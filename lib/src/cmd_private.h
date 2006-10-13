@@ -7,22 +7,30 @@
 
 typedef struct Laginfo_ Laginfo;
 
+enum {
+    CMD_NOLIST = 1 << 0,
+    CMD_IGNORE = 1 << 1
+};
+
 struct CMD_ {
     char word[9];               /* command word */
     int ci;                     /* command index number */
     int context;                /* context for subsetted commands */
     int order;                  /* lag order, for various commands */
+    int aux;                    /* auxiliary int (e.g. for VECM rank) */
     gretlopt opt;               /* option flags */
+    char flags;                 /* internal flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
-    int nolist;                 /* = 1 if the command does not take a list */
     int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */
     char *extra;                /* second parameter for some special uses */
-    int ignore;                 /* flag set to ignore comment lines in input */
     int errcode;                /* error code */
     Laginfo *linfo;             /* struct for recording info on automatically
                                    generated lags */
 };
+
+#define cmd_nolist(c) (c->flags & CMD_NOLIST)
+#define cmd_ignore(c) (c->flags & CMD_IGNORE)
 
 typedef void (*EXEC_CALLBACK) (ExecState *, double ***, DATAINFO *);
 

@@ -694,7 +694,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (k == -1) return 1;  /* action was faulty */
 
 	/* are we ready for this? */
-	if (!data_status && !cmd->ignore && !ready_for_command(line)) {
+	if (!data_status && !cmd_ignore(cmd) && !ready_for_command(line)) {
 	    fprintf(stderr, _("You must open a data file first\n"));
 	    return 1;
 	}
@@ -716,7 +716,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     /* are we in a multi-line comment block? */
-    s->in_comment = cmd->ignore;
+    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd->ci == CMD_COMMENT && gretl_echo_on()) {

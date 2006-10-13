@@ -2753,8 +2753,8 @@ int do_vector_model (selector *sr)
 	}	
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	var = vecm(order, atoi(libcmd.extra), libcmd.list, &Z, datainfo, 
-		   libcmd.opt, prn, &err);
+	var = gretl_VECM(order, libcmd.aux, libcmd.list, &Z, datainfo, 
+			 libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}
@@ -5951,7 +5951,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (k == -1) return 1;  /* action was faulty */
 
 	/* are we ready for this? */
-	if (!data_status && !cmd->ignore && !ready_for_command(line)) {
+	if (!data_status && !cmd_ignore(cmd) && !ready_for_command(line)) {
 	    pprintf(prn, _("You must open a data file first\n"));
 	    return 1;
 	}
@@ -5974,7 +5974,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     /* are we in a multi-line comment block? */
-    s->in_comment = cmd->ignore;
+    s->in_comment = (cmd_ignore(cmd))? 1 : 0;
 
     if (cmd->ci < 0) {
 	return 0; /* nothing there, or a comment */
@@ -6026,7 +6026,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     switch (cmd->ci) {
 
     case BXPLOT:
-	if (cmd->nolist) { 
+	if (cmd_nolist(cmd)) { 
 	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
 	} else {
 	    err = boxplots(cmd->list, NULL, pZ, pdinfo, cmd->opt | OPT_B);

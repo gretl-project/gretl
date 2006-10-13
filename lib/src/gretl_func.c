@@ -2455,7 +2455,7 @@ maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, DATAINFO *pdinfo
         return 1;
     }
     
-    s->in_comment = s->cmd->ignore;
+    s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
 
     if (s->cmd->ci < 0) {
 	return 0; /* nothing there, or a comment */

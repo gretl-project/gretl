@@ -55,6 +55,12 @@ typedef struct {
     int *laglist;
 } LAGVAR;
 
+#define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
+#define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
+
+#define cmd_set_ignore(c) (c->flags |= CMD_IGNORE)
+#define cmd_unset_ignore(c) (c->flags &= ~CMD_IGNORE)
+
 static void get_optional_filename (const char *line, CMD *cmd);
 
 static int trydatafile (char *line, CMD *cmd)
@@ -74,7 +80,7 @@ static int trydatafile (char *line, CMD *cmd)
 	    lower(datfile);
 	    i += 4;
 	} else if (line[i] == '*' && line[i+1] == ')') {
-	    cmd->ignore = 0;
+	    cmd_unset_ignore(cmd);
 	}
     }
 
@@ -97,22 +103,22 @@ static int filter_comments (char *line, CMD *cmd)
     
     for (i=0; i<n; i++) {
 	if (!strncmp(line + i, "(*", 2) || !strncmp(line + i, "/*", 2)) {
-	    cmd->ignore = 1;
+	    cmd_set_ignore(cmd);
 	    if (line[i+3] == '!') { /* special code for data file to open */
 		sscanf(line + 4, "%s", datfile);
 		sprintf(line, "open %s", datfile);
-		cmd->ignore = 0;  /* FIXME ? */
+		cmd_unset_ignore(cmd); /* FIXME ? */
 		return 0;
 	    }
 	} else if (!strncmp(line + i, "*)", 2) || !strncmp(line + i, "*/", 2)) {
-	    cmd->ignore = 0; 
+	    cmd_unset_ignore(cmd);
 	    i += 2;
 	    while (isspace((unsigned char) line[i]) && i < n) {
 		i++;
 	    }
 	}
 
-	if (!cmd->ignore && line[i] != '\r') {
+	if (!cmd_ignore(cmd) && line[i] != '\r') {
 	    tmpstr[j] = line[i];
 	    j++;
 	}
@@ -122,7 +128,7 @@ static int filter_comments (char *line, CMD *cmd)
     strcpy(line, tmpstr);
 
 #if CMD_DEBUG
-    fprintf(stderr, "filter_comments: cmd->ignore = %d\n", cmd->ignore);
+    fprintf(stderr, "filter_comments: cmd->ignore = %d\n", cmd_ignore(cmd));
 #endif
 
     return (*line == '\0');
@@ -671,11 +677,11 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
     int len = strcspn(s, ",;");
 
     if (len < strlen(s)) {
-	char ostr[8] = {0};
+	char ostr[VNAMELEN] = {0};
 	char word[32] = {0};
 	int v;
 
-	sscanf(s, "%7[^ ,;]", ostr);
+	sscanf(s, "%15[^ ,;]", ostr);
 	if (isdigit(*ostr)) {
 	    *order = atoi(ostr);
 	} else {
@@ -1176,8 +1182,9 @@ static int gretl_cmd_clear (CMD *cmd)
 {
     cmd->ci = 0;
     cmd->errcode = 0;
-    cmd->nolist = 0;
     *cmd->word = '\0';
+
+    cmd_unset_nolist(cmd);
 
     if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
 	cmd->errcode = E_ALLOC;
@@ -1245,8 +1252,8 @@ static int trap_comments (char *s, CMD *cmd)
 {
     int ret = 0;
 
-    if (*s == '#' || (*s == '/' && *(s+1) == '/')) {	
-	cmd->nolist = 1;
+    if (*s == '#' || (*s == '/' && *(s+1) == '/')) {
+	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
 	ret = 1;
     } else if (strstr(s, " #") || strstr(s, "//")) {
@@ -1365,6 +1372,17 @@ static char *copy_remainder (const char *line, int pos)
     return rem;
 }
 
+static int process_cmd_extra (CMD *cmd, const double **Z,
+			      const DATAINFO *pdinfo)
+{
+    if (cmd->ci == VECM) {
+	cmd->aux = gretl_int_from_string(cmd->extra, Z, pdinfo, 
+					 &cmd->errcode);
+    }
+
+    return cmd->errcode;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1400,14 +1418,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* legacy: look for Ramanathan practice files */
     if (line[0] == '(' && line[1] == '*') {
-	cmd->ignore = 1;
+	cmd_set_ignore(cmd);
 	gotdata = trydatafile(line, cmd);
     }
 
     /* trap old-style comments */
     if (!gotdata) {
 	if (filter_comments(line, cmd)) {
-	    cmd->nolist = 1;
+	    cmd_set_nolist(cmd);
 	    cmd->ci = CMD_COMMENT;
 	    return cmd->errcode;
 	}
@@ -1429,7 +1447,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* no command here? */
     if (sscanf(line, "%8s", cmd->word) != 1) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->errcode;
     }
@@ -1485,7 +1503,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* if, else, endif controls: should this come earlier? */
     if (flow_control(line, pZ, pdinfo, cmd)) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->errcode;
     }
@@ -1508,7 +1526,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci)) { 
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	capture_param(line, cmd, (const double **) *pZ, pdinfo);
 	return cmd->errcode;
     }
@@ -1517,7 +1535,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	capture_param(line, cmd, NULL, NULL);
 	return cmd->errcode;
     }
@@ -1525,21 +1543,21 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* SMPL can take a list, but only in case of OPT_M
        "--no-missing" */
     if (cmd->ci == SMPL && !(cmd->opt & OPT_M)) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	return cmd->errcode;
     }	
 
     /* boxplots take a list, but if there are Boolean conditions
        embedded, the line has to be parsed specially */
     if (cmd->ci == BXPLOT && strchr(line, '(')) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	return cmd->errcode;
     }
 
     /* OMIT typically takes a list, but can be given without args
        to omit last var */
     if (cmd->ci == OMIT && string_is_blank(line + 4)) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	return cmd->errcode;
     }
 
@@ -1669,15 +1687,15 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	pos = 0;
 	linelen = strlen(line);
     } else if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
-	char extra[4];
-
-	sscanf(line, "%3s", extra);
 	free(cmd->extra);
-	cmd->extra = gretl_strdup(extra);
-	shift_string_left(line, strlen(extra));
+	cmd->extra = gretl_word_strdup(line, NULL);
+	shift_string_left(line, strlen(cmd->extra));
 	nf--;
 	pos = 0;
 	linelen = strlen(line);
+	if (process_cmd_extra(cmd, (const double **) *pZ, pdinfo)) {
+	    return cmd->errcode;
+	}
     } 
 
     /* get a count of ';' separators in line */
@@ -1876,7 +1894,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->list[0] == 0) {
 	    cmd_full_list(pdinfo, cmd);
 	    /* suppress echo of the list -- may be too long */
-	    cmd->nolist = 1;
+	    cmd_set_nolist(cmd);
 	}
     } else if (cmd->ci != SETMISS && 
 	       cmd->ci != DELEET &&
@@ -1896,7 +1914,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* check list for duplicated variables? */
-    if (!cmd->errcode && !cmd->nolist) {
+    if (!cmd->errcode && !cmd_nolist(cmd)) {
 	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
 
 	if (dupv >= 0) {
@@ -2545,7 +2563,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 #if ECHO_DEBUG
     fprintf(stderr, "echo_cmd: line='%s', echo_stdout=%d, cmd->opt=%ld, batch=%d, "
 	    "param='%s', nolist=%d\n", line, echo_stdout, cmd->opt, batch, cmd->param,
-	    cmd->nolist);
+	    cmd_nolist(cmd));
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
 #endif
@@ -2589,7 +2607,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	prnlen += strlen(cmd->savename) + 4;
     }
 
-    if (!cmd->nolist) { 
+    if (!cmd_nolist(cmd)) { 
 	/* command has a list of args to be printed */
 	print_cmd_list(cmd, pdinfo, batch, echo_stdout, leadchar, 
 		       &stdlen, &prnlen, prn);
@@ -3681,8 +3699,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	    s->var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
 			       prn, &err);
 	} else {
-	    s->var = vecm(cmd->order, atoi(cmd->extra), cmd->list, pZ, pdinfo, 
-			  cmd->opt, prn, &err);
+	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, pZ, pdinfo, 
+				cmd->opt, prn, &err);
 	}
 	if (s->var != NULL) {
 	    if (s->callback != NULL) {
@@ -3761,13 +3779,13 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 #endif
 
     if (*line == '#' || (*line == '(' && *(line+1) == '*')) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
 	return 0;
     }
 
     if (sscanf(line, "%8s", cmd->word) != 1) {
-	cmd->nolist = 1;
+	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return 0;
     }
@@ -3887,7 +3905,8 @@ int gretl_cmd_init (CMD *cmd)
     cmd->errcode = 0;
     cmd->context = 0;
     cmd->order = 0;
-    cmd->ignore = 0;
+    cmd->aux = 0;
+    cmd->flags = 0;
     *cmd->word = '\0';
 
     cmd->list = NULL;

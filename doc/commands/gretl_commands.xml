@@ -4090,19 +4090,6 @@
     </description>
   </command>
 
-  <command name="matrix" section="Programming" 
-    label="Define or manipulate matrices" context="cli">
-
-    <description>
-      <para>
-	The keyword <lit>matrix</lit> must precede all commands
-	that create, manipulate and print matrices.  Please see
-	<guideref targ="chap-matrices"/> for details.
-      </para>
-    </description>
-
-  </command>
-
   <command name="meantest" section="Tests"
     label="Difference of means">
 

@@ -29,9 +29,9 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 		      double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, int *err);
 
-GRETL_VAR *vecm (int order, int rank, int *list, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn, int *err);
+GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
+		       double ***pZ, DATAINFO *pdinfo,
+		       gretlopt opt, PRN *prn, int *err);
 
 const gretl_matrix *
 gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,

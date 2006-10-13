@@ -2847,9 +2847,9 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
  * the VECM system or %NULL on failure.
  */
 
-GRETL_VAR *vecm (int order, int rank, int *list, 
-		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn, int *err)
+GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
+		       double ***pZ, DATAINFO *pdinfo,
+		       gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *jvar = NULL;
     int *endo_list = NULL, *exo_list = NULL;
