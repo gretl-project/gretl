@@ -18,7 +18,7 @@
  */
 
 /*
-  Modular-style GARCH routines by Jack Lucchetti, October 2006. For the 
+  Modular GARCH routines by Jack Lucchetti, October 2006. For the 
   moment, meant to replace seamlessly fcp.c, but syntax should evolve in 
   the future.
 */
@@ -32,82 +32,111 @@
 #include "f2c.h"
 #include "clapack_double.h"
 
-static void mark(int *n) { 
-    if(n==NULL) {
+#define GDEBUG 0
+
+enum {
+    INIT_VAR_THEO,
+    INIT_VAR_OLS,
+    INIT_VAR_RESID
+};
+
+enum {
+    DIST_NORM,
+    DIST_T
+};
+
+typedef struct garch_container_ garch_container;
+
+struct garch_container_ {
+    double *y;
+    const double **X;
+    int t1;
+    int t2;
+    int nobs;
+    int ncm;
+    int p;
+    int q;
+    int k;
+    int init;
+    int distrib;
+    double *e;
+    double *e2;
+    double *h;
+    int ascore;
+    double **score_e;
+    double **score_h;
+    double **blockglue;
+    double **G;
+    double *tot_score;
+};
+
+#if 0
+static void mark (int *n) 
+{ 
+    if (n == NULL) {
 	fprintf(stderr,"Ha!\n"); 
     } else {
 	int locn = *n;
+
 	fprintf(stderr,"Ha! (%d)\n", locn); 
 	*n = ++locn;
     }
 }
+#endif
 
 #define MOD_DEBUG 0
 
-static void init_eh_derivs(garch_container *DH, int analytical_score, int npar, int nobs)
+static void free_eh_derivs (garch_container *DH)
 {
-    double **se = NULL;
-    double **sh = NULL;
-    double **glue = NULL;
-    double **G = NULL;
+    doubles_array_free(DH->score_e, DH->k);
+    doubles_array_free(DH->score_h, DH->k);
+    doubles_array_free(DH->G, DH->k);
+    doubles_array_free(DH->blockglue, 2);
+}
 
-    if(analytical_score) {
-	
-	int i;
+static int init_eh_derivs (garch_container *DH)
+{
+    DH->score_e = NULL;
+    DH->score_h = NULL;
+    DH->G = NULL;
+    DH->blockglue = NULL;
+    int err = 0;
 
-	se = malloc(npar * sizeof **se);
-	sh = malloc(npar * sizeof **sh);
-	glue = malloc(2 * sizeof **glue);
-	G = malloc(npar * sizeof **G);
-	for(i=0; i<npar; i++) {
-	    se[i] = malloc(nobs * sizeof *(se[i]));
-	    sh[i] = malloc(nobs * sizeof *(sh[i]));
-	    glue[i] = malloc(nobs * sizeof *(glue[i]));
-	    G[i] = malloc(nobs * sizeof *(G[i]));
+    if (DH->ascore) {
+	DH->score_e = doubles_array_new(DH->k, DH->nobs);
+	DH->score_h = doubles_array_new(DH->k, DH->nobs);
+	DH->G = doubles_array_new(DH->k, DH->nobs);
+	DH->blockglue = doubles_array_new(2, DH->nobs);
+
+	if (DH->score_e == NULL ||
+	    DH->score_h == NULL ||
+	    DH->G == NULL ||
+	    DH->blockglue == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
-    DH->score_e = se;
-    DH->score_h = sh;
-    DH->blockglue = glue;
-    DH->G = G;
+    return err;
 }
 
-static void free_eh_derivs(garch_container *DH, int analytical_score)
+static garch_container *init_container (double *y, const double **X, 
+					int t1, int t2, int nobs, int nx,
+					int p, int q, int init_method, 
+					double *res, double *h, 
+					int analytical)
 {
-    if(analytical_score) {
-	int ncm = DH->ncm;
-	int p = DH->p;
-	int q = DH->q;
-	int totpar = 1 + ncm + 1 + p + q;
-	int n = ( DH->t2 + 1 );
-	
-	int i;
+    garch_container *DH = malloc(sizeof *DH);
 
-	for(i=0; i<totpar; i++) {
-	    free(DH->score_e[i]);
-	    free(DH->score_h[i]);
-	    free(DH->G[i]);
-	}
-
-	free(DH->blockglue[0]);
-	free(DH->blockglue[1]);
-	free(DH->blockglue);
-
-	free(DH->score_e);
-	free(DH->score_h);
-	free(DH->G);
+    if (DH == NULL) {
+	return NULL;
     }
-}
 
-static garch_container *init_container(double *y,
-				       double **X, int t1, int t2, int nobs, int nx,
-				       int p, int q, int init_method, double *res,
-				       double *h, int analytical)
-{
-    garch_container *DH;
+    DH->e2 = malloc(nobs * sizeof *DH->e2);
+    if (DH->e2 == NULL) {
+	free(DH);
+	return NULL;
+    }
 
-    DH = malloc(sizeof *DH);
     DH->y = y;
     DH->X = X;
     DH->t1 = t1;
@@ -116,77 +145,63 @@ static garch_container *init_container(double *y,
     DH->ncm = nx;
     DH->p = p;
     DH->q = q;
-    DH->initmeth = init_method;
+    DH->init = init_method;
     DH->e = res;
     DH->h = h;
-    DH->e2 = malloc(nobs * sizeof *(DH->e2));
     DH->ascore = analytical;
+    DH->k = 1 + nx + 1 + p + q;
 
-    init_eh_derivs(DH, analytical, 1+nx+1+p+q, nobs);
+    init_eh_derivs(DH);
 
     return DH;
 }
 
-static void free_container(garch_container *DH)
+static void garch_container_destroy (garch_container *DH)
 {
-    int anal = DH->ascore;
-
-    free_eh_derivs(DH, anal);
+    if (DH->ascore) {
+	free_eh_derivs(DH);
+    }
     free(DH->e2);
     free(DH);
-
 }
 
 /* 
    Compute the *ARCH log-likelihood for Gaussian innovations. 
 */
 
-static int 
-normal_ll (const garch_container *DH, double *ll)
+static double normal_ll (const garch_container *DH, int *err)
 {
-    int ret = 0;
+    double e2t, ht, ll = 0.0;
     int t;
-    int t1 = DH->t1;
-    int t2 = DH->t2;
-    double tmp = 0.0;
-    double e2t, ht;
 
-    for (t = t1; t <= t2; t++) {
+    for (t=DH->t1; t<=DH->t2; t++) {
 	e2t = DH->e2[t];
 	ht = DH->h[t];
-	if( na(e2t) || na(ht) ) return 1;
-	tmp -= ( log(ht) + e2t / ht );
+	if (na(e2t) || na(ht)) {
+	    *err = E_MISSDATA;
+	    return NADBL;
+	}
+	ll -= log(ht) + e2t / ht;
     }
-    tmp *= 0.5;
-    tmp -=  (t2-t1+1) * LN_SQRT_2_PI;
-    *ll = tmp;
 
-    return ret;
+    ll *= 0.5;
+    ll -= (DH->t2 - DH->t1 + 1) * LN_SQRT_2_PI;
+
+    return ll;
 } 
 
-static int normal_score(const garch_container *DH)
+static void normal_score (const garch_container *DH)
 {
-    int ret = 0;
+    double ut;
     int t;
-    int t1 = DH->t1;
-    int t2 = DH->t2;
 
-    double **S  = DH->blockglue;
-
-    double et, ht, ut;
-    for (t=t1; t<=t2; t++) {
-	et = DH->e[t];
-	ht = DH->h[t];
-	S[0][t] = ut = -et/ht;
-	S[1][t] = 0.5*(ut*ut - 1.0/ht);
+    for (t=DH->t1; t<=DH->t2; t++) {
+	DH->blockglue[0][t] = ut = -DH->e[t] / DH->h[t];
+	DH->blockglue[1][t] = 0.5 * (ut * ut - 1.0 / DH->h[t]);
     }
-
-    return ret;
 } 
 
-/* 
-   Compute the GARCH quantities. 
-*/
+/* Compute the GARCH quantities */
 
 static int garch_etht (const double *par, void *ptr)
 {
@@ -197,24 +212,23 @@ static int garch_etht (const double *par, void *ptr)
     int p = DH->p;
     int q = DH->q;
 
-    int maxlag = (p>q) ? p : q;
-    int init = DH->initmeth;
+    int maxlag = (p > q)? p : q;
 
     int i, j, k, ret = 0;
     int ncm = DH->ncm;
-    int totpar = 1 + ncm + 1 + p + q;
 
-    double **dedq;
-    double **dhdq;
+    double **dedq = DH->score_e;
+    double **dhdq = DH->score_h;
 
-    int t, s, T = (t2-t1+1);
-    double et, ht, tmp, u_var;
+    int t, T = t2 - t1 + 1;
+    double et, ht, tmp, h0 = 0.0;
+    double u_var = 0.0;
 
     /* compute residuals */
 
     tmp = 0.0;
     for (t = t1-maxlag; t <= t2; t++) {
-	if(t<t1) {
+	if (t<t1) {
 	    et = 0.0;
 	} else {
 	    et = DH->y[t] - par[0];
@@ -229,10 +243,9 @@ static int garch_etht (const double *par, void *ptr)
 	}
     }
 
-    if(DH->ascore) {
-	dedq = DH->score_e;
-	for (t = t-maxlag; t<t1; t++) {
-	    for(i=0; i<totpar; i++) {
+    if (DH->ascore) {
+	for (t=t-maxlag; t<t1; t++) {
+	    for (i=0; i<DH->k; i++) {
 		dedq[i][t] = 0.0;
 	    }
 	}
@@ -240,9 +253,7 @@ static int garch_etht (const double *par, void *ptr)
 	
     /* h0 and derivatives */
 
-    double h0;
-
-    switch (init) {
+    switch (DH->init) {
     case INIT_VAR_OLS:
 	h0 = 1.0;
 	break;
@@ -251,7 +262,7 @@ static int garch_etht (const double *par, void *ptr)
 	break;
     case INIT_VAR_THEO:
 	tmp = 1.0;
-	for(i=ncm+2; i<totpar; i++) {
+	for (i=ncm+2; i<DH->k; i++) {
 	    tmp -= par[i];
 	}
 	u_var = par[ncm+1] / tmp;
@@ -259,19 +270,18 @@ static int garch_etht (const double *par, void *ptr)
 	break;
     }
 
-    for (t = t1-maxlag; t <t1; t++) {
+    for (t=t1-maxlag; t<t1; t++) {
 	DH->h[t] = h0;
 	DH->e2[t] = h0;
     }
 
-    if(DH->ascore) {
-	dhdq = DH->score_h;
+    if (DH->ascore) {
 	double dh0;
 
-	switch (init) {
+	switch (DH->init) {
 	case INIT_VAR_OLS:
-	    for (t = t1-maxlag; t<t1; t++) {
-		for(i=0; i<totpar; i++) {
+	    for (t=t1-maxlag; t<t1; t++) {
+		for (i=0; i<DH->k; i++) {
 		    dhdq[i][t] = 0.0;
 		}
 	    }
@@ -279,25 +289,25 @@ static int garch_etht (const double *par, void *ptr)
 
 	case INIT_VAR_RESID:
 	    dh0 = 0.0;
-	    for (t = t1; t<=t2; t++) {
+	    for (t=t1; t<=t2; t++) {
 		dh0 -= DH->e[t];
 	    }
-	    for (t = t1-maxlag; t<t1; t++) {
+	    for (t=t1-maxlag; t<t1; t++) {
 		dhdq[0][t] = dh0  * 2.0 / T;
 	    }
 	    
-	    for(i=0; i<ncm; i++) {
+	    for (i=0; i<ncm; i++) {
 		dh0 = 0.0;
-		for (t = t1; t<=t2; t++) {
+		for (t=t1; t<=t2; t++) {
 		    dh0 -= DH->e[t] * DH->X[i][t];
 		}
-		for (t = t1-maxlag; t < t1; t++) {
+		for (t=t1-maxlag; t<t1; t++) {
 		    dhdq[i+1][t] = dh0  * 2.0 / T;
 		}
 	    }
 	    
-	    for (t = t1-maxlag; t<t1; t++) {
-		for(i=ncm+1; i<totpar; i++) {
+	    for (t=t1-maxlag; t<t1; t++) {
+		for (i=ncm+1; i<DH->k; i++) {
 		    dhdq[i][t] = 0.0;
 		}
 	    }
@@ -305,18 +315,18 @@ static int garch_etht (const double *par, void *ptr)
 	    break;
 	    
 	case INIT_VAR_THEO:
-	    for (t = t1-maxlag; t<t1; t++) {
-		for(i=0; i<=ncm; i++) {
+	    for (t=t1-maxlag; t<t1; t++) {
+		for (i=0; i<=ncm; i++) {
 		    dhdq[i][t] = 0.0;
 		}
 	    }
-	    dh0 = u_var/par[ncm+1];
-	    for (t = t1-maxlag; t<t1; t++) {
+	    dh0 = u_var / par[ncm+1];
+	    for (t=t1-maxlag; t<t1; t++) {
 		dhdq[ncm+1][t] = dh0;
 	    }
 	    dh0 *= u_var;
-	    for (t = t1-maxlag; t<t1; t++) {
-		for(i=ncm+2; i<totpar; i++) {
+	    for (t=t1-maxlag; t<t1; t++) {
+		for (i=ncm+2; i<DH->k; i++) {
 		    dhdq[i][t] = dh0;
 		}
 	    }
@@ -327,26 +337,27 @@ static int garch_etht (const double *par, void *ptr)
 
     /* in-sample loop */
 
-    for (t = t1; t <= t2; t++) {
-
+    for (t=t1; t<=t2; t++) {
 	ht = par[ncm+1];
-	for(i=1; i<=p; i++) {
-	    ht += DH->e2[t-i]*par[ncm+i+1];
+
+	for (i=1; i<=p; i++) {
+	    ht += DH->e2[t-i] * par[ncm+i+1];
 	}
-	for(i=1; i<=q; i++) {
-	    ht += DH->h[t-i]*par[ncm+i+p+1];
+
+	for (i=1; i<=q; i++) {
+	    ht += DH->h[t-i] * par[ncm+i+p+1];
 	}
 	
 	DH->h[t] = ht;
 	    
-	if(DH->ascore) {
+	if (DH->ascore) {
 	    
 	    /* constant */
 	    dedq[0][t] = -1.0;
 	    k = ncm+1;
 	    dhdq[0][t] = 0.0;
-	    for(i=1; i<=p; i++) {
-		if ((t-p<t1) && (init==INIT_VAR_RESID)) {
+	    for (i=1; i<=p; i++) {
+		if (t - p < t1 && DH->init == INIT_VAR_RESID) {
 		    dhdq[0][t] += par[k+i] * dhdq[0][t1-1];
 		} else {	
 		    dhdq[0][t] += 2.0 * par[k+i] * (DH->e[t-i]) * dedq[0][t-i];
@@ -354,12 +365,12 @@ static int garch_etht (const double *par, void *ptr)
 	    }
 	    
 	    /* regressors */
-	    for(i=1; i<=ncm; i++) {
+	    for (i=1; i<=ncm; i++) {
 		dedq[i][t] = -(DH->X[i-1][t]);
 		k = ncm+1;
 		dhdq[i][t] = 0.0;
-		for(j=1; j<=p; j++) {
-		    if ((init==INIT_VAR_RESID) && (t - p < t1)) { // add INIT_THEO here
+		for (j=1; j<=p; j++) {
+		    if (t - p < t1 && DH->init == INIT_VAR_RESID) { // add INIT_THEO here
 			dhdq[i][t] += par[k+j] * dhdq[i][t1-1];
 		    } else {	
 			dhdq[i][t] += 2.0 * par[k+j] * (DH->e[t-j]) * dedq[i][t-j];
@@ -370,19 +381,19 @@ static int garch_etht (const double *par, void *ptr)
 	    /* garch params: omega */
 	    dedq[ncm+1][t] = 0.0;
 	    dhdq[ncm+1][t] = 1.0;
-	    if ((t-p<t1) && (init==INIT_VAR_THEO)) {
-		for(i=1; i<=p; i++) {
+	    if (t - p < t1 && DH->init == INIT_VAR_THEO) {
+		for (i=1; i<=p; i++) {
 		    dhdq[ncm+1][t] += par[ncm+1+i] * dhdq[ncm+1][t1-1];
 		}
 	    }
 	    
 	    /* garch params: alphas */
 	    k = ncm + 2;
-	    for(i=1; i<=p; i++) {
+	    for (i=1; i<=p; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->e2[t-i];
-		if ((t-p<t1) && (init==INIT_VAR_THEO)) {
-		    for(j=0; j<p; j++) {
+		if (t - p < t1 && DH->init == INIT_VAR_THEO) {
+		    for (j=0; j<p; j++) {
 			dhdq[k][t] += par[k+j] * dhdq[k][t1-1];
 		    }
 		}
@@ -391,11 +402,11 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	    /* garch params: betas */
 	    k = ncm + p + 2;
-	    for(i=1; i<=q; i++) {
+	    for (i=1; i<=q; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->h[t-i];
-		if ((t-p<t1) && (init==INIT_VAR_THEO)) {
-		    for(j=0; j<p; j++) {
+		if (t - p < t1 && DH->init == INIT_VAR_THEO) {
+		    for (j=0; j<p; j++) {
 			dhdq[k][t] += par[k+j-p] * dhdq[k][t1-1];
 		    }
 		}
@@ -403,9 +414,9 @@ static int garch_etht (const double *par, void *ptr)
 	    }
 	    
 	    /* "real" recursive part */
-	    for(i=0; i<totpar; i++) {
+	    for (i=0; i<DH->k; i++) {
 		k = ncm + p + 2;
-		for(j=1; j<=q; j++) {
+		for (j=1; j<=q; j++) {
 		    dhdq[i][t] += par[k++] * dhdq[i][t-j];
 		}
 	    }
@@ -414,20 +425,23 @@ static int garch_etht (const double *par, void *ptr)
     }
     
 #if MOD_DEBUG
-    fputc('\n', stderr);
-    fputc('\n', stderr);
-    for(i=0; i<totpar; i++) {
-	fprintf(stderr,"garch_etht: par[%d] = %9.6f ",i,par[i]);
+    fputs("\n\n", stderr);
+    for (i=0; i<DH->k; i++) {
+	fprintf(stderr, "garch_etht: par[%d] = %9.6f ", i, par[i]);
     }
     fputc('\n', stderr);
-    for (t = t1-maxlag; t <=20; t++) {
-	if(t<t1) fputc('*', stderr); else fputc(' ', stderr);
-	fprintf(stderr," t:%4d ",t);
-	fprintf(stderr," %8.4f",DH->e[t]);
-	fprintf(stderr," %8.4f",DH->e2[t]);
-	fprintf(stderr," %8.4f",DH->h[t]);
-	fprintf(stderr," %12.8f",dedq[ncm+2][t]);
-	fprintf(stderr," %12.8f",dhdq[ncm+2][t]);
+    for (t=t1-maxlag; t<=20; t++) {
+	if (t < t1) {
+	    fputc('*', stderr); 
+	} else {
+	    fputc(' ', stderr);
+	}
+	fprintf(stderr, " t:%4d ", t);
+	fprintf(stderr, " %8.4f", DH->e[t]);
+	fprintf(stderr, " %8.4f", DH->e2[t]);
+	fprintf(stderr, " %8.4f", DH->h[t]);
+	fprintf(stderr, " %12.8f", dedq[ncm+2][t]);
+	fprintf(stderr, " %12.8f", dhdq[ncm+2][t]);
 	fputc('\n', stderr);
     }
 #endif
@@ -435,182 +449,139 @@ static int garch_etht (const double *par, void *ptr)
     return ret;
 } 
 
-static void garch_infomat(garch_container *DH, double **info)
+static void garch_infomat (garch_container *DH, double **info)
 {
-    int t1 = DH->t1;
-    int t2 = DH->t2;
-    int p = DH->p;
-    int q = DH->q;
-    int T = (t2 - t1 + 1);
-
-    int t, i, j;
-    int ncm = DH->ncm;
-    int totpar = 1 + ncm + 1 + p + q;
-    double *h = DH->h;
-    double **dhdq = DH->score_h;
     double tmpi, tmpj, tmpx1, tmpx2, x;
+    int i, j, t;
 
-    for(i=0; i<totpar; i++) {
-	for(j=0; j<totpar; j++) {
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
 	    info[i][j] = 0.0;
 	}
     }
 
-    for(t=t1; t<=t2; t++) {
-	for(i=0; i<=ncm; i++) {
-	    tmpi = dhdq[i][t]/h[t];
-	    tmpx1 = (i==0) ? 1.0 : DH->X[i-1][t];
+    for (t=DH->t1; t<=DH->t2; t++) {
+	for (i=0; i<=DH->ncm; i++) {
+	    tmpi = DH->score_h[i][t] / DH->h[t];
+	    tmpx1 = (i==0)? 1.0 : DH->X[i-1][t];
 	    tmpx1 *= 2.0;
-	    tmpx1 /= h[t];
-	    for(j=0; j<=i; j++) {
-		tmpj = dhdq[j][t]/h[t];
-		tmpx2 = (j==0) ? 1.0 : DH->X[j-1][t];
-		x = tmpx1*tmpx2 + tmpi*tmpj;
+	    tmpx1 /= DH->h[t];
+	    for (j=0; j<=i; j++) {
+		tmpj = DH->score_h[j][t] / DH->h[t];
+		tmpx2 = (j==0)? 1.0 : DH->X[j-1][t];
+		x = tmpx1 * tmpx2 + tmpi * tmpj;
 		info[i][j] += x;
 		info[j][i] += x;
 	    }
 	}
-	for(i=ncm+1; i<totpar; i++) {
-	    tmpi = dhdq[i][t]/h[t];
-	    for(j=ncm+1; j<=i; j++) {
-		tmpj = dhdq[j][t]/h[t];
-		x = tmpi*tmpj;
+
+	for (i=DH->ncm+1; i<DH->k; i++) {
+	    tmpi = DH->score_h[i][t] / DH->h[t];
+	    for (j=DH->ncm+1; j<=i; j++) {
+		tmpj = DH->score_h[j][t] / DH->h[t];
+		x = tmpi * tmpj;
 		info[i][j] += x;
 		info[j][i] += x;
 	    }
 	}
     }
 
-    for(i=0; i<totpar; i++) {
-	for(j=0; j<totpar; j++) {
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
 	    info[i][j] *= 0.5;
 	}
     }
 
-#if 1
-    fprintf(stderr, "Information matrix:\n");
-    for(i=0; i<totpar; i++) {
-	for(j=0; j<totpar; j++) {
+#if GDEBUG
+    fputs("Information matrix:\n", stderr);
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
 	    fprintf(stderr, "%14.6f ", info[i][j]);
 	}
 	fputc('\n', stderr);
     }
 #endif
-
 }
 
-static void garch_opg(garch_container *DH, double **GG)
+static void garch_opg (garch_container *DH, double **GG)
 {
-    int t1 = DH->t1;
-    int t2 = DH->t2;
-    int p = DH->p;
-    int q = DH->q;
-    int T = (t2 - t1 + 1);
-
+    double tmpi, x;
     int t, i, j;
-    int ncm = DH->ncm;
-    int totpar = 1 + ncm + 1 + p + q;
 
-    double **G = DH->G;
-    double tmpi, tmpj, x;
-
-    for(i=0; i<totpar; i++) {
-	for(j=0; j<totpar; j++) {
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
 	    GG[i][j] = 0.0;
 	}
     }
 
-    for(t=t1; t<=t2; t++) {
-	for(i=0; i<totpar; i++) {
-	    tmpi = G[i][t];
-	    for(j=0; j<=i; j++) {
-		x = tmpi * G[j][t]; 
+    for (t=DH->t1; t<=DH->t2; t++) {
+	for (i=0; i<DH->k; i++) {
+	    tmpi = DH->G[i][t];
+	    for (j=0; j<=i; j++) {
+		x = tmpi * DH->G[j][t]; 
 		GG[i][j] += x;
 		GG[j][i] += x;
 	    }
 	}
     }
 
-#if 1
-    fprintf(stderr, "OPG matrix:\n");
-    for(i=0; i<totpar; i++) {
-	for(j=0; j<totpar; j++) {
+#if GDEBUG
+    fputs("OPG matrix:\n", stderr);
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
 	    fprintf(stderr, "%14.6f ", GG[i][j]);
 	}
 	fputc('\n', stderr);
     }
 #endif
-
 }
-
 
 static double loglik (const double *theta, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
-    double ret;
     int err;
+
     err = garch_etht(theta, DH);
-    normal_ll (DH, &ret);
-    return ret;
+    return normal_ll(DH, &err);
 }
 
-static int score_fill_matrices(const double *theta, void *ptr)
+static int score_fill_matrices (const double *theta, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
-    int t, err;
-    
-    int t1 = DH->t1;
-    int t2 = DH->t2;
-
-    int i, ret = 0;
-    int ncm = DH->ncm;
-    int p = DH->p;
-    int q = DH->q;
-    int totpar = 1 + ncm + 1 + p + q;
+    int i, t, err;
 
     err = garch_etht(theta, DH);
-    err = normal_score(DH);
+    normal_score(DH);
 
-    double **dedq = DH->score_e;
-    double **dhdq = DH->score_h;
-    double **nscore = DH->blockglue;
-    double **G = DH->G;
-
-    for (t = t1; t <=t2; t++) {
-	for(i=0; i<totpar; i++) {
-	    G[i][t] = (dedq[i][t] * nscore[0][t]) + (dhdq[i][t] * nscore[1][t]);
+    for (t=DH->t1; t<=DH->t2; t++) {
+	for (i=0; i<DH->k; i++) {
+	    DH->G[i][t] = DH->score_e[i][t] * DH->blockglue[0][t] + 
+		DH->score_h[i][t] * DH->blockglue[1][t];
 	}
     }
 
     return err;
-
 }
 
-static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, void *ptr)
+static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+		       void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
-    
-    int t1 = DH->t1;
-    int t2 = DH->t2;
-
-    int t, i, ret = 0;
-
     double tmp;
+    int t, i, ret = 0;
 
     score_fill_matrices(theta, DH);
 
-    for(i=0; i<npar; i++) {
+    for (i=0; i<npar; i++) {
 	tmp = 0.0;
-	for(t=t1;t<=t2;t++) {
-	    tmp += DH->G[i][t] ;
+	for (t=DH->t1;t<=DH->t2; t++) {
+	    tmp += DH->G[i][t];
 	}
 	s[i] = tmp;
     }
 
     return ret;
 }
-
-
 
 /*
    Parameters to garch_estimate_mod()
@@ -642,27 +613,32 @@ static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, void
 */
 
 int garch_estimate_mod (int t1, int t2, int nobs, 
-			double **X, int nx, double *coeff, int nc, 
+			const double **X, int nx, double *coeff, int nc, 
 			double *vcv, double *res2, double *res, double *h,
 			double *y, double *amax, double *b, 
 			double scale, int *iters, PRN *prn, int vopt)
 {
-    int i,j;
-    int err = 0;
+    garch_container *DH;
     int p = amax[1];
     int q = amax[2];
-    int npar = (1+nx+1+p+q);
-
+    int npar = 1 + nx + 1 + p + q;
     int analytical = 1;
-    double **G;
+    double *theta = NULL;
+    double **info = NULL;
+    double *V, vij;
+    int i, j, k, err = 0;
 
-    garch_container *DH;
+    /* BFGS apparatus */
+    int maxit = 1000;
+    double reltol = 1.0e-12;
+    int fncount = 0;
+    int grcount = 0;
+
     DH = init_container(y, X, t1, t2, nobs, nx, p, q, INIT_VAR_RESID,
-		   res, h, analytical);
+			res, h, analytical);
 
-    double *theta;
     theta = malloc(npar * sizeof *theta);
-    theta[0] = gretl_mean(t1,t2,y);
+    theta[0] = gretl_mean(t1, t2, y);
     for (i=1; i<=nx; i++) {
 	theta[i] = coeff[i];
     }
@@ -671,13 +647,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 	theta[i] = amax[j++];
     }
 
-    /* BFGS apparatus */
-    int maxit = 1000;
-    double reltol = 1.0e-12;
-    int fncount = 0;
-    int grcount = 0;
-
-    if(analytical) {
+    if (DH->ascore) {
 	fputs("\nUsing analytical score\n", stderr);
     } else {
 	fputs("\nUsing numerical score\n", stderr);
@@ -685,74 +655,72 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 
     err = BFGS_max(theta, npar, maxit, reltol, 
 		   &fncount, &grcount, loglik, 
-		   (DH->ascore ? anal_score : NULL), 
-		   DH, (prn != NULL)? OPT_V : OPT_NONE, prn);
+		   (DH->ascore)? anal_score : NULL, 
+		   DH, (prn != NULL)? OPT_V : OPT_NONE, 
+		   prn);
     
-    amax[0] = loglik(theta, DH) - (t2-t1+1)*log(scale);
+    amax[0] = loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
     
     fprintf(stderr, "iters = %d (%d)\n", fncount, grcount);
 
-#if 1
-    double *testa, *testn;
-    int testret;
-    testa = malloc(npar * sizeof *testa);
-    testn = malloc(npar * sizeof *testn);
+#if GDEBUG
+    if (1) {
+	double *testa, *testn;
+	int testret;
 
-    testret = anal_score(theta, testa, npar, loglik, DH);
-    testret = BFGS_numeric_gradient(theta, testn, npar, loglik, DH);
+	testa = malloc(npar * sizeof *testa);
+	testn = malloc(npar * sizeof *testn);
 
-    fprintf(stderr, "ret = %d: \n", testret);
-    for(i=0; i<npar; i++) {
-	fprintf(stderr, "g[%d]: analytical = %14.8f, numerical: = %14.8f, \n", 
-		i, testa[i], testn[i]);
+	testret = anal_score(theta, testa, npar, loglik, DH);
+	testret = BFGS_numeric_gradient(theta, testn, npar, loglik, DH);
+
+	fprintf(stderr, "ret = %d:\n", testret);
+
+	for (i=0; i<npar; i++) {
+	    fprintf(stderr, "g[%d]: analytical = %14.8f, numerical: = %14.8f, \n", 
+		    i, testa[i], testn[i]);
+	}
+	fputc('\n', stderr);
+
+	free(testa);
+	free(testn);
     }
-    fprintf(stderr, "\n");
-    free(testa);
-    free(testn);
 #endif
 
-    DH->ascore = 0;
-    double *V = numerical_hessian(theta, npar, loglik, DH);
-    double vij;
-    int k=0;
+    V = numerical_hessian(theta, npar, loglik, DH);
 
-    for(i=0; i<npar; i++) {
-	for(j=i; j<npar; j++) {
+    k = 0;
+    for (i=0; i<npar; i++) {
+	for (j=i; j<npar; j++) {
 	    vij = V[k++];
 	    vcv[(i*npar) + j] = vij;
-	    if(i!=j) {
+	    if (i != j) {
 		vcv[(j*npar) + i] = vij;
 	    }
 	}
     }
 
-#if 1
+#if GDEBUG
     k = 0;
-    for(i=0; i<npar; i++) {
-	for(j=i; j<npar; j++) {
+    for (i=0; i<npar; i++) {
+	for (j=i; j<npar; j++) {
 	    fprintf(stderr, "V[%d,%d] = %g\t", i, j, V[k++]);
 	}
-	fprintf(stderr, "\n");
+	fputc('\n', stderr);
     }
 #endif
 
-    double **info;
-    info = malloc(npar * sizeof **info);
-    for(i=0; i<npar; i++) {
-	info[i] = malloc(npar * sizeof *(info[i]));
-    }
-
+    info = doubles_array_new(npar, npar);
     garch_infomat(DH, info);
     garch_opg(DH, info);
 
-    free(info);
-
+    doubles_array_free(info, npar);
     free(V);
 
     if (!err) {
 	double sderr;
-	/* 
-	   transcribe coefficients and standard errors 
+
+	/* transcribe coefficients and standard errors 
 	   note: slightly different from fcp
 	*/
 	for (i=0, j=0; i<npar; i++) {
@@ -761,14 +729,14 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 	    } else {
 		sderr = 0.0;
 	    }
-	    j += (npar+1);
+	    j += npar + 1;
 	    amax[i+1] = theta[i];
 	    amax[i+1+npar] = sderr;
 	}
     }
 
     free(theta);
-    free_container(DH);
+    garch_container_destroy(DH);
 
     return err;
 }

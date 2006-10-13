@@ -973,6 +973,27 @@ double *copyvec (const double *src, int n)
 }
 
 /**
+ * doubles_array_free:
+ * @X: 2-dimensional array of doubles.
+ * @m: number of sub-arrays.
+ *
+ * Frees a 2-dimensional array of doubles, first freeing
+ * each sub-array.
+ */
+
+void doubles_array_free (double **X, int m)
+{
+    int i;
+
+    if (X != NULL) {
+	for (i=0; i<m; i++) {
+	    free(X[i]);
+	}
+	free(X);
+    }
+}
+
+/**
  * doubles_array_new:
  * @m: number of sub-arrays.
  * @n: length of each sub-array.
@@ -986,7 +1007,7 @@ double *copyvec (const double *src, int n)
 double **doubles_array_new (int m, int n)
 {
     double **X;
-    int i, j;
+    int i;
 
     X = malloc(m * sizeof *X);
 
@@ -995,12 +1016,13 @@ double **doubles_array_new (int m, int n)
     }
 
     for (i=0; i<m; i++) {
+	X[i] = NULL;
+    }
+
+    for (i=0; i<m; i++) {
 	X[i] = malloc(n * sizeof **X);
 	if (X[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(X[j]);
-	    }
-	    free(X);
+	    doubles_array_free(X, m);
 	    X = NULL;
 	    break;
 	}

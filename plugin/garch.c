@@ -26,6 +26,7 @@
 #include "var.h"
 
 #include "fcp.h"
+#include "mod_garch.h"
 
 #undef VPARM_DEBUG
 

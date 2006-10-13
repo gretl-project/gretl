@@ -99,6 +99,8 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
 double *copyvec (const double *src, int n);
 
+void doubles_array_free (double **X, int m);
+
 double **doubles_array_new (int m, int n);
 
 int ijton (int i, int j, int nrows);
