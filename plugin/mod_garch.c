@@ -511,6 +511,10 @@ static int garch_iinfo (garch_container *DH, gretl_matrix *info)
     double tmpi, tmpj, tmpx1, tmpx2, x;
     int i, j, t;
 
+    if (info == NULL) {
+	return E_ALLOC;
+    }
+
     tmp_info = doubles_array_new(DH->k, DH->k);
     if (tmp_info == NULL) {
 	return E_ALLOC;
@@ -575,6 +579,10 @@ static int garch_opg (garch_container *DH, gretl_matrix *GG)
     double tmpi, x;
     int t, i, j;
 
+    if (GG == NULL) {
+	return E_ALLOC;
+    }
+
     tmp_GG = doubles_array_new(DH->k, DH->k);
     if (tmp_GG == NULL) {
 	return E_ALLOC;
@@ -619,6 +627,10 @@ static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
     double vij, *V;
     int i, j, k, npar = DH->k;
 
+    if (invH == NULL) {
+	return E_ALLOC;
+    }
+
     V = numerical_hessian(theta, npar, loglik, DH);
     if (V == NULL) {
 	return E_ALLOC;
@@ -644,8 +656,9 @@ static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
     return 0;
 }
 
-static gretl_matrix *
-garch_covariance_matrix (int vopt, double *theta, garch_container *DH) 
+static int
+garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
+			 double *vcv) 
 {
     gretl_matrix *V = NULL;
     gretl_matrix *GG = NULL;
@@ -656,7 +669,7 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH)
 
     V = gretl_matrix_alloc(npar, npar);
     if (V == NULL) {
-	return NULL;
+	return E_ALLOC;
     }
 
     if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
@@ -675,6 +688,10 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH)
 	/* Hessian matrix needed */
 	invhess = gretl_matrix_alloc(npar, npar);
 	err = garch_ihess(DH, theta, invhess);
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     switch (vopt) {
@@ -702,11 +719,33 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH)
 	break;
     }
 
+#if GDEBUG
+    gretl_matrix_print(V, "Variance-covariance matrix");
+#endif
+
+    if (!err) {
+	double vij;
+	int i, j;
+
+	for (i=0; i<npar; i++) {
+	    for (j=i; j<npar; j++) {
+		vij = gretl_matrix_get(V, i, j);
+		vcv[(i*npar) + j] = vij;
+		if (i != j) {
+		    vcv[(j*npar) + i] = vij;
+		}
+	    }
+	}
+    }
+
+ bailout:
+
     gretl_matrix_free(GG);
     gretl_matrix_free(iinfo);
     gretl_matrix_free(invhess);
+    gretl_matrix_free(V);
 
-    return V;
+    return err;
 }
 
 #if GDEBUG
@@ -777,7 +816,6 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     int npar = 1 + nx + 1 + p + q;
     int analytical = 1;
     double *theta = NULL;
-    gretl_matrix *V = NULL;
     int i, j, err = 0;
 
     /* BFGS apparatus */
@@ -829,26 +867,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     test_score(DH, theta);
 #endif
 
-    V = garch_covariance_matrix(vopt, theta, DH);
-    if (V == NULL) {
-	err = E_ALLOC;
-    } else {
-	double vij;
-
-#if GDEBUG
-	gretl_matrix_print(V, "Variance-covariance matrix");
-#endif
-	for (i=0; i<npar; i++) {
-	    for (j=i; j<npar; j++) {
-		vij = gretl_matrix_get(V,i,j);
-		vcv[(i*npar) + j] = vij;
-		if (i != j) {
-		    vcv[(j*npar) + i] = vij;
-		}
-	    }
-	}
-	gretl_matrix_free(V);
-    }
+    err = garch_covariance_matrix(vopt, theta, DH, vcv);
 
     if (!err) {
 	double sderr;
