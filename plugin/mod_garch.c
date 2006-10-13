@@ -43,26 +43,26 @@ enum {
 typedef struct garch_container_ garch_container;
 
 struct garch_container_ {
-    double *y;
-    const double **X;
-    int t1;
-    int t2;
-    int nobs;
-    int ncm;
-    int p;
-    int q;
-    int k;
-    int init;
-    int distrib;
-    double *e;
-    double *e2;
-    double *h;
-    int ascore;
-    double **score_e;
-    double **score_h;
-    double **blockglue;
-    double **G;
-    double *tot_score;
+    double *y;           /* dependent variable */
+    const double **X;    /* regressors (constant excluded) */
+    int t1;              /* beginning of sample */
+    int t2;              /* end of sample */
+    int nobs;            /* number of observations */
+    int ncm;             /* number of regressors (constant excluded) */
+    int p;               /* GARCH p */
+    int q;               /* GARCH q */
+    int k;               /* total number of parameters */
+    int init;            /* h0 initialisation method */
+    int distrib;         /* innovations distribution (only Gaussian for now) */
+    double *e;           /* residuals */
+    double *e2;          /* squared residuals */
+    double *h;           /* conditional variance */
+    int ascore;          /* 1 for analytical score provided */
+    double **score_e;    /* derivatives of the residuals wrt the parameters */
+    double **score_h;    /* derivatives of the variances wrt the parameters */
+    double **blockglue;  /* derivatives of the loglik wrt residuals and variances */
+    double **G;          /* score matrix */
+    double *tot_score;   /* score vector (sum of G) */
 };
 
 #if 0
