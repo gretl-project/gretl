@@ -223,11 +223,14 @@ arbond_sample_check (arbond *ab, const int *list,
     return 0;
 }
 
-/* N * (\bar{y}_{-1}'*Z*A_N*\hat{V}_N*A_N*Z'*\bar{y}_{-1}) / 
-       (\bar{y}_{-1}'*Z*A_N*Z'*\bar{y}_{-1})^2
+/* 
+   Compute the variance matrix:
 
-    where \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
-    v_i being the first stage residuals
+   N * C^{-1} * (\bar{X}'*Z*A_N*\hat{V}_N*A_N*Z'*\bar{X}) * C^{-1} 
+
+   where C = \bar{X}'*Z*A_N*Z'*\bar{X} and
+    \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
+    (v_i being the step-1 residuals)
 */
 
 static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
@@ -308,7 +311,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
 				     ab->tmp2, GRETL_MOD_NONE,
 				     num);
 
-    /* pre- and post-multiply by Den^{-1} */
+    /* pre- and post-multiply by C^{-1} */
     gretl_invert_symmetric_matrix(den);
     gretl_matrix_multiply(num, den, tmp);
     gretl_matrix_multiply(den, tmp, ab->vbeta);
@@ -316,7 +319,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
 
     gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
 
-    /* BTW, restore original dim of tmp2 */
+    /* just in case, restore original dim of tmp2 */
     gretl_matrix_reuse(ab->tmp2, ab->k, ab->m);
 
     for (i=0; i<ab->k; i++) {
@@ -355,7 +358,8 @@ static void make_first_diff_matrix (gretl_matrix *m)
 #endif
 }
 
-/* not really ready yet, just for testing */
+/* not really ready yet, just for testing.  list should be
+   p q ; y xvars */
 
 MODEL
 arbond_estimate (const int *list, const double **X, 
@@ -412,7 +416,7 @@ arbond_estimate (const int *list, const double **X,
 		    /* lagged difference of dependent var */
 		    x = y[k-j-1] - y[k-j-2];
 		} else {
-		    /* differenced independent var */
+		    /* differenced (?) independent var */
 		    v = list[XPOS + j - ab.p];
 		    x = X[v][k] - X[v][k-1];
 		}
@@ -454,6 +458,7 @@ arbond_estimate (const int *list, const double **X,
 	for (j=0; j<ab.nx; j++) {
 	    k = i * ab.T + 2;
 	    for (t=0; t<T2; t++) {
+		/* should we be doing automatic differencing here? */
 #if 0
 		x = X[list[XPOS + j]][k];
 #else
@@ -526,7 +531,9 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_free(den);
     gretl_matrix_free(tmp);
 
-    mod.errcode = 1; /* just fakery for now */
+    /* We need to package the results into a MODEL struct,
+       but for now we just flag an error */
+    mod.errcode = 1;
 
     return mod;
 }
