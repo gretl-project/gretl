@@ -2398,7 +2398,8 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     nsep = n_separators(cmd->list);
 
-    if (cmd->ci == AR || cmd->ci == GARCH || cmd->ci == ARMA) {
+    if (cmd->ci == AR || cmd->ci == ARBOND ||
+	cmd->ci == ARMA || cmd->ci == GARCH) {
 	use_varnames = 0;	
     }
 

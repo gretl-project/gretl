@@ -39,6 +39,7 @@ struct arbond_ {
     int N;                /* number of units */
     int T;                /* number of observations per unit */
     int k;                /* number of parameters estimated */
+    int nobs;             /* total observations used */
     gretl_matrix *beta;   /* parameter estimates */
     gretl_matrix *vbeta;  /* parameter variance matrix */
     gretl_matrix *H;
@@ -78,11 +79,43 @@ static void arbond_free (arbond *ab)
     free(ab->ui);
 }
 
+static int arbond_allocate (arbond *ab)
+{
+    /* FIXME dimensions */
+    int T2 = ab->T - 2;
+
+    ab->beta = gretl_matrix_alloc(ab->k, 1);
+    ab->vbeta = gretl_matrix_alloc(ab->k, ab->k);
+    ab->ZT = gretl_matrix_alloc(ab->m, ab->nobs);
+    ab->H = gretl_matrix_alloc(T2, T2);
+    ab->A = gretl_matrix_alloc(ab->m, ab->m);
+    ab->Zi = gretl_matrix_alloc(T2, ab->m);
+    ab->dy = gretl_column_vector_alloc(ab->nobs);
+    ab->dX = gretl_matrix_alloc(ab->nobs, ab->k);
+
+    ab->tmp0 = gretl_matrix_alloc(T2, ab->m);
+    ab->tmp1 = gretl_matrix_alloc(ab->m, ab->m);
+    ab->tmp2 = gretl_matrix_alloc(ab->k, ab->m);
+    ab->L1 = gretl_matrix_alloc(1, ab->m);
+    ab->Lk = gretl_matrix_alloc(ab->k, ab->m);
+    ab->R1 = gretl_matrix_alloc(ab->m, 1);
+    ab->Rk = gretl_matrix_alloc(ab->m, ab->k);
+
+    if (ab->ZT == NULL || ab->H == NULL || ab->A == NULL ||
+	ab->Zi == NULL || ab->dy == NULL || ab->dX == NULL ||
+	ab->tmp0 == NULL || ab->tmp1 == NULL || ab->tmp2 == NULL ||
+	ab->L1 == NULL || ab->Lk == NULL ||
+	ab->R1 == NULL || ab->Rk == NULL ||
+	ab->beta == NULL || ab->vbeta == NULL) {
+	return E_ALLOC;
+    } else {
+	return 0;
+    }
+}
+
 static int 
 arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
 {
-    int T2, NT2;
-
     ab->p = list[1];
     ab->q = list[2];
     /* FIXME list[3] should be sep: check this */
@@ -92,18 +125,17 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     } else {
 	ab->nx = 0;
     }
+
     ab->N = pdinfo->paninfo->nunits;
     ab->T = pdinfo->n / ab->N;
     ab->m = (ab->T - 2) * (ab->T - 1) / 2 + ab->nx; /* FIXME? */
     ab->k = ab->p + ab->nx;
+    ab->nobs = 0;
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, m = %d, k = %d\n",
 	    ab->yno, ab->p, ab->q, ab->nx, ab->m, ab->k);
 #endif
-
-    T2 = ab->T - 2;
-    NT2 = ab->N * T2;
 
     ab->beta = NULL;
     ab->vbeta = NULL;
@@ -121,32 +153,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->R1 = NULL;
     ab->Rk = NULL;
 
-    ab->beta = gretl_matrix_alloc(ab->k, 1);
-    ab->vbeta = gretl_matrix_alloc(ab->k, ab->k);
-    ab->ZT = gretl_matrix_alloc(ab->m, NT2);
-    ab->H = gretl_matrix_alloc(T2, T2);
-    ab->A = gretl_matrix_alloc(ab->m, ab->m);
-    ab->Zi = gretl_matrix_alloc(T2, ab->m);
-    ab->dy = gretl_column_vector_alloc(NT2);
-    ab->dX = gretl_matrix_alloc(NT2, ab->k);
-
-    ab->tmp0 = gretl_matrix_alloc(T2, ab->m);
-    ab->tmp1 = gretl_matrix_alloc(ab->m, ab->m);
-    ab->tmp2 = gretl_matrix_alloc(ab->k, ab->m);
-    ab->L1 = gretl_matrix_alloc(1, ab->m);
-    ab->Lk = gretl_matrix_alloc(ab->k, ab->m);
-    ab->R1 = gretl_matrix_alloc(ab->m, 1);
-    ab->Rk = gretl_matrix_alloc(ab->m, ab->k);
-
     ab->ui = malloc(ab->N * sizeof *ab->ui);
-
-    if (ab->ZT == NULL || ab->H == NULL || ab->A == NULL ||
-	ab->Zi == NULL || ab->dy == NULL || ab->dX == NULL ||
-	ab->tmp0 == NULL || ab->tmp1 == NULL || ab->tmp2 == NULL ||
-	ab->L1 == NULL || ab->Lk == NULL ||
-	ab->R1 == NULL || ab->Rk == NULL ||
-	ab->beta == NULL || ab->vbeta == NULL || ab->ui == NULL) {
-	arbond_free(ab);
+    if (ab->ui == NULL) {
 	return E_ALLOC;
     } else {
 	return 0;
@@ -172,50 +180,63 @@ arbond_sample_check (arbond *ab, const int *list,
 	vlist[i+2] = list[XPOS + i];
     }
 
+    printlist(vlist, "arbond vlist");
+
     for (i=0; i<ab->N; i++) {
 	int t1 = 0, t2 = ab->T - 1;
 	int miss = 0;
 
 	s = i * ab->T;
-	for (t=t1; t<=t2; t++) {
-	    for (j=1; j<=vlist[0]; j++) {
-		if (na(Z[vlist[j]][s])) {
-		    t1++;
-		} else {
-		    break;
-		}
-	    }
-	    s++;
-	}
-
-	s = (i+1) * ab->T - 1;
-	for (t=t2; t>=t1; t--) {
-	    for (j=1; j<=vlist[0]; j++) {
-		if (na(Z[vlist[j]][s])) {
-		    t2--;
-		} else {
-		    break;
-		}
-	    }
-	    s--;
-	}
-
-	s = i * ab->T;
-	for (t=t1; t<=t2; t++) {
+	for (t=t1; t<=t2; t++, s++) {
+	    miss = 0;
 	    for (j=1; j<=vlist[0]; j++) {
 		if (na(Z[vlist[j]][s])) {
 		    miss = 1;
 		    break;
 		}
 	    }
-	    s++;
+	    if (miss) {
+		t1++;
+	    } else {
+		break;
+	    }
+	}
+
+	s = (i+1) * ab->T - 1;
+	for (t=t2; t>=t1; t--, s--) {
+	    miss = 0;
+	    for (j=1; j<=vlist[0]; j++) {
+		if (na(Z[vlist[j]][s])) {
+		    miss = 1;
+		    break;
+		}
+	    }
+	    if (miss) {
+		t2--;
+	    } else {
+		break;
+	    }
+	}
+
+	miss = 0;
+	s = i * ab->T + t1;
+	for (t=t1; t<=t2; t++, s++) {
+	    for (j=1; j<=vlist[0]; j++) {
+		if (na(Z[vlist[j]][s])) {
+		    miss = 1;
+		    break;
+		}
+	    }
 	}
 	
-	/* FIXME figure minimum number of usable observations */
+	/* FIXME figure minimum number of usable observations 
+	   per unit, and reject units with sub-minimal T_i
+	*/
 
 	if (!miss) {
 	    ab->ui[i].t1 = t1;
 	    ab->ui[i].t2 = t2;
+	    ab->nobs += t2 - t1 + 1 - ab->p;
 	} else {
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
@@ -226,6 +247,8 @@ arbond_sample_check (arbond *ab, const int *list,
     }
     
     fprintf(stderr, "Number of units with usable observations = %d\n", N);
+    fprintf(stderr, "Total usable observations = %d\n", ab->nobs);
+
     if (N == 0) {
 	err = E_MISSDATA;
     }
@@ -238,9 +261,9 @@ arbond_sample_check (arbond *ab, const int *list,
 /* 
    Compute the variance matrix:
 
-   N * C^{-1} * (\bar{X}'*Z*A_N*\hat{V}_N*A_N*Z'*\bar{X}) * C^{-1} 
+   N * C^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * C^{-1} 
 
-   where C = \bar{X}'*Z*A_N*Z'*\bar{X} and
+   where C = X'*Z*A_N*Z'*X and
     \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
     (v_i being the step-1 residuals)
 */
@@ -313,7 +336,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
     err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
     err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
 
-    /* find the enclosing term, Z' * \bar{X} */
+    /* find the enclosing term, Z' * X */
     err += gretl_matrix_multiply(ab->ZT, ab->dX, ab->Rk);
 
     /* complete the large "middle bit" */
@@ -405,6 +428,12 @@ arbond_estimate (const int *list, const double **X,
 	goto bailout;
     }
 
+    mod.errcode = arbond_allocate(&ab);
+    if (mod.errcode) {
+	fprintf(stderr, "Error %d in arbond_allocate\n", mod.errcode);
+	goto bailout;
+    }
+
     T2 = ab.T - 2;
     y = X[ab.yno];
 
@@ -417,8 +446,8 @@ arbond_estimate (const int *list, const double **X,
 	goto bailout;
     }
 
-    /* build the differenced vector \bar{y} plus the differenced
-       differenced matrix \bar{X}
+    /* build the differenced vector \bar{y} plus the
+       X matrix
     */
 
     s = 0;
@@ -431,9 +460,9 @@ arbond_estimate (const int *list, const double **X,
 		    /* lagged difference of dependent var */
 		    x = y[k-j-1] - y[k-j-2];
 		} else {
-		    /* differenced (?) independent var */
+		    /* independent vars */
 		    v = list[XPOS + j - ab.p];
-		    x = X[v][k] - X[v][k-1];
+		    x = X[v][k];
 		}
 		gretl_matrix_set(ab.dX, s, j, x);
 	    }
@@ -443,7 +472,7 @@ arbond_estimate (const int *list, const double **X,
 
 #if ADEBUG
     gretl_matrix_print(ab.dy, "dy");
-    gretl_matrix_print(ab.dX, "dX");
+    gretl_matrix_print(ab.dX, "X");
 #endif
 
     make_first_diff_matrix(ab.H);
@@ -473,12 +502,7 @@ arbond_estimate (const int *list, const double **X,
 	for (j=0; j<ab.nx; j++) {
 	    k = i * ab.T + 2;
 	    for (t=0; t<T2; t++) {
-		/* should we be doing automatic differencing here? */
-#if 0
 		x = X[list[XPOS + j]][k];
-#else
-		x = X[list[XPOS + j]][k] - X[list[XPOS + j]][k-1];
-#endif
 		gretl_matrix_set(ab.Zi, t, xc, x);
 		k++;
 	    }
