@@ -3578,6 +3578,48 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
+ * arbond_model:
+ * @list: regression list.
+ * @Z: data array.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: to be hooked up.
+ * @prn: printing struct (or %NULL).
+ *
+ * To be written.  This function is currently just for
+ * testing.
+ *
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL arbond_model (const int *list, const double **Z, 
+		    const DATAINFO *pdinfo, gretlopt opt, 
+		    PRN *prn)
+{
+    void *handle = NULL;
+    MODEL (*ab_est) (const int *, const double **, 
+		     const DATAINFO *, gretlopt, PRN *);
+    MODEL mod;
+
+    gretl_model_init(&mod);
+
+    ab_est = get_plugin_function("arbond_estimate", &handle);
+    if (ab_est == NULL) {
+	mod.errcode = 1;
+	return mod;
+    }
+
+    mod = (*ab_est)(list, Z, pdinfo, opt, prn);
+    
+    close_plugin(handle);
+
+    if (!mod.errcode) {
+	set_model_id(&mod);
+    }
+
+    return mod;    
+}
+
+/**
  * groupwise_hetero_test:
  * @pmod: pooled OLS model to be tested.
  * @pZ: pointer to data array.

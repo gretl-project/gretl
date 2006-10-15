@@ -267,6 +267,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == VIF)
 
 #define USES_LISTSEP(c) (c == AR || \
+                         c == ARBOND || \
                          c == ARMA || \
                          c == EQUATION || \
                          c == GARCH || \
@@ -278,6 +279,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == XTAB)
 
 #define NEEDS_LISTSEP(c) (c == AR || \
+                          c == ARBOND || \
                           c == ARMA || \
                           c == GARCH || \
                           c == TSLS || \
@@ -1708,7 +1710,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }
 
-    if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
+    if (cmd->ci == AR || cmd->ci == ARBOND ||
+	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of lag orders in list */
 	read_lags = 1;
     }
@@ -2373,10 +2376,10 @@ static int n_separators (const int *list)
     return nsep;
 }
 
-#define listsep_switch(c) (c == AR || c == GARCH || c == ARMA || \
-                           c == MPOLS)
+#define listsep_switch(c) (c == AR || c == ARBOND || c == ARMA || \
+                           c == GARCH || c == MPOLS)
 
-#define hold_param(c) (c == TSLS || c == AR || c == ARMA || \
+#define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
                        c == CORRGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON)
@@ -3457,6 +3460,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	}
 	break;
 
+    case ARBOND:
     case GARCH:
     case HSK:
     case LAD:
@@ -3488,6 +3492,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {
 	    *models[0] = panel_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == ARBOND) {
+	    *models[0] = arbond_model(cmd->list, (const double **) *pZ, 
+				      pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;

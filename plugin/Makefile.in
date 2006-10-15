@@ -95,7 +95,8 @@ ZIPSRC = zfileio.c \
 	zipmain.c \
 	zipwork.c
 
-PLUGINS = arma.la \
+PLUGINS = arbond.la \
+	arma.la \
 	arma_x12.la \
 	eviews_import.la \
 	stata_import.la \
@@ -235,6 +236,9 @@ leverage.la: leverage.lo
 
 nistcheck.la: nistcheck.lo 
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
+
+arbond.la: arbond.lo 
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 arma.la: arma.lo 
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)

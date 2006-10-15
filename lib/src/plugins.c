@@ -55,7 +55,8 @@ enum {
     P_EVIEWS_IMPORT,
     P_STATA_IMPORT,
     P_JMULTI_IMPORT,
-    P_ZIPFILE
+    P_ZIPFILE,
+    P_ARBOND
 } plugin_codes;
 
 struct plugin_info {
@@ -97,7 +98,8 @@ struct plugin_info plugins[] = {
     { P_EVIEWS_IMPORT,   "eviews_import" },
     { P_STATA_IMPORT,    "stata_import" },
     { P_JMULTI_IMPORT,   "jmulti_import" },
-    { P_ZIPFILE,         "gretlzip" }
+    { P_ZIPFILE,         "gretlzip" },
+    { P_ARBOND,          "arbond" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -183,6 +185,9 @@ struct plugin_function plugin_functions[] = {
     { "gretl_make_zipfile", P_ZIPFILE},
     { "gretl_unzip_file",   P_ZIPFILE},
     { "gretl_is_zipfile",   P_ZIPFILE},
+
+    /* Arellano-Bond estimation */
+    { "arbond_estimate",    P_ARBOND},
 
     /* sentinel */
     { NULL, 0 }
