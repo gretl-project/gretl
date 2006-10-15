@@ -159,8 +159,14 @@ arbond_sample_check (arbond *ab, const int *list,
 {
     int *vlist;
     int i, j, s, t;
+    int N = ab->N;
+    int err = 0;
 
     vlist = gretl_list_new(1 + ab->nx);
+    if (vlist == NULL) {
+	return E_ALLOC;
+    }
+
     vlist[1] = ab->yno;
     for (i=0; i<ab->nx; i++) {
 	vlist[i+2] = list[XPOS + i];
@@ -213,14 +219,20 @@ arbond_sample_check (arbond *ab, const int *list,
 	} else {
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
+	    N--;
 	}
 	fprintf(stderr, "unit %d: t1=%d, t2=%d, miss=%d\n", 
 		i, t1, t2, miss);
     }
+    
+    fprintf(stderr, "Number of units with usable observations = %d\n", N);
+    if (N == 0) {
+	err = E_MISSDATA;
+    }
 
     free(vlist);
 
-    return 0;
+    return err;
 }
 
 /* 
@@ -381,14 +393,17 @@ arbond_estimate (const int *list, const double **X,
 
     gretl_model_init(&mod);
 
-    err = arbond_init(&ab, list, pdinfo);
-    if (err) {
-	fprintf(stderr, "do_arbond: error %d in arbond_init\n", err);
-	mod.errcode = err;
+    mod.errcode = arbond_init(&ab, list, pdinfo);
+    if (mod.errcode) {
+	fprintf(stderr, "Error %d in arbond_init\n", mod.errcode);
 	return mod;
     }
 
-    arbond_sample_check(&ab, list, X, pdinfo);
+    mod.errcode = arbond_sample_check(&ab, list, X, pdinfo);
+    if (mod.errcode) {
+	fprintf(stderr, "Error %d in arbond_sample_check\n", mod.errcode);
+	goto bailout;
+    }
 
     T2 = ab.T - 2;
     y = X[ab.yno];
@@ -398,7 +413,7 @@ arbond_estimate (const int *list, const double **X,
     tmp = gretl_matrix_alloc(ab.k, ab.k);
 
     if (num == NULL || den == NULL || tmp == NULL) {
-	err = E_ALLOC;
+	mod.errcode = E_ALLOC;
 	goto bailout;
     }
 
@@ -487,7 +502,9 @@ arbond_estimate (const int *list, const double **X,
 	c += T2;
     }
 
+#if ADEBUG
     gretl_matrix_print(ab.ZT, "ZT");
+#endif
 
     gretl_matrix_divide_by_scalar(ab.A, ab.N);
     gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
