@@ -22,6 +22,7 @@
 /* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (c == ADD || \
                        c == AR || \
+                       c == ARBOND || \
                        c == ARMA || \
                        c == CORC || \
                        c == GARCH || \

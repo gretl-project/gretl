@@ -1800,7 +1800,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
-    }    
+    } 
+
+    if (pmod->ci == ARBOND) {
+	print_middle_table_start(prn);
+	essline(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }   
 
     if (pmod->aux == AUX_SYS) {
 	print_middle_table_start(prn);

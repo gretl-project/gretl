@@ -1483,7 +1483,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     } else if (ci == LAGS && list[0] > 1 && list[2] == LISTSEP) {
 	start = 3;
     } else if (ci == TSLS || ci == AR || ci == SCATTERS || 
-	       ci == MPOLS || ci == GARCH) {
+	       ci == MPOLS || ci == GARCH || ci == ARBOND) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;
