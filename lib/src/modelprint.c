@@ -638,7 +638,10 @@ const char *estimator_string (int ci, PRN *prn)
     } else if (ci == PWE) {
 	if (tex_format(prn)) return N_("Prais--Winsten");
 	else return N_("Prais-Winsten");
-    }
+    } else if (ci == ARBOND) {
+	if (tex_format(prn)) return N_("Arellano--Bond");
+	else return N_("Arellano-Bond");
+    }	
 
     else return "";
 }

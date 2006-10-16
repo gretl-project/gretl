@@ -46,24 +46,9 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
 
-    pmod->params = malloc(np * sizeof pmod->params);
-    if (pmod->params == NULL) {
-	pmod->errcode = E_ALLOC;
+    gretl_model_allocate_params(pmod, np);
+    if (pmod->errcode) {
 	return;
-    }
-
-    pmod->nparams = np;
-
-    for (i=0; i<np; i++) {
-	pmod->params[i] = malloc(VNAMELEN);
-	if (pmod->params[i] == NULL) {
-	    for (j=0; j<i; j++) free(pmod->params[j]);
-	    free(pmod->params);
-	    pmod->params = NULL;
-	    pmod->nparams = 0;
-	    pmod->errcode = E_ALLOC;
-	    return;
-	}
     }
 
     strcpy(pmod->params[0], pdinfo->varname[pmod->list[4]]);
@@ -81,6 +66,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     for (i=0; i<q; i++) {
 	sprintf(pmod->params[j++], "alpha(%d)", i + 1);
     }
+
     for (i=0; i<p; i++) {
 	sprintf(pmod->params[j++], "beta(%d)", i + 1);
     }

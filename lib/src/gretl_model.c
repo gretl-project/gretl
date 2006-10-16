@@ -500,6 +500,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 		   pmod->ci == ARMA || pmod->ci == GARCH || 
 		   (pmod->ci == PANEL && !gretl_model_get_int(pmod, "between"))) {
 	    strcpy(targ, pmod->params[i + 1]);
+	} else if (pmod->ci == ARBOND) {
+	    strcpy(targ, pmod->params[i]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
@@ -1075,6 +1077,8 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
 	    dv = pmod->list[arma_depvar_pos(pmod)];
+	} else if (pmod->ci == ARBOND) {
+	    dv = pmod->list[4];
 	} else {
 	    dv = pmod->list[1];
 	}
@@ -3547,6 +3551,32 @@ double coeff_pval (const MODEL *pmod, double x, int df)
     } else {
         return t_pvalue_2(x, df);
     }
+}
+
+/**
+ * gretl_model_allocate_params:
+ * @pmod: pointer to target model.
+ * @k: number of strings to allocate.
+ * 
+ * Allocate an array of @k strings to hold the names given to
+ * the associated  coefficients, in a model where these strings 
+ * are not simply given by the names of the independent variables.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_model_allocate_params (MODEL *pmod, int k)
+{
+    pmod->params = strings_array_new_with_length(k, VNAMELEN);
+    if (pmod->params == NULL) {
+	pmod->errcode = E_ALLOC;
+    }
+
+    if (!pmod->errcode) {
+	pmod->nparams = k;
+    }
+
+    return pmod->errcode;
 }
 
 /**
