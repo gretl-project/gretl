@@ -213,18 +213,20 @@ arbond_sample_check (arbond *ab, const int *list,
 	}
 
 	/* independent vars */
-	s = i * ab->T;
-	for (t=t1; t<=t2; t++, s++) {
-	    miss = 0;
-	    for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		if (na(Z[ab->xlist[j]][s])) {
-		    miss = 1;
+	if (ab->nx > 0) {
+	    s = i * ab->T;
+	    for (t=t1; t<=t2; t++, s++) {
+		miss = 0;
+		for (j=1; j<=ab->xlist[0] && !miss; j++) {
+		    if (na(Z[ab->xlist[j]][s])) {
+			miss = 1;
+		    }
 		}
-	    }
-	    if (miss) {
-		t1++;
-	    } else {
-		break;
+		if (miss) {
+		    t1++;
+		} else {
+		    break;
+		}
 	    }
 	}
 
@@ -235,9 +237,11 @@ arbond_sample_check (arbond *ab, const int *list,
 	s = (i+1) * ab->T - 1;
 	for (t=t2; t>=t1; t--, s--) {
 	    miss = na(Z[ab->yno][s]);
-	    for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		if (na(Z[ab->xlist[j]][s])) {
-		    miss = 1;
+	    if (ab->nx > 0) {
+		for (j=1; j<=ab->xlist[0] && !miss; j++) {
+		    if (na(Z[ab->xlist[j]][s])) {
+			miss = 1;
+		    }
 		}
 	    }
 	    if (miss) {
@@ -250,11 +254,13 @@ arbond_sample_check (arbond *ab, const int *list,
 	/* check for missing obs within sample range */
 	miss = 0;
 	s = i * ab->T + t1;
-	for (t=t1; t<=t2; t++, s++) {
+	for (t=t1; t<=t2 && !miss; t++, s++) {
 	    miss = na(Z[ab->yno][s]);
-	    for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		if (na(Z[ab->xlist[j]][s])) {
-		    miss = 1;
+	    if (ab->nx > 0) {
+		for (j=1; j<=ab->xlist[0] && !miss; j++) {
+		    if (na(Z[ab->xlist[j]][s])) {
+			miss = 1;
+		    }
 		}
 	    }
 	}
@@ -337,7 +343,13 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
     k = 0;
 
     for (i=0; i<ab->N; i++) {
-	int Ti = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+	int Ti;
+
+	if (ab->ui[i].t1 < 0) {
+	    continue;
+	}
+
+	Ti = ab->ui[i].t2 - ab->ui[i].t1 + 1;
 
 	gretl_matrix_reuse(ab->Zi, Ti, ab->m);
 	gretl_matrix_reuse(u, Ti, 1);
@@ -641,6 +653,9 @@ arbond_estimate (const int *list, const double **X,
 
     s = 0;
     for (i=0; i<ab.N; i++) {
+	if (ab.ui[i].t1 < 0) {
+	    continue;
+	}
 	for (t=ab.ui[i].t1; t<=ab.ui[i].t2; t++) {
 	    k = i * ab.T + t;
 	    /* current difference of dependent var */
@@ -672,8 +687,13 @@ arbond_estimate (const int *list, const double **X,
 
     c = 0;
     for (i=0; i<ab.N; i++) {
-	int Ti = ab.ui[i].t2 - ab.ui[i].t1 + 1;
-	int xc, col = 0, offset = 0;
+	int Ti, xc, col = 0, offset = 0;
+
+	if (ab.ui[i].t1 < 0) {
+	    continue;
+	}
+
+	Ti = ab.ui[i].t2 - ab.ui[i].t1 + 1;
 	
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
