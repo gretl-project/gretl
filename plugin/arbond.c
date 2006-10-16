@@ -575,10 +575,15 @@ arbond_estimate (const int *list, const double **X,
     c = 0;
     for (i=0; i<ab.N; i++) {
 	int Ti = ab.ui[i].t2 - ab.ui[i].t1 + 1;
-	int xc, col = 0;
+	int xc, col = 0, coff = 0;
 	
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
+
+	/* column offset? (FIXME make this right in general case) */
+	coff = ab.ui[i].t1 - (ab.p + 1);
+	col += coff;
+	if (coff > 0) col++;
 
 	/* lagged dependent var (level) columns */
 	for (t=0; t<Ti; t++) {
@@ -587,7 +592,7 @@ arbond_estimate (const int *list, const double **X,
 		x = y[k++]; 
 		gretl_matrix_set(ab.Zi, t, j, x);
 	    }
-	    col = j;
+	    col = j + coff;
 	}
 
 	/* exogenous var (instr) columns */
