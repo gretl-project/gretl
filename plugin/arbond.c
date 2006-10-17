@@ -38,7 +38,8 @@ struct arbond_ {
     int m;                /* number of columns in instrument matrix */
     int N;                /* number of units */
     int T;                /* total number of observations per unit */
-    int tau;              /* max unsable observations, any unit */
+    int maxTi;            /* maximum equations for any given unit */
+    int tau;              /* maximal time-series span */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations used */
     double SSR;           /* sum of squared residuals */
@@ -87,7 +88,7 @@ static void arbond_free (arbond *ab)
 
 static int arbond_allocate (arbond *ab)
 {
-    int T2 = ab->tau - (ab->p + 1);
+    int T2 = ab->maxTi;
 
     ab->beta = gretl_matrix_alloc(ab->k, 1);
     ab->vbeta = gretl_matrix_alloc(ab->k, ab->k);
@@ -153,6 +154,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->N = pdinfo->paninfo->nunits;
     ab->T = pdinfo->n / ab->N;
     ab->k = ab->p + ab->nx;
+    ab->maxTi = 0;
     ab->tau = 0;
     ab->m = 0;
     ab->nobs = 0;
@@ -195,26 +197,54 @@ arbond_sample_check (arbond *ab, const int *list,
 		     const double **Z, const DATAINFO *pdinfo)
 {
     int i, j, s, t;
+    int t1min = ab->T - 1;
+    int t2max = 0;
     int N = ab->N;
     int err = 0;
 
+    fprintf(stderr, "*** ab->T = %d\n", ab->T);
+
     for (i=0; i<ab->N; i++) {
-	int yt1 = 0, t1 = 0, t2 = ab->T - 1;
+	int t1, t2 = ab->T - 1;
+	int yT, yTmax = 0, yt1 = 0;
 	int miss = 0;
 
-	/* check dependent var */
-	s = i * ab->T;
-	for (t=yt1; t<=t2; t++, s++) {
-	    if (na(Z[ab->yno][s])) {
-		yt1++;
-	    } else {
-		break;
+	/* find the starting point and length of the longest
+	   block of consecutive observations on the dependent
+	   variable */
+	for (t1=0; t1<=t2; t1++) {
+	    s = i * ab->T + t1;
+	    yT = 0;
+	    for (t=t1; t<=t2; t++, s++) {
+		if (!na(Z[ab->yno][s])) {
+		    yT++;
+		} else {
+		    break;
+		}
+	    }
+	    if (yT > yTmax) {
+		yTmax = yT;
+		yt1 = t1;
 	    }
 	}
 
+	if (yTmax > 0) {
+	    fprintf(stderr, "Unit %d: longest y block: start=%d, length=%d\n",
+		    i, yt1, yTmax);
+	} else {
+	    fprintf(stderr, "Unit %d: no y observations!\n", i);
+	    N--;
+	    ab->ui[i].t1 = -1;
+	    ab->ui[i].t2 = -1;
+	    continue;
+	}
+
+	t1 = yt1;
+	t2 = yt1 + yTmax - 1;
+
 	/* independent vars */
 	if (ab->nx > 0) {
-	    s = i * ab->T;
+	    s = i * ab->T + t1;
 	    for (t=t1; t<=t2; t++, s++) {
 		miss = 0;
 		for (j=1; j<=ab->xlist[0] && !miss; j++) {
@@ -233,11 +263,10 @@ arbond_sample_check (arbond *ab, const int *list,
 	/* finalize t1: binding constraint may be y or x */
 	t1 = (yt1 + ab->p + 1 > t1)? yt1 + ab->p + 1 : t1;
 
-	/* test down from t2, all vars */
-	s = (i+1) * ab->T - 1;
-	for (t=t2; t>=t1; t--, s--) {
-	    miss = na(Z[ab->yno][s]);
-	    if (ab->nx > 0) {
+	/* test down from t2, independent vars */
+	if (ab->nx > 0) {
+	    s = i * ab->T + t2;
+	    for (t=t2; t>=t1; t--, s--) {
 		for (j=1; j<=ab->xlist[0] && !miss; j++) {
 		    if (na(Z[ab->xlist[j]][s])) {
 			miss = 1;
@@ -251,12 +280,11 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	}
 
-	/* check for missing obs within sample range */
-	miss = 0;
-	s = i * ab->T + t1;
-	for (t=t1; t<=t2 && !miss; t++, s++) {
-	    miss = na(Z[ab->yno][s]);
-	    if (ab->nx > 0) {
+	/* check for missing x obs within sample range */
+	if (ab->nx > 0) {
+	    miss = 0;
+	    s = i * ab->T + t1;
+	    for (t=t1; t<=t2 && !miss; t++, s++) {
 		for (j=1; j<=ab->xlist[0] && !miss; j++) {
 		    if (na(Z[ab->xlist[j]][s])) {
 			miss = 1;
@@ -269,12 +297,18 @@ arbond_sample_check (arbond *ab, const int *list,
 	   per unit, and reject units with sub-minimal T_i
 	*/
 
-	if (!miss) {
+	if (!miss && t2 - t1 + 1 > 0) {
 	    int Ti = t2 - t1 + 1;
 
+	    if (Ti > ab->maxTi) {
+		ab->maxTi = Ti;
+	    }
 	    ab->nobs += Ti;
-	    if (Ti > ab->tau) {
-		ab->tau = Ti;
+	    if (t1 < t1min) {
+		t1min = t1;
+	    }
+	    if (t2 > t2max) {
+		t2max = t2;
 	    }
 	    ab->ui[i].t1 = t1;
 	    ab->ui[i].t2 = t2;
@@ -285,15 +319,17 @@ arbond_sample_check (arbond *ab, const int *list,
 	    N--;
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
-	    fprintf(stderr, "Unit %d: t1=%d, t2=%d, NAs inside range\n", 
-		    i, t1, t2);
+	    fprintf(stderr, "Unit %d: not usable\n", i);
 	    
 	}
     }
 
     fprintf(stderr, "Number of units with usable observations = %d\n", N);
     fprintf(stderr, "Total usable observations = %d\n", ab->nobs);
-    fprintf(stderr, "Max usable observations, any unit = %d\n", ab->tau);
+    fprintf(stderr, "Max equations for any given unit = %d\n", ab->maxTi);
+    fprintf(stderr, "Maximal overall time-series span: %d to %d = %d\n", 
+	    t1min, t2max, t2max - t1min + 1);
+    ab->tau = t2max - t1min + 1;
 
     if (ab->tau > 0) {
 	ab->tau += ab->p + 1;
@@ -325,7 +361,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
     gretl_matrix *V = NULL;
     gretl_matrix *u = NULL;
     double x, s2;
-    int T2 = ab->tau - (ab->p + 1);
+    int T2 = ab->maxTi;
     int i, j, t, k, c;
     int err = 0;
 
@@ -701,6 +737,11 @@ arbond_estimate (const int *list, const double **X,
 	/* column offset for initial missing obs */
 	offset = ab.ui[i].t1 - (ab.p + 1);
 	col = starting_col(offset);
+
+#if ADEBUG
+	fprintf(stderr, "Zi[%d]: Ti=%d, offset=%d, col=%d\n",
+		i, Ti, offset, col);
+#endif
 
 	/* lagged dependent var (level) columns */
 	for (t=0; t<Ti; t++) {
