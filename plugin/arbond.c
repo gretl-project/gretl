@@ -250,8 +250,10 @@ arbond_sample_check (arbond *ab, const int *list,
 	t2 = t1 + maxTi - 1;
 
 	/* allow for lags of y : FIXME */
-	t1 += ab->p;
-	Ti = maxTi - ab->p;
+	if (t1 < ab->p + 1) {
+	    t1 = ab->p + 1;
+	}
+	Ti = t2 - t1 + 1;
 
 	if (Ti > 0) {
 	    if (Ti > ab->maxTi) {
