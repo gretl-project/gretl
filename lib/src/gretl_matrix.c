@@ -269,8 +269,10 @@ static int gretl_matrix_get_structure (const gretl_matrix *m)
 /**
  * gretl_matrix_reuse:
  * @m: matrix to reuse.
- * @rows: desired number of rows in "new" matrix.
- * @cols: desired number of columns in "new" matrix.
+ * @rows: desired number of rows in "new" matrix, or -1
+ * to leave the current value unchanged.
+ * @cols: desired number of columns in "new" matrix, or -1
+ * to leave the current value unchanged.
  *
  * An "experts only" memory-conservation trick. If @m is an 
  * already-allocated gretl matrix, you can "resize" it by 
@@ -290,12 +292,13 @@ static int gretl_matrix_get_structure (const gretl_matrix *m)
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 {
-    if (rows <= 0 || cols <= 0) {
-	return NULL;
+    if (rows > 0) {
+	m->rows = rows;
     }
 
-    m->rows = rows;
-    m->cols = cols;
+    if (cols > 0) {
+	m->cols = cols;
+    }
 
     return m;
 }

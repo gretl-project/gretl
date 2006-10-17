@@ -63,6 +63,146 @@ struct arbond_ {
     struct unit_info *ui;
 };
 
+static int gretl_matrix_drop_zero_rows (gretl_matrix **a)
+{
+    gretl_matrix *b = NULL;
+    char *drop = NULL;
+    int ar = (*a)->rows;
+    int ac = (*a)->cols;
+    int all0, ndrop = 0;
+    int i, j, err = 0;
+
+    fprintf(stderr, "drop_zero_rows: on input a = %d x %d\n", ar, ac);
+
+    drop = calloc(ar, 1);
+    if (drop == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<ar; i++) {
+	all0 = 1;
+	for (j=0; j<ac; j++) {
+	    if (gretl_matrix_get(*a, i, j) != 0.0) {
+		all0 = 0;
+		break;
+	    }
+	}
+	if (all0) {
+	    drop[i] = 1;
+	    ndrop++;
+	}
+    }
+
+    if (ndrop == ar) {
+	/* no non-zero rows in matrix a */
+	free(drop);
+	return E_DATA;
+    }
+
+    if (ndrop > 0) {
+	int br = ar - ndrop;
+
+	b = gretl_matrix_alloc(br, ac);
+	if (b == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (b != NULL) {
+	double x;
+	int k = 0;
+
+	for (i=0; i<ar; i++) {
+	    if (!drop[i]) {
+		for (j=0; j<ac; j++) {
+		    x = gretl_matrix_get(*a, i, j);
+		    gretl_matrix_set(b, k, j, x);
+		}
+		k++;
+	    }
+	}
+	gretl_matrix_free(*a);
+	*a = b;
+    }
+
+    free(drop);
+
+    fprintf(stderr, "drop_zero_rows: on output a = %d x %d\n\n", 
+	    (*a)->rows, (*a)->cols);
+
+    return err;
+} 
+
+static int gretl_matrix_drop_zero_cols (gretl_matrix **a)
+{
+    gretl_matrix *b = NULL;
+    char *drop = NULL;
+    int ar = (*a)->rows;
+    int ac = (*a)->cols;
+    int all0, ndrop = 0;
+    int i, j, err = 0;
+
+    fprintf(stderr, "drop_zero_cols: on input a = %d x %d\n", ar, ac);
+
+    drop = calloc(ac, 1);
+    if (drop == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<ac; j++) {
+	all0 = 1;
+	for (i=0; i<ar; i++) {
+	    if (gretl_matrix_get(*a, i, j) != 0.0) {
+		all0 = 0;
+		break;
+	    }
+	}
+	if (all0) {
+	    drop[j] = 1;
+	    ndrop++;
+	}
+    }
+
+    if (ndrop == ac) {
+	/* no non-zero columns in matrix a */
+	free(drop);
+	return E_DATA;
+    }
+
+    if (ndrop > 0) {
+	int bc = ac - ndrop;
+
+	b = gretl_matrix_alloc(ar, bc);
+	if (b == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (b != NULL) {
+	double x;
+	int k = 0;
+
+	for (j=0; j<ac; j++) {
+	    if (!drop[j]) {
+		for (i=0; i<ar; i++) {
+		    x = gretl_matrix_get(*a, i, j);
+		    gretl_matrix_set(b, i, k, x);
+		}
+		k++;
+	    }
+	}
+	gretl_matrix_free(*a);
+	*a = b;
+    }
+
+    free(drop);
+
+    fprintf(stderr, "drop_zero_cols: on output a = %d x %d\n\n", 
+	    (*a)->rows, (*a)->cols);
+
+    return err;
+} 
+
 static void arbond_free (arbond *ab)
 {
     gretl_matrix_free(ab->beta);
@@ -592,6 +732,44 @@ static int arbond_zero_check (arbond *ab, const double **Z)
     return 0;
 }
 
+static int maybe_shrink_matrices (arbond *ab)
+{
+    int err;
+
+    err = gretl_matrix_drop_zero_rows(&ab->ZT);
+    if (err) {
+	return err;
+    }
+
+    if (ab->ZT->rows == ab->m) {
+	/* nothing to be done */
+	return 0;
+    }
+
+    err = gretl_matrix_drop_zero_rows(&ab->A);
+    if (err) {
+	return err;
+    }
+    
+    gretl_matrix_drop_zero_cols(&ab->A);
+    if (err) {
+	return err;
+    }
+
+    if (ab->A->rows < ab->m) {
+	ab->m = ab->A->rows;
+	gretl_matrix_reuse(ab->tmp0, -1, ab->m);
+	gretl_matrix_reuse(ab->tmp1, ab->m, ab->m);
+	gretl_matrix_reuse(ab->tmp2, -1, ab->m);
+	gretl_matrix_reuse(ab->L1, -1, ab->m);
+	gretl_matrix_reuse(ab->Lk, -1, ab->m);
+	gretl_matrix_reuse(ab->R1, ab->m, -1);
+	gretl_matrix_reuse(ab->Rk, ab->m, -1);
+    }
+
+    return 0;
+}
+
 /* not really ready yet, just for testing.  list should be
    p q ; y xvars */
 
@@ -749,6 +927,8 @@ arbond_estimate (const int *list, const double **X,
 	gretl_matrix_inscribe_matrix(ab.ZT, ab.Zi, 0, c, GRETL_MOD_TRANSPOSE);
 	c += Ti;
     }
+
+    maybe_shrink_matrices(&ab);
 
     gretl_matrix_divide_by_scalar(ab.A, ab.N);
 
