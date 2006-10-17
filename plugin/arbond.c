@@ -272,7 +272,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->q = list[2];
     ab->yno = list[4];
 
-    /* FIXME handling instruments list */
+    /* FIXME handle instruments list */
 
     if (list[0] > 4) {
 	int i;
@@ -755,7 +755,7 @@ static int maybe_shrink_matrices (arbond *ab)
 	return err;
     }
     
-    gretl_matrix_drop_zero_cols(&ab->A);
+    err = gretl_matrix_drop_zero_cols(&ab->A);
     if (err) {
 	return err;
     }
