@@ -192,114 +192,68 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     }
 }
 
+static int anymiss (arbond *ab, const double **Z, int s)
+{
+    int i;
+
+    if (na(Z[ab->yno][s])) {
+	return 1;
+    }
+
+    if (ab->xlist != NULL) {
+	for (i=1; i<=ab->xlist[0]; i++) {
+	    if (na(Z[ab->xlist[i]][s])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static int 
 arbond_sample_check (arbond *ab, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo)
 {
-    int i, j, s, t;
+    int i, s, t;
     int t1min = ab->T - 1;
     int t2max = 0;
     int N = ab->N;
     int err = 0;
 
-    fprintf(stderr, "*** ab->T = %d\n", ab->T);
+    fprintf(stderr, "arbond_sample_check: ab->T = %d\n", ab->T);
 
     for (i=0; i<ab->N; i++) {
 	int t1, t2 = ab->T - 1;
-	int yT, yTmax = 0, yt1 = 0;
-	int miss = 0;
+	int t1i = 0, Ti = 0, maxTi = 0;
 
 	/* find the starting point and length of the longest
-	   block of consecutive observations on the dependent
-	   variable */
+	   block of consecutive observations on all variables 
+	*/
 	for (t1=0; t1<=t2; t1++) {
 	    s = i * ab->T + t1;
-	    yT = 0;
+	    Ti = 0;
 	    for (t=t1; t<=t2; t++, s++) {
-		if (!na(Z[ab->yno][s])) {
-		    yT++;
-		} else {
+		if (anymiss(ab, Z, s)) {
 		    break;
-		}
-	    }
-	    if (yT > yTmax) {
-		yTmax = yT;
-		yt1 = t1;
-	    }
-	}
-
-	if (yTmax > 0) {
-	    fprintf(stderr, "Unit %d: longest y block: start=%d, length=%d\n",
-		    i, yt1, yTmax);
-	} else {
-	    fprintf(stderr, "Unit %d: no y observations!\n", i);
-	    N--;
-	    ab->ui[i].t1 = -1;
-	    ab->ui[i].t2 = -1;
-	    continue;
-	}
-
-	t1 = yt1;
-	t2 = yt1 + yTmax - 1;
-
-	/* independent vars */
-	if (ab->nx > 0) {
-	    s = i * ab->T + t1;
-	    for (t=t1; t<=t2; t++, s++) {
-		miss = 0;
-		for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		    if (na(Z[ab->xlist[j]][s])) {
-			miss = 1;
-		    }
-		}
-		if (miss) {
-		    t1++;
 		} else {
-		    break;
-		}
+		    Ti++;
+		} 
+	    }
+	    if (Ti > maxTi) {
+		maxTi = Ti;
+		t1i = t1;
 	    }
 	}
 
-	/* finalize t1: binding constraint may be y or x */
-	t1 = (yt1 + ab->p + 1 > t1)? yt1 + ab->p + 1 : t1;
+	t1 = t1i;
+	t2 = t1 + maxTi - 1;
 
-	/* test down from t2, independent vars */
-	if (ab->nx > 0) {
-	    s = i * ab->T + t2;
-	    for (t=t2; t>=t1; t--, s--) {
-		for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		    if (na(Z[ab->xlist[j]][s])) {
-			miss = 1;
-		    }
-		}
-	    }
-	    if (miss) {
-		t2--;
-	    } else {
-		break;
-	    }
-	}
+	/* allow for lags of y : FIXME */
+	t1 += ab->p;
+	Ti = maxTi - ab->p;
 
-	/* check for missing x obs within sample range */
-	if (ab->nx > 0) {
-	    miss = 0;
-	    s = i * ab->T + t1;
-	    for (t=t1; t<=t2 && !miss; t++, s++) {
-		for (j=1; j<=ab->xlist[0] && !miss; j++) {
-		    if (na(Z[ab->xlist[j]][s])) {
-			miss = 1;
-		    }
-		}
-	    }
-	}
-	
-	/* FIXME figure minimum number of usable observations 
-	   per unit, and reject units with sub-minimal T_i
-	*/
-
-	if (!miss && t2 - t1 + 1 > 0) {
-	    int Ti = t2 - t1 + 1;
-
+	if (Ti > 0) {
 	    if (Ti > ab->maxTi) {
 		ab->maxTi = Ti;
 	    }
