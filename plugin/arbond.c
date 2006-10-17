@@ -35,11 +35,11 @@ struct arbond_ {
     int p;                /* lag order for dependent variable */
     int q;                /* max lags of y used as instruments */
     int nx;               /* number of exogenous variables */
-    int m;                /* number of columns in instrument matrix */
+    int m;                /* number of columns in instrument matrix, Z */
+    int xc0;              /* column in Z where exog vars start */
     int N;                /* number of units */
     int T;                /* total number of observations per unit */
     int maxTi;            /* maximum equations for any given unit */
-    int tau;              /* maximal time-series span */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations used */
     double SSR;           /* sum of squared residuals */
@@ -295,8 +295,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->T = pdinfo->n / ab->N;
     ab->k = ab->p + ab->nx;
     ab->maxTi = 0;
-    ab->tau = 0;
     ab->m = 0;
+    ab->xc0 = 0;
     ab->nobs = 0;
     ab->SSR = NADBL;
 
@@ -368,7 +368,8 @@ arbond_sample_check (arbond *ab, const int *list,
 	int t1i = 0, Ti = 0, maxTi = 0;
 
 	/* find the starting point and length of the longest
-	   block of consecutive observations on all variables 
+	   block of consecutive observations on all variables
+	   for this unit
 	*/
 	for (t1=0; t1<=t2; t1++) {
 	    s = i * ab->T + t1;
@@ -416,7 +417,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	    ab->ui[i].t1 = t1;
 	    ab->ui[i].t2 = t2;
-	    fprintf(stderr, "Unit %d: t1=%d, t2=%d, Ti = %d\n", 
+	    fprintf(stderr, "Unit %d: t1 = %d, t2 = %d, Ti = %d\n", 
 		    i, t1, t2, Ti);
 
 	} else {
@@ -433,16 +434,18 @@ arbond_sample_check (arbond *ab, const int *list,
     fprintf(stderr, "Max equations for any given unit = %d\n", ab->maxTi);
     fprintf(stderr, "Maximal overall time-series span: %d to %d = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
-    ab->tau = t2max - t1min + 1;
-
-    if (ab->tau > 0) {
-	ab->tau += ab->p + 1;
-    }
 
     if (N == 0) {
 	err = E_MISSDATA;
     } else {
-	ab->m = (ab->tau - 2) * (ab->tau - 1) / 2 + ab->nx; /* FIXME? */
+	/* compute the number of lagged-y columns in Zi */
+	ab->m = ab->p;
+	for (i=1; i<ab->maxTi; i++) {
+	    ab->m += ab->p + i;
+	}
+	/* record the column where the exog vars will start */
+	ab->xc0 = ab->m;
+	ab->m += ab->nx;
     }
 
     return err;
@@ -663,18 +666,19 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     }
 
     if (!err) {
-	int t, k = 0;
+	int s, t, k = 0;
 
 	for (i=0; i<ab->N; i++) {
-	    for (j=0; j<ab->tau; j++) {
-		if (j >= ab->ui[i].t1 && j <= ab->ui[i].t2) {
-		    t = i * ab->T + j;
-		    pmod->uhat[t] = ab->uhat->val[k];
-		    pmod->yhat[t] = ab->dy->val[k] - ab->uhat->val[k];
+	    for (t=0; t<ab->T; t++) {
+		if (t >= ab->ui[i].t1 && t <= ab->ui[i].t2) {
+		    s = i * ab->T + t;
+		    pmod->uhat[s] = ab->uhat->val[k];
+		    pmod->yhat[s] = ab->dy->val[k] - ab->uhat->val[k];
 		    k++;
 		}
 	    }
 	}
+
     }
 
     return err;
@@ -888,7 +892,7 @@ arbond_estimate (const int *list, const double **X,
 	/* lagged dependent var (level) columns */
 	for (t=0; t<Ti; t++) {
 	    k = i * ab.T + ab.ui[i].t1 - (ab.p + 1);
-	    for (j=col; j<col+t+1; j++) {
+	    for (j=col; j<col+t+ab.p; j++) { 
 		x = y[k++]; 
 		gretl_matrix_set(ab.Zi, t, j, x);
 	    }
@@ -896,7 +900,7 @@ arbond_estimate (const int *list, const double **X,
 	}
 
 	/* exogenous var (instr) columns */
-	xc = (ab.tau - 2) * (ab.tau - 1) / 2;
+	xc = ab.xc0;
 	for (j=0; j<ab.nx; j++) {
 	    k = i * ab.T + ab.ui[i].t1;
 	    for (t=0; t<Ti; t++) {
@@ -928,6 +932,7 @@ arbond_estimate (const int *list, const double **X,
 	c += Ti;
     }
 
+    /* remove redundant rows/cols if needed */
     maybe_shrink_matrices(&ab);
 
     gretl_matrix_divide_by_scalar(ab.A, ab.N);
