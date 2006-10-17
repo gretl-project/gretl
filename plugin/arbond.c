@@ -26,8 +26,8 @@
 typedef struct arbond_ arbond;
 
 struct unit_info {
-    int t1;
-    int t2;
+    int t1;  /* start of usable sample for unit */
+    int t2;  /* end of usable sample */
 };
 
 struct arbond_ {
@@ -332,6 +332,10 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     }
 }
 
+/* see if there are NAs for the dependent variable, or
+   for any of the independent variables, at a given
+   observation */
+
 static int anymiss (arbond *ab, const double **Z, int s)
 {
     int i;
@@ -587,6 +591,8 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
     return err;
 }
 
+/* construct the H matrix for first-differencing */
+
 static void make_first_diff_matrix (gretl_matrix *m)
 {
     int n = m->rows;
@@ -684,9 +690,14 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     return err;
 }
 
-static int starting_col (int offset)
+/* figure the column in Zi at which we should start inserting
+   lagged values of y: FIXME this is wrong, I think, when
+   the lag-order for y is > 1
+*/
+
+static int starting_col (arbond *ab, int offset)
 {
-    int d = 1, c = offset;
+    int d = ab->p, c = offset;
 
     while (offset-- > 0) {
 	c += d++;
@@ -880,9 +891,9 @@ arbond_estimate (const int *list, const double **X,
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
 
-	/* column offset for initial missing obs */
+	/* column offset, accounting for initial missing obs */
 	offset = ab.ui[i].t1 - (ab.p + 1);
-	col = starting_col(offset);
+	col = starting_col(&ab, offset);
 
 #if ADEBUG
 	fprintf(stderr, "Zi[%d]: Ti=%d, offset=%d, col=%d\n",
