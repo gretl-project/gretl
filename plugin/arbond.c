@@ -249,9 +249,17 @@ arbond_sample_check (arbond *ab, const int *list,
 	t1 = t1i;
 	t2 = t1 + maxTi - 1;
 
-	/* allow for lags of y : FIXME */
+	/* now allow for lags of y */
 	if (t1 < ab->p + 1) {
 	    t1 = ab->p + 1;
+	}
+	s = i * ab->T + t1 - (ab->p + 1);
+	for (t=t1; t<=t2; t++) {
+	    if (na(Z[ab->yno][s++])) {
+		t1++;
+	    } else {
+		break;
+	    }
 	}
 	Ti = t2 - t1 + 1;
 
