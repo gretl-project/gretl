@@ -228,8 +228,69 @@ arbond_sample_check (arbond *ab, const int *list,
     fprintf(stderr, "arbond_sample_check: ab->T = %d\n", ab->T);
 
     for (i=0; i<ab->N; i++) {
+	/* find the first y observation */
+	if (t1min > 0) {
+	    for (t=0; t<ab->T; t++) {
+		s = i * ab->T + t;
+		if (!na(Z[ab->yno][s])) {
+		    if (t < t1min) {
+			t1min = t;
+		    }
+		    break;
+		}
+	    }
+	}
+
+	/* find the last y observation */
+	if (t2max < ab->T - 1) {
+	    for (t=ab->T-1; t>=0; t--) {
+		s = i * ab->T + t;
+		if (!na(Z[ab->yno][s])) {
+		    if (t > t2max) {
+			t2max = t;
+		    }
+		    break;
+		}
+	    }
+	}
+    }
+
+    fprintf(stderr, "initial scan: t1min = %d, t2max = %d, tau = %d\n", 
+	    t1min, t2max, t2max - t1min + 1);
+
+    for (i=0; i<ab->N; i++) {
+	int t1i = ab->T - 1;
 	int t1, t2 = ab->T - 1;
-	int t1i = 0, Ti = 0, maxTi = 0;
+	int Ti = 0, maxTi = 0;
+
+	fprintf(stderr, "checking unit %d\n", i+1);
+
+#if 0 /* just checking */
+	/* identify the observations at which we can form Delta y,
+	   Delta y_{-1}, and can construct at least one
+	   orthogonality condition using a lagged level of y
+	*/
+	int noc = 0;
+
+	for (t=2; t<ab->T; t++) {
+	    s = i * ab->T + t;
+	    if (na(Z[ab->yno][s]) || na(Z[ab->yno][s-1])) {
+		/* ?? */
+		continue;
+	    } 	    
+	    if (na(Z[ab->yno][s-1]) || na(Z[ab->yno][s-2])) {
+		continue;
+	    } 
+	    for (j=2; t-j>=0; j++) {
+		if (!na(Z[ab->yno][s-j])) {
+		    fprintf(stderr, " Delta y_%d, y_%d: OK\n", t, t-j+1);
+		    noc++;
+		} 
+	    }
+	}
+
+	fprintf(stderr, " number of orth conditions = %d\n", noc);
+#endif
 
 	/* find the starting point and length of the longest
 	   block of consecutive observations on all variables
@@ -290,7 +351,6 @@ arbond_sample_check (arbond *ab, const int *list,
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
 	    fprintf(stderr, "Unit %d: not usable\n", i);
-	    
 	}
     }
 
@@ -308,7 +368,7 @@ arbond_sample_check (arbond *ab, const int *list,
 
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
-	for (i=1; i<tau; i++) { /* tau, or ab->maxTi? */
+	for (i=1; i<tau-2; i++) { /* ?? */
 	    ab->m += ab->p + i;
 	}
 	/* record the column where the exog vars will start */
@@ -554,22 +614,6 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     }
 
     return err;
-}
-
-/* figure the column in Zi at which we should start inserting
-   lagged values of y: FIXME this is wrong, I think, when
-   the lag-order for y is > 1
-*/
-
-static int starting_col (arbond *ab, int offset)
-{
-    int d = ab->p, c = offset;
-
-    while (offset-- > 0) {
-	c += d++;
-    }
-
-    return c;
 }
 
 /* exclude any independent variables that are zero at all
@@ -833,7 +877,7 @@ arbond_estimate (const int *list, const double **X,
 
     c = 0;
     for (i=0; i<ab.N; i++) {
-	int Ti, xc, col = 0, offset = 0;
+	int Ti, xc, csize, offset;
 
 	if (ab.ui[i].t1 < 0) {
 	    continue;
@@ -844,24 +888,20 @@ arbond_estimate (const int *list, const double **X,
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
 
-	/* column offset, accounting for initial missing obs */
-	offset = ab.ui[i].t1 - (ab.p + 1);
-	col = starting_col(&ab, offset);
-
-#if ADEBUG
-	fprintf(stderr, "Zi[%d]: Ti=%d, offset=%d, col=%d\n",
-		i, Ti, offset, col);
-#endif
-
-	/* lagged dependent var (level) columns */
-	for (t=0; t<Ti; t++) {
-	    k = i * ab.T + ab.ui[i].t1 - (ab.p + 1);
-	    for (j=col; j<col+t+ab.p; j++) { 
-		x = y[k++]; 
-		gretl_matrix_set(ab.Zi, t, j, x);
+	offset = 0;
+	csize = ab.p;
+	for (t=ab.p+1; t<=ab.ui[i].t2; t++) {
+	    k = t - ab.ui[i].t1;
+	    if (k >= 0) {
+		for (j=0; j<csize; j++) {
+		    s = i * ab.T + j;
+		    if (!na(y[s])) {
+			gretl_matrix_set(ab.Zi, k, j + offset, y[s]);
+		    }
+		}
 	    }
-	    col = j + offset;
-	}
+	    offset += csize++;
+	} 
 
 	/* exogenous var (instr) columns */
 	xc = ab.xc0;
