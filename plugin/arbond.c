@@ -63,146 +63,6 @@ struct arbond_ {
     struct unit_info *ui;
 };
 
-static int gretl_matrix_drop_zero_rows (gretl_matrix **a)
-{
-    gretl_matrix *b = NULL;
-    char *drop = NULL;
-    int ar = (*a)->rows;
-    int ac = (*a)->cols;
-    int all0, ndrop = 0;
-    int i, j, err = 0;
-
-    fprintf(stderr, "drop_zero_rows: on input a = %d x %d\n", ar, ac);
-
-    drop = calloc(ar, 1);
-    if (drop == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<ar; i++) {
-	all0 = 1;
-	for (j=0; j<ac; j++) {
-	    if (gretl_matrix_get(*a, i, j) != 0.0) {
-		all0 = 0;
-		break;
-	    }
-	}
-	if (all0) {
-	    drop[i] = 1;
-	    ndrop++;
-	}
-    }
-
-    if (ndrop == ar) {
-	/* no non-zero rows in matrix a */
-	free(drop);
-	return E_DATA;
-    }
-
-    if (ndrop > 0) {
-	int br = ar - ndrop;
-
-	b = gretl_matrix_alloc(br, ac);
-	if (b == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (b != NULL) {
-	double x;
-	int k = 0;
-
-	for (i=0; i<ar; i++) {
-	    if (!drop[i]) {
-		for (j=0; j<ac; j++) {
-		    x = gretl_matrix_get(*a, i, j);
-		    gretl_matrix_set(b, k, j, x);
-		}
-		k++;
-	    }
-	}
-	gretl_matrix_free(*a);
-	*a = b;
-    }
-
-    free(drop);
-
-    fprintf(stderr, "drop_zero_rows: on output a = %d x %d\n\n", 
-	    (*a)->rows, (*a)->cols);
-
-    return err;
-} 
-
-static int gretl_matrix_drop_zero_cols (gretl_matrix **a)
-{
-    gretl_matrix *b = NULL;
-    char *drop = NULL;
-    int ar = (*a)->rows;
-    int ac = (*a)->cols;
-    int all0, ndrop = 0;
-    int i, j, err = 0;
-
-    fprintf(stderr, "drop_zero_cols: on input a = %d x %d\n", ar, ac);
-
-    drop = calloc(ac, 1);
-    if (drop == NULL) {
-	return E_ALLOC;
-    }
-
-    for (j=0; j<ac; j++) {
-	all0 = 1;
-	for (i=0; i<ar; i++) {
-	    if (gretl_matrix_get(*a, i, j) != 0.0) {
-		all0 = 0;
-		break;
-	    }
-	}
-	if (all0) {
-	    drop[j] = 1;
-	    ndrop++;
-	}
-    }
-
-    if (ndrop == ac) {
-	/* no non-zero columns in matrix a */
-	free(drop);
-	return E_DATA;
-    }
-
-    if (ndrop > 0) {
-	int bc = ac - ndrop;
-
-	b = gretl_matrix_alloc(ar, bc);
-	if (b == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (b != NULL) {
-	double x;
-	int k = 0;
-
-	for (j=0; j<ac; j++) {
-	    if (!drop[j]) {
-		for (i=0; i<ar; i++) {
-		    x = gretl_matrix_get(*a, i, j);
-		    gretl_matrix_set(b, i, k, x);
-		}
-		k++;
-	    }
-	}
-	gretl_matrix_free(*a);
-	*a = b;
-    }
-
-    free(drop);
-
-    fprintf(stderr, "drop_zero_cols: on output a = %d x %d\n\n", 
-	    (*a)->rows, (*a)->cols);
-
-    return err;
-} 
-
 static void arbond_free (arbond *ab)
 {
     gretl_matrix_free(ab->beta);
@@ -359,7 +219,7 @@ static int
 arbond_sample_check (arbond *ab, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo)
 {
-    int i, s, t;
+    int i, j, s, t;
     int t1min = ab->T - 1;
     int t2max = 0;
     int N = ab->N;
@@ -375,7 +235,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	   block of consecutive observations on all variables
 	   for this unit
 	*/
-	for (t1=0; t1<=t2; t1++) {
+	for (t1=0; t1<=t2 && (t2 - t1 + 1 > maxTi); t1++) {
 	    s = i * ab->T + t1;
 	    Ti = 0;
 	    for (t=t1; t<=t2; t++, s++) {
@@ -398,12 +258,13 @@ arbond_sample_check (arbond *ab, const int *list,
 	if (t1 < ab->p + 1) {
 	    t1 = ab->p + 1;
 	}
-	s = i * ab->T + t1 - (ab->p + 1);
 	for (t=t1; t<=t2; t++) {
-	    if (na(Z[ab->yno][s++])) {
-		t1++;
-	    } else {
-		break;
+	    s = i * ab->T + t1;
+	    for (j=1; j<=ab->p+1; j++) {
+		if (na(Z[ab->yno][s-j])) {
+		    t1++;
+		    break;
+		}
 	    }
 	}
 	Ti = t2 - t1 + 1;
@@ -443,13 +304,18 @@ arbond_sample_check (arbond *ab, const int *list,
 	err = E_MISSDATA;
     } else {
 	/* compute the number of lagged-y columns in Zi */
+	int tau = t2max - t1min + 1;
+
+	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
-	for (i=1; i<ab->maxTi; i++) {
+	for (i=1; i<tau; i++) { /* tau, or ab->maxTi? */
 	    ab->m += ab->p + i;
 	}
 	/* record the column where the exog vars will start */
+	fprintf(stderr, "'basic' m = %d\n", ab->m);
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
+	fprintf(stderr, "total m = %d\n", ab->m);
     }
 
     return err;
@@ -747,42 +613,127 @@ static int arbond_zero_check (arbond *ab, const double **Z)
     return 0;
 }
 
-static int maybe_shrink_matrices (arbond *ab)
+static int count_mask (const char *mask, int n)
 {
-    int err;
+    int i, c = 0;
 
-    err = gretl_matrix_drop_zero_rows(&ab->ZT);
-    if (err) {
-	return err;
+    for (i=0; i<n; i++) {
+	c += mask[i] == 0;
     }
 
-    if (ab->ZT->rows == ab->m) {
-	/* nothing to be done */
-	return 0;
+    return c;
+}
+
+static void
+matrix_copy_values_unmasked (gretl_matrix *targ, 
+			     const gretl_matrix *src, 
+			     const char *mask)
+{
+    int n = targ->rows;
+    int i, j, k, l;
+    double x;
+
+    gretl_matrix_zero(targ);
+
+    k = 0;
+    for (i=0; i<n; i++) {
+	if (!mask[i]) {
+	    l = 0;
+	    for (j=0; j<n; j++) {
+		if (!mask[j]) {
+		    x = gretl_matrix_get(src, k, l++);
+		    gretl_matrix_set(targ, i, j, x);
+		}
+	    }
+	    k++;
+	}
+    }
+}
+
+static gretl_matrix *
+matrix_copy_masked (const gretl_matrix *m, const char *mask)
+{
+    int n = count_mask(mask, m->rows);
+    gretl_matrix *a;
+    double x;
+    int i, j, k, l;
+
+    a = gretl_matrix_alloc(n, n);
+    if (a == NULL) {
+	return NULL;
     }
 
-    err = gretl_matrix_drop_zero_rows(&ab->A);
-    if (err) {
-	return err;
+    k = 0;
+    for (i=0; i<m->rows; i++) {
+	if (!mask[i]) {
+	    l = 0;
+	    for (j=0; j<m->cols; j++) {
+		if (!mask[j]) {
+		    x = gretl_matrix_get(m, i, j);
+		    gretl_matrix_set(a, k, l++, x);
+		}
+	    }
+	    k++;
+	}
+    }
+
+    return a;
+}
+
+static char *zero_row_mask (const gretl_matrix *m)
+{
+    char *mask = NULL;
+    int all0, i, j;
+
+    mask = calloc(m->rows, 1);
+    if (mask == NULL) {
+	return NULL;
     }
     
-    err = gretl_matrix_drop_zero_cols(&ab->A);
-    if (err) {
-	return err;
+    for (i=0; i<m->rows; i++) {
+	all0 = 1;
+	for (j=0; j<m->cols; j++) {
+	    if (gretl_matrix_get(m, i, j) != 0.0) {
+		all0 = 0;
+		break;
+	    }
+	}
+	if (all0) {
+	    mask[i] = 1;
+	}
     }
 
-    if (ab->A->rows < ab->m) {
-	ab->m = ab->A->rows;
-	gretl_matrix_reuse(ab->tmp0, -1, ab->m);
-	gretl_matrix_reuse(ab->tmp1, ab->m, ab->m);
-	gretl_matrix_reuse(ab->tmp2, -1, ab->m);
-	gretl_matrix_reuse(ab->L1, -1, ab->m);
-	gretl_matrix_reuse(ab->Lk, -1, ab->m);
-	gretl_matrix_reuse(ab->R1, ab->m, -1);
-	gretl_matrix_reuse(ab->Rk, ab->m, -1);
+    return mask;
+}
+
+static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
+{
+    char *mask = zero_row_mask(ab->ZT);
+    gretl_matrix *A;
+    int err;
+
+    if (mask == NULL) {
+	return E_ALLOC;
     }
 
-    return 0;
+    /* make a copy with zero rows/cols omitted */
+    A = matrix_copy_masked(Acpy, mask);
+    if (A == NULL) {
+	free(mask);
+	return E_ALLOC;
+    }
+
+    err = gretl_invert_symmetric_matrix(A);
+
+    if (!err) {
+	/* stick zero rows/cols back in */
+	matrix_copy_values_unmasked(ab->A, A, mask);
+    }
+
+    gretl_matrix_free(A);
+    free(mask);
+
+    return err;
 }
 
 /* not really ready yet, just for testing.  list should be
@@ -798,6 +749,7 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix *num = NULL;
     gretl_matrix *den = NULL;
     gretl_matrix *tmp = NULL;
+    gretl_matrix *Acpy = NULL;
     const double *y;
     double x;
     char zstr[8];
@@ -834,8 +786,9 @@ arbond_estimate (const int *list, const double **X,
     num = gretl_zero_matrix_new(ab.k, 1);
     den = gretl_matrix_alloc(ab.k, ab.k);
     tmp = gretl_matrix_alloc(ab.k, ab.k);
+    Acpy = gretl_matrix_alloc(ab.m, ab.m);
 
-    if (num == NULL || den == NULL || tmp == NULL) {
+    if (num == NULL || den == NULL || tmp == NULL || Acpy == NULL) {
 	mod.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -943,17 +896,18 @@ arbond_estimate (const int *list, const double **X,
 	c += Ti;
     }
 
-    /* remove redundant rows/cols if needed */
-    maybe_shrink_matrices(&ab);
-
     gretl_matrix_divide_by_scalar(ab.A, ab.N);
+    gretl_matrix_copy_values(Acpy, ab.A); /* in case inversion fails */
 
 #if ADEBUG
     gretl_matrix_print(ab.ZT, "ZT");
     gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
 #endif
 
-    gretl_invert_symmetric_matrix(ab.A);
+    err = gretl_invert_symmetric_matrix(ab.A);
+    if (err) {
+	err = try_pseudo_inverse(&ab, Acpy);
+    }
 
 #if ADEBUG
     gretl_matrix_print(ab.A, "A_N");
@@ -1004,6 +958,7 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_free(num);
     gretl_matrix_free(den);
     gretl_matrix_free(tmp);
+    gretl_matrix_free(Acpy);
 
     return mod;
 }
