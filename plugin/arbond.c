@@ -31,6 +31,8 @@ struct unit_info {
 };
 
 struct arbond_ {
+    gretlopt opt;         /* option flags */
+    int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
     int q;                /* max lags of y used as instruments */
@@ -49,6 +51,7 @@ struct arbond_ {
     gretl_matrix *uhat;   /* residuals, differenced version */
     gretl_matrix *H;
     gretl_matrix *A;
+    gretl_matrix *V;
     gretl_matrix *ZT;     /* transpose of full instrument matrix */
     gretl_matrix *Zi;     /* per-unit instrument matrix */
     gretl_matrix *dy;     /* first difference of dependent var */
@@ -70,6 +73,7 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->uhat);
     gretl_matrix_free(ab->H);
     gretl_matrix_free(ab->A);
+    gretl_matrix_free(ab->V);
     gretl_matrix_free(ab->Zi);
     gretl_matrix_free(ab->ZT);
     gretl_matrix_free(ab->dy);
@@ -122,7 +126,8 @@ static int arbond_allocate (arbond *ab)
 }
 
 static int 
-arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
+arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
+	     gretlopt opt)
 {
     if (list[0] < 4 || list[3] != LISTSEP) {
 	return E_PARSE;
@@ -131,6 +136,9 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->p = list[1];
     ab->q = list[2];
     ab->yno = list[4];
+
+    ab->opt = opt;
+    ab->step = 1;
 
     /* FIXME handle instruments list */
 
@@ -171,6 +179,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo)
     ab->ZT = NULL;
     ab->H = NULL;
     ab->A = NULL;
+    ab->V = NULL;
     ab->Zi = NULL;
     ab->dy = NULL;
     ab->dX = NULL;
@@ -391,7 +400,7 @@ arbond_sample_check (arbond *ab, const int *list,
     (v_i being the step-1 residuals)
 */
 
-static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
+static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 {
     gretl_matrix *tmp = NULL;
     gretl_matrix *num = NULL;
@@ -467,6 +476,10 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
     gretl_matrix_print(V, "V");
 #endif
 
+    if (ab->step == 1 && (ab->opt & OPT_T)) {
+	ab->V = gretl_matrix_copy(V);
+    }
+
     /* find the central term, A_N * \hat{V}_N * A_N :
        re-use V for this result */
     err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
@@ -483,9 +496,9 @@ static int arbond_variance (arbond *ab, gretl_matrix *den, PRN *prn)
 				     num);
 
     /* pre- and post-multiply by C^{-1} */
-    gretl_invert_symmetric_matrix(den);
-    gretl_matrix_multiply(num, den, tmp);
-    gretl_matrix_multiply(den, tmp, ab->vbeta);
+    gretl_invert_symmetric_matrix(C);
+    gretl_matrix_multiply(num, C, tmp);
+    gretl_matrix_multiply(C, tmp, ab->vbeta);
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->N);
 
     gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
@@ -780,6 +793,67 @@ static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
     return err;
 }
 
+static int arbond_calculate_beta (arbond *ab, gretl_matrix *num,
+				  gretl_matrix *den,
+				  gretl_matrix *tmp)
+{
+    /* find "Lk" = \bar{X}' Z A_N */
+    gretl_matrix_multiply_mod(ab->dX, GRETL_MOD_TRANSPOSE,
+			      ab->ZT, GRETL_MOD_TRANSPOSE,
+			      ab->tmp2);
+    gretl_matrix_multiply(ab->tmp2, ab->A, ab->Lk);
+
+    /* calculate "numerator", \bar{X}' Z A_N Z' \bar{y} */
+
+    gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
+    gretl_matrix_multiply(ab->Lk, ab->R1, num);
+
+    /* calculate "denominator", \bar{X}' Z A_N Z' \bar{X} */
+    
+    gretl_matrix_multiply(ab->ZT, ab->dX, ab->Rk);
+    gretl_matrix_multiply(ab->Lk, ab->Rk, den);
+
+    gretl_matrix_copy_values(ab->beta, num);
+    gretl_matrix_copy_values(tmp, den);
+
+    return gretl_LU_solve(tmp, ab->beta);
+}
+
+/* not ready yet ! */
+
+static int arbond_step_2 (arbond *ab, gretl_matrix *num,
+			  gretl_matrix *den, 
+			  gretl_matrix *tmp,
+			  PRN *prn)
+{
+    int i, err;
+
+    if (ab->V == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_print(ab->V, "V, in arbond_step_2");
+
+    err = gretl_invert_matrix(ab->V);
+    if (err) {
+	return err;
+    }
+
+    gretl_matrix_copy_values(ab->A, ab->V);
+
+    err = arbond_calculate_beta(ab, num, den, tmp);
+
+#if ADEBUG
+    pputs(prn, "two-step estimates:\n\n");
+    for (i=0; i<ab->k; i++) {
+	pprintf(prn, "beta[%d] = %g\n", i, ab->beta->val[i]);
+    }
+    pputc(prn, '\n');
+#endif
+
+    return err;
+}
+
 /* not really ready yet, just for testing.  list should be
    p q ; y xvars */
 
@@ -803,7 +877,7 @@ arbond_estimate (const int *list, const double **X,
 
     gretl_model_init(&mod);
 
-    mod.errcode = arbond_init(&ab, list, pdinfo);
+    mod.errcode = arbond_init(&ab, list, pdinfo, opt);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in arbond_init\n", mod.errcode);
 	return mod;
@@ -953,26 +1027,7 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_print(ab.A, "A_N");
 #endif
 
-    /* find "Lk" = \bar{X}' Z A_N */
-    gretl_matrix_multiply_mod(ab.dX, GRETL_MOD_TRANSPOSE,
-			      ab.ZT, GRETL_MOD_TRANSPOSE,
-			      ab.tmp2);
-    gretl_matrix_multiply(ab.tmp2, ab.A, ab.Lk);
-
-    /* calculate "numerator", \bar{X}' Z A_N Z' \bar{y} */
-
-    gretl_matrix_multiply(ab.ZT, ab.dy, ab.R1);
-    gretl_matrix_multiply(ab.Lk, ab.R1, num);
-
-    /* calculate "denominator", \bar{X}' Z A_N Z' \bar{X} */
-    
-    gretl_matrix_multiply(ab.ZT, ab.dX, ab.Rk);
-    gretl_matrix_multiply(ab.Lk, ab.Rk, den);
-
-    gretl_matrix_copy_values(ab.beta, num);
-    gretl_matrix_copy_values(tmp, den);
-
-    err = gretl_LU_solve(tmp, ab.beta);
+    err = arbond_calculate_beta(&ab, num, den, tmp);
 
 #if ADEBUG
     pputs(prn, "one-step estimates:\n\n");
@@ -983,6 +1038,11 @@ arbond_estimate (const int *list, const double **X,
 #endif
 
     err = arbond_variance(&ab, den, prn);
+
+    if (!err && (opt & OPT_T)) {
+	/* not ready */
+	err = arbond_step_2(&ab, num, den, tmp, prn);
+    }
 
  bailout:
 
