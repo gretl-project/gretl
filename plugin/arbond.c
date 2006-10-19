@@ -133,15 +133,15 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 	return E_PARSE;
     }
 
+    ab->p = list[1];
+    ab->q = list[2];
+
     if (ab->p < 1 || (ab->q != 0 && ab->q < ab->p + 1)) {
 	/* is this right? */
 	return E_DATA;
-    }
+    }    
 
-    ab->p = list[1];
-    ab->q = list[2];
     ab->yno = list[4];
-
     ab->opt = opt;
     ab->step = 1;
 
@@ -272,6 +272,10 @@ arbond_sample_check (arbond *ab, const int *list,
     fprintf(stderr, "initial scan: t1min = %d, t2max = %d, tau = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
 
+    if (ab->q == 0) {
+	ab->q = ab->T;
+    }
+
     for (i=0; i<ab->N; i++) {
 	int t1i = ab->T - 1;
 	int t1, t2 = ab->T - 1;
@@ -382,9 +386,11 @@ arbond_sample_check (arbond *ab, const int *list,
 
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
+	fprintf(stderr, "initial col block size = %d\n", ab->m);
 	for (i=1; i<tau-2; i++) {
-	    cols = (ab->q != 0 && ab->p + i > ab->q)? ab->q : ab->p + i;
+	    cols = (ab->p + i > ab->q - 1)? ab->q - 1 : ab->p + i;
 	    ab->m += cols;
+	    fprintf(stderr, "added col block size = %d, ab->m now %d\n", cols, ab->m);
 	}
 	/* record the column where the exog vars will start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
@@ -1010,20 +1016,20 @@ arbond_estimate (const int *list, const double **X,
 	    k = t - ab.ui[i].t1;
 	    if (k >= 0) {
 		for (j=0; j<csize; j++) {
-		    if (ab.q == 0) {
+		    if (ab.q == ab.T) {
 			s = i * ab.T + j;
 		    } else {
-			s = i * ab.T + t - csize + j; /* FIXME! */
+			s = i * ab.T + t - (csize + 1) + j; /* FIXME! */
 		    }
 		    if (!na(y[s])) {
 			gretl_matrix_set(ab.Zi, k, j + offset, y[s]);
 		    }
 		}
 	    }
-	    if (ab.q == 0 || csize < ab.q) {
+	    offset += csize;
+	    if (csize < ab.q - 1) {
 		csize++;
 	    }
-	    offset += csize;
 	} 
 
 	/* exogenous var (instr) columns */
