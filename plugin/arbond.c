@@ -272,7 +272,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	int t1, t2 = ab->T - 1;
 	int Ti = 0, maxTi = 0;
 
-	fprintf(stderr, "checking unit %d\n", i+1);
+	fprintf(stderr, "checking unit %d\n", i);
 
 #if 0 /* just checking */
 	/* identify the observations at which we can form Delta y,
@@ -283,8 +283,7 @@ arbond_sample_check (arbond *ab, const int *list,
 
 	for (t=2; t<ab->T; t++) {
 	    s = i * ab->T + t;
-	    if (na(Z[ab->yno][s]) || na(Z[ab->yno][s-1])) {
-		/* ?? */
+	    if (anymiss(ab, Z, s)) {
 		continue;
 	    } 	    
 	    if (na(Z[ab->yno][s-1]) || na(Z[ab->yno][s-2])) {
@@ -305,7 +304,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	   block of consecutive observations on all variables
 	   for this unit
 	*/
-	for (t1=0; t1<=t2 && (t2 - t1 + 1 > maxTi); t1++) {
+	for (t1=ab->p+1; t1<=t2 && (t2 - t1 + 1 > maxTi); t1++) {
 	    s = i * ab->T + t1;
 	    Ti = 0;
 	    for (t=t1; t<=t2; t++, s++) {
@@ -321,13 +320,14 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	}
 
+#if 0
+	fprintf(stderr, "scan 1: maxTi = %d, t1i = %d\n", maxTi, t1i);
+#endif
+
 	t1 = t1i;
 	t2 = t1 + maxTi - 1;
 
-	/* now allow for lags of y */
-	if (t1 < ab->p + 1) {
-	    t1 = ab->p + 1;
-	}
+	/* now check for lags of y */
 	for (t=t1; t<=t2; t++) {
 	    s = i * ab->T + t1;
 	    for (j=1; j<=ab->p+1; j++) {
