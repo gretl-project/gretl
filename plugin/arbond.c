@@ -26,8 +26,9 @@
 typedef struct arbond_ arbond;
 
 struct unit_info {
-    int t1;  /* start of usable sample for unit */
-    int t2;  /* end of usable sample */
+    int t1;      /* first usable obs for unit */
+    int t2;      /* last usable obs */
+    char *skip;  /* mask for obs to be skipped, if any */ 
 };
 
 struct arbond_ {
@@ -68,6 +69,8 @@ struct arbond_ {
 
 static void arbond_free (arbond *ab)
 {
+    int i;
+
     gretl_matrix_free(ab->beta);
     gretl_matrix_free(ab->vbeta);
     gretl_matrix_free(ab->uhat);
@@ -87,6 +90,10 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->Rk);
 
     free(ab->xlist);
+
+    for (i=0; i<ab->N; i++) {
+	free(ab->ui[i].skip);
+    }
     free(ab->ui);
 }
 
@@ -129,6 +136,8 @@ static int
 arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 	     gretlopt opt)
 {
+    int i;
+
     if (list[0] < 4 || list[3] != LISTSEP) {
 	return E_PARSE;
     }
@@ -148,8 +157,6 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     /* FIXME handle instruments list */
 
     if (list[0] > 4) {
-	int i;
-
 	ab->nx = list[0] - 4;
 	ab->xlist = gretl_list_new(list[0] - 4);
 	if (ab->xlist == NULL) {
@@ -202,6 +209,9 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 	ab->xlist = NULL;
 	return E_ALLOC;
     } else {
+	for (i=0; i<ab->N; i++) {
+	    ab->ui[i].skip = NULL;
+	}
 	return 0;
     }
 }
@@ -214,8 +224,10 @@ static int anymiss (arbond *ab, const double **Z, int s)
 {
     int i;
 
-    if (na(Z[ab->yno][s])) {
-	return 1;
+    for (i=0; i<=ab->p+1; i++) {
+	if (na(Z[ab->yno][s-i])) {
+	    return 1;
+	}
     }
 
     if (ab->xlist != NULL) {
@@ -233,6 +245,9 @@ static int
 arbond_sample_check (arbond *ab, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo)
 {
+    const double *y = Z[ab->yno];
+    char *mask = NULL;
+    int msize = 0;
     int i, j, s, t;
     int t1min = ab->T - 1;
     int t2max = 0;
@@ -246,7 +261,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	if (t1min > 0) {
 	    for (t=0; t<ab->T; t++) {
 		s = i * ab->T + t;
-		if (!na(Z[ab->yno][s])) {
+		if (!na(y[s])) {
 		    if (t < t1min) {
 			t1min = t;
 		    }
@@ -259,7 +274,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	if (t2max < ab->T - 1) {
 	    for (t=ab->T-1; t>=0; t--) {
 		s = i * ab->T + t;
-		if (!na(Z[ab->yno][s])) {
+		if (!na(y[s])) {
 		    if (t > t2max) {
 			t2max = t;
 		    }
@@ -272,104 +287,96 @@ arbond_sample_check (arbond *ab, const int *list,
     fprintf(stderr, "initial scan: t1min = %d, t2max = %d, tau = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
 
+    msize = ab->T - ab->p - 1;
+    mask = malloc(msize);
+    if (mask == NULL) {
+	return E_ALLOC;
+    }
+
     if (ab->q == 0) {
 	ab->q = ab->T;
     }
 
     for (i=0; i<ab->N; i++) {
-	int t1i = ab->T - 1;
-	int t1, t2 = ab->T - 1;
-	int Ti = 0, maxTi = 0;
+	int t1i = ab->T - 1, t2i = 0; 
+	int Ti = 0, usable = 0;
 
-	fprintf(stderr, "checking unit %d\n", i);
+	fprintf(stderr, "Checking unit %d\n", i);
 
-#if 0 /* just checking */
-	/* identify the observations at which we can form Delta y,
-	   Delta y_{-1}, and can construct at least one
-	   orthogonality condition using a lagged level of y
+	for (t=0; t<msize; t++) {
+	    mask[t] = 0;
+	}
+
+	/* identify the observations at which we can form the required
+	   Delta y terms, have the requisite independent variables,
+	   and can construct at least one orthogonality condition
+	   using a lagged level of y
 	*/
-	int noc = 0;
+	for (t=ab->p+1; t<ab->T; t++) {
+	    int ok = 1;
 
-	for (t=2; t<ab->T; t++) {
 	    s = i * ab->T + t;
+	    /* do we have the basic data? */
 	    if (anymiss(ab, Z, s)) {
-		continue;
-	    } 	    
-	    if (na(Z[ab->yno][s-1]) || na(Z[ab->yno][s-2])) {
-		continue;
-	    } 
-	    for (j=2; t-j>=0; j++) {
-		if (!na(Z[ab->yno][s-j])) {
-		    fprintf(stderr, " Delta y_%d, y_%d: OK\n", t, t-j+1);
-		    noc++;
-		} 
-	    }
-	}
+		ok = 0;
+	    } 	
 
-	fprintf(stderr, " number of orth conditions = %d\n", noc);
-#endif
-
-	/* find the starting point and length of the longest
-	   block of consecutive observations on all variables
-	   for this unit
-	*/
-	for (t1=ab->p+1; t1<=t2 && (t2 - t1 + 1 > maxTi); t1++) {
-	    s = i * ab->T + t1;
-	    Ti = 0;
-	    for (t=t1; t<=t2; t++, s++) {
-		if (anymiss(ab, Z, s)) {
-		    break;
-		} else {
-		    Ti++;
-		} 
-	    }
-	    if (Ti > maxTi) {
-		maxTi = Ti;
-		t1i = t1;
-	    }
-	}
-
-#if 0
-	fprintf(stderr, "scan 1: maxTi = %d, t1i = %d\n", maxTi, t1i);
-#endif
-
-	t1 = t1i;
-	t2 = t1 + maxTi - 1;
-
-	/* now check for lags of y */
-	for (t=t1; t<=t2; t++) {
-	    s = i * ab->T + t1;
-	    for (j=1; j<=ab->p+1; j++) {
-		if (na(Z[ab->yno][s-j])) {
-		    t1++;
-		    break;
+	    if (ok) {
+		ok = 0;
+		/* do we have any instruments? */
+		for (j=2; t-j>=0; j++) {
+		    if (!na(y[s-j])) {
+			ok = 1;
+			usable++;
+			break;
+		    } 
 		}
 	    }
+
+	    if (ok) {
+		if (t < t1i) t1i = t;
+		if (t > t2i) t2i = t;
+	    } else {
+		mask[t-(ab->p+1)] = 1;
+	    }
 	}
-	Ti = t2 - t1 + 1;
 
-	if (Ti > 0) {
-	    if (Ti > ab->maxTi) {
-		ab->maxTi = Ti;
-	    }
-	    ab->nobs += Ti;
-	    if (t1 < t1min) {
-		t1min = t1;
-	    }
-	    if (t2 > t2max) {
-		t2max = t2;
-	    }
-	    ab->ui[i].t1 = t1;
-	    ab->ui[i].t2 = t2;
-	    fprintf(stderr, "Unit %d: t1 = %d, t2 = %d, Ti = %d\n", 
-		    i, t1, t2, Ti);
-
-	} else {
+	if (usable == 0) {
 	    N--;
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
-	    fprintf(stderr, "Unit %d: not usable\n", i);
+	    fprintf(stderr, "not usable\n");
+	    continue;
 	}
+
+	Ti = t2i - t1i + 1;
+
+	if (usable < Ti) {
+	    /* there were gaps: steal and replace the skip mask */
+	    ab->ui[i].skip = mask;
+	    mask = NULL;
+	    if (i < ab->N - 1) {
+		mask = malloc(msize);
+		if (mask == NULL) {
+		    return E_ALLOC;
+		}
+	    }
+	}
+
+	if (usable > ab->maxTi) {
+	    ab->maxTi = usable;
+	}
+	ab->nobs += usable;
+	if (t1i < t1min) {
+	    t1min = t1i;
+	}
+	if (t2i > t2max) {
+	    t2max = t2i;
+	}
+	ab->ui[i].t1 = t1i;
+	ab->ui[i].t2 = t2i;
+	fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n", 
+		t1i, t2i, Ti, usable);
     }
 
     fprintf(stderr, "Number of units with usable observations = %d\n", N);
@@ -386,11 +393,9 @@ arbond_sample_check (arbond *ab, const int *list,
 
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
-	fprintf(stderr, "initial col block size = %d\n", ab->m);
 	for (i=1; i<tau-2; i++) {
 	    cols = (ab->p + i > ab->q - 1)? ab->q - 1 : ab->p + i;
 	    ab->m += cols;
-	    fprintf(stderr, "added col block size = %d, ab->m now %d\n", cols, ab->m);
 	}
 	/* record the column where the exog vars will start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
@@ -398,6 +403,8 @@ arbond_sample_check (arbond *ab, const int *list,
 	ab->m += ab->nx;
 	fprintf(stderr, "total m = %d\n", ab->m);
     }
+
+    free(mask);
 
     return err;
 }
@@ -801,6 +808,7 @@ static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
     err = gretl_invert_symmetric_matrix(A);
 
     if (!err && A->rows < ab->m) {
+	fprintf(stderr, "try_pseudo_inverse: shrinking matrices\n");
 	eliminate_zero_rows(ab->ZT, mask);
 	ab->m = A->rows;
 	gretl_matrix_free(ab->A);
@@ -902,8 +910,36 @@ static int arbond_step_2 (arbond *ab, gretl_matrix *num,
     return err;
 }
 
-/* not really ready yet, just for testing.  list should be
-   p q ; y xvars */
+static int unit_nobs (arbond *ab, int i)
+{
+    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+
+    if (ab->ui[i].skip != NULL) {
+	int t, m = n;
+
+	for (t=0; t<m; t++) {
+	    if (ab->ui[i].skip[t]) {
+		n--;
+	    }
+	}
+    }
+
+    return n;
+}
+
+static int skip_unit (arbond *ab, int i)
+{
+    return ab->ui[i].t1 < 0;
+}
+
+static int skip_obs (arbond *ab, int i, int t)
+{
+    if (ab->ui[i].skip == NULL) {
+	return 0;
+    }
+
+    return ab->ui[i].skip[t - ab->ui[i].t1];
+}
 
 MODEL
 arbond_estimate (const int *list, const double **X, 
@@ -965,10 +1001,13 @@ arbond_estimate (const int *list, const double **X,
 
     s = 0;
     for (i=0; i<ab.N; i++) {
-	if (ab.ui[i].t1 < 0) {
+	if (skip_unit(&ab, i)) {
 	    continue;
 	}
 	for (t=ab.ui[i].t1; t<=ab.ui[i].t2; t++) {
+	    if (skip_obs(&ab, i, t)) {
+		continue;
+	    }
 	    k = i * ab.T + t;
 	    /* current difference of dependent var */
 	    gretl_vector_set(ab.dy, s, y[k] - y[k-1]);
@@ -1001,25 +1040,27 @@ arbond_estimate (const int *list, const double **X,
     for (i=0; i<ab.N; i++) {
 	int Ti, xc, csize, offset;
 
-	if (ab.ui[i].t1 < 0) {
+	if (skip_unit(&ab, i)) {
 	    continue;
 	}
 
-	Ti = ab.ui[i].t2 - ab.ui[i].t1 + 1;
+	Ti = unit_nobs(&ab, i);
 	
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
 
+	/* lagged y (GMM instr) columns */
 	offset = 0;
 	csize = ab.p;
 	for (t=ab.p+1; t<=ab.ui[i].t2; t++) {
+	    /* FIXME this is broken when obs are non-consecutive !! */
 	    k = t - ab.ui[i].t1;
 	    if (k >= 0) {
 		for (j=0; j<csize; j++) {
 		    if (ab.q == ab.T) {
 			s = i * ab.T + j;
 		    } else {
-			s = i * ab.T + t - (csize + 1) + j; /* FIXME! */
+			s = i * ab.T + t - (csize + 1) + j;
 		    }
 		    if (!na(y[s])) {
 			gretl_matrix_set(ab.Zi, k, j + offset, y[s]);
