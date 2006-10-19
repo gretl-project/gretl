@@ -35,7 +35,7 @@ struct arbond_ {
     int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
-    int q;                /* max lags of y used as instruments */
+    int q;                /* longest lag of y used as instrument */
     int nx;               /* number of exogenous variables */
     int m;                /* number of columns in instrument matrix, Z */
     int xc0;              /* column in Z where exog vars start */
@@ -131,6 +131,11 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 {
     if (list[0] < 4 || list[3] != LISTSEP) {
 	return E_PARSE;
+    }
+
+    if (ab->p < 1 || (ab->q != 0 && ab->q < ab->p + 1)) {
+	/* is this right? */
+	return E_DATA;
     }
 
     ab->p = list[1];
@@ -373,12 +378,13 @@ arbond_sample_check (arbond *ab, const int *list,
 	err = E_MISSDATA;
     } else {
 	/* compute the number of lagged-y columns in Zi */
-	int tau = t2max - t1min + 1;
+	int cols, tau = t2max - t1min + 1;
 
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
-	for (i=1; i<tau-2; i++) { /* ?? */
-	    ab->m += ab->p + i;
+	for (i=1; i<tau-2; i++) {
+	    cols = (ab->q != 0 && ab->p + i > ab->q)? ab->q : ab->p + i;
+	    ab->m += cols;
 	}
 	/* record the column where the exog vars will start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
@@ -1004,13 +1010,20 @@ arbond_estimate (const int *list, const double **X,
 	    k = t - ab.ui[i].t1;
 	    if (k >= 0) {
 		for (j=0; j<csize; j++) {
-		    s = i * ab.T + j;
+		    if (ab.q == 0) {
+			s = i * ab.T + j;
+		    } else {
+			s = i * ab.T + t - csize + j; /* FIXME! */
+		    }
 		    if (!na(y[s])) {
 			gretl_matrix_set(ab.Zi, k, j + offset, y[s]);
 		    }
 		}
 	    }
-	    offset += csize++;
+	    if (ab.q == 0 || csize < ab.q) {
+		csize++;
+	    }
+	    offset += csize;
 	} 
 
 	/* exogenous var (instr) columns */
