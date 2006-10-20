@@ -1038,6 +1038,8 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 	if (matrix_is_scalar(src)) {
 	    return add_scalar_to_matrix(targ, src->val[0]);
 	} else {
+	    fprintf(stderr, "gretl_matrix_add_to: adding %d x %d to %d x %d\n",
+		    src->rows, src->cols, targ->rows, targ->cols);
 	    return E_NONCONF;
 	}
     }

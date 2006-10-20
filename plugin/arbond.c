@@ -248,16 +248,17 @@ arbond_sample_check (arbond *ab, const int *list,
     const double *y = Z[ab->yno];
     char *mask = NULL;
     int msize = 0;
-    int i, j, s, t;
     int t1min = ab->T - 1;
+    int t1imin = ab->T - 1;
     int t2max = 0;
     int N = ab->N;
+    int i, s, t;
     int err = 0;
 
     fprintf(stderr, "arbond_sample_check: ab->T = %d\n", ab->T);
 
     for (i=0; i<ab->N; i++) {
-	/* find the first y observation */
+	/* find the first y observation, all units */
 	if (t1min > 0) {
 	    for (t=0; t<ab->T; t++) {
 		s = i * ab->T + t;
@@ -269,23 +270,9 @@ arbond_sample_check (arbond *ab, const int *list,
 		}
 	    }
 	}
-
-	/* find the last y observation */
-	if (t2max < ab->T - 1) {
-	    for (t=ab->T-1; t>=0; t--) {
-		s = i * ab->T + t;
-		if (!na(y[s])) {
-		    if (t > t2max) {
-			t2max = t;
-		    }
-		    break;
-		}
-	    }
-	}
     }
 
-    fprintf(stderr, "initial scan: t1min = %d, t2max = %d, tau = %d\n", 
-	    t1min, t2max, t2max - t1min + 1);
+    fprintf(stderr, "initial scan: t1min = %d\n", t1min);
 
     msize = ab->T - ab->p - 1;
     mask = malloc(msize);
@@ -312,33 +299,16 @@ arbond_sample_check (arbond *ab, const int *list,
 	   and can construct at least one orthogonality condition
 	   using a lagged level of y
 	*/
+
 	for (t=ab->p+1; t<ab->T; t++) {
-	    int ok = 1;
-
 	    s = i * ab->T + t;
-	    /* do we have the basic data? */
 	    if (anymiss(ab, Z, s)) {
-		ok = 0;
-	    } 	
-
-	    if (ok) {
-		ok = 0;
-		/* do we have any instruments? */
-		for (j=2; t-j>=0; j++) {
-		    if (!na(y[s-j])) {
-			ok = 1;
-			usable++;
-			break;
-		    } 
-		}
-	    }
-
-	    if (ok) {
+		mask[t-(ab->p+1)] = 1;
+	    } else {
+		usable++;
 		if (t < t1i) t1i = t;
 		if (t > t2i) t2i = t;
-	    } else {
-		mask[t-(ab->p+1)] = 1;
-	    }
+	    } 
 	}
 
 	if (usable == 0) {
@@ -367,9 +337,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	    ab->maxTi = usable;
 	}
 	ab->nobs += usable;
-	if (t1i < t1min) {
-	    t1min = t1i;
-	}
+	if (t1i < t1imin) {
+	    t1imin = t1i;
+	}	
 	if (t2i > t2max) {
 	    t2max = t2i;
 	}
@@ -379,10 +349,15 @@ arbond_sample_check (arbond *ab, const int *list,
 		t1i, t2i, Ti, usable);
     }
 
+    /* is t1min actually "reachable"? */
+    if (t1min < t1imin - ab->q) {
+	t1min = t1imin - ab->q;
+    }
+
     fprintf(stderr, "Number of units with usable observations = %d\n", N);
     fprintf(stderr, "Total usable observations = %d\n", ab->nobs);
     fprintf(stderr, "Max equations for any given unit = %d\n", ab->maxTi);
-    fprintf(stderr, "Maximal overall time-series span: %d to %d = %d\n", 
+    fprintf(stderr, "Maximal relevant time-series span: %d to %d = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
 
     if (N == 0) {
@@ -397,7 +372,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	    cols = (ab->p + i > ab->q - 1)? ab->q - 1 : ab->p + i;
 	    ab->m += cols;
 	}
-	/* record the column where the exog vars will start */
+	/* record the column where the independent vars start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
@@ -407,6 +382,32 @@ arbond_sample_check (arbond *ab, const int *list,
     free(mask);
 
     return err;
+}
+
+static int unit_nobs (arbond *ab, int i)
+{
+    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+
+    if (ab->ui[i].skip != NULL) {
+	int t, m = n;
+
+	for (t=0; t<m; t++) {
+	    if (ab->ui[i].skip[t]) {
+		n--;
+	    }
+	}
+    }
+
+    return n;
+}
+
+static int skip_obs (arbond *ab, int i, int t)
+{
+    if (ab->ui[i].skip == NULL) {
+	return 0;
+    }
+
+    return ab->ui[i].skip[t - ab->ui[i].t1];
 }
 
 /* 
@@ -458,7 +459,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 	    continue;
 	}
 
-	Ti = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+	Ti = unit_nobs(ab, i);
 
 	gretl_matrix_reuse(ab->Zi, Ti, ab->m);
 	gretl_matrix_reuse(u, Ti, 1);
@@ -526,7 +527,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 				     num);
 
     /* pre- and post-multiply by C^{-1} */
-    gretl_invert_matrix(C);
+    gretl_invert_general_matrix(C);
     gretl_matrix_multiply(num, C, tmp);
     gretl_matrix_multiply(C, tmp, ab->vbeta);
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->N);
@@ -646,10 +647,12 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	for (i=0; i<ab->N; i++) {
 	    for (t=0; t<ab->T; t++) {
 		if (t >= ab->ui[i].t1 && t <= ab->ui[i].t2) {
-		    s = i * ab->T + t;
-		    pmod->uhat[s] = ab->uhat->val[k];
-		    pmod->yhat[s] = ab->dy->val[k] - ab->uhat->val[k];
-		    k++;
+		    if (!skip_obs(ab, i, t)) {
+			s = i * ab->T + t;
+			pmod->uhat[s] = ab->uhat->val[k];
+			pmod->yhat[s] = ab->dy->val[k] - ab->uhat->val[k];
+			k++;
+		    }
 		}
 	    }
 	}
@@ -805,10 +808,10 @@ static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
 	return E_ALLOC;
     }
 
-    err = gretl_invert_symmetric_matrix(A);
+    err = gretl_invert_general_matrix(A);
 
     if (!err && A->rows < ab->m) {
-	fprintf(stderr, "try_pseudo_inverse: shrinking matrices\n");
+	printf("try_pseudo_inverse: shrinking matrices\n");
 	eliminate_zero_rows(ab->ZT, mask);
 	ab->m = A->rows;
 	gretl_matrix_free(ab->A);
@@ -838,18 +841,18 @@ static int arbond_calculate (arbond *ab, gretl_matrix *num,
 {
     int err = 0;
 
-    /* find "Lk" = \bar{X}' Z A_N */
+    /* find "Lk" = X' Z A_N */
     gretl_matrix_multiply_mod(ab->dX, GRETL_MOD_TRANSPOSE,
 			      ab->ZT, GRETL_MOD_TRANSPOSE,
 			      ab->tmp2);
     gretl_matrix_multiply(ab->tmp2, ab->A, ab->Lk);
 
-    /* calculate "numerator", \bar{X}' Z A_N Z' \bar{y} */
+    /* calculate "numerator", X' Z A_N Z' y */
 
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
     gretl_matrix_multiply(ab->Lk, ab->R1, num);
 
-    /* calculate "denominator", \bar{X}' Z A_N Z' \bar{X} */
+    /* calculate "denominator", X' Z A_N Z' X */
     
     gretl_matrix_multiply(ab->ZT, ab->dX, ab->Rk);
     gretl_matrix_multiply(ab->Lk, ab->Rk, den);
@@ -910,35 +913,9 @@ static int arbond_step_2 (arbond *ab, gretl_matrix *num,
     return err;
 }
 
-static int unit_nobs (arbond *ab, int i)
-{
-    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
-
-    if (ab->ui[i].skip != NULL) {
-	int t, m = n;
-
-	for (t=0; t<m; t++) {
-	    if (ab->ui[i].skip[t]) {
-		n--;
-	    }
-	}
-    }
-
-    return n;
-}
-
 static int skip_unit (arbond *ab, int i)
 {
     return ab->ui[i].t1 < 0;
-}
-
-static int skip_obs (arbond *ab, int i, int t)
-{
-    if (ab->ui[i].skip == NULL) {
-	return 0;
-    }
-
-    return ab->ui[i].skip[t - ab->ui[i].t1];
 }
 
 MODEL
@@ -956,7 +933,7 @@ arbond_estimate (const int *list, const double **X,
     double x;
     char zstr[8];
     int i, j, k;
-    int c, s, t, v;
+    int c, s, t;
     int err = 0;
 
     gretl_model_init(&mod);
@@ -999,30 +976,32 @@ arbond_estimate (const int *list, const double **X,
        X matrix
     */
 
-    s = 0;
+    k = 0;
     for (i=0; i<ab.N; i++) {
+	int t1 = ab.ui[i].t1;
+	int t2 = ab.ui[i].t2;
+
 	if (skip_unit(&ab, i)) {
 	    continue;
 	}
-	for (t=ab.ui[i].t1; t<=ab.ui[i].t2; t++) {
+
+	for (t=t1; t<=t2; t++) {
 	    if (skip_obs(&ab, i, t)) {
 		continue;
 	    }
-	    k = i * ab.T + t;
+	    s = i * ab.T + t;
 	    /* current difference of dependent var */
-	    gretl_vector_set(ab.dy, s, y[k] - y[k-1]);
+	    gretl_vector_set(ab.dy, k, y[s] - y[s-1]);
 	    for (j=0; j<ab.p; j++) {
 		/* lagged difference of dependent var */
-		x = y[k-j-1] - y[k-j-2];
-		gretl_matrix_set(ab.dX, s, j, x);
+		gretl_matrix_set(ab.dX, k, j, y[s-j-1] - y[s-j-2]);
 	    }
 	    for (j=0; j<ab.nx; j++) {
 		/* independent vars */
-		v = ab.xlist[j+1];
-		x = X[v][k];
-		gretl_matrix_set(ab.dX, s, j + ab.p, x);
+		x = X[ab.xlist[j+1]][s];
+		gretl_matrix_set(ab.dX, k, j + ab.p, x);
 	    }
-	    s++;
+	    k++;
 	}
     }
 
@@ -1038,51 +1017,57 @@ arbond_estimate (const int *list, const double **X,
 
     c = 0;
     for (i=0; i<ab.N; i++) {
-	int Ti, xc, csize, offset;
+	int t1 = ab.ui[i].t1;
+	int t2 = ab.ui[i].t2;
+	int Ti, ncols, offj;
 
 	if (skip_unit(&ab, i)) {
 	    continue;
 	}
 
+	/* drop non-observed rows */
 	Ti = unit_nobs(&ab, i);
 	
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
 
-	/* lagged y (GMM instr) columns */
-	offset = 0;
-	csize = ab.p;
-	for (t=ab.p+1; t<=ab.ui[i].t2; t++) {
-	    /* FIXME this is broken when obs are non-consecutive !! */
-	    k = t - ab.ui[i].t1;
-	    if (k >= 0) {
-		for (j=0; j<csize; j++) {
-		    if (ab.q == ab.T) {
-			s = i * ab.T + j;
-		    } else {
-			s = i * ab.T + t - (csize + 1) + j;
-		    }
+	offj = 0;
+	ncols = ab.p;
+
+	for (t=ab.p+1; t<t1; t++) {
+	    /* pre-shift right as needed */
+	    offj += ncols;
+	    if (ncols < ab.q - 1) {
+		ncols++;
+	    }
+	}	    
+
+	k = 0;
+	for (t=t1; t<=t2; t++) {
+	    int skip = skip_obs(&ab, i, t);
+
+	    if (!skip) {
+		/* lagged y (GMM instr) columns */
+		for (j=0; j<ncols; j++) {
+		    s = i * ab.T + t - (ncols + 1) + j;
 		    if (!na(y[s])) {
-			gretl_matrix_set(ab.Zi, k, j + offset, y[s]);
+			gretl_matrix_set(ab.Zi, k, j + offj, y[s]);
 		    }
 		}
 	    }
-	    offset += csize;
-	    if (csize < ab.q - 1) {
-		csize++;
+	    offj += ncols;
+	    if (ncols < ab.q - 1) {
+		ncols++;
 	    }
-	} 
-
-	/* exogenous var (instr) columns */
-	xc = ab.xc0;
-	for (j=0; j<ab.nx; j++) {
-	    k = i * ab.T + ab.ui[i].t1;
-	    for (t=0; t<Ti; t++) {
-		x = X[ab.xlist[j+1]][k];
-		gretl_matrix_set(ab.Zi, t, xc, x);
-		k++;
+	    if (!skip) {
+		/* exogenous var (instr) columns */
+		s = i * ab.T + t;
+		for (j=0; j<ab.nx; j++) {
+		    x = X[ab.xlist[j+1]][s];
+		    gretl_matrix_set(ab.Zi, k, ab.xc0 + j, x);
+		}
+		k++; /* increment target row */	
 	    }
-	    xc++;
 	}
 
 #if ADEBUG
@@ -1114,7 +1099,7 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
 #endif
 
-    err = gretl_invert_symmetric_matrix(ab.A);
+    err = gretl_invert_general_matrix(ab.A);
     if (err) {
 	err = try_pseudo_inverse(&ab, Acpy);
     }
