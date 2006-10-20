@@ -3184,8 +3184,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     double *work;
 
-    if (m <= n) lipiv = m;
-    else lipiv = n;
+    lipiv = (m <= n)? m : n;
 
     ipiv = malloc(lipiv * sizeof *ipiv);
     if (ipiv == NULL) {
@@ -3236,7 +3235,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     lapack_free(work);
     free(ipiv);
 
-    if (info) {
+    if (info != 0) {
 	fprintf(stderr, "dgetri: matrix is singular\n");
 	err = E_SINGULAR;
     }
@@ -3363,6 +3362,93 @@ static int spd_matrix_check_scaling (const gretl_matrix *a)
     return 0;
 }
 #endif
+
+/**
+ * gretl_invert_symmetric_indef_matrix:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of a real symmetric matrix via the 
+ * Bunch-Kaufman diagonal pivoting method.  Uses the lapack 
+ * functions %dsytrf and %dsytri.  On exit @a is overwritten
+ * with the inverse.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
+{
+    char uplo = 'U';
+    integer n = a->rows;
+    integer info;
+    integer *ipiv;
+    int err = 0;
+
+    integer lwork = -1;
+    double *work;
+
+    if (a->cols != a->rows) {
+	fputs("gretl_invert_symmetric_indef_matrix: input is not square\n",
+	      stderr);
+	return E_NONCONF;
+    }
+
+    ipiv = malloc(n * sizeof *ipiv);
+    if (ipiv == NULL) {
+	return E_ALLOC;
+    }
+
+    work = lapack_malloc(sizeof *work);
+    if (work == NULL) {
+	free(ipiv);
+	return E_ALLOC;
+    }    
+
+    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);   
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	free(ipiv);
+	return 1;
+    }
+
+    lwork = (integer) work[0];
+#ifdef LAPACK_DEBUG
+    printf("dsytrf: workspace = %d\n", (int) lwork);
+#endif
+
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	free(ipiv);
+	return E_ALLOC;
+    }  
+
+    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info); 
+
+    if (info != 0) {
+	free(ipiv);
+	fprintf(stderr, "dsytrf: matrix is singular\n");
+	return E_SINGULAR;
+    }
+
+    dsytri_(&uplo, &n, a->val, &n, ipiv, work, &info);
+
+#ifdef LAPACK_DEBUG
+    printf("dsytri: info = %d\n", (int) info);
+#endif
+
+    lapack_free(work);
+    free(ipiv);
+
+    if (info != 0) {
+	fputs("dsytri: matrix is singular\n", stderr);
+	err = E_SINGULAR;
+    } else {
+	gretl_symmetric_matrix_expand(a, uplo);
+    }
+
+    return err;
+}
+
 
 /**
  * gretl_invert_symmetric_matrix:

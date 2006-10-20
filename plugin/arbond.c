@@ -527,7 +527,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 				     num);
 
     /* pre- and post-multiply by C^{-1} */
-    gretl_invert_general_matrix(C);
+    gretl_invert_symmetric_matrix(C);
     gretl_matrix_multiply(num, C, tmp);
     gretl_matrix_multiply(C, tmp, ab->vbeta);
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->N);
@@ -789,27 +789,34 @@ matrix_copy_masked (const gretl_matrix *m, const char *mask)
     return a;
 }
 
-static char *zero_row_mask (const gretl_matrix *m)
+static char *zero_row_mask (const gretl_matrix *m, int *err)
 {
     char *mask = NULL;
-    int all0, i, j;
+    int any0 = 0, row0, i, j;
 
     mask = calloc(m->rows, 1);
     if (mask == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
     
     for (i=0; i<m->rows; i++) {
-	all0 = 1;
+	row0 = 1;
 	for (j=0; j<m->cols; j++) {
 	    if (gretl_matrix_get(m, i, j) != 0.0) {
-		all0 = 0;
+		row0 = 0;
 		break;
 	    }
 	}
-	if (all0) {
+	if (row0) {
 	    mask[i] = 1;
+	    any0 = 1;
 	}
+    }
+
+    if (!any0) {
+	free(mask);
+	mask = NULL;
     }
 
     return mask;
@@ -836,27 +843,34 @@ eliminate_zero_rows (gretl_matrix *a, const char *mask)
     a->rows = n;
 }
 
-static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
+static int try_alt_inverse (arbond *ab, gretl_matrix *Acpy)
 {
-    char *mask = zero_row_mask(ab->ZT);
+    int err = 0;
+    char *mask = zero_row_mask(ab->ZT, &err);
     gretl_matrix *A;
-    int err;
+
+    if (err) {
+	return err;
+    }
 
     if (mask == NULL) {
-	return E_ALLOC;
+	fprintf(stderr, "Problem: A was not p.d., yet we didn't find "
+		"any zero rows in ZT\n");
+	/* FIXME drop some rows/cols based on another criterion */
+	A = Acpy;
+    } else {
+	/* make a copy with zero rows/cols omitted */
+	A = matrix_copy_masked(Acpy, mask);
+	if (A == NULL) {
+	    free(mask);
+	    return E_ALLOC;
+	}
     }
 
-    /* make a copy with zero rows/cols omitted */
-    A = matrix_copy_masked(Acpy, mask);
-    if (A == NULL) {
-	free(mask);
-	return E_ALLOC;
-    }
-
-    err = gretl_invert_general_matrix(A);
+    err = gretl_invert_symmetric_matrix(A);
 
     if (!err && A->rows < ab->m) {
-	printf("try_pseudo_inverse: shrinking matrices\n");
+	printf("try_alt_inverse: shrinking matrices\n");
 	eliminate_zero_rows(ab->ZT, mask);
 	ab->m = A->rows;
 	gretl_matrix_free(ab->A);
@@ -871,7 +885,7 @@ static int try_pseudo_inverse (arbond *ab, gretl_matrix *Acpy)
 	gretl_matrix_reuse(ab->Rk, ab->m, -1);
     }
 
-    if (A != NULL) {
+    if (A != NULL && A != Acpy) {
 	gretl_matrix_free(A);
     }
     free(mask);
@@ -941,7 +955,7 @@ static int arbond_step_2 (arbond *ab, gretl_matrix *num,
     gretl_matrix_print(ab->V, "V, in arbond_step_2");
 #endif
 
-    err = gretl_invert_general_matrix(ab->V);
+    err = gretl_invert_symmetric_indef_matrix(ab->V);
     if (err) {
 	fprintf(stderr, "arbond_step_2: inversion failed\n");
 	return err;
@@ -1146,18 +1160,18 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
 #endif
 
-    /* note: though ab.A should be symmetric, it may not be positive
-       definite */
-    err = gretl_invert_general_matrix(ab.A);
+    err = gretl_invert_symmetric_matrix(ab.A);
     if (err) {
-	err = try_pseudo_inverse(&ab, Acpy);
+	err = try_alt_inverse(&ab, Acpy);
     }
 
 #if ADEBUG
     gretl_matrix_print(ab.A, "A_N");
 #endif
 
-    err = arbond_calculate(&ab, num, den, tmp, prn);
+    if (!err) {
+	err = arbond_calculate(&ab, num, den, tmp, prn);
+    }
 
     if (!err && (opt & OPT_T)) {
 	err = arbond_step_2(&ab, num, den, tmp, prn);
