@@ -22,6 +22,7 @@
 #define ADEBUG 1
 
 #define XPOS 5
+#define KEEPROWS 0
 
 typedef struct arbond_ arbond;
 
@@ -333,10 +334,17 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	}
 
+#if KEEPROWS
+	if (Ti > ab->maxTi) {
+	    ab->maxTi = Ti;
+	}
+	ab->nobs += Ti;
+#else
 	if (usable > ab->maxTi) {
 	    ab->maxTi = usable;
 	}
 	ab->nobs += usable;
+#endif
 	if (t1i < t1imin) {
 	    t1imin = t1i;
 	}	
@@ -387,6 +395,10 @@ arbond_sample_check (arbond *ab, const int *list,
 static int unit_nobs (arbond *ab, int i)
 {
     int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+
+#if KEEPROWS
+    return n;
+#endif
 
     if (ab->ui[i].skip != NULL) {
 	int t, m = n;
@@ -976,6 +988,11 @@ arbond_estimate (const int *list, const double **X,
        X matrix
     */
 
+#if KEEPROWS
+    gretl_matrix_zero(ab.dy);
+    gretl_matrix_zero(ab.dX);
+#endif
+
     k = 0;
     for (i=0; i<ab.N; i++) {
 	int t1 = ab.ui[i].t1;
@@ -987,6 +1004,9 @@ arbond_estimate (const int *list, const double **X,
 
 	for (t=t1; t<=t2; t++) {
 	    if (skip_obs(&ab, i, t)) {
+#if KEEPROWS
+		k++;
+#endif
 		continue;
 	    }
 	    s = i * ab.T + t;
@@ -1025,7 +1045,6 @@ arbond_estimate (const int *list, const double **X,
 	    continue;
 	}
 
-	/* drop non-observed rows */
 	Ti = unit_nobs(&ab, i);
 	
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
@@ -1066,8 +1085,13 @@ arbond_estimate (const int *list, const double **X,
 		    x = X[ab.xlist[j+1]][s];
 		    gretl_matrix_set(ab.Zi, k, ab.xc0 + j, x);
 		}
+#if !KEEPROWS
 		k++; /* increment target row */	
+#endif
 	    }
+#if KEEPROWS
+	    k++; /* increment target row */	
+#endif
 	}
 
 #if ADEBUG
@@ -1086,6 +1110,10 @@ arbond_estimate (const int *list, const double **X,
 				  ab.tmp1); 
 	gretl_matrix_add_to(ab.A, ab.tmp1);
 
+#if ADEBUG
+	gretl_matrix_print(ab.tmp1, "Z'_i H Z_i");
+#endif
+
 	/* Write Zi into ZT at offset 0, c */
 	gretl_matrix_inscribe_matrix(ab.ZT, ab.Zi, 0, c, GRETL_MOD_TRANSPOSE);
 	c += Ti;
@@ -1099,7 +1127,9 @@ arbond_estimate (const int *list, const double **X,
     gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
 #endif
 
-    err = gretl_invert_general_matrix(ab.A);
+    /* note: though ab.A should be symmetric, it may not be positive
+       definite */
+    err = gretl_invert_matrix(ab.A);
     if (err) {
 	err = try_pseudo_inverse(&ab, Acpy);
     }

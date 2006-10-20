@@ -3202,6 +3202,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     if (info != 0) {
 	free(ipiv);
+	fprintf(stderr, "dgetrf: matrix is singular\n");
 	return E_SINGULAR;
     }
 
@@ -3236,6 +3237,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     free(ipiv);
 
     if (info) {
+	fprintf(stderr, "dgetri: matrix is singular\n");
 	err = E_SINGULAR;
     }
 
