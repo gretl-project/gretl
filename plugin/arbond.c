@@ -573,19 +573,64 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
     return err;
 }
 
-/* construct the H matrix for first-differencing */
-
-static void make_first_diff_matrix (gretl_matrix *m)
+static int next_obs (arbond *ab, int i, int j0, int n)
 {
-    int n = m->rows;
-    double x;
-    int i, j;
+    int j;
 
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    x = (i == j)? 2 : (i == j-1 || i == j+1)? -1 : 0;
-	    gretl_matrix_set(m, i, j, x);
+    for (j=j0; j<n; j++) {
+	if (ab->ui[i].skip[j] == 0) {
+	    return j;
 	}
+    }
+
+    return 0;
+}
+
+/* construct the H matrix for first-differencing
+   as applied to unit i */
+
+static void make_first_diff_matrix (arbond *ab, int i)
+{
+    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+    int m = unit_nobs(ab, i);
+    double x;
+    int k, j;
+
+    gretl_matrix_reuse(ab->H, n, n);
+
+    for (k=0; k<n; k++) {
+	for (j=0; j<n; j++) {
+	    x = (k == j)? 2 : (k == j-1 || k == j+1)? -1 : 0;
+	    gretl_matrix_set(ab->H, k, j, x);
+	}
+    }
+
+    if (m < n) {
+	gretl_matrix *P = gretl_zero_matrix_new(m, n);
+	gretl_matrix *L = gretl_matrix_alloc(m, n);
+	gretl_matrix *R = gretl_matrix_alloc(m, m);
+
+	j = next_obs(ab, i, 0, n);
+	for (k=0; k<m; k++) {
+	    gretl_matrix_set(P, k, j, 1.0);
+	    j = next_obs(ab, i, j+1, n);
+	}
+
+	gretl_matrix_print(ab->H, "initial H");
+	gretl_matrix_print(P, "P (mask)");
+
+	gretl_matrix_multiply(P, ab->H, L);
+	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
+				  P, GRETL_MOD_TRANSPOSE,
+				  R);
+	gretl_matrix_reuse(ab->H, m, m);
+	gretl_matrix_copy_values(ab->H, R);
+
+	gretl_matrix_print(ab->H, "final H");
+
+	gretl_matrix_free(P);
+	gretl_matrix_free(L);
+	gretl_matrix_free(R);
     }
 }
 
@@ -1099,8 +1144,7 @@ arbond_estimate (const int *list, const double **X,
 	gretl_matrix_print(ab.Zi, zstr);
 #endif
 	
-	gretl_matrix_reuse(ab.H, Ti, Ti);
-	make_first_diff_matrix(ab.H);
+	make_first_diff_matrix(&ab, i);
 	gretl_matrix_reuse(ab.tmp0, Ti, ab.m);
 
 	/* Add Z_i' H Z_i to A_N */
@@ -1129,7 +1173,7 @@ arbond_estimate (const int *list, const double **X,
 
     /* note: though ab.A should be symmetric, it may not be positive
        definite */
-    err = gretl_invert_matrix(ab.A);
+    err = gretl_invert_general_matrix(ab.A);
     if (err) {
 	err = try_pseudo_inverse(&ab, Acpy);
     }

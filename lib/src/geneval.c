@@ -1240,7 +1240,15 @@ static double real_apply_func (double x, int f, parser *p)
     double y;
 
     if (na(x)) {
-	return NADBL;
+	switch (f) {
+	case MISSING:
+	    return 1.0;
+	case OK:
+	case MISSZERO:
+	    return 0.0;
+	default:
+	    return NADBL;
+	}
     }
 
     switch (f) {
@@ -1273,11 +1281,11 @@ static double real_apply_func (double x, int f, parser *p)
     case LNGAMMA:
 	return cephes_lgamma(x);
     case MISSING:
-	return na(x);
+	return 0.0;
     case OK:
-	return !na(x);
+	return 1.0;
     case MISSZERO:
-	return (na(x))? 0.0 : x;
+	return x;
     case ZEROMISS:
 	return (x == 0.0)? NADBL : x;
     case SQRT:
