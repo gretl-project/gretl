@@ -3381,10 +3381,9 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     integer n = a->rows;
     integer info;
     integer *ipiv;
-    int err = 0;
-
     integer lwork = -1;
     double *work;
+    int err = 0;
 
     if (a->cols != a->rows) {
 	fputs("gretl_invert_symmetric_indef_matrix: input is not square\n",

@@ -843,6 +843,33 @@ eliminate_zero_rows (gretl_matrix *a, const char *mask)
     a->rows = n;
 }
 
+static int find_rank (const gretl_matrix *a, int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    int rank = 0;
+
+    Q = gretl_matrix_copy(a);
+    R = gretl_matrix_alloc(a->rows, a->rows);
+
+    if (Q == NULL || R == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    *err = gretl_matrix_QR_decomp(Q, R);
+
+    if (!*err) {
+	rank = gretl_matrix_QR_rank(R, NULL, err);
+    }
+
+ bailout:
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+
+    return rank;
+}
+
 static int try_alt_inverse (arbond *ab, gretl_matrix *Acpy)
 {
     int err = 0;
@@ -854,10 +881,12 @@ static int try_alt_inverse (arbond *ab, gretl_matrix *Acpy)
     }
 
     if (mask == NULL) {
-	fprintf(stderr, "Problem: A was not p.d., yet we didn't find "
-		"any zero rows in ZT\n");
-	/* FIXME drop some rows/cols based on another criterion */
-	A = Acpy;
+	int r = find_rank(Acpy, &err);
+
+	if (r > 0 && r < Acpy->rows) {
+	    fprintf(stderr, "Problem: A is of dim %d but rank %d\n", Acpy->rows, r);
+	}
+	return E_SINGULAR;
     } else {
 	/* make a copy with zero rows/cols omitted */
 	A = matrix_copy_masked(Acpy, mask);
