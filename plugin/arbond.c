@@ -22,7 +22,6 @@
 #define ADEBUG 1
 
 #define XPOS 5
-#define KEEPROWS 0
 
 typedef struct arbond_ arbond;
 
@@ -334,17 +333,10 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	}
 
-#if KEEPROWS
-	if (Ti > ab->maxTi) {
-	    ab->maxTi = Ti;
-	}
-	ab->nobs += Ti;
-#else
 	if (usable > ab->maxTi) {
 	    ab->maxTi = usable;
 	}
 	ab->nobs += usable;
-#endif
 	if (t1i < t1imin) {
 	    t1imin = t1i;
 	}	
@@ -395,10 +387,6 @@ arbond_sample_check (arbond *ab, const int *list,
 static int unit_nobs (arbond *ab, int i)
 {
     int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
-
-#if KEEPROWS
-    return n;
-#endif
 
     if (ab->ui[i].skip != NULL) {
 	int t, m = n;
@@ -591,10 +579,15 @@ static int next_obs (arbond *ab, int i, int j0, int n)
 
 static void make_first_diff_matrix (arbond *ab, int i)
 {
-    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
-    int m = unit_nobs(ab, i);
+    int n, m = unit_nobs(ab, i);
     double x;
     int k, j;
+
+    if (getenv("ARBOND_ADJUST_H") != NULL) {
+	n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+    } else {
+	n = m;
+    }
 
     gretl_matrix_reuse(ab->H, n, n);
 
@@ -616,17 +609,12 @@ static void make_first_diff_matrix (arbond *ab, int i)
 	    j = next_obs(ab, i, j+1, n);
 	}
 
-	gretl_matrix_print(ab->H, "initial H");
-	gretl_matrix_print(P, "P (mask)");
-
 	gretl_matrix_multiply(P, ab->H, L);
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  P, GRETL_MOD_TRANSPOSE,
 				  R);
 	gretl_matrix_reuse(ab->H, m, m);
 	gretl_matrix_copy_values(ab->H, R);
-
-	gretl_matrix_print(ab->H, "final H");
 
 	gretl_matrix_free(P);
 	gretl_matrix_free(L);
@@ -1033,11 +1021,6 @@ arbond_estimate (const int *list, const double **X,
        X matrix
     */
 
-#if KEEPROWS
-    gretl_matrix_zero(ab.dy);
-    gretl_matrix_zero(ab.dX);
-#endif
-
     k = 0;
     for (i=0; i<ab.N; i++) {
 	int t1 = ab.ui[i].t1;
@@ -1049,9 +1032,6 @@ arbond_estimate (const int *list, const double **X,
 
 	for (t=t1; t<=t2; t++) {
 	    if (skip_obs(&ab, i, t)) {
-#if KEEPROWS
-		k++;
-#endif
 		continue;
 	    }
 	    s = i * ab.T + t;
@@ -1114,7 +1094,7 @@ arbond_estimate (const int *list, const double **X,
 		/* lagged y (GMM instr) columns */
 		for (j=0; j<ncols; j++) {
 		    s = i * ab.T + t - (ncols + 1) + j;
-		    if (!na(y[s])) {
+		    if (t - s <= ab.q && !na(y[s])) {
 			gretl_matrix_set(ab.Zi, k, j + offj, y[s]);
 		    }
 		}
@@ -1130,13 +1110,8 @@ arbond_estimate (const int *list, const double **X,
 		    x = X[ab.xlist[j+1]][s];
 		    gretl_matrix_set(ab.Zi, k, ab.xc0 + j, x);
 		}
-#if !KEEPROWS
 		k++; /* increment target row */	
-#endif
 	    }
-#if KEEPROWS
-	    k++; /* increment target row */	
-#endif
 	}
 
 #if ADEBUG
@@ -1154,7 +1129,7 @@ arbond_estimate (const int *list, const double **X,
 				  ab.tmp1); 
 	gretl_matrix_add_to(ab.A, ab.tmp1);
 
-#if ADEBUG
+#if ADEBUG > 1
 	gretl_matrix_print(ab.tmp1, "Z'_i H Z_i");
 #endif
 
