@@ -21,8 +21,6 @@
 
 #define ADEBUG 1
 
-#define XPOS 5
-
 typedef struct arbond_ arbond;
 
 struct unit_info {
@@ -37,7 +35,8 @@ struct arbond_ {
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
     int q;                /* longest lag of y used as instrument */
-    int nx;               /* number of exogenous variables */
+    int nx;               /* number of independent variables */
+    int nz;               /* number of instruments (other than y lags) */
     int m;                /* number of columns in instrument matrix, Z */
     int xc0;              /* column in Z where exog vars start */
     int maxc;             /* number of Zi columns of maximal width */
@@ -48,6 +47,8 @@ struct arbond_ {
     int nobs;             /* total observations used */
     double SSR;           /* sum of squared residuals */
     int *xlist;           /* list of independent variables */
+    int *ilist;           /* list of instruments */
+    int *plist;           /* list of predetermined indep vars */
     gretl_matrix *beta;   /* parameter estimates */
     gretl_matrix *vbeta;  /* parameter variance matrix */
     gretl_matrix *uhat;   /* residuals, differenced version */
@@ -91,6 +92,8 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->Rk);
 
     free(ab->xlist);
+    free(ab->ilist);
+    free(ab->plist);
 
     for (i=0; i<ab->N; i++) {
 	free(ab->ui[i].skip);
@@ -133,60 +136,88 @@ static int arbond_allocate (arbond *ab)
     }
 }
 
-static int 
-arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
-	     gretlopt opt)
+static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 {
-    int i;
+    int i, nz = 0, spos = 0;
+    int err = 0;
 
-    if (list[0] < 4 || list[3] != LISTSEP) {
-	return E_PARSE;
+    for (i=xpos; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    spos = i;
+	    break;
+	}
     }
 
-    ab->p = list[1];
-    ab->q = list[2];
+    if (spos > 0) {
+	ab->nx = spos - xpos;
+	nz = list[0] - spos;
+    } else {
+	ab->nx = list[0] - (xpos - 1);
+    }
 
-    if (ab->p < 1 || (ab->q != 0 && ab->q < ab->p + 1)) {
-	/* is this right? */
-	return E_DATA;
-    }    
-
-    ab->yno = list[4];
-    ab->opt = opt;
-    ab->step = 1;
-
-    /* FIXME handle instruments list */
-
-    if (list[0] > 4) {
-	ab->nx = list[0] - 4;
-	ab->xlist = gretl_list_new(list[0] - 4);
+    if (ab->nx > 0) {
+	/* compose indep vars list */
+	ab->xlist = gretl_list_new(ab->nx);
 	if (ab->xlist == NULL) {
 	    return E_ALLOC;
-	}
-	for (i=5; i<=list[0]; i++) {
-	    ab->xlist[i-4] = list[i];
+	} 
+	for (i=0; i<ab->nx; i++) {
+	    ab->xlist[i+1] = list[xpos + i];
 	}
 	printlist(ab->xlist, "ab->xlist");
-    } else {
-	ab->nx = 0;
-	ab->xlist = NULL;
+	if (nz == 0) {
+	    /* implicit: all x vars are exogenous */
+	    ab->ilist = gretl_list_copy(ab->xlist);
+	    if (ab->ilist == NULL) {
+		return E_ALLOC;
+	    }
+	    ab->nz = ab->nx;
+	}
     }
 
-    ab->N = pdinfo->paninfo->nunits;
-    ab->T = pdinfo->n / ab->N;
-    ab->k = ab->p + ab->nx;
-    ab->maxTi = 0;
-    ab->m = 0;
-    ab->xc0 = 0;
-    ab->maxc = 0;
-    ab->nobs = 0;
-    ab->SSR = NADBL;
+    if (nz > 0) {
+	/* compose instruments list */
+	ab->ilist = gretl_list_new(nz);
+	if (ab->ilist == NULL) {
+	    return E_ALLOC;
+	} 
+	for (i=0; i<nz; i++) {
+	    ab->ilist[i+1] = list[spos + i + 1];
+	}
+	printlist(ab->ilist, "ab->ilist");
+	ab->nz = nz;
+    } 
 
-#if ADEBUG
-    fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, k = %d\n",
-	    ab->yno, ab->p, ab->q, ab->nx, ab->k);
-#endif
+    if (ab->nx > 0 && nz > 0) {
+	/* compose predetermined vars list */
+	int j, np = 0;
 
+	for (i=1; i<=ab->xlist[0]; i++) {
+	    if (gretl_list_position(ab->xlist[i], ab->ilist) == 0) {
+		np++;
+	    }
+	}
+
+	if (np > 0) {
+	    ab->plist = gretl_list_new(np);
+	    if (ab->plist == NULL) {
+		return E_ALLOC;
+	    }
+	    j = 1;
+	    for (i=1; i<=ab->xlist[0]; i++) {
+		if (gretl_list_position(ab->xlist[i], ab->ilist) == 0) {
+		    ab->plist[j++] = ab->xlist[i];
+		}
+	    }
+	    printlist(ab->plist, "ab->plist");
+	}
+    }
+
+    return err;
+}
+
+static void arbond_zero_matrices (arbond *ab)
+{
     ab->beta = NULL;
     ab->vbeta = NULL;
     ab->uhat = NULL;
@@ -204,18 +235,90 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->Lk = NULL;
     ab->R1 = NULL;
     ab->Rk = NULL;
+}
+
+static void arbond_free_lists (arbond *ab)
+{
+    free(ab->xlist);
+    free(ab->ilist);
+    free(ab->plist);
+}
+
+static int 
+arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
+	     gretlopt opt)
+{
+    int i, xpos = 0;
+    int err = 0;
+
+    if (list[0] < 3) {
+	return E_PARSE;
+    }
+
+    ab->p = list[1];
+
+    /* allow the 'q' field to be missing (implicit 0) */
+    if (list[2] == LISTSEP) {
+	ab->q = 0;
+	ab->yno = list[3];
+	xpos = 4;
+    } else if (list[3] == LISTSEP && list[0] >= 4) {
+	ab->q = list[2];
+	ab->yno = list[4];
+	xpos = 5;
+    } else {
+	return E_PARSE;
+    }
+
+    if (ab->p < 1 || (ab->q != 0 && ab->q < ab->p + 1)) {
+	/* is this right? */
+	return E_DATA;
+    }    
+
+    ab->xlist = NULL;
+    ab->ilist = NULL;
+    ab->plist = NULL;
+
+    ab->opt = opt;
+    ab->step = 1;
+    ab->nx = 0;
+    ab->nz = 0;
+
+    if (list[0] >= xpos) {
+	err = arbond_make_lists(ab, list, xpos);
+	if (err) {
+	    return err;
+	}
+    } 
+
+    ab->N = pdinfo->paninfo->nunits;
+    ab->T = pdinfo->n / ab->N;
+    ab->k = ab->p + ab->nx;
+    ab->maxTi = 0;
+    ab->m = 0;
+    ab->xc0 = 0;
+    ab->maxc = 0;
+    ab->nobs = 0;
+    ab->SSR = NADBL;
+
+#if ADEBUG
+    fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, k = %d\n",
+	    ab->yno, ab->p, ab->q, ab->nx, ab->k);
+#endif
+
+    arbond_zero_matrices(ab);
 
     ab->ui = malloc(ab->N * sizeof *ab->ui);
     if (ab->ui == NULL) {
-	free(ab->xlist);
-	ab->xlist = NULL;
-	return E_ALLOC;
+	arbond_free_lists(ab);
+	err = E_ALLOC;
     } else {
 	for (i=0; i<ab->N; i++) {
 	    ab->ui[i].skip = NULL;
 	}
-	return 0;
     }
+
+    return err;
 }
 
 /* see if there are NAs for the dependent variable, or
@@ -645,6 +748,8 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	pmod->errcode = E_ALLOC;
 	return pmod->errcode;
     }
+
+    gretl_model_set_int(pmod, "yno", ab->yno);
 
     pmod->ci = ARBOND;
     pmod->ncoeff = ab->k;
@@ -1202,10 +1307,10 @@ arbond_estimate (const int *list, const double **X,
 		ncols++;
 	    }
 	    if (!skip) {
-		/* exogenous var (instr) columns */
+		/* additional instrument columns */
 		s = i * ab.T + t;
-		for (j=0; j<ab.nx; j++) {
-		    x = X[ab.xlist[j+1]][s];
+		for (j=0; j<ab.nz; j++) {
+		    x = X[ab.ilist[j+1]][s];
 		    gretl_matrix_set(ab.Zi, k, ab.xc0 + j, x);
 		}
 		k++; /* increment target row */	
@@ -1279,4 +1384,3 @@ arbond_estimate (const int *list, const double **X,
 
     return mod;
 }
-

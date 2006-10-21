@@ -1070,15 +1070,17 @@ static int arma_depvar_pos (const MODEL *pmod)
 
 int gretl_model_get_depvar (const MODEL *pmod)
 {
-    int dv = 0;
+    int dv = gretl_model_get_int(pmod, "yno");
+
+    if (dv > 0) {
+	return dv;
+    }
 
     if (pmod != NULL && pmod->list != NULL) {
 	if (pmod->ci == GARCH) {
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
 	    dv = pmod->list[arma_depvar_pos(pmod)];
-	} else if (pmod->ci == ARBOND) {
-	    dv = pmod->list[4];
 	} else {
 	    dv = pmod->list[1];
 	}
