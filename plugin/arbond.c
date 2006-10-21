@@ -40,6 +40,7 @@ struct arbond_ {
     int nx;               /* number of exogenous variables */
     int m;                /* number of columns in instrument matrix, Z */
     int xc0;              /* column in Z where exog vars start */
+    int maxc;             /* number of Zi columns of maximal width */
     int N;                /* number of units */
     int T;                /* total number of observations per unit */
     int maxTi;            /* maximum equations for any given unit */
@@ -177,6 +178,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->maxTi = 0;
     ab->m = 0;
     ab->xc0 = 0;
+    ab->maxc = 0;
     ab->nobs = 0;
     ab->SSR = NADBL;
 
@@ -247,7 +249,6 @@ arbond_sample_check (arbond *ab, const int *list,
 {
     const double *y = Z[ab->yno];
     char *mask = NULL;
-    int msize = 0;
     int t1min = ab->T - 1;
     int t1imin = ab->T - 1;
     int t2max = 0;
@@ -274,8 +275,7 @@ arbond_sample_check (arbond *ab, const int *list,
 
     fprintf(stderr, "initial scan: t1min = %d\n", t1min);
 
-    msize = ab->T - ab->p - 1;
-    mask = malloc(msize);
+    mask = malloc(ab->T);
     if (mask == NULL) {
 	return E_ALLOC;
     }
@@ -290,7 +290,7 @@ arbond_sample_check (arbond *ab, const int *list,
 
 	fprintf(stderr, "Checking unit %d\n", i);
 
-	for (t=0; t<msize; t++) {
+	for (t=0; t<ab->T; t++) {
 	    mask[t] = 0;
 	}
 
@@ -303,7 +303,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	for (t=ab->p+1; t<ab->T; t++) {
 	    s = i * ab->T + t;
 	    if (anymiss(ab, Z, s)) {
-		mask[t-(ab->p+1)] = 1;
+		mask[t] = 1;
 	    } else {
 		usable++;
 		if (t < t1i) t1i = t;
@@ -326,7 +326,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	    ab->ui[i].skip = mask;
 	    mask = NULL;
 	    if (i < ab->N - 1) {
-		mask = malloc(msize);
+		mask = malloc(ab->T);
 		if (mask == NULL) {
 		    return E_ALLOC;
 		}
@@ -364,16 +364,23 @@ arbond_sample_check (arbond *ab, const int *list,
 	err = E_MISSDATA;
     } else {
 	/* compute the number of lagged-y columns in Zi */
-	int cols, tau = t2max - t1min + 1;
+	int tau = t2max - t1min + 1;
+	int cbak = ab->p, cols = 0;
 
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 	ab->m = ab->p;
+	ab->maxc = 1;
 	for (i=1; i<tau-2; i++) {
 	    cols = (ab->p + i > ab->q - 1)? ab->q - 1 : ab->p + i;
 	    ab->m += cols;
+	    if (cols == cbak) {
+		ab->maxc += 1;
+	    }
+	    cbak = cols;
 	}
 	/* record the column where the independent vars start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
+	ab->q = cols + 1;
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
 	fprintf(stderr, "total m = %d\n", ab->m);
@@ -386,12 +393,14 @@ arbond_sample_check (arbond *ab, const int *list,
 
 static int unit_nobs (arbond *ab, int i)
 {
-    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+    int t1 = ab->ui[i].t1;
+    int t2 = ab->ui[i].t2;
+    int n = t2 - t1 + 1;
 
     if (ab->ui[i].skip != NULL) {
-	int t, m = n;
+	int t;
 
-	for (t=0; t<m; t++) {
+	for (t=t1; t<=t2; t++) {
 	    if (ab->ui[i].skip[t]) {
 		n--;
 	    }
@@ -403,11 +412,7 @@ static int unit_nobs (arbond *ab, int i)
 
 static int skip_obs (arbond *ab, int i, int t)
 {
-    if (ab->ui[i].skip == NULL) {
-	return 0;
-    }
-
-    return ab->ui[i].skip[t - ab->ui[i].t1];
+    return (ab->ui[i].skip == NULL)? 0 : ab->ui[i].skip[t];
 }
 
 /* 
@@ -566,7 +571,7 @@ static int next_obs (arbond *ab, int i, int j0, int n)
     int j;
 
     for (j=j0; j<n; j++) {
-	if (ab->ui[i].skip[j] == 0) {
+	if (ab->ui[i].skip[j+ab->ui[i].t1] == 0) {
 	    return j;
 	}
     }
@@ -867,33 +872,76 @@ static int find_rank (const gretl_matrix *a, int *err)
     gretl_matrix_free(Q);
     gretl_matrix_free(R);
 
+    if (rank == 0 && !*err) {
+	*err = E_SINGULAR;
+    }
+
     return rank;
+}
+
+static char *
+rank_mask (arbond *ab, const gretl_matrix *A, int *err)
+{
+    char *mask;
+    int pos, cut, n;
+    int i, k, r;
+
+    r = find_rank(A, err);
+    if (*err) {
+	return NULL;
+    }
+
+    cut = A->rows - r;
+
+    mask = calloc(A->rows, 1);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    pos = ab->xc0; 
+    n  = 0;
+
+    /* work down from max lag */
+    for (k=ab->q; k>=2 && n<cut; k--) {
+	int psub = ab->q - 1;
+
+	for (i=0; i<ab->maxc; i++) {
+	    pos -= psub;
+	    mask[pos] = 1;
+	    n++;
+	}
+	while (psub >= k) {
+	    pos -= psub--;
+	    mask[pos] = 1;
+	    n++;
+	}
+	pos = ab->xc0 + (ab->q - k + 1);
+    }
+
+    return mask;
 }
 
 static int try_alt_inverse (arbond *ab, gretl_matrix *Acpy)
 {
+    char *mask = NULL;
+    gretl_matrix *A = NULL;
     int err = 0;
-    char *mask = zero_row_mask(ab->ZT, &err);
-    gretl_matrix *A;
+
+    mask = zero_row_mask(ab->ZT, &err);
+
+    if (mask == NULL && !err) {
+	mask = rank_mask(ab, Acpy, &err);
+    } 
 
     if (err) {
 	return err;
     }
 
-    if (mask == NULL) {
-	int r = find_rank(Acpy, &err);
-
-	if (r > 0 && r < Acpy->rows) {
-	    fprintf(stderr, "Problem: A is of dim %d but rank %d\n", Acpy->rows, r);
-	}
-	return E_SINGULAR;
-    } else {
-	/* make a copy with zero rows/cols omitted */
-	A = matrix_copy_masked(Acpy, mask);
-	if (A == NULL) {
-	    free(mask);
-	    return E_ALLOC;
-	}
+    A = matrix_copy_masked(Acpy, mask);
+    if (A == NULL) {
+	free(mask);
+	return E_ALLOC;
     }
 
     err = gretl_invert_symmetric_matrix(A);
@@ -1079,6 +1127,13 @@ arbond_estimate (const int *list, const double **X,
 	    }
 	    s = i * ab.T + t;
 	    /* current difference of dependent var */
+#if 1
+	    if (na(y[s])) {
+		fprintf(stderr, "ERROR: NA in y(s) at unit %d, t=%d\n", i, t);
+	    } else if (na(y[s-1])) {
+		fprintf(stderr, "ERROR: NA in y(s-1) at unit %d, t=%d\n", i, t);
+	    }
+#endif
 	    gretl_vector_set(ab.dy, k, y[s] - y[s-1]);
 	    for (j=0; j<ab.p; j++) {
 		/* lagged difference of dependent var */
