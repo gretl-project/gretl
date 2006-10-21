@@ -1219,13 +1219,6 @@ arbond_estimate (const int *list, const double **X,
 	    }
 	    s = i * ab.T + t;
 	    /* current difference of dependent var */
-#if 1
-	    if (na(y[s])) {
-		fprintf(stderr, "ERROR: NA in y(s) at unit %d, t=%d\n", i, t);
-	    } else if (na(y[s-1])) {
-		fprintf(stderr, "ERROR: NA in y(s-1) at unit %d, t=%d\n", i, t);
-	    }
-#endif
 	    gretl_vector_set(ab.dy, k, y[s] - y[s-1]);
 	    for (j=0; j<ab.p; j++) {
 		/* lagged difference of dependent var */
@@ -1309,9 +1302,9 @@ arbond_estimate (const int *list, const double **X,
 		for (ip=1; ip<=ab.plist[0]; ip++) {
 		    for (j=0; j<npcols; j++) {
 			s = i * ab.T + t - (npcols + 1) + j;
-			if (t - s <= ab.q && !na(Z[ab.plist[ip]][s])) {
+			if (t - s <= ab.q && !na(X[ab.plist[ip]][s])) {
 			    gretl_matrix_set(ab.Zi, k, ab.pc0 + j + offpj, 
-					     Z[ab.plist[ip]][s]);
+					     X[ab.plist[ip]][s]);
 			}
 		    }
 		}

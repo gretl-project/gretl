@@ -1534,8 +1534,6 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	    }
 	}
 
-	fprintf(stderr, "list dups: start=%d, stop=%d\n", start, stop);
-
 	if (stop == start) {
 	    ret = real_list_dup(list, start + 1, list[0]);
 	} else {
