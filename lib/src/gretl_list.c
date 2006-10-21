@@ -1452,6 +1452,21 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
     return 0;
 }
 
+static int real_list_dup (const int *list, int start, int stop)
+{
+    int i, j, ret = -1;
+
+    for (i=start; i<stop && ret<0; i++) {
+	for (j=i+1; j<=stop && ret<0; j++) {
+	    if (list[i] == list[j]) {
+		ret = list[i];
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /**
  * gretl_list_duplicates:
  * @list: an array of integer variable ID numbers, the first element
@@ -1468,8 +1483,9 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 {
-    int i, j, start = 2;
-    int ret = -1;
+    int multi = 0;
+    int start = 2;
+    int i, ret = -1;
 
     if (ci == ARCH) {
 	start = 3;
@@ -1482,22 +1498,57 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	}
     } else if (ci == LAGS && list[0] > 1 && list[2] == LISTSEP) {
 	start = 3;
-    } else if (ci == TSLS || ci == AR || ci == SCATTERS || 
-	       ci == MPOLS || ci == GARCH || ci == ARBOND) {
+    } else if (ci == AR || ci == SCATTERS || ci == MPOLS || ci == GARCH) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;
 		break;
 	    }
 	}
-    }
-    
-    for (i=start; i<list[0] && ret < 0; i++) {
-	for (j=i+1; j<=list[0] && ret < 0; j++) {
-	    if (list[i] == list[j]) {
-		ret = list[i];
+    } else if (ci == TSLS) {
+	multi = 1;
+	for (i=2; i<list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		start = i+1;
+		break;
 	    }
 	}
+	ret = real_list_dup(list, start, list[0]);
+	if (ret == -1) {
+	    ret = real_list_dup(list, 2, start - 2);
+	}
+    } else if (ci == ARBOND) {
+	int stop = 0;
+
+	multi = 1;
+	for (i=2; i<list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		start = i;
+		break;
+	    }
+	}
+	for (i=list[0]-1; i>2; i--) {
+	    if (list[i] == LISTSEP) {
+		stop = i;
+		break;
+	    }
+	}
+
+	fprintf(stderr, "list dups: start=%d, stop=%d\n", start, stop);
+
+	if (stop == start) {
+	    ret = real_list_dup(list, start + 1, list[0]);
+	} else {
+	    ret = real_list_dup(list, start + 1, stop - 1);
+	    if (ret == -1) {
+		ret = real_list_dup(list, stop + 1, list[0]);
+	    }
+	}
+	multi = 1;
+    } 
+
+    if (!multi) {
+	ret = real_list_dup(list, start, list[0]);
     }
 
     return ret;

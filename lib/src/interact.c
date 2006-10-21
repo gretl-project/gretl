@@ -546,7 +546,7 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
 
 static int expand_command_list (CMD *cmd, int add)
 {
-    int oldn = cmd->list[0];
+    int i, oldn = cmd->list[0];
     int *list;
 
     list = realloc(cmd->list, (oldn + add) * sizeof *list);
@@ -557,8 +557,13 @@ static int expand_command_list (CMD *cmd, int add)
 	return 1;
     }
 
-    /* one of the vars was "already assumed" */
+    /* one of the added vars was "already assumed" */
     list[0] += (add - 1);
+
+    /* avoid uninitialized values */
+    for (i=oldn+1; i<=list[0]; i++) {
+	list[i] = 0;
+    }
     
     cmd->list = list;
 
@@ -833,12 +838,19 @@ static int wildcard_expand_ok (const char *s, int *lnum,
 	    int k, nw = wildlist[0];
 	    int llen = *lnum;
 
+#if CMD_DEBUG
+	    printlist(wildlist, "wildlist");
+	    printlist(cmd->list, "cmd->list before wildlist insertion");
+#endif	    
 	    if (expand_command_list(cmd, nw)) {
 		return 0;
 	    }
 	    for (k=1; k<=nw; k++) {
 		cmd->list[llen++] = wildlist[k];
 	    }
+#if CMD_DEBUG
+	    printlist(cmd->list, "cmd->list after wildlist insertion");
+#endif	    
 	    free(wildlist);
 	    *lnum = llen;
 	    ok = 1;
@@ -998,7 +1010,7 @@ static int get_next_field (char *field, const char *s)
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, "field_from_line, got '%s'\n", field);
+    fprintf(stderr, "get_next_field: got '%s'\n", field);
 #endif
 
     return err;
@@ -1385,6 +1397,15 @@ static int process_cmd_extra (CMD *cmd, const double **Z,
     return cmd->errcode;
 }
 
+static void maybe_switch_off_ints (CMD *cmd, int scount, int *ints_ok)
+{
+    if (*ints_ok) {
+	if (scount == 0 || (cmd->ci == ARBOND && scount == 1)) {
+	    *ints_ok = 0;
+	}
+    }
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1402,7 +1423,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     int j, nf, linelen, pos, v, lnum;
     int gotdata = 0, poly = 0;
     int sepcount = 0;
-    int read_lags = 0;
+    int ints_ok = 0;
     char *remainder = NULL;
     char field[FIELDLEN] = {0};
 
@@ -1712,8 +1733,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == AR || cmd->ci == ARBOND ||
 	cmd->ci == ARMA || cmd->ci == GARCH) {
-	/* flag acceptance of lag orders in list */
-	read_lags = 1;
+	/* flag acceptance of plain ints in list */
+	ints_ok = 1;
     }
 
     /* allocate space for the command list */
@@ -1748,9 +1769,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		field[strlen(field) - 1] = '\0';
 	    }
 
-	    if (read_lags) {
+	    if (ints_ok) {
 		int k = gretl_int_from_string(field, (const double **) *pZ,
 					      pdinfo, &cmd->errcode);
+
 		if (!cmd->errcode) {
 		    cmd->list[lnum++] = k;
 		}
@@ -1835,7 +1857,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	else if (isdigit(*field)) {
 	    /* could be the ID number of a variable */
 	    v = atoi(field);
-	    if (!read_lags && !poly && v > pdinfo->v - 1) {
+	    if (!ints_ok && !poly && v > pdinfo->v - 1) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
@@ -1850,10 +1872,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
 		sepcount--;
-		if (read_lags && sepcount == 0) {
-		    /* turn off acceptance of AR lags etc */
-		    read_lags = 0;
-		}
+		maybe_switch_off_ints(cmd, sepcount, &ints_ok);
 		if (cmd->ci == MPOLS) { 	 
 		    poly = 1; 	 
 		}
@@ -1875,7 +1894,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	/* check cmd->list for scalars */
-	if (!read_lags && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
+	if (!ints_ok && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
 	    if (var_is_scalar(pdinfo, cmd->list[lnum-1])) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);

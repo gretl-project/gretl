@@ -3162,6 +3162,43 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 }
 
 /**
+ * gretl_matrix_rank:
+ * @a: matrix to examine.
+ * @err: location to receive error code on failure.
+ * 
+ * Computes the rank of @a via its QR decomposition.  If you
+ * already have that decomposition, using gretl_matrix_QR_rank()
+ * is more efficient.
+ *
+ * Returns: the rank of @a, or -1 on failure.
+ */
+
+int gretl_matrix_rank (const gretl_matrix *a, int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    int rank = -1;
+
+    Q = gretl_matrix_copy(a);
+    R = gretl_matrix_alloc(a->rows, a->rows);
+
+    if (Q == NULL || R == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = gretl_matrix_QR_decomp(Q, R);
+    }
+
+    if (!*err) {
+	rank = gretl_matrix_QR_rank(R, NULL, err);
+    }
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+
+    return rank;
+}
+
+/**
  * gretl_invert_general_matrix:
  * @a: matrix to invert.
  * 

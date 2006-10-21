@@ -1,4 +1,5 @@
 # Gretl: various illustrative datafiles
+"abdata","Arellano and Bond (1991) panel data"
 "anscombe","Anscombe's Quartet (artificial data)"
 "arma","Artificial data for ARMA script example"
 "armaloop","Artificial data for ARMA loop example"

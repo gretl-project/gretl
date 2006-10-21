@@ -324,6 +324,8 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R);
 
 int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp);
 
+int gretl_matrix_rank (const gretl_matrix *a, int *err);
+
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);

@@ -38,6 +38,7 @@ struct arbond_ {
     int nx;               /* number of independent variables */
     int nz;               /* number of instruments (other than y lags) */
     int m;                /* number of columns in instrument matrix, Z */
+    int pc0;              /* column in Z where predet vars start */
     int xc0;              /* column in Z where exog vars start */
     int maxc;             /* number of Zi columns of maximal width */
     int N;                /* number of units */
@@ -296,6 +297,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->k = ab->p + ab->nx;
     ab->maxTi = 0;
     ab->m = 0;
+    ab->pc0 = 0;
     ab->xc0 = 0;
     ab->maxc = 0;
     ab->nobs = 0;
@@ -481,9 +483,21 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	    cbak = cols;
 	}
-	/* record the column where the independent vars start */
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
 	ab->q = cols + 1;
+	/* instruments for predetermined vars */
+	if (ab->plist != NULL) {
+	    int j, np = ab->plist[0];
+
+	    ab->pc0 = ab->m;
+	    for (i=0; i<np; i++) {
+		for (j=2; j<tau; j++) {
+		    ab->m += j; /* FIXME q */
+		}
+	    }
+	    fprintf(stderr, "m, including predet cols, = %d\n", ab->m);
+	}
+	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
 	fprintf(stderr, "total m = %d\n", ab->m);
@@ -953,37 +967,6 @@ eliminate_zero_rows (gretl_matrix *a, const char *mask)
     a->rows = n;
 }
 
-static int find_rank (const gretl_matrix *a, int *err)
-{
-    gretl_matrix *Q = NULL;
-    gretl_matrix *R = NULL;
-    int rank = 0;
-
-    Q = gretl_matrix_copy(a);
-    R = gretl_matrix_alloc(a->rows, a->rows);
-
-    if (Q == NULL || R == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    *err = gretl_matrix_QR_decomp(Q, R);
-
-    if (!*err) {
-	rank = gretl_matrix_QR_rank(R, NULL, err);
-    }
-
- bailout:
-    gretl_matrix_free(Q);
-    gretl_matrix_free(R);
-
-    if (rank == 0 && !*err) {
-	*err = E_SINGULAR;
-    }
-
-    return rank;
-}
-
 static char *
 rank_mask (arbond *ab, const gretl_matrix *A, int *err)
 {
@@ -991,7 +974,11 @@ rank_mask (arbond *ab, const gretl_matrix *A, int *err)
     int pos, cut, n;
     int i, k, r;
 
-    r = find_rank(A, err);
+    r = gretl_matrix_rank(A, err);
+    if (!*err && r == 0) {
+	*err = E_SINGULAR;
+    }
+
     if (*err) {
 	return NULL;
     }
@@ -1268,6 +1255,7 @@ arbond_estimate (const int *list, const double **X,
 	int t1 = ab.ui[i].t1;
 	int t2 = ab.ui[i].t2;
 	int Ti, ncols, offj;
+	int npcols, offpj;
 
 	if (skip_unit(&ab, i)) {
 	    continue;
@@ -1278,14 +1266,21 @@ arbond_estimate (const int *list, const double **X,
 	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
 	gretl_matrix_zero(ab.Zi);
 
-	offj = 0;
+	offpj = offj = 0;
 	ncols = ab.p;
+	npcols = 2;
 
 	for (t=ab.p+1; t<t1; t++) {
-	    /* pre-shift right as needed */
+	    /* pre-shift fields right as needed */
 	    offj += ncols;
 	    if (ncols < ab.q - 1) {
 		ncols++;
+	    }
+	    if (ab.plist != NULL) {
+		offpj += npcols;
+		if (npcols < ab.q) { /* FIXME q */
+		    npcols++;
+		}
 	    }
 	}	    
 
@@ -1306,8 +1301,28 @@ arbond_estimate (const int *list, const double **X,
 	    if (ncols < ab.q - 1) {
 		ncols++;
 	    }
+#if 0
+	    if (!skip && ab.plist != NULL) {
+		/* predetermined independent vars (FIXME q) */
+		int ip;
+
+		for (ip=1; ip<=ab.plist[0]; ip++) {
+		    for (j=0; j<npcols; j++) {
+			s = i * ab.T + t - (npcols + 1) + j;
+			if (t - s <= ab.q && !na(Z[ab.plist[ip]][s])) {
+			    gretl_matrix_set(ab.Zi, k, ab.pc0 + j + offpj, 
+					     Z[ab.plist[ip]][s]);
+			}
+		    }
+		}
+	    }
+	    offpj += npcols;
+	    if (npcols < ab.q) {
+		npcols++;
+	    }
+#endif
 	    if (!skip) {
-		/* additional instrument columns */
+		/* additional full-length instrument columns */
 		s = i * ab.T + t;
 		for (j=0; j<ab.nz; j++) {
 		    x = X[ab.ilist[j+1]][s];
