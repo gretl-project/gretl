@@ -485,6 +485,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	}
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
 	ab->q = cols + 1;
+#if 0
 	/* instruments for predetermined vars */
 	if (ab->plist != NULL) {
 	    int j, np = ab->plist[0];
@@ -497,6 +498,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	    fprintf(stderr, "m, including predet cols, = %d\n", ab->m);
 	}
+#endif
 	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
@@ -1269,12 +1271,14 @@ arbond_estimate (const int *list, const double **X,
 	    if (ncols < ab.q - 1) {
 		ncols++;
 	    }
+#if 0
 	    if (ab.plist != NULL) {
 		offpj += npcols;
 		if (npcols < ab.q) { /* FIXME q */
 		    npcols++;
 		}
 	    }
+#endif
 	}	    
 
 	k = 0;
