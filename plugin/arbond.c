@@ -41,7 +41,7 @@ struct arbond_ {
     int pc0;              /* column in Z where predet vars start */
     int xc0;              /* column in Z where exog vars start */
     int maxc;             /* number of Zi columns of maximal width */
-    int N;                /* total number of units */
+    int N;                /* total number of units in sample */
     int effN;             /* number of units with usable observations */
     int T;                /* total number of observations per unit */
     int maxTi;            /* maximum equations for any given unit */
@@ -51,20 +51,21 @@ struct arbond_ {
     double s2;            /* residual variance */
     double AR1;           /* z statistic for AR(1) errors */
     double AR2;           /* z statistic for AR(2) errors */
+    double sargan;        /* overidentification test statistic */
     int *xlist;           /* list of independent variables */
     int *ilist;           /* list of instruments */
     int *plist;           /* list of predetermined indep vars */
     gretl_matrix *beta;   /* parameter estimates */
     gretl_matrix *vbeta;  /* parameter variance matrix */
     gretl_matrix *uhat;   /* residuals, differenced version */
-    gretl_matrix *H;
+    gretl_matrix *H;      /* step 1 error covariance matrix */
     gretl_matrix *A;
     gretl_matrix *V;
     gretl_matrix *ZT;     /* transpose of full instrument matrix */
     gretl_matrix *Zi;     /* per-unit instrument matrix */
     gretl_matrix *dy;     /* first difference of dependent var */
     gretl_matrix *dX;     /* lagged differences of y and indep vars */
-    gretl_matrix *tmp0;   /* workspace */
+    gretl_matrix *tmp0;   /* below: workspace */
     gretl_matrix *tmp1;
     gretl_matrix *tmp2;
     gretl_matrix *L1;
@@ -583,32 +584,31 @@ static int sargan_test (arbond *ab, PRN *prn)
 {
     gretl_matrix *Zu = NULL;
     gretl_matrix *m1 = NULL;
-    double s;
     int err = 0;
 
     Zu = gretl_matrix_alloc(ab->m, 1);
     m1 = gretl_matrix_alloc(ab->m, 1);
+
     if (Zu == NULL || m1 == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+	gretl_matrix_free(Zu);
+	gretl_matrix_free(m1);
+	return E_ALLOC;
     }
 
     gretl_matrix_multiply(ab->ZT, ab->uhat, Zu);
     gretl_matrix_divide_by_scalar(ab->A, ab->effN);
     gretl_matrix_multiply(ab->A, Zu, m1);
 
-    s = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
-				 m1, GRETL_MOD_NONE,
-				 &err);
+    ab->sargan = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
+					  m1, GRETL_MOD_NONE,
+					  &err);
 
     if (ab->step == 1) {
-	s /= ab->s2;
+	ab->sargan *= 2.0 / ab->s2; /* allow for scale factor in H */
     }
 
     pprintf(prn, "Sargan test: Chi-square(%d) = %g\n",
-	    ab->m - ab->k, s);
-
- bailout:
+	    ab->m - ab->k, ab->sargan);
 
     gretl_matrix_free(Zu);
     gretl_matrix_free(m1);
@@ -617,7 +617,7 @@ static int sargan_test (arbond *ab, PRN *prn)
 }
 
 /* Compute the z test for AR errors, if possible.  This should
-   probably be rolled into arbond_variance() for the sake of
+   perhaps be rolled into arbond_variance() for the sake of
    efficiency 
 */
 
@@ -794,6 +794,8 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
    where C = X'*Z*A_N*Z'*X and
     \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
     (v_i being the step-1 residuals)
+
+    we compute the residuals while we're at it
 */
 
 static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
