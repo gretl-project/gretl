@@ -293,6 +293,32 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
+{
+    double x;
+    int i;
+
+    x = gretl_model_get_double(pmod, "AR1");
+    if (!na(x)) {
+	pprintf(prn, "  Test for AR(%d) errors:", 1);
+	pprintf(prn, " z = %g (p-value %.4g)\n", x, normal_pvalue_2(x));
+    }
+
+    x = gretl_model_get_double(pmod, "AR2");
+    if (!na(x)) {
+	pprintf(prn, "  Test for AR(%d) errors:", 2);
+	pprintf(prn, " z = %g (p-value %.4g)\n", x, normal_pvalue_2(x));
+    }
+
+    x = gretl_model_get_double(pmod, "sargan");
+    if (!na(x)) {
+	i = gretl_model_get_int(pmod, "sargan_df");
+	pprintf(prn, "  %s:\n", _("Sargan over-identification test"));
+	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+    }
+}
+
 static void ladstats (const MODEL *pmod, PRN *prn)
 {
     int utf = plain_format(prn);
@@ -672,9 +698,15 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("Between-groups");
 	}
+    } else if (pmod->ci == ARBOND) {
+	if (gretl_model_get_int(pmod, "step") == 2) {
+	    return N_("2-step Arellano-Bond");
+	} else {
+	    return N_("1-step Arellano-Bond");
+	}
     } else {
 	return estimator_string(pmod->ci, prn);
-    } 
+    }
 }
 
 static void print_model_tests (const MODEL *pmod, PRN *prn)
@@ -1805,6 +1837,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->ci == ARBOND) {
 	print_middle_table_start(prn);
 	essline(pmod, prn);
+	print_arbond_test_data(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }   

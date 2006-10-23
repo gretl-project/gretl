@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-#define ADEBUG 1
+#define ADEBUG 0
 
 typedef struct arbond_ arbond;
 
@@ -54,12 +54,12 @@ struct arbond_ {
     double sargan;        /* overidentification test statistic */
     int *xlist;           /* list of independent variables */
     int *ilist;           /* list of instruments */
-    int *plist;           /* list of predetermined indep vars */
     gretl_matrix *beta;   /* parameter estimates */
     gretl_matrix *vbeta;  /* parameter variance matrix */
     gretl_matrix *uhat;   /* residuals, differenced version */
     gretl_matrix *H;      /* step 1 error covariance matrix */
     gretl_matrix *A;
+    gretl_matrix *Acpy;
     gretl_matrix *V;
     gretl_matrix *ZT;     /* transpose of full instrument matrix */
     gretl_matrix *Zi;     /* per-unit instrument matrix */
@@ -68,10 +68,12 @@ struct arbond_ {
     gretl_matrix *tmp0;   /* below: workspace */
     gretl_matrix *tmp1;
     gretl_matrix *tmp2;
+    gretl_matrix *kktmp;
+    gretl_matrix *den;
     gretl_matrix *L1;
-    gretl_matrix *Lk;
+    gretl_matrix *XZA;
     gretl_matrix *R1;
-    gretl_matrix *Rk;
+    gretl_matrix *ZX;
     struct unit_info *ui;
 };
 
@@ -86,6 +88,7 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->uhat);
     gretl_matrix_free(ab->H);
     gretl_matrix_free(ab->A);
+    gretl_matrix_free(ab->Acpy);
     gretl_matrix_free(ab->V);
     gretl_matrix_free(ab->Zi);
     gretl_matrix_free(ab->ZT);
@@ -94,14 +97,15 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->tmp0);
     gretl_matrix_free(ab->tmp1);
     gretl_matrix_free(ab->tmp2);
+    gretl_matrix_free(ab->kktmp);
+    gretl_matrix_free(ab->den);
     gretl_matrix_free(ab->L1);
-    gretl_matrix_free(ab->Lk);
+    gretl_matrix_free(ab->XZA);
     gretl_matrix_free(ab->R1);
-    gretl_matrix_free(ab->Rk);
+    gretl_matrix_free(ab->ZX);
 
     free(ab->xlist);
     free(ab->ilist);
-    free(ab->plist);
 
     for (i=0; i<ab->N; i++) {
 	free(ab->ui[i].skip);
@@ -119,6 +123,7 @@ static int arbond_allocate (arbond *ab)
     ab->ZT = gretl_matrix_alloc(ab->m, ab->nobs);
     ab->H = gretl_matrix_alloc(T2, T2);
     ab->A = gretl_matrix_alloc(ab->m, ab->m);
+    ab->Acpy = gretl_matrix_alloc(ab->m, ab->m);
     ab->Zi = gretl_matrix_alloc(T2, ab->m);
     ab->dy = gretl_column_vector_alloc(ab->nobs);
     ab->dX = gretl_matrix_alloc(ab->nobs, ab->k);
@@ -126,18 +131,20 @@ static int arbond_allocate (arbond *ab)
     ab->tmp0 = gretl_matrix_alloc(T2, ab->m);
     ab->tmp1 = gretl_matrix_alloc(ab->m, ab->m);
     ab->tmp2 = gretl_matrix_alloc(ab->k, ab->m);
+    ab->kktmp = gretl_matrix_alloc(ab->k, ab->k);
+    ab->den = gretl_matrix_alloc(ab->k, ab->k);
     ab->L1 = gretl_matrix_alloc(1, ab->m);
-    ab->Lk = gretl_matrix_alloc(ab->k, ab->m);
+    ab->XZA = gretl_matrix_alloc(ab->k, ab->m);
     ab->R1 = gretl_matrix_alloc(ab->m, 1);
-    ab->Rk = gretl_matrix_alloc(ab->m, ab->k);
+    ab->ZX = gretl_matrix_alloc(ab->m, ab->k);
 
     if (ab->ZT == NULL || ab->H == NULL || ab->A == NULL ||
 	ab->Zi == NULL || ab->dy == NULL || ab->dX == NULL ||
 	ab->tmp0 == NULL || ab->tmp1 == NULL || ab->tmp2 == NULL ||
-	ab->L1 == NULL || ab->Lk == NULL ||
-	ab->R1 == NULL || ab->Rk == NULL ||
+	ab->kktmp == NULL || ab->L1 == NULL || ab->XZA == NULL ||
+	ab->R1 == NULL || ab->ZX == NULL || ab->den == NULL ||
 	ab->beta == NULL || ab->vbeta == NULL ||
-	ab->uhat == NULL) {
+	ab->uhat == NULL || ab->Acpy == NULL) {
 	return E_ALLOC;
     } else {
 	return 0;
@@ -172,7 +179,9 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 	for (i=0; i<ab->nx; i++) {
 	    ab->xlist[i+1] = list[xpos + i];
 	}
+#if ADEBUG
 	printlist(ab->xlist, "ab->xlist");
+#endif
 	if (nz == 0) {
 	    /* implicit: all x vars are exogenous */
 	    ab->ilist = gretl_list_copy(ab->xlist);
@@ -192,34 +201,11 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 	for (i=0; i<nz; i++) {
 	    ab->ilist[i+1] = list[spos + i + 1];
 	}
+#if ADEBUG
 	printlist(ab->ilist, "ab->ilist");
+#endif
 	ab->nz = nz;
     } 
-
-    if (ab->nx > 0 && nz > 0) {
-	/* compose predetermined vars list */
-	int j, np = 0;
-
-	for (i=1; i<=ab->xlist[0]; i++) {
-	    if (gretl_list_position(ab->xlist[i], ab->ilist) == 0) {
-		np++;
-	    }
-	}
-
-	if (np > 0) {
-	    ab->plist = gretl_list_new(np);
-	    if (ab->plist == NULL) {
-		return E_ALLOC;
-	    }
-	    j = 1;
-	    for (i=1; i<=ab->xlist[0]; i++) {
-		if (gretl_list_position(ab->xlist[i], ab->ilist) == 0) {
-		    ab->plist[j++] = ab->xlist[i];
-		}
-	    }
-	    printlist(ab->plist, "ab->plist");
-	}
-    }
 
     return err;
 }
@@ -232,6 +218,7 @@ static void arbond_zero_matrices (arbond *ab)
     ab->ZT = NULL;
     ab->H = NULL;
     ab->A = NULL;
+    ab->Acpy = NULL;
     ab->V = NULL;
     ab->Zi = NULL;
     ab->dy = NULL;
@@ -239,17 +226,18 @@ static void arbond_zero_matrices (arbond *ab)
     ab->tmp0 = NULL;
     ab->tmp1 = NULL;
     ab->tmp2 = NULL;
+    ab->kktmp = NULL;
+    ab->den = NULL;
     ab->L1 = NULL;
-    ab->Lk = NULL;
+    ab->XZA = NULL;
     ab->R1 = NULL;
-    ab->Rk = NULL;
+    ab->ZX = NULL;
 }
 
 static void arbond_free_lists (arbond *ab)
 {
     free(ab->xlist);
     free(ab->ilist);
-    free(ab->plist);
 }
 
 static int 
@@ -285,7 +273,6 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 
     ab->xlist = NULL;
     ab->ilist = NULL;
-    ab->plist = NULL;
 
     ab->opt = opt;
     ab->step = 1;
@@ -370,14 +357,16 @@ arbond_sample_check (arbond *ab, const int *list,
     int i, s, t;
     int err = 0;
 
+#if ADEBUG
     fprintf(stderr, "arbond_sample_check: ab->T = %d\n", ab->T);
+#endif
 
     for (i=0; i<ab->N; i++) {
 	/* find the first y observation, all units */
 	if (t1min > 0) {
+	    s = i * ab->T;
 	    for (t=0; t<ab->T; t++) {
-		s = i * ab->T + t;
-		if (!na(y[s])) {
+		if (!na(y[s+t])) {
 		    if (t < t1min) {
 			t1min = t;
 		    }
@@ -387,7 +376,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	}
     }
 
+#if ADEBUG
     fprintf(stderr, "initial scan: t1min = %d\n", t1min);
+#endif
 
     mask = malloc(ab->T);
     if (mask == NULL) {
@@ -402,7 +393,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	int t1i = ab->T - 1, t2i = 0; 
 	int Ti = 0, usable = 0;
 
+#if ADEBUG
 	fprintf(stderr, "Checking unit %d\n", i);
+#endif
 
 	for (t=0; t<ab->T; t++) {
 	    mask[t] = 0;
@@ -414,9 +407,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	   using a lagged level of y
 	*/
 
+	s = i * ab->T;
 	for (t=ab->p+1; t<ab->T; t++) {
-	    s = i * ab->T + t;
-	    if (anymiss(ab, Z, s)) {
+	    if (anymiss(ab, Z, s + t)) {
 		mask[t] = 1;
 	    } else {
 		usable++;
@@ -429,7 +422,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	    ab->effN -= 1;
 	    ab->ui[i].t1 = -1;
 	    ab->ui[i].t2 = -1;
+#if ADEBUG
 	    fprintf(stderr, "not usable\n");
+#endif
 	    continue;
 	}
 
@@ -459,8 +454,10 @@ arbond_sample_check (arbond *ab, const int *list,
 	}
 	ab->ui[i].t1 = t1i;
 	ab->ui[i].t2 = t2i;
+#if ADEBUG
 	fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n", 
 		t1i, t2i, Ti, usable);
+#endif
     }
 
     /* is t1min actually "reachable"? */
@@ -468,11 +465,13 @@ arbond_sample_check (arbond *ab, const int *list,
 	t1min = t1imin - ab->q;
     }
 
+#if ADEBUG
     fprintf(stderr, "Number of units with usable observations = %d\n", ab->effN);
     fprintf(stderr, "Total usable observations = %d\n", ab->nobs);
     fprintf(stderr, "Max equations for any given unit = %d\n", ab->maxTi);
     fprintf(stderr, "Maximal relevant time-series span: %d to %d = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
+#endif
 
     if (ab->effN == 0) {
 	err = E_MISSDATA;
@@ -481,7 +480,9 @@ arbond_sample_check (arbond *ab, const int *list,
 	int tau = t2max - t1min + 1;
 	int cbak = ab->p, cols = 0;
 
+#if ADEBUG
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
+#endif
 	ab->m = ab->p;
 	ab->maxc = 1;
 	for (i=1; i<tau-2; i++) {
@@ -492,26 +493,16 @@ arbond_sample_check (arbond *ab, const int *list,
 	    }
 	    cbak = cols;
 	}
+#if ADEBUG
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
-	ab->q = cols + 1;
-#if 0
-	/* instruments for predetermined vars */
-	if (ab->plist != NULL) {
-	    int j, np = ab->plist[0];
-
-	    ab->pc0 = ab->m;
-	    for (i=0; i<np; i++) {
-		for (j=2; j<tau; j++) {
-		    ab->m += j; /* FIXME q */
-		}
-	    }
-	    fprintf(stderr, "m, including predet cols, = %d\n", ab->m);
-	}
 #endif
+	ab->q = cols + 1;
 	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
+#if ADEBUG
 	fprintf(stderr, "total m = %d\n", ab->m);
+#endif
     }
 
     free(mask);
@@ -521,16 +512,16 @@ arbond_sample_check (arbond *ab, const int *list,
 
 static int unit_nobs (arbond *ab, int i)
 {
-    int t1 = ab->ui[i].t1;
-    int t2 = ab->ui[i].t2;
-    int n = t2 - t1 + 1;
+    int n;
 
-    if (t1 < 0) return 0;
+    if (ab->ui[i].t1 < 0) return 0;
+
+    n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
 
     if (ab->ui[i].skip != NULL) {
 	int t;
 
-	for (t=t1; t<=t2; t++) {
+	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
 	    if (ab->ui[i].skip[t]) {
 		n--;
 	    }
@@ -607,8 +598,10 @@ static int sargan_test (arbond *ab, PRN *prn)
 	ab->sargan *= 2.0 / ab->s2; /* allow for scale factor in H */
     }
 
+#if ADEBUG
     pprintf(prn, "Sargan test: Chi-square(%d) = %g\n",
 	    ab->m - ab->k, ab->sargan);
+#endif
 
     gretl_matrix_free(Zu);
     gretl_matrix_free(m1);
@@ -621,24 +614,24 @@ static int sargan_test (arbond *ab, PRN *prn)
    efficiency 
 */
 
-static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
-		    PRN *prn)
+static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 {
     gretl_matrix *v = NULL;
-    gretl_matrix *v2 = NULL;
+    gretl_matrix *vk = NULL;
     gretl_matrix *X = NULL; /* this is trimmed "X_{*}" */
-    gretl_matrix *v2X = NULL; 
+    gretl_matrix *vkX = NULL; 
     gretl_matrix *tmpk = NULL;
     gretl_matrix *ui = NULL; 
     gretl_matrix *m1 = NULL; 
     gretl_matrix *SZv = NULL;
-    gretl_matrix *XZA = ab->Lk; /* already calculated */
     
     double x, num, den;
     double den2, den3;
-    int s, t, q, Q = 0;
-    int sbig = 0;
+    int s, t, q, Q;
+    int sbig, lag = 1;
     int i, j, err = 0;
+
+ restart:
 
     Q = ar_data_check(ab, lag);
     if (Q == 0) {
@@ -649,23 +642,32 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
     fprintf(stderr, "AR(%d) test: number of usable obs = %d\n", lag, Q);
 #endif
 
-    v = gretl_column_vector_alloc(Q);
-    v2 = gretl_column_vector_alloc(Q);
-    X = gretl_matrix_alloc(Q, ab->k);
-    v2X = gretl_matrix_alloc(1, ab->k);
-    tmpk = gretl_matrix_alloc(1, ab->k);
-    ui = gretl_column_vector_alloc(ab->maxTi);
-    m1 = gretl_matrix_alloc(ab->m, 1);
-    SZv = gretl_zero_matrix_new(ab->m, 1);
+    if (lag == 1) {
+	v = gretl_column_vector_alloc(Q);
+	vk = gretl_column_vector_alloc(Q);
+	X = gretl_matrix_alloc(Q, ab->k);
+	vkX = gretl_matrix_alloc(1, ab->k);
+	tmpk = gretl_matrix_alloc(1, ab->k);
+	ui = gretl_column_vector_alloc(ab->maxTi);
+	m1 = gretl_matrix_alloc(ab->m, 1);
+	SZv = gretl_zero_matrix_new(ab->m, 1);
 
-    if (v == NULL || v2 == NULL || X == NULL || 
-	v2X == NULL || tmpk == NULL || ui == NULL ||
-	m1 == NULL || SZv == NULL) {
-	return E_ALLOC;
+	if (v == NULL || vk == NULL || X == NULL || 
+	    vkX == NULL || tmpk == NULL || ui == NULL ||
+	    m1 == NULL || SZv == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    } else {
+	gretl_matrix_reuse(v, Q, 1);
+	gretl_matrix_reuse(vk, Q, 1);
+	gretl_matrix_reuse(X, Q, -1);
+	gretl_matrix_reuse(m1, ab->m, 1);
+	gretl_matrix_zero(SZv);
     }
 
     den = 0.0;
-    q = s = 0;
+    q = s = sbig = 0;
 
     for (i=0; i<ab->N; i++) {
 	int Ti = unit_nobs(ab, i);
@@ -699,8 +701,8 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
 	    if (!skip_obs(ab, i, t)) {
 		if (!skip_obs(ab, i, t-lag)) {
 		    v->val[q] = ab->uhat->val[s];
-		    v2->val[q] = ab->uhat->val[s-lag];
-		    den1i += v->val[q] * v2->val[q];
+		    vk->val[q] = ab->uhat->val[s-lag];
+		    den1i += v->val[q] * vk->val[q];
 		    for (j=0; j<ab->k; j++) {
 			x = gretl_matrix_get(ab->dX, s, j);
 			gretl_matrix_set(X, q, j, x);
@@ -711,7 +713,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
 	    }
 	}
 
-	/* cumulate Z'_i u_i u_i'_* u_{i,-2} */
+	/* cumulate Z'_i u_i u_i'_* u_{i,-k} */
 	gretl_matrix_multiply(ab->Zi, ui, m1);
 	gretl_matrix_multiply_by_scalar(m1, den1i);
 	gretl_matrix_add_to(SZv, m1);
@@ -720,64 +722,67 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
     }
 
 #if ADEBUG > 1
-    gretl_matrix_print(v2, "lagged residuals");
+    gretl_matrix_print(vk, "lagged residuals");
     gretl_matrix_print(v, "current residuals");
 #endif
 
     /* the numerator */
     num = 0.0;
     for (i=0; i<Q; i++) {
-	num += v2->val[i] * v->val[i];
+	num += vk->val[i] * v->val[i];
     }
 
     /* the denominator has three components, the first of which
        is already handled */
 
-    /* required component "v2X" = \hat{v}'_{-2} X_{*} */
-    gretl_matrix_multiply_mod(v2, GRETL_MOD_TRANSPOSE,
+    /* required component "vkX" = \hat{v}'_{-k} X_{*} */
+    gretl_matrix_multiply_mod(vk, GRETL_MOD_TRANSPOSE,
 			      X, GRETL_MOD_NONE,
-			      v2X);
+			      vkX);
     
-    /* v2' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
-    gretl_matrix_multiply(v2X, C, tmpk);
+    /* vk' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
+    gretl_matrix_multiply(vkX, C, tmpk);
     gretl_matrix_reuse(m1, 1, ab->m);
-    gretl_matrix_multiply(tmpk, XZA, m1);
+    gretl_matrix_multiply(tmpk, ab->XZA, m1);
     den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
 				    SZv, GRETL_MOD_NONE,
 				    &err);
     den -= 2.0 * den2;
 
-    /* additive term v2' X_* vbeta X_*' v2 */
-    gretl_matrix_multiply(v2X, ab->vbeta, tmpk);
+    /* additive term vk' X_* vbeta X_*' vk */
+    gretl_matrix_multiply(vkX, ab->vbeta, tmpk);
     den3 = gretl_matrix_dot_product(tmpk, GRETL_MOD_NONE,
-				    v2X, GRETL_MOD_TRANSPOSE,
+				    vkX, GRETL_MOD_TRANSPOSE,
 				    &err);
     den += den3;
 
     if (den < 0) {
-	return E_NAN;
+	err = E_NAN;
+	goto bailout;
     }
 
     /* now "x" = m2 */
     x = num / sqrt(den);
 
-    if (lag == 1) {
-	ab->AR1 = x;
-    } else if (lag == 2) {
-	ab->AR2 = x;
-    }
-
 #if ADEBUG
-    /* FIXME arrange to have this test printed under the
-       model output */
     pprintf(prn, "AR(%d) test: z = %.4g [%.3f]\n", lag, x, 
 	    normal_pvalue_2(x));
 #endif
 
+    if (lag == 1) {
+	ab->AR1 = x;
+	lag = 2;
+	goto restart;
+    } else {
+	ab->AR2 = x;
+    }
+
+ bailout:
+
     gretl_matrix_free(v);
-    gretl_matrix_free(v2);
+    gretl_matrix_free(vk);
     gretl_matrix_free(X);
-    gretl_matrix_free(v2X);
+    gretl_matrix_free(vkX);
     gretl_matrix_free(tmpk);
     gretl_matrix_free(ui);
     gretl_matrix_free(m1);
@@ -798,14 +803,14 @@ static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
     we compute the residuals while we're at it
 */
 
-static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
+static int arbond_variance (arbond *ab, PRN *prn)
 {
     static gretl_matrix *Vcpy;
 
-    gretl_matrix *tmp = NULL;
     gretl_matrix *num = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *u = NULL;
+    gretl_matrix *C = ab->den;
 
     double x, ut, SSR;
     int i, j, t, k, c;
@@ -815,7 +820,6 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 	return E_ALLOC;
     }
 
-    tmp = gretl_matrix_alloc(ab->k, ab->k);
     num = gretl_matrix_alloc(ab->k, ab->k);
 
     if (ab->step == 1) {
@@ -827,7 +831,7 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
 	Vcpy = NULL;
     }
 
-    if (tmp == NULL || num == NULL || V == NULL || 
+    if (num == NULL || V == NULL || 
 	(ab->step == 1 && u == NULL)) {
 	return E_ALLOC;
     }
@@ -888,20 +892,17 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
     err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
     err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
 
-    /* find the enclosing term, Z' * X */
-    err += gretl_matrix_multiply(ab->ZT, ab->dX, ab->Rk);
-
     /* complete the large "middle bit" */
     gretl_matrix_reuse(ab->tmp2, ab->m, ab->k);
-    err += gretl_matrix_multiply(V, ab->Rk, ab->tmp2);
-    err += gretl_matrix_multiply_mod(ab->Rk, GRETL_MOD_TRANSPOSE,
+    err += gretl_matrix_multiply(V, ab->ZX, ab->tmp2);
+    err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
 				     ab->tmp2, GRETL_MOD_NONE,
 				     num);
 
     /* pre- and post-multiply by C^{-1} */
     gretl_invert_symmetric_matrix(C);
-    gretl_matrix_multiply(num, C, tmp);
-    gretl_matrix_multiply(C, tmp, ab->vbeta);
+    gretl_matrix_multiply(num, C, ab->kktmp);
+    gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->effN);
 
 #if ADEBUG
@@ -911,30 +912,25 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
     /* just in case, restore original dim of tmp2 */
     gretl_matrix_reuse(ab->tmp2, ab->k, ab->m);
 
+    ab->SSR = SSR;
+    ab->s2 = SSR / (ab->nobs - ab->k);
+
 #if ADEBUG
     for (i=0; i<ab->k; i++) {
 	x = gretl_matrix_get(ab->vbeta, i, i);
 	pprintf(prn, "se(beta[%d]) = %g\n", i, sqrt(x));
     }
-#endif
-
-    ab->SSR = SSR;
-    ab->s2 = SSR / (ab->nobs - ab->k);
-
-#if ADEBUG
     pprintf(prn, "\nSSR = %.11g\n", ab->SSR);
     pprintf(prn, "sigma^2 = %.7g\n", ab->s2);
     pprintf(prn, "sigma = %.7g\n", sqrt(ab->s2));
 #endif
 
     /* while we're at it... */
-    ar_test(ab, C, 1, prn);
-    ar_test(ab, C, 2, prn);
+    ar_test(ab, C, prn);
     sargan_test(ab, prn);
 
     gretl_matrix_free(V);
     gretl_matrix_free(u);
-    gretl_matrix_free(tmp);
     gretl_matrix_free(num);
 
     return err;
@@ -1021,6 +1017,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     }
 
     gretl_model_set_int(pmod, "yno", ab->yno);
+    gretl_model_set_int(pmod, "n_included_units", ab->effN);
 
     pmod->ci = ARBOND;
     pmod->ncoeff = ab->k;
@@ -1083,7 +1080,21 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 		}
 	    }
 	}
+    }
 
+    /* additional arbond-specific test data */
+    if (!err) {
+	gretl_model_set_int(pmod, "step", ab->step);
+	if (!na(ab->AR1)) {
+	    gretl_model_set_double(pmod, "AR1", ab->AR1);
+	}
+	if (!na(ab->AR2)) {
+	    gretl_model_set_double(pmod, "AR2", ab->AR2);
+	}
+	if (!na(ab->sargan)) {
+	    gretl_model_set_int(pmod, "sargan_df", ab->m - ab->k);
+	    gretl_model_set_double(pmod, "sargan", ab->sargan);
+	}
     }
 
     return err;
@@ -1275,81 +1286,110 @@ rank_mask (arbond *ab, const gretl_matrix *A, int *err)
     return mask;
 }
 
-static int try_alt_inverse (arbond *ab, gretl_matrix *Acpy)
+/* Based on reduction of the A matrix, trim ZT to match and
+   adjust the sizes of all workspace matrices that have a 
+   dimension involving ab->m 
+*/
+
+static void real_shrink_matrices (arbond *ab, const char *mask)
 {
-    char *mask = NULL;
-    gretl_matrix *A = NULL;
+    fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
+	    ab->m, ab->A->rows);
+
+    eliminate_zero_rows(ab->ZT, mask);
+
+    ab->m = ab->A->rows;
+    gretl_matrix_reuse(ab->Acpy, ab->m, ab->m);
+    gretl_matrix_reuse(ab->tmp0, -1, ab->m);
+    gretl_matrix_reuse(ab->tmp1, ab->m, ab->m);
+    gretl_matrix_reuse(ab->tmp2, -1, ab->m);
+    gretl_matrix_reuse(ab->L1, -1, ab->m);
+    gretl_matrix_reuse(ab->XZA, -1, ab->m);
+    gretl_matrix_reuse(ab->R1, ab->m, -1);
+    gretl_matrix_reuse(ab->ZX, ab->m, -1);
+}
+
+/* Remove zero rows/cols from A, as indicated by mask, and delete the
+   corresponding columns from Z.  At this point we leave open the
+   question of whether the reduced A matrix is positive definite.
+*/
+
+static int 
+reduce_Z_and_A (arbond *ab, const char *mask)
+{
+    gretl_matrix *A;
     int err = 0;
 
-    mask = zero_row_mask(ab->ZT, &err);
+    A = matrix_copy_masked(ab->A, mask);
 
-    if (mask == NULL && !err) {
-	mask = rank_mask(ab, Acpy, &err);
-    } 
+    if (A == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_free(ab->A);
+	ab->A = A;
+	real_shrink_matrices(ab, mask);
+    }
 
+    return err;
+}
+
+/* We already removed any zero rows/columns from A, but it couldn't
+   be inverted.  Now we try reducing the dimension of A to its rank.
+   We need to read from the backup, Acpy, since ab->A will have been
+   mangled in the failed inversion attempt.  We proceed to check that
+   the reduced A is invertible, and if not we flag an error.
+*/
+
+static int try_alt_inverse (arbond *ab)
+{
+    char *mask = NULL;
+    int err = 0;
+
+    mask = rank_mask(ab, ab->Acpy, &err);
     if (err) {
 	return err;
     }
 
-    A = matrix_copy_masked(Acpy, mask);
-    if (A == NULL) {
+    gretl_matrix_free(ab->A);
+
+    ab->A = matrix_copy_masked(ab->Acpy, mask);
+    if (ab->A == NULL) {
 	free(mask);
 	return E_ALLOC;
     }
 
-    err = gretl_invert_symmetric_matrix(A);
-
-    if (!err && A->rows < ab->m) {
-	printf("try_alt_inverse: shrinking matrices\n");
-	eliminate_zero_rows(ab->ZT, mask);
-	ab->m = A->rows;
-	gretl_matrix_free(ab->A);
-	ab->A = A;
-	A = NULL;
-	gretl_matrix_reuse(ab->tmp0, -1, ab->m);
-	gretl_matrix_reuse(ab->tmp1, ab->m, ab->m);
-	gretl_matrix_reuse(ab->tmp2, -1, ab->m);
-	gretl_matrix_reuse(ab->L1, -1, ab->m);
-	gretl_matrix_reuse(ab->Lk, -1, ab->m);
-	gretl_matrix_reuse(ab->R1, ab->m, -1);
-	gretl_matrix_reuse(ab->Rk, ab->m, -1);
+    err = gretl_invert_symmetric_matrix(ab->A);
+    if (!err) {
+	real_shrink_matrices(ab, mask);
     }
 
-    if (A != NULL && A != Acpy) {
-	gretl_matrix_free(A);
-    }
     free(mask);
 
     return err;
 }
 
-static int arbond_calculate (arbond *ab, gretl_matrix *num,
-			     gretl_matrix *den,
-			     gretl_matrix *tmp,
-			     PRN *prn)
+static int arbond_calculate (arbond *ab, PRN *prn)
 {
     int err = 0;
 
-    /* find "Lk" = X' Z A_N */
+    /* find "XZA" = X' Z A */
     gretl_matrix_multiply_mod(ab->dX, GRETL_MOD_TRANSPOSE,
 			      ab->ZT, GRETL_MOD_TRANSPOSE,
 			      ab->tmp2);
-    gretl_matrix_multiply(ab->tmp2, ab->A, ab->Lk);
+    gretl_matrix_multiply(ab->tmp2, ab->A, ab->XZA);
 
-    /* calculate "numerator", X' Z A_N Z' y */
+    /* calculate "numerator", X' Z A Z' y */
 
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
-    gretl_matrix_multiply(ab->Lk, ab->R1, num);
+    gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
-    /* calculate "denominator", X' Z A_N Z' X */
+    /* calculate "denominator", X' Z A Z' X */
     
-    gretl_matrix_multiply(ab->ZT, ab->dX, ab->Rk);
-    gretl_matrix_multiply(ab->Lk, ab->Rk, den);
+    gretl_matrix_multiply(ab->ZT, ab->dX, ab->ZX);
+    gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
 
-    gretl_matrix_copy_values(ab->beta, num);
-    gretl_matrix_copy_values(tmp, den);
-
-    err = gretl_LU_solve(tmp, ab->beta);
+    gretl_matrix_copy_values(ab->kktmp, ab->den);
+    err = gretl_LU_solve(ab->kktmp, ab->beta);
 
 #if ADEBUG
     if (!err) {
@@ -1364,16 +1404,13 @@ static int arbond_calculate (arbond *ab, gretl_matrix *num,
 #endif
 
     if (!err) {
-	err = arbond_variance(ab, den, prn);
+	err = arbond_variance(ab, prn);
     }
 
     return err;
 }
 
-static int arbond_step_2 (arbond *ab, gretl_matrix *num,
-			  gretl_matrix *den, 
-			  gretl_matrix *tmp,
-			  PRN *prn)
+static int arbond_step_2 (arbond *ab, PRN *prn)
 {
     int err;
 
@@ -1394,10 +1431,153 @@ static int arbond_step_2 (arbond *ab, gretl_matrix *num,
     gretl_matrix_copy_values(ab->A, ab->V);
 
     ab->step = 2;
-    err = arbond_calculate(ab, num, den, tmp, prn);
+    err = arbond_calculate(ab, prn);
     if (err) {
 	fprintf(stderr, "step 2: arbond_calculate returned %d\n", err);
     }
+
+    return err;
+}
+
+static void arbond_make_dy_and_X (arbond *ab, const double *y,
+				  const double **Z)
+{
+    int i, j, s, t, k = 0;
+    double x;
+
+    for (i=0; i<ab->N; i++) {
+	if (skip_unit(ab, i)) {
+	    continue;
+	}
+	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
+	    if (skip_obs(ab, i, t)) {
+		continue;
+	    }
+	    s = i * ab->T + t;
+	    /* current difference of dependent var */
+	    gretl_vector_set(ab->dy, k, y[s] - y[s-1]);
+	    for (j=0; j<ab->p; j++) {
+		/* lagged difference of dependent var */
+		gretl_matrix_set(ab->dX, k, j, y[s-j-1] - y[s-j-2]);
+	    }
+	    for (j=0; j<ab->nx; j++) {
+		/* independent vars */
+		x = Z[ab->xlist[j+1]][s];
+		gretl_matrix_set(ab->dX, k, j + ab->p, x);
+	    }
+	    k++;
+	}
+    }
+
+#if ADEBUG
+    gretl_matrix_print(ab->dy, "dy");
+    gretl_matrix_print(ab->dX, "X");
+#endif
+}
+
+static int arbond_make_Z_and_A (arbond *ab, const double *y,
+				 const double **Z)
+{
+    int i, j, k, s, t, c = 0;
+    double x;
+    char *zmask;
+#if ADEBUG
+    char zstr[8];
+#endif
+    int err = 0;
+
+    gretl_matrix_zero(ab->A);
+
+    for (i=0; i<ab->N; i++) {
+	int ncols = ab->p;
+	int offj = 0;
+	int Ti = unit_nobs(ab, i);
+
+	if (Ti == 0) {
+	    continue;
+	}
+
+	gretl_matrix_reuse(ab->Zi, Ti, ab->m);
+	gretl_matrix_zero(ab->Zi);
+
+	offj = 0;
+	ncols = ab->p;
+
+	for (t=ab->p+1; t<ab->ui[i].t1; t++) {
+	    /* pre-shift fields right as needed */
+	    offj += ncols;
+	    if (ncols < ab->q - 1) {
+		ncols++;
+	    }
+	}	    
+
+	k = 0;
+	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
+	    int skip = skip_obs(ab, i, t);
+
+	    if (!skip) {
+		/* lagged y (GMM instr) columns */
+		for (j=0; j<ncols; j++) {
+		    s = i * ab->T + t - (ncols + 1) + j;
+		    if (t - s <= ab->q && !na(y[s])) {
+			gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
+		    }
+		}
+	    }
+	    offj += ncols;
+	    if (ncols < ab->q - 1) {
+		ncols++;
+	    }
+	    if (!skip) {
+		/* additional full-length instrument columns */
+		s = i * ab->T + t;
+		for (j=0; j<ab->nz; j++) {
+		    x = Z[ab->ilist[j+1]][s];
+		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
+		}
+		k++; /* increment target row */	
+	    }
+	}
+
+#if ADEBUG
+	sprintf(zstr, "Z_%d", i + 1);
+	gretl_matrix_print(ab->Zi, zstr);
+#endif
+	
+	make_first_diff_matrix(ab, i);
+	gretl_matrix_reuse(ab->tmp0, Ti, ab->m);
+
+	/* Add Z_i' H Z_i to A_N */
+	gretl_matrix_multiply(ab->H, ab->Zi, ab->tmp0); 
+	gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
+				  ab->tmp0, GRETL_MOD_NONE,
+				  ab->tmp1); 
+	gretl_matrix_add_to(ab->A, ab->tmp1);
+
+#if ADEBUG > 1
+	gretl_matrix_print(ab->tmp1, "Z'_i H Z_i");
+#endif
+
+	/* Write Zi into ZT at offset 0, c */
+	gretl_matrix_inscribe_matrix(ab->ZT, ab->Zi, 0, c, GRETL_MOD_TRANSPOSE);
+	c += Ti;
+    }
+
+    /* mask zero rows of ZT, if required */
+    zmask = zero_row_mask(ab->ZT, &err);
+    if (zmask != NULL) {
+	err = reduce_Z_and_A(ab, zmask);
+	free(zmask);
+    } 
+
+    if (!err) {
+	gretl_matrix_divide_by_scalar(ab->A, ab->N);
+    }
+
+#if ADEBUG
+    gretl_matrix_print(ab->ZT, "ZT");
+    gretl_matrix_print(ab->A, "N^{-1} * \\sum Z_i' H Z_i");
+#endif
 
     return err;
 }
@@ -1409,15 +1589,6 @@ arbond_estimate (const int *list, const double **X,
 {
     MODEL mod;
     arbond ab;
-    gretl_matrix *num = NULL;
-    gretl_matrix *den = NULL;
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *Acpy = NULL;
-    const double *y;
-    double x;
-    char zstr[8];
-    int i, j, k;
-    int c, s, t;
     int err = 0;
 
     gretl_model_init(&mod);
@@ -1444,180 +1615,21 @@ arbond_estimate (const int *list, const double **X,
 	goto bailout;
     }
 
-    y = X[ab.yno];
-
-    num = gretl_zero_matrix_new(ab.k, 1);
-    den = gretl_matrix_alloc(ab.k, ab.k);
-    tmp = gretl_matrix_alloc(ab.k, ab.k);
-    Acpy = gretl_matrix_alloc(ab.m, ab.m);
-
-    if (num == NULL || den == NULL || tmp == NULL || Acpy == NULL) {
-	mod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
     /* build the differenced vector \bar{y} plus the
        X matrix
     */
-
-    k = 0;
-    for (i=0; i<ab.N; i++) {
-	int t1 = ab.ui[i].t1;
-	int t2 = ab.ui[i].t2;
-
-	if (skip_unit(&ab, i)) {
-	    continue;
-	}
-
-	for (t=t1; t<=t2; t++) {
-	    if (skip_obs(&ab, i, t)) {
-		continue;
-	    }
-	    s = i * ab.T + t;
-	    /* current difference of dependent var */
-	    gretl_vector_set(ab.dy, k, y[s] - y[s-1]);
-	    for (j=0; j<ab.p; j++) {
-		/* lagged difference of dependent var */
-		gretl_matrix_set(ab.dX, k, j, y[s-j-1] - y[s-j-2]);
-	    }
-	    for (j=0; j<ab.nx; j++) {
-		/* independent vars */
-		x = X[ab.xlist[j+1]][s];
-		gretl_matrix_set(ab.dX, k, j + ab.p, x);
-	    }
-	    k++;
-	}
-    }
-
-#if ADEBUG
-    gretl_matrix_print(ab.dy, "dy");
-    gretl_matrix_print(ab.dX, "X");
-#endif
+    arbond_make_dy_and_X(&ab, X[ab.yno], X);
 
     /* build instrument matrix blocks, Z_i, and insert into
        big Z' matrix; cumulate first-stage A_N as we go */
+    err = arbond_make_Z_and_A(&ab, X[ab.yno], X);
 
-    gretl_matrix_zero(ab.A);
-
-    c = 0;
-    for (i=0; i<ab.N; i++) {
-	int t1 = ab.ui[i].t1;
-	int t2 = ab.ui[i].t2;
-	int Ti, ncols, offj;
-	int npcols, offpj;
-
-	if (skip_unit(&ab, i)) {
-	    continue;
-	}
-
-	Ti = unit_nobs(&ab, i);
-	
-	gretl_matrix_reuse(ab.Zi, Ti, ab.m);
-	gretl_matrix_zero(ab.Zi);
-
-	offpj = offj = 0;
-	ncols = ab.p;
-	npcols = 2;
-
-	for (t=ab.p+1; t<t1; t++) {
-	    /* pre-shift fields right as needed */
-	    offj += ncols;
-	    if (ncols < ab.q - 1) {
-		ncols++;
-	    }
-#if 0
-	    if (ab.plist != NULL) {
-		offpj += npcols;
-		if (npcols < ab.q) { /* FIXME q */
-		    npcols++;
-		}
-	    }
-#endif
-	}	    
-
-	k = 0;
-	for (t=t1; t<=t2; t++) {
-	    int skip = skip_obs(&ab, i, t);
-
-	    if (!skip) {
-		/* lagged y (GMM instr) columns */
-		for (j=0; j<ncols; j++) {
-		    s = i * ab.T + t - (ncols + 1) + j;
-		    if (t - s <= ab.q && !na(y[s])) {
-			gretl_matrix_set(ab.Zi, k, j + offj, y[s]);
-		    }
-		}
-	    }
-	    offj += ncols;
-	    if (ncols < ab.q - 1) {
-		ncols++;
-	    }
-#if 0
-	    if (!skip && ab.plist != NULL) {
-		/* predetermined independent vars (FIXME q) */
-		int ip;
-
-		for (ip=1; ip<=ab.plist[0]; ip++) {
-		    for (j=0; j<npcols; j++) {
-			s = i * ab.T + t - (npcols + 1) + j;
-			if (t - s <= ab.q && !na(X[ab.plist[ip]][s])) {
-			    gretl_matrix_set(ab.Zi, k, ab.pc0 + j + offpj, 
-					     X[ab.plist[ip]][s]);
-			}
-		    }
-		}
-	    }
-	    offpj += npcols;
-	    if (npcols < ab.q) {
-		npcols++;
-	    }
-#endif
-	    if (!skip) {
-		/* additional full-length instrument columns */
-		s = i * ab.T + t;
-		for (j=0; j<ab.nz; j++) {
-		    x = X[ab.ilist[j+1]][s];
-		    gretl_matrix_set(ab.Zi, k, ab.xc0 + j, x);
-		}
-		k++; /* increment target row */	
-	    }
-	}
-
-#if ADEBUG
-	sprintf(zstr, "Z_%d", i + 1);
-	gretl_matrix_print(ab.Zi, zstr);
-#endif
-	
-	make_first_diff_matrix(&ab, i);
-	gretl_matrix_reuse(ab.tmp0, Ti, ab.m);
-
-	/* Add Z_i' H Z_i to A_N */
-	gretl_matrix_multiply(ab.H, ab.Zi, ab.tmp0); 
-	gretl_matrix_multiply_mod(ab.Zi, GRETL_MOD_TRANSPOSE,
-				  ab.tmp0, GRETL_MOD_NONE,
-				  ab.tmp1); 
-	gretl_matrix_add_to(ab.A, ab.tmp1);
-
-#if ADEBUG > 1
-	gretl_matrix_print(ab.tmp1, "Z'_i H Z_i");
-#endif
-
-	/* Write Zi into ZT at offset 0, c */
-	gretl_matrix_inscribe_matrix(ab.ZT, ab.Zi, 0, c, GRETL_MOD_TRANSPOSE);
-	c += Ti;
-    }
-
-    gretl_matrix_divide_by_scalar(ab.A, ab.N);
-    gretl_matrix_copy_values(Acpy, ab.A); /* in case inversion fails */
-
-#if ADEBUG
-    gretl_matrix_print(ab.ZT, "ZT");
-    gretl_matrix_print(ab.A, "N^{-1} * \\sum Z_i' H Z_i");
-#endif
-
+    gretl_matrix_copy_values(ab.Acpy, ab.A);
     err = gretl_invert_symmetric_matrix(ab.A);
     if (err) {
-	err = try_alt_inverse(&ab, Acpy);
+	/* inversion failed: try again, using the backup copy and
+	   reducing A based on its rank */
+	err = try_alt_inverse(&ab);
     }
 
 #if ADEBUG
@@ -1625,11 +1637,11 @@ arbond_estimate (const int *list, const double **X,
 #endif
 
     if (!err) {
-	err = arbond_calculate(&ab, num, den, tmp, prn);
+	err = arbond_calculate(&ab, prn);
     }
 
     if (!err && (opt & OPT_T)) {
-	err = arbond_step_2(&ab, num, den, tmp, prn);
+	err = arbond_step_2(&ab, prn);
     }
 
  bailout:
@@ -1643,10 +1655,6 @@ arbond_estimate (const int *list, const double **X,
     }
 
     arbond_free(&ab);
-    gretl_matrix_free(num);
-    gretl_matrix_free(den);
-    gretl_matrix_free(tmp);
-    gretl_matrix_free(Acpy);
 
     return mod;
 }
