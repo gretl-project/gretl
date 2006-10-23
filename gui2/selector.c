@@ -128,7 +128,7 @@ struct _selector {
 
 #define select_lags_primary(c) (MODEL_CODE(c))
 #define select_lags_aux(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
-#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA) 
+#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
 
 static int default_var = -1;
 static int want_seasonals;
