@@ -47,6 +47,8 @@ struct arbond_ {
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations used */
     double SSR;           /* sum of squared residuals */
+    double AR1;           /* z statistic for AR(1) errors */
+    double AR2;           /* z statistic for AR(2) errors */
     int *xlist;           /* list of independent variables */
     int *ilist;           /* list of instruments */
     int *plist;           /* list of predetermined indep vars */
@@ -302,6 +304,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->maxc = 0;
     ab->nobs = 0;
     ab->SSR = NADBL;
+    ab->AR1 = NADBL;
+    ab->AR2 = NADBL;
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, k = %d\n",
@@ -534,6 +538,198 @@ static int skip_obs (arbond *ab, int i, int t)
     return (ab->ui[i].skip == NULL)? 0 : ab->ui[i].skip[t];
 }
 
+/* see if we have sufficient data to calculate A & B's z statistic for
+   AR(k) errors: return the length of the needed arrays, or 0 if we
+   can't do it
+ */
+
+static int ar_data_check (arbond *ab, int k)
+{
+    int i, t, q, T = 0;
+
+    for (i=0; i<ab->N; i++) {
+	q = 0;
+	for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
+	    if (!skip_obs(ab, i, t) && !skip_obs(ab, i, t-k)) {
+		q++;
+	    }
+	}
+	if (q + ab->p + 1 < 5) {
+	    fprintf(stderr, "unit %d has only %d ARk rows: m2 is undefined\n", 
+		    i, q);
+	    return 0;
+	} else {
+	    T += q;
+	}
+    }
+
+    return T;
+}
+
+/* compute the z test for AR errors, if possible.  FIXME this should
+   probably be rolled into arbond_variance() for the sake of
+   efficiency */
+
+static int ar_test (arbond *ab, const gretl_matrix *C, int lag,
+		    PRN *prn)
+{
+    gretl_matrix *v = NULL;
+    gretl_matrix *v2 = NULL;
+    gretl_matrix *X = NULL; /* this is trimmed "X_{*}" */
+    gretl_matrix *v2X = NULL; 
+    gretl_matrix *tmpk = NULL;
+    gretl_matrix *ui = NULL; 
+    gretl_matrix *Zi = NULL;
+    gretl_matrix *m1 = NULL; 
+    gretl_matrix *SZv = NULL;
+    gretl_matrix *XZA = ab->Lk; /* already calculated */
+    
+    double x, num, den;
+    double den2, den3;
+    int s, t, q, Q = 0;
+    int sbig = 0;
+    int i, j, err = 0;
+
+    Q = ar_data_check(ab, lag);
+    if (Q == 0) {
+	return 0;
+    }
+
+#if ADEBUG 
+    fprintf(stderr, "AR(%d) test: number of usable obs = %d\n", lag, Q);
+#endif
+
+    v = gretl_column_vector_alloc(Q);
+    v2 = gretl_column_vector_alloc(Q);
+    X = gretl_matrix_alloc(Q, ab->k);
+    v2X = gretl_matrix_alloc(1, ab->k);
+    tmpk = gretl_matrix_alloc(1, ab->k);
+    ui = gretl_column_vector_alloc(ab->maxTi);
+    Zi = gretl_matrix_alloc(ab->m, ab->maxTi); /* transpose */
+    m1 = gretl_matrix_alloc(ab->m, 1);
+    SZv = gretl_matrix_alloc(ab->m, 1);
+
+    if (v == NULL || v2 == NULL || X == NULL || 
+	v2X == NULL || tmpk == NULL || ui == NULL ||
+	Zi == NULL || m1 == NULL || SZv == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(SZv);
+
+    den = 0.0;
+    q = s = 0;
+
+    for (i=0; i<ab->N; i++) {
+	int Ti = unit_nobs(ab, i);
+	double den1i = 0.0;
+	int si = 0;
+
+	gretl_matrix_reuse(ui, Ti, -1);
+	gretl_matrix_reuse(Zi, -1, Ti);
+
+	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
+	    if (!skip_obs(ab, i, t)) {
+		/* extract full-length Z'_i and u_i */
+		for (j=0; j<ab->m; j++) {
+		    x = gretl_matrix_get(ab->ZT, j, sbig);
+		    gretl_matrix_set(Zi, j, si, x);
+		}
+		x = ab->uhat->val[sbig];
+		gretl_vector_set(ui, si, x);
+		sbig++;
+		si++;
+	    }
+	}
+
+	s += lag; /* skip first lag obs per unit */
+
+	for (t=ab->ui[i].t1+lag; t<=ab->ui[i].t2; t++) {
+	    if (!skip_obs(ab, i, t)) {
+		if (!skip_obs(ab, i, t-lag)) {
+		    v->val[q] = ab->uhat->val[s];
+		    v2->val[q] = ab->uhat->val[s-lag];
+		    den1i += v->val[q] * v2->val[q];
+		    for (j=0; j<ab->k; j++) {
+			x = gretl_matrix_get(ab->dX, s, j);
+			gretl_matrix_set(X, q, j, x);
+		    }
+		    q++;
+		}
+		s++;
+	    }
+	}
+
+	/* cumulate Z'_i u_i u_i'_* u_{i,-2} */
+	err = gretl_matrix_multiply(Zi, ui, m1);
+	gretl_matrix_multiply_by_scalar(m1, den1i);
+	gretl_matrix_add_to(SZv, m1);
+
+	den += den1i * den1i;
+    }
+
+#if ADEBUG > 1
+    gretl_matrix_print(v2, "lagged residuals");
+    gretl_matrix_print(v, "current residuals");
+#endif
+
+    /* the numerator */
+    num = 0.0;
+    for (i=0; i<Q; i++) {
+	num += v2->val[i] * v->val[i];
+    }
+
+    /* the denominator has three components, the first of which
+       is already handled */
+
+    /* required component "v2X" = \hat{v}'_{-2} X_{*} */
+    gretl_matrix_multiply_mod(v2, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      v2X);
+    
+    /* v2' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
+    gretl_matrix_multiply(v2X, C, tmpk);
+    gretl_matrix_reuse(m1, 1, ab->m);
+    gretl_matrix_multiply(tmpk, XZA, m1);
+    den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
+				    SZv, GRETL_MOD_NONE,
+				    &err);
+    den -= 2.0 * den2;
+
+    /* additive term v2' X_* vbeta X_*' v2 */
+    gretl_matrix_multiply(v2X, ab->vbeta, tmpk);
+    den3 = gretl_matrix_dot_product(tmpk, GRETL_MOD_NONE,
+				    v2X, GRETL_MOD_TRANSPOSE,
+				    &err);
+    den += den3;
+
+    /* now "x" = m2 */
+    x = num / sqrt(den);
+
+    if (lag == 1) {
+	ab->AR1 = x;
+    } else if (lag == 2) {
+	ab->AR2 = x;
+    }
+
+#if ADEBUG
+    pprintf(prn, "AR(%d) test: z = %.4g [%.3f]\n", lag, x, 
+	    normal_pvalue_2(x));
+#endif
+
+    gretl_matrix_free(v);
+    gretl_matrix_free(v2);
+    gretl_matrix_free(X);
+    gretl_matrix_free(v2X);
+    gretl_matrix_free(tmpk);
+    gretl_matrix_free(ui);
+    gretl_matrix_free(Zi);
+    gretl_matrix_free(m1);
+    gretl_matrix_free(SZv);
+
+    return err;
+}
+
 /* 
    Compute the variance matrix:
 
@@ -676,6 +872,10 @@ static int arbond_variance (arbond *ab, gretl_matrix *C, PRN *prn)
     pprintf(prn, "sigma^2 = %.7g\n", s2);
     pprintf(prn, "sigma = %.7g\n", sqrt(s2));
 #endif
+
+    /* while we're at it... */
+    ar_test(ab, C, 1, prn);
+    ar_test(ab, C, 2, prn);
 
     gretl_matrix_free(V);
     gretl_matrix_free(u);

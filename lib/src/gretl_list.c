@@ -1527,7 +1527,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		break;
 	    }
 	}
-	for (i=list[0]-1; i>2; i--) {
+	for (i=list[0]-1; i>=2; i--) {
 	    if (list[i] == LISTSEP) {
 		stop = i;
 		break;
