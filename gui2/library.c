@@ -2565,6 +2565,12 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;
 
+    case ARBOND:
+	*pmod = arbond_model(libcmd.list, (const double **) Z, datainfo, 
+			     libcmd.opt, prn);
+	err = model_output(pmod, prn);
+	break;
+
     case HSK:
 	*pmod = hsk_func(libcmd.list, &Z, datainfo);
 	err = model_output(pmod, prn);

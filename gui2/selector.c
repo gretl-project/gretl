@@ -70,14 +70,14 @@ struct _selector {
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS)
+                       c == PANEL_WLS || c == ARBOND)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS)
+                       c == PANEL_WLS || c == ARBOND)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -1280,6 +1280,14 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 	return;
     }
 
+    if (sr->code == ARBOND) {
+	int p = spinner_get_int(sr->extra[0]);
+
+	sprintf(s, "%d ; ", p);
+	add_to_cmdlist(sr, s);
+	return;
+    }    
+
     arma_p = spinner_get_int(sr->extra[0]);
     arima_d = spinner_get_int(sr->extra[1]);
     arma_q = spinner_get_int(sr->extra[2]);
@@ -1665,7 +1673,7 @@ static void construct_cmdlist (selector *sr)
     *sr->cmdlist = '\0';
 
     /* deal with content of "extra" widgets */
-    if (sr->code == ARMA || sr->code == GARCH) {
+    if (sr->code == ARMA || sr->code == GARCH || sr->code == ARBOND) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->code)) {
 	vec_get_spinner_data(sr, &order);
@@ -1835,6 +1843,8 @@ static char *est_str (int cmdnum)
     case PANEL:
     case PANEL_WLS:
 	return N_("Panel model");
+    case ARBOND:
+	return N_("Dynamic panel model");
     case WLS:
 	return N_("Weighted least squares");
     case TSLS:
@@ -2460,7 +2470,7 @@ static GtkWidget *spinner_label (int i, int code)
     };
     GtkWidget *lbl = NULL;
 
-    if (code == ARMA) {
+    if (code == ARMA || code == ARBOND) { /* FIXME later */
 	lbl = gtk_label_new(_(arma_strs[i % 3]));
     } else {
 	lbl = gtk_label_new(_(arch_strs[i]));
@@ -2475,6 +2485,18 @@ static void build_pdq_spinners (selector *sr)
     GtkObject *adj;
     gdouble vmax, val;
     int i;
+
+    if (sr->code == ARBOND) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = spinner_label(0, sr->code);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	adj = gtk_adjustment_new(1, 1, 12, 1, 1, 1);
+	sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);
+	return;
+    }    
 
     if (sr->code == GARCH) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -3199,8 +3221,8 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR, D, MA spinners for ARIMA; or P and Q for GARCH */
-    if (ci == ARMA || ci == GARCH) {
+    /* AR, D, MA spinners for ARIMA; P and Q for GARCH; P for ARBOND */
+    if (ci == ARMA || ci == GARCH || ci == ARBOND) {
 	build_pdq_spinners(sr);
     }
 
