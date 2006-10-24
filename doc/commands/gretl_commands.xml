@@ -370,6 +370,107 @@
 
   </command>
 
+  <command name="arbond" section="Estimation" label="Dynamic panel models">
+
+    <usage>
+      <arguments>
+	<argblock>
+	  <argument>p</argument>
+	  <argument optional="true">q</argument>
+	</argblock>
+	<argblock separated="true">
+	  <argument>depvar</argument>
+	  <argument>indepvars</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>instruments</argument>
+	</argblock>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+        <option>
+	  <flag>--two-step</flag>
+	  <effect>perform 2-step GMM estimation</effect>
+        </option>
+      </options>
+      <examples>
+        <example>arbond 2 ; y Dx1 Dx2</example>
+        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1 </example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	PROVISIONAL DOCUMENTATION.  This feature is under test and the
+	command syntax is liable to change.
+      </para>  
+      <para>
+	Carries out estimation of dynamic panel data models (that is,
+	panel models including one or more lags of the dependent variable)
+	using the GMM method set out by Arellano and Bond (1991).  
+      </para>
+      <para context="cli">
+	The parameter <repl>p</repl> represents the order of the
+	autoregression for the dependent variable.  The optional parameter
+	<repl>q</repl> indicates the maximum lag of the level of the
+	dependent variable to be used as an instrument.  If this argument
+	is omitted, or given as 0, all available lags are used.
+      </para>
+      <para>
+	The dependent variable should be given in levels form; it will be
+	automatically differenced (since this estimator uses differencing
+	to cancel out the individual effects).  The independent variables
+	are not automatically differenced; if you want to use differences
+	(which will generally be the case for ordinary quantitative
+	variables, though perhaps not for, say, time dummy variables) you
+	should create the differences first then specify these as the
+	regressors. 
+      </para>
+      <para context="cli">
+	The last (optional) field in the command is for specifying
+	instruments.  If no instruments are given, it is assumed that all
+	the independent variables are strictly exogenous.  If you specify
+	any instruments, you should include in the list any strictly
+	exogenous independent variables.  The handling of instruments is
+	currently incomplete in the following respect: with regard to
+	predetermined regressors, you are not able to specify a set
+	of <quote>block diagonal</quote> instruments containing values
+	of the variable in question prior to the current observation.
+	(We welcome suggestions on the best command syntax for specifiying
+	such elements.)
+      </para>
+      <para context="gui">
+	As regards the handling of instruments, please see the
+	(provisional) documentation for the script version of this
+	command.  Currently you can't specify instrument in the GUI: all
+	the independent variables are taken to be strictly exogenous.
+      </para>
+      <para>
+	By default the results of 1-step estimation are reported (with
+	robust standard errors).  You may select 2-step estimation as an
+	option.  In both cases tests for autocorrelation of orders 1 and 2
+	are provided, as well as the Sargan overidentification test.  Note
+	that in this differenced model first-order autocorrelation is not
+	a threat to the validity of the model, but second-order
+	autocorrelation violates the maintained statistical assumptions.
+	Note also that in the case of 2-step estimation, while the
+	parameter estimates are more efficient the asymptotic standard
+	errors are generally considered an unreliable guide to inference.
+	(A finite-sample correction is needed here, but this is not yet
+	implemented in gretl.)
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Panel</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="arch" section="Tests" label="ARCH test">
 
     <usage>
@@ -7287,7 +7388,7 @@
       <arguments>
         <argument>order</argument>
         <argument>varlist</argument>
-	<argument separated="true">exolist</argument>
+	<argument separated="true" optional="true">exolist</argument>
       </arguments>
       <options>
         <option>
@@ -7355,27 +7456,20 @@
 	response functions.</para>
 
       <para context="cli">
-	Sets up and estimates (using OLS) a vector autoregression
-	(VAR).  The first argument specifies the lag order &mdash; or
-	the maximum lag order in case the <lit>--lagselect</lit>
-	option is given (see below).  The order may be given
-	numerically, or as the name of a pre-existing scalar variable.
-	Then follows the setup for the first equation.  Don't include
-	lags among the elements of <repl>varlist</repl> &mdash; they
-	will be added automatically.  The semi-colon separates the
-	stochastic variables, for which <repl>order</repl> lags will
-	be included, from exogenous variables in
-	<repl>exolist</repl>.</para>
-
-      <para context="cli">
-	In fact, gretl is able to recognize the more common deterministic
-	variables (time trend, dummy variables with no values other than 0 and
-	1) as such, so these do not have to placed after the semi-colon.  More
-	complex deterministic variables (&eg; a time trend interacted with a
-	dummy variable) must be put after the semi-colon.  Note that a constant
-	is included automatically unless you give the <lit>--nc</lit> flag, a
-	trend can be added with the <lit>--trend</lit> flag, and seasonal dummy
-	variables may be added using the <lit>--seasonals</lit> flag.
+	Sets up and estimates (using OLS) a vector autoregression (VAR).
+	The first argument specifies the lag order &mdash; or the maximum
+	lag order in case the <lit>--lagselect</lit> option is given (see
+	below).  The order may be given numerically, or as the name of a
+	pre-existing scalar variable. Then follows the setup for the first
+	equation.  Don't include lags among the elements of
+	<repl>varlist</repl> &mdash; they will be added automatically.
+	The semi-colon separates the stochastic variables, for which
+	<repl>order</repl> lags will be included, from any exogenous
+	variables in <repl>exolist</repl>.  Note that a constant is
+	included automatically unless you give the <lit>--nc</lit> flag, a
+	trend can be added with the <lit>--trend</lit> flag, and seasonal
+	dummy variables may be added using the <lit>--seasonals</lit>
+	flag.
       </para>
 
       <para context="cli">
