@@ -638,6 +638,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	if (lag == 1) {
 	    return 0;
 	} else {
+	    /* don't leak */
 	    goto bailout;
 	}
     }
