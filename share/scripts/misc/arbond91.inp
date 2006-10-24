@@ -1,0 +1,13 @@
+# Replicate Table 4, column b, in Arellano and Bond,
+# Review of Economic Studies, 1991
+open abdata.gdt
+genr Dw = diff(w)
+genr Dk = diff(k)
+genr Dys = diff(ys)
+genr T1980 = YEAR=1980
+genr T1981 = YEAR=1981
+genr T1982 = YEAR=1982
+genr T1983 = YEAR=1983
+genr T1984 = YEAR=1984
+# 1-step GMM estimation
+arbond 2 0 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 T*

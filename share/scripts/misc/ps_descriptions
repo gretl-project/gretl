@@ -1,4 +1,5 @@
 # Gretl: various sample scripts
+"arbond91","Dynamic panel model","UK employment data"
 "arma","ARMA modeling","artificial data"
 "armaloop","ARMA using command loop","artificial data"
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"

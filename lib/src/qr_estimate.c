@@ -368,7 +368,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 
     gretl_matrix_multiply_mod(xpxinv, GRETL_MOD_TRANSPOSE,
 			      vcv, GRETL_MOD_NONE,
-			      wtj);
+			      wtj, GRETL_MOD_NONE);
     gretl_matrix_multiply(wtj, xpxinv, vcv);
 
     /* vcv now holds HAC */
@@ -740,7 +740,8 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* make "g" into gamma-hat */    
     gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE, g);
+			      y, GRETL_MOD_NONE, 
+			      g, GRETL_MOD_NONE);
 
     /* OLS coefficients */
     gretl_matrix_multiply(R, g, b);
@@ -766,7 +767,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     /* create (X'X)^{-1} */
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
-			      xpxinv);
+			      xpxinv, GRETL_MOD_NONE);
 
     /* VCV and standard errors */
     if (opts & OPT_R) { 
@@ -826,7 +827,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
     /* create (X'X)^{-1} */
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
-			      xpxinv);
+			      xpxinv, GRETL_MOD_NONE);
 
     /* VCV and standard errors */
     if (opts & OPT_R) { 

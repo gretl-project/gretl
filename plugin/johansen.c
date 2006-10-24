@@ -293,7 +293,7 @@ static int compute_alpha (JohansenInfo *jv, int n)
 	gretl_matrix_multiply(jv->Svv, jv->Beta, tmp1);
 	gretl_matrix_multiply_mod(jv->Beta, GRETL_MOD_TRANSPOSE,
 				  tmp1, GRETL_MOD_NONE,
-				  tmp2);
+				  tmp2, GRETL_MOD_NONE);
 	err = gretl_invert_general_matrix(tmp2);
     }
 
@@ -366,7 +366,7 @@ static int compute_omega (GRETL_VAR *vecm)
 
     gretl_matrix_multiply_mod(vecm->E, GRETL_MOD_TRANSPOSE,
 			      vecm->E, GRETL_MOD_NONE,
-			      vecm->S);
+			      vecm->S, GRETL_MOD_NONE);
 
     gretl_matrix_divide_by_scalar(vecm->S, vecm->T);
     
@@ -521,7 +521,7 @@ static int form_Pi (GRETL_VAR *vecm, const gretl_matrix *Alpha,
     if (!err) {
 	gretl_matrix_multiply_mod(Alpha, GRETL_MOD_NONE,
 				  Beta, GRETL_MOD_TRANSPOSE,
-				  Pi);
+				  Pi, GRETL_MOD_NONE);
     }
 
     if (freeit) {
@@ -729,7 +729,7 @@ compute_long_run_matrix (JohansenInfo *jv, int n, const DATAINFO *pdinfo, PRN *p
     if (!err) {
 	gretl_matrix_multiply_mod(jv->Beta, GRETL_MOD_NONE,
 				  jv->Beta, GRETL_MOD_TRANSPOSE,
-				  tmp);
+				  tmp, GRETL_MOD_NONE);
 
 	/* \Zeta_0 = \Sigma_{uv} A A' */
 	gretl_matrix_multiply(jv->Suv, tmp, Z0);
@@ -1080,7 +1080,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
     if (!err) {
 	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
 					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
-					TmpL);
+					TmpL, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -1218,7 +1218,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
 					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
-					TmpL);
+					TmpL, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -1368,7 +1368,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     gretl_matrix_reuse(TmpR, m, nv);
     err = gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
 				    jvar->jinfo->Svv, GRETL_MOD_NONE, 
-				    TmpR);
+				    TmpR, GRETL_MOD_NONE);
 
     if (!err) {
 	/* Svv <- D'SvvD */
@@ -1401,7 +1401,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 	if (!err) {
 	    err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
 					    Suv, GRETL_MOD_TRANSPOSE, 
-					    TmpL);
+					    TmpL, GRETL_MOD_NONE);
 	}
     }
 

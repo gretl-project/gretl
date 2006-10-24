@@ -463,7 +463,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     gretl_matrix_multiply(J, VCV, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      J, GRETL_MOD_TRANSPOSE,
-			      VCV);
+			      VCV, GRETL_MOD_NONE);
 
     ll = model_info_get_ll(tobit);
     write_tobit_stats(pmod, theta, k-1, sigma, ll, (const double **) X, 

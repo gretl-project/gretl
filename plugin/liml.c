@@ -292,7 +292,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 
     err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				    E, GRETL_MOD_NONE,
-				    W0);
+				    W0, GRETL_MOD_NONE);
     if (err) goto bailout;
 
 #if LDEBUG
@@ -311,7 +311,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     
     err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				    E, GRETL_MOD_NONE,
-				    W1);
+				    W1, GRETL_MOD_NONE);
     if (err) goto bailout;
 
 #if LDEBUG

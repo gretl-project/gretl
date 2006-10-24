@@ -2074,12 +2074,12 @@ gretl_matrix *gretl_matrix_from_scalar (double x)
 }
 
 static int 
-matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
-				int ltr)
+matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
+				gretl_matrix *c, GretlMatrixMod cmod)
 {
     register int i, j, k;
-    int nc = (ltr)? a->cols : a->rows;
-    int nr = (ltr)? a->rows : a->cols;
+    int nc = (atr)? a->cols : a->rows;
+    int nr = (atr)? a->rows : a->cols;
     int idx1, idx2;
     double x;
 
@@ -2089,7 +2089,9 @@ matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
 
     if (c->rows == 1) {
 	k = a->cols * a->rows;
-	c->val[0] = 0.0;
+	if (cmod != GRETL_MOD_CUMULATE) {
+	    c->val[0] = 0.0;
+	}
 	for (i=0; i<k; i++) {
 	    c->val[0] += a->val[i] * a->val[i];
 	}
@@ -2098,12 +2100,21 @@ matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
 	    for (j=i; j<nc; j++) {
 		x = 0.0;
 		for (k=0; k<nr; k++) {
-		    idx1 = (ltr)? mdxtr(a,i,k) : mdx(a,i,k);
-		    idx2 = (ltr)? mdx(a,k,j) : mdxtr(a,k,j);
+		    idx1 = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
+		    idx2 = (atr)? mdx(a,k,j) : mdxtr(a,k,j);
 		    x += a->val[idx1] * a->val[idx2];
 		}
-		c->val[mdx(c,i,j)] = x;
-		c->val[mdx(c,j,i)] = x;
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    c->val[mdx(c,i,j)] += x;
+		    if (i != j) {
+			c->val[mdx(c,j,i)] += x;
+		    }
+		} else {
+		    c->val[mdx(c,i,j)] = x;
+		    if (i != j) {
+			c->val[mdx(c,j,i)] = x;
+		    }
+		}
 	    }
 	} 
     }
@@ -2118,6 +2129,8 @@ matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
  * @b: right-hand matrix.
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @c: matrix to hold the product.
+ * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
+ * add the result to the existing value of @c.
  * 
  * Multiplies @a (or a-transpose) into @b (or b transpose),
  * with the result written into @c.
@@ -2128,7 +2141,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
-			       gretl_matrix *c)
+			       gretl_matrix *c, GretlMatrixMod cmod)
 {
     register int i, j, k;
     int lrows, lcols;
@@ -2136,7 +2149,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     const int atr = (amod == GRETL_MOD_TRANSPOSE);
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
     int aidx, bidx;
-    double targ;
+    double x;
 
 #if 0
     assert(a != NULL);
@@ -2153,7 +2166,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
     if (a == b && atr != btr && c->rows == c->cols) {
-	return matrix_multiply_self_transpose(a, c, atr);
+	return matrix_multiply_self_transpose(a, atr, c, cmod);
     }
 
     lrows = (atr)? a->cols : a->rows;
@@ -2177,13 +2190,17 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
     for (i=0; i<lrows; i++) {
 	for (j=0; j<rcols; j++) {
-	    targ = 0.0;
+	    x = 0.0;
 	    for (k=0; k<lcols; k++) {
 		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
 		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
-		targ += a->val[aidx] * b->val[bidx];
+		x += a->val[aidx] * b->val[bidx];
 	    }
-	    c->val[mdx(c,i,j)] = targ;
+	    if (cmod == GRETL_MOD_CUMULATE) {
+		c->val[mdx(c,i,j)] += x;
+	    } else {
+		c->val[mdx(c,i,j)] = x;
+	    }
 	}
     }
 
@@ -2332,7 +2349,8 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
     if (!err) {
-	err = gretl_matrix_multiply_mod(a, amod, b, bmod, c);
+	err = gretl_matrix_multiply_mod(a, amod, b, bmod, 
+					c, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -2725,7 +2743,7 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
     /* v = m'm */
     err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
 				    m, GRETL_MOD_NONE,
-				    v);
+				    v, GRETL_MOD_NONE);
 
     if (err) {
 	gretl_matrix_free(v);
@@ -2767,7 +2785,7 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
     } else {
 	err = gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
 					b, GRETL_MOD_NONE,
-					c);
+					c, GRETL_MOD_NONE);
     }
 
     return err;
@@ -4075,7 +4093,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 	/* B = MM' */
 	err = gretl_matrix_multiply_mod(M, GRETL_MOD_NONE,
 					M, GRETL_MOD_TRANSPOSE,
-					B);
+					B, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -4087,7 +4105,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 	/* A = M'(MM')^{-1} */
 	err = gretl_matrix_multiply_mod(M, GRETL_MOD_TRANSPOSE,
 					B, GRETL_MOD_NONE,
-					A);
+					A, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -4562,7 +4580,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	}	
 	gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
 				  u, GRETL_MOD_TRANSPOSE,
-				  a);
+				  a, GRETL_MOD_NONE);
     }
 
  bailout:
@@ -4620,13 +4638,13 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     if (!err) {
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					y, GRETL_MOD_NONE,
-					XTy);
+					XTy, GRETL_MOD_NONE);
     }
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					X, GRETL_MOD_NONE,
-					XTX);
+					XTX, GRETL_MOD_NONE);
     }
 
     if (!err && vcv != NULL) {
@@ -4715,7 +4733,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	V->rows = k;
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					y, GRETL_MOD_NONE,
-					V);
+					V, GRETL_MOD_NONE);
 	V->rows = ldW;
     }
 
@@ -4735,7 +4753,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	gretl_matrix_zero(W);
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					X, GRETL_MOD_NONE,
-					XTX);
+					XTX, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -4836,7 +4854,7 @@ double gretl_scalar_b_X_b (const gretl_vector *b,
     if (!err) {
 	err = gretl_matrix_multiply_mod(b, bmod,
 					X, GRETL_MOD_NONE,
-					tmp);
+					tmp, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -4913,12 +4931,12 @@ gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
 
     err = gretl_matrix_multiply_mod(A, amod,
 				    X, GRETL_MOD_NONE,
-				    tmp);
+				    tmp, GRETL_MOD_NONE);
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 					A, mod_complement(amod),
-					ret);
+					ret, GRETL_MOD_NONE);
     }
 
     gretl_matrix_free(tmp);

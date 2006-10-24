@@ -852,7 +852,7 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
 			      G, GRETL_MOD_TRANSPOSE,
-			      V);
+			      V, GRETL_MOD_NONE);
 
     err = gretl_invert_symmetric_matrix(V);
 

@@ -373,7 +373,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     if (!err) {    
 	gretl_matrix_multiply_mod(boot->E, GRETL_MOD_TRANSPOSE,
 				  boot->E, GRETL_MOD_NONE,
-				  boot->S);
+				  boot->S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(boot->S, boot->n);
 	err = gretl_VAR_do_error_decomp(boot->S, boot->C);
     }

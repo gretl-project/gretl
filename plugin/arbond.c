@@ -67,7 +67,7 @@ struct arbond_ {
     gretl_matrix *dX;     /* lagged differences of y and indep vars */
     gretl_matrix *tmp0;   /* below: workspace */
     gretl_matrix *tmp1;
-    gretl_matrix *tmp2;
+    gretl_matrix *kmtmp;
     gretl_matrix *kktmp;
     gretl_matrix *den;
     gretl_matrix *L1;
@@ -96,7 +96,7 @@ static void arbond_free (arbond *ab)
     gretl_matrix_free(ab->dX);
     gretl_matrix_free(ab->tmp0);
     gretl_matrix_free(ab->tmp1);
-    gretl_matrix_free(ab->tmp2);
+    gretl_matrix_free(ab->kmtmp);
     gretl_matrix_free(ab->kktmp);
     gretl_matrix_free(ab->den);
     gretl_matrix_free(ab->L1);
@@ -130,7 +130,7 @@ static int arbond_allocate (arbond *ab)
 
     ab->tmp0 = gretl_matrix_alloc(T2, ab->m);
     ab->tmp1 = gretl_matrix_alloc(ab->m, ab->m);
-    ab->tmp2 = gretl_matrix_alloc(ab->k, ab->m);
+    ab->kmtmp = gretl_matrix_alloc(ab->k, ab->m);
     ab->kktmp = gretl_matrix_alloc(ab->k, ab->k);
     ab->den = gretl_matrix_alloc(ab->k, ab->k);
     ab->L1 = gretl_matrix_alloc(1, ab->m);
@@ -140,7 +140,7 @@ static int arbond_allocate (arbond *ab)
 
     if (ab->ZT == NULL || ab->H == NULL || ab->A == NULL ||
 	ab->Zi == NULL || ab->dy == NULL || ab->dX == NULL ||
-	ab->tmp0 == NULL || ab->tmp1 == NULL || ab->tmp2 == NULL ||
+	ab->tmp0 == NULL || ab->tmp1 == NULL || ab->kmtmp == NULL ||
 	ab->kktmp == NULL || ab->L1 == NULL || ab->XZA == NULL ||
 	ab->R1 == NULL || ab->ZX == NULL || ab->den == NULL ||
 	ab->beta == NULL || ab->vbeta == NULL ||
@@ -225,7 +225,7 @@ static void arbond_zero_matrices (arbond *ab)
     ab->dX = NULL;
     ab->tmp0 = NULL;
     ab->tmp1 = NULL;
-    ab->tmp2 = NULL;
+    ab->kmtmp = NULL;
     ab->kktmp = NULL;
     ab->den = NULL;
     ab->L1 = NULL;
@@ -618,7 +618,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 {
     gretl_matrix *v = NULL;
     gretl_matrix *vk = NULL;
-    gretl_matrix *X = NULL; /* this is trimmed "X_{*}" */
+    gretl_matrix *X = NULL; /* this is the trimmed "X_{*}" */
     gretl_matrix *vkX = NULL; 
     gretl_matrix *tmpk = NULL;
     gretl_matrix *ui = NULL; 
@@ -714,9 +714,10 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	}
 
 	/* cumulate Z'_i u_i u_i'_* u_{i,-k} */
-	gretl_matrix_multiply(ab->Zi, ui, m1);
-	gretl_matrix_multiply_by_scalar(m1, den1i);
-	gretl_matrix_add_to(SZv, m1);
+	gretl_matrix_multiply_by_scalar(ui, den1i);
+	gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_NONE,
+				  ui, GRETL_MOD_NONE,
+				  SZv, GRETL_MOD_CUMULATE);
 
 	den += den1i * den1i;
     }
@@ -738,7 +739,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     /* required component "vkX" = \hat{v}'_{-k} X_{*} */
     gretl_matrix_multiply_mod(vk, GRETL_MOD_TRANSPOSE,
 			      X, GRETL_MOD_NONE,
-			      vkX);
+			      vkX, GRETL_MOD_NONE);
     
     /* vk' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
     gretl_matrix_multiply(vkX, C, tmpk);
@@ -871,11 +872,10 @@ static int arbond_variance (arbond *ab, PRN *prn)
 	if (ab->step == 1) {
 	    gretl_matrix_multiply_mod(u, GRETL_MOD_TRANSPOSE,
 				      ab->Zi, GRETL_MOD_NONE,
-				      ab->L1);
+				      ab->L1, GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(ab->L1, GRETL_MOD_TRANSPOSE,
 				      ab->L1, GRETL_MOD_NONE,
-				      ab->tmp1);
-	    gretl_matrix_add_to(V, ab->tmp1);
+				      V, GRETL_MOD_CUMULATE);
 	}
     }
 
@@ -893,29 +893,27 @@ static int arbond_variance (arbond *ab, PRN *prn)
     err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
 
     /* complete the large "middle bit" */
-    gretl_matrix_reuse(ab->tmp2, ab->m, ab->k);
-    err += gretl_matrix_multiply(V, ab->ZX, ab->tmp2);
+    gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
+    err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
     err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
-				     ab->tmp2, GRETL_MOD_NONE,
-				     num);
+				     ab->kmtmp, GRETL_MOD_NONE,
+				     num, GRETL_MOD_NONE);
 
     /* pre- and post-multiply by C^{-1} */
     gretl_invert_symmetric_matrix(C);
     gretl_matrix_multiply(num, C, ab->kktmp);
     gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
+
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->effN);
 
-#if ADEBUG
-    gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
-#endif
-
-    /* just in case, restore original dim of tmp2 */
-    gretl_matrix_reuse(ab->tmp2, ab->k, ab->m);
+    /* just in case, restore original dim of kmtmp */
+    gretl_matrix_reuse(ab->kmtmp, ab->k, ab->m);
 
     ab->SSR = SSR;
     ab->s2 = SSR / (ab->nobs - ab->k);
 
 #if ADEBUG
+    gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
     for (i=0; i<ab->k; i++) {
 	x = gretl_matrix_get(ab->vbeta, i, i);
 	pprintf(prn, "se(beta[%d]) = %g\n", i, sqrt(x));
@@ -987,7 +985,7 @@ static void make_first_diff_matrix (arbond *ab, int i)
 	gretl_matrix_multiply(P, ab->H, L);
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  P, GRETL_MOD_TRANSPOSE,
-				  R);
+				  R, GRETL_MOD_NONE);
 	gretl_matrix_reuse(ab->H, m, m);
 	gretl_matrix_copy_values(ab->H, R);
 
@@ -1302,7 +1300,7 @@ static void real_shrink_matrices (arbond *ab, const char *mask)
     gretl_matrix_reuse(ab->Acpy, ab->m, ab->m);
     gretl_matrix_reuse(ab->tmp0, -1, ab->m);
     gretl_matrix_reuse(ab->tmp1, ab->m, ab->m);
-    gretl_matrix_reuse(ab->tmp2, -1, ab->m);
+    gretl_matrix_reuse(ab->kmtmp, -1, ab->m);
     gretl_matrix_reuse(ab->L1, -1, ab->m);
     gretl_matrix_reuse(ab->XZA, -1, ab->m);
     gretl_matrix_reuse(ab->R1, ab->m, -1);
@@ -1372,20 +1370,18 @@ static int arbond_calculate (arbond *ab, PRN *prn)
 {
     int err = 0;
 
-    /* find "XZA" = X' Z A */
-    gretl_matrix_multiply_mod(ab->dX, GRETL_MOD_TRANSPOSE,
-			      ab->ZT, GRETL_MOD_TRANSPOSE,
-			      ab->tmp2);
-    gretl_matrix_multiply(ab->tmp2, ab->A, ab->XZA);
+    /* find X'Z A */
+    gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
+			      ab->A, GRETL_MOD_NONE,
+			      ab->XZA, GRETL_MOD_NONE);
 
-    /* calculate "numerator", X' Z A Z' y */
+    /* calculate "numerator", X'ZAZ'y */
 
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
     gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
-    /* calculate "denominator", X' Z A Z' X */
-    
-    gretl_matrix_multiply(ab->ZT, ab->dX, ab->ZX);
+    /* calculate "denominator", X'ZAZ'X */
+
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
@@ -1547,16 +1543,11 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	make_first_diff_matrix(ab, i);
 	gretl_matrix_reuse(ab->tmp0, Ti, ab->m);
 
-	/* Add Z_i' H Z_i to A_N */
+	/* Cumulate Z_i' H Z_i into A_N */
 	gretl_matrix_multiply(ab->H, ab->Zi, ab->tmp0); 
 	gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
 				  ab->tmp0, GRETL_MOD_NONE,
-				  ab->tmp1); 
-	gretl_matrix_add_to(ab->A, ab->tmp1);
-
-#if ADEBUG > 1
-	gretl_matrix_print(ab->tmp1, "Z'_i H Z_i");
-#endif
+				  ab->A, GRETL_MOD_CUMULATE); 
 
 	/* Write Zi into ZT at offset 0, c */
 	gretl_matrix_inscribe_matrix(ab->ZT, ab->Zi, 0, c, GRETL_MOD_TRANSPOSE);
@@ -1624,11 +1615,11 @@ arbond_estimate (const int *list, const double **X,
        big Z' matrix; cumulate first-stage A_N as we go */
     err = arbond_make_Z_and_A(&ab, X[ab.yno], X);
 
+    /* invert A_N: we back up ab.A in case inversion fails */
     gretl_matrix_copy_values(ab.Acpy, ab.A);
     err = gretl_invert_symmetric_matrix(ab.A);
     if (err) {
-	/* inversion failed: try again, using the backup copy and
-	   reducing A based on its rank */
+	/* failed: try again, reducing A based on its rank */
 	err = try_alt_inverse(&ab);
     }
 
@@ -1637,6 +1628,9 @@ arbond_estimate (const int *list, const double **X,
 #endif
 
     if (!err) {
+	/* calculate Z'X (this can be a big multiplication, and
+	   it only needs to be done once) */
+	gretl_matrix_multiply(ab.ZT, ab.dX, ab.ZX);
 	err = arbond_calculate(&ab, prn);
     }
 

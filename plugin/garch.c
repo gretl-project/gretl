@@ -546,7 +546,7 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
     /* dep var is squared OLS residual */
     list[4] = v;
 
-    amod = arma(list, (const double **) *pZ, pdinfo, OPT_NONE, NULL);
+    amod = arma(list, (const double **) *pZ, pdinfo, OPT_C, NULL);
     if (amod.errcode) {
 	err = amod.errcode;
 	goto bailout;
@@ -735,10 +735,9 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 #endif 
 
     /* default variance parameter initialization */
-    vparm_init[0] = model.sigma * model.sigma;
-    for (t=1; t<VPARM_MAX; t++) {
-	vparm_init[t] = 0.1;
-    }
+    vparm_init[1] = 0.2;
+    vparm_init[list[2]+1] = 0.7;
+    vparm_init[0] = model.sigma * model.sigma * 0.1;
 
     if (opt & OPT_A) {
 	/* "--arma-init": try initializing params via ARMA */

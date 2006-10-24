@@ -1100,7 +1100,7 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
 			      G, GRETL_MOD_TRANSPOSE,
-			      V);
+			      V, GRETL_MOD_NONE);
 
     if ((spec->opt & OPT_R) && spec->hessvec != NULL) {
 	/* robust option -> QML */

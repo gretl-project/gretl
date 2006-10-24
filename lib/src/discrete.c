@@ -278,7 +278,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     /* form S = GG' */
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
 			      G, GRETL_MOD_TRANSPOSE,
-			      S);
+			      S, GRETL_MOD_NONE);
 
     /* form sandwich: H^{-1} S H^{-1} */
     gretl_matrix_multiply(H, S, tmp);

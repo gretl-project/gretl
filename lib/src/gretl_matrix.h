@@ -30,7 +30,8 @@
 typedef enum {
     GRETL_MOD_NONE = 0,
     GRETL_MOD_TRANSPOSE,
-    GRETL_MOD_SQUARE
+    GRETL_MOD_SQUARE,
+    GRETL_MOD_CUMULATE
 } GretlMatrixMod;
 
 typedef struct _gretl_matrix gretl_matrix;
@@ -224,7 +225,7 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
-			       gretl_matrix *c);
+			       gretl_matrix *c, GretlMatrixMod cmod);
 
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);

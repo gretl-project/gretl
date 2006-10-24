@@ -931,14 +931,14 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods)
 		/* calculate initial variances */
 		err = gretl_matrix_multiply_mod(idx, GRETL_MOD_NONE,
 						var->C, GRETL_MOD_TRANSPOSE,
-						ctmp);
+						ctmp, GRETL_MOD_NONE);
 		err = gretl_matrix_multiply(var->C, ctmp, cic);
 		gretl_matrix_copy_values(vt, cic);
 	    } else {
 		/* calculate further variances */
 		err = gretl_matrix_multiply_mod(vt, GRETL_MOD_NONE,
 						var->A, GRETL_MOD_TRANSPOSE,
-						vtmp);
+						vtmp, GRETL_MOD_NONE);
 		err = gretl_matrix_multiply(var->A, vtmp, vt);
 		gretl_matrix_add_to(vt, cic);
 	    }
@@ -1364,7 +1364,7 @@ static double gretl_VAR_ldet (GRETL_VAR *var, int *err)
     } else {
 	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
 				  var->F, GRETL_MOD_NONE,
-				  S);
+				  S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(S, var->T);
 	ldet = gretl_vcv_log_determinant(S);
 	if (na(ldet)) {
@@ -1680,7 +1680,7 @@ static int VAR_add_variance_matrix (GRETL_VAR *var)
     if (!err) {
 	gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
 				  var->E, GRETL_MOD_NONE,
-				  var->S);
+				  var->S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(var->S, var->T);
     }
 
@@ -2689,13 +2689,13 @@ johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     if (!jvar->err) {
 	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
 				  jvar->jinfo->u, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Suu);
+				  jvar->jinfo->Suu, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(jvar->jinfo->v, GRETL_MOD_NONE,
 				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Svv);
+				  jvar->jinfo->Svv, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
 				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Suv);
+				  jvar->jinfo->Suv, GRETL_MOD_NONE);
 
 	gretl_matrix_divide_by_scalar(jvar->jinfo->Suu, jvar->T);
 	gretl_matrix_divide_by_scalar(jvar->jinfo->Svv, jvar->T);

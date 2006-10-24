@@ -646,7 +646,7 @@ system_print_F_test (const gretl_equation_system *sys,
     gretl_matrix_multiply(R, vcv, Rv);
     gretl_matrix_multiply_mod(Rv, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
-			      RvR);
+			      RvR, GRETL_MOD_NONE);
 
     err = gretl_invert_symmetric_matrix(RvR);
     if (err) {

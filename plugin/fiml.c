@@ -210,7 +210,7 @@ over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
 
     err = gretl_matrix_multiply_mod(uru, GRETL_MOD_TRANSPOSE,
 				    uru, GRETL_MOD_NONE,
-				    urv);
+				    urv, GRETL_MOD_NONE);
 
     if (err) {
 	goto bailout;
@@ -285,7 +285,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 
     err = gretl_matrix_multiply_mod(fsys->uhat, GRETL_MOD_TRANSPOSE,
 				    fsys->uhat, GRETL_MOD_NONE,
-				    fsys->sigma);
+				    fsys->sigma, GRETL_MOD_NONE);
 
     gretl_matrix_divide_by_scalar(fsys->sigma, fsys->n);
 

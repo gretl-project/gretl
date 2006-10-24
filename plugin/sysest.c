@@ -1147,7 +1147,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	    err = gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
 					    Xk, GRETL_MOD_NONE, 
-					    M);
+					    M, GRETL_MOD_NONE);
 
 	    if (rtsls || (single_equation && method != SYS_WLS)) {
 		sij = 1.0;

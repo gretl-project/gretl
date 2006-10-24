@@ -207,15 +207,13 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     eXi = gretl_vector_alloc(k);
     tmp = gretl_matrix_alloc(k, k);
     XX = fe_model_xpx(pmod);
-    W = gretl_matrix_alloc(k, k);
+    W = gretl_zero_matrix_new(k, k);
 
     if (e == NULL || Xi == NULL || eXi == NULL ||
 	tmp == NULL || XX == NULL || W == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    gretl_matrix_zero(W);
 
     s = 0;
     for (i=0; i<pan->nunits; i++) {
@@ -235,11 +233,10 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	}
 	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
 				  Xi, GRETL_MOD_NONE,
-				  eXi);
+				  eXi, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(eXi, GRETL_MOD_TRANSPOSE,
 				  eXi, GRETL_MOD_NONE,
-				  tmp);
-	gretl_matrix_add_to(W, tmp);
+				  W, GRETL_MOD_CUMULATE);
     }
 
 #if 0

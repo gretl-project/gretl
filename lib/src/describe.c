@@ -1115,7 +1115,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     /* make S into $H \Lambda^{-1/2} H'$ */
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      H, GRETL_MOD_TRANSPOSE,
-			      S);
+			      S, GRETL_MOD_NONE);
 
 #if 1
     gretl_matrix_demean_by_row(X);

@@ -58,7 +58,7 @@ static int check_R_matrix (const gretl_matrix *R)
 
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
-			      m);
+			      m, GRETL_MOD_NONE);
 
     err = gretl_invert_general_matrix(m);
     
