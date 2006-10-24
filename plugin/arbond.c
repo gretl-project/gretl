@@ -548,23 +548,16 @@ static int skip_unit (arbond *ab, int i)
 
 static int ar_data_check (arbond *ab, int k)
 {
-    int i, t, q, T = 0;
+    int i, t, T = 0;
 
     for (i=0; i<ab->N; i++) {
 	if (skip_unit(ab, i)) {
 	    continue;
 	}
-	q = 0;
 	for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
 	    if (!skip_obs(ab, i, t) && !skip_obs(ab, i, t-k)) {
-		q++;
+		T++;
 	    }
-	}
-	if (q + ab->p + 1 < 3 + k) {
-	    fprintf(stderr, "unit %d has only %d ARk rows\n", i, q);
-	    return 0;
-	} else {
-	    T += q;
 	}
     }
 
@@ -609,6 +602,19 @@ static int sargan_test (arbond *ab, PRN *prn)
     return err;
 }
 
+static int ar_skip_unit (arbond *ab, int i, int k)
+{
+    int t;
+
+    for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
+	if (!skip_obs(ab, i, t) && !skip_obs(ab, i, t-k)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* Compute the z test for AR errors, if possible.  This should
    perhaps be rolled into arbond_variance() for the sake of
    efficiency 
@@ -628,14 +634,14 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     double x, num, den;
     double den2, den3;
     int s, t, q, Q;
-    int sbig, lag = 1;
+    int sbig, k = 1;
     int i, j, err = 0;
 
  restart:
 
-    Q = ar_data_check(ab, lag);
+    Q = ar_data_check(ab, k);
     if (Q == 0) {
-	if (lag == 1) {
+	if (k == 1) {
 	    return 0;
 	} else {
 	    /* don't leak */
@@ -644,10 +650,10 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     }
 
 #if ADEBUG 
-    fprintf(stderr, "AR(%d) test: number of usable obs = %d\n", lag, Q);
+    fprintf(stderr, "AR(%d) test: number of usable obs = %d\n", k, Q);
 #endif
 
-    if (lag == 1) {
+    if (k == 1) {
 	v = gretl_column_vector_alloc(Q);
 	vk = gretl_column_vector_alloc(Q);
 	X = gretl_matrix_alloc(Q, ab->k);
@@ -683,12 +689,19 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	    continue;
 	}
 
+	if (ar_skip_unit(ab, i, k)) {
+	    sbig += Ti;
+	    s += Ti;
+	    continue;
+	}
+
 	gretl_matrix_reuse(ui, Ti, -1);
 	gretl_matrix_reuse(ab->Zi, ab->m, Ti);
 
+	/* extract full-length Z'_i and u_i */
+
 	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
 	    if (!skip_obs(ab, i, t)) {
-		/* extract full-length Z'_i and u_i */
 		for (j=0; j<ab->m; j++) {
 		    x = gretl_matrix_get(ab->ZT, j, sbig);
 		    gretl_matrix_set(ab->Zi, j, si, x);
@@ -700,13 +713,13 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	    }
 	}
 
-	s += lag; /* skip first lag obs per unit */
+	s += k; /* skip first k obs per unit */
 
-	for (t=ab->ui[i].t1+lag; t<=ab->ui[i].t2; t++) {
+	for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
 	    if (!skip_obs(ab, i, t)) {
-		if (!skip_obs(ab, i, t-lag)) {
+		if (!skip_obs(ab, i, t-k)) {
 		    v->val[q] = ab->uhat->val[s];
-		    vk->val[q] = ab->uhat->val[s-lag];
+		    vk->val[q] = ab->uhat->val[s-k];
 		    den1i += v->val[q] * vk->val[q];
 		    for (j=0; j<ab->k; j++) {
 			x = gretl_matrix_get(ab->dX, s, j);
@@ -767,17 +780,17 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	goto bailout;
     }
 
-    /* now "x" = m2 */
+    /* now "x" = m1 or m2 */
     x = num / sqrt(den);
 
 #if ADEBUG
-    pprintf(prn, "AR(%d) test: z = %.4g [%.3f]\n", lag, x, 
+    pprintf(prn, "AR(%d) test: z = %.4g [%.3f]\n", k, x, 
 	    normal_pvalue_2(x));
 #endif
 
-    if (lag == 1) {
+    if (k == 1) {
 	ab->AR1 = x;
-	lag = 2;
+	k = 2;
 	goto restart;
     } else {
 	ab->AR2 = x;
