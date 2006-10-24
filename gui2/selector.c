@@ -113,7 +113,7 @@ struct _selector {
                          c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
-                        c == SCATTERS || c == COINT)
+                        c == SCATTERS || c == COINT || c == ARBOND)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -2837,6 +2837,22 @@ static void build_panel_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_arbond_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("1-step estimation"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 1);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_coint_radios (selector *sr)
 {
     GtkWidget *button = NULL;
@@ -2909,6 +2925,8 @@ static void build_selector_radios (selector *sr)
 	build_arma_radios(sr);
     } else if (sr->code == PANEL) {
 	build_panel_radios(sr);
+    } else if (sr->code == ARBOND) {
+	build_arbond_radios(sr);
     } else if (sr->code == SCATTERS) {
 	build_scatters_radios(sr);
     } else if (sr->code == COINT) {
