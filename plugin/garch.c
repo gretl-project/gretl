@@ -364,6 +364,12 @@ int do_fcp (const int *list, double **Z, double scale,
 	amax[i+3] = vparm_init[i+1];
     }
 
+#ifdef USE_MOD_GARCH
+    err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
+			     (const double **) X, nx, coeff, ncoeff, 
+			     vcv, res2, res, h, y, amax, b, scale, &iters,
+			     prn, vopt);
+#else
     if (getenv("MOD_GARCH") != NULL) {
 	err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
 				 (const double **) X, nx, coeff, ncoeff, 
@@ -375,6 +381,7 @@ int do_fcp (const int *list, double **Z, double scale,
 			     vcv, res2, res, h, y, amax, b, scale, &iters,
 			     prn, vopt);
     }
+#endif
 
     if (err != 0) {
 	pmod->errcode = err;

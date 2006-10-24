@@ -53,6 +53,7 @@ vpath %.rc $(topsrc)/win32
 #### End of system configuration section. ####
 
 PLUGINSRC = \
+	arbond.c \
 	excel_import.c \
 	gnumeric_import.c \
 	eviews_import.c \
@@ -80,6 +81,7 @@ PLUGINSRC = \
         arma_x12.c \
 	workbook.c \
 	tobit.c \
+	mod_garch.c \
 	fcp.c \
 	garch.c \
         audio.c \
@@ -99,6 +101,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/sysest.dll \
 	plugins/johansen.dll \
 	plugins/kernel.dll \
+	plugins/arbond.dll \
 	plugins/arma.dll \
 	plugins/arma_x12.dll \
 	plugins/range-mean.dll \
@@ -365,6 +368,10 @@ plugins/nistcheck.dll: nistcheck.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
+plugins/arbond.dll: arbond.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+
 plugins/arma.dll: arma.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
@@ -377,7 +384,7 @@ plugins/tobit.dll: tobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-plugins/garch.dll: garch.o fcp.o dllinit.o
+plugins/garch.dll: garch.o fcp.o mod_garch.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

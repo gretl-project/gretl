@@ -635,7 +635,11 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 
     Q = ar_data_check(ab, lag);
     if (Q == 0) {
-	return 0;
+	if (lag == 1) {
+	    return 0;
+	} else {
+	    goto bailout;
+	}
     }
 
 #if ADEBUG 
@@ -811,6 +815,7 @@ static int arbond_variance (arbond *ab, PRN *prn)
     gretl_matrix *num = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *u = NULL;
+
     gretl_matrix *C = ab->den;
 
     double x, ut, SSR;

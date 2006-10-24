@@ -3596,20 +3596,20 @@ MODEL arbond_model (const int *list, const double **Z,
 		    PRN *prn)
 {
     void *handle = NULL;
-    MODEL (*ab_est) (const int *, const double **, 
-		     const DATAINFO *, gretlopt, PRN *);
+    MODEL (*arbond_estimate) (const int *, const double **, 
+			      const DATAINFO *, gretlopt, PRN *);
     MODEL mod;
 
     gretl_model_init(&mod);
 
-    ab_est = get_plugin_function("arbond_estimate", &handle);
-    if (ab_est == NULL) {
+    arbond_estimate = get_plugin_function("arbond_estimate", &handle);
+    if (arbond_estimate == NULL) {
 	mod.errcode = 1;
 	return mod;
     }
 
-    mod = (*ab_est)(list, Z, pdinfo, opt, prn);
-    
+    mod = (*arbond_estimate)(list, Z, pdinfo, opt, prn);
+
     close_plugin(handle);
 
     if (!mod.errcode) {
