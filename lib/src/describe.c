@@ -2058,7 +2058,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	    }
 	}
 
-	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - t + 1);
+	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - (t + 1));
 	pprintf(prn, "%12.4f", box);
 	if (t >= nparam) {
 	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(box, dfQ++));

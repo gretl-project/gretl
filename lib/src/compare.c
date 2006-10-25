@@ -1081,8 +1081,8 @@ static int ljung_box (int varno, int order, const double **Z,
 
     /* compute Ljung-Box statistic */
     *lb = 0;
-    for (t=1; t<=order; t++) { 
-	*lb += acf[t] * acf[t] / (nobs - t);
+    for (k=1; k<=order; k++) { 
+	*lb += acf[k] * acf[k] / (nobs - k);
     }
     *lb *= nobs * (nobs + 2.0);
 
