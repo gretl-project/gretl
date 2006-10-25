@@ -541,6 +541,19 @@ static int skip_unit (arbond *ab, int i)
     return ab->ui[i].t1 < 0;
 }
 
+static int ar_skip_unit (arbond *ab, int i, int k)
+{
+    int t;
+
+    for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
+	if (!skip_obs(ab, i, t) && !skip_obs(ab, i, t-k)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* see if we have sufficient data to calculate A & B's z statistic for
    AR(k) errors: return the length of the needed arrays, or 0 if we
    can't do it
@@ -600,19 +613,6 @@ static int sargan_test (arbond *ab, PRN *prn)
     gretl_matrix_free(m1);
 
     return err;
-}
-
-static int ar_skip_unit (arbond *ab, int i, int k)
-{
-    int t;
-
-    for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
-	if (!skip_obs(ab, i, t) && !skip_obs(ab, i, t-k)) {
-	    return 0;
-	}
-    }
-
-    return 1;
 }
 
 /* Compute the z test for AR errors, if possible.  This should
@@ -713,7 +713,12 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
 	    }
 	}
 
-	s += k; /* skip first k obs per unit */
+	for (t=ab->ui[i].t1; t<ab->ui[i].t1+k; t++) {
+	    /* skip any obs prior to t1 + k */
+	    if (!skip_obs(ab, i, t)) s++;
+	}
+
+	/* extract lagged residuals vk along with v_{*} and X_{*} */
 
 	for (t=ab->ui[i].t1+k; t<=ab->ui[i].t2; t++) {
 	    if (!skip_obs(ab, i, t)) {

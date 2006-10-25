@@ -462,6 +462,22 @@
 	(A finite-sample correction is needed here, but this is not yet
 	implemented in gretl.)
       </para>
+      <para>
+	TODO list for this command:
+      </para>
+      <ilist>
+	<li><para>Get block-diagonal instruments sorted out</para>
+	</li>
+	<li><para>Add Wald test for overall significance</para>
+	</li>
+	<li><para>Windmeijer finite-sample correction</para>
+	</li>
+	<li><para>Finalize GUI interface</para>
+	</li>
+	<li><para>Maybe add: param for minimum lag of y,
+	    automatic time dummies option</para>
+	</li>
+      </ilist>
 
     </description>
 
