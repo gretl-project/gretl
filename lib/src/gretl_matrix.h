@@ -348,6 +348,10 @@ gretl_matrix *
 gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
 		    const gretl_matrix *X, int *errp);
 
+int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
+			const gretl_matrix *X, gretl_matrix *C, 
+			GretlMatrixMod cmod);
+
 int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD);

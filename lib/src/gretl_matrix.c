@@ -1648,7 +1648,7 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
     gretl_print_destroy(prn);
 }
 
-#define EQTOL 1.0e-12
+#define EQTOL 1.5e-12  
 
 static int sneq (double x, double y)
 {
@@ -4950,6 +4950,76 @@ gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
     }
 
     return ret;
+}
+
+/**
+ * gretl_matrix_qform:
+ *
+ * @A: m * k matrix or k * m matrix, depending on @amod.
+ * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
+ * case @A should be m * k; in the second, k * m;
+ * @X: k * k matrix (must be symmetric).
+ * @C: matrix to hold the product.
+ * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
+ * add the result to the existing value of @C.
+ *
+ * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
+ * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result 
+ * written into @C.
+ *
+ * Returns: 0 on success; non-zero error code on
+ * failure.
+ */
+
+#define QFORM_SMALL 1.0e-20 
+
+int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
+			const gretl_matrix *X, gretl_matrix *C, 
+			GretlMatrixMod cmod)
+{
+    register int i, j, ii, jj;
+    int ipos, jpos;
+    double xi, xj, xx;
+    int m = (amod)? A->cols : A->rows;
+    int k = (amod)? A->rows : A->cols;
+
+    if (!matrix_is_symmetric(X)) {
+	return E_NONCONF;
+    }
+
+    if (k != gretl_matrix_rows(X)) {
+	fputs("gretl_matrix_qform: matrices not conformable\n", stderr);
+	return E_NONCONF;
+    }
+
+    if (C->rows != m || C->cols != m) {
+	fputs("gretl_matrix_qform: destination matrix not conformable\n", stderr);
+	return E_NONCONF;
+    }
+
+    for (i=0; i<m; i++) {
+	for (j=i; j<m; j++) {
+	    xx = 0.0;
+	    for (ii=0; ii<k; ii++) {
+		ipos = (amod)? mdx(A,ii,i) : mdx(A,i,ii);
+		xi = A->val[ipos];
+		if (fabs(xi) > QFORM_SMALL) {
+		    for (jj=0; jj<k; jj++) {
+			jpos = (amod)? mdx(A,jj,j) : mdx(A,j,jj);
+			xj = A->val[jpos];
+			xx += X->val[mdx(X,ii,jj)] * xi * xj;
+		    }
+		}
+	    }
+	    if (cmod) {
+		xx += C->val[mdx(C,i,j)];
+	    }
+	    C->val[mdx(C,i,j)] = xx;
+	    C->val[mdx(C,j,i)] = xx;
+	}
+    }
+
+    return 0;
 }
 
 /**

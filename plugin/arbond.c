@@ -1563,10 +1563,8 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_reuse(ab->tmp0, Ti, ab->m);
 
 	/* Cumulate Z_i' H Z_i into A_N */
-	gretl_matrix_multiply(ab->H, ab->Zi, ab->tmp0); 
-	gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
-				  ab->tmp0, GRETL_MOD_NONE,
-				  ab->A, GRETL_MOD_CUMULATE); 
+	gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
+			   ab->H, ab->A, GRETL_MOD_CUMULATE); 
 
 	/* Write Zi into ZT at offset 0, c */
 	gretl_matrix_inscribe_matrix(ab->ZT, ab->Zi, 0, c, GRETL_MOD_TRANSPOSE);
