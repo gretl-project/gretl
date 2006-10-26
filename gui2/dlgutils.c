@@ -630,7 +630,7 @@ static void set_replace_restrictions (GtkWidget *w, gpointer p)
     dialog_t *d = (dialog_t *) p;
     
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	d->opt = OPT_C;
+	d->opt = OPT_P;
     } else {
 	d->opt = OPT_NONE;
     }

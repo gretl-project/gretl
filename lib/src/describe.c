@@ -1875,21 +1875,42 @@ int auto_acf_order (int pd, int nobs)
     return m;
 }
 
-static double gretl_acf (int n, int k, const double *y)
-{
-    int t;
-    double z, ybar, num = 0.0, den = 0.0;
+/**
+ * gretl_acf:
+ * @k: lag order.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @y: data series.
+ *
+ * Returns: the autocorrelation at lag @k for the series @y over
+ * the range @t1 to @t2, or #NADBL on failure.
+ */
 
-    if (n == 0 || gretl_isconst(0, n - 1, y)) { 
+double gretl_acf (int k, int t1, int t2, const double *y)
+{
+    double z, ybar, num, den;
+    int n, t;
+
+    n = t2 - t1 + 1;
+
+    if (n == 0 || gretl_isconst(t1, t2, y)) { 
 	return NADBL;
     }
 
-    ybar = gretl_mean(0, n-1, y);
+    ybar = gretl_mean(t1, t2, y);
+    if (na(ybar)) {
+	return NADBL;
+    }
 
-    for (t=0; t<n; t++) {
+    num = den = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(y[t])) {
+	    return NADBL;
+	}
 	z = y[t] - ybar;
 	den += z * z;
-	if (t >= k) {
+	if (t - t1 >= k) {
 	    num += z * (y[t-k] - ybar);
 	}
     }
@@ -1932,15 +1953,13 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     double box, pm90, pm95, pm99;
     double *acf = NULL;
     double *pacf = NULL;
-    int k, l, acf_m, pacf_m; 
+    int k, acf_m, pacf_m; 
     int nobs, dfQ;
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int list[2];
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int list[2] = {1, varno };
     FILE *fq = NULL;
     int err = 0, pacf_err = 0;
 
-    list[0] = 1;
-    list[1] = varno;
     varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
     nobs = t2 - t1 + 1;
 
@@ -1956,8 +1975,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     }
 
     if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
-	sprintf(gretl_tmp_str, _("%s is a constant"), 
-		pdinfo->varname[varno]);
+	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[varno]);
 	pprintf(prn, "\n%s\n", gretl_tmp_str);
 	return 1;
     }
@@ -1974,26 +1992,26 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	return E_ALLOC;    
     }
 
-    /* calculate acf, with lag order m */
-    for (l=1; l<=acf_m; l++) {
-	acf[l-1] = gretl_acf(nobs, l, &(*pZ)[varno][t1]);
+    /* calculate acf up to order m */
+    for (k=1; k<=acf_m; k++) {
+	acf[k-1] = gretl_acf(k, t1, t2, (*pZ)[varno]);
     }
 
     if (opt & OPT_A) { 
 	/* use ASCII graphics, not gnuplot */
-	double *xl = malloc(acf_m * sizeof *xl);
+	double *xk = malloc(acf_m * sizeof *xk);
 
-	if (xl == NULL) {
+	if (xk == NULL) {
 	    err = E_ALLOC;
 	    goto acf_getout;
 	}
-	for (l=0; l<acf_m; l++) {
-	    xl[l] = l + 1.0;
+	for (k=0; k<acf_m; k++) {
+	    xk[k] = k + 1.0;
 	}
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-	graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
+	graphyzx(NULL, acf, NULL, xk, acf_m, pdinfo->varname[varno], 
 		 _("lag"), NULL, 0, prn);
-	free(xl);
+	free(xk);
     } 
 
     if (opt & OPT_R) {
@@ -2033,34 +2051,34 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     box = 0.0;
     dfQ = 1;
 
-    for (t=0; t<acf_m; t++) {
-	pprintf(prn, "%5d%9.4f ", t + 1, acf[t]);
-	if (fabs(acf[t]) > pm99) {
+    for (k=0; k<acf_m; k++) {
+	pprintf(prn, "%5d%9.4f ", k + 1, acf[k]);
+	if (fabs(acf[k]) > pm99) {
 	    pputs(prn, " ***");
-	} else if (fabs(acf[t]) > pm95) {
+	} else if (fabs(acf[k]) > pm95) {
 	    pputs(prn, " ** ");
-	} else if (fabs(acf[t]) > pm90) {
+	} else if (fabs(acf[k]) > pm90) {
 	    pputs(prn, " *  ");
 	} else {
 	    pputs(prn, "    ");
 	}
 
-	if (t < pacf_m) {
-	    pprintf(prn, "%9.4f", pacf[t]);
-	    if (fabs(pacf[t]) > pm99) {
+	if (k < pacf_m) {
+	    pprintf(prn, "%9.4f", pacf[k]);
+	    if (fabs(pacf[k]) > pm99) {
 		pputs(prn, " ***");
-	    } else if (fabs(pacf[t]) > pm95) {
+	    } else if (fabs(pacf[k]) > pm95) {
 		pputs(prn, " ** ");
-	    } else if (fabs(pacf[t]) > pm90) {
+	    } else if (fabs(pacf[k]) > pm90) {
 		pputs(prn, " *  ");
 	    } else {
 		pputs(prn, "    ");
 	    }
 	}
 
-	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - (t + 1));
+	box += (nobs * (nobs + 2.0)) * acf[k] * acf[k] / (nobs - (k + 1));
 	pprintf(prn, "%12.4f", box);
-	if (t >= nparam) {
+	if (k >= nparam) {
 	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(box, dfQ++));
 	}
 	pputc(prn, '\n');

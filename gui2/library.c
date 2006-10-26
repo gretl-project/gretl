@@ -1073,7 +1073,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *dlg)
 
     opt = edit_dialog_get_opt(dlg);
 
-    if (opt & OPT_C) { 
+    if (opt & OPT_P) { 
 	gretl_command_sprintf("smpl %s --restrict --replace", buf); 
     } else {
 	gretl_command_sprintf("smpl %s --restrict", buf);
