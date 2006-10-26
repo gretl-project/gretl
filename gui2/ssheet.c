@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include <float.h>
 
-#undef SSDEBUG
+#define SSDEBUG 0
 #undef CELLDEBUG
 
 typedef enum {
@@ -710,6 +710,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	}
 
 	for (i=0; i<newvars; i++) { 
+	    newname = NULL;
 	    vi = oldv + i;
 	    gretl_list_append_term(&sheet->varlist, vi);
 	    if (sheet->varlist == NULL) {
@@ -778,6 +779,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     } 
 
     sheet->modified = 0;
+    sheet->added_vars -= newvars; /* record that these are handled */
 }
 
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
