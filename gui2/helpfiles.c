@@ -1318,7 +1318,7 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 	    found = look_for_string(haystack, needle, 0);
 	}
 
-	if (!gtk_tree_model_iter_next(model, &iter)) {
+	if (found >= 0 || !gtk_tree_model_iter_next(model, &iter)) {
 	    break;
 	}
     }
