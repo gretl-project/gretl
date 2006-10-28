@@ -221,13 +221,6 @@
       &mdash; Mostra informazioni sulla versione del programma ed esce.
     </para>
 
-    <para><command>gretlcli --pvalue</command> (o <command>gretlcli
-	-p</command>)</para>
-
-    <para>&mdash; Avvia il programma in una modalità in cui è possibile
-      determinare interattivamente i p-value per alcune statistiche comuni.
-    </para>
-
     <para><command>gretlcli --english</command> (o <command>gretlcli
 	-e</command>)</para>
 
