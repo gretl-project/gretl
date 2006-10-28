@@ -4,16 +4,17 @@
 \section{Definizione di una funzione}
 \label{func-define}
 
-A partire dalla versione 1.4.0, \app{gretl} contiene un nuovo
-meccanismo per definire funzioni all'interno di uno script.
-\footnote{Si noti che il nuovo modo di definire le funzioni presenta
-  aspetti non compatibili con quello incluso nella versione 1.3.3 del programma.}
+A partire dalla versione 1.3.3, \app{gretl} contiene un meccanismo per definire
+funzioni all'interno di uno script. Questa funzionalità ha subito alcune
+modifiche prima di raggiungere un assetto stabile ed estensibile, ma pensiamo che
+la versione presente in \app{gretl} 1.6.1 costituisca una solida base per gli
+sviluppi futuri.
 
 Occorre definire una funzione prima di poterla utilizzare. La sintassi
 per farlo è la seguente:
 
 \begin{code}
-      function nome-funzione parametri
+      function nome-funzione(parametri)
          corpo della funzione
       end function
 \end{code}
@@ -22,18 +23,10 @@ Il \textsl{nome-funzione} identifica la funzione in modo univoco: deve
 iniziare con una lettera, può essere lungo al massimo 31 caratteri
 (eventuali caratteri in più verranno troncati) e non può contenere
 spazi. Se si tenta di definire una funzione con lo stesso nome di un
-comando di \app{gretl} o di una funzione preesistente, si otterrà
-un'errore. Nel secondo caso, per evitare un errore (ossia per poter
-ridefinire una funzione utente), basta far precedere la definizione
-della funzione da:
-    
-\begin{code}
-      function nome-funzione clear
-\end{code}
+comando di \app{gretl}.
 
-I \textsl{parametri} di una funzione (se esistono) vanno indicati
-sotto forma di lista separata da virgole. I parametri possono essere
-di uno dei seguenti tipi:
+I \textsl{parametri} di una funzione vanno indicati sotto forma di lista
+separata da virgole. I parametri possono essere di uno dei seguenti tipi:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -48,15 +41,47 @@ di uno dei seguenti tipi:
 \end{tabular}
 \end{center}
 
-Ogni elemento della lista di parametri è composto da due termini: per prima
+Ogni elemento della lista di parametri deve includere due termini: per prima
 cosa un indicatore di tipo, quindi il nome con cui il parametro verrà
-riconosciuto all'interno della funzione. Ecco un esempio (le parentesi che
-racchiudono la lista dei parametri sono opzionali):
+riconosciuto all'interno della funzione. Ecco un esempio:
     
 \begin{code}
-      function funzione (series y, list xvars, bool verboso)
+      function funzione(series y, list xvars, bool verboso)
 \end{code}
 
+Oltre a questi elementi richiesti, la specificazione di un parametro
+\texttt{scalare} può includere fino a tre ulteriori informazioni: un valore
+minimo, uno massimo e un valore predefinito. Questi valori aggiuntivi devono
+seguire direttamente il nome del parametro, devono essere racchiusi tra
+parentesi quadre e i singoli elementi devono essere separati dal carattere due
+punti. Ad esempio, ipotizzando di avere un parametro intero chiamato
+\texttt{ordine} per cui si vuole specificare un valore minimo di 1, un massimo
+di 12 e un valore predefinito di 4, si può scrivere
+%    
+\begin{code}
+      int ordine[1:12:4]
+\end{code} 
+%
+Per omettere uno dei tre valori aggiuntivi, basta lasciare vuoto il campo
+corrispondente. Ad esempio, \texttt{[1::4]} specifica un minimo di 1 e un valore
+predefinito di 4, senza porre limiti al valore massimo.
+
+Per parametri di tipo \texttt{bool} è possibile specificare come valori predefiniti 
+1 (vero) o 0 (falso), come in questo esempio:
+%    
+\begin{code}
+      bool verboso[0]
+\end{code} 
+%
+
+È possibile definire funzioni che non hanno parametri (quelle che in alcuni
+linguaggi di programmazione vengono chiamate ``routine''). In questo caso,
+occorre usare la parola chiave \texttt{void} al posto dell'elenco dei
+parametri:
+%    
+\begin{code}
+      function funzione2(void)
+\end{code}
 
 Quando una funzione viene chiamata, i parametri vengono istanziati
 usando gli argomenti indicati nella chiamata della funzione. Vengono
@@ -64,13 +89,20 @@ fatti dei controlli automatici per assicurarsi che il numero degli
 argomenti contenuti in una chiamata di funzione corrisponda al numero
 di parametri, e che i tipi degli argomenti corrispondano ai tipi
 specificati nella definizione della funzione; se qualcuna di queste
-condizioni è violata, viene segnalato un errore. Una serie può essere
-indicata come argomento specificando il nome della variabile in
-questione, oppure il suo numero identificativo. Gli scalari possono
-essere indicati specificando il nome di una variabile o un valore
-numerico (non è possibile indicare il numero identificativo della
-variabile). Le liste devono essere indicate per nome.
-    
+condizioni è violata, viene segnalato un errore\footnote{È consentito
+omettere degli argomenti alla fine della lista, a patto che i valori predefiniti
+siano specificati nella definizione della funzione. Più precisamente: il
+controllo consiste nell'assicurarsi che il numero degli argomenti sia almeno
+uguale al numero dei parametri \textit{richiesti} e non superiore al numero
+totale dei parametri.}.
+
+È possibile indicare uno scalare, una serie, o una matrice come argomento
+di una funzione, sia specificando il nome di una variabile preesistente,
+oppure (con un'eccezione che si vedrà in seguito) utilizzando un'espressione
+che, valutata, restituisce una variabile del tipo appropriato.
+Gli scalari possono essere indicati anche sotto forma di valori numerici, mentre
+le liste devono essere indicate per nome.
+
 Il \textsl{corpo della funzione} è composto da comandi \app{gretl} o
 funzioni definite dall'utente (ossia, le funzioni possono essere
 nidificate).  Una funzione può persino chiamare sé stessa (ossia, le
@@ -80,21 +112,18 @@ aumentato se sembra troppo restrittivo.  Se il corpo della funzione
 può contenere chiamate ad altre funzioni non può però contenere
 definizioni di altre funzioni, ossia non è possibile definire una
 funzione all'interno di un'altra funzione.
-    
-Le funzioni possono essere chiamate, ma non definite, all'interno di
-un loop (si veda il capitolo~\ref{looping}).
 
 \section{Chiamata di una funzione}
 \label{func-call}
 
 Una funzione utente viene chiamata, o invocata, usando il suo nome,
-eventualmente seguito da argomenti; se si usano due o più argomenti,
+eventualmente seguito da argomenti tra parentesi; se si usano due o più argomenti,
 vanno separati da virgole. L'esempio seguente mostra una chiamata di
 funzione che rispetta la definizione della funzione stessa.
     
 \begin{code}
       # Definizione della funzione
-      function ols_ess (series y, list xvars)
+      function ols_ess(series y, list xvars)
         ols y 0 xvars --quiet
         scalar myess = $ess
         printf "ESS = %g\n", myess
@@ -104,7 +133,7 @@ funzione che rispetta la definizione della funzione stessa.
       open data4-1
       list xlist = 2 3 4
       # Chiamata della funzione (il valore restituito viene qui ignorato)
-      ols_ess price, xlist
+      ols_ess(price, xlist)
 \end{code}
 
 La chiamata della funzione contiene due argomenti: il primo è una
@@ -116,23 +145,21 @@ hanno a che fare con una regressione, ma non si è interessati ai
 risultati completi della regressione, è possibile usare l'opzione
 \verb+--quiet+ con il comando di stima, come visto sopra.
     
-Un secondo esempio mostra una chiamata di funzione che assegna i
-valori prodotti dalla funzione ad alcune variabili:
+Un secondo esempio mostra una chiamata di funzione che assegna il
+valore prodotto dalla funzione ad alcune variabili:
     
 \begin{code}
       # Definizione di funzione
-      function ess_uhat (series y, list xvars)
+      function get_uhat(series y, list xvars)
         ols y 0 xvars --quiet
-        scalar myess = $ess
-        printf "ESS = %g\n", myess
         series uh = $uhat
-        return scalar myess, series uh
+        return series uh
       end function
       # Script principale
       open data4-1
       list xlist = 2 3 4
       # Chiamata di funzione
-      (SSR, resids) = ess_uhat price, xlist
+      series resids = get_uhat(price, xlist)
 \end{code}
 
 \section{Programmazione delle funzioni}
@@ -149,38 +176,96 @@ della funzione.
 Le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
 (ossia le variabili che esistono nello script da cui la funzione è
 chiamata), a meno che queste siano passate esplicitamente alla
-funzione come argomenti. Anche in questo caso, quello che viene
-passato alla funzione è una copia delle variabili in questione, quindi
-le variabili nell'ambiente esterno non vengono mai modificate da una
-funzione, a meno che non vengano assegnate come valore prodotto da una
-funzione.
+funzione come argomenti.
+
+Nel caso standard, quando una variabile viene passata a una funzione come
+argomento, la funzione ottiene una copia della variabile esterna, quindi il
+valore della variabile nell'ambiente esterno non viene modificato dalle
+operazioni che avvengono all'interno della funzione. Esiste tuttavia un
+meccanismo per consentire a una funzione e all'ambiente di ``cooperare'' in modo
+che una variabile esterna possa essere modificata dalla funzione. Questo
+meccanismo consente a una funzione di restituire più di un valore (anche se una
+funzione può restituire direttamente al massimo una variabile, come spiegato in
+seguito). Questo metodo assomiglia (almeno superficialmente) al passaggio
+dell'indirizzo di una variabile in linguaggio C. Il parametro in questione viene
+contrassegnato col prefisso \texttt{*} nella definizione della funzione, mentre
+l'argomento corrispondente viene contrassegnato col prefisso complementare
+\verb+&+ nella chiamata. Ad esempio:
+%
+\begin{code}
+      function get_uhat_and_ess(series y, list xvars, scalar *ess)
+        ols y 0 xvars --quiet
+        ess = $ess
+        series uh = $uhat
+        return series uh
+      end function
+      # Script principale
+      open data4-1
+      list xlist = 2 3 4
+      # Chiamata di funzione
+      scalar SSR
+      series resid = get_uhat_and_ess(price, xlist, &SSR)
+\end{code}
+%
+In questo caso, alla funzione viene passato l'indirizzo della variabile scalare
+\texttt{SSR} a cui viene assegnato un valore (usando il nome \texttt{ess}).
+Per chi ha familiarità con la programmazione in C, si noti che non è necessario
+(né possibile) ``dereferenziare'' la variabile in questione nella funzione
+usando l'operatore \texttt{*}. Per accedere al contenuto della variabile
+nell'ambiente esterno è sufficiente usare il nome della variabile senza
+prefissi.
+
+La specificazione di uno o più parametri speciali nella definizione di una
+funzione può essere utile per offrire informazioni opzionali alla chiamata. Se
+il parametro ``indirizzo'' è opzionale, occorre fornire come valore predefinito
+\texttt{null}. In questo caso la funzione dovrebbe controllare se alla chiamata
+è stato fornito un argomento corrispondente, usando la funzione \texttt{isnull()}.
+Ad esempio, ecco la funzione vista in precedenza, modificata in modo da rendere
+opzionale l'indicazione del valore di \texttt{ess}.
+%
+\begin{code}
+      function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+        ols y 0 xvars --quiet
+        if !isnull(ess) 
+           ess = $ess
+        endif
+        series uh = $uhat
+        return series uh
+      end function
+\end{code}
+%
+Se alla chiamata non si ha interesse per il valore di \texttt{ess}, occorre usare
+\texttt{null} al posto di un vero argomento:
+%
+\begin{code}
+      series resid = get_uhat_and_ess(price, xlist, null)
+\end{code}
 
 
 \subsection{Valori di uscita}
 
-Le funzioni possono produrre zero o più valori di uscita: questi
-possono essere scalari, serie o matrici (non liste). I valori di uscita sono
-specificati con una dichiarazione all'interno del corpo della funzione
-che comincia con la parola chiave \verb+return+, seguita da una lista
-separata da virgole, ogni elemento della quale è composto da un
-indicatore di tipo e dal nome di una variabile (in modo analogo a
-quanto avviene per la lista dei parametri di una funzione).
-All'interno di una funzione può esserci solo una di queste
-dichiarazioni. Ecco un esempio di dichiarazione return valida:
-    
+Le funzioni possono non produrre alcun valore (limitandosi ad esempio
+a stampare un risultato), oppure possono produrre una singola variabile:
+una scalare, una serie o una matrice. Il valore di uscita è specificato
+con una dichiarazione all'interno del corpo della funzione
+che comincia con la parola chiave \verb+return+, seguita dall'indicatore del
+tipo e dal nome della variabile (in modo analogo a quanto avviene per la lista
+dei parametri di una funzione).  All'interno di una funzione può esserci solo
+una di queste dichiarazioni. Ecco un esempio di dichiarazione return valida:
+%
 \begin{code}
-      return scalar SSR, series resid
+      return scalar SSR
 \end{code}
-
+%
 Si noti che la dichiarazione \verb+return+ \emph{non} indica alla
 funzione di produrre il valore (terminare) nel punto in cui essa
-appare nel corpo della funzione. Piuttosto, essa specifica quali
-variabili sono disponibili per l'assegnazione quando la funzione
+appare nel corpo della funzione. Piuttosto, essa specifica quale
+variabile è disponibile per l'assegnazione quando la funzione
 terminerà, cosa che può avvenire solo quando: a) viene raggiunta la
-fine del codice che definisce la funzione; b) si incontra una
-dichiarazione \verb+funcerr+ (si veda oltre); c) gretl produce un
+fine del codice che definisce la funzione, oppure b) si incontra una
+dichiarazione \verb+funcerr+ (si veda oltre), o c) gretl produce un
 errore.
-    
+ 
 La parola chiave \verb+funcerr+, che può essere seguita da una stringa
 contenuta fra virgolette doppie, fa terminare una funzione con un
 messaggio di errore, che può essere generico o rappresentato dalla
@@ -229,22 +314,20 @@ Dopo aver caricato una funzione, la voce ``Nuovo pacchetto'' nel menù
 alternative:
 
 \begin{itemize}
-\item Una o più funzioni pubbliche da impacchettare;
+\item Una funzione pubblica da impacchettare;
 \item Zero o più funzioni ausiliarie ``private''.
 \end{itemize}
 
-Le funzioni pubbliche saranno disponibili per gli utenti, quelle private
+Le funzioni pubbliche sono direttamente disponibili per gli utenti, quelle private
 fanno parte del meccanismo che lavora ``dietro le quinte'' in un pacchetto di funzioni.
 
 Facendo clic su ``OK'' apparirà una seconda finestra di dialogo, in cui occorre
 inserire le informazioni sul pacchetto (al momento: l'autore, la versione, la
 data e una breve descrizione), oltre che un testo di aiuto che descrive
-l'interfaccia pubblica della funzione. Se una funzione ha più di una interfaccia
-pubblica, verrà mostrato un menù a discesa con cui è possibile attivare le varie
-interfacce. Si ha l'opportunità di modificare il codice delle funzioni,
-selezionandole dal menù e facendo clic su ``Modifica codice della funzione''.
-Infine, è possibile scegliere di caricare il pacchetto sul server di gretl
-appena lo si salva, selezionando l'apposita casella.
+l'interfaccia pubblica della funzione. Si ha l'opportunità di modificare il
+codice delle funzioni, selezionandole dal menù e facendo clic su ``Modifica
+codice della funzione''.  Infine, è possibile scegliere di caricare il pacchetto
+sul server di gretl appena lo si salva, selezionando l'apposita casella.
 
 Facendo clic su ``OK'', si otterrà una finestra di salvataggio del file, che
 suggerirà di salvare il file in una directory chiamata \texttt{functions}, collocata

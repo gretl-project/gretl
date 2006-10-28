@@ -4,13 +4,14 @@
 \section{Introduzione}
 \label{matrix-intro}
 
-A partire dalla versione 1.5.1, gretl offre la possibilità di creare e manipolare matrici
-definite dall'utente. Questa funzionalità è ancora sperimentale.
+A partire dalla versione 1.5.1, gretl offre la possibilità di creare e
+manipolare matrici definite dall'utente. La versione 1.6.1 contiene alcune
+modifiche a questa funzionalità.
 
 \section{Creazione di matrici}
 \label{matrix-create}
 
-È possibile creare una matrice in uno dei quattro modi seguenti:
+È possibile creare una matrice usando uno dei quattro metodi seguenti:
 
 \begin{enumerate}
 \item Specificando direttamente i valori scalari che compongono la matrice,
@@ -23,9 +24,6 @@ definite dall'utente. Questa funzionalità è ancora sperimentale.
   e/o scalari esistenti, oppure attraverso funzioni speciali.
 \end{enumerate}
 
-Questi metodi non possono essere mescolati nella specificazione di una singola
-matrice. Ecco alcuni esempi.
-
 Per specificare una matrice \textit{direttamente in termini di scalari}, la
 sintassi è la seguente:
 
@@ -37,8 +35,9 @@ La matrice viene definita per righe successive; gli elementi di ogni riga sono
 separati da virgole e le righe sono separate da punti e virgola. L'intera
 espressione va racchiusa tra parentesi graffe. Gli spazi tra le parentesi non
 sono significativi. L'espressione vista sopra definisce una matrice $2\times3$.
-Ogni elemento deve essere un valore numerico o il nome di una variabile scalare
-preesistente. Per ottenere la matrice trasposta, basta aggiungere un apostrofo
+Ogni elemento deve essere un valore numerico, il nome di una variabile scalare
+preesistente, o un'espressione che, valutata, produce uno scalare.
+Per ottenere la matrice trasposta, basta aggiungere un apostrofo
 (\texttt{'}) direttamente dopo la parentesi graffa che chiude l'espressione.
 
 Per specificare una matrice \textit{in termini di serie di dati} la sintassi è
@@ -48,10 +47,19 @@ la seguente:
 matrix A = { x1, x2, x3 }
 \end{code}
 %
-dove i nomi delle variabili sono separati da virgole. Per impostazione
-predefinita, ogni variabile rappresenta una colonna (e può esserci solo una
-variabile per ogni colonna). L'intervallo dei valori dei dati inclusi nella
-matrice dipende dall'impostazione corrente dell'intervallo del campione.
+dove i nomi delle variabili sono separati da virgole. Oltre ai nomi di variabili
+esistenti, è possibile usare espressioni che producono una serie una volta
+valutate. Ad esempio, data una serie \texttt{x}, si può scrivere
+%
+\begin{code}
+matrix A = { x, x^2 }
+\end{code}
+%
+
+Per impostazione predefinita, ogni variabile rappresenta una colonna (e può
+esserci solo una variabile per ogni colonna). L'intervallo dei valori dei dati
+inclusi nella matrice dipende dall'impostazione corrente dell'intervallo del
+campione.
 
 Si noti che mentre le funzioni statistiche di gretl sono in grado di gestire
 valori mancanti, le funzioni che trattano le matrici non lo sono, quindi si
@@ -82,10 +90,8 @@ In questo modo, si costruisce una matrice usando tutte le serie del dataset
 corrente, salvo la costante (variabile 0).
 
 È possibile creare nuove matrici, o sostituire matrici esistenti, usando varie
-trasformazioni, in modo simile a quelle usate per il comando \texttt{genr}
-per gli scalari e le serie di dati. Per ottenere una matrice come risultato,
-però, il comando deve iniziare con la parola chiave \texttt{matrix}, non
-\texttt{genr}.  I prossimi paragrafi spiegano nel dettaglio questi meccanismi.
+trasformazioni, come per gli scalari e le serie di dati. I prossimi paragrafi
+spiegano nel dettaglio questi meccanismi.
 
 \tip{I nomi delle matrici devono soddisfare gli stessi requisiti dei nomi delle
 variabili in gretl: il nome non può essere più lungo di 15 caratteri, deve
@@ -194,9 +200,9 @@ Sono disponibili le seguenti funzioni per \textit{la trasformazione
 elemento per elemento} delle matrici: \texttt{log}, \texttt{exp},
 \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
 \texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
-\texttt{qnorm}, \texttt{gamma} e \texttt{lngamma}. Queste funzioni hanno
-lo stesso significato di quando sono usate con \texttt{genr}. Ad esempio,
-se una matrice \texttt{A} è già stata definita,
+\texttt{qnorm}, \texttt{gamma} e \texttt{lngamma}. Queste funzioni operano in
+modo analogo a quando sono usate nel contesto del comando \texttt{genr}.  Ad
+esempio, se una matrice \texttt{A} è già stata definita,
 %
 \begin{code}
 matrix B = sqrt(A)
@@ -327,8 +333,9 @@ matrice sono:
 \end{tabular}
 \end{center}
 
-Le dimensioni \textsl{m} e \textsl{n} possono essere indicate numericamente o
-per riferimento a variabili scalari pre-esistenti, come in
+Le dimensioni \textsl{m} e \textsl{n} possono essere indicate numericamente,
+per riferimento a variabili scalari pre-esistenti, o con espressioni che,
+valutate, producono scalari.
 %
 \begin{code}
 scalar m = 4
@@ -357,7 +364,7 @@ o due matrici sono:
 La sintassi per queste funzioni segue la forma
 %
 \begin{textcode}
-matrix B = func(\textsl{A}, \textsl{C})
+matrix B = func(\textsl{A}, \&\textsl{C})
 \end{textcode}
 %
 Il primo argomento, \ttsl{A}, rappresenta i dati in ingresso, ossia la matrice
@@ -365,13 +372,12 @@ di cui è richiesta la scomposizione o l'analisi. Questo deve essere specificato
 sotto forma di nome di una matrice esistente; in questo caso non è accettata
 un'espressione che si risolve in una matrice.
 
-Il secondo argomento, \ttsl{C}, può essere il nome di una matrice, nel qual caso
-il risultato della funzione viene scritto in quella matrice, oppure la parola
+Il secondo argomento, deve essere il nome di una matrice esistente, preceduto da
+\verb+&+ (per indicare l'``indirizzo'' della matrice in questione), nel qual
+caso un risultato ausiliario viene scritto in quella matrice, oppure la parola
 chiave \texttt{null}, nel qual caso il risultato non è mostrato o è scartato.
 
-Nel caso in cui venga specificato il nome di una matrice come secondo argomento,
-se questa matrice non era già stata definita in precedenza, verrà creata una nuova
-matrice con questo nome. Se esiste già una matrice con questo nome, sarà
+Nel caso in cui il secondo argomento venga indicato, la matrice specificata sarà
 sovrascritta con il risultato della funzione (non è richiesto che la matrice
 preesistente abbia le dimensioni corrette per ricevere il risultato della
 funzione).
@@ -383,12 +389,17 @@ La matrice $Q$ è prodotta direttamente, mentre $R$ può essere recuperata
 attraverso il secondo argomento. Ecco due esempi:
 %
 \begin{code}
-matrix Q = qrdecomp(M, R)
+matrix R
+matrix Q = qrdecomp(M, &R)
 matrix Q = qrdecomp(M, null)
 \end{code}
 %
 Nel primo esempio, la matrice triangolare $R$ è salvata come \texttt{R};
-nel secondo, $R$ è scartata.
+nel secondo, $R$ è scartata. La prima delle righe nell'esempio precedente
+mostra una ``dichiarazione semplice'' di una matrice: \texttt{R} viene
+dichiarata come matrice, ma non gli viene assegnato alcun valore esplicito. In
+questo caso, la variabile è inizializzata a una matrice $1\times 1$ il cui
+unico elemento vale zero.
 
 La funzione \texttt{eigensym} calcola gli autovalori, e opzionalmente gli
 autovettori destri, di una matrice simmetrica $n \times n$.
@@ -397,7 +408,8 @@ $n$; se vengono richiesti gli autovettori, sono restituiti in una matrice $n
 \times n$. Ad esempio:
 %
 \begin{code}
-matrix E = eigensym(M, V)
+matrix V
+matrix E = eigensym(M, &V)
 matrix E = eigensym(M, null)
 \end{code}
 %
@@ -494,7 +506,8 @@ Il nome di una matrice & seleziona le righe specificate dai valori della matrice
 \end{center}
 
 Rispetto alla seconda opzione, il valore intero può essere indicato
-numericamente o attraverso il nome di una variabile scalare esistente.
+numericamente, attraverso il nome di una variabile scalare esistente, o
+con un'espressione che, valutata, produce uno scalare.
 Con l'ultima opzione, la matrice indicata nel campo \textsl{righe} deve
 avere dimensioni $p\times 1$ o $1\times p$ e deve contenere valori interi
 nell'intervallo da 1 a $n$, dove $n$ è il numero di righe da selezionare
@@ -545,27 +558,22 @@ matrix A[diag] = d
 
 Le matrici condividono lo spazio dei nomi consentiti con le serie di dati e le
 variabili scalari. In altre parole, non possono esistere due oggetti di questo
-tipo con lo stesso nome. In caso di potenziali conflitti, quando un oggetto di
-un certo tipo esiste già e si tenta di creare un altro oggetto con lo stesso
-nome, gretl permette di sovrascrivere l'oggetto preesistente, con la sola
-eccezione che \textit{le serie di dati sono protette e non possono essere
-sovrascritte da scalari o matrici}. Di seguito sono presentate alcune
-implicazioni di questa regola.
+tipo con lo stesso nome. È un errore tentare di cambiare il tipo di una
+variabile esistente; ad esempio:
 %
-\begin{itemize}
-\item Se esiste una serie chiamata \texttt{X} e si tenta di creare una matrice
-  di nome \texttt{X}, viene segnalato un errore.
-\item Se si crea una serie chiamata \texttt{X} usando i comandi
-  \texttt{genr} o \texttt{series}, oppure leggendola da un file di dati, o
-  importandola da un database, una eventuale matrice preesistente chiamata
-  \texttt{X} viene automaticamente cancellata.
-\item Se si crea uno scalare chiamato \texttt{X}, una eventuale matrice
-  preesistente \texttt{X} viene cancellata.
-\end{itemize}
+\begin{code}
+scalar x = 3
+matrix x = ones(2,2) # Errore!
+\end{code}
 %
-Se si vuole davvero creare una matrice con il nome di una serie esistente,
-occorre per prima cosa cancellare la serie con il comando \texttt{delete}
-o rinominarla con il comando \texttt{rename}.
+
+È comunque possibile cancellare o rinominare una variabile esistente, e quindi
+riutilizzare il nome per una variabile di diverso tipo:
+\begin{code}
+scalar x = 3
+delete x
+matrix x = ones(2,2) # Corretto!
+\end{code}
 
 \section{Creazione di una serie di dati da una matrice}
 \label{matrix-create-series}
@@ -601,46 +609,30 @@ rappresenta l'osservazione iniziale dell'intervallo del campione. Ad ogni valore
 della serie che non proviene dalla matrice viene assegnato il codice di
 valore mancante.
  
-Si noti che quando si crea una serie in questo modo, il secondo membro del
-comando \texttt{series} può essere \textit{solo} il nome di una matrice, o il
-nome di una matrice seguito da un'espressione di selezione. Non è possibile
-eseguire operazioni tra le matrici in questo contesto.
-
 \section{Eliminazione di matrici}
 \label{matrix-delete}
 
-Per eliminare una matrice, si usa la sintassi
+Per eliminare una matrice, basta scrivere
 %
 \begin{code}
-matrix A delete
+delete M
 \end{code}
 %
-dove \texttt{A} è il nome della matrice da eliminare.
+dove \texttt{M} è il nome della matrice da eliminare.
 
-\section{Approfondimenti ed esempi}
+\section{Stampa di matrici}
+
+Per stampare una matrice, basta indicare solo il suo nome su una riga:
+\begin{code}
+matrix M = mnormal(100,2)
+M
+\end{code}
+
+\section{Esempio: OLS usando le matrici}
 \label{matrix-example}
 
-L'esempio~\ref{examp-matrix} mostra l'uso delle operazioni con le matrici per
-replicare la funzionalità di stima OLS già fornita da gretl. L'esempio illustra
-altri punti importanti.
-
-Per prima cosa, se si scrive solamente \texttt{matrix A}, quando esiste già una
-matrice \texttt{A}, l'effetto è quello di mostrare il contenuto della matrice.
-
-Inoltre, è possibile ``incrociare'' le espressioni  matriciali e il comando
-\texttt{genr} (anche se nell'esempio è usato il suo sinonimo \texttt{scalar}).
-In una formula \texttt{genr}, è possibile usare funzioni matriciali che
-producono risultati scalari (ad esempio \texttt{rows()}). Inoltre, è possibile
-fare riferimento a matrici $1\times 1$ come se fossero scalari ordinari. Infine,
-in una formula \texttt{matrix} è possibile fare riferimento a variabili scalari,
-ove appropriato.
-
-Si noti, comunque, che le serie di dati non possono essere usate nelle
-espressioni \texttt{matrix} al di fuori del caso speciale della definizione di
-una matrice da un elenco di serie, come mostrato in precedenza nel
-paragrafo~\ref{matrix-create}.  In modo simile, non è possibile usare matrici
-con dimensioni maggiori di $1\times 1$ nella generazione di una serie di dati,
-al di fuori del modo descritto nel paragrafo~\ref{matrix-create-series}.
+L'esempio \ref{examp-matrix} mostra come usare i metodi matriciali per replicare
+la funzionalità OLS di gretl.
 
 \begin{script}[htbp]
   \caption{OLS usando le matrici}
@@ -651,15 +643,15 @@ al di fuori del modo descritto nel paragrafo~\ref{matrix-create-series}.
   matrix y = { price }
   matrix b = inv(X'*X) * X'*y
   printf "vettore dei coefficienti stimati\n"
-  matrix b
+  b
   matrix uh = y - X*b
   scalar SSR = uh'*uh
   scalar s2 = SSR / (rows(X) - rows(b))
   matrix V = s2 * inv(X'*X)
-  matrix V
+  V
   matrix se = sqrt(diag(V))
   printf "errori standard stimati\n"
-  matrix se
+  se
   # Confronto con la funzione OLS di gretl
   ols price const sqft --vcv
 \end{code}
