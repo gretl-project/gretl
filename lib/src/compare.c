@@ -1656,6 +1656,131 @@ static double vprime_M_v (double *v, double *M, int n)
     return val;
 }
 
+static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
+			  double *wbar, double ***pZ, DATAINFO *pdinfo) 
+{
+    MODEL cmod;
+    gretlopt opt = OPT_C | OPT_A;
+    double *xvec;
+    double xx;
+    int n = T - k;
+    int i, j, t;
+    int err = 0;
+
+    xvec = malloc(k * sizeof *xvec);
+    if (xvec == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<n && !err; j++) {
+	cmod = lsq(pmod->list, pZ, pdinfo, OLS, opt);
+	if (cmod.errcode) {
+	    err = cmod.errcode;
+	} else {
+	    t = pdinfo->t2 + 1;
+	    xx = 0.0;
+	    for (i=0; i<cmod.ncoeff; i++) {
+		xvec[i] = (*pZ)[cmod.list[i+2]][t];
+		xx += cmod.coeff[i] * xvec[i];
+	    }
+	    cresid[j] = (*pZ)[pmod->list[1]][t] - xx;
+	    cmod.ci = CUSUM;
+	    err = makevcv(&cmod, 1.0);
+	    xx = vprime_M_v(xvec, cmod.vcv, cmod.ncoeff);
+	    cresid[j] /= sqrt(1.0 + xx);
+	    if (wbar != NULL) {
+		*wbar += cresid[j];
+	    } 
+	    pdinfo->t2 += 1;
+	}
+	clear_model(&cmod); 
+    }
+
+    free(xvec);
+
+    return err;
+}
+
+static int cusum_do_graph (double xx, double yy, const double *W, 
+			   int t1, int k, int n, gretlopt opt)
+{
+    FILE *fq = NULL;
+    int j, t;
+    int err = 0;
+
+    err = gnuplot_init(PLOT_CUSUM, &fq);
+    if (err) {
+	return err;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    fprintf(fq, "set xlabel '%s'\n", I_("Observation"));
+    fputs("set nokey\n", fq);
+
+    if (opt & OPT_R) {
+	double b = 1.0 / n;
+
+	/* FIXME */
+
+	fprintf(fq, "set title '%s'\n",
+		/* xgettext:no-c-format */
+		I_("CUSUMSQ plot with 95% confidence band"));
+	fprintf(fq, "plot \\\n%g*x title '' w dots lt 2, \\\n", b);
+	fprintf(fq, "%g+%g*x title '' w lines lt 2, \\\n", -xx, b);
+	fprintf(fq, "%g+%g*x title '' w lines lt 2, \\\n", xx, b);
+    } else {
+	fputs("set xzeroaxis\n", fq);
+	fprintf(fq, "set title '%s'\n",
+		/* xgettext:no-c-format */
+		I_("CUSUM plot with 95% confidence band"));
+	fprintf(fq, "plot \\\n%g+%g*x title '' w lines lt 2, \\\n", xx - k*yy, yy);
+	fprintf(fq, "%g-%g*x title '' w lines lt 2, \\\n", -xx + k*yy, yy);
+    }	
+
+    fputs("'-' using 1:2 w linespoints lt 1\n", fq);
+    for (j=0; j<n; j++) { 
+	/* FIXME use dates */
+	t = t1 + k + j;
+	fprintf(fq, "%d %g\n", t, W[j]);
+    }
+    fputs("e\n", fq);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fq);
+
+    err = gnuplot_make_graph();
+
+    return err;
+}
+
+static void cusum_harvey_collier (double wbar, double sigma, int T,
+				  int k, MODEL *pmod, gretlopt opt,
+				  PRN *prn)
+{
+    double hct, pval;
+
+    hct = (sqrt((double) (T - k)) * wbar) / sigma;
+    pval = t_pvalue_2(hct, T - k - 1);
+    pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
+	    T - k - 1, hct, pval);
+
+    if (opt & OPT_S) {
+	ModelTest *test = model_test_new(GRETL_TEST_CUSUM);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_HARVEY_COLLIER);
+	    model_test_set_dfn(test, T - k - 1);
+	    model_test_set_value(test, hct);
+	    model_test_set_pvalue(test, pval);
+	    maybe_add_test_to_model(pmod, test);
+	}
+    }
+
+    record_test_result(hct, pval, "Harvey-Collier");
+}
+
 /**
  * cusum_test:
  * @pmod: pointer to model to be tested.
@@ -1664,7 +1789,8 @@ static double vprime_M_v (double *v, double *M, int n)
  * @opt: if flags include %OPT_S, save results of test to model.
  * @prn: gretl printing struct.
  *
- * Tests the given model for parameter stability (CUSUM test).
+ * Tests the given model for parameter stability via the CUSUM test,
+ * or if @opt includes %OPT_R, via the CUSUMSQ test.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -1674,16 +1800,12 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
-    int n_est, i, j, t;
-    int xno, yno = pmod->list[1];
-    const int T = pmod->t2 - pmod->t1 + 1;
-    const int K = pmod->ncoeff;
-    MODEL cum_mod;
-    gretlopt cmodopt = OPT_C | OPT_A;
+    int m, i, j;
+    int T = pmod->t2 - pmod->t1 + 1;
+    int k = pmod->ncoeff;
     char cumdate[OBSLEN];
-    double xx, yy, sigma, hct, wbar = 0.0;
-    double *cresid = NULL, *W = NULL, *xvec = NULL;
-    FILE *fq = NULL;
+    double wbar = 0.0;
+    double *cresid = NULL, *W = NULL;
     int err = 0;
 
     if (pmod->ci != OLS) {
@@ -1694,147 +1816,108 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    n_est = T - K;
+    m = T - k;
 
     /* set sample based on model to be tested */
     pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = pmod->t1 + K - 1;    
+    pdinfo->t2 = pmod->t1 + k - 1;    
 
-    cresid = malloc(n_est * sizeof *cresid);
-    W = malloc(n_est * sizeof *W);
-    xvec = malloc(K * sizeof *xvec);
+    cresid = malloc(m * sizeof *cresid);
+    W = malloc(m * sizeof *W);
 
-    if (cresid == NULL || W == NULL || xvec == NULL) {
+    if (cresid == NULL || W == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	for (j=0; j<n_est && !err; j++) {
-	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, cmodopt);
-	    err = cum_mod.errcode;
-	    if (err) {
-		errmsg(err, prn);
-	    } else {
-#if 0
-		printmodel(&cum_mod, pdinfo, OPT_NONE, prn);
-#endif
-		t = pdinfo->t2 + 1;
-		yy = 0.0;
-		for (i=0; i<cum_mod.ncoeff; i++) {
-		    xno = cum_mod.list[i+2];
-		    xvec[i] = (*pZ)[xno][t];
-		    yy += cum_mod.coeff[i] * xvec[i];
-		}
-		cresid[j] = (*pZ)[yno][t] - yy;
-		cum_mod.ci = CUSUM;
-		makevcv(&cum_mod, 1.0);
-		xx = vprime_M_v(xvec, cum_mod.vcv, cum_mod.ncoeff);
-		cresid[j] /= sqrt(1.0 + xx);
-#if 0
-		printf("cresid[%d] = %g\n", j, cresid[j]);
-#endif
-		wbar += cresid[j];
-		clear_model(&cum_mod);
-		pdinfo->t2 += 1;
-	    }
-	    clear_model(&cum_mod); 
+	err = cusum_compute(pmod, cresid, T, k, &wbar, pZ, pdinfo);
+	if (err) {
+	    errmsg(err, prn);
 	}
     }
 
     if (!err) {
-	double pval = NADBL;
+	double xx, yy, den = 0.0, sigma = 0.0;
+	int sig;
 
-	wbar /= T - K;
-	pprintf(prn, "\n%s\n\n",
-		_("CUSUM test for stability of parameters"));
-	pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
+	if (opt & OPT_R) {
+	    double a1, a2, a3;
+	    double n = 0.5 * (T - k) - 1;
 
-	sigma = 0;
-	for (j=0; j<n_est; j++) {
-	    xx = (cresid[j] - wbar);
-	    sigma += xx * xx;
+	    pprintf(prn, "\n%s\n\n", _("CUSUMSQ test for stability of parameters"));
+
+	    for (j=0; j<m; j++) {
+		den += cresid[j] * cresid[j];
+	    }
+
+	    /* see Edgerton and Wells, Oxford Bulletin of Economics and
+	       Statistics, 56, 1994, pp. 355-365 */
+	    a1 = 1.358015 / sqrt(n);
+	    a2 = -0.6701218 / n;
+	    a3 = -0.8858694 / pow(n, 1.5);
+
+	    xx = a1 + a2 + a3;
+	    yy = 0.0;
+
+	    pputs(prn, _("Cumulated sum of squared residuals"));
+	} else {
+	    wbar /= T - k;
+	    pprintf(prn, "\n%s\n\n", _("CUSUM test for stability of parameters"));
+	    pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
+
+	    for (j=0; j<m; j++) {
+		xx = (cresid[j] - wbar);
+		sigma += xx * xx;
+	    }
+	    sigma /= T - k - 1;
+	    sigma = sqrt(sigma);
+	    pprintf(prn, _("sigmahat                 = %g\n\n"), sigma);
+
+	    xx = 0.948 * sqrt((double) (T - k));
+	    yy = 2.0 * xx / (T - k);
+
+	    pputs(prn, _("Cumulated sum of scaled residuals"));
 	}
-	sigma /= T - K - 1;
-	sigma = sqrt(sigma);
-	pprintf(prn, _("sigmahat                 = %g\n\n"), sigma);
 
-	xx = 0.948 * sqrt((double) (T-K));
-	yy = 2.0 * xx / (T-K);
-
-	pputs(prn, _("Cumulated sum of scaled residuals"));
 	pputc(prn, '\n');
 	pputs(prn, /* xgettext:no-c-format */
 	      _("('*' indicates a value outside of 95% confidence band)"));
 	pputs(prn, "\n\n");
     
-	for (j=0; j<n_est; j++) {
+	for (j=0; j<m; j++) {
 	    W[j] = 0.0;
-	    for (i=0; i<=j; i++) {
-		W[j] += cresid[i];
+	    if (opt & OPT_R) {
+		for (i=0; i<=j; i++) {
+		    W[j] += cresid[i] * cresid[i] / den;
+		}
+		sig = fabs(W[j] - (j+1) / m) > xx;
+	    } else {
+		for (i=0; i<=j; i++) {
+		    W[j] += cresid[i];
+		}
+		W[j] /= sigma;
+		sig = fabs(W[j]) > xx + (j+1) * yy;
 	    }
-	    W[j] /= sigma;
-	    t = pmod->t1 + K + j;
-	    ntodate(cumdate, t, pdinfo);
-	    /* FIXME printing of number below? */
-	    pprintf(prn, " %s %9.3f %s\n", cumdate, W[j],
-		    (fabs(W[j]) > xx + (j+1)*yy)? "*" : "");
+	    ntodate(cumdate, pmod->t1 + k + j, pdinfo);
+	    pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
 	}
 
-	hct = (sqrt((double) (T-K)) * wbar) / sigma;
-	pval = t_pvalue_2(hct, T-K-1);
-	pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
-		T-K-1, hct, pval);
-
-	if (opt & OPT_S) {
-	    ModelTest *test = model_test_new(GRETL_TEST_CUSUM);
-
-	    if (test != NULL) {
-		model_test_set_teststat(test, GRETL_STAT_HARVEY_COLLIER);
-		model_test_set_dfn(test, T-K-1);
-		model_test_set_value(test, hct);
-		model_test_set_pvalue(test, pval);
-		maybe_add_test_to_model(pmod, test);
-	    }
+	if (!(opt & OPT_R)) {
+	    cusum_harvey_collier(wbar, sigma, T, k, pmod, opt, prn);
 	}
 
-	record_test_result(hct, pval, "Harvey-Collier");
-
-	gretl_push_c_numeric_locale();
-
-	/* plot with 95% confidence bands, if not batch mode */
-	if (!gretl_in_batch_mode() &&
-	    gnuplot_init(PLOT_CUSUM, &fq) == 0) {
-	    fprintf(fq, "set xlabel '%s'\n", I_("Observation"));
-	    fputs("set xzeroaxis\n", fq);
-	    fprintf(fq, "set title '%s'\n",
-		    /* xgettext:no-c-format */
-		    I_("CUSUM plot with 95% confidence band"));
-	    fputs("set nokey\n", fq);
-	    fprintf(fq, "plot \\\n%g+%g*x title '' w lines lt 2, \\\n", xx - K*yy, yy);
-	    fprintf(fq, "%g-%g*x title '' w lines lt 2, \\\n", -xx + K*yy, yy);
-	    fputs("'-' using 1:2 w linespoints lt 1\n", fq);
-
-	    for (j=0; j<n_est; j++) { 
-		t = pmod->t1 + K + j;
-		fprintf(fq, "%d %g\n", t, W[j]);
-	    }
-	    fputs("e\n", fq);
-
-	    fclose(fq);
-
-	    err = gnuplot_make_graph();
+	/* plot with 95% confidence bands if not in batch mode */
+	if (!gretl_in_batch_mode()) {
+	    err = cusum_do_graph(xx, yy, W, pmod->t1, k, m, opt);
 	}
-
-	gretl_pop_c_numeric_locale();
     }
 
-    /* restore sample */
+    /* restore original sample range */
     pdinfo->t1 = smpl_t1;
     pdinfo->t2 = smpl_t2;
     
     free(cresid);
     free(W);
-    free(xvec);
 
     return err;
 }

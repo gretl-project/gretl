@@ -255,6 +255,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/_Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
     { N_("/Tests/_QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
     { N_("/Tests/_CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
+    { N_("/Tests/CUSUM_SQ test"), NULL, do_chow_cusum, CUSUMSQ, NULL, GNULL },
     { "/Tests/sep4", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/_Panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Save"), NULL, NULL, 0, "<Branch>", GNULL },

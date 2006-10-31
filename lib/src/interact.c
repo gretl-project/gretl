@@ -3602,7 +3602,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	if (cmd->ci == COEFFSUM) {
 	    err = sum_test(cmd->list, models[0], pZ, pdinfo, outprn);
 	} else if (cmd->ci == CUSUM) {
-	    err = cusum_test(models[0], pZ, pdinfo, OPT_NONE, outprn);
+	    err = cusum_test(models[0], pZ, pdinfo, cmd->opt, outprn);
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(models[0], pZ, pdinfo, OPT_NONE, outprn);
 	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {

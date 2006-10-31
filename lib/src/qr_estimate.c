@@ -637,6 +637,8 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
     return 0;
 }
 
+/* perform QR decomposition plus some additional tasks */
+
 static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
 {
     integer k = gretl_matrix_rows(R);
@@ -662,6 +664,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
 	char diag = 'N';
 	integer info = 0;
 
+	/* call lapack */
 	dtrtri_(&uplo, &diag, &k, R->val, &k, &info);
 	if (info != 0) {
 	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);

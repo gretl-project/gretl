@@ -1803,8 +1803,10 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	gretl_command_sprintf("chow %s", brkstr);
     } else if (action == QLRTEST) {
 	gretl_command_strcpy("qlrtest");
-    } else {
+    } else if (action == CUSUM) {
 	gretl_command_strcpy("cusum");
+    } else if (action == CUSUMSQ) {
+	gretl_command_strcpy("cusum --squares");
     }
 
     if (bufopen(&prn)) {
@@ -1814,14 +1816,19 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
     if (action == CHOW || action == QLRTEST) {
 	err = chow_test(cmdline, pmod, &Z, datainfo, OPT_S, prn);
     } else {
-	err = cusum_test(pmod, &Z, datainfo, OPT_S, prn);
+	gretlopt qopt = OPT_S;
+
+	if (action == CUSUMSQ) {
+	    qopt |= OPT_R;
+	}
+	err = cusum_test(pmod, &Z, datainfo, qopt, prn);
     }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	if (action == CUSUM) {
+	if (action == CUSUM || action == CUSUMSQ) {
 	    register_graph();
 	}
 
@@ -1832,7 +1839,9 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 		    _("gretl: Chow test output") : 
 		    (action == QLRTEST)?
 		    _("gretl: QLR test output") : 
-		    _("gretl: CUSUM test output"),
+		    (action == CUSUM)?
+		    _("gretl: CUSUM test output") :
+		    _("gretl: CUSUMSQ test output"),
 		    action, NULL);
     }
 }

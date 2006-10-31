@@ -556,24 +556,25 @@ int
 redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 {
     MODEL cmod;
-    int targ, ml0 = pmod->list[0];
+    int targ, l0;
     int *list;
-    int err = E_SINGULAR;
+    int err = 0;
     int i, ret = 0;
 
-    if (ml0 < 3) {
+    if (pmod->list[0] < 3) {
 	/* shouldn't happen */
 	return 0;
     }
 
-    /* can't handle compound lists */
-    for (i=1; i<=ml0; i++) {
+    for (i=1; i<=pmod->list[0]; i++) {
 	if (pmod->list[i] == LISTSEP) {
+	    /* can't handle compound lists */
 	    return 0;
 	}
     }
 
-    list = malloc(ml0 * sizeof *list);
+    l0 = pmod->list[0] - 1;
+    list = gretl_list_new(l0);
     if (list == NULL) {
 	return 0;
     }
@@ -583,54 +584,80 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
     printlist(pmod->list, "original model list");
 #endif
 
-    /* back up along the list of regressors, trying to find a
-       variable such that, when it is deleted, the exact
-       collinearity error goes away. */
+    list[1] = pmod->list[1];
 
-    while (err == E_SINGULAR && ml0 > 3) {
+    /* back up along the list of regressors, trying to find a single
+       variable such that, when it is deleted, the exact collinearity
+       problem goes away. */
 
-	list[0] = ml0 - 1;
+    for (targ=l0; targ>2; targ--) {
+	int j = 2;
 
-	for (targ=ml0; targ>2; targ--) {
-	    double ess = 1.0, rsq = 0.0;
-	    int j = 2;
-
-	    list[1] = pmod->list[targ];
-
-	    for (i=2; i<=ml0; i++) {
-		if (i != targ) {
-		    list[j++] = pmod->list[i];
-		}
-	    }
-
-#if COLL_DEBUG
-	    fprintf(stderr, "target list position = %d\n", targ);
-	    printlist(list, "temp list for redundancy check");
-#endif
-	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
-
-	    err = cmod.errcode;
-	    if (err == 0) {
-		ess = cmod.ess;
-		rsq = cmod.rsq;
-	    } 
-
-	    clear_model(&cmod);
-
-	    if (err && err != E_SINGULAR) {
-		break;
-	    } else if (ess == 0.0 || rsq == 1.0) {
-		ret = 1;
-		break;
+	for (i=2; i<=l0; i++) {
+	    if (i != targ) {
+		list[j++] = pmod->list[i];
 	    }
 	}
 
-	if (ret) break;
+	cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
 
-	ml0--;
-    }
+	if (cmod.errcode == 0) {
+	    ret = 1;
+	} else if (cmod.errcode != E_SINGULAR) {
+	    /* shouldn't happen */
+	    err = 1;
+	}
 
-    if (ret == 1) {
+	clear_model(&cmod);
+
+	if (ret || err) {
+	    break;
+	}
+    } 
+
+    /* if that didn't work, try trimming the list of regressors more
+       aggressively: look for a variable that is perfectly predicted
+       by the other regressors
+    */
+
+    for (l0=pmod->list[0]; !ret && !err && l0>2; l0--) {
+
+ 	list[0] = l0 - 1;
+
+ 	for (targ=l0; targ>2; targ--) {
+ 	    int j = 2;
+ 
+ 	    list[1] = pmod->list[targ];
+ 
+ 	    for (i=2; i<=l0; i++) {
+ 		if (i != targ) {
+ 		    list[j++] = pmod->list[i];
+ 		}
+ 	    }
+ 
+#if COLL_DEBUG
+ 	    fprintf(stderr, "target list position = %d\n", targ);
+ 	    printlist(list, "temp list for redundancy check");
+#endif
+ 	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
+
+	    if (cmod.errcode == 0) {
+		if (cmod.ess == 0.0 || cmod.rsq == 1.0) {
+		    ret = 1;
+		}
+	    } else if (cmod.errcode != E_SINGULAR) {
+		err = 1;
+	    }
+ 
+ 	    clear_model(&cmod);
+
+	    if (ret || err) {
+		break;
+	    }
+ 	}
+    }  
+
+    if (ret) {
 	int v = pmod->list[targ];
 
 	/* remove var from list and reduce number of coeffs */
