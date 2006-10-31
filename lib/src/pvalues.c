@@ -558,6 +558,79 @@ double log_normal_pdf (double x)
     return (x * x) / 2.0 - 0.91893853320467274178;
 }
 
+/**
+ * bvnorm_cdf:
+ * @a: input value.
+ * @b: input value.
+ * @rho: input value, correlation coefficient.
+ *
+ * Ripped and adapted from Gnumeric, with a bug corrected for the case
+ * (a * b < 0) && (rho < 0).
+ *
+ * Returns: for (x,y) a bivariate standard Normal rv with correlation
+ * coefficient rho, the joint probability that (x < a) && (y < b), or
+ * #NADBL on failure.
+ */
+
+double bvnorm_cdf (double a, double b, double rho)
+{
+    static const double x[] = {0.24840615, 0.39233107, 0.21141819, 
+			       0.03324666, 0.00082485334};
+    static const double y[] = {0.10024215, 0.48281397, 1.0609498, 
+			       1.7797294, 2.6697604};
+
+    double den, a1, b1;
+    double ret = NADBL;
+    int i, j;
+
+    if (fabs(rho) > 1.0) {
+	return NADBL;
+    }	
+
+    if (rho == 0.0) {
+	/* joint prob is just the product of the marginals */
+	return normal_cdf(a) * normal_cdf(b);
+    }
+	
+    den = sqrt(2.0 * (1.0 - rho * rho));
+    a1 = a / den;
+    b1 = b / den;
+
+    if (a <= 0 && b <= 0 && rho < 0) {
+	/* standard case */
+	double sum = 0.0;
+
+	for (i=0; i<5; i++) {
+	    for (j=0; j<5; j++) {
+		sum += x[i] * x[j] * 
+		    exp (a1 * (2 * y[i] - a1) + 
+			 b1 * (2 * y[j] - b1) + 
+			 2 * rho * (y[i] - a1) * (y[j] - b1));
+	    }
+	}
+	ret = (sqrt(1 - (rho * rho)) / M_PI * sum);
+    } else if (a <= 0 && b >= 0 && rho > 0) {
+	ret = normal_cdf(a) - bvnorm_cdf(a, -b, -rho);
+    } else if (a >= 0 && b <= 0 && rho > 0) {
+	ret = normal_cdf(b) - bvnorm_cdf(-a, b, -rho);
+    } else if (a >= 0 && b >= 0 && rho < 0) {
+	ret = normal_cdf(a) + normal_cdf(b) - 1 + bvnorm_cdf(-a, -b, rho);
+    } else if ((a * b * rho) > 0) {
+	int sgna = (a < 0.0)? -1 : 1;
+	int sgnb = (b < 0.0)? -1 : 1;
+	double rho1, rho2, tmp, delta;
+
+	tmp = sqrt((a * a) - 2 * rho * a * b + (b * b));
+	rho1 = (rho * a - b) * sgna / tmp;
+	rho2 = (rho * b - a) * sgnb / tmp;
+	delta = (sgna * sgnb && (rho > 0.0))? 0.0 : 0.5;
+
+	ret = (bvnorm_cdf(a, 0.0, rho1) + bvnorm_cdf(b, 0.0, rho2) - delta);
+    }    
+
+    return ret;
+}
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
@@ -610,6 +683,8 @@ double gretl_get_cdf (char st, double *p)
 	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 2);
     } else if (st == 'B') {
 	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
+    } else if (st == 'D') {
+	x = bvnorm_cdf(p[0], p[1], p[2]);
     }
 
     return x;
