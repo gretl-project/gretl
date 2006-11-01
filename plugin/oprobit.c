@@ -396,17 +396,17 @@ MODEL oprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* we drop 2 dummies, not just the first one */
     nv = list[0] + dumlist[0] - 1;
 
-    newlist = malloc(nv * sizeof *newlist);
+    newlist = gretl_list_new(nv);
     if (newlist == NULL) {
 	model.errcode = E_ALLOC;
 	goto bailout;
     }
 
-    newlist[0] = nv;
-    for(i=1, k=1; i<=list[0]; i++) {
+    k = 1;
+    for (i=1; i<=list[0]; i++) {
 	newlist[k++] = list[i];
     }
-    for(i=2; i<=dumlist[0]; i++) {
+    for (i=2; i<=dumlist[0]; i++) {
 	newlist[k++] = dumlist[i];
     }
 
