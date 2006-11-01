@@ -661,6 +661,26 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     return dmod;
 }
 
+static int 
+ordered_probit_ok (double **Z, const DATAINFO *pdinfo, int v)
+{
+    if (!var_is_discrete(pdinfo, v)) {
+	sprintf(gretl_errmsg, "The variable '%s' is not discrete",
+		pdinfo->varname[v]);
+	return 0;
+    } else {
+	double m = gretl_min(pdinfo->t1, pdinfo->t2, Z[v]);
+
+	if (m != 0.0) {
+	    sprintf(gretl_errmsg, "The minimum value of '%s' is not 0",
+		    pdinfo->varname[v]);
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /**
  * logit_probit:
  * @list: dependent variable plus list of regressors.
@@ -686,10 +706,10 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 {
     int yv = list[1];
 
-    if (opt & OPT_D) {
-	return oprobit_model(list, pZ, pdinfo, prn);
-    } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
+    if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt);
+    } else if (ordered_probit_ok(*pZ, pdinfo, yv)) {
+	return oprobit_model(list, pZ, pdinfo, prn);
     } else {
 	MODEL dmod;
 

@@ -38,6 +38,7 @@ struct op_container_ {
     int k;            /* total number of parameters */
     double *ndx;      /* index variable */
     double *dP;       /* probabilities */
+    MODEL *pmod;      /* model struct, initially containing OLS */
 };
 
 static void op_container_destroy (op_container *OC)
@@ -60,6 +61,7 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
     }
 
     OC->Z = Z;
+    OC->pmod = pmod;
     OC->t1 = pmod->t1;
     OC->t2 = pmod->t2;
     OC->nobs = pmod->nobs;
@@ -86,8 +88,11 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
 	return NULL;
     }
 
-    for (t=0; t<pmod->nobs; t++) {
-	OC->y[t] = (int) Z[vy][t];
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    OC->y[i++] = (int) Z[vy][t];
+	}
     }
 
 #if ODEBUG
@@ -112,15 +117,13 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
 
 static void compute_probs (const double *theta, op_container *OC)
 {
-    double m0, m1, ystar0, ystar1;
+    double m0, m1, ystar0, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
-    int t1 = OC->t1;
-    int t2 = OC->t2;
     double P0, P1;
     int t, yt;
 
-    for (t=t1; t<=t2; t++) {
+    for (t=0; t<OC->nobs; t++) {
 	yt = OC->y[t];
 	if (yt == 0) {
 	    ystar1 = OC->ndx[t];
@@ -151,22 +154,26 @@ static void compute_probs (const double *theta, op_container *OC)
 static double op_loglik (const double *theta, void *ptr)
 {
     double x, ll = 0.0;
-    int i, t, v;
+    int i, s, t, v;
     
     op_container *OC = (op_container *) ptr;
 
+    s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
 	x = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
 	    x -= theta[i] * OC->Z[v][t];
 	}
-	OC->ndx[t] = x;
+	OC->ndx[s++] = x;
     }
 
     compute_probs(theta, OC);
 
-    for (t=OC->t1; t<=OC->t2; t++) {
+    for (t=0; t<OC->nobs; t++) {
 	ll += log(OC->dP[t]);
     }
 
@@ -339,25 +346,6 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     return 0;
 }
 
-int oprobit_check_depvar (const double **Z, DATAINFO *pdinfo, int v)
-{
-    if (!var_is_discrete(pdinfo, v)) {
-	sprintf(gretl_errmsg, "The variable '%s' is not discrete",
-		pdinfo->varname[v]);
-	return E_DATA;
-    } else {
-	double m = gretl_min(pdinfo->t1, pdinfo->t2, Z[v]);
-
-	if (m != 0.0) {
-	    sprintf(gretl_errmsg, "The minimum value of '%s' is not 0",
-		    pdinfo->varname[v]);
-	    return E_DATA;
-	}
-    }
-
-    return 0;
-}
-
 /* the driver function for the plugin: note, if prn is non-NULL,
    the verbose option has been selected
 */
@@ -371,12 +359,6 @@ MODEL oprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     int i, k, nv;
 
     gretl_model_init(&model);
-
-    model.errcode = oprobit_check_depvar((const double **) *pZ, pdinfo, 
-					 list[1]);
-    if (model.errcode) {
-	return model;
-    }
 
     dumlist = malloc(2 * sizeof *dumlist);
     if (dumlist == NULL) {
@@ -410,7 +392,7 @@ MODEL oprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	newlist[k++] = dumlist[i];
     }
 
-    /* run initial OLS: OPT_M would ban missing obs */
+    /* run initial OLS */
     model = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	goto bailout;
