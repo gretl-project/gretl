@@ -696,7 +696,9 @@ ordered_probit_ok (double **Z, const DATAINFO *pdinfo, int v)
  * Computes estimates of the discrete model specified by @list,
  * using an estimator determined by the value of @ci.  In the
  * binary case, uses the BRMR auxiliary regression; see Davidson 
- * and MacKinnon.
+ * and MacKinnon.  In the case of probit, if the dependent
+ * variable is not binary but is discrete and has a minimum value
+ * of 0, we do ordered probit.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */

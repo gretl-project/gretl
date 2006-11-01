@@ -3,6 +3,7 @@
 "arma","ARMA modeling","artificial data"
 "armaloop","ARMA using command loop","artificial data"
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
+"camtriv","Ordered Probit (Cameron and Trivedi)","doctor visits"
 "denmark","Vector Error Correction Model","Danish macro data"
 "ects_nls","Nonlinear least squares (Davidson)","artificial data"
 "hamilton","VECM with tests on cointegrating vector","US and Italian prices"

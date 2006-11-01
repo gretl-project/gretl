@@ -1,0 +1,5 @@
+# Replicate Cameron and Trivedi: see also 
+# http://www.stanford.edu/~clint/bench/
+open rac3d.gdt
+probit DVISITS 0 SEX AGE AGESQ INCOME LEVYPLUS FREEPOOR FREEREPA \
+  ILLNESS ACTDAYS HSCORE CHCOND1 CHCOND2

@@ -21,5 +21,6 @@
 "nysewk","Weekly NYSE closing price, 1996-2006"
 "penngrow","Nerlove cross-country growth data"
 "poisson","Test data for Poisson regression"
+"rac3d","Cameron-Trivedi doctor visits data"
 "sw_ch12","International macro data (Stock and Watson)"
 "sw_ch14","Unemployment and inflation (Stock and Watson)"
