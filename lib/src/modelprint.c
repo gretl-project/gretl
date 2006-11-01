@@ -35,9 +35,9 @@ static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			    int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
 static void print_rho_terms (const MODEL *pmod, PRN *prn);
-static void print_discrete_statistics (const MODEL *pmod, 
-				       const DATAINFO *pdinfo,
-				       PRN *prn);
+static void print_binary_statistics (const MODEL *pmod, 
+				     const DATAINFO *pdinfo,
+				     PRN *prn);
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
@@ -48,6 +48,12 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 #define RTFTAB "\\par \\ql \\tab "
 
 #define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
+
+#define ordered_probit(m) (m->ci == PROBIT && \
+                           gretl_model_get_int(m, "ordered"))
+
+#define binary_model(m) (m->ci == LOGIT || (m->ci == PROBIT && \
+                         !gretl_model_get_int(m, "ordered")))
 
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
@@ -667,9 +673,9 @@ const char *estimator_string (int ci, PRN *prn)
     } else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
-    }	
-
-    else return "";
+    } else {
+	return "";
+    }
 }
 
 static const char *
@@ -703,6 +709,12 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("2-step Arellano-Bond");
 	} else {
 	    return N_("1-step Arellano-Bond");
+	}
+    } else if (pmod->ci == PROBIT) {
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    return N_("Ordered Probit");
+	} else {
+	    return N_("Probit");
 	}
     } else {
 	return estimator_string(pmod->ci, prn);
@@ -1359,7 +1371,7 @@ static void model_format_start (PRN *prn)
                        "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx7500\\cellx8000\n\\intbl"
 
-#define RTF_DISCRETE_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+#define RTF_BINARY_ROW "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx8000\n\\intbl"
 
@@ -1370,7 +1382,7 @@ static void model_format_start (PRN *prn)
 
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
-    int discrete = pmod->ci == PROBIT || pmod->ci == LOGIT;
+    int binary = binary_model(pmod);
     int use_param = pmod->ci == NLS || pmod->ci == MLE;
 
     if (plain_format(prn)) {
@@ -1378,7 +1390,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	    pputs(prn, _("      VARIABLE            COEFFICIENT          "
 		       "        STDERROR\n"));
 	    pputc(prn, '\n');
-	} else if (discrete) {
+	} else if (binary) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
 			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
@@ -1397,7 +1409,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	if (pmod->ci == MPOLS) {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"));
-	} else if (discrete) {
+	} else if (binary) {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
 		    d, I_("T STAT"), d, I_("SLOPE at mean"));
@@ -1440,14 +1452,14 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 		    pt, pt, pt, pt, pt, pt, pt, pt, I_(col1),
 		    I_(col2), I_("Std.\\ Error"), 
 		    I_("$t$-statistic"), 
-		    (discrete)? I_("Slope"): I_("p-value"),
-		    (discrete)? "$^*$" : "");
+		    (binary)? I_("Slope"): I_("p-value"),
+		    (binary)? "$^*$" : "");
 	    return;
 	}   
 
 	if (rtf_format(prn)) {
-	    if (discrete) {
-		pprintf(prn, "{" RTF_DISCRETE_ROW
+	    if (binary) {
+		pprintf(prn, "{" RTF_BINARY_ROW
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
@@ -1739,7 +1751,7 @@ static char active_decpoint (void)
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt, 
 		PRN *prn)
 {
-    int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
+    int binary = binary_model(pmod);
     int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
@@ -1791,8 +1803,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    if (is_discrete) {
-	print_discrete_statistics(pmod, pdinfo, prn);
+    if (binary) {
+	print_binary_statistics(pmod, pdinfo, prn);
 	goto close_format;
     }
 
@@ -1814,7 +1826,15 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
-    }	
+    }
+	
+    if (ordered_probit(pmod)) {
+	print_middle_table_start(prn);
+	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }
 
     if (pmod->ci == LAD) {
 	print_middle_table_start(prn);
@@ -2068,6 +2088,10 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int gotnan = 0;
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[24];
+
+    if (ordered_probit(pmod)) {
+	do_pval = 1;
+    }
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
     pprintf(prn, "  %-15s ", varname);
@@ -2629,9 +2653,9 @@ static void plain_print_act_pred (const int *ap, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void print_discrete_statistics (const MODEL *pmod, 
-				       const DATAINFO *pdinfo,
-				       PRN *prn)
+static void print_binary_statistics (const MODEL *pmod, 
+				     const DATAINFO *pdinfo,
+				     PRN *prn)
 {
     double model_chisq = gretl_model_get_double(pmod, "chisq");
     const double *crit = pmod->criterion;

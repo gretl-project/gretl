@@ -313,25 +313,34 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
-/**
- * logit_probit:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @ci: command index: if = %LOGIT, perform logit regression, otherwise
- * perform probit regression.
- * @opt: if includes %OPT_R form robust (QML) estimates of standard
- * errors and covariance matrix.
- *
- * Computes estimates of the discrete model specified by @list,
- * using an estimator determined by the value of @ci.  Uses the
- * BRMR auxiliary regression; see Davidson and MacKinnon.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
+static MODEL oprobit_model (const int *list, double ***pZ, 
+			    DATAINFO *pdinfo, PRN *prn)
+{
+    MODEL opmod;
+    void *handle;
+    MODEL (* oprobit_estimate) (const int *, double ***, DATAINFO *, PRN *);
 
-MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		    int ci, gretlopt opt)
+    *gretl_errmsg = '\0';
+
+    oprobit_estimate = get_plugin_function("oprobit_estimate", &handle);
+    if (oprobit_estimate == NULL) {
+	gretl_model_init(&opmod);
+	opmod.errcode = E_FOPEN;
+	return opmod;
+    }
+
+    opmod = (*oprobit_estimate) (list, pZ, pdinfo, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&opmod);
+
+    return opmod;
+}
+
+static MODEL 
+binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		     int ci, gretlopt opt)
 {
     int i, t, v, depvar = list[1];
     int nx = list[0] - 1;
@@ -343,7 +352,6 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *dmodlist = NULL;
     int *act_pred = NULL;
     MODEL dmod;
-    int dummy;
     double xx, zz, fx, Fx, fbx;
     double lldiff, llbak;
     int iters;
@@ -352,15 +360,6 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&dmod);
     
-    /* check whether depvar is binary */
-    dummy = gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[depvar]);
-    if (!dummy) {
-	dmod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
-				"variable.\n"), pdinfo->varname[depvar]);
-	return dmod;
-    }
-
     dmodlist = gretl_list_new(list[0]);
     if (dmodlist == NULL) {
 	dmod.errcode = E_ALLOC;
@@ -660,6 +659,46 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
 
     return dmod;
+}
+
+/**
+ * logit_probit:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @ci: command index: if = %LOGIT, perform logit regression, otherwise
+ * perform probit regression.
+ * @opt: if includes %OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix, in binary case.
+ * @prn: printing struct in case additional information is
+ * wanted (%OPT_V).
+ *
+ * Computes estimates of the discrete model specified by @list,
+ * using an estimator determined by the value of @ci.  In the
+ * binary case, uses the BRMR auxiliary regression; see Davidson 
+ * and MacKinnon.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    int ci, gretlopt opt, PRN *prn)
+{
+    int yv = list[1];
+
+    if (opt & OPT_D) {
+	return oprobit_model(list, pZ, pdinfo, prn);
+    } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
+	return binary_logit_probit(list, pZ, pdinfo, ci, opt);
+    } else {
+	MODEL dmod;
+
+	gretl_model_init(&dmod);
+	dmod.errcode = E_UNSPEC;
+	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
+				"variable.\n"), pdinfo->varname[yv]);
+	return dmod;
+    }
 }
 
 /* Solves for diagonal elements of X'X inverse matrix.

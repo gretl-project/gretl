@@ -905,7 +905,8 @@ static void print_pval_str (double pval, char *str)
     }
 }
 
-static int print_coeff (const MODEL *pmod, int i,
+static int 
+print_restricted_coeff (const MODEL *pmod, int i,
 			double coeff, double sderr, int k,
 			const DATAINFO *pdinfo, 
 			PRN *prn)
@@ -1053,7 +1054,7 @@ do_restricted_estimates (gretl_restriction_set *rset,
 	    coeff = gretl_vector_get(b, i);
 	    v = gretl_matrix_get(S, i, i);
 	    se = (v > 1.0e-16)? sqrt(v) : 0.0;
-	    print_coeff(pmod, i, coeff, se, rset->k, pdinfo, prn);
+	    print_restricted_coeff(pmod, i, coeff, se, rset->k, pdinfo, prn);
 	}
 	pputc(prn, '\n');
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 

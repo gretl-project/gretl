@@ -56,6 +56,7 @@ enum {
     P_STATA_IMPORT,
     P_JMULTI_IMPORT,
     P_ZIPFILE,
+    P_OPROBIT,
     P_ARBOND
 } plugin_codes;
 
@@ -99,6 +100,7 @@ struct plugin_info plugins[] = {
     { P_STATA_IMPORT,    "stata_import" },
     { P_JMULTI_IMPORT,   "jmulti_import" },
     { P_ZIPFILE,         "gretlzip" },
+    { P_OPROBIT,         "oprobit" },
     { P_ARBOND,          "arbond" }
 };  
 
@@ -164,6 +166,7 @@ struct plugin_function plugin_functions[] = {
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },
+    { "oprobit_estimate",  P_OPROBIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

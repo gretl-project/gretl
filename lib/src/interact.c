@@ -3493,7 +3493,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case TSLS:
 	clear_model(models[0]);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
-	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
+	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, 
+				      (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == HSK) {
 	    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == LOGISTIC) {

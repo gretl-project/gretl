@@ -83,6 +83,7 @@ SRCS = excel_import.c \
 	arma.c \
 	arma_x12.c \
 	tobit.c \
+	oprobit.c \
 	garch.c \
 	urcdist.c \
 	vif.c \
@@ -111,6 +112,7 @@ PLUGINS = arbond.la \
 	stats_tables.la \
 	sysest.la \
 	tobit.la \
+	oprobit.la \
 	urcdist.la \
 	vif.la \
 	poisson.la \
@@ -247,10 +249,13 @@ arma_x12.la: arma_x12.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 tobit.la: tobit.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB) 
+
+oprobit.la: oprobit.lo
+	$(LINK) -o $@ $< $(GRETLLIB) 
 
 poisson.la: poisson.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo mod_garch.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)

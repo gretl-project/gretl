@@ -21,7 +21,7 @@
 #define DISCRETE_H
 
 MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		    int ci, gretlopt opt);
+		    int ci, gretlopt opt, PRN *prn);
 
 MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param); 

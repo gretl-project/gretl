@@ -506,6 +506,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    strcpy(targ, pmod->params[i]);
+	} else if (pmod->ci == PROBIT && pmod->params != NULL) {
+	    strcpy(targ, pmod->params[i]);
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
 	}
