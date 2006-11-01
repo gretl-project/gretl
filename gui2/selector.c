@@ -2688,7 +2688,8 @@ static void build_selector_switches (selector *sr)
 	gtk_widget_show(hbox);
     }
 
-    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
+    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
+	sr->code == LOGIT || sr->code == PROBIT) {
 	if (sr->code == ARMA) {
 	    vbox_add_hsep(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));

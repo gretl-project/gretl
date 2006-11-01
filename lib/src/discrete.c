@@ -338,23 +338,184 @@ static MODEL oprobit_model (const int *list, double ***pZ,
     return opmod;
 }
 
+/* calculate standard errors etc using the Hessian */
+
+static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
+{
+    int i, err = 0;
+
+    if (dmod->vcv != NULL) {
+	free(dmod->vcv);
+	dmod->vcv = NULL;
+    }
+
+    if (dmod->xpx != NULL) {
+	free(dmod->xpx);
+    }
+
+    dmod->xpx = hessian(dmod, Z, dmod->ci);
+    if (dmod->xpx == NULL) {
+	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
+	return E_ALLOC;
+    } 
+
+    if (opt & OPT_R) {
+	err = compute_QML_vcv(dmod, Z);
+	if (err) {
+	    return err;
+	}
+    } else {    
+	/* obtain negative inverse of Hessian */
+	double *xpx = NULL, *diag = NULL;
+
+	cholesky_decomp(dmod->xpx, dmod->ncoeff); 
+
+	diag = malloc(dmod->ncoeff * sizeof *diag); 
+	if (diag == NULL) {
+	    return E_ALLOC;
+	}
+
+	xpx = copyvec(dmod->xpx, dmod->ncoeff * (dmod->ncoeff + 1) / 2);
+	if (xpx == NULL) {
+	    free(diag);
+	    return E_ALLOC;
+	}
+
+	neginv(xpx, diag, dmod->ncoeff);
+
+	for (i=0; i<dmod->ncoeff; i++) {
+	    dmod->sderr[i] = sqrt(diag[i]);
+	}
+
+	free(diag);
+	free(xpx);
+    }
+
+    return err;
+}
+
+/* BRMR, Davidson and MacKinnon, ETM, p. 461 */
+
+static int do_BRMR (const int *list, int *dmodlist, 
+		    MODEL *dmod, int ci, double *beta,
+		    double ***pZ, DATAINFO *pdinfo,
+		    PRN *prn)
+{
+    double lldiff, llbak = -1.0e9;
+    double xx, fx, Fx;
+    double tol = 1.0e-9;
+    int itermax = 250;
+    int v = dmodlist[1];
+    int depvar = list[1];
+    int i, t, iter;
+
+    for (iter=0; iter<itermax; iter++) {
+	double wt;
+
+	/* construct BRMR dataset */
+	for (t=dmod->t1; t<=dmod->t2; t++) {
+	    xx = dmod->yhat[t];
+	    if (na(xx)) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		if (ci == LOGIT) {
+		    fx = logit_pdf(xx);
+		    Fx = logit(xx);
+		} else {
+		    fx = normal_pdf(xx);
+		    Fx = normal_cdf(xx);
+		}
+
+		if (Fx < 1.0) {
+		    wt = 1.0 / sqrt(Fx * (1.0 - Fx));
+		} else {
+		    wt = 0.0;
+		}
+
+		(*pZ)[v][t] = wt * ((*pZ)[depvar][t] - Fx);
+		wt *= fx;
+		for (i=2; i<=dmodlist[0]; i++) {
+		    (*pZ)[dmodlist[i]][t] = wt * (*pZ)[list[i]][t];
+		}
+	    }
+	}
+
+	dmod->lnL = logit_probit_llhood((*pZ)[depvar], dmod, ci);
+
+	lldiff = fabs(dmod->lnL - llbak);
+	if (lldiff < tol) {
+	    break; 
+	}
+
+	if (na(dmod->lnL)) {
+	    pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
+	} else {
+	    pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, dmod->lnL);
+	}
+	pputc(prn, '\n');
+
+	llbak = dmod->lnL;
+	clear_model(dmod);
+	*dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A);
+	if (dmod->errcode) {
+	    fprintf(stderr, "logit_probit: dmod errcode = %d\n", dmod->errcode);
+	    if (iter > 0) {
+		dmod->errcode = E_NOCONV;
+	    }
+	    break;
+	}
+
+	/* update coefficient estimates */
+	for (i=0; i<dmod->ncoeff; i++) {
+	    if (isnan(dmod->coeff[i])) {
+		fprintf(stderr, "BRMR produced NaN coeff\n");
+		dmod->errcode = E_NOCONV;
+		break;
+	    }
+	    beta[i] += dmod->coeff[i];
+	}
+
+	if (dmod->errcode) {
+	    break;
+	}
+
+	/* calculate yhat */
+	for (t=dmod->t1; t<=dmod->t2; t++) {
+	    if (na(dmod->yhat[t])) {
+		continue;
+	    }
+	    dmod->yhat[t] = 0.0;
+	    for (i=0; i<dmod->ncoeff; i++) {
+		dmod->yhat[t] += beta[i] * (*pZ)[list[i+2]][t];
+	    }
+	}
+    }
+
+    if (lldiff > tol) {
+	dmod->errcode = E_NOCONV;
+    }
+
+    if (!dmod->errcode) {
+	gretl_model_set_int(dmod, "iters", iter);
+	pputc(prn, '\n');
+    }
+
+    return dmod->errcode;
+}
+
 static MODEL 
 binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		     int ci, gretlopt opt)
+		     int ci, gretlopt opt, PRN *prn)
 {
     int i, t, v, depvar = list[1];
     int nx = list[0] - 1;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
     int oldv = pdinfo->v;
-    int itermax = 250;
-    double tol = 1.0e-9; /* ? 1.0e-9 */
     int *dmodlist = NULL;
     int *act_pred = NULL;
     MODEL dmod;
-    double xx, zz, fx, Fx, fbx;
-    double lldiff, llbak;
-    int iters;
+    double xx, zz, fbx;
     double *xbar = NULL;
     double *beta = NULL;
 
@@ -366,16 +527,10 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return dmod;
     } 
 
-    /* allocate space for means of indep vars */
+    /* allocate space for means of indep vars, coeffs */
     xbar = malloc(nx * sizeof *xbar);
-    if (xbar == NULL) {
-	dmod.errcode = E_ALLOC;
-	return dmod;
-    }
-
-    /* space for coefficient vector */
     beta = malloc(nx * sizeof *beta);
-    if (beta == NULL) {
+    if (xbar == NULL || beta == NULL) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -391,7 +546,7 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* make room for full set of transformed vars */
     if (dataset_add_series(list[0], pZ, pdinfo)) {
 	dmod.errcode = E_ALLOC;
-	return dmod;
+	goto bailout;
     }
 
     v = oldv; /* the first newly created variable */
@@ -420,109 +575,10 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     dmodlist[0] = list[0];
     dmodlist[1] = v; /* dep var is the newly created one */
 
-    llbak = -1.0e9;
-    
-    /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
-
-    for (iters=0; iters<itermax; iters++) {
-	double wt;
-
-	/* construct BRMR dataset */
-	for (t=dmod.t1; t<=dmod.t2; t++) {
-	    xx = dmod.yhat[t];
-	    if (na(xx)) {
-		(*pZ)[v][t] = NADBL;
-	    } else {
-		if (ci == LOGIT) {
-		    fx = logit_pdf(xx);
-		    Fx = logit(xx);
-		} else {
-		    fx = normal_pdf(xx);
-		    Fx = normal_cdf(xx);
-		}
-
-		if (Fx < 1.0) {
-		    wt = 1.0 / sqrt(Fx * (1.0 - Fx));
-		} else {
-		    wt = 0.0;
-		}
-
-		(*pZ)[v][t] = wt * ((*pZ)[depvar][t] - Fx);
-#if LPDEBUG
-		fprintf(stderr, "creating Z[%d][%d] = %g * (%g - %g) = %g\n",
-			v, t, wt, (*pZ)[depvar][t], Fx, (*pZ)[v][t]);
-#endif
-		wt *= fx;
-		for (i=2; i<=dmodlist[0]; i++) {
-		    (*pZ)[dmodlist[i]][t] = wt * (*pZ)[list[i]][t];
-#if LPDEBUG
-		    fprintf(stderr, "creating Z[%d][%d] = %g * %g = %g\n",
-			    dmodlist[i], t, wt, (*pZ)[list[i]][t], 
-			    (*pZ)[dmodlist[i]][t]);
-#endif
-		}
-	    }
-	}
-
-	dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, ci);
-
-	lldiff = fabs(dmod.lnL - llbak);
-	if (lldiff < tol) {
-	    break; 
-	}
-
-#if LPDEBUG
-	fprintf(stderr, "\n*** iteration %d: log-likelihood = %g\n", iters, dmod.lnL);
-#endif
-
-	llbak = dmod.lnL;
-	clear_model(&dmod);
-	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A);
-	if (dmod.errcode) {
-	    fprintf(stderr, "logit_probit: dmod errcode = %d\n", dmod.errcode);
-	    if (iters > 0) {
-		dmod.errcode = E_NOCONV;
-	    }
-#if LPDEBUG
-	    fputs("BRMR dataset\n", stderr);
-	    for (t=dmod.t1; t<=dmod.t2; t++) {
-		for (i=1; i<=dmodlist[0]; i++) {
-		    fprintf(stderr, "%g ", (*pZ)[dmodlist[i]][t]);
-		}
-		fputc('\n', stderr);
-	    }
-#endif
-	    goto bailout;
-	}
-
-	/* update coefficient estimates: FIXME stepsize? */
-	for (i=0; i<dmod.ncoeff; i++) {
-	    if (isnan(dmod.coeff[i])) {
-		fprintf(stderr, "BRMR produced NaN coeff\n");
-		dmod.errcode = E_NOCONV;
-		goto bailout;
-	    }
-	    beta[i] += dmod.coeff[i];
-	}
-
-	/* calculate yhat */
-	for (t=dmod.t1; t<=dmod.t2; t++) {
-	    if (na(dmod.yhat[t])) {
-		continue;
-	    }
-	    dmod.yhat[t] = 0.0;
-	    for (i=0; i<dmod.ncoeff; i++) {
-		dmod.yhat[t] += beta[i] * (*pZ)[list[i+2]][t];
-	    }
-	}
-    }
-
-    if (lldiff > tol) {
-	dmod.errcode = E_NOCONV;
+    do_BRMR(list, dmodlist, &dmod, ci, beta, pZ, pdinfo, prn);
+    if (dmod.errcode) {
 	goto bailout;
     }
-
-    gretl_model_set_int(&dmod, "iters", iters);
 
     /* re-establish original list in model */
     for (i=1; i<=list[0]; i++) {
@@ -538,55 +594,10 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     Lr_chisq(&dmod, *pZ);
     dmod.ci = ci;
 
-    /* calculate standard errors etc using the Hessian */
-
-    if (dmod.vcv != NULL) {
-	free(dmod.vcv);
-	dmod.vcv = NULL;
-    }
-
-    if (dmod.xpx != NULL) {
-	free(dmod.xpx);
-    }
-
-    dmod.xpx = hessian(&dmod, (const double **) *pZ, ci);
-    if (dmod.xpx == NULL) {
-	dmod.errcode = E_ALLOC;
-	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
+    /* calculate standard errors etc */
+    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) *pZ);
+    if (dmod.errcode) {
 	goto bailout;
-    } 
-
-    if (opt & OPT_R) {
-	dmod.errcode = compute_QML_vcv(&dmod, (const double **) *pZ);
-	if (dmod.errcode) {
-	    goto bailout;
-	}
-    } else {    
-	/* obtain negative inverse of Hessian */
-	double *xpx = NULL, *diag = NULL;
-
-	cholesky_decomp(dmod.xpx, dmod.ncoeff); 
-	diag = malloc(dmod.ncoeff * sizeof *diag); 
-	if (diag == NULL) {
-	    dmod.errcode = E_ALLOC;
-	    goto bailout;
-	}
-
-	xpx = copyvec(dmod.xpx, dmod.ncoeff * (dmod.ncoeff + 1) / 2);
-	if (xpx == NULL) {
-	    free(diag);
-	    dmod.errcode = E_ALLOC;
-	    goto bailout;
-	}
-
-	neginv(xpx, diag, dmod.ncoeff);
-
-	for (i=0; i<dmod.ncoeff; i++) {
-	    dmod.sderr[i] = sqrt(diag[i]);
-	}
-
-	free(diag);
-	free(xpx);
     }
 
     /* apparatus for calculating slopes at means */
@@ -709,7 +720,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     int yv = list[1];
 
     if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
-	return binary_logit_probit(list, pZ, pdinfo, ci, opt);
+	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
     } else if (ordered_probit_ok(*pZ, pdinfo, yv)) {
 	return oprobit_model(list, pZ, pdinfo, prn);
     } else {

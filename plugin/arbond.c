@@ -47,11 +47,15 @@ struct arbond_ {
     int maxTi;            /* maximum equations for any given unit */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations used */
+    int t1min;            /* first usable observation, any unit */
+    int ndum;             /* number of time dummies to use */
     double SSR;           /* sum of squared residuals */
     double s2;            /* residual variance */
     double AR1;           /* z statistic for AR(1) errors */
     double AR2;           /* z statistic for AR(2) errors */
     double sargan;        /* overidentification test statistic */
+    double wald;          /* Wald test statistic */
+    int wdf;              /* degrees of freedom for Wald test */
     int *xlist;           /* list of independent variables */
     int *ilist;           /* list of instruments */
     gretl_matrix *beta;   /* parameter estimates */
@@ -278,6 +282,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->step = 1;
     ab->nx = 0;
     ab->nz = 0;
+    ab->t1min = 0;
+    ab->ndum = 0;
 
     if (list[0] >= xpos) {
 	err = arbond_make_lists(ab, list, xpos);
@@ -299,6 +305,9 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->s2 = NADBL;
     ab->AR1 = NADBL;
     ab->AR2 = NADBL;
+    ab->sargan = NADBL;
+    ab->wald = NADBL;
+    ab->wdf = 0;
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, k = %d\n",
@@ -460,6 +469,15 @@ arbond_sample_check (arbond *ab, const int *list,
 #endif
     }
 
+    /* record first usable obs, any unit */
+    ab->t1min = t1imin;
+
+    /* figure number of time dummies if wanted */
+    if (ab->opt & OPT_D) {
+	ab->ndum = t2max - t1imin;
+	ab->k += ab->ndum;
+    }
+
     /* is t1min actually "reachable"? */
     if (t1min < t1imin - ab->q) {
 	t1min = t1imin - ab->q;
@@ -500,6 +518,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
+	ab->m += ab->ndum;
 #if ADEBUG
 	fprintf(stderr, "total m = %d\n", ab->m);
 #endif
@@ -575,6 +594,94 @@ static int ar_data_check (arbond *ab, int k)
     }
 
     return T;
+}
+
+static int arbond_const_pos (arbond *ab)
+{
+    int i;
+
+    for (i=1; i<=ab->xlist[0]; i++) {
+	if (ab->xlist[i] == 0) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
+static int arbond_wald_test (arbond *ab, PRN *prn)
+{
+    gretl_matrix *vcv = NULL;
+    gretl_vector *b = NULL;
+    double x;
+    int cpos = arbond_const_pos(ab);
+    int i, j, k, kc = ab->p + ab->nx;
+    int ri, rj;
+    int err;
+
+    /* position of const in coeff vector? */
+    if (cpos != 0) {
+	k = kc - 1;
+	cpos += ab->p - 1;
+    } else {
+	k = kc;
+	cpos = -1;
+    }
+
+    b = gretl_column_vector_alloc(k);
+    vcv = gretl_matrix_alloc(k, k);
+    if (b == NULL || vcv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    ri = 0;
+    for (i=0; i<kc; i++) {
+	if (i != cpos) {
+	    b->val[ri++] = ab->beta->val[i];
+	}
+    }
+
+    ri = 0;
+    for (i=0; i<kc; i++) {
+	if (i != cpos) {
+	    rj = 0;
+	    for (j=0; j<kc; j++) {
+		if (j != cpos) {
+		    x = gretl_matrix_get(ab->vbeta, i, j);
+		    gretl_matrix_set(vcv, ri, rj++, x);
+		}
+	    }
+	    ri++;
+	}
+    } 
+
+    err = gretl_invert_symmetric_matrix(vcv);
+    if (err) {
+	goto bailout;
+    }
+    
+    x = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, vcv, &err);
+    if (err) {
+	fprintf(stderr, _("Failed to compute test statistic\n"));
+	goto bailout;
+    }
+
+    if (!err) {
+	ab->wald = x;
+	ab->wdf = k;
+    }
+
+#if ADEBUG
+    pprintf(prn, "Wald chi^2(%d) = %g\n", k, x);
+#endif
+
+ bailout:
+
+    gretl_matrix_free(vcv);
+    gretl_vector_free(b);
+    
+    return err;
 }
 
 static int sargan_test (arbond *ab, PRN *prn)
@@ -950,6 +1057,7 @@ static int arbond_variance (arbond *ab, PRN *prn)
     /* while we're at it... */
     ar_test(ab, C, prn);
     sargan_test(ab, prn);
+    arbond_wald_test(ab, prn);
 
     gretl_matrix_free(V);
     gretl_matrix_free(u);
@@ -1065,6 +1173,10 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	strcpy(pmod->params[j++], pdinfo->varname[ab->xlist[i+1]]);
     }
 
+    for (i=0; i<ab->ndum; i++) {
+	sprintf(pmod->params[j++], "T%d", i + 2);
+    }
+
     err = gretl_model_allocate_storage(pmod);
 
     if (!err) {
@@ -1116,6 +1228,10 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	if (!na(ab->sargan)) {
 	    gretl_model_set_int(pmod, "sargan_df", ab->m - ab->k);
 	    gretl_model_set_double(pmod, "sargan", ab->sargan);
+	}
+	if (!na(ab->wald)) {
+	    gretl_model_set_int(pmod, "wald_df", ab->wdf);
+	    gretl_model_set_double(pmod, "wald", ab->wald);
 	}
     }
 
@@ -1485,6 +1601,11 @@ static void arbond_make_dy_and_X (arbond *ab, const double *y,
 		x = Z[ab->xlist[j+1]][s];
 		gretl_matrix_set(ab->dX, k, j + ab->p, x);
 	    }
+	    for (j=0; j<ab->ndum; j++) {
+		/* time dummies */
+		x = (t - ab->t1min - 1 == j)? 1 : 0;
+		gretl_matrix_set(ab->dX, k, j + ab->p + ab->nx, x);
+	    }	    
 	    k++;
 	}
     }
@@ -1496,7 +1617,7 @@ static void arbond_make_dy_and_X (arbond *ab, const double *y,
 }
 
 static int arbond_make_Z_and_A (arbond *ab, const double *y,
-				 const double **Z)
+				const double **Z)
 {
     int i, j, k, s, t, c = 0;
     double x;
@@ -1554,6 +1675,11 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 		for (j=0; j<ab->nz; j++) {
 		    x = Z[ab->ilist[j+1]][s];
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
+		}
+		/* add time dummies? */
+		for (j=0; j<ab->ndum; j++) {
+		    x = (t - ab->t1min - 1 == j)? 1 : 0;
+		    gretl_matrix_set(ab->Zi, k, ab->xc0 + ab->nz + j, x);
 		}
 		k++; /* increment target row */	
 	    }

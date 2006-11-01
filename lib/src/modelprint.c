@@ -323,6 +323,14 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
 		i, x, _("with p-value"), chisq_cdf_comp(x, i));
     }
+
+    x = gretl_model_get_double(pmod, "wald");
+    if (!na(x)) {
+	i = gretl_model_get_int(pmod, "wald_df");
+	pprintf(prn, "  %s:\n", _("Wald (joint) test"));
+	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+    }
 }
 
 static void ladstats (const MODEL *pmod, PRN *prn)
