@@ -590,15 +590,19 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
        variable such that, when it is deleted, the exact collinearity
        problem goes away. */
 
-    for (targ=l0; targ>2; targ--) {
+    for (targ=pmod->list[0]; targ>2; targ--) {
 	int j = 2;
 
-	for (i=2; i<=l0; i++) {
+	for (i=2; i<=pmod->list[0]; i++) {
 	    if (i != targ) {
 		list[j++] = pmod->list[i];
 	    }
 	}
 
+#if COLL_DEBUG
+	fprintf(stderr, "pass 1: target list position = %d\n", targ);
+	printlist(list, "temp list for redundancy check");
+#endif
 	cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
 
 	if (cmod.errcode == 0) {
@@ -636,7 +640,7 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
  	    }
  
 #if COLL_DEBUG
- 	    fprintf(stderr, "target list position = %d\n", targ);
+ 	    fprintf(stderr, "pass 2: target list position = %d\n", targ);
  	    printlist(list, "temp list for redundancy check");
 #endif
  	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);

@@ -1679,6 +1679,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 	if (cmod.errcode) {
 	    err = cmod.errcode;
 	} else {
+	    /* compute ex post prediction error */
 	    t = pdinfo->t2 + 1;
 	    xx = 0.0;
 	    for (i=0; i<cmod.ncoeff; i++) {
@@ -1690,9 +1691,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 	    err = makevcv(&cmod, 1.0);
 	    xx = vprime_M_v(xvec, cmod.vcv, cmod.ncoeff);
 	    cresid[j] /= sqrt(1.0 + xx);
-	    if (wbar != NULL) {
-		*wbar += cresid[j];
-	    } 
+	    *wbar += cresid[j];
 	    pdinfo->t2 += 1;
 	}
 	clear_model(&cmod); 
@@ -1703,10 +1702,13 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
     return err;
 }
 
-static int cusum_do_graph (double xx, double yy, const double *W, 
-			   int t1, int k, int n, gretlopt opt)
+static int cusum_do_graph (double a, double b, const double *W, 
+			   int t1, int k, int m, 
+			   DATAINFO *pdinfo, gretlopt opt)
 {
     FILE *fq = NULL;
+    const double *obs = NULL;
+    double x0 = 0.0;
     int j, t;
     int err = 0;
 
@@ -1715,36 +1717,42 @@ static int cusum_do_graph (double xx, double yy, const double *W,
 	return err;
     }
 
+    if (dataset_is_time_series(pdinfo)) { 
+        obs = gretl_plotx(pdinfo);
+	if (obs != NULL) {
+	    x0 = obs[t1+k];
+	}
+    }
+
     gretl_push_c_numeric_locale();
 
     fprintf(fq, "set xlabel '%s'\n", I_("Observation"));
     fputs("set nokey\n", fq);
 
     if (opt & OPT_R) {
-	double b = 1.0 / n;
-
-	/* FIXME */
-
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		I_("CUSUMSQ plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g*x title '' w dots lt 2, \\\n", b);
-	fprintf(fq, "%g+%g*x title '' w lines lt 2, \\\n", -xx, b);
-	fprintf(fq, "%g+%g*x title '' w lines lt 2, \\\n", xx, b);
+	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - 1);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - 1);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - 1);
     } else {
 	fputs("set xzeroaxis\n", fq);
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		I_("CUSUM plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g+%g*x title '' w lines lt 2, \\\n", xx - k*yy, yy);
-	fprintf(fq, "%g-%g*x title '' w lines lt 2, \\\n", -xx + k*yy, yy);
+	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
+	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
     }	
 
     fputs("'-' using 1:2 w linespoints lt 1\n", fq);
-    for (j=0; j<n; j++) { 
-	/* FIXME use dates */
+    for (j=0; j<m; j++) { 
 	t = t1 + k + j;
-	fprintf(fq, "%d %g\n", t, W[j]);
+	if (obs != NULL) {
+	    fprintf(fq, "%g %g\n", obs[t], W[j]);
+	} else {
+	    fprintf(fq, "%d %g\n", t, W[j]);
+	}
     }
     fputs("e\n", fq);
 
@@ -1757,23 +1765,23 @@ static int cusum_do_graph (double xx, double yy, const double *W,
     return err;
 }
 
-static void cusum_harvey_collier (double wbar, double sigma, int T,
-				  int k, MODEL *pmod, gretlopt opt,
+static void cusum_harvey_collier (double wbar, double sigma, int m,
+				  MODEL *pmod, gretlopt opt,
 				  PRN *prn)
 {
     double hct, pval;
 
-    hct = (sqrt((double) (T - k)) * wbar) / sigma;
-    pval = t_pvalue_2(hct, T - k - 1);
+    hct = (sqrt((double) m) * wbar) / sigma;
+    pval = t_pvalue_2(hct, m - 1);
     pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
-	    T - k - 1, hct, pval);
+	    m - 1, hct, pval);
 
     if (opt & OPT_S) {
 	ModelTest *test = model_test_new(GRETL_TEST_CUSUM);
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_HARVEY_COLLIER);
-	    model_test_set_dfn(test, T - k - 1);
+	    model_test_set_dfn(test, m - 1);
 	    model_test_set_value(test, hct);
 	    model_test_set_pvalue(test, pval);
 	    maybe_add_test_to_model(pmod, test);
@@ -1800,8 +1808,8 @@ static void cusum_harvey_collier (double wbar, double sigma, int T,
 int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn) 
 {
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
     int m, i, j;
     int T = pmod->t2 - pmod->t1 + 1;
     int k = pmod->ncoeff;
@@ -1818,7 +1826,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    m = T - k;
+    /* number of forecasts */
+    m = T - k; 
 
     /* set sample based on model to be tested */
     pdinfo->t1 = pmod->t1;
@@ -1839,12 +1848,12 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	double xx, yy, den = 0.0, sigma = 0.0;
+	double a, b, den = 0.0, sigma = 0.0;
 	int sig;
 
 	if (opt & OPT_R) {
 	    double a1, a2, a3;
-	    double n = 0.5 * (T - k) - 1;
+	    double n = 0.5 * m - 1;
 
 	    pprintf(prn, "\n%s\n\n", _("CUSUMSQ test for stability of parameters"));
 
@@ -1858,8 +1867,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    a2 = -0.6701218 / n;
 	    a3 = -0.8858694 / pow(n, 1.5);
 
-	    xx = a1 + a2 + a3;
-	    yy = 0.0;
+	    /* 0.5 * total height of band */
+	    a = a1 + a2 + a3;
+	    /* slope of expectation wrt time */
+	    b = 1.0 / m;
 
 	    pputs(prn, _("Cumulated sum of squared residuals"));
 	} else {
@@ -1868,15 +1879,16 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
 
 	    for (j=0; j<m; j++) {
-		xx = (cresid[j] - wbar);
-		sigma += xx * xx;
+		sigma += (cresid[j] - wbar) * (cresid[j] - wbar);
 	    }
 	    sigma /= T - k - 1;
 	    sigma = sqrt(sigma);
 	    pprintf(prn, _("sigmahat                 = %g\n\n"), sigma);
 
-	    xx = 0.948 * sqrt((double) (T - k));
-	    yy = 2.0 * xx / (T - k);
+	    /* height of confidence band for first prediction */
+	    a = 0.948 * sqrt((double) m);
+	    /* slope of confidence band limit wrt time */
+	    b = 2.0 * a / m;
 
 	    pputs(prn, _("Cumulated sum of scaled residuals"));
 	}
@@ -1892,31 +1904,31 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		for (i=0; i<=j; i++) {
 		    W[j] += cresid[i] * cresid[i] / den;
 		}
-		sig = fabs(W[j] - (j+1) / m) > xx;
+		sig = fabs(W[j] - (j+1) / (double) m) > a;
 	    } else {
 		for (i=0; i<=j; i++) {
 		    W[j] += cresid[i];
 		}
 		W[j] /= sigma;
-		sig = fabs(W[j]) > xx + (j+1) * yy;
+		sig = fabs(W[j]) > a + j * b;
 	    }
 	    ntodate(cumdate, pmod->t1 + k + j, pdinfo);
 	    pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
 	}
 
 	if (!(opt & OPT_R)) {
-	    cusum_harvey_collier(wbar, sigma, T, k, pmod, opt, prn);
+	    cusum_harvey_collier(wbar, sigma, m, pmod, opt, prn);
 	}
 
 	/* plot with 95% confidence bands if not in batch mode */
 	if (!gretl_in_batch_mode()) {
-	    err = cusum_do_graph(xx, yy, W, pmod->t1, k, m, opt);
+	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, pdinfo, opt);
 	}
     }
 
     /* restore original sample range */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
     
     free(cresid);
     free(W);

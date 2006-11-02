@@ -115,7 +115,7 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
     return OC;
 }
 
-static void compute_probs (const double *theta, op_container *OC)
+static int compute_probs (const double *theta, op_container *OC)
 {
     double m0, m1, ystar0, ystar1 = 0.0;
     int M = OC->M;
@@ -142,21 +142,46 @@ static void compute_probs (const double *theta, op_container *OC)
 
 	P0 = (yt == 0)? 0.0 : normal_cdf(ystar0);
 	P1 = (yt == M)? 1.0 : normal_cdf(ystar1);
-
 	OC->dP[t] = P1 - P0;
-#if ODEBUG > 1
-	fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
-		t, yt, OC->ndx[t], OC->dP[t]);
-#endif	
+
+	if (OC->dP[t] <= 0.0) {
+	    fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
+		    t, yt, OC->ndx[t], OC->dP[t]);
+	    return 1;
+	} 
     }
+
+    return 0;
+}
+
+static int bad_cutpoints (const double *theta, const op_container *OC)
+{
+    int i;
+    
+    if (theta[OC->nx] <= 0.0) {
+	return 1;
+    }
+    
+    for (i=OC->nx+1; i<OC->k; i++) {
+	if (theta[i] <= theta[i-1]) {
+	    return 1;
+	}
+    }
+	
+    return 0;
 }
 
 static double op_loglik (const double *theta, void *ptr)
 {
+    op_container *OC = (op_container *) ptr;
     double x, ll = 0.0;
     int i, s, t, v;
+    int err;
     
-    op_container *OC = (op_container *) ptr;
+    if (bad_cutpoints(theta, OC)) {
+	fputs("Non-increasing cutpoint!\n", stderr);
+	return NADBL;
+    }
 
     s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
@@ -170,11 +195,14 @@ static double op_loglik (const double *theta, void *ptr)
 	}
 	OC->ndx[s++] = x;
     }
-
-    compute_probs(theta, OC);
-
-    for (t=0; t<OC->nobs; t++) {
-	ll += log(OC->dP[t]);
+    
+    err = compute_probs(theta, OC);
+    if (err) {
+	ll = NADBL;
+    } else {
+	for (t=0; t<OC->nobs; t++) {
+	    ll += log(OC->dP[t]);
+	}
     }
 
 #if ODEBUG > 1
@@ -225,8 +253,8 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 {
     int npar = OC->k;
     int nx = OC->nx;
-    int i, j, k;
-    double v;
+    double x;
+    int i, j, k, t, v;
 
     pmod->t1 = OC->t1;
     pmod->t2 = OC->t2;
@@ -251,12 +279,26 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	fprintf(stderr,"theta[%d] = %12.8f\n", i, theta[i]);
 #endif
 	for (j=0; j<=i; j++) {
-	    v = gretl_matrix_get(invH, i, j);
-	    pmod->vcv[ijton(i,j,npar)] = v;
+	    x = gretl_matrix_get(invH, i, j);
+	    pmod->vcv[ijton(i,j,npar)] = x;
 	    if (i == j) {
-		pmod->sderr[i] = sqrt(v);
+		pmod->sderr[i] = sqrt(x);
 	    }
 	}	    
+    }
+
+    for (t=OC->t1; t<=OC->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+	x = 0.0;
+	for (i=0; i<OC->nx; i++) {
+	    v = OC->list[i+2];
+	    x -= theta[i] * OC->Z[v][t];
+	}
+	/* - \hat{beta}'x */
+	pmod->yhat[t] = x;
+	pmod->uhat[t] = NADBL; /* can we do something sensible here? */
     }
 
     pmod->lnL = op_loglik(theta, OC);
@@ -301,8 +343,15 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	return E_ALLOC;
     }
 
-    for (i=0; i<npar; i++) {
+    for (i=0; i<OC->nx; i++) {
 	theta[i] = pmod->coeff[i];
+    }
+
+    /* the following is very heuristic, has no sound theoretical 
+       justification but seems to work in practice. So much
+       for the Scientific Method (TM) !!! */
+    for (i=OC->nx; i<npar; i++) {
+	theta[i] = 0.25 * pmod->coeff[i];
     }
 
 #if ODEBUG
