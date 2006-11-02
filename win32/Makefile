@@ -81,6 +81,7 @@ PLUGINSRC = \
         arma_x12.c \
 	workbook.c \
 	tobit.c \
+	oprobit.c \
 	mod_garch.c \
 	fcp.c \
 	garch.c \
@@ -113,6 +114,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/pca.dll \
 	plugins/nistcheck.dll \
 	plugins/tobit.dll \
+	plugins/oprobit.dll \
 	plugins/garch.dll \
         plugins/audio.dll \
 	plugins/vif.dll \
@@ -381,6 +383,10 @@ plugins/arma_x12.dll: arma_x12.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
 
 plugins/tobit.dll: tobit.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/oprobit.dll: oprobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 

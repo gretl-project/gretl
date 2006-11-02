@@ -275,8 +275,8 @@ static int op_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
 static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH) 
 {
     int i, j, err, k = OC->k;
-    double small = 1.0e-07;
-    double small2 = 2.0 * small;
+    double smal = 1.0e-07;  /* "small" is some sort of macro on win32 */
+    double smal2 = 2.0 * smal;
     double x, ll;
 
     double *g0 = malloc(k * sizeof *g0);
@@ -286,18 +286,18 @@ static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH
     }
 
     for (i=0; i<k; i++) {
-	theta[i] -= small;
+	theta[i] -= smal;
 	ll = op_loglik(theta, OC);
 	for (j=0; j<k; j++) {
 	    g0[j] = OC->g[j];
 	}
-	theta[i] += small2;
+	theta[i] += smal2;
 	ll = op_loglik(theta, OC);
 	for (j=0; j<k; j++) {
-	    x = (OC->g[j] - g0[j]) / small2;
+	    x = (OC->g[j] - g0[j]) / smal2;
 	    gretl_matrix_set(inH, i, j, -x);
 	}
-	theta[i] -= small;
+	theta[i] -= smal;
     }
 
     /* make symmetric */
