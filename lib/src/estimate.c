@@ -666,7 +666,9 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 
 	/* remove var from list and reduce number of coeffs */
 	gretl_list_delete_at_pos(pmod->list, targ);
-	get_model_df(pmod);
+	pmod->ncoeff -= 1;
+	pmod->dfd = pmod->nobs - pmod->ncoeff;
+	pmod->dfn = pmod->ncoeff - pmod->ifc;
 
 	/* add redundant var to list of drops */
 	gretl_list_append_term(droplist, v);

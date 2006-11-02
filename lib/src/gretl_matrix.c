@@ -2928,7 +2928,7 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
 
     dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
     if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
+	fprintf(stderr, "dgeqp3: info = %d\n", (int) info);
 	err = 1;
 	goto bailout;
     }
@@ -2946,7 +2946,7 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
     /* run actual QR factorization */
     dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
     if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
+	fprintf(stderr, "dgeqp3: info = %d\n", (int) info);
 	err = 1;
 	goto bailout;
     }
@@ -2977,7 +2977,7 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
     free(work);
     free(iwork);
 
-#if 1
+# if 1
     for (i=0; i<n; i++) {
 	fprintf(stderr, "jpvt[%d] = %d\n", i, (int) jpvt[i]);
 	if (jpvt[i] != i + 1) {
@@ -2985,12 +2985,103 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
 	}
     }
     free(jpvt);
-#endif
+# endif
 
     return err;
 }
 
 #endif 
+
+#if 0
+
+int gretl_matrix_LQ_decomp (gretl_matrix *M, gretl_matrix *L)
+{
+    integer m = M->rows;
+    integer n = M->cols;
+    integer lda = m;
+
+    integer info = 0;
+    integer lwork = -1;
+    doublereal *tau = NULL;
+    doublereal *work = NULL;
+    doublereal *work2;
+
+    int i, j;
+    int err = 0;
+
+    if (L != NULL && (L->rows != m || L->cols != m)) {
+	return E_NONCONF;
+    }
+
+    /* dim of tau is min (m, n) */
+    tau = malloc(m * sizeof *tau);
+    work = lapack_malloc(sizeof *work);
+
+    if (tau == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* workspace size query */
+    dgeqlf_(&m, &n, M->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeqlf: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+    /* optimally sized work array */
+    lwork = (integer) work[0];
+    work2 = lapack_realloc(work, (size_t) lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    work = work2;
+
+    /* run actual LQ factorization */
+    dgeqlf_(&m, &n, M->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeqlf: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+    if (R != NULL) {
+	/* copy the lower triangular L out of M */
+	for (i=0; i<m; i++) {
+	    for (j=0; j<m; j++) {
+		if (i >= j) {
+		    gretl_matrix_set(L, i, j, 
+				     gretl_matrix_get(M, i, j));
+		} else {
+		    gretl_matrix_set(L, i, j, 0.0);
+		}
+	    }
+	}
+    }
+
+    gretl_matrix_print(L, "L");
+    fprintf(stderr, "m=%d, n=%d\n", (int) m, (int) n);
+
+    /* obtain the real "Q" matrix (in M) */
+    dorgql_(&m, &n, &n, M->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dorgql: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    } 
+
+ bailout:
+
+    free(tau);
+    lapack_free(work);
+
+    return err;
+}
+
+#endif
 
 /**
  * gretl_matrix_QR_decomp:
@@ -3010,11 +3101,10 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 {
     integer m = M->rows;
     integer n = M->cols;
+    integer lda = m;
 
     integer info = 0;
     integer lwork = -1;
-    integer lda = m;
-    integer *iwork = NULL;
     doublereal *tau = NULL;
     doublereal *work = NULL;
     doublereal *work2;
@@ -3029,9 +3119,8 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
     work = lapack_malloc(sizeof *work);
-    iwork = malloc(n * sizeof *iwork);
 
-    if (tau == NULL || work == NULL || iwork == NULL) {
+    if (tau == NULL || work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -3088,32 +3177,39 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 
     free(tau);
     lapack_free(work);
-    free(iwork);
 
     return err;
 }
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
 
+static int get_R_rank (const gretl_matrix *R)
+{
+    double d;
+    int i, rank = R->rows;
+
+    for (i=0; i<R->rows; i++) {
+	d = gretl_matrix_get(R, i, i);
+	if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
+	    rank--;
+	}
+    }
+
+    return rank;
+}
+
 /**
- * gretl_matrix_QR_rank:
+ * gretl_check_QR_rank:
  * @R: matrix R from QR decomposition.
- * @pmask: pointer to array of char (see below) or %NULL.
- * @errp: pointer to receive error code.
+ * @err: pointer to receive error code.
  * 
- * Checks the reciprocal condition number of R and
- * calculates the rank of the matrix QR.  If QR is of 
- * less than full rank and @pmask is not %NULL, then
- * on successful exit @pmask receives an allocated
- * array of char, of length equal to the order of @R,
- * with 1s in positions corresponding to zero diagonal
- * elements of R (or redundant columns of Q) and 0s
- * in all other positions.
+ * Checks the reciprocal condition number of R and calculates 
+ * the rank of the matrix QR.
  *
  * Returns: on success, the rank of QR.
  */
 
-int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
+int gretl_check_QR_rank (const gretl_matrix *R, int *err)
 {
     integer n = R->rows;
     integer *iwork = NULL;
@@ -3125,13 +3221,13 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
     char norm = '1';
     int rank = n;
 
-    *errp = 0;
+    *err = 0;
 
     work = lapack_malloc(3 * n * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
     if (work == NULL || iwork == NULL) {
-	*errp = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }
 
@@ -3140,35 +3236,14 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 
     if (info != 0) {
 	fprintf(stderr, "dtrcon: info = %d\n", (int) info);
-	*errp = 1;
+	*err = 1;
 	goto bailout;
     }
 
     if (rcond < QR_RCOND_MIN) {
-	char *mask = NULL;
-	double d;
-	int i;
-
 	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g, but min is %g\n", rcond,
 		QR_RCOND_MIN);
-
-	if (pmask != NULL) {
-	    mask = calloc(n, 1);
-	}
-
-	for (i=0; i<n; i++) {
-	    d = gretl_matrix_get(R, i, i);
-	    if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
-		if (mask != NULL) {
-		    mask[i] = 1;
-		}
-		rank--;
-	    }
-	}
-
-	if (pmask != NULL) {
-	    *pmask = mask;
-	}
+	rank = get_R_rank(R);
     }
 
  bailout:
@@ -3185,7 +3260,7 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
  * @err: location to receive error code on failure.
  * 
  * Computes the rank of @a via its QR decomposition.  If you
- * already have that decomposition, using gretl_matrix_QR_rank()
+ * already have that decomposition, using gretl_check_QR_rank()
  * is more efficient.
  *
  * Returns: the rank of @a, or -1 on failure.
@@ -3207,7 +3282,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     }
 
     if (!*err) {
-	rank = gretl_matrix_QR_rank(R, NULL, err);
+	rank = get_R_rank(R);
     }
 
     gretl_matrix_free(Q);

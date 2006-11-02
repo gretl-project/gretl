@@ -33,8 +33,7 @@ static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
     for (i=2; i<=list[0]; i++) {
         v = list[i];
         if (gretl_iszero(t1, t2, Z[v])) {
-	    gretl_list_delete_at_pos(list, i);
-	    i--;
+	    gretl_list_delete_at_pos(list, i--);
 	}
     }
 }
@@ -544,7 +543,7 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     int rank, ndrop = 0;
     int *droplist = NULL;
     double test;
-    int i, k, v;
+    int i, j, k;
 
     Q = gretl_matrix_data_subset(instlist, Z, t1, t2, mask);
     if (Q == NULL) {
@@ -565,13 +564,15 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 	goto bailout;
     }
 
-    rank = gretl_matrix_QR_rank(R, NULL, err);
+    rank = gretl_check_QR_rank(R, err);
+
 #if TDEBUG
     fprintf(stderr, "tsls_Q: k = Q->cols = %d, rank = %d\n", k, rank);
     if (rank == 0) {
 	gretl_matrix_print(R, "R");
     }
 #endif
+
     if (*err) {
 	goto bailout;
     } else if (rank < k) {
@@ -585,17 +586,19 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 	    droplist[0] = 0;
 	}
 
+	j = 1;
 	for (i=0; i<k; i++) {
-	    v = instlist[i+1];
 	    test = gretl_matrix_get(R, i, i);
 	    if (fabs(test) < R_DIAG_MIN) {
 		if (droplist != NULL) {
 		    droplist[0] += 1;
-		    droplist[droplist[0]] = v;
+		    droplist[droplist[0]] = instlist[j];
 		}	    
-		fprintf(stderr, "tsls_Q: dropping redundant instrument %d\n", v);
-		gretl_list_delete_at_pos(instlist, i+1);
+		fprintf(stderr, "tsls_Q: dropping redundant instrument %d\n", 
+			instlist[j]);
+		gretl_list_delete_at_pos(instlist, j--);
 	    }
+	    j++;
 	}
 
 	k = instlist[0];

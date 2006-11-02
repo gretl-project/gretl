@@ -22,7 +22,7 @@
 
 #define ODEBUG 1
 
-#define OPROBIT_TOL 1.0e-12
+#define OPROBIT_TOL 1.0e-13
 
 typedef struct op_container_ op_container;
 
@@ -39,6 +39,9 @@ struct op_container_ {
     double *ndx;      /* index variable */
     double *dP;       /* probabilities */
     MODEL *pmod;      /* model struct, initially containing OLS */
+    int ascore;       /* 0 for numerical score, 1 analytical */
+    double **G;       /* score matrix by observation */
+    double *g;        /* total score vector */
 };
 
 static void op_container_destroy (op_container *OC)
@@ -47,13 +50,16 @@ static void op_container_destroy (op_container *OC)
     free(OC->ndx);
     free(OC->dP);
     free(OC->list);
+    doubles_array_free(OC->G, OC->k);
+    free(OC->g);
 
     free(OC);
 }
 
-static op_container *op_container_new (double **Z, MODEL *pmod)
+static op_container *op_container_new (double **Z, MODEL *pmod, int ascore)
 {
     int i, t, nx, vy;
+    int nobs = pmod->nobs;
 
     op_container *OC = malloc(sizeof *OC);
     if (OC == NULL) {
@@ -64,26 +70,32 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
     OC->pmod = pmod;
     OC->t1 = pmod->t1;
     OC->t2 = pmod->t2;
-    OC->nobs = pmod->nobs;
+    OC->nobs = nobs;
     OC->k = pmod->ncoeff;
 
     vy = pmod->list[1];
     OC->M = (int) gretl_max(OC->t1, OC->t2, Z[vy]);
     nx = OC->k - (OC->M - 1);
     OC->nx = nx;
+    OC->ascore = ascore;
 
     OC->y = NULL;
     OC->ndx = NULL;
     OC->dP = NULL;
     OC->list = NULL;
+    OC->G = NULL;
+    OC->g = NULL;
 
-    OC->y = malloc(OC->nobs * sizeof *OC->y);
-    OC->ndx = malloc(OC->nobs * sizeof *OC->ndx);
-    OC->dP = malloc(OC->nobs * sizeof *OC->dP);
+    OC->y = malloc(nobs * sizeof *OC->y);
+    OC->ndx = malloc(nobs * sizeof *OC->ndx);
+    OC->dP = malloc(nobs * sizeof *OC->dP);
     OC->list = gretl_list_new(1 + nx);
+    OC->G = doubles_array_new(OC->k, nobs);
+    OC->g = malloc(OC->k * sizeof *OC->g);
 
     if (OC->y == NULL || OC->ndx == NULL || 
-	OC->dP == NULL || OC->list == NULL) {
+	OC->dP == NULL || OC->list == NULL ||
+	OC->G == NULL || OC->g == NULL) {
 	op_container_destroy(OC);
 	return NULL;
     }
@@ -117,11 +129,17 @@ static op_container *op_container_new (double **Z, MODEL *pmod)
 
 static int compute_probs (const double *theta, op_container *OC)
 {
-    double m0, m1, ystar0, ystar1 = 0.0;
+    double m0, m1, ystar0 = 0.0, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
-    double P0, P1;
-    int t, yt;
+    double P0, P1, dP;
+    int i, t, yt, v;
+
+    if (OC->ascore) {
+	for (i=0; i<OC->k; i++) {
+	    OC->g[i] = 0.0;
+	}
+    }
 
     for (t=0; t<OC->nobs; t++) {
 	yt = OC->y[t];
@@ -142,13 +160,41 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	P0 = (yt == 0)? 0.0 : normal_cdf(ystar0);
 	P1 = (yt == M)? 1.0 : normal_cdf(ystar1);
-	OC->dP[t] = P1 - P0;
+	dP = P1 - P0;
 
-	if (OC->dP[t] <= 0.0) {
+	if (dP > 1.0e-09) {
+	    OC->dP[t] = dP;
+	} else {
 	    fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
-		    t, yt, OC->ndx[t], OC->dP[t]);
+		    t, yt, OC->ndx[t], dP);
 	    return 1;
 	} 
+
+	if (OC->ascore) {
+	    double mills0 = (yt == 0)? 0.0 : normal_pdf(ystar0) / dP;
+	    double mills1 = (yt == M)? 0.0 : normal_pdf(ystar1) / dP;
+	    double dm = mills1 - mills0;
+
+	    for (i=0; i<nx; i++) {
+		v = OC->list[i+2];
+		OC->G[i][t] = -dm * OC->Z[v][t];
+		OC->g[i] += OC->G[i][t];
+	    }
+
+	    for (i=nx; i<OC->k; i++) {
+		OC->G[i][t] = 0.0;
+		if (i == (nx + yt - 2)) {
+		    OC->G[i][t] = -mills0;
+		    OC->g[i] += OC->G[i][t];
+		}
+		if (i == (nx + yt - 1)) {
+		    OC->G[i][t] = mills1;
+		    OC->g[i] += OC->G[i][t];
+		}
+	    }
+
+	}
+	
     }
 
     return 0;
@@ -173,10 +219,11 @@ static int bad_cutpoints (const double *theta, const op_container *OC)
 
 static double op_loglik (const double *theta, void *ptr)
 {
-    op_container *OC = (op_container *) ptr;
     double x, ll = 0.0;
-    int i, s, t, v;
     int err;
+    int i, s, t, v;
+    
+    op_container *OC = (op_container *) ptr;
     
     if (bad_cutpoints(theta, OC)) {
 	fputs("Non-increasing cutpoint!\n", stderr);
@@ -212,8 +259,66 @@ static double op_loglik (const double *theta, void *ptr)
     return ll;
 }
 
+static int op_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+		     void *ptr)
+{
+    op_container *OC = (op_container *) ptr;
+    int i;
+
+    for (i=0; i<npar; i++) {
+	s[i] = OC->g[i];
+    }
+
+    return 1;
+}
+
+static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH) 
+{
+    int i, j, err, k = OC->k;
+    double small = 1.0e-07;
+    double small2 = 2.0 * small;
+    double x, ll;
+
+    double *g0 = malloc(k * sizeof *g0);
+
+    if (g0 == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<k; i++) {
+	theta[i] -= small;
+	ll = op_loglik(theta, OC);
+	for (j=0; j<k; j++) {
+	    g0[j] = OC->g[j];
+	}
+	theta[i] += small2;
+	ll = op_loglik(theta, OC);
+	for (j=0; j<k; j++) {
+	    x = (OC->g[j] - g0[j]) / small2;
+	    gretl_matrix_set(inH, i, j, -x);
+	}
+	theta[i] -= small;
+    }
+
+    /* make symmetric */
+
+    for (i=0; i<k; i++) {
+	for (j=i+1; j<k; j++) {
+	    x = 0.5 * (gretl_matrix_get(inH, i, j) + gretl_matrix_get(inH, j, i));
+	    gretl_matrix_set(inH, i, j, x);
+	    gretl_matrix_set(inH, j, i, x);
+	}
+    }
+
+    free(g0);
+
+    err = gretl_invert_symmetric_matrix(inH);
+
+    return err;
+}
+
 static int 
-oprobit_ihess (op_container *OC, double *theta, gretl_matrix *invH)
+numerical_ihess (op_container *OC, double *theta, gretl_matrix *invH)
 {
     double vij, *V;
     int i, j, k, npar = OC->k;
@@ -237,10 +342,6 @@ oprobit_ihess (op_container *OC, double *theta, gretl_matrix *invH)
 	    }
 	}
     }
-
-#if ODEBUG
-    gretl_matrix_print(invH, "Hessian (inverse)");
-#endif
 
     free(V);
 
@@ -329,8 +430,11 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     int maxit = 1000;
     int fncount = 0;
     int grcount = 0;
+    int ascore = 1;
 
-    op_container *OC = op_container_new(Z, pmod);
+    pprintf(prn, "Analytical score = %d\n", ascore);
+
+    op_container *OC = op_container_new(Z, pmod, ascore);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -347,12 +451,16 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	theta[i] = pmod->coeff[i];
     }
 
-    /* the following is very heuristic, has no sound theoretical 
+    /* 
+       the following is very heuristic, has no sound theoretical 
        justification but seems to work in practice. So much
-       for the Scientific Method (TM) !!! */
+       for the Scientific Method (TM) !!!
+    */
+ 
     for (i=OC->nx; i<npar; i++) {
 	theta[i] = 0.25 * pmod->coeff[i];
     }
+
 
 #if ODEBUG
     fputs("Starting values:\n", stderr);
@@ -365,10 +473,7 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     err = BFGS_max(theta, npar, maxit, OPROBIT_TOL, 
 		   &fncount, &grcount, op_loglik, 
-		   /* not for now
-		      (OC->ascore)? oc_score : NULL, 
-		   */
-		   NULL,
+		   (OC->ascore)? op_score : NULL, 
 		   OC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);
 
@@ -381,7 +486,12 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     }
 
     iH = gretl_matrix_alloc(npar, npar);
-    err = oprobit_ihess(OC, theta, iH);
+    if(ascore) {
+	err = ihess_from_ascore(theta, OC, iH);
+    } else {
+	err = numerical_ihess(OC, theta, iH);
+    }
+
 #if ODEBUG
     gretl_matrix_print(iH, "Inverse Hessian");
 #endif

@@ -639,10 +639,10 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
 
 /* perform QR decomposition plus some additional tasks */
 
-static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
+static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank)
 {
     integer k = gretl_matrix_rows(R);
-    int rank, err;
+    int r, err;
 
     /* basic decomposition */
     err = gretl_matrix_QR_decomp(Q, R);
@@ -651,12 +651,12 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
     }
 
     /* check rank of QR */
-    rank = gretl_matrix_QR_rank(R, NULL, &err);
+    r = gretl_check_QR_rank(R, &err);
     if (err) {
 	return err;
     }
 
-    if (rank < k) {
+    if (r < k) {
 	err = E_SINGULAR;
     } else {
 	/* invert R */
@@ -664,13 +664,16 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
 	char diag = 'N';
 	integer info = 0;
 
-	/* call lapack */
 	dtrtri_(&uplo, &diag, &k, R->val, &k, &info);
 	if (info != 0) {
 	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
 	    err = 1;
 	}
-    }   
+    }
+
+    if (rank != NULL) {
+	*rank = r;
+    }
 
     return err;
 }
@@ -681,6 +684,40 @@ static void gretl_matrix_null (gretl_matrix **m)
     *m = NULL;
 }
 
+static int *make_droplist (MODEL *pmod, gretl_matrix *R, int rank,
+			   int *err)
+{
+    int *dlist = NULL;
+    double d;
+    int nd = R->rows - rank;
+    int i, j;
+
+    dlist = gretl_list_new(nd);
+    if (dlist == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    dlist[0] = 0;
+
+    j = 2;
+    for (i=0; i<R->rows; i++) {
+	d = gretl_matrix_get(R, i, i);
+	if (fabs(d) < R_DIAG_MIN) {
+	    dlist[0] += 1;
+	    dlist[dlist[0]] = pmod->list[j];
+	    gretl_list_delete_at_pos(pmod->list, j--);
+	}
+	j++;
+    }
+
+    pmod->ncoeff -= dlist[0];
+    pmod->dfd = pmod->nobs - pmod->ncoeff;
+    pmod->dfn = pmod->ncoeff - pmod->ifc;
+
+    return dlist;
+}
+
 int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opts)
 {
@@ -689,9 +726,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *R = NULL, *g = NULL, *b = NULL;
     gretl_matrix *xpxinv = NULL;
     int *droplist = NULL;
-    int err = 0;
-
- trim_var:
+    int rank, err = 0;
 
     T = pmod->nobs;               /* # of rows (observations) */
     k = pmod->list[0] - 1;        /* # of cols (variables) */
@@ -709,18 +744,43 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto qr_cleanup;
     }
 
+ trim_var:    
+
     get_model_data(pmod, (const double **) *pZ, Q, y);
 
-    err = QR_decomp_plus(Q, R);
+    err = QR_decomp_plus(Q, R, &rank);
 
+#if 0
+    if (err == E_SINGULAR && !(opts & OPT_Z)) {
+	err = 0;
+	droplist = make_droplist(pmod, R, rank, &err);
+	if (!err) {
+	    k = pmod->list[0] - 1;
+	    gretl_matrix_reuse(Q, T, k);
+	    gretl_matrix_reuse(R, k, k);
+	    gretl_matrix_reuse(xpxinv, k, k);
+	    /*
+	    if (gretl_model_get_int(pmod, "ldepvar")) {
+		lagged_depvar_check(pmod, Z, pdinfo);
+	    }
+	    */
+	    goto trim_var;
+	}
+    }
+#else
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, &droplist)) {
+	err = 0;
 	/* FIXME: can't this be done more efficiently, using R? */
-	gretl_matrix_null(&Q);
-	gretl_matrix_null(&R);
-	gretl_matrix_null(&xpxinv);
+	k = pmod->list[0] - 1;
+	gretl_matrix_reuse(Q, T, k);
+	gretl_matrix_reuse(R, k, k);
+	gretl_matrix_reuse(xpxinv, k, k);
 	goto trim_var;
-    } else if (err) {
+    } 
+#endif
+
+    if (err) {
 	goto qr_cleanup;
     }
 
@@ -822,7 +882,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 	goto qr_cleanup;
     }
 
-    err = QR_decomp_plus(Q, R);
+    err = QR_decomp_plus(Q, R, NULL);
     if (err) {
 	goto qr_cleanup;
     }
