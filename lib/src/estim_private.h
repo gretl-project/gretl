@@ -26,4 +26,7 @@ double rhohat (int order, int t1, int t2, const double *uhat);
 
 int check_for_effective_const (MODEL *pmod, const double *y);
 
+void maybe_shift_ldepvar (MODEL *pmod, const double **Z, 
+			  DATAINFO *pdinfo);
+
 #endif /* ESTIM_PRIVATE_H */

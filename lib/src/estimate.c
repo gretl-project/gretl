@@ -672,11 +672,6 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 
 	/* add redundant var to list of drops */
 	gretl_list_append_term(droplist, v);
-
-	/* if there's a lagged dep var, it may have moved */
-	if (gretl_model_get_int(pmod, "ldepvar")) {
-	    lagged_depvar_check(pmod, (const double **) *pZ, pdinfo);
-	}
     }
 
     free(list);
@@ -708,6 +703,14 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
     }
 
     return 0;
+}
+
+void 
+maybe_shift_ldepvar (MODEL *pmod, const double **Z, DATAINFO *pdinfo)
+{
+    if (gretl_model_get_int(pmod, "ldepvar")) {
+	lagged_depvar_check(pmod, Z, pdinfo);
+    }
 }
 
 static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -786,6 +789,8 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (droplist != NULL) {
+	/* if there's a lagged dep var, it may have moved */
+	maybe_shift_ldepvar(pmod, (const double **) *pZ, pdinfo);
 	gretl_model_set_list_as_data(pmod, "droplist", droplist);
     }
 
