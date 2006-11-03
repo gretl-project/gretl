@@ -2100,12 +2100,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 {
     double t, pvalue = 999.0;
     int gotnan = 0;
-    int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
+    int do_pval = !binary_model(pmod);
     char varname[24];
-
-    if (ordered_model(pmod)) {
-	do_pval = 1;
-    }
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
     pprintf(prn, "  %-15s ", varname);
@@ -2170,8 +2166,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} else if (pvalue < 0.10) {
 	    pputs(prn, " *");
 	}
-    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	       pmod->list[i+2] != 0) { 
+    } else if (binary_model(pmod) && pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {
@@ -2199,7 +2194,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 {
     double t, pvalue = 999.0;
     int gotnan = 0;
-    int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
+    int do_pval = !binary_model(pmod);
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
@@ -2254,8 +2249,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} else {
 	    pputs(prn, " \\ql \\cell");
 	}
-    } else if (pmod->list[i+2] != 0 && 
-	       (pmod->ci == LOGIT || pmod->ci == PROBIT)) { 
+    } else if (binary_model(pmod) && pmod->list[i+2] != 0) {
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {
@@ -2275,7 +2269,7 @@ static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char d = prn_delim(prn);
     double t, pvalue = 999.0;
     int gotnan = 0;
-    int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
+    int do_pval = !binary_model(pmod);
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
@@ -2310,8 +2304,7 @@ static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
     }
 
-    if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	pmod->list[i+2] != 0) { 
+    if (binary_model(pmod) && pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {

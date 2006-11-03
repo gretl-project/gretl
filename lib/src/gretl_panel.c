@@ -48,7 +48,8 @@ struct panelmod_t_ {
     int T;                /* times-series length of panel */
     int effT;             /* effective times-series length (max usable obs per unit) */
     double Tbar;          /* harmonic mean of per-units tme series lengths */
-    int ndum;             /* number of dummy variables added for FE model */
+    int ndum;             /* number of unit dummy variables added for FE model */
+    int ntdum;            /* number of time dummies added */
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
     int *vlist;           /* list of time-varying variables from pooled model */
@@ -93,6 +94,10 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
     panidx.n = nunits;
     panidx.T = T;
     panidx.offset = pdinfo->t1;
+#if PDEBUG
+    fprintf(stderr, "panel_index_init: n=%d, T=%d, offset=%d\n", 
+	    panidx.n, panidx.T, panidx.offset);
+#endif
 }
 
 static void 
@@ -104,6 +109,7 @@ panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
     pan->effT = 0;
     pan->Tbar = 0;
     pan->ndum = 0;
+    pan->ntdum = 0;
     pan->unit_obs = NULL;
     pan->varying = NULL;
     pan->vlist = NULL;
@@ -1327,7 +1333,7 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
 	panel_df_correction(&femod, pan->effn);
-#if PDEBUG
+#if PDEBUG > 1
 	printmodel(&femod, winfo, OPT_O, prn);
 #endif
 	if (pan->opt & OPT_F) {
@@ -1398,6 +1404,11 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 	j++;
     }
 
+    /* FIXME add time dummies here if wanted */
+    if (pan->opt & OPT_D) {
+	;
+    }
+
     /* regression list: copy pooled list, dropping the constant and
        adding the unit dummies
     */
@@ -1417,7 +1428,7 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 
     femod = lsq(felist, pZ, pdinfo, OLS, lsqopt);
 
-#if PDEBUG
+#if PDEBUG > 1
     if (!femod.errcode) {
 	printmodel(&femod, pdinfo, OPT_NONE, prn);
     }
@@ -1853,7 +1864,7 @@ static int random_effects (panelmod_t *pan,
 	}
     }
 
-#if PDEBUG
+#if PDEBUG > 1
     if (remod.errcode == 0) {
 	printmodel(&remod, reinfo, OPT_NONE, prn);
     }
@@ -2042,6 +2053,10 @@ static int panel_obs_accounts (const MODEL *pmod, int nunits, int T,
     for (i=0; i<nunits; i++) {
 	uobs[i] = 0;
 	for (t=0; t<T; t++) {
+#if 0
+	    fprintf(stderr, "unit %d, t=%d, pmod->uhat[%d]: %s\n", i, t,
+		    panel_index(i, t), na(pmod->uhat[panel_index(i, t)])? "NA" : "OK");
+#endif
 	    if (!na(pmod->uhat[panel_index(i, t)])) {
 		uobs[i] += 1;
 	    }
@@ -2312,8 +2327,13 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* baseline: estimated via pooled OLS */
     mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
+	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
 	return mod;
     }
+
+#if PDEBUG
+    printmodel(&mod, pdinfo, OPT_NONE, prn);
+#endif
 
     if (mod.ifc == 0) {
 	/* at many points in these functions we assume the base

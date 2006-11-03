@@ -2011,24 +2011,25 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     FILE *fq = NULL;
     int err = 0, pacf_err = 0;
 
+    *gretl_errmsg = '\0';
+
     varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, "\n%s",
+	strcpy(gretl_errmsg, 
 		_("Missing values within sample -- can't do correlogram"));
-	return 1;
+	return E_MISSDATA;
     }
 
     if (nobs < 4) {
-	pputs(prn, _("\nInsufficient observations for correlogram"));
-	return 1;
+	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
+	return E_DATA;
     }
 
     if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
-	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[varno]);
-	pprintf(prn, "\n%s\n", gretl_tmp_str);
-	return 1;
+	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[varno]);
+	return E_DATA;
     }
 
     acf_m = order;
@@ -2237,6 +2238,8 @@ int xcorrgram (const int *list, int order, double ***pZ,
     int xno, yno;
     int nobs, err = 0;
 
+    *gretl_errmsg = '\0';
+
     if (list[0] != 2) {
 	return E_DATA;
     }
@@ -2249,24 +2252,22 @@ int xcorrgram (const int *list, int order, double ***pZ,
 
     if (missvals(&(*pZ)[xno][t1], nobs) ||
 	missvals(&(*pZ)[yno][t1], nobs)) {
-	pprintf(prn, "\n%s",
+	strcpy(gretl_errmsg, 
 		_("Missing values within sample -- can't do correlogram"));
-	return 1;
+	return E_MISSDATA;
     }
 
-    if (nobs < 4) {
-	pputs(prn, _("\nInsufficient observations for correlogram"));
+    if (nobs < 5) {
+	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
 	return 1;
     }
 
     if (gretl_isconst(t1, t2, &(*pZ)[xno][0])) {
-	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[xno]);
-	pprintf(prn, "\n%s\n", gretl_tmp_str);
-	return 1;
+	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[xno]);
+	return E_DATA;
     } else if (gretl_isconst(t1, t2, &(*pZ)[yno][0])) {
-	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[yno]);
-	pprintf(prn, "\n%s\n", gretl_tmp_str);
-	return 1;
+	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[yno]);
+	return E_DATA;
     }	
 
     xcf_m = order;

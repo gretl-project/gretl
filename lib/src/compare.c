@@ -464,7 +464,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
 
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
-#undef SMPL_DEBUG
+#define SMPL_DEBUG 0
 
 static MODEL replicate_estimator (MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
@@ -552,7 +552,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	if (gretl_model_get_int(orig, "random-effects")) {
 	    myopt |= OPT_R;
 	}
-	rep = real_panel_model(list, pZ, pdinfo, myopt, NULL);
+	rep = real_panel_model(list, pZ, pdinfo, myopt, prn); /* prn was NULL */
 	break;
     default:
 	/* handles OLS, WLS, HSK, HCCM, etc. */
@@ -982,15 +982,14 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	return E_NOVARS;
     }
 
-    /* impose as sample range the estimation range of the 
-       original model */
-    pdinfo->t1 = orig->t1;
-    pdinfo->t2 = orig->t2;
+    /* impose the sample range used for the original model */ 
+    impose_model_smpl(orig, pdinfo);
 
     /* set the mask for missing obs within the sample range, based
        on the original model */
     set_reference_missmask(orig);
 
+#if 1 /* ?? */
     if (orig->ci == AR) { 
 	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
     } else if (orig->ci == ARCH) {
@@ -1002,6 +1001,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     if (orig->ci == CORC || orig->ci == HILU) {
 	pdinfo->t1 -= 1;
     }
+#endif
 
     /* extract option flags that should not be passed to estimator
        functions */
