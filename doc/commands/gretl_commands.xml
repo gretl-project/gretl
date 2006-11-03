@@ -4001,30 +4001,40 @@
 
     <description>
       <para>
-	Binomial logit regression. The dependent variable should be a binary
-	variable.  Maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the <quote>binary response model
-	  regression</quote> (BRMR) method outlined by Davidson and MacKinnon
-	(2004). As the model is nonlinear the slopes depend on the values of the
-	independent variables: the reported slopes are evaluated at the means of
-	those variables. The chi-square statistic tests the null hypothesis that
-	all coefficients are zero apart from the constant.
+	If the dependent variable is a binary variable (all values are
+	0 or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the <quote>binary
+	  response model regression</quote> (BRMR) method outlined by
+	Davidson and MacKinnon (2004). As the model is nonlinear the
+	slopes depend on the values of the independent variables: the
+	reported slopes are evaluated at the means of those variables.
+	The chi-square statistic tests the null hypothesis that all
+	coefficients are zero apart from the constant.
       </para>
       <para context="cli">
-	By default, standard errors are computed using the negative inverse of
-	the Hessian.  If the <lit>--robust</lit> flag is given, then QML or
-	Huber&ndash;White standard errors are calculated instead. In this case
-	the estimated covariance matrix is a <quote>sandwich</quote> of the
-	inverse of the estimated Hessian and the outer product of the gradient.
-	See Davidson and MacKinnon (2004, Chapter 10) for details.
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	then QML or Huber&ndash;White standard errors are calculated
+	instead. In this case the estimated covariance matrix is a
+	<quote>sandwich</quote> of the inverse of the estimated Hessian
+	and the outer product of the gradient. See Davidson and MacKinnon
+	(2004, Chapter 10) for details.
       </para>
       <para context="gui">
-	By default, standard errors are computed using the negative inverse of
-	the Hessian.  If the "Robust standard errors" box is checked, then QML or
-	Huber&ndash;White standard errors are calculated instead. In this case
-	the estimated covariance matrix is a <quote>sandwich</quote> of the
-	inverse of the estimated Hessian and the outer product of the gradient.
-	See Davidson and MacKinnon (2004, Chapter 10) for details.
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the "Robust standard errors" box is
+	checked, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance matrix
+	is a <quote>sandwich</quote> of the inverse of the estimated
+	Hessian and the outer product of the gradient.  See Davidson and
+	MacKinnon (2004, Chapter 10) for details.
+      </para>
+      <para>
+	If the dependent variable is not binary, but is discrete and has a
+	minimum value of 0, then Ordered Logit estimates are obtained.  In
+	this case robust standard errors are not yet available.  (If the
+	variable selected as dependent is not discrete, or does not have a
+	minimum of zero, an error is flagged.)
       </para>
       <para>
 	If you want to use logit for analysis of proportions (where
@@ -5689,14 +5699,23 @@
 	The chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
-      <para>
+      <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <lit>--robust</lit> flag is
-	given, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance
-	matrix is a <quote>sandwich</quote> of the inverse of the
-	estimated Hessian and the outer product of the gradient. See
-	Davidson and MacKinnon (2004, Chapter 10) for details.
+	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	then QML or Huber&ndash;White standard errors are calculated
+	instead. In this case the estimated covariance matrix is a
+	<quote>sandwich</quote> of the inverse of the estimated Hessian
+	and the outer product of the gradient. See Davidson and MacKinnon
+	(2004, Chapter 10) for details.
+      </para>
+      <para context="gui">
+	By default, standard errors are computed using the negative
+	inverse of the Hessian.  If the "Robust standard errors" box is
+	checked, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance matrix
+	is a <quote>sandwich</quote> of the inverse of the estimated
+	Hessian and the outer product of the gradient.  See Davidson and
+	MacKinnon (2004, Chapter 10) for details.
       </para>
       <para>
 	If the dependent variable is not binary, but is discrete and
@@ -7867,6 +7886,43 @@
 
     <gui-access>
       <menu-path>/Model/Other linear models/Weighted Least Squares</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="xcorrgm" section="Statistics" label="Cross-correlogram">
+
+    <usage>
+      <arguments>
+        <argument>var1</argument>
+        <argument>var2</argument>
+        <argument optional="true">maxlag</argument>
+      </arguments>
+      <examples>
+        <example>xcorrgm x y 12</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Prints and graphs the cross-correlogram for variables
+	<repl>var1</repl> and <repl>var2</repl>, which may be specified by
+	name or number.  The values are the sample correlation coefficients
+	between the current value of <repl>var1</repl> and successive leads
+	and lags of <repl>var2</repl>.
+      </para>
+      <para>
+	If a <repl>maxlag</repl> value is specified the length of the
+	cross-correlogram is limited to at most that number of leads and
+	lags, otherwise the length is determined automatically, as a
+	function of the frequency of the data and the number of
+	observations.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/View/Cross-correlogram</menu-path>
+      <other-access>Main window pop-up menu (multiple selection)</other-access>
     </gui-access>
 
   </command>
