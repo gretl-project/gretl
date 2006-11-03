@@ -569,6 +569,19 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
     data_structure_wizard(NULL, 1, NULL);
 }
 
+void xcorrgm_callback (gpointer p, guint v, GtkWidget *w)
+{
+    if (mdata_selection_count() == 2) {
+	do_xcorrgm(NULL);
+    } else {
+	char title[64];
+
+	strcpy(title, "gretl: ");
+	strcat(title, _("cross-correlogram"));
+	simple_selection(title, do_xcorrgm, XCORRGM, NULL);
+    }
+}
+
 void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 {
     void *handle;

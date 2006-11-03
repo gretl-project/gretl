@@ -313,29 +313,29 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
-static MODEL oprobit_model (const int *list, double ***pZ, 
+static MODEL ordered_model (const int *list, int ci, double ***pZ, 
 			    DATAINFO *pdinfo, PRN *prn)
 {
-    MODEL opmod;
+    MODEL omod;
     void *handle;
-    MODEL (* oprobit_estimate) (const int *, double ***, DATAINFO *, PRN *);
+    MODEL (* ordered_estimate) (const int *, int, double ***, DATAINFO *, PRN *);
 
     *gretl_errmsg = '\0';
 
-    oprobit_estimate = get_plugin_function("oprobit_estimate", &handle);
-    if (oprobit_estimate == NULL) {
-	gretl_model_init(&opmod);
-	opmod.errcode = E_FOPEN;
-	return opmod;
+    ordered_estimate = get_plugin_function("ordered_estimate", &handle);
+    if (ordered_estimate == NULL) {
+	gretl_model_init(&omod);
+	omod.errcode = E_FOPEN;
+	return omod;
     }
 
-    opmod = (*oprobit_estimate) (list, pZ, pdinfo, prn);
+    omod = (*ordered_estimate) (list, ci, pZ, pdinfo, prn);
 
     close_plugin(handle);
 
-    set_model_id(&opmod);
+    set_model_id(&omod);
 
-    return opmod;
+    return omod;
 }
 
 /* calculate standard errors etc using the Hessian */
@@ -673,7 +673,7 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 static int 
-ordered_probit_ok (double **Z, const DATAINFO *pdinfo, int v)
+ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
     if (!var_is_discrete(pdinfo, v)) {
 	sprintf(gretl_errmsg, "The variable '%s' is not discrete",
@@ -707,9 +707,9 @@ ordered_probit_ok (double **Z, const DATAINFO *pdinfo, int v)
  * Computes estimates of the discrete model specified by @list,
  * using an estimator determined by the value of @ci.  In the
  * binary case, uses the BRMR auxiliary regression; see Davidson 
- * and MacKinnon.  In the case of probit, if the dependent
- * variable is not binary but is discrete and has a minimum value
- * of 0, we do ordered probit.
+ * and MacKinnon.  If the dependent variable is not binary but 
+ * is discrete and has a minimum value of 0, we do ordered 
+ * logit/probit.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -721,8 +721,8 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
-    } else if (ordered_probit_ok(*pZ, pdinfo, yv)) {
-	return oprobit_model(list, pZ, pdinfo, prn);
+    } else if (ordered_model_ok(*pZ, pdinfo, yv)) {
+	return ordered_model(list, ci, pZ, pdinfo, prn);
     } else {
 	MODEL dmod;
 

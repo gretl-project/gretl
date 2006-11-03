@@ -561,8 +561,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     strcpy(title, "gretl: ");
 
     if (action == CORR || action == SUMMARY || 
-	action == XCORRGM || action == PCA || 
-	action == MAHAL) {
+	action == PCA || action == MAHAL) {
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) return;
     }
@@ -576,10 +575,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	gretl_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
 	action = CORR;
-	break;
-    case XCORRGM:
-	gretl_command_sprintf("xcorrgm%s", liststr);
-	strcat(title, _("cross-correlogram"));
 	break;
     case PCA:
 	gretl_command_sprintf("pca%s", liststr);
@@ -642,10 +637,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, prn);
 	break;
 
-    case XCORRGM:
-	err = xcorrgram(libcmd.list, 0, &Z, datainfo, prn, OPT_NONE);
-	break;
-
     case FREQ:
 	err = freqdist(libcmd.list[1], (const double **) Z, datainfo,
 		       0, OPT_NONE, prn);
@@ -695,10 +686,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	gretl_print_destroy(prn);
 	return;
     } 
-
-    if (action == XCORRGM) {
-	register_graph();
-    }
 
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
@@ -977,6 +964,69 @@ int do_two_var_test (selector *sr)
         gretl_print_destroy(prn);
     } else {
 	view_buffer(prn, 78, 300, title, action, NULL); 
+    }
+
+    return err;
+}
+
+/* cross-corellogram: if two variables are selected in the main
+   window we use those, otherwise we present a selection dialog
+   (with a max of two selected variables) and use that
+   selection */
+
+int do_xcorrgm (selector *sr)
+{
+    const char *sbuf = NULL;
+    char *mbuf = NULL;
+    PRN *prn;
+    char title[64];
+    int order = 0;
+    int err = 0;
+
+    if (sr != NULL) {
+	sbuf = selector_list(sr);
+    } else {
+	mbuf = main_window_selection_as_string();
+    }
+
+    if (sbuf == NULL && mbuf == NULL) {
+	return 1;
+    }
+
+    strcpy(title, "gretl: ");
+    strcat(title, _("cross-correlogram"));
+
+    order = default_lag_order(datainfo);
+    if (order > datainfo->n / 4) {
+	order = datainfo->n / 4;
+    }
+    err = spin_dialog(title, &order, _("Lag order:"),
+		      1, datainfo->n / 4, 0);
+    if (err < 0) {
+	/* canceled */
+	free(mbuf);
+	return 0;
+    }
+
+    if (sbuf != NULL) {
+	gretl_command_sprintf("xcorrgm%s %d", sbuf, order);
+    } else {
+	gretl_command_sprintf("xcorrgm%s %d", mbuf, order);
+	free(mbuf);
+    }
+
+    if (check_and_record_command() || bufopen(&prn)) {
+	return 1;
+    }
+
+    err = xcorrgram(libcmd.list, order, &Z, datainfo, prn, OPT_NONE);
+
+    if (err) {
+        gui_errmsg(err);
+        gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 60, 300, title, XCORRGM, NULL); 
+	register_graph();
     }
 
     return err;

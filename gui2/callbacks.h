@@ -51,6 +51,8 @@ void add_rand_callback (gpointer data, guint r, GtkWidget *widget);
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 
+void xcorrgm_callback (gpointer p, guint v, GtkWidget *w);
+
 void do_nistcheck (gpointer p, guint u, GtkWidget *w);
 
 #if defined (ENABLE_MAILER) && !defined(G_OS_WIN32)

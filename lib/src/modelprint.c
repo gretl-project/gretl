@@ -49,11 +49,11 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 
 #define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
 
-#define ordered_probit(m) (m->ci == PROBIT && \
+#define ordered_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                            gretl_model_get_int(m, "ordered"))
 
-#define binary_model(m) (m->ci == LOGIT || (m->ci == PROBIT && \
-                         !gretl_model_get_int(m, "ordered")))
+#define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
+                         !gretl_model_get_int(m, "ordered"))
 
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
@@ -717,6 +717,12 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("2-step Arellano-Bond");
 	} else {
 	    return N_("1-step Arellano-Bond");
+	}
+    } else if (pmod->ci == LOGIT) {
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    return N_("Ordered Logit");
+	} else {
+	    return N_("Logit");
 	}
     } else if (pmod->ci == PROBIT) {
 	if (gretl_model_get_int(pmod, "ordered")) {
@@ -1836,7 +1842,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 	
-    if (ordered_probit(pmod)) {
+    if (ordered_model(pmod)) {
 	print_middle_table_start(prn);
 	print_ll(pmod, prn);
 	info_stats_lines(pmod, prn);
@@ -2097,7 +2103,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[24];
 
-    if (ordered_probit(pmod)) {
+    if (ordered_model(pmod)) {
 	do_pval = 1;
     }
 
@@ -2305,7 +2311,7 @@ static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	       pmod->list[i+2] != 0) { 
+	pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {

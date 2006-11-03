@@ -257,6 +257,8 @@ void do_box_graph (GtkWidget *widget, dialog_t *dlg);
 
 int do_dummy_graph (selector *sr);
 
+int do_xcorrgm (selector *sr);
+
 void delete_selected_vars (void);
 
 void delete_single_var (int id);

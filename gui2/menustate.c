@@ -412,7 +412,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Correlation matrix"))) 
 	do_menu_op(NULL, CORR, NULL);
     else if (!strcmp(item, _("Cross-correlogram"))) 
-	do_menu_op(NULL, XCORRGM, NULL);
+	xcorrgm_callback(NULL, 0, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("XY scatterplot"))) 

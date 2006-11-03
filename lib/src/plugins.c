@@ -166,7 +166,7 @@ struct plugin_function plugin_functions[] = {
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },
-    { "oprobit_estimate",  P_OPROBIT },
+    { "ordered_estimate",  P_OPROBIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

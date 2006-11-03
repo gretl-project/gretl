@@ -93,7 +93,7 @@ struct _selector {
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
 #define TWO_VARS_CODE(c) (c == SPEARMAN || c == MEANTEST || c == MEANTEST2 || \
-                          c == VARTEST || c == ELLIPSE)
+                          c == VARTEST || c == ELLIPSE || c == XCORRGM)
 
 #define WANT_TOGGLES(c) (c == ARMA || \
                          c == COINT || \

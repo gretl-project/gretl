@@ -22,11 +22,12 @@
 
 #define ODEBUG 1
 
-#define OPROBIT_TOL 1.0e-13
+#define OPROBIT_TOL 1.0e-12
 
 typedef struct op_container_ op_container;
 
 struct op_container_ {
+    int type;         /* model type */
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;
@@ -44,6 +45,33 @@ struct op_container_ {
     double *g;        /* total score vector */
 };
 
+static double distfunc (double x, int type)
+{
+    switch (type) {
+    case PROBIT:
+	return normal_cdf(x);
+    case LOGIT:
+	return 1.0 / (1.0 + exp(-x));
+    default:
+	return NADBL;
+    }
+}
+
+static double densfunc (double x, int type)
+{
+    double tmp;
+
+    switch (type) {
+    case PROBIT:
+	return normal_pdf(x);
+    case LOGIT:
+	tmp = 1.0 + exp(-x);
+	return (tmp - 1.0) / (tmp * tmp);
+    default:
+	return NADBL;
+    }
+}
+
 static void op_container_destroy (op_container *OC)
 {
     free(OC->y);
@@ -56,7 +84,8 @@ static void op_container_destroy (op_container *OC)
     free(OC);
 }
 
-static op_container *op_container_new (double **Z, MODEL *pmod, int ascore)
+static op_container *op_container_new (int type, double **Z, MODEL *pmod, 
+				       int ascore)
 {
     int i, t, nx, vy;
     int nobs = pmod->nobs;
@@ -65,6 +94,8 @@ static op_container *op_container_new (double **Z, MODEL *pmod, int ascore)
     if (OC == NULL) {
 	return NULL;
     }
+
+    OC->type = type;
 
     OC->Z = Z;
     OC->pmod = pmod;
@@ -120,7 +151,7 @@ static op_container *op_container_new (double **Z, MODEL *pmod, int ascore)
 	OC->list[i+1] = pmod->list[i+1];
     }
 
-#if ODEBUG
+#if ODEBUG > 1
     printlist(OC->list, "list, in op_container_new");
 #endif
 
@@ -134,6 +165,7 @@ static int compute_probs (const double *theta, op_container *OC)
     int nx = OC->nx;
     double P0, P1, dP;
     int i, t, yt, v;
+    int type = OC->type;
 
     if (OC->ascore) {
 	for (i=0; i<OC->k; i++) {
@@ -158,8 +190,8 @@ static int compute_probs (const double *theta, op_container *OC)
 	    }
 	} 
 
-	P0 = (yt == 0)? 0.0 : normal_cdf(ystar0);
-	P1 = (yt == M)? 1.0 : normal_cdf(ystar1);
+	P0 = (yt == 0)? 0.0 : distfunc(ystar0, type);
+	P1 = (yt == M)? 1.0 : distfunc(ystar1, type);
 	dP = P1 - P0;
 
 	if (dP > 1.0e-09) {
@@ -171,8 +203,8 @@ static int compute_probs (const double *theta, op_container *OC)
 	} 
 
 	if (OC->ascore) {
-	    double mills0 = (yt == 0)? 0.0 : normal_pdf(ystar0) / dP;
-	    double mills1 = (yt == M)? 0.0 : normal_pdf(ystar1) / dP;
+	    double mills0 = (yt == 0)? 0.0 : densfunc(ystar0, type) / dP;
+	    double mills1 = (yt == M)? 0.0 : densfunc(ystar1, type) / dP;
 	    double dm = mills1 - mills0;
 
 	    for (i=0; i<nx; i++) {
@@ -192,9 +224,7 @@ static int compute_probs (const double *theta, op_container *OC)
 		    OC->g[i] += OC->G[i][t];
 		}
 	    }
-
 	}
-	
     }
 
     return 0;
@@ -226,7 +256,9 @@ static double op_loglik (const double *theta, void *ptr)
     op_container *OC = (op_container *) ptr;
     
     if (bad_cutpoints(theta, OC)) {
+#if ODEBUG > 1
 	fputs("Non-increasing cutpoint!\n", stderr);
+#endif
 	return NADBL;
     }
 
@@ -360,7 +392,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     pmod->t1 = OC->t1;
     pmod->t2 = OC->t2;
     pmod->nobs = OC->nobs;
-    pmod->ci = PROBIT;
+    pmod->ci = OC->type;
     gretl_model_set_int(pmod, "ordered", 1);
 
     pmod->ncoeff = npar;
@@ -376,7 +408,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     k = 0;
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = theta[i];
-#if ODEBUG
+#if ODEBUG > 1
 	fprintf(stderr,"theta[%d] = %12.8f\n", i, theta[i]);
 #endif
 	for (j=0; j<=i; j++) {
@@ -416,9 +448,9 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-/* Main oprobit function */
+/* Main ordered estimation function */
 
-static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
+static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		       PRN *prn)
 {
     int i, npar;
@@ -434,7 +466,7 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     pprintf(prn, "Analytical score = %d\n", ascore);
 
-    op_container *OC = op_container_new(Z, pmod, ascore);
+    op_container *OC = op_container_new(ci, Z, pmod, ascore);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -458,7 +490,7 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     */
  
     for (i=OC->nx; i<npar; i++) {
-	theta[i] = 0.25 * pmod->coeff[i];
+	theta[i] = 0.5 * pmod->coeff[i];
     }
 
 
@@ -479,6 +511,8 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     if (err) {
 	return err;
+    } else {
+	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
     }
 
     for (i=0; i<npar; i++) {
@@ -492,7 +526,7 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	err = numerical_ihess(OC, theta, iH);
     }
 
-#if ODEBUG
+#if ODEBUG > 1
     gretl_matrix_print(iH, "Inverse Hessian");
 #endif
 
@@ -509,7 +543,7 @@ static int do_oprobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
    the verbose option has been selected
 */
 
-MODEL oprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 			PRN *prn) 
 {
     MODEL model;
@@ -557,14 +591,14 @@ MODEL oprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-#if ODEBUG
+#if ODEBUG > 1
     pprintf(prn, "oprobit_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_NONE, prn);
 #endif
 
     /* do the actual ordered probit analysis */
     if (model.errcode == 0) {
-	model.errcode = do_oprobit(*pZ, pdinfo, &model, prn);
+	model.errcode = do_ordered(ci, *pZ, pdinfo, &model, prn);
     }
 
  bailout:
