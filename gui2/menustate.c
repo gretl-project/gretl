@@ -95,6 +95,7 @@ void variable_menu_state (gboolean s)
 
     flip(mdata->ifac, "/Variable", s);
     flip(mdata->ifac, "/View/Correlation matrix", !s);
+    flip(mdata->ifac, "/View/Cross-correlogram", !s);
     flip(mdata->ifac, "/View/Principal components", !s);
     flip(mdata->ifac, "/View/Mahalanobis distances", !s);
 }
@@ -410,6 +411,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	do_menu_op(NULL, SUMMARY, NULL);
     else if (!strcmp(item, _("Correlation matrix"))) 
 	do_menu_op(NULL, CORR, NULL);
+    else if (!strcmp(item, _("Cross-correlogram"))) 
+	do_menu_op(NULL, XCORRGM, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("XY scatterplot"))) 
@@ -432,6 +435,7 @@ GtkWidget *build_selection_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Correlation matrix"),
+	N_("Cross-correlogram"),
 	N_("Time series plot"),
 	N_("XY scatterplot"),
 	N_("Copy to clipboard"),
@@ -446,7 +450,10 @@ GtkWidget *build_selection_popup (void)
     sel_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!extended_ts(datainfo) && i == 3) {
+	if (!dataset_is_time_series(datainfo) && i == 3) {
+	    continue;
+	}
+	if (!extended_ts(datainfo) && i == 4) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));

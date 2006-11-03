@@ -1753,7 +1753,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    cmd->list[0] = 1;
 	    cmd_param_grab_word(cmd, remainder);
 	    break;
-	}
+	} else if (cmd->ci == XCORRGM && j == 3) {
+	    cmd->list[0] = 2;
+	    cmd_param_grab_word(cmd, remainder);
+	    break;
+	}	    
 
 	cmd->errcode = get_next_field(field, remainder);
 	if (cmd->errcode) {
@@ -2401,7 +2405,7 @@ static int n_separators (const int *list)
 #define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
                        c == CORRGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
-                       c == EQUATION || c == POISSON)
+                       c == EQUATION || c == POISSON || c == XCORRGM)
 
 #define TESTLEN 62
 #define LINELEN 78
@@ -3084,6 +3088,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case CORRGM:
 	order = atoi(cmd->param);
 	err = corrgram(cmd->list[1], order, 0, pZ, pdinfo, prn, OPT_A);
+	if (err) {
+	    pputs(prn, _("Failed to generate correlogram\n"));
+	}
+	break;
+
+    case XCORRGM:
+	order = atoi(cmd->param);
+	err = xcorrgram(cmd->list, order, pZ, pdinfo, prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}

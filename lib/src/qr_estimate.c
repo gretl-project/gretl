@@ -745,6 +745,8 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     get_model_data(pmod, (const double **) *pZ, Q, y);
     err = QR_decomp_plus(Q, R, &rank);
 
+    /* alternate ways of handling (near-)perfect collinearity */
+
 #if 1
     if (err == E_SINGULAR && !(opts & OPT_Z)) {
 	err = 0;

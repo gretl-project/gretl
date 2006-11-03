@@ -560,8 +560,9 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     strcpy(title, "gretl: ");
 
-    if (action == CORR || action == SUMMARY ||
-	action == PCA || action == MAHAL) {
+    if (action == CORR || action == SUMMARY || 
+	action == XCORRGM || action == PCA || 
+	action == MAHAL) {
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) return;
     }
@@ -575,6 +576,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	gretl_command_strcpy("corr");
 	strcat(title, _("correlation matrix"));
 	action = CORR;
+	break;
+    case XCORRGM:
+	gretl_command_sprintf("xcorrgm%s", liststr);
+	strcat(title, _("cross-correlogram"));
 	break;
     case PCA:
 	gretl_command_sprintf("pca%s", liststr);
@@ -637,6 +642,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, prn);
 	break;
 
+    case XCORRGM:
+	err = xcorrgram(libcmd.list, 0, &Z, datainfo, prn, OPT_NONE);
+	break;
+
     case FREQ:
 	err = freqdist(libcmd.list[1], (const double **) Z, datainfo,
 		       0, OPT_NONE, prn);
@@ -683,7 +692,13 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	return;
     } 
+
+    if (action == XCORRGM) {
+	register_graph();
+    }
 
     view_buffer(prn, hsize, vsize, title, action, obj);
 }

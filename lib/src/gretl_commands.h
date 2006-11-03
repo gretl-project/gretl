@@ -142,6 +142,7 @@ typedef enum {
     VECM,
     VIF,
     WLS,
+    XCORRGM,
     XTAB,
     NC
 } GretlCmdIndex;
@@ -193,6 +194,7 @@ typedef enum {
                         c == TESTUHAT || \
                         c == VIF || \
                         c == VARTEST || \
+                        c == XCORRGM || \
                         c == XTAB)
 
 #define NEEDS_MODEL_CHECK(c) (c == ADD || \

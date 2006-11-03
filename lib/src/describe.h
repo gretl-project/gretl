@@ -113,6 +113,8 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
 
 double gretl_acf (int k, int t1, int t2, const double *y);
 
+double gretl_xcf (int k, int t1, int t2, const double *x, const double *y);
+
 int gretl_moments (int t1, int t2, const double *x, 
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);
@@ -135,6 +137,10 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 int auto_acf_order (int pd, int nobs);
 
 int corrgram (int varno, int order, int nparam,
+	      double ***pZ, DATAINFO *pdinfo, 
+	      PRN *prn, gretlopt opt);
+
+int xcorrgram (const int *list, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn, gretlopt opt);
 
@@ -178,7 +184,6 @@ double doornik_chisq (double skew, double xkurt, int n);
 int gretl_system_normality_test (const gretl_matrix *E, 
 				 const gretl_matrix *Sigma, 
 				 PRN *prn);
-
 
 int mahalanobis_distance (const int *list, double ***pZ,
 			  DATAINFO *pdinfo, gretlopt opt,

@@ -1918,6 +1918,57 @@ double gretl_acf (int k, int t1, int t2, const double *y)
     return num / den;
 }
 
+/**
+ * gretl_xcf:
+ * @k: lag order (or lead order if < 0).
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: first data series.
+ * @y: second data series.
+ *
+ * Returns: the cross-correlation at lag (or lead) @k for the 
+ * series @x and @y over the range @t1 to @t2, or #NADBL on failure.
+ */
+
+double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
+{
+    double zx, zy, xbar, ybar, num, den1, den2;
+    int n, t;
+
+    n = t2 - t1 + 1;
+
+    if (n == 0 || gretl_isconst(t1, t2, x) || gretl_isconst(t1, t2, y)) { 
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    ybar = gretl_mean(t1, t2, y);
+    if (na(ybar)) {
+	return NADBL;
+    }
+
+    num = den1 = den2 = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t]) || na(y[t])) {
+	    return NADBL;
+	}
+	zx = x[t] - xbar;
+	zy = y[t] - ybar;
+	den1 += zx * zx;
+	den2 += zy * zy;
+	if ((k >= 0 && t - k >= t1) || (k < 0 && t - k <= t2)) {
+	    num += zx * (y[t-k] - ybar);
+	}
+    }
+
+    return num / sqrt(den1 * den2);
+}
+
 static char *corrgm_crit_string (void)
 {
     if (get_local_decpoint() == ',') {
@@ -2156,6 +2207,148 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 
     free(acf);
     free(pacf);
+
+    return err;
+}
+
+/**
+ * xcorrgram:
+ * @list: should contain ID numbers of two variables.
+ * @order: integer order for autocorrelation function.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @opt: if includes %OPT_A, use ASCII graphics.
+ *
+ * Computes the cross-cocorrelation function and plots the 
+ * cross-correlogram for the specified variables.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int xcorrgram (const int *list, int order, double ***pZ, 
+	       DATAINFO *pdinfo, PRN *prn, gretlopt opt)
+{
+    char titlestr[128];
+    double *xcf = NULL;
+    int k, xcf_m;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    FILE *fq = NULL;
+    int xno, yno;
+    int nobs, err = 0;
+
+    if (list[0] != 2) {
+	return E_DATA;
+    }
+
+    xno = list[1];
+    yno = list[2];
+
+    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
+    nobs = t2 - t1 + 1;
+
+    if (missvals(&(*pZ)[xno][t1], nobs) ||
+	missvals(&(*pZ)[yno][t1], nobs)) {
+	pprintf(prn, "\n%s",
+		_("Missing values within sample -- can't do correlogram"));
+	return 1;
+    }
+
+    if (nobs < 4) {
+	pputs(prn, _("\nInsufficient observations for correlogram"));
+	return 1;
+    }
+
+    if (gretl_isconst(t1, t2, &(*pZ)[xno][0])) {
+	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[xno]);
+	pprintf(prn, "\n%s\n", gretl_tmp_str);
+	return 1;
+    } else if (gretl_isconst(t1, t2, &(*pZ)[yno][0])) {
+	sprintf(gretl_tmp_str, _("%s is a constant"), pdinfo->varname[yno]);
+	pprintf(prn, "\n%s\n", gretl_tmp_str);
+	return 1;
+    }	
+
+    xcf_m = order;
+    if (xcf_m == 0) {
+	xcf_m = auto_acf_order(pdinfo->pd, nobs) / 2;
+    } else if (2 * xcf_m > nobs - pdinfo->pd) {
+	xcf_m = (nobs - 1) / 2; /* ?? */
+    }
+
+    xcf = malloc((xcf_m * 2 + 1) * sizeof *xcf);
+    if (xcf == NULL) {
+	return E_ALLOC;    
+    }
+
+    /* calculate xcf up to order m */
+    for (k=-xcf_m; k<=xcf_m; k++) {
+	xcf[k+xcf_m] = gretl_xcf(k, t1, t2, (*pZ)[xno], (*pZ)[yno]);
+    }
+
+    if (opt & OPT_A) { 
+	/* use ASCII graphics, not gnuplot */
+	double *xk = malloc((xcf_m * 2 + 1) * sizeof *xk);
+
+	if (xk == NULL) {
+	    err = E_ALLOC;
+	    goto xcf_getout;
+	}
+	for (k=-xcf_m; k<=xcf_m; k++) {
+	    xk[k+xcf_m] = k;
+	}
+        pprintf(prn, "\n\n%s\n\n", _("Cross-correlogram"));
+	graphyzx(NULL, xcf, NULL, xk, 2 * xcf_m + 1, "", _("lag"), NULL, 
+		 0, prn);
+	free(xk);
+    } 
+
+    sprintf(gretl_tmp_str, _("Cross-correlation function for %s and %s"), 
+	    pdinfo->varname[xno], pdinfo->varname[yno]);
+    pprintf(prn, "\n%s\n\n", gretl_tmp_str);
+
+    pputs(prn, _("  LAG      XCF"));
+    pputs(prn, "\n\n");
+
+    for (k=-xcf_m; k<=xcf_m; k++) {
+	pprintf(prn, "%5d%9.4f ", k, xcf[k+xcf_m]);
+	pputc(prn, '\n');
+    }
+
+    if (opt & OPT_A) {
+	goto xcf_getout;
+    } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
+	err = E_FOPEN;
+	goto xcf_getout;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    fputs("set xzeroaxis\n", fq);
+    fputs("set yzeroaxis\n", fq);
+    fputs("set key top right\n", fq); 
+    fprintf(fq, "set xlabel '%s'\n", I_("lag"));
+    fputs("set yrange [-1.1:1.1]\n", fq);
+    sprintf(titlestr, I_("Correlations of %s and lagged %s"),
+	    pdinfo->varname[xno], pdinfo->varname[yno]);
+    fprintf(fq, "set title '%s'\n", titlestr);
+    fprintf(fq, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
+    fprintf(fq, "plot \\\n"
+	    "'-' using 1:2 notitle w impulses lw 5\n");
+    for (k=-xcf_m; k<=xcf_m; k++) {
+	fprintf(fq, "%d %g\n", k, xcf[k+xcf_m]);
+    }
+    fputs("e\n", fq);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fq);
+
+    err = gnuplot_make_graph();
+
+ xcf_getout:
+
+    free(xcf);
 
     return err;
 }
