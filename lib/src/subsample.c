@@ -1123,6 +1123,21 @@ enum {
     SMPL_T2
 };
 
+static int panel_round (const DATAINFO *pdinfo, int t, int code)
+{
+    if (code == SMPL_T1) {
+	while ((t + 1) % pdinfo->paninfo->Tmax != 1) {
+	    t++;
+	}
+    } else {
+	while ((t + 1) % pdinfo->paninfo->Tmax != 0) {
+	    t--;
+	}
+    }
+
+    return t;
+}
+
 static int 
 get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
 		  int code)
@@ -1130,7 +1145,7 @@ get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
     int v, ret = -1;
 
     if (*s == '-' || *s == '+') {
-	/* incremental form */
+	/* increment/decrement form */
 	int incr = 0;
 
 	if (isdigit((unsigned char) s[1])) {
@@ -1144,6 +1159,9 @@ get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
 		}
 	    }
 	}
+	if (dataset_is_panel(pdinfo)) {
+	    incr *= pdinfo->paninfo->Tmax;
+	}
 	if (code == SMPL_T1) {
 	    ret = pdinfo->t1 + incr;
 	} else {
@@ -1152,6 +1170,9 @@ get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo,
     } else {
 	/* absolute form */
 	ret = get_t_from_obs_string(s, Z, pdinfo);
+	if (dataset_is_panel(pdinfo)) {
+	    ret = panel_round(pdinfo, ret, code);
+	}
     }
 
     return ret;
@@ -1181,6 +1202,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     }
 
     if (nf == 1) {
+	/* no-op, just print the current sample */
 	return 0;
     }
 	

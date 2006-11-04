@@ -1361,6 +1361,10 @@ void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo)
 {
     pdinfo->t1 = pmod->smpl.t1;
     pdinfo->t2 = pmod->smpl.t2;
+#if MDEBUG
+    fprintf(stderr, "impose_model_smpl: set t1=%d, t2=%d\n", 
+	    pdinfo->t1, pdinfo->t2);
+#endif
 }
 
 #ifdef HAVE_X12A
@@ -1635,6 +1639,10 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
 {
     pmod->smpl.t1 = pdinfo->t1;
     pmod->smpl.t2 = pdinfo->t2;
+#if MDEBUG
+    fprintf(stderr, "gretl_model_smpl_init: set t1=%d, t2=%d\n",
+	    pdinfo->t1, pdinfo->t2);
+#endif
 }
 
 /**

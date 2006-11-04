@@ -930,7 +930,6 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     int smpl_t2 = pdinfo->t2;
     int omitlast = 0;
     int *tmplist = NULL;
-    int maxlag = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
@@ -988,20 +987,6 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     /* set the mask for missing obs within the sample range, based
        on the original model */
     set_reference_missmask(orig);
-
-#if 1 /* ?? */
-    if (orig->ci == AR) { 
-	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
-    } else if (orig->ci == ARCH) {
-	maxlag = gretl_model_get_int(orig, "arch_order");
-    }
-
-    pdinfo->t1 = orig->t1 - maxlag; /* FIXME: problem? */
-
-    if (orig->ci == CORC || orig->ci == HILU) {
-	pdinfo->t1 -= 1;
-    }
-#endif
 
     /* extract option flags that should not be passed to estimator
        functions */

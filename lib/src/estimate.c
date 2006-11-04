@@ -451,7 +451,7 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
-#undef SMPL_DEBUG 
+#define SMPL_DEBUG 0
 
 static int 
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,

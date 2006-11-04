@@ -2053,7 +2053,7 @@ static int panel_obs_accounts (const MODEL *pmod, int nunits, int T,
     for (i=0; i<nunits; i++) {
 	uobs[i] = 0;
 	for (t=0; t<T; t++) {
-#if 0
+#if PDEBUG > 1
 	    fprintf(stderr, "unit %d, t=%d, pmod->uhat[%d]: %s\n", i, t,
 		    panel_index(i, t), na(pmod->uhat[panel_index(i, t)])? "NA" : "OK");
 #endif
@@ -2425,6 +2425,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	clear_model(&mod);
 	mod = *pan.realmod;
+	gretl_model_smpl_init(&mod, pdinfo);
     }
 
     panelmod_free(&pan);

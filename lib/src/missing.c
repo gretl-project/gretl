@@ -362,8 +362,8 @@ static char *model_missmask (const int *list, int t1, int t2,
 	    }
 	    if (na(xx)) {
 #if MASKDEBUG
-		fprintf(stderr, "model_missmask: NA at list[%d], obs %d (mask %d)\n",
-			i, t, t - t1);
+		fprintf(stderr, "model_missmask: NA at list[%d] (%d), obs %d\n",
+			i, list[i], t);
 #endif
 		/* FIXME dwt case and nobs?? */
 		mask[t] = '1';
@@ -675,6 +675,10 @@ static const char *refmask;
 
 void set_reference_missmask (const MODEL *pmod)
 {
+#if MASKDEBUG
+    fprintf(stderr, "set_reference_missmask: using model = %p\n", 
+	    (void *) pmod);
+#endif
     if (pmod != NULL) {
 	refmask = pmod->missmask;
     } else {
@@ -682,17 +686,17 @@ void set_reference_missmask (const MODEL *pmod)
     }
 }
 
-/* Copy the reference mask onto a specified model: note that this
-   model must have the same initial sample range (pmod->t1 and
-   pmod->t2) as the one that generated refmask, or else the mask
-   will be out of alignment.
-*/
+/* Copy the reference missing obs mask onto a specified model */
 
 int apply_reference_missmask (MODEL *pmod)
 {
     int err = 0;
 
     if (refmask != NULL) {
+#if MASKDEBUG
+	fprintf(stderr, "copying reference mask onto model = %p\n", 
+		(void *) pmod);
+#endif
 	pmod->missmask = gretl_strdup(refmask);
 	if (pmod->missmask == NULL) {
 	    err = 1;
@@ -706,8 +710,6 @@ int reference_missmask_present (void)
 {
     return (refmask != NULL);
 }
-
-/* ........................................................... */
 
 static int real_setmiss (double missval, int varno, 
 			 double **Z, DATAINFO *pdinfo) 
