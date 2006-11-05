@@ -40,7 +40,8 @@ enum {
 enum {
     ADD_TEST,
     OMIT_TEST,
-    OMIT_WALD
+    OMIT_WALD,
+    ADD_WALD
 };
 
 struct COMPARE {
@@ -348,7 +349,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.err = 0;
 
-    if (flag == ADD_TEST) {
+    if (flag == ADD_TEST || flag == ADD_WALD) {
 	umod = pmodB;
 	rmod = pmodA;
 	cmp.cmd = ADD;
@@ -379,7 +380,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     /* FIXME TSLS (F or chi-square?) */
 
-    if (flag == OMIT_WALD) {
+    if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
     } else if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);
@@ -392,7 +393,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
     }
 
-    if (pmodB != NULL) {
+    if (pmodB != NULL && flag != ADD_WALD) {
 	cmp.score = 0;
 	for (i=0; i<C_MAX; i++) { 
 	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
@@ -581,9 +582,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 
     /* check that we got the same sample as the original */
     if (!rep.errcode) {
-	if (rep.nobs < orig->nobs) {
-	    rep.errcode = E_MISS;
-	} else if (rep.nobs > orig->nobs) {
+	if (rep.nobs > orig->nobs) {
 	    rep.errcode = E_DATA;
 	}
     } 
@@ -828,6 +827,9 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
+	struct COMPARE cmp;
+	int *addlist;
+	int flag;
 
 	new->aux = AUX_ADD;
 
@@ -835,16 +837,12 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, est_opt, prn);
 	}
 
-	if (new->nobs == orig->nobs) {
-	    struct COMPARE cmp;
-	    int *addlist;
+	flag = (new->nobs == orig->nobs)? ADD_TEST : ADD_WALD;
 
-	    addlist = gretl_list_diff_new(new->list, orig->list, 2);
-	    cmp = add_or_omit_compare(orig, new, ADD_TEST, addlist);
-
-	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
-	    free(addlist);
-	}
+	addlist = gretl_list_diff_new(new->list, orig->list, 2);
+	cmp = add_or_omit_compare(orig, new, flag, addlist);
+	gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
+	free(addlist);
     }
 
     /* trash any extra variables generated (squares, logs) */
