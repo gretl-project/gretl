@@ -1094,7 +1094,14 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     if (type == GRETL_OBJ_EQN) {
-	err = model_error_dist(ptr, pZ, pdinfo, prn);
+	MODEL *pmod = ptr;
+
+	if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	    gretl_model_get_int(pmod, "ordered")) {
+	    err = E_NOTIMP;
+	} else {
+	    err = model_error_dist(ptr, pZ, pdinfo, prn);
+	}
     } else if (type == GRETL_OBJ_SYS) {
 	err = system_normality_test(ptr, prn);
     } else if (type == GRETL_OBJ_VAR) {

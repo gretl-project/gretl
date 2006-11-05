@@ -512,6 +512,10 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     case AR:
 	rep = ar_func(list, pZ, pdinfo, myopt, prn);
 	break;
+    case ARBOND:
+	rep = arbond_model(list, (const double **) *pZ, 
+			   pdinfo, myopt, prn);
+	break;
     case ARCH:
 	order = gretl_model_get_int(orig, "arch_order");
 	rep = arch_model(list, order, pZ, pdinfo, myopt, prn);
@@ -827,9 +831,10 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
+	int flag = (orig->ci == OLS && new->nobs == orig->nobs)? 
+	    ADD_TEST : ADD_WALD;
 	struct COMPARE cmp;
 	int *addlist;
-	int flag;
 
 	new->aux = AUX_ADD;
 
@@ -837,12 +842,12 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, est_opt, prn);
 	}
 
-	flag = (new->nobs == orig->nobs)? ADD_TEST : ADD_WALD;
-
 	addlist = gretl_list_diff_new(new->list, orig->list, 2);
-	cmp = add_or_omit_compare(orig, new, flag, addlist);
-	gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
-	free(addlist);
+	if (addlist != NULL) {
+	    cmp = add_or_omit_compare(orig, new, flag, addlist);
+	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
+	    free(addlist);
+	}
     }
 
     /* trash any extra variables generated (squares, logs) */
@@ -1006,14 +1011,18 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, est_opt, prn); 
 	}	
 
-	if (new->nobs == orig->nobs && !omitlast) {
+	if (!omitlast) {
+	    int flag = (orig->ci == OLS && new->nobs == orig->nobs)?
+		OMIT_TEST : OMIT_WALD;
 	    struct COMPARE cmp;
-	    int *omitlist = NULL;
+	    int *omitlist;
 
 	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
-	    cmp = add_or_omit_compare(orig, new, OMIT_TEST, omitlist);
-	    gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
-	    free(omitlist);
+	    if (omitlist != NULL) {
+		cmp = add_or_omit_compare(orig, new, flag, omitlist);
+		gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
+		free(omitlist);
+	    }
 	}
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
