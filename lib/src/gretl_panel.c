@@ -2138,7 +2138,7 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
     panelmod_init(pan, pmod, opt);
 
     /* assumes (possibly padded) balanced panel dataset */
-    pan->nunits = pdinfo->n / pdinfo->pd;
+    pan->nunits = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
     pan->T = pdinfo->pd;
 
     panel_index_init(pdinfo, pan->nunits, pan->T);
