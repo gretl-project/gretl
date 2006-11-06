@@ -98,7 +98,4 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Mailer (send-to) support */
 #define ENABLE_MAILER 1
 
-/* Use modular GARCH code? */
-#define USE_MOD_GARCH 1
-
 #endif /* WINCONFIG_H */
