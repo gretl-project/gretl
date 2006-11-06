@@ -1268,11 +1268,21 @@
 
   <command name="cusum" section="Tests" label="Test CUSUM">
 
+    <usage>
+      <options>
+	<option>
+	  <flag>--squares</flag>
+	  <effect>esegue il test CUSUMSQ</effect>
+	</option>
+      </options>
+    </usage>
+
     <description>
       <para>
 	Va eseguito dopo la stima di un modello OLS. Esegue il test
-	CUSUM per la stabilità dei parametri. Viene calcolata una 
-        serie di errori di previsione (scalati) per il periodo successivo,
+	CUSUM (o, se si usa l'opzione <lit>--squares</lit>, il test
+        CUSUMSQ ) per la stabilità dei parametri. Viene calcolata una 
+        serie di errori di previsione per il periodo successivo,
         attraverso una serie di regressioni: la prima usa le prime
 	<mathvar>k</mathvar> osservazioni e viene usata per generare
         la previsione della variabile dipendente per l'osservazione 
@@ -1283,21 +1293,24 @@
       </para>
       <para>
 	Viene mostrata, anche graficamente, la somma cumulata degli errori 
-        scalati di previsione. L'ipotesi nulla della stabilità dei parametri
+        scalati di previsione (o dei quadrati degli errori). L'ipotesi nulla della stabilità dei parametri
         è rifiutata al livello di significatività del 5 per cento se la somma
         cumulata va al di fuori delle bande di confidenza al 95 per cento.
       </para>
 
       <para>
-	Viene mostrata anche la statistica <mathvar>t</mathvar> di
-        Harvey&ndash;Collier per testare l'ipotesi nulla della stabilità dei
-        parametri. Si veda il Capitolo 7 di <book>Econometric Analysis</book>
-        di Greene, per i dettagli.
+        Nel caso di test CUSUM, viene mostrata anche la statistica
+        <mathvar>t</mathvar> di Harvey&ndash;Collier per testare l'ipotesi nulla
+        della stabilità dei parametri. Si veda il Capitolo 7 di
+        <book>Econometric Analysis</book> di Greene, per i dettagli. Per il test
+	CUSUMSQ, la banda di confidenza al 95% è calcolata usando l'algoritmo
+        descritto in Edgerton e Wells (1994).
+
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test/CUSUM</menu-path>
+      <menu-path>Finestra del modello, /Test/CUSUM(SQ)</menu-path>
     </gui-access>
 
   </command>
@@ -3910,14 +3923,18 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
+	<option>
+          <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-        Regressione binomiale logit. La variabile dipendente deve essere
-        binaria. Le stime di massima verosimiglianza dei coefficienti
-        per le <repl>variabili-indipendenti</repl> sono ottenute con il
+        Se la variabile dipendente è binaria (i suoi valori sono 0 o 1),
+        esegue una stima di massima verosimiglianza dei coefficienti
+        per le <repl>variabili-indipendenti</repl> con il
         metodo BRMR (<quote>binary response model regression</quote>) descritto
         in Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le pendenze
         dipendono dai valori delle variabili indipendenti: le pendenze
@@ -3942,6 +3959,12 @@
         un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
         prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
         MacKinnon 2004, cap. 10.
+      </para>
+      <para>
+	Se la variabile dipendente non è binaria, ma è discreta e ha un valore
+        minimo di 0, si ottengono stime Logit ordinate. Se la variabile
+        scelta come dipendente non è discreta, o non ha un valore minimo pari a
+        superiore o pari a zero, viene emesso un messaggio di errore.
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
@@ -5551,14 +5574,18 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
+	<option>
+          <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-        Stima un modello probit, per variabili dipendenti binarie.
-        Le stime di massima verosimiglianza dei coefficienti delle
-        <repl>variabili-indipendenti</repl> sono ottenute con il metodo
+        Se la variabile dipendente è binaria (tutti i suoi valori sono 0 o 1),
+        esegue una stima di massima verosimiglianza dei coefficienti delle
+        <repl>variabili-indipendenti</repl> con il metodo
         <quote>binary response model regression</quote> (BRMR) descritto in
         Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le
         pendenze dipendono dai valori delle variabili indipendenti: le pendenze
@@ -5566,7 +5593,7 @@
         statistica chi-quadro testa l'ipotesi nulla che tutti i
         coefficienti tranne la costante siano pari a zero.
       </para>
-      <para>
+      <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati con
         l'inversa negativa dell'Hessiana.  Se si usa l'opzione
         <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
@@ -5574,6 +5601,22 @@
         un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
         prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
         MacKinnon 2004, cap. 10.
+      </para>
+      <para context="gui">
+        In modalità predefinita, gli errori standard sono calcolati con
+        l'inversa negativa dell'Hessiana.  Se si seleziona la casella "Errori
+        standard robusti", verranno calcolati gli errori standard QML o quelli
+        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
+        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
+        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
+        MacKinnon 2004, cap. 10.
+      </para>
+      <para>
+	Se la variabile dipendente non è binaria, ma è discreta e ha un valore
+        minimo di 0, si ottengono stime Probit ordinate; in questo caso non sono
+        ancora disponibili gli errori standard robusti. Se la variabile
+        scelta come dipendente non è discreta, o non ha un valore minimo pari a
+        superiore o pari a zero, viene emesso un messaggio di errore.
       </para>
       <para>
 	Il probit per l'analisi delle proporzioni non è ancora stato
@@ -7729,6 +7772,42 @@
 
     <gui-access>
       <menu-path>/Modello/Altri modelli lineari/WLS - Minimi quadrati ponderati</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="xcorrgm" section="Statistics" label="Correlogramma incrociato">
+
+    <usage>
+      <arguments>
+        <argument>var1</argument>
+        <argument>var2</argument>
+        <argument optional="true">maxlag</argument>
+      </arguments>
+      <examples>
+        <example>xcorrgm x y 12</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Mostra il correlogramma incrociato per le variabili
+	<repl>var1</repl> e <repl>var2</repl>, che possono essere specificate
+        per nome o per numero. I valori sono i coefficienti di correlazione
+        campionari tra il valore presente di <repl>var1</repl> e i valori
+        ritardati e anticipati di <repl>var2</repl>.
+      </para>
+      <para>
+	Se si indica un valore <repl>maxlag</repl>, la lunghezza del correlogramma è
+        limitata al numero di ritardi e anticipi indicati, altrimenti è
+        determinata automaticamente in funzione della frequenza dei dati e del
+        numero di osservazioni.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Visualizza/Correlogramma</menu-path>
+      <other-access>Menù pop-up nella finestra principale (selezione multipla)</other-access>
     </gui-access>
 
   </command>
