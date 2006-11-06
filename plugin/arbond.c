@@ -922,6 +922,51 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     return err;
 }
 
+#if 0 /* not ready */
+
+/* F. Windmeijer, Journal of Econometrics, 126 (2005), page 33 */
+
+static int windmeijer_correct (arbond *ab)
+{
+    gretl_matrix *D = NULL;  /* finite-sample factor */
+    gretl_matrix *aV = NULL; /* standard asymptotic variance */
+    gretl_matrix *kk = NULL; /* workspace */
+
+    D = gretl_matrix_alloc(ab->k, ab->k);
+    kk = gretl_matrix_alloc(ab->k, ab->k);
+    aV = gretl_matrix_copy(ab->vbeta);
+
+    if (D == NULL || kk == NULL || aV == NULL) {
+	return E_ALLOC;
+    }
+
+    /* FIXME: form matrix D first */
+
+    /* add to AsyV: D * AsyV */
+    gretl_matrix_multiply_mod(D, GRETL_MOD_NONE
+			      aV, GRETL_MOD_NONE,
+			      ab->vbeta, GRETL_MOD_CUMULATE);
+
+    /* add to AsyV: AsyV * D' */
+    gretl_matrix_multiply_mod(aV, GRETL_MOD_NONE,
+			      D, GRETL_MOD_TRANSPOSE,
+			      ab->vbeta, GRETL_MOD_CUMULATE);
+
+    /* add to AsyV: D * var(\hat{\beta}_1) * D' */
+    gretl_matrix_multiply(D, Vb1, kk); /* need to save Vb1 earlier! */
+    gretl_matrix_multiply_mod(kk, GRETL_MOD_NONE,
+			      D, GRETL_MOD_TRANSPOSE,
+			      ab->vbeta, GRETL_MOD_CUMULATE);
+
+    gretl_matrix_free(D);
+    gretl_matrix_free(kk);
+    gretl_matrix_free(aV);
+
+    return 0;
+}
+
+#endif
+
 /* 
    Compute the variance matrix:
 
@@ -952,9 +997,8 @@ static int arbond_variance (arbond *ab, PRN *prn)
 	return E_ALLOC;
     }
 
-    num = gretl_matrix_alloc(ab->k, ab->k);
-
     if (ab->step == 1) {
+	num = gretl_matrix_alloc(ab->k, ab->k);
 	V = gretl_zero_matrix_new(ab->m, ab->m);
 	u = gretl_column_vector_alloc(ab->maxTi);
     } else {
@@ -963,8 +1007,7 @@ static int arbond_variance (arbond *ab, PRN *prn)
 	Vcpy = NULL;
     }
 
-    if (num == NULL || V == NULL || 
-	(ab->step == 1 && u == NULL)) {
+    if (V == NULL || (ab->step == 1 && (u == NULL || num == NULL))) {
 	return E_ALLOC;
     }
 
@@ -1018,22 +1061,32 @@ static int arbond_variance (arbond *ab, PRN *prn)
 	}
     }
 
-    /* find the central term, A_N * \hat{V}_N * A_N :
-       re-use V for this result */
-    err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
-    err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
+    if (ab->step == 2) {
+	gretl_invert_symmetric_matrix(V);
+	gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
+	err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
+	err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
+					 ab->kmtmp, GRETL_MOD_NONE,
+					 ab->vbeta, GRETL_MOD_NONE);
+	gretl_invert_symmetric_matrix(ab->vbeta);
+    } else {
+	/* find the central term, A_N * \hat{V}_N * A_N :
+	   re-use V for this result */
+	err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
+	err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
 
-    /* complete the large "middle bit" */
-    gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
-    err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
-    err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
-				     ab->kmtmp, GRETL_MOD_NONE,
-				     num, GRETL_MOD_NONE);
+	/* complete the large "middle bit" */
+	gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
+	err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
+	err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
+					 ab->kmtmp, GRETL_MOD_NONE,
+					 num, GRETL_MOD_NONE);
 
-    /* pre- and post-multiply by C^{-1} */
-    gretl_invert_symmetric_matrix(C);
-    gretl_matrix_multiply(num, C, ab->kktmp);
-    gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
+	/* pre- and post-multiply by C^{-1} */
+	gretl_invert_symmetric_matrix(C);
+	gretl_matrix_multiply(num, C, ab->kktmp);
+	gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
+    }
 
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->effN);
 
