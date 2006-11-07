@@ -395,6 +395,10 @@
 	  <flag>--two-step</flag>
 	  <effect>perform 2-step GMM estimation</effect>
         </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>add time dummy variables</effect>
+        </option>
       </options>
       <examples>
         <example>arbond 2 ; y Dx1 Dx2</example>
@@ -450,17 +454,25 @@
       </para>
       <para>
 	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as an
-	option.  In both cases tests for autocorrelation of orders 1 and 2
-	are provided, as well as the Sargan overidentification test.  Note
-	that in this differenced model first-order autocorrelation is not
-	a threat to the validity of the model, but second-order
-	autocorrelation violates the maintained statistical assumptions.
-	Note also that in the case of 2-step estimation, while the
-	parameter estimates are more efficient the asymptotic standard
-	errors are generally considered an unreliable guide to inference.
-	(A finite-sample correction is needed here, but this is not yet
-	implemented in gretl.)
+	robust standard errors).  You may select 2-step estimation as
+	an option.  In both cases tests for autocorrelation of orders
+	1 and 2 are provided, as well as the Sargan overidentification
+	test and a Wald test for the joint significance of the
+	regressors.  Note that in this differenced model first-order
+	autocorrelation is not a threat to the validity of the model,
+	but second-order autocorrelation violates the maintained
+	statistical assumptions. In the case of 2-step estimation,
+	standard errors are computed using the finite-sample
+	correction suggested by Windmeijer (2005).
+      </para>
+      <para context="cli">
+	If the <lit>--time-dummies</lit> option is given, a set of
+	time dummy variables is added to the specified regressors.  
+	The number of dummies is one less than the maximum number of
+	periods used in estimation, to avoid perfect collinearity with
+	the constant.  The dummies are entered in levels; if you wish
+	to use time dummies in first-differenced form, you will have
+	to define and add these variables manually.
       </para>
       <para>
 	TODO list for this command:
@@ -468,14 +480,9 @@
       <ilist>
 	<li><para>Get block-diagonal instruments sorted out</para>
 	</li>
-	<li><para>Add Wald test for overall significance</para>
-	</li>
-	<li><para>Windmeijer finite-sample correction</para>
-	</li>
 	<li><para>Finalize GUI interface</para>
 	</li>
-	<li><para>Maybe add: param for minimum lag of y,
-	    automatic time dummies option</para>
+	<li><para>Maybe add param for minimum lag of y</para>
 	</li>
       </ilist>
 

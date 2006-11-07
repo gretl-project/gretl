@@ -1192,11 +1192,9 @@ static int arbond_variance (arbond *ab, PRN *prn)
     ab->SSR = SSR;
     ab->s2 = SSR / (ab->nobs - ab->k);
 
-#if 0
     if (ab->step == 2) {
 	windmeijer_correct(ab, u1, kk);
     }   
-#endif
 
 #if ADEBUG
     gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
