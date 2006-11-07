@@ -1065,7 +1065,7 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
     \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
     (v_i being the step-1 residuals)
 
-    we compute the residuals while we're at it
+   we compute the residuals while we're at it
 */
 
 static int arbond_variance (arbond *ab, PRN *prn)

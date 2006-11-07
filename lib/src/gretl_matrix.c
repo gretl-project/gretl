@@ -4938,21 +4938,21 @@ gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
 
 /**
  * gretl_matrix_qform:
- *
  * @A: m * k matrix or k * m matrix, depending on @amod.
  * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
  * case @A should be m * k; in the second, k * m;
- * @X: k * k matrix (must be symmetric).
+ * @X: symmetric k * k matrix.
  * @C: matrix to hold the product.
  * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
  * add the result to the existing value of @C.
  *
  * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
  * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result 
- * written into @C.
+ * written into @C.  The matrix @X must be symmetric, but this
+ * is not checked, to save time.  If you are in doubt on this
+ * point you can call matrix_is_symmetric() first.
  *
- * Returns: 0 on success; non-zero error code on
- * failure.
+ * Returns: 0 on success; non-zero error code on failure.
  */
 
 #define QFORM_SMALL 1.0e-20 
@@ -4966,10 +4966,6 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     double xi, xj, xx;
     int m = (amod)? A->cols : A->rows;
     int k = (amod)? A->rows : A->cols;
-
-    if (!matrix_is_symmetric(X)) {
-	return E_NONCONF;
-    }
 
     if (k != gretl_matrix_rows(X)) {
 	fputs("gretl_matrix_qform: matrices not conformable\n", stderr);
