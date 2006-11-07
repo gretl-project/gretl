@@ -2739,7 +2739,11 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label
 	    (_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
-    }
+    } else if (sr->code == PANEL || sr->code == ARBOND) {
+	tmp = gtk_check_button_new_with_label
+	    (_("Include time dummies"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_D, 0);
+    }	
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
@@ -2828,11 +2832,11 @@ static void build_panel_radios (selector *sr)
     }
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Fixed effects"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_U, 1);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_U, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -2844,11 +2848,11 @@ static void build_arbond_radios (selector *sr)
     GSList *group;
 
     b1 = gtk_radio_button_new_with_label(NULL, _("1-step estimation"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 1);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;

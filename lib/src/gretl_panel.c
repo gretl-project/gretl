@@ -53,6 +53,7 @@ struct panelmod_t_ {
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
     int *vlist;           /* list of time-varying variables from pooled model */
+    int *dlist;           /* list of included time dummy vars */
     int balanced;         /* 1 if the model dataset is balanced, else 0 */
     int nbeta;            /* number of slope coeffs for Hausman test */
     int Fdfn;             /* numerator df, F for differing intercepts */
@@ -113,6 +114,7 @@ panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
     pan->unit_obs = NULL;
     pan->varying = NULL;
     pan->vlist = NULL;
+    pan->dlist = NULL;
     pan->opt = opt;
 
     pan->balanced = 1;
@@ -139,6 +141,7 @@ static void panelmod_free (panelmod_t *pan)
     free(pan->unit_obs);
     free(pan->varying);
     free(pan->vlist);
+    free(pan->dlist);
 
     free(pan->bdiff);
     free(pan->sigma);
@@ -774,9 +777,12 @@ static int save_between_model (MODEL *bmod, panelmod_t *pan)
     set_model_id(bmod);
     bmod->dw = NADBL;
     free(bmod->list);
+
     bmod->list = gretl_list_copy(pan->pooled->list);
     if (bmod->list == NULL) {
 	err = E_ALLOC;
+    } else if (pan->dlist != NULL) {
+	bmod->list[0] -= pan->dlist[0];
     }
 
     *pan->realmod = *bmod;
@@ -791,6 +797,7 @@ static int
 between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 {
     MODEL bmod;
+    gretlopt bopt;
     int *blist;
     int i, j;
     int err = 0;
@@ -807,7 +814,13 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 	}
     }
 
-    bmod = lsq(blist, gZ, ginfo, OLS, OPT_A | OPT_Z);
+    if (pan->opt & OPT_D) {
+	bopt = OPT_A;
+    } else {
+	bopt = OPT_A | OPT_Z;
+    }
+
+    bmod = lsq(blist, gZ, ginfo, OLS, bopt);
 
     if (bmod.errcode == 0) {
 	pan->between_s2 = bmod.sigma * bmod.sigma;
@@ -1032,6 +1045,81 @@ static int print_fe_results (panelmod_t *pan,
 		 "effects alternative.)\n\n"));
 
     return 0;
+}
+
+static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
+{
+    gretl_matrix *vcv = NULL;
+    gretl_vector *b = NULL;
+    double x;
+    int i, j, k, bigk;
+    int di, dj;
+    int err;
+
+    if (pan->dlist == NULL) {
+	return 0;
+    }
+
+    k = pan->dlist[0];
+    bigk = wmod->ncoeff;
+
+    err = makevcv(wmod, wmod->sigma);
+    if (err) {
+	return err;
+    }
+
+    b = gretl_column_vector_alloc(k);
+    vcv = gretl_matrix_alloc(k, k);
+    if (b == NULL || vcv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    di = bigk - k;
+    for (i=0; i<k; i++) {
+	b->val[i] = wmod->coeff[di++];
+    }
+
+    di = bigk - k;
+    for (i=0; i<k; i++) {
+	dj = bigk - k;
+	for (j=0; j<=i; j++) {
+	    x = wmod->vcv[ijton(di, dj++, bigk)];
+	    gretl_matrix_set(vcv, i, j, x);
+	    gretl_matrix_set(vcv, j, i, x);
+	}
+	di++;
+    } 
+
+    err = gretl_invert_symmetric_matrix(vcv);
+    if (err) {
+	goto bailout;
+    }
+    
+    x = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, vcv, &err);
+    if (err) {
+	fprintf(stderr, _("Failed to compute test statistic\n"));
+	goto bailout;
+    }
+
+    if (!err) {
+	ModelTest *test = model_test_new(GRETL_TEST_PANEL_TIMEDUM);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	    model_test_set_dfn(test, k);
+	    model_test_set_value(test, x);
+	    model_test_set_pvalue(test, chisq_cdf_comp(x, k));
+	    maybe_add_test_to_model(wmod, test);
+	}
+    }		
+
+ bailout:
+
+    gretl_matrix_free(vcv);
+    gretl_vector_free(b);
+    
+    return err;
 }
 
 static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
@@ -1404,11 +1492,6 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 	j++;
     }
 
-    /* FIXME add time dummies here if wanted */
-    if (pan->opt & OPT_D) {
-	;
-    }
-
     /* regression list: copy pooled list, dropping the constant and
        adding the unit dummies
     */
@@ -1603,6 +1686,7 @@ static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
     set_model_id(femod);
     private_panel_dwstat(femod, pdinfo, pan);
     save_fixed_effects_F(pan, femod);
+    time_dummies_wald_test(pan, femod);
 
     *pan->realmod = *femod;
 
@@ -2131,7 +2215,8 @@ static void calculate_Tbar (panelmod_t *pan)
 
 static int 
 panelmod_setup (panelmod_t *pan, MODEL *pmod,
-		const DATAINFO *pdinfo, gretlopt opt)
+		const DATAINFO *pdinfo, int *dlist,
+		gretlopt opt)
 {
     int err = 0;
 
@@ -2142,6 +2227,7 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
     pan->T = pdinfo->pd;
 
     panel_index_init(pdinfo, pan->nunits, pan->T);
+    pan->dlist = dlist;
     
     err = panel_obs_accounts(pmod, pan->nunits, pan->T,
 			     &pan->effn, &pan->effT, 
@@ -2180,11 +2266,11 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (pmod->ifc == 0) {
 	/* at many points in these functions we assume the base
 	   regression has an intercept included */
-	return 1;
+	return E_NOCONST;
     }
 
     /* add OPT_V to make the fixed and random effects functions verbose */
-    err = panelmod_setup(&pan, pmod, pdinfo, opt | OPT_V);
+    err = panelmod_setup(&pan, pmod, pdinfo, NULL, opt | OPT_V);
     if (err) {
 	goto bailout;
     }   
@@ -2300,6 +2386,55 @@ static int between_model (panelmod_t *pan, const double **Z,
     return err;
 }
 
+static int
+add_dummies_to_list (const int *list, DATAINFO *pdinfo, int **pbiglist,
+		     int **pdlist)
+{
+    char dname[VNAMELEN];
+    int *biglist = NULL;
+    int *dlist = NULL;
+    int i, j, v;
+    int err = 0;
+
+    biglist = gretl_list_new(list[0] + pdinfo->pd - 1);
+    if (biglist == NULL) {
+	return E_ALLOC;
+    }
+
+    dlist = gretl_list_new(pdinfo->pd - 1);
+    if (dlist == NULL) {
+	free(biglist);
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	biglist[i] = list[i];
+    }
+
+    j = list[0] + 1;
+    for (i=2; i<=pdinfo->pd; i++) {
+	sprintf(dname, "dt_%d", i);
+	v = varindex(pdinfo, dname);
+	if (v == pdinfo->v) {
+	    err = E_DATA;
+	    break;
+	} else {
+	    biglist[j++] = v;
+	    dlist[i-1] = v;
+	}
+    }
+
+    if (err) {
+	free(biglist);
+	free(dlist);
+    } else {
+	*pbiglist = biglist;
+	*pdlist = dlist;
+    }
+
+    return err;
+}
+
 /* real_panel_model:
  * @list: list containing model specification.
  * @pZ: pointer to data array.  
@@ -2307,7 +2442,8 @@ static int between_model (panelmod_t *pan, const double **Z,
  * @opt: may include %OPT_U for the random effects model,
  * %OPT_R for robust standard errors (fixed effects model
  * only), %OPT_H to use the regression approach to the Hausman
- * test (random effects only), %OPT_B for "between" model.
+ * test (random effects only), %OPT_B for "between" model,
+ * %OPT_D to include time dummies.
  * @prn: printing struct.
  *
  * Estimates a panel model, either fixed effects or random
@@ -2322,10 +2458,27 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     MODEL mod;
     panelmod_t pan;
     gretlopt pan_opt = opt;
+    int *dlist = NULL;
+    int *olslist = NULL;
+    int orig_v = pdinfo->v;
     int err = 0;
 
-    /* baseline: estimated via pooled OLS */
-    mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    gretl_model_init(&mod);
+
+    if (opt & OPT_D) {
+	mod.errcode = panel_dummies(pZ, pdinfo, OPT_T);
+	if (!mod.errcode) {
+	    mod.errcode = add_dummies_to_list(list, pdinfo, &olslist, &dlist);
+	    if (mod.errcode == 0) {
+		mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+		free(olslist);
+	    }
+	}
+    } else {
+	/* baseline: estimated via pooled OLS */
+	mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    }
+
     if (mod.errcode) {
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
 	return mod;
@@ -2338,8 +2491,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (mod.ifc == 0) {
 	/* at many points in these functions we assume the base
 	   regression has an intercept included */
-	strcpy(gretl_errmsg, "Panel models must include an intercept");
-	mod.errcode = E_DATA;
+	mod.errcode = E_NOCONST;
 	return mod;
     }
 
@@ -2348,7 +2500,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	pan_opt |= OPT_F;
     }
 
-    err = panelmod_setup(&pan, &mod, pdinfo, pan_opt);
+    err = panelmod_setup(&pan, &mod, pdinfo, dlist, pan_opt);
     if (err) {
 	goto bailout;
     }   
@@ -2433,6 +2585,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (err && mod.errcode == 0) {
 	mod.errcode = err;
     }
+
+#if 1
+    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+#endif
 
     return mod;    
 }

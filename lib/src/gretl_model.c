@@ -2273,6 +2273,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_PANEL_BP,
       N_("Breusch-Pagan test"),
       N_("Variance of the unit-specific error = 0") },
+    { GRETL_TEST_PANEL_TIMEDUM,
+      N_("Wald test for joint significance of time dummies"),
+      NULL },
     { GRETL_TEST_MAX, NULL, NULL }
 };   
 
@@ -2354,7 +2357,7 @@ static int print_add_omit_varnames (const char *s, PRN *prn)
     return 0;
 }
 
-static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
+static void gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 {
     const char *H0 = NULL;
     int i;
@@ -2366,20 +2369,23 @@ static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
     }
 
     if (H0 == NULL) {
-	return 1;
+	return;
     }    
 
     if (plain_format(prn)) {
+	pprintf(prn, " -\n  %s: ", _("Null hypothesis"));
 	pputs(prn, _(H0));
-    } else {
+    } else if (tex_format(prn)) {
+	pprintf(prn, " --\\\\\n\\quad %s: ", I_("Null hypothesis"));
 	pputs(prn, I_(H0));
-    }  
+    } else if (rtf_format(prn)) {
+	pprintf(prn, " -\\par\n %s: ", I_("Null hypothesis"));
+	pputs(prn, I_(H0));
+    }
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
 	print_add_omit_varnames(test->param, prn);
     } 
-
-    return 0;
 }
 
 static void 
@@ -2501,18 +2507,15 @@ void gretl_model_test_print_direct (const ModelTest *test, PRN *prn)
 
     if (plain_format(prn)) {
 	gretl_test_print_string(test, prn);
-	pprintf(prn, " -\n  %s: ", _("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\n  %s: %s\n", _(tstat), buf);
     } else if (tex_format(prn)) {
 	gretl_test_print_string(test, prn);
-	pprintf(prn, " --\\\\\n\\quad %s: ", I_("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstat), buf);
     } else if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
 	gretl_test_print_string(test, prn);
-	pprintf(prn, " -\\par\n %s: ", I_("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstat), buf);
     }

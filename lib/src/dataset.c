@@ -1232,6 +1232,11 @@ static int real_dataset_add_series (int newvars, double *x,
     int i, t;
     int err = 0;
 
+    if (newvars == 0) {
+	/* no-op */
+	return 0;
+    }
+
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
 
     if (newZ == NULL) {

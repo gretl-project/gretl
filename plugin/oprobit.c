@@ -333,7 +333,6 @@ static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH
     }
 
     /* make symmetric */
-
     for (i=0; i<k; i++) {
 	for (j=i+1; j<k; j++) {
 	    x = 0.5 * (gretl_matrix_get(inH, i, j) + gretl_matrix_get(inH, j, i));
@@ -380,13 +379,32 @@ numerical_ihess (op_container *OC, double *theta, gretl_matrix *invH)
     return 0;
 }
 
+static int get_pred (op_container *OC, const MODEL *pmod,
+		     double Xb)
+{
+    int i, j, pred = 0;
+
+    for (j=OC->M, i=OC->k-1; i>=OC->nx; i--, j++) {
+	if (Xb >= pmod->coeff[i]) {
+	    pred = j;
+	    break;
+	}
+    }
+
+    if (pred == 0 && Xb >= pmod->coeff[0]) {
+	pred = 1;
+    }
+
+    return pred;
+}
+
 static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
 			op_container *OC, double *theta, 
 			gretl_matrix *invH)
 {
     int npar = OC->k;
     int nx = OC->nx;
-    double x;
+    double x, y;
     int i, j, k, t, v;
 
     pmod->t1 = OC->t1;
@@ -421,17 +439,22 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     for (t=OC->t1; t<=OC->t2; t++) {
+	int pred;
+
 	if (na(OC->pmod->uhat[t])) {
 	    continue;
 	}
 	x = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
-	    x -= theta[i] * OC->Z[v][t];
+	    x += theta[i] * OC->Z[v][t];
 	}
-	/* - \hat{beta}'x */
+	/* X\hat{beta} */
 	pmod->yhat[t] = x;
-	pmod->uhat[t] = NADBL; /* can we do something sensible here? */
+	y = OC->Z[OC->list[1]][t];
+	pred = get_pred(OC, pmod, x);
+	pmod->uhat[t] = y - pred;
+	/* FIXME compute generalized residual? */
     }
 
     pmod->lnL = op_loglik(theta, OC);
@@ -590,6 +613,12 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     if (model.errcode) {
 	goto bailout;
     }
+
+    if (model.ifc == 0) {
+	/* we assume the base regression has an intercept included */
+	model.errcode = E_NOCONST;
+	goto bailout;
+    }    
 
 #if ODEBUG > 1
     pprintf(prn, "oprobit_estimate: initial OLS\n");

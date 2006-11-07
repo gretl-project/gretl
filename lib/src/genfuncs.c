@@ -779,7 +779,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
     nnew = n_new_dummies(pdinfo, n_unitdum, n_timedum);
 
-    if (dataset_add_series(nnew, pZ, pdinfo)) {
+    if (nnew > 0 && dataset_add_series(nnew, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 

@@ -2407,7 +2407,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     }	
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
-	pmod->ci != NLS && pmod->ci != MLE) {
+	pmod->ci != NLS && pmod->ci != MLE &&
+	pmod->ci != PANEL && pmod->ci != ARBOND) {
 	add_dummies_to_plot_menu(vwin);
     }
 
@@ -2763,7 +2764,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
 
-	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH) { 
+	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH ||
+	    pmod->ci == PANEL || pmod->ci == ARBOND) { 
 	    continue;
 	}
 
@@ -2773,8 +2775,9 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	for (j=varstart; j<=pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;
 	    if (pmod->list[j] == LISTSEP) break;
-	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
+	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) {
 		continue;
+	    }
 
 	    varitem.callback_action = pmod->list[j]; 
 	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);

@@ -515,7 +515,7 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *dmodlist = NULL;
     int *act_pred = NULL;
     MODEL dmod;
-    double xx, zz, fbx;
+    double xx, fbx, f, F;
     double *xbar = NULL;
     double *beta = NULL;
 
@@ -624,24 +624,29 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     xx = 0.0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
 	double xb = dmod.yhat[t];
+	int yt;
 
 	if (model_missing(&dmod, t)) {
 	    continue;
 	}
-	zz = (*pZ)[depvar][t];
-	xx += zz;
+
+	yt = (int) (*pZ)[depvar][t];
+	xx += yt;
 
 	if (act_pred != NULL) {
-	    i = 2 * (floateq(zz, 1.0)) + (xb > 0.0);
+	    i = 2 * yt + (xb > 0.0);
 	    act_pred[i] += 1;
 	}
 
 	if (dmod.ci == LOGIT) {
-	   dmod.yhat[t] = exp(xb) / (1.0 + exp(xb)); 
+	    dmod.yhat[t] = exp(xb) / (1.0 + exp(xb)); 
+	    dmod.uhat[t] = yt - dmod.yhat[t];
 	} else {
-	   dmod.yhat[t] = normal_cdf(xb); 
+	    f = normal_pdf(xb);
+	    F = normal_cdf(xb);
+	    dmod.yhat[t] = F; 
+	    dmod.uhat[t] = yt ? f/F : -f/(1-F);
 	}
-	dmod.uhat[t] = zz - dmod.yhat[t];
     }
 
     xx /= dmod.nobs;
