@@ -157,17 +157,27 @@ int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
     const char *test = VARLABEL(pdinfo, v);
     char vname[VNAMELEN];
     double val;
-    int pv, ret = 0;
+    int pv = pdinfo->v;
+    int i = 0, ret = 0;
 
     if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
 	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {
 	pv = varindex(pdinfo, vname);
-	if (pv < pdinfo->v) {
-	    *parent = pv;
-	    ret = 1;
-	} else {
-	    *parent = 0;
+    } else if (!strncmp(pdinfo->varname[v], "dt_", 3)) {
+	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
+	    pv = varindex(pdinfo, "dt_1");
 	}
+    } else if (!strncmp(pdinfo->varname[v], "du_", 3)) {
+	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
+	    pv = varindex(pdinfo, "du_1");
+	}
+    }	
+
+    if (pv < pdinfo->v) {
+	*parent = pv;
+	ret = 1;
+    } else {
+	*parent = 0;
     }
 
     return ret;
