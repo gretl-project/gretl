@@ -924,7 +924,15 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     return err;
 }
 
-/* F. Windmeijer, Journal of Econometrics, 126 (2005), page 33 */
+/* Windmeijer, Journal of Econometrics, 126 (2005), page 33:
+   finite-sample correction for step-2 variance matrix.  Note: from a
+   computational point of view this calculation is expressed more
+   clearly in the working paper by Bond and Windmeijer, "Finite Sample
+   Inference for GMM Estimators in Linear Panel Data Models" (2002),
+   in particular the fact that the matrix named "D" below must be
+   built column by column, taking the derivative of the "W" (or "A")
+   matrix with respect to the successive independent variables.
+*/
 
 static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
 			       const gretl_matrix *varb1)
@@ -934,7 +942,7 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
     gretl_matrix *dWj = NULL; /* one component of the above */
     gretl_matrix *ui = NULL;  /* per-unit residuals */
     gretl_matrix *xij = NULL; /* per-unit X_j values */
-    gretl_matrix *TT = NULL;  /* workspace */
+    gretl_matrix *TT = NULL;  /* workspace follows */
     gretl_matrix *mT = NULL;  
     gretl_matrix *km = NULL;  
     gretl_matrix *k1 = NULL;  
@@ -959,7 +967,7 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
 	goto bailout;
     }
 
-    /* form -aV * XZW^{-1} */
+    /* form -(1/N) * asyV * XZW^{-1} */
     gretl_matrix_multiply(aV, ab->XZA, ab->kmtmp);
     gretl_matrix_multiply_by_scalar(ab->kmtmp, -1.0 / ab->effN);
 
@@ -1580,7 +1588,7 @@ rank_mask (arbond *ab, const gretl_matrix *A, int *err)
 
 /* Based on reduction of the A matrix, trim ZT to match and
    adjust the sizes of all workspace matrices that have a 
-   dimension involving ab->m 
+   dimension involving ab->m.
 */
 
 static void real_shrink_matrices (arbond *ab, const char *mask)
