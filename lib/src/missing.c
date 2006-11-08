@@ -334,16 +334,16 @@ static char *model_missmask (const int *list, int t1, int t2,
     int i, li, t;
 
     mask = malloc(n + 1);
+    if (mask == NULL) {
+	return NULL;
+    }
+
     memset(mask, '0', n);
     mask[n] = 0;
 
 #if MASKDEBUG
     fprintf(stderr, "model_missmask: using series length %d\n", n);
 #endif
-
-    if (mask == NULL) {
-	return NULL;
-    }
 
     if (misscount != NULL) {
 	*misscount = 0;
@@ -382,7 +382,7 @@ static char *model_missmask (const int *list, int t1, int t2,
  * adjust_t1t2: 
  * @pmod: pointer to model, or %NULL.
  * @list: list of variables to be tested for missing values.
- * @t1: on entry, intial start of sample range; on exit,
+ * @t1: on entry, initial start of sample range; on exit,
  *      start of sample range adjusted for missing values.
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
@@ -665,13 +665,11 @@ int check_for_missing_obs (const int *list, int *t1, int *t2,
    reduced models will be invalid.
 */
 
-/* const pointer to a given model's missmask, or NULL */
+/* copy of a given model's missmask, or NULL */
 
-static const char *refmask;
+static char *refmask;
 
-/* Set the "reference" mask based on a target model, or reset it to
-   NULL if pmod is NULL.
-*/
+/* Set the "reference" mask based on a target model */
 
 void set_reference_missmask (const MODEL *pmod)
 {
@@ -680,30 +678,24 @@ void set_reference_missmask (const MODEL *pmod)
 	    (void *) pmod);
 #endif
     if (pmod != NULL) {
-	refmask = pmod->missmask;
-    } else {
-	refmask = NULL;
-    }
+	refmask = gretl_strdup(pmod->missmask);
+    } 
 }
 
-/* Copy the reference missing obs mask onto a specified model */
+/* attach the reference missing obs mask to a specified model */
 
 int apply_reference_missmask (MODEL *pmod)
 {
-    int err = 0;
-
     if (refmask != NULL) {
 #if MASKDEBUG
-	fprintf(stderr, "copying reference mask onto model = %p\n", 
+	fprintf(stderr, "applying reference mask to model = %p\n", 
 		(void *) pmod);
 #endif
-	pmod->missmask = gretl_strdup(refmask);
-	if (pmod->missmask == NULL) {
-	    err = 1;
-	}
+	pmod->missmask = refmask;
+	refmask = NULL;
     }
 
-    return err;
+    return 0;
 }
 
 int reference_missmask_present (void)

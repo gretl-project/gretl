@@ -498,7 +498,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
 		   pmod->ci == ARMA || pmod->ci == GARCH || 
-		   (pmod->ci == PANEL && !gretl_model_get_int(pmod, "between"))) {
+		   pmod->ci == PANEL) {
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->ci == ARBOND) {
 	    strcpy(targ, pmod->params[i]);
@@ -3378,7 +3378,10 @@ int command_ok_for_model (int test_ci, int model_ci)
 
     case TESTUHAT:
 	/* do we really need to exclude garch? */
-	if (model_ci == TOBIT || model_ci == GARCH) ok = 0;
+	if (model_ci == TOBIT || model_ci == PROBIT ||
+	    model_ci == LOGIT || model_ci == GARCH) {
+	    ok = 0;
+	}
 	break;
 
     default:

@@ -27,13 +27,6 @@
 
 #define PDEBUG 0
 
-/* The minimum number of observations we'll accept for a given
-   cross-sectional unit, to include that unit in the fixed-effects
-   regression.  This was previously set at 2.
-*/
-
-#define FE_MINOBS 1
-
 enum vcv_ops {
     VCV_INIT,
     VCV_SUBTRACT
@@ -100,8 +93,7 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 #endif
 }
 
-static void 
-panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
+static void panelmod_init (panelmod_t *pan)
 {
     pan->nunits = 0;
     pan->effn = 0;
@@ -113,7 +105,7 @@ panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
     pan->unit_obs = NULL;
     pan->varying = NULL;
     pan->vlist = NULL;
-    pan->opt = opt;
+    pan->opt = OPT_NONE;
 
     pan->balanced = 1;
     pan->nbeta = 0;
@@ -130,7 +122,7 @@ panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
     pan->bdiff = NULL;
     pan->sigma = NULL;
     
-    pan->pooled = pmod;
+    pan->pooled = NULL;
     pan->realmod = NULL;
 }
 
@@ -224,7 +216,7 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     s = 0;
     for (i=0; i<pan->nunits; i++) {
 	Ti = pan->unit_obs[i];
-	if (Ti < FE_MINOBS) {
+	if (Ti < 1) {
 	    continue;
 	}
 	e = gretl_matrix_reuse(e, Ti, 1);
@@ -478,11 +470,12 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
     pan->balanced = 1;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= FE_MINOBS) {
+	if (pan->unit_obs[i] >= 1) {
 	    wnobs += pan->unit_obs[i];
 	    pan->effn += 1;
-	} else if (pan->unit_obs[i] != pan->effT) {
-	    pan->balanced = 0;
+	    if (pan->unit_obs[i] != pan->effT) {
+		pan->balanced = 0;
+	    }
 	}
     }
 
@@ -522,7 +515,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 #if PDEBUG
 	    fprintf(stderr, "looking at x-sect unit %d: Ti = %d\n", i, Ti);
 #endif
-	    if (Ti < FE_MINOBS) {
+	    if (Ti < 1) {
 		continue;
 	    }
 
@@ -706,6 +699,7 @@ group_means_dataset (panelmod_t *pan,
     DATAINFO *ginfo;
     double x;
     int gn = 0;
+    int gv = pan->pooled->list[0];
     int i, j, k;
     int s, t, bigt;
 
@@ -715,25 +709,29 @@ group_means_dataset (panelmod_t *pan,
 	}
     }
 
+    if (pan->balanced && pan->ntdum > 0) {
+	gv -= pan->ntdum;
+    }
+
 #if PDEBUG
     fprintf(stderr, "group_means_dataset: nvars=%d, nobs=%d\n", 
-	    pan->pooled->list[0], gn);
+	    gv, gn);
 #endif
 
-    ginfo = create_new_dataset(gZ, pan->pooled->list[0], gn, 0);
+    ginfo = create_new_dataset(gZ, gv, gn, 0);
     if (ginfo == NULL) {
 	return NULL;
     }
 
     k = 1;
-    for (j=1; j<=pan->pooled->list[0]; j++) { 
+    for (j=1; j<=gv; j++) { 
 	int pj = pan->pooled->list[j];
 
 	if (pj == 0) {
 	    continue;
 	}
 	
-	if (pan->opt & OPT_B) {
+	if (1 || (pan->opt & OPT_B)) {
 	    /* focus on "between" model: so name the variables */
 	    strcpy(ginfo->varname[k], pdinfo->varname[pj]);
 	}
@@ -765,7 +763,8 @@ group_means_dataset (panelmod_t *pan,
 
 /* spruce up bmod and attach it to pan */
 
-static int save_between_model (MODEL *bmod, panelmod_t *pan)
+static int save_between_model (MODEL *bmod, DATAINFO *ginfo, 
+			       panelmod_t *pan)
 {
     int i, err = 0;
 
@@ -774,9 +773,13 @@ static int save_between_model (MODEL *bmod, panelmod_t *pan)
     set_model_id(bmod);
     bmod->dw = NADBL;
 
+    gretl_model_add_panel_varnames(bmod, ginfo, NULL);
+
     for (i=1; i<=bmod->list[0]; i++) {
 	bmod->list[i] = pan->pooled->list[i];
     }
+    
+    /* FIXME handle droplist? */
 
     *pan->realmod = *bmod;
 
@@ -795,7 +798,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     int i, j;
     int err = 0;
 
-    blist = gretl_list_new(pan->pooled->list[0]);
+    blist = gretl_list_new(ginfo->v);
     if (blist == NULL) {
 	return E_ALLOC;
     }
@@ -807,12 +810,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 	}
     }
 
-    if (pan->opt & OPT_D) {
-	bopt = OPT_A;
-    } else {
-	bopt = OPT_A | OPT_Z;
-    }
-
+    bopt = (pan->opt & OPT_D)? OPT_A : OPT_A | OPT_Z;
     bmod = lsq(blist, gZ, ginfo, OLS, bopt);
 
     if (bmod.errcode == 0) {
@@ -825,7 +823,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     }
 
     if (pan->opt & OPT_B) {
-	err = save_between_model(&bmod, pan);
+	err = save_between_model(&bmod, ginfo, pan);
     } else {
 	clear_model(&bmod);
     }
@@ -1004,7 +1002,7 @@ static int print_fe_results (panelmod_t *pan,
        estimates */
     if (pan->ndum > 0) {
 	for (i=0, j=0; i<pan->nunits; i++) {
-	    if (pan->unit_obs[i] >= FE_MINOBS) {
+	    if (pan->unit_obs[i] >= 1) {
 		char dumstr[VNAMELEN];
 		double b;
 
@@ -1468,7 +1466,7 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
     for (i=0, j=0; i<pan->nunits && j<pan->ndum; i++) {
 	int t, dv = oldv + j;
 
-	if (pan->unit_obs[i] < FE_MINOBS) {
+	if (pan->unit_obs[i] < 1) {
 	    continue;
 	}
 
@@ -1545,7 +1543,7 @@ static int get_fixed_effects_method (panelmod_t *pan)
 	fprintf(stderr, "pan unit %d: obs (based on OLS) = %d\n", 
 		i, pan->unit_obs[i]);
 #endif
-	if (pan->unit_obs[i] >= FE_MINOBS) {
+	if (pan->unit_obs[i] >= 1) {
 	    nd++;
 	} else if (pan->unit_obs[i] > 0) {
 	    /* a unit we need to exclude: hard to handle with
@@ -1563,10 +1561,8 @@ static int get_fixed_effects_method (panelmod_t *pan)
 }
 
 /* Construct a gretl list containing the index numbers of the
-   cross-sectional units included in the fixed-effects regression
-   FIXME: we should actually read those index numbers from 
-   datainfo.  This is for the purpose of naming the per-unit
-   intercepts.
+   cross-sectional units included in the fixed-effects regression This
+   is for the purpose of naming the per-unit intercepts.
 */
 
 int *fe_units_list (const panelmod_t *pan)
@@ -1575,7 +1571,7 @@ int *fe_units_list (const panelmod_t *pan)
     int i, j, n = 0;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= FE_MINOBS) {
+	if (pan->unit_obs[i] >= 1) {
 	    n++;
 	}
     }
@@ -1585,7 +1581,7 @@ int *fe_units_list (const panelmod_t *pan)
     if (ulist != NULL) {
 	j = 1;
 	for (i=0; i<pan->nunits; i++) { 
-	    if (pan->unit_obs[i] >= FE_MINOBS) {
+	    if (pan->unit_obs[i] >= 1) {
 		ulist[j++] = i + 1;
 	    }
 	} 
@@ -2213,7 +2209,8 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATAINFO *pdinfo,
 {
     int err = 0;
 
-    panelmod_init(pan, pmod, opt);
+    pan->opt = opt;
+    pan->pooled = pmod;
 
     /* assumes (possibly padded) balanced panel dataset */
     pan->nunits = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
@@ -2263,6 +2260,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* add OPT_V to make the fixed and random effects functions verbose */
+    panelmod_init(&pan);
     err = panelmod_setup(&pan, pmod, pdinfo, 0, opt | OPT_V);
     if (err) {
 	goto bailout;
@@ -2417,6 +2415,32 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo, int **pbiglist)
     return err;
 }
 
+static int panel_check_for_const (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    return 0;
+	}
+    }
+
+    return E_NOCONST;
+}
+
+static int get_ntdum (const int *orig, const int *new)
+{
+    int i, n = 0;
+
+    for (i=2; i<=new[0]; i++) {
+	if (!in_gretl_list(orig, new[i])) {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
 /* real_panel_model:
  * @list: list containing model specification.
  * @pZ: pointer to data array.  
@@ -2446,36 +2470,42 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     gretl_model_init(&mod);
+    panelmod_init(&pan);
 
+    mod.errcode = panel_check_for_const(list);
+    if (mod.errcode) {
+	return mod;
+    }
+
+    /* add time dummies to list? */
     if (opt & OPT_D) {
 	mod.errcode = panel_dummies(pZ, pdinfo, OPT_T);
 	if (!mod.errcode) {
 	    mod.errcode = add_dummies_to_list(list, pdinfo, &olslist);
-	    if (mod.errcode == 0) {
-		mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
-		free(olslist);
-	    }
-	}
+	}  
     } else {
-	/* baseline: estimated via pooled OLS */
-	mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	olslist = gretl_list_copy(list);
+	if (olslist == NULL) {
+	    mod.errcode = E_ALLOC;
+	}
     }
 
     if (mod.errcode) {
-	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
-	return mod;
+	goto bailout;
     }
+
+    /* baseline: estimate via pooled OLS */
+    mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+    if (mod.errcode) {
+	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
+	goto bailout;
+    }
+
+    free(olslist);
 
 #if PDEBUG
     printmodel(&mod, pdinfo, OPT_NONE, prn);
 #endif
-
-    if (mod.ifc == 0) {
-	/* at many points in these functions we assume the base
-	   regression has an intercept included */
-	mod.errcode = E_NOCONST;
-	return mod;
-    }
 
     if (!(opt & OPT_U) && !(opt & OPT_B)) {
 	/* default: add OPT_F to save the fixed effects model */
@@ -2483,7 +2513,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_D) {
-	ntdum = mod.list[0] - list[0];
+	ntdum = get_ntdum(list, mod.list);
     }
 
     err = panelmod_setup(&pan, &mod, pdinfo, ntdum, pan_opt);

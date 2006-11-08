@@ -39,7 +39,7 @@ enum {
     SR_RVARS2
 };
 
-#define N_EXTRA 6
+#define N_EXTRA  6
 #define N_RADIOS 2
 
 struct _selector {
@@ -70,14 +70,14 @@ struct _selector {
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == ARBOND)
+                       c == PANEL_WLS || c == PANEL_B || c == ARBOND)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == ARBOND)
+                       c == PANEL_WLS || c == PANEL_B || c == ARBOND)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -104,6 +104,7 @@ struct _selector {
                          c == OLS || \
                          c == PANEL || \
                          c == PANEL_WLS || \
+                         c == PANEL_B || \
                          c == PROBIT || \
                          c == TOBIT || \
                          c == TSLS || \
@@ -1842,6 +1843,7 @@ static char *est_str (int cmdnum)
 	return N_("Poisson");
     case PANEL:
     case PANEL_WLS:
+    case PANEL_B:
 	return N_("Panel model");
     case ARBOND:
 	return N_("Dynamic panel model");
@@ -2739,7 +2741,7 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label
 	    (_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
-    } else if (sr->code == PANEL || sr->code == ARBOND) {
+    } else if (sr->code == PANEL || sr->code == ARBOND || sr->code == PANEL_B) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Include time dummies"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_D, 0);
@@ -3797,7 +3799,8 @@ void data_save_selection_wrapper (int file_code, gpointer p)
 
 int selector_code (const selector *sr)
 {
-    return (sr->code == PANEL_WLS)? PANEL : sr->code;
+    return (sr->code == PANEL_WLS || sr->code == PANEL_B)? 
+	PANEL : sr->code;
 }
 
 const char *selector_list (const selector *sr)
@@ -3826,7 +3829,11 @@ gpointer selector_get_data (const selector *sr)
 
 gretlopt selector_get_opts (const selector *sr)
 {
-    return sr->opts;
+    if (sr->code == PANEL_B) {
+	return sr->opts | OPT_B;
+    } else {
+	return sr->opts;
+    }
 }
 
 const char *selector_entry_text (const selector *sr)

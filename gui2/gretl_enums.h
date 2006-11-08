@@ -87,6 +87,7 @@ enum extra_cmds {
     TSPLOTS,
     ITERATIONS,
     CUSUMSQ,
+    PANEL_B,
     GUI_CMD_MAX
 };
 

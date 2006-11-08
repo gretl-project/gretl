@@ -1034,9 +1034,6 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     pdinfo->t1 = smpl_t1;
     pdinfo->t2 = smpl_t2;
 
-    /* reset the missing mask */
-    set_reference_missmask(NULL);
-
     free(tmplist);
 
     return err;

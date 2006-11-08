@@ -114,6 +114,7 @@ static struct gui_help_item gui_help_items[] = {
     { VAROMIT,        "VAR-omit" },
     { PANEL_MODE,     "panel-mode" },
     { PANEL_WLS,      "panel-wls" },
+    { PANEL_B,        "panel-between" },
     { -1,          NULL },
 };
 

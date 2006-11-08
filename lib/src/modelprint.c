@@ -966,6 +966,11 @@ static void print_model_droplist (const MODEL *pmod,
     const int *dlist = gretl_model_get_data(pmod, "droplist");
     int i, v;
 
+    if (pmod->ci == PANEL && gretl_model_get_int(pmod, "between")) {
+	/* FIXME? */
+	return;
+    }
+
     pputs(prn, _("Omitted due to exact collinearity:"));
     for (i=1; i<=dlist[0]; i++) {
 	v = dlist[i];

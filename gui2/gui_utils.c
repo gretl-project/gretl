@@ -2527,6 +2527,8 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    } else if (cmd_ci == LMTEST) { 
 		/* unqualified: autocorrelation */
 		opt = OPT_A;
+	    } else if (cmd_ci == CUSUMSQ) {
+		cmd_ci = CUSUM;
 	    }
 		
 	    ok = model_test_ok(cmd_ci, opt, pmod, datainfo);

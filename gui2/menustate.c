@@ -146,6 +146,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 static GtkItemFactoryEntry panel_model_items[] = {
     { N_("/Model/Panel/_Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL },
     { N_("/Model/Panel/_Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL, GNULL },
+    { N_("/Model/Panel/_Between model..."), NULL, model_callback, PANEL_B, NULL, GNULL },
     { N_("/Model/Panel/_Arellano-Bond..."), NULL, model_callback, ARBOND, NULL, GNULL },
 };
 

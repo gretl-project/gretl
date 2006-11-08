@@ -5222,6 +5222,14 @@
 	  <effect>random rather than fixed effects</effect>
         </option>
         <option>
+	  <flag>--between</flag>
+	  <effect>estimate the between-groups model</effect>
+        </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>include time dummy variables</effect>
+        </option>
+        <option>
 	  <flag>--unit-weights</flag>
 	  <effect>weighted least squares</effect>
         </option>
@@ -5262,13 +5270,16 @@
 	Likelihood.
       </para>
       <para context="cli">
-	For more details on panel estimation, please see <guideref
-	  targ="chap-panel"/>.
+	As a further alternative, if the <lit>--between</lit> flag is
+	given, the between-groups model is estimated (that is, an OLS
+	regression using the group means).
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
 	estimates are computed, using the method of Swamy and Arora.
-	For details on panel estimation, please see <guideref
+      </para>
+      <para>
+	For more details on panel estimation, please see <guideref
 	  targ="chap-panel"/>.
       </para>
       
@@ -5279,6 +5290,22 @@
     </gui-access>
 
   </command>
+
+  <command name="panel-between" section="Estimation" context="gui"
+    label="Between groups model">
+
+    <description>
+      <para>
+	This dialog allows you to enter a specification for the
+	<quote>between model</quote> in the context of panel data.  This
+	regression uses the group-means of the data, thereby ignoring the
+	variation within the groups.  This model is rarely of great
+	interest in its own right, but may be useful for purposes of
+	comparison (for example, with the fixed effects model).
+      </para>
+    </description>
+
+  </command>    
 
   <command name="panel-mode" section="Dataset" context="gui"
     label="Panel data organization">
