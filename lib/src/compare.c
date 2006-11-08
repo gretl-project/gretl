@@ -1012,14 +1012,12 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	}	
 
 	if (!omitlast) {
-	    int flag = (orig->ci == OLS && new->nobs == orig->nobs)?
-		OMIT_TEST : OMIT_WALD;
 	    struct COMPARE cmp;
 	    int *omitlist;
 
 	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
 	    if (omitlist != NULL) {
-		cmp = add_or_omit_compare(orig, new, flag, omitlist);
+		cmp = add_or_omit_compare(orig, new, OMIT_TEST, omitlist);
 		gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 		free(omitlist);
 	    }

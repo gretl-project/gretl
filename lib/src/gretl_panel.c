@@ -2479,24 +2479,25 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* add time dummies to list? */
     if (opt & OPT_D) {
-	mod.errcode = panel_dummies(pZ, pdinfo, OPT_T);
-	if (!mod.errcode) {
-	    mod.errcode = add_dummies_to_list(list, pdinfo, &olslist);
+	err = panel_dummies(pZ, pdinfo, OPT_T);
+	if (!err) {
+	    err = add_dummies_to_list(list, pdinfo, &olslist);
 	}  
     } else {
 	olslist = gretl_list_copy(list);
 	if (olslist == NULL) {
-	    mod.errcode = E_ALLOC;
+	    err = E_ALLOC;
 	}
     }
 
-    if (mod.errcode) {
+    if (err) {
 	goto bailout;
     }
 
     /* baseline: estimate via pooled OLS */
     mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
+	err = mod.errcode;
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", mod.errcode);
 	goto bailout;
     }
@@ -2547,6 +2548,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	if (xdf <= 0) {
 	    mod.errcode = E_DF;
+	    goto bailout;
 	} else {
 	    err = hausman_allocate(&pan);
 	    if (err) {
