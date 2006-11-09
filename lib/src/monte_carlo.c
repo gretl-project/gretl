@@ -330,7 +330,8 @@ static int set_loop_opts (LOOPSET *loop, ExecState *s)
 #define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
                           c == HCCM || c == HILU || c == HSK || \
                           c == LAD || c == OLS || c == TSLS || \
-                          c == PWE || c == WLS || c == MPOLS)
+                          c == PWE || c == WLS || c == MPOLS || \
+                          c == TOBIT)
 
 /**
  * ok_in_loop:
@@ -2573,6 +2574,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    case LAD:
 	    case MPOLS:
 	    case OLS:
+	    case TOBIT:
 	    case TSLS:
 	    case PWE:
 	    case WLS:
@@ -2603,6 +2605,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		} else if (cmd->ci == ARMA) {
 		    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo, 
 				      cmd->opt, prn);
+		} else if (cmd->ci == TOBIT) {
+		    *models[0] = tobit_model(cmd->list, pZ, pdinfo,
+					     (cmd->opt & OPT_V)? prn : NULL);
 		} else if (cmd->ci == TSLS) {
 		    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
 		} else if (cmd->ci == GARCH) {

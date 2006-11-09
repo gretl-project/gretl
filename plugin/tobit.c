@@ -209,6 +209,7 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
     return 0;
 }
 
+#if 0
 static int add_norm_test_to_model (MODEL *pmod, double chi2)
 {
     ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
@@ -226,14 +227,18 @@ static int add_norm_test_to_model (MODEL *pmod, double chi2)
 
     return err;
 }
+#endif
 
 static double recompute_tobit_ll (const MODEL *pmod, const double *y)
 {
     double lt, ll = 0.0;
-    int t;
+    int t, s = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (y[t - pmod->t1] == 0.0) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
+	if (y[s++] == 0.0) {
 	    lt = normal_cdf(-pmod->yhat[t] / pmod->sigma);
 	} else {
 	    lt = (1.0 / pmod->sigma) * normal_pdf(pmod->uhat[t] / pmod->sigma);
@@ -242,6 +247,115 @@ static double recompute_tobit_ll (const MODEL *pmod, const double *y)
     }
 
     return ll;
+}
+
+#if 1
+
+static int chesher_irish_test (MODEL *pmod, const double **X)
+{
+    double **cZ = NULL;
+    DATAINFO *cinfo;
+    MODEL mod;
+    const double *y, *e, *Xb;
+    double s, s2, X2;
+    int *list;
+    int i, t, k, nv;
+    int err = 0;
+
+    k = pmod->ncoeff;
+    nv = 4 + k;
+
+    list = gretl_list_new(nv);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<nv; i++) {
+	list[i+1] = i;
+    }
+
+    cinfo = create_new_dataset(&cZ, nv, pmod->nobs, 0);
+    if (cinfo == NULL) {
+	free(list);
+	return E_ALLOC;
+    }
+
+    e = pmod->uhat + pmod->t1;
+    Xb = pmod->yhat + pmod->t1;
+    y = X[1];
+    s = pmod->sigma;
+    s2 = s * s;
+
+    for (i=1; i<nv; i++) {
+	double e2, li;
+
+	for (t=0; t<cinfo->n; t++) {
+	    if (i == 1) {
+		cZ[i][t] = e[t];
+	    } else if (i <= k) {
+		cZ[i][t] = e[t] * X[i][t];
+	    } else if (i == k + 1) {
+		if (y[t] > 0) {
+#if 0
+		    /* see http://shazam.econ.ubc.ca/student/greene/fair.sha */
+		    double u2 = (y[t] - Xb[t]) * (y[t] - Xb[t]);
+
+		    cZ[i][t] = (u2 / s2 - 1) / (2 * s2);
+#else
+		    /* use the generalized residual here */
+		    cZ[i][t] = (e[t] * e[t] / s2 - 1) / (2 * s2);
+#endif
+		} else {
+		    li = normal_pdf(Xb[t]/s) / (1 - normal_cdf(Xb[t]/s));
+		    cZ[i][t] = Xb[t] * li / (2 * s * s2);
+		}
+	    } else {
+		e2 = e[t] * e[t];
+		if (i == k + 2) {
+		    /* skewness */
+		    cZ[i][t] = e[t] * e2;
+		} else {
+		    /* excess kurtosis */
+		    cZ[i][t] = e2 * (e2 - 3);
+		}
+	    }
+	}
+    }
+
+    mod = lsq(list, &cZ, cinfo, OLS, OPT_A);
+    if (!mod.errcode) {
+	X2 = mod.nobs - mod.ess;
+	fprintf(stderr, "Chesher-Irish chi-square = %7.3f [%.4f]\n", 
+		X2, chisq_cdf_comp(X2, 2));
+    }
+
+    clear_model(&mod);
+    free(list);
+    destroy_dataset(cZ, cinfo);
+    
+    return err;
+}
+
+#endif
+
+static double gen_res (double yt, double ndxt, double sig)
+{
+    double ret;
+
+    if (yt > 0.0) {
+	ret = yt - ndxt;
+    } else {
+	double std = ndxt / sig;
+	double F = 1.0 - normal_cdf(std);
+
+	ret = -sig * normal_pdf(std) / F;
+    }
+
+#if 0 /* do we need/want this? */
+    ret /= sig * sig;
+#endif
+
+    return ret;
 }
 
 /* Taking the original OLS model as a basis, re-write the statistics
@@ -254,7 +368,6 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 {
     int i, t, s, cenc = 0;
     const double *y = X[1];
-    double chi2, ubar, udev, skew, kurt;
 
     for (i=0; i<ncoeff; i++) {
 	pmod->coeff[i] = theta[i];
@@ -282,18 +395,17 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	    continue;
 	}
 
-	yt = y[s];
 	pmod->yhat[t] = pmod->coeff[0];
 	for (i=1; i<ncoeff; i++) {
 	    pmod->yhat[t] += pmod->coeff[i] * X[i + 1][s];
 	}
 
-	if (scale != 1.0) {
+	yt = y[s];
+	if (yt > 0 && scale != 1.0) {
 	    yt /= scale;
 	}
 
-	pmod->uhat[t] = yt - pmod->yhat[t];
-
+	pmod->uhat[t] = gen_res(yt, pmod->yhat[t], pmod->sigma);
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t]; /* Is this meaningful? */
 
 	if (yt == 0.0) cenc++;
@@ -306,34 +418,13 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	pmod->lnL = ll;
     }
 
-    /* run normality test on the untruncated uhat */
-    gretl_moments(pmod->t1, pmod->t2, pmod->uhat, &ubar, &udev, 
-		  &skew, &kurt, pmod->ncoeff);
-    chi2 = doornik_chisq(skew, kurt, pmod->nobs); 
-    add_norm_test_to_model(pmod, chi2);
-
-    /* now truncate reported yhat, uhat */
-    s = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (na(pmod->uhat[t])) {
-	    continue;
-	}
-	if (pmod->yhat[t] < 0.0) {
-	    pmod->yhat[t] = 0.0;
-	    pmod->uhat[t] = y[s];
-	    if (scale != 1.0) {
-		pmod->uhat[t] /= scale;
-	    }
-	}
-	s++;
-    }
+#if 1
+    chesher_irish_test(pmod, X);
+#endif
 
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
-
     mle_criteria(pmod, 1);
-
     make_vcv(pmod, VCV, scale);
-
     pmod->ci = TOBIT;
 
     gretl_model_set_int(pmod, "censobs", cenc);

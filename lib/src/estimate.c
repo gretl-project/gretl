@@ -1278,6 +1278,18 @@ int check_for_effective_const (MODEL *pmod, const double *y)
     return ret;
 }
 
+static void uncentered_r_squared (MODEL *pmod, const double *y)
+{
+    double y0 = y[pmod->t1];
+
+    if (y0 > 0) {
+	double tss = pmod->nobs * y0 * y0;
+
+	pmod->rsq = 1 - (pmod->ess / tss);
+	gretl_model_set_int(pmod, "uncentered", 1);
+    }
+}
+
 static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 {
     pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
@@ -1388,6 +1400,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     if (pmod->tss > 0.0) {
 	compute_r_squared(pmod, Z[yno], &ifc);
+    } else if (pmod->tss == 0.0) {
+	uncentered_r_squared(pmod, Z[yno]);
     }
 
 #if 0

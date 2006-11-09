@@ -160,19 +160,37 @@ static int essline_original (const MODEL *pmod, PRN *prn)
 
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
+    const char *plainrsq[] = {
+	N_("Unadjusted R-squared"),
+	N_("Uncentered R-squared")
+    };
+    const char *texrsq[] = {
+	N_("Unadjusted $R^2$"),
+	N_("Uncentered $R^2$")
+    };
+    const char *rtfrsq[] = {
+	N_("Unadjusted R{\\super 2}"),
+	N_("Uncentered R{\\super 2}")
+    };
+    int ridx = 0;
+
     if (na(pmod->rsq)) {
 	return;
     }
 
+    if (gretl_model_get_int(pmod, "uncentered")) {
+	ridx = 1;
+    }
+
     if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
+	pprintf(prn, "  %s = %.*g\n", _(plainrsq[ridx]), 
 		XDIGITS(pmod), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    XDIGITS(pmod), pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
+	pprintf(prn, RTFTAB "%s = %g\n", I_(rtfrsq[ridx]), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
 		    pmod->adjrsq);
@@ -181,13 +199,13 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	char r2[32];
 
 	tex_dcolumn_double(pmod->rsq, r2);
-	pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
+	pprintf(prn, "%s & %s \\\\\n", I_(texrsq[ridx]), r2);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
     } else if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"%c%.15g\n", I_("Unadjusted R-squared"), 
+	pprintf(prn, "\"%s\"%c%.15g\n", I_(plainrsq[ridx]), 
 		prn_delim(prn), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Adjusted R-squared"),  
