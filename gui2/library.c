@@ -2640,7 +2640,8 @@ static int real_do_model (int action)
 	break;
 
     case ARBOND:
-	*pmod = arbond_model(libcmd.list, (const double **) Z, datainfo, 
+	/* FIXME */
+	*pmod = arbond_model(libcmd.list, NULL, (const double **) Z, datainfo, 
 			     libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;

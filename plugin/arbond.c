@@ -29,6 +29,12 @@ struct unit_info {
     char *skip;  /* mask for obs to be skipped, if any */ 
 };
 
+struct diag_info {
+    int v;       /* ID number of variable */
+    int minlag;  /* minimum lag order */
+    int maxlag;  /* maximum lag order */
+};
+
 struct arbond_ {
     gretlopt opt;         /* option flags */
     int step;             /* what step are we on? */
@@ -1881,14 +1887,80 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
     return err;
 }
 
+static int parse_diag_info (const char *s, struct diag_info *d,
+			    const DATAINFO *pdinfo)
+{
+    char vname[VNAMELEN];
+    int v, m1, m2;
+    int err = 0;
+
+    if (sscanf(s, "%15[^(](%d to %d", vname, &m1, &m2) != 3) {
+	err = E_PARSE;
+    } else {
+	v = varindex(pdinfo, vname);
+	if (v == pdinfo->v) {
+	    err = E_UNKVAR;
+	} else {
+	    d->v = v;
+	    d->minlag = -m1;
+	    d->maxlag = -m2;
+	}
+    }
+
+    if (!err) {
+	fprintf(stderr, "var %d (%s): minlag=%d, maxlag=%d\n", 
+		d->v, vname, d->minlag, d->maxlag);
+    }
+	
+
+    return err;
+}
+
+static int arbond_parse_istr (const char *istr, const DATAINFO *pdinfo)
+{
+    struct diag_info d;
+    char *s0 = gretl_strdup(istr);
+    char *s, *p, *spec;
+    int ns = 0;
+
+    if (s0 == NULL) {
+	return E_ALLOC;
+    }
+
+    s = s0;
+    while (*s) {
+	if (*s == ')') ns++;
+	s++;
+    }
+
+    s = s0;
+    while (*s) {
+	while (*s == ' ') s++;
+	p = s;
+	while (*p && *p != ')') p++;
+	spec = gretl_strndup(s, p - s + 1);
+	parse_diag_info(spec, &d, pdinfo);
+	free(spec);
+	s = p + 1;
+    }
+
+    free(s0);
+
+    return 0;
+}
+
 MODEL
-arbond_estimate (const int *list, const double **X, 
+arbond_estimate (const int *list, const char *istr, const double **X, 
 		 const DATAINFO *pdinfo, gretlopt opt,
 		 PRN *prn)
 {
     MODEL mod;
     arbond ab;
     int err = 0;
+
+    if (istr != NULL && *istr != 0) {
+	arbond_parse_istr(istr, pdinfo);
+    }
 
     gretl_model_init(&mod);
 

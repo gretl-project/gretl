@@ -472,6 +472,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 				  gretlopt myopt, PRN *prn)
 {
     MODEL rep;
+    const char *param = NULL;
     double rho = 0.0;
     int *list = *plist;
     int mc = get_model_count();
@@ -501,6 +502,8 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	} else {
 	    list = *plist = full_list;
 	}
+    } else if (orig->ci == ARBOND) {
+	param = gretl_model_get_data(orig, "istr");
     }
 
     if (rep.errcode) {
@@ -513,7 +516,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = ar_func(list, pZ, pdinfo, myopt, prn);
 	break;
     case ARBOND:
-	rep = arbond_model(list, (const double **) *pZ, 
+	rep = arbond_model(list, param, (const double **) *pZ, 
 			   pdinfo, myopt, prn);
 	break;
     case ARCH:

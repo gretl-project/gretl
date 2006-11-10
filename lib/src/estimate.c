@@ -3632,6 +3632,7 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * arbond_model:
  * @list: regression list.
+ * @istr: may contain additional instrument specification.
  * @Z: data array.
  * @pdinfo: information on the (panel) data set.
  * @opt: to be hooked up.
@@ -3643,12 +3644,12 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arbond_model (const int *list, const double **Z, 
+MODEL arbond_model (const int *list, const char *istr, const double **Z, 
 		    const DATAINFO *pdinfo, gretlopt opt, 
 		    PRN *prn)
 {
     void *handle = NULL;
-    MODEL (*arbond_estimate) (const int *, const double **, 
+    MODEL (*arbond_estimate) (const int *, const char *, const double **, 
 			      const DATAINFO *, gretlopt, PRN *);
     MODEL mod;
 
@@ -3660,7 +3661,7 @@ MODEL arbond_model (const int *list, const double **Z,
 	return mod;
     }
 
-    mod = (*arbond_estimate)(list, Z, pdinfo, opt, prn);
+    mod = (*arbond_estimate)(list, istr, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 

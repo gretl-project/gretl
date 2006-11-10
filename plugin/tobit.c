@@ -249,7 +249,31 @@ static double recompute_tobit_ll (const MODEL *pmod, const double *y)
     return ll;
 }
 
-#if 1
+static int add_norm_test_to_model (MODEL *pmod, double X2)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
+    int err = 0;
+
+    if (test != NULL) {
+        model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
+        model_test_set_dfn(test, 2);
+        model_test_set_value(test, X2);
+        model_test_set_pvalue(test, chisq_cdf_comp(X2, 2));
+        maybe_add_test_to_model(pmod, test);
+    } else {
+        err = 1;
+    }
+
+    return err;
+}
+
+/* Chesher-Irish test for normality based on the generalized
+   residuals.  See Chesher and Irish, "Residual analysis in the
+   grouped and censored normal linear model," Journal of Econometrics,
+   vol. 34(1-2), 1987, pp. 33-61.  Note that the presentation of
+   this test in William Greene's "Econometric Analysis", 4e, is
+   badly broken.
+*/
 
 static int chesher_irish_test (MODEL *pmod, const double **X)
 {
@@ -257,9 +281,10 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
     DATAINFO *cinfo;
     MODEL mod;
     const double *y, *e, *Xb;
-    double s, s2, X2;
+    double s, s2, e2, li;
+    double es, ndxs, ndxs2;
     int *list;
-    int i, t, k, nv;
+    int i, t, k, nv, uncens;
     int err = 0;
 
     k = pmod->ncoeff;
@@ -286,37 +311,44 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
     s = pmod->sigma;
     s2 = s * s;
 
-    for (i=1; i<nv; i++) {
-	double e2, li;
+    for (t=0; t<cinfo->n; t++) {
+	es = e[t] / s;
+	ndxs = Xb[t] / s;
+	e2 = es * es;
+	li = normal_pdf(ndxs) / (1 - normal_cdf(ndxs));
+	ndxs2 = ndxs * ndxs;
+	uncens = (y[t] > 0);
 
-	for (t=0; t<cinfo->n; t++) {
+	for (i=1; i<nv; i++) {
 	    if (i == 1) {
 		cZ[i][t] = e[t];
 	    } else if (i <= k) {
 		cZ[i][t] = e[t] * X[i][t];
 	    } else if (i == k + 1) {
-		if (y[t] > 0) {
-#if 0
-		    /* see http://shazam.econ.ubc.ca/student/greene/fair.sha */
-		    double u2 = (y[t] - Xb[t]) * (y[t] - Xb[t]);
-
-		    cZ[i][t] = (u2 / s2 - 1) / (2 * s2);
-#else
+		if (uncens) {
 		    /* use the generalized residual here */
-		    cZ[i][t] = (e[t] * e[t] / s2 - 1) / (2 * s2);
-#endif
+		    cZ[i][t] = (es * es - 1) / (2 * s2);
 		} else {
-		    li = normal_pdf(Xb[t]/s) / (1 - normal_cdf(Xb[t]/s));
-		    cZ[i][t] = Xb[t] * li / (2 * s * s2);
+		    cZ[i][t] = ndxs * li / (2 * s2);
 		}
 	    } else {
-		e2 = e[t] * e[t];
-		if (i == k + 2) {
-		    /* skewness */
-		    cZ[i][t] = e[t] * e2;
+		if (uncens) {
+		    if (i == k + 2) {
+			/* skewness */
+			cZ[i][t] = es * e2;
+		    } else {
+			/* excess kurtosis */
+			cZ[i][t] = e2 * e2 - 3;
+		    }
 		} else {
-		    /* excess kurtosis */
-		    cZ[i][t] = e2 * (e2 - 3);
+		    if (i == k + 2) {
+			/* skewness */
+			cZ[i][t] = es * (2 + ndxs2);
+
+		    } else {
+			/* excess kurtosis */
+			cZ[i][t] = li * ndxs * (3 + ndxs2);
+		    }
 		}
 	    }
 	}
@@ -324,9 +356,7 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
 
     mod = lsq(list, &cZ, cinfo, OLS, OPT_A);
     if (!mod.errcode) {
-	X2 = mod.nobs - mod.ess;
-	fprintf(stderr, "Chesher-Irish chi-square = %7.3f [%.4f]\n", 
-		X2, chisq_cdf_comp(X2, 2));
+	add_norm_test_to_model(pmod, mod.nobs - mod.ess);
     }
 
     clear_model(&mod);
@@ -335,8 +365,6 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
     
     return err;
 }
-
-#endif
 
 static double gen_res (double yt, double ndxt, double sig)
 {
@@ -418,10 +446,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	pmod->lnL = ll;
     }
 
-#if 1
     chesher_irish_test(pmod, X);
-#endif
-
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
     mle_criteria(pmod, 1);
     make_vcv(pmod, VCV, scale);

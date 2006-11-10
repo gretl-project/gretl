@@ -427,6 +427,23 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     }
 }
 
+static void grab_arbond_diag (char *s, CMD *cmd)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) {
+	if (s[i] == ';') {
+	    free(cmd->param); 
+	    cmd->param = gretl_strdup(s + i + 1);
+	    if (cmd->param == NULL) {
+		cmd->errcode = E_ALLOC;
+	    }
+	    s[i] = 0;
+	    break;
+	}
+    }
+}
+
 #define LAG_DEBUG 0
 
 static int get_contiguous_lags (LAGVAR *lv,
@@ -1600,6 +1617,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* fix lines that contain a semicolon right after a var */
     linelen = fix_semicolon_after_var(line);
+
+    /* arbond special: if there's a block-diagonal instruments
+       portion to the command, grab that in literal form for
+       later processing */
+    if (cmd->ci == ARBOND && get_sepcount(line) == 3) {
+	grab_arbond_diag(line, cmd);
+	if (cmd->errcode) {
+	    return cmd->errcode;
+	}
+    }
 
     /* find number of space-separated fields remaining in line,
        record our reading position, and make a copy of the
@@ -3526,7 +3553,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	} else if (cmd->ci == PANEL) {
 	    *models[0] = panel_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *models[0] = arbond_model(cmd->list, (const double **) *pZ, 
+	    *models[0] = arbond_model(cmd->list, cmd->param, (const double **) *pZ, 
 				      pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
