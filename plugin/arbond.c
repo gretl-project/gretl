@@ -40,13 +40,14 @@ struct arbond_ {
     int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
-    int q;                /* longest lag of y used as instrument */
+    int qmax;             /* longest lag of y used as instrument */
+    int qmin;             /* shortest lag of y used as instrument */
     int nx;               /* number of independent variables */
-    int nz;               /* number of instruments (other than y lags) */
+    int nz;               /* number of regular instruments */
+    int nzb;              /* number of block-diagonal instruments (other than y) */
     int m;                /* number of columns in instrument matrix, Z */
     int pc0;              /* column in Z where predet vars start */
     int xc0;              /* column in Z where exog vars start */
-    int maxc;             /* number of Zi columns of maximal width */
     int N;                /* total number of units in sample */
     int effN;             /* number of units with usable observations */
     int T;                /* total number of observations per unit */
@@ -83,7 +84,8 @@ struct arbond_ {
     gretl_matrix *XZA;
     gretl_matrix *R1;
     gretl_matrix *ZX;
-    struct unit_info *ui;
+    struct diag_info *d;  /* info on block-diagonal instruments */
+    struct unit_info *ui; /* info on panel units */
 };
 
 static void make_first_diff_matrix (arbond *ab, int i);
@@ -114,6 +116,8 @@ static void arbond_free (arbond *ab)
 
     free(ab->xlist);
     free(ab->ilist);
+
+    free(ab->d);
 
     for (i=0; i<ab->N; i++) {
 	free(ab->ui[i].skip);
@@ -158,7 +162,69 @@ static int arbond_allocate (arbond *ab)
     }
 }
 
-static int arbond_make_lists (arbond *ab, const int *list, int xpos)
+/* FIXME: we need a proper mechanism for recognizing the
+   filiation of differences and lagged differences !!
+*/
+
+static int block_vars_delete (arbond *ab, int *list, 
+			      const DATAINFO *pdinfo)
+{
+    char lpar[VNAMELEN];
+    const char *s;
+    int i, j, v;
+
+    for (i=1; i<=list[0]; i++) {
+	int del = 0;
+
+	fprintf(stderr, "looking at list[%d] = %d (%s)\n", i, list[i],
+		pdinfo->varname[list[i]]);
+
+	for (j=0; j<ab->nzb; j++) {
+	    if (list[i] == ab->d[j].v) {
+		gretl_list_delete_at_pos(list, i--);
+		del = 1;
+		break;
+	    }
+	}
+	if (!del) {
+	    s = VARLABEL(pdinfo, list[i]);
+	    fprintf(stderr, " label = '%s'\n", s);
+	    if (strstr(s, "diff")) {
+		for (j=0; j<ab->nzb; j++) {
+		    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
+			gretl_list_delete_at_pos(list, i--);
+			del = 1;
+			break;
+		    }
+		}
+	    }
+	}
+	if (!del) {
+	    if (sscanf(s, "= %15[^(](t", lpar)) {
+		fprintf(stderr, " lag parent ?= '%s'\n", lpar);
+		v = varindex(pdinfo, lpar);
+		if (v < pdinfo->v) {
+		    s = VARLABEL(pdinfo, v);
+		    fprintf(stderr, " with label = '%s'\n", s);
+		    if (strstr(s, "diff")) {
+			for (j=0; j<ab->nzb; j++) {
+			    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
+				gretl_list_delete_at_pos(list, i--);
+				del = 1;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int arbond_make_lists (arbond *ab, const int *list, int xpos,
+			      const DATAINFO *pdinfo)
 {
     int i, nz = 0, spos = 0;
     int err = 0;
@@ -170,12 +236,21 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 	}
     }
 
+#if ADEBUG
+    printlist(list, "incoming list in arbond_make_lists");
+    fprintf(stderr, "separator pos = %d\n", spos);
+#endif
+
     if (spos > 0) {
 	ab->nx = spos - xpos;
 	nz = list[0] - spos;
     } else {
 	ab->nx = list[0] - (xpos - 1);
     }
+
+#if ADEBUG
+    fprintf(stderr, "got intial ab->nx = %d, nz = %d\n", ab->nx, nz);
+#endif
 
     if (ab->nx > 0) {
 	/* compose indep vars list */
@@ -190,12 +265,16 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 	printlist(ab->xlist, "ab->xlist");
 #endif
 	if (nz == 0) {
-	    /* implicit: all x vars are exogenous */
+	    /* implicitly all x vars are exogenous ... */
 	    ab->ilist = gretl_list_copy(ab->xlist);
 	    if (ab->ilist == NULL) {
 		return E_ALLOC;
 	    }
-	    ab->nz = ab->nx;
+	    /* ... unless there's a block-diagonal spec */
+	    if (ab->nzb > 0) {
+		block_vars_delete(ab, ab->ilist, pdinfo);
+	    }
+	    ab->nz = ab->ilist[0];
 	}
     }
 
@@ -208,11 +287,12 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 	for (i=0; i<nz; i++) {
 	    ab->ilist[i+1] = list[spos + i + 1];
 	}
-#if ADEBUG
-	printlist(ab->ilist, "ab->ilist");
-#endif
 	ab->nz = nz;
     } 
+
+#if ADEBUG
+    printlist(ab->ilist, "ab->ilist");
+#endif
 
     return err;
 }
@@ -248,34 +328,45 @@ static void arbond_free_lists (arbond *ab)
 
 static int 
 arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
-	     gretlopt opt)
+	     gretlopt opt, struct diag_info *d, int nzb)
 {
     int i, xpos = 0;
     int err = 0;
+
+    ab->d = d;
+    ab->nzb = nzb;
 
     if (list[0] < 3) {
 	return E_PARSE;
     }
 
     ab->p = list[1];
+    ab->qmin = 2;
 
-    /* allow the 'q' field to be missing (implicit 0) */
     if (list[2] == LISTSEP) {
-	ab->q = 0;
+	ab->qmax = 0;
 	ab->yno = list[3];
 	xpos = 4;
     } else if (list[3] == LISTSEP && list[0] >= 4) {
-	ab->q = list[2];
+	ab->qmax = list[2];
 	ab->yno = list[4];
 	xpos = 5;
+    } else if (list[4] == LISTSEP && list[0] >= 5) {
+	ab->qmax = list[2];
+	ab->qmin = list[3];
+	ab->yno = list[5];
+	xpos = 6;
     } else {
 	return E_PARSE;
     }
 
-    if (ab->p < 1 || (ab->q != 0 && ab->q < ab->p + 1)) {
-	/* is this right? */
+    if (ab->p < 1 || (ab->qmax != 0 && ab->qmax < ab->p + 1) ||
+	(ab->qmax != 0 && ab->qmin > ab->qmax)) {
+	/* is this all right? */
 	return E_DATA;
-    }    
+    }  
+
+    /* FIXME: qmin doesn't actually do anything below, yet */
 
     ab->xlist = NULL;
     ab->ilist = NULL;
@@ -288,7 +379,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->ndum = 0;
 
     if (list[0] >= xpos) {
-	err = arbond_make_lists(ab, list, xpos);
+	err = arbond_make_lists(ab, list, xpos, pdinfo);
 	if (err) {
 	    return err;
 	}
@@ -301,7 +392,6 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->m = 0;
     ab->pc0 = 0;
     ab->xc0 = 0;
-    ab->maxc = 0;
     ab->nobs = 0;
     ab->SSR = NADBL;
     ab->s2 = NADBL;
@@ -312,8 +402,8 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->wdf = 0;
 
 #if ADEBUG
-    fprintf(stderr, "yno = %d, p = %d, q = %d, nx = %d, k = %d\n",
-	    ab->yno, ab->p, ab->q, ab->nx, ab->k);
+    fprintf(stderr, "yno = %d, p = %d, qmax = %d, qmin = %d, nx = %d, k = %d\n",
+	    ab->yno, ab->p, ab->qmax, ab->qmin, ab->nx, ab->k);
 #endif
 
     arbond_zero_matrices(ab);
@@ -356,6 +446,26 @@ static int anymiss (arbond *ab, const double **Z, int s)
     return 0;
 }
 
+static int bzcols (arbond *ab, int i)
+{
+    int j, k, nc = 0;
+    int t = i + ab->p; /* ?? */
+
+    for (j=0; j<ab->nzb; j++) {
+	for (k=ab->d[j].minlag; k<=ab->d[j].maxlag; k++) {
+	    if (t - k >= 0) {
+		nc++;
+	    }
+	}
+    }
+
+#if 1
+    fprintf(stderr, "bzcols: got %d at i = %d\n", nc, i);
+#endif
+
+    return nc;
+}
+
 static int 
 arbond_sample_check (arbond *ab, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo)
@@ -367,10 +477,6 @@ arbond_sample_check (arbond *ab, const int *list,
     int t2max = 0;
     int i, s, t;
     int err = 0;
-
-#if ADEBUG
-    fprintf(stderr, "arbond_sample_check: ab->T = %d\n", ab->T);
-#endif
 
     for (i=0; i<ab->N; i++) {
 	/* find the first y observation, all units */
@@ -388,7 +494,8 @@ arbond_sample_check (arbond *ab, const int *list,
     }
 
 #if ADEBUG
-    fprintf(stderr, "initial scan: t1min = %d\n", t1min);
+    fprintf(stderr, "arbond_sample_check, initial scan: ab->T = %d, t1min = %d\n", 
+	    ab->T, t1min);
 #endif
 
     mask = malloc(ab->T);
@@ -396,8 +503,8 @@ arbond_sample_check (arbond *ab, const int *list,
 	return E_ALLOC;
     }
 
-    if (ab->q == 0) {
-	ab->q = ab->T;
+    if (ab->qmax == 0) {
+	ab->qmax = ab->T;
     }
 
     for (i=0; i<ab->N; i++) {
@@ -474,15 +581,15 @@ arbond_sample_check (arbond *ab, const int *list,
     /* record first usable obs, any unit */
     ab->t1min = t1imin;
 
-    /* figure number of time dummies if wanted */
+    /* figure number of time dummies, if wanted */
     if (ab->opt & OPT_D) {
 	ab->ndum = t2max - t1imin;
 	ab->k += ab->ndum;
     }
 
     /* is t1min actually "reachable"? */
-    if (t1min < t1imin - ab->q) {
-	t1min = t1imin - ab->q;
+    if (t1min < t1imin - ab->qmax) {
+	t1min = t1imin - ab->qmax;
     }
 
 #if ADEBUG
@@ -496,27 +603,26 @@ arbond_sample_check (arbond *ab, const int *list,
     if (ab->effN == 0) {
 	err = E_MISSDATA;
     } else {
-	/* compute the number of lagged-y columns in Zi */
+	/* compute the number of columns in Zi */
 	int tau = t2max - t1min + 1;
-	int cbak = ab->p, cols = 0;
+	int cols = 0;
 
 #if ADEBUG
 	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
 #endif
-	ab->m = ab->p;
-	ab->maxc = 1;
-	for (i=1; i<tau-2; i++) {
-	    cols = (ab->p + i > ab->q - 1)? ab->q - 1 : ab->p + i;
+	for (i=0; i<tau-2; i++) {
+	    /* lagged y values */
+	    cols = (ab->p + i > ab->qmax - 1)? ab->qmax - 1 : ab->p + i;
 	    ab->m += cols;
-	    if (cols == cbak) {
-		ab->maxc += 1;
+	    if (ab->nzb > 0) {
+		/* other block-diagonal instruments */
+		ab->m += bzcols(ab, i);
 	    }
-	    cbak = cols;
 	}
 #if ADEBUG
 	fprintf(stderr, "'basic' m = %d\n", ab->m);
 #endif
-	ab->q = cols + 1;
+	ab->qmax = cols + 1;
 	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
 	ab->m += ab->nx;
@@ -1296,7 +1402,7 @@ static void make_first_diff_matrix (arbond *ab, int i)
 }
 
 static int arbond_prepare_model (MODEL *pmod, arbond *ab,
-				 const int *list,
+				 const int *list, const char *istr,
 				 const DATAINFO *pdinfo)
 {
     double x;
@@ -1400,6 +1506,9 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	if (!na(ab->wald)) {
 	    gretl_model_set_int(pmod, "wald_df", ab->wdf);
 	    gretl_model_set_double(pmod, "wald", ab->wald);
+	}
+	if (istr != NULL && *istr != '\0') {
+	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
 	}
     }
 
@@ -1546,49 +1655,58 @@ eliminate_zero_rows (gretl_matrix *a, const char *mask)
 }
 
 static char *
-rank_mask (arbond *ab, const gretl_matrix *A, int *err)
+make_rank_mask (const gretl_matrix *A, int *err)
 {
-    char *mask;
-    int pos, cut, n;
-    int i, k, r;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    char *mask = NULL;
+    double test;
+    int n = A->cols;
+    int i, r;
 
-    r = gretl_matrix_rank(A, err);
-    if (!*err && r == 0) {
-	*err = E_SINGULAR;
-    }
-
-    if (*err) {
-	return NULL;
-    }
-
-    cut = A->rows - r;
-
-    mask = calloc(A->rows, 1);
-    if (mask == NULL) {
+    Q = gretl_matrix_copy(A);
+    if (Q == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    pos = ab->xc0; 
-    n  = 0;
-
-    /* work down from max lag */
-    for (k=ab->q; k>=2 && n<cut; k--) {
-	int psub = ab->q - 1;
-
-	for (i=0; i<ab->maxc; i++) {
-	    pos -= psub;
-	    mask[pos] = 1;
-	    n++;
-	}
-	while (psub >= k) {
-	    pos -= psub--;
-	    mask[pos] = 1;
-	    n++;
-	}
-	pos = ab->xc0 + (ab->q - k + 1);
+    R = gretl_matrix_alloc(n, n);
+    if (R == NULL) {
+	gretl_matrix_free(Q);
+	*err = E_ALLOC;
+	return NULL;
     }
 
+    *err = gretl_matrix_QR_decomp(Q, R);
+
+    if (!*err) {
+	r = gretl_check_QR_rank(R, err);
+    }
+
+    if (!*err) {
+	mask = calloc(n, 1);
+	if (mask == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	for (i=0; i<n; i++) {
+	    test = gretl_matrix_get(R, i, i);
+	    if (fabs(test) < R_DIAG_MIN) {
+		mask[i] = 1;
+	    }
+	}
+    }
+
+    if (*err) {
+	free(mask);
+	mask = NULL;
+    }
+
+    gretl_matrix_free(Q);
+    gretl_matrix_free(R);
+    
     return mask;
 }
 
@@ -1650,7 +1768,7 @@ static int try_alt_inverse (arbond *ab)
     char *mask = NULL;
     int err = 0;
 
-    mask = rank_mask(ab, ab->Acpy, &err);
+    mask = make_rank_mask(ab->Acpy, &err);
     if (err) {
 	return err;
     }
@@ -1787,6 +1905,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 				const double **Z)
 {
     int i, j, k, s, t, c = 0;
+    int zi, zk;
     double x;
     char *zmask;
 #if ADEBUG
@@ -1808,13 +1927,10 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_reuse(ab->Zi, Ti, ab->m);
 	gretl_matrix_zero(ab->Zi);
 
-	offj = 0;
-	ncols = ab->p;
-
 	for (t=ab->p+1; t<ab->ui[i].t1; t++) {
 	    /* pre-shift fields right as needed */
 	    offj += ncols;
-	    if (ncols < ab->q - 1) {
+	    if (ncols < ab->qmax - 1) {
 		ncols++;
 	    }
 	}	    
@@ -1822,28 +1938,50 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	k = 0;
 	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
 	    int skip = skip_obs(ab, i, t);
+	    int ycol = offj;
 
 	    if (!skip) {
 		/* lagged y (GMM instr) columns */
 		for (j=0; j<ncols; j++) {
 		    s = i * ab->T + t - (ncols + 1) + j;
-		    if (t - s <= ab->q && !na(y[s])) {
-			gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
+		    if (t - s <= ab->qmax) {
+			if (!na(y[s])) {
+			    gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
+			}
+			ycol++;
 		    }
 		}
 	    }
 	    offj += ncols;
-	    if (ncols < ab->q - 1) {
+	    if (ncols < ab->qmax - 1) {
 		ncols++;
 	    }
 	    if (!skip) {
+#if 1 /* not really, yet */
+		/* additional block-diagonal columns? */
+		for (zi=0; zi<ab->nzb; zi++) {
+		    int zcol = ycol;
+
+		    for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
+			if (t - zk >= 0) { /* ?? */
+			    s = i * ab->T + t - zk;
+			    x = Z[ab->d[zi].v][s];
+			    if (!na(x)) {
+				gretl_matrix_set(ab->Zi, k, zcol, x);
+			    }
+			    zcol++;
+			}
+		    }
+		    offj += zcol - ycol;
+		}
+#endif
 		/* additional full-length instrument columns */
 		s = i * ab->T + t;
 		for (j=0; j<ab->nz; j++) {
 		    x = Z[ab->ilist[j+1]][s];
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
 		}
-		/* add time dummies? */
+		/* plus time dummies? */
 		for (j=0; j<ab->ndum; j++) {
 		    x = (t - ab->t1min - 1 == j)? 1 : 0;
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + ab->nz + j, x);
@@ -1894,12 +2032,16 @@ static int parse_diag_info (const char *s, struct diag_info *d,
     int v, m1, m2;
     int err = 0;
 
-    if (sscanf(s, "%15[^(](%d to %d", vname, &m1, &m2) != 3) {
+    if (s == NULL) {
+	err = E_ALLOC;
+    } else if (sscanf(s, "%15[^(](%d to %d", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
 	v = varindex(pdinfo, vname);
 	if (v == pdinfo->v) {
 	    err = E_UNKVAR;
+	} else if (m1 > 0 || m2 > m1) {
+	    err = E_DATA;
 	} else {
 	    d->v = v;
 	    d->minlag = -m1;
@@ -1907,46 +2049,62 @@ static int parse_diag_info (const char *s, struct diag_info *d,
 	}
     }
 
-    if (!err) {
-	fprintf(stderr, "var %d (%s): minlag=%d, maxlag=%d\n", 
-		d->v, vname, d->minlag, d->maxlag);
-    }
-	
-
     return err;
 }
 
-static int arbond_parse_istr (const char *istr, const DATAINFO *pdinfo)
+static int arbond_parse_istr (const char *istr, const DATAINFO *pdinfo,
+			      struct diag_info **pd, int *ns)
 {
-    struct diag_info d;
+    struct diag_info *d = NULL;
     char *s0 = gretl_strdup(istr);
     char *s, *p, *spec;
-    int ns = 0;
+    int i, err = 0;
 
     if (s0 == NULL) {
 	return E_ALLOC;
     }
 
+    /* count ')'-terminated fields */
     s = s0;
     while (*s) {
-	if (*s == ')') ns++;
+	if (*s == ')') {
+	    *ns += 1;
+	}
 	s++;
     }
 
+    if (*ns == 0) {
+	err = E_PARSE;
+    } else {
+	d = malloc(*ns * sizeof *d);
+	if (d == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    /* parse and record individual instrument specs */
     s = s0;
-    while (*s) {
+    i = 0;
+    while (*s && !err) {
 	while (*s == ' ') s++;
 	p = s;
 	while (*p && *p != ')') p++;
 	spec = gretl_strndup(s, p - s + 1);
-	parse_diag_info(spec, &d, pdinfo);
+	err = parse_diag_info(spec, &d[i++], pdinfo);
 	free(spec);
 	s = p + 1;
     }
 
     free(s0);
 
-    return 0;
+    if (err) {
+	free(d);
+	*ns = 0;
+    } else {
+	*pd = d;
+    }
+
+    return err;
 }
 
 MODEL
@@ -1954,19 +2112,26 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 		 const DATAINFO *pdinfo, gretlopt opt,
 		 PRN *prn)
 {
+    struct diag_info *d = NULL;
+    int nzb = 0;
     MODEL mod;
     arbond ab;
     int err = 0;
 
-    if (istr != NULL && *istr != 0) {
-	arbond_parse_istr(istr, pdinfo);
-    }
-
     gretl_model_init(&mod);
 
-    mod.errcode = arbond_init(&ab, list, pdinfo, opt);
+    if (istr != NULL && *istr != 0) {
+	mod.errcode = arbond_parse_istr(istr, pdinfo, &d, &nzb);
+	if (mod.errcode) {
+	    fprintf(stderr, "Error %d in arbond_parse_istr\n", mod.errcode);
+	    return mod;
+	}
+    }
+
+    mod.errcode = arbond_init(&ab, list, pdinfo, opt, d, nzb);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in arbond_init\n", mod.errcode);
+	free(d);
 	return mod;
     }
 
@@ -2025,7 +2190,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     }
 
     if (!mod.errcode) {
-	mod.errcode = arbond_prepare_model(&mod, &ab, list, pdinfo);
+	mod.errcode = arbond_prepare_model(&mod, &ab, list, istr, pdinfo);
     }
 
     arbond_free(&ab);
