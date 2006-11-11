@@ -176,12 +176,17 @@ static int block_vars_delete (arbond *ab, int *list,
     for (i=1; i<=list[0]; i++) {
 	int del = 0;
 
+	if (list[i] == 0) {
+	    continue;
+	}
+
 	fprintf(stderr, "looking at list[%d] = %d (%s)\n", i, list[i],
 		pdinfo->varname[list[i]]);
 
 	for (j=0; j<ab->nzb; j++) {
 	    if (list[i] == ab->d[j].v) {
 		gretl_list_delete_at_pos(list, i--);
+		fprintf(stderr, " ** removing as exog var\n");
 		del = 1;
 		break;
 	    }
@@ -193,6 +198,7 @@ static int block_vars_delete (arbond *ab, int *list,
 		for (j=0; j<ab->nzb; j++) {
 		    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
 			gretl_list_delete_at_pos(list, i--);
+			fprintf(stderr, " ** removing as exog var\n");
 			del = 1;
 			break;
 		    }
@@ -210,6 +216,7 @@ static int block_vars_delete (arbond *ab, int *list,
 			for (j=0; j<ab->nzb; j++) {
 			    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
 				gretl_list_delete_at_pos(list, i--);
+				fprintf(stderr, " ** removing as exog var\n");
 				del = 1;
 				break;
 			    }
@@ -625,10 +632,11 @@ arbond_sample_check (arbond *ab, const int *list,
 	ab->qmax = cols + 1;
 	/* record the column where the exogenous vars start */
 	ab->xc0 = ab->m;
-	ab->m += ab->nx;
+	ab->m += ab->nz;
 	ab->m += ab->ndum;
 #if ADEBUG
-	fprintf(stderr, "total m = %d\n", ab->m);
+	fprintf(stderr, "total m = %d (dummies=%d, exog=%d)\n", 
+		ab->m, ab->ndum, ab->nz);
 #endif
     }
 
@@ -723,7 +731,7 @@ static int arbond_const_pos (arbond *ab)
 
 /* FIXME try to detect and omit periodic dummies? */
 
-static int arbond_wald_test (arbond *ab, PRN *prn)
+static int arbond_wald_test (arbond *ab)
 {
     gretl_matrix *vcv = NULL;
     gretl_vector *b = NULL;
@@ -787,7 +795,7 @@ static int arbond_wald_test (arbond *ab, PRN *prn)
     }
 
 #if ADEBUG
-    pprintf(prn, "Wald chi^2(%d) = %g\n", k, x);
+    fprintf(stderr, "Wald chi^2(%d) = %g\n", k, x);
 #endif
 
  bailout:
@@ -798,7 +806,7 @@ static int arbond_wald_test (arbond *ab, PRN *prn)
     return err;
 }
 
-static int sargan_test (arbond *ab, PRN *prn)
+static int sargan_test (arbond *ab)
 {
     gretl_matrix *Zu = NULL;
     gretl_matrix *m1 = NULL;
@@ -826,7 +834,7 @@ static int sargan_test (arbond *ab, PRN *prn)
     }
 
 #if ADEBUG
-    pprintf(prn, "Sargan test: Chi-square(%d) = %g\n",
+    fprintf(stderr, "Sargan test: Chi-square(%d) = %g\n",
 	    ab->m - ab->k, ab->sargan);
 #endif
 
@@ -841,7 +849,7 @@ static int sargan_test (arbond *ab, PRN *prn)
    efficiency 
 */
 
-static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
+static int ar_test (arbond *ab, const gretl_matrix *C)
 {
     gretl_matrix *v = NULL;
     gretl_matrix *vk = NULL;
@@ -1010,7 +1018,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C, PRN *prn)
     x = num / sqrt(den);
 
 #if ADEBUG
-    pprintf(prn, "AR(%d) test: z = %.4g [%.3f]\n", k, x, 
+    fprintf(stderr, "AR(%d) test: z = %.4g [%.3f]\n", k, x, 
 	    normal_pvalue_2(x));
 #endif
 
@@ -1180,7 +1188,7 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
    we compute the residuals while we're at it
 */
 
-static int arbond_variance (arbond *ab, PRN *prn)
+static int arbond_variance (arbond *ab)
 {
     static gretl_matrix *Vcpy;
 
@@ -1317,20 +1325,20 @@ static int arbond_variance (arbond *ab, PRN *prn)
     }   
 
 #if ADEBUG
-    gretl_matrix_print_to_prn(ab->vbeta, "Var(beta)", prn);
+    gretl_matrix_print(ab->vbeta, "Var(beta)");
     for (i=0; i<ab->k; i++) {
 	x = gretl_matrix_get(ab->vbeta, i, i);
-	pprintf(prn, "se(beta[%d]) = %g\n", i, sqrt(x));
+	fprintf(stderr, "se(beta[%d]) = %g\n", i, sqrt(x));
     }
-    pprintf(prn, "\nSSR = %.11g\n", ab->SSR);
-    pprintf(prn, "sigma^2 = %.7g\n", ab->s2);
-    pprintf(prn, "sigma = %.7g\n", sqrt(ab->s2));
+    fprintf(stderr, "\nSSR = %.11g\n", ab->SSR);
+    fprintf(stderr, "sigma^2 = %.7g\n", ab->s2);
+    fprintf(stderr, "sigma = %.7g\n", sqrt(ab->s2));
 #endif
 
     /* while we're at it... */
-    ar_test(ab, C, prn);
-    sargan_test(ab, prn);
-    arbond_wald_test(ab, prn);
+    ar_test(ab, C);
+    sargan_test(ab);
+    arbond_wald_test(ab);
 
     gretl_matrix_free(V);
     gretl_matrix_free(ui);
@@ -1791,7 +1799,7 @@ static int try_alt_inverse (arbond *ab)
     return err;
 }
 
-static int arbond_calculate (arbond *ab, PRN *prn)
+static int arbond_calculate (arbond *ab)
 {
     int err = 0;
 
@@ -1816,16 +1824,16 @@ static int arbond_calculate (arbond *ab, PRN *prn)
     if (!err) {
 	int i;
 
-	pprintf(prn, "%d-step estimates:\n\n", ab->step);
+	fprintf(stderr, "%d-step estimates:\n\n", ab->step);
 	for (i=0; i<ab->k; i++) {
-	    pprintf(prn, "beta[%d] = %g\n", i, ab->beta->val[i]);
+	    fprintf(stderr, "beta[%d] = %g\n", i, ab->beta->val[i]);
 	}
-	pputc(prn, '\n');
+	fputc('\n', stderr);
     }
 #endif
 
     if (!err) {
-	err = arbond_variance(ab, prn);
+	err = arbond_variance(ab);
     }
 
     return err;
@@ -1852,7 +1860,7 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     gretl_matrix_copy_values(ab->A, ab->V);
 
     ab->step = 2;
-    err = arbond_calculate(ab, prn);
+    err = arbond_calculate(ab);
     if (err) {
 	fprintf(stderr, "step 2: arbond_calculate returned %d\n", err);
     }
@@ -1957,11 +1965,11 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 		ncols++;
 	    }
 	    if (!skip) {
-#if 1 /* not really, yet */
-		/* additional block-diagonal columns? */
-		for (zi=0; zi<ab->nzb; zi++) {
-		    int zcol = ycol;
+		int zcol = ycol;
 
+		/* additional block-diagonal columns? 
+		   This needs more thinking/work */
+		for (zi=0; zi<ab->nzb; zi++) {
 		    for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
 			if (t - zk >= 0) { /* ?? */
 			    s = i * ab->T + t - zk;
@@ -1974,7 +1982,6 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 		    }
 		    offj += zcol - ycol;
 		}
-#endif
 		/* additional full-length instrument columns */
 		s = i * ab->T + t;
 		for (j=0; j<ab->nz; j++) {
@@ -2176,7 +2183,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 	/* calculate Z'X (this can be a big multiplication, and
 	   it only needs to be done once) */
 	gretl_matrix_multiply(ab.ZT, ab.dX, ab.ZX);
-	err = arbond_calculate(&ab, prn);
+	err = arbond_calculate(&ab);
     }
 
     if (!err && (opt & OPT_T)) {
