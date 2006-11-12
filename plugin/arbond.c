@@ -186,19 +186,17 @@ static int block_vars_delete (arbond *ab, int *list,
 	for (j=0; j<ab->nzb; j++) {
 	    if (list[i] == ab->d[j].v) {
 		gretl_list_delete_at_pos(list, i--);
-		fprintf(stderr, " ** removing as exog var\n");
 		del = 1;
 		break;
 	    }
 	}
 	if (!del) {
 	    s = VARLABEL(pdinfo, list[i]);
-	    fprintf(stderr, " label = '%s'\n", s);
 	    if (strstr(s, "diff")) {
 		for (j=0; j<ab->nzb; j++) {
 		    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
 			gretl_list_delete_at_pos(list, i--);
-			fprintf(stderr, " ** removing as exog var\n");
+			fprintf(stderr, " ** diff: removing as exog var\n");
 			del = 1;
 			break;
 		    }
@@ -211,12 +209,11 @@ static int block_vars_delete (arbond *ab, int *list,
 		v = varindex(pdinfo, lpar);
 		if (v < pdinfo->v) {
 		    s = VARLABEL(pdinfo, v);
-		    fprintf(stderr, " with label = '%s'\n", s);
 		    if (strstr(s, "diff")) {
 			for (j=0; j<ab->nzb; j++) {
 			    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
 				gretl_list_delete_at_pos(list, i--);
-				fprintf(stderr, " ** removing as exog var\n");
+				fprintf(stderr, " ** lagged diff: removing as exog var\n");
 				del = 1;
 				break;
 			    }
@@ -1968,7 +1965,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 		int zcol = ycol;
 
 		/* additional block-diagonal columns? 
-		   This needs more thinking/work */
+		   Not right yet for unbalanced case. */
 		for (zi=0; zi<ab->nzb; zi++) {
 		    for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
 			if (t - zk >= 0) { /* ?? */
