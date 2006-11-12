@@ -387,6 +387,10 @@
 	  <flag>--two-step</flag>
 	  <effect>usa stima GMM 2-step</effect>
         </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>aggiunge variabili dummy temporali</effect>
+        </option>
       </options>
       <examples>
         <example>arbond 2 ; y Dx1 Dx2</example>
@@ -447,26 +451,28 @@
         sovraidentificazione di Sargan. Si noti che in questo modello
         differenziato l'autocorrelazione del prim'ordine non contrasta con la
         validità del modello, mentre quella di ordine 2 viola le ipotesi
-        statistiche che ne sono alla base. Si noti anche che nel caso della
-        stima in due passi, mentre le stime dei parametri sono più efficienti,
-        gli errori standard asintotici non sono generalmente considerati una
-        guida affidabile per l'inferenza (occorrerebbe una correzione per
-        campioni finiti, ma non è ancora implementata in gretl).
+        statistiche che ne sono alla base. Nel caso della stima in due passi,
+        gli errori standard sono calcolati usando la correzione per campioni
+        finiti suggerita da Windmeijer (2005).
       </para>
+      <para context="cli">
+	Se si usa l'opzione <lit>--time-dummies</lit>, viene aggiunto ai
+        regressori un insieme di variabili dummy temporali. Il numero di
+        variabili dummy è pari al numero massimo dei periodi usati nella stima
+        meno uno, per evitare la perfetta collinearità in presenza della
+        costante. Le dummy sono specificate in livelli; se si intende usare
+        variabili dummy sotto forma di differenze temporali, occorre definirle
+        ed aggiungerle manualmente.
+       </para>
       <para>
 	TODO list for this command:
       </para>
       <ilist>
 	<li><para>Get block-diagonal instruments sorted out</para>
 	</li>
-	<li><para>Add Wald test for overall significance</para>
-	</li>
-	<li><para>Windmeijer finite-sample correction</para>
-	</li>
 	<li><para>Finalize GUI interface</para>
 	</li>
-	<li><para>Maybe add: param for minimum lag of y,
-	    automatic time dummies option</para>
+	<li><para>Maybe add: param for minimum lag of y</para>
 	</li>
       </ilist>
 
@@ -5124,6 +5130,14 @@
 	  <effect>effetti casuali invece che fissi</effect>
 	</option>
 	<option>
+	  <flag>--between</flag>
+	  <effect>stima il modello tra i gruppi</effect>
+        </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>include variabili dummy temporali</effect>
+        </option>
+        <option>
 	  <flag>--unit-weights</flag>
 	  <effect>minimi quadrati ponderati</effect>
 	</option>
@@ -5163,15 +5177,17 @@
         convergenza, le stime sono di massima verosimiglianza.
       </para>
       <para context="cli">
-	Per maggiori dettagli sulla stima panel, si veda la <guideref
-	  targ="chap-panel"/>.
+        Come ulteriore alernativa, se si usa l'opzione <lit>--between</lit>,
+        viene stimato il modello tra i gruppi, ossia una regressione OLS usando
+        le medie dei gruppi.
       </para>
       <para context="gui">
         Se si seleziona la casella "Effetti casuali", vengono calcolate stime a
         effetti casuali, usando il metodo di Swamy e Arora.
-	Per maggiori dettagli sulla stima panel, si veda la <guideref
-	  targ="chap-panel"/>.
-       </para>
+      </para>
+      <para>
+	Per maggiori dettagli sulla stima panel, si veda la <guideref targ="chap-panel"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -5179,6 +5195,22 @@
     </gui-access>
 
   </command>
+
+  <command name="panel-between" section="Estimation" context="gui"
+    label="Modello panel tra i gruppi">
+
+    <description>
+      <para>
+        Questa finestra di dialogo permette di immettere la specificazione per
+        un modello panel <quote>tra i gruppi</quote>, ossia una regressione che
+        usa le medie di gruppo dei dati, ignorando quindi la variazione
+        all'interno dei gruppi. Questo modello di solito non è di grande
+        interesse in sé, ma può essere utile a scopo di confronto, ad esempio
+        rispetto al modello a effetti fissi.
+      </para>
+    </description>
+
+  </command>    
   
   <command name="panel-mode" section="Dataset" context="gui"
     label="Organizzazione dei dati panel">
