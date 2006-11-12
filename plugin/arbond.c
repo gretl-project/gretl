@@ -453,7 +453,7 @@ static int anymiss (arbond *ab, const double **Z, int s)
 static int bzcols (arbond *ab, int i)
 {
     int j, k, nc = 0;
-    int t = i + ab->p; /* ?? */
+    int t = i + ab->p + 1; /* ?? */
 
     for (j=0; j<ab->nzb; j++) {
 	for (k=ab->d[j].minlag; k<=ab->d[j].maxlag; k++) {
@@ -462,10 +462,6 @@ static int bzcols (arbond *ab, int i)
 	    }
 	}
     }
-
-#if 1
-    fprintf(stderr, "bzcols: got %d at i = %d\n", nc, i);
-#endif
 
     return nc;
 }
@@ -609,18 +605,26 @@ arbond_sample_check (arbond *ab, const int *list,
     } else {
 	/* compute the number of columns in Zi */
 	int tau = t2max - t1min + 1;
-	int cols = 0;
+	int nblocks = tau - ab->p - 1; /* was tau - 2 */
+	int bcols, cols = 0;
 
 #if ADEBUG
-	fprintf(stderr, "tau = %d (ab->p = %d)\n", tau, ab->p);
+	fprintf(stderr, "\ntau = %d (ab->p = %d)\n", tau, ab->p);
 #endif
-	for (i=0; i<tau-2; i++) {
+	for (i=0; i<nblocks; i++) {
 	    /* lagged y values */
 	    cols = (ab->p + i > ab->qmax - 1)? ab->qmax - 1 : ab->p + i;
 	    ab->m += cols;
+#if ADEBUG
+	    fprintf(stderr, "i=%d: adding %d cols for y-lags\n", i, cols);
+#endif
 	    if (ab->nzb > 0) {
 		/* other block-diagonal instruments */
-		ab->m += bzcols(ab, i);
+		bcols = bzcols(ab, i);
+		ab->m += bcols;
+#if ADEBUG
+		fprintf(stderr, " plus %d cols for z-lags\n", bcols);
+#endif
 	    }
 	}
 #if ADEBUG
@@ -777,6 +781,7 @@ static int arbond_wald_test (arbond *ab)
 
     err = gretl_invert_symmetric_matrix(vcv);
     if (err) {
+	fprintf(stderr, "arbond_wald_test, error inverting vcv\n");
 	goto bailout;
     }
     
@@ -831,6 +836,8 @@ static int sargan_test (arbond *ab)
     }
 
 #if ADEBUG
+    fprintf(stderr, "Sargan df = m - k = %d - %d\n",
+	    ab->m, ab->k);
     fprintf(stderr, "Sargan test: Chi-square(%d) = %g\n",
 	    ab->m - ab->k, ab->sargan);
 #endif
@@ -1293,8 +1300,9 @@ static int arbond_variance (arbond *ab)
     } else {
 	/* find the central term, A_N * \hat{V}_N * A_N :
 	   re-use V for this result */
-	err += gretl_matrix_multiply(V, ab->A, ab->tmp1);
-	err += gretl_matrix_multiply(ab->A, ab->tmp1, V);
+	gretl_matrix_qform(ab->A, GRETL_MOD_NONE, V,
+			   ab->tmp1, GRETL_MOD_NONE);
+	gretl_matrix_copy_values(V, ab->tmp1); 
 
 	/* complete the large "middle bit" */
 	gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
@@ -1304,7 +1312,7 @@ static int arbond_variance (arbond *ab)
 					 kk, GRETL_MOD_NONE);
 
 	/* pre- and post-multiply by C^{-1} */
-	gretl_invert_symmetric_matrix(C);
+	err += gretl_invert_symmetric_matrix(C);
 	gretl_matrix_multiply(kk, C, ab->kktmp);
 	gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
     }
@@ -1789,6 +1797,8 @@ static int try_alt_inverse (arbond *ab)
     err = gretl_invert_symmetric_matrix(ab->A);
     if (!err) {
 	real_shrink_matrices(ab, mask);
+    } else {
+	fprintf(stderr, "try_alt_inverse: error inverting\n");
     }
 
     free(mask);
@@ -1910,7 +1920,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 				const double **Z)
 {
     int i, j, k, s, t, c = 0;
-    int zi, zk;
+    int zi, zj, zk;
     double x;
     char *zmask;
 #if ADEBUG
@@ -1921,8 +1931,8 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
     gretl_matrix_zero(ab->A);
 
     for (i=0; i<ab->N; i++) {
-	int ncols = ab->p;
-	int offj = 0;
+	int ycols = ab->p; /* intial y block width */
+	int offj = 0;      /* initialize column offset */
 	int Ti = unit_nobs(ab, i);
 
 	if (Ti == 0) {
@@ -1933,64 +1943,76 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	gretl_matrix_zero(ab->Zi);
 
 	for (t=ab->p+1; t<ab->ui[i].t1; t++) {
-	    /* pre-shift fields right as needed */
-	    offj += ncols;
-	    if (ncols < ab->qmax - 1) {
-		ncols++;
+	    /* unbalanced case: compute initial column offset */
+	    offj += ycols;
+	    if (ycols < ab->qmax - 1) {
+		ycols++;
 	    }
+	    zj = 0;
+	    for (zi=0; zi<ab->nzb; zi++) {
+		for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
+		    if (t - zk >= 0) {
+			zj++;
+		    }
+		}
+	    }
+	    offj += zj;
 	}	    
 
 	k = 0;
 	for (t=ab->ui[i].t1; t<=ab->ui[i].t2; t++) {
 	    int skip = skip_obs(ab, i, t);
-	    int ycol = offj;
+	    int offincr = ycols;
 
 	    if (!skip) {
 		/* lagged y (GMM instr) columns */
-		for (j=0; j<ncols; j++) {
-		    s = i * ab->T + t - (ncols + 1) + j;
-		    if (t - s <= ab->qmax) {
-			if (!na(y[s])) {
-			    gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
-			}
-			ycol++;
+		for (j=0; j<ycols; j++) {
+		    s = i * ab->T + t - (ycols + 1) + j;
+		    if (!na(y[s])) {
+			gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
 		    }
 		}
 	    }
-	    offj += ncols;
-	    if (ncols < ab->qmax - 1) {
-		ncols++;
-	    }
-	    if (!skip) {
-		int zcol = ycol;
-
-		/* additional block-diagonal columns? 
-		   Not right yet for unbalanced case. */
-		for (zi=0; zi<ab->nzb; zi++) {
-		    for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
-			if (t - zk >= 0) { /* ?? */
+	    
+	    /* additional block-diagonal columns, if required --
+	       needs for checking for the unbalanced case 
+	    */
+	    zj = 0;
+	    for (zi=0; zi<ab->nzb; zi++) {
+		for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
+		    if (t - zk >= 0) { /* ?? */
+			if (!skip) {
 			    s = i * ab->T + t - zk;
 			    x = Z[ab->d[zi].v][s];
 			    if (!na(x)) {
-				gretl_matrix_set(ab->Zi, k, zcol, x);
+				gretl_matrix_set(ab->Zi, k, zj + offj + ycols, x);
 			    }
-			    zcol++;
 			}
+			zj++;
 		    }
-		    offj += zcol - ycol;
 		}
+	    }
+	    offincr += zj;
+
+	    if (!skip) {
 		/* additional full-length instrument columns */
 		s = i * ab->T + t;
 		for (j=0; j<ab->nz; j++) {
 		    x = Z[ab->ilist[j+1]][s];
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
 		}
-		/* plus time dummies? */
+		/* plus time dummies, if wanted */
 		for (j=0; j<ab->ndum; j++) {
 		    x = (t - ab->t1min - 1 == j)? 1 : 0;
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + ab->nz + j, x);
 		}
 		k++; /* increment target row */	
+	    }
+
+	    offj += offincr; /* starting column for next block */
+	    if (ycols < ab->qmax - 1) {
+		/* increment y block width, if we're not already at max */
+		ycols++;
 	    }
 	}
 
@@ -2168,6 +2190,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     gretl_matrix_copy_values(ab.Acpy, ab.A);
     err = gretl_invert_symmetric_matrix(ab.A);
     if (err) {
+	fprintf(stderr, "inverting ab.A failed on first pass\n");
 	/* failed: try again, reducing A based on its rank */
 	err = try_alt_inverse(&ab);
     }

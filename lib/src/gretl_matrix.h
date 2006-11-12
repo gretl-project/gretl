@@ -115,6 +115,8 @@ struct _gretl_matrix {
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
 
+int gretl_matrix_is_symmetric (const gretl_matrix *m);
+
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 double gretl_vector_get (const gretl_vector *v, int i);

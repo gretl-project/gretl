@@ -1671,7 +1671,15 @@ static int sneq (double x, double y)
     return reldiff > EQTOL;
 }
 
-static int matrix_is_symmetric (const gretl_matrix *m)
+/**
+ * gretl_matrix_is_symmetric:
+ * @m: gretl_matrix.
+ *
+ * Returns: 1 if @m is symmetric (with a small relative tolerance
+ * for asymmetry), otherwise 0.
+ */
+
+int gretl_matrix_is_symmetric (const gretl_matrix *m)
 {
     int i, j;
 
@@ -1683,7 +1691,7 @@ static int matrix_is_symmetric (const gretl_matrix *m)
 
 		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
 			i, j, x, j, i, y);
-		gretl_matrix_print(m, "matrix_is_symmetric()");
+		gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
 		return 0;
 	    }
 	}
@@ -1747,7 +1755,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 	return det;
     }
 
-    if (!matrix_is_symmetric(m)) {
+    if (!gretl_matrix_is_symmetric(m)) {
 	fputs("gretl_vcv_log_determinant: matrix is not symmetric\n", stderr);
 	return det;
     }
@@ -3518,7 +3526,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return 0;
     }
 
-    if (!matrix_is_symmetric(a)) {
+    if (!gretl_matrix_is_symmetric(a)) {
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return 1;
     }
@@ -3587,7 +3595,7 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 	return 0;
     }
 
-    if (!matrix_is_symmetric(a)) {
+    if (!gretl_matrix_is_symmetric(a)) {
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return 1;
     }
@@ -3900,7 +3908,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
 
-    if (!matrix_is_symmetric(m)) {
+    if (!gretl_matrix_is_symmetric(m)) {
 	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
@@ -4950,7 +4958,7 @@ gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
  * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result 
  * written into @C.  The matrix @X must be symmetric, but this
  * is not checked, to save time.  If you are in doubt on this
- * point you can call matrix_is_symmetric() first.
+ * point you can call gretl_matrix_is_symmetric() first.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
