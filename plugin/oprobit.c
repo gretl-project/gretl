@@ -398,6 +398,40 @@ static int get_pred (op_container *OC, const MODEL *pmod,
     return pred;
 }
 
+static double gen_resid (const double *theta, op_container *OC, int t) 
+{
+    double ndxt, m0, m1, ystar0, f0, f1;
+    double dP, ystar1 = 0.0;
+    int M = OC->M;
+    int nx = OC->nx;
+    int yt;
+
+    dP = OC->dP[t];
+    yt = OC->y[t];
+    ndxt = OC->ndx[t];
+
+    if (yt == 0) {
+	ystar1 = ndxt;
+    } else if (yt == 1) {
+	m1 = theta[nx];
+	ystar0 = ndxt;
+	ystar1 = ndxt + m1;
+    } else {
+	m0 = theta[nx + yt - 2];
+	ystar0 = ndxt + m0;
+	if (yt < M) {
+	    m1 = theta[nx + yt - 1];
+	    ystar1 = ndxt + m1;
+	}
+    } 
+
+    f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type);
+    f1 = (yt == M)? 0.0 : densfunc(ystar1, OC->type);
+    
+    return (f0 - f1) / dP;
+
+} 
+
 static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
 			op_container *OC, double *theta, 
 			gretl_matrix *invH)
@@ -452,9 +486,9 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	/* X\hat{beta} */
 	pmod->yhat[t] = x;
 	y = OC->Z[OC->list[1]][t];
-	pred = get_pred(OC, pmod, x);
-	pmod->uhat[t] = y - pred;
-	/* FIXME compute generalized residual? */
+	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
+	/* compute generalized residual */
+	pmod->uhat[t] = gen_resid(theta, OC, t);
     }
 
     pmod->lnL = op_loglik(theta, OC);
