@@ -2232,6 +2232,8 @@ int xcorrgram (const int *list, int order, double ***pZ,
 {
     char titlestr[128];
     double *xcf = NULL;
+    double pm90, pm95, pm99;
+    int allpos = 1;
     int k, xcf_m;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     FILE *fq = NULL;
@@ -2285,6 +2287,9 @@ int xcorrgram (const int *list, int order, double ***pZ,
     /* calculate xcf up to order m */
     for (k=-xcf_m; k<=xcf_m; k++) {
 	xcf[k+xcf_m] = gretl_xcf(k, t1, t2, (*pZ)[xno], (*pZ)[yno]);
+	if (xcf[k+xcf_m] < 0) {
+	    allpos = 0;
+	}
     }
 
     if (opt & OPT_A) { 
@@ -2304,6 +2309,11 @@ int xcorrgram (const int *list, int order, double ***pZ,
 	free(xk);
     } 
 
+    /* for confidence bands */
+    pm90 = 1.65 / sqrt((double) nobs);
+    pm95 = 1.96 / sqrt((double) nobs);
+    pm99 = 2.58 / sqrt((double) nobs);
+
     sprintf(gretl_tmp_str, _("Cross-correlation function for %s and %s"), 
 	    pdinfo->varname[xno], pdinfo->varname[yno]);
     pprintf(prn, "\n%s\n\n", gretl_tmp_str);
@@ -2312,7 +2322,16 @@ int xcorrgram (const int *list, int order, double ***pZ,
     pputs(prn, "\n\n");
 
     for (k=-xcf_m; k<=xcf_m; k++) {
-	pprintf(prn, "%5d%9.4f ", k, xcf[k+xcf_m]);
+	double x = xcf[k + xcf_m];
+
+	pprintf(prn, "%5d%9.4f", k, x);
+	if (fabs(x) > pm99) {
+	    pputs(prn, " ***");
+	} else if (fabs(x) > pm95) {
+	    pputs(prn, " **");
+	} else if (fabs(x) > pm90) {
+	    pputs(prn, " *");
+	} 
 	pputc(prn, '\n');
     }
 
@@ -2329,13 +2348,26 @@ int xcorrgram (const int *list, int order, double ***pZ,
     fputs("set yzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
     fprintf(fq, "set xlabel '%s'\n", I_("lag"));
-    fputs("set yrange [-1.1:1.1]\n", fq);
+    if (allpos) {
+	fputs("set yrange [-0.1:1.1]\n", fq);
+    } else {
+	fputs("set yrange [-1.1:1.1]\n", fq);
+    } 
     sprintf(titlestr, I_("Correlations of %s and lagged %s"),
 	    pdinfo->varname[xno], pdinfo->varname[yno]);
     fprintf(fq, "set title '%s'\n", titlestr);
     fprintf(fq, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
-    fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 notitle w impulses lw 5\n");
+    if (allpos) {
+	fprintf(fq, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '%s' lt 2\n", pm95, corrgm_crit_string());
+    } else {
+	fprintf(fq, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
+    }	
+
     for (k=-xcf_m; k<=xcf_m; k++) {
 	fprintf(fq, "%d %g\n", k, xcf[k+xcf_m]);
     }
