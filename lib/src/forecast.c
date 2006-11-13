@@ -2485,13 +2485,11 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* add a graph here? */
 
-    if (!err) {
-	double RMSE = sqrt(MSE / effn);
-	double MAE = AE / effn;
-
+    if (!err && effn > 0) {
+	MSE /= effn;
 	pprintf(prn, "\n%s = %g\n", _("Mean Squared Error"), MSE);
-	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), RMSE);
-	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), MAE);
+	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), sqrt(MSE));
+	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
     }
 
     pdinfo->t1 = orig_t1;
