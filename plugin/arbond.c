@@ -1392,7 +1392,6 @@ static void make_first_diff_matrix (arbond *ab, int i)
 
     if (m < n) {
 	gretl_matrix *P = gretl_zero_matrix_new(m, n);
-	gretl_matrix *L = gretl_matrix_alloc(m, n);
 	gretl_matrix *R = gretl_matrix_alloc(m, m);
 
 	j = next_obs(ab, i, 0, n);
@@ -1401,15 +1400,12 @@ static void make_first_diff_matrix (arbond *ab, int i)
 	    j = next_obs(ab, i, j+1, n);
 	}
 
-	gretl_matrix_multiply(P, ab->H, L);
-	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
-				  P, GRETL_MOD_TRANSPOSE,
-				  R, GRETL_MOD_NONE);
+	gretl_matrix_qform(P, GRETL_MOD_NONE, ab->H,
+			   R, GRETL_MOD_NONE);
 	gretl_matrix_reuse(ab->H, m, m);
 	gretl_matrix_copy_values(ab->H, R);
 
 	gretl_matrix_free(P);
-	gretl_matrix_free(L);
 	gretl_matrix_free(R);
     }
 }

@@ -3138,7 +3138,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2,
 			   0, premax, &pre_n,
-			   dyn_ok);
+			   dyn_ok, 0);
     if (resp < 0) {
 	return;
     }

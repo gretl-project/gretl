@@ -1399,7 +1399,7 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 title '%s' w lines\n",
-	    I_("Chow F-statistic for break"));
+	    I_("Chow F-test for break"));
     for (t=t1; t<=t2; t++) {
 	fprintf(fp, "%g %g\n", x[t], Ft[t-t1]);
     }
@@ -1616,7 +1616,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    }
 	}
 
-	free(Ft);
+	if (Ft != NULL) {
+	    free(Ft);
+	}
 
     } else if (!err) {
 	/* regular Chow test */

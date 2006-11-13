@@ -69,6 +69,10 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 				 int *dyn_ok, int *add_obs_ok,
 				 int *dt2max, int *st2max);
 
+int 
+rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			    int t0, int t1, int t2, PRN *prn);
+
 #endif /* FORECAST_H */
 
 

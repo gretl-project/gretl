@@ -2389,3 +2389,113 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 	free(dvlags);
     }
 }
+
+/* rolling one-step ahead forecasts and forecast errors, for models
+   estimated via OLS */
+
+int 
+rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			    int t0, int t1, int t2, PRN *prn)
+{
+    char obs[OBSLEN];
+    char ystr[32];
+    char yfstr[32];
+    char errstr[32];
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+    double xit, yt, yf;
+    double MSE, AE;
+    int effn, nf = t2 - t1 + 1;
+    MODEL mod;
+    int i, s, t;
+    int err = 0;
+
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
+
+    if (t1 - t0 < pmod->ncoeff || t2 < t1) {
+	return E_DATA;
+    }
+
+    pdinfo->t1 = t0;
+    pdinfo->t2 = t1 - 1;
+    MSE = 0.0;
+    AE = 0.0;
+    effn = 0;
+
+    ntodate(obs, t0, pdinfo);    
+    pprintf(prn, "Rolling one-step ahead forecasts and forecast errors:\n"
+	    "The forecast for time t is based on data up to time t-1, using\n"
+	    "coefficients obtained by estimating the model over the sample\n"
+	    "%s to t-1.", obs);
+    pputs(prn, "\n\n");
+
+    strcpy(ystr, pdinfo->varname[pmod->list[1]]);
+    strcpy(yfstr, _("forecast"));
+    strcpy(errstr, _("error"));
+    pprintf(prn, "\n%12s%12s%12s%12s\n\n", " ", ystr, yfstr, errstr);
+
+    for (s=0; s<nf; s++) {
+	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A);
+	if (mod.errcode) {
+	    err = mod.errcode;
+	    clear_model(&mod);
+	    break;
+	}
+
+	t = pdinfo->t2 + 1;
+	yf = 0.0;
+	for (i=0; i<mod.ncoeff; i++) {
+	    xit = (*pZ)[mod.list[i+2]][t];
+	    if (na(xit)) {
+		yf = NADBL;
+		break;
+	    } else {
+		yf += mod.coeff[i] * xit;
+	    }
+	}
+
+	yt = (*pZ)[mod.list[1]][t];
+	ntodate(obs, t, pdinfo);
+
+	if (na(yf)) {
+	    strcpy(yfstr, "NA");
+	} else {
+	    sprintf(yfstr, "%#.6g", yf);
+	}
+	if (na(yt)) {
+	    strcpy(ystr, "NA");
+	} else {
+	    sprintf(ystr, "%#.6g", yt);
+	}
+	if (na(yf) || na(yt)) {
+	    strcpy(errstr, "NA");
+	} else {
+	    sprintf(errstr, "%#.6g", yt - yf);
+	    MSE += (yt - yf) * (yt - yf);
+	    AE += fabs(yt - yf);
+	    effn++;
+	}
+	
+	pprintf(prn, "%12s%12s%12s%12s\n", obs, ystr, yfstr, errstr);
+	clear_model(&mod);
+	pdinfo->t2 += 1;
+    }
+
+    /* add a graph here? */
+
+    if (!err) {
+	double RMSE = sqrt(MSE / effn);
+	double MAE = AE / effn;
+
+	pprintf(prn, "\n%s = %g\n", _("Mean Squared Error"), MSE);
+	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), RMSE);
+	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), MAE);
+    }
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+	
+    return err;
+}

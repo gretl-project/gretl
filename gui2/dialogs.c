@@ -1723,14 +1723,15 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int pmin, int pmax, int *p,
-		     int dyn)
+		     int dyn, int model_ci)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
     const char *opts[] = {
 	N_("automatic forecast (dynamic out of sample)"),
 	N_("dynamic forecast"),
-	N_("static forecast")
+	N_("static forecast"),
+	N_("rolling one-step ahead forecasts"),
     };
     int nopts = 3;
     int deflt = 0;
@@ -1767,6 +1768,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	deflt = 1;
     }
 
+    if (model_ci == OLS) {
+	nopts++;
+    }
+
     /* forecast-type options */
     for (i=0; i<nopts; i++) {
 	GSList *group;
@@ -1788,7 +1793,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    ret = i;
 	}
 
-	if (dyn != DYNAMIC_OK) {
+	if (dyn != DYNAMIC_OK && i < 3) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	} else {
 	    g_signal_connect(G_OBJECT(button), "clicked",

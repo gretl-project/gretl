@@ -1234,6 +1234,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     int dyn_ok, add_obs_ok;
     int premax, pre_n = 0;
     int t1min = 0;
+    int rolling = 0;
     int dt2 = datainfo->n - 1;
     int st2 = datainfo->n - 1;
     gretlopt opt = OPT_NONE;
@@ -1282,7 +1283,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
-			   dyn_ok);
+			   dyn_ok, pmod->ci);
     if (resp < 0) {
 	return;
     }
@@ -1291,6 +1292,24 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	opt = OPT_D;
     } else if (resp == 2) {
 	opt = OPT_S;
+    } else if (resp == 3) {
+	rolling = 1;
+    }
+
+    if (rolling) {
+	if (bufopen(&prn)) {
+	    return;
+	}
+	err = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
+					 pmod->t1, t1, t2,
+					 prn);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    view_buffer(prn, 78, 400, _("gretl: forecasts"), PRINT, NULL);
+	}
+	/* graph? */
+	return;
     }
 
     ntodate(startobs, t1, datainfo);
