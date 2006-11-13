@@ -1384,6 +1384,34 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return chowlist;
 }
 
+static int QLR_graph (const double *Ft, int t1, int t2, 
+		      const DATAINFO *pdinfo)
+{
+    const double *x = gretl_plotx(pdinfo);
+    FILE *fp = NULL;
+    int t;
+
+    if (gnuplot_init(PLOT_REGULAR, &fp)) {
+	return E_FOPEN;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, "plot \\\n"
+	    "'-' using 1:2 title '%s' w lines\n",
+	    I_("Chow F-statistic for break"));
+    for (t=t1; t<=t2; t++) {
+	fprintf(fp, "%g %g\n", x[t], Ft[t-t1]);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+    
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 static void save_QLR_test (MODEL *pmod, char *datestr,
 			   double Fmax, double crit, double alpha,
 			   int dfn, int dfd)
@@ -1542,9 +1570,14 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     if (!err && QLR) {
 	/* Quandt likelihood ratio */
 	double Fmax = 0.0;
+	double *Ft = NULL;
 	int dfn = 0, dfd = 0;
 	int tmax = 0;
 	int i, t;
+
+	if (gretl_in_gui_mode()) {
+	    Ft = malloc((smax - split + 1) * sizeof *Ft);
+	}
 	
 	for (t=split; t<=smax; t++) {
 	    chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
@@ -1559,6 +1592,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    if (F > Fmax) {
 		tmax = t;
 		Fmax = F;
+	    }
+	    if (Ft != NULL) {
+		Ft[t - split] = F;
 	    }
 #if 0
 	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g\n", t, 
@@ -1575,7 +1611,12 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	if (!err) {
 	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, pdinfo, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
+	    if (Ft != NULL) {
+		QLR_graph(Ft, split, smax, pdinfo);
+	    }
 	}
+
+	free(Ft);
 
     } else if (!err) {
 	/* regular Chow test */

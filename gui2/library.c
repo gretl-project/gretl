@@ -1893,7 +1893,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	if (action == CUSUM || action == CUSUMSQ) {
+	if (action == CUSUM || action == CUSUMSQ || action == QLRTEST) {
 	    register_graph();
 	}
 
