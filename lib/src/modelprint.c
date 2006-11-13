@@ -849,6 +849,20 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
+static void arbond_asy_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors (unreliable)"));
+    } else if (plain_format(prn)) {
+	pputs(prn, _("Asymptotic standard errors (unreliable)"));
+    } else {
+	pputs(prn, I_("Asymptotic standard errors (unreliable)"));
+    } 
+
+    pputc(prn, '\n');
+}
+
+
 static void panel_robust_vcv_line (const MODEL *pmod, PRN *prn)
 {
     if (csv_format(prn)) {
@@ -974,6 +988,8 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	ml_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "panel_hac")) {
 	panel_robust_vcv_line(pmod, prn);
+    } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
+	arbond_asy_vcv_line(pmod, prn);
     }
 }
 

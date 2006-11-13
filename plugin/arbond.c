@@ -1325,7 +1325,7 @@ static int arbond_variance (arbond *ab)
     ab->SSR = SSR;
     ab->s2 = SSR / (ab->nobs - ab->k);
 
-    if (ab->step == 2) {
+    if (ab->step == 2 && !(ab->opt & OPT_A)) {
 	windmeijer_correct(ab, u1, kk);
     }   
 
@@ -1522,6 +1522,9 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	}
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
+	}
+	if ((ab->opt & OPT_T) && (ab->opt & OPT_A)) {
+	    gretl_model_set_int(pmod, "asy", 1);
 	}
     }
 
