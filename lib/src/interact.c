@@ -3400,7 +3400,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	break;
 
     case SETOBS:
-	err = set_obs(line, pZ, pdinfo, cmd->opt);
+	err = set_obs(line, *pZ, pdinfo, cmd->opt);
 	if (!err) {
 	    if (pdinfo->n > 0) {
 		print_smpl(pdinfo, 0, prn);

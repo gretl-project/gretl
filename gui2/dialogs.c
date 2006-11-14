@@ -2928,6 +2928,9 @@ void infobox (const char *template, ...)
 
 #define PD_SPECIAL -1
 
+#define known_panel(p) (p->structure == STACKED_CROSS_SECTION || \
+                        p->structure == STACKED_TIME_SERIES)
+
 enum {
     DW_SET_TYPE,
     DW_TS_FREQUENCY,
@@ -3107,7 +3110,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     if (dwinfo->structure == TIME_SERIES || 
 	dwinfo->structure == SPECIAL_TIME_SERIES) {
 	ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
-    } else if (dataset_is_panel(dwinfo)) {
+    } else if (known_panel(dwinfo)) {
 	if (test_for_unbalanced(dwinfo)) {
 	    return 1;
 	}
@@ -3144,7 +3147,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     }
 
     /* handle panel structure */
-    if (dataset_is_panel(dwinfo)) {
+    if (known_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
 
@@ -3177,7 +3180,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     fprintf(stderr, "setline = '%s', opt = %ld\n", setline, opt);
 #endif
 
-    err = set_obs(setline, NULL, datainfo, opt);
+    err = set_obs(setline, Z, datainfo, opt);
 
  finalize:
 
@@ -3407,7 +3410,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	sprintf(ctxt, _("panel data (%s)\n"
 			"%d cross-sectional units observed over %d periods"),
 		_("stacked time series"), dwinfo->n, dwinfo->pd);
-    } else if (dataset_is_panel(dwinfo)) {
+    } else if (known_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
 
@@ -3862,7 +3865,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     deflt = radio_default(dwinfo, step);
 
-    if (step == DW_CONFIRM && dataset_is_panel(dwinfo) &&
+    if (step == DW_CONFIRM && known_panel(dwinfo) &&
 	test_for_unbalanced(dwinfo)) {
 	return DW_BACK;
     }

@@ -365,6 +365,7 @@ static int gen_special (const char *s, const char *line,
 static int do_stack_vars (const char *s, char *vname, const char **rem)
 {
     const char *p;
+    int ret = 0;
 
     if (!strncmp(s, "genr ", 5)) {
 	s += 5;
@@ -373,8 +374,8 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
     }
 
     while (*s == ' ') s++;
-
     p = strchr(s, '=');
+
     if (p != NULL) {
 	p++;
 	while (*p == ' ') p++;
@@ -387,11 +388,11 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
 	    }
 	    *vname = '\0';
 	    *rem = p;
-	    return n > 0;
+	    ret = n > 0 && check_varname(vname) == 0;
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 static int is_gen_special (const char *s, char *spec, const char **rem)

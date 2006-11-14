@@ -88,8 +88,6 @@ struct arbond_ {
     struct unit_info *ui; /* info on panel units */
 };
 
-static void make_first_diff_matrix (arbond *ab, int i);
-
 static void arbond_free (arbond *ab)
 {
     int i;
@@ -1369,40 +1367,56 @@ static int next_obs (arbond *ab, int i, int j0, int n)
 /* construct the H matrix for first-differencing
    as applied to unit i */
 
-static void make_first_diff_matrix (arbond *ab, int i)
+static int make_first_diff_matrix (arbond *ab, int i)
 {
-    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
-    int m = unit_nobs(ab, i);
+    static int *rc;
+
+    int n, m;
     double x;
-    int k, j;
+    int k, j, adjacent, skip = 0;
 
-    gretl_matrix_reuse(ab->H, n, n);
+    if (ab == NULL) {
+	/* clean-up signal */
+	free(rc);
+	rc = NULL;
+	return 0;
+    }
 
-    for (k=0; k<n; k++) {
-	for (j=0; j<n; j++) {
-	    x = (k == j)? 2 : (k == j-1 || k == j+1)? -1 : 0;
+    if (rc == NULL) {
+	rc = malloc((ab->T) * sizeof *rc);
+	if (rc == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+    m = unit_nobs(ab, i);
+
+    if (m < n) {
+	skip = 1;
+	j = next_obs(ab, i, 0, n);
+	for (k=0; k<m; k++) {
+	    rc[k] = j;
+	    j = next_obs(ab, i, j+1, n);
+	}
+    }
+
+    gretl_matrix_reuse(ab->H, m, m);
+
+    for (j=0; j<m; j++) {
+	for (k=j; k<m; k++) {
+	    if (skip) {
+		adjacent = (abs(rc[k] - rc[j]) == 1); 
+	    } else {
+		adjacent = (abs(k-j) == 1);
+	    }
+	    x = (k==j)? 2 : (adjacent)? -1 : 0;
+	    gretl_matrix_set(ab->H, j, k, x);
 	    gretl_matrix_set(ab->H, k, j, x);
 	}
     }
 
-    if (m < n) {
-	gretl_matrix *P = gretl_zero_matrix_new(m, n);
-	gretl_matrix *R = gretl_matrix_alloc(m, m);
-
-	j = next_obs(ab, i, 0, n);
-	for (k=0; k<m; k++) {
-	    gretl_matrix_set(P, k, j, 1.0);
-	    j = next_obs(ab, i, j+1, n);
-	}
-
-	gretl_matrix_qform(P, GRETL_MOD_NONE, ab->H,
-			   R, GRETL_MOD_NONE);
-	gretl_matrix_reuse(ab->H, m, m);
-	gretl_matrix_copy_values(ab->H, R);
-
-	gretl_matrix_free(P);
-	gretl_matrix_free(R);
-    }
+    return 0;
 }
 
 static int arbond_prepare_model (MODEL *pmod, arbond *ab,
@@ -1924,7 +1938,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 
     gretl_matrix_zero(ab->A);
 
-    for (i=0; i<ab->N; i++) {
+    for (i=0; i<ab->N && !err; i++) {
 	int ycols = ab->p; /* intial y block width */
 	int offj = 0;      /* initialize column offset */
 	int Ti = unit_nobs(ab, i);
@@ -2014,8 +2028,8 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	sprintf(zstr, "Z_%d", i + 1);
 	gretl_matrix_print(ab->Zi, zstr);
 #endif
-	
-	make_first_diff_matrix(ab, i);
+
+	err = make_first_diff_matrix(ab, i);
 
 	/* Cumulate Z_i' H Z_i into A_N */
 	gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
@@ -2026,11 +2040,16 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	c += Ti;
     }
 
-    /* mask zero rows of ZT, if required */
-    zmask = zero_row_mask(ab->ZT, &err);
-    if (zmask != NULL) {
-	err = reduce_Z_and_A(ab, zmask);
-	free(zmask);
+    /* clean up */
+    make_first_diff_matrix(NULL, 0);
+
+    if (!err) {
+	/* mask zero rows of ZT, if required */
+	zmask = zero_row_mask(ab->ZT, &err);
+	if (zmask != NULL) {
+	    err = reduce_Z_and_A(ab, zmask);
+	    free(zmask);
+	}
     } 
 
     if (!err) {
