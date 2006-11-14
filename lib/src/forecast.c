@@ -2393,10 +2393,14 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 /* rolling one-step ahead forecasts and forecast errors, for models
    estimated via OLS */
 
-int 
+/* FIXME this needs to be properly done using the FITRESID structure,
+   which may need modifying */
+
+FITRESID * 
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			    int t0, int t1, int t2, PRN *prn)
 {
+    FITRESID *fr;
     char obs[OBSLEN];
     char ystr[32];
     char yfstr[32];
@@ -2410,12 +2414,31 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int i, s, t;
     int err = 0;
 
+    fr = fit_resid_new(0); 
+    if (fr == NULL) {
+	return NULL;
+    }
+
     if (pmod->ci != OLS) {
-	return E_OLSONLY;
+	fr->err = E_OLSONLY;
+	return fr;
+    }
+
+    /* Reject in case model was estimated using repacked daily
+       data: this case should be handled more elegantly */
+    if (gretl_model_get_int(pmod, "daily_repack")) {
+	fr->err = E_DATA;
+	return fr;
     }
 
     if (t1 - t0 < pmod->ncoeff || t2 < t1) {
-	return E_DATA;
+	fr->err = E_DATA;
+	return fr;
+    }
+
+    fit_resid_init(t1, t1, t2, pmod, pdinfo, fr); 
+    if (fr->err) {
+	return fr;
     }
 
     pdinfo->t1 = t0;
@@ -2477,13 +2500,14 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    AE += fabs(yt - yf);
 	    effn++;
 	}
+
+	fr->actual[t] = yt;
+	fr->fitted[t] = yf;
 	
 	pprintf(prn, "%12s%12s%12s%12s\n", obs, ystr, yfstr, errstr);
 	clear_model(&mod);
 	pdinfo->t2 += 1;
     }
-
-    /* add a graph here? */
 
     if (!err && effn > 0) {
 	MSE /= effn;
@@ -2494,6 +2518,11 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
+
+    if (!fr->err) {
+	fit_resid_set_dec_places(fr);
+	strcpy(fr->depvar, pdinfo->varname[pmod->list[1]]);
+    }
 	
-    return err;
+    return fr;
 }

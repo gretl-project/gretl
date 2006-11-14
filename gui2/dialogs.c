@@ -1267,6 +1267,7 @@ struct range_setting {
     GtkWidget *endspin;
     GtkWidget *combo;
     gpointer p;
+    MODEL *pmod;
     int *t1;
     int *t2;
 };
@@ -1443,6 +1444,7 @@ static int default_randsize (void)
 }
 
 static struct range_setting *rset_new (guint code, gpointer p,
+				       MODEL *pmod, 
 				       int *t1, int *t2,
 				       const gchar *title)
 {
@@ -1468,6 +1470,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     rset->obslabel = NULL;
 
     rset->p = p;
+    rset->pmod = pmod;
 
     rset->t1 = t1;
     rset->t2 = t2;
@@ -1565,7 +1568,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	}
     }
 
-    rset = rset_new(u, p, NULL, NULL, _("gretl: set sample"));
+    rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"));
     if (rset == NULL) return;
 
     if (u == SMPLDUM) {
@@ -1672,7 +1675,7 @@ int get_obs_dialog (const char *title, const char *text,
     struct range_setting *rset;
     int ret = 0;
 
-    rset = rset_new(0, NULL, t1, t2, title);
+    rset = rset_new(0, NULL, NULL, t1, t2, title);
     if (rset == NULL) {
 	return -1;
     }
@@ -1720,10 +1723,37 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
     }
 }
 
+static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
+{
+    int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+
+    if (rset->pmod == NULL) {
+	return;
+    }
+
+    if (i == 3) {
+	int t1min = rset->pmod->t1 + rset->pmod->ncoeff;
+
+	if (t1 < t1min) {
+	    obs_button_set_value(OBS_BUTTON(rset->startspin), 
+				 (gdouble) t1min);
+	    g_object_set(rset->adj1, "lower", (gdouble) t1min, NULL);
+	}
+    } else if (i == 2) {
+	double txmin;
+
+	g_object_get(rset->adj1, "lower", &txmin, NULL);
+	if (txmin > *rset->t1) {
+	    g_object_set(rset->adj1, "lower", (gdouble) *rset->t1, NULL);
+	}
+    }
+}
+
 int forecast_dialog (int t1min, int t1max, int *t1, 
 		     int t2min, int t2max, int *t2,
 		     int pmin, int pmax, int *p,
-		     int dyn, int model_ci)
+		     int dyn, MODEL *pmod)
 {
     const char *pre_txt = N_("Number of pre-forecast observations "
 			     "to graph");
@@ -1741,9 +1771,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     struct range_setting *rset;
     int i, ret = 0;
 
-    rset = rset_new(0, NULL, t1, t2, _("gretl: forecast"));
+    rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"));
     if (rset == NULL) {
 	return -1;
+    }
+
+    if (pmod != NULL && pmod->ci == OLS) {
+	nopts++;
     }
 
     tmp = obs_spinbox(rset, _("Forecast range:"), 
@@ -1768,10 +1802,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	deflt = 1;
     }
 
-    if (model_ci == OLS) {
-	nopts++;
-    }
-
     /* forecast-type options */
     for (i=0; i<nopts; i++) {
 	GSList *group;
@@ -1793,9 +1823,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    ret = i;
 	}
 
-	if (dyn != DYNAMIC_OK && i < 3) {
+	if (dyn != DYNAMIC_OK && i < 2) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	} else {
+	    if (i >= 2) {
+		g_signal_connect(G_OBJECT(button), "clicked",
+				 G_CALLBACK(adjust_fcast_t1), 
+				 rset);
+	    }
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(set_radio_opt), &ret);
 	    g_object_set_data(G_OBJECT(button), "action", 

@@ -1283,7 +1283,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     resp = forecast_dialog(t1min, t2, &t1,
 			   0, t2, &t2,
 			   0, premax, &pre_n,
-			   dyn_ok, pmod->ci);
+			   dyn_ok, pmod);
     if (resp < 0) {
 	return;
     }
@@ -1296,6 +1296,7 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	rolling = 1;
     }
 
+#if 0
     if (rolling) {
 	if (bufopen(&prn)) {
 	    return;
@@ -1311,18 +1312,29 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	/* graph? */
 	return;
     }
+#endif
 
-    ntodate(startobs, t1, datainfo);
-    ntodate(endobs, t2, datainfo);
+    if (rolling) {
+	fr = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
+					pmod->t1, t1, t2,
+					NULL);
+    } else {
+	ntodate(startobs, t1, datainfo);
+	ntodate(endobs, t2, datainfo);
 
-    gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
-			  print_flags(opt, FCASTERR));
+	gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
+			      print_flags(opt, FCASTERR));
 
-    if (check_and_record_command() || bufopen(&prn)) {
-	return;
+	if (check_and_record_command()) {
+	    return;
+	}
+
+	fr = get_forecast(pmod, t1 - pre_n, t1, t2, &Z, datainfo, opt);
     }
 
-    fr = get_forecast(pmod, t1 - pre_n, t1, t2, &Z, datainfo, opt);
+    if (bufopen(&prn)) {
+	return;
+    }
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
