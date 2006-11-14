@@ -974,7 +974,7 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * @pdinfo: dataset information.
  * @opt: use %OPT_A to attempt to recognize and
  * automatically extend simple deterministic variables such 
- * as a time trend and periodic dummy variables; also can
+ * as a time trend and periodic dummy variables; 
  * use %OPT_D to drop any observation markers rather than
  * expanding the set of markers and padding it out with
  * dummy values.
@@ -1901,10 +1901,10 @@ static int missing_tail (const double *x, int n)
 
 /**
  * dataset_stack_variables:
+ * @vname: name for new variable, to be produced by stacking.
+ * @line: instructions for stacking existing variables.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @newvar: name for new variable, produced by stacking
- * @s: instructions for stacking existing variables.
  * @prn: printing apparatus.
  *
  * Really for internal use.  Don't worry about it.
@@ -1912,12 +1912,13 @@ static int missing_tail (const double *x, int n)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo, 
-			     char *newvar, char *s, PRN *prn)
+int dataset_stack_variables (const char *vname, const char *line,
+			     double ***pZ, DATAINFO *pdinfo, 
+			     PRN *prn)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
     char format[16];
-    char *p, *scpy;
+    char *p, *s = NULL, *scpy = NULL;
     int *vnum = NULL;
     double *bigx = NULL;
     int i, v1 = 0, v2 = 0, nv = 0;
@@ -1925,17 +1926,35 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
     int oldn, bign, genv;
     int err = 0;
 
-    scpy = gretl_strdup(s);
-    if (scpy == NULL) return E_ALLOC;
+    /* copy full "stack(...)" spec for later reference */
+    scpy = gretl_strdup(line);
+    if (scpy == NULL) {
+	return E_ALLOC;
+    }
 
-    genv = varindex(pdinfo, newvar);
+    line += 6; /* skip "stack(" */
+    if (*line == ',') {
+	free(scpy);
+	return E_SYNTAX;
+    }
 
-    s += 6;
-    if (*s == ',') return E_SYNTAX;
+    /* copy active portion of line (we use strtok below) */
+    s = gretl_strdup(line);
+    if (s == NULL) {
+	free(scpy);
+	return E_ALLOC;
+    }
 
     p = strrchr(s, ')');
-    if (p == NULL) return E_SYNTAX;
+    if (p == NULL) {
+	err = E_SYNTAX;
+	goto bailout;
+    }
+
+    /* end of active portion of line */
     *p = '\0';
+
+    genv = varindex(pdinfo, vname);
 
     /* do we have a range of vars? */
     sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
@@ -1963,7 +1982,9 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 	}
 	nv++;
 
-	if (nv < 2) return E_SYNTAX;
+	if (nv < 2) {
+	    return E_SYNTAX;
+	}
 
 	vnum = malloc(nv * sizeof *vnum);
 	if (vnum == NULL) {
@@ -2026,7 +2047,9 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		ok = 1;
 	    }
-	    if (ok > maxok) maxok = ok;
+	    if (ok > maxok) {
+		maxok = ok;
+	    }
 	}
 
 	if (maxok * nv <= pdinfo->n && pdinfo->n % maxok == 0) {
@@ -2077,8 +2100,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		bigx[bigt] = (*pZ)[j][0];
 	    }
-	    if (pdinfo->S != NULL && bigt != t && 
-		pdinfo->S[bigt][0] == '\0') {
+	    if (pdinfo->S != NULL && bigt != t) {
 		strcpy(pdinfo->S[bigt], pdinfo->S[t]);
 	    }
 	    bigt++;
@@ -2108,16 +2130,18 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
     
     /* complete the details */
     if (!err) {
-	strcpy(pdinfo->varname[genv], newvar);
+	strcpy(pdinfo->varname[genv], vname);
 	make_stack_label(VARLABEL(pdinfo, genv), scpy);
-	pprintf(prn, "%s %s %s (ID %d)", 
+	pprintf(prn, "%s %s %s (ID %d)\n", 
 		(genv == pdinfo->v - 1)? _("Generated") : _("Replaced"),
-		_("vector"), newvar, genv);
+		_("series"), vname, genv);
     }
 
  bailout:
 
     free(vnum);
+    free(s);
+    free(scpy);
 
     return err;
 }

@@ -300,15 +300,17 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return ret;
 }
 
-static int gen_special (const char *s, double ***pZ, 
-			DATAINFO *pdinfo, PRN *prn,
-			parser *p)
+static int gen_special (const char *s, const char *line,
+			double ***pZ, DATAINFO *pdinfo, 
+			PRN *prn, parser *p)
 {
     int orig_v = pdinfo->v;
     int msg = 0;
     int err = 0;
 
-    if (!strcmp(s, "dummy")) {
+    if (!strcmp(s, "markers")) {
+	return generate_obs_markers(line, pZ, pdinfo);
+    } else if (!strcmp(s, "dummy")) {
 	int di0 = dummy(pZ, pdinfo, 0);
 
 	if (di0 == 0) {
@@ -340,7 +342,7 @@ static int gen_special (const char *s, double ***pZ,
     } else if (!strcmp(s, "weekday")) {
 	err = gen_wkday(pZ, pdinfo);
 	msg = 1;
-    }	
+    } 
 
     if (!err && msg) {
 	strcpy(p->lh.name, s);
@@ -357,13 +359,49 @@ static int gen_special (const char *s, double ***pZ,
     return err;
 }
 
-static int gen_special_call (const char *s)
+/* try for something of the form "genr x = stack(...)", 
+   a special for fixing up panel data */
+
+static int do_stack_vars (const char *s, char *vname, const char **rem)
+{
+    const char *p;
+
+    if (!strncmp(s, "genr ", 5)) {
+	s += 5;
+    } else if (!strncmp(s, "series ", 7)) {
+	s += 7;
+    }
+
+    while (*s == ' ') s++;
+
+    p = strchr(s, '=');
+    if (p != NULL) {
+	p++;
+	while (*p == ' ') p++;
+	if (!strncmp(p, "stack(", 6)) {
+	    int n = 0;
+
+	    while (*s && *s != ' ' && *s != '=' && n < VNAMELEN-1) {
+		*vname++ = *s++;
+		n++;
+	    }
+	    *vname = '\0';
+	    *rem = p;
+	    return n > 0;
+	}
+    }
+
+    return 0;
+}
+
+static int is_gen_special (const char *s, char *spec, const char **rem)
 {
     if (strncmp(s, "genr ", 5)) {
 	return 0;
     }
 
     s += 5;
+    while (*s == ' ') s++;
 
     if (!strcmp(s, "dummy") || 
 	!strcmp(s, "timedum") || 
@@ -372,6 +410,16 @@ static int gen_special_call (const char *s)
 	!strcmp(s, "index") || 
 	!strcmp(s, "unit") || 
 	!strcmp(s, "weekday")) {
+	strcpy(spec, s);
+	*rem = s;
+	return 1;
+    }
+
+    if (!strncmp(s, "markers", 7) && strchr(s, '=')) {
+	strcpy(spec, "markers");
+	s = strchr(s, '=') + 1;
+	while (*s == ' ') s++;
+	*rem = s;
 	return 1;
     }
 
@@ -387,6 +435,8 @@ static int gen_special_call (const char *s)
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)
 {
+    char vname[VNAMELEN];
+    const char *subline = NULL;
     int oldv = pdinfo->v;
     int flags = 0;
     parser p;
@@ -403,8 +453,10 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
 #endif
 
-    if (gen_special_call(line)) {
-	return gen_special(line + 5, pZ, pdinfo, prn, &p);
+    if (is_gen_special(line, vname, &subline)) {
+	return gen_special(vname, subline, pZ, pdinfo, prn, &p);
+    } else if (do_stack_vars(line, vname, &subline)) {
+	return dataset_stack_variables(vname, subline, pZ, pdinfo, prn);
     }
 
     realgen(line, &p, pZ, pdinfo, prn, flags);
@@ -446,8 +498,11 @@ double generate_scalar (const char *s, double ***pZ,
     if (!*err) {
 	if (p.ret->t == MAT) {
 	    x = p.ret->v.m->val[0];
-	} else {
+	} else if (p.ret->t == NUM) {
 	    x = p.ret->v.xval;
+	} else {
+	    *err = E_TYPES;
+	    x = NADBL;
 	}
     }
 

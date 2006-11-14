@@ -99,7 +99,7 @@ void gretl_printxn (double x, int n, PRN *prn);
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn);
 
-int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s);
+int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo);
 
 int in_usa (void);
 

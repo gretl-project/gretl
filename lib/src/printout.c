@@ -2246,8 +2246,27 @@ static int get_conversion (const char *s, int *skip)
     return (*(s + *skip));
 }
 
+static double argv_get_scalar (const char *argv, double ***pZ,
+			       DATAINFO *pdinfo, int t, int *err)
+{
+    int v = varindex(pdinfo, argv);
+    double x;
+
+    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
+	char genstr[32];
+
+	sprintf(genstr, "%s[%d]", argv, t + 1);
+	x = generate_scalar(genstr, pZ, pdinfo, err);
+    } else {
+	x = generate_scalar(argv, pZ, pdinfo, err);
+    }
+
+    return x;
+}
+
 static int real_do_printf (const char *line, double ***pZ, 
-			   DATAINFO *pdinfo, PRN *prn, int t)
+			   DATAINFO *pdinfo, PRN *prn, 
+			   int t)
 {
     const char *p;
     char format[128];
@@ -2372,7 +2391,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else if ((special = literal_string(argv)) != NULL) {
 	    svals[i] = special;
 	} else {
-	    xvals[i] = generate_scalar(argv, pZ, pdinfo, &err);
+	    xvals[i] = argv_get_scalar(argv, pZ, pdinfo, t, &err);
 	}
 
 #if PRINTF_DEBUG
@@ -2434,24 +2453,24 @@ int do_printf (const char *line, double ***pZ,
     return real_do_printf(line, pZ, pdinfo, prn, -1);
 }
 
-/* originating command is of form:
+/* The originating command is of form:
 
-     genr markers=f1,f2,f3,...
+     genr markers = format, arg1,...
 
-   we're assuming that we're just getting the f* part here
+   We're assuming that we're just getting the part after
+   the equals sign here, in the variable s.
 */
 
-int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s)
+int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo)
 {
-    PRN *prn;
+    PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER);
     int t, err = 0;
 
-    prn = gretl_print_new(GRETL_PRINT_BUFFER);
     if (prn == NULL) {
-	err = E_ALLOC;
+	return E_ALLOC;
     }
 
-    if (!err && pdinfo->S == NULL) {
+    if (pdinfo->S == NULL) {
 	err = dataset_allocate_obs_markers(pdinfo);
     }
 

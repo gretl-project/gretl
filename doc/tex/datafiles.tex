@@ -264,7 +264,7 @@ The primary tool for doing this is the ``Data, Dataset structure''
 menu entry in the graphical interface, or the \texttt{setobs} command
 for scripts and the command-line interface.
 
-\subsection{Cross-section data}
+\subsection{Cross sectional data}
 \label{sec:cross-section-data}
 
 By a cross section we mean observations on a set of ``units'' (which
@@ -437,11 +437,16 @@ continued for 48 more states, followed by another 50 rows for variable
   \end{tabular}
 \end{center}
 
-If a datafile with this sort of structure is read into \app{gretl},
-the program will interpret the columns as distinct variables, so the
-data will not be usable ``as is.''  But there is a mechanism for
-correcting the situation, namely the \cmd{stack} function within
-the \cmd{genr} command.
+If a datafile with this sort of structure is read into
+\app{gretl},\footnote{Note that you will have to modify such a
+  datafile slightly before it can be read at all.  The line containing
+  the variable name (in this example \varname{x1}) will have to be
+  removed, and so will the initial row containing the years,
+  otherwise they will be taken as numerical data.}  the program
+will interpret the columns as distinct variables, so the data will not
+be usable ``as is.''  But there is a mechanism for correcting the
+situation, namely the \cmd{stack} function within the \cmd{genr}
+command.
 
 Consider the first data column in the fragment above: the first 50 rows
 of this column constitute a cross-section for the variable \varname{x1}
@@ -507,6 +512,51 @@ periods), but with 20 variables rather than 2.
       x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
 \end{code}
 
+\subsubsection{Panel data marker strings}
+
+It can be helpful with panel data to have the observations identified
+by mnemonic markers.  A special function in the \texttt{genr} command
+is available for this purpose.
+
+In the example above, suppose all the states are identified by
+two-letter codes in the left-most column of the original datafile.
+When the stacking operation is performed, these codes will be stacked
+along with the data values.  If the first row is marked \texttt{AR}
+for Arkansas, then the marker \texttt{AR} will end up being shown on
+each row containing an observation for Arkansas.  That's all very
+well, but these markers don't tell us anything about the date of the
+observation.  To rectify this we could do:
+
+\begin{code}
+    genr time
+    genr year = 1960 + (5 * time)
+    genr markers = "%s:%d", marker, year
+\end{code}
+
+The first line generates a 1-based index representing the period of
+each observation, and the second line uses the \texttt{time} variable
+to generate a variable representing the year of the observation.  The
+third line contains this special feature: if (and only if) the name of
+the new ``variable'' to generate is \texttt{markers}, the portion of
+the command following the equals sign is taken as C-style format
+string (which must be wrapped in double quotes), followed by a
+comma-separated list of arguments.  The arguments will be printed
+according to the given format to create a new set of observation
+markers.  Valid arguments are either the names of variables in the
+dataset, or the string \texttt{marker} which denotes the pre-existing
+observation marker.  The format specifiers which are likely to be
+useful in this context are \texttt{\%s} for a string and \texttt{\%d}
+for an integer.  Strings can be truncated: for example \texttt{\%.3s}
+will use just the first three characters of the string.  To chop
+initial characters off an existing observation marker when
+constructing a new one, you can use the syntax \texttt{marker + n},
+where \texttt{n} is a positive integer: in the case the first
+\texttt{n} characters will be skipped.
+
+After the commands above are processed, then, the observation markers
+will look like, for example, \texttt{AR:1965}, where the two-letter
+state code and the year of the observation are spliced together with a
+colon.
 
 \section{Missing data values}
 \label{missing-data}

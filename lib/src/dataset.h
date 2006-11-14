@@ -297,8 +297,9 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo, 
-			     char *newvar, char *s, PRN *prn);
+int dataset_stack_variables (const char *vname, const char *line,
+			     double ***pZ, DATAINFO *pdinfo, 
+			     PRN *prn);
 
 int is_log_variable (int i, const DATAINFO *pdinfo, char *parent);
 

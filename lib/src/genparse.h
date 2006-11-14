@@ -156,7 +156,7 @@ enum {
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,   /* 130: series, evaluated */
-    IVEC,     /* ector of integers, evaluated */
+    IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
