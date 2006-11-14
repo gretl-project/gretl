@@ -1371,15 +1371,10 @@ static int next_obs (arbond *ab, int i, int j0, int n)
 
 static void make_first_diff_matrix (arbond *ab, int i)
 {
-    int n, m = unit_nobs(ab, i);
+    int n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
+    int m = unit_nobs(ab, i);
     double x;
     int k, j;
-
-    if (getenv("ARBOND_ADJUST_H") != NULL) {
-	n = ab->ui[i].t2 - ab->ui[i].t1 + 1;
-    } else {
-	n = m;
-    }
 
     gretl_matrix_reuse(ab->H, n, n);
 
