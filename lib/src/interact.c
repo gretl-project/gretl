@@ -1149,7 +1149,7 @@ static void cmd_param_grab_string (CMD *cmd, const char *s)
 
 static void cmd_param_grab_word (CMD *cmd, const char *s)
 {
-    int n = strcspn(s, " \n\t");
+    int n = strcspn(s, " =\n\t");
 
     if (n > 0) {
 	free(cmd->param);
@@ -1209,6 +1209,10 @@ static int capture_param (const char *s, CMD *cmd,
 	/* test that param is present and valid */
 	check_end_command(cmd);
     }
+
+#if CMD_DEBUG
+    fprintf(stderr, "capture_param: returning %d\n", cmd->errcode);
+#endif
 
     return cmd->errcode;
 }
@@ -1731,14 +1735,15 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    /* creating empty object with explicit "null" */
 	    return cmd->errcode;
 	} 
+	fprintf(stderr, "line = '%s'\n", line);
 	line += strspn(line, " ");
 	if (*line != '=') {
 	    cmd->errcode = E_PARSE;
 	    return cmd->errcode;
 	}
 	line += strspn(line, "=");
-	nf--;
-	pos = 0;
+	pos = (*line == ' ')? 0 : -1;
+	nf = count_fields(line);
 	linelen = strlen(line);
     } else if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
 	free(cmd->extra);
@@ -2683,7 +2688,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	print_cmd_list(cmd, pdinfo, batch, echo_stdout, leadchar, 
 		       &stdlen, &prnlen, prn);
     } else if (strlen(line) > SAFELEN - 2) {
-	/* 20061115: this was confined to GENR and SMPL (?) */
+	/* 20061115: before, this was confined to GENR and SMPL (?) */
 	real_safe_print_line(line, echo_stdout, batch,  
 			     (flags & CMD_STACKING), 
 			     &stdlen, &prnlen, prn);
