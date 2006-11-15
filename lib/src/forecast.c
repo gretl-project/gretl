@@ -144,6 +144,7 @@ static FITRESID *fit_resid_new (int n)
 
     fr->model_ID = 0;
     fr->model_ci = 0;
+    fr->model_t1 = 0;
     fr->err = 0;
     fr->t0 = 0;
     fr->t1 = 0;
@@ -406,6 +407,7 @@ fit_resid_init (int t0, int t1, int t2, const MODEL *pmod,
 
     fr->model_ID = pmod->ID;
     fr->model_ci = pmod->ci;
+    fr->model_t1 = pmod->t1;
 
     fr->pmax = PMAX_NOT_AVAILABLE;
 
@@ -2401,15 +2403,10 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			    int t0, int t1, int t2, PRN *prn)
 {
     FITRESID *fr;
-    char obs[OBSLEN];
-    char ystr[32];
-    char yfstr[32];
-    char errstr[32];
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-    double xit, yt, yf;
-    double MSE, AE;
-    int effn, nf = t2 - t1 + 1;
+    double xit, yf;
+    int nf = t2 - t1 + 1;
     MODEL mod;
     int i, s, t;
     int err = 0;
@@ -2441,23 +2438,10 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return fr;
     }
 
+    fr->method = FC_ONESTEP;
+
     pdinfo->t1 = t0;
     pdinfo->t2 = t1 - 1;
-    MSE = 0.0;
-    AE = 0.0;
-    effn = 0;
-
-    ntodate(obs, t0, pdinfo);    
-    pprintf(prn, "Rolling one-step ahead forecasts and forecast errors:\n"
-	    "The forecast for time t is based on data up to time t-1, using\n"
-	    "coefficients obtained by estimating the model over the sample\n"
-	    "%s to t-1.", obs);
-    pputs(prn, "\n\n");
-
-    strcpy(ystr, pdinfo->varname[pmod->list[1]]);
-    strcpy(yfstr, _("forecast"));
-    strcpy(errstr, _("error"));
-    pprintf(prn, "\n%12s%12s%12s%12s\n\n", " ", ystr, yfstr, errstr);
 
     for (s=0; s<nf; s++) {
 	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A);
@@ -2479,41 +2463,11 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	yt = (*pZ)[mod.list[1]][t];
-	ntodate(obs, t, pdinfo);
-
-	if (na(yf)) {
-	    strcpy(yfstr, "NA");
-	} else {
-	    sprintf(yfstr, "%#.6g", yf);
-	}
-	if (na(yt)) {
-	    strcpy(ystr, "NA");
-	} else {
-	    sprintf(ystr, "%#.6g", yt);
-	}
-	if (na(yf) || na(yt)) {
-	    strcpy(errstr, "NA");
-	} else {
-	    sprintf(errstr, "%#.6g", yt - yf);
-	    MSE += (yt - yf) * (yt - yf);
-	    AE += fabs(yt - yf);
-	    effn++;
-	}
-
-	fr->actual[t] = yt;
+	fr->actual[t] = (*pZ)[mod.list[1]][t];
 	fr->fitted[t] = yf;
 	
-	pprintf(prn, "%12s%12s%12s%12s\n", obs, ystr, yfstr, errstr);
 	clear_model(&mod);
 	pdinfo->t2 += 1;
-    }
-
-    if (!err && effn > 0) {
-	MSE /= effn;
-	pprintf(prn, "\n%s = %g\n", _("Mean Squared Error"), MSE);
-	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), sqrt(MSE));
-	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
     }
 
     pdinfo->t1 = orig_t1;

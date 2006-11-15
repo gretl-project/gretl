@@ -902,26 +902,35 @@ static void fit_resid_head (const FITRESID *fr,
 			    const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
-    int i;
     char label[16];
     char mdate1[OBSLEN], mdate2[OBSLEN];
+    int onestep = fr->method == FC_ONESTEP;
+    int i;
 
-    ntodate(mdate1, fr->t1, pdinfo);
-    ntodate(mdate2, fr->t2, pdinfo);
+    if (onestep) {
+	ntodate(mdate1, fr->model_t1, pdinfo);    
+	pprintf(prn, "Rolling one-step ahead forecasts and forecast errors:\n"
+	    "The forecast for time t is based on data up to time t-1, using\n"
+	    "coefficients obtained by estimating the model over the sample\n"
+	    "%s to t-1.", mdate1);
+	pputc(prn, '\n');
+    } else {
+	ntodate(mdate1, fr->t1, pdinfo);
+	ntodate(mdate2, fr->t2, pdinfo);
+	pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
+	pputc(prn, '\n');
 
-    pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
-    pputc(prn, '\n');
-
-    if (!na(fr->sigma)) {
-	pprintf(prn, _("Standard error of residuals = %g\n"), fr->sigma);
+	if (!na(fr->sigma)) {
+	    pprintf(prn, _("Standard error of residuals = %g\n"), fr->sigma);
+	}
     }
     
     pprintf(prn, "\n     %s ", _("Obs"));
 
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, fr->depvar);
-	if (i == 2) strcpy(label, _("fitted"));
-	if (i == 3) strcpy(label, _("residuals"));
+	if (i == 2) strcpy(label, (onestep)? _("forecast") : _("fitted"));
+	if (i == 3) strcpy(label, (onestep)? _("error") : _("residual"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
 
@@ -1850,8 +1859,11 @@ int print_data_sorted (const int *list, const int *obsvec,
 int
 text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
+    int onestep = fr->method == FC_ONESTEP;
     int t, anyast = 0;
-    double xx;
+    double MSE = 0.0;
+    double AE = 0.0;
+    int effn = 0;
 
     fit_resid_head(fr, pdinfo, prn); 
 
@@ -1865,22 +1877,31 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	} else if (na(fr->fitted[t])) {
 	    pprintf(prn, "%13g\n", fr->actual[t]);
 	} else {
-	    int ast;
+	    double yt, yf, et;
+	    int ast = 0;
 
-	    xx = fr->actual[t] - fr->fitted[t];
-	    ast = (fabs(xx) > 2.5 * fr->sigma);
-	    if (ast) {
-		anyast = 1;
+	    yt = fr->actual[t];
+	    yf = fr->fitted[t];
+	    et = yt - yf;
+
+	    if (onestep) {
+		MSE += et * et;
+		AE += fabs(et);
+		effn++;
+	    } else {
+		ast = (fabs(et) > 2.5 * fr->sigma);
+		if (ast) {
+		    anyast = 1;
+		}
 	    }
+
 	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
-			fr->pmax, fr->actual[t],
-			fr->pmax, fr->fitted[t], fr->pmax, xx,
+			fr->pmax, yt, fr->pmax, yf, fr->pmax, et,
 			(ast)? " *" : "");
 	    } else {
 		pprintf(prn, "%13g%13g%13g%s\n", 
-			fr->actual[t],
-			fr->fitted[t], xx,
+			yt, yf, et,
 			(ast)? " *" : "");
 	    }
 	}
@@ -1891,6 +1912,13 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     if (anyast) {
 	pputs(prn, _("Note: * denotes a residual in excess of "
 		     "2.5 standard errors\n"));
+    }
+
+    if (effn > 0) {
+	MSE /= effn;
+	pprintf(prn, "%s = %g\n", _("Mean Squared Error"), MSE);
+	pprintf(prn, "%s = %g\n", _("Root Mean Squared Error"), sqrt(MSE));
+	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
     }
 
     return 0;

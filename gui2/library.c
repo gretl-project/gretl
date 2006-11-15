@@ -1296,24 +1296,6 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	rolling = 1;
     }
 
-#if 0
-    if (rolling) {
-	if (bufopen(&prn)) {
-	    return;
-	}
-	err = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
-					 pmod->t1, t1, t2,
-					 prn);
-	if (err) {
-	    gui_errmsg(err);
-	} else {
-	    view_buffer(prn, 78, 400, _("gretl: forecasts"), PRINT, NULL);
-	}
-	/* graph? */
-	return;
-    }
-#endif
-
     if (rolling) {
 	fr = rolling_OLS_one_step_fcast(pmod, &Z, datainfo,
 					pmod->t1, t1, t2,
@@ -1345,12 +1327,17 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     } else {
 	gretlopt popt = (LIMDEP(pmod->ci))? OPT_NONE : OPT_P;
 	int width = 78;
-	
-	err = text_print_forecast(fr, &Z, datainfo, popt, prn);
+
+	if (rolling) {
+	    popt = 0; /* FIXME */
+	    err = text_print_fit_resid(fr, datainfo, prn);
+	} else {
+	    err = text_print_forecast(fr, &Z, datainfo, popt, prn);
+	}
 	if (!err && popt == OPT_P) {
 	    register_graph();
 	}
-	if (fr->sderr == NULL) {
+	if (!rolling && fr->sderr == NULL) {
 	    width = 50;
 	}
 	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);

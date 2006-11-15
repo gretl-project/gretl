@@ -23,12 +23,14 @@
 typedef enum {
     FC_STATIC,
     FC_DYNAMIC,
-    FC_AUTO
+    FC_AUTO,
+    FC_ONESTEP
 } ForecastMethod;
 
 struct FITRESID_ {
     int model_ID;
     int model_ci;
+    int model_t1;
     int method;
     double *actual;
     double *fitted;
