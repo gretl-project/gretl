@@ -1,9 +1,5 @@
 \chapter{Maximum likelihood estimation}
 
-\newcommand{\LogLik}{\ensuremath\ell}
-\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
-\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
-
 \section{Generic ML estimation with gretl}
 
 Maximum likelihood estimation is a cornerstone of modern inferential
@@ -490,13 +486,13 @@ end mle --verbose
 
 Here, 1000 data points are artificially generated for an ordinary
 probit model\footnote{Again, gretl does provide a native
-  \texttt{probit} command, but a probit model makes for a nice
-  example here.}: $y_t$ is a binary variable, which takes the value 1 if
-$y_t^* = \beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t} +
-\varepsilon_t > 0$ and 0 otherwise. Therefore, $y_t = 1$ with
-probability $\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) =
-\pi_t$.  The probability function for one observation can be written
-as
+  \texttt{probit} command (see section \ref{sec:logit-probit}), but a
+  probit model makes for a nice example here.}: $y_t$ is a binary
+variable, which takes the value 1 if $y_t^* = \beta_1 x_{1t} + \beta_2
+x_{2t} + \beta_3 x_{3t} + \varepsilon_t > 0$ and 0 otherwise.
+Therefore, $y_t = 1$ with probability $\Phi(\beta_1 x_{1t} + \beta_2
+x_{2t} + \beta_3 x_{3t}) = \pi_t$.  The probability function for one
+observation can be written as
 \[
   P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t}
 \]

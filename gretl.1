@@ -1,13 +1,10 @@
-.TH "gretl" "1" "0.98" "Allin Cottrell" "econometrics"
+.TH "gretl" "1" "1.6.0" "Allin Cottrell" "econometrics"
 .SH "NAME"
 gretl \- GNU Regression, Econometrics and Time\-series Library
 
-.SH "SYNTAX"
-gretl
+.SH "SYNOPSIS"
+\fBgretl\fR [ options ] [ \fIdatafile\fP | \fIscriptfile\fP | \fIsessionfile\fP ]
 .br 
-gretl <\fIdatafile\fP>
-.br 
-gretl \-\-run <\fIscriptfile\fP>
 
 .SH "DESCRIPTION"
 gretl is an econometrics package, built around a shared
@@ -23,14 +20,47 @@ printed manual, which is available in PDF format via the
 gretl website, \fBhttp://gretl.sourceforge.net\fR.
 
 .SH "OPTIONS"
-.TP 
-\fB\-\-help\fR
+These are the options supported by the \fBgretl_x11\fR program;
+\fBgretlcli\fR supports a subset of these.
+.TP
+\fB\-b\fR script, \fB\-\-batch\fR script
+
+Open a script.
+.TP
+\fB\-c\fR, \fB\-\-dump\fR
+
+Dump the configuration file.
+.TP
+\fB\-d\fR database, \fB\-\-db\fR database
+
+Open a local database.
+.TP
+\fB\-e\fR, \fB\-\-english\fR
+
+Force use of English.
+.TP
+\fB\-q\fR, \fB\-\-basque\fR
+
+Force use of Basque translation.
+.TP
+\fB\-r\fR script, \fB\-\-run\fR script
+
+Open a script.
+.TP
+\fB\-w\fR database, \fB\-\-webdb\fR database
+
+Open a remote database.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+
 Give help information and exit.
 .TP 
-\fB\-\-version\fR
+\fB\-v\fR, \fB\-\-version\fR
+
 Give version information and exit.
+
 .SH "FILES"
-\fI~/.gretlrc\fP Per\-user configuration file
+\fI~/.gretl2rc\fP Per\-user configuration file
 .TP
 \fI~/.gretl\fP Default directory for user files
 
@@ -41,6 +71,9 @@ Specifies the user's home directory
 .TP 
 \fBDISPLAY\fP
 Specifies the X window display to use
+
+.SH "SEE ALSO"
+\fBgretlcli\fR(1), \fBgretl-config\fR(1)
 
 .SH "AUTHOR"
 Allin Cottrell <cottrell@wfu.edu>

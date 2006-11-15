@@ -1,0 +1,58 @@
+.TH "gretlcli" "1" "1.6.0" "Allin Cottrell" "econometrics"
+.SH "NAME"
+gretlcli \- Command\-line client for the GNU Regression, Econometrics and Time\-series Library
+
+.SH "SYNOPSIS"
+\fBgretlcli\fR [ options ] [ \fIdatafile\fP | \fIscriptfile\fP | \fIsessionfile\fP ]
+.br 
+
+.SH "DESCRIPTION"
+\fBgretlcli\fR is the command\-line client for the \fBlibgretl\fR
+library. It is called by the \fBgretl\fR wrapper script if the
+DISPLAY environment variable is not set.
+
+For details, please consult the online help, or read the
+printed manual, which is available in PDF format via the
+gretl website, \fBhttp://gretl.sourceforge.net\fR.
+
+.SH "OPTIONS"
+.TP
+\fB\-b\fR script, \fB\-\-batch\fR script
+
+Run a script and exit.
+.TP
+\fB\-e\fR, \fB\-\-english\fR
+
+Force use of English.
+.TP
+\fB\-q\fR, \fB\-\-basque\fR
+
+Force use of Basque translation.
+.TP
+\fB\-r\fR script, \fB\-\-run\fR script
+
+Run a script then hand control to the command line.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+
+Give help information and exit.
+.TP 
+\fB\-v\fR, \fB\-\-version\fR
+
+Give version information and exit.
+
+.SH "FILES"
+\fI~/.gretl2rc\fP Per\-user configuration file
+.TP
+\fI~/.gretl\fP Default directory for user files
+
+.SH "ENVIRONMENT VARIABLES"
+.TP 
+\fBHOME\fP
+Specifies the user's home directory
+
+.SH "SEE ALSO"
+\fBgretl\fR(1), \fBgretl-config\fR(1)
+
+.SH "AUTHOR"
+Allin Cottrell <cottrell@wfu.edu>

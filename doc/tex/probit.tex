@@ -1,0 +1,83 @@
+\chapter{Discrete and censored dependent variables}
+\label{discr-models}
+
+\section{Logit and probit models}
+\label{sec:logit-probit}
+
+It often happens that one wants to specify and estimate a model in
+which the dependent variable is not continuous, but discrete. A
+typical example is a model in which the dependent variable is the
+occupational status of an individual (1 = employed, 0 = unemployed). A
+convenient way of formalizing this situation is to consider the
+variable $y_i$ as a Bernoulli random variable and analyze its
+conditional distribution on the explanatory variables $x_i$, that is
+\begin{equation}
+  \label{eq:qr-Bernoulli}
+  y_i \left\{ 
+    \begin{array}{ll} 1 & P_i \\ 0 & 1 - P_i \end{array}
+    \right. 
+\end{equation}
+where $P_i$ is some function of the explanatory variables $x_i$.
+
+In most cases, the function $P_i$ is a cumulative distribution
+function, applied to a linear combination of the $x_i$'s. In the
+probit model, the Normal cdf is used, while the logit model employs
+the logistic function $\Lambda()$. Therefore, we have
+\begin{eqnarray}
+  \label{eq:qr-link}
+  \textrm{probit} & \qquad & P_i = \Phi(z_i)  \\
+  \textrm{logit}  & \qquad & P_i = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
+  & &z_i = \sum_{j=1}^k x_{ij} \beta_j
+\end{eqnarray}
+where $z_i$ is commonly known as the \emph{index} function. Note that
+in this case the coefficients $\beta_j$ cannot be interpreted as the
+partial derivatives of $E(y_i | x_i)$ with respect to $x_{ij}$. Another
+equivalent way of putting this model is to think that there is an
+unobserved variable $y^*_i$ which can be described via the model
+\begin{equation}
+  \label{eq:qr-latent}
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i = z_i  +
+  \varepsilon_i ;
+\end{equation}
+we observe $y_i = 1$ whenever $y^*_i > 0$ and $y_i = 0$ otherwise. If
+$\varepsilon_i$ is assumed to be normal, then we have the probit
+model. The logit model arises when assuming that the density function of
+$\varepsilon_i$ is 
+\[
+  \lambda(\varepsilon_i) =
+  \pder{\Lambda(\varepsilon_i)}{\varepsilon_i} =
+  \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2} .
+\]
+
+Both the probit and logit model are estimated in \app{gretl} via
+maximum likelihood, which requires numerical optimization. However, in
+most cases this is totally transparent to the user, since only a few
+iterations are normally needed to ensure convergence. The
+\texttt{--verbose} switch can be used to track the maximization
+algorithm.
+
+Example: \ldots
+
+\subsection{Ordered models}
+\label{sec:ordered}
+
+\section{The Tobit model}
+\label{sec:tobit}
+
+\subsection{Generalized Tobit model}
+\label{sec:heckit}
+
+include Heckman example script
+
+\section{Count data}
+\label{sec:poisson}
+
+also include example script for negative binomial (done in Vebeek
+example files).
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

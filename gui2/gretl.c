@@ -592,11 +592,19 @@ GtkItemFactoryEntry data_items[] = {
 static void gui_usage (void)
 {
     gui_logo(NULL);
-    printf(I_("You may supply the name of a data file on the command line.\n"));
-    printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
-    printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
-    printf(I_("You may do \"gretl -e\" to force use of English.\n"));
-    printf(I_("You may do \"gretl -q\" to force use of Basque.\n"));
+
+    printf(I_("\nYou may supply the name of a data file on the command line.\n"
+	      "Options:\n"
+	      " -b or --batch     Open a command script.\n"
+	      " -c or --dump      Dump the configuration file.\n"
+	      " -d or --db        Open a local database.\n"
+	      " -e or --english   Force use of English rather than translation.\n"
+	      " -q or --basque    Force use of Basque translation.\n"
+	      " -r or --run       Open a command script.\n"
+	      " -w or --webdb     Open a remote database.\n"
+	      " -h or --help      Print this info and exit.\n"
+	      " -v or --version   Print version info and exit.\n"));
+
     exit(0);
 }
 
