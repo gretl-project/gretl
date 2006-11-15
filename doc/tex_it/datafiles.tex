@@ -435,7 +435,11 @@ stati, seguita da altre 50 righe per la variabile \varname{x2}.
   \end{tabular}
 \end{center}
 
-Se un tale file di dati viene importato in \app{gretl}, il programma
+Se un tale file di dati viene importato in \app{gretl}\footnote{Si noti che
+  occorrerà fare alcune piccole modifiche al file affinché possa essere letto:
+  bisognerà rimuovere la riga che contiene il nome della variabile (in questo
+  esempio \varname{x1}) e la riga iniziale che contiene gli anni, altrimenti essi
+  verranno importati come valori numerici.}, il programma
 interpreterà le colonne come variabili diverse, rendendo inutilizzabili i dati.
 Esiste però un meccanismo per gestire queste situazioni, ossia la funzione
 \cmd{stack} del comando \cmd{genr}.
@@ -502,6 +506,50 @@ nell'esempio seguente, che ipotizza una situazione uguale a quella precedente
       x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
 \end{code}
 
+\subsubsection{Marcatori nei dati panel}
+
+Quando si lavora con dati panel, può essere utile usare dei marcatori
+di facile memorizzazione per identificare le osservazioni. Per questo scopo
+esiste una funzione speciale da usare con il comando \texttt{genr}.
+
+Nell'esempio precedente, si supponga che tutti gli stati siano identificati con
+codici di due lettere, presenti nella colonna più a sinistra del file di dati
+originale. Quando si usa la funzione \cmd{stack}, questi codici verranno
+impilati assieme ai valori dei dati. Se la prima riga è marcata con \texttt{AR}
+per l'Arkansas, il marcatore \texttt{AR} verrà a trovarsi su ogni riga che
+contiene un'osservazione relativa all'Arkansas. Tutto bene, ma questi marcatori
+non danno alcuna informazione sulla data dell'osservazione. Per correggere la
+situazione potremmo eseguire:
+
+\begin{code}
+    genr time
+    genr year = 1960 + (5 * time)
+    genr markers = "%s:%d", marker, year
+\end{code}
+
+La prima riga genera un indice che parte da 1 e rappresenta il periodo di ogni
+osservazione, mentre la seconda riga usa la variabile \texttt{time} per generare
+una variabile che rappresenta l'anno dell'osservazione. La terza riga contiene
+questa funzionalità speciale: se (e solo se) il nome della nuova ``variabile''
+da generare è \texttt{markers}, la parte del comando che segue il segno di
+uguaglianza viene interpretata come una stringa di formattazione nello stile del
+linguaggio C (andrà racchiusa tra virgolette doppie), seguita da una lista di
+argomenti separati da virgola. Gli argomenti verranno stampati seguendo la
+formattazione indicata e creeranno un nuovo insieme di marcatori per le
+osservazioni. È possibile indicare come argomento dei nomi di variabili del
+dataset, o la stringa \texttt{marker} che rappresenta il marcatore preesistente.
+Gli specificatori di formato più utili in questo contesto sono \texttt{\%s}
+per le stringhe e \texttt{\%d} per i numeri interi. Le stringhe possono essere
+troncate: ad esempio \texttt{\%.3s} indica di usare solo i primi tre caratteri
+della stringa. Per eliminare i caratteri iniziali da un marcatore esistente e
+costruirne un altro, si può usare la sintassi \texttt{marker + n}, dove
+\texttt{n} è un intero positivo: in questo caso, verranno omessi i primi
+\texttt{n} caratteri.
+
+Dopo aver eseguito i comandi visti sopra, i marcatori delle osservazioni
+appariranno come, ad esempio, \texttt{AR:1965}, ossia, il codice a due lettere
+relativo allo stato, seguito dall'anno dell'osservazione, uniti da un carattere
+due punti.
 
 \section{Valori mancanti nei dati}
 \label{missing-data}
