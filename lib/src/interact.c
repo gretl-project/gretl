@@ -1735,7 +1735,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    /* creating empty object with explicit "null" */
 	    return cmd->errcode;
 	} 
-	fprintf(stderr, "line = '%s'\n", line);
 	line += strspn(line, " ");
 	if (*line != '=') {
 	    cmd->errcode = E_PARSE;
