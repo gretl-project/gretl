@@ -5844,7 +5844,7 @@ static void output_line (const char *line, PRN *prn)
 	pprintf(prn, "\n%s\n", line);
     } else if (line[0] == '#') {
 	if (gretl_compiling_loop()) {
-	    pprintf(prn, "> %s\n", line);;
+	    pprintf(prn, "> %s\n", line);
 	} else {
 	    pprintf(prn, "%s\n", line);
 	}

@@ -430,15 +430,19 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
 static void grab_arbond_diag (char *s, CMD *cmd)
 {
     int i, n = strlen(s);
+    char *p;
 
     for (i=n-1; i>0; i--) {
 	if (s[i] == ';') {
 	    free(cmd->param); 
-	    cmd->param = gretl_strdup(s + i + 1);
+	    p = s + i + 1;
+	    while (*p == ' ') p++;
+	    cmd->param = gretl_strdup(p);
 	    if (cmd->param == NULL) {
 		cmd->errcode = E_ALLOC;
 	    }
 	    s[i] = 0;
+	    tailstrip(s);
 	    break;
 	}
     }
@@ -2293,27 +2297,29 @@ static void trim_to_length (char *s, int oklen)
 
 static void 
 real_safe_print_line (const char *line, int cli, int batch, 
-		      int script, PRN *prn)
+		      int script, int *stdlen, int *prnlen,
+		      PRN *prn)
 {
     char tmp[SAFELEN];
-    const char *split = " \\";
-    const char *leader;
-    const char *leaders[] = { "? ", "> " };
+    const char *leader = "";
+    const char *lstr[] = { "? ", "> " };
     const char *p, *q;
-    int n, out, rem;
+    int n, m, out, rem;
 
     if (!cli && batch) return;
 
-    if (gretl_compiling_loop()) {
-	leader = leaders[1];
-    } else {
-	leader = leaders[0];
+    if (cli && !batch) {
+	leader = " ";
+    } else if (cli || script) {
+	leader = (gretl_compiling_loop())? lstr[1] : lstr[0];
     }
 
     if (cli) {
-	printf("%s", (batch)? leader : " ");
+	fputs(leader, stdout);
+	*stdlen += strlen(leader);
     } else if (script) {
 	pputs(prn, leader); 
+	*prnlen += strlen(leader);
     }	
 
     rem = n = strlen(line);
@@ -2325,21 +2331,37 @@ real_safe_print_line (const char *line, int cli, int batch,
 	q = p;
 	strncat(tmp, p, SAFELEN - 1);
 	trim_to_length(tmp, SAFELEN);
-	out += strlen(tmp);
+	m = strlen(tmp);
+	out += m;
 	rem = n - out;
-	p = q + strlen(tmp);
+	p = q + m;
 	if (cli) {
-	    printf("%s%s\n", tmp, (rem > 0)? split : "");
+	    if (rem > 0) {
+		printf("%s \\\n ", tmp);
+		*stdlen = 1;
+	    } else {
+		printf("%s", tmp);
+		*stdlen += m;
+	    }
 	}
 	if (!batch) {
-	    pprintf(prn, "%s%s\n", tmp, (rem > 0)? split : "");
+	    if (rem > 0) {
+		pprintf(prn, "%s \\\n ", tmp);
+		*prnlen = 1;
+	    } else {
+		pprintf(prn, "%s", tmp);
+		*prnlen += m;
+	    }
 	}
     }
 }
 
 void safe_print_line (const char *line, PRN *prn)
 {
-    real_safe_print_line(line, 0, 0, 1, prn);
+    int l1 = 0, l2 = 0;
+
+    real_safe_print_line(line, 0, 0, 1, &l1, &l2, prn);
+    pputc(prn, '\n');
 }
 
 static int
@@ -2426,8 +2448,7 @@ static int n_separators (const int *list)
     return nsep;
 }
 
-#define listsep_switch(c) (c == AR || c == ARBOND || c == ARMA || \
-                           c == GARCH || c == MPOLS)
+#define listsep_switch(c) (c == AR || c == MPOLS)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
                        c == CORRGM || c == SCATTERS || c == MPOLS || \
@@ -2442,16 +2463,11 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		int batch, int echo_stdout, char leadchar,
 		int *stdlen, int *prnlen, PRN *prn)
 {
-    int use_varnames = 1;
+    int use_varnames = (cmd->ci != AR);
     char first[16];
     int nsep, gotsep, i;
 
     nsep = n_separators(cmd->list);
-
-    if (cmd->ci == AR || cmd->ci == ARBOND ||
-	cmd->ci == ARMA || cmd->ci == GARCH) {
-	use_varnames = 0;	
-    }
 
     if (cmd->ci == REMEMBER && cmd->extra != NULL) {
 	sprintf(first, "# %s", cmd->word);
@@ -2515,17 +2531,6 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
     }
 
-#if 0
-    if (cmd->ci == STORE) {
-	if (echo_stdout) {
-	    printf(" \\\n");
-	}
-	if (!batch) {
-	    pputs(prn, " \\\n");
-	}
-    }
-#endif
-
     gotsep = 0;
 
     for (i=1; i<=cmd->list[0]; i++) {
@@ -2573,7 +2578,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
     }
 }
 
-#undef ECHO_DEBUG
+#define ECHO_DEBUG 0
 
 static int is_silent (const CMD *cmd, const char *line)
 {
@@ -2589,6 +2594,15 @@ static int is_silent (const CMD *cmd, const char *line)
 
     return 0;
 }
+
+/* these commands have sub-lists that may contain either
+   numerical values or the names of scalar variables:
+   this can't be handled properly by the list-printing
+   mechanism */
+
+#define dont_print_list(c) ((c->flags & CMD_NOLIST) || \
+                             c->ci == ARMA || c->ci == GARCH || \
+                             c->ci == ARBOND)
 
 /**
  * echo_cmd:
@@ -2615,11 +2629,15 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
 #if ECHO_DEBUG
-    fprintf(stderr, "echo_cmd: line='%s', echo_stdout=%d, cmd->opt=%ld, batch=%d, "
-	    "param='%s', nolist=%d\n", line, echo_stdout, cmd->opt, batch, cmd->param,
-	    cmd_nolist(cmd));
+    fprintf(stderr, "echo_cmd:\n line='%s'\n param='%s'\n extra='%s'\n", 
+	    line, cmd->param, cmd->extra);
+    fprintf(stderr, " echo_stdout=%d, cmd->opt=%ld, batch=%d, nolist=%d\n",
+	    echo_stdout, cmd->opt, batch, cmd_nolist(cmd));
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
+    if (!cmd_nolist(cmd)) {
+	printlist(cmd->list, "cmd->list");
+    }
 #endif
 
     /* don't echo certain things */
@@ -2661,14 +2679,14 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	prnlen += strlen(cmd->savename) + 4;
     }
 
-    if (!cmd_nolist(cmd)) { 
-	/* command has a list of args to be printed */
+    if (!dont_print_list(cmd)) {
 	print_cmd_list(cmd, pdinfo, batch, echo_stdout, leadchar, 
 		       &stdlen, &prnlen, prn);
-    } else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
-	       strlen(line) > SAFELEN - 2) {
+    } else if (strlen(line) > SAFELEN - 2) {
+	/* 20061115: this was confined to GENR and SMPL (?) */
 	real_safe_print_line(line, echo_stdout, batch,  
-			     (flags & CMD_STACKING), prn);
+			     (flags & CMD_STACKING), 
+			     &stdlen, &prnlen, prn);
     } else if (strcmp(cmd->word, "quit")) {
 	if (echo_stdout) {
 	    if (batch) {
@@ -2683,19 +2701,27 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
     /* print parameter after list, if wanted */
-    if (cmd->ci == LOGISTIC) {
-	if (cmd->param[0] != '\0') {
-	    len = strlen(cmd->param) + 1;
-	    if (echo_stdout) {
-		putchar(' ');
-		fputs(cmd->param, stdout);
-		stdlen += len;
+    if ((cmd->ci == LOGISTIC || cmd->ci == ARBOND) && *cmd->param != '\0') {
+	const char *leader = (cmd->ci == ARBOND)? " ; " : " ";
+
+	len = strlen(cmd->param) + strlen(leader);
+	if (echo_stdout) {
+	    if (stdlen + len > LINELEN) {
+		fputs(" \\\n ", stdout);
+		stdlen = 0;
 	    }
-	    if (!batch) {
-		pputc(prn, ' ');
-		pputs(prn, cmd->param);
-		prnlen += len;
-	    }
+	    fputs(leader, stdout);
+	    fputs(cmd->param, stdout);
+	    stdlen += len;
+	}
+	if (!batch) {
+	    if (prnlen + len > LINELEN) {
+		pputs(prn, " \\\n ");
+		prnlen = 0;
+	    }	    
+	    pputs(prn, leader);
+	    pputs(prn, cmd->param);
+	    prnlen += len;
 	}
     }
 
