@@ -1266,7 +1266,7 @@
 	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
 	  ascii="BIC = -2L + k log T"
           graphic="bic_orig"/>
-	Si vada la <guideref targ="select-criteria"/> per ulteriori dettagli.
+	Si veda la <guideref targ="select-criteria"/> per ulteriori dettagli.
       </para>
     </description>
 
