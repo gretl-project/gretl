@@ -4517,7 +4517,7 @@
 
       <para context="cli">
 	Per questo comando è disponibile un'opzione abbastanza speciale (utile
-        soprattutto a scopo di test): se la lista <repl>variabili-indipendeti</repl>
+        soprattutto a scopo di test): se la lista <repl>variabili-indipendenti</repl>
         è seguita da un punto e virgola, e da un'ulteriore lista di numeri,
         questi numeri vengono interpretati come potenze di <repl>x</repl> da aggiungere
         alla regressione, dove <repl>x</repl> è l'ultima variabile della lista
@@ -5177,7 +5177,7 @@
         convergenza, le stime sono di massima verosimiglianza.
       </para>
       <para context="cli">
-        Come ulteriore alernativa, se si usa l'opzione <lit>--between</lit>,
+        Come ulteriore alternativa, se si usa l'opzione <lit>--between</lit>,
         viene stimato il modello tra i gruppi, ossia una regressione OLS usando
         le medie dei gruppi.
       </para>
@@ -5260,7 +5260,7 @@
         ogni passo, i residui vengono ricalcolati usando le stime WLS
         disponibili per i parametri, fornendo così un nuovo insieme di stime per
         le varianze degli errori, e quindi un nuovo insieme di pesi.
-	Le iterazioni si arrestanso quando la massima differenza nelle stime dei
+	Le iterazioni si arrestano quando la massima differenza nelle stime dei
         parametri tra un passo e l'altro scende sotto 0.0001, oppure se il
         numero di iterazioni supera 20. Se la procedura converge, le stime
         risultanti sono di massima verosimiglianza.
@@ -6479,7 +6479,7 @@
 	<li>	  
 	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
             uguale a 20. Determina il numero di cifre usate per mostrare i
-            valori delle variabili quando vuene usata l'opzione
+            valori delle variabili quando viene usata l'opzione
 	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
 	  </para>
 	</li>
@@ -7573,7 +7573,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Modelli bivatiati/Differenza delle varianze</menu-path>
+      <menu-path>/Modello/Modelli bivariati/Differenza delle varianze</menu-path>
     </gui-access>
 
   </command>
