@@ -160,69 +160,45 @@ static int arbond_allocate (arbond *ab)
     }
 }
 
-/* FIXME: we need a proper mechanism for recognizing the
-   filiation of differences and lagged differences !!
-*/
+/* if the const has been included among the regressors but not the
+   instruments, add it to the instruments */
 
-static int block_vars_delete (arbond *ab, int *list, 
-			      const DATAINFO *pdinfo)
+static int maybe_add_const_to_ilist (arbond *ab)
 {
-    char lpar[VNAMELEN];
-    const char *s;
-    int i, j, v;
+    int i, addc = 0;
+    int err = 0;
 
-    for (i=1; i<=list[0]; i++) {
-	int del = 0;
+    if (ab->xlist == NULL || (ab->nz == 0 && ab->nzb == 0)) {
+	/* no x's, or all x's treated as exogenous already */
+	return 0;
+    }
 
-	if (list[i] == 0) {
-	    continue;
+    for (i=1; i<=ab->xlist[0]; i++) {
+	if (ab->xlist[i] == 0) {
+	    addc = 1;
+	    break;
 	}
+    }
 
-	fprintf(stderr, "looking at list[%d] = %d (%s)\n", i, list[i],
-		pdinfo->varname[list[i]]);
-
-	for (j=0; j<ab->nzb; j++) {
-	    if (list[i] == ab->d[j].v) {
-		gretl_list_delete_at_pos(list, i--);
-		del = 1;
+    if (addc && ab->ilist != NULL) {
+	for (i=1; i<=ab->ilist[0]; i++) {
+	    if (ab->ilist[i] == 0) {
+		addc = 0;
 		break;
-	    }
-	}
-	if (!del) {
-	    s = VARLABEL(pdinfo, list[i]);
-	    if (strstr(s, "diff")) {
-		for (j=0; j<ab->nzb; j++) {
-		    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
-			gretl_list_delete_at_pos(list, i--);
-			fprintf(stderr, " ** diff: removing as exog var\n");
-			del = 1;
-			break;
-		    }
-		}
-	    }
-	}
-	if (!del) {
-	    if (sscanf(s, "= %15[^(](t", lpar)) {
-		fprintf(stderr, " lag parent ?= '%s'\n", lpar);
-		v = varindex(pdinfo, lpar);
-		if (v < pdinfo->v) {
-		    s = VARLABEL(pdinfo, v);
-		    if (strstr(s, "diff")) {
-			for (j=0; j<ab->nzb; j++) {
-			    if (strstr(s, pdinfo->varname[ab->d[j].v])) {
-				gretl_list_delete_at_pos(list, i--);
-				fprintf(stderr, " ** lagged diff: removing as exog var\n");
-				del = 1;
-				break;
-			    }
-			}
-		    }
-		}
 	    }
 	}
     }
 
-    return 0;
+    if (addc) {
+	ab->ilist = gretl_list_append_term(&ab->ilist, 0);
+	if (ab->ilist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    ab->nz += 1;
+	}
+    }
+
+    return err;
 }
 
 static int arbond_make_lists (arbond *ab, const int *list, int xpos,
@@ -266,22 +242,18 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos,
 #if ADEBUG
 	printlist(ab->xlist, "ab->xlist");
 #endif
-	if (nz == 0) {
-	    /* implicitly all x vars are exogenous ... */
+	if (nz == 0 && ab->nzb == 0) {
+	    /* implicitly all x vars are exogenous */
 	    ab->ilist = gretl_list_copy(ab->xlist);
 	    if (ab->ilist == NULL) {
 		return E_ALLOC;
-	    }
-	    /* ... unless there's a block-diagonal spec */
-	    if (ab->nzb > 0) {
-		block_vars_delete(ab, ab->ilist, pdinfo);
 	    }
 	    ab->nz = ab->ilist[0];
 	}
     }
 
     if (nz > 0) {
-	/* compose instruments list */
+	/* compose regular instruments list */
 	ab->ilist = gretl_list_new(nz);
 	if (ab->ilist == NULL) {
 	    return E_ALLOC;
@@ -291,6 +263,8 @@ static int arbond_make_lists (arbond *ab, const int *list, int xpos,
 	}
 	ab->nz = nz;
     } 
+
+    err = maybe_add_const_to_ilist(ab);
 
 #if ADEBUG
     printlist(ab->ilist, "ab->ilist");

@@ -2392,15 +2392,12 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     }
 }
 
-/* rolling one-step ahead forecasts and forecast errors, for models
+/* recursive one-step ahead forecasts and forecast errors, for models
    estimated via OLS */
-
-/* FIXME this needs to be properly done using the FITRESID structure,
-   which may need modifying */
 
 FITRESID * 
 rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    int t0, int t1, int t2, PRN *prn)
+			    int t0, int t1, int t2)
 {
     FITRESID *fr;
     int orig_t1 = pdinfo->t1;
@@ -2421,8 +2418,6 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return fr;
     }
 
-    /* Reject in case model was estimated using repacked daily
-       data: this case should be handled more elegantly */
     if (gretl_model_get_int(pmod, "daily_repack")) {
 	fr->err = E_DATA;
 	return fr;
@@ -2442,6 +2437,10 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     pdinfo->t1 = t0;
     pdinfo->t2 = t1 - 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	fr->actual[t] = (*pZ)[pmod->list[1]][t];
+    }
 
     for (s=0; s<nf; s++) {
 	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A);
@@ -2463,7 +2462,6 @@ rolling_OLS_one_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	fr->actual[t] = (*pZ)[mod.list[1]][t];
 	fr->fitted[t] = yf;
 	
 	clear_model(&mod);

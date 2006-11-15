@@ -2259,7 +2259,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     n = t2 - t1 + 1;
 
     if (n < 3) {
-	/* won't draw a graph for 2 datapoints or less */
+	/* won't draw a graph for 2 data points or less */
 	return 1;
     }
 
@@ -2301,7 +2301,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
 		varname);
     }
-    fprintf(fp, "'-' using 1:2 title '%s' w lines", I_("fitted"));
+    fprintf(fp, "'-' using 1:2 title '%s' w lines", I_("forecast"));
     if (do_errs) {
 	fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
 		I_("95 percent confidence interval"));

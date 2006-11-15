@@ -903,21 +903,25 @@ static void fit_resid_head (const FITRESID *fr,
 			    PRN *prn)
 {
     char label[16];
-    char mdate1[OBSLEN], mdate2[OBSLEN];
+    char obs1[OBSLEN], obs2[OBSLEN];
     int onestep = fr->method == FC_ONESTEP;
     int i;
 
     if (onestep) {
-	ntodate(mdate1, fr->model_t1, pdinfo);    
-	pprintf(prn, "Rolling one-step ahead forecasts and forecast errors:\n"
-	    "The forecast for time t is based on data up to time t-1, using\n"
-	    "coefficients obtained by estimating the model over the sample\n"
-	    "%s to t-1.", mdate1);
-	pputc(prn, '\n');
+	ntodate(obs1, fr->model_t1, pdinfo);   
+	pputs(prn, _("Recursive one-step ahead forecasts"));
+	pputs(prn, "\n\n");
+	pprintf(prn, _("The forecast for time t is based on (a) coefficients obtained by\n"
+		       "estimating the model over the sample %s to t-1, and (b) the\n"
+		       "regressors evaluated at time t."), obs1);
+	pputs(prn, "\n\n");
+	pputs(prn, _("This is truly a forecast only if all the stochastic regressors\n"
+		     "are in fact lagged values."));
+	pputs(prn, "\n\n");
     } else {
-	ntodate(mdate1, fr->t1, pdinfo);
-	ntodate(mdate2, fr->t2, pdinfo);
-	pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
+	ntodate(obs1, fr->t1, pdinfo);
+	ntodate(obs2, fr->t2, pdinfo);
+	pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
 	pputc(prn, '\n');
 
 	if (!na(fr->sigma)) {
@@ -1864,6 +1868,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     double MSE = 0.0;
     double AE = 0.0;
     int effn = 0;
+    int err = 0;
 
     fit_resid_head(fr, pdinfo, prn); 
 
@@ -1921,7 +1926,22 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "%s = %g\n", _("Mean Absolute Error"), AE / effn);
     }
 
-    return 0;
+    if (onestep && fr->nobs > 0 && gretl_in_gui_mode()) {
+	const double *obs = gretl_plotx(pdinfo);
+	int ts = dataset_is_time_series(pdinfo);
+	int t0 = (fr->t0 >= 0)? fr->t0 : 0;
+
+	if (obs == NULL) {
+	    err = 1;
+	} else {
+	    err = plot_fcast_errs(t0, fr->t2, obs, 
+				  fr->actual, fr->fitted, NULL, 
+				  fr->depvar, (ts)? pdinfo->pd : 0);
+	}
+    }
+
+
+    return err;
 }
 
 /**
@@ -1942,13 +1962,11 @@ int text_print_forecast (const FITRESID *fr,
 			 double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
-    int t, err = 0;
     int do_errs = (fr->sderr != NULL);
     int pmax = fr->pmax;
     int errpmax = fr->pmax;
     double *maxerr = NULL;
-    int time_series = (pdinfo->structure == TIME_SERIES);
-    int plot = (opt & OPT_P);
+    int t, err = 0;
 
     if (do_errs) {
 	maxerr = malloc(fr->nobs * sizeof *maxerr);
@@ -2022,16 +2040,17 @@ int text_print_forecast (const FITRESID *fr,
 
     /* do we really want a plot for non-time series? */
 
-    if (plot && fr->nobs > 0) {
+    if ((opt & OPT_P) && fr->nobs > 0) {
 	const double *obs = gretl_plotx(pdinfo);
+	int ts = dataset_is_time_series(pdinfo);
+	
 
 	if (obs == NULL) {
 	    err = 1;
 	} else {
 	    err = plot_fcast_errs(fr->t0, fr->t2, obs, 
 				  fr->actual, fr->fitted, maxerr, 
-				  fr->depvar, 
-				  (time_series)? pdinfo->pd : 0);
+				  fr->depvar, (ts)? pdinfo->pd : 0);
 	}
     }
 
