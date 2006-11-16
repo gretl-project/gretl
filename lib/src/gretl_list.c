@@ -1697,7 +1697,7 @@ int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
 	    *test = 0;
 	    strncat(test, s, len);
 
-	    /* valid elements: var numbers, varnames, named lists */
+	    /* valid elements: integers, varnames, named lists */
 
 	    if (isdigit(*test)) {
 		v = positive_int_from_string(test);

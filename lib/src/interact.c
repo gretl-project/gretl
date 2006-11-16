@@ -1772,10 +1772,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} 
 	line += strspn(line, " ");
 	if (!strncmp(line, "-=", 2)) {
+	    /* "subtracting" one list from another */
 	    shrink_list(cmd, line, pdinfo);
 	    return cmd->errcode;
-	}
-	if (*line != '=') {
+	} else if (*line != '=') {
 	    cmd->errcode = E_PARSE;
 	    return cmd->errcode;
 	}
