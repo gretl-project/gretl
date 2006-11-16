@@ -380,6 +380,7 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
 	p++;
 	while (*p == ' ') p++;
 	if (!strncmp(p, "stack(", 6)) {
+	    char *test = vname;
 	    int n = 0;
 
 	    while (*s && *s != ' ' && *s != '=' && n < VNAMELEN-1) {
@@ -388,7 +389,7 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
 	    }
 	    *vname = '\0';
 	    *rem = p;
-	    ret = n > 0 && check_varname(vname) == 0;
+	    ret = n > 0 && check_varname(test) == 0;
 	}
     }
 

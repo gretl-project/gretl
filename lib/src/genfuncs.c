@@ -21,6 +21,7 @@
 
 #include "genparse.h"
 #include "libset.h"
+#include "monte_carlo.h"
 
 #include <errno.h>
 
@@ -1353,7 +1354,15 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	} else {
 	    int v = varindex(pdinfo, s);
 
-	    if (v < pdinfo->v) {
+	    if (v == pdinfo->v && strlen(s) == 1) {
+		t = loop_scalar_read(s[0]);
+#if OBS_DEBUG
+		fprintf(stderr, " loop_scalar_read gave t = %d\n", t);
+#endif
+		if (t > 0) {
+		    t--;
+		}
+	    } else if (v < pdinfo->v) {
 		t = (int) Z[v][0];
 #if OBS_DEBUG
 		fprintf(stderr, " based on var %d: t = %d\n", v, t);

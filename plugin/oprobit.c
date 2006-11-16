@@ -164,7 +164,7 @@ static int compute_probs (const double *theta, op_container *OC)
     int M = OC->M;
     int nx = OC->nx;
     double P0, P1, h, adj, dP;
-    int i, t, yt, v;
+    int i, t, s, yt, v;
     int type = OC->type;
 
     if (OC->ascore) {
@@ -173,47 +173,54 @@ static int compute_probs (const double *theta, op_container *OC)
 	}
     }
 
-    for (t=0; t<OC->nobs; t++) {
-
+    s = 0;
+    for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
 	if (na(OC->pmod->uhat[t])) {
+#if ODEBUG > 1
+	    fprintf(stderr, "obs %4d excluded\n", t);
+#endif
 	    continue;
 	}
 
-	yt = OC->y[t];
+	yt = OC->y[s];
 	if (yt == 0) {
-	    ystar1 = OC->ndx[t];
+	    ystar1 = OC->ndx[s];
 	} else if (yt == 1) {
 	    m1 = theta[nx];
-	    ystar0 = OC->ndx[t];
-	    ystar1 = OC->ndx[t] + m1;
+	    ystar0 = OC->ndx[s];
+	    ystar1 = OC->ndx[s] + m1;
 	} else {
 	    m0 = theta[nx + yt - 2];
-	    ystar0 = OC->ndx[t] + m0;
+	    ystar0 = OC->ndx[s] + m0;
 	    if (yt < M) {
 		m1 = theta[nx + yt - 1];
-		ystar1 = OC->ndx[t] + m1;
+		ystar1 = OC->ndx[s] + m1;
 	    }
 	} 
 
-	if (ystar1 < 6.0 || OC->type == LOGIT) {
+#if ODEBUG > 1
+	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n", 
+		t, OC->nobs, s, yt, OC->ndx[s], ystar0, ystar1);
+#endif
+
+	if (ystar0 < 6.0 || OC->type == LOGIT) {
 	    P0 = (yt == 0)? 0.0 : distfunc(ystar0, type);
 	    P1 = (yt == M)? 1.0 : distfunc(ystar1, type);
 	    dP = P1 - P0;
 	} else { 
-	    /* Taylor-based 3rd order approximation */
+	    /* Taylor-based 1st order approximation */
 	    h = ystar1 - ystar0;
-	    adj = h;
-	    adj -= 0.5 * h * h * ystar0;
-	    adj += (ystar0 * ystar0 - 1) * h * h * h / 6;
-	    adj = (adj > 0)? adj : 0.0;
-	    dP = densfunc(ystar0, type) * adj;
+	    adj = densfunc(ystar1, type) + densfunc(ystar0, type);
+	    dP =  0.5 * h * adj;
 	}
 
 	if (dP > 1.0e-15) {
-	    OC->dP[t] = dP;
+	    OC->dP[s] = dP;
 	} else {
+#if ODEBUG > 1
 	    fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
-		    t, yt, OC->ndx[t], dP);
+		    t, yt, OC->ndx[s], dP);
+#endif
 	    return 1;
 	} 
 
@@ -235,22 +242,25 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	    for (i=0; i<nx; i++) {
 		v = OC->list[i+2];
-		OC->G[i][t] = -dm * OC->Z[v][t];
-		OC->g[i] += OC->G[i][t];
+		OC->G[i][s] = -dm * OC->Z[v][t];
+		OC->g[i] += OC->G[i][s];
 	    }
 
 	    for (i=nx; i<OC->k; i++) {
-		OC->G[i][t] = 0.0;
+		OC->G[i][s] = 0.0;
 		if (i == nx + yt - 2) {
-		    OC->G[i][t] = -mills0;
-		    OC->g[i] += OC->G[i][t];
+		    OC->G[i][s] = -mills0;
+		    OC->g[i] += OC->G[i][s];
 		}
 		if (i == nx + yt - 1) {
-		    OC->G[i][t] = mills1;
-		    OC->g[i] += OC->G[i][t];
+		    OC->G[i][s] = mills1;
+		    OC->g[i] += OC->G[i][s];
 		}
 	    }
 	}
+
+	s++;
+
     }
 
     return 0;
@@ -299,15 +309,19 @@ static double op_loglik (const double *theta, void *ptr)
 	    x -= theta[i] * OC->Z[v][t];
 	}
 	OC->ndx[s++] = x;
+#if ODEBUG > 1
+	fprintf(stderr, "t = %d, s = %d, x = %g\n", t, s, x);
+#endif
     }
     
     err = compute_probs(theta, OC);
     if (err) {
 	ll = NADBL;
     } else {
-	for (t=0; t<OC->nobs; t++) {
+	s = 0;
+	for (t=OC->t1; t<=OC->t2; t++) {
 	    if (!na(OC->pmod->uhat[t])) {
-		ll += log(OC->dP[t]);
+		ll += log(OC->dP[s++]);
 	    }
 	}
     }
@@ -331,6 +345,48 @@ static int op_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
 
     return 1;
 }
+
+#if notyet
+
+static int opg_from_ascore (double *theta, op_container *OC, gretl_matrix *GG) 
+{
+    int s, t, i, j, k = OC->k;
+    double x, ll;
+
+    double *g0 = malloc(k * sizeof *g0);
+
+    if (g0 == NULL) {
+	return E_ALLOC;
+    }
+
+    ll = op_loglik(theta, OC);
+
+    for (j=0; j<k; j++) {
+	g0[j] = OC->g[j];
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    x = 0.0;
+	    s = 0;
+	    for (t=OC->t1; t<=OC->t2; t++) {
+		if (na(OC->pmod->uhat[t])) {
+		    continue;
+		}
+		x += OC->G[i][s] * OC->G[j][s];
+		s++;
+	    }
+	    gretl_matrix_set(GG, j, i, x);
+	    gretl_matrix_set(GG, i, j, x);
+	}
+    }
+
+    free(g0);
+
+    return 0;
+}
+
+#endif
 
 static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH) 
 {
@@ -453,16 +509,16 @@ static double gen_resid (const double *theta, op_container *OC, int t)
 	}
     } 
 
-    if (ystar1 < 6.0 || OC->type == LOGIT) {
+    if (ystar1 < 6.0 || OC->type == LOGIT || 1) {
 	f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type) / dP;
 	f1 = (yt == M)? 0.0 : densfunc(ystar1, OC->type) / dP;
-	ret = (f0 - f1) / dP;
     } else { 
 	/* L'Hopital-based approximation */
-	f0 = (yt == 0)? 0.0 : -ystar0 / dP;
-	f1 = (yt == M)? 0.0 : -ystar1 / dP;
-	ret = (f0 - f1);
+	f0 = (yt == 0)? 0.0 : -ystar0;
+	f1 = (yt == M)? 0.0 : -ystar1;
     }
+
+    ret = (f0 - f1);
 
     return ret;
 } 
@@ -507,6 +563,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}	    
     }
 
+    int s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
 	int pred;
 
@@ -518,12 +575,19 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	    v = OC->list[i+2];
 	    x += theta[i] * OC->Z[v][t];
 	}
+
+	//	fprintf(stderr, "t = %d/%d: x = %10.6", t, OC->t2, x);
 	/* X\hat{beta} */
 	pmod->yhat[t] = x;
+	//	fprintf(stderr, "\ty = %d", y);
 	y = OC->Z[OC->list[1]][t];
 	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
 	/* compute generalized residual */
-	pmod->uhat[t] = gen_resid(theta, OC, t);
+	pmod->uhat[t] = gen_resid(theta, OC, s++);
+	/*
+	fprintf(stderr, "\tu = %10.7f", pmod->uhat[t]);
+	fprintf(stderr, "\n");
+	*/
     }
 
     pmod->lnL = op_loglik(theta, OC);
@@ -613,13 +677,20 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     iH = gretl_matrix_alloc(npar, npar);
     if(ascore) {
+#if 1
 	err = ihess_from_ascore(theta, OC, iH);
+#else
+	err = opg_from_ascore(theta, OC, iH);
+	if(!err) {
+	    err = gretl_invert_symmetric_matrix(iH);
+	}
+#endif
     } else {
 	err = numerical_ihess(OC, theta, iH);
     }
 
 #if ODEBUG > 1
-    gretl_matrix_print(iH, "Inverse Hessian");
+    gretl_matrix_print(iH, "Covariance matrix");
 #endif
 
     fill_model(pmod, pdinfo, OC, theta, iH);

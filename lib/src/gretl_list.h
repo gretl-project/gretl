@@ -57,6 +57,8 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist, int minpos);
 
+int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err);
+
 int gretl_list_add_list (int **targ, const int *src);
 
 int gretl_list_insert_list (int **targ, const int *src, int pos);

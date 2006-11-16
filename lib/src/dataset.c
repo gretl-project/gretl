@@ -1973,7 +1973,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    err = E_DATA;
 	}
     } else {
-	/* or do we have a comma separated list of vars? */
+	/* or a comma-separated list of vars? */
 	char *p = s;
 
 	while (*p) {
@@ -1993,6 +1993,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 
 	for (i=0; i<nv && !err; i++) {
 	    p = strtok((i == 0)? s : NULL, ",");
+	    while (*p == ' ') p++;
 	    if (isdigit(*p)) {
 		v1 = atoi(p);
 	    } else {

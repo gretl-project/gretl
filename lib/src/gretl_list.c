@@ -1083,14 +1083,16 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 
 int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
 {
-    int i, j, k = 0;
+    int i, j, k, n;
     int match, err = 0;
 
-    targ[0] = biglist[0] - sublist[0];
+    n = biglist[0] - sublist[0];
+    targ[0] = n;
 
-    if (targ[0] <= 0) {
+    if (n <= 0) {
 	err = 1;
     } else {
+	k = 1;
 	for (i=2; i<=biglist[0]; i++) {
 	    match = 0;
 	    for (j=2; j<=sublist[0]; j++) {
@@ -1100,7 +1102,11 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
 		}
 	    }
 	    if (!match) {
-		targ[++k] = biglist[i];
+		if (k <= n) {
+		    targ[k++] = biglist[i];
+		} else {
+		    err = 1;
+		}
 	    }
 	}
     }
@@ -1116,29 +1122,26 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
  *
  * Returns: a newly allocated list including the elements of @biglist,
  * from position @minpos onwards, that are not present in @sublist, 
- * or %NULL on failure.  It is an error if, from position @minpos on, 
- * @sublist is not a proper subset of @biglist.
+ * again from @minpos onwards, %NULL on failure.  
  */
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist,
 			  int minpos)
 {
     int *targ = NULL;
-    int i, j, n, k = 0;
+    int i, j, k;
     int match;
 
     if (biglist == NULL || sublist == NULL) {
 	return NULL;
     }
 
-    n = biglist[0] - sublist[0];
-
-    if (n <= 0) {
+    targ = gretl_null_list();
+    if (targ == NULL) {
 	return NULL;
     }
 
-    targ = gretl_list_new(n);
-
+    k = 1;
     for (i=minpos; i<=biglist[0]; i++) {
 	match = 0;
 	for (j=minpos; j<=sublist[0]; j++) {
@@ -1148,7 +1151,10 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
 	    }
 	}
 	if (!match) {
-	    targ[++k] = biglist[i];
+	    targ = gretl_list_append_term(&targ, biglist[i]);
+	    if (targ == NULL) {
+		break;
+	    }
 	}
     }
 
@@ -1652,6 +1658,81 @@ int gretl_list_is_consecutive (const int *list)
     }
 
     return ret;
+}
+
+/**
+ * gretl_list_build:
+ * @s: string list specification.
+ * @pdinfo: dataset information.
+ * @err: location to receive error code
+ *
+ * Builds a list based on the specification in @s, which may include
+ * the ID numbers of variables, the names of variables, and/or the
+ * names of previously defined lists (all separated by spaces).
+ *
+ * Returns: the constructed list, or %NULL on failure.
+ */
+
+int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
+{
+    char test[32];
+    int *list = NULL;
+    int *nlist;
+    int i, v, len, nf;
+
+    list = gretl_null_list();
+    if (list == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    nf = count_fields(s);
+    
+    for (i=0; i<nf && !*err; i++) {
+	s += strspn(s, " ");
+	len = strcspn(s, " ");
+	if (len > 31) {
+	    *err = E_PARSE;
+	} else {
+	    *test = 0;
+	    strncat(test, s, len);
+
+	    /* valid elements: var numbers, varnames, named lists */
+
+	    if (isdigit(*test)) {
+		v = positive_int_from_string(test);
+		if (v >= 0) {
+		    list = gretl_list_append_term(&list, v);
+		} else {
+		    *err = E_PARSE;
+		}
+	    } else {
+		v = varindex(pdinfo, test);
+		if (v < pdinfo->v) {
+		    list = gretl_list_append_term(&list, v);
+		} else {
+		    nlist = get_list_by_name(test);
+		    if (nlist != NULL) {
+			*err = gretl_list_add_list(&list, nlist);
+		    } else {
+			*err = E_UNKVAR;
+		    }
+		}
+	    }
+
+	    if (list == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	s += len;
+    }
+
+    if (*err) {
+	free(list);
+	list = NULL;
+    }
+
+    return list;
 }
 
 int load_user_lists_file (const char *fname)

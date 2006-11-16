@@ -427,6 +427,10 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     }
 }
 
+/* pull the specification for "block-diagonal" instruments
+   off the end of an arbond command line, for subsequent
+   special processing */
+
 static void grab_arbond_diag (char *s, CMD *cmd)
 {
     int i, n = strlen(s);
@@ -589,6 +593,37 @@ static int expand_command_list (CMD *cmd, int add)
     cmd->list = list;
 
     return 0;
+}
+
+/* something like "list xl -= foo" */
+
+static void shrink_list (CMD *cmd, char *line, DATAINFO *pdinfo)
+{
+    int *llist, *rlist, *dlist;
+    char *s;
+
+    llist = get_list_by_name(cmd->param);
+    if (llist == NULL) {
+	cmd->errcode = E_UNKVAR;
+	return;
+    }
+
+    s = line + 2; /* skip "-=" */
+
+    rlist = gretl_list_build(s, pdinfo, &cmd->errcode);
+    if (cmd->errcode) {
+	return;
+    }
+
+    dlist = gretl_list_diff_new(llist, rlist, 1);
+    if (dlist == NULL) {
+	cmd->errcode = 1; /* FIXME */
+    } else {
+	free(cmd->list);
+	cmd->list = dlist;
+    }
+
+    free(rlist);
 }
 
 /* Get the total number of lags and set the increment for
@@ -1736,6 +1771,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    return cmd->errcode;
 	} 
 	line += strspn(line, " ");
+	if (!strncmp(line, "-=", 2)) {
+	    shrink_list(cmd, line, pdinfo);
+	    return cmd->errcode;
+	}
 	if (*line != '=') {
 	    cmd->errcode = E_PARSE;
 	    return cmd->errcode;

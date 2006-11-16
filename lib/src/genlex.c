@@ -508,7 +508,7 @@ NODE *obs_node (parser *p)
 
     if (close >= 0) {
 	getobs(word, p);
-	t = get_t_from_obs_string(word, (const double **) p->Z, 
+	t = get_t_from_obs_string(word, (const double **) *p->Z, 
 				  p->dinfo);
     }
 
