@@ -163,7 +163,7 @@ static int compute_probs (const double *theta, op_container *OC)
     double m0, m1, ystar0 = 0.0, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
-    double P0, P1, dP;
+    double P0, P1, h, adj, dP;
     int i, t, yt, v;
     int type = OC->type;
 
@@ -174,6 +174,11 @@ static int compute_probs (const double *theta, op_container *OC)
     }
 
     for (t=0; t<OC->nobs; t++) {
+
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+
 	yt = OC->y[t];
 	if (yt == 0) {
 	    ystar1 = OC->ndx[t];
@@ -190,11 +195,21 @@ static int compute_probs (const double *theta, op_container *OC)
 	    }
 	} 
 
-	P0 = (yt == 0)? 0.0 : distfunc(ystar0, type);
-	P1 = (yt == M)? 1.0 : distfunc(ystar1, type);
-	dP = P1 - P0;
+	if (ystar1 < 6.0 || OC->type == LOGIT) {
+	    P0 = (yt == 0)? 0.0 : distfunc(ystar0, type);
+	    P1 = (yt == M)? 1.0 : distfunc(ystar1, type);
+	    dP = P1 - P0;
+	} else { 
+	    /* Taylor-based 3rd order approximation */
+	    h = ystar1 - ystar0;
+	    adj = h;
+	    adj -= 0.5 * h * h * ystar0;
+	    adj += (ystar0 * ystar0 - 1) * h * h * h / 6;
+	    adj = (adj > 0)? adj : 0.0;
+	    dP = densfunc(ystar0, type) * adj;
+	}
 
-	if (dP > 1.0e-09) {
+	if (dP > 1.0e-15) {
 	    OC->dP[t] = dP;
 	} else {
 	    fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
@@ -203,9 +218,20 @@ static int compute_probs (const double *theta, op_container *OC)
 	} 
 
 	if (OC->ascore) {
-	    double mills0 = (yt == 0)? 0.0 : densfunc(ystar0, type) / dP;
-	    double mills1 = (yt == M)? 0.0 : densfunc(ystar1, type) / dP;
-	    double dm = mills1 - mills0;
+	    double mills0;
+	    double mills1;
+	    double dm;
+
+	    if (ystar1 < 6.0 || OC->type == LOGIT) {
+		mills0 = (yt == 0)? 0.0 : densfunc(ystar0, type) / dP;
+		mills1 = (yt == M)? 0.0 : densfunc(ystar1, type) / dP;
+	    } else { 
+		/* L'Hopital-based approximation */
+		mills0 = (yt == 0)? 0.0 : -ystar0;
+		mills1 = (yt == M)? 0.0 : -ystar1;
+	    }
+
+	    dm = mills1 - mills0;
 
 	    for (i=0; i<nx; i++) {
 		v = OC->list[i+2];
@@ -215,11 +241,11 @@ static int compute_probs (const double *theta, op_container *OC)
 
 	    for (i=nx; i<OC->k; i++) {
 		OC->G[i][t] = 0.0;
-		if (i == (nx + yt - 2)) {
+		if (i == nx + yt - 2) {
 		    OC->G[i][t] = -mills0;
 		    OC->g[i] += OC->G[i][t];
 		}
-		if (i == (nx + yt - 1)) {
+		if (i == nx + yt - 1) {
 		    OC->G[i][t] = mills1;
 		    OC->g[i] += OC->G[i][t];
 		}
@@ -280,7 +306,9 @@ static double op_loglik (const double *theta, void *ptr)
 	ll = NADBL;
     } else {
 	for (t=0; t<OC->nobs; t++) {
-	    ll += log(OC->dP[t]);
+	    if (!na(OC->pmod->uhat[t])) {
+		ll += log(OC->dP[t]);
+	    }
 	}
     }
 
@@ -401,7 +429,7 @@ static int get_pred (op_container *OC, const MODEL *pmod,
 static double gen_resid (const double *theta, op_container *OC, int t) 
 {
     double ndxt, m0, m1, ystar0, f0, f1;
-    double dP, ystar1 = 0.0;
+    double ret, dP, ystar1 = 0.0;
     int M = OC->M;
     int nx = OC->nx;
     int yt;
@@ -425,11 +453,18 @@ static double gen_resid (const double *theta, op_container *OC, int t)
 	}
     } 
 
-    f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type);
-    f1 = (yt == M)? 0.0 : densfunc(ystar1, OC->type);
-    
-    return (f0 - f1) / dP;
+    if (ystar1 < 6.0 || OC->type == LOGIT) {
+	f0 = (yt == 0)? 0.0 : densfunc(ystar0, OC->type) / dP;
+	f1 = (yt == M)? 0.0 : densfunc(ystar1, OC->type) / dP;
+	ret = (f0 - f1) / dP;
+    } else { 
+	/* L'Hopital-based approximation */
+	f0 = (yt == 0)? 0.0 : -ystar0 / dP;
+	f1 = (yt == M)? 0.0 : -ystar1 / dP;
+	ret = (f0 - f1);
+    }
 
+    return ret;
 } 
 
 static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
