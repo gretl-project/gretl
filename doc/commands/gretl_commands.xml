@@ -194,10 +194,15 @@
 	  <flag>--difference</flag>
 	  <effect>use first difference of variable</effect>
 	</option>
+	<option>
+	  <flag>--test-down</flag>
+	  <effect>automatic lag order</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
         <example>adf 2 y --nc --c --ct</example>
+        <example>adf 12 y --c --test-down</example>
       </examples>
     </usage>
 
@@ -234,28 +239,24 @@
 	  graphic="adf1"/></para>
 
       <para context="cli">
-	If the lag order, <mathvar>k</mathvar>, is greater than 0,
-	then <mathvar>k</mathvar> lags of the dependent variable are
-	included on the right-hand side of each test
-	regression.</para>
-
-      <para context="cli">
-	If the given lag order is prefaced with a minus sign, it is
-	taken as the maximum lag and the actual lag order used is
-	obtained by testing down.  Let the given order be
-	&minus;<mathvar>k</mathvar>: the testing-down algorithm is
-	then:</para>
+	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
+	<mathvar>k</mathvar> lags of the dependent variable are included
+	on the right-hand side of the test regressions, subject to the
+	following qualification.  If the <lit>--test-down</lit> option is
+	given, <mathvar>k</mathvar> is taken as the maximum lag
+	and the actual lag order used is obtained by testing down, using
+	this algorithm:
+      </para>
 
       <para context="gui">
-	If the lag order, <mathvar>k</mathvar>, is greater than 0,
-	then <mathvar>k</mathvar> lags of the dependent variable are
-	included on the right-hand side of each test regression,
-	unless the box labeled <quote>test down from maximum
-	  lag</quote> is checked: in that case the selected lag order
-	is taken as a maximum and the actual lag order used is
-	obtained by testing down. Let the selected order be
-	<mathvar>k</mathvar>: the testing-down algorithm is
-	then:</para>
+	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
+	<mathvar>k</mathvar> lags of the dependent variable are included
+	on the right-hand side of the test regressions, subject to the
+	following qualification. If the box labeled <quote>test down from
+	  maximum lag</quote> is checked, the selected lag order is taken
+	as a maximum and the actual lag order used is obtained by testing
+	down, using this algorithm:
+      </para>
 
       <nlist>
 	<li><para>Estimate the Dickey&ndash;Fuller regression with
@@ -265,7 +266,7 @@
 	<li><para>Is the last lag significant?  If so, execute the
 	    test with lag order <mathvar>k</mathvar>.  Otherwise, let
 	    <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; if
-	    <mathvar>k</mathvar> = 0, execute the test with lag order
+	    <mathvar>k</mathvar> equals 0, execute the test with lag order
 	    0, else go to step 1.
 	  </para>
 	</li>
