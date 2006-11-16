@@ -199,17 +199,10 @@ static int auto_adjust_order (int *list, int order_max,
 			      PRN *prn)
 {
     MODEL kmod;
-    double tstat, pval = 1.0;
-    int l0 = list[0];
-    int k;
+    double tstat, pval;
+    int k, pos;
 
     for (k=order_max; k>0; k--) {
-	int pos = k;
-
-	if (list[l0] == 0) {
-	    /* constructed list includes constant */
-	    pos++;
-	}
 
 	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 
@@ -224,6 +217,7 @@ static int auto_adjust_order (int *list, int order_max,
 	printmodel(&kmod, pdinfo, OPT_NONE, prn);
 #endif
 
+	pos = k + kmod.ifc;
 	tstat = kmod.coeff[pos] / kmod.sderr[pos];
 	clear_model(&kmod);
 	pval = normal_pvalue_2(tstat);
@@ -233,12 +227,7 @@ static int auto_adjust_order (int *list, int order_max,
 	    pprintf(prn, "\nauto_adjust_order: lagged difference not "
 		    "significant at order %d (t = %g)\n\n", k, tstat);
 #endif
-	    if (k == 1) {
-		k = 0;
-		break;
-	    } else {
-		gretl_list_delete_at_pos(list, k + 2);
-	    }
+	    gretl_list_delete_at_pos(list, k + 2);
 	} else {
 #if ADF_DEBUG
 	    pprintf(prn, "\nauto_adjust_order: lagged difference is "
@@ -383,6 +372,10 @@ static int real_adf_test (int varno, int order, int niv,
 	if (varno < 0) {
 	    return E_DATA;
 	}
+    }
+
+    if (opt & OPT_E) {
+	auto_order = 1;
     }
 
     if (order < 0) {

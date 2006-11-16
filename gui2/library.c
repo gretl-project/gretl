@@ -862,7 +862,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	if (adf_active[3]) gretl_command_strcat(" --ctt");
 	if (adf_active[4] > 0) gretl_command_strcat(" --seasonals");
 	if (adf_active[5]) gretl_command_strcat(" --verbose");
-	if (adf_active[6]) order = -order; /* auto-trim the lag order */
+	if (adf_active[6]) gretl_command_strcat(" --test-down");
     } else {
 	if (kpss_active[0]) gretl_command_strcat(" --trend");
 	if (kpss_active[1]) gretl_command_strcat(" --verbose");
