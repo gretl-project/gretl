@@ -1,9 +1,5 @@
 \chapter{Stima di massima verosimiglianza}
 
-\newcommand{\LogLik}{\ensuremath\ell}
-\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
-\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
-
 \section{Stima di massima verosimiglianza con gretl}
 
 La stima di massima verosimiglianza (maximum likelihood, ML) è una pietra
@@ -480,7 +476,8 @@ end mle --verbose
 
 Vengono generate artificialmente 1000 osservazioni per un modello probit
 ordinario\footnote{Ancora una volta ricordiamo che gretl contiene il comando
-  interno \texttt{probit}, ma in questo caso usiamo il modello probit come
+  interno \texttt{probit} (si veda il capitolo \ref{sec:logit-probit}), ma in
+  questo caso usiamo il modello probit come
   esempio per la procedura}: $y_t$ è una variabile binaria, che assume valore 1 se
 $y_t^* = \beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t} +
 \varepsilon_t > 0$ e 0 altrove. Quindi, $y_t = 1$ con probabilità

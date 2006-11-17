@@ -1,0 +1,81 @@
+\chapter{Variabili dipendenti discrete e censurate}
+\label{discr-models}
+
+\section{Modelli logit e probit}
+\label{sec:logit-probit}
+
+Capita spesso che si voglia specificare e stimare un modello in cui la variabile
+dipendente non è continua  ma discreta. Un esempio tipico è quello di un modello
+in cui la variabile dipendente è lo stato lavorativo di un individuo (1 =
+occupato, 0 = disoccupato). Un modo comodo per formalizzare questa situazione
+consiste nel considerare la variabile $y_i$ come una variabile aleatoria di
+Bernoulli e analizzarne la distribuzione condizionata alle variabili esplicative
+$x_i$, ossia
+\begin{equation}
+  \label{eq:qr-Bernoulli}
+  y_i \left\{ 
+    \begin{array}{ll} 1 & P_i \\ 0 & 1 - P_i \end{array}
+    \right. 
+\end{equation}
+dove $P_i$ è una funzione delle variabili esplicative $x_i$.
+
+Nella maggior parte dei casi, la funzione $P_i$ è una funzione di ripartizione,
+applicata a una combinazione lineare delle $x_i$. Nel modello probit, si usa la
+funzione di ripartizione normale, mentre il modello logit usa la funzione
+logistica $\Lambda()$. Quindi si ha
+\begin{eqnarray}
+  \label{eq:qr-link}
+  \textrm{probit} & \qquad & P_i = \Phi(z_i)  \\
+  \textrm{logit}  & \qquad & P_i = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
+  & &z_i = \sum_{j=1}^k x_{ij} \beta_j
+\end{eqnarray}
+dove $z_i$ è chiamata la funzione \emph{indicatrice}. Si noti che in questo
+caso, i coefficienti $\beta_j$ non possono essere interpretati come derivate
+parziali di $E(y_i | x_i)$ rispetto a $x_{ij}$. Un modo equivalente di formulare
+questo modello consiste nell'ipotizzare l'esistenza di una variabile non
+osservata $y^*_i$ che può essere descritta dal modello
+\begin{equation}
+  \label{eq:qr-latent}
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i = z_i  +
+  \varepsilon_i ;
+\end{equation}
+si osserva $y_i = 1$ quando $y^*_i > 0$ e $y_i = 0$ altrimenti. Se si assume
+$\varepsilon_i$ come normale, si ottiene il modello probit, mentre il modello
+logit assume che la funzione di densità di $\varepsilon_i$ sia
+\[
+  \lambda(\varepsilon_i) =
+  \pder{\Lambda(\varepsilon_i)}{\varepsilon_i} =
+  \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2} .
+\]
+
+\app{gretl} stima sia il modello probit che quello logit col metodo della
+massima verosimiglianza, usando procedure di ottimizzazione numerica. La maggior
+parte delle volte queste richiedono poche iterazioni per raggiungere la
+convergenza, ma è possibile visualizzare i dettagli dell'algoritmo di
+massimizzazione usando l'opzione \texttt{--verbose}.
+
+Example: \ldots
+
+\subsection{Ordered models}
+\label{sec:ordered}
+
+\section{The Tobit model}
+\label{sec:tobit}
+
+\subsection{Generalized Tobit model}
+\label{sec:heckit}
+
+include Heckman example script
+
+\section{Count data}
+\label{sec:poisson}
+
+also include example script for negative binomial (done in Vebeek
+example files).
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
