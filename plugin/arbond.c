@@ -2050,10 +2050,13 @@ static int parse_diag_info (const char *s, struct diag_info *d,
     } else if (sscanf(s, "GMM(%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
+	if (m2 == 0) {
+	    m2 = 99;
+	}
 	v = varindex(pdinfo, vname);
 	if (v == pdinfo->v) {
 	    err = E_UNKVAR;
-	} else if (m1 < 0 || (m2 != 0 && m2 < m1)) {
+	} else if (m1 < 0 || m2 < m1) {
 	    err = E_DATA;
 	} else {
 	    d->v = v;
