@@ -556,7 +556,7 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
        and last k observations */
 
     for (t=0; t<pdinfo->n; t++) {
-	if (t < t1 + k || t >= t2 - k) {
+	if (t < t1 + k || t > t2 - k) {
 	    bk[t] = NADBL;
 	} else {
 	    bk[t] = a[0] * y[t];

@@ -510,7 +510,7 @@ static int filter_dialog (filter_info *finfo)
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("k (higher values -> better approximation):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	w = gtk_spin_button_new_with_range(4.0, 4 * finfo->k, 1);
+	w = gtk_spin_button_new_with_range(1.0, 4 * finfo->k, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->k);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(spinner_set_int), &finfo->k);

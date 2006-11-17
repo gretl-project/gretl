@@ -619,7 +619,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	*err = numerical_ihess(OC, theta, V);
     }
 
-    if (!*err && && (OC->opt & OPT_R)) {
+    if (!*err && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
 	gretl_matrix *Vr = NULL;
 
