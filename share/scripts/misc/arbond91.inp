@@ -1,10 +1,20 @@
 # Replicate Table 4, column b, in Arellano and Bond,
 # Review of Economic Studies, 1991
+
 open abdata.gdt
 genr Dw = diff(w)
 genr Dk = diff(k)
 genr Dys = diff(ys)
+
 # 1-step GMM estimation
-arbond 2 0 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies
+arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies
 # 2-step estimation
-arbond 2 0 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies --two-step
+arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies --two-step
+
+# Approximation to column c (some data are not available; and
+# here we're using corrected standard errors)
+list pred = Dw Dw(-1) Dk
+list exog = Dys Dys(-1) 0
+arbond 2 ; n pred exog ; exog GMM(k,2,3) GMM(w,2,3) --time-dummies
+arbond 2 ; n pred exog ; exog GMM(k,2,3) GMM(w,2,3) --time --two-step
+

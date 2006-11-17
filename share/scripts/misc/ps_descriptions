@@ -14,6 +14,7 @@
 "leverage","Influential observations","artificial data"
 "longley","Multicollinearity","US employment"
 "mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
+"oprobit","Ordered probit and logit","happiness and age"
 "penngrow","Nerlove dynamic panel model","cross-country"
 "perron97","Unit-root testing with breaks","Nelson-Plosser data"
 "pscoin","Johansen cointegration test","prices & exchange rate"

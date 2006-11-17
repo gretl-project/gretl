@@ -1,0 +1,17 @@
+# Use Ray Fair's extra-marital affairs data
+open greene22_2
+# display the definitions of the variables
+labels
+# The variable 'Z8' is the self-rating of marriage:
+# we subtract one to give a base of zero, and relate
+# this variable to gender (Z1) and age in years (Z2)
+genr rat = Z8 - 1
+discrete rat 
+freq rat
+# ordered probit
+probit rat 0 Z1 Z2
+probit rat 0 Z1 Z2 --robust
+# ordered logit
+logit rat 0 Z1 Z2
+logit rat 0 Z1 Z2 --robust
+

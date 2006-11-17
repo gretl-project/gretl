@@ -221,7 +221,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     gretl_matrix *G = NULL;
     gretl_matrix *H = NULL;
     gretl_matrix *S = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *V = NULL;
 
     const double *y = Z[pmod->list[1]];
     const double *xi;
@@ -234,9 +234,9 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     G = gretl_matrix_alloc(k, T);
     H = gretl_matrix_alloc(k, k);
     S = gretl_matrix_alloc(k, k);
-    tmp = gretl_matrix_alloc(k, k);
+    V = gretl_matrix_alloc(k, k);
 
-    if (G == NULL || H == NULL || S == NULL || tmp == NULL) {
+    if (G == NULL || H == NULL || S == NULL || V == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -280,9 +280,9 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
 			      G, GRETL_MOD_TRANSPOSE,
 			      S, GRETL_MOD_NONE);
 
-    /* form sandwich: H^{-1} S H^{-1} */
-    gretl_matrix_multiply(H, S, tmp);
-    gretl_matrix_multiply(tmp, H, S);
+    /* form sandwich: V = H^{-1} S H^{-1} */
+    gretl_matrix_qform(H, GRETL_MOD_NONE, S,
+		       V, GRETL_MOD_NONE);
 
     pmod->vcv = malloc((k * (k + 1) / 2) * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) {
@@ -293,7 +293,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     /* set VCV and std err values */
     for (i=0; i<k; i++) {
 	for (j=0; j<=i; j++) {
-	    x = gretl_matrix_get(S, i, j);
+	    x = gretl_matrix_get(V, i, j);
 	    pmod->vcv[ijton(i, j, k)] = x;
 	    if (i == j) {
 		pmod->sderr[i] = sqrt(x);
@@ -308,7 +308,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     gretl_matrix_free(G);
     gretl_matrix_free(H);
     gretl_matrix_free(S);
-    gretl_matrix_free(tmp);
+    gretl_matrix_free(V);
 
     return err;
 }

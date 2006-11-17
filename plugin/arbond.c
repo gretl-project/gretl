@@ -339,7 +339,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     if (ab->p < 1 || (ab->qmax != 0 && ab->qmax < ab->p + 1) ||
 	(ab->qmax != 0 && ab->qmin > ab->qmax)) {
 	/* is this all right? */
-	return E_DATA;
+	return E_INVARG;
     }  
 
     /* FIXME: qmin doesn't actually do anything below, yet */
@@ -1285,8 +1285,8 @@ static int arbond_variance (arbond *ab)
 
 	/* pre- and post-multiply by C^{-1} */
 	err += gretl_invert_symmetric_matrix(C);
-	gretl_matrix_multiply(kk, C, ab->kktmp);
-	gretl_matrix_multiply(C, ab->kktmp, ab->vbeta);
+	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, ab->vbeta,
+			   GRETL_MOD_NONE);
     }
 
     /* reset as k x m, as advertised */

@@ -222,7 +222,11 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	e = gretl_matrix_reuse(e, Ti, 1);
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
 	for (t=0; t<Ti; t++) {
-	    gretl_vector_set(e, t, pmod->uhat[s]);
+	    if (na(pmod->uhat[s])) {
+		gretl_vector_set(e, t, 0.0);
+	    } else {
+		gretl_vector_set(e, t, pmod->uhat[s]);
+	    }
 	    for (j=0; j<k; j++) {
 		v = pmod->list[j + 2];
 		gretl_matrix_set(Xi, t, j, Z[v][s]);

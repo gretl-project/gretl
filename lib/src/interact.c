@@ -1983,6 +1983,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	if (!isalpha((unsigned char) *field) && !isdigit((unsigned char) *field)) {
+	    /* FIXME: are negative numerical values ever acceptable here? */
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("field '%s' in command is invalid"), field);
 	    goto bailout;

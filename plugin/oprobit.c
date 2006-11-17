@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 
-#define ODEBUG 1
+#define ODEBUG 0
 
 #define OPROBIT_TOL 1.0e-12
 
@@ -545,9 +545,6 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
-    /* FIXME: if VCV is robust, flag this so the info can be printed
-       when the model is printed */
-
     k = 0;
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = theta[i];
@@ -561,6 +558,10 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 		pmod->sderr[i] = sqrt(x);
 	    }
 	}	    
+    }
+
+    if (OC->opt & OPT_R) {
+	gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
     }
 
     s = 0;
@@ -633,11 +634,11 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	} else {
 	    *err = opg_from_ascore(OC, theta, GG);
 	    if (!*err) {
-		gretl_matrix_qform(V, GRETL_MOD_NONE,
-				   GG, Vr, GRETL_MOD_NONE);
 #if ODEBUG > 1
 		gretl_matrix_print(GG, "OPG matrix");
 #endif
+		gretl_matrix_qform(V, GRETL_MOD_NONE,
+				   GG, Vr, GRETL_MOD_NONE);
 		gretl_matrix_copy_values(V, Vr);
 	    }
 	}

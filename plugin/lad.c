@@ -4,126 +4,20 @@
 
 static double toler = 1.0e-9;
 
-static int l1_ (int m, int n, 
-		double *a, double *b, 
-		double *x, double *e);
-
-static int col_(double *v1, double *v2, double amlt, 
-		int m1, int iout);
-
-static int bootstrap_vcv (MODEL *pmod, double **Z,
-			  double *a, double *b, double *e, double *x,
-			  int m, int n, int dim);
-
-
-int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
+static void col_(double *v1, double *v2, double amlt, 
+		 int m1, int iout)
 {
-    double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
-    int i, j, t, m, n, nrows, dim;
-    int yno = pmod->list[1];
-    int ladcode;
+    int i;
 
-    m = pmod->nobs;
-    n = pmod->list[0] - 1;
+    /* Parameter adjustments */
+    --v2;
+    --v1;
 
-    nrows = m + 2;
-    dim = nrows * (n + 2);
-
-    a = malloc(dim * sizeof *a);
-    x = malloc(n * sizeof *x);
-    e = malloc(m * sizeof *e);
-    b = malloc(m * sizeof *b);
-
-    if (a == NULL || x == NULL || e == NULL || b == NULL) {
-	free(a);
-	free(x);
-	free(e);
-	free(b);
-	return 1;
-    }
-
-    /* initialize arrays */
-    for (i=0; i<dim; i++) {
-	a[i] = 0.0;
-    }
-    for (i=0; i<m; i++) {
-	e[i] = b[i] = 0.0;
-    }
-    for (i=0; i<n; i++) {
-	x[i] = 0.0;
-    }
-
-    /* populate data array */
-    for (j=0; j<n; j++) {
-	int v = pmod->list[j+2];
-
-	t = pmod->t1;
-	for (i=0; i<m; i++) {
-	    while (model_missing(pmod, t)) {
-		t++;
-	    }
-	    a[i + j * nrows] = Z[v][t++];
+    for (i=1; i<=m1; i++) {
+	if (i != iout) {
+	    v1[i] -= v2[i] * amlt;
 	}
     }
-
-    t = pmod->t1;
-    for (i=0; i<m; i++) {
-	while (model_missing(pmod, t)) {
-	    t++;
-	}
-	b[i] = a[i + n * nrows] = Z[yno][t++];
-    }
-
-    l1_(m, n, a, b, x, e);
-
-    /* handle case where exit code indicates numeric error */
-    ladcode = (int) a[m + 1 + n * nrows];
-    if (ladcode == 2) {
-	pmod->errcode = E_SINGULAR;
-    } else {
-	gretl_model_set_int(pmod, "ladcode", ladcode);
-    }
-
-    if (pmod->errcode == 0) {
-
-	for (i=0; i<n; i++) {
-	    pmod->coeff[i] = x[i];
-	}
-
-	pmod->ess = 0.0;
-	for (i=0; i<m; i++) {
-	    t = i + pmod->t1;
-	    pmod->yhat[t] = Z[yno][t] - e[i];
-	    pmod->uhat[t] = e[i];
-	    pmod->ess += e[i] * e[i];
-	}
-
-	/* sum of absolute residuals (abuse of "rho") */
-	pmod->rho = a[m + n * nrows];
-
-	/* set ess-based stats to missing value */
-	pmod->rsq = NADBL;
-	pmod->adjrsq = NADBL;
-	pmod->fstt = NADBL;
-
-	/* LaPlace errors: equivalent of standard error is sum of
-	   absolute residuals over nobs */
-	pmod->sigma = pmod->rho / pmod->nobs; 
-
-	if (bootstrap_vcv(pmod, Z, a, b, e, x, m, n, dim)) {
-	    pmod->errcode = E_ALLOC;
-	}
-
-    }
-
-    pmod->ci = LAD;
-
-    free(a);
-    free(x);
-    free(e);
-    free(b);
-
-    return 0;
 }
 
 /*    Based on SUBROUTINE L1(M,N,TOLER,X,A,B)
@@ -182,15 +76,10 @@ static int l1_ (int m, int n,
 		double *a, double *b, 
 		double *x, double *e)
 {
-    static double big = 1e200;
-
-    /* System generated locals */
-    int i1, i2;
-
-    /* Local variables */
+    const double big = 1e200;
     double amin, amax;
     int test = 0, stage;
-    double zero, one, two, sum;
+    double sum;
     int iout = 0;
     int i, j, k, l;
     int m1, n1, m2, n2, kount;
@@ -206,194 +95,157 @@ static int l1_ (int m, int n,
     --b;
     a -= (nrows + 1);
 
-    zero = 0.;
-    one = 1.;
-    two = 2.;
     m1 = m + 1;
     n1 = n + 1;
     m2 = m + 2;
     n2 = n + 2;
-    i1 = n;
-    for (j = 1; j <= i1; ++j) {
+
+    for (j = 1; j <= n; ++j) {
 	a[m2 + j * nrows] = (double) j;
-	x[j] = zero;
-/* L10: */
-    }
-    i1 = m;
-    for (i = 1; i <= i1; ++i) {
-	a[i + n2 * nrows] = (double) (n + i);
-	a[i + n1 * nrows] = b[i];
-	if (b[i] >= zero) {
-	    goto L30;
-	}
-	i2 = n2;
-	for (j = 1; j <= i2; ++j) {
-	    a[i + j * nrows] = -a[i + j * nrows];
-/* L20: */
-	}
-L30:
-	e[i] = zero;
-/* L40: */
+	x[j] = 0.0;
     }
 
-    i1 = n1;
-    for (j = 1; j <= i1; ++j) {
-	sum = zero;
-	i2 = m;
-	for (i = 1; i <= i2; ++i) {
+    for (i = 1; i <= m; ++i) {
+	a[i + n2 * nrows] = (double) (n + i);
+	a[i + n1 * nrows] = b[i];
+	if (b[i] < 0.0) {
+	    for (j = 1; j <= n2; ++j) {
+		a[i + j * nrows] = -a[i + j * nrows];
+	    }
+	}
+	e[i] = 0.0;
+    }
+
+    for (j = 1; j <= n1; ++j) {
+	sum = 0.0;
+	for (i = 1; i <= m; ++i) {
 	    sum += a[i + j * nrows];
-/* L50: */
 	}
 	a[m1 + j * nrows] = sum;
-/* L60: */
     }
 
     stage = 1;
     kount = 0;
     kr = 1;
     kl = 1;
+
 L70:
-    amax = -one;
-    i1 = n;
-    for (j = kr; j <= i1; ++j) {
+    amax = -1.0;
+    for (j = kr; j <= n; ++j) {
 	if (fabs(a[m2 + j * nrows]) > (double) n) {
-	    goto L80;
+	    continue;
 	}
 	d = fabs(a[m1 + j * nrows]);
 	if (d <= amax) {
-	    goto L80;
+	    continue;
 	}
 	amax = d;
 	in = j;
-L80:
-	;
     }
-    if (a[m1 + in * nrows] >= zero) {
-	goto L100;
-    }
-    i1 = m2;
-    for (i = 1; i <= i1; ++i) {
-	a[i + in * nrows] = -a[i + in * nrows];
-/* L90: */
+
+    if (a[m1 + in * nrows] < 0.0) {
+	for (i = 1; i <= m2; ++i) {
+	    a[i + in * nrows] = -a[i + in * nrows];
+	}
     }
 
 L100:
     k = 0;
-    i1 = m;
-    for (i = kl; i <= i1; ++i) {
+    for (i = kl; i <= m; ++i) {
 	d = a[i + in * nrows];
-	if (d <= toler) {
-	    goto L110;
+	if (d > toler) {
+	    ++k;
+	    b[k] = a[i + n1 * nrows] / d;
+	    ls[k - 1] = i;
+	    test = 1;
 	}
-	++k;
-	b[k] = a[i + n1 * nrows] / d;
-	ls[k - 1] = i;
-	test = 1;
-L110:
-	;
     }
+
 L120:
-    if (k > 0) {
-	goto L130;
+    if (k <= 0) {
+	test = 0;
+	goto L150;
     }
-    test = 0;
-    goto L150;
-L130:
+
     amin = big;
-    i1 = k;
-    for (i = 1; i <= i1; ++i) {
-	if (b[i] >= amin) {
-	    goto L140;
+    for (i = 1; i <= k; ++i) {
+	if (b[i] < amin) {
+	    j = i;
+	    amin = b[i];
+	    iout = ls[i - 1];
 	}
-	j = i;
-	amin = b[i];
-	iout = ls[i - 1];
-L140:
-	;
     }
     b[j] = b[k];
     ls[j - 1] = ls[k - 1];
     --k;
 
 L150:
-    if (test || ! stage) {
+    if (test || !stage) {
 	goto L170;
     }
-    i1 = m2;
-    for (i = 1; i <= i1; ++i) {
+    for (i = 1; i <= m2; ++i) {
 	d = a[i + kr * nrows];
 	a[i + kr * nrows] = a[i + in * nrows];
 	a[i + in * nrows] = d;
-/* L160: */
     }
     ++kr;
     goto L260;
+
 L170:
     if (test) {
 	goto L180;
     }
-    a[m2 + n1 * nrows] = two;
+    a[m2 + n1 * nrows] = 2.0;
     goto L350;
+
 L180:
     pivot = a[iout + in * nrows];
     if (a[m1 + in * nrows] - pivot - pivot <= toler) {
 	goto L200;
     }
-    i1 = n1;
-    for (j = kr; j <= i1; ++j) {
+    for (j = kr; j <= n1; ++j) {
 	d = a[iout + j * nrows];
 	a[m1 + j * nrows] = a[m1 + j * nrows] - d - d;
 	a[iout + j * nrows] = -d;
-/* L190: */
     }
     a[iout + n2 * nrows] = -a[iout + n2 * nrows];
     goto L120;
 
 L200:
-    i1 = n1;
-    for (j = kr; j <= i1; ++j) {
-	if (j == in) {
-	    goto L210;
+    for (j = kr; j <= n1; ++j) {
+	if (j != in) {
+	    a[iout + j * nrows] /= pivot;
 	}
-	a[iout + j * nrows] /= pivot;
-L210:
-	;
     }
-    i1 = n1;
-    for (j = kr; j <= i1; ++j) {
-	if (j == in) {
-	    goto L220;
+    for (j = kr; j <= n1; ++j) {
+	if (j != in) {
+	    col_(&a[j * nrows + 1], &a[in * nrows + 1], a[iout + j * nrows], 
+		 m1, iout);
 	}
-	col_(&a[j * nrows + 1], &a[in * nrows + 1], a[iout + j * nrows], m1, iout);
-L220:
-	;
     }
-    i1 = m1;
-    for (i = 1; i <= i1; ++i) {
-	if (i == iout) {
-	    goto L240;
+    for (i = 1; i <= m1; ++i) {
+	if (i != iout) {
+	    a[i + in * nrows] = -a[i + in * nrows] / pivot;
 	}
-	a[i + in * nrows] = -a[i + in * nrows] / pivot;
-L240:
-	;
     }
-    a[iout + in * nrows] = one / pivot;
+
+    a[iout + in * nrows] = 1.0 / pivot;
     d = a[iout + n2 * nrows];
     a[iout + n2 * nrows] = a[m2 + in * nrows];
     a[m2 + in * nrows] = d;
     ++kount;
-    if (! stage) {
+
+    if (!stage) {
 	goto L270;
     }
 
     ++kl;
-    i1 = n2;
-    for (j = kr; j <= i1; ++j) {
+    for (j = kr; j <= n2; ++j) {
 	d = a[iout + j * nrows];
 	a[iout + j * nrows] = a[kount + j * nrows];
 	a[kount + j * nrows] = d;
-/* L250: */
     }
+
 L260:
     if (kount + kr != n1) {
 	goto L70;
@@ -403,120 +255,84 @@ L260:
 
 L270:
     amax = -big;
-    i1 = n;
-    for (j = kr; j <= i1; ++j) {
+    for (j = kr; j <= n; ++j) {
 	d = a[m1 + j * nrows];
-	if (d >= zero) {
-	    goto L280;
+	if (d < 0.0) {
+	    if (d > -2.0) {
+		continue;
+	    }
+	    d = -d - 2.0;
 	}
-	if (d > -two) {
-	    goto L290;
-	}
-	d = -d - two;
-L280:
 	if (d <= amax) {
-	    goto L290;
+	    continue;
 	}
 	amax = d;
 	in = j;
-L290:
-	;
     }
-    if (amax <= toler) {
-	goto L310;
-    }
-    if (a[m1 + in * nrows] > zero) {
+
+    if (amax > toler) {
+	if (a[m1 + in * nrows] > 0.0) {
+	    goto L100;
+	}
+	for (i = 1; i <= m2; ++i) {
+	    a[i + in * nrows] = -a[i + in * nrows];
+	}
+	a[m1 + in * nrows] -= 2.0;
 	goto L100;
     }
-    i1 = m2;
-    for (i = 1; i <= i1; ++i) {
-	a[i + in * nrows] = -a[i + in * nrows];
-/* L300: */
-    }
-    a[m1 + in * nrows] -= two;
-    goto L100;
 
-L310:
     l = kl - 1;
-    i1 = l;
-    for (i = 1; i <= i1; ++i) {
-	if (a[i + n1 * nrows] >= zero) {
-	    goto L330;
+    for (i = 1; i <= l; ++i) {
+	if (a[i + n1 * nrows] < 0.0) {
+	    for (j = kr; j <= n2; ++j) {
+		a[i + j * nrows] = -a[i + j * nrows];
+	    }
 	}
-	i2 = n2;
-	for (j = kr; j <= i2; ++j) {
-	    a[i + j * nrows] = -a[i + j * nrows];
-/* L320: */
-	}
-L330:
-	;
     }
-    a[m2 + n1 * nrows] = zero;
+
+    a[m2 + n1 * nrows] = 0.0;
     if (kr != 1) {
 	goto L350;
     }
-    i1 = n;
-    for (j = 1; j <= i1; ++j) {
+
+    for (j = 1; j <= n; ++j) {
 	d = fabs(a[m1 + j * nrows]);
-	if (d <= toler || two - d <= toler) {
+	if (d <= toler || 2.0 - d <= toler) {
 	    goto L350;
 	}
-/* L340: */
     }
-    a[m2 + n1 * nrows] = one;
+    a[m2 + n1 * nrows] = 1.0;
+
 L350:
-    i1 = m;
-    for (i = 1; i <= i1; ++i) {
+    for (i = 1; i <= m; ++i) {
 	k = (int) a[i + n2 * nrows];
 	d = a[i + n1 * nrows];
-	if (k > 0) {
-	    goto L360;
+	if (k <= 0) {
+	    k = -k;
+	    d = -d;
 	}
-	k = -k;
-	d = -d;
-L360:
 	if (i >= kl) {
-	    goto L370;
+	    k -= n;
+	    e[k] = d;
+	} else {
+	    x[k] = d;
 	}
-	x[k] = d;
-	goto L380;
-L370:
-	k -= n;
-	e[k] = d;
-L380:
-	;
     }
+
     a[m2 + n2 * nrows] = (double) kount;
     a[m1 + n2 * nrows] = (double) (n1 - kr);
-    sum = zero;
-    i1 = m;
-    for (i = kl; i <= i1; ++i) {
+
+    sum = 0.0;
+    for (i = kl; i <= m; ++i) {
 	sum += a[i + n1 * nrows];
-/* L390: */
     }
+
     a[m1 + n1 * nrows] = sum;
 
     free(ls);
 
     return 0;
 } 
-
-static int col_(double *v1, double *v2, double amlt, 
-		int m1, int iout)
-{
-    int i;
-
-    /* Parameter adjustments */
-    --v2;
-    --v1;
-
-    for (i = 1; i <= m1; ++i) {
-	if (i != iout) {
-	    v1[i] -= v2[i] * amlt;
-	}
-    }
-    return 0;
-}
 
 static int missobs_before (const MODEL *pmod, int t)
 {
@@ -710,3 +526,112 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
     return 0;
 }
 
+int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
+{
+    double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
+    int i, j, t, m, n, nrows, dim;
+    int yno = pmod->list[1];
+    int ladcode;
+
+    m = pmod->nobs;
+    n = pmod->list[0] - 1;
+
+    nrows = m + 2;
+    dim = nrows * (n + 2);
+
+    a = malloc(dim * sizeof *a);
+    x = malloc(n * sizeof *x);
+    e = malloc(m * sizeof *e);
+    b = malloc(m * sizeof *b);
+
+    if (a == NULL || x == NULL || e == NULL || b == NULL) {
+	free(a);
+	free(x);
+	free(e);
+	free(b);
+	return 1;
+    }
+
+    /* initialize arrays */
+    for (i=0; i<dim; i++) {
+	a[i] = 0.0;
+    }
+    for (i=0; i<m; i++) {
+	e[i] = b[i] = 0.0;
+    }
+    for (i=0; i<n; i++) {
+	x[i] = 0.0;
+    }
+
+    /* populate data array */
+    for (j=0; j<n; j++) {
+	int v = pmod->list[j+2];
+
+	t = pmod->t1;
+	for (i=0; i<m; i++) {
+	    while (model_missing(pmod, t)) {
+		t++;
+	    }
+	    a[i + j * nrows] = Z[v][t++];
+	}
+    }
+
+    t = pmod->t1;
+    for (i=0; i<m; i++) {
+	while (model_missing(pmod, t)) {
+	    t++;
+	}
+	b[i] = a[i + n * nrows] = Z[yno][t++];
+    }
+
+    l1_(m, n, a, b, x, e);
+
+    /* handle case where exit code indicates numeric error */
+    ladcode = (int) a[m + 1 + n * nrows];
+    if (ladcode == 2) {
+	pmod->errcode = E_SINGULAR;
+    } else {
+	gretl_model_set_int(pmod, "ladcode", ladcode);
+    }
+
+    if (pmod->errcode == 0) {
+
+	for (i=0; i<n; i++) {
+	    pmod->coeff[i] = x[i];
+	}
+
+	pmod->ess = 0.0;
+	for (i=0; i<m; i++) {
+	    t = i + pmod->t1;
+	    pmod->yhat[t] = Z[yno][t] - e[i];
+	    pmod->uhat[t] = e[i];
+	    pmod->ess += e[i] * e[i];
+	}
+
+	/* sum of absolute residuals (abuse of "rho") */
+	pmod->rho = a[m + n * nrows];
+
+	/* set ess-based stats to missing value */
+	pmod->rsq = NADBL;
+	pmod->adjrsq = NADBL;
+	pmod->fstt = NADBL;
+
+	/* LaPlace errors: equivalent of standard error is sum of
+	   absolute residuals over nobs */
+	pmod->sigma = pmod->rho / pmod->nobs; 
+
+	if (bootstrap_vcv(pmod, Z, a, b, e, x, m, n, dim)) {
+	    pmod->errcode = E_ALLOC;
+	}
+
+    }
+
+    pmod->ci = LAD;
+
+    free(a);
+    free(x);
+    free(e);
+    free(b);
+
+    return 0;
+}
