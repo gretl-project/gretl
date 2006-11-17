@@ -408,6 +408,58 @@ char *gretl_strndup (const char *src, size_t n)
     return targ;
 }
 
+/**
+ * gretl_str_expand:
+ * @orig: pointer to the base string.
+ * @add: the string to be added.
+ * @sep: string to be interpolated, or %NULL.
+ *
+ * Creates a newly allocated string built by concatenating
+ * @orig and @add, with @sep interpolated unless @sep is
+ * %NULL, and replaces the content of @orig with the new string.
+ * As a special case, if @orig is %NULL, or if the content of
+ * @orig is %NULL, we just duplicate @add.
+ *
+ * Returns: the reallocated string, or %NULL on failure.  In case
+ * of failure the content of @orig is freed, if @orig is not %NULL,
+ * to avoid memory leakage.
+ */
+
+char *gretl_str_expand (char **orig, const char *add, const char *sep)
+{
+    char *targ;
+    int n;
+
+    if (add == NULL) {
+	return NULL;
+    }
+
+    if (orig == NULL || *orig == NULL) {
+	return gretl_strdup(add);
+    }
+
+    n = strlen(*orig);
+    if (sep != NULL) {
+	n += strlen(sep);
+    }
+    n += strlen(add) + 1;
+
+    targ = realloc(*orig, n);
+    if (targ == NULL) {
+	free(*orig);
+	*orig = NULL;
+	return NULL;
+    }
+
+    if (sep != NULL) {
+	strcat(targ, sep);
+    }
+    strcat(targ, add);
+    *orig = targ;
+
+    return targ;
+}
+
 #define is_word_char(c) (isalnum((unsigned char) c) || c == '_')
 
 /**

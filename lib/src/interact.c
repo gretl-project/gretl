@@ -427,28 +427,45 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     }
 }
 
-/* pull the specification for "block-diagonal" instruments
-   off the end of an arbond command line, for subsequent
-   special processing */
+/* pluck the specification for "block-diagonal" instruments out of an
+   arbond command line, and put it in the command's "param" field for
+   subsequent special processing in arbond.c */
 
 static void grab_arbond_diag (char *s, CMD *cmd)
 {
-    int i, n = strlen(s);
-    char *p;
+    char *param = NULL;
+    char *s0, *p, *q;
+    int k;
 
-    for (i=n-1; i>0; i--) {
-	if (s[i] == ';') {
-	    free(cmd->param); 
-	    p = s + i + 1;
-	    while (*p == ' ') p++;
-	    cmd->param = gretl_strdup(p);
-	    if (cmd->param == NULL) {
+    s0 = s = strrchr(s, ';');
+
+    while ((s = strstr(s, "GMM("))) {
+	p = strchr(s, ')');
+	if (p == NULL) {
+	    cmd->errcode = E_PARSE;
+	} else {
+	    p++;
+	    k = p - s;
+	    q = gretl_strndup(s, k);
+	    param = gretl_str_expand(&param, q, " ");
+	    if (param == NULL) {
 		cmd->errcode = E_ALLOC;
 	    }
-	    s[i] = 0;
-	    tailstrip(s);
+	    free(q);
+	    while (*p == ' ') {
+		p++; k++;
+	    }
+	    shift_string_left(s, k);
+	}
+	if (cmd->errcode) {
 	    break;
 	}
+    }
+
+    if (param != NULL) {
+	free(cmd->param);
+	cmd->param = param;
+	tailstrip(s0);
     }
 }
 
@@ -1664,7 +1681,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
        later processing */
-    if (cmd->ci == ARBOND && get_sepcount(line) == 3) {
+    if (cmd->ci == ARBOND && get_sepcount(line) == 2) {
 	grab_arbond_diag(line, cmd);
 	if (cmd->errcode) {
 	    return cmd->errcode;
@@ -2745,15 +2762,13 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     /* print parameter after list, if wanted */
     if ((cmd->ci == LOGISTIC || cmd->ci == ARBOND) && *cmd->param != '\0') {
-	const char *leader = (cmd->ci == ARBOND)? " ; " : " ";
-
-	len = strlen(cmd->param) + strlen(leader);
+	len = strlen(cmd->param) + 1;
 	if (echo_stdout) {
 	    if (stdlen + len > LINELEN) {
 		fputs(" \\\n ", stdout);
 		stdlen = 0;
 	    }
-	    fputs(leader, stdout);
+	    fputc(' ', stdout);
 	    fputs(cmd->param, stdout);
 	    stdlen += len;
 	}
@@ -2762,7 +2777,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		pputs(prn, " \\\n ");
 		prnlen = 0;
 	    }	    
-	    pputs(prn, leader);
+	    pputc(prn, ' ');
 	    pputs(prn, cmd->param);
 	    prnlen += len;
 	}

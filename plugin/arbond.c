@@ -2047,18 +2047,18 @@ static int parse_diag_info (const char *s, struct diag_info *d,
 
     if (s == NULL) {
 	err = E_ALLOC;
-    } else if (sscanf(s, "%15[^(](%d to %d", vname, &m1, &m2) != 3) {
+    } else if (sscanf(s, "GMM(%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
 	v = varindex(pdinfo, vname);
 	if (v == pdinfo->v) {
 	    err = E_UNKVAR;
-	} else if (m1 > 0 || m2 > m1) {
+	} else if (m1 < 0 || (m2 != 0 && m2 < m1)) {
 	    err = E_DATA;
 	} else {
 	    d->v = v;
-	    d->minlag = -m1;
-	    d->maxlag = -m2;
+	    d->minlag = m1;
+	    d->maxlag = m2;
 	}
     }
 
@@ -2095,7 +2095,7 @@ static int arbond_parse_istr (const char *istr, const DATAINFO *pdinfo,
 	}
     }
 
-    /* parse and record individual instrument specs */
+    /* parse and record individual GMM instrument specs */
     s = s0;
     i = 0;
     while (*s && !err) {
