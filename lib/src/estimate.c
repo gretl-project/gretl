@@ -360,6 +360,37 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     return 0;
 }
 
+/* Durbin-Watson statistic for pooled model */
+
+static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
+{
+    double ut, us, num = 0.0;
+    int s, t;
+
+    pmod->rho = NADBL;
+
+    for (t=pmod->t1+1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
+	s = t - 1;
+	if (na(pmod->uhat[s])) {
+	    continue;
+	}
+	if (pdinfo->paninfo->unit[t] != pdinfo->paninfo->unit[s]) {
+	    continue;
+	}
+	if (pdinfo->paninfo->period[t] != pdinfo->paninfo->period[s] + 1) {
+	    continue;
+	}
+	ut = pmod->uhat[t];
+	us = pmod->uhat[s];
+	num += (ut - us) * (ut - us);
+    }
+
+    pmod->dw = num / pmod->ess;
+}
+
 /* calculation of WLS stats in agreement with GNU R */
 
 static void get_wls_stats (MODEL *pmod, const double **Z)

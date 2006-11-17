@@ -184,7 +184,11 @@ static gretl_matrix *fe_model_xpx (MODEL *pmod)
     return X;
 }
 
-/* HAC covariance matrix for the fixed-effects model */
+/* HAC covariance matrix for the fixed-effects model, given "fixed T
+   and large N".  In the case of "large T" a different form is needed
+   for robustness in respect of autocorrelation.  See Arellano, "Panel
+   Data Econometrics" (Oxford, 2003), pages 18-19.
+*/
 
 static int 
 fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
@@ -192,7 +196,7 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_vector *e = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     gretl_matrix *W = NULL;
     int Ti, T = pan->effT;
@@ -203,12 +207,12 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     e = gretl_vector_alloc(T);
     Xi = gretl_matrix_alloc(T, k);
     eXi = gretl_vector_alloc(k);
-    tmp = gretl_matrix_alloc(k, k);
+    V = gretl_matrix_alloc(k, k);
     XX = fe_model_xpx(pmod);
     W = gretl_zero_matrix_new(k, k);
 
     if (e == NULL || Xi == NULL || eXi == NULL ||
-	tmp == NULL || XX == NULL || W == NULL) {
+	V == NULL || XX == NULL || W == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -219,8 +223,10 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	if (Ti < 1) {
 	    continue;
 	}
+
 	e = gretl_matrix_reuse(e, Ti, 1);
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
+
 	for (t=0; t<Ti; t++) {
 	    if (na(pmod->uhat[s])) {
 		gretl_vector_set(e, t, 0.0);
@@ -233,6 +239,7 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	    }
 	    s++;
 	}
+
 	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
 				  Xi, GRETL_MOD_NONE,
 				  eXi, GRETL_MOD_NONE);
@@ -245,21 +252,20 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_print(W, "sum_eXi");
 #endif
 
-    /* now form V(b_W) = (X'X)^{-1} W (X'X)^{-1} */
-
-    gretl_matrix_multiply(XX, W, tmp);
-    gretl_matrix_multiply(tmp, XX, W);
+    /* form V(b_W) = (X'X)^{-1} W (X'X)^{-1} */
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
 
 #if 0
-    gretl_matrix_print(W, "V(b_W)");
+    gretl_matrix_print(V, "V(b_W)");
 #endif
 
     s = 0;
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
-	    pmod->vcv[s++] = W->val[mdx(W, i, j)];
+	    pmod->vcv[s++] = V->val[mdx(V, i, j)];
 	}
-	pmod->sderr[i] = sqrt(W->val[mdx(W, i, i)]);
+	pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
     }
 
     gretl_model_set_int(pmod, "panel_hac", 1);
@@ -269,17 +275,20 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_free(e);
     gretl_matrix_free(Xi);
     gretl_matrix_free(eXi);
-    gretl_matrix_free(tmp);
+    gretl_matrix_free(V);
     gretl_matrix_free(XX);
     gretl_matrix_free(W);
 
     return err;
 }
 
-/* Durbin-Watson statistic for pooled or fixed effects model on a 
-   balanced panel */
+#if 1
 
-void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
+/* Durbin-Watson statistic for pooled or fixed effects model */
+
+/* FIXME? */
+
+static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int T = pdinfo->pd;
     double ut, u1;
@@ -337,6 +346,8 @@ static void private_panel_dwstat (MODEL *pmod, DATAINFO *pdinfo,
 	pmod->rho = pmod->dw = NADBL;
     }
 }
+
+#endif
 
 /* Allocate the arrays needed to perform the Hausman test,
    in its matrix formulation.
@@ -1677,7 +1688,9 @@ static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
     fe_model_add_ahat(femod, Z, pdinfo, pan);
     femod->list[0] -= pan->ndum;
     set_model_id(femod);
+#if 1 /* FIXME? */
     private_panel_dwstat(femod, pdinfo, pan);
+#endif
     save_fixed_effects_F(pan, femod);
     time_dummies_wald_test(pan, femod);
 
