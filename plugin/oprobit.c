@@ -619,7 +619,7 @@ static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
 	*err = numerical_ihess(OC, theta, V);
     }
 
-    if (!*err && (OC->opt & OPT_R)) {
+    if (!*err && && (OC->opt & OPT_R)) {
 	gretl_matrix *GG = NULL;
 	gretl_matrix *Vr = NULL;
 
@@ -669,8 +669,13 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
     int fncount = 0;
     int grcount = 0;
 
-    /* analytical score option */
+    /* set analytical score option... */
     opt |= OPT_A;
+
+    /* ...but if not analytical, remove robust option */
+    if (!(opt & OPT_A)) {
+	opt &= ~OPT_R;
+    }
 
     op_container *OC = op_container_new(ci, Z, pmod, opt);
     if (OC == NULL) {
