@@ -190,10 +190,15 @@
 	  <flag>--difference</flag>
 	  <effect>usa la differenza prima della variabile</effect>
 	</option>
+	<option>
+	  <flag>--test-down</flag>
+	  <effect>ordine di ritardo automatico</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
         <example>adf 2 y --nc --c --ct</example>
+        <example>adf 12 y --c --test-down</example>
       </examples>
     </usage>
 
@@ -229,25 +234,23 @@
 	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
 	graphic="adf1"/></para>
 
-      <para>Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
-        regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente.
-      </para>
-
       <para context="cli">
-        Se l'ordine di ritardi è preceduto da un segno meno, ad esempio
-        &minus;<mathvar>k</mathvar>, verrà considerato come ordine massimo, e
-        l'ordine da usare effettivamente sarà ricavato applicando la seguente
-        procedura di test "all'indietro":
+        Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
+        regressori di ognuna delle regressioni calcolate per il test saranno
+        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, con la
+        precisazione che segue. Se si usa l'opzione <lit>--test-down</lit>,
+        <mathvar>k</mathvar> viene interpretato come ritardo massimo, mentre
+        l'ordine di ritardo effettivamente usato viene ottenuto testando
+        "all'indietro" con il seguente algoritmo:
       </para>
 
       <para context="gui">
         Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
         regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, a meno
-        che venga selezionata la casella <quote>test per il ritardo
-        massimo</quote>; in questo caso, l'ordine selezionato verrà considerato
-        come ordine massimo, e l'ordine da usare effettivamente sarà ricavato
+        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, con la
+        precisazione che segue. Se viene selezionata la casella <quote>test per
+        il ritardo massimo</quote>, l'ordine selezionato verrà considerato come
+        ordine massimo, e l'ordine da usare effettivamente sarà ricavato
         applicando la seguente procedura di test "all'indietro":
       </para>
 
