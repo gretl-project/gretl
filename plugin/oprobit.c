@@ -28,6 +28,7 @@ typedef struct op_container_ op_container;
 
 struct op_container_ {
     int type;         /* model type */
+    gretlopt opt;     /* option flags */
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;
@@ -40,7 +41,6 @@ struct op_container_ {
     double *ndx;      /* index variable */
     double *dP;       /* probabilities */
     MODEL *pmod;      /* model struct, initially containing OLS */
-    int ascore;       /* 0 for numerical score, 1 analytical */
     double **G;       /* score matrix by observation */
     double *g;        /* total score vector */
 };
@@ -85,7 +85,7 @@ static void op_container_destroy (op_container *OC)
 }
 
 static op_container *op_container_new (int type, double **Z, MODEL *pmod, 
-				       int ascore)
+				       gretlopt opt)
 {
     int i, t, nx, vy;
     int nobs = pmod->nobs;
@@ -108,7 +108,7 @@ static op_container *op_container_new (int type, double **Z, MODEL *pmod,
     OC->M = (int) gretl_max(OC->t1, OC->t2, Z[vy]);
     nx = OC->k - (OC->M - 1);
     OC->nx = nx;
-    OC->ascore = ascore;
+    OC->opt = opt;
 
     OC->y = NULL;
     OC->ndx = NULL;
@@ -167,7 +167,8 @@ static int compute_probs (const double *theta, op_container *OC)
     int i, t, s, yt, v;
     int type = OC->type;
 
-    if (OC->ascore) {
+    if (OC->opt & OPT_A) {
+	/* analytical score */
 	for (i=0; i<OC->k; i++) {
 	    OC->g[i] = 0.0;
 	}
@@ -218,13 +219,13 @@ static int compute_probs (const double *theta, op_container *OC)
 	    OC->dP[s] = dP;
 	} else {
 #if ODEBUG > 1
-	    fprintf(stderr, "t:%4d y=%d, ndx = %10.6f, dP = %9.7f\n", 
-		    t, yt, OC->ndx[s], dP);
+	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx = %10.6f, dP = %9.7f\n", 
+ 		    t, yt, OC->ndx[s], dP);
 #endif
 	    return 1;
 	} 
 
-	if (OC->ascore) {
+	if (OC->opt & OPT_A) {
 	    double mills0;
 	    double mills1;
 	    double dm;
@@ -346,9 +347,7 @@ static int op_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
     return 1;
 }
 
-#if notyet
-
-static int opg_from_ascore (double *theta, op_container *OC, gretl_matrix *GG) 
+static int opg_from_ascore (op_container *OC, double *theta, gretl_matrix *GG) 
 {
     int s, t, i, j, k = OC->k;
     double x, ll;
@@ -386,9 +385,7 @@ static int opg_from_ascore (double *theta, op_container *OC, gretl_matrix *GG)
     return 0;
 }
 
-#endif
-
-static int ihess_from_ascore (double *theta, op_container *OC, gretl_matrix *inH) 
+static int ihess_from_ascore (op_container *OC, double *theta, gretl_matrix *inH) 
 {
     int i, j, err, k = OC->k;
     double smal = 1.0e-07;  /* "small" is some sort of macro on win32 */
@@ -525,12 +522,12 @@ static double gen_resid (const double *theta, op_container *OC, int t)
 
 static void fill_model (MODEL *pmod, const DATAINFO *pdinfo, 
 			op_container *OC, double *theta, 
-			gretl_matrix *invH)
+			gretl_matrix *V)
 {
     int npar = OC->k;
     int nx = OC->nx;
     double x, y;
-    int i, j, k, t, v;
+    int i, j, k, s, t, v;
 
     pmod->t1 = OC->t1;
     pmod->t2 = OC->t2;
@@ -548,14 +545,17 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
+    /* FIXME: if VCV is robust, flag this so the info can be printed
+       when the model is printed */
+
     k = 0;
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = theta[i];
 #if ODEBUG > 1
 	fprintf(stderr,"theta[%d] = %12.8f\n", i, theta[i]);
 #endif
-	for (j=0; j<=i; j++) {
-	    x = gretl_matrix_get(invH, i, j);
+	for (j=0; j<=i && V != NULL; j++) {
+	    x = gretl_matrix_get(V, i, j);
 	    pmod->vcv[ijton(i,j,npar)] = x;
 	    if (i == j) {
 		pmod->sderr[i] = sqrt(x);
@@ -563,36 +563,32 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}	    
     }
 
-    int s = 0;
+    s = 0;
     for (t=OC->t1; t<=OC->t2; t++) {
 	int pred;
 
 	if (na(OC->pmod->uhat[t])) {
 	    continue;
 	}
+
 	x = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
 	    x += theta[i] * OC->Z[v][t];
 	}
 
-	//	fprintf(stderr, "t = %d/%d: x = %10.6", t, OC->t2, x);
 	/* X\hat{beta} */
 	pmod->yhat[t] = x;
-	//	fprintf(stderr, "\ty = %d", y);
 	y = OC->Z[OC->list[1]][t];
 	pred = get_pred(OC, pmod, x); /* should we do anything with this? */
 	/* compute generalized residual */
 	pmod->uhat[t] = gen_resid(theta, OC, s++);
-	/*
-	fprintf(stderr, "\tu = %10.7f", pmod->uhat[t]);
-	fprintf(stderr, "\n");
-	*/
     }
 
     pmod->lnL = op_loglik(theta, OC);
 
     gretl_model_allocate_params(pmod, npar);
+
     if (pmod->errcode == 0) {
 	for (i=0; i<nx; i++) {
 	    strcpy(pmod->params[i], pdinfo->varname[OC->list[i+2]]);
@@ -604,13 +600,67 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
+static gretl_matrix *oprobit_vcv (op_container *OC, double *theta, int *err)
+{
+    gretl_matrix *V;
+    int k = OC->k;
+
+    V = gretl_matrix_alloc(k, k);
+    if (V == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (OC->opt & OPT_A) {
+	/* hessian from analytical score */
+	*err = ihess_from_ascore(OC, theta, V);
+    } else {
+	/* numerical hessian */
+	*err = numerical_ihess(OC, theta, V);
+    }
+
+    if (!*err && (OC->opt & OPT_R)) {
+	gretl_matrix *GG = NULL;
+	gretl_matrix *Vr = NULL;
+
+	/* sandwich of hessian and OPG */
+
+	GG = gretl_matrix_alloc(k, k);
+	Vr = gretl_matrix_alloc(k, k);
+
+	if (GG == NULL || Vr == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = opg_from_ascore(OC, theta, GG);
+	    if (!*err) {
+		gretl_matrix_qform(V, GRETL_MOD_NONE,
+				   GG, Vr, GRETL_MOD_NONE);
+#if ODEBUG > 1
+		gretl_matrix_print(GG, "OPG matrix");
+#endif
+		gretl_matrix_copy_values(V, Vr);
+	    }
+	}
+
+	gretl_matrix_free(GG);
+	gretl_matrix_free(Vr);
+    } 
+
+    if (*err) {
+	gretl_matrix_free(V);
+	V = NULL;
+    }
+
+    return V;
+}
+
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
-		       PRN *prn)
+		       gretlopt opt, PRN *prn)
 {
     int i, npar;
-    gretl_matrix *iH = NULL;
+    gretl_matrix *V = NULL;
     double *theta = NULL;
     int err;
 
@@ -618,11 +668,11 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
     int maxit = 1000;
     int fncount = 0;
     int grcount = 0;
-    int ascore = 1;
 
-    pprintf(prn, "Analytical score = %d\n", ascore);
+    /* analytical score option */
+    opt |= OPT_A;
 
-    op_container *OC = op_container_new(ci, Z, pmod, ascore);
+    op_container *OC = op_container_new(ci, Z, pmod, opt);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -661,7 +711,7 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     err = BFGS_max(theta, npar, maxit, OPROBIT_TOL, 
 		   &fncount, &grcount, op_loglik, 
-		   (OC->ascore)? op_score : NULL, 
+		   (OC->opt & OPT_A)? op_score : NULL, 
 		   OC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);
 
@@ -675,31 +725,19 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	pmod->coeff[i] = theta[i];
     }
 
-    iH = gretl_matrix_alloc(npar, npar);
-    if(ascore) {
-#if 1
-	err = ihess_from_ascore(theta, OC, iH);
-#else
-	err = opg_from_ascore(theta, OC, iH);
-	if(!err) {
-	    err = gretl_invert_symmetric_matrix(iH);
-	}
-#endif
-    } else {
-	err = numerical_ihess(OC, theta, iH);
-    }
+    V = oprobit_vcv(OC, theta, &err);
 
 #if ODEBUG > 1
-    gretl_matrix_print(iH, "Covariance matrix");
+    gretl_matrix_print(V, "Covariance matrix");
 #endif
 
-    fill_model(pmod, pdinfo, OC, theta, iH);
+    fill_model(pmod, pdinfo, OC, theta, V);
 
     free(theta);
-    gretl_matrix_free(iH);
+    gretl_matrix_free(V);
     op_container_destroy(OC);
 
-    return 0;
+    return err;
 }
 
 /* the driver function for the plugin: note, if prn is non-NULL,
@@ -707,7 +745,7 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 */
 
 MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
-			PRN *prn) 
+			gretlopt opt, PRN *prn) 
 {
     MODEL model;
     int *newlist = NULL;
@@ -767,7 +805,7 @@ MODEL ordered_estimate (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     /* do the actual ordered probit analysis */
     if (model.errcode == 0) {
-	model.errcode = do_ordered(ci, *pZ, pdinfo, &model, prn);
+	model.errcode = do_ordered(ci, *pZ, pdinfo, &model, opt, prn);
     }
 
  bailout:

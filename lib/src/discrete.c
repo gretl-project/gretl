@@ -314,11 +314,12 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
 }
 
 static MODEL ordered_model (const int *list, int ci, double ***pZ, 
-			    DATAINFO *pdinfo, PRN *prn)
+			    DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     MODEL omod;
     void *handle;
-    MODEL (* ordered_estimate) (const int *, int, double ***, DATAINFO *, PRN *);
+    MODEL (* ordered_estimate) (const int *, int, double ***, DATAINFO *, 
+				gretlopt, PRN *);
 
     *gretl_errmsg = '\0';
 
@@ -329,7 +330,7 @@ static MODEL ordered_model (const int *list, int ci, double ***pZ,
 	return omod;
     }
 
-    omod = (*ordered_estimate) (list, ci, pZ, pdinfo, prn);
+    omod = (*ordered_estimate) (list, ci, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
 
@@ -727,7 +728,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
     } else if (ordered_model_ok(*pZ, pdinfo, yv)) {
-	return ordered_model(list, ci, pZ, pdinfo, prn);
+	return ordered_model(list, ci, pZ, pdinfo, opt, prn);
     } else {
 	MODEL dmod;
 
