@@ -36,11 +36,13 @@ typedef struct panelmod_t_ panelmod_t;
 
 struct panelmod_t_ {
     gretlopt opt;         /* option flags */
-    int nunits;           /* total cross-sectional units */
+    int nunits;           /* total cross-sectional units in sample range */
     int effn;             /* effective (included) cross-section units */
+    int N_fe;             /* number of units included in fixed effects model */
     int T;                /* times-series length of panel */
     int effT;             /* effective times-series length (max usable obs per unit) */
-    double Tbar;          /* harmonic mean of per-units tme series lengths */
+    double Tbar;          /* harmonic mean of per-units time-series lengths */
+    int NT;               /* total observations used (based on pooled model) */
     int ndum;             /* number of unit dummy variables added for FE model */
     int ntdum;            /* number of time dummies added */
     int *unit_obs;        /* array of number of observations per x-sect unit */
@@ -97,9 +99,11 @@ static void panelmod_init (panelmod_t *pan)
 {
     pan->nunits = 0;
     pan->effn = 0;
+    pan->N_fe = 0;
     pan->T = 0;
     pan->effT = 0;
     pan->Tbar = 0;
+    pan->NT = 0;
     pan->ndum = 0;
     pan->ntdum = 0;
     pan->unit_obs = NULL;
@@ -220,7 +224,7 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     s = 0;
     for (i=0; i<pan->nunits; i++) {
 	Ti = pan->unit_obs[i];
-	if (Ti < 1) {
+	if (Ti < 2) {
 	    continue;
 	}
 
@@ -475,36 +479,33 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 {
     DATAINFO *winfo;
     double *wy = NULL;
-    int wnobs = 0;
+    int wn = 0;
     double xbar;
     int i, j, k;
     int s, t, bigt;
 
-    /* real number of included units */
-    pan->effn = 0;
     pan->balanced = 1;
 
-    for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= 1) {
-	    wnobs += pan->unit_obs[i];
-	    pan->effn += 1;
-	    if (pan->unit_obs[i] != pan->effT) {
-		pan->balanced = 0;
-	    }
-	}
+    for (i=0; i<pan->nunits; i++) {
+ 	if (pan->unit_obs[i] > 1) {
+ 	    wn += pan->unit_obs[i];
+ 	    if (pan->unit_obs[i] != pan->effT) {
+ 		pan->balanced = 0;
+ 	    }
+ 	}
     }
 
-    wy = malloc(wnobs * sizeof *wy);
+    wy = malloc(wn * sizeof *wy);
     if (wy == NULL) {
 	return NULL;
     }
 
 #if PDEBUG
     fprintf(stderr, "within_groups dataset: nvars=%d, nobs=%d\n", 
-	    pan->vlist[0], wnobs);
+	    pan->vlist[0], wn);
 #endif
 
-    winfo = dataset_with_panel_info(wZ, pan->vlist[0], wnobs);
+    winfo = dataset_with_panel_info(wZ, pan->vlist[0], wn);
     if (winfo == NULL) {
 	free(wy);
 	return NULL;
@@ -512,7 +513,9 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 
     k = 0;
     for (j=1; j<=pan->vlist[0]; j++) { 
-	if (pan->vlist[j] == 0) {
+	int vj = pan->vlist[j];
+
+	if (vj == 0) {
 	    continue;
 	} 
 
@@ -530,7 +533,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 #if PDEBUG
 	    fprintf(stderr, "looking at x-sect unit %d: Ti = %d\n", i, Ti);
 #endif
-	    if (Ti < 1) {
+	    if (Ti < 2) {
 		continue;
 	    }
 
@@ -538,7 +541,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
 		if (!na(pan->pooled->uhat[bigt])) {
-		    xbar += Z[pan->vlist[j]][bigt];
+		    xbar += Z[vj][bigt];
 		}
 	    }
 	    xbar /= (double) Ti;
@@ -556,12 +559,12 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 		}
 		bigt = panel_index(i, t);
 		if (!na(pan->pooled->uhat[bigt])) {
-		    (*wZ)[k][s] = Z[pan->vlist[j]][bigt] - xbar;
+		    (*wZ)[k][s] = Z[vj][bigt] - xbar;
 #if PDEBUG > 1
 		    fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, s, (*wZ)[k][s]);
 #endif
 		    if (j == 1) {
-			wy[s] = Z[pan->vlist[j]][bigt];
+			wy[s] = Z[vj][bigt];
 			winfo->paninfo->unit[s] = i;
 			winfo->paninfo->period[s] = t;
 		    }
@@ -572,7 +575,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 	}
     }
 
-    within_depvarstats(pan, wy, wnobs);
+    within_depvarstats(pan, wy, wn);
     free(wy);
 
     return winfo;
@@ -595,14 +598,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
     int hreg = (hlist != NULL);
     int v1 = relist[0];
     int v2 = 0;
-    int re_n = 0;
     int i, j, k, k2, t;
-
-    for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] > 0) {
-	    re_n += pan->unit_obs[i];
-	}
-    }
 
     if (hreg) {
 	/* apparatus for regression version of Hausman test */
@@ -616,15 +612,13 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 
 #if PDEBUG
     fprintf(stderr, "random_effects_dataset: nvars=%d, nobs=%d\n",
-	    v1 + v2, re_n);
+	    v1 + v2, pan->NT);
 #endif
 
-    reinfo = dataset_with_panel_info(reZ, v1 + v2, re_n);
+    reinfo = dataset_with_panel_info(reZ, v1 + v2, pan->NT);
     if (reinfo == NULL) {
 	return NULL;
     }
-
-    pan->balanced = 1;
 
     /* Now create the transformed variables: original data minus theta
        times the appropriate group mean.
@@ -632,24 +626,24 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
     k = 0;
     k2 = v1 - 1;
     for (j=1; j<=v1; j++) {
-	int pj = pan->pooled->list[j];
-	const double *xj = Z[pj];
+	int vj = pan->pooled->list[j];
+	const double *xj = Z[vj];
 	const double *gm = NULL;
-	int vvar = var_is_varying(pan, pj);
+	int vvar = var_is_varying(pan, vj);
 	double theta_i;
 	int bigt, s, u = 0;
 
-	if (pj == 0) {
+	if (vj == 0) {
 	    relist[j] = 0;
 	} else {
 	    k++;
 	    relist[j] = k; /* build GLS regression list */
 	    gm = gZ[k];
-	    strcpy(reinfo->varname[k], pdinfo->varname[pj]);
+	    strcpy(reinfo->varname[k], pdinfo->varname[vj]);
 	    if (hreg && vvar && j > 1) {
 		k2++;
 		strcpy(reinfo->varname[k2], "_");
-		strncat(reinfo->varname[k2], pdinfo->varname[pj],
+		strncat(reinfo->varname[k2], pdinfo->varname[vj],
 			VNAMELEN - 2);
 	    }
 	}
@@ -668,7 +662,6 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
 			i, Ti, theta_i);
 #endif
-		pan->balanced = 0;
 	    } else {
 		theta_i = pan->theta;
 	    }
@@ -713,16 +706,10 @@ group_means_dataset (panelmod_t *pan,
 {
     DATAINFO *ginfo;
     double x;
-    int gn = 0;
+    int gn = pan->effn;
     int gv = pan->pooled->list[0];
     int i, j, k;
     int s, t, bigt;
-
-    for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] > 0) {
-	    gn++;
-	}
-    }
 
     if (pan->balanced && pan->ntdum > 0) {
 	gv -= pan->ntdum;
@@ -740,35 +727,37 @@ group_means_dataset (panelmod_t *pan,
 
     k = 1;
     for (j=1; j<=gv; j++) { 
-	int pj = pan->pooled->list[j];
+	int vj = pan->pooled->list[j];
 
-	if (pj == 0) {
+	if (vj == 0) {
 	    continue;
 	}
 	
-	if (1 || (pan->opt & OPT_B)) {
+	if (pan->opt & OPT_B) {
 	    /* focus on "between" model: so name the variables */
-	    strcpy(ginfo->varname[k], pdinfo->varname[pj]);
+	    strcpy(ginfo->varname[k], pdinfo->varname[vj]);
 	}
 
 	s = 0;
 	for (i=0; i<pan->nunits; i++) { 
 	    int Ti = pan->unit_obs[i];
 
-	    if (Ti > 0) {
-		x = 0.0;
-		for (t=0; t<pan->T; t++) {
-		    bigt = panel_index(i, t);
-		    if (!na(pan->pooled->uhat[bigt])) {
-			x += Z[pj][bigt];
-		    }
-		}
-		(*gZ)[k][s] = x / (double) Ti;
-#if PDEBUG > 1
-		fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][s]);
-#endif
-		s++;
+	    if (Ti == 0) {
+		continue;
 	    }
+
+	    x = 0.0;
+	    for (t=0; t<pan->T; t++) {
+		bigt = panel_index(i, t);
+		if (!na(pan->pooled->uhat[bigt])) {
+		    x += Z[vj][bigt];
+		}
+	    }
+	    (*gZ)[k][s] = x / (double) Ti;
+#if PDEBUG > 1
+	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][s]);
+#endif
+	    s++;
 	}
 	k++;
     }
@@ -1144,7 +1133,7 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 
 static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 {
-    pan->Fdfn = pan->effn - 1;
+    pan->Fdfn = pan->N_fe - 1;
     pan->Fdfd = wmod->dfd;
 
     pan->F = (pan->pooled->ess - wmod->ess) * pan->Fdfd / 
@@ -1205,6 +1194,7 @@ static int fix_within_stats (MODEL *targ, panelmod_t *pan)
     targ->sdy = pan->sdy;
     targ->ifc = 1;
 
+    /* should we modify R^2 in this way? */
     targ->rsq = 1.0 - (targ->ess / pan->tss);
 
     if (targ->dfd > 0) {
@@ -1426,7 +1416,7 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract degrees of freedom */
-	panel_df_correction(&femod, pan->effn);
+	panel_df_correction(&femod, pan->N_fe);
 #if PDEBUG > 1
 	printmodel(&femod, winfo, OPT_O, prn);
 #endif
@@ -1576,8 +1566,9 @@ static int get_fixed_effects_method (panelmod_t *pan)
 }
 
 /* Construct a gretl list containing the index numbers of the
-   cross-sectional units included in the fixed-effects regression This
-   is for the purpose of naming the per-unit intercepts.
+   cross-sectional units included in the fixed-effects
+   regression. This is for the purpose of naming the per-unit
+   intercepts.
 */
 
 int *fe_units_list (const panelmod_t *pan)
@@ -1620,7 +1611,7 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     const int *pooldrop;
     int *dlist;
     int ndrop = 0;
-    int j, pj, i = 1;
+    int j, vj, i = 1;
 
     if (gretl_model_get_int(pmod, "fixed-effects")) {
 	ndrop = pan->pooled->list[0] - pan->vlist[0];
@@ -1649,9 +1640,9 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 
     if (pan->vlist[0] < pan->pooled->list[0]) {
 	for (j=2; j<=pan->pooled->list[0]; j++) {
-	    pj = pan->pooled->list[j];
-	    if (!in_gretl_list(pan->vlist, pj)) {
-		dlist[i++] = pj;
+	    vj = pan->pooled->list[j];
+	    if (!in_gretl_list(pan->vlist, vj)) {
+		dlist[i++] = vj;
 	    }
 	}
     }
@@ -1976,21 +1967,21 @@ static int random_effects (panelmod_t *pan,
 
 static void 
 unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
-		      int nunits, int T, const int *unit_obs)
+		      panelmod_t *pan)
 {
     int i, t;
     double x;
 
-    for (i=0; i<nunits; i++) {
+    for (i=0; i<pan->nunits; i++) {
 	uvar[i] = 0.0;
-	for (t=0; t<T; t++) {
+	for (t=0; t<pan->T; t++) {
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
 		uvar[i] += x * x;
 	    }
 	}
-	if (unit_obs[i] > 1) {
-	    uvar[i] /= (double) unit_obs[i]; 
+	if (pan->unit_obs[i] > 1) {
+	    uvar[i] /= (double) pan->unit_obs[i]; 
 	}	
     }
 }
@@ -2124,25 +2115,28 @@ static int complete_hausman_test (panelmod_t *pan, PRN *prn)
    non-zero otherwise.
 */
 
-static int panel_obs_accounts (const MODEL *pmod, int nunits, int T, 
-			       int *effn, int *effT, 
-			       int **unit_obs, int *bal)
+static int panel_obs_accounts (panelmod_t *pan)
 {
+    const MODEL *pmod = pan->pooled;
     int *uobs;
     int ninc = 0;
     int obsmax = 0;
+    int N = pan->nunits;
     int i, t;
     
-    *effn = *effT = 0;
-
-    uobs = malloc(nunits * sizeof *uobs);
+    uobs = malloc(pan->nunits * sizeof *uobs);
     if (uobs == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<nunits; i++) {
+    pan->NT = 0;
+    pan->effn = 0;
+    pan->N_fe = 0;
+    pan->effT = 0;
+
+    for (i=0; i<N; i++) {
 	uobs[i] = 0;
-	for (t=0; t<T; t++) {
+	for (t=0; t<pan->T; t++) {
 #if PDEBUG > 1
 	    fprintf(stderr, "unit %d, t=%d, pmod->uhat[%d]: %s\n", i, t,
 		    panel_index(i, t), na(pmod->uhat[panel_index(i, t)])? 
@@ -2157,22 +2151,23 @@ static int panel_obs_accounts (const MODEL *pmod, int nunits, int T,
 	    if (uobs[i] > obsmax) {
 		obsmax = uobs[i];
 	    }
+	    pan->NT += uobs[i];
+	}
+	if (uobs[i] > 1) {
+	    pan->N_fe += 1;
 	}
     }
 
-    if (bal != NULL) {
-	*bal = 1;
-	for (i=0; i<nunits; i++) {
-	    if (uobs[i] > 0 && uobs[i] != obsmax) {
-		*bal = 0;
-		break;
-	    }
+    for (i=0; i<N; i++) {
+	if (uobs[i] > 0 && uobs[i] != obsmax) {
+	    pan->balanced = 0;
+	    break;
 	}
     }
 
-    *effn = ninc;
-    *effT = obsmax;
-    *unit_obs = uobs;
+    pan->effn = ninc;
+    pan->effT = obsmax;
+    pan->unit_obs = uobs;
 
     return 0;
 }
@@ -2236,10 +2231,7 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATAINFO *pdinfo,
     panel_index_init(pdinfo, pan->nunits, pan->T);
     pan->ntdum = ntdum;
     
-    err = panel_obs_accounts(pmod, pan->nunits, pan->T,
-			     &pan->effn, &pan->effT, 
-			     &pan->unit_obs,
-			     &pan->balanced);
+    err = panel_obs_accounts(pan);
 
     if (!err && (pan->opt & (OPT_U | OPT_F | OPT_B))) {
 	pan->realmod = malloc(sizeof *pan->realmod);
@@ -2271,8 +2263,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (pmod->ifc == 0) {
-	/* at many points in these functions we assume the base
-	   regression has an intercept included */
+	/* at many points we assume the base regression has an
+	   intercept included */
 	return E_NOCONST;
     }
 
@@ -2290,9 +2282,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    /* figure out which of the original regressors are time-varying,
-       or unit-varying as the case may be 
-    */
+    /* figure out which of the original regressors are time-varying */
     err = varying_vars_list((const double **) *pZ, pdinfo, &pan);
     if (err) {
 	goto bailout;
@@ -2694,20 +2684,20 @@ print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
 static double 
 wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo, 
 		  double s2, const double *uvar,
-		  int T, int nunits, const int *unit_obs)
+		  panelmod_t *pan)
 {
     double x, W = 0.0;
     int i, t, Ti;
 
-    for (i=0; i<nunits; i++) {
+    for (i=0; i<pan->nunits; i++) {
 	double fii = 0.0;
 
-	Ti = unit_obs[i];
+	Ti = pan->unit_obs[i];
 	if (Ti == 1) {
 	    W = NADBL;
 	    break;
 	}
-	for (t=0; t<T; t++) {
+	for (t=0; t<pan->T; t++) {
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
 		x = x * x - uvar[i];
@@ -2806,18 +2796,18 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
     MODEL mdl;
+    panelmod_t pan;
     gretlopt wlsopt = OPT_A;
     double *uvar = NULL;
     double *bvec = NULL;
     double s2, diff = 1.0;
     double W = NADBL;
-    int *unit_obs = NULL;
     int *wlist = NULL;
-    int nunits, effn, T, effT;
     int orig_v = pdinfo->v;
     int i, iter = 0;
 
     gretl_errmsg_clear();
+    panelmod_init(&pan);
 
     if (opt & OPT_T) {
 	/* iterating: no degrees-of-freedom correction */
@@ -2834,28 +2824,20 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    nunits = pdinfo->n / pdinfo->pd;
-    T = pdinfo->pd;
-
-    panel_index_init(pdinfo, nunits, T);
-
-    mdl.errcode = panel_obs_accounts(&mdl, nunits, T,
-				     &effn, &effT,
-				     &unit_obs,
-				     NULL);
+    mdl.errcode = panelmod_setup(&pan, &mdl, pdinfo, 0, OPT_NONE);
     if (mdl.errcode) {
 	goto bailout;
     }
 
-    uvar = malloc(nunits * sizeof *uvar);
+    uvar = malloc(pan.nunits * sizeof *uvar);
     if (uvar == NULL) {
-	free(unit_obs);
+	free(pan.unit_obs);
 	mdl.errcode = E_ALLOC;
 	return mdl;
     }  
 
     if (opt & OPT_T) {
-	if (singleton_check(unit_obs, nunits)) {
+	if (singleton_check(pan.unit_obs, pan.nunits)) {
 	    pprintf(prn, _("Can't produce ML estimates: "
 			   "some units have only one observation"));
 	    pputc(prn, '\n');
@@ -2902,7 +2884,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	iter++;
 
-	unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
+	unit_error_variances(uvar, &mdl, pdinfo, &pan);
 
 	if (opt & OPT_V) {
 	    if (opt & OPT_T) {
@@ -2912,19 +2894,18 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 		pputc(prn, '\n');
 	    }
 	    pputs(prn, " unit    variance\n");
-	    for (i=0; i<nunits; i++) {
-		if (unit_obs[i] > 0) {
+	    for (i=0; i<pan.nunits; i++) {
+		if (pan.unit_obs[i] > 0) {
 		    pprintf(prn, "%5d%12g\n", i + 1, uvar[i]);
 		}
 	    }
 	}
 
 	if ((opt & OPT_T) && iter == 2) {
-	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, T, 
-				 nunits, unit_obs);
+	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
 	}
 
-	write_uvar_to_dataset(uvar, nunits, T, *pZ, pdinfo);
+	write_uvar_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
 
 	if (opt & OPT_T) {
 	    /* save coefficients for comparison */
@@ -2934,9 +2915,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	clear_model(&mdl);
-
 	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt);
-
 	if (mdl.errcode) {
 	    break;
 	}
@@ -2962,32 +2941,31 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_A)) {
 	    set_model_id(&mdl);
 	}
-	gretl_model_set_int(&mdl, "n_included_units", effn);
+	gretl_model_set_int(&mdl, "n_included_units", pan.effn);
 	gretl_model_set_int(&mdl, "unit_weights", 1);
 	mdl.nwt = 0;
 
 	if (opt & OPT_T) {
 	    gretl_model_set_int(&mdl, "iters", iter);
-	    ml_hetero_test(&mdl, s2, uvar, nunits, unit_obs);
-	    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
-	    mdl.lnL = real_ll(&mdl, uvar, nunits, unit_obs);
+	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
+	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
+	    mdl.lnL = real_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
 	    }
 	} else {
-	    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
-	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, T, 
-				 nunits, unit_obs);
+	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
+	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
 	}
 
 	if (!na(W)) {
-	    print_wald_test(W, nunits, unit_obs, prn);
+	    print_wald_test(W, pan.nunits, pan.unit_obs, prn);
 	}
     }    
 
  bailout:
 
-    free(unit_obs);
+    free(pan.unit_obs);
     free(uvar);
     free(wlist);
     free(bvec);
@@ -3341,7 +3319,7 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 
 #if PDEBUG
     printlist(pan->pooled->list, "original regressors");
-    printlist(pan->vlist, "varying regressors");
+    printlist(pan->vlist, "time-varying regressors");
 #endif
 
     return 0;
