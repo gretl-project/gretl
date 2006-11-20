@@ -693,9 +693,11 @@ group_means_dataset (panelmod_t *pan,
     int i, j, k;
     int s, t, bigt;
 
+#if 0
     if (pan->balanced && pan->ntdum > 0) {
 	gv -= pan->ntdum;
     }
+#endif
 
 #if PDEBUG
     fprintf(stderr, "group_means_dataset: nvars=%d, nobs=%d\n", 
@@ -778,10 +780,15 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     MODEL bmod;
     gretlopt bopt;
     int *blist;
-    int i, j;
+    int i, j, nv;
     int err = 0;
 
-    blist = gretl_list_new(ginfo->v);
+    nv = ginfo->v;
+    if (pan->balanced && pan->ntdum > 0) {
+	nv -= pan->ntdum;
+    }
+
+    blist = gretl_list_new(nv);
     if (blist == NULL) {
 	return E_ALLOC;
     }
@@ -2314,7 +2321,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	pan_opt |= OPT_F;
     }
 
-    if (opt & OPT_D) {
+    if (opt & OPT_D && !(opt & OPT_B)) {
 	ntdum = get_ntdum(list, mod.list);
     }
 
