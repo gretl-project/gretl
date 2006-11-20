@@ -6298,7 +6298,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		}
 		varlist(pdinfo, prn);
 	    }
+#if 0 /* changed 2006/11/20: does this create problems? */
 	    *paths.currdir = '\0'; 
+#endif
 	}
 	break;
 

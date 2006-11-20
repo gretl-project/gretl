@@ -1688,6 +1688,13 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	   break;
 	case RESAMPLE:
 	   p->err = resample_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	   break;
+	case PMEAN:
+	   p->err = panel_mean_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	   break;
+	case PSD:
+	   p->err = panel_sd_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	   break;
 	default:
 	    break;
 	}
@@ -2569,6 +2576,8 @@ static NODE *eval (NODE *t, parser *p)
     case BKFILT:
     case FRACDIF:
     case RESAMPLE:
+    case PMEAN:
+    case PSD:
 	/* series argument needed */
 	if (l->t == VEC) {
 	    ret = series_series_func(l, r, t->t, p);

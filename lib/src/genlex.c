@@ -149,6 +149,8 @@ struct str_table funcs[] = {
     { GAMMA,    "gamma" },
     { LNGAMMA,  "lngamma" },
     { RESAMPLE, "resample" },
+    { PMEAN,    "pmean" },     /* panel mean */
+    { PSD,      "psd" },       /* panel std dev */
     { HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { BKFILT,   "bkfilt" },    /* Baxter-King filter */
     { FRACDIF,  "fracdiff" },  /* fractional difference */

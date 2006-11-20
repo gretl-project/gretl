@@ -35,6 +35,10 @@ int resample_series (const double *x, double *y,
 int fracdiff_series (const double *x, double *y, double d,
 		     const DATAINFO *pdinfo);
 
+int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo);
+
+int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo);
+
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	       gretlopt opt);
 

@@ -57,6 +57,10 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
+    if (na(pmod->ybar) || na(pmod->sdy)) {
+	return;
+    }
+
     if (plain_format(prn)) {
 	pprintf(prn, "  %s = %.*g\n", _("Mean of dependent variable"), 
 		XDIGITS(pmod), pmod->ybar);

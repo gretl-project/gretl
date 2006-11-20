@@ -4189,8 +4189,9 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
-    if (has_suffix(fname, ".inp")) 
+    if (has_suffix(fname, ".inp")) { 
 	return GRETL_SCRIPT;
+    }
 
     if (has_suffix(fname, ".gretl")) {
 	if (gretl_is_pkzip_file(fname)) {

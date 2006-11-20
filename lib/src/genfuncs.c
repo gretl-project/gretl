@@ -285,6 +285,99 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
     return 0;
 }
 
+int panel_mean_series (const double *x, double *y, const DATAINFO *pdinfo)
+{
+    const int *unit;
+    double xbar = NADBL;
+    int smin = 0;
+    int s, t, Ti = 0;
+
+    if (pdinfo->paninfo == NULL) {
+	return E_DATA;
+    }
+
+    unit = pdinfo->paninfo->unit;
+
+    for (t=0; t<=pdinfo->n; t++) {
+	if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (!na(xbar)) {
+		xbar /= Ti;
+	    }
+	    /* got a new unit (or reached the end): 
+	       ship out current mean */
+	    for (s=smin; s<t; s++) {
+		y[s] = xbar;
+	    }
+	    if (t == pdinfo->n) {
+		break;
+	    }
+	    Ti = 0;
+	    xbar = NADBL;
+	    smin = t;
+	}
+	if (!na(x[t])) {
+	    if (na(xbar)) {
+		xbar = x[t];
+	    } else {
+		xbar += x[t];
+	    }
+	    Ti++;
+	}
+    }
+
+    return 0;
+}
+
+int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo)
+{
+    const int *unit;
+    double sd, xbar = NADBL;
+    int smin = 0;
+    int s, t, Ti = 0;
+
+    if (pdinfo->paninfo == NULL) {
+	return E_DATA;
+    }
+
+    unit = pdinfo->paninfo->unit;
+
+    for (t=0; t<=pdinfo->n; t++) {
+	if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (na(xbar)) {
+		sd = NADBL;
+	    } else {
+		xbar /= Ti;
+		sd = 0.0;
+		for (s=smin; s<t; s++) {
+		    if (!na(x[s])) {
+			sd += (x[s] - xbar) * (x[s] - xbar);
+		    }
+		}
+		sd = sqrt(sd / Ti); /* -1? */
+	    }
+	    for (s=smin; s<t-1; s++) {
+		y[s] = sd;
+	    }
+	    if (t == pdinfo->n) {
+		break;
+	    }
+	    Ti = 0;
+	    xbar = NADBL;
+	    smin = t;
+	}
+	if (!na(x[t])) {
+	    if (na(xbar)) {
+		xbar = x[t];
+	    } else {
+		xbar += x[t];
+	    }
+	    Ti++;
+	}
+    }
+
+    return 0;
+}
+
 /* handling sorted marker strings */
 
 int maybe_pick_up_sorted_markers (parser *p)
@@ -1583,3 +1676,4 @@ int check_declarations (char ***pS, parser *p)
 
     return n;
 }
+

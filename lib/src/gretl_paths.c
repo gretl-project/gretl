@@ -430,7 +430,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     }
 
     /* try looking where script was found */
-    if (*ppaths->currdir) {
+    if (*ppaths->currdir != '\0') {
 	if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
 	    return fname;
 	}
@@ -565,9 +565,13 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     char *fullname;
 
     /* get the initial filename off the command line */
-    if (get_quoted_filename(line, fname)) return 0; 
+    if (get_quoted_filename(line, fname)) {
+	return 0; 
+    }
 
-    if (sscanf(line, "%*s %s", fname) != 1) return 1;
+    if (sscanf(line, "%*s %s", fname) != 1) {
+	return 1;
+    }
 
     /* handle tilde == HOME */
     if (*fname == '~') {

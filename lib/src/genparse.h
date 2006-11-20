@@ -55,10 +55,10 @@ enum {
     DOTMULT,
     DOTDIV,
     DOTPOW,
-    KRON,     /* Kronecker product */
+    KRON,   /* 30: Kronecker product */
     MCAT,     /* matrix concatenation */
     OP_MAX,   /* separator: end of operators */
-    ABS,   /* 33 */
+    ABS,
     TOINT,
     SIN,
     COS,
@@ -102,9 +102,11 @@ enum {
     HPFILT,
     BKFILT,
     RESAMPLE,
+    PMEAN,
+    PSD,
     IMAT,
-    SUMR,
-    SUMC,  /* 80 */
+    SUMR,  /* 80 */
+    SUMC,
     MEANR,
     MEANC,
     CDEMEAN,
@@ -113,8 +115,8 @@ enum {
     DIAG,
     TRANSP,
     TVEC,
-    VECH,
-    UNVECH, /* 90 */
+    VECH,   /* 90 */
+    UNVECH,
     ROWS,
     COLS,
     DET,
@@ -123,8 +125,8 @@ enum {
     NORM1,
     RCOND,
     VARNUM,
-    OBSNUM,
-    ISSERIES, /* 100 */
+    OBSNUM,  /* 100 */
+    ISSERIES,
     ISLIST,
     ISNULL,
     LISTLEN,
@@ -133,8 +135,8 @@ enum {
     CRIT,
     FUNC_MAX, /* separator: end of single-arg functions */
     COR,
-    COV,
-    UNIFORM, /* 110 */
+    COV,     /* 110 */
+    UNIFORM,
     NORMAL,
     FRACDIF,    
     ZEROS,
@@ -143,9 +145,9 @@ enum {
     MNORM,
     QR,
     EIGSYM,
-    EIGGEN,
+    EIGGEN,  /* 120 */
     F2_MAX,   /* separator: end of two-arg functions */
-    COM,   /* 120: comma */
+    COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
@@ -153,9 +155,9 @@ enum {
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
-    UOBJ,     /* user-defined object (e.g. model) */
+    UOBJ,  /* 130: user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
-    VEC,   /* 130: series, evaluated */
+    VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
@@ -163,9 +165,9 @@ enum {
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
-    MSPEC,    /* evaluated matrix subspec */
+    MSPEC,  /* 140: evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
-    MDEF,  /* 140: explicit matrix definition {...} */
+    MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */

@@ -4297,6 +4297,34 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
     return 0;
 }
 
+static void 
+get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
+			const gretl_vector *b, gretl_matrix *vcv,
+			double *ps2)
+{
+    double u, s2 = 0.0;
+    int k = X->cols;       /* number of regressors */
+    int n = X->rows;       /* number of observations */
+    int r = 0;
+    int i, j;
+
+    if (vcv != NULL) {
+	r = vcv->rows - k; /* number of restrictions */
+    }
+
+    for (i=0; i<n; i++) {
+	u = y->val[i];
+	for (j=0; j<k; j++) {
+	    u -= X->val[mdx(X, i, j)] * b->val[j];
+	}
+	s2 += u * u;
+    }
+
+    s2 /= (n - k + r);
+
+    *ps2 = s2;
+}
+
 static int
 get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	     const gretl_vector *b, gretl_matrix *vcv,
@@ -4308,25 +4336,7 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (s2 != NULL) {
-	double u, sigma2 = 0.0;
-	int k = X->cols;       /* number of regressors */
-	int n = X->rows;       /* number of observations */
-	int r = vcv->rows - k; /* number of restrictions */
-	int i, j;
-
-	for (i=0; i<n; i++) {
-	    u = y->val[i];
-	    for (j=0; j<k; j++) {
-		u -= X->val[mdx(X, i, j)] * b->val[j];
-	    }
-	    sigma2 += u * u;
-	}
-
-	sigma2 /= (n - k + r);
-
-	gretl_matrix_multiply_by_scalar(vcv, sigma2);  
-
-	*s2 = sigma2;
+	gretl_matrix_multiply_by_scalar(vcv, *s2);
     }
 
     return 0;
@@ -4653,6 +4663,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	for (i=0; i<k; i++) {
 	    b->val[i] = XTy->val[i];
 	}
+	if (s2 != NULL) {
+	    get_ols_error_variance(y, X, b, vcv, s2);
+	}
 	if (vcv != NULL) {
 	    err = get_ols_vcv(y, X, b, vcv, s2);
 	}
@@ -4784,6 +4797,9 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	    b->val[i] = V->val[i];
 	}
 	if (S != NULL) {
+	    if (s2 != NULL) {
+		get_ols_error_variance(y, X, b, S, s2);
+	    }
 	    err = get_ols_vcv(y, X, b, S, s2);
 	    if (!err) {
 		for (i=0; i<k; i++) {
