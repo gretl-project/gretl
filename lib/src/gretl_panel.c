@@ -551,11 +551,13 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 {
     DATAINFO *reinfo;
     double xbar, theta_i;
+    const double *xj;
+    const double *gm;
     int hreg = (hlist != NULL);
     int v1 = relist[0];
     int v2 = 0;
     int i, j, k, k2, t;
-    int vvar, s, bigt, u;
+    int vvar, vj, s, bigt, u;
 
     if (hreg) {
 	/* apparatus for regression version of Hausman test */
@@ -583,10 +585,9 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
     k = 0;
     k2 = v1 - 1;
     for (j=1; j<=v1; j++) {
-	int vj = pan->pooled->list[j];
-	const double *xj = Z[vj];
-	const double *gm = NULL;
-	
+	vj = pan->pooled->list[j];
+	xj = Z[vj];
+	gm = NULL;
 	vvar = var_is_varying(pan, vj);
 	u = 0;
 
@@ -2795,19 +2796,18 @@ int panel_autocorr_test (MODEL *pmod, int order,
     int i, nv, nunits, nobs, err = 0;
     int sn = pdinfo->t2 - pdinfo->t1 + 1;
 
+    if (pmod->ci != OLS) {
+	return E_NOTIMP;
+    }
+
+    if (pmod->missmask != NULL) {
+	return E_DATA;
+    }
+
     /* basic checks */
     if (order <= 0) order = 1;
     if (order > pdinfo->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
-
-    if (!balanced_panel(pdinfo)) { 
-	/* FIXME: check should be on balance of model? */
-        return E_DATA;
-    }
-
-    if (pmod->missmask != NULL) {
-	return E_MISSDATA;
-    }
 
     /* get number of cross-sectional units */
     nunits = sn / pdinfo->pd;

@@ -3398,7 +3398,9 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case RESTRICT:
-	if (model_ci == LAD || model_ci == NLS) ok = 0;
+	if (model_ci == LAD || model_ci == NLS || model_ci == MLE) {
+	    ok = 0;
+	}
 	break;
 
     case TESTUHAT:

@@ -1191,8 +1191,9 @@ int autocorr_test (MODEL *pmod, int order,
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
+    if (pmod->ci != OLS && pmod->ci != VAR) { 
 	return E_NOTIMP;
+    }
 
     if (pmod->missmask != NULL) {
 	return E_DATA;
