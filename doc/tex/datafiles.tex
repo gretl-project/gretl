@@ -395,9 +395,11 @@ of how the observation rows are organized.
 The \cmd{setobs} command has options that parallel those in the
 graphical interface.  If suitable index variables are available
 you can do, for example
+%
 \begin{code}
-            setobs unitvar timevar --panel-vars
+    setobs unitvar timevar --panel-vars
 \end{code}
+%
 where \texttt{unitvar} is a variable that indexes the units and
 \texttt{timevar} is a variable indexing the periods.  Alternatively
 you can use the form \verb+setobs+ \textsl{freq} \verb+1:1+
@@ -409,9 +411,10 @@ or \verb+--stacked-cross-section+.  Two examples are given below: the
 first is suitable for a panel in the form of stacked time series with
 observations from 20 periods; the second for stacked cross sections
 with 5 units.
+%
 \begin{code}
-            setobs 20 1:1 --stacked-time-series
-            setobs 5 1:1 --stacked-cross-section
+    setobs 20 1:1 --stacked-time-series
+    setobs 5 1:1 --stacked-cross-section
 \end{code}
 
 \subsubsection{Panel data arranged by variable}

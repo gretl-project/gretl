@@ -199,9 +199,10 @@ create periodic dummy variables using the modulus operator,
 \verb+%+.  For instance, to create a dummy with
 value 1 for the first observation and every thirtieth observation
 thereafter, 0 otherwise, do
+%
 \begin{code}
-      genr index 
-      genr dum = ((index-1)%30) = 0
+    genr index 
+    genr dum = ((index-1) % 30) = 0
 \end{code}
 
 \subsection{Lags, differences, trends}
@@ -228,15 +229,62 @@ panel.  If you want to create an index that runs consecutively from 1
 to $m\times T$, where $m$ is the number of units in the panel, use
 \cmd{genr index}.
 
+\subsection{Basic statistics by unit}
+\label{panel-stats}
+
+The functions \texttt{pmean()} and \texttt{psd()} can be used to
+generate basic descriptive statistics (mean and standard deviation)
+for a given variable, on a per-group basis.  
+
+Suppose we have a panel data set comprising 8 time-series observations
+on each of $N$ units or groups.  Then the command
+%
+\begin{code}
+    genr pmx = pmean(x)
+\end{code}
+%
+creates a series of this form: the first 8 values (corresponding to
+unit 1) contain the mean of \varname{x} for unit 1, the next 8 values
+contain the mean for unit 2, and so on.  The \texttt{psd()} function
+works in a similar manner.  The sample standard deviation for group
+$i$ is computed as
+\[
+s_i = \sqrt{\frac{\sum(x-\bar{x}_i)^2}{T_i-1}}
+\]
+where $T_i$ denotes the number of valid observations on \varname{x}
+for the given unit, $\bar{x}_i$ denotes the group mean, and the
+summation is across valid observations for the group.  If $T_i < 2$,
+however, the standard deviation is recorded as 0.
+
+One particular use of \texttt{psd()} may be worth noting.  If you want
+to form a sub-sample of a panel that contains only those units for
+which the variable \varname{x} is time-varying, you can do
+%
+\begin{code}
+    smpl (psd(x) > 0) --restrict
+\end{code}
+
+\subsection{Special functions for data manipulation}
+\label{panel-manip}
+
+Besides the functions discussed above, there are some facilities in
+\texttt{genr} designed specifically for manipulating panel data --- in
+particular, for the case where the data have been read into the
+program from a third-party source and they are not in the correct
+form for panel analysis.  These facilities are explained in
+Chapter~\ref{datafiles}.
+
 
 \section{Resampling and bootstrapping}
 \label{genr-resample}
 
 Another specialized function is the resampling, with replacement, of a
 series.  Given an original data series \varname{x}, the command
+%
 \begin{code}
     genr xr = resample(x)
 \end{code}
+%
 creates a new series each of whose elements is drawn at random from
 the elements of \varname{x}.  If the original series has 100
 observations, each element of \varname{x} is selected with probability

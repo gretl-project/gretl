@@ -95,7 +95,8 @@ struct _selector {
 #define TWO_VARS_CODE(c) (c == SPEARMAN || c == MEANTEST || c == MEANTEST2 || \
                           c == VARTEST || c == ELLIPSE || c == XCORRGM)
 
-#define WANT_TOGGLES(c) (c == ARMA || \
+#define WANT_TOGGLES(c) (c == ARBOND || \
+                         c == ARMA || \
                          c == COINT || \
                          c == COINT2 || \
                          c == GARCH || \
@@ -1842,9 +1843,11 @@ static char *est_str (int cmdnum)
     case POISSON:
 	return N_("Poisson");
     case PANEL:
-    case PANEL_WLS:
-    case PANEL_B:
 	return N_("Panel model");
+    case PANEL_WLS:
+	return N_("Groupwise WLS");
+    case PANEL_B:
+	return N_("Between-groups model");
     case ARBOND:
 	return N_("Dynamic panel model");
     case WLS:
@@ -1852,7 +1855,7 @@ static char *est_str (int cmdnum)
     case TSLS:
 	return N_("Two-stage least squares");
     case AR:
-	return N_("Autoregressive");
+	return N_("Autoregressive model");
     case ARMA:
 	return N_("ARIMA");
     case GARCH:
@@ -1870,7 +1873,7 @@ static char *est_str (int cmdnum)
 	return N_("Cointegration");
 #ifdef ENABLE_GMP
     case MPOLS:
-	return N_("High precision OLS");
+	return N_("Multiple precision OLS");
 #endif
     default:
 	return "";
@@ -2044,7 +2047,9 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
     gtk_widget_show(sr->default_check); 
 
-    vbox_add_hsep(right_vbox);
+    if (sr->code != ARBOND) {
+	vbox_add_hsep(right_vbox);
+    }
 
     return yvar;
 }
@@ -2116,11 +2121,13 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 
     for (i=0; i<nspin; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
+
 	if (sr->code == VLAGSEL) {
 	    tmp = gtk_label_new(_("maximum lag:"));
 	} else {
 	    tmp = gtk_label_new(_(labels[i]));
 	}
+
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	gtk_widget_show(tmp);
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
@@ -2130,6 +2137,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 	} else {
 	    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 1);
 	}
+
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 	gtk_widget_show(sr->extra[i]);
@@ -2137,6 +2145,27 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show(hbox); 
     }
+}
+
+static void AR_order_spin (selector *sr, GtkWidget *vbox)
+{
+    GtkWidget *tmp, *hbox;
+    GtkObject *adj;
+    gdouble maxlag = datainfo->pd;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("AR order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
+    gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
+    adj = gtk_adjustment_new(1, 1, maxlag, 1, 1, 1);
+
+    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra[0]);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox); 
 }
 
 static void dummy_box (selector *sr, GtkWidget *vbox)
@@ -2269,6 +2298,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->code)) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
+    } else if (sr->code == ARBOND) {
+	AR_order_spin(sr, right_vbox);
     }
 
     vbox_add_hsep(right_vbox);
@@ -2472,7 +2503,7 @@ static GtkWidget *spinner_label (int i, int code)
     };
     GtkWidget *lbl = NULL;
 
-    if (code == ARMA || code == ARBOND) { /* FIXME later */
+    if (code == ARMA) { 
 	lbl = gtk_label_new(_(arma_strs[i % 3]));
     } else {
 	lbl = gtk_label_new(_(arch_strs[i]));
@@ -2487,18 +2518,6 @@ static void build_pdq_spinners (selector *sr)
     GtkObject *adj;
     gdouble vmax, val;
     int i;
-
-    if (sr->code == ARBOND) {
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = spinner_label(0, sr->code);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	adj = gtk_adjustment_new(1, 1, 12, 1, 1, 1);
-	sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show_all(hbox);
-	return;
-    }    
 
     if (sr->code == GARCH) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -2731,19 +2750,15 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
 	pack_switch(tmp, sr, TRUE, TRUE, OPT_B, 0);
     } else if (sr->code == COINT) {
-	tmp = gtk_check_button_new_with_label
-	    (_("Test down from maximum lag order"));
+	tmp = gtk_check_button_new_with_label(_("Test down from maximum lag order"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_A, 0);
-	tmp = gtk_check_button_new_with_label
-	    (_("Skip initial DF tests"));
+	tmp = gtk_check_button_new_with_label(_("Skip initial DF tests"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_S, 0);
     } else if (sr->code == PANEL_WLS) {
-	tmp = gtk_check_button_new_with_label
-	    (_("Iterated weighted least squares"));
+	tmp = gtk_check_button_new_with_label(_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
-    } else if (sr->code == PANEL || sr->code == ARBOND || sr->code == PANEL_B) {
-	tmp = gtk_check_button_new_with_label
-	    (_("Include time dummies"));
+    } else if (sr->code == PANEL || sr->code == ARBOND) {
+	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_D, 0);
     }	
 
@@ -3205,8 +3220,6 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* RHS: vertical holder */
     right_vbox = gtk_vbox_new(FALSE, 5);
 
-    vbox_add_hsep(right_vbox);
-
     if (MODEL_CODE(ci)) { 
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
@@ -3220,7 +3233,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == TSLS || 
-	VEC_CODE(ci) || ci == POISSON || 
+	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
 	ci == GR_DUMMY || ci == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }
@@ -3246,8 +3259,8 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR, D, MA spinners for ARIMA; P and Q for GARCH; P for ARBOND */
-    if (ci == ARMA || ci == GARCH || ci == ARBOND) {
+    /* AR, D, MA spinners for ARIMA; P and Q for GARCH */
+    if (ci == ARMA || ci == GARCH) {
 	build_pdq_spinners(sr);
     }
 
@@ -4329,7 +4342,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
     int *slist = NULL;
 
     if (sr->code != ARMA && sr->code != VAR &&
-	sr->code != VECM && sr->code != VLAGSEL) { 
+	sr->code != VECM && sr->code != VLAGSEL &&
+	sr->code != ARBOND) { 
 	ynum = selector_get_depvar_number(sr);
     }
 

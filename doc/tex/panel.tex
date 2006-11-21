@@ -61,8 +61,9 @@ $\varepsilon_{it}$.\footnote{It is possible to break a third component
 then treated as fixed parameters (in effect, unit-specific
 $y$-intercepts), which are to be estimated.  This can be done by
 including a dummy variable for each cross-sectional unit (and
-suppressing the global constant).  Alternatively, one can subtract the
-group mean from each of variables and estimate a model without a
+suppressing the global constant).  This is sometimes called the Least
+Squares Dummy Variables (LSDV) method.  Alternatively, one can subtract
+the group mean from each of variables and estimate a model without a
 constant.  In the latter case the dependent variable may be written as
 \[
 \tilde{y}_{it} = y_{it} - \bar{y}_i
@@ -80,10 +81,19 @@ we can recover estimates of the $\alpha_i$s using
    \left(y_{it} - X_{it}\hat{\beta}\right)
 \]
 
-These two methods (using dummy variables, and using de-meaned data) are
-numerically equivalent, and \app{gretl} chooses between them based on
-the number of cross-sectional units and the number of independent
-variables (with the objective of economizing the use of computer memory).
+These two methods (LSDV, and using de-meaned data) are numerically
+equivalent. \app{Gretl} takes the approach of de-meaning the data.  If
+you have a small number of cross-sectional units, a large number of
+time-series observations per unit, and a large number of regressors,
+it is more economical in terms of computer memory to use LSDV.  If 
+need be you can easily implement this manually.  For example,
+%
+\begin{code}
+    genr unitdum
+    ols y x du_*
+\end{code}
+%
+(See Chapter~\ref{chap-genr} for details on \texttt{unitdum}).
 
 The $\hat{\alpha}_i$ estimates are not printed as part of the standard
 model output in \app{gretl} (there may be a large number of these, and
@@ -358,8 +368,12 @@ random effects.  The estimator used for fixed effects is
 \left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
 \]
 where $\tilde{X}$ is the matrix of regressors with the group means
-subtracted, $\tilde{u}_i$ denotes the FE residuals for unit $i$, and $m$
-is the number of cross-sectional units.
+subtracted, $\tilde{u}_i$ denotes the FE residuals for unit $i$, and
+$m$ is the number of cross-sectional units.  This estimator is robust
+with respect to heteroskedasticity; it is also robust with respect to
+autocorrelation provided the time-series length of the panel is
+relatively small.\footnote{See, for example, Arellano (2003, section
+  2.3).}
 
 \section{Dynamic panel models}
 \label{panel-dyn}
@@ -424,14 +438,6 @@ which is based on a study of country growth rates by Nerlove
 (1999).\footnote{Also see Clint Cummins' benchmarks page,
   \url{http://www.stanford.edu/~clint/bench/}.}
  
-Although the Anderson--Hsiao estimator is consistent, it is not most
-efficient: it does not make the fullest use of the available
-instruments for $\Delta y_{i,t-1}$, nor does it take into account the
-differenced structure of the error $\eta_{it}$.  It is improved upon
-by the methods of Arellano and Bond (1991) and Blundell and Bond
-(1998).  These methods are not yet supported in \app{gretl}; the
-former is likely to be added in a future release of the program.
-
 \begin{script}[htbp]
   \caption{The Anderson--Hsiao estimator for a dynamic panel model}
   \label{anderson-hsiao}
@@ -450,6 +456,15 @@ former is likely to be added in a future release of the program.
    tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{code}
 \end{script}
+
+Although the Anderson--Hsiao estimator is consistent, it is not most
+efficient: it does not make the fullest use of the available
+instruments for $\Delta y_{i,t-1}$, nor does it take into account the
+differenced structure of the error $\eta_{it}$.  It is improved upon
+by the methods of Arellano and Bond (1991) and Blundell and Bond
+(1998).  There is provisional support for the Arellano--Bond method in
+current gretl --- please see the documentation for the \cmd{arbond}
+command.
 
 
 \section{Illustration: the Penn World Table}

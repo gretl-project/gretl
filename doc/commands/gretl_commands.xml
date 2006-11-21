@@ -400,10 +400,15 @@
 	  <flag>--time-dummies</flag>
 	  <effect>add time dummy variables</effect>
         </option>
+        <option>
+	  <flag>--asymptotic</flag>
+	  <effect>standard asymptotic standard errors</effect>
+        </option>
       </options>
       <examples>
         <example>arbond 2 ; y Dx1 Dx2</example>
         <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1 </example>
+	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3) </example>
       </examples>
     </usage>
 
@@ -439,32 +444,38 @@
 	instruments.  If no instruments are given, it is assumed that all
 	the independent variables are strictly exogenous.  If you specify
 	any instruments, you should include in the list any strictly
-	exogenous independent variables.  The handling of instruments is
-	currently incomplete in the following respect: with regard to
-	predetermined regressors, you are not able to specify a set
-	of <quote>block diagonal</quote> instruments containing values
-	of the variable in question prior to the current observation.
-	(We welcome suggestions on the best command syntax for specifiying
-	such elements.)
+	exogenous independent variables.  For predetermined regressors,
+	you can use the <lit>GMM</lit> function to include a specified
+	range of lags in block-diagonal fashion.  This is illustrated in
+	the third example above.  The first argument to <lit>GMM</lit> is
+	the name of the variable in question, the second is the minimum
+	lag to be used as an instrument, and the third is the maximum lag.
+	If the third argument is given as 0, all available lags are used.
       </para>
       <para context="gui">
 	As regards the handling of instruments, please see the
-	(provisional) documentation for the script version of this
-	command.  Currently you can't specify instrument in the GUI: all
-	the independent variables are taken to be strictly exogenous.
+	documentation for the script version of this command.  Currently
+	you can't specify instrument in the GUI: all the independent
+	variables are taken to be strictly exogenous.
       </para>
       <para>
 	By default the results of 1-step estimation are reported (with
-	robust standard errors).  You may select 2-step estimation as
-	an option.  In both cases tests for autocorrelation of orders
-	1 and 2 are provided, as well as the Sargan overidentification
-	test and a Wald test for the joint significance of the
-	regressors.  Note that in this differenced model first-order
-	autocorrelation is not a threat to the validity of the model,
-	but second-order autocorrelation violates the maintained
-	statistical assumptions. In the case of 2-step estimation,
-	standard errors are computed using the finite-sample
-	correction suggested by Windmeijer (2005).
+	robust standard errors).  You may select 2-step estimation as an
+	option.  In both cases tests for autocorrelation of orders 1 and 2
+	are provided, as well as the Sargan overidentification test and a
+	Wald test for the joint significance of the regressors.  Note that
+	in this differenced model first-order autocorrelation is not a
+	threat to the validity of the model, but second-order
+	autocorrelation violates the maintained statistical assumptions.
+      </para>
+      <para context="cli">
+	In the case of 2-step estimation, standard errors are by default
+	computed using the finite-sample correction suggested by
+	Windmeijer (2005).  The standard asymptotic standard errors
+	associated with the 2-step estimator are generally reckoned to be
+	an unreliable guide to inference, but if for some reason you want
+	to see them you can use the <lit>--asymptotic</lit> option to turn
+	off the Windmeijer correction.
       </para>
       <para context="cli">
 	If the <lit>--time-dummies</lit> option is given, a set of
@@ -479,8 +490,6 @@
 	TODO list for this command:
       </para>
       <ilist>
-	<li><para>Get block-diagonal instruments sorted out</para>
-	</li>
 	<li><para>Finalize GUI interface</para>
 	</li>
 	<li><para>Maybe add param for minimum lag of y</para>
@@ -2294,10 +2303,15 @@
 	<li>
 	  <para>
 	    Statistical functions taking one series as argument and
-	    yielding a series or vector result: <func>sort</func>
-	    (sort a series is ascending order of magnitude),
-	    <func>dsort</func> (sort in descending order),
-	    <func>cum</func> (cumulate, or running sum).
+	    yielding a series or vector result: <func>sort</func> (sort a
+	    series in ascending order of magnitude), <func>dsort</func>
+	    (sort in descending order), <func>cum</func> (cumulate, or
+	    running sum).  For panel data only, the functions
+	    <func>pmean</func> and <func>psd</func> take a single series
+	    as argument and return series containing, respectively, the
+	    means and standard deviations of the variable for each of the
+	    cross-sectional units.  See <guideref targ="chap-genr"/> for
+	    details.
 	  </para>
 	</li>
 
