@@ -48,7 +48,6 @@
 #define ESSZERO   1.0e-22 /* threshold for considering a tiny error-sum-of-
 			     squares value to be effectively zero */
 
-/* define for lots of debugging info */
 #define XPX_DEBUG 0
 
 /* private function prototypes */
@@ -67,7 +66,6 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z);
 static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
 static int jackknife_vcv (MODEL *pmod, const double **Z);
-/* end private protos */
 
 
 /* compute statistics for the dependent variable in a model */
@@ -364,28 +362,19 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 
 static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    double ut, us, num = 0.0;
-    int s, t;
+    double ut, u1, num = 0.0;
+    int t;
 
     pmod->rho = NADBL;
 
     for (t=pmod->t1+1; t<=pmod->t2; t++) {
-	if (na(pmod->uhat[t])) {
-	    continue;
+	if (pdinfo->paninfo->unit[t] == pdinfo->paninfo->unit[t-1]) {
+	    ut = pmod->uhat[t];
+	    u1 = pmod->uhat[t-1];
+	    if (!na(ut) && !na(u1)) {
+		num += (ut - u1) * (ut - u1);
+	    }
 	}
-	s = t - 1;
-	if (na(pmod->uhat[s])) {
-	    continue;
-	}
-	if (pdinfo->paninfo->unit[t] != pdinfo->paninfo->unit[s]) {
-	    continue;
-	}
-	if (pdinfo->paninfo->period[t] != pdinfo->paninfo->period[s] + 1) {
-	    continue;
-	}
-	ut = pmod->uhat[t];
-	us = pmod->uhat[s];
-	num += (ut - us) * (ut - us);
     }
 
     pmod->dw = num / pmod->ess;
