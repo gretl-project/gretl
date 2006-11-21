@@ -40,7 +40,8 @@ struct panelmod_t_ {
     int effn;             /* effective (included) cross-section units */
     int N_fe;             /* number of units included in fixed effects model */
     int T;                /* times-series length of panel */
-    int effT;             /* effective times-series length (max usable obs per unit) */
+    int Tmax;             /* effective times-series length (max usable obs per unit) */
+    int Tmin;             /* shortest usable times-series */
     double Tbar;          /* harmonic mean of per-units time-series lengths */
     int NT;               /* total observations used (based on pooled model) */
     int NT_fe;            /* total observations used in fixed-effects model */
@@ -81,8 +82,6 @@ struct {
 static int 
 varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   panelmod_t *pan);
-static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan);
-int *fe_units_list (const panelmod_t *pan);
 
 /* translate from (i = unit, t = time period for that unit) to
    overall index into the data set */
@@ -110,7 +109,8 @@ static void panelmod_init (panelmod_t *pan)
     pan->effn = 0;
     pan->N_fe = 0;
     pan->T = 0;
-    pan->effT = 0;
+    pan->Tmax = 0;
+    pan->Tmin = 0;
     pan->Tbar = 0;
     pan->NT = 0;
     pan->ntdum = 0;
@@ -211,7 +211,7 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix *V = NULL;
     gretl_matrix *XX = NULL;
     gretl_matrix *W = NULL;
-    int Ti, T = pan->effT;
+    int Ti, T = pan->Tmax;
     int k = pmod->ncoeff;
     int i, j, v, s, t;
     int err = 0;
@@ -350,7 +350,7 @@ static void private_panel_dwstat (MODEL *pmod, DATAINFO *pdinfo,
     if (pan->balanced) {
 	int pd = pdinfo->pd;
 
-	pdinfo->pd = pan->effT;
+	pdinfo->pd = pan->Tmax;
 	panel_dwstat(pmod, pdinfo);
 	pdinfo->pd = pd;
     } else {
@@ -477,7 +477,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
     for (i=0; i<pan->nunits; i++) {
  	if (pan->unit_obs[i] >= FE_MINOBS) {
  	    wn += pan->unit_obs[i];
- 	    if (pan->unit_obs[i] != pan->effT) {
+ 	    if (pan->unit_obs[i] != pan->Tmax) {
  		pan->balanced = 0;
  	    }
  	}
@@ -646,7 +646,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 		continue;
 	    }
 
-	    if (Ti != pan->effT) {
+	    if (Ti != pan->Tmax) {
 		theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2u + pan->s2e));
 #if PDEBUG
 		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
@@ -663,7 +663,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 			/* the intercept */
 			(*reZ)[0][s] -= theta_i;
 		    } else {
-			xbar = (gm == NULL)? 1.0 / pan->effT : gm[u];
+			xbar = (gm == NULL)? 1.0 / pan->Tmax : gm[u];
 			(*reZ)[k][s] = xj[bigt] - theta_i * xbar;
 #if PDEBUG > 1
 			fprintf(stderr, "Set reZ[%d][%d] = %g\n", k, s, (*reZ)[k][s]);
@@ -1382,7 +1382,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
    intercepts.
 */
 
-int *fe_units_list (const panelmod_t *pan)
+static int *fe_units_list (const panelmod_t *pan)
 {
     int *ulist = NULL;
     int i, j, n = 0;
@@ -1461,39 +1461,47 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     return gretl_model_set_list_as_data(pmod, "droplist", dlist);
 }
 
-/* spruce up femod and attach it to pan */
+static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
+{
+    gretl_model_set_int(pmod, "Tmin", pan->Tmin);
+    gretl_model_set_int(pmod, "Tmax", pan->Tmax);
+}
 
-static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
+/* spruce up the fixed-effects model and attach it to pan */
+
+static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
 				     const double **Z,
 				     DATAINFO *pdinfo)
 {
     int *ulist;
     int err = 0;
 
-    femod->ci = PANEL;
-    gretl_model_set_int(femod, "fixed-effects", 1);
+    pmod->ci = PANEL;
+    gretl_model_set_int(pmod, "fixed-effects", 1);
 
-    err = fix_within_stats(femod, pan);
+    err = fix_within_stats(pmod, pan);
     if (err) {
 	return err;
     }
 
     /* compose list of dropped variables, if any */
-    compose_panel_droplist(femod, pan);
+    compose_panel_droplist(pmod, pan);
 
     ulist = fe_units_list(pan);
-    gretl_model_add_panel_varnames(femod, pdinfo, ulist);
+    gretl_model_add_panel_varnames(pmod, pdinfo, ulist);
     free(ulist);
 
-    fe_model_add_ahat(femod, Z, pdinfo, pan);
-    set_model_id(femod);
+    fe_model_add_ahat(pmod, Z, pdinfo, pan);
+    set_model_id(pmod);
 #if 1 /* FIXME? */
-    private_panel_dwstat(femod, pdinfo, pan);
+    private_panel_dwstat(pmod, pdinfo, pan);
 #endif
-    save_fixed_effects_F(pan, femod);
-    time_dummies_wald_test(pan, femod);
+    save_fixed_effects_F(pan, pmod);
+    time_dummies_wald_test(pan, pmod);
 
-    *pan->realmod = *femod;
+    add_panel_obs_info(pmod, pan);
+
+    *pan->realmod = *pmod;
 
     return err;
 }
@@ -1577,31 +1585,33 @@ static void fix_gls_stats (MODEL *gmod, panelmod_t *pan)
     gmod->ncoeff = nc;
 }
 
-/* spruce up remod and attach it to pan */
+/* spruce up GLS model and attach it to pan */
 
-static void save_random_effects_model (MODEL *remod, panelmod_t *pan,
+static void save_random_effects_model (MODEL *pmod, panelmod_t *pan,
 				       const double **Z,
 				       const DATAINFO *reinfo)
 {
-    remod->ci = PANEL;
+    pmod->ci = PANEL;
 
-    gretl_model_set_int(remod, "random-effects", 1);
-    gretl_model_set_double(remod, "within-variance", pan->s2e);
-    gretl_model_set_double(remod, "between-variance", pan->between_s2);
+    gretl_model_set_int(pmod, "random-effects", 1);
+    gretl_model_set_double(pmod, "within-variance", pan->s2e);
+    gretl_model_set_double(pmod, "between-variance", pan->between_s2);
 
     if (pan->balanced) {
-	gretl_model_set_double(remod, "gls-theta", pan->theta);
+	gretl_model_set_double(pmod, "gls-theta", pan->theta);
     }
 
+    add_panel_obs_info(pmod, pan);
+
     /* compose list of dropped variables, if any */
-    compose_panel_droplist(remod, pan);
+    compose_panel_droplist(pmod, pan);
 
-    gretl_model_add_panel_varnames(remod, reinfo, NULL);
-    fix_panel_hatvars(remod, reinfo, pan, Z);
-    fix_gls_stats(remod, pan);
-    set_model_id(remod);
+    gretl_model_add_panel_varnames(pmod, reinfo, NULL);
+    fix_panel_hatvars(pmod, reinfo, pan, Z);
+    fix_gls_stats(pmod, pan);
+    set_model_id(pmod);
 
-    *pan->realmod = *remod;
+    *pan->realmod = *pmod;
 }
 
 static void print_hausman_result (panelmod_t *pan, PRN *prn)
@@ -1684,7 +1694,7 @@ static int random_effects (panelmod_t *pan,
     if (pan->s2u < 0) {
 	pan->s2u = 0.0;
     }
-    pan->theta = 1.0 - sqrt(pan->s2e / (pan->effT * pan->s2u + pan->s2e));
+    pan->theta = 1.0 - sqrt(pan->s2e / (pan->Tmax * pan->s2u + pan->s2e));
 
 #if PDEBUG
     fprintf(stderr, "s_u = %.8g, s_e = %.8g\n", sqrt(pan->s2u), sqrt(pan->s2e));
@@ -1919,8 +1929,6 @@ static int complete_hausman_test (panelmod_t *pan, PRN *prn)
 static int panel_obs_accounts (panelmod_t *pan)
 {
     int *uobs;
-    int ninc = 0;
-    int obsmax = 0;
     int N = pan->nunits;
     int i, t, bigt;
 
@@ -1932,7 +1940,8 @@ static int panel_obs_accounts (panelmod_t *pan)
     pan->NT = 0;
     pan->effn = 0;
     pan->N_fe = 0;
-    pan->effT = 0;
+    pan->Tmax = 0;
+    pan->Tmin = pan->nunits;
 
     for (i=0; i<N; i++) {
 	uobs[i] = 0;
@@ -1948,9 +1957,11 @@ static int panel_obs_accounts (panelmod_t *pan)
 	    }
 	}
 	if (uobs[i] > 0) {
-	    ninc++;
-	    if (uobs[i] > obsmax) {
-		obsmax = uobs[i];
+	    pan->effn += 1;
+	    if (uobs[i] > pan->Tmax) {
+		pan->Tmax = uobs[i];
+	    } else if (uobs[i] < pan->Tmin) {
+		pan->Tmin = uobs[i];
 	    }
 	    pan->NT += uobs[i];
 	}
@@ -1960,14 +1971,12 @@ static int panel_obs_accounts (panelmod_t *pan)
     }
 
     for (i=0; i<N; i++) {
-	if (uobs[i] > 0 && uobs[i] != obsmax) {
+	if (uobs[i] > 0 && uobs[i] != pan->Tmax) {
 	    pan->balanced = 0;
 	    break;
 	}
     }
 
-    pan->effn = ninc;
-    pan->effT = obsmax;
     pan->unit_obs = uobs;
 
     return 0;
@@ -2003,7 +2012,7 @@ static void calculate_Tbar (panelmod_t *pan)
     int i;
 
     if (pan->balanced) {
-	pan->Tbar = pan->effT;
+	pan->Tbar = pan->Tmax;
     } else {
 	double den = 0.0;
 
@@ -2100,8 +2109,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     xdf = pan.effn - pmod->ncoeff;
 
 #if PDEBUG
-    fprintf(stderr, "nunits=%d, T=%d, effn=%d, effT=%d, xdf=%d\n",
-	    pan.nunits, pan.T, pan.effn, pan.effT, xdf);
+    fprintf(stderr, "nunits=%d, T=%d, effn=%d, Tmax=%d, xdf=%d\n",
+	    pan.nunits, pan.T, pan.effn, pan.Tmax, xdf);
 #endif
 
     /* can we do the Hausman test or not? */
@@ -2116,7 +2125,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
 		       "cross-sectional units\n "
 		       "                        observed over %d periods\n\n"), 
-		pan.effn, pan.effT);
+		pan.effn, pan.Tmax);
     }
 
     err = within_variance(&pan, pZ, pdinfo, prn);

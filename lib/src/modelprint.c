@@ -1243,6 +1243,8 @@ static void print_model_heading (const MODEL *pmod,
 	}
     } else {
 	int effn = gretl_model_get_int(pmod, "n_included_units");
+	int Tmin = gretl_model_get_int(pmod, "Tmin");
+	int Tmax = gretl_model_get_int(pmod, "Tmax");
 
 	pprintf(prn, (utf)?
 		_("%s estimates using %d observations") :
@@ -1253,6 +1255,17 @@ static void print_model_heading (const MODEL *pmod,
 	    gretl_prn_newline(prn);
 	    pprintf(prn, (utf)? _("Included %d cross-sectional units") :
 		    I_("Included %d cross-sectional units"), effn);
+	}
+	if (Tmin > 0 && Tmax > 0) {
+	    gretl_prn_newline(prn);
+	    if (Tmin == Tmax) {
+		pprintf(prn, (utf)? _("Time-series length = %d") :
+			I_("Time-series length = %d"), Tmin);
+	    } else {
+		pprintf(prn, (utf)? _("Time-series length: minimum %d, maximum %d") :
+			I_("Time-series length: minimum %d, maximum %d"), 
+			Tmin, Tmax);
+	    }
 	}
     }
 
