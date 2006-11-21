@@ -345,6 +345,8 @@ int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo)
 	if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
 	    if (na(xbar)) {
 		sd = NADBL;
+	    } else if (Ti == 1) {
+		sd = 0.0;
 	    } else {
 		xbar /= Ti;
 		sd = 0.0;
@@ -353,9 +355,9 @@ int panel_sd_series (const double *x, double *y, const DATAINFO *pdinfo)
 			sd += (x[s] - xbar) * (x[s] - xbar);
 		    }
 		}
-		sd = sqrt(sd / Ti); /* -1? */
+		sd = sqrt(sd / (Ti - 1));
 	    }
-	    for (s=smin; s<t-1; s++) {
+	    for (s=smin; s<t; s++) {
 		y[s] = sd;
 	    }
 	    if (t == pdinfo->n) {

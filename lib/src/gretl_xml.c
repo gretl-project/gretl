@@ -740,6 +740,15 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
     return list;
 }
 
+static const char *skip_to_next (const char *s)
+{
+    s += strspn(s, " \r\n");
+    s += strcspn(s, " \r\n");
+    s += strspn(s, " \r\n");
+
+    return s;
+}
+
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				  ModelDataType type,
 				  int *nelem, int *err)
@@ -789,12 +798,10 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 			} else if (type == MODEL_DATA_CMPLX_ARRAY) {
 			    if (sscanf(p, "%lf %lf", &cvals[i].r, &cvals[i].i) != 2) {
 				*err = E_DATA;
-			    }
-			}			    
-			/* skip to next number */
-			p += strspn(p, " \r\n");
-			p += strcspn(p, " \r\n");
-			p += strspn(p, " \r\n");
+			    } 
+			    p = skip_to_next(p);
+			}
+			p = skip_to_next(p);
 		    }
 		    free(tmp);
 		}
@@ -866,6 +873,66 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 {
     return gretl_xml_get_array(node, doc, MODEL_DATA_CMPLX_ARRAY,
 			       nelem, err);
+}
+
+/**
+ * gretl_xml_get_strings_array:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @nelem: location to receive number of elements in array.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated array of cmplx (complex numbers) read from 
+ * @node, or %NULL on failure.
+ */
+
+char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
+				    int *nelem, int *err)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    char **S = NULL;
+    const char *p;
+    int i, n = 0;
+
+    if (tmp == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    n = atoi((const char *) tmp);
+    free(tmp);
+
+    if (n > 0) {
+	S = strings_array_new(n);
+	if (S == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	    if (tmp == NULL) {
+		*err = E_DATA;
+	    } else {
+		p = (const char *) tmp;
+		for (i=0; i<n; i++) {
+		    S[i] = gretl_word_strdup(p, &p);
+		    if (S[i] == NULL) {
+			*err = E_ALLOC;
+		    }
+		}
+		free(tmp);
+	    }
+	}
+    }
+
+    if (S != NULL && *err) {
+	free_strings_array(S, n);
+	S = NULL;
+    }
+
+    if (!*err) {
+	*nelem = n;
+    }
+
+    return S;
 }
 
 /**

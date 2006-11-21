@@ -577,8 +577,9 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 
 static DATAINFO *
 random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
-			const double **gZ, double ***reZ, 
-			int *relist, int *hlist, panelmod_t *pan)
+			const double **gZ, const DATAINFO *ginfo,
+			double ***reZ, int *relist, int *hlist, 
+			panelmod_t *pan)
 {
     DATAINFO *reinfo;
     int hreg = (hlist != NULL);
@@ -624,7 +625,9 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	} else {
 	    k++;
 	    relist[j] = k; /* build GLS regression list */
-	    gm = gZ[k];
+	    if (k < ginfo->v) {
+		gm = gZ[k];
+	    } 
 	    strcpy(reinfo->varname[k], pdinfo->varname[vj]);
 	    if (hreg && vvar && j > 1) {
 		k2++;
@@ -637,6 +640,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	s = 0;
 	for (i=0; i<pan->nunits; i++) {
 	    int Ti = pan->unit_obs[i];
+	    double xbar;
 
 	    if (Ti == 0) {
 		continue;
@@ -659,7 +663,8 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 			/* the intercept */
 			(*reZ)[0][s] -= theta_i;
 		    } else {
-			(*reZ)[k][s] = xj[bigt] - theta_i * gm[u];
+			xbar = (gm == NULL)? 1.0 / pan->effT : gm[u];
+			(*reZ)[k][s] = xj[bigt] - theta_i * xbar;
 #if PDEBUG > 1
 			fprintf(stderr, "Set reZ[%d][%d] = %g\n", k, s, (*reZ)[k][s]);
 #endif
@@ -693,11 +698,9 @@ group_means_dataset (panelmod_t *pan,
     int i, j, k;
     int s, t, bigt;
 
-#if 0
     if (pan->balanced && pan->ntdum > 0) {
 	gv -= pan->ntdum;
     }
-#endif
 
 #if PDEBUG
     fprintf(stderr, "group_means_dataset: nvars=%d, nobs=%d\n", 
@@ -780,15 +783,10 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     MODEL bmod;
     gretlopt bopt;
     int *blist;
-    int i, j, nv;
+    int i, j;
     int err = 0;
 
-    nv = ginfo->v;
-    if (pan->balanced && pan->ntdum > 0) {
-	nv -= pan->ntdum;
-    }
-
-    blist = gretl_list_new(nv);
+    blist = gretl_list_new(ginfo->v);
     if (blist == NULL) {
 	return E_ALLOC;
     }
@@ -1649,7 +1647,8 @@ static void save_hausman_result (panelmod_t *pan)
 
 static int random_effects (panelmod_t *pan, 
 			   const double **Z, DATAINFO *pdinfo, 
-			   const double **gZ, PRN *prn)
+			   const double **gZ, DATAINFO *ginfo, 
+			   PRN *prn)
 {
     double **reZ;
     DATAINFO *reinfo;
@@ -1693,7 +1692,8 @@ static int random_effects (panelmod_t *pan,
 #endif
 
     /* make special transformed dataset, and regression list */
-    reinfo = random_effects_dataset(Z, pdinfo, gZ, &reZ, relist, hlist, pan);
+    reinfo = random_effects_dataset(Z, pdinfo, gZ, ginfo, &reZ, relist, 
+				    hlist, pan);
     if (reinfo == NULL) {
 	free(relist);
 	free(hlist);
@@ -2148,7 +2148,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
-			   (const double **) gZ, prn);
+			   (const double **) gZ, ginfo, prn);
 	    complete_hausman_test(&pan, prn);
 	}
 
@@ -2388,7 +2388,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
-			   (const double **) gZ, prn);
+			   (const double **) gZ, ginfo, prn);
 	    save_breusch_pagan_result(&pan);
 	    complete_hausman_test(&pan, prn);
 	}

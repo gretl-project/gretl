@@ -494,23 +494,30 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     *targ = '\0';
 
     if (pmod != NULL) {
+	int pnum = -1;
+
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
 		   pmod->ci == ARMA || pmod->ci == GARCH || 
 		   pmod->ci == PANEL) {
-	    strcpy(targ, pmod->params[i + 1]);
+	    pnum = i + 1;
 	} else if (pmod->ci == ARBOND) {
-	    strcpy(targ, pmod->params[i]);
+	    pnum = i;
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
-	    strcpy(targ, pmod->params[i]);
+	    pnum = i;
 	} else if (pmod->ci == PROBIT && pmod->params != NULL) {
-	    strcpy(targ, pmod->params[i]);
+	    pnum = i;
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
 	}
+
+	if (pnum >= 0 && pmod->params != NULL) {
+	    strcpy(targ, pmod->params[pnum]);
+	}
+
     }
 
     return targ;
@@ -1996,6 +2003,22 @@ static int real_add_test_to_model (MODEL *pmod, ModelTest *test)
     return err;
 }
 
+static int attach_model_params_from_xml (xmlNodePtr node, xmlDocPtr doc,
+					 MODEL *pmod)
+{
+    char **S;
+    int np = 0;
+    int err = 0;
+
+    S = gretl_xml_get_strings_array(node, doc, &np, &err);
+    if (!err) {
+	pmod->params = S;
+	pmod->nparams = np;
+    }
+
+    return err;
+}
+
 int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 {
     ModelTest test;
@@ -2667,7 +2690,7 @@ static void print_model_data_items (const MODEL *pmod, FILE *fp)
 	    cmplx *vals = (cmplx *) item->ptr;
 	    
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%.15g %.15g ", vals[i].r, vals[i].i);
+		fprintf(fp, "%.15g %.15g ", vals[j].r, vals[j].i);
 	    }	    
 	} else if (item->type == MODEL_DATA_LIST) {
 	    int *list = (int *) item->ptr;
@@ -3176,6 +3199,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
 	    *err = attach_model_tests_from_xml(pmod, cur);
+	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
+	    *err = attach_model_params_from_xml(cur, doc, pmod);
 	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
 	    *err = model_submask_from_xml(cur, doc, pmod);
 	} else if (!xmlStrcmp(cur->name, (XUC) "missmask")) {
