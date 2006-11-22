@@ -320,7 +320,9 @@ static double t_loglik (const double *theta, void *ptr)
 	    llt = f[t];
 	}
 	if (llt == 0.0) {
+#if 0
 	    fprintf(stderr, "tobit_ll: L[%d] is zero\n", t);
+#endif
 	    return NADBL;
 	}
 	ll += log(llt);
