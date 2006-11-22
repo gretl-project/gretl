@@ -2625,6 +2625,8 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 
     fputs("# printing data labels\n", fp);
 
+    gretl_push_c_numeric_locale();
+
     for (t=0; t<spec->nobs; t++) {
 	double xoff = 0.0;
 
@@ -2641,6 +2643,8 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 		    x[t] + xoff, y[t] + yoff);
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     return 0;
 }
