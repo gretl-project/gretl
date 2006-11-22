@@ -36,20 +36,33 @@ typedef struct tob_container_ tob_container;
 struct tob_container_ {
     int k;
     int n;
+    int do_score;
     double ll;
+
     const double **X;       /* data */
     double **G;
     double *g;
     double *theta;
-    int do_score;
+
+    /* workspace */
+    double *e;
+    double *f;
+    double *P;
+    double *ystar;
 };
 
 static void tob_container_destroy (tob_container *TC)
 {
     if (TC != NULL) {
 	doubles_array_free(TC->G, TC->k);
+
 	free(TC->g);
 	free(TC->theta);
+	free(TC->e);
+	free(TC->f);
+	free(TC->P);
+	free(TC->ystar);
+
 	free(TC);
     }
 }
@@ -68,6 +81,11 @@ static tob_container *tob_container_new (int k, MODEL *pmod, const double **X,
     TC->g = NULL;
     TC->theta = NULL;
 
+    TC->e = NULL;
+    TC->f = NULL;
+    TC->P = NULL;
+    TC->ystar = NULL;
+
     TC->k = k;
     TC->n = n;
     TC->X = X;
@@ -78,7 +96,14 @@ static tob_container *tob_container_new (int k, MODEL *pmod, const double **X,
     TC->g = malloc(k * sizeof *TC->g);
     TC->theta = malloc(k * sizeof *TC->theta);
 
-    if (TC->G == NULL || TC->g == NULL || TC->theta == NULL) {
+    TC->e = malloc(n * sizeof *TC->e);
+    TC->f = malloc(n * sizeof *TC->f);
+    TC->P = malloc(n * sizeof *TC->P);
+    TC->ystar = malloc(n * sizeof *TC->ystar);
+
+    if (TC->G == NULL || TC->g == NULL || TC->theta == NULL ||
+	TC->e == NULL || TC->f == NULL || TC->P == NULL ||
+	TC->ystar == NULL) {
 	tob_container_destroy(TC);
 	TC = NULL;
     } else {
@@ -259,10 +284,10 @@ static double t_loglik (const double *theta, void *ptr)
     int do_score = TC->do_score;
     double siginv = theta[k-1];  /* inverse of variance */
 
-    double *e = NULL;
-    double *f = NULL;
-    double *P = NULL;
-    double *ystar = NULL;
+    double *e = TC->e;
+    double *f = TC->f;
+    double *P = TC->P;
+    double *ystar = TC->ystar;
     double llt;
     int i, t;
 
@@ -270,15 +295,6 @@ static double t_loglik (const double *theta, void *ptr)
 	fprintf(stderr, "tobit_ll: got a negative variance\n");
 	return NADBL;
     } 
-
-    e = malloc(n * sizeof *e);
-    f = malloc(n * sizeof *f);
-    P = malloc(n * sizeof *P);
-    ystar = malloc(n * sizeof *ystar);
-
-    if (e == NULL || f == NULL || P == NULL || ystar == NULL) {
-	goto bailout;
-    }
 
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<n; t++) {
@@ -323,7 +339,6 @@ static double t_loglik (const double *theta, void *ptr)
 
 	for (t=0; t<n; t++) {
 	    for (i=0; i<k; i++) {
-
 		/* set the indices into the data arrays */
 		gi = i + 1;
 		xi = (i == 0)? 0 : i + 1;
@@ -348,20 +363,12 @@ static double t_loglik (const double *theta, void *ptr)
 		    if (i == (k-1)) {
 			Z[i][t] += 1.0 / siginv;
 		    }
-
 		    score[i] += Z[i][t];
 		}
 		
 	    }
 	}
     }
-
- bailout:
-
-    free(e);
-    free(f);
-    free(P);
-    free(ystar);
 
     TC->ll = ll;
 
