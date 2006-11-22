@@ -1050,6 +1050,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
  	    errmsg(err, prn);
  	} else {
  	    print_smpl(pdinfo, get_full_length_n(), prn);
+#if 0
+	    if (pdinfo->paninfo != NULL) {
+		panel_obs_info(NULL, (const double **) *pZ, pdinfo, prn);
+	    }
+#endif
  	}
  	break;
 

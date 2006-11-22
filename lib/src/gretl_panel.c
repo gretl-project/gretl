@@ -3696,7 +3696,145 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err)
     }
 	
     return newlist;
-}    
+} 
+
+#if 0 /* not ready */
+
+static int panel_obs_freq (FreqDist *fr, int *x, int n)
+{
+    int *ifreq = NULL, *ivals = NULL;
+    int *sorted = NULL;
+    int i, t, last;
+    int err = 0;
+
+    sorted = malloc(n * sizeof *sorted);
+    if (sorted == NULL) {
+	return E_ALLOC;
+    }
+	
+    for (t=0; t<n; t++) {
+	sorted[t] = x[t];
+    }
+	
+    qsort(sorted, n, sizeof *sorted, gretl_compare_ints); 
+    nbins = count_distinct_int_values(sorted, n);
+
+    ifreq = malloc(nbins * sizeof *ifreq);
+    ivals = malloc(nbins * sizeof *ivals);
+    if (ifreq == NULL || ivals == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    ivals[0] = last = sorted[0];
+    ifreq[0] = i = 1;
+
+    for (t=1; t<n; t++) {
+	if (sorted[t] != last) {
+	    last = sorted[t];
+	    ifreq[i] = 1;
+	    ivals[i++] = last;
+	} else {
+	    ifreq[i-1] += 1;
+	}
+    }
+
+    if (freq_add_arrays(freq, nbins)) {
+	*err = E_ALLOC;
+    } else {
+	for (k=0; k<nbins; k++) {
+	    freq->endpt[k] = freq->midpt[k] = ivals[k];
+	    freq->f[k] = ifreq[k];
+	}
+	freq->endpt[nbins] = xmax;
+    }
+
+ bailout:
+
+    free(sorted);
+    free(ivals);
+    free(ifreq);
+
+    return err;
+}
+
+#endif
+
+int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
+		    PRN *prn)
+{
+    int *uobs = NULL;
+    const int *unit;
+    int minTi, maxTi;
+    int jmax, vj;
+    int n, Ti, ok;
+    int i, j, t;
+    
+    if (pdinfo->paninfo == NULL) {
+	return E_PDWRONG;
+    }
+
+    n = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
+
+    uobs = malloc(n * sizeof *uobs);
+    if (uobs == NULL) {
+	return E_ALLOC;
+    }
+
+    unit = pdinfo->paninfo->unit;
+
+    jmax = (list != NULL)? list[0] : pdinfo->v - 1;
+
+    maxTi = 0;
+    minTi = pdinfo->pd;
+    Ti = 0;
+    i = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (t > pdinfo->t1 && unit[t] != unit[t-1]) {
+	    if (Ti < minTi) {
+		minTi = Ti;
+	    } else if (Ti > maxTi) {
+		maxTi = Ti;
+	    }
+	    uobs[i] = Ti;
+	    Ti = 0;
+	    i++;
+	}
+	ok = 1;
+	for (j=1; j<=jmax; j++) {
+	    vj = (list != NULL)? list[j] : j;
+	    if (na(Z[vj][t])) {
+		ok = 0;
+		break;
+	    }
+	}
+	Ti += ok;
+	if (t == pdinfo->t2) {
+	    if (Ti < minTi) {
+		minTi = Ti;
+	    } else if (Ti > maxTi) {
+		maxTi = Ti;
+	    }
+	    uobs[i] = Ti;
+	}
+    }
+
+    pprintf(prn, "Panel observations info\n");
+
+    if (minTi == maxTi) {
+	pprintf(prn, "%d units, each with %d observations\n", n, maxTi);
+    } else {
+	for (i=0; i<n; i++) {
+	    pprintf(prn, "unit %d: %d observations\n", i+1, uobs[i]);
+	}
+	/* do a frequency distribution */
+    }
+
+    free(uobs);
+
+    return 0;
+}   
 
 
 

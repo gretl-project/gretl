@@ -31,6 +31,7 @@
 #include "libset.h"
 #include "usermat.h"
 #include "modelspec.h"
+#include "gretl_panel.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
