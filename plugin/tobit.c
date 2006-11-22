@@ -27,7 +27,68 @@
 
 #undef TDEBUG 
 
+#define USE_BFGS
+
 #define TOBIT_TOL 1.0e-10 /* calibrated against William Greene */
+
+typedef struct tob_container_ tob_container;
+
+struct tob_container_ {
+    int k;
+    int n;
+    double ll;
+    const double **X;       /* data */
+    double **G;
+    double *g;
+    double *theta;
+    int do_score;
+};
+
+static void tob_container_destroy (tob_container *TC)
+{
+    if (TC != NULL) {
+	doubles_array_free(TC->G, TC->k);
+	free(TC->g);
+	free(TC->theta);
+	free(TC);
+    }
+}
+
+static tob_container *tob_container_new (int k, MODEL *pmod, const double **X, 
+					 int do_score)
+{
+    tob_container *TC = malloc(sizeof *TC);
+    int i, n = pmod->nobs;
+
+    if (TC == NULL) {
+	return NULL;
+    }
+    
+    TC->G = NULL;
+    TC->g = NULL;
+    TC->theta = NULL;
+
+    TC->k = k;
+    TC->n = n;
+    TC->X = X;
+
+    TC->do_score = do_score;
+
+    TC->G = doubles_array_new(k, n);
+    TC->g = malloc(k * sizeof *TC->g);
+    TC->theta = malloc(k * sizeof *TC->theta);
+
+    if (TC->G == NULL || TC->g == NULL || TC->theta == NULL) {
+	tob_container_destroy(TC);
+	TC = NULL;
+    } else {
+	for (i=0; i<k; i++) {
+	    TC->theta[i] = pmod->coeff[i];
+	}
+    }
+
+    return TC;
+}
 
 /* Below: we are buying ourselves a considerable simplification when it comes
    to the tobit_ll function.  That function needs access to the original y
@@ -87,11 +148,15 @@ static double **make_tobit_X (const MODEL *pmod, double **Z, int missvals)
     return X;
 }
 
-/* Compute log likelihood, and the score matrix if do_score is non-zero */
+#ifndef USE_BFGS
 
-static int tobit_ll (double *theta, const double **X, double **Z, model_info *tobit, 
-		     int do_score)
+/* BHHH: Compute log likelihood, and the score matrix if do_score is
+   non-zero */
+
+static int tobit_ll (double *theta, const double **X, double **Z, 
+		     model_info *tobit, int do_score)
 {
+
     const double *y = X[1];
     double **series = model_info_get_series(tobit);
     double *e = series[0];
@@ -147,9 +212,6 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 	double den, tail;
 
 	for (t=0; t<n; t++) {
-	    den = normal_pdf(ystar[t]);
-	    tail = 1.0 - P[t];
-	    
 	    for (i=0; i<k; i++) {
 
 		/* set the indices into the data arrays */
@@ -159,6 +221,8 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 		if (y[t] == 0.0) {
 		    /* score if y is censored */
 		    if (xi < k) {
+			den = normal_pdf(ystar[t]);
+			tail = 1.0 - P[t];
 			Z[gi][t] = -den / tail * X[xi][t];
 		    } else {
 			Z[gi][t] = 0.0;
@@ -181,9 +245,176 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
     return 0;
 }
 
+#endif
+
+static double t_loglik (const double *theta, void *ptr)
+{
+    double ll = NADBL;
+    
+    tob_container *TC = (tob_container *) ptr;
+    const double **X = TC->X;
+    const double *y = X[1];
+    int k = TC->k;
+    int n = TC->n;
+    int do_score = TC->do_score;
+    double siginv = theta[k-1];  /* inverse of variance */
+
+    double *e = NULL;
+    double *f = NULL;
+    double *P = NULL;
+    double *ystar = NULL;
+    double llt;
+    int i, t;
+
+    if (siginv < 0.0) {
+	fprintf(stderr, "tobit_ll: got a negative variance\n");
+	return NADBL;
+    } 
+
+    e = malloc(n * sizeof *e);
+    f = malloc(n * sizeof *f);
+    P = malloc(n * sizeof *P);
+    ystar = malloc(n * sizeof *ystar);
+
+    if (e == NULL || f == NULL || P == NULL || ystar == NULL) {
+	goto bailout;
+    }
+
+    /* calculate ystar, e, f, and P vectors */
+    for (t=0; t<n; t++) {
+	ystar[t] = theta[0];
+	for (i=1; i<k-1; i++) {
+	    ystar[t] += theta[i] * X[i+1][t]; /* coeff * orig data */
+	}
+	e[t] = y[t] * siginv - ystar[t];
+	f[t] = siginv * normal_pdf(e[t]);
+	P[t] = normal_cdf(ystar[t]);
+#if 0
+	fprintf(stderr, "t_loglik: e[%d]=%g, f[%d]=%g, P[%d]=%g\n",
+		t, e[t], t, f[t], t, P[t]);
+#endif
+    }
+
+    /* compute loglikelihood for each obs, cumulate into ll */
+    ll = 0.0;
+    for (t=0; t<n; t++) {
+	if (y[t] == 0.0) {
+	    llt = 1.0 - P[t];
+	} else {
+	    llt = f[t];
+	}
+	if (llt == 0.0) {
+	    fprintf(stderr, "tobit_ll: L[%d] is zero\n", t);
+	    return NADBL;
+	}
+	ll += log(llt);
+    }
+
+    if (do_score) {
+	double *score = TC->g;
+	double **Z = TC->G;
+
+	int i, gi, xi;
+	double den, tail;
+
+	for (i=0; i<k; i++) {
+	    score[i] = 0.0;
+	}
+
+	for (t=0; t<n; t++) {
+	    for (i=0; i<k; i++) {
+
+		/* set the indices into the data arrays */
+		gi = i + 1;
+		xi = (i == 0)? 0 : i + 1;
+
+		if (y[t] == 0.0) {
+		    /* score if y is censored */
+		    if (i < (k-1)) {
+			den = normal_pdf(ystar[t]);
+			tail = 1.0 - P[t];
+			Z[i][t] = -den / tail * X[xi][t];
+			score[i] += Z[i][t];
+		    } else {
+			Z[i][t] = 0.0;
+		    } 
+		} else {
+		    /* score if y is not censored */
+		    if (i < (k-1)) {
+			Z[i][t] = e[t] * X[xi][t];
+		    } else {
+			Z[i][t] = e[t] * -y[t];
+		    }
+		    if (i == (k-1)) {
+			Z[i][t] += 1.0 / siginv;
+		    }
+
+		    score[i] += Z[i][t];
+		}
+		
+	    }
+	}
+    }
+
+ bailout:
+
+    free(e);
+    free(f);
+    free(P);
+    free(ystar);
+
+    TC->ll = ll;
+
+    return ll;
+}
+
+static int t_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+		    void *ptr)
+{
+    tob_container *TC = (tob_container *) ptr;
+    int i;
+
+    for (i=0; i<npar; i++) {
+	s[i] = TC->g[i];
+    }
+
+    return 1;
+}
+
+static gretl_matrix *tobit_opg_vcv (const tob_container *TC) 
+{
+
+    int n = TC->n;
+    int k = TC->k;
+    double x;
+    int i, j, t;
+    double **G = TC->G;
+    gretl_matrix *V;
+
+    V = gretl_matrix_alloc(k,k);
+    if (V == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    x = 0.0;
+	    for (t=0; t<n; t++) {
+		x += G[i][t] * G[j][t];
+	    }
+	    gretl_matrix_set(V, i, j, x);
+	    gretl_matrix_set(V, j, i, x);
+	}
+    }
+
+    gretl_invert_symmetric_matrix(V);
+
+    return V;
+}
+
 /* Transcribe the VCV matrix into packed triangular form */
 
-static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
+static int pack_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 {
     const int nv = pmod->ncoeff;
     const int nterms = nv * (nv + 1) / 2;
@@ -192,8 +423,10 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 
     if (pmod->vcv == NULL) {
 	pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
-    }
-    if (pmod->vcv == NULL) return 1;  
+	if (pmod->vcv == NULL) {
+	    return E_ALLOC;
+	}
+    } 
 
     for (i=0; i<nv; i++) {
 	for (j=0; j<=i; j++) {
@@ -208,26 +441,6 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 
     return 0;
 }
-
-#if 0
-static int add_norm_test_to_model (MODEL *pmod, double chi2)
-{
-    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
-    int err = 0;
-
-    if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
-	model_test_set_dfn(test, 2);
-	model_test_set_value(test, chi2);
-	model_test_set_pvalue(test, chisq_cdf_comp(chi2, 2));
-	maybe_add_test_to_model(pmod, test);
-    } else {
-	err = 1;
-    }
-
-    return err;
-}
-#endif
 
 static double recompute_tobit_ll (const MODEL *pmod, const double *y)
 {
@@ -449,7 +662,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     chesher_irish_test(pmod, X);
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
     mle_criteria(pmod, 1);
-    make_vcv(pmod, VCV, scale);
+    pack_vcv(pmod, VCV, scale);
     pmod->ci = TOBIT;
 
     gretl_model_set_int(pmod, "censobs", cenc);
@@ -457,6 +670,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 
     return 0;
 }
+
+#ifndef USE_BFGS
 
 static model_info *
 tobit_model_info_init (int model_obs, int bign, int k, int n_series)
@@ -478,25 +693,82 @@ tobit_model_info_init (int model_obs, int bign, int k, int n_series)
     return tobit;
 }
 
-/* Main Tobit function */
+#endif
+
+static int transform_tobit_VCV (gretl_matrix *VCV, double sigma,
+				const double *theta, int k)
+{
+    gretl_matrix *J = NULL;
+    gretl_matrix *kk = NULL;
+    int i, j;
+
+    /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
+    J = gretl_zero_matrix_new(k, k);
+    if (J == NULL) {
+	return E_ALLOC;
+    }
+
+    kk = gretl_matrix_copy(VCV);
+    if (kk == NULL) {
+	gretl_matrix_free(J);
+	return E_ALLOC;
+    }    
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	    if (i == j && i < k-1) {
+		/* upper left diagonal component */
+		gretl_matrix_set(J, i, j, sigma);
+	    } else if (j == k-1 && i < j) {
+		/* right-hand column */
+		gretl_matrix_set(J, i, j, -sigma * theta[i]);
+	    } else if (j == k-1 && i == j) {
+		/* bottom right-hand element */
+		gretl_matrix_set(J, i, j, -sigma * sigma);
+	    }
+	}
+    }
+
+    gretl_matrix_qform(J, GRETL_MOD_NONE, kk,
+		       VCV, GRETL_MOD_NONE);
+
+    gretl_matrix_free(J);
+    gretl_matrix_free(kk);
+
+    return 0;
+}
+
+static int tobit_add_variance (MODEL *pmod, int k)
+{
+    double *b;
+
+    b = realloc(pmod->coeff, k * sizeof *b);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    /* initialize variance */
+    b[k-1] = 1.0;
+    pmod->coeff = b;
+
+    return 0;
+}
+
+/* Main Tobit function: two variants */
+
+#ifdef USE_BFGS
 
 static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		     double scale, int missvals, PRN *prn)
 {
+    tob_container *TC = NULL;
+    int fncount, grcount;
     double **X;
-    double *coeff, *theta = NULL;
-    double sigma, ll;
-    int i, j, k, n;
-    int nv = pmod->list[0];
-    int n_series = 4;
-    int err = 0;
-
-    model_info *tobit = NULL;
-
-    /* for VCV manipulation */
     gretl_matrix *VCV = NULL;
-    gretl_matrix *J = NULL; 
-    gretl_matrix *tmp = NULL; 
+    double sigma;
+    int i, k, n;
+    int nv = pmod->list[0];
+    int err = 0;
 
     k = pmod->ncoeff + 1; /* add the variance */
     n = pmod->nobs;
@@ -509,15 +781,94 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	goto bailout;
     }
 
-    coeff = realloc(pmod->coeff, k * sizeof *pmod->coeff);
-    if (coeff == NULL) {
+    err = tobit_add_variance(pmod, k);
+    if (err) {
+	goto bailout;
+    }
+
+    TC = tob_container_new(k, pmod, (const double **) X, 1);
+    if (TC == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-    pmod->coeff = coeff;
 
-    /* initialization of variance */
-    pmod->coeff[k-1] = 1.0;
+    err = BFGS_max(TC->theta, TC->k, 1000, TOBIT_TOL, 
+		   &fncount, &grcount, t_loglik, 
+		   (1 ? t_score : NULL), 
+		   TC, (prn != NULL)? OPT_V : OPT_NONE,
+		   prn);
+    if (err) {
+	goto bailout;
+    }
+
+    /* recover estimate of variance */
+    sigma = 1.0 / TC->theta[k-1]; 
+
+    /* recover slope estimates */
+    for (i=0; i<k-1; i++) {
+	TC->theta[i] *= sigma;
+    }
+
+    /* get estimate of variance matrix for Olsen parameters */
+    VCV = tobit_opg_vcv(TC);
+
+    if (VCV == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* Do Jacobian thing */
+	err = transform_tobit_VCV(VCV, sigma, TC->theta, k);
+    }
+
+    if (!err) {
+	write_tobit_stats(pmod, TC->theta, k-1, sigma, TC->ll, (const double **) X, 
+			  VCV, scale, fncount);
+    }
+
+ bailout:
+
+    if (missvals) {
+	doubles_array_free(X, nv);
+    } else {
+	free(X);
+    }
+
+    tob_container_destroy(TC);
+
+    return err;
+}
+
+#else /* BHHH */
+
+static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
+		     double scale, int missvals, PRN *prn)
+{
+    double **X;
+    double *theta = NULL;
+    gretl_matrix *VCV = NULL;
+    double sigma;
+    int i, k, n;
+    int nv = pmod->list[0];
+    int err = 0;
+
+    model_info *tobit = NULL;
+    int n_series = 4;
+    double ll;
+
+    k = pmod->ncoeff + 1; /* add the variance */
+    n = pmod->nobs;
+
+    /* set of pointers into original data, or a reduced copy 
+       if need be */
+    X = make_tobit_X(pmod, Z, missvals);
+    if (X == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    err = tobit_add_variance(pmod, k);
+    if (err) {
+	goto bailout;
+    }
 
     tobit = tobit_model_info_init(pmod->nobs, pdinfo->n, k, n_series);
     if (tobit == NULL) {
@@ -525,9 +876,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	goto bailout;
     }
 
-    /* call BHHH routine to maximize ll */
     err = bhhh_max(tobit_ll, (const double **) X, pmod->coeff, tobit, prn);
-
     if (err) {
 	goto bailout;
     }
@@ -547,39 +896,8 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     gretl_invert_symmetric_matrix(VCV);
     gretl_matrix_divide_by_scalar(VCV, n);
 
-    /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
-    J = gretl_matrix_alloc(k, k);
-    if (J == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-    gretl_matrix_zero(J);
-    for (i=0; i<k; i++) {
-	for (j=0; j<k; j++) {
-	    if (i == j && i < k-1) {
-		/* upper left diagonal component */
-		gretl_matrix_set(J, i, j, sigma);
-	    } else if (j == k-1 && i < j) {
-		/* right-hand column */
-		gretl_matrix_set(J, i, j, -sigma * theta[i]);
-	    } else if (j == k-1 && i == j) {
-		/* bottom right-hand element */
-		gretl_matrix_set(J, i, j, -sigma * sigma);
-	    }
-	}
-    }
-
-    /* VCV matrix transformation */
-    tmp = gretl_matrix_alloc(k, k);
-    if (tmp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    gretl_matrix_multiply(J, VCV, tmp);
-    gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-			      J, GRETL_MOD_TRANSPOSE,
-			      VCV, GRETL_MOD_NONE);
+    /* Do Jacobian thing */
+    err = transform_tobit_VCV(VCV, sigma, theta, k);
 
     ll = model_info_get_ll(tobit);
     write_tobit_stats(pmod, theta, k-1, sigma, ll, (const double **) X, 
@@ -588,19 +906,9 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
  bailout:
 
     if (missvals) {
-	for (i=0; i<nv; i++) {
-	    free(X[i]);
-	}
-    }
-
-    free(X);
-
-    if (J != NULL) {
-	gretl_matrix_free(J);
-    }
-
-    if (tmp != NULL) {
-	gretl_matrix_free(tmp);
+	doubles_array_free(X, nv);
+    } else {
+	free(X);
     }
 
     if (tobit != NULL) {
@@ -609,6 +917,8 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     return err;
 }
+
+#endif /* BFGS vs BHHH */
 
 static double tobit_depvar_scale (const MODEL *pmod, int *miss)
 {
