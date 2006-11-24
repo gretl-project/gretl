@@ -285,6 +285,8 @@ double gretl_matrix_one_norm (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
+int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b);
+
 int gretl_invert_general_matrix (gretl_matrix *a);
 
 int gretl_invert_symmetric_indef_matrix (gretl_matrix *a);

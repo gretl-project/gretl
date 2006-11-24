@@ -1244,6 +1244,10 @@ static int arbond_variance (arbond *ab)
     }
 
     if (ab->step == 1) {
+	if (ab->opt & OPT_T) {
+	    gretl_matrix_copy_values(ab->Acpy, V);
+	}
+
 	gretl_matrix_divide_by_scalar(V, ab->effN);
 
 	/* form X'Z A_N Z'X  */
@@ -1260,6 +1264,7 @@ static int arbond_variance (arbond *ab)
 
 	if (ab->opt & OPT_T) {
 	    /* preserve V for second stage */
+	    gretl_matrix_copy_values(V, ab->Acpy);
 	    ab->V = V;
 	    V = NULL;
 	}
@@ -1801,7 +1806,7 @@ static int arbond_calculate (arbond *ab)
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
-    err = gretl_LU_solve(ab->kktmp, ab->beta);
+    err = gretl_cholesky_solve(ab->kktmp, ab->beta);
 
 #if ADEBUG
     if (!err) {
@@ -1833,7 +1838,21 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     /* in case inversion fails */
     gretl_matrix_copy_values(ab->Acpy, ab->V);
 
-    err = gretl_invert_symmetric_matrix(ab->V);
+    if (1) {
+	err = gretl_invert_symmetric_matrix(ab->V);
+    } else {
+	int i, j;
+	double x;
+
+	err = gretl_SVD_invert_matrix(ab->V);
+	for (i=0; i<ab->m; i++) {
+	    for (j=0; j<i; j++) {
+		x = gretl_matrix_get(ab->V, i, j);
+		gretl_matrix_set(ab->V, j, i, x);
+	    }
+	}
+    }
+    
     if (err) {
 	fprintf(stderr, "step 2: inverting ab->V failed on first pass\n");
 	err = try_alt_inverse(ab);
@@ -1846,6 +1865,10 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     } else {
 	gretl_matrix_copy_values(ab->A, ab->V);
     }
+
+    /* matrix was not scaled prior to inversion */
+    gretl_matrix_multiply_by_scalar(ab->A, ab->effN);
+    gretl_matrix_multiply_by_scalar(ab->V, ab->effN);
 
     ab->step = 2;
     err = arbond_calculate(ab);
