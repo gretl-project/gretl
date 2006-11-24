@@ -1261,36 +1261,32 @@ static int arbond_variance (arbond *ab)
     }
 
     if (ab->step == 2) {
-	gretl_invert_symmetric_matrix(V);
-	gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
-	err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
-	err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
-					 ab->kmtmp, GRETL_MOD_NONE,
-					 ab->vbeta, GRETL_MOD_NONE);
-	gretl_invert_symmetric_matrix(ab->vbeta);
-	gretl_invert_symmetric_matrix(C); /* for AR test */
+	err = gretl_invert_symmetric_matrix(V);
+	if (!err) {
+	    gretl_matrix_qform(ab->ZX, GRETL_MOD_TRANSPOSE, V,
+			       ab->vbeta, GRETL_MOD_NONE);
+	    err = gretl_invert_symmetric_matrix(ab->vbeta);
+	}
+	if (!err) {
+	    err = gretl_invert_symmetric_indef_matrix(C); /* for AR test */
+	}
     } else {
-	/* find the central term, A_N * \hat{V}_N * A_N :
-	   re-use V for this result */
-	gretl_matrix_qform(ab->A, GRETL_MOD_NONE, V,
-			   ab->tmp1, GRETL_MOD_NONE);
-	gretl_matrix_copy_values(V, ab->tmp1); 
-
-	/* complete the large "middle bit" */
-	gretl_matrix_reuse(ab->kmtmp, ab->m, ab->k);
-	err += gretl_matrix_multiply(V, ab->ZX, ab->kmtmp);
-	err += gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
-					 ab->kmtmp, GRETL_MOD_NONE,
-					 kk, GRETL_MOD_NONE);
+	/* form X'Z A_N Z'X  */
+	gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
+				  ab->A, GRETL_MOD_NONE,
+				  ab->kmtmp, GRETL_MOD_NONE);
+	gretl_matrix_qform(ab->kmtmp, GRETL_MOD_NONE, V,
+			   kk, GRETL_MOD_NONE);
 
 	/* pre- and post-multiply by C^{-1} */
-	err += gretl_invert_symmetric_matrix(C);
+	err = gretl_invert_symmetric_matrix(C);
 	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, ab->vbeta,
 			   GRETL_MOD_NONE);
     }
 
-    /* reset as k x m, as advertised */
-    gretl_matrix_reuse(ab->kmtmp, ab->k, ab->m);
+    if (err) {
+	goto bailout;
+    }
 
     gretl_matrix_multiply_by_scalar(ab->vbeta, ab->effN);
 
@@ -1316,6 +1312,8 @@ static int arbond_variance (arbond *ab)
     ar_test(ab, C);
     sargan_test(ab);
     arbond_wald_test(ab);
+
+ bailout:
 
     gretl_matrix_free(V);
     gretl_matrix_free(ui);
@@ -1803,8 +1801,12 @@ static int arbond_calculate (arbond *ab)
     gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
     /* calculate "denominator", X'ZAZ'X */
-
+#if 0
+    gretl_matrix_qform(ab->ZX, GRETL_MOD_TRANSPOSE, ab->A,
+		       ab->den, GRETL_MOD_NONE);
+#else
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
+#endif
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
     err = gretl_LU_solve(ab->kktmp, ab->beta);

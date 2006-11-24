@@ -2119,9 +2119,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		    }
 		} else {
 		    c->val[mdx(c,i,j)] = x;
-		    if (i != j) {
-			c->val[mdx(c,j,i)] = x;
-		    }
+		    c->val[mdx(c,j,i)] = x;
 		}
 	    }
 	} 
