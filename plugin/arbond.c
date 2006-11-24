@@ -37,6 +37,7 @@ struct diag_info {
 
 struct arbond_ {
     gretlopt opt;         /* option flags */
+    int doZX;             /* calculation flag */
     int step;             /* what step are we on? */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
@@ -349,6 +350,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 
     ab->opt = opt;
     ab->step = 1;
+    ab->doZX = 1;
     ab->nx = 0;
     ab->nz = 0;
     ab->t1min = 0;
@@ -1166,8 +1168,6 @@ static int windmeijer_correct (arbond *ab, const gretl_matrix *uhat1,
 
 static int arbond_variance (arbond *ab)
 {
-    static gretl_matrix *Vcpy;
-
     gretl_matrix *kk = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *ui = NULL;
@@ -1179,33 +1179,24 @@ static int arbond_variance (arbond *ab)
     int i, j, t, k, c;
     int err = 0;
 
-    if (ab->step == 2 && Vcpy == NULL) {
+    kk = gretl_matrix_alloc(ab->k, ab->k);
+    if (kk == NULL) {
 	return E_ALLOC;
     }
-
-    kk = gretl_matrix_alloc(ab->k, ab->k);
 
     if (ab->step == 1) {
 	V = gretl_zero_matrix_new(ab->m, ab->m);
 	ui = gretl_column_vector_alloc(ab->maxTi);
+	if (V == NULL || ui == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
     } else {
-	V = gretl_matrix_copy(Vcpy);
-	gretl_matrix_free(Vcpy);
-	Vcpy = NULL;
 	u1 = gretl_matrix_copy(ab->uhat);
-    }
-
-    if (V == NULL || kk == NULL || 
-	(ab->step == 1 && ui == NULL) ||
-	(ab->step == 2 && u1 == NULL)) {
-	gretl_matrix_free(V);
-	gretl_matrix_free(kk);
-	gretl_matrix_free(ui);
-	gretl_matrix_free(u1);
-	return E_ALLOC;
-    }
-
-    if (ab->step == 2) {
+	if (u1 == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
 	/* copy 1-step coefficient variance */
 	gretl_matrix_copy_values(kk, ab->vbeta);
     }
@@ -1254,23 +1245,7 @@ static int arbond_variance (arbond *ab)
 
     if (ab->step == 1) {
 	gretl_matrix_divide_by_scalar(V, ab->effN);
-	if (ab->opt & OPT_T) {
-	    Vcpy = gretl_matrix_copy(V);
-	    ab->V = gretl_matrix_copy(V);
-	}
-    }
 
-    if (ab->step == 2) {
-	err = gretl_invert_symmetric_matrix(V);
-	if (!err) {
-	    gretl_matrix_qform(ab->ZX, GRETL_MOD_TRANSPOSE, V,
-			       ab->vbeta, GRETL_MOD_NONE);
-	    err = gretl_invert_symmetric_matrix(ab->vbeta);
-	}
-	if (!err) {
-	    err = gretl_invert_symmetric_indef_matrix(C); /* for AR test */
-	}
-    } else {
 	/* form X'Z A_N Z'X  */
 	gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
 				  ab->A, GRETL_MOD_NONE,
@@ -1282,7 +1257,21 @@ static int arbond_variance (arbond *ab)
 	err = gretl_invert_symmetric_matrix(C);
 	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, ab->vbeta,
 			   GRETL_MOD_NONE);
-    }
+
+	if (ab->opt & OPT_T) {
+	    /* preserve V for second stage */
+	    ab->V = V;
+	    V = NULL;
+	}
+    } else {
+	/* second step */
+	gretl_matrix_qform(ab->ZX, GRETL_MOD_TRANSPOSE, ab->V,
+			   ab->vbeta, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(ab->vbeta);
+	if (!err) {
+	    err = gretl_invert_symmetric_matrix(C); /* for AR test */
+	}
+    } 
 
     if (err) {
 	goto bailout;
@@ -1626,8 +1615,7 @@ static char *zero_row_mask (const gretl_matrix *m, int *err)
     return mask;
 }
 
-static void 
-eliminate_zero_rows (gretl_matrix *a, const char *mask)
+static void cut_rows (gretl_matrix *a, const char *mask)
 {
     int n = count_mask(mask, a->rows);
     int i, j, k;
@@ -1713,7 +1701,7 @@ static void real_shrink_matrices (arbond *ab, const char *mask)
     fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
 	    ab->m, ab->A->rows);
 
-    eliminate_zero_rows(ab->ZT, mask);
+    cut_rows(ab->ZT, mask);
 
     ab->m = ab->A->rows;
     gretl_matrix_reuse(ab->Acpy, ab->m, ab->m);
@@ -1723,6 +1711,10 @@ static void real_shrink_matrices (arbond *ab, const char *mask)
     gretl_matrix_reuse(ab->XZA, -1, ab->m);
     gretl_matrix_reuse(ab->R1, ab->m, -1);
     gretl_matrix_reuse(ab->ZX, ab->m, -1);
+
+    if (ab->V != NULL) {
+	gretl_matrix_reuse(ab->V, ab->m, ab->m);
+    }
 }
 
 /* Remove zero rows/cols from A, as indicated by mask, and delete the
@@ -1790,23 +1782,23 @@ static int arbond_calculate (arbond *ab)
 {
     int err = 0;
 
+    /* find Z'X, if this job is not already done */
+    if (ab->doZX) {
+	gretl_matrix_multiply(ab->ZT, ab->dX, ab->ZX);
+	ab->doZX = 0;
+    }
+
     /* find X'Z A */
     gretl_matrix_multiply_mod(ab->ZX, GRETL_MOD_TRANSPOSE,
 			      ab->A, GRETL_MOD_NONE,
 			      ab->XZA, GRETL_MOD_NONE);
 
     /* calculate "numerator", X'ZAZ'y */
-
     gretl_matrix_multiply(ab->ZT, ab->dy, ab->R1);
     gretl_matrix_multiply(ab->XZA, ab->R1, ab->beta);
 
     /* calculate "denominator", X'ZAZ'X */
-#if 0
-    gretl_matrix_qform(ab->ZX, GRETL_MOD_TRANSPOSE, ab->A,
-		       ab->den, GRETL_MOD_NONE);
-#else
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
-#endif
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
     err = gretl_LU_solve(ab->kktmp, ab->beta);
@@ -1834,21 +1826,26 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
 {
     int err;
 
-    if (ab->V == NULL) {
-	return E_ALLOC;
-    }
-
 #if ADEBUG
     gretl_matrix_print(ab->V, "V, in arbond_step_2");
 #endif
 
-    err = gretl_invert_symmetric_indef_matrix(ab->V);
-    if (err) {
-	fprintf(stderr, "arbond_step_2: inversion failed\n");
-	return err;
-    }
+    /* in case inversion fails */
+    gretl_matrix_copy_values(ab->Acpy, ab->V);
 
-    gretl_matrix_copy_values(ab->A, ab->V);
+    err = gretl_invert_symmetric_matrix(ab->V);
+    if (err) {
+	fprintf(stderr, "step 2: inverting ab->V failed on first pass\n");
+	err = try_alt_inverse(ab);
+	if (err) {
+	    return err;
+	}
+	gretl_matrix_copy_values(ab->V, ab->A);
+	/* flag recomputation of Z'X */
+	ab->doZX = 1;
+    } else {
+	gretl_matrix_copy_values(ab->A, ab->V);
+    }
 
     ab->step = 2;
     err = arbond_calculate(ab);
@@ -2192,9 +2189,6 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 #endif
 
     if (!err) {
-	/* calculate Z'X (this can be a big multiplication, and
-	   it only needs to be done once) */
-	gretl_matrix_multiply(ab.ZT, ab.dX, ab.ZX);
 	err = arbond_calculate(&ab);
     }
 
