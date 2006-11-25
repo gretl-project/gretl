@@ -1818,6 +1818,17 @@ static int arbond_calculate (arbond *ab)
     return err;
 }
 
+static void make_matrix_symmetric (gretl_matrix *m)
+{
+    int i, j;
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<i; j++) {
+	    m->val[mdx(m, j, i)] = m->val[mdx(m, i, j)];
+	}
+    }
+}
+
 static int arbond_step_2 (arbond *ab, PRN *prn)
 {
     int err;
@@ -1835,9 +1846,8 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
 	err = gretl_SVD_invert_matrix(ab->V);
 	if (err) {
 	    return err;
-	}
-	/* things are liable to get a wee bit sloppy after this */
-	gretl_matrix_set_equals_tolerance(1.0e-9);
+	} 
+	make_matrix_symmetric(ab->V);
     }
 
     gretl_matrix_copy_values(ab->A, ab->V);
@@ -1847,8 +1857,6 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     if (err) {
 	fprintf(stderr, "step 2: arbond_calculate returned %d\n", err);
     }
-
-    gretl_matrix_unset_equals_tolerance();
 
     return err;
 }

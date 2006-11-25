@@ -1722,7 +1722,9 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 
 		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
 			i, j, x, j, i, y);
-		gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
+		if (m->rows < 100) {
+		    gretl_matrix_print(m, "gretl_matrix_is_symmetric()");
+		}
 		return 0;
 	    }
 	}
@@ -4667,7 +4669,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	/* invert singular values */
 	for (j=0; j<k; j++) {
 	    for (i=0; i<n; i++) {
-		u->val[mdx(u, i, j)] *= 1.0 / s[j];
+		u->val[mdx(u, i, j)] /= s[j];
 	    }
 	}
 	err = gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
