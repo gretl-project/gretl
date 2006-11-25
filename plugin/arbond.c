@@ -1244,10 +1244,6 @@ static int arbond_variance (arbond *ab)
     }
 
     if (ab->step == 1) {
-	if (ab->opt & OPT_T) {
-	    gretl_matrix_copy_values(ab->Acpy, V);
-	}
-
 	gretl_matrix_divide_by_scalar(V, ab->effN);
 
 	/* form X'Z A_N Z'X  */
@@ -1264,7 +1260,6 @@ static int arbond_variance (arbond *ab)
 
 	if (ab->opt & OPT_T) {
 	    /* preserve V for second stage */
-	    gretl_matrix_copy_values(V, ab->Acpy);
 	    ab->V = V;
 	    V = NULL;
 	}
@@ -1716,10 +1711,6 @@ static void real_shrink_matrices (arbond *ab, const char *mask)
     gretl_matrix_reuse(ab->XZA, -1, ab->m);
     gretl_matrix_reuse(ab->R1, ab->m, -1);
     gretl_matrix_reuse(ab->ZX, ab->m, -1);
-
-    if (ab->V != NULL) {
-	gretl_matrix_reuse(ab->V, ab->m, ab->m);
-    }
 }
 
 /* Remove zero rows/cols from A, as indicated by mask, and delete the
@@ -1806,7 +1797,7 @@ static int arbond_calculate (arbond *ab)
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
-    err = gretl_cholesky_solve(ab->kktmp, ab->beta);
+    err = gretl_LU_solve(ab->kktmp, ab->beta);
 
 #if ADEBUG
     if (!err) {
@@ -1835,46 +1826,29 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     gretl_matrix_print(ab->V, "V, in arbond_step_2");
 #endif
 
-    /* in case inversion fails */
+    /* in case first inversion attempt fails */
     gretl_matrix_copy_values(ab->Acpy, ab->V);
 
-    if (1) {
-	err = gretl_invert_symmetric_matrix(ab->V);
-    } else {
-	int i, j;
-	double x;
-
-	err = gretl_SVD_invert_matrix(ab->V);
-	for (i=0; i<ab->m; i++) {
-	    for (j=0; j<i; j++) {
-		x = gretl_matrix_get(ab->V, i, j);
-		gretl_matrix_set(ab->V, j, i, x);
-	    }
-	}
-    }
-    
+    err = gretl_invert_symmetric_matrix(ab->V);
     if (err) {
 	fprintf(stderr, "step 2: inverting ab->V failed on first pass\n");
-	err = try_alt_inverse(ab);
+	gretl_matrix_copy_values(ab->V, ab->Acpy);
+	err = gretl_SVD_invert_matrix(ab->V);
 	if (err) {
 	    return err;
 	}
-	gretl_matrix_copy_values(ab->V, ab->A);
-	/* flag recomputation of Z'X */
-	ab->doZX = 1;
-    } else {
-	gretl_matrix_copy_values(ab->A, ab->V);
+	gretl_matrix_set_equals_tolerance(1.0e-9);
     }
 
-    /* matrix was not scaled prior to inversion */
-    gretl_matrix_multiply_by_scalar(ab->A, ab->effN);
-    gretl_matrix_multiply_by_scalar(ab->V, ab->effN);
+    gretl_matrix_copy_values(ab->A, ab->V);
 
     ab->step = 2;
     err = arbond_calculate(ab);
     if (err) {
 	fprintf(stderr, "step 2: arbond_calculate returned %d\n", err);
     }
+
+    gretl_matrix_unset_equals_tolerance();
 
     return err;
 }

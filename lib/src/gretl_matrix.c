@@ -1648,7 +1648,38 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
     gretl_print_destroy(prn);
 }
 
-#define EQTOL 1.5e-12  
+#define DEFAULT_EQTOL 1.5e-12
+
+static double eq_tol = DEFAULT_EQTOL;
+
+/**
+ * gretl_matrix_set_equals_tolerance:
+ * @tol: tolerance value.
+ *
+ * Sets the tolerance for judging whether or not a matrix is symmetric
+ * (see gretl_matrix_is_symmetric() and also 
+ * gretl_invert_symmetric_matrix()).  The tolerance is the maximum
+ * relative difference between corresponding off-diagonal elements that
+ * is acceptable in a supposedly "symmetric" matrix.  The default
+ * value is 1.5e-12.
+ */
+
+void gretl_matrix_set_equals_tolerance (double tol)
+{
+    eq_tol = tol;
+}
+
+/**
+ * gretl_matrix_unset_equals_tolerance:
+ *
+ * Sets the tolerance for judging whether or not a matrix is symmetric
+ * to its default value.  See also gretl_matrix_set_equals_tolerance().
+ */
+
+void gretl_matrix_unset_equals_tolerance (void)
+{
+    eq_tol = DEFAULT_EQTOL;
+}
 
 static int sneq (double x, double y)
 {
@@ -1664,11 +1695,11 @@ static int sneq (double x, double y)
 	reldiff = fabs((y - x) / x);
     }
 
-    if (reldiff > EQTOL) {
+    if (reldiff > eq_tol) {
 	fprintf(stderr, "relative difference = %g\n", reldiff);
     }
 
-    return reldiff > EQTOL;
+    return reldiff > eq_tol;
 }
 
 /**
@@ -3568,10 +3599,6 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return 1;
     }
 
-#if 0
-    spd_matrix_check_scaling(a);
-#endif
-
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
@@ -4529,15 +4556,18 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
+#define SVD_SMIN 1.0e-9
+
 /**
  * gretl_SVD_invert_matrix:
  * @a: matrix to invert.
  * 
- * Computes the inverse of a general matrix using SVD
- * factorization.  Uses the lapack function %dgesvd.
- * Prints to stderr an estimate of the reciprocal
- * condition number of the matrix if it is less then 1e-9.
- * On exit the original matrix is overwritten by the inverse.
+ * Computes the inverse (or generalized inverse) of a general matrix 
+ * using SVD factorization, with the help of the lapack function 
+ * %dgesvd.  If any of the singular values of @a are less than 1e-9
+ * the Moore-Penrose generalized inverse is computed instead of the
+ * standard inverse.  On exit the original matrix is overwritten by 
+ * the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -4553,9 +4583,10 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     integer info;
 
     double *work2, *work = NULL;
-    double *s = NULL;
+    double x, *s = NULL;
 
-    int i, j, err = 0;
+    int i, j, k;
+    int err = 0;
 
     if (a->rows != a->cols) {
 	err = E_NONCONF;
@@ -4601,25 +4632,47 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     }
 
     if (!err) {
-	/* invert singular values */
+	k = 0;
 	for (i=0; i<n; i++) {
-	    double wi = 0.0;
-
-	    if (s[i] != 0.0) {
-		wi = 1.0 / s[i];
+	    if (s[i] < SVD_SMIN) {
+		break;
 	    }
-	    for (j=0; j<n; j++) {
-		u->val[mdx(u, j, i)] *= wi;
+	    k++;
+	}
+	if (k < n) {
+	    gretl_matrix *vt2;
+
+	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n", 
+		    k, (int) n);
+	    fputs("Warning: computing Moore-Penrose generalized inverse\n", stderr);
+
+	    vt2 = gretl_matrix_alloc(k, n);
+	    if (vt2 == NULL) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
+	    for (i=0; i<k; i++) {
+		for (j=0; j<n; j++) {
+		    x = gretl_matrix_get(vt, i, j);
+		    gretl_matrix_set(vt2, i, j, x);
+		}
+	    }
+	    gretl_matrix_free(vt);
+	    vt = vt2;
+	    gretl_matrix_reuse(u, n, k);
+	}	    
+    }
+
+    if (!err) {
+	/* invert singular values */
+	for (j=0; j<k; j++) {
+	    for (i=0; i<n; i++) {
+		u->val[mdx(u, i, j)] *= 1.0 / s[j];
 	    }
 	}
-	if (s[n-1] == 0.0) {
-	    fputs("gretl_SVD_invert_matrix: matrix is not of full rank\n", stderr);
-	} else if (s[n-1] / s[0] < 1e-9) {
-	    fprintf(stderr, "rcond = %g\n", s[n-1] / s[0]);
-	}	
-	gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
-				  u, GRETL_MOD_TRANSPOSE,
-				  a, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
+					u, GRETL_MOD_TRANSPOSE,
+					a, GRETL_MOD_NONE);
     }
 
  bailout:

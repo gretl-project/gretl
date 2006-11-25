@@ -117,6 +117,10 @@ struct _gretl_matrix {
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 
+void gretl_matrix_set_equals_tolerance (double tol);
+
+void gretl_matrix_unset_equals_tolerance (void);
+
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 double gretl_vector_get (const gretl_vector *v, int i);
