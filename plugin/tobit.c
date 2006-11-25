@@ -115,64 +115,6 @@ static tob_container *tob_container_new (int k, MODEL *pmod, const double **X,
     return TC;
 }
 
-/* Below: we are buying ourselves a considerable simplification when it comes
-   to the tobit_ll function.  That function needs access to the original y
-   and X data.  But the sample used for estimation may be at an offset into
-   the full dataset, and the variables chosen for the analysis may not
-   be at contiguous locations in the main dataset.  So we construct a
-   "virtual dataset" in the form of a set of const pointers into the real
-   dataset.  These pointers start at the correct sample offset, and are
-   contiguous, so the indexing is a lot easier.
-*/
-
-static double **make_tobit_X (const MODEL *pmod, double **Z, int missvals)
-{
-    double **X;
-    int nv = pmod->list[0];
-    int offset = pmod->t1;
-    int v, i;
-
-    if (missvals) {
-	X = doubles_array_new(nv, pmod->nobs);
-    } else {
-	X = malloc(nv * sizeof *X);
-    }
-
-    if (X == NULL) return NULL;
-
-    if (missvals) {
-	int t, s;
-
-	for (t=0; t<pmod->nobs; t++) {
-	    X[0][t] = 1.0;
-	}
-
-	for (i=1; i<nv; i++) {
-	    v = (i == 1)? pmod->list[1] : pmod->list[i + 1];
-	    s = 0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!na(pmod->uhat[t])) {
-		    X[i][s++] = Z[v][t];
-		}
-	    }
-	}
-    } else {
-	/* constant in slot 0 */
-	X[0] = Z[0] + offset;
-
-	/* dependent var in slot 1 */
-	X[1] = Z[pmod->list[1]] + offset;
-
-	/* independent vars in slots 2, 3, ... */
-	for (i=2; i<nv; i++) {
-	    v = pmod->list[i + 1];
-	    X[i] = Z[v] + offset;
-	}
-    }
-
-    return X;
-}
-
 #ifndef USE_BFGS
 
 /* BHHH: Compute log likelihood, and the score matrix if do_score is
@@ -784,7 +726,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* set of pointers into original data, or a reduced copy 
        if need be */
-    X = make_tobit_X(pmod, Z, missvals);
+    X = data_array_from_model(pmod, Z, missvals);
     if (X == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -849,7 +791,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 #else /* BHHH */
 
 static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
-		     double scale, int missvals, PRN *prn)
+		     double scale, int missv, PRN *prn)
 {
     double **X;
     double *theta = NULL;
@@ -868,7 +810,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* set of pointers into original data, or a reduced copy 
        if need be */
-    X = make_tobit_X(pmod, Z, missvals);
+    X = data_array_from_model(pmod, Z, missv);
     if (X == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -914,7 +856,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
  bailout:
 
-    if (missvals) {
+    if (missv) {
 	doubles_array_free(X, nv);
     } else {
 	free(X);
@@ -1006,4 +948,3 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     return model;
 }
-

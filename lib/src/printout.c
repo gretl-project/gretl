@@ -2091,7 +2091,7 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 0
+#define PRINTF_DEBUG 1
 
 #define is_format_char(c) (c == 'e' || \
                            c == 'E' || \

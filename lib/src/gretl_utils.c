@@ -1031,6 +1031,71 @@ double **doubles_array_new (int m, int n)
     return X;
 }
 
+/**
+ * data_array_from_model:
+ * @pmod: reference model.
+ * @Z: main data array.
+ * @missv: should equal 1 if there are missing values to be
+ * skipped, else 0.
+ *
+ * Constructs a dataset containing all the variables referenced in
+ * @pmod.  The arrays start at the correct sample offset for @pmod,
+ * and are contiguous.  If @missvals equals 0, this is done by creating
+ * a set of pointers into the main dataset, but if there are missing
+ * values to be handled, the sub-arrays are newly allocated and purged
+ * of NAs.
+ *
+ * Returns: two-dimensional array, or %NULL on failure.
+ */
+
+double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
+{
+    double **X;
+    int nv = pmod->list[0];
+    int offset = pmod->t1;
+    int v, i;
+
+    if (missv) {
+	X = doubles_array_new(nv, pmod->nobs);
+    } else {
+	X = malloc(nv * sizeof *X);
+    }
+
+    if (X == NULL) return NULL;
+
+    if (missv) {
+	int t, s;
+
+	for (t=0; t<pmod->nobs; t++) {
+	    X[0][t] = 1.0;
+	}
+
+	for (i=1; i<nv; i++) {
+	    v = (i == 1)? pmod->list[1] : pmod->list[i + 1];
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    X[i][s++] = Z[v][t];
+		}
+	    }
+	}
+    } else {
+	/* constant in slot 0 */
+	X[0] = Z[0] + offset;
+
+	/* dependent var in slot 1 */
+	X[1] = Z[pmod->list[1]] + offset;
+
+	/* independent vars in slots 2, 3, ... */
+	for (i=2; i<nv; i++) {
+	    v = pmod->list[i + 1];
+	    X[i] = Z[v] + offset;
+	}
+    }
+
+    return X;
+}
+
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo) 
 {

@@ -103,6 +103,9 @@ void doubles_array_free (double **X, int m);
 
 double **doubles_array_new (int m, int n);
 
+double **data_array_from_model (const MODEL *pmod, double **Z, 
+				int missv);
+
 int ijton (int i, int j, int nrows);
 
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
