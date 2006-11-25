@@ -462,8 +462,9 @@ static int expand_model_series (MODEL *pmod, model_info *minfo)
     return 0;
 }
 
-static int bhhh_iter_info (int iter, double *theta, int m, double ll,
-			   double steplength, PRN *prn)
+static int 
+bhhh_iter_info (int iter, const double *theta, const double *delta,
+		int m, double ll, double steplength, PRN *prn)
 {
     int i;
 
@@ -476,6 +477,16 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
 	    return 1;
 	}
 	pprintf(prn, "%#12.5g ", theta[i]);
+    }
+    
+    pputc(prn, '\n');
+    for (i=0; i<m; i++) {
+	if (i && i % 5 == 0) pputc(prn, '\n');
+	if (na(delta[i]) || isnan(delta[i])) {
+	    pprintf(prn, "Invalid value for delta[%d]\n", i);
+	    return 1;
+	}
+	pprintf(prn, "%#12.5g ", delta[i]);
     }
 
     pprintf(prn, "\n    %s = %g, ll = %g\n", _("step length"),
@@ -664,7 +675,7 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 	/* print interation info, if wanted */
-	bhhh_iter_info(iters, minfo->theta, k, minfo->ll, stepsize, prn);
+	bhhh_iter_info(iters, minfo->theta, delta, k, minfo->ll, stepsize, prn);
 
 	crit = minfo->ll2 - minfo->ll;  
     }

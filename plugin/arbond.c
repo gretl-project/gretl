@@ -1642,8 +1642,7 @@ make_rank_mask (const gretl_matrix *A, int *err)
     gretl_matrix *R = NULL;
     char *mask = NULL;
     double test;
-    int n = A->cols;
-    int i, r;
+    int i, n = A->cols;
 
     Q = gretl_matrix_copy(A);
     if (Q == NULL) {
@@ -1659,10 +1658,6 @@ make_rank_mask (const gretl_matrix *A, int *err)
     }
 
     *err = gretl_matrix_QR_decomp(Q, R);
-
-    if (!*err) {
-	r = gretl_check_QR_rank(R, err);
-    }
 
     if (!*err) {
 	mask = calloc(n, 1);
@@ -1795,9 +1790,10 @@ static int arbond_calculate (arbond *ab)
 
     /* calculate "denominator", X'ZAZ'X */
     gretl_matrix_multiply(ab->XZA, ab->ZX, ab->den);
+    gretl_matrix_xtr_symmetric(ab->den);
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
-    err = gretl_LU_solve(ab->kktmp, ab->beta);
+    err = gretl_cholesky_solve(ab->kktmp, ab->beta);
 
 #if ADEBUG
     if (!err) {
@@ -1818,17 +1814,6 @@ static int arbond_calculate (arbond *ab)
     return err;
 }
 
-static void make_matrix_symmetric (gretl_matrix *m)
-{
-    int i, j;
-
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<i; j++) {
-	    m->val[mdx(m, j, i)] = m->val[mdx(m, i, j)];
-	}
-    }
-}
-
 static int arbond_step_2 (arbond *ab, PRN *prn)
 {
     int err;
@@ -1847,7 +1832,7 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
 	if (err) {
 	    return err;
 	} 
-	make_matrix_symmetric(ab->V);
+	gretl_matrix_xtr_symmetric(ab->V);
     }
 
     gretl_matrix_copy_values(ab->A, ab->V);
