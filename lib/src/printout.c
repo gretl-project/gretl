@@ -27,7 +27,7 @@
 
 #include <time.h>
 
-#undef PRN_DEBUG
+#define PRN_DEBUG 0
 
 void bufspace (int n, PRN *prn)
 {
@@ -1174,7 +1174,7 @@ static int get_signif (const double *x, int n)
 	    smax = s;
 	}
 
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
 #endif
 
@@ -1202,7 +1202,7 @@ static int get_signif (const double *x, int n)
     if (trailmax > 0 && (leadmax + trailmax <= SMAX)) {
 	smax = -trailmax;
     } else if ((leadmin < leadmax) && (leadmax < smax)) {
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n", 
 		smax, leadmax);
 #endif	
@@ -1210,7 +1210,7 @@ static int get_signif (const double *x, int n)
     } else if (leadmax == smax) {
 	smax = 0;
     } else if (leadmax == 0 && !allfrac) {
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	fprintf(stderr, "get_signif: setting smax = -(%d - 1)\n", smax);
 #endif
 	smax = -1 * (smax - 1);
@@ -1241,13 +1241,13 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     }
 
     if (signif < 0) {
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	    fprintf(stderr, "got %d for signif: "
 		    "printing with %%.%df\n", signif, -signif);
 #endif
 	sprintf(numstr, "%.*f", -signif, x);
     } else if (signif == 0) {
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	    fprintf(stderr, "got 0 for signif: "
 		    "printing with %%.0f\n");
 #endif
@@ -1267,7 +1267,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	if (l == 6 && signif < 6) {
 	   sprintf(numstr, "%.0f", x); 
 	} else if (l >= signif) { 
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%dG\n", l, signif, signif);
 #endif
@@ -1277,14 +1277,14 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 		sprintf(numstr, "%.*G", signif, x);
 	    }
 	} else if (z >= .10) {
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%df\n", l, signif, signif-l);
 #endif
 	    sprintf(numstr, "%.*f", signif - l, x);
 	} else {
 	    if (signif > 4) signif = 4;
-#ifdef PRN_DEBUG
+#if PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%#.%dG\n", l, signif, signif);
 #endif
@@ -2091,7 +2091,7 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 1
+#define PRINTF_DEBUG 0
 
 #define is_format_char(c) (c == 'e' || \
                            c == 'E' || \
