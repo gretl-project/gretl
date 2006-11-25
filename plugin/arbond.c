@@ -1836,6 +1836,7 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
 	if (err) {
 	    return err;
 	}
+	/* things are liable to get a wee bit sloppy after this */
 	gretl_matrix_set_equals_tolerance(1.0e-9);
     }
 
