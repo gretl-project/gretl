@@ -22,7 +22,7 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (usage?, description+, gui-access?)>
+<!ELEMENT command (usage?, description+, gui-access?, scripts?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
@@ -44,6 +44,7 @@
 <!ELEMENT argblock     (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
+<!ELEMENT scripts      (script)+>
 <!ELEMENT altforms     (altform)+>
 <!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
@@ -64,6 +65,7 @@
 
 <!ELEMENT option   (flag, effect)>
 <!ELEMENT example  (#PCDATA)>
+<!ELEMENT script   (#PCDATA)>
 
 <!ELEMENT flag    (#PCDATA)>
 <!ELEMENT effect  (#PCDATA)>

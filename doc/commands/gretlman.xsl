@@ -206,6 +206,10 @@
   <xsl:call-template name="nl"/>
 </xsl:template>
 
+<xsl:template match="script">
+  <literal><xsl:apply-templates/></literal>
+</xsl:template>
+
 <xsl:template match="flag">
   <literal><xsl:apply-templates/></literal>
 </xsl:template>
@@ -353,6 +357,24 @@
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'menupath'"/>
     </xsl:call-template>
+  <xsl:apply-templates/></para>
+</xsl:template>
+
+<xsl:template match="scripts">
+  <xsl:call-template name="nl"/>
+  <para>
+  <xsl:choose>
+    <xsl:when test="count(script) > 1">
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'scripts'"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'script'"/>
+      </xsl:call-template>
+    </xsl:otherwise> 
+  </xsl:choose>
   <xsl:apply-templates/></para>
 </xsl:template>
 

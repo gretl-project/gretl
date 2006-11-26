@@ -501,6 +501,9 @@
     <gui-access>
       <menu-path>/Model/Panel</menu-path>
     </gui-access>
+    <scripts>
+      <script>arbond91</script>
+    </scripts>
 
   </command>
 

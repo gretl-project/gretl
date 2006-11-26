@@ -35,6 +35,9 @@
    <gentext key="equation" text="Ecuaci&#243;n"/>
    <gentext key="Example" text="Ejemplo"/>
    <gentext key="example" text="Ejemplo"/>
+   <gentext key="examples" text="Ejemplos"/>
+   <gentext key="script" text="Gui&#243;n"/>
+   <gentext key="scripts" text="Gui&#243;nes"/>
    <gentext key="Figure" text="Figura"/>
    <gentext key="figure" text="Figura"/>
    <gentext key="GlossSee" text="Ver"/>

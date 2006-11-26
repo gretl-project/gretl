@@ -213,6 +213,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     restriction *r;
     double x;
     int col, i, j;
+    int err = 0;
 
     R = gretl_zero_matrix_new(rset->k, R_n_columns(rset));
     if (R == NULL) {
@@ -255,13 +256,18 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 #endif
 
     if (rset->type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = rset->obj;
-
 	gretl_matrix *D = gretl_matrix_right_nullspace(R);
+
+	if (D == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    GRETL_VAR *var = rset->obj;
+
 #if RDEBUG
-	gretl_matrix_print(D, "D");
+	    gretl_matrix_print(D, "D");
 #endif
-	gretl_VAR_attach_restrictions(var, D);
+	    gretl_VAR_attach_restrictions(var, D);
+	}
 	gretl_matrix_free(R);
 	gretl_matrix_free(q);
     } else {
@@ -269,7 +275,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 	*qin = q;
     }
 
-    return 0;
+    return err;
 }
 
 /* Make a mask with 1s in positions in the array of coeffs where
@@ -283,8 +289,7 @@ static int restriction_set_make_mask (gretl_restriction_set *rset)
     restriction *r;
     int i, j;
 
-    if (rset->type != GRETL_OBJ_EQN ||
-	rset->obj == NULL) {
+    if (rset->type != GRETL_OBJ_EQN || rset->obj == NULL) {
 	return 1;
     }
 

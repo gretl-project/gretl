@@ -2,9 +2,11 @@
 # Example of mixed MA model
 open bjg.gdt
 # gretl native (conditional ML)
-arima 0 1 1 ; 0 1 1 ; lg --nc
+arima 0 1 1 ; 0 1 1 ; lg --nc --conditional
 # X-12-ARIMA (also conditional)
 arima 0 1 1 ; 0 1 1 ; lg --nc --x-12-arima --conditional
+# gretl native (exact ML, Kalman filter)
+arima 0 1 1 ; 0 1 1 ; lg --nc 
 # X-12-ARIMA (exact ML)
 arima 0 1 1 ; 0 1 1 ; lg --nc --x-12-arima
 
