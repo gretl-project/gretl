@@ -4,10 +4,13 @@ tooldir = $(topsrc)/tools
 docdir = $(topsrc)/doc
 
 INSTALL = @INSTALL@
+prefix = @prefix@
 gnome_prefix = @gnome_prefix@
 have_gnome = @have_gnome@
 
-sysconfdir = $(gnome_prefix)/etc
+ifeq ($(gnome_prefix),NA)
+  gnome_prefix = $(prefix)
+endif
 
 GCONFTOOL = @GCONFTOOL@
 GCONF_SCHEMA_CONFIG_SOURCE = @GCONF_SCHEMA_CONFIG_SOURCE@
@@ -32,8 +35,7 @@ install: install-images install-misc $(install_schemas)
 
 install-images:
 	$(tooldir)/mkinstalldirs $(gpixmaps)
-	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(gpixmaps)
-	$(INSTALL_DATA) $(topsrc)/gnome/gretl.png $(gpixmaps)
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl.xpm $(gpixmaps)
 	$(INSTALL_DATA) $(topsrc)/gnome/gnome-*.png $(gpixmaps)
 
 install-misc:

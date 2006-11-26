@@ -2,9 +2,8 @@
 Name=gretl
 Comment=Econometrics program
 Exec=gretl
-Icon=gretl.png
+Icon=gretl.xpm
 Terminal=0
 Type=Application
-X-GNOME-DocPath=gretl/gretl.xml
-Categories=Application;Scientific;Econometrics
+Categories=Application;Science;Econometrics
 

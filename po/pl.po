@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.0.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-02 15:00-0400\n"
-"PO-Revision-Date: 2006-09-06 20:00+0100\n"
+"PO-Revision-Date: 2006-11-23 16:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3707,7 +3707,7 @@ msgstr "Najwiêkszej wiarygodno¶ci"
 
 #: lib/src/modelprint.c:681
 msgid "Fixed-effects"
-msgstr "Sta³e efekty"
+msgstr "Ustalone efekty"
 
 #: lib/src/modelprint.c:683
 msgid "Random-effects (GLS)"
@@ -3874,11 +3874,11 @@ msgstr "      Zmienna             Wspó³czynnik          B³±d standardowy\n"
 
 #: lib/src/modelprint.c:1362
 msgid "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-msgstr "      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t  Nachylenie\n"
+msgstr "      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t  Efekt krañcowy\n"
 
 #: lib/src/modelprint.c:1365
 msgid "(at mean)"
-msgstr "(do ¶redniej)"
+msgstr "(dla ¶rednich)"
 
 #: lib/src/modelprint.c:1379 lib/src/modelprint.c:1382
 #: lib/src/modelprint.c:1390
@@ -3902,7 +3902,7 @@ msgstr "STAT. T"
 
 #: lib/src/modelprint.c:1383
 msgid "SLOPE at mean"
-msgstr "NACHYLENIE do ¶redniej"
+msgstr "EFEKT KRANCOWY dla ¶rednich"
 
 #: lib/src/modelprint.c:1386
 msgid "PARAMETER"
@@ -3938,7 +3938,7 @@ msgstr "Statystyka $t$"
 
 #: lib/src/modelprint.c:1423 lib/src/modelprint.c:1438
 msgid "Slope"
-msgstr "Nachylenie"
+msgstr "Efekt krañcowy"
 
 #: lib/src/modelprint.c:1437 lib/src/modelprint.c:1448
 msgid "Std. Error"
@@ -3985,7 +3985,7 @@ msgstr "Logarytm wiarygodno¶ci dla %s"
 
 #: lib/src/modelprint.c:1674 lib/src/modelprint.c:1683
 msgid "First-stage F-statistic"
-msgstr "Pierwszy etap statystyki F"
+msgstr "W pierwszym kroku - statystyka F"
 
 #: lib/src/modelprint.c:1676
 msgid "A value < 10 may indicate weak instruments"
@@ -4097,7 +4097,7 @@ msgstr "Test ilorazu wiarygodno¶ci"
 
 #: lib/src/modelprint.c:2665 lib/src/modelprint.c:2697
 msgid "Evaluated at the mean"
-msgstr "Ocena ¶redniej"
+msgstr "Efekty krañcowe dla ¶rednich"
 
 #: lib/src/modelprint.c:2704
 msgid "Number of cases `correctly predicted'"
@@ -4617,7 +4617,7 @@ msgstr "Macierz wariancji i kowariancji dla reszt poszczególnych równañ"
 
 #: lib/src/printout.c:680
 msgid "correlations above the diagonal"
-msgstr "skorelowania w nawisach - powy¿ej elemetów diagonalnych"
+msgstr "skorelowania w nawisach - powy¿ej elementów diagonalnych"
 
 #: lib/src/printout.c:700
 msgid "log determinant"
@@ -4721,7 +4721,7 @@ msgstr "prawostronny obszar krytyczny dla %g = %g\n"
 
 #: lib/src/pvalues.c:674
 msgid "Standard normal"
-msgstr "B³±d standardowy"
+msgstr "Rozk³ad normalny"
 
 #: lib/src/pvalues.c:676 lib/src/pvalues.c:690
 #, c-format
@@ -7042,7 +7042,7 @@ msgstr "Liczba obserwacji przed prognoz± na wykresie"
 
 #: gui2/dialogs.c:1590
 msgid "automatic forecast (dynamic out of sample)"
-msgstr "prognoza dynamiczna (tylko poza zakres próby)"
+msgstr "automatyczna prognoza (dynamiczna poza zakresem próby)"
 
 #: gui2/dialogs.c:1591
 msgid "dynamic forecast"
@@ -10724,7 +10724,7 @@ msgstr "/Model/Szeregi czasowe/testy kointegracji/test Johansena..."
 
 #: gui2/menustate.c:146
 msgid "/Model/Panel/_Fixed or random effects..."
-msgstr "/Model/Modele panelowe/Sta³e oraz losowe efekty..."
+msgstr "/Model/Modele panelowe/Ustalone oraz losowe efekty..."
 
 #: gui2/menustate.c:147
 msgid "/Model/Panel/_Weighted least squares..."
@@ -11202,7 +11202,7 @@ msgstr "Warunkowa metoda najwiêkszej wiarygodno¶ci"
 
 #: gui2/selector.c:2783
 msgid "Fixed effects"
-msgstr "Sta³e efekty"
+msgstr "Ustalone efekty"
 
 #: gui2/selector.c:2787
 msgid "Random effects"
