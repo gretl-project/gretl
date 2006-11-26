@@ -759,7 +759,7 @@ static int arbond_wald_test (arbond *ab)
 	goto bailout;
     }
     
-    x = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, vcv, &err);
+    x = gretl_scalar_qform(b, vcv, &err);
     if (err) {
 	fprintf(stderr, _("Failed to compute test statistic\n"));
 	goto bailout;

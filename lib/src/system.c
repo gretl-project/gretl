@@ -615,12 +615,10 @@ system_print_F_test (const gretl_equation_system *sys,
     const gretl_matrix *R = sys->R;
     const gretl_matrix *q = sys->q;
     int Rrows = gretl_matrix_rows(R);
-    int vcols = gretl_matrix_cols(vcv);
     int dfu = system_get_dfu(sys);
     int dfn = gretl_matrix_rows(R);
 
     gretl_matrix *Rbq = NULL;
-    gretl_matrix *Rv = NULL;
     gretl_matrix *RvR = NULL;
 
     double F = NADBL;
@@ -632,10 +630,9 @@ system_print_F_test (const gretl_equation_system *sys,
     }
 
     Rbq = gretl_matrix_alloc(Rrows, 1);
-    Rv = gretl_matrix_alloc(Rrows, vcols);
     RvR = gretl_matrix_alloc(Rrows, Rrows);
 
-    if (Rbq == NULL || Rv == NULL || RvR == NULL) {
+    if (Rbq == NULL || RvR == NULL) {
 	pputs(prn, "Out of memory in F test\n");
 	goto bailout;
     }
@@ -643,10 +640,8 @@ system_print_F_test (const gretl_equation_system *sys,
     gretl_matrix_multiply(R, b, Rbq);
     gretl_matrix_subtract_from(Rbq, q);
 
-    gretl_matrix_multiply(R, vcv, Rv);
-    gretl_matrix_multiply_mod(Rv, GRETL_MOD_NONE,
-			      R, GRETL_MOD_TRANSPOSE,
-			      RvR, GRETL_MOD_NONE);
+    gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
+		       RvR, GRETL_MOD_NONE);
 
     err = gretl_invert_symmetric_matrix(RvR);
     if (err) {
@@ -654,7 +649,7 @@ system_print_F_test (const gretl_equation_system *sys,
 	goto bailout;
     }
 
-    F = gretl_scalar_b_X_b(Rbq, GRETL_MOD_TRANSPOSE, RvR, &err);
+    F = gretl_scalar_qform(Rbq, RvR, &err);
     if (err) {
 	pputs(prn, "Matrix multiplication failed in F test\n");
 	goto bailout;
@@ -670,7 +665,6 @@ system_print_F_test (const gretl_equation_system *sys,
  bailout:
     
     gretl_matrix_free(Rbq);
-    gretl_matrix_free(Rv);
     gretl_matrix_free(RvR);
 }
 

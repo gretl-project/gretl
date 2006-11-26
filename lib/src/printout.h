@@ -82,6 +82,10 @@ int text_print_forecast (const FITRESID *fr,
 			 double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
+void print_iter_info (int iter, double ll, int k, 
+		      const double *b, const double *g, 
+		      double sl, int neggrad, PRN *prn);
+
 void text_print_vmatrix (VMatrix *vmat, PRN *prn);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);

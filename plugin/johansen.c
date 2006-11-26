@@ -290,11 +290,9 @@ static int compute_alpha (JohansenInfo *jv, int n)
     } 
 
     if (!err) {
-	gretl_matrix_multiply(jv->Svv, jv->Beta, tmp1);
-	gretl_matrix_multiply_mod(jv->Beta, GRETL_MOD_TRANSPOSE,
-				  tmp1, GRETL_MOD_NONE,
-				  tmp2, GRETL_MOD_NONE);
-	err = gretl_invert_general_matrix(tmp2);
+	gretl_matrix_qform(jv->Beta, GRETL_MOD_TRANSPOSE, jv->Svv,
+			   tmp2, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(tmp2);
     }
 
     if (!err) {
@@ -844,31 +842,30 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix *HSH = NULL;
 
     int r = jrank(vecm);
+    int m = gretl_matrix_cols(vecm->jinfo->Alpha);
     int n = gretl_matrix_rows(vecm->jinfo->Beta);
     int i, j, k, err = 0;
 
     double x;
 
-    /* initial allocations */
     O = gretl_matrix_copy(vecm->S);
+    aOa = gretl_matrix_alloc(m, m);
     HSH = gretl_matrix_alloc(n - r, n - r);
 
-    if (O == NULL || HSH == NULL) {
+    if (O == NULL || aOa == NULL || HSH == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* compute \alpha' \Omega^{-1} \alpha */
+
     err = gretl_invert_symmetric_matrix(O);
     if (err) {
 	goto bailout;
     }
 
-    aOa = gretl_matrix_A_X_A(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE, O, &err);
-    if (aOa == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }    
+    gretl_matrix_qform(vecm->jinfo->Alpha, GRETL_MOD_TRANSPOSE, O,
+		       aOa, GRETL_MOD_NONE);
 
 #if JDEBUG
     gretl_matrix_print(vecm->S, "vecm->S");
@@ -1028,6 +1025,36 @@ compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
     return 0;
 }
 
+static int johansen_form_M (gretl_matrix *Suu, gretl_matrix *Svv,
+			    const gretl_matrix *Suv,
+			    gretl_matrix *R, gretl_matrix *L,
+			    gretl_matrix *M)
+{
+    int err = 0;
+
+    /* calculate Suu^{-1} Suv */
+    err = gretl_invert_symmetric_matrix(Suu);
+    if (!err) {
+	err = gretl_matrix_multiply(Suu, Suv, R);
+    }
+
+    /* calculate Svv^{-1} Suv' */
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(Svv);
+    }
+    if (!err) {
+	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
+					Suv, GRETL_MOD_TRANSPOSE, 
+					L, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply(L, R, M);
+    }
+
+    return err;
+}
+
 /* Public entry point for both cointegration test and VECM
    estimation */
 
@@ -1067,26 +1094,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 	gretl_matrix_reuse(TmpR, n, nv);
     }
 
-    /* calculate Suu^{-1} Suv */
-    err = gretl_invert_general_matrix(Suu);
-    if (!err) {
-	err = gretl_matrix_multiply(Suu, jvar->jinfo->Suv, TmpR);
-    }
-
-    /* calculate Svv^{-1} Suv' */
-    if (!err) {
-	err = gretl_invert_general_matrix(Svv);
-    }
-    if (!err) {
-	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
-					TmpL, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(TmpL, TmpR, M);
-    }
-
+    err = johansen_form_M(Suu, Svv, jvar->jinfo->Suv, TmpR, TmpL, M);
     if (err) {
 	goto eigenvals_bailout;
     }
@@ -1203,27 +1211,10 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     if (nv > n) {
 	gretl_matrix_reuse(TmpR, n, nv);
-    }    
-
-    /* calculate Suu^{-1} Suv */
-    err = gretl_invert_general_matrix(jvar->jinfo->Suu);
-    if (!err) {
-	err = gretl_matrix_multiply(jvar->jinfo->Suu, jvar->jinfo->Suv, TmpR);
     }
 
-    /* calculate Svv^{-1} Suv' */
-    if (!err) {
-	err = gretl_invert_general_matrix(Svv);
-    }
-    if (!err) {
-	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-					jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, 
-					TmpL, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(TmpL, TmpR, M);
-    }
+    err = johansen_form_M(jvar->jinfo->Suu, Svv, jvar->jinfo->Suv,
+			  TmpR, TmpL, M);
 
     if (err) {
 	goto eigenvals_bailout;
@@ -1343,13 +1334,12 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     double *eigvals = NULL;
 
     int n = jvar->neqns;
-    int nv = gretl_matrix_cols(jvar->jinfo->Svv);
     int m = gretl_matrix_cols(jvar->jinfo->D);
     int err = 0;
 
     M = gretl_matrix_alloc(m, m);
-    TmpL = gretl_matrix_alloc(m, n); /* FIXME n or nv? */
-    TmpR = gretl_matrix_alloc(nv, nv);
+    TmpL = gretl_matrix_alloc(m, n);
+    TmpR = gretl_matrix_alloc(n, m);
     Svv = gretl_matrix_alloc(m, m);
     Suv = gretl_matrix_alloc(n, m);
     Suu = gretl_matrix_copy(jvar->jinfo->Suu);
@@ -1364,16 +1354,9 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 
     gretl_matrix_print_to_prn(jvar->jinfo->D, "Restriction matrix, D", prn);
 
-    /* calculate D'Svv */
-    gretl_matrix_reuse(TmpR, m, nv);
-    err = gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
-				    jvar->jinfo->Svv, GRETL_MOD_NONE, 
-				    TmpR, GRETL_MOD_NONE);
-
-    if (!err) {
-	/* Svv <- D'SvvD */
-	err = gretl_matrix_multiply(TmpR, jvar->jinfo->D, Svv);
-    }
+    /* calculate Svv <- D' Svv D */
+    gretl_matrix_qform(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
+		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
     gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
     
@@ -1387,26 +1370,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     gretl_matrix_print_to_prn(Suv, "SuvD", prn);
 
     if (!err) {
-	/* calculate Suu^{-1} Suv */
-	err = gretl_invert_general_matrix(Suu);
-	if (!err) {
-	    gretl_matrix_reuse(TmpR, n, m);
-	    err = gretl_matrix_multiply(Suu, Suv, TmpR);
-	}
-    }
-
-    /* calculate Svv^{-1} Suv' */
-    if (!err) {
-	err = gretl_invert_general_matrix(Svv);
-	if (!err) {
-	    err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-					    Suv, GRETL_MOD_TRANSPOSE, 
-					    TmpL, GRETL_MOD_NONE);
-	}
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(TmpL, TmpR, M);
+	err = johansen_form_M(Suu, Svv, Suv, TmpR, TmpL, M);
     }
 
     gretl_matrix_print_to_prn(M, "M", prn);

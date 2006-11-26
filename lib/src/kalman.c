@@ -666,31 +666,20 @@ static int kalman_iter_1 (kalman *K, double *llt)
 
 static int kalman_iter_2 (kalman *K)
 {
-    gretl_matrix *PHV = K->Tmprn;
-    gretl_matrix *HP;
     int err = 0;
 
     /* form P - PH(H'PH + R)^{-1}H'P */
-    fast_multiply(K->PH, K->V, PHV);
-    HP = gretl_matrix_reuse(K->PH, K->n, K->r);
-    fast_A_prime_B(K->H, K->P0, HP);
-    fast_multiply(PHV, HP, K->Tmprr);
-    gretl_matrix_subtract_from(K->P0, K->Tmprr);
+    err += gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->V,
+			      K->Tmprr, GRETL_MOD_NONE);
+    err += gretl_matrix_subtract_from(K->P0, K->Tmprr);
 
     /* pre-multiply by F, post-multiply by F' */
     err += multiply_by_F(K, K->P0, K->Tmprr, 0);
     err += multiply_by_F(K, K->Tmprr, K->P1, 1);
 
     /* add Q */
-    if (arma_ll(K)) {
-	K->P1->val[0] += K->Q->val[0];
-    } else {
-	err += gretl_matrix_add_to(K->P1, K->Q);
-    }
+    err += gretl_matrix_add_to(K->P1, K->Q);
 
-    /* put K->PH back the way we found it */
-    gretl_matrix_reuse(K->PH, K->r, K->n);
-    
     return err;
 }
 
@@ -786,8 +775,7 @@ static int kalman_incr_S (kalman *K)
     double x;
     int err = 0;
 
-    x = gretl_scalar_b_X_b(K->e, GRETL_MOD_TRANSPOSE,
-			   K->V, &err);
+    x = gretl_scalar_qform(K->e, K->V, &err);
     if (!err) {
 	K->SSRw += x;
     }

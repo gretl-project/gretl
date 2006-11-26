@@ -174,7 +174,7 @@ static double wald_test (const int *list, MODEL *pmod, int form,
     }
 
     if (!*err) {
-	w = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, C, err);
+	w = gretl_scalar_qform(b, C, err);
     }
 
     if (!*err && form == F_FORM) {

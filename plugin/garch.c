@@ -185,8 +185,8 @@ static int make_garch_dataset (const int *list, double **Z,
 			       double **py, double ***pX)
 {
     double *y = NULL, **X = NULL;
-    int i, k = 0, t;
-    int xnum, ynum = list[4];
+    int i, t, k = 5;
+    int vx, vy = list[4];
 
     /* If pad > 0 we have to create a newly allocated, padded
        dataset.  Otherwise we can use a virtual dataset, made
@@ -195,25 +195,22 @@ static int make_garch_dataset (const int *list, double **Z,
 
     if (pad > 0) {
 	y = malloc(bign * sizeof *y);
-	if (y == NULL) return 1;
+	if (y == NULL) {
+	    return E_ALLOC;
+	}
+	*py = y;
     } 
 
     if (nx > 0) {
-	X = malloc(nx * sizeof *X);
-	if (X == NULL) goto bailout;
-
-	if (pad > 0) {
-	    for (i=0; i<nx; i++) {
-		X[i] = malloc(bign * sizeof **X);
-		if (X[i] == NULL) {
-		    for (t=0; t<i; t++) {
-			free(X[t]);
-		    }
-		    free(X);
-		    goto bailout;
-		}
-	    } 
-	}  
+	if (pad) {
+	    X = doubles_array_new(nx, bign);
+	} else {
+	    X = malloc(nx * sizeof *X);
+	}
+	if (X == NULL) {
+	    free(y);
+	    return E_ALLOC;
+	}
     }
 
     if (pad > 0) {
@@ -225,35 +222,31 @@ static int make_garch_dataset (const int *list, double **Z,
 		    X[i][t] = 0.0;
 		}
 	    } else {
-		y[t] = Z[ynum][t-pad];
-		if (nx > 0) k = 5;
+		y[t] = Z[vy][t-pad];
 		for (i=0; i<nx; i++) {
-		    xnum = list[k++]; 
-		    if (xnum == 0) xnum = list[k++];
-		    X[i][t] = Z[xnum][t-pad];
+		    vx = list[k++]; 
+		    if (vx == 0) {
+			vx = list[k++];
+		    }
+		    X[i][t] = Z[vx][t-pad];
 		}
 	    }
 	}
-	*py = y;
     } else {
 	/* build virtual dataset */
-	*py = Z[ynum];
-	if (nx > 0) k = 5;
+	*py = Z[vy];
 	for (i=0; i<nx; i++) {
-	    xnum = list[k++]; 
-	    if (xnum == 0) xnum = list[k++];
-	    X[i] = Z[xnum];
+	    vx = list[k++]; 
+	    if (vx == 0) {
+		vx = list[k++];
+	    }
+	    X[i] = Z[vx];
 	}
     }
 
     *pX = X;
 
     return 0;
-
- bailout:
-
-    free(y);
-    return E_ALLOC;
 }
 
 static int get_vopt (int robust)
@@ -322,6 +315,7 @@ int do_fcp (const int *list, double **Z, double scale,
 	err = E_ALLOC;
 	goto bailout;
     }
+
     for (i=0; i<bign; i++) {
 	res2[i] = res[i] = amax[i] = 0.0;
     }   
@@ -338,6 +332,7 @@ int do_fcp (const int *list, double **Z, double scale,
 	err = E_ALLOC;
 	goto bailout;
     }
+
     for (i=0; i<nparam * nparam; i++) {
 	vcv[i] = 0.0;
     } 
@@ -420,18 +415,9 @@ int do_fcp (const int *list, double **Z, double scale,
     free(vcv); 
 
     if (pad > 0) {
-	/* don't free y if it's just a pointer into Z */
 	free(y);
-    }
-    
-    if (X != NULL) {
-	if (pad > 0) {
-	    /* don't free the X[i] if they're just pointers into
-	       the original data matrix */
-	    for (i=0; i<nx; i++) {
-		free(X[i]);
-	    }
-	}
+	doubles_array_free(X, nx);
+    } else {
 	free(X);
     }
 

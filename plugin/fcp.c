@@ -212,7 +212,7 @@ static void vs_free (double **dhdp, int np, double **g, int nrc,
     free(yhat);
 }
 
-static void print_iter_info (int iter, double *theta, int m, double ll,
+static void garch_iter_info (int iter, double *theta, int m, double ll,
 			     int hess, PRN *prn)
 {
     int i;
@@ -591,7 +591,7 @@ int garch_estimate (int t1, int t2, int nobs,
 		      X, nx, t1, t2, param, b, &a0, 
 		      q, p, h);
 
-	print_iter_info(it1, param, nparam, ll, 0, prn);
+	garch_iter_info(it1, param, nparam, ll, 0, prn);
 
 	/* store previous coefficients */
 	for (i=0; i<nparam; i++) {
@@ -656,7 +656,7 @@ int garch_estimate (int t1, int t2, int nobs,
 			   grad, param, nparam, b, &a0,
 			   q, p, h, dhdp, zt);
 
-	print_iter_info(ittot++, param, nparam, ll, 1, prn);
+	garch_iter_info(ittot++, param, nparam, ll, 1, prn);
 
 	s1 = 0.0;
 	s2 = 0.0;

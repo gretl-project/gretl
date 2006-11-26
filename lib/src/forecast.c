@@ -536,7 +536,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 					       NULL);
 
 	/* forecast variance */
-	vyh = gretl_scalar_b_X_b(Xs, GRETL_MOD_NONE, V, NULL);
+	vyh = gretl_scalar_qform(Xs, V, &err);
 	if (na(vyh)) {
 	    err = 1;
 	} else {

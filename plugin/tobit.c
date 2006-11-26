@@ -234,7 +234,7 @@ static double t_loglik (const double *theta, void *ptr)
     int i, t;
 
     if (siginv < 0.0) {
-	fprintf(stderr, "tobit_ll: got a negative variance\n");
+	fprintf(stderr, "t_loglik: got a negative variance\n");
 	return NADBL;
     } 
 

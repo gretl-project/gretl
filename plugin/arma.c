@@ -606,7 +606,7 @@ static void write_big_theta (const double *theta,
     }
 
     for (i=1; i<=qmax; i++) {
-	gretl_vector_set(H, i, mc[i]);
+	H->val[i] = mc[i];
     }    
 }
 

@@ -2089,6 +2089,64 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
     return 0;
 }
 
+static void print_iter_val (double x, int i, PRN *prn)
+{
+    if (na(x)) {
+	pprintf(prn, "%-12s", "NA");
+    } else {
+	pprintf(prn, "%#12.5g", x);
+    }
+    if (i && i % 5 == 0) {
+	pprintf(prn, "\n%12s", " ");
+    }
+}
+
+/**
+ * print_iter_info:
+ * @iter: iteration number.
+ * @ll: log-likelihood.
+ * @k: number of parameters.
+ * @b: parameter array.
+ * @g: gradient array.
+ * @sl: step length.
+ * @neggrad: = 1 if gradients are in negative form, else 0.
+ * @prn: gretl printing struct.
+ *
+ * Print to @prn information pertaining to step @iter of an 
+ * iterative estimation process.
+ */
+
+void 
+print_iter_info (int iter, double ll, int k, const double *b, const double *g, 
+		 double sl, int neggrad, PRN *prn)
+{
+    double x;
+    int i;
+
+    if (na(ll)) {
+	pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
+    } else {
+	pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, ll);
+    }
+    if (sl > 0.0) {
+	pprintf(prn, _(" (steplength = %.8g)"), sl);
+    }	
+    pputc(prn, '\n');
+	
+    pputs(prn, _("Parameters: "));
+    for (i=0; i<k; i++) {
+	print_iter_val(b[i], i, prn);
+    }
+    pputc(prn, '\n');
+
+    pputs(prn, _("Gradients:  "));
+    for (i=0; i<k; i++) {
+	x = (neggrad && !na(g[i]))? -g[i] : g[i];
+	print_iter_val(x, i, prn);
+    }
+    pputs(prn, "\n\n");
+}
+
 /* apparatus for user-defined printf statements */
 
 #define PRINTF_DEBUG 0

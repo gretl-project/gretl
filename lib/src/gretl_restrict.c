@@ -54,7 +54,9 @@ static int check_R_matrix (const gretl_matrix *R)
     int err = 0;
 
     m = gretl_matrix_alloc(k, k);
-    if (m == NULL) return E_ALLOC;
+    if (m == NULL) {
+	return E_ALLOC;
+    }
 
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
@@ -212,19 +214,16 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     double x;
     int col, i, j;
 
-    R = gretl_matrix_alloc(rset->k, R_n_columns(rset));
+    R = gretl_zero_matrix_new(rset->k, R_n_columns(rset));
     if (R == NULL) {
 	return E_ALLOC;
     }
 
-    q = gretl_column_vector_alloc(rset->k);
+    q = gretl_zero_matrix_new(rset->k, 1);
     if (q == NULL) {
 	gretl_matrix_free(R);
 	return E_ALLOC;
     }
-
-    gretl_matrix_zero(R);
-    gretl_matrix_zero(q);
 
     if (rset->type == GRETL_OBJ_EQN) {
 	pmod = rset->obj;
@@ -1088,9 +1087,9 @@ static int test_restriction_set (gretl_restriction_set *rset,
     gretl_matrix *vcv = NULL;
     gretl_vector *b = NULL;
     gretl_vector *br = NULL;
-    gretl_matrix *Rv = NULL;
+    gretl_matrix *RvR = NULL;
     double test_stat, pval;
-    int err, robust, freeRv = 1;
+    int err, robust, freeRvR = 1;
 
     int asym = ASYMPTOTIC_MODEL(pmod->ci);
 
@@ -1156,24 +1155,29 @@ static int test_restriction_set (gretl_restriction_set *rset,
 #if RDEBUG
 	fprintf(stderr, "R is identity matrix: taking shortcut\n");
 #endif  
-	Rv = vcv;
-	freeRv = 0;
+	RvR = vcv;
+	freeRvR = 0;
     } else {
-	Rv = gretl_matrix_A_X_A(R, GRETL_MOD_NONE, vcv, &err);
-	if (err) goto bailout;
+	RvR = gretl_matrix_alloc(R->rows, R->rows);
+	if (RvR == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+	gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
+			   RvR, GRETL_MOD_NONE);
 #if RDEBUG
-	gretl_matrix_print(Rv, "Rv");
+	gretl_matrix_print(RvR, "RvR");
 #endif  
     }
 
-    err = gretl_invert_symmetric_matrix(Rv);
+    err = gretl_invert_symmetric_matrix(RvR);
     if (err) {
 	pputs(prn, _("Matrix inversion failed:\n"
 		     " restrictions may be inconsistent or redundant\n"));
 	goto bailout;
     }
     
-    test_stat = gretl_scalar_b_X_b(br, GRETL_MOD_TRANSPOSE, Rv, &err);
+    test_stat = gretl_scalar_qform(br, RvR, &err);
     if (err) {
 	pputs(prn, _("Failed to compute test statistic\n"));
 	goto bailout;
@@ -1211,8 +1215,8 @@ static int test_restriction_set (gretl_restriction_set *rset,
     gretl_vector_free(b);
     gretl_vector_free(br);
     
-    if (freeRv) {
-	gretl_matrix_free(Rv);
+    if (freeRvR) {
+	gretl_matrix_free(RvR);
     }
 
     return err;

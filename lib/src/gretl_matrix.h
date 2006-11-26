@@ -351,16 +351,13 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *b, gretl_matrix *vcv,
 			  gretl_vector *uhat, double *s2);
 
-double gretl_scalar_b_X_b (const gretl_vector *b, GretlMatrixMod bmod,
-			   const gretl_matrix *X, int *errp);
-
-gretl_matrix *
-gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
-		    const gretl_matrix *X, int *errp);
-
 int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 			const gretl_matrix *X, gretl_matrix *C, 
 			GretlMatrixMod cmod);
+
+double gretl_scalar_qform (const gretl_vector *b, 
+			   const gretl_matrix *X,
+			   int *errp);
 
 int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,

@@ -3770,7 +3770,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 		gretl_vector_set(xdiff, i, (*pZ)[vi][t] - xbar);
 	    }
 
-	    m = gretl_scalar_b_X_b(xdiff, GRETL_MOD_TRANSPOSE, S, &err);
+	    m = gretl_scalar_qform(xdiff, S, &err);
 
 	    get_obs_string(obs_string, t, pdinfo);
 	    pprintf(prn, "%8s ", obs_string);

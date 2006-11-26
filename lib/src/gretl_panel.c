@@ -1008,7 +1008,7 @@ static int time_dummies_wald_test (panelmod_t *pan, MODEL *wmod)
 	goto bailout;
     }
     
-    x = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, vcv, &err);
+    x = gretl_scalar_qform(b, vcv, &err);
     if (err) {
 	fprintf(stderr, _("Failed to compute test statistic\n"));
 	goto bailout;

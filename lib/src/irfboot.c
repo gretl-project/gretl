@@ -206,33 +206,19 @@ static int irf_boot_init (irfboot *boot, const GRETL_VAR *var,
 	    goto bailout;
 	}
 	boot->E = gretl_matrix_alloc(boot->n, boot->neqns);
-	if (boot->E == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
 	boot->S = gretl_matrix_alloc(boot->neqns, boot->neqns);
-	if (boot->S == NULL) {
+	if (boot->E == NULL || boot->S == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
-	}
+	}	    
     }
 
     boot->rE = gretl_matrix_alloc(boot->n, boot->neqns);
-    if (boot->rE == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     boot->resp = gretl_matrix_alloc(boot->horizon, BOOT_ITERS);
-    if (boot->resp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     boot->sample = malloc(boot->n * sizeof *boot->sample);
-    if (boot->sample == NULL) {
+    if (boot->rE == NULL || boot->resp == NULL || 
+	boot->sample == NULL) {
 	err = E_ALLOC;
-	goto bailout;
     }
 
  bailout:

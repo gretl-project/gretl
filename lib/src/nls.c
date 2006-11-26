@@ -780,35 +780,6 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
     return 0;
 }
 
-static void 
-print_mle_iter_stats (double ll, int nparam, const double *b, const double *g, 
-		      int iter, double sl, PRN *prn)
-{
-    int i;
-
-    if (na(ll)) {
-	pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
-    } else {
-	pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, ll);
-    }
-    if (iter > 1) {
-	pprintf(prn, _(" (steplength = %.8g)"), sl);
-    }	
-    pputc(prn, '\n');
-	
-    pputs(prn, _("Parameters: "));
-    for (i=0; i<nparam; i++) {
-	pprintf(prn, "%#15.8g", b[i]);
-    }
-    pputc(prn, '\n');
-
-    pputs(prn, _("Gradients:  "));
-    for (i=0; i<nparam; i++) {
-	pprintf(prn, "%#15.8g", -g[i]);
-    }
-    pputs(prn, "\n\n");
-}
-
 /* this function is used in the context of the minpack callback, and
    also for checking derivatives in the MLE case
 */
@@ -2901,7 +2872,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     do {
 	if (opt & OPT_V) {
-	    print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
+	    print_iter_info(iter, f, n, b, g, steplen, 1, prn);
 	}
 	if (ilast == gcount) {
 	    /* (re-)start: initialize curvature matrix */
@@ -3053,7 +3024,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     if (opt & OPT_V) {
 	pputs(nprn, _("\n--- FINAL VALUES: \n"));	
-	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
+	print_iter_info(iter, f, n, b, g, steplen, 1, prn);
 	pputs(nprn, "\n\n");	
     }
 

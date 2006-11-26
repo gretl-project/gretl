@@ -546,14 +546,8 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     } else { 
 	/* not transposing */
 	n = rows * cols;
-	for (i=0; i<n; i++) {
-	    c->val[i] = m->val[i];
-	}
+	memcpy(c->val, m->val, n * sizeof *m->val);
     }
-
-#if 0
-    c->t = m->t;
-#endif
 
     return c;
 }
@@ -638,7 +632,7 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
     
     if (m == NULL || m->rows != m->cols) {
 	*err = E_NONCONF;
-	return d;
+	return NULL;
     }
 
     d = gretl_column_vector_alloc(m->rows);
@@ -4153,7 +4147,6 @@ static gretl_matrix *find_base (gretl_matrix *M)
 
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 {
-    gretl_matrix *A = NULL;
     gretl_matrix *B = NULL;
     gretl_matrix *C = NULL;
     gretl_matrix *R = NULL;
@@ -4162,11 +4155,10 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
     double x;
     int i, j, err = 0;
 
-    A = gretl_matrix_alloc(n, m);
     B = gretl_matrix_alloc(m, m);
     C = gretl_matrix_alloc(n, n);
 
-    if (A == NULL || B == NULL || C == NULL) {
+    if (B == NULL || C == NULL) {
 	err = 1;
     }
 
@@ -4183,27 +4175,22 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
     }
 
     if (!err) {
-	/* A = M'(MM')^{-1} */
-	err = gretl_matrix_multiply_mod(M, GRETL_MOD_TRANSPOSE,
-					B, GRETL_MOD_NONE,
-					A, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
 	/* C = M'(MM')^{-1}M */
-	err = gretl_matrix_multiply(A, M, C);
-    } 
+	gretl_matrix_qform(M, GRETL_MOD_TRANSPOSE, B,
+			   C, GRETL_MOD_NONE);
+    }
 
     if (!err) {
 	/* make C = I - M'(MM')^{-1}M */
 	for (i=0; i<n; i++) {
-	    for (j=0; j<n; j++) {
+	    for (j=0; j<=i; j++) {
 		if (i == j) {
 		    x = 1.0 - C->val[mdx(C, i, j)];
 		} else {
 		    x = - C->val[mdx(C, i, j)];
 		}
 		C->val[mdx(C, i, j)] = x;
+		C->val[mdx(C, j, i)] = x;
 	    }
 	}
     }
@@ -4213,7 +4200,6 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 	R = find_base(C);
     }
 
-    gretl_matrix_free(A);
     gretl_matrix_free(B);
     gretl_matrix_free(C);
     
@@ -4240,8 +4226,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 			 int *err)
 {
     gretl_matrix *c = NULL;
-    double x;
-    int i, j, k, n;
+    size_t asize, bsize;
 
     if (a == NULL || b == NULL) {
 	*err = 1;
@@ -4253,24 +4238,17 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	return NULL;
     }
 
-    n = a->cols + b->cols;
-    c = gretl_matrix_alloc(a->rows, n);
+    c = gretl_matrix_alloc(a->rows, a->cols + b->cols);
     if (c == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (i=0; i<a->rows; i++) {
-	for (j=0; j<a->cols; j++) {
-	    x = a->val[mdx(a, i, j)];
-	    c->val[mdx(c, i, j)] = x;
-	}
-	for (j=0; j<b->cols; j++) {
-	    x = b->val[mdx(b, i, j)];
-	    k = a->cols + j;
-	    c->val[mdx(c, i, k)] = x;
-	}
-    }
+    asize = a->rows * a->cols * sizeof *a->val;
+    bsize = b->rows * b->cols * sizeof *b->val;
+
+    memcpy(c->val, a->val, asize);
+    memcpy(c->val + asize, b->val, bsize);
 
     return c;
 }
@@ -4935,147 +4913,6 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 }
 
 /**
- * gretl_scalar_b_X_b:
- * @b: k-vector.
- * @bmod: either %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
- * @X: k x k matrix.
- * @errp: pointer to receive error code, or %NULL.
- *
- * If @bmod = %GRETL_MOD_NONE, computes the scalar product
- * b * X * b'; if @bmod = %GRETL_MOD_TRANSPOSE, computes
- * the scalar product b' * X * b.
- * If @errp is not %NULL its content is set to 0 on success, non-zero
- * on failure.
- * 
- * Returns: the scalar product, or #NADBL on failure.
- */
-
-double gretl_scalar_b_X_b (const gretl_vector *b, 
-			   GretlMatrixMod bmod,
-			   const gretl_matrix *X,
-			   int *errp)
-{
-    gretl_matrix *tmp = NULL;
-    double ret = NADBL;
-    int tmpdim = (bmod == GRETL_MOD_TRANSPOSE)?
-	b->rows : b->cols;
-    int chk = (bmod == GRETL_MOD_TRANSPOSE)? 
-	b->cols : b->rows;
-    int err = 0;
-
-    if (X->rows != X->cols || tmpdim != X->rows || chk != 1) {
-	err = E_NONCONF;
-    }
-
-    if (!err) {
-	tmp = gretl_matrix_alloc(1, tmpdim);
-	if (tmp == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(b, bmod,
-					X, GRETL_MOD_NONE,
-					tmp, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	GretlMatrixMod rmod = (bmod == GRETL_MOD_TRANSPOSE)?
-	    GRETL_MOD_NONE : GRETL_MOD_TRANSPOSE;
-
-	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
-				       b, rmod, &err);
-    }
-
-    gretl_matrix_free(tmp);
-
-    if (err) {
-	ret = NADBL;
-    }
-
-    if (errp != NULL) {
-	*errp = err;
-    }
-
-    return ret;
-}
-
-#define mod_complement(m) ((m)? GRETL_MOD_NONE : GRETL_MOD_TRANSPOSE)
-
-/**
- * gretl_matrix_A_X_A:
- * @A: m * k matrix or k * m matrix, depending on @amod.
- * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
- * case @A should be m * k; in the second, k * m;
- * @X: k * k matrix.
- * @errp: pointer to receive error code, or %NULL.
- *
- * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
- * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE).
- * If @errp is not %NULL its content is set to 0 on success, non-zero
- * on failure.
- * 
- * Returns: allocated m * m matrix product, or %NULL on error.
- */
-
-gretl_matrix *
-gretl_matrix_A_X_A (const gretl_matrix *A, GretlMatrixMod amod,
-		    const gretl_matrix *X, int *errp)
-{
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *ret = NULL;
-    int m = (amod)? A->cols : A->rows;
-    int k = (amod)? A->rows : A->cols;
-    int err = 0;
-
-    if (errp != NULL) {
-	*errp = 0;
-    }
-
-    if (X->rows != k || X->cols != k) {
-	if (errp != NULL) {
-	    *errp = E_NONCONF;
-	}
-	return NULL;
-    }
-
-    tmp = gretl_matrix_alloc(m, k);
-    ret = gretl_matrix_alloc(m, m);
-
-    if (tmp == NULL || ret == NULL) {
-	gretl_matrix_free(tmp);
-	gretl_matrix_free(ret);
-	if (errp != NULL) {
-	    *errp = E_ALLOC;
-	}
-	return NULL;
-    }
-
-    err = gretl_matrix_multiply_mod(A, amod,
-				    X, GRETL_MOD_NONE,
-				    tmp, GRETL_MOD_NONE);
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
-					A, mod_complement(amod),
-					ret, GRETL_MOD_NONE);
-    }
-
-    gretl_matrix_free(tmp);
-
-    if (err) {
-	gretl_matrix_free(ret);
-	ret = NULL;
-	if (errp != NULL) {
-	    *errp = err;
-	}
-    }
-
-    return ret;
-}
-
-/**
  * gretl_matrix_qform:
  * @A: m * k matrix or k * m matrix, depending on @amod.
  * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first
@@ -5139,6 +4976,48 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     }
 
     return 0;
+}
+
+/**
+ * gretl_scalar_qform:
+ * @b: k-vector.
+ * @X: symmetric k x k matrix.
+ * @errp: pointer to receive error code.
+ *
+ * Computes the scalar product bXb', or b'Xb if @b is a column
+ * vector.  The content of @errp is set to 0 on success,
+ * or a non-zero code on failure.
+ * 
+ * Returns: the scalar product, or #NADBL on failure.
+ */
+
+double gretl_scalar_qform (const gretl_vector *b, 
+			   const gretl_matrix *X,
+			   int *errp)
+{
+    gretl_matrix *tmp = NULL;
+    double ret = NADBL;
+    int mod, k = gretl_vector_get_length(b);
+
+    if (k == 0 || X->rows != k || X->cols != k) {
+	*errp = E_NONCONF;
+	return NADBL;
+    } 
+
+    mod = (b->rows > 1)? GRETL_MOD_TRANSPOSE : GRETL_MOD_NONE;
+
+    tmp = gretl_matrix_alloc(1, 1);
+    if (tmp == NULL) {
+	*errp = E_ALLOC;
+    } else {
+	*errp = gretl_matrix_qform(b, mod, X, tmp, GRETL_MOD_NONE);
+	if (!*errp) {
+	    ret = tmp->val[0];
+	}
+	gretl_matrix_free(tmp);
+    }
+
+    return ret;
 }
 
 /**
