@@ -37,9 +37,6 @@
    <gentext key="equation" text="Equazione"/>
    <gentext key="Example" text="Esempio"/>
    <gentext key="example" text="Esempio"/>
-   <gentext key="examples" text="Esempi"/>
-   <gentext key="script" text="Comandi"/>
-   <gentext key="scripts" text="Comandi"/>
    <gentext key="Figure" text="Figura"/>
    <gentext key="figure" text="Figura"/>
    <gentext key="GlossSee" text="Vedi"/>
