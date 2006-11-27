@@ -1,6 +1,7 @@
 # Replicate James Hamilton's analysis of the relationship
 # between the US and Italian price levels and the Dollar
-# to Lira exchange rate (Time Series Analysis, ch. 20)
+# to Lira exchange rate ("Time Series Analysis", Princeton
+# 1994, ch. 20)
 
 open hamilton.gdt
 
@@ -15,6 +16,9 @@ genr pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
 
 # Set the sample period used by Hamilton
 smpl 1974:2 ;
+
+# Determine cointegration rank
+coint2 12 p s pf
 
 # Estimate VECM: lag order 12, cointegration rank 1
 Hamilton <- vecm 12 1 p s pf

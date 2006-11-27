@@ -1,4 +1,9 @@
-# Bollerslev and Ghysels GARCH example
+# Replicate GARCH model from T. Bollerslev and E. Ghysels, 
+# "Periodic Autoregressive Conditional Heteroscedasticity", 
+# Journal of Business and Economic Statistics, 14 (1996), 
+# pp. 139-151.  'Y' is the daily nominal return on the
+# Deutschemark/Sterling exchange rate.
+
 open b-g.gdt
 garch 1 1 ; Y --vcv
 

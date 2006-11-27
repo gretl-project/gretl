@@ -622,8 +622,10 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     build_path(scriptfile, coll->path, fname, ".inp");
     g_free(fname);
 
+#if 0
     /* close the calling window (?) */
     gtk_widget_destroy(GTK_WIDGET(vwin->w));
+#endif
 
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
     set_scriptpage(coll->title);

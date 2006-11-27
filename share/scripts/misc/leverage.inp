@@ -1,3 +1,15 @@
+# Illustration of the analysis of influential observations
+# and "leverage".  The example comes from Davidson and 
+# MacKinnon's "Estimation and Inference in Econometrics"
+# (Oxford, 1993), Chapter 1.
+
 open leverage.gdt
-ols 1 0 3
+
+# OLS using "correct" x data
+ols y 0 x1
+leverage
+
+# using data with an erroneous value for x at 
+# observation 7 (otherwise x2 is identical to x1)
+ols y 0 x2
 leverage

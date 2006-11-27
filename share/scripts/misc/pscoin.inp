@@ -1,8 +1,0 @@
-open hamilton.gdt
-genr p = 100*(log(PZUNEW)-log(PZUNEW[1973:01]))
-genr pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
-genr s = -100*(log(EXRITL)-log(EXRITL[1973:01]))
-# The sample period used by Hamilton
-smpl 1974:2 ;
-coint2 12 p s pf
-

@@ -1,9 +1,19 @@
+# Replication of illustrative system of equations from
+# J. Kmenta, "Elements of Econometrics", 2e, (University
+# of Michigan Press, 1986).  
+#
+# The two endogenous variables were artificially generated 
+# by Kmenta.  The other variables are taken from a study by 
+# Girschik and Haavelmo (Econometrica, 1947)
+
 open kmenta.gdt
+
 system name=Kmenta
-equation Q 0 P D
-equation Q 0 P F A
-endog Q P
+  equation Q 0 P D
+  equation Q 0 P F A
+  endog Q P
 end system
+
 estimate Kmenta method=ols
 estimate Kmenta method=tsls
 estimate Kmenta method=liml

@@ -1,3 +1,8 @@
+# Replication of some of the results on Danish macro
+# data in S. Johansen, "Likelihood-Based Inference in
+# Cointegrated Vector Auto-Regressive Models" (Oxford,
+# 1995), chapter 7.
+
 open denmark.gdt
 
 # determination of the cointegration rank
