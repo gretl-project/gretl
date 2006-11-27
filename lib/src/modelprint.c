@@ -1647,8 +1647,12 @@ static void print_middle_table_end (PRN *prn)
     }
 }
 
-static void r_squared_message (PRN *prn)
+static void r_squared_message (const MODEL *pmod, PRN *prn)
 {
+    if (na(pmod->rsq)) {
+	return;
+    }
+
     pprintf(prn, "%s.\n\n",    
 	    _("R-squared is computed as the square of the correlation "
 	      "between observed and\nfitted values of the dependent variable"));
@@ -2041,7 +2045,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
 
 	if (pmod->ci == TSLS && plain_format(prn)) {
-	    r_squared_message(prn);
+	    r_squared_message(pmod, prn);
 	}
     }
 

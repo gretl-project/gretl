@@ -1390,6 +1390,8 @@ int do_add_omit (selector *sr)
     const char *buf = selector_list(sr);
     PRN *prn;
     char title[48];
+    char *optstr = "";
+    gretlopt opt = OPT_S;
     MODEL *orig, *pmod;
     gint err;
 
@@ -1399,10 +1401,15 @@ int do_add_omit (selector *sr)
 
     orig = vwin->data;
 
+    if (orig->ci == TSLS) {
+	optstr = "--both";
+	opt |= OPT_B;
+    }
+
     if (selector_code(sr) == ADD) {
-        gretl_command_sprintf("addto %d %s", orig->ID, buf);
+        gretl_command_sprintf("addto %d %s%s", orig->ID, buf, optstr);
     } else {
-        gretl_command_sprintf("omitfrom %d %s", orig->ID, buf);
+        gretl_command_sprintf("omitfrom %d %s%s", orig->ID, buf, optstr);
     }
 
     if (check_lib_command() || bufopen(&prn)) {
@@ -1417,9 +1424,9 @@ int do_add_omit (selector *sr)
     }
 
     if (selector_code(sr) == ADD) { 
-        err = add_test(libcmd.list, orig, pmod, &Z, datainfo, OPT_S, prn);
+        err = add_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
     } else {
-        err = omit_test(libcmd.list, orig, pmod, &Z, datainfo, OPT_S, prn);
+        err = omit_test(libcmd.list, orig, pmod, &Z, datainfo, opt, prn);
     }
 
     if (err) {

@@ -429,6 +429,11 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	return 0;
     }
 
+    if (tsls_model->list[0] == 2 && tsls_model->list[2] == 0) {
+	/* degenerate model with const only */
+	return 0;
+    }
+
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
 	return err;

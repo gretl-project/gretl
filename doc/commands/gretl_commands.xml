@@ -132,6 +132,14 @@
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for augmented model</effect>
 	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>add as instrument, TSLS only</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>add as both regressor and instrument, TSLS only</effect>
+	</option>
       </options>
       <examples>
         <example>addto 2 5 7 9</example>
@@ -5059,8 +5067,20 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--wald</flag>
+	  <effect>do a Wald test rather than an F-test</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't print estimates for reduced model</effect>
+	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>omit as instrument, TSLS only</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>omit as both regressor and instrument, TSLS only</effect>
 	</option>
       </options>
       <examples>
