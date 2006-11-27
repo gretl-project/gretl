@@ -1,29 +1,32 @@
-open armaloop.gdt
+# Estimation of an ARMA(1,1) model "manually", using a
+# loop construct.
 
-genr c = 0
-genr a = 0.1
-genr m = 0.1
+open arma.gdt
+
+scalar c = 0
+scalar a = 0.1
+scalar m = 0.1
 
 series e = 0.0
-genr de_c = e
-genr de_a = e
-genr de_m = e
+series de_c = e
+series de_a = e
+series de_m = e
 
-genr crit = 1
+scalar crit = 1
 
 loop while crit > 1.0e-9
 
    # one-step forecast errors
-   genr e = y - c - a*y(-1) - m*e(-1)  
+   e = y - c - a*y(-1) - m*e(-1)  
 
    # log-likelihood 
-   genr loglik = -0.5 * sum(e^2)
+   scalar loglik = -0.5 * sum(e^2)
    print loglik
 
    # partials of e wrt c, a, and m
-   genr de_c = -1 - m * de_c(-1) 
-   genr de_a = -y(-1) -m * de_a(-1)
-   genr de_m = -e(-1) -m * de_m(-1)
+   de_c = -1 - m * de_c(-1) 
+   de_a = -y(-1) -m * de_a(-1)
+   de_m = -e(-1) -m * de_m(-1)
    
    # partials of l wrt c, a and m
    genr sc_c = -de_c * e
@@ -34,28 +37,31 @@ loop while crit > 1.0e-9
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
    # Update the parameters
-   genr dc = $coeff(sc_c) 
-   genr c = c + dc
-   genr da = $coeff(sc_a) 
-   genr a = a + da
-   genr dm = $coeff(sc_m) 
-   genr m = m + dm
+   dc = $coeff(sc_c) 
+   c += dc
+   da = $coeff(sc_a) 
+   a += da
+   dm = $coeff(sc_m) 
+   m += dm
 
    printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
    printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
    printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
 
-   genr crit = $T - $ess
+   crit = $T - $ess
    print crit
 endloop
 
-genr se_c = $stderr(sc_c)
-genr se_a = $stderr(sc_a)
-genr se_m = $stderr(sc_m)
+scalar se_c = $stderr(sc_c)
+scalar se_a = $stderr(sc_a)
+scalar se_m = $stderr(sc_m)
 
 set echo off
 print "
 printf "constant        = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+
+# compare with the built-in arma command (conditional ML)
+arima 1 0 1 ; y --conditional
 
