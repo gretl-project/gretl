@@ -1,21 +1,28 @@
-# Reproduce the illustrative VAR in Stock and Watson,
-# Introduction to Econometrics, chapter 14
-# (Note that S and W use "robust" standard errors throughout)
+# Reproduce the illustrative VAR and GARCH in Stock and Watson,
+# "Introduction to Econometrics", chapter 14
 open sw_ch14.gdt
+
+# set the robust std errors variant used by S and W
+set force_hc on
+set hc_version 1
+
 genr infl = 400 * log(PUNEW/PUNEW(-1))
 diff infl 
 lags d_infl LHUR
 smpl 1962:1 1999:4
-# run "automatic" VAR
-var 4 d_infl LHUR const
+
+# run "automatic" VAR, (see equations 14.5 and 14.6)
+var 4 d_infl LHUR const -r
+
 # for comparison, try one equation manually
-ols LHUR const d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
-LHUR_1 LHUR_2 LHUR_3 LHUR_4
+ols LHUR const d_infl(-1 to -4) LHUR(-1 to -4) -r
+
 # Test for Granger causality of unemployment by inflation
-omit d_infl_1 d_infl_2 d_infl_3 d_infl_4
+omit d_infl(-1 to -4) --quiet
+
 # GARCH model
-garch 1 1 ; d_infl const d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
- LHUR_1 LHUR_2 LHUR_3 LHUR_4 --robust
+garch 1 1 ; d_infl const d_infl(-1 to -4) LHUR(-1 to -4) -r --vcv
+
 
 
 

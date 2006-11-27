@@ -68,6 +68,8 @@ enum {
     STACK_POP_PS,
     STACK_RESET_DATA,
     STACK_RESET_PS,
+    STACK_SORT_DATA,
+    STACK_SORT_PS,
     STACK_DESTROY
 };
 
@@ -270,6 +272,33 @@ static file_collection *file_collection_new (const char *path,
     return coll;
 }
 
+static int compare_colls (const void *a, const void *b)
+{
+    const file_collection *ca = *(const file_collection **) a;
+    const file_collection *cb = *(const file_collection **) b;
+     
+    return strcmp(ca->title, cb->title);
+}
+
+static void collection_stack_sort (file_collection **colls, int n)
+{
+    file_collection *tmp;
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(colls[i]->title, "Gretl")) {
+	    if (i > 0) {
+		tmp = colls[0];
+		colls[0] = colls[i];
+		colls[i] = tmp;
+	    }
+	    break;
+	}
+    }
+
+    qsort(colls + 1, n - 1, sizeof *colls, compare_colls);
+}
+
 static file_collection *collection_stack (file_collection *coll, int op)
 {
     static file_collection **datacoll;
@@ -303,8 +332,11 @@ static file_collection *collection_stack (file_collection *coll, int op)
 	n_data_popped = 0;
     } else if (op == STACK_RESET_PS) {
 	n_ps_popped = 0;
+    } else if (op == STACK_SORT_DATA) {
+	collection_stack_sort(datacoll, n_data);
+    } else if (op == STACK_SORT_PS) {
+	collection_stack_sort(pscoll, n_ps);
     } else if (op == STACK_DESTROY) {
-
         for (j=0; j<n_data; j++) {
 	    free_file_collection(datacoll[j]);
 	}
@@ -355,7 +387,17 @@ static void reset_ps_stack (void)
     collection_stack(NULL, STACK_RESET_PS);
 }
 
-static int test_dir_for_file_collections (const char *dname, DIR *dir)
+static void sort_data_stack (void)
+{
+    collection_stack(NULL, STACK_SORT_DATA);
+}
+
+static void sort_ps_stack (void)
+{
+    collection_stack(NULL, STACK_SORT_PS);
+}
+
+static int get_file_collections_from_dir (const char *dname, DIR *dir)
 {
     file_collection *coll;
     struct dirent *dirent;
@@ -421,7 +463,7 @@ static int seek_file_collections (const char *topdir)
 #ifdef COLL_DEBUG
 		fprintf(stderr, " trying in subdir '%s'\n", subdir);
 #endif
-		err = test_dir_for_file_collections(subdir, try);
+		err = get_file_collections_from_dir(subdir, try);
 #ifdef COLL_DEBUG
 		fprintf(stderr, " result: err = %d\n", err);
 #endif
@@ -483,6 +525,10 @@ static int build_file_collections (void)
 	}
 	if (!err) {
 	    err = seek_file_collections(paths.userdir);
+	}
+	if (!err) {
+	    sort_data_stack();
+	    sort_ps_stack();
 	}
 	built = 1;
     }
