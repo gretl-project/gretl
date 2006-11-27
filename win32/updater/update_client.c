@@ -12,10 +12,6 @@
 # include <winsock.h>
 #endif
 
-#ifdef USE_GTK
-# include <gtk/gtk.h>
-#endif
-
 #include "updater.h"
 #include "webget.h"
 
@@ -38,14 +34,12 @@ static time_t filedate;
 static int argcount;
 static int prog_opt;
 
-#ifdef USE_GTK
-static GtkWidget *mainwin;
-static GtkWidget *mainlabel;
-static char infobuf[256];
-static void put_text_on_window (void);
-#else
-# define GTK_RESPONSE_ACCEPT IDYES
-# define GTK_RESPONSE_NO     IDNO
+#ifndef WIN32
+# define IDYES 1
+#endif
+
+#ifndef TRUE
+# define TRUE 1
 #endif
 
 static void getout (int err)
@@ -130,29 +124,17 @@ static int create_child_process (char *prog)
 
 static int yes_no_dialog (const char *msg)
 {
-    int ret;
-
-    ret = MessageBox(NULL, msg, "gretl updater", 
-		     MB_YESNO | MB_ICONQUESTION);
-
-    if (ret == IDYES) {
-	return GTK_RESPONSE_ACCEPT;
-    } else {
-	return GTK_RESPONSE_NO;
-    }
+    return MessageBox(NULL, msg, "gretl updater", 
+		      MB_YESNO | MB_ICONQUESTION);
 }
 
 static int msgbox (const char *msg, int err)
 {
-    int ret;
-
     if (err) {
-        ret = MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONERROR);
+        return MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONERROR);
     } else {
-        ret = MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONINFORMATION);
+        return MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONINFORMATION);
     }
-
-    return ret;
 }
 
 static void ws_cleanup (void)
@@ -178,7 +160,9 @@ static int ws_startup (void)
         WSACleanup();
         return 1;
     }
+
     atexit(ws_cleanup);
+
     return 0;
 }
 
@@ -211,59 +195,27 @@ static int check_for_gretl (void)
     return gretl_run_status;
 }
 
-#else /* ! WIN32 */
+#else
 
-gint yes_no_dialog (char *msg)
+static int yes_no_dialog (const char *msg)
 {
-    GtkWidget *dialog, *label, *hbox;
-    int ret;
+    printf("%s\n", msg);
 
-    dialog = gtk_dialog_new_with_buttons ("gretl updater",
-					  NULL,
-					  GTK_DIALOG_MODAL | 
-					  GTK_DIALOG_DESTROY_WITH_PARENT,
-					  GTK_STOCK_YES,
-					  GTK_RESPONSE_ACCEPT,
-					  GTK_STOCK_NO,
-					  GTK_RESPONSE_NO,
-					  NULL);
-    
-    label = gtk_label_new (msg);
-    gtk_widget_show(label);
-    hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 10);
-    gtk_widget_show(hbox);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
-		       hbox, FALSE, FALSE, 10);
-
-    ret = gtk_dialog_run(GTK_DIALOG(dialog));
-					  
-    gtk_widget_destroy(dialog);
-
-    switch (ret) {
-    case GTK_RESPONSE_ACCEPT: 
-	return ret;
-    default: 
-	return GTK_RESPONSE_NO;
-    }
+    return 0;
 }
 
 static int msgbox (const char *msg, int err)
 {
-    GtkWidget *dialog;
+    if (err) {
+	printf("Error: %s\n", msg);
+    } else {
+	printf("Info: %s\n", msg);
+    }
 
-    dialog = gtk_message_dialog_new (NULL, 
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
-				     GTK_BUTTONS_CLOSE,
-				     msg);
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
-    
     return 0;
 }
 
-#endif /* WIN32 vs ! WIN32 */
+#endif
 
 static char *get_size_string (size_t fsize)
 {
@@ -279,15 +231,6 @@ static char *get_size_string (size_t fsize)
 
     return sizestr;
 }
-
-#ifdef USE_GTK
-
-static void put_text_on_window (void)
-{
-    gtk_label_set_text(GTK_LABEL(mainlabel), infobuf);
-}
-
-#endif
 
 int errbox (const char *msg) 
 {
@@ -403,11 +346,6 @@ static int real_program (void)
     if (argcount == 1) {
 	/* no arguments: a default update */
 
-#ifdef USE_GTK
-	strcpy(infobuf, "Looking for gretl updates...");
-	put_text_on_window();
-#endif
-
 	if (logit) {
 	    fputs("doing default update (argcount = 1)\n", flg);
 	}
@@ -427,7 +365,9 @@ static int real_program (void)
 	   getout(1);
 	}
 
-	if (logit) fputs("call to files_query: success\n", flg);
+	if (logit) {
+	    fputs("call to files_query: success\n", flg);
+	}
 
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
@@ -455,15 +395,9 @@ static int real_program (void)
 		sprintf(query, "An update file is available%s.\n"
 			"Get it now?", get_size_string(fsize));
 		resp = yes_no_dialog(query);
-		if (resp != GTK_RESPONSE_ACCEPT) break;
+		if (resp != IDYES) break;
 	    }
 
-#ifdef USE_GTK
-	    sprintf(infobuf, "Downloading %s", get_fname);
-	    put_text_on_window();    
-	    while (gtk_events_pending()) gtk_main_iteration();
-#endif
-	    
 	    if (logit) {
 		fprintf(flg, "trying to get '%s'\n", get_fname);
 	    }
@@ -528,7 +462,7 @@ static int real_program (void)
 	int resp;
 
 	resp = yes_no_dialog("gretl update succeeded.\r\nStart gretl now?");
-	if (resp == GTK_RESPONSE_ACCEPT) {
+	if (resp == IDYES) {
 	    create_child_process("gretlw32.exe");
 	}
     }
@@ -540,70 +474,10 @@ static int real_program (void)
 
     getout(err);
 
-#ifdef USE_GTK
-    gtk_main_quit();
-#endif
-
     return TRUE;
 }
 
-#ifdef USE_GTK
-
-static gint cancel_callback (void)
-{
-    gtk_main_quit();
-    return FALSE;
-}
-
-static void create_main_gtk_window (int warn)
-{
-    GtkWidget *main_vbox;
-    GtkWidget *buttonbox;
-    GtkWidget *tmp;
-    int mainwin_width = 300;
-    int mainwin_height = 100;
-
-    mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(mainwin), "gretl updater");
-    gtk_window_set_default_size(GTK_WINDOW(mainwin), 
-				mainwin_width, mainwin_height);
-    
-    main_vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
-    gtk_container_add(GTK_CONTAINER(mainwin), main_vbox);
-
-    if (warn) {
-	mainlabel = gtk_label_new("If gretl is running, please close it "
-				  "down before running the updater.\n\n"
-				  "Press OK to proceed or Cancel to quit");
-    } else {
-	mainlabel = gtk_label_new("Press OK to proceed or Cancel to quit");
-    }
-	
-    gtk_box_pack_start(GTK_BOX(main_vbox), mainlabel, TRUE, TRUE, 0);
-
-    buttonbox = gtk_hbox_new(TRUE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(buttonbox), 8);
-    gtk_box_pack_start(GTK_BOX(main_vbox), buttonbox, FALSE, FALSE, 0);
-
-    /* Create an "OK" button */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(buttonbox), tmp);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(real_program), NULL);
-    gtk_widget_grab_default (tmp);
-
-    /* Create a "Cancel" button */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_container_add(GTK_CONTAINER(buttonbox), tmp);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(cancel_callback), NULL);
-    
-    gtk_widget_show_all(mainwin);
-}
-
-#else 
+#ifdef WIN32 
 
 static void win32_start (int warn)
 {
@@ -625,19 +499,14 @@ static void win32_start (int warn)
     }
 }
 
+#endif
+
 int show_progress (long res, long expected, int flag)
 {
     return 0;
 }
 
-#endif
-
-#ifdef WIN32
 int main (int argc, char *argv[])
-#else
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, 
-		    LPSTR CmdLine, int Show)
-#endif
 {
     const char *testfile = "gretl.stamp";
     int warn = 1;
@@ -720,11 +589,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	getout(1);
     } 
 
-#ifdef USE_GTK
-    gtk_init(&argc, &argv);
-    create_main_gtk_window(warn);
-    gtk_main();
-#else
+#ifdef WIN32
     win32_start(warn);
 #endif
 

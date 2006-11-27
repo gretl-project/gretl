@@ -1151,7 +1151,7 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
 	    }
 	}
 	if (!match) {
-	    /* is this var already accounted for? */
+	    /* but is this var already accounted for? */
 	    for (j=1; j<=targ[0]; j++) {
 		if (targ[j] == bi) {
 		    match = 1;

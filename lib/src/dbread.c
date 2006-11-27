@@ -86,7 +86,7 @@ static int db_type;
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
 			    CompactMethod method, int dbv,
-			    int *newdata);
+			    int *newdata, PRN *prn);
 
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
@@ -1245,7 +1245,7 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
     if (fp == NULL) {
 	*db_name = 0;
 	pprintf(prn, _("Couldn't open %s\n"), fname);
-	err = 1;
+	err = E_FOPEN;
     } else {
 	fclose(fp);
 	db_type = filetype;
@@ -1469,7 +1469,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	if (!err) {
 	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v,
-				  &newdata);
+				  &newdata, prn);
 	}
 
 	/* free up temp stuff */
@@ -1554,7 +1554,7 @@ void init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
 			    CompactMethod method, int dbv,
-			    int *newdata)
+			    int *newdata, PRN *prn)
 {
     double *xvec = NULL;
     int pad1 = 0, pad2 = 0;
@@ -1604,12 +1604,10 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    return 1;
 	}
 	if (method == COMPACT_NONE) {
-	    sprintf(gretl_errmsg, _("%s: you must specify a compaction method"), 
+	    method = COMPACT_AVG;
+	    pprintf(prn, _("%s: using default compaction method: averaging"), 
 		    sinfo->varname);
-	    if (new) {
-		dataset_drop_last_variables(1, pZ, pdinfo);
-	    }
-	    return 1;
+	    pputc(prn, '\n');
 	}
 	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
 	if (xvec == NULL) {

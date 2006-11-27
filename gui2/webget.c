@@ -1023,6 +1023,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	status = header_get(&rbuf, &hdr,
 			    /* Disallow continuations for status line */
 			    (hcount == 1 ? HG_NO_CONTINUATIONS : HG_NONE));
+
 	/* Check for errors */
 	if (status == HG_EOF && *hdr) {
 #if WDEBUG
@@ -1050,14 +1051,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	if (hcount == 1) {
 	    const char *error;
 
-	    /* Parse the first line of server response */
 	    statcode = parse_http_status_line (hdr, &error);
 	    hs->statcode = statcode;
-	    /* Store the descriptive response */
-	    if (statcode == -1) { /* malformed response */
-		/* A common reason for "malformed response" error is the
-		   case when no data was actually received.  Handle this
-		   special case. */
+	    if (statcode == -1) { 
 		if (!*hdr) {
 		    hs->error = g_strdup(_("No data received"));
 		} else {
@@ -1154,11 +1150,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     /* Return if redirected */
     if (H_REDIRECTED (statcode) || statcode == HTTP_STATUS_MULTIPLE_CHOICES) {
-	/* RFC2068 says that in case of the 300 (multiple choices)
-	   response, the server can output a preferred URL through
-	   `Location' header; otherwise, the request should be treated
-	   like GET.  So, if the location is set, it will be a
-	   redirection; otherwise, just proceed normally.  */
 	if (statcode == HTTP_STATUS_MULTIPLE_CHOICES && !hs->newloc) {
 	    *dt |= RETROKF;
 	} else {
@@ -1205,14 +1196,13 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
 static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 {
-    struct http_stat hstat; /* HTTP status */
+    struct http_stat hstat;
     int count = 0;
     char *tms;
     uerr_t err;
 
     *dt = 0 | ACCEPTRANGES;
 
-    /* main loop */
     do {
 	++count;
 	tms = time_str(NULL);
@@ -1220,9 +1210,8 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	*dt &= ~HEAD_ONLY;
 	*dt &= ~SEND_NOCACHE;
 
-	/* Try fetching the document, or at least its head :-) */
+	/* Try fetching the document */
 	err = gethttp(u, &hstat, dt, proxy);
-	/* Time? */
 	tms = time_str(NULL);
 
 #if WDEBUG
@@ -1280,7 +1269,6 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 /* other utility functions from Wget */
 
-
 /* Flush RBUF's buffer to WHERE.  Flush MAXSIZE bytes at most.
    Returns the number of bytes actually copied.  If the buffer is
    empty, 0 is returned.  */
@@ -1317,9 +1305,6 @@ static void url_init (struct urlinfo *u)
     u->fp = NULL;
 }
 
-/* Allocate a new urlinfo structure, fill it with default values and
-   return a pointer to it.  */
-
 static struct urlinfo *newurl (void)
 {
     struct urlinfo *u;
@@ -1332,10 +1317,8 @@ static struct urlinfo *newurl (void)
     return u;
 }
 
-/* Perform a "deep" free of the urlinfo structure.  The structure
-   should have been created with newurl, but need not have been used.
-   If defile is non-zero and there's a local file open, delete
-   that file.
+/* Perform a "deep" free of the urlinfo structure.  If defile is
+   non-zero and there's a local file open, delete that file.
 */
 
 static void freeurl (struct urlinfo *u, int delfile)

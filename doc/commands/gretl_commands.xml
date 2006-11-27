@@ -802,6 +802,7 @@
       </arguments>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
+	<demo>restrict.inp</demo>
       </examples>
     </usage>
 

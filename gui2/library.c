@@ -1402,6 +1402,7 @@ int do_add_omit (selector *sr)
     orig = vwin->data;
 
     if (orig->ci == TSLS) {
+	/* this is a bit of a fudge */
 	optstr = "--both";
 	opt |= OPT_B;
     }
@@ -6144,6 +6145,14 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    err = maybe_save_graph(cmd, boxplottmp,
 				   GRETL_OBJ_PLOT, prn);
 	}
+	break;
+
+    case DATA:
+	err = db_get_series(line, pZ, pdinfo, prn);
+        if (!err) { 
+	    register_data(NULL, NULL, 0);
+            varlist(pdinfo, prn);
+        }
 	break;
 
     case DELEET:
