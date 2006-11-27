@@ -13,5 +13,6 @@
  <gentext   key="otheraccess" text="Accesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando script: "/>
  <gentext key="or" text=" o "/>
-
+ <gentext key="Seealso" text="Vd. anche"/>
+ 
 </localization>

@@ -163,6 +163,14 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="demo">
+  <xsl:text>&#xa;            </xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'Seealso'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="altforms">
   <xsl:call-template name="nl"/>
   <xsl:call-template name="gettext">
@@ -178,13 +186,6 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="script">
-  <xsl:if test="position() > 1">
-    <xsl:text> </xsl:text>
-  </xsl:if> 
-  <xsl:apply-templates/>
-</xsl:template>
-
 <xsl:template match="examples">
   <xsl:call-template name="nl"/>
   <xsl:choose>
@@ -196,23 +197,6 @@
     <xsl:otherwise>
       <xsl:call-template name="gettext">
         <xsl:with-param name="key" select="'example'"/>
-      </xsl:call-template>
-    </xsl:otherwise> 
-  </xsl:choose>
-  <xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="scripts">
-  <xsl:call-template name="nl"/>
-  <xsl:choose>
-    <xsl:when test="count(script) > 1">
-      <xsl:call-template name="gettext">
-        <xsl:with-param name="key" select="'scripts'"/>
-      </xsl:call-template>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:call-template name="gettext">
-        <xsl:with-param name="key" select="'script'"/>
       </xsl:call-template>
     </xsl:otherwise> 
   </xsl:choose>

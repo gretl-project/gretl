@@ -26,7 +26,8 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define GUIDE_PAGE 999
+#define GUIDE_PAGE  999
+#define SCRIPT_PAGE 998
 
 enum {
     PLAIN_TEXT,
@@ -608,7 +609,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 }
 
 static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			 const gchar *text, gint page,
+			 const char *text, gint page, 
 			 const char *indent)
 {
     GtkTextTag *ltag;
@@ -616,6 +617,11 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     if (page == GUIDE_PAGE) {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
 					  "family", "sans", NULL);
+    } else if (page == SCRIPT_PAGE) {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+					  "family", "monospace", NULL);
+	g_object_set_data_full(G_OBJECT(ltag), "fname", g_strdup(text), 
+			       g_free);
     } else if (indent != NULL) {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
 					  "left_margin", 30, NULL);
@@ -625,6 +631,16 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     g_object_set_data(G_OBJECT(ltag), "page", GINT_TO_POINTER(page));
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
+}
+
+static void link_open_script (GtkTextTag *tag)
+{
+    const char *fname = g_object_get_data(G_OBJECT(tag), "fname");
+    char fullname[MAXLEN];
+
+    sprintf(fullname, "%sscripts%cmisc%c%s", paths.gretldir, 
+	    SLASH, SLASH, fname);
+    view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
@@ -640,6 +656,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	if (page != 0) {
 	    if (page == GUIDE_PAGE) {
 		display_pdf_help(NULL, 1, NULL);
+	    } else if (page == SCRIPT_PAGE) {
+		link_open_script(tag);
 	    } else {
 		plain_text_cmdref(p, page, NULL);
 	    }
@@ -648,7 +666,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
     }
 
     if (tags) {
-	g_slist_free (tags);
+	g_slist_free(tags);
     }
 }
 
@@ -956,7 +974,8 @@ enum {
     INSERT_LIT,
     INSERT_ITAL,
     INSERT_TEXT,
-    INSERT_PDFLINK
+    INSERT_PDFLINK,
+    INSERT_INPLINK
 };
 
 static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
@@ -1018,6 +1037,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_LIT;
     } else if (!strncmp(p, "pdf", 3)) {
 	ins = INSERT_PDFLINK;
+    } else if (!strncmp(p, "inp", 3)) {
+	ins = INSERT_INPLINK;
     }
 
     if (ins != INSERT_NONE) {
@@ -1058,7 +1079,7 @@ static void
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s)
 {
-    char targ[128];
+    static char targ[128];
     const char *p;
     int ins;
 
@@ -1085,6 +1106,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		insert_link(tbuf, iter, targ, gretl_command_number(targ), indent);
 	    } else if (ins == INSERT_PDFLINK) {
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
+	    } else if (ins == INSERT_INPLINK) {
+		insert_link(tbuf, iter, targ, SCRIPT_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {

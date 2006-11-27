@@ -1203,7 +1203,8 @@ static GtkWidget *files_window (windata_t *vwin)
     case PS_FILES:
 	titles = ps_titles;
 	cols = 3;
-	full_width = 480;
+	full_width = 560;
+	file_height = 300;
 	break;
     case FUNC_FILES:
 	titles = func_titles;

@@ -13,5 +13,6 @@
  <gentext   key="otheraccess" text="Otro acceso:  "/>
  <gentext key="scriptcommand" text="Instrucción de guión: "/>
  <gentext key="or" text=" o "/>
-
+ <gentext key="Seealso" text="Ver También"/>
+ 
 </localization>

@@ -203,6 +203,7 @@
 	<example>adf 0 y</example>
         <example>adf 2 y --nc --c --ct</example>
         <example>adf 12 y --c --test-down</example>
+	<demo>jgm-1996.inp</demo>
       </examples>
     </usage>
 
@@ -407,16 +408,13 @@
       </options>
       <examples>
         <example>arbond 2 ; y Dx1 Dx2</example>
-        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1 </example>
-	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3) </example>
+        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
+	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
+	<demo>arbond91.inp</demo>
       </examples>
     </usage>
 
     <description>
-      <para>
-	PROVISIONAL DOCUMENTATION.  This feature is under test and the
-	command syntax is liable to change.
-      </para>  
       <para>
 	Carries out estimation of dynamic panel data models (that is,
 	panel models including one or more lags of the dependent variable)
@@ -486,24 +484,11 @@
 	to use time dummies in first-differenced form, you will have
 	to define and add these variables manually.
       </para>
-      <para>
-	TODO list for this command:
-      </para>
-      <ilist>
-	<li><para>Finalize GUI interface</para>
-	</li>
-	<li><para>Maybe add param for minimum lag of y</para>
-	</li>
-      </ilist>
-
     </description>
 
     <gui-access>
       <menu-path>/Model/Panel</menu-path>
     </gui-access>
-    <scripts>
-      <script>arbond91</script>
-    </scripts>
 
   </command>
 
@@ -7213,6 +7198,7 @@
         <example>system method=sur</example>
 	<example>system method=sur save=resids</example>
 	<example>system method=3sls save=resids,fitted</example>
+	<demo>klein.inp</demo>
       </examples>
     </usage>
 
@@ -7750,6 +7736,7 @@
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
         <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+	<demo>denmark.inp</demo>
       </examples>
     </usage>
 

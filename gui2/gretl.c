@@ -595,7 +595,6 @@ static void gui_usage (void)
 
     printf(I_("\nYou may supply the name of a data file on the command line.\n"
 	      "Options:\n"
-	      " -b or --batch     Open a command script.\n"
 	      " -c or --dump      Dump the configuration file.\n"
 	      " -d or --db        Open a local database.\n"
 	      " -e or --english   Force use of English rather than translation.\n"
