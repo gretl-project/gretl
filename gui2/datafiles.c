@@ -25,7 +25,7 @@
 #include "datafiles.h"
 #include "database.h"
 #include "filelists.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "menustate.h"
 #include "fnsave.h"
 #include "fncall.h"
@@ -668,12 +668,12 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     build_path(scriptfile, coll->path, fname, ".inp");
     g_free(fname);
 
-#if 0
-    /* close the calling window (?) */
+    /* close the calling window */
     gtk_widget_destroy(GTK_WIDGET(vwin->w));
-#endif
 
+#if 0
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+#endif
     set_scriptpage(coll->title);
 
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);

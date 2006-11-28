@@ -85,6 +85,8 @@ void errmsg (const int errcode, PRN *prn);
 
 const char *get_gretl_errmsg (void);
 
+char *copy_gretl_errmsg (void);
+
 int print_gretl_errmsg (PRN *prn);
 
 void gretl_errmsg_set (const char *str);

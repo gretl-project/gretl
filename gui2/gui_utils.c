@@ -97,7 +97,8 @@ enum {
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
-    CODE_ITEM
+    CODE_ITEM,
+    INDEX_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -1643,6 +1644,11 @@ static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
     copy_format_dialog(vwin, W_SAVE);
 }
 
+static void script_index (GtkWidget *w, windata_t *vwin)
+{
+    display_files(NULL, PS_FILES, NULL);
+}
+
 static void view_code_callback (GtkWidget *w, windata_t *vwin)
 {
     windata_t *child = vwin_first_child(vwin);
@@ -1681,6 +1687,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, series_view_sort_by, SORT_BY_ITEM },    
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
+    { N_("Scripts index"), GTK_STOCK_INDEX, script_index, INDEX_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
@@ -1764,7 +1771,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (!run_ok && viewbar_items[i].flag == MAIL_ITEM) {
+	if (vwin->role != EDIT_SCRIPT && viewbar_items[i].flag == MAIL_ITEM) {
 	    continue;
 	}	
 
@@ -1808,6 +1815,11 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (!format_ok && viewbar_items[i].flag == FORMAT_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != VIEW_SCRIPT && 
+	    viewbar_items[i].flag == INDEX_ITEM) {
 	    continue;
 	}
 

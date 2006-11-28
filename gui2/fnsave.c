@@ -21,7 +21,7 @@
 #include "dlgutils.h"
 #include "textbuf.h"
 #include "fileselect.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "fnsave.h"
 
 #ifdef G_OS_WIN32
@@ -725,23 +725,102 @@ static void login_dialog (login_info *linfo)
     gtk_widget_show(linfo->dlg);
 }
 
+#define url_reserved(c) (strchr(";/?:@&=+$,<>%#\t\r\n\v\0", c) != NULL)
+
+static int count_specials (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (url_reserved(*s) || !isprint(*s)) {
+	    n++;
+	}
+	s++;
+    }
+
+    return n;
+}
+
+static char *url_encode_string (const char *s)
+{
+    char *encstr;
+    char encc[4];
+    int n;
+
+    if (s == NULL) {
+	return NULL;
+    }
+
+    n = count_specials(s);
+    if (n == 0) {
+	return gretl_strdup(s);
+    }
+
+    encstr = malloc(strlen(s) + n * 2 + 1);
+
+    if (encstr != NULL) {
+	*encstr = '\0';
+	while (*s) {
+	    if (*s == ' ') {
+		strcat(encstr, "+");
+	    } else if (url_reserved(*s) || !isprint(*s)) {
+		sprintf(encc, "%%%.2X", *s);
+		strcat(encstr, encc);
+	    } else {
+		strncat(encstr, s, 1);
+	    } 
+	    s++;
+	}
+    }
+
+    return encstr;
+}
+
 static void do_upload (const char *fname)
 {
+    char *ulogin = NULL;
+    char *upass = NULL;
+    char *ufname = NULL;
+    char *ubuf = NULL;
+    char *buf = NULL;
     login_info linfo;
+    int err = 0;
 
     login_dialog(&linfo);
 
-    if (!linfo.canceled) {
-	char *errbuf = NULL;
-	int err = upload_function_package(linfo.login,
-					  linfo.pass,
-					  fname,
-					  &errbuf);
-	if (err) {
-	    errbox(errbuf);
-	}
-	free(errbuf);
+    if (linfo.canceled) {
+	linfo_free(&linfo);
+	return;
     }
+	
+    g_file_get_contents(fname, &buf, NULL, NULL);
+
+    if (buf == NULL) {
+	err = E_ALLOC;
+    } else {  
+	ubuf = url_encode_string(buf);
+	ulogin = url_encode_string(linfo.login);
+	upass = url_encode_string(linfo.pass);
+	ufname = url_encode_string(path_last_element(fname));
+	
+	if (ubuf == NULL || ulogin == NULL || upass == NULL || ufname == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = upload_function_package(ulogin, upass, ufname, ubuf);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    free(ulogin);
+    free(upass);
+    free(ufname);
+    free(ubuf);
+    free(buf);
 
     linfo_free(&linfo);
 }

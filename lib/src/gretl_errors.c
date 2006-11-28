@@ -142,6 +142,11 @@ const char *get_gretl_errmsg (void)
     return gretl_errmsg;
 }
 
+char *copy_gretl_errmsg (void)
+{
+    return gretl_strdup(gretl_errmsg);
+}
+
 int print_gretl_errmsg (PRN *prn)
 {
     int ret = 0;

@@ -28,7 +28,6 @@
 #include "ssheet.h"
 #include "console.h"
 #include "session.h"
-#include "webget.h"
 #include "database.h"
 #include "datafiles.h"
 #include "cmdstack.h"
@@ -54,6 +53,10 @@
 #ifdef WINDEBUG
 FILE *dbg;
 #endif
+
+/* update.c */
+extern int silent_update_query (void);
+extern int update_query (void); 
 
 /* functions private to gretl.c */
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
@@ -128,8 +131,6 @@ int main_x = -1;
 int main_y = -1;
 int mainwin_width = 520;
 int mainwin_height = 420;
-
-char dbproxy[21];
 
 #if defined(G_OS_WIN32)
 char Rcommand[MAXSTR] = "RGui.exe";
@@ -1029,7 +1030,6 @@ int main (int argc, char *argv[])
     }
 
     /* check for program updates? */
-    proxy_init(dbproxy);
     if (updater) {
 	silent_update_query(); 
     }

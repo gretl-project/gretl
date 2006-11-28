@@ -25,7 +25,7 @@
 #include "datafiles.h"
 
 #ifdef G_OS_WIN32
-# include "webget.h"
+/* # include "webget.h" */
 # include "gretlwin32.h"
 #endif
 

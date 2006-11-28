@@ -34,7 +34,35 @@
 #define HUSH_RUNTIME_WARNINGS
 
 extern int wimp; /* settings.c */
-extern int ws_startup (void);
+
+static void ws_cleanup (void)
+{
+    WSACleanup();
+}
+
+static int ws_startup (void)
+{
+    WORD requested;
+    WSADATA data;
+
+    requested = MAKEWORD(1, 1);
+
+    if (WSAStartup(requested, &data)) {
+	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
+	return 1;
+    }
+
+    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
+				   HIBYTE (requested) < 1)) {
+	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
+	WSACleanup();
+	return 1;
+    }
+
+    atexit(ws_cleanup);
+
+    return 0;
+}
 
 int create_child_process (char *prog, char *env) 
 { 

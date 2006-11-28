@@ -154,6 +154,7 @@ LIBSRC = adf_kpss.c \
 	gretl_string_table.c \
 	gretl_utils.c \
 	gretl_win32.c \
+	gretl_www.c \
 	gretl_xml.c \
 	interact.c \
 	kalman.c \
@@ -225,7 +226,7 @@ GUISRC = about.c \
 	textutil.c \
 	toolbar.c \
 	treeutils.c \
-	webget.c
+	update.c
 
 GUIOBJ = $(GUISRC:.c=.o)
 
@@ -273,7 +274,7 @@ dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lf2c -lm -L$(imports) -lxml2 -lz -lintl -lprob -lgmp \
-	-lmingwex $(GLIBLIB) $(LAPACK_LIBS)
+	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

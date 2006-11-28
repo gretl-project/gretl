@@ -23,7 +23,7 @@
 #include "boxplots.h"
 #include "database.h"
 #include "datafiles.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "menustate.h"
 #include "treeutils.h"
 
@@ -116,12 +116,15 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
-void show_network_error (windata_t *vwin, char *buf)
+void show_network_error (windata_t *vwin)
 {
-    if (*buf != '\0') {
+    char *buf = copy_gretl_errmsg();
+
+    if (buf != NULL && *buf != '\0') {
 	size_t n = strlen(buf);
 
 	if (buf[n-1] == '\n') {
+	    
 	    buf[n-1] = '\0';
 	}
 	if (vwin != NULL) {
@@ -136,13 +139,14 @@ void show_network_error (windata_t *vwin, char *buf)
 	    errbox(_("Error retrieving data from server"));
 	}
     }
+
+    free(buf);
 }
 
 static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
     char *getbuf = NULL;
-    char errbuf[80];
     char *dbbase = vwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
@@ -151,20 +155,18 @@ static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
     netfloat nf;
 #endif
 
-    *errbuf = '\0';
-
     update_statusline(vwin, _("Retrieving data..."));
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  errbuf, GRAB_NBO_DATA);
+				  GRAB_NBO_DATA);
 #else
     err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  errbuf, GRAB_DATA);
+				  GRAB_DATA);
 #endif
 
     if (err) {
-	show_network_error(vwin, errbuf);
+	show_network_error(vwin);
 	free(getbuf);
 	return E_FOPEN;
     } 
@@ -1253,15 +1255,12 @@ void open_db_index (GtkWidget *w, gpointer data)
 void open_named_remote_db_index (char *dbname)
 {
     char *getbuf = NULL;
-    char errbuf[80];
     int err;
 
-    *errbuf = '\0';
-
-    err = retrieve_remote_db_index(dbname, &getbuf, errbuf);
+    err = retrieve_remote_db_index(dbname, &getbuf);
 
     if (err) {
-	show_network_error(NULL, errbuf);
+	show_network_error(NULL);
     } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
@@ -1275,21 +1274,18 @@ void open_named_remote_db_index (char *dbname)
 void open_remote_db_index (GtkWidget *w, gpointer data)
 {
     char *getbuf = NULL;
-    char errbuf[80];
     gchar *fname;
     windata_t *vwin = (windata_t *) data;
     int err;
-
-    *errbuf = '\0';
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &fname);
 
     update_statusline(vwin, _("Retrieving data..."));
-    err = retrieve_remote_db_index(fname, &getbuf, errbuf);
+    err = retrieve_remote_db_index(fname, &getbuf);
 
     if (err) {
-	show_network_error(vwin, errbuf);
+	show_network_error(vwin);
     } else {
 	update_statusline(vwin, "OK");
 	make_db_series_list(REMOTE_SERIES, fname, getbuf);
@@ -1477,7 +1473,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 {
     gchar *objname;
     char fndir[MAXLEN];
-    char *target, errbuf[80];
+    char *target;
     FILE *fp;
     int err = 0;
 
@@ -1521,20 +1517,18 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	fclose(fp);
     }
 
-    *errbuf = '\0';
-
     if (vwin->role == REMOTE_FUNC_FILES) {
-	err = retrieve_remote_function_package(objname, target, errbuf);
+	err = retrieve_remote_function_package(objname, target);
     } else {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-	err = retrieve_remote_db(objname, target, errbuf, GRAB_NBO_DATA);
+	err = retrieve_remote_db(objname, target, GRAB_NBO_DATA);
 #else
-	err = retrieve_remote_db(objname, target, errbuf, GRAB_DATA);
+	err = retrieve_remote_db(objname, target, GRAB_DATA);
 #endif
     }
 
     if (err) {
-	show_network_error(NULL, errbuf);
+	show_network_error(NULL);
 	free(objname);
 	free(target);
 	return err;
@@ -1548,6 +1542,8 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    gui_show_function_info(target, VIEW_FUNC_INFO);
 	}
     } else {
+	char errbuf[80];
+
 	err = ggz_extract(errbuf, target);
 	if (err) {
 	    if (*errbuf == '\0') {
@@ -1821,22 +1817,20 @@ gint populate_remote_object_list (windata_t *vwin)
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
-    char fname[16], errbuf[80], status[20];
+    char fname[16], status[20];
     gchar *row[3];
     gint i;
     time_t remtime;
     int err = 0;
 
-    *errbuf = '\0';
-
     if (vwin->role == REMOTE_DB) {
-	err = list_remote_dbs(&getbuf, errbuf);
+	err = list_remote_dbs(&getbuf);
     } else {
-	err = list_remote_function_packages(&getbuf, errbuf);
+	err = list_remote_function_packages(&getbuf);
     }
 
     if (err) {
-	show_network_error(NULL, errbuf);
+	show_network_error(NULL);
 	free(getbuf);
 	return err;
     }

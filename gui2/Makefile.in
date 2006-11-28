@@ -141,7 +141,7 @@ SRCS = about.c \
 	textutil.c \
 	toolbar.c \
 	treeutils.c \
-	webget.c 
+	update.c
 
 OBJS = $(SRCS:.c=.o)
 

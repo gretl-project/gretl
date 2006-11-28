@@ -92,6 +92,7 @@ PUBLIC_HDRS = \
 	gretl_string_table.h \
 	gretl_utils.h \
 	gretl_win32.h \
+	gretl_www.h \
 	gretl_xml.h \
 	interact.h \
 	kalman.h \
@@ -152,6 +153,7 @@ SRCS = adf_kpss.c \
 	gretl_restrict.c \
 	gretl_string_table.c \
 	gretl_utils.c \
+	gretl_www.c \
 	gretl_xml.c \
 	interact.c \
 	kalman.c \

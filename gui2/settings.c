@@ -21,7 +21,7 @@
 
 #include "gretl.h"
 #include "filelists.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "toolbar.h"
 #include "dlgutils.h"
 #include "fileselect.h"
@@ -55,13 +55,13 @@ char rcfile[MAXLEN];
 
 extern int want_toolbar;
 extern char Rcommand[MAXSTR];
-extern char dbproxy[21];
 
 #ifdef HAVE_TRAMO
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
 #endif
 
+char dbproxy[21];
 int use_proxy;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
@@ -1398,7 +1398,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_tramo_x12a_dirs();
 #endif
 
-    proxy_init(dbproxy);
+    www_proxy_init(dbproxy, use_proxy);
 }
 
 #ifndef USE_GCONF
@@ -1449,6 +1449,7 @@ static void common_read_rc_setup (void)
     set_garch_robust_vcv(hc_garch);
 
     set_paths(&paths, set_paths_opt);
+    www_proxy_init(dbproxy, use_proxy);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();

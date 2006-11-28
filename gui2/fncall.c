@@ -24,7 +24,7 @@
 #include "monte_carlo.h"
 #include "usermat.h"
 #include "cmd_private.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "database.h"
 
 #define FCDEBUG 0
@@ -626,7 +626,6 @@ static int function_data_check (call_info *cinfo)
 
 static int temp_install_remote_fnpkg (const char *fname, char *target)
 {
-    char errbuf[80];
     int err = 0;
 
     build_path(target, paths.userdir, "dltmp", NULL);
@@ -635,9 +634,9 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
 	return err;
     }
 
-    err = retrieve_remote_function_package(fname, target, errbuf);
+    err = retrieve_remote_function_package(fname, target);
     if (err) {
-	show_network_error(NULL, errbuf);
+	show_network_error(NULL);
 	return err;
     } 
 

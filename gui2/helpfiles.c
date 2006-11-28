@@ -21,7 +21,7 @@
 
 #include "gretl.h"
 #include "textbuf.h"
-#include "webget.h"
+#include "gretl_www.h"
 #include "treeutils.h"
 #include "dlgutils.h"
 
@@ -1525,11 +1525,8 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
 	"gretl-ref-es.pdf"  
     };
     const char *fname;
-    char errtext[MAXLEN];
     FILE *fp;
     int err = 0;
-
-    *errtext = '\0';
 
     if (i < 0 || i > 3) {
 	i = 0;
@@ -1558,12 +1555,14 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
 
     /* do actual download */
     if (!err) {
-	err = retrieve_manfile(fname, fullpath, errtext);
+	err = retrieve_manfile(fname, fullpath);
     }
 
     if (err) {
-	if (*errtext) {
-	    errbox(errtext);
+	const char *buf = get_gretl_errmsg();
+
+	if (*buf) {
+	    errbox(buf);
 	} else {
 	    errbox(_("Failed to download file"));
 	}
