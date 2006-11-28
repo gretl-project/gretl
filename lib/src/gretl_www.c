@@ -74,6 +74,12 @@ const char *dbhost = "ricardo.ecn.wfu.edu";
 static char dbproxy[21];
 #endif /* UPDATER */
 
+typedef enum {
+    SAVE_NONE,
+    SAVE_TO_BUFFER,
+    SAVE_TO_FILE
+} SaveOpt;
+
 #ifdef WIN32
 /*  #define REALCLOSE(x) closesocket (x) */
 #define EWOULDBLOCK             WSAEWOULDBLOCK
@@ -726,6 +732,7 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 	if (show_progress != NULL) show = 1;
     }
 #endif
+
     if (show) {
 	sp_ret = show_progress(res, expected, SP_LOAD_INIT);
     }
@@ -882,6 +889,7 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", GRETL_VERSION);
+
 #if defined(UPDATER) || defined (WIN32)
     /* the linux test updater program pretends to be Windows */
     strcat(useragent, "w");
@@ -1578,7 +1586,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 
     u = urlinfo_new();
     if (u == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     u->path = malloc(strlen(cgi) + 64);
@@ -1740,6 +1748,8 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     return err;
 }
 
+#ifndef UPDATER
+
 /* FIXME */
 
 static const char *get_db_host (void)
@@ -1808,6 +1818,8 @@ int retrieve_manfile (const char *fname, const char *localname)
     return retrieve_url (host, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
 }
+
+#endif
 
 
 

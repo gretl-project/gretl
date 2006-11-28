@@ -331,39 +331,6 @@ static int iread (int fd, char *buf, int len);
 static int iwrite (int fd, char *buf, int len);
 static char *print_option (int opt);
 
-#ifdef WIN32
-
-static void ws_cleanup (void)
-{
-    WSACleanup();
-}
-
-int ws_startup (void)
-{
-    WORD requested;
-    WSADATA data;
-
-    requested = MAKEWORD(1, 1);
-
-    if (WSAStartup(requested, &data)) {
-	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
-	return 1;
-    }
-
-    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
-				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
-	WSACleanup();
-	return 1;
-    }
-
-    atexit(ws_cleanup);
-
-    return 0;
-}
-
-#endif /* WIN32 */
-
 static int get_host_ip (char *h_ip, const char *h_name)
 {
     struct hostent *h_ent;
@@ -1653,64 +1620,6 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 
     return err;
 }
-
-#ifdef WIN32
-
-#include <windows.h>
-#include <shellapi.h>
-
-int read_reg_val (HKEY tree, char *keyname, char *keyval)
-{
-    unsigned long datalen = MAXLEN;
-    int error = 0;
-    HKEY regkey;
-
-    if (RegOpenKeyEx(
-                     tree,                        /* handle to open key */
-                     "Software\\gretl",           /* subkey name */
-                     0,                           /* reserved */
-                     KEY_READ,                    /* access mask */
-                     &regkey                      /* key handle */
-                     ) != ERROR_SUCCESS) {
-        fprintf(stderr, "couldn't open registry\n");
-        return 1;
-    }
-
-    if (RegQueryValueEx(
-                        regkey,
-                        keyname,
-                        NULL,
-                        NULL,
-                        keyval,
-                        &datalen
-                        ) != ERROR_SUCCESS) {
-        error = 1;
-    }
-
-    RegCloseKey(regkey);
-
-    return error;
-}
-
-static void read_proxy_info (void) 
-{
-    char val[128];
-
-    use_proxy = 0;
-    *dbproxy = '\0';
-
-    if (read_reg_val(HKEY_CURRENT_USER, "useproxy", val) == 0) {
-	if (!strcmp(val, "true") || !strcmp(val, "1")) {
-	    use_proxy = 1;
-	}
-    }
-
-    if (use_proxy && read_reg_val(HKEY_CURRENT_USER, "dbproxy", val) == 0) {
-        strncat(dbproxy, val, 20);
-    }
-}
-
-#endif /* WIN32 */
 
 int files_query (char **getbuf, char *errbuf, time_t filedate)
 {

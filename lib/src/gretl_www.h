@@ -18,17 +18,6 @@
  */
 
 typedef enum {
-    SAVE_NONE,
-    SAVE_TO_BUFFER,
-    SAVE_TO_FILE
-} SaveOpt;
-
-typedef enum {
-    QUERY_SILENT,
-    QUERY_VERBOSE
-} QueryOpt;
-
-typedef enum {
     LIST_DBS = 1,
     GRAB_IDX,
     GRAB_DATA,
@@ -42,6 +31,11 @@ typedef enum {
     GRAB_PDF,
     UPLOAD
 } CGIOpt;
+
+typedef enum {
+    QUERY_SILENT,
+    QUERY_VERBOSE
+} QueryOpt;
 
 int www_proxy_init (const char *dbproxy, int use_proxy);
 

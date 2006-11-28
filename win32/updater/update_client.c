@@ -10,6 +10,7 @@
 #ifdef WIN32
 # include <windows.h>
 # include <winsock.h>
+# include <shellapi.h>
 #endif
 
 #include "updater.h"
@@ -68,6 +69,35 @@ enum {
 };
 
 static int gretl_run_status;
+
+static void ws_cleanup (void)
+{
+    WSACleanup();
+}
+
+int ws_startup (void)
+{
+    WORD requested;
+    WSADATA data;
+
+    requested = MAKEWORD(1, 1);
+
+    if (WSAStartup(requested, &data)) {
+	fprintf(stderr, "Couldn't find usable socket driver\n");
+	return 1;
+    }
+
+    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
+				   HIBYTE (requested) < 1)) {
+	fprintf(stderr, "Couldn't find usable socket driver\n");
+	WSACleanup();
+	return 1;
+    }
+
+    atexit(ws_cleanup);
+
+    return 0;
+}
 
 static int win_error (void)
 {
@@ -137,33 +167,54 @@ static int msgbox (const char *msg, int err)
     }
 }
 
-static void ws_cleanup (void)
+static int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
-    WSACleanup();
+    unsigned long datalen = MAXLEN;
+    int error = 0;
+    HKEY regkey;
+
+    if (RegOpenKeyEx(
+                     tree,                        /* handle to open key */
+                     "Software\\gretl",           /* subkey name */
+                     0,                           /* reserved */
+                     KEY_READ,                    /* access mask */
+                     &regkey                      /* key handle */
+                     ) != ERROR_SUCCESS) {
+        fprintf(stderr, "couldn't open registry\n");
+        return 1;
+    }
+
+    if (RegQueryValueEx(
+                        regkey,
+                        keyname,
+                        NULL,
+                        NULL,
+                        keyval,
+                        &datalen
+                        ) != ERROR_SUCCESS) {
+        error = 1;
+    }
+
+    RegCloseKey(regkey);
+
+    return error;
 }
 
-static int ws_startup (void)
+static void read_proxy_info (void) 
 {
-    WORD requested;
-    WSADATA data;
+    int use_proxy = 0;
+    char dbproxy[21] = {0};
+    char val[128];
 
-    requested = MAKEWORD(1, 1);
-
-    if (WSAStartup(requested, &data)) {
-        errbox("Couldn't find usable socket driver");
-        return 1;
+    if (read_reg_val(HKEY_CURRENT_USER, "useproxy", val) == 0) {
+	if (!strcmp(val, "true") || !strcmp(val, "1")) {
+	    use_proxy = 1;
+	}
     }
 
-    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
-                                   HIBYTE (requested) < 1)) {
-        errbox("Couldn't find usable socket driver");
-        WSACleanup();
-        return 1;
+    if (use_proxy && read_reg_val(HKEY_CURRENT_USER, "dbproxy", val) == 0) {
+        strncat(dbproxy, val, 20);
     }
-
-    atexit(ws_cleanup);
-
-    return 0;
 }
 
 BOOL CALLBACK record_gretl_running (HWND hw, LPARAM lp)
@@ -567,7 +618,9 @@ int main (int argc, char *argv[])
 	}
     }
 
-    if (ws_startup()) exit(EXIT_FAILURE);
+    if (ws_startup()) {
+	exit(EXIT_FAILURE);
+    }
 #endif
 
     flg = fopen("updater.log", "w");
