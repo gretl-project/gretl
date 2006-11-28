@@ -409,6 +409,41 @@ char *gretl_strndup (const char *src, size_t n)
 }
 
 /**
+ * gretl_strdup_printf:
+ * @template: as in printf().
+ * @Varargs: arguments to be printed.
+ *
+ * Print the arguments according to @format.
+ * 
+ * Returns: allocated result of the printing, or %NULL on failure.
+ */
+
+char *gretl_strdup_printf (const char *template, ...)
+{
+    va_list args;
+    int plen, bsize = 2048;
+    char *buf;
+
+    buf = malloc(bsize);
+    if (buf == NULL) {
+	return NULL;
+    }
+
+    memset(buf, 0, 1);
+
+    va_start(args, template);
+    plen = vsnprintf(buf, bsize, template, args);
+    va_end(args);
+
+    if (plen >= bsize) {
+	fputs("gretl_strdup_printf warning: string was truncated\n",
+	      stderr);
+    }
+
+    return buf;
+}
+
+/**
  * gretl_str_expand:
  * @orig: pointer to the base string.
  * @add: the string to be added.

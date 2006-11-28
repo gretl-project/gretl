@@ -1,7 +1,6 @@
 topsrc = @top_srcdir@
 
 prefix = @prefix@
-exec_prefix = @exec_prefix@
 CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
@@ -9,7 +8,6 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 
 build_gui = @build_gui@
-have_gtk = @have_gtk@
 have_gmp = @have_gmp@
 build_mailer = @build_mailer@
 
@@ -24,9 +22,6 @@ GMP_LIBS = @GMP_LIBS@
 MPFR_CFLAGS = @MPFR_CFLAGS@
 MPFR_LIBS = @MPFR_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
-FLIB = @FLIB@
-HAVE_X12A = @HAVE_X12A@
-HAVE_TRAMO = @HAVE_TRAMO@
 HAVE_AUDIO = @HAVE_AUDIO@
 FLITE_CFLAGS = @FLITE_CFLAGS@
 FLITE_LIBS = @FLITE_LIBS@
@@ -116,13 +111,13 @@ PLUGINS = arbond.la \
 	urcdist.la \
 	vif.la \
 	poisson.la \
-	gretlzip.la \
-	$(TXPLUGIN)
+	gretlzip.la 
 
 GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
 	progress_bar.la \
 	leverage.la \
+	tramo-x12a.la \
 	pca.la 
 
 MAILER_PLUGIN = mailer.la
@@ -132,25 +127,17 @@ ifeq ($(build_gui),yes)
   ifeq ($(build_mailer),yes)
      PLUGINS += $(MAILER_PLUGIN)
   endif
+  ifeq ($(HAVE_AUDIO),1)
+     PLUGINS += audio.la
+     AUDIO_CFLAGS = $(FLITE_CFLAGS)
+     AUDIO_LIBS = $(FLITE_LIBS)
+  endif  
 endif
 
 ifeq ($(have_gmp),yes)
   PLUGINS += mp_ols.la
   GMPDEF = -DUSE_GMP
 endif
-
-ifeq ($(HAVE_TRAMO),1)
-  TXPLUGIN = tramo-x12a.la
-endif
-ifeq ($(HAVE_X12A),1)
-  TXPLUGIN = tramo-x12a.la
-endif
-
-ifeq ($(HAVE_AUDIO),1)
-  PLUGINS += audio.la
-  AUDIO_CFLAGS = $(FLITE_CFLAGS)
-  AUDIO_LIBS = $(FLITE_LIBS)
-endif  
 
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(topsrc)/plugin/libole2

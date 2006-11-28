@@ -333,18 +333,19 @@ static int realloc_prn_buffer (PRN *prn, size_t blen)
  * how @prn was initialized.  It's not advisable to use this function
  * for large chunks of text: use #pputs instead.
  * 
- * Returns: 0 on successful completion, 1 on memory allocation
+ * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
- * 
  */
 
 int pprintf (PRN *prn, const char *template, ...)
 {
     va_list args;
     size_t blen;
-    int plen = 0;
+    int rem, plen = 0;
 
-    if (prn == NULL || prn->fixed) return 0;
+    if (prn == NULL || prn->fixed) {
+	return 0;
+    }
 
     if (prn->fp != NULL) {
 	va_start(args, template);
@@ -367,7 +368,9 @@ int pprintf (PRN *prn, const char *template, ...)
 	return 0;
     }
 
-    if (prn->buf == NULL) return 0;
+    if (prn->buf == NULL) {
+	return 0;
+    }
 
     blen = strlen(prn->buf);
 
@@ -377,15 +380,21 @@ int pprintf (PRN *prn, const char *template, ...)
 	}
     }
 
+    rem = prn->bufsize - blen - 1;
+
     va_start(args, template);
 #if PRN_DEBUG
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
 #endif
-    plen = vsprintf(prn->buf + blen, template, args);
+    plen = vsnprintf(prn->buf + blen, rem, template, args);
     va_end(args);
 #if PRN_DEBUG
     fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
 #endif
+
+    if (plen >= rem) {
+	fputs("pprintf warning: string was trincated\n", stderr);
+    }
 
     return plen;
 }
@@ -393,9 +402,9 @@ int pprintf (PRN *prn, const char *template, ...)
 /**
  * pputs:
  * @prn: gretl printing struct.
- * @s: constant string to print
+ * @s: constant string to print.
  * 
- * Returns: 0 on successful completion, 1 on memory allocation
+ * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
  */
 
@@ -441,7 +450,7 @@ int pputs (PRN *prn, const char *s)
  * @prn: gretl printing struct.
  * @c: character to print
  * 
- * Returns: 0 on successful completion, 1 on memory allocation
+ * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.
  */
 

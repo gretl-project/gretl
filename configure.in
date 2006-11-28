@@ -45,7 +45,6 @@ have_lapack="no"
 seek_inet_addr="no"
 png_comments="yes"
 highlight="yes"
-prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
@@ -371,51 +370,51 @@ AC_DEFUN([AC_PROG_LATEX],
 AC_PROG_LATEX
 test x"${LATEX}" = xyes && AC_DEFINE(HAVE_LATEX)
 if test x"${LATEX}" = xyes ; then
-  have_latex=yes
+  have_latex="yes"
 else
-  have_latex=no
+  have_latex="no"
 fi
 
 dnl
 dnl Preliminary check for pkg-config
 dnl
-if test "$build_gui" = "yes" ; then
-   if test -z "$PKG_CONFIG"; then
-      AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-   fi
-   if test "$PKG_CONFIG" = "no" ; then
-      echo "*** pkg-config not found, can't build graphical interface" 
-      build_gui="no"
-   fi
+if test -z "$PKG_CONFIG"; then
+   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+fi
+if test "$PKG_CONFIG" = "no" && test "$build_gui" = "yes" ; then
+   echo "*** pkg-config not found, can't build graphical interface"
+   build_gui="no"
+fi
+
+orig_CFLAGS=$CFLAGS
+
+dnl
+dnl glib 2.0 (desirable even if not building GUI)
+dnl
+if test "$PKG_CONFIG" != "no" ; then
+   PKG_CHECK_MODULES(GLIB, glib-2.0, AC_DEFINE(USE_GLIB2), have_glib2="no")
 fi
 
 dnl
 dnl Check for GTK 2.0
 dnl
-orig_CFLAGS=$CFLAGS
 if test "$build_gui" = "yes" ; then
     PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
-      have_gtk="2.0"
-      AC_DEFINE(USE_GLIB2),
+      have_gtk="2.0",
       have_gtk="no"      
     )
 fi
 
-dnl if the above succeeds, check separately for glib 2.0 flags
-if test "$have_gtk" = "2.0" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
-fi
-
 dnl ...and try for gtksourceview flags, unless prohibited
 if test "$have_gtk" = "2.0" && test "$try_installed_sourceview" = "yes" ; then
-     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
-     have_gtksourceview="yes"
-     use_gtksourceview="yes"
-     AC_DEFINE(USE_GTKSOURCEVIEW),
-     have_gtksourceview="no"
-    )
+   PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
+   have_gtksourceview="yes"
+   use_gtksourceview="yes"
+   AC_DEFINE(USE_GTKSOURCEVIEW),
+   have_gtksourceview="no"
+   )
 fi
 
 dnl Fallback on supplied gtksourceview? Check for libxml2 and gtk >= 2.2.0
@@ -439,7 +438,6 @@ fi
 
 dnl record the results of the above tests
 AC_SUBST(build_gui)
-AC_SUBST(build_docs)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
@@ -482,9 +480,9 @@ fi
 
 if test $png_comments = "yes" ; then
   if test $png_failed = "yes" ; then
-     echo "* gretl wants but did not find libpng."
-     echo "* You can turn off this dependency by configuring with the option"
-     echo "* --disable-png-comments"
+     echo "*** gretl wants but did not find libpng."
+     echo "*** You can turn off this dependency by configuring with the option"
+     echo "*** --disable-png-comments"
      exit
   else
     AC_DEFINE(PNG_COMMENTS)
@@ -550,10 +548,21 @@ fi
 dnl Check for libxslt (for the helpfiles)
 if test "${build_docs}" = "yes" ; then
   PKG_CHECK_MODULES(XSLT, libxslt >= 1.0.15,	
-    have_xslt="no",
-    have_xslt="yes"
+    have_xslt="yes",
+    have_xslt="no"
   )
 fi
+
+dnl If building docs was requested, see if we can do it
+if test "${build_docs}" = "yes" ; then
+   if test "$have_xslt" = "no" || test "$have_latex" = "no" ; then
+      build_docs="no"
+      echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
+   fi
+fi
+
+dnl record the results of the above test
+AC_SUBST(build_docs)
 
 dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)

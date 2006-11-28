@@ -21,8 +21,6 @@
 #include "modelspec.h"
 #include "gretl_xml.h"
 
-#include "glib.h"
-
 #define MDEBUG 0
 
 struct model_data_item_ {
@@ -3823,25 +3821,25 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 	    double lmax = gretl_model_get_double(pmod, "lmax");
 
 	    if (!na(lmax)) {
-		ret = g_strdup_printf("yformula: %g/(1.0+exp(-(%g%s%g*x)))",
-				      lmax, pmod->coeff[0], 
-				      (pmod->coeff[1] >= 0)? "+" : "",
-				      pmod->coeff[1]);
+		ret = gretl_strdup_printf("yformula: %g/(1.0+exp(-(%g%s%g*x)))",
+					  lmax, pmod->coeff[0], 
+					  (pmod->coeff[1] >= 0)? "+" : "",
+					  pmod->coeff[1]);
 	    }
 	}
     } else if (!pmod->ifc && pmod->ncoeff == 1 && xvar == pmod->list[2]) {
-	ret = g_strdup_printf("yformula: %g*x", pmod->coeff[0]);
+	ret = gretl_strdup_printf("yformula: %g*x", pmod->coeff[0]);
     } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
-	ret = g_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 
-			      (pmod->coeff[1] >= 0)? "+" : "",
-			      pmod->coeff[1]);
+	ret = gretl_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 
+				  (pmod->coeff[1] >= 0)? "+" : "",
+				  pmod->coeff[1]);
     } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == pmod->list[3]) {
 	if (model_is_quadratic(pmod, mZ, mdinfo)) {
-	    ret = g_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
-				  (pmod->coeff[1] >= 0)? "+" : "",
-				  pmod->coeff[1], 
-				  (pmod->coeff[2] >= 0)? "+" : "",
-				  pmod->coeff[2]);
+	    ret = gretl_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
+				      (pmod->coeff[1] >= 0)? "+" : "",
+				      pmod->coeff[1], 
+				      (pmod->coeff[2] >= 0)? "+" : "",
+				      pmod->coeff[2]);
 	}
     }
 
