@@ -9,18 +9,20 @@
 
 #ifdef WIN32
 # include <windows.h>
-# include <winsock.h>
 # include <shellapi.h>
 #endif
 
+#define ERRLEN 256
+#define MAXLEN 512
+#define UBUFSIZE 8192
+#define E_ALLOC 15
+#define E_DATA 2
+
 #include "updater.h"
-#include "webget.h"
 
 FILE *flg;
 int logit;
 int debug;
-
-#define MAXLEN 512
 
 enum {
     UPDATER_DEFAULT,
@@ -28,12 +30,15 @@ enum {
     UPDATER_GET_FILE
 } program_opts;
 
-static char errbuf[256];
 static char get_fname[48];
+static char gretl_errmsg[ERRLEN];
 static int ask_before_download = 1;
 static time_t filedate;
 static int argcount;
 static int prog_opt;
+
+#define STANDALONE
+#include "gretl_www.c"
 
 #ifndef WIN32
 # define IDYES 1
@@ -42,6 +47,40 @@ static int prog_opt;
 #ifndef TRUE
 # define TRUE 1
 #endif
+
+/* Replication (or stubs) for functionality usually provided
+   by libgretl (which we don't want to depend on in this context)
+*/
+
+FILE *gretl_fopen (const char *filename, const char *mode)
+{
+    FILE *fp = NULL;
+
+    fp = fopen(filename, mode);
+
+    return fp;
+}
+
+int show_progress (long res, long expected, int flag)
+{
+    return 0;
+}
+
+char *gretl_strdup (const char *src)
+{
+    char *targ = NULL;
+
+    if (src != NULL) {
+	targ = malloc(strlen(src) + 1);
+	if (targ != NULL) {
+	    strcpy(targ, src);
+	}
+    }
+
+    return targ;
+}
+
+/* end replication/stubs */
 
 static void getout (int err)
 {
@@ -200,15 +239,13 @@ static int read_reg_val (HKEY tree, char *keyname, char *keyval)
     return error;
 }
 
-static void read_proxy_info (void) 
+static void read_proxy_info (int *use_proxy, char *dbproxy) 
 {
-    int use_proxy = 0;
-    char dbproxy[21] = {0};
     char val[128];
 
     if (read_reg_val(HKEY_CURRENT_USER, "useproxy", val) == 0) {
 	if (!strcmp(val, "true") || !strcmp(val, "1")) {
-	    use_proxy = 1;
+	    *use_proxy = 1;
 	}
     }
 
@@ -246,7 +283,7 @@ static int check_for_gretl (void)
     return gretl_run_status;
 }
 
-#else
+#else /* not WIN32 */
 
 static int yes_no_dialog (const char *msg)
 {
@@ -266,7 +303,7 @@ static int msgbox (const char *msg, int err)
     return 0;
 }
 
-#endif
+#endif /* WIN32 or not */
 
 static char *get_size_string (size_t fsize)
 {
@@ -293,7 +330,36 @@ int infobox (const char *msg)
     return msgbox(msg, 0);
 }
 
-void listerr (char *buf, char *fname)
+static int files_query (char **getbuf, time_t filedate)
+{
+    int use_proxy = 0;
+    char dbproxy[21] = {0};
+
+#ifdef WIN32
+    read_proxy_info(&use_proxy, dbproxy);
+#endif
+
+    gretl_www_init(RICARDO, dbproxy, use_proxy);
+
+    return get_update_info(getbuf, filedate, QUERY_SILENT); 
+}
+
+static int get_remote_file (const char *fname)
+{
+    int use_proxy = 0;
+    char dbproxy[21] = {0};
+
+#ifdef WIN32
+    read_proxy_info(&use_proxy, dbproxy);
+#endif
+
+    gretl_www_init(RICARDO, dbproxy, use_proxy);
+
+    return retrieve_url(RICARDO, GRAB_FILE, fname, NULL, SAVE_TO_FILE, 
+			fname, NULL);
+}
+
+static void listerr (const char *fname)
 {
     char mybuf[256];
 
@@ -311,15 +377,15 @@ void listerr (char *buf, char *fname)
 	}
     }
 
-    if (*buf != '\0') {
+    if (*gretl_errmsg != '\0') {
 	strcat(mybuf, "\n");
-	strcat(mybuf, buf);
+	strcat(mybuf, gretl_errmsg);
     }
 
     errbox(mybuf);
 }
 
-void usage (char *prog)
+static void usage (char *prog)
 {
     char usebuf[1024];
 
@@ -332,7 +398,7 @@ void usage (char *prog)
     getout(0);
 }
 
-time_t get_time_from_stamp_file (const char *fname)
+static time_t get_time_from_stamp_file (const char *fname)
      /* E.g. Sun Mar 16 13:50:52 EST 2003 */
 {
     FILE *fp;
@@ -401,18 +467,18 @@ static int real_program (void)
 	    fputs("doing default update (argcount = 1)\n", flg);
 	}
 
-	getbuf = mymalloc(GRETL_BUFSIZE);
+	getbuf = malloc(UBUFSIZE);
 	if (getbuf == NULL) return 1;
 
-	clear(getbuf, GRETL_BUFSIZE);
+	memset(getbuf, 0, UBUFSIZE);
 
 	if (logit) {
 	    fputs("getbuf allocated OK\n", flg);
 	}
 
-	err = files_query(&getbuf, errbuf, filedate);
+	err = files_query(&getbuf, filedate);
 	if (err) {
-	   listerr(errbuf, NULL);
+	   listerr(NULL);
 	   getout(1);
 	}
 
@@ -453,13 +519,13 @@ static int real_program (void)
 		fprintf(flg, "trying to get '%s'\n", get_fname);
 	    }
 
-	    err = get_remote_file(get_fname, errbuf);
+	    err = get_remote_file(get_fname);
 
 	    if (logit) {
 		fprintf(flg, "get_remote_file() returned %d\n", err);
 	    }	    
 	    if (err) {
-		listerr(errbuf, get_fname);
+		listerr(get_fname);
 		return 1;
 	    }
 
@@ -480,14 +546,15 @@ static int real_program (void)
 		err = 1;
 	    }
 	}
-    }
-
-    else if (prog_opt == UPDATER_GET_LISTING) { /* get listing */
-	getbuf = malloc(8192); 
-	clear(getbuf, 8192);
-	err = files_query(&getbuf, errbuf, filedate);
+    } else if (prog_opt == UPDATER_GET_LISTING) { /* get listing */
+	getbuf = malloc(UBUFSIZE); 
+	if (getbuf == NULL) {
+	    getout(1);
+	}
+	memset(getbuf, 0, UBUFSIZE);
+	err = files_query(&getbuf, filedate);
 	if (err) {
-	    listerr(errbuf, NULL);
+	    listerr(NULL);
 	    free(getbuf);
 	    getout(1);
 	}
@@ -495,17 +562,17 @@ static int real_program (void)
 	    infobox(getbuf);
 	}
 	free(getbuf);
-    }
-    
-    else if (prog_opt == UPDATER_GET_FILE) { /* get a specified file */
-	err = get_remote_file(get_fname, errbuf);
+    } else if (prog_opt == UPDATER_GET_FILE) { /* get a specified file */
+	err = get_remote_file(get_fname);
 	if (err) {
-	    listerr(errbuf, get_fname);
+	    listerr(get_fname);
 	    getout(1);
 	}
 	tarerr = untgz(get_fname);
 	remerr = remove(get_fname);
-	if (!err && !tarerr && !remerr) unpack_ok = 1;
+	if (!err && !tarerr && !remerr) {
+	    unpack_ok = 1;
+	}
     }
 
 #ifdef WIN32
@@ -551,11 +618,6 @@ static void win32_start (int warn)
 }
 
 #endif
-
-int show_progress (long res, long expected, int flag)
-{
-    return 0;
-}
 
 int main (int argc, char *argv[])
 {
@@ -637,8 +699,8 @@ int main (int argc, char *argv[])
     filedate = get_time_from_stamp_file(testfile);
 
     if (filedate == (time_t) 0) {
-	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
-	errbox(errbuf);
+	sprintf(gretl_errmsg, "Couldn't get time-stamp from file '%s'", testfile);
+	errbox(gretl_errmsg);
 	getout(1);
     } 
 

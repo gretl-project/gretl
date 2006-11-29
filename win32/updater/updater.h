@@ -1,9 +1,8 @@
 #ifndef UPDATER_H_
 #define UPDATER_H_
 
-#define GRETL_BUFSIZE 8192
-
 #define _(String) String
+#define I_(String) String
 
 enum {
     SP_NONE, 
@@ -22,6 +21,8 @@ enum {
 extern FILE *flg;
 extern int logit;
 
+char *gretl_strdup (const char *src);
+FILE *gretl_fopen (const char *filename, const char *mode);
 int errbox (const char *msg);
 int infobox (const char *msg);
 int untgz (char *fname);
