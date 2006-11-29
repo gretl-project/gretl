@@ -1387,22 +1387,55 @@ static char *print_option (int opt)
     return NULL;
 } 
 
-#if 0
+static int open_local_file (urlinfo_t *u)
+{
+    int err = 0;
 
-static int get_update_info (const char *host, char **saver, char *errbuf, 
-			    time_t filedate, int queryopt)
+    u->fp = gretl_fopen(u->localfile, "wb");
+    if (u->fp == NULL) {
+	fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
+	err = 1;
+    }
+
+    return err;
+}
+
+/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
+   to a local file whose name is given by "savefile".  If saveopt =
+   SAVE_TO_BUFFER then "getbuf" is presumed to point to a char buffer
+   to which the data should be written.
+*/
+
+static int 
+retrieve_url (const char *host, CGIOpt opt, const char *fname, 
+	      const char *dbseries, SaveOpt saveopt, const char *savefile, 
+	      char **getbuf)
 {
     uerr_t result;
     urlinfo_t *u;
-    int dt, err = 0;
-    char datestr[32];
-    const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
     urlinfo_t *proxy = NULL; 
+    const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
+    const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
+    const char *cgi = "";
+    int dt, err = 0;
+    size_t fnlen = 0L;
 
-    *saver = NULL;
+    if (getbuf != NULL) {
+	*getbuf = NULL;
+    }
 
     if (wproxy) {
 	proxy = &gretlproxy;
+    }
+
+    if (fname != NULL) {
+	fnlen = strlen(fname);
+    }
+
+    if (opt == GRAB_FILE) {
+	cgi = updatecgi;
+    } else if (opt != GRAB_PDF) {
+	cgi = datacgi;
     }
 
     u = urlinfo_new();
@@ -1410,56 +1443,77 @@ static int get_update_info (const char *host, char **saver, char *errbuf,
 	return E_ALLOC;
     }
 
-    u->path = malloc(strlen(cgi) + 64);
-    u->getbuf = calloc(2048, 1);
-    if (u->path == NULL || u->getbuf == NULL) {
-	free(u->getbuf);
+    u->path = malloc(strlen(cgi) + fnlen + 64);
+    if (u->path == NULL) {
 	urlinfo_destroy(u, 0);
 	return 1;
     }
 
     err = get_host_ip(u->host, host);
-
     if (err) {
-	free(u->getbuf);
 	urlinfo_destroy(u, 0);
 	return err;
     }
 
-    if (queryopt == QUERY_VERBOSE) {
-	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
+    if (opt == GRAB_PDF) {
+	sprintf(u->path, "/pub/gretl/manual/PDF/%s", fname);
     } else {
-	sprintf(u->path, "%s?opt=QUERY", cgi);
+	sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
     }
 
-    strcat(u->path, "&date=");
-    sprintf(datestr, "%lu", filedate);
-    strcat(u->path, datestr);
+    u->saveopt = saveopt;
 
-    u->saveopt = SAVE_TO_BUFFER;
+    if (fnlen > 0 && opt != GRAB_PDF) {
+	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
+	    strcat(u->path, "&fname=");
+	} else {
+	    strcat(u->path, "&dbase=");
+	}
+	strcat(u->path, fname);
+    }
 
-    result = try_http(u, &dt, proxy); 
+    if (dbseries != NULL) {
+	strcat(u->path, "&series=");
+	strcat(u->path, dbseries);
+    }
+
+    if (saveopt == SAVE_TO_FILE) {
+	u->localfile = gretl_strdup(savefile);
+	err = open_local_file(u);
+    } else {
+	u->getbuf = calloc(WBUFSIZE, 1);
+	if (u->getbuf == NULL) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	urlinfo_destroy(u, 0);
+	return err;
+    }    
+
+    result = try_http(u, &dt, proxy);
 
 #if WDEBUG
-    fprintf(stderr, "try_http returned %d (RETROK=%d), u->errbuf='%s'\n",
-	    (int) result, RETROK, u->errbuf);
+    fprintf(stderr, "try_http returned %d, u->errbuf='%s'\n",
+	    (int) result, u->errbuf);
 #endif
 
-    if (result == RETROK) {
-        *errbuf = '\0';
-    } else {
-	strcpy(errbuf, u->errbuf);
+    if (result != RETROK) {
+	strcpy(gretl_errmsg, u->errbuf);
 	err = 1;
     }
 
-    *saver = u->getbuf;
+    if (getbuf != NULL) {
+	*getbuf = u->getbuf;
+    }    
 
-    urlinfo_destroy(u, 0);
+    urlinfo_destroy(u, err);
 
     return err;
 }
 
-#endif
+/* public interfaces follow */
 
 int www_proxy_init (const char *dbproxy, int use_proxy)
 {
@@ -1501,19 +1555,6 @@ int www_proxy_init (const char *dbproxy, int use_proxy)
 
     return 0;
 } 
-
-static int open_local_file (urlinfo_t *u)
-{
-    int err = 0;
-
-    u->fp = gretl_fopen(u->localfile, "wb");
-    if (u->fp == NULL) {
-	fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
-	err = 1;
-    }
-
-    return err;
-}
 
 int upload_function_package (const char *login, const char *pass, 
 			     const char *fname, const char *buf)
@@ -1635,118 +1676,6 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
     return err;
 }
 
-/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
-   to a local file whose name is given by "savefile".  If saveopt =
-   SAVE_TO_BUFFER then "getbuf" is presumed to point to a char buffer
-   to which the data should be written.
-*/
-
-static int 
-retrieve_url (const char *host, CGIOpt opt, const char *fname, 
-	      const char *dbseries, SaveOpt saveopt, const char *savefile, 
-	      char **getbuf)
-{
-    uerr_t result;
-    urlinfo_t *u;
-    urlinfo_t *proxy = NULL; 
-    const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
-    const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
-    const char *cgi = "";
-    int dt, err = 0;
-    size_t fnlen = 0L;
-
-    if (getbuf != NULL) {
-	*getbuf = NULL;
-    }
-
-    if (wproxy) {
-	proxy = &gretlproxy;
-    }
-
-    if (fname != NULL) {
-	fnlen = strlen(fname);
-    }
-
-    if (opt == GRAB_FILE) {
-	cgi = updatecgi;
-    } else if (opt != GRAB_PDF) {
-	cgi = datacgi;
-    }
-
-    u = urlinfo_new();
-    if (u == NULL) {
-	return E_ALLOC;
-    }
-
-    u->path = malloc(strlen(cgi) + fnlen + 64);
-    if (u->path == NULL) {
-	urlinfo_destroy(u, 0);
-	return 1;
-    }
-
-    err = get_host_ip(u->host, host);
-    if (err) {
-	urlinfo_destroy(u, 0);
-	return err;
-    }
-
-    if (opt == GRAB_PDF) {
-	sprintf(u->path, "/pub/gretl/manual/PDF/%s", fname);
-    } else {
-	sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
-    }
-
-    u->saveopt = saveopt;
-
-    if (fnlen > 0 && opt != GRAB_PDF) {
-	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
-	    strcat(u->path, "&fname=");
-	} else {
-	    strcat(u->path, "&dbase=");
-	}
-	strcat(u->path, fname);
-    }
-
-    if (dbseries != NULL) {
-	strcat(u->path, "&series=");
-	strcat(u->path, dbseries);
-    }
-
-    if (saveopt == SAVE_TO_FILE) {
-	u->localfile = gretl_strdup(savefile);
-	err = open_local_file(u);
-    } else {
-	u->getbuf = calloc(WBUFSIZE, 1);
-	if (u->getbuf == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (err) {
-	urlinfo_destroy(u, 0);
-	return err;
-    }    
-
-    result = try_http(u, &dt, proxy);
-
-#if WDEBUG
-    fprintf(stderr, "try_http returned %d, u->errbuf='%s'\n",
-	    (int) result, u->errbuf);
-#endif
-
-    if (result != RETROK) {
-	strcpy(gretl_errmsg, u->errbuf);
-	err = 1;
-    }
-
-    if (getbuf != NULL) {
-	*getbuf = u->getbuf;
-    }    
-
-    urlinfo_destroy(u, err);
-
-    return err;
-}
 
 #ifndef UPDATER
 
