@@ -58,12 +58,10 @@ static time_t get_time_from_stamp_file (const char *fname)
         "Oct", "Nov", "Dec"
     };
 
-#ifdef USE_G_FOPEN
-    fp = g_fopen(fname, "r");
-#else
-    fp = fopen(fname, "r");
-#endif
-    if (fp == NULL) return (time_t) 0;
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return (time_t) 0;
+    }
 
     if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
                wday, mon, &stime.tm_mday, &stime.tm_hour,
@@ -82,7 +80,9 @@ static time_t get_time_from_stamp_file (const char *fname)
         }
     }
 
-    if (stime.tm_mon == 20) return (time_t) 0;
+    if (stime.tm_mon == 20) {
+	return (time_t) 0;
+    }
 
     stime.tm_year -= 1900;
 
@@ -90,6 +90,7 @@ static time_t get_time_from_stamp_file (const char *fname)
 }
 
 #ifdef WIN32
+
 static void maybe_fork_updater (char *msg)
 {
     int resp;
@@ -109,6 +110,47 @@ static void maybe_fork_updater (char *msg)
 	exit(EXIT_SUCCESS);
     }
 }
+
+static void win_new_files_response (const char *buf)
+{
+    char infotxt[512];
+
+    sprintf(infotxt, _("New files are available from the gretl web site.\n"
+		       "These files have a combined size of %u bytes.\n\nWould "
+		       "you like to exit from gretl and update your installation now?\n"
+		       "(You can run gretl_updater.exe later if you prefer.)"),
+	    get_size(buf));
+    maybe_fork_updater(infotxt);
+}
+
+#else
+
+static void new_files_response (int admin, const char *testfile,
+				const char *hometest)
+{
+    char infotxt[512];
+    FILE *fp;
+
+    if (admin) {
+	strcpy(infotxt, _("New files are available from the gretl web site\n"
+			  "http://gretl.sourceforge.net/"));
+	fp = fopen(testfile, "w");
+    } else {
+	strcpy(infotxt, _("You may want to let the system administrator know\n"
+			  "that new files are available from the gretl web site\n"
+			  "http://gretl.sourceforge.net/"));
+	fp = fopen(hometest, "w");
+    }
+
+    if (fp != NULL) {
+	fprintf(fp, _("This file is part of the gretl update notification "
+		      "system\n"));
+	fclose(fp);
+    }
+
+    infobox(infotxt);
+}
+
 #endif
 
 static int real_update_query (int queryopt)
@@ -158,33 +200,11 @@ static int real_update_query (int queryopt)
     if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
     } else if (strncmp(getbuf, "No new", 6)) {
-	char infotxt[512];
-
-#ifdef WIN32 
-	sprintf(infotxt, _("New files are available from the gretl web site.\n"
-			   "These files have a combined size of %u bytes.\n\nWould "
-			   "you like to exit from gretl and update your installation now?\n"
-			   "(You can run gretl_updater.exe later if you prefer.)"),
-		get_size(getbuf));
-	maybe_fork_updater(infotxt);
+#ifdef WIN32
+	win_new_files_response(getbuf);
 #else
-	if (admin) {
-	    strcpy(infotxt, _("New files are available from the gretl web site\n"
-		   "http://gretl.sourceforge.net/"));
-	    fp = fopen(testfile, "w");
-	} else {
-	    strcpy(infotxt, _("You may want to let the system administrator know\n"
-		   "that new files are available from the gretl web site\n"
-		   "http://gretl.sourceforge.net/"));
-	    fp = fopen(hometest, "w");
-	}
-	if (fp != NULL) {
-	    fprintf(fp, _("This file is part of the gretl update notification "
-		    "system\n"));
-	    fclose(fp);
-	}
-	infobox(infotxt);
-#endif /* WIN32 */
+	new_files_response(admin, testfile, hometest);
+#endif 
     } else if (queryopt == QUERY_VERBOSE) {
 	infobox(_("No new files"));
     }
