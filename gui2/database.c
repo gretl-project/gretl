@@ -35,7 +35,7 @@
 #include <errno.h>
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-#include <netinet/in.h>
+# include <netinet/in.h>
 #endif
 
 /* private functions */
@@ -143,59 +143,24 @@ void show_network_error (windata_t *vwin)
     free(buf);
 }
 
-static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 
-			       double **Z)
+static int gui_get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 
+				   double **Z)
 {
-    char *getbuf = NULL;
     char *dbbase = vwin->fname;
-    int t, err, n = sinfo->nobs;
-    dbnumber val;
-    size_t offset;
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-    netfloat nf;
-#endif
+    int err;
 
     update_statusline(vwin, _("Retrieving data..."));
 
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  GRAB_NBO_DATA);
-#else
-    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
-				  GRAB_DATA);
-#endif
+    err = get_remote_db_data(dbbase, sinfo, Z);
 
     if (err) {
 	show_network_error(vwin);
-	free(getbuf);
 	return E_FOPEN;
-    } 
-
-    offset = 0L;
-    for (t=0; t<n; t++) {
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-	/* go via network byte order */
-	memcpy(&(nf.frac), getbuf + offset, sizeof nf.frac);
-	offset += sizeof nf.frac;
-	memcpy(&(nf.exp), getbuf + offset, sizeof nf.exp);
-	offset += sizeof nf.exp;
-	val = retrieve_float(nf);
-#else
-	/* just read floats */
-	memcpy(&val, getbuf + offset, sizeof val);
-	offset += sizeof val;
-#endif
-	if (val == -999.0) {
-	    Z[1][t] = NADBL;
-	} else {
-	    Z[1][t] = val;
-	}
+    } else {
+	update_statusline(vwin, "OK");
     }
 
-    update_statusline(vwin, "OK");
-    free(getbuf);
-
-    return 0;
+    return err;
 }
 
 static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
@@ -461,7 +426,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     if (dbcode == NATIVE_SERIES) { 
 	err = get_native_db_data(vwin->fname, sinfo, dbZ);
     } else if (dbcode == REMOTE_SERIES) {
-	err = get_remote_db_data(vwin, sinfo, dbZ);
+	err = gui_get_remote_db_data(vwin, sinfo, dbZ);
     } else if (dbcode == RATS_SERIES) {
 	err = get_rats_db_data(vwin->fname, sinfo, dbZ);
     } else if (dbcode == PCGIVE_SERIES) {

@@ -29,6 +29,7 @@ typedef enum {
     LIST_FUNCS,
     GRAB_FUNC,
     GRAB_PDF,
+    CHECK_DB,
     UPLOAD
 } CGIOpt;
 
@@ -37,7 +38,7 @@ typedef enum {
     QUERY_VERBOSE
 } QueryOpt;
 
-int www_proxy_init (const char *dbproxy, int use_proxy);
+int gretl_www_init (const char *host, const char *proxy, int use_proxy);
 
 int list_remote_dbs (char **getbuf);
 
@@ -48,6 +49,8 @@ int retrieve_remote_db_index (const char *dbname, char **getbuf);
 int retrieve_remote_db (const char *dbname, 
 			const char *localname,
 			int opt);
+
+int check_remote_db (const char *dbname);
 
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname);

@@ -549,9 +549,8 @@ static int substitute_homedir (char *fname)
  * @line: command line (e.g. "open foo").
  * @fname: filename to be filled out.
  * @ppaths: path information struct.
- * @setpath: if non-zero, set @ppaths->currdir based on the file
- * that is found (if any).
- * @script: if non-zero, suppose the file is a command script.
+ * @opt: if includes %OPT_W, treat as web filename and don't
+ * try to add path, if %OPT_S, treat as a script.
  * 
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened.
@@ -560,17 +559,22 @@ static int substitute_homedir (char *fname)
  */
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
-		 int setpath, int script)
+		 gretlopt opt)
 {
+    int script = (opt & OPT_S)? 1 : 0;
     char *fullname;
 
-    /* get the initial filename off the command line */
     if (get_quoted_filename(line, fname)) {
+	/* if the filename was quoted, we'll leave it as is */
 	return 0; 
     }
 
     if (sscanf(line, "%*s %s", fname) != 1) {
-	return 1;
+	return E_PARSE;
+    }
+
+    if (opt & OPT_W) {
+	return 0;
     }
 
     /* handle tilde == HOME */
@@ -581,7 +585,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     /* try a basic path search on this filename */
     fullname = addpath(fname, ppaths, script);
 
-    if (fullname != NULL && setpath) {
+    if (fullname != NULL && script) {
 	int n, spos = slashpos(fname);
 
 	if (spos) {

@@ -50,6 +50,7 @@ typedef enum {
     GRETL_SCRIPT,         /* file containing gretl commands */
     GRETL_SESSION,        /* zipped session file */
     GRETL_NATIVE_DB,      /* gretl database */
+    GRETL_NATIVE_DB_WWW,  /* gretl database, accessed via internet */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_PCGIVE_DB,      /* PcGive bn7/in7 pair */
     GRETL_JMULTI,         /* JMulTi data file */

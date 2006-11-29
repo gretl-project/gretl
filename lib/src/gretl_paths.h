@@ -35,7 +35,7 @@ int gretl_is_xml_file (const char *fname);
 char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
-		 int setpath, int script);
+		 gretlopt opt);
 
 void show_paths (const PATHS *ppaths);
 

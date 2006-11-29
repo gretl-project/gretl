@@ -21,6 +21,11 @@
 
 #include "libgretl.h"
 #include "swap_bytes.h"
+#include "gretl_www.h"
+
+#if WORDS_BIGENDIAN
+# include <netinet/in.h>
+#endif
 
 #define DB_DEBUG 0
 
@@ -82,6 +87,22 @@ typedef struct {
 
 static char db_name[MAXLEN];
 static int db_type;
+
+#if WORDS_BIGENDIAN
+typedef struct {
+    long frac;
+    short exp;
+} netfloat;
+
+float retrieve_float (netfloat nf)
+{
+    short exp = ntohs(nf.exp);
+    long frac = ntohl(nf.frac);
+    double receive = frac / 10e6;
+    
+    return ldexp(receive, exp);
+}
+#endif
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
@@ -145,6 +166,55 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     fclose(fp);
 
     return err;
+}
+
+int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, double **Z)
+{
+    char *getbuf = NULL;
+    int t, err, n = sinfo->nobs;
+    dbnumber x;
+    size_t offset;
+#if WORDS_BIGENDIAN
+    netfloat nf;
+#endif
+
+#if WORDS_BIGENDIAN
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  GRAB_NBO_DATA);
+#else
+    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf,
+				  GRAB_DATA);
+#endif
+
+    if (err) {
+	free(getbuf);
+	return E_FOPEN;
+    } 
+
+    offset = 0L;
+    for (t=0; t<n; t++) {
+#if WORDS_BIGENDIAN
+	/* go via network byte order */
+	memcpy(&(nf.frac), getbuf + offset, sizeof nf.frac);
+	offset += sizeof nf.frac;
+	memcpy(&(nf.exp), getbuf + offset, sizeof nf.exp);
+	offset += sizeof nf.exp;
+	x = retrieve_float(nf);
+#else
+	/* just read floats */
+	memcpy(&x, getbuf + offset, sizeof x);
+	offset += sizeof x;
+#endif
+	if (x == -999.0) {
+	    Z[1][t] = NADBL;
+	} else {
+	    Z[1][t] = x;
+	}
+    }
+
+    free(getbuf);
+
+    return 0;
 }
 
 int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
@@ -278,9 +348,13 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
     while (fgets(line1, sizeof line1, fp) && !gotit) {
 
-	if (*line1 == '#') continue;
+	if (*line1 == '#') {
+	    continue;
+	}
 
-	if (sscanf(line1, "%15s", sername) != 1) break;
+	if (sscanf(line1, "%15s", sername) != 1) {
+	    break;
+	}
 
 	if (!strcmp(series, sername)) {
 	    gotit = 1;
@@ -311,6 +385,69 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     }
 
     fclose(fp);
+
+    if (!gotit) {
+	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	err = DB_NO_SUCH_SERIES;
+    }
+
+    return err;
+}
+
+static int 
+get_remote_series_info (const char *series, SERIESINFO *sinfo)
+{
+    char *buf = NULL;
+    char sername[VNAMELEN];
+    char line1[256], line2[72];
+    char stobs[11], endobs[11];
+    char pdc;
+    int gotit = 0;
+    int err = 0;
+
+    err = retrieve_remote_db_index(db_name, &buf);
+    if (err) {
+	return err;
+    }
+
+    sinfo->offset = 0;
+
+    bufgets_init(buf);
+
+    while (bufgets(line1, sizeof line1, buf) && !gotit) {
+	if (*line1 == '#') {
+	    continue;
+	}
+
+	if (sscanf(line1, "%15s", sername) != 1) {
+	    break;
+	}
+
+	if (strcmp(series, sername)) {
+	    continue;
+	}
+
+	gotit = 1;
+
+	if (bufgets(line2, sizeof line2, buf) == NULL) {
+	    err = DB_PARSE_ERROR;
+	    break;
+	} 
+
+	strcpy(sinfo->varname, sername);
+	get_native_series_comment(sinfo, line1);
+
+	if (sscanf(line2, "%c %10s %*s %10s %*s %*s %d", 
+		   &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+	    strcpy(gretl_errmsg, _("Failed to parse series information"));
+	    err = DB_PARSE_ERROR;
+	} else {
+	    get_native_series_pd(sinfo, pdc);
+	    get_native_series_obs(sinfo, stobs, endobs);
+	}
+    }
+
+    free(buf);
 
     if (!gotit) {
 	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
@@ -1219,14 +1356,31 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
     return x;
 }
 
-int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
-		 PRN *prn)
+int 
+set_db_name (const char *fname, int filetype, const PATHS *ppaths, PRN *prn)
 {
     FILE *fp;
     int err = 0;
 
     *db_name = 0;
     strncat(db_name, fname, MAXLEN - 1);
+
+    if (filetype == GRETL_NATIVE_DB_WWW) {
+	int n = strlen(db_name);
+
+	if (n > 4) {
+	    n -= 4;
+	    if (!strcmp(db_name + n, ".bin")) {
+		db_name[n] = '\0';
+	    }
+	}
+	err = check_remote_db(db_name);
+	if (!err) {
+	    db_type = filetype;
+	    pprintf(prn, "%s\n", db_name);
+	}
+	return err;
+    }
 
     fp = gretl_fopen(db_name, "rb");
 
@@ -1430,6 +1584,8 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    err = get_rats_series_info(series, &sinfo);
 	} else if (db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_series_info(series, &sinfo);
+	} else if (db_type == GRETL_NATIVE_DB_WWW) {
+	    err = get_remote_series_info(series, &sinfo);
 	} else {
 	    err = get_native_series_info(series, &sinfo);
 	} 
@@ -1447,13 +1603,16 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 #if DB_DEBUG
-	fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", sinfo.offset, sinfo.nobs);
+	fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", 
+		sinfo.offset, sinfo.nobs);
 #endif
 
 	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_db_data(db_name, &sinfo, dbZ);
 	} else if (db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_db_data(db_name, &sinfo, dbZ);
+	} else if (db_type == GRETL_NATIVE_DB_WWW) {
+	    err = get_remote_db_data(db_name, &sinfo, dbZ);
 	} else {
 	    err = get_native_db_data(db_name, &sinfo, dbZ);
 	} 
@@ -1468,7 +1627,8 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!err) {
-	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v,
+	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, 
+				  this_var_method, v, 
 				  &newdata, prn);
 	}
 
@@ -1517,8 +1677,8 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 	sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
 	sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
 	if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	    strcpy(gretl_errmsg, _("Observation range does not overlap\nwith the working "
-				   "data set"));
+	    strcpy(gretl_errmsg, _("Observation range does not overlap\n"
+				   "with the working data set"));
 	    err = 1;
 	}
     }
@@ -1590,7 +1750,8 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
 #if DB_DEBUG
     fprintf(stderr, "Z=%p\n", (void *) *pZ);
-    fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, dbv = %d\n", pdinfo->n, pdinfo->v, dbv);
+    fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, dbv = %d\n", 
+	    pdinfo->n, pdinfo->v, dbv);
 #endif
 
     /* is the frequency of the new var higher? */
@@ -2111,7 +2272,8 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
 #define WEEKLY_DEBUG 0
 
 static int 
-weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int mn)
+weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, 
+		      int mn)
 { 
     char obsstr[OBSLEN];
     int *den;

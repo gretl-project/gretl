@@ -845,7 +845,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case IMPORT:
-	err = getopenfile(line, datfile, &paths, 0, 0);
+	err = getopenfile(line, datfile, &paths, OPT_NONE);
 	if (err) {
 	    pputs(prn, _("import command is malformed\n"));
 	    break;
@@ -874,7 +874,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-	err = getopenfile(line, datfile, &paths, 0, 0);
+	err = getopenfile(line, datfile, &paths, cmd->opt);
 	if (err) {
 	    pputs(prn, _("'open' command is malformed\n"));
 	} else {
@@ -1000,7 +1000,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, &paths, 1, 1);
+	err = getopenfile(line, runfile, &paths, OPT_S);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;

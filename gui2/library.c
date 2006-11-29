@@ -6023,6 +6023,101 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
+static int open_append_import (CMD *cmd, char *line, 
+			       double ***pZ,
+			       DATAINFO **ppdinfo,
+			       PRN *prn)
+{
+    DATAINFO *pdinfo = *ppdinfo;
+    char datfile[MAXLEN];
+    int k, dbdata = 0;
+    int err = 0;
+
+    if (dataset_locked()) {
+	return 0;
+    }
+
+    err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)? 
+		      OPT_W : OPT_NONE);
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
+
+    if (cmd->opt & OPT_W) {
+	k = GRETL_NATIVE_DB_WWW;
+    } else if (cmd->ci == IMPORT) {
+	if (cmd->opt & OPT_B) {
+	    k = GRETL_BOX_DATA;
+	} else if (cmd->opt & OPT_O) {
+	    k = GRETL_OCTAVE;
+	} else {
+	    k = GRETL_CSV_DATA;
+	}
+    } else {
+	k = detect_filetype(datfile, &paths, prn);
+    }
+
+    dbdata = (k == GRETL_NATIVE_DB || k == GRETL_NATIVE_DB_WWW ||
+	      k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
+
+    if (cmd->ci != APPEND && (data_status & HAVE_DATA) && !dbdata) {
+	close_session(pZ, ppdinfo);
+	pdinfo = *ppdinfo;
+    }
+
+    if (k == GRETL_CSV_DATA) {
+	err = import_csv(pZ, ppdinfo, datfile, prn);
+    } else if (k == GRETL_OCTAVE) {
+	err = import_octave(pZ, ppdinfo, datfile, prn);
+    } else if (k == GRETL_BOX_DATA) {
+	err = import_box(pZ, ppdinfo, datfile, prn);
+    } else if (k == GRETL_XML_DATA) {
+	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
+			     data_status, prn, 1);
+    } else if (WORKSHEET_IMPORT(k)) {
+	err = import_other(pZ, ppdinfo, k, datfile, prn);
+    } else if (dbdata) {
+	err = set_db_name(datfile, k, &paths, prn);
+    } else {
+	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
+			     data_status, prn);
+    }
+
+    pdinfo = *ppdinfo;
+
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
+
+    if (!dbdata && cmd->ci != APPEND) {
+	strncpy(paths.datfile, datfile, MAXLEN - 1);
+    }
+
+    if (k == GRETL_CSV_DATA || k == GRETL_BOX_DATA || 
+	k == GRETL_OCTAVE || WORKSHEET_IMPORT(k) || dbdata) {
+	data_status |= IMPORT_DATA;
+	maybe_display_string_table();
+    }
+
+    if (pdinfo->v > 0 && !dbdata) {
+	if (cmd->ci == APPEND) {
+	    register_data(NULL, NULL, 0);
+	} else {
+	    register_data(paths.datfile, NULL, 0);
+	}
+	varlist(pdinfo, prn);
+    }
+
+    if (cmd->ci == IMPORT) {
+	pprintf(prn, _("You should now use the \"print\" command "
+		       "to verify the data\n"));
+    }
+
+    return err;
+}
+
 int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     DATAINFO *pdinfo = *ppdinfo;
@@ -6032,7 +6127,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     MODEL **models = s->models;
     PRN *outprn = NULL;
     int grbatch = 0;
-    char datfile[MAXLEN];
     char runfile[MAXLEN];
     GnuplotFlags plotflags = 0;
     int k, err = 0;
@@ -6225,99 +6319,11 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	help(cmd->param, paths.cli_helpfile, prn);
 	break;
 
-    case IMPORT:
-	if (dataset_locked()) {
-	    break;
-	}
-        err = getopenfile(line, datfile, &paths, 0, 0);
-        if (err) {
-            pprintf(prn, _("import command is malformed\n"));
-            break;
-        }
-	if (data_status & HAVE_DATA) {
-	    close_session(pZ, ppdinfo);
-	    pdinfo = *ppdinfo;
-	}
-        if (cmd->opt & OPT_B) {
-            err = import_box(pZ, ppdinfo, datfile, prn);
-	} else if (cmd->opt & OPT_O) {
-	    err = import_octave(pZ, ppdinfo, datfile, prn);
-        } else {
-            err = import_csv(pZ, ppdinfo, datfile, prn);
-	}
-	pdinfo = *ppdinfo;
-        if (!err) { 
-	    maybe_display_string_table();
-	    data_status |= IMPORT_DATA;
-	    register_data(datfile, NULL, 1);
-            print_smpl(pdinfo, 0, prn);
-            varlist(pdinfo, prn);
-            pprintf(prn, _("You should now use the \"print\" command "
-			   "to verify the data\n"));
-            pprintf(prn, _("If they are OK, use the  \"store\" command "
-			   "to save them in gretl format\n"));
-        }
-        break;
-
     case OPEN:
     case APPEND:
-	if (dataset_locked()) {
-	    break;
-	}
-	err = getopenfile(line, datfile, &paths, 0, 0);
-	if (err) {
-	    errbox(_("'open' command is malformed"));
-	} else {
-	    int k = detect_filetype(datfile, &paths, prn);
-	    int dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB ||
-			  k == GRETL_PCGIVE_DB);
-
-	    if (cmd->ci == OPEN && (data_status & HAVE_DATA) && !dbdata) {
-		close_session(pZ, ppdinfo);
-		pdinfo = *ppdinfo;
-	    }
-
-	    if (k == GRETL_CSV_DATA) {
-		err = import_csv(pZ, ppdinfo, datfile, prn);
-	    } else if (k == GRETL_OCTAVE) {
-		err = import_octave(pZ, ppdinfo, datfile, prn);
-	    } else if (k == GRETL_BOX_DATA) {
-		err = import_box(pZ, ppdinfo, datfile, prn);
-	    } else if (k == GRETL_XML_DATA) {
-		err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-				     data_status, prn, 1);
-	    } else if (WORKSHEET_IMPORT(k)) {
-		err = import_other(pZ, ppdinfo, k, datfile, prn);
-	    } else if (dbdata) {
-		err = set_db_name(datfile, k, &paths, prn);
-	    } else {
-		err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-				     data_status, prn);
-	    }
-	    pdinfo = *ppdinfo;
-	    if (err) {
-		gui_errmsg(err);
-		break;
-	    }
-	    if (!dbdata && cmd->ci != APPEND) {
-		strncpy(paths.datfile, datfile, MAXLEN-1);
-	    }
-	    if (k == GRETL_CSV_DATA || k == GRETL_BOX_DATA || dbdata) {
-		data_status |= IMPORT_DATA;
-		maybe_display_string_table();
-	    }
-	    if (pdinfo->v > 0 && !dbdata) {
-		if (cmd->ci == APPEND) {
-		    register_data(NULL, NULL, 0);
-		} else {
-		    register_data(paths.datfile, NULL, 0);
-		}
-		varlist(pdinfo, prn);
-	    }
-#if 0 /* changed 2006/11/20: does this create problems? */
-	    *paths.currdir = '\0'; 
-#endif
-	}
+    case IMPORT:
+	err = open_append_import(cmd, line, pZ, ppdinfo, prn);
+	pdinfo = *ppdinfo;
 	break;
 
     case MODELTAB:
@@ -6362,7 +6368,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case RUN:
     case INCLUDE:
-	err = getopenfile(line, runfile, &paths, 1, 1);
+	err = getopenfile(line, runfile, &paths, OPT_S);
 	if (err) { 
 	    pprintf(prn, _("Run command failed\n"));
 	    break;

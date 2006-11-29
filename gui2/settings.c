@@ -1398,7 +1398,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_tramo_x12a_dirs();
 #endif
 
-    www_proxy_init(dbproxy, use_proxy);
+    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 }
 
 #ifndef USE_GCONF
@@ -1449,7 +1449,7 @@ static void common_read_rc_setup (void)
     set_garch_robust_vcv(hc_garch);
 
     set_paths(&paths, set_paths_opt);
-    www_proxy_init(dbproxy, use_proxy);
+    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
