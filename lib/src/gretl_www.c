@@ -675,7 +675,7 @@ static int http_process_type (const char *hdr, void *arg)
 
     *result = malloc(len + 1);
     if (*result != NULL) {
-	*result[0] = '\0';
+	(*result)[0] = '\0';
 	strncat(*result, hdr, len);
     }
 
