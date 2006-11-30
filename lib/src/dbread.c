@@ -252,29 +252,12 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 
 static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
 {
-    size_t n = strlen(sinfo->varname);
-    const char *p = s + n + 1;
-    int i;
-
-    while (*p) {
-	if (isspace(*p)) p++;
-	else break;
-    }
+    s += strcspn(p, " "); /* skip varname */
+    s += strspn(p, " ");  /* skip space */
 
     *sinfo->descrip = 0;
-    strncat(sinfo->descrip, p, MAXLABEL - 1);
-
-    n = strlen(sinfo->descrip) - 1;
-    
-    for (i=n; i>0; i--) {
-	if (isspace(sinfo->descrip[i])) {
-	    sinfo->descrip[i] = 0;
-	} else if (sinfo->descrip[i] == '\r' || sinfo->descrip[i] == '\n') {
-	    sinfo->descrip[i] = 0;
-	} else {
-	    break;
-	}
-    }
+    strncat(sinfo->descrip, s, MAXLABEL - 1);
+    tailstrip(sinfo->descrip);
 }
 
 static int get_native_series_pd (SERIESINFO *sinfo, char pdc)

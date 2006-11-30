@@ -5804,18 +5804,29 @@ void save_latex (PRN *prn, const char *fname)
     }
 }
 
-#if 0
-static const char *exec_string (int i)
+static void clean_up_varlabels (DATAINFO *pdinfo)
 {
-    switch (i) {
-    case CONSOLE_EXEC: return "CONSOLE_EXEC";
-    case SCRIPT_EXEC: return "SCRIPT_EXEC";
-    case SESSION_EXEC: return "SESSION_EXEC";
-    case SAVE_SESSION_EXEC: return "SAVE_SESSION_EXEC";
-    default: return "Unknown";
+    char *label;
+    gchar *conv;
+    gsize wrote;
+    int i;
+
+    for (i=1; i<pdinfo->v; i++) {
+	label = VARLABEL(pdinfo, i);
+	if (!g_utf8_validate(label, -1, NULL)) {
+	    fprintf(stderr, "clean_up_varlabels!\n");
+	    conv = g_convert(label, -1,
+			     "UTF-8",
+			     "ISO-8859-1",
+			     NULL, &wrote, NULL);
+	    if (conv != NULL) {
+		*label = '\0';
+		strncat(label, conv, MAXLABEL - 1);
+		g_free(conv);
+	    }
+	} 
     }
 }
-#endif
 
 static int ok_script_file (const char *runfile)
 {
@@ -6252,7 +6263,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATA:
 	err = db_get_series(line, pZ, pdinfo, prn);
-        if (0 && !err) { 
+        if (!err) { 
+	    clean_up_varlabels(pdinfo);
 	    register_data(NULL, NULL, 0);
             varlist(pdinfo, prn);
         }
