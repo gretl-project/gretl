@@ -2630,7 +2630,7 @@ struct readbuf {
 static struct readbuf *rbuf;
 static int n_bufs;
 
-static int push_read_buffer (const char *s)
+static int rbuf_push (const char *s)
 {
     struct readbuf *tmp = NULL;
     int i;
@@ -2682,7 +2682,7 @@ static void rbuf_set_point (const char *s, const char *p)
     }
 }
 
-static void rbuf_destroy (const char *s)
+static void rbuf_finalize (const char *s)
 {
     int i;
 
@@ -2715,23 +2715,22 @@ static void rbuf_destroy (const char *s)
 char *bufgets (char *s, size_t size, const char *buf)
 {
     enum {
-	END_OF_BUF,
-	GOT_LF,
+	GOT_LF = 1,
 	GOT_CR,
 	GOT_CRLF
     };
-    int i, status = END_OF_BUF;
+    int i, status = 0;
     const char *p;
 
     if (s == NULL && size == 1) {
 	/* signal for end-of-read */
-	rbuf_destroy(buf);
+	rbuf_finalize(buf);
 	return NULL;
     }
 
     if (s == NULL || size == 0) {
 	/* signal for initialization */
-	push_read_buffer(buf);
+	rbuf_push(buf);
 	return NULL;
     }
 
@@ -2740,8 +2739,8 @@ char *bufgets (char *s, size_t size, const char *buf)
 	return NULL;
     }
 
-    /* signal that we've reached the end of the buffer */
     if (*p == '\0') {
+	/* reached the end of the buffer */
 	return NULL;
     }
 
