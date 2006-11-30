@@ -1825,7 +1825,12 @@ static int arbond_step_2 (arbond *ab, PRN *prn)
     /* in case first inversion attempt fails */
     gretl_matrix_copy_values(ab->Acpy, ab->V);
 
-    err = gretl_invert_symmetric_matrix(ab->V);
+    if (gretl_matrix_rows(ab->V) > ab->effN) {
+	err = 1; /* we know this case won't work */
+    } else {
+	err = gretl_invert_symmetric_matrix(ab->V);
+    }
+
     if (err) {
 	gretl_matrix_copy_values(ab->V, ab->Acpy);
 	err = gretl_SVD_invert_matrix(ab->V);
