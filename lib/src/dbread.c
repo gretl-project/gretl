@@ -447,6 +447,8 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 	}
     }
 
+    bufgets_finalize(buf);
+
     free(buf);
 
     if (!gotit) {
@@ -1479,12 +1481,11 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 
     *method = COMPACT_NONE;
 
-    if ((p = strstr(s, "(compact"))) {
+    if ((p = strstr(s, "(compact")) != NULL) {
 	char comp[8];
-	int i;
+	int i = 0;
 
 	p += 8;
-	i = 0;
 	while (*p && *p != ')' && i < 7) {
 	    if (!isspace(*p) && *p != '=') {
 		comp[i++] = *p;
@@ -1505,11 +1506,10 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 
 	p = strchr(p, ')');
 	if (p != NULL) p++;
+    } else if ((p = strstr(s, "data ")) != NULL) {
+	p += 5;
     } else {
-	/* no compaction method given */
-	if ((p = strstr(s, "data "))) {
-	    p += 5;
-	}
+	p = s;
     }
 
     return p;
@@ -1540,7 +1540,7 @@ static double **new_dbZ (int n)
 int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn)
 {
-    char series[16];
+    char series[VNAMELEN];
     CompactMethod method;
     SERIESINFO sinfo;
     double **dbZ;

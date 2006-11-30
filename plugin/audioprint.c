@@ -199,13 +199,15 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 
     bufgets_init(buf);
 
-    while (bufgets(line, 127, buf)) {
+    while (bufgets(line, sizeof line, buf)) {
 	if (should_stop()) {
 	    flite_text_to_speech("OK, stopping", v, "play");
 	    break;
 	}
 	flite_text_to_speech(line, v, "play");
     }
+
+    bufgets_finalize(buf);
 	
     return 0;
 }
@@ -266,7 +268,7 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 
     bufgets_init(buf);
 
-    while (bufgets(line, 127, buf)) {
+    while (bufgets(line, sizeof line, buf)) {
 	if (should_stop()) {
 	    ISpVoice_Speak(v, L"OK, stopping", 0, NULL);
 	    break;
@@ -275,6 +277,8 @@ static int speak_buffer (const char *buf, int (*should_stop)())
 	ISpVoice_Speak(v, w, 0, NULL);
 	free(w);
     }
+
+    bufgets_finalize(buf);
 
     release_sapi_voice(v);
 

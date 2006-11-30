@@ -662,12 +662,12 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int cli_open_append (CMD *cmd, char *line, double ***pZ,
+static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO **ppdinfo, MODEL **models,
 			    PRN *prn)
 {
     DATAINFO *pdinfo = *ppdinfo;
-    char datfile[MAXLEN];
+    char datfile[MAXLEN] = {0};
     char response[3];
     int k, dbdata = 0;
     int err = 0;

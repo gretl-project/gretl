@@ -209,9 +209,8 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
 	chunk = readbuf;
 # endif /* ENABLE_NLS */
 
-	/* check that this works */
 	len = strlen(chunk);
-	if (chunk[len - 2] == '\r') {
+	if (len >= 2 && chunk[len - 2] == '\r') {
 	    chunk[len - 2] = '\n';
 	    chunk[len - 1] = '\0';
 	}
@@ -249,6 +248,8 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, line, -1);
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, "\n", 1);
     }
+
+    bufgets_finalize(buf);
 
     gtk_source_buffer_end_not_undoable_action(sbuf);
     gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
@@ -517,6 +518,7 @@ void textview_set_text_colorized (GtkWidget *view, const char *buf)
 
     thiscolor = PLAIN_TEXT;
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+
     bufgets_init(buf);
 
     while (bufgets(readbuf, sizeof readbuf, buf)) {
@@ -544,6 +546,8 @@ void textview_set_text_colorized (GtkWidget *view, const char *buf)
 
 	thiscolor = nextcolor;
     }
+
+    bufgets_finalize(buf);
 }
 
 void textview_insert_file (windata_t *vwin, const char *fname)
@@ -1162,28 +1166,31 @@ static char *grab_topic_buffer (const char *s)
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
-    GtkTextBuffer *tbuf;
+    GtkTextBuffer *textb;
     GtkTextIter iter;
     char line[256];
     gchar *hbuf;
-    char *topicbuf;
+    char *buf;
 
-    tbuf = gretl_text_buf_new();
+    textb = gretl_text_buf_new();
 
     if (pos == 0) {
 	/* cli help with no topic selected */
-	cmdref_title_page(hwin, tbuf, en);
+	cmdref_title_page(hwin, textb, en);
 	cursor_to_top(hwin);
 	hwin->active_var = 0;
 	return;
     }
     
-    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
 
     hbuf = (gchar *) hwin->data + pos;
-    bufgets_init(hbuf);
 
-    if (bufgets(line, sizeof line, hbuf) == NULL) {
+    bufgets_init(hbuf);
+    buf = bufgets(line, sizeof line, hbuf);
+    bufgets_finalize(hbuf);
+
+    if (buf == NULL) {
 	return;
     }
 
@@ -1191,7 +1198,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	/* topic heading: descriptive string */
 	gchar *p = quoted_help_string(line);
 
-	gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+	gtk_text_buffer_insert_with_tags_by_name(textb, &iter,
 						 p, -1,
 						 "sansbold", NULL);
 	free(p);
@@ -1200,22 +1207,22 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	char hword[9];
 
 	sscanf(line + 2, "%8s", hword);
-	gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+	gtk_text_buffer_insert_with_tags_by_name(textb, &iter,
 						 hword, -1,
 						 "redtext", NULL);
     }
 
-    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
+    gtk_text_buffer_insert(textb, &iter, "\n", 1);
 
-    topicbuf = grab_topic_buffer(hbuf + strlen(line) + 1);
-    if (topicbuf == NULL) {
+    buf = grab_topic_buffer(hbuf + strlen(line) + 1);
+    if (buf == NULL) {
 	return;
     }
 
-    insert_text_with_markup(tbuf, &iter, topicbuf);
-    free(topicbuf);
+    insert_text_with_markup(textb, &iter, buf);
+    free(buf);
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), textb);
     g_object_set_data(G_OBJECT(hwin->w), "backpage", 
 		      GINT_TO_POINTER(hwin->active_var));
     maybe_connect_help_signals(hwin, en);

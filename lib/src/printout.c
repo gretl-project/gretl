@@ -2622,14 +2622,92 @@ int in_usa (void)
     return ustime;
 }
 
+struct readbuf {
+    const char *start;
+    const char *point;
+};
+
+static struct readbuf *rbuf;
+static int n_bufs;
+
+static int push_read_buffer (const char *s)
+{
+    struct readbuf *tmp = NULL;
+    int i;
+
+    for (i=0; i<n_bufs; i++) {
+	if (rbuf[i].start == NULL) {
+	    /* re-use existing slot */
+	    rbuf[i].start = s;
+	    rbuf[i].point = s;
+	    return 0;
+	}
+    }    
+
+    tmp = realloc(rbuf, (n_bufs + 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    rbuf = tmp;
+    rbuf[n_bufs].start = s;
+    rbuf[n_bufs].point = s;
+    n_bufs++;
+
+    return 0;
+}
+
+static const char *rbuf_get_point (const char *s)
+{
+    int i;
+
+    for (i=0; i<n_bufs; i++) {
+	if (rbuf[i].start == s) {
+	    return rbuf[i].point;
+	}
+    }
+
+    return NULL;
+}
+
+static void rbuf_set_point (const char *s, const char *p)
+{
+    int i;
+
+    for (i=0; i<n_bufs; i++) {
+	if (rbuf[i].start == s) {
+	    rbuf[i].point = p;
+	    break;
+	}
+    }
+}
+
+static void rbuf_destroy (const char *s)
+{
+    int i;
+
+    for (i=0; i<n_bufs; i++) {
+	if (rbuf[i].start == s) {
+	    rbuf[i].start = NULL;
+	    rbuf[i].point = NULL;
+	    break;
+	}
+    }    
+}
+
 /**
  * bufgets:
- * @s: target string (must be pre-allocated)
- * @size: max number of characters to print
- * @buf: source buffer
+ * @s: target string (must be pre-allocated).
+ * @size: maximum number of characters to print.
+ * @buf: source buffer.
  *
- * This function (which works rather like fgets) must be initialized 
- * via the call: bufgets_init(buf);
+ * This function works much like fgets, reading lines from a
+ * buffer rather than a file.  It differs in that it discards
+ * the line termination ("\n" or "\r\n").  Important note:
+ * use of bufgets() on a particular buffer must be preceded by
+ * a call to bufgets_init() on the same buffer, and must be
+ * followed by a call to bufgets_finalize(), again on the same
+ * buffer.
  * 
  * Returns: @s (or %NULL if nothing more can be read from @buf).
  */
@@ -2643,19 +2721,29 @@ char *bufgets (char *s, size_t size, const char *buf)
 	GOT_CRLF
     };
     int i, status = END_OF_BUF;
-    static const char *p;
+    const char *p;
 
-    /* mechanism for resetting p */
-    if (s == NULL || size == 0) {
-	p = NULL;
+    if (s == NULL && size == 1) {
+	/* signal for end-of-read */
+	rbuf_destroy(buf);
 	return NULL;
     }
 
-    /* start at beginning of buffer */
-    if (p == NULL) p = buf;
+    if (s == NULL || size == 0) {
+	/* signal for initialization */
+	push_read_buffer(buf);
+	return NULL;
+    }
+
+    p = rbuf_get_point(buf);
+    if (p == NULL) {
+	return NULL;
+    }
 
     /* signal that we've reached the end of the buffer */
-    if (p && *p == 0) return NULL;
+    if (*p == '\0') {
+	return NULL;
+    }
 
     *s = 0;
     /* advance to line-end, end of buffer, or maximum size,
@@ -2689,8 +2777,13 @@ char *bufgets (char *s, size_t size, const char *buf)
 
     /* advance the buffer pointer */
     p += i;
-    if (status == GOT_CR || status == GOT_LF) p++;
-    else if (status == GOT_CRLF) p += 2;
+    if (status == GOT_CR || status == GOT_LF) {
+	p++;
+    } else if (status == GOT_CRLF) {
+	p += 2;
+    }
+
+    rbuf_set_point(buf, p);
 
     return s;
 }
@@ -2705,4 +2798,16 @@ char *bufgets (char *s, size_t size, const char *buf)
 void bufgets_init (const char *buf)
 {
     bufgets(NULL, 0, buf);
+}
+
+/**
+ * bufgets_finalize:
+ * @buf: source buffer.
+ *
+ * Signals that we are done reading from @buf.
+ */
+
+void bufgets_finalize (const char *buf)
+{
+    bufgets(NULL, 1, buf);
 }

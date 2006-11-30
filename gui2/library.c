@@ -2136,6 +2136,8 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 	model_command_init(pmod->ID);
     }
 
+    bufgets_finalize(buf);
+
     gretl_cmd_destroy_context(&libcmd);
 
     if (!got_end) {
@@ -2213,6 +2215,8 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 	}
     }
 
+    bufgets_finalize(buf);
+
     if (err) {
 	g_free(buf);
 	return;
@@ -2266,6 +2270,8 @@ record_sys_commands_from_buf (const gchar *buf, const char *startline,
 	    add_command_to_stack(bufline);
 	}
     }
+
+    bufgets_finalize(buf);
 
     if (!got_end_line) {
 	add_command_to_stack("end system");
@@ -2363,6 +2369,8 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	    }
 	} 
     }
+
+    bufgets_finalize(buf);
 
     if (err) {
 	g_free(buf);
@@ -2483,7 +2491,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     bufgets_init(buf);
     *realline = 0;
 
-    while (bufgets(bufline, MAXLINE-1, buf) && !err) {
+    while (bufgets(bufline, sizeof bufline, buf) && !err) {
 	int len, cont = 0;
 
 	if (string_is_blank(bufline)) {
@@ -2539,6 +2547,8 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
 	*realline = 0;
     }
+
+    bufgets_finalize(buf);
 
     g_free(buf);
 
@@ -5871,6 +5881,7 @@ int execute_script (const char *runfile, const char *buf,
     char line[MAXLINE] = {0};
     char tmp[MAXLINE] = {0};
     int including = (exec_code & INCLUDE_EXEC);
+    int bufread = 0;
     int exec_err = 0;
 
 #if 0
@@ -5890,6 +5901,7 @@ int execute_script (const char *runfile, const char *buf,
 	    return -1;	
 	}
 	bufgets_init(buf);
+	bufread = 1;
     }
 
     /* reset model count to 0 if starting/saving session (?) */
@@ -5975,6 +5987,10 @@ int execute_script (const char *runfile, const char *buf,
 
  endwhile:
 
+    if (bufread) {
+	bufgets_finalize(buf);
+    }
+
     if (fb != NULL) {
 	fclose(fb);
     }
@@ -6023,13 +6039,13 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int open_append (CMD *cmd, char *line, 
+static int open_append (CMD *cmd, const char *line, 
 			double ***pZ,
 			DATAINFO **ppdinfo,
 			PRN *prn)
 {
     DATAINFO *pdinfo = *ppdinfo;
-    char datfile[MAXLEN];
+    char datfile[MAXLEN] = {0};
     int k, dbdata = 0;
     int err = 0;
 
@@ -6094,7 +6110,9 @@ static int open_append (CMD *cmd, char *line,
     if (k == GRETL_CSV_DATA || k == GRETL_BOX_DATA || 
 	k == GRETL_OCTAVE || WORKSHEET_IMPORT(k) || dbdata) {
 	data_status |= IMPORT_DATA;
-	maybe_display_string_table();
+	if (!dbdata) {
+	    maybe_display_string_table();
+	}
     }
 
     if (pdinfo->v > 0 && !dbdata) {
@@ -6234,7 +6252,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATA:
 	err = db_get_series(line, pZ, pdinfo, prn);
-        if (!err) { 
+        if (0 && !err) { 
 	    register_data(NULL, NULL, 0);
             varlist(pdinfo, prn);
         }

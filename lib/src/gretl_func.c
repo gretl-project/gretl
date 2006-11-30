@@ -557,6 +557,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
 	}
     }
 
+    bufgets_finalize(buf);
+
     free(buf);
 
     return err;

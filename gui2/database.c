@@ -864,6 +864,8 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	offset += nobs;
     }
 
+    bufgets_finalize(buf);
+
     db_drag_connect(vwin);
 
     return 0;
@@ -1833,6 +1835,7 @@ gint populate_remote_object_list (windata_t *vwin)
 	i++;
     }
 
+    bufgets_finalize(getbuf);
     free(getbuf);
 
     if (i == 0) {

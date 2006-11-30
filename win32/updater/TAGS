@@ -1,263 +1,99 @@
 
-untgz.c,594
-#    define F_OK 29,461
-#    define mkdir(32,509
-#    define strdup(33,557
-#    define unlink(34,602
-#    define access(35,646
-#    define mkdir(37,705
-#define REGTYPE	44,810
-#define AREGTYPE 45,851
-#define LNKTYPE 46,893
-#define SYMTYPE 47,926
-#define CHRTYPE 48,963
-#define BLKTYPE 49,1009
-#define DIRTYPE 50,1051
-#define FIFOTYPE 51,1089
-#define CONTTYPE 52,1130
-#define BLOCKSIZE 54,1168
-struct tar_header56,1191
-union tar_buffer 77,1749
-int getoct(95,2065
-#define ISSPECIAL(114,2327
-int ExprMatch 116,2380
-int makedir 144,2864
-int untar 183,3519
-int untgz 282,5502
+untgz.c,659
+#    define F_OK 30,482
+#    define mkdir(mkdir33,530
+#    define strdup(strdup34,578
+#    define unlink(unlink35,623
+#    define access(access36,667
+#    define mkdir(mkdir38,726
+#define REGTYPE	45,831
+#define AREGTYPE 46,872
+#define LNKTYPE 47,914
+#define SYMTYPE 48,947
+#define CHRTYPE 49,984
+#define BLKTYPE 50,1030
+#define DIRTYPE 51,1072
+#define FIFOTYPE 52,1110
+#define CONTTYPE 53,1151
+#define BLOCKSIZE 55,1189
+struct tar_headertar_header57,1212
+union tar_buffer tar_buffer78,1770
+int getoct(96,2086
+#define ISSPECIAL(ISSPECIAL115,2348
+int ExprMatch 117,2401
+int makedir 143,2846
+int untar 182,3501
+int untgz 281,5497
 
-update_client.c,386
-FILE *flg;flg20,316
-int logit;21,327
-#define MAXLEN 23,339
-static void switch_cursor 26,372
-static void getout 42,584
-static int msgbox 55,759
-static int msgbox 68,1037
-int errbox 80,1197
-int infobox 85,1259
-static void ws_cleanup 91,1335
-static int ws_startup 96,1388
-void listerr 119,1882
-void usage 144,2327
-time_t get_time_from_stamp_file 157,2619
-int main 215,3720
+update_client.c,1540
+#define ERRLEN 15,258
+#define MAXLEN 16,277
+#define UBUFSIZE 17,296
+#define E_ALLOC 18,318
+#define E_DATA 19,337
+FILE *flg;23,377
+int logit;24,388
+int debug;25,399
+    UPDATER_DEFAULT,28,418
+    UPDATER_GET_LISTING,29,439
+    UPDATER_GET_FILE30,464
+} program_opts;31,485
+static char get_fname[33,502
+static char gretl_errmsg[34,529
+static int ask_before_download 35,563
+static time_t filedate;36,599
+static int argcount;37,623
+static int prog_opt;38,644
+#define STANDALONE40,666
+# define IDYES 44,723
+# define TRUE 48,761
+FILE *gretl_fopen 55,916
+int show_progress 64,1050
+char *gretl_strdup 69,1123
+static void getout 85,1346
+    GRETL_NOT_RUNNING 105,1650
+    GRETL_RUNNING,106,1677
+    GRETL_RUN_UNKNOWN107,1696
+static int gretl_run_status;110,1722
+static void ws_cleanup 112,1752
+int ws_startup 117,1805
+static int win_error 141,2246
+static int create_child_process 166,2757
+static int yes_no_dialog 194,3774
+static int msgbox 200,3910
+static int read_reg_val 209,4154
+static void read_proxy_info 242,5114
+BOOL CALLBACK record_gretl_running 257,5464
+static int check_for_gretl 275,5834
+static int yes_no_dialog 288,6038
+static int msgbox 295,6126
+static char *get_size_string 308,6309
+int errbox 323,6666
+int infobox 328,6728
+static int files_query 333,6791
+static int get_remote_file 347,7078
+static void listerr 362,7384
+static void usage 388,7875
+static time_t get_time_from_stamp_file 401,8174
+static int real_program 455,9245
+static void win32_start 600,12156
+int main 622,12582
 
-../../gui2/webget.c,7680
-# define I_(29,1015
-# define _(30,1042
-# define MAXLEN 31,1068
-const char *dbhost_ip dbhost_ip71,1677
-static char dbproxy[dbproxy72,1717
-static int use_proxy;73,1742
-    SP_NONE,75,1771
-    SP_LOAD_INIT,76,1785
-    SP_SAVE_INIT,77,1803
-    SP_FONT_INIT,78,1821
-    SP_FINISH 79,1839
-} progress_flags;80,1854
-    SAVE_TO_BUFFER,84,1901
-    SAVE_TO_FILE85,1921
-} save_opts;86,1938
-    QUERY_SILENT,89,1959
-    QUERY_VERBOSE90,1977
-} query_opts;91,1995
-#define EWOULDBLOCK 97,2112
-#define EINPROGRESS 98,2159
-#define EALREADY 99,2206
-#define ENOTSOCK 100,2250
-#define EDESTADDRREQ 101,2294
-#define EMSGSIZE 102,2342
-#define EPROTOTYPE 103,2386
-#define ENOPROTOOPT 104,2432
-#define EPROTONOSUPPORT 105,2479
-#define ESOCKTNOSUPPORT 106,2530
-#define EOPNOTSUPP 107,2581
-#define EPFNOSUPPORT 108,2627
-#define EAFNOSUPPORT 109,2675
-#define EADDRINUSE 110,2723
-#define EADDRNOTAVAIL 111,2769
-#define ENETDOWN 112,2818
-#define ENETUNREACH 113,2862
-#define ENETRESET 114,2909
-#define ECONNABORTED 115,2954
-#define ECONNRESET 116,3002
-#define ENOBUFS 117,3048
-#define EISCONN 118,3091
-#define ENOTCONN 119,3134
-#define ESHUTDOWN 120,3178
-#define ETOOMANYREFS 121,3223
-#define ETIMEDOUT 122,3271
-#define ECONNREFUSED 123,3316
-#define ELOOP 124,3364
-#define EHOSTDOWN 125,3405
-#define EHOSTUNREACH 126,3450
-#define EPROCLIM 127,3498
-#define EUSERS 128,3542
-#define EDQUOT 129,3584
-#define ESTALE 130,3626
-#define EREMOTE 131,3668
-    TEXTHTML 136,3764
-    TEXTHTML      = 0x0001,x0001136,3764
-    RETROKF 137,3828
-    RETROKF       = 0x0002,x0002137,3828
-    HEAD_ONLY 138,3879
-    HEAD_ONLY     = 0x0004,x0004138,3879
-    SEND_NOCACHE 139,3940
-    SEND_NOCACHE  = 0x0008,x0008139,3940
-    ACCEPTRANGES 140,4006
-    ACCEPTRANGES  = 0x0010	x0010140,4006
-    NOCONERROR,144,4089
-    NOCONERROR, HOSTERR,144,4089
-    NOCONERROR, HOSTERR, CONSOCKERR,144,4089
-    NOCONERROR, HOSTERR, CONSOCKERR, CONERROR,144,4089
-    CONREFUSED,145,4136
-    CONREFUSED, NEWLOCATION,145,4136
-    CONREFUSED, NEWLOCATION, NOTENOUGHMEM,145,4136
-    CONREFUSED, NEWLOCATION, NOTENOUGHMEM, CONPORTERR,145,4136
-    BINDERR,146,4191
-    BINDERR, BINDOK,146,4191
-    BINDERR, BINDOK, LISTENERR,146,4191
-    BINDERR, BINDOK, LISTENERR, ACCEPTERR,146,4191
-    BINDERR, BINDOK, LISTENERR, ACCEPTERR, ACCEPTOK,146,4191
-    CONCLOSED,147,4244
-    CONCLOSED, FTPOK,147,4244
-    CONCLOSED, FTPOK, FTPLOGINC,147,4244
-    CONCLOSED, FTPOK, FTPLOGINC, FTPLOGREFUSED,147,4244
-    CONCLOSED, FTPOK, FTPLOGINC, FTPLOGREFUSED, FTPPORTERR,147,4244
-    FTPNSFOD,148,4304
-    FTPNSFOD, FTPRETROK,148,4304
-    FTPNSFOD, FTPRETROK, FTPUNKNOWNTYPE,148,4304
-    FTPNSFOD, FTPRETROK, FTPUNKNOWNTYPE, FTPRERR,148,4304
-    FTPREXC,149,4354
-    FTPREXC, FTPSRVERR,149,4354
-    FTPREXC, FTPSRVERR, FTPRETRINT,149,4354
-    FTPREXC, FTPSRVERR, FTPRETRINT, FTPRESTFAIL,149,4354
-    URLOK,150,4403
-    URLOK, URLHTTP,150,4403
-    URLOK, URLHTTP, URLFTP,150,4403
-    URLOK, URLHTTP, URLFTP, URLFILE,150,4403
-    URLOK, URLHTTP, URLFTP, URLFILE, URLUNKNOWN,150,4403
-    URLOK, URLHTTP, URLFTP, URLFILE, URLUNKNOWN, URLBADPORT,150,4403
-    URLBADHOST,151,4464
-    URLBADHOST, FOPENERR,151,4464
-    URLBADHOST, FOPENERR, FWRITEERR,151,4464
-    URLBADHOST, FOPENERR, FWRITEERR, HOK,151,4464
-    URLBADHOST, FOPENERR, FWRITEERR, HOK, HLEXC,151,4464
-    URLBADHOST, FOPENERR, FWRITEERR, HOK, HLEXC, HEOF,151,4464
-    HERR,152,4519
-    HERR, RETROK,152,4519
-    HERR, RETROK, RECLEVELEXC,152,4519
-    HERR, RETROK, RECLEVELEXC, FTPACCDENIED,152,4519
-    HERR, RETROK, RECLEVELEXC, FTPACCDENIED, WRONGCODE,152,4519
-    FTPINVPASV,153,4575
-    FTPINVPASV, FTPNOPASV,153,4575
-    RETRFINISHED,154,4602
-    RETRFINISHED, READERR,154,4602
-    RETRFINISHED, READERR, TRYLIMEXC,154,4602
-    RETRFINISHED, READERR, TRYLIMEXC, URLBADPATTERN,154,4602
-    FILEBADFILE,155,4655
-    FILEBADFILE, RANGEERR,155,4655
-    FILEBADFILE, RANGEERR, RETRBADPATTERN,155,4655
-    FILEBADFILE, RANGEERR, RETRBADPATTERN, RETNOTSUP,155,4655
-    ROBOTSOK,156,4709
-    ROBOTSOK, NOROBOTS,156,4709
-    ROBOTSOK, NOROBOTS, PROXERR,156,4709
-    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED,156,4709
-    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC,156,4709
-    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC, WRITEFAILED156,4709
-} uerr_t;157,4775
-#define RBUF_READCHAR(171,5297
-#define RBUF_FD(186,5855
-# define READ(190,5962
-# define WRITE(191,6019
-#  define READ(194,6097
-#  define WRITE(197,6174
-struct proto 201,6258
-struct urlinfo207,6334
-struct http_stat 220,6676
-struct rbuf231,7055
-#define DEFAULT_HTTP_PORT 241,7372
-#define MINVAL(242,7401
-#define TEXTHTML_S 244,7447
-#define HTTP_ACCEPT 245,7478
-#define H_20X(248,7547
-#define H_PARTIAL(249,7601
-#define H_REDIRECTED(250,7663
-#define HTTP_STATUS_OK	255,7867
-#define HTTP_STATUS_CREATED	256,7896
-#define HTTP_STATUS_ACCEPTED	257,7929
-#define HTTP_STATUS_NO_CONTENT	258,7963
-#define HTTP_STATUS_PARTIAL_CONTENTS	259,7999
-#define HTTP_STATUS_MULTIPLE_CHOICES	262,8065
-#define HTTP_STATUS_MOVED_PERMANENTLY	263,8106
-#define HTTP_STATUS_MOVED_TEMPORARILY	264,8148
-#define HTTP_STATUS_NOT_MODIFIED	265,8190
-#define HTTP_STATUS_BAD_REQUEST	268,8253
-#define HTTP_STATUS_UNAUTHORIZED	269,8290
-#define HTTP_STATUS_FORBIDDEN	270,8327
-#define HTTP_STATUS_NOT_FOUND	271,8362
-#define HTTP_STATUS_INTERNAL	274,8424
-#define HTTP_STATUS_NOT_IMPLEMENTED	275,8458
-#define HTTP_STATUS_BAD_GATEWAY	276,8498
-#define HTTP_STATUS_UNAVAILABLE	277,8535
-    HG_OK,280,8580
-    HG_ERROR,281,8592
-    HG_EOF282,8607
-enum header_get_flags 285,8622
-    HG_NONE 286,8647
-    HG_NO_CONTINUATIONS 287,8664
-    HG_NO_CONTINUATIONS = 0x2 x2287,8664
-static struct urlinfo gretlproxy;294,8787
-static void ws_cleanup 333,10491
-int ws_startup 338,10544
-static char *time_str time_str364,11078
-static int rbuf_peek 383,11469
-void clear 409,11965
-void *mymalloc mymalloc414,12027
-static void *myrealloc myrealloc424,12178
-static char *g_strdup g_strdup434,12354
-static int header_get 449,12591
-static int header_extract_number 509,13857
-static int header_strdup 528,14220
-static int skip_lws 536,14410
-static int header_process 549,14654
-static void rbuf_initialize 572,15151
-static int parse_http_status_line 581,15362
-struct http_process_range_closure 652,17040
-static int http_process_range 660,17220
-static int http_process_none 713,18353
-static int http_process_type 730,18707
-#define FREEHSTAT(750,19090
-static int numdigit 760,19339
-static char *herrmsg herrmsg770,19508
-static uerr_t gethttp 785,19817
-#define MAXTRY 1096,27301
-static uerr_t http_loop 1100,27386
-static size_t rbuf_flush 1180,28953
-static struct urlinfo *newurl newurl1201,29522
-static void freeurl 1215,29832
-static int get_contents 1235,30319
-static int store_hostaddress 1321,32149
-# define ECONNREFUSED 1338,32510
-static uerr_t make_connection 1343,32623
-static int iread 1373,33392
-static int iwrite 1387,33679
-static char *print_option print_option1413,34305
-static int get_update_info 1436,34719
-static size_t get_size 1491,35838
-static time_t get_time_from_stamp_file 1509,36134
-static int real_update_query 1551,37035
-int silent_update_query 1637,39375
-int update_query 1642,39456
-int proxy_init 1651,39622
-retrieve_url 1704,40767
-static long GetRegKey 1780,42435
-int read_reg_val 1802,42817
-static void read_proxy_info 1835,43770
-int goto_url 1855,44158
-int list_remote_dbs 1898,45122
-int retrieve_remote_db_list 1904,45268
-int retrieve_remote_db 1912,45462
-int retrieve_remote_db_data 1921,45657
-int files_query 1933,45925
-int get_remote_file 1944,46171
+winprogress.c,59
+LRESULT CALLBACK DlgProc 8,112
+INT WINAPI WinMain 44,791
+
+updater.h,315
+#define UPDATER_H_2,19
+#define _(_4,39
+#define I_(I_5,64
+    SP_NONE,8,98
+    SP_LOAD_INIT,9,112
+    SP_SAVE_INIT,10,130
+    SP_FONT_INIT,11,148
+    SP_FINISH 12,166
+} progress_flags;13,181
+    SP_RETURN_OK,16,207
+    SP_RETURN_DONE,17,225
+    SP_RETURN_CANCELED18,245
+} progress_return_flags;19,268

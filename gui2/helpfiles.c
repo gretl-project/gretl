@@ -46,7 +46,8 @@ struct help_head_t {
     int *topics;       /* array of topics under heading by command number */
     char **topicnames; /* array of descriptive topic names (GUI help only) */
     int *pos;          /* array of byte offsets into file for topics */
-    int ntopics;       /* number of topics under this heading */
+    int ntalloc;       /* number of topics initally allocated */
+    int ntopics;       /* actual number of topics under this heading */
 };
 
 static help_head **cli_heads, **gui_heads;
@@ -358,7 +359,7 @@ static void free_help_head (help_head *head)
     free(head->pos);
     
     if (head->topicnames != NULL) {
-	for (i=0; i<head->ntopics; i++) {
+	for (i=0; i<head->ntalloc; i++) {
 	    free(head->topicnames[i]);
 	}
 	free(head->topicnames);
@@ -369,17 +370,19 @@ static void free_help_head (help_head *head)
 
 static int head_allocate_topicnames (help_head *head)
 {
-    int i;
+    int i, n = head->ntopics;
 
-    head->topicnames = malloc(head->ntopics * sizeof *head->topicnames);
+    head->topicnames = malloc(n * sizeof *head->topicnames);
     
     if (head->topicnames == NULL) {
 	return 1;
     }
 
-    for (i=0; i<head->ntopics; i++) {
+    for (i=0; i<n; i++) {
 	head->topicnames[i] = NULL;
     }
+    
+    head->ntalloc = n;
 
     return 0;
 }
@@ -412,15 +415,15 @@ static help_head *help_head_new (const char *name, int nt, int gui)
     return head;
 }
 
-static help_head **allocate_heads (int nh)
+static help_head **allocate_heads (int n)
 {
     help_head **heads;
     int i;
 
-    heads = malloc(nh * sizeof *heads);
+    heads = malloc(n * sizeof *heads);
 
     if (heads != NULL) {
-	for (i=0; i<nh; i++) {
+	for (i=0; i<n; i++) {
 	    heads[i] = NULL;
 	}
     }
@@ -432,7 +435,9 @@ static void free_help_heads (help_head **heads, int nh)
 {
     int i;
 
-    if (heads == NULL) return;
+    if (heads == NULL) {
+	return;
+    }
 
     for (i=0; i<nh; i++) {
 	if (heads[i] != NULL) {
@@ -443,31 +448,28 @@ static void free_help_heads (help_head **heads, int nh)
     free(heads);
 }
 
-static void add_topic_to_head (help_head *head, int j, const char *word,
+static void add_topic_to_head (help_head *head, int *i, const char *word,
 			       char *label, int gui)
 {
     int hnum = help_topic_number(word, gui);
 
     if (hnum > 0) {
-	head->topics[j] = hnum;
+	head->topics[*i] = hnum;
 	if (label != NULL && head->topicnames != NULL) {
-	    head->topicnames[j] = label;
+	    head->topicnames[*i] = label;
 	}
+	*i += 1;
+#if HDEBUG
+	fprintf(stderr, "add_topic_to_head: topic %d: word = %s: hnum = %d\n", 
+		*i, word, hnum);
+#endif
     } else {
 	fprintf(stderr, "helpfile error: word='%s' not recognized\n", word);
-#if 0
-	head->topics[j] = 0;
-	head->topicnames[j] = NULL;
-#endif
+	head->ntopics -= 1;
 	if (label != NULL) {
 	    free(label);
 	}
     }
-
-#if HDEBUG
-    fprintf(stderr, "add_topic_to_head: topic %d: word = %s: hnum = %d\n", 
-	    j+1, word, hnum);
-#endif
 }
 
 static int 
@@ -477,7 +479,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
     FILE *fp;
     char line[128];
     char tmp[32];
-    int i, j, nh2;
+    int i, j, k, nh2;
     int nh = 0;
     int err = 0;
 
@@ -505,7 +507,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
     }
 
 #if HDEBUG
-    fprintf(stderr, "Found got %d topic headings\n", nh);
+    fprintf(stderr, "Found %d topic headings\n", nh);
 #endif
 
     nh2 = 0;
@@ -537,7 +539,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	}
 
 #if HDEBUG
-	fprintf(stderr, "Heading %d (%s): got %d topics\n", nh2+1, tmp, nt);
+	fprintf(stderr, "Heading %d (\"%s\"): got %d topics\n", nh2+1, tmp, nt);
 #endif
 
 	/* heading with at least one topic */
@@ -546,6 +548,8 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	    fprintf(stderr, "help_head_new() failed\n");
 	    err = 1;
 	}
+
+	k = 0;
 
 	/* get topics under heading */
 	for (j=0; j<nt && !err; j++) {
@@ -567,7 +571,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	    }
 
 	    if (!err) {
-		add_topic_to_head(heads[nh2], j, tmp, label, gui);
+		add_topic_to_head(heads[nh2], &k, tmp, label, gui);
 	    }
 	}
 
@@ -726,7 +730,9 @@ static int gui_pos_from_cmd (int cmd, int en)
     }
 
     /* special for gui-specific help items */
+
     helpstr = help_string_from_cmd(cmd);
+
     if (helpstr != NULL) {
 	int altcode = extra_command_number(helpstr);
 
@@ -866,7 +872,7 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 				    hds[i]->topicnames[j]);
 #if HDEBUG
 		fprintf(stderr, "(1) Built help topic path from\n"
-			" '%s', '%s' and '%s'\n", mpath, headname),
+			" '%s', '%s' and '%s'\n", mpath, headname,
 			hds[i]->topicnames[j]);
 #endif
 	    } else {
@@ -878,7 +884,7 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 					gretl_command_word(tnum));
 #if HDEBUG
 		    fprintf(stderr, "(2) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, headname),
+			    " '%s', '%s' and '%s'\n", mpath, headname,
 			    gretl_command_word(tnum));
 #endif
 		} else if (!cli) {
