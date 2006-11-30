@@ -3607,12 +3607,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	break;
 
     case ARBOND:
+    case PANEL:	
+	if (!dataset_is_panel(pdinfo)) {
+	    strcpy(gretl_errmsg, _("This estimator requires panel data"));
+	    err = E_DATA;
+	    break;
+	}
     case GARCH:
     case HSK:
     case LAD:
     case LOGISTIC:
     case LOGIT:
-    case PANEL:
     case POISSON:
     case PROBIT:
     case TOBIT:
