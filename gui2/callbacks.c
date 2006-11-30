@@ -78,15 +78,14 @@ void listbox_select_row (GtkTreeSelection *selection, gpointer data)
     GtkTreeIter iter;
     GtkTreeModel *model;
     GtkTreePath *path;
-    gint row;
 
-    if (!gtk_tree_selection_get_selected (selection, &model, &iter))
+    if (!gtk_tree_selection_get_selected(selection, &model, &iter)) {
 	return;
+    }
 
-    path = gtk_tree_model_get_path (model, &iter);
-    row = tree_path_get_row_number (path);
-    win->active_var = row;
-    gtk_tree_path_free (path);
+    path = gtk_tree_model_get_path(model, &iter);
+    win->active_var = tree_path_get_row_number(path);
+    gtk_tree_path_free(path);
 }
 
 gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,

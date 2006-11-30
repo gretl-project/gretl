@@ -52,7 +52,7 @@ enum db_data_actions {
     DB_IMPORT
 };
 
-int validate_string (char *orig)
+static int utf8_correct (char *orig)
 {
     int err = 0;
 
@@ -223,7 +223,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	int dbv;
 
 	if (check_db_import(sinfo, datainfo)) {
-	    errbox(get_gretl_errmsg());
+	    gui_errmsg(1);
 	    return;
 	}
 
@@ -771,7 +771,7 @@ static int make_local_db_series_list (windata_t *vwin)
 	    continue;
 	}
 
-	err = validate_string(line1);
+	err = utf8_correct(line1);
 
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
@@ -837,7 +837,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
-	err = validate_string(line1);
+	err = utf8_correct(line1);
 
 	if (sscanf(line1, "%15s", sername) != 1) {
 	    break;
@@ -979,14 +979,12 @@ static int make_rats_db_series_list (windata_t *vwin)
     fclose(fp);
 
     if (tbl == NULL) {
-	errbox(get_gretl_errmsg());
+	gui_errmsg(1);
 	return 1;
     }
 
     insert_and_free_db_table(tbl, vwin->listbox);
-
     vwin->active_var = 0;
-
     db_drag_connect(vwin);
 
     return 0;
@@ -1013,7 +1011,7 @@ static int make_pcgive_db_series_list (windata_t *vwin)
     fclose(fp);
 
     if (tbl == NULL) {
-	errbox(get_gretl_errmsg());
+	gui_errmsg(1);
 	return 1;
     }
 
@@ -1240,13 +1238,24 @@ void open_named_remote_db_index (char *dbname)
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
 {
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    GtkTreeSelection *sel;
     char *getbuf = NULL;
-    gchar *fname;
+    gchar *fname = NULL;
     windata_t *vwin = (windata_t *) data;
     int err;
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 0, &fname);
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	return;
+    }
+
+    gtk_tree_model_get(model, &iter, 0, &fname, -1);
+    if (fname == NULL || *fname == '\0') {
+	g_free(fname);
+	return;
+    }
 
     update_statusline(vwin, _("Retrieving data..."));
     err = retrieve_remote_db_index(fname, &getbuf);
@@ -1583,7 +1592,7 @@ real_get_db_description (const char *fullname, const char *binname,
 	    char *s = tmp + 2;
 
 	    tailstrip(s);
-	    validate_string(s);
+	    utf8_correct(s);
 	    descrip = g_strdup(s);
 	}
     }
@@ -1775,8 +1784,205 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
     return 0;
 }
 
-/* fill a list box with names and short descriptions of either
-   databases or function packages, retrieved from server */
+/* below: mechanism for tucking individual databases under a twisty,
+   when there's a large number of databases from a single source.
+*/
+
+static char *get_source_string (char *src, const char *s)
+{
+    char *p;
+
+    *src = 0;
+    strncat(src, s, 95);
+    
+    p = strchr(src, '(');
+    if (p == NULL) {
+	p = strstr(src, "--");
+    }
+    if (p != NULL) {
+	*p = '\0';
+    }
+    tailstrip(src);
+
+    return src;
+}
+
+struct src_info {
+    int start;
+    int ndb;
+};
+
+static struct src_info *dbsrc;
+static int n_src;
+
+static int push_src_info (int start, int ndb)
+{
+    struct src_info *tmp;
+
+    tmp = realloc(dbsrc, (n_src + 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    dbsrc = tmp;
+    dbsrc[n_src].start = start;
+    dbsrc[n_src].ndb = ndb;
+    n_src++;
+
+    return 0;
+}
+
+static int get_ndbs (int lineno)
+{
+    int i;
+
+    for (i=0; i<n_src; i++) {
+	if (dbsrc[i].start == lineno) {
+	    return dbsrc[i].ndb;
+	}
+    }
+    
+    return 1;
+}
+
+static void free_src_info (void)
+{
+    free(dbsrc);
+    dbsrc = NULL;
+    n_src = 0;
+}
+
+gint populate_remote_db_list (windata_t *vwin)
+{
+    GtkTreeStore *store;
+    GtkTreeIter iter, child_iter; 
+    char *getbuf = NULL;
+    char line[1024];
+    char fname[16], status[20];
+    char src[96], srcbak[96];
+    gchar *row[3];
+    time_t remtime;
+    int start, parent, kids;
+    int i, ndb, err = 0;
+
+    err = list_remote_dbs(&getbuf);
+    if (err) {
+	show_network_error(NULL);
+	free(getbuf);
+	return err;
+    }
+
+    i = 0;
+    ndb = start = 0;
+    src[0] = srcbak[0] = '\0';
+
+    /* first pass: figure "parentage" of databases */
+
+    bufgets_init(getbuf);
+
+    while (bufgets(line, sizeof line, getbuf)) {
+	if (strstr(line, "idx")) {
+	    continue;
+	}
+	if (read_remote_filetime(line, fname, &remtime)) {
+	    continue;
+	}
+	if (bufgets(line, sizeof line, getbuf)) {
+	    get_source_string(src, line + 2);
+	    if (strcmp(src, srcbak)) {
+		if (ndb > 3) {
+		    push_src_info(start, ndb);
+		}
+		start = i;
+		ndb = 1;
+	    } else {
+		ndb++;
+	    }
+	    strcpy(srcbak, src);
+	}
+	i++;
+    }
+
+    bufgets_finalize(getbuf);
+
+    if (i == 0) {
+	errbox(_("No database files found"));
+	free_src_info();
+	free(getbuf);
+	return 1;
+    }
+
+    /* second pass: insert databases into tree view */
+
+    store = GTK_TREE_STORE(gtk_tree_view_get_model 
+			   (GTK_TREE_VIEW(vwin->listbox)));
+    gtk_tree_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    i = 0;
+    parent = kids = 0;
+
+    bufgets_init(getbuf);
+
+    while (bufgets(line, sizeof line, getbuf)) {
+	if (strstr(line, "idx")) {
+	    continue;
+	}
+	if (read_remote_filetime(line, fname, &remtime)) {
+	    continue;
+	}
+
+	get_local_object_status(fname, vwin->role, status, remtime);
+	row[0] = strip_extension(fname);
+	row[2] = status;
+
+	if (bufgets(line, sizeof line, getbuf)) {
+	    utf8_correct(line);
+	    row[1] = line + 2;
+	    ndb = get_ndbs(i);
+	    if (ndb > 1) {
+		get_source_string(src, row[1]);
+		parent = 1;
+		kids = ndb;
+	    }	
+	} else {
+	    row[1] = NULL;
+	}
+
+	if (parent) {
+	    /* header for child databases */
+	    gtk_tree_store_append(store, &iter, NULL);
+	    gtk_tree_store_set(store, &iter, 0, "", 1, src, -1);
+	    parent = 0;
+	}
+	
+	if (kids > 0) {
+	    /* insert child under heading */
+	    gtk_tree_store_insert_before(store, &child_iter, 
+					 &iter, NULL);
+	    gtk_tree_store_set(store, &child_iter, 0, row[0], 
+			       1, row[1], 2, row[2], -1);
+	    kids--;
+	} else {
+	    /* insert at top level */
+	    gtk_tree_store_append(store, &iter, NULL);
+	    gtk_tree_store_set(store, &iter, 0, row[0], 1, row[1],
+			   2, row[2], -1);
+	}	    
+
+	i++;
+    }
+
+    bufgets_finalize(getbuf);
+    free(getbuf);
+    free_src_info();
+
+    return err;
+}
+
+/* fill a list box with names and short descriptions of function
+   packages, retrieved from server: this was previously used for
+   remote databases too */
 
 gint populate_remote_object_list (windata_t *vwin)
 {
@@ -1786,9 +1992,8 @@ gint populate_remote_object_list (windata_t *vwin)
     char line[1024];
     char fname[16], status[20];
     gchar *row[3];
-    gint i;
     time_t remtime;
-    int err = 0;
+    int n, err = 0;
 
     if (vwin->role == REMOTE_DB) {
 	err = list_remote_dbs(&getbuf);
@@ -1807,8 +2012,8 @@ gint populate_remote_object_list (windata_t *vwin)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
+    n = 0;
     bufgets_init(getbuf);
-    i = 0;
 
     while (bufgets(line, sizeof line, getbuf)) {
 	if (strstr(line, "idx")) {
@@ -1822,7 +2027,7 @@ gint populate_remote_object_list (windata_t *vwin)
 	row[0] = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
-	    validate_string(line);
+	    utf8_correct(line);
 	    row[1] = line + 2;
 	} else {
 	    row[1] = NULL;
@@ -1832,13 +2037,13 @@ gint populate_remote_object_list (windata_t *vwin)
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
 			   2, row[2], -1);
-	i++;
+	n++;
     }
 
     bufgets_finalize(getbuf);
     free(getbuf);
 
-    if (i == 0) {
+    if (n == 0) {
 	if (vwin->role == REMOTE_DB) {
 	    errbox(_("No database files found"));
 	} else {

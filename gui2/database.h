@@ -15,6 +15,8 @@ void file_info_from_server (GtkWidget *w, gpointer data);
 
 gint populate_dbfilelist (windata_t *ddata);
 
+gint populate_remote_db_list (windata_t *vwin);
+
 gint populate_remote_object_list (windata_t *win);
 
 void gui_get_db_series (gpointer p, guint action, GtkWidget *w);

@@ -287,7 +287,9 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     GtkTreeSelection *select;
     int i, viscols = ncols;
 
-    if (hidden_col) viscols--;
+    if (hidden_col) {
+	viscols--;
+    }
 
     if (tree) {
 	tstore = gtk_tree_store_newv(ncols, types);

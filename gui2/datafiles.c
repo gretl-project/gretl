@@ -1168,6 +1168,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 {
     if (vwin->role == NATIVE_DB) {
 	return populate_dbfilelist(vwin);
+    } else if (vwin->role == REMOTE_DB) {
+	return populate_remote_db_list(vwin);
     } else if (REMOTE_ACTION(vwin->role)) {
 	return populate_remote_object_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
@@ -1233,6 +1235,7 @@ static GtkWidget *files_window (windata_t *vwin)
 
     int full_width = 500, file_height = 260;
     int hidden_col = 0;
+    int use_tree = 0;
 
     GtkWidget *box;
     int cols = 2;
@@ -1246,7 +1249,8 @@ static GtkWidget *files_window (windata_t *vwin)
     case REMOTE_DB:
 	titles = remote_db_titles;
 	cols = 3;
-	full_width = 560;
+	full_width = 580;
+	use_tree = 1;
 	break;
     case PS_FILES:
 	titles = ps_titles;
@@ -1283,7 +1287,7 @@ static GtkWidget *files_window (windata_t *vwin)
     box = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(box, full_width, file_height);
     vwin_add_list_box(vwin, GTK_BOX(box), cols, hidden_col, 
-		      types, titles, 0);
+		      types, titles, use_tree);
     gtk_widget_show(box);
 
     return box;
