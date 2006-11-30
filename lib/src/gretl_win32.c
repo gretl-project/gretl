@@ -104,6 +104,8 @@ int write_reg_val (HKEY tree, const char *base,
 void cli_read_registry (char *callname, PATHS *ppaths)
 {
     char valstr[MAXLEN];
+    char dbproxy[21];
+    int use_proxy = 0;
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
@@ -152,6 +154,21 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima", drive);
     }
 
+    ppaths->dbhost[0] = '\0';
+    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "dbhost", ppaths->dbhost);
+    if (ppaths->dbhost[0] == '\0') {
+	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
+    }
+
+    dbproxy[0] = '\0';
+    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "dbproxy", dbproxy);
+
+    valstr[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "use_proxy", valstr);
+    if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
+	use_proxy = 1;
+    } 
+
     valstr[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "shellok", valstr);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
@@ -159,6 +176,8 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     } else {
 	set_shell_ok(0);
     }
+
+    gretl_www_init(ppaths->dbhost, dbproxy, use_proxy);
 }
 
 void win_show_error (DWORD dw)

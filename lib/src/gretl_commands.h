@@ -71,7 +71,6 @@ typedef enum {
     HSK,
     HURST,
     IF,
-    IMPORT,
     INCLUDE,
     INFO,
     KPSS,

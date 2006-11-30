@@ -3424,53 +3424,6 @@
 
   </command>
 
-  <command name="import" section="Dataset" 
-    label="Import data" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>filename</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--octave</flag>
-	  <effect>GNU octave data</effect>
-        </option>
-        <option>
-	  <flag>--box1</flag>
-	  <effect>BOX1 data</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	With no option flags specified, brings in data from a
-	comma-separated values (CSV) format file, such as can easily be
-	written from a spreadsheet program.  The file should have variable
-	names on the first line and a rectangular data matrix on the
-	remaining lines. Variables should be arranged <quote>by
-	  observation</quote> (one column per variable; each row
-	represents an observation). See <guideref targ="datafiles"/> for
-	details.
-      </para>
-      <para>
-	With the <lit>--octave</lit> flag, reads a data file in 
-	the format of GNU octave.
-      </para>
-      <para>
-	With the <lit>--box1</lit> flag, reads a data file in BOX1
-	format, which could at one time be obtained via the Data
-	Extraction Service of the US Bureau of the Census.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/File/Open data/import</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="include" section="Programming" 
     label="Include function definitions" context="cli">
 
@@ -5157,14 +5110,20 @@
       <arguments>
         <argument>datafile</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--www</flag>
+	  <effect>open a database on the gretl server</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
       <para>
 	Opens a data file.  If a data file is already open, it is
 	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, plain text, CSV or
-	BOX1).
+	detect the format of the data file (native, plain text, CSV,
+	MS Excel, Stata, etc.).
       </para>
 
       <para>

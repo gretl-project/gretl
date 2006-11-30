@@ -6023,10 +6023,10 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int open_append_import (CMD *cmd, char *line, 
-			       double ***pZ,
-			       DATAINFO **ppdinfo,
-			       PRN *prn)
+static int open_append (CMD *cmd, char *line, 
+			double ***pZ,
+			DATAINFO **ppdinfo,
+			PRN *prn)
 {
     DATAINFO *pdinfo = *ppdinfo;
     char datfile[MAXLEN];
@@ -6046,14 +6046,10 @@ static int open_append_import (CMD *cmd, char *line,
 
     if (cmd->opt & OPT_W) {
 	k = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->ci == IMPORT) {
-	if (cmd->opt & OPT_B) {
-	    k = GRETL_BOX_DATA;
-	} else if (cmd->opt & OPT_O) {
-	    k = GRETL_OCTAVE;
-	} else {
-	    k = GRETL_CSV_DATA;
-	}
+    } else if (cmd->opt & OPT_B) {
+	k = GRETL_BOX_DATA;
+    } else if (cmd->opt & OPT_O) {
+	k = GRETL_CSV_DATA;
     } else {
 	k = detect_filetype(datfile, &paths, prn);
     }
@@ -6108,11 +6104,6 @@ static int open_append_import (CMD *cmd, char *line,
 	    register_data(paths.datfile, NULL, 0);
 	}
 	varlist(pdinfo, prn);
-    }
-
-    if (cmd->ci == IMPORT) {
-	pprintf(prn, _("You should now use the \"print\" command "
-		       "to verify the data\n"));
     }
 
     return err;
@@ -6321,8 +6312,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-    case IMPORT:
-	err = open_append_import(cmd, line, pZ, ppdinfo, prn);
+	err = open_append(cmd, line, pZ, ppdinfo, prn);
 	pdinfo = *ppdinfo;
 	break;
 

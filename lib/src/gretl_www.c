@@ -65,7 +65,7 @@ extern int h_errno;
 #define RICARDO "ricardo.ecn.wfu.edu"
 
 static int wproxy;
-static char dbhost[64];
+static char dbhost[64] = "ricardo.ecn.wfu.edu";
 
 typedef enum {
     SAVE_NONE,
@@ -1723,7 +1723,7 @@ int check_remote_db (const char *dbname)
 
     if (!err && getbuf != NULL) {
 	err = strncmp(getbuf, "OK", 2) != 0;
-    }
+    } 
 
     free(getbuf);
 

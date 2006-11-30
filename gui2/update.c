@@ -161,7 +161,6 @@ static int real_update_query (int queryopt)
 #ifndef WIN32
     int admin = 0;
     char hometest[MAXLEN];
-    FILE *fp;
 #endif
     struct stat fbuf;
     time_t filedate = (time_t) 0;

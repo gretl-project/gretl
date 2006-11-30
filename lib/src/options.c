@@ -123,12 +123,6 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy" },
     { GRAPH,    OPT_O, "tall" },
     { HILU,     OPT_B, "no-corc" },
-    { IMPORT,   OPT_B, "box1" },
-    { IMPORT,   OPT_O, "octave" },
-#if 0 /* not ready */
-    { INFO,     OPT_V, "variables" },
-    { INFO,     OPT_T, "tests" },
-#endif
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },
@@ -172,6 +166,8 @@ struct gretl_option gretl_opts[] = {
     { OMITFROM, OPT_Q, "quiet" },
     { OMITFROM, OPT_T, "inst" },
     { OMITFROM, OPT_W, "wald" },
+    { OPEN,     OPT_B, "box1" },
+    { OPEN,     OPT_O, "octave" },
     { OPEN,     OPT_W, "www" },
     { OUTFILE,  OPT_A, "append" },
     { OUTFILE,  OPT_C, "close" },

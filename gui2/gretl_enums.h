@@ -88,6 +88,7 @@ enum extra_cmds {
     ITERATIONS,
     CUSUMSQ,
     PANEL_B,
+    IMPORT,
     GUI_CMD_MAX
 };
 

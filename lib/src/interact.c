@@ -174,6 +174,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = HELP;
     } else if (!strcmp(s, "pooled")) {
 	cmd->ci = OLS;
+    } else if (!strcmp(s, "import")) {
+	cmd->ci = OPEN;
     } else if (!strcmp(s, "label")) {
 	cmd->ci = SETINFO;
     } else if (!strcmp(line, "smpl full")) {
@@ -235,7 +237,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == GENR || \
 	               c == HAUSMAN || \
                        c == HELP || \
-	               c == IMPORT || \
                        c == INCLUDE || \
     	               c == INFO || \
  	               c == LABELS || \

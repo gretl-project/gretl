@@ -662,6 +662,90 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
+static int cli_open_append (CMD *cmd, char *line, double ***pZ,
+			    DATAINFO **ppdinfo, MODEL **models,
+			    PRN *prn)
+{
+    DATAINFO *pdinfo = *ppdinfo;
+    char datfile[MAXLEN];
+    char response[3];
+    int k, dbdata = 0;
+    int err = 0;
+
+    err = getopenfile(line, datfile, &paths, (cmd->opt & OPT_W)?
+		      OPT_W : OPT_NONE);
+    if (err) {
+	errmsg(err, prn);
+	return err;
+    }
+
+    if (cmd->opt & OPT_W) {
+	k = GRETL_NATIVE_DB_WWW;
+    } else if (cmd->opt & OPT_B) {
+	k = GRETL_BOX_DATA;
+    } else if (cmd->opt & OPT_O) {
+	k = GRETL_CSV_DATA;
+    } else {
+	k = detect_filetype(datfile, &paths, prn);
+    }
+
+    dbdata = (k == GRETL_NATIVE_DB || k == GRETL_NATIVE_DB_WWW ||
+	      k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
+
+    if (data_status && !batch && !dbdata && cmd->ci != APPEND &&
+	strcmp(datfile, paths.datfile)) {
+	fprintf(stderr, _("Opening a new data file closes the "
+			  "present one.  Proceed? (y/n) "));
+	fgets(response, sizeof response, stdin);
+	if (*response != 'y' && *response != 'Y') {
+	    pprintf(prn, _("OK, staying with current data set\n"));
+	    return 0;
+	}
+    }
+
+    if (data_status && !dbdata && cmd->ci != APPEND) {
+	clear_data(cmd, pZ, ppdinfo, models);
+	pdinfo = *ppdinfo;
+    }
+
+    if (k == GRETL_CSV_DATA) {
+	err = import_csv(pZ, ppdinfo, datfile, prn);
+    } else if (k == GRETL_OCTAVE) {
+	err = import_octave(pZ, ppdinfo, datfile, prn);
+    } else if (k == GRETL_BOX_DATA) {
+	err = import_box(pZ, ppdinfo, datfile, prn);
+    } else if (WORKSHEET_IMPORT(k)) {
+	err = import_other(pZ, ppdinfo, k, datfile, prn);
+    } else if (k == GRETL_XML_DATA) {
+	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
+			     data_status, prn, 0);
+    } else if (dbdata) {
+	err = set_db_name(datfile, k, &paths, prn);
+    } else {
+	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
+			     data_status, prn);
+    }
+
+    pdinfo = *ppdinfo;
+
+    if (err) {
+	errmsg(err, prn);
+	return err;
+    }
+
+    if (!dbdata && cmd->ci != APPEND) {
+	strncpy(paths.datfile, datfile, MAXLEN - 1);
+    }
+
+    data_status = 1;
+
+    if (pdinfo->v > 0 && !dbdata) {
+	varlist(pdinfo, prn);
+    }
+
+    return err;
+}
+
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     DATAINFO *pdinfo = *ppdinfo;
@@ -670,7 +754,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     PRN *prn = s->prn;
     MODEL **models = s->models;
     int old_runit = runit;
-    char datfile[MAXLEN];
     char runfile[MAXLEN];
     int k, err = 0;
 
@@ -844,93 +927,10 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	help(cmd->param, paths.helpfile, prn);
 	break;
 
-    case IMPORT:
-	err = getopenfile(line, datfile, &paths, OPT_NONE);
-	if (err) {
-	    pputs(prn, _("import command is malformed\n"));
-	    break;
-	}
-	if (data_status) {
-	    clear_data(cmd, pZ, ppdinfo, models);
-	}
-	if (cmd->opt & OPT_B) {
-	    err = import_box(pZ, ppdinfo, datfile, prn);
-	} else if (cmd->opt & OPT_O) {
-	    err = import_octave(pZ, ppdinfo, datfile, prn);
-	} else {
-	    err = import_csv(pZ, ppdinfo, datfile, prn);
-	}
-	pdinfo = *ppdinfo;
-	if (!err) { 
-	    data_status = 1;
-	    print_smpl(pdinfo, 0, prn);
-	    varlist(pdinfo, prn);
-	    pputs(prn, _("You should now use the \"print\" command "
-			 "to verify the data\n"));
-	    pputs(prn, _("If they are OK, use the \"store\" command "
-			 "to save them in gretl format\n"));
-	}
-	break;
-
     case OPEN:
     case APPEND:
-	err = getopenfile(line, datfile, &paths, cmd->opt);
-	if (err) {
-	    pputs(prn, _("'open' command is malformed\n"));
-	} else {
-	    int k = detect_filetype(datfile, &paths, prn);
-	    int dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB || 
-			  k == GRETL_PCGIVE_DB);
-	    char response[3];
-
-	    if (data_status && !batch && !dbdata && cmd->ci != APPEND &&
-		strcmp(datfile, paths.datfile)) {
-		fprintf(stderr, _("Opening a new data file closes the "
-				  "present one.  Proceed? (y/n) "));
-		fgets(response, sizeof response, stdin);
-		if (*response != 'y' && *response != 'Y') {
-		    fprintf(stderr, 
-			    _("OK, staying with current data set\n"));
-		    break;
-		}
-	    }
-
-	    if (data_status && !dbdata && cmd->ci != APPEND) {
-		clear_data(cmd, pZ, ppdinfo, models);
-		pdinfo = *ppdinfo;
-	    }
-
-	    if (k == GRETL_CSV_DATA) {
-		err = import_csv(pZ, ppdinfo, datfile, prn);
-	    } else if (k == GRETL_OCTAVE) {
-		err = import_octave(pZ, ppdinfo, datfile, prn);
-	    } else if (k == GRETL_BOX_DATA) {
-		err = import_box(pZ, ppdinfo, datfile, prn);
-	    } else if (WORKSHEET_IMPORT(k)) {
-		err = import_other(pZ, ppdinfo, k, datfile, prn);
-	    } else if (k == GRETL_XML_DATA) {
-		err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-				     data_status, prn, 0);
-	    } else if (dbdata) {
-		err = set_db_name(datfile, k, &paths, prn);
-	    } else {
-		err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-				     data_status, prn);
-	    }
-	    pdinfo = *ppdinfo;
-	    if (err) {
-		errmsg(err, prn);
-	    } else {
-		if (!dbdata && cmd->ci != APPEND) {
-		    strncpy(paths.datfile, datfile, MAXLEN-1);
-		}
-		data_status = 1;
-		if (pdinfo->v > 0 && !dbdata) {
-		    varlist(pdinfo, prn);
-		}
-		paths.currdir[0] = '\0';
-	    }
-	}
+	err = cli_open_append(cmd, line, pZ, ppdinfo, models, prn);
+	pdinfo = *ppdinfo;
 	break;
 
     case NULLDATA:

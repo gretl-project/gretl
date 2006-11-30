@@ -81,7 +81,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { HSK,      "hsk" }, 
     { HURST,    "hurst" },
     { IF,       "if" },
-    { IMPORT,   "import" },
     { INCLUDE,  "include" },
     { INFO,     "info" }, 
     { KPSS,     "kpss" },

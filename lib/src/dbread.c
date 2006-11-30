@@ -1378,7 +1378,7 @@ set_db_name (const char *fname, int filetype, const PATHS *ppaths, PRN *prn)
 	if (!err) {
 	    db_type = filetype;
 	    pprintf(prn, "%s\n", db_name);
-	}
+	} 
 	return err;
     }
 
