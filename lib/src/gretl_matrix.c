@@ -1236,25 +1236,20 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m)
 {
-    int i, j;
     double x1, x2;
+    int i, j;
 
     if (m->rows != m->cols) {
 	fputs("gretl_matrix_add_self_transpose: matrix must be square\n", 
 	      stderr);
-	return 1;
+	return E_NONCONF;
     }
 
     for (i=0; i<m->rows; i++) {
 	for (j=i; j<m->rows; j++) {
-	    if (j == i) {
-		m->val[mdx(m, i, j)] *= 2.0;
-	    } else {
-		x1 = m->val[mdx(m, i, j)];
-		x2 = m->val[mdx(m, j, i)];
-		m->val[mdx(m, i, j)] = 
-		    m->val[mdx(m, j, i)] = x1 + x2;
-	    }
+	    x1 = m->val[mdx(m,i,j)];
+	    x2 = m->val[mdx(m,j,i)];
+	    m->val[mdx(m,i,j)] = m->val[mdx(m,j,i)] = x1 + x2;
 	}
     }
 
@@ -1465,7 +1460,7 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
     int m = (mod == GRETL_MOD_TRANSPOSE)? targ->cols : targ->rows;
     int n = (mod == GRETL_MOD_TRANSPOSE)? targ->rows : targ->cols;
     double x;
-    int i, j;
+    int i, j, si, sj;
 
     if (row < 0 || col < 0) {
 	return E_NONCONF;
@@ -1476,15 +1471,18 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
 	return E_NONCONF;
     }
 
+    si = row;
     for (i=0; i<m; i++) {
+	sj = col;
 	for (j=0; j<n; j++) {
-	    x = gretl_matrix_get(src, row + i, col + j);
+	    x = src->val[mdx(src, si, sj++)];
 	    if (mod == GRETL_MOD_TRANSPOSE) {
-		gretl_matrix_set(targ, j, i, x);
+		targ->val[mdx(targ,j,i)] = x;
 	    } else {
-		gretl_matrix_set(targ, i, j, x);
+		targ->val[mdx(targ,i,j)] = x;
 	    }
 	}
+	si++;
     }
 
     return 0;
@@ -4567,7 +4565,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
  * 
  * Computes the inverse (or generalized inverse) of a general matrix 
  * using SVD factorization, with the help of the lapack function 
- * %dgesvd.  If any of the singular values of @a are less than 1e-9
+ * %dgesvd.  If any of the singular values of @a are less than 1.0e-9
  * the Moore-Penrose generalized inverse is computed instead of the
  * standard inverse.  On exit the original matrix is overwritten by 
  * the inverse.
@@ -5588,7 +5586,3 @@ gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
 
     return M;
 }
-
-
-
-
