@@ -2698,14 +2698,14 @@ static void rbuf_finalize (const char *s)
 /**
  * bufgets:
  * @s: target string (must be pre-allocated).
- * @size: maximum number of characters to print.
+ * @size: maximum number of characters to read.
  * @buf: source buffer.
  *
- * This function works much like fgets, reading lines from a
- * buffer rather than a file.  It differs in that it discards
- * the line termination ("\n" or "\r\n").  Important note:
- * use of bufgets() on a particular buffer must be preceded by
- * a call to bufgets_init() on the same buffer, and must be
+ * This function works much like fgets, reading successive lines 
+ * from a buffer rather than a file.  It differs from fgets in 
+ * that it discards the line termination ("\n" or "\r\n") on output.  
+ * Important note: use of bufgets() on a particular buffer must be 
+ * preceded by a call to bufgets_init() on the same buffer, and must be
  * followed by a call to bufgets_finalize(), again on the same
  * buffer.
  * 

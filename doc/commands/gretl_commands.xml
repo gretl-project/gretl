@@ -1359,21 +1359,22 @@
 	quarter of 1999, and then import the series named
 	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
       <para>
-	If <lit>setobs</lit> and <lit>smpl</lit> are not used in this way,
-	the data frequency and sample range are set using the first variable
-	read from the database.
+	If <lit>setobs</lit> and <lit>smpl</lit> are not specified in this
+	way, the data frequency and sample range are set using the first
+	variable read from the database.
       </para>
       <para>
 	If the series to be read are of higher frequency than the working
-	data set, you must specify a compaction method as below:</para>
+	data set, you may specify a compaction method as below:</para>
       <code>
 	data (compact=average) LHUR PUNEW</code>
       <para>
 	The four available compaction methods are <quote>average</quote>
 	(takes the mean of the high frequency observations),
 	<quote>last</quote> (uses the last observation),
-	<quote>first</quote> and <quote>sum</quote>.
-      </para> 
+	<quote>first</quote> and <quote>sum</quote>.  If no method is
+	specified, the default is to use the average.
+      </para>
 
     </description>
 
@@ -5113,24 +5114,36 @@
       <options>
 	<option>
 	  <flag>--www</flag>
-	  <effect>open a database on the gretl server</effect>
+	  <effect>use a database on the gretl server</effect>
 	</option>
       </options>
+      <examples>
+        <example>open data4-1</example>
+        <example>open voter.dta</example>
+	<example>open fedbog --www</example>
+      </examples>
     </usage>
 
     <description>
       <para>
-	Opens a data file.  If a data file is already open, it is
-	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, plain text, CSV,
-	MS Excel, Stata, etc.).
+	Opens a data file.  If a data file is already open, it is replaced
+	by the newly opened one.  If a full path is not given, the program
+	will search some relevant paths to try to find the file.  If no
+	filename suffix is given (as in the first example above), gretl
+	assumes a native datafile with suffix <lit>.gdt</lit>.  Based on
+	the name of the file and various heuristics, gretl will try to
+	detect the format of the data file (native, plain text, CSV, MS
+	Excel, Stata, etc.).
       </para>
 
       <para>
-	This command can also be used to open a database (gretl or
-	RATS 4.0) for reading.  In that case it should be followed by
-	the <cmdref targ="data"/> command to extract particular series
-	from the database.
+	This command can also be used to open a database (gretl or RATS
+	4.0) for reading.  In that case it should be followed by the
+	<cmdref targ="data"/> command to extract particular series from
+	the database.  If the <lit>www</lit> option is given, the program
+	will try to access a database of the given name on the gretl
+	server &mdash; for instance the Federal Reserve interest rates
+	database in the third example above.
       </para>
     </description>
 
