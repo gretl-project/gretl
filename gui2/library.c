@@ -5814,7 +5814,6 @@ static void clean_up_varlabels (DATAINFO *pdinfo)
     for (i=1; i<pdinfo->v; i++) {
 	label = VARLABEL(pdinfo, i);
 	if (!g_utf8_validate(label, -1, NULL)) {
-	    fprintf(stderr, "clean_up_varlabels!\n");
 	    conv = g_convert(label, -1,
 			     "UTF-8",
 			     "ISO-8859-1",

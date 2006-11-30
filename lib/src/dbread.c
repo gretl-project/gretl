@@ -252,8 +252,8 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 
 static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
 {
-    s += strcspn(p, " "); /* skip varname */
-    s += strspn(p, " ");  /* skip space */
+    s += strcspn(s, " "); /* skip varname */
+    s += strspn(s, " ");  /* skip space */
 
     *sinfo->descrip = 0;
     strncat(sinfo->descrip, s, MAXLABEL - 1);
