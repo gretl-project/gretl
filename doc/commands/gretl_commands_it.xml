@@ -128,6 +128,14 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime del modello aumentato</effect>
 	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>aggiunge come strumento, solo per TSLS</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>aggiunge sia come regressore che come strumento, solo per TSLS</effect>
+	</option>
       </options>
       <examples>
         <example>addto 2 5 7 9</example>
@@ -199,6 +207,7 @@
 	<example>adf 0 y</example>
         <example>adf 2 y --nc --c --ct</example>
         <example>adf 12 y --c --test-down</example>
+	<demo>jgm-1996.inp</demo>
       </examples>
     </usage>
 
@@ -394,18 +403,20 @@
 	  <flag>--time-dummies</flag>
 	  <effect>aggiunge variabili dummy temporali</effect>
         </option>
+        <option>
+	  <flag>--asymptotic</flag>
+	  <effect>calcola gli errori standard asintotici nel modo consueto</effect>
+        </option>
       </options>
       <examples>
         <example>arbond 2 ; y Dx1 Dx2</example>
-        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1 </example>
+        <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
+	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
+	<demo>arbond91.inp</demo>
       </examples>
     </usage>
 
     <description>
-      <para>
-	DOCUMENTAZIONE PROVVISORIA: questa funzionalità è in corso di test
-        e la sintassi del comando potrebbe essere modificata.
-      </para>  
       <para>
 	Esegue la stima di modelli panel dinamici (ossia, modelli panel che
         includono uno o più ritardi della variabile dipendente) usando il
@@ -430,18 +441,19 @@
       </para>
       <para context="cli">
 	L'ultimo campo (opzionale) del comando consente di specificare gli
-        strumenti. Se non viene usato, si assumer che tutte le variabili
+        strumenti. Se non viene usato, si assumerà che tutte le variabili
         indipendenti sono strettamente esogene. Se si specifica uno strumento,
         occorre includere nell'elenco tutte le variabili indipendenti
-        strettamente esogene. La gestione degli strumenti al momento è
-        incompleta: a proposito dei regressori predeterminati, non è possibile
-        specificare un insieme di strumenti <quote>diagonali</quote> che contengono
-        valori della variabile in questione prima dell'osservazione attuale
-        (siamo aperti a suggerimenti sulla migliore sintassi del comando da
-        usare per specificare questi elementi).
+        strettamente esogene. Per i regressori predeterminati, è possibile usare
+        la funzione <lit>GMM</lit> per includere un intervallo specifico di
+        ritardi in stile "diagonale". Questo modo di procedere è illustrato nel
+        terzo esempio visto sopra. Il primo argomento di <lit>GMM</lit> è il
+        nome della variabile in questione, il secondo è il ritardo minimo da
+        usare, mentre il terzo è quello massimo. Se il terzo argomento è pari a
+        0, vengono usati tutti i ritardi disponibili.
       </para>
       <para context="gui">
-	A proposito degli strumenti, si veda la documentazione (provvisoria) per
+	A proposito degli strumenti, si veda la documentazione per
         la versione testuale di questo comando. Al momento non è possibile
         specificare gli strumenti nell'interfaccia grafica: tutte le variabili
         indipendenti sono considerate strettamente esogene.
@@ -454,9 +466,15 @@
         sovraidentificazione di Sargan. Si noti che in questo modello
         differenziato l'autocorrelazione del prim'ordine non contrasta con la
         validità del modello, mentre quella di ordine 2 viola le ipotesi
-        statistiche che ne sono alla base. Nel caso della stima in due passi,
-        gli errori standard sono calcolati usando la correzione per campioni
-        finiti suggerita da Windmeijer (2005).
+        statistiche che ne sono alla base. 
+      </para>
+      <para context="cli">
+        Nel caso della stima in due passi, gli errori standard sono calcolati
+        usando la correzione per campioni finiti suggerita da Windmeijer (2005).
+        Gli errori standard asintotici calcolati nel modo consueto non sono
+        generalmente ritenuti affidabili nel caso dello stimatore a due passi,
+        ma se per qualche motivo si vuole usarli, è possibile usare l'opzione
+        <lit>--asymptotic</lit> per disabilitare la correzione di Windmeijer.
       </para>
       <para context="cli">
 	Se si usa l'opzione <lit>--time-dummies</lit>, viene aggiunto ai
@@ -467,18 +485,6 @@
         variabili dummy sotto forma di differenze temporali, occorre definirle
         ed aggiungerle manualmente.
        </para>
-      <para>
-	TODO list for this command:
-      </para>
-      <ilist>
-	<li><para>Get block-diagonal instruments sorted out</para>
-	</li>
-	<li><para>Finalize GUI interface</para>
-	</li>
-	<li><para>Maybe add: param for minimum lag of y</para>
-	</li>
-      </ilist>
-
     </description>
 
     <gui-access>
@@ -795,6 +801,7 @@
       </arguments>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
+	<demo>restrict.inp</demo>
       </examples>
     </usage>
 
@@ -1352,13 +1359,13 @@
 	del 1999 e infine importano le serie <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
       </para>
       <para>
-        Se non si usano <lit>setobs</lit> e <lit>smpl</lit> nel modo descritto,
+        Se non si specificano <lit>setobs</lit> e <lit>smpl</lit> nel modo descritto,
         la frequenza dei dati e l'intervallo del campione vengono impostati
         usando la prima variabile letta dal database.
       </para>
       <para>
         Se le serie da leggere hanno frequenza maggiore di quella impostata
-        nel dataset, occorre specificare un metodo di compattamento, come mostrato
+        nel dataset, è possibile specificare un metodo di compattamento, come mostrato
         di seguito
       </para>
 
@@ -1368,7 +1375,8 @@
       <para>I quattro metodi di compattamento disponibili sono
 	<quote>average</quote> (usa la media delle osservazioni ad alta
 	frequenza), <quote>last</quote> (usa l'ultima osservazione),
-	<quote>first</quote> e <quote>sum</quote>.
+	<quote>first</quote> e <quote>sum</quote>. Se non si specifica alcun
+        metodo, verrà usata la media delle osservazioni.
       </para> 
 
     </description>
@@ -2274,6 +2282,11 @@
           producono una serie o un vettore: <func>sort</func> (ordina una serie
           in ordine ascendente di grandezza), <func>dsort</func> (ordina una serie
           in ordine discendente di grandezza), <func>cum</func> (somma cumulata).
+          Solo per i  modelli panel, le funzioni <func>pmean</func> e <func>psd</func>
+          accettano un'unica serie come argomento, e producono rispettivamente
+          le medie e le deviazioni standard della variabile per ognuna dele
+          unità cross-section. Si veda la <guideref targ="chap-genr"/> per i
+          dettagli.
           </para>
         </li>
 	<li>
@@ -3350,53 +3363,6 @@
       Il blocco <cmd>else</cmd> è opzionale; i blocchi <lit>if</lit> &hellip;
 	<lit>endif</lit> possono essere nidificati.</para>
     </description>
-
-  </command>
-
-  <command name="import" section="Dataset" label="Importazione dei dati" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>nomefile</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--octave</flag>
-	  <effect>dati GNU octave</effect>
-        </option>
-        <option>
-	  <flag>--box1</flag>
-	  <effect>dati BOX1</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-        Se non si specifica alcuna opzione, importa dati da un file in formato
-        valori separati da virgole (CSV: comma-separated values), che può essere
-        facilmente prodotto da un foglio elettronico. Il file deve contenere i
-        nomi delle variabili sulla prima riga e una matrice rettangolare di dati
-        nelle righe rimanenti. Le variabili devono essere disposte <quote>per
-          osservazione</quote> (una colonna per variabile, ogni riga rappresenta
-        un'osservazione).  Si veda la <guideref targ="datafiles"/> per i
-        dettagli.
-      </para>
-      <para>
-	Con l'opzione <lit>--octave</lit> viene letto un file nel formato di
-        GNU octave.
-      </para>
-
-      <para>
-	Con l'opzione <lit>--box1</lit> viene letto un file in formato
-        BOX1, che un tempo poteva essere ottenuto usando il Servizio di Estrazione
-        Dati del Bureau of the Census degli USA.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/File/Apri dati/importa</menu-path>
-    </gui-access>
 
   </command>
 
@@ -4974,9 +4940,21 @@
         <argument>lista-variabili</argument>
       </arguments>
       <options>
+ 	<option>
+	  <flag>--wald</flag>
+          <effect>esegue un test di Wald invece di un test F</effect>
+	</option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime per il modello ridotto</effect>
+	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>omette come strumento, solo per TSLS</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>omette sia come regressore che come strumento, solo per TSLS</effect>
 	</option>
       </options>
       <examples>
@@ -5047,21 +5025,38 @@
       <arguments>
         <argument>file-dati</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--www</flag>
+	  <effect>usa un database sul server di gretl</effect>
+	</option>
+      </options>
+      <examples>
+        <example>open data4-1</example>
+        <example>open voter.dta</example>
+	<example>open fedbog --www</example>
+      </examples>
     </usage>
 
     <description>
       <para>
-	Apre un file di dati. Se è già stato aperto un file di dati,
-        esso viene sostituito da quello selezionato. Il programma cerca
-        di determinare il formato del file di dati (gretl, testo
-        semplice, CSV o	BOX1).
+        Apre un file di dati. Se è già stato aperto un file di dati, esso viene
+        sostituito da quello selezionato. Se non si specifica un percorso
+        completo, il programma cercherà automaticamente il file in alcuni
+        percorsi predefiniti. Se non si specifica un'estensione per il file,
+        come nel primo degli esempi, gretl assume che si tratti di un file di
+        dati standard, con estensione <lit>.gdt</lit>. A seconda del nome del
+        file e di alcune sue caratteristiche, gretl cerca di indovinare il
+        formato dei dati (standard, testo semplice, CSV, MS Excel, Stata, ecc).
       </para>
 
       <para>
 	Questo comando può essere usato anche per aprire un database (gretl o
 	RATS 4.0) per la lettura. In questo caso, dev'essere seguito dal comando
-	<cmdref targ="data"/> per estrarre una particolare serie dal
-        database.
+        <cmdref targ="data"/> per estrarre una particolare serie dal database.
+        Se si usa l'opzione <lit>www</lit>, il programma cercherà di accedere al
+        database specificato sul server di gretl &mdash; ad esempio il database
+        "Federal Reserve interest rates" nel terzo degli esempi visti sopra.
       </para>
     </description>
 
@@ -7094,6 +7089,7 @@
         <example>system method=sur</example>
 	<example>system method=sur save=resids</example>
 	<example>system method=3sls save=resids,fitted</example>
+	<demo>klein.inp</demo>
       </examples>
     </usage>
 
@@ -7623,6 +7619,7 @@
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
         <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+	<demo>denmark.inp</demo>
       </examples>
     </usage>
 
