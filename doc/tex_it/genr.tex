@@ -203,9 +203,10 @@ per un anno particolare, ad esempio con \cmd{genr dum = (ANNO=1960)}.
 modulo, \verb+%+.  Ad esempio, per creare una dummy che
 valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
 basta eseguire
+%
 \begin{code}
-      genr index 
-      genr dum = ((index-1)%30) = 0
+    genr index 
+    genr dum = ((index-1)%30) = 0
 \end{code}
 
 
@@ -234,15 +235,60 @@ per ogni unità, dove $T$ è la lunghezza della dimensione temporale del panel.
 Per creare un indice che assuma valori compresi tra 1 e $m\times T$, dove $m$
 è il numero di unità nel panel, si usi invece \cmd{genr index}.
 
+\subsection{Statistiche descrittive per unità}
+\label{panel-stats}
+
+Le funzioni \texttt{pmean()} e \texttt{psd()} possono essere usate per generare
+semplici statistiche descrittive (media e deviazione standard) per una data
+variabile, calcolate per gruppo.
+
+Supponendo di avere un dataset panel che comprende 8 osservazioni temporali per
+ciascuna di $N$ unità o gruppi. Il comando
+%
+\begin{code}
+    genr pmx = pmean(x)
+\end{code}
+%
+crea una serie di questo tipo: i primi 8 valori (che corrispondono all'unità 1)
+contengono la media di \varname{x} per l'unità 1, i successivi 8 valori
+contengono la media per l'unità 2 e così via. La funzione \texttt{psd()}
+funziona in modo simile. La deviazione standard campionaria per il gruppo
+$i$ è calcolata come
+\[
+s_i = \sqrt{\frac{\sum(x-\bar{x}_i)^2}{T_i-1}}
+\]
+dove $T_i$ denota il numero di osservazioni valide su \varname{x}
+per l'unità data, $\bar{x}_i$ denota la media di gruppo, e la somma viene fatta
+su tutte le osservazioni valide per il gruppo. Se però vale $T_i < 2$,
+la deviazione standard viene impostata pari a 0.
+
+È interessante notare un uso particolare di \texttt{psd()}: se si vuole formare
+un sotto-campione di un panel che contenga solo quelle unità per cui la
+variabile \varname{x} varia nel tempo, si può eseguire
+%
+\begin{code}
+    smpl (psd(x) > 0) --restrict
+\end{code}
+
+\subsection{Funzioni speciali per manipolare i dati}
+\label{panel-manip}
+
+Oltre alle funzioni discusse sopra, ci sono alcune opzioni di \texttt{genr}
+particolarmente utili per manipolare i dati panel, soprattutto quando i dati
+sono stati importati da una fonte esterna e non sono nella forma corretta per
+l'analisi panel. Queste funzionalità sono spiegate nel Capitolo~\ref{datafiles}.
+
 
 \section{Ricampionamento e bootstrapping}
 \label{genr-resample}
 
 Un'altra funzione particolare è il ricampionamento, con reimmissione,
 di una serie. Data una serie di dati originale \varname{x}, il comando
+%
 \begin{code}
     genr xr = resample(x)
 \end{code}
+%
 crea una nuova serie in cui ognuno degli elementi è estratto in modo casuale
 dagli elementi di \varname{x}. Se la serie originale ha 100 osservazioni, ogni
 elemento di \varname{x} è scelto con probabilità $1/100$ ad ogni estrazione.

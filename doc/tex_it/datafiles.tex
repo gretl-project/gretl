@@ -393,10 +393,11 @@ in cui le osservazioni sono organizzate.
 Il comando testuale \cmd{setobs} supporta delle opzioni che corrispondono a
 quelle viste sopra nell'interfaccia grafica. Se sono disponibili delle variabili indice,
 è possibile procedere nel modo seguente:
+%
 \begin{code}
-            setobs var-unita var-tempo --panel-vars
+    setobs var-unita var-tempo --panel-vars
 \end{code}
-
+%
 dove \texttt{var-unita} è una variabile che indicizza le unità e 
 \texttt{var-tempo} è una variabile che indicizza i periodi.
 Altrimenti, è possibile usare la sintassi \verb+setobs+ \textsl{freq} \verb+1:1+
@@ -408,9 +409,10 @@ numero di unità cross section nel caso di pila di dati cross section), mentre
 per un dataset panel sotto forma di pila di serie storiche con osservazioni per
 20 periodi, il secondo per un dataset panel sotto forma di pila di dati cross
 section, con 5 unità cross section.
+%
 \begin{code}
-            setobs 20 1:1 --stacked-time-series
-            setobs 5 1:1 --stacked-cross-section
+    setobs 20 1:1 --stacked-time-series
+    setobs 5 1:1 --stacked-cross-section
 \end{code}
 
 \subsubsection{Dati panel organizzati per variabile}

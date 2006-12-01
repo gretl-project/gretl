@@ -61,9 +61,10 @@ $\varepsilon_{it}$\footnote{È possibile individuare un'altra componente di
 Gli $\alpha_i$ sono quindi trattati come parametri fissi
 (intercette $y$ specifiche per le unità) da stimare. Questo può essere fatto
 includendo una variabile dummy per ogni unità cross-section (e sopprimendo la
-costante comune), oppure è possibile procedere sottraendo le medie di gruppo da
-ognuna delle variabili e stimando un modello senza costante. Nell'ultimo caso la
-variabile dipendente si può scrivere come
+costante comune), ossia applicando il cosiddetto metodo ``Least Squares Dummy
+Variables'' (LSDV). In alternativa, è possibile procedere sottraendo le medie di
+gruppo da ognuna delle variabili e stimando un modello senza costante.
+Nell'ultimo caso la variabile dipendente si può scrivere come
 \[
 \tilde{y}_{it} = y_{it} - \bar{y}_i
 \]
@@ -80,10 +81,20 @@ dalla media, possiamo ottenere le stime degli $\alpha_i$ usando
    \left(y_{it} - X_{it}\hat{\beta}\right)
 \]
 
-Questi due metodi (usare le variabili dummy o usare le differenze dalla media)
-sono numericamente equivalenti, e \app{gretl} sceglie tra i
-due a seconda del numero di unità cross-section e di variabili indipendenti
-(cercando di minimizzare l'uso delle memoria).
+Questi due metodi (LSDV oppure usare le differenze dalla media)
+sono numericamente equivalenti. \app{gretl} sceglie il secondo approccio, che
+consiste nel prendere le differenze dalla media dei dati. Se si ha un piccolo
+numero di unità cross-section, un grande numero di osservazioni temporali per
+ogni unità, e un grande numero di regressori, è più economico in termini di
+memoria utilizzare il metodo LSDV, che può essere implementato manualmente in
+questo modo:
+%
+\begin{code}
+    genr unitdum
+    ols y x du_*
+\end{code}
+%
+Si veda il Capitolo~\ref{chap-genr} per i dettagli su \texttt{unitdum}.
 
 Le stime $\hat{\alpha}_i$ non vengono mostrate fra i risultati del modello
 tipicamente prodotti da \app{gretl} (possono essere molto numerose, e
@@ -346,7 +357,10 @@ effetti casuali. Lo stimatore usato per gli effetti fissi è
 \]
 dove $\tilde{X}$ è la matrice dei regressori con le medie di gruppo sottratte,
 $\tilde{u}_i$ denota i residui del modello a effetti fissi per l'unità $i$, e
-$m$ è il numero di unità cross-section.
+$m$ è il numero di unità cross-section. Questo stimatore è robusto rispetto
+all'eteroschedasticità; è robusto anche rispetto all'autocorrelazione, a patto
+che la dimensione temporale del panel sia relativamente ridotta\footnote{Si veda,
+ad esempio, Arellano (2003, capitolo 2.3).}.
 
 \section{Modelli panel dinamici}
 \label{panel-dyn}
@@ -409,13 +423,6 @@ di regressione con le variabili strumentali: si veda
 l'esempio~\ref{anderson-hsiao}, basato su uno studio dei tassi di crescita dei
 paesi (Nerlove 1999)\footnote{Si veda anche la pagina dei benchmark di Clint Cummins,
   \url{http://www.stanford.edu/~clint/bench/}.}.
- 
-Sebbene lo stimatore di Anderson--Hsiao sia consistente, non è il più
-efficiente: non usa pienamente gli strumenti disponibili per $\Delta y_{i,t-1}$,
-né tiene conto della struttura dell'errore $\eta_{it}$.  Dei miglioramenti sono
-stati proposti da Arellano e Bond (1991) e da Blundell e Bond
-(1998). Questi metodi non sono ancora supportati da \app{gretl}, ma il primo
-potrebbe essere aggiunto in una delle prossime versioni del programma.
 
 \begin{script}[htbp]
   \caption{Lo stimatore Anderson--Hsiao per un modello panel dinamico}
@@ -435,7 +442,13 @@ potrebbe essere aggiunto in una delle prossime versioni del programma.
    tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{code}
 \end{script}
-
+ 
+Sebbene lo stimatore di Anderson--Hsiao sia consistente, non è il più
+efficiente: non usa pienamente gli strumenti disponibili per $\Delta y_{i,t-1}$,
+né tiene conto della struttura dell'errore $\eta_{it}$.  Dei miglioramenti sono
+stati proposti da Arellano e Bond (1991) e da Blundell e Bond
+(1998). La versione attuale di \app{gretl} permette di utilizzare il metodo di
+Arellano--Bond, si veda la documentazione del comando \cmd{arbond}.
 
 \section{Esempio: la Penn World Table}
 \label{PWT}
