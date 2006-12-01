@@ -61,7 +61,8 @@ static int cholbeta (double *xpx, double *xpy, double *coeff, int nv,
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static int hatvar (MODEL *pmod, int n, double **Z);
-static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo);
+static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+		      gretlopt opt);
 static int depvar_zero (int t1, int t2, int yno, int nwt, 
 			const double **Z);
 static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
@@ -577,7 +578,7 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 {
     MODEL cmod;
     int targ, l0;
-    int *list;
+    int *list = NULL;
     int err = 0;
     int i, ret = 0;
 
@@ -638,6 +639,10 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 	    break;
 	}
     } 
+
+#if COLL_DEBUG
+    fprintf(stderr, "pass 1: done, ret = %d, err = %d\n", ret, err);
+#endif
 
     /* if that didn't work, try trimming the list of regressors more
        aggressively: look for a variable that is perfectly predicted
@@ -934,7 +939,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* drop any vars that are all zero and repack the list */
-    omitzero(&mdl, (const double **) *pZ, pdinfo);
+    omitzero(&mdl, (const double **) *pZ, pdinfo, opt);
 
     /* if regressor list contains a constant, record this fact and 
        place it first among the regressors */
@@ -2162,7 +2167,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
  * is %AUX_SQ add the squares of the original regressors; if @aux
  * is %AUX_WHITE add squares and cross-products, or if @aux is
  * %AUX_LOG add the natural logs of the original regressors.
- * If theye are not already present, these variables are added
+ * If they are not already present, these variables are added
  * to the data array.
  * 
  * Returns: the augmented list, or NULL on failure.
@@ -2224,7 +2229,9 @@ int *augment_regression_list (const int *orig, int aux,
 			continue;
 		    }
 		    vnew = xpxgenr(vi, vj, pZ, pdinfo);
-		    if (vnew > 0) list[++k] = vnew;
+		    if (vnew > 0) {
+			list[++k] = vnew;
+		    }
 		}
 	    }
 	} else if (aux == AUX_LOG) {
@@ -2909,11 +2916,11 @@ MODEL ar_func (const int *list, double ***pZ,
 /* From 2 to end of list, omits variables with all zero observations
    and re-packs the rest of them */
 
-static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
+static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+		      gretlopt opt)
 {
     int v, lv, offset, dropmsg = 0;
     double xx = 0.0;
-    char vnamebit[20];
 
     offset = (pmod->ci == WLS)? 3 : 2;
 
@@ -2921,12 +2928,8 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
         lv = pmod->list[v];
         if (gretl_iszero(pmod->t1, pmod->t2, Z[lv])) {
 	    gretl_list_delete_at_pos(pmod->list, v);
-	    if (pdinfo->varname[lv][0] != 0) {
-		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
-		strcat(gretl_msg, vnamebit);
-		dropmsg = 1;
-		v--;
-	    }
+	    dropmsg = 1;
+	    v--;
 	}
     }
 
@@ -2945,16 +2948,15 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 	    }
 	    if (wtzero) {
 		gretl_list_delete_at_pos(pmod->list, v);
-		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
-		strcat(gretl_msg, vnamebit);
 		dropmsg = 1;
 		v--;
 	    }
 	}
     }
 
-    if (dropmsg) {
-	strcat(gretl_msg, _("omitted because all obs are zero."));
+    if (dropmsg && !(opt & OPT_A)) {
+	strcpy(gretl_msg, 
+	       _("Some regressors were omitted because all obs are zero."));
     }
 }
 

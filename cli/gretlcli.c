@@ -411,7 +411,7 @@ int main (int argc, char *argv[])
 
 #ifdef WIN32
     if (!batch) {
-	bind_textdomain_codeset (PACKAGE, "CP850");
+	bind_textdomain_codeset(PACKAGE, "CP850");
     }
 #endif
 

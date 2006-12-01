@@ -157,11 +157,17 @@ static void sample_info_init (struct sample_info *sinfo)
 
 #define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
 
+/* check_for_state() returns non-zero if the program options
+   state is not readable */
+
 static int check_for_state (void) 
 {
-    if (state != NULL) {
+    if (state == NULL) { /* was "!=" ?? */
 	return libset_init();
     } else {
+#if PDEBUG > 1
+	fprintf(stderr, "check_for_state: state = %p\n", (void *) state);
+#endif
 	return 0;
     }
 }
@@ -193,7 +199,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
 #if PDEBUG
-	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d\n"
+	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d\n",
 		sv->sinfo.t1, sv->sinfo.t2);
 #endif
     } else {
@@ -417,7 +423,6 @@ int set_long_digits (int n)
     return err;
 }
 
-
 int get_VAR_horizon (void)
 {
     if (check_for_state()) {
@@ -564,25 +569,25 @@ int get_force_hc (void)
 
 void set_gretl_echo (int e)
 {
-    check_for_state();
+    if (check_for_state()) return;
     state->gretl_echo = e;
 }
 
 int gretl_echo_on (void)
 {
-    check_for_state();
+    if (check_for_state()) return 1;
     return state->gretl_echo;
 }
 
 void set_gretl_messages (int e)
 {
-    check_for_state();
+    if (check_for_state()) return;
     state->gretl_msgs = e;
 }
 
 int gretl_messages_on (void)
 {
-    check_for_state();
+    if (check_for_state()) return 1;
     return state->gretl_msgs;
 }
 
@@ -604,6 +609,7 @@ int get_long_digits (void)
 
 const gretl_matrix *get_init_vals (void)
 {
+    check_for_state();
     return state->initvals;
 }    
 
@@ -628,7 +634,7 @@ int get_hac_lag (int m)
     return 0.75 * pow(m, 1.0 / 3.0);
 }
 
-static char *get_hac_lag_string (void)
+static const char *get_hac_lag_string (void)
 {
     check_for_state();
 
@@ -1132,12 +1138,21 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 void set_use_qr (int set)
 {
     check_for_state();
-    state->use_qr = set;
+
+    if (state != NULL) {
+	state->use_qr = set;
+    }
 }
 
 int get_use_qr (void)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 0;
+    }
+
+#if PDEBUG
+    fprintf(stderr, "get_use_qr: state = %p\n", (void *) state);
+#endif
 
     if (is_unset(state->use_qr)) {
 	char *s = getenv("GRETL_USE_QR");
@@ -1154,7 +1169,9 @@ int get_use_qr (void)
 
 int get_halt_on_error (void)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 1;
+    }
 
     if (is_unset(state->halt_on_error)) {
 	char *s = getenv("GRETL_KEEP_GOING");
@@ -1221,7 +1238,7 @@ static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
    function exits.
 */
 
-int n_states;
+static int n_states;
 static set_vars **state_stack;
 
 int push_program_state (const DATAINFO *pdinfo)
@@ -1359,6 +1376,10 @@ int libset_init (void)
 void libset_cleanup (void)
 {
     int i;
+
+#if PDEBUG
+    fprintf(stderr, "libset_cleanup called\n");
+#endif
 
     for (i=0; i<n_states; i++) {
 	free_state(state_stack[i]);
