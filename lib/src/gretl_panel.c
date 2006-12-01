@@ -1286,7 +1286,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 		     DATAINFO *pdinfo, PRN *prn)
 {
     MODEL femod;
-    gretlopt lsqopt = OPT_A | OPT_Z | OPT_C;
+    gretlopt lsqopt = OPT_A | OPT_Z | OPT_X;
     double **wZ = NULL;
     DATAINFO *winfo = NULL;
     int *felist = NULL;
@@ -1331,7 +1331,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	printmodel(&femod, winfo, OPT_O, prn);
 #endif
 	if (pan->opt & OPT_F) {
-	    /* saving the FE model */
+	    /* estimating the FE model in its own right */
 	    fix_panel_hatvars(&femod, winfo, pan, NULL);
 	    if (pan->opt & OPT_R) {
 		fe_robust_vcv(&femod, pan, (const double **) wZ);
@@ -1473,6 +1473,23 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
     return err;
 }
 
+static void femod_hausman_vcv (MODEL *pmod)
+{
+    if (pmod->vcv == NULL) {
+	/* estimated via Cholesky: no vcv yet */
+	makevcv(pmod, pmod->sigma);
+    } else {
+	/* estimated via QR: "vcv" = (X'X)^{-1} */
+	int i, p = pmod->ncoeff;
+	int n = p * (p + 1) / 2;
+	double s2 = pmod->sigma * pmod->sigma;
+
+	for (i=0; i<n; i++) {
+	    pmod->vcv[i] *= s2;
+	}
+    }
+}
+
 /* drive the calculation of the fixed effects regression, print the
    results (if wanted), and compute the "within" error variance */
 
@@ -1511,7 +1528,7 @@ static int within_variance (panelmod_t *pan,
 	    for (i=0; i<femod.ncoeff; i++) {
 		pan->bdiff[i] = femod.coeff[i];
 	    }
-	    makevcv(&femod, femod.sigma);
+	    femod_hausman_vcv(&femod);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
 	}

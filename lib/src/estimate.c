@@ -17,7 +17,7 @@
  *
  */
 
-/* estimate.c - gretl estimation procedures */
+/* estimate.c - basic gretl estimation procedures */
 
 #include "libgretl.h"
 #include "qr_estimate.h"
@@ -56,8 +56,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 			double *xpx, double *xpy, const char *mask);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho);
-static int cholbeta (double *xpx, double *xpy, double *coeff, int nv, 
-		     double *rss);
+static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static int hatvar (MODEL *pmod, int n, double **Z);
@@ -571,139 +570,6 @@ log_depvar_ll (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
     }
 }
 
-#define COLL_DEBUG 0
-
-int 
-redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
-{
-    MODEL cmod;
-    int targ, l0;
-    int *list = NULL;
-    int err = 0;
-    int i, ret = 0;
-
-    if (pmod->list[0] < 3) {
-	/* shouldn't happen */
-	return 0;
-    }
-
-    for (i=1; i<=pmod->list[0]; i++) {
-	if (pmod->list[i] == LISTSEP) {
-	    /* can't handle compound lists */
-	    return 0;
-	}
-    }
-
-    l0 = pmod->list[0] - 1;
-    list = gretl_list_new(l0);
-    if (list == NULL) {
-	return 0;
-    }
-
-#if COLL_DEBUG
-    fprintf(stderr, "\n*** redundant_var called ***\n");
-    printlist(pmod->list, "original model list");
-#endif
-
-    list[1] = pmod->list[1];
-
-    /* back up along the list of regressors, trying to find a single
-       variable such that, when it is deleted, the exact collinearity
-       problem goes away. */
-
-    for (targ=pmod->list[0]; targ>2; targ--) {
-	int j = 2;
-
-	for (i=2; i<=pmod->list[0]; i++) {
-	    if (i != targ) {
-		list[j++] = pmod->list[i];
-	    }
-	}
-
-#if COLL_DEBUG
-	fprintf(stderr, "pass 1: target list position = %d\n", targ);
-	printlist(list, "temp list for redundancy check");
-#endif
-	cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
-
-	if (cmod.errcode == 0) {
-	    ret = 1;
-	} else if (cmod.errcode != E_SINGULAR) {
-	    /* shouldn't happen */
-	    err = 1;
-	}
-
-	clear_model(&cmod);
-
-	if (ret || err) {
-	    break;
-	}
-    } 
-
-#if COLL_DEBUG
-    fprintf(stderr, "pass 1: done, ret = %d, err = %d\n", ret, err);
-#endif
-
-    /* if that didn't work, try trimming the list of regressors more
-       aggressively: look for a variable that is perfectly predicted
-       by the other regressors
-    */
-
-    for (l0=pmod->list[0]; !ret && !err && l0>2; l0--) {
-
- 	list[0] = l0 - 1;
-
- 	for (targ=l0; targ>2; targ--) {
- 	    int j = 2;
- 
- 	    list[1] = pmod->list[targ];
- 
- 	    for (i=2; i<=l0; i++) {
- 		if (i != targ) {
- 		    list[j++] = pmod->list[i];
- 		}
- 	    }
- 
-#if COLL_DEBUG
- 	    fprintf(stderr, "pass 2: target list position = %d\n", targ);
- 	    printlist(list, "temp list for redundancy check");
-#endif
- 	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
-
-	    if (cmod.errcode == 0) {
-		if (cmod.ess == 0.0 || cmod.rsq == 1.0) {
-		    ret = 1;
-		}
-	    } else if (cmod.errcode != E_SINGULAR) {
-		err = 1;
-	    }
- 
- 	    clear_model(&cmod);
-
-	    if (ret || err) {
-		break;
-	    }
- 	}
-    }  
-
-    if (ret) {
-	int v = pmod->list[targ];
-
-	/* remove var from list and reduce number of coeffs */
-	gretl_list_delete_at_pos(pmod->list, targ);
-	pmod->ncoeff -= 1;
-	pmod->dfd = pmod->nobs - pmod->ncoeff;
-	pmod->dfn = pmod->ncoeff - pmod->ifc;
-
-	/* add redundant var to list of drops */
-	gretl_list_append_term(droplist, v);
-    }
-
-    free(list);
-
-    return ret;
-}
-
 static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 {
     int t;
@@ -742,20 +608,9 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 				   double rho, int pwe, gretlopt opt)
 {
     double *xpy = NULL;
-    int *droplist = NULL;
     int l0 = pmod->list[0];
     int i, k, nxpx;
 
- trim_var:
-
-    if (droplist != NULL) {
-	l0 = pmod->list[0];
-	free(pmod->xpx);
-	free(pmod->coeff);
-	free(pmod->sderr);
-	pmod->errcode = 0;
-    }
- 
     k = l0 - 1;
     nxpx = k * (k + 1) / 2;
 
@@ -808,18 +663,22 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     regress(pmod, xpy, *pZ, pdinfo->n, rho);
     free(xpy);
 
-    if (pmod->errcode == E_SINGULAR && !(opt & OPT_Z) &&
-	redundant_var(pmod, pZ, pdinfo, &droplist)) {
-	goto trim_var;
-    }
-
-    if (droplist != NULL) {
-	/* if there's a lagged dep var, it may have moved */
-	maybe_shift_ldepvar(pmod, (const double **) *pZ, pdinfo);
-	gretl_model_set_list_as_data(pmod, "droplist", droplist);
-    }
-
     return pmod->errcode;
+}
+
+static void model_free_storage (MODEL *pmod)
+{
+    free(pmod->xpx);
+    free(pmod->coeff);
+    free(pmod->sderr);
+    free(pmod->uhat);
+    free(pmod->yhat);
+
+    pmod->xpx = NULL;
+    pmod->coeff = NULL;
+    pmod->sderr = NULL;
+    pmod->uhat = NULL;
+    pmod->yhat = NULL;
 }
 
 /* as lsq() below, except that we allow for a non-zero value
@@ -985,11 +844,17 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	jackknife = 1;
     }
 
-    if (!jackknife && ((opt & OPT_R) || (use_qr && !(opt & OPT_C)))) { 
+    if (!jackknife && ((opt & OPT_R) || use_qr)) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
     } else {
 	gretl_choleski_regress(&mdl, pZ, pdinfo, rho, pwe, opt);
+	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) && !jackknife) {
+	    /* perfect collinearity is better handled by QR */
+	    model_free_storage(&mdl);
+	    mdl.rho = rho;
+	    gretl_qr_regress(&mdl, pZ, pdinfo, opt);
+	}
     }
 
     if (mdl.errcode) {
@@ -1075,7 +940,6 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @ci: one of the command indices in #LSQ_MODEL.
  * @opt: option flags: zero or more of the following --
  *   %OPT_R compute robust standard errors;
- *   %OPT_C force use of Cholesky decomp;
  *   %OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
  *   %OPT_P use Prais-Winsten for first obs;
@@ -1084,6 +948,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  *   %OPT_M reject missing observations within sample range;
  *   %OPT_Z (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables.
+ *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -1324,7 +1189,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
     }
 
     if (pmod->dfd > 0) {
-	double den;
+	double den = 0.0;
 
 	if (*ifc) {
 	    den = pmod->tss * pmod->dfd;
@@ -1332,9 +1197,8 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 	} else {
 	    int t;
 
-	    den = 0.0;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		if (!na(y[t])) {
+		if (!na(pmod->yhat[t])) {
 		    den += y[t] * y[t];
 		}
 	    }
@@ -1383,7 +1247,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     pmod->tss = ypy - zz;
 
     /*  Cholesky-decompose X'X and find the coefficients */
-    err = cholbeta(pmod->xpx, xpy, pmod->coeff, pmod->ncoeff, &rss);
+    err = cholbeta(pmod, xpy, &rss);
     if (err) {
         pmod->errcode = err;
         return;
@@ -1467,15 +1331,13 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 }
 
 /*
-  cholbeta: does an in-place Cholesky decomposition of xpx (lower
-  triangular matrix stacked in columns) and solves for the
+  cholbeta: does an in-place Cholesky decomposition of pmod->xpx 
+  (lower triangular matrix stacked in columns) and solves for the
   least-squares coefficient estimates.
 
-  xpx = X'X on input and Cholesky decomposition on output
+  pmod->xpx = X'X on input and Cholesky decomposition on output
   xpy = the X'y vector on input and Cholesky-transformed t
         vector on output 
-  coeff = array of estimated coefficients 
-  nv = number of regression coefficients including the constant
   rss = location to receive regression sum of squares
 
   The number of floating-point operations is basically 3.5 * nv^2
@@ -1483,10 +1345,13 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 */
 
 static int 
-cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
+cholbeta (MODEL *pmod, double *xpy, double *rss)
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
+    double *xpx = pmod->xpx;
+    double *coeff = pmod->coeff;
+    int nv = pmod->ncoeff;
 
     if (xpx[0] <= 0.0) {
 	fprintf(stderr, "%s %d: xpx <= 0.0\n", __FILE__, __LINE__);
@@ -1519,7 +1384,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
 	    return E_SINGULAR;
         }
 	if (test < SMALL) {
-	    strcpy(gretl_msg, _("Warning: data matrix close to singularity!"));
+	    gretl_model_set_int(pmod, "near-singular", 1);
 	}
         e = 1 / sqrt(d2);
         xpx[kk] = e;
@@ -2919,44 +2784,54 @@ MODEL ar_func (const int *list, double ***pZ,
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt)
 {
-    int v, lv, offset, dropmsg = 0;
-    double xx = 0.0;
+    int *zlist = NULL;
+    int i, v, offset;
+    double x = 0.0;
 
     offset = (pmod->ci == WLS)? 3 : 2;
 
-    for (v=offset; v<=pmod->list[0]; v++) {
-        lv = pmod->list[v];
-        if (gretl_iszero(pmod->t1, pmod->t2, Z[lv])) {
-	    gretl_list_delete_at_pos(pmod->list, v);
-	    dropmsg = 1;
-	    v--;
+    if (!(opt & OPT_A)) {
+	zlist = gretl_null_list();
+    }
+
+    for (i=offset; i<=pmod->list[0]; i++) {
+        v = pmod->list[i];
+        if (gretl_iszero(pmod->t1, pmod->t2, Z[v])) {
+	    if (zlist != NULL) {
+		gretl_list_append_term(&zlist, v);
+	    }
+	    gretl_list_delete_at_pos(pmod->list, i--);
 	}
     }
 
     if (pmod->nwt) {
 	int t, wtzero;
 
-	for (v=offset; v<=pmod->list[0]; v++) {
-	    lv = pmod->list[v];
+	for (i=offset; i<=pmod->list[0]; i++) {
+	    v = pmod->list[i];
 	    wtzero = 1;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		xx = Z[lv][t] * Z[pmod->nwt][t];
-		if (floatneq(xx, 0.0)) {
+		x = Z[v][t] * Z[pmod->nwt][t];
+		if (floatneq(x, 0.0)) {
 		    wtzero = 0;
 		    break;
 		}
 	    }
 	    if (wtzero) {
-		gretl_list_delete_at_pos(pmod->list, v);
-		dropmsg = 1;
-		v--;
+		if (zlist != NULL) {
+		    gretl_list_append_term(&zlist, v);
+		}
+		gretl_list_delete_at_pos(pmod->list, i--);
 	    }
 	}
     }
 
-    if (dropmsg && !(opt & OPT_A)) {
-	strcpy(gretl_msg, 
-	       _("Some regressors were omitted because all obs are zero."));
+    if (zlist != NULL) {
+	if (zlist[0] > 0) {
+	    gretl_model_set_list_as_data(pmod, "zerolist", zlist);
+	} else {
+	    free(zlist);
+	}
     }
 }
 

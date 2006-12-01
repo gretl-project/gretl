@@ -462,7 +462,9 @@ gretl_column_vector_from_array (const double *x, int n, GretlMatrixMod mod)
     int i = 0;
     
     v = gretl_column_vector_alloc(n);
-    if (v == NULL) return NULL;
+    if (v == NULL) {
+	return NULL;
+    }
 
     while (i < n) {
 	xi = *x++;

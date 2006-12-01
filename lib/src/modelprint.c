@@ -177,9 +177,14 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	N_("Uncentered R{\\super 2}")
     };
     int ridx = 0;
+    int adjr2 = 1;
 
     if (na(pmod->rsq)) {
 	return;
+    }
+
+    if (NO_RBAR_SQ(pmod->aux) || na(pmod->adjrsq)) {
+	adjr2 = 0;
     }
 
     if (gretl_model_get_int(pmod, "uncentered")) {
@@ -189,13 +194,13 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) { 
 	pprintf(prn, "  %s = %.*g\n", _(plainrsq[ridx]), 
 		XDIGITS(pmod), pmod->rsq);
-	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
+	if (adjr2) {
 	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    XDIGITS(pmod), pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(rtfrsq[ridx]), pmod->rsq);
-	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
+	if (adjr2) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
 		    pmod->adjrsq);
 	}	
@@ -204,14 +209,14 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 	tex_dcolumn_double(pmod->rsq, r2);
 	pprintf(prn, "%s & %s \\\\\n", I_(texrsq[ridx]), r2);
-	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
+	if (adjr2) {
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_(plainrsq[ridx]), 
 		prn_delim(prn), pmod->rsq);
-	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
+	if (adjr2) {
 	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Adjusted R-squared"),  
 		    prn_delim(prn), pmod->adjrsq);
 	}
@@ -997,28 +1002,55 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_extra_list (const char *tag, const int *list, 
+			      const DATAINFO *pdinfo, PRN *prn)
+{
+    int i, v, len;
+
+    len = pputs(prn, _(tag));
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v < pdinfo->v) {
+	    len += pprintf(prn, " %s", pdinfo->varname[v]);
+	} else {
+	    len += pprintf(prn, " %d", v);
+	}
+	if (len > 68 && i < list[0]) {
+	    pputc(prn, '\n');
+	    len = 0;
+	}
+    }
+
+    pputc(prn, '\n');
+}
+
+static void print_model_zerolist (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
+{
+    const int *zlist = gretl_model_get_data(pmod, "zerolist");
+    const char *tag = N_("Omitted because all values were zero:");
+
+    if (pmod->ci == PANEL && gretl_model_get_int(pmod, "between")) {
+	return;
+    }
+
+    print_extra_list(tag, zlist, pdinfo, prn);
+}
+
 static void print_model_droplist (const MODEL *pmod, 
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
     const int *dlist = gretl_model_get_data(pmod, "droplist");
-    int i, v;
+    const char *tag = N_("Omitted due to exact collinearity:");
 
     if (pmod->ci == PANEL && gretl_model_get_int(pmod, "between")) {
-	/* FIXME? */
 	return;
     }
 
-    pputs(prn, _("Omitted due to exact collinearity:"));
-    for (i=1; i<=dlist[0]; i++) {
-	v = dlist[i];
-	if (v < pdinfo->v) {
-	    pprintf(prn, " %s", pdinfo->varname[v]);
-	} else {
-	    pprintf(prn, " %d", v);
-	}
-    }
-    pputc(prn, '\n');
+    print_extra_list(tag, dlist, pdinfo, prn);
 }
 
 static void print_tsls_droplist (const MODEL *pmod, 
@@ -1398,10 +1430,14 @@ static void print_model_heading (const MODEL *pmod,
 	print_tsls_droplist(pmod, pdinfo, prn);
     }  
 
-    /* message about collinear regressors dropped */
-    if (plain_format(prn) && 
-	gretl_model_get_data(pmod, "droplist") != NULL) {
-	print_model_droplist(pmod, pdinfo, prn);
+    /* messages about collinear and/or zero regressors */
+    if (plain_format(prn)) {
+	if (gretl_model_get_data(pmod, "zerolist") != NULL) {
+	    print_model_zerolist(pmod, pdinfo, prn);
+	}
+	if (gretl_model_get_data(pmod, "droplist") != NULL) {
+	    print_model_droplist(pmod, pdinfo, prn);
+	}
     }    
 
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
@@ -1555,7 +1591,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_coeff_table_end (PRN *prn)
+static void print_coeff_table_end (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn) || csv_format(prn)) {
 	pputc(prn, '\n');
@@ -1563,6 +1599,12 @@ static void print_coeff_table_end (PRN *prn)
 	pputs(prn, "\\end{tabular*}\n\n");
     } else if (rtf_format(prn)) {
 	pputs(prn, "}\n\n");
+    }
+
+    if (plain_format(prn) && gretl_model_get_int(pmod, "near-singular")) {
+	const char *msg = N_("Warning: data matrix close to singularity!");
+
+	pprintf(prn, "%s\n\n", _(msg));
     }
 }
 
@@ -1660,40 +1702,40 @@ static void r_squared_message (const MODEL *pmod, PRN *prn)
 
 static void weighted_stats_message (PRN *prn)
 {
+    const char *msg = N_("Statistics based on the weighted data");
+
     if (plain_format(prn)) {
-	pprintf(prn, "%s:\n\n", _("Statistics based on the weighted data"));
+	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}%s:\n\n", 
-		I_("Statistics based on the weighted data"));
+	pprintf(prn, "\\vspace{1em}%s:\n\n", I_(msg));
     } else { /* RTF */
-	pprintf(prn, "\\par \\qc\n%s:\n\n", 
-		I_("Statistics based on the weighted data"));	
+	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));	
     }
 }
 
 static void original_stats_message (PRN *prn)
 {
+    const char *msg = N_("Statistics based on the original data");
+
     if (plain_format(prn)) {
-	pprintf(prn, "%s:\n\n", _("Statistics based on the original data"));
+	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", 
-		I_("Statistics based on the original data"));
+	pprintf(prn, "\\vspace{1em}\n%s:\n\n", I_(msg));
     } else { /* RTF */
-	pprintf(prn, "\\par \\qc\n%s:\n\n", 
-		I_("Statistics based on the original data"));
+	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }
 }
 
 static void rho_differenced_stats_message (PRN *prn)
 {
+    const char *msg = N_("Statistics based on the rho-differenced data");
+
     if (plain_format(prn)) {    
-	pprintf(prn, "%s:\n\n", _("Statistics based on the rho-differenced data"));
+	pprintf(prn, "%s:\n\n", _(msg));
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\vspace{1em}\n%s:\n\n", 
-		I_("Statistics based on the rho-differenced data"));
+	pprintf(prn, "\\vspace{1em}\n%s:\n\n", I_(msg));
     } else { /* RTF */
-	pprintf(prn, "\\par \\qc\n%s:\n\n", 
-		I_("Statistics based on the rho-differenced data"));
+	pprintf(prn, "\\par \\qc\n%s:\n\n", I_(msg));
     }	
 }
 
@@ -1869,7 +1911,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_poisson_offset(pmod, pdinfo, prn);
     }
 
-    print_coeff_table_end(prn);
+    print_coeff_table_end(pmod, prn);
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
 	pmod->aux == AUX_RESET || pmod->aux == AUX_DF || 

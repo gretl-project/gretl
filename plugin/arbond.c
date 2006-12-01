@@ -1516,7 +1516,7 @@ static int arbond_zero_check (arbond *ab, const double **Z)
 	    }
 	    for (t=ab->ui[i].t1; t<=ab->ui[i].t2 && all0; t++) {
 		k = i * ab->T + t;
-		if (x[k] != 0.0) {
+		if (x[k] != 0.0 && !na(x[k])) {
 		    all0 = 0;
 		}
 	    }

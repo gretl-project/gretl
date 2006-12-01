@@ -23,7 +23,6 @@
 #include "libset.h"
 
 char gretl_errmsg[ERRLEN];
-char gretl_msg[ERRLEN];
 
 const char *gretl_error_messages[] = {
     NULL,

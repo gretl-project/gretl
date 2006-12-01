@@ -19,10 +19,10 @@
 
 /* errors.h -- prototypes of functions in errors.c */
 
-#include <stdio.h>
+#ifndef GRETL_ERRORS_H
+#define GRETL_ERRORS_H
 
 extern char gretl_errmsg[ERRLEN];
-extern char gretl_msg[ERRLEN];
 
 enum gretl_error_codes {
     E_DATA = 2,
@@ -92,3 +92,5 @@ int print_gretl_errmsg (PRN *prn);
 void gretl_errmsg_set (const char *str);
 
 void gretl_errmsg_clear (void);
+
+#endif /* GRETL_ERRORS_H */

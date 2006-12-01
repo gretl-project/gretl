@@ -1696,7 +1696,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 			  double *wbar, double ***pZ, DATAINFO *pdinfo) 
 {
     MODEL cmod;
-    gretlopt opt = OPT_C | OPT_A;
+    gretlopt opt = OPT_X | OPT_A;
     double *xvec;
     double xx;
     int n = T - k;

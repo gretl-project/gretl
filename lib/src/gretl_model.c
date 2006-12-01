@@ -153,17 +153,41 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
 {
     model_data_item **items;
     model_data_item *item;
-    int n_items = pmod->n_data_items + 1;
+    int i, n;
 
-    items = realloc(pmod->data_items, n_items * sizeof *items);
-    if (items == NULL) return 1;
+    for (i=0; i<pmod->n_data_items; i++) {
+	item = pmod->data_items[i];
+	if (!strcmp(key, item->key)) {
+	    /* there's a pre-existing item of this name */
+	    if (item->destructor != NULL) {
+		(*item->destructor)(item->ptr);
+	    } else {
+		free(item->ptr);
+	    }
+	    item->type = type;
+	    item->ptr = ptr;
+	    item->size = size;
+	    item->destructor = destructor;
+	    /* handled */
+	    return 0;
+	}
+    } 
+
+    n = pmod->n_data_items + 1;
+
+    items = realloc(pmod->data_items, n * sizeof *items);
+    if (items == NULL) {
+	return 1;
+    }
 
     pmod->data_items = items;
 
     item = create_data_item(key, ptr, type, size, destructor);
-    if (item == NULL) return 1;
+    if (item == NULL) {
+	return 1;
+    }
 
-    pmod->data_items[n_items - 1] = item;
+    pmod->data_items[n - 1] = item;
     pmod->n_data_items += 1;
 
     return 0;
@@ -1622,8 +1646,6 @@ void gretl_model_init (MODEL *pmod)
 
     gretl_model_init_pointers(pmod);
     pmod->n_data_items = 0;
-
-    *gretl_msg = '\0';
 }
 
 /**
