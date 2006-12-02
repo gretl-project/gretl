@@ -1351,7 +1351,7 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
     double e, d, d1, d2, test, xx;
     double *xpx = pmod->xpx;
     double *coeff = pmod->coeff;
-    int nv = pmod->ncoeff;
+    int nc = pmod->ncoeff;
 
     if (xpx[0] <= 0.0) {
 	fprintf(stderr, "%s %d: xpx <= 0.0\n", __FILE__, __LINE__);
@@ -1361,42 +1361,46 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
     e = 1.0 / sqrt(xpx[0]);
     xpx[0] = e;
     xpy[1] *= e;
-    for (i=1; i<nv; i++) {
+    for (i=1; i<nc; i++) {
 	xpx[i] *= e;
     }
 
-    kk = nv;
+    kk = nc;
 
-    for (j=2; j<=nv; j++) {
+    for (j=1; j<nc; j++) {
 	/* diagonal elements */
         d = d1 = 0.0;
-        k = jm1 = j - 1;
+        k = jm1 = j;
         for (l=1; l<=jm1; l++) {
             xx = xpx[k];
             d1 += xx * xpy[l];
             d += xx * xx;
-            k += nv-l;
+            k += nc-l;
         }
         d2 = xpx[kk] - d;
 	test = d2 / xpx[kk];
+
+	/* check for singularity */
         if (test < TINY) {
+	    fprintf(stderr, "cholbeta: test[%d] = %g\n", j, test);
 	    *rss = -1.0;
 	    return E_SINGULAR;
-        }
-	if (test < SMALL) {
+        } else if (test < SMALL) {
 	    gretl_model_set_int(pmod, "near-singular", 1);
 	}
+
         e = 1 / sqrt(d2);
         xpx[kk] = e;
-        xpy[j] = (xpy[j] - d1) * e;
-        for (i=j+1; i<=nv; i++) {
-	    /* off-diagonal elements */
+        xpy[j+1] = (xpy[j+1] - d1) * e;
+
+	/* off-diagonal elements */
+        for (i=j+1; i<nc; i++) {
             kk++;
             d = 0.0;
-            k = j - 1;
+            k = j;
             for (l=1; l<=jm1; l++) {
                 d += xpx[k] * xpx[k-j+i];
-                k += nv - l;
+                k += nc - l;
             }
             xpx[kk] = (xpx[kk] - d) * e;
         }
@@ -1406,30 +1410,26 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
     kk--;
 
     /* calculate regression sum of squares */
+
     d = 0.0;
-    for (j=1; j<=nv; j++) {
+    for (j=1; j<=nc; j++) {
 	d += xpy[j] * xpy[j];
     }
     *rss = d;
 
-    /* solve for the coefficients */
-    for (j=0; j<nv-1; j++) {
-	coeff[j] = 0.0;
-    }
+    /* back-solve for the coefficients */
 
-    coeff[nv-1] = xpy[nv] * xpx[kk];
+    coeff[nc-1] = xpy[nc] * xpx[kk];
 
-    for (j=nv-1; j>=1; j--) {
-	d = xpy[j];
-	for (i=nv-1; i>=j; i--) {
-	    kk--;
-	    d -= coeff[i] * xpx[kk];
+    for (j=nc-2; j>=0; j--) {
+	d = xpy[j+1];
+	for (i=nc-1; i>j; i--) {
+	    d -= coeff[i] * xpx[--kk];
 	}
-	kk--;
-	coeff[j-1] = d * xpx[kk];
+	coeff[j] = d * xpx[--kk];
     }
 
-    for (j=0; j<nv; j++) {
+    for (j=0; j<nc; j++) {
 	if (isnan(coeff[j])) {
 	    fprintf(stderr, "%s %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
 	    return E_NAN;
