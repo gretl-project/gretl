@@ -332,9 +332,8 @@ void set_fixed_font (void)
 
 #ifndef G_OS_WIN32
 
-/* remedial setting of font path for libgd, in case it's not
-   set right (which, it seems, is often the case on
-   Linux) 
+/* remedial setting of font path for libgd, in case it's not set right
+   (which, I'm sorry to say, seems often to be the case on Linux)
 */
 
 static void maybe_set_gd_fontpath (void)

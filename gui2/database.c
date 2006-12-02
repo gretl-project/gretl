@@ -1453,8 +1453,25 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     FILE *fp;
     int err = 0;
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 0, &objname);
+    if (vwin->role == REMOTE_DB) {
+	GtkTreeSelection *sel;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+
+	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+	if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	    return 1;
+	}
+
+	gtk_tree_model_get(model, &iter, 0, &objname, -1);
+	if (objname == NULL || *objname == '\0') {
+	    g_free(objname);
+	    return 1;
+	}
+    } else {
+	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
+			     vwin->active_var, 0, &objname);
+    }
     
     target = mymalloc(MAXLEN);
     if (target == NULL) {
