@@ -50,16 +50,15 @@
 
 #define XPX_DEBUG 0
 
-/* private function prototypes */
-static int form_xpxxpy (const int *list, int t1, int t2, 
-			const double **Z, int nwt, double rho, int pwe,
-			double *xpx, double *xpy, const char *mask);
-static void regress (MODEL *pmod, double *xpy, double **Z, 
-		     int n, double rho);
+static int xpxxpy (const int *list, int t1, int t2, 
+		   const double **Z, int nwt, double rho, int pwe,
+		   double *xpx, double *xpy, const char *mask);
+static void regress (MODEL *pmod, double *xpy, const double **Z, 
+		     double rho);
 static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
-static int hatvar (MODEL *pmod, int n, double **Z);
+static int hatvar (MODEL *pmod, int n, const double **Z);
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt);
 static int depvar_zero (int t1, int t2, int yno, int nwt, 
@@ -604,7 +603,7 @@ maybe_shift_ldepvar (MODEL *pmod, const double **Z, DATAINFO *pdinfo)
     }
 }
 
-static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+static int gretl_choleski_regress (MODEL *pmod, const double **Z, 
 				   double rho, int pwe, gretlopt opt)
 {
     double *xpy = NULL;
@@ -626,11 +625,11 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
 
     if (pmod->yhat == NULL) {
-	pmod->yhat = malloc(pdinfo->n * sizeof *pmod->yhat);
+	pmod->yhat = malloc(pmod->full_n * sizeof *pmod->yhat);
     } 
 
     if (pmod->uhat == NULL) {
-	pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
+	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
     }
 
     if (xpy == NULL || pmod->xpx == NULL || pmod->coeff == NULL ||
@@ -647,8 +646,8 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* calculate regression results, Cholesky style */
-    form_xpxxpy(pmod->list, pmod->t1, pmod->t2, (const double **) *pZ, 
-		pmod->nwt, rho, pwe, pmod->xpx, xpy, pmod->missmask);
+    xpxxpy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+	   rho, pwe, pmod->xpx, xpy, pmod->missmask);
 
 #if XPX_DEBUG
     for (i=0; i<=l0; i++) {
@@ -660,25 +659,25 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     fputc('\n', stderr);
 #endif
 
-    regress(pmod, xpy, *pZ, pdinfo->n, rho);
+    regress(pmod, xpy, Z, rho);
     free(xpy);
 
     return pmod->errcode;
 }
+
+/* limited freeing of elements before passing a model
+   on for QR estimation in the case of singularity 
+*/
 
 static void model_free_storage (MODEL *pmod)
 {
     free(pmod->xpx);
     free(pmod->coeff);
     free(pmod->sderr);
-    free(pmod->uhat);
-    free(pmod->yhat);
 
     pmod->xpx = NULL;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
-    pmod->uhat = NULL;
-    pmod->yhat = NULL;
 }
 
 /* as lsq() below, except that we allow for a non-zero value
@@ -846,14 +845,14 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (!jackknife && ((opt & OPT_R) || use_qr)) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
+	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
     } else {
-	gretl_choleski_regress(&mdl, pZ, pdinfo, rho, pwe, opt);
+	gretl_choleski_regress(&mdl, (const double **) *pZ, rho, pwe, opt);
 	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) && !jackknife) {
 	    /* perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
 	    mdl.rho = rho;
-	    gretl_qr_regress(&mdl, pZ, pdinfo, opt);
+	    gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
 	}
     }
 
@@ -963,7 +962,7 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /*
-  form_xpxxpy: form the X'X matrix and X'y vector
+  xpxxpy: form the X'X matrix and X'y vector
 
   - if rho is non-zero, quasi-difference the data first
   - if nwt is non-zero, use that variable as weight
@@ -982,9 +981,9 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     xpy[list[0]] = y'y
 */
 
-static int form_xpxxpy (const int *list, int t1, int t2, 
-			const double **Z, int nwt, double rho, int pwe,
-			double *xpx, double *xpy, const char *mask)
+static int xpxxpy (const int *list, int t1, int t2, 
+		   const double **Z, int nwt, double rho, int pwe,
+		   double *xpx, double *xpy, const char *mask)
 {
     int i, j, t;
     int li, lj, m;
@@ -1003,7 +1002,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     xpy[0] = xpy[l0] = 0.0;
 
     for (t=t1; t<=t2; t++) {
-	if (missing_masked(mask, t)) {
+	if (masked(mask, t)) {
 	    continue;
 	}
 	x = Z[yno][t]; 
@@ -1065,7 +1064,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    if (!missing_masked(mask, t)) {
+		    if (!masked(mask, t)) {
 			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
 		    }
 		}
@@ -1076,7 +1075,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		if (!missing_masked(mask, t)) {
+		if (!masked(mask, t)) {
 		    x += Z[nwt][t] * Z[yno][t] * Z[li][t];
 		}
 	    }
@@ -1090,7 +1089,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    if (!missing_masked(mask, t)) {
+		    if (!masked(mask, t)) {
 			x += Z[li][t] * Z[lj][t];
 		    }
 		}
@@ -1101,7 +1100,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		if (!missing_masked(mask, t)) {
+		if (!masked(mask, t)) {
 		    x += Z[yno][t] * Z[li][t];
 		}
 	    }
@@ -1112,7 +1111,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     return 0; 
 }
 
-static int make_ess (MODEL *pmod, double **Z)
+static int make_ess (MODEL *pmod, const double **Z)
 {
     int i, t, yno = pmod->list[1], l0 = pmod->list[0];
     int nwt = pmod->nwt;
@@ -1214,7 +1213,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 }
 
 /*
-  regress: takes xpx, the X'X matrix produced by form_xpxxpy(), and
+  regress: takes xpx, the X'X matrix produced by xpxxpy(), and
   xpy (X'y), and computes ols estimates and associated statistics.
 
   n = total number of observations per series in data set
@@ -1227,11 +1226,12 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
   sderr = corresponding array of standard errors
 */
 
-static void regress (MODEL *pmod, double *xpy, double **Z, 
-		     int n, double rho)
+static void regress (MODEL *pmod, double *xpy, const double **Z, 
+		     double rho)
 {
     int v, yno = pmod->list[1];
     int ifc = pmod->ifc;
+    int n = pmod->full_n;
     double ysum, ypy, zz, rss = 0.0;
     double sgmasq = 0.0;
     double *diag = NULL;
@@ -1704,7 +1704,7 @@ double rhohat (int order, int t1, int t2, const double *uhat)
 
 /* compute fitted values and residuals */
 
-static int hatvar (MODEL *pmod, int n, double **Z)
+static int hatvar (MODEL *pmod, int n, const double **Z)
 {
     int xno, i, t;
     int yno = pmod->list[1];

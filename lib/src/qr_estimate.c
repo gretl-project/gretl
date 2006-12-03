@@ -29,6 +29,8 @@
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
 #define ESSZERO      1e-22 /* SSR less than this counts as zero */
 
+#undef CONST_LAST
+
 /* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are contiguous.
@@ -131,6 +133,7 @@ static int get_vcv_index (MODEL *pmod, int i, int j, int n)
 {
     int k, vi, vj;
 
+#ifdef CONST_LAST
     if (pmod->ifc) {
 	vi = (i + 1) % n;
 	vj = (j + 1) % n;
@@ -138,6 +141,10 @@ static int get_vcv_index (MODEL *pmod, int i, int j, int n)
 	vi = i;
 	vj = j;
     }
+#else
+    vi = i;
+    vj = j;
+#endif
 
     k = ijton(vi, vj, n);
 
@@ -245,7 +252,11 @@ static void
 get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 {
     int i, j, t;
+#ifdef CONST_LAST
     int start = (pmod->ifc)? 3 : 2;
+#else
+    int start = 2;
+#endif
 
     /* copy independent vars into matrix X */
     j = 0;
@@ -261,6 +272,7 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 	}
     }
 
+#ifdef CONST_LAST 
     /* insert constant */
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -273,6 +285,7 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 	    }
 	}
     }
+#endif
 }
 
 static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
@@ -376,7 +389,11 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     for (i=0; i<k; i++) {
 	double x = gretl_matrix_get(vcv, i, i);
 
+#ifdef CONST_LAST
 	j = (pmod->ifc)? (i + 1) % k : i;
+#else
+	j = i;
+#endif
 	pmod->sderr[j] = sqrt(x);
     }
 
@@ -486,7 +503,11 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     for (i=0; i<k; i++) {
 	double x = vcv->val[mdx(vcv, i, i)];
 
+#ifdef CONST_LAST
 	j = (pmod->ifc)? (i + 1) % k : i;
+#else
+	j = i;
+#endif
 	pmod->sderr[j] = sqrt(x);
     }
 
@@ -512,7 +533,11 @@ static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v,
     for (i=0; i<k; i++) {
 	double x = v->val[mdx(v, i, i)];
 
+#ifdef CONST_LAST
 	j = (pmod->ifc)? (i + 1) % k : i;
+#else
+	j = i;
+#endif
 	pmod->sderr[j] = pmod->sigma * sqrt(x);
     }
 
@@ -531,9 +556,13 @@ static void get_model_data (MODEL *pmod, const double **Z,
 
     if (pwe) {
 	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
-    } 
+    }
 
+#ifdef CONST_LAST 
     start = (pmod->ifc)? 3 : 2;
+#else
+    start = 2;
+#endif
 
     if (dwt) {
 	dwt = pmod->nwt;
@@ -562,6 +591,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	}
     }
 
+#ifdef CONST_LAST
     /* insert constant last (numerical issues) */
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -586,6 +616,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	    Q->val[j++] = x;
 	}
     }
+#endif
 
     if (y != NULL) {
 	/* copy dependent variable into y vector */
@@ -616,6 +647,7 @@ static void save_coefficients (MODEL *pmod, gretl_matrix *b,
 {
     pmod->coeff = gretl_matrix_steal_data(b);
 
+#ifdef CONST_LAST
     if (pmod->ifc) {
 	int i;
 	double tmp = pmod->coeff[n-1];
@@ -625,14 +657,21 @@ static void save_coefficients (MODEL *pmod, gretl_matrix *b,
 	}
 	pmod->coeff[0] = tmp;
     }
+#endif
 }
 
 static int 
 allocate_model_arrays (MODEL *pmod, int k, int T)
 {
-    pmod->sderr = malloc(k * sizeof *pmod->sderr);
-    pmod->yhat = malloc(T * sizeof *pmod->yhat);
-    pmod->uhat = malloc(T * sizeof *pmod->uhat);
+    if (pmod->sderr == NULL) {
+	pmod->sderr = malloc(k * sizeof *pmod->sderr);
+    }
+    if (pmod->yhat == NULL) {
+	pmod->yhat = malloc(T * sizeof *pmod->yhat);
+    }
+    if (pmod->uhat == NULL) {
+	pmod->uhat = malloc(T * sizeof *pmod->uhat);
+    }
 
     if (pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
 	return 1;
@@ -697,10 +736,18 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
 	}
     }
 
+#if REDEBUG
+    printlist(pmod->list, "pmod->list, into drop_redundant_vars\n");
+    fprintf(stderr, "rank = %d\n", rank);
+#endif
+
     j = 2;
     nd = 0;
     for (i=0; i<R->rows; i++) {
 	d = gretl_matrix_get(R, i, i);
+#if REDEBUG
+	fprintf(stderr, "d[%d] = %g\n", i, d);
+#endif
 	if (fabs(d) < R_DIAG_MIN) {
 	    if (dlist != NULL) {
 		dlist[0] += 1;
@@ -733,7 +780,7 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
     return 0;
 }
 
-int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 		      gretlopt opt)
 {
     integer T, k;
@@ -761,7 +808,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
  trim_vars:
 
-    get_model_data(pmod, (const double **) *pZ, Q, y);
+    get_model_data(pmod, Z, Q, y);
     err = QR_decomp_plus(Q, R, &rank);
 
     /* handling of (near-)perfect collinearity */
@@ -782,7 +829,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (trimmed) {
-	maybe_shift_ldepvar(pmod, (const double **) *pZ, pdinfo);
+	maybe_shift_ldepvar(pmod, Z, pdinfo);
     }
 
     /* allocate temporary arrays */
@@ -811,7 +858,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_multiply(Q, g, y);    
 
     /* get vector of residuals and SSR */
-    get_resids_and_SSR(pmod, (const double **) *pZ, y, pdinfo->n);
+    get_resids_and_SSR(pmod, Z, y, pdinfo->n);
 
     /* standard error of regression */
     if (T - k > 0) {
@@ -833,16 +880,16 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (opt & OPT_R) { 
 	gretl_model_set_int(pmod, "robust", 1);
 	if ((opt & OPT_T) && !get_force_hc()) {
-	    qr_make_hac(pmod, (const double **) *pZ, xpxinv);
+	    qr_make_hac(pmod, Z, xpxinv);
 	} else {
-	    qr_make_hccme(pmod, (const double **) *pZ, Q, xpxinv);
+	    qr_make_hccme(pmod, Z, Q, xpxinv);
 	}
     } else {
 	qr_make_regular_vcv(pmod, xpxinv, opt);
     }
 
     /* get R^2, F */
-    qr_compute_stats(pmod, (*pZ)[pmod->list[1]], T, opt);
+    qr_compute_stats(pmod, Z[pmod->list[1]], T, opt);
 
  qr_cleanup:
 
