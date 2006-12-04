@@ -1,56 +1,57 @@
-(* PS10.4, using DATA6-3, for Application Section 10.5 *)
+# PS10.4, for Application Section 10.5 
+open data6-3
 genr C1 = Cons(-1)
 genr DI1 = DI(-1)
-(* Generate first difference of disposable income *)
+# Generate first difference of disposable income 
 genr DiffI = diff(DI)
-(*  Model A - Static model with OLS estimation *)
+# Model A - Static model with OLS estimation 
 ols Cons 0 DI
-(*  Model A - Static model with AR(1) error & CORC estimation *)
+# Model A - Static model with AR(1) error & CORC estimation 
 corc Cons 0 DI
-(*  Model A - Static model with AR(1) error & mixed HILU-CORC 
-estimation.  Note that CORC misses the global minimum here also. *)
+# Model A - Static model with AR(1) error & mixed HILU-CORC 
+# estimation.  Note that CORC misses the global minimum here also. 
 hilu Cons 0 DI
-(* Retrieve sigma tilde square for Likelihood Ratio test *)
+# Retrieve sigma tilde square for Likelihood Ratio test 
 genr sgmasqr = $ess/$T
-(* Suppress the first observation *)
+# Suppress the first observation 
 smpl 1949 1989
-(* Model B - General dynamic model with no restrictions *)
+# Model B - General dynamic model with no restrictions 
 ols Cons 0 C1 DI DI1 ;
-(* Save uhat for LM test for AR(1) and generate uhat(t-1) *)
+# Save uhat for LM test for AR(1) and generate uhat(t-1) 
 genr ut = $uhat
 genr ut1=ut(-1)
-(* Retrieve error sum of squares for Wald test *)
+# Retrieve error sum of squares for Wald test 
 genr essu = $ess
-(* Retrieve sigma hat square for Likelihood Ratio test *)
+# Retrieve sigma hat square for Likelihood Ratio test 
 genr sgmasqu = $ess/$T
-(* Retrieve d.f. for unrestricted Model B *)
+# Retrieve d.f. for unrestricted Model B 
 genr dfu = $df
-(* compute -2log likelihood for LR test *)
+# compute -2log likelihood for LR test 
 genr LR=-$T*ln(sgmasqu/sgmasqr)
 pvalue X 1 LR
-(* Reset sample range for LM test for AR(1) *)
+# Reset sample range for LM test for AR(1) 
 smpl 1950 1989
-(* Auxiliary regression for the LM test *)
+# Auxiliary regression for the LM test 
 ols ut 0 ut1 C1 DI DI1
-(* Compute trsquare statistic and corresponding p-value *)
+# Compute trsquare statistic and corresponding p-value 
 genr LM1 = $trsq
 pvalue X 1 LM1
-(* Model C - Restricted model with coeff. for DI and DI1 adding to zero *)
+# Model C - Restricted model with coeff. for DI and DI1 adding to zero 
 smpl 1949 1989
 ols Cons 0 C1 DiffI
-(* Save uhat for LM test for AR(1) and generate uhat(t-1) *)
+# Save uhat for LM test for AR(1) and generate uhat(t-1) 
 genr utt = $uhat
 genr utt1=utt(-1)
-(* Retrieve error sum of squares for WALD test *)
+# Retrieve error sum of squares for WALD test 
 genr essr = $ess
-(* Reset sample range for LM test for AR(1) *)
+# Reset sample range for LM test for AR(1) 
 smpl 1950 1989
-(* Auxiliary regression for the LM test *)
+# Auxiliary regression for the LM test 
 ols utt 0 utt1 C1 DiffI
-(* Compute trsquare and p-value for LM test *)
+# Compute trsquare and p-value for LM test 
 genr LM2 = $trsq
 pvalue X 1 LM2
-(* Compute WALD F-statistic *)
+# Compute WALD F-statistic 
 genr WALD = dfu*(essr-essu)/essu
-(* Compute p-value for F-distribution *)
+# Compute p-value for F-distribution 
 pvalue F 1 dfu WALD

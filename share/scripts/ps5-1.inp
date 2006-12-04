@@ -1,21 +1,22 @@
-(* PS5.1, using DATA4-3, to verify Example 5.1 and Table 5.1 *)
+# PS5.1, to verify Example 5.1 and Table 5.1 
+open data4-3
 ols housing 0 intrate pop gnp 
-(* compute absolute percentage error *)
+# compute absolute percentage error 
 genr ape3 = 100*abs($uhat)/housing
-(* compute mean percentage error *)
+# compute mean percentage error 
 genr mape3 = mean(ape3)
-(* Model B *)
+# Model B 
 omit pop
 genr ape2 = 100*abs($uhat)/housing
 genr mape2 = mean(ape2)
-(* Model A *)
+# Model A 
 ols housing 0 intrate pop
 genr ape1 = 100*abs($uhat)/housing
 genr mape1 = mean(ape1)
-(* Correlation coefficients *)
+# Correlation coefficients 
 corr gnp pop intrate 
 print mape1 mape2 mape3
-(* carry out joint F-test for coefficients of pop and gnp *)
+# carry out joint F-test for coefficients of pop and gnp 
 ols housing 0 intrate pop gnp 
 omit pop gnp 
 

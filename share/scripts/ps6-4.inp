@@ -1,10 +1,11 @@
-(* PS6.4, using DATA4-1, for Practice Problems 6.5 and 6.6 of Section 6.4 *)
+# PS6.4, for Practice Problems 6.5 and 6.6 of Section 6.4 
+open data4-1
 genr sqft2=sqft*sqft
-(* obtain logarithm of sqft *)
+# obtain logarithm of sqft 
 genr lsqft=log(sqft)
-(* Practice problem 6.5 *)
+# Practice problem 6.5 
 ols price 0 sqft sqft2
-(* Practice problem 6.5 *)
+# Practice problem 6.5 
 ols price 0 lsqft
-(* Practice problem 6.6 *)
+# Practice problem 6.6 
 ols price 0 lsqft baths

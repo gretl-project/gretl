@@ -1,45 +1,46 @@
-(* PS7.7, using DATA7-5, for the Application in Section 7.8 *)  
+# PS7.7, for the Application in Section 7.8 
+open data7-5  
 ols Q const P HS SHC OC L PL  
-(* Above command estimates Model A. Now generate monthly dummies *)  
+# Above command estimates Model A. Now generate monthly dummies   
 genr dummy
-(* estimate Model B with monthly dummies *)  
+# estimate Model B with monthly dummies   
 ols Q const P HS SHC OC L PL dfeb dmar dapr dmay djun \
  djul daug dsep doct dnov ddec  
-(* reset sample range to the first period only *)  
+# reset sample range to the first period only   
 smpl 1983.01 1986.06
-(* Next estimate Model C *)  
+# Next estimate Model C   
 ols Q const P HS SHC OC dfeb dmar dapr dmay djun \
  djul daug dsep doct dnov ddec  
-(* omit variables with highest p-values, a few at a time *)  
+# omit variables with highest p-values, a few at a time   
 omit dfeb dmar  
 omit HS  
 omit daug dsep  
 omit doct dnov  
 omit dapr  
 omit dmay djul  
-(* This is Model D, the final model with all significant coefficients *)  
+# This is Model D, the final model with all significant coefficients   
 omit ddec  
-(* obtain predicted values for the loss and post loss periods *)  
+# obtain predicted values for the loss and post loss periods   
 fcast 1986.07 1990.05 Qhat 
-(* reset sample range to the second and third periods *)  
+# reset sample range to the second and third periods   
 smpl 1986.07 1990.05
-(* compute loss in sales for each month *)  
+# compute loss in sales for each month   
 genr Qloss = Qhat - Q
-(* compute loss in revenues for each month *)  
+# compute loss in revenues for each month   
 genr dolrloss = P*Qloss
-(* print values *)  
+# print values   
 print -o Q Qhat Qloss dolrloss  
-(* set sample range to the middle period *)  
+# set sample range to the middle period   
 smpl 1986.07 1988.10
-(* compute sum of losses during the litigation period *)
+# compute sum of losses during the litigation period 
 genr totqloss = 28*mean(Qloss)
 genr totdloss = 28*mean(dolrloss)
-(* print the values *)  
+# print the values   
 print totqloss totdloss 
-(* reset sample range for the post loss period *)  
+# reset sample range for the post loss period   
 smpl 1988.11 1990.05
-(* compute sum of losses for this period *)  
+# compute sum of losses for this period   
 genr qloss2 = 19*mean(Qloss)
 genr dloss2 = 19*mean(dolrloss)
-(* print the values *)  
+# print the values   
 print qloss2 dloss2  

@@ -1,8 +1,9 @@
-(* PS7.4, using DATA7-3, for Practice Problem 7.2 *)
+# PS7.4, for Practice Problem 7.2 
+open data7-3
 genr lsqft = log(sqft)
-(* Model A' *)
+# Model A' 
 ols price 0 lsqft
-(* Model E' *)
+# Model E' 
 ols price 0 lsqft bedrms baths pool famroom firepl
-(* Model F' *)
+# Model F' 
 ols price 0 lsqft pool

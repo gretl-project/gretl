@@ -1,26 +1,27 @@
-(*  PS6.8 using DATA6-4 for Example 6.6 *)
+#  PS6.8 for Example 6.6 
+open data6-4
 logs WAGE  
-(* generate square of education *)
+# generate square of education 
 square EDUC 
-(* estimate linear model *)
+# estimate linear model 
 ols WAGE 0 sq_EDUC EXPER 
-(* estimate log-linear model *)
+# estimate log-linear model 
 ols l_WAGE 0 sq_EDUC EXPER 
-(* save fitted log values *)
+# save fitted log values 
 genr lwhat = l_WAGE - $uhat
-(* save ess for bias correction *)
+# save ess for bias correction 
 genr sgmasq=$ess/$df
-(* generate adjusted fitted value *)
+# generate adjusted fitted value 
 genr what = exp(lwhat+(sgmasq/2))
-(* compute error in new fitted value *)
+# compute error in new fitted value 
 genr error = WAGE -what
-(* compute new ess *)
+# compute new ess 
 genr ess = sum(error*error)
-(* learn about the criteria command *)
+# learn about the criteria command 
 help criteria
-(* compute criteria statistics *)
+# compute criteria statistics 
 criteria ess 49 3 
-(* compute correlation between observed WAGES and adjusted predictions *)
+# compute correlation between observed WAGES and adjusted predictions 
 corr WAGE what 
 genr c1 = corr(WAGE,what)
 genr rsq = c1*c1

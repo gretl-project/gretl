@@ -1,8 +1,9 @@
-(* PS9.7, using DATA4-2, for Example 9.8 on CORC HILU differences *)
+# PS9.7, for Example 9.8 on CORC HILU differences
+open data4-2 
 genr Wt=WAGES*100/PRDEFL
-(* The above is real wages, Pt is real profit income *)
+# The above is real wages, Pt is real profit income 
 genr Pt=Yt-Wt
 ols Ct 0 Wt Pt
 corc Ct 0 Wt Pt
-(* note that the mixed hilu-corc procedure yields global minimum *)
+# note that the mixed hilu-corc procedure yields global minimum 
 hilu Ct 0 Wt Pt

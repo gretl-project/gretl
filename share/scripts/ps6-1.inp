@@ -1,12 +1,13 @@
-(* PS6.1 using DATA4-1, for Example 6.1 *)
+# PS6.1 for Example 6.1 
+open data4-1
 logs sqft bedrms baths 
-(* learn about the logs command *)
+# learn about the logs command 
 help logs
-(* "best" linear model *)
+# "best" linear model 
 ols price 0 sqft
-(* estimate linear-log model *)
+# estimate linear-log model 
 ols price 0 l_sqft l_bedrms l_baths
-(* omit l_baths *)
+# omit l_baths 
 omit l_baths
-(* omit l_bedrms also *)
+# omit l_bedrms also 
 omit l_bedrms

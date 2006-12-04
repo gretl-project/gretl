@@ -1,4 +1,5 @@
-(* PS7.1, using DATA7-1, for example in Section 7.1 *)
+# PS7.1 for example in Section 7.1
+open data7-1
 ols WAGE 0 D
 genr n=$T
 genr nm=sum(D)

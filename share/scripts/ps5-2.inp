@@ -1,17 +1,18 @@
-(* PS5.2, using DATA3-7, for Example 5.2 and Table 5.2 *)
+# PS5.2, for Example 5.2 and Table 5.2
+open data3-7 
 ols cost 0 age
-(* compute absolute percentage error *)
+# compute absolute percentage error 
 genr ape1 = 100*abs($uhat)/cost
-(* compute mean percentage error *)
+# compute mean percentage error 
 genr mape1 = mean(ape1)
-(* Model B *)
+# Model B 
 ols cost 0 miles
 genr ape2 = 100*abs($uhat)/cost
 genr mape2 = mean(ape2)
-(* Model C *)
+# Model C 
 ols cost 0 age miles
 genr ape3 = 100*abs($uhat)/cost
 genr mape3 = mean(ape3)
-(* Correlation coefficients *)
+# Correlation coefficients 
 corr age miles
 print mape1 mape2 mape3 

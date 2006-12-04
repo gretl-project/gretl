@@ -1,10 +1,11 @@
-(* PS4.3, using DATA4-3, for Examples 4.12 and 4.13 in Section 4.5 *)
+# PS4.3 for Examples 4.12 and 4.13 in Section 4.5 
+open data4-3
 ols housing 0 gnp intrate 
-(* Model B in Example 4.12 *)
+# Model B in Example 4.12 
 omit intrate
-(* Model C in Example 4.13 *)
+# Model C in Example 4.13 
 ols housing 0 gnp intrate pop unemp
-(* Wald test for omitting pop and unemp *)
+# Wald test for omitting pop and unemp 
 omit pop unemp 
-(* add unemp back for Practice Problem 4.8 *)
+# add unemp back for Practice Problem 4.8 
 add unemp 

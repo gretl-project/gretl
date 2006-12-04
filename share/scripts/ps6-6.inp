@@ -1,33 +1,34 @@
-(*  PS6.6 using DATA3-3 for Application Section 6.7 *)
+#  PS6.6 for Application Section 6.7
+open data3-3 
 ols PATENTS 0 R_D 
-(* generate lagged variables *)
+# generate lagged variables 
 genr R_D1 = R_D(-1)
 genr R_D2 = R_D(-2)
 genr R_D3 = R_D(-3)
 genr R_D4 = R_D(-4)
-(* print them to see that missing observations are denoted by -999 *)
+# print them to see that missing observations are denoted by -999 
 print R_D R_D1 R_D2 R_D3 R_D4
-(* generate square terms *)
+# generate square terms 
 square R_D R_D1 R_D2 R_D3 R_D4  
-(* reset sample range because lagged variables are undefined for the 
-period 1960-63 *)
+# reset sample range because lagged variables are undefined for the 
+# period 1960-63 
 smpl 1964 1993
-(* estimate the most general urestricted model *)
+# estimate the most general urestricted model 
 ols PATENTS const R_D R_D1 R_D2 R_D3 R_D4 sq_R_D \
  sq_R_D1 sq_R_D2 sq_R_D3 sq_R_D4 
-(* omit variables with p-values above 0.9 *) 
+# omit variables with p-values above 0.9  
 omit 3 5 11 
-(* omit variables with p-values above 0.5 *)
+# omit variables with p-values above 0.5 
 omit 7 9 10 
-(* omit one at a time *)
+# omit one at a time 
 omit 8 
 omit 4 
-(* compute predicted values *)
+# compute predicted values 
 genr pred = PATENTS - $uhat
-(* save residuals *)
+# save residuals 
 genr error = $uhat
-(* compute absolute % error *)
+# compute absolute % error 
 genr abspcerr = 100*abs(error)/PATENTS
-(* print values as in a table with the -o flag *)
+# print values as in a table with the -o flag 
 print -o R_D PATENTS pred error abspcerr 
 

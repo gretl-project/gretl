@@ -1,5 +1,6 @@
-(* PS9.1, using DATA6-6, for Examples 9.1 and 9.2 illustrating
-   autocorrelation and the residual plot *)
+# PS9.1, for Examples 9.1 and 9.2 illustrating
+# autocorrelation and the residual plot
+open data6-6
 genr time
 ols farmpop const time 
 genr ut=$uhat

@@ -1,42 +1,43 @@
-(* PS3.1, using DATA3-1, for various examples in Chapter 3 *)
+# PS3.1, for various examples in Chapter 3
+open data3-1 
 graph 1 2 
-(* learn about the ols command *)	  
+# learn about the ols command 	  
 help ols 
-(* estimate model; -o is to get covariance *)
+# estimate model; -o is to get covariance 
 ols -o 1 0 2
-(* generate "fitted" value *)		  
+# generate "fitted" value 		  
 fcast 1 14 phat1
-(* learn about fcast command *)		  
+# learn about fcast command 		  
 help fcast
-(* print values *)                        
+# print values                         
 print phat1 
-(* ESL saves residuals under the name uhat.  Copy this to ut *)
+# ESL saves residuals under the name uhat.  Copy this to ut 
 genr ut = $uhat 
-(* another way to get fitted value is to subtract the error from the 
-actual value of the dependent variable *)
+# another way to get fitted value is to subtract the error from the 
+# actual value of the dependent variable 
 genr phat2 = price - ut 
-(* print values *)                        
+# print values                         
 print phat2 
-(* retrieve number of obs. *)		  
+# retrieve number of obs. 		  
 genr n = $nobs
-(* retrieve ESS - Section 3.4 *)	  
+# retrieve ESS - Section 3.4 	  
 genr ESS = $ess
-(* compute st. dev. for price *)	  
+# compute st. dev. for price 	  
 genr sdy = sd(price) 
-(* compute TSS - Example 3.4 *)	  	  
+# compute TSS - Example 3.4 	  	  
 genr TSS = (n-1)*sdy*sdy 
-(* compute RSS *)			  
+# compute RSS 			  
 genr RSS = TSS - ESS 
-(* retrieve R-square *)			  
+# retrieve R-square 			  
 genr RSQ = $rsq
-(* print values *)			  
+# print values 			  
 print TSS ESS RSS RSQ
-(* F-statistic in Example 3.6 *)	  
+# F-statistic in Example 3.6 	  
 genr Fc = RSS*(n-2)/ESS
-(* print F-statistic *)			  
+# print F-statistic 			  
 print Fc
-(* graph price and phat1 against sqft - connect x to get approximate line *)
+# graph price and phat1 against sqft - connect x to get approximate line 
 graph price phat1 sqft 
-(* Reproduce predicted averages in Table 3.1 using only 3 decimals *)
+# Reproduce predicted averages in Table 3.1 using only 3 decimals 
 genr phat3 = 52.351+(0.139*sqft)
 print -o price phat3 

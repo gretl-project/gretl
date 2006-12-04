@@ -1,30 +1,31 @@
-(* PS6.10, using DATA4-8, for LM test application in Example 6.7. 
-   First generate squared variables.  *)
+# PS6.10, for LM test application in Example 6.7. 
+open data4-8
+# First generate squared variables.  
 square home inst svc tv age air y  
-(* estimate basic model *)
+# estimate basic model 
 ols sub const home inst svc tv age air y  
 genr ut=$uhat
-(* estimate auxiliary regression *)
+# estimate auxiliary regression 
 ols ut const home inst svc tv age air y sq_home sq_inst sq_svc sq_tv \
  sq_age sq_air sq_y  
-(* compute LM test statistic *)
+# compute LM test statistic 
 genr LM = $nrsq
-(* compute pvalue *)
+# compute pvalue 
 pvalue X 7 LM
-(* from auxiliary regression add variables to basic model *)
+# from auxiliary regression add variables to basic model 
 ols sub const home inst svc tv age air y sq_home sq_age sq_air sq_y  
-(* carry out data-based model reduction *)
+# carry out data-based model reduction 
 omit svc  
 omit sq_home  
 omit inst  
-(* final model with all coefficients significant at 10 percent level *)
+# final model with all coefficients significant at 10 percent level 
 omit tv  
-(*  estimate most general model using the Hendry/LSE approach *)
+#  estimate most general model using the Hendry/LSE approach 
 ols sub const home inst svc tv age air y sq_home sq_inst sq_svc sq_tv \
  sq_age sq_air sq_y  
-(* carry out data-based model reduction on this *)
+# carry out data-based model reduction on this 
 omit inst tv sq_inst  
 omit svc sq_svc  
 omit sq_home  
-(* note that the final model is identical to the one above *)
+# note that the final model is identical to the one above 
 omit sq_tv 

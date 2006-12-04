@@ -1,32 +1,32 @@
-(* PS10.5b, using DATA10-2, for the AR(24) estimation in Application
-Section 10.6 *)
+# PS10.5b, for the AR(24) estimation in Application Section 10.6 
+open data10-2
 genr load1 = load(-1)
-(* suppress the first observation *)
+# suppress the first observation 
 smpl 1.02 31.24
-(* Estimate model with AR(24) using Generalized CORC *)
+# Estimate model with AR(24) using Generalized CORC 
 ar 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 ; \
 load 0 load1 temp
-(* eliminate all insignificant AR terms with p-value > 0.5 *)
+# eliminate all insignificant AR terms with p-value > 0.5 
 ar 1 2 5 6 7 8 9 12 13 14 15 17 18 19 21 22 23 24 ; \
 load 0 load1 temp
-(* eliminate insignificant AR terms one at a time *)
+# eliminate insignificant AR terms one at a time 
 ar 1 2 5 6 7 9 12 13 14 15 17 18 19 21 22 23 24 ; \
 load 0 load1 temp
 ar 1 2 5 7 9 12 13 14 15 17 18 19 21 22 23 24 ; \
 load 0 load1 temp
 ar 1 2 5 7 9 12 13 14 15 17 19 21 22 23 24 ; \
 load 0 load1 temp
-(* generate forecasts after incorporating the error structure *)
+# generate forecasts after incorporating the error structure 
 fcast 2.02 31.24 yf
-(* Compute forecast error statistics *)
+# Compute forecast error statistics 
 genr abserror=abs($uhat)
 genr abspcter=100*abserror/load
-(* Flag observations with percent error > 5 *)
+# Flag observations with percent error > 5 
 genr five =abspcter>5
 genr sumfive = sum(five)
-(* Flag observations with percent error > 10 *)
+# Flag observations with percent error > 10 
 genr ten = abspcter>10
 genr sumten = sum(ten)
-(* Compute mean absolute percent error *)
+# Compute mean absolute percent error 
 genr mape = mean(abspcter)
 print sumfive sumten mape

@@ -1,12 +1,13 @@
-(* PS3.2, using DATA3-1, for Section 3.6 on changing units *)
+# PS3.2, for Section 3.6 on changing units 
+open data3-1
 ols price 0 sqft 
-(* price in dollars *)		
+# price in dollars 		
 genr price2 = price*1000
-(* estimate new model *)	
+# estimate new model 	
 ols price2 0 sqft 
-(* sqft in hundredths *)	
+# sqft in hundredths 	
 genr sqft2 = sqft/100
-(* estimate new model *)	
+# estimate new model 	
 ols price 0 sqft2 
-(* both units changed *)	
+# both units changed 	
 ols price2 0 sqft2 

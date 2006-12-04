@@ -1,10 +1,11 @@
-(* PS4.4, using DATA4-4, for Table 4.4 and the application in Section 4.6 *)
-ols BUSTRAVL 0 FARE GASPRICE INCOME POP DENSITY LANDAREA ;
-(* omit variables -- Model B *) 
+# PS4.4, for Table 4.4 and the application in Section 4.6 
+open data4-4
+ols BUSTRAVL 0 FARE GASPRICE INCOME POP DENSITY LANDAREA
+# omit variables -- Model B  
 omit GASPRICE LANDAREA FARE 
-(* estimate full model and omit variables one at a time *)
+# estimate full model and omit variables one at a time 
 ols BUSTRAVL 0 FARE GASPRICE INCOME POP DENSITY LANDAREA 
-(* Model C *)
+# Model C 
 omit GASPRICE
-(* Model D *)
+# Model D 
 omit LANDAREA

@@ -1,16 +1,17 @@
-(* PS8.4, using DATA8-1, for the White's test of Example 8.5 *)
+# PS8.4, for the White's test of Example 8.5 
+open data8-1
 genr LNSALARY=ln(SALARY)
-(* generate squares and cross-products *)
+# generate squares and cross-products 
 genr YRS2 = YEARS*YEARS
 genr YRS3 = YRS2*YEARS
 genr YRS4 = YRS2*YRS2
-(* estimate log quadratic model *)
+# estimate log quadratic model 
 ols LNSALARY const YEARS YRS2 
-(* save squared residuals *)
+# save squared residuals 
 genr usq=$uhat*$uhat
-(* auxiliary regression *)
+# auxiliary regression 
 ols usq const YEARS YRS2 YRS3 YRS4 
-(* compute LM test statistic and p-value *)
+# compute LM test statistic and p-value 
 genr LM=$nrsq
 pvalue X 4 LM
 

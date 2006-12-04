@@ -1,28 +1,29 @@
-(* PS2.3, using DATA2-2 -- on covariance and corr. coeff. - Section 2.5 *)
+# PS2.3 -- on covariance and corr. coeff. - Section 2.5
+open data2-2 
 genr x = colgpa
 genr y = hsgpa
 genr n = $nobs
-(* mean of colgpa *)			
+# mean of colgpa 			
 genr xbar = mean(x)
-(* s.d. of colgpa *)			
+# s.d. of colgpa 			
 genr sx = sd(x)
-(* mean of hsgpa *)			
+# mean of hsgpa 			
 genr ybar = mean(y)
-(* s.d. of hsgpa *)			
+# s.d. of hsgpa 			
 genr sy = sd(y)
-(* cross product of deviation from mean *)	
+# cross product of deviation from mean 	
 genr sxy = (x-xbar)*(y-ybar)
-(* compute covariance *)		
+# compute covariance 		
 genr covxy = sum(sxy)/(n-1)
-(* compute correlation coefficient *)	
+# compute correlation coefficient 	
 genr corxy = covxy/(sx*sy)
-(* reset sample range *)		
+# reset sample range 		
 smpl 1 1
-(* print values *)		
+# print values 		
 print xbar sx ybar sy covxy corxy 
-(* reset sample range *)                
+# reset sample range                 
 smpl 1 427
-(* same with the corr command *)	
+# same with the corr command 	
 corr x y 
-(* summary statistics *)                
+# summary statistics                 
 summary x y

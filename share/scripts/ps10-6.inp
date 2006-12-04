@@ -1,15 +1,16 @@
-(* PS10.6, using DATA9-2, for Example 10.5 for the Dickey-Fuller test *)
+# PS10.6, for Example 10.5 for the Dickey-Fuller test
+open data9-2 
 genr time
-(* generate log of money supply *)
+# generate log of money supply
 genr Y = ln(M)
-(* generate delta Y *)
+# generate delta Y
 genr DY = diff(Y)
-(* lag DY once *)
+# lag DY once
 genr Y1 = Y(-1)
-(* delta Y(-1) *)
+# delta Y(-1)
 genr DY1 = DY(-1)
-(* reset starting obs to omit two observations *)
+# reset starting obs to omit two observations
 smpl 1962 ;
-(* estimate unrestricted model U *)
+# estimate unrestricted model U
 ols DY const time Y1 DY1
 omit time Y1

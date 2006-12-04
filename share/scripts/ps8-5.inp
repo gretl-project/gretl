@@ -1,4 +1,5 @@
-(* PS8.5, using DATA8-1, for Example 8.6 and the HCCM procedure *)
+# PS8.5, for Example 8.6 and the HCCM procedure
+open data8-1
 genr LNSALARY=ln(SALARY)
 genr YRS2 = YEARS*YEARS
 ols LNSALARY const YEARS YRS2 -o

@@ -1,8 +1,9 @@
-(* PS3.3, using DATA3-2, for Annotated output in Table 3.3, Section 3.7 *)
+# PS3.3, for Annotated output in Table 3.3, Section 3.7 
+open data3-2
 graph exphlth income  
 ols exphlth const income  
-(* copy residuals from uhat to ut *)
+# copy residuals from uhat to ut 
 genr ut=$uhat
-(* copy predicted value from yhat to yt *)
+# copy predicted value from yhat to yt 
 genr yt=$yhat
 print -o exphlth yt ut 

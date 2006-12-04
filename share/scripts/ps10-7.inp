@@ -1,13 +1,14 @@
-(* PS10-7, using DATA10-3, for Example 10.6 for the Dickey-Fuller test *)
+# PS10-7, for Example 10.6 for the Dickey-Fuller test 
+open data10-3
 genr time
-(* generate change in exchange rate *)
+# generate change in exchange rate 
 genr dxchrate = diff(exchrate)
-(* lag exchange rate *)
+# lag exchange rate 
 genr exchrat1 = exchrate(-1)
-(* generate change in dxchrate *)
+# generate change in dxchrate 
 genr dxchrat2 = dxchrate(-1)
 list
-(* suppress two observations *)
+# suppress two observations 
 smpl 1973.03 ;
-(* estimate unrestricted model *)
+# estimate unrestricted model 
 ols dxchrate const exchrat1 dxchrat2  ;

@@ -1,15 +1,16 @@
-(* PS7.3, using DATA7-3, to duplicate Table 7.2 *)
+# PS7.3, to duplicate Table 7.2 
+open data7-3
 ols price const sqft
-(* This is model E in Table 7.2 *)
+# This is model E in Table 7.2 
 ols price const sqft bedrms baths pool famroom firepl
-(* omit variable with highest pvalue, one at a time *)
+# omit variable with highest pvalue, one at a time 
 omit baths
 omit bedrms
 omit firepl
-(* Model F *)
+# Model F 
 omit famroom
-(* rerun full model for Wald test *)
+# rerun full model for Wald test 
 ols price const sqft bedrms baths pool famroom firepl
-(* Wald F-statistic for Models E and F is provided *)
+# Wald F-statistic for Models E and F is provided 
 omit bedrms baths famroom firepl
 

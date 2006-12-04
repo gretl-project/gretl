@@ -1,14 +1,15 @@
-(*  PS3.6 using DATA3-3 for application section 3.11 *)
+# PS3.6 for application section 3.11 
+open data3-3
 ols PATENTS const R_D 
-(* save residuals *)
+# save residuals 
 genr ut = $uhat
-(* compute fitted values *)
+# compute fitted values 
 genr temp = PATENTS - ut
-(* round to one decimal *)
+# round to one decimal 
 genr fitted =int(0.5+(10*temp))/10
-(* compute forecast error *)
+# compute forecast error 
 genr error = PATENTS - fitted
-(* compute absolute % error *)
+# compute absolute % error 
 genr abspcerr = int(0.5+(10000*abs(error)/PATENTS))/100
-(* print values; see Table 3.5 *)
+# print values; see Table 3.5 
 print -o R_D PATENTS fitted error abspcerr

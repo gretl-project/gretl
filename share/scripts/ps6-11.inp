@@ -1,4 +1,5 @@
-(* PS6.11 using DATA6-4 for Example 6.8 *)  
+# PS6.11 for Example 6.8
+open data6-4
 logs WAGE  
 ols l_WAGE const EDUC EXPER AGE 
 genr ut = $uhat

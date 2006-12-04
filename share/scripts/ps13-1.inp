@@ -1,10 +1,11 @@
-(* PS13.1, using DATA13-1, for the Application in Section 13.6 *)
+# PS13.1, for the Application in Section 13.6
+open data13-1 
 genr TAXt=100*GOVREC/Pt  
-(* generate disposable income *)
+# generate disposable income 
 genr DISPINCM=GDP-TAXt
-(* generate real money supply *)
+# generate real money supply 
 genr M=100*MONYSUP/Pt  
-(* generate per capita measures *)
+# generate per capita measures 
 genr Yt=GDP/POP  
 genr Ct=CONS/POP  
 genr It=INV/POP  
@@ -16,7 +17,7 @@ genr DYt=DISPINCM/POP
 genr Mt=M/POP  
 lags Yt Ct It Gt Xt DYt Mt rt
 smpl 1960 1993 
-(* TSLS estimation *)
+# TSLS estimation 
 tsls Ct 0 Ct_1 DYt DYt_1 ; 0 Ct_1 DYt_1 It_1 Yt_1 rt_1 Mt Mt_1 Gt Xt 
 tsls It 0 It_1 Yt Yt_1 rt rt_1 ; 0 Ct_1 DYt_1 It_1 Yt_1 rt_1 Mt Mt_1 Gt Xt
 tsls rt 0 rt_1 Yt Yt_1 Mt Mt_1 ; 0 Ct_1 DYt_1 It_1 Yt_1 rt_1 Mt Mt_1 Gt Xt

@@ -1,20 +1,21 @@
-(* PS8.2, using DATA3-11, for Example 8.3 *)
+# PS8.2, for Example 8.3
+open data3-11 
 genr LNSALARY=ln(SALARY)
 genr YRS2 = YEARS*YEARS
 ols LNSALARY const YEARS YRS2 
-(* save absolute uhat, uhat squared, and its log *)
+# save absolute uhat, uhat squared, and its log 
 genr usq = $uhat*$uhat
 genr absuhat = abs($uhat)
 genr lnusq = ln(usq)
-(* Breusch-Pagan test *)
+# Breusch-Pagan test 
 ols usq const YEARS YRS2 
 genr LM1=$nrsq
 pvalue 3 2 LM1
-(* Glesjer test *)
+# Glesjer test 
 ols absuhat const YEARS YRS2 
 genr LM2=$nrsq
 pvalue 3 2 LM2
-(* Harvey-Godfrey test *)
+# Harvey-Godfrey test 
 ols lnusq const YEARS YRS2 
 genr LM3=$nrsq
 pvalue X 2 LM3

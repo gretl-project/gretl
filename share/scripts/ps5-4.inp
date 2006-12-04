@@ -1,2 +1,3 @@
-(* PS5.4, using DATA3-7, for the first application in Section 5.4 *)
+# PS5.4, for the first application in Section 5.4
+open data3-7
 ols miles const age

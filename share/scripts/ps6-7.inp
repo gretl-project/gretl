@@ -1,4 +1,5 @@
-(* PS6.7 using DATA6-4 for Example 6.5 *)  
+# PS6.7 for Example 6.5
+open data6-4  
 logs WAGE  
 square EDUC EXPER AGE  
 ols l_WAGE const EDUC EXPER AGE sq_EDUC sq_EXPER sq_AGE  
