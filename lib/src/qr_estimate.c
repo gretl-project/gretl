@@ -36,16 +36,19 @@
    So in a fortran array, entries for a given variable are contiguous.
 */
 
-static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
+static double qr_get_tss (MODEL *pmod, const double *y, int *ifc,
+			  int *yconst)
 {
     int pwe = gretl_model_get_int(pmod, "pwe");
-    double ymean = 0.0;
+    double y0 = 0.0, ymean = 0.0;
     double x, tss = 0.0;
     int t;
 
     if (*ifc == 0) {
 	*ifc = check_for_effective_const(pmod, y);
     }
+
+    *yconst = 1;
 
     if (pmod->rho != 0.0) {
 	double ry, d;
@@ -70,6 +73,11 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 	    } else {
 		ry -= pmod->rho * y[t-1];
 	    }
+	    if (t == pmod->t1) {
+		y0 = ry;
+	    } else if (ry != y0) {
+		*yconst = 0;
+	    }
 	    d = ry - ymean;
 	    tss += d * d;
 	}
@@ -83,8 +91,13 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 	    ymean /= pmod->nobs;
 	}
 
+	y0 = y[pmod->t1];
+
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->yhat[t])) {
+		if (y[t] != y0) {
+		    *yconst = 0;
+		}
 		x = y[t] - ymean;
 		tss += x * x;
 	    }
@@ -97,11 +110,20 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 static void qr_compute_stats (MODEL *pmod, const double *y, int n,
 			      gretlopt opt)
 {
-    int ifc = pmod->ifc;
+    int yconst, ifc = pmod->ifc;
 
-    pmod->tss = qr_get_tss(pmod, y, &ifc);
+    pmod->tss = qr_get_tss(pmod, y, &ifc, &yconst);
 
-    if (pmod->dfd > 0) {
+    if (yconst && pmod->dfd > 0) {
+	double y0 = y[pmod->t1];
+    
+	if (y0 > 0) {
+	    double tss = pmod->nobs * y0 * y0;
+
+	    pmod->rsq = 1 - (pmod->ess / tss);
+	    gretl_model_set_int(pmod, "uncentered", 1);
+	}
+    } else if (pmod->dfd > 0) {
 	double den = pmod->tss * pmod->dfd;
 
 	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
