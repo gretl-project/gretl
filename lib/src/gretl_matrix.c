@@ -2983,7 +2983,8 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 
 #if 0 /* experimental */
 
-int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
+int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
+				  int **order)
 {
     integer m = M->rows;
     integer n = M->cols;
@@ -2998,6 +2999,7 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
     integer *jpvt = NULL;
 
     int i, j;
+    int moved = 0;
     int err = 0;
 
     if (R == NULL || R->rows != n || R->cols != n) {
@@ -3072,20 +3074,30 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
     free(work);
     free(iwork);
 
-# if 1
     for (i=0; i<n; i++) {
-	fprintf(stderr, "jpvt[%d] = %d\n", i, (int) jpvt[i]);
 	if (jpvt[i] != i + 1) {
 	    fprintf(stderr, "column was moved\n");
+	    moved = 1;
 	}
     }
+
+    if (moved && order != NULL) {
+	*order = malloc(n * sizeof **order);
+	if (*order == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		(*order)[i] = jpvt[i] - 1;
+	    }
+	}
+    }
+
     free(jpvt);
-# endif
 
     return err;
 }
 
-#endif 
+#endif
 
 /**
  * gretl_matrix_QR_decomp:
