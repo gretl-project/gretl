@@ -135,7 +135,7 @@ static int spearman_rho (const double *x, const double *y, int n,
 
 	for (j=0; j<n; j++) {
 	    /* scan raw x for matches */
-	    if (na(x[j])) {
+	    if (na(x[j]) || na(y[j])) {
 		continue;
 	    }
 	    if (x[j] == sx[i]) {
@@ -167,7 +167,7 @@ static int spearman_rho (const double *x, const double *y, int n,
 
 	for (j=0; j<n; j++) {
 	    /* scan raw y for matches */
-	    if (na(y[j])) {
+	    if (na(x[j]) || na(y[j])) {
 		continue;
 	    }
 	    if (y[j] == sy[i]) {
@@ -291,9 +291,9 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    print_obs_marker(t, pdinfo, prn);
 	    if (!(na(Z[vx][t])) && !(na(Z[vy][t]))) {
 		gretl_printxn(Z[vx][t], 15, prn);
-		gretl_printxn(rx[i], 15, prn);
+		pprintf(prn, "%15g", rx[i]);
 		gretl_printxn(Z[vy][t], 15, prn);
-		gretl_printxn(ry[i], 15, prn);
+		pprintf(prn, "%15g", ry[i]);
 		i++;
 	    }
 	    pputc(prn, '\n');
