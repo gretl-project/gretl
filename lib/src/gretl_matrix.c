@@ -3172,10 +3172,9 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
 		if (i <= j) {
-		    gretl_matrix_set(R, i, j, 
-				     gretl_matrix_get(M, i, j));
+		    R->val[mdx(R, i, j)] = M->val[mdx(M, i, j)];
 		} else {
-		    gretl_matrix_set(R, i, j, 0.0);
+		    R->val[mdx(R, i, j)] = 0.0;
 		}
 	    }
 	}
@@ -3205,7 +3204,7 @@ static int get_R_rank (const gretl_matrix *R)
     int i, rank = R->rows;
 
     for (i=0; i<R->rows; i++) {
-	d = gretl_matrix_get(R, i, i);
+	d = R->val[mdx(R, i, i)];
 	if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
 	    rank--;
 	}
@@ -3447,7 +3446,7 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
 
     for (i=0; i<a->rows; i++) {
 	if (a->val[mdx(a,i,i)] == 0.0) {
-	    return 1;
+	    return E_SINGULAR;
 	}
     }
 
@@ -3483,31 +3482,6 @@ int gretl_invert_matrix (gretl_matrix *a)
 	return gretl_invert_general_matrix(a);
     }
 }
-
-#if 0
-static int spd_matrix_check_scaling (const gretl_matrix *a)
-{
-    integer n = a->rows;
-    integer info;
-    double *s;
-    double scond, amax;
-
-    s = malloc(n * sizeof *s);
-    if (s == NULL) {
-	return 1;
-    }
-
-    dpoequ_(&n, a->val, &n, s, &scond, &amax, &info);
-
-    gretl_matrix_print(a, "a: check for scaling");
-    fprintf(stderr, "info = %d, scond = %g, amax = %g\n",
-	    (int) info, scond, amax);
-
-    free(s);
-
-    return 0;
-}
-#endif
 
 /**
  * gretl_invert_symmetric_indef_matrix:
@@ -3593,7 +3567,6 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 
     return err;
 }
-
 
 /**
  * gretl_invert_symmetric_matrix:
@@ -3694,10 +3667,6 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return 1;
     }
-
-#if 0
-    spd_matrix_check_scaling(a);
-#endif
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
@@ -4046,19 +4015,18 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     if (info != 0) {
 	*err = 1;
-	goto bailout;
     }
-
-    lapack_free(work);
-
-    return w;
 
  bailout:
 
     lapack_free(work);
-    free(w);
 
-    return NULL;
+    if (*err && w != NULL) {
+	free(w);
+	w = NULL;
+    }
+
+    return w;
 }
 
 /* return the row-index of the element in column col of

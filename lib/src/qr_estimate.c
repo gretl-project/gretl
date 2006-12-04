@@ -158,11 +158,11 @@ static void qr_compute_stats (MODEL *pmod, const double *y, int n,
 static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int flag)
 {
     int k = pmod->ncoeff;
-    int nterms = k * (k + 1) / 2;
+    int m = k * (k + 1) / 2;
     double x;
     int i, j, idx;
 
-    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    pmod->vcv = malloc(m * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) {
 	return E_ALLOC;
     }
@@ -261,17 +261,19 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 static void 
 get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 {
-    int i, j, t;
+    int wt = pmod->nwt;
+    int i, j, t, vi;
 
     /* copy independent vars into matrix X */
     j = 0;
     for (i=2; i<=pmod->list[0]; i++) {
+	vi = pmod->list[i];
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
-		if (pmod->nwt) {
-		    X->val[j++] = sqrt(Z[pmod->nwt][t]) * Z[pmod->list[i]][t];
+		if (wt) {
+		    X->val[j++] = sqrt(Z[wt][t]) * Z[vi][t];
 		} else {
-		    X->val[j++] = Z[pmod->list[i]][t];
+		    X->val[j++] = Z[vi][t];
 		}
 	    }
 	}
