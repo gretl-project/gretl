@@ -667,13 +667,13 @@ static int get_n_lags (LAGVAR *lv, int *incr)
     return nl;
 }
 
-int auto_lag_ok (const char *s, int *lnum,
+int auto_lag_ok (const char *s, int *lpos,
 		 double ***pZ, DATAINFO *pdinfo,
 		 CMD *cmd)
 {
     LAGVAR lagvar;
     int nlags, i;
-    int llen = *lnum;
+    int llen = *lpos;
     int lincr = 1;
     int ok = 1;
 	
@@ -705,42 +705,39 @@ int auto_lag_ok (const char *s, int *lnum,
     }
 
     for (i=0; i<nlags && ok; i++) {
-	int laglen, vnum;
+	int order, lv;
 
 	if (lagvar.laglist != NULL) {
-	    laglen = lagvar.laglist[i+1];
+	    order = lagvar.laglist[i+1];
 	} else {
-	    laglen = lagvar.lmin + i * lincr;
+	    order = lagvar.lmin + i * lincr;
 	}
 
-	vnum = laggenr(lagvar.v, laglen, pZ, pdinfo);
+	lv = laggenr(lagvar.v, order, pZ, pdinfo);
 
 #if LAG_DEBUG
-	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave vnum = %d\n",
-		lagvar.v, pdinfo->varname[lagvar.v], laglen, vnum);
+	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave lv = %d\n",
+		lagvar.v, pdinfo->varname[lagvar.v], order, lv);
 #endif
-	if (vnum < 0) {
+	if (lv < 0) {
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
 	    ok = 0;
 	} else {
-	    int err;
-
 	    /* record info regarding the auto-generation of lags,
 	       so that we'll be able to echo the command properly --
 	       see the echo_cmd() function. 
 	    */
-	    cmd->list[llen++] = vnum;
-	    err = add_to_list_lag_info(lagvar.v, laglen, vnum, cmd);
-	    if (err) {
-		cmd->errcode = E_ALLOC;
+	    cmd->list[llen++] = lv;
+	    cmd->errcode = add_to_list_lag_info(lagvar.v, order, lv, cmd);
+	    if (cmd->errcode) {
 		ok = 0;
 	    }
 	}
     }
 
     if (ok) {
-	*lnum = llen;
+	*lpos = llen;
     }
 
  bailout:
@@ -784,7 +781,7 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
     }
 }
 
-static int auto_transform_ok (const char *s, int *lnum,
+static int auto_transform_ok (const char *s, int *lpos,
 			      double ***pZ, DATAINFO *pdinfo,
 			      CMD *cmd)
 {
@@ -793,7 +790,7 @@ static int auto_transform_ok (const char *s, int *lnum,
     int trans = 0;
     int order = 0;
     gretlopt opt = OPT_NONE;
-    int err = 0, ok = 1;
+    int ok = 1;
 
     if (sscanf(s, "%8[^(](", fword)) {
 	char *param = NULL;
@@ -850,24 +847,27 @@ static int auto_transform_ok (const char *s, int *lnum,
     }	
 
     if (trans == LOGS) {
-	err = list_loggenr(genlist, pZ, pdinfo);
+	cmd->errcode = list_loggenr(genlist, pZ, pdinfo);
     } else if (trans == DIFF || trans == LDIFF || trans == SDIFF) {
-	err = list_diffgenr(genlist, trans, pZ, pdinfo);
+	cmd->errcode = list_diffgenr(genlist, trans, pZ, pdinfo);
     } else if (trans == SQUARE) {
-	err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
+	cmd->errcode = list_xpxgenr(&genlist, pZ, pdinfo, opt);
     } else if (trans == LAGS) {
-	err = list_laggenr(&genlist, order, pZ, pdinfo);
+	cmd->errcode = list_laggenr(&genlist, order, pZ, pdinfo);
     } else if (trans == DUMMIFY) {
-	err = list_dumgenr(&genlist, pZ, pdinfo, OPT_NONE);
+	cmd->errcode = list_dumgenr(&genlist, pZ, pdinfo, OPT_F);
     }
 
-    if (err) {
-	cmd->errcode = err;
-	ok = 0;
-    } else {
+    if (!cmd->errcode) {
 	cmd->list[0] -= 1;
-	gretl_list_insert_list(&cmd->list, genlist, *lnum);
-	*lnum = cmd->list[0];
+	cmd->errcode = gretl_list_insert_list(&cmd->list, genlist, *lpos);
+	if (!cmd->errcode) {
+	    *lpos += genlist[0];
+	}
+    }
+
+    if (cmd->errcode) {
+	ok = 0;
     }
 
     free(genlist);
@@ -875,33 +875,33 @@ static int auto_transform_ok (const char *s, int *lnum,
     return ok;
 } 
 
-static int add_time_ok (const char *s, int *lnum,
+static int add_time_ok (const char *s, int *lpos,
 			double ***pZ, DATAINFO *pdinfo,
 			CMD *cmd)
 {
-    if (strcmp(s, "time")) {
-	return 0; /* not handled */
-    } else if (cmd->ci == GNUPLOT) {
-	cmd->list[0] -= 1;
-	cmd->opt |= OPT_T;
-	return 1; /* handled */
-    } else {
-	int err = gen_time(pZ, pdinfo, 1);
+    int ok = 0;
 
-	if (err) {
-	    cmd->errcode = err;
+    if (!strcmp(s, "time")) {
+	if (cmd->ci == GNUPLOT) {
+	    cmd->list[0] -= 1;
+	    cmd->opt |= OPT_T;
+	    ok = 1; /* handled */
 	} else {
-	    cmd->list[*lnum] = varindex(pdinfo, "time");
-	    *lnum += 1;
+	    cmd->errcode = gen_time(pZ, pdinfo, 1);
+	    if (!cmd->errcode) {
+		cmd->list[*lpos] = varindex(pdinfo, "time");
+		*lpos += 1;
+		ok = 1; /* handled */
+	    }
 	}
-
-	return err == 0;
     }
+
+    return ok;
 } 
 
 #if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 
-static int wildcard_expand_ok (const char *s, int *lnum,
+static int wildcard_expand_ok (const char *s, int *lpos,
 			       const DATAINFO *pdinfo, CMD *cmd)
 {
     int ok = 0;
@@ -911,7 +911,7 @@ static int wildcard_expand_ok (const char *s, int *lnum,
 
 	if (wildlist != NULL) {
 	    int k, nw = wildlist[0];
-	    int llen = *lnum;
+	    int llen = *lpos;
 
 #if CMD_DEBUG
 	    printlist(wildlist, "wildlist");
@@ -927,7 +927,7 @@ static int wildcard_expand_ok (const char *s, int *lnum,
 	    printlist(cmd->list, "cmd->list after wildlist insertion");
 #endif	    
 	    free(wildlist);
-	    *lnum = llen;
+	    *lpos = llen;
 	    ok = 1;
 	}
     }
@@ -1499,12 +1499,12 @@ static void maybe_switch_off_ints (CMD *cmd, int scount, int *ints_ok)
 
 int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
 {
-    int j, nf, linelen, pos, v, lnum;
+    int j, k, nf, linelen, pos, v;
     int gotdata = 0, poly = 0;
     int sepcount = 0;
     int ints_ok = 0;
-    char *remainder = NULL;
-    char field[FIELDLEN] = {0};
+    char *rem = NULL;
+    char s[FIELDLEN] = {0};
 
     if (gretl_cmd_clear(cmd)) {
 	return cmd->errcode;
@@ -1696,19 +1696,19 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     */
     nf = count_free_fields(line) - 1;
     pos = strlen(cmd->word);
-    remainder = copy_remainder(line, pos);
-    if (remainder == NULL) {
+    rem = copy_remainder(line, pos);
+    if (rem == NULL) {
 	cmd->errcode = E_ALLOC;
 	goto bailout;
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, "nf=%d, remainder='%s'\n", nf, remainder);
+    fprintf(stderr, "nf=%d, remainder='%s'\n", nf, rem);
 #endif
 
     if (cmd->ci == DELEET && nf == 1 &&
-	get_matrix_by_name(remainder)) {
-	cmd_param_grab_string(cmd, remainder);
+	get_matrix_by_name(rem)) {
+	cmd_param_grab_string(cmd, rem);
 	return cmd->errcode;
     }
 
@@ -1716,11 +1716,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        the end of the command word to the first semicolon into
        "param", for processing later */
     if (cmd->ci == RHODIFF) { 
-	if (!get_rhodiff_or_lags_param(remainder, cmd)) {
+	if (!get_rhodiff_or_lags_param(rem, cmd)) {
 	    cmd->errcode = E_SYNTAX;
 	    goto bailout;
 	}
-	strcpy(line, remainder);
+	strcpy(line, rem);
 	linelen = strlen(line);
 	nf = count_fields(line);
 	pos = 0;
@@ -1728,26 +1728,26 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == LAGS) {
 	/* optional initial lags field */
-	if (get_rhodiff_or_lags_param(remainder, cmd)) {
-	    strcpy(line, remainder);
+	if (get_rhodiff_or_lags_param(rem, cmd)) {
+	    strcpy(line, rem);
 	    linelen = strlen(line);
 	    nf = count_fields(line);
 	    pos = 0;
 	} else {
-	    *remainder = '\0';
+	    *rem = '\0';
 	}
     }	
 
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it.  Groan */
     if (cmd->ci == STORE && nf > 0) {
-	cmd->errcode = get_maybe_quoted_storename(cmd, remainder, &nf);
+	cmd->errcode = get_maybe_quoted_storename(cmd, rem, &nf);
 	if (cmd->errcode) {
 	    goto bailout;
 	} else {
 	    pos = 0;
 	    if (--nf > 0) {
-		strcpy(line, remainder);	
+		strcpy(line, rem);	
 		linelen = strlen(line);
 	    }		
 	}
@@ -1770,10 +1770,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->errcode) {
 	    goto bailout;
 	} else {
-	    strcpy(remainder, line + pos + 1 + strlen(cmd->param));
+	    strcpy(rem, line + pos + 1 + strlen(cmd->param));
 	    pos = 0;
 	    if (--nf > 0) {
-		strcpy(line, remainder);
+		strcpy(line, rem);
 		linelen = strlen(line);
 	    }
 	} 
@@ -1785,7 +1785,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} else if (nf == 0) {
 	    /* creating empty object implicitly, OK */
 	    return cmd->errcode;
-	} else if (creating_null_list(cmd, nf, remainder)) {
+	} else if (creating_null_list(cmd, nf, rem)) {
 	    /* creating empty object with explicit "null" */
 	    return cmd->errcode;
 	} 
@@ -1820,7 +1820,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (NEEDS_LISTSEP(cmd->ci) && sepcount == 0) {
 	/* missing field in command */
 	cmd->errcode = E_ARGS;
-	free(remainder);
+	free(rem);
 	return cmd->errcode;
     }
 
@@ -1837,101 +1837,97 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* now assemble the command list */
 
-    for (j=1, lnum=1; j<=nf; j++) {
+    for (j=1, k=1; j<=nf; j++) {
 
-	strcpy(remainder, line + pos + 1);
+	strcpy(rem, line + pos + 1);
 
 	/* special: optional lag order for correlogram */
 	if (cmd->ci == CORRGM && j == 2) {
 	    cmd->list[0] = 1;
-	    cmd_param_grab_word(cmd, remainder);
+	    cmd_param_grab_word(cmd, rem);
 	    break;
 	} else if (cmd->ci == XCORRGM && j == 3) {
 	    cmd->list[0] = 2;
-	    cmd_param_grab_word(cmd, remainder);
+	    cmd_param_grab_word(cmd, rem);
 	    break;
 	}	    
 
-	cmd->errcode = get_next_field(field, remainder);
+	cmd->errcode = get_next_field(s, rem);
 	if (cmd->errcode) {
 	    goto bailout;
 	}
 
-	if (isalpha((unsigned char) *field)) {
-	    /* probably should be the name of a variable */
-	    int *savedlist;
+	if (isalpha((unsigned char) *s)) {
+	    int *xlist;
 
-	    if (field[strlen(field) - 1] == ';') {
+	    if (s[strlen(s) - 1] == ';') {
 		/* strip any trailing semicolon */
-		field[strlen(field) - 1] = '\0';
+		s[strlen(s) - 1] = '\0';
 	    }
 
 	    if (ints_ok) {
-		int k = gretl_int_from_string(field, (const double **) *pZ,
-					      pdinfo, &cmd->errcode);
+		int val = gretl_int_from_string(s, (const double **) *pZ,
+						pdinfo, &cmd->errcode);
 
 		if (!cmd->errcode) {
-		    cmd->list[lnum++] = k;
+		    cmd->list[k++] = val;
 		}
-	    } else if ((v = varindex(pdinfo, field)) < pdinfo->v) {
-		/* yes, it's an existing variable */
-		cmd->list[lnum++] = v;
-	    } else if ((savedlist = get_list_by_name(field)) != NULL) {
-		/* or it's a pre-defined list */
+	    } else if ((v = varindex(pdinfo, s)) < pdinfo->v) {
+		/* it's an existing variable */
+		cmd->list[k++] = v;
+	    } else if ((xlist = get_list_by_name(s)) != NULL) {
+		/* or it's a named list */
 		cmd->list[0] -= 1;
-		cmd->errcode = gretl_list_insert_list(&cmd->list, savedlist,
-						      lnum);
-		lnum += savedlist[0];
+		cmd->errcode = gretl_list_insert_list(&cmd->list, xlist, k);
+		k += xlist[0];
 	    } else { 
 		/* possibly an auto-generated variable? */
-		if (strchr(field, '(') != NULL) {
+		if (strchr(s, '(') != NULL) {
 		    /* Case 1: automated lags: e.g. 'var(-1)' */
-		    if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
+		    if (auto_lag_ok(s, &k, pZ, pdinfo, cmd)) {
 			/* handled, get on with it */
-			pos += strlen(field) + 1;
+			pos += strlen(s) + 1;
 			continue; 
 		    }
 		    /* Case 2: automated transformations: e.g. 'logs(list)' */
-		    else if (auto_transform_ok(field, &lnum, pZ, pdinfo, cmd)) {
+		    else if (auto_transform_ok(s, &k, pZ, pdinfo, cmd)) {
 			/* handled, get on with it */
-			pos += strlen(field) + 1;
+			pos += strlen(s) + 1;
 			continue; 
 		    }
 		}
 
 		/* Case 3: add "time" automatically? */
-		else if (!cmd->errcode && 
-			 add_time_ok(field, &lnum, pZ, pdinfo, cmd)) {
+		else if (!cmd->errcode && add_time_ok(s, &k, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
-		    pos += strlen(field) + 1;
+		    pos += strlen(s) + 1;
 		    continue; 
 		} 
 
 #if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 		/* wildcard expansion? */
-		else if (!cmd->errcode && 
-			 wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
+		else if (!cmd->errcode && wildcard_expand_ok(s, &k, pdinfo, cmd)) {
 		    /* handled, get on with it */
-		    pos += strlen(field) + 1;
+		    pos += strlen(s) + 1;
 		    continue; 			
 		}
 #endif
 		/* try abbreviating the varname? */
 		else if (!cmd->errcode) {
 		    cmd->errcode = 1; /* presume guilt at this stage */
-		    if (strlen(field) > 8) {
+		    if (strlen(s) > 8) {
 			char test[9];
 
 			*test = 0;
-			strncat(test, field, 8);
+			strncat(test, s, 8);
 			if ((v = varindex(pdinfo, test)) <= pdinfo->v - 1) {
-			    cmd->list[lnum++] = v;
+			    cmd->list[k++] = v;
 			    cmd->errcode = 0;
 			} 
 		    } 
 		    if (cmd->errcode) {
 			sprintf(gretl_errmsg, 
-				_("'%s' is not the name of a variable"), field);
+				_("'%s' is not the name of a variable"), s);
 		    }
 		}
 
@@ -1939,35 +1935,35 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    goto bailout;
 		}
 	    }
-	} /* end if isalpha(*field) */
+	} /* end if isalpha(*s) */
 
 #if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
-	else if (*field == '*') {
-	    if (wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
+	else if (*s == '*') {
+	    if (wildcard_expand_ok(s, &k, pdinfo, cmd)) {
 		/* handled, get on with it */
-		pos += strlen(field) + 1;
+		pos += strlen(s) + 1;
 		continue; 			
 	    }
 	}
 #endif
 
-	else if (isdigit(*field)) {
+	else if (isdigit(*s)) {
 	    /* could be the ID number of a variable */
-	    v = atoi(field);
+	    v = atoi(s);
 	    if (!ints_ok && !poly && v > pdinfo->v - 1) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
 		goto bailout;
 	    }
-	    cmd->list[lnum++] = v;
+	    cmd->list[k++] = v;
 	}
 
-	else if (*field == ';') {
+	else if (*s == ';') {
 	    /* could be the separator between two sub-lists */
 	    if (USES_LISTSEP(cmd->ci)) {
-		pos += strlen(field) + 1;
-		cmd->list[lnum++] = LISTSEP;
+		pos += strlen(s) + 1;
+		cmd->list[k++] = LISTSEP;
 		sepcount--;
 		maybe_switch_off_ints(cmd, sepcount, &ints_ok);
 		if (cmd->ci == MPOLS) { 	 
@@ -1975,8 +1971,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		}
 		continue;
 	    } else if (cmd->ci == VAR || cmd->ci == VECM) {
-		pos += strlen(field) + 1;
-		cmd->list[lnum++] = LISTSEP;
+		pos += strlen(s) + 1;
+		cmd->list[k++] = LISTSEP;
 		continue;
 	    } else {
 		cmd->list[0] -= 1;
@@ -1984,23 +1980,23 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	}
 
-	if (!isalpha((unsigned char) *field) && !isdigit((unsigned char) *field)) {
+	if (!isalpha((unsigned char) *s) && !isdigit((unsigned char) *s)) {
 	    /* FIXME: are negative numerical values ever acceptable here? */
 	    cmd->errcode = 1;
-	    sprintf(gretl_errmsg, _("field '%s' in command is invalid"), field);
+	    sprintf(gretl_errmsg, _("field '%s' in command is invalid"), s);
 	    goto bailout;
 	}
 
 	/* check cmd->list for scalars */
 	if (!ints_ok && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
-	    if (var_is_scalar(pdinfo, cmd->list[lnum-1])) {
+	    if (var_is_scalar(pdinfo, cmd->list[k-1])) {
 		cmd->errcode = 1;
-		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);
+		sprintf(gretl_errmsg, _("variable %s is a scalar"), s);
 		goto bailout;
 	    }
 	}
 
-	pos += strlen(field) + 1;
+	pos += strlen(s) + 1;
     } /* end of loop through fields in command line */
 
     /* By now we're looking at a command that takes a list,
@@ -2038,12 +2034,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
 
 	if (dupv >= 0) {
-	    printlist(cmd->list, "cmd->list");
+	    printlist(cmd->list, "cmd->list with duplicate(s)");
 	    cmd->errcode = E_UNSPEC;
 	    sprintf(gretl_errmsg, 
 		    _("var number %d duplicated in the command list."),
 		    dupv);
-	}
+	} 
     }
 
  bailout:
@@ -2063,7 +2059,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->context = 0;
     }
 
-    free(remainder);
+    free(rem);
 
     return cmd->errcode;
 }

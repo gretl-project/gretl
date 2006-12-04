@@ -52,10 +52,9 @@ static const int *
 get_lag_list_by_varnum (int v, const Laginfo *linfo)
 {
     int *list = NULL;
+    int i;
 
     if (linfo != NULL && linfo->reflist != NULL) {
-	int i;
-	
 	for (i=1; i<=linfo->reflist[0]; i++) {
 	    if (linfo->reflist[i] == v) {
 		list = linfo->lag_lists[i-1];
@@ -84,7 +83,7 @@ static int add_lagv_to_genlist (int lv, Laginfo *linfo)
 	genlist[n - 1] = lv;
 	genlist[0] = n - 1;
     } else {
-	err = 1;
+	err = E_ALLOC;
     }
 
     return err;
@@ -99,7 +98,7 @@ static int add_lag_to_laglist (int i, int lag, Laginfo *linfo)
 	if (linfo->lag_lists[i] != NULL) {
 	    linfo->lag_lists[i][1] = lag;
 	} else {
-	    err = 1;
+	    err = E_ALLOC;
 	}
     } else {
 	int n = linfo->lag_lists[i][0] + 2;
@@ -111,7 +110,7 @@ static int add_lag_to_laglist (int i, int lag, Laginfo *linfo)
 	    laglist[n - 1] = lag;
 	    laglist[0] = n - 1;
 	} else {
-	    err = 1;
+	    err = E_ALLOC;
 	}
     }
 
@@ -132,7 +131,7 @@ static int laginfo_add_lags_list (int n, Laginfo *linfo)
 	linfo->lag_lists = llists;
 	linfo->lag_lists[n - 1] = NULL;
     } else {
-	err = 1;
+	err = E_ALLOC;
     }
 
     return err;
@@ -161,7 +160,7 @@ static int laginfo_expand_reflist (int n, int v, Laginfo *linfo)
 	linfo->reflist[0] = l0;
 	linfo->reflist[l0] = v;
     } else {
-	err = 1;
+	err = E_ALLOC;
     }
 
     return err;
@@ -179,11 +178,10 @@ static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
 
     if (cmd->linfo == NULL) {
 	cmd->linfo = list_lag_info_new();
+	if (cmd->linfo == NULL) {
+	    return E_ALLOC;
+	}
 	add_to_reflist = 1;
-    }
-
-    if (cmd->linfo == NULL) {
-	return 1;
     }
 
     if (!add_to_reflist) {
@@ -272,7 +270,7 @@ static int print_var_lags (const int *laglist, PRN *prn)
     char tmp[32];
     int lag, lsign;
     int lmax = laglist[0];
-    int ret = 0;
+    int i, ret = 0;
     
     if (lmax == 1) {
 	lsign = laglist[1];
@@ -291,8 +289,6 @@ static int print_var_lags (const int *laglist, PRN *prn)
 	sprintf(tmp, "%s%d)", lag_sign_str(lsign), lag);
 	ret += pputs(prn, tmp);	
     } else {
-	int i;
-
 	pputc(prn, '(');
 	ret++;
 	for (i=1; i<=lmax; i++) {
