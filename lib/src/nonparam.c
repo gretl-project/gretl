@@ -135,14 +135,13 @@ static int spearman_rho (const double *x, const double *y, int n,
 
 	for (j=0; j<n; j++) {
 	    /* scan raw x for matches */
-	    if (na(x[j]) || na(y[j])) {
-		continue;
+	    if (!na(x[j]) && !na(y[j])) {
+		if (x[j] == sx[i]) {
+		    rx[k] = r;
+		    cases++;
+		}
+		k++;
 	    }
-	    if (x[j] == sx[i]) {
-		rx[k] = r;
-		cases++;
-	    }
-	    k++;
 	}
 	if (cases > 1) {
 	    double avg = (r + r + cases - 1.0) / 2.0;
@@ -167,14 +166,13 @@ static int spearman_rho (const double *x, const double *y, int n,
 
 	for (j=0; j<n; j++) {
 	    /* scan raw y for matches */
-	    if (na(x[j]) || na(y[j])) {
-		continue;
+	    if (!na(x[j]) && !na(y[j])) {
+		if (y[j] == sy[i]) {
+		    ry[k] = r;
+		    cases++;
+		}
+		k++;
 	    }
-	    if (y[j] == sy[i]) {
-		ry[k] = r;
-		cases++;
-	    }
-	    k++;
 	}
 	if (cases > 1) {
 	    double avg = (r + r + cases - 1.0) / 2.0;
