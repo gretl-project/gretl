@@ -336,15 +336,10 @@ void set_fixed_font (void)
    (which, I'm sorry to say, seems often to be the case on Linux)
 */
 
-static void maybe_set_gd_fontpath (void)
+static void set_gd_fontpath (void)
 {
     char *gdpath = NULL;
     char *newpath = NULL;
-
-    if (gnuplot_has_ttf()) {
-	/* fonts already found, don't mess with this */
-	return;
-    }
 
     gdpath = getenv("GDFONTPATH");
     if (gdpath != NULL) {
@@ -795,7 +790,7 @@ void set_rcfile (void)
     strcpy(rcfile, tmp);
     strcat(rcfile, "/.gretl2rc");
     read_rc(); 
-    maybe_set_gd_fontpath();
+    set_gd_fontpath();
 }
 #endif
 
@@ -803,7 +798,7 @@ void set_rcfile (void)
 void set_rcfile (void)
 {
     read_rc();
-    maybe_set_gd_fontpath();
+    set_gd_fontpath();
 }
 #endif
 
