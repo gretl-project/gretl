@@ -2227,11 +2227,13 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* std error is well-defined, but is it positive? */
     if (pmod->sderr[i] > 0.) {
 	t = pmod->coeff[i] / pmod->sderr[i];
-	if (fabs(t) >= 1000.0) { /* || t < .001 ? */
+	if (fabs(t) >= 1000) { /* || t < .001 ? */
 	    char numstr[9];
 
 	    sprintf(numstr, "%#8.2G", t);
 	    pprintf(prn, " %8s", numstr);
+	} else if (t <= -100) {
+	    pprintf(prn, " %7.2f", t);
 	} else {
 	    pprintf(prn, " %7.3f", t);
 	}

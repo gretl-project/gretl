@@ -816,8 +816,6 @@ static int auto_transform_ok (const char *s, int *lpos,
 	    strcpy(fword, "logs");
 	}
 
-	fprintf(stderr, "fword = '%s', s = '%s'\n", fword, s);
-
 	trans = gretl_command_number(fword);
 	if (!RETURNS_LIST(trans)) {
 	    trans = 0;
