@@ -89,12 +89,14 @@ static void free_eh_derivs (garch_container *DH)
 
 static int allocate_eh_derivs (garch_container *DH)
 {
+    int k = DH->k;
+    int n = DH->nobs;
     int err = 0;
 
-    DH->score_e = doubles_array_new(DH->k, DH->nobs);
-    DH->score_h = doubles_array_new(DH->k, DH->nobs);
-    DH->G = doubles_array_new(DH->k, DH->nobs);
-    DH->blockglue = doubles_array_new(2, DH->nobs);
+    DH->score_e = doubles_array_new(k, n);
+    DH->score_h = doubles_array_new(k, n);
+    DH->G = doubles_array_new(k, n);
+    DH->blockglue = doubles_array_new(2, n);
 
     if (DH->score_e == NULL ||
 	DH->score_h == NULL ||
@@ -102,7 +104,7 @@ static int allocate_eh_derivs (garch_container *DH)
 	DH->blockglue == NULL) {
 	free_eh_derivs(DH);
 	err = E_ALLOC;
-    }
+    } 
 
     return err;
 }
@@ -607,7 +609,7 @@ static int garch_opg (garch_container *DH, gretl_matrix *GG)
     for (i=0; i<DH->k; i++) {
 	for (j=0; j<=i; j++) {
 	    gretl_matrix_set(GG, i, j, tmp_GG[i][j]);
-	    if(j<i) {
+	    if (j < i) {
 		gretl_matrix_set(GG, j, i, tmp_GG[i][j]);
 	    }
 	}
@@ -712,14 +714,12 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
 	err = gretl_invert_symmetric_matrix(V);
 	break;
     case VCV_BW:
-	err = gretl_matrix_multiply(iinfo, GG, V);
-	err = gretl_matrix_multiply(V, iinfo, GG);
-	gretl_matrix_copy_values(V, GG);
+	gretl_matrix_qform(iinfo, GRETL_MOD_NONE, GG,
+			   V, GRETL_MOD_NONE);
 	break;
     case VCV_QML:
-	err = gretl_matrix_multiply(invhess, GG, V);
-	err = gretl_matrix_multiply(V, invhess, GG);
-	gretl_matrix_copy_values(V, GG);
+	gretl_matrix_qform(invhess, GRETL_MOD_NONE, GG,
+			   V, GRETL_MOD_NONE);
 	break;
     default: 
 	break;

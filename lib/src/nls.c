@@ -933,8 +933,9 @@ static int QML_vcv (nls_spec *spec, gretl_matrix *V)
     }
 	    
     /* form sandwich: V <- H^{-1} V H^{-1} */
-    gretl_matrix_multiply(Hinv, V, tmp);
-    gretl_matrix_multiply(tmp, Hinv, V);
+    gretl_matrix_copy_values(tmp, V);
+    gretl_matrix_qform(Hinv, GRETL_MOD_NONE, tmp,
+		       V, GRETL_MOD_NONE);
 
     gretl_matrix_free(Hinv);
     gretl_matrix_free(tmp);
@@ -2543,22 +2544,6 @@ void nls_spec_destroy (nls_spec *spec)
     free(spec);
 }
 
-static double **triangular_array_new (int n)
-{
-    double **m;
-    int i;
-
-    m = malloc(n * sizeof *m);
-
-    if (m != NULL) {
-	for (i=0; i<n; i++) {
-	    m[i] = malloc((i + 1) * sizeof **m);
-	}
-    }
-
-    return m;
-}
-
 static void free_triangular_array (double **m, int n)
 {
     int i;
@@ -2569,6 +2554,30 @@ static void free_triangular_array (double **m, int n)
 	}
 	free(m);
     }
+}
+
+static double **triangular_array_new (int n)
+{
+    double **m;
+    int i;
+
+    m = malloc(n * sizeof *m);
+
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    m[i] = NULL;
+	}
+	for (i=0; i<n; i++) {
+	    m[i] = malloc((i + 1) * sizeof **m);
+	    if (m[i] == NULL) {
+		free_triangular_array(m, n);
+		m = NULL;
+		break;
+	    }
+	}
+    }
+
+    return m;
 }
 
 #define BFGS_DEBUG 0

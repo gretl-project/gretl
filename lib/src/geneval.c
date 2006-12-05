@@ -2157,34 +2157,110 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     return ret;
 }
 
+static int bool_const_vec (double *x, int n, int *err)
+{
+    int c0 = (x[0] != 0.0); 
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (na(x[i])) {
+	    *err = E_MISSDATA;
+	    return 0;
+	}
+	if ((c0 && x[i] == 0) || (!c0 && x[i] == 0)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static NODE *bool_eval_vec (double *c, NODE *t, parser *p)
+{
+    NODE *l, *r, *ret;
+    double *x1 = NULL, *x2 = NULL;
+    double x1s, x2s;
+    double x1i, x2i;
+    int i;
+
+    l = eval(t->v.b3.m, p);
+
+    if (l->t == VEC) {
+	x1 = l->v.xvec;
+    } else if (l->t == NUM) {
+	x1s = l->v.xval;
+    } else {
+	p->err = E_TYPES;
+	free_tree(l, "Eval_query"); /* ?? */
+	return NULL;
+    }
+
+    r = eval(t->v.b3.r, p);
+
+    if (r->t == VEC) {
+	x2 = r->v.xvec;
+    } else if (r->t == NUM) {
+	x2s = r->v.xval;
+    } else {
+	p->err = E_TYPES;
+	free_tree(r, "Eval_query"); /* ?? */
+	return NULL;
+    }
+
+    ret = aux_vec_node(p, p->dinfo->n);
+
+    for (i=0; i<p->dinfo->n && !p->err; i++) {
+	x1i = (x1 != NULL)? x1[i] : x1s;
+	x2i = (x2 != NULL)? x2[i] : x2s;
+	ret->v.xvec[i] = c[i] ? x1[i] : x2[i];
+    }
+
+    return ret;
+}
+
+/* evaluate ternary expression: FIXME this is just experimental.
+   It definitely leaks memory at present (2006/12/05)
+*/
+
 static NODE *eval_query (NODE *t, parser *p)
 {
-    int x = 0;
+    NODE *e = t->v.b3.l;
+    NODE *ret = NULL; 
+    double *vec = NULL;
+    double x = NADBL;
+    int free_e = 0;
 
-    /* FIXME this is just experimental */
-
-    if (t->v.b3.l->t != NUM) {
-	NODE *e = eval(t->v.b3.l, p);
-
-	if (e->t != NUM) {
-	    p->err = E_TYPES;
-	} else {
-	    x = e->v.xval;
+    if (e->t != NUM && e->t != VEC) {
+	e = eval(t->v.b3.l, p);
+	if (p->err) {
+	    return NULL;
 	}
-	/* free_tree(e, "Eval_query"); */
+	free_e = 1;
+    }
+
+    if (e->t != NUM && e->t != VEC) {
+	p->err = E_TYPES;
+    } else if (e->t == NUM) {
+	x = e->v.xval;
     } else {
-	x = t->v.b3.l->v.xval;
+	vec = e->v.xvec;
     }
 
-    if (!p->err) {
-	if (x) {
-	    return eval(t->v.b3.m, p);
-	} else {
-	    return eval(t->v.b3.r, p);
+    if (!p->err && vec != NULL) {
+	int c = bool_const_vec(vec, p->dinfo->n, &p->err);
+
+	if (!p->err && c) {
+	    x = vec[0];
+	} else if (!p->err) {
+	    ret = bool_eval_vec(vec, t, p);
 	}
     }
 
-    return NULL;
+    if (!p->err && !na(x)) {
+	ret = (x != 0.0)? eval(t->v.b3.m, p) : eval(t->v.b3.r, p);
+    }
+
+    return ret;
 }
 
 #define dvar_scalar(i) (i <= R_TEST_PVAL)
