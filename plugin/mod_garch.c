@@ -761,8 +761,8 @@ static void test_score (garch_container *DH, double *theta)
     double *testa, *testn;
     int i, testret;
 
-    testa = malloc(npar * sizeof *testa);
-    testn = malloc(npar * sizeof *testn);
+    testa = malloc(DH->k * sizeof *testa);
+    testn = malloc(DH->k * sizeof *testn);
 
     testret = anal_score(theta, testa, DH->k, loglik, DH);
     testret = BFGS_numeric_gradient(theta, testn, DH->k, loglik, DH);
@@ -825,8 +825,8 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     int i, j, err = 0;
 
     /* BFGS apparatus */
-    int maxit = 1000;
-    double reltol = 1.0e-12;
+    int maxit = 10000;
+    double reltol = 1.0e-13;
     int fncount = 0;
     int grcount = 0;
 

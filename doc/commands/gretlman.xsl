@@ -2,6 +2,9 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+  <!-- Stylesheet for intermediate XML output, for further 
+       transformation to TeX -->
+
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="standalone">true</xsl:param>
 <xsl:param name="lang" select="'en'"/>
@@ -206,19 +209,54 @@
   <xsl:call-template name="nl"/>
 </xsl:template>
 
-<xsl:template match="demo">
+<xsl:template match="demos">
   <row>
-    <entry/>
+    <xsl:choose>
+      <xsl:when test="position() = 1">
+        <xsl:choose>
+          <xsl:when test="count(../example) > 1">
+            <entry>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'examples'"/>
+                </xsl:call-template>
+              </para>
+            </entry>
+          </xsl:when>
+          <xsl:otherwise>
+            <entry>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'example'"/>
+                </xsl:call-template>
+              </para>
+            </entry>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>
+        <entry/>
+      </xsl:otherwise>
+    </xsl:choose>
     <entry>
       <para>
-        <xsl:call-template name="gettext">
-          <xsl:with-param name="key" select="'Seealso'"/>
-        </xsl:call-template>
-        <literal><xsl:apply-templates/></literal>
+        <xsl:if test="count(../example) > 1">
+          <xsl:call-template name="gettext">
+            <xsl:with-param name="key" select="'Seealso'"/>
+          </xsl:call-template>
+        </xsl:if>
+        <xsl:apply-templates/>
       </para>
     </entry>
   </row>
   <xsl:call-template name="nl"/>
+</xsl:template>
+
+<xsl:template match="demo">
+  <xsl:if test="position() > 1">
+    <xsl:text>, </xsl:text>
+  </xsl:if>
+  <literal><xsl:apply-templates/></literal>
 </xsl:template>
 
 <xsl:template match="flag">

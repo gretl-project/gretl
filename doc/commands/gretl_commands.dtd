@@ -43,7 +43,8 @@
 <!ELEMENT arguments    (argument | argblock)+>
 <!ELEMENT argblock     (argument)+>
 <!ELEMENT options      (option)+>
-<!ELEMENT examples     (example+, demo?)>
+<!ELEMENT examples     (example*, demos?)>
+<!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
 <!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
@@ -63,11 +64,11 @@
 <!ELEMENT altform (#PCDATA | repl | lit)*>
 
 <!ELEMENT option   (flag, effect)>
+
 <!ELEMENT example  (#PCDATA)>
 <!ELEMENT demo     (#PCDATA)>
-
-<!ELEMENT flag    (#PCDATA)>
-<!ELEMENT effect  (#PCDATA)>
+<!ELEMENT flag     (#PCDATA)>
+<!ELEMENT effect   (#PCDATA)>
 
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>
@@ -85,6 +86,9 @@
 >
 
 <!ELEMENT code (#PCDATA)>
+<!ATTLIST code
+   context (cli | gui | both) "both"
+>
 
 <!ELEMENT ilist (li)+>
 <!ATTLIST ilist 

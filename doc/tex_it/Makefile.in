@@ -22,6 +22,7 @@ TEXSRC = cli.tex \
 	genr.tex \
 	biblio.tex \
 	mle.tex \
+	probit.tex \
 	nls.tex \
 	timeseries.tex \
 	functions.tex \

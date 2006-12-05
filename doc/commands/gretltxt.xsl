@@ -2,6 +2,8 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+  <!-- Stylesheet for CLI plain text "online" help -->
+
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="xrefs">false</xsl:param>
 <xsl:param name="lang" select="'en'"/>
@@ -163,11 +165,21 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="demos">
+  <xsl:if test="position() > 1">
+    <xsl:text>&#xa;            </xsl:text>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'Seealso'"/>
+    </xsl:call-template>
+  </xsl:if>
+  <xsl:apply-templates/>
+  <xsl:call-template name="nl"/>
+</xsl:template>
+
 <xsl:template match="demo">
-  <xsl:text>&#xa;            </xsl:text>
-  <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="'Seealso'"/>
-  </xsl:call-template>
+  <xsl:if test="position() > 1">
+    <xsl:text>, </xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
 </xsl:template>
 

@@ -207,7 +207,9 @@
 	<example>adf 0 y</example>
         <example>adf 2 y --nc --c --ct</example>
         <example>adf 12 y --c --test-down</example>
-	<demo>jgm-1996.inp</demo>
+	<demos>
+	  <demo>jgm-1996.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -412,7 +414,9 @@
         <example>arbond 2 ; y Dx1 Dx2</example>
         <example>arbond 2 5 ; y Dx1 Dx2 ; Dx1</example>
 	<example>arbond 1 ; y Dx1 Dx2 ; Dx1 GMM(x2,2,3)</example>
-	<demo>arbond91.inp</demo>
+	<demos>
+	  <demo>arbond91.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -801,7 +805,9 @@
       </arguments>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
-	<demo>restrict.inp</demo>
+	<demos>
+	  <demo>restrict.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -7089,7 +7095,10 @@
         <example>system method=sur</example>
 	<example>system method=sur save=resids</example>
 	<example>system method=3sls save=resids,fitted</example>
-	<demo>klein.inp</demo>
+	<demos>
+	  <demo>klein.inp</demo>
+	  <demo>kmenta.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -7619,7 +7628,10 @@
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
         <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
-	<demo>denmark.inp</demo>
+	<demos>
+	  <demo>denmark.inp</demo>
+	  <demo>hamilton.inp</demo>
+	</demos>
       </examples>
     </usage>
 

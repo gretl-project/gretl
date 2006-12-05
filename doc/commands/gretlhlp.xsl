@@ -2,6 +2,8 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+  <!-- Stylesheet for formatted GUI "online" help -->
+
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
@@ -198,15 +200,29 @@
   <xsl:text>"&gt;</xsl:text>  
 </xsl:template>
 
+<xsl:template match="demos">
+  <xsl:choose>
+    <xsl:when test="position() > 1">
+      <xsl:text>&#xa;&#x9;&#x9;</xsl:text>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'Seealso'"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&#x9;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:apply-templates/>
+  <xsl:call-template name="nl"/>
+</xsl:template>
+
 <xsl:template match="demo">
-  <xsl:text>&#xa;&#x9;</xsl:text>
-  <xsl:text>&#x9;</xsl:text>
-  <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="'Seealso'"/>
-  </xsl:call-template>
+  <xsl:if test="position() > 1">
+    <xsl:text>, </xsl:text>
+  </xsl:if>
   <xsl:text>&lt;@inp="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>"&gt;</xsl:text>  
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="altforms">

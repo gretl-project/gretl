@@ -812,7 +812,11 @@ static int auto_transform_ok (const char *s, int *lpos,
 	if (!strcmp(fword, "cross")) {
 	    strcpy(fword, "square");
 	    opt = OPT_O;
+	} else if (!strcmp(fword, "log")) {
+	    strcpy(fword, "logs");
 	}
+
+	fprintf(stderr, "fword = '%s', s = '%s'\n", fword, s);
 
 	trans = gretl_command_number(fword);
 	if (!RETURNS_LIST(trans)) {

@@ -185,8 +185,8 @@ static int make_garch_dataset (const int *list, double **Z,
 			       double **py, double ***pX)
 {
     double *y = NULL, **X = NULL;
-    int i, t, k = 5;
     int vx, vy = list[4];
+    int i, k, t;
 
     /* If pad > 0 we have to create a newly allocated, padded
        dataset.  Otherwise we can use a virtual dataset, made
@@ -223,6 +223,7 @@ static int make_garch_dataset (const int *list, double **Z,
 		}
 	    } else {
 		y[t] = Z[vy][t-pad];
+		k = 5;
 		for (i=0; i<nx; i++) {
 		    vx = list[k++]; 
 		    if (vx == 0) {
@@ -235,6 +236,7 @@ static int make_garch_dataset (const int *list, double **Z,
     } else {
 	/* build virtual dataset */
 	*py = Z[vy];
+	k = 5;
 	for (i=0; i<nx; i++) {
 	    vx = list[k++]; 
 	    if (vx == 0) {

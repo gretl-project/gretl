@@ -585,9 +585,11 @@ void destroy_genr (parser *p)
     fprintf(stderr, "\n*** destroy_genr: p = %p\n", (void *) p);
 #endif
 
-    p->flags = 0;
-    gen_cleanup(p);
-    free(p);
+    if (p != NULL) {
+	p->flags = 0;
+	gen_cleanup(p);
+	free(p);
+    }
 }
 
 int genr_get_varnum (const parser *p)
