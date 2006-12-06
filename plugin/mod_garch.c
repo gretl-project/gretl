@@ -227,12 +227,12 @@ static int garch_etht (const double *par, void *ptr)
 
     tmp = 0.0;
     for (t = t1-maxlag; t <= t2; t++) {
-	if (t<t1) {
+	if (t < t1) {
 	    et = 0.0;
 	} else {
 	    et = DH->y[t] - par[0];
 	    if (DH->X != NULL) {
-		for(i=0; i<ncm; i++) {
+		for (i=0; i<ncm; i++) {
 		    et -= DH->X[i][t]*par[i+1];
 		}
 	    }
@@ -369,7 +369,8 @@ static int garch_etht (const double *par, void *ptr)
 		k = ncm+1;
 		dhdq[i][t] = 0.0;
 		for (j=1; j<=p; j++) {
-		    if (t - p < t1 && DH->init == INIT_VAR_RESID) { // add INIT_THEO here
+		    if (t - p < t1 && DH->init == INIT_VAR_RESID) { 
+			// add INIT_THEO here
 			dhdq[i][t] += par[k+j] * dhdq[i][t1-1];
 		    } else {	
 			dhdq[i][t] += 2.0 * par[k+j] * DH->e[t-j] * dedq[i][t-j];

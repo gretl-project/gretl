@@ -501,13 +501,13 @@ make_garch_vcv (int t1, int t2,
    res2:  vector of 0's on input, squared resids on output (not needed)
    res:   vector of 0's on input, resids on output
    h:     null pointer on input, conditional variances on output
-   y:     on input, vector with dep. var., not needed on output
+   y:     on input, vector with dep. var.; not needed on output
    amax:  vector; element 0 holds the garch intercept; 1 and 2 the
           arch & garch orders; from 3 onwards, the arch & garch 
           parameters
    b:     0 on input, holds vector of coefficient for the conditional
           mean on output
-   scale: double used to scale dep. var.
+   scale: double used to scale dependent variable
    iters: int, 0 on input, holds number of iterations on output
    prn:   print handle for info on iterations and other diagnostic output
 
@@ -523,7 +523,7 @@ int garch_estimate (int t1, int t2, int nobs,
     int count, conv = 0;
     int i, q, p, nparam;
 
-    double zt[6];   /* max value of (1 + q + p) */
+    double zt[6];   /* 6 == max value of (1 + q + p) */
 
     double pappo, tol1, tol2;
     double sumgra; 

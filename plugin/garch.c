@@ -274,6 +274,75 @@ static int get_vopt (int robust)
     return vopt;
 }
 
+static void garch_print_init (const double *coeff, int k,
+			      const double *a, int p, int q,
+			      int manual, PRN *prn)
+{
+    int i;
+
+    pputc(prn, '\n');
+
+    if (manual) {
+	pputs(prn, "Manual initialization of parameters");
+    } else {
+	pputs(prn, "Automatic initialization of parameters");
+    }
+
+    pputs(prn, "\n\n Regression coefficients:\n");
+
+    for (i=0; i<k; i++) {
+	pprintf(prn, "  theta[%d] = %g\n", i, coeff[i]);
+    }
+
+    pputs(prn, "\n Variance parameters:\n");
+
+    pprintf(prn, "  alpha[0] = %g\n", a[0]);
+    for (i=0; i<p; i++) {
+	pprintf(prn, "  alpha[%d] = %g\n", i+1, a[i+3]);
+    }
+    for (i=0; i<q; i++) {
+	pprintf(prn, "   beta[%d] = %g\n", i, a[i+3+p]);
+    }
+
+    pputc(prn, '\n');
+}
+
+/* pick up any manually set initial values (if these
+   have been set via "set initvals") */
+
+static int garch_manual_init (double *a, int p, int q, 
+			      double *coeff, double *b,
+			      int k, PRN *prn)
+{
+    const gretl_matrix *m = get_init_vals();
+    int n = p + q + 1 + k;
+    int i, j;
+
+    if (gretl_vector_get_length(m) != n) {
+	fprintf(stderr, "number of initvals = %d, but we want %d "
+		"values for GARCH\n", gretl_vector_get_length(m),
+		n);
+	return 0;
+    }
+
+    /* coefficients on regressors */
+    for (i=0; i<k; i++) {
+	coeff[i] = m->val[i];
+	b[i] = 0.0;
+    }
+
+
+    /* variance parameters */
+    a[0] = m->val[i++];
+    for (j=0; j<p+q; j++) {
+	a[j+3] = m->val[i++];
+    }
+
+    garch_print_init(coeff, k, a, p, q, 1, prn);
+
+    return 1;
+}
+
 int do_fcp (const int *list, double **Z, double scale,
 	    const DATAINFO *pdinfo, MODEL *pmod,
 	    PRN *prn, gretlopt opt)
@@ -346,20 +415,27 @@ int do_fcp (const int *list, double **Z, double scale,
 	goto bailout;
     }
 
-    /* initial coefficients from OLS */
-    for (i=0; i<ncoeff; i++) {
-	coeff[i] = pmod->coeff[i];
-	b[i] = 0.0;
-    }
-
-    /* for compatibility with FCP... */
+    /* a bit odd, but for compatibility with FCP... */
     amax[1] = q;
     amax[2] = p; 
 
-    /* initialize variance parameters */
-    amax[0] = vparm_init[0];
-    for (i=0; i<p+q; i++) {
-	amax[i+3] = vparm_init[i+1];
+    if (!garch_manual_init(amax, p, q, coeff, b, ncoeff, prn)) {
+
+	/* initial coefficients from OLS */
+	for (i=0; i<ncoeff; i++) {
+	    coeff[i] = pmod->coeff[i];
+	    b[i] = 0.0;
+	}
+
+	/* initialize variance parameters */
+	amax[0] = vparm_init[0];
+	for (i=0; i<p+q; i++) {
+	    amax[i+3] = vparm_init[i+1];
+	}
+
+	if (opt & OPT_V) {
+	    garch_print_init(coeff, ncoeff, amax, p, q, 0, prn);
+	}
     }
 
 #ifdef USE_FCP
@@ -704,6 +780,11 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	if (model.errcode) {
 	    err = model.errcode;
 	}
+#if 0
+	if (!err) {
+	    printmodel(&model, pdinfo, OPT_NONE, prn);
+	}
+#endif
     }
 
 #if GARCH_AUTOCORR_TEST
@@ -717,13 +798,14 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	yno = ols_list[1];
 	scale = model.sigma;
+	fprintf(stderr, "scale = sigma = %g\n", scale);
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!na((*pZ)[yno][t])) {
 		(*pZ)[yno][t] /= scale;
 	    }
 	}
 	for (t=0; t<model.ncoeff; t++) {
-	    model.coeff[t] *= scale;
+	    model.coeff[t] /= scale;
 	}
 	model.ess /= scale * scale;
 	model.sigma = 1.0;

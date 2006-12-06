@@ -609,8 +609,13 @@ int get_long_digits (void)
 
 const gretl_matrix *get_init_vals (void)
 {
+    const gretl_matrix *m = NULL;
+
     check_for_state();
-    return state->initvals;
+    m = state->initvals;
+    state->initvals = NULL;
+
+    return m;
 }    
 
 int get_hac_lag (int m)
