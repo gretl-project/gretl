@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 1 /* can be > 1 */
+# define EDEBUG 1 /* can be set > 1 */
 #else
 # define EDEBUG 0
 #endif
@@ -70,6 +70,10 @@ static void free_tree (NODE *t, const char *msg)
 	for (i=0; i<t->v.bn.n_nodes; i++) {
 	    free_tree(t->v.bn.n[i], msg);
 	}
+    } else if (b3sym(t->t)) {
+	free_tree(t->v.b3.l, msg);
+	free_tree(t->v.b3.m, msg);
+	free_tree(t->v.b3.r, msg);
     } else if (b2sym(t->t)) {
 	free_tree(t->v.b2.l, msg);
 	free_tree(t->v.b2.r, msg);
@@ -98,7 +102,7 @@ static void free_tree (NODE *t, const char *msg)
 	free(t->v.str);
     }
 
-    if (bnsym(t->t)) {
+    if (bnsym(t->t)) { /* should be up above? */
 	free(t->v.bn.n);
     }
 
@@ -141,6 +145,8 @@ static int is_aux_node (NODE *t, parser *p)
     return 0;
 }
 
+/* new node to hold array of doubles */
+
 static NODE *newvec (int n, int tmp)
 {  
     NODE *b = malloc(sizeof *b);
@@ -170,6 +176,8 @@ static NODE *newvec (int n, int tmp)
     return b;
 }
 
+/* new node to hold array of ints */
+
 static NODE *newivec (int n)
 {  
     NODE *b = malloc(sizeof *b);
@@ -195,6 +203,8 @@ static NODE *newivec (int n)
     return b;
 }
 
+/* new node to hold a gretl_matrix */
+
 static NODE *newmat (int tmp)
 {  
     NODE *b = malloc(sizeof *b);
@@ -211,6 +221,8 @@ static NODE *newmat (int tmp)
 
     return b;
 }
+
+/* new node to hold a matrix specification */
 
 static NODE *newmspec (void)
 {
@@ -260,6 +272,9 @@ static int add_aux_node (parser *p, NODE *t)
     return p->err;
 }
 
+/* get an auxiliary node: if starting from scratch we allocate
+   a new node, otherwise we look up an existing one */
+
 static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
     NODE *ret = NULL;
@@ -284,6 +299,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = NULL;
 	}
     } else {
+	while (p->aux[p->aux_i] == NULL) {
+	    p->aux_i += 1;
+	}
 	ret = p->aux[p->aux_i];
 	p->aux_i += 1;
     }
@@ -460,6 +478,9 @@ static int dist_argc (char *s, int f)
     return 0;
 }
 
+/* return a node containing the evaluated result of a
+   probability distriution function */
+
 static NODE *eval_pdist (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -533,6 +554,8 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
     return ret;
 }
+
+/* look up and return numerical values of symbolic constants */
 
 static NODE *retrieve_const (int idnum, parser *p)
 {
@@ -907,6 +930,9 @@ static void matrix_error (parser *p)
     }
 }
 
+/* functions taking a matrix argument and returning a
+   scalar result */
+
 static NODE *matrix_to_scalar_func (const gretl_matrix *m, 
 				    int f, parser *p)
 {
@@ -1170,6 +1196,8 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 
     return mspec;
 }
+
+/* node holding evaluated result of matrix specification */
 
 static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
@@ -1729,6 +1757,9 @@ apply_matrix_func (const gretl_matrix *m, int f, parser *p)
     return ret;
 }
 
+/* node holding a user-defined variable, either a scalar
+   or a series */
+
 static NODE *uvar_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
@@ -1747,6 +1778,8 @@ static NODE *uvar_node (NODE *t, parser *p)
 
     return ret;
 }
+
+/* node holding a user-defined matrix */
 
 static NODE *umatrix_node (NODE *t, parser *p)
 {
@@ -2157,6 +2190,10 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     return ret;
 }
 
+/* determine whether or not a vector is constant in boolean terms 
+   (all elements zero or all non-zero) 
+*/
+
 static int bool_const_vec (double *x, int n, int *err)
 {
     int c0 = (x[0] != 0.0); 
@@ -2175,9 +2212,15 @@ static int bool_const_vec (double *x, int n, int *err)
     return 1;
 }
 
-static NODE *bool_eval_vec (double *c, NODE *t, parser *p)
+/* given a vector condition in a ternary "?" expression,
+   return the evaluated counterpart -- we evaluate both
+   forks and select based on the value of the condition
+   at each observation
+*/
+
+static NODE *bool_eval_vec (const double *c, NODE *t, parser *p)
 {
-    NODE *l, *r, *ret;
+    NODE *l = NULL, *r = NULL, *ret = NULL;
     double *x1 = NULL, *x2 = NULL;
     double x1s, x2s;
     double x1i, x2i;
@@ -2191,7 +2234,6 @@ static NODE *bool_eval_vec (double *c, NODE *t, parser *p)
 	x1s = l->v.xval;
     } else {
 	p->err = E_TYPES;
-	free_tree(l, "Eval_query"); /* ?? */
 	return NULL;
     }
 
@@ -2203,7 +2245,6 @@ static NODE *bool_eval_vec (double *c, NODE *t, parser *p)
 	x2s = r->v.xval;
     } else {
 	p->err = E_TYPES;
-	free_tree(r, "Eval_query"); /* ?? */
 	return NULL;
     }
 
@@ -2218,26 +2259,32 @@ static NODE *bool_eval_vec (double *c, NODE *t, parser *p)
     return ret;
 }
 
-/* evaluate ternary expression: FIXME this is just experimental.
-   It definitely leaks memory at present (2006/12/05)
+/* evaluate ternary expression: 
+   FIXME this is just experimental.
 */
 
 static NODE *eval_query (NODE *t, parser *p)
 {
     NODE *e = t->v.b3.l;
-    NODE *ret = NULL; 
+    NODE *ret = NULL;
     double *vec = NULL;
     double x = NADBL;
-    int free_e = 0;
 
+#if EDEBUG
+    fprintf(stderr, "eval_query: t=%p, l=%p, m=%p, r=%p\n", 
+	    (void *) t, (void *) t->v.b3.l, (void *) t->v.b3.m,
+	    (void *) t->v.b3.r);
+#endif
+
+    /* check and maybe evaluate the condition */
     if (e->t != NUM && e->t != VEC) {
 	e = eval(t->v.b3.l, p);
 	if (p->err) {
 	    return NULL;
 	}
-	free_e = 1;
     }
 
+    /* fork depending on the type of the condition */
     if (e->t != NUM && e->t != VEC) {
 	p->err = E_TYPES;
     } else if (e->t == NUM) {
@@ -2246,6 +2293,7 @@ static NODE *eval_query (NODE *t, parser *p)
 	vec = e->v.xvec;
     }
 
+    /* is the condition a vector? */
     if (!p->err && vec != NULL) {
 	int c = bool_const_vec(vec, p->dinfo->n, &p->err);
 
@@ -2256,8 +2304,22 @@ static NODE *eval_query (NODE *t, parser *p)
 	}
     }
 
+    /* or is it a scalar? */
     if (!p->err && !na(x)) {
-	ret = (x != 0.0)? eval(t->v.b3.m, p) : eval(t->v.b3.r, p);
+	ret = (x != 0)? eval(t->v.b3.m, p) : eval(t->v.b3.r, p);
+    }
+
+    if (ret == t->v.b3.m || ret == t->v.b3.r) {
+	/* avoid double-freeing of result */
+	if (ret->t == NUM) {
+	    x = ret->v.xval;
+	    ret = aux_scalar_node(p);
+	    ret->v.xval = x;
+	} else {
+	    vec = ret->v.xvec;
+	    ret = aux_vec_node(p, 0);
+	    ret->v.xvec = copyvec(vec, p->dinfo->n);
+	}
     }
 
     return ret;
@@ -3989,6 +4051,7 @@ void gen_cleanup (parser *p)
 	    p->ret = NULL;
 	}
     } else {
+	/* FIXME ternary: 'ret' may be _under_ 'tree' */
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, "p->tree");
 	}
@@ -4109,4 +4172,3 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     return p->err;
 }
-
