@@ -74,6 +74,46 @@ static gboolean weird_font (const gchar *name)
 	return FALSE;
 }
 
+struct ok_font {
+    gchar *name;
+    int mono;
+};
+
+static struct ok_font *ok_fonts;
+static int n_ok;
+
+static int push_ok_font (const char *name, int mono)
+{
+    struct ok_font *tmp;
+
+    tmp = realloc(ok_fonts, (n_ok + 1) * sizeof *ok_fonts);
+    if (tmp == NULL) {
+	return 1;
+    }
+
+    ok_fonts = tmp;
+    ok_fonts[n_ok].name = g_strdup(name);
+    ok_fonts[n_ok].mono = mono;
+
+    n_ok++;
+    
+    return 0;
+}
+
+static int font_is_ok (const char *name, int mono)
+{
+    int i;
+
+    for (i=0; i<n_ok; i++) {
+	if (ok_fonts[i].mono == mono &&
+	    !strcmp(name, ok_fonts[i].name)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* We can test for a font for "latin text" compatibility, via the heuristic
    of seeing if it contains the letters 'i' and 'W' in English.  Given the
    latin text characteristic, we can then see if the font is monospaced
@@ -85,28 +125,25 @@ static gboolean weird_font (const gchar *name)
 static gboolean validate_font_family (const gchar *familyname, 
 				      gint filter,
 				      gint n_families,
-				      gboolean cache_built)
+				      gboolean cache_built,
+				      int *err)
 {
-    static gchar **latin_families;
-    static gboolean *monospaced;
-    static gint n_latin;
-    gboolean is_latin = FALSE, is_mono = FALSE;
-#ifdef SHOW_PROGRESS
     static void *handle = NULL;
     static int show = 1, n_done = 0;
     static int (*show_progress) (long, long, int) = NULL;
-#endif
 
-    if (!cache_built) { /* we haven't set up the cache yet */
+    int latin = 0;
+    int mono = 0;
+
+    if (!cache_built) {
 	gchar *fontname = NULL;
 	PangoFontDescription *desc = NULL;
 
-#ifdef FONT_FILTER_DEBUG
+#if FDEBUG
 	fprintf(dbg, "Checking font family '%s'\n", familyname);
 	fflush(dbg);
 #endif
 
-#ifdef SHOW_PROGRESS
 	if (show && handle == NULL) {
 	    show_progress = gui_get_plugin_function("show_progress", 
 						    &handle);
@@ -120,90 +157,60 @@ static gboolean validate_font_family (const gchar *familyname,
 	    (*show_progress)(1L, n_families, SP_NONE);
 	}
 	n_done++;
-# ifdef FONT_FILTER_DEBUG
-	fprintf(stderr, "n_families=%d, n_done=%d\n", n_families, n_done);
-# endif
+
 	if (show && (n_done == n_families - 1)) {
-# ifdef FONT_FILTER_DEBUG
-	    fprintf(stderr, "doing SP_FINISH\n");
-# endif
 	    (*show_progress)(0L, n_families, SP_FINISH);
 	    show = 0;
 	    close_plugin(handle);
 	    handle = NULL;
 	}
-#endif
 
-	if (weird_font(familyname)) return FALSE;
+	if (weird_font(familyname)) {
+	    return FALSE;
+	}
 
 	fontname = g_strdup_printf("%s 10", familyname);
 	desc = pango_font_description_from_string(fontname);
 
 	if (desc != NULL) {
-	    int memerr = 0;
-
-# ifdef FONT_FILTER_DEBUG
-	    fprintf(dbg, "Got pango_font_description for '%s'\n", fontname);
-	    fprintf(dbg, "Doing font_is_latin_text_font() test\n");
+#if FDEBUG
+	    fprintf(dbg, "Testing %s... ", fontname);
 	    fflush(dbg);
-# endif
-	    if (font_is_latin_text_font(desc)) {
-# ifdef FONT_FILTER_DEBUG
-		fprintf(dbg, "%s passed font_is_latin_text_font() test\n", fontname);
-		fflush(dbg);
-# endif
-		/* extend the cache */
-		if (latin_families == NULL) {
-		    latin_families = malloc(sizeof *latin_families);
-		} else {
-		    latin_families = realloc(latin_families, (n_latin + 1) * 
-					     sizeof *latin_families);
-		}
-		if (latin_families == NULL) memerr = 1;
-
-		if (monospaced == NULL) {
-		    monospaced = malloc(sizeof *monospaced);
-		} else {
-		    monospaced = realloc(monospaced, (n_latin + 1) * sizeof *monospaced);
-		}
-		if (monospaced == NULL) memerr = 1;
-
-		if (!memerr) {
-		    latin_families[n_latin] = g_strdup(familyname);
-		    is_latin = TRUE;
-#ifdef FONT_FILTER_DEBUG
-		    fprintf(dbg, "Doing monospace test for '%s'\n", fontname);
-		    fflush(dbg);
 #endif
-		    if (font_is_latin_monospaced(desc)) {
-			is_mono = monospaced[n_latin] = TRUE;
-		    } else {
-			is_mono = monospaced[n_latin] = FALSE;
-		    }
-		    n_latin++;
-		}
+
+	    latin = font_is_latin_text_font(desc);
+	    if (latin) {
+		mono = font_is_latin_monospaced(desc);
+		*err = push_ok_font(familyname, mono);
 	    }
+
+#if FDEBUG
+	    fprintf(dbg, "Latin %s, monospaced %s\n",
+		    latin? "yes" : "no", mono? "yes" : "no");
+	    fflush(dbg);
+#endif
+
 	    pango_font_description_free(desc);
 	}
 
 	g_free(fontname);
 
-    } else if (filter != GTK_FONT_HACK_NONE) { /* refer to the cached information */
-	gint i;
-
-	for (i=0; i<n_latin; i++) {
-	    if (strcmp(familyname, latin_families[i]) == 0) {
-		is_latin = TRUE;
-		is_mono = monospaced[i];
-		break;
-	    }
-	    if (latin_families[i][0] > familyname[0]) break;
-	}
+    } else if (filter != GTK_FONT_HACK_NONE) { 
+#if FDEBUG
+	fprintf(dbg, "Looking up cached info on '%s'\n", familyname);
+	fflush(dbg);
+#endif
+	return font_is_ok(familyname, filter == GTK_FONT_HACK_LATIN_MONO);
     }
 
-    if (filter == GTK_FONT_HACK_LATIN) return is_latin;
-    else if (filter == GTK_FONT_HACK_LATIN_MONO) return (is_latin && is_mono);
-    else if (filter == GTK_FONT_HACK_NONE) return TRUE;
+    if (filter == GTK_FONT_HACK_LATIN) {
+	return latin;
+    } else if (filter == GTK_FONT_HACK_LATIN_MONO) {
+	return mono;
+    } else if (filter == GTK_FONT_HACK_NONE) {
+	return TRUE;
+    }
+
     return FALSE; /* not reachable */
 }
 
