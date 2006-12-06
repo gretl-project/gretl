@@ -692,7 +692,7 @@ static int *get_garch_list (const int *list, const double **Z,
     return glist;
 }
 
-/* make regresson list for initial OLS */
+/* make regression list for initial OLS */
 
 static int *make_ols_list (const int *list)
 {

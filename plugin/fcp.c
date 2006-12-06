@@ -87,41 +87,6 @@ garch_full_hessian (int t1, int t2,
 		    int q, int p, double *h,
 		    double **dhdp, double *zt);
 
-static void free_2d_array (double **A, int k)
-{
-    int i;
-
-    if (A == NULL) return;
-
-    for (i=0; i<k; i++) {
-	free(A[i]);
-    }
-
-    free(A);
-}
-
-static double **allocate_2d_array (int k, int T)
-{
-    double **A;
-    int i, j;
-
-    A = malloc(k * sizeof *A);
-    if (A == NULL) return NULL;
-
-    for (i=0; i<k; i++) {
-	A[i] = malloc(T * sizeof **A);
-	if (A[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(A[j]);
-	    }
-	    free(A);
-	    return NULL;
-	}
-    }
-
-    return A;
-}
-
 static int vs_allocate (double ***pdhdp, double ***pg, 
 			double **pparam, double **pgrad, 
 			double **pc, double **paux, double **pvch,
@@ -155,12 +120,12 @@ static int vs_allocate (double ***pdhdp, double ***pg,
 	goto bailout;
     }
 
-    D = allocate_2d_array(np, T);
+    D = doubles_array_new(np, T);
     if (D == NULL) {
 	goto bailout;
     }
 
-    G = allocate_2d_array(nrc, T);
+    G = doubles_array_new(nrc, T);
     if (G == NULL) {
 	goto bailout;
     }
@@ -190,8 +155,8 @@ static int vs_allocate (double ***pdhdp, double ***pg,
     free(vch);
     free(parpre);
     free(yhat);
-    free_2d_array(D, np);
-    free_2d_array(G, nrc);
+    doubles_array_free(D, np);
+    doubles_array_free(G, nrc);
 
     return 1;
 }
@@ -201,8 +166,8 @@ static void vs_free (double **dhdp, int np, double **g, int nrc,
 		     double *c, double *aux, double *vcv,
 		     double *parpre, double *yhat)
 {
-    free_2d_array(dhdp, np);
-    free_2d_array(g, nrc);
+    doubles_array_free(dhdp, np);
+    doubles_array_free(g, nrc);
     free(param);
     free(grad);
     free(c);
