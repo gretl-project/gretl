@@ -315,13 +315,15 @@ static int garch_manual_init (double *a, int p, int q,
 			      int k, PRN *prn)
 {
     const gretl_matrix *m = get_init_vals();
+    int mlen = gretl_vector_get_length(m);
     int n = p + q + 1 + k;
     int i, j;
 
-    if (gretl_vector_get_length(m) != n) {
-	fprintf(stderr, "number of initvals = %d, but we want %d "
-		"values for GARCH\n", gretl_vector_get_length(m),
-		n);
+    if (mlen != n) {
+	if (mlen > 0) {
+	    fprintf(stderr, "Number of initvals = %d, but we want %d "
+		    "values for GARCH\n", mlen, n);
+	}
 	return 0;
     }
 
