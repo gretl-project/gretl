@@ -2209,7 +2209,7 @@ static int bool_const_vec (double *x, int n, int *err)
     return 1;
 }
 
-/* Given a vector condition in a ternary "?" expression, return the
+/* Given a series condition in a ternary "?" expression, return the
    evaluated counterpart.  We evaluate both forks and select based on
    the value of the condition at each observation.  We accept only
    scalar (NUM) and series (VEC) types on input, and always produce
@@ -2261,8 +2261,8 @@ static NODE *bool_eval_vec (const double *c, NODE *n, parser *p)
 }
 
 /* Handle the case where a ternary "query" expression has produced one
-   of its own child nodes as output: we duplicate the information in a
-   new node so as to avoid double-freeing of the result.
+   of its own child nodes as output: we duplicate the information in an
+   auxiliary node so as to avoid double-freeing of the result.
 */
 
 static NODE *ternary_return_node (NODE *n, parser *p)
@@ -2298,7 +2298,11 @@ static NODE *ternary_return_node (NODE *n, parser *p)
     return ret;
 }
 
-/* evaluate ternary expression: (c)? x1 : x2 */
+/* Evaluate a ternary "query" expression: (C)? X : Y.  The condition C
+   must be a scalar or a series.  The relevant sub-nodes of t are
+   named "l" (left, the condition), "m" and "r" (middle and right
+   respectively, the two alternates).
+*/
 
 static NODE *eval_query (NODE *t, parser *p)
 {
@@ -2321,7 +2325,7 @@ static NODE *eval_query (NODE *t, parser *p)
 	}
     }
 
-    /* fork depending on the type of the condition */
+    /* assess the type of the condition */
     if (e->t != NUM && e->t != VEC) {
 	p->err = E_TYPES;
     } else if (e->t == NUM) {
