@@ -1981,23 +1981,21 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
-    /* evaluate the function arguments, if need be */
+    /* evaluate the function arguments */
+
     for (i=0; i<m && !p->err; i++) {
-	n = r->v.bn.n[i];
+
+	n = eval(r->v.bn.n[i], p);
 	if (!ok_ufunc_sym(n->t)) {
-	    n = eval(n, p);
-	    if (ok_ufunc_sym(n->t)) {
-		free_tree(r->v.bn.n[i], "Ufunc");
-		r->v.bn.n[i] = n;
-	    } else {
-		fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
-		p->err = E_TYPES;
-		break;
-	    }
+	    fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
+	    p->err = E_TYPES;
+	    break;
 	}
+
 #if EDEBUG
 	fprintf(stderr, "eval_ufunc: arg[%d] is of type %d\n", i, n->t);
 #endif
+
 	if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
@@ -2040,6 +2038,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 #endif
 
     /* try sending args to function */
+
     if (!p->err) {
 	double xret = NADBL;
 	double *Xret = NULL;
@@ -2077,13 +2076,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     }
 
     fn_args_free(&args);
-
-    for (i=0; i<m && !p->err; i++) {
-	/* forestall double-freeing: null out any aux nodes */
-	if (is_aux_node(r->v.bn.n[i], p)) {
-	    r->v.bn.n[i] = NULL;
-	}
-    }
 
     return ret;
 }

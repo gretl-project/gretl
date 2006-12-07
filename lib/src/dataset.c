@@ -1395,7 +1395,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 int dataset_add_scalar_as (double x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo)
 {
-    int vnew, err = 0;
+    int v, err = 0;
 
     if (pdinfo->varinfo == NULL) {
 	strcpy(gretl_errmsg, _("Please open a data file first"));
@@ -1405,10 +1405,10 @@ int dataset_add_scalar_as (double x, const char *newname,
     err = dataset_add_scalar(pZ, pdinfo);
 
     if (!err) {
-	vnew = pdinfo->v - 1;
-	(*pZ)[vnew][0] = x;
-	strcpy(pdinfo->varname[vnew], newname);
-	STACK_LEVEL(pdinfo, vnew) += 1;
+	v = pdinfo->v - 1;
+	(*pZ)[v][0] = x;
+	strcpy(pdinfo->varname[v], newname);
+	STACK_LEVEL(pdinfo, v) += 1;
     }
 
     return err;

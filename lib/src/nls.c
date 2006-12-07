@@ -212,7 +212,6 @@ static int nls_auto_genr (int i)
 #endif
     genr_err = execute_genr(pspec->genrs[j], nZ, ndinfo);
 
-
 #if NLS_DEBUG
     if (genr_err) {
 	int v = genr_get_varnum(pspec->genrs[j]);
@@ -883,6 +882,8 @@ static void add_stats_to_model (MODEL *pmod, nls_spec *spec,
     double d, tss;
     int t;
 
+    fprintf(stderr, "add_stats_to_model: Z at %p\n", (void *) Z);
+
     pmod->ess = spec->ess;
     pmod->sigma = sqrt(spec->ess / (pmod->nobs - spec->nparam));
     
@@ -1277,7 +1278,7 @@ print_GNR_dataset (const int *list, double **gZ, DATAINFO *gdinfo)
 */
 
 static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
-		  const double **Z, const DATAINFO *pdinfo, 
+		  double ***pZ, const DATAINFO *pdinfo, 
 		  PRN *prn)
 {
     double **gZ = NULL;
@@ -1366,6 +1367,9 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	}
     }
 
+    /* get_nls_deriv may have shifted Z */
+    *pZ = *nZ;
+
 #if NLS_DEBUG > 1
     print_GNR_dataset(glist, gZ, gdinfo);
 #endif
@@ -1398,7 +1402,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 
     if (gnr.errcode == 0) {
 	gnr.ci = spec->ci;
-	add_stats_to_model(&gnr, spec, Z);
+	add_stats_to_model(&gnr, spec, (const double **) *pZ);
 	if (add_nls_std_errs_to_model(&gnr)) {
 	    gnr.errcode = E_ALLOC;
 	}
@@ -1408,7 +1412,8 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
 	ls_criteria(&gnr);
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
-	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
+	add_fit_resid_to_model(&gnr, spec, uhat, (const double **) *pZ, 
+			       perfect);
 	gnr.list[1] = spec->depvar;
 
 	/* set relevant data on model to be shipped out */
@@ -2395,8 +2400,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		/* Use Gauss-Newton Regression for covariance matrix,
 		   standard errors */
-		nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
-			     pdinfo, prn);
+		nlsmod = GNR(fvec, jac, pspec, pZ, pdinfo, prn);
 	    }
 	} else {
 	    make_mle_model(&nlsmod, pspec, pdinfo);
