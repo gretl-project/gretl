@@ -775,6 +775,8 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 			  VCV, scale, fncount);
     }
 
+    gretl_matrix_free(VCV);
+
  bailout:
 
     if (missvals) {

@@ -2896,6 +2896,10 @@ int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)
 	return 1;
     }
 
+    if (var->jinfo->D != NULL) {
+	gretl_matrix_free(var->jinfo->D);
+    }
+
     var->jinfo->D = D;
 
     return 0;

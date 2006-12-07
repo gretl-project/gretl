@@ -3671,26 +3671,26 @@ static MahalDist *mahal_dist_new (const int *list, int n)
 
 static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
 {
-    int sv = 0;
-    int err;
+    int t, v, err;
 
     err = dataset_add_series(1, pZ, pdinfo);
 
-    if (!err) {
-	int t;
+    if (err) {
+	v = 0;
+    } else {
+	v = pdinfo->v - 1;
 
-	sv = pdinfo->v - 1;
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[sv][t] = NADBL;
+	    (*pZ)[v][t] = NADBL;
 	}
 
-	strcpy(pdinfo->varname[sv], "mdist");
-	make_varname_unique(pdinfo->varname[sv], sv, pdinfo);
+	strcpy(pdinfo->varname[v], "mdist");
+	make_varname_unique(pdinfo->varname[v], v, pdinfo);
 
-	strcpy(VARLABEL(pdinfo, sv), _("Mahalanobis distances"));	
+	strcpy(VARLABEL(pdinfo, v), _("Mahalanobis distances"));	
     }
 		
-    return sv;
+    return v;
 }
 
 static int 
@@ -3742,10 +3742,10 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
     if (!err) {
 	int k = gretl_vector_get_length(means);
-	char obs_string[OBSLEN];
-	int savevar = 0;
-	double m;
-	int i, t;
+	char obs[OBSLEN];
+	int miss, savevar = 0;
+	double m, x, xbar;
+	int i, t, vi;
 
 	if (opt & OPT_S) {
 	    /* save the results to a data series */
@@ -3761,21 +3761,26 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 
+	    miss = 0;
+
 	    /* write vector of deviations from centroid for
 	       observation t */
-	    for (i=0; i<k; i++) {
-		int vi = list[i+1];
-		double xbar = gretl_vector_get(means, i);
 
-		gretl_vector_set(xdiff, i, (*pZ)[vi][t] - xbar);
+	    for (i=0; i<k; i++) {
+		vi = list[i+1];
+		xbar = gretl_vector_get(means, i);
+		x = (*pZ)[vi][t];
+		miss += na(x);
+		if (!miss) {
+		    gretl_vector_set(xdiff, i,  x - xbar);
+		} 
 	    }
 
-	    m = gretl_scalar_qform(xdiff, S, &err);
+	    m = miss ? NADBL : gretl_scalar_qform(xdiff, S, &err);
 
-	    get_obs_string(obs_string, t, pdinfo);
-	    pprintf(prn, "%8s ", obs_string);
+	    pprintf(prn, "%8s ", get_obs_string(obs, t, pdinfo));
 
-	    if (err) {
+	    if (err || miss) {
 		pprintf(prn, "NA\n");
 	    } else {
 		m = sqrt(m);

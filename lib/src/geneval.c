@@ -70,6 +70,7 @@ static void free_tree (NODE *t, const char *msg)
 	for (i=0; i<t->v.bn.n_nodes; i++) {
 	    free_tree(t->v.bn.n[i], msg);
 	}
+	free(t->v.bn.n);
     } else if (b3sym(t->t)) {
 	free_tree(t->v.b3.l, msg);
 	free_tree(t->v.b3.m, msg);
@@ -100,10 +101,6 @@ static void free_tree (NODE *t, const char *msg)
 
     if (freestr(t->t)) {
 	free(t->v.str);
-    }
-
-    if (bnsym(t->t)) { /* should be up above? */
-	free(t->v.bn.n);
     }
 
     free(t);
@@ -2212,37 +2209,38 @@ static int bool_const_vec (double *x, int n, int *err)
     return 1;
 }
 
-/* given a vector condition in a ternary "?" expression,
-   return the evaluated counterpart -- we evaluate both
-   forks and select based on the value of the condition
-   at each observation
+/* Given a vector condition in a ternary "?" expression, return the
+   evaluated counterpart.  We evaluate both forks and select based on
+   the value of the condition at each observation.  We accept only
+   scalar (NUM) and series (VEC) types on input, and always produce
+   a VEC type on output.
 */
 
-static NODE *bool_eval_vec (const double *c, NODE *t, parser *p)
+static NODE *bool_eval_vec (const double *c, NODE *n, parser *p)
 {
     NODE *l = NULL, *r = NULL, *ret = NULL;
-    double *x1 = NULL, *x2 = NULL;
-    double x1s, x2s;
-    double x1i, x2i;
-    int i;
+    double *xvec = NULL, *yvec = NULL;
+    double x = NADBL, y = NADBL;
+    double xt, yt;
+    int t, t1, t2;
 
-    l = eval(t->v.b3.m, p);
+    l = eval(n->v.b3.m, p);
 
     if (l->t == VEC) {
-	x1 = l->v.xvec;
+	xvec = l->v.xvec;
     } else if (l->t == NUM) {
-	x1s = l->v.xval;
+	x = l->v.xval;
     } else {
 	p->err = E_TYPES;
 	return NULL;
     }
 
-    r = eval(t->v.b3.r, p);
+    r = eval(n->v.b3.r, p);
 
     if (r->t == VEC) {
-	x2 = r->v.xvec;
+	yvec = r->v.xvec;
     } else if (r->t == NUM) {
-	x2s = r->v.xval;
+	y = r->v.xval;
     } else {
 	p->err = E_TYPES;
 	return NULL;
@@ -2250,18 +2248,57 @@ static NODE *bool_eval_vec (const double *c, NODE *t, parser *p)
 
     ret = aux_vec_node(p, p->dinfo->n);
 
-    for (i=0; i<p->dinfo->n && !p->err; i++) {
-	x1i = (x1 != NULL)? x1[i] : x1s;
-	x2i = (x2 != NULL)? x2[i] : x2s;
-	ret->v.xvec[i] = c[i] ? x1[i] : x2[i];
+    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+
+    for (t=t1; t<=t2 && !p->err; t++) {
+	xt = (xvec != NULL)? xvec[t] : x;
+	yt = (yvec != NULL)? yvec[t] : y;
+	ret->v.xvec[t] = c[t] ? xt : yt;
     }
 
     return ret;
 }
 
-/* evaluate ternary expression: 
-   FIXME this is just experimental.
+/* Handle the case where a ternary "query" expression has produced one
+   of its own child nodes as output: we duplicate the information in a
+   new node so as to avoid double-freeing of the result.
 */
+
+static NODE *ternary_return_node (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (n->t == NUM) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    ret->v.xval = n->v.xval;
+	}
+    } else if (n->t == VEC) {
+	int t, T = p->dinfo->n;
+
+	ret = aux_vec_node(p, T);
+	if (ret != NULL) {
+	    for (t=0; t<T; t++) {
+		ret->v.xvec[t] = n->v.xvec[t];
+	    }
+	}
+    } else if (n->t == MAT) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    ret->v.m = gretl_matrix_copy(n->v.m);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
+    return ret;
+}
+
+/* evaluate ternary expression: (c)? x1 : x2 */
 
 static NODE *eval_query (NODE *t, parser *p)
 {
@@ -2310,16 +2347,8 @@ static NODE *eval_query (NODE *t, parser *p)
     }
 
     if (ret == t->v.b3.m || ret == t->v.b3.r) {
-	/* avoid double-freeing of result */
-	if (ret->t == NUM) {
-	    x = ret->v.xval;
-	    ret = aux_scalar_node(p);
-	    ret->v.xval = x;
-	} else {
-	    vec = ret->v.xvec;
-	    ret = aux_vec_node(p, 0);
-	    ret->v.xvec = copyvec(vec, p->dinfo->n);
-	}
+	/* forestall double-freeing */
+	ret = ternary_return_node(ret, p);
     }
 
     return ret;

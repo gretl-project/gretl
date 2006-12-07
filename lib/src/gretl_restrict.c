@@ -873,13 +873,13 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 
     if (ptr == NULL) {
 	*err = E_DATA;
-	return NULL;
+	goto bailout;
     }
 
     if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_SYS &&
 	type != GRETL_OBJ_VAR) {
 	*err = E_DATA;
-	return NULL;
+	goto bailout;
     }
 
     rset = real_restriction_set_start(ptr, type, opt);
@@ -895,7 +895,11 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 		sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	    }
 	}
-    }	
+    }
+
+ bailout:
+
+    free(name);
 
     return rset;
 }
@@ -1252,6 +1256,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	    print_restriction_set(rset, pdinfo, prn);
 	    gretl_VECM_test_beta(rset->obj, prn);
 	}
+	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {
 	/* simultaneous equations system */
 	gretl_matrix *R;
@@ -1275,7 +1280,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	    destroy_restriction_set(rset);
 	}
     } else {
-	/* single model */
+	/* single-equation model */
 	err = restriction_set_make_mask(rset);
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
