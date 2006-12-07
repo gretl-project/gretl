@@ -1509,6 +1509,9 @@ void fn_args_init (fnargs *args)
     args->upnames = NULL;
 }
 
+/* note: this is not a "deep free"; that should be
+   handled in geneval.c */
+
 void fn_args_free (fnargs *args)
 {
     free(args->types);

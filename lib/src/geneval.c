@@ -30,6 +30,8 @@
 # define EDEBUG 0
 #endif
 
+#define ERRVAL (NADBL / 10)
+
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
@@ -1321,7 +1323,7 @@ static double real_apply_func (double x, int f, parser *p)
     case SQRT:
 	if (x < 0.0) {
 	    p->err = E_SQRT;
-	    return NADBL;
+	    return ERRVAL;
 	} else {
 	    return sqrt(x);
 	}
@@ -1346,7 +1348,7 @@ static double real_apply_func (double x, int f, parser *p)
 	if (y == HUGE_VAL) {
 	    fprintf(stderr, "genr: excessive exponent = %g\n", x);
 	    p->err = E_HIGH;
-	    return NADBL;
+	    return ERRVAL;
 	} else {
 	    return y;
 	}
@@ -2055,6 +2057,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	p->err = gretl_function_exec(uf, &args, rtype, p->Z, p->dinfo, 
 				     retp, p->prn);
+
 	if (!p->err) {
 	    if (rtype == ARG_SCALAR) {
 		ret = aux_scalar_node(p);
@@ -2064,11 +2067,17 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    } else if (rtype == ARG_SERIES) {
 		ret = aux_vec_node(p, 0);
 		if (ret != NULL) {
+		    if (ret->v.xvec != NULL) {
+			free(ret->v.xvec);
+		    }
 		    ret->v.xvec = Xret;
 		}
 	    } else if (rtype == ARG_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
+		    if (ret->v.m != NULL) {
+			gretl_matrix_free(ret->v.m);
+		    }
 		    ret->v.m = mret;
 		}
 	    } 
@@ -2201,6 +2210,8 @@ static int bool_const_vec (double *x, int n, int *err)
     return 1;
 }
 
+#define maybe_ok(i) (i == E_SQRT || i == E_HIGH)
+
 /* Given a series condition in a ternary "?" expression, return the
    evaluated counterpart.  We evaluate both forks and select based on
    the value of the condition at each observation.  We accept only
@@ -2213,10 +2224,19 @@ static NODE *bool_eval_vec (const double *c, NODE *n, parser *p)
     NODE *l = NULL, *r = NULL, *ret = NULL;
     double *xvec = NULL, *yvec = NULL;
     double x = NADBL, y = NADBL;
-    double xt, yt;
+    double xt, yt, z;
+    int err = 0;
     int t, t1, t2;
 
     l = eval(n->v.b3.m, p);
+    if (p->err) {
+	if (maybe_ok(p->err)) {
+	    err = p->err;
+	    p->err = 0;
+	} else {
+	    return NULL;
+	}
+    }
 
     if (l->t == VEC) {
 	xvec = l->v.xvec;
@@ -2228,6 +2248,14 @@ static NODE *bool_eval_vec (const double *c, NODE *n, parser *p)
     }
 
     r = eval(n->v.b3.r, p);
+    if (p->err) {
+	if (maybe_ok(p->err)) {
+	    err = p->err;
+	    p->err = 0;
+	} else {
+	    return NULL;
+	}
+    }
 
     if (r->t == VEC) {
 	yvec = r->v.xvec;
@@ -2246,7 +2274,12 @@ static NODE *bool_eval_vec (const double *c, NODE *n, parser *p)
     for (t=t1; t<=t2 && !p->err; t++) {
 	xt = (xvec != NULL)? xvec[t] : x;
 	yt = (yvec != NULL)? yvec[t] : y;
-	ret->v.xvec[t] = c[t] ? xt : yt;
+	z = (c[t] != 0.0)? xt : yt;
+	if (z == ERRVAL) {
+	    z = NADBL;
+	    p->err = err;
+	} 
+	ret->v.xvec[t] = z;
     }
 
     return ret;

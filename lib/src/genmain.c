@@ -504,7 +504,6 @@ double generate_scalar (const char *s, double ***pZ,
 	    x = p.ret->v.xval;
 	} else {
 	    *err = E_TYPES;
-	    x = NADBL;
 	}
     }
 
