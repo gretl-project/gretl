@@ -80,6 +80,14 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     pputc(prn, '\n');
 }
 
+static void gen_write_warning (const parser *p, PRN *prn)
+{
+    if (prn != NULL) {
+	pprintf(prn, "%s: %s: %s\n", _("Warning"),
+		p->warning, _("missing values were generated"));
+    }
+}
+
 static void gen_write_label (parser *p, int oldv)
 {
     char tmp[MAXLABEL];
@@ -476,6 +484,10 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_Q)) {
 	    gen_write_message(&p, oldv, prn);
 	}
+    }
+
+    if (!p.err && p.warn) {
+	gen_write_warning(&p, prn);
     }
 
     gen_cleanup(&p);

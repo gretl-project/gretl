@@ -23,7 +23,7 @@
 #include <float.h>
 
 #define NADBL DBL_MAX
-#define na(x) (x == NADBL)
+#define na(x) ((x) == NADBL)
 
 #define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
 

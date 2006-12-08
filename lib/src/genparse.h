@@ -175,7 +175,7 @@ enum {
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
-    EROOT,    /* dummy root for (...) expression */
+    EROOT,  /* 150: dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
@@ -270,10 +270,13 @@ union val {
 };
 
 struct node {
-    int t;       /* type indentifier */
-    int aux;     /* auxiliary information */
-    int tmp;     /* is node temporary? */
-    union val v; /* value (of whatever type) */
+    int t;         /* type indentifier */
+    int ext;       /* extra information for some cases */
+    int tmp;       /* if non-zero, node holds temporary data which
+		      should be freed on completion */
+    NODE *pa;      /* pointer to parent, for an auxiliary node */
+    NODE *ma;      /* pointer to possible second parent */
+    union val v;   /* value (of whatever type) */
 };
 
 enum {
@@ -320,7 +323,7 @@ struct parser_ {
     NODE *ret;         /* evaluated result node */
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
-    int aux_i;         /* position of the "current" one of the above */
+    char warning[64];  /* to hold a warning, if needed */
     /* below: parser state variables */
     int obs;
     int sym;

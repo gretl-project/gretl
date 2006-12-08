@@ -53,7 +53,8 @@ static NODE *newempty (int t)
     if (n != NULL) {
 	n->t = t;
 	n->v.idnum = 0;
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
 	n->tmp = 0;
     }
 
@@ -77,14 +78,15 @@ static NODE *newref (parser *p)
 	} else {
 	    n->v.idnum = p->idnum;
 	}
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
 	n->tmp = 0;
     }
 
     return n;
 }
 
-static NODE *newstr (char *s, int aux, int flag)
+static NODE *newstr (char *s, int ext, int flag)
 {  
     NODE *n = malloc(sizeof *n);
 
@@ -101,7 +103,8 @@ static NODE *newstr (char *s, int aux, int flag)
 	    n->v.str = s;
 	}
 	n->tmp = 0;
-	n->aux = aux;
+	n->ext = ext;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -122,7 +125,8 @@ NODE *newdbl (double x)
 	n->t = NUM;
 	n->v.xval = x;
 	n->tmp = 0;
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -130,7 +134,7 @@ NODE *newdbl (double x)
 
 /* node for unary operator, or single-argument function */
 
-static NODE *newb1 (int t, NODE *b, int aux)
+static NODE *newb1 (int t, NODE *b, int ext)
 {  
     NODE *n = malloc(sizeof *n);
 
@@ -143,7 +147,8 @@ static NODE *newb1 (int t, NODE *b, int aux)
 	n->t = t;
 	n->v.b1.b = b;
 	n->tmp = 0;
-	n->aux = aux;
+	n->ext = ext;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -165,7 +170,8 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 	n->v.b2.l = l;
 	n->v.b2.r = r;
 	n->tmp = 0;
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -188,7 +194,8 @@ static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
 	n->v.b3.m = m;
 	n->v.b3.r = r;
 	n->tmp = 0;
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -210,7 +217,8 @@ static NODE *newbn (int t)
 	n->v.bn.n_nodes = 0;
 	n->v.bn.n = NULL;
 	n->tmp = 0;
-	n->aux = 0;
+	n->ext = 0;
+	n->pa = n->ma = NULL;
     }
 
     return n;
@@ -218,15 +226,15 @@ static NODE *newbn (int t)
 
 static int push_bn_node (NODE *t, NODE *n)
 {
-    NODE **tmp;
+    NODE **nn;
     int k = t->v.bn.n_nodes;
 
-    tmp = realloc(t->v.bn.n, (k + 1) * sizeof *tmp);
-    if (tmp == NULL) {
+    nn = realloc(t->v.bn.n, (k + 1) * sizeof *nn);
+    if (nn == NULL) {
 	return E_ALLOC;
     }
 
-    t->v.bn.n = tmp;
+    t->v.bn.n = nn;
     t->v.bn.n[k] = n;
     t->v.bn.n_nodes += 1;
 
@@ -285,7 +293,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == UMAT || 
 	    (p->sym == MVAR && model_data_matrix(p->idnum))) {
 	    if (p->ch == '\'') {
-		t->aux = TRANSP;
+		t->ext = TRANSP;
 		parser_getc(p);
 	    }
 	}
@@ -311,7 +319,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == RPR) {
 	    if (up != NULL && up->t != LAG) {
 		if (p->ch == '\'') {
-		    up->aux = TRANSP; 
+		    up->ext = TRANSP; 
 		    parser_getc(p);
 		}
 	    } 
@@ -330,7 +338,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
 		if (p->ch == '\'') {
-		    up->aux = TRANSP;
+		    up->ext = TRANSP;
 		    parser_getc(p);
 		}
 	    }
@@ -465,7 +473,7 @@ static void get_matrix_def (NODE *t, parser *p)
 		lex(p);
 	    } else if (p->sym == RCB) {
 		if (p->ch == '\'') {
-		    t->aux = TRANSP;
+		    t->ext = TRANSP;
 		    parser_getc(p);
 		}
 		break;
@@ -532,7 +540,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    }
 	    if (p->sym == RBR) {
 		if (p->ch == '\'') {
-		    t->aux = TRANSP; /* ?? */
+		    t->ext = TRANSP; /* ?? */
 		    parser_getc(p);
 		}
 		lex(p);
@@ -583,7 +591,7 @@ static void get_args (NODE *t, parser *p, int opt)
 	    t->v.b2.r = expr(p);
 	    if (p->sym == RPR) {
 		if (p->ch == '\'') {
-		    t->aux = TRANSP; 
+		    t->ext = TRANSP; 
 		    parser_getc(p);
 		}
 		lex(p);
@@ -602,12 +610,12 @@ static void get_args (NODE *t, parser *p, int opt)
     }
 }
 
-#define idnum_to_aux(t) (t == LAG || t == OBS || t == MVAR || \
+#define idnum_to_ext(t) (t == LAG || t == OBS || t == MVAR || \
                          t == DMSL || t == DMSTR)
 
 static NODE *powterm (parser *p)
 {  
-    int aux = (idnum_to_aux(p->sym)) ? p->idnum : 0;
+    int ext = (idnum_to_ext(p->sym)) ? p->idnum : 0;
     int opt = 0;
     NODE *t;
 
@@ -641,14 +649,14 @@ static NODE *powterm (parser *p)
 	    }
 	}	
     } else if (string_arg_func(p->sym)) {
-	t = newb1(p->sym, NULL, aux);
+	t = newb1(p->sym, NULL, ext);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = get_string_arg(p);
 	}	
     } else if (func_symb(p->sym)) {
 	/* includes LAG, OBS */
-	t = newb1(p->sym, NULL, aux);
+	t = newb1(p->sym, NULL, ext);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = base(p, t);
@@ -656,7 +664,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == MSL || p->sym == DMSL) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, aux, STR_STEAL);
+	    t->v.b2.l = newstr(p->idstr, ext, STR_STEAL);
 	    t->v.b2.r = newb2(MSL2, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		lex(p);
@@ -666,7 +674,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == DMSTR) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, aux, STR_STEAL);
+	    t->v.b2.l = newstr(p->idstr, ext, STR_STEAL);
 	    lex(p);
 	    t->v.b2.r = get_string_arg(p);
 	}
