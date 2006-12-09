@@ -4636,7 +4636,7 @@
     <usage>
       <arguments>
         <argument>function</argument>
-        <argument>derivatives</argument>
+        <argument optional="true">derivatives</argument>
       </arguments>
       <options>
 	<option>
@@ -4652,16 +4652,24 @@
 	  <effect>print details of iterations</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>wg_nls.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description context="gui">
 
       <para>Performs Nonlinear Least Squares (NLS) estimation using a
-	modified version of the Levenberg&ndash;Marquandt algorithm.
-	You must supply a function specification; it is recommended
-	that you also supply expressions for the derivatives of this
-	function with respect to each of the parameters if
-	possible.</para>
+	modified version of the Levenberg&ndash;Marquandt algorithm. You
+	must supply a function specification; it is recommended but not
+	required that you also supply expressions for the derivatives of
+	this function with respect to each of the parameters if possible.
+	If you do not supply derivatives you should instead give a list of
+	the parameters to be estimated (separated by spaces or commas),
+	preceded by the keyword <lit>params</lit>.
+      </para>
 
       <para>Example: Suppose we have a data set with
 	variables C and Y (&eg; greene11_3.gdt) and we wish to
@@ -4708,15 +4716,17 @@
     <description context="cli">
 
       <para>
-	Performs Nonlinear Least Squares (NLS) estimation using a
-	modified version of the Levenberg&ndash;Marquandt algorithm.
-	The user must supply a function specification.  The parameters
-	of this function must be declared and given starting values
-	(using the <cmd>genr</cmd> command) prior to estimation.
-	Optionally, the user may specify the derivatives of the
-	regression function with respect to each of the parameters; if
-	analytical derivatives are not supplied, a numerical
-	approximation to the Jacobian is computed.
+	Performs Nonlinear Least Squares (NLS) estimation using a modified
+	version of the Levenberg&ndash;Marquandt algorithm.  You must
+	supply a function specification.  The parameters of this function
+	must be declared and given starting values (using the
+	<cmd>genr</cmd> command) prior to estimation.  Optionally, you may
+	specify the derivatives of the regression function with respect to
+	each of the parameters.  If you do not supply derivatives you
+	should instead give a list of the parameters to be estimated
+	(separated by spaces or commas), preceded by the keyword
+	<lit>params</lit>.  In the latter case a numerical approximation
+	to the Jacobian is computed.
       </para>
 
       <para>
@@ -4733,13 +4743,13 @@
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr alpha = $coeff(0)
-	4   genr beta = $coeff(Y)
-	5   genr gamma = 1.0
-	6   nls C = alpha + beta * Y^gamma
-	7   deriv alpha = 1
-	8   deriv beta = Y^gamma
-	9   deriv gamma = beta * Y^gamma * log(Y)
+	3   genr a = $coeff(0)
+	4   genr b = $coeff(Y)
+	5   genr g = 1.0
+	6   nls C = a + b * Y^g
+	7    deriv a = 1
+	8    deriv b = Y^g
+	9    deriv g = beta * Y^g * log(Y)
 	10  end nls --vcv</code>
 
       <para>
@@ -4748,7 +4758,8 @@
 	on lines 2 to 5.  The parameters alpha, beta and gamma could
 	be set to any initial values (not necessarily based on a model
 	estimated with OLS), although convergence of the NLS procedure
-	is not guaranteed for an arbitrary starting point.</para>
+	is not guaranteed for an arbitrary starting point.
+      </para>
 
       <para>
 	The actual NLS commands occupy lines 6 to 10. On line 6 the
@@ -4761,10 +4772,16 @@
 	begins with the keyword <cmd>deriv</cmd>, gives the name of a
 	parameter, an equals sign, and an expression whereby the
 	derivative can be calculated (again, the syntax here is the
-	same as for <cmd>genr</cmd>). These <cmd>deriv</cmd> lines are
-	optional, but it is recommended that you supply them if
-	possible. Line 10, <cmd>end nls</cmd>, completes the command
-	and calls for estimation.</para>
+	same as for <cmd>genr</cmd>). As an alternative to supplying
+	numerical derivatives, you could substitute the following for
+	lines 7 to 9:
+      </para>
+      <code>
+	params a b g</code>
+      <para>
+	Line 10, <cmd>end nls</cmd>, completes the command and calls for
+	estimation.
+      </para>
 
       <para>For further details on NLS estimation please see
 	<guideref targ="chap-nls"/>.</para>

@@ -1,0 +1,22 @@
+# William Greene, Econometric Analysis, 5e, Chapter 9
+open greene5_1.gdt
+
+# Use OLS to initialize the parameters
+ols realcons 0 realdpi
+genr a = $coeff(0)
+genr b = $coeff(realdpi)
+genr g = 1.0
+
+# Run NLS with analytical derivatives
+nls realcons = a + b * (realdpi^g)
+ deriv a = 1
+ deriv b = realdpi^g
+ deriv g = b * realdpi^g * log(realdpi)
+end nls
+
+# Compare result using numerical derivatives
+nls realcons = a + b * (realdpi^g)
+ params a, b, g
+end nls
+
+
