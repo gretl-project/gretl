@@ -33,9 +33,9 @@ enum {
     ANALYTIC_DERIVS
 } nls_modes;
 
-typedef struct _nls_param nls_param;
+typedef struct _sparm sparm;
 
-struct _nls_param {
+struct _sparm {
     char name[VNAMELEN]; /* name of parameter (scalar variable) */
     char *deriv;         /* string representation of derivative of regression
 			    function with respect to param (or NULL) */
@@ -65,8 +65,8 @@ struct _nls_spec {
     double ess;         /* error sum of squares */
     double ll;          /* log likelihood */
     double tol;         /* tolerance for stopping iteration */
-    nls_param *params;  /* array of information on function parameters
-			   (see the _nls_param struct above) */
+    sparm *params;      /* array of information on function parameters
+			   (see the _sparm struct above) */
     doublereal *coeff;  /* coefficient estimates */
     double *hessvec;    /* vech representation of negative inverse of
 			   Hessian */
@@ -237,7 +237,7 @@ static int nls_calculate_deriv (int i)
 
 static int nlspec_allocate_param (nls_spec *spec)
 {
-    nls_param *params;
+    sparm *params;
     double *coeff;
     int nt = spec->nparam + 1;
 
@@ -261,7 +261,7 @@ static int nlspec_allocate_param (nls_spec *spec)
     return 0;
 }
 
-static void nls_param_init (nls_param *param, const char *vname, int v)
+static void nls_param_init (sparm *param, const char *vname, int v)
 {
     strcpy(param->name, vname);
     param->deriv = NULL;
@@ -692,9 +692,10 @@ static int get_mle_gradient (double *b, double *g, int n,
 
 	v = pspec->params[i].dernum;
 
-	g[i] = 0.0;
+	/* derivative may be series or scalar */
+
 	if (var_is_series(ndinfo, v)) {
-	    /* derivative may be vector or scalar */
+	    g[i] = 0.0;
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
 		if (na((*nZ)[v][t])) {
 		    fprintf(stderr, "NA in gradient calculation\n");
@@ -704,7 +705,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 		}
 	    }
 	} else {
-	    g[i] += (*nZ)[v][0];
+	    g[i] = (*nZ)[v][0];
 	}
 #if NLS_DEBUG > 1
 	fprintf(stderr, "g[%d] = %g, based on nZ[%d]\n", i, g[i], v);
@@ -1986,7 +1987,7 @@ int
 nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 			       const double **Z, const DATAINFO *pdinfo)
 {
-    nls_param *param = NULL;
+    sparm *param = NULL;
     const char *p = dstr;
     char *vname = NULL;
     int i, v, err = 0;
@@ -2707,31 +2708,31 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
     for (i=0; i<n; i++) {
 	hess_h_init(h, h0, n);
 	for (k=0; k<r; k++) {
-	    hess_b_adjust_i(c, b, h, n, i, 1.0);
+	    hess_b_adjust_i(c, b, h, n, i, 1);
 	    f1 = func(c, data);
 	    if (na(f1)) {
 		err = E_NAN;
 		goto bailout;
 	    }
-	    hess_b_adjust_i(c, b, h, n, i, -1.0);
+	    hess_b_adjust_i(c, b, h, n, i, -1);
 	    f2 = func(c, data);
 	    if (na(f2)) {
 		err = E_NAN;
 		goto bailout;
 	    }
 	    /* F'(i) */
-	    Dx[k] = (f1 - f2) / (2.0 * h[i]); 
+	    Dx[k] = (f1 - f2) / (2.0*h[i]); 
 	    /* F''(i) */
-	    Hx[k] = (f1 - 2.0 * f0 + f2) / (h[i] * h[i]);
+	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i]*h[i]);
 	    hess_h_reduce(h, v, n);
 	}
-	p4m = 4.0;
+	p4m = 4;
 	for (m=0; m<r-1; m++) {
 	    for (k=0; k<r-m; k++) {
-		Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1.0);
-		Hx[k] = (Hx[k+1] * p4m - Hx[k]) / (p4m - 1.0);
+		Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1);
+		Hx[k] = (Hx[k+1] * p4m - Hx[k]) / (p4m - 1);
 	    }
-	    p4m *= 4.0;
+	    p4m *= 4;
 	}
 	D[i] = Dx[0];
 	Hd[i] = Hx[0];
@@ -2747,21 +2748,21 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
 	    } else {
 		hess_h_init(h, h0, n);
 		for (k=0; k<r; k++) {
-		    hess_b_adjust_ij(c, b, h, n, i, j, 1.0);
+		    hess_b_adjust_ij(c, b, h, n, i, j, 1);
 		    f1 = func(c, data);
 		    if (na(f1)) {
 			err = E_NAN;
 			goto bailout;
 		    }
-		    hess_b_adjust_ij(c, b, h, n, i, j, -1.0);
+		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
 		    f2 = func(c, data);
 		    if (na(f2)) {
 			err = E_NAN;
 			goto bailout;
 		    }
 		    /* cross-partial */
-		    Dx[k] = (f1 - 2.0 * f0 + f2 - Hd[i] * h[i] * h[i]
-			     - Hd[j] * h[j] * h[j]) / (2.0 * h[i] * h[j]);
+		    Dx[k] = (f1 - 2.0*f0 + f2 - Hd[i]*h[i]*h[i]
+			     - Hd[j]*h[j]*h[j]) / (2.0*h[i]*h[j]);
 		    hess_h_reduce(h, v, n);
 		}
 		p4m = 4.0;
@@ -2931,8 +2932,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		if (ndelta > 0) {
 		    f = llfunc(b, data);
 		    fcount++;
-		    ll_ok = !na(f) &&
-			(f >= fmax + sumgrad * steplen * acctol);
+		    ll_ok = !na(f) && (f >= fmax + sumgrad*steplen*acctol);
 		    if (!ll_ok) {
 			/* loglik not good: try smaller step */
 			steplen *= stepfrac;
@@ -2983,8 +2983,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		    D2 = 1.0 + D2 / D1;
 		    for (i=0; i<n; i++) {
 			for (j=0; j<=i; j++) {
-			    H[i][j] += (D2 * t[i] * t[j]
-					- X[i] * t[j] - t[i] * X[j]) / D1;
+			    H[i][j] += (D2 * t[i]*t[j]
+					- X[i]*t[j] - t[i]*X[j]) / D1;
 			}
 		    }
 		} else {
