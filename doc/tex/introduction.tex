@@ -141,7 +141,10 @@ tweak is \cmd{--prefix}.  By default the installation goes under
 will put everything under the \verb+/usr+ tree.  In the event that a
 required library is not found on your system, so that the configure
 process fails, please see Appendix~\ref{app-technote}.
-          
+On most systems, the \texttt{make install} command requires you to
+have administrative privileges. Hence, either you log in as
+\texttt{root} before launching  \texttt{make install} or, more
+correctly, you may want to use the \texttt{sudo} utility. 
 \end{enumerate}
 
 \app{Gretl} offers support for the \app{gnome} desktop.  To take

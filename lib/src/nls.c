@@ -882,8 +882,6 @@ static void add_stats_to_model (MODEL *pmod, nls_spec *spec,
     double d, tss;
     int t;
 
-    fprintf(stderr, "add_stats_to_model: Z at %p\n", (void *) Z);
-
     pmod->ess = spec->ess;
     pmod->sigma = sqrt(spec->ess / (pmod->nobs - spec->nparam));
     
