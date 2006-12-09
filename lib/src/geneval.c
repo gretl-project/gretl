@@ -118,6 +118,7 @@ static void parser_aux_init (parser *p)
 {
     p->aux = NULL;
     p->n_aux = 0;
+    p->aux_i = 0;
 }
 
 static void parser_free_aux_nodes (parser *p)
@@ -134,20 +135,7 @@ static void parser_free_aux_nodes (parser *p)
     }
 }
 
-static int is_aux_node (NODE *t, parser *p)
-{
-    int i;
-
-    if (p->aux != NULL) {
-	for (i=0; i<p->n_aux; i++) {
-	    if (t == p->aux[i]) {
-		return 1;
-	    }
-	}
-    }
-
-    return 0;
-}
+#define is_aux_node(t) (t != NULL && t->aux)
 
 static NODE *newmdef (int k)
 {  
@@ -155,7 +143,7 @@ static NODE *newmdef (int k)
     int i;
 
 #if MDEBUG
-    fprintf(stderr, "newmdef:  allocated node at %p\n", (void *) n);
+    fprintf(stderr, "newmdef: allocated node at %p\n", (void *) n);
 #endif
 
     if (n == NULL) {
@@ -295,7 +283,7 @@ static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
-static int add_aux_node (parser *p, NODE *t, NODE *pa, NODE *ma)
+static int add_aux_node (parser *p, NODE *t)
 {
     NODE **aux;
 
@@ -304,47 +292,24 @@ static int add_aux_node (parser *p, NODE *t, NODE *pa, NODE *ma)
     if (aux == NULL) {
 	p->err = E_ALLOC;
     } else {
-	t->pa = pa;
-	t->ma = ma;
+	t->aux = 1;
 	aux[p->n_aux] = t;
 	p->aux = aux;
+	p->aux_i = p->n_aux;
 	p->n_aux += 1;
     }
 
     return p->err;
 }
 
-static NODE *get_aux_by_parents (NODE *pa, NODE *ma, parser *p)
-{
-    int i;
-
-    if (p->aux != NULL) {
-	for (i=0; i<p->n_aux; i++) {
-	    if (p->aux[i] != NULL && 
-		p->aux[i]->pa == pa && 
-		p->aux[i]->ma == ma) {
-		return p->aux[i];
-	    }
-	}
-    }
-
-    return NULL;
-}
-
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
 
-static NODE *get_aux_node (parser *p, int t, NODE *pa, NODE *ma,
-			   int n, int tmp)
+static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
-    NODE *ret = get_aux_by_parents(pa, ma, p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && ret->t != t) {
-	/* FIXME this shouldn't be happening? */
-	ret = NULL;
-    }
-
-    if (ret == NULL) {
+    if (starting(p)) {
 	if (t == NUM) {
 	    ret = newdbl(NADBL);
 	} else if (t == VEC) {
@@ -361,68 +326,59 @@ static NODE *get_aux_node (parser *p, int t, NODE *pa, NODE *ma,
 
 	if (ret == NULL) {
 	    p->err = E_ALLOC;
-	} else if (add_aux_node(p, ret, pa, ma)) {
+	} else if (add_aux_node(p, ret)) {
 	    free_tree(ret, "On error");
 	    ret = NULL;
 	} 
-    }	
+    } else {
+	while (p->aux[p->aux_i] == NULL) {
+ 	    p->aux_i += 1;
+ 	}
+ 	ret = p->aux[p->aux_i];
+	p->aux_i += 1;
+    }
 
     return ret;
 }
 
-static NODE *aux_scalar_node (NODE *t, parser *p)
+static NODE *aux_scalar_node (parser *p)
 {
-    return get_aux_node(p, NUM, t, NULL, 0, 0);
+    return get_aux_node(p, NUM, 0, 0);
 }
 
-static NODE *aux_scalar2_node (NODE *l, NODE *r, parser *p)
+static NODE *aux_vec_node (parser *p, int n)
 {
-    return get_aux_node(p, NUM, l, r, 0, 0);
+    return get_aux_node(p, VEC, n, 1);
 }
 
-static NODE *aux_vec_node (NODE *t, parser *p, int n)
+static NODE *aux_ivec_node (parser *p, int n)
 {
-    return get_aux_node(p, VEC, t, NULL, n, 1);
-}
-
-static NODE *aux_vec2_node (NODE *l, NODE *r, parser *p, int n)
-{
-    return get_aux_node(p, VEC, l, r, n, 1);
-}
-
-static NODE *aux_ivec_node (NODE *l, NODE *r, parser *p, int n)
-{
-    return get_aux_node(p, IVEC, l, r, n, 1);
+    return get_aux_node(p, IVEC, n, 1);
 }
 
 static NODE *vec_pointer_node (NODE *t, parser *p)
 {
-    return get_aux_node(p, VEC, t, NULL, 0, 0);
+    return get_aux_node(p, VEC, 0, 0);
 }
 
-static NODE *aux_matrix_node (NODE *t, parser *p)
+static NODE *aux_matrix_node (parser *p)
 {
-    return get_aux_node(p, MAT, t, NULL, 0, 1);
+    return get_aux_node(p, MAT, 0, 1);
 }
 
-static NODE *aux_matrix2_node (NODE *l, NODE *r, parser *p)
+static NODE *matrix_pointer_node (parser *p)
 {
-    return get_aux_node(p, MAT, l, r, 0, 1);
+    return get_aux_node(p, MAT, 0, 0);
 }
 
-static NODE *matrix_pointer_node (NODE *t, parser *p)
+static NODE *aux_mspec_node (parser *p)
 {
-    return get_aux_node(p, MAT, t, NULL, 0, 0);
+    return get_aux_node(p, MSPEC, 0, 0);
 }
 
-static NODE *aux_mspec_node (NODE *l, NODE *r, parser *p)
+static NODE *aux_mdef_node (parser *p, int n)
 {
-    return get_aux_node(p, MSPEC, l, r, 0, 0);
-}
-
-static NODE *aux_mdef_node (NODE *t, parser *p, int n)
-{
-    return get_aux_node(p, MDEF, t, NULL, n, 0);
+    return get_aux_node(p, MDEF, n, 0);
 }
 
 static void eval_warning (parser *p, int op)
@@ -563,7 +519,7 @@ static int dist_argc (char *s, int f)
 
 static NODE *eval_pdist (NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
@@ -639,7 +595,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 static NODE *retrieve_const (NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	switch (n->v.idnum) {
@@ -657,7 +613,7 @@ static NODE *retrieve_const (NODE *n, parser *p)
 
 static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
 {
-    NODE *ret = aux_scalar2_node(x, y, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	ret->v.xval = xy_calc(x->v.xval, y->v.xval, f, p);
@@ -673,7 +629,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     double y = (r->t == NUM)? r->v.xval : 0.0;
     int t, t1, t2;
 
-    ret = aux_vec2_node(l, r, p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
 	return NULL;
     }
@@ -867,7 +823,7 @@ tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
 
 static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 {
-    NODE *ret = aux_matrix2_node(l, r, p);
+    NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *a = NULL;
@@ -911,7 +867,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	m = (l->t == MAT)? l->v.m : r->v.m;
 	n = m->rows * m->cols;
 
-	ret = aux_matrix2_node(l, r, p);
+	ret = aux_matrix_node(p);
 	if (ret == NULL) { 
 	    return NULL;
 	}
@@ -937,7 +893,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    }	
 	} 
     } else {
-	ret = aux_matrix2_node(l, r, p);
+	ret = aux_matrix_node(p);
     }
 
     return ret;
@@ -947,7 +903,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
-    NODE *ret = aux_matrix2_node(l, r, p);
+    NODE *ret = aux_matrix_node(p);
+
+#if EDEBUG
+    fprintf(stderr, "matrix_matrix_calc: l=%p, r=%p, ret=%p\n",
+	    (void *) l, (void *) r, (void *) ret);
+#endif
 
     if (ret != NULL && starting(p)) {
 	ret->v.m = real_matrix_calc(l->v.m, r->v.m, op, &p->err);
@@ -960,7 +921,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
 static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 {
-    NODE *ret = aux_scalar2_node(l, r, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *a = l->v.m;
@@ -1016,7 +977,7 @@ static void matrix_error (parser *p)
 static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 {
     const gretl_matrix *m = n->v.m;
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 
@@ -1060,7 +1021,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 {
     const gretl_matrix *m = n->v.m;
-    NODE *ret = aux_matrix_node(n, p);
+    NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 
@@ -1119,7 +1080,7 @@ static NODE *
 matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 {
     const gretl_matrix *m = n->v.m;
-    NODE *ret = aux_matrix2_node(n, r, p);
+    NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	const char *rname;
@@ -1162,7 +1123,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_matrix2_node(l, r, p);
+    NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	int rows = l->v.xval;
@@ -1281,7 +1242,7 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 
 static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_mspec_node(l, r, p);
+    NODE *ret = aux_mspec_node(p);
 
     if (ret != NULL && starting(p)) {
 	matrix_subspec *mspec;
@@ -1313,7 +1274,7 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 
 	a = user_matrix_get_submatrix(l->v.str, r->v.mspec, &p->err);
 	if (a != NULL) {
-	    ret = aux_matrix2_node(l, r, p);
+	    ret = aux_matrix_node(p);
 	    if (ret == NULL) {
 		gretl_matrix_free(a);
 	    } else {
@@ -1321,7 +1282,7 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	    }
 	}
     } else {
-	ret = aux_matrix2_node(l, r, p);
+	ret = aux_matrix_node(p);
     }
 
     return ret;
@@ -1333,7 +1294,7 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
 
     if (starting(p)) {
 	if (l->t == NUM && r->t == NUM) {
-	    ret = aux_ivec_node(l, r, p, 2);
+	    ret = aux_ivec_node(p, 2);
 	    if (ret != NULL) {
 		ret->v.ivec[0] = (int) l->v.xval;
 		ret->v.ivec[1] = (int) r->v.xval;
@@ -1342,7 +1303,7 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
 	    p->err = E_TYPES;
 	}
     } else {
-	ret = aux_ivec_node(l, r, p, 2);
+	ret = aux_ivec_node(p, 2);
     }
 
     return ret;
@@ -1435,7 +1396,7 @@ static double real_apply_func (double x, int f, parser *p)
 
 static NODE *apply_scalar_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
 	ret->v.xval = real_apply_func(n->v.xval, f, p);
@@ -1446,7 +1407,7 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
 
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(n, p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
     int t;
 
     if (ret != NULL) {
@@ -1464,7 +1425,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 static NODE *
 series_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_vec2_node(l, r, p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL && starting(p)) {
 	double x = 0.0;
@@ -1512,7 +1473,7 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_scalar2_node(l, r, p);
+    NODE *ret = aux_scalar_node(p);
     const double *x = l->v.xvec;
     const double *y = r->v.xvec;
 
@@ -1534,7 +1495,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *object_status (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
     const char *s = n->v.str;
 
     if (ret != NULL && starting(p)) {
@@ -1617,7 +1578,7 @@ static int series_get_end (int n, const double *x)
 static NODE *
 series_scalar_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
     const double *x = n->v.xvec;
 
     if (ret != NULL && starting(p)) {
@@ -1671,9 +1632,9 @@ series_scalar_func (NODE *n, int f, parser *p)
 
 static NODE *series_obs (int v, NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(n, p);
+    NODE *ret = aux_scalar_node(p);
 
-    if (ret != NULL && starting(p)) {
+    if (ret != NULL) {
 	int t = n->v.xval;
 
 	ret->v.xval = (*p->Z)[v][t];
@@ -1688,7 +1649,7 @@ static NODE *series_lag (int v, NODE *n, parser *p)
     const double *x = (*p->Z)[v];
     int k, t, s, t1, t2;
 
-    ret = aux_vec_node(n, p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
 	return NULL;
     }
@@ -1729,8 +1690,8 @@ static NODE *series_lag (int v, NODE *n, parser *p)
 
 static NODE *vector_sort (NODE *l, int f, parser *p)
 {
-    NODE *ret = (l->t == VEC)? aux_vec_node(l, p, p->dinfo->n) :
-	aux_matrix_node(l, p);
+    NODE *ret = (l->t == VEC)? aux_vec_node(p, p->dinfo->n) :
+	aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC) {
@@ -1773,7 +1734,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	p->err = E_PDWRONG;
 	return NULL;
     } else {
-	ret = aux_vec2_node(l, r, p, p->dinfo->n);
+	ret = aux_vec_node(p, p->dinfo->n);
     }
 
     if (ret != NULL && starting(p)) {
@@ -1817,7 +1778,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 static NODE *apply_matrix_func (NODE *n, int f, parser *p)
 {
     const gretl_matrix *m = n->v.m;
-    NODE *ret = aux_matrix_node(n, p);
+    NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	int i, n = m->rows * m->cols;
@@ -1846,13 +1807,13 @@ static NODE *uvar_node (NODE *t, parser *p)
     NODE *ret = NULL;
 
     if (var_is_scalar(p->dinfo, t->v.idnum)) {
-	ret = aux_scalar_node(t, p);
-	if (ret != NULL && starting(p)) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
 	    ret->v.xval = (*p->Z)[t->v.idnum][0];
 	}
     } else if (var_is_series(p->dinfo, t->v.idnum)) {
 	ret = vec_pointer_node(t, p);
-	if (ret != NULL && starting(p)) {
+	if (ret != NULL) {
 	    ret->v.xvec = (*p->Z)[t->v.idnum];
 	}
     }
@@ -1864,7 +1825,7 @@ static NODE *uvar_node (NODE *t, parser *p)
 
 static NODE *umatrix_node (NODE *t, parser *p)
 {
-    NODE *ret = matrix_pointer_node(t, p);
+    NODE *ret = matrix_pointer_node(p);
 
     if (ret != NULL && starting(p)) {
 	ret->v.m = get_matrix_by_name(t->v.str);
@@ -1875,7 +1836,7 @@ static NODE *umatrix_node (NODE *t, parser *p)
 
 static NODE *loop_index_node (NODE *t, parser *p)
 {
-    NODE *ret = aux_scalar_node(t, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	ret->v.xval = loop_scalar_read(*t->v.str);
@@ -2142,12 +2103,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	if (!p->err) {
 	    if (rtype == ARG_SCALAR) {
-		ret = aux_scalar_node(t, p);
+		ret = aux_scalar_node(p);
 		if (ret != NULL) {
 		    ret->v.xval = xret;
 		}
 	    } else if (rtype == ARG_SERIES) {
-		ret = aux_vec_node(t, p, 0);
+		ret = aux_vec_node(p, 0);
 		if (ret != NULL) {
 		    if (ret->v.xvec != NULL) {
 			free(ret->v.xvec);
@@ -2155,7 +2116,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->v.xvec = Xret;
 		}
 	    } else if (rtype == ARG_MATRIX) {
-		ret = aux_matrix_node(t, p);
+		ret = aux_matrix_node(p);
 		if (ret != NULL) {
 		    if (ret->tmp) {
 			gretl_matrix_free(ret->v.m);
@@ -2179,7 +2140,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 static NODE *matrix_def_node (NODE *t, parser *p)
 {
     gretl_matrix *M = NULL;
-    NODE *n, *ret = NULL;
+    NODE *nn, *n, *ret = NULL;
     int m = t->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
@@ -2187,10 +2148,19 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     int seppos = -1;
     int i;
 
-    if (autoreg(p) || reusable(p)) {
+    if (autoreg(p)) {
 	fprintf(stderr, "You can't define a matrix in this context\n");
 	p->err = E_TYPES;
 	return NULL;
+    }
+
+    if (reusable(p)) {
+	nn = aux_mdef_node(p, m);
+	if (nn == NULL) {
+	    return NULL;
+	}
+    } else {
+	nn = t;
     }
 
 #if EDEBUG
@@ -2199,11 +2169,15 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 
     for (i=0; i<m && !p->err; i++) {
 	n = t->v.bn.n[i];
-	if (!ok_matdef_sym(n->t)) {
+	if (ok_matdef_sym(n->t)) {
+	    nn->v.bn.n[i] = n;
+	} else {
 	    n = eval(n, p);
 	    if (ok_matdef_sym(n->t)) {
-		free_tree(t->v.bn.n[i], "MatDef");
-		t->v.bn.n[i] = n;
+		if (nn == t) {
+		    free_tree(t->v.bn.n[i], "MatDef");
+		}
+		nn->v.bn.n[i] = n;
 	    } else {
 		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
 		p->err = E_TYPES;
@@ -2237,24 +2211,26 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	} 
     }
 
-    if (nnum > 0) {
-	M = matrix_from_scalars(t, m, nsep, seppos, p);
-    } else if (nvec > 0) {
-	M = matrix_from_series(t, nvec, p);
-    } else if (list) {
-	M = matrix_from_list(t->v.bn.n[0], p);
-    } else if (dum) {
-	n = t->v.bn.n[0];
-	if (n->v.idnum == DUM_DATASET) {
-	    M = matrix_from_list(NULL, p);
-	} else {
-	    pprintf(p->prn, "Wrong sort of dummy var\n");
-	    p->err = E_TYPES;
+    if (!p->err) {
+	if (nnum > 0) {
+	    M = matrix_from_scalars(nn, m, nsep, seppos, p);
+	} else if (nvec > 0) {
+	    M = matrix_from_series(nn, nvec, p);
+	} else if (list) {
+	    M = matrix_from_list(nn->v.bn.n[0], p);
+	} else if (dum) {
+	    n = nn->v.bn.n[0];
+	    if (n->v.idnum == DUM_DATASET) {
+		M = matrix_from_list(NULL, p);
+	    } else {
+		pprintf(p->prn, "Wrong sort of dummy var\n");
+		p->err = E_TYPES;
+	    }
 	}
     }
 
     if (!p->err) {
-	ret = aux_matrix_node(t, p);
+	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = M;
 	}
@@ -2262,8 +2238,8 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 
     for (i=0; i<m && !p->err; i++) {
 	/* forestall double-freeing: null out any aux nodes */
-	if (is_aux_node(t->v.bn.n[i], p)) {
-	    t->v.bn.n[i] = NULL;
+	if (is_aux_node(nn->v.bn.n[i])) {
+	    nn->v.bn.n[i] = NULL;
 	}
     }
 	
@@ -2316,7 +2292,6 @@ static int vec_branch (const double *c, parser *p)
 static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 {
     NODE *l = NULL, *r = NULL, *ret = NULL;
-    NODE *parent = NULL;
     double *xvec = NULL, *yvec = NULL;
     double x = NADBL, y = NADBL;
     double xt, yt;
@@ -2325,7 +2300,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 
     branch = vec_branch(c, p);
 
-    if (starting(p) || branch != FORK_R) {
+    if (autoreg(p) || branch != FORK_R) {
 	l = eval(n->v.b3.m, p);
 	if (p->err) {
 	    return NULL;
@@ -2340,7 +2315,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	}
     }
 
-    if (starting(p) || branch != FORK_L) {
+    if (autoreg(p) || branch != FORK_L) {
 	r = eval(n->v.b3.r, p);
 	if (p->err) {
 	    return NULL;
@@ -2355,9 +2330,7 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	}
     }
 
-    parent = (branch == FORK_L)? l : (branch == FORK_R)? r : n;
-
-    ret = aux_vec_node(parent, p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dinfo->n);
 
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
@@ -2382,14 +2355,14 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
 
     branch = (xna(x))? FORK_NONE : (x != 0)? FORK_L : FORK_R;
 
-    if (starting(p) || branch != FORK_R) {
+    if (autoreg(p) || branch != FORK_R) {
 	l = eval(n->v.b3.m, p);
 	if (p->err) {
 	    return NULL;
 	}
     }
 
-    if (starting(p) || branch != FORK_L) {
+    if (autoreg(p) || branch != FORK_L) {
 	r = eval(n->v.b3.r, p);
 	if (p->err) {
 	    return NULL;
@@ -2397,7 +2370,7 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
     }
 
     if (branch == FORK_NONE) {
-	ret = aux_scalar_node(n, p);
+	ret = aux_scalar_node(p);
 	if (ret != NULL) {
 	    ret->v.xval = NADBL;
 	}
@@ -2420,21 +2393,21 @@ static NODE *ternary_return_node (NODE *n, parser *p)
     NODE *ret = NULL;
 
     if (n->t == NUM) {
-	ret = aux_scalar_node(n, p);
+	ret = aux_scalar_node(p);
 	if (ret != NULL) {
 	    ret->v.xval = n->v.xval;
 	}
     } else if (n->t == VEC) {
 	int t, T = p->dinfo->n;
 
-	ret = aux_vec_node(n, p, T);
+	ret = aux_vec_node(p, T);
 	if (ret != NULL) {
 	    for (t=0; t<T; t++) {
 		ret->v.xvec[t] = n->v.xvec[t];
 	    }
 	}
     } else if (n->t == MAT) {
-	ret = aux_matrix_node(n, p);
+	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    if (ret->tmp) {
 		gretl_matrix_free(ret->v.m);
@@ -2549,12 +2522,12 @@ static NODE *dollar_var_node (NODE *t, parser *p)
     NODE *ret = NULL;
 
     if (dvar_scalar(t->v.idnum)) {
-	ret = aux_scalar_node(t, p);
+	ret = aux_scalar_node(p);
 	if (ret != NULL && starting(p)) {
 	    ret->v.xval = dvar_get_value(t->v.idnum, p);
 	}
     } else if (dvar_series(t->v.idnum)) {
-	ret = aux_vec_node(t, p, 0);
+	ret = aux_vec_node(p, 0);
 	if (ret != NULL && starting(p)) {
 	    ret->v.xvec = dvar_get_series(t->v.idnum, p);
 	}
@@ -2609,11 +2582,11 @@ static NODE *object_var_node (NODE *t, parser *p)
 #endif
 
     if (scalar) {
-	ret = aux_scalar_node(t, p);
+	ret = aux_scalar_node(p);
     } else if (series) {
-	ret = aux_vec_node(t, p, 0);
+	ret = aux_vec_node(p, 0);
     } else if (matrix || mslice) {
-	ret = aux_matrix_node(t, p);
+	ret = aux_matrix_node(p);
     }
 
     if (ret != NULL && starting(p)) {
@@ -2652,7 +2625,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 
 static NODE *dollar_str_node (NODE *t, parser *p)
 {
-    NODE *ret = aux_scalar_node(t, p);
+    NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	NODE *l = t->v.b2.l;
@@ -4346,6 +4319,7 @@ int realgen (const char *s, parser *p, double ***pZ,
     if (p->flags & P_AUTOREG) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
 	for (t=p->dinfo->t1; t<p->dinfo->t2; t++) {
+	    p->aux_i = 0;
 	    p->obs = t;
 #if EDEBUG
 	    fprintf(stderr, "\n*** autoreg: p->obs = %d\n", p->obs);
@@ -4369,6 +4343,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 	p->obs = t;
     } 
 
+    p->aux_i = 0;
     p->ret = eval(p->tree, p);
 
 #if EDEBUG > 1

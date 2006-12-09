@@ -54,7 +54,7 @@ static NODE *newempty (int t)
 	n->t = t;
 	n->v.idnum = 0;
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
 	n->tmp = 0;
     }
 
@@ -79,7 +79,7 @@ static NODE *newref (parser *p)
 	    n->v.idnum = p->idnum;
 	}
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
 	n->tmp = 0;
     }
 
@@ -104,7 +104,7 @@ static NODE *newstr (char *s, int ext, int flag)
 	}
 	n->tmp = 0;
 	n->ext = ext;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;
@@ -126,7 +126,7 @@ NODE *newdbl (double x)
 	n->v.xval = x;
 	n->tmp = 0;
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;
@@ -148,7 +148,7 @@ static NODE *newb1 (int t, NODE *b, int ext)
 	n->v.b1.b = b;
 	n->tmp = 0;
 	n->ext = ext;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;
@@ -171,7 +171,7 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 	n->v.b2.r = r;
 	n->tmp = 0;
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;
@@ -195,7 +195,7 @@ static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
 	n->v.b3.r = r;
 	n->tmp = 0;
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;
@@ -218,7 +218,7 @@ static NODE *newbn (int t)
 	n->v.bn.n = NULL;
 	n->tmp = 0;
 	n->ext = 0;
-	n->pa = n->ma = NULL;
+	n->aux = 0;
     }
 
     return n;

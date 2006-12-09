@@ -274,8 +274,7 @@ struct node {
     int ext;       /* extra information for some cases */
     int tmp;       /* if non-zero, node holds temporary data which
 		      should be freed on completion */
-    NODE *pa;      /* pointer to parent, for an auxiliary node */
-    NODE *ma;      /* pointer to possible second parent */
+    int aux;       /* non-zero for an auxiliary node */
     union val v;   /* value (of whatever type) */
 };
 
@@ -323,6 +322,7 @@ struct parser_ {
     NODE *ret;         /* evaluated result node */
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
+    int aux_i;         /* the current ID of the above */
     char warning[64];  /* to hold a warning, if needed */
     /* below: parser state variables */
     int obs;
