@@ -64,14 +64,14 @@ Both the probit and logit model are estimated in \app{gretl} via
 maximum likelihood; since the score equations do not have a closed
 form solution, numerical optimization is used. However, in most cases
 this is totally transparent to the user, since only a few iterations
-are normally needed to ensure convergence. The \texttt{ --verbose}
+are normally needed to ensure convergence. The \texttt{--verbose}
 switch can be used to track the maximization algorithm.
 
 \begin{script}[htbp]
   \caption{Estimation of simple logit and probit models}
   \label{simple-QR}
 \begin{code}
-open greene21_1
+open greene19_1
 
 logit GRADE const GPA TUCE PSI
 probit GRADE const GPA TUCE PSI
@@ -162,7 +162,7 @@ addition test.
   \caption{Variable addition test in a probit model}
   \label{QR-add}
 \begin{code}
-open greene21_1
+open greene19_1
 
 probit GRADE const GPA PSI
 series u = $uhat 
