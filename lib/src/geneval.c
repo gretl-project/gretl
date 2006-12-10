@@ -2031,9 +2031,14 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     for (i=0; i<m && !p->err; i++) {
 
 	n = eval(r->v.bn.n[i], p);
-	if (!ok_ufunc_sym(n->t)) {
+	if (n == NULL) {
+	    fprintf(stderr, "eval_ufunc: failed to evaluare arg\n"); 
+	} else if (!ok_ufunc_sym(n->t)) {
 	    fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
 	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
 	    break;
 	}
 
@@ -2736,6 +2741,7 @@ static NODE *eval (NODE *t, parser *p)
     case EMPTY:
     case ABSENT:
     case U_ADDR:
+    case LIST:
 	/* terminal symbol: pass on through */
 	ret = t;
 	break;

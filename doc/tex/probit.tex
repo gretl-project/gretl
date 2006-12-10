@@ -1,5 +1,5 @@
 \chapter{Discrete and censored dependent variables}
-\label{discr-models}
+\label{chap:discr-models}
 
 \section{Logit and probit models}
 \label{sec:logit-probit}
@@ -230,11 +230,75 @@ $y^*_i$ simply by adding the two together.
 \section{The Tobit model}
 \label{sec:tobit}
 
+The Tobit model is used when the dependent variable of a model is
+censored: assume a latent variable $y^*_i$ can be described as
+\[
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i ,
+\]
+where $\varepsilon_i \sim N(0,\sigma^2)$. If $y^*_i$ were observable,
+the model's parameters could be estimated via ordinary least squares.
+On the contrary, suppose that we observe $y_i$, defined as\footnote{We
+  are assuming that censoring occurs from below at 0. Censoring from
+  above, or at a point different from zero, can be rather easily
+  handled by re-defining the dependent variable appropriately. The
+  more general case of two-sided censoring is not handled by
+  \app{gretl} via a native command yet, but it is possible to estimate
+  such models using the \texttt{mle} command (see chapter
+  \ref{chap:mle}).}
+\begin{equation}
+  \label{eq:tobit}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
+      0 & \mathrm{for} \quad y^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
+In this case, regressing $y_i$ on the $x_i$'s does not yield
+consistent estimates of the parameters $\beta$, because the
+conditional mean $E(y_i|x_i)$ is not equal to $\sum_{j=1}^k x_{ij}
+\beta_j$. As is possible to show, restricting the sample to non-zero
+observations would not yield consistent estimates either. The solution
+is to estimate the parameters via maximum likelihood. The syntax is simply
+\begin{code}
+  tobit depvar indvars
+\end{code}
+
+As usual, progress of the maximization algorithm can be visualized via
+the \texttt{--verbose} switch, while \texttt{$\$$uhat} returns the
+generalized residuals.
+
+An important difference between the Tobit estimator and OLS is that
+the consequences of non-normality of the disturbance term are much
+more severe, as non-normality implies inconsistency for the Tobit
+estimator. For this reason, the output for the tobit model includes
+the Chesher-Irish test for normality by default.
+
 \subsection{Generalized Tobit model}
 \label{sec:heckit}
 
-include Heckman example script
+In the so-called ``Tobit II'' model, there are two latent variables:
+\begin{eqnarray*}
+  y^*_i & = & \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i \\
+  s^*_i & = & \sum_{j=1}^p z_{ij} \gamma_j + \eta_i 
+\end{eqnarray*}
+and the observation rule is given by
+\begin{equation}
+  \label{eq:tobitII}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
+      0 & \mathrm{for} \quad s^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
 
+\begin{itemize}
+\item MLE estimation is cumbersome but possible by using the \cmd{mle}
+  command (see chapter \ref{chap:mle})
+\item two-step estimation can be accomplished as in the provided
+  example script (insert heckit here)
+\end{itemize}
 \section{Count data}
 \label{sec:poisson}
 
@@ -245,5 +309,5 @@ example files).
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: t
+%%% TeX-master: gretl-guide.tex
 %%% End: 
