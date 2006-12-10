@@ -950,6 +950,13 @@ make_restriction_mask (int mode, const char *line, const int *list,
     return err;
 }
 
+static DATAINFO *subinfo_ptr;
+
+DATAINFO *get_subinfo (void)
+{
+    return subinfo_ptr;
+}
+
 int 
 restrict_sample_from_mask (char *mask, int mode, 
 			   double ***pZ, DATAINFO **ppdinfo)
@@ -1044,6 +1051,9 @@ restrict_sample_from_mask (char *mask, int mode,
     /* and switch pointers */
     *pZ = subZ;
     *ppdinfo = subinfo;
+
+    /* bodge */
+    subinfo_ptr = subinfo;
 
     return 0;
 }

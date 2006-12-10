@@ -5533,7 +5533,7 @@ gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
 {
     gretl_matrix *M;
     int T = t2 - t1 + 1;
-    int i, t, k = list[0];
+    int i, s, t, k = list[0];
     double x;
 
     *err = 0;
@@ -5550,8 +5550,9 @@ gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
     }
     
     for (t=0; t<T && !*err; t++) {
+	s = t + t1;
 	for (i=0; i<k; i++) {
-	    x = Z[list[i+1]][t + t1];
+	    x = Z[list[i+1]][s];
 	    if (na(x)) {
 		*err = E_MISSDATA;
 		break;
@@ -5564,6 +5565,82 @@ gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
     if (*err) {
 	gretl_matrix_free(M);
 	M = NULL;
+    }
+
+    return M;
+}
+
+/**
+ * gretl_matrix_data_subset_skip_missing:
+ * @list: list of variable to process.
+ * @Z: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl matrix holding the subset of variables from
+ * @Z specified by @list, over the sample range @t1 to @t2,
+ * inclusive.  Variables are in columns.  If there is a missing
+ * value for any variable on a given row, that row is skipped.
+ *
+ * Returns: allocated matrix or %NULL on failure. 
+ */
+
+gretl_matrix *
+gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
+				       int t1, int t2, int *err)
+{
+    gretl_matrix *M;
+    int T = t2 - t1 + 1;
+    int i, j, t, k = list[0];
+    int skip;
+    double x;
+
+    *err = 0;
+
+    if (T <= 0 || k <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	for (i=0; i<k; i++) {
+	    x = Z[list[i+1]][t];
+	    if (na(x)) {
+		T--;
+		break;
+	    }
+	}
+    }
+
+    if (T <= 0 || k <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    M = gretl_matrix_alloc(T, k);
+    if (M == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	skip = 0;
+	for (j=0; j<k; j++) {
+	    x = Z[list[j+1]][t];
+	    if (na(x)) {
+		skip = 1;
+		break;
+	    }
+	}
+	if (!skip) {
+	    for (j=0; j<k; j++) {
+		x = Z[list[j+1]][t];	
+		gretl_matrix_set(M, i, j, x);
+	    }
+	    i++;
+	}
     }
 
     return M;

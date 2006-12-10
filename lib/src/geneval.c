@@ -723,6 +723,27 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    *err = gretl_matrix_multiply(A, B, C);
 	}	
 	break;
+    case QFORM:
+	/* quadratic form, A * B * A', for symmetric B */
+	ra = gretl_matrix_rows(A);
+	ca = gretl_matrix_cols(A);
+	rb = gretl_matrix_rows(B);
+	cb = gretl_matrix_cols(B);
+
+	if (ca != rb || cb != rb) {
+	    *err = E_NONCONF;
+	} else if (!gretl_matrix_is_symmetric(B)) {
+	    *err = E_NONCONF;
+	} else {
+	    C = gretl_matrix_alloc(ra, ra);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		*err = gretl_matrix_qform(A, GRETL_MOD_NONE, B,
+					  C, GRETL_MOD_NONE);
+	    }
+	}
+	break;
     case B_DIV:
 	/* matrix "division" */
 	rb = gretl_matrix_rows(B);
@@ -789,28 +810,36 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     return C;
 }
 
+#define MATRIX_SKIP_MISSING 0
+
 static gretl_matrix *
 tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
 			int *err)
 {
     gretl_matrix *m = NULL;
-    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
     int i, t;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (xna(x[t])) {
+#if MATRIX_SKIP_MISSING
+	    T--;
+#else
 	    *err = E_MISSDATA;
 	    return NULL;
+#endif
 	}
     }
 
-    m = gretl_column_vector_alloc(n);
+    m = gretl_column_vector_alloc(T);
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
 	i = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    m->val[i++] = x[t];
+	    if (!xna(x[t])) {
+		m->val[i++] = x[t];
+	    }
 	}
     }
 
@@ -1968,9 +1997,15 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 	return NULL;
     }
 
+#if MATRIX_SKIP_MISSING
+    M = gretl_matrix_data_subset_skip_missing(list, (const double **) *p->Z, 
+					      p->dinfo->t1, p->dinfo->t2, 
+					      &p->err);
+#else
     M = gretl_matrix_data_subset_no_missing(list, (const double **) *p->Z, 
 					    p->dinfo->t1, p->dinfo->t2, 
 					    &p->err);
+#endif
 
     if (freelist) {
 	free(list);
@@ -2137,6 +2172,105 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+/* Create a matrix using more than one list, or a mixture of series
+   and lists.  Note that we can't use an augmented list here, because
+   the series are not necessarily members of the dataset: they could
+   be auxiliary series.
+*/
+
+static gretl_matrix *assemble_composite_matrix (NODE *nn, int nnodes, parser *p)
+{
+    NODE *n;
+    gretl_matrix *m = NULL;
+    int *list;
+    double **X = NULL;
+    int t, T, k = 0;
+    int i, j, s;
+
+    for (i=0; i<nnodes; i++) {
+	n = nn->v.bn.n[i];
+	if (n->t == LIST) {
+	    list = get_list_by_name(n->v.str);
+	    if (list == NULL) {
+		p->err = E_DATA;
+		return NULL;
+	    } 
+	    k += list[0];
+	} else if (n->t == VEC) {
+	    k++;
+	}
+    }
+
+    X = malloc(k * sizeof *X);
+    if (X == NULL) {
+	return NULL;
+    }
+
+    s = 0;
+    for (i=0; i<nnodes; i++) {
+	n = nn->v.bn.n[i];
+	if (n->t == LIST) {
+	    list = get_list_by_name(n->v.str);
+	    for (j=1; j<=list[0]; j++) {
+		X[s++] = (*p->Z)[list[j]];
+	    }
+	} else if (n->t == VEC) {
+	    X[s++] = n->v.xvec;
+	}
+    }
+
+    T = p->dinfo->t2 - p->dinfo->t1 + 1;
+	    
+    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (i=0; i<k; i++) {
+	    if (na(X[i][t])) {
+#if MATRIX_SKIP_MISSING
+		T--;
+		break;
+#else
+		free(X);
+		p->err = E_MISSDATA;
+		return NULL;
+#endif
+	    }
+	}
+    }
+
+    if (T == 0) {
+	free(X);
+	p->err = E_DATA;
+	return NULL;
+    }
+
+    m = gretl_matrix_alloc(T, k);
+    if (m == NULL) {
+	p->err = E_ALLOC;
+    } else {
+	int skip;
+
+	i = 0;
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    skip = 0;
+	    for (j=0; j<k; j++) {
+		if (na(X[j][t])) {
+		    skip = 1;
+		    break;
+		}
+	    }
+	    if (!skip) {
+		for (j=0; j<k; j++) {
+		    gretl_matrix_set(m, i, j, X[j][t]);
+		}
+		i++;
+	    }
+	}
+    }
+
+    free(X);
+
+    return m;
+}
+
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
                           s == DUM || s == LIST)
 
@@ -2149,7 +2283,7 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     int m = t->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
-    int list = 0;
+    int nlist = 0;
     int seppos = -1;
     int i;
 
@@ -2196,32 +2330,35 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	} else if (n->t == DUM) {
 	    dum++;
 	} else if (n->t == LIST) {
-	    list++;
+	    nlist++;
 	} else if (n->t == EMPTY) {
 	    if (nsep == 0) {
 		seppos = i;
 	    }
 	    nsep++;
 	}
-	if ((dum || list) && m != 1) {
-	    /* dummy and list must be singleton nodes */
+
+	if (dum && m != 1) {
+	    /* dummy must be singleton node */
 	    p->err = E_TYPES;
-	} else if (nnum && nvec) {
-	    /* can't mix scalars and series */
+	} else if ((nvec || nlist) && nnum) {
+	    /* can't mix series/lists with scalars */
 	    p->err = E_TYPES;
-	} else if (nvec && nsep) {
+	} else if ((nvec || nlist) && nsep) {
 	    /* can't have row separators in a matrix
-	       composed of series */
+	       composed of series or lists */
 	    p->err = E_TYPES;
 	} 
     }
 
     if (!p->err) {
-	if (nnum > 0) {
+	if ((nvec > 0 && nlist > 0) || nlist > 1) {
+	    M = assemble_composite_matrix(nn, m, p);
+	} else if (nnum > 0) {
 	    M = matrix_from_scalars(nn, m, nsep, seppos, p);
 	} else if (nvec > 0) {
 	    M = matrix_from_series(nn, nvec, p);
-	} else if (list) {
+	} else if (nlist) {
 	    M = matrix_from_list(nn->v.bn.n[0], p);
 	} else if (dum) {
 	    n = nn->v.bn.n[0];
@@ -2798,6 +2935,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case KRON:
     case MCAT:
+    case QFORM:
 	/* matrix-only binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);

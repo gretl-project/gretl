@@ -35,7 +35,7 @@ enum {
     B_ADD,
     B_SUB,
     B_MUL,
-    B_DIV, /* 10 */
+    B_DIV,  /* 10 */
     B_MOD, 
     B_POW,
     B_EQ,
@@ -45,7 +45,7 @@ enum {
     B_GTE,
     B_NEQ,
     B_AND,
-    B_OR,  /* 20 */
+    B_OR,   /* 20 */
     LPR,     /* left paren */
     RPR,     /* right paren */
     LBR,     /* left bracket */
@@ -85,7 +85,7 @@ enum {
     MISSZERO,
     ZEROMISS,
     MEDIAN,
-    GINI, /* 60 */
+    GINI,   /* 60 XX */ 
     SUM,
     MEAN,
     MIN,
@@ -143,9 +143,10 @@ enum {
     ONES,
     MUNIF,
     MNORM,
+    QFORM,
     QR,
-    EIGSYM,
-    EIGGEN,  /* 120 */
+    EIGSYM,  /* 120 */
+    EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
     DOT,      /* period */
@@ -154,8 +155,8 @@ enum {
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
-    UMAT,     /* user-defined matrix */
-    UOBJ,  /* 130: user-defined object (e.g. model) */
+    UMAT,  /* 130: user-defined matrix */
+    UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
@@ -164,8 +165,8 @@ enum {
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,     /* unevaluated matrix subspec */
-    MSPEC,  /* 140: evaluated matrix subspec */
+    MSL2,   /* 140: unevaluated matrix subspec */
+    MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,
@@ -174,8 +175,8 @@ enum {
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
-    STR,      /* string */
-    EROOT,  /* 150: dummy root for (...) expression */
+    STR,    /* 150: string */
+    EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,

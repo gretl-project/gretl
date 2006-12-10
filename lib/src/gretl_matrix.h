@@ -410,6 +410,10 @@ gretl_matrix *
 gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
 				     int t1, int t2, int *err);
 
+gretl_matrix *
+gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
+				       int t1, int t2, int *err);
+
 void lapack_mem_free (void);
 
 #endif /* GRETL_MATRIX_H */

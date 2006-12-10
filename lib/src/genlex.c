@@ -180,6 +180,7 @@ struct str_table funcs[] = {
     { TRACE,    "tr" },
     { NORM1,    "onenorm" },
     { RCOND,    "rcond" },
+    { QFORM,    "qform" },
     { QR,       "qrdecomp" },
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
