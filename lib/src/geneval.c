@@ -1922,6 +1922,7 @@ static gretl_matrix *matrix_from_series (NODE *t, int nvec, parser *p)
     int i, j;
 
     M = gretl_matrix_alloc(r, c);
+
     if (M == NULL) {
 	p->err = E_ALLOC;
     } else {
