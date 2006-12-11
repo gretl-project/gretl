@@ -272,8 +272,11 @@ static void nls_param_init (nls_spec *spec, int i, const char *vname,
     spec->coeff[i] = x;
 }
 
-/* scrutinize word and see if it's a new scalar that should
-   be added to the NLS specification; if so, add it */
+/* Scrutinize word and see if it's a new scalar that should be added
+   to the NLS specification; if so, add it.  This function is used by
+   the fallback get_params_from_nlfunc(), which comes into play only
+   if no "deriv" or "params" lines have been provided.
+*/
 
 static int 
 maybe_add_param_to_spec (nls_spec *spec, const char *word, 
@@ -285,19 +288,15 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
     fprintf(stderr, "maybe_add_param: looking at '%s'\n", word);
 #endif
 
-    /* if word represents a math function or constant, skip it */
     if (function_from_string(word) || const_lookup(word)) {
 	return 0;
     }
 
-    /* try looking up word as the name of a variable */
     v = varindex(pdinfo, word);
 
     if (v < pdinfo->v) {
-	/* existing variable */
 	if (var_is_series(pdinfo, v)) {
-	    /* if term is not a scalar, skip it: only scalars can figure
-	       as regression parameters */
+	    /* only scalars are wanted here */
 	    return 0;
 	}
     } else {
@@ -305,7 +304,7 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 	return E_UNKVAR;
     }
 
-    /* if this term is already present in the specification, skip it */
+    /* if this term is already present in the spec, skip it */
     for (i=0; i<spec->nparam; i++) {
 	if (!strcmp(word, spec->params[i].vname)) {
 	    return 0;
@@ -320,15 +319,15 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 	return E_ALLOC;
     }
 
-    i = spec->nparam - 1;
-    nls_param_init(spec, i, word, v, Z[v][0]);
+    nls_param_init(spec, spec->nparam - 1, word, v, Z[v][0]);
 
     return 0;
 }
 
 /* Parse NLS function specification string to find names of variables
    that may figure as parameters of the regression function.  We need
-   to do this only if analytical derivatives have not been supplied.
+   to do this only if we haven't been given derivatives or a "params"
+   line.
 */
 
 static int 
@@ -537,7 +536,7 @@ static void readjust_params (nls_spec *spec, const char *zlist)
 static int nls_missval_check (nls_spec *spec)
 {
     char *zlist = NULL;
-    int t, v, miss = 0;
+    int t, v;
     int t1 = spec->t1, t2 = spec->t2;
     int adj, err = 0;
 
@@ -553,7 +552,7 @@ static int nls_missval_check (nls_spec *spec)
     err = nls_calculate_fvec();
 
     /* if we messed with any parameters, reset them now */
-    if (zlist != NULL) {
+    if (adj) {
 	readjust_params(pspec, zlist);
 	free(zlist);
     }
@@ -588,10 +587,6 @@ static int nls_missval_check (nls_spec *spec)
 	}
     }
 
-#if NLS_DEBUG
-    fprintf(stderr, "Got here: t1=%d, t2=%d\n", t1, t2);
-#endif
-
     if (t2 - t1 + 1 < spec->nparam) {
 	return E_DF;
     }
@@ -600,15 +595,9 @@ static int nls_missval_check (nls_spec *spec)
 	if (na((*nZ)[v][t])) {
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d at obs %d\n", t1, t2, v, t);
-	    miss = 1;
-	    break;
+	    return E_MISSDATA;
 	}
     }  
-
-    if (miss) {
-	strcpy(gretl_errmsg, _("There were missing data values"));
-	return 1;
-    }
 
     spec->t1 = t1;
     spec->t2 = t2;
@@ -620,7 +609,9 @@ static int nls_missval_check (nls_spec *spec)
 #endif
 
     /* if we adjusted any params above, recalculate fvec */
-    nls_calculate_fvec();
+    if (adj) {
+	nls_calculate_fvec();
+    }
 
     return 0;
 }
@@ -806,7 +797,7 @@ static int get_nls_fvec (double *fvec)
 
 static int get_nls_deriv (int i, double *deriv)
 {
-    int j, t, vec, v = pspec->params[i].dnum;
+    int j, t, ser, v = pspec->params[i].dnum;
 
 #if NLS_DEBUG
     fprintf(stderr, "get_nls_deriv: getting deriv %d\n", i);
@@ -821,8 +812,8 @@ static int get_nls_deriv (int i, double *deriv)
 	v = pspec->params[i].dnum = ndinfo->v - 1;
     }
 
-    /* derivative may be vector or scalar */
-    vec = var_is_series(ndinfo, v);
+    /* derivative may be series or scalar */
+    ser = var_is_series(ndinfo, v);
 
 #if NLS_DEBUG
     fprintf(stderr, " v = %d, vec = %d\n", v, vec);
@@ -831,7 +822,7 @@ static int get_nls_deriv (int i, double *deriv)
     j = 0;
     /* transcribe from dataset to deriv array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
-	if (vec) {
+	if (ser) {
 	    deriv[j] = - (*nZ)[v][t];
 	} else {
 	    deriv[j] = - (*nZ)[v][0];

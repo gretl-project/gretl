@@ -2391,7 +2391,7 @@ static int roundup_mod (int i, double x)
     return (int) ceil((double) x * i);
 }
 
-static int fract_int_GPH (int T, int m, double *hhat, double *omega, PRN *prn)
+static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
 {
     double x, **Z = NULL;
     DATAINFO *dinfo;
@@ -2418,10 +2418,10 @@ static int fract_int_GPH (int T, int m, double *hhat, double *omega, PRN *prn)
     if (!mod.errcode) {
 	double tval = -mod.coeff[1] / mod.sderr[1];
 
-	pprintf(prn, "\n%s (T = %d, m = %d)\n"
+	pprintf(prn, "%s (m = %d)\n"
 		"  %s = %g (%g)\n"
 		"  %s: t(%d) = %g, %s %.4f\n",
-		_("GPH test for fractional integration"), T, m,
+		_("GPH test for fractional integration"), m,
 		_("Estimated degree of integration"), -mod.coeff[1], mod.sderr[1],
 		_("test statistic"), mod.dfd, tval, 
 		_("with p-value"), t_pvalue_2(tval, mod.dfd));
@@ -2672,10 +2672,10 @@ int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
     se = 1 / (2.0 * sqrt((double) m));
     z = d / se;
 
-    pprintf(prn, "\n%s (T = %d, m = %d)\n"
+    pprintf(prn, "\n%s (m = %d)\n"
 	    "  %s = %g (%g)\n"
 	    "  %s: z = %g, %s %.4f\n\n",
-	    _("Local Whittle Estimator"), T, m,
+	    _("Local Whittle Estimator"), m,
 	    _("Estimated degree of integration"), d, se,
 	    _("test statistic"), z, 
 	    _("with p-value"), normal_pvalue_2(z));    
@@ -2863,15 +2863,12 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     } else {
 	pputc(prn, '\n');
     }
-    pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
 
-    if (do_graph) { 
-	savexx = malloc((1 + nobs/2) * sizeof *savexx);
-	if (savexx == NULL) {
-	    err = 1;
-	    fclose(fq);
-	    do_graph = 0;
-	}
+    savexx = malloc((1 + nobs/2) * sizeof *savexx);
+    if (savexx == NULL) {
+	err = 1;
+	fclose(fq);
+	do_graph = 0;
     }
 
     for (t=1; t<=nobs/2; t++) {
@@ -2886,8 +2883,6 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
 	xx *= varx /(2 * M_PI);
-	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
-		(double) nobs / t, xx);
 	if (savexx != NULL) {
 	    savexx[t] = xx;
 	}
@@ -2896,8 +2891,6 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	    hhat[t-1] = xx;
 	}
     }
-
-    pputc(prn, '\n');
 
     if (do_graph) {
 	gretl_push_c_numeric_locale();
@@ -2911,17 +2904,27 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	fputs("e\n", fq);
 
 	fclose(fq);
-	free(savexx);
 	err = gnuplot_make_graph();
     }
 
     if (!window) {
-	if (fract_int_GPH(nobs, m, hhat, omega, prn)) {
+	if (fract_int_GPH(m, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
 	fract_int_LWE((const double **) *pZ, varno, width, t1, t2, prn);
     }
 
+    pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
+
+    for (t=1; t<=nobs/2; t++) {
+	yy = 2 * M_PI * t / (double) nobs;
+	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
+		(double) nobs / t, savexx[t]);
+    }
+
+    pputc(prn, '\n');
+
+    free(savexx);
     free(autocov);
     free(omega);
     free(hhat);

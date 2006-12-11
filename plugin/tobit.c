@@ -902,6 +902,72 @@ static double tobit_depvar_scale (const MODEL *pmod, int *miss)
     return scale;
 }
 
+#if 0 /* may be worth trying, but broken for now */
+
+static int probit_init (const int *list, double ***pZ, DATAINFO *pdinfo,
+			MODEL *pmod, PRN *prn)
+{
+    MODEL aux;
+    int *plist = gretl_list_copy(list);
+    double *y = (*pZ)[list[1]];
+    int t, v = pdinfo->v;
+    int err;
+
+    err = dataset_add_series(2, pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    strcpy(pdinfo->varname[v], "d");
+
+    /* dummified dependent variable */
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	(*pZ)[v][t] = (na(y[t]))? NADBL : (y[t] > 0)? 1 : 0;
+    }
+
+    plist[1] = v;
+    *pmod = logit_probit(plist, pZ, pdinfo, PROBIT, OPT_NONE, prn);
+    if (pmod->errcode) {
+	err = pmod->errcode;
+	goto bailout;
+    }
+
+    printmodel(pmod, pdinfo, OPT_NONE, prn);
+    
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	(*pZ)[v][t] = (y[t] > 0)? y[t] : NADBL;
+	(*pZ)[v+1][t] = pmod->uhat[t];
+    }
+
+    /* add the probit residual */
+    gretl_list_append_term(&plist, v + 1);
+
+    strcpy(pdinfo->varname[v], "yaux");
+    strcpy(pdinfo->varname[v+1], "uhat");
+    
+    aux = lsq(plist, pZ, pdinfo, OLS, OPT_A);
+    err = aux.errcode;
+
+    printmodel(&aux, pdinfo, OPT_NONE, prn);
+
+    /* transcribe coeffs into probit model shell */
+    for (t=0; t<pmod->ncoeff; t++) {
+	pmod->coeff[t] = aux.coeff[t];
+    }
+
+    pmod->list[1] = list[1];
+
+ bailout:
+
+    clear_model(&aux);
+    dataset_drop_last_variables(2, pZ, pdinfo);
+    free(plist);
+	
+    return err;
+}
+
+#endif
+
 /* the driver function for the plugin */
 
 MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
@@ -913,8 +979,13 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     int missvals = 0;
     int t;
 
-    /* run initial OLS: OPT_M would ban missing obs */
+#if 0
+    /* initial probit (broken at present) */
+    probit_init(list, pZ, pdinfo, &model, prn);
+#else
+    /* run initial OLS */
     model = lsq(list, pZ, pdinfo, OLS, OPT_A);
+#endif
     if (model.errcode) {
 	return model;
     }
@@ -928,6 +999,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 		y[t] *= scale;
 	    }
 	}
+	fprintf(stderr, "Tobit: rescaling depvar using %g\n", scale);
 	clear_model(&model);
 	model = lsq(list, pZ, pdinfo, OLS, OPT_A);
     }
