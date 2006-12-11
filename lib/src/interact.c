@@ -2480,7 +2480,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 		int batch, int echo_stdout, char leadchar,
 		int *stdlen, int *prnlen, PRN *prn)
 {
-    int use_varnames = (cmd->ci != AR);
+    int use_varnames = (cmd->ci != AR && cmd->ci != DELEET);
     char first[16];
     int nsep, gotsep, i;
 

@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 1 /* can be set > 1 */
+# define EDEBUG 2 /* can be set > 1 */
 #else
 # define EDEBUG 0
 #endif
@@ -1335,7 +1335,14 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	a = user_matrix_get_submatrix(l->v.str, r->v.mspec, &p->err);
+	if (l->t == MAT) {
+	    a = matrix_get_submatrix(l->v.m, r->v.mspec, &p->err);
+	} else if (l->t == STR) {
+	    a = user_matrix_get_submatrix(l->v.str, r->v.mspec, &p->err);
+	} else {
+	    p->err = E_TYPES;
+	}
+
 	if (a != NULL) {
 	    ret = aux_matrix_node(p);
 	    if (ret == NULL) {
@@ -1815,6 +1822,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case LDIF:
 	case SDIF:
 	   p->err = diff_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
+	   break;
+	case ODEV:
+	   p->err = orthdev_series(l->v.xvec, ret->v.xvec, p->dinfo); 
 	   break;
 	case CUM:
 	   p->err = cum_series(l->v.xvec, ret->v.xvec, p->dinfo); 
@@ -3024,6 +3034,7 @@ static NODE *eval (NODE *t, parser *p)
     case DIF:
     case LDIF:
     case SDIF:
+    case ODEV:
     case CUM:
     case HPFILT:
     case BKFILT:

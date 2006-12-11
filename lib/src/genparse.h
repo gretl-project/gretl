@@ -74,8 +74,9 @@ enum {
     SDIF,     /* seasonal difference */
     SORT,     /* ascending sort */
     DSORT,    /* descending sort */
-    NOBS,
-    T1,     /* 50 */
+    ODEV,     /* orthogonal deviation */
+    NOBS,   /* 50 */
+    T1,
     T2,
     CHISQ,
     STUDENT,
@@ -84,8 +85,8 @@ enum {
     OK,
     MISSZERO,
     ZEROMISS,
-    MEDIAN,
-    GINI,   /* 60 XX */ 
+    MEDIAN,   /* 60 */ 
+    GINI,
     SUM,
     MEAN,
     MIN,
@@ -94,8 +95,8 @@ enum {
     VCE,      /* variance */
     LRVAR,    /* long-run variance */
     SST,
-    CNORM,
-    DNORM,  /* 70 */
+    CNORM,  /* 70 */
+    DNORM,
     QNORM,
     GAMMA,
     LNGAMMA,
@@ -104,8 +105,8 @@ enum {
     RESAMPLE,
     PMEAN,
     PSD,
-    IMAT,
-    SUMR,    /* 80 */
+    IMAT,   /* 80 */
+    SUMR,
     SUMC,
     MEANR,
     MEANC,
@@ -114,8 +115,8 @@ enum {
     INV,
     DIAG,
     TRANSP,
-    TVEC,
-    VECH,    /* 90 */
+    TVEC,    /* 90 */
+    VECH,
     UNVECH,
     ROWS,
     COLS,
@@ -124,8 +125,8 @@ enum {
     TRACE,
     NORM1,
     RCOND,
-    VARNUM,
-    OBSNUM,  /* 100 */
+    VARNUM,  /* 100 */
+    OBSNUM,
     ISSERIES,
     ISLIST,
     ISNULL,
@@ -134,8 +135,8 @@ enum {
     CDF,
     CRIT,
     MAKEMASK,
-    FUNC_MAX, /* separator: end of single-arg functions */
-    COR,     /* 110 */
+    FUNC_MAX, /* 110: separator: end of single-arg functions */
+    COR,
     COV,
     UNIFORM,
     NORMAL,
@@ -144,8 +145,8 @@ enum {
     ONES,
     MUNIF,
     MNORM,
-    QFORM,
-    QR,      /* 120 */
+    QFORM,   /* 120 */
+    QR,
     EIGSYM,
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
@@ -154,8 +155,8 @@ enum {
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
-    DUM,      /* dummy variable */
-    UVAR,  /* 130: user variable (scalar or series) */
+    DUM,    /* 130: dummy variable */
+    UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
@@ -164,8 +165,8 @@ enum {
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
-    DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,  /* 140: "dollar" matrix plus old-style string subspec */
+    DMSL,   /* 140: "dollar" matrix plus subspec */
+    DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
@@ -174,8 +175,8 @@ enum {
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX,  /* loop index variable */
-    LIST,   /* 150: reference to named list */
+    LOOPIDX, /* 150: loop index variable */
+    LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */

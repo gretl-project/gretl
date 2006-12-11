@@ -154,8 +154,9 @@ int diff_series (const double *x, double *y, int f,
     }
 
     for (t=t1; t<=pdinfo->t2; t++) {
-	if (pdinfo->structure == STACKED_TIME_SERIES &&
-	    panel_unit_first_obs(t, pdinfo)) {
+
+	if (dataset_is_panel(pdinfo) && t % pdinfo->pd == 0) {
+	    /* skip first observation in panel unit */
 	    continue;
 	}
 
@@ -175,6 +176,55 @@ int diff_series (const double *x, double *y, int f,
     }
 
     return 0; /* see FIXME above */
+}
+
+/**
+ * orthdev_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @pdinfo: data set information.
+ *
+ * Calculates in @y the forward orthogonal deviations of the input 
+ * series @x.  That is, y[t+1] is the scaled difference between x[t]
+ * and the mean of the subsequent observations on x.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
+{
+    double ci, xbar;
+    int n, s, t, Tt;
+
+    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+
+	if (na(x[t])) {
+	    continue;
+	}
+
+	if (dataset_is_panel(pdinfo)) {
+	    Tt = pdinfo->pd - (t % pdinfo->pd) - 1;
+	} else {
+	    Tt = pdinfo->t2 - t;
+	}
+
+	xbar = 0.0;
+	n = 0;
+	for (s=1; s<=Tt; s++) {
+	    if (!na(x[t+s])) {
+		xbar += x[t+s];
+		n++;
+	    }
+	}
+
+	if (n > 0) {
+	    xbar /= n;
+	    ci = sqrt(n / (n + 1.0));
+	    y[t+1] = ci * (x[t] - xbar);
+	}
+    }
+
+    return 0;
 }
 
 /**

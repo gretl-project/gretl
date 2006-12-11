@@ -26,6 +26,8 @@ int sort_series (const double *x, double *y, int f,
 int diff_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo);
 
+int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo);
+
 int cum_series (const double *x, double *y, 
 		const DATAINFO *pdinfo);
 

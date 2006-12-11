@@ -447,7 +447,7 @@ static void get_multi_args (NODE *t, parser *p)
     }
 }
 
-static void get_matrix_def (NODE *t, parser *p)
+static void get_matrix_def (NODE *t, parser *p, int *sub)
 {
     NODE *n;
     char cexp = 0;
@@ -475,6 +475,9 @@ static void get_matrix_def (NODE *t, parser *p)
 		if (p->ch == '\'') {
 		    t->ext = TRANSP;
 		    parser_getc(p);
+		} else if (p->ch == '[') {
+		    parser_ungetc(p);
+		    *sub = 1;
 		}
 		break;
 	    }
@@ -693,10 +696,23 @@ static NODE *powterm (parser *p)
 	    t->v.b1.b = base(p, t);
 	}
     } else if (p->sym == LCB) {
-	/* opener for explicit matrix definition */
+	/* explicit matrix definition, possibly followed by
+	   a "subslice" specification */
+	int sub = 0;
+
 	t = newbn(MDEF);
 	if (t != NULL) {
-	    get_matrix_def(t, p);
+	    get_matrix_def(t, p, &sub);
+	    if (sub) {
+		t = newb2(MSL, t, NULL);
+		if (t != NULL) {
+		    t->v.b2.r = newb2(MSL2, NULL, NULL);
+		    if (t->v.b2.r != NULL) {
+			lex(p);
+			get_slice_parts(t->v.b2.r, p);
+		    }
+		}		
+	    }
 	}
     } else if (p->sym == UFUN) {
 	t = newb2(p->sym, NULL, NULL);
