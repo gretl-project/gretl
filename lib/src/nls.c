@@ -2768,7 +2768,7 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
 		p4m = 4.0;
 		for (m=0; m<r-1; m++) {
 		    for (k=0; k<r-m; k++) {
-			Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1.0);
+			Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1);
 		    }
 		    p4m *= 4.0;
 		}

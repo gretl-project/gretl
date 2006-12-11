@@ -65,7 +65,7 @@ enum {
     TAN,
     ATAN,
     LOG,
-    LOG10, /* 40 */
+    LOG10,  /* 40 */
     LOG2,
     EXP,
     SQRT,
@@ -75,7 +75,7 @@ enum {
     SORT,     /* ascending sort */
     DSORT,    /* descending sort */
     NOBS,
-    T1,   /* 50 */
+    T1,     /* 50 */
     T2,
     CHISQ,
     STUDENT,
@@ -105,7 +105,7 @@ enum {
     PMEAN,
     PSD,
     IMAT,
-    SUMR,  /* 80 */
+    SUMR,    /* 80 */
     SUMC,
     MEANR,
     MEANC,
@@ -115,7 +115,7 @@ enum {
     DIAG,
     TRANSP,
     TVEC,
-    VECH,   /* 90 */
+    VECH,    /* 90 */
     UNVECH,
     ROWS,
     COLS,
@@ -133,9 +133,10 @@ enum {
     PVAL,
     CDF,
     CRIT,
+    MAKEMASK,
     FUNC_MAX, /* separator: end of single-arg functions */
-    COR,
-    COV,     /* 110 */
+    COR,     /* 110 */
+    COV,
     UNIFORM,
     NORMAL,
     FRACDIF,    
@@ -144,8 +145,8 @@ enum {
     MUNIF,
     MNORM,
     QFORM,
-    QR,
-    EIGSYM,  /* 120 */
+    QR,      /* 120 */
+    EIGSYM,
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
@@ -154,8 +155,8 @@ enum {
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
-    UVAR,     /* user variable (scalar or series) */
-    UMAT,  /* 130: user-defined matrix */
+    UVAR,  /* 130: user variable (scalar or series) */
+    UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
@@ -164,8 +165,8 @@ enum {
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,   /* 140: unevaluated matrix subspec */
+    DMSTR,  /* 140: "dollar" matrix plus old-style string subspec */
+    MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
@@ -174,8 +175,8 @@ enum {
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
-    LIST,     /* reference to named list */
-    STR,    /* 150: string */
+    LIST,   /* 150: reference to named list */
+    STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */

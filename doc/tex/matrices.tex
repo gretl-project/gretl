@@ -229,6 +229,7 @@ into four categories:
 \item Those taking a single matrix as argument and returning a matrix.
 \item Those taking one or two dimensions as arguments and
   returning a matrix.
+\item Those taking two matrices as arguments and returning a matrix.
 \item Those taking one or two matrices as arguments and returning one
   or two matrices.
 \end{enumerate}
@@ -353,6 +354,21 @@ matrix A = mnormal(m,n)
 The \texttt{muniform()} and \texttt{mnormal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
+
+\subsection{Single-return two-matrix functions}
+\label{matrix-two}
+
+At present there is only one such function, \texttt{qform()}, which
+constructs a quadratic form in a matrix $A$ and a conformable
+symmetric matrix $X$.  The command
+%
+\begin{code}
+B = qform(A, X)
+\end{code}
+%
+calculates $B = A X A^{\prime}$.  This is computed more efficiently than
+the alternative command \texttt{B = A*X*A'}.  In addition, the result
+is symmetric by construction.
 
 \subsection{Multiple-return matrix functions}
 \label{matrix-multiples}

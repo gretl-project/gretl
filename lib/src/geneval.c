@@ -514,6 +514,48 @@ static int dist_argc (char *s, int f)
     return 0;
 }
 
+/* make a column vector containing the 1-based observation numbers
+   corresponding to the non-zero entries in the series under node n
+*/
+
+static NODE *make_series_mask (NODE *n, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_matrix *v;
+	int t, s, T = 0;
+
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    if (n->v.xvec[t] != 0) {
+		T++;
+	    }
+	}
+
+	if (T == 0) {
+	    p->err = E_DATA;
+	    return NULL;
+	}
+
+	v = gretl_column_vector_alloc(T);
+	if (v == NULL) {
+	    p->err = E_ALLOC;
+	    return NULL;
+	}
+
+	s = 0;
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    if (n->v.xvec[t] != 0) {
+		gretl_vector_set(v, s++, t + 1);
+	    }
+	}
+	
+	ret->v.m = v;
+    }
+
+    return ret;
+}
+
 /* return a node containing the evaluated result of a
    probability distriution function */
 
@@ -810,8 +852,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     return C;
 }
 
-#define MATRIX_SKIP_MISSING 0
-
 static gretl_matrix *
 tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
 			int *err)
@@ -822,12 +862,8 @@ tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (xna(x[t])) {
-#if MATRIX_SKIP_MISSING
-	    T--;
-#else
 	    *err = E_MISSDATA;
 	    return NULL;
-#endif
 	}
     }
 
@@ -837,9 +873,7 @@ tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
     } else {
 	i = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (!xna(x[t])) {
-		m->val[i++] = x[t];
-	    }
+	    m->val[i++] = x[t];
 	}
     }
 
@@ -1912,41 +1946,6 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     return M;
 }
 
-static gretl_matrix *matrix_from_series (NODE *t, int nvec, parser *p)
-{
-    gretl_matrix *M;
-    NODE *n;
-    int r = p->dinfo->t2 - p->dinfo->t1 + 1;
-    int c = nvec;
-    double x;
-    int i, j;
-
-    M = gretl_matrix_alloc(r, c);
-
-    if (M == NULL) {
-	p->err = E_ALLOC;
-    } else {
-	for (j=0; j<c && !p->err; j++) {
-	    n = t->v.bn.n[j];
-	    for (i=0; i<r; i++) {
-		x = n->v.xvec[i + p->dinfo->t1];
-		if (xna(x)) {
-		    p->err = E_MISSDATA;
-		    break;
-		}
-		gretl_matrix_set(M, i, j, x);
-	    }
-	}
-    }
-
-    if (M != NULL && p->err) {
-	gretl_matrix_free(M);
-	M = NULL;
-    }
-
-    return M;
-}
-
 static int *full_series_list (const DATAINFO *pdinfo, int *err)
 {
     int *list = NULL;
@@ -1977,6 +1976,8 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
 
     return list;
 }
+
+#define MATRIX_SKIP_MISSING 1
 
 static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 {
@@ -2173,13 +2174,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
-/* Create a matrix using more than one list, or a mixture of series
-   and lists.  Note that we can't use an augmented list here, because
-   the series are not necessarily members of the dataset: they could
-   be auxiliary series.
+/* Create a matrix using selected series, or a mixture of series and
+   lists, or more than one list.  Note that we can't use an augmented
+   list here, because the series are not necessarily members of the
+   dataset: they could be auxiliary series.
 */
 
-static gretl_matrix *assemble_composite_matrix (NODE *nn, int nnodes, parser *p)
+static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 {
     NODE *n;
     gretl_matrix *m = NULL;
@@ -2221,7 +2222,7 @@ static gretl_matrix *assemble_composite_matrix (NODE *nn, int nnodes, parser *p)
     }
 
     T = p->dinfo->t2 - p->dinfo->t1 + 1;
-	    
+
     for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	for (i=0; i<k; i++) {
 	    if (na(X[i][t])) {
@@ -2275,7 +2276,7 @@ static gretl_matrix *assemble_composite_matrix (NODE *nn, int nnodes, parser *p)
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
                           s == DUM || s == LIST)
 
-/* composing a matrix from scalars or series */
+/* composing a matrix from scalars, series or lists */
 
 static NODE *matrix_def_node (NODE *t, parser *p)
 {
@@ -2353,12 +2354,10 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     }
 
     if (!p->err) {
-	if ((nvec > 0 && nlist > 0) || nlist > 1) {
-	    M = assemble_composite_matrix(nn, m, p);
+	if (nvec > 0 || nlist > 1) {
+	    M = assemble_matrix(nn, m, p);
 	} else if (nnum > 0) {
 	    M = matrix_from_scalars(nn, m, nsep, seppos, p);
-	} else if (nvec > 0) {
-	    M = matrix_from_series(nn, nvec, p);
 	} else if (nlist) {
 	    M = matrix_from_list(nn->v.bn.n[0], p);
 	} else if (dum) {
@@ -2372,14 +2371,18 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	}
     }
 
-    if (!p->err) {
+    if (p->err) {
+	if (M != NULL) {
+	    gretl_matrix_free(M);
+	}
+    } else {
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = M;
 	}
     }
 
-    for (i=0; i<m && !p->err; i++) {
+    for (i=0; i<m; i++) {
 	/* forestall double-freeing: null out any aux nodes */
 	if (is_aux_node(nn->v.bn.n[i])) {
 	    nn->v.bn.n[i] = NULL;
@@ -2981,6 +2984,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
+	} else {
+	    node_type_error(t, p, VEC, l->t);
+	}
+	break;
+    case MAKEMASK:
+	/* one series argument needed: vector output */
+	if (l->t == VEC) {
+	    ret = make_series_mask(l, p);
 	} else {
 	    node_type_error(t, p, VEC, l->t);
 	}
@@ -4381,7 +4392,6 @@ void gen_cleanup (parser *p)
 	    p->ret = NULL;
 	}
     } else {
-	/* FIXME ternary: 'ret' may be _under_ 'tree' */
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, "p->tree");
 	}
