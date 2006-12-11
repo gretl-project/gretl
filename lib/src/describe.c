@@ -2391,57 +2391,47 @@ static int roundup_mod (int i, double x)
     return (int) ceil((double) x * i);
 }
 
-static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
+static int fract_int_GPH (int T, int m, double *hhat, double *omega, PRN *prn)
 {
-    double xx, tstat, **tmpZ = NULL;
-    DATAINFO *tmpdinfo;
-    MODEL tmp;
-    int t, err = 0, list[4];
+    double x, **Z = NULL;
+    DATAINFO *dinfo;
+    MODEL mod;
+    int list[4] = { 3, 1, 0, 2 };
+    int t, err = 0;
 
-    tmpdinfo = datainfo_new();
-    if (tmpdinfo == NULL) {
-	return 1;
-    }
-
-    tmpdinfo->n = n;
-    tmpdinfo->v = 3;
-    if (start_new_Z(&tmpZ, tmpdinfo, 1)) {
+    dinfo = create_new_dataset(&Z, 3, m, 0);
+    if (dinfo == NULL) {
 	return 1;
     }
 
     /* Test from Geweke and Porter-Hudak, as set out in
        Greene, Econometric Analysis 4e, p. 787 */
     
-    for (t=0; t<n; t++) {
-	tmpZ[0][t] = 1.0;
-	tmpZ[1][t] = log(hhat[t]);
-	xx = sin(omega[t] / 2);
-	tmpZ[2][t] = log(4 * xx * xx);
+    for (t=0; t<m; t++) {
+	Z[1][t] = log(hhat[t]);
+	x = sin(omega[t] / 2);
+	Z[2][t] = log(4 * x * x);
     }
 
-    list[0] = 3;
-    list[1] = 1;
-    list[2] = 0;
-    list[3] = 2;
+    mod = lsq(list, &Z, dinfo, OLS, OPT_A);
 
-    tmp = lsq(list, &tmpZ, tmpdinfo, OLS, OPT_A);
+    if (!mod.errcode) {
+	double tval = -mod.coeff[1] / mod.sderr[1];
 
-    if (!tmp.errcode) {
-	tstat = -tmp.coeff[1] / tmp.sderr[1];
-	pprintf(prn, "\n%s (Geweke, Porter-Hudak)\n"
+	pprintf(prn, "\n%s (T = %d, m = %d)\n"
 		"  %s = %g (%g)\n"
 		"  %s: t(%d) = %g, %s %.4f\n",
-		_("Test for fractional integration"),
-		_("Estimated degree of integration"), -tmp.coeff[1], tmp.sderr[1],
-		_("test statistic"), tmp.dfd, tstat, 
-		_("with p-value"), t_pvalue_2(tstat, tmp.dfd));
+		_("GPH test for fractional integration"), T, m,
+		_("Estimated degree of integration"), -mod.coeff[1], mod.sderr[1],
+		_("test statistic"), mod.dfd, tval, 
+		_("with p-value"), t_pvalue_2(tval, mod.dfd));
     } else {
-	err = tmp.errcode;
+	err = mod.errcode;
     }
 
-    clear_model(&tmp);
+    clear_model(&mod);
 
-    destroy_dataset(tmpZ, tmpdinfo);
+    destroy_dataset(Z, dinfo);
 
     return err;
 }
@@ -2632,13 +2622,31 @@ double LWE (const gretl_matrix *X, int m)
     return ret;
 }
 
-int fract_int_LWE (const double **Z, int varno, int t1, int t2,
+int auto_spectrum_order (int T, gretlopt opt)
+{
+    int m;
+
+    if (opt & OPT_O) {
+	/* Bartlett */
+	m = (int) 2.0 * sqrt((double) T);
+    } else {
+	/* fractional integration test */
+	double m1 = floor((double) T / 2.0);
+	double m2 = floor(pow((double) T, 0.6));
+
+	m = (m1 < m2)? m1 : m2;
+	m--;
+    }
+
+    return m;
+}
+
+int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
 		   PRN *prn)
 {
     gretl_matrix *X;
-    double m1, m2;
     double d, se, z;
-    int T, m;
+    int T;
 
     X = gretl_data_series_to_vector(Z, varno, t1, t2);
     if (X == NULL) {
@@ -2647,16 +2655,13 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
 
     T = gretl_vector_get_length(X);
 
-    m1 = floor((double) T / 2.0);
-    m2 = floor(pow((double) T, 0.6));
-
-    if (m1 < m2) {
-	m = m1;
+    if (m > 0) {
+	if (m > T / 2.0) {
+	    m = T / 2.0;
+	}
     } else {
-	m = m2;
+	m = auto_spectrum_order(T, OPT_NONE);
     }
-
-    m--;
 
     d = LWE(X, m);
     if (na(d)) {
@@ -2683,6 +2688,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
 /**
  * periodogram:
  * @varno: ID number of variable to process.
+ * @width: width of window.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
@@ -2697,7 +2703,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  *
  */
 
-int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
+int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
     double *autocov = NULL;
@@ -2706,7 +2712,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     double *savexx = NULL;
     double *stdy = NULL;
     double xx, yy, varx, stdx, w;
-    int k, xmax, L, nT, nobs; 
+    int k, xmax, L, m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
     int do_graph = !(opt & OPT_N);
@@ -2741,21 +2747,31 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     /* Chatfield (1996); Greene 4ed, p. 772 */
     if (window) {
-	L = (int) 2.0 * sqrt((double) nobs);
+	if (width > 0) {
+	    L = width;
+	    if (L > nobs / 2) {
+		L = nobs / 2;
+	    }
+	} else {
+	    L = auto_spectrum_order(nobs, opt);
+	}
     } else {
 	L = nobs - 1; 
     }
 
     /* prepare for fractional integration test */
-    xx = sqrt((double) nobs);
-    nT = (int) xx;
-    if ((double) nT < xx) {
-	nT++;
+    if (width > 0) {
+	m = width;
+	if (m > nobs / 2) {
+	    m = nobs / 2;
+	}
+    } else {
+	m = auto_spectrum_order(nobs, OPT_NONE);
     }
     
     autocov = malloc((L + 1) * sizeof *autocov);
-    omega = malloc(nT * sizeof *omega);
-    hhat = malloc(nT * sizeof *hhat);
+    omega = malloc(m * sizeof *omega);
+    hhat = malloc(m * sizeof *hhat);
     stdy = malloc(nobs * sizeof *stdy);
 
     if (autocov == NULL || omega == NULL || hhat == NULL || stdy == NULL) {
@@ -2875,7 +2891,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	if (savexx != NULL) {
 	    savexx[t] = xx;
 	}
-	if (t <= nT) {
+	if (t <= m) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;
 	}
@@ -2900,10 +2916,10 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (!window) {
-	if (fract_int_GPH(nT, hhat, omega, prn)) {
+	if (fract_int_GPH(nobs, m, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
-	fract_int_LWE((const double **) *pZ, varno, t1, t2, prn);
+	fract_int_LWE((const double **) *pZ, varno, width, t1, t2, prn);
     }
 
     free(autocov);

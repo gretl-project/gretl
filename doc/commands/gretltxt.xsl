@@ -253,6 +253,11 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="super">
+  <xsl:text>^</xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="book">
   <xsl:apply-templates/>
 </xsl:template>

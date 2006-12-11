@@ -341,6 +341,11 @@ static void set_gd_fontpath (void)
     char *gdpath = NULL;
     char *newpath = NULL;
 
+    if (gnuplot_has_ttf(0)) {
+	/* we're OK, don't mess */
+	return;
+    }
+
     gdpath = getenv("GDFONTPATH");
     if (gdpath != NULL) {
 	if (strstr(gdpath, "gretl") == NULL &&
@@ -355,6 +360,7 @@ static void set_gd_fontpath (void)
     if (newpath != NULL) {
 	setenv("GDFONTPATH", newpath, 1);
 	g_free(newpath);
+	gnuplot_has_ttf(1);
     }
 }
 

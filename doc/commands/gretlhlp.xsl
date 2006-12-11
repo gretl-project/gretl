@@ -292,6 +292,12 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="super">
+  <xsl:text>&lt;@sup="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="book">
   <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>

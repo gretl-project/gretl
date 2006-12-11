@@ -311,7 +311,7 @@ static int factorized_vars (gnuplot_info *gpinfo, const double **Z)
 
 #ifdef WIN32
 
-int gnuplot_has_ttf (void)
+int gnuplot_has_ttf (int reset)
 {
     /* we know the gnuplot supplied with gretl for win32
        does TrueType fonts */
@@ -350,14 +350,14 @@ static char *label_front (void)
 
 #else
 
-int gnuplot_has_ttf (void)
+int gnuplot_has_ttf (int reset)
 {
     static int err = -1; 
 
     /* try a range of ttf fonts that might plausibly be installed
        with X11 */
 
-    if (err == -1) {
+    if (err == -1 || reset) {
 	err = gnuplot_test_command("set term png font luxisr 8");
 	if (err) {
 	    err = gnuplot_test_command("set term png font Vera 8");
@@ -482,7 +482,7 @@ const char *get_gretl_png_term_line (PlotType ptype)
 
 #ifndef WIN32
     gpcolors = gnuplot_has_specified_colors();
-    gpttf = gnuplot_has_ttf();
+    gpttf = gnuplot_has_ttf(0);
 #endif
 
     /* plot font setup */
@@ -770,7 +770,7 @@ int gnuplot_make_graph (void)
     char plotcmd[MAXLEN];
 
 #ifdef ENABLE_NLS  
-    if (use_latin_2() && gnuplot_has_ttf()) {
+    if (use_latin_2() && gnuplot_has_ttf(0)) {
 # if GP_DEBUG
 	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
 # endif

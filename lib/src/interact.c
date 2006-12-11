@@ -1901,8 +1901,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
 	strcpy(rem, line + pos + 1);
 
-	/* special: optional lag order for correlogram */
-	if (cmd->ci == CORRGM && j == 2) {
+	/* special: optional width for correlogram, periodogram */
+	if ((cmd->ci == CORRGM || cmd->ci == PERGM) && j == 2) {
 	    cmd->list[0] = 1;
 	    cmd_param_grab_word(cmd, rem);
 	    break;
@@ -2468,7 +2468,7 @@ static int n_separators (const int *list)
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
-                       c == CORRGM || c == SCATTERS || c == MPOLS || \
+                       c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM)
 
@@ -3170,7 +3170,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	break;
 
     case PERGM:
-	err = periodogram(cmd->list[1], pZ, pdinfo, cmd->opt | OPT_N, prn);
+	order = atoi(cmd->param);
+	err = periodogram(cmd->list[1], order, pZ, pdinfo, cmd->opt | OPT_N, prn);
 	if (err) {
 	    pputs(prn, _("Failed to generate periodogram\n"));
 	}

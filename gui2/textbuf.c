@@ -455,7 +455,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("sansbold");
-    g_object_set(tag, "family", "sans",
+    g_object_set(tag, "family", "sans", 
 		 "weight", PANGO_WEIGHT_BOLD, 
 		 NULL);
     gtk_text_tag_table_add(table, tag);
@@ -472,6 +472,13 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("superscript");
+    g_object_set(tag, "style", PANGO_STYLE_NORMAL,
+		 "rise", 4 * PANGO_SCALE,
+		 "size", 8 * PANGO_SCALE,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+		 
     tag = gtk_text_tag_new("literal");
     g_object_set(tag, "family", "monospace", NULL);
     gtk_text_tag_table_add(table, tag);
@@ -977,6 +984,7 @@ enum {
     INSERT_REPL,
     INSERT_LIT,
     INSERT_ITAL,
+    INSERT_SUP,
     INSERT_TEXT,
     INSERT_PDFLINK,
     INSERT_INPLINK
@@ -1014,6 +1022,9 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
     case INSERT_LIT:
 	ftag = "literal";
 	break;
+    case INSERT_SUP:
+	ftag = "superscript";
+	break;
     default:
 	break;
     }
@@ -1039,6 +1050,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_REPL;
     } else if (!strncmp(p, "lit", 3)) {
 	ins = INSERT_LIT;
+    } else if (!strncmp(p, "sup", 3)) {
+	ins = INSERT_SUP;
     } else if (!strncmp(p, "pdf", 3)) {
 	ins = INSERT_PDFLINK;
     } else if (!strncmp(p, "inp", 3)) {

@@ -136,6 +136,8 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
 int auto_acf_order (int pd, int nobs);
 
+int auto_spectrum_order (int T, gretlopt opt);
+
 int corrgram (int varno, int order, int nparam,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn, gretlopt opt);
@@ -144,7 +146,8 @@ int xcorrgram (const int *list, int order,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn, gretlopt opt);
 
-int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
+int periodogram (int varno, int width, 
+		 double ***pZ, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
 Summary *summary (const int *list, const double **Z, 

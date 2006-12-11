@@ -220,7 +220,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 
 int is_auto_ols_string (const char *s);
 
-int gnuplot_has_ttf (void);
+int gnuplot_has_ttf (int reset);
 
 int gnuplot_has_pdf (void);
 

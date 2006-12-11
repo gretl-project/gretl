@@ -3656,8 +3656,21 @@ void residual_correlogram (gpointer data, guint u, GtkWidget *widget)
 static void 
 real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 {
-    gint err;
     PRN *prn;
+    char title[64];
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int width = 0;
+    int err;
+
+    strcpy(title, _("gretl: periodogram"));
+
+    width = auto_spectrum_order(T, (bartlett)? OPT_O : OPT_NONE);
+
+    err = spin_dialog(title, &width, _("Bandwidth:"),
+		      2, T / 2, PERGM);
+    if (err < 0) {
+	return;
+    }        
 
     if (bufopen(&prn)) return;
 
@@ -3671,13 +3684,13 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = periodogram(libcmd.list[1], pZ, pdinfo, libcmd.opt, prn);
+	err = periodogram(libcmd.list[1], width, pZ, pdinfo, libcmd.opt, prn);
     } else {
 	gretlopt opt = OPT_R;
 	if (bartlett) {
 	    opt |= OPT_O;
 	}
-	err = periodogram(pdinfo->v - 1, pZ, pdinfo, opt, prn);
+	err = periodogram(pdinfo->v - 1, width, pZ, pdinfo, opt, prn);
     }
 
     if (err) {
@@ -3689,8 +3702,7 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 
     register_graph();
 
-    view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, 
-		NULL);
+    view_buffer(prn, 60, 400, title, PERGM, NULL);
 }
 
 void do_pergm (gpointer data, guint opt, GtkWidget *widget)

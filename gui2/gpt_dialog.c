@@ -696,7 +696,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* set TT font (if gnuplot uses libgd and freetype) */
-    if (gnuplot_has_ttf()) {
+    if (gnuplot_has_ttf(0)) {
 	GtkWidget *ebox, *hsep;
 	GList *fontnames = NULL;
 	struct font_info *ttflist;
