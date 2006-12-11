@@ -137,10 +137,12 @@ static int tobit_ll (double *theta, const double **X, double **Z,
     double ll, llt;
     int i, t;
 
+#if 0
     if (siginv < 0.0) {
 	fprintf(stderr, "tobit_ll: got a negative variance\n");
 	return 1;
     } 
+#endif
 
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<n; t++) {
@@ -233,10 +235,12 @@ static double t_loglik (const double *theta, void *ptr)
     double llt;
     int i, t;
 
+#if 0
     if (siginv < 0.0) {
 	fprintf(stderr, "t_loglik: got a negative variance\n");
 	return NADBL;
     } 
+#endif
 
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<n; t++) {

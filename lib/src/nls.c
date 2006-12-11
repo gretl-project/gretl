@@ -33,14 +33,14 @@ enum {
     ANALYTIC_DERIVS
 } nls_modes;
 
-typedef struct _sparm sparm;
+typedef struct parm_ parm;
 
-struct _sparm {
-    char name[VNAMELEN]; /* name of parameter (scalar variable) */
-    char *deriv;         /* string representation of derivative of regression
-			    function with respect to param (or NULL) */
-    int varnum;          /* ID number of the scalar variable in dataset */
-    int dernum;          /* ID number of the variable holding the derivative */
+struct parm_ {
+    char vname[VNAMELEN]; /* name of parameter (scalar variable) */
+    char *deriv;          /* string representation of derivative of regression
+			     function with respect to param (or NULL) */
+    int vnum;             /* ID number of the scalar variable in dataset */
+    int dnum;             /* ID number of the variable holding the derivative */
 };
 
 struct _nls_spec {
@@ -65,8 +65,8 @@ struct _nls_spec {
     double ess;         /* error sum of squares */
     double ll;          /* log likelihood */
     double tol;         /* tolerance for stopping iteration */
-    sparm *params;      /* array of information on function parameters
-			   (see the _sparm struct above) */
+    parm *params;       /* array of information on function parameters
+			   (see the parm_ struct above) */
     doublereal *coeff;  /* coefficient estimates */
     double *hessvec;    /* vech representation of negative inverse of
 			   Hessian */
@@ -159,7 +159,7 @@ static int nls_genr_setup (void)
 	    if (i == pspec->naux) {
 		pspec->uhatnum = v;
 	    } else if (j > 0) {
-		pspec->params[j-1].dernum = v;
+		pspec->params[j-1].dnum = v;
 	    }
 #if NLS_DEBUG
 	    fprintf(stderr, " genr->varnum = %d\n", v);
@@ -235,62 +235,41 @@ static int nls_calculate_deriv (int i)
     return nls_auto_genr(i + 1);
 }
 
-static int nlspec_allocate_param (nls_spec *spec)
+static int nls_spec_allocate_params (nls_spec *spec, int n_add)
 {
-    sparm *params;
-    double *coeff;
-    int nt = spec->nparam + 1;
-
-    params = realloc(spec->params, nt * sizeof *spec->params);
+    parm *params = NULL;
+    double *coeff = NULL;
+    int np = spec->nparam + n_add;
+    
+    params = realloc(spec->params, np * sizeof *params);
     if (params == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     spec->params = params;
 
-    coeff = realloc(spec->coeff, nt * sizeof *spec->coeff);
+    coeff = realloc(spec->coeff, np * sizeof *coeff);
     if (coeff == NULL) {
-	free(params);
-	return 1;
+	free(spec->params);
+	spec->params = NULL;
+	return E_ALLOC;
     }
 
     spec->coeff = coeff;
 
-    spec->nparam += 1;
+    spec->nparam = np;
 
     return 0;
 }
 
-static void nls_param_init (sparm *param, const char *vname, int v)
+static void nls_param_init (nls_spec *spec, int i, const char *vname, 
+			    int v, double x)
 {
-    strcpy(param->name, vname);
-    param->deriv = NULL;
-    param->varnum = v;
-    param->dernum = 0;
-}
-
-/* allocate space for an additional regression parameter in the
-   nls_spec struct and add its info */
-
-static int 
-real_add_param_to_spec (const char *vname, int vnum, double initval,
-			nls_spec *spec)
-{
-    int i;
-
-#if NLS_DEBUG
-    fprintf(stderr, "real_add_param: adding '%s'\n", vname);
-#endif
-
-    if (nlspec_allocate_param(spec)) {
-	return E_ALLOC;
-    }
-
-    i = spec->nparam - 1;
-    nls_param_init(&spec->params[i], vname, vnum);
-    spec->coeff[i] = initval;
-
-    return 0;
+    strcpy(spec->params[i].vname, vname);
+    spec->params[i].deriv = NULL;
+    spec->params[i].vnum = v;
+    spec->params[i].dnum = 0;
+    spec->coeff[i] = x;
 }
 
 /* scrutinize word and see if it's a new scalar that should
@@ -328,7 +307,7 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 
     /* if this term is already present in the specification, skip it */
     for (i=0; i<spec->nparam; i++) {
-	if (strcmp(word, spec->params[i].name) == 0) {
+	if (!strcmp(word, spec->params[i].vname)) {
 	    return 0;
 	}
     }
@@ -337,8 +316,14 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
     fprintf(stderr, "maybe_add_param: adding '%s'\n", word);
 #endif
 
-    /* else: add this param to the NLS specification */
-    return real_add_param_to_spec(word, v, Z[v][0], spec);
+    if (nls_spec_allocate_params(spec, 1)) {
+	return E_ALLOC;
+    }
+
+    i = spec->nparam - 1;
+    nls_param_init(spec, i, word, v, Z[v][0]);
+
+    return 0;
 }
 
 /* Parse NLS function specification string to find names of variables
@@ -386,23 +371,6 @@ get_params_from_nlfunc (nls_spec *spec, const double **Z,
     return err;
 }
 
-static int nls_spec_allocate_params (nls_spec *spec, int np)
-{
-    spec->params = malloc(np * sizeof *spec->params);
-    if (spec->params == NULL) {
-	return E_ALLOC;
-    }
-
-    spec->coeff = malloc(np * sizeof *spec->coeff);
-    if (spec->coeff == NULL) {
-	free(spec->params);
-	spec->params = NULL;
-	return E_ALLOC;
-    }    
-
-    return 0;
-}
-
 /* For case where analytical derivatives are not given, the user
    may supply a line like:
 
@@ -434,21 +402,26 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 	char *pname = gretl_word_strdup(p, &p);
 	int v;
 
-	if (pname != NULL) {
-	    if (strlen(pname) > VNAMELEN - 1) {
-		pname[VNAMELEN - 1] = '\0';
-	    }
-	    v = varindex(pdinfo, pname);
-	    if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
-		err = E_DATA;
-	    } else {
-		nls_param_init(&spec->params[i], pname, v);
-		spec->coeff[i] = Z[v][0];
-	    }
-	    free(pname);
-	} else {
+	if (pname == NULL) {
 	    err = E_ALLOC;
+	    break;
 	}
+
+	if (strlen(pname) > VNAMELEN - 1) {
+	    pname[VNAMELEN - 1] = '\0';
+	}
+	v = varindex(pdinfo, pname);
+
+	if (v < pdinfo->v) {
+	    if (var_is_scalar(pdinfo, v)) {
+		nls_param_init(spec, i, pname, v, Z[v][0]);
+	    } else {
+		err = E_DATA;
+	    }
+	} else {
+	    err = E_DATA;
+	}
+	free(pname);
     }
 
     if (err) {
@@ -472,7 +445,8 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
  * @pdinfo: information on dataset.
  *
  * Adds to @spec a list of (scalar) parameters to be estimated, as
- * given in @list.
+ * given in @list.  For an example of use see arma.c in the
+ * gretl plugin directory.
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -495,11 +469,10 @@ int nls_spec_add_param_list (nls_spec *spec, const int *list,
     for (i=0; i<np && !err; i++) {
 	int v = list[i+1];
 
-	if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
-	    err = E_DATA;
+	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
+	    nls_param_init(spec, i, pdinfo->varname[v], v, Z[v][0]);
 	} else {
-	    nls_param_init(&spec->params[i], pdinfo->varname[v], v);
-	    spec->coeff[i] = Z[v][0];
+	    err = E_DATA;
 	}
     }
 
@@ -522,7 +495,7 @@ static int maybe_adjust_params (nls_spec *spec, char **pzlist)
     int i, v;
 
     for (i=0; i<pspec->nparam; i++) {
-	v = pspec->params[i].varnum;
+	v = pspec->params[i].vnum;
 	if ((*nZ)[v][0] == 0.0) {
 	    zlist = calloc(pspec->nparam, 1);
 	    break;
@@ -531,7 +504,7 @@ static int maybe_adjust_params (nls_spec *spec, char **pzlist)
 
     if (zlist != NULL) {
 	for (i=0; i<pspec->nparam; i++) {
-	    v = pspec->params[i].varnum;
+	    v = pspec->params[i].vnum;
 	    if ((*nZ)[v][0] == 0.0) {
 		zlist[i] = 1;
 		(*nZ)[v][0] = 0.0001;
@@ -548,7 +521,7 @@ static void readjust_params (nls_spec *spec, const char *zlist)
     int i, v;
 
     for (i=0; i<pspec->nparam; i++) {
-	v = pspec->params[i].varnum;
+	v = pspec->params[i].vnum;
 	if (zlist[i]) {
 	    (*nZ)[v][0] = 0.0;
 	}
@@ -690,7 +663,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 	    return 1;
 	}
 
-	v = pspec->params[i].dernum;
+	v = pspec->params[i].dnum;
 
 	/* derivative may be series or scalar */
 
@@ -833,7 +806,7 @@ static int get_nls_fvec (double *fvec)
 
 static int get_nls_deriv (int i, double *deriv)
 {
-    int j, t, vec, v = pspec->params[i].dernum;
+    int j, t, vec, v = pspec->params[i].dnum;
 
 #if NLS_DEBUG
     fprintf(stderr, "get_nls_deriv: getting deriv %d\n", i);
@@ -845,7 +818,7 @@ static int get_nls_deriv (int i, double *deriv)
     }
 
     if (v == 0) { /* FIXME */
-	v = pspec->params[i].dernum = ndinfo->v - 1;
+	v = pspec->params[i].dnum = ndinfo->v - 1;
     }
 
     /* derivative may be vector or scalar */
@@ -1056,7 +1029,7 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 	    return E_ALLOC;
 	} else {
 	    for (i=0; i<k; i++) {
-		v = spec->params[i].dernum;
+		v = spec->params[i].dnum;
 		if (var_is_scalar(ndinfo, v)) {
 		    x = (*nZ)[v][0];
 		}
@@ -1196,7 +1169,7 @@ add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
     }    
 
     for (i=1; i<=pmod->ncoeff; i++) {
-	pmod->params[i] = gretl_strdup(spec->params[i-1].name);
+	pmod->params[i] = gretl_strdup(spec->params[i-1].vname);
 	if (pmod->params[i] == NULL) {
 	    int j;
 
@@ -1595,7 +1568,7 @@ static void update_nls_param_values (const double *x)
 
     /* write the values produced by minpack into the dataset */
     for (i=0; i<pspec->nparam; i++) {
-	v = pspec->params[i].varnum;
+	v = pspec->params[i].vnum;
 	(*nZ)[v][0] = x[i];
 #if NLS_DEBUG
 	fprintf(stderr, "revised param[%d] = %.14g\n", i, x[i]);
@@ -1987,17 +1960,16 @@ int
 nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 			       const double **Z, const DATAINFO *pdinfo)
 {
-    sparm *param = NULL;
+    parm *param = NULL;
     const char *p = dstr;
     char *vname = NULL;
     int i, v, err = 0;
 
-    if (nlspec_allocate_param(spec)) {
+    if (nls_spec_allocate_params(spec, 1)) {
 	return E_ALLOC;
     }
 
     i = spec->nparam - 1;
-
     param = &spec->params[i];
 
     if (!strncmp(p, "deriv ", 6)) {
@@ -2011,19 +1983,19 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 	return E_PARSE;
     }
 
-    *param->name = '\0';
-    strncat(param->name, vname, VNAMELEN - 1);
+    *param->vname = '\0';
+    strncat(param->vname, vname, VNAMELEN - 1);
     free(vname);
 
-    v = varindex(pdinfo, param->name);
+    v = varindex(pdinfo, param->vname);
     if (v < pdinfo->v) {
-	param->varnum = v;
-	param->dernum = 0;
+	param->vnum = v;
+	param->dnum = 0;
 	spec->coeff[i] = Z[v][0];
     } else {
 	free(param->deriv);
 	param->deriv = NULL;
-	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->name);
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->vname);
 	err = E_UNKVAR;
     }
 
@@ -2034,8 +2006,8 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 #if NLS_DEBUG
     if (param->deriv != NULL) {
 	fprintf(stderr, "add_param_with_deriv: '%s'\n"
-		" set varnum = %d, initial value = %.14g\n", dstr, 
-		param->varnum, spec->coeff[i]);
+		" set vnum = %d, initial value = %.14g\n", dstr, 
+		param->vnum, spec->coeff[i]);
     }
 #endif
 

@@ -806,7 +806,8 @@ static void test_score (garch_container *DH, double *theta)
    b:     0 on input, holds vector of coefficient for the conditional
           mean on output
    scale: double used to scale dep. var.
-   iters: int, 0 on input, holds number of iterations on output
+   fncount: 0 on input, holds number of function evaluations on output
+   fncount: 0 on input, holds number of gradient evaluations on output
    prn:   print handle for info on iterations and other diagnostic output
 
 */
@@ -815,7 +816,8 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 			const double **X, int nx, double *coeff, int nc, 
 			double *vcv, double *res2, double *res, double *h,
 			double *y, double *amax, double *b, 
-			double scale, int *iters, PRN *prn, int vopt)
+			double scale, int *fncount, int *grcount,
+			PRN *prn, int vopt)
 {
     garch_container *DH;
     int p = amax[1];
@@ -828,8 +830,6 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     /* BFGS apparatus */
     int maxit = 10000;
     double reltol = 1.0e-13;
-    int fncount = 0;
-    int grcount = 0;
 
     DH = garch_container_new(y, X, t1, t2, nobs, nx, p, q, 
 			     INIT_VAR_RESID, res, h, 
@@ -854,22 +854,22 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 	theta[i] = amax[j++];
     }
 
+#if 0
     if (DH->ascore) {
 	fputs("\nUsing analytical score\n", stderr);
     } else {
 	fputs("\nUsing numerical score\n", stderr);
     } 
+#endif
 
     err = BFGS_max(theta, npar, maxit, reltol, 
-		   &fncount, &grcount, loglik, 
+		   fncount, grcount, loglik, 
 		   (DH->ascore)? anal_score : NULL, 
 		   DH, (prn != NULL)? OPT_V : OPT_NONE, 
 		   prn);
     
     amax[0] = loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
     
-    fprintf(stderr, "iters = %d (%d)\n", fncount, grcount);
-
 #if GDEBUG
     test_score(DH, theta);
 #endif

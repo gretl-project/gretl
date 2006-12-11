@@ -360,9 +360,10 @@ int do_fcp (const int *list, double **Z, double scale,
     double *res = NULL, *res2 = NULL;
     double *coeff = NULL, *b = NULL;
     double *vcv = NULL;
-    int err = 0, iters = 0;
+    int fnc = 0, grc = 0, iters = 0;
     int nobs, maxlag, bign, pad = 0;
     int i, nx, nparam, vopt;
+    int err = 0;
 
     vopt = get_vopt(opt & OPT_R);
 
@@ -454,8 +455,8 @@ int do_fcp (const int *list, double **Z, double scale,
     } else {
 	err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
 				 (const double **) X, nx, coeff, ncoeff, 
-				 vcv, res2, res, h, y, amax, b, scale, &iters,
-				 prn, vopt);
+				 vcv, res2, res, h, y, amax, b, scale, &fnc,
+				 &grc, prn, vopt);
     }
 #endif
 
@@ -481,7 +482,12 @@ int do_fcp (const int *list, double **Z, double scale,
 	write_garch_stats(pmod, (const double **) Z, scale, pdinfo, 
 			  list, amax, nparam, pad, res, h);
 	make_packed_vcv(pmod, vcv, nparam, ncoeff, scale);
-	gretl_model_set_int(pmod, "iters", iters);
+	if (iters > 0) {
+	    gretl_model_set_int(pmod, "iters", iters);
+	} else if (fnc > 0) {
+	    gretl_model_set_int(pmod, "fncount", fnc);
+	    gretl_model_set_int(pmod, "grcount", grc);
+	}
 	gretl_model_set_int(pmod, "ml_vcv", vopt);
     }
 
@@ -800,7 +806,6 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	yno = ols_list[1];
 	scale = model.sigma;
-	fprintf(stderr, "scale = sigma = %g\n", scale);
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!na((*pZ)[yno][t])) {
 		(*pZ)[yno][t] /= scale;
