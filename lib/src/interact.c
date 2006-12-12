@@ -95,7 +95,7 @@ static int strip_inline_comments (char *s)
     return ret;
 }
 
-/* filter_comments: strip comments out of line, and return non-zero if
+/* filter_comments: strip comments out of line; return non-zero if
    the whole line is a comment */
 
 static int filter_comments (char *s, CMD *cmd)
@@ -143,7 +143,6 @@ static int filter_comments (char *s, CMD *cmd)
 
     return ret;
 }
-
 
 static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
 {
@@ -1444,9 +1443,8 @@ static int get_sepcount (const char *s)
 {
     int c = 0;
 
-    while (*s) {
+    while (*s++) {
 	if (*s == ';') c++;
-	s++;
     }
 
     return c;
@@ -1725,7 +1723,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* OMIT typically takes a list, but can be given without args
-       to omit last var */
+       to omit the last variable */
     if (cmd->ci == OMIT && string_is_blank(line + 4)) {
 	cmd_set_nolist(cmd);
 	return cmd->err;
@@ -1775,6 +1773,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (cmd->ci == DELEET && nf == 1 && get_matrix_by_name(rem)) {
+	/* special for deleting a named matrix */
 	cmd_param_grab_string(cmd, rem);
 	return cmd->err;
     }
@@ -1788,7 +1787,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    nf = count_fields(line);
 	    pos = 0;
 	} else if (cmd->ci == RHODIFF) {
-	    /* param field is not optional */
+	    /* rhodiff: param field is not optional */
 	    cmd->err = E_SYNTAX;
 	    goto bailout;
 	} else {

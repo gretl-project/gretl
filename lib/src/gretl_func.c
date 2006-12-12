@@ -31,6 +31,7 @@
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
+typedef struct upstate_ upstate;
 
 struct fn_param_ {
     char *name;
@@ -39,6 +40,11 @@ struct fn_param_ {
     double deflt;
     double min;
     double max;
+};
+
+struct upstate_ {
+    int t1;
+    int t2;
 };
 
 struct ufunc_ {
@@ -53,6 +59,7 @@ struct ufunc_ {
     int rettype;
     char *retname;
     int in_use;
+    upstate up;
 };
 
 struct fnpkg_ {
@@ -284,6 +291,9 @@ static ufunc *ufunc_new (void)
     fun->retname = NULL;
 
     fun->in_use = 0;
+
+    fun->up.t1 = 0;
+    fun->up.t2 = 0;
 
     return fun;
 }
@@ -2531,14 +2541,14 @@ static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	}  
     }    
 
-    pop_program_state(pdinfo);
+    pop_program_state();
     set_executing_off(u);
 }
 
-static void start_fncall (ufunc *u, const DATAINFO *pdinfo)
+static void start_fncall (ufunc *u)
 {
     set_executing_on(u);
-    push_program_state(pdinfo);
+    push_program_state();
 }
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
@@ -2554,6 +2564,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = pdinfo->v;
     int argc, i, j;
     int err = 0;
+
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
 
     err = maybe_check_function_needs(pdinfo, u);
     if (err) {
@@ -2632,7 +2645,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	start_fncall(u, pdinfo);
+	start_fncall(u);
 	started = 1;
     }
 
@@ -2658,6 +2671,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     if (started) {
 	stop_fncall(u, pZ, pdinfo, orig_v);
     }
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
 #if FN_DEBUG
     fprintf(stderr, "gretl_function_exec: err = %d\n", err);

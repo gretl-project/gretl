@@ -53,11 +53,6 @@ struct bkbp_opts {
     int periods[2];
 };
 
-struct sample_info {
-    int t1;
-    int t2;
-};
-    
 struct bhhh_opts {
     double toler;
     int maxiter;
@@ -79,7 +74,6 @@ struct set_vars_ {
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
-    struct sample_info sinfo;   /* record of dataset sample state */
     struct bhhh_opts maxopts;   /* options for BHHH maximisation */
 };
 
@@ -149,14 +143,6 @@ static void print_initvals (const gretl_matrix *ivals, PRN *prn)
     }
 }
 
-static void sample_info_init (struct sample_info *sinfo)
-{
-    sinfo->t1 = UNSET_INT;
-    sinfo->t2 = UNSET_INT;
-}
-
-#define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
-
 /* check_for_state() returns non-zero if the program options
    state is not readable */
 
@@ -172,10 +158,10 @@ static int check_for_state (void)
     }
 }
 
-static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
+static void state_vars_copy (set_vars *sv)
 {
 #if PDEBUG
-    fprintf(stderr, "state_vars_copy called: pdinfo=%p\n", (void *) pdinfo);
+    fprintf(stderr, "state_vars_copy() called\n");
 #endif
     sv->use_qr = state->use_qr;
     sv->seed = state->seed;
@@ -194,17 +180,6 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     garch_opts_copy(&sv->gopts);
     bkbp_opts_copy(&sv->bkopts);
     bhhh_opts_copy(&sv->maxopts);
-
-    if (pdinfo != NULL) {
-	sv->sinfo.t1 = pdinfo->t1;
-	sv->sinfo.t2 = pdinfo->t2;
-#if PDEBUG
-	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d\n",
-		sv->sinfo.t1, sv->sinfo.t2);
-#endif
-    } else {
-	sample_info_init(&sv->sinfo);
-    }
 }
 
 static void state_vars_init (set_vars *sv)
@@ -229,7 +204,6 @@ static void state_vars_init (set_vars *sv)
     garch_opts_init(&sv->gopts);
     bkbp_opts_init(&sv->bkopts);
     bhhh_opts_init(&sv->maxopts);
-    sample_info_init(&sv->sinfo);
 }
 
 int get_hc_version (void)
@@ -1228,14 +1202,6 @@ int get_shell_ok (void)
     return state->shell_ok;
 }
 
-static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
-{
-    if (pdinfo != NULL) {
-	sv->sinfo.t1 = pdinfo->t1;
-	sv->sinfo.t2 = pdinfo->t2;
-    }	 
-}
-
 /* Mechanism for pushing and popping program state for user-defined
    functions. push_program_state() is used when a function starts
    execution: the function gets a copy of the current program state,
@@ -1246,7 +1212,7 @@ static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
 static int n_states;
 static set_vars **state_stack;
 
-int push_program_state (const DATAINFO *pdinfo)
+int push_program_state (void)
 {
     set_vars **sstack;
     set_vars *newstate;
@@ -1254,13 +1220,7 @@ int push_program_state (const DATAINFO *pdinfo)
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "push_program_state: ns=%d\n", ns);
-    if (pdinfo != NULL) {
-	fprintf(stderr, " pdinfo=%p, t1=%d, t2=%d\n",
-		(void *) pdinfo, pdinfo->t1, pdinfo->t2);
-    } else {
-	fprintf(stderr, " pdinfo is NULL\n");
-    }
+    fprintf(stderr, "push_program_state: n_states = %d\n", ns);
 #endif
 
     newstate = malloc(sizeof *newstate);
@@ -1280,10 +1240,8 @@ int push_program_state (const DATAINFO *pdinfo)
 	    /* set all defaults */
 	    state_vars_init(newstate);
 	} else {
-	    /* set sample on existing state */
-	    update_sample_info(state, pdinfo);
 	    /* copy existing state */
-	    state_vars_copy(newstate, pdinfo);
+	    state_vars_copy(newstate);
 	}
 	state_stack = sstack;
 	state = state_stack[ns] = newstate;
@@ -1308,11 +1266,11 @@ static void free_state (set_vars *sv)
     free(sv);
 }
 
-/* Called when a new-style function exits: restores the program state
-   that was in force when the function started executing.  
+/* Called when a user-defined function exits: restores the program
+   state that was in force when the function started executing.
 */
 
-int pop_program_state (DATAINFO *pdinfo)
+int pop_program_state (void)
 {
     set_vars **sstack;
     int ns = n_states;
@@ -1344,18 +1302,6 @@ int pop_program_state (DATAINFO *pdinfo)
     fprintf(stderr, " state is now state_stack[%d]\n", ns - 2);
 #endif
 
-    if (!err && pdinfo != NULL && sinfo_is_set(state->sinfo)) {
-	pdinfo->t1 = state->sinfo.t1;
-	pdinfo->t2 = state->sinfo.t2;
-    }
-
-#if PDEBUG
-    if (pdinfo != NULL) {
-	fprintf(stderr, " err=%d, pdinfo->t1=%d, pdinfo->t2=%d\n",
-		err, pdinfo->t1, pdinfo->t2);
-    } 
-#endif
-
     return err;
 }
 
@@ -1371,7 +1317,7 @@ int libset_init (void)
 #endif
 
     if (!done) {
-	err = push_program_state(NULL);
+	err = push_program_state();
 	done = 1;
     }
 
