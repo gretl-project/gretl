@@ -2561,10 +2561,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     CMD cmd;
     fn_param *fp;
     int started = 0;
-    int orig_v = pdinfo->v;
     int argc, i, j;
     int err = 0;
 
+    int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
 
@@ -2597,8 +2597,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	} else if (scalar_arg(fp->type) && args->types[i] == ARG_SCALAR) {
 	    ; /* this is OK too */
 	} else if (fp->type != args->types[i]) {
-	    pprintf(prn, "argv[%d] is of wrong type (got %d, should be %d)\n", 
-		    i, args->types[i], fp->type);
+	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
+		    i, arg_type_string(args->types[i]), 
+		    arg_type_string(fp->type));
 	    err = E_TYPES;
 	} else if (fp->type == ARG_SCALAR) {
 	    if ((!na(fp->min) && args->x[j] < fp->min) ||
