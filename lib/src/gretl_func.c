@@ -31,7 +31,6 @@
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
-typedef struct upstate_ upstate;
 
 struct fn_param_ {
     char *name;
@@ -40,11 +39,6 @@ struct fn_param_ {
     double deflt;
     double min;
     double max;
-};
-
-struct upstate_ {
-    int t1;
-    int t2;
 };
 
 struct ufunc_ {
@@ -59,7 +53,6 @@ struct ufunc_ {
     int rettype;
     char *retname;
     int in_use;
-    upstate up;
 };
 
 struct fnpkg_ {
@@ -291,9 +284,6 @@ static ufunc *ufunc_new (void)
     fun->retname = NULL;
 
     fun->in_use = 0;
-
-    fun->up.t1 = 0;
-    fun->up.t2 = 0;
 
     return fun;
 }
@@ -2448,8 +2438,10 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 }
 
 static int 
-maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, DATAINFO *pdinfo)
+maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, 
+			  DATAINFO **ppdinfo)
 {
+    DATAINFO *pdinfo = *ppdinfo;
     int err = 0;
 
     if (string_is_blank(s->line)) {
@@ -2491,7 +2483,8 @@ maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, DATAINFO *pdinfo
 	pprintf(s->prn, "%s: %s\n", u->name, s->cmd->param);
 	err = 1;
     } else {
-	err = gretl_cmd_exec(s, pZ, pdinfo, s->prn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo, s->prn);
+	pdinfo = *ppdinfo;
     }
 
     if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
@@ -2564,6 +2557,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int argc, i, j;
     int err = 0;
 
+    char *upmask = copy_datainfo_submask(pdinfo);
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
@@ -2643,6 +2637,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
+	if (upmask != NULL) {
+	    state.flags |= FUNC_UPSAMPLED;
+	}
     }
 
     if (!err) {
@@ -2654,7 +2651,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     for (i=0; i<u->n_lines && !err; i++) {
 	strcpy(line, u->lines[i]);
-	err = maybe_exec_function_line(&state, u, pZ, pdinfo);
+	err = maybe_exec_function_line(&state, u, pZ, &pdinfo);
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);
 	    if (err) {
@@ -2667,14 +2664,19 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
 			    ret, prn, &err);
 
+    /* restore the sample that was in place on entry */
+    if (upmask == NULL && complex_subsampled()) {
+	restore_full_sample(pZ, &pdinfo);
+    } else {
+	pdinfo->t1 = orig_t1;
+	pdinfo->t2 = orig_t2;
+    }
+
     gretl_exec_state_clear(&state);
 
     if (started) {
 	stop_fncall(u, pZ, pdinfo, orig_v);
     }
-
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
 
 #if FN_DEBUG
     fprintf(stderr, "gretl_function_exec: err = %d\n", err);

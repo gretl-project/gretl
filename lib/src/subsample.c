@@ -95,10 +95,11 @@ static int get_submask_length (const char *s)
 
 char *copy_subsample_mask (const char *src)
 {
-    int n = get_submask_length(src);
     char *ret = NULL;
 
     if (src != NULL) {
+	int n = get_submask_length(src);
+
 	ret = malloc(n * sizeof *ret);
 	if (ret != NULL) {
 	    memcpy(ret, src, n);
@@ -200,6 +201,11 @@ static void relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
     *pZ = fullZ;
     *ppdinfo = fullinfo;
     (*ppdinfo)->submode = 0;
+
+#if SUBDEBUG
+    fprintf(stderr, "relink_full_dataset: set *pZ = %p, *ppdinfo = %p\n",
+	    (void *) *pZ, (void *) *ppdinfo);
+#endif
 
     fullZ = NULL;
     fullinfo = NULL;
@@ -415,9 +421,9 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     *gretl_errmsg = '\0';
 
 #if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p\n",
+    fprintf(stderr, "\nrestore_full_sample: pZ=%p, ppdinfo=%p\n",
 	    (void *) pZ, (void *) ppdinfo);
-    fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
+    fprintf(stderr, " *pZ=%p, *ppdinfo=%p\n",
 	    (void *) *pZ, (void *) *ppdinfo);
 #endif
 
@@ -467,7 +473,11 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     }
 
     free_Z(*pZ, *ppdinfo);
+
     clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
+#if SUBDEBUG
+    fprintf(stderr, "freeing datainfo at %p\n", (void *) *ppdinfo);
+#endif
     free(*ppdinfo);
 
     relink_full_dataset(pZ, ppdinfo);
@@ -719,6 +729,10 @@ static void backup_full_dataset (double ***pZ, DATAINFO **ppdinfo,
     fullZ = *pZ;
     fullinfo = *ppdinfo;
     peerinfo = newinfo;
+#if SUBDEBUG
+    fprintf(stderr, "backup_full_dataset: fullZ = %p, fullinfo = %p\n",
+	    (void *) fullZ, (void *) fullinfo);
+#endif
 }
 
 int complex_subsampled (void)
@@ -950,22 +964,18 @@ make_restriction_mask (int mode, const char *line, const int *list,
     return err;
 }
 
-static DATAINFO *subinfo_ptr;
-
-DATAINFO *get_subinfo (void)
-{
-    return subinfo_ptr;
-}
+/* this is also used in session.c, when re-establishing
+   a previously sub-sampled data state on reopening 
+   a saved session */
 
 int 
 restrict_sample_from_mask (char *mask, int mode, 
 			   double ***pZ, DATAINFO **ppdinfo)
 {
     double **subZ = NULL;
-    DATAINFO *subinfo = NULL;
+    DATAINFO *subinfo;
     int err = 0;
 
-    /* allocate new datainfo */
     subinfo = datainfo_new();
     if (subinfo == NULL) {
 	return E_ALLOC;
@@ -975,8 +985,8 @@ restrict_sample_from_mask (char *mask, int mode,
     subinfo->v = (*ppdinfo)->v;
 
 #if SUBDEBUG
-    fprintf(stderr, "count_selected_cases: %d obs in subsample\n",
-	    subinfo->n);
+    fprintf(stderr, "restrict_sample: new subinfo = %p, %d obs in subsample\n",
+	    (void *) subinfo, subinfo->n);
 #endif
 
     if (dataset_is_panel(*ppdinfo)) {
@@ -1051,9 +1061,6 @@ restrict_sample_from_mask (char *mask, int mode,
     /* and switch pointers */
     *pZ = subZ;
     *ppdinfo = subinfo;
-
-    /* bodge */
-    subinfo_ptr = subinfo;
 
     return 0;
 }

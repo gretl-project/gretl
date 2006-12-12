@@ -2682,28 +2682,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		}
 		break;
 
-	    case SMPL:
-		if (s->flags & FUNCTION_EXEC) {
-		    /* can't do complex sub-sampling */
-		    goto cmd_exec;
-		}
-		if (cmd->opt == OPT_F) {
-		    err = restore_full_sample(pZ, ppdinfo);
-		    pdinfo = *ppdinfo;
-		} else if (cmd->opt) {
-		    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
-					  cmd->opt, NULL);
-		    pdinfo = *ppdinfo;
-		} else { 
-		    err = set_sample(line, (const double **) *pZ, pdinfo);
-		}
-		if (err) {
-		    errmsg(err, prn);
-		} else if (1 || gretl_echo_on()) { /* FIXME */
-		    print_smpl(pdinfo, get_full_length_n(), prn);
-		}
-		break;
-
 	    case STORE:
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0) {
@@ -2725,7 +2703,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
-		err = gretl_cmd_exec(s, pZ, pdinfo, prn);
+		err = gretl_cmd_exec(s, pZ, ppdinfo, prn);
+		pdinfo = *ppdinfo;
 		break;
 
 	    } /* end switch on specific command number */

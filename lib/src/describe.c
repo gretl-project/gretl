@@ -3990,7 +3990,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 /**
  * gini:
  * @vnum: ID number of variable to examine.
- * @pZ: pointer to data matrix.
+ * @Z: data array
  * @pdinfo: data information struct.
  * @opt: not used yet.
  * @prn: gretl printing struct.
@@ -4001,7 +4001,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gini (int vnum, double ***pZ, DATAINFO *pdinfo, 
+int gini (int vnum, const double **Z, DATAINFO *pdinfo, 
 	  gretlopt opt, PRN *prn)
 {
     double *lz = NULL;
@@ -4009,7 +4009,7 @@ int gini (int vnum, double ***pZ, DATAINFO *pdinfo,
     int n, fulln;
     int err = 0;
 
-    gini = gini_coeff((*pZ)[vnum], pdinfo->t1, pdinfo->t2, 
+    gini = gini_coeff(Z[vnum], pdinfo->t1, pdinfo->t2, 
 		      &lz, &n, &err);
 
     if (err) {

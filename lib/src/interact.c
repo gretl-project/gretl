@@ -3080,11 +3080,12 @@ static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
     return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *outprn)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
+    DATAINFO *pdinfo = *ppdinfo;
     MODEL **models = s->models;
     PRN *prn = s->prn;
     VMatrix *corrmat;
@@ -3202,14 +3203,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	break;
 
     case FREQ:
-#if 0 /* gretlcli.c version */
-	err = freqdist(cmd->list[1], (const double **) *pZ, 
-		       pdinfo, !batch, cmd->opt, prn);
-#else
 	err = freqdist(cmd->list[1], (const double **) *pZ, 
 		       pdinfo, (s->flags == CONSOLE_EXEC),
 		       cmd->opt, prn);
-#endif
 	if (!err && s->callback != NULL) {
 	    s->callback(s, pZ, pdinfo);
 	}
@@ -3456,16 +3452,33 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 
     case SMPL:
 	if (cmd->opt == OPT_F) {
-	    simple_restore_full_sample(pdinfo);
+	    if (0 && s->flags & FUNCTION_EXEC) { /* FIXME */
+		simple_restore_full_sample(pdinfo);
+	    } else {
+		err = restore_full_sample(pZ, ppdinfo);
+		pdinfo = *ppdinfo;
+	    }
 	} else if (cmd->opt) {
-	    pputs(prn, "You can't do boolean sub-sampling here\n");
-	    err = 1;
+	    if (s->flags & (FUNCTION_EXEC & FUNC_UPSAMPLED)) {
+		pputs(prn, "You can't do boolean sub-sampling here\n");
+		err = 1;
+		break;
+	    } else {
+		err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
+				      cmd->opt, prn);
+		pdinfo = *ppdinfo;
+		if (!err && (s->flags & FUNCTION_EXEC)) {
+		    s->flags |= FUNC_RESAMPLED;
+		}
+	    }
 	} else { 
 	    err = set_sample(line, (const double **) *pZ, pdinfo);
 	}
-	if (!err) {
+	if (err) {
+	    errmsg(err, prn);
+	} else {
 	    print_smpl(pdinfo, get_full_length_n(), prn);
-	}
+	}	
 	break;
 
     case STORE:

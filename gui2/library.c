@@ -1810,7 +1810,7 @@ void do_gini (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    err = gini(v, &Z, datainfo, opt, prn);
+    err = gini(v, (const double **) Z, datainfo, opt, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -6448,7 +6448,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
   	break;
 
     default:
-	err = gretl_cmd_exec(s, pZ, pdinfo, outprn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo, outprn);
+	pdinfo = *ppdinfo;
 	break;
     } /* end of command switch */
 

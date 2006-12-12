@@ -1035,31 +1035,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	}
 	break;
 
-    case SMPL:
- 	if (cmd->opt == OPT_F) {
- 	    err = restore_full_sample(pZ, ppdinfo);
- 	    pdinfo = *ppdinfo;
- 	} else if (cmd->opt) {
- 	    err = restrict_sample(line, cmd->list, pZ, ppdinfo,
- 				  cmd->opt, prn);
- 	    pdinfo = *ppdinfo;
- 	} else {
- 	    err = set_sample(line, (const double **) *pZ, pdinfo);
- 	}
- 	if (err) {
- 	    errmsg(err, prn);
- 	} else {
- 	    print_smpl(pdinfo, get_full_length_n(), prn);
-#if 0
-	    if (pdinfo->paninfo != NULL) {
-		panel_obs_info(NULL, (const double **) *pZ, pdinfo, prn);
-	    }
-#endif
- 	}
- 	break;
-
     default:
-	err = gretl_cmd_exec(s, pZ, pdinfo, prn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo, prn);
+	pdinfo = *ppdinfo;
 	break;
     }
 

@@ -55,7 +55,9 @@ typedef enum {
     SCRIPT_EXEC       = 1 << 1,
     SESSION_EXEC      = 1 << 2,
     INCLUDE_EXEC      = 1 << 3,
-    FUNCTION_EXEC     = 1 << 4
+    FUNCTION_EXEC     = 1 << 4,
+    FUNC_UPSAMPLED    = 1 << 5,
+    FUNC_RESAMPLED    = 1 << 6
 } ExecFlags;
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || c == REMEMBER)
@@ -99,7 +101,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
 void echo_function_call (const char *line, unsigned char flags, PRN *prn);
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *prn);
 
 int call_pca_plugin (VMatrix *corrmat, double ***pZ,
