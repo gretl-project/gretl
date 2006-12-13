@@ -56,7 +56,8 @@ int restrict_sample (const char *line, const int *list,
 
 int 
 restrict_sample_from_mask (char *mask, int mode, 
-			   double ***pZ, DATAINFO **ppdinfo);
+			   double ***pZ, DATAINFO **ppdinfo,
+			   ExecState *state);
 
 int complex_subsampled (void);
 

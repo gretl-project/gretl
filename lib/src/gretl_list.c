@@ -267,7 +267,6 @@ int copy_named_list_as (const char *orig, const char *new)
     } else {
 	err = real_remember_list(sl->list, new, 1, NULL);
 	if (!err) {
-	    /* for use in functions */
 	    sl = list_stack[n_lists - 1];
 	    sl->level += 1;
 	}

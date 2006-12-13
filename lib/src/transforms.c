@@ -299,14 +299,8 @@ static int get_log (int v, double *logvec, const double **Z,
 
     for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
 	xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
-	if (na(xx)) {
+	if (na(xx) || xx <= 0.0) {
 	    logvec[t] = NADBL;
-	} else if (xx <= 0.0) { /* ?? treatment of 0 arg */
-	    sprintf(gretl_errmsg, 
-		    _("Log error: Variable '%s', obs %d,"
-		      " value = %g\n"), pdinfo->varname[v],
-		    t+1, xx);
-	    err = 1;
 	} else {
 	    logvec[t] = log(xx); 
 	}
@@ -725,6 +719,8 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen);
+
+	fprintf(stderr, "var %d: tnum = %d\n", v, tnum);
 
 	if (tnum > 0) {
 	    n_ok++;

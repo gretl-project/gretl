@@ -920,7 +920,8 @@ void do_open_session (void)
     err = maybe_read_lists_file(fname);
 
     if (sinfo.mask != NULL) {
-	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo);
+	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo,
+					NULL);
     }
 
     if (err) {

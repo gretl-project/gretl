@@ -72,7 +72,7 @@ enum {
 
 #define ref_type(t) (t == ARG_REF_SCALAR || \
 		     t == ARG_REF_SERIES || \
-		     t == ARG_REF_MATRIX) 
+		     t == ARG_REF_MATRIX)
 
 static int n_ufuns;
 static ufunc **ufuns;
@@ -416,9 +416,11 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "series"))   return ARG_SERIES;
     if (!strcmp(s, "list"))     return ARG_LIST;
     if (!strcmp(s, "matrix"))   return ARG_MATRIX;
+
     if (!strcmp(s, "scalar *"))  return ARG_REF_SCALAR;
     if (!strcmp(s, "series *"))  return ARG_REF_SERIES;
     if (!strcmp(s, "matrix *"))  return ARG_REF_MATRIX;
+
     if (!strcmp(s, "scalarref"))  return ARG_REF_SCALAR;
     if (!strcmp(s, "seriesref"))  return ARG_REF_SERIES;
     if (!strcmp(s, "matrixref"))  return ARG_REF_MATRIX;
@@ -2123,6 +2125,10 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
+#define REAL_LOCALIZE_LISTS 1
+
+#if REAL_LOCALIZE_LISTS
+
 /* given a named list of variables supplied as an argument to a function,
    make a revised version of the list in which the original variable
    ID numbers are replaced by the ID numbers of local copies of those
@@ -2157,7 +2163,7 @@ static int localize_list (const char *oldname, const char *newname,
 	if (v == pdinfo->v) {
 	    /* unknown variable */
 	    err = E_DATA;
-	} else {
+	} else if (v != 0) {
 	    /* add a local copy of the variable */
 	    err = dataset_copy_variable_as(v, pdinfo->varname[v], 
 					   pZ, pdinfo);
@@ -2168,15 +2174,49 @@ static int localize_list (const char *oldname, const char *newname,
     }
 	
     if (!err) {
-	/* save the new list at appropriate stacking level */
+	/* save the new list at appropriate stacking level -- 
+	   note that this action copies the list */
 	err = stack_localized_list_as(new, newname);
     } else {
 	dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
-	free(new);
+    }
+
+    free(new);
+
+    return err;
+}
+
+#else /* alternative treatment of lists passed to functions */
+
+/* given a named list of variables supplied as an argument to a
+   function, copy the list under the name assigned by the function,
+   and make the variables referenced in that list accessible to the
+   function */
+
+static int localize_list (const char *oldname, const char *newname,
+			  double ***pZ, DATAINFO *pdinfo)
+{
+    const int *list = get_list_by_name(oldname);
+    int i, err;
+
+    if (list == NULL) {
+	return E_DATA;
+    }
+
+    err = copy_named_list_as(oldname, newname);
+
+    if (!err) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] != 0) {
+		STACK_LEVEL(pdinfo, list[i]) += 1;
+	    }
+	}
     }
 
     return err;
 }
+
+#endif /* alternative list handling */
 
 /* Scalar function arguments only: if the arg is not supplied, use the
    default that is contained in the function specification, if any.
@@ -2260,7 +2300,7 @@ static int allocate_function_args (ufunc *fun,
 		    user_matrix_set_name(args->refm[Mi], fp->name);
 		    Mi++;
 		}
-	    }
+	    } 
 	} 
     }
 
@@ -2397,6 +2437,10 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
     int vi = 0, mi = 0;
     int i, j, err = 0;
 
+#if !REAL_LOCALIZE_LISTS
+    int li = 0;
+#endif
+
     if (*perr == 0) {
 	/* direct return value */
 	if (rtype == ARG_SCALAR) {
@@ -2413,7 +2457,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 	*perr = err;
     }
 
-    /* indirect return values: these should be restored even if the
+    /* "indirect return" values: these should be restored even if the
        function bombed
     */
 
@@ -2432,6 +2476,20 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		mi++;
 	    }
 	} 
+#if !REAL_LOCALIZE_LISTS
+	if (fp->type == ARG_LIST) {
+	    const int *list = get_list_by_name(args->lists[li++]);
+	    int k;
+
+	    if (list != NULL) {
+		for (k=1; k<=list[0]; k++) {
+		    if (list[k] != 0 && list[i] < pdinfo->v) {
+			STACK_LEVEL(pdinfo, list[k]) -= 1;
+		    }
+		}
+	    }
+	}
+#endif
     }
 
     return err;
@@ -2664,20 +2722,17 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     if (complex_subsampled()) {
 	if (state.subinfo == NULL) {
-	    /* we weren't sub-sampled on entry */
+	    /* we weren't sub-sampled on entry: easy */
 	    restore_full_sample(pZ, &pdinfo, NULL);
 	} else if (state.subinfo != pdinfo) {
-	    /* we're differently sub-sampled */
+	    /* we're differently sub-sampled: complex */
+	    state.flags |= FUNC_EXIT;
 	    restore_full_sample(pZ, &pdinfo, &state);
-	} else {
-	    /* same sub-sample as on entry */
-	    pdinfo->t1 = orig_t1;
-	    pdinfo->t2 = orig_t2;
-	}
-    } else {
-	pdinfo->t1 = orig_t1;
-	pdinfo->t2 = orig_t2;
-    }
+	} 
+    } 
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
 			    ret, prn, &err);

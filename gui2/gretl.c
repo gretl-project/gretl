@@ -379,6 +379,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Compact data..."), NULL, do_compact_data_set, 0, NULL, GNULL },
     { N_("/Data/_Expand data..."), NULL, do_expand_data_set, 0, NULL, GNULL },
     { N_("/Data/_Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
+    { "/Data/sep3", NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Data/_Refresh window"), NULL, refresh_data, 0, NULL, GNULL },
 #if 0 /* not ready */
     { N_("/Data/_Matrix..."), NULL, matrix_edit_callback, 0, NULL, GNULL },
 #endif
@@ -1233,7 +1235,7 @@ void populate_varlist (void)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<datainfo->v; i++) {
-	int pv;
+	int pv = 0;
 
 	if (var_is_hidden(datainfo, i)) {
 	    continue;
@@ -1254,15 +1256,17 @@ void populate_varlist (void)
 				       -1);	
 		}	
 	    }
-	    continue;
 	}
-	gtk_tree_store_append(store, &iter, NULL);
-	sprintf(id, "%d", i);
-	gtk_tree_store_set(store, &iter, 
-			   0, id, 
-			   1, datainfo->varname[i],
-			   2, VARLABEL(datainfo, i),
-			   -1);
+
+	if (pv == 0) {
+	    gtk_tree_store_append(store, &iter, NULL);
+	    sprintf(id, "%d", i);
+	    gtk_tree_store_set(store, &iter, 
+			       0, id, 
+			       1, datainfo->varname[i],
+			       2, VARLABEL(datainfo, i),
+			       -1);
+	}
     } 
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
