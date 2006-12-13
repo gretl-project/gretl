@@ -14,9 +14,14 @@ version 1.6.1, in progress
 - When you "Save as" in the Command log window, ensure that all the 
   regular script-editing signals are properly connected (e.g. the 
   state of the Save icon responds appropriately)
-- "dummify" command: add options --drop-first and --drop-last
+- "dummify" command: add options --drop-first and --drop-last; make
+  --drop-first the default when the dummify() construct is used in 
+  a regression list
 - Add ordered probit analysis for the case where the dependent
   variable is discrete but not binary
+- Add computation of generalized residuals in various estimators
+- Revamp Tobit estimation: use BFGS instead of BHHH, allow --robust 
+  option and add normality test
 - Fix some bugs and inconsistencies in relation to the Ljung-Box
   statistic and ACFs
 - Add the CUSUMSQ test alongside CUSUM
@@ -26,6 +31,11 @@ version 1.6.1, in progress
   where's there's already a restriction in place
 - QLR test: add time-series graph of F test
 - new command "xcorrgm" for cross-correlogram of 2 variables
+- Add bivariate normal to cdf()
+- New modular engine for garch estimation (no user-visible changes
+  for now)
+- Make window size for semiparametric estimators of the fractional 
+  integration parameter adjustable by the user	
 
 9/13/2006 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we

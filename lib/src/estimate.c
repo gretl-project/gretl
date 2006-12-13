@@ -383,6 +383,7 @@ static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 
 static void get_wls_stats (MODEL *pmod, const double **Z)
 {
+    int dumwt = gretl_model_get_int(pmod, "wt_dummy");
     int t, wobs = pmod->nobs, yno = pmod->list[1];
     double x, dy, wmean = 0.0, wsum = 0.0;
 
@@ -390,7 +391,7 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
 	if (model_missing(pmod, t)) {
 	    continue;
 	}
-	if (Z[pmod->nwt][t] == 0.0) {
+	if (Z[pmod->nwt][t] == 0.0 && !dumwt) {
 	    wobs--;
 	    pmod->dfd -= 1;
 	} else {

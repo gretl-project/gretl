@@ -41,7 +41,7 @@ double binomial_cdf (int k, int n, double p)
 {
     double x = NADBL;
 
-    if (p >= 0.0 && n >= 0 && k >= 0) {
+    if (p >= 0 && n >= 0 && k >= 0) {
 	x = bdtr(k, n, p);
 	if (get_cephes_errno()) {
 	    x = NADBL;
@@ -66,7 +66,7 @@ double binomial_cdf_comp (int k, int n, double p)
 {
     double x = NADBL;
 
-    if (p >= 0.0 && n >= 0 && k >= 0) {
+    if (p >= 0 && n >= 0 && k >= 0) {
 	x = bdtrc(k, n, p);
 	if (get_cephes_errno()) {
 	    x = NADBL;
@@ -89,15 +89,15 @@ double x_factorial (double x)
     double fact;
     int n = x;
 
-    if (x < 0.0) {
+    if (x < 0) {
 	fact = NADBL;
-    } else if (x > 12.0) {
-	fact = cephes_gamma(1.0 + x);
+    } else if (x > 12) {
+	fact = cephes_gamma(1 + x);
 	if (get_cephes_errno()) {
 	    fact = NADBL;
 	}
     } else if (n == 0) {
-	fact = 1.0;
+	fact = 1;
     } else {
 	fact = n;
 	while (--n > 1) {
@@ -121,15 +121,15 @@ double log_x_factorial (double x)
     double lfact;
     int n = x;
 
-    if (x < 0.0) {
+    if (x < 0) {
 	lfact = NADBL;
-    } else if (x > 12.0) {
-	lfact = cephes_lgamma(1.0 + x);
+    } else if (x > 12) {
+	lfact = cephes_lgamma(1 + x);
 	if (get_cephes_errno()) {
 	    lfact = NADBL;
 	}
     } else if (n == 0) {
-	lfact = 0.0;
+	lfact = 0;
     } else {
 	lfact = n;
 	while (--n > 1) {
@@ -204,9 +204,9 @@ double rhocrit95 (int n)
 
 double normal_pvalue_2 (double x)
 {
-    double p = (x < 0.0)? ndtr(x) : ndtr(-x);
+    double p = (x < 0)? ndtr(x) : ndtr(-x);
 
-    return 2.0 * p;
+    return 2 * p;
 }
 
 /**
@@ -223,7 +223,7 @@ double normal_pvalue_2 (double x)
 
 double normal_pvalue_1 (double x)
 {
-    return 1.0 - ndtr(x);
+    return 1 - ndtr(x);
 }
 
 /**
@@ -269,7 +269,7 @@ double t_cdf_comp (double x, int df)
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	} else {
-	    p = 1.0 - p;
+	    p = 1 - p;
 	}
     }
 
@@ -299,7 +299,7 @@ double t_pvalue_2 (double x, int df)
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	} else {
-	    p *= 2.0;
+	    p *= 2;
 	}
     }
 
@@ -318,7 +318,7 @@ double t_pvalue_2 (double x, int df)
 
 double t_critval (double a, int df)
 {
-    double x = stdtri(df, 1.0 - a);
+    double x = stdtri(df, 1 - a);
 
     if (get_cephes_errno()) {
 	x = NADBL;
@@ -341,7 +341,7 @@ double chisq_cdf (double x, int df)
 {
     double p = NADBL;
 
-    if (df > 0 && x >= 0.0) {
+    if (df > 0 && x >= 0) {
 	p = chdtr(df, x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
@@ -365,7 +365,7 @@ double chisq_cdf_comp (double x, int df)
 {
     double p = NADBL;
 
-    if (df > 0 && x >= 0.0) {
+    if (df > 0 && x >= 0) {
 	p = chdtrc(df, x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
@@ -389,7 +389,7 @@ double chisq_critval (double a, int df)
 {
     double x = NADBL;
 
-    if (df > 0 && a >= 0.0) {
+    if (df > 0 && a >= 0) {
 	x = chdtri(df, a);
 	if (get_cephes_errno()) {
 	    x = NADBL;
@@ -413,7 +413,7 @@ double f_cdf (double x, int dfn, int dfd)
 {
     double p = NADBL;
 
-    if (dfn > 0 && dfd > 0 && x >= 0.0) {
+    if (dfn > 0 && dfd > 0 && x >= 0) {
 	p = fdtr(dfn, dfd, x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
@@ -438,7 +438,7 @@ double f_cdf_comp (double x, int dfn, int dfd)
 {
     double p = NADBL;
 
-    if (dfn > 0 && dfd > 0 && x >= 0.0) {
+    if (dfn > 0 && dfd > 0 && x >= 0) {
 	p = fdtrc(dfn, dfd, x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
@@ -463,7 +463,7 @@ double f_critval (double a, int dfn, int dfd)
 {
     double x = NADBL;
 
-    if (dfn > 0 && dfd > 0 && a >= 0.0) {
+    if (dfn > 0 && dfd > 0 && a >= 0) {
 	x = fdtri(dfn, dfd, a);
 	if (get_cephes_errno()) {
 	    x = NADBL;
@@ -522,7 +522,7 @@ double normal_cdf_inverse (double x)
 
 double normal_pdf (double x)
 {
-    return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
+    return (1 / sqrt(2 * M_PI)) * exp(-0.5 * x * x);
 }
 
 /**
@@ -555,7 +555,80 @@ double normal_critval (double a)
 
 double log_normal_pdf (double x)
 {
-    return (x * x) / 2.0 - 0.91893853320467274178;
+    return (x * x) / 2 - 0.91893853320467274178;
+}
+
+#define FPI  1.25331413731550025120  /* sqrt(pi/2) */
+#define FPII 0.79788456080286535588  /* 1/FPI */
+
+/*
+  Algorithm AS 138.1 Appl. Statist. (1979) vol. 28. no. 2 compute the
+  reciprocal of Mills ratio.  Adapted from FORTRAN code from the Space
+  Telescope Science Data Analysis System (STSDAS) (no licence
+  available, so we assume is public domain).
+*/
+
+double inverse_mills (double x)
+{
+    const double mtol = 1.0e-12;
+    double s, a0, b0, a1, a2, b1, b2;
+    double f, a, b, r, t, y;
+    
+    if (x < -10) {
+	return 0;
+    }
+
+    y = fabs(x);
+
+    if (y < 1.0e-07) {
+	return FPII;
+    }
+
+    b = y * y;
+
+    if (y < 2) {
+	a = 1;
+	t = r = y;
+
+	while (r > mtol) {
+	    a += 2;
+	    r *= b/a;
+	    t += r;
+	}
+
+	f = FPI * exp(b / 2) + ((x < 0) ? t : -t);
+
+	return 1 / f;
+    }
+
+    a = 2;
+    b1 = s = y;
+    a1 = y * y + 1;
+    a2 = y * (a1 + 2);
+    b2 = a1 + 1;
+    t = a2 / b2;
+    r = 0;
+
+    while ((t-r) > mtol || (t-s) > mtol) {
+	a += 1;
+	a0 = a1;
+	a1 = a2;
+	a2 = y * a1 + a * a0;
+	b0 = b1;
+	b1 = b2;
+	b2 = y * b1 + a * b0;
+	r = s;
+	s = t;
+	t = a2 / b2;
+    }
+
+    f = t;
+
+    if (x < 0) {
+	f /= (2 * FPI * exp(b / 2) * t - 1);
+    }
+
+    return f;
 }
 
 /**
@@ -583,7 +656,7 @@ double bvnorm_cdf (double a, double b, double rho)
     double ret = NADBL;
     int i, j;
 
-    if (fabs(rho) > 1.0) {
+    if (fabs(rho) > 1) {
 	return NADBL;
     }	
 
@@ -592,7 +665,7 @@ double bvnorm_cdf (double a, double b, double rho)
 	return normal_cdf(a) * normal_cdf(b);
     }
 	
-    den = sqrt(2.0 * (1.0 - rho * rho));
+    den = sqrt(2.0 * (1 - rho * rho));
     a1 = a / den;
     b1 = b / den;
 
@@ -616,16 +689,16 @@ double bvnorm_cdf (double a, double b, double rho)
     } else if (a >= 0 && b >= 0 && rho < 0) {
 	ret = normal_cdf(a) + normal_cdf(b) - 1 + bvnorm_cdf(-a, -b, rho);
     } else if ((a * b * rho) > 0) {
-	int sgna = (a < 0.0)? -1 : 1;
-	int sgnb = (b < 0.0)? -1 : 1;
+	int sgna = (a < 0)? -1 : 1;
+	int sgnb = (b < 0)? -1 : 1;
 	double rho1, rho2, tmp, delta;
 
 	tmp = sqrt((a * a) - 2 * rho * a * b + (b * b));
 	rho1 = (rho * a - b) * sgna / tmp;
 	rho2 = (rho * b - a) * sgnb / tmp;
-	delta = (sgna * sgnb && (rho > 0.0))? 0.0 : 0.5;
+	delta = (sgna * sgnb && (rho > 0))? 0 : 0.5;
 
-	ret = (bvnorm_cdf(a, 0.0, rho1) + bvnorm_cdf(b, 0.0, rho2) - delta);
+	ret = (bvnorm_cdf(a, 0, rho1) + bvnorm_cdf(b, 0, rho2) - delta);
     }    
 
     return ret;
@@ -654,7 +727,7 @@ double gretl_get_critval (char st, double *p)
 	}
     } else if (st == 't') {
 	if (p[1] > 0.5) {
-	    x = stdtri((int) p[0], 1.0 - p[1]);
+	    x = stdtri((int) p[0], 1 - p[1]);
 	} else {
 	    x = -stdtri((int) p[0], p[1]);
 	}
@@ -743,7 +816,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	print_pv_string(p[0], pv, prn);
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		    2.0 * pv, 1.0 - 2.0 * pv);
+		    2 * pv, 1 - 2 * pv);
 	} else {
 	    pc = normal_cdf(p[0]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
@@ -756,7 +829,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	print_pv_string(p[1], pv, prn);
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		    2.0 * pv, 1.0 - 2.0 * pv);
+		    2 * pv, 1 - 2 * pv);
 	} else {
 	    pc = t_cdf(p[1], (int) p[0]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
@@ -788,7 +861,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
 		       "\n area to the right of %g = %g\n"), 
 		p[0], p[1], p[0] * p[0] / p[1], p[1] / p[0],
-		p[2], 1.0 - pv);
+		p[2], 1 - pv);
 	break;
 
     case 'B':
@@ -892,8 +965,8 @@ static const double gamma_tol = 1e-7;
 
 static double gammadist_wilson_hilferty (double shape, double scale, double x)
 {
-    double df = 2.0 * shape;
-    double xscaled = x * 2.0 / scale;
+    double df = 2 * shape;
+    double xscaled = x * 2 / scale;
     double xx;
 
     xx = exp(log(xscaled/df)/3) - 1 + (double)(2) / 9 / df;
@@ -909,8 +982,8 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x)
 
 static double gamma_integral_expansion (double lambda, double x)
 {
-    double g, x1 = 1.0;
-    double x2, x3 = 1.0 / lambda;
+    double g, x1 = 1;
+    double x2, x3 = 1 / lambda;
     int i = 0;
 
     do {
@@ -973,11 +1046,11 @@ static double gamma_integral (double lambda, double x)
 {
     double g;
 
-    if (x < 0.0)  { 
+    if (x < 0)  { 
 	g = NADBL;
     } else if (x < gamma_tol) {
-	g = 0.0;
-    } else if (x <= 1.0 || x < 0.9 * lambda) {
+	g = 0;
+    } else if (x <= 1 || x < 0.9 * lambda) {
 	g = gamma_integral_expansion(lambda, x);
     } else {
 	g = gamma_integral_fraction(lambda, x);

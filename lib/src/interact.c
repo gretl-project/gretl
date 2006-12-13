@@ -3452,25 +3452,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case SMPL:
 	if (cmd->opt == OPT_F) {
-	    if (0 && s->flags & FUNCTION_EXEC) { /* FIXME */
-		simple_restore_full_sample(pdinfo);
-	    } else {
-		err = restore_full_sample(pZ, ppdinfo);
-		pdinfo = *ppdinfo;
-	    }
+	    err = restore_full_sample(pZ, ppdinfo, s);
+	    pdinfo = *ppdinfo;
 	} else if (cmd->opt) {
-	    if (s->flags & (FUNCTION_EXEC & FUNC_UPSAMPLED)) {
-		pputs(prn, "You can't do boolean sub-sampling here\n");
-		err = 1;
-		break;
-	    } else {
-		err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
-				      cmd->opt, prn);
-		pdinfo = *ppdinfo;
-		if (!err && (s->flags & FUNCTION_EXEC)) {
-		    s->flags |= FUNC_RESAMPLED;
-		}
-	    }
+	    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
+				  s, cmd->opt, prn);
+	    pdinfo = *ppdinfo;
 	} else { 
 	    err = set_sample(line, (const double **) *pZ, pdinfo);
 	}
@@ -4143,6 +4130,7 @@ void gretl_exec_state_init (ExecState *s,
     s->alt_model = 0;
     s->in_comment = 0;
 
+    s->subinfo = NULL;
     s->callback = NULL;
 }
 

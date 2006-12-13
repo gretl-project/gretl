@@ -62,6 +62,8 @@ double normal_critval (double a);
 
 double log_normal_pdf (double x);
 
+double inverse_mills (double x);
+
 double bvnorm_cdf (double a, double b, double rho);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);

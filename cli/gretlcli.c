@@ -218,7 +218,7 @@ static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(pZ, ppdinfo); 
+    err = restore_full_sample(pZ, ppdinfo, NULL); 
     pdinfo = *ppdinfo;
 
     if (pZ != NULL && *pZ != NULL) {

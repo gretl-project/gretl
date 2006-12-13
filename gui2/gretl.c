@@ -1602,7 +1602,7 @@ int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo)
 {
     int err;
 
-    err = restore_full_sample(pZ, ppdinfo);
+    err = restore_full_sample(pZ, ppdinfo, NULL);
     if (err) {
 	gui_errmsg(err);
     } else {

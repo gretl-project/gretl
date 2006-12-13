@@ -51,7 +51,8 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, const int *list,  
 		     double ***pZ, DATAINFO **ppdinfo,
-		     gretlopt oflag, PRN *prn);
+		     ExecState *state, gretlopt opt, 
+		     PRN *prn);
 
 int 
 restrict_sample_from_mask (char *mask, int mode, 
@@ -63,9 +64,8 @@ int get_full_length_n (void);
 
 int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo); 
-
-void simple_restore_full_sample (DATAINFO *pdinfo);
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
+			 ExecState *state); 
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 

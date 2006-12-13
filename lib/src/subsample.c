@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "gretl_panel.h"
+#include "cmd_private.h"
 
 #define SUBDEBUG 0
 
@@ -50,6 +51,10 @@ static DATAINFO *fullinfo;
 static const DATAINFO *peerinfo;
 
 #define SUBMASK_SENTINEL 127
+
+static int 
+restore_sample_from_subinfo (double ***pZ, DATAINFO **ppdinfo,
+			     ExecState *state);
 
 /* accessors for full dataset, when sub-sampled */
 
@@ -405,7 +410,9 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
 
 /* restore_full_sample: 
  * @pZ: pointer to data array.  
- * @ppdinfo: address of data info pointer. 
+ * @ppdinfo: address of data info pointer.
+ * @state: structure representing program execution state,
+ * or %NULL. 
  *
  * Restore the full data range, undoing any sub-sampling that was
  * previously performed (either by shifting the endpoints of the
@@ -414,7 +421,8 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
+			 ExecState *state)
 {
     int err = 0;
 
@@ -474,28 +482,28 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
 
     free_Z(*pZ, *ppdinfo);
 
-    clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
+    if (state == NULL || *ppdinfo != state->subinfo) {
+	clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
 #if SUBDEBUG
-    fprintf(stderr, "freeing datainfo at %p\n", (void *) *ppdinfo);
+	fprintf(stderr, "freeing datainfo at %p\n", (void *) *ppdinfo);
 #endif
-    free(*ppdinfo);
+	free(*ppdinfo);
+    }
+
+    /* If we're executing a function, and the dataset was sub-sampled
+       on entry to that function, restoring the "full sample" in
+       effect means restoring the outer sub-sample.
+    */
+
+    if (state != NULL && state->subinfo != NULL &&
+	(state->flags & FUNCTION_EXEC)) {
+	fprintf(stderr, "doing restore_sample_from_subinfo\n");
+	err = restore_sample_from_subinfo(pZ, ppdinfo, state);
+    } 
 
     relink_full_dataset(pZ, ppdinfo);
 
     return err;
-}
-
-/* simple_restore_full_sample: 
- * @pdinfo: dataset info. 
- *
- * Restore the full data range by shifting the endpoints of the
- * sample range to the minimum and maximum.
- */
-
-void simple_restore_full_sample (DATAINFO *pdinfo)
-{
-    pdinfo->t1 = 0;
-    pdinfo->t2 = pdinfo->n - 1;
 }
 
 static int overlay_masks (char *targ, const char *src, int n)
@@ -1069,6 +1077,7 @@ restrict_sample_from_mask (char *mask, int mode,
  * @line: command line (or %NULL).  
  * @pZ: pointer to original data array.  
  * @ppdinfo: address of original data info pointer. 
+ * @state: structure representing program state (or %NULL).
  * @list: list of variables in case of OPT_M (or %NULL).  
  * @opt: option flags.
  * @prn: printing apparatus.
@@ -1091,7 +1100,8 @@ restrict_sample_from_mask (char *mask, int mode,
 
 int restrict_sample (const char *line, const int *list,
 		     double ***pZ, DATAINFO **ppdinfo, 
-		     gretlopt opt, PRN *prn)
+		     ExecState *state, gretlopt opt, 
+		     PRN *prn)
 {
     char *oldmask = NULL;
     char *mask = NULL;
@@ -1113,9 +1123,8 @@ int restrict_sample (const char *line, const int *list,
 	}
     }
 
-    /* We must first restore the full data range, for housekeeping
-       purposes */
-    err = restore_full_sample(pZ, ppdinfo);
+    /* restore the full data range, for housekeeping purposes */
+    err = restore_full_sample(pZ, ppdinfo, state);
     if (err) {
 	return err;
     }
@@ -1132,7 +1141,47 @@ int restrict_sample (const char *line, const int *list,
     free(mask);
     free(oldmask);
 
+    if (!err && state != NULL && (state->flags & FUNCTION_EXEC)) {
+	/* executing function: flag the fact that we've subsampled
+	   within the function */
+	state->flags |= FUNC_RESAMPLED;
+    }
+
     return err;
+}
+
+static int 
+restore_sample_from_subinfo (double ***pZ, DATAINFO **ppdinfo,
+			     ExecState *state)
+{
+    double **subZ = NULL;
+    DATAINFO *subinfo = state->subinfo;
+
+    /* set up the sub-sampled Z */
+    if (allocate_Z(&subZ, subinfo)) {
+	return E_ALLOC;
+    }
+
+    /* link varnames, etc. */
+    subinfo->varname = (*ppdinfo)->varname;
+    subinfo->varinfo = (*ppdinfo)->varinfo;
+    subinfo->descrip = (*ppdinfo)->descrip;
+
+    /* copy across data */
+    copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
+			   *ppdinfo, subinfo->submask);
+
+    /* save state */
+    backup_full_dataset(pZ, ppdinfo, subinfo);
+
+    /* and switch pointers */
+    *pZ = subZ;
+    *ppdinfo = subinfo;
+
+    fprintf(stderr, "restore_sample_from_subinfo: subinfo->n = %d\n", 
+	    subinfo->n);
+
+    return 0;    
 }
 
 enum {

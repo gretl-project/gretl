@@ -2557,7 +2557,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int argc, i, j;
     int err = 0;
 
-    char *upmask = copy_datainfo_submask(pdinfo);
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
@@ -2637,8 +2636,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
-	if (upmask != NULL) {
-	    state.flags |= FUNC_UPSAMPLED;
+	if (pdinfo->submode) {
+	    state.subinfo = pdinfo;
 	}
     }
 
@@ -2661,16 +2660,27 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
-			    ret, prn, &err);
-
     /* restore the sample that was in place on entry */
-    if (upmask == NULL && complex_subsampled()) {
-	restore_full_sample(pZ, &pdinfo);
+
+    if (complex_subsampled()) {
+	if (state.subinfo == NULL) {
+	    /* we weren't sub-sampled on entry */
+	    restore_full_sample(pZ, &pdinfo, NULL);
+	} else if (state.subinfo != pdinfo) {
+	    /* we're differently sub-sampled */
+	    restore_full_sample(pZ, &pdinfo, &state);
+	} else {
+	    /* same sub-sample as on entry */
+	    pdinfo->t1 = orig_t1;
+	    pdinfo->t2 = orig_t2;
+	}
     } else {
 	pdinfo->t1 = orig_t1;
 	pdinfo->t2 = orig_t2;
     }
+
+    function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
+			    ret, prn, &err);
 
     gretl_exec_state_clear(&state);
 

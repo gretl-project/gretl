@@ -1089,9 +1089,11 @@ int bool_subsample (gretlopt opt)
     }
 
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, NULL, &Z, &datainfo, opt, prn);
+	err = restrict_sample(NULL, NULL, &Z, &datainfo, NULL, 
+			      opt, prn);
     } else {
-	err = restrict_sample(cmdline, NULL, &Z, &datainfo, opt, prn);
+	err = restrict_sample(cmdline, NULL, &Z, &datainfo, NULL, 
+			      opt, prn);
     }
 
     if (err) {
@@ -6434,7 +6436,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
  	    pdinfo = *ppdinfo;
  	} else if (cmd->opt) {
  	    err = restrict_sample(line, cmd->list, pZ, ppdinfo,
- 				  cmd->opt, prn);
+ 				  NULL, cmd->opt, prn);
  	    pdinfo = *ppdinfo;
  	} else {
  	    err = set_sample(line, (const double **) *pZ, pdinfo);

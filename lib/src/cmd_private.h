@@ -12,6 +12,9 @@ enum {
     CMD_IGNORE = 1 << 1
 };
 
+#define cmd_nolist(c) (c->flags & CMD_NOLIST)
+#define cmd_ignore(c) (c->flags & CMD_IGNORE)
+
 struct CMD_ {
     char word[9];               /* command word */
     int ci;                     /* command index number */
@@ -29,9 +32,6 @@ struct CMD_ {
                                    generated lags */
 };
 
-#define cmd_nolist(c) (c->flags & CMD_NOLIST)
-#define cmd_ignore(c) (c->flags & CMD_IGNORE)
-
 typedef void (*EXEC_CALLBACK) (ExecState *, double ***, DATAINFO *);
 
 struct ExecState_ {
@@ -44,6 +44,7 @@ struct ExecState_ {
     gretl_equation_system *sys;
     gretl_restriction_set *rset;
     GRETL_VAR *var;
+    DATAINFO *subinfo; /* record of incoming sub-sample for functions */
     int alt_model;
     int in_comment;
     EXEC_CALLBACK callback;

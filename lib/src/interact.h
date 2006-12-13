@@ -56,8 +56,8 @@ typedef enum {
     SESSION_EXEC      = 1 << 2,
     INCLUDE_EXEC      = 1 << 3,
     FUNCTION_EXEC     = 1 << 4,
-    FUNC_UPSAMPLED    = 1 << 5,
-    FUNC_RESAMPLED    = 1 << 6
+    FUNC_RESAMPLED    = 1 << 5,
+    FUNC_EXIT         = 1 << 6
 } ExecFlags;
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || c == REMEMBER)
