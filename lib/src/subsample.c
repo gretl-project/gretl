@@ -618,14 +618,14 @@ static int mask_from_temp_dummy (const char *line,
 
     *formula = '\0';
     strncat(formula, line + 4, MAXLEN - 1);
-    x = generate_series(formula, pZ, pdinfo, &err);
-    if (err) {
-	return err;
-    }
 
-    err = copy_dummy_to_mask(mask, x, pdinfo->n);
-    if (err) {
-	sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), "mask");
+    x = generate_series(formula, pZ, pdinfo, &err);
+
+    if (!err) {
+	err = copy_dummy_to_mask(mask, x, pdinfo->n);
+	if (err) {
+	    sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), "mask");
+	}
     }
 
     free(x);
@@ -801,42 +801,57 @@ int get_full_length_n (void)
     return n;
 }
 
-/* when subsampling cases from a time series, if the resulting dataset
-   is still a time series without internal "holes" then automatically
-   set a time series interpretation of the reduced dataset
+/* When sub-sampling on some boolean criterion, check to see if we can
+   meet the criterion by simply adjusting the endpoints of the sample
+   range: life will be simpler if that is so.
 */
 
-static void
-maybe_reconstitute_time_series (const DATAINFO *pdinfo,
-				const char *mask,
-				DATAINFO *subinfo)
+static int mask_contiguous (const char *mask,
+			    const DATAINFO *pdinfo,
+			    int *pt1, int *pt2)
 {
-    int missing = 1, switches = 0;
-    int t, t1 = 0, ts_ok = 1;
+    int t, t1 = 0, t2 = pdinfo->n - 1;
+    int contig = 1;
 
     for (t=0; t<pdinfo->n; t++) {
-	if (missing && mask[t] == 1) {
-	    t1 = t;
-	    switches++;
-	    missing = 0;
-	} else if (!missing && mask[t] == 0) {
-	    switches++;
-	    missing = 1;
-	}
-	if (switches > 2) {
-	    ts_ok = 0;
+	if (mask[t] == 0) {
+	    t1++;
+	} else {
 	    break;
 	}
     }
 
-    if (ts_ok) {
-	char line[32];
-	char stobs[OBSLEN];
+    for (t=pdinfo->n - 1; t>=0; t--) {
+	if (mask[t] == 0) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
 
-	ntodate(stobs, t1, pdinfo);
-	sprintf(line, "setobs %d %s", pdinfo->pd, stobs);
-	set_obs(line, NULL, subinfo, OPT_NONE);
-    } 
+    for (t=t1; t<=t2; t++) {
+	if (mask[t] == 0) {
+	    /* there's a hole inside the range */
+	    contig = 0;
+	    break;
+	}
+    }
+
+    if (contig && dataset_is_panel(pdinfo)) {
+	int n = t2 - t1 + 1;
+
+	/* sample must leave a whole number of panel units */
+	if (t1 % pdinfo->pd != 0 || n % pdinfo->pd != 0) {
+	    contig = 0;
+	}
+    }
+
+    if (contig) {
+	*pt1 = t1;
+	*pt2 = t2;
+    }
+
+    return contig;
 }
 
 static void 
@@ -1103,14 +1118,6 @@ restrict_sample_from_mask (char *mask, int mode,
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
 			   pdinfo, mask);
 
-    if (dataset_is_time_series(pdinfo)) {
-	if (mode == SUBSAMPLE_USE_DUMMY || 
-	    mode == SUBSAMPLE_BOOLEAN ||
-	    mode == SUBSAMPLE_DROP_MISSING) {
-	    maybe_reconstitute_time_series(pdinfo, mask, subinfo);
-	}
-    }
-
     if (state != NULL && state->subinfo != NULL) {
 	backup_full_dataset(*pZ, pdinfo, NULL);
     } else {
@@ -1203,8 +1210,20 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (!err && mask != NULL) {
-	err = restrict_sample_from_mask(mask, mode, pZ, ppdinfo,
-					state);
+	int t1 = 0, t2 = 0;
+	int contig = 0;
+	
+	if (mode != SUBSAMPLE_RANDOM) {
+	    contig = mask_contiguous(mask, *ppdinfo, &t1, &t2);
+	}
+
+	if (contig) {
+	    (*ppdinfo)->t1 = t1;
+	    (*ppdinfo)->t2 = t2;
+	} else {
+	    err = restrict_sample_from_mask(mask, mode, pZ, ppdinfo,
+					    state);
+	}
     }
 
     free(mask);

@@ -3225,7 +3225,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case GENR:
 	err = generate(line, pZ, pdinfo, cmd->opt, prn);
-	/* FIXME gui notification? */
 	break;
 
     case PCA:

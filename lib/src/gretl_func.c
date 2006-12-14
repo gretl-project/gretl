@@ -2441,6 +2441,24 @@ get_matrix_return (const char *mname, int action, int *err)
     return ret;
 }
 
+static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
+{
+    const int *list = get_list_by_name(listname);
+    int i, err = 0;
+
+    if (list == NULL) {
+	err = E_DATA;
+    } else {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] != 0 && list[i] < pdinfo->v) {
+		STACK_LEVEL(pdinfo, list[i]) -= 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int 
 function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype, 
 			 double **Z, DATAINFO *pdinfo, 
@@ -2486,16 +2504,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 	    }
 	} else if (fp->type == ARG_LIST) {
 	    if (fp->flags & ARG_CONST) {
-		const int *list = get_list_by_name(args->lists[li]);
-		int k;
-
-		if (list != NULL) {
-		    for (k=1; k<=list[0]; k++) {
-			if (list[k] != 0 && list[i] < pdinfo->v) {
-			    STACK_LEVEL(pdinfo, list[k]) -= 1;
-			}
-		    }
-		}
+		unlocalize_list(args->lists[li], pdinfo);
 	    }
 	    li++;
 	}

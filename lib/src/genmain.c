@@ -536,8 +536,14 @@ double *generate_series (const char *s, double ***pZ,
 
     if (!*err) {
 	if (p.ret->t == VEC) {
-	    x = p.ret->v.xvec;
-	    p.ret->v.xvec = NULL;
+	    if (p.ret->tmp) {
+		/* steal the generated series */
+		x = p.ret->v.xvec;
+		p.ret->v.xvec = NULL;
+	    } else {
+		/* copy it */
+		x = copyvec(p.ret->v.xvec, p.dinfo->n);
+	    }
 	} else {
 	    *err = E_TYPES;
 	}

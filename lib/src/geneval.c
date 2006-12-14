@@ -4457,13 +4457,13 @@ int realgen (const char *s, parser *p, double ***pZ,
     lex(p);
     if (p->err) {
 	fprintf(stderr, "exiting on lex() error\n");
-	return 1;
+	return p->err;
     }
 
     p->tree = expr(p);
     if (p->err) {
 	fprintf(stderr, "exiting on expr() error\n");
-	return 1;
+	return p->err;
     }
 
 #if EDEBUG
