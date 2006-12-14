@@ -2261,26 +2261,27 @@ static int allocate_function_args (ufunc *fun,
     /* regular arguments, passed by value */
     
     for (i=0; i<fun->n_params && !err; i++) {
-	if (scalar_arg(fun->params[i].type)) {
+	fp = &fun->params[i];
+	if (scalar_arg(fp->type)) {
 	    if (xi >= args->nx) {
-		err = add_scalar_arg_default(&fun->params[i], pZ, pdinfo);
+		err = add_scalar_arg_default(fp, pZ, pdinfo);
 	    } else {
-		err = dataset_add_scalar_as(args->x[xi++], fun->params[i].name, 
+		err = dataset_add_scalar_as(args->x[xi++], fp->name, 
 					    pZ, pdinfo);
 	    } 
-	} else if (fun->params[i].type == ARG_SERIES) {
-	    err = dataset_add_series_as(args->X[Xi++], fun->params[i].name, 
+	} else if (fp->type == ARG_SERIES) {
+	    err = dataset_add_series_as(args->X[Xi++], fp->name, 
 					pZ, pdinfo);
-	} else if (fun->params[i].type == ARG_MATRIX) {
-	    err = copy_matrix_as(args->M[Mi++], fun->params[i].name);
-	} else if (fun->params[i].type == ARG_LIST) {
+	} else if (fp->type == ARG_MATRIX) {
+	    err = copy_matrix_as(args->M[Mi++], fp->name);
+	} else if (fp->type == ARG_LIST) {
 	    const char *lname = args->lists[li++];
 
 	    if (get_list_by_name(lname) != NULL || !strcmp(lname, "null")) {
-		if (fun->params[i].flags & ARG_CONST) {
-		    err = localize_const_list(lname, fun->params[i].name, pdinfo);
+		if (fp->flags & ARG_CONST) {
+		    err = localize_const_list(lname, fp->name, pdinfo);
 		} else {
-		    err = localize_list(lname, fun->params[i].name, pZ, pdinfo);
+		    err = localize_list(lname, fp->name, pZ, pdinfo);
 		}
 	    }
 	} 
