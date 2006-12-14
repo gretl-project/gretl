@@ -452,6 +452,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
 #if SUBDEBUG
 	    fprintf(stderr, "restore_full_sample: reset t1 and t2\n");
 #endif
+	    return 0;
 	}
     }
 
