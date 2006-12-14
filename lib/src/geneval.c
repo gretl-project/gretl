@@ -3721,6 +3721,8 @@ static void pre_process (parser *p, int flags)
     /* do we have a type specification? */
     if (flags & P_SCALAR) {
 	p->targ = NUM;
+    } else if (flags & P_SERIES) {
+	p->targ = VEC;
     } else if (!strncmp(s, "scalar ", 7)) {
 	p->targ = NUM;
 	s += 7;
@@ -4364,6 +4366,8 @@ static void parser_init (parser *p, const char *str,
 	p->lh.t = MAT;
     } else if (p->flags & P_SCALAR) {
 	p->targ = NUM;
+    } else if (p->flags & P_SERIES) {
+	p->targ = VEC;
     } else if (p->flags & P_UFUN) {
 	p->targ = EMPTY;
     } else {
@@ -4385,7 +4389,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
 	    }
-	} else if (p->flags & P_SCALAR) {
+	} else if (p->flags & (P_SCALAR | P_SERIES)) {
 	    gen_check_return_type(p);
 	} else if (p->flags & P_DECL) {
 	    do_decl(p);

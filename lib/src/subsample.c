@@ -65,6 +65,9 @@ double ***fetch_full_Z (void)
 
 void reset_full_Z (double ***pZ)
 {
+#if SUBDEBUG
+    fprintf(stderr, "reset_full_Z -> %p\n", (void *) *pZ);
+#endif    
     fullZ = *pZ;
 }
 
@@ -595,23 +598,22 @@ static int mask_from_temp_dummy (const char *line,
 				 char *mask)
 {
     char formula[MAXLEN];
-    int dnum, err;
+    double *x;
+    int err = 0;
 
-    /* + 4 to skip the command word "smpl" */
-    sprintf(formula, "__tmpmsk=%s", line + 4);
-
-    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+    *formula = '\0';
+    strncat(formula, line + 4, MAXLEN - 1);
+    x = generate_series(formula, pZ, pdinfo, &err);
     if (err) {
 	return err;
     }
 
-    dnum = varindex(pdinfo, "__tmpmsk");
-    err = copy_dummy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
+    err = copy_dummy_to_mask(mask, x, pdinfo->n);
     if (err) {
 	sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), "mask");
     }
 
-    dataset_drop_variable(dnum, pZ, pdinfo);
+    free(x);
 
     return err;
 }

@@ -288,12 +288,13 @@ enum {
     P_DECL    = 1 <<  3, /* command is actually a declaration */
     P_PRINT   = 1 <<  4, /* command just prints an existing var */
     P_SCALAR  = 1 <<  5, /* return a scalar result (only) */ 
-    P_PRIVATE = 1 <<  6, /* generating a private or internal var */
-    P_COMPILE = 1 <<  7, /* just compiling tree, not evaluating */
-    P_EXEC    = 1 <<  8, /* evaluating pre-built tree */ 
-    P_SLICE   = 1 <<  9, /* compute matrix slice specification */
-    P_UFUN    = 1 << 10, /* user function call with no assignment */
-    P_SORT    = 1 << 11  /* doing a simple sort of a variable */
+    P_SERIES  = 1 <<  6, /* return a series result (only) */
+    P_PRIVATE = 1 <<  7, /* generating a private or internal var */
+    P_COMPILE = 1 <<  8, /* just compiling tree, not evaluating */
+    P_EXEC    = 1 <<  9, /* evaluating pre-built tree */ 
+    P_SLICE   = 1 << 10, /* compute matrix slice specification */
+    P_UFUN    = 1 << 11, /* user function call with no assignment */
+    P_SORT    = 1 << 12  /* doing a simple sort of a variable */
 };
 
 struct lhinfo {

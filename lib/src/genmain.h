@@ -90,6 +90,9 @@ int genr_fit_resid (const MODEL *pmod,
 double generate_scalar (const char *s, double ***pZ, 
 			DATAINFO *pdinfo, int *err);
 
+double *generate_series (const char *s, double ***pZ, 
+			 DATAINFO *pdinfo, int *err);
+
 int print_object_var (const char *oname, const char *param,
 		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn);

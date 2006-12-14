@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 
+#define DDEBUG 0
+
 /**
  * free_Z:
  * @Z: data matrix.
@@ -32,6 +34,11 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 {
     if (Z != NULL && pdinfo != NULL) {
 	int i;
+
+#if DDEBUG
+	fprintf(stderr, "Freeing Z (%p): %d vars\n", (void *) Z, 
+		pdinfo->v);
+#endif
 
 	for (i=0; i<pdinfo->v; i++) {
 	    free(Z[i]);
@@ -261,7 +268,7 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     PANINFO *pan;
     int i;
 
-#if 0
+#if DDEBUG
     fprintf(stderr, "dataset_allocate_panel_info: pdinfo at %p\n",
 	    (void *) pdinfo);
 #endif
@@ -457,7 +464,7 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
 	return E_PDWRONG;
     }
 
-#if 0
+#if DDEBUG
     fprintf(stderr, "dataset_finalize_panel_indices:\n "
 	    "nunits=%d, Tmin=%d, Tmax=%d, olen=%d\n", pan->nunits,
 	    pan->Tmin, pan->Tmax, pan->olen);
@@ -1237,7 +1244,13 @@ static int real_add_series (int newvars, double *x,
 	return 0;
     }
 
-    newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
+    newZ = realloc(*pZ, (v + newvars) * sizeof *newZ); 
+
+#if DDEBUG
+    fprintf(stderr, "real_add_series: add %d vars, Z = %p\n",
+	    newvars, (void *) newZ);
+#endif
+	    
 
     if (newZ == NULL) {
 	err = E_ALLOC;
@@ -1439,6 +1452,11 @@ int dataset_add_series_as (double *x, const char *newname,
 	return 1;
     }
 
+#if DDEBUG
+    fprintf(stderr, "dataset_add_series_as: incoming Z=%p, name='%s'\n",
+	    (void *) *pZ, newname);
+#endif
+
     err = real_add_series(1, NULL, pZ, pdinfo);
 
     if (!err) {
@@ -1544,8 +1562,6 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
     return 0;
 }
 
-#define DROPDBG 0
-
 static int real_drop_listed_vars (const int *list, double ***pZ, 
 				  DATAINFO *pdinfo, int *renumber,
 				  int drop)
@@ -1563,8 +1579,8 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 	*renumber = 0;
     }
 
-#if DROPDBG
-    fprintf(stderr, "dataset_drop_listed_variables: dropping %d vars:\n",
+#if DDEBUG
+    fprintf(stderr, "real_drop_listed_variables: dropping %d vars:\n",
 	    list[0]);
 #endif
 
@@ -1745,6 +1761,10 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
 {
     int i, v = pdinfo->v; 
     int newv = v - delvars;
+
+#if DDEBUG
+    fprintf(stderr, "real_drop_last_vars: dropping %d\n", delvars);
+#endif
 
     if (drop == DROP_NORMAL) {
 	for (i=newv; i<v; i++) {

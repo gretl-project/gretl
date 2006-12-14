@@ -524,6 +524,30 @@ double generate_scalar (const char *s, double ***pZ,
     return x;
 }
 
+/* retrieve a series result directly */
+
+double *generate_series (const char *s, double ***pZ, 
+			 DATAINFO *pdinfo, int *err)
+{
+    parser p;
+    double *x = NULL;
+
+    *err = realgen(s, &p, pZ, pdinfo, NULL, P_SERIES | P_PRIVATE);
+
+    if (!*err) {
+	if (p.ret->t == VEC) {
+	    x = p.ret->v.xvec;
+	    p.ret->v.xvec = NULL;
+	} else {
+	    *err = E_TYPES;
+	}
+    }
+
+    gen_cleanup(&p);
+
+    return x;
+}
+
 /* retrieve and print a variable from "within" a saved
    object
 */
