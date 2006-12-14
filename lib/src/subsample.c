@@ -219,6 +219,7 @@ relink_to_full_dataset (double ***pZ, DATAINFO **ppdinfo, int nullit)
 	fullZ = NULL;
 	fullinfo = NULL;
 	peerinfo = NULL;
+	fullZ = 0;
     }
 }
 
@@ -322,7 +323,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     int V0 = fullinfo->v;
     int N = fullinfo->n;
     double **newZ = NULL;
-    int i, t, subt;
+    int i, t, s;
     int err = 0;
 
     if (V1 <= V0) {
@@ -332,6 +333,12 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     if (pdinfo->submask == NULL) {
 	return E_NOMERGE;
     }
+
+#if SUBDEBUG
+    fprintf(stderr, "V1 = pdinfo->v = %d; V0 = fullinfo->v = %d\n",
+	    V1, V0);
+    fprintf(stderr, "Z = %p, fullZ = %p\n", (void *) Z, (void *) fullZ);
+#endif
 
     /* allocate expanded data array */
     newZ = realloc(fullZ, V1 * sizeof *fullZ);
@@ -359,25 +366,11 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 
     for (i=V0; i<pdinfo->v; i++) {
 	if (var_is_scalar(pdinfo, i)) {
-	   fullZ[i][0] = Z[i][0]; 
-	}
-    }
-
-    subt = 0;
-
-    for (t=0; t<N; t++) {
-	if (pdinfo->submask[t]) {
-	    for (i=V0; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i)) {
-		    fullZ[i][t] = Z[i][subt];
-		}
-	    }
-	    subt++;
+	    fullZ[i][0] = Z[i][0]; 
 	} else {
-	    for (i=V0; i<pdinfo->v; i++) { 
-		if (var_is_series(pdinfo, i)) {
-		    fullZ[i][t] = NADBL;
-		}
+	    s = 0;
+	    for (t=0; t<N; t++) {
+		fullZ[i][t] = (pdinfo->submask[t])? Z[i][s++] : NADBL;
 	    }
 	}
     }
@@ -496,12 +489,6 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-    /* sync with anything that may have happened in exiting
-       a user-defined function */
-    if (fullinfo->v > pdinfo->v) {
-	fullinfo->v = pdinfo->v;
-    }    
-
     if (err == E_ALLOC) {
         sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
     } else if (err == E_NOMERGE) {
@@ -510,6 +497,9 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
     }
 
     /* destroy sub-sampled data array */
+#if SUBDEBUG
+    fprintf(stderr, "Freeing Z at %p (pdinfo->v = %d)\n", (void *) *pZ, pdinfo->v);
+#endif
     free_Z(*pZ, pdinfo);
 
     if (state != NULL && state->subinfo != NULL) {
@@ -1177,6 +1167,7 @@ int restrict_sample (const char *line, const int *list,
 	}
 	free_oldmask = 1;
     } else if (state != NULL && state->subinfo != NULL) {
+	/* subsampling within a function */
 	oldmask = state->subinfo->submask;
     }
 

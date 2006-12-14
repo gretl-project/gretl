@@ -1223,8 +1223,8 @@ dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
     return 0;
 }
 
-static int real_dataset_add_series (int newvars, double *x,
-				    double ***pZ, DATAINFO *pdinfo)
+static int real_add_series (int newvars, double *x,
+			    double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     int v = pdinfo->v;
@@ -1286,7 +1286,7 @@ static int real_dataset_add_series (int newvars, double *x,
 int 
 dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo)
 {
-    return real_dataset_add_series(newvars, NULL, pZ, pdinfo);
+    return real_add_series(newvars, NULL, pZ, pdinfo);
 }
 
 /**
@@ -1305,7 +1305,7 @@ dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo)
 int 
 dataset_add_allocated_series (double *x, double ***pZ, DATAINFO *pdinfo)
 {
-    return real_dataset_add_series(1, x, pZ, pdinfo);
+    return real_add_series(1, x, pZ, pdinfo);
 }
 
 /**
@@ -1439,7 +1439,7 @@ int dataset_add_series_as (double *x, const char *newname,
 	return 1;
     }
 
-    err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+    err = real_add_series(1, NULL, pZ, pdinfo);
 
     if (!err) {
 	v = pdinfo->v - 1;
@@ -1477,7 +1477,7 @@ int dataset_copy_variable_as (int v, const char *newname,
     int t, err;
 
     if (var_is_series(pdinfo, v)) {
-	err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+	err = real_add_series(1, NULL, pZ, pdinfo);
     } else {
 	err = dataset_add_scalar(pZ, pdinfo);
     }
@@ -1546,9 +1546,9 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
 
 #define DROPDBG 0
 
-static int real_dataset_drop_listed_vars (const int *list, double ***pZ, 
-					  DATAINFO *pdinfo, int *renumber,
-					  int drop)
+static int real_drop_listed_vars (const int *list, double ***pZ, 
+				  DATAINFO *pdinfo, int *renumber,
+				  int drop)
 {
     double **Z = *pZ;
     int oldv = pdinfo->v, vmax = pdinfo->v;
@@ -1577,9 +1577,7 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 	    Z[v] = NULL;
 	    if (drop == DROP_NORMAL) {
 		free(pdinfo->varname[v]);
-		if (pdinfo->varinfo[v] != NULL) {
-		    free(pdinfo->varinfo[v]);
-		}
+		free(pdinfo->varinfo[v]);
 	    }
 	    ndel++;
 	}
@@ -1658,15 +1656,15 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
 	dlist = list;
     }
 
-    err = real_dataset_drop_listed_vars(dlist, pZ, pdinfo, renumber,
-					DROP_NORMAL);
+    err = real_drop_listed_vars(dlist, pZ, pdinfo, renumber,
+				DROP_NORMAL);
 
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
 
-	err = real_dataset_drop_listed_vars(dlist, fZ, fdinfo, NULL,
-					    DROP_SPECIAL);
+	err = real_drop_listed_vars(dlist, fZ, fdinfo, NULL,
+				    DROP_SPECIAL);
 	reset_full_Z(fZ);
     }
 
@@ -1721,24 +1719,43 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (nhid > 0) {
-	int *hidlist = gretl_list_new(nhid);
+	int *list = gretl_list_new(nhid);
 
-	if (hidlist == NULL) {
+	if (list == NULL) {
 	    err = 1;
 	} else {
 	    int j = 1;
 
 	    for (i=vmin; i<pdinfo->v; i++) {
 		if (var_is_hidden(pdinfo, i)) {
-		    hidlist[j++] = i;
+		    list[j++] = i;
 		}
 	    }	    
-	    err = dataset_drop_listed_variables(hidlist, pZ, pdinfo, NULL);
-	    free(hidlist);
+	    err = dataset_drop_listed_variables(list, pZ, pdinfo, NULL);
+	    free(list);
 	}
     }
 
     return err;
+}
+
+static int 
+real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
+		     int drop)
+{
+    int i, v = pdinfo->v; 
+    int newv = v - delvars;
+
+    if (drop == DROP_NORMAL) {
+	for (i=newv; i<v; i++) {
+	    free(pdinfo->varname[i]);
+	    free_varinfo(pdinfo, i);
+	    free((*pZ)[i]);
+	    (*pZ)[i] = NULL;
+	}
+    }
+
+    return shrink_dataset_to_size(pZ, pdinfo, newv, drop);
 }
 
 /**
@@ -1755,7 +1772,7 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, v = pdinfo->v;   
+    int err;
 
     if (delvars <= 0) {
 	return 0;
@@ -1765,19 +1782,17 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	return E_DATA;
     }
 
-    for (i=v-delvars; i<v; i++) {
-	if (pdinfo->varname[i] != NULL) {
-	    free(pdinfo->varname[i]);
-	}
-	if (pdinfo->varinfo[i] != NULL) {
-	    free_varinfo(pdinfo, i);
-	}
-	if ((*pZ)[i] != NULL) {
-	    free((*pZ)[i]);
-	}
+    err = real_drop_last_vars(delvars, pZ, pdinfo, DROP_NORMAL);
+
+    if (!err && complex_subsampled()) {
+	double ***fZ = fetch_full_Z();
+	DATAINFO *fdinfo = fetch_full_datainfo();
+
+	err = real_drop_last_vars(delvars, fZ, fdinfo, DROP_SPECIAL);
+	reset_full_Z(fZ);
     }
 
-    return shrink_dataset_to_size(pZ, pdinfo, v - delvars, DROP_NORMAL);
+    return err;
 }
 
 static void make_stack_label (char *label, char *s)
