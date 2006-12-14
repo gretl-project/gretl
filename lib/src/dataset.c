@@ -1766,13 +1766,13 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "real_drop_last_vars: dropping %d\n", delvars);
 #endif
 
-    if (drop == DROP_NORMAL) {
-	for (i=newv; i<v; i++) {
+    for (i=newv; i<v; i++) {
+	if (drop == DROP_NORMAL) {
 	    free(pdinfo->varname[i]);
 	    free_varinfo(pdinfo, i);
-	    free((*pZ)[i]);
-	    (*pZ)[i] = NULL;
 	}
+	free((*pZ)[i]);
+	(*pZ)[i] = NULL;
     }
 
     return shrink_dataset_to_size(pZ, pdinfo, newv, drop);

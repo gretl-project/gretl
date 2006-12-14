@@ -720,8 +720,6 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 
 	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen);
 
-	fprintf(stderr, "var %d: tnum = %d\n", v, tnum);
-
 	if (tnum > 0) {
 	    n_ok++;
 	    list[i] = tnum;

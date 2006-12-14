@@ -338,9 +338,10 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     }
 
 #if SUBDEBUG
-    fprintf(stderr, "V1 = pdinfo->v = %d; V0 = fullinfo->v = %d\n",
+    fprintf(stderr, "add_new_vars_to_full:\n");
+    fprintf(stderr, " V1 = pdinfo->v = %d; V0 = fullinfo->v = %d\n",
 	    V1, V0);
-    fprintf(stderr, "Z = %p, fullZ = %p\n", (void *) Z, (void *) fullZ);
+    fprintf(stderr, " Z = %p, fullZ = %p\n", (void *) Z, (void *) fullZ);
 #endif
 
     /* allocate expanded data array */
@@ -424,6 +425,26 @@ static void destroy_subsampled_datainfo (DATAINFO *pdinfo)
     free(pdinfo);
 }
 
+/* marker for the case where restore_full_sample is called as
+   a preliminary for imposing a restriction */
+
+static int restricting;
+
+static void flag_restricting_on (void)
+{
+    restricting = 1;
+}
+
+static void flag_restricting_off (void)
+{
+    restricting = 0;
+}
+
+static int doing_restrict (void)
+{
+    return restricting;
+}
+
 /* restore_full_sample: 
  * @pZ: pointer to data array.  
  * @ppdinfo: address of data info pointer.
@@ -446,17 +467,14 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
     *gretl_errmsg = '\0';
 
     if (!complex_subsampled()) {
-	if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) {
-	    /* no-op */
-	    return 0;
-	} else {
+	if (pdinfo->t1 != 0 || pdinfo->t2 != pdinfo->n - 1) {
 	    pdinfo->t1 = 0;
 	    pdinfo->t2 = pdinfo->n - 1;
 #if SUBDEBUG
 	    fprintf(stderr, "restore_full_sample: reset t1 and t2\n");
 #endif
-	    return 0;
 	}
+	return 0;
     }
 
 #if SUBDEBUG
@@ -501,25 +519,22 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
     }
 
     /* destroy sub-sampled data array */
-#if SUBDEBUG
-    fprintf(stderr, "Freeing Z at %p (pdinfo->v = %d)\n", (void *) *pZ, pdinfo->v);
-#endif
     free_Z(*pZ, pdinfo);
 
     if (state != NULL && state->subinfo != NULL) {
-	if (state->flags & FUNC_EXIT) {
-	    /* if we're exiting a function and the dataset was sub-sampled
-	       on entry to that function, restoring the "full sample" in
-	       effect means restoring the outer sub-sample.
-	    */
-	    err = restore_sample_from_subinfo(pZ, ppdinfo, state);
-	} else {
-	    /* sub-sampling within a function, but not on exit */
+	if (doing_restrict()) {
+	    /* preliminary to sub-sampling inside a function */
 	    if (*ppdinfo != state->subinfo) {
 		destroy_subsampled_datainfo(*ppdinfo);
 	    }
 	    relink_to_full_dataset(pZ, ppdinfo, 0);
-	}
+	} else {
+	    /* inside a function, where the dataset was sub-sampled
+	       on entry to the function: restoring the "full sample" in
+	       effect means restoring the outer sub-sample.
+	    */
+	    err = restore_sample_from_subinfo(pZ, ppdinfo, state);
+	} 
     } else {
 	destroy_subsampled_datainfo(*ppdinfo);
 	relink_to_full_dataset(pZ, ppdinfo, 1);
@@ -1175,7 +1190,9 @@ int restrict_sample (const char *line, const int *list,
     }
 
     /* restore the full data range, for housekeeping purposes */
+    flag_restricting_on();
     err = restore_full_sample(pZ, ppdinfo, state);
+    flag_restricting_off();
     if (err) {
 	return err;
     }
@@ -1260,7 +1277,8 @@ restore_sample_from_subinfo (double ***pZ, DATAINFO **ppdinfo,
     *ppdinfo = subinfo;
 
 #if SUBDEBUG
-    fprintf(stderr, " set *pZ = %p, *ppdinfo = %p\n", (void *) subZ, (void *) subinfo);
+    fprintf(stderr, " set *pZ = %p, *ppdinfo = %p\n", (void *) subZ, 
+	    (void *) subinfo);
 #endif
 
     return 0;    

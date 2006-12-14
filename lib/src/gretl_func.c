@@ -67,7 +67,8 @@ struct fnpkg_ {
 };
 
 enum {
-    ARG_OPTIONAL = 1 << 0
+    ARG_OPTIONAL = 1 << 0,
+    ARG_CONST    = 1 << 1
 };
 
 #define ref_type(t) (t == ARG_REF_SCALAR || \
@@ -492,6 +493,9 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
 		    fun->params[n].flags |= ARG_OPTIONAL;
 		}
+		if (gretl_xml_get_prop_as_bool(cur, "const")) {
+		    fun->params[n].flags |= ARG_CONST;
+		}
 	    } else {
 		err = E_DATA;
 	    }
@@ -614,6 +618,9 @@ static void print_function_start (ufunc *fun, PRN *prn)
     for (i=0; i<fun->n_params; i++) {
 	if (i == 0) {
 	    pputc(prn, '(');
+	}
+	if (fun->params[i].flags & ARG_CONST) {
+	    pputs(prn, "const ");
 	}
 	s = arg_type_string(fun->params[i].type);
 	if (s[strlen(s) - 1] == '*') {
@@ -796,6 +803,9 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	    }
 	    if (fun->params[i].flags & ARG_OPTIONAL) {
 		fputs(" optional=\"true\"", fp);
+	    }
+	    if (fun->params[i].flags & ARG_CONST) {
+		fputs(" const=\"true\"", fp);
 	    }
 	    fputs("/>\n", fp);
 	}
@@ -1737,16 +1747,22 @@ static int read_param_option (char *s, fn_param *param,
 
 static int parse_function_param (char *s, fn_param *param, int i)
 {
-    char tstr[16] = {0};
+    char tstr[22] = {0};
     char *name;
     int type, len;
     int err = 0;
 
     while (isspace(*s)) s++;
 
+    if (!strncmp(s, "const ", 6)) {
+	param->flags |= ARG_CONST;
+	s += 6;
+	while (isspace(*s)) s++;
+    }
+
     /* get arg or return type */
     len = strcspn(s, " ");
-    if (len > 15) {
+    if (len > 21) {
 	err = E_PARSE;
     } else {
 	strncat(tstr, s, len);
@@ -2125,10 +2141,6 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-#define REAL_LOCALIZE_LISTS 1
-
-#if REAL_LOCALIZE_LISTS
-
 /* given a named list of variables supplied as an argument to a function,
    make a revised version of the list in which the original variable
    ID numbers are replaced by the ID numbers of local copies of those
@@ -2186,15 +2198,13 @@ static int localize_list (const char *oldname, const char *newname,
     return err;
 }
 
-#else /* alternative treatment of lists passed to functions */
-
 /* given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
    function */
 
-static int localize_list (const char *oldname, const char *newname,
-			  double ***pZ, DATAINFO *pdinfo)
+static int localize_const_list (const char *oldname, const char *newname,
+				DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(oldname);
     int i, err;
@@ -2215,8 +2225,6 @@ static int localize_list (const char *oldname, const char *newname,
 
     return err;
 }
-
-#endif /* alternative list handling */
 
 /* Scalar function arguments only: if the arg is not supplied, use the
    default that is contained in the function specification, if any.
@@ -2269,7 +2277,11 @@ static int allocate_function_args (ufunc *fun,
 	    const char *lname = args->lists[li++];
 
 	    if (get_list_by_name(lname) != NULL || !strcmp(lname, "null")) {
-		err = localize_list(lname, fun->params[i].name, pZ, pdinfo);
+		if (fun->params[i].flags & ARG_CONST) {
+		    err = localize_const_list(lname, fun->params[i].name, pdinfo);
+		} else {
+		    err = localize_list(lname, fun->params[i].name, pZ, pdinfo);
+		}
 	    }
 	} 
     }
@@ -2434,12 +2446,8 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 			 void *ret, PRN *prn, int *perr)
 {
     fn_param *fp;
-    int vi = 0, mi = 0;
+    int vi = 0, mi = 0, li = 0;
     int i, j, err = 0;
-
-#if !REAL_LOCALIZE_LISTS
-    int li = 0;
-#endif
 
     if (*perr == 0) {
 	/* direct return value */
@@ -2475,21 +2483,21 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		user_matrix_set_name(args->refm[mi], args->upnames[j++]);
 		mi++;
 	    }
-	} 
-#if !REAL_LOCALIZE_LISTS
-	if (fp->type == ARG_LIST) {
-	    const int *list = get_list_by_name(args->lists[li++]);
-	    int k;
+	} else if (fp->type == ARG_LIST) {
+	    if (fp->flags & ARG_CONST) {
+		const int *list = get_list_by_name(args->lists[li]);
+		int k;
 
-	    if (list != NULL) {
-		for (k=1; k<=list[0]; k++) {
-		    if (list[k] != 0 && list[i] < pdinfo->v) {
-			STACK_LEVEL(pdinfo, list[k]) -= 1;
+		if (list != NULL) {
+		    for (k=1; k<=list[0]; k++) {
+			if (list[k] != 0 && list[i] < pdinfo->v) {
+			    STACK_LEVEL(pdinfo, list[k]) -= 1;
+			}
 		    }
 		}
 	    }
+	    li++;
 	}
-#endif
     }
 
     return err;
@@ -2726,7 +2734,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    restore_full_sample(pZ, &pdinfo, NULL);
 	} else if (state.subinfo != pdinfo) {
 	    /* we're differently sub-sampled: complex */
-	    state.flags |= FUNC_EXIT;
 	    restore_full_sample(pZ, &pdinfo, &state);
 	} 
     } 
