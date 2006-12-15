@@ -2565,6 +2565,7 @@ maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ,
 
     if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
 	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
+	attach_subsample_to_model(s->models[0], pdinfo);
 	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
     }
 
