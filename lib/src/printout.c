@@ -2149,7 +2149,7 @@ print_iter_info (int iter, double ll, int k, const double *b, const double *g,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 0
+#define PRINTF_DEBUG 2
 
 #define is_format_char(c) (c == 'e' || \
                            c == 'E' || \
@@ -2345,10 +2345,18 @@ static char *literal_string (const char *s)
     return ret;
 }
 
-static int get_conversion (const char *s, int *skip)
+static int get_conversion (const char *s, int *skip,
+			   int *dotstar)
 {
-    *skip = strspn(s, "#0123456789.");
-    return (*(s + *skip));
+    int n = strspn(s, "#0123456789*.");
+
+    if (strstr(s, ".*s")) {
+	*dotstar = 1;
+    }
+
+    *skip = n;
+
+    return (*(s + n));
 }
 
 static double argv_get_scalar (const char *argv, double ***pZ,
@@ -2408,10 +2416,10 @@ static int real_do_printf (const char *line, double ***pZ,
 
     p = format;
     while (*p) {
-	int c, skip;
+	int c, skip, dotstar = 0;
 
 	if (*p == '%') {
-	    c = get_conversion(p + 1, &skip);
+	    c = get_conversion(p + 1, &skip, &dotstar);
 	    if (c == '%') {
 		p++;
 	    } else if (numeric_conv(c)) {
@@ -2425,6 +2433,12 @@ static int real_do_printf (const char *line, double ***pZ,
 		break;
 	    }
 	}
+
+	if (0 && dotstar) {
+	    strcpy(gretl_errmsg, "Sorry, \".*\" notation not handled yet\n");
+	    return 1;
+	}
+
 	p++;
     }
 
@@ -2433,6 +2447,7 @@ static int real_do_printf (const char *line, double ***pZ,
     }
 
     line += strlen(format) + 2;
+    while (isspace(*line)) line++;
     if (*line != ',') {
 	err = output_format_only(format, prn);
 	return err;
@@ -2454,6 +2469,8 @@ static int real_do_printf (const char *line, double ***pZ,
 	err = 1;
 	goto printf_bailout;
     }
+
+    fprintf(stderr, "xcnv=%d, scnv=%d, argc=%d\n", xcnv, scnv, argc);
 
     /* play safe with sizes here */
     xvals = malloc(argc * sizeof *xvals);
