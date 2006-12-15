@@ -115,49 +115,6 @@
 
   </command>
 
-  <command name="addto" section="Tests"
-    label="Aggiunge variabili al modello specificato" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>id-modello</argument>
-	<argument>lista-variabili</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>non mostra le stime del modello aumentato</effect>
-	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>aggiunge come strumento, solo per TSLS</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>aggiunge sia come regressore che come strumento, solo per TSLS</effect>
-	</option>
-      </options>
-      <examples>
-        <example>addto 2 5 7 9</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Funziona come il comando <cmd>add</cmd>, con l'eccezione che occorre
-	specificare il modello precedente (usando il suo numero identificativo,
-	che è mostrato all'inizio dei risultati del modello) da prendere come
-	base per l'aggiunta delle variabili. L'esempio precedente aggiunge le
-	variabili numero 5, 7 e 9 al modello 2.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Finestra del modello, /Test/ADD - Aggiungi variabili</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="adf" section="Tests" label="Test Dickey-Fuller aumentato">
 
     <usage>
@@ -4232,6 +4189,11 @@
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>weibull.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description context="gui">
@@ -4555,7 +4517,7 @@
     <usage>
       <arguments>
         <argument>funzione</argument>
-        <argument>derivate</argument>
+        <argument optional="true">derivate</argument>
       </arguments>
       <options>
 	<option>
@@ -4571,16 +4533,25 @@
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>wg_nls.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description context="gui">
 
-      <para>Esegue una stima con minimi quadrati non-lineari (NLS:
-      Nonlinear Least Squares) usando una versione modificata
-      dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
-      specificazione di funzione e si raccomanda di specificare anche le
-      espressioni per le derivate di questa funzione rispetto a ognuno
-      dei parametri, se possibile.</para>
+      <para>
+        Esegue una stima con minimi quadrati non-lineari (NLS:
+        Nonlinear Least Squares) usando una versione modificata
+        dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
+        specificazione di funzione e si raccomanda di specificare anche le
+        espressioni per le derivate di questa funzione rispetto a ognuno
+        dei parametri, se possibile. Se non si indicano le derivate, occorre
+        fornire una lista dei parametri da stimare (separati da spazi o virgole),
+        preceduta dalla parola chiave <lit>params</lit>.
+      </para>
 
       <para>Esempio: si supponga di avere un dataset con le variabili
 	C e Y (ad es. greene11_3.gdt) e di voler stimare una funzione di
@@ -4628,15 +4599,18 @@
 
     <description context="cli">
 
-      <para>Esegue una stima con minimi quadrati non-lineari (NLS:
-      Nonlinear Least Squares) usando una versione modificata
-      dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
-      specificazione di funzione e dichiarare i parametri della funzione
-      (usando il comando <cmd>genr</cmd>) prima della stima.
-      Opzionalmente, è anche possibile specificare le espressioni per le
-      derivate della funzione rispetto a ognuno dei parametri; in caso
-      contrario, viene calcolata un'approssimazione numerica del
-      Jacobiano.</para>
+      <para>
+        Esegue una stima con minimi quadrati non-lineari (NLS: Nonlinear Least
+        Squares) usando una versione modificata dell'algoritmo di
+        Levenberg&ndash;Marquandt. Occorre fornire una specificazione di
+        funzione e dichiarare i parametri della funzione (usando il comando
+        <cmd>genr</cmd>) prima della stima.  Opzionalmente, è anche possibile
+        specificare le espressioni per le derivate della funzione rispetto a
+        ognuno dei parametri. Se non si indicano le derivate, occorre fornire
+        una lista dei parametri da stimare (separati da spazi o virgole),
+        preceduta dalla parola chiave <lit>params</lit>. In quest'ultimo caso,
+        viene calcolata un'approssimazione numerica del Jacobiano.
+      </para>
 
       <para>
 	È più semplice mostrare il funzionamento con un esempio. Quello
@@ -4647,18 +4621,19 @@
         delle righe sono dei punti di riferimento e non fanno parte dei
         comandi. Si noti che le opzioni, come ad esempio <lit>--vcv</lit> per mostrare la
 	matrice di covarianza delle stime dei parametri, vanno aggiunte al
-        comando finale <lit>end nls</lit>.</para>
+        comando finale <lit>end nls</lit>.
+      </para>
 
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr alfa = $coeff(0)
-	4   genr beta = $coeff(Y)
-	5   genr gamma = 1.0
-	6   nls C = alfa + beta * Y^gamma
-	7   deriv alfa = 1
-	8   deriv beta = Y^gamma
-	9   deriv gamma = beta * Y^gamma * log(Y)
+	3   genr a = $coeff(0)
+	4   genr b = $coeff(Y)
+	5   genr g = 1.0
+	6   nls C = a + b * Y^g
+	7   deriv a = 1
+	8   deriv b = Y^g
+	9   deriv g = b * Y^g * log(Y)
 	10  end nls --vcv</code>
 
       <para>
@@ -4680,9 +4655,14 @@
         con il comando <cmd>deriv</cmd>, indica il nome di un parametro,
         il segno di uguale e un'espressione che indica come calcolare la
         derivata (anche qui la sintassi è la stessa di <cmd>genr</cmd>).
-        Queste righe <cmd>deriv</cmd> sono opzionali, ma si raccomanda
-        di inserirle se possibile. La riga 10, <cmd>end nls</cmd>,
-        completa il comando ed esegue la stima.</para>
+        In alternativa, invece di fornire le derivate, è possibile sostituire
+        le righe dalla 7 alla 9 con la seguente:
+      </para>
+      <code>
+	params a b g</code>
+      <para> 
+        La riga 10, <cmd>end nls</cmd>, completa il comando ed esegue la stima.
+      </para>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda la
 	<guideref targ="chap-nls"/>.</para>
@@ -4928,52 +4908,6 @@
        <lit>--both</lit> sono rimosse totalmente dal modello. Queste due opzioni
        sono incompatibili con l'opzione <lit>--wald</lit>; se uno o più strumenti
        vengono omessi, il modello va ri-stimato.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Finestra del modello, /Test/OMIT - Ometti variabili</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="omitfrom" section="Tests" label="Omette variabili dal modello
-    specificato" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>id-modello</argument>
-        <argument>lista-variabili</argument>
-      </arguments>
-      <options>
- 	<option>
-	  <flag>--wald</flag>
-          <effect>esegue un test di Wald invece di un test F</effect>
-	</option>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>non mostra le stime per il modello ridotto</effect>
-	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>omette come strumento, solo per TSLS</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>omette sia come regressore che come strumento, solo per TSLS</effect>
-	</option>
-      </options>
-      <examples>
-        <example>omitfrom 2 5 7 9</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>Funziona come <cmdref targ="omit"/>, tranne per il fatto che
-      è possibile indicare un modello precedentemente stimato,
-      attraverso il suo numero identificativo (che è mostrato all'inizio
-      dei risultati del modello). L'esempio precedente omette le
-      variabili numero 5, 7 e 9 dal modello 2.
       </para>
     </description>
 
@@ -5324,6 +5258,7 @@
     <usage>
       <arguments>
         <argument>nome-variabile</argument>
+        <argument optional="true">banda</argument>
       </arguments>
       <options>
         <option>
@@ -5336,20 +5271,27 @@
     <description>
       <para>
 	Calcola e mostra (graficamente se non si è in modalità batch)
-        lo spettro della variabile specificata. Senza l'opzione
-	<lit>--bartlett</lit>, viene mostrato il periodogramma nel
-        campione; usando l'opzione, lo spettro viene stimato usando una
-        finestra di Bartlett per i ritardi di lunghezza pari al doppio della
-        radice quadrata dell'ampiezza campionaria (si veda il capitolo 18 di
-        <book>Econometric Analysis</book> di Greene).
-       </para>
-       <para>
-        Se viene mostrato il periodogramma
-        del campione, viene mostrato anche il test <mathvar>t</mathvar>
-        per l'integrazione frazionale della serie (<quote>memoria
-        lunga</quote>): l'ipotesi nulla è che l'ordine di integrazione
-        sia zero.
+        lo spettro della variabile specificata.  Per impostazione predefinita
+        viene mostrato il periodogramma nel campione, mentre usando  l'opzione
+	<lit>--bartlett</lit>, lo spettro viene stimato usando una
+        finestra di Bartlett per i ritardi (si veda ad esempio <book>Econometric
+        Analysis</book> di Greene per una discussione su questo argomento).
+        L'ampiezza predefinita della fiestra di Bartlett è pari a due volte la
+        radice quadrata dell'ampiezza campionaria, ma questo valore può essere
+        impostato manualmente usando il parametro <repl>banda</repl>, fino a un
+        massimo pari a metà dell'ampiezza campionaria.
       </para>
+      <para>
+       <para>
+        Quando viene mostrato il periodogramma del campione, vengono mostrati
+        anche due test per l'integrazione frazionale (<quote>memoria
+        lunga</quote>) della serie, ossia il test di Geweke e Porter-Hudak
+        (GPH), e lo stimatore locale di Whittle. L'ipotesi nulla in entrambi
+        i casi è che l'ordine di integrazione sia zero. Per impostazione
+        predefinita, l'ordine per questi test è il valore minore tra
+        <mathvar>T</mathvar>/2 e <mathvar>T</mathvar><super>0.6</super>; anche
+        questo valore può essere modificato con il parametro di banda.
+       </para>
     </description>
 
     <gui-access>
@@ -5520,8 +5462,8 @@
         finale non viene mostrata, ma viene usata per selezionare le
         osservazioni da mostrare. Le osservazioni per cui la variabile finale
         assume valore 0 non verranno mostrate. Ad esempio, si supponga di avere
-        la serie giornaliera <varname>x</varname> e di volere la lista delle date per
-        cui <varname>x</varname> ha valori mancanti. Si può procedere nel modo
+        la serie giornaliera <lit>x</lit> e di volere la lista delle date per
+        cui <lit>x</lit> ha valori mancanti. Si può procedere nel modo
         seguente:
       </para>
       <code>
@@ -6463,20 +6405,19 @@
 	</li>
 	<li>	
 	<para><lit>bhhh_maxiter</lit>: un intero. Imposta il massimo numero di
-          iterazioni per la routine BHHH, che è usata dai comandi
-	    <cmd>arma</cmd> e <cmd>tobit</cmd>. Se non viene raggiunta la
-            convergenza dopo <lit>bhhh_maxiter</lit>, il programma segnala un
-            errore. Il valore predefinito è 500.
+          iterazioni per la routine BHHH, che è usata dal comando
+          <cmd>arma</cmd>. Se non viene raggiunta la convergenza dopo
+          <lit>bhhh_maxiter</lit>, il programma segnala un errore. Il valore
+          predefinito è 500.
 	  </para>
-	  </li>	  
+	</li>	  
 	<li>	  
 	  <para><lit>bhhh_toler</lit>: un valore a virgola mobile, oppure la
             stringa <lit>default</lit>. Viene usato dalla routine BHHH di gretl
             per controllare se viene raggiunta la convergenza. L'algoritmo di
             calcolo ferma le iterazioni non appena l'incremento nella
             log-verosimiglianza tra le iterazioni è minore di <lit>bhhh_toler</lit>.
-            I valori predefiniti sono 1.0E&minus;06 per il comando <cmd>arma</cmd>
-            e 1.0E&minus;10 per <cmd>tobit</cmd>; questi valori possono essere reimpostati
+            Il valore predefinito è 1.0E&minus;06; questo valore può essere reimpostato
             usando la stringa <lit>default</lit> invece di un valore numerico.
 	  </para>
 	</li>
@@ -7267,7 +7208,7 @@
 
     <description>
       <para>Stima un modello Tobit. Il modello può essere appropriato
-      quando la variabile dipendente è <quote>troncata</quote>. Ad
+      quando la variabile dipendente è <quote>censurata</quote>. Ad
       esempio, vengono osservati valori positivi o nulli della spesa dei
       consumatori per beni durevoli, ma non valori negativi; tuttavia le
       decisioni di spesa possono essere pensate come derivanti da una
