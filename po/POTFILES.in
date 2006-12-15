@@ -11,9 +11,11 @@ lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
 lib/src/forecast.c
-lib/src/generate.c
-lib/src/genrfuncs.c
-lib/src/genstack.c
+lib/src/geneval.c
+lib/src/genfuncs.c
+lib/src/genlex.c
+lib/src/genmain.c
+lib/src/gensyntax.c
 lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
@@ -29,6 +31,7 @@ lib/src/gretl_restrict.c
 lib/src/gretl_string_table.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
+lib/src/gretl_www.c
 lib/src/gretl_xml.c
 lib/src/interact.c
 lib/src/irfboot.c
@@ -106,7 +109,8 @@ gui2/textbuf.c
 gui2/textutil.c
 gui2/toolbar.c
 gui2/treeutils.c
-gui2/webget.c
+gui2/update.c
+plugin/arbond.c
 plugin/arma.c
 plugin/arma_common.c
 plugin/arma_x12.c
@@ -129,7 +133,9 @@ plugin/leverage.c
 plugin/liml.c
 plugin/mailer.c
 plugin/midi_utils.c
+plugin/mod_garch.c
 plugin/mp_ols.c
+plugin/oprobit.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
