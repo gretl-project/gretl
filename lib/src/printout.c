@@ -2149,7 +2149,7 @@ print_iter_info (int iter, double ll, int k, const double *b, const double *g,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 2
+#define PRINTF_DEBUG 0
 
 #define is_format_char(c) (c == 'e' || \
                            c == 'E' || \
@@ -2469,8 +2469,6 @@ static int real_do_printf (const char *line, double ***pZ,
 	err = 1;
 	goto printf_bailout;
     }
-
-    fprintf(stderr, "xcnv=%d, scnv=%d, argc=%d\n", xcnv, scnv, argc);
 
     /* play safe with sizes here */
     xvals = malloc(argc * sizeof *xvals);
