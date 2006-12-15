@@ -5282,7 +5282,6 @@
         massimo pari a metà dell'ampiezza campionaria.
       </para>
       <para>
-       <para>
         Quando viene mostrato il periodogramma del campione, vengono mostrati
         anche due test per l'integrazione frazionale (<quote>memoria
         lunga</quote>) della serie, ossia il test di Geweke e Porter-Hudak
