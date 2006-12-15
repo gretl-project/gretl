@@ -43,6 +43,7 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "modelspec.h"
+#include "cmd_private.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -869,7 +870,7 @@ void do_open_session (void)
     }
 
     /* close existing session, if any, and initialize */
-    close_session(&Z, &datainfo);
+    close_session(NULL, &Z, &datainfo);
 
     strcpy(sessionfile, tryfile);
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
@@ -982,7 +983,7 @@ void verify_clear_data (void)
 	}
     }
 
-    close_session(&Z, &datainfo);
+    close_session(NULL, &Z, &datainfo);
 }
 
 static const char *readd (DIR *d)
@@ -1142,7 +1143,8 @@ void gui_clear_dataset (void)
     main_menubar_state(FALSE);
 }
 
-static void session_clear_data (double ***pZ, DATAINFO **ppdinfo)
+static void 
+session_clear_data (double ***pZ, DATAINFO **ppdinfo, int realclean)
 {
     gui_restore_sample(pZ, ppdinfo);
     gui_clear_dataset();
@@ -1152,42 +1154,57 @@ static void session_clear_data (double ***pZ, DATAINFO **ppdinfo)
     clear_model(models[1]);
     clear_model(models[2]);
 
-    free_command_stack(); 
+    if (realclean) {
+	free_command_stack(); 
+    }
+
     free_modelspec();
     reset_model_count();
 
     lib_cmd_destroy_context();
 }
 
-void close_session (double ***pZ, DATAINFO **ppdinfo)
+void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
+    int realclean = 1;
+
+    /* if we're running the "command log" to get text output
+       (SESSION_EXEC), then don't destroy saved stuff */
+    if (s != NULL && (s->flags & SESSION_EXEC)) {
+	realclean = 0;
+    }
+
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
-    session_clear_data(pZ, ppdinfo); 
+    session_clear_data(pZ, ppdinfo, realclean); 
 
-    free_session();
+    if (realclean) {
+	free_session();
 
-    clear_model_table(NULL);
-    clear_graph_page();
+	clear_model_table(NULL);
+	clear_graph_page();
 
-    session_menu_state(FALSE);
-    session_file_open = 0;
-    *scriptfile = '\0';
-    *sessionfile = '\0';
+	session_menu_state(FALSE);
+	session_file_open = 0;
+	*scriptfile = '\0';
+	*sessionfile = '\0';
 
-    if (iconview != NULL) {
-	gtk_widget_destroy(iconview);
+	if (iconview != NULL) {
+	    gtk_widget_destroy(iconview);
+	}
+
+	session_changed(0);
+	set_session_saved(0);
     }
-
-    session_changed(0);
-    set_session_saved(0);
 
     winstack_destroy();
     clear_selector();
     edit_dialog_special_get_text(NULL);
 
-    libgretl_session_cleanup();
+    if (realclean) {
+	libgretl_session_cleanup();
+    }
 
     plot_count = 0;
     zero_boxplot_count();

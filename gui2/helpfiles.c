@@ -1111,7 +1111,23 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    if (!gtk_text_iter_ends_word(&iter)) {
 		gtk_text_iter_forward_word_end(&w_end);
 	    }
+
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
+
+	    /* "coint2" command! */
+	    if (text != NULL && !strcmp(text, "coint") && 
+		gtk_text_iter_forward_char(&w_end)) {
+		gchar *s = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
+
+		if (s != NULL) {
+		    if (!strcmp(s, "coint2")) {
+			g_free(text);
+			text = s;
+		    } else {
+			g_free(s);
+		    }
+		}
+	    }
 	} 
 
 	if (text != NULL && *text != '\0') {

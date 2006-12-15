@@ -5055,64 +5055,57 @@ void display_var (void)
     }
 }
 
-void do_run_script (gpointer data, guint code, GtkWidget *w)
+/* Execute a script from the buffer in a viewer window.  This may
+   be a regular script, or it may be the "command log" from a
+   GUI session */
+
+void do_run_script (GtkWidget *w, gpointer data)
 {
+    windata_t *vwin = (windata_t *) data;
+    gchar *buf = textview_get_text(vwin->w);
+    GdkDisplay *disp;
+    GdkCursor *cursor;
+    GdkWindow *w1, *w2;
+    gint x, y;
     PRN *prn;
-    char *runfile = NULL;
-    int err;
+    int code, err;
+
+    if (buf == NULL || *buf == '\0') {
+	errbox("No commands to execute");
+	if (buf != NULL) {
+	    g_free(buf);
+	}
+    }    
 
     if (bufopen(&prn)) {
+	g_free(buf);
 	return;
     }
 
-    if (code == SCRIPT_EXEC) {
-	runfile = scriptfile;
-	gretl_command_sprintf("run %s", scriptfile);
+    if (vwin->role == VIEW_LOG) {
+	code = SESSION_EXEC;
+    } else {
+	gretl_command_sprintf("run %s", vwin->fname);
 	check_and_record_command();
-    } else if (code == SESSION_EXEC) {
-	runfile = cmdfile;
-    }
-
-    if (data == NULL) {
-	/* get commands from file */
-	err = execute_script(runfile, NULL, prn, code);
-    } else {	
-	/* get commands from file view buffer */
-	windata_t *vwin = (windata_t *) data;
-	gchar *buf = textview_get_text(vwin->w);
-
-	if (buf == NULL || *buf == '\0') {
-	    errbox("No commands to execute");
-	    gretl_print_destroy(prn);
-	    if (buf != NULL) {
-		g_free(buf);
-	    }
-	    return;
-	} else {
-	    GdkDisplay *disp = gdk_display_get_default();
-	    GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
-	    GdkWindow *w1, *w2;
-	    gint x, y;
-
-	    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
-	    w2 = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
-					  GTK_TEXT_WINDOW_TEXT);
-	    gdk_window_set_cursor(w1, cursor);
-	    gdk_window_set_cursor(w2, cursor);
-	    gdk_display_sync(disp);
-	    gdk_cursor_unref(cursor);
-
-	    err = execute_script(NULL, buf, prn, code);
-	    g_free(buf);
-
-	    gdk_window_set_cursor(w1, NULL);
-	    gdk_window_set_cursor(w2, NULL);
-	}
+	code = SCRIPT_EXEC;
     } 
 
-    if (err == -1) {
-	return;
-    }
+    disp = gdk_display_get_default();
+    cursor = gdk_cursor_new(GDK_WATCH);
+
+    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+    w2 = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
+				  GTK_TEXT_WINDOW_TEXT);
+    gdk_window_set_cursor(w1, cursor);
+    gdk_window_set_cursor(w2, cursor);
+    gdk_display_sync(disp);
+    gdk_cursor_unref(cursor);
+
+    err = execute_script(NULL, buf, prn, code);
+    g_free(buf);
+
+    gdk_window_set_cursor(w1, NULL);
+    gdk_window_set_cursor(w2, NULL);
 
     refresh_data();
 
@@ -5928,7 +5921,7 @@ int execute_script (const char *runfile, const char *buf,
 	bufread = 1;
     }
 
-    /* reset model count to 0 if starting/saving session (?) */
+    /* reset model count to 0 if saving session output */
     if (exec_code == SESSION_EXEC) {
 	reset_model_count();
     }
@@ -6063,12 +6056,12 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
-static int open_append (CMD *cmd, const char *line, 
-			double ***pZ,
-			DATAINFO **ppdinfo,
-			PRN *prn)
+static int open_append (ExecState *s, double ***pZ,
+			DATAINFO **ppdinfo, PRN *prn)
 {
     DATAINFO *pdinfo = *ppdinfo;
+    char *line = s->line;
+    CMD *cmd = s->cmd;
     char datfile[MAXLEN] = {0};
     int k, dbdata = 0;
     int err = 0;
@@ -6098,7 +6091,7 @@ static int open_append (CMD *cmd, const char *line,
 	      k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
 
     if (cmd->ci != APPEND && (data_status & HAVE_DATA) && !dbdata) {
-	close_session(pZ, ppdinfo);
+	close_session(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;
     }
 
@@ -6355,7 +6348,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case OPEN:
     case APPEND:
-	err = open_append(cmd, line, pZ, ppdinfo, prn);
+	err = open_append(s, pZ, ppdinfo, prn);
 	pdinfo = *ppdinfo;
 	break;
 
@@ -6380,7 +6373,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (data_status & HAVE_DATA) {
-	    close_session(pZ, ppdinfo);
+	    close_session(s, pZ, ppdinfo);
 	    pdinfo = *ppdinfo;
 	}
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);

@@ -77,7 +77,6 @@ extern char *storelist;
 extern float gui_scale;
 
 /* global filenames */
-extern char cmdfile[MAXLEN];
 extern char scriptfile[MAXLEN];
 extern char sessionfile[MAXLEN];
 extern char tryfile[MAXLEN];

@@ -1139,7 +1139,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     /* destroy the current data set, etc., unless we're explicitly appending */
     if (!append) {
-	close_session(&Z, &datainfo);
+	close_session(NULL, &Z, &datainfo);
     }
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
@@ -1677,7 +1677,7 @@ static struct viewbar_item viewbar_items[] = {
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("Print..."), GTK_STOCK_PRINT, window_print_callback, 0 },
 # endif
-    { N_("Run"), GTK_STOCK_EXECUTE, run_script_callback, RUN_ITEM },
+    { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, RUN_ITEM },
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },

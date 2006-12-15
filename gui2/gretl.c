@@ -110,7 +110,6 @@ static const struct poptOption options[] = {
 windata_t *mdata;
 DATAINFO *datainfo;
 
-char cmdfile[MAXLEN];
 char scriptfile[MAXLEN];
 char sessionfile[MAXLEN];
 char tryfile[MAXLEN];
@@ -875,9 +874,6 @@ int main (int argc, char *argv[])
     } else {
 	gui_get_data = 1;
     }
-
-    strcpy(cmdfile, paths.userdir);
-    strcat(cmdfile, "session.inp");
 
     /* allocate data information struct */
     datainfo = datainfo_new();

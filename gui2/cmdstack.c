@@ -240,7 +240,7 @@ static void dump_model_cmds (const model_stack *mstack, FILE *fp)
 {
     int i;
 
-    fprintf(fp, "(* commands pertaining to model %d *)\n", mstack->ID);
+    fprintf(fp, "/* commands pertaining to model %d */\n", mstack->ID);
 
     for (i=0; i<mstack->n; i++) {
 	fprintf(fp, "%s", mstack->cmds[i]);
@@ -253,6 +253,7 @@ static void dump_model_cmds (const model_stack *mstack, FILE *fp)
 
 static int vnum_from_data_command (const char *s)
 {
+    
     char vname[VNAMELEN];
     char format[8];
     int offset = 6;
@@ -291,8 +292,8 @@ static int parse_store_cmd (const char *sline, CMD *scmd)
     return err;
 }
 
-/* check if, so far as we can tell, a given modified variable has been
-   saved to the current datafile
+/* So far as we can tell, has a given modified variable been
+   saved to the current datafile?
 */
 
 static int var_is_stored (int v, int pos)
@@ -341,9 +342,6 @@ static char *mark_redundant_commands (void)
 	    if (v > 0 && var_is_stored(v, i)) {
 		drop[i] = 1;
 	    }
-	} else if (!strcmp(s, "corr") || !strcmp(s, "summary")) {
-	    /* available as session objects by default */
-	    drop[i] = 1;
 	}
     }
 
@@ -464,21 +462,21 @@ int dump_command_stack (const char *fname, int insert_open_data)
 
 void view_command_log (void)
 {
-    char fname[MAXLEN];
-    
+    char logfile[MAXLEN];
+
     if (n_cmds == 0) {
 	errbox(_("The command log is empty"));
 	return;
     }
 
-    strcpy(fname, paths.userdir);
-    strcat(fname, "session.inp");
+    strcpy(logfile, paths.userdir);
+    strcat(logfile, "session.inp");
 
-    if (dump_command_stack(fname, 0)) {
+    if (dump_command_stack(logfile, 0)) {
 	return;
     }
 
-    view_file(fname, 0, 0, 78, 370, VIEW_LOG);
+    view_file(logfile, 0, 0, 78, 370, VIEW_LOG);
 }
 
 /* See whether user has done any work, to determine whether or not to

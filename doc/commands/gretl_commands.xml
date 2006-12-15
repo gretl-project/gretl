@@ -119,49 +119,6 @@
 
   </command>
 
-  <command name="addto" section="Tests" 
-    label="Add variables to specified model" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>modelID</argument>
-	<argument>varlist</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>don't print estimates for augmented model</effect>
-	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>add as instrument, TSLS only</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>add as both regressor and instrument, TSLS only</effect>
-	</option>
-      </options>
-      <examples>
-        <example>addto 2 5 7 9</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Works like the <cmd>add</cmd> command, except that you specify
-	a previous model (using its ID number, which is printed at the
-	start of the model output) to take as the base for adding
-	variables.  The example above adds variables number 5, 7 and 9
-	to Model 2.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Add variables</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>
@@ -5031,52 +4988,6 @@
 	model altogether.  These two options are incompatible with the
 	<lit>--wald</lit> option; if one or more instruments are
 	omitted the model must be re-estimated.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>Model window, /Tests/Omit variables</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="omitfrom" section="Tests" 
-    label="Omit variables from specified model" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>modelID</argument>
-        <argument>varlist</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--wald</flag>
-	  <effect>do a Wald test rather than an F-test</effect>
-	</option>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>don't print estimates for reduced model</effect>
-	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>omit as instrument, TSLS only</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>omit as both regressor and instrument, TSLS only</effect>
-	</option>
-      </options>
-      <examples>
-        <example>omitfrom 2 5 7 9</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>Works like <cmdref targ="omit"/>, except that you specify
-	a previous model (using its ID number, which is printed at the
-	start of the model output) to take as the base for omitting
-	variables.  The example above omits variables number 5, 7 and
-	9 from Model 2.
       </para>
     </description>
 

@@ -94,9 +94,14 @@ static void gen_write_label (parser *p, int oldv)
     const char *src;
     size_t len = 0;
 
-    /* don't touch the label if we generated a single
-       observation in a series */
+    if (p->targ != NUM && p->targ != VEC) {
+	/* not relevant for matrices */
+	return;
+    }
+
     if (p->lh.substr != NULL) {
+	/* don't touch the label if we generated a single
+	   observation in a series */
 	return;
     }
 

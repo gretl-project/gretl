@@ -58,7 +58,10 @@ typedef enum {
     FUNCTION_EXEC     = 1 << 4
 } ExecFlags;
 
-#define HIDDEN_COMMAND(c) (c == FUNCERR || c == REMEMBER)
+#define HIDDEN_COMMAND(c) (c == ADDTO || \
+                           c == FUNCERR || \
+                           c == OMITFROM || \
+                           c == REMEMBER)
     
 /* functions follow */
 

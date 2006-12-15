@@ -96,6 +96,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_N, "nc" },
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
+    { COINT2,   OPT_V, "verbose" },
     { CUSUM,    OPT_R, "squares" },
     { DISCRETE, OPT_R, "reverse" },
     { DUMMIFY,  OPT_F, "drop-first" },
