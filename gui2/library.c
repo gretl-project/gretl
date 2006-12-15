@@ -619,12 +619,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	free(liststr);
     }
 
-    /* check the command and initialize output buffer */
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
     }
 
-    /* execute the command */
     switch (action) {
 
     case CORR:

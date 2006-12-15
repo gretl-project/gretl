@@ -3375,9 +3375,6 @@ static int add_omit_list (gpointer p, selector *sr)
 			  GINT_TO_POINTER(1));
     } else if (sr->code == OMIT || sr->code == COEFFSUM) {
 	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0) {
-		continue;
-	    }
 	    if (pmod->list[i] == LISTSEP) {
 		break;
 	    }
