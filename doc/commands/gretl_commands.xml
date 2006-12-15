@@ -4706,7 +4706,7 @@
 	6   nls C = a + b * Y^g
 	7    deriv a = 1
 	8    deriv b = Y^g
-	9    deriv g = beta * Y^g * log(Y)
+	9    deriv g = b * Y^g * log(Y)
 	10  end nls --vcv</code>
 
       <para>
