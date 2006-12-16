@@ -2446,7 +2446,7 @@ static int print_arg (char **pfmt, char **pargs,
     *pfmt += flen;
 
     if (wstar) {
-	/* get field width specifier */
+	/* evaluate field width specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
@@ -2463,7 +2463,7 @@ static int print_arg (char **pfmt, char **pargs,
     }
 
     if (pstar) {
-	/* get precision specifier */
+	/* evaluate precision specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
@@ -2488,7 +2488,7 @@ static int print_arg (char **pfmt, char **pargs,
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {
-		fmt[flen - 1] = 's';
+		fc = fmt[flen - 1] = 's';
 		str = gretl_strdup("NA");
 	    }
 	}
