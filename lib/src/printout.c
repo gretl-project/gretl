@@ -2166,6 +2166,285 @@ print_iter_info (int iter, double ll, int k, const double *b, const double *g,
                          c == 'G' || \
 			 c == 'd')
 
+#define NEW_PRINTF 0
+
+#if NEW_PRINTF
+
+#define STAR 777
+
+static double printf_get_scalar (char *s, double ***pZ,
+				 DATAINFO *pdinfo, int t, 
+				 int *err)
+{
+    double x = NADBL;
+    int v;
+
+    if (numeric_string(s)) {
+	return atof(s);
+    }
+
+    v = varindex(pdinfo, s);
+
+    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
+	char genstr[32];
+
+	sprintf(genstr, "%s[%d]", s, t + 1);
+	x = generate_scalar(genstr, pZ, pdinfo, err);
+    } else {
+	x = generate_scalar(s, pZ, pdinfo, err);
+    }
+
+    return x;
+}
+
+/* dup argv (s) up to the next free comma */
+
+static char *get_next_arg (const char *s, int *len, int *err)
+{
+    const char *p;
+    char *arg = NULL;
+    int par = 0, br = 0;
+    int quoted = 0;
+    int n = 0;
+
+    *len = strspn(s, ", ");
+    s += *len;
+    p = s;
+    
+    while (*p) {
+	if (*p == '"' && (p == s || *(p-1) != '\\')) {
+	    quoted = !quoted;
+	}
+	if (!quoted) {
+	    if (*p == '(') par++;
+	    else if (*p == ')') par--;
+	    else if (*p == '[') br++;
+	    else if (*p == ']') br--;
+	}
+	if (!quoted && !par && !br && *p == ',') {
+	    break;
+	}
+	p++;
+    }
+
+    n = p - s;
+    *len += n;
+
+    if (n > 0) {
+	arg = gretl_strndup(s, n);
+	if (arg == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else {
+	*err = E_PARSE;
+    }
+
+#if PRINTF_DEBUG
+    fprintf(stderr, "arg = '%s'\n", arg);
+#endif
+
+    return arg;
+}
+
+/* dup format string up to the end of the current conversion:
+   e.g. "%10.4f", "%6g", "%.8g", %3s", "%.*s", "%#12.4g"
+*/
+
+static char *get_format_chunk (const char *s, int *fc, 
+			       int *len, int *wid, int *prec,
+			       int *err)
+{
+    const char *cnvchars = "dDeEfgGxdux";
+    const char *numchars = "0123456789";
+    char *chunk = NULL;
+    const char *p = s;
+    int n;
+
+    *wid = *prec = 0;
+
+    p++; /* % */
+
+    /* '#', if present, must come first */
+    if (*p == '#') {
+	p++;
+    }
+
+    /* 'width' could be < 0 */
+    if (*p == '-') {
+	p++;
+    }
+
+    /* optional width? */
+    n = strspn(p, numchars);
+    if (n == 0 && *p == '*') {
+	/* variable version */
+	*wid = STAR;
+	p++;
+    } else if (n > 3) {
+	*err = E_PARSE;
+	return NULL;
+    } else {
+	p += n;
+    }
+
+    /* optional dot plus precision? */
+    if (*p == '.') {
+	p++;
+	n = strspn(p, numchars);
+	if (n == 0 && *p == '*') {
+	    *prec = STAR;
+	    p++;
+	} else if (n > 3) {
+	    *err = E_PARSE;
+	    return NULL;
+	} else {
+	    p += n;
+	}
+    }
+
+    /* now we should have a conversion character */
+    if (strchr(cnvchars, *p) == NULL) {
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    *fc = *p++;
+    *len = n = p - s;
+    
+    if (n > 0) {
+	chunk = gretl_strndup(s, n);
+	if (chunk == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else {
+	*err = E_PARSE;
+    }
+
+#if PRINTF_DEBUG
+    fprintf(stderr, "format chunk = '%s'\n", chunk);
+#endif
+
+    return chunk;
+}
+
+static int print_arg (char **pfmt, char **pargs, 
+		      double ***pZ, DATAINFO *pdinfo,
+		      int t, PRN *prn)
+{
+    const char *intconv = "dxul";
+    char *fmt = NULL, *arg = NULL;
+    char *str = NULL;
+    double x = NADBL;
+    int flen = 0, alen = 0;
+    int wid, prec, fc = 0;
+    int nstar = 0;
+    int err = 0;
+
+    /* select current conversion format */
+    fmt = get_format_chunk(*pfmt, &fc, &flen, &wid, &prec, &err);
+    if (err) {
+	return err;
+    }
+
+    *pfmt += flen;
+
+    if (wid == STAR) {
+	nstar++;
+	/* get field width specifier */
+	arg = get_next_arg(*pargs, &alen, &err);
+	if (!err) {
+	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
+	    if (!err && (na(x) || fabs(x) > 255)) {
+		err = E_DATA;
+	    }
+	}
+	if (err) {
+	    free(fmt);
+	    return err;
+	}
+	*pargs += alen;
+	wid = x;
+    }
+
+    if (prec == STAR) {
+	nstar++;
+	/* get precision specifier */
+	arg = get_next_arg(*pargs, &alen, &err);
+	if (!err) {
+	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
+	    if (!err && (na(x) || fabs(x) > 255)) {
+		err = E_DATA;
+	    }
+	}
+	if (err) {
+	    free(fmt);
+	    return err;
+	}
+	*pargs += alen;
+	prec = x;
+    }
+
+    /* get next "real" arg */
+    arg = get_next_arg(*pargs, &alen, &err);
+    if (!err) {
+	if (fc == 's') {
+	    /* str = printf_get_string(arg, pZ, pdinfo, &err); */
+	    str = gretl_strdup("string");
+	} else {
+	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
+	    if (!err && na(x)) {
+		fmt[flen - 1] = 's';
+		str = gretl_strdup("NA");
+	    }
+	}
+	*pargs += alen;
+    }
+
+    if (err) {
+	free(fmt);
+	return err;
+    } 
+
+    /* do the actual printing */
+
+    if (fc == 's') {
+	if (nstar == 2) {
+	    pprintf(prn, fmt, wid, prec, str);
+	} else if (nstar == 1) {
+	    wid = (wid == STAR)? wid : prec;
+	    pprintf(prn, fmt, wid, str);
+	} else {
+	    pprintf(prn, fmt, str);
+	}
+    } else if (strchr(intconv, fc)) {
+	if (nstar == 2) {
+	    pprintf(prn, fmt, wid, prec, (int) x);
+	} else if (nstar == 1) {
+	    wid = (wid == STAR)? wid : prec;
+	    pprintf(prn, fmt, wid, (int) x);
+	} else {
+	    pprintf(prn, fmt, (int) x);
+	}
+    } else {
+	if (nstar == 2) {
+	    pprintf(prn, fmt, wid, prec, x);
+	} else if (nstar == 1) {
+	    wid = (wid == STAR)? wid : prec;
+	    pprintf(prn, fmt, wid, x);
+	} else {
+	    pprintf(prn, fmt, x);
+	}
+    }
+
+    free(fmt);
+    free(arg);
+    free(str);
+    
+    return err;
+}
+
+#else
+
 static int print_arg (const char **pfmt, double val, 
 		      const char *str, PRN *prn)
 {
@@ -2214,6 +2493,8 @@ static int print_arg (const char **pfmt, double val,
     
     return err;
 }
+
+#endif /* new? */
 
 static int handle_escape (int c, PRN *prn)
 {
@@ -2376,6 +2657,122 @@ static double argv_get_scalar (const char *argv, double ***pZ,
 
     return x;
 }
+
+#if NEW_PRINTF 
+
+/* split line into format and args, copying both parts */
+
+static int split_printf_line (const char *s, char **format, 
+			      char **args)
+{
+    const char *p;
+    int n = 0;
+
+    if (!strncmp(s, "printf ", 7)) {
+	s += 7;
+    }
+
+    s += strspn(s, " ");
+    if (*s != '"' || *(s+1) == '\0') {
+	return E_PARSE;
+    }
+
+    s++;
+    p = s;
+
+    while (*s) {
+	if (*s == '"' && *(s-1) != '\\') {
+	    break;
+	}
+	n++;
+	s++;
+    }
+
+    if (n == 0) {
+	/* empty format string */
+	return 0; 
+    }
+
+    *format = gretl_strndup(p, n);
+    if (*format == NULL) {
+	return E_ALLOC;
+    }
+
+    s++;
+    s += strspn(s, " ");
+
+    if (*s != ',') {
+	/* empty args */
+	*args = NULL;
+	return 0;
+    }
+
+    s++;
+    s += strspn(s, " ");
+
+    *args = gretl_strdup(s);
+    if (*args == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+static int real_do_printf (const char *line, double ***pZ, 
+			   DATAINFO *pdinfo, PRN *prn, 
+			   int t)
+{
+    char *p, *q;
+    char *format = NULL;
+    char *args = NULL;
+    int err = 0;
+
+    *gretl_errmsg = '\0';
+
+    if (t < 0) {
+	t = pdinfo->t1;
+    }
+
+    err = split_printf_line(line, &format, &args);
+    if (err) {
+	return err;
+    }
+
+#if PRINTF_DEBUG
+    fprintf(stderr, "do_printf: line = '%s'\n", line);
+    fprintf(stderr, " format = '%s'\n", format);
+    fprintf(stderr, " args = '%s'\n", args);
+#endif
+
+    p = format;
+    q = args;
+
+    while (*p && !err) {
+	if (*p == '%' && *(p+1) == '%') {
+	    pputc(prn, '%');
+	    p += 2;
+	} else if (*p == '%') {
+	    err = print_arg(&p, &q, pZ, pdinfo, t, prn);
+	} else if (*p == '\\') {
+	    err = handle_escape(*(p+1), prn);
+	    p += 2;
+	} else {
+	    pputc(prn, *p);
+	    p++;
+	}
+    }
+
+    if (err) {
+	pputc(prn, '\n');
+    }
+
+    free(format);
+    free(args);
+
+    return err;
+}
+
+#else
 
 static int real_do_printf (const char *line, double ***pZ, 
 			   DATAINFO *pdinfo, PRN *prn, 
@@ -2566,6 +2963,8 @@ static int real_do_printf (const char *line, double ***pZ,
 
     return err;
 }
+
+#endif /* alternate versions */
 
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn)
