@@ -905,13 +905,13 @@ int positive_int_from_string (const char *s)
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo)
 {
-    int varno = positive_int_from_string(str);
+    int v = positive_int_from_string(str);
 
-    if (varno <= 0 || varno >= pdinfo->v) {
-	varno = -1;
+    if (v <= 0 || v >= pdinfo->v) {
+	v = -1;
     } 
     
-    return varno;
+    return v;
 }
 
 /**
@@ -927,9 +927,16 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 int rename_var_by_id (const char *idstr, const char *vname, 
 		      DATAINFO *pdinfo)
 {
-    int v = varnum_from_string(idstr, pdinfo);
+    int v1, v = varnum_from_string(idstr, pdinfo);
 
     if (v < 0) {
+	return E_DATA;
+    }
+
+    /* Can we round-trip?  If not, perhaps a function is
+       trying to rename a variable in outer scope. */
+    v1 = varindex(pdinfo, pdinfo->varname[v]);
+    if (v1 != v) {
 	return E_DATA;
     }
 

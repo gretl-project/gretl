@@ -2184,7 +2184,7 @@ static int localize_list (const char *oldname, const char *newname,
 	    }
 	}
     }
-	
+
     if (!err) {
 	/* save the new list at appropriate stacking level -- 
 	   note that this action copies the list */
@@ -2215,6 +2215,7 @@ static int localize_const_list (const char *oldname, const char *newname,
 
     err = copy_named_list_as(oldname, newname);
 
+#if 1 /* FIXME? */
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] != 0) {
@@ -2222,6 +2223,7 @@ static int localize_const_list (const char *oldname, const char *newname,
 	    }
 	}
     }
+#endif
 
     return err;
 }
@@ -2503,9 +2505,11 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		mi++;
 	    }
 	} else if (fp->type == ARG_LIST) {
+#if 1
 	    if (fp->flags & ARG_CONST) {
 		unlocalize_list(args->lists[li], pdinfo);
 	    }
+#endif
 	    li++;
 	}
     }

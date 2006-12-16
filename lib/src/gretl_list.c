@@ -1570,7 +1570,8 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
  * @nvars: location for return of number of elements in full list.
  *
  * Creates a newly allocated list including all variables in the
- * dataset that are not scalars and are not hidden variables.
+ * dataset that are not scalars, are not hidden variables, and
+ * are accessible at the current level of function execution.
  * The return value is %NULL in case either (a) allocation of
  * memory failed, or (b) the resulting list would be empty.
  * The caller can distinguish between these possibilities by
@@ -1583,11 +1584,13 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 
 int *full_var_list (const DATAINFO *pdinfo, int *nvars)
 {
+    int fsd = gretl_function_depth();
     int i, j, nv = 0;
     int *list = NULL;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i)) {
+	if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i) &&
+	    STACK_LEVEL(pdinfo, i) == fsd) {
 	    nv++;
 	}
     }
@@ -1603,7 +1606,8 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i)) {
+	    if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i) &&
+		STACK_LEVEL(pdinfo, i) == fsd) {
 		list[j++] = i;
 	    }
 	}

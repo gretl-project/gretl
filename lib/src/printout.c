@@ -2151,26 +2151,110 @@ print_iter_info (int iter, double ll, int k, const double *b, const double *g,
 
 #define PRINTF_DEBUG 0
 
-#define is_format_char(c) (c == 'e' || \
-                           c == 'E' || \
-                           c == 'f' || \
-                           c == 'g' || \
-                           c == 'G' || \
-                           c == 'd' || \
-                           c == 's')
+static int printf_escape (int c, PRN *prn)
+{
+    int err = 0;
 
-#define numeric_conv(c) (c == 'e' || \
-                         c == 'E' || \
-                         c == 'f' || \
-                         c == 'g' || \
-                         c == 'G' || \
-			 c == 'd')
+    switch (c) {
+    case 'n':
+	pputc(prn, '\n');
+	break;
+    case 't':
+	pputc(prn, '\t');
+	break;
+    case 'v':
+	pputc(prn, '\v');
+	break;
+    case '\\':
+	pputc(prn, '\\');
+	break;
+    default:
+	err = 1;
+    }
 
-#define NEW_PRINTF 0
+    return err;
+}
 
-#if NEW_PRINTF
+/* various string argument variants, optionally followed
+   by "+ offset" */
 
-#define STAR 777
+static char *printf_get_string (const char *s, const double **Z,
+				const DATAINFO *pdinfo, 
+				int t, int *err)
+{
+    char *ret = NULL;
+    char tstr[OBSLEN], darg[16];
+    const char *p = NULL, *q = NULL;
+    int v, offset = 0;
+    int len = 0;
+
+#if PRINTF_DEBUG
+    fprintf(stderr, "printf_get_string: looking at '%s'\n", s);
+#endif
+
+    if (*s == '"') {
+	/* literal string */
+	p = strrchr(s + 1, '"');
+	if (p != NULL) {
+	    q = p + 1;
+	    len = p - s - 1;
+	    p = s + 1;
+	}
+    } else if (sscanf(s, "varname(%d)", &v)) {
+	/* name of variable identified by number */
+	if (v >= 0 && v < pdinfo->v) {
+	    p = pdinfo->varname[v];
+	    len = strlen(p);
+	    q = strchr(s, ')') + 1;
+	}
+    } else if (sscanf(s, "date(%15[^)])", darg)) {
+	/* date string */
+	t = -1;
+	if (isdigit(*darg)) {
+	    t = atoi(darg);
+	} else {
+	    v = varindex(pdinfo, darg);
+	    if (v < pdinfo->v) {
+		t = Z[v][0];
+	    }
+	}
+	if (t > 0 && t <= pdinfo->n) {
+	    ntodate(tstr, t - 1, pdinfo);
+	    p = tstr;
+	    len = strlen(p);
+	    q = strchr(s, ')') + 1;
+	}
+    } else if (!strncmp(s, "marker", 6) && pdinfo->S != NULL) {
+	/* observation label */
+	p = pdinfo->S[t];
+	len = strlen(p);
+	q = s + 6;
+    }
+
+    if (p != NULL) {
+	if (q != NULL) {
+	    while (isspace(*q)) q++;
+	    if (*q == '+') {
+		q++;
+		offset = atoi(q);
+		len -= offset;
+	    }
+	}
+	if (len >= 0) {
+	    ret = gretl_strndup(p + offset, len);
+	}
+    }
+
+    if (ret == NULL) {
+	ret = gretl_strdup("NA");
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
+}
 
 static double printf_get_scalar (char *s, double ***pZ,
 				 DATAINFO *pdinfo, int t, 
@@ -2178,6 +2262,10 @@ static double printf_get_scalar (char *s, double ***pZ,
 {
     double x = NADBL;
     int v;
+
+#if PRINTF_DEBUG
+    fprintf(stderr, "printf_get_scalar: looking at '%s'\n", s);
+#endif
 
     if (numeric_string(s)) {
 	return atof(s);
@@ -2240,7 +2328,7 @@ static char *get_next_arg (const char *s, int *len, int *err)
     }
 
 #if PRINTF_DEBUG
-    fprintf(stderr, "arg = '%s'\n", arg);
+    fprintf(stderr, "get_next_arg: got '%s'\n", arg);
 #endif
 
     return arg;
@@ -2251,16 +2339,14 @@ static char *get_next_arg (const char *s, int *len, int *err)
 */
 
 static char *get_format_chunk (const char *s, int *fc, 
-			       int *len, int *wid, int *prec,
+			       int *len, int *wstar, int *pstar,
 			       int *err)
 {
-    const char *cnvchars = "dDeEfgGxdux";
+    const char *cnvchars = "eEfgGxduxs";
     const char *numchars = "0123456789";
     char *chunk = NULL;
     const char *p = s;
     int n;
-
-    *wid = *prec = 0;
 
     p++; /* % */
 
@@ -2278,7 +2364,7 @@ static char *get_format_chunk (const char *s, int *fc,
     n = strspn(p, numchars);
     if (n == 0 && *p == '*') {
 	/* variable version */
-	*wid = STAR;
+	*wstar = 1;
 	p++;
     } else if (n > 3) {
 	*err = E_PARSE;
@@ -2292,7 +2378,7 @@ static char *get_format_chunk (const char *s, int *fc,
 	p++;
 	n = strspn(p, numchars);
 	if (n == 0 && *p == '*') {
-	    *prec = STAR;
+	    *pstar = 1;
 	    p++;
 	} else if (n > 3) {
 	    *err = E_PARSE;
@@ -2304,6 +2390,7 @@ static char *get_format_chunk (const char *s, int *fc,
 
     /* now we should have a conversion character */
     if (strchr(cnvchars, *p) == NULL) {
+	fprintf(stderr, "bad conversion '%c'\n", *p);
 	*err = E_PARSE;
 	return NULL;
     }
@@ -2321,35 +2408,44 @@ static char *get_format_chunk (const char *s, int *fc,
     }
 
 #if PRINTF_DEBUG
-    fprintf(stderr, "format chunk = '%s'\n", chunk);
+    fprintf(stderr, "get_format_chunk: got '%s'\n", chunk);
 #endif
 
     return chunk;
 }
+
+/* extract the next conversion spec from *pfmt, find and evaluate the
+   corresponding elements in *pargs, and print the result */
 
 static int print_arg (char **pfmt, char **pargs, 
 		      double ***pZ, DATAINFO *pdinfo,
 		      int t, PRN *prn)
 {
     const char *intconv = "dxul";
-    char *fmt = NULL, *arg = NULL;
+    char *fmt = NULL;
+    char *arg = NULL;
     char *str = NULL;
     double x = NADBL;
     int flen = 0, alen = 0;
-    int wid, prec, fc = 0;
-    int nstar = 0;
+    int wstar = 0, pstar = 0;
+    int wid = 0, prec = 0;
+    int fc = 0;
     int err = 0;
 
+#if PRINTF_DEBUG
+    fprintf(stderr, "print_arg: *pfmt='%s', *pargs='%s'\n",
+	    *pfmt, *pargs);
+#endif
+
     /* select current conversion format */
-    fmt = get_format_chunk(*pfmt, &fc, &flen, &wid, &prec, &err);
+    fmt = get_format_chunk(*pfmt, &fc, &flen, &wstar, &pstar, &err);
     if (err) {
 	return err;
     }
 
     *pfmt += flen;
 
-    if (wid == STAR) {
-	nstar++;
+    if (wstar) {
 	/* get field width specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
@@ -2358,16 +2454,15 @@ static int print_arg (char **pfmt, char **pargs,
 		err = E_DATA;
 	    }
 	}
+	free(arg);
 	if (err) {
-	    free(fmt);
-	    return err;
+	    goto bailout;
 	}
 	*pargs += alen;
 	wid = x;
     }
 
-    if (prec == STAR) {
-	nstar++;
+    if (pstar) {
 	/* get precision specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
@@ -2376,9 +2471,9 @@ static int print_arg (char **pfmt, char **pargs,
 		err = E_DATA;
 	    }
 	}
+	free(arg);
 	if (err) {
-	    free(fmt);
-	    return err;
+	    goto bailout;
 	}
 	*pargs += alen;
 	prec = x;
@@ -2388,8 +2483,8 @@ static int print_arg (char **pfmt, char **pargs,
     arg = get_next_arg(*pargs, &alen, &err);
     if (!err) {
 	if (fc == 's') {
-	    /* str = printf_get_string(arg, pZ, pdinfo, &err); */
-	    str = gretl_strdup("string");
+	    str = printf_get_string(arg, (const double **) *pZ, 
+				    pdinfo, t, &err);
 	} else {
 	    x = printf_get_scalar(arg, pZ, pdinfo, t, &err);
 	    if (!err && na(x)) {
@@ -2399,266 +2494,54 @@ static int print_arg (char **pfmt, char **pargs,
 	}
 	*pargs += alen;
     }
+    free(arg);
 
     if (err) {
-	free(fmt);
-	return err;
+	goto bailout;
     } 
 
     /* do the actual printing */
 
     if (fc == 's') {
-	if (nstar == 2) {
+	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, str);
-	} else if (nstar == 1) {
-	    wid = (wid == STAR)? wid : prec;
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
 	    pprintf(prn, fmt, wid, str);
 	} else {
 	    pprintf(prn, fmt, str);
 	}
     } else if (strchr(intconv, fc)) {
-	if (nstar == 2) {
+	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, (int) x);
-	} else if (nstar == 1) {
-	    wid = (wid == STAR)? wid : prec;
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
 	    pprintf(prn, fmt, wid, (int) x);
 	} else {
 	    pprintf(prn, fmt, (int) x);
 	}
     } else {
-	if (nstar == 2) {
+	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
-	} else if (nstar == 1) {
-	    wid = (wid == STAR)? wid : prec;
+	} else if (wstar || pstar) {
+	    wid = (wstar)? wid : prec;
 	    pprintf(prn, fmt, wid, x);
 	} else {
 	    pprintf(prn, fmt, x);
 	}
     }
 
+ bailout:
+
+    if (err) {
+	pputc(prn, '\n');
+    }
+
     free(fmt);
-    free(arg);
     free(str);
     
     return err;
 }
-
-#else
-
-static int print_arg (const char **pfmt, double val, 
-		      const char *str, PRN *prn)
-{
-    char fmt[16];
-    int fc = *(*pfmt + 1);
-    size_t n = 0;
-    int err = 0;
-
-    fmt[0] = '%';
-
-    if (is_format_char(fc)) {
-	fmt[1] = fc;
-	fmt[2] = '\0';
-	n = 2;
-    } else {
-	sscanf(*pfmt + 1, "%14[^eEfgGsd]", fmt + 1);
-	n = strlen(fmt);
-	fc = *(*pfmt + n);
-	fmt[n] = fc;
-	fmt[++n] = '\0';
-    }
-
-    if (n == 0 || !is_format_char(fc)) {
-	err = 1;
-    } else if (fc != 's') {
-	/* numeric */
-	if (na(val)) {
-	    fmt[n-1] = 's';
-	    pprintf(prn, fmt, "NA");
-	} else if (fc == 'd') {
-	    pprintf(prn, fmt, (int) val);
-	} else {
-	    pprintf(prn, fmt, val);
-	}
-	*pfmt += n;
-    } else {
-	/* string */
-	if (str == NULL) {
-	    fprintf(stderr, "NULL string in printf\n");
-	    err = 1;
-	} else {
-	    pprintf(prn, fmt, str);
-	    *pfmt += n;	
-	}
-    } 
-    
-    return err;
-}
-
-#endif /* new? */
-
-static int handle_escape (int c, PRN *prn)
-{
-    int err = 0;
-
-    switch (c) {
-    case 'n':
-	pputc(prn, '\n');
-	break;
-    case 't':
-	pputc(prn, '\t');
-	break;
-    case 'v':
-	pputc(prn, '\v');
-	break;
-    case '\\':
-	pputc(prn, '\\');
-	break;
-    default:
-	err = 1;
-    }
-
-    return err;
-}
-
-static int output_format_only (const char *s, PRN *prn)
-{
-    int err = 0;
-
-    while (*s) {
-	if (*s == '\\') {
-	    err = handle_escape(*(s+1), prn);
-	    s++;
-	} else {
-	    pputc(prn, *s);
-	}
-	s++;
-    }
-
-    return err;
-}
-
-static char *get_arg (char *line)
-{
-    int inparen = 0;
-    static char *p = NULL;
-    char *q, *ret = NULL;
-
-    if (line != NULL) p = line;
-
-    q = p;
-    while (*p && ret == NULL) {
-	if (*p == '(') inparen++;
-	else if (*p == ')') inparen--;
-	if (!inparen && *p == ',') {
-	    *p = '\0';
-	    ret = q;
-	}
-	p++;
-    }
-
-    if (*p == '\0') ret = q;
-
-    return ret;
-}
-
-static int get_marker_offset (const char *s)
-{
-    int off = 0;
-
-    if (sscanf(s, "marker+%d", &off)) {
-	if (off < 0) {
-	    off = 0;
-	}
-    }
-
-    return off;
-}
-
-static char *date_string (const char *s, double **Z, const DATAINFO *pdinfo)
-{
-    char darg[16];
-    char *ret = NULL;
-    int v, t = -1;
-
-    if (!strncmp(s, "date(", 5) && sscanf(s + 5, "%15[^)])", darg)) {
-	if (isdigit(*darg)) {
-	    t = atoi(darg);
-	} else {
-	    v = varindex(pdinfo, darg);
-	    if (v < pdinfo->v) {
-		t = Z[v][0];
-	    }
-	}
-	if (t > 0 && t <= pdinfo->n) {
-	    char tstr[OBSLEN];
-
-	    ntodate(tstr, t - 1, pdinfo);
-	    ret = gretl_strdup(tstr);
-	}
-    }
-
-    return ret;
-}
-
-static char *varname_string (const char *s, const DATAINFO *pdinfo)
-{
-    char *vname = NULL;
-    int v;
-
-    if (sscanf(s, "varname(%d)", &v)) {
-	if (v >= 0 && v < pdinfo->v) {
-	    vname = gretl_strdup(pdinfo->varname[v]);
-	}
-    }
-
-    return vname;
-}
-
-static char *literal_string (const char *s)
-{
-    char *ret = NULL;
-    int n = strlen(s);
-
-    if (*s == '"' && s[n - 1] == '"') {
-	ret = gretl_strndup(s + 1, n - 2);
-    }
-
-    return ret;
-}
-
-static int get_conversion (const char *s, int *skip,
-			   int *dotstar)
-{
-    int n = strspn(s, "#0123456789*.");
-
-    if (strstr(s, ".*s")) {
-	*dotstar = 1;
-    }
-
-    *skip = n;
-
-    return (*(s + n));
-}
-
-static double argv_get_scalar (const char *argv, double ***pZ,
-			       DATAINFO *pdinfo, int t, int *err)
-{
-    int v = varindex(pdinfo, argv);
-    double x;
-
-    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
-	char genstr[32];
-
-	sprintf(genstr, "%s[%d]", argv, t + 1);
-	x = generate_scalar(genstr, pZ, pdinfo, err);
-    } else {
-	x = generate_scalar(argv, pZ, pdinfo, err);
-    }
-
-    return x;
-}
-
-#if NEW_PRINTF 
 
 /* split line into format and args, copying both parts */
 
@@ -2754,7 +2637,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else if (*p == '%') {
 	    err = print_arg(&p, &q, pZ, pdinfo, t, prn);
 	} else if (*p == '\\') {
-	    err = handle_escape(*(p+1), prn);
+	    err = printf_escape(*(p+1), prn);
 	    p += 2;
 	} else {
 	    pputc(prn, *p);
@@ -2771,200 +2654,6 @@ static int real_do_printf (const char *line, double ***pZ,
 
     return err;
 }
-
-#else
-
-static int real_do_printf (const char *line, double ***pZ, 
-			   DATAINFO *pdinfo, PRN *prn, 
-			   int t)
-{
-    const char *p;
-    char format[128];
-    char *argv, *str = NULL;
-    double *xvals = NULL;
-    char **svals = NULL;
-    int argc = 0, inparen = 0;
-    int xcnv = 0, scnv = 0;
-    int markerpos = -1;
-    int markeroffset = 0;
-    int i, err = 0;
-
-    if (t < 0) {
-	t = pdinfo->t1;
-    }
-
-#if PRINTF_DEBUG
-    fprintf(stderr, "do_printf: line='%s'\n", line);
-#endif
-
-    *gretl_errmsg = '\0';
-
-    if (!strncmp(line, "printf ", 7)) {
-	line += 7;
-    }
-
-    if (sscanf(line, "\"%127[^\"]\"", format) != 1) {
-	return 1;
-    }
-
-#if PRINTF_DEBUG
-    fprintf(stderr, "do_printf: format='%s'\n", format);
-#endif
-
-    p = format;
-    while (*p) {
-	int c, skip, dotstar = 0;
-
-	if (*p == '%') {
-	    c = get_conversion(p + 1, &skip, &dotstar);
-	    if (c == '%') {
-		p++;
-	    } else if (numeric_conv(c)) {
-		xcnv++;
-		p += skip;
-	    } else if (c == 's') {
-		scnv++;
-		p += skip;
-	    } else {
-		err = 1;
-		break;
-	    }
-	}
-
-	if (0 && dotstar) {
-	    strcpy(gretl_errmsg, "Sorry, \".*\" notation not handled yet\n");
-	    return 1;
-	}
-
-	p++;
-    }
-
-    if (err) {
-	return err;
-    }
-
-    line += strlen(format) + 2;
-    while (isspace(*line)) line++;
-    if (*line != ',') {
-	err = output_format_only(format, prn);
-	return err;
-    }
-
-    line++;
-    p = line;
-    while (*p) {
-	if (*p == '(') inparen++;
-	else if (*p == ')') inparen--;
-	if (!inparen && *p == ',') argc++;
-	p++;
-    }
-
-    argc++;
-    if (argc != xcnv + scnv) {
-	fprintf(stderr, "do_printf: argc = %d but conversions = %d\n",
-		argc, xcnv + scnv);
-	err = 1;
-	goto printf_bailout;
-    }
-
-    /* play safe with sizes here */
-    xvals = malloc(argc * sizeof *xvals);
-    str = malloc(strlen(line) + 1);
-    svals = strings_array_new(argc);
-
-    if (xvals == NULL || svals == NULL || str == NULL) {
-	err = E_ALLOC;
-	goto printf_bailout;
-    }
-
-    strcpy(str, line);
-
-    for (i=0; i<argc; i++) {
-	char *special;
-
-	argv = get_arg((i > 0)? NULL : str);
-	chopstr(argv);
-
-	xvals[i] = NADBL;
-	svals[i] = NULL;
-
-#if PRINTF_DEBUG
-	fprintf(stderr, "do_printf: processing argv[%d] '%s'\n", i, argv);	
-#endif
-	if (numeric_string(argv)) {
-	    xvals[i] = atof(argv);
-	} else if (!strncmp(argv, "marker", 6)) {
-	    if (markerpos >= 0 || pdinfo->S == NULL) {
-		err = 1;
-	    } else {
-		markerpos = i;
-		xvals[i] = 0.0;
-		markeroffset = get_marker_offset(argv);
-	    }
-	} else if ((special = varname_string(argv, pdinfo)) != NULL) {
-	    svals[i] = special;
-	} else if ((special = date_string(argv, *pZ, pdinfo)) != NULL) {
-	    svals[i] = special;
-	} else if ((special = literal_string(argv)) != NULL) {
-	    svals[i] = special;
-	} else {
-	    xvals[i] = argv_get_scalar(argv, pZ, pdinfo, t, &err);
-	}
-
-#if PRINTF_DEBUG
-	fprintf(stderr, " after processing arg, xvals[%d] = %g, err = %d\n", 
-		i, xvals[i], err);	
-#endif
-	if (err) {
-	    goto printf_bailout;
-	}
-    }    
-
-    p = format;
-    i = 0;
-    while (*p && !err) {
-	const char *s = NULL;
-
-	if (*p == '%') {
-	    if (*(p + 1) == '%') {
-		pputc(prn, '%');
-		p += 2;
-	    } else {
-		if (i == markerpos) {
-		    s = pdinfo->S[t];
-		    if (markeroffset > 0 && 
-			markeroffset < strlen(pdinfo->S[t])) {
-			s += markeroffset;
-		    }
-		} else if (svals[i] != NULL) {
-		    s = svals[i];
-		}
-		err = print_arg(&p, xvals[i], s, prn);
-		i++;
-	    }
-	} else if (*p == '\\') {
-	    err = handle_escape(*(p + 1), prn);
-	    p += 2;
-	} else {
-	    pputc(prn, *p);
-	    p++;
-	}
-    }
-
-    if (err) {
-	pputc(prn, '\n');
-    }
-
- printf_bailout:
-
-    free(xvals);
-    free(str);
-    free_strings_array(svals, argc);
-
-    return err;
-}
-
-#endif /* alternate versions */
 
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn)

@@ -374,7 +374,8 @@ int ok_in_loop (int c)
 	c == MULTIPLY || 
 	c == OUTFILE ||
 	c == PCA ||
-	c == REMEMBER || 
+	c == REMEMBER ||
+        c == RENAME || 
 	c == RHODIFF ||
 	c == RUNS || 
 	c == SETINFO ||
@@ -910,19 +911,23 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	err = allocate_each_strings(loop, list[0]);
     }
 
-    /* when cashing out list-members, use varnames rather than numbers */
+    /* when cashing out list-members, use varnames rather than numbers,
+       unless the list member is not at the current depth
+    */
     if (!err) {
-	int i, li;
+	int i, li, fsd = gretl_function_depth();
 
-	for (i=1; i<=list[0] && !err; i++) {
-	    li = list[i];
+	for (i=0; i<list[0] && !err; i++) {
+	    li = list[i+1];
 	    if (li < 0 || li >= pdinfo->v) {
 		err = 1;
+	    } else if (li != 0 && STACK_LEVEL(pdinfo, li) != fsd) {
+		loop->eachstrs[i] = gretl_strdup_printf("%d", li);
 	    } else {
-		loop->eachstrs[i-1] = gretl_strdup(pdinfo->varname[li]);
-		if (loop->eachstrs[i-1] == NULL) {
-		    err = E_ALLOC;
-		}
+		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[li]);
+	    }
+	    if (!err && loop->eachstrs[i] == NULL) {
+		err = E_ALLOC;
 	    }
 	}
     }
@@ -1149,7 +1154,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     }
 
     if (!err && !na(loop->init.val) && !na(loop->final.val)) {
-	int nt = loop->final.val - loop->init.val;
+	int nt = loop->final.val - loop->init.val + 1;
 
 	if (loop->type != FOR_LOOP && nt <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count missing or invalid"));
