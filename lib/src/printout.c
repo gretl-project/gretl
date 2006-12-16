@@ -2384,7 +2384,7 @@ static int print_arg (char **pfmt, char **pargs,
 	prec = x;
     }
 
-    /* get next "real" arg */
+    /* get next substantive arg */
     arg = get_next_arg(*pargs, &alen, &err);
     if (!err) {
 	if (fc == 's') {
