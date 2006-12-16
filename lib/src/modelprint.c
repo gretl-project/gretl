@@ -333,14 +333,18 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
-	pprintf(prn, "  Test for AR(%d) errors:", 1);
-	pprintf(prn, " z = %g (p-value %.4g)\n", x, normal_pvalue_2(x));
+	pputs(prn, "  ");
+	pprintf(prn, _("Test for AR(%d) errors:"), 1);
+	pprintf(prn, " z = %g (%s %.4g)\n", x, _("p-value"), 
+		normal_pvalue_2(x));
     }
 
     x = gretl_model_get_double(pmod, "AR2");
     if (!na(x)) {
-	pprintf(prn, "  Test for AR(%d) errors:", 2);
-	pprintf(prn, " z = %g (p-value %.4g)\n", x, normal_pvalue_2(x));
+	pputs(prn, "  ");
+	pprintf(prn, _("Test for AR(%d) errors:"), 2);
+	pprintf(prn, " z = %g (%s %.4g)\n", x, _("p-value"),
+		normal_pvalue_2(x));
     }
 
     x = gretl_model_get_double(pmod, "sargan");

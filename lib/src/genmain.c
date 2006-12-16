@@ -37,16 +37,16 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 
     if (p->targ == NUM) {
 	if (var_is_series(p->dinfo, p->lh.v)) {
-	    pprintf(prn, "Modified series %s (ID %d)",
+	    pprintf(prn, _("Modified series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	} else {
 	    double x = (*p->Z)[p->lh.v][p->lh.obs];
 
 	    if (p->lh.v < oldv) {
-		pprintf(prn, "Replaced scalar %s (ID %d)",
+		pprintf(prn, _("Replaced scalar %s (ID %d)"),
 			p->lh.name, p->lh.v);
 	    } else {
-		pprintf(prn, "Generated scalar %s (ID %d)",
+		pprintf(prn, _("Generated scalar %s (ID %d)"),
 			p->lh.name, p->lh.v);
 	    }
 	    if (na(x)) {
@@ -57,23 +57,20 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (p->targ == VEC) {
 	if (p->lh.v < oldv) {
-	    pprintf(prn, "Replaced series %s (ID %d)",
-		    p->lh.name, p->lh.v);
-	} else if (p->lh.v < oldv) {
-	    pprintf(prn, "Replaced series %s (ID %d)",
+	    pprintf(prn, _("Replaced series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	} else {
-	    pprintf(prn, "Generated series %s (ID %d)",
+	    pprintf(prn, _("Generated series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	}
     } else if (p->targ == MAT) {
 	if (p->lh.m0 != NULL && p->lh.substr != NULL && 
 	    *p->lh.substr !='\0') {
-	    pprintf(prn, "Modified matrix %s\n", p->lh.name);
+	    pprintf(prn, _("Modified matrix %s"), p->lh.name);
 	} else if (p->lh.m0 != NULL) {
-	    pprintf(prn, "Replaced matrix %s\n", p->lh.name);
+	    pprintf(prn, _("Replaced matrix %s"), p->lh.name);
 	} else {
-	    pprintf(prn, "Generated matrix %s\n", p->lh.name);
+	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
 	}
     }
 

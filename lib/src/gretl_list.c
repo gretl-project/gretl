@@ -154,10 +154,9 @@ static int real_remember_list (const int *list, const char *name,
 	free(orig->list);
 	orig->list = gretl_list_copy(list);
 	if (orig->list == NULL) {
-	    pprintf(prn, "Out of memory replacing list '%s'\n", name);
 	    err = E_ALLOC;
 	} else if (gretl_messages_on()) {
-	    pprintf(prn, "Replaced list '%s'\n", name);
+	    pprintf(prn, _("Replaced list '%s'\n"), name);
 	}
     } else {
 	saved_list **lstack;
@@ -170,15 +169,14 @@ static int real_remember_list (const int *list, const char *name,
 
 	list_stack[n_lists] = saved_list_new(list, name);
 	if (list_stack[n_lists] == NULL) {
-	    pprintf(prn, "Out of memory adding list '%s'\n", name);
 	    err = E_ALLOC;
 	} else {
 	    if (gretl_messages_on()) {
 		const char *realname = list_stack[n_lists]->name;
 
-		pprintf(prn, "Added list '%s'\n", realname);
+		pprintf(prn, _("Added list '%s'\n"), realname);
 		if (strlen(realname) < strlen(name)) {
-		    pprintf(prn, "Warning: the name was truncated to %d characters\n", 
+		    pprintf(prn, _("Warning: the name was truncated to %d characters\n"), 
 			    LNAMELEN - 1);
 		}
 	    }
