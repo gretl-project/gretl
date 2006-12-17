@@ -933,11 +933,10 @@ int rename_var_by_id (const char *idstr, const char *vname,
 	return E_DATA;
     }
 
-    /* Can we round-trip?  If not, perhaps a function is
-       trying to rename a variable in outer scope. */
-    v1 = varindex(pdinfo, pdinfo->varname[v]);
-    if (v1 != v) {
-	return E_DATA;
+    if (var_is_const(pdinfo, v)) {
+	sprintf(gretl_errmsg, "The variable %s is read-only", 
+		pdinfo->varname[v]);
+	return 1;
     }
 
     /* should be pre-checked for validity of varname and

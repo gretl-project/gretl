@@ -30,7 +30,8 @@ typedef enum {
     VAR_DISCRETE   = 1 << 0,
     VAR_SCALAR     = 1 << 1,
     VAR_HIDDEN     = 1 << 2,
-    VAR_GENERATED  = 1 << 3
+    VAR_GENERATED  = 1 << 3,
+    VAR_CONST      = 1 << 4
 } VarinfoFlags;
 
 /**
@@ -214,6 +215,34 @@ typedef enum {
  * a formula or transformation function.
  */
 #define var_is_generated(p, i) ((p)->varinfo[i]->flags & VAR_GENERATED)
+
+/**
+ * var_is_const:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable has been marked as
+ * "const".
+ */
+#define var_is_const(p, i) ((p)->varinfo[i]->flags & VAR_CONST)
+
+/**
+ * set_var_const:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Set the "const" flag on the given variable.
+ */
+#define set_var_const(p, i) ((p)->varinfo[i]->flags |= VAR_CONST)
+
+/**
+ * unset_var_const:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Remove the "const" flag from the given variable.
+ */
+#define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_CONST)
 
 
 void free_Z (double **Z, DATAINFO *pdinfo);

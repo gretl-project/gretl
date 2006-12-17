@@ -911,8 +911,7 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	err = allocate_each_strings(loop, list[0]);
     }
 
-    /* when cashing out list-members, use varnames rather than numbers,
-       unless the list member is not at the current depth
+    /* when cashing out list-members, use varnames rather than numbers
     */
     if (!err) {
 	int i, li, fsd = gretl_function_depth();
@@ -921,8 +920,6 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	    li = list[i+1];
 	    if (li < 0 || li >= pdinfo->v) {
 		err = 1;
-	    } else if (li != 0 && STACK_LEVEL(pdinfo, li) != fsd) {
-		loop->eachstrs[i] = gretl_strdup_printf("%d", li);
 	    } else {
 		loop->eachstrs[i] = gretl_strdup(pdinfo->varname[li]);
 	    }
