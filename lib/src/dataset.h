@@ -224,7 +224,7 @@ typedef enum {
  * Determine whether or not a variable has been marked as
  * "const".
  */
-#define var_is_const(p, i) ((p)->varinfo[i]->flags & VAR_CONST)
+#define var_is_const(p, i) (i == 0 || ((p)->varinfo[i]->flags & VAR_CONST))
 
 /**
  * set_var_const:
@@ -315,6 +315,8 @@ int dataset_add_series_as (double *x, const char *newname,
 
 int dataset_copy_variable_as (int v, const char *newname,
 			      double ***pZ, DATAINFO *pdinfo);
+
+int overwrite_err (const DATAINFO *pdinfo, int v);
 
 int dataset_drop_listed_variables (const int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber);

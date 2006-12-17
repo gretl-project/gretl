@@ -927,16 +927,14 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 int rename_var_by_id (const char *idstr, const char *vname, 
 		      DATAINFO *pdinfo)
 {
-    int v1, v = varnum_from_string(idstr, pdinfo);
+    int v = varnum_from_string(idstr, pdinfo);
 
     if (v < 0) {
 	return E_DATA;
     }
 
     if (var_is_const(pdinfo, v)) {
-	sprintf(gretl_errmsg, "The variable %s is read-only", 
-		pdinfo->varname[v]);
-	return 1;
+	return overwrite_err(pdinfo, v);
     }
 
     /* should be pre-checked for validity of varname and

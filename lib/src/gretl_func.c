@@ -2141,70 +2141,15 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-/* given a named list of variables supplied as an argument to a function,
-   make a revised version of the list in which the original variable
-   ID numbers are replaced by the ID numbers of local copies of those
-   variables */
-
-static int localize_list (const char *oldname, const char *newname,
-			  double ***pZ, DATAINFO *pdinfo)
-{
-    int *orig = NULL;
-    int *new = NULL;
-    int origv = pdinfo->v;
-    int orig0 = 0;
-    int i, v, err = 0;
-
-    if (!strcmp(oldname, "null")) {
-	new = gretl_null_list();
-    } else {
-	orig = get_list_by_name(oldname);
-	if (orig == NULL) {
-	    return 1;
-	}
-	new = gretl_list_copy(orig);
-	orig0 = orig[0];
-    }
-
-    if (new == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<=orig0 && !err; i++) {
-	v = orig[i];
-	if (v == pdinfo->v) {
-	    /* unknown variable */
-	    err = E_DATA;
-	} else if (v != 0) {
-	    /* add a local copy of the variable */
-	    err = dataset_copy_variable_as(v, pdinfo->varname[v], 
-					   pZ, pdinfo);
-	    if (!err) {
-		new[i] = pdinfo->v - 1;
-	    }
-	}
-    }
-
-    if (!err) {
-	/* save the new list at appropriate stacking level -- 
-	   note that this action copies the list */
-	err = stack_localized_list_as(new, newname);
-    } else {
-	dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
-    }
-
-    free(new);
-
-    return err;
-}
-
-/* given a named list of variables supplied as an argument to a
+/* Given a named list of variables supplied as an argument to a
    function, copy the list under the name assigned by the function,
    and make the variables referenced in that list accessible to the
-   function */
+   function.  If the "const" flag is set for the parameter, mark the
+   variables in question as const.
+*/
 
-static int localize_const_list (const char *oldname, const char *newname,
-				DATAINFO *pdinfo)
+static int localize_list (const char *oldname, fn_param *fp,
+			  DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(oldname);
     int i, err;
@@ -2213,13 +2158,15 @@ static int localize_const_list (const char *oldname, const char *newname,
 	return E_DATA;
     }
 
-    err = copy_named_list_as(oldname, newname);
+    err = copy_named_list_as(oldname, fp->name);
 
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] != 0) {
 		STACK_LEVEL(pdinfo, list[i]) += 1;
-		set_var_const(pdinfo, list[i]);
+		if (fp->flags & ARG_CONST) {
+		    set_var_const(pdinfo, list[i]);
+		}
 	    }
 	}
     }
@@ -2279,11 +2226,7 @@ static int allocate_function_args (ufunc *fun,
 	    const char *lname = args->lists[li++];
 
 	    if (get_list_by_name(lname) != NULL || !strcmp(lname, "null")) {
-		if (fp->flags & ARG_CONST) {
-		    err = localize_const_list(lname, fp->name, pdinfo);
-		} else {
-		    err = localize_list(lname, fp->name, pZ, pdinfo);
-		}
+		err = localize_list(lname, fp, pdinfo);
 	    }
 	} 
     }
@@ -2505,10 +2448,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		mi++;
 	    }
 	} else if (fp->type == ARG_LIST) {
-	    if (fp->flags & ARG_CONST) {
-		unlocalize_list(args->lists[li], pdinfo);
-	    }
-	    li++;
+	    unlocalize_list(args->lists[li++], pdinfo);
 	}
     }
 

@@ -1562,13 +1562,23 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
     return 0;
 }
 
+int overwrite_err (const DATAINFO *pdinfo, int v)
+{
+    sprintf(gretl_errmsg, "The variable %s is read-only", 
+	    pdinfo->varname[v]);
+
+    return E_DATA;
+}
+
 static int real_drop_listed_vars (const int *list, double ***pZ, 
 				  DATAINFO *pdinfo, int *renumber,
 				  int drop)
 {
     double **Z = *pZ;
     int oldv = pdinfo->v, vmax = pdinfo->v;
+    int delmin = oldv;
     int i, v, ndel = 0; 
+    int err;
 
     if (list == NULL) {
 	/* no-op */
@@ -1584,16 +1594,16 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 	    list[0]);
 #endif
 
-    /* free and set to NULL all the vars to be deleted */
-
+    /* check that no vars to be deleted are marked "const", and do
+       some preliminary accounting while we're at it */
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
-	    free(Z[v]);
-	    Z[v] = NULL;
-	    if (drop == DROP_NORMAL) {
-		free(pdinfo->varname[v]);
-		free(pdinfo->varinfo[v]);
+	    if (var_is_const(pdinfo, v)) {
+		return overwrite_err(pdinfo, v);
+	    }
+	    if (v < delmin) {
+		delmin = v;
 	    }
 	    ndel++;
 	}
@@ -1603,7 +1613,44 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 	return 0;
     }
 
-    /* rearrange pointers if necessary */
+#if DDEBUG
+    fprintf(stderr, "real_drop_listed_variables: lowest ID of deleted var"
+	    " = %d\n", delmin);
+#endif
+
+#if 0 /* not yet: stuff for recreating saved lists in the face of the
+	 renumbering of variables (see below) */
+    if (1) {
+	int ren = oldv - ndel - delmin;
+
+	if (ren > 0) {
+	    /* if the vars "to be renumbered" are actually hidden, we're OK? */
+	    for (i=delmin; i<vmax; i++) {
+		if (var_is_hidden(pdinfo, i) && !in_gretl_list(list, i)) {
+		    ren--;
+		}
+	    }
+	    if (ren > 0) {
+		fprintf(stderr, "drop vars: renumbering needed (ren=%d)\n", ren);
+	    }
+	}
+    }
+#endif
+
+    /* free and set to NULL all the vars to be deleted */
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v > 0 && v < oldv) {
+	    free(Z[v]);
+	    Z[v] = NULL;
+	    if (drop == DROP_NORMAL) {
+		free(pdinfo->varname[v]);
+		free(pdinfo->varinfo[v]);
+	    }
+	}
+    }
+
+    /* repack pointers if necessary */
 
     for (v=1; v<vmax; v++) {
 	if (Z[v] == NULL) {
@@ -1621,9 +1668,10 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
 		    if (drop == DROP_NORMAL) {
-			if (renumber != NULL && 
-			    !var_is_hidden(pdinfo, i + gap)) {
-			    *renumber = 1;
+			if (!var_is_hidden(pdinfo, i + gap)) {
+			    if (renumber != NULL) {
+				*renumber = 1;
+			    }
 			}
 			pdinfo->varname[i] = pdinfo->varname[i + gap];
 			pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
@@ -1637,7 +1685,15 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 	}
     }
 
-    return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
+    err = shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
+
+    if (!err) {
+	/* for now we'll just remove from saved lists any vars
+	   that have been deleted OR renumbered */
+	gretl_lists_prune(delmin);
+    }
+
+    return err;
 }
 
 /**

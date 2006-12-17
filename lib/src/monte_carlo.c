@@ -914,7 +914,7 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
     /* when cashing out list-members, use varnames rather than numbers
     */
     if (!err) {
-	int i, li, fsd = gretl_function_depth();
+	int i, li;
 
 	for (i=0; i<list[0] && !err; i++) {
 	    li = list[i+1];

@@ -96,6 +96,30 @@ int n_saved_lists (void)
 }
 
 /**
+ * max_varno_in_saved_lists:
+ *
+ * Returns: the highest ID number of a variable referenced
+ * in a saved (named) list.
+ */
+
+int max_varno_in_saved_lists (void)
+{
+    int *list;
+    int i, j, vmax = 0;
+
+    for (i=0; i<n_lists; i++) {
+	list = list_stack[i]->list;
+	for (j=1; j<=list[0]; j++) {
+	    if (list[j] > vmax) {
+		vmax = list[j];
+	    }
+	}
+    }    
+
+    return vmax;
+}
+
+/**
  * get_list_name_by_index:
  * @idx: 0-based index into array of saved lists.
  *
@@ -214,33 +238,6 @@ int remember_list (const int *list, const char *name, PRN *prn)
 }
 
 /**
- * stack_localized_list_as:
- * @list: the list to be saved.
- * @name: the name to be given.
- *
- * For use in user-defined functions: take a list of
- * variables that has been "localized" to function-scope
- * and save it under the given @name.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int stack_localized_list_as (int *list, const char *name)
-{
-    saved_list *sl;
-    int err;
-
-    err = real_remember_list(list, name, 1, NULL);
-
-    if (!err) {
-	sl = list_stack[n_lists - 1];
-	sl->level += 1;
-    }
-
-    return err;
-}
-
-/**
  * copy_named_list_as:
  * @orig: the name of the original list.
  * @new: the name to be given to the copy.
@@ -323,6 +320,28 @@ int destroy_saved_lists_at_level (int level)
     }
 
     return err;
+}
+
+/**
+ * gretl_lists_prune:
+ *
+ * Goes through any saved lists, removing variables with
+ * ID numbers @vmin or higher.
+ */
+
+void gretl_lists_prune (int vmin)
+{
+    int *list;
+    int i, j;
+
+    for (i=0; i<n_lists; i++) {
+	list = list_stack[i]->list;
+	for (j=1; j<=list[0]; j++) {
+	    if (list[j] >= vmin) {
+		gretl_list_delete_at_pos(list, j--);
+	    }
+	}
+    }
 }
 
 /**

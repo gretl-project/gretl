@@ -3789,6 +3789,14 @@ static void pre_process (parser *p, int flags)
 	newvar = 0;
     }
 
+    /* if pre-existing var, check for const-ness */
+    if (!newvar && (p->lh.t == NUM || p->lh.t == VEC)) {
+	if (var_is_const(p->dinfo, p->lh.v)) {
+	    p->err = overwrite_err(p->dinfo, p->lh.v);
+	    return;
+	}
+    }
+
     /* if new variable, check name for legality */
     if (newvar && !(flags & P_PRIVATE)) {
 	p->err = check_varname(test);
