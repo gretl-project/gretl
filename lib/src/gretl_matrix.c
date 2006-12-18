@@ -5288,15 +5288,6 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	}
     }
 
-    xbar = gretl_vector_alloc(k);
-    if (xbar == NULL) {
-	if (errp != NULL) {
-	    *errp = E_ALLOC;
-	}
-	gretl_matrix_free(V);
-	return NULL;
-    }
-    
     for (i=0; i<k; i++) {
 	xbar->val[i] = 0.0;
 	for (t=0; t<n; t++) {
@@ -5305,7 +5296,7 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	xbar->val[i] /= n;
     }
 
-    if (corr) {
+    if (ssx != NULL) {
 	for (i=0; i<k; i++) {
 	    ssx->val[i] = 0.0;
 	    for (t=0; t<n; t++) {
@@ -5324,8 +5315,10 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		vv += (x - xbar->val[i]) * (y - xbar->val[j]);
 	    }
 	    if (ssx != NULL) {
-		x = ssx->val[i] * ssx->val[j];
-		vv /= sqrt(x);
+		if (vv != 0.0) {
+		    x = ssx->val[i] * ssx->val[j];
+		    vv /= sqrt(x);
+		}
 	    } else {
 		vv /= n - 1;
 	    }
@@ -5379,27 +5372,14 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
     double vv, x, y;
     int n, err = 0;
     
-    if (errp != NULL) {
-	*errp = 0;
-    }
-
     V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	if (errp != NULL) {
-	    *errp = E_ALLOC;
-	}
-	return NULL;
+    xbar = gretl_vector_alloc(k);
+
+    if (V == NULL || xbar == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    xbar = gretl_vector_alloc(k);
-    if (xbar == NULL) {
-	if (errp != NULL) {
-	    *errp = E_ALLOC;
-	}
-	gretl_matrix_free(V);
-	return NULL;
-    }
-    
     for (i=0; i<k && !err; i++) {
 	xbar->val[i] = gretl_mean(pdinfo->t1, pdinfo->t2, Z[list[i+1]]);
 	if (na(xbar->val[i])) {
@@ -5430,6 +5410,8 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 	    gretl_matrix_set(V, j, i, vv);
 	}
     }
+
+ bailout:
 
     if (means != NULL && !err) {
 	*means = xbar;
