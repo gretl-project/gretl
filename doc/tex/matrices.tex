@@ -277,6 +277,8 @@ matrix are:
 \texttt{sumr()} & sum by row \\
 \texttt{meanc()} & mean by column \\
 \texttt{meanr()} & mean by row \\
+\texttt{mcov()} & covariance matrix by columns \\
+\texttt{mcorr()} & correlation matrix by columns \\
 \texttt{inv()} & inverse \\
 \texttt{cholesky()} & Cholesky decomposition \\
 \texttt{diag()} & extract principal diagonal \\
@@ -296,7 +298,13 @@ For a matrix $A$ with $m$ rows and $n$ columns, \texttt{sumc(A)}
 returns a row vector with the $n$ column sums, and \texttt{sumr(A)}
 returns a column vector with the $m$ row sums.  \texttt{meanc(A)}
 returns a row vector with the $n$ column means, and \texttt{meanr(A)}
-a column vector with the $m$ row means.
+a column vector with the $m$ row means.  
+
+For a matrix $A$ with $T$ rows and $k$ columns, \texttt{mcov(A)} and
+\texttt{mcorr(A)} both return $k \times k$ symmetric matrices, in the
+first case containing the variances (on the diagonal) and covariances
+of the variables in the columns of $A$, and in the second, containing
+the correlations of the variables.
 
 The \texttt{cholesky} function computes the Cholesky decomposition $L$
 of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower

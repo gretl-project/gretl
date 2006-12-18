@@ -110,12 +110,14 @@ enum {
     SUMC,
     MEANR,
     MEANC,
+    MCOV,
+    MCORR,
     CDEMEAN,
     CHOL,
     INV,
-    DIAG,
+    DIAG,    /* 90 */
     TRANSP,
-    TVEC,    /* 90 */
+    TVEC,
     VECH,
     UNVECH,
     ROWS,
@@ -123,9 +125,9 @@ enum {
     DET,
     LDET,
     TRACE,
-    NORM1,
+    NORM1,  /* 100 */
     RCOND,
-    VARNUM,  /* 100 */
+    VARNUM,
     OBSNUM,
     ISSERIES,
     ISLIST,
@@ -133,9 +135,9 @@ enum {
     LISTLEN,
     PVAL,
     CDF,
-    CRIT,
+    CRIT,     /* 110 */
     MAKEMASK,
-    FUNC_MAX, /* 110: separator: end of single-arg functions */
+    FUNC_MAX, /* separator: end of single-arg functions */
     COR,
     COV,
     UNIFORM,
@@ -143,9 +145,9 @@ enum {
     FRACDIF,    
     ZEROS,
     ONES,
-    MUNIF,
+    MUNIF,   /* 120 */
     MNORM,
-    QFORM,   /* 120 */
+    QFORM,
     QR,
     EIGSYM,
     EIGGEN,
@@ -153,9 +155,9 @@ enum {
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
-    COL,      /* colon */
+    COL,    /* 130: colon */
     CON,      /* named constant */
-    DUM,    /* 130: dummy variable */
+    DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
@@ -163,9 +165,9 @@ enum {
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
-    OBS,      /* observation from a series */
+    OBS,    /* 140: observation from a series */
     MSL,      /* matrix plus subspec */
-    DMSL,   /* 140: "dollar" matrix plus subspec */
+    DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
@@ -173,9 +175,9 @@ enum {
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,     /* $ model var (scalar, series, or matrix) */
+    MVAR,   /* 150: $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX, /* 150: loop index variable */
+    LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */

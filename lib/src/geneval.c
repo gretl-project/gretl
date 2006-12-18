@@ -1103,6 +1103,12 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MEANR:
 	    ret->v.m = gretl_matrix_row_mean(m);
 	    break;
+	case MCOV:
+	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
+	    break;
+	case MCORR:
+	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
+	    break;
 	case CDEMEAN:
 	    ret->v.m = user_matrix_column_demean(m);
 	    break;
@@ -3123,6 +3129,8 @@ static NODE *eval (NODE *t, parser *p)
     case SUMR:
     case MEANC:
     case MEANR:
+    case MCOV:
+    case MCORR:
     case CDEMEAN:
     case CHOL:
     case INV:

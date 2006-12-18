@@ -166,6 +166,8 @@ struct str_table funcs[] = {
     { SUMC,     "sumc" },
     { MEANR,    "meanr" },
     { MEANC,    "meanc" },
+    { MCOV,     "mcov" },
+    { MCORR,    "mcorr" },
     { CDEMEAN,  "cdemean" },
     { CHOL,     "cholesky" },
     { INV,      "inv" },
