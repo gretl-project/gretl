@@ -37,6 +37,8 @@ char *addpath (char *fname, PATHS *ppaths, int script);
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 gretlopt opt);
 
+int gretl_path_is_absolute (const char *fname);
+
 void show_paths (const PATHS *ppaths);
 
 int set_paths (PATHS *ppaths, gretlopt opt);
@@ -44,11 +46,13 @@ int set_paths (PATHS *ppaths, gretlopt opt);
 const char *gretl_lib_path (void);
 
 const char *gretl_user_dir (void);
+
 void set_gretl_user_dir (const char *path, PATHS *ppaths);
 
 const char *gretl_gnuplot_path (void);
 
 const char *gretl_plotfile (void);
+
 char *set_gretl_plotfile (const char *fname);
 
 const char *gretl_x12_arima (void);

@@ -388,10 +388,11 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 static int 
 get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 {
+    char *fname;
     int quoted = 0;
     int q, len;
 
-    while (*s == ' ') s++;
+    while (isspace(*s)) s++;
 
     q = *s;
 
@@ -411,9 +412,20 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
     }
 
     free(cmd->param);
-    cmd->param = gretl_strndup(s + quoted, len);
-    if (cmd->param == NULL) {
+
+    fname = gretl_strndup(s + quoted, len);
+    if (fname == NULL) {
 	return E_ALLOC;
+    }
+
+    if (gretl_path_is_absolute(fname)) {
+	cmd->param = fname;
+    } else {
+	cmd->param = gretl_strdup_printf("%s%s", gretl_user_dir(), fname);
+	free(fname);
+	if (cmd->param == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     if (quoted) {

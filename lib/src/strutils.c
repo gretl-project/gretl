@@ -1379,7 +1379,7 @@ void modify_date_for_csv (char *s, int pd)
     if (pd == 4) {
 	charsub(s, ':', 'Q');
     } else {
-	charsub(s, ':', '-');
+	charsub(s, ':', 'M');
     }
 }
 
@@ -1403,18 +1403,8 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
 	ntodate_full(tmp, t, pdinfo);
 	if (quarterly_or_monthly(pdinfo)) {
 	    modify_date_for_csv(tmp, pdinfo->pd);
-	    if (pdinfo->delim == ',') {
-		pprintf(prn, "\"%s\"%c", tmp, pdinfo->delim);
-	    } else {
-		pprintf(prn, "%s%c", tmp, pdinfo->delim);
-	    }
-	} else {
-	    if (pdinfo->delim == ',') {
-		pprintf(prn, "\"'%s\"%c", tmp, pdinfo->delim);
-	    } else {
-		pprintf(prn, "%s%c", tmp, pdinfo->delim);
-	    }
 	}
+	pprintf(prn, "%s%c", tmp, pdinfo->delim);
     }
 }
 	

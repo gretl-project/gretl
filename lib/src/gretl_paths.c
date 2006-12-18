@@ -355,12 +355,14 @@ static char *search_dir (char *fname, const char *topdir, int code)
     return NULL;
 }
 
-static int path_is_absolute (const char *fname)
+int gretl_path_is_absolute (const char *fname)
 {
     int ret = 0;
 
 #ifdef WIN32
-    if (fname[1] == ':') ret = 1; /* drive letter? */
+    if (fname[1] == ':') {
+	ret = 1; /* drive letter? */
+    }
 #endif
 
     /* we'll count as absolute paths specified using "." */
@@ -416,11 +418,11 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     test = gretl_fopen(fname, "r");
     if (test != NULL) { 
 	fclose(test); 
-	if (!path_is_absolute(fname)) {
+	if (!gretl_path_is_absolute(fname)) {
 	    make_path_absolute(fname, orig);
 	}
 	return fname;
-    } else if (path_is_absolute(fname)) {  
+    } else if (gretl_path_is_absolute(fname)) {  
 	/* unable to open file as given: if the path was absolute, fail */
 	return NULL;
     }

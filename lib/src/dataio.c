@@ -1091,12 +1091,8 @@ format_from_opt_or_name (gretlopt opt, const char *fname)
 {
     GretlDataFormat fmt = 0;
     
-    if (opt & OPT_S) {
-	fmt = GRETL_DATA_FLOAT;	
-    } else if (opt & OPT_T) {
+    if (opt & OPT_T) {
 	fmt = GRETL_DATA_TRAD;
-    } else if (opt & OPT_O) {
-	fmt = GRETL_DATA_DOUBLE;
     } else if (opt & OPT_M) {
 	fmt = GRETL_DATA_OCTAVE;
     } else if (opt & OPT_R) {
@@ -1141,6 +1137,8 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
 	*min = 1;
     }
 }
+
+#define annual_data(p) (p->structure == TIME_SERIES && p->pd == 1)
 
 /**
  * write_data:
@@ -1230,50 +1228,9 @@ int write_data (const char *fname, const int *list,
     }
 
     /* open file for output */
-    if (fmt == GRETL_DATA_FLOAT || fmt == GRETL_DATA_DOUBLE) {
-	fp = gretl_fopen(datfile, "wb");
-    } else {
-	fp = gretl_fopen(datfile, "w");
-    }
-
+    fp = gretl_fopen(datfile, "w");
     if (fp == NULL) {
 	return E_FOPEN;
-    }
-
-    if (fmt == GRETL_DATA_FLOAT) { 
-	/* single-precision binary */
-	float x;
-
-	for (i=1; i<=l0; i++) {
-	    v = list[i];
-	    if (na(Z[v][0])) {
-		x = -999.0;
-	    } else {
-		x = (float) Z[v][0];
-	    }
-	    for (t=0; t<n; t++) {
-		if (var_is_series(pdinfo, v)) {
-		    if (na(Z[v][0])) {
-			x = -999.0;
-		    } else {	
-			x = (float) Z[v][t];
-		    }
-		}
-		fwrite(&x, sizeof x, 1, fp);
-	    }
-	}
-    } else if (fmt == GRETL_DATA_DOUBLE) { 
-	/* double-precision binary */
-	for (i=1; i<=l0; i++) {
-	    v = list[i];
-	    if (var_is_series(pdinfo, v)) {
-		fwrite(&Z[v][0], sizeof(double), n, fp);
-	    } else {
-		for (t=0; t<n; t++) {
-		    fwrite(&Z[v][0], sizeof(double), 1, fp);
-		}
-	    }
-	}
     }
 
     if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_OCTAVE || 
@@ -1295,8 +1252,11 @@ int write_data (const char *fname, const int *list,
 	}	
     }
 
-    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
-    else gretl_push_c_numeric_locale();
+    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ','){
+	;
+    } else {
+	gretl_push_c_numeric_locale();
+    }
 
     if (fmt == GRETL_DATA_TRAD) { 
 	/* plain ASCII */
@@ -1350,10 +1310,8 @@ int write_data (const char *fname, const int *list,
 		    ntodate_full(tmp, t, pdinfo);
 		    if (quarterly_or_monthly(pdinfo)) {
 			modify_date_for_csv(tmp, pdinfo->pd);
-			fprintf(fp, "\"%s\"%c", tmp, delim);
-		    } else {
-			fprintf(fp, "\"'%s\"%c", tmp, delim);
 		    }
+		    fprintf(fp, "%s%c", tmp, delim);
 		}
 	    }
 	    for (i=1; i<=l0; i++) { 
@@ -1506,7 +1464,11 @@ int write_data (const char *fname, const int *list,
 	}
     }
 
-    gretl_pop_c_numeric_locale();
+    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ','){
+	;
+    } else {
+	gretl_pop_c_numeric_locale();
+    }
 
     if (pmax != NULL) {
 	free(pmax);
@@ -2368,6 +2330,7 @@ static void make_endobs_string (char *endobs, const char *s)
 
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
 {
+    const char *subchars = ".:QqMmPp";
     char year[5];
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
@@ -2397,10 +2360,7 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
 	    return pd;
 	}
-    } else if (lbl1[4] == '.' || 
-	       lbl1[4] == ':' || 
-	       lbl1[4] == 'Q' || 
-	       lbl1[4] == 'P') {
+    } else if (strchr(subchars, lbl1[4])) {
 	char subper[3];
 
 	*subper = '\0';
