@@ -51,6 +51,19 @@ within the function.  An example follows:
       function myfunc(series y, list xvars, bool verbose)
 \end{code}
 
+Each of the type-specifiers, with the exception of \texttt{list}, may
+be modified by prepending an asterisk to the associated parameter
+name, as in
+%    
+\begin{code}
+      function myfunc(series *y, scalar *b)
+\end{code}
+
+The meaning of this modification is explained below (see section
+\ref{funscope}); it is related to the use of pointer arguments in the
+C programming language.  In addition, \texttt{list} parameters (only)
+may be modified by the tag \texttt{const} (again, see \ref{funscope}).
+
 Besides these required elements, the specification of a
 \texttt{scalar} parameter may include up to three pieces of additional
 information: a minimum value, a maximum, and a default.  These
@@ -90,12 +103,13 @@ arguments given by the caller.  There are automatic checks in place to
 ensure that the number of arguments given in a function call matches
 the number of parameters, and that the types of the given arguments
 match the types specified in the definition of the function.  An error
-is flagged if either of these conditions is
-violated.\footnote{Allowance is made for omitting arguments at the end
-  of the list, provided that default values are specified in the
-  function definition.  To be precise, the check is that the number of
-  arguments is at least equal to the number of \textit{required}
-  parameters, and is no greater than the total number of parameters.}
+is flagged if either of these conditions is violated.  One
+qualification: allowance is made for omitting arguments at the end of
+the list, provided that default values are specified in the function
+definition.  To be precise, the check is that the number of arguments
+is at least equal to the number of \textit{required} parameters, and
+is no greater than the total number of parameters.
+
 A scalar, series or matrix argument to a function may be given either
 as the name of a pre-existing variable or (with one exception
 discussed below) as an expression which evaluates to a variable of the
@@ -165,6 +179,7 @@ a return value to a variable in the caller:
 \label{func-details}
 
 \subsection{Scope of variables}
+\label{funscope}
 
 All variables created within a function are local to that function,
 and are destroyed when the function exits, unless they are made
@@ -239,6 +254,42 @@ use \texttt{null} in place of a real argument:
 \begin{code}
       series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
+
+\subsection{List arguments}
+
+The use of a named list as an argument to a function gives a means of
+supplying a function with a number of variables that is unknown when
+the function is written --- for example, sets of regressors or
+instruments.  Within the function, the list can be passed on to
+commands such as \texttt{ols}, or it can be ``unpacked'' using a
+\texttt{foreach} loop construct.  For example, suppose you have a list
+\texttt{X} and want to calculate the standard deviation of each
+variable in the list:
+%
+\begin{code}
+     loop foreach i X
+        scalar sd_$i = sd($i)
+     end loop
+\end{code}
+
+When a named list of variables is passed to a function, the function
+is provided with a copy of the list.  The variables referenced in the
+list are, however, made directly accessible to the function, in a
+similar manner to the case where a scalar or series argument is passed
+in ``pointer'' form, as discussed above.  Passing a list is therefore
+another means of allowing a function to do more in the way of
+modifying data at the level of the caller than simply offering a
+return value.  If the variables will \textit{not} be modified inside
+the function, it is a good idea to flag this fact using the
+\texttt{const} modifier in the parameter list, as in
+%
+\begin{code}
+     function myfunc (scalar y, const list X)
+\end{code}
+%
+When a list is marked \texttt{const}, any attempt to rename, delete
+or overwrite the original values of the variables in the list will
+generate an error.
 
 
 \subsection{Return values}

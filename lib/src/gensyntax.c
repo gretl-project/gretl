@@ -370,6 +370,8 @@ static NODE *get_string_arg (parser *p)
 
     if (p->ch != ')') {
 	/* allow for empty arg string "()" */
+	int j, started = 0;
+
 	close = parser_charpos(p, ')');
 
 	if (close < 0 || close > MAXSTR - 2) {
@@ -383,8 +385,14 @@ static NODE *get_string_arg (parser *p)
 	    return NULL;
 	}
 
+	j = 0;
 	for (i=0; i<=close; i++) {
-	    str[i] = p->ch;
+	    if (!started && !isspace(p->ch)) {
+		started = 1;
+	    }
+	    if (started) {
+		str[j++] = p->ch;
+	    }
 	    parser_getc(p);
 	}
     }
@@ -392,7 +400,7 @@ static NODE *get_string_arg (parser *p)
     parser_getc(p);
     lex(p);
 
-    return newstr(str, 0, STR_COPY);
+    return newstr(tailstrip(str), 0, STR_COPY);
 }
 
 enum {
