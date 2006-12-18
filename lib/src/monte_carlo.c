@@ -379,6 +379,7 @@ int ok_in_loop (int c)
 	c == RHODIFF ||
 	c == RUNS || 
 	c == SETINFO ||
+	c == SHELL || 
 	c == SPEARMAN || 
 	c == SQUARE || 
 	c == SUMMARY ||

@@ -255,7 +255,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
     
     gretl_errmsg[0] = '\0';
 
-    if (binary == 1) { /* single-precision binary data */
+    if (binary == 1) { 
+	/* single-precision binary data */
 	float xx;
 
 	for (i=1; i<pdinfo->v; i++) {
@@ -268,7 +269,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 		Z[i][t] = (double) xx;
 	    }
 	}
-    } else if (binary == 2) { /* double-precision binary data */
+    } else if (binary == 2) { 
+	/* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
 		sprintf(gretl_errmsg, 
@@ -276,7 +278,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 		return 1;
 	    }
 	}
-    } else { /* ascii data file */
+    } else { 
+	/* ascii data */
 	char *line, numstr[24], sformat[8];
 	int llen = pdinfo->v * 32;
 	size_t offset;
@@ -1164,7 +1167,6 @@ int write_data (const char *fname, const int *list,
     GretlDataFormat fmt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    int omit_obs = 0;
     int n = pdinfo->n;
     FILE *fp = NULL;
     int *pmax = NULL;
@@ -1199,11 +1201,6 @@ int write_data (const char *fname, const int *list,
 
     if (fmt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
 	fmt = GRETL_DATA_R_TS;
-    }
-
-    if (fmt == GRETL_DATA_CSV && (opt & OPT_X)) {
-	/* don't print a first column with observations */
-	omit_obs = 1;
     }
 
     /* write header and label files if not exporting to other formats */
@@ -1252,9 +1249,7 @@ int write_data (const char *fname, const int *list,
 	}	
     }
 
-    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ','){
-	;
-    } else {
+    if (fmt != GRETL_DATA_CSV || pdinfo->decpoint != ',') {
 	gretl_push_c_numeric_locale();
     }
 
@@ -1282,16 +1277,22 @@ int write_data (const char *fname, const int *list,
 	}
     } else if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
+	int print_obs = 0;
 	char delim;
-	
+
 	if (fmt == GRETL_DATA_CSV) {
+	    if ((pdinfo->structure == TIME_SERIES || pdinfo->S != NULL)
+		&& !(opt & OPT_X)) {
+		print_obs = 1;
+	    }
 	    delim = get_csv_delim(pdinfo);
 	} else {
+	    print_obs = (pdinfo->S != NULL);
 	    delim = ' ';
 	}
 
 	/* variable names */
-	if (fmt == GRETL_DATA_CSV && !omit_obs && 
+	if (fmt == GRETL_DATA_CSV && print_obs && 
 	    (pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
 	    fprintf(fp, "obs%c", delim);
 	}
@@ -1301,10 +1302,10 @@ int write_data (const char *fname, const int *list,
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (!omit_obs) {
+	    if (print_obs) {
 		if (pdinfo->S != NULL) {
-		    fprintf(fp, "%s%c", pdinfo->S[t], delim);
-		} else if (pdinfo->structure != CROSS_SECTION) {
+		    fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
+		} else {
 		    char tmp[OBSLEN];
 
 		    ntodate_full(tmp, t, pdinfo);
@@ -1464,9 +1465,7 @@ int write_data (const char *fname, const int *list,
 	}
     }
 
-    if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ','){
-	;
-    } else {
+    if (fmt != GRETL_DATA_CSV || pdinfo->decpoint != ','){
 	gretl_pop_c_numeric_locale();
     }
 
