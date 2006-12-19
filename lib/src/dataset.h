@@ -31,7 +31,7 @@ typedef enum {
     VAR_SCALAR     = 1 << 1,
     VAR_HIDDEN     = 1 << 2,
     VAR_GENERATED  = 1 << 3,
-    VAR_CONST      = 1 << 4
+    VAR_SETCONST   = 1 << 4
 } VarinfoFlags;
 
 /**
@@ -224,7 +224,7 @@ typedef enum {
  * Determine whether or not a variable has been marked as
  * "const".
  */
-#define var_is_const(p, i) (i == 0 || ((p)->varinfo[i]->flags & VAR_CONST))
+#define var_is_const(p, i) (i == 0 || ((p)->varinfo[i]->flags & VAR_SETCONST))
 
 /**
  * set_var_const:
@@ -233,7 +233,7 @@ typedef enum {
  *
  * Set the "const" flag on the given variable.
  */
-#define set_var_const(p, i) ((p)->varinfo[i]->flags |= VAR_CONST)
+#define set_var_const(p, i) ((p)->varinfo[i]->flags |= VAR_SETCONST)
 
 /**
  * unset_var_const:
@@ -242,7 +242,7 @@ typedef enum {
  *
  * Remove the "const" flag from the given variable.
  */
-#define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_CONST)
+#define unset_var_const(p, i) ((p)->varinfo[i]->flags &= ~VAR_SETCONST)
 
 
 void free_Z (double **Z, DATAINFO *pdinfo);

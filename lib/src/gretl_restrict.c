@@ -324,6 +324,11 @@ static int count_ops (const char *p)
     return n;
 }
 
+/* given the dataset position of a variable as the identifier for a
+   parameter, try to retrieve the 0-based coefficient number in the
+   model to be restricted 
+*/
+
 static int 
 bnum_from_vnum (gretl_restriction_set *r, int v, const DATAINFO *pdinfo)
 {
