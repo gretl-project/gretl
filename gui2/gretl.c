@@ -698,7 +698,7 @@ static void real_nls_init (void)
 
     loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
-    bindtextdomain (PACKAGE, LOCALEDIR);
+    bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }

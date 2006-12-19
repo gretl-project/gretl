@@ -203,7 +203,7 @@ $P(y_i = j | x_i) = P(\mu_{j-1} \le y^*_i < \mu_j)$.
 
 \begin{script}[htbp]
   \caption{Ordered probit model}
-  \label{ex-oprobit}
+  \label{ex:oprobit}
 \begin{code}
 open pension.gdt
 series pctstck = pctstck/50
@@ -214,8 +214,8 @@ probit pctstck const choice age educ female black married finc25 finc35 \
 \end{script}
 
 In order to apply these models, the dependent variable must be marked
-as discrete and its lowest value must be 0. Example \ref{ex-oprobit}
-reproduces the estimation given in chap. 15 of Wooldridge (2002). Note
+as discrete and its lowest value must be 0. Example \ref{ex:oprobit}
+reproduces the estimation given in chap. 15 of Wooldridge (2002a). Note
 that \app{gretl} does not provide a separate command for ordered
 models: the \texttt{logit} and \texttt{probit} commands automatically
 estimate the ordered version if the dependent variable is not binary
@@ -278,10 +278,12 @@ the Chesher-Irish test for normality by default.
 \label{sec:heckit}
 
 In the so-called ``Tobit II'' model, there are two latent variables:
-\begin{eqnarray*}
+\begin{eqnarray}
+  \label{eq:heckit1}
   y^*_i & = & \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i \\
+  \label{eq:heckit2}
   s^*_i & = & \sum_{j=1}^p z_{ij} \gamma_j + \eta_i 
-\end{eqnarray*}
+\end{eqnarray}
 and the observation rule is given by
 \begin{equation}
   \label{eq:tobitII}
@@ -293,21 +295,63 @@ and the observation rule is given by
     \right. 
 \end{equation}
 
-\begin{itemize}
-\item MLE estimation is cumbersome but possible by using the \cmd{mle}
-  command (see chapter \ref{chap:mle})
-\item two-step estimation can be accomplished as in the provided
-  example script (insert heckit here)
-\end{itemize}
-\section{Count data}
-\label{sec:poisson}
+One of the most popular applications of this model in econometrics is
+a wage equation coupled with a labour force partecipation equation: we
+only observe the wage for the employed. If $y^*_i$ and $s^*_i$ were
+(conditionally) independent, there would be no reason not to use OLS
+for estimating equation (\ref{eq:heckit1}); otherwise, OLS does not
+yield consistent estimates of the parameters $\beta_j$.
 
-also include example script for negative binomial (done in Verbeek
-example files).
+A widely used estimator is the so-called \emph{Heckit} estimator,
+named after Heckman (1979). The procedure can be briefly outlined as
+follows: first, a probit model is fit on equation (\ref{eq:heckit2});
+next, the generalised residuals are inserted in equation
+(\ref{eq:heckit1}) to correct for the effect of sample selection.
+
+Example \ref{ex:heckit} shows two estimates from the dataset used in
+Mroz (1987): the first one replicates table 22.7 in Greene (2003),
+while the second one replicates table 17.1 in Wooldridge (2002a). Note
+that the \texttt{heckit.inp} script (provided with \app{gretl} as an
+example script) is invoked.
+
+\begin{script}[htbp]
+  \caption{Ordered probit model}
+  \label{ex:heckit}
+\begin{code}
+open mroz.gdt
+include heckit.inp
+
+genr EXP2 = AX^2
+genr WA2 = WA^2
+genr KIDS = (KL6+K618)>0
+
+# Greene's specification
+
+list X = const AX EXP2 WE CIT
+list Z = const WA WA2 FAMINC KIDS WE
+
+heckit(WW,X,LFP,Z)
+
+# Wooldridge's specification
+
+series NWINC = FAMINC - WW*WHRS
+series lww = log(WW)
+list X = const WE AX EXP2
+list Z = X NWINC WA KL6 K618
+
+heckit(lww,X,LFP,Z)
+\end{code}
+\end{script}
+
+% \section{Count data}
+% \label{sec:poisson}
+
+% also include example script for negative binomial (done in Verbeek
+% example files).
 
 
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: gretl-guide.tex
+%%% TeX-master: "gretl-guide"
 %%% End: 
