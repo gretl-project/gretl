@@ -342,6 +342,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		     int i, PRN *prn)
 {
     char tmp[32], coeff[64], sderr[64], tratio[64], pval[64];
+    int j = i + 2;
 
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
@@ -364,21 +365,26 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     if (pmod->aux == AUX_ARCH) {
 	tex_make_cname(tmp, pdinfo->varname[pmod->list[i+2]]);
     } else if (pmod->ci == NLS) {
-	if (!tex_greek_param(tmp, pmod->params[i+1])) {
-	    tex_escape(tmp, pmod->params[i+1]);
+	if (!tex_greek_param(tmp, pmod->params[i])) {
+	    tex_escape(tmp, pmod->params[i]);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(tmp, pmod->params[i+1], 0);
+	tex_arma_coeff_name(tmp, pmod->params[i], 0);
     } else if (pmod->ci == GARCH) {
-	tex_garch_coeff_name(tmp, pmod->params[i+1], 0);
+	tex_garch_coeff_name(tmp, pmod->params[i], 0);
     } else if (pmod->ci == VAR) {
-	tex_lagname(tmp, pdinfo, pmod->list[i+2]);
+	tex_lagname(tmp, pdinfo, pmod->list[j]);
     } else if (pmod->aux == AUX_VECM) {
-	tex_vecm_varname(tmp, pdinfo, pmod->list[i+2]);
+	tex_vecm_varname(tmp, pdinfo, pmod->list[j]);
     } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	tex_mp_coeff_name(tmp, pmod->params[i], 0);
+    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
+	       pmod->params != NULL) {
+	tex_escape(tmp, pmod->params[i]);
+    } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
+	tex_escape(tmp, pmod->params[i]);
     } else {
-	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+	tex_escape(tmp, pdinfo->varname[pmod->list[j]]);
     }
 	
     if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
@@ -397,7 +403,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 	char slope[32];
 
-	if (pmod->list[i+2]) {
+	if (pmod->list[j]) {
 	    tex_dcolumn_double(slopes[i], slope);
 	}
 	pprintf(prn, "%s &\n"
@@ -409,7 +415,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		coeff,
 		sderr,
 		tratio,
-		(pmod->list[i+2])? slope : "");
+		(pmod->list[j])? slope : "");
     }
 
     return 0;

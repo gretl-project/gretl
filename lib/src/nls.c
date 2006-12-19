@@ -1133,9 +1133,9 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 static int 
 add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 {
-    int i, np = pmod->ncoeff + 1;
+    int i, np = pmod->ncoeff;
 
-    pmod->params = malloc(np * sizeof *pmod->params);
+    pmod->params = strings_array_new(np);
     if (pmod->params == NULL) {
 	return 1;
     }
@@ -1144,30 +1144,25 @@ add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
     if (spec->ci == MLE) {
 	int n = strlen(spec->nlfunc);
 
-	pmod->params[0] = malloc(n + 3);
-	if (pmod->params[0] != NULL) {
-	    sprintf(pmod->params[0], "l = %s", spec->nlfunc + 2);
-	    n = strlen(pmod->params[0]);
-	    pmod->params[0][n-1] = '\0';
+	pmod->depvar = malloc(n + 3);
+	if (pmod->depvar != NULL) {
+	    sprintf(pmod->depvar, "l = %s", spec->nlfunc + 2);
+	    n = strlen(pmod->depvar);
+	    pmod->depvar[n-1] = '\0';
 	} 
     } else {
-	pmod->params[0] = gretl_strdup(pdinfo->varname[spec->depvar]);
+	pmod->depvar = gretl_strdup(pdinfo->varname[spec->depvar]);
     } 
 
-    if (pmod->params[0] == NULL) {
+    if (pmod->depvar == NULL) {
 	free(pmod->params);
 	return 1;
     }    
 
-    for (i=1; i<=pmod->ncoeff; i++) {
-	pmod->params[i] = gretl_strdup(spec->params[i-1].vname);
+    for (i=0; i<np; i++) {
+	pmod->params[i] = gretl_strdup(spec->params[i].vname);
 	if (pmod->params[i] == NULL) {
-	    int j;
-
-	    for (j=0; j<i; j++) {
-		free(pmod->params[j]);
-	    }
-	    free(pmod->params);
+	    free_strings_array(pmod->params, np);
 	    pmod->params = NULL;
 	    pmod->nparams = 0;
 	    return 1;

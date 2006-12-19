@@ -3616,6 +3616,42 @@ int balanced_panel (const DATAINFO *pdinfo)
     return ret;
 }
 
+/* FIXME: this does not yet handle the dropping of instruments */
+
+static int *arbond_list_omit (const MODEL *orig, const int *drop, int *err)
+{
+    const int *old = orig->list;
+    int *new = gretl_list_copy(old);
+    int sep = 0;
+    int i, j;
+
+    if (new == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=3; i<=new[0]; i++) {
+	if (new[i] == LISTSEP) {
+	    sep++;
+	}
+	if (sep == 1) {
+	    for (j=1; j<=drop[0]; j++) {
+		if (drop[j] == new[i]) {
+		    gretl_list_delete_at_pos(new, i--);
+		}
+	    }
+	}
+    }
+
+#if 0
+    printlist(old, "old");
+    printlist(drop, "drop");
+    printlist(new, "new");
+#endif
+    
+    return new;
+}
+
 /**
  * panel_list_omit:
  * @orig: list specifying original panel model.
@@ -3633,6 +3669,10 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
 {
     int *newlist = NULL;
     int i;
+
+    if (orig->ci == ARBOND) {
+	return arbond_list_omit(orig, drop, err);
+    }
 
     /* sorry, can't drop the constant */
     if (drop != NULL) {
@@ -3674,6 +3714,44 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
     return newlist;
 }
 
+/* FIXME doesn't handle adding instruments */
+
+static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
+{
+    const int *old = orig->list;
+    int *new = gretl_list_copy(old);
+    int sep = 0, pos = old[0] + 1;
+    int i;
+
+    if (new == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=3; i<=old[0]; i++) {
+	if (old[i] == LISTSEP) {
+	    sep++;
+	    if (sep == 2) {
+		pos = i - 1;
+	    }
+	}
+    }
+
+    gretl_list_insert_list(&new, add, pos);
+    if (new == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+#if 0
+    printlist(old, "old");
+    printlist(add, "add");
+    printlist(new, "new");
+#endif
+    
+    return new;
+}
+
 /**
  * panel_list_add:
  * @orig: list specifying original panel model.
@@ -3691,6 +3769,10 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err)
 {
     int *newlist = NULL;
     int i;
+
+    if (orig->ci == ARBOND) {
+	return arbond_list_add(orig, add, err);
+    }
 
     if (gretl_model_get_int(orig, "fixed-effects")) {
 	int *panlist;

@@ -890,7 +890,7 @@ void lex (parser *p)
 		parser_getc(p);
 		return;
 	    } else {
-		/* not an operator, back up */
+		/* not a "dot operator", back up */
 		parser_ungetc(p);
 	    }
         default: 

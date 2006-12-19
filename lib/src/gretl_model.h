@@ -92,7 +92,8 @@ struct CoeffIntervals_ {
                       c == PWE || \
                       c == WLS)
 
-#define ASYMPTOTIC_MODEL(c) (c == ARMA || \
+#define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
+                             c == ARMA || \
                              c == GARCH || \
                              c == LOGIT || \
                              c == MLE || \
@@ -200,6 +201,10 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key);
 char *gretl_model_get_param_name (const MODEL *pmod, 
 				  const DATAINFO *pdinfo,
 				  int i, char *targ);
+
+int gretl_model_get_param_number (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  const char *s);
 
 void free_coeff_intervals (CoeffIntervals *cf);
 

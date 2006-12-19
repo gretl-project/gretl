@@ -596,7 +596,7 @@ static void fill_model (MODEL *pmod, const DATAINFO *pdinfo,
 	}
 	k = 1;
 	for (i=nx; i<npar; i++) {
-	    sprintf(pmod->params[i], "cut(%d)", k++);
+	    sprintf(pmod->params[i], "cut%d", k++);
 	}
     }
 }

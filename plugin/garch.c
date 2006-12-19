@@ -41,7 +41,7 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     int p = list[1];
     int q = list[2];
     int r = list[0] - 4;
-    int i, j, np = 3 + p + q + r;
+    int i, j, np = 2 + p + q + r;
 
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
@@ -51,10 +51,9 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	return;
     }
 
-    strcpy(pmod->params[0], pdinfo->varname[pmod->list[4]]);
-    strcpy(pmod->params[1], pdinfo->varname[0]);
+    strcpy(pmod->params[0], pdinfo->varname[0]);
 
-    j = 2;
+    j = 1;
     for (i=0; i<r; i++) {
 	if (pmod->list[5+i] > 0) {
 	    strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);

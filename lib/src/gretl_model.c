@@ -516,28 +516,28 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     *targ = '\0';
 
     if (pmod != NULL) {
-	int pnum = -1;
+	int j = i + 2;
+	int k = -1;
 
 	if (pmod->aux == AUX_ARCH) {
-	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
+	    make_cname(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
-		   pmod->ci == ARMA || pmod->ci == GARCH || 
-		   pmod->ci == PANEL) {
-	    pnum = i + 1;
-	} else if (pmod->ci == ARBOND) {
-	    pnum = i;
+		   pmod->ci == ARMA || pmod->ci == PANEL ||
+		   pmod->ci == ARBOND || pmod->ci == GARCH) {
+	    k = i;
 	} else if (pmod->aux == AUX_VECM) {
-	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
+	    adjust_vecm_name(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
-	    pnum = i;
-	} else if (pmod->ci == PROBIT && pmod->params != NULL) {
-	    pnum = i;
+	    k = i;
+	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT)
+		   && pmod->params != NULL) {
+	    k = i;
 	} else {
-	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
+	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	}
 
-	if (pnum >= 0 && pmod->params != NULL) {
-	    strcpy(targ, pmod->params[pnum]);
+	if (k >= 0 && pmod->params != NULL) {
+	    strcpy(targ, pmod->params[k]);
 	}
 
     }
@@ -556,7 +556,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
  * of a parameter.
  */
 
-static int 
+int 
 gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
 			      const char *s)
 {
@@ -576,9 +576,9 @@ gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->params != NULL) {
 	int i;
 
-	for (i=1; i<pmod->nparams; i++) {
+	for (i=0; i<pmod->nparams; i++) {
 	    if (!strcmp(pname, pmod->params[i])) {
-		idx = i - 1;
+		idx = i;
 		break;
 	    }
 	}
@@ -1060,6 +1060,19 @@ const double *arma_model_get_x_coeffs (const MODEL *pmod)
     return xc;
 }
 
+static int arbond_get_depvar (const MODEL *pmod)
+{
+    int i;
+
+    for (i=1; i<=pmod->list[0]; i++) {
+	if (pmod->list[i] == LISTSEP && i < pmod->list[0]) {
+	    return pmod->list[i+1];
+	}
+    }
+
+    return 0;
+}
+
 static int arma_depvar_pos (const MODEL *pmod)
 {
     int seasonal = 0;
@@ -1112,6 +1125,8 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
 	    dv = pmod->list[arma_depvar_pos(pmod)];
+	} else if (pmod->ci == ARBOND) {
+	    dv = arbond_get_depvar(pmod);
 	} else {
 	    dv = pmod->list[1];
 	}
@@ -1601,6 +1616,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
     pmod->vcv = NULL;
     pmod->arinfo = NULL;
     pmod->name = NULL;
+    pmod->depvar = NULL;
     pmod->params = NULL;
     pmod->tests = NULL;
     pmod->dataset = NULL;
@@ -1829,6 +1845,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->xpx = %p\n"
 	    " pmod->vcv = %p\n"
 	    " pmod->name = %p\n"
+	    " pmod->depvar = %p\n"
 	    " pmod->params = %p\n"
 	    " pmod->arinfo = %p\n"
 	    " pmod->tests = %p\n" 
@@ -1838,9 +1855,9 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->coeff, (void *) pmod->sderr, 
 	    (void *) pmod->yhat, (void *) pmod->uhat, 
 	    (void *) pmod->xpx, (void *) pmod->vcv, 
-	    (void *) pmod->name, (void *) pmod->params, 
-	    (void *) pmod->arinfo, (void *) pmod->tests, 
-	    (void *) pmod->data_items);
+	    (void *) pmod->name, (void *) pmod->depvar,
+	    (void *) pmod->params, (void *) pmod->arinfo, 
+	    (void *) pmod->tests, (void *) pmod->data_items);
 }
 
 #endif /* MDEBUG */
@@ -1903,6 +1920,7 @@ void clear_model (MODEL *pmod)
 	if (pmod->xpx) free(pmod->xpx);
 	if (pmod->vcv) free(pmod->vcv);
 	if (pmod->name) free(pmod->name);
+	if (pmod->depvar) free(pmod->depvar);
 	if (pmod->arinfo) {
 	    clear_ar_info(pmod);
 	}
@@ -2849,6 +2867,20 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	targ->ntests = src->ntests;
     }
 
+    if (src->name != NULL) {
+	targ->name = gretl_strdup(src->name);
+	if (targ->name == NULL) {
+	    return 1;
+	}
+    }    
+
+    if (src->depvar != NULL) {
+	targ->depvar = gretl_strdup(src->depvar);
+	if (targ->depvar == NULL) {
+	    return 1;
+	}
+    }
+
     if (src->nparams > 0 && src->params != NULL) {
 	copy_model_params(targ, src);
 	if (targ->params == NULL) {
@@ -2885,6 +2917,10 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ", 
 	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name,
 	    (int) flags);
+
+    if (pmod->depvar != NULL) {
+	fprintf(fp, "depvar=\"%s\" ", pmod->depvar);
+    }
 
     fprintf(fp, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
 	    pmod->t1, pmod->t2, pmod->nobs);
@@ -3196,6 +3232,9 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	gretl_pop_c_numeric_locale();
 	goto bailout;
     }
+
+    gretl_xml_get_prop_as_string(node, "name", &pmod->name);
+    gretl_xml_get_prop_as_string(node, "depvar", &pmod->depvar);
 
     cur = node->xmlChildrenNode;
 
@@ -3666,25 +3705,31 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int yno, int p, int q, int P, int Q, 
 				   int r)
 {
-    int np = p + P + q + Q + r + pmod->ifc + 1;
+    int np = p + P + q + Q + r + pmod->ifc;
     int xstart;
     int i, j;
 
+    pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
+    if (pmod->depvar == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }	
+
     pmod->params = strings_array_new_with_length(np, VNAMELEN);
     if (pmod->params == NULL) {
+	free(pmod->depvar);
+	pmod->depvar = NULL;
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
 
     pmod->nparams = np;
 
-    strcpy(pmod->params[0], pdinfo->varname[yno]);
-
     if (pmod->ifc) {
-	strcpy(pmod->params[1], pdinfo->varname[0]);
-	j = 2;
-    } else {
+	strcpy(pmod->params[0], pdinfo->varname[0]);
 	j = 1;
+    } else {
+	j = 0;
     }
 
     for (i=0; i<p; i++) {
@@ -3728,8 +3773,14 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				    const int *ulist)
 {
-    int np = pmod->list[0];
+    int np = pmod->ncoeff;
     int i, j, v;
+
+    pmod->depvar = gretl_strdup(pdinfo->varname[pmod->list[1]]);
+    if (pmod->depvar == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }	
 
     pmod->params = strings_array_new_with_length(np, VNAMELEN);
     if (pmod->params == NULL) {
@@ -3740,14 +3791,14 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     pmod->nparams = np;
 
     j = 1;
-    for (i=1; i<=pmod->list[0]; i++) {
-	v = pmod->list[i];
+    for (i=0; i<np; i++) {
+	v = pmod->list[i+2];
 	if (v < pdinfo->v) {
-	    strcpy(pmod->params[i-1], pdinfo->varname[v]);
+	    strcpy(pmod->params[i], pdinfo->varname[v]);
 	} else if (ulist != NULL) {
-	    sprintf(pmod->params[i-1], "ahat_%d", ulist[j++]);
+	    sprintf(pmod->params[i], "ahat_%d", ulist[j++]);
 	} else {
-	    sprintf(pmod->params[i-1], "ahat_%d", j++);
+	    sprintf(pmod->params[i], "ahat_%d", j++);
 	}
     }
 

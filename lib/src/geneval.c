@@ -396,8 +396,8 @@ static void eval_warning (parser *p, int op)
     }
 }
 
-/* implementation of binary operators for scalar operands,
-   (plus increment/decrement operators) */
+/* implementation of binary operators for scalar operands
+   (also increment/decrement operators) */
 
 static double xy_calc (double x, double y, int op, parser *p)
 {

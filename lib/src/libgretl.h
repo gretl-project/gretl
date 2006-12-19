@@ -366,6 +366,7 @@ struct MODEL_ {
 				    autoregressive model */ 
     int errcode;                 /* Error code in case of failure */
     char *name;                  /* for use in GUI */
+    char *depvar;                /* name of dependent var in special cases */
     int nparams;                 /* number of named model parameters */
     char **params;               /* for named model parameters */
     int ntests;                  /* number of attached test results */

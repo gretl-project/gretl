@@ -324,17 +324,17 @@ static int count_ops (const char *p)
     return n;
 }
 
-/* given the dataset position of a variable as the identifier for a
-   parameter, try to retrieve the 0-based coefficient number in the
-   model to be restricted 
+/* Given the dataset position of a variable as the identifier for a
+   parameter, try to retrieve the corresponding 0-based coefficient
+   number in the model to be restricted.  We don't yet attempt this
+   for anything other than single-equation models.
 */
 
 static int 
 bnum_from_vnum (gretl_restriction_set *r, int v, const DATAINFO *pdinfo)
 {
     const MODEL *pmod;
-    char vname[24];
-    int i;
+    int k;
 
     if (r->type != GRETL_OBJ_EQN || r->obj == NULL) {
 	return -1;
@@ -342,15 +342,27 @@ bnum_from_vnum (gretl_restriction_set *r, int v, const DATAINFO *pdinfo)
 
     pmod = r->obj;
 
-    for (i=0; i<pmod->ncoeff; i++) {
-	gretl_model_get_param_name(pmod, pdinfo, i, vname);
-	if (!strcmp(vname, pdinfo->varname[v])) {
-	    return i;
-	}
-    }
+    k = gretl_model_get_param_number(pmod, pdinfo, pdinfo->varname[v]);
 
-    return -1;
+#if RDEBUG
+    fprintf(stderr, "bnum_from_vnum: vnum = %d (%s) -> bnum = %d (coeff = %g)\n", 
+	    v, pdinfo->varname[v], k, pmod->coeff[k]);
+#endif
+
+    /* convert to 1-based for compatibility with numbers read directly:
+       the index will be converted to 0-base below */
+
+    return k + 1; 
 }
+
+/* Pick apart strings of the form "b[X]" or "b[X,Y]".  If the ",Y" is
+   present the "X" element must be an equation number, and the "Y" may
+   be a coefficient number or the name of a variable.  If the ",Y" is
+   not present, "X" may be a coefficient number or the name of a
+   variable.  This function is actually fed the string in question at
+   an offset of 1 beyond the "[".  In parsing, we skip any white space
+   in the string.
+*/
 
 static int pick_apart (gretl_restriction_set *r, const char *s, 
 		       int *eq, int *bnum,

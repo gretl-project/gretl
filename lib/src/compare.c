@@ -101,6 +101,7 @@ static char *
 mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 {
     char *mask;
+    int off1 = 2, off2 = 0;
     int nmask = 0;
     int i, j;
 
@@ -110,18 +111,30 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	return NULL;
     }
 
+    if (pmod->ci == ARBOND) {
+	/* find correct offset into independent vars in list */
+	for (i=3; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] == LISTSEP) {
+		off1 = i + 2;
+	    }
+	}
+	off2 = pmod->list[1];
+    }
+
     for (i=0; i<pmod->ncoeff; i++) {
 	if (list != NULL) {
 	    for (j=1; j<=list[0]; j++) {
-		if (pmod->list[i+2] == list[j]) {
-		    mask[i] = 1;
+		if (pmod->list[i + off1] == list[j]) {
+#if WDEBUG
+		    fprintf(stderr, "matched var %d at pmod->list[%d]: set mask[%d] = 1\n", 
+			    list[j], i + off1, i + off2);
+#endif
+		    mask[i + off2] = 1;
 		    nmask++;
 		}
 	    }
-	} else {
-	    if (pmod->list[i+2] != 0) {
-		mask[i] = 1;
-	    }
+	} else if (pmod->list[i + off1] != 0) {
+	    mask[i + off2] = 1;
 	}
     }
 
@@ -268,6 +281,11 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
     stat_ok = !na(cmp->F) || !na(cmp->chisq);
 
+    if (!stat_ok && (!verbosity || cmp->score < 0)) {
+	/* nothing to show */
+	return;
+    }
+
     if (stat_ok && (opt & OPT_S)) {
 	test = model_test_new((cmp->cmd == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
@@ -378,7 +396,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.dfd = umod->dfd;
 
-    /* FIXME TSLS (F or chi-square?) */
+    /* FIXME TSLS (use F or chi-square?) */
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
 	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
@@ -394,14 +412,20 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     }
 
     if (pmodB != NULL && flag != ADD_WALD) {
+	int miss = 0;
+
 	cmp.score = 0;
 	for (i=0; i<C_MAX; i++) { 
 	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
+		miss++;
 		continue;
 	    }
 	    if (pmodB->criterion[i] < pmodA->criterion[i]) {
 		cmp.score++;
 	    }
+	}
+	if (miss == C_MAX) {
+	    cmp.score = -1;
 	}
     }
 
@@ -804,7 +828,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     /* create augmented regression list */
     if (orig->ci == TSLS) {
 	tmplist = tsls_list_add(orig->list, addvars, opt, &err);
-    } else if (orig->ci == PANEL) {
+    } else if (orig->ci == PANEL || orig->ci == ARBOND) {
 	tmplist = panel_list_add(orig, addvars, &err);
     } else {
 	tmplist = gretl_list_add(orig->list, addvars, &err);
@@ -874,7 +898,15 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     int err = 0;
 
     /* test validity of omissions */
-    test = gretl_list_omit(pmod->list, list, 2, &err);
+
+    if (pmod->ci == TSLS) {
+	test = tsls_list_omit(pmod->list, list, opt, &err);
+    } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
+	test = panel_list_omit(pmod, list, &err);
+    } else {
+	test = gretl_list_omit(pmod->list, list, 2, &err);
+    }
+
     if (err) {
 	return err;
     }
@@ -970,7 +1002,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     /* create list for test model */
     if (orig->ci == TSLS) {
 	tmplist = tsls_list_omit(orig->list, omitvars, opt, &err);
-    } else if (orig->ci == PANEL) {
+    } else if (orig->ci == PANEL || orig->ci == ARBOND) {
 	tmplist = panel_list_omit(orig, omitvars, &err);
     } else if (omitlast) {
 	/* special: just drop the last variable */

@@ -335,32 +335,38 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
     if (!na(x)) {
 	pputs(prn, "  ");
 	pprintf(prn, _("Test for AR(%d) errors:"), 1);
-	pprintf(prn, " z = %g (%s %.4g)\n", x, _("p-value"), 
+	pprintf(prn, " z = %g (%s %.4g)", x, _("p-value"), 
 		normal_pvalue_2(x));
+	gretl_prn_newline(prn);
     }
 
     x = gretl_model_get_double(pmod, "AR2");
     if (!na(x)) {
 	pputs(prn, "  ");
 	pprintf(prn, _("Test for AR(%d) errors:"), 2);
-	pprintf(prn, " z = %g (%s %.4g)\n", x, _("p-value"),
+	pprintf(prn, " z = %g (%s %.4g)", x, _("p-value"),
 		normal_pvalue_2(x));
+	gretl_prn_newline(prn);
     }
 
     x = gretl_model_get_double(pmod, "sargan");
     if (!na(x)) {
 	i = gretl_model_get_int(pmod, "sargan_df");
-	pprintf(prn, "  %s:\n", _("Sargan over-identification test"));
-	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+	pprintf(prn, "  %s:", _("Sargan over-identification test"));
+	gretl_prn_newline(prn);
+	pprintf(prn, "    %s(%d) = %g %s %g", _("Chi-square"),
 		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+	gretl_prn_newline(prn);
     }
 
     x = gretl_model_get_double(pmod, "wald");
     if (!na(x)) {
 	i = gretl_model_get_int(pmod, "wald_df");
-	pprintf(prn, "  %s:\n", _("Wald (joint) test"));
-	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+	pprintf(prn, "  %s:", _("Wald (joint) test"));
+	gretl_prn_newline(prn);
+	pprintf(prn, "    %s(%d) = %g %s %g", _("Chi-square"),
 		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+	gretl_prn_newline(prn);
     }
 }
 
@@ -1331,15 +1337,15 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     } else if (pmod->ci == NLS) {
-	if (tex) tex_escape(vname, pmod->params[0]);
+	if (tex) tex_escape(vname, pmod->depvar);
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
-		(tex)? vname : pmod->params[0]);
+		(tex)? vname : pmod->depvar);
     } else if (pmod->ci == MLE) {
 	if (tex) {
-	    pprintf(prn, "\\verb!%s!", pmod->params[0]);
+	    pprintf(prn, "\\verb!%s!", pmod->depvar);
 	} else {
-	    pputs(prn, pmod->params[0]);
+	    pputs(prn, pmod->depvar);
 	}
     } else if (pmod->ci == ARMA) {
 	print_arma_depvar(pmod, pdinfo, prn);
