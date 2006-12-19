@@ -5,9 +5,9 @@ open data4-10
 ols 1 0 2 3 4 5
 
 # Evaluate two zero restrictions
-restrict 
-  b4 = 0
-  b5 = 0
+restrict --quiet
+  b[4] = 0
+  b[5] = 0
 end restrict
 
 # Equivalent: use the "omit" command
@@ -15,8 +15,8 @@ omit 4 5
 
 # Now try a test for equality of coefficients
 ols 1 0 2 3 4 5
-restrict
-  b4 - b5 = 0
+restrict --quiet
+  b[4] - b[5] = 0
 end restrict
 
 # Manual equivalent to the above...
@@ -30,8 +30,8 @@ pvalue F 1 dfu Fval
 
 # Try testing for sum of coefficients
 ols 1 0 2 3 4 5
-restrict
-  b4 + b5 = 0
+restrict --quiet
+  b[WHITE] + b[ADMEXP] = 0
 end restrict
 
 # Alternative method (t-test)

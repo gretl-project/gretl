@@ -2208,7 +2208,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 		gui_errmsg(err);
 	    }
 	} else {
-	    err = restriction_set_parse_line(my_rset, bufline);
+	    err = restriction_set_parse_line(my_rset, bufline, datainfo);
 	    if (err) {
 		gui_errmsg(err);
 	    }

@@ -27,13 +27,13 @@ Hamilton <- vecm 12 1 p s pf
 # the cointegrating vector, "beta", involves only the two 
 # price levels.)
 restrict Hamilton
-  b2 = 0
+  b[2] = 0
 end restrict
 
 # Second test: The real exchange rate is stationary, or beta 
 # is proportional to (1, -1, -1)'
 restrict Hamilton
-  b1 + b2 = 0
-  b1 + b3 = 0
+  b[1] + b[2] = 0
+  b[1] + b[3] = 0
 end restrict
 

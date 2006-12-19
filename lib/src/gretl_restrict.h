@@ -35,13 +35,14 @@ gretl_restriction_set *
 eqn_restriction_set_start (const char *line, MODEL *pmod);
 
 int 
-restriction_set_parse_line (gretl_restriction_set *rset, const char *line);
+restriction_set_parse_line (gretl_restriction_set *rset, const char *line,
+			    const DATAINFO *pdinfo);
 
 int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, 
 				const double **Z, const DATAINFO *pdinfo,
 				PRN *prn);
 
-#endif
+#endif /* GRETL_RESTRICT_H */
 
 

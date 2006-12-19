@@ -3766,7 +3766,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		gretl_cmd_set_context(cmd, RESTRICT);
 	    }
 	} else {
-	    err = restriction_set_parse_line(s->rset, line);
+	    err = restriction_set_parse_line(s->rset, line, pdinfo);
 	    if (err) {
 		s->rset = NULL;
 	    }	

@@ -31,7 +31,7 @@ struct restriction_ {
     int nterms;      /* number of terms in restriction */
     double *mult;    /* array of numerical multipliers on coeffs */
     int *eq;         /* array of equation numbers (for cross-equation case) */
-    int *coeff;      /* array of coeff numbers */
+    int *bnum;       /* array of coeff numbers */
     double rhs;      /* numerical value on right-hand side */
 };
 
@@ -75,7 +75,7 @@ get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
     const restriction *r = rset->restrictions[i];
     GRETL_VAR *var = rset->obj;
     int nb = gretl_VECM_n_beta(var);
-    int col = r->coeff[j];
+    int col = r->bnum[j];
     int k;
 
     if (r->eq != NULL) {
@@ -93,7 +93,7 @@ get_R_sys_column (const gretl_restriction_set *rset, int i, int j)
     const restriction *r = rset->restrictions[i];
     gretl_equation_system *sys = rset->obj;
     const int *list;
-    int col = r->coeff[j];
+    int col = r->bnum[j];
     int k;
 
     for (k=0; k<r->eq[j]; k++) {
@@ -121,7 +121,7 @@ static double get_restriction_param (const restriction *r, int k)
     int i;    
 
     for (i=0; i<r->nterms; i++) {
-	if (r->coeff[i] == k) {
+	if (r->bnum[i] == k) {
 	    x = r->mult[i];
 	    break;
 	}
@@ -304,7 +304,7 @@ static int restriction_set_make_mask (gretl_restriction_set *rset)
     for (i=0; i<rset->k; i++) {
 	r = rset->restrictions[i];
 	for (j=0; j<r->nterms; j++) {
-	    rset->mask[r->coeff[j]] = 1;
+	    rset->mask[r->bnum[j]] = 1;
 	}	
     }
 
@@ -324,7 +324,98 @@ static int count_ops (const char *p)
     return n;
 }
 
-static int parse_b_bit (const char *s, int *eq, int *bnum)
+static int 
+bnum_from_vnum (gretl_restriction_set *r, int v, const DATAINFO *pdinfo)
+{
+    const MODEL *pmod;
+    char vname[24];
+    int i;
+
+    if (r->type != GRETL_OBJ_EQN || r->obj == NULL) {
+	return -1;
+    }
+
+    pmod = r->obj;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	gretl_model_get_param_name(pmod, pdinfo, i, vname);
+	if (!strcmp(vname, pdinfo->varname[v])) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+static int pick_apart (gretl_restriction_set *r, const char *s, 
+		       int *eq, int *bnum,
+		       const DATAINFO *pdinfo)
+{
+    char s1[16] = {0};
+    char s2[16] = {0};
+    char *targ = s1;
+    int i, j, k;
+    int vnum = -1;
+
+#if RDEBUG
+    fprintf(stderr, "pick_apart: looking at '%s'\n", s);
+#endif
+
+    *eq = *bnum = -1;
+
+    k = haschar(']', s);
+    if (k <= 0 || k > 30) {
+	return E_PARSE;
+    }
+
+    j = 0;
+    for (i=0; i<k; i++) {
+	if (s[i] == ',') {
+	    targ = s2;
+	    j = 0;
+	} else if (!isspace(s[i])) {
+	    if (j == 15) {
+		return E_PARSE;
+	    }
+	    targ[j++] = s[i];
+	}
+    }
+
+#if RDEBUG
+    fprintf(stderr, " s1 = '%s', s2 = '%s'\n", s1, s2);
+#endif
+
+    if (targ == s2) {
+	/* got a comma separator: [eqn,bnum] */
+	*eq = positive_int_from_string(s1);
+	if (*eq <= 0) {
+	    return E_PARSE;
+	}
+	if (isdigit(*s2)) {
+	    *bnum = positive_int_from_string(s2);
+	} else if (pdinfo != NULL) {
+	    vnum = varindex(pdinfo, s2);
+	}
+    } else {
+	/* only one field: [bnum] */
+	*eq = 1;
+	if (isdigit(*s1)) {
+	    *bnum = positive_int_from_string(s1);
+	} else if (pdinfo != NULL) {
+	    vnum = varindex(pdinfo, s1);
+	}	    
+    }
+
+    if (pdinfo != NULL && vnum >= 0 && vnum < pdinfo->v) {
+	*bnum = bnum_from_vnum(r, vnum, pdinfo);
+    }
+
+    return 0;
+}
+
+static int parse_b_bit (gretl_restriction_set *r, const char *s, 
+			int *eq, int *bnum,
+			const DATAINFO *pdinfo)
 {
     int err = E_PARSE;
 
@@ -332,12 +423,7 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
 	sscanf(s, "%d", bnum);
 	err = 0;
     } else if (*s == '[') {
-	if (sscanf(s, "[%d,%d]", eq, bnum) == 2) {
-	    err = 0;
-	} else if (sscanf(s, "[%d]", bnum) == 1) {
-	    *eq = 1;
-	    err = 0;
-	}	
+	err = pick_apart(r, s + 1, eq, bnum, pdinfo);
     }
 
     if (*bnum < 1) {
@@ -349,7 +435,6 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
     }
 
     if (*eq < 1) {
-	fprintf(stderr, "borked HERE\n");
 	sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		*eq);
 	err = 1;
@@ -361,7 +446,8 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
 }
 
 static int 
-parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
+parse_coeff_chunk (gretl_restriction_set *r, const char *s, double *x, 
+		   int *eq, int *bnum, const DATAINFO *pdinfo)
 {
     const char *s0 = s;
     int err = E_PARSE;
@@ -372,7 +458,7 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
 
     if (*s == 'b') {
 	s++;
-	err = parse_b_bit(s, eq, bnum);
+	err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	*x = 1.0;
     } else if (sscanf(s, "%lf", x)) {
 	s += strspn(s, " ");
@@ -380,7 +466,7 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
 	s += strspn(s, " *");
 	if (*s == 'b') {
 	    s++;
-	    err = parse_b_bit(s, eq, bnum);
+	    err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	}
     }
 
@@ -389,8 +475,8 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
     } 
 
 #if RDEBUG
-    printf("parse_coeff_chunk: x=%g, eq=%d, bnum=%d\n", 
-	   *x, *eq, *bnum);
+    fprintf(stderr, "parse_coeff_chunk: x=%g, eq=%d, bnum=%d\n", 
+	    *x, *eq, *bnum);
 #endif
 
     return err;
@@ -402,7 +488,7 @@ static void destroy_restriction (restriction *r)
 
     free(r->mult);
     free(r->eq);
-    free(r->coeff);
+    free(r->bnum);
     free(r);
 }
 
@@ -429,18 +515,18 @@ static restriction *restriction_new (int n, int cross)
 
     r->mult = NULL;
     r->eq = NULL;
-    r->coeff = NULL;
+    r->bnum = NULL;
 	
     r->mult = malloc(n * sizeof *r->mult);
-    r->coeff = malloc(n * sizeof *r->coeff);
-    if (r->mult == NULL || r->coeff == NULL) {
+    r->bnum = malloc(n * sizeof *r->bnum);
+    if (r->mult == NULL || r->bnum == NULL) {
 	destroy_restriction(r);
 	return NULL;
     }
 
     for (i=0; i<n; i++) {
 	r->mult[i] = 0.0;
-	r->coeff[i] = 0;
+	r->bnum[i] = 0;
     }
 
     if (cross) {
@@ -505,7 +591,7 @@ static void print_restriction (const gretl_restriction_set *rset,
     int i, k;
 
     for (i=0; i<r->nterms; i++) {
-	k = r->coeff[i];
+	k = r->bnum[i];
 	print_mult(r->mult[i], i == 0, prn);
 	if (rset->cross) {
 	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, k + 1);
@@ -551,7 +637,7 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
     int j;
 
     for (j=0; j<i; j++) {
-	if (bnum == r->coeff[j] && (r->eq == NULL || eq == r->eq[j])) {
+	if (bnum == r->bnum[j] && (r->eq == NULL || eq == r->eq[j])) {
 	    /* additional reference to a previously referenced coeff */
 	    r->mult[j] += mult;
 	    r->nterms -= 1;
@@ -560,7 +646,7 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
     }
 
     r->mult[i] = mult;
-    r->coeff[i] = bnum;
+    r->bnum[i] = bnum;
 
     if (r->eq != NULL) {
 	r->eq[i] = eq;
@@ -654,6 +740,7 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 static int 
 real_restriction_set_parse_line (gretl_restriction_set *rset, 
 				 const char *line,
+				 const DATAINFO *pdinfo,
 				 int first)
 {
     const char *p = line;
@@ -662,7 +749,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     int i, nt, err = 0;
 
 #if RDEBUG
-    printf("parse restriction line: got '%s'\n", line);
+    fprintf(stderr, "parse restriction line: got '%s'\n", line);
 #endif
 
     if (!strncmp(p, "restrict", 8)) {
@@ -685,7 +772,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     nt = 1 + count_ops(p);
 
 #if RDEBUG
-    printf("restriction line: assuming %d terms\n", nt);
+    fprintf(stderr, "restriction line: assuming %d terms\n", nt);
 #endif
 
     r = augment_restriction_set(rset, nt);
@@ -711,10 +798,10 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	p += len;
 
 #if RDEBUG
-	printf(" working on chunk %d, '%s'\n", i, chunk);
+	fprintf(stderr, " working on chunk %d, '%s'\n", i, chunk);
 #endif
 
-	err = parse_coeff_chunk(chunk, &mult, &eq, &bnum);
+	err = parse_coeff_chunk(rset, chunk, &mult, &eq, &bnum, pdinfo);
 	if (err) {
 	    break;
 	} else if (bnum_out_of_bounds(rset, bnum, eq)) {
@@ -752,7 +839,8 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 }
 
 int 
-restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
+restriction_set_parse_line (gretl_restriction_set *rset, const char *line,
+			    const DATAINFO *pdinfo)
 {
     int nx = 0;
 
@@ -773,7 +861,7 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
 	return 1;
     }
 
-    return real_restriction_set_parse_line(rset, line, 0);
+    return real_restriction_set_parse_line(rset, line, pdinfo, 0);
 }
 
 /* set-up for a set of restrictions for a VAR (vecm, actually) */
@@ -791,7 +879,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 
     *gretl_errmsg = '\0';
 
-    if (real_restriction_set_parse_line(rset, line, 1)) {
+    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
 	if (*gretl_errmsg == '\0') {
 	    sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	}
@@ -815,7 +903,7 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 	return NULL;
     }
 
-    if (real_restriction_set_parse_line(rset, line, 1)) {
+    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	return NULL;
     }
@@ -836,7 +924,7 @@ eqn_restriction_set_start (const char *line, MODEL *pmod)
 	return NULL;
     }
 
-    if (real_restriction_set_parse_line(rset, line, 1)) {
+    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	return NULL;
     }
@@ -888,7 +976,7 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
     }
 
     if (!*err && name == NULL) {
-	*err = real_restriction_set_parse_line(rset, line, 1);
+	*err = real_restriction_set_parse_line(rset, line, NULL, 1);
 	if (*err) {
 	    rset = NULL;
 	    if (*err == E_PARSE) {

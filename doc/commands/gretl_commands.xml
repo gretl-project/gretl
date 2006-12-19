@@ -5919,22 +5919,24 @@
 	Each restriction in the set should be expressed as an equation,
 	with a linear combination of parameters on the left and a numeric
 	value to the right of the equals sign. In the single-equation
-	case, parameters are referenced in the form b<repl>N</repl>, where
-	<repl>N</repl> represents the position in the list of regressors,
-	starting at 1.  For example, <lit>b2</lit> denotes the second
-	regression parameter.  In the system case, parameters are
-	referenced using <lit>b</lit> plus two numbers in square brackets.
-	The leading number represents the position of the equation within
-	the system and the second number indicates position in the list of
-	regressors.  For example <lit>b[2,1]</lit> denotes the first
-	parameter in the second equation, and <lit>b[3,2]</lit> the second
-	parameter in the third equation.
+	case, parameters may be referenced in the form
+	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
+	represents the position in the list of regressors (starting at 1),
+	or <lit>b[</lit><repl>varname</repl><lit>]</lit>, where
+	<repl>varname</repl> is the name of the regressor in question. In
+	the system case, parameters are referenced using <lit>b</lit> plus
+	two numbers in square brackets. The leading number represents the
+	position of the equation within the system and the second number
+	indicates position in the list of regressors.  For example
+	<lit>b[2,1]</lit> denotes the first parameter in the second
+	equation, and <lit>b[3,2]</lit> the second parameter in the third
+	equation.
       </para>
 
       <para>The <lit>b</lit> terms in the equation representing a
 	restriction equation may be prefixed with a numeric
 	multiplier, using <lit>*</lit> to represent multiplication,
-	for example <lit>3.5*b4</lit>.
+	for example <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Here is an example of a set of restrictions for a
@@ -5942,9 +5944,9 @@
       </para>
       <code>
 	restrict
-	 b1 = 0
-	 b2 - b3 = 0
-	 b4 + 2*b5 = 1
+	 b[1] = 0
+	 b[2] - b[3] = 0
+	 b[4] + 2*b[5] = 1
 	end restrict</code>
 
       <para>And here is an example of a set of restrictions to be
@@ -5987,25 +5989,27 @@
 
     <description>
 
-      <para>Each restriction in the set should be expressed as an equation, with
-	a linear combination of parameters on the left and a numeric value to
-	the right of the equals sign.  Parameters are referenced in the form
-	b<repl>N</repl>, where <repl>N</repl> represents the position in the
-	list of regressors, starting at 1.  For example, <lit>b2</lit>
-	denotes the second regression parameter.  
+      <para>Each restriction in the set should be expressed as an
+	equation, with a linear combination of parameters on the left and
+	a numeric value to the right of the equals sign. Parameters may be
+	referenced in the form <lit>b[</lit><repl>i</repl><lit>]</lit>,
+	where <repl>i</repl> represents the position in the list of
+	regressors (starting at 1), or
+	<lit>b[</lit><repl>varname</repl><lit>]</lit>, where
+	<repl>varname</repl> is the name of the regressor in question.
       </para>
 
       <para>The <lit>b</lit> terms in the equation representing a restriction
 	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b4</lit>.
+	to represent multiplication, for example <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Here is an example of a set of restrictions:
       </para>
       <code>
-	b1 = 0
-	b2 - b3 = 0
-	b4 + 2*b5 = 1</code>
+	b[1] = 0
+	b[2] - b[3] = 0
+	b[4] + 2*b[5] = 1</code>
 
     </description>
 
@@ -6030,7 +6034,7 @@
 
       <para>The <lit>b</lit> terms in the equation representing a restriction
 	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b4</lit>.
+	to represent multiplication, for example <lit>3.5*b[1,4]</lit>.
       </para>
 
       <para>Here is an example of a set of restrictions:
@@ -6060,10 +6064,11 @@
 	the context of VECMs).
       </para>
 
-      <para>If the VECM is of rank 1, parameters are referenced in the form
-	b<repl>N</repl>, where <repl>N</repl> represents position in the
-	error-correction vector, starting at 1.  For example, <lit>b2</lit>
-	denotes the second error-correction parameter.  
+      <para>If the VECM is of rank 1, parameters are referenced in the
+	form <lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
+	represents position in the error-correction vector, starting at 1.
+	For example, <lit>b[2]</lit> denotes the second error-correction
+	parameter.  
       </para>
 
       <para>If the rank is greater than 1, parameters are referenced using
@@ -6072,14 +6077,14 @@
 
       <para>The <lit>b</lit> terms in the equation representing a restriction
 	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b4</lit>.
+	to represent multiplication, for example <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Here is an example of a set of restrictions on a VECM of rank 1.
       </para>
       <code>
-	b1 + b2 = 0
-	b1 + b3 = 0</code>
+	b[1] + b[2] = 0
+	b[1] + b[3] = 0</code>
 
     </description>
 
