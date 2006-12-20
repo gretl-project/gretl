@@ -43,6 +43,11 @@ struct restriction_set_ {
     void *obj;
     GretlObjType type;
     gretlopt opt;
+    double test;
+    double pval;
+    double bsum;
+    double bsd;
+    int code;
 };
 
 static void destroy_restriction_set (gretl_restriction_set *rset);
@@ -685,10 +690,16 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->type = type;
     rset->opt = opt;
 
+    rset->test = NADBL;
+    rset->pval = NADBL;
+    rset->bsum = NADBL;
+    rset->bsd = NADBL;
+
     rset->k = 0;
     rset->mask = NULL;
     rset->restrictions = NULL;
     rset->cross = 0;
+    rset->code = GRETL_STAT_NONE;
 
     if (rset->type == GRETL_OBJ_SYS) {
 	rset->cross = 1;
@@ -1202,7 +1213,6 @@ static int test_restriction_set (gretl_restriction_set *rset,
     gretl_vector *b = NULL;
     gretl_vector *br = NULL;
     gretl_matrix *RvR = NULL;
-    double test_stat, pval;
     int err, robust, freeRvR = 1;
 
     int asym = ASYMPTOTIC_MODEL(pmod->ci);
@@ -1257,6 +1267,10 @@ static int test_restriction_set (gretl_restriction_set *rset,
     gretl_matrix_print(br, "br");
 #endif  
 
+    if (rset->opt & OPT_C) {
+	rset->bsum = br->val[0];
+    }
+
     if (!gretl_is_zero_matrix(q)) {
 	err = gretl_matrix_subtract_from(br, q);
 	if (err) {
@@ -1282,6 +1296,9 @@ static int test_restriction_set (gretl_restriction_set *rset,
 #if RDEBUG
 	gretl_matrix_print(RvR, "RvR");
 #endif  
+	if (rset->opt & OPT_C) {
+	    rset->bsd = sqrt(RvR->val[0]);
+	}
     }
 
     err = gretl_invert_symmetric_matrix(RvR);
@@ -1291,7 +1308,7 @@ static int test_restriction_set (gretl_restriction_set *rset,
 	goto bailout;
     }
     
-    test_stat = gretl_scalar_qform(br, RvR, &err);
+    rset->test = gretl_scalar_qform(br, RvR, &err);
     if (err) {
 	pputs(prn, _("Failed to compute test statistic\n"));
 	goto bailout;
@@ -1300,24 +1317,29 @@ static int test_restriction_set (gretl_restriction_set *rset,
     robust = gretl_model_get_int(pmod, "robust");
 
     if (asym) {
-	pval = chisq_cdf_comp(test_stat, rset->k);
+	rset->code = GRETL_STAT_WALD_CHISQ;
+	rset->pval = chisq_cdf_comp(rset->test, rset->k);
 	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust chi^2"): "chi^2",
-		rset->k, test_stat);
+		rset->k, rset->test);
     } else {
-	test_stat /= rset->k;
-	pval = f_cdf_comp(test_stat, rset->k, pmod->dfd);
+	rset->code = GRETL_STAT_F;
+	rset->test /= rset->k;
+	rset->pval = f_cdf_comp(rset->test, rset->k, pmod->dfd);
 	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust F"): "F",
-		rset->k, pmod->dfd, test_stat);
+		rset->k, pmod->dfd, rset->test);
     }
 
-    pprintf(prn, _("with p-value = %g\n"), pval);
+    pprintf(prn, _("with p-value = %g\n"), rset->pval);
     pputc(prn, '\n');
 
-    record_test_result(test_stat, pval, _("restriction"));
+    if (!(rset->opt & OPT_C)) {
+	record_test_result(rset->test, rset->pval, _("restriction"));
+    }
 
-    if (pmod != NULL && !(rset->opt & OPT_Q) && pmod->ci == OLS) {
+    if (pmod != NULL && Z != NULL && !(rset->opt & OPT_Q) 
+	&& pmod->ci == OLS) {
 	do_restricted_estimates(rset, Z, pdinfo, prn);
     }
 
@@ -1390,10 +1412,114 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
 	    test_restriction_set(rset, Z, pdinfo, prn);
-	    destroy_restriction_set(rset);
+	    if (!(rset->opt & OPT_C)) {
+		destroy_restriction_set(rset);
+	    }
 	}
     }	
 
     return err;
 }
+
+/**
+ * gretl_sum_test:
+ * @list: list of variables to use.
+ * @pmod: pointer to model.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * 
+ * Calculates the sum of the coefficients, relative to the given model, 
+ * for the variables given in @list.  Prints this estimate along 
+ * with its standard error.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int 
+gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
+		PRN *prn)
+{
+    gretl_restriction_set *r;
+    char line[MAXLEN];
+    char bstr[24];
+    int i, len, err = 0;
+
+    if (list[0] < 2) {
+	pprintf(prn, _("Invalid input\n"));
+	return E_DATA;
+    }
+
+    if (!command_ok_for_model(COEFFSUM, pmod->ci)) {
+	return E_NOTIMP;
+    }
+
+    r = real_restriction_set_start(pmod, GRETL_OBJ_EQN, OPT_Q | OPT_C);
+    if (r == NULL) {
+	return 1;
+    }
+
+    *line = '\0';
+    len = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	sprintf(bstr, "b[%s]", pdinfo->varname[list[i]]);
+	len += strlen(bstr) + 4;
+	if (len >= MAXLEN - 1) {
+	    err = E_PARSE;
+	    break;
+	}
+	strcat(line, bstr);
+	if (i < list[0]) {
+	    strcat(line, " + ");
+	} else {
+	    strcat(line, " = 0");
+	}
+    }
+
+    if (!err) {
+	err = real_restriction_set_parse_line(r, line, pdinfo, 1); 
+    }
+
+    if (!err) {
+	err = gretl_restriction_set_finalize(r, NULL, pdinfo, NULL);
+    }
+
+    if (!err) {
+	double test;
+
+	pprintf(prn, "\n%s: ", _("Variables"));
+
+	for (i=1; i<=list[0]; i++) {
+	    pprintf(prn, "%s ", pdinfo->varname[list[i]]);
+	}
+
+	pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), r->bsum);
+
+	if (r->code == GRETL_STAT_F) {
+	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bsd);
+	    test = sqrt(r->test);
+	    if (r->bsum < 0) {
+		test = -test;
+	    }
+	    pprintf(prn, "   t(%d) = %g ", pmod->dfd, test);
+	    pprintf(prn, _("with p-value = %g\n"), r->pval);
+	    record_test_result(test, r->pval, _("sum")); 
+	} else if (r->code == GRETL_STAT_WALD_CHISQ) {
+	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bsd);
+	    test = sqrt(r->test);
+	    if (r->bsum < 0) {
+		test = -test;
+	    }
+	    r->pval = normal_pvalue_2(test);
+	    pprintf(prn, "   z = %g ", test);
+	    pprintf(prn, _("with p-value = %g\n"), r->pval);
+	    record_test_result(test, r->pval, _("sum")); 
+	}	    
+
+	destroy_restriction_set(r);
+    }
+
+    return err;
+}
+
 

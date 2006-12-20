@@ -2670,6 +2670,19 @@ static GtkItemFactoryEntry define_var_items[] = {
       MODEL_GENR, NULL, GNULL }
 };
 
+static int criteria_available (const MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<C_MAX; i++) {
+	if (na(pmod->criterion[i])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 static void add_model_dataset_items (windata_t *vwin)
 {
     MODEL *pmod = vwin->data;
@@ -2706,9 +2719,11 @@ static void add_model_dataset_items (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &lnl_data_item, vwin, 1);
     }
 
-    n = sizeof criteria_items / sizeof criteria_items[0];
-    for (i=0; i<n; i++) {
-	gtk_item_factory_create_item(vwin->ifac, &criteria_items[i], vwin, 1);
+    if (criteria_available(pmod)) {
+	n = sizeof criteria_items / sizeof criteria_items[0];
+	for (i=0; i<n; i++) {
+	    gtk_item_factory_create_item(vwin->ifac, &criteria_items[i], vwin, 1);
+	}
     }
 
     if (pmod->ci == GARCH) {

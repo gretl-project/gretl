@@ -1473,7 +1473,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	}
     }
 
-    /* additional arbond-specific test data */
+    /* additional arbond-specific data */
     if (!err) {
 	gretl_model_set_int(pmod, "step", ab->step);
 	if (!na(ab->AR1)) {
@@ -1492,6 +1492,9 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	}
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
+	}
+	if (ab->opt & OPT_D) {
+	    gretl_model_set_int(pmod, "time-dummies", 1);
 	}
 	if ((ab->opt & OPT_T) && (ab->opt & OPT_A)) {
 	    gretl_model_set_int(pmod, "asy", 1);

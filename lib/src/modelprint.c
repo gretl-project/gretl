@@ -326,63 +326,103 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_arbond_AR_test (double z, int order, PRN *prn)
+{
+    double pv = normal_pvalue_2(z);
+
+    pputs(prn, "  ");
+
+    if (plain_format(prn)) {
+	pprintf(prn, _("Test for AR(%d) errors:"), order);
+    } else {
+	pprintf(prn, I_("Test for AR(%d) errors:"), order);
+    }
+
+    if (tex_format(prn)) {
+	char numstr[32];
+
+	tex_float_string(z, 4, numstr);
+	pprintf(prn, " $z$ = %s & [%.4f]", numstr, pv);
+    } else {
+	pprintf(prn, " z = %g (%s %.4f)", z, 
+		(plain_format(prn))? _("p-value") : I_("p-value"), pv);
+    }
+
+    gretl_prn_newline(prn);
+}
+
+enum {
+    AB_SARGAN,
+    AB_WALD
+};
+
+static void 
+print_arbond_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
+{
+    const char *strs[] = {
+	N_("Sargan over-identification test"),
+	N_("Wald (joint) test")
+    };
+    const char *texstrs[] = {
+	N_("Sargan test"),
+	N_("Wald (joint) test")
+    };
+    double pv;
+    int df;
+
+    if (j == AB_SARGAN) {
+	df = gretl_model_get_int(pmod, "sargan_df");
+    } else {
+	df = gretl_model_get_int(pmod, "wald_df");
+    }
+
+    pv = chisq_cdf_comp(x, df);
+
+    if (tex_format(prn)) {
+	pprintf(prn, "%s: ", I_(texstrs[j]));
+	pprintf(prn, "$\\chi^2(%d)$ = %.3f & [%.4f]", df, x, pv);
+    } else if (plain_format(prn)) {
+	pprintf(prn, "  %s:", _(strs[j]));
+	gretl_prn_newline(prn);
+	pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
+		df, x, _("p-value"), pv);
+    } else {
+	pprintf(prn, "  %s:", I_(strs[j]));
+	gretl_prn_newline(prn);
+	pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", I_("Chi-square"),
+		df, x, I_("p-value"), pv);
+    }
+
+    gretl_prn_newline(prn);
+}
+
 static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 {
-    int tex = tex_format(prn);
     double x;
-    int i;
 
-    if (tex) {
+    if (tex_format(prn)) {
 	pputs(prn, "\\end{tabular}\n\n\\vspace{1ex}\n");
-	pputs(prn, "\\begin{tabular}{l}\n");
+	pputs(prn, "\\begin{tabular}{ll}\n");
     }
 
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
-	pputs(prn, "  ");
-	pprintf(prn, _("Test for AR(%d) errors:"), 1);
-	pprintf(prn, " z = %g (%s %.4f)", x, _("p-value"), 
-		normal_pvalue_2(x));
-	gretl_prn_newline(prn);
+	print_arbond_AR_test(x, 1, prn);
     }
 
     x = gretl_model_get_double(pmod, "AR2");
     if (!na(x)) {
-	pputs(prn, "  ");
-	pprintf(prn, _("Test for AR(%d) errors:"), 2);
-	pprintf(prn, " z = %g (%s %.4f)", x, _("p-value"),
-		normal_pvalue_2(x));
-	gretl_prn_newline(prn);
+	print_arbond_AR_test(x, 2, prn);
     }
 
     x = gretl_model_get_double(pmod, "sargan");
     if (!na(x)) {
-	i = gretl_model_get_int(pmod, "sargan_df");
-	pprintf(prn, "  %s:", _("Sargan over-identification test"));
-	gretl_prn_newline(prn);
-	if (tex) {
-	    pprintf(prn, "\\quad $\\chi^2(%d)$ = %.3f (%s %.4f)",
-		    i, x, _("p-value"), chisq_cdf_comp(x, i));
-	} else {
-	    pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
-		    i, x, _("p-value"), chisq_cdf_comp(x, i));
-	}
-	gretl_prn_newline(prn);
+	print_arbond_chi2_test(pmod, x, AB_SARGAN, prn);
     }
 
     x = gretl_model_get_double(pmod, "wald");
     if (!na(x)) {
-	i = gretl_model_get_int(pmod, "wald_df");
-	pprintf(prn, "  %s:", _("Wald (joint) test"));
-	gretl_prn_newline(prn);
-	if (tex) {
-	    pprintf(prn, "\\quad $\\chi^2(%d)$ = %.3f (%s %.4f)",
-		    i, x, _("p-value"), chisq_cdf_comp(x, i));
-	} else {
-	    pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
-		    i, x, _("p-value"), chisq_cdf_comp(x, i));
-	}
-	gretl_prn_newline(prn);
+	print_arbond_chi2_test(pmod, x, AB_WALD, prn);
     }
 }
 
@@ -997,11 +1037,11 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
 
 static void tex_vecm_depvar_name (char *s, const char *vname)
 {
-    char tmp[9];
+    char tmp[14];
     int gotit = 0;
 
-    if (sscanf(vname, "d_%8s", tmp)) {
-	char myvar[16];
+    if (sscanf(vname, "d_%13s", tmp)) {
+	char myvar[24];
 
 	tex_escape(myvar, tmp);
 	sprintf(s, "$\\Delta$%s", myvar);
@@ -1011,6 +1051,14 @@ static void tex_vecm_depvar_name (char *s, const char *vname)
     if (!gotit) {
 	tex_escape(s, vname); 
     }    
+}
+
+static void tex_arbond_depvar_name (char *s, const char *vname)
+{
+    char vnesc[32];
+
+    tex_escape(vnesc, vname);
+    sprintf(s, "$\\Delta$%s", vnesc);
 }
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
@@ -1371,6 +1419,8 @@ static void print_model_heading (const MODEL *pmod,
 	if (tex) {
 	    if (pmod->aux == AUX_VECM) {
 		tex_vecm_depvar_name(vname, pdinfo->varname[v]);
+	    } else if (pmod->ci == ARBOND) {
+		tex_arbond_depvar_name(vname, pdinfo->varname[v]);
 	    } else {
 		tex_escape(vname, pdinfo->varname[v]);
 	    }

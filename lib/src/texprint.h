@@ -41,7 +41,9 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo,
 
 char *tex_escape (char *targ, const char *src);
 
-void tex_dcolumn_double (double xx, char *numstr);
+void tex_dcolumn_double (double x, char *numstr);
+
+char *tex_float_string (double x, int prec, char *targ);
 
 void set_gretl_tex_preamble (void);
 

@@ -3630,7 +3630,7 @@ static int *arbond_list_omit (const MODEL *orig, const int *drop, int *err)
 	return NULL;
     }
 
-    for (i=3; i<=new[0]; i++) {
+    for (i=2; i<=new[0]; i++) {
 	if (new[i] == LISTSEP) {
 	    sep++;
 	}
@@ -3728,7 +3728,7 @@ static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
 	return NULL;
     }
 
-    for (i=3; i<=old[0]; i++) {
+    for (i=2; i<=old[0]; i++) {
 	if (old[i] == LISTSEP) {
 	    sep++;
 	    if (sep == 2) {

@@ -215,7 +215,12 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 {
     int i;
 
-    pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
+    if (cf->asy) {
+	pprintf(prn, "z(.025) = %.4f\n\n", cf->t);
+    } else {
+	pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, cf->t);
+    }
+
     /* xgettext:no-c-format */
     pputs(prn, _("      VARIABLE         COEFFICIENT      95% CONFIDENCE "
 	    "INTERVAL\n\n"));      

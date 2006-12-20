@@ -890,7 +890,7 @@ static int run_gretl_nls_check (void)
     if (verbose) {
 	prn = gretl_print_new(GRETL_PRINT_STDOUT);
     } else {
-	prn = gretl_print_new(GRETL_PRINT_NULL);
+	prn = NULL;
     }
 
     err1 = real_run_check(1, prn);

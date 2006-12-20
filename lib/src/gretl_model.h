@@ -48,7 +48,9 @@ typedef enum {
 typedef struct CoeffIntervals_ CoeffIntervals;
 
 struct CoeffIntervals_ {
+    int asy;
     int ncoeff;
+    double t;
     char **names;
     double *coeff;
     double *maxerr;

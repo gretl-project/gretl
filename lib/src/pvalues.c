@@ -747,6 +747,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	} else {
 	    pc = normal_cdf(p[0]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2 * pc, 1 - 2 * pc);
 	}
 	break;
 
@@ -760,6 +762,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	} else {
 	    pc = t_cdf(p[1], (int) p[0]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2 * pc, 1 - 2 * pc);
 	}
 	break;
 

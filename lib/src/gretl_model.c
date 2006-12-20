@@ -631,7 +631,6 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 				 const DATAINFO *pdinfo)
 {
     CoeffIntervals *cf;
-    double t = tcrit95(pmod->dfd);
     char pname[24];
     int i, err = 0;
 
@@ -666,9 +665,17 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 	goto bailout;
     }    
 
+    if (ASYMPTOTIC_MODEL(pmod->ci)) {
+	cf->asy = 1;
+	cf->t = normal_cdf_inverse(0.975);
+    } else {
+	cf->asy = 0;
+	cf->t = tcrit95(pmod->dfd);
+    }
+
     for (i=0; i<cf->ncoeff && !err; i++) { 
 	cf->coeff[i] = pmod->coeff[i];
-	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0.0;
+	cf->maxerr[i] = (pmod->sderr[i] > 0)? cf->t * pmod->sderr[i] : 0.0;
 	gretl_model_get_param_name(pmod, pdinfo, i, pname);
 	cf->names[i] = gretl_strdup(pname);
 	if (cf->names[i] == NULL) {
@@ -1184,7 +1191,27 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    for (i=1; i<=list[0]; i++) {
 		list[i] = pmod->list[i + 1];
 	    }
-	}	
+	}
+    } else if (pmod->ci == ARBOND) {
+	int sep = 0;
+
+	nx = 0;
+	for (i=2; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] == LISTSEP) {
+		sep++;
+		if (sep == 1) {
+		    i += 2;
+		} else if (sep == 2) {
+		    break;
+		}
+	    }
+	    if (sep == 1 && i <= pmod->list[0]) {
+		list = gretl_list_append_term(&list, pmod->list[i]);
+		if (list == NULL) {
+		    return NULL;
+		}
+	    }
+	}
     } else if (pmod->ci != NLS && pmod->ci != MLE) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
@@ -3276,6 +3303,18 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 
     gretl_pop_c_numeric_locale();
 
+    /* backward compatibility */
+    if (!*err && pmod->nparams > pmod->ncoeff && pmod->depvar == NULL) {
+	int i, np = pmod->nparams - 1;
+
+	pmod->depvar = pmod->params[0];
+	for (i=0; i<np; i++) {
+	    pmod->params[i] = pmod->params[i+1];
+	}
+	pmod->params[np] = NULL;
+	pmod->nparams = np;
+    }
+
  bailout:
 
     if (*err) {
@@ -3424,11 +3463,10 @@ int command_ok_for_model (int test_ci, int model_ci)
 	}
 	break;
 
-    case COEFFSUM:
     case VIF:
 	if (model_ci == NLS || model_ci == TSLS ||
 	    model_ci == ARMA || model_ci == GARCH ||
-	    model_ci == PANEL) {
+	    model_ci == PANEL || model_ci == ARBOND) {
 	    ok = 0;
 	}
 	break;

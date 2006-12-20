@@ -19,6 +19,9 @@
 
 /* compare.h for gretl */
 
+#ifndef COMPARE_H
+#define COMPARE_H
+
 #include <stdio.h>
 #include "gretl_matrix.h"
 
@@ -98,10 +101,8 @@ int leverage_test (MODEL *pmod,
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char flags);
 
-int sum_test (const int *sumvars, MODEL *pmod, 
-	      double ***pZ, DATAINFO *pdinfo, 
-	      PRN *prn);
-
 int lmtest_driver (const char *param,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);
+
+#endif /* COMPARE_H */

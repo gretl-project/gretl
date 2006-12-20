@@ -1366,7 +1366,7 @@ int do_coeff_sum (selector *sr)
     }
 
     pmod = vwin->data;
-    err = sum_test(libcmd.list, pmod, &Z, datainfo, prn);
+    err = gretl_sum_test(libcmd.list, pmod, datainfo, prn);
 
     if (err) {
         gui_errmsg(err);

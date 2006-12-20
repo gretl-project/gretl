@@ -43,6 +43,9 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 				const double **Z, const DATAINFO *pdinfo,
 				PRN *prn);
 
+int gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
+		    PRN *prn);
+
 #endif /* GRETL_RESTRICT_H */
 
 

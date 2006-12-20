@@ -3347,6 +3347,7 @@ static int add_omit_list (gpointer p, selector *sr)
     MODEL *pmod = NULL;
     GtkListStore *store;
     GtkTreeIter iter;
+    int *xlist = NULL;
     int i, nvars = 0;
 
     if (sr->code == VAROMIT) {
@@ -3371,55 +3372,56 @@ static int add_omit_list (gpointer p, selector *sr)
 			       -1);
 	    nvars++;
 	}
-	g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
+	g_object_set_data(G_OBJECT(sr->lvars), "keep_names", 
 			  GINT_TO_POINTER(1));
-    } else if (sr->code == OMIT || sr->code == COEFFSUM) {
-	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == LISTSEP) {
-		break;
-	    }
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 
-			       0, pmod->list[i], 1, 0,
-			       2, datainfo->varname[pmod->list[i]],
-			       -1);
-	    nvars++;
-	} 
-    } else if (sr->code == ADD) {
-	for (i=1; i<datainfo->v; i++) {
-	    int j, match = 0;
+    } else if (sr->code == OMIT || sr->code == ADD || sr->code == COEFFSUM) {
+	xlist = gretl_model_get_x_list(pmod);
 
-	    for (j=1; j<=pmod->list[0]; j++) {
-		if (i == pmod->list[j]) {
-		    match = 1;
-		    break;
+	if (xlist == NULL) {
+	    return 0;
+	}
+
+	if (sr->code == ADD) {
+	    int dv = gretl_model_get_depvar(pmod);
+
+	    for (i=0; i<datainfo->v; i++) {
+		if (!in_gretl_list(xlist, i) && i != dv &&
+		    !var_is_hidden(datainfo, i)) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, i, 1, 0, 
+				       2, datainfo->varname[i],
+				       -1);
+		    nvars++;
 		}
 	    }
-	    if (!match) {
+	} else {	    
+	    for (i=1; i<=xlist[0]; i++) {
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
-				   0, i, 1, 0, 
-				   2, datainfo->varname[i],
+				   0, xlist[i], 1, 0,
+				   2, datainfo->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }
-	}
+	} 
     } else if (sr->code == VAROMIT) {
-	int err, vi, *exolist;
+	int err;
 
-	exolist = gretl_VAR_get_exo_list(var, &err);
-	if (exolist != NULL) {
-	    for (i=1; i<=exolist[0]; i++) {
-		vi = exolist[i];
+	xlist = gretl_VAR_get_exo_list(var, &err);
+	if (xlist != NULL) {
+	    for (i=1; i<=xlist[0]; i++) {
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
-				   0, vi, 1, 0,
-				   2, datainfo->varname[vi],
+				   0, xlist[i], 1, 0,
+				   2, datainfo->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }	    
 	}
     } 
+
+    free(xlist);
 
     return nvars;
 }
@@ -3613,7 +3615,6 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     } else {
 	int start = (ci == DEFINE_LIST)? 0 : 1;
 
-	nleft = 0;
 	for (i=start; i<datainfo->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
@@ -3684,7 +3685,15 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 	maybe_set_tsplot_vars(sr);
     }
 
-    gtk_widget_show(sr->dlg);
+    if (nleft == 0) {
+	gtk_widget_destroy(sr->dlg);
+	errbox(_("No variables are available"));
+    } else if ((ci == COEFFSUM || ci == ELLIPSE) && nleft < 2) {
+	gtk_widget_destroy(sr->dlg);
+	errbox(_("No variables are available"));
+    } else {
+	gtk_widget_show(sr->dlg);
+    }
 
     if (SAVE_DATA_ACTION(sr->code)) {
 	gretl_set_window_modal(sr->dlg);

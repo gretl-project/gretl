@@ -22,13 +22,6 @@
 
 #include "libgretl.h"
 
-typedef enum {
-    C_AIC,
-    C_BIC,
-    C_HQC,
-    C_MAX
-} model_selection_criteria;
-
 #include <float.h>
 #include <limits.h>
 

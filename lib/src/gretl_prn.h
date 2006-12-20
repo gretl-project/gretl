@@ -24,8 +24,7 @@ typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
     GRETL_PRINT_FILE,
-    GRETL_PRINT_BUFFER,
-    GRETL_PRINT_NULL
+    GRETL_PRINT_BUFFER
 } PrnType;
 
 typedef enum {

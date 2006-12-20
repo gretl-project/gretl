@@ -80,6 +80,37 @@ static void tex_print_math_float (double x, PRN *prn)
 }
 
 /**
+ * tex_float_string:
+ * @x: value to be printed.
+ * @targ: target string.
+ *
+ * Prints the value @x into @targ with @prec digits of precision.
+ * The result is intended for use in a non-math environment: if
+ * @x is negative, the minus sign is put into math mode.
+ * 
+ * Returns: @targ.
+ */
+
+char *tex_float_string (double x, int prec, char *targ)
+{
+    int offset = 0;
+
+    *targ = '\0';
+
+    x = tex_screen_zero(x);
+    if (x < 0.0) {
+	strcat(targ, "$-$");
+	x = fabs(x);
+	offset = 3;
+    }
+
+    sprintf(targ + offset, "%#.*g", prec, x);
+    tex_modify_exponent(targ);
+
+    return targ;
+}
+
+/**
  * tex_escape:
  * @targ: target string (must be pre-allocated)
  * @src: source string.
@@ -116,19 +147,19 @@ static void cut_extra_zero (char *numstr)
     numstr[s + p + GRETL_DIGITS] = '\0';
 }
 
-void tex_dcolumn_double (double xx, char *numstr)
+void tex_dcolumn_double (double x, char *numstr)
 {
     double a;
 
-    if (na(xx)) {
+    if (na(x)) {
 	strcpy(numstr, "\\multicolumn{1}{c}{}");
 	return;
     }
 
-    xx = screen_zero(xx);
-    a = fabs(xx);
+    x = screen_zero(x);
+    a = fabs(x);
 
-    sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
+    sprintf(numstr, "%#.*g", GRETL_DIGITS, x);
 
     if (a != 0.0 && (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT)) {
 	int expon;
@@ -137,7 +168,7 @@ void tex_dcolumn_double (double xx, char *numstr)
 	p = strchr(numstr, 'e');
 	expon = atoi(p + 2);
 	strcpy(p, "\\mbox{e");
-	sprintf(exponstr, "%s%02d}", (xx > 10)? "+" : "-", expon);
+	sprintf(exponstr, "%s%02d}", (x > 10)? "+" : "-", expon);
 	strcat(numstr, exponstr);
     } else {
 	cut_extra_zero(numstr);
@@ -189,6 +220,29 @@ static int tex_greek_param (char *targ, const char *src)
     return (*targ != 0);
 }
 
+static void tex_arbond_coeff_name (char *targ, const char *src,
+				   int inmath)
+{
+    char vname[VNAMELEN], vnesc[16];
+    int lag;
+
+    if (sscanf(src, "D%10[^(](%d)", vname, &lag) == 2) {
+	tex_escape(vnesc, vname);
+	if (!inmath) {
+	    sprintf(targ, "$\\Delta \\mbox{\\rm %s}_{%d}$", vnesc, lag);
+	} else {
+	    sprintf(targ, "\\Delta \\mbox{\\rm %s}_{%d}", vnesc, lag);
+	}
+    } else {
+	tex_escape(vnesc, src);
+	if (inmath) {
+	    sprintf(targ, "\\mbox{%s}", vnesc);
+	} else {
+	    strcpy(targ, vnesc);
+	}
+    }
+}
+
 static void tex_garch_coeff_name (char *targ, const char *src,
 				  int inmath)
 {
@@ -198,9 +252,9 @@ static void tex_garch_coeff_name (char *targ, const char *src,
     if (sscanf(src, "%15[^(](%d)", vname, &lag) == 2) {
 	/* e.g. "alpha(0)" */
 	if (!inmath) {
-	    sprintf(targ, "$\\%s_%d$", vname, lag);
+	    sprintf(targ, "$\\%s_{%d}$", vname, lag);
 	} else {
-	    sprintf(targ, "\\%s_%d", vname, lag);
+	    sprintf(targ, "\\%s_{%d}", vname, lag);
 	}
     } else {
 	/* regular variable name */
@@ -381,8 +435,10 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
 	       pmod->params != NULL) {
 	tex_escape(tmp, pmod->params[i]);
-    } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
+    } else if (pmod->ci == PANEL) {
 	tex_escape(tmp, pmod->params[i]);
+    } else if (pmod->ci == ARBOND) {
+	tex_arbond_coeff_name(tmp, pmod->params[i], 0);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[j]]);
     }
@@ -728,7 +784,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	tex_escape(tmp, pdinfo->varname[i]);
     }
 
-    pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
+    if (pmod->ci == ARBOND) {
+	pprintf(prn, "\\widehat{\\Delta \\rm %s} %s= \n", tmp, (split? "&" : ""));
+    } else {
+	pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
+    }
 
     if (pmod->ci == GARCH) {
 	nc -= (1 + pmod->list[1] + pmod->list[2]);
@@ -765,10 +825,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 		cchars += strlen(pmod->params[i]);
 		tex_garch_coeff_name(tmp, pmod->params[i], 1);
 		pputs(prn, tmp);
-	    } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
+	    } else if (pmod->ci == PANEL) {
 		cchars += strlen(pmod->params[i]);
 		tex_escape(tmp, pmod->params[i]);
 		pprintf(prn, "\\mbox{%s}", tmp);
+	    } else if (pmod->ci == ARBOND) {
+		if (strcmp(pmod->params[i], "const")) {
+		    cchars += strlen(pmod->params[i]);
+		    tex_arbond_coeff_name(tmp, pmod->params[i], 1);
+		    pputs(prn, tmp);
+		}
 	    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 		cchars += strlen(pmod->params[i]);
 		tex_mp_coeff_name(tmp, pmod->params[i], 1);

@@ -113,7 +113,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 
     if (pmod->ci == ARBOND) {
 	/* find correct offset into independent vars in list */
-	for (i=3; i<=pmod->list[0]; i++) {
+	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == LISTSEP) {
 		off1 = i + 2;
 	    }
@@ -487,6 +487,25 @@ full_model_list (const MODEL *pmod, const int *inlist)
     return flist;
 }
 
+static gretlopt retrieve_arbond_opts (MODEL *pmod)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (gretl_model_get_int(pmod, "time-dummies")) {
+	opt |= OPT_D;
+    }
+
+    if (gretl_model_get_int(pmod, "asy")) {
+	opt |= OPT_A;
+    }
+
+    if (gretl_model_get_int(pmod, "step") == 2) {
+	opt |=OPT_T;
+    }    
+
+    return opt;
+}
+
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
 #define SMPL_DEBUG 0
@@ -528,6 +547,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	}
     } else if (orig->ci == ARBOND) {
 	param = gretl_model_get_data(orig, "istr");
+	myopt |= retrieve_arbond_opts(orig);
     }
 
     if (rep.errcode) {
@@ -2274,114 +2294,6 @@ int make_sum_test_list (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     return (nnew == 0)? testcoeff : -1;
-}
-
-/**
- * sum_test:
- * @sumvars: specification of variables to use.
- * @pmod: pointer to model.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
- * 
- * Calculates the sum of the coefficients, relative to the given model, 
- * for the variables given in @sumvars.  Prints this estimate along 
- * with its standard error.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-int sum_test (const int *sumvars, MODEL *pmod, 
-	      double ***pZ, DATAINFO *pdinfo, 
-	      PRN *prn)
-{
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
-    int *tmplist = NULL;
-    const int oldv = pdinfo->v;
-    int testcoeff;
-    MODEL summod;
-    PRN *nullprn;
-    int err = 0;
-
-    if (sumvars[0] < 2) {
-	pprintf(prn, _("Invalid input\n"));
-	return E_DATA;
-    }
-
-    if (!command_ok_for_model(COEFFSUM, pmod->ci)) {
-	return E_NOTIMP;
-    }
-
-    tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);
-    if (tmplist == NULL) {
-	return E_ALLOC;
-    }
-
-    if (dataset_add_series(sumvars[0] - 1, pZ, pdinfo)) {
-	free(tmplist);
-	return E_ALLOC;
-    }
-
-    nullprn = gretl_print_new(GRETL_PRINT_NULL);
-
-    testcoeff = make_sum_test_list(pmod, *pZ, pdinfo, tmplist, sumvars, oldv);
-
-    if (testcoeff < 0) {
-	pprintf(prn, _("Invalid input\n"));
-	free(tmplist);
-	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
-	return E_DATA;
-    }
-
-    /* temporarily impose the sample that was in force when the
-       original model was estimated */
-    impose_model_smpl(pmod, pdinfo);
-
-    gretl_model_init(&summod);
-
-    if (!err) {
-	summod = replicate_estimator(pmod, &tmplist, pZ, pdinfo, OPT_A, 
-				     nullprn);
-	if (summod.errcode) {
-	    pprintf(prn, "%s\n", gretl_errmsg);
-	    err = summod.errcode; 
-	} else {
-	    int i;
-
-	    pprintf(prn, "\n%s: ", _("Variables"));
-	    for (i=1; i<=sumvars[0]; i++) {
-		pprintf(prn, "%s ", pdinfo->varname[sumvars[i]]);
-	    }
-	    /* FIXME: check indexing of summod.coeff[] below */
-	    pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), 
-		    summod.coeff[testcoeff - 2]);
-	    if (!na(summod.sderr[testcoeff - 2])) {
-		double tval, pval;
-
-		pprintf(prn, "   %s = %g\n", _("Standard error"),
-			summod.sderr[testcoeff - 2]);
-		tval = summod.coeff[testcoeff - 2] / 
-		    summod.sderr[testcoeff - 2];
-		pval = coeff_pval(&summod, tval, summod.dfd);
-		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
-		pprintf(prn, _("with p-value = %g\n"), pval);
-		record_test_result(tval, pval, _("sum"));
-	    }
-	}
-    }
-
-    free(tmplist);
-    clear_model(&summod);
-
-    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
-    gretl_print_destroy(nullprn);
-
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
-
-    return err;
 }
 
 /**
