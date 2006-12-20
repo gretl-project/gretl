@@ -2242,60 +2242,6 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-static int varmatch (const int *sumvars, int test)
-{
-    int j;
-
-    for (j=1; j<=sumvars[0]; j++) {
-	if (sumvars[j] == test) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static 
-void fill_sum_var (double **Z, int n, int v, int vrepl, int vfirst)
-{
-    int t;
-
-    for (t=0; t<n; t++) {
-	Z[v][t] = Z[vrepl][t] - Z[vfirst][t];
-    }
-}
-
-static 
-int make_sum_test_list (MODEL *pmod, double **Z, DATAINFO *pdinfo,
-			int *tmplist, const int *sumvars, int newv)
-{
-    int repl = 0;
-    int testcoeff = 0;
-    int nnew = sumvars[0] - 1;
-    int i;
-
-    tmplist[0] = pmod->list[0];
-    tmplist[1] = pmod->list[1];
-
-    for (i=2; i<=pmod->list[0]; i++) {
-	if (nnew > 0 && varmatch(sumvars, pmod->list[i])) {
-	    if (repl) {
-		fill_sum_var(Z, pdinfo->n, newv, pmod->list[i], sumvars[1]);
-		tmplist[i] = newv++;
-		nnew--;
-	    } else {
-		tmplist[i] = pmod->list[i];
-		testcoeff = i;
-		repl = 1;
-	    }
-	} else {
-	    tmplist[i] = pmod->list[i];
-	}
-    }
-
-    return (nnew == 0)? testcoeff : -1;
-}
-
 /**
  * lmtest_driver:
  * @param: auxiliary parameter for some uses.
