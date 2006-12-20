@@ -716,15 +716,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* dependent variable */
     *tmp = '\0';
-    if (pmod->ci == POISSON) {
+    if (pmod->depvar != NULL) {
+	tex_escape(tmp, pmod->depvar);
+    } else if (pmod->ci == POISSON) {
 	char vname[32];
 
 	tex_escape(vname, pdinfo->varname[pmod->list[1]]);
 	sprintf(tmp, "log(%s)", vname);
-    } else if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
     } else {
-	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+	i = gretl_model_get_depvar(pmod);
+	tex_escape(tmp, pdinfo->varname[i]);
     }
 
     pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
@@ -757,17 +758,26 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (i > 0 || pmod->ifc == 0) {
 	    pputs(prn, "\\,");
 	    if (pmod->ci == ARMA) {
-		cchars += strlen(pmod->params[i+1]);
-		tex_arma_coeff_name(tmp, pmod->params[i+1], 1);
+		cchars += strlen(pmod->params[i]);
+		tex_arma_coeff_name(tmp, pmod->params[i], 1);
 		pputs(prn, tmp);
 	    } else if (pmod->ci == GARCH) {
-		cchars += strlen(pmod->params[i+1]);
-		tex_garch_coeff_name(tmp, pmod->params[i+1], 1);
+		cchars += strlen(pmod->params[i]);
+		tex_garch_coeff_name(tmp, pmod->params[i], 1);
 		pputs(prn, tmp);
+	    } else if (pmod->ci == PANEL || pmod->ci == ARBOND) {
+		cchars += strlen(pmod->params[i]);
+		tex_escape(tmp, pmod->params[i]);
+		pprintf(prn, "\\mbox{%s}", tmp);
 	    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 		cchars += strlen(pmod->params[i]);
 		tex_mp_coeff_name(tmp, pmod->params[i], 1);
 		pputs(prn, tmp);
+	    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
+		       pmod->params != NULL) {
+		cchars += strlen(pmod->params[i]);
+		tex_escape(tmp, pmod->params[i]);
+		pprintf(prn, "\\mbox{%s}", tmp);
 	    } else if (offvar > 0 && i == nc - 1) {
 		cchars += strlen(pdinfo->varname[offvar]);
 		tex_escape(tmp, pdinfo->varname[offvar]);
@@ -838,21 +848,20 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 
 	pputs(prn, "\\notag \\\\\n");
-    }	    
+    }
+
+    pprintf(prn, "T = %d ", pmod->nobs);
 
     /* additional info (R^2 etc) */
     if (pmod->ci == LAD) { 
 	sprintf(tmp, "%g", pmod->rho);
 	tex_modify_exponent(tmp);
-	pprintf(prn, "T = %d \\quad \\sum |\\hat{u}_t| = %s",
-		pmod->nobs, tmp);
+	pprintf(prn, "\\quad \\sum |\\hat{u}_t| = %s", tmp);
     } else {
 	if (!na(pmod->adjrsq)) {
-	    pprintf(prn, "T = %d \\quad \\bar{R}^2 = %.4f ",
-		    pmod->nobs, pmod->adjrsq);
+	    pprintf(prn, "\\quad \\bar{R}^2 = %.4f ", pmod->adjrsq);
 	} else if (!na(pmod->lnL)) {
-	    pprintf(prn, "T = %d \\quad \\mbox{ln}L = %.4f ",
-		    pmod->nobs, pmod->lnL);
+	    pprintf(prn, "\\quad \\mbox{ln}L = %.4f ", pmod->lnL);
 	}
 
 	if (pmod->ci != LOGIT && pmod->ci != PROBIT && !na(pmod->fstt)) {

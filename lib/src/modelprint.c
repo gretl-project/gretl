@@ -328,14 +328,20 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 {
+    int tex = tex_format(prn);
     double x;
     int i;
+
+    if (tex) {
+	pputs(prn, "\\end{tabular}\n\n\\vspace{1ex}\n");
+	pputs(prn, "\\begin{tabular}{l}\n");
+    }
 
     x = gretl_model_get_double(pmod, "AR1");
     if (!na(x)) {
 	pputs(prn, "  ");
 	pprintf(prn, _("Test for AR(%d) errors:"), 1);
-	pprintf(prn, " z = %g (%s %.4g)", x, _("p-value"), 
+	pprintf(prn, " z = %g (%s %.4f)", x, _("p-value"), 
 		normal_pvalue_2(x));
 	gretl_prn_newline(prn);
     }
@@ -344,7 +350,7 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
     if (!na(x)) {
 	pputs(prn, "  ");
 	pprintf(prn, _("Test for AR(%d) errors:"), 2);
-	pprintf(prn, " z = %g (%s %.4g)", x, _("p-value"),
+	pprintf(prn, " z = %g (%s %.4f)", x, _("p-value"),
 		normal_pvalue_2(x));
 	gretl_prn_newline(prn);
     }
@@ -354,8 +360,13 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 	i = gretl_model_get_int(pmod, "sargan_df");
 	pprintf(prn, "  %s:", _("Sargan over-identification test"));
 	gretl_prn_newline(prn);
-	pprintf(prn, "    %s(%d) = %g %s %g", _("Chi-square"),
-		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+	if (tex) {
+	    pprintf(prn, "\\quad $\\chi^2(%d)$ = %.3f (%s %.4f)",
+		    i, x, _("p-value"), chisq_cdf_comp(x, i));
+	} else {
+	    pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
+		    i, x, _("p-value"), chisq_cdf_comp(x, i));
+	}
 	gretl_prn_newline(prn);
     }
 
@@ -364,8 +375,13 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 	i = gretl_model_get_int(pmod, "wald_df");
 	pprintf(prn, "  %s:", _("Wald (joint) test"));
 	gretl_prn_newline(prn);
-	pprintf(prn, "    %s(%d) = %g %s %g", _("Chi-square"),
-		i, x, _("with p-value"), chisq_cdf_comp(x, i));
+	if (tex) {
+	    pprintf(prn, "\\quad $\\chi^2(%d)$ = %.3f (%s %.4f)",
+		    i, x, _("p-value"), chisq_cdf_comp(x, i));
+	} else {
+	    pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
+		    i, x, _("p-value"), chisq_cdf_comp(x, i));
+	}
 	gretl_prn_newline(prn);
     }
 }

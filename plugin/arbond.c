@@ -1390,7 +1390,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
-    pmod->dfd = ab->k;
+    pmod->dfn = ab->k;
     pmod->dfd = ab->nobs - ab->k;
 
     pmod->list = gretl_list_copy(list);
@@ -1409,8 +1409,12 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     pmod->ess = ab->SSR;
     if (ab->s2 >= 0) {
 	pmod->sigma = sqrt(ab->s2);
-    }	
-    
+    }
+
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->fstt = NADBL;
+    pmod->lnL = NADBL;
+  
     gretl_model_allocate_params(pmod, ab->k);
     if (pmod->errcode) {
 	return pmod->errcode;
