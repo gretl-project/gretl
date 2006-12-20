@@ -4207,6 +4207,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 {
     gretl_matrix *c = NULL;
     size_t asize, bsize;
+    int anelem;
 
     if (a == NULL || b == NULL) {
 	*err = 1;
@@ -4224,11 +4225,12 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	return NULL;
     }
 
-    asize = a->rows * a->cols * sizeof *a->val;
+    anelem = a->rows * a->cols;
+    asize = anelem * sizeof *a->val;
     bsize = b->rows * b->cols * sizeof *b->val;
 
     memcpy(c->val, a->val, asize);
-    memcpy(c->val + asize, b->val, bsize);
+    memcpy(c->val + anelem, b->val, bsize);
 
     return c;
 }
