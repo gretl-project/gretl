@@ -2298,28 +2298,33 @@
  	</li>
         
 	<li><para>
-	    Numeri pseudo-casuali: <func>uniform</func> e <func>normal</func>.
-	    Queste funzioni non accettano argomenti e vanno scritte con
-            parentesi vuote: <lit>uniform()</lit>, <lit>normal()</lit>. Esse
+	    Numeri pseudo-casuali: <func>uniform</func>,
+            <func>normal</func>, <func>chisq</func>, <func>student</func>
+            e <func>binomial</func>. Le prime due funzioni non accettano
+            argomenti e vanno scritte con parentesi vuote:
+	    <lit>uniform()</lit>, <lit>normal()</lit>. Esse
             creano serie pseudo-casuali estraendo i valori dalle distribuzioni
-            uniforme (0&ndash;1) e normale standard. Si veda anche l'opzione
-            <lit>seed</lit> del comando <cmdref targ="set"/>.
-            Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
+            uniforme (0&ndash;1) e normale standard. Le due successive accettano
+            un singolo argomento intero, ossia i gradi di libertà, generando
+            delle estrazioni dalle distribuzioni Chi-quadro e t di Student. La
+            funzione <func>binomial</func> accetta due parametri: un numero
+            intero di tentativi una probabilità di <quote>successo</quote>. Le
+            serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
             <footnote><para>Si veda Matsumoto e Nishimura
             (1998). L'implementazione è fornita da <program>glib</program>, se è
             disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
             </footnote>; per le serie dalla distribuzione normale, viene usato il
             metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.
+            Si veda anche il comando <cmdref targ="set"/>, opzione
+            <lit>seed</lit>.
 	  </para>
 	</li>
       </ilist> 
 
       <para>
-        Tutte le funzioni viste sopra, con l'eccezione di <func>cov</func>,
-        <func>corr</func>, <func>pvalue</func>, <func>cdf</func>, <func>critical</func>,
-        <func>fracdiff</func>, <func>uniform</func> e <func>normal</func> hanno
-        come unico argomento il nome di una variabile o un'espressione che si
-        risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
+        Con le eccezioni di cui si è detto, tutte le funzioni viste sopra
+        accettano come unico argomento il nome di una variabile o un'espressione
+        che si risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
       </para>
       <para>
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
@@ -2717,6 +2722,12 @@
             devono essere positivi.
 	  </para>
 	</li>
+        <li>
+          <para>
+            Binomiale: occorre fornire il numero di prove (un intero positivo)
+            e la probabilità di <quote>successo</quote>.
+          </para>
+        </li>
       </ilist>
 
       <para>
@@ -5638,7 +5649,7 @@
         gradi di libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
         libertà al numeratore e al denominatore; per la gamma sono richieste la
         media e la varianza; per la binomiale sono richieste la probabilità di
-        <quote>successo</quote> e il numero di tentativi. In ogni caso questi
+        <quote>successo</quote> e il numero di prove. In ogni caso questi
         argomenti aggiuntivi vanno specificati prima del <repl>valore-x</repl>.
       </para>
       <para>
@@ -5804,10 +5815,11 @@
       <para>Ogni vincolo nell'insieme va indicato sotto forma di equazione
 	con una combinazione lineare dei parametri al primo membro e un
         valore numerico al secondo. Nel caso della singola equazione, i
-        parametri sono indicati con la sintassi b<repl>N</repl>, dove
-        <repl>N</repl> rappresenta la posizione nella lista dei regressori, a
-        partire da uno. Ad esempio, <lit>b2</lit> indica il secondo parametro
-        della regressione. Nel caso del sistema, i parametri vengono indicati
+        parametri sono indicati con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>,
+        dove <repl>i</repl> rappresenta la posizione nella lista dei regressori, a
+        partire da uno, oppure con <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
+        <repl>variabile</repl> è il nome del regressore in questione.
+        estion. Nel caso del sistema, i parametri vengono indicati
         con la sintassi <lit>b</lit> seguita da due numeri tra parentesi quadre.
         Il primo numero rappresenta la posizione dell'equazione all'interno del
         sistema, mentre il secondo indica la posizione nella lista dei regressori.
@@ -5819,7 +5831,7 @@
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
       possono essere prefissati da un moltiplicatore numerico, usando il segno
       <lit>*</lit> per indicare la moltiplicazione, ad esempio
-      <lit>3.5*b4</lit>.
+      <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Ecco un esempio di un insieme di vincoli per un modello stimato in
@@ -5827,9 +5839,9 @@
 
       <code>
 	restrict
-	 b1 = 0
-	 b2 - b3 = 0
-	 b4 + 2*b5 = 1
+	 b[1] = 0
+	 b[2] - b[3] = 0
+	 b[4] + 2*b[5] = 1
 	end restrict</code>
 
       <para>Ed ecco un esempio di un insieme di vincoli da applicare a un
@@ -5875,24 +5887,24 @@
       <para>Ognuno dei vincoli da imporre a un modello deve essere espresso
         sotto forma di equazione con una combinazione lineare dei parametri al
         primo membro e un valore numerico al secondo. Nel caso della singola
-        equazione, i parametri sono indicati con la sintassi b<repl>N</repl>,
-        dove <repl>N</repl> rappresenta la posizione nella lista dei regressori,
-        a partire da uno. Ad esempio, <lit>b2</lit> indica il secondo parametro
-        della regressione.
+        equazione, i parametri sono indicati con la sintassi <lit>b[</lit><repl>i</repl><lit>]</lit>,
+        dove <repl>i</repl> rappresenta la posizione nella lista dei regressori,
+        a partire da uno, oppure <lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
+        <repl>variabile</repl> è il nome del regressore in questione.
       </para>
 
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
         possono essere prefissati con un moltiplicatore numerico usando il
         carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
-        <lit>3.5*b4</lit>.
+        <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Ecco ad esempio un insieme di vincoli:</para>
 
       <code>
-	b1 = 0
-	b2 - b3 = 0
-	b4 + 2*b5 = 1</code>
+	b[1] = 0
+	b[2] - b[3] = 0
+	b[4] + 2*b[5] = 1</code>
 
     </description>
 
@@ -5918,7 +5930,7 @@
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
         possono essere prefissati con un moltiplicatore numerico usando il
         carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
-        <lit>3.5*b4</lit>.
+        <lit>3.5*b[1,4]</lit>.
       </para>
 
       <para>Ecco ad esempio un insieme di vincoli:</para>
@@ -5949,9 +5961,10 @@
       </para>
 
       <para>Se il VECM è di rango 1, è possibile esprimere i parametri nella
-        forma b<repl>N</repl>, dove <repl>N</repl> rappresenta la posizione nel
+        forma <lit>b[</lit><repl>i</repl><lit>]</lit>,  dove <repl>i</repl>
+        rappresenta la posizione nel
         vettore di correzione dell'errore, a partire da uno. Ad esempio,
-        <lit>b2</lit> indica il secondo parametro di correzione dell'errore.
+        <lit>b[2]</lit> indica il secondo parametro di correzione dell'errore.
       </para>
 
       <para>Se il rango è maggiore di 1, è possibile esprimere i parametri
@@ -5961,15 +5974,15 @@
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
         possono essere prefissati con un moltiplicatore numerico usando il
         carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
-        <lit>3.5*b4</lit>.
+        <lit>3.5*b[4]</lit>.
       </para>
 
       <para>Ecco ad esempio un insieme di vincoli su un VECM di rango 1.
       </para>
 
       <code>
-	b1 + b2 = 0
-	b1 + b3 = 0</code>
+	b[1] + b[2] = 0
+	b[1] + b[3] = 0</code>
 
     </description>
 
