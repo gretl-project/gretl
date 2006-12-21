@@ -142,10 +142,11 @@ enum {
     COV,
     UNIFORM,
     NORMAL,
+    BINOMIAL,
     FRACDIF,    
     ZEROS,
-    ONES,
-    MUNIF,   /* 120 */
+    ONES,    /* 120 */
+    MUNIF,
     MNORM,
     QFORM,
     QR,
@@ -154,8 +155,8 @@ enum {
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
     DOT,      /* period */
-    SEMI,     /* semi-colon */
-    COL,    /* 130: colon */
+    SEMI,   /* 130: semi-colon */
+    COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
@@ -164,8 +165,8 @@ enum {
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
-    MAT,      /* matrix, evaluated */
-    OBS,    /* 140: observation from a series */
+    MAT,    /* 140: matrix, evaluated */
+    OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
@@ -174,8 +175,8 @@ enum {
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,
-    DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,   /* 150: $ model var (scalar, series, or matrix) */
+    DVAR,   /* 150: $ dataset variable (scalar or series) */
+    MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
@@ -184,7 +185,7 @@ enum {
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
-    ABSENT,
+    ABSENT, /* 160 */
     INC,
     DEC,
     QUERY,

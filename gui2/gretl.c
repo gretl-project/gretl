@@ -446,6 +446,8 @@ GtkItemFactoryEntry data_items[] = {
       RANDOM_CHISQ, NULL, GNULL },
     { N_("/Add/Random variable/Student's _t..."), NULL, add_rand_callback, 
       RANDOM_ST, NULL, GNULL },
+    { N_("/Add/Random variable/Binomial..."), NULL, add_rand_callback, 
+      RANDOM_BIN, NULL, GNULL },
     { "/Add/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     /* dummies */
     { N_("/Add/_Periodic dummies"), NULL, add_dummies, TS_DUMMIES, NULL, GNULL },

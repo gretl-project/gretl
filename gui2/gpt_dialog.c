@@ -76,11 +76,6 @@ struct gpt_titles_t gpt_titles[] = {
     { N_("Title for axis"), 3, NULL },
 };
 
-#define frequency_plot(s)       (s->code == PLOT_FREQ_SIMPLE || \
-			         s->code == PLOT_FREQ_NORMAL || \
-			         s->code == PLOT_FREQ_GAMMA || \
-                                 s->code == PLOT_KERNEL)
-
 static const char *get_font_filename (const char *showname);
 
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
@@ -558,10 +553,100 @@ static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
     }
 }
 
+/* re-establish the default plot colors and reset the
+   color selection buttons accordingly */
+
+static void color_default_callback (GtkWidget *w, GtkWidget *book)
+{
+    GtkWidget *button;
+    char id[32];
+    int i;
+
+    sprintf(id, "color-button%d", BOXCOLOR);
+    button = g_object_get_data(G_OBJECT(book), id);
+
+    if (button != NULL) {
+	graph_palette_reset(BOXCOLOR);
+	color_patch_button_reset(button, BOXCOLOR);
+    } else {
+	for (i=0; i<BOXCOLOR; i++) {
+	    sprintf(id, "color-button%d", i);
+	    button = g_object_get_data(G_OBJECT(book), id);
+	    if (button != NULL) {
+		if (i == 0) {
+		    graph_palette_reset(i);
+		}
+		color_patch_button_reset(button, i);
+	    }
+	}
+    }
+}
+
+static void table_add_row (GtkWidget *tbl, int *rows, int cols)
+{
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, cols);    
+}
+
+static void add_color_selector (int i, GtkWidget *tbl, int *rows,
+				GtkWidget *notebook)
+{
+
+    GtkWidget *button, *hbox;
+    GtkWidget *label;
+    char str[32];
+
+    table_add_row(tbl, rows, TAB_MAIN_COLS);
+
+    hbox = gtk_hbox_new(FALSE, 2);
+
+    if (i == BOXCOLOR) {
+	strcpy(str, _("Fill color"));
+    } else {
+	sprintf(str, _("Color %d"), i + 1);
+    }
+
+    label = gtk_label_new(str);
+    gtk_container_add(GTK_CONTAINER(hbox), label);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1, 
+			      *rows - 1, *rows);
+    gtk_widget_show(label);
+    gtk_widget_show(hbox);
+
+    hbox = gtk_hbox_new(FALSE, 2);
+    button = color_patch_button(i);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, 
+			      *rows - 1, *rows);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(graph_color_selector), 
+		     GINT_TO_POINTER(i));
+
+    gtk_widget_show_all(button);
+    gtk_widget_show(hbox);
+
+    sprintf(str, "color-button%d", i);
+    g_object_set_data(G_OBJECT(notebook), str, button);
+
+    if (i == BOXCOLOR || i == BOXCOLOR - 1) {
+	table_add_row(tbl, rows, TAB_MAIN_COLS);
+	hbox = gtk_hbox_new(FALSE, 2);
+	button = gtk_button_new_with_label(_("Reset to default"));
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(color_default_callback), 
+			 notebook);
+	gtk_table_attach(GTK_TABLE(tbl), hbox, 0, 2, *rows - 1, *rows,
+			 GTK_FILL, 0, 0, 5);
+	gtk_widget_show(button);
+	gtk_widget_show(hbox);
+    }
+}
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *vbox, *tbl;
-    int i, tbl_len;
+    int i, rows = 1;
     GList *keypos_list = NULL;
 
     gchar *keypos[] = {
@@ -586,8 +671,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(label);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, TAB_MAIN_COLS, FALSE);
+    tbl = gtk_table_new(rows, TAB_MAIN_COLS, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
@@ -597,17 +681,19 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	if (gpt_titles[i].tab == 0) {
 	    GtkWidget *entry;
 
-	    tbl_len++;
-	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, TAB_MAIN_COLS);
+	    if (i > 0) {
+		table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	    }
+
 	    label = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
-				      label, 0, 1, tbl_len-1, tbl_len);
+				      label, 0, 1, rows-1, rows);
 	    gtk_widget_show(label);
 
 	    entry = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      entry, 1, TAB_MAIN_COLS, 
-				      tbl_len-1, tbl_len);
+				      rows-1, rows);
 				      
             if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
 		gp_string_to_entry(entry, spec->titles[i]);
@@ -623,15 +709,15 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* specify position of plot key or legend */
-    tbl_len++;
+    table_add_row(tbl, &rows, TAB_MAIN_COLS);
     label = gtk_label_new(_("key position"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 0, 1, tbl_len-1, tbl_len);
+			      label, 0, 1, rows-1, rows);
     gtk_widget_show(label);
 
     keycombo = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      keycombo, 1, TAB_MAIN_COLS, tbl_len-1, tbl_len);
+			      keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show(keycombo);	
@@ -639,11 +725,11 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     /* give option of removing top & right border */
     if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
 	y2_check = NULL;
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	border_check = gtk_check_button_new_with_label(_("Show full border"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  border_check, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	if (!(spec->flags & GPTSPEC_MINIMAL_BORDER)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
 					 TRUE);
@@ -651,11 +737,11 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(border_check);
     } else {
 	border_check = NULL;
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  y2_check, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(y2_check),
 				     FALSE);
 	g_signal_connect(G_OBJECT(y2_check), "clicked", 
@@ -665,11 +751,11 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* give option of removing an auto-fitted line */
     if (spec->flags & GPTSPEC_AUTO_OLS) { 
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	fitline_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  fitline_check, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	if (spec->flags & GPTSPEC_OLS_HIDDEN) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fitline_check),
 					 TRUE);
@@ -681,11 +767,11 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* give option of showing all case markers */
     if (spec->flags & GPTSPEC_ALL_MARKERS_OK) { 
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  markers_check, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	if (spec->flags & GPTSPEC_ALL_MARKERS) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(markers_check),
 					 TRUE);
@@ -718,18 +804,18 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	}
 
 	/* first a separator */
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);	
 	hsep = gtk_hseparator_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);  
+				  rows-1, rows);  
 	gtk_widget_show(hsep);
 
-	tbl_len++;
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ebox = gtk_event_box_new();
 	label = gtk_label_new(_("TrueType font"));
 	gtk_container_add(GTK_CONTAINER(ebox), label);
 	gtk_table_attach_defaults(GTK_TABLE (tbl), ebox, 0, 1, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	gtk_widget_show(label);
 	gtk_widget_show(ebox);
 
@@ -738,7 +824,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	ttfcombo = gtk_combo_new();
 	gtk_entry_set_max_length(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfcombo, 1, 2, 
-				  tbl_len-1, tbl_len);
+				  rows-1, rows);
 	gtk_combo_set_popdown_strings(GTK_COMBO(ttfcombo), fontnames); 
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), default_font);
 	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
@@ -751,7 +837,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
 				  get_point_size(gretl_png_font()));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfspin, 2, 3, 
-				  tbl_len-1, tbl_len);
+				  rows - 1, rows);
 	gtk_widget_show(ttfspin);
     } else {
 	ttfcombo = NULL;
@@ -759,55 +845,19 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     if (gnuplot_has_specified_colors()) { 
-	GtkWidget *hsep;
-	int colmax;
+	GtkWidget *hsep = gtk_hseparator_new();
 
-	tbl_len++;
-	hsep = gtk_hseparator_new();
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
-				  tbl_len-1, tbl_len);  
+				  rows - 1, rows);  
 	gtk_widget_show(hsep);
 
-	if (frequency_plot(spec)) {
-	    colmax = 1;
+	if (frequency_plot_code(spec->code)) {
+	    add_color_selector(BOXCOLOR, tbl, &rows, notebook);
 	} else {
-	    colmax = COLOR_MAX;
-	}
-
-	for (i=0; i<colmax; i++) {
-	    GtkWidget *button, *hbox;
-	    char labstr[16];
-
-	    if (frequency_plot(spec)) {
-		i = COLOR_MAX;
+	    for (i=0; i<BOXCOLOR; i++) {
+		add_color_selector(i, tbl, &rows, notebook);
 	    }
-
-	    tbl_len++;
-	    hbox = gtk_hbox_new(FALSE, 2);
-
-	    if (i == COLOR_MAX) {
-		sprintf(labstr, _("Fill color"));
-	    } else {
-		sprintf(labstr, _("Color %d"), i + 1);
-	    }
-
-	    label = gtk_label_new(labstr);
-	    gtk_container_add(GTK_CONTAINER(hbox), label);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1, 
-				      tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
-	    gtk_widget_show(hbox);
-
-	    hbox = gtk_hbox_new(FALSE, 2);
-	    button = color_patch_button(i);
-	    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, 
-				      tbl_len-1, tbl_len);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(gnuplot_color_selector), 
-			     GINT_TO_POINTER(i));
-	    gtk_widget_show_all(button);
-	    gtk_widget_show(hbox);
 	}
     }
 }
@@ -894,6 +944,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
     if (spec->code == PLOT_REGULAR && (spec->flags & GPTSPEC_TS)) {
 	do_scale_axis = 1;
+    }
+
+    if (frequency_plot_code(spec->code)) {
+	plot_types = g_list_append(plot_types, "boxes");
     }
 
     if (spec->flags & GPTSPEC_TS) {

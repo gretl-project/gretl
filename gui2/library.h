@@ -181,6 +181,8 @@ void do_random_chisq (GtkWidget *widget, dialog_t *dlg);
 
 void do_random_st (GtkWidget *widget, dialog_t *dlg);
 
+void do_random_bin (GtkWidget *widget, dialog_t *dlg);
+
 void do_global_setmiss (GtkWidget *widget, dialog_t *dlg);
 
 void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg);

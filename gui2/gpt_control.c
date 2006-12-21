@@ -632,6 +632,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->reglist = NULL;
     spec->n_lines = 0;
     spec->nobs = 0;
+    spec->boxwidth = 0;
 
     spec->termtype[0] = 0;
 
@@ -887,6 +888,8 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	safecpy(spec->mxtics, value, 3);
     } else if (!strcmp(variable, "xzeroaxis")) {
 	spec->xzeroaxis = 1;
+    } else if (!strcmp(variable, "boxwidth")) {
+	spec->boxwidth = (float) atof(value);
     } else if (!strcmp(variable, "label")) {
 	parse_label_line(spec, s, *labelno);
 	*labelno += 1;

@@ -1508,7 +1508,10 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	double y = 0.0;
 	int v = 0;
 
-	if (f == UNIFORM || f == NORMAL) {
+	if (f == BINOMIAL) {
+	    v = l->v.xval;
+	    y = r->v.xval;
+	} else if (f == UNIFORM || f == NORMAL) {
 	    x = (l->t == EMPTY)? NADBL : l->v.xval;
 	    y = (r->t == EMPTY)? NADBL : r->v.xval;
 	} else {
@@ -1536,6 +1539,11 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = gretl_t_dist(ret->v.xvec, p->dinfo->t1, 
 				  p->dinfo->t2, v);
 	    break;
+	case BINOMIAL:
+	    p->err = gretl_binomial_dist(ret->v.xvec, p->dinfo->t1, 
+					 p->dinfo->t2, v, y);
+	    break;
+
 	default:
 	    break;
 	}
@@ -3090,6 +3098,14 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);
 	} else if (l->t == EMPTY && r->t == EMPTY) {
+	    ret = series_fill_func(l, r, t->t, p);
+	} else {
+	    node_type_error(t, p, NUM, (l->t == NUM)? r->t : l->t);
+	} 
+	break;
+    case BINOMIAL:
+	/* requires two scalars */
+	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t, p, NUM, (l->t == NUM)? r->t : l->t);

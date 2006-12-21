@@ -307,6 +307,49 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
 }
 
 /**
+ * gretl_binomial_dist:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @n: number of trials.
+ * @p: success probability per trial.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the binomial distribution with parameters @n and @p.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_binomial_dist (double *a, int t1, int t2, int n, double p) 
+{
+    double *b;
+    int i, t;
+
+    if (n < 1 || p <= 0 || p >= 1) {
+	return E_INVARG;
+    }
+
+    b = malloc(n * sizeof *b);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	a[t] = 0.0;
+	gretl_uniform_dist(b, 0, n - 1);
+	for (i=0; i<n; i++) {
+	    if (b[i] <= p) {
+		a[t] += 1;
+	    }
+	}
+    }
+
+    free(b);
+
+    return 0;
+}
+
+/**
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *

@@ -433,6 +433,69 @@ static char *label_front (void)
 
 #endif /* WIN32 */
 
+/* apparatus for handling plot colors */
+
+static const char default_palette[N_GP_COLORS][8] = {
+    "xff0000", 
+    "x0000ff", 
+    "x00cc00",
+    "x9ba6bb"
+};
+
+static char graph_palette[N_GP_COLORS][8] = {
+    "xff0000", 
+    "x0000ff", 
+    "x00cc00",  /* full-intensity green is not very legible */
+    "x9ba6bb"   /* color for box fill */
+};
+
+const char *graph_color_string (int i)
+{
+#if GP_DEBUG
+    fprintf(stderr, "get_graph_palette: i=%d\n", i);
+#endif
+
+    return (i >= 0 && i < N_GP_COLORS)? graph_palette[i] : "";
+}
+
+static int colstr_is_valid (const char *colstr)
+{
+    char *test = NULL;
+    int cnum;
+
+    if (*colstr != 'x' || strlen(colstr) != 7) {
+	return 0;
+    }
+
+    cnum = strtol(colstr + 1, &test, 16);
+
+    if (*test != '\0' || cnum < 0 || cnum > 0xffffff) {
+	return 0;
+    }
+
+    return 1;
+}
+
+void set_graph_palette (int i, const char *colstr)
+{
+    if (i >= 0 && i < N_GP_COLORS && colstr_is_valid(colstr)) {
+	strcpy(graph_palette[i], colstr);
+    } else {
+	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
+    }
+}
+
+void graph_palette_reset (int i)
+{
+    if (i == BOXCOLOR) {
+	strcpy(graph_palette[BOXCOLOR], default_palette[BOXCOLOR]);
+    } else {
+	for (i=0; i<BOXCOLOR; i++) {
+	    strcpy(graph_palette[i], default_palette[i]);
+	}
+    }
+}
+
 static void 
 write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
 {
@@ -453,6 +516,8 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
 	sprintf(fstr, " font %s", grfont);
     }
 }
+
+/* end colors apparatus */
 
 /**
  * get_gretl_png_term_line:
@@ -500,10 +565,17 @@ const char *get_gretl_png_term_line (PlotType ptype)
     if (gpcolors) {
 	int i;
 
+	/* background etc. */
 	strcpy(color_string, " xffffff x000000 x202020");
-	for (i=0; i<3; i++) {
+
+	if (frequency_plot_code(ptype)) {
 	    strcat(color_string, " ");
-	    strcat(color_string, get_gnuplot_pallette(i, ptype));
+	    strcat(color_string, graph_palette[BOXCOLOR]);
+	} else {
+	    for (i=0; i<BOXCOLOR; i++) {
+		strcat(color_string, " ");
+		strcat(color_string, graph_palette[i]);
+	    }
 	}
     } else {
 	strcpy(color_string, " color"); /* old PNG driver */
@@ -577,17 +649,13 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 
     if (color && gnuplot_has_specified_emf_colors()) {
 	if (frequency_plot_code(ptype)) {
-	    strcat(emf_term_line, get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE));
+	    strcat(emf_term_line, graph_palette[BOXCOLOR]);
 	} else {
 	    int i;
 
-	    for (i=0; i<3; i++) {
-		const char *colstr = get_gnuplot_pallette(i, 0);
-
-		if (*colstr != '\0') {
-		    strcat(emf_term_line, colstr);
-		    strcat(emf_term_line, " ");
-		}
+	    for (i=0; i<BOXCOLOR; i++) {
+		strcat(emf_term_line, graph_palette[i]);
+		strcat(emf_term_line, " ");
 	    }
 	}
     } 
@@ -2196,7 +2264,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     /* plot instructions */
     if (use_boxes) {
 	if (gnuplot_has_style_fill()) {
-	    fputs("set style fill solid 0.5\n", fp);
+	    fputs("set style fill solid\n", fp);
 	}
 	strcpy(withstr, "w boxes");
     } else {
@@ -2712,6 +2780,10 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 		spec->range[i][0], spec->range[i][1]);
     }
 
+    if (spec->boxwidth > 0 && spec->boxwidth < 1) {
+	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
+    }
+
     gretl_pop_c_numeric_locale();
 
     /* customized xtics? */
@@ -2760,7 +2832,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
-	fputs("set style fill solid 0.5\n", fp);
+	fputs("set style fill solid\n", fp);
     }  
 
     if (spec->flags & GPTSPEC_ALL_MARKERS) {
@@ -3598,59 +3670,6 @@ int is_auto_ols_string (const char *s)
     if (strstr(s, "automatic OLS")) return 1;
     if (strstr(s, I_("with least squares fit"))) return 1;
     return 0;
-}
-
-static char gnuplot_pallette[4][8] = {
-    "xff0000", 
-    "x0000ff", 
-    "x00cc00",  /* full-intensity green is not very legible */
-    "xaabbcc"
-};
-
-const char *get_gnuplot_pallette (int i, PlotType ptype)
-{
-#if GP_DEBUG
-    fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",
-	    i, ptype);
-#endif
-    if (i == 0 && (ptype == PLOT_FREQ_SIMPLE ||
-		   ptype == PLOT_FREQ_NORMAL || 
-		   ptype == PLOT_FREQ_GAMMA)) {
-	return gnuplot_pallette[3];
-    } else if (i >= 0 && i < 3) {
-	return gnuplot_pallette[i];
-    } else {
-	return "";
-    }
-}
-
-static int colstr_is_valid (const char *colstr)
-{
-    int i;
-    const char *ok = "0123456789abcdef";
-
-    if (*colstr != 'x') {
-	return 0;
-    }
-    if (strlen(colstr) != 7) {
-	return 0;
-    }
-    for (i=1; i<7; i++) {
-	if (strchr(ok, colstr[i]) == NULL) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
-void set_gnuplot_pallette (int i, const char *colstr)
-{
-    if (i >= 0 && i <= 3 && colstr_is_valid(colstr)) {
-	strcpy(gnuplot_pallette[i], colstr);
-    } else {
-	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
-    }
 }
 
 #ifdef ENABLE_NLS

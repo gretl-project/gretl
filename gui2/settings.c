@@ -1338,14 +1338,14 @@ static void set_lcnumeric (void)
 
 static void set_gp_colors (void)
 {
-    char cstr[4][8];
+    char cstr[N_GP_COLORS][8];
     int i, nc;
 
     nc = sscanf(gpcolors, "%7s %7s %7s %7s", 
 		cstr[0], cstr[1], cstr[2], cstr[3]);
 
     for (i=0; i<nc; i++) {
-	set_gnuplot_pallette(i, cstr[i]);
+	set_graph_palette(i, cstr[i]);
     }
 }
 
@@ -2009,13 +2009,10 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
 /* graph color selection apparatus */
 
-static double scale_round (double val)
-{
-    return val * 255.0 / 65535.0;
-}
-
 #define XPMROWS 19
 #define XPMCOLS 17
+
+#define scale_round(v) ((v) * 255.0 / 65535.0)
 
 static GtkWidget *get_image_for_color (const char *colstr)
 {
@@ -2051,7 +2048,9 @@ static GtkWidget *get_image_for_color (const char *colstr)
 	}
     }
 
-    if (xpm == NULL) return NULL;
+    if (xpm == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<6; i++) {
 	xpm[1][10+i] = colstr[1+i];
@@ -2076,25 +2075,27 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
     sprintf(color_string, "x%02x%02x%02x",
-	    (guint) (scale_round (color.red)),
-	    (guint) (scale_round (color.green)),
-	    (guint) (scale_round (color.blue)));
+	    (guint) (scale_round(color.red)),
+	    (guint) (scale_round(color.green)),
+	    (guint) (scale_round(color.blue)));
 
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
 
-    set_gnuplot_pallette(i, color_string);
+    set_graph_palette(i, color_string);
 
     sprintf(gpcolors, "%s %s %s %s", 
-	    get_gnuplot_pallette(0, 0),
-	    get_gnuplot_pallette(1, 0),
-	    get_gnuplot_pallette(2, 0),
-	    get_gnuplot_pallette(3, 0));
+	    graph_color_string(0),
+	    graph_color_string(1),
+	    graph_color_string(2),
+	    graph_color_string(3));
 
+    /* update the "image" widget */
     image = g_object_get_data(G_OBJECT(color_button), "image");
     gtk_widget_destroy(image);
     image = get_image_for_color(color_string);
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(color_button), image);
+    g_object_set_data(G_OBJECT(color_button), "image", image);
   
     gtk_widget_destroy(w);
 }
@@ -2104,18 +2105,11 @@ static void color_cancel (GtkWidget *button, GtkWidget *w)
     gtk_widget_destroy(w);
 }
 
-GtkWidget *color_patch_button (int colnum)
+GtkWidget *color_patch_button (int cnum)
 {
     GtkWidget *image, *button;
-    const char *colstr;
 
-    if (colnum == COLOR_MAX) {
-	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
-    } else {
-	colstr = get_gnuplot_pallette(colnum, 0);
-    }
-
-    image = get_image_for_color(colstr);
+    image = get_image_for_color(graph_color_string(cnum));
 
     if (image == NULL) {
 	button = gtk_button_new_with_label(_("Select color"));
@@ -2128,26 +2122,42 @@ GtkWidget *color_patch_button (int colnum)
     return button;
 }
 
-void gnuplot_color_selector (GtkWidget *w, gpointer p)
+/* reset color patch button after selecting the option to
+   restore the default plot colors */
+
+void color_patch_button_reset (GtkWidget *button, int cnum)
+{
+    GtkWidget *image;
+
+    image = g_object_get_data(G_OBJECT(button), "image");
+    gtk_widget_destroy(image);
+    image = get_image_for_color(graph_color_string(cnum));
+    gtk_widget_show(image);
+    gtk_container_add(GTK_CONTAINER(button), image);
+    g_object_set_data(G_OBJECT(button), "image", image);
+
+    if (cnum == BOXCOLOR || cnum == BOXCOLOR - 1) {
+	sprintf(gpcolors, "%s %s %s %s", 
+		graph_color_string(0),
+		graph_color_string(1),
+		graph_color_string(2),
+		graph_color_string(3));
+    }
+}
+
+void graph_color_selector (GtkWidget *w, gpointer p)
 {
     GtkWidget *cdlg;
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
-    const char *colstr;
-    char my_colstr[8];
+    char colstr[8];
     GdkColor color;
 
-    if (i == COLOR_MAX) {
-	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
-    } else {
-	colstr = get_gnuplot_pallette(i, 0); 
-    } 
+    strcpy(colstr, graph_color_string(i));
+    *colstr = '#';
+    gdk_color_parse(colstr, &color);
 
-    strcpy(my_colstr, colstr);
-    *my_colstr = '#';
-    gdk_color_parse(my_colstr, &color);
-
-    cdlg = gtk_color_selection_dialog_new("gretl color selection");
+    cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
 
     g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
@@ -2163,8 +2173,9 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(color_cancel), cdlg);
-    
+
     gtk_widget_show(cdlg);
+    gtk_window_set_modal(GTK_WINDOW(cdlg), TRUE);
 }
 
 /* end graph color selection apparatus */

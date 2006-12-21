@@ -1456,6 +1456,8 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     if (!err) {
 	int s, t, k = 0;
 
+	/* add uhat, yhat: these are in differenced form */
+
 	for (i=0; i<ab->N; i++) {
 	    if (skip_unit(ab, i)) {
 		continue;
@@ -1474,6 +1476,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     }
 
     /* additional arbond-specific data */
+
     if (!err) {
 	gretl_model_set_int(pmod, "step", ab->step);
 	if (!na(ab->AR1)) {

@@ -1,8 +1,6 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#define COLOR_MAX 3
-
 #ifdef G_OS_WIN32
 void read_rc (void);
 #endif
@@ -35,9 +33,11 @@ const char *get_app_fontname (void);
 
 #endif
 
-void gnuplot_color_selector (GtkWidget *w, gpointer p);
+void graph_color_selector (GtkWidget *w, gpointer p);
 
-GtkWidget *color_patch_button (int colnum);
+GtkWidget *color_patch_button (int cnum);
+
+void color_patch_button_reset (GtkWidget *button, int cnum);
 
 void get_default_dir (char *s, int action);
 

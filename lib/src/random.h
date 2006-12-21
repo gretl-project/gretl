@@ -36,6 +36,8 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v);
 
 int gretl_t_dist (double *a, int t1, int t2, int v);
 
+int gretl_binomial_dist (double *a, int t1, int t2, int n, double p);
+
 unsigned int gretl_rand_int_max (unsigned int max);
 
 unsigned int gretl_rand_int (void);

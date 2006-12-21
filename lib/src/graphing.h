@@ -55,6 +55,8 @@ typedef enum {
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
 #define MAX_PLOT_LINES 8
+#define N_GP_COLORS 4
+#define BOXCOLOR (N_GP_COLORS - 1)
 
 typedef struct {
     int varnum;            /* ID number of variable to plot */
@@ -123,6 +125,7 @@ typedef struct {
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
     int n_lines;               /* number of lines */
     int xzeroaxis;             /* show x == 0 (1) or not (0) */
+    float boxwidth;            /* when using box style for frequency plots */
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */
     int n_literal;             /* number of the above */
@@ -226,9 +229,11 @@ int gnuplot_has_pdf (void);
 
 int gnuplot_has_specified_colors (void);
 
-void set_gnuplot_pallette (int i, const char *colstr);
+void set_graph_palette (int i, const char *colstr);
 
-const char *get_gnuplot_pallette (int i, PlotType ptype);
+void graph_palette_reset (int i);
+
+const char *graph_color_string (int i);
 
 int gnuplot_test_command (const char *cmd);
 

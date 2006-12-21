@@ -535,6 +535,12 @@ void add_rand_callback (gpointer data, guint r, GtkWidget *widget)
 		     "st 20", 
 		     do_random_st, NULL, 
 		     GENR_RANDOM, VARCLICK_NONE, NULL);
+    } else if (r == RANDOM_BIN) {
+	edit_dialog (_("gretl: binomial variable"), 
+		     _("Enter name, number of trials and probability:"), 
+		     "bin 10 0.5", 
+		     do_random_bin, NULL, 
+		     GENR_RANDOM, VARCLICK_NONE, NULL);
     }	
 }
 

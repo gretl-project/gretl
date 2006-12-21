@@ -3052,6 +3052,11 @@ static void real_do_random (dialog_t *dlg, int action)
 		     "Should be like \"foo 5\""));
 	    return;
 	}
+    } else if (action == RANDOM_BIN) {
+	if (sscanf(buf, "%15s %d %lf", vname, &v, &f2) != 3) {
+	    errbox(_("Specification is malformed\n"
+		     "Should be like \"foo 10 0.5\""));
+	}
     } else if (sscanf(buf, "%15s %lf %lf", vname, &f1, &f2) != 3) {
 	if (action == RANDOM_NORMAL) {
 	    errbox(_("Specification is malformed\n"
@@ -3061,7 +3066,7 @@ static void real_do_random (dialog_t *dlg, int action)
 		     "Should be like \"foo 0 10\""));
 	}
 	return;
-    }
+    } 
 
     if (action == RANDOM_NORMAL && f2 <= 0.0) {
 	errbox(_("Can't have a negative standard deviation!"));
@@ -3073,7 +3078,13 @@ static void real_do_random (dialog_t *dlg, int action)
 	       && v < 1) {
 	errbox(_("The degrees of freedom must be positive"));
 	return;
-    }	
+    } else if (action == RANDOM_BIN) {
+	if (v < 1) {
+	    errbox(_("The number of trials must be at least 1"));
+	} else if (f2 <= 0 || f2 >= 1) {
+	    errbox(_("The probability must be between 0 and 1"));
+	}
+    }
 
     if (validate_varname(vname)) {
 	return;
@@ -3097,6 +3108,8 @@ static void real_do_random (dialog_t *dlg, int action)
 	gretl_command_sprintf("genr %s = chisq(%d)", vname, v); 
     } else if (action == RANDOM_ST) {
 	gretl_command_sprintf("genr %s = student(%d)", vname, v); 
+    } else if (action == RANDOM_BIN) {
+	gretl_command_sprintf("genr %s = binomial(%d, %g)", vname, v, f2);
     }
 
     if (check_and_record_command()) {
@@ -3124,6 +3137,11 @@ void do_random_chisq (GtkWidget *widget, dialog_t *dlg)
 void do_random_st (GtkWidget *widget, dialog_t *dlg) 
 {
     real_do_random(dlg, RANDOM_ST);
+}
+
+void do_random_bin (GtkWidget *widget, dialog_t *dlg) 
+{
+    real_do_random(dlg, RANDOM_BIN);
 }
 
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
