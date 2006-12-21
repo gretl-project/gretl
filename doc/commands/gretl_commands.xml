@@ -2770,6 +2770,12 @@
 	    which must be positive.
 	  </para>
 	</li>
+	<li>
+	  <para>
+	    Binomial: give the number of trials (a positive integer)
+	    and the <quote>success</quote> probability.
+	  </para>
+	</li>
       </ilist>
 
       <para>
