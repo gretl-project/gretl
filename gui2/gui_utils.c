@@ -2586,6 +2586,11 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
 	panel_heteroskedasticity_menu(vwin);
     }
+
+    if (pmod->ci == ARBOND) {
+	flip(vwin->ifac, "/Graphs/Fitted, actual plot", FALSE);
+	flip(vwin->ifac, "/Analysis/Forecasts...", FALSE);
+    }
 }
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -2793,8 +2798,12 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
 
+	if (pmod->ci == ARBOND) {
+	    break;
+	}
+
 	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH ||
-	    pmod->ci == PANEL || pmod->ci == ARBOND) { 
+	    pmod->ci == PANEL) { 
 	    continue;
 	}
 

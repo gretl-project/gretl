@@ -1147,7 +1147,7 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 
     pputs(prn, "\\begin{raggedright}\n");
     pputs(prn, I_("Model estimation range:"));
-    pprintf(prn, " %s--%s", date1, date2);
+    pprintf(prn, " %s--%s \\\\ \n", date1, date2);
 
     pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");

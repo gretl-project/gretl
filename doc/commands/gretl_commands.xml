@@ -2332,35 +2332,34 @@
 
 	<li><para>
 	    Pseudo-random numbers: <func>uniform</func>,
-	    <func>normal</func>, <func>chisq</func> and
-	    <func>student</func>. The first two functions do not take
+	    <func>normal</func>, <func>chisq</func>, <func>student</func>
+	    and <func>binomial</func>. The first two functions do not take
 	    an argument and should be written with empty parentheses:
 	    <lit>uniform()</lit>, <lit>normal()</lit>.  They create
-	    pseudo-random series drawn from the uniform (0&ndash;1)
-	    and standard normal distributions respectively.  The
-	    latter two take a single argument, namely the (integer)
-	    degrees of freedom; they generate drawings from the
-	    Chi-square and Student's t distributions respectively.
-	    Uniform series are generated using the Mersenne
-	    Twister;<footnote><para>See Matsumoto and
+	    pseudo-random series drawn from the uniform (0&ndash;1) and
+	    standard normal distributions respectively.  The next two take
+	    a single argument, namely the (integer) degrees of freedom;
+	    they generate drawings from the Chi-square and Student's t
+	    distributions respectively.  The <func>binomial</func>
+	    function takes two parameters: an integer number of trials and
+	    a <quote>success</quote> probability.  Uniform series are
+	    generated using the Mersenne Twister;<footnote><para>See
+		Matsumoto and
 		Nishimura (1998). The implementation is provided by
-		<program>glib</program>, if available, or by the C
-		code written by Nishimura and
-		Matsumoto.</para></footnote> for normal series the
-	    method of Box and Muller (1958) is used, taking input from
-	    the Mersenne Twister. See also the <cmdref
+		<program>glib</program>, if available, or by the C code
+		written by Nishimura and Matsumoto.</para></footnote> for
+	    normal series the method of Box and Muller (1958) is used,
+	    taking input from the Mersenne Twister. See also the <cmdref
 	      targ="set"/> command, <lit>seed</lit> option.
 	  </para>
 	</li>
       </ilist> 
 
       <para>
-	All of the above functions with the exception of <func>cov</func>,
-	<func>corr</func>, <func>pvalue</func>, <func>cdf</func>,
-	<func>critical</func>, <func>fracdiff</func>, <func>uniform</func>
-	and <func>normal</func> take as their single argument either the
-	name of a variable or an expression that evaluates to a variable
-	(&eg; <cmd>ln((x1+x2)/2)</cmd>).
+	With a few exceptions as noted, all the above functions take as
+	their single argument either the name of a variable or an
+	expression that evaluates to a variable (&eg;
+	<cmd>ln((x1+x2)/2)</cmd>).
       </para>
 
       <para>

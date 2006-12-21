@@ -217,8 +217,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     int depvar, t;
     FITRESID *fr;
 
-    depvar = gretl_model_get_depvar(pmod);
-
     fr = fit_resid_new(pdinfo->n);
     if (fr == NULL) {
 	return NULL;
@@ -230,18 +228,32 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	fr->sigma = pmod->sigma;
     }
 
+    depvar = gretl_model_get_depvar(pmod);
+
     fr->t0 = pmod->t1;
     fr->t1 = pmod->t1;
     fr->t2 = pmod->t2;
 
     for (t=0; t<fr->nobs; t++) {
-	fr->actual[t] = Z[depvar][t];
+	if (pmod->ci == ARBOND) {
+	    if (na(pmod->uhat[t])) {
+		fr->actual[t] = NADBL;
+	    } else {
+		fr->actual[t] = pmod->yhat[t] + pmod->uhat[t];
+	    }
+	} else {
+	    fr->actual[t] = Z[depvar][t];
+	}
 	fr->fitted[t] = pmod->yhat[t];
     }
 
     fit_resid_set_dec_places(fr);
 
-    strcpy(fr->depvar, pdinfo->varname[depvar]);
+    if (pmod->ci == ARBOND) {
+	sprintf(fr->depvar, "D%.14s", pdinfo->varname[depvar]);
+    } else {
+	strcpy(fr->depvar, pdinfo->varname[depvar]);
+    }
     
     return fr;
 }
@@ -2007,6 +2019,10 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     char sdname[VNAMELEN];
     int nf, err = 0;
 
+    if (pmod->ci == ARBOND) {
+	return E_NOTIMP; /* FIXME */
+    }
+
     *t1str = '\0'; *t2str = '\0';
 
     /* Reject in case model was estimated using repacked daily
@@ -2139,6 +2155,10 @@ int display_forecast (const char *str, MODEL *pmod,
     FITRESID *fr;
     int t1, t2;
     int err;
+
+    if (pmod->ci == ARBOND) {
+	return E_NOTIMP;
+    }
 
     err = parse_forecast_string(str, pmod, pdinfo, &t1, &t2);
     if (err) {
