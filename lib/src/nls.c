@@ -53,7 +53,8 @@ struct _nls_spec {
     int uhatnum;        /* ID number of variable holding residuals */
     char *nlfunc;       /* string representation of nonlinear function,
 			   expressed in terms of the residuals */
-    int nparam;         /* number of parameters to be estimated */
+    int nparam;         /* number of parameters */
+    int ncoeff;         /* number of coefficients (allows for vector params) */
     int naux;           /* number of auxiliary commands */
     int ngenrs;         /* number of variable-generating formulae */
     int iters;          /* number of iterations performed */
@@ -215,6 +216,7 @@ static int nls_auto_genr (int i)
 #if NLS_DEBUG
     if (genr_err) {
 	int v = genr_get_varnum(pspec->genrs[j]);
+
 	fprintf(stderr, " varnum = %d, err = %d\n", v, genr_err);
 	errmsg(genr_err, nprn);
     } 
@@ -235,11 +237,39 @@ static int nls_calculate_deriv (int i)
     return nls_auto_genr(i + 1);
 }
 
-static int nls_spec_allocate_params (nls_spec *spec, int n_add)
+static void nls_spec_destroy_arrays (nls_spec *spec)
+{
+    free(spec->params);
+    spec->params = NULL;
+    spec->nparam = 0;
+    free(spec->coeff);
+    spec->coeff = NULL;
+    spec->ncoeff = 0;
+}
+
+static int nls_spec_push_coeff (nls_spec *spec, double x)
+{
+    double *coeff = NULL;
+    int nc = spec->ncoeff + 1;
+    
+    coeff = realloc(spec->coeff, nc * sizeof *coeff);
+    if (coeff == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->coeff = coeff;
+    spec->ncoeff = nc;
+
+    spec->coeff[nc-1] = x;
+
+    return 0;
+}
+
+static int nls_spec_push_param (nls_spec *spec, const char *name,
+				int v)
 {
     parm *params = NULL;
-    double *coeff = NULL;
-    int np = spec->nparam + n_add;
+    int np = spec->nparam + 1;
     
     params = realloc(spec->params, np * sizeof *params);
     if (params == NULL) {
@@ -247,29 +277,16 @@ static int nls_spec_allocate_params (nls_spec *spec, int n_add)
     }
 
     spec->params = params;
-
-    coeff = realloc(spec->coeff, np * sizeof *coeff);
-    if (coeff == NULL) {
-	free(spec->params);
-	spec->params = NULL;
-	return E_ALLOC;
-    }
-
-    spec->coeff = coeff;
-
     spec->nparam = np;
 
-    return 0;
-}
+    np--;
 
-static void nls_param_init (nls_spec *spec, int i, const char *vname, 
-			    int v, double x)
-{
-    strcpy(spec->params[i].vname, vname);
-    spec->params[i].deriv = NULL;
-    spec->params[i].vnum = v;
-    spec->params[i].dnum = 0;
-    spec->coeff[i] = x;
+    strcpy(spec->params[np].vname, name);
+    spec->params[np].deriv = NULL;
+    spec->params[np].vnum = v;
+    spec->params[np].dnum = 0;
+
+    return 0;
 }
 
 /* Scrutinize word and see if it's a new scalar that should be added
@@ -282,7 +299,7 @@ static int
 maybe_add_param_to_spec (nls_spec *spec, const char *word, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    int i, v;
+    int i, v, err;
 
 #if NLS_DEBUG
     fprintf(stderr, "maybe_add_param: looking at '%s'\n", word);
@@ -315,13 +332,12 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
     fprintf(stderr, "maybe_add_param: adding '%s'\n", word);
 #endif
 
-    if (nls_spec_allocate_params(spec, 1)) {
-	return E_ALLOC;
+    err = nls_spec_push_param(spec, word, v);
+    if (!err) {
+	err = nls_spec_push_coeff(spec, Z[v][0]);
     }
 
-    nls_param_init(spec, spec->nparam - 1, word, v, Z[v][0]);
-
-    return 0;
+    return err;
 }
 
 /* Parse NLS function specification string to find names of variables
@@ -392,11 +408,6 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 	return E_DATA;
     }
 
-    err = nls_spec_allocate_params(spec, nf);
-    if (err) {
-	return err;
-    }
-
     for (i=0; i<nf && !err; i++) {
 	char *pname = gretl_word_strdup(p, &p);
 	int v;
@@ -413,7 +424,10 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 
 	if (v < pdinfo->v) {
 	    if (var_is_scalar(pdinfo, v)) {
-		nls_param_init(spec, i, pname, v, Z[v][0]);
+		err = nls_spec_push_param(spec, pname, v);
+		if (!err) {
+		    err = nls_spec_push_coeff(spec, Z[v][0]);
+		}
 	    } else {
 		err = E_DATA;
 	    }
@@ -424,14 +438,8 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
     }
 
     if (err) {
-	free(spec->params);
-	spec->params = NULL;
-	free(spec->coeff);
-	spec->coeff = NULL;
-	spec->nparam = 0;
-    } else {
-	spec->nparam = nf;
-    }
+	nls_spec_destroy_arrays(spec);
+    } 
 
     return err;
 }
@@ -453,37 +461,28 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 int nls_spec_add_param_list (nls_spec *spec, const int *list,
 			     const double **Z, const DATAINFO *pdinfo)
 {
-    int i, np = list[0];
+    int i, v, np = list[0];
     int err = 0;
 
     if (spec->params != NULL || np == 0) {
 	return E_DATA;
     }
 
-    err = nls_spec_allocate_params(spec, np);
-    if (err) {
-	return err;
-    }
-
     for (i=0; i<np && !err; i++) {
-	int v = list[i+1];
-
+	v = list[i+1];
 	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    nls_param_init(spec, i, pdinfo->varname[v], v, Z[v][0]);
+	    err = nls_spec_push_param(spec, pdinfo->varname[v], v);
+	    if (!err) {
+		err = nls_spec_push_coeff(spec, Z[v][0]);
+	    }
 	} else {
 	    err = E_DATA;
 	}
     }
 
     if (err) {
-	free(spec->params);
-	spec->params = NULL;
-	free(spec->coeff);
-	spec->coeff = NULL;
-	spec->nparam = 0;
-    } else {
-	spec->nparam = np;
-    }
+	nls_spec_destroy_arrays(spec);
+    } 
 
     return err;
 }
@@ -1949,43 +1948,39 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
     parm *param = NULL;
     const char *p = dstr;
     char *vname = NULL;
+    char *deriv = NULL;
     int i, v, err = 0;
-
-    if (nls_spec_allocate_params(spec, 1)) {
-	return E_ALLOC;
-    }
-
-    i = spec->nparam - 1;
-    param = &spec->params[i];
 
     if (!strncmp(p, "deriv ", 6)) {
 	/* make starting with "deriv" optional */
 	p += 6;
     }
 
-    err = equation_get_lhs_and_rhs(p, &vname, &param->deriv);
+    err = equation_get_lhs_and_rhs(p, &vname, &deriv);
     if (err) {
 	fprintf(stderr, "parse error in deriv string: '%s'\n", dstr);
 	return E_PARSE;
     }
 
-    *param->vname = '\0';
-    strncat(param->vname, vname, VNAMELEN - 1);
-    free(vname);
-
-    v = varindex(pdinfo, param->vname);
+    v = varindex(pdinfo, vname);
     if (v < pdinfo->v) {
-	param->vnum = v;
-	param->dnum = 0;
-	spec->coeff[i] = Z[v][0];
+	err = nls_spec_push_param(spec, vname, v);
+	if (!err) {
+	    nls_spec_push_coeff(spec, Z[v][0]);
+	}
     } else {
-	free(param->deriv);
-	param->deriv = NULL;
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), param->vname);
 	err = E_UNKVAR;
     }
 
-    if (!err) {
+    free(vname);
+
+    i = spec->nparam - 1;
+
+    if (err) {
+	free(deriv);
+    } else {
+	spec->params[i].deriv = deriv;
 	spec->mode = ANALYTIC_DERIVS;
     }
 
@@ -2471,13 +2466,14 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
     spec->ngenrs = 0;
     
     spec->coeff = NULL;
+    spec->ncoeff = 0;
+
     spec->hessvec = NULL;
 
     spec->ci = ci;
     spec->mode = NUMERIC_DERIVS;
     spec->opt = OPT_NONE;
 
-    spec->nparam = 0;
     spec->depvar = 0;
 
     spec->iters = 0;

@@ -2264,7 +2264,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     /* plot instructions */
     if (use_boxes) {
 	if (gnuplot_has_style_fill()) {
-	    fputs("set style fill solid\n", fp);
+	    fputs("set style fill solid 0.8\n", fp);
 	}
 	strcpy(withstr, "w boxes");
     } else {
@@ -2832,7 +2832,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
-	fputs("set style fill solid\n", fp);
+	fputs("set style fill solid 0.8\n", fp);
     }  
 
     if (spec->flags & GPTSPEC_ALL_MARKERS) {

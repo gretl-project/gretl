@@ -1214,6 +1214,71 @@ static int count_distinct_int_values (int *x, int n)
     return c;
 }
 
+int default_freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
+			int *pn, double *pxmax, double *pxmin, int *nbins, 
+			double *binwidth)
+{
+    const double *x = Z[v];
+    double xrange, xmin = 0, xmax = 0;
+    int t, k = 0, n = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t])) {
+	    if (n == 0) {
+		xmax = xmin = x[t];
+	    } else {
+		if (x[t] > xmax) xmax = x[t];
+		if (x[t] < xmin) xmin = x[t];
+	    }
+	    n++;
+	}
+    }
+
+    if (n < 8) {
+	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
+				"distribution for variable %s"), 
+		pdinfo->varname[v]);
+	return E_DATA;
+    }
+
+    xrange = xmax - xmin;
+    if (xrange == 0) {
+	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[v]);
+	return E_DATA;
+    }
+
+    if (n < 16) {
+	k = 5; 
+    } else if (n < 50) {
+	k = 7;
+    } else if (n > 850) {
+	k = 29;
+    } else {
+	k = (int) sqrt((double) n);
+	if (k % 2 == 0) {
+	    k++;
+	}
+    }
+
+    if (pn != NULL) {
+	*pn = n;
+    }
+    if (pxmax != NULL) {
+	*pxmax = xmax;
+    }
+    if (pxmin != NULL) {
+	*pxmin = xmin;
+    }
+    if (nbins != NULL) {
+	*nbins = k;
+    }
+    if (binwidth != NULL) {
+	*binwidth = xrange / (k - 1);
+    }
+
+    return 0;
+}
+
 /**
  * get_freq:
  * @varno: ID number of variable to process.
@@ -1237,7 +1302,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     const double *x = Z[varno];
     double xx, xmin, xmax;
     double skew, kurt;
-    double range, binwidth;
+    double binwidth;
     int nbins;
     int t, k, n;
 
@@ -1247,13 +1312,9 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    n = pdinfo->t2 - pdinfo->t1 + 1;
-    n = good_obs(x + pdinfo->t1, n, NULL);
-
-    if (n < 8) {
+    if (default_freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, 
+			   &nbins, &binwidth)) {
 	*err = E_DATA;
-	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
-		"distribution for variable %s"), pdinfo->varname[varno]);
 	goto bailout;
     }
 
@@ -1262,21 +1323,11 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     freq->n = n;
 
     strcpy(freq->varname, pdinfo->varname[varno]);
-
-    if (gretl_isconst(pdinfo->t1, pdinfo->t2, x)) {
-	*err = E_DATA;
-	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
-	goto bailout;
-    } 
-
     freq->discrete = var_is_discrete(pdinfo, varno);
 
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
 		  &skew, &kurt, params);
-
-    gretl_minmax(pdinfo->t1, pdinfo->t2, x, &xmin, &xmax);
-    range = xmax - xmin;
 
     /* calculate test stat for distribution */
     if (freq->n > 7) {
@@ -1360,26 +1411,12 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
     } else {
 	/* not discrete (integer) data */
-	if (n < 16) {
-	    nbins = 5; 
-	} else if (n < 50) {
-	    nbins = 7;
-	} else if (n > 850) {
-	    nbins = 29;
-	} else {
-	    nbins = (int) sqrt((double) n);
-	    if (nbins % 2 == 0) {
-		nbins++;
-	    }
-	}
 	
 	if (freq_add_arrays(freq, nbins)) {
 	    *err = E_ALLOC;
 	    goto bailout;
 	}
 
-	binwidth = range / (nbins - 1);
-	
 	freq->endpt[0] = xmin - .5 * binwidth;
 	
 	if (xmin > 0.0 && freq->endpt[0] < 0.0) {

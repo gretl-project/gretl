@@ -3378,6 +3378,26 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     int v = mdata_active_var();
     int err = 0;
 
+#if 0 /* not yet: bin size choice */
+    int n, nbins;
+    int xmax, xmin, binwidth;
+    int err;
+
+    err = default_freq_setup(v, (const double **) Z, datainfo,
+			     &n, &xmax, &xmin, &nbins, &binwidth);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    err = spin_dialog("gretl: frequency plot setup", &nbins, 
+		      _("Number of bins:"), 2, n, 0);
+    if (err < 0) {
+	/* canceled */
+	return;
+    }
+#endif
+
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
 			  (dist == D_GAMMA)? " --gamma" : "");
 
