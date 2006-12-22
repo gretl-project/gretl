@@ -25,6 +25,7 @@
 #include "guiprint.h"
 #include "gpt_control.h"
 #include "menustate.h"
+#include "gretl_www.h"
 
 #include <gdk/gdkwin32.h>
 #include <dirent.h>

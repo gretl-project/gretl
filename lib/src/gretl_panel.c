@@ -3387,12 +3387,12 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     return err;
 }
 
-static int is_positive (const double *x, int n)
+static int non_negative (const double *x, int n)
 {
     int i;
 
     for (i=1; i<n; i++) {
-	if (x[i] <= 0.0) {
+	if (x[i] < 0) {
 	    return 0;
 	}
     }    
@@ -3568,7 +3568,7 @@ int set_panel_structure_from_line (const char *line,
 	return err;
     }
 
-    if (!is_positive(Z[uv], n) || !is_positive(Z[tv], n)) {
+    if (!non_negative(Z[uv], n) || !non_negative(Z[tv], n)) {
 	return E_DATA;
     }
 

@@ -2588,7 +2588,6 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     }
 
     if (pmod->ci == ARBOND) {
-	flip(vwin->ifac, "/Graphs/Fitted, actual plot", FALSE);
 	flip(vwin->ifac, "/Analysis/Forecasts...", FALSE);
     }
 }
@@ -2798,12 +2797,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
 
-	if (pmod->ci == ARBOND) {
-	    break;
-	}
-
 	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH ||
-	    pmod->ci == PANEL) { 
+	    pmod->ci == PANEL || pmod->ci == ARBOND) { 
 	    continue;
 	}
 

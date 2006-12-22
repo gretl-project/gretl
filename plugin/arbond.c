@@ -55,6 +55,7 @@ struct arbond_ {
     int maxTi;            /* maximum equations for any given unit */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations used */
+    int t1;               /* initial offset into dataset */
     int t1min;            /* first usable observation, any unit */
     int ndum;             /* number of time dummies to use */
     double SSR;           /* sum of squared residuals */
@@ -88,6 +89,8 @@ struct arbond_ {
     struct diag_info *d;  /* info on block-diagonal instruments */
     struct unit_info *ui; /* info on panel units */
 };
+
+#define data_index(ab,i) (i * ab->T + ab->t1)
 
 static void arbond_free (arbond *ab)
 {
@@ -361,10 +364,11 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 	if (err) {
 	    return err;
 	}
-    } 
+    }
 
-    ab->effN = ab->N = pdinfo->paninfo->nunits;
-    ab->T = pdinfo->n / ab->N;
+    ab->t1 = pdinfo->t1;
+    ab->T = pdinfo->pd;
+    ab->effN = ab->N = (pdinfo->t2 - ab->t1 + 1) / ab->T;
     ab->k = ab->p + ab->nx;
     ab->maxTi = 0;
     ab->m = 0;
@@ -455,7 +459,7 @@ arbond_sample_check (arbond *ab, const int *list,
     for (i=0; i<ab->N; i++) {
 	/* find the first y observation, all units */
 	if (t1min > 0) {
-	    s = i * ab->T;
+	    s = data_index(ab, i);
 	    for (t=0; t<ab->T; t++) {
 		if (!na(y[s+t])) {
 		    if (t < t1min) {
@@ -499,7 +503,7 @@ arbond_sample_check (arbond *ab, const int *list,
 	   using a lagged level of y
 	*/
 
-	s = i * ab->T;
+	s = data_index(ab, i);
 	for (t=ab->p+1; t<ab->T; t++) {
 	    if (anymiss(ab, Z, s + t)) {
 		mask[t] = 1;
@@ -1382,8 +1386,9 @@ static int make_first_diff_matrix (arbond *ab, int i)
 
 static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 				 const int *list, const char *istr,
-				 const DATAINFO *pdinfo)
+				 const double **X, const DATAINFO *pdinfo)
 {
+    const double *y = X[ab->yno];
     double x;
     int i, j;
     int err = 0;
@@ -1456,7 +1461,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
     if (!err) {
 	int s, t, k = 0;
 
-	/* add uhat, yhat: these are in differenced form */
+	/* add uhat, yhat */
 
 	for (i=0; i<ab->N; i++) {
 	    if (skip_unit(ab, i)) {
@@ -1465,9 +1470,9 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 	    for (t=0; t<ab->T; t++) {
 		if (t >= ab->ui[i].t1 && t <= ab->ui[i].t2) {
 		    if (!skip_obs(ab, i, t)) {
-			s = i * ab->T + t;
+			s = data_index(ab, i) + t;
 			pmod->uhat[s] = ab->uhat->val[k];
-			pmod->yhat[s] = ab->dy->val[k] - ab->uhat->val[k];
+			pmod->yhat[s] = y[s-1] + ab->dy->val[k] - pmod->uhat[s];
 			k++;
 		    }
 		}
@@ -1525,7 +1530,7 @@ static int arbond_zero_check (arbond *ab, const double **Z)
 		continue;
 	    }
 	    for (t=ab->ui[i].t1; t<=ab->ui[i].t2 && all0; t++) {
-		k = i * ab->T + t;
+		k = data_index(ab, i) + t;
 		if (x[k] != 0.0 && !na(x[k])) {
 		    all0 = 0;
 		}
@@ -1875,7 +1880,7 @@ static void arbond_make_dy_and_X (arbond *ab, const double *y,
 	    if (skip_obs(ab, i, t)) {
 		continue;
 	    }
-	    s = i * ab->T + t;
+	    s = data_index(ab, i) + t;
 	    /* current difference of dependent var */
 	    gretl_vector_set(ab->dy, k, y[s] - y[s-1]);
 	    for (j=0; j<ab->p; j++) {
@@ -1953,7 +1958,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 	    if (!skip) {
 		/* lagged y (GMM instr) columns */
 		for (j=0; j<ycols; j++) {
-		    s = i * ab->T + t - (ycols + 1) + j;
+		    s = data_index(ab, i) + t - (ycols + 1) + j;
 		    if (!na(y[s])) {
 			gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
 		    }
@@ -1968,7 +1973,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 		for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
 		    if (t - zk >= 0) { /* ?? */
 			if (!skip) {
-			    s = i * ab->T + t - zk;
+			    s = data_index(ab, i) + t - zk;
 			    x = Z[ab->d[zi].v][s];
 			    if (!na(x)) {
 				gretl_matrix_set(ab->Zi, k, zj + offj + ycols, x);
@@ -1982,7 +1987,7 @@ static int arbond_make_Z_and_A (arbond *ab, const double *y,
 
 	    if (!skip) {
 		/* additional full-length instrument columns */
-		s = i * ab->T + t;
+		s = data_index(ab, i) + t;
 		for (j=0; j<ab->nz; j++) {
 		    x = Z[ab->ilist[j+1]][s];
 		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
@@ -2208,7 +2213,8 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     }
 
     if (!mod.errcode) {
-	mod.errcode = arbond_prepare_model(&mod, &ab, list, istr, pdinfo);
+	mod.errcode = arbond_prepare_model(&mod, &ab, list, istr, 
+					   X, pdinfo);
     }
 
     arbond_free(&ab);

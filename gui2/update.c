@@ -25,7 +25,8 @@
 #include <sys/stat.h>
 
 # ifdef WIN32
-static size_t get_size (char *buf)
+
+static size_t get_bufsize (const char *buf)
 {
     size_t i, newsize = 0L;
     int pos;
@@ -41,6 +42,7 @@ static size_t get_size (char *buf)
 
     return newsize;
 }
+
 # endif /* WIN32 */
 
 /* E.g. Sun Mar 16 13:50:52 EST 2003 */
@@ -119,7 +121,7 @@ static void win_new_files_response (const char *buf)
 		       "These files have a combined size of %u bytes.\n\nWould "
 		       "you like to exit from gretl and update your installation now?\n"
 		       "(You can run gretl_updater.exe later if you prefer.)"),
-	    get_size(buf));
+	    get_bufsize(buf));
     maybe_fork_updater(infotxt);
 }
 

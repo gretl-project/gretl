@@ -235,25 +235,13 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     fr->t2 = pmod->t2;
 
     for (t=0; t<fr->nobs; t++) {
-	if (pmod->ci == ARBOND) {
-	    if (na(pmod->uhat[t])) {
-		fr->actual[t] = NADBL;
-	    } else {
-		fr->actual[t] = pmod->yhat[t] + pmod->uhat[t];
-	    }
-	} else {
-	    fr->actual[t] = Z[depvar][t];
-	}
+	fr->actual[t] = Z[depvar][t];
 	fr->fitted[t] = pmod->yhat[t];
     }
 
     fit_resid_set_dec_places(fr);
 
-    if (pmod->ci == ARBOND) {
-	sprintf(fr->depvar, "D%.14s", pdinfo->varname[depvar]);
-    } else {
-	strcpy(fr->depvar, pdinfo->varname[depvar]);
-    }
+    strcpy(fr->depvar, pdinfo->varname[depvar]);
     
     return fr;
 }

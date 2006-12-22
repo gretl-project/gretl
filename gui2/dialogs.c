@@ -3690,7 +3690,7 @@ static GList *panelvars_list (void)
 	}
 	ok = 1;
 	for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	    if (na(Z[i][t]) || Z[i][t] <= 0.0) {
+	    if (na(Z[i][t]) || Z[i][t] < 0) {
 		ok = 0;
 		break;
 	    }
@@ -4184,6 +4184,8 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 		step = DW_TS_FREQUENCY;
 	    } else if (step == DW_PANEL_SIZE) {
 		step = (create)? DW_SET_TYPE : DW_PANEL_MODE;
+	    } else if (step == DW_PANEL_VARS) {
+		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
 		if (dwinfo->structure == TIME_SERIES || 
 		    dwinfo->structure == SPECIAL_TIME_SERIES) {
@@ -4194,7 +4196,7 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 		} else {
 		    step = DW_SET_TYPE;
 		}
-	    }
+	    } 
 	    break;
 	}
     }

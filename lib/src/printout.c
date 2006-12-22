@@ -542,6 +542,8 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
 	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
     }
+
+    pputc(prn, '\n');
 }
 
 /**
@@ -1870,6 +1872,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
     int onestep = fr->method == FC_ONESTEP;
     int t, anyast = 0;
+    double yt, yf;
     double MSE = 0.0;
     double AE = 0.0;
     int effn = 0;
@@ -1882,17 +1885,20 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     for (t=fr->t1; t<=fr->t2; t++) {
 	print_obs_marker(t, pdinfo, prn);
 
-	if (na(fr->actual[t])) {
-	    pputc(prn, '\n');
-	} else if (na(fr->fitted[t])) {
-	    pprintf(prn, "%13g\n", fr->actual[t]);
-	} else {
-	    double yt, yf, et;
-	    int ast = 0;
+	yt = fr->actual[t];
+	yf = fr->fitted[t];
 
-	    yt = fr->actual[t];
-	    yf = fr->fitted[t];
-	    et = yt - yf;
+	if (na(yt)) {
+	    pputc(prn, '\n');
+	} else if (na(yf)) {
+	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
+		pprintf(prn, "%13.*f\n", fr->pmax, yt);
+	    } else {
+		pprintf(prn, "%13g\n", yt);
+	    }
+	} else {
+	    double et = yt - yf;
+	    int ast = 0;
 
 	    if (onestep) {
 		MSE += et * et;

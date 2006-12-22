@@ -193,7 +193,7 @@ int diff_series (const double *x, double *y, int f,
 
 int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 {
-    double ci, xbar;
+    double xbar;
     int n, s, t, Tt;
 
     for (t=pdinfo->t1; t<pdinfo->t2; t++) {
@@ -219,8 +219,7 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 
 	if (n > 0) {
 	    xbar /= n;
-	    ci = sqrt(n / (n + 1.0));
-	    y[t+1] = ci * (x[t] - xbar);
+	    y[t+1] = sqrt(n / (n + 1.0)) * (x[t] - xbar);
 	}
     }
 
