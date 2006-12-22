@@ -236,8 +236,7 @@ static void console_exec (void)
 
     if (strcmp(cbuf, "quit") == 0 || 
 	strcmp(cbuf, "q") == 0 ||
-	strcmp(cbuf, "exit") == 0 ||
-	strcmp(cbuf, "x") == 0) {
+	strcmp(cbuf, "exit") == 0) {
 	gtk_widget_destroy(console_view->parent->parent->parent);
 	g_free(cbuf);
 	cbuf = NULL;

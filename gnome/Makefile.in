@@ -36,6 +36,7 @@ install: install-images install-misc $(install_schemas)
 install-images:
 	$(tooldir)/mkinstalldirs $(gpixmaps)
 	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl.xpm $(gpixmaps)
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(gpixmaps)
 	$(INSTALL_DATA) $(topsrc)/gnome/gnome-*.png $(gpixmaps)
 
 install-misc:
