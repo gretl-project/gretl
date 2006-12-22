@@ -173,36 +173,6 @@ static void manual_update_query (gpointer p, guint u, GtkWidget *w)
     update_query();
 }
 
-#ifdef USE_GNOME_HELP
-static void gnome_help (void)
-{
-    GError *error = NULL;
-
-    gnome_help_display ("gretl.xml", NULL, &error);
-        
-    if (error != NULL) {
-	g_warning (error->message);
-	g_error_free (error);
-    }
-}
-#endif 
-
-#ifndef G_OS_WIN32
-static void root_check (void)
-{
-    if (getuid() == 0) {
-	int resp;
-
-	resp = yes_no_dialog ("gretl", _("You seem to be running gretl " 
-			      "as root.  Do you really want to do this?"), 
-			      0);
-	if (resp == GRETL_NO) {
-	    exit(EXIT_FAILURE);
-	}
-    }
-}
-#endif
-
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
@@ -812,11 +782,8 @@ int main (int argc, char *argv[])
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);
 #else 
-    set_rcfile(); /* also calls read_rc() */
-    if (!expert) {
-	root_check();
-    }
-#endif/* G_OS_WIN32 */
+    gretl_config_init();
+#endif
 
     if (argc > 1) {
 	int force_lang = 0;

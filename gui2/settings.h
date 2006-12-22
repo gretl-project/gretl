@@ -3,13 +3,13 @@
 
 #ifdef G_OS_WIN32
 void read_rc (void);
+#else
+void gretl_config_init (void);
 #endif
 
 int using_hc_by_default (void);
 
 int get_manpref (void);
-
-void set_rcfile (void);
 
 void write_rc (void);
 

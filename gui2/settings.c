@@ -785,28 +785,35 @@ int check_for_prog (const char *prog)
     return found;
 }
 
-#endif
-
-#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
-void set_rcfile (void) 
+static void root_check (void)
 {
-    char *tmp;
+    if (getuid() == 0) {
+	int resp;
 
-    tmp = getenv("HOME");
-    strcpy(rcfile, tmp);
-    strcat(rcfile, "/.gretl2rc");
-    read_rc(); 
-    set_gd_fontpath();
+	resp = yes_no_dialog ("gretl", _("You seem to be running gretl " 
+			      "as root.  Do you really want to do this?"), 
+			      0);
+	if (resp == GRETL_NO) {
+	    exit(EXIT_FAILURE);
+	}
+    }
 }
+
+void gretl_config_init (void)
+{
+#ifndef USE_GCONF
+    sprintf(rcfile, "%s/.gretl2rc", getenv("HOME"));
 #endif
 
-#ifdef USE_GNOME
-void set_rcfile (void)
-{
     read_rc();
     set_gd_fontpath();
+
+    if (!expert) {
+	root_check();
+    }
 }
-#endif
+
+#endif /* *nix versus Windows */
 
 static void option_dialog_canceled (GtkWidget *w, int *c)
 {
@@ -1389,6 +1396,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     /* register these for session using libset apparatus */
     set_use_qr(useqr);
+    set_use_cwd(usecwd);
     set_shell_ok(shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
@@ -1441,6 +1449,7 @@ static void boolvar_to_str (void *b, char *s)
 static void common_read_rc_setup (void)
 {
     set_use_qr(useqr);
+    set_use_cwd(usecwd);
     set_shell_ok(shellok);
     set_gp_colors();
     
@@ -1545,9 +1554,7 @@ static void read_rc (void)
     }
 
     read_file_lists(client);
-
     g_object_unref(G_OBJECT(client));
-
     common_read_rc_setup();
 }
 
@@ -1703,9 +1710,7 @@ void read_rc (void)
     }
 
     read_file_lists();
-
     common_read_rc_setup();
-
     set_fixed_font();
     set_app_font(NULL);
 }
@@ -1789,9 +1794,7 @@ static void read_rc (void)
     }
 
     read_file_lists(fp, line);
-
     fclose(fp);
-
     common_read_rc_setup();
 }
 

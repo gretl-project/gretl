@@ -60,6 +60,7 @@ struct bhhh_opts {
 
 struct set_vars_ {
     int use_qr;                 /* use QR decomposition? */
+    int use_cwd;                /* store: use current dir as default */
     unsigned int seed;          /* for PRNG */
     int halt_on_error;          /* halt cli program on script error? */
     int shell_ok;               /* shell commands permitted? */
@@ -164,6 +165,7 @@ static void state_vars_copy (set_vars *sv)
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
     sv->use_qr = state->use_qr;
+    sv->use_cwd = state->use_cwd;
     sv->seed = state->seed;
     sv->halt_on_error = state->halt_on_error;
     sv->shell_ok = state->shell_ok;
@@ -188,6 +190,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->use_qr = UNSET_INT; 
+    sv->use_cwd = 0;
     sv->seed = 0;
     sv->halt_on_error = UNSET_INT;
     sv->shell_ok = 0;
@@ -865,6 +868,8 @@ static int display_settings (PRN *prn)
     ival = get_use_qr(); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
 
+    pprintf(prn, " use_cwd = %d\n", state->use_cwd);
+
     uval = get_gretl_random_seed();
     pprintf(prn, " seed = %u\n", uval);
 
@@ -1023,6 +1028,14 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 		state->use_qr = 0;
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "use_cwd")) {
+	    if (boolean_on(setarg)) {
+		state->use_cwd = 1;
+		err = 0;
+	    } else if (boolean_off(setarg)) {
+		state->use_cwd = 0;
+		err = 0;
+	    }
 	} else if (!strcmp(setobj, "halt_on_error")) {
 	    if (boolean_on(setarg)) {
 		state->halt_on_error = 1;
@@ -1144,6 +1157,24 @@ int get_use_qr (void)
     } 
 
     return state->use_qr;
+}
+
+void set_use_cwd (int set)
+{
+    check_for_state();
+
+    if (state != NULL) {
+	state->use_cwd = set;
+    }
+}
+
+int get_use_cwd (void)
+{
+    if (check_for_state()) {
+	return 0;
+    }
+
+    return state->use_cwd;
 }
 
 int get_halt_on_error (void)

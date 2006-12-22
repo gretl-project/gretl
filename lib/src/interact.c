@@ -418,7 +418,7 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 	return E_ALLOC;
     }
 
-    if (gretl_path_is_absolute(fname)) {
+    if (get_use_cwd() || gretl_path_is_absolute(fname)) {
 	cmd->param = fname;
     } else {
 	cmd->param = gretl_strdup_printf("%s%s", gretl_user_dir(), fname);
