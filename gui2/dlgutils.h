@@ -51,7 +51,7 @@ GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
 
-void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
+void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick,
 		  int *canceled);

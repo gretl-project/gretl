@@ -2332,24 +2332,27 @@
 
 	<li><para>
 	    Pseudo-random numbers: <func>uniform</func>,
-	    <func>normal</func>, <func>chisq</func>, <func>student</func>
-	    and <func>binomial</func>. The first two functions do not take
-	    an argument and should be written with empty parentheses:
-	    <lit>uniform()</lit>, <lit>normal()</lit>.  They create
-	    pseudo-random series drawn from the uniform (0&ndash;1) and
-	    standard normal distributions respectively.  The next two take
-	    a single argument, namely the (integer) degrees of freedom;
-	    they generate drawings from the Chi-square and Student's t
-	    distributions respectively.  The <func>binomial</func>
-	    function takes two parameters: an integer number of trials and
-	    a <quote>success</quote> probability.  Uniform series are
-	    generated using the Mersenne Twister;<footnote><para>See
-		Matsumoto and
-		Nishimura (1998). The implementation is provided by
-		<program>glib</program>, if available, or by the C code
-		written by Nishimura and Matsumoto.</para></footnote> for
-	    normal series the method of Box and Muller (1958) is used,
-	    taking input from the Mersenne Twister. See also the <cmdref
+	    <func>normal</func>, <func>chisq</func>, <func>student</func>,
+	    <func>binomial</func> and <func>poisson</func>. The first two
+	    functions do not take an argument and should be written with
+	    empty parentheses: <lit>uniform()</lit>, <lit>normal()</lit>.
+	    They create pseudo-random series drawn from the uniform
+	    (0&ndash;1) and standard normal distributions respectively.
+	    The next two take a single argument, namely the (integer)
+	    degrees of freedom; they generate drawings from the Chi-square
+	    and Student's t distributions respectively.  The
+	    <func>binomial</func> function takes two parameters: an
+	    integer number of trials and a <quote>success</quote>
+	    probability.  The <func>poisson</func> function takes a single
+	    argument, the mean, which may be either a scalar or a series.
+	    Uniform series, which form the basis for the more complex
+	    distributions, are generated using the Mersenne
+	    Twister;<footnote><para>See Matsumoto and Nishimura (1998).
+		The implementation is provided by <program>glib</program>,
+		if available, or by the C code written by Nishimura and
+		Matsumoto.</para></footnote> for normal series the method
+	    of Box and Muller (1958) is used, taking input from the
+	    Mersenne Twister. See also the <cmdref
 	      targ="set"/> command, <lit>seed</lit> option.
 	  </para>
 	</li>
@@ -2774,6 +2777,12 @@
 	  <para>
 	    Binomial: give the number of trials (a positive integer)
 	    and the <quote>success</quote> probability.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Poisson: give the mean, either as a numerical value or as the
+	    name of a scalar or series.
 	  </para>
 	</li>
       </ilist>

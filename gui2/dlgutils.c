@@ -289,11 +289,6 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 	gtk_main_quit();
     }
 
-    if (d->code == GENR_RANDOM) {
-	/* pointer to double */
-	free(d->data);
-    } 
-
     g_free(d); 
 
     open_edit_dialog = NULL;
@@ -311,7 +306,7 @@ static void cancel_on_delete (GtkDialog *d, int resp, int *c)
 }
 
 static dialog_t *
-dialog_data_new (gpointer data, gint code, const char *title,
+dialog_data_new (gpointer p, gint code, const char *title,
 		 int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
@@ -320,7 +315,7 @@ dialog_data_new (gpointer data, gint code, const char *title,
 	return NULL;
     }
 
-    d->data = data;
+    d->data = p;
     d->code = code;
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
@@ -835,7 +830,7 @@ static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
     gtk_widget_destroy(d->dialog);
 }
 
-void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
+void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick, 
 		  int *canceled)
@@ -851,7 +846,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode, diagtxt, canceled);
+    d = dialog_data_new(okptr, cmdcode, title, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
@@ -873,7 +868,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	int hsize = 62;
 	gchar *lbl;
 
-	lbl = g_strdup_printf("%s\n%s", infotxt,
+	lbl = g_strdup_printf("%s\n%s", info,
 			      _("(Please refer to Help for guidance)"));
 	w = gtk_label_new(lbl);
 	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
@@ -895,8 +890,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
     } else {
-	if (infotxt != NULL) {
-	    w = gtk_label_new(infotxt);
+	if (info != NULL) {
+	    w = gtk_label_new(info);
 	    gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
 	    gtk_widget_show(w);
 	}
@@ -910,9 +905,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(okfunc), d);
 	}
 
-	if (deftext != NULL && *deftext != '\0') {
-	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
-	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
+	if (deflt != NULL && *deflt != '\0') {
+	    gtk_entry_set_text(GTK_ENTRY(d->edit), deflt);
+	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deflt));
 	} 
 
 	gtk_widget_show(d->edit);

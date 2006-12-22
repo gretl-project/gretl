@@ -125,7 +125,7 @@ enum {
     DET,
     LDET,
     TRACE,
-    NORM1,  /* 100 */
+    NORM1,    /* 100 */
     RCOND,
     VARNUM,
     OBSNUM,
@@ -136,6 +136,7 @@ enum {
     PVAL,
     CDF,
     CRIT,     /* 110 */
+    GENPOIS,
     MAKEMASK,
     FUNC_MAX, /* separator: end of single-arg functions */
     COR,
@@ -143,9 +144,9 @@ enum {
     UNIFORM,
     NORMAL,
     BINOMIAL,
-    FRACDIF,    
-    ZEROS,
-    ONES,    /* 120 */
+    FRACDIF,
+    ZEROS,   /* 120 */ 
+    ONES,
     MUNIF,
     MNORM,
     QFORM,
@@ -154,8 +155,8 @@ enum {
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
-    DOT,      /* period */
-    SEMI,   /* 130: semi-colon */
+    DOT,    /* 130: period */
+    SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
@@ -164,8 +165,8 @@ enum {
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
-    IVEC,     /* vector of integers, evaluated */
-    MAT,    /* 140: matrix, evaluated */
+    IVEC,   /* 140: vector of integers, evaluated */
+    MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
@@ -174,8 +175,8 @@ enum {
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
-    LAG,
-    DVAR,   /* 150: $ dataset variable (scalar or series) */
+    LAG,    /* 150 */
+    DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
@@ -184,8 +185,8 @@ enum {
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
-    EMPTY,
-    ABSENT, /* 160 */
+    EMPTY,  /* 160 */
+    ABSENT,
     INC,
     DEC,
     QUERY,

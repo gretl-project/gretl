@@ -243,7 +243,8 @@ enum random_types {
     RANDOM_NORMAL,
     RANDOM_CHISQ,
     RANDOM_ST,
-    RANDOM_BIN
+    RANDOM_BIN,
+    RANDOM_POIS
 };
 
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \

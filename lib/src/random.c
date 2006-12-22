@@ -349,6 +349,47 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
     return 0;
 }
 
+#define RNDU (rand() / ((double) RAND_MAX + 1))
+
+/* Poisson rv with mean m */
+
+static double genpois (double m)
+{
+    double x = exp(m) * RNDU;
+    int y = 0;
+
+    while (x > 1) {
+	y++;
+	x *= RNDU;
+    }
+
+    return (double) y;
+}
+
+/**
+ * gretl_poisson_dist:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @m: mean (see below).
+ * @vec: should be 1 if @m is an array, else 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the Poisson distribution with a mean determined by 
+ * @m, which can either be a pointer to a scalar, or an array
+ * of length greater than or equal to @t2 + 1.  
+ */
+
+void gretl_poisson_dist (double *a, int t1, int t2, double *m,
+			 int vec) 
+{
+    int t;
+
+    for (t=t1; t<=t2; t++) {
+	a[t] = (vec)? genpois(m[t]) : genpois(*m);
+    }
+}
+
 /**
  * gretl_rand_int_max:
  * @max: the maximum value (open)

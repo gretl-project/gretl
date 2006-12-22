@@ -1504,6 +1504,7 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL && starting(p)) {
+	double *vx = NULL;
 	double x = 0.0;
 	double y = 0.0;
 	int v = 0;
@@ -1511,6 +1512,13 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	if (f == BINOMIAL) {
 	    v = l->v.xval;
 	    y = r->v.xval;
+	} else if (f == GENPOIS) {
+	    if (l->t == VEC) {
+		vx = l->v.xvec;
+		v = 1;
+	    } else {
+		x = l->v.xval;
+	    }
 	} else if (f == UNIFORM || f == NORMAL) {
 	    x = (l->t == EMPTY)? NADBL : l->v.xval;
 	    y = (r->t == EMPTY)? NADBL : r->v.xval;
@@ -1543,7 +1551,10 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = gretl_binomial_dist(ret->v.xvec, p->dinfo->t1, 
 					 p->dinfo->t2, v, y);
 	    break;
-
+	case GENPOIS:
+	    gretl_poisson_dist(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
+			       (v)? vx : &x, v);
+	    break;
 	default:
 	    break;
 	}
@@ -3110,7 +3121,15 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t, p, NUM, (l->t == NUM)? r->t : l->t);
 	} 
-	break;	
+	break;
+    case GENPOIS:
+	/* one arg: scalar or series */
+	if (l->t == NUM || l->t == VEC) {
+	    ret = series_fill_func(l, NULL, t->t, p);
+	} else {
+	    node_type_error(t, p, VEC, l->t);
+	} 
+	break;
     case CHISQ:
     case STUDENT:
 	/* one scalar argument, series result */

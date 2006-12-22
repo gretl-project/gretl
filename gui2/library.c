@@ -3036,29 +3036,39 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
-static void real_do_random (dialog_t *dlg, int action) 
+void add_rand_series (GtkWidget *widget, dialog_t *dlg) 
 {
-    char vname[VNAMELEN];
+    guint r = GPOINTER_TO_UINT(edit_dialog_get_data(dlg));
+    char vname[VNAMELEN] = {0};
+    char supp[VNAMELEN] = {0};
     const gchar *buf;
     double f1, f2;
     int v;
 
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
+    if (buf == NULL) {
+	return;
+    }
 
-    if (action == RANDOM_CHISQ || action == RANDOM_ST) {
+    if (r == RANDOM_CHISQ || r == RANDOM_ST) {
 	if (sscanf(buf, "%15s %d", vname, &v) != 2) {
 	    errbox(_("Specification is malformed\n"
 		     "Should be like \"foo 5\""));
 	    return;
 	}
-    } else if (action == RANDOM_BIN) {
+    } else if (r == RANDOM_BIN) {
 	if (sscanf(buf, "%15s %d %lf", vname, &v, &f2) != 3) {
 	    errbox(_("Specification is malformed\n"
 		     "Should be like \"foo 10 0.5\""));
 	}
+    } else if (r == RANDOM_POIS) {
+	if (sscanf(buf, "%15s %15s", vname, supp) != 2) {
+	    errbox(_("Specification is malformed\n"
+		     "Should be like \"foo xbar\""));
+	    return;
+	}
     } else if (sscanf(buf, "%15s %lf %lf", vname, &f1, &f2) != 3) {
-	if (action == RANDOM_NORMAL) {
+	if (r == RANDOM_NORMAL) {
 	    errbox(_("Specification is malformed\n"
 		     "Should be like \"foo 1 2.5\""));
 	} else {
@@ -3068,17 +3078,17 @@ static void real_do_random (dialog_t *dlg, int action)
 	return;
     } 
 
-    if (action == RANDOM_NORMAL && f2 <= 0.0) {
+    if (r == RANDOM_NORMAL && f2 <= 0.0) {
 	errbox(_("Can't have a negative standard deviation!"));
 	return;
-    } else if (action == RANDOM_UNIFORM && f1 >= f2) {
+    } else if (r == RANDOM_UNIFORM && f1 >= f2) {
 	errbox(_("Range is non-positive!"));
 	return;
-    } else if ((action == RANDOM_CHISQ || action == RANDOM_ST) 
+    } else if ((r == RANDOM_CHISQ || r == RANDOM_ST) 
 	       && v < 1) {
 	errbox(_("The degrees of freedom must be positive"));
 	return;
-    } else if (action == RANDOM_BIN) {
+    } else if (r == RANDOM_BIN) {
 	if (v < 1) {
 	    errbox(_("The number of trials must be at least 1"));
 	} else if (f2 <= 0 || f2 >= 1) {
@@ -3090,26 +3100,28 @@ static void real_do_random (dialog_t *dlg, int action)
 	return;
     }
 
-    if (action == RANDOM_NORMAL) {
+    if (r == RANDOM_NORMAL) {
 	if (f1 != 0. || f2 != 1.) {
 	    gretl_command_sprintf("genr %s = %g * normal() + %g", 
 				  vname, f2, f1);
 	} else {
 	    gretl_command_sprintf("genr %s = normal()", vname); 
 	}
-    } else if (action == RANDOM_UNIFORM) {
+    } else if (r == RANDOM_UNIFORM) {
 	if (f1 != 0. || f2 != 1.) {
 	    gretl_command_sprintf("genr %s = %g + (uniform() * %g)", 
 				  vname, f1, (f2 - f1));
 	} else {
 	    gretl_command_sprintf("genr %s = uniform()", vname); 
 	}
-    } else if (action == RANDOM_CHISQ) {
+    } else if (r == RANDOM_CHISQ) {
 	gretl_command_sprintf("genr %s = chisq(%d)", vname, v); 
-    } else if (action == RANDOM_ST) {
+    } else if (r == RANDOM_ST) {
 	gretl_command_sprintf("genr %s = student(%d)", vname, v); 
-    } else if (action == RANDOM_BIN) {
+    } else if (r == RANDOM_BIN) {
 	gretl_command_sprintf("genr %s = binomial(%d, %g)", vname, v, f2);
+    } else if (r == RANDOM_POIS) {
+	gretl_command_sprintf("genr %s = poisson(%s)", vname, supp);
     }
 
     if (check_and_record_command()) {
@@ -3117,31 +3129,6 @@ static void real_do_random (dialog_t *dlg, int action)
     }
 
     finish_genr(NULL, dlg);
-}
-
-void do_random_uniform (GtkWidget *widget, dialog_t *dlg) 
-{
-    real_do_random(dlg, RANDOM_UNIFORM);
-}
-
-void do_random_normal (GtkWidget *widget, dialog_t *dlg) 
-{
-    real_do_random(dlg, RANDOM_NORMAL);
-}
-
-void do_random_chisq (GtkWidget *widget, dialog_t *dlg) 
-{
-    real_do_random(dlg, RANDOM_CHISQ);
-}
-
-void do_random_st (GtkWidget *widget, dialog_t *dlg) 
-{
-    real_do_random(dlg, RANDOM_ST);
-}
-
-void do_random_bin (GtkWidget *widget, dialog_t *dlg) 
-{
-    real_do_random(dlg, RANDOM_BIN);
 }
 
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
