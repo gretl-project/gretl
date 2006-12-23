@@ -682,7 +682,7 @@ int find_coeff_number (const MODEL *pmod, const char *param)
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	if (!strcmp(param, pmod->params[i+1])) {
+	if (!strcmp(param, pmod->params[i])) {
 	    return i;
 	}
     }
