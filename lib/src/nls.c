@@ -237,6 +237,8 @@ static int nls_calculate_deriv (int i)
     return nls_auto_genr(i + 1);
 }
 
+/* end wrappers */
+
 static void nls_spec_destroy_arrays (nls_spec *spec)
 {
     free(spec->params);
@@ -298,13 +300,14 @@ static int nls_spec_push_param (nls_spec *spec, const char *name,
 }
 
 static int 
-nls_check_varname (const char *name, const DATAINFO *pdinfo, int *pv)
+check_param_name (const char *name, const DATAINFO *pdinfo, int *pv)
 {
     int v = varindex(pdinfo, name);
 
     if (v == 0) {
 	return E_DATA;
     } else if (v >= pdinfo->v) {
+	/* FIXME look for a vector here */
 	return E_UNKVAR;
     } else if (!var_is_scalar(pdinfo, v)) {
 	return E_DATA;
@@ -446,7 +449,7 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 	}
 
 	if (!err) {
-	    err = nls_check_varname(name, pdinfo, &v);
+	    err = check_param_name(name, pdinfo, &v);
 	}
 
 	if (!err) {
@@ -456,11 +459,6 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 	if (!err) {
 	    err = nls_spec_push_coeff(spec, Z[v][0]);
 	}
-
-#if NLS_DEBUG
-	fprintf(stderr, " added '%s' with initial value %g\n",
-		name, Z[v][0]);
-#endif
 
 	free(name);
     }
@@ -520,16 +518,16 @@ static int maybe_adjust_params (nls_spec *spec, char **pzlist)
     char *zlist = NULL;
     int i, v;
 
-    for (i=0; i<pspec->nparam; i++) {
+    for (i=0; i<pspec->ncoeff; i++) {
 	v = pspec->params[i].vnum;
 	if ((*nZ)[v][0] == 0.0) {
-	    zlist = calloc(pspec->nparam, 1);
+	    zlist = calloc(pspec->ncoeff, 1);
 	    break;
 	}
     }
 
     if (zlist != NULL) {
-	for (i=0; i<pspec->nparam; i++) {
+	for (i=0; i<pspec->ncoeff; i++) {
 	    v = pspec->params[i].vnum;
 	    if ((*nZ)[v][0] == 0.0) {
 		zlist[i] = 1;
@@ -698,6 +696,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 	} else {
 	    g[i] = (*nZ)[v][0];
 	}
+
 #if NLS_DEBUG > 1
 	fprintf(stderr, "g[%d] = %g, based on nZ[%d]\n", i, g[i], v);
 #endif
@@ -780,7 +779,7 @@ static int get_nls_fvec (double *fvec)
     int j, t, v = pspec->uhatnum;
 
 #if NLS_DEBUG > 1
-    fprintf(stderr, "*** get_nls_fvec called\n");
+    fprintf(stderr, "\n*** get_nls_fvec called\n");
 #endif
 
     /* calculate residual given current parameter estimates */
@@ -1989,7 +1988,7 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 	return E_PARSE;
     }
 
-    err = nls_check_varname(name, pdinfo, &v);
+    err = check_param_name(name, pdinfo, &v);
     
     if (!err) {
 	err = nls_spec_push_param(spec, name, v, deriv);
