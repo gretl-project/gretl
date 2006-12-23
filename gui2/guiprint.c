@@ -402,6 +402,8 @@ save_gretl_print_config_to_file (GnomePrintConfig *gretl_print_config)
     g_free(str);
 }
 
+#define GUCAST (const guchar *)
+
 void winprint (char *fullbuf, char *selbuf)
 {
     GnomePrintJob *job;
@@ -423,7 +425,7 @@ void winprint (char *fullbuf, char *selbuf)
     config = gnome_print_job_get_config(job);
 
     dialog = gnome_print_dialog_new(job, 
-				    "print gretl output", 
+				    GUCAST "print gretl output", 
 				    0);
     response = gtk_dialog_run(GTK_DIALOG(dialog));
 
@@ -437,9 +439,9 @@ void winprint (char *fullbuf, char *selbuf)
 	goto winprint_bailout;
     }
 
-    gnome_print_beginpage(gpc, _("gretl output"));
+    gnome_print_beginpage(gpc, GUCAST _("gretl output"));
 
-    font = gnome_font_find_closest("Monospace", 10);
+    font = gnome_font_find_closest(GUCAST "Monospace", 10);
     if (font == NULL) {
 	fprintf(stderr, "gnomeprint couldn't find \"Monospace\"\n");
 	goto winprint_bailout;
@@ -457,19 +459,19 @@ void winprint (char *fullbuf, char *selbuf)
 	line = 0;
 	y = 756;
 	if (page > 1) {
-	    gnome_print_beginpage(gpc, _("gretl output"));
+	    gnome_print_beginpage(gpc, GUCAST _("gretl output"));
 	    gnome_print_setfont(gpc, font); 
 	}
 	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
 	gnome_print_moveto(gpc, x, y);
-	gnome_print_show(gpc, hdr);
+	gnome_print_show(gpc, GUCAST hdr);
 	y = 720;
 	while (*p && line < page_lines) { /* lines loop */
 	    len = strcspn(p, "\n");
 	    *linebuf = '\0';
 	    strncat(linebuf, p, len);
 	    gnome_print_moveto(gpc, x, y);
-	    gnome_print_show(gpc, linebuf);
+	    gnome_print_show(gpc, GUCAST linebuf);
 	    p += len + 1;
 	    y -= 14; /* line spacing */
 	    line++;
@@ -482,7 +484,8 @@ void winprint (char *fullbuf, char *selbuf)
     gnome_print_job_close(job);
 
     if (preview) {
-	gtk_widget_show(gnome_print_job_preview_new(job, "Print preview"));
+	gtk_widget_show(gnome_print_job_preview_new(job, 
+						    GUCAST "Print preview"));
     } else {
 	gnome_print_job_print(job);
     }
@@ -516,10 +519,10 @@ print_image_from_pixbuf (GnomePrintContext *gpc, GdkPixbuf *pixbuf)
     width     = gdk_pixbuf_get_width (pixbuf);
         
     if (has_alpha) {
-	gnome_print_rgbaimage (gpc, (char *)raw_image, width, height, 
+	gnome_print_rgbaimage (gpc, GUCAST raw_image, width, height, 
 			       rowstride);
     } else {
-	gnome_print_rgbimage (gpc, (char *)raw_image, width, height, 
+	gnome_print_rgbimage (gpc, GUCAST raw_image, width, height, 
 			      rowstride);
     }
 }
@@ -542,7 +545,7 @@ void gnome_print_graph (const char *fname)
     config = gnome_print_job_get_config(job);
 
     dialog = gnome_print_dialog_new(job, 
-				    _("print gretl graph"), 
+				    GUCAST _("print gretl graph"), 
 				    0);
     response = gtk_dialog_run(GTK_DIALOG(dialog));
 
@@ -579,7 +582,7 @@ void gnome_print_graph (const char *fname)
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
 
-    gnome_print_beginpage(gpc, _("gretl output"));
+    gnome_print_beginpage(gpc, GUCAST _("gretl output"));
     gnome_print_gsave(gpc);
     gnome_print_translate(gpc, image_left_x, image_bottom_y);
     gnome_print_rotate(gpc, 90);
@@ -591,7 +594,8 @@ void gnome_print_graph (const char *fname)
     gnome_print_job_close(job);
 
     if (preview) {
-	gtk_widget_show(gnome_print_job_preview_new(job, "Print preview"));
+	gtk_widget_show(gnome_print_job_preview_new(job, 
+						    GUCAST "Print preview"));
     } else {
 	gnome_print_job_print(job);
     }  
