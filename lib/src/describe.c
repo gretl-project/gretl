@@ -2522,12 +2522,12 @@ gretl_matrix *gretl_matrix_periodogram (const gretl_matrix *x, int m)
     }
 
     for (t=1; t<=m; t++) {
-	yy = 2 * M_PI * t / (double) T;
+	yy = M_2PI * t / (double) T;
 	xx = varx; 
 	for (k=1; k<=T-1; k++) {
 	    xx += 2.0 * autocov[k] * cos(yy * k);
 	}
-	xx /= 2 * M_PI;
+	xx /= M_2PI;
 	xx *= T;
 	gretl_vector_set(p, t-1, xx);
 #if LWE_DEBUG
@@ -2549,7 +2549,7 @@ gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
     lambda = gretl_column_vector_alloc(m);
 
     for (i=0; i<m; i++) {
-	gretl_vector_set(lambda, i, (2.0 * M_PI / n) * (i + 1));
+	gretl_vector_set(lambda, i, (M_2PI / n) * (i + 1));
 #if LWE_DEBUG
 	fprintf(stderr, "LWE_obj_func: lambda[%d] = %g\n",
 		i, lambda->val[i]);
@@ -2909,7 +2909,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     }
 
     for (t=1; t<=nobs/2; t++) {
-	yy = 2 * M_PI * t / (double) nobs;
+	yy = M_2PI * t / (double) nobs;
 	xx = 1.0; 
 	for (k=1; k<=L; k++) {
 	    if (window) {
@@ -2919,7 +2919,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	    }
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
-	xx *= varx /(2 * M_PI);
+	xx *= varx /(M_2PI);
 	if (savexx != NULL) {
 	    savexx[t] = xx;
 	}
@@ -2954,7 +2954,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
 
     for (t=1; t<=nobs/2; t++) {
-	yy = 2 * M_PI * t / (double) nobs;
+	yy = M_2PI * t / (double) nobs;
 	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
 		(double) nobs / t, savexx[t]);
     }

@@ -77,7 +77,11 @@
 #define OBSLEN    16  /* space allocated for obs strings (including termination) */
 
 #ifndef M_PI
-# define M_PI 3.14159265358979323846
+# define M_PI 3.1415926535897932384626432
+#endif
+
+#ifndef M_2PI
+# define M_2PI 6.2831853071795864769252864
 #endif
 
 #define LN_2_PI       1.837877066409345

@@ -359,6 +359,10 @@ double gretl_scalar_qform (const gretl_vector *b,
 			   const gretl_matrix *X,
 			   int *errp);
 
+int gretl_matrix_columnwise_product (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     gretl_matrix *C);
+
 int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD);

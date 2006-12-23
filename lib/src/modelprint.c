@@ -2661,7 +2661,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		} else {
 		    mod = fabs(roots[i].r);
 		}
-		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
 		if (i == p - 1 && q == 0 && P == 0 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -2681,7 +2681,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		} else {
 		    mod = fabs(roots[i].r);
 		}
-		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
 		if (i == p + P - 1 && q == 0 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -2701,7 +2701,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		} else {
 		    mod = fabs(roots[i].r);
 		}
-		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
 		if (i == p + P + q - 1 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -2721,7 +2721,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 		} else {
 		    mod = fabs(roots[i].r);
 		}
-		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
 		if (i == p + P + q + Q - 1) {
 		    hline = 1;
 		} else {

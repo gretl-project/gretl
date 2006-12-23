@@ -522,7 +522,7 @@ double normal_cdf_inverse (double x)
 
 double normal_pdf (double x)
 {
-    return (1 / sqrt(2 * M_PI)) * exp(-0.5 * x * x);
+    return (1 / sqrt(M_2PI)) * exp(-0.5 * x * x);
 }
 
 /**

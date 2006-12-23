@@ -675,8 +675,8 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
     
-    omubar = 2.0 * M_PI / bkl;
-    omlbar = 2.0 * M_PI / bku;
+    omubar = M_2PI / bkl;
+    omlbar = M_2PI / bku;
     
     /* first we compute the coefficients */
 

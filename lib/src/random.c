@@ -81,6 +81,31 @@ void gretl_rand_set_seed (unsigned int seed)
 #endif
 }
 
+#ifdef USE_GLIB2
+#define gretl_one_uniform() (g_rand_double_range(gretl_rand, 0, 1))
+#else
+#define gretl_one_uniform() (genrand_int32() * (1.0 / 4294967296))
+#endif
+
+/**
+ * gretl_one_snormal:
+ */
+
+double gretl_one_snormal (void) 
+{
+    double x, y, z;
+
+ tryagain:
+    x = gretl_one_uniform();
+    y = gretl_one_uniform();
+    z = sqrt(-2. * log(x));
+    if (isnan(z) || isinf(z)) {
+	goto tryagain;
+    }
+
+    return (z * cos(M_2PI * y));
+}
+
 /**
  * gretl_uniform_dist_minmax:
  * @a: target array
@@ -135,11 +160,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
     int t;
 
     for (t=t1; t<=t2; t++) {
-#ifdef USE_GLIB2
-	a[t] = g_rand_double_range(gretl_rand, 0.0, 1.0);
-#else
-	a[t] = genrand_int32() * (1.0 / 4294967296.0);
-#endif 
+	a[t] = gretl_one_uniform();
     }
 }
 
@@ -157,23 +178,10 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
-    double x, y, z;
     int t;
 
     for (t=t1; t<=t2; t++) {
-    tryagain:
-#ifdef USE_GLIB2
-	x = g_rand_double(gretl_rand);
-	y = g_rand_double(gretl_rand);
-#else
-	x = genrand_real2();
-	y = genrand_real2();
-#endif
-	z = sqrt(-2. * log(x));
-	if (isnan(z) || isinf(z)) {
-	    goto tryagain;
-	}
-	a[t] = z * cos(2. * M_PI * y);
+	a[t] = gretl_one_snormal();
     }
 }
 
@@ -234,7 +242,7 @@ gretl_normal_dist_with_params (double *a, int t1, int t2,
 
 int gretl_chisq_dist (double *a, int t1, int t2, int v) 
 {
-    double x, y, z;
+    double z;
     int i, t;
 
     if (v < 1) {
@@ -244,19 +252,7 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v)
     for (t=t1; t<=t2; t++) {
 	a[t] = 0.0;
 	for (i=0; i<v; i++) {
-	tryagain:
-#ifdef USE_GLIB2
-	    x = g_rand_double(gretl_rand);
-	    y = g_rand_double(gretl_rand);
-#else
-	    x = genrand_real2();
-	    y = genrand_real2();
-#endif
-	    z = sqrt(-2. * log(x));
-	    if (isnan(z) || isinf(z)) {
-		goto tryagain;
-	    }
-	    z *= cos(2. * M_PI * y);
+	    z = gretl_one_snormal();
 	    a[t] += z * z;
 	}
     }
@@ -349,21 +345,27 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
     return 0;
 }
 
-#define RNDU (rand() / ((double) RAND_MAX + 1))
-
 /* Poisson rv with mean m */
 
 static double genpois (double m)
 {
-    double x = exp(m) * RNDU;
-    int y = 0;
+    double x;
 
-    while (x > 1) {
-	y++;
-	x *= RNDU;
+    if (m > 200) {
+	x = (m + 0.5) + sqrt(m) * gretl_one_snormal();
+	x = floor(x);
+    } else {
+	int y = 0;
+
+	x = exp(m) * gretl_one_uniform();
+	while (x > 1) {
+	    y++;
+	    x *= gretl_one_uniform();
+	}
+	x = (double) y;
     }
 
-    return (double) y;
+    return x;
 }
 
 /**

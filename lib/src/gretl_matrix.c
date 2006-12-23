@@ -4895,6 +4895,55 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 }
 
 /**
+ * gretl_matrix_columwise_product:
+ * @A: m x k matrix.
+ * @B: m x n matrix.
+ * @C: m x max(k, n) matrix to hold the product.
+ *
+ * If k = 1, column j of C is computed as the Hadamard product
+ * of A and column j of B.  Otherwise if n = 1, column j of C is
+ * the Hadamard product of column j of A and B.  Otherwise if 
+ * k = n, column j of C is the Hadamard product of column j of 
+ * A and column j of B.  
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_columnwise_product (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     gretl_matrix *C)
+{
+    int avec = (A->cols == 1);
+    int bvec = (B->cols == 1);
+    int n = (avec)? B->cols : A->cols;
+    double aval, bval;
+    int i, j, k;
+
+    if (A->rows != C->rows || B->rows != C->rows) {
+	return E_NONCONF;
+    }
+
+    if (A->cols != B->cols && !avec && !bvec) {
+	return E_NONCONF;
+    }
+
+    if (C->cols != n) {
+	return E_NONCONF;
+    }
+
+    for (j=0; j<C->cols; j++) {
+	for (i=0; i<C->rows; i++) {
+	    k = mdx(C, i, j);
+	    aval = (avec)? A->val[i] : A->val[k];
+	    bval = (bvec)? B->val[i] : B->val[k];
+	    C->val[k] = aval * bval;
+	}
+    }
+	    
+    return 0;
+}
+
+/**
  * gretl_matrix_qform:
  * @A: m * k matrix or k * m matrix, depending on @amod.
  * @amod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE: in the first

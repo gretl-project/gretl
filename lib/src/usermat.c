@@ -107,10 +107,11 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 	return 0;
     }
 
+#if 0
     if (check_varname(name)) {
 	return E_DATA;
     }
-    
+#endif
 
     tmp = realloc(matrices, (n_matrices + 1) * sizeof *tmp);
     if (tmp == NULL) {

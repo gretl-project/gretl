@@ -150,12 +150,13 @@ enum {
     MUNIF,
     MNORM,
     QFORM,
+    COLMULT,
     QR,
     EIGSYM,
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
-    COM,      /* comma */
-    DOT,    /* 130: period */
+    COM,    /* 130: comma */
+    DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
@@ -164,8 +165,8 @@ enum {
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
-    VEC,      /* series, evaluated */
-    IVEC,   /* 140: vector of integers, evaluated */
+    VEC,    /* 140: series, evaluated */
+    IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
@@ -174,8 +175,8 @@ enum {
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
-    MDEF,     /* explicit matrix definition {...} */
-    LAG,    /* 150 */
+    MDEF,   /* 150: explicit matrix definition {...} */
+    LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
@@ -184,8 +185,8 @@ enum {
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
-    FARGS,    /* set of n function arguments */
-    EMPTY,  /* 160 */
+    FARGS,  /* 160: set of n function arguments */
+    EMPTY,
     ABSENT,
     INC,
     DEC,
