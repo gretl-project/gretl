@@ -4064,8 +4064,9 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp)
 	if (adj) {
 	    p->lh.m0 = m; /* make the lh matrix pointer valid */
 	}
-	p->lh.m1 = m;
     }
+
+    p->lh.m1 = m;
     
     return m;
 }
@@ -4086,6 +4087,18 @@ static gretl_matrix *copy_old_matrix (parser *p)
     }
 
     return m;
+}
+
+static int vec_dim_ok (parser *p)
+{
+    int T = p->dinfo->t2 - p->dinfo->t1 + 1;
+    gretl_matrix *m = p->lh.m0;
+
+    if (m->rows == T && m->cols == 1) {
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 static int same_dim (parser *p)
@@ -4109,7 +4122,9 @@ static void assign_to_matrix (parser *p)
     int reuse;
 
     /* can we reuse the existing LHS gretl_matrix? */
-    reuse = (p->ret->t == NUM || (p->ret->t == MAT && same_dim(p)));
+    reuse = (p->ret->t == NUM || 
+	     (p->ret->t == MAT && same_dim(p)) ||
+	     (p->ret->t == VEC && vec_dim_ok(p)));
 
     if (reuse) {
 	m = p->lh.m0;
@@ -4119,16 +4134,22 @@ static void assign_to_matrix (parser *p)
 	    for (i=0; i<n; i++) {
 		m->val[i] = p->ret->v.xval;
 	    }
+	} else if (p->ret->t == VEC) {
+	    int i, s = p->dinfo->t1;
+
+	    for (i=0; i<m->rows; i++) {
+		m->val[i] = p->ret->v.xvec[s++];
+	    }
 	} else {
 	    gretl_matrix_copy_values(m, p->ret->v.m);
 	}
-	p->lh.m1 = m;
     } else {
 	/* replace the old matrix with result */
 	m = grab_or_copy_matrix_result(p);
 	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
-	p->lh.m1 = m;
     }
+
+    p->lh.m1 = m;
 }
 
 /* assigning to an existing (whole) LHS matrix, but using '+=' or
@@ -4618,10 +4639,28 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     gen_check_errvals(p);
 
-    /* if context is NLS or similar, warnings for
-       producing NAs become errors */
-    if (reusable(p) && p->warn != 0 && p->err == 0) {
-	p->err = p->warn;
+    if (flags & P_EXEC) {
+	/* context is NLS/MLE or similar */
+	if (p->warn != 0 && p->err == 0) {
+	    /* warnings re. NAs become errors */
+	    p->err = p->warn;
+	}
+#if 0 /* come back to this later */
+	if (p->targ == MAT) {
+	    if (p->lh.m0 == NULL) {
+		p->lh.m0 = p->lh.m1;
+	    } else if (p->lh.m1 != p->lh.m0) {
+		fprintf(stderr, "genr exec (%s) matrix target has shifted: "
+			" m0 = %p, m1 = %p\n", p->lh.name, (void *) p->lh.m0, 
+			(void *) p->lh.m1);
+	    }
+	} else {
+	    if (p->lh.v == 0) {
+		fprintf(stderr, "genr exec (%s): p->lh.v = %d\n", p->lh.name,
+			p->lh.v);
+	    }
+	}
+#endif	    
     }
 
     return p->err;
