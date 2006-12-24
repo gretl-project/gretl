@@ -1,5 +1,5 @@
 \chapter{Variabili dipendenti discrete e censurate}
-\label{discr-models}
+\label{chap:discr-models}
 
 \section{Modelli logit e probit}
 \label{sec:logit-probit}
@@ -17,23 +17,32 @@ $x_i$, ossia
     \begin{array}{ll} 1 & P_i \\ 0 & 1 - P_i \end{array}
     \right. 
 \end{equation}
-dove $P_i$ è una funzione delle variabili esplicative $x_i$.
+dove $P_i = P(y_i = 1 | x_i) $ è una funzione delle variabili esplicative $x_i$.
 
-Nella maggior parte dei casi, la funzione $P_i$ è una funzione di ripartizione,
-applicata a una combinazione lineare delle $x_i$. Nel modello probit, si usa la
+Nella maggior parte dei casi, la funzione $P_i$ è una funzione di ripartizione
+$F$, applicata a una combinazione lineare delle $x_i$. Nel modello probit, si usa la
 funzione di ripartizione normale, mentre il modello logit usa la funzione
 logistica $\Lambda()$. Quindi si ha
 \begin{eqnarray}
   \label{eq:qr-link}
-  \textrm{probit} & \qquad & P_i = \Phi(z_i)  \\
-  \textrm{logit}  & \qquad & P_i = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
+  \textrm{probit} & \qquad & P_i = F(z_i) = \Phi(z_i)  \\
+  \textrm{logit}  & \qquad & P_i = F(z_i) = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
   & &z_i = \sum_{j=1}^k x_{ij} \beta_j
 \end{eqnarray}
 dove $z_i$ è chiamata la funzione \emph{indicatrice}. Si noti che in questo
 caso, i coefficienti $\beta_j$ non possono essere interpretati come derivate
-parziali di $E(y_i | x_i)$ rispetto a $x_{ij}$. Un modo equivalente di formulare
-questo modello consiste nell'ipotizzare l'esistenza di una variabile non
-osservata $y^*_i$ che può essere descritta dal modello
+parziali di $E(y_i | x_i)$ rispetto a $x_{ij}$. Comunque, per un dato valore
+di $x_i$ è possibile calcolare il vettore delle ``pendenze'', ossia
+\[
+  \mathrm{slope}_j(\bar{x}) = \left. \pder{F(z)}{x_j} \right|_{z =
+    \bar{z}} ;
+\]
+\app{gretl} calcola automaticamente le pendenze assegnando a ogni variabile
+esplicativa un valore pari alla sua media.
+
+Un modo equivalente di formulare questo modello consiste nell'ipotizzare
+l'esistenza di una variabile non osservata $y^*_i$ che può essere descritta dal
+modello
 \begin{equation}
   \label{eq:qr-latent}
   y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i = z_i  +
@@ -49,33 +58,296 @@ logit assume che la funzione di densità di $\varepsilon_i$ sia
 \]
 
 \app{gretl} stima sia il modello probit che quello logit col metodo della
-massima verosimiglianza, usando procedure di ottimizzazione numerica. La maggior
+massima verosimiglianza; poiché le equazioni degli score non hanno una soluzione
+in forma chiusa, vengono usate procedure di ottimizzazione numerica. La maggior
 parte delle volte queste richiedono poche iterazioni per raggiungere la
 convergenza, ma è possibile visualizzare i dettagli dell'algoritmo di
 massimizzazione usando l'opzione \texttt{--verbose}.
 
-Example: \ldots
+\begin{script}[htbp]
+  \caption{Stima di semplici modelli logit e probit}
+  \label{simple-QR}
+\begin{code}
+open greene19_1
 
-\subsection{Ordered models}
+logit GRADE const GPA TUCE PSI
+probit GRADE const GPA TUCE PSI
+\end{code}
+\end{script}
+
+Come esempio, riproduciamo i risultati esposti nel capitolo 21 di Greene (2000),
+dove viene valutata l'efficacia di un programma per insegnare l'economia
+osservando i miglioramenti nei voti degli studenti.
+Eseguendo il codice contenuto nell'esempio \ref{simple-QR} si ottengono i seguenti risultati:
+\begin{code}
+
+Modello 1: Stime Logit usando le 32 osservazioni 1-32
+Variabile dipendente: GRADE
+
+      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T       PENDENZA
+                                                                  (alla media)
+  const               -13,0213           4,93132      -2,641
+  GPA                   2,82611          1,26294       2,238      0,533859   
+  TUCE                  0,0951577        0,141554      0,672      0,0179755  
+  PSI                   2,37869          1,06456       2,234      0,449339   
+
+  Media di GRADE = 0,344
+  Numero dei casi 'previsti correttamente' = 26 (81,2%)
+  f(beta'x) nella media delle variabili indipendenti = 0,189
+  Pseudo-R-quadro di McFadden = 0,374038
+  Log-verosimiglianza = -12,8896
+  Test del rapporto di verosimiglianza: Chi-quadro(3) = 15,4042 (p-value 0,001502)
+  Criterio di informazione di Akaike (AIC) = 33,7793
+  Criterio bayesiano di Schwarz (BIC) = 39,6422
+  Criterio di Hannan-Quinn (HQC) = 35,7227
+
+              Previsto
+                0    1
+  Effettivo 0  18    3
+            1   3    8
+
+Modello 2: Stime Probit usando le 32 osservazioni 1-32
+Variabile dipendente: GRADE
+
+      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T       PENDENZA
+                                                                  (alla media)
+  const                -7,45232          2,54247      -2,931
+  GPA                   1,62581          0,693883      2,343      0,533347   
+  TUCE                  0,0517288        0,0838903     0,617      0,0169697  
+  PSI                   1,42633          0,595038      2,397      0,467908   
+
+  Media di GRADE = 0,344
+  Numero dei casi 'previsti correttamente' = 26 (81,2%)
+  f(beta'x) nella media delle variabili indipendenti = 0,328
+  Pseudo-R-quadro di McFadden = 0,377478
+  Log-verosimiglianza = -12,8188
+  Test del rapporto di verosimiglianza: Chi-quadro(3) = 15,5459 (p-value 0,001405)
+  Criterio di informazione di Akaike (AIC) = 33,6376
+  Criterio bayesiano di Schwarz (BIC) = 39,5006
+  Criterio di Hannan-Quinn (HQC) = 35,581
+
+              Previsto
+                0    1
+  Effettivo 0  18    3
+            1   3    8
+
+\end{code}
+
+In questo contesto, la funzione accessoria \texttt{$\$$uhat} assume un
+significato speciale: produce i residui generalizzati come sono definiti in
+Gourieroux, che possono essere interpretati come stimatori non distorti dei
+disturbi latenti $\varepsilon_t$. Questi sono definiti come
+\begin{equation}
+  \label{eq:QR-genres}
+  u_i = \left\{
+    \begin{array}{ll}
+      y_i - \hat{P}_i & \textrm{for the logit model} \\
+      y_i\cdot \frac{\phi(\hat{z}_i)}{\Phi(\hat{z}_i)} - 
+      ( 1 - y_i ) \cdot \frac{\phi(\hat{z}_i)}{1 - \Phi(\hat{z}_i)}
+      & \textrm{for the probit model} \\
+    \end{array}
+    \right.
+\end{equation}
+
+Tra l'altro, i residui generalizzati sono spesso usati a scopo diagnostico; ad
+esempio, è molto facile costruire un test per variabili omesse
+equivalente al test LM usato tipicamente nel contesto della regressione lineare:
+l'esempio \ref{QR-add} mostra come eseguire un test per l'aggiunta di una
+variabile.
+
+\begin{script}[htbp]
+  \caption{Test per l'aggiunta di una variabile in un modello probit}
+  \label{QR-add}
+\begin{code}
+open greene19_1
+
+probit GRADE const GPA PSI
+series u = $uhat 
+
+ols u const GPA PSI TUCE -q
+printf "Test per l'aggiunta della variabile TUCE:\n"
+printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
+\end{code}
+
+\end{script}
+
+\subsection{Modelli ordinati}
 \label{sec:ordered}
 
-\section{The Tobit model}
+Questi modelli sono semplici variazioni sui normali modelli logit/probit,
+utilizzati di solito nei casi in cui la variabile dipendente assume valori
+discreti e ordinati, non necessariamente quantitativi. Ad esempio, questi
+modelli possono essere applicati per analizzare casi in cui la variabile
+dipendente è un giudizio qualitativo come ``Buono'', ``Medio'', ``Scarso''.
+Ipotizzando di avere $p$ categorie, la probabilità che l'individuo $i$ ricada
+nella $j$-esima categoria è dato da
+\begin{equation}
+  \label{eq:QR-ordered}
+  P(y_i = j | x_i) = \left\{
+    \begin{array}{ll}
+      F(z_i + \mu_0) & \textrm{for } j = 0 \\
+      F(z_i + \mu_j) -  F(z_i + \mu_{j-1}) & \textrm{for } 0 < j < p \\
+      1 -  F(z_i + \mu_{p-1}) & \textrm{for } j = p 
+    \end{array}
+    \right.
+\end{equation}
+I parametri ignoti $\mu_j$ sono chiamati ``punti di taglio'' e sono stimati
+insieme ai $\beta$'. Ai fini dell'identificazione, $\mu_0$ è ipotizzato pari a
+0.  In termini della variabile non osservata $y^*_i$, il modello può essere
+espresso in modo equivalente come
+$P(y_i = j | x_i) = P(\mu_{j-1} \le y^*_i < \mu_j)$. 
+
+\begin{script}[htbp]
+  \caption{Modello probit ordinato}
+  \label{ex:oprobit}
+\begin{code}
+open pension.gdt
+series pctstck = pctstck/50
+discrete pctstck
+probit pctstck const choice age educ female black married finc25 finc35 \
+  finc50 finc75 finc100 finc101 wealth89 prftshr
+\end{code}
+\end{script}
+
+Per applicare questi modelli, la variabile dipendente deve essere marcata come
+discreta e il suo valore minimo deve essere pari a 0. L'esempio \ref{ex:oprobit}
+riproduce la stima proposta nel capitolo 15 di Wooldridge (2002a). Si noti che
+\app{gretl} non fornisce un comando separato per i modelli ordinati: i comandi
+\texttt{logit} e \texttt{probit} stimano automaticamente le versioni ordinate se
+la variabile dipendente non è binaria (a patto che sia stata marcata in
+precedenza come discreta).
+
+Dopo aver stimato modelli ordinati, la variabile \texttt{$\$$uhat} contiene i
+residui generalizzati, come avviene per i modelli binari; in più, la variabile
+\texttt{$\$$yhat} contiene $\hat{z}_i$, così è possibile calcolare una stima non
+distorta della variabile latente $y^*_i$ semplicemente facendo l'addizione delle
+due.
+
+\section{Il modello Tobit}
 \label{sec:tobit}
 
-\subsection{Generalized Tobit model}
+Il modello Tobit viene usato quando la variabile dipendente di un modello è
+censurata: si ipotizzi che una variabile latente $y^*_i$ possa essere descritta
+come
+\[
+  y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i ,
+\]
+dove $\varepsilon_i \sim N(0,\sigma^2)$. Se le $y^*_i$ fossero osservabili, i
+parametri del modello potrebbero essere stimati con i minimi quadrati ordinari.
+Al contrario, si supponga di poter osservare $y_i$, definita
+come\footnote{Stiamo assumendo che i dati siano censurati per quanto riguarda
+  i valori inferiori a zero. I casi di censura per valori maggiori di zero,
+  o in corrispondenza di valori diversi da zero, possono essere trattati facilmente
+  ridefinendo la variabile dipendente. Il caso più generale di censura da due
+  lati non è contemplato automaticamente da \app{gretl}, ma è possibile stimare
+  tali modelli usando il comando \texttt{mle} (si veda il capitolo
+  \ref{chap:mle}).}
+\begin{equation}
+  \label{eq:tobit}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
+      0 & \mathrm{for} \quad y^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
+In questo caso, regredire $y_i$ sulle $x_i$ non produce stime consistenti dei
+parametri $\beta$, perché la media condizionale $E(y_i|x_i)$ non è pari a $\sum_{j=1}^k x_{ij}
+\beta_j$. Come si può dimostrare, nemmeno restringere il campione alle
+osservazioni diverse da zero non produrrebbe stime consistenti. La soluzione sta
+nello stimare i parametri con la massima verosimiglianza. La sintassi è
+semplicemente
+\begin{code}
+  tobit depvar indvars
+\end{code}
+
+Come al solito, è possibile visualizzare i progressi dell'algoritmo di
+massimizzazione usando l'opzione \texttt{--verbose} e \texttt{$\$$uhat}
+contiene i residui generalizzati.
+
+Un'importante differenza tra lo stimatore Tobit e quello OLS è che le
+conseguenze della non-normalità del termine di disturbo sono molto più severe,
+visto che la non-normalità implica la non consistenza per lo stimatore Tobit.
+Per questo motivo, fra i risultati del modello Tobit viene mostrato anche il
+test di normalità di Chesher-Irish.
+
+\subsection{Modello Tobit generalizzato}
 \label{sec:heckit}
 
-include Heckman example script
+Nel cosiddetto modello ``Tobit II'', esistono due variabili latenti:
+\begin{eqnarray}
+  \label{eq:heckit1}
+  y^*_i & = & \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i \\
+  \label{eq:heckit2}
+  s^*_i & = & \sum_{j=1}^p z_{ij} \gamma_j + \eta_i 
+\end{eqnarray}
+e la regola di osservazione è data da
+\begin{equation}
+  \label{eq:tobitII}
+  y_i \left\{ 
+    \begin{array}{ll} 
+      y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
+      0 & \mathrm{for} \quad s^*_i \le 0 
+    \end{array}
+    \right. 
+\end{equation}
 
-\section{Count data}
-\label{sec:poisson}
+Una delle applicazioni più popolari di questo modello in econometria prevede
+un'equazione dei salari e un'equazione della partecipazione alla forza lavoro:
+viene osservato solo il salario delle persone occupate. Se $y^*_i$ e $s^*_i$ fossero
+(condizionalmente) indipendenti, non ci sarebbe motivo per non usare lo
+stimatore OLS per stimare l'equazione (\ref{eq:heckit1}); ma in altri casi, lo
+stimatore OLS non produce stime consistenti dei parametri $\beta_j$.
 
-also include example script for negative binomial (done in Vebeek
-example files).
+Uno stimatore molto usato è il cosidetto stimatore \emph{Heckit}, che prende il
+nome da Heckman (1979). La procedura può essere schematizzata nel modo seguente:
+per prima cosa viene stimato un modello probit per l'equazione (\ref{eq:heckit2});
+quindi, vengono inseriti i residui generalizzati nell'equazione (\ref{eq:heckit1})
+per correggere gli effetti della selezione del campione.
+
+L'esempio \ref{ex:heckit} mostra due stime dal dataset usato in
+Mroz (1987): la prima replica la tabella 22.7 di Greene (2003), mentre la
+seconda replica la tabella 17.1 di Wooldridge (2002a). Si noti che lo script
+usato, \texttt{heckit.inp}, fa parte degli script di esempio forniti con \app{gretl}.
+
+\begin{script}[htbp]
+  \caption{Modello Tobit generalizzato}
+  \label{ex:heckit}
+\begin{code}
+open mroz.gdt
+include heckit.inp
+
+genr EXP2 = AX^2
+genr WA2 = WA^2
+genr KIDS = (KL6+K618)>0
+
+# Greene's specification
+
+list X = const AX EXP2 WE CIT
+list Z = const WA WA2 FAMINC KIDS WE
+
+heckit(WW,X,LFP,Z)
+
+# Wooldridge's specification
+
+series NWINC = FAMINC - WW*WHRS
+series lww = log(WW)
+list X = const WE AX EXP2
+list Z = X NWINC WA KL6 K618
+
+heckit(lww,X,LFP,Z)
+\end{code}
+\end{script}
+
+%\section{Count data}
+%\label{sec:poisson}
+
+%also include example script for negative binomial (done in Vebeek
+%example files).
 
 
 
 %%% Local Variables: 
 %%% mode: latex
-%%% TeX-master: t
+%%% TeX-master: "gretl-guide"
 %%% End: 
