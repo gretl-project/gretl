@@ -140,7 +140,10 @@ comportamento predefinito è quello di installare il programma in
 installerà il tutto sotto la directory \verb+/usr+.  Se la procedura
 di configurazione si interrompe perché una delle librerie richieste
 non è disponibile sul sistema, si veda l'appendice~\ref{app-technote}.
-
+Sulla maggior parte dei sistemi, il comando \texttt{make install} richiede
+di avere i privilegi di amministratore. Quindi, occorre assumere l'identità
+di \texttt{root} prima di eseguire  \texttt{make install}, oppure si può
+usare il comando \texttt{sudo}.
 \end{enumerate}
 
 \app{Gretl} supporta il desktop \app{gnome}. Per abilitare il supporto, occorre
