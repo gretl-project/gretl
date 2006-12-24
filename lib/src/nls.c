@@ -2670,6 +2670,10 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
     free(fvec);
     free(jac);
 
+    if (pspec->nvec > 0 && pspec->mode == ANALYTIC_DERIVS) {
+	destroy_private_matrices();
+    }
+
     if (spec == NULL) {
 	clear_nls_spec(pspec);
     }

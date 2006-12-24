@@ -83,6 +83,8 @@ void destroy_user_matrices (void);
 
 int destroy_user_matrices_at_level (int level);
 
+int destroy_private_matrices (void);
+
 double user_matrix_get_determinant (const gretl_matrix *m, int *err);
 
 double user_matrix_get_log_determinant (const gretl_matrix *m, int *err);

@@ -644,14 +644,14 @@ static void word_check_next_char (const char *s, parser *p)
 
 static void getword (parser *p)
 {  
-    char word[VNAMELEN];
+    char word[32];
     int i = 0;
 
     /* we know the first char is acceptable (and might be '$') */
     word[i++] = p->ch;
     parser_getc(p);
 
-    while (p->ch != 0 && strchr(wordchars, p->ch) != NULL && i < VNAMELEN - 1) {
+    while (p->ch != 0 && strchr(wordchars, p->ch) != NULL && i < 31) {
 	word[i++] = p->ch;
 	parser_getc(p);
     }

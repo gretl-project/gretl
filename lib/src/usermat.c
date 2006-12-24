@@ -721,6 +721,19 @@ static void destroy_user_matrix (user_matrix *u)
 #endif
 }
 
+#define LEV_PRIVATE -1
+
+static int levels_match (user_matrix *u, int lev)
+{
+    if (u->level == lev) {
+	return 1;
+    } else if (lev == LEV_PRIVATE && *u->name == '$') {
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * destroy_user_matrices_at_level:
  * @level: stack level of function execution.
@@ -751,7 +764,7 @@ int destroy_user_matrices_at_level (int level)
 	if (matrices[i] == NULL) {
 	    break;
 	}
-	if (matrices[i]->level == level) {
+	if (levels_match(matrices[i], level)) {
 #if MDEBUG
 	    fprintf(stderr, "destroying matrix[%d] ('%s' at %p)\n",
 		    i, matrices[i]->name, (void *) matrices[i]->M);
@@ -787,6 +800,11 @@ int destroy_user_matrices_at_level (int level)
 #endif
 
     return err;
+}
+
+int destroy_private_matrices (void)
+{
+    return destroy_user_matrices_at_level(LEV_PRIVATE);    
 }
 
 /**
