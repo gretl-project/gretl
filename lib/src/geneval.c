@@ -43,7 +43,9 @@
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
+
 static void printnode (const NODE *t, const parser *p);
+
 static NODE *eval (NODE *t, parser *p);
 
 static const char *typestr (int t)
@@ -4393,15 +4395,21 @@ static void parser_reinit (parser *p, double ***pZ,
     p->ret = NULL;
     p->err = 0;
     p->warn = 0;
+
     *p->warning = '\0';
+
+    /* matrix: check the LH name again */
+    if (p->targ == MAT && p->lh.m0 == NULL) {
+	p->lh.m0 = get_matrix_by_name(p->lh.name);
+    }
 }
 
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags)
 {
-    p->input = p->point = str;
-    p->rhs = p->input;
+    p->input = str;
+    p->point = p->rhs = p->input;
     p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
@@ -4431,6 +4439,7 @@ static void parser_init (parser *p, const char *str,
     p->getstr = 0;
     p->err = 0;
     p->warn = 0;
+
     *p->warning = '\0';
 
     if (p->flags & P_SLICE) {

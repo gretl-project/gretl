@@ -172,6 +172,10 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
   undefined and an error is flagged.
 \end{itemize}
 
+For a variant on element-wise multiplication that may be useful in
+some contexts, see also the \texttt{colmult()} function below
+(page~\pageref{matrix-two}).
+
 Element-wise division works in a manner exactly analogous to
 element-wise multiplication, simply replacing $\times$ by $\div$ in
 the account given for multiplication.
@@ -366,9 +370,8 @@ standard normal distribution respectively.
 \subsection{Single-return two-matrix functions}
 \label{matrix-two}
 
-At present there is only one such function, \texttt{qform()}, which
-constructs a quadratic form in a matrix $A$ and a conformable
-symmetric matrix $X$.  The command
+The function \texttt{qform()} constructs a quadratic form in a matrix
+$A$ and a conformable symmetric matrix $X$.  The command
 %
 \begin{code}
 B = qform(A, X)
@@ -377,6 +380,20 @@ B = qform(A, X)
 calculates $B = A X A^{\prime}$.  This is computed more efficiently than
 the alternative command \texttt{B = A*X*A'}.  In addition, the result
 is symmetric by construction.
+
+The function \texttt{colmult()} carries out column-wise multiplication
+of two matrices, if they are conformable.  The syntax is
+%
+\begin{code}
+C = colmult(A, B)
+\end{code}
+%  
+Let $A$ be an $m \times n$ matrix and $B$ be $m \times k$.  By
+column-wise multiplication we mean: if $n = 1$ then $c_{ij} = a_i
+\times b_{ij}$; otherwise if $k = 1$ then $c_{ij} = a_{ij} \times b_{i}$;
+otherwise if $k = n$ then $c_{ij} = a_{ij} \times b_{ij}$; otherwise
+the result is undefined and an error is flagged.
+
 
 \subsection{Multiple-return matrix functions}
 \label{matrix-multiples}

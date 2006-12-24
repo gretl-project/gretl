@@ -75,6 +75,18 @@
         <long>Used by gretl to start up the GNU R statistical program</long>
       </locale>
     </schema>
+    
+    <schema>
+      <key>/schemas/apps/gretl/latex</key>
+      <applyto>/apps/gretl/latex</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>latex</default>
+      <locale name="C">
+        <short>Command to compile TeX files</short>
+        <long>Command issued by gretl for compiling files</long>
+      </locale>
+    </schema>    
 
     <schema>
       <key>/schemas/apps/gretl/viewdvi</key>
@@ -87,7 +99,31 @@
         <long>Command issued by gretl for viewing tex DVI files</long>
       </locale>
     </schema>
-
+    
+    <schema>
+      <key>/schemas/apps/gretl/viewps</key>
+      <applyto>/apps/gretl/viewps</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>dvips</default>
+      <locale name="C">
+        <short>Command to view PostScript files</short>
+        <long>Command issued by gretl for viewing PostScript files</long>
+      </locale>
+    </schema>
+    
+    <schema>
+      <key>/schemas/apps/gretl/viewpdf</key>
+      <applyto>/apps/gretl/viewpdf</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>dvips</default>
+      <locale name="C">
+        <short>Command to view PDF files</short>
+        <long>Command issued by gretl for viewing PDF files</long>
+      </locale>
+    </schema>
+    
     <schema>
       <key>/schemas/apps/gretl/editor</key>
       <applyto>/apps/gretl/editor</applyto>
@@ -209,18 +245,6 @@
       <locale name="C">
         <short>Use ".dat" as default datafile suffix</short>
         <long>May be useful if working with old gretl datafiles</long>
-      </locale>
-    </schema>
-
-    <schema>
-      <key>/schemas/apps/gretl/jwdata</key>
-      <applyto>/apps/gretl/jwdata</applyto>
-      <owner>gretl</owner>
-      <type>bool</type>
-      <default>FALSE</default>
-      <locale name="C">
-        <short>Make toolbar directory icon open Wooldridge data</short>
-        <long>The default (false) means that Ramanathan data will be used</long>
       </locale>
     </schema>
 

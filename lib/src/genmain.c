@@ -604,8 +604,8 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo)
     PRN *prn = NULL;
 
 #if GDEBUG
-    fprintf(stderr, "\n*** execute_genr: p = %p\n s='%s'\n", 
-	    (void *) p, p->input);
+    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s'\n", 
+	    (void *) p, p->lh.name);
     gretl_print_new(GRETL_PRINT_STDERR);
 #endif
 
