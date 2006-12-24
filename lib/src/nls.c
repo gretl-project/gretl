@@ -104,10 +104,10 @@ static gretl_matrix *deriv_matrix (nls_spec *s, int i)
 {
     gretl_matrix *m = get_matrix_by_name(s->params[i].dname);
 
-#if ML_DEBUG
-    fprintf(stderr, "deriv_matrix for param %d: '%s' at %p\n",
-	    i, s->params[i].dname, (void *) m);
-#endif
+    if (m != s->params[i].dmat) {
+	fprintf(stderr, "param.dmat = %p, but get_matrix_by_name(%s) = %p\n", 
+		(void *) s->params[i].dmat, s->params[i].dname, (void *) m);
+    }
 
     if (m == NULL) {
 	fprintf(stderr, "Couldn't find deriv matrix for param %d\n", i);
@@ -188,11 +188,17 @@ static int nls_genr_setup (void)
 	}
 
 	if (!err) {
+	    int k = j - 1;
+
 	    v = genr_get_varnum(genrs[i]);
 	    if (i == pspec->naux) {
 		pspec->uhatnum = v;
 	    } else if (j > 0) {
-		pspec->params[j-1].dnum = v;
+		if (scalar_param(pspec, k)) {
+		    pspec->params[k].dnum = v;
+		} else {
+		    pspec->params[k].dmat = get_matrix_by_name(pspec->params[k].dname);
+		}
 	    }
 #if NLS_DEBUG
 	    fprintf(stderr, " genr->varnum = %d\n", v);

@@ -4088,30 +4088,43 @@ static gretl_matrix *copy_old_matrix (parser *p)
     return m;
 }
 
+static int same_dim (parser *p)
+{
+    gretl_matrix *rm = p->ret->v.m;
+    gretl_matrix *m0 = p->lh.m0;
+
+    if (gretl_matrix_rows(m0) == gretl_matrix_rows(rm) &&
+	gretl_matrix_cols(m0) == gretl_matrix_cols(rm)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* generating a matrix: there's a pre-existing LHS matrix */
 
 static void assign_to_matrix (parser *p)
 {
     gretl_matrix *m;
+    int reuse;
 
-    if (p->ret->t == NUM) {
-	/* scalar result: assign this result to each
-	   element of the existing matrix */
-	m = copy_old_matrix(p);
-	if (m != NULL) {
+    /* can we reuse the existing LHS gretl_matrix? */
+    reuse = (p->ret->t == NUM || (p->ret->t == MAT && same_dim(p)));
+
+    if (reuse) {
+	m = p->lh.m0;
+	if (p->ret->t == NUM) {
 	    int i, n = m->rows * m->cols;
 
 	    for (i=0; i<n; i++) {
 		m->val[i] = p->ret->v.xval;
 	    }
+	} else {
+	    gretl_matrix_copy_values(m, p->ret->v.m);
 	}
-
-	if (!p->err) {
-	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
-	    p->lh.m1 = m;
-	}
+	p->lh.m1 = m;
     } else {
-	/* overwrite the old matrix with new */
+	/* replace the old matrix with result */
 	m = grab_or_copy_matrix_result(p);
 	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
 	p->lh.m1 = m;
