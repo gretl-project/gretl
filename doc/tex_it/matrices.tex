@@ -171,6 +171,10 @@ $m \times n$ e $B$ è una matrice $p \times q$.
 \item Se non è soddisfatta alcuna delle condizioni precedenti, il prodotto non è
   definito e viene segnalato un errore.
 \end{itemize}
+ 
+Per una variante della moltiplicazione per elementi che può essere utile in
+alcuni contesti, si veda anche la funzione \texttt{colmult()} descritta in
+seguito (pagina~\pageref{matrix-two}).
 
 La divisione per elementi funziona in modo simile alla moltiplicazione per elementi,
 sostituendo $\times$ con $\div$ nella spiegazione precedente.
@@ -226,6 +230,7 @@ possibile suddividere in quattro categorie:
 \item Quelle che richiedono come argomento una sola matrice e producono uno scalare.
 \item Quelle che richiedono come argomento una sola matrice e producono una matrice.
 \item Quelle che richiedono come argomento uno o due valori e producono una matrice.
+\item Quelle che richiedono come argomento due matrici e producono una matrice.
 \item Quelle che richiedono come argomento una o due matrici e producono una o due matrici.
 \end{enumerate}
 %
@@ -270,6 +275,8 @@ matrice sono:
 \texttt{sumr()} & somma per riga \\
 \texttt{meanc()} & media per colonna \\
 \texttt{meanr()} & media per riga \\
+\texttt{mcov()} & matrice di covarianza per colonne \\
+\texttt{mcorr()} & matrice di correlazione per colonne \\
 \texttt{inv()} & inversa \\
 \texttt{cholesky()} & scomposizione di Cholesky \\
 \texttt{diag()} & diagonale principale \\
@@ -289,6 +296,12 @@ produce un vettore riga con le $n$ somme per colonna, mentre \texttt{sumr(A)}
 produce un vettore colonna con le $m$ somme per riga. \texttt{meanc(A)}
 produce un vettore riga con le $n$ medie per colonna e \texttt{meanr(A)}
 un vettore colonna con le $m$ medie per riga.
+
+Per una matrice $A$ con $T$ righe e $k$ colonne, \texttt{mcov(A)} e
+\texttt{mcorr(A)} producono entrambe delle matrici simmetriche $k \times k$,
+nel primo caso contenenti le varianze (sulla diagonale) e le covarianze delle
+variabili nelle colonne di $A$, e nel secondo caso, le correlazioni delle
+variabili.
 
 La funzione \texttt{cholesky} calcola la scomposizione di Cholesky
 $L$ di una matrice simmetrica definita positiva $A$: $A = LL'$; $L$ è
@@ -346,6 +359,33 @@ matrix A = mnormal(m,n)
 Le funzioni matriciali \texttt{muniform()} e \texttt{mnormal()} riempiono la
 matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
 distribuzione normale standard.
+
+\subsection{Funzioni da coppie di matrici a matrici}
+\label{matrix-two}
+
+La funzione \texttt{qform()} costruisce una forma quadratica in una matrice
+$A$ e una matrice simmetrica $X$ conformabile. Il comando
+%
+\begin{code}
+B = qform(A, X)
+\end{code}
+%
+calcola $B = A X A^{\prime}$.  Questo risultato viene calcolato in modo più
+efficiente rispetto al comando alternativo \texttt{B = A*X*A'}. Inoltre, il
+risultato è simmetrico per costruzione.
+
+La funzione \texttt{colmult()} esegue la moltiplicazione per colonne di due
+matrici, se esse sono conformabili. La sintassi è la seguente:
+%
+\begin{code}
+C = colmult(A, B)
+\end{code}
+%  
+Se $A$ è una matrice $m \times n$ e $B$ è $m \times k$, la moltiplicazione per
+colonne è definita nel modo seguente: se $n = 1$, $c_{ij} = a_i
+\times b_{ij}$; altrimenti se $k = 1$, then $c_{ij} = a_{ij} \times b_{i}$;
+altrimenti se $k = n$, $c_{ij} = a_{ij} \times b_{ij}$; altrimenti il risultato
+è indefinito e viene segnalato un errore.
 
 \subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
