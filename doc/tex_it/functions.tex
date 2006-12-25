@@ -49,6 +49,20 @@ riconosciuto all'interno della funzione. Ecco un esempio:
       function funzione(series y, list xvars, bool verboso)
 \end{code}
 
+Ognuno di questi indicatori di tipo, con l'eccezione di \texttt{list},
+può essere modificato facendo precedere da un asterisco il parametro ad esso
+associato, come in questo esempio
+%    
+\begin{code}
+      function funzione(series *y, scalar *b)
+\end{code}
+
+Il significato di questa modifica è spiegato nella sezione
+\ref{funscope} e ha a che fare con l'uso dei puntatori nel linguaggio di
+programmazione C. Inoltre, i parametri di tipo \texttt{list} (e solo essi)
+possono essere modificati con il tag \texttt{const} (anche in questo caso, 
+si veda la sezione \ref{funscope}).
+
 Oltre a questi elementi richiesti, la specificazione di un parametro
 \texttt{scalare} può includere fino a tre ulteriori informazioni: un valore
 minimo, uno massimo e un valore predefinito. Questi valori aggiuntivi devono
@@ -89,12 +103,12 @@ fatti dei controlli automatici per assicurarsi che il numero degli
 argomenti contenuti in una chiamata di funzione corrisponda al numero
 di parametri, e che i tipi degli argomenti corrispondano ai tipi
 specificati nella definizione della funzione; se qualcuna di queste
-condizioni è violata, viene segnalato un errore\footnote{È consentito
+condizioni è violata, viene segnalato un errore. Una precisazione: è consentito
 omettere degli argomenti alla fine della lista, a patto che i valori predefiniti
 siano specificati nella definizione della funzione. Più precisamente: il
 controllo consiste nell'assicurarsi che il numero degli argomenti sia almeno
 uguale al numero dei parametri \textit{richiesti} e non superiore al numero
-totale dei parametri.}.
+totale dei parametri.
 
 È possibile indicare uno scalare, una serie, o una matrice come argomento
 di una funzione, sia specificando il nome di una variabile preesistente,
@@ -166,6 +180,7 @@ valore prodotto dalla funzione ad alcune variabili:
 \label{func-details}
  
 \subsection{Ambito delle variabili}
+\label{funscope}
 
 Tutte le variabili create in una funzione sono locali a quella
 funzione, e vengono distrutte quando la funzione termina la sua
@@ -241,6 +256,41 @@ Se alla chiamata non si ha interesse per il valore di \texttt{ess}, occorre usar
       series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
 
+\subsection{Argomenti lista}
+
+L'uso di una lista come argomento di una funzione dà modo di fornire a una
+funzione un numero di argomenti che non è noto al momento della scrittura della
+funzione, ad esempio un insieme di regressori o di strumenti. All'interno della
+funzione, la lista può essere passata a comandi come
+\texttt{ols}, oppure può essere ``espansa'' usando un costrutto loop
+\texttt{foreach}. Ad esempio, si supponga di avere una lista
+\texttt{X} e di voler calcolare la deviazione standard di ogni variabile della
+lista:
+%
+\begin{code}
+     loop foreach i X
+        scalar sd_$i = sd($i)
+     end loop
+\end{code}
+
+Quando a una funzione viene passata una lista di variabili, in realtà riceve
+una copia della lista; al contrario, le variabili referenziate dalla lista sono
+direttamente accessibili dalla funzione, in modo simile a quando si passa
+uno scalare o una serie come ``puntatore'', come descritto in precedenza.
+Passare una lista a una funzione è quindi un altro modo per consentire a una
+funzione di modificare i dati quando questa viene chiamata, piuttosto che
+produrre semplicemente un valore di uscita. Se le variabili \textit{non} verranno
+modificate nella funzione, è una buona idea sottolineare questo fatto usando
+l'identificatore \texttt{const} nella lista dei parametri, come in questo
+esempio:
+%
+\begin{code}
+     function funzione (scalar y, const list X)
+\end{code}
+%
+Quando una lista è marcata come \texttt{const}, ogni tentativo di rinomiare,
+cancellare o sovrascrivere i valori originali delle variabili nella lista
+produrrà un errore.
 
 \subsection{Valori di uscita}
 
