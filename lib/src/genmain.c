@@ -635,7 +635,16 @@ void destroy_genr (parser *p)
     }
 }
 
-int genr_get_varnum (const parser *p)
+int genr_get_output_varnum (const parser *p)
 {
     return p->lh.v;
+}
+
+gretl_matrix *genr_get_output_matrix (const parser *p)
+{
+    if (p->targ == MAT) {
+	return p->lh.m1;
+    } else {
+	return NULL;
+    }
 }

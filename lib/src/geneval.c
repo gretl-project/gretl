@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 2 /* can be set > 1 */
+# define EDEBUG 1 /* can be set > 1 */
 #else
 # define EDEBUG 0
 #endif
@@ -47,6 +47,8 @@ static void parser_init (parser *p, const char *str,
 static void printnode (const NODE *t, const parser *p);
 
 static NODE *eval (NODE *t, parser *p);
+
+static void node_type_error (const NODE *n, parser *p, int t, int badt);
 
 static const char *typestr (int t)
 {
@@ -1689,15 +1691,39 @@ static int series_get_end (int n, const double *x)
     return t + 1;
 }
 
+static void cast_to_series (NODE *n, gretl_matrix **tmp, parser *p)
+{
+    gretl_matrix *m = n->v.m;
+
+    if (gretl_vector_get_length(m) != p->dinfo->n) {
+	node_type_error(n, p, VEC, MAT);
+    } else {
+	*tmp = m;
+	n->v.xvec = m->val;
+    }
+}
+
 /* functions taking a series as argument and returning a scalar */
 
 static NODE *
 series_scalar_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    const double *x = n->v.xvec;
 
     if (ret != NULL && starting(p)) {
+	gretl_matrix *tmp = NULL;
+	const double *x;
+
+	if (n->t == MAT) {
+	    cast_to_series(n, &tmp, p);
+	    if (p->err) {
+		free_tree(ret, "failed cast");
+		return NULL;
+	    }
+	}
+
+	x = n->v.xvec;
+
 	switch (f) {
 	case SUM:
 	    ret->v.xval = gretl_sum(p->dinfo->t1, p->dinfo->t2, x);
@@ -1740,6 +1766,10 @@ series_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	default:
 	    break;
+	}
+
+	if (n->t == MAT) {
+	    n->v.m = tmp;
 	}
     }
 
@@ -1854,6 +1884,16 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (ret != NULL && starting(p)) {
+	gretl_matrix *tmp = NULL;
+
+	if (l->t == MAT) {
+	    cast_to_series(l, &tmp, p);
+	    if (p->err) {
+		free_tree(ret, "failed cast");
+		return NULL;
+	    }
+	}
+
 	switch (f) {
 	case HPFILT:
 	   p->err = hp_filter(l->v.xvec, ret->v.xvec, p->dinfo, OPT_NONE);
@@ -1886,6 +1926,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	   break;
 	default:
 	    break;
+	}
+
+	if (l->t == MAT) {
+	    l->v.m = tmp;
 	}
     }
 
@@ -3090,7 +3134,7 @@ static NODE *eval (NODE *t, parser *p)
     case PMEAN:
     case PSD:
 	/* series argument needed */
-	if (l->t == VEC) {
+	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t, p, VEC, l->t);
@@ -3119,7 +3163,7 @@ static NODE *eval (NODE *t, parser *p)
     case T1:
     case T2:
 	/* functions taking series arg, returning scalar */
-	if (l->t == VEC) {
+	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
 	} else {
 	    node_type_error(t, p, VEC, l->t);
@@ -4511,6 +4555,19 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    save_generated_var(p, prn);
 	} 
     }
+
+#if 0
+    if (p->targ == MAT) {
+	fprintf(stderr, "genr exec (%s): "
+		" m0 = %p, m1 = %p\n", p->lh.name, (void *) p->lh.m0, 
+		(void *) p->lh.m1);
+    } else {
+	if (p->lh.v == 0) {
+	    fprintf(stderr, "genr exec (%s): p->lh.v = %d\n", p->lh.name,
+		    p->lh.v);
+	}
+    }
+#endif    
 }
 
 void gen_cleanup (parser *p)
@@ -4645,22 +4702,6 @@ int realgen (const char *s, parser *p, double ***pZ,
 	    /* warnings re. NAs become errors */
 	    p->err = p->warn;
 	}
-#if 0 /* come back to this later */
-	if (p->targ == MAT) {
-	    if (p->lh.m0 == NULL) {
-		p->lh.m0 = p->lh.m1;
-	    } else if (p->lh.m1 != p->lh.m0) {
-		fprintf(stderr, "genr exec (%s) matrix target has shifted: "
-			" m0 = %p, m1 = %p\n", p->lh.name, (void *) p->lh.m0, 
-			(void *) p->lh.m1);
-	    }
-	} else {
-	    if (p->lh.v == 0) {
-		fprintf(stderr, "genr exec (%s): p->lh.v = %d\n", p->lh.name,
-			p->lh.v);
-	    }
-	}
-#endif	    
     }
 
     return p->err;

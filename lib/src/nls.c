@@ -39,7 +39,6 @@ typedef struct parm_ parm;
 
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter (scalar or vector) */
-    char dname[VNAMELEN]; /* name of derivative variable, if any */
     char *deriv;          /* string representation of derivative of regression
 			     function with respect to param (or NULL) */
     int vnum;             /* ID number of scalar variable in dataset */
@@ -99,23 +98,6 @@ static nls_spec *pspec;
 static integer one = 1;
 static int genr_err;
 
-
-static gretl_matrix *deriv_matrix (nls_spec *s, int i)
-{
-    gretl_matrix *m = get_matrix_by_name(s->params[i].dname);
-
-    if (m != s->params[i].dmat) {
-	fprintf(stderr, "param.dmat = %p, but get_matrix_by_name(%s) = %p\n", 
-		(void *) s->params[i].dmat, s->params[i].dname, (void *) m);
-    }
-
-    if (m == NULL) {
-	fprintf(stderr, "Couldn't find deriv matrix for param %d\n", i);
-    }
-
-    return m;
-}
-
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
     int i;
@@ -125,6 +107,25 @@ static void destroy_genrs_array (GENERATOR **genrs, int n)
     }
 
     free(genrs);
+}
+
+static int check_derivative_matrix (int i, GENERATOR *g)
+{
+    gretl_matrix *m = genr_get_output_matrix(g);
+    int r = gretl_matrix_rows(m);
+    int c = gretl_matrix_cols(m);
+    
+    pspec->params[i].dmat = m;
+
+    if (c != pspec->params[i].vlen || (r != 1 && r != pspec->nobs)) {
+	fprintf(stderr, "matrix deriv for param %d is %d x %d: WRONG\n", 
+		i, r, c);
+	fprintf(stderr, "vlen = %d, nobs = %d\n", pspec->params[i].vlen,
+		pspec->nobs);
+	return 1;
+    }
+
+    return 0;
 }
 
 /* we "compile" the required equations first, so we can
@@ -167,12 +168,10 @@ static int nls_genr_setup (void)
 	    sprintf(formula, "$nl_y = %s", pspec->nlfunc); 
 	} else {
 	    /* derivatives/gradients */
-	    sprintf(pspec->params[j].dname, "$nl_x%d", i);
 	    if (scalar_param(pspec, j)) {
-		sprintf(formula, "%s = %s", pspec->params[j].dname, 
-			pspec->params[j].deriv);
+		sprintf(formula, "$nl_x%d = %s", i, pspec->params[j].deriv);
 	    } else {
-		sprintf(formula, "matrix %s = %s", pspec->params[j].dname, 
+		sprintf(formula, "matrix $nl_x%d = %s", i, 
 			pspec->params[j].deriv);
 	    }		
 	    j++;
@@ -190,14 +189,14 @@ static int nls_genr_setup (void)
 	if (!err) {
 	    int k = j - 1;
 
-	    v = genr_get_varnum(genrs[i]);
+	    v = genr_get_output_varnum(genrs[i]);
 	    if (i == pspec->naux) {
 		pspec->uhatnum = v;
 	    } else if (j > 0) {
 		if (scalar_param(pspec, k)) {
 		    pspec->params[k].dnum = v;
 		} else {
-		    pspec->params[k].dmat = get_matrix_by_name(pspec->params[k].dname);
+		    err = check_derivative_matrix(k, genrs[i]);
 		}
 	    }
 #if NLS_DEBUG
@@ -219,6 +218,9 @@ static int nls_genr_setup (void)
     return err;
 }
 
+/* if i == 0 we're calculating the function; if i > 0 we're calculating
+   a derivative */
+
 static int nls_auto_genr (int i)
 {
     int j;
@@ -232,9 +234,6 @@ static int nls_auto_genr (int i)
 	if (genr_err) {
 	    fprintf(stderr, " nls_genr_setup failed\n");
 	}
-#if NLS_DEBUG
-	fprintf(stderr, " initialized, returning\n");
-#endif
 	return genr_err;
     }
 
@@ -252,9 +251,14 @@ static int nls_auto_genr (int i)
 #endif
     genr_err = execute_genr(pspec->genrs[j], nZ, ndinfo);
 
+    /* make sure we have a correct pointer to matrix deriv */
+    if (!genr_err && i > 0 && !scalar_param(pspec, i-1)) {
+	genr_err = check_derivative_matrix(i-1, pspec->genrs[j]);
+    }
+
 #if NLS_DEBUG
     if (genr_err) {
-	int v = genr_get_varnum(pspec->genrs[j]);
+	int v = genr_get_output_varnum(pspec->genrs[j]);
 
 	fprintf(stderr, " varnum = %d, err = %d\n", v, genr_err);
 	errmsg(genr_err, nprn);
@@ -354,7 +358,6 @@ static int nls_spec_push_param (nls_spec *spec, const char *name,
 
     params[np].name[0] = '\0';
     strncat(params[np].name, name, VNAMELEN - 1);
-    params[np].dname[0] = '\0';
     params[np].deriv = deriv;
     params[np].vnum = v;
     params[np].dnum = 0;
@@ -993,7 +996,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G)
 	    }
 	} else {
 	    /* vector param, matrix derivative */
-	    gretl_matrix *m = deriv_matrix(pspec, j);
+	    gretl_matrix *m = pspec->params[j].dmat;
 	    int i;
 
 	    if (m == NULL) {
@@ -1096,7 +1099,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 	    i++;
 	} else {
 	    /* param is vector: derivative is matrix */
-	    m = deriv_matrix(pspec, j);
+	    m = pspec->params[j].dmat;
 
 	    if (m == NULL) {
 		fprintf(stderr, "param %d: couldn't find gradient matrix\n", j);
@@ -1326,7 +1329,7 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 		}
 		j++;
 	    } else {
-		gretl_matrix *m = deriv_matrix(spec, i);
+		gretl_matrix *m = spec->params[i].dmat;
 
 		for (s=0; s<m->cols; s++) {
 		    x = gretl_matrix_get(m, 0, s);
@@ -2431,6 +2434,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
     if (spec != NULL) {
 	spec->t1 = t1;
 	spec->t2 = t2;
+	spec->nobs = t2 - t1 + 1;
     }
 }
 
@@ -2788,7 +2792,7 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
 
     spec->t1 = pdinfo->t1;
     spec->t2 = pdinfo->t2;
-    spec->nobs = 0;
+    spec->nobs = spec->t2 - spec->t1 + 1;
 
     return spec;
 }

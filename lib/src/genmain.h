@@ -20,6 +20,8 @@
 #ifndef GENMAIN_H
 #define GENMAIN_H
 
+#include "gretl_matrix.h"
+
 typedef enum {
     R_NOBS = 1,  /* number of observations in current sample range */
     R_NVARS,     /* number of variables in dataset (including the constant) */
@@ -79,7 +81,9 @@ int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo);
 
 void destroy_genr (GENERATOR *genr);
 
-int genr_get_varnum (const GENERATOR *genr);
+int genr_get_output_varnum (const GENERATOR *genr);
+
+gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
