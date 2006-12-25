@@ -2299,8 +2299,8 @@
         
 	<li><para>
 	    Numeri pseudo-casuali: <func>uniform</func>,
-            <func>normal</func>, <func>chisq</func>, <func>student</func>
-            e <func>binomial</func>. Le prime due funzioni non accettano
+            <func>normal</func>, <func>chisq</func>, <func>student</func>,
+            <func>binomial</func> e <func>poisson</func>. Le prime due funzioni non accettano
             argomenti e vanno scritte con parentesi vuote:
 	    <lit>uniform()</lit>, <lit>normal()</lit>. Esse
             creano serie pseudo-casuali estraendo i valori dalle distribuzioni
@@ -2308,8 +2308,12 @@
             un singolo argomento intero, ossia i gradi di libertà, generando
             delle estrazioni dalle distribuzioni Chi-quadro e t di Student. La
             funzione <func>binomial</func> accetta due parametri: un numero
-            intero di tentativi una probabilità di <quote>successo</quote>. Le
-            serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
+            intero di tentativi una probabilità di <quote>successo</quote>. 
+            La funzione <func>poisson</func> accetta un singolo argomento: la
+            media, che può essere sia uno scalare che una serie.
+            Le serie dalla distribuzione uniforme, che sono usate come base per
+            calcolare le distribuzioni più complesse, sono generate usando il
+            Mersenne Twister
             <footnote><para>Si veda Matsumoto e Nishimura
             (1998). L'implementazione è fornita da <program>glib</program>, se è
             disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
@@ -2728,6 +2732,13 @@
             e la probabilità di <quote>successo</quote>.
           </para>
         </li>
+        <li>
+          <para>
+            Poisson: occorre fornire la media, come valore numerico, o come nome
+            di uno scalare o di una serie.
+          </para>
+        </li>
+
       </ilist>
 
       <para>
