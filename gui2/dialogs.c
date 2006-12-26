@@ -34,7 +34,7 @@ static int all_done;
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
-				  gpointer p);
+				  int hcode, gpointer p);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
 void menu_exit_check (GtkWidget *w, gpointer data)
@@ -1843,7 +1843,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, &rset->p);
+    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       hbox, TRUE, TRUE, 5);
@@ -2562,7 +2562,7 @@ static void set_radio_opt (GtkWidget *w, int *opt)
 }
 
 int real_radio_dialog (const char *title, const char *label,
-		       const char **opts, int nopts, int deflt, int helpcode,
+		       const char **opts, int nopts, int deflt, int hcode,
 		       int *spinvar, const char *spintxt,
 		       int spinmin, int spinmax)
 {
@@ -2612,7 +2612,7 @@ int real_radio_dialog (const char *title, const char *label,
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, 0, NULL);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tmp, TRUE, TRUE, 0);
@@ -2630,8 +2630,8 @@ int real_radio_dialog (const char *title, const char *label,
     gtk_widget_show(tmp);
 
     /* Create a "Help" button? */
-    if (helpcode) {
-	context_help_button(GTK_DIALOG(dialog)->action_area, helpcode);
+    if (hcode) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, hcode);
     }
 
     gtk_widget_show(dialog);
@@ -2640,18 +2640,18 @@ int real_radio_dialog (const char *title, const char *label,
 }
 
 int radio_dialog (const char *title, const char *label, const char **opts, 
-		  int nopts, int deflt, int helpcode)
+		  int nopts, int deflt, int hcode)
 {
-    return real_radio_dialog(title, label, opts, nopts, deflt, helpcode,
+    return real_radio_dialog(title, label, opts, nopts, deflt, hcode,
 			     NULL, NULL, 0, 0);
 }
 
 int radio_dialog_with_spinner (const char *title, const char **opts, 
-			       int nopts, int deflt, int helpcode,
+			       int nopts, int deflt, int hcode,
 			       int *spinvar, const char *spintxt,
 			       int spinmin, int spinmax)
 {
-    return real_radio_dialog(title, NULL, opts, nopts, deflt, helpcode,
+    return real_radio_dialog(title, NULL, opts, nopts, deflt, hcode,
 			     spinvar, spintxt, spinmin, spinmax);
 }
 
@@ -2760,19 +2760,20 @@ static GtkWidget *dialog_blurb_box (const char *text)
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
-				  gpointer p)
+				  int ci, gpointer p)
 {
     GtkWidget *hbox;
     GtkWidget *label;
     GtkWidget *button;
     GtkObject *adj;
+    int step = (ci == FREQ)? 2 : 1;
 
     hbox = gtk_hbox_new(FALSE, 5);
 
     label = gtk_label_new(spintxt);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, 1, 1, 1);
+    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 1);
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
@@ -2810,7 +2811,7 @@ int checks_dialog (const char *title, const char *blurb,
 		   const char **opts, int nopts,
 		   int *active, int nradios, int *rvar, int *spinvar, 
 		   const char *spintxt, int spinmin, int spinmax, 
-		   int helpcode)
+		   int hcode)
 {
     GtkWidget *dialog;
     GtkWidget *tmp, *okb;
@@ -2830,7 +2831,7 @@ int checks_dialog (const char *title, const char *blurb,
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 			   tmp, TRUE, TRUE, 5);
@@ -2894,8 +2895,8 @@ int checks_dialog (const char *title, const char *blurb,
     }
 
     /* Create a "Help" button if wanted */
-    if (helpcode) {
-	context_help_button(GTK_DIALOG(dialog)->action_area, helpcode);
+    if (hcode && hcode != FREQ) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, hcode);
     }
 
     gtk_widget_show(dialog);
@@ -2905,11 +2906,11 @@ int checks_dialog (const char *title, const char *blurb,
 
 int spin_dialog (const char *title, const char *blurb,
 		 int *spinvar, const char *spintxt, 
-		 int spinmin, int spinmax, int helpcode)
+		 int spinmin, int spinmax, int hcode)
 {
     return checks_dialog(title, blurb, NULL, 0, NULL, 0, NULL,
 			 spinvar, spintxt,
-			 spinmin, spinmax, helpcode);
+			 spinmin, spinmax, hcode);
 }
 
 #if defined(G_OS_WIN32)

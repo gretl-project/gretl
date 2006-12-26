@@ -3377,31 +3377,44 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     gretlopt opt = (dist == D_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata_active_var();
     int nbins = 0;
+    int err = 0;
 
-#if 1 /* not yet: bin size choice */
-    double xmax, xmin, binwidth;
-    char *bintxt;
-    int n, err;
-
-    err = freq_setup(v, (const double **) Z, datainfo,
-		     &n, &xmax, &xmin, &nbins, &binwidth);
-    if (err) {
-	gui_errmsg(err);
+    if (var_is_scalar(datainfo, v)) {
+	errbox(_("This variable is a scalar"));
 	return;
     }
 
-    bintxt = g_strdup_printf(_("Frequency plot for %s (n = %d, "
-			     "range %g to %g)"), 
-			     datainfo->varname[v],
-			     n, xmin, xmax);
+    if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[v])) {
+	nbins = 3;
+    } else if (!var_is_discrete(datainfo, v)) {
+	double xmax, xmin;
+	char *bintxt;
+	int n;
 
-    err = spin_dialog("gretl: frequency plot setup", bintxt, &nbins, 
-		      _("Number of bins:"), 2, n, 0);
-    if (err < 0) {
-	/* canceled */
-	return;
+	err = freq_setup(v, (const double **) Z, datainfo,
+			 &n, &xmax, &xmin, &nbins, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	    return;
+	}
+
+	bintxt = g_strdup_printf(_("Frequency plot for %s (n = %d, "
+				   "range %g to %g)"), 
+				 datainfo->varname[v],
+				 n, xmin, xmax);
+
+	if (n % 2 == 0) n--;
+
+	err = spin_dialog("gretl: frequency plot setup", bintxt, &nbins, 
+			  _("Number of bins:"), 3, n, FREQ);
+
+	g_free(bintxt);
+
+	if (err < 0) {
+	    /* canceled */
+	    return;
+	}
     }
-#endif
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
 			  (dist == D_GAMMA)? " --gamma" : "");
@@ -3427,6 +3440,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	    register_graph();
 	}
     }
+
     free_freq(freq);
 }
 
