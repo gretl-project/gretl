@@ -571,6 +571,7 @@ const char *get_gretl_png_term_line (PlotType ptype)
 	if (frequency_plot_code(ptype)) {
 	    strcat(color_string, " ");
 	    strcat(color_string, graph_palette[BOXCOLOR]);
+	    strcat(color_string, " x000000");
 	} else {
 	    for (i=0; i<BOXCOLOR; i++) {
 		strcat(color_string, " ");

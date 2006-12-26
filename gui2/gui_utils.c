@@ -2953,7 +2953,7 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 	title = g_strdup_printf("gretl: %s", 
 				(code == VAR_IRF)? _("impulse responses") :
 				_("variance decompositions"));
-	err = checks_dialog(title, NULL, 0, NULL, 0, NULL,
+	err = checks_dialog(title, NULL, NULL, 0, NULL, 0, NULL,
 			    &h, _("forecast horizon (periods):"),
 			    2, datainfo->n / 2, 0);
 	g_free(title);
@@ -3048,7 +3048,7 @@ static int impulse_response_setup (int *horizon, int *bootstrap)
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
-    err = checks_dialog(title, 
+    err = checks_dialog(title, NULL,
 			impulse_opts, 
 			1, 
 			active,
@@ -3231,7 +3231,7 @@ static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
 	set_window_busy(vwin);
 	err = spin_dialog((code == VAR_AUTOCORR_TEST)?
 			  _("gretl: autocorrelation") :
-			  _("gretl: ARCH test"),
+			  _("gretl: ARCH test"), NULL,
 			  &order, _("Lag order for test:"),
 			  1, datainfo->n / 2, LMTEST);
 	unset_window_busy(vwin);

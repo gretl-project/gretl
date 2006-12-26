@@ -549,7 +549,7 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	return;
     }
 
-    resp = spin_dialog (_("gretl: create data set"), &n, 
+    resp = spin_dialog (_("gretl: create data set"), NULL, &n, 
 			_("Number of observations:"), 
 			2, 100000, 0);
 

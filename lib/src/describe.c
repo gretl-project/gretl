@@ -1214,9 +1214,9 @@ static int count_distinct_int_values (int *x, int n)
     return c;
 }
 
-int default_freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
-			int *pn, double *pxmax, double *pxmin, int *nbins, 
-			double *binwidth)
+int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
+		int *pn, double *pxmax, double *pxmin, int *nbins, 
+		double *binwidth)
 {
     const double *x = Z[v];
     double xrange, xmin = 0, xmax = 0;
@@ -1247,7 +1247,12 @@ int default_freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if (n < 16) {
+    if (nbins != NULL && *nbins > 0) {
+	k = *nbins;
+	if (k % 2 == 0) {
+	    k++;
+	}
+    } else if (n < 16) {
 	k = 5; 
     } else if (n < 50) {
 	k = 7;
@@ -1284,6 +1289,7 @@ int default_freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
  * @varno: ID number of variable to process.
  * @Z: data array.
  * @pdinfo: information on the data set.
+ * @nbins: number of bins to use (or 0 for automatic)
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
  * @opt: if & OPT_O, compare with gamma distribution, not normal;
@@ -1296,14 +1302,13 @@ int default_freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
  */
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int params, gretlopt opt, int *err)
+		    int nbins, int params, gretlopt opt, int *err)
 {
     FreqDist *freq;
     const double *x = Z[varno];
     double xx, xmin, xmax;
     double skew, kurt;
     double binwidth;
-    int nbins;
     int t, k, n;
 
     freq = freq_new();
@@ -1312,8 +1317,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (default_freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, 
-			   &nbins, &binwidth)) {
+    if (freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth)) {
 	*err = E_DATA;
 	goto bailout;
     }
@@ -1475,7 +1479,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     FreqDist *freq;
     int err = 0;
 
-    freq = get_freq(varno, Z, pdinfo, 1, opt, &err); 
+    freq = get_freq(varno, Z, pdinfo, 0, 1, opt, &err); 
 
     if (err) {
 	return err;
@@ -1644,9 +1648,9 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_D, err); 
+    rowfreq = get_freq(rvarno, Z, pdinfo, 0, 0, OPT_D, err); 
     if (!*err) {
-	colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_D, err); 
+	colfreq = get_freq(cvarno, Z, pdinfo, 0, 0, OPT_D, err); 
     }
     if (!*err) {
 	X = malloc(n * sizeof *X);
@@ -1834,7 +1838,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
     if (!err) {
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			pmod->ncoeff, OPT_NONE, &err);
+			0, pmod->ncoeff, OPT_NONE, &err);
     }
 
     if (!err) {

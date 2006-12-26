@@ -831,7 +831,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	adf_active[4] = -1;
     }
 
-    err = checks_dialog(_(title), opts,
+    err = checks_dialog(_(title), NULL, opts,
 			(action == ADF)? 7 : 2,
 			(action == ADF)? adf_active : kpss_active,
 			2, &difference,
@@ -998,7 +998,7 @@ int do_xcorrgm (selector *sr)
     if (order > datainfo->n / 4) {
 	order = datainfo->n / 4;
     }
-    err = spin_dialog(title, &order, _("Lag order:"),
+    err = spin_dialog(title, NULL, &order, _("Lag order:"),
 		      1, datainfo->n / 4, 0);
     if (err < 0) {
 	/* canceled */
@@ -1975,7 +1975,7 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
     order = default_lag_order(datainfo);
 
     set_window_busy(vwin);
-    err = spin_dialog(_("gretl: autocorrelation"), 
+    err = spin_dialog(_("gretl: autocorrelation"), NULL,
 		      &order, _("Lag order for test:"),
 		      1, datainfo->n / 2, LMTEST);
     unset_window_busy(vwin);
@@ -2022,7 +2022,7 @@ void do_arch (gpointer data, guint u, GtkWidget *widget)
     order = default_lag_order(datainfo);
 
     set_window_busy(vwin);
-    err = spin_dialog(_("gretl: ARCH test"),
+    err = spin_dialog(_("gretl: ARCH test"), NULL,
 		      &order, _("Lag order for ARCH test:"),
 		      1, datainfo->n / 2, ARCH);
     unset_window_busy(vwin);
@@ -3325,7 +3325,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     }
 
     freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
-		    pmod->ncoeff, OPT_NONE, &err);
+		    0, pmod->ncoeff, OPT_NONE, &err);
 
     dataset_drop_last_variables(1, rZ, rinfo);
 
@@ -3376,21 +3376,26 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     FreqDist *freq;
     gretlopt opt = (dist == D_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata_active_var();
-    int err = 0;
+    int nbins = 0;
 
-#if 0 /* not yet: bin size choice */
-    int n, nbins;
-    int xmax, xmin, binwidth;
-    int err;
+#if 1 /* not yet: bin size choice */
+    double xmax, xmin, binwidth;
+    char *bintxt;
+    int n, err;
 
-    err = default_freq_setup(v, (const double **) Z, datainfo,
-			     &n, &xmax, &xmin, &nbins, &binwidth);
+    err = freq_setup(v, (const double **) Z, datainfo,
+		     &n, &xmax, &xmin, &nbins, &binwidth);
     if (err) {
 	gui_errmsg(err);
 	return;
     }
 
-    err = spin_dialog("gretl: frequency plot setup", &nbins, 
+    bintxt = g_strdup_printf(_("Frequency plot for %s (n = %d, "
+			     "range %g to %g)"), 
+			     datainfo->varname[v],
+			     n, xmin, xmax);
+
+    err = spin_dialog("gretl: frequency plot setup", bintxt, &nbins, 
 		      _("Number of bins:"), 2, n, 0);
     if (err < 0) {
 	/* canceled */
@@ -3405,7 +3410,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	return;
     }
 
-    freq = get_freq(v, (const double **) Z, datainfo, 1, opt, &err);
+    freq = get_freq(v, (const double **) Z, datainfo, nbins, 1, opt, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -3615,7 +3620,7 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 
     order = auto_acf_order(pdinfo->pd, T);
 
-    err = spin_dialog(title, &order, _("Maximum lag:"),
+    err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM);
     if (err < 0) {
 	return;
@@ -3691,7 +3696,7 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 
     width = auto_spectrum_order(T, (bartlett)? OPT_O : OPT_NONE);
 
-    err = spin_dialog(title, &width, _("Bandwidth:"),
+    err = spin_dialog(title, NULL, &width, _("Bandwidth:"),
 		      2, T / 2, PERGM);
     if (err < 0) {
 	return;
@@ -3944,7 +3949,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	int resp;
 
 	order = default_lag_order(datainfo);
-	resp = spin_dialog(_("gretl: generate lags"), 
+	resp = spin_dialog(_("gretl: generate lags"), NULL,
 			   &order, _("Number of lags to create:"), 
 			   1, datainfo->n - 1, 0);
 	if (resp < 0) {

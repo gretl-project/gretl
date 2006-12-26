@@ -121,8 +121,12 @@ int gretl_moments (int t1, int t2, const double *x,
 
 void free_freq (FreqDist *freq);
 
+int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
+		int *pn, double *pxmax, double *pxmin, int *nbins, 
+		double *binwidth);
+
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int params, gretlopt opt, int *err);
+		    int nbins, int params, gretlopt opt, int *err);
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn);

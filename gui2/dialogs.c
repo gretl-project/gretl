@@ -2745,6 +2745,19 @@ static void option_spin_set (GtkWidget *w, int *ivar)
     *ivar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
 }
 
+static GtkWidget *dialog_blurb_box (const char *text)
+{
+    GtkWidget *hbox;
+    GtkWidget *label;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(text);
+    gtk_widget_show(label);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    return hbox;
+}
+
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
 				  gpointer p)
@@ -2793,7 +2806,8 @@ static void trigger_ok (GtkWidget *w, GtkWidget *b)
 /* general purpose dialog offering check-button options and/or
    a spinner with numerical values */
 
-int checks_dialog (const char *title, const char **opts, int nopts,
+int checks_dialog (const char *title, const char *blurb,
+		   const char **opts, int nopts,
 		   int *active, int nradios, int *rvar, int *spinvar, 
 		   const char *spintxt, int spinmin, int spinmax, 
 		   int helpcode)
@@ -2805,6 +2819,14 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     int i, ret = 0;
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+
+    /* create upper label if wanted */
+    if (blurb != NULL) {
+	tmp = dialog_blurb_box(blurb);
+	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
+			   tmp, TRUE, TRUE, 5);
+    }
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
@@ -2881,10 +2903,11 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     return ret;
 }
 
-int spin_dialog (const char *title, int *spinvar, const char *spintxt, 
+int spin_dialog (const char *title, const char *blurb,
+		 int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode)
 {
-    return checks_dialog(title, NULL, 0, NULL, 0, NULL,
+    return checks_dialog(title, blurb, NULL, 0, NULL, 0, NULL,
 			 spinvar, spintxt,
 			 spinmin, spinmax, helpcode);
 }
