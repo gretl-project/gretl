@@ -752,21 +752,32 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	rb = gretl_matrix_rows(B);
 	cb = gretl_matrix_cols(B);
 
-	if (ra == 1 && ca == 1) {
-	    r = rb;
-	    c = cb;
-	} else if (rb == 1 && cb == 1) {
-	    r = ra;
-	    c = ca;
-	} else {
-	    r = ra;
-	    c = cb;
-	}
+	r = (ra == 1 && ca == 1)? rb : ra;
+	c = (rb == 1 && cb == 1)? ca : cb;
+
 	C = gretl_matrix_alloc(r, c);
 	if (C == NULL) {
 	    *err = E_ALLOC;
 	} else {
 	    *err = gretl_matrix_multiply(A, B, C);
+	}	
+	break;
+    case B_TRMUL:
+	ra = gretl_matrix_cols(A);
+	ca = gretl_matrix_rows(A);
+	rb = gretl_matrix_rows(B);
+	cb = gretl_matrix_cols(B);
+
+	r = (ra == 1 && ca == 1)? rb : ra;
+	c = (rb == 1 && cb == 1)? ca : cb;
+
+	C = gretl_matrix_alloc(r, c);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+					     B, GRETL_MOD_NONE,
+					     C, GRETL_MOD_NONE);
 	}	
 	break;
     case QFORM:
@@ -3025,6 +3036,18 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES; /* FIXME message? */
 	}
 	break;
+    case B_TRMUL:
+	/* matrix on left, otherwise be flexible */
+	if (l->t == MAT && r->t == MAT) {
+	    ret = matrix_matrix_calc(l, r, t->t, p);
+	} else if (l->t == MAT && r->t == VEC) {
+	    ret = matrix_series_calc(l, r, t->t, p);
+	} else if (l->t == MAT && r->t == NUM) {
+	    ret = matrix_scalar_calc(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES; 
+	}
+	break;
     case DOTMULT:
     case DOTDIV:
     case DOTPOW:
@@ -3396,6 +3419,22 @@ int parser_charpos (parser *p, int c)
 
     return -1;
 }
+
+/* look ahead to the next non-space character and return it */
+
+int parser_next_char (parser *p)
+{
+    int i;
+
+    for (i=0; p->point[i] != '\0'; i++) {
+	if (!isspace(p->point[i])) {
+	    return p->point[i];
+	}
+    }
+
+    return 0;
+}
+
 
 /* for error reporting: print the input up to the current
    parse point */

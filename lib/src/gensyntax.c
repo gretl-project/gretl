@@ -262,6 +262,42 @@ static void unmatched_symbol_error (int c, parser *p)
     p->err = E_PARSE;
 }
 
+#define matrix_ref_node(p) (p->sym == UMAT || (p->sym == MVAR && \
+                            model_data_matrix(p->idnum)))
+
+static int get_apost (parser *p) 
+{
+    int ret = 0;
+
+    if (p->ch == '\'') {
+	int c = parser_next_char(p);
+	int unget = 0;
+
+	if (c == '*' || c == 0 || c == ')') {
+	    return 1;
+	}
+
+	c = *p->point;
+	while (isspace(c)) {
+	    c = parser_getc(p);
+	    unget = 1;
+	}
+
+	/* is it a binary operator (TRMUL)? */
+	if (isalpha(c) || c == '(') {
+	    /* yes, so it's not "free" to bind left */
+	    ret = 0;
+	} else {
+	    if (unget) {
+		parser_ungetc(p);
+	    }
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *base (parser *p, NODE *up)
 { 
     NODE *t = NULL;
@@ -290,12 +326,9 @@ static NODE *base (parser *p, NODE *up)
     case LIST:
     case LOOPIDX:
 	t = newref(p);
-	if (p->sym == UMAT || 
-	    (p->sym == MVAR && model_data_matrix(p->idnum))) {
-	    if (p->ch == '\'') {
-		t->ext = TRANSP;
-		parser_getc(p);
-	    }
+	if (matrix_ref_node(p) && get_apost(p)) {
+	    t->ext = TRANSP;
+	    parser_getc(p);
 	}
 	lex(p);
 	break;
@@ -317,11 +350,9 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	t = expr(p);
 	if (p->sym == RPR) {
-	    if (up != NULL && up->t != LAG) {
-		if (p->ch == '\'') {
-		    up->ext = TRANSP; 
-		    parser_getc(p);
-		}
+	    if (up != NULL && up->t != LAG && get_apost(p)) {
+		up->ext = TRANSP; 
+		parser_getc(p);
 	    } 
 	    lex(p);
 	} else if (p->err == 0) {
@@ -811,8 +842,9 @@ static NODE *term (parser *p)
     }
 
     while (!p->err && (p->sym == B_MUL || p->sym == B_DIV || 
-		       p->sym == B_MOD || p->sym == DOTMULT || 
-		       p->sym == DOTDIV || p->sym == KRON)) {
+		       p->sym == B_TRMUL || p->sym == B_MOD || 
+		       p->sym == DOTMULT || p->sym == DOTDIV || 
+		       p->sym == KRON)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

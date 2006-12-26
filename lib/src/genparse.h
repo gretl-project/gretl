@@ -46,6 +46,7 @@ enum {
     B_NEQ,
     B_AND,
     B_OR,   /* 20 */
+    B_TRMUL,
     LPR,     /* left paren */
     RPR,     /* right paren */
     LBR,     /* left bracket */
@@ -54,8 +55,8 @@ enum {
     RCB,     /* right curly bracket */
     DOTMULT,
     DOTDIV,
-    DOTPOW,
-    KRON,   /* 30: Kronecker product */
+    DOTPOW, /* 30 */
+    KRON,     /* Kronecker product */
     MCAT,     /* matrix concatenation */
     OP_MAX,   /* separator: end of operators */
     ABS,
@@ -64,8 +65,8 @@ enum {
     COS,
     TAN,
     ATAN,
-    LOG,
-    LOG10,  /* 40 */
+    LOG,    /* 40 */
+    LOG10,
     LOG2,
     EXP,
     SQRT,
@@ -74,8 +75,8 @@ enum {
     SDIF,     /* seasonal difference */
     SORT,     /* ascending sort */
     DSORT,    /* descending sort */
-    ODEV,     /* orthogonal deviation */
-    NOBS,   /* 50 */
+    ODEV,   /* 50: orthogonal deviation */
+    NOBS,
     T1,
     T2,
     CHISQ,
@@ -84,8 +85,8 @@ enum {
     MISSING,
     OK,
     MISSZERO,
-    ZEROMISS,
-    MEDIAN,   /* 60 */ 
+    ZEROMISS, /* 60 */ 
+    MEDIAN,
     GINI,
     SUM,
     MEAN,
@@ -94,8 +95,8 @@ enum {
     SD,
     VCE,      /* variance */
     LRVAR,    /* long-run variance */
-    SST,
-    CNORM,  /* 70 */
+    SST,    /* 70 */
+    CNORM,
     DNORM,
     QNORM,
     GAMMA,
@@ -104,8 +105,8 @@ enum {
     BKFILT,
     RESAMPLE,
     PMEAN,
-    PSD,
-    IMAT,   /* 80 */
+    PSD,    /* 80 */
+    IMAT,
     SUMR,
     SUMC,
     MEANR,
@@ -114,8 +115,8 @@ enum {
     MCORR,
     CDEMEAN,
     CHOL,
-    INV,
-    DIAG,    /* 90 */
+    INV,    /* 90 */
+    DIAG,
     TRANSP,
     TVEC,
     VECH,
@@ -124,8 +125,8 @@ enum {
     COLS,
     DET,
     LDET,
-    TRACE,
-    NORM1,    /* 100 */
+    TRACE,   /* 100 */
+    NORM1,
     RCOND,
     VARNUM,
     OBSNUM,
@@ -134,8 +135,8 @@ enum {
     ISNULL,
     LISTLEN,
     PVAL,
-    CDF,
-    CRIT,     /* 110 */
+    CDF,     /* 110 */
+    CRIT,
     GENPOIS,
     MAKEMASK,
     FUNC_MAX, /* separator: end of single-arg functions */
@@ -144,8 +145,8 @@ enum {
     UNIFORM,
     NORMAL,
     BINOMIAL,
-    FRACDIF,
-    ZEROS,   /* 120 */ 
+    FRACDIF, /* 120 */ 
+    ZEROS,
     ONES,
     MUNIF,
     MNORM,
@@ -154,8 +155,8 @@ enum {
     QR,
     EIGSYM,
     EIGGEN,
-    F2_MAX,   /* separator: end of two-arg functions */
-    COM,    /* 130: comma */
+    F2_MAX, /* 130: separator: end of two-arg functions */
+    COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
@@ -164,8 +165,8 @@ enum {
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
-    NUM,      /* scalar, evaluated */
-    VEC,    /* 140: series, evaluated */
+    NUM,    /* 140: scalar, evaluated */
+    VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
@@ -174,8 +175,8 @@ enum {
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
-    SUBSL,    /* row or column component of MSPEC */
-    MDEF,   /* 150: explicit matrix definition {...} */
+    SUBSL,  /* 150: row or column component of MSPEC */
+    MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
@@ -184,8 +185,8 @@ enum {
     LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
-    UFUN,     /* user-defined function */
-    FARGS,  /* 160: set of n function arguments */
+    UFUN,   /* 160: user-defined function */
+    FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT,
     INC,
@@ -349,9 +350,10 @@ struct parser_ {
 #define autoreg(p) (p->flags & P_AUTOREG)
 #define simple_ufun_call(p) (p->flags & P_UFUN)
 
-int parser_getc (parser *s);
-void parser_ungetc (parser *s);
-int parser_charpos (parser *s, int c);
+int parser_getc (parser *p);
+void parser_ungetc (parser *p);
+int parser_charpos (parser *p, int c);
+int parser_next_char (parser *p);
 void parser_print_input (parser *p);
 void lex (parser *s);
 NODE *expr (parser *s);

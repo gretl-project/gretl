@@ -775,6 +775,10 @@ void lex (parser *p)
 		p->sym = B_MUL;
 	    }
 	    return;
+	case '\'':
+	    p->sym = B_TRMUL;
+	    parser_getc(p);
+	    return;
         case '/': 
 	    p->sym = B_DIV;
 	    parser_getc(p);
@@ -980,6 +984,8 @@ const char *getsymb (int t, const parser *p)
 	return "-";
     case B_MUL: 
 	return "*";
+    case B_TRMUL: 
+	return "'";
     case B_DIV: 
 	return "/";
     case B_MOD: 

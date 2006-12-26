@@ -17,7 +17,9 @@
  *
  */
 
-/* Nonlinear least squares for libgretl, using minpack */
+/* Nonlinear least squares for libgretl, using minpack; also
+   Maximum Likelihood estimation using BFGS
+*/
 
 #include "libgretl.h" 
 #include "libset.h"
@@ -43,12 +45,14 @@ struct parm_ {
 			     function with respect to param (or NULL) */
     int vnum;             /* ID number of scalar variable in dataset */
     int dnum;             /* ID number of variable holding the derivative */
-    int vlen;             /* number of elements, if vector param */
+    int nc;               /* number of individual coefficients associated
+			     with the parameter */
     gretl_matrix *vec;    /* pointer to vector parameter */
     gretl_matrix *dmat;   /* pointer to matrix derivative */
 };
 
 #define scalar_param(s,i) (s->params[i].vnum > 0)
+#define matrix_deriv(s,i) (s->params[i].dmat != NULL)
 
 struct _nls_spec {
     int ci;             /* NLS or MLE */
@@ -56,10 +60,14 @@ struct _nls_spec {
     gretlopt opt;       /* can include OPT_V for verbose output; if ci = MLE
 			   can also include OPT_H (Hessian) or OPT_R (QML)
 			   to control the estimator of the variance matrix */
-    int depvar;         /* ID number of dependent variable */
-    int uhatnum;        /* ID number of variable holding residuals */
+    int depvar;         /* ID number of dependent variable (NLS) */
+    int lhv;            /* ID number of LHS variable in function being
+			   minimized or maximized... */
+    gretl_matrix *lvec; /* or LHS vector */
     char *nlfunc;       /* string representation of nonlinear function,
-			   expressed in terms of the residuals */
+			   expressed in terms of the residuals (NLS) or
+			   the log-likelihood (MLE) 
+			*/
     int nparam;         /* number of parameters */
     int ncoeff;         /* number of coefficients (allows for vector params) */
     int nvec;           /* number of vector parameters */
@@ -109,19 +117,37 @@ static void destroy_genrs_array (GENERATOR **genrs, int n)
     free(genrs);
 }
 
-static int check_derivative_matrix (int i, GENERATOR *g)
+static int check_lhs_vec (nls_spec *spec)
 {
-    gretl_matrix *m = genr_get_output_matrix(g);
-    int r = gretl_matrix_rows(m);
-    int c = gretl_matrix_cols(m);
-    
-    pspec->params[i].dmat = m;
+    int v = gretl_vector_get_length(spec->lvec);
 
-    if (c != pspec->params[i].vlen || (r != 1 && r != pspec->nobs)) {
+    if (v != spec->nobs) {
+	fprintf(stderr, "LHS vector should be of length %d, is %d\n", 
+		spec->nobs, v);
+	return 1;
+    }
+
+    return 0;
+}
+
+static int check_derivative_matrix (int i, gretl_matrix *m)
+{
+    int r, c, v;
+
+    if (m == NULL) {
+	fprintf(stderr, "param %d, got NULL matrix derivative\n", i);
+	return 1;
+    }
+
+    r = gretl_matrix_rows(m);
+    c = gretl_matrix_cols(m);
+    v = pspec->params[i].nc;
+    
+    if (c != v || (r != 1 && r != pspec->nobs)) {
 	fprintf(stderr, "matrix deriv for param %d is %d x %d: WRONG\n", 
 		i, r, c);
-	fprintf(stderr, "vlen = %d, nobs = %d\n", pspec->params[i].vlen,
-		pspec->nobs);
+	fprintf(stderr, " should be %d x %d, or %d x %d\n", pspec->nobs,
+		v, 1, v);
 	return 1;
     }
 
@@ -129,12 +155,13 @@ static int check_derivative_matrix (int i, GENERATOR *g)
 }
 
 /* we "compile" the required equations first, so we can
-   subsequently execute the compiled versions for max
+   subsequently execute the compiled versions for maximum
    efficiency */
 
 static int nls_genr_setup (void)
 {
     GENERATOR **genrs;
+    gretl_matrix *m;
     char formula[MAXLINE];
     int i, j, ngen, np;
     int v, err = 0;
@@ -164,7 +191,7 @@ static int nls_genr_setup (void)
 	    /* auxiliary variables */
 	    strcpy(formula, pspec->aux[i]);
 	} else if (i == pspec->naux) {
-	    /* residual/likelihood function */
+	    /* residual or likelihood function */
 	    sprintf(formula, "$nl_y = %s", pspec->nlfunc); 
 	} else {
 	    /* derivatives/gradients */
@@ -173,7 +200,7 @@ static int nls_genr_setup (void)
 	    } else {
 		sprintf(formula, "matrix $nl_x%d = %s", i, 
 			pspec->params[j].deriv);
-	    }		
+	    }
 	    j++;
 	}
 	
@@ -183,25 +210,33 @@ static int nls_genr_setup (void)
 #endif
 
 	if (!err) {
+	    /* see if the formula actually works */
 	    err = execute_genr(genrs[i], nZ, ndinfo);
 	}
 
 	if (!err) {
-	    int k = j - 1;
-
 	    v = genr_get_output_varnum(genrs[i]);
+	    m = genr_get_output_matrix(genrs[i]);
+
 	    if (i == pspec->naux) {
-		pspec->uhatnum = v;
-	    } else if (j > 0) {
-		if (scalar_param(pspec, k)) {
-		    pspec->params[k].dnum = v;
-		} else {
-		    err = check_derivative_matrix(k, genrs[i]);
+		pspec->lhv = v;
+		pspec->lvec = m;
+		if (pspec->lvec != NULL) {
+		    err = check_lhs_vec(pspec);
 		}
+	    } else if (j > 0) {
+		int k = j - 1;
+
+		pspec->params[k].dnum = v;
+		pspec->params[k].dmat = m;
+
+		if (m != NULL || !scalar_param(pspec, k)) {
+		    err = check_derivative_matrix(k, m);
+		} 
 	    }
 #if NLS_DEBUG
-	    fprintf(stderr, " genr->varnum = %d\n", v);
 	    fprintf(stderr, " formula '%s'\n", formula);
+	    fprintf(stderr, " v = %p, m = %p\n", v, (void *) m);
 #endif
 	} else {
 	    fprintf(stderr, "execute_genr: formula '%s', error = %d\n", formula, err);
@@ -252,8 +287,10 @@ static int nls_auto_genr (int i)
     genr_err = execute_genr(pspec->genrs[j], nZ, ndinfo);
 
     /* make sure we have a correct pointer to matrix deriv */
-    if (!genr_err && i > 0 && !scalar_param(pspec, i-1)) {
-	genr_err = check_derivative_matrix(i-1, pspec->genrs[j]);
+    if (!genr_err && i > 0 && matrix_deriv(pspec, i-1)) {
+	gretl_matrix *m = genr_get_output_matrix(pspec->genrs[j]);
+
+	genr_err = check_derivative_matrix(i-1, m);
     }
 
 #if NLS_DEBUG
@@ -270,7 +307,7 @@ static int nls_auto_genr (int i)
 
 /* wrappers for the above to enhance comprehensibility below */
 
-static int nls_calculate_fvec (void)
+static int nl_calculate_fvec (void)
 {
     return nls_auto_genr(0);
 }
@@ -361,7 +398,7 @@ static int nls_spec_push_param (nls_spec *spec, const char *name,
     params[np].deriv = deriv;
     params[np].vnum = v;
     params[np].dnum = 0;
-    params[np].vlen = 0;
+    params[np].nc = 0;
     params[np].vec = NULL;
     params[np].dmat = NULL;
 
@@ -373,6 +410,7 @@ static int nls_spec_push_param (nls_spec *spec, const char *name,
     spec->nparam = np + 1;
 
     if (v > 0) {
+	spec->params[np].nc = 1;
 	err = push_scalar_coeff(spec, Z[v][0]);
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
@@ -383,7 +421,7 @@ static int nls_spec_push_param (nls_spec *spec, const char *name,
 #endif
 
 	spec->params[np].vec = m;
-	spec->params[np].vlen = k;
+	spec->params[np].nc = k;
 	err = push_vec_coeffs(spec, m, k);
 	if (!err) {
 	    spec->nvec += 1;
@@ -631,9 +669,10 @@ static double *coeff_address (nls_spec *spec, int i)
 		fprintf(stderr, "*** coeff_address: by name, '%s' is at %p; "
 			"stored addr = %p\n", spec->params[j].name,
 			(void *) m, (void *) spec->params[j].vec);
+		spec->params[j].vec = m;
 	    }
 
-	    k = spec->params[j].vlen;
+	    k = spec->params[j].nc;
 	    if (i >= pos && i < pos + k) {
 		return &(spec->params[j].vec->val[i - pos]);
 	    }
@@ -726,11 +765,11 @@ static int nl_missval_check (nls_spec *spec)
     adj = maybe_adjust_coeffs(spec, &zlist);
 
 #if NLS_DEBUG
-    fprintf(stderr, "nl_missval_check: calling nls_calculate_fvec\n");
+    fprintf(stderr, "nl_missval_check: calling nl_calculate_fvec\n");
 #endif
 
-    /* generate the nls residual variable */
-    err = nls_calculate_fvec();
+    /* calculate the function (NLS residual or MLE likelihood) */
+    err = nl_calculate_fvec();
 
     /* if we messed with any coefficients, reset them now */
     if (adj) {
@@ -741,9 +780,15 @@ static int nl_missval_check (nls_spec *spec)
     if (err) {
 	return err;
     }
+
+    if (spec->lvec != NULL) {
+	/* vector result */
+	goto nl_miss_exit;
+    }
+
 	
     /* ID number of LHS variable */
-    v = spec->uhatnum;
+    v = spec->lhv;
 
 #if NLS_DEBUG
     fprintf(stderr, " checking var %d (%s)\n",
@@ -780,6 +825,8 @@ static int nl_missval_check (nls_spec *spec)
 	}
     }  
 
+ nl_miss_exit:
+
     spec->t1 = t1;
     spec->t2 = t2;
     spec->nobs = t2 - t1 + 1;
@@ -791,7 +838,7 @@ static int nl_missval_check (nls_spec *spec)
 
     /* if we adjusted any params above, recalculate fvec */
     if (adj) {
-	nls_calculate_fvec();
+	nl_calculate_fvec();
     }
 
     return 0;
@@ -801,18 +848,27 @@ static int nl_missval_check (nls_spec *spec)
 
 static double get_mle_ll (const double *b, void *unused)
 {
-    int t, v = pspec->uhatnum;
+    int t, k;
 
     update_coeff_values(b);
 
     /* calculate log-likelihood given current parameter estimates */
-    if (nls_calculate_fvec()) {
+    if (nl_calculate_fvec()) {
 	return NADBL;
     }
 
     pspec->ll = 0.0;
-    for (t=pspec->t1; t<=pspec->t2; t++) {
-	pspec->ll -= (*nZ)[v][t];
+
+    if (pspec->lvec != NULL) {
+	k = gretl_vector_get_length(pspec->lvec);
+	for (t=0; t<k; t++) {
+	    pspec->ll -= pspec->lvec->val[t];
+	}
+    } else {
+	k = pspec->lhv;
+	for (t=pspec->t1; t<=pspec->t2; t++) {
+	    pspec->ll -= (*nZ)[k][t];
+	}
     }
 
     return pspec->ll;
@@ -898,25 +954,29 @@ static int nl_function_calc (double *f)
 #endif
 
     /* calculate residual given current parameter estimates */
-    if (nls_calculate_fvec()) {
+    if (nl_calculate_fvec()) {
 	return 1;
     }
 
     pspec->ess = pspec->ll = 0.0;
-    y = (*nZ)[pspec->uhatnum] + pspec->t1;
+
+    if (pspec->lvec != NULL) {
+	y = pspec->lvec->val;
+    } else {
+	y = (*nZ)[pspec->lhv] + pspec->t1;
+    }
 
     /* transcribe from dataset to array f */
 
     for (t=0; t<pspec->nobs; t++) {
 	if (na(y[t])) {
-	    fprintf(stderr, "nls_calculate_fvec: produced NA at obs %d\n", t);
+	    fprintf(stderr, "nl_calculate_fvec: produced NA at obs %d\n", t);
 	    return 1;
 	}
 	f[t] = y[t];	
 
 #if NLS_DEBUG > 1
-	fprintf(stderr, "fvec[%d] = nZ[%d][%d] = %.14g\n", t,  pspec->uhatnum,
-		t + pspec->t1, f[t]);
+	fprintf(stderr, "fvec[%d] = %.14g\n", t,  f[t]);
 #endif
 
 	if (pspec->ci == MLE) {
@@ -964,45 +1024,9 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G)
 	fprintf(stderr, "param[%d]: done nls_calculate_deriv\n", j);
 #endif
 
-	if (scalar_param(pspec, j)) {
-	    int s, ser, v = pspec->params[j].dnum;
-
-	    if (v == 0) {
-		/* FIXME? */
-		v = pspec->params[j].dnum = ndinfo->v - 1;
-	    }
-	    ser = var_is_series(ndinfo, v);
-
-#if NLS_DEBUG
-	    fprintf(stderr, "param[%d]: dnum = %d, series = %d\n", j, v, ser);
-#endif
-
-	    /* transcribe from dataset to array g */
-	    for (t=0; t<T; t++) {
-		s = (ser)? (t + pspec->t1) : 0;
-		x = (*nZ)[v][s];
-		gi[t] = -x;
-#if NLS_DEBUG > 1
-		fprintf(stderr, " set g[%d] = nZ[%d][%d] = %.14g\n", 
-			t, v, s, gi[t]);
-#endif
-	    }		
-
-	    /* advance the write pointer */
-	    if (g != NULL) {
-		gi += T;
-	    } else {
-		gi = *(++G) + offset;
-	    }
-	} else {
-	    /* vector param, matrix derivative */
+	if (matrix_deriv(pspec, j)) {
 	    gretl_matrix *m = pspec->params[j].dmat;
 	    int i;
-
-	    if (m == NULL) {
-		err = 1;
-		break;
-	    }
 
 #if NLS_DEBUG
 	    fprintf(stderr, "param[%d]: matrix at %p (%d x %d)\n", j, 
@@ -1026,6 +1050,36 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G)
 		} else {
 		    gi = *(++G) + offset;
 		}
+	    }
+	} else {
+	    /* derivative is scalar or series */
+	    int s, ser, v = pspec->params[j].dnum;
+
+	    if (v == 0) {
+		/* FIXME? */
+		v = pspec->params[j].dnum = ndinfo->v - 1;
+	    }
+	    ser = var_is_series(ndinfo, v);
+
+#if NLS_DEBUG
+	    fprintf(stderr, "param[%d]: dnum = %d, series = %d\n", j, v, ser);
+#endif
+
+	    /* transcribe from dataset to array g */
+	    for (t=0; t<T; t++) {
+		s = (ser)? (t + pspec->t1) : 0;
+		x = (*nZ)[v][s];
+		gi[t] = -x;
+#if NLS_DEBUG > 1
+		fprintf(stderr, " set g[%d] = nZ[%d][%d] = %.14g\n", 
+			t, v, s, gi[t]);
+#endif
+	    }		
+
+	    if (g != NULL) {
+		gi += T;
+	    } else {
+		gi = *(++G) + offset;
 	    }
 	}
     }
@@ -1063,14 +1117,36 @@ static int get_mle_gradient (double *b, double *g, int n,
 	fprintf(stderr, "param[%d]: done nls_calculate_deriv\n", j);
 #endif
 
-	if (scalar_param(pspec, j)) {
+	if (matrix_deriv(pspec, j)) {
+	    m = pspec->params[j].dmat;
+
+#if ML_DEBUG > 1
+	    gretl_matrix_print(m, "deriv matrix");
+#endif
+	    for (k=0; k<m->cols; k++) {
+		g[i] = 0.0;
+		for (t=0; t<m->rows; t++) {
+		    x = gretl_matrix_get(m, t, k);
+		    if (na(x)) {
+			fprintf(stderr, "NA in gradient calculation\n");
+			err = 1;
+		    } else {
+			g[i] += x;
+		    }
+		}
+#if ML_DEBUG > 1
+		fprintf(stderr, "set gradient g[%d] = %g\n", i, g[i]);
+#endif
+		i++;
+	    }
+	} else {
+	    /* derivative may be series or scalar */
 	    int v = pspec->params[j].dnum;
 
 #if ML_DEBUG > 1
 	    fprintf(stderr, "param[%d], dnum = %d\n", j, v);
 #endif
 
-	    /* derivative may be series or scalar */
 	    if (var_is_series(ndinfo, v)) {
 		t1 = pspec->t1;
 		t2 = pspec->t2;
@@ -1097,40 +1173,11 @@ static int get_mle_gradient (double *b, double *g, int n,
 	    fprintf(stderr, "set gradient g[%d] = %g\n", i, g[i]);
 #endif
 	    i++;
-	} else {
-	    /* param is vector: derivative is matrix */
-	    m = pspec->params[j].dmat;
-
-	    if (m == NULL) {
-		fprintf(stderr, "param %d: couldn't find gradient matrix\n", j);
-		err = 1;
-	    } else {
-#if ML_DEBUG > 1
-		gretl_matrix_print(m, "deriv matrix");
-#endif
-		for (k=0; k<m->cols; k++) {
-		    g[i] = 0.0;
-		    for (t=0; t<m->rows; t++) {
-			x = gretl_matrix_get(m, t, k);
-			if (na(x)) {
-			    fprintf(stderr, "NA in gradient calculation\n");
-			    err = 1;
-			} else {
-			    g[i] += x;
-			}
-		    }
-#if ML_DEBUG > 1
-		    fprintf(stderr, "set gradient g[%d] = %g\n", i, g[i]);
-#endif
-		    i++;
-		}
-	    }
-	}
+	} 
     }
 
     return err;
 }
-
 
 /* compute auxiliary statistics and add them to the NLS 
    model struct */
@@ -1207,9 +1254,13 @@ static double *mle_score_callback (const double *b, int i, void *data)
     nls_spec *spec = (nls_spec *) data;
 
     update_coeff_values(b);
-    nls_calculate_fvec();
+    nl_calculate_fvec();
 
-    return (*nZ)[spec->uhatnum] + spec->t1;
+    if (spec->lvec != NULL) {
+	return spec->lvec->val;
+    } else {
+	return (*nZ)[spec->lhv] + spec->t1;
+    }
 }
 
 /* build the G matrix, given a final set of coefficient
@@ -1290,6 +1341,7 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
+    gretl_matrix *m;
     double x = 0.0;
     int k = spec->ncoeff;
     int T = spec->nobs;
@@ -1316,7 +1368,19 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 	}
 	j = 0;
 	for (i=0; i<spec->nparam; i++) {
-	    if (scalar_param(spec, i)) {
+	    if (matrix_deriv(spec, i)) {
+		m = spec->params[i].dmat;
+		for (s=0; s<m->cols; s++) {
+		    x = gretl_matrix_get(m, 0, s);
+		    for (t=0; t<T; t++) {
+			if (t > 0 && m->rows > 0) {
+			    x = gretl_matrix_get(m, t, s);
+			}
+			gretl_matrix_set(G, j, t, x);
+		    }
+		    j++;
+		}
+	    } else {
 		v = spec->params[i].dnum;
 		if (var_is_scalar(ndinfo, v)) {
 		    x = (*nZ)[v][0];
@@ -1328,20 +1392,7 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 		    gretl_matrix_set(G, j, t, x);
 		}
 		j++;
-	    } else {
-		gretl_matrix *m = spec->params[i].dmat;
-
-		for (s=0; s<m->cols; s++) {
-		    x = gretl_matrix_get(m, 0, s);
-		    for (t=0; t<T; t++) {
-			if (t > 0 && m->rows > 0) {
-			    x = gretl_matrix_get(m, t, s);
-			}
-			gretl_matrix_set(G, j, t, x);
-		    }
-		    j++;
-		}
-	    }
+	    } 
 	}		
     }
 
@@ -1478,7 +1529,7 @@ add_param_names_to_model (MODEL *pmod, nls_spec *spec, const DATAINFO *pdinfo)
 	if (scalar_param(spec, j)) {
 	    pmod->params[i++] = gretl_strdup(spec->params[j].name);
 	} else {
-	    m = spec->params[j].vlen;
+	    m = spec->params[j].nc;
 	    sprintf(pname, "%d", m + 1);
 	    n = VNAMELEN - strlen(pname) - 3;
 	    for (k=0; k<m; k++) {
@@ -1841,7 +1892,8 @@ static void clear_nls_spec (nls_spec *spec)
     spec->opt = OPT_NONE;
 
     spec->depvar = 0;
-    spec->uhatnum = 0;
+    spec->lhv = 0;
+    spec->lvec = NULL;
 
     spec->iters = 0;
     spec->fncount = 0;
@@ -2540,8 +2592,10 @@ save_likelihood_vector (nls_spec *spec, double ***pZ, DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	if (t < spec->t1 || t > spec->t2) {
 	    (*pZ)[spec->depvar][t] = NADBL;
+	} else if (spec->lvec != NULL) {
+	    (*pZ)[spec->depvar][t] = - spec->lvec->val[t - spec->t1];
 	} else {
-	    (*pZ)[spec->depvar][t] = - (*pZ)[spec->uhatnum][t];
+	    (*pZ)[spec->depvar][t] = - (*pZ)[spec->lhv][t];
 	}
     }
 }
@@ -2618,9 +2672,15 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    i = 0;
-    for (t=pspec->t1; t<=pspec->t2; t++) {
-	fvec[i++] = (*nZ)[pspec->uhatnum][t];
+    if (pspec->lvec != NULL) {
+	for (t=0; t<pspec->nobs; t++) {
+	    fvec[t] = pspec->lvec->val[t];
+	}
+    } else {
+	i = 0;
+	for (t=pspec->t1; t<=pspec->t2; t++) {
+	    fvec[i++] = (*nZ)[pspec->lhv][t];
+	}
     }
 
     /* get tolerance from user setting or default */
@@ -2785,6 +2845,8 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
     spec->opt = OPT_NONE;
 
     spec->depvar = 0;
+    spec->lhv = 0;
+    spec->lvec = NULL;
 
     spec->iters = 0;
     spec->fncount = 0;
