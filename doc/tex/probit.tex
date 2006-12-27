@@ -10,61 +10,69 @@ typical example is a model in which the dependent variable is the
 occupational status of an individual (1 = employed, 0 = unemployed). A
 convenient way of formalizing this situation is to consider the
 variable $y_i$ as a Bernoulli random variable and analyze its
-conditional distribution on the explanatory variables $x_i$, that is
+distribution conditional on the explanatory variables $x_i$.  That is,
+%
 \begin{equation}
   \label{eq:qr-Bernoulli}
   y_i \left\{ 
-    \begin{array}{ll} 1 & P_i \\ 0 & 1 - P_i \end{array}
-    \right. 
+    \begin{array}{ll} 
+      1 & P_i \\ 0 & 1 - P_i 
+    \end{array}
+    \right.
 \end{equation}
+%
 where $P_i = P(y_i = 1 | x_i) $ is a given function of the explanatory
 variables $x_i$.
 
 In most cases, the function $P_i$ is a cumulative distribution
-function $F$, applied to a linear combination of the $x_i$'s. In the
-probit model, the Normal cdf is used, while the logit model employs
+function $F$, applied to a linear combination of the $x_i$s. In the
+probit model, the normal cdf is used, while the logit model employs
 the logistic function $\Lambda()$. Therefore, we have
+%
 \begin{eqnarray}
   \label{eq:qr-link}
   \textrm{probit} & \qquad & P_i = F(z_i) = \Phi(z_i)  \\
   \textrm{logit}  & \qquad & P_i = F(z_i) = \Lambda(z_i) = \frac{1}{1 + e^{-z_i}} \\
   & &z_i = \sum_{j=1}^k x_{ij} \beta_j
 \end{eqnarray}
+%
 where $z_i$ is commonly known as the \emph{index} function. Note that
 in this case the coefficients $\beta_j$ cannot be interpreted as the
 partial derivatives of $E(y_i | x_i)$ with respect to
-$x_{ij}$. However, for a given value of $x_i$ it is possible to
+$x_{ij}$.  However, for a given value of $x_i$ it is possible to
 compute the vector of ``slopes'', that is
 \[
   \mathrm{slope}_j(\bar{x}) = \left. \pder{F(z)}{x_j} \right|_{z =
-    \bar{z}} ;
+    \bar{z}}
 \]
-\app{gretl} automatically computes the slopes by setting each
+\app{Gretl} automatically computes the slopes, setting each
 explanatory variable at its sample mean.
 
-Another
-equivalent way of putting this model is to think that there is an
-unobserved variable $y^*_i$ which can be described via the model
+Another, equivalent way of thinking about this model is in terms of
+an unobserved variable $y^*_i$ which can be described thus:
+%
 \begin{equation}
   \label{eq:qr-latent}
   y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i = z_i  +
-  \varepsilon_i ;
+  \varepsilon_i 
 \end{equation}
-we observe $y_i = 1$ whenever $y^*_i > 0$ and $y_i = 0$ otherwise. If
+%
+We observe $y_i = 1$ whenever $y^*_i > 0$ and $y_i = 0$ otherwise. If
 $\varepsilon_i$ is assumed to be normal, then we have the probit
-model. The logit model arises when assuming that the density function of
-$\varepsilon_i$ is 
+model. The logit model arises if we assume that the density function
+of $\varepsilon_i$ is
+%
 \[
   \lambda(\varepsilon_i) =
   \pder{\Lambda(\varepsilon_i)}{\varepsilon_i} =
-  \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2} .
+  \frac{e^{-\varepsilon_i}}{(1 + e^{-\varepsilon_i})^2}
 \]
 
 Both the probit and logit model are estimated in \app{gretl} via
 maximum likelihood; since the score equations do not have a closed
 form solution, numerical optimization is used. However, in most cases
-this is totally transparent to the user, since only a few iterations
-are normally needed to ensure convergence. The \texttt{--verbose}
+this is totally transparent to the user, since usually only a few
+iterations are needed to ensure convergence. The \texttt{--verbose}
 switch can be used to track the maximization algorithm.
 
 \begin{script}[htbp]
@@ -136,10 +144,12 @@ Dependent variable: GRADE
 
 \end{code}
 
-In this context, the \texttt{$\$$uhat} accessor function
-takes a special meaning: it returns generalised residuals as defined
-in Gourieroux et al, which can be interpreted as unbiased estimators
-of the latent disturbances $\varepsilon_t$. These are defined as
+In this context, the \verb+$uhat+ accessor function takes a
+special meaning: it returns generalized residuals as defined in
+Gourieroux \textit{et al} (1987), which can be interpreted as unbiased
+estimators of the latent disturbances $\varepsilon_t$. These are
+defined as
+%
 \begin{equation}
   \label{eq:QR-genres}
   u_i = \left\{
@@ -152,10 +162,10 @@ of the latent disturbances $\varepsilon_t$. These are defined as
     \right.
 \end{equation}
 
-Among other uses, generalised residuals are often used for diagnostic
-purposes; for example, it is very easy to set up an omitted variables
+Among other uses, generalized residuals are often used for diagnostic
+purposes.  For example, it is very easy to set up an omitted variables
 test equivalent to the familiar LM test in the context of a linear
-regression: example \ref{QR-add} shows how to perform a variable
+regression; example \ref{QR-add} shows how to perform a variable
 addition test.
 
 \begin{script}[htbp]
@@ -171,20 +181,19 @@ ols u const GPA PSI TUCE -q
 printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{code}
-%$
 \end{script}
 
 \subsection{Ordered models}
 \label{sec:ordered}
 
 These models are simple variations of ordinary logit/probit models,
-and are usually applied in case the dependent variable is a
-discrete and ordered measurement, not necessarily quantitative. For
-example, this models can be applied to analyse cases when the
-dependent variable is a qualitative assessment like ``Good'',
-``Average'' and ``Bad''. Assuming we have $p$ categories, the
-probability that individual $i$ falls in the $j$-th category is given
-by
+and are usually applied in case the dependent variable is a discrete
+and ordered measurement, not necessarily quantitative. For example,
+this sort of model can be applied when the dependent variable is a
+qualitative assessment like ``Good'', ``Average'' and ``Bad''.
+Assuming we have $p$ categories, the probability that individual $i$
+falls in the $j$-th category is given by
+%
 \begin{equation}
   \label{eq:QR-ordered}
   P(y_i = j | x_i) = \left\{
@@ -195,8 +204,9 @@ by
     \end{array}
     \right.
 \end{equation}
+%
 The unknown parameters $\mu_j$ are called the ``cutoff
-points'' and are estimated together with the $\beta$'s. For
+points'' and are estimated together with the $\beta$s. For
 identification purposes, $\mu_0$ is assumed to be 0. In terms of the
 unobserved variable $y^*_i$, the model can be equivalently cast as
 $P(y_i = j | x_i) = P(\mu_{j-1} \le y^*_i < \mu_j)$. 
@@ -221,9 +231,9 @@ models: the \texttt{logit} and \texttt{probit} commands automatically
 estimate the ordered version if the dependent variable is not binary
 (provided it has already been marked as discrete).
 
-After estimating ordered models, the \texttt{$\$$uhat} accessor yields
+After estimating ordered models, the \verb+$uhat+ accessor yields
 generalized residuals as in binary models; additionally, the
-\texttt{$\$$yhat} accessor function returns $\hat{z}_i$, so it is
+\verb+$yhat+ accessor function returns $\hat{z}_i$, so it is
 possible to compute an unbiased estimator of the latent variable
 $y^*_i$ simply by adding the two together.
 
@@ -231,20 +241,24 @@ $y^*_i$ simply by adding the two together.
 \label{sec:tobit}
 
 The Tobit model is used when the dependent variable of a model is
-censored: assume a latent variable $y^*_i$ can be described as
+\emph{censored}.\footnote{We assume here that censoring occurs from
+  below at 0. Censoring from above, or at a point different from zero,
+  can be rather easily handled by re-defining the dependent variable
+  appropriately. The more general case of two-sided censoring is not
+  handled by \app{gretl} via a native command yet, but it is possible
+  to estimate such models using the \texttt{mle} command (see chapter
+  \ref{chap:mle}).}  
+Assume a latent variable $y^*_i$ can be described
+as
+%
 \[
   y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i ,
 \]
+%
 where $\varepsilon_i \sim N(0,\sigma^2)$. If $y^*_i$ were observable,
 the model's parameters could be estimated via ordinary least squares.
-On the contrary, suppose that we observe $y_i$, defined as\footnote{We
-  are assuming that censoring occurs from below at 0. Censoring from
-  above, or at a point different from zero, can be rather easily
-  handled by re-defining the dependent variable appropriately. The
-  more general case of two-sided censoring is not handled by
-  \app{gretl} via a native command yet, but it is possible to estimate
-  such models using the \texttt{mle} command (see chapter
-  \ref{chap:mle}).}
+On the contrary, suppose that we observe $y_i$, defined as
+%
 \begin{equation}
   \label{eq:tobit}
   y_i \left\{ 
@@ -254,37 +268,43 @@ On the contrary, suppose that we observe $y_i$, defined as\footnote{We
     \end{array}
     \right. 
 \end{equation}
-In this case, regressing $y_i$ on the $x_i$'s does not yield
+%
+In this case, regressing $y_i$ on the $x_i$s does not yield
 consistent estimates of the parameters $\beta$, because the
 conditional mean $E(y_i|x_i)$ is not equal to $\sum_{j=1}^k x_{ij}
-\beta_j$. As is possible to show, restricting the sample to non-zero
+\beta_j$.  It can be shown that restricting the sample to non-zero
 observations would not yield consistent estimates either. The solution
-is to estimate the parameters via maximum likelihood. The syntax is simply
+is to estimate the parameters via maximum likelihood. The syntax is
+simply
+%
 \begin{code}
   tobit depvar indvars
 \end{code}
 
-As usual, progress of the maximization algorithm can be visualized via
-the \texttt{--verbose} switch, while \texttt{$\$$uhat} returns the
+As usual, progress of the maximization algorithm can be tracked via
+the \texttt{--verbose} switch, while \verb+$uhat+ returns the
 generalized residuals.
 
 An important difference between the Tobit estimator and OLS is that
 the consequences of non-normality of the disturbance term are much
-more severe, as non-normality implies inconsistency for the Tobit
+more severe: non-normality implies inconsistency for the Tobit
 estimator. For this reason, the output for the tobit model includes
-the Chesher-Irish test for normality by default.
+the Chesher--Irish (1987) test for normality by default.
 
 \subsection{Generalized Tobit model}
 \label{sec:heckit}
 
 In the so-called ``Tobit II'' model, there are two latent variables:
+%
 \begin{eqnarray}
   \label{eq:heckit1}
   y^*_i & = & \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i \\
   \label{eq:heckit2}
   s^*_i & = & \sum_{j=1}^p z_{ij} \gamma_j + \eta_i 
 \end{eqnarray}
+%
 and the observation rule is given by
+%
 \begin{equation}
   \label{eq:tobitII}
   y_i \left\{ 
@@ -296,7 +316,7 @@ and the observation rule is given by
 \end{equation}
 
 One of the most popular applications of this model in econometrics is
-a wage equation coupled with a labour force partecipation equation: we
+a wage equation coupled with a labor force participation equation: we
 only observe the wage for the employed. If $y^*_i$ and $s^*_i$ were
 (conditionally) independent, there would be no reason not to use OLS
 for estimating equation (\ref{eq:heckit1}); otherwise, OLS does not
@@ -305,17 +325,17 @@ yield consistent estimates of the parameters $\beta_j$.
 A widely used estimator is the so-called \emph{Heckit} estimator,
 named after Heckman (1979). The procedure can be briefly outlined as
 follows: first, a probit model is fit on equation (\ref{eq:heckit2});
-next, the generalised residuals are inserted in equation
+next, the generalized residuals are inserted in equation
 (\ref{eq:heckit1}) to correct for the effect of sample selection.
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
-Mroz (1987): the first one replicates table 22.7 in Greene (2003),
+Mroz (1987): the first one replicates Table 22.7 in Greene (2003),
 while the second one replicates table 17.1 in Wooldridge (2002a). Note
 that the \texttt{heckit.inp} script (provided with \app{gretl} as an
 example script) is invoked.
 
 \begin{script}[htbp]
-  \caption{Ordered probit model}
+  \caption{Heckit model}
   \label{ex:heckit}
 \begin{code}
 open mroz.gdt
