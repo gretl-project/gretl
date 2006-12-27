@@ -74,4 +74,8 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, 
 			   void *data);
 
+int user_BFGS (const char *line, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, 
+	       PRN *prn);
+
 #endif /* GRETL_NLS_H */

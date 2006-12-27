@@ -86,6 +86,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_Q, "quiet" },
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },
+    { BFGS,     OPT_V, "verbose" },
     { BXPLOT,   OPT_O, "notches" },
     { COINT,    OPT_N, "nc" },
     { COINT,    OPT_R, "ctt" },     
@@ -592,7 +593,7 @@ gretlopt get_gretl_options (char *line, int *err)
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
-    if (ci == 0 || ci == GENR) {
+    if (ci == 0 || ci == GENR || ci == PRINTF) {
 	return oflags;
     }
 

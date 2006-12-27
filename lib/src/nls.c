@@ -3375,3 +3375,183 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     return err;
 }
+
+/* user-level access to BFGS */
+
+typedef struct umax_ umax;
+
+struct umax_ {
+    gretl_matrix *b;
+    int ncoeff;
+    GENERATOR *g;
+    double ***Z;
+    DATAINFO *dinfo;
+};
+
+static double user_get_criterion (const double *b, void *p)
+{
+    umax *u = (umax *) p;
+    double x = NADBL;
+    int i, v;
+    int err;
+
+    for (i=0; i<u->ncoeff; i++) {
+	u->b->val[i] = b[i];
+    }
+
+    err = execute_genr(u->g, u->Z, u->dinfo); 
+
+    if (err) {
+	return NADBL;
+    }
+
+    v = genr_get_output_varnum(u->g);
+    if (v > 0) {
+	x = (*u->Z)[v][0];
+    } else {
+	gretl_matrix *m = genr_get_output_matrix(u->g);
+
+	if (m != NULL && m->rows == 1 && m->cols == 1) {
+	    x = m->val[0];
+	}
+    }
+    
+    return x;
+}
+
+static int user_gen_setup (umax *u,
+			   const char *formula,
+			   double ***pZ, 
+			   DATAINFO *pdinfo)
+{
+    GENERATOR *g;
+    int err = 0;
+
+    g = genr_compile(formula, pZ, pdinfo, &err);
+
+    if (!err) {
+	/* see if the formula actually works */
+	err = execute_genr(g, pZ, pdinfo);
+    }
+
+    if (!err) {
+	u->g = g;
+	u->Z = pZ;
+	u->dinfo = pdinfo;
+    } else {
+	destroy_genr(g);
+    }
+
+    return err;
+}
+
+/* the following is a rough draft */
+
+static int parse_BFGS_line (const char *s, gretl_matrix **b,
+			    int *maxit, double *tol,
+			    char **fncall, double ***pZ,
+			    DATAINFO *pdinfo)
+{
+    char mname[16];
+    char maxstr[16];
+    char tolstr[16];
+    const char *p;
+    int err = 0;
+
+    s = strchr(s, '(');
+    if (s == NULL) {
+	return E_PARSE;
+    }
+
+    s++;
+
+    if (sscanf(s, "%15[^,],%15[^,],%15[^,]", 
+	       mname, maxstr, tolstr) != 3) {
+	return E_PARSE;
+    }
+
+    *b = get_matrix_by_name(mname);
+
+    if (numeric_string(maxstr)) {
+	*maxit = atoi(maxstr);
+    } else {
+	*maxit = generate_scalar(maxstr, pZ, pdinfo, &err);
+	if (err) {
+	    return err;
+	}
+    }
+
+    if (numeric_string(tolstr)) {
+	*tol = atof(tolstr);
+    } else {
+	*tol = generate_scalar(tolstr, pZ, pdinfo, &err);
+	if (err) {
+	    return err;
+	}
+    }
+
+    if (*b == NULL || *maxit <= 0 || *tol <= 0) {
+	return E_DATA;
+    }
+
+    s = strchr(s, '"');
+    if (s == NULL) {
+	return E_PARSE;
+    }
+
+    s++;
+    p = strchr(s, '"');
+    if (p == NULL) {
+	return E_PARSE;
+    }
+
+    *fncall = gretl_strndup(s, p - s);
+    if (*fncall == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+int user_BFGS (const char *line, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, 
+	       PRN *prn)
+{
+    umax u;
+    gretl_matrix *b;
+    char *fncall = NULL;
+    int maxit;
+    int fcount = 0, gcount = 0;
+    double tol;
+    int err;
+
+    err = parse_BFGS_line(line, &b, &maxit, &tol, &fncall,
+			  pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    err = user_gen_setup(&u, fncall, pZ, pdinfo);
+    if (err) {
+	free(fncall);
+	return err;
+    }
+
+    u.ncoeff = gretl_vector_get_length(b);
+    if (u.ncoeff == 0) {
+	err = E_DATA;
+	goto bailout;
+    }
+
+    u.b = b;
+
+    err = BFGS_max(b->val, u.ncoeff, maxit, tol, &fcount, &gcount,
+		   user_get_criterion, NULL, &u, opt, prn);
+
+ bailout:
+
+    free(fncall);
+    destroy_genr(u.g);
+
+    return err;
+}

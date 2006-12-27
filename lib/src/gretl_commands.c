@@ -41,6 +41,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ARBOND,   "arbond" },
     { ARCH,     "arch" },
     { ARMA,     "arima" },
+    { BFGS,     "BFGS_max" },
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },
     { CHOW,     "chow" },     
