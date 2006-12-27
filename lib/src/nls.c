@@ -3548,6 +3548,11 @@ int user_BFGS (const char *line, double ***pZ,
     err = BFGS_max(b->val, u.ncoeff, maxit, tol, &fcount, &gcount,
 		   user_get_criterion, NULL, &u, opt, prn);
 
+    if (fcount > 0) {
+	pprintf(prn, _("Function evaluations: %d\n"), fcount);
+	pprintf(prn, _("Evaluations of gradient: %d\n"), gcount);
+    }
+
  bailout:
 
     free(fncall);
