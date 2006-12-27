@@ -668,6 +668,46 @@ static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
     return ret;
 }
 
+/* try interpreting the string on the right as identifying
+   an observation number */
+
+static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret;
+    double y, x = (l->t == NUM)? l->v.xval : 0.0;
+    int t, t1, t2;
+
+    t = dateton(r->v.str, p->dinfo);
+    if (t >= 0) {
+	y = t + 1;
+    } else {
+	p->err = 1;
+	return NULL;
+    }
+
+    ret = aux_vec_node(p, p->dinfo->n);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+#if EDEBUG
+    fprintf(stderr, "number_string_calc: l=%p, r=%p, ret=%p\n", 
+	    (void *) l, (void *) r, (void *) ret);
+#endif
+
+    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+
+    for (t=t1; t<=t2; t++) {
+	if (l->t == VEC) {
+	    x = l->v.xvec[t];
+	}
+	ret->v.xvec[t] = xy_calc(x, y, f, p);
+    }
+
+    return ret;
+}
+
 static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret;
@@ -989,6 +1029,46 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		ret->v.m->val[i] = y;
 	    }	
 	} 
+    } else {
+	ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	const char *s = r->v.str;
+
+	ret = aux_matrix_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.m = fdjac(l->v.m, s, p->Z, p->dinfo, &p->err);
+    } else {
+	ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	int k = r->v.xval;
+
+	ret = aux_matrix_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.m = gretl_matrix_lag(l->v.m, k, 0.0);
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -3032,6 +3112,10 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((l->t == MAT && r->t == VEC) ||
 		   (l->t == VEC && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
+	} else if (t->t >= B_EQ && t->t <= B_NEQ &&
+		   (l->t == VEC || l->t == NUM) && 
+		   r->t == STR) {
+	    ret = number_string_calc(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES; /* FIXME message? */
 	}
@@ -3069,6 +3153,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t, p, MAT, (l->t == MAT)? r->t : l->t);
+	}
+	break;
+    case MLAG:
+	if (l->t == MAT && r->t == NUM) {
+	    ret = matrix_lag(l, r, p);
+	} else {
+	    p->err = E_TYPES; 
 	}
 	break;
     case U_NEG: 
@@ -3296,6 +3387,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
+    case FDJAC:
+	/* matrix -> matrix, with string as second arg */
+	if (l->t == MAT && r->t == STR) {
+	    ret = numeric_jacobian(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;
     case UVAR: 
 	/* user-defined variable */
 	ret = uvar_node(t, p);
@@ -3396,6 +3495,15 @@ int parser_getc (parser *p)
     return p->ch;
 }
 
+/* advance the read position by n characters */
+
+void parser_advance (parser *p, int n)
+{
+    p->point += n;
+    p->ch = *p->point;
+    p->point += 1;
+}
+
 /* throw back the last-read character */
 
 void parser_ungetc (parser *p)
@@ -3434,7 +3542,6 @@ int parser_next_char (parser *p)
 
     return 0;
 }
-
 
 /* for error reporting: print the input up to the current
    parse point */

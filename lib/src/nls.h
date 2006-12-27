@@ -78,4 +78,8 @@ int user_BFGS (const char *line, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, 
 	       PRN *prn);
 
+gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
+		     double ***pZ, DATAINFO *pdinfo,
+		     int *err);
+
 #endif /* GRETL_NLS_H */

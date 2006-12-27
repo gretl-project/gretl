@@ -1,12 +1,13 @@
 /* fdjac2.f -- translated by f2c (version 20030306) */
 
 #include "f2c.h"
+#include "minpack.h"
 
 static integer c__1 = 1;
 
 int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
 	    doublereal *fvec, doublereal *fjac, integer *ldfjac, integer *iflag, 
-	    doublereal *epsfcn, doublereal *wa)
+	    doublereal *epsfcn, doublereal *wa, void *p)
 {
     /* Initialized data */
 
@@ -87,6 +88,8 @@ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 
 /*       wa is a work array of length m. */
 
+/*       p is a general-purpose pointer available in fcn. */
+
 /*     subprograms called */
 
 /*       user-supplied ...... fcn */
@@ -119,7 +122,7 @@ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 	    h__ = eps;
 	}
 	x[j] = temp + h__;
-	(*fcn)(m, n, &x[1], &wa[1], iflag);
+	(*fcn)(m, n, &x[1], &wa[1], iflag, p);
 	if (*iflag < 0) {
 	    goto L30;
 	}

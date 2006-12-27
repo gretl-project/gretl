@@ -187,9 +187,11 @@ struct str_table funcs[] = {
     { RCOND,    "rcond" },
     { QFORM,    "qform" },
     { COLMULT,  "colmult" },
+    { MLAG,     "mlag" },
     { QR,       "qrdecomp" },
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
+    { FDJAC,    "fdjac" },
     { VARNUM,   "varnum" },
     { OBSNUM,   "obsnum" },
     { ISSERIES, "isseries" },
@@ -440,39 +442,21 @@ static int ok_date_char (int c, char *s, int i)
     return 0;
 }
 
-static double get_quoted_obsnum (parser *p)
+static char *get_quoted_string (parser *p)
 {
-    char obs[OBSLEN+2] = {0};
-    double x = NADBL;
-    int t, i = 0;
+    int n = parser_charpos(p, '"');
+    char *s = NULL;
 
-    while (p->ch != 0 && i < MAXQUOTE - 1) {
-	obs[i++] = p->ch;
-	parser_getc(p);
-	if (p->ch == '"') {
-	    obs[i++] = p->ch;
-	    parser_getc(p);
-	    break;
-	}
-    }
-
-#if LDEBUG
-    fprintf(stderr, "get_quoted_obsnum: obs = '%s', ch = %c\n", obs, p->ch);
-#endif
-
-    t = dateton(obs, p->dinfo);
-    if (t >= 0) {
-	x = t + 1;
+    if (n >= 0) {
+	s = gretl_strndup(p->point, n);
+	parser_advance(p, n + 1);
     } else {
-	/* try unquoting (e.g. we got "1978:1") */
-	obs[strlen(obs) - 1] = '\0';
-	t = dateton(obs + 1, p->dinfo);
-	if (t >= 0) {
-	    x = t + 1;
-	}
+	parser_print_input(p);
+	pprintf(p->prn, _("Unmatched '%c'\n"), '"');
+	p->err = E_PARSE;
     }
 
-    return x;
+    return s;
 }
 
 static void getobs (char *obs, parser *p)
@@ -909,8 +893,8 @@ void lex (parser *p)
 		getword(p);
 		return;
 	    } else if (p->ch == '"') {
-		p->xval = get_quoted_obsnum(p);
-		p->sym = NUM;
+		p->idstr = get_quoted_string(p);
+		p->sym = STR;
 		return;
 	    } else {
 		parser_print_input(p);

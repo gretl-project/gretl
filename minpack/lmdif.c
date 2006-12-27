@@ -4,6 +4,7 @@
 */
 
 #include "f2c.h"
+#include "minpack.h"
 
 /* Table of constant values */
 
@@ -16,7 +17,7 @@ static logical c_true = TRUE_;
 	mode, doublereal *factor, integer *nprint, integer *info, integer *
 	nfev, doublereal *fjac, integer *ldfjac, integer *ipvt, doublereal *
 	qtf, doublereal *wa1, doublereal *wa2, doublereal *wa3, doublereal *
-	wa4)
+	wa4, void *p)
 {
     /* Initialized data */
 
@@ -53,7 +54,7 @@ static logical c_true = TRUE_;
     static doublereal fnorm, gnorm;
     extern /* Subroutine */ int fdjac2_(S_fp, integer *, integer *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    doublereal *, doublereal *);
+	    doublereal *, doublereal *, void *);
     static doublereal pnorm, xnorm, fnorm1, actred, dirder, epsmch, prered;
     extern doublereal dpmpar_(integer *);
 
@@ -71,7 +72,7 @@ static logical c_true = TRUE_;
 
 /*       subroutine lmdif(fcn,m,n,x,fvec,ftol,xtol,gtol,maxfev,epsfcn, */
 /*                        diag,mode,factor,nprint,info,nfev,fjac, */
-/*                        ldfjac,ipvt,qtf,wa1,wa2,wa3,wa4) */
+/*                        ldfjac,ipvt,qtf,wa1,wa2,wa3,wa4,p) */
 
 /*     where */
 
@@ -225,6 +226,8 @@ static logical c_true = TRUE_;
 
 /*       wa4 is a work array of length m. */
 
+/*       p is a general-purpose data pointer, available for use in fcn. */
+
 /*     subprograms called */
 
 /*       user-supplied ...... fcn */
@@ -283,7 +286,7 @@ L20:
 /*     and calculate its norm. */
 
     iflag = 1;
-    (*fcn)(m, n, &x[1], &fvec[1], &iflag);
+    (*fcn)(m, n, &x[1], &fvec[1], &iflag, p);
     *nfev = 1;
     if (iflag < 0) {
 	goto L300;
@@ -303,7 +306,7 @@ L30:
 
     iflag = 2;
     fdjac2_((S_fp)fcn, m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &
-	    iflag, epsfcn, &wa4[1]);
+	    iflag, epsfcn, &wa4[1], p);
     *nfev += *n;
     if (iflag < 0) {
 	goto L300;
@@ -316,7 +319,7 @@ L30:
     }
     iflag = 0;
     if ((iter - 1) % *nprint == 0) {
-	(*fcn)(m, n, &x[1], &fvec[1], &iflag);
+	(*fcn)(m, n, &x[1], &fvec[1], &iflag, p);
     }
     if (iflag < 0) {
 	goto L300;
@@ -472,7 +475,7 @@ L200:
 /*           evaluate the function at x + p and calculate its norm. */
 
     iflag = 1;
-    (*fcn)(m, n, &wa2[1], &wa4[1], &iflag);
+    (*fcn)(m, n, &wa2[1], &wa4[1], &iflag, p);
     ++(*nfev);
     if (iflag < 0) {
 	goto L300;
@@ -628,7 +631,7 @@ L300:
     }
     iflag = 0;
     if (*nprint > 0) {
-	(*fcn)(m, n, &x[1], &fvec[1], &iflag);
+	(*fcn)(m, n, &x[1], &fvec[1], &iflag, p);
     }
     return 0;
 

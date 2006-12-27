@@ -4,10 +4,11 @@
 */
 
 #include "f2c.h"
+#include "minpack.h"
 
 /* Subroutine */ int lmder1_(U_fp fcn, integer *m, integer *n, doublereal *x, 
 	doublereal *fvec, doublereal *fjac, integer *ldfjac, doublereal *tol, 
-	integer *info, integer *ipvt, doublereal *wa, integer *lwa)
+	integer *info, integer *ipvt, doublereal *wa, integer *lwa, void *p)
 {
     /* Initialized data */
 
@@ -25,7 +26,7 @@
 	    doublereal *, doublereal *, integer *, doublereal *, integer *, 
 	    doublereal *, integer *, integer *, integer *, integer *, integer 
 	    *, doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *);
+	    doublereal *, void *p);
     static integer maxfev, nprint;
 
 /*     ********** */
@@ -139,6 +140,8 @@
 
 /*       lwa is a positive integer input variable not less than 5*n+m. */
 
+/*       p is a general-purpose pointer available to fcn. */
+
 /*     subprograms called */
 
 /*       user-supplied ...... fcn */
@@ -179,7 +182,7 @@
     lmder_((U_fp)fcn, m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, 
 	    &ftol, &xtol, &gtol, &maxfev, &wa[1], &mode, &factor, &nprint, 
 	    info, &nfev, &njev, &ipvt[1], &wa[*n + 1], &wa[(*n << 1) + 1], &
-	    wa[*n * 3 + 1], &wa[(*n << 2) + 1], &wa[*n * 5 + 1]);
+	    wa[*n * 3 + 1], &wa[(*n << 2) + 1], &wa[*n * 5 + 1], p);
     if (*info == 8) {
 	*info = 4;
     }

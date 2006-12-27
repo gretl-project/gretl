@@ -4,6 +4,7 @@
 */
 
 #include "f2c.h"
+#include "minpack.h"
 
 /* Table of constant values */
 

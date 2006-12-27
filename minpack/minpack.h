@@ -9,7 +9,8 @@ int chkder_(integer *m, integer *n, doublereal *x,
 int lmder1_(U_fp fcn, integer *m, integer *n, 
 	    doublereal *x, doublereal *fvec, doublereal *fjac, 
 	    integer *ldfjac, doublereal *tol, integer *info, 
-	    integer *ipvt, doublereal *wa, integer *lwa);
+	    integer *ipvt, doublereal *wa, integer *lwa,
+            void *p);
 
 int lmdif_(S_fp fcn, integer *m, integer *n, doublereal *x, 
 	   doublereal *fvec, doublereal *ftol, doublereal *xtol, 
@@ -18,12 +19,12 @@ int lmdif_(S_fp fcn, integer *m, integer *n, doublereal *x,
 	   integer *nprint, integer *info, integer *nfev, 
 	   doublereal *fjac, integer *ldfjac, integer *ipvt, 
 	   doublereal *qtf, doublereal *wa1, doublereal *wa2, 
-	   doublereal *wa3, doublereal *wa4);
+	   doublereal *wa3, doublereal *wa4, void *p);
 
 int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
 	    doublereal *fvec, doublereal *fjac, integer *ldfjac, 
-	    integer *iflag, doublereal *epsfcn, doublereal *wa);
-
+	    integer *iflag, doublereal *epsfcn, doublereal *wa,
+            void *p);
 
 doublereal dpmpar_(integer *i__);
 

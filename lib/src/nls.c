@@ -1931,7 +1931,8 @@ static void clear_nls_spec (nls_spec *spec)
 /* callback for lm_calculate (below) to be used by minpack */
 
 static int nls_calc (integer *m, integer *n, double *x, double *fvec, 
-		     double *jac, integer *ldjac, integer *iflag)
+		     double *jac, integer *ldjac, integer *iflag,
+		     void *p)
 {
 #if NLS_DEBUG
     fprintf(stderr, "nls_calc called by minpack with iflag = %d\n", 
@@ -2001,7 +2002,7 @@ static int check_derivatives (integer m, integer n, double *x,
 
     /* calculate gradient */
     iflag = 2;
-    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag);
+    nls_calc(&m, &n, x, fvec, jac, &ldjac, &iflag, NULL);
     if (iflag == -1) goto chkderiv_abort;
 
 #if NLS_DEBUG > 1
@@ -2013,7 +2014,7 @@ static int check_derivatives (integer m, integer n, double *x,
 
     /* calculate function, at neighboring point xp */
     iflag = 1;
-    nls_calc(&m, &n, xp, fvecp, jac, &ldjac, &iflag);
+    nls_calc(&m, &n, xp, fvecp, jac, &ldjac, &iflag, NULL);
     if (iflag == -1) goto chkderiv_abort; 
 
     /* mode 2: on input, fvec must contain the functions, the rows of
@@ -2096,7 +2097,8 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 /* driver for minpack levenberg-marquandt code for use when analytical
    derivatives have been supplied */
 
-static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
+static int lm_calculate (nls_spec *spec, double *fvec, double *jac, 
+			 PRN *prn)
 {
     integer info, lwa;
     integer m, n, ldjac;
@@ -2126,7 +2128,7 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 
     /* call minpack */
     lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
-	    &info, ipvt, wa, &lwa);
+	    &info, ipvt, wa, &lwa, NULL);
 
     switch ((int) info) {
     case -1: 
@@ -2167,7 +2169,7 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 
 static int 
 nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
-		 integer *iflag)
+		 integer *iflag, void *p)
 {
     /* write current parameter values into dataset Z */
     update_coeff_values(x);
@@ -2221,7 +2223,7 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     lmdif_(nls_calc_approx, &m, &n, spec->coeff, fvec, 
 	   &spec->tol, &spec->tol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
 	   &nprint, &info, &nfev, jac, &ldjac, 
-	   ipvt, qtf, wa1, wa2, wa3, wa4);
+	   ipvt, qtf, wa1, wa2, wa3, wa4, NULL);
 
     spec->iters = nfev;
 
@@ -2262,7 +2264,7 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 
 	/* call minpack again */
 	fdjac2_(nls_calc_approx, &m, &n, spec->coeff, fvec, jac, 
-		&ldjac, &iflag, &epsfcn, wa4);
+		&ldjac, &iflag, &epsfcn, wa4, NULL);
 	spec->ess = ess;
 	spec->iters = iters;
 	spec->opt = opt;
@@ -3384,6 +3386,7 @@ struct umax_ {
     gretl_matrix *b;
     int ncoeff;
     GENERATOR *g;
+    gretl_matrix *output;
     double ***Z;
     DATAINFO *dinfo;
 };
@@ -3438,14 +3441,13 @@ static int user_gen_setup (umax *u,
 	u->g = g;
 	u->Z = pZ;
 	u->dinfo = pdinfo;
+	u->output = genr_get_output_matrix(g);
     } else {
 	destroy_genr(g);
     }
 
     return err;
 }
-
-/* the following is a rough draft */
 
 static int parse_BFGS_line (const char *s, gretl_matrix **b,
 			    int *maxit, double *tol,
@@ -3560,3 +3562,126 @@ int user_BFGS (const char *line, double ***pZ,
 
     return err;
 }
+
+static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
+			   integer *iflag, void *p)
+{
+    umax *u = (umax *) p;
+    gretl_matrix *v;
+    int i, err;
+
+    for (i=0; i<*n; i++) {
+	u->b->val[i] = x[i];
+    }
+
+    err = execute_genr(u->g, u->Z, u->dinfo); 
+    if (err) {
+	fprintf(stderr, "execute_genr: err = %d\n", err); 
+    }
+
+    if (err) {
+	*iflag = -1;
+	return 0;
+    }
+
+    v = genr_get_output_matrix(u->g);
+
+    if (v == NULL || gretl_vector_get_length(v) != *m) {
+	fprintf(stderr, "user_calc_fvec: got bad matrix\n"); 
+	*iflag = -1;
+    } else {
+	for (i=0; i<*m; i++) {
+	    fvec[i] = v->val[i];
+	}
+    }
+    
+    return 0;
+}
+
+static int fdjac_allocate (integer m, integer n,
+			   gretl_matrix **J, 
+			   double **w, double **f)
+{
+    *J = gretl_matrix_alloc(m, n);
+    if (*J == NULL) {
+	return E_ALLOC;
+    }
+
+    *w = malloc(m * sizeof **w);
+    *f = malloc(m * sizeof **f);
+
+    if (*w == NULL || *f == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
+		     double ***pZ, DATAINFO *pdinfo,
+		     int *err)
+{
+    umax u;
+    gretl_matrix *J = NULL;
+    integer m, n;
+    integer iflag = 0;
+    double *wa = NULL;
+    double *fvec = NULL;
+    double epsfcn = 0.0;
+    int i;
+
+    *err = 0;
+
+    n = gretl_vector_get_length(theta);
+    if (n == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    u.b = theta;
+    u.ncoeff = n;
+
+    *err = user_gen_setup(&u, fncall, pZ, pdinfo);
+    if (*err) {
+	fprintf(stderr, "ldjac: error %d from user_gen_setup\n", *err);
+	goto bailout;
+    }
+
+    if (u.output == NULL) {
+	*err = E_TYPES; /* FIXME */
+	goto bailout;
+    }
+
+    m = gretl_vector_get_length(u.output);
+    if (m == 0) {
+	*err = E_DATA;
+	goto bailout;
+    }
+    
+    *err = fdjac_allocate(m, n, &J, &wa, &fvec);
+    if (*err) {
+	goto bailout;
+    }
+
+    for (i=0; i<m; i++) {
+	fvec[i] = u.output->val[i];
+    }
+
+    fdjac2_(user_calc_fvec, &m, &n, theta->val, fvec, J->val, 
+	    &m, &iflag, &epsfcn, wa, &u);
+
+ bailout:
+
+    free(wa);
+    free(fvec);
+
+    if (*err) {
+	gretl_matrix_free(J);
+	J = NULL;
+    }
+
+    destroy_genr(u.g);
+
+    return J;
+}
+

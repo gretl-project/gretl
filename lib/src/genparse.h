@@ -152,10 +152,12 @@ enum {
     MNORM,
     QFORM,
     COLMULT,
+    MLAG,
     QR,
     EIGSYM,
-    EIGGEN,
-    F2_MAX, /* 130: separator: end of two-arg functions */
+    EIGGEN, /* 130 */
+    FDJAC,
+    F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
@@ -163,9 +165,9 @@ enum {
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
-    UMAT,     /* user-defined matrix */
+    UMAT,   /* 140: user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
-    NUM,    /* 140: scalar, evaluated */
+    NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
@@ -173,9 +175,9 @@ enum {
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,     /* unevaluated matrix subspec */
+    MSL2,   /* 150: unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
-    SUBSL,  /* 150: row or column component of MSPEC */
+    SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
@@ -183,9 +185,9 @@ enum {
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
-    STR,      /* string */
+    STR,    /* 160: string */
     EROOT,    /* dummy root for (...) expression */
-    UFUN,   /* 160: user-defined function */
+    UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT,
@@ -352,6 +354,7 @@ struct parser_ {
 
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);
+void parser_advance (parser *p, int n);
 int parser_charpos (parser *p, int c);
 int parser_next_char (parser *p);
 void parser_print_input (parser *p);
