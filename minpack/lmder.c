@@ -15,7 +15,8 @@ static logical c_true = TRUE_;
 	 doublereal *xtol, doublereal *gtol, integer *maxfev, doublereal *
 	diag, integer *mode, doublereal *factor, integer *nprint, integer *
 	info, integer *nfev, integer *njev, integer *ipvt, doublereal *qtf, 
-	doublereal *wa1, doublereal *wa2, doublereal *wa3, doublereal *wa4)
+	doublereal *wa1, doublereal *wa2, doublereal *wa3, doublereal *wa4,
+	void *p)
 {
     /* Initialized data */
 
@@ -66,7 +67,7 @@ static logical c_true = TRUE_;
 
 /*       subroutine lmder(fcn,m,n,x,fvec,fjac,ldfjac,ftol,xtol,gtol, */
 /*                        maxfev,diag,mode,factor,nprint,info,nfev, */
-/*                        njev,ipvt,qtf,wa1,wa2,wa3,wa4) */
+/*                        njev,ipvt,qtf,wa1,wa2,wa3,wa4,p) */
 
 /*     where */
 
@@ -75,7 +76,7 @@ static logical c_true = TRUE_;
 /*         be declared in an external statement in the user */
 /*         calling program, and should be written as follows. */
 
-/*         subroutine fcn(m,n,x,fvec,fjac,ldfjac,iflag) */
+/*         subroutine fcn(m,n,x,fvec,fjac,ldfjac,iflag,p) */
 /*         integer m,n,ldfjac,iflag */
 /*         double precision x(n),fvec(m),fjac(ldfjac,n) */
 /*         ---------- */
@@ -218,6 +219,8 @@ static logical c_true = TRUE_;
 
 /*       wa4 is a work array of length m. */
 
+/*       p is an auxiliary pointer passed to fcn. */
+
 /*     subprograms called */
 
 /*       user-supplied ...... fcn */
@@ -277,7 +280,7 @@ L20:
 /*     and calculate its norm. */
 
     iflag = 1;
-    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag);
+    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
     *nfev = 1;
     if (iflag < 0) {
 	goto L300;
@@ -296,7 +299,7 @@ L30:
 /*        calculate the jacobian matrix. */
 
     iflag = 2;
-    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag);
+    (*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
     ++(*njev);
     if (iflag < 0) {
 	goto L300;
@@ -309,7 +312,7 @@ L30:
     }
     iflag = 0;
     if ((iter - 1) % *nprint == 0) {
-	(*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag);
+	(*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
     }
     if (iflag < 0) {
 	goto L300;
@@ -465,7 +468,7 @@ L200:
 /*           evaluate the function at x + p and calculate its norm. */
 
     iflag = 1;
-    (*fcn)(m, n, &wa2[1], &wa4[1], &fjac[fjac_offset], ldfjac, &iflag);
+    (*fcn)(m, n, &wa2[1], &wa4[1], &fjac[fjac_offset], ldfjac, &iflag, p);
     ++(*nfev);
     if (iflag < 0) {
 	goto L300;
@@ -621,7 +624,7 @@ L300:
     }
     iflag = 0;
     if (*nprint > 0) {
-	(*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag);
+	(*fcn)(m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &iflag, p);
     }
     return 0;
 

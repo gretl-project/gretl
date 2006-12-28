@@ -42,7 +42,7 @@
 /*     the subroutine statement is */
 
 /*       subroutine lmder1(fcn,m,n,x,fvec,fjac,ldfjac,tol,info, */
-/*                         ipvt,wa,lwa) */
+/*                         ipvt,wa,lwa,p) */
 
 /*     where */
 
@@ -51,7 +51,7 @@
 /*         be declared in an external statement in the user */
 /*         calling program, and should be written as follows. */
 
-/*         subroutine fcn(m,n,x,fvec,fjac,ldfjac,iflag) */
+/*         subroutine fcn(m,n,x,fvec,fjac,ldfjac,iflag,p) */
 /*         integer m,n,ldfjac,iflag */
 /*         double precision x(n),fvec(m),fjac(ldfjac,n) */
 /*         ---------- */
