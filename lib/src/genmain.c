@@ -184,10 +184,7 @@ static const char *res1[] = {
 };
 
 static const char *res2[] = {
-    "t"
-};
-
-static const char *res3[] = {
+    "t",
     "obs",
     "scalar",
     "series",
@@ -206,13 +203,11 @@ int gretl_reserved_word (const char *str)
 {
     const char *ruses[] = {
 	N_("a constant"),
-	N_("a plotting variable"),
 	N_("an internal variable"),
 	N_("a function")
     };
     static int n1 = sizeof res1 / sizeof res1[0];
     static int n2 = sizeof res2 / sizeof res2[0];
-    static int n3 = sizeof res3 / sizeof res3[0];
     int i, ret = 0;
 
     for (i=0; i<n1 && !ret; i++) {
@@ -224,12 +219,6 @@ int gretl_reserved_word (const char *str)
     for (i=0; i<n2 && !ret; i++) {
 	if (!strcmp(str, res2[i])) {
 	    ret = 2;
-	}
-    }
-
-    for (i=0; i<n3 && !ret; i++) {
-	if (!strcmp(str, res3[i])) {
-	    ret = 3;
 	}
     }
 
