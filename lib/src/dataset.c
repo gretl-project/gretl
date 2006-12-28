@@ -1696,6 +1696,24 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
     return err;
 }
 
+static int *make_dollar_list (DATAINFO *pdinfo, int *err)
+{
+    int *list = NULL;
+    int i;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (pdinfo->varname[i][0] == '$') {
+	    list = gretl_list_append_term(&list, i);
+	    if (list == NULL) {
+		*err = E_ALLOC;
+		break;
+	    }
+	}
+    }
+
+    return list;
+}
+
 /**
  * dataset_drop_listed_variables:
  * @list: list of variable to drop, by ID number.
@@ -1713,17 +1731,30 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int dataset_drop_listed_variables (const int *list, double ***pZ, 
-				   DATAINFO *pdinfo, int *renumber)
+int dataset_drop_listed_variables (int *list, double ***pZ, 
+				   DATAINFO *pdinfo, 
+				   int *renumber)
 {
-    const int *dlist;
-    int last[2];
-    int err;
+    int *dlist = NULL;
+    int free_dlist = 0;
+    int lastvar[2];
+    int err = 0;
 
-    if (list != NULL && list[0] == 0) {
-	last[0] = 1;
-	last[1] = pdinfo->v - 1;
-	dlist = last;
+    if (list == NULL) {
+	/* signal to drop internal "$" variables */
+	dlist = make_dollar_list(pdinfo, &err);
+	if (err) {
+	    return err;
+	} else if (dlist == NULL) {
+	    /* no-op */
+	    return 0;
+	}
+	free_dlist = 1;
+    } else if (list[0] == 0) {
+	/* signal to drop last variable */
+	lastvar[0] = 1;
+	lastvar[1] = pdinfo->v - 1;
+	dlist = lastvar;
     } else {
 	dlist = list;
     }
@@ -1738,6 +1769,10 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
 	err = real_drop_listed_vars(dlist, fZ, fdinfo, NULL,
 				    DROP_SPECIAL);
 	reset_full_Z(fZ);
+    }
+
+    if (free_dlist) {
+	free(dlist);
     }
 
     return err;

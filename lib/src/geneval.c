@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 1 /* can be set > 1 */
+# define EDEBUG 2 /* can be set > 1 */
 #else
 # define EDEBUG 0
 #endif
@@ -1051,6 +1051,27 @@ static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
 	ret->v.m = fdjac(l->v.m, s, p->Z, p->dinfo, &p->err);
     } else {
 	ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	const char *s = r->v.str;
+
+	ret = aux_scalar_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.xval = user_BFGS(l->v.m, s, p->Z, p->dinfo, 
+				p->prn, &p->err);
+    } else {
+	ret = aux_scalar_node(p);
     }
 
     return ret;
@@ -3387,10 +3408,15 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
+    case BFGSMAX:
     case FDJAC:
-	/* matrix -> matrix, with string as second arg */
+	/* matrix, with string as second arg */
 	if (l->t == MAT && r->t == STR) {
-	    ret = numeric_jacobian(l, r, p);
+	    if (t->t == BFGSMAX) {
+		ret = BFGS_maximize(l, r, p);
+	    } else {
+		ret = numeric_jacobian(l, r, p);
+	    }
 	} else {
 	    p->err = E_TYPES;
 	} 

@@ -2561,6 +2561,8 @@ static void start_fncall (ufunc *u)
 {
     set_executing_on(u);
     push_program_state();
+    set_gretl_echo(0);
+    set_gretl_messages(0);
 }
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,

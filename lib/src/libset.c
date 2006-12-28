@@ -53,7 +53,7 @@ struct bkbp_opts {
     int periods[2];
 };
 
-struct bhhh_opts {
+struct max_opts {
     double toler;
     int maxiter;
 };
@@ -71,11 +71,13 @@ struct set_vars_ {
     int gretl_msgs;             /* emitting non-error messages or not */
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
+    int max_verbose;            /* verbose output from maximizer? */
     gretl_matrix *initvals;     /* for parameter initialization */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
-    struct bhhh_opts maxopts;   /* options for BHHH maximisation */
+    struct max_opts bhhh_opts;  /* options for BHHH maximization */
+    struct max_opts bfgs_opts;  /* options for BFGS maximization */
 };
 
 /* global state */
@@ -123,16 +125,22 @@ static void bkbp_opts_copy (struct bkbp_opts *opts)
     opts->periods[1] = state->bkopts.periods[1];
 }
 
-static void bhhh_opts_init (struct bhhh_opts *opts)
+static void max_opts_init (struct max_opts *opts)
 {
     opts->toler = NADBL;
     opts->maxiter = 500;
 }
 
-static void bhhh_opts_copy (struct bhhh_opts *opts)
+static void bhhh_opts_copy (struct max_opts *opts)
 {
-    opts->toler = state->maxopts.toler;
-    opts->maxiter = state->maxopts.maxiter;
+    opts->toler = state->bhhh_opts.toler;
+    opts->maxiter = state->bhhh_opts.maxiter;
+}
+
+static void bfgs_opts_copy (struct max_opts *opts)
+{
+    opts->toler = state->bfgs_opts.toler;
+    opts->maxiter = state->bfgs_opts.maxiter;
 }
 
 static void print_initvals (const gretl_matrix *ivals, PRN *prn)
@@ -176,12 +184,14 @@ static void state_vars_copy (set_vars *sv)
     sv->gretl_msgs = state->gretl_msgs; 
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
+    sv->max_verbose = state->max_verbose;
     sv->initvals = gretl_matrix_copy(state->initvals);
 
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
     bkbp_opts_copy(&sv->bkopts);
-    bhhh_opts_copy(&sv->maxopts);
+    bhhh_opts_copy(&sv->bhhh_opts);
+    bfgs_opts_copy(&sv->bfgs_opts);
 }
 
 static void state_vars_init (set_vars *sv)
@@ -201,12 +211,14 @@ static void state_vars_init (set_vars *sv)
     sv->gretl_msgs = 1; 
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
+    sv->max_verbose = 0;
     sv->initvals = NULL;
 
     robust_opts_init(&sv->ropts);
     garch_opts_init(&sv->gopts);
     bkbp_opts_init(&sv->bkopts);
-    bhhh_opts_init(&sv->maxopts);
+    max_opts_init(&sv->bhhh_opts);
+    max_opts_init(&sv->bfgs_opts);
 }
 
 int get_hc_version (void)
@@ -337,7 +349,7 @@ double get_bhhh_toler (void)
 	return 1.0;
     }
 
-    return state->maxopts.toler;
+    return state->bhhh_opts.toler;
 }
 
 int get_bhhh_maxiter (void)
@@ -346,10 +358,37 @@ int get_bhhh_maxiter (void)
 	return 0;
     }
 
-    return state->maxopts.maxiter;
+    return state->bhhh_opts.maxiter;
 }
 
-int set_bhhh_toler (double tol)
+double get_bfgs_toler (void)
+{
+    if (check_for_state()) {
+	return 1.0;
+    }
+
+    if (na(state->bfgs_opts.toler)) {
+	state->bfgs_opts.toler = get_default_nls_toler();
+    }
+
+    return state->bfgs_opts.toler;
+}
+
+int get_bfgs_maxiter (void)
+{
+    if (check_for_state()) {
+	return 0;
+    }
+
+    return state->bfgs_opts.maxiter;
+}
+
+enum {
+    BHHH,
+    BFGS
+};
+
+static int real_set_toler (double tol, int c)
 {
     int err = 0;
 
@@ -359,14 +398,26 @@ int set_bhhh_toler (double tol)
 
     if (tol <= 0.0) {
 	err = 1;
+    } else if (c == BFGS) {
+	state->bfgs_opts.toler = tol;
     } else {
-	state->maxopts.toler = tol;
+	state->bhhh_opts.toler = tol;
     }
 
     return err;
 }
 
-int set_bhhh_maxiter (int n)
+int set_bhhh_toler (double tol)
+{
+    return real_set_toler(tol, BHHH);
+}
+
+int set_bfgs_toler (double tol)
+{
+    return real_set_toler(tol, BFGS);
+}
+
+static int real_set_maxiter (int n, int c)
 {
     int err = 0;
 
@@ -376,28 +427,51 @@ int set_bhhh_maxiter (int n)
 
     if (n < 1) {
 	err = 1;
+    } else if (c == BFGS) {
+	state->bfgs_opts.maxiter = n;
     } else {
-	state->maxopts.maxiter = n;
+	state->bhhh_opts.maxiter = n;
     }
 
     return err;
 }
 
+int set_bhhh_maxiter (int n)
+{
+    return real_set_maxiter(n, BHHH);
+}
+
+int set_bfgs_maxiter (int n)
+{
+    return real_set_maxiter(n, BFGS);
+}
+
 int set_long_digits (int n)
 {
-    int err = 0;
-
     if (check_for_state()) {
 	return E_ALLOC;
     }
 
     if (n < 1 || n > 20) {
-	err = 1;
+	return 1;
     } else {
 	state->longdigits = n;
+	return 0;
+    }
+}
+
+int set_max_verbose (int n)
+{
+    if (check_for_state()) {
+	return E_ALLOC;
     }
 
-    return err;
+    if (n < 0) {
+	return 1;
+    } else {
+	state->max_verbose = n;
+	return 0;
+    }
 }
 
 int get_VAR_horizon (void)
@@ -582,6 +656,12 @@ int get_long_digits (void)
 {
     check_for_state();
     return state->longdigits;
+}
+
+int get_max_verbose (void)
+{
+    check_for_state();
+    return state->max_verbose;
 }
 
 const gretl_matrix *get_init_vals (void)
@@ -913,8 +993,16 @@ static int display_settings (PRN *prn)
     } else {
 	pprintf(prn, " bhhh_toler = %g\n", dval);
     }
-
     pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
+
+    dval = get_bfgs_toler();
+    if (na(dval)) {
+	pputs(prn, " bfgs_toler = default\n");
+    } else {
+	pprintf(prn, " bfgs_toler = %g\n", dval);
+    }
+    pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
+
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
 
     ival =  get_halt_on_error(); /* checks env */
@@ -923,6 +1011,7 @@ static int display_settings (PRN *prn)
     pprintf(prn, " shell_ok = %d\n", state->shell_ok);
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
     pprintf(prn, " longdigits = %d\n", state->longdigits);
+    pprintf(prn, " max_verbose = %d\n", state->max_verbose);
     print_initvals(state->initvals, prn);
 
     return 0;
@@ -1109,11 +1198,28 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    if (isdigit(*setarg)) {
 		err = set_bhhh_maxiter(atoi(setarg));
 	    }
+	} else if (!strcmp(setobj, "bfgs_toler")) {
+	    double tol;
+
+	    if (!strcmp(setarg, "default")) {
+		set_bfgs_toler(NADBL);
+		err = 0;
+	    } else if (sscanf(setarg, "%lf", &tol)) {
+		err = set_bfgs_toler(tol);
+	    }
+	} else if (!strcmp(setobj, "bfgs_maxiter")) {
+	    if (isdigit(*setarg)) {
+		err = set_bfgs_maxiter(atoi(setarg));
+	    }
 	} else if (!strcmp(setobj, "longdigits")) {
 	    if (isdigit(*setarg)) {
 		err = set_long_digits(atoi(setarg));
 	    }
-	} 
+	} else if (!strcmp(setobj, "max_verbose")) {
+	    if (isdigit(*setarg)) {
+		err = set_max_verbose(atoi(setarg));
+	    }
+	}	    
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    err = set_bkbp_limits(setarg, setarg2, prn);

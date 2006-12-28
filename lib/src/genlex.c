@@ -192,6 +192,7 @@ struct str_table funcs[] = {
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
     { FDJAC,    "fdjac" },
+    { BFGSMAX,  "BFGSmax" },
     { VARNUM,   "varnum" },
     { OBSNUM,   "obsnum" },
     { ISSERIES, "isseries" },

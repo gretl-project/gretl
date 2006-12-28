@@ -115,7 +115,7 @@ enum {
     MCORR,
     CDEMEAN,
     CHOL,
-    INV,    /* 90 */
+    INV,     /* 90 */
     DIAG,
     TRANSP,
     TVEC,
@@ -157,6 +157,7 @@ enum {
     EIGSYM,
     EIGGEN, /* 130 */
     FDJAC,
+    BFGSMAX,
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
     DOT,      /* period */
@@ -164,8 +165,8 @@ enum {
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
-    UVAR,     /* user variable (scalar or series) */
-    UMAT,   /* 140: user-defined matrix */
+    UVAR,   /* 140: user variable (scalar or series) */
+    UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
@@ -174,8 +175,8 @@ enum {
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,   /* 150: unevaluated matrix subspec */
+    DMSTR,  /* 150: "dollar" matrix plus old-style string subspec */
+    MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
@@ -184,8 +185,8 @@ enum {
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
-    LIST,     /* reference to named list */
-    STR,    /* 160: string */
+    LIST,   /* 160: reference to named list */
+    STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */

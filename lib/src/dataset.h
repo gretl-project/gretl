@@ -318,7 +318,7 @@ int dataset_copy_variable_as (int v, const char *newname,
 
 int overwrite_err (const DATAINFO *pdinfo, int v);
 
-int dataset_drop_listed_variables (const int *list, double ***pZ, 
+int dataset_drop_listed_variables (int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber);
 
 int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo); 

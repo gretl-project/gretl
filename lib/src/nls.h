@@ -20,7 +20,7 @@
 #ifndef GRETL_NLS_H
 #define GRETL_NLS_H
 
-typedef struct _nls_spec nls_spec;
+typedef struct _nlspec nlspec;
 
 typedef double (*BFGS_LL_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
@@ -28,34 +28,34 @@ typedef int (*BFGS_GRAD_FUNC) (double *, double *, int,
 typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
 
 
-nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo);
+nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
 
-void nls_spec_destroy (nls_spec *spec);
-
-int 
-nls_spec_add_param_with_deriv (nls_spec *spec, 
-			       const char *dstr,
-			       const double **Z, 
-			       const DATAINFO *pdinfo);
-
-int nls_spec_add_param_list (nls_spec *spec, const int *list,
-			     const double **Z, const DATAINFO *pdinfo);
+void nlspec_destroy (nlspec *spec);
 
 int 
-nls_spec_set_regression_function (nls_spec *spec, 
-				  const char *fnstr, 
-				  const DATAINFO *pdinfo);
+nlspec_add_param_with_deriv (nlspec *spec, 
+			     const char *dstr,
+			     const double **Z, 
+			     const DATAINFO *pdinfo);
 
-void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2);
+int nlspec_add_param_list (nlspec *spec, const int *list,
+			   const double **Z, const DATAINFO *pdinfo);
+
+int 
+nlspec_set_regression_function (nlspec *spec, 
+				const char *fnstr, 
+				const DATAINFO *pdinfo);
+
+void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2);
 
 int nls_parse_line (int ci, const char *line, const double **Z,
 		    const DATAINFO *pdinfo, PRN *prn);
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-MODEL model_from_nls_spec (nls_spec *spec, double ***pZ, 
-			   DATAINFO *pdinfo, gretlopt opt, 
-			   PRN *prn);
+MODEL model_from_nlspec (nlspec *spec, double ***pZ, 
+			 DATAINFO *pdinfo, gretlopt opt, 
+			 PRN *prn);
 
 double get_default_nls_toler (void);
 
@@ -74,9 +74,9 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, 
 			   void *data);
 
-int user_BFGS (const char *line, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, 
-	       PRN *prn);
+double user_BFGS (gretl_matrix *b, const char *fncall,
+		  double ***pZ, DATAINFO *pdinfo,
+		  PRN *prn, int *err);
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 		     double ***pZ, DATAINFO *pdinfo,

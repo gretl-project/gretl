@@ -229,7 +229,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 
 #define NO_VARLIST(c) (c == ADDOBS || \
                        c == APPEND || \
-                       c == BFGS || \
                        c == BREAK || \
                        c == CHOW || \
 	               c == CRITERIA || \
@@ -3146,10 +3145,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case COINT2:
 	err = johansen_test_simple(cmd->order, cmd->list, pZ, pdinfo, 
 				   cmd->opt, prn);
-	break;
-
-    case BFGS:
-	err = user_BFGS(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case CORR:

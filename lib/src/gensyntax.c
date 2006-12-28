@@ -265,37 +265,26 @@ static void unmatched_symbol_error (int c, parser *p)
 #define matrix_ref_node(p) (p->sym == UMAT || (p->sym == MVAR && \
                             model_data_matrix(p->idnum)))
 
-static int get_apost (parser *p) 
+/* try to recognize a unary ', indicating that we're taking
+   the transpose of the preceding matrix */
+
+static int unary_apost (parser *p) 
 {
-    int ret = 0;
-
     if (p->ch == '\'') {
+	/* peek at the next non-space character */
 	int c = parser_next_char(p);
-	int unget = 0;
 
-	if (c == '*' || c == 0 || c == ')') {
+	if (isalpha(c) || c == '$' || c == '(') {
+	    /* next symbol is variable or expression: the
+	       apostrophe must be the binary operator, TRMUL
+	    */
+	    return 0;
+	} else {
 	    return 1;
 	}
+    } 
 
-	c = *p->point;
-	while (isspace(c)) {
-	    c = parser_getc(p);
-	    unget = 1;
-	}
-
-	/* is it a binary operator (TRMUL)? */
-	if (isalpha(c) || c == '(') {
-	    /* yes, so it's not "free" to bind left */
-	    ret = 0;
-	} else {
-	    if (unget) {
-		parser_ungetc(p);
-	    }
-	    ret = 1;
-	}
-    }
-
-    return ret;
+    return 0;
 }
 
 static NODE *base (parser *p, NODE *up)
@@ -326,7 +315,7 @@ static NODE *base (parser *p, NODE *up)
     case LIST:
     case LOOPIDX:
 	t = newref(p);
-	if (matrix_ref_node(p) && get_apost(p)) {
+	if (matrix_ref_node(p) && unary_apost(p)) {
 	    t->ext = TRANSP;
 	    parser_getc(p);
 	}
@@ -350,7 +339,7 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	t = expr(p);
 	if (p->sym == RPR) {
-	    if (up != NULL && up->t != LAG && get_apost(p)) {
+	    if (up != NULL && up->t != LAG && unary_apost(p)) {
 		up->ext = TRANSP; 
 		parser_getc(p);
 	    } 

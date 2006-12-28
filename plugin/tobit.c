@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2004 Riccardo Lucchetti and Allin Cottrell
+ * Copyright (C) Riccardo "Jack" Lucchetti and Allin Cottrell
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -17,17 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* The algorithm here was contributed by Riccardo "Jack" Lucchetti; 
-   C coding by Allin Cottrell. 
-*/
-
 #include "libgretl.h"
-#include "bhhh_max.h"
 #include "libset.h"
 
-#undef TDEBUG 
-
-#define USE_BFGS
+#define TDEBUG 0
 
 #define TOBIT_TOL 1.0e-10 /* calibrated against William Greene */
 
@@ -39,7 +32,7 @@ struct tob_container_ {
     int do_score;
     double ll;
 
-    const double **X;       /* data */
+    const double **X; /* data */
     double **G;
     double *g;
     double *theta;
@@ -115,107 +108,6 @@ static tob_container *tob_container_new (int k, MODEL *pmod, const double **X,
     return TC;
 }
 
-#ifndef USE_BFGS
-
-/* BHHH: Compute log likelihood, and the score matrix if do_score is
-   non-zero */
-
-static int tobit_ll (double *theta, const double **X, double **Z, 
-		     model_info *tobit, int do_score)
-{
-
-    const double *y = X[1];
-    double **series = model_info_get_series(tobit);
-    double *e = series[0];
-    double *f = series[1];
-    double *P = series[2];
-    double *ystar = series[3];
-    int k = model_info_get_k(tobit);
-    int n = model_info_get_n(tobit);
-    
-    double siginv = theta[k-1]; /* inverse of variance */
-    double ll, llt;
-    int i, t;
-
-#if 0
-    if (siginv < 0.0) {
-	fprintf(stderr, "tobit_ll: got a negative variance\n");
-	return 1;
-    } 
-#endif
-
-    /* calculate ystar, e, f, and P vectors */
-    for (t=0; t<n; t++) {
-	ystar[t] = theta[0];
-	for (i=1; i<k-1; i++) {
-	    ystar[t] += theta[i] * X[i+1][t]; /* coeff * orig data */
-	}
-	e[t] = y[t] * siginv - ystar[t];
-	f[t] = siginv * normal_pdf(e[t]);
-	P[t] = normal_cdf(ystar[t]);
-#ifdef TDEBUG
-	fprintf(stderr, "tobit_ll: e[%d]=%g, f[%d]=%g, P[%d]=%g\n",
-		t, e[t], t, f[t], t, P[t]);
-#endif
-    }
-
-    /* compute loglikelihood for each obs, cumulate into ll */
-    ll = 0.0;
-    for (t=0; t<n; t++) {
-	if (y[t] == 0.0) {
-	    llt = 1.0 - P[t];
-	} else {
-	    llt = f[t];
-	}
-	if (llt == 0.0) {
-	    fprintf(stderr, "tobit_ll: L[%d] is zero\n", t);
-	    return 1;
-	}
-	ll += log(llt);
-    }
-
-    model_info_set_ll(tobit, ll, do_score);
-
-    if (do_score) {
-	int i, gi, xi;
-	double den, tail;
-
-	for (t=0; t<n; t++) {
-	    for (i=0; i<k; i++) {
-
-		/* set the indices into the data arrays */
-		gi = i + 1;
-		xi = (i == 0)? 0 : i + 1;
-
-		if (y[t] == 0.0) {
-		    /* score if y is censored */
-		    if (xi < k) {
-			den = normal_pdf(ystar[t]);
-			tail = 1.0 - P[t];
-			Z[gi][t] = -den / tail * X[xi][t];
-		    } else {
-			Z[gi][t] = 0.0;
-		    } 
-		} else {
-		    /* score if y is not censored */
-		    if (xi < k) {
-			Z[gi][t] = e[t] * X[xi][t];
-		    } else {
-			Z[gi][t] = e[t] * -y[t];
-		    }
-		    if (xi == k) {
-			Z[gi][t] += 1.0 / siginv;
-		    }
-		}
-	    }
-	}
-    }
-
-    return 0;
-}
-
-#endif
-
 static double t_loglik (const double *theta, void *ptr)
 {
     double ll = NADBL;
@@ -235,12 +127,12 @@ static double t_loglik (const double *theta, void *ptr)
     double llt;
     int i, t;
 
-#if 0
     if (siginv < 0.0) {
+#if 0
 	fprintf(stderr, "t_loglik: got a negative variance\n");
+#endif
 	return NADBL;
     } 
-#endif
 
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<n; t++) {
@@ -626,30 +518,6 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     return 0;
 }
 
-#ifndef USE_BFGS
-
-static model_info *
-tobit_model_info_init (int model_obs, int bign, int k, int n_series)
-{
-    double tol = get_bhhh_toler();
-    model_info *tobit;
-
-    if (na(tol)) {
-	tol = TOBIT_TOL;
-    }
-
-    tobit = model_info_new(k, 0, model_obs - 1, bign, tol);
-
-    if (tobit != NULL) {
-	model_info_set_opts(tobit, FULL_VCV_MATRIX);
-	model_info_set_n_series(tobit, n_series);
-    }
-
-    return tobit;
-}
-
-#endif
-
 static int transform_tobit_VCV (gretl_matrix *VCV, double sigma,
 				const double *theta, int k)
 {
@@ -709,9 +577,7 @@ static int tobit_add_variance (MODEL *pmod, int k)
     return 0;
 }
 
-/* Main Tobit function: two variants */
-
-#ifdef USE_BFGS
+/* Main Tobit function */
 
 static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		     double scale, int missvals, PRN *prn)
@@ -793,89 +659,6 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     return err;
 }
-
-#else /* BHHH */
-
-static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
-		     double scale, int missv, PRN *prn)
-{
-    double **X;
-    double *theta = NULL;
-    gretl_matrix *VCV = NULL;
-    double sigma;
-    int i, k, n;
-    int nv = pmod->list[0];
-    int err = 0;
-
-    model_info *tobit = NULL;
-    int n_series = 4;
-    double ll;
-
-    k = pmod->ncoeff + 1; /* add the variance */
-    n = pmod->nobs;
-
-    /* set of pointers into original data, or a reduced copy 
-       if need be */
-    X = data_array_from_model(pmod, Z, missv);
-    if (X == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    err = tobit_add_variance(pmod, k);
-    if (err) {
-	goto bailout;
-    }
-
-    tobit = tobit_model_info_init(pmod->nobs, pdinfo->n, k, n_series);
-    if (tobit == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    err = bhhh_max(tobit_ll, (const double **) X, pmod->coeff, tobit, prn);
-    if (err) {
-	goto bailout;
-    }
-
-    theta = model_info_get_theta(tobit);
-
-    /* recover estimate of variance */
-    sigma = 1.0 / theta[k-1]; 
-
-    /* recover slope estimates */
-    for (i=0; i<k-1; i++) {
-	theta[i] *= sigma;
-    }
-
-    /* get estimate of variance matrix for Olsen parameters */
-    VCV = model_info_get_VCV(tobit);
-    gretl_invert_symmetric_matrix(VCV);
-    gretl_matrix_divide_by_scalar(VCV, n);
-
-    /* Do Jacobian thing */
-    err = transform_tobit_VCV(VCV, sigma, theta, k);
-
-    ll = model_info_get_ll(tobit);
-    write_tobit_stats(pmod, theta, k-1, sigma, ll, (const double **) X, 
-		      VCV, scale, model_info_get_iters(tobit));
-
- bailout:
-
-    if (missv) {
-	doubles_array_free(X, nv);
-    } else {
-	free(X);
-    }
-
-    if (tobit != NULL) {
-	model_info_free(tobit);
-    }
-
-    return err;
-}
-
-#endif /* BFGS vs BHHH */
 
 static double tobit_depvar_scale (const MODEL *pmod, int *miss)
 {
@@ -1004,7 +787,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	model = lsq(list, pZ, pdinfo, OLS, OPT_A);
     }
 
-#ifdef TDEBUG
+#if TDEBUG
     pprintf(prn, "tobit_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_NONE, prn);
 #endif

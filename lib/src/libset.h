@@ -75,6 +75,11 @@ int get_bhhh_maxiter (void);
 int set_bhhh_toler (double tol);
 int set_bhhh_maxiter (int n);
 
+double get_bfgs_toler (void);
+int get_bfgs_maxiter (void);
+int set_bfgs_toler (double tol);
+int set_bfgs_maxiter (int n);
+
 const gretl_matrix *get_init_vals (void);
 
 int get_VAR_horizon (void);
@@ -100,6 +105,9 @@ int gretl_messages_on (void);
 
 int set_long_digits (int n);
 int get_long_digits (void);
+
+int set_max_verbose (int n);
+int get_max_verbose (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
 

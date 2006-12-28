@@ -492,8 +492,8 @@ static int expand_model_series (MODEL *pmod, model_info *minfo)
  * member, %Z[0], represents the constant or intercept, and should
  * not be modified.  
  *
- * For examples of the use of this function, see arma.c and tobit.c
- * in the %plugin directory of the gretl source.
+ * For an example of the use of this function, see arma.c in the
+ * %plugin directory of the gretl source.
  * 
  * Returns: 0 on successful completion, non-zero error code otherwise.
  */
@@ -513,9 +513,9 @@ int bhhh_max (LL_FUNC loglik,
     DATAINFO *tinfo = NULL;
 
     int iters, itermax;
-    double minstep = 1.0e-06; /* in arma, was 1.0e-08 */
+    double minstep = 1.0e-06;
     double crit = 1.0;
-    double stepsize = 0.25;   /* in arma, was 0.125 */
+    double stepsize = 0.25;
 
     double *delta = NULL, *ctemp = NULL;
 

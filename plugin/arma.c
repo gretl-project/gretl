@@ -1380,18 +1380,18 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 #endif
     char fnstr[MAXLINE];
     char term[32];
-    nls_spec *spec;
+    nlspec *spec;
     int *plist = NULL;
     int v, oldv = pdinfo->v;
     int nparam;
     int i, j, k, err = 0;
 
-    spec = nls_spec_new(NLS, pdinfo);
+    spec = nlspec_new(NLS, pdinfo);
     if (spec == NULL) {
 	return E_ALLOC;
     }
 
-    nls_spec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
+    nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
 
     nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->nexo;
 
@@ -1472,15 +1472,15 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
 #endif
 
-    err = nls_spec_set_regression_function(spec, fnstr, pdinfo);
+    err = nlspec_set_regression_function(spec, fnstr, pdinfo);
 
     if (!err) {
-	err = nls_spec_add_param_list(spec, plist, (const double **) *pZ,
-				      pdinfo);
+	err = nlspec_add_param_list(spec, plist, (const double **) *pZ,
+				    pdinfo);
     }
 
     if (!err) {
-	*amod = model_from_nls_spec(spec, pZ, pdinfo, nlsopt, prn);
+	*amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
 	err = amod->errcode;
 #if ARMA_DEBUG
 	if (!err) {
@@ -1490,9 +1490,9 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 #endif
     }
 
-    bailout:
+ bailout:
 
-    nls_spec_destroy(spec);
+    nlspec_destroy(spec);
     free(plist);
 
     return err;

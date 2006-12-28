@@ -61,8 +61,8 @@ name, as in
 
 The meaning of this modification is explained below (see section
 \ref{funscope}); it is related to the use of pointer arguments in the
-C programming language.  In addition, \texttt{list} parameters (only)
-may be modified by the tag \texttt{const} (again, see \ref{funscope}).
+C programming language.  In addition, parameters may be modified by
+the tag \texttt{const} (again, see \ref{funscope}).
 
 Besides these required elements, the specification of a
 \texttt{scalar} parameter may include up to three pieces of additional
@@ -111,18 +111,17 @@ is at least equal to the number of \textit{required} parameters, and
 is no greater than the total number of parameters.
 
 A scalar, series or matrix argument to a function may be given either
-as the name of a pre-existing variable or (with one exception
-discussed below) as an expression which evaluates to a variable of the
-appropriate type.  Scalar arguments may also be given as numerical
-values.  List arguments must be specified by name.
+as the name of a pre-existing variable or as an expression which
+evaluates to a variable of the appropriate type.  Scalar arguments may
+also be given as numerical values.  List arguments must be specified
+by name.
     
 The \textsl{function body} is composed of \app{gretl} commands, or
 calls to user-defined functions (that is, functions may be nested).  A
-function may call itself (that is, functions may be recursive). There
-is a maximum ``stacking depth'' for user functions: at present this is
-set to 8.  While the function body may contain function calls, it may
-not contain function definitions.  That is, you cannot define a
-function inside another function.  
+function may call itself (that is, functions may be recursive). While
+the function body may contain function calls, it may not contain
+function definitions.  That is, you cannot define a function inside
+another function.
 
 
 \section{Calling a function}
@@ -191,8 +190,8 @@ variables that exist in the script from which the function is called)
 except insofar as these are explicitly passed to the function as
 arguments.  
 
-In the standard case, when a variable is passed to a function as an
-argument, what the function actually ``gets'' is a copy of the outer
+By default, when a variable is passed to a function as an argument,
+what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
 modified by whatever goes on inside the function.  There is, however,
 a mechanism for allowing a function and its caller to ``cooperate''
@@ -220,11 +219,11 @@ complementary prefix \verb+&+ in the caller.  For example,
       series resid = get_uhat_and_ess(price, xlist, &SSR)
 \end{code}
 %
-In the above, we may say that the function is given the address of
-the scalar variable \texttt{SSR}, and it assigns a value to that
+In the above, we may say that the function is given the \emph{address}
+of the scalar variable \texttt{SSR}, and it assigns a value to that
 variable (under the name \texttt{ess}).  For anyone used to
-programming in C, note that it is not necessary (or possible) to
-``dereference'' the variable in question within the function using the 
+programming in C, note that it is not necessary (or even possible) to
+``dereference'' the variable in question within the function using the
 \texttt{*} operator.  Unembellished use of the name of the variable is
 sufficient to access the variable in outer scope.
 
@@ -329,6 +328,20 @@ trying to define a function inside a function (see Section
 \ref{func-define}). Otherwise, if the function body contains invalid
 commands this will become apparent only when the function is called,
 and its commands are executed.
+
+
+\subsection{Printing of output}
+
+The usual mechanism whereby \app{gretl} echos commands, and reports on
+the creation of new variables, is suppressed by default when a
+function is being executed.  If you want to turn this on (for example,
+for the purpose of debugging function code), you can issue one or both
+of the following commands inside the function:
+%
+\begin{code}
+     set echo on
+     set messages on
+\end{code}
 
 \section{Function packages}
 \label{func-packages}
