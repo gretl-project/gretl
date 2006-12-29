@@ -95,8 +95,8 @@ static void free_tree (NODE *t, const char *msg)
     }
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %d)\n", msg, 
-	    (void *) t, t->t);
+    fprintf(stderr, "%-8s: freeing node at %p (type %d, aux = %d)\n", msg, 
+	    (void *) t, t->t, t->aux);
 #endif
 
     if (t->tmp) {
@@ -120,12 +120,14 @@ static void free_tree (NODE *t, const char *msg)
 
 static void parser_aux_init (parser *p)
 {
-    p->aux = NULL;
-    p->n_aux = 0;
+    if (p->ecount == 0) {
+	p->aux = NULL;
+	p->n_aux = 0;
+    }
     p->aux_i = 0;
 }
 
-static void parser_free_aux_nodes (parser *p)
+void parser_free_aux_nodes (parser *p)
 {
     int i;
 
@@ -306,6 +308,8 @@ static int add_aux_node (parser *p, NODE *t)
     return p->err;
 }
 
+#define repeat_exec(p) (p->ecount > 0)
+
 /* get an auxiliary node: if starting from scratch we allocate
    a new node, otherwise we look up an existing one */
 
@@ -313,7 +317,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 {
     NODE *ret = NULL;
 
-    if (starting(p)) {
+    if (starting(p) && !repeat_exec(p)) {
 	if (t == NUM) {
 	    ret = newdbl(NADBL);
 	} else if (t == VEC) {
@@ -334,6 +338,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    free_tree(ret, "On error");
 	    ret = NULL;
 	} 
+    } else if (p->aux == NULL) {
+	p->err = E_DATA;
     } else {
 	while (p->aux[p->aux_i] == NULL) {
  	    p->aux_i += 1;
@@ -4702,6 +4708,7 @@ static void parser_init (parser *p, const char *str,
     p->getstr = 0;
     p->err = 0;
     p->warn = 0;
+    p->ecount = 0;
 
     *p->warning = '\0';
 
@@ -4758,10 +4765,17 @@ void gen_save_or_print (parser *p, PRN *prn)
 void gen_cleanup (parser *p)
 {
     if (reusable(p)) {
+#if PRESERVE_AUX_NODES
+	if (p->ret != p->tree && !is_aux_node(p->ret)) {
+	    free_tree(p->ret, "p->ret");
+	    p->ret = NULL;
+	}
+#else
 	if (p->ret != p->tree) {
 	    free_tree(p->ret, "p->ret");
 	    p->ret = NULL;
 	}
+#endif
     } else {
 	if (p->ret != p->tree) {
 	    free_tree(p->tree, "p->tree");
@@ -4882,7 +4896,13 @@ int realgen (const char *s, parser *p, double ***pZ,
     pputc(prn, '\n');
 #endif
 
+#if PRESERVE_AUX_NODES
+    if (!reusable(p)) {
+	parser_free_aux_nodes(p);
+    }
+#else
     parser_free_aux_nodes(p);
+#endif
 
     gen_check_errvals(p);
 

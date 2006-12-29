@@ -25,6 +25,10 @@
 
 #define GENDEBUG 0
 
+/* this may be a good idea, but perhaps risky? */
+
+#define PRESERVE_AUX_NODES 0
+
 enum {
     U_NEG = 1,
     U_POS,
@@ -336,6 +340,7 @@ struct parser_ {
     NODE **aux;        /* auxiliary nodes used in evaluation */
     int n_aux;         /* the number of the above */
     int aux_i;         /* the current ID of the above */
+    int ecount;        /* number of times this parser has been exec'd */
     char warning[64];  /* to hold a warning, if needed */
     /* below: parser state variables */
     int obs;
@@ -372,6 +377,7 @@ int realgen (const char *s, parser *p, double ***Z,
 	     DATAINFO *pdinfo, PRN *prn, int flags);
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
+void parser_free_aux_nodes (parser *p);
 
 /* name lookup functions */
 const char *constname (int c);
