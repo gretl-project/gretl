@@ -121,17 +121,12 @@ void print_constants (void)
 void print_internals (void)
 {
     int n2 = sizeof res2 / sizeof res2[0];
-    int n3 = sizeof res3 / sizeof res3[0];
     char **S = NULL;
     int i, n = 0;
     int err = 0;
 
     for (i=0; i<n2 && !err; i++) {
 	err = push_string_on_array(&S, res2[i], n++);
-    }
-
-    for (i=0; i<n3 && !err; i++) {
-	err = push_string_on_array(&S, res3[i], n++);
     }
 
     if (!err) {

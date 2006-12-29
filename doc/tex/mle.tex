@@ -107,6 +107,12 @@ safe and efficient choice: this ensures that in large samples the
 starting point will be likely close to $\hat{\theta}$ and convergence
 can be achieved in few iterations. 
 
+The maxmimum number of iterations allowed for the BFGS procedure, and
+the relative tolerance for assessing convergence, can be adjusted
+using the \cmd{set} command: the relevant variables are
+\verb+bfgs_maxiter+ (default value 500) and \verb+bfgs_toler+ (default
+value, the machine precision to the power 3/4).
+
 \subsection{Covariance matrix and standard errors}
 
 By default the covariance matrix of the parameter estimates is
@@ -226,7 +232,7 @@ for the algorithm.  The gretl script code then becomes
 
 Another thing to note is that sometimes parameters are constrained
 within certain boundaries: in this case, for example, both $\alpha$
-and $p$ must be positive numbers. \app{gretl} does not check for this:
+and $p$ must be positive numbers. \app{Gretl} does not check for this:
 it is the user's responsibility to ensure that the function is
 always evaluated at an admissible point in the parameter space during
 the iterative search for the maximum. An effective technique is to
@@ -463,6 +469,7 @@ In many situations, this is rather efficient and accurate. However,
 one might want to avoid the approximation and specify an exact
 function for the derivatives. As an example, consider the following
 script:
+%
 \begin{code}
 nulldata 1000
 
@@ -523,7 +530,7 @@ via the chain rule, and it is easy to see that
 
 The \texttt{mle} block in the above script can therefore be modified
 as follows:
-
+%
 \begin{code}
 mle logl = y*ln(P) + (1-y)*ln(1-P)
   series ndx = b0 + b1*x1 + b2*x2 + b3*x3
@@ -540,6 +547,38 @@ Note that the \texttt{params} statement has been replaced by a series
 of \texttt{deriv} statements; these have the double function of
 identifying the parameters over which to optimize and providing an
 analytical expression for their respective score elements.
+
+\section{Debugging ML scripts}
+\label{sec:mle-debug}
+
+We have discussed above the main sorts of statements that are
+permitted within an \texttt{mle} block, namely 
+%
+\begin{itemize}
+\item auxiliary commands to generate helper variables;
+\item \texttt{deriv} statements to specify the gradient with respect
+  to each of the parameters; and
+\item a \texttt{params} statement to identify the parameters in case
+  analytical derivatives are not given.
+\end{itemize}
+
+For the purpose of debugging ML estimators one additional sort of
+statement is allowed: you can print the value of a relevant variable
+at each step of the iteration.  This facility is more restricted then
+the regular \texttt{print} command.  The command word \texttt{print}
+should be followed by the name of just one variable (a scalar, series
+or matrix).
+
+In the last example above a key variable named \texttt{tmp} was
+generated, forming the basis for the analytical derivatives.  To track
+the progress of this variable one could add a print statement within
+the ML block, as in
+%
+\begin{code}
+  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
+  print tmp
+\end{code}
+
 
 %%% Local Variables: 
 %%% mode: latex

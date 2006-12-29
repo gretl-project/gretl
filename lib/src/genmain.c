@@ -588,23 +588,17 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 
 /* run a previously compiled generator */
 
-int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo)
+int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
+		  PRN *prn)
 {
-    PRN *prn = NULL;
-
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s'\n", 
 	    (void *) p, p->lh.name);
-    gretl_print_new(GRETL_PRINT_STDERR);
 #endif
 
     realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
     gen_save_or_print(p, prn);
     gen_cleanup(p);
-
-#if GDEBUG
-    gretl_print_destroy(prn);
-#endif
 
     return p->err;
 }

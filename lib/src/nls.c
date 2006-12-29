@@ -206,7 +206,7 @@ static int nls_genr_setup (nlspec *s)
 
 	if (!err) {
 	    /* see if the formula actually works */
-	    err = execute_genr(genrs[i], s->Z, s->dinfo);
+	    err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
 	}
 
 	if (!err) {
@@ -272,7 +272,7 @@ static int nls_auto_genr (nlspec *s, int i)
 #if NLS_DEBUG
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
-	genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo);
+	genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
     }
 
     j = s->naux + i;
@@ -280,7 +280,7 @@ static int nls_auto_genr (nlspec *s, int i)
     fprintf(stderr, " j = naux + i = %d+%d = %d: executing genr[%d]\n", 
 	    s->naux, i, j, j);
 #endif
-    genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo);
+    genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
 
     /* make sure we have a correct pointer to matrix deriv */
     if (!genr_err && i > 0 && matrix_deriv(s, i-1)) {
@@ -556,7 +556,8 @@ get_params_from_nlfunc (nlspec *s, const double **Z,
 
    specifying the parameters to be estimated.  Here we parse
    such a list and add the parameter info to spec.  The terms
-   in the list must be pre-existing scalar variables.
+   in the list must be pre-existing scalar variables or
+   matrices (vectors).
 */
 
 static int 
@@ -2365,10 +2366,10 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
 /**
  * nlspec_add_aux:
  * @spec: pointer to nls specification.
- * @s: string specifying generation of an auxiliary variable
- * (for use in calculating function or derivatives).
+ * @s: string specifying an auxiliary command (primarily
+ * for use in calculating function or derivatives).
  *
- * Adds the specification of an auxiliary variable to @spec, 
+ * Adds the specification of an auxiliary command to @spec, 
  * which pointer must have previously been obtained by a call 
  * to nlspec_new().
  *
@@ -2381,6 +2382,10 @@ int nlspec_add_aux (nlspec *spec, const char *s)
     char *this;
     int nx = spec->naux + 1;
     int err = 0;
+
+#if NLS_DEBUG
+    fprintf(stderr, "nlspec_add_aux: s = '%s'\n", s);
+#endif
 
     this = gretl_strdup(s);
     if (this == NULL) {
@@ -3399,6 +3404,7 @@ struct umax_ {
     gretl_matrix *m_out;
     double ***Z;
     DATAINFO *dinfo;
+    PRN *prn;
 };
 
 static void umax_init (umax *u)
@@ -3410,6 +3416,7 @@ static void umax_init (umax *u)
     u->m_out = NULL;
     u->Z = NULL;
     u->dinfo = NULL;
+    u->prn = NULL;
 }
 
 static void umax_clear (umax *u)
@@ -3430,7 +3437,7 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->g, u->Z, u->dinfo); 
+    err = execute_genr(u->g, u->Z, u->dinfo, u->prn); 
 
     if (err) {
 	return NADBL;
@@ -3467,7 +3474,7 @@ static int user_gen_setup (umax *u,
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(g, pZ, pdinfo);
+	err = execute_genr(g, pZ, pdinfo, u->prn);
     }
 
     if (!err) {
@@ -3513,6 +3520,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 
     if (get_max_verbose()) {
 	opt = OPT_V;
+	u.prn = prn;
     }
 
     *err = BFGS_max(b->val, u.ncoeff, maxit, tol, &fcount, &gcount,
@@ -3545,7 +3553,7 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
 	u->b->val[i] = x[i];
     }
 
-    err = execute_genr(u->g, u->Z, u->dinfo); 
+    err = execute_genr(u->g, u->Z, u->dinfo, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
     }

@@ -2680,7 +2680,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    }
 		    update_loop_print(loop, p, cmd->list, pZ, pdinfo);
 		} else {
-		    err = printdata(cmd->list, (const double **) *pZ, pdinfo, 
+		    err = printdata(cmd->list, cmd->extra,
+				    (const double **) *pZ, pdinfo, 
 				    cmd->opt, prn);
 		}
 		break;

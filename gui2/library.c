@@ -4468,7 +4468,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	if (user_fopen("data_display_tmp", fname, &prn)) {
 	    goto display_exit;
 	}
-	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
+	printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
@@ -4478,7 +4478,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	if (bufopen(&prn)) {
 	    goto display_exit;
 	}
-	if (printdata(list, (const double **) Z, datainfo, OPT_O, prn)) {
+	if (printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn)) {
 	    nomem();
 	    gretl_print_destroy(prn);
 	} else {
@@ -5072,7 +5072,7 @@ void display_var (void)
 	    return;
 	}
 
-	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
+	printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { 
@@ -5083,7 +5083,7 @@ void display_var (void)
 	    return;
 	}
 
-	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
+	err = printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
 	    nomem();
 	    gretl_print_destroy(prn);

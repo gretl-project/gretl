@@ -60,10 +60,11 @@ By default, each variable occupies a column (and there can only be one
 variable per column).  The range of data values included in the matrix
 depends on the current setting of the sample range.
 
-Please note that while gretl's built-in statistical functions are
+Please note: while gretl's built-in statistical functions are
 capable of handling missing values, the matrix arithmetic functions
-are not, and you will get an error if you try to build a matrix from
-series that include missing values.
+are not.  \emph{When you build a matrix from series that include missing
+values, observations for which at least one series has a missing value
+are skipped}.  
 
 Instead of giving an explicit list of variables, you may instead
 provide the \textit{name of a saved list} (see Chapter~\ref{persist}),
@@ -100,13 +101,14 @@ relevant mechanisms are discussed in the next several sections.
 \section{Matrix operators}
 \label{matrix-op}
 
-The following operators are available for matrices:
+The following binary operators are available for matrices:
 
 \begin{center}
 \begin{tabular}{ll}
 \texttt{+} & addition \\
 \texttt{-} & subtraction \\
 \texttt{*} & ordinary matrix multiplication \\
+\texttt{'} & multiplication by transpose \\
 \texttt{/} & matrix ``division'' (see below) \\
 \texttt{.*} & element-wise multiplication \\
 \texttt{./} & element-wise division \\
@@ -134,6 +136,16 @@ matrix D = A - k
 %
 both produce $m \times n$ matrices, with elements $c_{ij} = 
 a_{ij} + k$ and $d_{ij} = a_{ij} - k$ respectively.
+
+By ``multiplication by transpose'' we mean, for example, that 
+%
+\begin{code}
+matrix C = X'Y
+\end{code}
+%
+produces the product of $X$-transpose and $Y$.  In effect, 
+the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
+(which is also valid).
 
 In matrix ``division'', $A/B$ is algebraically equivalent to
 $B^{-1}A$ (pre-multiplication by the inverse of the ``divisor'').
@@ -230,7 +242,8 @@ into four categories:
 %
 \begin{enumerate}
 \item Those taking a single matrix as argument and returning a scalar.
-\item Those taking a single matrix as argument and returning a matrix.
+\item Those taking a single matrix as argument (plus in some cases an
+  additional parameter) and returning a matrix.
 \item Those taking one or two dimensions as arguments and
   returning a matrix.
 \item Those taking two matrices as arguments and returning a matrix.
@@ -290,7 +303,8 @@ matrix are:
 \texttt{cdemean()} & subtract column means \\ 
 \texttt{vec()} & organize elements as column vector \\
 \texttt{vech()} & vectorize lower triangle \\
-\texttt{unvech()} & undo \texttt{vech}
+\texttt{unvech()} & undo \texttt{vech} \\
+\texttt{mlag()} & matrix lag or lead
 \end{tabular}
 \end{center}
 
@@ -332,6 +346,24 @@ elements of the lower triangle of $A$, column by column.  Note that
 $A$ must be square; for the operation to make sense $A$ should also
 be symmetric.  The \texttt{unvech} function performs the inverse
 operation, producing a symmetric matrix.
+
+The \texttt{mlag} function requires two arguments, a matrix and a
+scalar lag order, $m$.  Applied to an $T \times k$ matrix $A$, this
+function returns a $T \times k$ matrix $B$ such that
+%
+\[
+  b_{ij} = \left\{ 
+    \begin{array}{ll} 
+      a_{i-m,j} & 1 \leq i - m \leq T \\ 
+      0 & \mbox{otherwise}
+    \end{array}
+    \right.
+\]
+%
+That is, the columns of $B$ are lagged versions of the columns of $A$,
+with missing values replaced by zeros.  The order $m$ may be negative
+to generate leads instead of lags.
+
 
 \subsection{Matrix filling functions}
 \label{matrix-fill}

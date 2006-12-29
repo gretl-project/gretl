@@ -1475,6 +1475,20 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
     return ret;
 }
 
+static void print_listed_matrices (const char *s, PRN *prn)
+{
+    gretl_matrix *m;
+    char *mname;
+
+    while ((mname = gretl_word_strdup(s, &s)) != NULL) {
+	m = get_matrix_by_name(mname);
+	if (m != NULL) {
+	    gretl_matrix_print_to_prn(m, mname, prn);
+	}
+	free(mname);
+    }
+}
+
 static void print_scalar (double x, const char *vname, 
 			  gretlopt opt, int allconst,
 			  PRN *prn)
@@ -1536,6 +1550,7 @@ static int adjust_print_list (int *list, int *screenvar,
 /**
  * printdata:
  * @list: list of variables to print.
+ * @mstr: optional string holding names of matrices to print.
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: if %OPT_O, print the data by observation (series in columns);
@@ -1550,7 +1565,8 @@ static int adjust_print_list (int *list, int *screenvar,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int printdata (const int *list, const char *mstr, 
+	       const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
@@ -1569,7 +1585,11 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     printdata_blocks = 0;
 
     if (list == NULL) {
-	plist = full_var_list(pdinfo, &nvars);
+	if (mstr != NULL) {
+	    goto endprint;
+	} else {
+	    plist = full_var_list(pdinfo, &nvars);
+	}
     } else {
 	nvars = list[0];
 	if (nvars > 0) {
@@ -1754,6 +1774,10 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 
  endprint:
+
+    if (mstr != NULL) {
+	print_listed_matrices(mstr, prn);
+    }
 
     free(plist);
     free(pmax);

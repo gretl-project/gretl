@@ -3604,6 +3604,10 @@ static void printnode (const NODE *t, const parser *p)
     } else if (t->t == VEC) {
 	int i, j = 1;
 
+	if (p->lh.v > 0 && p->lh.v < p->dinfo->v) {
+	    pprintf(p->prn, "%s\n", p->dinfo->varname[p->lh.v]);
+	}
+
 	for (i=p->dinfo->t1; i<=p->dinfo->t2; i++, j++) {
 	    if (na(t->v.xvec[i])) {
 		pputs(p->prn, "NA");
@@ -3840,7 +3844,7 @@ static void parser_print_result (parser *p, PRN *prn)
     if (p->targ == NUM || p->targ == VEC) {
 	int list[2] = { 1, p->lh.v };
 
-	printdata(list, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
+	printdata(list, NULL, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
     } else if (p->targ == MAT) {
 	gretl_matrix_print_to_prn(p->lh.m1, p->lh.name, prn);
     }
@@ -3995,6 +3999,9 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "eval ", 5)) {
 	p->flags |= P_DISCARD;
 	s += 5;
+    } else if (!strncmp(s, "print ", 6)) {
+	p->flags |= P_PRINT;
+	s += 6;
     }
 
     while (isspace(*s)) s++;
@@ -4628,7 +4635,13 @@ static int save_generated_var (parser *p, PRN *prn)
 static void parser_reinit (parser *p, double ***pZ, 
 			   DATAINFO *dinfo, PRN *prn) 
 {
+    int saveflags = p->flags;
+
     p->flags = (P_START | P_PRIVATE | P_EXEC);
+
+    if (saveflags & P_PRINT) {
+	p->flags |= P_PRINT;
+    }
 
     p->Z = pZ;
     p->dinfo = dinfo;
@@ -4779,7 +4792,12 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     if (flags & P_EXEC) {
 	parser_reinit(p, pZ, pdinfo, prn);
-	goto starteval;
+	if (p->flags & P_PRINT) {
+	    p->ret = lhs_copy_node(p);
+	    return p->err;
+	} else {
+	    goto starteval;
+	}
     } else {
 	parser_init(p, s, pZ, pdinfo, prn, flags);
 	if (p->err) {

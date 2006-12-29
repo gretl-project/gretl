@@ -77,7 +77,8 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 GENERATOR *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
 			 int *err);
  
-int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo);
+int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo,
+		  PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 

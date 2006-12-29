@@ -597,6 +597,12 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
     int nv = 0, err = 0;
     int *list;
 
+    if (cmd->ci == PRINT && cmd->extra != NULL &&
+	*cmd->extra != '\0') {
+	/* no-op */
+	return 0;
+    }
+
     list = full_var_list(pdinfo, &nv);
 
     if (list == NULL) {
@@ -983,6 +989,21 @@ static int wildcard_expand (const char *s, int *lpos,
 }
 
 #endif /* no globbing available */
+
+static int matrix_name_ok (const char *s, CMD *cmd)
+{
+    int ok = 0;
+
+    if (cmd->ci == PRINT) {
+	if (get_matrix_by_name(s)) {
+	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
+	    cmd->list[0] -= 1;
+	    ok = 1;
+	}
+    }
+
+    return ok;
+}
 
 static void parse_rename_cmd (const char *line, CMD *cmd, 
 			      const DATAINFO *pdinfo)
@@ -1535,6 +1556,10 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     int v, k = *pk;
     int ok = 0;
 
+#if CMD_DEBUG
+    fprintf(stderr, "parse_alpha_list_field: s = '%s'\n", s);
+#endif
+
     if (ints_ok) {
 	v = gretl_int_from_string(s, (const double **) *pZ,
 				  pdinfo, &cmd->err);
@@ -1565,6 +1590,8 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     } else if (wildcard_expand(s, &k, pdinfo, cmd)) {
 	ok = 1;
     } else if (truncate_varname(s, &k, pdinfo, cmd)) {
+	ok = 1;
+    } else if (matrix_name_ok(s, cmd)) {
 	ok = 1;
     }
 
@@ -3383,7 +3410,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	if (*cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, (const double **) *pZ, pdinfo, 
+	    printdata(cmd->list, cmd->extra, (const double **) *pZ, pdinfo, 
 		      cmd->opt, prn);
 	}
 	break;
