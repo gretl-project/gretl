@@ -651,6 +651,7 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
     if (color && gnuplot_has_specified_emf_colors()) {
 	if (frequency_plot_code(ptype)) {
 	    strcat(emf_term_line, graph_palette[BOXCOLOR]);
+	    strcat(emf_term_line, " x000000");
 	} else {
 	    int i;
 
