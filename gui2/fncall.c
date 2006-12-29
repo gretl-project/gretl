@@ -94,6 +94,11 @@ static const char *arg_type_string (int type)
     if (type == ARG_SERIES) return "series";
     if (type == ARG_LIST)   return "list";
     if (type == ARG_MATRIX) return "matrix";
+
+    if (type == ARG_REF_SCALAR) return "scalar";
+    if (type == ARG_REF_SERIES) return "series";
+    if (type == ARG_REF_MATRIX) return "matrix";
+
     return "";
 }
 
@@ -653,11 +658,39 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
     return err;
 }
 
+static int addressify_var (call_info *cinfo, int i)
+{
+    char *numchars = "0123456789+-.";
+    int t = fn_param_type(cinfo->func, i);
+    char *s = cinfo->args[i];
+
+    return (t == ARG_REF_SCALAR && strchr(numchars, *s)) ||
+	(t == ARG_REF_MATRIX && *s == '{');
+}
+
+static int needs_amp (call_info *cinfo, int i)
+{
+    int t = fn_param_type(cinfo->func, i);
+    char *s = cinfo->args[i];
+
+    if (*s == '&') {
+	return 0;
+    }
+
+    if (t != ARG_REF_SCALAR && t != ARG_REF_SERIES &&
+	t != ARG_REF_MATRIX) {
+	return 0;
+    }
+
+    return 1;
+}
+
 void call_function_package (const char *fname, GtkWidget *w)
 {
     ExecState state;
     char tmpfile[FILENAME_MAX];
     char fnline[MAXLINE];
+    char auxline[MAXLINE];
     const char *fnname;
     FuncDataReq dreq;
     float minver;
@@ -766,6 +799,20 @@ void call_function_package (const char *fname, GtkWidget *w)
     if (cinfo.args != NULL) {
 	strcat(fnline, "(");
 	for (i=0; i<cinfo.n_params; i++) {
+	    char auxname[VNAMELEN];
+
+	    if (addressify_var(&cinfo, i)) {
+		sprintf(auxname, "ARG%d", i + 1);
+		sprintf(auxline, "genr %s=%s", auxname, cinfo.args[i]);
+		err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
+		if (!err) {
+		    free(cinfo.args[i]);
+		    cinfo.args[i] = g_strdup(auxname);
+		}
+	    } 
+	    if (needs_amp(&cinfo, i)) {
+		strcat(fnline, "&");
+	    }
 	    strcat(fnline, cinfo.args[i]);
 	    if (i < cinfo.n_params - 1) {
 		strcat(fnline, ", ");
@@ -773,6 +820,8 @@ void call_function_package (const char *fname, GtkWidget *w)
 	}
 	strcat(fnline, ")");
     }
+
+    /* FIXME destroy any "ARG" vars or matrices that were created */
 
     cinfo_free(&cinfo);
 
