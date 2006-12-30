@@ -276,7 +276,8 @@ static int unary_apost (parser *p)
 
 	if (isalpha(c) || c == '$' || c == '(') {
 	    /* next symbol is variable or expression: the
-	       apostrophe must be the binary operator, TRMUL
+	       apostrophe must be the binary operator, 
+	       B_TRMUL
 	    */
 	    return 0;
 	} else {
@@ -805,7 +806,9 @@ static NODE *factor (parser *p)
     } else {
 	t = powterm(p);
 	if (t != NULL) {
-	    while (!p->err && (p->sym == B_POW || p->sym == DOTPOW)) {
+	    while (!p->err && (p->sym == B_POW || 
+			       p->sym == DOTPOW ||
+			       p->sym == B_TRMUL)) {
 		t = newb2(p->sym, t, NULL);
 		if (t != NULL) {
 		    lex(p);
@@ -831,9 +834,8 @@ static NODE *term (parser *p)
     }
 
     while (!p->err && (p->sym == B_MUL || p->sym == B_DIV || 
-		       p->sym == B_TRMUL || p->sym == B_MOD || 
-		       p->sym == DOTMULT || p->sym == DOTDIV || 
-		       p->sym == KRON)) {
+		       p->sym == B_MOD || p->sym == DOTMULT || 
+		       p->sym == DOTDIV || p->sym == KRON)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

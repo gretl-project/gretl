@@ -724,7 +724,7 @@ replicate gretl's built-in OLS functionality.
   open data4-1
   matrix X = { const, sqft }
   matrix y = { price }
-  matrix b = inv(X'X) * (X'y)
+  matrix b = inv(X'X) * X'y
   printf "estimated coefficient vector\n"
   b
   matrix uh = y - X*b
