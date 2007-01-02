@@ -1472,7 +1472,7 @@ static int arbond_prepare_model (MODEL *pmod, arbond *ab,
 		    if (!skip_obs(ab, i, t)) {
 			s = data_index(ab, i) + t;
 			pmod->uhat[s] = ab->uhat->val[k];
-			pmod->yhat[s] = y[s-1] + ab->dy->val[k] - pmod->uhat[s];
+			pmod->yhat[s] = y[s] - pmod->uhat[s];
 			k++;
 		    }
 		}

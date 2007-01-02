@@ -591,7 +591,6 @@ static void table_add_row (GtkWidget *tbl, int *rows, int cols)
 static void add_color_selector (int i, GtkWidget *tbl, int *rows,
 				GtkWidget *notebook)
 {
-
     GtkWidget *button, *hbox;
     GtkWidget *label;
     char str[32];

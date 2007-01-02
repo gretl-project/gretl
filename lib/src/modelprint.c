@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "system.h"
+#include "texprint.h"
 
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
@@ -1616,26 +1617,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	}	    
 
 	if (tex_format(prn)) {
-	    char pt = get_local_decpoint();
-
-	    pprintf(prn, "\\vspace{1em}\n\n"
-		    "\\begin{tabular*}{\\textwidth}"
-		    "{@{\\extracolsep{\\fill}}\n"
-		    "l%% col 1: varname\n"
-		    "  D{%c}{%c}{-1}%% col 2: coeff\n"
-		    "    D{%c}{%c}{-1}%% col 3: sderr\n"
-		    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
-		    "        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
-		    "%s &\n"
-		    "  \\multicolumn{1}{c}{%s} &\n"
-		    "    \\multicolumn{1}{c}{%s} &\n"
-		    "      \\multicolumn{1}{c}{%s} &\n"
-		    "        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
-		    pt, pt, pt, pt, pt, pt, pt, pt, I_(col1),
-		    I_(col2), I_("Std.\\ Error"), 
-		    I_("$t$-statistic"), 
-		    (binary)? I_("Slope"): I_("p-value"),
-		    (binary)? "$^*$" : "");
+	    tex_coeff_table_start(col1, col2, binary, prn);
 	    return;
 	}   
 
@@ -1672,7 +1654,7 @@ static void print_coeff_table_end (const MODEL *pmod, PRN *prn)
     if (plain_format(prn) || csv_format(prn)) {
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
-	pputs(prn, "\\end{tabular*}\n\n");
+	tex_coeff_table_end(prn);
     } else if (rtf_format(prn)) {
 	pputs(prn, "}\n\n");
     }

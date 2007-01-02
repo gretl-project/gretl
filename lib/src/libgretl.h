@@ -415,7 +415,6 @@ struct MODEL_ {
 #include "describe.h"
 #include "printout.h"
 #include "modelprint.h"
-#include "texprint.h"
 #include "graphing.h"
 #include "random.h"
 #include "nonparam.h"

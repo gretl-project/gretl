@@ -23,6 +23,7 @@
 #include "model_table.h"
 #include "session.h"
 #include "textutil.h"
+#include "texprint.h"
 
 static MODEL **table_models;
 static int n_models;

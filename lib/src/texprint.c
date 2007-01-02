@@ -21,6 +21,24 @@
 
 #include "libgretl.h"
 #include "johansen.h"
+#include "texprint.h"
+
+static char colspec[4][8];
+static int use_custom;
+
+int tex_using_custom_tabular (void)
+{
+    return use_custom;
+}
+
+const char *tex_column_format (int i)
+{
+    if (i >= 0 && i < 4) {
+	return colspec[i];
+    } else {
+	return "";
+    }
+}
 
 #define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
 
@@ -392,28 +410,85 @@ static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
     }
 }
 
+static int tex_print_coeff_custom (const char *pname, const MODEL *pmod, 
+				   int i, PRN *prn)
+{
+    char fmt[12];
+    double x;
+
+    pprintf(prn, "%s & ", pname);
+
+    if (colspec[0][0]) {
+	/* coefficient */
+	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    sprintf(fmt, "$%s$", colspec[0]);
+	    pprintf(prn, fmt, pmod->coeff[i]);
+	}
+    }
+
+    if (!colspec[1][0] && !colspec[2][0] && !colspec[3][0]) {
+	pputs(prn, " \\\\\n");
+	return 0;
+    }
+
+    if (colspec[1][0]) {
+	if (colspec[0][0]) {
+	    pputs(prn, " & ");
+	}
+	/* standard error */
+	if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    pprintf(prn, colspec[1], pmod->sderr[i]);
+	}
+    }
+
+    if (!colspec[2][0] && !colspec[3][0]) {
+	pputs(prn, " \\\\\n");
+	return 0;
+    }
+
+    if (colspec[2][0]) {
+	if (colspec[0][0] || colspec[1][0]) {
+	    pputs(prn, " & ");
+	}
+	/* t-ratio */
+	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i]) ||
+	    isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    x = pmod->coeff[i] / pmod->sderr[i];
+	    sprintf(fmt, "$%s$", colspec[2]);
+	    pprintf(prn, fmt, x);
+	}
+    } 
+
+    if (colspec[3][0]) {
+	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
+	    pputs(prn, " & ");
+	}
+	/* p-value */
+	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i]) ||
+	    isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	} else {
+	    x = coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], pmod->dfd);
+	    pprintf(prn, colspec[3], x);
+	}
+    }  
+
+    pputs(prn, " \\\\\n");
+
+    return 0;
+}
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn)
 {
     char tmp[32], coeff[64], sderr[64], tratio[64], pval[64];
     int j = i + 2;
-
-    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
-	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-    } else {
-	tex_dcolumn_double(pmod->coeff[i], coeff);
-    }
-
-    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
-	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-    } else {
-	tex_dcolumn_double(pmod->sderr[i], sderr);
-	sprintf(tratio, "%.4f", pmod->coeff[i] / pmod->sderr[i]);
-	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], 
-					 pmod->dfd));
-    }    
 
     *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
@@ -442,6 +517,27 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[j]]);
     }
+
+    if (use_custom) {
+	return tex_print_coeff_custom(tmp, pmod, i, prn);
+    }
+
+    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    } else {
+	tex_dcolumn_double(pmod->coeff[i], coeff);
+    }
+
+    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    } else {
+	tex_dcolumn_double(pmod->sderr[i], sderr);
+	sprintf(tratio, "%.4f", pmod->coeff[i] / pmod->sderr[i]);
+	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], 
+					 pmod->dfd));
+    }    
 	
     if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
 	pprintf(prn, "%s &\n"
@@ -475,6 +571,106 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     return 0;
+}
+
+void tex_custom_coeff_table_start (const char *col1, const char *col2,
+				   PRN *prn)
+{
+    int i, ncols = 0;
+
+    for (i=0; i<4; i++) {
+	if (colspec[i][0]) ncols++;
+    }
+
+    pputs(prn, "\\vspace{1em}\n\n"
+	  "\\begin{tabular}{l");
+
+    for (i=0; i<ncols; i++) {
+	pputs(prn, "r");
+    }
+
+    pputs(prn, "}\n");
+
+    pprintf(prn, "\\multicolumn{1}{c}{%s} &\n", I_(col1));
+
+    if (colspec[0][0]) {
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_(col2));
+    }
+
+    if (!colspec[1][0] && !colspec[2][0] && !colspec[3][0]) {
+	pputs(prn, " \\\\\n");
+	return;
+    }
+
+    if (colspec[1][0]) {
+	if (colspec[0][0]) {
+	    pputs(prn, " &\n");
+	}
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("Std.\\ Error"));
+    }
+
+    if (!colspec[2][0] && !colspec[3][0]) {
+	pputs(prn, " \\\\\n");
+	return;
+    }
+
+    if (colspec[2][0]) {
+	if (colspec[0][0] || colspec[1][0]) {
+	    pputs(prn, " &\n");
+	}
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("$t$-statistic"));
+    }
+
+    if (colspec[3][0]) {
+	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
+	    pputs(prn, " &\n");
+	}
+	pprintf(prn, "\\multicolumn{1}{c}{%s}", I_("p-value"));
+    }
+
+    pputs(prn, " \\\\\n");
+}
+
+void tex_coeff_table_start (const char *col1, const char *col2,
+			    int binary, PRN *prn)
+{
+
+    char pt;
+
+    if (use_custom) {
+	tex_custom_coeff_table_start(col1, col2, prn);
+	return;
+    }
+
+    pt = get_local_decpoint();
+
+    pprintf(prn, "\\vspace{1em}\n\n"
+	    "\\begin{tabular*}{\\textwidth}"
+	    "{@{\\extracolsep{\\fill}}\n"
+	    "l%% col 1: varname\n"
+	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
+	    "    D{%c}{%c}{-1}%% col 3: sderr\n"
+	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
+	    "        D{%c}{%c}{4}}%% col 5: p-value (or slope)\n"
+	    "%s &\n"
+	    "  \\multicolumn{1}{c}{%s} &\n"
+	    "    \\multicolumn{1}{c}{%s} &\n"
+	    "      \\multicolumn{1}{c}{%s} &\n"
+	    "        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
+	    pt, pt, pt, pt, pt, pt, pt, pt, I_(col1),
+	    I_(col2), I_("Std.\\ Error"), 
+	    I_("$t$-statistic"), 
+	    (binary)? I_("Slope"): I_("p-value"),
+	    (binary)? "$^*$" : "");
+}
+
+void tex_coeff_table_end (PRN *prn)
+{
+    if (use_custom) {
+	pputs(prn, "\\end{tabular}\n\n");
+    } else {
+	pputs(prn, "\\end{tabular*}\n\n");
+    }
 }
 
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
@@ -1019,8 +1215,8 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt opt)
+int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile, 
+	      gretlopt opt)
 {
     PRN *prn;
     int eqn = (opt & OPT_E);
@@ -1056,5 +1252,114 @@ void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 
 	ntodate(tmp, t, pdinfo);
 	pprintf(prn, "%8s ", tmp);
+    }
+}
+
+static int check_colspec (const char *s)
+{
+    const char *ok = "eEfgG";
+    int w = 0, p = 0;
+    char c = 0;
+    int err = 1;
+
+    /* blank is OK */
+    if (*s == '\0') {
+	return 0;
+    }
+
+    if (*s != '%') {
+	return 1;
+    }
+
+    s++;
+
+    if (*s == '#') { /* OK */
+	s++;
+    }
+
+    if (sscanf(s, "%d.%d%c", &w, &p, &c) == 3) {
+	if (w != 0 && p > 0 && strchr(ok, c)) {
+	    err = 0;
+	}
+    } else if (sscanf(s, "%d%c", &w, &c) == 2) {
+	if (w != 0 && strchr(ok, c)) {
+	    err = 0;
+	}
+    } else if (sscanf(s, ".%d%c", &p, &c) == 2) {
+	if (p > 0 && strchr(ok, c)) {
+	    err = 0;
+	}
+    } else if (sscanf(s, "%c", &c) == 1) {
+	if (strchr(ok, c)) {
+	    err = 0;
+	}
+    } 
+
+    return err;
+}
+
+/**
+ * set_tex_param_format:
+ * @s: stylized format string.
+ *
+ * Sets the format with which parameters will be printed, when
+ * producing TeX tabular output.
+ */
+
+void set_tex_param_format (const char *s)
+{
+    const char *p = s;
+    int i, n = 0;
+    int err = 0;
+
+    if (s == NULL) {
+	use_custom = 0;
+	return;
+    }
+
+    for (i=0; i<4; i++) {
+	colspec[i][0] = '\0';
+    }
+
+    i = 0;
+
+    while (i < 4) {
+	if (*s == '|' || *s == '\0') {
+	    if (n > 7) {
+		n = 7;
+	    }
+	    strncat(colspec[i], p, n);
+	    fprintf(stderr, "spec %d = '%s'\n", i, colspec[i]);
+	    err = check_colspec(colspec[i]);
+	    if (err || *s == '\0') {
+		break;
+	    }
+	    p = s + 1;
+	    i++;
+	    n = 0;
+	} else {
+	    n++;
+	}
+	s++;
+    }
+
+    if (!err) {
+	/* all columns can't be blank */
+	n = 0;
+	for (i=0; i<4; i++) {
+	    if (colspec[i][0] != '\0') n++;
+	}
+	if (n == 0) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	for (i=0; i<4; i++) {
+	    colspec[i][0] = '\0';
+	}
+	use_custom = 0;
+    } else {
+	use_custom = 1;
     }
 }

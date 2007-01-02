@@ -105,4 +105,6 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w);
 
 void lmax_dialog (double *lmax, double ymax);
 
+void tex_format_dialog (gpointer p, guint u, GtkWidget *w);
+
 #endif /* DIALOGS_H */

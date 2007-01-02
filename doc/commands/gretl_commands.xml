@@ -422,8 +422,8 @@
       <para context="gui">
 	As regards the handling of instruments, please see the
 	documentation for the script version of this command.  Currently
-	you can't specify instrument in the GUI: all the independent
-	variables are taken to be strictly exogenous.
+	you cannot specify instruments explicitly in the GUI: all the
+	independent variables are taken to be strictly exogenous.
       </para>
       <para>
 	By default the results of 1-step estimation are reported (with
@@ -7265,6 +7265,10 @@
 	  <flag>--complete</flag>
 	  <effect>Create a complete document</effect>
         </option>
+        <option>
+	  <flag>--format="f1|f2|f3|f4"</flag>
+	  <effect>Specify a custom format</effect>
+        </option>
       </options>
     </usage>
 
@@ -7278,11 +7282,44 @@
 	number of models estimated to date in the current session. See
 	also <cmdref targ="eqnprint"/>.
       </para>
-
       <para>
 	If the <lit>--complete</lit> flag is given the &latex; file is
 	a complete document, ready for processing; otherwise it must
 	be included in a document.
+      </para>
+      <para>
+	If you wish alter the appearance of the tabular output, you can
+	specify a custom row format using the <lit>--format</lit> flag.
+	The format string must be enclosed in double quotes and must be
+	tied to the flag with an equals sign.  The pattern for the format
+	string is as follows.  There are four fields, representing the
+	coefficient, standard error, <mathvar>t</mathvar>-ratio and
+	p-value respectively.  These fields should be separated by
+	vertical bars; they may contain a <lit>printf</lit>-type
+	specification for the formatting of the numeric value in question,
+	or may be left blank to suppress the printing of that column
+	(subject to the constraint that you can't leave all the columns
+	blank).  Here are a few examples:
+      </para>
+      <code>
+	--format="%.4f|%.4f|%.4f|%.4f"
+	--format="%.4f|%.4f|%.3f|"
+	--format="%.5f|%.4f||%.4f"
+	--format="%.8g|%.8g||%.4f"
+      </code>
+      <para>
+	The first of these specifications prints the values in all columns
+	using 4 decimal places.  The second suppresses the p-value and
+	prints the <mathvar>t</mathvar>-ratio to 3 places.  The third
+	omits the <mathvar>t</mathvar>-ratio.  The last one again omits
+	the <mathvar>t</mathvar>, and prints both coefficient and standard
+	error to 8 significant figures.
+      </para>
+      <para>
+	Once you set a custom format in this way, it is remembered and
+	used for the duration of the gretl session.  To revert to
+	the default format you can use the special variant
+	<lit>--format=default</lit>.
       </para>
     </description>
 

@@ -25,6 +25,7 @@
 #include "model_table.h"
 #include "clipboard.h"
 #include "fileselect.h"
+#include "texprint.h"
 
 /* find-and-replace related materials */
 

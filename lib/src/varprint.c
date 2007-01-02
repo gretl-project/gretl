@@ -21,6 +21,7 @@
 #include "var.h"  
 #include "varprint.h"
 #include "libset.h"
+#include "texprint.h"
 
 /**
  * gretl_VAR_print_VCV:

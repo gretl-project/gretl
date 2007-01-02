@@ -50,7 +50,7 @@ static void doubleclick_action (windata_t *win)
 	browser_open_ps(NULL, win);
 	break;
     case FUNC_FILES:
-	browser_load_func(NULL, win);
+	browser_call_func(NULL, win);
 	break;
     case FUNC_EDIT:
 	browser_edit_func(NULL, win);

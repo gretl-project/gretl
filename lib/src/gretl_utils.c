@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "gretl_panel.h"
 #include "loop_private.h"
+#include "texprint.h"
 
 #include <errno.h>
 

@@ -604,10 +604,14 @@ static int function_data_check (call_info *cinfo)
 {
     int i, err = 0;
 
+    /* FIXME provide a way for a function to signal that
+       it doesn't need data loaded? */
+
     for (i=0; i<cinfo->n_params; i++) {
 	int type = fn_param_type(cinfo->func, i);
 
-	if (type == ARG_SERIES || type == ARG_LIST) {
+	if (type == ARG_SERIES || type == ARG_LIST ||
+	    type == ARG_REF_SERIES) {
 	    if (datainfo == NULL || datainfo->v == 0) {
 		errbox(_("Please open a data file first"));
 		err = 1;
@@ -616,7 +620,7 @@ static int function_data_check (call_info *cinfo)
 	}
 	if (type == ARG_LIST) {
 	    cinfo->need_list = 1;
-	} else if (type == ARG_MATRIX) {
+	} else if (type == ARG_MATRIX || type == ARG_REF_MATRIX) {
 	    if (n_user_matrices() == 0) {
 		errbox(_("This function takes a matrix argument\n"
 			 "but no matrices are currently defined"));
@@ -802,7 +806,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	    char auxname[VNAMELEN];
 
 	    if (addressify_var(&cinfo, i)) {
-		sprintf(auxname, "ARG%d", i + 1);
+		sprintf(auxname, "FNARG%d", i + 1);
 		sprintf(auxline, "genr %s=%s", auxname, cinfo.args[i]);
 		err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
 		if (!err) {
@@ -821,7 +825,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	strcat(fnline, ")");
     }
 
-    /* FIXME destroy any "ARG" vars or matrices that were created */
+    /* FIXME destroy any "ARG" vars or matrices that were created? */
 
     cinfo_free(&cinfo);
 

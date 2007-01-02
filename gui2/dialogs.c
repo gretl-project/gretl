@@ -29,6 +29,7 @@
 #include "ssheet.h"
 #include "database.h"
 #include "gretl_panel.h"
+#include "texprint.h"
 
 static int all_done;
 
@@ -4312,4 +4313,228 @@ void lmax_dialog (double *lmax, double ymax)
 		     G_CALLBACK(lmax_opt_finalize), &opt);
 
     gtk_widget_show_all(opt.dlg);
+}
+
+/* apparatus for setting custom format for TeX tabular model output */
+
+struct rbin {
+    GtkWidget *b[2];
+};
+
+struct tex_formatter {
+    GtkWidget *custom;
+    GtkWidget *show[3];
+    GtkObject *adj[4];
+    GtkWidget *spin[4];
+    struct rbin radio[4];
+};
+
+static void activate_row (GtkWidget *w, struct tex_formatter *tf)
+{
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "row"));
+    int s = GTK_TOGGLE_BUTTON(w)->active;
+
+    if (tf->spin[i] != NULL) {
+	gtk_widget_set_sensitive(tf->spin[i], s);
+	gtk_widget_set_sensitive(tf->radio[i].b[0], s);
+	gtk_widget_set_sensitive(tf->radio[i].b[1], s);
+    }
+}
+
+static void toggle_tex_custom (GtkWidget *w, struct tex_formatter *tf)
+{
+    int s = GTK_TOGGLE_BUTTON(w)->active;
+    int i;
+
+    if (tf->spin[0] != NULL) {
+	for (i=0; i<4; i++) {
+	    if (i < 3) {
+		gtk_widget_set_sensitive(tf->show[i], s);
+	    }
+	    gtk_widget_set_sensitive(tf->spin[i], s);
+	    gtk_widget_set_sensitive(tf->radio[i].b[0], s);
+	    gtk_widget_set_sensitive(tf->radio[i].b[1], s);
+	}
+    }
+}
+
+static gboolean record_tex_format (GtkWidget *w, struct tex_formatter *tf)
+{
+    if (GTK_TOGGLE_BUTTON(tf->custom)->active) {
+	char c, bit[8], fmt[32];
+	int i, p;
+
+	*fmt = '\0';
+
+	for (i=0; i<4; i++) {
+	    if (i == 0 || GTK_TOGGLE_BUTTON(tf->show[i-1])->active) {
+		p = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(tf->spin[i]));
+		if (GTK_TOGGLE_BUTTON(tf->radio[i].b[1])->active) {
+		    c = 'g';
+		} else {
+		    c = 'f';
+		}
+		sprintf(bit, "%%.%d%c", p, c);
+		strcat(fmt, bit);
+	    } 
+	    if (i < 3) {
+		strcat(fmt, "|");
+	    }
+	}
+	set_tex_param_format(fmt);
+    } else {
+	/* chose standard (default) format */
+	set_tex_param_format(NULL);
+    }
+
+    return FALSE;
+}
+
+static int get_tex_prec (const char *s)
+{
+    int p = 4;
+
+    if (s != NULL) {
+	s = strchr(s, '.');
+	if (s != NULL) {
+	    p = atoi(s + 1);
+	}
+    }
+
+    return p;
+}
+
+static char get_tex_conv (const char *s)
+{
+    char c = 'f';
+    int n = strlen(s);
+
+    if (n > 1) {
+	c = s[n - 1];
+    }
+
+    return c;
+}
+
+void tex_format_dialog (gpointer p, guint u, GtkWidget *w)
+{
+    const char *labels[] = {
+	N_("Coefficient"),
+	N_("Standard error"),
+	N_("t-ratio"),
+	N_("p-value")
+    };
+    struct tex_formatter tf;
+    GtkWidget *dlg, *tbl;
+    GtkWidget *tmp, *hbox, *vbox; 
+    GSList *group;
+    int i, nset = 0;
+
+    for (i=0; i<4; i++) {
+	const char *fmt = tex_column_format(i);
+
+	tf.spin[i] = NULL;
+	if (*fmt) nset++;
+    }
+
+    dlg = gretl_dialog_new(_("gretl: TeX tabular format"), NULL,
+			   GRETL_DLG_BLOCK);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    vbox = gtk_vbox_new(FALSE, 0);
+    tmp = gtk_radio_button_new_with_label(NULL, _("Standard format"));
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+    tmp = tf.custom = gtk_radio_button_new_with_label(group, _("Custom format"));
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(toggle_tex_custom), &tf);
+
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
+    gtk_widget_show_all(hbox);
+
+    vbox_add_hsep(GTK_DIALOG(dlg)->vbox);    
+    
+    tbl = gtk_table_new(11, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+
+    for (i=0; i<4; i++) {
+	const char *curr = tex_column_format(i);
+	int p = get_tex_prec(curr);
+	char c = get_tex_conv(curr);
+	int shown = (i == 0 || curr[0] != 0 || nset == 0);
+	int j = i * 3;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_(labels[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 2, j, j+1);
+
+	/* "show" check button */
+	if (i > 0) {
+	    tmp = tf.show[i-1] = gtk_check_button_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, j+1, j+2);
+	    g_object_set_data(G_OBJECT(tmp), "row", GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(tmp), "clicked",
+			     G_CALLBACK(activate_row), &tf);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), shown);
+	}
+
+	/* spinner for precision */
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_("Show"));
+	tf.adj[i] = gtk_adjustment_new(p, 0, 15, 1, 1, 1);
+	tf.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(tf.adj[i]), 1, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tf.spin[i], FALSE, FALSE, 5);
+
+	/* decimal places versus significant figures */
+	vbox = gtk_vbox_new(FALSE, 0);
+	tf.radio[i].b[0] = gtk_radio_button_new_with_label(NULL, _("decimal places"));
+	gtk_box_pack_start(GTK_BOX(vbox), tf.radio[i].b[0], TRUE, TRUE, 5);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tf.radio[i].b[0]));
+	tf.radio[i].b[1] = gtk_radio_button_new_with_label(group, _("significant figures"));
+	gtk_box_pack_start(GTK_BOX(vbox), tf.radio[i].b[1], TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
+
+	if (c == 'g') {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tf.radio[i].b[1]), TRUE);
+	}
+
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, j+1, j+2);
+
+	gtk_widget_set_sensitive(tf.spin[i], shown);
+	gtk_widget_set_sensitive(tf.radio[i].b[0], shown);
+	gtk_widget_set_sensitive(tf.radio[i].b[1], shown);
+
+	if (i < 3) {
+	    tmp = gtk_hseparator_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, j+2, j+3);
+	}
+    }
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), tbl, TRUE, TRUE, 0);
+    gtk_widget_show_all(tbl);
+
+    if (tex_using_custom_tabular()) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tf.custom), TRUE);
+    } else {
+	toggle_tex_custom(tf.custom, &tf);
+    }
+
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
+   
+    /* OK button */
+    tmp = ok_button(GTK_DIALOG(dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(record_tex_format), &tf);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
+
+    gtk_widget_show(dlg);
 }

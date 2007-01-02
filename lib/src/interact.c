@@ -59,7 +59,7 @@ typedef struct {
 #define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
 
-static void get_optional_filename (const char *line, CMD *cmd);
+static void get_optional_filename_etc (const char *line, CMD *cmd);
 
 static int strip_inline_comments (char *s)
 {
@@ -1715,9 +1715,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /* tex printing commands can take a filename parameter */
+    /* TeX printing commands can take a filename parameter, and
+       possibly a format string -- but that's all
+    */
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
-	get_optional_filename(line, cmd);
+	get_optional_filename_etc(line, cmd);
+	return cmd->err;
     } 
 
     /* the "outfile" command may have a filename */
@@ -2827,24 +2830,25 @@ void echo_function_call (const char *line, unsigned char flags, PRN *prn)
     }
 }
 
-/* Look for a flag of the form "-x" which occurs outside of any
+/* Look for a flag of the form " -x" which occurs outside of any
    quotes: if found, return a pointer to the flag.
 */
 
 static const char *flag_present (const char *s, char f, int *quoted)
 {
     int inquote = 0;
-    int gotdash = 0;
+
+#if CMD_DEBUG
+    fprintf(stderr, "flag_present: looking at '%s'\n", s);
+#endif
 
     while (*s) {
 	if (*s == '"') {
 	    inquote = !inquote;
 	}
 	if (!inquote) {
-	    if (*s == '-') {
-		gotdash = 1;
-	    } else if (gotdash && *s == f && *(s+1)) {
-		s++;
+	    if (*s == ' ' && strlen(s) >= 4 && *(s+1) == '-' && *(s+2) == f) {
+		s += 3;
 		while (*s) {
 		    if (isspace(*s)) s++;
 		    else break;
@@ -2857,12 +2861,14 @@ static const char *flag_present (const char *s, char f, int *quoted)
 		    *quoted = 0;
 		    return s;
 		}
-	    } else {
-		gotdash = 0;
-	    }
+	    } 
 	}
 	s++;
     }
+
+#if CMD_DEBUG
+    fprintf(stderr, "flag_present: returning '%s'\n", s);
+#endif
 
     return NULL;
 }
@@ -2895,15 +2901,37 @@ static char *get_flag_field  (const char *s, char f)
     return ret;
 }
 
-static void get_optional_filename (const char *line, CMD *cmd)
-{
-    char *p;
+/* grab filename for TeX output; while we're at it, if the command is
+   TABPRINT, get an optional format string too
+*/
 
-    p = get_flag_field(line + 8, 'f');
-    if (p != NULL) {
+static void get_optional_filename_etc (const char *line, CMD *cmd)
+{
+    char *p = get_flag_field(line + 8, 'f');
+
+    if (p != NULL && *p != '\0') {
 	free(cmd->param);
 	cmd->param = p;
-    }    
+    }  
+
+    if (cmd->ci == TABPRINT) {
+	const char *q = strstr(line, "--format=");
+	int len;
+
+	if (q != NULL && !strncmp(q + 9, "default", 7)) {
+	    set_tex_param_format(NULL);
+	} else if (q != NULL && *(q + 9) == '"') {
+	    q += 10;
+	    len = haschar('"', q);
+	    if (len > 0) {
+		p = gretl_strndup(q, len);
+		if (p != NULL) {
+		    set_tex_param_format(p);
+		    free(p);
+		}
+	    }
+	}
+    }
 }
 
 static int set_var_info (const char *line, gretlopt opt, 

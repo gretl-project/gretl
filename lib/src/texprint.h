@@ -27,6 +27,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn);
 
+void tex_coeff_table_start (const char *col1, const char *col2,
+			    int binary, PRN *prn);
+
+void tex_coeff_table_end (PRN *prn);
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn);
 
@@ -36,8 +41,8 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn);
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      char *texfile, gretlopt opt);
+int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *texfile, 
+	      gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);
 
@@ -51,3 +56,8 @@ void gretl_tex_preamble (PRN *prn, int ams);
 
 void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
+void set_tex_param_format (const char *s);
+
+int tex_using_custom_tabular (void);
+
+const char *tex_column_format (int i);

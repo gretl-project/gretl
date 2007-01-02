@@ -299,7 +299,9 @@ static GtkItemFactoryEntry model_tex_items[] = {
       eqn_set_show_stderrs, 1, "<RadioItem>", GNULL },
     { N_("/LaTeX/Equation options/Show _t-ratios"), NULL, 
       eqn_set_show_stderrs, 0, "/LaTeX/Equation options/Show standard errors", 
-      GNULL }
+      GNULL },
+    { N_("/LaTeX/_Tabular options..."), NULL, tex_format_dialog, 
+      0, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry VAR_tex_items[] = {
