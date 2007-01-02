@@ -59,9 +59,8 @@ associato, come in questo esempio
 
 Il significato di questa modifica è spiegato nella sezione
 \ref{funscope} e ha a che fare con l'uso dei puntatori nel linguaggio di
-programmazione C. Inoltre, i parametri di tipo \texttt{list} (e solo essi)
-possono essere modificati con il tag \texttt{const} (anche in questo caso, 
-si veda la sezione \ref{funscope}).
+programmazione C. Inoltre, i parametri possono essere modificati con il tag
+\texttt{const} (anche in questo caso, si veda la sezione \ref{funscope}).
 
 Oltre a questi elementi richiesti, la specificazione di un parametro
 \texttt{scalare} può includere fino a tre ulteriori informazioni: un valore
@@ -112,20 +111,16 @@ totale dei parametri.
 
 È possibile indicare uno scalare, una serie, o una matrice come argomento
 di una funzione, sia specificando il nome di una variabile preesistente,
-oppure (con un'eccezione che si vedrà in seguito) utilizzando un'espressione
-che, valutata, restituisce una variabile del tipo appropriato.
-Gli scalari possono essere indicati anche sotto forma di valori numerici, mentre
-le liste devono essere indicate per nome.
+oppure utilizzando un'espressione che, valutata, restituisce una variabile del
+tipo appropriato.  Gli scalari possono essere indicati anche sotto forma di
+valori numerici, mentre le liste devono essere indicate per nome.
 
 Il \textsl{corpo della funzione} è composto da comandi \app{gretl} o
 funzioni definite dall'utente (ossia, le funzioni possono essere
-nidificate).  Una funzione può persino chiamare sé stessa (ossia, le
-funzioni possono essere ricorsive), fino a un massimo di 8 ``livelli
-di ricorsività'', ma questo valore è provvisorio, potrà essere
-aumentato se sembra troppo restrittivo.  Se il corpo della funzione
-può contenere chiamate ad altre funzioni non può però contenere
-definizioni di altre funzioni, ossia non è possibile definire una
-funzione all'interno di un'altra funzione.
+nidificate). Una funzione può chiamare sé stessa (ossia, le funzioni possono
+essere ricorsive).  Se il corpo della funzione può contenere chiamate ad altre
+funzioni non può però contenere definizioni di altre funzioni, ossia non è
+possibile definire una funzione all'interno di un'altra funzione.
 
 \section{Chiamata di una funzione}
 \label{func-call}
@@ -193,8 +188,8 @@ Le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
 chiamata), a meno che queste siano passate esplicitamente alla
 funzione come argomenti.
 
-Nel caso standard, quando una variabile viene passata a una funzione come
-argomento, la funzione ottiene una copia della variabile esterna, quindi il
+Nel caso predefinito, quando una variabile viene passata a una funzione come
+argomento, la funzione ottiene una \emph{copia} della variabile esterna, quindi il
 valore della variabile nell'ambiente esterno non viene modificato dalle
 operazioni che avvengono all'interno della funzione. Esiste tuttavia un
 meccanismo per consentire a una funzione e all'ambiente di ``cooperare'' in modo
@@ -222,7 +217,7 @@ l'argomento corrispondente viene contrassegnato col prefisso complementare
       series resid = get_uhat_and_ess(price, xlist, &SSR)
 \end{code}
 %
-In questo caso, alla funzione viene passato l'indirizzo della variabile scalare
+In questo caso, alla funzione viene passato l'\emph{indirizzo} della variabile scalare
 \texttt{SSR} a cui viene assegnato un valore (usando il nome \texttt{ess}).
 Per chi ha familiarità con la programmazione in C, si noti che non è necessario
 (né possibile) ``dereferenziare'' la variabile in questione nella funzione
@@ -330,6 +325,19 @@ funzione sia accettabile e che non si tenti di definire una funzione
 all'interno di una funzione (si veda la sezione~\ref{func-define}). Se
 il corpo della funzione contiene comandi non validi, verrà segnalato
 solo quando la funzione viene chiamata.
+
+\subsection{Printing of output}
+
+Durante l'esecuzione di una funzione, il meccanismo con cui \app{gretl} mostra i
+comandi e i risultati delle operazioni di creazione di nuove variabili, viene
+disattivato. Per riattivarlo (ad esempio se si vuole fare il debug del codice di
+una nuova funzione), basta usare uno dei seguenti comandi (o entrambi)
+all'interno nella funzione:
+%
+\begin{code}
+     set echo on
+     set messages on
+\end{code}
 
 \section{Pacchetti di funzioni}
 \label{func-packages}

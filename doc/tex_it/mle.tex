@@ -103,6 +103,12 @@ valori ``sensibili'', quando è possibile. Se è disponibile uno stimatore
 consistente, di solito è una scelta valida ed efficiente: ci si assicura che per
 grandi campioni il punto di partenza sarà probabilmente vicino a $\hat{\theta}$
 e la convergenza sarà raggiunta in poche iterazioni.
+ 
+Il numero massimo di iterazioni consentite per la procedura BFGS, e la relativa
+tolleranza per valutare la convergenza, possono essere impostati usando il
+comando \cmd{set}: le variabili relative sono
+\verb+bfgs_maxiter+ (valore predefinito: 500) e \verb+bfgs_toler+ (valore
+predefinito: la precisione della macchina elevata alla potenza 3/4).
 
 \subsection{Matrice di covarianza ed errori standard}
 
@@ -222,7 +228,7 @@ Lo script per \app{gretl} diventa quindi
 
 Un'altro fatto di cui tener conto è che talvolta i parametri sono vincolati
 all'interno di certi intervalli: in questo caso, ad esempio, sia $\alpha$
-che $p$ devono essere numeri positivi. \app{gretl} non controlla queste
+che $p$ devono essere numeri positivi. \app{Gretl} non controlla queste
 condizioni: è responsabilità dell'utente assicurarsi che la funzione venga
 sempre valutata in un punto ammissibile dello spazio dei parametri, durante la
 ricerca iterativa del massimo. Un metodo efficace per far questo consiste nel
@@ -453,6 +459,7 @@ dove $h$ è un numero piccolo.
 In molte situazioni questo metodo è abbastanza efficiente e accurato, ma
 potrebbe esserci la necessità di evitare le approssimazioni e specificare una
 funzione esatta per le derivate. Come esempio, si consideri lo script seguente:
+%
 \begin{code}
 nulldata 1000
 
@@ -512,7 +519,7 @@ ed è facile vedere che
 
 Il blocco \texttt{mle} nello script precedente può quindi essere modificato nel
 modo seguente:
-
+%
 \begin{code}
 mle logl = y*ln(P) + (1-y)*ln(1-P)
   series ndx = b0 + b1*x1 + b2*x2 + b3*x3
@@ -529,6 +536,37 @@ Si noti che il comando \texttt{params} è stato sostituito da una serie di
 comandi \texttt{deriv}, che hanno la doppia funzione di identificare i parametri
 rispetto a cui ottimizzare e di fornire un'espressione analitica per i
 rispettivi elementi del vettore degli score.
+ 
+\section{Debug del codice mle}
+\label{sec:mle-debug}
+
+Finora sono stati presentati i comandi principali che possono essere usati
+all'interno di un blocco \texttt{mle}, ossia
+%
+\begin{itemize}
+\item comandi ausiliari per generare variabili ausiliarie;
+\item comandi \texttt{deriv} per specificare il gradiente rispetto ad ognuno dei
+  parametri;
+\item un comando \texttt{params} per identificare i parametri nel caso in cui
+  non vengano specificate le derivate analitiche.
+\end{itemize}
+
+Per fare il debug del codice contenuto nei blocchi \texttt{mle}, è possibile
+usare un altro tipo di comandi: è possibile stampare il valore di una variabile
+rilevante nel corso di ogni iterazione. Questo meccanismo è più limitato
+rispetto al classico comando \texttt{print}: in questo caso, la parola chiave
+\texttt{print} può essere seguita dal nome di una sola variabile (una scalare,
+una serie, o una matrice).
+
+Nell'ultimo degli esempi visti sopra, è stata generata una variabile chiamata
+\texttt{tmp}, usata come base per le derivate analitiche. Per tenere traccia
+dell'andamento di questa variabile, si può aggiungere un comando print nel
+blocco \texttt{mle}, nel modo seguente:
+%
+\begin{code}
+  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
+  print tmp
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex

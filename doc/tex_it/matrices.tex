@@ -62,9 +62,10 @@ inclusi nella matrice dipende dall'impostazione corrente dell'intervallo del
 campione.
 
 Si noti che mentre le funzioni statistiche di gretl sono in grado di gestire
-valori mancanti, le funzioni che trattano le matrici non lo sono, quindi si
-otterrà un errore se si cerca di costruire una matrice usando delle serie che
-contengono valori mancanti.
+valori mancanti, ciò non vale per le funzioni che trattano le matrici:
+\emph{quando si costruisce una matrice partendo da serie che contengono valori
+mancanti, le osservazioni per cui almeno una delle serie contiene valori
+mancanti sono saltate}.
 
 Invece di fornire una lista esplicita di variabili, è possibile fornire il
 \textit{nome di una lista personalizzata} (si veda il capitolo~\ref{persist}),
@@ -101,7 +102,7 @@ carattere trattino basso.}
 \section{Operatori matriciali}
 \label{matrix-op}
 
-Per le matrici sono disponibili gli operatori seguenti:
+Per le matrici sono disponibili i seguenti operatori binari:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -110,6 +111,7 @@ Per le matrici sono disponibili gli operatori seguenti:
 \texttt{*} & moltiplicazione matriciale \\
 \texttt{/} & ``divisione'' matriciale (si veda oltre) \\
 \texttt{.*} & moltiplicazione per elementi \\
+\texttt{'} & moltiplicazione per la trasposta \\
 \texttt{./} & divisione per elementi \\
 \verb+.^+ & elevazione a potenza per elementi \\
 \verb+~+ & concatenazione per colonne \\
@@ -134,6 +136,16 @@ matrix D = A - k
 %
 producono entrambi delle matrici $m \times n$, con elementi $c_{ij} = 
 +a_{ij} + k$ e $d_{ij} = a_{ij} - k$ rispettivamente.
+ 
+Per ``moltiplicazione per la trasposta'' si intende, ad esempio, che
+%
+\begin{code}
+matrix C = X'Y
+\end{code}
+%
+ha come risultato il prodotto fra $X$-trasposta e $Y$.  In effetti, 
+l'espressione \texttt{X'Y} ha lo stesso significato di \texttt{X'*Y}
+(che pure è un comando valido).
 
 La ``divisione'' tra matrici, $A/B$ è algebricamente equivalente a $B^{-1}A$
 (pre-moltiplicazione per mezzo dell'inversa del ``divisore''). Quindi in linea
@@ -228,7 +240,7 @@ possibile suddividere in quattro categorie:
 %
 \begin{enumerate}
 \item Quelle che richiedono come argomento una sola matrice e producono uno scalare.
-\item Quelle che richiedono come argomento una sola matrice e producono una matrice.
+\item Quelle che richiedono come argomento una sola matrice (e in alcuni casi un parametro aggiuntivo) e producono una matrice.
 \item Quelle che richiedono come argomento uno o due valori e producono una matrice.
 \item Quelle che richiedono come argomento due matrici e producono una matrice.
 \item Quelle che richiedono come argomento una o due matrici e producono una o due matrici.
@@ -284,7 +296,8 @@ matrice sono:
 \texttt{cdemean()} & sottrazione della media delle colonne \\
 \texttt{vec()} & organizza gli elementi come vettore colonna \\
 \texttt{vech()} & organizza gli elementi del triangolo inferiore come vettore colonna \\
-\texttt{unvech()} & annulla l'operazione \texttt{vech}
+\texttt{unvech()} & annulla l'operazione \texttt{vech} \\
+\texttt{mlag()} & ritardo o anticipo per le matrici
 \end{tabular}
 \end{center}
 
@@ -325,6 +338,23 @@ gli elementi del triangolo inferiore di $A$, colonna per colonna.
 Si noti che $A$ deve essere quadrata e, perché l'operazione abbia senso,
 simmetrica. La funzione \texttt{unvech} esegue l'operazione inversa, producendo
 una matrice simmetrica.
+ 
+La funzione \texttt{mlag} richiede due argomenti: una matrice e uno scalare che
+indica un ordine di ritardo, $m$. Applicata a una matrice $A$ $T \times k$, questa
+funzione produce una matrice $B$ $T \times k$ tale che
+%
+\[
+  b_{ij} = \left\{ 
+    \begin{array}{ll} 
+      a_{i-m,j} & 1 \leq i - m \leq T \\ 
+      0 & \mbox{otherwise}
+    \end{array}
+    \right.
+\]
+%
+Ossia, le colonne di $B$ sono versioni ritardate delle colonne di $A$, in cui i
+valori mancanti vengono sostituiti da zeri. L'ordine $m$ può essere negativo, e
+in questo caso invece di ritardi verranno generati anticipi delle variabili.
 
 \subsection{Funzioni da scalare a matrice}
 \label{matrix-fill}
@@ -681,13 +711,13 @@ la funzionalità OLS di gretl.
   open data4-1
   matrix X = { const, sqft }
   matrix y = { price }
-  matrix b = inv(X'*X) * X'*y
+  matrix b = inv(X'X) * X'y
   printf "vettore dei coefficienti stimati\n"
   b
   matrix uh = y - X*b
-  scalar SSR = uh'*uh
+  scalar SSR = uh'uh
   scalar s2 = SSR / (rows(X) - rows(b))
-  matrix V = s2 * inv(X'*X)
+  matrix V = s2 * inv(X'X)
   V
   matrix se = sqrt(diag(V))
   printf "errori standard stimati\n"
