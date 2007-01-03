@@ -642,7 +642,7 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 	/* print interation info, if wanted */
-	print_iter_info(iters, minfo->ll, k, minfo->theta, delta, 
+	print_iter_info(iters, minfo->ll, C_LOGLIK, k, minfo->theta, delta, 
 			stepsize, 0, prn);
 
 	crit = minfo->ll2 - minfo->ll;  

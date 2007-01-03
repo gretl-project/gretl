@@ -334,7 +334,7 @@ static double op_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int op_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
 		     void *ptr)
 {
     op_container *OC = (op_container *) ptr;

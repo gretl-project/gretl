@@ -24,6 +24,11 @@
 
 #define PAGELINES 21
 
+enum {
+    C_LOGLIK,
+    C_OTHER
+};
+
 /* functions follow */
  
 void session_time (PRN *prn);
@@ -83,7 +88,7 @@ int text_print_forecast (const FITRESID *fr,
 			 double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
-void print_iter_info (int iter, double ll, int k, 
+void print_iter_info (int iter, double crit, int type, int k, 
 		      const double *b, const double *g, 
 		      double sl, int neggrad, PRN *prn);
 

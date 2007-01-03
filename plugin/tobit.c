@@ -215,7 +215,7 @@ static double t_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int t_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+static int t_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
 		    void *ptr)
 {
     tob_container *TC = (tob_container *) ptr;

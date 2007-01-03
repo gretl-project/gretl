@@ -485,7 +485,7 @@ static int score_fill_matrices (const double *theta, void *ptr)
     return err;
 }
 
-static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll, 
+static int anal_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
 		       void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;

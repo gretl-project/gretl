@@ -877,7 +877,7 @@ static double get_mle_ll (const double *b, void *p)
 /* default numerical calculation of gradient in context of BFGS */
 
 int BFGS_numeric_gradient (double *b, double *g, int n,
-			   BFGS_LL_FUNC func, void *data)
+			   BFGS_CRIT_FUNC func, void *data)
 {
     double bi0, f1, f2;
     gretlopt opt = OPT_NONE;
@@ -1092,7 +1092,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 /* analytical derivatives, used in the context of BFGS */
 
 static int get_mle_gradient (double *b, double *g, int n, 
-			     BFGS_LL_FUNC llfunc,
+			     BFGS_CRIT_FUNC llfunc,
 			     void *p)
 {
     nlspec *spec = (nlspec *) p;
@@ -2991,7 +2991,7 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
    Allin Cottrell, June 2006.
 */
 
-double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
+double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
@@ -3160,17 +3160,16 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
  * @reltol: relative tolerance for terminating iteration.
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
- * @llfunc: pointer to function used to calculate log
- * likelihood.
+ * @cfunc: pointer to function used to calculate maximand.
  * @gradfunc: pointer to function used to calculate the 
  * gradient, or %NULL for default numerical calculation.
  * @data: pointer that will be passed as the last
- * parameter to the callback functions @get_ll and @get_gradient.
+ * parameter to the callback functions @cfunc and @gradfunc.
  * @opt: may contain %OPT_V for verbose operation.
  * @prn: printing struct (or %NULL).
  *
  * Obtains the set of values for @b which jointly maximize the
- * log-likelihood as calculated by @llfunc.  Uses the BFGS
+ * criterion value as calculated by @cfunc.  Uses the BFGS
  * variable-metric method.  Based on Pascal code in J. C. Nash,
  * "Compact Numerical Methods for Computers," 2nd edition, converted
  * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
@@ -3181,7 +3180,7 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
  */
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_LL_FUNC llfunc, 
+	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
@@ -3209,7 +3208,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	goto bailout;
     }
 
-    f = llfunc(b, data);
+    f = cfunc(b, data);
 
     if (na(f)) {
 	fprintf(stderr, "initial value of f is not finite\n");
@@ -3219,12 +3218,12 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     fmax = f;
     iter = ilast = fcount = gcount = 1;
-    gradfunc(b, g, n, llfunc, data);
+    gradfunc(b, g, n, cfunc, data);
     reverse_gradient(g, n);
 
     do {
 	if (opt & OPT_V) {
-	    print_iter_info(iter, f, n, b, g, steplen, 1, prn);
+	    print_iter_info(iter, f, C_LOGLIK, n, b, g, steplen, 1, prn);
 	}
 	if (ilast == gcount) {
 	    /* (re-)start: initialize curvature matrix */
@@ -3270,7 +3269,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		    }
 		}
 		if (ndelta > 0) {
-		    f = llfunc(b, data);
+		    f = cfunc(b, data);
 		    fcount++;
 		    ll_ok = !na(f) && (f >= fmax + sumgrad*steplen*acctol);
 		    if (!ll_ok) {
@@ -3297,7 +3296,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	    if (ndelta > 0) {
 		/* making progress */
 		fmax = f;
-		gradfunc(b, g, n, llfunc, data);
+		gradfunc(b, g, n, cfunc, data);
 		reverse_gradient(g, n);
 		gcount++;
 		iter++;
@@ -3375,7 +3374,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     if (opt & OPT_V) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));	
-	print_iter_info(iter, f, n, b, g, steplen, 1, prn);
+	print_iter_info(iter, f, C_LOGLIK, n, b, g, steplen, 1, prn);
 	pputs(prn, "\n\n");	
     }
 

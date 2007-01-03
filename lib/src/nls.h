@@ -22,9 +22,9 @@
 
 typedef struct _nlspec nlspec;
 
-typedef double (*BFGS_LL_FUNC) (const double *, void *);
+typedef double (*BFGS_CRIT_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
-			       BFGS_LL_FUNC, void *);
+			       BFGS_CRIT_FUNC, void *);
 typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
 
 
@@ -60,18 +60,18 @@ MODEL model_from_nlspec (nlspec *spec, double ***pZ,
 double get_default_nls_toler (void);
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_LL_FUNC llfunc, 
+	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn);
 
 int BFGS_numeric_gradient (double *b, double *g, int n,
-			   BFGS_LL_FUNC func, void *data);
+			   BFGS_CRIT_FUNC func, void *data);
 
 gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,
 				void *data, int *err);
 
-double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, 
+double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, 
 			   void *data);
 
 double user_BFGS (gretl_matrix *b, const char *fncall,

@@ -2139,7 +2139,8 @@ static void print_iter_val (double x, int i, PRN *prn)
 /**
  * print_iter_info:
  * @iter: iteration number.
- * @ll: log-likelihood.
+ * @crit: criterion (e.g. log-likelihood).
+ * @type: type of criterion (%C_LOGLIK or %C_OTHER)
  * @k: number of parameters.
  * @b: parameter array.
  * @g: gradient array.
@@ -2152,16 +2153,20 @@ static void print_iter_val (double x, int i, PRN *prn)
  */
 
 void 
-print_iter_info (int iter, double ll, int k, const double *b, const double *g, 
+print_iter_info (int iter, double crit, int type, int k, 
+		 const double *b, const double *g, 
 		 double sl, int neggrad, PRN *prn)
 {
     double x;
     int i;
 
-    if (na(ll)) {
-	pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
+    if (na(crit)) {
+	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter,
+		(type == C_LOGLIK)? _("Log-likelihood") : _("Criterion"));	
     } else {
-	pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, ll);
+	pprintf(prn, "%d %d: %s = %#.12g", _("Iteration"), iter, 
+		(type == C_LOGLIK)? _("Log-likelihood") : _("Criterion"),
+		crit);
     }
     if (sl > 0.0) {
 	pprintf(prn, _(" (steplength = %.8g)"), sl);
