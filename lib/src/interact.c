@@ -32,6 +32,7 @@
 #include "usermat.h"
 #include "modelspec.h"
 #include "gretl_panel.h"
+#include "texprint.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -44,7 +45,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 
 #include "laginfo.c"
 
@@ -1413,10 +1414,15 @@ static int creating_null_list (CMD *cmd, int nf, const char *s)
 {
     int ret = 0;
 
-    if (nf == 2 && (cmd->opt & OPT_L)) {
-	if (!strcmp(s, " = null")) {
-	    cmd->list[0] = 0;
-	    ret = 1;
+    if ((nf == 1 || nf == 2) && cmd->opt & OPT_L) {
+	while (*s == ' ') s++;
+	if (*s == '=') {
+	    s++;
+	    while (*s == ' ') s++;
+	    if (!strcmp(s, "null") || !strcmp(s, "NULL")) {
+		cmd->list[0] = 0;
+		ret = 1;
+	    }
 	}
     }
 

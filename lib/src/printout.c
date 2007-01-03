@@ -27,7 +27,7 @@
 
 #include <time.h>
 
-#define PRN_DEBUG 0
+#define PRN_DEBUG 1
 
 void bufspace (int n, PRN *prn)
 {
@@ -2424,7 +2424,7 @@ static char *get_format_chunk (const char *s, int *fc,
     }
 
     /* now we should have a conversion character */
-    if (strchr(cnvchars, *p) == NULL) {
+    if (*p == '\0' || strchr(cnvchars, *p) == NULL) {
 	fprintf(stderr, "bad conversion '%c'\n", *p);
 	*err = E_PARSE;
 	return NULL;
