@@ -1,6 +1,6 @@
 version 1.6.1, in progress
 - Revamp for internal "genr" mechanism plus some user-visible
-  changes to genr (manual not fully updated)
+  changes to genr
 - Make the "delete" command do what the manual says
 - Doing "Edit attributes" on a newly generated variable: you
   can edit the formula and hence change the content of the variable
@@ -36,6 +36,11 @@ version 1.6.1, in progress
   for now)
 - Make window size for semiparametric estimators of the fractional 
   integration parameter adjustable by the user	
+- Make the number of bins for a frequency plot adjustable via GUI
+- Add facility to generate Binomial and Poisson random variables
+- Row format for tabular output of models in TeX: make this
+  configurable
+
 
 9/13/2006 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we
