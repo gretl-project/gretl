@@ -2157,20 +2157,29 @@ print_iter_info (int iter, double crit, int type, int k,
 		 const double *b, const double *g, 
 		 double sl, int neggrad, PRN *prn)
 {
+    const char *cstrs[] = {
+	N_("Log-likelihood"),
+	N_("GMM criterion"),
+	N_("Criterion"),
+    };
+    const char *cstr = cstrs[type];
     double x;
     int i;
 
     if (na(crit)) {
-	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter,
-		(type == C_LOGLIK)? _("Log-likelihood") : _("Criterion"));	
+	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter, _(cstr));
     } else {
-	pprintf(prn, "%d %d: %s = %#.12g", _("Iteration"), iter, 
-		(type == C_LOGLIK)? _("Log-likelihood") : _("Criterion"),
-		crit);
+	if (type == C_GMM) {
+	    crit = -crit;
+	}
+	pprintf(prn, "%s %d: %s = %#.12g", _("Iteration"), iter, 
+		_(cstr), crit);
     }
+
     if (sl > 0.0) {
 	pprintf(prn, _(" (steplength = %.8g)"), sl);
     }	
+
     pputc(prn, '\n');
 	
     pputs(prn, _("Parameters: "));

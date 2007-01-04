@@ -2412,7 +2412,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
 
-    if (pmod->ci != MLE) {
+    if (pmod->ci != MLE && pmod->ci != GMM) {
 	add_vars_to_plot_menu(vwin);
 	add_model_dataset_items(vwin);
 	if (latex_is_ok() && !pmod->errcode) {
@@ -2421,7 +2421,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     }	
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
-	pmod->ci != NLS && pmod->ci != MLE &&
+	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
 	pmod->ci != PANEL && pmod->ci != ARBOND) {
 	add_dummies_to_plot_menu(vwin);
     }
@@ -2519,7 +2519,8 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
     char path[128];
     int i, cmd_ci, ok;
 
-    if (pmod->ci == MLE || pmod->ci == MPOLS) { /* FIXME? */
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) { 
+	/* FIXME? */
 	flip(ifac, "/Tests", FALSE);
 	return;
     }
@@ -2577,7 +2578,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	model_save_state(vwin->ifac, FALSE);
     }
 
-    if (pmod->ci == MLE) {
+    if (pmod->ci == MLE || pmod->ci == GMM) {
 	/* some of this could be relaxed later */
 	flip(vwin->ifac, "/Analysis", FALSE);
 	flip(vwin->ifac, "/Graphs", FALSE);
@@ -3648,7 +3649,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (pmod->ci == MLE || pmod->ci == MPOLS) {
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) {
 	return FALSE;
     }
 

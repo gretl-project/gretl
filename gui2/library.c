@@ -2484,9 +2484,12 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     if (ci == NLS) {
 	cstr = "nls";
 	endstr = "end nls";
-    } else {
+    } else if (ci == MLE) {
 	cstr = "mle";
 	endstr = "end mle";
+    } else {
+	cstr = "gmm";
+	endstr = "end gmm";
     }
 
     bufgets_init(buf);
@@ -2599,6 +2602,11 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg)
 void do_mle_model (GtkWidget *widget, dialog_t *dlg)
 {
     real_do_nonlinear_model(dlg, MLE);
+}
+
+void do_gmm_model (GtkWidget *widget, dialog_t *dlg)
+{
+    real_do_nonlinear_model(dlg, GMM);
 }
 
 static int logistic_model_get_lmax (CMD *cmd)

@@ -137,6 +137,8 @@ void do_nls_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_mle_model (GtkWidget *widget, dialog_t *dlg);
 
+void do_gmm_model (GtkWidget *widget, dialog_t *dlg);
+
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg);
 
 void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg);

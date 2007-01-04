@@ -78,6 +78,8 @@ char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
+static int push_input_file (FILE *fp);
+static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, double ***pZ,
 				DATAINFO *pdinfo, MODEL **models,
 				PRN *prn);
@@ -278,9 +280,9 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-static int maybe_get_input_line_continuation (char *line,
-					      double ***pZ,
-					      DATAINFO *pdinfo)
+/* allow for backslash continuation of lines */
+
+static int maybe_get_input_line_continuation (char *line)
 {
     char tmp[MAXLINE];
     int err = 0;
@@ -289,7 +291,6 @@ static int maybe_get_input_line_continuation (char *line,
 	return 0;
     }
 
-    /* allow for backslash continuation of lines */
     while (top_n_tail(line)) {
 	tmp[0] = '\0';
 
@@ -306,6 +307,8 @@ static int maybe_get_input_line_continuation (char *line,
 
 	if (*tmp != '\0') {
 	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
+		fprintf(stderr, _("Maximum length of command line "
+				  "(%d bytes) exceeded\n"), MAXLINE);
 		err = 1;
 		break;
 	    } else {
@@ -347,7 +350,6 @@ int main (int argc, char *argv[])
     ExecState state;
     char *line = NULL;
     int cli_get_data = 0;
-    int cmd_overflow = 0;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
     CMD cmd;
@@ -535,7 +537,7 @@ int main (int argc, char *argv[])
 
     if (!batch) {
 	fb = stdin;
-	gretl_exec_state_push_input(&state, fb);
+	push_input_file(fb);
     }
 
     if (!batch && !runit && !data_status) {
@@ -559,6 +561,7 @@ int main (int argc, char *argv[])
     /* main command loop */
     while (strcmp(cmd.word, "quit") && fb != NULL) {
 	char linecopy[MAXLINE];
+	int overflow;
 
 	if (err && errfatal) {
 	    gretl_abort(linecopy);
@@ -577,11 +580,8 @@ int main (int argc, char *argv[])
 	    }
 	}
 
-	cmd_overflow = maybe_get_input_line_continuation(line, &Z, 
-							 datainfo); 
-	if (cmd_overflow) {
-	    fprintf(stderr, _("Maximum length of command line "
-			      "(%d bytes) exceeded\n"), MAXLINE);
+	overflow = maybe_get_input_line_continuation(line); 
+	if (overflow) {
 	    break;
 	} else {
 	    strcpy(linecopy, line);
@@ -958,7 +958,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    *s->runfile = '\0';
 	    runit--;
 	    fclose(fb);
-	    fb = gretl_exec_state_pop_input(s, &err);
+	    fb = pop_input_file();
 	    if (fb == NULL) {
 		pputs(prn, _("Done\n"));
 	    } else {
@@ -1016,11 +1016,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (fb != NULL) {
-	    gretl_exec_state_push_input(s, fb);
+	    push_input_file(fb);
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
 	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
-	    fb = gretl_exec_state_pop_input(s, &err);
+	    fb = pop_input_file();
 	} else {
 	    strcpy(s->runfile, runfile);
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
@@ -1058,6 +1058,37 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     return err;
+}
+
+/* apparatus for keeping track of input stream */
+
+#define N_STACKED_FILES 8
+
+static int nfiles;
+static FILE *fstack[N_STACKED_FILES];
+
+static int push_input_file (FILE *fp)
+{
+    int err = 0;
+
+    if (nfiles >= N_STACKED_FILES) {
+	err = 1;
+    } else {
+	fstack[nfiles++] = fp;
+    }
+
+    return err;
+}
+
+static FILE *pop_input_file (void)
+{
+    FILE *ret = NULL;
+
+    if (nfiles > 0) {
+	ret = fstack[--nfiles];
+    }
+
+    return ret;
 }
 
 #include "cli_object.c"

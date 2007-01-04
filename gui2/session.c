@@ -1351,7 +1351,7 @@ static char *model_cmd_str (MODEL *pmod)
 {
     char *str = NULL;
 
-    if (pmod->ci == MLE || pmod->ncoeff > 10 ||
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ncoeff > 10 ||
 	pmod->list[0] > 10) {
 	return NULL;
     }

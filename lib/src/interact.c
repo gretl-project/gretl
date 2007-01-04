@@ -245,6 +245,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
+                       c == GMM || \
 	               c == HAUSMAN || \
                        c == HELP || \
                        c == INCLUDE || \
@@ -1236,6 +1237,7 @@ static int fix_semicolon_after_var (char *s)
 /* apparatus for checking that the "end" command is valid */
 
 #define COMMAND_CAN_END(c) (c == FUNC || \
+                            c == GMM || \
                             c == MLE || \
                             c == NLS || \
 			    c == RESTRICT || \
@@ -2799,6 +2801,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		ci = NLS;
 	    } else if (!strcmp(cmd->param, "mle")) {
 		ci = MLE;
+	    } else if (!strcmp(cmd->param, "gmm")) {
+		ci = GMM;
 	    }
 	}
 	flagstr = print_flags(cmd->opt, ci);
@@ -3153,6 +3157,61 @@ static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
     return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
+static int get_line_continuation (char *line, FILE *fp, PRN *prn)
+{
+    char tmp[MAXLINE];
+    int err = 0;
+
+    if (!strncmp(line, "quit", 4)) {
+	return 0;
+    }
+
+    while (top_n_tail(line)) {
+	*tmp = '\0';
+	fgets(tmp, sizeof tmp, fp);
+	if (*tmp != '\0') {
+	    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
+		pprintf(prn, _("Maximum length of command line "
+			       "(%d bytes) exceeded\n"), MAXLINE);
+		err = 1;
+		break;
+	    } else {
+		strcat(line, tmp);
+		compress_spaces(line);
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int run_script (const char *fname, ExecState *s, 
+		       double ***pZ, DATAINFO **ppdinfo,
+		       PRN *prn)
+{
+    FILE *fp;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    strcpy(s->runfile, fname);
+    pprintf(prn, "run \"%s\"\n", fname);
+
+    while (fgets(s->line, MAXLINE - 1, fp) && !err) {
+	err = get_line_continuation(s->line, fp, prn);
+	if (!err) {
+	    err = maybe_exec_line(s, pZ, ppdinfo, NULL);
+	}
+    }
+
+    fclose(fp);
+
+    return err;
+}
+
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *outprn)
 {
@@ -3164,6 +3223,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     VMatrix *corrmat;
     Summary *summ;
     double rho;
+    char runfile[MAXLEN];
     int *listcpy = NULL;
     int k, order = 0;
     int err = 0;
@@ -3681,6 +3741,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
+    case GMM:
     case MLE:
     case NLS:
 	err = nls_parse_line(cmd->ci, line, (const double **) *pZ, 
@@ -3862,7 +3923,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	if (!strcmp(cmd->param, "system")) {
 	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, outprn);
 	    s->sys = NULL;
-	} else if (!strcmp(cmd->param, "mle") || !strcmp(cmd->param, "nls")) {
+	} else if (!strcmp(cmd->param, "mle") || 
+		   !strcmp(cmd->param, "nls") ||
+		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
 	    *models[0] = nls(pZ, pdinfo, cmd->opt, outprn);
 	    err = maybe_print_model(models[0], pdinfo, outprn, cmd->opt);
@@ -3895,30 +3958,19 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	}
 	break;
 
-#if 0 /* needs some work! */
     case RUN:
-	err = getopenfile(line, runfile, &paths, OPT_S);
+	err = getopenfile(line, runfile, NULL, OPT_S);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
-	}
+	} 
 	if (!strcmp(runfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	    break;
 	}
-	if (fb != NULL) {
-	    gretl_exec_state_push_input(s, fb);
-	}
-	if ((fb = fopen(runfile, "r")) == NULL) {
-	    err = E_FOPEN;
-	    fb = gretl_exec_state_pop_input(s, &err);
-	} else {
-	    strcpy(s->runfile, runfile);
-	    pprintf(prn, "run \"%s\"\n", runfile);
-	}
+	err = run_script(runfile, s, pZ, ppdinfo, prn);
 	break;
-#endif
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
@@ -3937,6 +3989,69 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     if (err) {
 	errmsg(err, prn);
+    }
+
+    return err;
+}
+
+/* called by functions, and by scripts executed from within
+   functions */
+
+int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
+		     int *funcerr)
+{
+    DATAINFO *pdinfo = *ppdinfo;
+    int err = 0;
+
+    if (string_is_blank(s->line)) {
+	return 0;
+    }
+
+    if (gretl_compiling_loop()) { 
+	err = get_command_index(s->line, s->cmd, pdinfo);
+    } else {
+	err = parse_command_line(s->line, s->cmd, pZ, pdinfo);
+    }
+
+    if (err) {
+        errmsg(err, s->prn);
+        return 1;
+    }
+    
+    s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
+
+    if (s->cmd->ci < 0) {
+	return 0; /* nothing there, or a comment */
+    }
+
+    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
+	/* accumulating loop commands */
+	if (!ok_in_loop(s->cmd->ci)) {
+            pprintf(s->prn, _("Sorry, this command is not available in loop mode\n"));
+            return 1;
+        }
+	err = gretl_loop_append_line(s, pZ, pdinfo);
+	if (err) {
+	    print_gretl_errmsg(s->prn);
+	    return 1;
+	} 
+	return 0;
+    } 
+
+    if (s->cmd->ci == FUNCERR) {
+	if (funcerr != NULL) {
+	    *funcerr = 1;
+	}
+	err = 1;
+    } else {
+	err = gretl_cmd_exec(s, pZ, ppdinfo, s->prn);
+	pdinfo = *ppdinfo;
+    }
+
+    if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
+	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
+	attach_subsample_to_model(s->models[0], pdinfo);
+	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
     }
 
     return err;
@@ -4049,6 +4164,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	context = NLS;
     } else if (cmd->ci == MLE) {
 	context = MLE;
+    } else if (cmd->ci == GMM) {
+	context = GMM;
     }
 
     if (!strcmp(line, "end loop")) {
@@ -4229,57 +4346,10 @@ void gretl_exec_state_init (ExecState *s,
 
     s->subinfo = NULL;
     s->callback = NULL;
-    s->filesrc = NULL;
-
-    s->n_files = 0;
-}
-
-int gretl_exec_state_push_input (ExecState *s, FILE *fp)
-{
-    int nf = s->n_files;
-    FILE **fsrc;
-
-    fsrc = realloc(s->filesrc, (nf + 1) * sizeof *s->filesrc);
-    if (fsrc == NULL) {
-	return E_ALLOC;
-    }
-
-    s->filesrc = fsrc;
-    s->filesrc[nf] = fp;
-    s->n_files += 1;
-
-    return 0;
-}
-
-FILE *gretl_exec_state_pop_input (ExecState *s, int *err)
-{
-    FILE *ret = NULL;
-
-    if (s->n_files > 0) {
-	int nf = s->n_files - 1;
-	FILE **fsrc = NULL;
-
-	ret = s->filesrc[nf];
-	if (nf == 0) {
-	    free(s->filesrc);
-	    s->filesrc = NULL;
-	} else {
-	    fsrc = realloc(s->filesrc, nf * sizeof *s->filesrc);
-	    if (fsrc == NULL && err != NULL) {
-		*err = E_ALLOC;
-	    } else {
-		s->filesrc = fsrc;
-	    }
-	}
-	s->n_files -= 1;
-    }
-
-    return ret;
 }
 
 void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
-    free(s->filesrc);
 }

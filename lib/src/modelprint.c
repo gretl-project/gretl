@@ -761,6 +761,7 @@ const char *estimator_string (int ci, PRN *prn)
     else if (ci == POISSON) return N_("Poisson");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
+    else if (ci == GMM) return N_("GMM");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
     else if (ci == CORC) {
@@ -1406,7 +1407,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pmod->depvar);
-    } else if (pmod->ci == MLE) {
+    } else if (pmod->ci == MLE || pmod->ci == GMM) {
 	if (tex) {
 	    pprintf(prn, "\\verb!%s!", pmod->depvar);
 	} else {
@@ -1566,7 +1567,7 @@ static void model_format_start (PRN *prn)
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
     int binary = binary_model(pmod);
-    int use_param = pmod->ci == NLS || pmod->ci == MLE;
+    int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
 
     if (plain_format(prn)) {
 	if (pmod->ci == MPOLS) {
@@ -2217,7 +2218,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
-	pmod->ci != ARMA && pmod->ci != NLS && !pmod->aux) {
+	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
+	!pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 

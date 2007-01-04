@@ -27,6 +27,11 @@ typedef int (*BFGS_GRAD_FUNC) (double *, double *, int,
 			       BFGS_CRIT_FUNC, void *);
 typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
 
+enum {
+    C_LOGLIK,
+    C_GMM,
+    C_OTHER
+};
 
 nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
 
@@ -61,7 +66,7 @@ double get_default_nls_toler (void);
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	      BFGS_GRAD_FUNC gradfunc, void *data, 
+	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn);
 
 int BFGS_numeric_gradient (double *b, double *g, int n,

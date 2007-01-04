@@ -97,6 +97,7 @@ struct CoeffIntervals_ {
 #define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
                              c == ARMA || \
                              c == GARCH || \
+                             c == GMM || \
                              c == LOGIT || \
                              c == MLE || \
                              c == POISSON || \

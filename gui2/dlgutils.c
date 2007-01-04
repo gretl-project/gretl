@@ -920,7 +920,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	sample_replace_buttons(top_vbox, d);
     } else if (cmdcode == SYSTEM) {
 	system_estimator_list(top_vbox, d);
-    } else if (cmdcode == NLS || cmdcode == MLE) {
+    } else if (cmdcode == NLS || cmdcode == MLE || cmdcode == GMM) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
     } 

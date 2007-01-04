@@ -26,6 +26,7 @@
                        c == ARMA || \
                        c == CORC || \
                        c == GARCH || \
+                       c == GMM || \
                        c == HCCM || \
                        c == HILU || \
                        c == HSK || \
@@ -117,6 +118,8 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_A, "arma-init" },    
     { GARCH,    OPT_R, "robust" },
     { GARCH,    OPT_V, "verbose" },
+    { GMM,      OPT_R, "robust" },
+    { GMM,      OPT_V, "verbose" },
     { GNUPLOT,  OPT_O, "with-lines" },
     { GNUPLOT,  OPT_M, "with-impulses" },
     { GNUPLOT,  OPT_S, "suppress-fitted" },
@@ -586,6 +589,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = NLS;
     } else if (strstr(line, "end mle")) {
 	ci = MLE;
+    } else if (strstr(line, "end gmm")) {
+	ci = GMM;
     } else {
 	ci = gretl_command_number(cmdword);
     }

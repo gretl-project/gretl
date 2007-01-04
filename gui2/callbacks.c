@@ -439,6 +439,12 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	varclick = VARCLICK_INSERT_NAME;
 	defstr = get_boxplots_string();
 	break;
+    case GMM:
+	title = N_("gretl: GMM");
+	query = N_("GMM: Specify function and orthogonality conditions:");
+	okfunc = do_gmm_model;
+	varclick = VARCLICK_INSERT_TEXT;
+	break;	
     case MLE:
 	title = N_("gretl: maximum likelihood");
 	query = N_("MLE: Specify function, and derivatives if possible:");

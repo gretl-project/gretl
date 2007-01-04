@@ -405,7 +405,7 @@ int ok_in_loop (int c)
     }
     
     /* nonlinear models */
-    if (c == NLS || c == MLE || c == END) {
+    if (c == NLS || c == MLE || c == GMM || c == END) {
 	return 1;
     }
 
@@ -2657,6 +2657,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	    case ADD:
 	    case OMIT:
+	    case GMM:
 	    case MLE:
 	    case NLS:
 		if (loop_is_progressive(loop)) {

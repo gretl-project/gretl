@@ -716,7 +716,7 @@ static int do_ordered (int ci, double **Z, DATAINFO *pdinfo, MODEL *pmod,
 #endif
 
     err = BFGS_max(theta, npar, maxit, OPROBIT_TOL, 
-		   &fncount, &grcount, op_loglik, 
+		   &fncount, &grcount, op_loglik, C_LOGLIK,
 		   (OC->opt & OPT_A)? op_score : NULL, 
 		   OC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);

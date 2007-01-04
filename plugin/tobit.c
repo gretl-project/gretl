@@ -614,7 +614,7 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     }
 
     err = BFGS_max(TC->theta, TC->k, 1000, TOBIT_TOL, 
-		   &fncount, &grcount, t_loglik, 
+		   &fncount, &grcount, t_loglik, C_LOGLIK,
 		   (1 ? t_score : NULL), 
 		   TC, (prn != NULL)? OPT_V : OPT_NONE,
 		   prn);

@@ -230,12 +230,15 @@ generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.
 
-The functions \texttt{sort()} and \texttt{dsort()} are available for
-matrices as well as data series.  In the matrix case the argument to
-these functions must be a vector ($p \times 1$ or $1\times p$).  The
-return value is a vector containing the elements of the input vector
-sorted in ascending order of magnitude (\texttt{sort}) or descending
-order (\texttt{dsort}).
+The functions \texttt{sort()}, \texttt{dsort()} and \texttt{values()}
+are available for matrices as well as data series.  In the matrix case
+the argument to these functions must be a vector ($p \times 1$ or
+$1\times p$).  For \texttt{sort} and \texttt{dsort} the return value
+is a vector containing the elements of the input vector sorted in
+ascending (\texttt{sort}) or descending (\texttt{dsort}) order of
+magnitude.  For \texttt{values} the return is a vector containing the
+distinct integer values in the input vector, sorted in ascending
+order.
 
 Several matrix-specific functions are available.  These functions fall
 into four categories:

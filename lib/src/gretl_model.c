@@ -521,7 +521,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
-	} else if (pmod->ci == NLS || pmod->ci == MLE ||
+	} else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == GARCH) {
 	    k = i;
@@ -1212,7 +1212,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci != NLS && pmod->ci != MLE) {
+    } else if (pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
 	if (list != NULL) {
@@ -3448,7 +3448,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 {
     int ok = 1;
 
-    if (model_ci == MLE) {
+    if (model_ci == MLE || model_ci == GMM) {
 	return 0;
     }
 
@@ -3495,7 +3495,8 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case RESTRICT:
-	if (model_ci == LAD || model_ci == NLS || model_ci == MLE) {
+	if (model_ci == LAD || model_ci == NLS || 
+	    model_ci == MLE || model_ci == GMM) {
 	    ok = 0;
 	}
 	break;
@@ -3634,7 +3635,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     int i, v, vmax = 0;
     int gotsep = 0;
 
-    if (pmod->ci == MLE) {
+    if (pmod->ci == MLE || pmod->ci == GMM) {
 	return 0;
     }
 

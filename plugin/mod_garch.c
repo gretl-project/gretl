@@ -863,7 +863,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 #endif
 
     err = BFGS_max(theta, npar, maxit, reltol, 
-		   fncount, grcount, loglik, 
+		   fncount, grcount, loglik, C_LOGLIK,
 		   (DH->ascore)? anal_score : NULL, 
 		   DH, (prn != NULL)? OPT_V : OPT_NONE, 
 		   prn);

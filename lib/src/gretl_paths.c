@@ -427,40 +427,38 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return NULL;
     }
 
-    if (ppaths == NULL) {
-	return NULL;
-    }
-
-    /* try looking where script was found */
-    if (*ppaths->currdir != '\0') {
-	if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
-	    return fname;
-	}
-    }
-
-    fname = tmp;
-    strcpy(fname, orig);
-
-    if (script) {
-	/* for a script, try system script dir (and subdirs) */
-	if ((fname = search_dir(fname, ppaths->scriptdir, SCRIPT_SEARCH))) { 
-	    return fname;
-	} else {
-	    char fndir[MAXLEN];
-
-	    fname = tmp;
-	    strcpy(fname, orig);
-	    sprintf(fndir, "%sfunctions", ppaths->gretldir);
-	    if ((fname = search_dir(fname, fndir, FUNCS_SEARCH))) { 
+    if (ppaths != NULL) {
+	/* try looking where script was found */
+	if (*ppaths->currdir != '\0') {
+	    if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {
 		return fname;
 	    }
 	}
-    } else {
-	/* for a data file, try system data dir (and subdirs) */
-	if ((fname = search_dir(fname, ppaths->datadir, DATA_SEARCH))) { 
-	    return fname;
-	}
-    } 
+
+	fname = tmp;
+	strcpy(fname, orig);
+
+	if (script) {
+	    /* for a script, try system script dir (and subdirs) */
+	    if ((fname = search_dir(fname, ppaths->scriptdir, SCRIPT_SEARCH))) { 
+		return fname;
+	    } else {
+		char fndir[MAXLEN];
+
+		fname = tmp;
+		strcpy(fname, orig);
+		sprintf(fndir, "%sfunctions", ppaths->gretldir);
+		if ((fname = search_dir(fname, fndir, FUNCS_SEARCH))) { 
+		    return fname;
+		}
+	    }
+	} else {
+	    /* for a data file, try system data dir (and subdirs) */
+	    if ((fname = search_dir(fname, ppaths->datadir, DATA_SEARCH))) { 
+		return fname;
+	    }
+	} 
+    }
 
     /* or try looking in user's dir (and subdirs) */
     fname = tmp;
@@ -550,7 +548,7 @@ static int substitute_homedir (char *fname)
  * getopenfile:
  * @line: command line (e.g. "open foo").
  * @fname: filename to be filled out.
- * @ppaths: path information struct.
+ * @ppaths: pointer to paths information struct.
  * @opt: if includes %OPT_W, treat as web filename and don't
  * try to add path, if %OPT_S, treat as a script.
  * 
@@ -587,7 +585,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     /* try a basic path search on this filename */
     fullname = addpath(fname, ppaths, script);
 
-    if (fullname != NULL && script) {
+    if (ppaths != NULL && fullname != NULL && script) {
 	int n, spos = slashpos(fname);
 
 	if (spos) {

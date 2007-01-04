@@ -1098,7 +1098,7 @@ print_restricted_coeff (const MODEL *pmod, int i,
 
 static void coeff_header (const MODEL *pmod, PRN *prn)
 {
-    int use_param = pmod->ci == NLS || pmod->ci == MLE;
+    int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
 
     if (use_param) {
 	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"

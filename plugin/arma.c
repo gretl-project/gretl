@@ -1234,7 +1234,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	}
 	kalman_use_ARMA_ll(K);
 	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
-		       &fncount, &grcount, kalman_arma_ll, 
+		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
 		       NULL, K, (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);

@@ -2455,65 +2455,6 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
     return err;
 }
 
-static int 
-maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, 
-			  DATAINFO **ppdinfo)
-{
-    DATAINFO *pdinfo = *ppdinfo;
-    int err = 0;
-
-    if (string_is_blank(s->line)) {
-	return 0;
-    }
-
-    if (gretl_compiling_loop()) { 
-	err = get_command_index(s->line, s->cmd, pdinfo);
-    } else {
-	err = parse_command_line(s->line, s->cmd, pZ, pdinfo);
-    }
-
-    if (err) {
-        errmsg(err, s->prn);
-        return 1;
-    }
-    
-    s->in_comment = cmd_ignore(s->cmd)? 1 : 0;
-
-    if (s->cmd->ci < 0) {
-	return 0; /* nothing there, or a comment */
-    }
-
-    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
-	/* accumulating loop commands */
-	if (!ok_in_loop(s->cmd->ci)) {
-            pprintf(s->prn, _("Sorry, this command is not available in loop mode\n"));
-            return 1;
-        }
-	err = gretl_loop_append_line(s, pZ, pdinfo);
-	if (err) {
-	    print_gretl_errmsg(s->prn);
-	    return 1;
-	} 
-	return 0;
-    } 
-
-    if (s->cmd->ci == FUNCERR) {
-	pprintf(s->prn, "%s: %s\n", u->name, s->cmd->param);
-	err = 1;
-    } else {
-	err = gretl_cmd_exec(s, pZ, ppdinfo, s->prn);
-	pdinfo = *ppdinfo;
-    }
-
-    if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
-	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
-	attach_subsample_to_model(s->models[0], pdinfo);
-	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
-    }
-
-    return err;
-}
-
 static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 			 int orig_v)
 {
@@ -2575,6 +2516,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     CMD cmd;
     fn_param *fp;
     int started = 0;
+    int funcerr = 0;
     int argc, i, j;
     int err = 0;
 
@@ -2671,7 +2613,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     for (i=0; i<u->n_lines && !err; i++) {
 	strcpy(line, u->lines[i]);
-	err = maybe_exec_function_line(&state, u, pZ, &pdinfo);
+	err = maybe_exec_line(&state, pZ, &pdinfo, &funcerr);
+	if (funcerr) {
+	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
+	}
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);
 	    if (err) {

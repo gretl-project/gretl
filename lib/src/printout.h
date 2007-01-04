@@ -24,11 +24,6 @@
 
 #define PAGELINES 21
 
-enum {
-    C_LOGLIK,
-    C_OTHER
-};
-
 /* functions follow */
  
 void session_time (PRN *prn);
