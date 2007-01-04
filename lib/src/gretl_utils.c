@@ -394,6 +394,26 @@ int count_distinct_values (const double *x, int n)
 }
 
 /**
+ * count_distinct_int_values:
+ * @x: sorted array of ints.
+ * @n: number of elements in array.
+ *
+ * Returns: the number of distinct values in array @x,
+ * provided that @x is already sorted.
+ */
+
+int count_distinct_int_values (const int *x, int n)
+{
+    int i, c = 1;
+
+    for (i=1; i<n; i++) {
+	if (x[i] != x[i-1]) c++;
+    }
+
+    return c;
+}
+
+/**
  * rearrange_id_array:
  * @x: sorted array of doubles.
  * @m: number of distinct values in array.

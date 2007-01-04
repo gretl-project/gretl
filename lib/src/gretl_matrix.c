@@ -5786,3 +5786,66 @@ gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
 
     return M;
 }
+
+/**
+ * gretl_matrix_values:
+ * @x: array to process.
+ * @n: length of array.
+ * @err: location to receive error code.
+ *
+ * Returns: an allocated matrix containing the distinct
+ * values in array @x, or %NULL on failure. 
+ */
+
+gretl_matrix *gretl_matrix_values (const double *x, int n,
+				   int *err)
+{
+    gretl_matrix *v = NULL;
+    int *sorted = NULL;
+    int i, k, m, last;
+
+    sorted = malloc(n * sizeof *sorted);
+    if (sorted == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+	
+    k = 0;
+    for (i=0; i<n; i++) {
+	if (!na(x[i])) {
+	    sorted[k++] = (int) x[i];
+	}
+    }
+
+    if (k == 0) {
+	*err = E_DATA;
+	goto bailout;
+    }
+	
+    qsort(sorted, k, sizeof *sorted, gretl_compare_ints); 
+    m = count_distinct_int_values(sorted, k);
+
+    v = gretl_column_vector_alloc(m);
+    if (v == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    v->val[0] = last = sorted[0];
+    m = 1;
+
+    for (i=1; i<k; i++) {
+	if (sorted[i] != last) {
+	    last = sorted[i];
+	    v->val[m++] = sorted[i];
+	}
+    }
+
+ bailout:
+
+    free(sorted);
+
+    return v;
+}
+
+

@@ -69,6 +69,8 @@ int gretl_inverse_compare_doubles (const void *a, const void *b);
 
 int count_distinct_values (const double *x, int n);
 
+int count_distinct_int_values (const int *x, int n);
+
 int rearrange_id_array (double *x, int m, int n);
 
 int gretl_compare_ints (const void *a, const void *b);

@@ -1988,6 +1988,37 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
     return ret;
 }
 
+static NODE *vector_values (NODE *l, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const double *x;
+	int n;
+
+	if (l->t == VEC) {
+	    n = p->dinfo->t2 - p->dinfo->t1 + 1;
+	    x = l->v.xvec + p->dinfo->t1;
+	} else {
+	    n = gretl_vector_get_length(l->v.m);
+	    x = l->v.m->val;
+	}
+
+	if (n > 0 && x != NULL) {
+	    ret->v.m = gretl_matrix_values(x, n, &p->err);
+	} else {
+	    p->err = E_DATA;
+	}
+
+	if (p->err) {
+	    free(ret);
+	    ret = NULL;
+	}
+    } 
+
+    return ret;
+}
+
 /* functions taking a series as argument and returning a series */
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -3283,9 +3314,14 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case SORT:
     case DSORT:
+    case VALUES:
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
-	    ret = vector_sort(l, t->t, p);
+	    if (t->t == VALUES) {
+		ret = vector_values(l, p);
+	    } else {
+		ret = vector_sort(l, t->t, p);
+	    }
 	} else {
 	    node_type_error(t, p, VEC, l->t);
 	} 

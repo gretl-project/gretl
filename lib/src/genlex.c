@@ -203,6 +203,7 @@ struct str_table funcs[] = {
     { PVAL,     "pvalue" },
     { CRIT,     "critical" },
     { MAKEMASK, "makemask" },
+    { VALUES,   "values" },
     { 0,     NULL }
 };
 

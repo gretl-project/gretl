@@ -1203,17 +1203,6 @@ static int freq_add_arrays (FreqDist *freq, int nbins)
     return err;
 }
 
-static int count_distinct_int_values (int *x, int n)
-{
-    int i, c = 1;
-
-    for (i=1; i<n; i++) {
-	if (x[i] != x[i-1]) c++;
-    }
-
-    return c;
-}
-
 int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 		int *pn, double *pxmax, double *pxmin, int *nbins, 
 		double *binwidth)
