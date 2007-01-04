@@ -78,8 +78,6 @@ char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
-static int push_input_file (FILE *fp);
-static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, double ***pZ,
 				DATAINFO *pdinfo, MODEL **models,
 				PRN *prn);
@@ -537,7 +535,7 @@ int main (int argc, char *argv[])
 
     if (!batch) {
 	fb = stdin;
-	push_input_file(fb);
+	gretl_exec_state_push_input(&state, fb);
     }
 
     if (!batch && !runit && !data_status) {
@@ -960,7 +958,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    *s->runfile = '\0';
 	    runit--;
 	    fclose(fb);
-	    fb = pop_input_file();
+	    fb = gretl_exec_state_pop_input(s, &err);
 	    if (fb == NULL) {
 		pputs(prn, _("Done\n"));
 	    } else {
@@ -1018,11 +1016,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (fb != NULL) {
-	    push_input_file(fb);
+	    gretl_exec_state_push_input(s, fb);
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
 	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
-	    fb = pop_input_file();
+	    fb = gretl_exec_state_pop_input(s, &err);
 	} else {
 	    strcpy(s->runfile, runfile);
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
@@ -1060,37 +1058,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     return err;
-}
-
-/* apparatus for keeping track of input stream */
-
-#define N_STACKED_FILES 8
-
-static int nfiles;
-static FILE *fstack[N_STACKED_FILES];
-
-static int push_input_file (FILE *fp)
-{
-    int err = 0;
-
-    if (nfiles >= N_STACKED_FILES) {
-	err = 1;
-    } else {
-	fstack[nfiles++] = fp;
-    }
-
-    return err;
-}
-
-static FILE *pop_input_file (void)
-{
-    FILE *ret = NULL;
-
-    if (nfiles > 0) {
-	ret = fstack[--nfiles];
-    }
-
-    return ret;
 }
 
 #include "cli_object.c"

@@ -3895,6 +3895,31 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	}
 	break;
 
+#if 0 /* needs some work! */
+    case RUN:
+	err = getopenfile(line, runfile, &paths, OPT_S);
+	if (err) { 
+	    pputs(prn, _("Command is malformed\n"));
+	    break;
+	}
+	if (!strcmp(runfile, s->runfile)) { 
+	    pprintf(prn, _("Infinite loop detected in script\n"));
+	    err = 1;
+	    break;
+	}
+	if (fb != NULL) {
+	    gretl_exec_state_push_input(s, fb);
+	}
+	if ((fb = fopen(runfile, "r")) == NULL) {
+	    err = E_FOPEN;
+	    fb = gretl_exec_state_pop_input(s, &err);
+	} else {
+	    strcpy(s->runfile, runfile);
+	    pprintf(prn, "run \"%s\"\n", runfile);
+	}
+	break;
+#endif
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);
@@ -4204,13 +4229,57 @@ void gretl_exec_state_init (ExecState *s,
 
     s->subinfo = NULL;
     s->callback = NULL;
+    s->filesrc = NULL;
+
+    s->n_files = 0;
+}
+
+int gretl_exec_state_push_input (ExecState *s, FILE *fp)
+{
+    int nf = s->n_files;
+    FILE **fsrc;
+
+    fsrc = realloc(s->filesrc, (nf + 1) * sizeof *s->filesrc);
+    if (fsrc == NULL) {
+	return E_ALLOC;
+    }
+
+    s->filesrc = fsrc;
+    s->filesrc[nf] = fp;
+    s->n_files += 1;
+
+    return 0;
+}
+
+FILE *gretl_exec_state_pop_input (ExecState *s, int *err)
+{
+    FILE *ret = NULL;
+
+    if (s->n_files > 0) {
+	int nf = s->n_files - 1;
+	FILE **fsrc = NULL;
+
+	ret = s->filesrc[nf];
+	if (nf == 0) {
+	    free(s->filesrc);
+	    s->filesrc = NULL;
+	} else {
+	    fsrc = realloc(s->filesrc, nf * sizeof *s->filesrc);
+	    if (fsrc == NULL && err != NULL) {
+		*err = E_ALLOC;
+	    } else {
+		s->filesrc = fsrc;
+	    }
+	}
+	s->n_files -= 1;
+    }
+
+    return ret;
 }
 
 void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
+    free(s->filesrc);
 }
-
-
-

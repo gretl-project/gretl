@@ -48,6 +48,8 @@ struct ExecState_ {
     int alt_model;
     int in_comment;
     EXEC_CALLBACK callback;
+    FILE **filesrc;    /* input (command) files */
+    int n_files;       /* number of stacked source files */
 };
 
 void gretl_exec_state_init (ExecState *s,
@@ -56,6 +58,10 @@ void gretl_exec_state_init (ExecState *s,
 			    CMD *cmd,
 			    MODEL **models, 
 			    PRN *prn);
+
+int gretl_exec_state_push_input (ExecState *s, FILE *fp);
+
+FILE *gretl_exec_state_pop_input (ExecState *s, int *err);
 
 void gretl_exec_state_clear (ExecState *s);
 
