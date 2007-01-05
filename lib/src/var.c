@@ -3173,6 +3173,101 @@ static GRETL_VAR *gretl_VAR_rebuilder_new (void)
     return var;
 }
 
+static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
+			       GRETL_VAR *var)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    JohansenInfo *jinfo;
+    int *list = NULL;
+    int ID, code, rank;
+    int seas, nexo;
+    int got = 0;
+    int err = 0;
+
+    got += gretl_xml_get_prop_as_int(node, "ID", &ID);
+    got += gretl_xml_get_prop_as_int(node, "code", &code);
+    got += gretl_xml_get_prop_as_int(node, "rank", &rank);
+    got += gretl_xml_get_prop_as_int(node, "seasonals", &seas);
+    got += gretl_xml_get_prop_as_int(node, "nexo", &nexo);
+
+    if (got != 5) {
+	return E_DATA;
+    }
+
+    got = 0;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "list")) {
+	    list = gretl_xml_node_get_list(cur, doc, &err);
+	    got = 1;
+	    break;
+	} 
+	cur = cur->next;
+    }
+
+    if (!err && !got) {
+	err = E_DATA;
+    }
+
+    if (err) {
+	return err;
+    }
+
+    jinfo = johansen_info_new(list, NULL, rank, OPT_NONE);
+    if (jinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    jinfo->ID = ID;
+    jinfo->code = code;
+    jinfo->rank = rank;
+    jinfo->seasonals = seas;
+    jinfo->nexo = nexo;
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "difflist")) {
+	    jinfo->difflist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "exolist")) {
+	    jinfo->exolist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "biglist")) {
+	    jinfo->biglist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "levels_list")) {
+	    jinfo->levels_list = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "varlist")) {
+	    jinfo->varlist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "u")) {
+	    jinfo->u = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "v")) {
+	    jinfo->v = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Suu")) {
+	    jinfo->Suu = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Suv")) {
+	    jinfo->Suv = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Beta")) {
+	    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Alpha")) {
+	    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Bse")) {
+	    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "D")) {
+	    jinfo->D = gretl_xml_get_matrix(cur, doc, &err);
+	}
+	cur = cur->next;
+    }
+
+    if (err) {
+	johansen_info_free(jinfo);
+    } else {
+	var->jinfo = jinfo;
+    }
+
+    fprintf(stderr, "VAR_retrieve_jinfo: err = %d\n", err);
+
+    return err;
+}
+
 static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
 				   MODEL **models, int neqns)
 {
@@ -3243,6 +3338,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "equations")) {
 	    *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns);
+	} else if (!xmlStrcmp(cur->name, (XUC) "gretl-johansen")) {
+	    *err = VAR_retrieve_jinfo(cur, doc, var);
 	}
 	cur = cur->next;
     } 

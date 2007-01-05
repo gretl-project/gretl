@@ -542,6 +542,7 @@ GtkItemFactoryEntry data_items[] = {
       VARTEST, NULL,  GNULL },
     { "/Model/sep6",  NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model/_Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },
+    { N_("/Model/_GMM..."), NULL, gretl_callback, GMM, NULL, GNULL },
     { "/Model/sep7",  NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model/_Simultaneous equations..."), NULL, gretl_callback, SYSTEM, NULL, GNULL },
 
@@ -989,8 +990,11 @@ int main (int argc, char *argv[])
 	*tryfile = 0;
     }
 
-    /* opening a script from the command line? */
+    /* opening a script or session from the command line? */
     if (tryfile[0] != '\0') { 
+	if (ftype == GRETL_SCRIPT && gretl_is_pkzip_file(tryfile)) {
+	    ftype = GRETL_SESSION;
+	}
 	if (ftype == GRETL_SESSION) {
 	    do_open_session();
 	} else {

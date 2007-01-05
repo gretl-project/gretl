@@ -728,6 +728,11 @@ static void
 print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
 {
     gretl_prn_newline(prn);
+
+    if (vecm->jinfo == NULL) {
+	return;
+    }
+    
     pprintf(prn, "%s = %d", 
 	    (plain_format(prn))? _("Cointegration rank") : I_("Cointegration rank"),
 	    jrank(vecm));

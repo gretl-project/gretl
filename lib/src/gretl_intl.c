@@ -93,7 +93,6 @@ void gretl_pop_c_numeric_locale (void)
  * doing_nls:
  *
  * Returns: 1 if NLS translation is in effect, 0 otherwise.
- *
  */
 
 int doing_nls (void)
@@ -113,14 +112,13 @@ int doing_nls (void)
 #endif
 }
 
+static int decpoint;
+
 /**
- * get_local_decpoint:
+ * reset_local_decpoint:
  *
  * Returns: the character representing a decimal point in the current locale.
- *
  */
-
-static int decpoint;
 
 int reset_local_decpoint (void)
 {
@@ -135,10 +133,18 @@ int reset_local_decpoint (void)
 #endif
 }
 
+/**
+ * get_local_decpoint:
+ *
+ * Returns: the character representing a decimal point in the current locale.
+ */
+
 int get_local_decpoint (void)
 {
 #ifdef ENABLE_NLS
-    if (decpoint == 0) decpoint = reset_local_decpoint();
+    if (decpoint == 0) {
+	decpoint = reset_local_decpoint();
+    }
     return decpoint;
 #else
     return '.';

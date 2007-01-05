@@ -864,7 +864,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	/* revisiting saved equation system */
 	dlg_display_sys(d);
     } else if (cmdcode == NLS || cmdcode == MLE || 
-	cmdcode == SYSTEM || cmdcode == RESTRICT) {
+	       cmdcode == SYSTEM || cmdcode == RESTRICT ||
+	       cmdcode == GMM) {
 	int hsize = 62;
 	gchar *lbl;
 
@@ -885,7 +886,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	    clear = 1;
 	}
 
-	if (cmdcode != RESTRICT) {
+	if (cmdcode != RESTRICT && cmdcode != GMM) {
 	    g_signal_connect(G_OBJECT(d->edit), "button_press_event", 
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}

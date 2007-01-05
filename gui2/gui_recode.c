@@ -224,13 +224,22 @@ gchar *my_filename_to_utf8 (char *fname)
     return fname;
 }
 
-gchar *my_locale_to_utf8 (const gchar *src)
+static gchar *real_my_locale_to_utf8 (const gchar *src,
+				      int starting)
 {
+    static int errcount;
     gchar *trstr;
     gsize bytes;
     GError *err = NULL;
 
-    trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+    if (starting) {
+	errcount = 0;
+	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+    } else if (errcount == 0) {
+	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
+    } else {
+	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+    }
 
     if (err != NULL) {
 	const gchar *cset = NULL;
@@ -242,7 +251,18 @@ gchar *my_locale_to_utf8 (const gchar *src)
 	    errbox("g_locale_to_utf8 failed; so did g_get_charset");
 	}
 	g_error_free(err);
+	errcount++;
     }
 
     return trstr;
+}
+
+gchar *my_locale_to_utf8 (const gchar *src)
+{
+    return real_my_locale_to_utf8(src, 1);
+}
+
+gchar *my_locale_to_utf8_next (const gchar *src)
+{
+    return real_my_locale_to_utf8(src, 0);
 }
