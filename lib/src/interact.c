@@ -387,35 +387,32 @@ static void maybe_extract_savename (char *s, CMD *cmd)
     }
 }
 
-static int 
-get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
+static int filename_to_param (CMD *cmd, char *s, int *len,
+			      int *quoted)
 {
     char *fname;
-    int quoted = 0;
-    int q, len;
 
     while (isspace(*s)) s++;
 
-    q = *s;
-
-    if (q == '"' || q == '\'') {
-	char *p = strchr(s + 1, q);
+    if (*s == '"' || *s == '\'') {
+	char *p = strchr(s + 1, *s);
 
 	if (p == NULL) {
 	    return E_SYNTAX;
 	}
-	len = p - s - 1;
-	if (len == 0) {
+	*len = p - s - 1;
+	if (*len == 0) {
 	    return E_SYNTAX;
 	}
-	quoted = 1;
+	*quoted = 1;
     } else {
-	len = strcspn(s, " ");
+	*len = strcspn(s, " ");
     }
 
     free(cmd->param);
+    cmd->param = NULL;
 
-    fname = gretl_strndup(s + quoted, len);
+    fname = gretl_strndup(s + *quoted, *len);
     if (fname == NULL) {
 	return E_ALLOC;
     }
@@ -430,11 +427,27 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 	}
     }
 
+    return 0;
+}
+
+static int 
+get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
+{
+    int err, len = 0;
+    int quoted = 0;
+
+    err = filename_to_param(cmd, s, &len, &quoted);
+    if (err) {
+	return err;
+    }
+
     if (quoted) {
 	char *p = cmd->param;
 
 	while (*p) {
-	    if (*p == ' ') *nf -= 1;
+	    if (*p == ' ') {
+		*nf -= 1;
+	    }
 	    p++;
 	}
     }
@@ -1065,26 +1078,16 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 
 static void parse_outfile_cmd (char *s, CMD *cmd)
 {
+    int len = 0, quoted = 0;
+
     s += strlen(cmd->word);
 
-    while (isspace((unsigned char) *s) || *s == '"') {
+    while (isspace(*s)) {
 	s++;
     }
 
     if (*s) {
-	free(cmd->param);
-	cmd->param = gretl_strdup(s);
-	if (cmd->param == NULL) {
-	    cmd->err = E_ALLOC;
-	} else {
-	    int n;
-
-	    tailstrip(cmd->param);
-	    n = strlen(cmd->param);
-	    if (cmd->param[n] == '"') {
-		cmd->param[n] = 0;
-	    }
-	}
+	cmd->err = filename_to_param(cmd, s, &len, &quoted);
     }
 }
 
@@ -2885,27 +2888,21 @@ static const char *flag_present (const char *s, char f, int *quoted)
 
 static char *get_flag_field  (const char *s, char f)
 {
-    const char *p;
     char *ret = NULL;
     int quoted = 0;
 
-    if ((p = flag_present(s, f, &quoted)) != NULL) {
-	const char *q = p;
-	size_t len = 0;
+    if ((s = flag_present(s, f, &quoted)) != NULL) {
+	const char *p = s;
+	int len = 0;
 
-	while (*q) {
-	    if (quoted && *q == '"') break;
-	    if (!quoted && isspace(*q)) break;
-	    q++;
+	while (*p) {
+	    if (quoted && *p == '"') break;
+	    if (!quoted && isspace(*p)) break;
+	    p++;
 	    len++;
 	}
 
-	ret = malloc(len + 1);
-
-	if (ret != NULL) {
-	    *ret = 0;
-	    strncat(ret, p, len);
-	}
+	ret = gretl_strndup(s, len);
     }
 
     return ret;
@@ -2921,8 +2918,13 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 
     if (p != NULL && *p != '\0') {
 	free(cmd->param);
-	cmd->param = p;
-    }  
+	if (get_use_cwd() || gretl_path_is_absolute(p)) {
+	    cmd->param = p;
+	} else {
+	    cmd->param = gretl_strdup_printf("%s%s", gretl_user_dir(), p);
+	    free(p);
+	}
+    }
 
     if (cmd->ci == TABPRINT) {
 	const char *q = strstr(line, "--format=");
@@ -4098,6 +4100,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     }
 
     cmd->ci = 0;
+    cmd->opt = OPT_NONE;
 
 #if CMD_DEBUG
     fprintf(stderr, "get_command_index: line='%s'\n", line);

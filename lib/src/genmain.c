@@ -638,3 +638,4 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
 	return NULL;
     }
 }
+

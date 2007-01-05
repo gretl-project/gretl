@@ -27,7 +27,7 @@
 
 #include <time.h>
 
-#define PRN_DEBUG 1
+#define PRN_DEBUG 0
 
 void bufspace (int n, PRN *prn)
 {

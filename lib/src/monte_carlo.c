@@ -298,22 +298,22 @@ static double loop_delta (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     return x;
 }
 
-static int set_loop_opts (LOOPSET *loop, ExecState *s)
+static gretlopt get_loop_opts (ExecState *s, int *err)
 {
     gretlopt opt = OPT_NONE;
 
     if (compile_level > 0) {
 	/* options will not have been parsed out already */
-	int err = 0;
-
-	opt = get_gretl_options(s->line, &err);
-	if (err) {
-	    return err;
-	}
+	opt = get_gretl_options(s->line, err);
     } else {
 	opt = s->cmd->opt;
     }
 
+    return opt;
+}
+
+static void set_loop_opts (LOOPSET *loop, gretlopt opt)
+{
     if (opt & OPT_P) {
 	loop_set_progressive(loop);
     }
@@ -323,8 +323,6 @@ static int set_loop_opts (LOOPSET *loop, ExecState *s)
     if (opt & OPT_Q) {
 	loop_set_quiet(loop);
     }
-
-    return 0;
 }
 
 #define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
@@ -903,9 +901,11 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
     int *list;
     int err = 0;
 
-    chopstr(s);
+    while (isspace(*s)) s++;
+
+    tailstrip(s);
     list = get_list_by_name(s);
-    
+
     if (list == NULL) {
 	err = E_UNKVAR;
     } else {
@@ -1003,7 +1003,11 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
     /* we're looking at the string that follows "loop foreach" */
 
-    s++;
+    s++; /* skip space */
+
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
+#endif 
 
     /* should be something like "i " */
     if (sscanf(s, "%7s", ivar) != 1) {
@@ -1895,6 +1899,10 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
     int nc = loop->n_cmds;
     int err = 0;
 
+#if LOOP_DEBUG
+    fprintf(stderr, "real_append_line: s->line = '%s'\n", s->line);
+#endif
+
     if ((nc + 1) % LOOP_BLOCK == 0) {
 	if (add_more_loop_lines(loop)) {
 	    gretl_errmsg_set(_("Out of memory!"));
@@ -1971,16 +1979,17 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 #endif
 
     if (s->cmd->ci == LOOP) {
+	gretlopt opt = get_loop_opts(s, &err);
 	int nested = 0;
 
-	newloop = start_new_loop(s->line, loop, pZ, pdinfo, 
-				 &nested, &err);
+	if (!err) {
+	    newloop = start_new_loop(s->line, loop, pZ, pdinfo, 
+				     &nested, &err);
 #if LOOP_DEBUG
-	fprintf(stderr, "got LOOP: newloop at %p\n", (void *) newloop);
+	    fprintf(stderr, "got LOOP: newloop at %p\n", (void *) newloop);
 #endif
-	if (newloop != NULL) {
-	    err = set_loop_opts(newloop, s);
-	    if (!err) {
+	    if (newloop != NULL) {
+		set_loop_opts(newloop, opt);
 		compile_level++;
 		if (!nested) {
 		    currloop = newloop;
@@ -2216,6 +2225,10 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     } else {
 	return 1;
     }
+
+#if SUBST_DEBUG
+    fprintf(stderr, " target = '%s'\n", targ);
+#endif
 
     while ((p = strstr(str, targ)) != NULL) {
 	char ins[32];
@@ -2501,7 +2514,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
 
-	if (gretl_echo_on() && indexed_loop(loop)) {
+	if (gretl_echo_on() && indexed_loop(loop) &&
+	    !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, pdinfo, prn);
 	}
 
@@ -2537,7 +2551,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    if (gretl_echo_on() && indexed_loop(loop)) {
 		if (s->cmd->ci == ENDLOOP) {
 		    pputc(prn, '\n');
-		} else {
+		} else if (!loop_is_quiet(loop)) {
 		    echo_cmd(cmd, pdinfo, line, 0, prn);
 		}
 	    }

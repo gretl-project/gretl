@@ -1598,6 +1598,8 @@ int gretl_get_user_function (const char *line)
 	function_name_from_line(line, name);
 	if (get_user_function_by_name(name) != NULL) {
 	    ret = 1;
+	} else if (function_from_string(name)) {
+	    ret = 1;
 	}
     }
 
