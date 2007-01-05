@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef GRETL_WWW_H
+#define GRETL_WWW_H
+
 typedef enum {
     LIST_DBS = 1,
     GRAB_IDX,
@@ -67,4 +70,4 @@ int get_update_info (char **saver, time_t filedate, int queryopt);
 int upload_function_package (const char *login, const char *pass, 
 			     const char *fname, const char *buf);
 
-
+#endif /* GRETL_WWW_H */

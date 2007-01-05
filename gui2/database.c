@@ -38,6 +38,11 @@
 # include <netinet/in.h>
 #endif
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
+
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
 static int make_local_db_series_list (windata_t *vwin);
@@ -2083,16 +2088,10 @@ gint populate_dbfilelist (windata_t *vwin)
 
     while (dir == NULL) {
 #ifdef G_OS_WIN32 
-	/* opendir doesn't work on e.g. c:\foo\ !! */
-	if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
-	    dbdir[strlen(dbdir) - 1] = '\0';
-	}
-	/* but neither does it work on e.g. f: */
-	if (dbdir[strlen(dbdir) - 1] == ':') {
-	    strcat(dbdir, "\\");
-	}
-#endif
+	dir = win32_opendir(dbdir);
+#else
 	dir = opendir(dbdir);
+#endif
 	if (dir == NULL) {
 	    errbox(_("Can't open folder %s"), dbdir);
 	    if (++tries == 2 || options_dialog(1)) {

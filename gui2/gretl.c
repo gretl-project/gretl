@@ -992,7 +992,7 @@ int main (int argc, char *argv[])
 
     /* opening a script or session from the command line? */
     if (tryfile[0] != '\0') { 
-	if (ftype == GRETL_SCRIPT && gretl_is_pkzip_file(tryfile)) {
+	if (gretl_is_pkzip_file(tryfile)) {
 	    ftype = GRETL_SESSION;
 	}
 	if (ftype == GRETL_SESSION) {
@@ -1701,10 +1701,10 @@ drag_data_received  (GtkWidget *widget,
 
     strcpy(tryfile, tmp);
 
-    if (probably_script_file(tmp)) {
-	do_open_script();
-    } else if (probably_session_file(tmp)) {
+    if (gretl_is_pkzip_file(tmp)) {
 	verify_open_session();
+    } else if (probably_script_file(tmp)) {
+	do_open_script();
     } else {
 	verify_open_data(NULL, 0);
     }

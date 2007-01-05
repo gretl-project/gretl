@@ -169,7 +169,7 @@ system_set_restriction_matrices (gretl_equation_system *sys,
 int 
 system_normality_test (const gretl_equation_system *sys, PRN *prn);
 
-int gretl_system_add_resids_to_dataset (const char *sysname, int eqnum,
+int gretl_system_add_resids_to_dataset (gretl_equation_system *sys, int eqnum,
 					double ***pZ, DATAINFO *pdinfo);
 
 double *

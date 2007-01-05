@@ -52,6 +52,7 @@
 
 #ifdef _WIN32
 # include <windows.h>
+# include "gretlwin32.h"
 #endif
 
 static void auto_save_gp (windata_t *vwin);
@@ -995,6 +996,14 @@ static const char *readd (DIR *d)
 
 static void remove_session_dir (void)
 {
+#ifdef G_OS_WIN32
+    char *fullpath = g_strdup_printf("%s%s", paths.userdir,
+				     session.dirname);
+
+    chdir(paths.userdir);
+    win32_delete_dir(fullpath);
+    g_free(fullpath);
+#else
     const char *fname;
     DIR *dir;
 
@@ -1012,6 +1021,7 @@ static void remove_session_dir (void)
 	chdir(paths.userdir);
 	remove(session.dirname);
     }
+#endif
 }
 
 void session_init (void)

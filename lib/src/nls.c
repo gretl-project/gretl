@@ -1323,12 +1323,14 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 					  s->oc->tmp);
 
     if (!err) {
+	double x = sqrt((double) T) / T;
+
 	for (i=0; i<*m; i++) {
 	    f[i] = 0.0;
 	    for (t=0; t<T; t++) {
 		f[i] += gretl_matrix_get(s->oc->tmp, t, i);
 	    }
-	    f[i] *= sqrt((double) T) / T;
+	    f[i] *= x;
 	}
     } else {
 	*iflag = -1;
@@ -1839,38 +1841,55 @@ static int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 	goto bailout;
     }
 
-    err += gretl_matrix_multiply_mod(spec->oc->tmp, GRETL_MOD_TRANSPOSE,
-				     spec->oc->tmp, GRETL_MOD_NONE,
-				     S, GRETL_MOD_NONE);
-    gretl_matrix_divide_by_scalar(S, spec->nobs);
+    err = gretl_matrix_multiply_mod(spec->oc->tmp, GRETL_MOD_TRANSPOSE,
+				    spec->oc->tmp, GRETL_MOD_NONE,
+				    S, GRETL_MOD_NONE);
 
-    f = spec->oc->sum->val;
+    if (!err) {
+	gretl_matrix_divide_by_scalar(S, spec->nobs);
 
-    for (i=0; i<m; i++) {
-	f[i] = 0.0;
-	for (j=0; j<T; j++) {
-	    f[i] += gretl_matrix_get(spec->oc->tmp, j, i);
+	f = spec->oc->sum->val;
+
+	for (i=0; i<m; i++) {
+	    f[i] = 0.0;
+	    for (j=0; j<T; j++) {
+		f[i] += gretl_matrix_get(spec->oc->tmp, j, i);
+	    }
+	    f[i] *= sqrt((double) T) / T;
 	}
-	f[i] *= sqrt((double) T) / T;
+
+	fdjac2_(gmm_jacobian_calc, &m, &n, spec->coeff, f, 
+		J->val, &ldjac, &iflag, &epsfcn, wa4, spec);
+
+	if (iflag != 0) {
+	    err = 1;
+	}
     }
 
-    fdjac2_(gmm_jacobian_calc, &m, &n, spec->coeff, f, 
-	    J->val, &ldjac, &iflag, &epsfcn, wa4, spec);
+    if (!err) {
+	err = gretl_matrix_multiply_mod(J, GRETL_MOD_TRANSPOSE,
+					spec->oc->W, GRETL_MOD_NONE,
+					m1, GRETL_MOD_NONE);
+    }
 
-    err += gretl_matrix_multiply_mod(J, GRETL_MOD_TRANSPOSE,
-				     spec->oc->W, GRETL_MOD_NONE,
-				     m1, GRETL_MOD_NONE);
+    if (!err) {
+	err = gretl_matrix_qform(J, GRETL_MOD_TRANSPOSE,
+				 spec->oc->W, m2, GRETL_MOD_NONE);
+    }
 
-    err += gretl_matrix_qform(J, GRETL_MOD_TRANSPOSE,
-			      spec->oc->W, m2, GRETL_MOD_NONE);
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(m2);
+    }
+    
+    if (!err) {
+	err = gretl_matrix_qform(m1, GRETL_MOD_NONE,
+				 S, m3, GRETL_MOD_NONE);
+    }
 
-    err += gretl_invert_symmetric_matrix(m2);
-
-    err += gretl_matrix_qform(m1, GRETL_MOD_NONE,
-			      S, m3, GRETL_MOD_NONE);
-
-    err += gretl_matrix_qform(m2, GRETL_MOD_NONE,
-			      m3, V, GRETL_MOD_NONE);
+    if (!err) {
+	err = gretl_matrix_qform(m2, GRETL_MOD_NONE,
+				 m3, V, GRETL_MOD_NONE);
+    }
 
     if (!err) {
 	for (i=0; i<k; i++) {

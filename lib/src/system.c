@@ -1168,18 +1168,18 @@ void make_system_data_info (gretl_equation_system *sys, int eqn,
     }
 }
 
-int gretl_system_add_resids_to_dataset (const char *sysname, int eqnum,
+int gretl_system_add_resids_to_dataset (gretl_equation_system *sys, int eqnum,
 					double ***pZ, DATAINFO *pdinfo)
 {
-    gretl_equation_system *sys;
     int v, t;
 
-    sys = get_equation_system_by_name(sysname);
-    if (sys == NULL || sys->uhat == NULL) {
-	return 1;
+    if (sys->uhat == NULL) {
+	return E_DATA;
     }
 
-    if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     v = pdinfo->v - 1;
 

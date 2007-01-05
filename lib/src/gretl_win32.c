@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_www.h"
 
 #include <windows.h>
 #include <shlobj.h>

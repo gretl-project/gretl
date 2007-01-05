@@ -2299,7 +2299,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
     gretl_equation_system *my_sys = NULL;
     gchar *buf;
     PRN *prn;
-    char sysname[32];
+    char sysname[32] = {0};
     char bufline[MAXLINE];
     int *slist = NULL;
     char *startline = NULL;
@@ -3328,8 +3328,9 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	rinfo = datainfo;
     }
 
-    if (genr_fit_resid(pmod, rZ, rinfo, GENR_RESID, 1)) {
-	nomem();
+    err = genr_fit_resid(pmod, rZ, rinfo, GENR_RESID, 1);
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 
@@ -4065,7 +4066,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     }
 
     if (err) {
-	nomem();
+	gui_errmsg(err);
 	return 1;
     }
 
@@ -4113,14 +4114,14 @@ int add_system_resid (gpointer data, int eqnum, int ci)
 	err = gretl_VAR_add_resids_to_dataset(var, eqnum,
 					      &Z, datainfo);
     } else {
-	const char *sysname = (const char *) vwin->data;
+	gretl_equation_system *sys = vwin->data;
 
-	err = gretl_system_add_resids_to_dataset(sysname, eqnum,
+	err = gretl_system_add_resids_to_dataset(sys, eqnum,
 						 &Z, datainfo);
     }	
 
     if (err) {
-	nomem();
+	gui_errmsg(err);
 	return 1;
     }
 
