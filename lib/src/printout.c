@@ -1584,7 +1584,7 @@ int printdata (const int *list, const char *mstr,
 
     printdata_blocks = 0;
 
-    if (list == NULL) {
+    if (list == NULL || list[0] == 0) {
 	if (mstr != NULL) {
 	    goto endprint;
 	} else {
