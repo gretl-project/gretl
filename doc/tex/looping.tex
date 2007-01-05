@@ -1,5 +1,5 @@
 \chapter{Loop constructs}
-\label{looping}
+\label{chap:looping}
 
 \section{Introduction}
 \label{loop-intro}
@@ -108,6 +108,28 @@ variables are evaluated once, when the loop is set up.  In addition,
 with time series data you can give the starting and ending values in
 the form of dates, as in \cmd{loop i=1950:1..1999:4}.
       
+This form of loop is particularly useful in conjunction with the
+\texttt{values()} matrix function when some operation must be carried
+out for each value of some discrete variable (see chapter
+\ref{chap:discrete}). Consider the following example:
+
+\begin{code}
+  open greene22_2
+
+  discrete Z8
+  v8 = values(Z8)
+  n = rows(v8)
+
+  loop for i=1..n
+    scalar xi = v8[$i]
+    smpl (Z8=xi) --restrict --replace
+    printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
+      xi, mean(Y), xi, sd(Y)
+  end loop
+\end{code}
+
+In this case, we evaluate the conditional mean and standard deviation
+of the variable Y for each value of Z8.
 
 \subsection{For each loop}
 \label{loop-each}

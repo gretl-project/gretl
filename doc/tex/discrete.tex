@@ -1,5 +1,5 @@
 \chapter{Discrete variables}
-\label{chap-discrete}
+\label{chap:discrete}
 
 When a variable can take only a finite, typically small, number of
 values, then the variable is said to be \emph{discrete}. Some
@@ -122,10 +122,12 @@ Frequency distribution'' menu entry.
 
 For discrete variables, frequencies are counted for each different
 value that the variable takes. For continuous variables, values are
-grouped into ``bins'' and then the frequencies are computed for each
-bin. The number of bins is computed as a function of the number of
-valid observations in the currently selected sample via the 
-rule shown in Table~\ref{tab:bins}.
+grouped into ``bins'' and then the frequencies are counted for each
+bin. The number of bins, by default, is computed as a function of the
+number of valid observations in the currently selected sample via the
+rule shown in Table~\ref{tab:bins}. However, when the command is
+invoked through the menu item ``Variable, Frequency Plot'', this
+default can be overridden by the user.
 
 \begin{table}[htbp]
   \centering
@@ -209,6 +211,10 @@ generation of the histogram when invoked from the command line and
 \texttt{--gamma}, for replacing the normality test with Locke's
 nonparametric test, whose null hypothesis is that the data follow a
 Gamma distribution.
+
+If the distinct values of a discrete variable need to be saved, the
+\texttt{values()} matrix construct can be used (see chapter
+\ref{chap:matrices}).
 
 \subsection{The \texttt{xtab} command}
 \label{discr-xtab}
