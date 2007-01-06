@@ -139,7 +139,8 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
     }
 
     /* NLS, MLE and GMM models won't work */
-    if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM) {
+    if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
+	pmod->ci == ARBOND) {
 	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;
