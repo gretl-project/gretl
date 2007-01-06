@@ -1590,10 +1590,8 @@ int push_fn_arg (fnargs *args, int type, void *p)
     args->types = types;
 
     if (type == ARG_NONE) {
-	return 0;
-    }
-
-    if (type == ARG_SCALAR) {
+	args->nnull += 1;
+    } else if (type == ARG_SCALAR) {
 	double *x;
 
 	n = args->nx + 1;

@@ -100,6 +100,8 @@ int remember_list (const int *list, const char *name, PRN *prn);
 
 int copy_named_list_as (const char *orig, const char *new);
 
+int create_named_null_list (const char *name);
+
 int destroy_saved_lists_at_level (int level);
 
 void gretl_lists_prune (int vmin);

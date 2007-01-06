@@ -38,12 +38,14 @@ typedef enum {
 typedef enum {
     FN_NEEDS_TS = 1, /* function requires time-series data */
     FN_NEEDS_QM,     /* function requires quarterly or monthly data */
-    FN_NEEDS_PANEL   /* function requires panel data */
+    FN_NEEDS_PANEL,  /* function requires panel data */
+    FN_NODATA_OK     /* function does not require a dataset */
 } FuncDataReq;
 
 #define NEEDS_TS    "needs-time-series-data"
 #define NEEDS_QM    "needs-qm-data"
 #define NEEDS_PANEL "needs-panel-data"
+#define NO_DATA_OK  "no-data-ok"
 
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
@@ -82,6 +84,8 @@ double fn_param_default (const ufunc *fun, int i);
 double fn_param_minval (const ufunc *fun, int i);
 
 double fn_param_maxval (const ufunc *fun, int i);
+
+int fn_param_optional (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);
 

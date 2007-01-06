@@ -37,7 +37,7 @@
 
 #ifdef NATIVE_PRINTING
 
-gchar *user_string (void)
+static gchar *user_string (void)
 {
     const gchar *username, *realname;
     gchar *ret = NULL;

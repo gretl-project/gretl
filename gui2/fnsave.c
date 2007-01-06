@@ -493,6 +493,18 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
+static const gchar *get_user_string (void)
+{
+    const gchar *name;
+
+    name = g_get_real_name();
+    if (name == NULL) {
+	name = g_get_user_name();
+    }
+
+    return name;
+}
+
 static void finfo_dialog (function_info *finfo)
 {
     GtkWidget *button, *label;
@@ -550,6 +562,12 @@ static void finfo_dialog (function_info *finfo)
 
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
+	} else if (i == 0) {
+	    const gchar *s = get_user_string();
+
+	    if (s != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(entry), s);
+	    }
 	} else if (i == 1) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), "1.0");
 	} else if (i == 2) {

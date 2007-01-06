@@ -178,10 +178,14 @@ double fn_param_maxval (const ufunc *fun, int i)
 
 int fn_param_optional (const ufunc *fun, int i)
 {
+    int t;
+
     if (i < 0 || i >= fun->n_params) return 0;
 
-    return ref_type(fun->params[i].type) && 
-	!(fun->params[i].flags & ARG_OPTIONAL);
+    t = fun->params[i].type;
+
+    return ((ref_type(t) || t == ARG_LIST) && 
+	    (fun->params[i].flags & ARG_OPTIONAL));
 }
 
 int user_func_get_return_type (const ufunc *fun)
@@ -1801,7 +1805,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	err = read_deflt_min_max(s, param, &len);
     }
 
-    if (ref_type(type)) {
+    if (ref_type(type) || type == ARG_LIST) {
 	param->type = type;
 	err = read_param_option(s, param, &len);
     }    
@@ -2153,14 +2157,16 @@ int update_function_from_script (const char *fname, int idx)
 static int localize_list (const char *oldname, fn_param *fp,
 			  DATAINFO *pdinfo)
 {
-    const int *list = get_list_by_name(oldname);
+    const int *list;
     int i, err;
 
-    if (list == NULL) {
-	return E_DATA;
-    }
+    list = get_list_by_name(oldname);
 
-    err = copy_named_list_as(oldname, fp->name);
+    if (list == NULL) {
+	err = E_DATA;
+    } else {
+	err = copy_named_list_as(oldname, fp->name);
+    }
 
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
@@ -2225,11 +2231,11 @@ static int allocate_function_args (ufunc *fun,
 	} else if (fp->type == ARG_MATRIX) {
 	    err = copy_matrix_as(args->M[Mi++], fp->name);
 	} else if (fp->type == ARG_LIST) {
-	    const char *lname = args->lists[li++];
-
-	    if (get_list_by_name(lname) != NULL || !strcmp(lname, "null")) {
-		err = localize_list(lname, fp, pdinfo);
-	    }
+	    if (li < args->nl) {
+		err = localize_list(args->lists[li++], fp, pdinfo);
+	    } else {
+		err = create_named_null_list(fp->name);
+	    } 
 	} 
     }
 
@@ -2450,7 +2456,9 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		mi++;
 	    }
 	} else if (fp->type == ARG_LIST) {
-	    unlocalize_list(args->lists[li++], pdinfo);
+	    if (li < args->nl) {
+		unlocalize_list(args->lists[li++], pdinfo);
+	    } 
 	}
     }
 

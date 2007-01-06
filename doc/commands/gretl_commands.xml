@@ -2820,65 +2820,7 @@
     </description>
   </command>
 
-  <command name="gmm" section="Estimation"
-    label="GMM estimation">
-
-    <usage>
-      <arguments>
-        <argument>residuals function</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-	<option>
-	  <flag>--verbose</flag>
-	  <effect>print details of iterations</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-
-      <para>
-	Performs Generalized Method of Moments (GMM) estimation using
-	the BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
-	specify an expression to compute residuals, an orthogonality
-	condition, and a matrix of weights.
-      </para>
-      <para>
-	The documentation remains to be written, but here is an example:
-      </para>
-      <code>
-	gmm e = y - X*b
-	  orthog e W
-          weights V
-          params b
-	end gmm
-      </code>
-      <para>
-	Here we assume that <lit>y</lit> and <lit>X</lit> are data
-	matrices, <lit>b</lit> is an appropriately sized vector of
-	parameter values, <lit>W</lit> is a matrix of instruments, and
-	<lit>V</lit> is a suitable matrix of weights.  The statement
-      </para>
-      <code>
-	orthog e W
-      </code>
-      <para>
-	indicates that the residual vector <lit>e</lit> is in principle
-	orthogonal to each of the instruments composing the columns of
-	<lit>W</lit>.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/GMM</menu-path>
-    </gui-access>
-
-  </command>
+<!-- GMM goes here when it's ready -->
 
   <command name="gnuplot" section="Graphs" 
     label="Create a gnuplot graph" context="cli">

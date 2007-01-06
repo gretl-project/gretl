@@ -271,6 +271,40 @@ int copy_named_list_as (const char *orig, const char *new)
 }
 
 /**
+ * create_named_null_list:
+ * @name: the name to be given to the list.
+ *
+ * Creates an empty list under the given @name and adds it
+ * to the stack of saved lists at the next level of
+ * function execution.  This is intended for use when a null 
+ * list is given as an argument to a user-defined function.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int create_named_null_list (const char *name)
+{
+    saved_list *sl;
+    int *list;
+    int err;
+
+    list = gretl_null_list();
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    err = real_remember_list(list, name, 1, NULL);
+    if (!err) {
+	sl = list_stack[n_lists - 1];
+	sl->level += 1;
+    } else {
+	free(list);
+    }
+
+    return err;
+}
+
+/**
  * destroy_saved_lists_at_level:
  * @level: stack level of function execution.
  *

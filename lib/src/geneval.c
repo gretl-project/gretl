@@ -2266,7 +2266,8 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 }
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
-                         s == LIST || s == U_ADDR || s == DUM)
+                         s == LIST || s == U_ADDR || s == DUM || \
+                         s == EMPTY)
 
 /* evaluate a user-defined function */
 
@@ -2315,10 +2316,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* evaluate the function arguments */
 
     for (i=0; i<m && !p->err; i++) {
-
 	n = eval(r->v.bn.n[i], p);
 	if (n == NULL) {
-	    fprintf(stderr, "eval_ufunc: failed to evaluare arg\n"); 
+	    fprintf(stderr, "eval_ufunc: failed to evaluate arg\n"); 
 	} else if (!ok_ufunc_sym(n->t)) {
 	    fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
 	    p->err = E_TYPES;
@@ -2370,7 +2370,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 #if EDEBUG
     fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
-	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
+	    args.nx, args.nX, args.nM, args.nl, args.nrefv, args.nnull, m);
 #endif
 
     /* try sending args to function */

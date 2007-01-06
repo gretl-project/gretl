@@ -26,6 +26,7 @@
 #include "cmd_private.h"
 #include "gretl_www.h"
 #include "database.h"
+#include "guiprint.h"
 
 #define FCDEBUG 0
 
@@ -86,18 +87,19 @@ static void cinfo_free (call_info *cinfo)
     g_list_free(cinfo->lsels);
 }
 
+#define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
+#define series_type(t) (t == ARG_SERIES || t == ARG_REF_SERIES)
+#define matrix_type(t) (t == ARG_MATRIX || t == ARG_REF_MATRIX)
+
 static const char *arg_type_string (int type)
 {
     if (type == ARG_BOOL)   return "boolean";
     if (type == ARG_INT)    return "int";
-    if (type == ARG_SCALAR) return "scalar";
-    if (type == ARG_SERIES) return "series";
     if (type == ARG_LIST)   return "list";
-    if (type == ARG_MATRIX) return "matrix";
-
-    if (type == ARG_REF_SCALAR) return "scalar";
-    if (type == ARG_REF_SERIES) return "series";
-    if (type == ARG_REF_MATRIX) return "matrix";
+    
+    if (scalar_type(type)) return "scalar";
+    if (series_type(type)) return "series";
+    if (matrix_type(type)) return "matrix";
 
     return "";
 }
@@ -184,22 +186,25 @@ static gboolean update_return (GtkEditable *entry,
     return FALSE;
 }
 
-static GList *get_selection_list (int type)
+static GList *get_selection_list (call_info *cinfo, int i, int type)
 {
     GList *list = NULL;
     const char *name;
-    int i;
+    int optional = 0;
 
-    /* FIXME ref arguments 
-       FIXME int, bool arguments */
+    /* FIXME int, bool arguments */
 
-    if (type == ARG_SERIES || type == ARG_SCALAR) {
+    if (i >= 0) {
+	optional = fn_param_optional(cinfo->func, i);
+    }
+
+    if (series_type(type) || scalar_type(type)) {
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_hidden(datainfo, i)) {
 		continue;
 	    }
-	    if ((type == ARG_SERIES && var_is_series(datainfo, i)) ||
-		(type == ARG_SCALAR && var_is_scalar(datainfo, i))) {
+	    if ((series_type(type) && var_is_series(datainfo, i)) ||
+		(scalar_type(type) && var_is_scalar(datainfo, i))) {
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
 	}
@@ -213,13 +218,17 @@ static GList *get_selection_list (int type)
 	    name = get_list_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}
-    } else if (type == ARG_MATRIX) {
+    } else if (matrix_type(type)) {
 	int nm = n_user_matrices();
 
 	for (i=0; i<nm; i++) {
 	    name = get_matrix_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}	
+    }
+
+    if (optional) {
+	list = g_list_append(list, "null");
     }
 
     return list;
@@ -389,7 +398,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
 		     G_CALLBACK(update_arg), cinfo);
-    list = get_selection_list(ptype);
+    list = get_selection_list(cinfo, i, ptype);
     if (list != NULL) {
 	gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);
 	g_list_free(list);
@@ -443,7 +452,7 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	int tcols = (cinfo->need_list)? 4 : 3;
 
-	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, _("Required arguments:"), 0);
+	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, _("Arguments:"), 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
@@ -546,7 +555,7 @@ static void function_call_dialog (call_info *cinfo)
 	sel = gtk_combo_new();
 	g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			 G_CALLBACK(update_return), cinfo);
-	list = get_selection_list(cinfo->rettype);
+	list = get_selection_list(cinfo, -1, cinfo->rettype);
 	if (list != NULL) {
 	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
 	    g_list_free(list);

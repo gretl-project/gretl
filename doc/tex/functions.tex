@@ -290,6 +290,19 @@ When a list is marked \texttt{const}, any attempt to rename, delete
 or overwrite the original values of the variables in the list will
 generate an error.
 
+If a list argument to a function is optional, this should be indicated
+by appending a default value of \texttt{null}, as in
+%
+\begin{code}
+     function myfunc (scalar y, list X[null])
+\end{code}
+%
+In that case, if the caller gives \texttt{null} as the list argument
+then the named list \texttt{X} inside the function will be empty.
+This possibility can be detected using the \texttt{nelem()} function,
+which returns 0 for an empty list.  (This mechanism can also be used
+to check whether a named, but empty, list was supplied as an
+argument.)
 
 \subsection{Return values}
 
