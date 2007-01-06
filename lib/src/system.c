@@ -2070,3 +2070,23 @@ int gretl_system_serialize (gretl_equation_system *sys, SavedObjectFlags flags,
     return err;
 }
 
+void gretl_system_set_save_flag (gretl_equation_system *sys)
+{
+    sys->flags |= GRETL_SYS_SAVEIT;
+}
+
+void gretl_system_unset_save_flag (gretl_equation_system *sys)
+{
+    sys->flags &= ~GRETL_SYS_SAVEIT;
+}
+
+int gretl_system_save_flag_set (gretl_equation_system *sys)
+{
+    if (sys == NULL) {
+	return 0;
+    } else if (sys->flags & GRETL_SYS_SAVEIT) {
+	return 1;
+    } else {
+	return 0;
+    }
+}

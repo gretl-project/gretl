@@ -3526,7 +3526,8 @@ static NODE *eval (NODE *t, parser *p)
 	ret = eval_query(t, p);
 	break;
     default: 
-	printf("EVAL: weird node %s\n", getsymb(t->t, NULL));
+	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
+	       t->t);
 	p->err = E_PARSE;
 	break;
     }
@@ -3734,6 +3735,8 @@ static void printnode (const NODE *t, const parser *p)
 	pputc(p->prn, '(');
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
+    } else if (t->t == LIST) {
+	pputs(p->prn, "LIST (lost!)");
     } else if (t->t != EMPTY) {
 	pputs(p->prn, "weird tree - ");
 	printsymb(t->t, p);
@@ -4265,6 +4268,33 @@ static void gen_check_errvals (parser *p)
     }
 }
 
+static gretl_matrix *list_to_matrix (const char *name, int *err)
+{
+    const int *list = get_list_by_name(name);
+    gretl_matrix *v = NULL;
+    int i;
+
+    if (list == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (list[0] > 0) {
+	v = gretl_vector_alloc(list[0]);
+	if (v == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	} 
+	for (i=0; i<list[0]; i++) {
+	    v->val[i] = list[i+1];
+	}
+    } else {
+	*err = E_DATA;
+    }
+
+    return v;
+}
+
 static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 {
     NODE *r = p->ret;
@@ -4282,7 +4312,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 		m->val[i] = r->v.xvec[i + p->dinfo->t1];
 	    }
 	}
-    } else if (r->tmp) {
+    } else if (r->t == MAT && r->tmp) {
 	/* result r->v.m is newly allocated, steal it */
 #if EDEBUG
 	fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
@@ -4290,7 +4320,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 #endif
 	m = r->v.m;
 	r->v.m = NULL; /* avoid double-freeing */
-    } else {
+    } else if (r->t == MAT) {
 	/* r->v.m is an existing user matrix, copy it */
 #if EDEBUG
 	fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
@@ -4300,7 +4330,12 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	if (m == NULL) {
 	    p->err = E_ALLOC;
 	}
-    } 
+    } else if (r->t == LIST) {
+	m = list_to_matrix(r->v.str, &p->err);
+    } else {
+	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
+	p->err = E_TYPES;
+    }
 
     return m;
 }

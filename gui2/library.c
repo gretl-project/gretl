@@ -6523,6 +6523,12 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	maybe_save_model(cmd, models[0], prn);
     }
 
+    if (gretl_system_save_flag_set(s->sys)) {
+	maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS);
+	gretl_system_unset_save_flag(s->sys);
+	s->sys = NULL;
+    }
+
     return (err != 0);
 }
 

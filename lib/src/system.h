@@ -38,7 +38,8 @@ enum {
     GRETL_SYS_VCV_GEOMEAN  = 1 << 3,
     GRETL_SYS_SAVE_VCV     = 1 << 4,
     GRETL_SYS_RESTRICT     = 1 << 5,
-    GRETL_SYS_ITERATE      = 1 << 6
+    GRETL_SYS_ITERATE      = 1 << 6,
+    GRETL_SYS_SAVEIT       = 1 << 7
 };
 
 typedef struct id_atom_ id_atom;
@@ -187,6 +188,12 @@ int highest_numbered_var_in_system (const gretl_equation_system *sys,
 int gretl_system_serialize (gretl_equation_system *sys, 
 			    SavedObjectFlags flags,
 			    FILE *fp);
+
+void gretl_system_set_save_flag (gretl_equation_system *sys);
+
+void gretl_system_unset_save_flag (gretl_equation_system *sys);
+
+int gretl_system_save_flag_set (gretl_equation_system *sys);
 
 #ifndef GRETLCLI
 

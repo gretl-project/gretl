@@ -1052,6 +1052,12 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	maybe_stack_model(models[0], cmd, prn);
     }
 
+    if (gretl_system_save_flag_set(s->sys)) {
+	/* only warrants action in GUI program */
+	gretl_system_unset_save_flag(s->sys);
+	s->sys = NULL;
+    }
+
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
 	echo_cmd(cmd, pdinfo, line, 0, cmdprn);

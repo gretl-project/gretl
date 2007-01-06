@@ -934,6 +934,8 @@ const char *getsymb (int t, const parser *p)
 	return "MDEF";
     } else if (t == FARGS) {
 	return "FARGS";
+    } else if (t == LIST) {
+	return "LIST";
     }
 
     if (p != NULL) {

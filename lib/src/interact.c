@@ -172,7 +172,7 @@ static int catch_command_alias (char *line, CMD *cmd)
     if (!strcmp(line, "q")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
-    } if (!strcmp(line, "x")) {
+    } if (!strcmp(line, "exit")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
 	cmd->opt = OPT_X;
@@ -1559,6 +1559,40 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     return ok;
 }
 
+static int ok_list_matrix (const char *s, int *lpos,
+			   const DATAINFO *pdinfo, CMD *cmd)
+{
+    const gretl_matrix *m = get_matrix_by_name(s);
+    int n = gretl_vector_get_length(m);
+    int ok = 0;
+
+    if (n > 0) {
+	int i, llen = *lpos;
+	double vi, ci;
+
+	for (i=0; i<n; i++) {
+	    vi = gretl_vector_get(m, i);
+	    ci = (double) (int) vi;
+	    if (ci != vi || ci < 0 || ci >= pdinfo->v) {
+		return 0;
+	    } 
+	}
+
+	if (expand_command_list(cmd, n)) {
+	    return 0;
+	}
+
+	for (i=0; i<n; i++) {
+	    cmd->list[llen++] = gretl_vector_get(m, i);
+	}
+
+	*lpos = llen;
+	ok = 1;
+    }
+	
+    return ok;
+}
+
 static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 				   double ***pZ, DATAINFO *pdinfo, 
 				   CMD *cmd)
@@ -1602,7 +1636,9 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;
     } else if (truncate_varname(s, &k, pdinfo, cmd)) {
 	ok = 1;
-    } else if (matrix_name_ok(s, cmd)) {
+    } else if (cmd->ci == PRINT && matrix_name_ok(s, cmd)) {
+	ok = 1;
+    } else if (cmd->ci == REMEMBER && ok_list_matrix(s, &k, pdinfo, cmd)) {
 	ok = 1;
     }
 
@@ -3924,7 +3960,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case END:
 	if (!strcmp(cmd->param, "system")) {
 	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, outprn);
-	    s->sys = NULL;
+	    if (s->sys->name == NULL) {
+		s->sys = NULL;
+	    } else {
+		gretl_system_set_save_flag(s->sys);
+	    }
 	} else if (!strcmp(cmd->param, "mle") || 
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
@@ -4054,6 +4094,12 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
 	attach_subsample_to_model(s->models[0], pdinfo);
 	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+    }
+
+    if (gretl_system_save_flag_set(s->sys)) {
+	/* only warrants action in GUI program */
+	gretl_system_unset_save_flag(s->sys);
+	s->sys = NULL;
     }
 
     return err;

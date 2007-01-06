@@ -723,8 +723,8 @@ int maybe_add_model_to_session (void *ptr, GretlObjType type)
 	return 1;
     }
 
-    /* check to see if there's already a model with the same name: if
-       so, delete it
+    /* check to see if there's already a (different) model with the
+       same name: if so, delete it
     */
     name = gretl_object_get_name(ptr, type);
     oldmod = get_session_model_by_name(name);
