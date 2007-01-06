@@ -3960,7 +3960,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case END:
 	if (!strcmp(cmd->param, "system")) {
 	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, outprn);
-	    if (s->sys->name == NULL) {
+	    if (err || s->sys->name == NULL) {
 		s->sys = NULL;
 	    } else {
 		gretl_system_set_save_flag(s->sys);

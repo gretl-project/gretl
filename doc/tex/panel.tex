@@ -129,7 +129,7 @@ estimator.  Greater efficiency may be gained using generalized least
 squares (GLS), taking into account the covariance structure of the
 error term.  
 
-Consider two observation on the same unit $i$ at two different times
+Consider observations on a given unit $i$ at two different times
 $s$ and $t$. From the hypotheses above it can be worked out that
 $\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
 \sigma^2_{\varepsilon}$, while the covariance between $u_{is}$ and
@@ -223,13 +223,12 @@ issues must be taken into account.
   the issue is that after de-meaning these variables are nothing but
   zeros.
 \item A somewhat analogous prohibition applies to the random effects
-  model.  To appreciate this point it is necessary to note that the
-  random effects estimator is a matrix-weighted average of the pooled
-  OLS estimator and the ``between'' estimator.  The point is that if
-  one has observations on $m$ units and $k$ independent variables of
-  interest, then if $k>m$ the ``between'' estimator is undefined ---
-  since we have only $m$ effective observations --- and hence so is
-  the random effects estimator.
+  estimator.  This estimator is in effect a matrix-weighted average of
+  pooled OLS and the ``between'' estimator.  Suppose we have
+  observations on $m$ units or individuals and there are $k$
+  independent variables of interest.  If $k>m$, the ``between''
+  estimator is undefined --- since we have only $m$ effective
+  observations --- and hence so is the random effects estimator.
 \end{enumerate}
 
 If one does not fall foul of one or other of the prohibitions
@@ -257,11 +256,11 @@ regressors.  The richer hypothesis set of the random-effects estimator
 ensures that parameters for time-invariant regressors can be
 estimated, and that estimation of the parameters for time-varying
 regressors is carried out more efficiently.  These advantages, though,
-are tied to the validity of these additional hypotheses. If, for
+are tied to the validity of the additional hypotheses. If, for
 example, there is reason to think that individual effects may be
 correlated with some of the explanatory variables, then the
 random-effects estimator would be inconsistent, while fixed-effects
-estimates would be perfectly valid.  It is precisely on this principle
+estimates would still be valid.  It is precisely on this principle
 that the Hausman test is built (see below): if the fixed- and
 random-effects estimates agree, to within the usual statistical margin
 of error, there is no reason to think the additional hypotheses
@@ -294,7 +293,7 @@ and Hausman tests are presented automatically.
 The Breusch--Pagan test is the counterpart to the $F$-test mentioned
 above.  The null hypothesis is that the variance of $v_i$ equals zero;
 if this hypothesis is not rejected, then again we conclude that the
-pooled model is adequate.
+simple pooled model is adequate.
 
 The Hausman test probes the consistency of the GLS estimates.  The
 null hypothesis is that these estimates are consistent, that is, that
@@ -303,7 +302,7 @@ satisfied.  The test is based on a measure, $H$, of the ``distance''
 between the fixed-effects and random-effects estimates, constructed
 such that under the null it follows the $\chi^2$ distribution with
 degrees of freedom equal to the number of time-varying regressors in
-the matrix $X$.  If the value of $H$ is large enough this suggests
+the matrix $X$.  If the value of $H$ is ``large'' this suggests
 that the random effects estimator is not consistent and the
 fixed-effects model is preferable.
 

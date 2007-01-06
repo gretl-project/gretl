@@ -4,15 +4,14 @@
 \section{Introduction and examples}
 \label{nls-intro}
 
-As of version 1.0.9, \app{gretl} supports nonlinear least squares
-(NLS) using a variant of the Levenberg--Marquandt algorithm.  The user
-must supply a specification of the regression function; prior to
-giving this specification the parameters to be estimated must be
-``declared'' and given initial values.  Optionally, the user may
-supply analytical derivatives of the regression function with respect
-to each of the parameters.  The tolerance (criterion for terminating
-the iterative estimation procedure) can be adjusted using the
-\cmd{set} command.
+\app{Gretl} supports nonlinear least squares (NLS) using a variant of
+the Levenberg--Marquandt algorithm.  The user must supply a
+specification of the regression function; prior to giving this
+specification the parameters to be estimated must be ``declared'' and
+given initial values.  Optionally, the user may supply analytical
+derivatives of the regression function with respect to each of the
+parameters.  The tolerance (criterion for terminating the iterative
+estimation procedure) can be adjusted using the \cmd{set} command.
 
 The syntax for specifying the function to be estimated is the same as
 for the \cmd{genr} command.  Here are two examples, with accompanying
@@ -129,7 +128,7 @@ number of iterations is $100 \times (k+1)$ when analytical derivatives
 are given, and $200 \times (k+1)$ when numerical derivatives are used.
 
 Let $\epsilon$ denote a small number.  The iteration is deemed to have
-converged if one or both of the following conditions are satisfied:
+converged if at least one of the following conditions is satisfied:
 
 \begin{itemize}
 \item Both the actual and predicted relative reductions in the error

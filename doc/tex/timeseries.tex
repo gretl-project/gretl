@@ -867,14 +867,17 @@ each case, p-values are computed via the approximations by Doornik
 
 The following code uses the \cmd{denmark} database, supplied with
 \app{gretl}, to replicate Johansen's example found in his 1995 book.
+%
 \begin{code}
   open denmark
   coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
+%
 In this case, the vector $y_t$ in equation (\ref{eq:Joh-tests})
 comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
 \cmd{IDE}. The number of lags equals $p$ in (\ref{eq:Joh-tests}) plus
 one. Part of the output is reported below:
+
 \begin{center}
 \begin{code}
 Johansen test:
@@ -888,8 +891,6 @@ Rank Eigenvalue Trace test p-value   Lmax test  p-value
    1    0.17758     19.057 [0.7833]     10.362 [0.8017]
    2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
    3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
-
-eigenvalue     0.43317      0.17758      0.11279     0.043411 
 \end{code}
 \end{center}
 

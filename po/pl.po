@@ -1,14 +1,14 @@
 # Polish translation for gretl-1.6.0.pre2
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006, 2007
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.6.0.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-12-15 14:53-0500\n"
-"PO-Revision-Date: 2006-12-30 01:00+0100\n"
+"PO-Revision-Date: 2007-01-05 21:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1267,7 +1267,7 @@ msgstr "Brak pamiêci dla dodanych serii"
 #: lib/src/dbread.c:1752
 #, c-format
 msgid "%s: using default compaction method: averaging"
-msgstr "%s: wykorzystano domyœln¹ metodê agregacji: uœrednianie"
+msgstr "%s: wykorzystano domy¶ln± metodê agregacji: u¶rednianie"
 
 #: lib/src/dbread.c:2500 lib/src/dbread.c:2568 lib/src/dbread.c:2779
 msgid "Compacted dataset would be empty"
@@ -1367,12 +1367,12 @@ msgstr "Funkcja korelacji wzajemnej (XCF) dla procesów: %s i %s"
 
 #: lib/src/describe.c:2321
 msgid "  LAG      XCF"
-msgstr "OpóŸnienia XCF"
+msgstr "Opó¼nienia XCF"
 
 #: lib/src/describe.c:2356
 #, c-format
 msgid "Correlations of %s and lagged %s"
-msgstr "Korelacja dla procesu: %s i opóŸnieñ %s"
+msgstr "Korelacja dla procesu: %s i opó¼nieñ %s"
 
 #: lib/src/describe.c:2424
 msgid "GPH test for fractional integration"
@@ -2021,12 +2021,12 @@ msgstr "'%s': brak wymaganego argumentu\n"
 #: lib/src/genlex.c:402
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
-msgstr "Symbol '%c' jest niepoprawny w tym kontekœcie\n"
+msgstr "Symbol '%c' jest niepoprawny w tym kontek¶cie\n"
 
 #: lib/src/genlex.c:405
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
-msgstr "Symbol '%s' jest niepoprawny w tym kontekœcie\n"
+msgstr "Symbol '%s' jest niepoprawny w tym kontek¶cie\n"
 
 #: lib/src/genlex.c:908
 #, c-format
@@ -2087,7 +2087,7 @@ msgstr "Akceptowany '%c' ale utworzono '%s'\n"
 #: lib/src/gensyntax.c:378
 #, c-format
 msgid "String is too long (%d versus %d max)\n"
-msgstr "Ci¹g znaków jest za d³ugi (%d do %d max)\n"
+msgstr "Ci±g znaków jest za d³ugi (%d do %d max)\n"
 
 #: lib/src/graphing.c:813
 #, c-format
@@ -3896,7 +3896,7 @@ msgstr "brak"
 
 #: lib/src/modelprint.c:864 lib/src/modelprint.c:866 lib/src/modelprint.c:868
 msgid "Asymptotic standard errors (unreliable)"
-msgstr "Asymptotyczny b³¹d standardowy (niepewny)"
+msgstr "Asymptotyczny b³±d standardowy (niepewny)"
 
 #: lib/src/modelprint.c:878 lib/src/modelprint.c:880 lib/src/modelprint.c:882
 msgid "Robust (HAC) standard errors"
@@ -4031,12 +4031,12 @@ msgstr "W³±czono %d jednostek danych przekrojowych"
 #: lib/src/modelprint.c:1294 lib/src/modelprint.c:1295
 #, c-format
 msgid "Time-series length = %d"
-msgstr "Szereg czasowy d³ugoœci = %d"
+msgstr "Szereg czasowy d³ugo¶ci = %d"
 
 #: lib/src/modelprint.c:1297 lib/src/modelprint.c:1298
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
-msgstr "Szereg czasowy d³ugoœci: minimum %d, maksimun %d"
+msgstr "Szereg czasowy d³ugo¶ci: minimum %d, maksimun %d"
 
 
 #: lib/src/modelprint.c:1385 lib/src/modelprint.c:1386
@@ -4833,7 +4833,7 @@ msgid ""
 "are in fact lagged values."
 msgstr ""
 "To jest prawdziwa prognoza tylko wtedy, je¿eli wszystkie regresory\n"
-"zmiennych opóŸnionych s¹ wed³ug danych faktycznych."
+"zmiennych opó¼nionych s± wed³ug danych faktycznych."
 
 
 #: lib/src/printout.c:924
@@ -4868,15 +4868,15 @@ msgstr ""
 
 #: lib/src/printout.c:1924
 msgid "Mean Squared Error"
-msgstr "B³¹d œredniokwadratowy"
+msgstr "B³±d ¶redniokwadratowy"
 
 #: lib/src/printout.c:1925
 msgid "Root Mean Squared Error"
-msgstr "Pierwiastek b³êdu œredniokwadratowego"
+msgstr "Pierwiastek b³êdu ¶redniokwadratowego"
 
 #: lib/src/printout.c:1926
 msgid "Mean Absolute Error"
-msgstr "Sredni absolutny b³¹d"
+msgstr "Sredni absolutny b³±d"
 
 #: lib/src/printout.c:1982
 #, c-format
@@ -5815,7 +5815,7 @@ msgstr "B³êdna liczebno¶æ próby"
 
 #: gui2/calculator.c:213
 msgid "Failed to compute critical value"
-msgstr "B³±d w wyznaczaniu wartoœci krytycznej"
+msgstr "B³±d w wyznaczaniu warto¶ci krytycznej"
 
 #: gui2/calculator.c:218 gui2/calculator.c:400
 msgid "Standard normal distribution"
@@ -5856,7 +5856,7 @@ msgstr "B³êdne odchylenie standardowe"
 
 #: gui2/calculator.c:372 gui2/calculator.c:381
 msgid "Failed to compute p-value"
-msgstr "B³±d w wyznaczaniu wartoœci p"
+msgstr "B³±d w wyznaczaniu warto¶ci p"
 
 #: gui2/calculator.c:384
 msgid "gretl: p-value"
@@ -7101,7 +7101,7 @@ msgstr "prognoza statyczna"
 
 #: gui2/dialogs.c:1764
 msgid "rolling one-step ahead forecasts"
-msgstr "krocz¹ca jednookresowa prognoza"
+msgstr "krocz±ca jednookresowa prognoza"
 
 #: gui2/dialogs.c:1774
 msgid "gretl: forecast"
@@ -8628,7 +8628,7 @@ msgstr "/Dane/_Transpozycja danych..."
 
 #: gui2/gretl.c:382
 msgid "/Data/_Refresh window"
-msgstr "/Dane/_Odœwie¿ okno danych"
+msgstr "/Dane/_Od¶wie¿ okno danych"
 
 #: gui2/gretl.c:384
 msgid "/Data/_Matrix..."
@@ -10507,7 +10507,7 @@ msgstr "gretl: periodogram"
 
 #: gui2/library.c:3671
 msgid "Bandwidth:"
-msgstr "szerokoœæ okna:"
+msgstr "szeroko¶æ okna:"
 
 #: gui2/library.c:3699
 msgid "Periodogram command failed"
@@ -10564,11 +10564,11 @@ msgstr "Przekodowano wszystkie warto¶ci"
 
 #: gui2/library.c:3895
 msgid "Skip the lowest value"
-msgstr "Opuszczono najni¿sz¹ wartoœæ"
+msgstr "Opuszczono najni¿sz± warto¶æ"
 
 #: gui2/library.c:3896
 msgid "Skip the highest value"
-msgstr "Opuszczono najwy¿sz¹ wartoœæ"
+msgstr "Opuszczono najwy¿sz± warto¶æ"
 
 #: gui2/library.c:3900
 msgid "gretl: create dummy variables"
@@ -10734,15 +10734,15 @@ msgstr "Czy nadpisaæ istniej±cy plik?"
 
 #: gui2/library.c:5419
 msgid "gretl: revised data set"
-msgstr "gretl: przegl¹danie zbioru danych"
+msgstr "gretl: przegl±danie zbioru danych"
 
 #: gui2/library.c:5420
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
 msgstr ""
-"Zapisano zredukowana wersjê bie¿¹cego zbioru danych.\n"
-"Czy chcesz zamieniæ zredukowan¹ wersjê teraz?"
+"Zapisano zredukowana wersjê bie¿±cego zbioru danych.\n"
+"Czy chcesz zamieniæ zredukowan± wersjê teraz?"
 
 #: gui2/library.c:5488
 msgid ""

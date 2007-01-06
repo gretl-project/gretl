@@ -126,8 +126,8 @@ squares.
 
 Although the Akaike criterion is designed to favor parsimony, arguably
 it does not go far enough in that direction.  For instance, if we have
-two nested models with $k$ and $k+1$ parameters respectively, and if
-the null hypothesis that parameter $k+1$ equals 0 is true, in large
+two nested models with $k-1$ and $k$ parameters respectively, and if
+the null hypothesis that parameter $k$ equals 0 is true, in large
 samples the AIC will nonetheless tend to select the less parsimonious
 model about 16 percent of the time (see Davidson and MacKinnon, 2004,
 chapter 15).
@@ -163,7 +163,7 @@ procedure will underestimate the order to a lesser degree.''
 \vspace{1ex}
 
 Gretl reports the AIC, BIC and HQC (calculated as explained above) for
-most sorts of models.  The key point is interpreting these values is
+most sorts of models.  The key point in interpreting these values is
 to know whether they are calculated such that smaller values are
 better, or such that larger values are better.  In gretl, smaller
 values are better: one wants to minimize the chosen criterion.
