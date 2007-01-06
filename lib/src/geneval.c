@@ -847,25 +847,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    }
 	}
 	break;
-    case COLMULT:
-	/* column-wise product */
-	ra = gretl_matrix_rows(A);
-	ca = gretl_matrix_cols(A);
-	rb = gretl_matrix_rows(B);
-	cb = gretl_matrix_cols(B);
-	c = (ca > cb)? ca : cb;
-
-	if (ra != rb || (ca != 1 && cb != 1 && ca != cb)) {
-	    *err = E_NONCONF;
-	} else {
-	    C = gretl_matrix_alloc(rb, c);
-	    if (C == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		*err = gretl_matrix_columnwise_product(A, B, C);
-	    }
-	}
-	break;	
     case B_DIV:
 	/* matrix "division" */
 	rb = gretl_matrix_rows(B);
@@ -3205,7 +3186,6 @@ static NODE *eval (NODE *t, parser *p)
     case KRON:
     case MCAT:
     case QFORM:
-    case COLMULT:
 	/* matrix-only binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);

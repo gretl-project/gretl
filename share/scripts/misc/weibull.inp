@@ -18,7 +18,7 @@ mle loglik = Z - log(s) - exp(Z)
   series Xb = b0 + b1*Prod
   series Z = (l_Ti - Xb) / s
   series W = -(1 - exp(Z)) / s
-  deriv s = -Z/s - 1/s + exp(Z)*Z/s
+  deriv s = -Z/s - 1/s + exp(Z) * Z/s
   deriv b0 = W
   deriv b1 = Prod * W
 end mle

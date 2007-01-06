@@ -186,7 +186,6 @@ struct str_table funcs[] = {
     { NORM1,    "onenorm" },
     { RCOND,    "rcond" },
     { QFORM,    "qform" },
-    { COLMULT,  "colmult" },
     { MLAG,     "mlag" },
     { QR,       "qrdecomp" },
     { EIGSYM,   "eigensym" },

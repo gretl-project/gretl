@@ -942,7 +942,7 @@ int win32_delete_dir (const char *path)
     op.wFunc = FO_DELETE;
     op.pFrom = from;
     op.pTo = NULL;
-    op.fFlags = FOF_SILENT;
+    op.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
     op.fAnyOperationsAborted = FALSE;
     op.hNameMappings = NULL;
     op.lpszProgressTitle = NULL;
