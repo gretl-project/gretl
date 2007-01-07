@@ -58,7 +58,7 @@ struct parm_ {
 typedef struct ocond_ ocond;
 
 struct ocond_ {
-    gretl_matrix *e;    /* residual */
+    gretl_matrix *e;    /* GMM residual */
     gretl_matrix *Z;    /* instruments */
     gretl_matrix *W;    /* weights */
     gretl_matrix *tmp;  /* holds columnwise product of e and Z */
@@ -979,17 +979,23 @@ static int maybe_adjust_coeffs (nlspec *spec, char **pzlist)
     return (zlist != NULL);
 }
 
-static void readjust_coeffs (nlspec *spec, const char *zlist)
+static int readjust_coeffs (nlspec *spec, const char *zlist)
 {
     double *x;
-    int i;
+    int i, err = 0;
 
     for (i=0; i<spec->ncoeff; i++) {
 	if (zlist[i]) {
 	    x = coeff_address(spec, i);
-	    *x = 0.0;
+	    if (x != NULL) {
+		*x = 0.0;
+	    } else {
+		err = E_DATA;
+	    }
 	}
     }
+
+    return err;
 }
 
 /* Adjust starting and ending points of sample if need be, to avoid
@@ -2612,7 +2618,7 @@ static int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
-/* driver for minpack levenberg-marquandt code for use when analytical
+/* driver for minpack Levenberg-Marquandt code for use when analytical
    derivatives have been supplied */
 
 static int lm_calculate (nlspec *spec, double *fvec, double *jac, 
@@ -2701,7 +2707,7 @@ nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
     return 0;
 }
 
-/* driver for minpack levenberg-marquandt code for use when the
+/* driver for minpack Levenberg-Marquandt code for use when the
    Jacobian must be approximated numerically */
 
 static int 
@@ -2802,7 +2808,7 @@ lm_approximate (nlspec *spec, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
-/* below: public functions */
+/* below: various public functions */
 
 /**
  * nlspec_add_param_with_deriv:
@@ -3693,12 +3699,16 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
  * @cfunc: pointer to function used to calculate maximand.
+ * @crittype: code for type of the maximand/minimand: should
+ * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
+ * iteration info.
  * @gradfunc: pointer to function used to calculate the 
  * gradient, or %NULL for default numerical calculation.
  * @data: pointer that will be passed as the last
  * parameter to the callback functions @cfunc and @gradfunc.
  * @opt: may contain %OPT_V for verbose operation.
- * @prn: printing struct (or %NULL).
+ * @prn: printing struct (or %NULL).  Only used if @opt
+ * includes %OPT_V.
  *
  * Obtains the set of values for @b which jointly maximize the
  * criterion value as calculated by @cfunc.  Uses the BFGS
@@ -3716,7 +3726,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
-    int ll_ok, done;
+    int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
     int ndelta, fcount, gcount;
     double fmax, f, sumgrad;
@@ -3785,12 +3795,12 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	}
 
 	if (sumgrad < 0.0) {	
-	    /* search direction is uphill, actually */
+	    /* search direction is _uphill_, actually */
 	    steplen = 1.0;
-	    ll_ok = 0;
+	    crit_ok = 0;
 	    do {
 		/* loop so long as (a) we haven't achieved a definite
-		   improvement in the log-likelihood and (b) there is
+		   improvement in the criterion and (b) there is
 		   still some prospect of doing so */
 		ndelta = n;
 		for (i=0; i<n; i++) {
@@ -3803,13 +3813,13 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		if (ndelta > 0) {
 		    f = cfunc(b, data);
 		    fcount++;
-		    ll_ok = !na(f) && (f >= fmax + sumgrad*steplen*acctol);
-		    if (!ll_ok) {
-			/* loglik not good: try smaller step */
+		    crit_ok = !na(f) && (f >= fmax + sumgrad*steplen*acctol);
+		    if (!crit_ok) {
+			/* calculated criterion no good: try smaller step */
 			steplen *= stepfrac;
 		    }
 		}
-	    } while (ndelta != 0 && !ll_ok);
+	    } while (ndelta != 0 && !crit_ok);
 
 	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
 
