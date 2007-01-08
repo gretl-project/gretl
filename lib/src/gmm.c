@@ -471,7 +471,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    /* this is the first set of O.C.s */
 	    s->oc->e = e;
 	    s->oc->Z = M;
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 	    fprintf(stderr, "oc_add_matrices: added first entries\n");
 	    gretl_matrix_print(s->oc->e, "e");
 	    gretl_matrix_print(s->oc->Z, "Z");
@@ -488,7 +488,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    }
 	    if (!err) {
 		err = gretl_matrix_inplace_colcat(s->oc->e, e, NULL);
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 		fprintf(stderr, "oc_add_matrices: expanded e\n");
 		gretl_matrix_print(s->oc->e, "e");
 #endif
@@ -503,7 +503,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		}
 		if (!err) {
 		    err = add_new_cols_to_Z(s, M);
-#if GMM_DEBUG
+#if GMM_DEBUG > 1
 		    fprintf(stderr, "oc_add_matrices: expanded Z\n");
 		    gretl_matrix_print(s->oc->Z, "Z");
 #endif
@@ -957,3 +957,98 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     return err;
 }
 
+/* check any generated auxiliary series for missing values:
+   we resort to this if we don't have an "nlfunc" that defines
+   a single left-hand side variable */
+
+int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
+{
+    int i, t, t1 = *pt1, t2 = *pt2;
+    int vi, *list = NULL;
+    int all_ok, n = 0;
+    int err = 0;
+
+    for (i=0; i<s->ngenrs; i++) {
+	if (genr_get_output_varnum(s->genrs[i])) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	list = gretl_list_new(n);
+	if (list == NULL) {
+	    return E_ALLOC;
+	}
+	t = 1;
+	for (i=0; i<s->ngenrs; i++) {
+	    vi = genr_get_output_varnum(s->genrs[i]);
+	    if (vi > 0) {
+		list[t++] = vi;
+	    }
+	}
+    } else {
+	return 0;
+    }
+
+#if GMM_DEBUG
+    printlist(list, "gmm missval test list");
+#endif
+
+    for (t=s->t1; t<=s->t2; t++) {
+	all_ok = 1;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na((*s->Z)[vi][t])) {
+		all_ok = 0;
+		break;
+	    } 
+	}
+	if (all_ok) {
+	    break;
+	} else {
+	    t1++;
+	}
+    }
+
+    for (t=s->t2; t>=t1; t--) {
+	all_ok = 1;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na((*s->Z)[vi][t])) {
+		all_ok = 0;
+		break;
+	    }
+	}
+	if (all_ok) {
+	    break;
+	} else {
+	    t2--;
+	}
+    }
+
+    if (t2 - t1 + 1 < s->ncoeff) {
+	err = E_DF;
+    }
+
+    for (t=t1; t<=t2 && !err; t++) {
+	for (i=1; i<=list[0] && !err; i++) {
+	    vi = list[i];    
+	    if (na((*s->Z)[vi][t])) {
+		fprintf(stderr, "  after setting t1=%d, t2=%d, "
+			"got NA for var %d at obs %d\n", t1, t2, vi, t);
+		err = E_MISSDATA;
+	    }
+	}
+    } 
+
+    free(list);
+
+    if (!err) {
+	*pt1 = t1;
+	*pt2 = t2;
+    }
+
+    return err;
+}
+
+ 

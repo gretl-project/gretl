@@ -766,6 +766,15 @@ static int nl_missval_check (nlspec *s)
 	goto nl_miss_exit;
     }
 
+    if (s->nlfunc == NULL) {
+	/* GMM: no single "left-hand" var to check, bother */
+	err = gmm_missval_check(s, &t1, &t2);
+	if (err) {
+	    return err;
+	} else {
+	    goto nl_miss_exit;
+	}
+    }
 	
     /* ID number of LHS variable */
     v = s->lhv;

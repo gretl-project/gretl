@@ -87,4 +87,4 @@ double get_gmm_crit (const double *b, void *p);
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 
-
+int gmm_missval_check (nlspec *s, int *t1, int *t2);

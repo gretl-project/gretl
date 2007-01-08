@@ -1236,6 +1236,7 @@ static void print_model_heading (const MODEL *pmod,
     int tex = tex_format(prn);
     int utf = plain_format(prn);
     int csv = csv_format(prn);
+    int dvnl = 1;
     int order = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
@@ -1414,6 +1415,8 @@ static void print_model_heading (const MODEL *pmod,
 	    } else {
 		pputs(prn, pmod->depvar);
 	    }
+	} else {
+	    dvnl = 0;
 	}
     } else if (pmod->ci == ARMA) {
 	print_arma_depvar(pmod, pdinfo, prn);
@@ -1429,6 +1432,7 @@ static void print_model_heading (const MODEL *pmod,
 		tex_escape(vname, pdinfo->varname[v]);
 	    }
 	}
+
 	if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
 	    pputs(prn, (tex)? vname : pdinfo->varname[v]);
 	} else {
@@ -1440,7 +1444,9 @@ static void print_model_heading (const MODEL *pmod,
 
     if (csv) pputc(prn, '"');
 
-    gretl_prn_newline(prn);
+    if (dvnl) {
+	gretl_prn_newline(prn);
+    }
 
     /* supplementary strings below the estimator and sample info */
 
