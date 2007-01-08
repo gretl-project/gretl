@@ -139,6 +139,7 @@ SRCS = adf_kpss.c \
 	genlex.c \
 	genmain.c \
 	gensyntax.c \
+	gmm.c \
 	graphing.c \
 	gretl_commands.c \
 	gretl_errors.c \

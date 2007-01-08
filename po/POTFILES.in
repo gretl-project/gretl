@@ -16,6 +16,7 @@ lib/src/genfuncs.c
 lib/src/genlex.c
 lib/src/genmain.c
 lib/src/gensyntax.c
+lib/src/gmm.c
 lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c

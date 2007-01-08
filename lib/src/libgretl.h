@@ -93,6 +93,19 @@
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
 
+typedef enum {
+    ARG_NONE = 0,
+    ARG_SCALAR,
+    ARG_SERIES,
+    ARG_LIST,
+    ARG_MATRIX,
+    ARG_BOOL,
+    ARG_INT,
+    ARG_REF_SCALAR,
+    ARG_REF_SERIES,
+    ARG_REF_MATRIX
+} GretlArgType;
+
 enum ts_codes {
     CROSS_SECTION,
     TIME_SERIES,
@@ -184,31 +197,6 @@ typedef enum {
     D_NORMAL,
     D_GAMMA
 } DistCode;
-
-typedef enum {
-    T_NONE,
-    T_LOG,
-    T_EXP, 
-    T_SIN, 
-    T_COS,
-    T_TAN,
-    T_ATAN,
-    T_INT, 
-    T_ABS, 
-    T_SQRT, 
-    T_DNORM,
-    T_CNORM,
-    T_QNORM,
-    T_GAMMA,
-    T_LNGAMMA,
-    T_UNIFORM, 
-    T_NORMAL, 
-    T_CHISQ, 
-    T_STUDENT,
-    T_LOG10,
-    T_LOG2,
-    T_MATHMAX
-} GretlMathFunc;
 
 typedef enum {
     C_AIC,

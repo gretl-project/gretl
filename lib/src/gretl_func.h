@@ -23,19 +23,6 @@
 #include "usermat.h"
 
 typedef enum {
-    ARG_NONE = 0,
-    ARG_SCALAR,
-    ARG_SERIES,
-    ARG_LIST,
-    ARG_MATRIX,
-    ARG_BOOL,
-    ARG_INT,
-    ARG_REF_SCALAR,
-    ARG_REF_SERIES,
-    ARG_REF_MATRIX
-} FuncArgTypes;
-
-typedef enum {
     FN_NEEDS_TS = 1, /* function requires time-series data */
     FN_NEEDS_QM,     /* function requires quarterly or monthly data */
     FN_NEEDS_PANEL,  /* function requires panel data */
