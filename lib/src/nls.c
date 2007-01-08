@@ -123,7 +123,10 @@ static int nls_genr_setup (nlspec *s)
 
     s->ngenrs = 0;
     np = (s->mode == ANALYTIC_DERIVS)? s->nparam : 0;
-    ngen = 1 + s->naux + np;
+    ngen = s->naux + np;
+    if (s->nlfunc != NULL) {
+	ngen++;
+    }
 
 #if NLS_DEBUG
     fprintf(stderr, "nls_genr_setup: current v = %d, n_gen = %d\n", 
@@ -237,6 +240,11 @@ static int nls_auto_genr (nlspec *s, int i)
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
 	genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
+    }
+
+    if (i == 0 && s->nlfunc == NULL) {
+	/* we're done */
+	return genr_err;
     }
 
     j = s->naux + i;
@@ -482,6 +490,10 @@ get_params_from_nlfunc (nlspec *s, const double **Z,
     char name[VNAMELEN];
     int n, np = 0;
     int err = 0;
+
+    if (f == NULL) {
+	return 0;
+    }
 
 #if NLS_DEBUG
     fprintf(stderr, "get_params: looking at '%s'\n", f);
@@ -1471,6 +1483,7 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
     char pname[VNAMELEN];
     int nc = pmod->ncoeff;
     int i, j, k, m, n;
+    int err = 0;
 
     pmod->params = strings_array_new(nc);
     if (pmod->params == NULL) {
@@ -1486,20 +1499,29 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 	    sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc + 2);
 	    n = strlen(pmod->depvar);
 	    pmod->depvar[n-1] = '\0';
-	} 
+	} else {
+	    err = E_ALLOC;
+	}
     } else if (spec->ci == GMM) {
-	n = strlen(spec->nlfunc) + strlen(spec->lhname);
-	pmod->depvar = malloc(n + 4);
-	if (pmod->depvar != NULL) {
-	    sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc);
-	} 	
+	if (spec->nlfunc != NULL) {
+	    n = strlen(spec->nlfunc) + strlen(spec->lhname);
+	    pmod->depvar = malloc(n + 4);
+	    if (pmod->depvar != NULL) {
+		sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc);
+	    } else {
+		err = E_ALLOC;
+	    }
+	}
     } else {
 	pmod->depvar = gretl_strdup(pdinfo->varname[spec->dv]);
+	if (pmod->depvar == NULL) {
+	    err = E_ALLOC;
+	}
     } 
 
-    if (pmod->depvar == NULL) {
+    if (err) {
 	free(pmod->params);
-	return 1;
+	return err;
     }    
 
     i = 0;
@@ -2444,13 +2466,20 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
 	spec->nlfunc = NULL;
     }
 
+    spec->dv = 0;
+
     if (!strncmp(p, "nls ", 4) || 
 	!strncmp(p, "mle ", 4) ||
 	!strncmp(p, "gmm ", 4)) {
 	p += 4;
-    }  
+    } else if (!strncmp(p, "gmm", 3)) {
+	p += 3;
+    }
 
-    spec->dv = 0;
+    if (spec->ci == GMM && string_is_blank(p)) {
+	/* GMM: we don't insist on a function on the first line */
+	return 0;
+    }
 
     if (equation_get_lhs_and_rhs(p, &vname, &rhs)) { 
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), fnstr);
@@ -2520,6 +2549,10 @@ void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2)
                        !strncmp(s, "orthog ", 7) || \
                        !strncmp(s, "weights ", 8))
 
+#define cmd_start(s) (!strncmp(s, "nls ", 4) || \
+                      !strncmp(s, "mle ", 4) || \
+                      !strncmp(s, "gmm ", 4) || \
+                      !strcmp(s, "gmm")) 
 
 /**
  * nls_parse_line:
@@ -2555,9 +2588,11 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 
     s->ci = ci;
 
-    if (!strncmp(line, "nls ", 4) || 
-	!strncmp(line, "mle ", 4) ||
-	!strncmp(line, "gmm ", 4)) {
+#if NLS_DEBUG
+    fprintf(stderr, "nls_parse_line: '%s'\n", line);
+#endif
+
+    if (cmd_start(line)) {
 	if (s->nlfunc != NULL) {
 	    clear_nlspec(s);
 	}
@@ -2566,7 +2601,7 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    nlspec_set_t1_t2(s, pdinfo->t1, pdinfo->t2);
 	}	
     } else if (param_line(line)) {
-	if (s->nlfunc == NULL) {
+	if (s->nlfunc == NULL && s->ci != GMM) {
 	    strcpy(gretl_errmsg, _("No regression function has been specified"));
 	    err = E_PARSE;
 	} else {
@@ -2656,7 +2691,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	spec = &private_spec;
     }
 
-    if (spec->nlfunc == NULL) {
+    if (spec->nlfunc == NULL && spec->ci != GMM) {
 	strcpy(gretl_errmsg, _("No function has been specified"));
 	nlsmod.errcode = E_PARSE;
 	goto bailout;
@@ -2669,7 +2704,8 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     spec->dinfo = pdinfo;
     spec->prn = prn;
 
-    if (spec->mode == NUMERIC_DERIVS && spec->nparam == 0) {
+    if (spec->mode == NUMERIC_DERIVS && spec->nparam == 0 &&
+	spec->ci != GMM) {
 	err = get_params_from_nlfunc(spec, (const double **) *pZ, pdinfo);
 	if (err) {
 	    if (err == 1) {

@@ -1408,10 +1408,12 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pmod->depvar);
     } else if (pmod->ci == MLE || pmod->ci == GMM) {
-	if (tex) {
-	    pprintf(prn, "\\verb!%s!", pmod->depvar);
-	} else {
-	    pputs(prn, pmod->depvar);
+	if (pmod->depvar != NULL) {
+	    if (tex) {
+		pprintf(prn, "\\verb!%s!", pmod->depvar);
+	    } else {
+		pputs(prn, pmod->depvar);
+	    }
 	}
     } else if (pmod->ci == ARMA) {
 	print_arma_depvar(pmod, pdinfo, prn);

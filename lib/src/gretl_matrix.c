@@ -1514,7 +1514,7 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
-			  int packed, PRN *prn)
+			  int packed, int errout, PRN *prn)
 {
     char numstr[32];
     int i, j;
@@ -1524,11 +1524,15 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     }
 
     if (msg != NULL && *msg != '\0') {
-	pprintf(prn, "%s\n\n", msg);
+	if (errout && m != NULL) {
+	    pprintf(prn, "%s (%d x %d)\n\n", msg, m->rows, m->cols);
+	} else {
+	    pprintf(prn, "%s\n\n", msg);
+	}
     }
 
     if (m == NULL || m->val == NULL) {
-	pputs(prn, " matrix is NULL\n");
+	pputs(prn, " matrix is NULL\n\n");
 	return;
     }
 
@@ -1581,7 +1585,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, prn);
+    real_matrix_print_to_prn(m, msg, 0, 0, prn);
 }
 
 /**
@@ -1596,7 +1600,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 
-    real_matrix_print_to_prn(m, msg, 0, prn);
+    real_matrix_print_to_prn(m, msg, 0, 1, prn);
     gretl_print_destroy(prn);
 }
 
@@ -1613,7 +1617,7 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 
-    real_matrix_print_to_prn(m, msg, 1, prn);
+    real_matrix_print_to_prn(m, msg, 1, 0, prn);
     gretl_print_destroy(prn);
 }
 

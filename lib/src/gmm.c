@@ -23,7 +23,7 @@
 
 #include "../../minpack/minpack.h"
 
-#define GMM_DEBUG 1
+#define GMM_DEBUG 0
 
 typedef struct colsrc_ colsrc;
 
@@ -101,8 +101,12 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
     int *list = NULL;
     int v = varindex(pdinfo, name);
 
+#if GMM_DEBUG
+    fprintf(stderr, "oc_get_type: looking at '%s'\n", name);
+#endif
+
     /* try for a series first */
-    if (v > 0 && v < pdinfo->v) {
+    if (v >= 0 && v < pdinfo->v) {
 	if (var_is_scalar(pdinfo, v)) {
 	    *err = E_TYPES;
 	    return ARG_NONE;
@@ -162,7 +166,7 @@ col_present (const gretl_matrix *a, const gretl_matrix *b, int j,
 	match = 1;
 	for (i=0; i<a->rows; i++) {
 	    xa = gretl_matrix_get(a, i, k);
-	    xb = gretl_matrix_get(a, i, j);
+	    xb = gretl_matrix_get(b, i, j);
 	    if (xa != xb) {
 		match = 0;
 		break;
@@ -289,6 +293,15 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
 
     n = Z->cols + M->cols;
 
+#if GMM_DEBUG
+    fprintf(stderr, "add_new_cols_to_Z: old Z cols = %d, M->cols = %d\n",
+	    oldZcols, M->cols);
+#endif
+
+#if GMM_DEBUG > 1
+    gretl_matrix_print(M, "Add matrix, M");
+#endif
+
     mask = malloc(n);
     if (mask == NULL) {
 	return E_ALLOC;
@@ -311,6 +324,9 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
     }
 
     if (n > 0) {
+#if GMM_DEBUG
+	fprintf(stderr, "add_new_cols_to_Z: adding %d new columns\n", n);
+#endif
 	err = gretl_matrix_inplace_colcat(Z, M, mask);
     }
 
@@ -379,6 +395,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
        or a series?
     */
 
+#if GMM_DEBUG
+    fprintf(stderr, "oc_add_matrices: lname = '%s'\n", lname);
+#endif
+
     if (ltype == ARG_MATRIX) {
 	e = get_matrix_by_name(lname);
 	err = push_column_source(s, 0, lname);
@@ -408,6 +428,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
        list, or a single series 
     */
 
+#if GMM_DEBUG
+    fprintf(stderr, "oc_add_matrices: rname = '%s'\n", rname);
+#endif
+
     if (rtype == ARG_MATRIX) {
 	M = get_matrix_by_name(rname);
 	k = gretl_matrix_cols(M);
@@ -429,7 +453,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	}
     } else {
 	/* name of single series */
-	v = varindex(pdinfo, lname);
+	v = varindex(pdinfo, rname);
 	k = 1;
 	M = gretl_column_vector_alloc(s->nobs);
 	if (M == NULL) {
@@ -454,7 +478,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 	} else {
 	    /* it's an additional set of O.C.s */
-	    if (s->oc->free_e == 0) {
+	    if (!s->oc->free_e) {
 		/* current 'e' is pointer to external matrix: this
 		   must now be changed */
 		s->oc->e = gretl_matrix_copy(s->oc->e);
@@ -470,7 +494,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 	    }
 	    if (!err) {
-		if (s->oc->free_Z == 0) {
+		if (!s->oc->free_Z) {
 		    /* current 'Z' is pointer to external matrix */
 		    s->oc->Z = gretl_matrix_copy(s->oc->Z);
 		    if (s->oc->Z == NULL) {
@@ -481,7 +505,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		    err = add_new_cols_to_Z(s, M);
 #if GMM_DEBUG
 		    fprintf(stderr, "oc_add_matrices: expanded Z\n");
-		    gretl_matrix_print(s->oc->e, "Z");
+		    gretl_matrix_print(s->oc->Z, "Z");
 #endif
 		}
 	    }
@@ -602,11 +626,19 @@ int nlspec_add_weights (nlspec *s, const char *str)
 	err = E_DATA;
     }
 
+#if GMM_DEBUG > 1
+    fprintf(stderr, "weights matrix is %d x %d: %s\n",
+	    s->oc->W->rows, s->oc->W->cols, err? "BAD" : "OK");
+    if (!err) {
+	gretl_matrix_print(s->oc->W, "Weights");
+    }
+#endif
+
     /* now we're ready to add the workspace matrices */
 
     if (!err) {
 	s->oc->tmp = gretl_matrix_alloc(s->nobs, k);
-	s->oc->sum = gretl_matrix_alloc(1, k);
+	s->oc->sum = gretl_column_vector_alloc(k);
 	if (s->oc->tmp == NULL || s->oc->sum == NULL) {
 	    err = E_ALLOC;
 	}
@@ -646,12 +678,20 @@ static int gmm_update_e (nlspec *s)
     for (j=0; j<m && !err; j++) {
 	v = s->oc->ecols[j].v;
 	if (v > 0) {
+#if GMM_DEBUG
+	    fprintf(stderr, "gmm_update_e: updating col %d from var %d\n",
+		    j, v);
+#endif
 	    /* transcribe from series */
 	    for (t=0; t<s->nobs; t++) {
 		etj = (*s->Z)[v][t + s->t1];
 		gretl_matrix_set(s->oc->e, t, j, etj);
 	    }
 	} else {
+#if GMM_DEBUG
+	    fprintf(stderr, "gmm_update_e: updating col %d from vector %s\n",
+		    j, s->oc->ecols[j].mname);
+#endif
 	    /* transcribe from vector */
 	    col = get_matrix_by_name(s->oc->ecols[j].mname);
 	    if (col == NULL) {
@@ -662,7 +702,7 @@ static int gmm_update_e (nlspec *s)
 		    gretl_matrix_set(s->oc->e, t, j, etj);
 		}
 	    }
-	}
+	} 
     }
 
     return err;
@@ -690,6 +730,10 @@ static int gmm_multiply_ocs (nlspec *s)
 	for (i=0; i<m; i++) {
 	    for (j=0; j<k; j++) {
 		if (gretl_matrix_get(s->oc->S, i, j) != 0) {
+#if GMM_DEBUG
+		    fprintf(stderr, "O.C. %d: multiplying col %d of e "
+			    "into col %d of Z\n", p, i, j);
+#endif
 		    for (t=0; t<s->nobs; t++) {
 			x = gretl_matrix_get(s->oc->e, t, i);
 			y = gretl_matrix_get(s->oc->Z, t, j);
@@ -738,7 +782,7 @@ double get_gmm_crit (const double *b, void *p)
 
     s->crit = gretl_scalar_qform(s->oc->sum, s->oc->W, &err);
     if (!err) {
-	s->crit *= -1.0 / s->nobs;
+	s->crit = - s->crit;
     }
 
 #if GMM_DEBUG > 2

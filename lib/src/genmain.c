@@ -224,7 +224,7 @@ int gretl_reserved_word (const char *str)
 
     if (!ret) {
 	if (function_from_string(str)) {
-	    ret = 4;
+	    ret = 3;
 	}
     }
 
