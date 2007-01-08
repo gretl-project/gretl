@@ -537,8 +537,6 @@ illustrates this point.
 \section{Numerical maximization}
 \label{genr-numerical}
 
-THIS SECTION IS PROVISIONAL and may be moved or changed.
-
 Two special functions are available to aid in the construction of
 special-purpose estimators, namely \texttt{BFGSmax} (the BFGS
 maximizer, discussed in Chapter~\ref{chap:mle}) and \texttt{fdjac},
@@ -576,7 +574,43 @@ The operation of the BFGS maximizer can be adjusted using the
 \texttt{set} variables \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
 Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
 from the maximizer by assigning a positive value to
-\verb+max_verbose+, again via the \texttt{set} command.
+\verb|max_verbose|, again via the \texttt{set} command.
+
+The Rosenbrock function is often used as a test problem for
+optimization algorithms. It is also known as ``Rosenbrock's Valley''
+or ``Rosenbrock's Banana Function'', on account of the fact that its
+contour lines are banana-shaped. It is defined by:
+%
+\[
+    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
+\]
+%
+The function has a global minimum at $(x,y) = (1,1)$ where $f(x,y) =
+0$.  Example~\ref{rosenbrock} shows a \app{gretl} script that
+discovers the minimum using \texttt{BFGSmax} (giving a verbose account
+of progress).  
+
+\begin{script}[htbp]
+  \caption{Finding the minimum of the Rosenbrock function}
+  \label{rosenbrock}
+\begin{code}
+function Rosenbrock(matrix *param)
+  scalar x = param[1]
+  scalar y = param[2]
+  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
+  return scalar f 
+end function
+
+nulldata 10
+
+matrix theta = { 0 , 0 }
+
+set max_verbose 1
+M = BFGSmax(theta, "Rosenbrock(&theta)")
+
+print theta
+\end{code}
+\end{script}
 
 \subsection{Computing the Jacobian}
 
@@ -603,8 +637,6 @@ the following structure:
       return matrix V
     end function
 \end{code}
-
-FIXME a full-blown example would be good here. 
 
 %%% Local Variables: 
 %%% mode: latex

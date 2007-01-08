@@ -28,8 +28,8 @@
 typedef struct colsrc_ colsrc;
 
 struct colsrc_ {
-    int v;
-    char mname[VNAMELEN];
+    int v;                 /* ID number of variable n column */
+    char mname[VNAMELEN];  /* or name of source matrix */
 };
 
 struct ocond_ {
@@ -93,13 +93,15 @@ static ocond *oc_set_new (void)
     return oc;
 }
 
-/* Determine the type of an element in an O.C. specification */
+/* Determine the type of an element in an "orthog" specification */
 
 static int oc_get_type (const char *name, const DATAINFO *pdinfo,
-			int i, int *err)
+			int rhs, int *err)
 {
+    int *list = NULL;
     int v = varindex(pdinfo, name);
 
+    /* try for a series first */
     if (v > 0 && v < pdinfo->v) {
 	if (var_is_scalar(pdinfo, v)) {
 	    *err = E_TYPES;
@@ -109,28 +111,36 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 	}
     }
 
+    /* then a matrix */
     if (get_matrix_by_name(name) != NULL) {
 	return ARG_MATRIX;
     }
-    
-    if (i > 0) {
-	int j, *list = get_list_by_name(name);
 
-	if (list != NULL) {
-	    for (j=1; j<=list[0]; j++) {
-		if (list[j] < 0 || list[j] >= pdinfo->v) {
-		    *err = E_UNKVAR;
-		    return ARG_NONE;
-		} else if (var_is_scalar(pdinfo, list[j])) {
-		    *err = E_TYPES;
-		    return ARG_NONE;
-		}
-	    }
-	    return ARG_LIST;
-	} 
+    /* failing that, a list */
+    list = get_list_by_name(name);
+    if (list == NULL) {
+	*err = E_UNKVAR;
+	return ARG_NONE;
     }
+    
+    if (rhs) {
+	/* lists are OK on the right-hand side */
+	int j;
 
-    *err = E_UNKVAR;
+	for (j=1; j<=list[0]; j++) {
+	    if (list[j] < 0 || list[j] >= pdinfo->v) {
+		*err = E_DATA;
+		return ARG_NONE;
+	    } else if (var_is_scalar(pdinfo, list[j])) {
+		*err = E_TYPES;
+		return ARG_NONE;
+	    }
+	}
+	return ARG_LIST;
+    } else {
+	/* but not on the left */
+	*err = E_TYPES;
+    }
 
     return ARG_NONE;
 }
@@ -234,7 +244,7 @@ expand_selector_matrix (nlspec *s, int oldZcols, const char *mask)
 		}
 	    }
 
-	    /* zero upper-right block */
+	    /* 0s in upper-right block */
 	    for (i=0; i<sm; i++) {
 		for (j=sn; j<Zcols; j++) {
 		    gretl_matrix_set(S, i, j, 0);
@@ -745,6 +755,8 @@ double get_gmm_crit (const double *b, void *p)
     return s->crit;
 }
 
+/* GMM callback for Minpack's fdjac2 function */
+
 static int 
 gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 		   integer *iflag, void *p)
@@ -783,6 +795,12 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 
     return 0;
 }
+
+/* Calculate the variance matrix for the GMM estimator.  Right now
+   we do a heteroskedasticity-consistent variant.  This should be
+   generalized to allow selection of (a) a simpler asymptotic
+   version or (b) a Newey-West variant.
+*/
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 {
