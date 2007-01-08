@@ -4236,6 +4236,81 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 }
 
 /**
+ * gretl_matrix_inplace_colcat:
+ * @a: matrix to be enlarged (m x n).
+ * @b: matrix from which columns should be added (m x p).
+ * @mask: char array, of length p, with 1s in positions
+ * corresponding to columns of @b that are to be added
+ * to @a, 0s elsewhere; or %NULL to add all columns
+ * of @b.
+ *
+ * Concatenates onto @a the selected columns of @b, if the
+ * two matrices are conformable.
+ * 
+ * Returns: 0 on success, non-zero code on error. 
+ */
+
+int gretl_matrix_inplace_colcat (gretl_matrix *a, 
+				 const gretl_matrix *b,
+				 const char *mask)
+{
+    double x, *val;
+    size_t asize, bsize;
+    int addc, anelem;
+    int i, j, k;
+
+    if (a == NULL || b == NULL) {
+	return E_DATA;
+    }
+
+    if (a->rows != b->rows) {
+	return E_NONCONF;
+    }
+
+    if (mask == NULL) {
+	addc = b->cols;
+    } else {
+	addc = 0;
+	for (j=0; j<b->cols; j++) {
+	    if (mask[j]) addc++;
+	}
+	if (addc == 0) {
+	    return 0;
+	}
+    }
+
+    anelem = a->rows * a->cols;
+    asize = anelem * sizeof *a->val;
+    bsize = b->rows * addc * sizeof *b->val;
+
+    val = realloc(a->val, asize + bsize);
+    if (val == NULL) {
+	return E_ALLOC;
+    }
+
+    a->val = val;
+
+    if (mask == NULL) {
+	memcpy(a->val + anelem, b->val, bsize);
+	a->cols += addc;
+    } else {
+	k = a->cols;
+	a->cols += addc;
+	for (j=0; j<b->cols; j++) {
+	    if (mask[j]) {
+		for (i=0; i<b->rows; i++) {
+		    x = gretl_matrix_get(b, i, j);
+		    gretl_matrix_set(a, i, k, x);
+		}
+		k++;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_matrix_lag:
  * @m: matrix to operate on.
  * @k: lag order (> 0 for lags, < 0 for leads).

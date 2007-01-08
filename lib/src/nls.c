@@ -55,14 +55,24 @@ struct parm_ {
 #define scalar_param(s,i) (s->params[i].vnum > 0)
 #define matrix_deriv(s,i) (s->params[i].dmat != NULL)
 
+typedef struct colsrc_ colsrc;
+
+struct colsrc_ {
+    int v;
+    char mname[VNAMELEN];
+};
+
 typedef struct ocond_ ocond;
 
 struct ocond_ {
-    gretl_matrix *e;    /* GMM residual */
-    gretl_matrix *Z;    /* instruments */
-    gretl_matrix *W;    /* weights */
+    gretl_matrix *e;    /* GMM residual, or LHS term in O.C. */
+    gretl_matrix *Z;    /* instruments, or RHS terms in O.C. */
+    gretl_matrix *W;    /* matrix of weights */
     gretl_matrix *tmp;  /* holds columnwise product of e and Z */
     gretl_matrix *sum;  /* holds column sums of tmp */
+    gretl_matrix *S;    /* selector matrix for computing tmp */
+    colsrc *ecols;      /* info on provenance of columns of 'e' */
+    int noc;            /* total number of orthogonality conds. */
     int free_e;
     int free_Z;
 };
@@ -610,25 +620,210 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
     return ARG_NONE;
 }
 
+/* See if column j in matrix b is present anywhere in matrix a.  If
+   so, set *colno to the matching (0-based) column number in 'a' and
+   return 1; if not, return 0.
+*/
+
+static int 
+col_present (const gretl_matrix *a, const gretl_matrix *b, int j,
+	     int *colno)
+{
+    double xa, xb;
+    int match;
+    int i, k;
+
+    for (k=0; k<a->cols; k++) {
+	match = 1;
+	for (i=0; i<a->rows; i++) {
+	    xa = gretl_matrix_get(a, i, k);
+	    xb = gretl_matrix_get(a, i, j);
+	    if (xa != xb) {
+		match = 0;
+		break;
+	    }
+	}
+	if (match) {
+	    *colno = k;
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+#define Sidx(i,j,m)   ((j)*m+(i))
+
+/* Add zero or more columns to the 'Z' (instrument) matrix in the
+   nlspec (GMM).  We add columns only if they are not already present.
+*/
+
+static int 
+add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
+{
+    gretl_matrix *Z = s->oc->Z;
+    int Zcols, oldZcols = Z->cols;
+    char *mask;
+    int i, j, k, n;
+    int err = 0;
+
+    if (Z->rows != M->rows) {
+	return E_NONCONF;
+    }
+
+    n = Z->cols + M->cols;
+
+    mask = malloc(n);
+    if (mask == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=M->cols; j<n; j++) {
+	mask[j] = 0;
+    }
+
+    n = M->cols;
+
+    for (j=0; j<M->cols; j++) {
+	if (col_present(Z, M, j, &k)) {
+	    mask[j] = 0;
+	    mask[M->cols + k] = 1;
+	    n--;
+	} else {
+	    mask[j] = 1;
+	}
+    }
+
+    if (n > 0) {
+	err = gretl_matrix_inplace_colcat(Z, M, mask);
+    }
+
+    if (!err) {
+	gretl_matrix *S = s->oc->S;
+
+	Zcols = Z->cols;
+
+	/* Expand the selector matrix */
+
+	if (S == NULL) {
+	    S = s->oc->S = gretl_matrix_alloc(2, Zcols);
+	    if (s->oc->S == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (j=0; j<Zcols; j++) {
+		    gretl_matrix_set(S, 0, j, (j < oldZcols)? 1 : 0);
+		    gretl_matrix_set(S, 1, j, (j < oldZcols)? 
+				     ((mask[M->cols + j])? 1 : 0) : 1);
+		}
+	    }
+	} else {
+	    double xij, *x;
+
+	    k = s->oc->e->cols;
+	    x = realloc(S->val, k * Zcols * sizeof *x);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+		int sm = S->rows;
+		int sn = S->cols;
+
+		S->val = x;
+		S->rows = k;
+		S->cols = Zcols;
+
+		/* transcribe original entries */
+		for (j=sn-1; j>=0; j--) {
+		    for (i=sm-1; i>=0; i--) {
+			xij = x[Sidx(i,j,sm)];
+			gretl_matrix_set(S, i, j, xij);
+		    }
+		}
+
+		/* zero upper-right block */
+		for (i=0; i<sm; i++) {
+		    for (j=sn; j<Zcols; j++) {
+			gretl_matrix_set(S, i, j, 0);
+		    }
+		}
+
+		/* units in lower-right block */
+		for (j=sn; j<Zcols; j++) {
+		    gretl_matrix_set(S, k-1, j, 1);
+		}
+
+		/* mixed in lower-left */
+		for (j=0; j<sn; j++) {
+		    gretl_matrix_set(S, k-1, j, 
+				     (mask[M->cols + j])? 1 : 0);
+		}
+	    }
+	}
+    }
+    
+    free(mask);
+
+    return err;
+}
+
+/* Record the source (ID number of variable or name of matrix)
+   for a given column on the left-hand side of the set of
+   GMM orthogonality conditions. */
+
+static int 
+push_column_source (nlspec *s, int v, const char *mname)
+{
+    colsrc *cols;
+    int n = 0;
+
+    if (s->oc->e != NULL) {
+	n = s->oc->e->cols;
+    }
+
+    cols = realloc(s->oc->ecols, (n+1) * sizeof *cols);
+    if (cols == NULL) {
+	return E_ALLOC;
+    }
+
+    s->oc->ecols = cols;
+
+    if (v <= 0) {
+	cols[n].v = 0;
+    } else {
+	cols[n].v = v;
+    }
+
+    if (mname == NULL) {
+	cols[n].mname[0] = '\0';
+    } else {
+	strcpy(cols[n].mname, mname);
+    }
+
+    return 0;
+}
+
 static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 			    int rtype, const char *rname,
 			    const double **Z, const DATAINFO *pdinfo)
 {
+    gretl_matrix *e = NULL;
+    gretl_matrix *M = NULL;
     int i, k, t, v;
     int err = 0;
 
     if (ltype == ARG_MATRIX) {
-	s->oc->e = get_matrix_by_name(lname);
+	e = get_matrix_by_name(lname);
+	err = push_column_source(s, 0, lname);
     } else if (ltype == ARG_SERIES) {
 	v = varindex(pdinfo, lname);
-	s->oc->e = gretl_column_vector_alloc(s->nobs);
-	if (s->oc->e == NULL) {
+	e = gretl_column_vector_alloc(s->nobs);
+	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<s->nobs; t++) {
-		gretl_vector_set(s->oc->e, t, Z[v][t + s->t1]);
+		gretl_vector_set(e, t, Z[v][t + s->t1]);
 	    }
 	    s->oc->free_e = 1;
+	    err = push_column_source(s, v, NULL);
 	}
     } else {
 	err = E_UNKVAR;
@@ -639,20 +834,20 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     }
 
     if (rtype == ARG_MATRIX) {
-	s->oc->Z = get_matrix_by_name(rname);
-	k = gretl_matrix_cols(s->oc->Z);
+	M = get_matrix_by_name(rname);
+	k = gretl_matrix_cols(M);
     } else if (rtype == ARG_LIST) {
 	int *list = get_list_by_name(rname);
 
 	k = list[0];
-	s->oc->Z = gretl_matrix_alloc(s->nobs, k);
-	if (s->oc->Z == NULL) {
+	M = gretl_matrix_alloc(s->nobs, k);
+	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (i=0; i<k; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
-		    gretl_matrix_set(s->oc->Z, t, i, Z[v][t + s->t1]);
+		    gretl_matrix_set(M, t, i, Z[v][t + s->t1]);
 		}
 	    }
 	    s->oc->free_Z = 1;
@@ -660,18 +855,50 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     } else {
 	v = varindex(pdinfo, lname);
 	k = 1;
-	s->oc->Z = gretl_column_vector_alloc(s->nobs);
-	if (s->oc->Z == NULL) {
+	M = gretl_column_vector_alloc(s->nobs);
+	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<s->nobs; t++) {
-		gretl_vector_set(s->oc->Z, t, Z[v][t + s->t1]);
+		gretl_vector_set(M, t, Z[v][t + s->t1]);
 	    }
 	    s->oc->free_Z = 1;
 	}
     }
 
     if (!err) {
+	if (s->oc->e == NULL) {
+	    /* first set of O.C.s */
+	    s->oc->e = e;
+	    s->oc->Z = M;
+	} else {
+	    /* additional set of O.C.s */
+	    if (s->oc->free_e == 0) {
+		/* current 'e' is pointer to external matrix */
+		s->oc->e = gretl_matrix_copy(s->oc->e);
+		if (s->oc->e == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	    if (!err) {
+		err = gretl_matrix_inplace_colcat(s->oc->e, e, NULL);
+	    }
+	    if (!err) {
+		if (s->oc->free_Z == 0) {
+		    /* current 'Z' is pointer to external matrix */
+		    s->oc->Z = gretl_matrix_copy(s->oc->Z);
+		    if (s->oc->Z == NULL) {
+			err = E_ALLOC;
+		    }
+		}
+		if (!err) {
+		    err = add_new_cols_to_Z(s, M);
+		}
+	    }
+	    s->oc->free_e = s->oc->free_Z = 1;
+	}
+
+	/* FIXME move this: wait till all O.C.s are handled */
 	s->oc->tmp = gretl_matrix_alloc(s->nobs, k);
 	s->oc->sum = gretl_matrix_alloc(1, k);
 	if (s->oc->tmp == NULL || s->oc->sum == NULL) {
@@ -692,7 +919,10 @@ static ocond *oc_new (void)
 	oc->W = NULL;
 	oc->tmp = NULL;
 	oc->sum = NULL;
-	
+	oc->S = NULL;
+	oc->ecols = NULL;
+	oc->noc = 0;
+
 	oc->free_e = 0;
 	oc->free_Z = 0;
     }
@@ -714,6 +944,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     }
 
     if (count_fields(str) != 2) {
+	/* FIXME ';' field separator? */
 	return E_DATA;
     }
 
@@ -721,9 +952,11 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     fprintf(stderr, "nlspec_add_orthcond: line = '%s'\n", str);
 #endif
 
-    s->oc = oc_new();
     if (s->oc == NULL) {
-	return E_ALLOC;
+	s->oc = oc_new();
+	if (s->oc == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     for (i=0; i<2 && !err; i++) {
@@ -1136,6 +1369,9 @@ static double get_gmm_crit (const double *b, void *p)
     if (nl_calculate_fvec(s)) {
 	return NADBL;
     }
+
+    /* FIXME this needs to be modified quite substantially
+       to match the more general handling of O.C.s */
 
     if (s->lhv > 0) {
 	for (t=0; t<s->nobs; t++) {
@@ -2325,6 +2561,9 @@ static void nlspec_free_oc (nlspec *spec)
 
 	gretl_matrix_free(spec->oc->tmp);
 	gretl_matrix_free(spec->oc->sum);
+	gretl_matrix_free(spec->oc->S);
+
+	free(spec->oc->ecols);
 	
 	free(spec->oc);
 	spec->oc = NULL;
