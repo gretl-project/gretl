@@ -752,7 +752,7 @@ static int gmm_multiply_ocs (nlspec *s)
 /* calculate the value of the GMM criterion given the current
    parameter values */
 
-double get_gmm_crit (const double *b, void *p)
+static double get_gmm_crit (const double *b, void *p)
 {
     nlspec *s = (nlspec *) p;
     int i, k, t;
@@ -999,6 +999,10 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     return err;
 }
 
+/* Compute summary criterion for change in parameter estimates
+   (context, whether or not to continue GMM iteration)
+*/
+
 static double gmm_get_icrit (nlspec *s, double *oldcoeff)
 {
     double db, x = 0.0;
@@ -1012,6 +1016,9 @@ static double gmm_get_icrit (nlspec *s, double *oldcoeff)
 
     return x;
 }
+
+/* In case we're proceeding to another round of iteration, recompute
+   the weights matrix */
 
 static int gmm_recompute_weights (nlspec *s)
 {
