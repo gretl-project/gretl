@@ -22,6 +22,11 @@
 #include "libgretl.h" 
 #include "f2c.h"
 
+enum {
+    NUMERIC_DERIVS,
+    ANALYTIC_DERIVS
+} nls_modes;
+
 typedef struct parm_ parm;
 typedef struct ocond_ ocond;
 
@@ -86,5 +91,7 @@ int nlspec_add_weights (nlspec *s, const char *str);
 double get_gmm_crit (const double *b, void *p);
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
+
+int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn);
 
 int gmm_missval_check (nlspec *s, int *t1, int *t2);

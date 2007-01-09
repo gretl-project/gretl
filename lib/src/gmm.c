@@ -999,6 +999,113 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     return err;
 }
 
+static double gmm_get_icrit (nlspec *s, double *oldcoeff)
+{
+    double db, x = 0.0;
+    int i;
+
+    for (i=0; i<s->ncoeff; i++) {
+	db = s->coeff[i] - oldcoeff[i];
+	x += db * db;
+	oldcoeff[i] = s->coeff[i];
+    }
+
+    return x;
+}
+
+static int gmm_recompute_weights (nlspec *s)
+{
+    gretl_matrix *W = s->oc->W;
+    int hac_lag = 0;
+    int err = 0;
+
+    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
+	hac_lag = get_hac_lag(s->nobs);
+    }
+
+    if (hac_lag == 0) {
+	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
+					s->oc->tmp, GRETL_MOD_NONE,
+					W, GRETL_MOD_NONE);
+    } else {
+	err = newey_west(s->oc->tmp, hac_lag, W);
+    }
+
+    if (!err) {
+	gretl_matrix_divide_by_scalar(W, s->nobs);
+	err = gretl_invert_symmetric_matrix(W);
+    }
+
+    return err;
+}
+
+/* driver for BFGS, in case of GMM estimation */
+
+int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
+{
+    int err = 0;
+
+    if (s->mode == ANALYTIC_DERIVS) {
+	pprintf(prn, "GMM: can't handle ANALYTIC_DERIVS at present\n");
+	err = 1;
+    } else {
+	double itol = 1.0e-12, icrit = 1;
+	double *oldcoeff = NULL;
+	int maxit = get_bfgs_maxiter();
+	int outer_iters = 0;
+	int outer_max = 1;
+	int converged = 0;
+
+	/* We may have to handle both "inner" (BFGS) and "outer"
+	   iterations here: the "outer" iterations (if applicable) are
+	   re-runs of BFGS using an updated weights matrix.
+	*/
+
+	if (s->opt & OPT_T) {
+	    oldcoeff = copyvec(s->coeff, s->ncoeff);
+	    if (oldcoeff == NULL) {
+		err = E_ALLOC;
+	    } else {
+		outer_max = 100; /* arbitrary! */
+	    }
+	}
+
+	while (!err && outer_iters < outer_max && !converged) {
+	    err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
+			   &s->fncount, &s->grcount, 
+			   get_gmm_crit, C_GMM, NULL, s,
+			   s->opt, s->prn);
+
+	    if (!err && outer_max > 1) {
+		icrit = gmm_get_icrit(s, oldcoeff);
+		if (icrit < itol) {
+		    fprintf(stderr, "Breaking on icrit = %g\n", icrit);
+		    converged = 1;
+		} else if (outer_iters < outer_max - 1) {
+		    err = gmm_recompute_weights(s);
+		}
+	    }
+
+	    if (err) {
+		fprintf(stderr, "Breaking on err = %d\n", err);
+	    } else if (!converged) {
+		outer_iters++;
+		if (outer_iters == outer_max) {
+		    if (outer_max > 0) {
+			fprintf(stderr, "Breaking on max outer iter\n");
+		    }
+		}
+	    }
+	}
+
+	if (oldcoeff != NULL) {
+	    free(oldcoeff);
+	}
+    }
+
+    return err;    
+}
+
 /* Check any generated auxiliary series for missing values:
    we resort to this if we don't have an "nlfunc" that defines
    a single left-hand side variable, which can occur only

@@ -34,11 +34,6 @@
 #define ML_DEBUG 0
 #define RSTEPS 4
 
-enum {
-    NUMERIC_DERIVS,
-    ANALYTIC_DERIVS
-} nls_modes;
-
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter (scalar or vector) */
     char *deriv;          /* string representation of derivative of regression
@@ -2114,25 +2109,6 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	    s->hessvec = numerical_hessian(s->coeff, s->ncoeff, 
 					   get_mle_ll, NULL);
 	}
-    }
-
-    return err;    
-}
-
-static int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
-{
-    int err = 0;
-
-    if (s->mode == ANALYTIC_DERIVS) {
-	pprintf(prn, "GMM: can't handle ANALYTIC_DERIVS at present\n");
-	err = 1;
-    } else {
-	int maxit = get_bfgs_maxiter();
-
-	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
-		       &s->fncount, &s->grcount, 
-		       get_gmm_crit, C_GMM, NULL, s,
-		       s->opt, s->prn);
     }
 
     return err;    

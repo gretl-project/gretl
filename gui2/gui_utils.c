@@ -973,8 +973,7 @@ void register_data (char *fname, const char *user_fname,
                            action == APPEND_DTA || \
                            action == APPEND_JMULTI)
 
-int get_worksheet_data (char *fname, int datatype, int append,
-			int *gui_get_data)
+int get_worksheet_data (char *fname, int datatype, int append)
 {
     void *handle;
     PRN *errprn;
@@ -1025,11 +1024,8 @@ int get_worksheet_data (char *fname, int datatype, int append,
 
     if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
-	if (gui_get_data != NULL) {
-	    *gui_get_data = 1;
-	}
 	gretl_print_destroy(errprn);
-	return 0;
+	return E_CANCEL;
     }
 
     errbuf = gretl_print_get_buffer(errprn);
@@ -1147,7 +1143,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
 	datatype == GRETL_WF1 || datatype == GRETL_DTA ||
 	datatype == GRETL_JMULTI) {
-	get_worksheet_data(tryfile, datatype, append, NULL);
+	get_worksheet_data(tryfile, datatype, append);
 	return;
     } else if (datatype == GRETL_CSV_DATA) {
 	do_open_csv_box(tryfile, OPEN_CSV, append);

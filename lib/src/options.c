@@ -118,7 +118,7 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_A, "arma-init" },    
     { GARCH,    OPT_R, "robust" },
     { GARCH,    OPT_V, "verbose" },
-    { GMM,      OPT_R, "robust" },
+    { GMM,      OPT_T, "iterate" },
     { GMM,      OPT_V, "verbose" },
     { GNUPLOT,  OPT_O, "with-lines" },
     { GNUPLOT,  OPT_M, "with-impulses" },

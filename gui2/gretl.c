@@ -913,7 +913,7 @@ int main (int argc, char *argv[])
 	case GRETL_WF1:
 	case GRETL_DTA:
 	case GRETL_JMULTI:
-	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
+	    err = get_worksheet_data(paths.datfile, ftype, 0);
 	    break;
 	case GRETL_SCRIPT:
 	case GRETL_SESSION:
@@ -943,10 +943,19 @@ int main (int argc, char *argv[])
 	}
 #endif
 
+	if (err == E_CANCEL) {
+	    err = 0;
+	    ftype = 0;
+	    *tryfile = '\0';
+	    *paths.datfile = '\0';
+	    gui_get_data = 1;
+	}
+
 	if (ftype != GRETL_SCRIPT && err) {
 	    errmsg(err, prn);
 	    exit(EXIT_FAILURE);
 	}
+
 	gretl_print_destroy(prn);
     }
 

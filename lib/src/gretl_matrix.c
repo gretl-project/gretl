@@ -2056,7 +2056,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
  * @a: symmetric positive-definite matrix.
  * @b: vector 'x'.
  *
- * Solves ax = b for the unknown vector x, using Choleski decomposition.
+ * Solves ax = b for the unknown vector x, using Cholesky decomposition.
  * On exit, @b is replaced by the solution and @a is replaced by its 
  * decomposition.
  * 
@@ -2072,7 +2072,7 @@ int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b)
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
     if (info != 0) {
-	fprintf(stderr, "gretl_choleski_solve:\n"
+	fprintf(stderr, "gretl_cholesky_solve:\n"
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
@@ -2082,7 +2082,7 @@ int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b)
 
     dpotrs_(&uplo, &n, &one, a->val, &n, b->val, &n, &info);
     if (info != 0) {
-	fprintf(stderr, "gretl_choleski_solve:\n"
+	fprintf(stderr, "gretl_cholesky_solve:\n"
 		" dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
 	return E_SINGULAR;
     }     
