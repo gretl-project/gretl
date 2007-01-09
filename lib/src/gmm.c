@@ -1098,7 +1098,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	    } else if (!converged) {
 		outer_iters++;
 		if (outer_iters == outer_max) {
-		    if (outer_max > 0) {
+		    if (outer_max > 1) {
 			fprintf(stderr, "Breaking on max outer iter\n");
 		    }
 		}
