@@ -331,7 +331,12 @@ int
 gretl_matrix_inplace_colcat (gretl_matrix *a, const gretl_matrix *b,
 			     const char *mask);
 
-gretl_matrix *gretl_matrix_lag (gretl_matrix *m, int k, double missval);
+gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k, 
+				double missval);
+
+int gretl_matrix_inplace_lag (gretl_matrix *targ,
+			      const gretl_matrix *src,
+			      int k);
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 

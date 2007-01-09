@@ -4316,7 +4316,7 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
 
 /**
  * gretl_matrix_lag:
- * @m: matrix to operate on.
+ * @m: source matrix.
  * @k: lag order (> 0 for lags, < 0 for leads).
  * @missval: value to represent missing observations.
  * 
@@ -4325,7 +4325,8 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
  * to @missval.
  */
 
-gretl_matrix *gretl_matrix_lag (gretl_matrix *m, int k, double missval)
+gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k, 
+				double missval)
 {
     gretl_matrix *a = gretl_matrix_alloc(m->rows, m->cols);
     int s, t, i;
@@ -4348,6 +4349,47 @@ gretl_matrix *gretl_matrix_lag (gretl_matrix *m, int k, double missval)
     }
 
     return a;
+}
+
+/**
+ * gretl_matrix_inplace_lag:
+ * @targ: target matrix.
+ * @src: source matrix.
+ * @k: lag order (> 0 for lags, < 0 for leads).
+ *
+ * Fills out @targ (if it is of the correct dimensions),
+ * with (columnwise) lags of @src, using 0 for missing
+ * values.
+ * 
+ * Returns: 0 on success, non-zero code otherwise.
+ */
+
+int gretl_matrix_inplace_lag (gretl_matrix *targ,
+			      const gretl_matrix *src,
+			      int k)
+{
+    int m = src->rows;
+    int n = src->cols;
+    int s, t, i;
+
+    if (targ->rows != m || targ->cols != n) {
+	return E_NONCONF;
+    }
+
+    for (t=0; t<m; t++) {
+	s = t - k;
+	if (s < 0 || s >= m) {
+	    for (i=0; i<n; i++) {
+		targ->val[mdx(targ, t, i)] = 0.0;
+	    }
+	} else {
+	    for (i=0; i<n; i++) {
+		targ->val[mdx(targ, t, i)] = src->val[mdx(src, s, i)];
+	    }
+	}
+    }
+
+    return 0;
 }
 
 /**

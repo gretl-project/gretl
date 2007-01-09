@@ -20,6 +20,7 @@
 #include "libgretl.h" 
 #include "usermat.h"
 #include "nlspec.h"
+#include "libset.h"
 
 #include "../../minpack/minpack.h"
 
@@ -840,10 +841,39 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     return 0;
 }
 
-/* Calculate the variance matrix for the GMM estimator.  Right now
-   we do a heteroskedasticity-consistent variant.  This should be
-   generalized to allow selection of (a) a simpler asymptotic
-   version or (b) a Newey-West variant.
+static int newey_west (const gretl_matrix *E, int h,
+		       gretl_matrix *V)
+{
+    gretl_matrix *W;
+    double w;
+    int i;
+
+    W = gretl_matrix_alloc(E->rows, E->cols);
+    if (W == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(V);
+
+    for (i=-h; i<=h; i++) {
+	w = 1.0 - fabs((double) i) / (h + 1.0);
+	gretl_matrix_inplace_lag(W, E, i);
+	gretl_matrix_multiply_by_scalar(W, w);
+	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+				  W, GRETL_MOD_NONE,
+				  V, GRETL_MOD_CUMULATE);
+    }
+
+    gretl_matrix_free(W);
+
+    return 0;
+}
+
+/* Calculate the variance matrix for the GMM estimator.  Right now we
+   do an HC variant for non-time series, and a HAC variant for
+   time-series, subject to (some) control for the libset.c apparatus.
+   Perhaps we should allow for selection of a "straight" asymptotic
+   version?
 */
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec)
@@ -861,6 +891,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     integer m, n, ldjac;
     integer iflag = 0;
     double x, *f;
+    int hac_lag = 0;
     int err = 0;
 
     m = gretl_matrix_cols(spec->oc->tmp);
@@ -882,9 +913,17 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 	goto bailout;
     }
 
-    err = gretl_matrix_multiply_mod(spec->oc->tmp, GRETL_MOD_TRANSPOSE,
-				    spec->oc->tmp, GRETL_MOD_NONE,
-				    S, GRETL_MOD_NONE);
+    if (dataset_is_time_series(spec->dinfo) && !get_force_hc()) {
+	hac_lag = get_hac_lag(spec->nobs);
+    }
+
+    if (hac_lag == 0) {
+	err = gretl_matrix_multiply_mod(spec->oc->tmp, GRETL_MOD_TRANSPOSE,
+					spec->oc->tmp, GRETL_MOD_NONE,
+					S, GRETL_MOD_NONE);
+    } else {
+	err = newey_west(spec->oc->tmp, hac_lag, S);
+    }
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(S, spec->nobs);
@@ -942,6 +981,9 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 		} 
 	    }
 	}
+	if (hac_lag > 0) {
+	    gretl_model_set_int(pmod, "hac_lag", hac_lag);
+	}
     }
 
  bailout:
@@ -957,9 +999,11 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     return err;
 }
 
-/* check any generated auxiliary series for missing values:
+/* Check any generated auxiliary series for missing values:
    we resort to this if we don't have an "nlfunc" that defines
-   a single left-hand side variable */
+   a single left-hand side variable, which can occur only
+   in estimating via GMM.
+*/
 
 int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
 {
@@ -1050,5 +1094,3 @@ int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
 
     return err;
 }
-
- 
