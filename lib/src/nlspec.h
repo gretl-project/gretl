@@ -28,7 +28,7 @@ enum {
 } nls_modes;
 
 typedef struct parm_ parm;
-typedef struct ocond_ ocond;
+typedef struct ocset_ ocset;
 
 struct _nlspec {
     int ci;             /* NLS, MLE or GMM */
@@ -69,12 +69,12 @@ struct _nlspec {
     double ***Z;        /* pointer to data array */
     DATAINFO *dinfo;    /* pointer to dataset info */
     PRN *prn;           /* printing aparatus */
-    ocond *oc;          /* orthogonality info (GMM) */
+    ocset *oc;          /* orthogonality info (GMM) */
 };
 
 void nlspec_destroy_arrays (nlspec *s);
 
-void oc_set_destroy (ocond *oc);
+void oc_set_destroy (ocset *oc);
 
 int nl_calculate_fvec (nlspec *s);
 

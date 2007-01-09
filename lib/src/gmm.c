@@ -33,7 +33,7 @@ struct colsrc_ {
     char mname[VNAMELEN];  /* or name of source matrix */
 };
 
-struct ocond_ {
+struct ocset_ {
     gretl_matrix *e;     /* GMM residual, or LHS term in O.C. */
     gretl_matrix *Z;     /* instruments, or RHS terms in O.C. */
     gretl_matrix *W;     /* matrix of weights */
@@ -42,13 +42,13 @@ struct ocond_ {
     gretl_matrix *S;     /* selector matrix for computing tmp */
     colsrc *ecols;       /* info on provenance of columns of 'e' */
     int noc;             /* total number of orthogonality conds. */
-    int free_e;
-    int free_Z;
+    int free_e;          /* indicator: should 'e' be freed? */
+    int free_Z;          /* indicator: should 'Z' be freed? */
 };
 
 /* destructor for set of O.C. info */
 
-void oc_set_destroy (ocond *oc)
+void oc_set_destroy (ocset *oc)
 {
     if (oc == NULL) {
 	return;
@@ -73,9 +73,9 @@ void oc_set_destroy (ocond *oc)
 
 /* constructor for same */
 
-static ocond *oc_set_new (void)
+static ocset *oc_set_new (void)
 {
-    ocond *oc = malloc(sizeof *oc);
+    ocset *oc = malloc(sizeof *oc);
     
     if (oc != NULL) {
 	oc->e = NULL;
@@ -196,7 +196,8 @@ col_present (const gretl_matrix *a, const gretl_matrix *b, int j,
 
 /* Expand the matrix that keeps track of which columns of e should
    be paired with which columns of Z for the computation of the
-   GMM criterion function.
+   GMM criterion function.  The Z matrix has already been expanded
+   at this point.
 */
 
 static int 
@@ -340,10 +341,10 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
     return err;
 }
 
-/* Record the source (ID number of variable or name of matrix) for a
+/* Record the source (ID number of variable, or name of matrix) for a
    column on the left-hand side of the set of GMM orthogonality
    conditions.  We need this later for updating the values in the
-   given column.
+   given column, after adjusting the parameters.
 */
 
 static int 
@@ -390,9 +391,11 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     gretl_matrix *e = NULL;
     gretl_matrix *M = NULL;
     int i, k, t, v;
+    int free_e = 0;
+    int free_M = 0;
     int err = 0;
 
-    /* first work on the left-hand side: have we been given a vector
+    /* First work on the left-hand side: have we been given a vector
        or a series?
     */
 
@@ -412,7 +415,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    for (t=0; t<s->nobs; t++) {
 		gretl_vector_set(e, t, Z[v][t + s->t1]);
 	    }
-	    s->oc->free_e = 1;
+	    free_e = s->oc->free_e = 1;
 	    err = push_column_source(s, v, NULL);
 	}
     } else {
@@ -425,8 +428,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 
     k = 0;
 
-    /* now process the right-hand side: should be a matrix, a
-       list, or a single series 
+    /* Now process the right-hand side: should be a matrix, a
+       list, or a single series. 
     */
 
 #if GMM_DEBUG
@@ -450,7 +453,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		    gretl_matrix_set(M, t, i, Z[v][t + s->t1]);
 		}
 	    }
-	    s->oc->free_Z = 1;
+	    free_M = s->oc->free_Z = 1;
 	}
     } else {
 	/* name of single series */
@@ -463,7 +466,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    for (t=0; t<s->nobs; t++) {
 		gretl_vector_set(M, t, Z[v][t + s->t1]);
 	    }
-	    s->oc->free_Z = 1;
+	    free_M = s->oc->free_Z = 1;
 	}
     }
 
@@ -487,6 +490,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		    err = E_ALLOC;
 		}
 	    }
+
 	    if (!err) {
 		err = gretl_matrix_inplace_colcat(s->oc->e, e, NULL);
 #if GMM_DEBUG > 1
@@ -494,6 +498,12 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		gretl_matrix_print(s->oc->e, "e");
 #endif
 	    }
+
+	    if (free_e) {
+		/* don't leak temporary matrix */
+		gretl_matrix_free(e);
+	    }
+
 	    if (!err) {
 		if (!s->oc->free_Z) {
 		    /* current 'Z' is pointer to external matrix */
@@ -510,6 +520,11 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 		}
 	    }
+
+	    if (free_M) {
+		gretl_matrix_free(M);
+	    }
+
 	    s->oc->free_e = s->oc->free_Z = 1;
 	}
     }
@@ -665,7 +680,8 @@ int check_gmm_requirements (nlspec *spec)
     return 0;
 }
 
-/* update the column(s) of the LHS matrix in the O.C. set */
+/* Update the column(s) of the LHS matrix in the O.C. set,
+   after adusting the parameter values */
 
 static int gmm_update_e (nlspec *s)
 {
@@ -709,7 +725,8 @@ static int gmm_update_e (nlspec *s)
     return err;
 }
 
-/* carry out the required O.C. columnwise multiplications */
+/* Carry out the required O.C. columnwise multiplications:
+   e_i * Z_j */
 
 static int gmm_multiply_ocs (nlspec *s)
 {
@@ -869,14 +886,14 @@ static int newey_west (const gretl_matrix *E, int h,
     return 0;
 }
 
-/* Calculate the variance matrix for the GMM estimator.  Right now we
-   do an HC variant for non-time series, and a HAC variant for
+/* Calculate the covariance matrix for the GMM estimator.  Right now
+   we do an HC variant for non-time series, and a HAC variant for
    time-series, subject to (some) control for the libset.c apparatus.
    Perhaps we should allow for selection of a "straight" asymptotic
    version?
 */
 
-int gmm_add_vcv (MODEL *pmod, nlspec *spec)
+int gmm_add_vcv (MODEL *pmod, nlspec *s)
 {
     gretl_matrix *V = NULL;
     gretl_matrix *J = NULL;
@@ -884,8 +901,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     gretl_matrix *m1 = NULL;
     gretl_matrix *m2 = NULL;
     gretl_matrix *m3 = NULL;
-    int i, j, k = spec->ncoeff;
-    int T = spec->nobs;
+    int i, j, k = s->ncoeff;
+    int T = s->nobs;
     doublereal *wa4 = NULL;
     doublereal epsfcn = 0.0;
     integer m, n, ldjac;
@@ -894,8 +911,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     int hac_lag = 0;
     int err = 0;
 
-    m = gretl_matrix_cols(spec->oc->tmp);
-    n = spec->ncoeff;
+    m = gretl_matrix_cols(s->oc->tmp);
+    n = s->ncoeff;
     ldjac = m; /* leading dimension of jac array */
 
     wa4 = malloc(m * sizeof *wa4);
@@ -913,33 +930,33 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 	goto bailout;
     }
 
-    if (dataset_is_time_series(spec->dinfo) && !get_force_hc()) {
-	hac_lag = get_hac_lag(spec->nobs);
+    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
+	hac_lag = get_hac_lag(s->nobs);
     }
 
     if (hac_lag == 0) {
-	err = gretl_matrix_multiply_mod(spec->oc->tmp, GRETL_MOD_TRANSPOSE,
-					spec->oc->tmp, GRETL_MOD_NONE,
+	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
+					s->oc->tmp, GRETL_MOD_NONE,
 					S, GRETL_MOD_NONE);
     } else {
-	err = newey_west(spec->oc->tmp, hac_lag, S);
+	err = newey_west(s->oc->tmp, hac_lag, S);
     }
 
     if (!err) {
-	gretl_matrix_divide_by_scalar(S, spec->nobs);
+	gretl_matrix_divide_by_scalar(S, s->nobs);
 
-	f = spec->oc->sum->val;
+	f = s->oc->sum->val;
 
 	for (i=0; i<m; i++) {
 	    f[i] = 0.0;
 	    for (j=0; j<T; j++) {
-		f[i] += gretl_matrix_get(spec->oc->tmp, j, i);
+		f[i] += gretl_matrix_get(s->oc->tmp, j, i);
 	    }
 	    f[i] *= sqrt((double) T) / T;
 	}
 
-	fdjac2_(gmm_jacobian_calc, &m, &n, spec->coeff, f, 
-		J->val, &ldjac, &iflag, &epsfcn, wa4, spec);
+	fdjac2_(gmm_jacobian_calc, &m, &n, s->coeff, f, 
+		J->val, &ldjac, &iflag, &epsfcn, wa4, s);
 
 	if (iflag != 0) {
 	    err = 1;
@@ -948,13 +965,13 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(J, GRETL_MOD_TRANSPOSE,
-					spec->oc->W, GRETL_MOD_NONE,
+					s->oc->W, GRETL_MOD_NONE,
 					m1, GRETL_MOD_NONE);
     }
 
     if (!err) {
 	err = gretl_matrix_qform(J, GRETL_MOD_TRANSPOSE,
-				 spec->oc->W, m2, GRETL_MOD_NONE);
+				 s->oc->W, m2, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -986,6 +1003,15 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
 	}
     }
 
+#if 0
+    if (!err) {
+	/* update the weights matrix on the way out */
+	gretl_matrix_copy_values(s->oc->W, S);
+	gretl_matrix_divide_by_scalar(s->oc->W, s->nobs);
+	err = gretl_invert_symmetric_matrix(s->oc->W);
+    }
+#endif
+
  bailout:
 
     gretl_matrix_free(V);
@@ -999,8 +1025,9 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec)
     return err;
 }
 
-/* Compute summary criterion for change in parameter estimates
-   (context, whether or not to continue GMM iteration)
+/* Compute summary criterion for change in parameter estimates.
+   (Context: whether or not to continue GMM iteration, if the
+   iterate option is selected.)
 */
 
 static double gmm_get_icrit (nlspec *s, double *oldcoeff)
@@ -1017,8 +1044,8 @@ static double gmm_get_icrit (nlspec *s, double *oldcoeff)
     return x;
 }
 
-/* In case we're proceeding to another round of iteration, recompute
-   the weights matrix */
+/* In case we're proceeding to another round of GMM iteration,
+   recompute the weights matrix */
 
 static int gmm_recompute_weights (nlspec *s)
 {
@@ -1046,7 +1073,7 @@ static int gmm_recompute_weights (nlspec *s)
     return err;
 }
 
-/* driver for BFGS, in case of GMM estimation */
+/* driver for BFGS, case of GMM estimation */
 
 int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 {
@@ -1068,27 +1095,43 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	   re-runs of BFGS using an updated weights matrix.
 	*/
 
-	if (s->opt & OPT_T) {
+	if (s->opt & OPT_I) {
+	    /* iterate */
 	    oldcoeff = copyvec(s->coeff, s->ncoeff);
 	    if (oldcoeff == NULL) {
 		err = E_ALLOC;
 	    } else {
-		outer_max = 100; /* arbitrary! */
+		outer_max = 50; /* arbitrary! */
 	    }
+	} else if (s->opt & OPT_T) {
+	    /* two-step */
+	    outer_max = 2;
 	}
 
 	while (!err && outer_iters < outer_max && !converged) {
+
+#if GMM_DEBUG
+	    fprintf(stderr, "GMM calling BFGS: outer_iters = %d\n",
+		    outer_iters);
+#endif
+
 	    err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 			   &s->fncount, &s->grcount, 
 			   get_gmm_crit, C_GMM, NULL, s,
 			   s->opt, s->prn);
 
 	    if (!err && outer_max > 1) {
-		icrit = gmm_get_icrit(s, oldcoeff);
-		if (icrit < itol) {
-		    fprintf(stderr, "Breaking on icrit = %g\n", icrit);
-		    converged = 1;
-		} else if (outer_iters < outer_max - 1) {
+		if (outer_max > 2) {
+		    icrit = gmm_get_icrit(s, oldcoeff);
+		    if (icrit < itol && outer_iters > 0) {
+			fprintf(stderr, "Breaking on icrit = %g\n", icrit);
+			converged = 1;
+		    } 
+		}
+		if (!converged && outer_iters < outer_max - 1) {
+#if GMM_DEBUG
+		    fprintf(stderr, "GMM recomputing weights\n");
+#endif
 		    err = gmm_recompute_weights(s);
 		}
 	    }
@@ -1098,7 +1141,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	    } else if (!converged) {
 		outer_iters++;
 		if (outer_iters == outer_max) {
-		    if (outer_max > 1) {
+		    if (outer_max > 2) {
 			fprintf(stderr, "Breaking on max outer iter\n");
 		    }
 		}
@@ -1116,7 +1159,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 /* Check any generated auxiliary series for missing values:
    we resort to this if we don't have an "nlfunc" that defines
    a single left-hand side variable, which can occur only
-   in estimating via GMM.
+   in the case of GMM estimation.
 */
 
 int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
@@ -1145,43 +1188,40 @@ int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
 	    }
 	}
     } else {
+	/* no series to test */
 	return 0;
     }
 
 #if GMM_DEBUG
-    printlist(list, "gmm missval test list");
+    printlist(list, "GMM missval test list");
 #endif
 
-    for (t=s->t1; t<=s->t2; t++) {
+    for (t1=s->t1; t1<=s->t2; t1++) {
 	all_ok = 1;
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    if (na((*s->Z)[vi][t])) {
+	    if (na((*s->Z)[vi][t1])) {
 		all_ok = 0;
 		break;
 	    } 
 	}
 	if (all_ok) {
 	    break;
-	} else {
-	    t1++;
 	}
     }
 
-    for (t=s->t2; t>=t1; t--) {
+    for (t2=s->t2; t2>=t1; t2--) {
 	all_ok = 1;
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    if (na((*s->Z)[vi][t])) {
+	    if (na((*s->Z)[vi][t2])) {
 		all_ok = 0;
 		break;
 	    }
 	}
 	if (all_ok) {
 	    break;
-	} else {
-	    t2--;
-	}
+	} 
     }
 
     if (t2 - t1 + 1 < s->ncoeff) {

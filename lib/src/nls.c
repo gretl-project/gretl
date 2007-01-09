@@ -675,6 +675,9 @@ int update_coeff_values (const double *x, nlspec *s)
     return 0;
 }
 
+/* If the initial value for a given coefficient is zero, change it to
+   a small positive value */
+
 static int maybe_adjust_coeffs (nlspec *spec, char **pzlist)
 {
     char *zlist = NULL;
@@ -703,6 +706,9 @@ static int maybe_adjust_coeffs (nlspec *spec, char **pzlist)
     return (zlist != NULL);
 }
 
+/* For the case where initial zeros were changed: set the coefficients
+   back to zero as requested. */
+
 static int readjust_coeffs (nlspec *spec, const char *zlist)
 {
     double *x;
@@ -724,8 +730,9 @@ static int readjust_coeffs (nlspec *spec, const char *zlist)
 
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
-   (possibly reduced) sample range.  For this purpose we generate
-   the nls residual variable.
+   (possibly reduced) sample range.  For this purpose we generate the
+   nls residual variable.  Note: a rigorous check for missing values
+   requires that all coefficients be non-zero, so we adjust any zeros.
 */
 
 static int nl_missval_check (nlspec *s)
@@ -735,8 +742,6 @@ static int nl_missval_check (nlspec *s)
     int t1 = s->t1, t2 = s->t2;
     int adj, err = 0;
 
-    /* a rigorous check for missing values requires that
-       all coefficients be non-zero */
     adj = maybe_adjust_coeffs(s, &zlist);
 
 #if NLS_DEBUG
@@ -781,18 +786,14 @@ static int nl_missval_check (nlspec *s)
 	    s->t1, s->t2);
 #endif
 
-    for (t=s->t1; t<=s->t2; t++) {
-	if (na((*s->Z)[v][t])) {
-	    t1++;
-	} else {
+    for (t1=s->t1; t1<=s->t2; t1++) {
+	if (!na((*s->Z)[v][t1])) {
 	    break;
 	}
     }
 
-    for (t=s->t2; t>=t1; t--) {
-	if (na((*s->Z)[v][t])) {
-	    t2--;
-	} else {
+    for (t2=s->t2; t2>=t1; t2--) {
+	if (!na((*s->Z)[v][t2])) {
 	    break;
 	}
     }
@@ -1168,8 +1169,8 @@ static int get_mle_gradient (double *b, double *g, int n,
     return err;
 }
 
-/* compute auxiliary statistics and add them to the NLS 
-   model struct */
+/* Compute auxiliary statistics and add them to the NLS 
+   model struct. */
 
 static void add_stats_to_model (MODEL *pmod, nlspec *spec,
 				const double **Z)
