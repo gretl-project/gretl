@@ -34,6 +34,8 @@ typedef enum {
 #define NEEDS_PANEL "needs-panel-data"
 #define NO_DATA_OK  "no-data-ok"
 
+#define FN_NAMELEN 32
+
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;

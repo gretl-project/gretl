@@ -290,7 +290,7 @@ real_varlist_set_var (int v, int lag, GtkListStore *store, GtkTreeIter *iter)
 			   2, datainfo->varname[v], 
 			   -1);
     } else {
-	char vstr[VNAMELEN+8];
+	char vstr[VNAMELEN + 8];
 
 	sprintf(vstr, "%s(-%d)", datainfo->varname[v], lag);
 	gtk_list_store_set(store, iter, 0, v, 1, lag, 
@@ -1966,8 +1966,8 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     gtk_widget_show(tmp); 
 
     entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN+3);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN + 3);
 
     gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
     gtk_widget_show(entry); 
@@ -2027,8 +2027,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_widget_show(tmp); 
 
     sr->depvar = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
+    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN + 3);
 
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
@@ -2072,8 +2072,8 @@ build_public_iface_section (selector *sr, GtkWidget *right_vbox)
     gtk_widget_show(tmp); 
 
     sr->depvar = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
+    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), FN_NAMELEN - 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), 18);
 
     gtk_box_pack_start(GTK_BOX(pub_hbox), sr->depvar, FALSE, FALSE, 0);
     gtk_widget_show(sr->depvar); 
@@ -2320,50 +2320,51 @@ static void selector_init (selector *sr, guint code, const char *title,
 			   gpointer p, int (*callback)())
 {
     GtkWidget *base;
-    int i, dlgheight = 340;
-    double hx;
+    double x;
+    int dlgx = -1, dlgy = 340;
+    int i;
 
     sr->code = code;
     sr->opts = (code == PANEL_WLS)? OPT_W : OPT_NONE;
     
     if (MODEL_CODE(code)) {
 	if (datainfo->v > 9) {
-	    dlgheight += 80;
+	    dlgy += 80;
 	} else if (code == ARMA) {
-	    dlgheight += 40;
+	    dlgy += 40;
 	}
     } 
 
     if (code == WLS || code == POISSON || code == AR) {
-	dlgheight += 30;
+	dlgy += 30;
     } else if (code == TSLS) {
-	dlgheight += 40;
+	dlgy += 40;
     } else if (VEC_CODE(code)) {
-	dlgheight = 450;
+	dlgy = 450;
 	if (code == VAR || code == VECM) {
-	    dlgheight += 90;
+	    dlgy += 90;
 	} else if (code == VLAGSEL) {
-	    dlgheight += 40;
+	    dlgy += 40;
 	}
     } 
 
     if (WANT_TOGGLES(code) && code != COINT) {
-	dlgheight += 40;
+	dlgy += 40;
     }
 
     if (WANT_RADIOS(code)) {
-	dlgheight += 60;
+	dlgy += 60;
     }
 
     if (code == ARMA && datainfo->pd > 1) {
 	/* seasonal spinners */
-	dlgheight += 60;
+	dlgy += 60;
     }
 
     if (dataset_lags_ok(datainfo)) {
 	if (MODEL_CODE(code) && code != ARMA) {
 	    /* lag selector button at foot */
-	    dlgheight += 30;
+	    dlgy += 30;
 	}
     }
 
@@ -2395,10 +2396,15 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
-    hx = (double) dlgheight * gui_scale;
-    dlgheight = hx;
+    x = (double) dlgy * gui_scale;
+    dlgy = x;
+
+    if (code == SAVE_FUNCTIONS) {
+	x = (double) 460 * gui_scale;
+	dlgx = x;
+    }
     
-    gtk_window_set_default_size(GTK_WINDOW(sr->dlg), -1, dlgheight); 
+    gtk_window_set_default_size(GTK_WINDOW(sr->dlg), dlgx, dlgy); 
 
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 

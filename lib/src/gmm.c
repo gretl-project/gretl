@@ -1118,84 +1118,74 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix_free(V);
 }
 
-/* driver for BFGS, case of GMM estimation */
+/* Driver for BFGS, case of GMM estimation.  We may have to handle
+   both "inner" (BFGS) and "outer" iterations here: the "outer"
+   iterations (if applicable) are re-runs of BFGS using an updated
+   weights matrix.
+*/
 
 int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 {
+    double itol = 1.0e-12, icrit = 1;
+    double *oldcoeff = NULL;
+    int maxit = get_bfgs_maxiter();
+    int outer_iters = 0;
+    int outer_max = 1;
+    int converged = 0;
     int err = 0;
 
-    if (s->mode == ANALYTIC_DERIVS) {
-	pprintf(prn, "GMM: can't handle ANALYTIC_DERIVS at present\n");
-	err = 1;
-    } else {
-	double itol = 1.0e-12, icrit = 1;
-	double *oldcoeff = NULL;
-	int maxit = get_bfgs_maxiter();
-	int outer_iters = 0;
-	int outer_max = 1;
-	int converged = 0;
-
-	/* We may have to handle both "inner" (BFGS) and "outer"
-	   iterations here: the "outer" iterations (if applicable) are
-	   re-runs of BFGS using an updated weights matrix.
-	*/
-
-	if (s->opt & OPT_I) {
-	    /* iterate */
-	    oldcoeff = copyvec(s->coeff, s->ncoeff);
-	    if (oldcoeff == NULL) {
-		err = E_ALLOC;
-	    } else {
-		outer_max = 50; /* arbitrary! */
-	    }
-	} else if (s->opt & OPT_T) {
-	    /* two-step */
-	    outer_max = 2;
+    if (s->opt & OPT_I) {
+	/* iterate */
+	oldcoeff = copyvec(s->coeff, s->ncoeff);
+	if (oldcoeff == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    outer_max = 50; /* arbitrary! */
 	}
+    } else if (s->opt & OPT_T) {
+	/* two-step */
+	outer_max = 2;
+    }
 
-	while (!err && outer_iters < outer_max && !converged) {
+    while (!err && outer_iters < outer_max && !converged) {
 
 #if GMM_DEBUG
-	    fprintf(stderr, "GMM calling BFGS: outer_iters = %d\n",
-		    outer_iters);
+	fprintf(stderr, "GMM calling BFGS: outer_iters = %d\n",
+		outer_iters);
 #endif
 
-	    err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
-			   &s->fncount, &s->grcount, 
-			   get_gmm_crit, C_GMM, NULL, s,
-			   s->opt, s->prn);
+	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
+		       &s->fncount, &s->grcount, 
+		       get_gmm_crit, C_GMM, NULL, s,
+		       s->opt, s->prn);
 
-	    if (!err && outer_max > 1) {
+	if (!err && outer_max > 1) {
+	    if (outer_max > 2) {
+		icrit = gmm_get_icrit(s, oldcoeff);
+		if (icrit < itol && outer_iters > 0) {
+		    fprintf(stderr, "Breaking on icrit = %g\n", icrit);
+		    converged = 1;
+		} 
+	    }
+	    if (!converged && outer_iters < outer_max - 1) {
+		err = gmm_recompute_weights(s);
+	    }
+	}
+
+	if (err) {
+	    fprintf(stderr, "Breaking on err = %d\n", err);
+	} else if (!converged) {
+	    outer_iters++;
+	    if (outer_iters == outer_max) {
 		if (outer_max > 2) {
-		    icrit = gmm_get_icrit(s, oldcoeff);
-		    if (icrit < itol && outer_iters > 0) {
-			fprintf(stderr, "Breaking on icrit = %g\n", icrit);
-			converged = 1;
-		    } 
-		}
-		if (!converged && outer_iters < outer_max - 1) {
-#if GMM_DEBUG
-		    fprintf(stderr, "GMM recomputing weights\n");
-#endif
-		    err = gmm_recompute_weights(s);
-		}
-	    }
-
-	    if (err) {
-		fprintf(stderr, "Breaking on err = %d\n", err);
-	    } else if (!converged) {
-		outer_iters++;
-		if (outer_iters == outer_max) {
-		    if (outer_max > 2) {
-			fprintf(stderr, "Breaking on max outer iter\n");
-		    }
+		    fprintf(stderr, "Breaking on max outer iter\n");
 		}
 	    }
 	}
+    }
 
-	if (oldcoeff != NULL) {
-	    free(oldcoeff);
-	}
+    if (oldcoeff != NULL) {
+	free(oldcoeff);
     }
 
     if (s->opt & OPT_V) {

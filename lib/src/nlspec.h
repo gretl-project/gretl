@@ -22,11 +22,6 @@
 #include "libgretl.h" 
 #include "f2c.h"
 
-enum {
-    NUMERIC_DERIVS,
-    ANALYTIC_DERIVS
-} nls_modes;
-
 typedef struct parm_ parm;
 typedef struct ocset_ ocset;
 

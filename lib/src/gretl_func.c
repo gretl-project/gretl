@@ -26,7 +26,6 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 
-#define FN_NAMELEN 32
 #define FN_DEBUG 0
 
 typedef struct fn_param_ fn_param;

@@ -2155,7 +2155,7 @@ static void print_iter_val (double x, int i, PRN *prn)
 void 
 print_iter_info (int iter, double crit, int type, int k, 
 		 const double *b, const double *g, 
-		 double sl, int neggrad, PRN *prn)
+		 double sl, PRN *prn)
 {
     const char *cstrs[] = {
 	N_("Log-likelihood"),
@@ -2163,7 +2163,6 @@ print_iter_info (int iter, double crit, int type, int k,
 	N_("Criterion"),
     };
     const char *cstr = cstrs[type];
-    double x;
     int i;
 
     if (na(crit)) {
@@ -2190,8 +2189,7 @@ print_iter_info (int iter, double crit, int type, int k,
 
     pputs(prn, _("Gradients:  "));
     for (i=0; i<k; i++) {
-	x = (neggrad && !na(g[i]))? -g[i] : g[i];
-	print_iter_val(x, i, prn);
+	print_iter_val(g[i], i, prn);
     }
     pputs(prn, "\n\n");
 }

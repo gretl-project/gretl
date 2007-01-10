@@ -616,6 +616,11 @@ static int function_data_check (call_info *cinfo)
     /* FIXME provide a way for a function to signal that
        it doesn't need data loaded? */
 
+    if (datainfo == NULL || datainfo->v == 0) {
+	errbox(_("Please open a data file first"));
+	return 1;
+    }
+
     for (i=0; i<cinfo->n_params; i++) {
 	int type = fn_param_type(cinfo->func, i);
 

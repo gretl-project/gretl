@@ -34,6 +34,11 @@
 #define ML_DEBUG 0
 #define RSTEPS 4
 
+enum {
+    NUMERIC_DERIVS,
+    ANALYTIC_DERIVS
+} nls_modes;
+
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter (scalar or vector) */
     char *deriv;          /* string representation of derivative of regression
@@ -2108,7 +2113,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	if (!err && (s->opt & (OPT_H | OPT_R))) {
 	    /* doing Hessian or QML covariance matrix */
 	    s->hessvec = numerical_hessian(s->coeff, s->ncoeff, 
-					   get_mle_ll, NULL);
+					   get_mle_ll, s);
 	}
     }
 
@@ -2336,6 +2341,11 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     char *name = NULL;
     char *deriv = NULL;
     int v, err = 0;
+
+    if (spec->ci == GMM) {
+	strcpy(gretl_errmsg, _("Analytical derivatives cannot be used with GMM"));
+	return E_DATA;
+    }
 
     if (!strncmp(p, "deriv ", 6)) {
 	/* make starting with "deriv" optional */
@@ -2967,23 +2977,6 @@ static double **triangular_array_new (int n)
 
 #define BFGS_DEBUG 0
 
-#define stepfrac	0.2
-#define acctol		0.0001 
-#define reltest		10.0
-
-/* FIXME: it would be nice to trash this, but that depends on
-   switching all the signs correctly below, which (to me!) is
-   more difficult than it looks -- AC */
-
-static void reverse_gradient (double *g, int n)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-	g[i] = -g[i];
-    }
-}
-
 /* apparatus for constructing numerical approximation to
    the Hessian */
 
@@ -3194,6 +3187,12 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
     return vcv;
 }
 
+#define stepfrac	0.2
+#define acctol		0.0001 
+#define reltest		10.0
+
+#define coeff_unchanged(a,b) (reltest + a == reltest + b)
+
 /**
  * BFGS_max:
  * @b: array of adjustable coefficients.
@@ -3233,7 +3232,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
     int ndelta, fcount, gcount;
-    double fmax, f, sumgrad;
+    double d, fmax, f, sumgrad;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
     double D1, D2;
@@ -3265,11 +3264,10 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     fmax = f;
     iter = ilast = fcount = gcount = 1;
     gradfunc(b, g, n, cfunc, data);
-    reverse_gradient(g, n);
 
     do {
 	if (opt & OPT_V) {
-	    print_iter_info(iter, f, crittype, n, b, g, steplen, 1, prn);
+	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	}
 	if (ilast == gcount) {
 	    /* (re-)start: initialize curvature matrix */
@@ -3289,17 +3287,16 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	for (i=0; i<n; i++) {
 	    s = 0.0;
 	    for (j=0; j<=i; j++) {
-		s -= H[i][j] * g[j];
+		s += H[i][j] * g[j];
 	    }
 	    for (j=i+1; j<n; j++) {
-		s -= H[j][i] * g[j];
+		s += H[j][i] * g[j];
 	    }
 	    t[i] = s;
 	    sumgrad += s * g[i];
 	}
 
-	if (sumgrad < 0.0) {	
-	    /* search direction is _uphill_, actually */
+	if (sumgrad > 0.0) {	
 	    steplen = 1.0;
 	    crit_ok = 0;
 	    do {
@@ -3309,15 +3306,15 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		ndelta = n;
 		for (i=0; i<n; i++) {
 		    b[i] = X[i] + steplen * t[i];
-		    if (reltest + X[i] == reltest + b[i]) {
-			/* no change in coefficient */
+		    if (coeff_unchanged(b[i], X[i])) {
 			ndelta--;
 		    }
 		}
 		if (ndelta > 0) {
 		    f = cfunc(b, data);
+		    d = sumgrad * steplen * acctol;
 		    fcount++;
-		    crit_ok = !na(f) && (f >= fmax + sumgrad*steplen*acctol);
+		    crit_ok = !na(f) && (f >= fmax + d);
 		    if (!crit_ok) {
 			/* calculated criterion no good: try smaller step */
 			steplen *= stepfrac;
@@ -3343,13 +3340,12 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		/* making progress */
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
-		reverse_gradient(g, n);
 		gcount++;
 		iter++;
 		D1 = 0.0;
 		for (i=0; i<n; i++) {
 		    t[i] = steplen * t[i];
-		    c[i] = g[i] - c[i];
+		    c[i] -= g[i];
 		    D1 += t[i] * c[i];
 		}
 		if (D1 > 0.0) {
@@ -3420,7 +3416,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     if (opt & OPT_V) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));	
-	print_iter_info(iter, f, crittype, n, b, g, steplen, 1, prn);
+	print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	pputc(prn, '\n');	
     }
 

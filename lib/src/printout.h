@@ -85,7 +85,7 @@ int text_print_forecast (const FITRESID *fr,
 
 void print_iter_info (int iter, double crit, int type, int k, 
 		      const double *b, const double *g, 
-		      double sl, int neggrad, PRN *prn);
+		      double sl, PRN *prn);
 
 void text_print_vmatrix (VMatrix *vmat, PRN *prn);
 
