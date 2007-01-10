@@ -3421,7 +3421,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     if (opt & OPT_V) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));	
 	print_iter_info(iter, f, crittype, n, b, g, steplen, 1, prn);
-	pputs(prn, "\n\n");	
+	pputc(prn, '\n');	
     }
 
  bailout:
