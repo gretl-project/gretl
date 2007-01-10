@@ -68,6 +68,7 @@ int retrieve_manfile (const char *fname, const char *localname);
 int get_update_info (char **saver, time_t filedate, int queryopt);
 
 int upload_function_package (const char *login, const char *pass, 
-			     const char *fname, const char *buf);
+			     const char *fname, const char *buf,
+			     char **retbuf);
 
 #endif /* GRETL_WWW_H */

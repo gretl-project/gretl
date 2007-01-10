@@ -801,6 +801,7 @@ static void do_upload (const char *fname)
     char *ufname = NULL;
     char *ubuf = NULL;
     char *buf = NULL;
+    char *retbuf = NULL;
     login_info linfo;
     int err = 0;
 
@@ -827,11 +828,14 @@ static void do_upload (const char *fname)
     }
 
     if (!err) {
-	err = upload_function_package(ulogin, upass, ufname, ubuf);
+	err = upload_function_package(ulogin, upass, ufname, ubuf,
+				      &retbuf);
     }
 
     if (err) {
 	gui_errmsg(err);
+    } else if (retbuf != NULL && *retbuf != '\0') {
+	infobox(retbuf);
     }
 
     free(ulogin);
@@ -839,6 +843,7 @@ static void do_upload (const char *fname)
     free(ufname);
     free(ubuf);
     free(buf);
+    free(retbuf);
 
     linfo_free(&linfo);
 }

@@ -1217,6 +1217,17 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
     }
 }
 
+static int getbuf_init (urlinfo_t *u)
+{
+    u->getbuf = calloc(WBUFSIZE, 1);
+
+    if (u->getbuf == NULL) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void url_init (urlinfo_t *u)
 {
     u->url = NULL;
@@ -1481,10 +1492,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	u->localfile = gretl_strdup(savefile);
 	err = open_local_file(u);
     } else {
-	u->getbuf = calloc(WBUFSIZE, 1);
-	if (u->getbuf == NULL) {
-	    err = 1;
-	}
+	err = getbuf_init(u);
     }
 
     if (err) {
@@ -1582,7 +1590,8 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
     }
 
     u->path = malloc(strlen(cgi) + 64);
-    u->getbuf = calloc(2048, 1);
+    getbuf_init(u);
+
     if (u->path == NULL || u->getbuf == NULL) {
 	free(u->getbuf);
 	urlinfo_destroy(u, 0);
@@ -1629,8 +1638,15 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 
 #ifndef STANDALONE /* functions below not needed for updater */
 
+/* The content of the function package to be uploaded is URL-encoded
+   in 'buf'; the (short, pathless) filename for this package is in
+   'fname'.  If 'retbuf' is non-NULL it gets a copy of the response
+   from the server.
+*/
+
 int upload_function_package (const char *login, const char *pass, 
-			     const char *fname, const char *buf)
+			     const char *fname, const char *buf,
+			     char **retbuf)
 {
     const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
     const char *host = "ricardo.ecn.wfu.edu";
@@ -1657,8 +1673,7 @@ int upload_function_package (const char *login, const char *pass,
 	return E_ALLOC;
     }
 
-    u->getbuf = calloc(256, 1);
-    if (u->getbuf == NULL) {
+    if (getbuf_init(u)) {
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
     }
@@ -1680,6 +1695,9 @@ int upload_function_package (const char *login, const char *pass,
     if (result != RETROK) {
 	strcpy(gretl_errmsg, u->getbuf);
 	err = 1;
+    } else if (retbuf != NULL) {
+	*retbuf = u->getbuf;
+	u->getbuf = NULL;
     }
 
     urlinfo_destroy(u, 0);
