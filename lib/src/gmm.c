@@ -1089,7 +1089,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 
     V = gretl_matrix_alloc(k, k);
     if (V == NULL) {
-	pprintf(prn, "gmm_print_oc: allocation failed\n");
+	pprintf(prn, "gmm_print_oc: allocation failed!\n");
 	return;
     }
 
@@ -1108,6 +1108,8 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 		_("Orth. cond."), i, gretl_vector_get(s->oc->sum, i)/T);
 	if (!err) {
 	    pprintf(prn, " %10.6f\n", sqrt(gretl_matrix_get(V, i, i))/T);
+	} else {
+	    pprintf(prn, " %10s\n", "NA");
 	}
     }
     pputc(prn, '\n');
