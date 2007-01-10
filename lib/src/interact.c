@@ -2582,10 +2582,14 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     if (echo_stdout) {
 	if (batch) {
-	    if (cmd->ci != EQUATION) {
+	    if (cmd->ci != EQUATION && cmd->ci != REMEMBER) {
 		putchar('\n');
 	    }
-	    *stdlen += printf("%c %s", leadchar, first);
+	    if (cmd->ci == REMEMBER) {
+		*stdlen += printf("%s", first);
+	    } else {
+		*stdlen += printf("%c %s", leadchar, first);
+	    }
 	} else {
 	    *stdlen += printf(" %s", first);
 	}
@@ -2769,6 +2773,9 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     /* another special, REMEMBER: we should print the literal
        command line first */
     if (cmd->ci == REMEMBER && cmd->extra != NULL) {
+	if (echo_stdout) {
+	    printf("%c %s\n", leadchar, cmd->extra);
+	}
 	pputs(prn, cmd->extra);
 	pputc(prn, '\n');
     }
