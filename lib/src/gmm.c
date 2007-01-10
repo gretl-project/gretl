@@ -1003,14 +1003,16 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	}
     }
 
-#if 0
     if (!err) {
-	/* update the weights matrix on the way out */
-	gretl_matrix_copy_values(s->oc->W, S);
-	gretl_matrix_divide_by_scalar(s->oc->W, s->nobs);
-	err = gretl_invert_symmetric_matrix(s->oc->W);
+	/* set additional GMM info */
+	int l = s->oc->noc;
+	
+	pmod->ess = - s->crit; /* note the borrowing! */
+	if (l > k) {
+	    gretl_model_set_int(pmod, "J_df", l - k);
+	    gretl_model_set_double(pmod, "J_test", pmod->ess / s->nobs);
+	}
     }
-#endif
 
  bailout:
 
@@ -1071,6 +1073,46 @@ static int gmm_recompute_weights (nlspec *s)
     }
 
     return err;
+}
+
+static void gmm_print_oc (nlspec *s, PRN *prn)
+{
+    gretl_matrix *V;
+    int i, k = s->oc->noc;
+    int T = s->nobs;
+    int hac_lag = 0;
+    int err = 0;
+
+    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
+	hac_lag = get_hac_lag(s->nobs);
+    }
+
+    V = gretl_matrix_alloc(k, k);
+    if (V == NULL) {
+	pprintf(prn, "gmm_print_oc: allocation failed\n");
+	return;
+    }
+
+    if (hac_lag == 0) {
+	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
+					s->oc->tmp, GRETL_MOD_NONE,
+					V, GRETL_MOD_NONE);
+    } else {
+	err = newey_west(s->oc->tmp, hac_lag, V);
+    }
+
+    pprintf(prn,"%26s %10s\n\n", _("mean"), _("std. dev"));
+
+    for (i=0; i<k; i++) {
+	pprintf(prn, "%s %2d: %10.6f",
+		_("Orth. cond."), i, gretl_vector_get(s->oc->sum, i)/T);
+	if (!err) {
+	    pprintf(prn, " %10.6f\n", sqrt(gretl_matrix_get(V, i, i))/T);
+	}
+    }
+    pputc(prn, '\n');
+
+    gretl_matrix_free(V);
 }
 
 /* driver for BFGS, case of GMM estimation */
@@ -1151,6 +1193,10 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	if (oldcoeff != NULL) {
 	    free(oldcoeff);
 	}
+    }
+
+    if (s->opt & OPT_V) {
+	gmm_print_oc(s, prn);
     }
 
     return err;    

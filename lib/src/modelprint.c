@@ -146,9 +146,35 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
     return 0;
 }
 
+static int GMM_crit_line (const MODEL *pmod, PRN *prn)
+{
+    if (plain_format(prn)) {    
+	pprintf(prn, "  %s = %.*g\n", _("GMM criterion"), 
+		XDIGITS(pmod), pmod->ess);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("GMM criterion"), 
+		pmod->ess);
+    } else if (tex_format(prn)) {
+	char xstr[32];
+
+	tex_dcolumn_double(pmod->ess, xstr);
+	pprintf(prn, "%s & %s \\\\\n",
+		I_("GMM criterion"), xstr);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
+		prn_delim(prn), pmod->ess);
+    }	
+
+    return 0;
+}
+
 static int essline (const MODEL *pmod, PRN *prn)
 {
-    return real_essline(pmod, pmod->ess, pmod->sigma, prn);
+    if (pmod->ci == GMM) {
+	return GMM_crit_line(pmod, prn);
+    } else {
+	return real_essline(pmod, pmod->ess, pmod->sigma, prn);
+    }
 }
 
 static int essline_original (const MODEL *pmod, PRN *prn)
@@ -354,56 +380,78 @@ static void print_arbond_AR_test (double z, int order, PRN *prn)
 
 enum {
     AB_SARGAN,
-    AB_WALD
+    AB_WALD,
+    J_TEST
 };
 
 static void 
-print_arbond_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
+print_GMM_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 {
     const char *strs[] = {
 	N_("Sargan over-identification test"),
-	N_("Wald (joint) test")
+	N_("Wald (joint) test"),
+	N_("J test")
     };
     const char *texstrs[] = {
 	N_("Sargan test"),
-	N_("Wald (joint) test")
+	N_("Wald (joint) test"),
+	N_("J test")
     };
     double pv;
     int df;
 
     if (j == AB_SARGAN) {
 	df = gretl_model_get_int(pmod, "sargan_df");
-    } else {
+    } else if (j == AB_WALD) {
 	df = gretl_model_get_int(pmod, "wald_df");
+    } else {
+	df = gretl_model_get_int(pmod, "J_df");
     }
 
     pv = chisq_cdf_comp(x, df);
 
     if (tex_format(prn)) {
 	pprintf(prn, "%s: ", I_(texstrs[j]));
-	pprintf(prn, "$\\chi^2(%d)$ = %.3f & [%.4f]", df, x, pv);
+	pprintf(prn, "$\\chi^2(%d)$ = %g & [%.4f]", df, x, pv);
     } else if (plain_format(prn)) {
 	pprintf(prn, "  %s:", _(strs[j]));
-	gretl_prn_newline(prn);
-	pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", _("Chi-square"),
+	if (j == J_TEST) {
+	    pputc(prn, ' ');
+	} else {
+	    pputs(prn, "\n   ");
+	}
+	pprintf(prn, "%s(%d) = %g (%s %.4f)", _("Chi-square"),
 		df, x, _("p-value"), pv);
     } else {
 	pprintf(prn, "  %s:", I_(strs[j]));
-	gretl_prn_newline(prn);
-	pprintf(prn, "    %s(%d) = %.3f (%s %.4f)", I_("Chi-square"),
+	if (j == J_TEST) {
+	    pputc(prn, ' ');
+	} else {
+	    gretl_prn_newline(prn);
+	    pputs(prn, "   ");
+	}
+	pprintf(prn, "%s(%d) = %g (%s %.4f)", I_("Chi-square"),
 		df, x, I_("p-value"), pv);
     }
 
     gretl_prn_newline(prn);
 }
 
-static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
+static void print_GMM_test_data (const MODEL *pmod, PRN *prn)
 {
     double x;
 
     if (tex_format(prn)) {
 	pputs(prn, "\\end{tabular}\n\n\\vspace{1ex}\n");
 	pputs(prn, "\\begin{tabular}{ll}\n");
+    }
+
+    if (pmod->ci == GMM) {
+	x = gretl_model_get_double(pmod, "J_test");
+	if (!na(x)) {
+	    print_GMM_chi2_test(pmod, x, J_TEST, prn);
+	}
+	return;
     }
 
     x = gretl_model_get_double(pmod, "AR1");
@@ -418,12 +466,12 @@ static void print_arbond_test_data (const MODEL *pmod, PRN *prn)
 
     x = gretl_model_get_double(pmod, "sargan");
     if (!na(x)) {
-	print_arbond_chi2_test(pmod, x, AB_SARGAN, prn);
+	print_GMM_chi2_test(pmod, x, AB_SARGAN, prn);
     }
 
     x = gretl_model_get_double(pmod, "wald");
     if (!na(x)) {
-	print_arbond_chi2_test(pmod, x, AB_WALD, prn);
+	print_GMM_chi2_test(pmod, x, AB_WALD, prn);
     }
 }
 
@@ -2037,10 +2085,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     } 
 
-    if (pmod->ci == ARBOND) {
+    if (pmod->ci == ARBOND || pmod->ci == GMM) {
 	print_middle_table_start(prn);
 	essline(pmod, prn);
-	print_arbond_test_data(pmod, prn);
+	print_GMM_test_data(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }   
