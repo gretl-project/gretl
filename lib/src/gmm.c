@@ -1101,11 +1101,12 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 	err = newey_west(s->oc->tmp, hac_lag, V);
     }
 
-    pprintf(prn,"%26s %10s\n\n", _("mean"), _("std. dev"));
+    pprintf(prn, "  %s\n", _("Orthgonality"));
+    pprintf(prn, "   %10s %10s %10s\n\n", _("condition"), 
+	    _("mean"), _("std. dev"));
 
     for (i=0; i<k; i++) {
-	pprintf(prn, "%s %2d: %10.6f",
-		_("Orth. cond."), i, gretl_vector_get(s->oc->sum, i)/T);
+	pprintf(prn, "%10d    %10.6f", i, gretl_vector_get(s->oc->sum, i)/T);
 	if (!err) {
 	    pprintf(prn, " %10.6f\n", sqrt(gretl_matrix_get(V, i, i))/T);
 	} else {
