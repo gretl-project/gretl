@@ -42,6 +42,7 @@ struct ocset_ {
     gretl_matrix *S;     /* selector matrix for computing tmp */
     colsrc *ecols;       /* info on provenance of columns of 'e' */
     int noc;             /* total number of orthogonality conds. */
+    int step;            /* number of estimation steps */
     int free_e;          /* indicator: should 'e' be freed? */
     int free_Z;          /* indicator: should 'Z' be freed? */
 };
@@ -86,6 +87,7 @@ static ocset *oc_set_new (void)
 	oc->S = NULL;
 	oc->ecols = NULL;
 	oc->noc = 0;
+	oc->step = 0;
 
 	oc->free_e = 0;
 	oc->free_Z = 0;
@@ -1012,6 +1014,9 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	    gretl_model_set_int(pmod, "J_df", l - k);
 	    gretl_model_set_double(pmod, "J_test", pmod->ess / s->nobs);
 	}
+	if (s->oc->step > 1) {
+	    gretl_model_set_int(pmod, "step", s->oc->step);
+	}
     }
 
  bailout:
@@ -1182,6 +1187,10 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 		}
 	    }
 	}
+    }
+
+    if (!err) {
+	s->oc->step = outer_iters;
     }
 
     if (oldcoeff != NULL) {

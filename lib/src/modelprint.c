@@ -861,6 +861,16 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("1-step Arellano-Bond");
 	}
+    } else if (pmod->ci == GMM) {
+	int s = gretl_model_get_int(pmod, "step");
+
+	if (s > 2) {
+	    return N_("Iterated GMM");
+	} else if (s == 2) {
+	    return N_("2-step GMM");
+	} else {
+	    return N_("1-step GMM");
+	}	
     } else if (pmod->ci == LOGIT) {
 	if (gretl_model_get_int(pmod, "ordered")) {
 	    return N_("Ordered Logit");
