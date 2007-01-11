@@ -100,6 +100,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, PRN *prn);
 
+const char *get_funcerr_message (void);
+
 int gretl_function_set_info (int i, const char *help);
 
 int gretl_function_get_info (int i, const char *key, char const **value);

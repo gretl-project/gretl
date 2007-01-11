@@ -2515,6 +2515,22 @@ static void start_fncall (ufunc *u)
     set_gretl_messages(0);
 }
 
+static char funcerr_msg[256];
+
+const char *get_funcerr_message (void)
+{
+    return funcerr_msg;
+}
+
+static void set_funcerr_message (ufunc *u, const char *s)
+{
+    int n;
+
+    sprintf(funcerr_msg, _("Error message from %s:\n"), u->name);
+    n = strlen(funcerr_msg);
+    strncat(funcerr_msg, s, 255 - n);
+}
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, PRN *prn)
@@ -2532,6 +2548,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
+
+    *funcerr_msg = '\0';
 
     err = maybe_check_function_needs(pdinfo, u);
     if (err) {
@@ -2625,6 +2643,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = maybe_exec_line(&state, pZ, &pdinfo, &funcerr);
 	if (funcerr) {
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
+	    set_funcerr_message(u, state.cmd->param);
 	}
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);

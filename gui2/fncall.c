@@ -866,7 +866,13 @@ void call_function_package (const char *fname, GtkWidget *w)
     err = gui_exec_line(&state, &Z, &datainfo);
 
     if (err) {
-	gui_errmsg(err);
+	const char *msg = get_funcerr_message();
+
+	if (*msg != 0) {
+	    errbox(msg);
+	} else {
+	    gui_errmsg(err);
+	}
     } else {
 	view_buffer(prn, 80, 400, fnname, PRINT, NULL);
     }
