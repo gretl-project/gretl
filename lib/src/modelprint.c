@@ -1946,7 +1946,7 @@ static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "%s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
 		dfn, dfd, GRETL_DIGITS, F);
-	pprintf(prn, "  %s\n", _("A value < 10 may indicate weak instruments"));
+	pprintf(prn, "  %s\n\n", _("A value < 10 may indicate weak instruments"));
     } else if (tex_format(prn)) {
 	char x1str[32];
 

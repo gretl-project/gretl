@@ -234,11 +234,8 @@ static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
     clear_model(models[1]);
 
     free_modelspec();
-
     libgretl_session_cleanup();
-
     reset_model_count();
-
     gretl_cmd_destroy_context(cmd);
 
     return err;
@@ -330,7 +327,7 @@ static void set_errfatal (int code)
     }
 
     if (code == ERRFATAL_FORCE) {
-	/* for contexts where contunuation on error is
+	/* for contexts where continuation on error is
 	   bound to make a big mess */
 	errfatal = 1;
     } else if (hoe == 0) {
@@ -416,7 +413,7 @@ int main (int argc, char *argv[])
 #endif
 
     libgretl_init();
-    logo();     /* print version info */
+    logo(); 
     session_time(NULL);
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT);
@@ -752,6 +749,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     PRN *prn = s->prn;
     MODEL **models = s->models;
     int old_runit = runit;
+    unsigned char eflag;
     char runfile[MAXLEN];
     int k, err = 0;
 
@@ -828,33 +826,27 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (!ok_in_loop(cmd->ci)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
-	    if (gretl_echo_on()) {
-		unsigned char cflag = 0;
-
-		if (gretl_compiling_loop()) {
-		    cflag = CMD_STACKING;
-		}
-		/* straight stdout echo */
-		echo_cmd(cmd, pdinfo, line, cflag, NULL);
-		if (!batch && !runit) {
-		    /* also echo to record */
-		    echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
-		}
+	    if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
+		eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;
+		/* straight visual echo */
+		echo_cmd(cmd, pdinfo, line, eflag, prn);
 	    }
 	    err = gretl_loop_append_line(s, pZ, pdinfo);
 	    if (err) {
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
-	    } 
+	    } else if (!batch && !runit) {
+		/* echo to record */
+		echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
+	    }
 	}
 	return err;
     }
 
     if (gretl_echo_on()) {
 	/* visual feedback, not recording */
-	unsigned char cflag = (batch || runit)? CMD_BATCH_MODE : 0;
-
-	echo_cmd(cmd, pdinfo, line, cflag, NULL);
+	eflag = (batch || runit)? CMD_BATCH_MODE : CMD_CLI;
+	echo_cmd(cmd, pdinfo, line, eflag, prn);
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);

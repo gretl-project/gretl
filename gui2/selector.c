@@ -1672,6 +1672,7 @@ static void construct_cmdlist (selector *sr)
     if (sr->cmdlist == NULL) {
 	return;
     }
+
     *sr->cmdlist = '\0';
 
     /* deal with content of "extra" widgets */

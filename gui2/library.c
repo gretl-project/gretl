@@ -334,8 +334,26 @@ static int lib_cmd_init (void)
     return cmd_init(cmdline);
 }
 
+static int console_cmd_init (char *s, int *crun)
+{
+    int ret = 0;
+
+    if (*crun) {
+	libcmd.word[0] = 0;
+	libcmd.param[0] = 0;
+	libcmd.extra[0] = 0;
+	libcmd.opt = OPT_NONE;
+	ret = cmd_init(s);
+	*crun = 0;
+    } else {
+	ret = cmd_init(s);
+    }
+
+    return ret;
+}
+
 /* checks command line s for validity, but does not
-   record the command */
+   of itself record the command */
 
 int check_specific_command (char *s)
 {
@@ -345,7 +363,7 @@ int check_specific_command (char *s)
     fprintf(stderr, "check_specific_command: s = '%s'\n", s);
 #endif
 
-    /* "cmd" is global */
+    /* "libcmd" is global */
     err = parse_command_line(s, &libcmd, &Z, datainfo); 
     if (err) {
 	gui_errmsg(err);
@@ -5922,54 +5940,6 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
-#define SAFELEN 78
-
-static void trim_to_length (char *s)
-{
-    int i, n = strlen(s);
-
-    if (n < SAFELEN - 1) return;
-
-    for (i=n-1; i>0; i--) {
-	if (s[i] == ' ') {
-	    s[i] = '\0';
-	    break;
-	}
-    }
-}
-
-static void safe_print_line (const char *line, PRN *prn)
-{
-    char tmp[SAFELEN];
-    const char *leader = " ";
-    const char *lstr[] = { "? ", "> " };
-    const char *p, *q;
-    int n, m, out, rem;
-
-    leader = (gretl_compiling_loop())? lstr[1] : lstr[0];
-    pputs(prn, leader); 
-    
-    rem = n = strlen(line);
-
-    p = line;
-    out = 0;
-    while (out < n) {
-	*tmp = 0;
-	q = p;
-	strncat(tmp, p, SAFELEN - 1);
-	trim_to_length(tmp);
-	m = strlen(tmp);
-	out += m;
-	rem = n - out;
-	p = q + m;
-	if (rem > 0) {
-	    pprintf(prn, "%s \\\n ", tmp);
-	} else {
-	    pprintf(prn, "%s", tmp);
-	}
-    }
-}
-
 static void output_line (const char *line, PRN *prn) 
 {
     int n = strlen(line);
@@ -5984,7 +5954,13 @@ static void output_line (const char *line, PRN *prn)
 	    pprintf(prn, "%s\n", line);
 	}
     } else if (!string_is_blank(line)) {
-	safe_print_line(line, prn);
+	const char *leader;
+	
+	leader = (gretl_compiling_loop())? "> " : "? ";
+	pputs(prn, leader); 
+	n = 2;
+	safe_print_line(line, &n, prn);
+	pputc(prn, '\n');
     }
 }
 
@@ -6254,6 +6230,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     PRN *outprn = NULL;
     int grbatch = 0;
     char runfile[MAXLEN];
+    int console_run = 0;
     GnuplotFlags plotflags = 0;
     int k, err = 0;
 
@@ -6334,7 +6311,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (err) {
 	    print_gretl_errmsg(prn);
 	    return 1;
-	} 
+	}
+	if (s->flags == CONSOLE_EXEC) {
+	    cmd_init(line);
+	}
 	return 0;
     } 
 
@@ -6510,6 +6490,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	} else {
+	    int orig_code = s->flags;
 	    int script_code = s->flags;
 
 	    if (s->flags == CONSOLE_EXEC) {
@@ -6520,6 +6501,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		script_code |= INCLUDE_EXEC;
 	    }
 	    err = execute_script(runfile, NULL, prn, script_code);
+	    if (!err && orig_code == CONSOLE_EXEC) {
+		console_run = 1;
+	    }
 	}
 	break;
 
@@ -6550,7 +6534,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     /* log the specific command? */
     if (s->flags == CONSOLE_EXEC && !err) {
-	cmd_init(line);
+	console_cmd_init(line, &console_run);
     }
 
     /* save specific output (text) buffer? */

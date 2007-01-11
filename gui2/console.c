@@ -294,8 +294,8 @@ static void console_exec (void)
     }
 
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
-					     (gretl_compiling_loop())? "\n> " : "\n? ", 
-					     3, "redtext", NULL);
+					     (gretl_compiling_loop())? "> " : "? ", 
+					     2, "redtext", NULL);
 
     /* scroll to end of buffer */
     console_scroll_to_end(buf, &start);

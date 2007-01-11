@@ -32,7 +32,8 @@ typedef struct ExecState_ ExecState;
 typedef enum {
     CMD_BATCH_MODE     = 1 << 0,
     CMD_STACKING       = 1 << 1,
-    CMD_RECORDING      = 1 << 2
+    CMD_RECORDING      = 1 << 2,
+    CMD_CLI            = 1 << 3
 } CmdEchoFlags;
 
 typedef enum {
@@ -101,6 +102,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	       unsigned char flags, PRN *prn);
 
 void echo_function_call (const char *line, unsigned char flags, PRN *prn);
+
+void safe_print_line (const char *line, int *plen, PRN *prn);
 
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *prn);

@@ -3193,6 +3193,15 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
 
+static void reverse_gradient (double *g, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	g[i] = -g[i];
+    }
+}
+
 /**
  * BFGS_max:
  * @b: array of adjustable coefficients.
@@ -3264,10 +3273,13 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     fmax = f;
     iter = ilast = fcount = gcount = 1;
     gradfunc(b, g, n, cfunc, data);
+    reverse_gradient(g, n);
 
     do {
 	if (opt & OPT_V) {
+	    reverse_gradient(g, n);
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
+	    reverse_gradient(g, n);
 	}
 	if (ilast == gcount) {
 	    /* (re-)start: initialize curvature matrix */
@@ -3287,16 +3299,16 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	for (i=0; i<n; i++) {
 	    s = 0.0;
 	    for (j=0; j<=i; j++) {
-		s += H[i][j] * g[j];
+		s -= H[i][j] * g[j];
 	    }
 	    for (j=i+1; j<n; j++) {
-		s += H[j][i] * g[j];
+		s -= H[j][i] * g[j];
 	    }
 	    t[i] = s;
 	    sumgrad += s * g[i];
 	}
 
-	if (sumgrad > 0.0) {	
+	if (sumgrad < 0.0) {	
 	    steplen = 1.0;
 	    crit_ok = 0;
 	    do {
@@ -3340,12 +3352,13 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		/* making progress */
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
+		reverse_gradient(g, n);
 		gcount++;
 		iter++;
 		D1 = 0.0;
 		for (i=0; i<n; i++) {
 		    t[i] = steplen * t[i];
-		    c[i] -= g[i];
+		    c[i] = g[i] - c[i];
 		    D1 += t[i] * c[i];
 		}
 		if (D1 > 0.0) {
@@ -3415,9 +3428,10 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     *grcount = gcount;
 
     if (opt & OPT_V) {
-	pputs(prn, _("\n--- FINAL VALUES: \n"));	
+	pputs(prn, _("\n--- FINAL VALUES: \n"));
+	reverse_gradient(g, n);
 	print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
-	pputc(prn, '\n');	
+	pputc(prn, '\n');
     }
 
  bailout:

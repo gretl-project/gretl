@@ -1350,6 +1350,7 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd->ci = 0;
     cmd->err = 0;
     *cmd->word = '\0';
+    cmd->opt = OPT_NONE;
 
     cmd_unset_nolist(cmd);
 
@@ -2401,12 +2402,12 @@ static void trim_to_length (char *s)
     }
 }
 
-static void 
-safe_print_line (const char *line, int *plen, PRN *prn)
+void safe_print_line (const char *line, int *plen, PRN *prn)
 {
     char tmp[SAFELEN];
     const char *q, *p = line;
     int n, m, rem, out = 0;
+    int len0 = *plen;
 
     rem = n = strlen(line);
 
@@ -2414,7 +2415,9 @@ safe_print_line (const char *line, int *plen, PRN *prn)
 	*tmp = 0;
 	q = p;
 	strncat(tmp, p, SAFELEN - 1);
-	trim_to_length(tmp);
+	len0 = 0;
+	trim_to_length(tmp - len0);
+	len0 = 0;
 	m = strlen(tmp);
 	out += m;
 	rem = n - out;
@@ -2526,9 +2529,10 @@ static int effective_ci (const CMD *cmd)
 #define LINELEN 78
 
 static void
-print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,  
+cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,  
 		int *plen, PRN *prn)
 {
+    char numstr[12];
     int use_varnames = (cmd->ci != AR && cmd->ci != DELEET);
     int nsep, gotsep, i;
 
@@ -2571,8 +2575,6 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	if (use_varnames) {
 	    *plen += cmd_list_print_var(cmd, i, pdinfo, prn);
 	} else {
-	    char numstr[12];
-		
 	    sprintf(numstr, " %d", cmd->list[i]);
 	    *plen += pputs(prn, numstr);
 	}
@@ -2593,7 +2595,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
-    if (!strcmp(line, "quit")) {
+    if (!strncmp(line, "quit", 4) && string_is_blank(line + 4)) {
 	return 1;
     }
 
@@ -2623,7 +2625,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
  * @prn: pointer to gretl printing struct (or %NULL).
  *
  * Echoes the user command represented by @cmd and @line, to
- * %stdout (if @prn is %NULL) or @prn.
+ * %stdout (if @prn is %NULL) or @prn.  This is used for two
+ * distinct purposes: to give visual feedback on the
+ * command supplied, and (in some contexts) to record a
+ * command that was executed interactively.
  */
 
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
@@ -2632,9 +2637,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     int batch = (flags & CMD_BATCH_MODE);
     int recording = (flags & CMD_RECORDING);
     int len, llen = 0;
-    int free_prn = 0;
 
-    if (line == NULL) {
+    if (line == NULL || prn == NULL) {
 	return;
     }
 
@@ -2650,23 +2654,12 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 #endif
 
-    /* certain things don't get echoed at all */
-    if (command_is_silent(cmd, line)) {
+    /* certain things don't get echoed at all, if not recording */
+    if (!recording && command_is_silent(cmd, line)) {
 	return;
     }
 
-    if (prn == NULL) {
-	/* echoing to stdout */
-	prn = gretl_print_new(GRETL_PRINT_STDOUT);
-	free_prn = 1;
-    }
-
-    /* special case: "store" command, which could overflow the
-       line length; also not clear whether we should record gui
-       "store" in the command script.  As a compromise we'll record
-       it, but commented out. (FIXME: loop context?)
-    */
-
+    /* special case: "store" command: record as comment */
     if (recording && cmd->ci == STORE) {
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
@@ -2678,25 +2671,18 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    /* leading string before echo: none if recording */
+    /* print leading string before echo: none if recording */
     if (!recording) {
 	if (flags & CMD_STACKING) {
 	    llen += pputs(prn, "> ");
 	} else if (batch) {
 	    llen += pputs(prn, "? ");
+	} else if (flags & CMD_CLI) {
+	    llen += pputc(prn, ' ');
 	}
     }
 
-#if 0
-    /* REMEMBER: print the literal command line (only) */
-    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
-	pputs(prn, cmd->extra);
-	pputc(prn, '\n');
-	return;
-    }
-#endif
-
-    /* printing a list */
+    /* special: printing a list */
     if (cmd->ci == PRINT && !strcmp(cmd->word, "list")) {
 	pprintf(prn, "list %s print\n", cmd->extra);
 	return;
@@ -2715,7 +2701,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     if (!dont_print_list(cmd)) {
 	llen += pprintf(prn, "%s", cmd->word);
-	print_cmd_list(cmd, pdinfo, &llen, prn);
+	cmd_print_list(cmd, pdinfo, &llen, prn);
     } else if (strlen(line) > SAFELEN - 2) {
 	safe_print_line(line, &llen, prn);
     } else if (strcmp(cmd->word, "quit")) {
@@ -2747,12 +2733,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
     pputc(prn, '\n');
-
     gretl_print_flush_stream(prn);
-
-    if (free_prn) {
-	gretl_print_destroy(prn);
-    }
 }
 
 void echo_function_call (const char *line, unsigned char flags, PRN *prn)
@@ -3886,11 +3867,19 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	break;
 
     case RUN:
+    case INCLUDE:
 	err = getopenfile(line, runfile, NULL, OPT_S);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	} 
+	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
+	    err = load_user_function_file(runfile);
+	    if (err) {
+		pputs(prn, _("Error reading function definitions\n"));
+	    }
+	    break;
+	}
 	if (!strcmp(runfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
@@ -4026,12 +4015,18 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     static int context;
     int done = 0;
 
+#if 0
+    if (gretl_cmd_clear(cmd)) {
+	return cmd->err;
+    }
+#else
+    cmd->ci = 0;
+    cmd->opt = OPT_NONE;
+#endif
+
     while (isspace(*line)) {
 	line++;
     }
-
-    cmd->ci = 0;
-    cmd->opt = OPT_NONE;
 
 #if CMD_DEBUG
     fprintf(stderr, "get_command_index: line='%s'\n", line);

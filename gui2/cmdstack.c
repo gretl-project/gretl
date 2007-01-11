@@ -23,7 +23,7 @@
 #include "cmd_private.h"
 #include "fileselect.h"
 
-#undef CMD_DEBUG
+#define CMD_DEBUG 0
 
 typedef struct {
     int ID;
@@ -81,7 +81,7 @@ int add_command_to_stack (const char *str)
 	return 1;
     }
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "added to stack as cmd_stack[%d]:\n"
 	    " %s\n", n_cmds, cmd_stack[n_cmds]);
 #endif
@@ -116,7 +116,7 @@ static model_stack *add_model_stack (int model_id)
     mstacks[nm].n = 0;
     mstacks[nm].cmds = NULL;
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "add_model_stack:\n"
 	    " mstacks[%d]: ID=%d\n", nm, model_id);
 #endif
@@ -161,7 +161,7 @@ static int add_command_to_mstack (model_stack *mstack, const char *str)
 
     mstack->n += 1;
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "add_command_to_mstack, with ID=%d:\n"
 	    " %s\n", mstack->ID, str);
 #endif
@@ -382,6 +382,17 @@ static int maybe_prepend_open_data (FILE *fp)
     return cancel;
 }
 
+static int creates_model (const char *cmdword)
+{
+    if (is_model_cmd(cmdword) ||
+	!strcmp(cmdword, "addto") ||
+	!strcmp(cmdword, "omitfrom")) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /* ship out the stack of commands entered in the current session */
 
 int dump_command_stack (const char *fname, int insert_open_data)
@@ -438,8 +449,8 @@ int dump_command_stack (const char *fname, int insert_open_data)
 	    sscanf(cmd_stack[i], "%8s", cmdword);
 	}
 	
-	if (is_model_cmd(cmdword)) {
-#ifdef CMD_DEBUG
+	if (creates_model(cmdword)) {
+#if CMD_DEBUG
 	    fprintf(stderr, "cmd_stack[%d]: looking for model commands\n", i);
 #endif
 	    mstack = mstack_from_model_id(++modnum);

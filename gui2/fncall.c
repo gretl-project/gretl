@@ -299,17 +299,26 @@ int do_make_list (selector *sr)
     int *list;
     int err;
 
-    if (buf == NULL || *buf == 0) {
-	return 1;
-    }
-
     if (lname == NULL || *lname == 0) {
 	errbox(_("No name was given for the list"));
 	return 1;
-    }    
+    }   
 
-    list = gretl_list_from_string(buf);
+    if (buf == NULL || *buf == 0) {
+	int resp;
+
+	resp = yes_no_dialog("gretl", _("Really create an empty list?"), 0);
+	if (resp == GRETL_YES) {
+	    list = gretl_null_list();
+	} else {
+	    return 0;
+	}
+    } else {
+	list = gretl_list_from_string(buf);
+    }
+
     if (list == NULL) {
+	nomem();
 	return 1;
     }
 
