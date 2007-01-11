@@ -215,7 +215,7 @@ int model_command_init (int model_ID)
 	return 1;
     }
 
-    echo_cmd(libcmd, datainfo, line, 0, echo);
+    echo_cmd(libcmd, datainfo, line, CMD_RECORDING, echo);
 
     if (add_command_to_mstack(mstack, gretl_print_get_buffer(echo))) {
 	err = 1;

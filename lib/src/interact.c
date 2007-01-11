@@ -1402,12 +1402,13 @@ static int maybe_print_object (const char *line, int nf, CMD *cmd)
 	if (nf == 0 || (sscanf(line, "%5s", word) && !strcmp(word, "print"))) {
 	    list = get_list_by_name(cmd->param);
 	    if (list != NULL) {
-		free(cmd->list);
-		cmd->list = gretl_list_copy(list);
-		if (cmd->list != NULL) {
-		    cmd->opt |= OPT_P;
-		    ret = 1;
-		}
+		cmd->list[0] = 0;
+		free(cmd->extra);
+		cmd->extra = gretl_strdup(cmd->param);
+		*cmd->param = '\0';
+		cmd->ci = PRINT;
+		cmd->opt = OPT_NONE;
+		ret = 1;
 	    }
 	}
     }
@@ -2384,11 +2385,13 @@ int gretl_shell (const char *arg)
 
 #endif /* ! WIN32 */
 
-static void trim_to_length (char *s, int oklen)
+#define SAFELEN 78
+
+static void trim_to_length (char *s)
 {
     int i, n = strlen(s);
 
-    if (n < oklen - 1) return;
+    if (n < SAFELEN - 1) return;
 
     for (i=n-1; i>0; i--) {
 	if (s[i] == ' ') {
@@ -2398,96 +2401,43 @@ static void trim_to_length (char *s, int oklen)
     }
 }
 
-#define SAFELEN 78
-
 static void 
-real_safe_print_line (const char *line, int cli, int batch, 
-		      int script, int *stdlen, int *prnlen,
-		      PRN *prn)
+safe_print_line (const char *line, int *plen, PRN *prn)
 {
     char tmp[SAFELEN];
-    const char *leader = "";
-    const char *lstr[] = { "? ", "> " };
-    const char *p, *q;
-    int n, m, out, rem;
-
-    if (!cli && batch) return;
-
-    if (cli && !batch) {
-	leader = " ";
-    } else if (cli || script) {
-	leader = (gretl_compiling_loop())? lstr[1] : lstr[0];
-    }
-
-    if (cli) {
-	fputs(leader, stdout);
-	*stdlen += strlen(leader);
-    } else if (script) {
-	pputs(prn, leader); 
-	*prnlen += strlen(leader);
-    }	
+    const char *q, *p = line;
+    int n, m, rem, out = 0;
 
     rem = n = strlen(line);
 
-    p = line;
-    out = 0;
     while (out < n) {
 	*tmp = 0;
 	q = p;
 	strncat(tmp, p, SAFELEN - 1);
-	trim_to_length(tmp, SAFELEN);
+	trim_to_length(tmp);
 	m = strlen(tmp);
 	out += m;
 	rem = n - out;
 	p = q + m;
-	if (cli) {
-	    if (rem > 0) {
-		printf("%s \\\n ", tmp);
-		*stdlen = 1;
-	    } else {
-		printf("%s", tmp);
-		*stdlen += m;
-	    }
-	}
-	if (!batch) {
-	    if (rem > 0) {
-		pprintf(prn, "%s \\\n ", tmp);
-		*prnlen = 1;
-	    } else {
-		pprintf(prn, "%s", tmp);
-		*prnlen += m;
-	    }
+	if (rem > 0) {
+	    pprintf(prn, "%s \\\n ", tmp);
+	    *plen = 1;
+	} else {
+	    pprintf(prn, "%s", tmp);
+	    *plen += m;
 	}
     }
 }
 
-void safe_print_line (const char *line, PRN *prn)
-{
-    int l1 = 0, l2 = 0;
-
-    real_safe_print_line(line, 0, 0, 1, &l1, &l2, prn);
-    pputc(prn, '\n');
-}
-
 static int
-print_maybe_quoted_str (const char *s, int cli, PRN *prn)
+print_maybe_quoted_str (const char *s, PRN *prn)
 {
     int ret = 0;
 
     if (strchr(s, ' ') != NULL) {
-	if (cli) {
-	    ret += printf(" \"%s\"", s);
-	} else {
-	    pprintf(prn, " \"%s\"", s);
-	    ret += strlen(s) + 3;
-	}
+	ret += pprintf(prn, " \"%s\"", s);
     } else {
-	if (cli) {
-	    ret += printf(" %s", s); 
-	} else {
-	    pprintf(prn, " %s", s);
-	    ret += strlen(s) + 1;
-	}
+	ret += pprintf(prn, " %s", s);
     }
 
     return ret;
@@ -2495,7 +2445,7 @@ print_maybe_quoted_str (const char *s, int cli, PRN *prn)
 
 static int 
 cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
-		    int echo_stdout, PRN *prn)
+		    PRN *prn)
 {
     int v = cmd->list[i];
     int src, genpos;
@@ -2504,16 +2454,11 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
     if (v > 0 &&
 	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
 	if (is_first_lag(genpos, cmd->linfo, &src)) {
-	    bytes += print_lags_by_varnum(src, cmd->linfo, echo_stdout, 
-					  pdinfo, prn);
+	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, prn);
 	} 
     } else {
-	if (echo_stdout) {
-	    bytes += printf(" %s", pdinfo->varname[v]);
-	} else {
-	    pputc(prn, ' ');
-	    bytes += 1 + pputs(prn, pdinfo->varname[v]);
-	}
+	pputc(prn, ' ');
+	bytes += 1 + pputs(prn, pdinfo->varname[v]);
     }
 
     return bytes;
@@ -2553,6 +2498,23 @@ static int n_separators (const int *list)
     return nsep;
 }
 
+static int effective_ci (const CMD *cmd)
+{
+    int ci = cmd->ci;
+
+    if (ci == END) {
+	if (!strcmp(cmd->param, "nls")) {
+	    ci = NLS;
+	} else if (!strcmp(cmd->param, "mle")) {
+	    ci = MLE;
+	} else if (!strcmp(cmd->param, "gmm")) {
+	    ci = GMM;
+	}
+    }
+
+    return ci;
+}
+
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
@@ -2565,79 +2527,32 @@ static int n_separators (const int *list)
 
 static void
 print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,  
-		int batch, int echo_stdout, char leadchar,
-		int *stdlen, int *prnlen, PRN *prn)
+		int *plen, PRN *prn)
 {
     int use_varnames = (cmd->ci != AR && cmd->ci != DELEET);
-    char first[16];
     int nsep, gotsep, i;
+
+    if (cmd->list == NULL || cmd->list[0] == 0) {
+	return;
+    }
 
     nsep = n_separators(cmd->list);
 
-    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
-	sprintf(first, "# %s", cmd->word);
-    } else {
-	strcpy(first, cmd->word);
-    }
-
-    if (echo_stdout) {
-	if (batch) {
-	    if (cmd->ci != EQUATION && cmd->ci != REMEMBER) {
-		putchar('\n');
-	    }
-	    if (cmd->ci == REMEMBER) {
-		*stdlen += printf("%s", first);
-	    } else {
-		*stdlen += printf("%c %s", leadchar, first);
-	    }
-	} else {
-	    *stdlen += printf(" %s", first);
+    if (cmd->ci == RHODIFF) {
+	*plen += pprintf(prn, " %s;", cmd->param);
+    } else if (cmd->ci == LAGS) {
+	if (cmd->param[0] != '\0') {
+	    *plen += pprintf(prn, " %s;", cmd->param);
 	}
-	if (cmd->ci == RHODIFF) {
-	    *stdlen += printf(" %s;", cmd->param);
-	} else if (cmd->ci == LAGS) {
-	    if (cmd->param[0] != '\0') {
-		*stdlen += printf(" %s;", cmd->param);
-	    }
-	} else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
-	    *stdlen += print_maybe_quoted_str(cmd->param, 1, prn);
-	}
+    } else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
+	*plen += print_maybe_quoted_str(cmd->param, prn);
 	if (cmd->ci == REMEMBER) {
-	    fputs(" =", stdout);
-	    *stdlen += 2;
-	    if (cmd->list[0] == 0) {
-		fputs(" null", stdout);
-		*stdlen += 5;
-	    }
-	} else if (cmd->ci == VECM) {
-	    *stdlen += printf(" %s", cmd->extra);
+	    *plen += pputs(prn, " =");
 	}
     }
 
-    if (!batch) {
-	pprintf(prn, "%s", first);
-	*prnlen += strlen(first);
-	if (cmd->ci == RHODIFF) {
-	    pprintf(prn, " %s;", cmd->param);
-	    *prnlen += 2 + strlen(cmd->param);
-	} else if (cmd->ci == LAGS) {
-	    if (cmd->param[0] != '\0') {
-		pprintf(prn, " %s;", cmd->param);
-		*prnlen += 2 + strlen(cmd->param);
-	    }
-	} else if (cmd->param[0] != '\0' && !hold_param(cmd->ci)) {
-	    *prnlen += print_maybe_quoted_str(cmd->param, 0, prn);
-	}
-	if (cmd->ci == REMEMBER) {
-	    *prnlen += pputs(prn, " =");
-	    if (cmd->list[0] == 0) {
-		pputs(prn, " null");
-		*prnlen += 5;
-	    }
-	} else if (cmd->ci == VECM) {
-	    pprintf(prn, " %s", cmd->extra);
-	    *prnlen += 1 + strlen(cmd->extra);
-	}
+    if (cmd->ci == VECM && cmd->extra != NULL) {
+	*plen += pprintf(prn, " %s", cmd->extra);
     }
 
     gotsep = 0;
@@ -2645,12 +2560,7 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
     for (i=1; i<=cmd->list[0]; i++) {
 
 	if (cmd->list[i] == LISTSEP) {
-	    if (echo_stdout) {
-		*stdlen += printf(" ;");
-	    }
-	    if (!batch) {
-		*prnlen += pputs(prn, " ;");
-	    }
+	    *plen += pputs(prn, " ;");
 	    gotsep++;
 	    if (listsep_switch(cmd->ci) && gotsep == nsep) {
 		use_varnames = !use_varnames;
@@ -2658,41 +2568,32 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	    continue;
 	}
 
-	if (echo_stdout) {
-	    if (use_varnames) {
-		*stdlen += cmd_list_print_var(cmd, i, pdinfo, 1, prn);
-	    } else {
-		*stdlen += printf(" %d", cmd->list[i]);
-	    }
-	    if (*stdlen > TESTLEN && more_coming(cmd, i)) {
-		printf(" \\\n "); 
-		*stdlen = 1;
-	    }
+	if (use_varnames) {
+	    *plen += cmd_list_print_var(cmd, i, pdinfo, prn);
+	} else {
+	    char numstr[12];
+		
+	    sprintf(numstr, " %d", cmd->list[i]);
+	    *plen += pputs(prn, numstr);
 	}
 
-	if (!batch) {
-	    if (use_varnames) {
-		*prnlen += cmd_list_print_var(cmd, i, pdinfo, 0, prn);
-	    } else {
-		char numstr[12];
-		
-		sprintf(numstr, " %d", cmd->list[i]);
-		*prnlen += pputs(prn, numstr);
-	    }
-	    if (*prnlen > TESTLEN && more_coming(cmd, i)) {
-		pputs(prn, " \\\n "); 
-		*prnlen = 1;
-	    }
+	if (*plen > TESTLEN && more_coming(cmd, i)) {
+	    pputs(prn, " \\\n "); 
+	    *plen = 1;
 	}
     }
 }
 
 #define ECHO_DEBUG 0
 
-static int is_silent (const CMD *cmd, const char *line)
+static int command_is_silent (const CMD *cmd, const char *line)
 {
     if (cmd->ci == FUNCERR || cmd->ci == PRINTF ||
 	(cmd->ci == PRINT && strchr(line, '"'))) {
+	return 1;
+    }
+
+    if (!strcmp(line, "quit")) {
 	return 1;
     }
 
@@ -2721,17 +2622,17 @@ static int is_silent (const CMD *cmd, const char *line)
  * @flags: bitwise OR of elements from #CmdEchoFlags.
  * @prn: pointer to gretl printing struct (or %NULL).
  *
- * Echoes the user command represented by @pcmd and @line, to
- * %stdout and/or @prn.
+ * Echoes the user command represented by @cmd and @line, to
+ * %stdout (if @prn is %NULL) or @prn.
  */
 
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn)
 {
-    char leadchar = (flags & CMD_STACKING)? '>' : '?';
-    int echo_stdout = (flags & CMD_ECHO_TO_STDOUT);
     int batch = (flags & CMD_BATCH_MODE);
-    int len, stdlen = 0, prnlen = 0;
+    int recording = (flags & CMD_RECORDING);
+    int len, llen = 0;
+    int free_prn = 0;
 
     if (line == NULL) {
 	return;
@@ -2740,8 +2641,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 #if ECHO_DEBUG
     fprintf(stderr, "echo_cmd:\n line='%s'\n param='%s'\n extra='%s'\n", 
 	    line, cmd->param, cmd->extra);
-    fprintf(stderr, " echo_stdout=%d, cmd->opt=%ld, batch=%d, nolist=%d\n",
-	    echo_stdout, cmd->opt, batch, cmd_nolist(cmd));
+    fprintf(stderr, " cmd->opt=%ld, batch=%d, nolist=%d\n",
+	    cmd->opt, flags & CMD_BATCH_MODE, cmd_nolist(cmd));
     fprintf(stderr, " prn=%p\n", (void *) prn);
     fprintf(stderr, " cmd->word='%s'\n", cmd->word);
     if (!cmd_nolist(cmd)) {
@@ -2749,17 +2650,24 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 #endif
 
-    /* don't echo certain things */
-    if (is_silent(cmd, line)) {
+    /* certain things don't get echoed at all */
+    if (command_is_silent(cmd, line)) {
 	return;
     }
 
-    /* special case: gui "store" command, which could overflow the
-       line length; also I'm not sure whether we should record gui
-       "store" in the command script.  As a compromise we'll record it,
-       but commented out. (FIXME: loop context?)
+    if (prn == NULL) {
+	/* echoing to stdout */
+	prn = gretl_print_new(GRETL_PRINT_STDOUT);
+	free_prn = 1;
+    }
+
+    /* special case: "store" command, which could overflow the
+       line length; also not clear whether we should record gui
+       "store" in the command script.  As a compromise we'll record
+       it, but commented out. (FIXME: loop context?)
     */
-    if (!echo_stdout && !batch && cmd->ci == STORE) {  
+
+    if (recording && cmd->ci == STORE) {
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
 	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
@@ -2770,110 +2678,80 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    /* another special, REMEMBER: we should print the literal
-       command line first */
-    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
-	if (echo_stdout) {
-	    printf("%c %s\n", leadchar, cmd->extra);
+    /* leading string before echo: none if recording */
+    if (!recording) {
+	if (flags & CMD_STACKING) {
+	    llen += pputs(prn, "> ");
+	} else if (batch) {
+	    llen += pputs(prn, "? ");
 	}
-	pputs(prn, cmd->extra);
-	pputc(prn, '\n');
     }
 
-    if (*line == '\0' || *line == '!' || !strcmp(line, "quit")) {
+#if 0
+    /* REMEMBER: print the literal command line (only) */
+    if (cmd->ci == REMEMBER && cmd->extra != NULL) {
+	pputs(prn, cmd->extra);
+	pputc(prn, '\n');
+	return;
+    }
+#endif
+
+    /* printing a list */
+    if (cmd->ci == PRINT && !strcmp(cmd->word, "list")) {
+	pprintf(prn, "list %s print\n", cmd->extra);
+	return;
+    }
+
+    if (*line == '\0' || *line == '!') {
 	return;
     }
 
     /* command is preceded by a "savename" to which an object will
        be assigned */
-    if (*cmd->savename && !echo_stdout && !batch) {
+    if (*cmd->savename) {
 	pprintf(prn, "%s <- ", cmd->savename);
-	prnlen += strlen(cmd->savename) + 4;
+	llen += strlen(cmd->savename) + 4;
     }
 
     if (!dont_print_list(cmd)) {
-	print_cmd_list(cmd, pdinfo, batch, echo_stdout, leadchar, 
-		       &stdlen, &prnlen, prn);
+	llen += pprintf(prn, "%s", cmd->word);
+	print_cmd_list(cmd, pdinfo, &llen, prn);
     } else if (strlen(line) > SAFELEN - 2) {
-	/* 20061115: before, this was confined to GENR and SMPL (?) */
-	real_safe_print_line(line, echo_stdout, batch,  
-			     (flags & CMD_STACKING), 
-			     &stdlen, &prnlen, prn);
+	safe_print_line(line, &llen, prn);
     } else if (strcmp(cmd->word, "quit")) {
-	if (echo_stdout) {
-	    if (batch) {
-		stdlen += printf("%c %s", leadchar, line);
-	    } else {
-		stdlen += printf(" %s", line);
-	    }
-	}
-	if (!batch) {
-	    prnlen += pputs(prn, line);
-	}
+	llen += pputs(prn, line);
     }
 
     /* print parameter after list, if wanted */
     if ((cmd->ci == LOGISTIC || cmd->ci == ARBOND) && *cmd->param != '\0') {
 	len = strlen(cmd->param) + 1;
-	if (echo_stdout) {
-	    if (stdlen + len > LINELEN) {
-		fputs(" \\\n ", stdout);
-		stdlen = 0;
-	    }
-	    fputc(' ', stdout);
-	    fputs(cmd->param, stdout);
-	    stdlen += len;
-	}
-	if (!batch) {
-	    if (prnlen + len > LINELEN) {
-		pputs(prn, " \\\n ");
-		prnlen = 0;
-	    }	    
-	    pputc(prn, ' ');
-	    pputs(prn, cmd->param);
-	    prnlen += len;
-	}
+	if (llen + len > LINELEN) {
+	    pputs(prn, " \\\n ");
+	    llen = 0;
+	}	    
+	pputc(prn, ' ');
+	pputs(prn, cmd->param);
+	llen += len;
     }
 
-    /* add printout of any options to the command (note that these
-       will have been stripped from line)
-    */
+    /* add printout of any options to the command */
     if (cmd->opt) {
 	const char *flagstr;
-	int ci = cmd->ci;
 
-	if (cmd->ci == END) {
-	    if (!strcmp(cmd->param, "nls")) {
-		ci = NLS;
-	    } else if (!strcmp(cmd->param, "mle")) {
-		ci = MLE;
-	    } else if (!strcmp(cmd->param, "gmm")) {
-		ci = GMM;
-	    }
-	}
-	flagstr = print_flags(cmd->opt, ci);
+	flagstr = print_flags(cmd->opt, effective_ci(cmd));
 	len = strlen(flagstr);
-	if (echo_stdout) {
-	    if (stdlen + len > LINELEN) {
-		fputs(" \\\n ", stdout);
-	    }
-	    fputs(flagstr, stdout);
-	}
-	if (!batch) {
-	    if (prnlen + len > LINELEN) {
-		pputs(prn, " \\\n ");
-	    }	    
-	    pputs(prn, flagstr);
-	}
+	if (llen + len > LINELEN) {
+	    pputs(prn, " \\\n ");
+	}	    
+	pputs(prn, flagstr);
     }
 
-    if (echo_stdout) {
-	putchar('\n');
-    }
+    pputc(prn, '\n');
 
-    if (!batch) {
-	pputc(prn, '\n');
-	gretl_print_flush_stream(prn);
+    gretl_print_flush_stream(prn);
+
+    if (free_prn) {
+	gretl_print_destroy(prn);
     }
 }
 

@@ -309,29 +309,19 @@ static int print_var_lags (const int *laglist, PRN *prn)
 }
 
 static int 
-print_lags_by_varnum (int v, const Laginfo *linfo, int cli, 
-		      const DATAINFO *pdinfo, PRN *prn)
+print_lags_by_varnum (int v, const Laginfo *linfo, 
+		      const DATAINFO *pdinfo, 
+		      PRN *prn)
 {
-    PRN *myprn = NULL;
     const int *laglist = NULL;
     int ret = 0;
 
-    if (cli) {
-	myprn = gretl_print_new(GRETL_PRINT_STDOUT);
-    } else {
-	myprn = prn;
-    }
-
     laglist = get_lag_list_by_varnum(v, linfo);
     if (laglist != NULL) {
-	pputc(myprn, ' ');
-	ret = 1 + pputs(myprn, pdinfo->varname[v]);
-	ret += print_var_lags(laglist, myprn);
+	pputc(prn, ' ');
+	ret = 1 + pputs(prn, pdinfo->varname[v]);
+	ret += print_var_lags(laglist, prn);
     } 
-
-    if (cli) {
-	gretl_print_destroy(myprn);
-    }
 
     return ret;
 }

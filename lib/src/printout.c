@@ -1475,17 +1475,51 @@ check_for_sorted_var (int *list, const DATAINFO *pdinfo)
     return ret;
 }
 
-static void print_listed_matrices (const char *s, PRN *prn)
+static void print_varlist (const char *name, const int *list, 
+			   const DATAINFO *pdinfo, PRN *prn)
 {
-    gretl_matrix *m;
-    char *mname;
+    int i, v, len = 0;
 
-    while ((mname = gretl_word_strdup(s, &s)) != NULL) {
-	m = get_matrix_by_name(mname);
-	if (m != NULL) {
-	    gretl_matrix_print_to_prn(m, mname, prn);
+    if (list[0] == 0) {
+	pprintf(prn, " %s\n", _("list is empty"));
+    } else {
+	len += pprintf(prn, " %s: ", name);
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    if (v == LISTSEP) {
+		len += pputs(prn, "; ");
+	    } else if (v >= 0 && v < pdinfo->v) {
+		len += pprintf(prn, "%s ", pdinfo->varname[v]);
+	    } else {
+		len += pprintf(prn, "%d ", v);
+	    }
+	    if (i < list[0] && len > 68) {
+		pputs(prn, " \\\n ");
+		len = 0;
+	    }
 	}
-	free(mname);
+	pputc(prn, '\n');
+    }
+}
+
+static void 
+print_listed_objects (const char *s, const DATAINFO *pdinfo, PRN *prn)
+{
+    const gretl_matrix *m;
+    const int *list;
+    char *name;
+
+    while ((name = gretl_word_strdup(s, &s)) != NULL) {
+	m = get_matrix_by_name(name);
+	if (m != NULL) {
+	    gretl_matrix_print_to_prn(m, name, prn);
+	} else {
+	    list = get_list_by_name(name);
+	    if (list != NULL) {
+		print_varlist(name, list, pdinfo, prn);
+	    }
+	}
+	free(name);
     }
 }
 
@@ -1776,7 +1810,7 @@ int printdata (const int *list, const char *mstr,
  endprint:
 
     if (mstr != NULL) {
-	print_listed_matrices(mstr, prn);
+	print_listed_objects(mstr, pdinfo, prn);
     }
 
     free(plist);

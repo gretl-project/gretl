@@ -31,8 +31,8 @@ typedef struct ExecState_ ExecState;
 
 typedef enum {
     CMD_BATCH_MODE     = 1 << 0,
-    CMD_ECHO_TO_STDOUT = 1 << 1,
-    CMD_STACKING       = 1 << 2
+    CMD_STACKING       = 1 << 1,
+    CMD_RECORDING      = 1 << 2
 } CmdEchoFlags;
 
 typedef enum {
@@ -110,8 +110,6 @@ int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 		     PRN *prn);
 
 int ready_for_command (const char *line);
-
-void safe_print_line (const char *line, PRN *prn);
 
 #endif /* INTERACT_H */
 

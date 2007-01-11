@@ -317,7 +317,7 @@ static int cmd_init (char *s)
     } else {
 	const char *buf;
 
-	echo_cmd(&libcmd, datainfo, s, 0, echo);
+	echo_cmd(&libcmd, datainfo, s, CMD_RECORDING, echo);
 	buf = gretl_print_get_buffer(echo);
 #if CMD_DEBUG
 	fprintf(stderr, "from echo_cmd: buf='%s'\n", buf);
@@ -5922,12 +5922,60 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
+#define SAFELEN 78
+
+static void trim_to_length (char *s)
+{
+    int i, n = strlen(s);
+
+    if (n < SAFELEN - 1) return;
+
+    for (i=n-1; i>0; i--) {
+	if (s[i] == ' ') {
+	    s[i] = '\0';
+	    break;
+	}
+    }
+}
+
+static void safe_print_line (const char *line, PRN *prn)
+{
+    char tmp[SAFELEN];
+    const char *leader = " ";
+    const char *lstr[] = { "? ", "> " };
+    const char *p, *q;
+    int n, m, out, rem;
+
+    leader = (gretl_compiling_loop())? lstr[1] : lstr[0];
+    pputs(prn, leader); 
+    
+    rem = n = strlen(line);
+
+    p = line;
+    out = 0;
+    while (out < n) {
+	*tmp = 0;
+	q = p;
+	strncat(tmp, p, SAFELEN - 1);
+	trim_to_length(tmp);
+	m = strlen(tmp);
+	out += m;
+	rem = n - out;
+	p = q + m;
+	if (rem > 0) {
+	    pprintf(prn, "%s \\\n ", tmp);
+	} else {
+	    pprintf(prn, "%s", tmp);
+	}
+    }
+}
+
 static void output_line (const char *line, PRN *prn) 
 {
     int n = strlen(line);
 
-    if ((line[0] == '(' && line[1] == '*') ||
-	(line[n-1] == ')' && line[n-2] == '*')) {
+    if ((line[0] == '/' && line[1] == '*') ||
+	(line[n-1] == '/' && line[n-2] == '*')) {
 	pprintf(prn, "\n%s\n", line);
     } else if (line[0] == '#') {
 	if (gretl_compiling_loop()) {

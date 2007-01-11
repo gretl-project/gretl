@@ -829,15 +829,17 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
 	    if (gretl_echo_on()) {
-		unsigned char eflags = CMD_ECHO_TO_STDOUT;
+		unsigned char cflag = 0;
 
 		if (gretl_compiling_loop()) {
-		    eflags |= CMD_STACKING;
+		    cflag = CMD_STACKING;
 		}
-		if (batch || runit) {
-		    eflags |= CMD_BATCH_MODE;
+		/* straight stdout echo */
+		echo_cmd(cmd, pdinfo, line, cflag, NULL);
+		if (!batch && !runit) {
+		    /* also echo to record */
+		    echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
 		}
-		echo_cmd(cmd, pdinfo, line, eflags, cmdprn);
 	    }
 	    err = gretl_loop_append_line(s, pZ, pdinfo);
 	    if (err) {
@@ -849,12 +851,10 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     if (gretl_echo_on()) {
-	unsigned char eflags = CMD_ECHO_TO_STDOUT;
+	/* visual feedback, not recording */
+	unsigned char cflag = (batch || runit)? CMD_BATCH_MODE : 0;
 
-	if (batch || runit) {
-	    eflags |= CMD_BATCH_MODE;
-	}
-	echo_cmd(cmd, pdinfo, line, eflags, NULL);
+	echo_cmd(cmd, pdinfo, line, cflag, NULL);
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
@@ -1060,7 +1060,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
-	echo_cmd(cmd, pdinfo, line, 0, cmdprn);
+	echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
     }
 
     return err;
