@@ -4,9 +4,8 @@
 #include "genparse.h"
 
 const char *special_keyword[] = {
-    "for"
+    "for",
     "funcerr",
-    "null",
     "return", 
     "while",
     NULL
@@ -24,7 +23,16 @@ void output_emacs_block (void)
     fputs("(defvar gretl-command-words\n '(", stdout);
     for (i=1; i<NC; i++) {
 	printf("\"%s\"", gretl_command_word(i));
-	if (i < NC-1) {
+	if (n % 8 == 0) {
+	    fputs("\n   ", stdout);
+	} else {
+	    putchar(' ');
+	}
+	n++;
+    } 
+    for (i=0; special_keyword[i] != NULL; i++) {
+	printf("\"%s\"", special_keyword[i]);
+	if (special_keyword[i+1] != NULL) {
 	    if (n % 8 == 0) {
 		fputs("\n   ", stdout);
 	    } else {
@@ -32,7 +40,7 @@ void output_emacs_block (void)
 	    }
 	}
 	n++;
-    } 
+    }	
     puts(")\n  \"Commands in Gretl (these names are also reserved).\")\n");
 
     /* functions in "genr" command */
@@ -147,6 +155,8 @@ void output_lang_file (void)
     puts(" <keyword>series</keyword>");
     puts(" <keyword>matrix</keyword>");
     puts(" <keyword>list</keyword>");
+    puts(" <keyword>null</keyword>");
+    puts(" <keyword>void</keyword>");
     puts("</keyword-list>\n");
 
     /* gretl commands */
@@ -155,6 +165,10 @@ void output_lang_file (void)
 	if (strcmp(gretl_command_word(i), "matrix")) {
 	    printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
 	}
+    }
+    /* plus a few specials */
+    for (i=0; special_keyword[i] != NULL; i++) {
+	printf(" <keyword>%s</keyword>\n", special_keyword[i]);
     }
     puts("</keyword-list>\n");
 
@@ -203,13 +217,6 @@ void output_lang_file (void)
 	printf(" <keyword>%s</keyword>\n", s);
     }
 	
-    puts("</keyword-list>\n");
-
-    /* other syntax elements */
-    puts("<keyword-list _name = \"AuxElements\" style = \"Data Type\" case-sensitive=\"TRUE\">");
-    for (i=0; special_keyword[i] != NULL; i++) {
-	printf(" <keyword>%s</keyword>\n", special_keyword[i]);
-    }
     puts("</keyword-list>\n");
 
     puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");
