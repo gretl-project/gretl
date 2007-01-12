@@ -3537,6 +3537,7 @@ static void selector_add_top_entry (selector *sr)
     label = gtk_label_new("Name for list:");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     entry = gtk_entry_new_with_max_length(31);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
     if (lname != NULL && *lname != 0) {
 	gtk_entry_set_text(GTK_ENTRY(entry), lname);
 	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);

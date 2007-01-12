@@ -997,11 +997,12 @@ static int fix_varname (char *vname)
 }   
 
 static int 
-check_all_varnames (wbook *book, int ncols, const char *blank_col)
+check_all_varnames (wbook *book, int *ncols, const char *blank_col)
 {
     int j, i = book->row_offset;
     int startcol = book->col_offset;
     int realcols = 0;
+    int gotcols = 0;
     int vnames = 0;
     int ret = VARNAMES_NONE;
 
@@ -1009,15 +1010,26 @@ check_all_varnames (wbook *book, int ncols, const char *blank_col)
 	startcol++;
     }
 
-    for (j=startcol; j<ncols; j++) { 
+    if (rows[i].cells == NULL) {
+	fprintf(stderr, "Row %d is empty, trying lower...\n", i);
+	while (i < nrows - 1 && rows[i].cells == NULL) {
+	    book->row_offset += 1;
+	    i++;
+	}
+    }
+
+    for (j=startcol; j<*ncols; j++) { 
 	if (blank_col[j]) {
+	    gotcols++;
 	    continue;
 	}
 
 	if (rows[i].cells[j] == NULL) {
 	    dprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
-	    return VARNAMES_NULL;
+	    break;
 	}
+
+	gotcols++;
 
 	dprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
 		rows[i].cells[j]);
@@ -1047,7 +1059,10 @@ check_all_varnames (wbook *book, int ncols, const char *blank_col)
 	realcols++;
     }
 
+    fprintf(stderr, "realcols = %d, vnames = %d\n", realcols, vnames);
+
     if (vnames == realcols) {
+	*ncols = gotcols;
 	ret = VARNAMES_OK;
     } else if (vnames > 0) {
 	ret = VARNAMES_NOTSTR;
@@ -1413,7 +1428,7 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* any bad or missing variable names? */
-    err = check_all_varnames(book, totcols, blank_col);
+    err = check_all_varnames(book, &totcols, blank_col);
 
     if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	pputs(prn, _("One or more variable names are missing.\n"));
@@ -1446,8 +1461,8 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* do we have a first column containing dates? */
     if (book_numeric_dates(book)) {
-	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, NULL,
-				   book);
+	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, 
+				   NULL, book);
     } else if (!book_auto_varnames(book)) {
 	int r0 = book->row_offset;
 	int c0 = book->col_offset;

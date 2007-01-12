@@ -675,7 +675,8 @@ static void login_dialog (login_info *linfo)
     gtk_widget_show(hbox);
 
     tbl = gtk_table_new(2, 2, FALSE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->vbox), tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->vbox), tbl, 
+		       FALSE, FALSE, 5);
 
     for (i=0; i<2; i++) {
 	char *src = (i == 0)? linfo->login : linfo->pass;
@@ -690,6 +691,7 @@ static void login_dialog (login_info *linfo)
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 34);
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
+	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	if (src != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), src);
