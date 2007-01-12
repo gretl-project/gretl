@@ -26,7 +26,6 @@
 #define GENDEBUG 0
 
 /* this may be a good idea, but perhaps risky? */
-
 #define PRESERVE_AUX_NODES 0
 
 enum {
@@ -109,7 +108,7 @@ enum {
     BKFILT,
     RESAMPLE,
     PMEAN,
-    PSD,    /* 80 */
+    PSD,     /* 80 */
     IMAT,
     SUMR,
     SUMC,
@@ -233,9 +232,11 @@ enum {
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL)
 
-#define b1sym(s) (unary_op(s) || func_symb(s) || s == LPR || s == EROOT)
+#define b1sym(s) (unary_op(s) || func_symb(s) || funcn_symb(s) || \
+                  s == LPR || s == EROOT)
 
-#define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR)
+#define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR && \
+                   !func2_symb(s))
 
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == OVAR || s == UFUN)
 

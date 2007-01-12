@@ -92,7 +92,7 @@ static void free_tree (NODE *t, const char *msg)
 	free_tree(t->v.b2.r, msg);
     } else if (b1sym(t->t)) {
 	free_tree(t->v.b1.b, msg);
-    }
+    } 
 
 #if EDEBUG
     fprintf(stderr, "%-8s: freeing node at %p (type %d, aux = %d)\n", msg, 
@@ -2450,6 +2450,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
 	    ret->v.m = gretl_matrix_shape(A, r, c);
 	}
     } 
@@ -3167,6 +3170,10 @@ static NODE *eval (NODE *t, parser *p)
     case U_ADDR:
     case LIST:
 	/* terminal symbol: pass on through */
+	ret = t;
+	break;
+    case FARGS:
+	/* will be evlauated in context */
 	ret = t;
 	break;
     case B_ADD:
