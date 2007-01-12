@@ -363,12 +363,7 @@ As of \app{gretl} 1.6.0, there is a mechanism to package functions and
 make them available to other users of \app{gretl}.  This is currently
 experimental, but here is a walk-through of the process.
 
-Start the GUI program and take a look at the ``File, Function files'' menu.
-This menu contains four items: ``On local machine'', ``On server'', ``Edit
-package'', ``New package''.
-
-The ``New package'' command will return an error message, unless at least one
-user-defined function is currently loaded in memory.
+\subsection{Load a function in memory}
 
 There are several ways to load a function:
 
@@ -382,8 +377,45 @@ There are several ways to load a function:
   probably better composing a function non-interactively.
 \end{itemize}
 
-After loading a function, try again using the command ``File, Function
-files, New package''. In the first dialog you get to select:
+For example, suppose you decide to package a function that returns the
+percentage change of a time series. Open a script file and type
+\begin{code}
+  function pc(series y)
+    series foo = diff(y)/y(-1)
+    return series foo
+  end function
+\end{code}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/func_check}
+  \caption{Output of function check}
+  \label{fig:func_check}
+\end{figure}
+
+Now run your function. You may want to make sure your function works
+properly by running a few tests. For example, you may open the console
+and type
+
+\begin{code}
+  genr x = uniform()
+  genr dpcx = pc(x)
+  print x dpcx --byobs
+\end{code}
+
+You should see something similar to figure \ref{fig:func_check}. The
+function seems to work ok. Once your function is debugged, you
+may proceed to the next stage.
+
+\subsection{Create a package}
+
+Start the GUI program and take a look at the ``File, Function files'' menu.
+This menu contains four items: ``On local machine'', ``On server'', ``Edit
+package'', ``New package''.
+
+Select ``New package'' (the command will return an error message,
+unless at least one user-defined function is currently loaded in
+memory --- see previous point); in the first dialog you get to select:
 
 \begin{itemize}
 \item A public function to package.
@@ -393,14 +425,22 @@ files, New package''. In the first dialog you get to select:
 Public functions are directly available to users; private functions are
 part of the ``behind the scenes'' mechanism in a function package.
 
-On clicking ``OK'' a second dialog should appear, where you get to
-enter the package information (currently, author, version, date, and a
-short description).  You also get to enter help text for the public
-interface.  You have a further chance to edit the code of the functions
-to be packaged, by selecting them from the drop-down selector and
-clicking on ``Edit function code''. Finally, you can choose to upload
-the package on gretl's server as soon as it is saved, by checking the
-relevant checkbox.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/package_editor}
+  \caption{The package editor window}
+  \label{fig:package_editor}
+\end{figure}
+
+On clicking ``OK'' a second dialog should appear (see figure
+\ref{fig:package_editor}), where you get to enter the package
+information (currently, author, version, date, and a short
+description).  You also get to enter help text for the public
+interface.  You have a further chance to edit the code of the
+functions to be packaged, by selecting them from the drop-down
+selector and clicking on ``Edit function code''. Finally, you can
+choose to upload the package on gretl's server as soon as it is saved,
+by checking the relevant checkbox.
 
 Clicking ``OK'' in this dialog leads you to a File Save dialog.  All
 being well, this should be pointing towards a directory named
@@ -430,11 +470,13 @@ for fast loading using \textsf{libxml}.
 
 \vspace{6pt}
 
+\subsection{Load a package}
+
 Why package functions in this way?  To see what's on offer so far, try
-this second phase of the walk-through.
+the next phase of the walk-through.
 
 Close gretl, then re-open it.  Now go to ``File, Function files, On
-local machine''. If the first stage above has gone OK, you should
+local machine''. If the previous stage above has gone OK, you should
 see the file you packaged and saved, with its short description.  If
 you click on ``Info'' you get a window with all the information gretl
 has gleaned from the function package.  If you click on the ``View
@@ -442,7 +484,7 @@ code'' icon in the toolbar of this new window, you get a script view
 window showing the actual function code. Now, back to the ``Function
 packages'' window, if you click on the package's name, the functions
 are loaded into gretl, ready to be called by clicking on the ``Call''
-button, or by using the CLI.
+button.
 
 After loading the function(s) from the package, open the GUI console.
 Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
@@ -452,6 +494,46 @@ was provided for the function, it should be presented.
 In a similar way, you can browse and load the functions packages
 available on gretl's server, by selecting ``File, Function files, On
 server''.
+
+Once your package is installed on your local machine, you can use the
+function it contains via the graphical interface as described above,
+or by using the CLI, namely in a script or through the console. In the
+latter case, you load the function via the \texttt{include} command,
+specifying the package file as the argument, complete with the
+\texttt{.gfn} extension.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/function_call}
+  \caption{Using your package}
+  \label{fig:function_call}
+\end{figure}
+
+To continue with our example, load the file \texttt{np.gdt} (supplied
+with \app{gretl} among the sample datasets). Suppose you want to
+compute the rate of change for the variable \texttt{iprod} via your
+new function and store the result in a series named \texttt{foo}.
+
+Go to ``File, Function files, On local machine''.  You will be
+shown a list of the installed packages, including the one you have
+just created. If you select it and click on ``Execute'', a window
+similar to the one shown in figure \ref{fig:function_call} will appear.
+Click ``Ok'' and the series \texttt{foo} will be generated (see figure
+\ref{fig:iprod_pc}).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/iprod_pc}
+  \caption{Percent change in industrial production}
+  \label{fig:iprod_pc}
+\end{figure}
+
+Alternatively, the same could have been accomplished by the script
+\begin{code}
+  include pc.gfn
+  open np
+  iprod_pc = pc(iprod)
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex

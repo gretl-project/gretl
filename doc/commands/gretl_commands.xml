@@ -3411,13 +3411,18 @@
       <arguments>
         <argument>inputfile</argument>
       </arguments>
+      <examples>
+        <example>include myfile.inp</example>
+        <example>include sols.gfn</example>
+      </examples>
     </usage>
 
     <description>
       <para>
 	Intended for use in a command script, primarily for including definitions of
 	functions.  Executes the commands in <repl>inputfile</repl> then returns
-	control to the main script. 
+	control to the main script. To include a packaged function, be
+	sure to include the filename extension.
       </para>
       <para>
 	See also <cmdref targ="run"/>.

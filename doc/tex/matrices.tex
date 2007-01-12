@@ -397,6 +397,56 @@ The \texttt{muniform()} and \texttt{mnormal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 
+\subsection{Matrix reshaping}
+\label{matrix-mshape}
+
+A matrix can also be created by re-arranging the elements of a
+pre-existing matrix. This is accomplished via the \texttt{mshape()}
+function. It takes three arguments: the input matrix, $A$, and the
+rows and columns of the target matrix, $r$ and $c$ respectively.
+Elements are read from $A$ and written to the target in column-major
+order.  If $A$ contains fewer elements than $n = r \times c$, they are
+repeated cyclically; if $A$ has more elements, only the first $n$ are
+used.
+
+For example:
+\begin{code}
+  matrix a = mnormal(2,3)
+  a
+  matrix b = mshape(a,3,1)
+  b
+  matrix b = mshape(a,5,2)
+  b
+\end{code}
+produces
+\begin{code}
+?   a
+a
+
+      1.2323      0.99714     -0.39078
+     0.54363      0.43928     -0.48467
+
+?   matrix b = mshape(a,3,1)
+Generated matrix b
+?   b
+b
+
+      1.2323
+     0.54363
+     0.99714
+
+?   matrix b = mshape(a,5,2)
+Replaced matrix b
+?   b
+b
+
+      1.2323     -0.48467
+     0.54363       1.2323
+     0.99714      0.54363
+     0.43928      0.99714
+    -0.39078      0.43928
+\end{code}
+
 \subsection{Single-return two-matrix functions}
 \label{matrix-two}
 
