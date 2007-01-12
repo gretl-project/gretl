@@ -3,7 +3,14 @@
 #include "libgretl.h"
 #include "genparse.h"
 
-/* FIXME new genr stuff */
+const char *special_keyword[] = {
+    "for"
+    "funcerr",
+    "null",
+    "return", 
+    "while",
+    NULL
+};
 
 void output_emacs_block (void)
 {
@@ -134,6 +141,8 @@ void output_lang_file (void)
 
     /* gretl data types */
     puts("<keyword-list _name = \"Gretl-types\" style = \"Data Type\" case-sensitive=\"TRUE\">");
+    puts(" <keyword>bool</keyword>");
+    puts(" <keyword>int</keyword>");
     puts(" <keyword>scalar</keyword>");
     puts(" <keyword>series</keyword>");
     puts(" <keyword>matrix</keyword>");
@@ -173,6 +182,7 @@ void output_lang_file (void)
     puts("<keyword-list _name = \"InternalVars\" style = \"Data Type\" case-sensitive=\"TRUE\"");
     puts(" match-empty-string-at-beginning = \"FALSE\" match-empty-string-at-end = \"FALSE\"");
     puts(" beginning-regex=\"\\$\">");
+
     n = model_var_count();
     for (i=0; i<n; i++) {
 	s = model_var_name(i);
@@ -182,6 +192,7 @@ void output_lang_file (void)
 	if (*s == '$') s++;
 	printf(" <keyword>%s</keyword>\n", s);
     }
+
     n = data_var_count();
     for (i=0; i<n; i++) {
 	s = data_var_name(i);
@@ -190,7 +201,15 @@ void output_lang_file (void)
 	}
 	if (*s == '$') s++;	
 	printf(" <keyword>%s</keyword>\n", s);
-    }	
+    }
+	
+    puts("</keyword-list>\n");
+
+    /* other syntax elements */
+    puts("<keyword-list _name = \"AuxElements\" style = \"Data Type\" case-sensitive=\"TRUE\">");
+    for (i=0; special_keyword[i] != NULL; i++) {
+	printf(" <keyword>%s</keyword>\n", special_keyword[i]);
+    }
     puts("</keyword-list>\n");
 
     puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");

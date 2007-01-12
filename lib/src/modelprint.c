@@ -210,6 +210,10 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	return;
     }
 
+    if (!plain_format(prn) && pmod->ci == TSLS) {
+	return;
+    }
+
     if (NO_RBAR_SQ(pmod->aux) || na(pmod->adjrsq)) {
 	adjr2 = 0;
     }
