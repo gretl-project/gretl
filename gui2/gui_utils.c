@@ -3860,7 +3860,7 @@ void startR (const char *Rcommand)
 	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = fopen(Rtmp, "w");
 	if (fq != NULL) {
-	    fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
+	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	    fprintf(fq, "attach(gretldata)\n");
 	    fclose(fq);
 	}

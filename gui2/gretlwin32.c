@@ -163,7 +163,7 @@ void startR (const char *Rcommand)
 	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = gretl_fopen(Rtmp, "w");
 	if (fq != NULL) {
-	    fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
+	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", 
 		    slash_convert(Rdata, FROM_BACKSLASH));
 	    fprintf(fq, "attach(gretldata)\n");
 	    fclose(fq);
