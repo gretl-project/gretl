@@ -203,6 +203,7 @@ struct str_table funcs[] = {
     { CRIT,     "critical" },
     { MAKEMASK, "makemask" },
     { VALUES,   "values" },
+    { MSHAPE,   "mshape" },
     { 0,     NULL }
 };
 
@@ -596,7 +597,7 @@ static void word_check_next_char (const char *s, parser *p)
 	    p->sym = DMSTR;
 	    p->idstr = gretl_strdup(s);
 	} else if (!func_symb(p->sym) && !func2_symb(p->sym) &&
-		   p->sym != UFUN) {
+		   !funcn_symb(p->sym) && p->sym != UFUN) {
 	    p->err = 1;
 	} 
     } else if (p->ch == '[') {

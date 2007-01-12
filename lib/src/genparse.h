@@ -163,13 +163,15 @@ enum {
     FDJAC,
     BFGSMAX,
     F2_MAX,   /* separator: end of two-arg functions */
+    MSHAPE,
+    FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
-    CON,      /* named constant */
+    CON,    /* 140: named constant */
     DUM,      /* dummy variable */
-    UVAR,   /* 140: user variable (scalar or series) */
+    UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
@@ -177,9 +179,9 @@ enum {
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
-    MSL,      /* matrix plus subspec */
+    MSL,    /* 150: matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,  /* 150: "dollar" matrix plus old-style string subspec */
+    DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
@@ -187,9 +189,9 @@ enum {
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,     /* object variable: variable "under" an object */
+    OVAR,   /* 160: object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
-    LIST,   /* 160: reference to named list */
+    LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
@@ -218,6 +220,7 @@ enum {
 #define func_symb(s) ((s > OP_MAX && s < FUNC_MAX) || \
                        s == LAG || s == OBS)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
+#define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
 #define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
                             s == ISLIST || s == LISTLEN || s == OBSNUM)
 

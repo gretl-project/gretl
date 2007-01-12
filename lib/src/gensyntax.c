@@ -753,6 +753,15 @@ static NODE *powterm (parser *p)
 		get_multi_args(t->v.b2.r, p);
 	    }
 	}
+    } else if (funcn_symb(p->sym)) {
+	t = newb1(p->sym, NULL, 0);
+	if (t != NULL) {
+	    lex(p);
+	    t->v.b1.b = newbn(FARGS);
+	    if (t != NULL) {
+		get_multi_args(t->v.b1.b, p);
+	    }
+	}
     } else if (p->sym == STR) {
 	t = newstr(p->idstr, 0, STR_STEAL);
 	lex(p);

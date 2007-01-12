@@ -2404,6 +2404,59 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+/* evaluate a built-in function that has more than two arguments */
+
+static NODE *eval_nargs_func (NODE *t, parser *p)
+{
+    NODE *e, *n = t->v.b1.b;
+    NODE *ret = NULL;
+    int i, k = n->v.bn.n_nodes;
+
+    if (t->t == MSHAPE) {
+	gretl_matrix *A = NULL;
+	int r = 0, c = 0;
+
+	if (k != 3) {
+	    pprintf(p->prn, _("Number of arguments (%d) does not "
+			      "match the number of\nparameters for "
+			      "function %s (%d)"),
+		    k, "mshape", 3);
+	    p->err = 1;
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i); 
+	    } else if (i == 0) {
+		if (e->t != MAT) {
+		    p->err = E_TYPES;
+		} else {
+		    A = e->v.m;
+		}
+	    } else {
+		if (e->t != NUM) {
+		    p->err = E_TYPES;
+		} else if (i == 1) {
+		    r = e->v.xval;
+		} else {
+		    c = e->v.xval;
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_shape(A, r, c);
+	}
+    } 
+
+    return ret;
+}
+
 /* Create a matrix using selected series, or a mixture of series and
    lists, or more than one list.  Note that we can't use an augmented
    list here, because the series are not necessarily members of the
@@ -3442,6 +3495,10 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    p->err = E_TYPES;
 	} 
+	break;
+    case MSHAPE:
+	/* built-in functions taking more than two args */
+	ret = eval_nargs_func(t, p);
 	break;
     case UVAR: 
 	/* user-defined variable */

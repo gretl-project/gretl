@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) by Allin Cottrell and Riccardo "Jack" Lucchetti
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -5967,6 +5967,50 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
     free(sorted);
 
     return v;
+}
+
+/**
+ * gretl_matrix_shape:
+ * @A: array to process.
+ * @r: rows of target matrix.
+ * @c: columns of target matrix.
+ *
+ * Creates an (r x c) matrix containing the re-arranged
+ * values of A.  Elements are read from A by column and
+ * written into the target, also by column.  If A contains 
+ * less elements than n = r*c, they are repeated cyclically; 
+ * if A has more elements, only the first n are used.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
+				  int r, int c)
+{
+    gretl_matrix *B;
+    int i, k, nA, nB;
+
+    if (r <= 0 || c <= 0) {
+	return NULL;
+    }
+    
+    B = gretl_matrix_alloc(r, c);
+    if (B == NULL) {
+	return NULL;
+    }
+
+    nA = A->rows * A->cols;
+    nB = r * c;
+
+    k = 0;
+    for (i=0; i<nB; i++) {
+	B->val[i] = A->val[k++];
+	if (k == nA) {
+	    k = 0;
+	}
+    }
+
+    return B;
 }
 
 
