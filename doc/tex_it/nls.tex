@@ -22,24 +22,24 @@ anche le derivate.
 \begin{script}[htbp]
   \caption{Funzione di consumo da Greene}
   \label{nls-cons}
-\begin{code}
-          nls C = alfa + beta * Y^gamma
-          deriv alfa = 1
-          deriv beta = Y^gamma
-          deriv gamma = beta * Y^gamma * log(Y)
-          end nls
-\end{code}
+\begin{scode}
+nls C = alfa + beta * Y^gamma
+deriv alfa = 1
+deriv beta = Y^gamma
+deriv gamma = beta * Y^gamma * log(Y)
+end nls
+\end{scode}
 \end{script}
 
 \begin{script}[htbp]
   \caption{Funzione non lineare da Russell Davidson}
   \label{nls-ects}
-\begin{code}
-          nls y = alfa + beta * x1 + (1/beta) * x2
-          deriv alfa = 1
-          deriv beta = x1 - x2/(beta*beta)
-          end nls
-\end{code}
+\begin{scode}
+nls y = alfa + beta * x1 + (1/beta) * x2
+deriv alfa = 1
+deriv beta = x1 - x2/(beta*beta)
+end nls
+\end{scode}
 \end{script}
 
 Si notino i comandi \cmd{nls} (che indica la funzione di regressione),

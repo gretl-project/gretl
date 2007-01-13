@@ -707,24 +707,24 @@ la funzionalità OLS di gretl.
 \begin{script}[htbp]
   \caption{OLS usando le matrici}
   \label{examp-matrix}
-\begin{code}
-  open data4-1
-  matrix X = { const, sqft }
-  matrix y = { price }
-  matrix b = inv(X'X) * X'y
-  printf "vettore dei coefficienti stimati\n"
-  b
-  matrix uh = y - X*b
-  scalar SSR = uh'uh
-  scalar s2 = SSR / (rows(X) - rows(b))
-  matrix V = s2 * inv(X'X)
-  V
-  matrix se = sqrt(diag(V))
-  printf "errori standard stimati\n"
-  se
-  # Confronto con la funzione OLS di gretl
-  ols price const sqft --vcv
-\end{code}
+\begin{scode}
+open data4-1
+matrix X = { const, sqft }
+matrix y = { price }
+matrix b = inv(X'X) * X'y
+printf "vettore dei coefficienti stimati\n"
+b
+matrix uh = y - X*b
+scalar SSR = uh'uh
+scalar s2 = SSR / (rows(X) - rows(b))
+matrix V = s2 * inv(X'X)
+V
+matrix se = sqrt(diag(V))
+printf "errori standard stimati\n"
+se
+# Confronto con la funzione OLS di gretl
+ols price const sqft --vcv
+\end{scode}
 \end{script}
 
 

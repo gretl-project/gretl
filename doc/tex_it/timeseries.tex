@@ -371,30 +371,32 @@ successivo all'interno del campione, e dinamica, fuori dal campione).
 \begin{script}[htbp]
   \caption{Previsione ARIMA}
   \label{arima-fcast-script}
-\begin{code}
-  open greene18_2.gdt
-  # Logaritmo del PIL nominale trimestrale degli USA, da 1950:1 a 1983:4
-  genr y = log(Y)
-  # La sua differenza prima
-  genr dy = diff(y)
-  # Teniamo 2 anni per la previsione fuori dal campione
-  smpl ; 1981:4
-  # Stima con ARIMA
-  arima 1 1 1 ; y 
-  # Previsione su tutto il periodo
-  smpl --full
-  fcast fc1
-  # Torniamo al campione ristretto ed eseguiamo ARMA sulla differenza prima di y
-  smpl ; 1981:4
-  arma 1 1 ; dy
-  smpl --full
-  fcast fc2
-  genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
-  # Confronto delle previsioni sull'ultimo periodo
-  smpl 1981:1 1983:4
-  print y fc1 fc2 fcdiff --byobs
-\end{code}
+\begin{scode}
+open greene18_2.gdt
+# Logaritmo del PIL nominale trimestrale degli USA, da 1950:1 a 1983:4
+genr y = log(Y)
+# La sua differenza prima
+genr dy = diff(y)
+# Teniamo 2 anni per la previsione fuori dal campione
+smpl ; 1981:4
+# Stima con ARIMA
+arima 1 1 1 ; y 
+# Previsione su tutto il periodo
+smpl --full
+fcast fc1
+# Torniamo al campione ristretto ed eseguiamo ARMA sulla differenza prima di y
+smpl ; 1981:4
+arma 1 1 ; dy
+smpl --full
+fcast fc2
+genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+# Confronto delle previsioni sull'ultimo periodo
+smpl 1981:1 1983:4
+print y fc1 fc2 fcdiff --byobs
+\end{scode}
+
 Il risultato dell'ultimo comando è:
+%
 \begin{code}
                     y          fc1          fc2       fcdiff
 

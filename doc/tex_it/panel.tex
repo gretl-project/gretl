@@ -427,20 +427,20 @@ paesi (Nerlove 1999)\footnote{Si veda anche la pagina dei benchmark di Clint Cum
 \begin{script}[htbp]
   \caption{Lo stimatore Anderson--Hsiao per un modello panel dinamico}
   \label{anderson-hsiao}
-\begin{code}
-   # La Penn World Table usata da Nerlove
-   open penngrow.gdt
-   # Effetti fissi (per confronto)
-   panel Y 0 Y(-1) X
-   # Effetti casuali (per confronto)
-   panel Y 0 Y(-1) X --random-effects
-   # Differenza di tutte le variabili
-   diff Y X
-   # Anderson-Hsiao, usando Y(-2) come strumento
-   tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
-   # Anderson-Hsiao, usando d_Y(-2) come strumento
-   tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
-\end{code}
+\begin{scode}
+# La Penn World Table usata da Nerlove
+open penngrow.gdt
+# Effetti fissi (per confronto)
+panel Y 0 Y(-1) X
+# Effetti casuali (per confronto)
+panel Y 0 Y(-1) X --random-effects
+# Differenza di tutte le variabili
+diff Y X
+# Anderson-Hsiao, usando Y(-2) come strumento
+tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+# Anderson-Hsiao, usando d_Y(-2) come strumento
+tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
+\end{scode}
 \end{script}
  
 Sebbene lo stimatore di Anderson--Hsiao sia consistente, non è il più
@@ -477,25 +477,24 @@ situazione peggiore).
 \begin{script}[htbp]
   \caption{Uso della Penn World Table}
   \label{examp-pwt}
-
-\begin{code}
-  open pwt56_60_89.gdt 
-  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
-  genr gdp60 = RGDPL(-29) 
-  # Calcola la crescita totale del PIL reale sui 30 anni
-  genr gdpgro = (RGDPL - gdp60)/gdp60
-  # Restringi il campione a una cross-section del 1989
-  smpl --restrict YEAR=1989 
-  # convergenza: i paesi che partono più indietro crescono di più?
-  ols gdpgro const gdp60 
-  # risultato: no! Proviamo una relazione inversa?
-  genr gdp60inv = 1/gdp60 
-  ols gdpgro const gdp60inv 
-  # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
-  genr afdum = (CCODE = 1)
-  genr afslope = afdum * gdp60 
-  ols gdpgro const afdum gdp60 afslope 
-\end{code}
+\begin{scode}
+open pwt56_60_89.gdt 
+# Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
+genr gdp60 = RGDPL(-29) 
+# Calcola la crescita totale del PIL reale sui 30 anni
+genr gdpgro = (RGDPL - gdp60)/gdp60
+# Restringi il campione a una cross-section del 1989
+smpl --restrict YEAR=1989 
+# convergenza: i paesi che partono più indietro crescono di più?
+ols gdpgro const gdp60 
+# risultato: no! Proviamo una relazione inversa?
+genr gdp60inv = 1/gdp60 
+ols gdpgro const gdp60inv 
+# Ancora no. Proviamo a trattare l'Africa in modo speciale? 
+genr afdum = (CCODE = 1)
+genr afslope = afdum * gdp60 
+ols gdpgro const afdum gdp60 afslope 
+\end{scode}
 \end{script}
 
 

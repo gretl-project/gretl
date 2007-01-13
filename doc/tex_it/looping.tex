@@ -234,27 +234,27 @@ esempio~\ref{monte-carlo-loop}.
 \begin{script}[htbp]
   \caption{Un semplice loop di tipo Monte Carlo}
   \label{monte-carlo-loop}
-\begin{code}
-          nulldata 50
-          seed 547
-          genr x = 100 * uniform()
-          # Apre un loop "progressivo", da ripetere 100 volte
-          loop 100 --progressive
-             genr u = 10 * normal()
-             # Costruisce la variabile dipendente
-             genr y = 10*x + u
-             # Esegue la regressione OLS
-             ols y const x
-             # Definisce variabili per i coefficienti e R-quadro
-             genr a = $coeff(const)
-             genr b = $coeff(x)
-             genr r2 = $rsq
-             # Mostra le statistiche su queste variabili
-             print a b r2
-             # Salva i coefficienti in un file
-             store coeffs.gdt a b
-          endloop
-\end{code}
+\begin{scode}
+nulldata 50
+seed 547
+genr x = 100 * uniform()
+# Apre un loop "progressivo", da ripetere 100 volte
+loop 100 --progressive
+   genr u = 10 * normal()
+   # Costruisce la variabile dipendente
+   genr y = 10*x + u
+   # Esegue la regressione OLS
+   ols y const x
+   # Definisce variabili per i coefficienti e R-quadro
+   genr a = $coeff(const)
+   genr b = $coeff(x)
+   genr r2 = $rsq
+   # Mostra le statistiche su queste variabili
+   print a b r2
+   # Salva i coefficienti in un file
+   store coeffs.gdt a b
+endloop
+\end{scode}
 \end{script}
 
 Questo loop mostrerà le statistiche di riepilogo per le stime di "a",
@@ -292,34 +292,34 @@ solo quelli dell'ultima iterazione del loop.
 \begin{script}[htbp]
   \caption{Funzione di consumo non lineare}
   \label{greene-ils-script}
-\begin{code}
-          open greene11_3.gdt
-          # Esegue la regressione OLS iniziale
-          ols C 0 Y
-          genr essbak = $ess
-          genr essdiff = 1
-          genr beta = $coeff(Y)
-          genr gamma = 1
-          # Itera OLS finché la somma dei quadrati degli errori converge
-          loop while essdiff > .00001
-             # Genera le variabili linearizzate
-             genr C0 = C + gamma * beta * Y^gamma * log(Y)
-             genr x1 = Y^gamma
-             genr x2 = beta * Y^gamma * log(Y)
-             # Esegue la regressione OLS 
-             ols C0 0 x1 x2 --print-final --no-df-corr --vcv
-             genr beta = $coeff(x1)
-             genr gamma = $coeff(x2)
-             genr ess = $ess
-             genr essdiff = abs(ess - essbak)/essbak
-             genr essbak = ess
-          endloop 
-          # Mostra le stime dei parametri usando i "nomi giusti"
-          noecho
-          printf "alfa = %g\n", $coeff(0)
-          printf "beta  = %g\n", beta
-          printf "gamma = %g\n", gamma
-\end{code}
+\begin{scode}
+open greene11_3.gdt
+# Esegue la regressione OLS iniziale
+ols C 0 Y
+genr essbak = $ess
+genr essdiff = 1
+genr beta = $coeff(Y)
+genr gamma = 1
+# Itera OLS finché la somma dei quadrati degli errori converge
+loop while essdiff > .00001
+   # Genera le variabili linearizzate
+   genr C0 = C + gamma * beta * Y^gamma * log(Y)
+   genr x1 = Y^gamma
+   genr x2 = beta * Y^gamma * log(Y)
+   # Esegue la regressione OLS 
+   ols C0 0 x1 x2 --print-final --no-df-corr --vcv
+   genr beta = $coeff(x1)
+   genr gamma = $coeff(x2)
+   genr ess = $ess
+   genr essdiff = abs(ess - essbak)/essbak
+   genr essbak = ess
+endloop 
+# Mostra le stime dei parametri usando i "nomi giusti"
+noecho
+printf "alfa = %g\n", $coeff(0)
+printf "beta  = %g\n", beta
+printf "gamma = %g\n", gamma
+\end{scode}
 \end{script}
 
 L'esempio~\ref{jack-arma} mostra come sia possibile usare
@@ -331,67 +331,67 @@ discussa da Davidson e MacKinnon nel loro \emph{Estimation and
 \begin{script}[htbp]
   \caption{ARMA 1, 1}
   \label{jack-arma}
-\begin{code}
-          open armaloop.gdt
+\begin{scode}
+open armaloop.gdt
 
-          genr c = 0
-          genr a = 0.1
-          genr m = 0.1
+genr c = 0
+genr a = 0.1
+genr m = 0.1
 
-          series e = 1.0
-          genr de_c = e
-          genr de_a = e
-          genr de_m = e
+series e = 1.0
+genr de_c = e
+genr de_a = e
+genr de_m = e
 
-          genr crit = 1
-          loop while crit > 1.0e-9
+genr crit = 1
+loop while crit > 1.0e-9
 
-             # Errori di previsione "one-step"
-             genr e = y - c - a*y(-1) - m*e(-1)  
+   # Errori di previsione "one-step"
+   genr e = y - c - a*y(-1) - m*e(-1)  
 
-             # Log-verosimiglianza 
-             genr loglik = -0.5 * sum(e^2)
-             print loglik
+   # Log-verosimiglianza 
+   genr loglik = -0.5 * sum(e^2)
+   print loglik
 
-             # Derivate parziali degli errori di previsione rispetto a c, a e m
-             genr de_c = -1 - m * de_c(-1) 
-             genr de_a = -y(-1) -m * de_a(-1)
-             genr de_m = -e(-1) -m * de_m(-1)
-     
-             # Derivate parziali di l rispetto a c, a e m
-             genr sc_c = -de_c * e
-             genr sc_a = -de_a * e
-             genr sc_m = -de_m * e
-     
-             # Regressione OPG
-             ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
+   # Derivate parziali degli errori di previsione rispetto a c, a e m
+   genr de_c = -1 - m * de_c(-1) 
+   genr de_a = -y(-1) -m * de_a(-1)
+   genr de_m = -e(-1) -m * de_m(-1)
 
-             # Aggiorna i parametri
-             genr dc = $coeff(sc_c) 
-             genr c = c + dc
-             genr da = $coeff(sc_a) 
-             genr a = a + da
-             genr dm = $coeff(sc_m) 
-             genr m = m + dm
+   # Derivate parziali di l rispetto a c, a e m
+   genr sc_c = -de_c * e
+   genr sc_a = -de_a * e
+   genr sc_m = -de_m * e
 
-             printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
-             printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
-             printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+   # Regressione OPG
+   ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
-             genr crit = $T - $ess
-             print crit
-          endloop
+   # Aggiorna i parametri
+   genr dc = $coeff(sc_c) 
+   genr c = c + dc
+   genr da = $coeff(sc_a) 
+   genr a = a + da
+   genr dm = $coeff(sc_m) 
+   genr m = m + dm
 
-          genr se_c = $stderr(sc_c)
-          genr se_a = $stderr(sc_a)
-          genr se_m = $stderr(sc_m)
+   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
+   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
+   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
 
-          noecho
-          print "
-          printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
-          printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
-          printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
-\end{code}
+   genr crit = $T - $ess
+   print crit
+endloop
+
+genr se_c = $stderr(sc_c)
+genr se_a = $stderr(sc_a)
+genr se_m = $stderr(sc_m)
+
+noecho
+print "
+printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+\end{scode}
 \end{script}
 
 
@@ -409,13 +409,13 @@ variabili da 1 a 4.
 \begin{script}[htbp]
   \caption{Statistiche panel}
   \label{loop-panel-script}
-\begin{code}
-          open ospedali.gdt
-          loop i=1991..2000
-            smpl (anno=i) --restrict --replace
-            summary 1 2 3 4
-          endloop
-\end{code}
+\begin{scode}
+open ospedali.gdt
+loop i=1991..2000
+  smpl (anno=i) --restrict --replace
+  summary 1 2 3 4
+endloop
+\end{scode}
 \end{script}
 
 L'esempio~\ref{loop-string-script} illustra un loop indicizzato per
@@ -424,15 +424,15 @@ sostituire stringhe.
 \begin{script}[htbp]
   \caption{Sostituzione di stringhe}
   \label{loop-string-script}
-\begin{code}
-          open bea.dat
-          loop i=1987..2001
-            genr V = COMP$i
-            genr TC = GOC$i - PBT$i
-            genr C = TC - V
-            ols PBT$i const TC V
-          endloop
-\end{code}
+\begin{scode}
+open bea.dat
+loop i=1987..2001
+  genr V = COMP$i
+  genr TC = GOC$i - PBT$i
+  genr C = TC - V
+  ols PBT$i const TC V
+endloop
+\end{scode}
 \end{script}
 
 Alla prima iterazione, la variabile \verb+V+ verrà impostata a

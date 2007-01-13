@@ -75,12 +75,12 @@ massimizzazione usando l'opzione \texttt{--verbose}.
 \begin{script}[htbp]
   \caption{Stima di semplici modelli logit e probit}
   \label{simple-QR}
-\begin{code}
+\begin{scode}
 open greene19_1
 
 logit GRADE const GPA TUCE PSI
 probit GRADE const GPA TUCE PSI
-\end{code}
+\end{scode}
 \end{script}
 
 Come esempio, riproduciamo i risultati esposti nel capitolo 21 di Greene (2000),
@@ -167,7 +167,7 @@ variabile.
 \begin{script}[htbp]
   \caption{Test per l'aggiunta di una variabile in un modello probit}
   \label{QR-add}
-\begin{code}
+\begin{scode}
 open greene19_1
 
 probit GRADE const GPA PSI
@@ -176,7 +176,7 @@ series u = $uhat
 ols u const GPA PSI TUCE -q
 printf "Test per l'aggiunta della variabile TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
-\end{code}
+\end{scode}
 \end{script}
 
 \subsection{Modelli ordinati}
@@ -210,13 +210,13 @@ $P(y_i = j | x_i) = P(\mu_{j-1} \le y^*_i < \mu_j)$.
 \begin{script}[htbp]
   \caption{Modello probit ordinato}
   \label{ex:oprobit}
-\begin{code}
+\begin{scode}
 open pension.gdt
 series pctstck = pctstck/50
 discrete pctstck
 probit pctstck const choice age educ female black married finc25 finc35 \
   finc50 finc75 finc100 finc101 wealth89 prftshr
-\end{code}
+\end{scode}
 \end{script}
 
 Per applicare questi modelli, la variabile dipendente deve essere marcata come
@@ -332,7 +332,7 @@ usato, \texttt{heckit.inp}, fa parte degli script di esempio forniti con \app{gr
 \begin{script}[htbp]
   \caption{Modello Heckit}
   \label{ex:heckit}
-\begin{code}
+\begin{scode}
 open mroz.gdt
 include heckit.inp
 
@@ -355,7 +355,7 @@ list X = const WE AX EXP2
 list Z = X NWINC WA KL6 K618
 
 heckit(lww,X,LFP,Z)
-\end{code}
+\end{scode}
 \end{script}
 
 %\section{Count data}

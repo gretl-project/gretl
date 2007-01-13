@@ -319,25 +319,24 @@ metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
 \begin{script}[htbp]
   \caption{Calcolo del p-value col metodo bootstrap}
   \label{resampling-loop}
-\begin{code}
-    ols y 0 x
-    # salva i residui
-    genr ui = $uhat
-    scalar ybar = mean(y)
-    # numero delle replicazioni per il bootstrap
-    scalar replics = 10000
-    scalar tcount = 0
-    series ysim = 0
-    loop replics --quiet
-      # genera i valori simulati di y ricampionando
-      ysim = ybar + resample(ui)
-      ols ysim 0 x
-      scalar tsim = abs($coeff(x) / $stderr(x))
-      tcount += (tsim > 2.5)
-    endloop      
-    printf "Proporzione dei casi con |t| > 2.5 = %g\n", \
-       tcount / replics
-\end{code}
+\begin{scode}
+ols y 0 x
+# salva i residui
+genr ui = $uhat
+scalar ybar = mean(y)
+# numero delle replicazioni per il bootstrap
+scalar replics = 10000
+scalar tcount = 0
+series ysim = 0
+loop replics --quiet
+  # genera i valori simulati di y ricampionando
+  ysim = ybar + resample(ui)
+  ols ysim 0 x
+  scalar tsim = abs($coeff(x) / $stderr(x))
+  tcount += (tsim > 2.5)
+endloop      
+printf "Proporzione dei casi con |t| > 2.5 = %g\n", tcount / replics
+\end{scode}
 \end{script}
    
 
