@@ -440,20 +440,20 @@ which is based on a study of country growth rates by Nerlove
 \begin{script}[htbp]
   \caption{The Anderson--Hsiao estimator for a dynamic panel model}
   \label{anderson-hsiao}
-\begin{code}
-   # Penn World Table data as used by Nerlove
-   open penngrow.gdt
-   # Fixed effects (for comparison)
-   panel Y 0 Y(-1) X
-   # Random effects (for comparison)
-   panel Y 0 Y(-1) X --random-effects
-   # take differences of all variables
-   diff Y X
-   # Anderson-Hsiao, using Y(-2) as instrument
-   tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
-   # Anderson-Hsiao, using d_Y(-2) as instrument
-   tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
-\end{code}
+\begin{scode}
+# Penn World Table data as used by Nerlove
+open penngrow.gdt
+# Fixed effects (for comparison)
+panel Y 0 Y(-1) X
+# Random effects (for comparison)
+panel Y 0 Y(-1) X --random-effects
+# take differences of all variables
+diff Y X
+# Anderson-Hsiao, using Y(-2) as instrument
+tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+# Anderson-Hsiao, using d_Y(-2) as instrument
+tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
+\end{scode}
 \end{script}
 
 Although the Anderson--Hsiao estimator is consistent, it is not most
@@ -490,24 +490,24 @@ part of countries starting from a low base).
 \begin{script}[htbp]
   \caption{Use of the Penn World Table}
   \label{examp-pwt}
-\begin{code}
-  open pwt56_60_89.gdt 
-  # for 1989 (the last obs), lag 29 gives 1960, the first obs 
-  genr gdp60 = RGDPL(-29) 
-  # find total growth of real GDP over 30 years
-  genr gdpgro = (RGDPL - gdp60)/gdp60
-  # restrict the sample to a 1989 cross-section 
-  smpl --restrict YEAR=1989 
-  # convergence: did countries with a lower base grow faster?  
-  ols gdpgro const gdp60 
-  # result: No! Try an inverse relationship?
-  genr gdp60inv = 1/gdp60 
-  ols gdpgro const gdp60inv 
-  # no again.  Try treating Africa as special? 
-  genr afdum = (CCODE = 1)
-  genr afslope = afdum * gdp60 
-  ols gdpgro const afdum gdp60 afslope 
-\end{code}
+\begin{scode}
+open pwt56_60_89.gdt 
+# for 1989 (the last obs), lag 29 gives 1960, the first obs 
+genr gdp60 = RGDPL(-29) 
+# find total growth of real GDP over 30 years
+genr gdpgro = (RGDPL - gdp60)/gdp60
+# restrict the sample to a 1989 cross-section 
+smpl --restrict YEAR=1989 
+# convergence: did countries with a lower base grow faster?  
+ols gdpgro const gdp60 
+# result: No! Try an inverse relationship?
+genr gdp60inv = 1/gdp60 
+ols gdpgro const gdp60inv 
+# no again.  Try treating Africa as special? 
+genr afdum = (CCODE = 1)
+genr afslope = afdum * gdp60 
+ols gdpgro const afdum gdp60 afslope 
+\end{scode}
 \end{script}
 
 

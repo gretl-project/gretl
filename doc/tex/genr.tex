@@ -315,25 +315,24 @@ bootstrapping, see Davidson and MacKinnon (2004, chapter 4).
 \begin{script}[htbp]
   \caption{Calculation of bootstrap p-value}
   \label{resampling-loop}
-\begin{code}
-    ols y 0 x
-    # save the residuals
-    genr ui = $uhat
-    scalar ybar = mean(y)
-    # number of replications for bootstrap
-    scalar replics = 10000
-    scalar tcount = 0
-    series ysim = 0
-    loop replics --quiet
-      # generate simulated y by resampling
-      ysim = ybar + resample(ui)
-      ols ysim 0 x
-      scalar tsim = abs($coeff(x) / $stderr(x))
-      tcount += (tsim > 2.5)
-    endloop      
-    printf "proportion of cases with |t| > 2.5 = %g\n", \
-       tcount / replics
-\end{code}
+\begin{scode}
+ols y 0 x
+# save the residuals
+genr ui = $uhat
+scalar ybar = mean(y)
+# number of replications for bootstrap
+scalar replics = 10000
+scalar tcount = 0
+series ysim = 0
+loop replics --quiet
+  # generate simulated y by resampling
+  ysim = ybar + resample(ui)
+  ols ysim 0 x
+  scalar tsim = abs($coeff(x) / $stderr(x))
+  tcount += (tsim > 2.5)
+endloop      
+printf "proportion of cases with |t| > 2.5 = %g\n", tcount / replics
+\end{scode}
 \end{script}
 
 \section{Cumulative densities and p-values}
@@ -593,7 +592,7 @@ of progress).
 \begin{script}[htbp]
   \caption{Finding the minimum of the Rosenbrock function}
   \label{rosenbrock}
-\begin{code}
+\begin{scode}
 function Rosenbrock(matrix *param)
   scalar x = param[1]
   scalar y = param[2]
@@ -609,7 +608,7 @@ set max_verbose 1
 M = BFGSmax(theta, "Rosenbrock(&theta)")
 
 print theta
-\end{code}
+\end{scode}
 \end{script}
 
 \subsection{Computing the Jacobian}

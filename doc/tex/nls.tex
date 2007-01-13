@@ -20,24 +20,24 @@ derivatives.
 \begin{script}[htbp]
   \caption{Consumption function from Greene}
   \label{nls-cons}
-\begin{code}
-          nls C = alpha + beta * Y^gamma
-          deriv alpha = 1
-          deriv beta = Y^gamma
-          deriv gamma = beta * Y^gamma * log(Y)
-          end nls
-\end{code}
+\begin{scode}
+nls C = alpha + beta * Y^gamma
+deriv alpha = 1
+deriv beta = Y^gamma
+deriv gamma = beta * Y^gamma * log(Y)
+end nls
+\end{scode}
 \end{script}
 
 \begin{script}[htbp]
   \caption{Nonlinear function from Russell Davidson}
   \label{nls-ects}
-\begin{code}
-          nls y = alpha + beta * x1 + (1/beta) * x2
-          deriv alpha = 1
-          deriv beta = x1 - x2/(beta*beta)
-          end nls
-\end{code}
+\begin{scode}
+nls y = alpha + beta * x1 + (1/beta) * x2
+deriv alpha = 1
+deriv beta = x1 - x2/(beta*beta)
+end nls
+\end{scode}
 \end{script}
 
 Note the command words \cmd{nls} (which introduces the regression
@@ -60,16 +60,16 @@ a restricted form of) a linear model, it may be convenient to run an
 estimates.  In relation to the first example above, one might do:
 
 \begin{code}
-      ols C 0 Y
-      genr alpha = $coeff(0)
-      genr beta = $coeff(Y)
-      genr gamma = 1
+ols C 0 Y
+genr alpha = $coeff(0)
+genr beta = $coeff(Y)
+genr gamma = 1
 \end{code}
 And in relation to the second example one might do:
 \begin{code}
-      ols y 0 x1 x2
-      genr alpha = $coeff(0)
-      genr beta = $coeff(x1)
+ols y 0 x1 x2
+genr alpha = $coeff(0)
+genr beta = $coeff(x1)
 \end{code}
 
 

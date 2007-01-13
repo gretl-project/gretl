@@ -336,7 +336,7 @@ used in Lucchetti, Papi and Zazzaro (2001).
 \begin{script}[htbp]
   \caption{Estimation of stochastic frontier cost function}
   \label{cost-estimation}
-\begin{code}
+\begin{scode}
 open banks91
 
 # Cobb-Douglas cost function
@@ -368,7 +368,7 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   series e = rcost - b0*const - b1*y - b2*rp1 - b3*rp2
   params b0 b1 b2 b3 su sv
 end mle
-\end{code}
+\end{scode}
 \end{script}
 
 \section{GARCH models}

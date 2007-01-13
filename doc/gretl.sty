@@ -34,7 +34,15 @@
 \newenvironment{textcode}{\par\small\ttfamily}
 {\normalfont\normalsize\par}
 
+\DefineVerbatimEnvironment%
+{scode}{Verbatim}
+{frame=lines, framesep=2ex, fontsize=\small,
+ formatcom=\color{myteal}, rulecolor=\color{mygray}}
+
 \renewcommand{\arraystretch}{1.2}
+
+\definecolor{mygray}{rgb}{0.75,0.75,0.75} 
+\definecolor{myteal}{rgb}{0.0,0.4,0.4} 
 
 %% Unlike standard book class, running heads not in caps  
 %% \renewcommand{\chaptermark}[1]{\markboth{\chaptername\

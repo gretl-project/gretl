@@ -380,30 +380,31 @@ one step ahead within the sample range, and dynamic out of sample).
 \begin{script}[htbp]
   \caption{ARIMA forecasting}
   \label{arima-fcast-script}
-\begin{code}
-  open greene18_2.gdt
-  # log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
-  genr y = log(Y)
-  # and its first difference
-  genr dy = diff(y)
-  # reserve 2 years for out-of-sample forecast
-  smpl ; 1981:4
-  # Estimate using ARIMA
-  arima 1 1 1 ; y 
-  # forecast over full period
-  smpl --full
-  fcast fc1
-  # Return to sub-sample and run ARMA on the first difference of y
-  smpl ; 1981:4
-  arma 1 1 ; dy
-  smpl --full
-  fcast fc2
-  genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
-  # compare the forecasts over the later period
-  smpl 1981:1 1983:4
-  print y fc1 fc2 fcdiff --byobs
-\end{code}
+\begin{scode}
+open greene18_2.gdt
+# log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
+genr y = log(Y)
+# and its first difference
+genr dy = diff(y)
+# reserve 2 years for out-of-sample forecast
+smpl ; 1981:4
+# Estimate using ARIMA
+arima 1 1 1 ; y 
+# forecast over full period
+smpl --full
+fcast fc1
+# Return to sub-sample and run ARMA on the first difference of y
+smpl ; 1981:4
+arma 1 1 ; dy
+smpl --full
+fcast fc2
+genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+# compare the forecasts over the later period
+smpl 1981:1 1983:4
+print y fc1 fc2 fcdiff --byobs
+\end{scode}
 The output from the last command is:
+%
 \begin{code}
                     y          fc1          fc2       fcdiff
 

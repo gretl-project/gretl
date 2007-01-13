@@ -1,5 +1,5 @@
 \chapter{Matrix manipulation}
-\label{chap-matrices}
+\label{chap:matrices}
 
 \section{Introduction}
 \label{matrix-intro}
@@ -209,23 +209,87 @@ produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 \section{Matrix functions}
 \label{matrix-func}
 
-The following functions are available for \textit{element-by-element
-  transformations} of matrices: \texttt{log}, \texttt{exp},
-\texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
-\texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
-\texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
-have the effects documented in relation to the \texttt{genr} command.
-For example, if a matrix \texttt{A} is already defined, then
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lllll}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cdemean}   &
+\texttt{cholesky}  &
+\texttt{cnorm}     \\
+\texttt{cols}      &
+\texttt{cos}       &
+\texttt{det}       &
+\texttt{diag}      &
+\texttt{dnorm}     \\
+\texttt{dsort}     &
+\texttt{eigengen}  &
+\texttt{eigensym}  &
+\texttt{exp}       &
+\texttt{gamma}     \\
+\texttt{I}         &
+\texttt{int}       &
+\texttt{inv}       &
+\texttt{ldet}      &
+\texttt{lngamma}   \\
+\texttt{log}       &
+\texttt{mcorr}     &
+\texttt{mcov}      &
+\texttt{meanc}     &
+\texttt{meanr}     \\
+\texttt{mlag}      &
+\texttt{mnormal}   &
+\texttt{mshape}    &
+\texttt{muniform}  &
+\texttt{onenorm}   \\
+\texttt{ones}      &
+\texttt{qform}     &
+\texttt{qnorm}     &
+\texttt{qrdecomp}  &
+\texttt{rcond}     \\
+\texttt{rows}      &
+\texttt{sin}       &
+\texttt{sort}      &
+\texttt{sqrt}      &
+\texttt{sumc}      \\
+\texttt{sumr}      &
+\texttt{tan}       &
+\texttt{tr}        &
+\texttt{transp}    &
+\texttt{unvech}    \\
+\texttt{values}    &
+\texttt{vec}       &
+\texttt{vech}      &
+\texttt{zeros}     \\
+\end{tabular}      
+\caption{Table of matrix functions}
+\label{tab:matrix_funcs}
+\end{table}
+
+Table \ref{tab:matrix_funcs} lists the matrix function that
+\app{gretl} provides. The following functions are available for
+\textit{element-by-element transformations} of matrices: \texttt{log},
+\texttt{exp}, \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan},
+\texttt{int}, \texttt{abs}, \texttt{sqrt}, \texttt{dnorm},
+\texttt{cnorm}, \texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.
+These functions have the effects documented in relation to the
+\texttt{genr} command.  For example, if a matrix \texttt{A} is already
+defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
 \end{code}
 %
-generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  (To find the
-``matrix square root'' you need the \texttt{cholesky} function --- see
-below).  All of these functions require a single matrix as argument,
-or an expression which evaluates to a single matrix.
+generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
+functions require a single matrix as argument, or an expression which
+evaluates to a single matrix.
 
+Note, in particular, that to find the ``matrix square root'' you need
+the \texttt{cholesky()} function (see below); moreover, the \texttt{exp()}
+function computes the exponential element by element, and therefore
+does \emph{not} return the matrix exponential unless the matrix is
+diagonal.
+  
 The functions \texttt{sort()}, \texttt{dsort()} and \texttt{values()}
 are available for matrices as well as data series.  In the matrix case
 the argument to these functions must be a vector ($p \times 1$ or
@@ -764,11 +828,14 @@ conversion; that is, it must be a row or column vector containing
 non-negative whole-number values, none of which exceeds the highest ID
 number of a variable (series or scalar) in the current dataset.
 
-The following code exemplifies the use of this sort of conversion to
-``normalize'' a list, moving the constant (variable 0) to first
-position.
+Example~\ref{normalize-list} illustrates the use of this sort of
+conversion to ``normalize'' a list, moving the constant (variable 0)
+to first position.
 
-\begin{code}
+\begin{script}[htbp]
+  \caption{Manipulating a list}
+  \label{normalize-list}
+\begin{scode}
 function normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
   # but not in first position, move it to first position
@@ -790,7 +857,8 @@ list Xl = 2 3 0 4
 matrix x = Xl
 normalize_list(&x)
 list Xl = x
-\end{code}
+\end{scode}
+\end{script}
 
 
 \section{Deleting a matrix}
@@ -818,30 +886,30 @@ print M
 \section{Example: OLS using matrices}
 \label{matrix-example}
 
-Example \ref{examp-matrix} shows how matrix methods can be used to
+Example \ref{matrixOLS} shows how matrix methods can be used to
 replicate gretl's built-in OLS functionality.
 
 \begin{script}[htbp]
   \caption{OLS via matrix methods}
-  \label{examp-matrix}
-\begin{code}
-  open data4-1
-  matrix X = { const, sqft }
-  matrix y = { price }
-  matrix b = inv(X'X) * X'y
-  printf "estimated coefficient vector\n"
-  b
-  matrix u = y - X*b
-  scalar SSR = u'u
-  scalar s2 = SSR / (rows(X) - rows(b))
-  matrix V = s2 * inv(X'X)
-  V
-  matrix se = sqrt(diag(V))
-  printf "estimated standard errors\n"
-  se
-  # compare with built-in function
-  ols price const sqft --vcv
-\end{code}
+  \label{matrixOLS}
+\begin{scode}
+open data4-1
+matrix X = { const, sqft }
+matrix y = { price }
+matrix b = inv(X'X) * X'y
+printf "estimated coefficient vector\n"
+b
+matrix u = y - X*b
+scalar SSR = u'u
+scalar s2 = SSR / (rows(X) - rows(b))
+matrix V = s2 * inv(X'X)
+V
+matrix se = sqrt(diag(V))
+printf "estimated standard errors\n"
+se
+# compare with built-in function
+ols price const sqft --vcv
+\end{scode}
 \end{script}
 
 
