@@ -221,20 +221,21 @@ series resid = get_uhat_and_ess(price, xlist, &SSR)
 %
 In the above, we may say that the function is given the \emph{address}
 of the scalar variable \texttt{SSR}, and it assigns a value to that
-variable (under the name \texttt{ess}).  For anyone used to
-programming in C, note that it is not necessary (or even possible) to
+variable (under the local name \texttt{ess}).  (For anyone used to
+programming in C: note that it is not necessary, or even possible, to
 ``dereference'' the variable in question within the function using the
 \texttt{*} operator.  Unembellished use of the name of the variable is
-sufficient to access the variable in outer scope.
+sufficient to access the variable in outer scope.)
 
-The specification of one or more such special parameters in the
-definition of a function may be used to offer optional information to
-the caller.  If the ``address'' parameter is optional, this should be
-marked by providing a default value of \texttt{null}.  In that case
-the function should test to see if the caller supplied a corresponding
-argument or not, using the built-in function \texttt{isnull()}.  For
-example, here is the simple function shown above, modified to make the
-filling out of the \texttt{ess} value optional.
+An ``address'' parameter of this sort can be used as a means of
+offering optional information to the caller.  (That is, the
+corresponding argument is not strictly needed, but will be used if
+present).  In that case the parameter should be given a default value
+of \texttt{null} and the the function should test to see if the caller
+supplied a corresponding argument or not, using the built-in function
+\texttt{isnull()}.  For example, here is the simple function shown
+above, modified to make the filling out of the \texttt{ess} value
+optional.
 %
 \begin{code}
 function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
@@ -257,8 +258,8 @@ series resid = get_uhat_and_ess(price, xlist, null)
 \subsection{List arguments}
 
 The use of a named list as an argument to a function gives a means of
-supplying a function with a number of variables that is unknown when
-the function is written --- for example, sets of regressors or
+supplying a function with a set of variables whose number is unknown
+when the function is written --- for example, sets of regressors or
 instruments.  Within the function, the list can be passed on to
 commands such as \texttt{ols}, or it can be ``unpacked'' using a
 \texttt{foreach} loop construct.  For example, suppose you have a list
@@ -280,7 +281,7 @@ another means of allowing a function to do more in the way of
 modifying data at the level of the caller than simply offering a
 return value.  If the variables will \textit{not} be modified inside
 the function, it is a good idea to flag this fact using the
-\texttt{const} modifier in the parameter list, as in
+\texttt{const} modifier in the listing of parameters:
 %
 \begin{code}
 function myfunc (scalar y, const list X)
@@ -309,7 +310,7 @@ argument.)
 Functions can return nothing (just printing a result, perhaps), or
 they can return a single variable --- a scalar, series or matrix.  The
 return value, if any, is specified via a statement within the function
-body beginning with the keyword \verb+return+, followed by type
+body beginning with the keyword \verb+return+, followed by a type
 specifier and the name of a variable (as in the listing of
 parameters).  There can be only one such statement.  An example of a
 valid return statement is shown below:
@@ -320,16 +321,23 @@ return scalar SSR
 %
 Note that the \verb+return+ statement does \emph{not} cause the
 function to return (exit) at the point where it appears within the
-body of the function. Rather, it specifies which variable is
-available for assignment when the function exits, and a function exits
-only when (a) the end of the function code is reached, (b) a
-\verb+funcerr+ statement is reached (see below), or (c) a gretl error
-occurs.
-    
+body of the function. Rather, it specifies which variable is available
+for assignment when the function exits, and a function exits only when
+(a) the end of the function code is reached, (b) a \app{gretl} error
+occurs, or (c) a \verb+funcerr+ statement is reached.
+
 The \verb+funcerr+ keyword, which may be followed by a string enclosed
 in double quotes, causes a function to exit with an error flagged.  If
-a string is provided, this is printed on exit otherwise a generic
-error message is printed.
+a string is provided, this is printed on exit, otherwise a generic
+error message is printed.  This mechanism enables the author of a
+function to pre-empt an ordinary execution error and/or offer a more
+specific and helpful error message.  For example,
+%
+\begin{code}
+if nelem(xlist) = 0
+   funcerr "xlist must not be empty"
+end if
+\end{code}
     
 
 \subsection{Error checking}
@@ -415,7 +423,8 @@ package'', ``New package''.
 
 Select ``New package'' (the command will return an error message,
 unless at least one user-defined function is currently loaded in
-memory --- see previous point); in the first dialog you get to select:
+memory --- see the previous point); in the first dialog you get to
+select:
 
 \begin{itemize}
 \item A public function to package.
@@ -488,12 +497,12 @@ button.
 
 After loading the function(s) from the package, open the GUI console.
 Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
-a public interface from the loaded function package: if any help text
+the public interface from the loaded function package: if any help text
 was provided for the function, it should be presented.
 
-In a similar way, you can browse and load the functions packages
-available on gretl's server, by selecting ``File, Function files, On
-server''.
+In a similar way, you can browse and load the function packages
+available on the \app{gretl} server, by selecting ``File, Function
+files, On server''.
 
 Once your package is installed on your local machine, you can use the
 function it contains via the graphical interface as described above,
@@ -514,12 +523,15 @@ with \app{gretl} among the sample datasets). Suppose you want to
 compute the rate of change for the variable \texttt{iprod} via your
 new function and store the result in a series named \texttt{foo}.
 
-Go to ``File, Function files, On local machine''.  You will be
-shown a list of the installed packages, including the one you have
-just created. If you select it and click on ``Execute'', a window
-similar to the one shown in figure \ref{fig:function_call} will appear.
-Click ``Ok'' and the series \texttt{foo} will be generated (see figure
-\ref{fig:iprod_pc}).
+Go to ``File, Function files, On local machine''.  You will be shown a
+list of the installed packages, including the one you have just
+created. If you select it and click on ``Execute'' (or double-click on
+the name of the function package), a window similar to the one shown
+in figure \ref{fig:function_call} will appear.  Click ``Ok'' and the
+series \texttt{foo} will be generated (see figure \ref{fig:iprod_pc}).
+You may have to go to ``Data, Refresh data'' in order to have your new
+variable show up in the main window variable list (or just press the
+``r'' key).
 
 \begin{figure}[htbp]
   \centering
@@ -532,7 +544,7 @@ Alternatively, the same could have been accomplished by the script
 \begin{code}
 include pc.gfn
 open np
-iprod_pc = pc(iprod)
+foo = pc(iprod)
 \end{code}
 
 %%% Local Variables: 
