@@ -28,15 +28,19 @@ command-line client program and a graphical user interface.
 \item[Open source] The full source code for \app{gretl} is available
   to anyone who wants to critique it, patch it, or extend it.
   See Appendix~\ref{app-technote}.
-\item[Sophisticated] \app{Gretl} offers a full range of
-  least-squares based estimators, including two-stage least squares
-  and nonlinear least squares.  It also offers several specific
-  maximum-likelihood estimators (e.g.\ logit, probit, tobit) as well
-  as generic maximum likelihood estimation.  The program supports
-  estimation of systems of simultaneous equations, GARCH, ARIMA, vector
-  autoregressions and vector error correction models.
-\item[Accurate] \app{Gretl} has been thoroughly tested on the NIST
-  reference datasets. See Appendix~\ref{app-accuracy}.
+\item[Sophisticated] \app{Gretl} offers a full range of least-squares
+  based estimators, either for single equations and for systems,
+  including vector autoregressions and vector error correction models.
+  Several specific maximum likelihood estimators (e.g.\ probit, ARIMA,
+  GARCH) are also provided natively; more advanced estimation methods
+  can be implemented by the user via generic maximum likelihood or
+  nonlinear GMM.
+\item[Extendible] Users can enhance \app{gretl} by writing their own
+  functions and procedures in \app{gretl}'s scripting language, which
+  includes a reasonably wide range of matrix functions.
+\item[Accurate] \app{Gretl} has been thoroughly tested on several
+  benchmarks, among which the NIST reference datasets. See
+  Appendix~\ref{app-accuracy}.
 \item[Internet ready] \app{Gretl} can access and fetch databases from
   a server at Wake Forest University.  The MS Windows version comes
   with an updater program which will detect when a new version is
@@ -88,8 +92,8 @@ particular.
 Many users of \app{gretl} have submitted useful suggestions and bug
 reports.  In this connection particular thanks are due to Ignacio
 Díaz-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cri Rigamonti,
-Talha Yalta, and Dirk Eddelbuettel, who maintains the \app{gretl}
-package for Debian GNU/Linux.
+Sven Schreiber, Talha Yalta, and Dirk Eddelbuettel, who maintains the
+\app{gretl} package for Debian GNU/Linux.
 
 
 \section{Installing the programs}

@@ -24,6 +24,7 @@ version 1.6.1, in progress
   option and add normality test
 - Fix some bugs and inconsistencies in relation to the Ljung-Box
   statistic and ACFs
+- Fix bug in the Baxter-King filter routine
 - Add the CUSUMSQ test alongside CUSUM
 - Add test version of Arellano-Bond dynamic panel data estimation
 - Fix bug in GUI spreadsheet in relation to adding variables
@@ -40,6 +41,8 @@ version 1.6.1, in progress
 - Add facility to generate Binomial and Poisson random variables
 - Row format for tabular output of models in TeX: make this
   configurable
+- Add a few matrix functions
+- Add nonlinear GMM estimation (experimental)	
 
 
 9/13/2006 version 1.6.0
