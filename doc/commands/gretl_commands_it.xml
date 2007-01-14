@@ -581,7 +581,8 @@
         un modello ARMA(2,1):
       </para>
       <code context="cli">
-	arma 2 1 ; y</code>
+	arma 2 1 ; y
+      </code>
       
       <para context="gui">
 	Stima un modello ARMA, con o senza regressori esogeni. Se l'ordine di
@@ -689,7 +690,8 @@
 	  quote="true">lista-variabili</repl>:</para>
 
       <code>
-	salario (GENERE=1) salario (GENERE=0)</code>
+	salario (GENERE=1) salario (GENERE=0)
+      </code>
 
       <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
         essere controllati attraverso un file testuale chiamato
@@ -1333,7 +1335,8 @@
       </para>
 
       <code>
-	data (compact=average) LHUR PUNEW</code>
+	data (compact=average) LHUR PUNEW
+      </code>
 
       <para>I quattro metodi di compattamento disponibili sono
 	<quote>average</quote> (usa la media delle osservazioni ad alta
@@ -1556,7 +1559,8 @@
         opzioni al comando <cmd>dummify</cmd>).
       </para>
       <code>
-	ols y dummify(x)</code>
+	ols y dummify(x)
+      </code>
     </description>
 
   </command>
@@ -2131,7 +2135,8 @@
         esempio, per ottenere la varianza condizionale è possibile scrivere: 
         </para>
       <code context="cli">
-        genr ht = $h</code>
+        genr ht = $h
+      </code>
 
     </description>
 
@@ -3935,7 +3940,8 @@
         la variabile logit come
       </para>
       <code>
-	genr lgt_p = log(p/(1 - p))</code>
+	genr lgt_p = log(p/(1 - p))
+      </code>
       <para>
         e usare questa come variabile dipendente in una regressione OLS.
         Si veda Ramanathan 2002, capitolo 12.
@@ -4472,7 +4478,8 @@
         comando seguente prima di avviare gretl
       </para>
       <code>
-	export GRETL_MP_BITS=1024</code>
+	export GRETL_MP_BITS=1024
+      </code>
 
       <para context="cli">
 	Per questo comando è disponibile un'opzione abbastanza speciale (utile
@@ -4486,7 +4493,8 @@
         potenza di <lit>x</lit>:
       </para>
       <code context="cli">
-	mpols y 0 x ; 2 3 4</code>
+	mpols y 0 x ; 2 3 4
+      </code>
     </description>
 
     <gui-access>
@@ -4681,7 +4689,8 @@
         le righe dalla 7 alla 9 con la seguente:
       </para>
       <code>
-	params a b g</code>
+	params a b g
+      </code>
       <para> 
         La riga 10, <cmd>end nls</cmd>, completa il comando ed esegue la stima.
       </para>
@@ -6022,7 +6031,8 @@
 	<lit>r2</lit> nella <repl>lista-rho</repl>, viene creata
       </para>
       <code>
-        v1# = v1 - r1*v1(-1) - r2*v1(-2)</code>
+        v1# = v1 - r1*v1(-1) - r2*v1(-2)
+      </code>
       <para>
 	I valori nella <repl>lista-rho</repl> possono essere specificati sotto
 	forma di valori numerici o di nomi di variabili definite in precedenza.
@@ -6797,14 +6807,16 @@
       forma <lit>--restrict</lit> di <lit>smpl</lit> per escludere
       particolari osservazioni dal campione. Ad esempio,</para>
 
-        <code>
-	smpl obs!=4 --restrict</code>
+      <code>
+	smpl obs!=4 --restrict
+      </code>
         
-        <para>scarterà la quarta osservazione. Se le osservazioni sono
+      <para>scarterà la quarta osservazione. Se le osservazioni sono
         identificate da etichette,</para>
         
-	<code>
-        smpl obs!="USA" --restrict</code>
+      <code>
+        smpl obs!="USA" --restrict
+      </code>
         
         <para>scarterà l'osservazione a cui è associata l'etichetta <quote>USA</quote>.
         </para>

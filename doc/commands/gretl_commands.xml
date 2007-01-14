@@ -586,7 +586,8 @@
 	valid way to specify an ARMA(2, 1) model:
       </para>
       <code context="cli">
-	arma 2 1 ; y</code>
+	arma 2 1 ; y
+      </code>
 
       <para context="gui">
 	Estimates an ARMA model, with or without exogenous regressors. If
@@ -689,7 +690,8 @@
 	comparative boxplots with the following <repl
 	  quote="true">varlist</repl>:</para>
       <code>
-	salary (GENDER=1) salary (GENDER=0)</code>
+	salary (GENDER=1) salary (GENDER=0)
+      </code>
 
       <para>Some details of gretl's boxplots can be controlled via a
 	(plain text) file named <filename>.boxplotrc</filename>.  For
@@ -1330,7 +1332,8 @@
 	If the series to be read are of higher frequency than the working
 	data set, you may specify a compaction method as below:</para>
       <code>
-	data (compact=average) LHUR PUNEW</code>
+	data (compact=average) LHUR PUNEW
+      </code>
       <para>
 	The four available compaction methods are <quote>average</quote>
 	(takes the mean of the high frequency observations),
@@ -1556,7 +1559,8 @@
 	<cmd>dummify</cmd> in this context.)
       </para>
       <code>
-	ols y dummify(x)</code>
+	ols y dummify(x)
+      </code>
     </description>
 
   </command>
@@ -2146,7 +2150,8 @@
 	example, to get the conditional variance:  
       </para>
       <code context="cli">
-	genr ht = $h</code>
+	genr ht = $h
+      </code>
 
     </description>
 
@@ -4002,7 +4007,8 @@
 	rather construct the logit variable, as in
       </para>
       <code>
-	genr lgt_p = log(p/(1 - p))</code>
+	genr lgt_p = log(p/(1 - p))
+      </code>
       <para>and use this as the dependent variable in an OLS regression.  
 	See Ramanathan (2002, Chapter 12).
       </para>
@@ -4545,7 +4551,8 @@
 	command, before starting gretl, to set a precision of 1024 bits.
       </para>
       <code>
-	export GRETL_MP_BITS=1024</code>
+	export GRETL_MP_BITS=1024
+      </code>
 
       <para context="cli">
 	A rather arcane option is available for this command (primarily
@@ -4559,7 +4566,8 @@
 	and fourth powers of <lit>x</lit>:
       </para>
       <code context="cli">
-	mpols y 0 x ; 2 3 4</code>
+	mpols y 0 x ; 2 3 4
+      </code>
 
     </description>
 
@@ -4755,7 +4763,8 @@
 	lines 7 to 9:
       </para>
       <code>
-	params a b g</code>
+	params a b g
+      </code>
       <para>
 	Line 10, <cmd>end nls</cmd>, completes the command and calls for
 	estimation.
@@ -6134,7 +6143,9 @@
 	<repl>varlist</repl>, and entries <lit>r1</lit> and
 	<lit>r2</lit> in <repl>rholist</repl>, the new variable
       </para>
-      <code>v1# = v1 - r1*v1(-1) - r2*v1(-2)</code>
+      <code>
+	v1# = v1 - r1*v1(-1) - r2*v1(-2)
+      </code>
       <para>
 	is created. The <repl>rholist</repl> entries can be given as numerical
 	values or as the names of variables previously defined.
@@ -6903,13 +6914,15 @@
 	particular observations from the sample.  For example</para>
 
       <code>
-	smpl obs!=4 --restrict</code> 
+	smpl obs!=4 --restrict
+      </code> 
 
       <para>will drop just the fourth observation. If the data points
 	are identified by labels,</para>
 
       <code>
-	smpl obs!="USA" --restrict</code>
+	smpl obs!="USA" --restrict
+      </code>
 	  
       <para>will drop the observation with label <quote>USA</quote>.
       </para>
