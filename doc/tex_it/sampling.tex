@@ -22,7 +22,7 @@ trimestrali per l'intervallo da 1960:1 a 2003:4 e si vuole stimare una
 regressione usando solo i dati degli anni '70, un comando adeguato è
 
 \begin{code}
-    smpl 1970:1 1979:4
+smpl 1970:1 1979:4
 \end{code}
       
 Oppure se si vuole riservare la parte finale delle osservazioni
@@ -30,7 +30,7 @@ disponibili per eseguire una previsione "fuori dal campione", si può
 usare il comando
 
 \begin{code}
-    smpl ; 2000:4
+smpl ; 2000:4
 \end{code}
       
 dove il punto e virgola significa ``mantenere inalterata
@@ -42,8 +42,8 @@ inalterata relativamente all'ultima impostazione eseguita con
 stato definito alcun sotto-campione.  Ad esempio, dopo
 
 \begin{code}
-    smpl 1970:1 2003:4
-    smpl ; 2000:4
+smpl 1970:1 2003:4
+smpl ; 2000:4
 \end{code}
       
 l'intervallo del campione sarà da 1970:1 a 2000:4.
@@ -54,14 +54,14 @@ spostamento relativo, sotto forma di numero preceduto dal segno più o dal segno
 meno (o un punto e virgola per indicare nessuna variazione). Ad esempio
 
 \begin{code}
-    smpl +1 ;
+smpl +1 ;
 \end{code}
       
 sposterà in avanti di un'osservazione l'inizio del campione,
 mantenendo inalterata la fine del campione, mentre
 
 \begin{code}
-    smpl +2 -1
+smpl +2 -1
 \end{code}
 
 sposterà l'inizio del campione in avanti di due osservazioni e la fine
@@ -89,13 +89,13 @@ dispone di una variabile dummy \verb+genere+, che vale 1 per gli
 uomini e 0 per le donne, si potrebbe ottenere questo risultato con
 
 \begin{code}
-    smpl genere=0 --restrict
+smpl genere=0 --restrict
 \end{code}
     
 Oppure si supponga di voler limitare il campione di lavoro ai soli
 individui con un reddito superiore ai 50.000 euro. Si potrebbe usare
 \begin{code}
-    smpl reddito>50000 --restrict
+smpl reddito>50000 --restrict
 \end{code}
 
 Qui sorge un problema: eseguendo in sequenza i due comandi visti
@@ -109,14 +109,14 @@ indipendentemente da quelle applicate in precedenza, occorre prima
 re-impostare il campione alla sua lunghezza originaria, usando
     
 \begin{code}
-    smpl --full
+smpl --full
 \end{code}
 %
 In alternativa, è possibile aggiungere l'opzione \verb+replace+ al
 comando \verb+smpl+:
 %
 \begin{code}
-    smpl income>50000 --restrict --replace
+smpl income>50000 --restrict --replace
 \end{code}
 
 Questa opzione ha l'effetto di re-impostare automaticamente il
@@ -133,14 +133,14 @@ dalla variabile \verb+impresa+) osservate in ognuno degli anni
 identificati dalla variabile \verb+anno+.  La restrizione
 %
 \begin{code}
-    smpl anno=1995 --restrict
+smpl anno=1995 --restrict
 \end{code}
 %
 produce un dataset che non è più di tipo panel, ma cross-section per
 l'anno 1995.  In modo simile
 %      
 \begin{code}
-    smpl impresa=3 --restrict
+smpl impresa=3 --restrict
 \end{code}
 %
 produce un dataset di serie storiche per l'impresa numero 3.
@@ -188,7 +188,7 @@ proprietà di uno stimatore), può essere utile estrarre un campione
 casuale dal dataset completo. È possibile farlo ad esempio con
 
 \begin{code}
-    smpl 100 --random
+smpl 100 --random
 \end{code}
 
 che seleziona 100 osservazioni.  Se occorre che il campione sia

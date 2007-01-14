@@ -97,7 +97,7 @@ si ottiene un tabulato non interattivo dei risultati, ma è possibile
 interattivamente dopo l'esecuzione dello script. Ecco un esempio:
     
 \begin{code}
-      Modello1 <- ols Ct 0 Yt
+Modello1 <- ols Ct 0 Yt
 \end{code}
 
 Ossia: si indica un nome con cui verrà salvato il modello,
@@ -106,7 +106,7 @@ comando di stima del modello. È possibile usare spazi nei nomi dei
 modelli, ma occorre racchiudere il nome tra virgolette doppie:
     
 \begin{code}
-      "Modello 1" <- ols Ct 0 Yt
+"Modello 1" <- ols Ct 0 Yt
 \end{code}
 
 I modelli salvati in questo modo appariranno come icone nella finestra
@@ -114,12 +114,12 @@ delle icone di \app{gretl} (si veda la sezione~\ref{session}) dopo l'esecuzione
 dello script. Inoltre, è possibile fare in modo che un modello venga mostrato in
 una finestra in modo automatico, usando:
 \begin{code}
-      Modello1.show
+Modello1.show
 \end{code}
 
 Ancora: se il nome contiene spazi, occorre metterlo tra virgolette:
 \begin{code}
-      "Modello 1".show
+"Modello 1".show
 \end{code}
 
 È possibile usare la stessa procedura anche per i grafici; ad esempio,
@@ -127,8 +127,8 @@ il comando seguente crea un grafico di \verb+Ct+ rispetto a \verb+Yt+,
 lo salva come ``Grafico'' (apparirà con questo nome nella finestra delle
 icone) e lo mostra automaticamente:
 \begin{code}
-      Grafico <- gnuplot Ct Yt
-      Grafico.show
+Grafico <- gnuplot Ct Yt
+Grafico.show
 \end{code}
 
 È anche possibile salvare i risultati di un comando come oggetti
@@ -138,8 +138,8 @@ esempio, questo comando invia i risultati di un test Dickey--Fuller
 aumentato a un ``oggetto testuale'' chiamato \verb+ADF1+ e li mostra in
 una finestra:
 \begin{code}
-      ADF1 <- adf 2 x1
-      ADF1.show
+ADF1 <- adf 2 x1
+ADF1.show
 \end{code}
 
 Gli oggetti salvati in questo modo (siano essi modelli, grafici o

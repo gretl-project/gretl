@@ -11,9 +11,9 @@ bootstrapping of test statistics and iterative estimation procedures.
 The general form of a loop is:
 
 \begin{code}
-      loop control-expression [ --progressive | --verbose | --quiet ]
-         loop body
-      endloop
+loop control-expression [ --progressive | --verbose | --quiet ]
+   loop body
+endloop
 \end{code}
 
 Five forms of control-expression are available, as explained in
@@ -81,8 +81,10 @@ A second sort of control expression takes the form of the keyword
 the name of a predefined variable; the right-hand side may be either a
 numerical constant or the name of another predefined variable.  For
 example, 
-
-\cmd{loop while essdiff > .00001} 
+%
+\begin{code}
+loop while essdiff > .00001
+\end{code}
 
 Execution of the commands within the loop will continue so long as the
 specified condition evaluates as true. If the right-hand term of the
@@ -114,18 +116,18 @@ out for each value of some discrete variable (see chapter
 \ref{chap:discrete}). Consider the following example:
 
 \begin{code}
-  open greene22_2
-
-  discrete Z8
-  v8 = values(Z8)
-  n = rows(v8)
-
-  loop for i=1..n
-    scalar xi = v8[$i]
-    smpl (Z8=xi) --restrict --replace
-    printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
-      xi, mean(Y), xi, sd(Y)
-  end loop
+open greene22_2
+open greene22_2
+discrete Z8
+v8 = values(Z8)
+n = rows(v8)
+n = rows(v8)
+loop for i=1..n
+  scalar xi = v8[$i]
+  smpl (Z8=xi) --restrict --replace
+  printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
+    xi, mean(Y), xi, sd(Y)
+end loop
 \end{code}
 
 In this case, we evaluate the conditional mean and standard deviation
@@ -141,9 +143,9 @@ This can be useful for performing repetitive operations on a list of
 variables.  Here is an example of the syntax:
       
 \begin{code}
-	loop foreach i peach pear plum
-	   print "$i"
-	endloop
+loop foreach i peach pear plum
+   print "$i"
+endloop
 \end{code}
 
 This loop will execute three times, printing out ``peach'', ``pear''
@@ -158,10 +160,10 @@ of the US.  To run a regression of income on time for each of the
 states we could do:
 
 \begin{code}
-	genr time
-	loop foreach i AL..WY
-	   ols $i const time
-	endloop
+genr time
+loop foreach i AL..WY
+   ols $i const time
+endloop
 \end{code}
 
 
@@ -177,8 +179,10 @@ the same control variable); and the third part specifies an increment
 (or decrement) for the control variable, to be applied each time round
 the loop.  The entire expression is enclosed in parentheses.  For
 example:
-
-\cmd{loop for (r=0.01; r<.991; r+=.01)}
+%
+\begin{code}
+loop for (r=0.01; r<.991; r+=.01)
+\end{code}
 
 In this example the variable \verb+r+ will take on the values 0.01,
 0.02, \dots{}, 0.99 across the 99 iterations.  Note that due to the

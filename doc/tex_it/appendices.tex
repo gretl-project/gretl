@@ -76,15 +76,15 @@ In particolare:
 Ecco un esempio di un file di descrizione dei dati ben scritto.
         
 \begin{code}
-    (* 
-      DATA9-6: 
-      Dati su log(moneta), log(reddito) e tasso di interesse USA. 
-      Fonte: Stock and Watson (1993) Econometrica 
-      (dati grezzi) Il periodo è 1900-1989 (dati annuali). 
-      Dati composti da Graham Elliott. 
-    *) 
-    lmoneta lreddito tassint ; 
-    1 1900 1989 BYOBS
+(* 
+  DATA9-6: 
+  Dati su log(moneta), log(reddito) e tasso di interesse USA. 
+  Fonte: Stock and Watson (1993) Econometrica 
+  (dati grezzi) Il periodo è 1900-1989 (dati annuali). 
+  Dati composti da Graham Elliott. 
+*) 
+lmoneta lreddito tassint ; 
+1 1900 1989 BYOBS
 \end{code}
           
 Il corrispondente file di dati contiene tre colonne di dati, ognuna
@@ -139,10 +139,10 @@ veri e propri. Ecco due esempi di voci contenute in un file
 \verb+idx+:
 
 \begin{code}
-      G0M910  Indice composto da 11 indicatori principali (1987=100) 
-      M 1948.01 - 1995.11  n = 575
-      currbal Bilancia dei pagamenti: parte corrente; corretta per la stagionalità
-      Q 1960.1 - 1999.4 n = 160
+G0M910  Indice composto da 11 indicatori principali (1987=100) 
+M 1948.01 - 1995.11  n = 575
+currbal Bilancia dei pagamenti: parte corrente; corretta per la stagionalità
+Q 1960.1 - 1999.4 n = 160
 \end{code}
 
 Il primo campo è il nome della serie, il secondo è una descrizione
@@ -165,7 +165,7 @@ commento (al massimo 64 caratteri) a proposito della fonte e del tipo
 dei dati, che segue un carattere cancelletto. Ad esempio:
       
 \begin{code}
-      # Banca Centrale Europea (tassi di interesse)
+# Banca Centrale Europea (tassi di interesse)
 \end{code}
 
 Il corrispondente database binario contiene i valori dei dati,

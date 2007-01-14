@@ -122,21 +122,21 @@ here is what to do.
 \item The basic routine is then
             
 \begin{code}
-    ./configure 
-    make 
-    make check
-    make install
+./configure 
+make 
+make check
+make install
 \end{code}
 However, you should probably read the \verb+INSTALL+ file first,
 and/or do
 \begin{code}
-    ./configure --help
+./configure --help
 \end{code}
 first to see what options are available. One option you way wish to
 tweak is \cmd{--prefix}.  By default the installation goes under
 \verb+/usr/local+ but you can change this.  For example
 \begin{code}
-    ./configure --prefix=/usr
+./configure --prefix=/usr
 \end{code}
 will put everything under the \verb+/usr+ tree.  In the event that a
 required library is not found on your system, so that the configure

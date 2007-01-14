@@ -11,9 +11,9 @@ statistiche test e per altre procedure di stima iterativa. La forma
 generale di un loop, o ciclo, è:
 
 \begin{code}
-      loop espressione di controllo [ --progressive | --verbose | --quiet ]
-         corpo del loop
-      endloop
+loop espressione di controllo [ --progressive | --verbose | --quiet ]
+   corpo del loop
+endloop
 \end{code}
 
 Sono disponibili cinque tipi di espressione di controllo, come si vede nella
@@ -80,9 +80,11 @@ comando \cmd{while} seguito da una disuguaglianza, in cui il termine a
 sinistra è il nome di una variabile predefinita, mentre il lato destro
 può essere una costante numerica o il nome di un'altra variabile
 predefinita. Ad esempio:
-        
-\cmd{loop while differ > .00001} 
-
+%
+\begin{code}        
+loop while differ > .00001
+\end{code}
+%
 L'esecuzione del ciclo di comandi continuerà fintanto che la
 condizione specificata rimane vera. Se il termine a destra della
 disuguaglianza è una variabile, essa viene valutata all'inizio di ogni
@@ -119,13 +121,13 @@ che in questo caso può assumere valori solo all'interno di una lista
 specifica di stringhe. Il loop è eseguito una volta per ogni stringa
 presente nella lista, agevolando l'esecuzione di operazioni ripetitive
 su un gruppo di variabili. Ecco un esempio:
-      
+%      
 \begin{code}
-        loop foreach i mele pere pesche
-          print "$i"
-        endloop
+loop foreach i mele pere pesche
+  print "$i"
+endloop
 \end{code}
-
+%
 Questo loop verrà eseguito tre volte, mostrando ``mele'', ``pere'' e
 ``pesche'' ad ogni iterazione.  
 
@@ -136,12 +138,12 @@ nomi. Ad esempio, ipotizzando di avere 50 variabili \verb+AK+,
 \verb+AL+, \dots{}, \verb+WY+, che contengono livelli di reddito per
 gli stati degli USA, per stimare una regressione del reddito sul tempo
 per ognuno degli stati, basta eseguire:
-       
+%       
 \begin{code}
-       genr time
-       loop foreach i AL..WY
-          ols $i const time
-       endloop
+genr time
+loop foreach i AL..WY
+   ols $i const time
+endloop
 \end{code}
 
 
@@ -158,9 +160,11 @@ controllo), mentre la terza parte specifica un incremento (o un
 decremento) per la variabile di controllo, da applicare ogni volta che
 il ciclo viene eseguito. L'intera espressione deve essere racchiusa
 tra parentesi.  Ad esempio:
-
-\cmd{loop for (r=0.01; r<.991; r+=.01)}
-
+%
+\begin{code}
+loop for (r=0.01; r<.991; r+=.01)
+\end{code}
+%
 La variabile \verb+r+ assumerà i valori 0.01, 0.02, \dots{}, 0.99 nel
 giro di 99 iterazioni. Si noti che a causa della precisione limitata
 dell'aritmetica in virgola mobile usata dal computer, può dover essere

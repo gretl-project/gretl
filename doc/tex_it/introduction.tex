@@ -119,23 +119,23 @@ procedere:
 \item La sequenza basilare di comandi da eseguire è:
           
 \begin{code}
-    ./configure 
-    make 
-    make check
-    make install
+./configure 
+make 
+make check
+make install
 \end{code}
 
 Tuttavia, potrebbe essere utile leggere per prima cosa il file
   \verb+INSTALL+ e/o eseguire
 \begin{code}
-    ./configure --help
+./configure --help
 \end{code}
 per capire quali opzioni di configurazione sono disponibili.
 Un'opzione che può essere utile utilizzare è \cmd{--prefix}; il
 comportamento predefinito è quello di installare il programma in
 \verb+/usr/local+, ma è possibile modificarlo.  Ad esempio
 \begin{code}
-    ./configure --prefix=/usr
+./configure --prefix=/usr
 \end{code}
 installerà il tutto sotto la directory \verb+/usr+.  Se la procedura
 di configurazione si interrompe perché una delle librerie richieste

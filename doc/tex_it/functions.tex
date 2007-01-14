@@ -14,9 +14,9 @@ Occorre definire una funzione prima di poterla utilizzare. La sintassi
 per farlo è la seguente:
 
 \begin{code}
-      function nome-funzione(parametri)
-         corpo della funzione
-      end function
+function nome-funzione(parametri)
+   corpo della funzione
+end function
 \end{code}
 
 Il \textsl{nome-funzione} identifica la funzione in modo univoco: deve
@@ -46,7 +46,7 @@ cosa un indicatore di tipo, quindi il nome con cui il parametro verrà
 riconosciuto all'interno della funzione. Ecco un esempio:
     
 \begin{code}
-      function funzione(series y, list xvars, bool verboso)
+function funzione(series y, list xvars, bool verboso)
 \end{code}
 
 Ognuno di questi indicatori di tipo, con l'eccezione di \texttt{list},
@@ -54,7 +54,7 @@ può essere modificato facendo precedere da un asterisco il parametro ad esso
 associato, come in questo esempio
 %    
 \begin{code}
-      function funzione(series *y, scalar *b)
+function funzione(series *y, scalar *b)
 \end{code}
 
 Il significato di questa modifica è spiegato nella sezione
@@ -72,7 +72,7 @@ punti. Ad esempio, ipotizzando di avere un parametro intero chiamato
 di 12 e un valore predefinito di 4, si può scrivere
 %    
 \begin{code}
-      int ordine[1:12:4]
+int ordine[1:12:4]
 \end{code} 
 %
 Per omettere uno dei tre valori aggiuntivi, basta lasciare vuoto il campo
@@ -83,7 +83,7 @@ Per parametri di tipo \texttt{bool} è possibile specificare come valori predefin
 1 (vero) o 0 (falso), come in questo esempio:
 %    
 \begin{code}
-      bool verboso[0]
+bool verboso[0]
 \end{code} 
 %
 
@@ -93,7 +93,7 @@ occorre usare la parola chiave \texttt{void} al posto dell'elenco dei
 parametri:
 %    
 \begin{code}
-      function funzione2(void)
+function funzione2(void)
 \end{code}
 
 Quando una funzione viene chiamata, i parametri vengono istanziati
@@ -131,18 +131,18 @@ vanno separati da virgole. L'esempio seguente mostra una chiamata di
 funzione che rispetta la definizione della funzione stessa.
     
 \begin{code}
-      # Definizione della funzione
-      function ols_ess(series y, list xvars)
-        ols y 0 xvars --quiet
-        scalar myess = $ess
-        printf "ESS = %g\n", myess
-        return scalar myess
-      end function
-      # Script principale
-      open data4-1
-      list xlist = 2 3 4
-      # Chiamata della funzione (il valore restituito viene qui ignorato)
-      ols_ess(price, xlist)
+# Definizione della funzione
+function ols_ess(series y, list xvars)
+  ols y 0 xvars --quiet
+  scalar myess = $ess
+  printf "ESS = %g\n", myess
+  return scalar myess
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata della funzione (il valore restituito viene qui ignorato)
+ols_ess(price, xlist)
 \end{code}
 
 La chiamata della funzione contiene due argomenti: il primo è una
@@ -158,17 +158,17 @@ Un secondo esempio mostra una chiamata di funzione che assegna il
 valore prodotto dalla funzione ad alcune variabili:
     
 \begin{code}
-      # Definizione di funzione
-      function get_uhat(series y, list xvars)
-        ols y 0 xvars --quiet
-        series uh = $uhat
-        return series uh
-      end function
-      # Script principale
-      open data4-1
-      list xlist = 2 3 4
-      # Chiamata di funzione
-      series resids = get_uhat(price, xlist)
+# Definizione di funzione
+function get_uhat(series y, list xvars)
+  ols y 0 xvars --quiet
+  series uh = $uhat
+  return series uh
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata di funzione
+series resids = get_uhat(price, xlist)
 \end{code}
 
 \section{Programmazione delle funzioni}
@@ -203,18 +203,18 @@ l'argomento corrispondente viene contrassegnato col prefisso complementare
 \verb+&+ nella chiamata. Ad esempio:
 %
 \begin{code}
-      function get_uhat_and_ess(series y, list xvars, scalar *ess)
-        ols y 0 xvars --quiet
-        ess = $ess
-        series uh = $uhat
-        return series uh
-      end function
-      # Script principale
-      open data4-1
-      list xlist = 2 3 4
-      # Chiamata di funzione
-      scalar SSR
-      series resid = get_uhat_and_ess(price, xlist, &SSR)
+function get_uhat_and_ess(series y, list xvars, scalar *ess)
+  ols y 0 xvars --quiet
+  ess = $ess
+  series uh = $uhat
+  return series uh
+end function
+# Script principale
+open data4-1
+list xlist = 2 3 4
+# Chiamata di funzione
+scalar SSR
+series resid = get_uhat_and_ess(price, xlist, &SSR)
 \end{code}
 %
 In questo caso, alla funzione viene passato l'\emph{indirizzo} della variabile scalare
@@ -234,21 +234,21 @@ Ad esempio, ecco la funzione vista in precedenza, modificata in modo da rendere
 opzionale l'indicazione del valore di \texttt{ess}.
 %
 \begin{code}
-      function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
-        ols y 0 xvars --quiet
-        if !isnull(ess) 
-           ess = $ess
-        endif
-        series uh = $uhat
-        return series uh
-      end function
+function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+  ols y 0 xvars --quiet
+  if !isnull(ess) 
+     ess = $ess
+  endif
+  series uh = $uhat
+  return series uh
+end function
 \end{code}
 %
 Se alla chiamata non si ha interesse per il valore di \texttt{ess}, occorre usare
 \texttt{null} al posto di un vero argomento:
 %
 \begin{code}
-      series resid = get_uhat_and_ess(price, xlist, null)
+series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
 
 \subsection{Argomenti lista}
@@ -263,9 +263,9 @@ funzione, la lista può essere passata a comandi come
 lista:
 %
 \begin{code}
-     loop foreach i X
-        scalar sd_$i = sd($i)
-     end loop
+loop foreach i X
+   scalar sd_$i = sd($i)
+end loop
 \end{code}
 
 Quando a una funzione viene passata una lista di variabili, in realtà riceve
@@ -280,7 +280,7 @@ l'identificatore \texttt{const} nella lista dei parametri, come in questo
 esempio:
 %
 \begin{code}
-     function funzione (scalar y, const list X)
+function funzione (scalar y, const list X)
 \end{code}
 %
 Quando una lista è marcata come \texttt{const}, ogni tentativo di rinomiare,
@@ -299,7 +299,7 @@ dei parametri di una funzione).  All'interno di una funzione può esserci solo
 una di queste dichiarazioni. Ecco un esempio di dichiarazione return valida:
 %
 \begin{code}
-      return scalar SSR
+return scalar SSR
 \end{code}
 %
 Si noti che la dichiarazione \verb+return+ \emph{non} indica alla
@@ -335,8 +335,8 @@ una nuova funzione), basta usare uno dei seguenti comandi (o entrambi)
 all'interno nella funzione:
 %
 \begin{code}
-     set echo on
-     set messages on
+set echo on
+set messages on
 \end{code}
 
 \section{Pacchetti di funzioni}

@@ -161,18 +161,18 @@ massimizzare (\ref{eq:gammaloglik}) rispetto ad essi. Il frammento di codice da
 eseguire in \app{gretl} è
 
 \begin{code}
-    scalar alpha = 1
-    scalar p = 1
-
-    mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
-    end mle 
+scalar alpha = 1
+scalar p = 1
+scalar p = 1
+mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
+end mle 
 \end{code}
 
 I due comandi
 
 \begin{code}
-    alpha = 1
-    p = 1
+alpha = 1
+p = 1
 \end{code}
 
 sono necessari per assicurarsi che le variabili \texttt{p} e \texttt{alpha}
@@ -186,13 +186,13 @@ Il codice visto può essere reso più leggibile, e leggermente più efficiente,
 definendo una variabile in cui memorizzare $\alpha \cdot x_t$. Questo comando
 può essere inserito nel blocco \texttt{mle} nel modo seguente:
 \begin{code}
-    scalar alpha = 1
-    scalar p = 1
-
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-    series ax = alpha*x
-    params alpha p
-    end mle 
+scalar alpha = 1
+scalar p = 1
+scalar p = 1
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+series ax = alpha*x
+params alpha p
+end mle 
 \end{code}
 In questo caso, è necessario includere la riga \texttt{params alpha
   p} per impostare i simboli \texttt{p} e \texttt{alpha} separatamente da
@@ -216,14 +216,14 @@ sono consistenti e quindi appropriati da usare come punti di partenza per
 l'algoritmo.
 Lo script per \app{gretl} diventa quindi
 \begin{code}
-    scalar m = mean(x)
-    scalar alpha = m/var(x)
-    scalar p = m*alpha
-
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-    series ax = alpha*x
-    params alpha p
-    end mle 
+scalar m = mean(x)
+scalar alpha = m/var(x)
+scalar p = m*alpha
+scalar p = m*alpha
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+series ax = alpha*x
+params alpha p
+end mle 
 \end{code}
 
 Un'altro fatto di cui tener conto è che talvolta i parametri sono vincolati
@@ -236,15 +236,15 @@ definire una variabile per controllare che i parametri siano ammissibili e
 impostare la log-verosimiglianza come indefinita se il controllo fallisce. Ad
 esempio:
 \begin{code}
-    scalar m = mean(x)
-    scalar alpha = m/var(x)
-    scalar p = m*alpha
-
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
-    series ax = alpha*x
-    scalar check = (alpha>0) * (p>0)
-    params alpha p
-    end mle 
+scalar m = mean(x)
+scalar alpha = m/var(x)
+scalar p = m*alpha
+scalar p = m*alpha
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
+series ax = alpha*x
+scalar check = (alpha>0) * (p>0)
+params alpha p
+end mle 
 \end{code}
 
 \section{Funzioni di costo con frontiera stocastica}
@@ -564,8 +564,8 @@ dell'andamento di questa variabile, si può aggiungere un comando print nel
 blocco \texttt{mle}, nel modo seguente:
 %
 \begin{code}
-  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
-  print tmp
+series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
+print tmp
 \end{code}
 
 %%% Local Variables: 

@@ -63,18 +63,18 @@ a partire dalle stime OLS dei coefficienti. In relazione al primo
 degli esempi visti sopra, si potrebbe usare:
 
 \begin{code}
-      ols C 0 Y
-      genr alfa = $coeff(0)
-      genr beta = $coeff(Y)
-      genr gamma = 1
+ols C 0 Y
+genr alfa = $coeff(0)
+genr beta = $coeff(Y)
+genr gamma = 1
 \end{code}
 
 E in relazione al secondo esempio si userebbe:
 
 \begin{code}
-      ols y 0 x1 x2
-      genr alfa = $coeff(0)
-      genr beta = $coeff(x1)
+ols y 0 x1 x2
+genr alfa = $coeff(0)
+genr beta = $coeff(x1)
 \end{code}
 
 \section{Finestra di dialogo NLS}

@@ -90,7 +90,7 @@ numericamente identici; piuttosto:
 La sintassi di \app{gretl} per stimare la (\ref{eq:arma-with-xconst}) è
 semplicemente
 \begin{code}
-  arma p q ; y
+arma p q ; y
 \end{code}
 Gli ordini di ritardo AR e MA, \verb|p| e \verb|q|, possono essere indicati come
 numeri o come scalari definiti in precedenza. Il parametro $\mu$ può essere
@@ -98,13 +98,13 @@ omesso se necessario, aggiungendo l'opzione \cmd{--nc} (``no constant'') al
 comando. Se occorre stimare la (\ref{eq:arma-with-zconst}), bisogna aggiungere
 al comando l'opzione \texttt{--conditional}, come in
 \begin{code}
-  arma p q ; y --conditional
+arma p q ; y --conditional
 \end{code}
 
 Generalizzando questo principio alla stima della
 (\ref{eq:arma-with-x}) o della (\ref{eq:arma-with-z}), si ottiene che
 \begin{code}
-  arma p q ; y const x1 x2
+arma p q ; y const x1 x2
 \end{code}
 stimerebbe il modello seguente:
 \[
@@ -117,7 +117,7 @@ x_{t,2} \beta_2$.
 
 Usando l'opzione \texttt{--conditional}, come in
 \begin{code}
-  arma p q ; y const x1 x2 --conditional
+arma p q ; y const x1 x2 --conditional
 \end{code}
 si stimerebbe il modello seguente:
 \[
@@ -148,12 +148,12 @@ Il modello (\ref{eq:plain-0-arma}) può essere espanso nel seguente
 \end{equation}
 In questi casi, è disponibile una versione ampliata della sintassi, ossia:
 \begin{code}
-  arma p q ; P Q ; y
+arma p q ; P Q ; y
 \end{code}
 dove \texttt{p} e \texttt{q} rappresentano gli ordini AR e MA non stagionali,
 mentre \texttt{P} e \texttt{Q} gli ordini stagionali. Ad esempio
 \begin{code}
-  arma 1 1 ; 1 1 ; y
+arma 1 1 ; 1 1 ; y
 \end{code}
 stima il modello seguente:
 \[
@@ -176,15 +176,15 @@ stazionarietà (si veda anche la sezione \ref{sec:uroot}). La differenziazione è
 la più comune tra queste trasformazioni, e \app{gretl} fornisce un meccanismo
 per includere questo passo nel comando \cmd{arma}: la sintassi
 \begin{code}
-  arma p d q ; y 
+arma p d q ; y 
 \end{code}
 stima un modello ARMA$(p,q)$ su $\Delta^d y_t$. È funzionalmente equivalente a
 \begin{code}
-  series tmp = y
-  loop for i=1..d
-    tmp = diff(tmp)
-  end loop
-  arma p q ; tmp 
+series tmp = y
+loop for i=1..d
+  tmp = diff(tmp)
+end loop
+arma p q ; tmp 
 \end{code}
 tranne che per quanto riguarda la previsione dopo la stima (si veda oltre).
 
@@ -195,16 +195,16 @@ motivo, \app{gretl} fornisce anche il comando \cmd{arima} come alias per
 
 La differenziazione stagionale è trattata in modo simile, con la sintassi
 \begin{code}
-  arma p d q ; P D Q ; y 
+arma p d q ; P D Q ; y 
 \end{code}
 dove \texttt{D} è l'ordine di differenziazione stagionale. Così, il comando
 \begin{code}
-  arma 1 0 0 ; 1 1 1 ; y 
+arma 1 0 0 ; 1 1 1 ; y 
 \end{code}
 produrrebbe le stesse stime dei parametri date da
 \begin{code}
-  genr dsy = sdiff(y)
-  arma 1 0 ; 1 1 ; dsy 
+genr dsy = sdiff(y)
+arma 1 0 ; 1 1 ; dsy 
 \end{code}
 dove usiamo la funzione \texttt{sdiff} per creare una differenza stagionale (ad
 esempio per dati trimestrali: $y_t - y_{t-4}$).
@@ -243,9 +243,9 @@ variabili esogene come mostrato nell'equazione (\ref{eq:arma-with-z}).
 
 I due metodi possono essere confrontati nell'esempio seguente
 \begin{code}
-  open data10-1
-  arma 1 1 ; r
-  arma 1 1 ; r --conditional
+open data10-1
+arma 1 1 ; r
+arma 1 1 ; r --conditional
 \end{code}
 che produce le stime mostrate nella Tabella~\ref{tab:ml-cml}. Come si può
 vedere, le stime di $\phi$ e $\theta$ sono abbastanza simili. Le costanti
@@ -302,9 +302,9 @@ specificare manualmente un insieme di valori di partenza, attraverso il comando
 \texttt{initvals}, mentre il secondo dev'essere il nome di una matrice
 pre-specificata che contiene i valori iniziali. Ad esempio
 \begin{code}
-  matrix start = { 0, 0.85, 0.34 }
-  set initvals start
-  arma 1 1 ; y
+matrix start = { 0, 0.85, 0.34 }
+set initvals start
+arma 1 1 ; y
 \end{code}
 La matrice specificata deve avere un numero di parametri pari a quello del
 modello: nell'esempio precedente ci sono tre parametri, visto che il modello
@@ -334,7 +334,7 @@ GNU/Linux.
 Per invocare \app{X-12-ARIMA} come motore di stima, basta usare l'opzione
 \verb|--x-12-arima|, come in questo esempio:
 \begin{code}
-  arma p q ; y --x-12-arima
+arma p q ; y --x-12-arima
 \end{code}
 Come accade con le stime effettuate da \app{gretl}, per impostazione predefinita
 viene usata la massima verosimiglianza esatta, ma è possibile usare la
@@ -398,20 +398,19 @@ print y fc1 fc2 fcdiff --byobs
 Il risultato dell'ultimo comando è:
 %
 \begin{code}
-                    y          fc1          fc2       fcdiff
-
-  1981:1      7.964086     7.940930      0.02668      0.02668
-  1981:2      7.978654     7.997576      0.03349      0.03349
-  1981:3      8.009463     7.997503      0.01885      0.01885
-  1981:4      8.015625     8.033695      0.02423      0.02423
-  1982:1      8.014997     8.029698      0.01407      0.01407
-  1982:2      8.026562     8.046037      0.01634      0.01634
-  1982:3      8.032717     8.063636      0.01760      0.01760
-  1982:4      8.042249     8.081935      0.01830      0.01830
-  1983:1      8.062685     8.100623      0.01869      0.01869
-  1983:2      8.091627     8.119528      0.01891      0.01891
-  1983:3      8.115700     8.138554      0.01903      0.01903
-  1983:4      8.140811     8.157646      0.01909      0.01909
+                  y          fc1          fc2       fcdiff
+1981:1      7.964086     7.940930      0.02668      0.02668
+1981:2      7.978654     7.997576      0.03349      0.03349
+1981:3      8.009463     7.997503      0.01885      0.01885
+1981:4      8.015625     8.033695      0.02423      0.02423
+1982:1      8.014997     8.029698      0.01407      0.01407
+1982:2      8.026562     8.046037      0.01634      0.01634
+1982:3      8.032717     8.063636      0.01760      0.01760
+1982:4      8.042249     8.081935      0.01830      0.01830
+1983:1      8.062685     8.100623      0.01869      0.01869
+1983:2      8.091627     8.119528      0.01891      0.01891
+1983:3      8.115700     8.138554      0.01903      0.01903
+1983:4      8.140811     8.157646      0.01909      0.01909
 \end{code}
 \end{script}
 
@@ -428,7 +427,7 @@ Un modo per aggirare questa limitazione con riguardo alla parte AR della
 specificazione consiste nell'includere ritardi della variabile dipendente nella
 lista delle variabili ``esogene''. Ad esempio, il comando
 \begin{code}
-  arma 0 0 ; 0 1 ; y const y(-2)
+arma 0 0 ; 0 1 ; y const y(-2)
 \end{code}
 su una serie trimestrale, stimerebbe i parametri del modello
 \[
@@ -488,7 +487,7 @@ approssimativi usando l'algoritmo descritto in MacKinnon 1996.
 
 Il comando di \app{gretl} da usare per eseguire il test è \cmd{adf}; ad esempio
 \begin{code}
-  adf 4 x1 --c --ct
+adf 4 x1 --c --ct
 \end{code}
 calcola la statistica test come statistica-t per $\varphi$ nell'equazione
 \ref{eq:ADFtest} con $p=4$ nei due casi $\mu_t = \mu_0$ e
@@ -538,7 +537,7 @@ desiderato; \app{gretl} fornisce i quantili del 90\%, 95\%,
 
 Esempio di uso:
 \begin{code}
-  kpss m y
+kpss m y
 \end{code}
 dove \verb|m| è un intero che rappresenta la larghezza di banda, o la dimensione
 della finestra usata nella formula per stimare la varianza di lungo periodo:
@@ -559,7 +558,7 @@ residui della regressione OLS di $y_t$ su una costante e un trend lineare.
 Questa seconda forma del test si ottiene aggiungendo l'opzione
 \verb|--trend| al comando \cmd{kpss}:
 \begin{code}
-  kpss n y --trend
+kpss n y --trend
 \end{code}
 Si noti che in questo caso la distribuzione asintotica del test è diversa, e i
 valori critici riportati da \app{gretl} sono corretti di conseguenza.
@@ -684,7 +683,7 @@ opzioni che riguardano la matrice di covarianza GARCH.
 
 Esempio:
 \begin{code}
-  garch p q ; y const x
+garch p q ; y const x
 \end{code}
 dove \verb|p| $\ge 0$ e \verb|q| $>0$ denotano i rispettivi ordini di ritardo
 come mostrati nell'equazione (\ref{eq:garch-vareq}).  Questi valori possono
@@ -842,8 +841,8 @@ sono calcolati con le approssimazioni di Doornik (1998).
 Il codice seguente usa il database \cmd{denmark}, fornito con \app{gretl}, per
 replicare l'esempio di Johansen contenuto nel suo libro del 1995.
 \begin{code}
-  open denmark
-  coint2 2 LRM LRY IBO IDE --rc --seasonal
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
 
 In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:Joh-tests}) comprende

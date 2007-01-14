@@ -397,7 +397,7 @@ graphical interface.  If suitable index variables are available
 you can do, for example
 %
 \begin{code}
-    setobs unitvar timevar --panel-vars
+setobs unitvar timevar --panel-vars
 \end{code}
 %
 where \texttt{unitvar} is a variable that indexes the units and
@@ -413,8 +413,8 @@ observations from 20 periods; the second for stacked cross sections
 with 5 units.
 %
 \begin{code}
-    setobs 20 1:1 --stacked-time-series
-    setobs 5 1:1 --stacked-cross-section
+setobs 20 1:1 --stacked-time-series
+setobs 5 1:1 --stacked-cross-section
 \end{code}
 
 \subsubsection{Panel data arranged by variable}
@@ -469,11 +469,11 @@ this file the columns are headed with ``variable names'' \varname{p1},
 variables, but in the first instance we ``pretend'' that they are.)
 
 \begin{code}
-    open panel.txt
-    genr x1 = stack(p1..p5) --length=50
-    genr x2 = stack(p1..p5) --offset=50 --length=50
-    setobs 50 1:1 --stacked-cross-section
-    store panel.gdt x1 x2
+open panel.txt
+genr x1 = stack(p1..p5) --length=50
+genr x2 = stack(p1..p5) --offset=50 --length=50
+setobs 50 1:1 --stacked-cross-section
+store panel.gdt x1 x2
 \end{code}
 
 The second line illustrates the syntax of the \cmd{stack} function.
@@ -486,7 +486,7 @@ to stack a non-contiguous set of columns you can put a comma-separated
 list within the parentheses, as in
 
 \begin{code}
-    genr x = stack(p1,p3,p5)
+genr x = stack(p1,p3,p5)
 \end{code}
 
 On line 3 we do the stacking for variable \varname{x2}.  Again we want
@@ -505,14 +505,14 @@ is presumed to be the same as in the previous section (50 units, 5
 periods), but with 20 variables rather than 2.
 
 \begin{code}
-    open panel.txt
-    loop for i=1..20
-      genr k = ($i - 1) * 50
-      genr x$i = stack(p1..p5) --offset=k --length=50
-    endloop
-    setobs 50 1.01 --stacked-cross-section
-    store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
-      x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+open panel.txt
+loop for i=1..20
+  genr k = ($i - 1) * 50
+  genr x$i = stack(p1..p5) --offset=k --length=50
+endloop
+setobs 50 1.01 --stacked-cross-section
+store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
+  x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
 \end{code}
 
 \subsubsection{Panel data marker strings}
@@ -531,9 +531,9 @@ well, but these markers don't tell us anything about the date of the
 observation.  To rectify this we could do:
 
 \begin{code}
-    genr time
-    genr year = 1960 + (5 * time)
-    genr markers = "%s:%d", marker, year
+genr time
+genr year = 1960 + (5 * time)
+genr markers = "%s:%d", marker, year
 \end{code}
 
 The first line generates a 1-based index representing the period of
@@ -691,7 +691,7 @@ When a user selects one of the items:
 \end{itemize}
 
 \begin{table}[htbp]
-    \begin{center}
+  \begin{center}
     \begin{tabular}{lll}
         & \multicolumn{1}{c}{\textit{Linux}} & 
         \multicolumn{1}{c}{\textit{MS Windows}} \\
@@ -704,92 +704,90 @@ When a user selects one of the items:
         user dir & 
         {\small \verb+/home/me/gretl+} &
         {\small \verb+c:\userdata\gretl\user+}\\
-      \end{tabular}
-    \end{center}
-    \caption{Typical locations for file collections}
-    \label{tab-colls}
-  \end{table}
+  \end{tabular}
+ \end{center}
+ \caption{Typical locations for file collections}
+ \label{tab-colls}
+\end{table}
 
-  Any valid collections will be added to the selection windows. So
-  what constitutes a valid file collection?  This comprises either a
-  set of data files in \app{gretl} XML format (with the \verb+.gdt+
-  suffix) or a set of script files containing gretl commands (with
-  \verb+.inp+ suffix), in each case accompanied by a ``master file''
-  or catalog.  The \app{gretl} distribution contains several example
-  catalog files, for instance the file \verb+descriptions+ in the
-  \verb+misc+ sub-directory of the \app{gretl} data directory and
-  \verb+ps_descriptions+ in the \verb+misc+ sub-directory of the
-  scripts directory.  
+Any valid collections will be added to the selection windows. So what
+constitutes a valid file collection?  This comprises either a set of
+data files in \app{gretl} XML format (with the \verb+.gdt+ suffix) or
+a set of script files containing gretl commands (with \verb+.inp+
+suffix), in each case accompanied by a ``master file'' or catalog.
+The \app{gretl} distribution contains several example catalog files,
+for instance the file \verb+descriptions+ in the \verb+misc+
+sub-directory of the \app{gretl} data directory and
+\verb+ps_descriptions+ in the \verb+misc+ sub-directory of the scripts
+directory.
 
-  If you are adding your own collection, data catalogs should be named
-  \verb+descriptions+ and script catalogs should be be named
-  \verb+ps_descriptions+.  In each case the catalog should be placed
-  (along with the associated data or script files) in its own specific
-  sub-directory (e.g.\  \verb+/usr/share/gretl/data/mydata+ or
-  \verb+c:\userdata\gretl\data\mydata+).
+If you are adding your own collection, data catalogs should be named
+\verb+descriptions+ and script catalogs should be be named
+\verb+ps_descriptions+.  In each case the catalog should be placed
+(along with the associated data or script files) in its own specific
+sub-directory (e.g.\ \verb+/usr/share/gretl/data/mydata+ or
+\verb+c:\userdata\gretl\data\mydata+).
 
-  The syntax of the (plain text) description files is straightforward.
-  Here, for example, are the first few lines of gretl's ``misc'' data
-  catalog:
-
-\begin{code}
-      # Gretl: various illustrative datafiles
-      "arma","artificial data for ARMA script example"
-      "ects_nls","Nonlinear least squares example"
-      "hamilton","Prices and exchange rate, U.S. and Italy"
-\end{code}
-
-  The first line, which must start with a hash mark, contains a short
-  name, here ``Gretl'', which will appear as the label for this
-  collection's tab in the data browser window, followed by a colon,
-  followed by an optional short description of the
-  collection.
-
-  Subsequent lines contain two elements, separated by a comma and
-  wrapped in double quotation marks.  The first is a datafile name
-  (leave off the \verb+.gdt+ suffix here) and the second is a short
-  description of the content of that datafile.  There should be one
-  such line for each datafile in the collection.
-
-  A script catalog file looks very similar, except that there are
-  three fields in the file lines: a filename (without its \verb+.inp+
-  suffix), a brief description of the econometric point illustrated in
-  the script, and a brief indication of the nature of the data used.
-  Again, here are the first few lines of the supplied ``misc'' script
-  catalog:
+The syntax of the (plain text) description files is straightforward.
+Here, for example, are the first few lines of gretl's ``misc'' data
+catalog:
 
 \begin{code}
-      # Gretl: various sample scripts
-      "arma","ARMA modeling","artificial data"
-      "ects_nls","Nonlinear least squares (Davidson)","artificial data"
-      "leverage","Influential observations","artificial data"
-      "longley","Multicollinearity","US employment"
+# Gretl: various illustrative datafiles
+"arma","artificial data for ARMA script example"
+"ects_nls","Nonlinear least squares example"
+"hamilton","Prices and exchange rate, U.S. and Italy"
 \end{code}
 
-  If you want to make your own data collection available to users,
-  these are the steps:
+The first line, which must start with a hash mark, contains a short
+name, here ``Gretl'', which will appear as the label for this
+collection's tab in the data browser window, followed by a colon,
+followed by an optional short description of the collection.
 
-  \begin{enumerate}
-  \item Assemble the data, in whatever format is convenient.
-  \item Convert the data to \app{gretl} format and save as \verb+gdt+
-    files.  It is probably easiest to convert the data by importing
-    them into the program from plain text, CSV, or a spreadsheet
-    format (MS Excel or Gnumeric) then saving them. You may wish to
-    add descriptions of the individual variables (the ``Variable, Edit
-    attributes'' menu item), and add information on the source of the
-    data (the ``Data, Edit info'' menu item).
-  \item Write a descriptions file for the collection using a text
-    editor.
-  \item Put the datafiles plus the descriptions file in a subdirectory
-    of the \app{gretl} data directory (or user directory).
-  \item If the collection is to be distributed to other people,
-    package the data files and catalog in some suitable manner, e.g.\
-    as a zipfile.
-  \end{enumerate}
+Subsequent lines contain two elements, separated by a comma and
+wrapped in double quotation marks.  The first is a datafile name
+(leave off the \verb+.gdt+ suffix here) and the second is a short
+description of the content of that datafile.  There should be one such
+line for each datafile in the collection.
 
-  If you assemble such a collection, and the data are not proprietary,
-  I would encourage you to submit the collection for packaging as a
-  \app{gretl} optional extra.
+A script catalog file looks very similar, except that there are three
+fields in the file lines: a filename (without its \verb+.inp+ suffix),
+a brief description of the econometric point illustrated in the
+script, and a brief indication of the nature of the data used.  Again,
+here are the first few lines of the supplied ``misc'' script catalog:
+
+\begin{code}
+# Gretl: various sample scripts
+"arma","ARMA modeling","artificial data"
+"ects_nls","Nonlinear least squares (Davidson)","artificial data"
+"leverage","Influential observations","artificial data"
+"longley","Multicollinearity","US employment"
+\end{code}
+
+If you want to make your own data collection available to users, these
+are the steps:
+
+\begin{enumerate}
+\item Assemble the data, in whatever format is convenient.
+\item Convert the data to \app{gretl} format and save as \verb+gdt+
+  files.  It is probably easiest to convert the data by importing them
+  into the program from plain text, CSV, or a spreadsheet format (MS
+  Excel or Gnumeric) then saving them. You may wish to add
+  descriptions of the individual variables (the ``Variable, Edit
+  attributes'' menu item), and add information on the source of the
+  data (the ``Data, Edit info'' menu item).
+\item Write a descriptions file for the collection using a text
+  editor.
+\item Put the datafiles plus the descriptions file in a subdirectory
+  of the \app{gretl} data directory (or user directory).
+\item If the collection is to be distributed to other people, package
+  the data files and catalog in some suitable manner, e.g.\ as a
+  zipfile.
+\end{enumerate}
+
+If you assemble such a collection, and the data are not proprietary, I
+would encourage you to submit the collection for packaging as a
+\app{gretl} optional extra.
 
 %%% Local Variables: 
 %%% mode: latex

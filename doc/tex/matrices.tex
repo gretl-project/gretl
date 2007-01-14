@@ -475,12 +475,12 @@ used.
 
 For example:
 \begin{code}
-  matrix a = mnormal(2,3)
-  a
-  matrix b = mshape(a,3,1)
-  b
-  matrix b = mshape(a,5,2)
-  b
+matrix a = mnormal(2,3)
+a
+matrix b = mshape(a,3,1)
+b
+matrix b = mshape(a,5,2)
+b
 \end{code}
 produces
 \begin{code}
@@ -657,7 +657,7 @@ procedure, the matrices \texttt{\$jalpha} and \texttt{\$jbeta} are
 also available. These have a number of columns equal to the chosen
 cointegration rank; therefore, the product
 \begin{code}
-  matrix Pi = $jalpha * $jbeta'
+matrix Pi = $jalpha * $jbeta'
 \end{code}
 returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
 automatically identified via the Phillips normalization (see section

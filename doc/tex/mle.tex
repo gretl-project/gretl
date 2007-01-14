@@ -164,18 +164,18 @@ estimate the parameters $\alpha$ and $p$ via ML, we need to maximize
 \app{gretl} code snippet is
 
 \begin{code}
-    scalar alpha = 1
-    scalar p = 1
+scalar alpha = 1
+scalar p = 1
 
-    mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
-    end mle 
+mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
+end mle 
 \end{code}
 
 The two statements
 
 \begin{code}
-    alpha = 1
-    p = 1
+alpha = 1
+p = 1
 \end{code}
 
 are necessary to ensure that the variables \texttt{p} and
@@ -190,13 +190,13 @@ The above code can be made more readable, and marginally more
 efficient, by defining a variable to hold $\alpha \cdot x_t$. This
 command can be embedded into the \texttt{mle} block as follows:
 \begin{code}
-    scalar alpha = 1
-    scalar p = 1
+scalar alpha = 1
+scalar p = 1
 
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-    series ax = alpha*x
-    params alpha p
-    end mle 
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+series ax = alpha*x
+params alpha p
+end mle 
 \end{code}
 In this case, it is necessary to include the line \texttt{params alpha
   p} to set the symbols \texttt{p} and \texttt{alpha} apart from
@@ -220,14 +220,14 @@ it follows that the following estimators
 are consistent, and therefore suitable to be used as starting point
 for the algorithm.  The gretl script code then becomes
 \begin{code}
-    scalar m = mean(x)
-    scalar alpha = m/var(x)
-    scalar p = m*alpha
+scalar m = mean(x)
+scalar alpha = m/var(x)
+scalar p = m*alpha
 
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
-    series ax = alpha*x
-    params alpha p
-    end mle 
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+series ax = alpha*x
+params alpha p
+end mle 
 \end{code}
 
 Another thing to note is that sometimes parameters are constrained
@@ -240,15 +240,15 @@ define a variable for checking that the parameters are admissible and
 setting the log-likelihood as undefined if the check fails. An example
 follows:
 \begin{code}
-    scalar m = mean(x)
-    scalar alpha = m/var(x)
-    scalar p = m*alpha
+scalar m = mean(x)
+scalar alpha = m/var(x)
+scalar p = m*alpha
 
-    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
-    series ax = alpha*x
-    scalar check = (alpha>0) * (p>0)
-    params alpha p
-    end mle 
+mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
+series ax = alpha*x
+scalar check = (alpha>0) * (p>0)
+params alpha p
+end mle 
 \end{code}
 
 \section{Stochastic frontier cost function}
@@ -575,8 +575,8 @@ the progress of this variable one could add a print statement within
 the ML block, as in
 %
 \begin{code}
-  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
-  print tmp
+series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
+print tmp
 \end{code}
 
 

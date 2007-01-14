@@ -14,9 +14,9 @@ Functions must be defined before they are called.  The syntax for
 defining a function looks like this
     
 \begin{code}
-      function function-name(parameters)
-         function body
-      end function
+function function-name(parameters)
+   function body
+end function
 \end{code}
 
 \textsl{function-name} is the unique identifier for the function.
@@ -48,7 +48,7 @@ type specifier, and the name by which the parameter shall be known
 within the function.  An example follows:
 %    
 \begin{code}
-      function myfunc(series y, list xvars, bool verbose)
+function myfunc(series y, list xvars, bool verbose)
 \end{code}
 
 Each of the type-specifiers, with the exception of \texttt{list}, may
@@ -56,7 +56,7 @@ be modified by prepending an asterisk to the associated parameter
 name, as in
 %    
 \begin{code}
-      function myfunc(series *y, scalar *b)
+function myfunc(series *y, scalar *b)
 \end{code}
 
 The meaning of this modification is explained below (see section
@@ -74,7 +74,7 @@ by colons.  For example, suppose we have an integer parameter
 of 12, and a default of 4.  We can write
 %    
 \begin{code}
-      int order[1:12:4]
+int order[1:12:4]
 \end{code} 
 %
 If you wish to omit any of the three specifiers, leave the
@@ -86,7 +86,7 @@ For a parameter of type \texttt{bool}, you can specify a default of
 1 (true) or 0 (false), as in
 %    
 \begin{code}
-      bool verbose[0]
+bool verbose[0]
 \end{code} 
 %
 
@@ -95,7 +95,7 @@ You may define a function that has no parameters (these are called
 use the keyword \texttt{void} in place of the listing of parameters:
 %    
 \begin{code}
-      function myfunc2(void)
+function myfunc2(void)
 \end{code}
 
 When a function is called, the parameters are instantiated by
@@ -134,18 +134,18 @@ trivial example illustrates a function call that correctly matches the
 function definition.
     
 \begin{code}
-      # function definition
-      function ols_ess(series y, list xvars)
-        ols y 0 xvars --quiet
-        scalar myess = $ess
-        printf "ESS = %g\n", myess
-        return scalar myess
-      end function
-      # main script
-      open data4-1
-      list xlist = 2 3 4
-      # function call (the return value is ignored here)
-      ols_ess(price, xlist)
+# function definition
+function ols_ess(series y, list xvars)
+  ols y 0 xvars --quiet
+  scalar myess = $ess
+  printf "ESS = %g\n", myess
+  return scalar myess
+end function
+# main script
+open data4-1
+list xlist = 2 3 4
+# function call (the return value is ignored here)
+ols_ess(price, xlist)
 \end{code}
 
 The function call gives two arguments: the first is a data series
@@ -161,17 +161,17 @@ A second example shows how to write a function call that assigns
 a return value to a variable in the caller:
     
 \begin{code}
-      # function definition
-      function get_uhat(series y, list xvars)
-        ols y 0 xvars --quiet
-        series uh = $uhat
-        return series uh
-      end function
-      # main script
-      open data4-1
-      list xlist = 2 3 4
-      # function call
-      series resid = get_uhat(price, xlist)
+# function definition
+function get_uhat(series y, list xvars)
+  ols y 0 xvars --quiet
+  series uh = $uhat
+  return series uh
+end function
+# main script
+open data4-1
+list xlist = 2 3 4
+# function call
+series resid = get_uhat(price, xlist)
 \end{code}
 
 \section{Function programming details}
@@ -205,18 +205,18 @@ definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
 %
 \begin{code}
-      function get_uhat_and_ess(series y, list xvars, scalar *ess)
-        ols y 0 xvars --quiet
-        ess = $ess
-        series uh = $uhat
-        return series uh
-      end function
-      # main script
-      open data4-1
-      list xlist = 2 3 4
-      # function call
-      scalar SSR
-      series resid = get_uhat_and_ess(price, xlist, &SSR)
+function get_uhat_and_ess(series y, list xvars, scalar *ess)
+  ols y 0 xvars --quiet
+  ess = $ess
+  series uh = $uhat
+  return series uh
+end function
+# main script
+open data4-1
+list xlist = 2 3 4
+# function call
+scalar SSR
+series resid = get_uhat_and_ess(price, xlist, &SSR)
 \end{code}
 %
 In the above, we may say that the function is given the \emph{address}
@@ -237,21 +237,21 @@ example, here is the simple function shown above, modified to make the
 filling out of the \texttt{ess} value optional.
 %
 \begin{code}
-      function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
-        ols y 0 xvars --quiet
-        if !isnull(ess) 
-           ess = $ess
-        endif
-        series uh = $uhat
-        return series uh
-      end function
+function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+  ols y 0 xvars --quiet
+  if !isnull(ess) 
+     ess = $ess
+  endif
+  series uh = $uhat
+  return series uh
+end function
 \end{code}
 %
 If the caller does not care to get the \texttt{ess} value, it should
 use \texttt{null} in place of a real argument:
 %
 \begin{code}
-      series resid = get_uhat_and_ess(price, xlist, null)
+series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
 
 \subsection{List arguments}
@@ -266,9 +266,9 @@ commands such as \texttt{ols}, or it can be ``unpacked'' using a
 variable in the list:
 %
 \begin{code}
-     loop foreach i X
-        scalar sd_$i = sd($i)
-     end loop
+loop foreach i X
+   scalar sd_$i = sd($i)
+end loop
 \end{code}
 
 When a named list of variables is passed to a function, the function
@@ -283,7 +283,7 @@ the function, it is a good idea to flag this fact using the
 \texttt{const} modifier in the parameter list, as in
 %
 \begin{code}
-     function myfunc (scalar y, const list X)
+function myfunc (scalar y, const list X)
 \end{code}
 %
 When a list is marked \texttt{const}, any attempt to rename, delete
@@ -294,7 +294,7 @@ If a list argument to a function is optional, this should be indicated
 by appending a default value of \texttt{null}, as in
 %
 \begin{code}
-     function myfunc (scalar y, list X[null])
+function myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
@@ -315,7 +315,7 @@ parameters).  There can be only one such statement.  An example of a
 valid return statement is shown below:
 %    
 \begin{code}
-      return scalar SSR
+return scalar SSR
 \end{code}
 %
 Note that the \verb+return+ statement does \emph{not} cause the
@@ -352,8 +352,8 @@ for the purpose of debugging function code), you can issue one or both
 of the following commands inside the function:
 %
 \begin{code}
-     set echo on
-     set messages on
+set echo on
+set messages on
 \end{code}
 
 \section{Function packages}
@@ -380,10 +380,10 @@ There are several ways to load a function:
 For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
-  function pc(series y)
-    series foo = diff(y)/y(-1)
-    return series foo
-  end function
+function pc(series y)
+  series foo = diff(y)/y(-1)
+  return series foo
+end function
 \end{code}
 
 \begin{figure}[htbp]
@@ -398,9 +398,9 @@ properly by running a few tests. For example, you may open the console
 and type
 
 \begin{code}
-  genr x = uniform()
-  genr dpcx = pc(x)
-  print x dpcx --byobs
+genr x = uniform()
+genr dpcx = pc(x)
+print x dpcx --byobs
 \end{code}
 
 You should see something similar to figure \ref{fig:func_check}. The
@@ -530,9 +530,9 @@ Click ``Ok'' and the series \texttt{foo} will be generated (see figure
 
 Alternatively, the same could have been accomplished by the script
 \begin{code}
-  include pc.gfn
-  open np
-  iprod_pc = pc(iprod)
+include pc.gfn
+open np
+iprod_pc = pc(iprod)
 \end{code}
 
 %%% Local Variables: 

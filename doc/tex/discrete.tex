@@ -25,8 +25,8 @@ ways.
   command. The command takes one or more arguments, which can be
   either variables or list of variables. For example:
 \begin{code}
-  list xlist = x1 x2 x3
-  discrete z1 xlist z2
+list xlist = x1 x2 x3
+discrete z1 xlist z2
 \end{code}
 This syntax makes it possible to declare as discrete many
 variables at once, which cannot presently be done via the graphical
@@ -34,10 +34,10 @@ interface. The switch \texttt{--reverse} reverses the declaration of a
 variable as discrete, or in other words marks it as continuous.
 For example:
 \begin{code}
-  discrete foo
-  # now foo is discrete
-  discrete foo --reverse
-  # now foo is continuous
+discrete foo
+# now foo is discrete
+discrete foo --reverse
+# now foo is continuous
 \end{code}
 \end{enumerate}
 
@@ -47,13 +47,13 @@ variable as discrete is a sensible thing to do. If you want to recode
 a continuous variable into classes, you can use the \texttt{genr}
 command and its arithmetic functions, as in the following example:
 \begin{code}
-  nulldata 100
-  # generate a variable with mean 2 and variance 1
-  genr x = normal() + 2
-  # split into 4 classes
-  genr z = (x>0) + (x>2) + (x>4)
-  # now declare z as discrete
-  discrete z
+nulldata 100
+# generate a variable with mean 2 and variance 1
+genr x = normal() + 2
+# split into 4 classes
+genr z = (x>0) + (x>2) + (x>4)
+# now declare z as discrete
+discrete z
 \end{code}
 
 Once a variable is marked as discrete, this setting is remembered when
@@ -69,9 +69,9 @@ The \texttt{dummify} command takes as argument a series $x$ and creates
 dummy variables for each distinct value present in $x$, which must
 have already been declared as discrete.  Example:
 \begin{code}
-  open greene22_2
-  discrete Z5 # mark Z5 as discrete
-  dummify Z5
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+dummify Z5
 \end{code}
 
 The effect of the above command is to generate 5 new dummy variables,
@@ -84,21 +84,21 @@ selecting the menu item ``Add, Dummies for selected discrete variables''.
 The \texttt{dummify} command can also be used with the following
 syntax:
 \begin{code}
-  list dlist = dummify(x)
+list dlist = dummify(x)
 \end{code}
 This not only creates the dummy variables, but also a named list (see
 section~\ref{named-lists}) that can be used afterwards. The
 following example computes summary statistics for the variable \texttt{Y} for
 each value of \texttt{Z5}:
 \begin{code}
-  open greene22_2
-  discrete Z5 # mark Z5 as discrete
-  list foo = dummify(Z5)
-  loop foreach i foo
-    smpl $i --restrict --replace
-    summary Y
-  end loop
-  smpl full
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+list foo = dummify(Z5)
+loop foreach i foo
+  smpl $i --restrict --replace
+  summary Y
+end loop
+smpl full
 \end{code}
 % $
 
@@ -106,9 +106,9 @@ Since \texttt{dummify} generates a list, it can be used directly
 in commands that call for a list as input, such as \texttt{ols}.  For
 example:
 \begin{code}
-  open greene22_2
-  discrete Z5 # mark Z5 as discrete
-  ols Y 0 dummify(Z5)
+open greene22_2
+discrete Z5 # mark Z5 as discrete
+ols Y 0 dummify(Z5)
 \end{code}
 
 \subsection{The \texttt{freq} command}
@@ -147,10 +147,10 @@ default can be overridden by the user.
 
 For example, the following code
 \begin{code}
-  open greene19_1
-  freq TUCE
-  discrete TUCE # mark TUCE as discrete
-  freq TUCE
+open greene19_1
+freq TUCE
+discrete TUCE # mark TUCE as discrete
+freq TUCE
 \end{code}
 yields
 \begin{code}
@@ -221,7 +221,7 @@ If the distinct values of a discrete variable need to be saved, the
 
 The \texttt{xtab} command has the following syntax
 \begin{code}
-  xtab ylist ; xlist
+xtab ylist ; xlist
 \end{code}
 where \texttt{ylist} and \texttt{xlist} are lists of discrete
 variables, and produces crosstabulations (two-way frequencies) of each
@@ -231,9 +231,9 @@ functionality is not accessible via the graphical interface.
 
 For example, 
 \begin{code}
-  open greene22_2
-  discrete Z* # mark Z1-Z8 as discrete
-  xtab Z1 Z4 ; Z5 Z6
+open greene22_2
+discrete Z* # mark Z1-Z8 as discrete
+xtab Z1 Z4 ; Z5 Z6
 \end{code}
 produces
 \begin{code}

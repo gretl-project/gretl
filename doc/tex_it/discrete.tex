@@ -24,8 +24,8 @@ modi:
   Il comando accetta uno o più argomenti, che possono essere variabili o liste
   di variabili. Ad esempio:
 \begin{code}
-  list xlist = x1 x2 x3
-  discrete z1 xlist z2
+list xlist = x1 x2 x3
+discrete z1 xlist z2
 \end{code}
 In questo modo è possibile dichiarare più variabili discrete con un solo
 comando, cosa che al momento non è possibile fare usando l'interfaccia grafica.
@@ -33,10 +33,10 @@ L'opzione \texttt{--reverse} inverte la dichiarazione, ossia rende continua una
 variabile discreta.
 Ad esempio:
 \begin{code}
-  discrete pippo
-  # ora pippo è discreta
-  discrete pippo --reverse
-  # ora piipo è continua
+discrete pippo
+# ora pippo è discreta
+discrete pippo --reverse
+# ora piipo è continua
 \end{code}
 \end{enumerate}
 
@@ -45,13 +45,13 @@ quindi responsabilità dell'utente usare correttamente questa funzione. Per
 ricodificare una variabile continua in classi, è possibile usare il comando
 \texttt{genr} e le sue funzioni aritmetiche come nell'esempio seguente:
 \begin{code}
-  nulldata 100
-  # genera una variabile con media 2 e varianza 1
-  genr x = normal() + 2
-  # suddivide in 4 classi
-  genr z = (x>0) + (x>2) + (x>4)
-  # ora dichiara z come discreta
-  discrete z
+nulldata 100
+# genera una variabile con media 2 e varianza 1
+genr x = normal() + 2
+# suddivide in 4 classi
+genr z = (x>0) + (x>2) + (x>4)
+# ora dichiara z come discreta
+discrete z
 \end{code}
 
 Quando si marca una variabile come discreta, questa impostazione viene ricordata
@@ -67,9 +67,9 @@ Il comando \texttt{dummify} prende come argomento una serie $x$ e crea delle
 variabili dummy per ognuno dei valori distinti presenti in $x$, che deve essere
 stata dichiarata discreta in precedenza. Ad esempio:
 \begin{code}
-  open greene22_2
-  discrete Z5 # marca Z5 come discreta
-  dummify Z5
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+dummify Z5
 \end{code}
 
 L'effetto di questi comandi è quello di generare 5 nuove variabili dummy, i cui
@@ -81,21 +81,21 @@ diversi valori presenti in \texttt{Z5}. Ossia, la variabile
 
 Il comando \texttt{dummify} può essere usato anche con la sintassi seguente:
 \begin{code}
-  list dlist = dummify(x)
+list dlist = dummify(x)
 \end{code}
 In questo modo, vengono create non solo le variabili dummy, ma anche una lista
 che può essere usata in seguito (si veda la sezione~\ref{named-lists}).
 L'esempio seguente calcola le statistiche descrittive per la variabile
 \texttt{Y} in corrispondenza di ogni valore di \texttt{Z5}:
 \begin{code}
-  open greene22_2
-  discrete Z5 # marca Z5 come discreta
-  list foo = dummify(Z5)
-  loop foreach i foo
-    smpl $i --restrict --replace
-    summary Y
-  end loop
-  smpl full
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+list foo = dummify(Z5)
+loop foreach i foo
+  smpl $i --restrict --replace
+  summary Y
+end loop
+smpl full
 \end{code}
 % $
 
@@ -103,9 +103,9 @@ Poiché \texttt{dummify} genera una lista, può essere usato direttamente in
 comandi che accettano una lista come input, come \texttt{ols}.
 Ad esempio:
 \begin{code}
-  open greene22_2
-  discrete Z5 # marca Z5 come discreta
-  ols Y 0 dummify(Z5)
+open greene22_2
+discrete Z5 # marca Z5 come discreta
+ols Y 0 dummify(Z5)
 \end{code}
 
 \subsection{Il comando \texttt{freq}}
@@ -141,10 +141,10 @@ nel campione selezionato al momento, come mostrato nella Tabella~\ref{tab:bins}.
 
 Ad esempio, il codice seguente
 \begin{code}
-  open greene19_1
-  freq TUCE
-  discrete TUCE # marca TUCE come discreta
-  freq TUCE
+open greene19_1
+freq TUCE
+discrete TUCE # marca TUCE come discreta
+freq TUCE
 \end{code}
 produce questo risultato
 \begin{code}
@@ -212,7 +212,7 @@ distribuzione Gamma.
 
 Il comando \texttt{xtab} ha la sintassi seguente
 \begin{code}
-  xtab lista-y ; lista-x
+xtab lista-y ; lista-x
 \end{code}
 dove \texttt{lista-y} e \texttt{lista-x} sono liste di variabili discrete;
 esso produce tabulazioni incrociate per ognuna delle variabili nella
@@ -222,9 +222,9 @@ accessibile dall'interfaccia grafica.
 
 Ad esempio:
 \begin{code}
-  open greene22_2
-  discrete Z* # Marca Z1-Z8 come discrete
-  xtab Z1 Z4 ; Z5 Z6
+open greene22_2
+discrete Z* # Marca Z1-Z8 come discrete
+xtab Z1 Z4 ; Z5 Z6
 \end{code}
 produce questo risultato
 \begin{code}

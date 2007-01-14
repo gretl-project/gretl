@@ -53,7 +53,7 @@ Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots
     
 In \app{gretl} this transformation can be accomplished by the syntax 
 \begin{code}
-  genr Y = fracdiff(X,0.5)
+genr Y = fracdiff(X,0.5)
 \end{code}
 
 \subsection{The Hodrick--Prescott filter}
@@ -153,8 +153,8 @@ example if you were using monthly data and wanted to adjust the
 frequency bounds to 18 and 96, and $k$ to 24, you could do
 
 \begin{code}
-    set bkbp_limits 18 96
-    set bkbp_k 24
+set bkbp_limits 18 96
+set bkbp_k 24
 \end{code}
 
 These values would then remain in force for calls to the \verb+bkfilt+
@@ -201,8 +201,8 @@ value 1 for the first observation and every thirtieth observation
 thereafter, 0 otherwise, do
 %
 \begin{code}
-    genr index 
-    genr dum = ((index-1) % 30) = 0
+genr index 
+genr dum = ((index-1) % 30) = 0
 \end{code}
 
 \subsection{Lags, differences, trends}
@@ -240,7 +240,7 @@ Suppose we have a panel data set comprising 8 time-series observations
 on each of $N$ units or groups.  Then the command
 %
 \begin{code}
-    genr pmx = pmean(x)
+genr pmx = pmean(x)
 \end{code}
 %
 creates a series of this form: the first 8 values (corresponding to
@@ -261,7 +261,7 @@ to form a sub-sample of a panel that contains only those units for
 which the variable \varname{x} is time-varying, you can do
 %
 \begin{code}
-    smpl (psd(x) > 0) --restrict
+smpl (psd(x) > 0) --restrict
 \end{code}
 
 \subsection{Special functions for data manipulation}
@@ -282,7 +282,7 @@ Another specialized function is the resampling, with replacement, of a
 series.  Given an original data series \varname{x}, the command
 %
 \begin{code}
-    genr xr = resample(x)
+genr xr = resample(x)
 \end{code}
 %
 creates a new series each of whose elements is drawn at random from
@@ -369,12 +369,12 @@ Suppose you're interested in the left tail of the $\chi^2$ distribution
 with 50 degrees of freedom: you'd like to know the CDF value for $x =
 0.9$.  Take a look at the following interactive session: 
 \begin{code}
-  ? genr p1 = cdf(X, 50, 0.9)
-  Generated scalar p1 (ID 2) = 8.94977e-35
-  ? genr p2 = pvalue(X, 50, 0.9)
-  Generated scalar p2 (ID 3) = 1
-  ? genr test = 1 - p2
-  Generated scalar test (ID 4) = 0
+? genr p1 = cdf(X, 50, 0.9)
+Generated scalar p1 (ID 2) = 8.94977e-35
+? genr p2 = pvalue(X, 50, 0.9)
+Generated scalar p2 (ID 3) = 1
+? genr test = 1 - p2
+Generated scalar test (ID 4) = 0
 \end{code}
 
 The \cmd{cdf} function has produced an accurate value, but the
@@ -390,12 +390,12 @@ too far off into one or other tail of the distribution, the \cmd{cdf}
 and \cmd{pvalue} functions will in fact produce complementary
 answers, as shown below:
 \begin{code}
-  ? genr p1 = cdf(X, 50, 30)
-  Generated scalar p1 (ID 2) = 0.0111648
-  ? genr p2 = pvalue(X, 50, 30)
-  Generated scalar p2 (ID 3) = 0.988835
-  ? genr test = 1 - p2
-  Generated scalar test (ID 4) = 0.0111648
+? genr p1 = cdf(X, 50, 30)
+Generated scalar p1 (ID 2) = 0.0111648
+? genr p2 = pvalue(X, 50, 30)
+Generated scalar p2 (ID 3) = 0.988835
+? genr test = 1 - p2
+Generated scalar test (ID 4) = 0.0111648
 \end{code}
 But the moral is that if you want to examine extreme values
 you should be careful in selecting the function you need, in the
@@ -417,7 +417,7 @@ that observation).  The function \verb+ok()+ is complementary to
 missing values for variable \verb+x+ using
 
 \begin{code}
-    genr nmiss_x = sum(missing(x))
+genr nmiss_x = sum(missing(x))
 \end{code}
 
 The function \verb+zeromiss()+, which again takes a single series as
@@ -428,8 +428,8 @@ contexts.  For example, one can determine the first valid observation
 for a variable \verb+x+ using
 
 \begin{code}
-    genr time
-    genr x0 = min(zeromiss(time * ok(x)))
+genr time
+genr x0 = min(zeromiss(time * ok(x)))
 \end{code}
 
 The function \verb+misszero()+ does the opposite of \verb+zeromiss+,
@@ -513,23 +513,20 @@ have retrieved the right value.  The following interactive session
 illustrates this point.
 
 \begin{code}
-    ? adf 4 x1 --c
-
-    Augmented Dickey-Fuller tests, order 4, for x1
-    sample size 59
-    unit-root null hypothesis: a = 1
-
-      test with constant
-      model: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
-      estimated value of (a - 1): -0.216889
-      test statistic: t = -1.83491
-      asymptotic p-value 0.3638
-
-    P-values based on MacKinnon (JAE, 1996)
-    ? genr pv = $pvalue
-    Generated scalar pv (ID 13) = 0.363844
-    ? label pv    
-      pv=Dickey-Fuller pvalue (scalar)
+? adf 4 x1 --c
+Augmented Dickey-Fuller tests, order 4, for x1
+sample size 59
+unit-root null hypothesis: a = 1
+  test with constant
+  model: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+  estimated value of (a - 1): -0.216889
+  test statistic: t = -1.83491
+  asymptotic p-value 0.3638
+P-values based on MacKinnon (JAE, 1996)
+? genr pv = $pvalue
+Generated scalar pv (ID 13) = 0.363844
+? label pv    
+  pv=Dickey-Fuller pvalue (scalar)
 \end{code}
 
 
@@ -554,19 +551,19 @@ the first argument holds the parameter values which produce the
 maximum.  Here is an example:
 %
 \begin{code}
-    matrix X = { dataset }
-    matrix theta = { 1, 100 }'
-    scalar J = BFGSmax(theta, "ObjFunc(&theta, &X)")
+matrix X = { dataset }
+matrix theta = { 1, 100 }'
+scalar J = BFGSmax(theta, "ObjFunc(&theta, &X)")
 \end{code}
 %
 It is assumed here that \texttt{ObjFunc} is a user-defined function
 (see Chapter~\ref{functions}) with the following general set-up:
 %
 \begin{code}
-    function ObjFunc (matrix *theta, matrix *X)
-      scalar val = ...  # do some computation
-      return scalar val
-    end function
+function ObjFunc (matrix *theta, matrix *X)
+  scalar val = ...  # do some computation
+  return scalar val
+end function
 \end{code}
 
 The operation of the BFGS maximizer can be adjusted using the
@@ -625,16 +622,16 @@ data.  On successful completion it returns an $m \times n$ matrix
 holding the Jacobian.  For example,
 %
 \begin{code}
-    matrix Jac = fdjac(theta, "SumOC(&theta, &X)")
+matrix Jac = fdjac(theta, "SumOC(&theta, &X)")
 \end{code}
 where we assume that \texttt{SumOC} is a user-defined function with
 the following structure:
 %
 \begin{code}
-    function SumOC (matrix *theta, matrix *X)
-      matrix V = ...  # do some computation
-      return matrix V
-    end function
+function SumOC (matrix *theta, matrix *X)
+  matrix V = ...  # do some computation
+  return matrix V
+end function
 \end{code}
 
 %%% Local Variables: 

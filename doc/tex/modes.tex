@@ -92,33 +92,33 @@ examine them interactively when the script is finished.  Here is an
 example of the syntax for achieving this effect:
     
 \begin{code}
-      Model1 <- ols Ct 0 Yt
+Model1 <- ols Ct 0 Yt
 \end{code}
 That is, you type a name for the model to be saved under, then a
 back-pointing ``assignment arrow'', then the model command.  You may
 use names that have embedded spaces if you like, but such names must
 be wrapped in double quotes:
 \begin{code}
-      "Model 1" <- ols Ct 0 Yt
+"Model 1" <- ols Ct 0 Yt
 \end{code}
 Models saved in this way will appear as icons in the \app{gretl}
 icon view window (see Section \ref{session}) after the script is
 executed.  In addition, you can arrange to have a named model
 displayed (in its own window) automatically as follows:
 \begin{code}
-      Model1.show
+Model1.show
 \end{code}
 Again, if the name contains spaces it must be quoted:
 \begin{code}
-      "Model 1".show
+"Model 1".show
 \end{code}
 The same facility can be used for graphs.  For example the following
 will create a plot of \verb+Ct+ against \verb+Yt+, save it under the
 name ``CrossPlot'' (it will appear under this name in the icon
 view window), and have it displayed:
 \begin{code}
-      CrossPlot <- gnuplot Ct Yt
-      CrossPlot.show
+CrossPlot <- gnuplot Ct Yt
+CrossPlot.show
 \end{code}
 You can also save the output from selected commands as named pieces of
 text (again, these will appear in the session icon window, from where
@@ -126,8 +126,8 @@ you can open them later).  For example this command sends the output
 from an augmented Dickey--Fuller test to a ``text object'' named
 \verb+ADF1+ and displays it in a window:
 \begin{code}
-      ADF1 <- adf 2 x1
-      ADF1.show
+ADF1 <- adf 2 x1
+ADF1.show
 \end{code}
 Objects saved in this way (whether models, graphs or pieces of text
 output) can be destroyed using the command \verb+.free+ appended to

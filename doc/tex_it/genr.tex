@@ -55,7 +55,7 @@ Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots
     
 In \app{gretl} questa trasformazione può essere eseguita con il comando
 \begin{code}
-  genr Y = fracdiff(X,0.5)
+genr Y = fracdiff(X,0.5)
 \end{code}
     
 \subsection{Il filtro di Hodrick--Prescott}
@@ -153,8 +153,8 @@ impostare i limiti di frequenza tra 18 e 96, e $k$ a 24, si può
 eseguire
 
 \begin{code}
-    set bkbp_limits 18 96
-    set bkbp_k 24
+set bkbp_limits 18 96
+set bkbp_k 24
 \end{code}
 
 Questi valori resteranno in vigore per le chiamate alla funzione
@@ -205,8 +205,8 @@ valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
 basta eseguire
 %
 \begin{code}
-    genr index 
-    genr dum = ((index-1)%30) = 0
+genr index 
+genr dum = ((index-1)%30) = 0
 \end{code}
 
 
@@ -246,7 +246,7 @@ Supponendo di avere un dataset panel che comprende 8 osservazioni temporali per
 ciascuna di $N$ unità o gruppi. Il comando
 %
 \begin{code}
-    genr pmx = pmean(x)
+genr pmx = pmean(x)
 \end{code}
 %
 crea una serie di questo tipo: i primi 8 valori (che corrispondono all'unità 1)
@@ -267,7 +267,7 @@ un sotto-campione di un panel che contenga solo quelle unità per cui la
 variabile \varname{x} varia nel tempo, si può eseguire
 %
 \begin{code}
-    smpl (psd(x) > 0) --restrict
+smpl (psd(x) > 0) --restrict
 \end{code}
 
 \subsection{Funzioni speciali per manipolare i dati}
@@ -286,7 +286,7 @@ Un'altra funzione particolare è il ricampionamento, con reimmissione,
 di una serie. Data una serie di dati originale \varname{x}, il comando
 %
 \begin{code}
-    genr xr = resample(x)
+genr xr = resample(x)
 \end{code}
 %
 crea una nuova serie in cui ognuno degli elementi è estratto in modo casuale
@@ -373,12 +373,12 @@ Supponiamo di essere interessati alla coda sinistra della distribuzione $\chi^2$
 con 50 gradi di libertà, ossia di voler conoscere il valore della CDF per $x =
 0.9$.  Vediamo la seguente sessione interattiva:
 \begin{code}
-  ? genr p1 = cdf(X, 50, 0.9)
-  Generato lo scalare p1 (ID 2) = 8.94977e-35
-  ? genr p2 = pvalue(X, 50, 0.9)
-  Generato lo scalare p2 (ID 3) = 1
-  ? genr test = 1 - p2
-  Generato lo scalare test (ID 4) = 0
+? genr p1 = cdf(X, 50, 0.9)
+Generato lo scalare p1 (ID 2) = 8.94977e-35
+? genr p2 = pvalue(X, 50, 0.9)
+Generato lo scalare p2 (ID 3) = 1
+? genr test = 1 - p2
+Generato lo scalare test (ID 4) = 0
 \end{code}
 
 La funzione \cmd{cdf} ha prodotto un valore accurato, ma la funzione
@@ -393,12 +393,12 @@ trova alle estremità di una delle due code della distribuzione, le funzioni
 \cmd{cdf} e \cmd{pvalue} produrranno risultati complementari, come si vede da
 questo esempio:
 \begin{code}
-  ? genr p1 = cdf(X, 50, 30)
-  Generato lo scalare p1 (ID 2) = 0.0111648
-  ? genr p2 = pvalue(X, 50, 30)
-  Generato lo scalare p2 (ID 3) = 0.988835
-  ? genr test = 1 - p2
-  Generato lo scalare test (ID 4) = 0.0111648
+? genr p1 = cdf(X, 50, 30)
+Generato lo scalare p1 (ID 2) = 0.0111648
+? genr p2 = pvalue(X, 50, 30)
+Generato lo scalare p2 (ID 3) = 0.988835
+? genr test = 1 - p2
+Generato lo scalare test (ID 4) = 0.0111648
 \end{code}
 La morale è che se occorre esaminare valori estremi, occorre scegliere
 attentamente la funzione da usare, tenendo presente che valori molto vicini allo
@@ -419,7 +419,7 @@ booleano NOT).  Ad esempio, è possibile contare i valori mancanti
 della variabile \verb+x+ usando
 
 \begin{code}
-    genr nmanc_x = sum(missing(x))
+genr nmanc_x = sum(missing(x))
 \end{code}
 
 La funzione \verb+zeromiss()+, che richiede anch'essa come unico
@@ -431,8 +431,8 @@ possibile determinare la prima osservazione valida di una variabile
 \verb+x+ usando
 
 \begin{code}
-    genr time
-    genr x0 = min(zeromiss(time * ok(x)))
+genr time
+genr x0 = min(zeromiss(time * ok(x)))
 \end{code}
 
 
@@ -521,23 +521,20 @@ corretto, è possibile leggere l'etichetta con il comando \cmd{label}
 sessione interattiva illustra la procedura.
     
 \begin{code}
-    ? adf 4 x1 --c
-
-    Test Dickey-Fuller aumentati, ordine 4, per x1
-    ampiezza campionaria 59
-    ipotesi nulla di radice unitaria: a = 1
-
-      test con costante
-      modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
-      valore stimato di (a - 1): -0.216889
-      statistica test: t = -1.83491
-      p-value asintotico 0.3638
-
-    P-value basati su MacKinnon (JAE, 1996)
-    ? genr pv = $pvalue
-    Generato lo scalare pv (ID 13) = 0.363844
-    ? label pv    
-      pv=Dickey-Fuller pvalue (scalar)
+? adf 4 x1 --c
+Test Dickey-Fuller aumentati, ordine 4, per x1
+ampiezza campionaria 59
+ipotesi nulla di radice unitaria: a = 1
+  test con costante
+  modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+  valore stimato di (a - 1): -0.216889
+  statistica test: t = -1.83491
+  p-value asintotico 0.3638
+P-value basati su MacKinnon (JAE, 1996)
+? genr pv = $pvalue
+Generato lo scalare pv (ID 13) = 0.363844
+? label pv    
+  pv=Dickey-Fuller pvalue (scalar)
 \end{code}
 
 

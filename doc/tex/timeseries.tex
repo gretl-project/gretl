@@ -91,7 +91,7 @@ obviously, not numerically identical; rather
 
 The \app{gretl} syntax for estimating (\ref{eq:arma-with-xconst}) is simply
 \begin{code}
-  arma p q ; y
+arma p q ; y
 \end{code}
 The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
 numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
@@ -100,13 +100,13 @@ the command. If estimation of (\ref{eq:arma-with-zconst}) is needed,
 the switch \texttt{--conditional} must be appended to the command, as
 in 
 \begin{code}
-  arma p q ; y --conditional
+arma p q ; y --conditional
 \end{code}
 
 Generalizing this principle to the estimation of
 (\ref{eq:arma-with-x}) or (\ref{eq:arma-with-z}), you get that
 \begin{code}
-  arma p q ; y const x1 x2
+arma p q ; y const x1 x2
 \end{code}
 would estimate the following model:
 \[
@@ -117,7 +117,7 @@ would estimate the following model:
 where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
 x_{t,2} \beta_2$. Appending the \texttt{--conditional} switch, as in 
 \begin{code}
-  arma p q ; y const x1 x2 --conditional
+arma p q ; y const x1 x2 --conditional
 \end{code}
 would estimate the following model:
 \[
@@ -147,13 +147,13 @@ can be expanded to
 \end{equation}
 For such cases, a fuller form of the syntax is available, namely,
 \begin{code}
-  arma p q ; P Q ; y
+arma p q ; P Q ; y
 \end{code}
 where \texttt{p} and \texttt{q} represent the non-seasonal AR and MA
 orders, and \texttt{P} and \texttt{Q} the seasonal orders.  For
 example,
 \begin{code}
-  arma 1 1 ; 1 1 ; y
+arma 1 1 ; 1 1 ; y
 \end{code}
 would be used to estimate the following model:
 \[
@@ -177,16 +177,16 @@ is the most common of these transformations, and \app{gretl} provides
 a mechanism to include this step into the \cmd{arma} command: the
 syntax
 \begin{code}
-  arma p d q ; y 
+arma p d q ; y 
 \end{code}
 would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
 functionally equivalent to 
 \begin{code}
-  series tmp = y
-  loop for i=1..d
-    tmp = diff(tmp)
-  end loop
-  arma p q ; tmp 
+series tmp = y
+loop for i=1..d
+  tmp = diff(tmp)
+end loop
+arma p q ; tmp 
 \end{code}
 except with regard to forecasting after estimation (see below).
 
@@ -197,17 +197,17 @@ the model is known as ARIMA (``I'' for Integrated); for this reason,
 
 Seasonal differencing is handled similarly, with the syntax
 \begin{code}
-  arma p d q ; P D Q ; y 
+arma p d q ; P D Q ; y 
 \end{code}
 where \texttt{D} is the order for seasonal differencing.  Thus, the
 command
 \begin{code}
-  arma 1 0 0 ; 1 1 1 ; y 
+arma 1 0 0 ; 1 1 1 ; y 
 \end{code}
 would produce the same parameter estimates as
 \begin{code}
-  genr dsy = sdiff(y)
-  arma 1 0 ; 1 1 ; dsy 
+genr dsy = sdiff(y)
+arma 1 0 ; 1 1 ; dsy 
 \end{code}
 where we use the \texttt{sdiff} function to create a seasonal
 difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
@@ -247,9 +247,9 @@ constant and exogenous variables as per equation (\ref{eq:arma-with-z}).
 
 The two methods can be compared as in the following example
 \begin{code}
-  open data10-1
-  arma 1 1 ; r
-  arma 1 1 ; r --conditional
+open data10-1
+arma 1 1 ; r
+arma 1 1 ; r --conditional
 \end{code}
 which produces the estimates shown in Table~\ref{tab:ml-cml}.  As you
 can see, the estimates of $\phi$ and $\theta$ are quite similar.  The
@@ -307,9 +307,9 @@ via the \cmd{set} command: the first argument should be the keyword
 \texttt{initvals} and the second should be the name of a pre-specified
 matrix containing starting values.  For example
 \begin{code}
-  matrix start = { 0, 0.85, 0.34 }
-  set initvals start
-  arma 1 1 ; y
+matrix start = { 0, 0.85, 0.34 }
+set initvals start
+arma 1 1 ; y
 \end{code}
 The specified matrix should have just as many parameters as the model:
 in the example above there are three parameters, since the model
@@ -342,7 +342,7 @@ GNU/Linux are available from the \app{gretl} website,
 To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
 \verb|--x-12-arima|, as in
 \begin{code}
-  arma p q ; y --x-12-arima
+arma p q ; y --x-12-arima
 \end{code}
 As with native estimation, the default is to use exact ML but there is
 the option of using conditional ML with the \verb|--conditional| flag.
@@ -406,20 +406,19 @@ print y fc1 fc2 fcdiff --byobs
 The output from the last command is:
 %
 \begin{code}
-                    y          fc1          fc2       fcdiff
-
-  1981:1      7.964086     7.940930      0.02668      0.02668
-  1981:2      7.978654     7.997576      0.03349      0.03349
-  1981:3      8.009463     7.997503      0.01885      0.01885
-  1981:4      8.015625     8.033695      0.02423      0.02423
-  1982:1      8.014997     8.029698      0.01407      0.01407
-  1982:2      8.026562     8.046037      0.01634      0.01634
-  1982:3      8.032717     8.063636      0.01760      0.01760
-  1982:4      8.042249     8.081935      0.01830      0.01830
-  1983:1      8.062685     8.100623      0.01869      0.01869
-  1983:2      8.091627     8.119528      0.01891      0.01891
-  1983:3      8.115700     8.138554      0.01903      0.01903
-  1983:4      8.140811     8.157646      0.01909      0.01909
+                  y          fc1          fc2       fcdiff
+1981:1      7.964086     7.940930      0.02668      0.02668
+1981:2      7.978654     7.997576      0.03349      0.03349
+1981:3      8.009463     7.997503      0.01885      0.01885
+1981:4      8.015625     8.033695      0.02423      0.02423
+1982:1      8.014997     8.029698      0.01407      0.01407
+1982:2      8.026562     8.046037      0.01634      0.01634
+1982:3      8.032717     8.063636      0.01760      0.01760
+1982:4      8.042249     8.081935      0.01830      0.01830
+1983:1      8.062685     8.100623      0.01869      0.01869
+1983:2      8.091627     8.119528      0.01891      0.01891
+1983:3      8.115700     8.138554      0.01903      0.01903
+1983:4      8.140811     8.157646      0.01909      0.01909
 \end{code}
 \end{script}
 
@@ -437,7 +436,7 @@ part of the specification by the trick of including lags of the
 dependent variable in the list of ``exogenous'' variables.  For
 example, the following command
 \begin{code}
-  arma 0 0 ; 0 1 ; y const y(-2)
+arma 0 0 ; 0 1 ; y const y(-2)
 \end{code}
 on a quarterly series would estimate the parameters of the model
 \[
@@ -500,7 +499,7 @@ algorithm developed in MacKinnon (1996).
 
 The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
-  adf 4 x1 --c --ct
+adf 4 x1 --c --ct
 \end{code}
 would compute the test statistic as the t-statistic for $\varphi$ in
 equation \ref{eq:ADFtest} with $p=4$ in the two cases $\mu_t = \mu_0$
@@ -549,7 +548,7 @@ appropriate critical value; \app{gretl} provides the 90\%, 95\%,
 
 Usage example:
 \begin{code}
-  kpss m y
+kpss m y
 \end{code}
 where \verb|m| is an integer representing the bandwidth or window
 size used in the formula for estimating the long run variance:
@@ -570,7 +569,7 @@ defined as the residuals from an OLS regression of $y_t$ on a constant
 and a linear trend. This second form of the test is obtained by
 appending the \verb|--trend| option to the \cmd{kpss} command:
 \begin{code}
-  kpss n y --trend
+kpss n y --trend
 \end{code}
 Note that in this case the asymptotic distribution of the test is
 different and the critical values reported by \app{gretl} differ
@@ -702,7 +701,7 @@ for more on the options regarding the GARCH covariance matrix.
 
 Example:
 \begin{code}
-  garch p q ; y const x
+garch p q ; y const x
 \end{code}
 where \verb|p| $\ge 0$ and \verb|q| $>0$ denote the respective lag
 orders as shown in equation (\ref{eq:garch-vareq}).  These values
@@ -870,8 +869,8 @@ The following code uses the \cmd{denmark} database, supplied with
 \app{gretl}, to replicate Johansen's example found in his 1995 book.
 %
 \begin{code}
-  open denmark
-  coint2 2 LRM LRY IBO IDE --rc --seasonal
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
 %
 In this case, the vector $y_t$ in equation (\ref{eq:Joh-tests})

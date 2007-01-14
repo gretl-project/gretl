@@ -69,15 +69,15 @@ read.  To be more specific:
 Here is an example of a well-formed data header file.
 
 \begin{code} 
-      (* 
-        DATA9-6: 
-        Data on log(money), log(income) and interest rate from US. 
-        Source: Stock and Watson (1993) Econometrica 
-        (unsmoothed data) Period is 1900-1989 (annual data). 
-        Data compiled by Graham Elliott. 
-      *) 
-      lmoney lincome intrate ; 
-      1 1900 1989 BYOBS
+(* 
+  DATA9-6: 
+  Data on log(money), log(income) and interest rate from US. 
+  Source: Stock and Watson (1993) Econometrica 
+  (unsmoothed data) Period is 1900-1989 (annual data). 
+  Data compiled by Graham Elliott. 
+*) 
+lmoney lincome intrate ; 
+1 1900 1989 BYOBS
 \end{code}
 
 The corresponding data file contains three columns of data, each
@@ -128,10 +128,10 @@ data.  Two examples of the format for an entry in the \verb+idx+ file
 are shown below:
 
 \begin{code}
-      G0M910  Composite index of 11 leading indicators (1987=100) 
-      M 1948.01 - 1995.11  n = 575
-      currbal Balance of Payments: Balance on Current Account; SA 
-      Q 1960.1 - 1999.4 n = 160
+G0M910  Composite index of 11 leading indicators (1987=100) 
+M 1948.01 - 1995.11  n = 575
+currbal Balance of Payments: Balance on Current Account; SA 
+Q 1960.1 - 1999.4 n = 160
 \end{code}
 
 The first field is the series name.  The second is a description of
@@ -152,7 +152,7 @@ comment (up to 64 characters) on the source and nature of the data,
 following a hash mark.  For example:
 
 \begin{code}
-      # Federal Reserve Board (interest rates)
+# Federal Reserve Board (interest rates)
 \end{code}
 
 The corresponding binary database file holds the data values,
