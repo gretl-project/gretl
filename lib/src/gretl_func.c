@@ -1868,17 +1868,21 @@ static int parse_fn_definition (char *fname,
     } else if (len < FN_NAMELEN - 1) {
 	sprintf(fmt, "%%%ds", len);
     }
+
     if (!err) {
 	if (sscanf(str, fmt, fname) != 1) {
 	    err = E_PARSE;
 	}
     }
+
     if (!err) {
 	err = check_func_name(fname, pfun, prn);
     }
+
     if (!err) {
 	str += len;
     }
+
     if (*str == '\0') {
 	/* void function */
 	return 0;
