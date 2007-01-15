@@ -3361,15 +3361,20 @@
 
     <usage>
       <arguments>
-        <argument>file</argument>
+        <argument>file-input</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
         Da usare in uno script di comandi, principalmente per includere
-        definizioni di funzioni. Esegue i comandi nel <repl>file</repl>
-        e ripassa il controllo allo script principale.
+        definizioni di funzioni. Esegue i comandi nel <repl>file-input</repl>
+        e ripassa il controllo allo script principale. Per includere una funzione
+        che fa parte di un pacchetto, occorre specificare anche l'estensione del
+        file.
+      </para>
+      <para>
+	Si veda anche il comando <cmdref targ="run"/>.
       </para>
     </description>
 
@@ -7175,7 +7180,11 @@
       <options>
         <option>
 	  <flag>--complete</flag>
-	  <effect>crea un documento completo</effect>
+	  <effect>Crea un documento completo</effect>
+        </option>
+        <option>
+	  <flag>--format="f1|f2|f3|f4"</flag>
+	  <effect>Specifica un formato personalizzato</effect>
         </option>
       </options>
     </usage>
@@ -7190,11 +7199,44 @@
         dei modelli stimati finora nella sessione in corso.
 	Si veda anche <cmdref targ="eqnprint"/>.
       </para>
-
       <para>
 	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
         documento completo, pronto per essere processato; altrimenti il
         file va incluso in un documento.
+      </para>
+      <para>
+	Se si intende modificare lo stile del formato tabulare, è possibile
+        specificare un formato personalizzato usando l'opzione <lit>--format</lit>,
+        seguita da una stringa di formato. La stringa di formato va inclusa tra
+        virgolette doppie e deve essere unita all'opzione con un segno di
+        uguale. La composizione della stringa di formato è la seguente: ci sono
+        quattro campi, che rappresentano il coefficiente, l'errore standard, il
+        rapporto <mathvar>t</mathvar> e il p-value. Questi campi vanno separati
+        usando barre verticali e possono contenere una specificazione di formato
+        per valori numerici nello stile della funzione <lit>printf</lit>, oppure
+        possono essere lasciati in bianco, in modo da sopprimere la
+        visualizzazione del campo nella rispettiva colonna dela tabella (con
+        l'unico vincolo che non è possibile lasciare in bianco tutti i campi).
+        Ecco alcuni esempi:
+      </para>
+      <code>
+	--format="%.4f|%.4f|%.4f|%.4f"
+	--format="%.4f|%.4f|%.3f|"
+	--format="%.5f|%.4f||%.4f"
+	--format="%.8g|%.8g||%.4f"
+      </code>
+      <para>
+	La prima specificazione stampa i valori di tutte le colonne usando 4
+        cifre decimali. La seconda sopprime il p-value e mostra il rapporto
+	<mathvar>t</mathvar> con 3 cifre decimali. La terza omette il rapporto
+	<mathvar>t</mathvar>, mentre l'ultima omette il rapporto
+	<mathvar>t</mathvar> e mostra sia il coefficiente che l'errore standard
+        con 8 cifre significative.
+      </para>
+      <para>
+	Una volta che si imposta un formato in questo modo, esso viene ricordato
+        e usato per tutta la sessione di lavoro. Per tornare ad usare il formato
+        predefinito, basta usare la parola chiave <lit>--format=default</lit>.
       </para>
     </description>
 
