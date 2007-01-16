@@ -26,4 +26,6 @@ void prepare_functions_save (void);
 
 void save_user_functions (const char *fname, gpointer p);
 
+void get_default_package_name (char *fname, gpointer p);
+
 #endif /* FNSAVE_H */

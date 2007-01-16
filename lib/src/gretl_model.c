@@ -1937,18 +1937,19 @@ void clear_model (MODEL *pmod)
 #if MDEBUG > 1
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
-	if (pmod->list) free(pmod->list);
-	if (pmod->submask) free(pmod->submask);
-	if (pmod->missmask) free(pmod->missmask);
-	if (pmod->coeff) free(pmod->coeff);
-	if (pmod->sderr) free(pmod->sderr);
-	if (pmod->yhat) free(pmod->yhat);
-	if (pmod->uhat) free(pmod->uhat);
-	if (pmod->xpx) free(pmod->xpx);
-	if (pmod->vcv) free(pmod->vcv);
-	if (pmod->name) free(pmod->name);
-	if (pmod->depvar) free(pmod->depvar);
-	if (pmod->arinfo) {
+	if (pmod->list != NULL) free(pmod->list);
+	if (pmod->submask != NULL) free(pmod->submask);
+	if (pmod->missmask != NULL) free(pmod->missmask);
+	if (pmod->coeff != NULL) free(pmod->coeff);
+	if (pmod->sderr != NULL) free(pmod->sderr);
+	if (pmod->yhat != NULL) free(pmod->yhat);
+	if (pmod->uhat != NULL) free(pmod->uhat);
+	if (pmod->xpx != NULL) free(pmod->xpx);
+	if (pmod->vcv != NULL) free(pmod->vcv);
+	if (pmod->name != NULL) free(pmod->name);
+	if (pmod->depvar != NULL) free(pmod->depvar);
+
+	if (pmod->arinfo != NULL) {
 	    clear_ar_info(pmod);
 	}
 	if (pmod->params) {

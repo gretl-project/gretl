@@ -2673,7 +2673,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     /* print leading string before echo: none if recording */
     if (!recording) {
-	if (flags & CMD_STACKING) {
+	if ((flags & CMD_STACKING) || gretl_compiling_function()) {
 	    llen += pputs(prn, "> ");
 	} else if (batch) {
 	    llen += pputs(prn, "? ");

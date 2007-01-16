@@ -79,9 +79,14 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 
 static void gen_write_warning (const parser *p, PRN *prn)
 {
-    if (prn != NULL) {
-	pprintf(prn, "%s: %s: %s\n", _("Warning"),
-		p->warning, _("missing values were generated"));
+    if (prn != NULL && !repeating_function_exec()) {
+	if (*p->warning != '\0') {
+	    pprintf(prn, "%s: %s: %s\n", _("Warning"),
+		    p->warning, _("missing values were generated"));
+	} else {
+	    pprintf(prn, "%s: %s\n", _("Warning"),
+		    _("missing values were generated"));
+	}
     }
 }
 
@@ -268,10 +273,6 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
     fsd = gretl_function_depth();
 
-#if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex for '%s': fsd = %d\n", s, fsd);
-#endif
-
     if (fsd > 0) {
 	/* inside a function: see only vars at that level */
 	for (i=1; i<pdinfo->v; i++) { 
@@ -292,8 +293,8 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     }
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "varindex: '%s': returning %d (pdinfo->v = %d)\n", 
-	    s, ret, pdinfo->v);
+    fprintf(stderr, "varindex for '%s', fsd = %d: got %d (pdinfo->v = %d)\n", 
+	    s, fsd, ret, pdinfo->v);
 #endif 
 
     return ret;

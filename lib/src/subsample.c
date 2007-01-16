@@ -256,6 +256,10 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	/* sync, in case anything has moved */
 	sync_dataset_elements(pdinfo);
 
+	if (pmod->submask != NULL) {
+	    free(pmod->submask);
+	}
+
 	pmod->submask = copy_subsample_mask(pdinfo->submask);
 	if (pmod->submask == NULL) {
 	    err = E_ALLOC;

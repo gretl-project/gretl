@@ -1534,6 +1534,12 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
 {
     double **newZ;
 
+#if DDEBUG
+    fprintf(stderr, "shrink_dataset_to_size: nv=%d, got pZ at %p, pdinfo at %p\n"
+	    " drop = %s\n", nv, (void *) pZ, (void *) pdinfo, 
+	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
+#endif
+
     if (drop == DROP_NORMAL) {
 	char **varname;
 	VARINFO **varinfo;
@@ -1793,6 +1799,10 @@ int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo)
 {
     int list[2] = {1, v};
 
+    if (v <= 0 || v >= pdinfo->v) {
+	return E_DATA;
+    }
+
     return dataset_drop_listed_variables(list, pZ, pdinfo, NULL);
 }
 
@@ -1854,7 +1864,9 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
     int newv = v - delvars;
 
 #if DDEBUG
-    fprintf(stderr, "real_drop_last_vars: dropping %d\n", delvars);
+    fprintf(stderr, "real_drop_last_vars: %d vars, got pZ at %p, pdinfo at %p\n"
+	    " drop = %s\n", delvars, (void *) pZ, (void *) pdinfo, 
+	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
 #endif
 
     for (i=newv; i<v; i++) {

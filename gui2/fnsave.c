@@ -168,6 +168,19 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
+void get_default_package_name (char *fname, gpointer p)
+{
+    function_info *finfo = (function_info *) p;
+    const char *pubname;
+    
+    pubname = user_function_name_by_index(finfo->pub);  
+
+    if (pubname != NULL) {
+	strcpy(fname, pubname);
+	strcat(fname, ".gfn");	
+    }
+}
+
 static void real_finfo_save (function_info *finfo)
 {
     char **fields[] = {
@@ -219,7 +232,6 @@ static void finfo_save_as (GtkWidget *w, function_info *finfo)
 static void finfo_save (GtkWidget *w, function_info *finfo)
 {
     finfo->saveas = (finfo->fname == NULL);
-
     real_finfo_save(finfo);
 }
 

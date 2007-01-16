@@ -437,33 +437,41 @@ static void get_functions_dir (char *dirname)
 {
     char *target = NULL;
     FILE *fp;
-    int err;
+    int err, ok = 0;
 
     sprintf(dirname, "%sfunctions", paths.gretldir);
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
-	fp = gretl_fopen(target, "w");
-	if (fp != NULL) {
-	    fclose(fp);
-	    remove(target);
+	if (target != NULL) {
+	    fp = gretl_fopen(target, "w");
+	    if (fp != NULL) {
+		ok = 1;
+		fclose(fp);
+		remove(target);
+	    }
 	    free(target);
-	    return;
 	}
     } 
+    
+    if (ok) return;
 
     sprintf(dirname, "%sfunctions", paths.userdir);
     err = gretl_mkdir(dirname);
     if (!err) {
 	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
-	fp = gretl_fopen(target, "w");
-	if (fp != NULL) {
-	    fclose(fp);
-	    remove(target);
+	if (target != NULL) {
+	    fp = gretl_fopen(target, "w");
+	    if (fp != NULL) {
+		ok = 1;
+		fclose(fp);
+		remove(target);
+	    }
 	    free(target);
-	    return;
 	}
-    }	
+    }
+
+    if (ok) return;
 
     *dirname = '\0';
 }

@@ -225,6 +225,7 @@ static void console_exec (void)
     static int redirected;
     int oldv = datainfo->v;
     char execline[MAXLINE];
+    int coding = 0;
     int err = 0;
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
@@ -293,8 +294,10 @@ static void console_exec (void)
 	gretl_print_reset_buffer(console_prn);
     }
 
+    coding = gretl_compiling_loop() || gretl_compiling_function();
+
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
-					     (gretl_compiling_loop())? "> " : "? ", 
+					     (coding)? "> " : "? ", 
 					     2, "redtext", NULL);
 
     /* scroll to end of buffer */

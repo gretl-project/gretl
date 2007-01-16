@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 
 #define FN_DEBUG 0
+#define PKG_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
@@ -81,6 +82,8 @@ static ufunc *current_ufun;
 static int n_pkgs;
 static fnpkg **pkgs;
 
+static int drop_function_vars = 1;
+
 static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
 
 /* record of state, and communication of state with outside world */
@@ -106,6 +109,23 @@ static void set_compiling_off (void)
 int gretl_function_depth (void)
 {
     return fn_executing;
+}
+
+/* Switch to delete, or not, all the "private" variables internal to a
+   function when execution terminates.  This is used in nls.c: if a
+   user function will be called repeatedly in the context of
+   NLS/MLE/GMM we turn off deletion temporarily, which saves repeated
+   allocation/deallocation of storage for the variables.
+*/
+
+void set_drop_function_vars (int s)
+{
+    drop_function_vars = (s != 0)? 1 : 0;
+}
+
+int repeating_function_exec (void)
+{
+    return !drop_function_vars;
 }
 
 static void set_executing_on (ufunc *fun)
@@ -348,6 +368,11 @@ static int add_allocated_ufunc (ufunc *fun)
     ufuns = myfuns;
     ufuns[nf] = fun;
     n_ufuns++;
+
+#if PKG_DEBUG
+    fprintf(stderr, "add_allocated_ufunc: name '%s', n_ufuns = %d\n",
+	    fun->name, n_ufuns);
+#endif
 
     return 0;
 }
@@ -680,7 +705,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	return E_DATA;
     }
 
-#if FN_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: got function name '%s'\n",
 	    fname);
 #endif
@@ -1395,7 +1420,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	err = function_package_add(pkg);
     }
 
-#if FN_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "read_user_function_package:\n"
 	    " err = %d reading '%s'\n", err, fname);
 #endif
@@ -1447,7 +1472,7 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
 	xmlCleanupParser();
     }
 
-#if FN_DEBUG
+#if PKG_DEBUG
     fprintf(stderr, "real_read_user_function_file:\n"
 	    " returning %d for '%s'\n", err, fname);
 #endif
@@ -2472,7 +2497,6 @@ static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 			 int orig_v)
 {
     int d = gretl_function_depth();
-    int delv = pdinfo->v - orig_v;
     int anyerr = 0;
     int err = 0;
 
@@ -2497,7 +2521,10 @@ static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 #endif
     }   
 
-    if (delv > 0) {
+    if (drop_function_vars) {
+	/* delete all variables "inside" the function */
+	int delv = pdinfo->v - orig_v;
+
 	anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
 	if (anyerr && !err) {
 	    err = anyerr;
@@ -2505,7 +2532,19 @@ static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	    fprintf(stderr, "dataset_drop_last_variables: err = %d\n", err);
 #endif
 	}  
-    }    
+    } else {
+	/* delete only variables copied from arguments */
+	fn_param *fp;
+	int i, v;
+
+	for (i=0; i<u->n_params && !err; i++) {
+	    fp = &u->params[i];
+	    if (scalar_arg(fp->type) || fp->type == ARG_SERIES) {
+		v = varindex(pdinfo, fp->name);
+		err = dataset_drop_variable(v, pZ, pdinfo);
+	    } 
+	}		
+    }
 
     pop_program_state();
     set_executing_off(u);

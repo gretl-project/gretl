@@ -741,7 +741,9 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 		strcpy(fname, strvar + slashpos(strvar) + 1);
 	    } 
 	}
-    }	
+    } else if (action == SAVE_FUNCTIONS) {
+	get_default_package_name(fname, data);
+    }
 
     if (doing_nls()) {
 	trmsg = my_locale_from_utf8(msg);
@@ -912,6 +914,13 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 					  strvar);
 	} 
+    } else if (action == SAVE_FUNCTIONS) {
+	char fname[MAXLEN];
+
+	*fname = '\0';
+	get_default_package_name(fname, data);
+	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
+					  fname);
     }	
 
     if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {

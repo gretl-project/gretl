@@ -4633,12 +4633,13 @@ static int gen_check_return_type (parser *p)
 static int gen_allocate_storage (parser *p)
 {
     if (p->targ == NUM && p->lh.v == 0) {
-#if EDEBUG
-	fprintf(stderr, "gen_allocate_storage: adding scalar\n");
-#endif
 	p->err = dataset_add_scalar(p->Z, p->dinfo);
 	if (!p->err) {
 	    p->lh.v = p->dinfo->v - 1;
+#if EDEBUG
+	    fprintf(stderr, "gen_allocate_storage: added scalar #%d (%s)\n",
+		    p->lh.v, p->lh.name);
+#endif
 	}
     } else if (p->targ == VEC && p->lh.v == 0) {
 	p->err = dataset_add_series(1, p->Z, p->dinfo);
@@ -4650,8 +4651,8 @@ static int gen_allocate_storage (parser *p)
 		(*p->Z)[p->lh.v][t] = NADBL;
 	    }
 #if EDEBUG
-	    fprintf(stderr, "gen_allocate_storage: added series #%d\n",
-		    p->lh.v);
+	    fprintf(stderr, "gen_allocate_storage: added series #%d (%s)\n",
+		    p->lh.v, p->lh.name);
 #endif
 	}
     }
