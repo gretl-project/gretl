@@ -1869,6 +1869,11 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
 	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
 #endif
 
+    if (newv < 1) {
+	fprintf(stderr, "real_drop_last_vars: got newv = %d!\n", newv);
+	return E_DATA;
+    }
+
     for (i=newv; i<v; i++) {
 	if (drop == DROP_NORMAL) {
 	    free(pdinfo->varname[i]);

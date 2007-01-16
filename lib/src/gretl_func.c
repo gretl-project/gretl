@@ -2493,8 +2493,8 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
     return err;
 }
 
-static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
-			 int orig_v)
+static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
+			int orig_v)
 {
     int d = gretl_function_depth();
     int anyerr = 0;
@@ -2541,13 +2541,18 @@ static void stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	    fp = &u->params[i];
 	    if (scalar_arg(fp->type) || fp->type == ARG_SERIES) {
 		v = varindex(pdinfo, fp->name);
-		err = dataset_drop_variable(v, pZ, pdinfo);
+		anyerr = dataset_drop_variable(v, pZ, pdinfo);
+		if (anyerr && !err) {
+		    err = anyerr;
+		}
 	    } 
 	}		
     }
 
     pop_program_state();
     set_executing_off(u);
+
+    return err;
 }
 
 static void start_fncall (ufunc *u)
@@ -2718,7 +2723,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     gretl_exec_state_clear(&state);
 
     if (started) {
-	stop_fncall(u, pZ, pdinfo, orig_v);
+	int stoperr = stop_fncall(u, pZ, pdinfo, orig_v);
+
+	if (stoperr && !err) {
+	    err = stoperr;
+	}
     }
 
 #if FN_DEBUG
