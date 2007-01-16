@@ -251,7 +251,7 @@ static void get_a_filename (char *fname)
 static int 
 get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
-    int compiling = gretl_compiling_function() || 
+    int coding = gretl_compiling_function() || 
 	gretl_compiling_loop();
     int err = 0;
 
@@ -261,14 +261,14 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     } else {
 	/* interactive use */
 #ifdef HAVE_READLINE
-	rl_gets(&line_read, (compiling)? "> " : "? ");
+	rl_gets(&line_read, (coding)? "> " : "? ");
 	if (line_read == NULL) {
 	    strcpy(s->line, "quit");
 	} else {
 	    strcpy(s->line, line_read);
 	}
 #else
-	printf("%s", (compiling)? "> " : "? ");
+	printf("%s", (coding)? "> " : "? ");
 	fflush(stdout);
 	file_get_line(); /* note: "file" = stdin here */
 #endif
@@ -761,7 +761,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
-	}    
+	} else {
+	    pprintf(cmdprn, "%s\n", line);
+	}
 	return err;
     } 
 

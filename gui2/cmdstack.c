@@ -67,6 +67,7 @@ void free_command_stack (void)
 
 int add_command_to_stack (const char *str)
 {
+    int n = strlen(str);
     char **cmds;
 
     cmds = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmds);
@@ -76,7 +77,12 @@ int add_command_to_stack (const char *str)
 
     cmd_stack = cmds;
 
-    cmd_stack[n_cmds] = gretl_strdup(str);
+    if (n > 0 && str[n-1] == '\n') {
+	cmd_stack[n_cmds] = gretl_strdup(str);
+    } else {
+	cmd_stack[n_cmds] = g_strdup_printf("%s\n", str);
+    }
+
     if (cmd_stack[n_cmds] == NULL) {
 	return 1;
     }

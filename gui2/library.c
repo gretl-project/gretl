@@ -5942,13 +5942,15 @@ static int ok_script_file (const char *runfile)
 
 static void output_line (const char *line, PRN *prn) 
 {
+    int coding = gretl_compiling_function() || 
+	gretl_compiling_loop();
     int n = strlen(line);
 
     if ((line[0] == '/' && line[1] == '*') ||
 	(line[n-1] == '/' && line[n-2] == '*')) {
 	pprintf(prn, "\n%s\n", line);
     } else if (line[0] == '#') {
-	if (gretl_compiling_loop()) {
+	if (coding) {
 	    pprintf(prn, "> %s\n", line);
 	} else {
 	    pprintf(prn, "%s\n", line);
@@ -5956,7 +5958,7 @@ static void output_line (const char *line, PRN *prn)
     } else if (!string_is_blank(line)) {
 	const char *leader;
 	
-	leader = (gretl_compiling_loop())? "> " : "? ";
+	leader = (coding)? "> " : "? ";
 	pputs(prn, leader); 
 	n = 2;
 	safe_print_line(line, &n, prn);
@@ -6246,6 +6248,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
+	} else if (s->flags == CONSOLE_EXEC) {
+	    add_command_to_stack(line);
 	}
 	return err;
     }     
