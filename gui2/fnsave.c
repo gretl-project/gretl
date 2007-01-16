@@ -172,7 +172,8 @@ void get_default_package_name (char *fname, gpointer p)
 {
     function_info *finfo = (function_info *) p;
     const char *pubname;
-    
+
+    *fname = '\0';
     pubname = user_function_name_by_index(finfo->pub);  
 
     if (pubname != NULL) {
