@@ -176,7 +176,7 @@ open greene19_1
 
 probit GRADE const GPA PSI
 series u = $uhat 
-
+%$
 ols u const GPA PSI TUCE -q
 printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
@@ -236,6 +236,78 @@ generalized residuals as in binary models; additionally, the
 \verb+$yhat+ accessor function returns $\hat{z}_i$, so it is
 possible to compute an unbiased estimator of the latent variable
 $y^*_i$ simply by adding the two together.
+
+\subsection{Multinomial logit}
+\label{sec:mlogit}
+
+When the dependent variable is not binary and does not have a natural
+ordering, \emph{multinomial} models are used. \app{Gretl} does not
+provide a native implementation of these yet, but simple models can be
+handled via the \texttt{mle} command (see chapter \ref{chap:mle}). We
+give here an example of a multinomial logit model.  Let the dependent
+variable, $y_i$, take on integer values $0,1,\dots p$.  The
+probability that $y_i = k$ is given by
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{\sum_{j=0}^p \exp(x_i \beta_j)}
+\]
+For the purpose of identification one of the outcomes must be taken as
+the ``baseline''; it is usually assumed that $\beta_0 = 0$, in which case
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} 
+\]
+and
+\[
+  P(y_i = 0 |  x_i) = \frac{1}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} .
+\]
+
+Example~\ref{ex:mlogit} reproduces Table 15.2 in Wooldridge (2002a),
+based on data on career choice from Keane and Wolpin (1997).  The
+dependent variable is the occupational status of an individual (0 = in
+school; 1 = not in school and not working; 2 = working), and the
+explanatory variables are education and work experience (linear and
+square) plus a ``black'' binary variable.  The full data set is a
+panel; here the analysis is confined to a cross-section for 1987.  For
+explanations of the matrix methods employed in the script, see
+chapter~\ref{chap:matrices}.
+
+\begin{script}[htbp]
+  \caption{Multinomial logit}
+  \label{ex:mlogit}
+\begin{scode}
+function mlogitlogprobs(series y, matrix X, matrix theta)
+
+  scalar n = max(y)
+  scalar k = cols(X)
+  matrix b = mshape(theta,k,n)
+
+  matrix tmp = X*b
+  series ret = -ln(1 + sumr(exp(tmp)))
+
+  loop for i=1..n --quiet
+    series x = tmp[,i]
+    ret += (y=$i) ? x : 0 
+  end loop
+
+  return series ret
+
+end function
+
+open Keane.gdt
+status = status-1 # dep. var. must be 0-based
+smpl (year=87 & ok(status)) --restrict
+
+matrix X = { educ exper expersq black const }
+scalar k = cols(X)
+matrix theta = zeros(2*k, 1)
+
+mle loglik = lp
+  series lp = mlogitlogprobs(status,X,theta)
+  params theta
+end mle --verbose --hessian
+\end{scode}
+%$
+\end{script}
+
 
 \section{The Tobit model}
 \label{sec:tobit}
@@ -368,8 +440,6 @@ heckit(lww,X,LFP,Z)
 
 % also include example script for negative binomial (done in Verbeek
 % example files).
-
-
 
 %%% Local Variables: 
 %%% mode: latex

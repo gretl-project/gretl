@@ -372,6 +372,11 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
+#if SUBDEBUG
+    fprintf(stderr, "After expansion, fullZ = %p (%d vars)\n", (void *) fullZ,
+	    pdinfo->v);
+#endif
+
     for (i=V0; i<pdinfo->v; i++) {
 	if (var_is_scalar(pdinfo, i)) {
 	    fullZ[i][0] = Z[i][0]; 

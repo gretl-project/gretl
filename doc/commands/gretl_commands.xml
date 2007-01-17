@@ -2371,16 +2371,39 @@
       </para>
 
       <para>
+	The <func>pvalue</func>, <func>critical</func> and
+	<func>cdf</func> functions take, as their first parameter, a
+	one-character code for the distribution of interest:
+      </para>
+      
+      <ilist>
+	<li><para><cmd>z</cmd> or <cmd>N</cmd>: Normal;</para></li>
+	<li><para><cmd>t</cmd>: Student's <emphasis>t</emphasis>;</para></li>
+	<li><para><cmd>X</cmd>: chi-square;</para></li>
+	<li><para><cmd>F</cmd>: Snedecor;</para></li>
+	<li><para><cmd>G</cmd>: Gamma (only <cmd>pvalue</cmd> and <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>B</cmd>: Binomial (only <cmd>pvalue</cmd> and <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>D</cmd>: Bivariate normal (only <cmd>cdf</cmd>).</para></li>
+      </ilist>
+
+      <para>
 	The <func>pvalue</func> function takes the same arguments as the
 	<cmdref targ="pvalue"/> command, but in this context commas should
 	be placed between the arguments. It returns a one-tailed,
 	right-hand p-value, that is, the integral of the given density
-	function from the specified value to plus infinity. The
-	<func>cdf</func> function also takes the same arguments as the
-	<cmdref targ="pvalue"/> command, but it returns the complementary
-	value, that is, the integral of the relevant density function from
-	its lower limit (either minus infinity or zero) to the specified
-	value.  For additional discussion of these functions see 
+	function from the specified value to plus infinity. 
+      </para>
+
+      <para>
+        The <func>cdf</func> function also takes the same arguments as
+	the <cmdref targ="pvalue"/> command, but it returns the
+	complementary value, that is, the integral of the relevant
+	density function from its lower limit (either minus infinity
+	or zero) to the specified value.  For the bivariate normal
+	distribution, three arguments must be given:
+	<emphasis>x</emphasis>, <emphasis>y</emphasis> and the
+	correlation coefficient <emphasis>rho</emphasis>, in this order.
+	For additional discussion of these functions see
 	<guideref targ="chap-genr"/>.
       </para>
 
@@ -2388,11 +2411,8 @@
 	The <func>critical</func> function returns the critical value
 	for a specified probability distribution and a specified
 	proportion in the right-hand tail (with specified degrees of
-	freedom where applicable).  The distribution parameter, which
-	must come first, can be <cmd>z</cmd> or <cmd>N</cmd> (Normal
-	distribution), <cmd>t</cmd> (Student's
-	<emphasis>t</emphasis>), <cmd>X</cmd> (chi-square) or
-	<cmd>F</cmd>.  The last parameter is the right-hand tail
+	freedom where applicable). 
+	The last parameter is the right-hand tail
 	proportion.  If the first parameter is <cmd>t</cmd> or
 	<cmd>X</cmd>, a second parameter must give the degrees of
 	freedom.  For the <emphasis>F</emphasis> distribution, the
@@ -2408,8 +2428,10 @@
       <code>
 	genr p1 = pvalue(z, 2.2)
 	genr p2 = pvalue(X, 3, 5.67)
+	genr p3 = cdf(D, -1, 1, 0.25)
 	genr c1 = critical(t, 20, 0.025)
-	genr c2 = critical(F, 4, 48, 0.05)</code>
+	genr c2 = critical(F, 4, 48, 0.05)
+      </code>
 
       <para>
 	The functions relating to the standard normal density work thus,

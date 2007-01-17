@@ -1524,9 +1524,10 @@ enum {
 };
 
 /* DROP_SPECIAL is used when deleting variables from the "full" shadow
-   of a sub-sampled dataset: in that case we don't mess with the
+   of a sub-sampled dataset, after deleting those same variables from
+   the sub-sampled version: in that case we don't mess with the
    pointer elements of the DATAINFO struct, because these are shared
-   between the full and sub-sampled datasets.
+   between the full and sub-sampled versions.
 */
 
 static int 
@@ -1856,32 +1857,6 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int 
-real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
-		     int drop)
-{
-    int i, v = pdinfo->v; 
-    int newv = v - delvars;
-
-    if (newv < 1) {
-	fprintf(stderr, "real_drop_last_vars: got newv = %d\n"
-		" (pdinfo = %p, pdinfo->v = %d, delvars = %d, drop = %d)\n", 
-		newv, (void *) pdinfo, pdinfo->v, delvars, drop);
-	return E_DATA;
-    }
-
-    for (i=newv; i<v; i++) {
-	if (drop == DROP_NORMAL) {
-	    free(pdinfo->varname[i]);
-	    free_varinfo(pdinfo, i);
-	}
-	free((*pZ)[i]);
-	(*pZ)[i] = NULL;
-    }
-
-    return shrink_dataset_to_size(pZ, pdinfo, newv, drop);
-}
-
 /**
  * dataset_drop_last_variables:
  * @delvars: number of variables to be dropped.
@@ -1896,35 +1871,54 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
-    int err;
+    int newv, v = pdinfo->v;
+    int i, err = 0;
 
     if (delvars <= 0) {
 	return 0;
     }
 
-    if (pdinfo->v <= 1) {
+    newv = pdinfo->v - delvars;
+
+    if (newv < 1) {
+	fprintf(stderr, "dataset_drop_last_vars: pdinfo->v = %d, delvars = %d "
+		" -> newv = %d\n (pdinfo = %p)\n", pdinfo->v, delvars,
+		newv, (void *) pdinfo);
 	return E_DATA;
     }
 
-    err = real_drop_last_vars(delvars, pZ, pdinfo, DROP_NORMAL);
+    for (i=newv; i<pdinfo->v; i++) {
+	free(pdinfo->varname[i]);
+	free_varinfo(pdinfo, i);
+	free((*pZ)[i]);
+	(*pZ)[i] = NULL;
+    }
 
-#if 0 /* I'm pretty sure the following should never be done!
-	 (2007-01-17) If we're currently subsampled, the "last
-	 variables" we're deleting will not be in the shadow "full"
-	 dataset, will they?  They'll be things like temporary
-	 variables from user-functions or NLS, residuals added
-	 pro tem for tests...  Deleting such variables from the
-	 sub-sampled dataset will simply bring it back in line
-	 with the full dataset in the background.
-      */
+    err = shrink_dataset_to_size(pZ, pdinfo, newv, DROP_NORMAL);
+
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
 
-	err = real_drop_last_vars(delvars, fZ, fdinfo, DROP_SPECIAL);
-	reset_full_Z(fZ);
+	/* The following is required for the special case of
+	   sub-sampling inside a function, when the dataset is already
+	   subsampled on entry to the function.  Note that we actually
+	   _do_ something here only if the number of variables in the
+	   full dataset equals that in the subsetted dataset (before
+	   the deletions in the latter).  Therefore, specifically, we
+	   do _not_ do anything if the vars deleted (above) from the
+	   subsetted dataset were not present in the full version.
+	*/
+
+	if (fdinfo->v == v) {
+	    for (i=newv; i<fdinfo->v; i++) {
+		free((*fZ)[i]);
+		(*fZ)[i] = NULL;
+	    }
+	    err = shrink_dataset_to_size(fZ, fdinfo, newv, DROP_SPECIAL);
+	    reset_full_Z(fZ);
+	}
     }
-#endif
 
     return err;
 }

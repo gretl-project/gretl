@@ -25,7 +25,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 2 /* can be set > 1 */
+# define EDEBUG 1 /* can be set > 1 */
 #else
 # define EDEBUG 0
 #endif
@@ -1513,7 +1513,7 @@ static double real_apply_func (double x, int f, parser *p)
 
     errno = 0;
 
-    if (na(x)) {
+    if (xna(x)) {
 	switch (f) {
 	case MISSING:
 	    return 1.0;
@@ -2351,7 +2351,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 #if EDEBUG
     fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
-	    args.nx, args.nX, args.nM, args.nl, args.nrefv, args.nnull, m);
+	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
 #endif
 
     /* try sending args to function */
