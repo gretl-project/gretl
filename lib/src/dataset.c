@@ -1863,14 +1863,10 @@ real_drop_last_vars (int delvars, double ***pZ, DATAINFO *pdinfo,
     int i, v = pdinfo->v; 
     int newv = v - delvars;
 
-#if DDEBUG
-    fprintf(stderr, "real_drop_last_vars: %d vars, got pZ at %p, pdinfo at %p\n"
-	    " drop = %s\n", delvars, (void *) pZ, (void *) pdinfo, 
-	    (drop == DROP_NORMAL)? "DROP_NORMAL" : "DROP_SPECIAL");
-#endif
-
     if (newv < 1) {
-	fprintf(stderr, "real_drop_last_vars: got newv = %d!\n", newv);
+	fprintf(stderr, "real_drop_last_vars: got newv = %d\n"
+		" (pdinfo = %p, pdinfo->v = %d, delvars = %d, drop = %d)\n", 
+		newv, (void *) pdinfo, pdinfo->v, delvars, drop);
 	return E_DATA;
     }
 
@@ -1912,6 +1908,15 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     err = real_drop_last_vars(delvars, pZ, pdinfo, DROP_NORMAL);
 
+#if 0 /* I'm pretty sure the following should never be done!
+	 (2007-01-17) If we're currently subsampled, the "last
+	 variables" we're deleting will not be in the shadow "full"
+	 dataset, will they?  They'll be things like temporary
+	 variables from user-functions or NLS, residuals added
+	 pro tem for tests...  Deleting such variables from the
+	 sub-sampled dataset will simply bring it back in line
+	 with the full dataset in the background.
+      */
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
@@ -1919,6 +1924,7 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	err = real_drop_last_vars(delvars, fZ, fdinfo, DROP_SPECIAL);
 	reset_full_Z(fZ);
     }
+#endif
 
     return err;
 }
