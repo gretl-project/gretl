@@ -4126,13 +4126,14 @@ int ready_for_command (const char *line)
 	"function",
 	"newfunc",
 	"noecho",
+	"exit",
 	NULL 
     };
     int i, ok = 0;
 
     if (string_is_blank(line) || gretl_compiling_function()) {
 	ok = 1;
-    } else if (*line == 'q' || *line == 'x' || *line == '#') {
+    } else if (*line == 'q' || *line == '#') {
 	ok = 1;
     } else if (*line == '/' && *(line+1) == '*') {
 	ok = 1;

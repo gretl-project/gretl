@@ -90,6 +90,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
 
 static int compiling;
 static int fn_executing;
+static int fn_comment;
 
 int gretl_compiling_function (void)
 {
@@ -98,6 +99,7 @@ int gretl_compiling_function (void)
 
 static void set_compiling_on (void)
 {
+    fn_comment = 0;
     compiling = 1;
 }
 
@@ -2088,6 +2090,16 @@ int gretl_function_append_line (const char *line)
 
     if (string_is_blank(line)) {
 	return 0;
+    }
+
+    if (!strncmp(line, "/*", 2)) {
+	fn_comment = 1;
+    } else if (!strncmp(line, "*/", 2)) {
+	fn_comment = 0;
+    }
+
+    if (fn_comment) {
+	return strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
     if (end_of_function(line)) {

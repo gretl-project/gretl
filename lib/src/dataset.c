@@ -1900,7 +1900,7 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
 
-	/* The following is required for the special case of
+	/* The following is required for the special case of undoing
 	   sub-sampling inside a function, when the dataset is already
 	   subsampled on entry to the function.  Note that we actually
 	   _do_ something here only if the number of variables in the
