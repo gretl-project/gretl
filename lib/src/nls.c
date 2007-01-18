@@ -156,7 +156,7 @@ static int nls_genr_setup (nlspec *s)
 		sprintf(formula, "%s = %s", s->lhname, s->nlfunc);
 	    } else {
 		sprintf(formula, "$nl_y = %s", s->nlfunc);
-	    } 
+	    }
 	} else {
 	    /* derivatives/gradients */
 	    if (scalar_param(s, j)) {
@@ -845,6 +845,7 @@ static int nl_missval_check (nlspec *s)
 static double get_mle_ll (const double *b, void *p)
 {
     nlspec *s = (nlspec *) p;
+    double x;
     int t, k;
 
     update_coeff_values(b, s);
@@ -858,12 +859,20 @@ static double get_mle_ll (const double *b, void *p)
     if (s->lvec != NULL) {
 	k = gretl_vector_get_length(s->lvec);
 	for (t=0; t<k; t++) {
-	    s->crit -= s->lvec->val[t];
+	    x = s->lvec->val[t];
+	    if (na(x)) {
+		return NADBL;
+	    }
+	    s->crit += x;
 	}
     } else {
 	k = s->lhv;
 	for (t=s->t1; t<=s->t2; t++) {
-	    s->crit -= (*s->Z)[k][t];
+	    x = (*s->Z)[k][t];
+	    if (na(x)) {
+		return NADBL;
+	    }
+	    s->crit += x;
 	}
     }
 
@@ -969,14 +978,15 @@ static int nl_function_calc (double *f, void *p)
 	    fprintf(stderr, "nl_calculate_fvec: produced NA at obs %d\n", t);
 	    return 1;
 	}
-	f[t] = y[t];	
+
+	f[t] = y[t];
 
 #if NLS_DEBUG > 1
 	fprintf(stderr, "fvec[%d] = %.14g\n", t,  f[t]);
 #endif
 
 	if (s->ci == MLE) {
-	    s->crit -= f[t];
+	    s->crit += f[t];
 	} else {
 	    s->crit += f[t] * f[t];
 	}
@@ -1008,6 +1018,8 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 	return 1;
     }
 
+    fprintf(stderr, "get_nls_derivs called\n");
+
 #if NLS_DEBUG
     fprintf(stderr, "get_nls_derivs: T = %d, offset = %d\n", T, offset);
 #endif
@@ -1037,7 +1049,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 		    if (t > 0 && m->rows > 0) {
 			x = gretl_matrix_get(m, t, i);
 		    }
-		    gi[t] = -x;
+		    gi[t] = (spec->ci == MLE)? x : -x;
 #if NLS_DEBUG > 1
 		    fprintf(stderr, " set g[%d] = M(%d,%d) = %.14g\n", 
 			    t, t, i, gi[t]);
@@ -1067,7 +1079,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 	    for (t=0; t<T; t++) {
 		s = (ser)? (t + spec->t1) : 0;
 		x = (*spec->Z)[v][s];
-		gi[t] = -x;
+		gi[t] = (spec->ci == MLE)? x : -x;
 #if NLS_DEBUG > 1
 		fprintf(stderr, " set g[%d] = s->Z[%d][%d] = %.14g\n", 
 			t, v, s, gi[t]);
@@ -1154,8 +1166,6 @@ static int get_mle_gradient (double *b, double *g, int n,
 	    }
 
 	    g[i] = 0.0;
-
-	    /* FIXME is the following right for scalar? */
 
 	    for (t=t1; t<=t2; t++) {
 		x = (*spec->Z)[v][t];
@@ -1508,29 +1518,17 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
 
     pmod->nparams = nc;
 
-    if (spec->ci == MLE) {
-	n = strlen(spec->nlfunc) + strlen(spec->lhname);
-	pmod->depvar = malloc(n + 3);
-	if (pmod->depvar != NULL) {
-	    sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc + 2);
-	    n = strlen(pmod->depvar);
-	    pmod->depvar[n-1] = '\0';
-	} else {
-	    err = E_ALLOC;
-	}
-    } else if (spec->ci == GMM) {
-	if (spec->nlfunc != NULL) {
-	    n = strlen(spec->nlfunc) + strlen(spec->lhname);
-	    pmod->depvar = malloc(n + 4);
-	    if (pmod->depvar != NULL) {
-		sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc);
-	    } else {
-		err = E_ALLOC;
-	    }
-	}
-    } else {
+    if (spec->ci == NLS) {
 	pmod->depvar = gretl_strdup(pdinfo->varname[spec->dv]);
 	if (pmod->depvar == NULL) {
+	    err = E_ALLOC;
+	}
+    } else if (spec->ci == MLE || (spec->ci == GMM && spec->nlfunc != NULL)) {
+	n = strlen(spec->nlfunc) + strlen(spec->lhname);
+	pmod->depvar = malloc(n + 4);
+	if (pmod->depvar != NULL) {
+	    sprintf(pmod->depvar, "%s = %s", spec->lhname, spec->nlfunc);
+	} else {
 	    err = E_ALLOC;
 	}
     } 
@@ -1976,7 +1974,7 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
 	/* calculate function at x, results into fvec */
 	if (nl_function_calc(fvec, p)) {
 	    *iflag = -1;
-	}
+	} 
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
 	if (get_nls_derivs(*n, *m, 0, jac, NULL, p)) {
@@ -2498,27 +2496,19 @@ nlspec_set_regression_function (nlspec *spec, const char *fnstr,
     } 
 
     if (!err) {
-	if (spec->ci == MLE) {
-	    flen = strlen(rhs) + 4;
-	} else if (spec->ci == GMM) {
-	    flen = strlen(rhs) + 1;
+	if (spec->ci == MLE || spec->ci == GMM) {
+	    spec->nlfunc = gretl_strdup(rhs);
 	} else {
 	    flen = strlen(vname) + strlen(rhs) + 6;
-	}
-
-	spec->nlfunc = malloc(flen);
-
-	if (spec->nlfunc == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    if (spec->ci == MLE) {
-		sprintf(spec->nlfunc, "-(%s)", rhs);
-	    } else if (spec->ci == GMM) {
-		strcpy(spec->nlfunc, rhs);
-	    } else {
+	    spec->nlfunc = malloc(flen);
+	    if (spec->nlfunc != NULL) {
 		sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
 	    }
 	}
+
+	if (spec->nlfunc == NULL) {
+	    err = E_ALLOC;
+	} 
     }
 
     free(vname);
