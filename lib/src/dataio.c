@@ -4181,6 +4181,10 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (has_suffix(fname, ".bn7"))
 	return GRETL_PCGIVE_DB;
 
+    if (ppaths == NULL) {
+	return GRETL_NATIVE_DATA; 
+    }
+
     addpath(fname, ppaths, 0); 
 
     if (gretl_is_xml_file(fname)) {

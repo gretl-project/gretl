@@ -95,6 +95,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_A, "crt" },
     { COINT2,   OPT_D, "seasonals" },
     { COINT2,   OPT_N, "nc" },
+    { COINT2,   OPT_Q, "quiet" },
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { COINT2,   OPT_V, "verbose" },

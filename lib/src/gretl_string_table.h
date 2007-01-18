@@ -34,4 +34,12 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 
 void gretl_string_table_destroy (gretl_string_table *st);
 
+int process_string_command (const char *line, PRN *prn);
+
+int substitute_named_strings (char *line);
+
+int string_is_defined (const char *sname);
+
+void saved_strings_cleanup (void);
+
 #endif /* GRETL_STRING_TABLE_H */

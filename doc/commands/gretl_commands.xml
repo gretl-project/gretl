@@ -924,6 +924,10 @@
 	  <effect>include centered seasonal dummies</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>print just the tests</effect>
+        </option>
+        <option>
 	  <flag>--verbose</flag>
 	  <effect>print details of auxiliary regressions</effect>
         </option>

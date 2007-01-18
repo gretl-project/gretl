@@ -341,7 +341,8 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 
 int ok_in_loop (int c)
 {
-    if (c == GENR ||
+    if (c == APPEND ||
+        c == GENR ||
 	c == LOOP ||
 	c == STORE ||
 	c == PRINT ||

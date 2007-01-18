@@ -300,8 +300,7 @@ matrix X = { educ exper expersq black const }
 scalar k = cols(X)
 matrix theta = zeros(2*k, 1)
 
-mle loglik = lp
-  series lp = mlogitlogprobs(status,X,theta)
+mle loglik = mlogitlogprobs(status,X,theta)
   params theta
 end mle --verbose --hessian
 \end{scode}

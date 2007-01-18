@@ -27,6 +27,7 @@
 #include "gretl_panel.h"
 #include "loop_private.h"
 #include "texprint.h"
+#include "gretl_string_table.h"
 
 #include <errno.h>
 
@@ -1346,6 +1347,7 @@ void libgretl_cleanup (void)
     gretl_functions_cleanup();
     libset_cleanup();
     gretl_command_hash_cleanup();
+    saved_strings_cleanup();
     lapack_mem_free();
 
     p = strstr(gretl_plotfile(), "gpttmp");

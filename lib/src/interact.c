@@ -33,6 +33,8 @@
 #include "modelspec.h"
 #include "gretl_panel.h"
 #include "texprint.h"
+#include "gretl_xml.h"
+#include "gretl_string_table.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -272,6 +274,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == SETINFO || \
 	               c == SETOBS || \
 	               c == SHELL || \
+                       c == STRING || \
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == TESTUHAT || \
@@ -1681,6 +1684,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
+    cmd->err = substitute_named_strings(line);
+    if (cmd->err) {
+	return cmd->err;
+    }    
+    
     compress_spaces(line);
 
 #if CMD_DEBUG
@@ -2322,15 +2330,24 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 int gretl_shell (const char *arg)
 {
-    int pid;
-    void (*old1)(int);
-    void (*old2)(int);
+    const char *theshell, *namep;
     char shellnam[40];
-    const char *theshell, *namep; 
+    void (*old1) (int);
+    void (*old2) (int);
+    int pid;
 
     if (!get_shell_ok()) {
 	strcpy(gretl_errmsg, "The shell command is not activated.");
 	return 1;
+    }
+
+    if (get_shell_sync()) {
+	char *s = gretl_strdup(arg);
+	int err;
+
+	err = gretl_spawn(s);
+	free(s);
+	return err;
     }
 
     old1 = signal(SIGINT, SIG_IGN);
@@ -3116,6 +3133,41 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
+static int append_data (const char *line, double ***pZ,
+			DATAINFO **ppdinfo, PRN *prn)
+{
+    char fname[MAXLEN] = {0};
+    int k, err = 0;
+
+    err = getopenfile(line, fname, NULL, OPT_NONE);
+    if (err) {
+	errmsg(err, prn);
+	return err;
+    }
+
+    k = detect_filetype(fname, NULL, prn);
+
+    if (k == GRETL_CSV_DATA) {
+	err = import_csv(pZ, ppdinfo, fname, prn);
+    } else if (k == GRETL_OCTAVE) {
+	err = import_octave(pZ, ppdinfo, fname, prn);
+    } else if (k == GRETL_BOX_DATA) {
+	err = import_box(pZ, ppdinfo, fname, prn);
+    } else if (WORKSHEET_IMPORT(k)) {
+	err = import_other(pZ, ppdinfo, k, fname, prn);
+    } else if (k == GRETL_XML_DATA) {
+	err = gretl_read_gdt(pZ, ppdinfo, fname, NULL, 
+			     DATA_APPEND, prn, 0);
+    } else {
+	err = gretl_get_data(pZ, ppdinfo, fname, NULL, 
+			     DATA_APPEND, prn);
+    }
+
+    /* message wanted on success? */
+
+    return err;
+}
+
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *outprn)
 {
@@ -3153,6 +3205,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case ADDOBS:
 	err = add_obs(cmd->order, pZ, pdinfo, prn);
+	break;
+
+    case APPEND:
+	err = append_data(line, pZ, ppdinfo, prn);
+	pdinfo = *ppdinfo;
 	break;
 
     case ADF:
@@ -3415,6 +3472,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case PRINTF:
 	err = do_printf(line, pZ, pdinfo, prn);
+	break;
+
+    case STRING:
+	err = process_string_command(line, prn);
 	break;
 
     case PVALUE:
@@ -4115,6 +4176,7 @@ int ready_for_command (const char *line)
 	"pvalue",
 	"print",
 	"printf",
+	"string",
 	"eval",
 	"!",
 	"(*", 

@@ -139,6 +139,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SPEARMAN, "spearman" },
     { SQUARE,   "square" },  
     { STORE,    "store" },   
+    { STRING,   "string" },
     { SUMMARY,  "summary" },
     { SYSTEM,   "system" },
     { TABPRINT, "tabprint" },

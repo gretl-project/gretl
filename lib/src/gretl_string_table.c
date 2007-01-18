@@ -270,4 +270,287 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     return err;
 }
 
+/* below: saving of user-defined strings */
 
+typedef struct saved_string_ saved_string;
+
+struct saved_string_ {
+    char name[VNAMELEN];
+    char *s;
+};
+
+static int n_saved_strings;
+static saved_string *saved_strings;
+
+static saved_string *get_saved_string_by_name (const char *name)
+{
+    int i;
+
+    for (i=0; i<n_saved_strings; i++) {
+	if (!strcmp(name, saved_strings[i].name)) {
+	    return &saved_strings[i];
+	}
+    }
+
+    return NULL;
+}
+
+static int append_to_saved_string (const char *name, char **s)
+{
+    saved_string *str;
+    char *tmp;
+    int n;
+
+    str = get_saved_string_by_name(name);
+    if (str == NULL) {
+	return E_UNKVAR;
+    }
+
+    if (str->s != NULL) {
+	n = strlen(str->s) + strlen(*s) + 1;
+    } else {
+	n = strlen(*s) + 1;
+    }
+
+    tmp = malloc(n);
+
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (str->s != NULL) {
+	strcpy(tmp, str->s);
+	free(str->s);
+    } else {
+	*tmp = '\0';
+    }
+
+    strcat(tmp, *s);
+    free(*s);
+    *s = NULL;
+    str->s = tmp;
+    
+    return 0;
+}
+
+static saved_string *add_named_string (const char *name)
+{
+    int n = n_saved_strings;
+    saved_string *S;
+
+    S = realloc(saved_strings, (n + 1) * sizeof *S);
+    if (S == NULL) {
+	return NULL;
+    }
+
+    strcpy(S[n].name, name);
+    S[n].s = NULL;
+    saved_strings = S;
+    n_saved_strings += 1;
+
+    return &S[n];
+}
+
+void saved_strings_cleanup (void)
+{
+    int i;
+
+    for (i=0; i<n_saved_strings; i++) {
+	free(saved_strings[i].s);
+    }
+
+    free(saved_strings);
+    saved_strings = NULL;
+    n_saved_strings = 0;
+}
+
+static char *get_string_element (const char **pline, int *err)
+{
+    const char *line = *pline;
+    const char *s;
+    char *cpy;
+    int closed = 0;
+    int n = 0;
+
+    line += strspn(line, " \t");
+    if (*line != '"') {
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    line++;
+    s = line;
+    while (*s) {
+	/* allow for escaped quotes */
+	if (*s == '"' && *(s-1) != '\\') {
+	    closed = 1;
+	    break;
+	}
+	s++;
+	n++;
+    }
+
+    if (!closed) {
+	*err = E_PARSE;
+	return NULL;
+    }
+	
+    cpy = gretl_strndup(line, n);
+    if (cpy == NULL) {
+	*err = E_ALLOC;
+    }
+
+    s++; /* eat closing quote */
+    *pline = s;
+
+    return cpy;
+}
+
+int string_is_defined (const char *sname)
+{
+    saved_string *str;
+    
+    str = get_saved_string_by_name(sname);
+
+    return (str != NULL && str->s != NULL);
+}
+
+/* respond to commands of the forms:
+
+     string <name> = "<s1>" "<s2>" ... "<sn>"
+     string <name> += "<s2>" "<s2>"  ... "<sn>"
+*/
+
+int process_string_command (const char *line, PRN *prn)
+{
+    saved_string *str;
+    char *s1 = NULL;
+    char targ[VNAMELEN];
+    int add = 0;
+    int err = 0;
+
+    /* skip "string" plus any following space */
+    line += 6;
+    line += strspn(line, " \t");
+
+    if (sscanf(line, "%15s", targ) != 1) {
+	return E_PARSE;
+    }
+
+    /* eat space before operator */
+    line += strlen(targ);
+    line += strcspn(line, " \t");
+    line += strspn(line, " \t");
+
+    /* operator must be '=' or '+=' */
+    if (!strncmp(line, "+=", 2)) {
+	add = 1;
+    } else if (*line != '=') {
+	return E_PARSE;
+    }
+
+    line += (add)? 2 : 1;
+
+    /* set up the target */
+    str = get_saved_string_by_name(targ);
+    if (str == NULL) {
+	if (add) {
+	    return E_UNKVAR;
+	} else {
+	    str = add_named_string(targ);
+	    if (str == NULL) {
+		return E_ALLOC;
+	    }
+	}
+    } else if (!add) {
+	free(str->s);
+	str->s = NULL;
+    }
+
+    /* add strings(s) to target */
+    while (!err && *line != '\0') {
+	s1 = get_string_element(&line, &err);
+	if (!err) {
+	    err = append_to_saved_string(targ, &s1);
+	}
+    }
+
+    if (err) {
+	free(s1);
+    } else {
+	pprintf(prn, "Saved string as '%s'\n",
+		saved_strings[n_saved_strings - 1].name);
+    }
+
+    return err;
+}
+
+static char *maybe_get_subst (char *name, int *n)
+{
+    saved_string *str;
+    int k = *n - 1;
+
+    while (k >= 0) {
+	str = get_saved_string_by_name(name);
+	if (str != NULL) {
+	    *n = k + 1;
+	    return str->s;
+	}
+	name[k--] = '\0';
+    }
+
+    return NULL;
+}
+
+static void too_long (void)
+{
+    sprintf(gretl_errmsg, _("Maximum length of command line "
+			    "(%d bytes) exceeded\n"), MAXLINE);
+}
+
+int substitute_named_strings (char *line)
+{
+    char sname[VNAMELEN];
+    int len = strlen(line);
+    char *sub, *tmp, *s = line;
+    int n, m, err = 0;
+
+    if (strchr(s, '@') == NULL) {
+	return 0;
+    }
+
+    while (*s && !err) {
+	if (*s == '@') {
+	    n = gretl_varchar_spn(s + 1);
+	    if (n > 0) {
+		if (n >= VNAMELEN) {
+		    n = VNAMELEN - 1;
+		}
+		*sname = '\0';
+		strncat(sname, s + 1, n);
+		sub = maybe_get_subst(sname, &n);
+		if (sub != NULL) {
+		    m = strlen(sub);
+		    if (len + m >= MAXLINE) {
+			too_long();
+			err = 1;
+			break;
+		    } 
+		    tmp = gretl_strdup(s + n + 1);
+		    if (tmp == NULL) {
+			err = E_ALLOC;
+		    } else {
+			strcpy(s, sub);
+			strcpy(s + m, tmp);
+			free(tmp);
+			len += m - (n + 1);
+			s += m - 1;
+		    }
+		}
+	    }
+	}
+	s++;
+    }
+
+    return err;
+}

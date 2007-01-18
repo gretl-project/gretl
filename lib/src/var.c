@@ -2116,10 +2116,11 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
 }
 
 static int 
-johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn,
+		   gretlopt opt)
 {
     void *handle = NULL;
-    int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, PRN *);
+    int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, PRN *, gretlopt);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2129,7 +2130,7 @@ johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (jvar, pZ, pdinfo, prn);
+	err = (* johansen) (jvar, pZ, pdinfo, prn, opt);
 	close_plugin(handle);
     }
     
@@ -2735,7 +2736,7 @@ johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	   by the special code in irfboot.c
 	*/
 	if (!jvar->err && !(opt & OPT_B)) {
-	    jvar->err = johansen_complete(jvar, pZ, pdinfo, prn);
+	    jvar->err = johansen_complete(jvar, pZ, pdinfo, prn, opt);
 	}
     } 
 
