@@ -1018,8 +1018,6 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 	return 1;
     }
 
-    fprintf(stderr, "get_nls_derivs called\n");
-
 #if NLS_DEBUG
     fprintf(stderr, "get_nls_derivs: T = %d, offset = %d\n", T, offset);
 #endif
