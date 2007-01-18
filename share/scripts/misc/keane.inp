@@ -1,0 +1,31 @@
+function mlogitlogprobs(series y, matrix X, matrix theta)
+
+  scalar n = max(y)
+  scalar k = cols(X)
+  matrix b = mshape(theta,k,n)
+
+  matrix tmp = X*b
+  series ret = -ln(1 + sumr(exp(tmp)))
+
+  loop for i=1..n --quiet
+    series x = tmp[,i]
+    ret += (y=$i) ? x : 0 
+  end loop
+
+  return series ret
+
+end function
+
+# Replicate Table 15.2 in Wooldridge's panel data book (2002a)
+
+open keane.gdt
+status = status-1 # dep. var. must be 0-based
+smpl (year=87 & ok(status)) --restrict
+
+matrix X = { educ exper expersq black const }
+scalar k = cols(X)
+matrix theta = zeros(2*k, 1)
+
+mle ll = mlogitlogprobs(status,X,theta)
+  params theta
+end mle --verbose --hessian

@@ -8,6 +8,7 @@
 "hamilton","VECM with tests on cointegrating vector","US and Italian prices"
 "garch","GARCH (Bollerslev and Ghysels, 1996)","exchange rate"
 "jgm-1996","Unit root tests (MacKinnon, 1996)","interest & inflation"
+"keane","Multinomial logit","career choice data"
 "klein","System estimation","US macro data"
 "kmenta","System estimation","US macro plus artificial data"
 "leverage","Influential observations","artificial data"
