@@ -1603,6 +1603,7 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 
     /* check that no vars to be deleted are marked "const", and do
        some preliminary accounting while we're at it */
+
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
@@ -1623,25 +1624,6 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 #if DDEBUG
     fprintf(stderr, "real_drop_listed_variables: lowest ID of deleted var"
 	    " = %d\n", delmin);
-#endif
-
-#if 0 /* not yet: stuff for recreating saved lists in the face of the
-	 renumbering of variables (see below) */
-    if (1) {
-	int ren = oldv - ndel - delmin;
-
-	if (ren > 0) {
-	    /* if the vars "to be renumbered" are actually hidden, we're OK? */
-	    for (i=delmin; i<vmax; i++) {
-		if (var_is_hidden(pdinfo, i) && !in_gretl_list(list, i)) {
-		    ren--;
-		}
-	    }
-	    if (ren > 0) {
-		fprintf(stderr, "drop vars: renumbering needed (ren=%d)\n", ren);
-	    }
-	}
-    }
 #endif
 
     /* free and set to NULL all the vars to be deleted */
@@ -1693,12 +1675,6 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
     }
 
     err = shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
-
-    if (!err) {
-	/* for now we'll just remove from saved lists any vars
-	   that have been deleted OR renumbered */
-	gretl_lists_prune(delmin);
-    }
 
     return err;
 }
@@ -1768,6 +1744,10 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
 
     err = real_drop_listed_vars(dlist, pZ, pdinfo, renumber,
 				DROP_NORMAL);
+
+    if (!err) {
+	err = gretl_lists_revise(dlist, 0);
+    }
 
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();
@@ -1895,6 +1875,10 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
     }
 
     err = shrink_dataset_to_size(pZ, pdinfo, newv, DROP_NORMAL);
+
+    if (!err) {
+	err = gretl_lists_revise(NULL, newv);
+    }
 
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();

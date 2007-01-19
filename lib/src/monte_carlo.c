@@ -380,6 +380,7 @@ int ok_in_loop (int c)
 	c == SETINFO ||
 	c == SHELL || 
 	c == SPEARMAN || 
+        c == STRING ||
 	c == SQUARE || 
 	c == SUMMARY ||
 	c == VARLIST ||

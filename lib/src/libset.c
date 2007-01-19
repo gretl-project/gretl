@@ -64,7 +64,6 @@ struct set_vars_ {
     unsigned int seed;          /* for PRNG */
     int halt_on_error;          /* halt cli program on script error? */
     int shell_ok;               /* shell commands permitted? */
-    int shell_sync;             /* exec shell commands synchronously? */
     double hp_lambda;           /* for Hodrick-Prescott filter */
     int horizon;                /* for VAR impulse responses */ 
     double nls_toler;           /* NLS convergence criterion */
@@ -178,7 +177,6 @@ static void state_vars_copy (set_vars *sv)
     sv->seed = state->seed;
     sv->halt_on_error = state->halt_on_error;
     sv->shell_ok = state->shell_ok;
-    sv->shell_sync = state->shell_sync;
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
     sv->nls_toler = state->nls_toler;
@@ -206,7 +204,6 @@ static void state_vars_init (set_vars *sv)
     sv->seed = 0;
     sv->halt_on_error = UNSET_INT;
     sv->shell_ok = 0;
-    sv->shell_sync = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
     sv->nls_toler = NADBL;
@@ -1012,7 +1009,6 @@ static int display_settings (PRN *prn)
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
 
     pprintf(prn, " shell_ok = %d\n", state->shell_ok);
-    pprintf(prn, " shell_sync = %d\n", state->shell_sync);
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
     pprintf(prn, " longdigits = %d\n", state->longdigits);
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
@@ -1135,14 +1131,6 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 		err = 0;
 	    } else if (boolean_off(setarg)) {
 		state->halt_on_error = 0;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "shell_sync")) {
-	    if (boolean_on(setarg)) {
-		state->shell_sync = 1;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->shell_sync = 0;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "shell_ok")) {
@@ -1349,13 +1337,6 @@ int get_shell_ok (void)
 #endif
 
     return state->shell_ok;
-}
-
-int get_shell_sync (void)
-{
-    check_for_state();
-
-    return state->shell_sync;
 }
 
 /* Mechanism for pushing and popping program state for user-defined

@@ -44,7 +44,6 @@ int get_use_cwd (void);
 
 void set_shell_ok (int set);
 int get_shell_ok (void);
-int get_shell_sync (void);
 
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);

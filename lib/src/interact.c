@@ -217,7 +217,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 	    cmd->ci = REMEMBER;
 	    cmd->opt = OPT_L;
 	}
-    } else if (*s == '!') {
+    } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
     } else if (!strcmp(s, "funcerr")) {
 	cmd->ci = FUNCERR;
@@ -2353,20 +2353,18 @@ int gretl_shell (const char *arg)
     char shellnam[40];
     void (*old1) (int);
     void (*old2) (int);
-    int pid;
+    int pid, async = 0;
 
     if (!get_shell_ok()) {
 	strcpy(gretl_errmsg, "The shell command is not activated.");
 	return 1;
     }
 
-    if (get_shell_sync()) {
-	char *s = gretl_strdup(arg);
-	int err;
-
-	err = gretl_spawn(s);
-	free(s);
-	return err;
+    if (!strncmp(arg, "launch ", 7)) {
+	async = 1;
+	arg += 7;
+    } else {
+	arg++;
     }
 
     old1 = signal(SIGINT, SIG_IGN);
@@ -2388,25 +2386,29 @@ int gretl_shell (const char *arg)
 	    theshell = "/bin/sh"; 
 #endif
 	}
+
 	namep = strrchr(theshell, '/');
 	if (namep == NULL) {
 	    namep = theshell;
 	}
+
 	strcpy(shellnam, "-");
 	strcat(shellnam, ++namep);
 	if (strcmp(namep, "sh") != 0) {
 	    shellnam[0] = '+';
 	}
+
 	if (arg) {
 	    execl(theshell, shellnam, "-c", arg, NULL);
 	} else {
 	    execl(theshell, shellnam, NULL);
 	}
+
 	perror(theshell);
 	return 1;
     }
 
-    if (pid > 0) {
+    if (pid > 0 && !async) {
 	while (wait(NULL) != pid);
     }
 
@@ -3630,7 +3632,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	break;
 
     case SHELL:
-	err = gretl_shell(line + 1);
+	err = gretl_shell(line);
 	break;
 
     case OLS:
@@ -4207,7 +4209,8 @@ int ready_for_command (const char *line)
 	"string",
 	"eval",
 	"!",
-	"(*", 
+	"launch",
+	"/*", 
 	"man ", 
 	"help", 
 	"set", 

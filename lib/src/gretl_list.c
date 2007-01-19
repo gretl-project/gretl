@@ -410,26 +410,99 @@ int destroy_saved_lists_at_level (int level)
     return err;
 }
 
+static int var_is_deleted (const int *dlist, int dmin, int j)
+{
+    if (dlist != NULL) {
+	return in_gretl_list(dlist, j);
+    } else {
+	return (j >= dmin);
+    }
+}
+
 /**
- * gretl_lists_prune:
+ * gretl_lists_revise:
+ * @dlist: list of variables to be deleted (or %NULL).
+ * @dmin: lowest ID number of deleted var (referenced only
+ * if @dlist is %NULL).
  *
- * Goes through any saved lists, removing variables with
- * ID numbers @vmin or higher.
+ * Goes through any saved lists, adjusting the ID numbers
+ * they contain to reflect the deletion from the dataset of
+ * certain variables: those referenced in @dlist, if given, 
+ * or if @dlist is %NULL, those variables with IDs greater 
+ * than or equal to @dmin.
+ *
+ * Returns: 0 on success, non-zero code on failure.
  */
 
-void gretl_lists_prune (int vmin)
+int gretl_lists_revise (const int *dlist, int dmin)
 {
-    int *list;
-    int i, j;
+    int *list, *maplist;
+    int lmax = 0;
+    int i, j, k, ndel;
 
-    for (i=0; i<n_lists; i++) {
-	list = list_stack[i]->list;
-	for (j=1; j<=list[0]; j++) {
-	    if (list[j] >= vmin) {
-		gretl_list_delete_at_pos(list, j--);
+    if (dlist != NULL) {
+	/* determine lowest deleted ID */
+	dmin = dlist[1];
+	for (i=2; i<=dlist[0]; i++) {
+	    if (dlist[i] > 0 && dlist[i] < dmin) {
+		dmin = dlist[i];
 	    }
 	}
     }
+
+    /* find highest ID ref'd in any saved list */
+    for (j=0; j<n_lists; j++) {
+	list = list_stack[j]->list;
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] > lmax) {
+		lmax = list[i];
+	    }
+	}
+    }
+
+    if (lmax < dmin) {
+	/* nothing to be done */
+	return 0;
+    }
+
+    /* make mapping from old to new IDs */
+
+    maplist = gretl_list_new(lmax - dmin + 1);
+    if (maplist == NULL) {
+	return E_ALLOC;
+    }
+
+    j = dmin;
+    ndel = 0;
+
+    for (i=1; i<=maplist[0]; i++) {
+	if (var_is_deleted(dlist, dmin, j)) {
+	    maplist[i] = -1;
+	    ndel++;
+	} else {
+	    maplist[i] = j - ndel;
+	}
+	j++;
+    }
+
+    /* use mapping to revise saved lists */
+    for (j=0; j<n_lists; j++) {
+	list = list_stack[j]->list;
+	for (i=1; i<=list[0]; i++) {
+	    k = list[i] - dmin + 1;
+	    if (k >= 1) {
+		if (maplist[k] == -1) {
+		    gretl_list_delete_at_pos(list, i--);
+		} else {
+		    list[i] = maplist[k];
+		}
+	    }
+	}
+    }
+
+    free(maplist);
+
+    return 0;
 }
 
 /**

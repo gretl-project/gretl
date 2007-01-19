@@ -108,7 +108,7 @@ int create_named_null_list (const char *name);
 
 int destroy_saved_lists_at_level (int level);
 
-void gretl_lists_prune (int vmin);
+int gretl_lists_revise (const int *dlist, int dmin);
 
 void gretl_lists_cleanup (void);
 

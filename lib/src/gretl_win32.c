@@ -266,26 +266,36 @@ char *desktop_path (void)
 int gretl_shell (const char *arg)
 {
     UINT winret;
-    char *myarg;
+    int async = 0;
     int err = 0;
 
     if (!get_shell_ok()) {
 	strcpy(gretl_errmsg, "The shell command is not activated.");
-	err = 1;
-    } else if (get_shell_sync()) {
-	myarg = gretl_strdup(arg);
+	return 1;
+    }
+
+    if (!strncmp(arg, "launch ", 7)) {
+	async = 1;
+	arg += 7;
+    } else {
+	arg++;
+    }
+
+    if (async) {
+	winret = WinExec(arg, SW_SHOWNORMAL);
+	if (winret <= 31) {
+	    err = 1;
+	}
+    } else {	
+	char *myarg = gretl_strdup(arg);
+
 	if (myarg == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    err = winfork(myarg, NULL, SW_SHOWMINIMIZED, 0);
 	    free(myarg);
 	}
-    } else {
-	winret = WinExec(arg + 1, SW_SHOWNORMAL);
-	if (winret <= 31) {
-	    err = 1;
-	}
-    }
+    } 
 
     return err;
 }
