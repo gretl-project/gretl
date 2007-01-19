@@ -393,7 +393,7 @@ int pprintf (PRN *prn, const char *template, ...)
 #endif
 
     if (plen >= rem) {
-	fputs("pprintf warning: string was trincated\n", stderr);
+	fputs("pprintf warning: string was truncated\n", stderr);
     }
 
     return plen;
@@ -574,7 +574,10 @@ int print_start_redirection (PRN *prn, FILE *fp)
     int err = 0;
 
     if (prn != NULL) {
-	/* save the current stream */
+	/* flush and save the current stream */
+	if (prn->fp != NULL) {
+	    fflush(prn->fp);
+	}
 	prn->fpaux = prn->fp;
 	/* hook output to specified file */
 	prn->fp = fp;

@@ -2982,6 +2982,7 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 {
     static char outname[MAXLEN];
     int diverted = 0;
+    int err = 0;
 
     if (prn == NULL) {
 	return 0;
@@ -3000,7 +3001,9 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	    return 1;
 	} else {
 	    print_end_redirection(prn);
-	    pprintf(prn, "Closed output file '%s'\n", outname);
+	    if (gretl_messages_on()) {
+		pprintf(prn, "Closed output file '%s'\n", outname);
+	    }
 	    return 0;
 	}
     }
@@ -3010,36 +3013,35 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	fprintf(stderr, _("Output is already diverted to '%s'\n"),
 		outname);
 	return 1;
+    } else if (*fname == '\0') {
+	return E_ARGS;
     } else {
-	if (*fname == '\0') {
-	    return E_ARGS;
+	FILE *fp;
+
+	if (flag == OPT_W) {
+	    fp = gretl_fopen(fname, "w");
 	} else {
-	    FILE *fp;
-
-	    if (flag == OPT_W) {
-		fp = gretl_fopen(fname, "w");
-	    } else {
-		fp = gretl_fopen(fname, "a");
-	    }
-
-	    if (fp == NULL) {
-		pprintf(prn, _("Couldn't open %s for writing\n"), fname);
-		return 1;
-	    } else {
-		if (flag == OPT_W) {
-		    pprintf(prn, _("Now writing output to '%s'\n"), fname);
-		} else {
-		    pprintf(prn, _("Now appending output to '%s'\n"), fname);
-		}
-	    }
-
-	    print_start_redirection(prn, fp);
-	    strcpy(outname, fname);
-	    return 0;
+	    fp = gretl_fopen(fname, "a");
 	}
+
+	if (fp == NULL) {
+	    pprintf(prn, _("Couldn't open %s for writing\n"), fname);
+	    return 1;
+	}
+
+	if (gretl_messages_on()) {
+	    if (flag == OPT_W) {
+		pprintf(prn, _("Now writing output to '%s'\n"), fname);
+	    } else {
+		pprintf(prn, _("Now appending output to '%s'\n"), fname);
+	    }
+	}
+
+	print_start_redirection(prn, fp);
+	strcpy(outname, fname);
     }
 
-    return 1; /* not reached */
+    return err;
 }
 
 int call_pca_plugin (VMatrix *corrmat, double ***pZ,
@@ -3192,8 +3194,6 @@ static int append_data (const char *line, double ***pZ,
 	err = gretl_get_data(pZ, ppdinfo, fname, NULL, 
 			     DATA_APPEND, prn);
     }
-
-    /* message wanted on success? */
 
     return err;
 }

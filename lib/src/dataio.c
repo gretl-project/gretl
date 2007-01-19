@@ -2679,7 +2679,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!err && (addvars || addobs)) {
+    if (!err && (addvars || addobs) && gretl_messages_on()) {
 	pputs(prn, _("Data appended OK\n"));
     }
 
@@ -3068,6 +3068,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     FILE *fp = NULL;
     DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
+    PRN *mprn = NULL;
     char *line = NULL, *p = NULL, *descrip = NULL;
 
     const char *msg = M_("\nPlease note:\n"
@@ -3091,6 +3092,10 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	check_for_console(prn);
     }
 
+    if (gretl_messages_on()) {
+	mprn = prn;
+    }
+
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
@@ -3110,13 +3115,13 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *trfname = g_locale_to_utf8(fname, -1, NULL, NULL, NULL);
 
-	pprintf(prn, "%s %s...\n", M_("parsing"), trfname);
+	pprintf(mprn, "%s %s...\n", M_("parsing"), trfname);
 	g_free(trfname);
     } else {
-	pprintf(prn, "%s %s...\n", M_("parsing"), fname);
+	pprintf(mprn, "%s %s...\n", M_("parsing"), fname);
     }
 #else
-    pprintf(prn, "%s %s...\n", M_("parsing"), fname);
+    pprintf(mprn, "%s %s...\n", M_("parsing"), fname);
 #endif
 
     /* get line length, also check for binary data, etc. */
@@ -3134,8 +3139,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-    pprintf(prn, M_("using delimiter '%c'\n"), delim);
-    pprintf(prn, M_("   longest line: %d characters\n"), maxlen - 1);
+    pprintf(mprn, M_("using delimiter '%c'\n"), delim);
+    pprintf(mprn, M_("   longest line: %d characters\n"), maxlen - 1);
 
     if (trail && delim != ',') trail = 0;
 
@@ -3170,13 +3175,13 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	compress_csv_line(line, delim, trail);
 	if (!gotdata) {
 	    /* scrutinize first "real" line */
-	    check_first_field(line, delim, &blank_1, &obs_1, prn);
+	    check_first_field(line, delim, &blank_1, &obs_1, mprn);
 	    gotdata = 1;
 	} 
 	chkcols = count_csv_fields(line, delim);
 	if (ncols == 0) {
 	    ncols = chkcols;
-	    pprintf(prn, M_("   number of columns = %d\n"), ncols);	    
+	    pprintf(mprn, M_("   number of columns = %d\n"), ncols);	    
 	} else {
 	    if (chkcols != ncols) {
 		pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
@@ -3191,8 +3196,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     csvinfo->n = nrows - 1;
 
     csvinfo->v = (blank_1 || obs_1)? ncols : ncols + 1;
-    pprintf(prn, M_("   number of variables: %d\n"), csvinfo->v - 1);
-    pprintf(prn, M_("   number of non-blank lines: %d\n"), nrows);
+    pprintf(mprn, M_("   number of variables: %d\n"), csvinfo->v - 1);
+    pprintf(mprn, M_("   number of non-blank lines: %d\n"), nrows);
 
     /* end initial checking */
 
@@ -3219,7 +3224,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     rewind(fp);
 
     /* parse the line containing variable names */
-    pputs(prn, M_("scanning for variable names...\n"));
+    pputs(mprn, M_("scanning for variable names...\n"));
 
     while (fgets(line, maxlen, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
@@ -3234,7 +3239,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     p = line;
     if (delim == ' ' && *p == ' ') p++;
     iso_to_ascii(p);
-    pprintf(prn, M_("   line: %s\n"), p);
+    pprintf(mprn, M_("   line: %s\n"), p);
     
     numcount = 0;
     for (k=0; k<ncols; k++) {
@@ -3311,7 +3316,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	gretl_push_c_numeric_locale();
     }
 
-    pputs(prn, M_("scanning for row labels and data...\n"));
+    pputs(mprn, M_("scanning for row labels and data...\n"));
 
     t = 0;
     while (fgets(line, maxlen, fp)) {
@@ -3373,10 +3378,11 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (blank_1 || obs_1) {
 	markertest = test_markers_for_dates(&csvZ, csvinfo, prn);
     }
+
     if (markertest > 0) {
-	pputs(prn, M_("taking date information from row labels\n\n"));
+	pputs(mprn, M_("taking date information from row labels\n\n"));
     } else {
-	pputs(prn, M_("treating these as undated data\n\n"));
+	pputs(mprn, M_("treating these as undated data\n\n"));
 	dataset_obs_info_default(csvinfo);
     }
 

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_string_table.h"
 
 typedef struct _col_table col_table;
@@ -442,7 +443,9 @@ int save_named_string (const char *name, const char *s, PRN *prn)
 	return E_ALLOC;
     }
 
-    pprintf(prn, "Saved string as '%s'\n", name);
+    if (gretl_messages_on()) {
+	pprintf(prn, "Saved string as '%s'\n", name);
+    }
 
     return 0;
 }
@@ -520,7 +523,7 @@ int process_string_command (const char *line, PRN *prn)
 
     if (err) {
 	free(s1);
-    } else {
+    } else if (gretl_messages_on()) {
 	pprintf(prn, "Saved string as '%s'\n", targ);
     }
 

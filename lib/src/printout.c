@@ -2706,7 +2706,7 @@ static int real_do_printf (const char *line, double ***pZ,
 			   DATAINFO *pdinfo, PRN *inprn, 
 			   int t)
 {
-    PRN *prn;
+    PRN *prn = inprn;
     char *p, *q;
     char targ[VNAMELEN];
     char *format = NULL;
@@ -2734,10 +2734,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	if (prn == NULL) {
 	    return E_ALLOC;
 	}
-    } else {
-	/* regular "printf" */
-	prn = inprn;
-    }
+    } 
 
 #if PRINTF_DEBUG
     fprintf(stderr, "do_printf: line = '%s'\n", line);
