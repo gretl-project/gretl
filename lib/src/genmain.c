@@ -72,6 +72,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	} else {
 	    pprintf(prn, _("Generated matrix %s"), p->lh.name);
 	}
+    } else if (p->targ == LIST) {
+	pprintf(prn, _("Generated list %s"), p->lh.name);
     }
 
     pputc(prn, '\n');
@@ -97,7 +99,7 @@ static void gen_write_label (parser *p, int oldv)
     size_t len = 0;
 
     if (p->targ != NUM && p->targ != VEC) {
-	/* not relevant for matrices */
+	/* not relevant for matrices, lists */
 	return;
     }
 

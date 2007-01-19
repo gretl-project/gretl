@@ -24,6 +24,7 @@
 #include "libset.h"
 #include "forecast.h"
 #include "gretl_func.h"
+#include "gretl_string_table.h"
 
 #include <time.h>
 
@@ -2626,14 +2627,32 @@ static int print_arg (char **pfmt, char **pargs,
 
 /* split line into format and args, copying both parts */
 
-static int split_printf_line (const char *s, char **format, 
-			      char **args)
+static int split_printf_line (const char *s, char *targ, int *sp,
+			      char **format, char **args)
 {
     const char *p;
-    int n = 0;
+    int n;
+
+    *sp = 0;
 
     if (!strncmp(s, "printf ", 7)) {
 	s += 7;
+    } else if (!strncmp(s, "sprintf ", 8)) {
+	s += 8;
+	*sp = 1;
+    }
+
+    if (*sp) {
+	/* need a target name */
+	s += strspn(s, " ");
+	n = gretl_varchar_spn(s);
+	if (n == 0 || n >= VNAMELEN) {
+	    return E_PARSE;
+	} else {
+	    *targ = '\0';
+	    strncat(targ, s, n);
+	    s += n;
+	}
     }
 
     s += strspn(s, " ");
@@ -2644,6 +2663,7 @@ static int split_printf_line (const char *s, char **format,
     s++;
     p = s;
 
+    n = 0;
     while (*s) {
 	if (*s == '"' && *(s-1) != '\\') {
 	    break;
@@ -2683,27 +2703,45 @@ static int split_printf_line (const char *s, char **format,
 }
 
 static int real_do_printf (const char *line, double ***pZ, 
-			   DATAINFO *pdinfo, PRN *prn, 
+			   DATAINFO *pdinfo, PRN *inprn, 
 			   int t)
 {
+    PRN *prn;
     char *p, *q;
+    char targ[VNAMELEN];
     char *format = NULL;
     char *args = NULL;
-    int err = 0;
+    int sp, err = 0;
 
     *gretl_errmsg = '\0';
+    *targ = '\0';
 
     if (t < 0) {
 	t = pdinfo->t1;
     }
 
-    err = split_printf_line(line, &format, &args);
+    err = split_printf_line(line, targ, &sp, &format, &args);
     if (err) {
 	return err;
     }
 
+    if (sp) {
+	/* "sprintf" */
+	if (*targ == '\0') {
+	    return E_PARSE;
+	}
+	prn = gretl_print_new(GRETL_PRINT_BUFFER);
+	if (prn == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	/* regular "printf" */
+	prn = inprn;
+    }
+
 #if PRINTF_DEBUG
     fprintf(stderr, "do_printf: line = '%s'\n", line);
+    fprintf(stderr, " targ = '%s'\n", targ);
     fprintf(stderr, " format = '%s'\n", format);
     fprintf(stderr, " args = '%s'\n", args);
 #endif
@@ -2726,7 +2764,13 @@ static int real_do_printf (const char *line, double ***pZ,
 	}
     }
 
-    if (err) {
+    if (sp) {
+	if (!err) {
+	   err = save_named_string(targ, gretl_print_get_buffer(prn),
+				   inprn);
+	}
+	gretl_print_destroy(prn);
+    } else if (err) {
 	pputc(prn, '\n');
     }
 
@@ -2735,6 +2779,20 @@ static int real_do_printf (const char *line, double ***pZ,
 
     return err;
 }
+
+/**
+ * do_printf:
+ * @line: 
+ * @pZ: 
+ * @pdinfo: 
+ * @opt: 
+ * @prn:
+ *
+ * Implement a somewhat limited version of C's printf
+ * for use in gretl scripts.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn)

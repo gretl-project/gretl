@@ -2116,11 +2116,11 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
 }
 
 static int 
-johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		   gretlopt opt)
+johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, PRN *, gretlopt);
+    int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, gretlopt, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;
@@ -2130,7 +2130,7 @@ johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (jvar, pZ, pdinfo, prn, opt);
+	err = (* johansen) (jvar, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
     
@@ -2532,17 +2532,11 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 
     if (seasonals) {
 	if (pdinfo->pd > 1) {
-#if 0
-	    /* Center the dummies only if there's a constant in the VAR? 
-	       This seems to be a bad idea.
-	    */
-	    int flag = (jcode(jvar) >= J_UNREST_CONST)? 1 : -1;
-#else
-	    int flag = 1;
-#endif
+	    int center = 1;
+
 	    jvar->jinfo->seasonals = pdinfo->pd - 1;
 	    nexo += pdinfo->pd - 1;
-	    di0 = dummy(pZ, pdinfo, flag);
+	    di0 = dummy(pZ, pdinfo, center);
 	    if (di0 == 0) {
 		jvar->err = E_ALLOC;
 	    }
@@ -2736,7 +2730,7 @@ johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	   by the special code in irfboot.c
 	*/
 	if (!jvar->err && !(opt & OPT_B)) {
-	    jvar->err = johansen_complete(jvar, pZ, pdinfo, prn, opt);
+	    jvar->err = johansen_complete(jvar, pZ, pdinfo, opt, prn);
 	}
     } 
 
@@ -2802,8 +2796,8 @@ GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pd
  * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
  * include centered seasonals; %OPT_N: no constant; %OPT_R:
  * restricted constant; %OPT_T: constant and unrestricted trend
- * (note: default "case" is unrestricted constant).
- * %OPT_V: produce verbose results.
+ * (note: default "case" is unrestricted constant);
+ * %OPT_V: produce verbose results; %OPT_Q: just print the tests.
  * @prn: gretl printing struct.
  *
  * Carries out the Johansen test for cointegration and prints the
@@ -2813,8 +2807,8 @@ GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pd
  * Returns: 0 on success, non-zero code on error.
  */
 
-int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
-			  gretlopt opt, PRN *prn)
+int johansen_test_simple (int order, const int *list, double ***pZ, 
+			  DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar;
     int err;

@@ -2038,10 +2038,7 @@ static int add_function_return (ufunc *fun, const char *line)
     type = field_to_type(s1);
     if (type == 0) {
 	return E_PARSE;
-    } else if (type == ARG_LIST) {
-	strcpy(gretl_errmsg, "A function cannot return a list");
-	return E_DATA;
-    }
+    } 
 
     err = check_varname(s2);
 
@@ -2436,6 +2433,7 @@ get_matrix_return (const char *mname, int action, int *err)
 static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(listname);
+    int d = gretl_function_depth();
     int i, err = 0;
 
     if (list == NULL) {
@@ -2443,13 +2441,33 @@ static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] != 0 && list[i] < pdinfo->v) {
-		STACK_LEVEL(pdinfo, list[i]) -= 1;
+		if (STACK_LEVEL(pdinfo, list[i]) == d) {
+		    STACK_LEVEL(pdinfo, list[i]) -= 1;
+		}
 		unset_var_const(pdinfo, list[i]);
 	    }
 	}
     }
 
     return err;
+}
+
+static char *
+get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
+{
+    
+    char *ret = gretl_strdup(lname);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = unlocalize_list(lname, pdinfo);
+	if (!*err) {
+	    *err = named_list_lower_level(lname);
+	}
+    }
+
+    return ret;
 }
 
 static int 
@@ -2469,7 +2487,10 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 	    *(double **) ret = get_series_return(u->retname, Z, pdinfo, GET_COPY, &err);
 	} else if (rtype == ARG_MATRIX) {
 	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
+	} else if (rtype == ARG_LIST) {
+	    *(char **) ret = get_list_return(u->retname, pdinfo, &err);
 	}
+
 	if (err == E_UNKVAR) {
 	    pprintf(prn, "Function %s did not provide the specified return value\n",
 		    u->name);
@@ -2531,19 +2552,38 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 #if FN_DEBUG
 	fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
 #endif
-    }   
+    }  
+
+    /* below: delete some or all local variables, taking care not to
+       delete any 'local' vars that have been "promoted" to caller
+       level via their inclusion in a returned list
+    */
 
     if (drop_function_vars) {
-	/* delete all variables "inside" the function */
-	int delv = pdinfo->v - orig_v;
+	/* delete all local variables */
+	int i, delv = 0;
 
-	anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
-	if (anyerr && !err) {
-	    err = anyerr;
-#if FN_DEBUG
-	    fprintf(stderr, "dataset_drop_last_variables: err = %d\n", err);
-#endif
-	}  
+	for (i=orig_v; i<pdinfo->v; i++) {
+	    if (STACK_LEVEL(pdinfo, i) == d) {
+		delv++;
+	    }
+	}
+
+	if (delv == pdinfo->v - orig_v) {
+	    anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
+	    if (anyerr && !err) {
+		err = anyerr;
+	    }
+	} else {
+	    for (i=orig_v; i<pdinfo->v; i++) {
+		if (STACK_LEVEL(pdinfo, i) == d) {
+		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
+		    if (anyerr && !err) {
+			err = anyerr;
+		    }
+		}
+	    }
+	}
     } else {
 	/* delete only variables copied from arguments */
 	fn_param *fp;
@@ -2553,9 +2593,11 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	    fp = &u->params[i];
 	    if (scalar_arg(fp->type) || fp->type == ARG_SERIES) {
 		v = varindex(pdinfo, fp->name);
-		anyerr = dataset_drop_variable(v, pZ, pdinfo);
-		if (anyerr && !err) {
-		    err = anyerr;
+		if (STACK_LEVEL(pdinfo, v) == d) {
+		    anyerr = dataset_drop_variable(v, pZ, pdinfo);
+		    if (anyerr && !err) {
+			err = anyerr;
+		    }
 		}
 	    } 
 	}		
@@ -2808,4 +2850,3 @@ int user_function_help (const char *fnname, PRN *prn)
 
     return err;
 }
-

@@ -196,6 +196,7 @@ struct str_table funcs[] = {
     { OBSNUM,   "obsnum" },
     { ISSERIES, "isseries" },
     { ISLIST,   "islist" },
+    { ISSTRING, "isstring" },
     { ISNULL,   "isnull" },
     { LISTLEN,  "nelem" },
     { CDF,      "cdf" },

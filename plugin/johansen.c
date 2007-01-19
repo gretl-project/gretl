@@ -1058,8 +1058,8 @@ static int johansen_form_M (gretl_matrix *Suu, gretl_matrix *Svv,
 /* Public entry point for both cointegration test and VECM
    estimation */
 
-int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		       gretlopt opt)
+int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *TmpL = NULL, *TmpR = NULL;
@@ -1126,7 +1126,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 
 	if (rank == 0) {
 	    /* just running cointegration test */
-	    if (opt && OPT_Q) {
+	    if (opt & OPT_Q) {
 		goto eigenvals_bailout;
 	    }
 	    jvar->jinfo->Beta = M;

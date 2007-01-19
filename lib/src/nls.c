@@ -182,6 +182,11 @@ static int nls_genr_setup (nlspec *s)
 	    v = genr_get_output_varnum(genrs[i]);
 	    m = genr_get_output_matrix(genrs[i]);
 
+	    if (v == 0 && m == NULL) {
+		err = E_TYPES;
+		break;
+	    }
+
 	    if (i == s->naux) {
 		s->lhv = v;
 		s->lvec = m;

@@ -21,6 +21,7 @@
 
 #include "genparse.h"
 #include "monte_carlo.h"
+#include "gretl_string_table.h"
 
 #include <errno.h>
 
@@ -276,6 +277,25 @@ static NODE *newmspec (void)
     return b;
 }
 
+/* new node to hold a list reference */
+
+static NODE *newlist (void)
+{  
+    NODE *b = malloc(sizeof *b);
+
+#if EDEBUG
+    fprintf(stderr, "newlist: allocated node at %p\n", (void *) b); 
+#endif
+
+    if (b != NULL) {
+	b->t = LIST;
+	b->tmp = 1;
+	b->v.str = NULL;
+    }    
+
+    return b;
+}
+
 static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
 {
     t->v.m = gretl_matrix_alloc(m, n);
@@ -330,6 +350,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newmspec();
 	} else if (t == MDEF) {
 	    ret = newmdef(n);
+	} else if (t == LIST) {
+	    ret = newlist();
 	}
 
 	if (ret == NULL) {
@@ -389,6 +411,11 @@ static NODE *aux_mspec_node (parser *p)
 static NODE *aux_mdef_node (parser *p, int n)
 {
     return get_aux_node(p, MDEF, n, 0);
+}
+
+static NODE *aux_list_node (parser *p)
+{
+    return get_aux_node(p, LIST, 0, 0);
 }
 
 static void eval_warning (parser *p, int op)
@@ -1732,6 +1759,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    } else if (f == ISLIST) {
 		ret->v.xval = 0;
 	    }
+	} else if (f == ISSTRING) {
+	    ret->v.xval = string_is_defined(s);
 	} else if (f == ISNULL) {
 	    ret->v.xval = 1;
 	    if (varindex(p->dinfo, s) < p->dinfo->v) {
@@ -2277,7 +2306,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     if (!simple_ufun_call(p)) {
 	rtype = user_func_get_return_type(uf);
 	if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
-	    rtype != ARG_MATRIX) {
+	    rtype != ARG_MATRIX && rtype != ARG_LIST) {
 	    p->err = E_TYPES;
 	    return NULL;
 	}
@@ -2360,6 +2389,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	double xret = NADBL;
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
+	char *sret = NULL;
 	void *retp = NULL;
 
 	if (rtype == ARG_SCALAR) {
@@ -2368,6 +2398,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &Xret;
 	} else if (rtype == ARG_MATRIX) {
 	    retp = &mret;
+	} else if (rtype == ARG_LIST) {
+	    retp = &sret;
 	}
 
 	p->err = gretl_function_exec(uf, &args, rtype, p->Z, p->dinfo, 
@@ -2395,7 +2427,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->v.m = mret;
 		}
-	    } 
+	    } else if (rtype == ARG_LIST) {
+		ret = aux_list_node(p);
+		if (ret != NULL) {
+		    if (ret->tmp) {
+			free(ret->v.str);
+		    }
+		    ret->v.str = sret;
+		}
+	    }		
 	}
     }
 
@@ -3539,6 +3579,7 @@ static NODE *eval (NODE *t, parser *p)
     case OBSNUM:
     case ISSERIES:
     case ISLIST:
+    case ISSTRING:
     case ISNULL:
     case LISTLEN:
 	if (l->t == STR) {
@@ -4109,7 +4150,10 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "matrix ", 7)) {
 	p->targ = MAT;
 	s += 7;
-    }
+    } else if (!strncmp(s, "list ", 5)) {
+	p->targ = LIST;
+	s += 5;
+    }	
 
     if (p->flags & P_DISCARD) {
 	/* doing a simple "eval" */
@@ -4596,20 +4640,27 @@ static int gen_check_return_type (parser *p)
 
     if (p->targ == NUM) {
 	/* result must be scalar or 1 x 1 matrix */
-	if (r->t == VEC || non_scalar_matrix(r)) {
+	if (r->t == VEC || r->t == LIST || non_scalar_matrix(r)) {
 	    p->err = E_TYPES;
 	} 
     } else if (p->targ == VEC) {
 	/* error if result is matrix of wrong dim */
-	if (r->t == MAT && !series_compatible(r->v.m, p->dinfo)) {
+	if ((r->t == MAT && !series_compatible(r->v.m, p->dinfo)) ||
+	    r->t == LIST) {
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == MAT) {
 	/* error if result contains NAs */
-	if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
+	if (r->t == LIST) {
+	    p->err = E_TYPES;
+	} else if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
 	    p->err = E_MISSDATA;
 	} else if (r->t == NUM && xna(r->v.xval)) {
 	    p->err = E_MISSDATA;
+	}
+    } else if (p->targ == LIST) {
+	if (r->t != LIST) {
+	    p->err = E_TYPES;
 	}
     } else {
 	/* target type was not specified: set it now, based
@@ -4742,6 +4793,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else {
 	    /* assignment to submatrix of original */
 	    matrix_edit(p);
+	}
+    } else if (p->targ == LIST) {
+	if (strcmp(p->lh.name, r->v.str)) {
+	    rename_saved_list(r->v.str, p->lh.name);
 	}
     }
 

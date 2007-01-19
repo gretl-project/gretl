@@ -415,6 +415,38 @@ int string_is_defined (const char *sname)
     return (str != NULL && str->s != NULL);
 }
 
+/* for use in "sprintf" command */
+
+int save_named_string (const char *name, const char *s, PRN *prn)
+{
+    saved_string *str;
+
+    if (s == NULL) {
+	return E_DATA;
+    }
+
+    str = get_saved_string_by_name(name);
+    if (str == NULL) {
+	str = add_named_string(name);
+	if (str == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (str->s != NULL) {
+	free(str->s);
+    }
+
+    str->s = gretl_strdup(s);
+    if (str->s == NULL) {
+	return E_ALLOC;
+    }
+
+    pprintf(prn, "Saved string as '%s'\n", name);
+
+    return 0;
+}
+
 /* respond to commands of the forms:
 
      string <name> = "<s1>" "<s2>" ... "<sn>"
@@ -441,6 +473,17 @@ int process_string_command (const char *line, PRN *prn)
     line += strlen(targ);
     line += strcspn(line, " \t");
     line += strspn(line, " \t");
+
+    if (*line == '\0') {
+	/* just a call to echo an existing string? */
+	str = get_saved_string_by_name(targ);
+	if (str == NULL) {
+	    return E_UNKVAR;
+	} else {
+	    pprintf(prn, " %s\n", str->s);
+	    return 0;
+	}
+    }
 
     /* operator must be '=' or '+=' */
     if (!strncmp(line, "+=", 2)) {
@@ -478,8 +521,7 @@ int process_string_command (const char *line, PRN *prn)
     if (err) {
 	free(s1);
     } else {
-	pprintf(prn, "Saved string as '%s'\n",
-		saved_strings[n_saved_strings - 1].name);
+	pprintf(prn, "Saved string as '%s'\n", targ);
     }
 
     return err;

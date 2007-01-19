@@ -135,10 +135,11 @@ enum {
     OBSNUM,
     ISSERIES,
     ISLIST,
+    ISSTRING,
     ISNULL,
     LISTLEN,
-    PVAL,
-    CDF,     /* 110 */
+    PVAL,    /* 110 */
+    CDF,
     CRIT,
     GENPOIS,
     MAKEMASK,
@@ -147,8 +148,8 @@ enum {
     COR,
     COV,
     UNIFORM,
-    NORMAL,
-    BINOMIAL, /* 120 */ 
+    NORMAL,   /* 120 */ 
+    BINOMIAL,
     FRACDIF,
     ZEROS,
     ONES,
@@ -157,8 +158,8 @@ enum {
     QFORM,
     MLAG,
     QR,
-    EIGSYM,
-    EIGGEN,  /* 130 */ 
+    EIGSYM,  /* 130 */ 
+    EIGGEN,
     FDJAC,
     BFGSMAX,
     F2_MAX,   /* separator: end of two-arg functions */
@@ -167,8 +168,8 @@ enum {
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
-    COL,      /* colon */
-    CON,    /* 140: named constant */
+    COL,    /* 140: colon */
+    CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
@@ -177,8 +178,8 @@ enum {
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
-    OBS,      /* observation from a series */
-    MSL,    /* 150: matrix plus subspec */
+    OBS,    /* 150: observation from a series */
+    MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
@@ -187,8 +188,8 @@ enum {
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,   /* 160: object variable: variable "under" an object */
+    MVAR,   /* 160: $ model var (scalar, series, or matrix) */
+    OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
@@ -197,7 +198,7 @@ enum {
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT,
-    INC,
+    INC,    /* 170 */
     DEC,
     QUERY,
     UNK
@@ -221,7 +222,8 @@ enum {
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
 #define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
 #define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
-                            s == ISLIST || s == LISTLEN || s == OBSNUM)
+                            s == ISLIST || s == LISTLEN || s == ISSTRING || \
+                            s == OBSNUM)
 
 #define string0_func(s) (s == PVAL || s == CDF || s == CRIT)
 

@@ -162,8 +162,21 @@ static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
     return ret;
 }
 
-/* catch aliased command words and assign ci; return 1
-   if alias caught, else 0. */
+static int list_genr_command (char *line)
+{
+    char *s = strchr(line, '=');
+
+    if (s != NULL) {
+	s++;
+	s += strspn(s, " ");
+	return gretl_is_user_function(s);
+    }
+
+    return 0;
+}
+
+/* catch aliased command words and assign ci; return
+   ci if alias caught, else 0. */
 
 static int catch_command_alias (char *line, CMD *cmd)
 {
@@ -190,14 +203,20 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = OPEN;
     } else if (!strcmp(s, "label")) {
 	cmd->ci = SETINFO;
+    } else if (!strcmp(s, "sprintf")) {
+	cmd->ci = PRINTF;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "list")) {
-	cmd->ci = REMEMBER;
-	cmd->opt = OPT_L;
+	if (list_genr_command(line)) {
+	    cmd->ci = GENR;
+	} else {
+	    cmd->ci = REMEMBER;
+	    cmd->opt = OPT_L;
+	}
     } else if (*s == '!') {
 	cmd->ci = SHELL;
     } else if (!strcmp(s, "funcerr")) {
@@ -2621,6 +2640,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
+    if (*line == '!') {
+	return 1;
+    }
+
     return 0;
 }
 
@@ -2676,6 +2699,11 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
+    /* or don't get echoed in interactive use */
+    if ((flags & CMD_CLI) && cmd->ci == STRING) {
+	return;
+    }
+
     /* special case: "store" command: record as comment */
     if (recording && cmd->ci == STORE) {
 	pprintf(prn, "# store '%s'", cmd->param);
@@ -2705,7 +2733,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	return;
     }
 
-    if (*line == '\0' || *line == '!') {
+    if (*line == '\0') {
 	return;
     }
 

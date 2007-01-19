@@ -238,6 +238,32 @@ int remember_list (const int *list, const char *name, PRN *prn)
 }
 
 /**
+ * rename_saved_list:
+ * @orig: the original name of the list.
+ * @new: the new name to be given.
+ *
+ * Overwrites the name of a saved list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int rename_saved_list (const char *orig, const char *new)
+{
+    saved_list *sl;
+    int err = 0;
+
+    sl = get_saved_list_by_name(orig);
+    if (sl == NULL) {
+	err = 1;
+    } else {
+	*sl->name = '\0';
+	strncat(sl->name, new, LNAMELEN - 1);
+    } 
+
+    return err;
+}
+
+/**
  * copy_named_list_as:
  * @orig: the name of the original list.
  * @new: the name to be given to the copy.
@@ -265,6 +291,34 @@ int copy_named_list_as (const char *orig, const char *new)
 	    sl = list_stack[n_lists - 1];
 	    sl->level += 1;
 	}
+    }
+
+    return err;
+}
+
+/**
+ * named_list_lower_level:
+ * @name: the name of the list.
+ *
+ * If a saved list is found by the name @name, at the
+ * current level of function execution, lower its level
+ * by 1.  This is intended for use when a list is 
+ * returned by a user-defined function: it is shifted to
+ * the level of the caller.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */ 
+
+int named_list_lower_level (const char *name)
+{
+    saved_list *sl;
+    int err = 0;
+
+    sl = get_saved_list_by_name(name);
+    if (sl == NULL) {
+	err = E_DATA;
+    } else {
+	sl->level -= 1;
     }
 
     return err;
