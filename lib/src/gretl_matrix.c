@@ -3260,8 +3260,7 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
     }
 
     if (rcond < QR_RCOND_MIN) {
-	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g, but min is %g\n", rcond,
-		QR_RCOND_MIN);
+	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g\n", rcond);
 	rank = get_R_rank(R);
     }
 

@@ -27,21 +27,21 @@
 #include "missing_private.h"
 #include "estim_private.h"
 
-/* There's a balancing act with 'TINY' here.  It's the minimum value
-   for test that libgretl will accept before rejecting a
-   data matrix as too highly collinear.  If you set it too high,
-   data sets for which gretl could produce reasonable estimates will
-   be rejected.  If you set it too low (and even 100 * DBL_EPSILON
-   is definitely too low), gretl will produce more or less worthless
-   coefficient estimates when given highly collinear data.  If you're
-   tempted to change the value of TINY, check how gretl does on the
-   NIST reference data sets for linear regression and ensure you're
-   not getting any garbage results.  The setting of 2.1e-09 enables
-   me to get decent results on the NIST nonlinear regression test
-   suite, but it could be a bit too low for some contexts.
+/* Comment on 'TINY': It's the minimum value for 'test' (see below)
+   that libgretl's Cholesky decomposition routine will accept before
+   rejecting a data matrix as too highly collinear.  If you set it too
+   high, data sets for which Cholesky could produce reasonable
+   estimates will be rejected.  If you set it too low (and 100 *
+   DBL_EPSILON is definitely too low), gretl will produce more or less
+   worthless coefficient estimates when given highly collinear data.
+   Before making a permanent change to the value of TINY, check how
+   gretl does on the NIST reference data sets for linear regression
+   and ensure you're not getting any garbage results.  The current
+   enables us to get decent results on the NIST nonlinear regression
+   test suite; it might be a bit too low for some contexts.
 */
 
-#define TINY      2.1e-09 /* was 4.75e-09 (last changed 2004/07/16) */
+#define TINY      8.0e-09 /* was 2.1e-09 (last changed 2007/01/20) */
 #define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
 #define YBARZERO  0.5e-14 /* threshold for treating mean of dependent
 			     variable as effectively zero */
@@ -849,8 +849,8 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
     } else {
 	gretl_choleski_regress(&mdl, (const double **) *pZ, rho, pwe, opt);
-	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) && !jackknife) {
-	    /* perfect collinearity is better handled by QR */
+	if (mdl.errcode == E_SINGULAR && !jackknife) {
+	    /* (near-) perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
 	    mdl.rho = rho;
 	    gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
@@ -1388,7 +1388,7 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 	    return E_SINGULAR;
         } else if (test < SMALL) {
 	    gretl_model_set_int(pmod, "near-singular", 1);
-	}
+	} 
 
         e = 1 / sqrt(d2);
         xpx[kk] = e;
