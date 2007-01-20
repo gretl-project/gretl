@@ -410,12 +410,14 @@ int destroy_saved_lists_at_level (int level)
     return err;
 }
 
-static int var_is_deleted (const int *dlist, int dmin, int j)
+static int var_is_deleted (const int *dlist, int dmin, int i)
 {
+    int v = dmin + i - 1;
+
     if (dlist != NULL) {
-	return in_gretl_list(dlist, j);
+	return in_gretl_list(dlist, v);
     } else {
-	return (j >= dmin);
+	return (v >= dmin);
     }
 }
 
@@ -438,7 +440,7 @@ int gretl_lists_revise (const int *dlist, int dmin)
 {
     int *list, *maplist;
     int lmax = 0;
-    int i, j, k, ndel;
+    int i, j, k;
 
     if (dlist != NULL) {
 	/* determine lowest deleted ID */
@@ -473,16 +475,13 @@ int gretl_lists_revise (const int *dlist, int dmin)
     }
 
     j = dmin;
-    ndel = 0;
 
     for (i=1; i<=maplist[0]; i++) {
-	if (var_is_deleted(dlist, dmin, j)) {
+	if (var_is_deleted(dlist, dmin, i)) {
 	    maplist[i] = -1;
-	    ndel++;
 	} else {
-	    maplist[i] = j - ndel;
+	    maplist[i] = j++;
 	}
-	j++;
     }
 
     /* use mapping to revise saved lists */

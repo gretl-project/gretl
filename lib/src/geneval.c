@@ -450,7 +450,12 @@ static double xy_calc (double x, double y, int op, parser *p)
 	return y;
     }    
 
-    /* special case: 0.0 * anything (including even NA) = 0.0 */
+    /* testing for presence of NAs? */
+    if ((p->flags & P_NATEST) && (na(x) || na(y))) {
+	return NADBL;
+    }
+
+    /* special case: 0 * anything (including even NA) = 0 */
     if (op == B_MUL && (x == 0.0 || y == 0.0)) {
 	return 0.0;
     }
@@ -4818,6 +4823,10 @@ static void parser_reinit (parser *p, double ***pZ,
 
     if (saveflags & P_PRINT) {
 	p->flags |= P_PRINT;
+    }
+
+    if (saveflags & P_NATEST) {
+	p->flags |= P_NATEST;
     }
 
     p->Z = pZ;

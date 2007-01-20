@@ -104,7 +104,11 @@ int print_object_var (const char *oname, const char *param,
 
 int gretl_reserved_word (const char *str);
 
-/* next two used in nls.c FIXME below */
+/* following functions used in nls.c */
+
+void genr_set_na_check (GENERATOR *genr);
+
+void genr_unset_na_check (GENERATOR *genr);
 
 int function_from_string (const char *s);
 

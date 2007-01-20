@@ -1569,6 +1569,22 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
     return 0;
 }
 
+static int vars_renumbered (const int *list, DATAINFO *pdinfo,
+			    int dmin)
+{
+    int i, ndel = 0;
+
+    for (i=dmin; i<pdinfo->v; i++) {
+	if (in_gretl_list(list, i)) {
+	    ndel++;
+	} else if (ndel > 0 && !var_is_hidden(pdinfo, i)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 int overwrite_err (const DATAINFO *pdinfo, int v)
 {
     sprintf(gretl_errmsg, "The variable %s is read-only", 
@@ -1587,13 +1603,13 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
     int i, v, ndel = 0; 
     int err;
 
+    if (renumber != NULL) {
+	*renumber = 0;
+    }
+
     if (list == NULL) {
 	/* no-op */
 	return 0;
-    }
-
-    if (renumber != NULL) {
-	*renumber = 0;
     }
 
 #if DDEBUG
@@ -1620,6 +1636,10 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
     if (ndel == 0) {
 	return 0;
     }
+
+    if (renumber != NULL) {
+	*renumber = vars_renumbered(list, pdinfo, delmin);
+    }    
 
 #if DDEBUG
     fprintf(stderr, "real_drop_listed_variables: lowest ID of deleted var"
@@ -1657,18 +1677,13 @@ static int real_drop_listed_vars (const int *list, double ***pZ,
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
 		    if (drop == DROP_NORMAL) {
-			if (!var_is_hidden(pdinfo, i + gap)) {
-			    if (renumber != NULL) {
-				*renumber = 1;
-			    }
-			}
 			pdinfo->varname[i] = pdinfo->varname[i + gap];
 			pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
 		    }
 		    Z[i] = Z[i + gap];
 		}		    
 	    } else {
-		/* deleting all subsequent vars */
+		/* deleting all subsequent vars: done */
 		break;
 	    }
 	}

@@ -642,3 +642,14 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
     }
 }
 
+void genr_set_na_check (parser *p)
+{
+    p->flags |= P_NATEST;
+}
+
+void genr_unset_na_check (parser *p)
+{
+    p->flags &= ~P_NATEST;
+}
+
+

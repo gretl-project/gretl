@@ -1216,7 +1216,7 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 {
     gretl_matrix *e = NULL;
     gretl_matrix *Z = NULL;
-    gretl_matrix *tmp = NULL;
+    gretl_matrix *M = NULL;
     int T = t2 - t1 + 1;
     int m = s->oc->e->cols;
     int k = s->oc->Z->cols;
@@ -1225,12 +1225,12 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 
     e = gretl_matrix_alloc(T, m);
     Z = gretl_matrix_alloc(T, k);
-    tmp = gretl_matrix_alloc(T, s->oc->noc);
+    M = gretl_matrix_alloc(T, s->oc->noc);
 
-    if (e == NULL || Z == NULL || tmp == NULL) {
+    if (e == NULL || Z == NULL || M == NULL) {
 	gretl_matrix_free(e);
 	gretl_matrix_free(Z);
-	gretl_matrix_free(tmp);
+	gretl_matrix_free(M);
 	return E_ALLOC;
     }
 
@@ -1256,7 +1256,7 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 
     s->oc->e = e;
     s->oc->Z = Z;
-    s->oc->tmp = tmp;
+    s->oc->tmp = M;
 
     return 0;
 }
@@ -1270,9 +1270,19 @@ int gmm_missval_check (nlspec *s)
     double x;
     int err = 0;
 
-    /* FIXME adjust any zero coefficients as in NLS */
+#if GMM_DEBUG
+    fprintf(stderr, "gmm_missval_check: initial t1=%d, t2=%d\n",
+	    s->t1, s->t2);
+#endif
 
     err = nl_calculate_fvec(s);
+    if (!err) {
+	err = gmm_update_e(s);
+    }
+
+    if (err) {
+	return err;
+    }
 
     m = s->oc->e->cols;
     p = s->oc->Z->cols;

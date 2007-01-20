@@ -109,9 +109,9 @@ static int check_derivative_matrix (int i, gretl_matrix *m,
     return 0;
 }
 
-/* we "compile" the required equations first, so we can
-   subsequently execute the compiled versions for maximum
-   efficiency */
+/* we "compile" the required equations first, so we can subsequently
+   execute the compiled versions for maximum efficiency 
+*/
 
 static int nls_genr_setup (nlspec *s)
 {
@@ -174,8 +174,12 @@ static int nls_genr_setup (nlspec *s)
 #endif
 
 	if (!err) {
-	    /* see if the formula actually works */
+	    /* see if the formula actually works, and flush out NAs
+	       while we're at it
+	    */
+	    genr_set_na_check(genrs[i]);
 	    err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
+	    genr_unset_na_check(genrs[i]);
 	}
 
 	if (!err) {
@@ -206,6 +210,10 @@ static int nls_genr_setup (nlspec *s)
 #if NLS_DEBUG
 	    fprintf(stderr, " formula '%s'\n", formula);
 	    fprintf(stderr, " v = %d, m = %p\n", v, (void *) m);
+	    if (v > 0) {
+		fprintf(stderr, " first value: Z[%d][%d] = %g\n", 
+			v, s->t1, (*s->Z)[v][s->t1]);
+	    }
 #endif
 	} else {
 	    fprintf(stderr, "execute_genr: formula '%s', error = %d\n", 
@@ -691,74 +699,17 @@ int update_coeff_values (const double *x, nlspec *s)
     return 0;
 }
 
-/* If the initial value for a given coefficient is zero, change it to
-   a small positive value */
-
-static int maybe_adjust_coeffs (nlspec *spec, char **pzlist)
-{
-    char *zlist = NULL;
-    int i;
-
-    for (i=0; i<spec->ncoeff; i++) {
-	if (spec->coeff[i] == 0.0) {
-	    zlist = calloc(spec->ncoeff, 1);
-	    break;
-	}
-    }
-
-    if (zlist != NULL) {
-	double *x;
-
-	for (i=0; i<spec->ncoeff; i++) {
-	    if (spec->coeff[i] == 0.0) {
-		x = coeff_address(spec, i);
-		*x = 0.0001;
-		zlist[i] = 1;
-	    }
-	}
-	*pzlist = zlist;
-    }
-
-    return (zlist != NULL);
-}
-
-/* For the case where initial zeros were changed: set the coefficients
-   back to zero as requested. */
-
-static int readjust_coeffs (nlspec *spec, const char *zlist)
-{
-    double *x;
-    int i, err = 0;
-
-    for (i=0; i<spec->ncoeff; i++) {
-	if (zlist[i]) {
-	    x = coeff_address(spec, i);
-	    if (x != NULL) {
-		*x = 0.0;
-	    } else {
-		err = E_DATA;
-	    }
-	}
-    }
-
-    return err;
-}
-
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate the
-   nls residual variable.  Note: a rigorous check for missing values
-   requires that all coefficients be non-zero, so we adjust any zeros.
+   nls residual variable.  
 */
 
 static int nl_missval_check (nlspec *s)
 {
-    char *zlist = NULL;
-    int t, v;
     int t1 = s->t1, t2 = s->t2;
-    int adj, err = 0;
-
-    adj = maybe_adjust_coeffs(s, &zlist);
+    int t, v;
+    int err = 0;
 
 #if NLS_DEBUG
     fprintf(stderr, "nl_missval_check: calling nl_calculate_fvec\n");
@@ -766,13 +717,6 @@ static int nl_missval_check (nlspec *s)
 
     /* calculate the function (NLS residual, MLE likelihood) */
     err = nl_calculate_fvec(s);
-
-    /* if we messed with any coefficients, reset them now */
-    if (adj) {
-	readjust_coeffs(s, zlist);
-	free(zlist);
-    }
-
     if (err) {
 	return err;
     }
@@ -793,7 +737,6 @@ static int nl_missval_check (nlspec *s)
 #endif
 
     for (t1=s->t1; t1<=s->t2; t1++) {
-	fprintf(stderr, "Z[%d][%d] = %g\n", v, t1, (*s->Z)[v][t1]);
 	if (!na((*s->Z)[v][t1])) {
 	    break;
 	}
@@ -827,11 +770,6 @@ static int nl_missval_check (nlspec *s)
     fprintf(stderr, "  after: spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
 	    s->t1, s->t2, s->nobs);
 #endif
-
-    /* if we adjusted any params above, recalculate fvec */
-    if (adj) {
-	nl_calculate_fvec(s);
-    }
 
     return 0;
 }
