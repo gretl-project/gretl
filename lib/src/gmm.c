@@ -395,6 +395,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     int i, k, t, v;
     int free_e = 0;
     int free_M = 0;
+    double x;
     int err = 0;
 
     /* First work on the left-hand side: have we been given a vector
@@ -415,7 +416,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<s->nobs; t++) {
-		gretl_vector_set(e, t, Z[v][t + s->t1]);
+		x = Z[v][t + s->t1];
+		gretl_vector_set(e, t, x);
 	    }
 	    free_e = s->oc->free_e = 1;
 	    err = push_column_source(s, v, NULL);
@@ -449,10 +451,11 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=0; i<k; i++) {
+	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
-		    gretl_matrix_set(M, t, i, Z[v][t + s->t1]);
+		    x = Z[v][t + s->t1];
+		    gretl_matrix_set(M, t, i, x);
 		}
 	    }
 	    free_M = s->oc->free_Z = 1;
@@ -466,7 +469,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<s->nobs; t++) {
-		gretl_vector_set(M, t, Z[v][t + s->t1]);
+		x = Z[v][t + s->t1];
+		gretl_vector_set(M, t, x);
 	    }
 	    free_M = s->oc->free_Z = 1;
 	}
@@ -1204,72 +1208,121 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
-/* Check any generated auxiliary series for missing values:
-   we resort to this if we don't have an "nlfunc" that defines
-   a single left-hand side variable, which can occur only
-   in the case of GMM estimation.
+/* if we discover missing values after setting up the OC
+   matrices, we'll have to shrink them down
 */
 
-int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
+static int resize_oc_matrices (nlspec *s, int t1, int t2)
 {
-    int i, t, t1 = *pt1, t2 = *pt2;
-    int vi, *list = NULL;
-    int all_ok, n = 0;
+    gretl_matrix *e = NULL;
+    gretl_matrix *Z = NULL;
+    gretl_matrix *tmp = NULL;
+    int T = t2 - t1 + 1;
+    int m = s->oc->e->cols;
+    int k = s->oc->Z->cols;
+    double x;
+    int j, t, offt;
+
+    e = gretl_matrix_alloc(T, m);
+    Z = gretl_matrix_alloc(T, k);
+    tmp = gretl_matrix_alloc(T, s->oc->noc);
+
+    if (e == NULL || Z == NULL || tmp == NULL) {
+	gretl_matrix_free(e);
+	gretl_matrix_free(Z);
+	gretl_matrix_free(tmp);
+	return E_ALLOC;
+    }
+
+    offt = t1 - s->t1;
+
+    for (j=0; j<m; j++) {
+	for (t=0; t<T; t++) {
+	    x = gretl_matrix_get(s->oc->e, t + offt, j);
+	    gretl_matrix_set(e, t, j, x);
+	}
+    }
+
+    for (j=0; j<k; j++) {
+	for (t=0; t<T; t++) {
+	    x = gretl_matrix_get(s->oc->Z, t + offt, j);
+	    gretl_matrix_set(Z, t, j, x);
+	}
+    }
+
+    gretl_matrix_free(s->oc->e);
+    gretl_matrix_free(s->oc->Z);
+    gretl_matrix_free(s->oc->tmp);
+
+    s->oc->e = e;
+    s->oc->Z = Z;
+    s->oc->tmp = tmp;
+
+    return 0;
+}
+
+/* Check the e and Z matrices for missing values */
+
+int gmm_missval_check (nlspec *s)
+{
+    int i, t, t1 = s->t1, t2 = s->t2;
+    int m, k, p, all_ok;
+    double x;
     int err = 0;
 
-    for (i=0; i<s->ngenrs; i++) {
-	if (genr_get_output_varnum(s->genrs[i])) {
-	    n++;
-	}
-    }
+    /* FIXME adjust any zero coefficients as in NLS */
 
-    if (n > 0) {
-	list = gretl_list_new(n);
-	if (list == NULL) {
-	    return E_ALLOC;
-	}
-	t = 1;
-	for (i=0; i<s->ngenrs; i++) {
-	    vi = genr_get_output_varnum(s->genrs[i]);
-	    if (vi > 0) {
-		list[t++] = vi;
-	    }
-	}
-    } else {
-	/* no series to test */
-	return 0;
-    }
+    err = nl_calculate_fvec(s);
 
-#if GMM_DEBUG
-    printlist(list, "GMM missval test list");
-#endif
+    m = s->oc->e->cols;
+    p = s->oc->Z->cols;
 
     for (t1=s->t1; t1<=s->t2; t1++) {
+	k = t1 - s->t1;
 	all_ok = 1;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (na((*s->Z)[vi][t1])) {
+	for (i=0; i<m; i++) {
+	    x = gretl_matrix_get(s->oc->e, k, i);
+	    if (na(x)) {
 		all_ok = 0;
 		break;
-	    } 
+	    }
+	}
+	if (all_ok) {
+	    for (i=0; i<p; i++) {
+		x = gretl_matrix_get(s->oc->Z, k, i);
+		if (na(x)) {
+		    all_ok = 0;
+		    break;
+		}
+	    }
 	}
 	if (all_ok) {
 	    break;
 	}
     }
 
-    for (t2=s->t2; t2>=t1; t2--) {
+    for (t2=s->t2; t2>=s->t1; t2--) {
+	k = t1 - s->t1;
 	all_ok = 1;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (na((*s->Z)[vi][t2])) {
+	for (i=0; i<m; i++) {
+	    x = gretl_matrix_get(s->oc->e, k, i);
+	    if (na(x)) {
 		all_ok = 0;
 		break;
 	    }
 	}
 	if (all_ok) {
+	    for (i=0; i<p; i++) {
+		x = gretl_matrix_get(s->oc->Z, k, i);
+		if (na(x)) {
+		    all_ok = 0;
+		    break;
+		}
+	    }
+	}
+	if (all_ok) {
 	    break;
-	} 
+	}
     }
 
     if (t2 - t1 + 1 < s->ncoeff) {
@@ -1277,21 +1330,35 @@ int gmm_missval_check (nlspec *s, int *pt1, int *pt2)
     }
 
     for (t=t1; t<=t2 && !err; t++) {
-	for (i=1; i<=list[0] && !err; i++) {
-	    vi = list[i];    
-	    if (na((*s->Z)[vi][t])) {
+	k = t - s->t1;
+	for (i=0; i<m && !err; i++) {
+	    x = gretl_matrix_get(s->oc->e, k, i);
+	    if (na(x)) {
 		fprintf(stderr, "  after setting t1=%d, t2=%d, "
-			"got NA for var %d at obs %d\n", t1, t2, vi, t);
+			"got NA for e(%d) at obs %d\n", t1, t2, i, t);
 		err = E_MISSDATA;
 	    }
 	}
+	if (!err) {
+	    for (i=0; i<p && !err; i++) {
+		x = gretl_matrix_get(s->oc->Z, k, i);
+		if (na(x)) {
+		    fprintf(stderr, "  after setting t1=%d, t2=%d, "
+			    "got NA for Z(%d) at obs %d\n", t1, t2, i, t);
+		    err = E_MISSDATA;
+		}
+	    }
+	}	    
     } 
 
-    free(list);
+    if (!err && (t1 > s->t1 || t2 < s->t2)) {
+	err = resize_oc_matrices(s, t1, t2);
+    }
 
     if (!err) {
-	*pt1 = t1;
-	*pt2 = t2;
+	s->t1 = t1;
+	s->t2 = t2;
+	s->nobs = t2 - t1 + 1;
     }
 
     return err;

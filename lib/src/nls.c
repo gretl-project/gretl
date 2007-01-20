@@ -764,7 +764,7 @@ static int nl_missval_check (nlspec *s)
     fprintf(stderr, "nl_missval_check: calling nl_calculate_fvec\n");
 #endif
 
-    /* calculate the function (NLS or GMM residual, MLE likelihood) */
+    /* calculate the function (NLS residual, MLE likelihood) */
     err = nl_calculate_fvec(s);
 
     /* if we messed with any coefficients, reset them now */
@@ -782,16 +782,6 @@ static int nl_missval_check (nlspec *s)
 	goto nl_miss_exit;
     }
 
-    if (s->nlfunc == NULL) {
-	/* GMM: no single "left-hand" var to check, bother */
-	err = gmm_missval_check(s, &t1, &t2);
-	if (err) {
-	    return err;
-	} else {
-	    goto nl_miss_exit;
-	}
-    }
-	
     /* ID number of LHS variable */
     v = s->lhv;
 
@@ -803,6 +793,7 @@ static int nl_missval_check (nlspec *s)
 #endif
 
     for (t1=s->t1; t1<=s->t2; t1++) {
+	fprintf(stderr, "Z[%d][%d] = %g\n", v, t1, (*s->Z)[v][t1]);
 	if (!na((*s->Z)[v][t1])) {
 	    break;
 	}
@@ -2717,7 +2708,12 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    err = nl_missval_check(spec);
+    if (spec->ci == GMM) {
+	err = gmm_missval_check(spec);
+    } else {
+	err = nl_missval_check(spec);
+    }
+
     if (err) {
 	nlsmod.errcode = err;
 	goto bailout;
