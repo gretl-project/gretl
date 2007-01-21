@@ -3151,7 +3151,10 @@ static int run_script (const char *fname, ExecState *s,
     }
 
     strcpy(s->runfile, fname);
-    pprintf(prn, "run \"%s\"\n", fname);
+
+    if (gretl_echo_on()) {
+	pprintf(prn, "run \"%s\"\n", fname);
+    }
 
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
 	err = get_line_continuation(s->line, fp, prn);
