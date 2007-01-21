@@ -6848,20 +6848,28 @@
       <examples>
         <example>! ls -al</example>
 	<example>! notepad</example>
+	<example>launch notepad</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	A <cmd>!</cmd> at the beginning of a command line is
-	interpreted as an escape to the user's shell.  Thus arbitrary
-	shell commands can be executed from within <program>gretl</program>.
+	A <cmd>!</cmd>, or the keyword <cmd>launch</cmd>, at the beginning
+	of a command line is interpreted as an escape to the user's shell.
+	Thus arbitrary shell commands can be executed from within
+	<program>gretl</program>.  When <cmd>!</cmd> is used, the external
+	command is executed synchronously.  That is,
+	<program>gretl</program> waits for it to complete before
+	proceeding.  If you want to start another program from within
+	<program>gretl</program> and not wait for its completion
+	(asynchronous operation), use <cmd>launch</cmd> instead.
       </para>
       <para>
-	For reasons of security this facility is not enabled by default.  To
-	activate it, check the box titled <quote>Allow shell commands</quote>
-	under the File, Preferences menu in the GUI program.
-      </para> 
+	For reasons of security this facility is not enabled by default.
+	To activate it, check the box titled <quote>Allow shell
+	commands</quote> under the File, Preferences menu in the GUI
+	program.  This also makes shell commands available in the
+	command-line program (and is the only way to do so).  </para>
     </description>
 
   </command>
