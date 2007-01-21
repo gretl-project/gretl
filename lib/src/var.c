@@ -2101,7 +2101,7 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
 	return E_DATA;
     }    
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
     
     vecm_beta_test = get_plugin_function("vecm_beta_test", &handle);
     
@@ -2123,7 +2123,7 @@ johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, gretlopt, PRN *);
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
     
     johansen = get_plugin_function("johansen_analysis", &handle);
 

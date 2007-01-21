@@ -943,7 +943,7 @@ db_table *read_pcgive_db (FILE *fp)
     db_table *tbl;
     int ns, err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     ns = count_in7_series(fp, &err);
     if (ns == 0) {
@@ -995,7 +995,7 @@ db_table *read_rats_db (FILE *fp)
     long forward;
     int i, err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
     
     /* get into position */
     fseek(fp, 30L, SEEK_SET); /* skip unneeded fields */
@@ -1132,7 +1132,7 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
     long forward;
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     fp = gretl_fopen(db_name, "rb");
     if (fp == NULL) {
@@ -2716,7 +2716,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     char stobs[OBSLEN];
     int i, err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (oldpd == 52) {
 	return weekly_dataset_to_monthly(pZ, pdinfo, default_method);

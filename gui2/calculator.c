@@ -93,7 +93,7 @@ static double getval (const char *s, PRN *prn, int pos)
 	errbox(_("Incomplete entry"));
     } else {
 	if (check_atof(s)) {
-	    errbox(get_gretl_errmsg());
+	    errbox(gretl_errmsg_get());
 	} else {
 	    x = atof(s);
 	}

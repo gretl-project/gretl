@@ -141,7 +141,7 @@ void register_graph (void)
 
     gnuplot_show_png(gretl_plotfile(), NULL, 0);
 
-    msg = get_gretl_errmsg();
+    msg = gretl_errmsg_get();
     if (msg != NULL && *msg != '\0') {
 	errbox(msg);
     }
@@ -152,7 +152,7 @@ static void gui_graph_handler (int err)
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err) {
-	const char *msg = get_gretl_errmsg();
+	const char *msg = gretl_errmsg_get();
 
 	if (*msg) {
 	    errbox(msg);
@@ -1069,22 +1069,16 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
     }
 }
 
-void gui_errmsg (const int errcode)
+void gui_errmsg (int errcode)
 {
-    const char *msg = get_gretl_errmsg();
-    char errtext[MAXLEN];
+    const char *msg;
 
-    *errtext = 0;
+    msg = errmsg_get_with_default(errcode);
 
     if (*msg != '\0') {
 	errbox(msg);
     } else {
-	msg = get_errmsg(errcode, errtext, NULL);
-	if (msg != NULL) {
-	    errbox(msg);
-	} else {
-	    errbox(_("Unspecified error"));
-	}
+	errbox(_("Unspecified error"));
     }
 }
 
@@ -3284,7 +3278,7 @@ int do_rename_variable (int v, const char *newname, int full)
     int err = 0;
 
     if (check_varname(newname)) {
-	errbox(get_gretl_errmsg());
+	errbox(gretl_errmsg_get());
 	return 1;
     }
 
@@ -5374,7 +5368,7 @@ static int db_write_response (const char *savename, const int *list)
     gchar *msg;
     int resp, ret = 0;
 
-    msg = g_strdup_printf("%s\n%s", get_gretl_errmsg(),
+    msg = g_strdup_printf("%s\n%s", gretl_errmsg_get(),
 			  _("OK to overwrite?"));
 
     resp = yes_no_dialog("gretl", msg, 0);
@@ -5594,7 +5588,7 @@ int do_store (char *savename, gretlopt opt)
 		goto store_get_out;
 	    }
 	} else {
-	    errbox(_("Write of data file failed\n%s"), get_gretl_errmsg());
+	    errbox(_("Write of data file failed\n%s"), gretl_errmsg_get());
 	    err = 1;
 	    goto store_get_out;
 	} 
@@ -6313,7 +6307,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
         }
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
-	    print_gretl_errmsg(prn);
+	    errmsg(err, prn);
 	    return 1;
 	}
 	if (s->flags == CONSOLE_EXEC) {

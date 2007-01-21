@@ -3674,7 +3674,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Save/Define new variable...", ok);
 
     if (!ok) {
-	const char *msg = get_gretl_errmsg();
+	const char *msg = gretl_errmsg_get();
 
 	if (msg != NULL && *msg != 0) {
 	    infobox(msg);
@@ -3755,7 +3755,7 @@ void *gui_get_plugin_function (const char *funcname,
 
     func = get_plugin_function(funcname, phandle);
     if (func == NULL) {
-	errbox(get_gretl_errmsg());
+	errbox(gretl_errmsg_get());
     }
 
     return func;

@@ -2713,7 +2713,8 @@ static int real_do_printf (const char *line, double ***pZ,
     char *args = NULL;
     int sp, err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
+
     *targ = '\0';
 
     if (t < 0) {

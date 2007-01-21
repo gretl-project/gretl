@@ -905,7 +905,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 	return NULL;
     }
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
 	if (*gretl_errmsg == '\0') {
@@ -1217,7 +1217,7 @@ static int test_restriction_set (gretl_restriction_set *rset,
 
     int asym = ASYMPTOTIC_MODEL(pmod->ci);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     err = restriction_set_form_matrices(rset, &R, &q);
     if (err) {

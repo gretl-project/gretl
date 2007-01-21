@@ -321,7 +321,7 @@ static MODEL ordered_model (const int *list, int ci, double ***pZ,
     MODEL (* ordered_estimate) (const int *, int, double ***, DATAINFO *, 
 				gretlopt, PRN *);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     ordered_estimate = get_plugin_function("ordered_estimate", &handle);
     if (ordered_estimate == NULL) {

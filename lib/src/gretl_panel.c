@@ -2579,7 +2579,8 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     int orig_v = pdinfo->v;
     int i, iter = 0;
 
-    gretl_errmsg_clear();
+    gretl_error_clear();
+
     panelmod_init(&pan);
 
     if (opt & OPT_T) {

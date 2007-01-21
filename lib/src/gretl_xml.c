@@ -1577,7 +1577,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     double x;
     int i, err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     for (i=1; i<pdinfo->v && !err; i++) {
 	if (var_is_scalar(pdinfo, i)) {
@@ -1959,7 +1959,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     int caldata = 0;
     long fsz, progress = 0L;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     check_for_console(prn);
 
@@ -2147,7 +2147,7 @@ char *gretl_get_gdt_description (const char *fname)
     xmlNodePtr cur;
     xmlChar *buf = NULL;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);

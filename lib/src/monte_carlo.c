@@ -199,7 +199,7 @@ static double controller_evaluate_expr (const char *expr,
     int iftest = 0;
     int v, err;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (!strcmp(vname, "iftest")) {
 	iftest = 1;
@@ -229,8 +229,8 @@ static double controller_evaluate_expr (const char *expr,
 	}
     }
 
-    if (err && *gretl_errmsg == '\0') {
-	strcpy(gretl_errmsg, _("error evaluating loop condition"));
+    if (err) {
+	gretl_errmsg_set(_("error evaluating loop condition"));
     }
 
     return x;
@@ -1193,7 +1193,7 @@ start_new_loop (char *s, LOOPSET *inloop,
 {
     LOOPSET *loop = NULL;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
 #if LOOP_DEBUG
     fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
@@ -1973,7 +1973,7 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
     LOOPSET *newloop = loop;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n", 

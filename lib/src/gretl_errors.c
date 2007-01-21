@@ -24,7 +24,7 @@
 
 char gretl_errmsg[ERRLEN];
 
-const char *gretl_error_messages[] = {
+static const char *gretl_error_messages[] = {
     NULL,
     NULL,
     N_("Data error"),                                            /* E_DATA = 2 */
@@ -83,35 +83,44 @@ const char *gretl_error_messages[] = {
     NULL                                                         /* E_MAX */
 };
 
-/**
- * get_errmsg:
- * @errcode: gretl error code (see #error_codes).
- * @errtext: pre-allocated string or NULL.
- * @prn: gretl printing struct.
- *
- * Print an error message, given an error code number.  The message
- * is printed to the string variable errtext, if it is non-NULL,
- * or otherwise to the printing struct @prn.
- * 
- * Returns: the error text string, or NULL if @errtext is NULL.
- */
-
-char *get_errmsg (const int errcode, char *errtext, PRN *prn)
+static const char *look_up_errmsg (int err)
 {
-    char *msg = NULL;
+    const char *ret = "";
 
-    if (errcode > 0 && errcode < E_MAX) {
-	if (gretl_error_messages[errcode] != NULL) {
-	    if (errtext != NULL) {
-		strcpy(errtext, _(gretl_error_messages[errcode]));
-		msg = errtext;
-	    } else {
-		pprintf(prn, "%s\n", _(gretl_error_messages[errcode]));
-	    }
+    if (err > 0 && err < E_MAX) {
+	ret = gretl_error_messages[err];
+	if (ret == NULL) {
+	    return "";
 	}
     } else {
-	fprintf(stderr, "get_errmsg: out of bounds errcode %d\n", 
-		errcode);
+	fprintf(stderr, "look_up_errmsg: out of bounds errcode %d\n", 
+		err);
+    }
+
+    return ret;
+}
+
+static int error_printed;
+
+/**
+ * errmsg_get_with_default: 
+ * @err: gretl error code (see #error_codes).
+ *
+ * Returns: a specific error message if available,
+ * otherwise a generic error message corresponding to the 
+ * given @err.
+ */
+
+const char *errmsg_get_with_default (int err)
+{
+    const char *msg;
+
+    if (*gretl_errmsg != '\0') {
+	msg = gretl_errmsg;
+    } else {
+	const char *deflt = look_up_errmsg(err);
+
+	msg = _(deflt);
     }
 
     return msg;
@@ -119,63 +128,71 @@ char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 
 /**
  * errmsg:
- * @errcode: gretl error code (see #error_codes).
+ * @err: gretl error code (see #error_codes).
  * @prn: gretl printing struct.
  *
- * Print an error message looked up from a given an error code number, 
- * or a more specific error message if available.  
- * 
+ * Prints to @prn a specific error message if available, 
+ * otherwise a generic error message corresponding to the 
+ * given @err.
  */
 
-void errmsg (const int errcode, PRN *prn)
+void errmsg (int err, PRN *prn)
 {
-    if (*gretl_errmsg == '\0') {
-	get_errmsg(errcode, NULL, prn);
-    } else {
-	pprintf(prn, "%s\n", gretl_errmsg);
-    }
+    const char *msg;
+
+    if (!error_printed && prn != NULL) {
+	msg = errmsg_get_with_default(err);
+	pprintf(prn, "%s\n", msg);
+	error_printed = 1;
+    } 
 }
 
-const char *get_gretl_errmsg (void)
+/**
+ * gretl_errmsg_get:
+ *
+ * Returns: a specific error message if available,
+ * otherwise an empty string.
+ */
+
+const char *gretl_errmsg_get (void)
 {
     return gretl_errmsg;
-}
-
-char *copy_gretl_errmsg (void)
-{
-    return gretl_strdup(gretl_errmsg);
-}
-
-int print_gretl_errmsg (PRN *prn)
-{
-    int ret = 0;
-
-    if (*gretl_errmsg != '\0') {
-	pprintf(prn, "%s\n", gretl_errmsg);
-	ret = 1;
-    } 
-
-    return ret;
 }
 
 /**
  * gretl_errmsg_set:
  * @str: an error message.
  *
- * If gretl_errmsg is currently blank, copy the given string into
- * the message space.
- * 
+ * If %gretl_errmsg is currently blank, copy the given string into
+ * the message space; or if the error message is not blank but
+ * sufficient space remains, append @str to the message.
  */
 
 void gretl_errmsg_set (const char *str)
 {
     if (*gretl_errmsg == '\0') {
 	strncat(gretl_errmsg, str, ERRLEN - 1);
+    } else {
+	/* should we do the following? */
+	int n = strlen(gretl_errmsg);
+	int m = strlen(str);
+
+	if (n + m + 1 < ERRLEN) {
+	    strcat(gretl_errmsg, "\n");
+	    strcat(gretl_errmsg, str);
+	}
     }
 }
 
-void gretl_errmsg_clear (void)
+/**
+ * gretl_error_clear:
+ *
+ * Blank out any previously recorded error message.
+ */
+
+void gretl_error_clear (void)
 {
     *gretl_errmsg = '\0';
+    error_printed = 0;
 }
 

@@ -300,7 +300,7 @@ re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock,
     static void *handle = NULL;
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     if (iter == 0) {
 	/* first round: open the Johansen plugin */

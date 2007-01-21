@@ -873,8 +873,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 			       (est_opt | OPT_Z), prn);
 
     if (new->errcode) {
-	pprintf(prn, "%s\n", gretl_errmsg);
-	err = new->errcode; 
+	err = new->errcode;
+	errmsg(err, prn);
     }
 
     if (!err) {
@@ -1053,8 +1053,8 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
 
     if (new->errcode) {
-	pprintf(prn, "%s\n", gretl_errmsg);
-	err = new->errcode; 
+	err = new->errcode;
+	errmsg(err, prn);
     }
 
     if (!err) {
@@ -2224,7 +2224,7 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
     int err;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     print_vifs = get_plugin_function("print_vifs", &handle);
     if (print_vifs == NULL) {
@@ -2235,7 +2235,7 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     close_plugin(handle);
 
-    if (err && *gretl_errmsg == '\0') {
+    if (err) {
 	gretl_errmsg_set(_("Command failed"));
     }
 

@@ -975,7 +975,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* initialize model in case we bail out early on error */
     gretl_model_init(&tsls);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     pos = gretl_list_separator_position(list);
     if (pos == 0) {

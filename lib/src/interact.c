@@ -1701,7 +1701,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     cmd->err = substitute_named_strings(line);
     if (cmd->err) {
@@ -3053,7 +3053,7 @@ int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 			     gretlopt *, PRN *);
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
     
     pca_from_corrmat = get_plugin_function("pca_from_corrmat", &handle);
     if (pca_from_corrmat == NULL) {
@@ -3231,6 +3231,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	    return E_ALLOC;
 	}
     }
+
+    gretl_error_clear();
 
     s->alt_model = 0;
 
@@ -4038,7 +4040,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
         }
 	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
-	    print_gretl_errmsg(s->prn);
+	    errmsg(err, s->prn);
 	    return 1;
 	} 
 	return 0;

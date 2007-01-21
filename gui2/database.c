@@ -123,13 +123,17 @@ float retrieve_float (netfloat nf)
 
 void show_network_error (windata_t *vwin)
 {
-    char *buf = copy_gretl_errmsg();
+    const char *msg = gretl_errmsg_get();
+    char *buf = NULL;
 
-    if (buf != NULL && *buf != '\0') {
+    if (*msg != '\0') {
+	buf = gretl_strdup(msg);
+    }
+
+    if (buf != NULL) {
 	size_t n = strlen(buf);
 
 	if (buf[n-1] == '\n') {
-	    
 	    buf[n-1] = '\0';
 	}
 	if (vwin != NULL) {
@@ -137,6 +141,7 @@ void show_network_error (windata_t *vwin)
 	} else {
 	    errbox(buf);
 	}
+	free(buf);
     } else {
 	if (vwin != NULL) {
 	    update_statusline(vwin, _("Error retrieving data from server"));
@@ -144,8 +149,6 @@ void show_network_error (windata_t *vwin)
 	    errbox(_("Error retrieving data from server"));
 	}
     }
-
-    free(buf);
 }
 
 static int gui_get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 

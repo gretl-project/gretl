@@ -473,7 +473,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo,
     DATAINFO *pdinfo = *ppdinfo;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (!complex_subsampled()) {
 	if (pdinfo->t1 != 0 || pdinfo->t2 != pdinfo->n - 1) {
@@ -1178,7 +1178,7 @@ int restrict_sample (const char *line, const int *list,
     int free_oldmask = 0;
     int mode, err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
 #if SUBDEBUG
     fprintf(stderr, "\nrestrict_sample: '%s'\n", line);
@@ -1377,7 +1377,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     nf = count_fields(line);
 

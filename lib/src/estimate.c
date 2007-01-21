@@ -697,7 +697,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int pwe = (ci == PWE || (opt & OPT_P));
     int yno, i;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (list == NULL || pZ == NULL || pdinfo == NULL) {
 	fprintf(stderr, "E_DATA: lsq: list = %p, pZ = %p, pdinfo = %p\n",
@@ -1835,7 +1835,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     int ascii = !(opt & OPT_P);
     MODEL corc_model;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
     *err = 0;
 
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
@@ -2207,7 +2207,7 @@ MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo)
     int *hsklist;
     MODEL hsk;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     /* run initial OLS */
     hsk = lsq(list, pZ, pdinfo, OLS, OPT_A);
@@ -2297,7 +2297,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     double xx;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     t1 = pmod->t1;
     t2 = pmod->t2;
@@ -2560,7 +2560,7 @@ MODEL ar_func (const int *list, double ***pZ,
     int pos, cpos;
     MODEL ar, rhomod;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     gretl_model_init(&ar);
     gretl_model_init(&rhomod);
@@ -2921,7 +2921,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
     double LM, xx;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     gretl_model_init(&archmod);
 
@@ -3232,7 +3232,7 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
     MODEL (*arma_func) (const int *, const double **, const DATAINFO *, 
 			gretlopt, PRN *);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (opt & OPT_X && (pdinfo->t2 - pdinfo->t1) > 719) {
 	strcpy(gretl_errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
@@ -3281,7 +3281,7 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     void *handle;
     MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, PRN *);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     tobit_estimate = get_plugin_function("tobit_estimate", &handle);
     if (tobit_estimate == NULL) {
@@ -3333,7 +3333,7 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     int offvar;
     int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, PRN *);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     gretl_model_init(&pmodel);
 
@@ -3395,7 +3395,7 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     MODEL (*garch_model) (const int *, double ***, DATAINFO *, PRN *,
 			  gretlopt);
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     garch_model = get_plugin_function("garch_model", &handle);
 
@@ -3513,7 +3513,7 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL mod;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (check_panel_options(opt)) {
 	gretl_model_init(&mod);

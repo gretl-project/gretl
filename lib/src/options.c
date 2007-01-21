@@ -568,7 +568,7 @@ gretlopt get_gretl_options (char *line, int *err)
     char cmdword[9] = {0};
     int ci, myerr = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (err != NULL) {
 	*err = 0;

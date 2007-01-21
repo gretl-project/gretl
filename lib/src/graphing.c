@@ -1494,7 +1494,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
     gnuplot_info gpinfo;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
 #if GP_DEBUG
     print_gnuplot_flags(flags);

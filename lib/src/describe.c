@@ -2041,7 +2041,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     FILE *fq = NULL;
     int err = 0, pacf_err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
     nobs = t2 - t1 + 1;
@@ -2270,7 +2270,7 @@ int xcorrgram (const int *list, int order, double ***pZ,
     int xno, yno;
     int nobs, err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (list[0] != 2) {
 	return E_DATA;
@@ -2750,7 +2750,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     FILE *fq = NULL;
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     list[0] = 1;
     list[1] = varno;
@@ -3898,7 +3898,7 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
     double idx, gini;
     int t, n = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     sx = malloc(m * sizeof *sx);
 

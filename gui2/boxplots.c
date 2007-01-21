@@ -1346,14 +1346,14 @@ int retrieve_boxplot (const char *fname)
     PLOTGROUP *grp = NULL;
     BOXPLOT *plt = NULL;
     char line[80], numstr[24];
-    gchar *errmsg;
+    gchar *msg;
 
     fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
-	errmsg = g_strdup_printf(_("Couldn't open %s"), fname);
-	errbox(errmsg);
-	g_free(errmsg);
+	msg = g_strdup_printf(_("Couldn't open %s"), fname);
+	errbox(msg);
+	g_free(msg);
 	return 1;
     }
 
@@ -1630,18 +1630,18 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     nbool = 0;
     for (i=1; i<=list[0] && !err; i++) {
 	if (bools[i-1] != NULL) {
-	    int t;
 	    char formula[80];
+	    int t;
 	    
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 	    if (err) {
-		char errtxt[128];
+		char *msg = 
+		    g_strdup_printf(_("boxplots: generation of dummy variable failed\n%s"), 
+				    gretl_errmsg_get());
 
-		sprintf(errtxt, 
-			_("boxplots: generation of dummy variable failed\n%s"),
-			get_gretl_errmsg());
-		errbox(errtxt);
+		errbox(msg);
+		g_free(msg);
 		err = 1;
 	    } else {
 		for (t=0; t<n; t++) {

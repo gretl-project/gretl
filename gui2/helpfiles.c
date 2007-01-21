@@ -1581,7 +1581,7 @@ static int find_or_download_pdf (int uguide, int i, char *fullpath)
     }
 
     if (err) {
-	const char *buf = get_gretl_errmsg();
+	const char *buf = gretl_errmsg_get();
 
 	if (*buf) {
 	    errbox(buf);

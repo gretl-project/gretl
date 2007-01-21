@@ -203,7 +203,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
     } else {
 	err = check_atof(user_text);
 	if (err) {
-	    errbox(get_gretl_errmsg());
+	    errbox(gretl_errmsg_get());
 	} else {
 	    new_text = user_text;
 	}

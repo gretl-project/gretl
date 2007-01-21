@@ -859,7 +859,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 		       double ***, DATAINFO *, gretlopt, PRN *);
     int stest = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     if (opt == OPT_UNSET) {
 	opt = OPT_NONE;
@@ -939,7 +939,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     gretlopt opt = OPT_NONE;
     int err = 0;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));
@@ -1651,7 +1651,7 @@ system_parse_line (gretl_equation_system *sys, const char *line,
 {
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (strncmp(line, "identity", 8) == 0) {
 	err = add_identity_to_sys(sys, line + 8, pdinfo);

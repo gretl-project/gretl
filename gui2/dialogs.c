@@ -803,7 +803,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 
 	edttext = gtk_entry_get_text(GTK_ENTRY(vset->value_entry));
 	if (check_atof(edttext)) {
-	    errbox(get_gretl_errmsg());
+	    errbox(gretl_errmsg_get());
 	    return;
 	} else {
 	    val = atof(edttext);
@@ -3245,7 +3245,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
  finalize:
 
     if (err) {
-	errbox(get_gretl_errmsg());
+	errbox(gretl_errmsg_get());
     } else if (create) {
 	if (datainfo->n < 1001) {
 	    maybe_start_editing();

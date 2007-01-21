@@ -111,7 +111,7 @@ int main (void)
     /* Handle case where lsq bombed */
     if (model->errcode) {
         printf("model->errcode: %d\n", model->errcode);
-        printf("error message: %s\n", get_gretl_errmsg());
+        printf("error message: %s\n", gretl_errmsg_get());
         return 1;
     }
 

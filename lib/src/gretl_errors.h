@@ -79,18 +79,14 @@ enum gretl_error_codes {
 
 /* functions follow */
  
-char *get_errmsg (const int errcode, char *errtext, PRN *prn);
+void errmsg (int err, PRN *prn);
 
-void errmsg (const int errcode, PRN *prn);
+const char *errmsg_get_with_default (int err);
 
-const char *get_gretl_errmsg (void);
-
-char *copy_gretl_errmsg (void);
-
-int print_gretl_errmsg (PRN *prn);
+const char *gretl_errmsg_get (void);
 
 void gretl_errmsg_set (const char *str);
 
-void gretl_errmsg_clear (void);
+void gretl_error_clear (void);
 
 #endif /* GRETL_ERRORS_H */

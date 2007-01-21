@@ -45,7 +45,7 @@ static void parser_init (parser *p, const char *str,
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
 
-static void printnode (const NODE *t, const parser *p);
+static void printnode (const NODE *t, const parser *p, PRN *prn);
 
 static NODE *eval (NODE *t, parser *p);
 
@@ -1183,8 +1183,7 @@ static void matrix_error (parser *p)
     }
 
     if (*gretl_errmsg != '\0') {
-	pprintf(p->prn, "%s\n", gretl_errmsg);
-	*gretl_errmsg = '\0';
+	errmsg(p->err, p->prn);
     }
 }
 
@@ -1198,7 +1197,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 
-	*gretl_errmsg = '\0';
+	gretl_error_clear();
 
 	switch (f) {
 	case ROWS:
@@ -1242,7 +1241,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 
-	*gretl_errmsg = '\0';
+	gretl_error_clear();
 
 	switch (f) {
 	case SUMC:
@@ -1308,7 +1307,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *rname;
 
-	*gretl_errmsg = '\0';
+	gretl_error_clear();
 
 	/* on the right: address of matrix or null */
 	if (r->t == EMPTY) {
@@ -3143,10 +3142,19 @@ static void transpose_matrix_result (NODE *n, parser *p)
 static void node_type_error (const NODE *n, parser *p, int t, int badt)
 {
     const char *fun;
+    PRN *prn;
+    int altprn = 0;
 
-    pputs(p->prn, "> ");
-    printnode(n, p);
-    pputc(p->prn, '\n');
+    if (p->prn != NULL) {
+	prn = p->prn;
+    } else {
+	prn = gretl_print_new(GRETL_PRINT_BUFFER);
+	altprn = 1;
+    }
+
+    pputs(prn, "> ");
+    printnode(n, p, prn);
+    pputc(prn, '\n');
 
     if (n->t == LAG) {
 	fun = (t == NUM)? "lag order" : "lag variable";
@@ -3154,13 +3162,20 @@ static void node_type_error (const NODE *n, parser *p, int t, int badt)
 	fun = getsymb(n->t, NULL);
     }
 
-    pprintf(p->prn, _("Wrong type argument for %s: should be %s"),
+    pprintf(prn, _("Wrong type argument for %s: should be %s"),
 	    fun, typestr(t));
 
     if (badt != 0) {
-	pprintf(p->prn, ", is %s\n", typestr(badt));
+	pprintf(prn, ", is %s\n", typestr(badt));
     } else {
-	pputc(p->prn, '\n');
+	pputc(prn, '\n');
+    }
+
+    if (altprn) {
+	const char *buf = gretl_print_get_buffer(prn);
+
+	gretl_errmsg_set(buf);
+	gretl_print_destroy(prn);
     }
 
     p->err = E_TYPES;
@@ -3719,117 +3734,117 @@ void parser_print_input (parser *p)
 
 /* "pretty print" syntatic nodes and symbols */
 
-static void printsymb (int symb, const parser *p)
+static void printsymb (int symb, const parser *p, PRN *prn)
 {
-    pputs(p->prn, getsymb(symb, NULL));
+    pputs(prn, getsymb(symb, NULL));
 }
 
-static void printnode (const NODE *t, const parser *p)
+static void printnode (const NODE *t, const parser *p, PRN *prn)
 {  
     if (t == NULL) {
-	pputs(p->prn, "NULL"); 
+	pputs(prn, "NULL"); 
     } else if (t->t == NUM) {
 	if (na(t->v.xval)) {
-	    pputs(p->prn, "NA");
+	    pputs(prn, "NA");
 	} else {
-	    pprintf(p->prn, "%.8g", t->v.xval);
+	    pprintf(prn, "%.8g", t->v.xval);
 	}
     } else if (t->t == VEC) {
 	int i, j = 1;
 
 	if (p->lh.v > 0 && p->lh.v < p->dinfo->v) {
-	    pprintf(p->prn, "%s\n", p->dinfo->varname[p->lh.v]);
+	    pprintf(prn, "%s\n", p->dinfo->varname[p->lh.v]);
 	}
 
 	for (i=p->dinfo->t1; i<=p->dinfo->t2; i++, j++) {
 	    if (na(t->v.xvec[i])) {
-		pputs(p->prn, "NA");
+		pputs(prn, "NA");
 	    } else {
-		pprintf(p->prn, "%g", t->v.xvec[i]);
+		pprintf(prn, "%g", t->v.xvec[i]);
 	    }
 	    if (j % 8 == 0) {
-		pputc(p->prn, '\n');
+		pputc(prn, '\n');
 	    } else if (i < p->dinfo->t2) {
-		pputc(p->prn, ' ');
+		pputc(prn, ' ');
 	    }
 	}
     } else if (t->t == MAT) {
-	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
+	gretl_matrix_print_to_prn(t->v.m, NULL, prn);
     } else if (t->t == UVAR) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->v.idnum]);
+	pprintf(prn, "%s", p->dinfo->varname[t->v.idnum]);
     } else if (t->t == UMAT || t->t == UOBJ) {
-	pprintf(p->prn, "%s", t->v.str);
+	pprintf(prn, "%s", t->v.str);
     } else if (t->t == DVAR) {
-	pputs(p->prn, dvarname(t->v.idnum));
+	pputs(prn, dvarname(t->v.idnum));
     } else if (t->t == MVAR) {
-	pputs(p->prn, mvarname(t->v.idnum));
+	pputs(prn, mvarname(t->v.idnum));
     } else if (t->t == CON) {
-	pputs(p->prn, constname(t->v.idnum));
+	pputs(prn, constname(t->v.idnum));
     } else if (t->t == DUM) {
-	pputs(p->prn, dumname(t->v.idnum));
+	pputs(prn, dumname(t->v.idnum));
     } else if (binary_op(t->t)) {
-	pputc(p->prn, '(');
-	printnode(t->v.b2.l, p);
-	printsymb(t->t, p);
-	printnode(t->v.b2.r, p);
-	pputc(p->prn, ')');
+	pputc(prn, '(');
+	printnode(t->v.b2.l, p, prn);
+	printsymb(t->t, p, prn);
+	printnode(t->v.b2.r, p, prn);
+	pputc(prn, ')');
     } else if (t->t == LAG) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->ext]);
-	pputc(p->prn, '(');
-	printnode(t->v.b1.b, p);
-	pputc(p->prn, ')');
+	pprintf(prn, "%s", p->dinfo->varname[t->ext]);
+	pputc(prn, '(');
+	printnode(t->v.b1.b, p, prn);
+	pputc(prn, ')');
     } else if (t->t == OBS) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->ext]);
-	pputc(p->prn, '[');
+	pprintf(prn, "%s", p->dinfo->varname[t->ext]);
+	pputc(prn, '[');
 	/* should use date string? */
-	printnode(t->v.b1.b, p);
-	pputc(p->prn, ']');
+	printnode(t->v.b1.b, p, prn);
+	pputc(prn, ']');
     } else if (t->t == MSL || t->t == DMSL) {
-	printnode(t->v.b2.l, p);
-	pputc(p->prn, '[');
-	printnode(t->v.b2.r, p);
-	pputc(p->prn, ']');
+	printnode(t->v.b2.l, p, prn);
+	pputc(prn, '[');
+	printnode(t->v.b2.r, p, prn);
+	pputc(prn, ']');
     } else if (t->t == MSL2) {
-	pputs(p->prn, "MSL2");
+	pputs(prn, "MSL2");
     } else if (t->t == SUBSL) {
-	pputs(p->prn, "SUBSL");
+	pputs(prn, "SUBSL");
     } else if (t->t == OVAR) {
-	printnode(t->v.b2.l, p);
-	pputc(p->prn, '.');
-	printnode(t->v.b2.r, p);
+	printnode(t->v.b2.l, p, prn);
+	pputc(prn, '.');
+	printnode(t->v.b2.r, p, prn);
     } else if (func_symb(t->t)) {
-	printsymb(t->t, p);
-	pputc(p->prn, '(');
-	printnode(t->v.b1.b, p);
-	pputc(p->prn, ')');
+	printsymb(t->t, p, prn);
+	pputc(prn, '(');
+	printnode(t->v.b1.b, p, prn);
+	pputc(prn, ')');
     } else if (unary_op(t->t)) {
-	printsymb(t->t, p);
-	printnode(t->v.b1.b, p);
+	printsymb(t->t, p, prn);
+	printnode(t->v.b1.b, p, prn);
     } else if (t->t == EROOT) {
-	printnode(t->v.b1.b, p);
+	printnode(t->v.b1.b, p, prn);
     } else if (func2_symb(t->t)) {
-	printsymb(t->t, p);
-	pputc(p->prn, '(');
-	printnode(t->v.b2.l, p);
+	printsymb(t->t, p, prn);
+	pputc(prn, '(');
+	printnode(t->v.b2.l, p, prn);
 	if (t->v.b2.r->t != EMPTY) {
-	    pputc(p->prn, ',');
+	    pputc(prn, ',');
 	}
-	printnode(t->v.b2.r, p);
-	pputc(p->prn, ')');
+	printnode(t->v.b2.r, p, prn);
+	pputc(prn, ')');
     } else if (t->t == STR) {
-	pprintf(p->prn, "%s", t->v.str);
+	pprintf(prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
-	pprintf(p->prn, "{ MDEF }");
+	pprintf(prn, "{ MDEF }");
     } else if (t->t == DMSTR || t->t == UFUN) {
-	printnode(t->v.b2.l, p);
-	pputc(p->prn, '(');
-	printnode(t->v.b2.r, p);
-	pputc(p->prn, ')');
+	printnode(t->v.b2.l, p, prn);
+	pputc(prn, '(');
+	printnode(t->v.b2.r, p, prn);
+	pputc(prn, ')');
     } else if (t->t == LIST) {
-	pputs(p->prn, "LIST (lost!)");
+	pputs(prn, "LIST (lost!)");
     } else if (t->t != EMPTY) {
-	pputs(p->prn, "weird tree - ");
-	printsymb(t->t, p);
+	pputs(prn, "weird tree - ");
+	printsymb(t->t, p, prn);
     }
 }
 
@@ -4916,7 +4931,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    } else {
-		printnode(p->ret, p);
+		printnode(p->ret, p, p->prn);
 		pputc(p->prn, '\n');
 	    }
 	} else if (p->flags & (P_SCALAR | P_SERIES)) {
@@ -5072,7 +5087,7 @@ int realgen (const char *s, parser *p, double ***pZ,
     p->ret = eval(p->tree, p);
 
 #if EDEBUG > 1
-    printnode(p->ret, p);
+    printnode(p->ret, p, p->prn);
     pputc(prn, '\n');
 #endif
 

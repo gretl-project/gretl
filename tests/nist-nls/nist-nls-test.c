@@ -807,13 +807,9 @@ static int real_run_check (int round, PRN *prn)
 	*pmod = nls(&Z, datainfo, OPT_NONE, prn);
 
 	if (pmod->errcode) {
-	    char errtext[128];
-
 	    err = pmod->errcode;
-	    if (get_errmsg(err, errtext, NULL) != NULL) {
-		fprintf(stderr, "%s: ERROR: model error %d (%s)\n", 
-			tester.datname, err, errtext);
-	    }
+	    fprintf(stderr, "%s: ERROR: model error %d\n", 
+		    tester.datname, err);
 	    errmsg(err, prn);
 	} else {
 	    if (verbose) {

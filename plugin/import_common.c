@@ -34,7 +34,7 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 
 static void invalid_varname (PRN *prn)
 {
-    pputs(prn, get_gretl_errmsg());
+    pputs(prn, gretl_errmsg_get());
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 

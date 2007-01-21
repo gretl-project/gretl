@@ -683,7 +683,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
     int pd, dated = 0;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (opt & OPT_R) {
 	/* restructure panel: "hidden" option */
@@ -1220,7 +1220,7 @@ int gretl_spawn (char *cmdline)
     int ok, status;
     int ret = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     signal(SIGCHLD, SIG_DFL);
 

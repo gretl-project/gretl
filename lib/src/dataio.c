@@ -146,7 +146,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
     char c, marker[OBSLEN];
     int err = 0;
 
-    gretl_errmsg[0] = '\0';
+    gretl_error_clear();
 
     if (binary == 1) { 
 	/* single-precision binary data */
@@ -253,7 +253,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
     int i, t, n = pdinfo->n;
     int err = 0;
     
-    gretl_errmsg[0] = '\0';
+    gretl_error_clear();
 
     if (binary == 1) { 
 	/* single-precision binary data */
@@ -363,7 +363,7 @@ int check_varname (const char *varname)
     int testchar = 'a';
     int ret = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     if (gretl_reserved_word(varname)) {
 	ret = VARNAME_RESERVED;
@@ -418,7 +418,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     int n, i = 0, panel = 0, descrip = 0;
     char str[MAXLEN], byobs[6], option[8];
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     fp = gretl_fopen(hdrfile, "r");
     if (fp == NULL) {
@@ -577,7 +577,7 @@ static int bad_date_string (const char *s)
 {
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     while (*s && !err) {
 	if (!isdigit((unsigned char) *s) && !IS_DATE_SEP(*s)) {
@@ -1172,7 +1172,7 @@ int write_data (const char *fname, const int *list,
     int *pmax = NULL;
     double xx;
 
-    *gretl_errmsg = 0;
+    gretl_error_clear();
 
     if (list == NULL || list[0] == 0) {
 	return 1;
@@ -1580,7 +1580,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
     char line[MAXLEN], *label, varname[VNAMELEN];
     int v;
     
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
 
     fp = gretl_fopen(lblfile, "r");
     if (fp == NULL) return 0;
@@ -1754,7 +1754,8 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     int binary = 0, old_byvar = 0;
     int err = 0;
 
-    *gretl_errmsg = '\0';
+    gretl_error_clear();
+
     *hdrfile = '\0';
 
     gdtsuff = has_suffix(datfile, ".gdt");
@@ -2978,10 +2979,9 @@ static int process_csv_obs (const char *str, int i, int t,
 	    if (ix >= 0) {
 		Z[i][t] = (double) ix;
 	    } else {
-		pprintf(prn, M_("At variable %d, observation %d:\n"), i, t+1);
-		pprintf(prn, " %s\n", gretl_errmsg);
-		*gretl_errmsg = '\0';
 		err = 1;
+		pprintf(prn, M_("At variable %d, observation %d:\n"), i, t+1);
+		errmsg(err, prn);
 	    }
 	} else {
 	    Z[i][t] = atof(str);
@@ -3273,8 +3273,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		} else {
 		    iso_to_ascii(csvinfo->varname[nv]);
 		    if (check_varname(csvinfo->varname[nv])) {
-			pprintf(prn, "%s\n", gretl_errmsg);
-			*gretl_errmsg = '\0';
+			errmsg(1, prn);
 			goto csv_bailout;
 		    }
 		}
@@ -3304,8 +3303,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     } else if (numcount > 0) {
 	for (i=1; i<csvinfo->v; i++) {
 	    if (check_varname(csvinfo->varname[i])) {
-		pprintf(prn, "%s\n", gretl_errmsg);
-		*gretl_errmsg = '\0';
+		errmsg(1, prn);
 		break;
 	    }
 	}	    

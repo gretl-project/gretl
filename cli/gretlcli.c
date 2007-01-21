@@ -836,7 +836,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    err = gretl_loop_append_line(s, pZ, pdinfo);
 	    if (err) {
 		set_errfatal(ERRFATAL_FORCE);
-		print_gretl_errmsg(prn);
+		errmsg(err, prn);
 	    } else if (!batch && !runit) {
 		/* echo to record */
 		echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);

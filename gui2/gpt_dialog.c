@@ -172,7 +172,7 @@ static double entry_to_gp_double (GtkWidget *w)
 	    const gchar *tmp = s;
 #endif
 	    if (check_atof(tmp)) {
-		errbox(get_gretl_errmsg());
+		errbox(gretl_errmsg_get());
 	    } else {
 		ret = atof(tmp);
 	    }
