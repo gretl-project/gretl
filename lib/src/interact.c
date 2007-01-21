@@ -3002,7 +3002,7 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	} else {
 	    print_end_redirection(prn);
 	    if (gretl_messages_on()) {
-		pprintf(prn, "Closed output file '%s'\n", outname);
+		pprintf(prn, _("Closed output file '%s'\n"), outname);
 	    }
 	    return 0;
 	}
@@ -3597,10 +3597,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case STORE:
 	if (*cmd->param != '\0') {
-	    if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
-		pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
-	    } else {
-		pprintf(prn, _("store: using filename %s\n"), cmd->param);
+	    if (gretl_messages_on()) {
+		if ((cmd->opt & OPT_Z) && !has_suffix(cmd->param, ".gz")) {
+		    pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
+		} else {
+		    pprintf(prn, _("store: using filename %s\n"), cmd->param);
+		}
 	    }
 	} else {
 	    pprintf(prn, _("store: no filename given\n"));
@@ -3612,7 +3614,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	    err = 1;
 	    break;
 	}
-	pprintf(prn, _("Data written OK.\n"));
+	if (gretl_messages_on()) {
+	    pprintf(prn, _("Data written OK.\n"));
+	}
 	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && pdinfo->markers) {
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));

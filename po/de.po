@@ -7392,7 +7392,7 @@ msgid ""
 "? "
 msgstr ""
 "gretl-Konsole: geben Sie 'help' für eine Liste von Befehlen ein\n"
-"?"
+"? "
 
 #: gui2/database.c:90
 #, c-format
