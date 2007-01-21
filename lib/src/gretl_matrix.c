@@ -5161,6 +5161,7 @@ double gretl_scalar_qform (const gretl_vector *b,
     if (tmp == NULL) {
 	*errp = E_ALLOC;
     } else {
+	tmp->val[0] = 0.0;
 	*errp = gretl_matrix_qform(b, mod, X, tmp, GRETL_MOD_NONE);
 	if (!*errp) {
 	    ret = tmp->val[0];

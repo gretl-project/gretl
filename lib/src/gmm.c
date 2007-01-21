@@ -806,7 +806,7 @@ static double get_gmm_crit (const double *b, void *p)
 
     s->crit = gretl_scalar_qform(s->oc->sum, s->oc->W, &err);
     if (!err) {
-	s->crit = - s->crit;
+	s->crit = -s->crit;
     }
 
 #if GMM_DEBUG > 2
@@ -1162,6 +1162,8 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	fprintf(stderr, "GMM calling BFGS: outer_iters = %d\n",
 		outer_iters);
 #endif
+
+	s->crit = 0.0;
 
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
