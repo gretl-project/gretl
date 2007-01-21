@@ -17,8 +17,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* errors.h -- prototypes of functions in errors.c */
-
 #ifndef GRETL_ERRORS_H
 #define GRETL_ERRORS_H
 
@@ -77,8 +75,6 @@ enum gretl_error_codes {
     E_MAX          /* 51 */
 }; 
 
-/* functions follow */
- 
 void errmsg (int err, PRN *prn);
 
 const char *errmsg_get_with_default (int err);

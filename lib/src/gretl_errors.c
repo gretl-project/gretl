@@ -17,10 +17,7 @@
  *
  */
 
-/* errors.c - error messages for gretl */
-
 #include "libgretl.h"
-#include "libset.h"
 
 char gretl_errmsg[ERRLEN];
 

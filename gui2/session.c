@@ -987,12 +987,16 @@ void verify_clear_data (void)
     close_session(NULL, &Z, &datainfo);
 }
 
+#ifndef G_OS_WIN32
+
 static const char *readd (DIR *d)
 {
     struct dirent *e = readdir(d);
 
     return (e == NULL)? NULL : e->d_name;
 }
+
+#endif
 
 static void remove_session_dir (void)
 {
