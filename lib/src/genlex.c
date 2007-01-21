@@ -912,7 +912,8 @@ void lex (parser *p)
 const char *getsymb (int t, const parser *p)
 {  
     if ((t > OP_MAX && t < FUNC_MAX) ||
-	(t > FUNC_MAX && t < F2_MAX)) {
+	(t > FUNC_MAX && t < F2_MAX) ||
+	(t > F2_MAX && t < FN_MAX)) {
 	return funname(t);
     }
 
