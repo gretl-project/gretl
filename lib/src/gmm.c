@@ -105,7 +105,8 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
     int v = varindex(pdinfo, name);
 
 #if GMM_DEBUG
-    fprintf(stderr, "oc_get_type: looking at '%s'\n", name);
+    fprintf(stderr, "oc_get_type: looking at '%s' (v = %d, pdinfo->v = %d)\n", 
+	    name, v, pdinfo->v);
 #endif
 
     /* try for a series first */
