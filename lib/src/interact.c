@@ -1213,6 +1213,8 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
 static int plausible_genr_start (const char *s, CMD *cmd, 
 				 const DATAINFO *pdinfo)
 {
+    int ret = 0;
+
     if (strchr(s, '=') || strstr(s, "++") || strstr(s, "--")) {
 	const char *ok = "+-*/=[";
 	char word[VNAMELEN];
@@ -1221,16 +1223,16 @@ static int plausible_genr_start (const char *s, CMD *cmd,
 	    s += strlen(word);
 	    while (*s == ' ') s++;
 	    if (strspn(s, ok) && check_varname(word) == 0) {
-		cmd->ci = GENR;
+		ret = 1;
 	    }
 	}
     } else if (varindex(pdinfo, s) < pdinfo->v) {
-	cmd->ci = GENR;
+	ret = 1;
     } else if (get_matrix_by_name(s)) {
-	cmd->ci = GENR;
+	ret = 1;
     }
 
-    return cmd->ci;
+    return ret;
 }
 
 /* if we find a semicolon directly after a varname, insert a space so
@@ -1767,10 +1769,14 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, cmd, pdinfo)) {
-		; /* maybe OK */
+		cmd->ci = GENR;
 	    } else if (gretl_get_user_function(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
+	    } else if (ifstate(IS_FALSE)) {
+		cmd_set_nolist(cmd);
+		cmd->ci = CMD_NULL;
+		return 0;
 	    } else {
 		cmd->err = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
