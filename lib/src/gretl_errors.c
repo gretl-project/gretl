@@ -82,13 +82,10 @@ static const char *gretl_error_messages[] = {
 
 static const char *look_up_errmsg (int err)
 {
-    const char *ret = "";
+    const char *ret = NULL;
 
     if (err > 0 && err < E_MAX) {
 	ret = gretl_error_messages[err];
-	if (ret == NULL) {
-	    return "";
-	}
     } else {
 	fprintf(stderr, "look_up_errmsg: out of bounds errcode %d\n", 
 		err);
@@ -110,14 +107,16 @@ static int error_printed;
 
 const char *errmsg_get_with_default (int err)
 {
-    const char *msg;
+    const char *msg = "";
 
     if (*gretl_errmsg != '\0') {
 	msg = gretl_errmsg;
     } else {
 	const char *deflt = look_up_errmsg(err);
 
-	msg = _(deflt);
+	if (deflt != NULL) {
+	    msg = _(deflt);
+	}
     }
 
     return msg;
@@ -135,10 +134,9 @@ const char *errmsg_get_with_default (int err)
 
 void errmsg (int err, PRN *prn)
 {
-    const char *msg;
-
     if (!error_printed && prn != NULL) {
-	msg = errmsg_get_with_default(err);
+	const char *msg = errmsg_get_with_default(err);
+
 	pprintf(prn, "%s\n", msg);
 	error_printed = 1;
     } 

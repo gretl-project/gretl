@@ -1152,7 +1152,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	if (oldcoeff == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    outer_max = 50; /* arbitrary! */
+	    outer_max = 200; /* arbitrary! */
 	}
     } else if (s->opt & OPT_T) {
 	/* two-step */
