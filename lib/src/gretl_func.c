@@ -2439,17 +2439,20 @@ static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
 {
     const int *list = get_list_by_name(listname);
     int d = gretl_function_depth();
-    int i, err = 0;
+    int i, vi, err = 0;
+
+    fprintf(stderr, "unlocalize '%s'\n", listname);
 
     if (list == NULL) {
 	err = E_DATA;
     } else {
 	for (i=1; i<=list[0]; i++) {
-	    if (list[i] != 0 && list[i] < pdinfo->v) {
-		if (STACK_LEVEL(pdinfo, list[i]) == d) {
-		    STACK_LEVEL(pdinfo, list[i]) -= 1;
+	    vi = list[i];
+	    if (vi != 0 && vi < pdinfo->v) {
+		if (STACK_LEVEL(pdinfo, vi) == d) {
+		    STACK_LEVEL(pdinfo, vi) -= 1;
 		}
-		unset_var_const(pdinfo, list[i]);
+		unset_var_const(pdinfo, vi);
 	    }
 	}
     }
@@ -2582,11 +2585,11 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    for (i=orig_v; i<pdinfo->v; i++) {
 		if (STACK_LEVEL(pdinfo, i) == d) {
-		    anyerr = dataset_drop_variable(i, pZ, pdinfo);
+		    anyerr = dataset_drop_variable(i--, pZ, pdinfo);
 		    if (anyerr && !err) {
 			err = anyerr;
 		    }
-		}
+		} 
 	    }
 	}
     } else {
