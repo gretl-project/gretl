@@ -2127,6 +2127,11 @@ int gretl_function_append_line (const char *line)
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
+    if (err) {
+	delete_ufunc_from_list(fun);
+	set_compiling_off();
+    }	
+
     return err;
 }
 
