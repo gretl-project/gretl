@@ -2451,8 +2451,6 @@ static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
     int d = gretl_function_depth();
     int i, vi, err = 0;
 
-    fprintf(stderr, "unlocalize '%s'\n", listname);
-
     if (list == NULL) {
 	err = E_DATA;
     } else {
