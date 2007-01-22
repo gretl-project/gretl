@@ -1279,8 +1279,9 @@ static void find_in_text (GtkWidget *widget, gpointer data)
     }
 }
 
-static void get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
-				     char *haystack)
+static void 
+get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
+			 char *haystack)
 {
     gchar *tmp;
 
@@ -1295,9 +1296,9 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
     windata_t *win = g_object_get_data(G_OBJECT(p), "windat");
     int minvar, wrapped = 0;
     char haystack[MAXLEN];
-    gchar *pstr;
+    char pstr[16];
     GtkTreeModel *model;
-    GtkTreeIter iter, iterbak;
+    GtkTreeIter iter;
     int found = -1;
 
     /* if searching in the main gretl window, start on line 1 */
@@ -1313,13 +1314,12 @@ static void find_in_listbox (GtkWidget *w, gpointer p)
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox));
 
-    /* try searching downward from the current line plus one */
-    pstr = g_strdup_printf("%d", win->active_var);
-    gtk_tree_model_get_iter_from_string(model, &iter, pstr);
-    g_free(pstr);
-    iterbak = iter;
-    if (!gtk_tree_model_iter_next(model, &iter)) {
-	iter = iterbak;
+    /* if possible, try searching downward from the current line 
+       plus one; failing start, start from the top */
+    sprintf(pstr, "%d", win->active_var);
+    if (!gtk_tree_model_get_iter_from_string(model, &iter, pstr) ||
+	!gtk_tree_model_iter_next(model, &iter)) {
+	gtk_tree_model_get_iter_first(model, &iter);
     }
 
  search_wrap:

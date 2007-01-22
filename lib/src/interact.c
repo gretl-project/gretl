@@ -47,7 +47,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 
 #include "laginfo.c"
 
