@@ -1015,10 +1015,12 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	int l = s->oc->noc;
 	
 	pmod->ess = - s->crit; /* note the borrowing! */
-	if (l > k) {
+
+	if (l > k && ((s->opt & OPT_V) || s->oc->step > 1)) {
 	    gretl_model_set_int(pmod, "J_df", l - k);
 	    gretl_model_set_double(pmod, "J_test", pmod->ess / s->nobs);
 	}
+
 	if (s->oc->step > 1) {
 	    gretl_model_set_int(pmod, "step", s->oc->step);
 	}

@@ -1170,7 +1170,12 @@ static int get_next_field (char *field, const char *s)
 
     *field = '\0';
 
+#if CMD_DEBUG
+    fprintf(stderr, "get_next_field: input = '%s'\n", s);
+#endif
+
     while (*s == ' ') s++;
+
     len = get_field_length(s);
 
     if (len >= 0) {
@@ -1299,7 +1304,7 @@ static void cmd_param_grab_string (CMD *cmd, const char *s)
     }
 }
 
-static void cmd_param_grab_word (CMD *cmd, const char *s)
+static void cmd_param_grab_word (CMD *cmd, const char *s, int *nf)
 {
     int n = strcspn(s, " =\n\t");
 
@@ -1308,6 +1313,9 @@ static void cmd_param_grab_word (CMD *cmd, const char *s)
 	cmd->param = gretl_strndup(s, n);
 	if (cmd->param == NULL) {
 	    cmd->err = E_ALLOC;
+	} else if (cmd->ci == REMEMBER && nf != NULL && 
+		   *(s+n) != '\0' && *(s+n) != ' ') {
+	    *nf += 1;
 	}
     }
 }
@@ -1319,7 +1327,7 @@ static void cmd_param_grab_word (CMD *cmd, const char *s)
 */
 
 static int capture_param (const char *s, CMD *cmd,
-			  const double **Z, 
+			  int *nf, const double **Z, 
 			  const DATAINFO *pdinfo)
 {
     /* if param has already been written by some special
@@ -1344,7 +1352,7 @@ static int capture_param (const char *s, CMD *cmd,
 	    cmd_param_grab_string(cmd, s);
 	} else {
 	    /* grab one 'word' */
-	    cmd_param_grab_word(cmd, s);
+	    cmd_param_grab_word(cmd, s, nf);
 	}
 #if CMD_DEBUG
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
@@ -1819,7 +1827,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci)) { 
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, (const double **) *pZ, pdinfo);
+	capture_param(line, cmd, NULL, (const double **) *pZ, pdinfo);
 	return cmd->err;
     }
 
@@ -1828,7 +1836,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, NULL, NULL);
+	capture_param(line, cmd, NULL, NULL, NULL);
 	return cmd->err;
     }
 
@@ -1948,7 +1956,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == MULTIPLY ||
 	cmd->ci == REMEMBER ||
 	cmd->ci == SETMISS) {
-	capture_param(line, cmd, (const double **) *pZ, pdinfo);
+	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
 	if (cmd->err) {
 	    goto bailout;
 	} else {
@@ -1982,7 +1990,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 	line += strspn(line, "=");
 	pos = (*line == ' ')? 0 : -1;
-	nf = count_fields(line);
+	nf = count_free_fields(line);
 	linelen = strlen(line);
     } else if (cmd->ci == MULTIPLY || cmd->ci == VECM) { 
 	free(cmd->extra);
@@ -2027,11 +2035,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	/* special: optional width for correlogram, periodogram */
 	if ((cmd->ci == CORRGM || cmd->ci == PERGM) && j == 2) {
 	    cmd->list[0] = 1;
-	    cmd_param_grab_word(cmd, rem);
+	    cmd_param_grab_word(cmd, rem, NULL);
 	    break;
 	} else if (cmd->ci == XCORRGM && j == 3) {
 	    cmd->list[0] = 2;
-	    cmd_param_grab_word(cmd, rem);
+	    cmd_param_grab_word(cmd, rem, NULL);
 	    break;
 	}	    
 
