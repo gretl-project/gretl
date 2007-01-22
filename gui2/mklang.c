@@ -5,9 +5,14 @@
 
 const char *special_keyword[] = {
     "for",
+    "foreach",
     "funcerr",
     "return", 
     "while",
+    "const",
+    "3sls",
+    "liml",
+    "fiml"
     NULL
 };
 
@@ -219,10 +224,12 @@ void output_lang_file (void)
 	
     puts("</keyword-list>\n");
 
+#if 0
     puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");
     puts(" <start-regex>&apos;</start-regex>");
     puts(" <end-regex>&apos;</end-regex>");
     puts("</string>\n");
+#endif
 
     puts("</language>");
 }
