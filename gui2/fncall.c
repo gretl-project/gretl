@@ -590,11 +590,13 @@ static void function_call_dialog (call_info *cinfo)
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
-    /* Help button */
-    button = context_help_button(GTK_DIALOG(cinfo->dlg)->action_area, -1);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(fncall_help), cinfo);
-    gtk_widget_show(button);    
+    /* Help button? */
+    if (cinfo->n_params > 0 || cinfo->rettype != ARG_NONE) {
+	button = context_help_button(GTK_DIALOG(cinfo->dlg)->action_area, -1);
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(fncall_help), cinfo);
+	gtk_widget_show(button);
+    }  
 
     gtk_widget_show(cinfo->dlg);
 }
@@ -846,6 +848,8 @@ void call_function_package (const char *fname, GtkWidget *w)
 	    }
 	}
 	strcat(fnline, ")");
+    } else {
+	strcat(fnline, "()");
     }
 
     /* FIXME destroy any "ARG" vars or matrices that were created? */

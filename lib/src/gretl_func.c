@@ -85,6 +85,7 @@ static fnpkg **pkgs;
 static int drop_function_vars = 1;
 
 static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
+static void delete_ufunc_from_list (ufunc *fun);
 
 /* record of state, and communication of state with outside world */
 
@@ -379,11 +380,12 @@ static int add_allocated_ufunc (ufunc *fun)
     return 0;
 }
 
-static ufunc *add_ufunc (void)
+static ufunc *add_ufunc (const char *fname)
 {
     ufunc *fun = ufunc_new();
 
     if (fun != NULL) {
+	strncat(fun->name, fname, FN_NAMELEN - 1);
 	if (add_allocated_ufunc(fun)) {
 	    free_ufunc(fun);
 	    fun = NULL;
@@ -696,7 +698,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
     ufunc *fun = ufunc_new();
     xmlNodePtr cur;
     char *fname;
-    int err = 0;
+    int i, err = 0;
 
     if (fun == NULL) {
 	return E_ALLOC;
@@ -711,6 +713,14 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
     fprintf(stderr, "read_ufunc_from_xml: got function name '%s'\n",
 	    fname);
 #endif
+
+    /* check for name collisions */
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(fname, ufuns[i]->name)) {
+	    pprintf(prn, "Redefining function '%s'\n", fname);
+	    delete_ufunc_from_list(ufuns[i]);
+	}
+    }
 
     *fun->name = 0;
     strncat(fun->name, fname, FN_NAMELEN - 1);
@@ -1999,7 +2009,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 			      line + 8, &fun, prn);
 
     if (!err && fun == NULL) {
-	fun = add_ufunc();
+	fun = add_ufunc(fname);
 	if (fun == NULL) {
 	    free_params_array(params, n_params);
 	    err = E_ALLOC;
