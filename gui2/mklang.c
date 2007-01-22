@@ -12,7 +12,7 @@ const char *special_keyword[] = {
     "const",
     "3sls",
     "liml",
-    "fiml"
+    "fiml",
     NULL
 };
 
