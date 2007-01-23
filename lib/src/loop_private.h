@@ -28,8 +28,12 @@ enum {
     SET_FALSE,
     SET_TRUE,
     SET_ELSE,
+    SET_ELIF,
     SET_ENDIF,
     IS_FALSE,
+    DOINDENT,
+    UNINDENT,
+    GETINDENT,
     RELAX
 };
 

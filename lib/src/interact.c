@@ -225,6 +225,9 @@ static int catch_command_alias (char *line, CMD *cmd)
 	strcpy(s, "endif");
 	strcpy(line, "endif");
 	cmd->ci = ENDIF;
+    } else if (!strcmp(s, "elif")) {
+	cmd->ci = ELSE;
+	cmd->opt = OPT_I;
     }
 
     return cmd->ci;
@@ -347,25 +350,84 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == LOGS || \
                          c == SQUARE)
 
+/* Below: 'skip' gets set whenever an "if" or "elif" condition is
+   satisfied: in that case we don't need to bother with any trailing
+   "else" or "elif" clauses.  We do need to be sure to switch off
+   'skip' when we meet a matching "endif".
+*/
+
+enum {
+    SKIP_NONE = 0,
+    SKIP_ALLOW,
+    SKIP_DENY
+};
+
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {
+    static int skip;
+    static int skiplev;
     int ci = cmd->ci;
-    int err = 0;
+    int ok, err = 0;
 
-    /* clear to proceed? */
-    if (!ifstate(IS_FALSE) && 
-	ci != IF && ci != ELSE && ci != ENDIF) {
+#if 0
+    fprintf(stderr, "flow_control: line='%s', skiplev=%d, skip=%d\n",
+	    line, skiplev, skip);
+#endif
+
+    if (skip == SKIP_ALLOW && ci == ELSE && 
+	skiplev == ifstate(GETINDENT)) {
+	/* reached the end of an accepted block */
+	skip = SKIP_DENY;
+	return 1;
+    }
+
+    if (skip == SKIP_DENY) {
+	/* keep going to the end of the relevant conditional, keeping
+	   track of depth */
+	if (ci == IF) {
+	    ifstate(DOINDENT);
+	} else if (ci == ENDIF) {
+	    if (skiplev < ifstate(GETINDENT)) {
+		ifstate(UNINDENT);
+	    } else {
+		skip = SKIP_NONE;
+	    }
+	}
+	if (skip == SKIP_DENY) {
+	    return 1;
+	}
+    }
+
+    /* otherwise, clear to proceed? */
+    if (!ifstate(IS_FALSE) && ci != IF && ci != ELSE && ci != ENDIF) {
 	return 0;
     }
 
-    if (ci == IF) {
-	int ok = if_eval(line, pZ, pdinfo);
-
+    if (ci == ELSE && (cmd->opt & OPT_I)) {
+	/* "elif" */
+	err = ifstate(SET_ELIF);
+	if (!ifstate(IS_FALSE)) {
+	    ifstate(UNINDENT);
+	    ok = if_eval(line, pZ, pdinfo);
+	    if (ok == -1) {
+		err = 1;
+	    } else if (ok) {
+		err = ifstate(SET_TRUE);
+		skip = SKIP_ALLOW;
+		skiplev = ifstate(GETINDENT);
+	    } else {
+		err = ifstate(SET_FALSE);
+	    }
+	} 	
+    } else if (ci == IF) {
+	ok = if_eval(line, pZ, pdinfo);
 	if (ok == -1) {
 	    err = 1;
 	} else if (ok) {
 	    err = ifstate(SET_TRUE);
+	    skip = SKIP_ALLOW;
+	    skiplev = ifstate(GETINDENT);
 	} else {
 	    err = ifstate(SET_FALSE);
 	}
@@ -376,6 +438,7 @@ static int flow_control (const char *line, double ***pZ,
     }
 
     if (err) {
+	ifstate(RELAX);
 	cmd->err = E_SYNTAX;
     }    
 
@@ -680,12 +743,14 @@ static int expand_command_list (CMD *cmd, int add)
     return 0;
 }
 
-/* something like "list xl -= foo" */
+/* something like "list xl -= foo", "list xl += foo" */
 
-static void shrink_list (CMD *cmd, char *line, DATAINFO *pdinfo)
+static void 
+shrink_or_expand_list (CMD *cmd, char *line, DATAINFO *pdinfo)
 {
-    int *llist, *rlist, *dlist;
+    int *llist, *rlist, *list;
     char *s;
+    int expand = 0;
 
     llist = get_list_by_name(cmd->param);
     if (llist == NULL) {
@@ -693,19 +758,32 @@ static void shrink_list (CMD *cmd, char *line, DATAINFO *pdinfo)
 	return;
     }
 
-    s = line + 2; /* skip "-=" */
+    expand = (*line == '+');
+    s = line + 2; /* skip "-=/+=" */
 
     rlist = gretl_list_build(s, pdinfo, &cmd->err);
     if (cmd->err) {
 	return;
     }
 
-    dlist = gretl_list_diff_new(llist, rlist, 1);
-    if (dlist == NULL) {
-	cmd->err = 1; /* FIXME */
+    if (expand) {
+	list = gretl_list_copy(llist);
+	if (list == NULL) {
+	    cmd->err = E_ALLOC;
+	} else {
+	    cmd->err = gretl_list_add_list(&list, rlist);
+	}
+    } else {
+	list = gretl_list_diff_new(llist, rlist, 1);
+    }
+
+    if (list == NULL) {
+	if (!cmd->err) {
+	    cmd->err = 1; /* FIXME */
+	}
     } else {
 	free(cmd->list);
-	cmd->list = dlist;
+	cmd->list = list;
     }
 
     free(rlist);
@@ -1980,9 +2058,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    return cmd->err;
 	} 
 	line += strspn(line, " ");
-	if (!strncmp(line, "-=", 2)) {
-	    /* "subtracting" one list from another */
-	    shrink_list(cmd, line, pdinfo);
+	if (!strncmp(line, "-=", 2) || !strncmp(line, "+=", 2)) {
+	    /* adding or subtracting lists */
+	    shrink_or_expand_list(cmd, line, pdinfo);
 	    return cmd->err;
 	} else if (*line != '=') {
 	    cmd->err = E_PARSE;
@@ -4240,7 +4318,6 @@ int ready_for_command (const char *line)
 	"critical", 
 	"seed", 
 	"function",
-	"newfunc",
 	"noecho",
 	"exit",
 	NULL 

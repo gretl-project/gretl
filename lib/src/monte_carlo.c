@@ -2876,7 +2876,9 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     val = generate_scalar(line, pZ, pdinfo, &err);
 
 #if IFDEBUG
-    fprintf(stderr, "if_eval: generate returned %d\n", err);
+    if (err) {
+	fprintf(stderr, "if_eval: generate returned %d\n", err);
+    }
 #endif
 
     if (err) {
@@ -2894,7 +2896,24 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     return ret;
 }
 
-#define IF_DEPTH 9
+#if IFDEBUG
+static const char *ifstr (int c)
+{
+    if (c == SET_FALSE) return "SET_FALSE";
+    if (c == SET_TRUE)  return "SET_TRUE";
+    if (c == SET_ELSE)  return "SET_ELSE";
+    if (c == SET_ELIF)  return "SET_ELIF";
+    if (c == SET_ENDIF) return "SET_ENDIF";
+    if (c == IS_FALSE)  return "IS_FALSE";
+    if (c == DOINDENT)  return "DOINDENT";
+    if (c == UNINDENT)  return "UNINDENT";
+    if (c == GETINDENT) return "GETINDENT";
+    if (c == RELAX)     return "RELAX";
+    return "UNKNOWN";
+}
+#endif
+
+#define IF_DEPTH 32
 
 int ifstate (int code)
 {
@@ -2902,40 +2921,66 @@ int ifstate (int code)
     static unsigned char got_if[IF_DEPTH];
     static unsigned char got_else[IF_DEPTH];
     static unsigned char indent;
+    int i, ret = 0;
+
+#if IFDEBUG
+    fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
+#endif
 
     if (code == RELAX) {
 	indent = 0;
+    } else if (code == DOINDENT) {
+	return ++indent;
+    } else if (code == UNINDENT) {
+	return --indent;
+    } else if (code == GETINDENT) {
+	return indent;
     } else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
 	if (indent >= IF_DEPTH) {
-	    fprintf(stderr, "if depth (%d) exceeded\n", IF_DEPTH);
-	    return 1; /* too deeply nested */
+	    fprintf(stderr, "IF depth (%d) exceeded\n", IF_DEPTH);
+	    ret = 1;
+	} else {
+	    T[indent] = (code == SET_TRUE);
+	    got_if[indent] = 1;
+	    got_else[indent] = 0;
 	}
-	T[indent] = (code == SET_TRUE);
-	got_if[indent] = 1;
-	got_else[indent] = 0;
     } else if (code == SET_ELSE) {
 	if (got_else[indent] || !got_if[indent]) {
 	    strcpy(gretl_errmsg, "Unmatched \"else\"");
-	    return 1; 
+	    ret = 1; 
+	} else {
+	    T[indent] = !T[indent];
+	    got_else[indent] = 1;
 	}
-	T[indent] = !T[indent];
-	got_else[indent] = 1;
+    } else if (code == SET_ELIF) {
+	if (got_else[indent] || !got_if[indent]) {
+	    strcpy(gretl_errmsg, "Unmatched \"elif\"");
+	    ret = 1; 
+	} else {
+	    T[indent] = !T[indent];
+	}
     } else if (code == SET_ENDIF) {
 	if (!got_if[indent] || indent == 0) {
 	    strcpy(gretl_errmsg, "Unmatched \"endif\"");
-	    return 1; 
+	    ret = 1; 
+	} else {
+	    got_if[indent] = 0;
+	    got_else[indent] = 0;
+	    indent--;
 	}
-	got_if[indent] = 0;
-	got_else[indent] = 0;
-	indent--;
     } else if (code == IS_FALSE) {
-	int i;
-
 	for (i=1; i<=indent; i++) {
-	    if (T[i] == 0) return 1;
+	    if (T[i] == 0) {
+		ret = 1;
+		break;
+	    }
 	}
     }
 
-    return 0;
+#if IFDEBUG
+    fprintf(stderr, "ifstate: returning %d (indent = %d)\n", ret, indent);
+#endif
+
+    return ret;
 }
