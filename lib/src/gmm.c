@@ -1113,7 +1113,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 	err = newey_west(s->oc->tmp, hac_lag, V);
     }
 
-    pprintf(prn, "  %s\n", _("Orthgonality"));
+    pprintf(prn, "  %s\n", _("Orthogonality"));
     pprintf(prn, "   %10s %10s %10s\n\n", _("condition"), 
 	    _("mean"), _("std. dev"));
 
