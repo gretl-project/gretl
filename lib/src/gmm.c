@@ -1113,9 +1113,10 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 	err = newey_west(s->oc->tmp, hac_lag, V);
     }
 
-    pprintf(prn, "  %s\n", _("Orthogonality"));
-    pprintf(prn, "   %10s %10s %10s\n\n", _("condition"), 
-	    _("mean"), _("std. dev"));
+    pprintf(prn, "\n%s\n", 
+	    _("Orthgonality conditions - descriptive statistics"));
+    pprintf(prn, "\n%10s  %10s %10s\n\n", _("OC"),
+            _("mean"), _("std. dev"));
 
     for (i=0; i<k; i++) {
 	pprintf(prn, "%10d    %10.6f", i, gretl_vector_get(s->oc->sum, i)/T);
