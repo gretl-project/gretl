@@ -684,33 +684,39 @@ static void getword (parser *p)
 #endif
 }
 
+/* below: we're testing 'ch' for validity, given what we've already
+   packed into string 's' up to element 'i'
+*/
+
 static int ok_dbl_char (int ch, char *s, int i)
 {
+    int ret = 0;
+
     if (i < 0) {
 	return 1;
     }
 
-    if (s[i] == 'e' || s[i] == 'E') {
+    if (ch >= '0' && ch <= '9') {
+	/* numeral: always OK */
+	ret = 1;
+    } else if (s[i] == 'e' || s[i] == 'E') {
 	if (ch == '+' || ch == '-') {
 	    /* +/- "inside" a double: only OK at the start of the exponent */
-	    return 1;
+	    ret = 1;
 	}
-    } else if (ch >= '0' && ch <= '9') {
-	/* numeral: OK except at start of exponent (?) */
-	return 1;
     } else if (ch == '.' && !strchr(s, '.') && 
 	       !strchr(s, 'e') && !strchr(s, 'E')) {
 	/* point is OK is we haven't already got one, and
 	   we're not already in the exponent part */
-	return 1;
+	ret = 1;
     } else if (ch == 'e' || ch == 'E') {
 	if (!strchr(s, 'e') && !strchr(s, 'E')) {
 	    /* exponent char is OK if we don't already have one */
-	    return 1;
+	    ret = 1;
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 static double getdbl (parser *p)
@@ -729,7 +735,8 @@ static double getdbl (parser *p)
     } 
 
 #if LDEBUG
-    fprintf(stderr, "getdbl: xstr = '%s'\n", xstr);
+    fprintf(stderr, "getdbl: xstr = '%s', x = %g\n", xstr,
+	    dot_atof(xstr));
 #endif
 
     return dot_atof(xstr);

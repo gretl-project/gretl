@@ -1343,13 +1343,35 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+static int ok_matrix_dim (double xr, double xc)
+{
+    double imax = (double) INT_MAX;
+    double xm = xr * xc;
+
+    return (xr > 0 && xr < imax && 
+	    xc > 0 && xc < imax &&
+	    xm > 0 && xm < imax);
+}
+
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	int rows = l->v.xval;
-	int cols = f == IMAT ? l->v.xval : r->v.xval;
+	double xr = l->v.xval;
+	double xc = f == IMAT ? l->v.xval : r->v.xval;
+	int rows, cols;
+
+	gretl_error_clear();
+
+	if (!ok_matrix_dim(xr, xc)) {
+	    p->err = E_DATA;
+	    matrix_error(p);
+	    return ret;
+	}
+
+	rows = xr;
+	cols = xc;
 
 	switch (f) {
 	case IMAT:
