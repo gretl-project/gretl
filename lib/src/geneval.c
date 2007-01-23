@@ -1348,9 +1348,9 @@ static int ok_matrix_dim (double xr, double xc)
     double imax = (double) INT_MAX;
     double xm = xr * xc;
 
-    return (xr > 0 && xr < imax && 
-	    xc > 0 && xc < imax &&
-	    xm > 0 && xm < imax);
+    return (xr > 0 && xr <= imax && 
+	    xc > 0 && xc <= imax &&
+	    xm > 0 && xm <= imax);
 }
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
@@ -1359,7 +1359,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	double xr = l->v.xval;
-	double xc = f == IMAT ? l->v.xval : r->v.xval;
+	double xc = (f == IMAT)? l->v.xval : r->v.xval;
 	int rows, cols;
 
 	gretl_error_clear();
