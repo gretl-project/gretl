@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-22 13:45-0500\n"
-"PO-Revision-Date: 2007-01-22 13:49-0500\n"
+"PO-Revision-Date: 2007-01-23 12:43+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2026,47 +2026,47 @@ msgstr "Carattere non valido \"%c\"\n"
 #: lib/src/genmain.c:40
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr ""
+msgstr "Modificata la serie %s (ID %d)"
 
 #: lib/src/genmain.c:46
 #, c-format
 msgid "Replaced scalar %s (ID %d)"
-msgstr ""
+msgstr "Sostituito lo scalare %s (ID %d)"
 
 #: lib/src/genmain.c:49
 #, c-format
 msgid "Generated scalar %s (ID %d)"
-msgstr ""
+msgstr "Generato lo scalare %s (ID %d)"
 
 #: lib/src/genmain.c:60
 #, c-format
 msgid "Replaced series %s (ID %d)"
-msgstr ""
+msgstr "Sostituita la serie %s (ID %d)"
 
 #: lib/src/genmain.c:63
 #, c-format
 msgid "Generated series %s (ID %d)"
-msgstr ""
+msgstr "Generata la serie %s (ID %d)"
 
 #: lib/src/genmain.c:69
-#, fuzzy, c-format
+#, c-format
 msgid "Modified matrix %s"
-msgstr "Matrice %s eliminata"
+msgstr "Modificata la matrice %s"
 
 #: lib/src/genmain.c:71
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced matrix %s"
-msgstr "Matrice %s eliminata"
+msgstr "Eliminata la matrice %s"
 
 #: lib/src/genmain.c:73
-#, fuzzy, c-format
+#, c-format
 msgid "Generated matrix %s"
-msgstr "Matrice %s eliminata"
+msgstr "Generata la matrice %s"
 
 #: lib/src/genmain.c:76
-#, fuzzy, c-format
+#, c-format
 msgid "Generated list %s"
-msgstr "Matrice %s eliminata"
+msgstr "Generata la lista %s"
 
 #: lib/src/genmain.c:86 lib/src/genmain.c:89
 msgid "Warning"
@@ -2122,39 +2122,36 @@ msgstr "La stringa è troppo lunga (%d invece del massimo %d)\n"
 
 #: lib/src/gmm.c:566
 msgid "Orthogonality conditions must come before the weights matrix"
-msgstr ""
+msgstr "Le condizioni di ortogonalità devono precedere la matrice dei pesi"
 
 #: lib/src/gmm.c:621
 msgid "Weights must come after orthogonality conditions"
-msgstr ""
+msgstr "I pesi devono seguire le condizioni di ortogonalità"
 
 #: lib/src/gmm.c:626
 msgid "Weights are already defined"
-msgstr ""
+msgstr "I pesi sono già definiti"
 
 #: lib/src/gmm.c:647
 #, c-format
 msgid "Weight matrix is of wrong size: should be %d x %d"
-msgstr ""
+msgstr "La matrice dei pesi ha dimensioni errate: dovrebbe essere %d x %d"
 
 #: lib/src/gmm.c:678
-#, fuzzy
 msgid "No orthogonality conditions have been specified"
-msgstr "Non è stata specificata alcuna funzione di regressione"
+msgstr "Non è stata specificata alcuna condizione di ortogonalità"
 
 #: lib/src/gmm.c:683
-#, fuzzy
 msgid "No weights have been specified"
-msgstr "Non è stata specificata alcuna funzione di regressione"
+msgstr "Non sono stati specificati i pesi"
 
 #: lib/src/gmm.c:1116
 msgid "Orthgonality"
-msgstr ""
+msgstr "Ortogonalità"
 
 #: lib/src/gmm.c:1117
-#, fuzzy
 msgid "condition"
-msgstr "MV condizionale"
+msgstr "condizione"
 
 #: lib/src/gmm.c:1118 gui2/calculator.c:1268 gui2/calculator.c:1277
 #: gui2/calculator.c:1295 gui2/calculator.c:1715 plugin/range-mean.c:68
@@ -2163,9 +2160,8 @@ msgid "mean"
 msgstr "Media"
 
 #: lib/src/gmm.c:1118
-#, fuzzy
 msgid "std. dev"
-msgstr "Deviazione standard"
+msgstr "Dev. std."
 
 #: lib/src/graphing.c:883
 #, c-format
@@ -2488,7 +2484,7 @@ msgstr "Nessuna descrizione disponibile"
 #: lib/src/gretl_func.c:2639
 #, c-format
 msgid "Error message from %s:\n"
-msgstr ""
+msgstr "Messaggi di errore da %s:\n"
 
 #: lib/src/gretl_func.c:2853
 #, c-format
@@ -2500,19 +2496,19 @@ msgid "/File/_Open data"
 msgstr "/File/_Apri dati"
 
 #: lib/src/gretl_list.c:183
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced list '%s'\n"
-msgstr "Sostituisci con:"
+msgstr "Sostituita la lista '%s'\n"
 
 #: lib/src/gretl_list.c:201
 #, c-format
 msgid "Added list '%s'\n"
-msgstr ""
+msgstr "Aggiunta la lista '%s'\n"
 
 #: lib/src/gretl_list.c:203
 #, c-format
 msgid "Warning: the name was truncated to %d characters\n"
-msgstr ""
+msgstr "Attenzione: il nome è stato troncato a %d caratteri\n"
 
 #: lib/src/gretl_list.c:1191
 #, c-format
@@ -3430,9 +3426,9 @@ msgid "Output is not currently diverted to file\n"
 msgstr "Al momento i risultati non sono rediretti al file\n"
 
 #: lib/src/interact.c:3019
-#, fuzzy, c-format
+#, c-format
 msgid "Closed output file '%s'\n"
-msgstr "Chiusura del file per la redirezione dell'output"
+msgstr "Chiuso il file di output '%s'\n"
 
 #: lib/src/interact.c:3027
 #, c-format
@@ -3672,9 +3668,8 @@ msgstr "Somma dei quadrati dei residui"
 
 #: lib/src/modelprint.c:152 lib/src/modelprint.c:155 lib/src/modelprint.c:162
 #: lib/src/modelprint.c:164 lib/src/printout.c:2197
-#, fuzzy
 msgid "GMM criterion"
-msgstr "iterazione"
+msgstr "Criterio GMM"
 
 #: lib/src/modelprint.c:195
 msgid "Unadjusted R-squared"
@@ -3764,23 +3759,21 @@ msgid "Equation is just identified"
 msgstr "L'equazione è esattamente identificata"
 
 #: lib/src/modelprint.c:367 lib/src/modelprint.c:369
-#, fuzzy, c-format
+#, c-format
 msgid "Test for AR(%d) errors:"
-msgstr "Test per ARCH di ordine %s"
+msgstr "Test per errori AR(%d):"
 
 #: lib/src/modelprint.c:396 lib/src/modelprint.c:401
 msgid "Wald (joint) test"
 msgstr "Test (congiunto) di Wald"
 
 #: lib/src/modelprint.c:397 lib/src/modelprint.c:402
-#, fuzzy
 msgid "J test"
-msgstr "test %s"
+msgstr "Test J"
 
 #: lib/src/modelprint.c:400
-#, fuzzy
 msgid "Sargan test"
-msgstr "Test delle varianze"
+msgstr "Test di Sargan"
 
 #: lib/src/modelprint.c:492 lib/src/modelprint.c:496 lib/src/modelprint.c:502
 #: lib/src/modelprint.c:503
@@ -3965,7 +3958,7 @@ msgstr "ML"
 
 #: lib/src/modelprint.c:816
 msgid "GMM"
-msgstr ""
+msgstr "GMM"
 
 #: lib/src/modelprint.c:817 gui2/selector.c:1843
 msgid "Logistic"
@@ -4044,17 +4037,16 @@ msgid "1-step Arellano-Bond"
 msgstr "Arellano-Bond a un passo"
 
 #: lib/src/modelprint.c:872
-#, fuzzy
 msgid "Iterated GMM"
-msgstr "%s iterato"
+msgstr "GMM iterato"
 
 #: lib/src/modelprint.c:874
 msgid "2-step GMM"
-msgstr ""
+msgstr "GMM a due passi"
 
 #: lib/src/modelprint.c:876
 msgid "1-step GMM"
-msgstr ""
+msgstr "GMM a un passo"
 
 #: lib/src/modelprint.c:880
 msgid "Ordered Logit"
@@ -4669,7 +4661,7 @@ msgstr "NLS: convergenza fallita dopo %d iterazioni"
 
 #: lib/src/nls.c:2282
 msgid "Analytical derivatives cannot be used with GMM"
-msgstr ""
+msgstr "Non è possibile usare derivate analitiche con GMM"
 
 #: lib/src/nls.c:2529
 msgid "No regression function has been specified"
@@ -4686,14 +4678,12 @@ msgstr ""
 "Sono state fornite derivate analitiche: la riga \"params\" verrà ignorata"
 
 #: lib/src/nls.c:2582
-#, fuzzy
 msgid "No parameters have been specified"
-msgstr "Non è stata specificata alcuna funzione di regressione"
+msgstr "Non è stato specificato alcun parametro"
 
 #: lib/src/nls.c:2619
-#, fuzzy
 msgid "No function has been specified"
-msgstr "Non è stata specificata alcuna funzione di regressione"
+msgstr "Non è stata specificata alcuna funzione"
 
 #: lib/src/nls.c:2688
 msgid "Using numerical derivatives\n"
@@ -5053,9 +5043,8 @@ msgid "Listing %d variables:\n"
 msgstr "%d variabili elencate:\n"
 
 #: lib/src/printout.c:1485
-#, fuzzy
 msgid "list is empty"
-msgstr "Il buffer è vuoto"
+msgstr "la lista è vuota"
 
 #: lib/src/printout.c:1704
 #, c-format
@@ -5103,14 +5092,12 @@ msgid "   95%% confidence interval\n"
 msgstr "   Int. di confidenza al 95%%\n"
 
 #: lib/src/printout.c:2198
-#, fuzzy
 msgid "Criterion"
-msgstr "iterazione"
+msgstr "Criterio"
 
 #: lib/src/printout.c:2204 lib/src/printout.c:2209
-#, fuzzy
 msgid "Iteration"
-msgstr "iterazione"
+msgstr "Iterazione"
 
 #: lib/src/printout.c:2214
 #, c-format
@@ -6663,14 +6650,12 @@ msgid "Specify variables to plot:"
 msgstr "Specificare le variabili:"
 
 #: gui2/callbacks.c:443
-#, fuzzy
 msgid "gretl: GMM"
-msgstr "gretl: ARMA"
+msgstr "gretl: GMM"
 
 #: gui2/callbacks.c:444
-#, fuzzy
 msgid "GMM: Specify function and orthogonality conditions:"
-msgstr "MLE: specificare la funzione e le derivate, se possibile:"
+msgstr "GMM: specificare la funzione e le condizioni di ortogonalità:"
 
 #: gui2/callbacks.c:449
 msgid "gretl: maximum likelihood"
@@ -6733,14 +6718,12 @@ msgid "gretl: Student's t variable"
 msgstr "gretl: variabile t di Student"
 
 #: gui2/callbacks.c:524
-#, fuzzy
 msgid "gretl: binomial variable"
-msgstr "gretl: variabile normale"
+msgstr "gretl: variabile binomiale"
 
 #: gui2/callbacks.c:525
-#, fuzzy
 msgid "gretl: Poisson variable"
-msgstr "gretl: nome variabile"
+msgstr "gretl: variabile Poisson"
 
 #: gui2/callbacks.c:528
 msgid ""
@@ -6756,16 +6739,15 @@ msgstr "Indicare nome, media e deviazione standard:"
 
 #: gui2/callbacks.c:531 gui2/callbacks.c:532
 msgid "Enter name and degrees of freedom:"
-msgstr "Inserire il nome e i gradi di libertà:"
+msgstr "Indicare il nome e i gradi di libertà:"
 
 #: gui2/callbacks.c:533
 msgid "Enter name, number of trials and probability:"
-msgstr ""
+msgstr "Indicare il nome, il numero di prove e la probabilità:"
 
 #: gui2/callbacks.c:534
-#, fuzzy
 msgid "Enter name and mean (scalar or series):"
-msgstr "Indicare nome, media e deviazione standard:"
+msgstr "Indicare il nome e la media (scalare o serie):"
 
 #: gui2/callbacks.c:558
 msgid "gretl: create data set"
@@ -7717,24 +7699,20 @@ msgstr ""
 "variabile dipendente"
 
 #: gui2/dialogs.c:4424
-#, fuzzy
 msgid "t-ratio"
-msgstr "iterazione"
+msgstr "rapporto t"
 
 #: gui2/dialogs.c:4440
-#, fuzzy
 msgid "gretl: TeX tabular format"
-msgstr "gretl: formato dati"
+msgstr "gretl: formato tabulare TeX"
 
 #: gui2/dialogs.c:4445
-#, fuzzy
 msgid "Standard format"
-msgstr "Normale standard"
+msgstr "Formato standard"
 
 #: gui2/dialogs.c:4448
-#, fuzzy
 msgid "Custom format"
-msgstr "Formato"
+msgstr "Formato personalizzato"
 
 #: gui2/dialogs.c:4487 gui2/series_view.c:549
 msgid "Show"
@@ -8081,9 +8059,8 @@ msgid "No name was given for the list"
 msgstr "Non è stato dato alcun nome alla lista"
 
 #: gui2/fncall.c:310
-#, fuzzy
 msgid "Really create an empty list?"
-msgstr "Impossibile creare un dataset vuoto"
+msgstr "Si vuole davvero creare una lista vuota?"
 
 #: gui2/fncall.c:348
 msgid "Define list"
@@ -8099,9 +8076,8 @@ msgid "Call to function %s"
 msgstr "Chiamata alla funzione %s"
 
 #: gui2/fncall.c:464
-#, fuzzy
 msgid "Arguments:"
-msgstr "Strumenti"
+msgstr "Argomenti:"
 
 #: gui2/fncall.c:471
 msgid "name"
@@ -8381,9 +8357,8 @@ msgid "Color %d"
 msgstr "Colore %d"
 
 #: gui2/gpt_dialog.c:633
-#, fuzzy
 msgid "Reset to default"
-msgstr "Imposta come predefinito"
+msgstr "Imposta al valore predefinito"
 
 #: gui2/gpt_dialog.c:669
 msgid "Main"
@@ -9043,14 +9018,12 @@ msgid "/Add/Random variable/Student's _t..."
 msgstr "/Aggiungi/Variabile casuale/_T di Student..."
 
 #: gui2/gretl.c:419
-#, fuzzy
 msgid "/Add/Random variable/Binomial..."
-msgstr "/Aggiungi/Variabile casuale/_Normale..."
+msgstr "/Aggiungi/Variabile casuale/_Binomiale..."
 
 #: gui2/gretl.c:421
-#, fuzzy
 msgid "/Add/Random variable/Poisson..."
-msgstr "/Aggiungi/Variabile casuale/_Uniforme..."
+msgstr "/Aggiungi/Variabile casuale/_Poisson..."
 
 #: gui2/gretl.c:425
 msgid "/Add/_Periodic dummies"
@@ -9338,9 +9311,8 @@ msgid "/Model/_Maximum likelihood..."
 msgstr "/Modello/_ML - Massima verosimiglianza..."
 
 #: gui2/gretl.c:546
-#, fuzzy
 msgid "/Model/_GMM..."
-msgstr "/Modello/HCC_M..."
+msgstr "/Modello/_GMM..."
 
 #: gui2/gretl.c:549
 msgid "/Model/_Simultaneous equations..."
@@ -9877,7 +9849,7 @@ msgstr "/LaTeX/Salva/_Equazione"
 
 #: gui2/gui_utils.c:297
 msgid "/LaTeX/_Equation options"
-msgstr "/LaTeX/_Opzioni equazione"
+msgstr "/LaTeX/Opzioni _equazione"
 
 #: gui2/gui_utils.c:298
 msgid "/LaTeX/Equation options/Show _standard errors"
@@ -9888,9 +9860,8 @@ msgid "/LaTeX/Equation options/Show _t-ratios"
 msgstr "LaTeX/Opzioni equazione/Mostra rapporti _t"
 
 #: gui2/gui_utils.c:303
-#, fuzzy
 msgid "/LaTeX/_Tabular options..."
-msgstr "/LaTeX/_Opzioni equazione"
+msgstr "/LaTeX/Opzioni _tabella..."
 
 #: gui2/gui_utils.c:1037
 msgid "Failed to import data"
@@ -10710,22 +10681,20 @@ msgstr ""
 "Dovrebbe assomigliare a \"xyz 5\""
 
 #: gui2/library.c:3082
-#, fuzzy
 msgid ""
 "Specification is malformed\n"
 "Should be like \"foo 10 0.5\""
 msgstr ""
 "La specificazione è malformata\n"
-"Dovrebbe assomigliare a \"xyz 1 2.5\""
+"Dovrebbe assomigliare a \"xyz 10 0.5\""
 
 #: gui2/library.c:3087
-#, fuzzy
 msgid ""
 "Specification is malformed\n"
 "Should be like \"foo xbar\""
 msgstr ""
 "La specificazione è malformata\n"
-"Dovrebbe assomigliare a \"xyz 5\""
+"Dovrebbe assomigliare a \"nome parametro\""
 
 #: gui2/library.c:3093
 msgid ""
@@ -10756,13 +10725,12 @@ msgid "The degrees of freedom must be positive"
 msgstr "I gradi di libertà devono essere positivi"
 
 #: gui2/library.c:3114
-#, fuzzy
 msgid "The number of trials must be at least 1"
-msgstr "La variabile di controllo del loop deve essere uno scalare"
+msgstr "Il numero di prove deve essere almeno 1"
 
 #: gui2/library.c:3116
 msgid "The probability must be between 0 and 1"
-msgstr ""
+msgstr "La probabilità deve essere tra 0 e 1"
 
 #: gui2/library.c:3235
 #, c-format
@@ -10785,12 +10753,11 @@ msgstr "gretl: distribuzione dei residui"
 #: gui2/library.c:3423
 #, c-format
 msgid "Frequency plot for %s (n = %d, range %g to %g)"
-msgstr ""
+msgstr "Grafico della frequenza per %s (n = %d, intervallo da %g a %g)"
 
 #: gui2/library.c:3431
-#, fuzzy
 msgid "Number of bins:"
-msgstr "Numero di righe:"
+msgstr "Numero di intervalli:"
 
 #: gui2/library.c:3456
 msgid "Data contain negative values: gamma distribution not appropriate"
@@ -11835,9 +11802,8 @@ msgid "All ->"
 msgstr "Tutte ->"
 
 #: gui2/selector.c:3698 gui2/selector.c:3701
-#, fuzzy
 msgid "No variables are available"
-msgstr "Non è stata letta alcuna variabile\n"
+msgstr "Non è disponibile alcuna variabile"
 
 #: gui2/selector.c:3757
 msgid "Too many items were selected"
@@ -11860,6 +11826,8 @@ msgid ""
 "No user-defined functions are currently loaded.\n"
 "Please load or define some functions first."
 msgstr ""
+"Al momento non è stata caricata alcuna funzione utente.\n"
+"Per prima cosa occorre caricarne o definirne una."
 
 #: gui2/selector.c:3813
 msgid "Save functions"
@@ -12260,9 +12228,8 @@ msgid "Select color"
 msgstr "Seleziona colore"
 
 #: gui2/settings.c:2171
-#, fuzzy
 msgid "gretl: graph color selection"
-msgstr "gretl: scelta dei ritardi VAR"
+msgstr "gretl: scelta dei colori del grafico"
 
 #: gui2/settings.c:2223
 #, c-format
