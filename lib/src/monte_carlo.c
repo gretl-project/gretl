@@ -366,6 +366,7 @@ int ok_in_loop (int c)
 	c == DIFF || 
 	c == HURST ||	
 	c == KPSS ||
+        c == LABELS ||
 	c == LAGS || 
 	c == LDIFF || 
 	c == LOGS ||

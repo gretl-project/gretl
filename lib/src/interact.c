@@ -2912,23 +2912,23 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 static int set_var_info (const char *line, gretlopt opt, 
 			 DATAINFO *pdinfo, PRN *prn)
 {
-    char *p;
-    char vname[VNAMELEN];
-    int cmdlen = 0;
+    char *p, vname[VNAMELEN];
     int v, setstuff = 0;
 
     if (pdinfo->varinfo == NULL) {
 	return 1;
     }
 
-    /* skip command word */
-    cmdlen = strcspn(line, " ");
-    line += cmdlen++;
+    /* skip command word plus space */
+    line += strcspn(line, " ");
     line += strspn(line, " ");
 
     if (sscanf(line, "%15s", vname) != 1) {
 	return E_PARSE;
     }
+
+    /* skip varname, but not following space */
+    line += strcspn(line, " ");
 
     v = varindex(pdinfo, vname);
     if (v == pdinfo->v) {
@@ -2942,7 +2942,7 @@ static int set_var_info (const char *line, gretlopt opt,
 	set_var_discrete(pdinfo, v, 0);
     }
 
-    p = get_flag_field(line + cmdlen, 'd');
+    p = get_flag_field(line, 'd');
     if (p != NULL) {
 	setstuff = 1;
 	*VARLABEL(pdinfo, v) = 0;
@@ -2950,7 +2950,7 @@ static int set_var_info (const char *line, gretlopt opt,
 	free(p);
     }
 
-    p = get_flag_field(line + cmdlen, 'n');
+    p = get_flag_field(line, 'n');
     if (p != NULL) {
 	setstuff = 1;
 	*DISPLAYNAME(pdinfo, v) = 0;
