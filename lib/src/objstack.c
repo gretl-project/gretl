@@ -348,6 +348,38 @@ const char *gretl_object_get_name (void *p, GretlObjType type)
     return NULL;
 }
 
+static stacker *
+get_stacker_by_name (const char *oname, GretlObjType type, int *onum)
+{
+    stacker *s = NULL;
+    const char *test;
+    int i;
+
+    if (oname == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n_obj; i++) {
+	if (type == GRETL_OBJ_ANY || type == ostack[i].type) {
+	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
+	    if (!strcmp(oname, test)) {
+		if (onum != NULL) {
+		    *onum = i;
+		}
+		s = &ostack[i];
+		break;
+	    }
+	}
+    }
+
+#if ODEBUG
+    fprintf(stderr, "get_stacker_by_name: name='%s', type=%d: got s=%p\n",
+	    oname, type, (void *) s);
+#endif
+    
+    return s;
+}
+
 static void *
 get_object_by_name (const char *oname, GretlObjType type, int *onum)
 {
@@ -549,6 +581,11 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     stacker *orig;
     int onum, err = 0;
 
+#if ODEBUG
+    fprintf(stderr, "real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
+	    (void *) p, type, name);
+#endif
+
     if (p == NULL) {
 	return 1;
     }
@@ -567,7 +604,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	return err;
     }
 
-    orig = get_object_by_name(name, type, &onum);
+    orig = get_stacker_by_name(name, type, &onum);
 
     if (orig != NULL) {
 	/* replace existing object of same name */

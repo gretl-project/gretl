@@ -615,7 +615,7 @@ static void word_check_next_char (const char *s, parser *p)
 	} else {
 	    p->err = 1;
 	} 
-    } else if (p->ch == '.') {
+    } else if (p->ch == '.' && parser_charpos(p, '$') == 0) {
 	if (p->sym == UOBJ) {
 	    /* name of saved object followed by dollar variable? */
 	    p->sym = OVAR;

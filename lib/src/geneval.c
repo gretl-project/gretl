@@ -4658,6 +4658,12 @@ static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
 
+    if (r == NULL) {
+	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
+	p->err = E_DATA;
+	return E_DATA;
+    }
+
     if (p->targ == NUM) {
 	/* result must be scalar or 1 x 1 matrix */
 	if (r->t == VEC || r->t == LIST || non_scalar_matrix(r)) {
