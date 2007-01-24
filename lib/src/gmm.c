@@ -1120,7 +1120,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     }
 
     pprintf(prn, "\n%s\n", 
-	    _("Orthgonality conditions - descriptive statistics"));
+	    _("Orthogonality conditions - descriptive statistics"));
     pprintf(prn, "\n%10s  %10s %10s\n\n", _("OC"),
             _("mean"), _("std. dev"));
 
