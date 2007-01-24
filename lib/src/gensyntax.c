@@ -642,6 +642,25 @@ static void get_args (NODE *t, parser *p, int opt)
     }
 }
 
+static void get_ovar_ref (NODE *t, parser *p)
+{
+    if (p->ch != '.' || parser_charpos(p, '$') != 0) {
+	p->err = E_PARSE;
+    }
+
+    p->idnum = 0;
+
+    lex(p);
+    lex(p);
+
+    if (p->idnum == 0) {
+	p->err = E_PARSE;
+    } else {
+	t->v.b2.r = newref(p);
+	lex(p);
+    }
+}
+
 #define idnum_to_ext(t) (t == LAG || t == OBS || t == MVAR || \
                          t == DMSL || t == DMSTR)
 
@@ -714,8 +733,7 @@ static NODE *powterm (parser *p)
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
-	    lex(p);
-	    t->v.b2.r = base(p, t);
+	    get_ovar_ref(t, p);
 	}
     } else if (p->sym == LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
