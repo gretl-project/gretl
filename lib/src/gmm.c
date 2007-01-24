@@ -888,6 +888,12 @@ static int newey_west (const gretl_matrix *E, int h,
 				  V, GRETL_MOD_CUMULATE);
     }
 
+    if (!gretl_matrix_is_symmetric(V)) {
+	/* should we do this? */
+	fprintf(stderr, "newey_west: V is not symmetric\n");
+	gretl_matrix_xtr_symmetric(V);
+    }
+
     gretl_matrix_free(W);
 
     return 0;
@@ -1194,6 +1200,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	    if (outer_iters == outer_max) {
 		if (outer_max > 2) {
 		    fprintf(stderr, "Breaking on max outer iter\n");
+		    err = E_NOCONV;
 		}
 	    }
 	}
@@ -1318,7 +1325,7 @@ int gmm_missval_check (nlspec *s)
     }
 
     for (t2=s->t2; t2>=s->t1; t2--) {
-	k = t1 - s->t1;
+	k = t2 - s->t1;
 	all_ok = 1;
 	for (i=0; i<m; i++) {
 	    x = gretl_matrix_get(s->oc->e, k, i);
