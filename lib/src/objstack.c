@@ -944,6 +944,20 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
     return M;
 }
 
+static int varchar_spn_with_space (const char *s)
+{
+    const char *varchars = "abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"0123456789_ ";
+    int ret = 0;
+
+    if (isalpha(*s)) {
+	ret = strspn(s, varchars);
+    }
+
+    return ret;
+}
+
 #define OPDEBUG 0
 
 /* try to parse an "object-oriented" command, such as
@@ -953,7 +967,6 @@ int parse_object_command (const char *s, char *name, char **cmd)
 {
     int len, start = 0;
     int quoted = 0;
-    const char *p;
     int err = 0;
 
     *name = 0;
@@ -966,32 +979,30 @@ int parse_object_command (const char *s, char *name, char **cmd)
 
     /* skip an opening quote */
     if (*s == '"') {
-	s++;
 	quoted = 1;
+	s++;
     }
 
-    p = s;
-
-    /* crawl to end of (possibly quoted) "name" */
-    len = 0;
-    while (*s) {
-	if (*s == '"') {
-	    quoted = 0;
-	    len--;
-	}
-	if (!quoted && (isspace(*s) || *s == '.')) break;
-	s++; len++;
+    if (quoted) {
+	len = varchar_spn_with_space(s);
+    } else {
+	len = gretl_varchar_spn(s);
     }
 
     if (len == 0) {
 	return 0;
-    }    
+    } 
 
     if (len > MAXSAVENAME - 1) {
 	len = MAXSAVENAME - 1;
     }
 
-    strncat(name, p, len);
+    strncat(name, s, len);
+    s += len;
+
+    if (quoted && *s == '"') {
+	s++;
+    }
 
     /* is an object command embedded? */
     if (*s == '.') {

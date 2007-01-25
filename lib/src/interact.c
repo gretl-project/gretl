@@ -2835,8 +2835,13 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     /* command is preceded by a "savename" to which an object will
        be assigned */
     if (*cmd->savename) {
-	pprintf(prn, "%s <- ", cmd->savename);
-	llen += strlen(cmd->savename) + 4;
+	if (haschar(' ', cmd->savename) >= 0) {
+	    pprintf(prn, "\"%s\" <- ", cmd->savename);
+	    llen += strlen(cmd->savename) + 6;
+	} else {
+	    pprintf(prn, "%s <- ", cmd->savename);
+	    llen += strlen(cmd->savename) + 4;
+	}
     }
 
     if (!dont_print_list(cmd)) {
