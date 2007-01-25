@@ -666,7 +666,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	    }
 	} else if (scalar_arg(fun->params[i].type)) {
 	    print_deflt_min_max(&fun->params[i], prn);
-	} else if (ref_type(fun->params[i].type)) {
+	} else if (ref_type(fun->params[i].type) || 
+		   fun->params[i].type == ARG_LIST) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
 	if (i == fun->n_params - 1) {

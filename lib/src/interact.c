@@ -435,6 +435,7 @@ static int flow_control (const char *line, double ***pZ,
 	err = ifstate(SET_ELSE);
     } else if (ci == ENDIF) {
 	err = ifstate(SET_ENDIF);
+	skip = SKIP_NONE;
     }
 
     if (err) {
