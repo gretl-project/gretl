@@ -2460,6 +2460,8 @@ int gretl_shell (const char *arg)
 	arg++;
     }
 
+    arg += strspn(arg, " \t");
+
     old1 = signal(SIGINT, SIG_IGN);
     old2 = signal(SIGQUIT, SIG_IGN);
 

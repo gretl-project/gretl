@@ -200,8 +200,8 @@ void win_show_error (DWORD dw)
     LocalFree(buf);
 }
 
-int winfork (char *cmdline, const char *dir, int wshow,
-	     DWORD flags)
+static int real_winfork (char *app, char *cmdline, const char *dir, 
+			 int wshow, DWORD flags)
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
@@ -216,7 +216,7 @@ int winfork (char *cmdline, const char *dir, int wshow,
     ZeroMemory(&pi, sizeof pi);  
 
     /* zero return means failure */
-    child = CreateProcess(NULL, cmdline, 
+    child = CreateProcess(app, cmdline, 
 			  NULL, NULL, FALSE,
 			  flags,
 			  NULL, dir,
@@ -237,9 +237,15 @@ int winfork (char *cmdline, const char *dir, int wshow,
     return 0;
 }
 
+int winfork (char *cmdline, const char *dir, int wshow,
+	     DWORD flags)
+{
+    return real_winfork(NULL, cmdline, dir, wshow, flags);
+}
+
 int gretl_spawn (char *cmdline)
 {
-    return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
+    return real_winfork(NULL, cmdline, NULL, SW_SHOWMINIMIZED, 0);
 }
 
 char *desktop_path (void)
@@ -281,18 +287,29 @@ int gretl_shell (const char *arg)
 	arg++;
     }
 
+    arg += strspn(arg, " \t");
+
     if (async) {
 	winret = WinExec(arg, SW_SHOWNORMAL);
 	if (winret <= 31) {
 	    err = 1;
 	}
-    } else {	
-	char *myarg = gretl_strdup(arg);
+    } else {
+	char *myarg, app[8];
+
+	if (!strncmp(arg, "cmd ", 4) || !strncmp(arg, "cmd.exe ", 8)) {
+	    strcpy(app, "cmd.exe");
+	    arg += strcspn(arg, " ");
+	    arg += strspn(arg, " ");
+	    myarg = gretl_strdup(arg);
+	} else {
+	    myarg = gretl_strdup(arg);
+	}
 
 	if (myarg == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = winfork(myarg, NULL, SW_SHOWMINIMIZED, 0);
+	    err = real_winfork(app, myarg, NULL, SW_SHOWMINIMIZED, 0);
 	    free(myarg);
 	}
     } 
