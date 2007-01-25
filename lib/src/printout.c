@@ -2364,6 +2364,10 @@ static double printf_get_scalar (char *s, double ***pZ,
 	x = generate_scalar(s, pZ, pdinfo, err);
     }
 
+#if PRINTF_DEBUG
+    fprintf(stderr, "printf_get_scalar: returning %g\n", x);
+#endif
+
     return x;
 }
 

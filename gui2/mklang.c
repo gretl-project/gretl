@@ -9,6 +9,7 @@ const char *special_keyword[] = {
     "funcerr",
     "return", 
     "while",
+    "elif",
     "const",
     "3sls",
     "liml",

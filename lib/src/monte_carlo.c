@@ -1971,7 +1971,7 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 			    DATAINFO *pdinfo)
 {
     LOOPSET *loop = currloop;
-    LOOPSET *newloop = loop;
+    LOOPSET *newloop = currloop;
     int err = 0;
 
     gretl_error_clear();
@@ -1989,9 +1989,12 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 	    newloop = start_new_loop(s->line, loop, pZ, pdinfo, 
 				     &nested, &err);
 #if LOOP_DEBUG
-	    fprintf(stderr, "got LOOP: newloop at %p\n", (void *) newloop);
+	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n", 
+		    (void *) newloop, err);
 #endif
-	    if (newloop != NULL) {
+	    if (newloop == NULL) {
+		return err;
+	    } else {
 		set_loop_opts(newloop, opt);
 		compile_level++;
 		if (!nested) {
