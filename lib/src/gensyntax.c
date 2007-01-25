@@ -463,7 +463,7 @@ static void get_multi_args (NODE *t, parser *p)
 	cexp = '(';
     }
 
-    if (cexp == 0) {
+    if (cexp == 0 && !p->err) {
 	if (p->sym == RPR) {
 	    lex(p);
 	} else {

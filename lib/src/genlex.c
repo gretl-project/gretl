@@ -420,31 +420,6 @@ void context_error (int c, parser *p)
     }
 }
 
-static int ok_date_char (int c, char *s, int i)
-{
-    if (i < 0) {
-	return 1;
-    }
-
-    if (c == ':' || c == '.') {
-	/* field separator in a date: must be in slot 2 or higher,
-	   and must be unique */
-	if (i >= 1 && !strchr(s, ':') && !strchr(s, '.') && !strchr(s, '/')) {
-	    return 1;
-	}
-    } else if (c == '/') {
-	/* daily date separator: must be in slot 2 or higher */
-	if (i >= 1) {
-	    return 1;
-	}
-    } else if (c >= '0' && c <= '9') {
-	/* numeral: generally OK */
-	return 1;
-    }
-
-    return 0;
-}
-
 static char *get_quoted_string (parser *p)
 {
     int n = parser_charpos(p, '"');
@@ -462,63 +437,90 @@ static char *get_quoted_string (parser *p)
     return s;
 }
 
-static void getobs (char *obs, parser *p)
+static int might_be_date_string (const char *s, int n)
 {
-    int quoted = p->ch == '"';
-    int i = 0;
-
-    if (quoted) {
-	/* obs identified by quoted string */
-	while (p->ch != 0 && 
-	       (p->ch == '"' || strchr(wordchars, p->ch) != NULL) 
-	       && i < MAXQUOTE - 1) {
-	    obs[i++] = p->ch;
-	    parser_getc(p);
-	}
-    } else {
-	/* numerical obs value or date string */
-	while (ok_date_char(p->ch, obs, i - 1) && 
-	       i < NUMLEN - 1) {
-	    obs[i++] = p->ch;
-	    parser_getc(p);
-	}
-    }  
+    char test[12];
+    int y, m, d;
 
 #if LDEBUG
-    fprintf(stderr, "getobs: obs = '%s', ch = %c\n", obs, p->ch);
+    fprintf(stderr, "might_be_date_string: s='%s', n=%d\n", s, n);
 #endif
+    
+    if (n > 10) {
+	return 0;
+    }
 
-    while (p->ch != ']') {
-	/* FIXME trapping excess characters */
-	parser_getc(p);
-    } 
+    *test = 0;
+    strncat(test, s, n);
+
+    if (strspn(s, "1234567890") == n) {
+	/* plain integer */
+	return 1;
+    } else if (sscanf(s, "%d:%d", &y, &m) == 2) {
+	/* quarterly, monthly date */
+	return 1;
+    } else if (sscanf(s, "%d/%d/%d", &y, &m, &d) == 3) {
+	/* daily date */
+	return 1;
+    }
+
+    return 0;
 }
 
 NODE *obs_node (parser *p)
 {
-    char word[MAXQUOTE] = {0};
-    const char *s = p->point;
-    int close, c = p->ch;
+    NODE *ret = NULL;
+    char word[OBSLEN + 2] = {0};
+    const char *s = p->point - 1;
+    int close;
+    int special = 0;
     int t = -1;
 
-    close = parser_charpos(p, ']');
+    close = haschar(']', s);
 
-    if (close >= 0) {
-	getobs(word, p);
+#if LDEBUG
+    fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n", 
+	    s, (char) p->ch, close);
+#endif
+
+    if (close == 0) {
+	pprintf(p->prn, _("Empty observation []\n"));
+	p->err = E_PARSE;
+    } else if (close < 0) {
+	pprintf(p->prn, _("Unmatched '%c'\n"), '[');
+	p->err = E_PARSE;
+    } else if (*s == '"' && close < OBSLEN + 2 &&
+	       haschar('"', s+1) == close - 2) {
+	/* quoted observation label? */
+	strncat(word, s, close);
+	special = 1;
+    } else if (might_be_date_string(s, close)) {
+	strncat(word, s, close);
+	special = 1;
+    } 
+
+    if (special && !p->err) {
 	t = get_t_from_obs_string(word, (const double **) *p->Z, 
 				  p->dinfo);
+	if (t >= 0) {
+	    /* convert to use-style 1-based index */
+	    t++;
+	}
     }
 
-    if (t >= 0) {
+    if (t > 0) {
+	parser_advance(p, close - 1);
 	lex(p);
-	return newdbl(t);
-    } else {
-	/* restore state */
-	p->point = s;
-	p->ch = c;
+	ret = newdbl(t);
+    } else if (!p->err) {
+#if LDEBUG
+	fprintf(stderr, "obs_node: first try failed, going for expr\n");
+#endif
 	lex(p);
-	return expr(p);
+	ret = expr(p);
     }
+
+    return ret;
 }
 
 static void look_up_dollar_word (const char *s, parser *p)

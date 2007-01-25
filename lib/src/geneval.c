@@ -1934,9 +1934,25 @@ static NODE *series_obs (int v, NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	int t = n->v.xval;
+	char word[16];
+	int t;
 
-	ret->v.xval = (*p->Z)[v][t];
+	if (n->v.xval < 0 || n->v.xval > (double) INT_MAX) {
+	    ret->v.xval = NADBL;
+	    return ret;
+	}
+
+	/* convert to 0-based, and allow for dates */
+	t = n->v.xval;
+	sprintf(word, "%d", t);
+	t = get_t_from_obs_string(word, (const double **) *p->Z, 
+				  p->dinfo);
+
+	if (t >= 0 && t < p->dinfo->n) {
+	    ret->v.xval = (*p->Z)[v][t];
+	} else {
+	    ret->v.xval = NADBL;
+	}
     }
 
     return ret;
