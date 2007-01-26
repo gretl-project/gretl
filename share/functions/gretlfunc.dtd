@@ -11,6 +11,7 @@
 <!ELEMENT gretl-function-package (author, version, date, description, gretl-function+)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
+   ID CDATA #IMPLIED
    needs-time-series-data (true|false) 'false'
    needs-qm-data (true|false) 'false'
    needs-panel-data (true|false) 'false'

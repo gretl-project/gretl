@@ -214,6 +214,10 @@ static GList *get_selection_list (call_info *cinfo, int i, int type)
     } else if (type == ARG_LIST) {
 	int nl = n_saved_lists();
 
+	if (optional) {
+	    list = g_list_append(list, "null");
+	}
+
 	for (i=0; i<nl; i++) {
 	    name = get_list_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
@@ -227,7 +231,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type)
 	}	
     }
 
-    if (optional) {
+    if (optional && type != ARG_LIST) {
 	list = g_list_append(list, "null");
     }
 

@@ -52,7 +52,7 @@ struct ufunc_ {
     fn_param *params;
     int rettype;
     char *retname;
-    int in_use;
+    int *in_use;
 };
 
 struct fnpkg_ {
@@ -134,17 +134,45 @@ int repeating_function_exec (void)
 static void set_executing_on (ufunc *fun)
 {
     fn_executing++;
-    fun->in_use += 1;
+    gretl_list_append_term(&fun->in_use, fn_executing);
 #if FN_DEBUG
     fprintf(stderr, "set_executing_on: fun = %s, fn_executing=%d\n", 
 	    fun->name, fn_executing);
 #endif
 }
 
+static int use_list_delete_last (ufunc *fun)
+{
+    if (fun->in_use == NULL || fun->in_use[0] == 0) {
+	/* shouldn't happen */
+	return E_DATA;
+    }
+
+    if (fun->in_use[0] == 1) {
+	free(fun->in_use);
+	fun->in_use = NULL;
+    } else {
+	int *newlist = gretl_list_new(fun->in_use[0] - 1);
+	int i;
+
+	if (newlist == NULL) {
+	    return E_ALLOC;
+	}
+
+	for (i=1; i<fun->in_use[0]; i++) {
+	    newlist[i] = fun->in_use[i];
+	}
+	free(fun->in_use);
+	fun->in_use = newlist;
+    }
+
+    return 0;
+}
+
 static void set_executing_off (ufunc *fun)
 {
+    use_list_delete_last(fun);
     fn_executing--;
-    fun->in_use -= 1;
 #if FN_DEBUG
     fprintf(stderr, "set_executing_off: fun=%s, fn_executing=%d\n",
 	    fun->name, fn_executing);
@@ -241,17 +269,56 @@ int user_function_index_by_name (const char *name)
     return -1;
 }
 
+int current_func_pkgID (void)
+{
+    ufunc *fun;
+    int i, f0;
+
+    for (i=0; i<n_ufuns; i++) {
+	fun = ufuns[i];
+	if (fun->in_use != NULL) {
+	    f0 = fun->in_use[0];
+	    if (fun->in_use[f0] == fn_executing) {
+		return fun->pkgID;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 ufunc *get_user_function_by_name (const char *name)
 {
+    int i, ID = current_func_pkgID();
     ufunc *fun = NULL;
-    int i;
+
+    /* if we're currently exec'ing a function from a package,
+       look first for functions from the same package */
 
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(name, (ufuns[i])->name)) {
 	    fun = ufuns[i];
-	    break;
+	    if (fun->pkgID == ID || ID == 0) {
+		break;
+	    } else {
+		fun = NULL;
+	    }
 	}
     }
+
+    if (ID > 0 && fun == NULL) {
+	/* fall back on unpackaged functions */
+	for (i=0; i<n_ufuns; i++) {
+	    if (!strcmp(name, (ufuns[i])->name)) {
+		fun = ufuns[i];
+		if (fun->pkgID == 0) {
+		    break;
+		} else {
+		    fun = NULL;
+		}
+	    }
+	}
+    }	
 
 #if FN_DEBUG
     if (fun != NULL) {
@@ -310,7 +377,7 @@ static ufunc *ufunc_new (void)
     fun->rettype = ARG_NONE;
     fun->retname = NULL;
 
-    fun->in_use = 0;
+    fun->in_use = NULL;
 
     return fun;
 }
@@ -344,7 +411,7 @@ static void clear_ufunc_data (ufunc *fun)
     fun->rettype = ARG_NONE;
     fun->retname = NULL;
     
-    fun->in_use = 0;
+    fun->in_use = NULL;
 }
 
 static void free_ufunc (ufunc *fun)
@@ -706,6 +773,13 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	return E_DATA;
     }
 
+    strncat(fun->name, fname, FN_NAMELEN - 1);
+    free(fname);
+
+    if (pkg != NULL) {
+	fun->pkgID = pkg->ID;
+    }
+
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: got function name '%s'\n",
 	    fname);
@@ -713,20 +787,13 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 
     /* check for name collisions */
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fname, ufuns[i]->name)) {
+	if (!strcmp(fname, ufuns[i]->name) && fun->pkgID == ufuns[i]->pkgID) {
 	    pprintf(prn, "Redefining function '%s'\n", fname);
 	    delete_ufunc_from_list(ufuns[i]);
 	}
     }
 
-    *fun->name = 0;
-    strncat(fun->name, fname, FN_NAMELEN - 1);
-    free(fname);
-
     gretl_xml_get_prop_as_int(node, "private", &fun->private);
-    if (pkg != NULL) {
-	fun->pkgID = pkg->ID;
-    }
 
     cur = node->xmlChildrenNode;
 
@@ -1048,7 +1115,13 @@ int write_function_package (fnpkg *pkg,
     if (pkgname != NULL) {
 	fprintf(fp, " name=\"%s\"", pkgname);
 	free(pkgname);
-    } 
+    }
+
+    if (pkg == NULL || saveas) {
+	fprintf(fp, " ID=\"%d\"", (int) time(NULL));
+    } else {
+	fprintf(fp, " ID=\"%d\"", pkg->ID);
+    }
 
     if (dreq == FN_NEEDS_TS) {
 	fprintf(fp, " %s=\"true\"", NEEDS_TS);
@@ -1362,7 +1435,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
     xmlNodePtr cur;
     fnpkg *pkg;
     char *vstr = NULL;
-    int err = 0;
+    int id, err = 0;
 
     pkg = function_package_new(fname);
     if (pkg == NULL) {
@@ -1386,6 +1459,10 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	free(vstr);
     }
 
+    if (gretl_xml_get_prop_as_int(node, "ID", &id)) {
+	pkg->ID = id;
+    }    
+
     cur = node->xmlChildrenNode;
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "author")) {
@@ -1396,7 +1473,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->date);
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
-	}
+	} 
 	cur = cur->next;
     }
 
@@ -1710,7 +1787,7 @@ static int maybe_delete_function (const char *fname)
 
     if (fun == NULL) {
 	; /* no-op */
-    } else if (fun->in_use) {
+    } else if (fun->in_use != NULL) {
 	sprintf(gretl_errmsg, "%s: function is in use", fname);
 	err = 1;
     } else {
