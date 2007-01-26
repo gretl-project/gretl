@@ -100,7 +100,8 @@ int gretl_get_user_function (const char *line);
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
-			 void *ret, PRN *prn);
+			 void *ret, char **descrip,
+			 PRN *prn);
 
 void set_drop_function_vars (int s);
 

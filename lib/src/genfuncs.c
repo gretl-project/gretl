@@ -441,7 +441,7 @@ int maybe_pick_up_sorted_markers (parser *p)
 	    free_strings_array(SortedS, p->dinfo->n);
 	}
 	SortedS = NULL;	
-    }
+    } 
 
     return 0;
 }

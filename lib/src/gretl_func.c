@@ -2484,10 +2484,24 @@ get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
     return ret;
 }
 
+static void 
+maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo, 
+			      char **descrip)
+{
+    if (rtype == ARG_SCALAR || rtype == ARG_SERIES) {
+	int v = varindex(pdinfo, u->retname);
+
+	if (v < pdinfo->v) {
+	    *descrip = gretl_strdup(VARLABEL(pdinfo, v));
+	}
+    }
+}
+
 static int 
 function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype, 
 			 double **Z, DATAINFO *pdinfo, 
-			 void *ret, PRN *prn, int *perr)
+			 void *ret, char **descrip, PRN *prn, 
+			 int *perr)
 {
     fn_param *fp;
     int vi = 0, mi = 0, li = 0;
@@ -2509,7 +2523,12 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 	    pprintf(prn, "Function %s did not provide the specified return value\n",
 		    u->name);
 	}
+
 	*perr = err;
+
+	if (!err && descrip != NULL) {
+	    maybe_set_return_description(u, rtype, pdinfo, descrip);
+	}
     }
 
     /* "indirect return" values: these should be restored even if the
@@ -2649,7 +2668,8 @@ static void set_funcerr_message (ufunc *u, const char *s)
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
-			 void *ret, PRN *prn)
+			 void *ret, char **descrip, 
+			 PRN *prn)
 {
     ExecState state;
     MODEL **models = NULL;
@@ -2786,7 +2806,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     pdinfo->t2 = orig_t2;
 
     function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
-			    ret, prn, &err);
+			    ret, descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
 

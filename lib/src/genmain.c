@@ -120,7 +120,9 @@ static void gen_write_label (parser *p, int oldv)
 	}
     }
 
-    if (*p->lh.label != '\0' && dollar_node(p->tree)) {
+    if (*p->lh.label != '\0' && (p->flags & P_UFRET)) {
+	src = p->lh.label;
+    } else if (*p->lh.label != '\0' && dollar_node(p->tree)) {
 	src = p->lh.label;
     } else {
 	src = p->rhs;

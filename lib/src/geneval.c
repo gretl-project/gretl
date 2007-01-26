@@ -2426,6 +2426,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* try sending args to function */
 
     if (!p->err) {
+	char *descrip = NULL;
+	char **pdescrip = NULL;
 	double xret = NADBL;
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
@@ -2442,8 +2444,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &sret;
 	}
 
+	if ((p->flags & P_UFRET) && (rtype == ARG_SCALAR || rtype == ARG_SERIES)) {
+	    /* pick up description of generated var, if any */
+	    pdescrip = &descrip;
+	}
+
 	p->err = gretl_function_exec(uf, &args, rtype, p->Z, p->dinfo, 
-				     retp, p->prn);
+				     retp, pdescrip, p->prn);
 
 	if (!p->err) {
 	    if (rtype == ARG_SCALAR) {
@@ -2475,7 +2482,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->v.str = sret;
 		}
-	    }		
+	    }
+	}
+
+	if (descrip != NULL) {
+	    strcpy(p->lh.label, descrip);
+	    free(descrip);
 	}
     }
 
@@ -5003,7 +5015,7 @@ void gen_cleanup (parser *p)
     }
 }
 
-static void maybe_set_simple_sort (parser *p)
+static void maybe_set_return_flags (parser *p)
 {
     NODE *t = p->tree;
 
@@ -5013,6 +5025,8 @@ static void maybe_set_simple_sort (parser *p)
 	if (l->t == UVAR) {
 	    p->flags |= P_SORT;
 	}
+    } else if (t != NULL && t->t == UFUN) {
+	p->flags |= P_UFRET;
     }
 }
 
@@ -5069,9 +5083,9 @@ int realgen (const char *s, parser *p, double ***pZ,
 	return p->err;
     }
 
-    /* set "simple sort" flag here if relevant */
+    /* set "simple sort" or other flags here if relevant */
     if (!p->err) {
-	maybe_set_simple_sort(p);
+	maybe_set_return_flags(p);
     }
 
  starteval:

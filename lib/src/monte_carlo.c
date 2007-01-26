@@ -378,6 +378,7 @@ int ok_in_loop (int c)
         c == RENAME || 
 	c == RHODIFF ||
 	c == RUNS || 
+        c == SET ||
 	c == SETINFO ||
 	c == SHELL || 
 	c == SPEARMAN || 
