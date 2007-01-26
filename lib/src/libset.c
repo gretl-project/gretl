@@ -78,6 +78,7 @@ struct set_vars_ {
     struct bkbp_opts bkopts;    /* Baxter-King filter */
     struct max_opts bhhh_opts;  /* options for BHHH maximization */
     struct max_opts bfgs_opts;  /* options for BFGS maximization */
+    char shelldir[MAXLEN];      /* working dir for shell commands */
 };
 
 /* global state */
@@ -186,6 +187,7 @@ static void state_vars_copy (set_vars *sv)
     sv->longdigits = state->longdigits; 
     sv->max_verbose = state->max_verbose;
     sv->initvals = gretl_matrix_copy(state->initvals);
+    strcpy(sv->shelldir, state->shelldir);
 
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
@@ -213,6 +215,7 @@ static void state_vars_init (set_vars *sv)
     sv->longdigits = 10;
     sv->max_verbose = 0;
     sv->initvals = NULL;
+    *sv->shelldir = '\0';
 
     robust_opts_init(&sv->ropts);
     garch_opts_init(&sv->gopts);
@@ -673,7 +676,18 @@ const gretl_matrix *get_init_vals (void)
     state->initvals = NULL;
 
     return m;
-}    
+}   
+
+char *get_shelldir (void)
+{
+    check_for_state();
+
+    if (state != NULL && *state->shelldir != '\0') {
+	return state->shelldir;
+    } else {
+	return NULL;
+    }
+} 
 
 int get_hac_lag (int m)
 {
@@ -873,6 +887,33 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+static int set_shelldir (const char *s)
+{
+    int err = 0;
+
+    /* skip past "set shelldir" and space */
+    s += 12;
+    s += strspn(s, " ");
+
+    if (*s == '\0') {
+	*state->shelldir = '\0';
+    } else if (*s == '"') {
+	int len = haschar('"', s + 1);
+
+	if (len <= 0 || len >= MAXLEN) {
+	    err = E_PARSE;
+	} else {
+	    *state->shelldir = '\0';
+	    strncat(state->shelldir, s + 1, len);
+	}
+    } else {
+	*state->shelldir = '\0';
+	strncat(state->shelldir, s, MAXLEN - 1);
+    }
+
+    return err;
+}
+
 static int parse_set_plotfile (const char *s)
 {
     char *fname;
@@ -1014,6 +1055,8 @@ static int display_settings (PRN *prn)
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
     print_initvals(state->initvals, prn);
 
+    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
+
     return 0;
 }
 
@@ -1044,6 +1087,8 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    return parse_set_plotfile(line);
 	} else if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, pdinfo, prn);
+	} else if (!strcmp(setobj, "shelldir")) {
+	    return set_shelldir(line);
 	}
     }
 
@@ -1219,7 +1264,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    if (isdigit(*setarg)) {
 		err = set_max_verbose(atoi(setarg));
 	    }
-	}	    
+	} 	    
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    err = set_bkbp_limits(setarg, setarg2, prn);

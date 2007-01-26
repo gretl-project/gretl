@@ -2443,6 +2443,7 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 int gretl_shell (const char *arg)
 {
     const char *theshell, *namep;
+    char *wdir;
     char shellnam[40];
     void (*old1) (int);
     void (*old2) (int);
@@ -2451,6 +2452,12 @@ int gretl_shell (const char *arg)
     if (!get_shell_ok()) {
 	strcpy(gretl_errmsg, "The shell command is not activated.");
 	return 1;
+    }
+
+    wdir = get_shelldir();
+    if (wdir != NULL && chdir(wdir)) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), wdir);
+	return E_FOPEN;
     }
 
     if (!strncmp(arg, "launch ", 7)) {

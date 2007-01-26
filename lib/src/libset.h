@@ -109,6 +109,8 @@ int get_long_digits (void);
 int set_max_verbose (int n);
 int get_max_verbose (void);
 
+char *get_shelldir (void);
+
 char get_csv_delim (const DATAINFO *pdinfo);
 
 int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);

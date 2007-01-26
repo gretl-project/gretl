@@ -209,11 +209,11 @@ int winfork (char *cmdline, const char *dir,
     int child;
 
     ZeroMemory(&si, sizeof si);
+    ZeroMemory(&pi, sizeof pi);  
+
     si.cb = sizeof si;
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = wshow;
-
-    ZeroMemory(&pi, sizeof pi);  
 
     /* zero return means failure */
     child = CreateProcess(NULL, cmdline, 
@@ -273,22 +273,18 @@ static int run_cmd_wait (char *cmd)
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);
 
-    /* Set startup information */
     si.cb = sizeof si;
+    si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_SHOWMINIMIZED;
-    si.dwFlags = 0;
 
-    /* Create command line */
     GetSystemDirectory(cmdline, MAX_PATH);
-    lstrcat(cmdline, "\\cmd.exe");
-    lstrcat(cmdline, " /c");
-    lstrcat(cmdline, " \"");
+    lstrcat(cmdline, "\\cmd.exe /c ");
     lstrcat(cmdline, cmd);
-    lstrcat(cmdline, "\"");
 
-    child = CreateProcess(NULL, cmdline, NULL, NULL,
-			  TRUE, NORMAL_PRIORITY_CLASS, 
-			  NULL, NULL,
+    child = CreateProcess(NULL, cmdline, 
+			  NULL, NULL, FALSE,
+			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+			  NULL, get_shelldir(),
 			  &si, &pi);
 
     if (!child) {
