@@ -200,8 +200,8 @@ void win_show_error (DWORD dw)
     LocalFree(buf);
 }
 
-static int real_winfork (char *app, char *cmdline, const char *dir, 
-			 int wshow, DWORD flags)
+int winfork (char *cmdline, const char *dir, 
+	     int wshow, DWORD flags)
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
@@ -216,7 +216,7 @@ static int real_winfork (char *app, char *cmdline, const char *dir,
     ZeroMemory(&pi, sizeof pi);  
 
     /* zero return means failure */
-    child = CreateProcess(app, cmdline, 
+    child = CreateProcess(NULL, cmdline, 
 			  NULL, NULL, FALSE,
 			  flags,
 			  NULL, dir,
@@ -237,15 +237,9 @@ static int real_winfork (char *app, char *cmdline, const char *dir,
     return 0;
 }
 
-int winfork (char *cmdline, const char *dir, int wshow,
-	     DWORD flags)
-{
-    return real_winfork(NULL, cmdline, dir, wshow, flags);
-}
-
 int gretl_spawn (char *cmdline)
 {
-    return real_winfork(NULL, cmdline, NULL, SW_SHOWMINIMIZED, 0);
+    return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
 }
 
 char *desktop_path (void)
@@ -267,6 +261,48 @@ char *desktop_path (void)
     }
 
     return (result == TRUE) ? gretl_strdup(dpath) : NULL;
+}
+
+static int run_cmd_wait (char *cmd)
+{
+    CHAR cmdline[MAX_PATH * 2];
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    int child;
+
+    ZeroMemory(&si, sizeof si);
+    ZeroMemory(&pi, sizeof pi);
+
+    /* Set startup information */
+    si.cb = sizeof si;
+    si.wShowWindow = SW_SHOWMINIMIZED;
+    si.dwFlags = 0;
+
+    /* Create command line */
+    GetSystemDirectory(cmdline, MAX_PATH);
+    lstrcat(cmdline, "\\cmd.exe");
+    lstrcat(cmdline, " /c");
+    lstrcat(cmdline, " \"");
+    lstrcat(cmdline, cmd);
+    lstrcat(cmdline, "\"");
+
+    child = CreateProcess(NULL, cmdline, NULL, NULL,
+			  TRUE, NORMAL_PRIORITY_CLASS, 
+			  NULL, NULL,
+			  &si, &pi);
+
+    if (!child) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	return 1;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return 0;
 }
 
 int gretl_shell (const char *arg)
@@ -295,21 +331,12 @@ int gretl_shell (const char *arg)
 	    err = 1;
 	}
     } else {
-	char *myarg, app[8];
-
-	if (!strncmp(arg, "cmd ", 4) || !strncmp(arg, "cmd.exe ", 8)) {
-	    strcpy(app, "cmd.exe");
-	    arg += strcspn(arg, " ");
-	    arg += strspn(arg, " ");
-	    myarg = gretl_strdup(arg);
-	} else {
-	    myarg = gretl_strdup(arg);
-	}
+	char *myarg = gretl_strdup(arg);
 
 	if (myarg == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = real_winfork(app, myarg, NULL, SW_SHOWMINIMIZED, 0);
+	    err = run_cmd_wait(myarg);
 	    free(myarg);
 	}
     } 
