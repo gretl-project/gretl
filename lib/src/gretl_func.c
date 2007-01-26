@@ -454,10 +454,6 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "series *"))  return ARG_REF_SERIES;
     if (!strcmp(s, "matrix *"))  return ARG_REF_MATRIX;
 
-    if (!strcmp(s, "scalarref"))  return ARG_REF_SCALAR;
-    if (!strcmp(s, "seriesref"))  return ARG_REF_SERIES;
-    if (!strcmp(s, "matrixref"))  return ARG_REF_MATRIX;
-
     return 0;
 }
 
@@ -802,7 +798,8 @@ static void adjust_indent (const char *line, int *this_indent,
     } else if (!strncmp(line, "end", 3)) {
 	ti--;
 	ni--;
-    } else if (!strncmp(line, "else", 4)) {
+    } else if (!strncmp(line, "else", 4) ||
+	       !strncmp(line, "elif", 4)) {
 	ni = ti;
 	ti--;
     } 
