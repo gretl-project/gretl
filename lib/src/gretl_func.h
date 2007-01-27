@@ -39,7 +39,6 @@ typedef enum {
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;
-typedef union retloc_ retloc;
 
 struct fnargs_ {
     char *types;
@@ -56,7 +55,7 @@ struct fnargs_ {
     char **upnames;
 };
 
-int n_user_functions (void);
+int n_free_functions (void);
 
 ufunc *get_user_function_by_name (const char *name);
 
@@ -81,6 +80,10 @@ int user_func_get_return_type (const ufunc *fun);
 const char *user_function_name_by_index (int i);
 
 int user_function_index_by_name (const char *name);
+
+void function_names_init (void);
+
+const char *next_free_function_name (void);
 
 int gretl_compiling_function (void);
 
@@ -142,7 +145,9 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 
 int write_user_function_file (const char *fname);
 
-int user_function_file_is_loaded (const char *fname);
+int function_package_is_loaded (const char *fname);
+
+const char *function_package_description (const char *fname);
 
 int load_user_function_file (const char *fname);
 

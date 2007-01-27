@@ -3584,7 +3584,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	break;
 
     case SET:
-	err = execute_set_line(line, pdinfo, prn);
+	err = execute_set_line(line, *pZ, pdinfo, prn);
 	break;
 
     case SETINFO:

@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "dlgutils.h"
+#include "datafiles.h"
 #include "textbuf.h"
 #include "fileselect.h"
 #include "gretl_www.h"
@@ -909,8 +910,11 @@ void save_user_functions (const char *fname, gpointer p)
 
     if (err) {
 	gui_errmsg(err);
-    } else if (finfo->upload) {
-	do_upload(fname);
+    } else {
+	maybe_update_func_files_window(1);
+	if (finfo->upload) {
+	    do_upload(fname);
+	}
     }
 }
 
@@ -963,16 +967,17 @@ void prepare_functions_save (void)
     finfo_dialog(finfo);
 }
 
-void edit_function_package (const char *fname)
+void edit_function_package (const char *fname, int *loaderr)
 {
     function_info *finfo;
     int err = 0;
 
-    if (!user_function_file_is_loaded(fname)) {
+    if (!function_package_is_loaded(fname)) {
 	err = load_user_function_file(fname);
 	if (err) {
 	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 	    errbox(_("Couldn't open %s"), fname);
+	    *loaderr = 1;
 	    return;
 	}
     }

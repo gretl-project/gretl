@@ -181,9 +181,17 @@ static void set_executing_off (ufunc *fun)
 
 /* general info accessors */
 
-int n_user_functions (void)
+int n_free_functions (void)
 {
-    return n_ufuns;
+    int i, n = 0;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkgID == 0) {
+	    n++;
+	}
+    }
+
+    return n;
 }
 
 const ufunc *get_user_function_by_index (int idx)
@@ -267,6 +275,34 @@ int user_function_index_by_name (const char *name)
     }
 
     return -1;
+}
+
+static int fname_idx;
+
+const char *next_free_function_name (void)
+{
+    const char *ret = NULL;
+    ufunc *fun;
+
+    if (n_ufuns == 0) {
+	fname_idx = 0;
+	return NULL;
+    }
+
+    while (fname_idx < n_ufuns) {
+	fun = ufuns[fname_idx++];
+	if (fun->pkgID == 0) {
+	    ret = fun->name;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+void function_names_init (void)
+{
+    fname_idx = 0;
 }
 
 int current_func_pkgID (void)
@@ -1567,7 +1603,7 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
     return err;
 }
 
-int user_function_file_is_loaded (const char *fname)
+int function_package_is_loaded (const char *fname)
 {
     int i;
 
@@ -1578,6 +1614,19 @@ int user_function_file_is_loaded (const char *fname)
     }
 
     return 0;
+}
+
+const char *function_package_description (const char *fname)
+{
+    int i;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(fname, pkgs[i]->fname)) {
+	    return pkgs[i]->descrip;
+	}
+    }
+
+    return NULL;
 }
 
 /* read functions from file into gretl's workspace */

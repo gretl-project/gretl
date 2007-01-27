@@ -411,6 +411,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
 		     G_CALLBACK(update_arg), cinfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(GTK_COMBO(combo)->entry), 
+				    TRUE);
+
     list = get_selection_list(cinfo, i, ptype);
     if (list != NULL) {
 	gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);
@@ -718,7 +721,8 @@ static int needs_amp (call_info *cinfo, int i)
     return 1;
 }
 
-void call_function_package (const char *fname, GtkWidget *w)
+void call_function_package (const char *fname, GtkWidget *w,
+			    int *loaderr)
 {
     ExecState state;
     char tmpfile[FILENAME_MAX];
@@ -737,11 +741,12 @@ void call_function_package (const char *fname, GtkWidget *w)
 	/* not a full filename -> a function package on server */
 	err = temp_install_remote_fnpkg(fname, tmpfile);
     } else {
-	if (!user_function_file_is_loaded(fname)) {
+	if (!function_package_is_loaded(fname)) {
 	    err = load_user_function_file(fname);
 	    if (err) {
 		fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 		errbox(_("Couldn't open %s"), fname);
+		*loaderr = 1;
 	    }
 	}
     }

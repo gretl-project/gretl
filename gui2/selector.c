@@ -3438,25 +3438,25 @@ static int functions_list (selector *sr)
     GtkListStore *store;
     GtkTreeIter iter;
     const char *fnname;
-    int i, nfn;
+    int n = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    nfn = n_user_functions();
-
-    for (i=0; i<nfn; i++) {
-	fnname = user_function_name_by_index(i);
+    function_names_init();
+    
+    while ((fnname = next_free_function_name()) != NULL) {
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter,
-			   0, i, 1, 0,
+			   0, n++, 1, 0,
 			   2, fnname, -1);
     }
+
     g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
 		      GINT_TO_POINTER(1));
 
-    return nfn;
+    return n;
 }
 
 static GtkWidget *simple_selection_top_label (int code)
@@ -3805,9 +3805,16 @@ static int data_save_selection_callback (selector *sr)
 void data_save_selection_wrapper (int file_code, gpointer p)
 {
     if (file_code == SAVE_FUNCTIONS) {
-	if (n_user_functions() == 0) {
+	if (n_free_functions() == 0) {
+#if 0
 	    errbox(_("No user-defined functions are currently loaded.\n"
 		     "Please load or define some functions first."));
+#else
+	    errbox(_("No user-defined functions are currently available\n"
+		     "for packaging.\n\nPlease load or define some "
+		     "functions first."));
+#endif
+
 	    return;
 	}
 	selection_dialog(_("Save functions"), 

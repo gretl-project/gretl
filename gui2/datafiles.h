@@ -42,4 +42,6 @@ gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
 
+void maybe_update_func_files_window (int code);
+
 #endif /* DATAFILES_H */

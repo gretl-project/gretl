@@ -52,9 +52,6 @@ static void doubleclick_action (windata_t *win)
     case FUNC_FILES:
 	browser_call_func(NULL, win);
 	break;
-    case FUNC_EDIT:
-	browser_edit_func(NULL, win);
-	break;
     case NATIVE_DB:
 	open_db_index(NULL, win); 
 	break;

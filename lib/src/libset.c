@@ -726,6 +726,40 @@ static const char *get_hac_lag_string (void)
     }
 }
 
+static int libset_get_scalar (const char *s, double **Z,
+			      DATAINFO *pdinfo,
+			      int *pi, double *px)
+{
+    double x = NADBL;
+    int err = 0;
+
+    if (numeric_string(s)) {
+	x = atof(s);
+    } else {
+	int v = varindex(pdinfo, s);
+
+	if (v >= pdinfo->v) {
+	    return E_UNKVAR;
+	} else if (var_is_series(pdinfo, v)) {
+	    return E_DATATYPE;
+	} else {
+	    x = Z[v][0];
+	}
+    }
+
+    if (px != NULL) {
+	*px = x;
+    } else if (pi != NULL) {
+	if (na(x) || fabs(x) > (double) INT_MAX) {
+	    err = E_DATA;
+	} else {
+	    *pi = (int) x;
+	}
+    }
+
+    return err;
+}
+
 static int parse_hc_variant (const char *s)
 {
     int err = 1;
@@ -832,16 +866,20 @@ static int set_line_width (const char *s0, const char *s1,
 }
 
 static int set_bkbp_limits (const char *s0, const char *s1,
+			    double **Z, DATAINFO *pdinfo,
 			    PRN *prn)
 {
     int p0, p1;
+    int err = 0;
 
-    if (!isdigit((unsigned char) *s0) || !isdigit((unsigned char) *s1)) {
-	return 1;
+    err = libset_get_scalar(s0, Z, pdinfo, &p0, NULL);
+    if (!err) {
+	err = libset_get_scalar(s0, Z, pdinfo, &p1, NULL);
     }
 
-    p0 = atoi(s0);
-    p1 = atoi(s1);
+    if (err) {
+	return err;
+    }
 
     if (p1 < p0) {
 	/* 2nd entry should be bigger than 1st one */
@@ -1066,7 +1104,8 @@ static int display_settings (PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
+int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
+		      PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
@@ -1182,15 +1221,14 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, "You can only set this variable via the gretl GUI\n");
 	} else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
-	    if (isdigit(*setarg)) {
-		int k = atoi(setarg);
+	    int k = 0;
 
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
 		gretl_rand_set_seed((unsigned int) k);
 		pprintf(prn, 
 			_("Pseudo-random number generator seeded with %d\n"), k);
 		state->seed = k;
-		err = 0;
-
 	    }
 	} else if (!strcmp(setobj, "hp_lambda")) {
 	    /* Hodrick-Prescott filter parameter */
@@ -1267,7 +1305,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 	} 	    
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
-	    err = set_bkbp_limits(setarg, setarg2, prn);
+	    err = set_bkbp_limits(setarg, setarg2, Z, pdinfo, prn);
 	} else if (!strcmp(setobj, "linewidth")) {
 	    err = set_line_width(setarg, setarg2, pdinfo, prn);
 	}

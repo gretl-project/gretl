@@ -20,7 +20,7 @@
 #ifndef FNSAVE_H
 #define FNSAVE_H
 
-void edit_function_package (const char *fname);
+void edit_function_package (const char *fname, int *loaderr);
 
 void prepare_functions_save (void);
 

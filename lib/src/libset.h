@@ -113,7 +113,8 @@ char *get_shelldir (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);
+int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
+		      PRN *prn);
 
 #endif /* LIBSET_H */
 

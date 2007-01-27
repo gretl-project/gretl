@@ -20,6 +20,7 @@
 #ifndef FNCALL_H
 #define FNCALL_H
 
-void call_function_package (const char *fname, GtkWidget *w);
+void call_function_package (const char *fname, GtkWidget *w,
+			    int *loaderr);
 
 #endif /* FNCALL_H */

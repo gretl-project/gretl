@@ -154,7 +154,6 @@ enum browser_codes {
     PS_FILES,
     FUNC_FILES,
     REMOTE_FUNC_FILES,
-    FUNC_EDIT,
     NATIVE_DB,
     REMOTE_DB,
     NATIVE_SERIES,
