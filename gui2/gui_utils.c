@@ -1276,7 +1276,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     }
 }
 
-static void update_func_code (windata_t *vwin)
+static int update_func_code (windata_t *vwin)
 {
     int iface, err = 0;
 
@@ -1288,6 +1288,8 @@ static void update_func_code (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     }
+
+    return err;
 }
 
 static void view_window_save (GtkWidget *widget, windata_t *vwin)

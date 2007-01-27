@@ -225,12 +225,6 @@ static void real_finfo_save (function_info *finfo)
     }
 }
 
-static void finfo_save_as (GtkWidget *w, function_info *finfo)
-{
-    finfo->saveas = 1;
-    real_finfo_save(finfo);
-}
-
 static void finfo_save (GtkWidget *w, function_info *finfo)
 {
     finfo->saveas = (finfo->fname == NULL);
@@ -642,13 +636,6 @@ static void finfo_dialog (function_info *finfo)
     gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    /* SaveAs button */
-    button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finfo_save_as), finfo);
-
     /* Save button */
     button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
@@ -864,18 +851,57 @@ static void do_upload (const char *fname)
     linfo_free(&linfo);
 }
 
+static int 
+fnpkg_check_filename (function_info *finfo, const char *fname)
+{
+    const char *p = strrchr(fname, SLASH);
+    char funname[FN_NAMELEN];
+    int n, err = 0;
+
+    if (p == NULL) {
+	p = fname;
+    } else {
+	p++;
+    }
+
+    n = strlen(p);
+    if (has_suffix(fname, ".gfn")) {
+	n -= 4;
+    }
+
+    if (n >= FN_NAMELEN) {
+	err = 1;
+    } else {
+	const char *iname = user_function_name_by_index(finfo->pub);
+
+	*funname = '\0';
+	strncat(funname, p, n);
+	if (strcmp(funname, iname)) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	errbox(_("The package filename must match the name of\n"
+		 "the package's public interface"));
+    }
+
+    return err;
+}
+
 void save_user_functions (const char *fname, gpointer p)
 {
     function_info *finfo = p;
     int i, err;
 
-    /* sync filename with functions editor */
+    /* sync/check filename with functions editor */
     if (finfo->fname == NULL) {
+	err = fnpkg_check_filename(finfo, fname);
+	if (err) {
+	    return;
+	}
 	finfo->fname = g_strdup(fname);
-    } else if (strcmp(fname, finfo->fname)) {
-	g_free(finfo->fname);
-	finfo->fname = g_strdup(fname);
-    }
+    } 
 
     if (finfo->privlist != NULL) {
 	for (i=1; i<=finfo->privlist[0]; i++) {

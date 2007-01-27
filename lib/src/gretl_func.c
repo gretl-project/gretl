@@ -2313,7 +2313,7 @@ int update_function_from_script (const char *fname, int idx)
 	int ichk = user_function_index_by_name(current_ufun->name);
 
 	if (ichk != idx) {
-	    strcpy(gretl_errmsg, "Function name has been changed!");
+	    strcpy(gretl_errmsg, _("You can't change the name of a function here"));
 	    fprintf(stderr, "idx = %d, but user_function_index_by_name() "
 		    "gives %d for '%s'\n", idx, ichk, current_ufun->name);
 	    err = 1;

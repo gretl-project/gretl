@@ -23,6 +23,8 @@
 #include "libset.h"
 #include "usermat.h"
 
+#include <errno.h>
+
 #define PDEBUG 0
 
 enum {
@@ -726,6 +728,38 @@ static const char *get_hac_lag_string (void)
     }
 }
 
+int libset_numeric_string (const char *s, int *pi, double *px)
+{
+    char *test;
+    int ret = 1;
+
+    if (s == NULL || *s == '\0' ||
+	!strcmp(s, "inf") || !strcmp(s, "nan")) {
+	return 0;
+    }
+
+    errno = 0;
+
+    if (px != NULL) {
+	*px = strtod(s, &test);
+	if (*test != '\0' || errno == ERANGE) {
+	    ret = 0;
+	}
+    } else {
+	long li = strtol(s, &test, 10);
+
+	if (*test != '\0' || errno == ERANGE) {
+	    ret = 0;
+	} else {
+	    *pi = (int) li;
+	}
+    }
+
+    return ret;
+}
+
+/* all the libset ints/doubles are non-negative */
+
 static int libset_get_scalar (const char *s, double **Z,
 			      DATAINFO *pdinfo,
 			      int *pi, double *px)
@@ -733,9 +767,7 @@ static int libset_get_scalar (const char *s, double **Z,
     double x = NADBL;
     int err = 0;
 
-    if (numeric_string(s)) {
-	x = atof(s);
-    } else {
+    if (!libset_numeric_string(s, pi, px)) {
 	int v = varindex(pdinfo, s);
 
 	if (v >= pdinfo->v) {
@@ -745,6 +777,10 @@ static int libset_get_scalar (const char *s, double **Z,
 	} else {
 	    x = Z[v][0];
 	}
+    }
+
+    if (x < 0.0) {
+	return E_DATA;
     }
 
     if (px != NULL) {
@@ -1108,7 +1144,8 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		      PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
-    int nw, err = E_PARSE;
+    int k, nw, err = E_PARSE;
+    double x;
 
     check_for_state();
 
@@ -1221,8 +1258,6 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    pprintf(prn, "You can only set this variable via the gretl GUI\n");
 	} else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
-	    int k = 0;
-
 	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
 	    if (!err) {
 		gretl_rand_set_seed((unsigned int) k);
@@ -1235,17 +1270,19 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    if (!strcmp(setarg, "auto")) {
 		state->hp_lambda = NADBL;
 		err = 0;
-	    } else if (check_atof(setarg) == 0) {
-		state->hp_lambda = atof(setarg);
-		err = 0;
+	    } else {
+		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+		if (!err) {
+		    state->hp_lambda = x;
+		}
 	    }
 	} else if (!strcmp(setobj, "bkbp_k")) {
 	    /* Baxter-King approximation order */
-	    if (isdigit(*setarg)) {
-		state->bkopts.k = atoi(setarg);
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
+		state->bkopts.k = k;
 		pprintf(prn, 
 			_("Baxter-King approximation = %d\n"), state->bkopts.k);
-		err = 0;
 	    }
 	} else if (!strcmp(setobj, "horizon")) {
 	    /* horizon for VAR impulse responses */
@@ -1253,28 +1290,28 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		state->horizon = atoi(setarg);
-		if (state->horizon > 0) {
-		    err = 0;
+		err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+		if (!err) {
+		    state->horizon = k;
 		} else {
 		    state->horizon = UNSET_INT;
 		}
 	    }	    
 	} else if (!strcmp(setobj, "nls_toler")) {
-	    double tol;
-
-	    if (sscanf(setarg, "%lf", &tol)) {
-		err = set_nls_toler(tol);
+	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+	    if (!err) {
+		err = set_nls_toler(x);
 	    }
 	} else if (!strcmp(setobj, "bhhh_toler")) {
 	    /* Tolerance for BHHH (ARMA, Tobit) */
-	    double tol;
-
 	    if (!strcmp(setarg, "default")) {
 		set_bhhh_toler(NADBL);
 		err = 0;
-	    } else if (sscanf(setarg, "%lf", &tol)) {
-		err = set_bhhh_toler(tol);
+	    } else {
+		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+		if (!err) {
+		    err = set_bhhh_toler(x);
+		}
 	    }
 	} else if (!strcmp(setobj, "bhhh_maxiter")) {
 	    /* Maximum iterations for BHHH (ARMA, Tobit) */
@@ -1282,25 +1319,29 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = set_bhhh_maxiter(atoi(setarg));
 	    }
 	} else if (!strcmp(setobj, "bfgs_toler")) {
-	    double tol;
-
 	    if (!strcmp(setarg, "default")) {
 		set_bfgs_toler(NADBL);
 		err = 0;
-	    } else if (sscanf(setarg, "%lf", &tol)) {
-		err = set_bfgs_toler(tol);
+	    } else {
+		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+		if (!err) {
+		    err = set_bfgs_toler(x);
+		}
 	    }
 	} else if (!strcmp(setobj, "bfgs_maxiter")) {
-	    if (isdigit(*setarg)) {
-		err = set_bfgs_maxiter(atoi(setarg));
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
+		err = set_bfgs_maxiter(k);
 	    }
 	} else if (!strcmp(setobj, "longdigits")) {
-	    if (isdigit(*setarg)) {
-		err = set_long_digits(atoi(setarg));
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
+		err = set_long_digits(k);
 	    }
 	} else if (!strcmp(setobj, "max_verbose")) {
-	    if (isdigit(*setarg)) {
-		err = set_max_verbose(atoi(setarg));
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
+		err = set_max_verbose(k);
 	    }
 	} 	    
     } else if (nw == 3) {
