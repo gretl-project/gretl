@@ -755,6 +755,9 @@ int libset_numeric_string (const char *s, int *pi, double *px)
 	}
     }
 
+    fprintf(stderr, "libset numeric string: s='%s', ret=%d\n",
+	    s, ret);
+
     return ret;
 }
 
@@ -765,18 +768,25 @@ static int libset_get_scalar (const char *s, double **Z,
 			      int *pi, double *px)
 {
     double x = NADBL;
-    int err = 0;
+    int v, err = 0;
 
-    if (!libset_numeric_string(s, pi, px)) {
-	int v = varindex(pdinfo, s);
-
-	if (v >= pdinfo->v) {
-	    return E_UNKVAR;
-	} else if (var_is_series(pdinfo, v)) {
-	    return E_DATATYPE;
-	} else {
-	    x = Z[v][0];
+    if (libset_numeric_string(s, pi, px)) {
+	if (pi != NULL && *pi < 0) {
+	    err = E_DATA;
+	} else if (px != NULL && *px < 0.0) {
+	    err = E_DATA;
 	}
+	return err;
+    }
+
+    v = varindex(pdinfo, s);
+
+    if (v >= pdinfo->v) {
+	return E_UNKVAR;
+    } else if (var_is_series(pdinfo, v)) {
+	return E_DATATYPE;
+    } else {
+	x = Z[v][0];
     }
 
     if (x < 0.0) {
