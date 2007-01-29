@@ -241,26 +241,28 @@ produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 \texttt{mnormal}   &
 \texttt{mshape}    &
 \texttt{muniform}  &
-\texttt{onenorm}   \\
+\texttt{nullspace} \\
+\texttt{onenorm}   &
 \texttt{ones}      &
 \texttt{qform}     &
 \texttt{qnorm}     &
-\texttt{qrdecomp}  &
-\texttt{rcond}     \\
+\texttt{qrdecomp}  \\
+\texttt{rcond}     &
 \texttt{rows}      &
 \texttt{sin}       &
 \texttt{sort}      &
-\texttt{sqrt}      &
-\texttt{sumc}      \\
+\texttt{sqrt}      \\
+\texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{tan}       &
 \texttt{tr}        &
-\texttt{transp}    &
-\texttt{unvech}    \\
+\texttt{transp}    \\
+\texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
 \texttt{vech}      &
 \texttt{zeros}     \\
+
 \end{tabular}      
 \caption{Table of matrix functions}
 \label{tab:matrix_funcs}
@@ -366,7 +368,8 @@ matrix are:
 \texttt{vec()} & organize elements as column vector \\
 \texttt{vech()} & vectorize lower triangle \\
 \texttt{unvech()} & undo \texttt{vech} \\
-\texttt{mlag()} & matrix lag or lead
+\texttt{mlag()} & matrix lag or lead \\
+\texttt{nullspace()} & right nullspace
 \end{tabular}
 \end{center}
 
@@ -425,6 +428,10 @@ function returns a $T \times k$ matrix $B$ such that
 That is, the columns of $B$ are lagged versions of the columns of $A$,
 with missing values replaced by zeros.  The order $m$ may be negative
 to generate leads instead of lags.
+
+The \texttt{nullspace} function yields $X$, the right null space of a
+matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
+\cdot X = 0$.
 
 
 \subsection{Matrix filling functions}

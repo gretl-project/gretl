@@ -784,7 +784,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 
 static gretl_matrix *real_matrix_calc (const gretl_matrix *A, 
 				       const gretl_matrix *B, 
-				       char op, int *err) 
+				       int op, int *err) 
 {
     gretl_matrix *C = NULL;
     gretl_matrix *D = NULL;
@@ -1286,6 +1286,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case UNVECH:
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
+	case NULLSPC:
+	    ret->v.m = user_matrix_nullspace(m);
+	    break;
 	default:
 	    break;
 	}
@@ -1664,6 +1667,55 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     if (ret != NULL) {
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    ret->v.xvec[t] = real_apply_func(n->v.xvec[t], f, p);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *list_ok_func (NODE *n, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	const int *list = get_list_by_name(n->v.str);
+	int allbad = 0;
+	int nseries = 0;
+	int i, v, t;
+	double x;
+
+	if (list == NULL || list[0] == 0) {
+	    return ret;
+	}
+
+	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
+	    if (var_is_scalar(p->dinfo, v)) {
+		if (na((*p->Z)[v][0])) {
+		    allbad = 1;
+		    break;
+		}
+	    } else {
+		nseries++;
+	    }
+	}
+
+	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    if (allbad) {
+		ret->v.xvec[t] = 0;
+	    } else if (nseries == 0) {
+		ret->v.xvec[t] = 1;
+	    } else {
+		x = 1;
+		for (i=1; i<=list[0]; i++) {
+		    v = list[i];
+		    if (var_is_series(p->dinfo, v) && na((*p->Z)[v][t])) {
+			x = 0;
+			break;
+		    }
+		}
+		ret->v.xvec[t] = x;
+	    }
 	}
     }
 
@@ -3009,6 +3061,10 @@ static double dvar_get_value (int i, parser *p)
 	return p->dinfo->v;
     case R_PD:
 	return p->dinfo->pd;
+    case R_T1:
+	return p->dinfo->t1 + 1;
+    case R_T2:
+	return p->dinfo->t2 + 1;
     case R_TEST_PVAL:
 	return get_last_pvalue(p->lh.label);
     case R_TEST_STAT:
@@ -3377,7 +3433,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case MISSING:
-    case OK:
     case MISSZERO:
     case ZEROMISS:
 	/* one series or scalar argument needed */
@@ -3385,6 +3440,18 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);
+	} else {
+	    node_type_error(t->t, VEC, l, p);
+	}
+	break;
+    case OK:
+	/* series, scalar or list argument needed */
+	if (l->t == VEC) {
+	    ret = apply_series_func(l, t->t, p);
+	} else if (l->t == NUM) {
+	    ret = apply_scalar_func(l, t->t, p);
+	} else if (l->t == LIST) {
+	    ret = list_ok_func(l, p);
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	}
@@ -3545,6 +3612,7 @@ static NODE *eval (NODE *t, parser *p)
     case TVEC:
     case VECH:
     case UNVECH:
+    case NULLSPC:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

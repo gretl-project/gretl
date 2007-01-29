@@ -144,11 +144,12 @@ enum {
     GENPOIS,
     MAKEMASK,
     VALUES,
+    NULLSPC,
     FUNC_MAX, /* separator: end of single-arg functions */
     COR,
     COV,
-    UNIFORM,
-    NORMAL,   /* 120 */ 
+    UNIFORM, /* 120 */ 
+    NORMAL,   
     BINOMIAL,
     FRACDIF,
     ZEROS,
@@ -157,8 +158,8 @@ enum {
     MNORM,
     QFORM,
     MLAG,
-    QR,
-    EIGSYM,  /* 130 */ 
+    QR,     /* 130 */ 
+    EIGSYM,  
     EIGGEN,
     FDJAC,
     BFGSMAX,
@@ -167,8 +168,8 @@ enum {
     FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
     DOT,      /* period */
-    SEMI,     /* semi-colon */
-    COL,    /* 140: colon */
+    SEMI,   /* 140: semi-colon */
+    COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
@@ -177,8 +178,8 @@ enum {
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
-    MAT,      /* matrix, evaluated */
-    OBS,    /* 150: observation from a series */
+    MAT,    /* 150: matrix, evaluated */
+    OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
@@ -187,8 +188,8 @@ enum {
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,
-    DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,   /* 160: $ model var (scalar, series, or matrix) */
+    DVAR,   /* 160: $ dataset variable (scalar or series) */
+    MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
@@ -197,8 +198,8 @@ enum {
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
-    ABSENT,
-    INC,    /* 170 */
+    ABSENT, /* 170 */
+    INC,    
     DEC,
     QUERY,
     UNK

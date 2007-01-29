@@ -71,6 +71,8 @@ struct str_table dvars[] = {
     { R_TEST_PVAL, "$pvalue" },
     { R_INDEX,     "t" },
     { R_INDEX,     "obs" },
+    { R_T1,        "$t1" },
+    { R_T2,        "$t2" },
     { 0,           NULL },
 };
 
@@ -190,6 +192,7 @@ struct str_table funcs[] = {
     { QR,       "qrdecomp" },
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
+    { NULLSPC,  "nullspace" },
     { FDJAC,    "fdjac" },
     { BFGSMAX,  "BFGSmax" },
     { VARNUM,   "varnum" },
