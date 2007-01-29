@@ -1287,7 +1287,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
 	case NULLSPC:
-	    ret->v.m = user_matrix_nullspace(m);
+	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
 	    break;
 	default:
 	    break;

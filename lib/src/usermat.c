@@ -1153,21 +1153,6 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     return E;
 }
 
-gretl_matrix *user_matrix_nullspace (const gretl_matrix *m)
-{
-    gretl_matrix *R = NULL;
-
-    if (m != NULL) {
-	R = gretl_matrix_right_nullspace(m);
-    }
-
-    if (R == NULL) {
-	strcpy(gretl_errmsg, _("Nullspace calculation failed"));
-    }
-
-    return R;
-}
-
 void write_matrices_to_file (FILE *fp)
 {
     int i;

@@ -117,8 +117,6 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
 					 matrix_subspec *spec,
 					 int *err);
 
-gretl_matrix *user_matrix_nullspace (const gretl_matrix *m);
-
 void write_matrices_to_file (FILE *fp);
 
 #endif /* USERMAT_H_ */

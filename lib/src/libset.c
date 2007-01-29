@@ -755,9 +755,6 @@ int libset_numeric_string (const char *s, int *pi, double *px)
 	}
     }
 
-    fprintf(stderr, "libset numeric string: s='%s', ret=%d\n",
-	    s, ret);
-
     return ret;
 }
 

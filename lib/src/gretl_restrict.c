@@ -261,11 +261,9 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 #endif
 
     if (rset->type == GRETL_OBJ_VAR) {
-	gretl_matrix *D = gretl_matrix_right_nullspace(R);
+	gretl_matrix *D = gretl_matrix_right_nullspace(R, &err);
 
-	if (D == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    GRETL_VAR *var = rset->obj;
 
 #if RDEBUG

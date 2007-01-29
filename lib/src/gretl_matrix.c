@@ -32,6 +32,8 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
+#define SVD_SMIN 1.0e-9
+
 /**
  * gretl_matrix_get:
  * @m: matrix to get data from.
@@ -4052,6 +4054,8 @@ static int max_abs_index (const gretl_matrix *X, int col)
     return idx;
 }
 
+#if OLD_NULLSPACE
+
 /* given M = I - X'(XX')^{-1}X, normalize M and reduce to rank:
    return result in newly allocate matrix
 */
@@ -4117,18 +4121,7 @@ static gretl_matrix *find_base (gretl_matrix *M)
     return C;
 }
 
-/**
- * gretl_matrix_right_nullspace:
- * @M: matrix to operate on.
- * 
- * Given an m x n matrix @M, construct a conformable matrix
- * R such that MR = 0 (that is, all the columns of R are
- * orthogonal to the space spanned by the rows of @M).
- *
- * Returns: the allocated matrix R, or %NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
+gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 {
     gretl_matrix *B = NULL;
     gretl_matrix *C = NULL;
@@ -4136,34 +4129,34 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
     double x;
-    int i, j, err = 0;
+    int i, j;
 
     B = gretl_matrix_alloc(m, m);
     C = gretl_matrix_alloc(n, n);
 
     if (B == NULL || C == NULL) {
-	err = 1;
+	*err = 1;
     }
 
-    if (!err) {
+    if (!*err) {
 	/* B = MM' */
-	err = gretl_matrix_multiply_mod(M, GRETL_MOD_NONE,
-					M, GRETL_MOD_TRANSPOSE,
-					B, GRETL_MOD_NONE);
+	*err = gretl_matrix_multiply_mod(M, GRETL_MOD_NONE,
+					 M, GRETL_MOD_TRANSPOSE,
+					 B, GRETL_MOD_NONE);
     }
 
-    if (!err) {
+    if (!*err) {
 	/* B = (MM')^{-1} */
-	err = gretl_invert_symmetric_matrix(B);
+	*err = gretl_invert_symmetric_matrix(B);
     }
 
-    if (!err) {
+    if (!*err) {
 	/* C = M'(MM')^{-1}M */
 	gretl_matrix_qform(M, GRETL_MOD_TRANSPOSE, B,
 			   C, GRETL_MOD_NONE);
     }
 
-    if (!err) {
+    if (!*err) {
 	/* make C = I - M'(MM')^{-1}M */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<=i; j++) {
@@ -4178,7 +4171,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 	}
     }
 
-    if (!err) {
+    if (!*err) {
 	/* now make R into the normalized matrix */
 	R = find_base(C);
     }
@@ -4186,13 +4179,163 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
     gretl_matrix_free(B);
     gretl_matrix_free(C);
     
-    if (err) {
+    if (*err) {
 	gretl_matrix_free(R);
 	R = NULL;
     }
 
     return R;
 }
+
+#else /* !OLD_NULLSPACE */
+
+static void normalize_nullspace (gretl_matrix *M)
+{
+    int i, j, k, idx;
+    double x; 
+
+    for (j=0; j<M->cols; j++) {
+	idx = max_abs_index(M, j);
+	x = M->val[mdx(M, idx, j)];
+
+	/* normalize column j */
+	for (i=0; i<M->rows; i++) {
+	    M->val[mdx(M, i, j)] /= x;
+	    if (fabs(x) < 1.0e-16) x = 0.0; /* ? */
+	}
+
+	/* normalize cols to the right of j */
+	for (k=j+1; k<M->cols; k++) {
+	    x = M->val[mdx(M, idx, k)];
+	    for (i=0; i<M->rows; i++) {
+		x = M->val[mdx(M, i, j)] * x;
+		M->val[mdx(M, i, k)] -= x;
+	    }
+	} 
+    }
+
+    /* remove ugliness for printing */
+    k = M->rows * M->cols;
+    for (i=0; i<k; i++) {
+	if (M->val[i] == -0) {
+	    M->val[i] = 0;
+	}
+    }
+}
+
+/**
+ * gretl_matrix_right_nullspace:
+ * @M: matrix to operate on.
+ * @err: location to receive error code.
+ * 
+ * Given an m x n matrix @M, construct a conformable matrix
+ * R such that MR = 0 (that is, all the columns of R are
+ * orthogonal to the space spanned by the rows of @M).
+ *
+ * Returns: the allocated matrix R, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
+{
+    gretl_matrix *R = NULL;
+    gretl_matrix *V = NULL;
+    integer m = M->rows;
+    integer n = M->cols;
+    integer r = (m < n)? m : n;
+    integer one = 1;
+    char jobu = 'N';
+    char jobvt = 'A';
+    integer lwork = -1;
+    integer info;
+
+    double *work2, *work = NULL;
+    double u, *s = NULL, *xm = NULL;
+
+    xm = copyvec(M->val, M->rows * M->cols);
+    s = malloc(r * sizeof *s);
+    V = gretl_matrix_alloc(n, n);
+    work = lapack_malloc(sizeof *work);
+
+    if (xm == NULL || s == NULL || V == NULL || work == NULL) {
+	*err = E_ALLOC; 
+	goto bailout;
+    }	
+
+    /* workspace query */
+    dgesvd_(&jobu, &jobvt, &m, &n, xm, &m, s, &u, &one, V->val, &n, 
+	    work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	*err = 1;
+	fputs(wspace_fail, stderr);
+	goto bailout;
+    }	
+
+    lwork = (integer) work[0];
+
+    work2 = lapack_realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	*err = E_ALLOC; 
+	goto bailout;
+    } 
+    work = work2;
+
+    /* actual computation */
+    dgesvd_(&jobu, &jobvt, &m, &n, xm, &m, s, &u, &one, V->val, &n, 
+	    work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "gretl_matrix_right_nullspace: info = %d\n", (int) info);
+	*err = 1;
+    }
+
+    if (!*err) {
+	int i, j, k = n;
+	double x;
+
+	/* rank plus nullity = n */
+
+	for (i=0; i<r; i++) {
+	    if (s[i] > SVD_SMIN) {
+		k--;
+	    }
+	}
+
+	if (k == 0) {
+	    strcpy(gretl_errmsg, _("Nullspace calculation failed"));
+	    *err = 1;
+	} else {
+	    R = gretl_matrix_alloc(n, k);
+	    if (R == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<n; i++) {
+		    for (j=0; j<k; j++) {
+			x = gretl_matrix_get(V, j + n - k, i);
+			gretl_matrix_set(R, i, j, x);
+		    }
+		}
+		normalize_nullspace(R);
+	    }
+	}
+    }
+
+#if 0
+    gretl_matrix_print(M, "M");
+    gretl_matrix_print(V, "V'");
+    gretl_matrix_print(R, "R");
+#endif
+
+ bailout:
+
+    free(xm);
+    free(s);
+    lapack_free(work);
+    gretl_matrix_free(V);
+
+    return R;
+}
+
+#endif /* old vs new nullspace method */
 
 /**
  * gretl_matrix_col_concat:
@@ -4660,8 +4803,6 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 
     return err;
 }
-
-#define SVD_SMIN 1.0e-9
 
 /**
  * gretl_SVD_invert_matrix:
