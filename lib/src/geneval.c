@@ -1673,6 +1673,8 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* check for missing obs in a list of variables */
+
 static NODE *list_ok_func (NODE *n, parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
