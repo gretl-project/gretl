@@ -2558,15 +2558,17 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     NODE *ret = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == MSHAPE) {
+    if (t->t == MSHAPE || t->t == SVD) {
 	gretl_matrix *A = NULL;
+	const char *lname = NULL;
+	const char *rname = NULL;
 	int r = 0, c = 0;
 
 	if (k != 3) {
 	    pprintf(p->prn, _("Number of arguments (%d) does not "
 			      "match the number of\nparameters for "
 			      "function %s (%d)"),
-		    k, "mshape", 3);
+		    k, (t->t == MSHAPE)? "mshape" : "svd", 3);
 	    p->err = 1;
 	} 
 
@@ -2580,13 +2582,25 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else {
 		    A = e->v.m;
 		}
-	    } else {
+	    } else if (t->t == MSHAPE) {
 		if (e->t != NUM) {
 		    p->err = E_TYPES;
 		} else if (i == 1) {
 		    r = e->v.xval;
 		} else {
 		    c = e->v.xval;
+		}
+	    } else {
+		if (e->t == EMPTY) {
+		    if (i == 1) {
+			lname = "null";
+		    } else {
+			rname = "null";
+		    }
+		} else if (e->t == U_ADDR) {
+		    /* FIXME to be done */
+		    p->err = 1;
+		    ;
 		}
 	    }
 	}
@@ -2599,7 +2613,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = gretl_matrix_shape(A, r, c);
+	    if (t->t == MSHAPE) {
+		ret->v.m = gretl_matrix_shape(A, r, c);
+	    } else {
+		ret->v.m = user_matrix_SVD(A, lname, rname, &p->err);
+	    }
 	}
     } 
 
@@ -3662,6 +3680,7 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case MSHAPE:
+    case SVD:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;

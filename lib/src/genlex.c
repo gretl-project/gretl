@@ -208,6 +208,7 @@ struct str_table funcs[] = {
     { MAKEMASK, "makemask" },
     { VALUES,   "values" },
     { MSHAPE,   "mshape" },
+    { SVD,      "svd" },
     { 0,     NULL }
 };
 

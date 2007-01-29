@@ -309,6 +309,9 @@ int gretl_invert_matrix (gretl_matrix *a);
 
 int gretl_SVD_invert_matrix (gretl_matrix *a);
 
+int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+		      gretl_vector **ps, gretl_matrix **pvt);
+
 double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
 
 int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank);

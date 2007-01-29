@@ -1097,6 +1097,58 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     return Q;
 }
 
+gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
+			       const char *uname, 
+			       const char *vname, 
+			       int *err)
+{
+    gretl_matrix *U = NULL;
+    gretl_matrix *S = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix **pU = NULL;
+    gretl_matrix **pV = NULL;
+    int wantU = 0;
+    int wantV = 0;
+
+    if (m == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (uname != NULL && strcmp(uname, "null")) {
+	if (get_matrix_by_name(uname) == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    wantU = 1;
+	    pU = &U;
+	}
+    }
+
+    if (vname != NULL && strcmp(vname, "null")) {
+	if (get_matrix_by_name(vname) == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    wantV = 1;
+	    pV = &V;
+	}
+    }
+
+    if (!*err) {
+	*err = gretl_matrix_SVD(m, pU, &S, pV);
+    }
+
+    if (!*err) {
+	if (wantU) {
+	    user_matrix_replace_matrix_by_name(uname, U);
+	}
+	if (wantV) {
+	    user_matrix_replace_matrix_by_name(vname, V);
+	}
+    }
+
+    return S;
+}
+
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err)

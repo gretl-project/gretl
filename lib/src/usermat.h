@@ -105,6 +105,11 @@ gretl_matrix *
 user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, 
 		       int *err);
 
+gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
+			       const char *uname, 
+			       const char *vname, 
+			       int *err);
+
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err);

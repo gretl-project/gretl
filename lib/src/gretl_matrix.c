@@ -4117,7 +4117,6 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
     work = lapack_malloc(sizeof *work);
-
     if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
