@@ -40,10 +40,10 @@ void window_copy (gpointer data, guint how, GtkWidget *w);
 
 void window_save (windata_t *vwin, guint fmt);
 
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
+void text_replace (windata_t *vwin, guint u, GtkWidget *w);
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
-void window_print (windata_t *vwin, guint u, GtkWidget *widget);
+void window_print (windata_t *vwin, guint u, GtkWidget *w);
 #endif
 
 void system_print_buf (const gchar *buf, FILE *fp);

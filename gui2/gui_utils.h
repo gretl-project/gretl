@@ -92,6 +92,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role);
 
+windata_t *vwin_first_child (windata_t *vwin);
+
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
 

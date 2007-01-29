@@ -49,9 +49,7 @@
 # include "gretlwin32.h"
 #endif
 
-#ifdef USE_GTKSOURCEVIEW
-# include <gtksourceview/gtksourceview.h>
-#endif
+#include <gtksourceview/gtksourceview.h>
 
 char *storelist = NULL;
 
@@ -710,6 +708,46 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
     return FALSE;
 }
 
+/* when Ctrl-Return is pressed in a script window, send the
+   current line for execution */
+
+static gint 
+script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
+    if ((mods & GDK_CONTROL_MASK) && key->keyval == GDK_Return) {
+	GtkTextBuffer *buf;
+	GtkTextIter i1, i2;
+	gchar *str;
+	gint lno;
+	
+	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+	gtk_text_buffer_get_iter_at_mark(buf, 
+					 &i1, 
+					 gtk_text_buffer_get_insert(buf));
+
+	i2 = i1;
+	lno = gtk_text_iter_get_line(&i1);
+	gtk_text_iter_set_line(&i1, lno);
+	gtk_text_iter_forward_to_line_end(&i2);
+	str = gtk_text_buffer_get_text(buf, &i1, &i2, FALSE);
+	if (str != NULL && !string_is_blank(str)) {
+	    g_object_set_data(G_OBJECT(w), "script-line", str);
+	    do_run_script(w, vwin);
+	    g_object_steal_data(G_OBJECT(w), "script-line");
+	} else if (str != NULL) {
+	    g_free(str);
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 #ifdef G_OS_WIN32
 
 static void win_ctrl_c (windata_t *vwin)
@@ -736,16 +774,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) { 
 	set_window_help_active(vwin);
 	edit_script_help(NULL, NULL, vwin);
-    }
-
-#ifndef USE_GTKSOURCEVIEW
-    else if (key->keyval == GDK_Return) {
-	/* newline: correct line color */
-	correct_line_color(vwin);
-    }
-#endif
-
-    else if (mods & GDK_CONTROL_MASK) {
+    } else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
 	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		buf_edit_save(NULL, vwin);
@@ -1338,9 +1367,7 @@ void windata_init (windata_t *vwin)
     vwin->n_gretl_children = 0;
     vwin->flags = 0;
     vwin->fname[0] = '\0';
-#ifdef USE_GTKSOURCEVIEW
     vwin->sbuf = NULL;
-#endif
 }
 
 static int vwin_add_child (windata_t *parent, windata_t *child)
@@ -1388,7 +1415,7 @@ static void vwin_nullify_child (windata_t *parent, windata_t *child)
     }
 }
 
-static windata_t *vwin_first_child (windata_t *vwin)
+windata_t *vwin_first_child (windata_t *vwin)
 {
     int i, n = vwin->n_gretl_children;
 
@@ -2014,12 +2041,10 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     const char *buf = gretl_print_get_buffer(prn);
 
-#ifdef USE_GTKSOURCEVIEW
     if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
 	sourceview_insert_buffer(vwin, buf);
 	return;
     }
-#endif
 
     if (vwin->role == SCRIPT_OUT) {
 	textview_set_text_colorized(vwin->w, buf);
@@ -2077,7 +2102,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	make_viewbar(vwin, 1);
     }
 
-#ifdef USE_GTKSOURCEVIEW
     if (role == VIEW_FUNC_CODE) {
 	create_source(vwin, hsize, vsize, FALSE);
     } else if (role == EDIT_FUNC_CODE) {
@@ -2085,12 +2109,13 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     } else {
 	vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
     }
-#else
-    vwin->w = create_text(vwin->dialog, hsize, vsize, 
-			  role == EDIT_FUNC_CODE);
-#endif
 
     text_table_setup(vwin->vbox, vwin->w);
+
+    if (role == SCRIPT_OUT && data != NULL) {
+	/* partial output window for script */
+	vwin_add_child((windata_t *) data, vwin);
+    }
 
     /* arrange for clean-up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -2158,15 +2183,11 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     viewer_box_config(vwin);
     make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
 
-#ifdef USE_GTKSOURCEVIEW
     if (doing_script || role == GR_PLOT) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
 	vwin->w = create_text(vwin->dialog, hsize, vsize, editable);
     }
-#else
-    vwin->w = create_text(vwin->dialog, hsize, vsize, editable);
-#endif
 
     text_table_setup(vwin->vbox, vwin->w);
 
@@ -2179,6 +2200,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     } 
 
     if (doing_script) {
+	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
+			 G_CALLBACK(script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(edit_script_help), vwin);
     } 
@@ -2186,15 +2209,11 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* "Close" button */
     viewer_add_close_button(vwin);
 
-#ifdef USE_GTKSOURCEVIEW
     if (doing_script || role == GR_PLOT) {
 	sourceview_insert_file(vwin, filename);
     } else {
 	textview_insert_file(vwin, filename);
     }
-#else
-    textview_insert_file(vwin, filename);
-#endif
 
     /* grab the "changed" signal when editing a script */
     if (role == EDIT_SCRIPT) {
@@ -2231,8 +2250,8 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
-    cursor_to_top(vwin);
 
+    cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->w);
 
     return vwin;

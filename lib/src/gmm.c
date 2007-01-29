@@ -865,6 +865,54 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     return 0;
 }
 
+#if 1
+
+static int newey_west (const gretl_matrix *E, int h,
+		       gretl_matrix *V)
+{
+    gretl_matrix *W = NULL;
+    gretl_matrix *tmp = NULL;
+    double w;
+    int i;
+
+    W = gretl_matrix_alloc(E->rows, E->cols);
+    tmp = gretl_matrix_alloc(E->cols, E->cols);
+
+    if (W == NULL || tmp == NULL) {
+	gretl_matrix_free(W);
+	gretl_matrix_free(tmp);
+	return E_ALLOC;
+    }
+
+    gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+			      E, GRETL_MOD_NONE,
+			      V, GRETL_MOD_NONE);
+
+    for (i=1; i<=h; i++) {
+	w = 1.0 - fabs((double) i) / (h + 1.0);
+	gretl_matrix_inplace_lag(W, E, i);
+	gretl_matrix_multiply_by_scalar(W, 2*w);
+	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
+				  W, GRETL_MOD_NONE,
+				  tmp, GRETL_MOD_NONE);
+	gretl_matrix_xtr_symmetric(tmp);
+	gretl_matrix_add_to(V, tmp);
+    }
+
+    if (!gretl_matrix_is_symmetric(V)) {
+	/* should we do this? */
+	fprintf(stderr, "newey_west: V is not symmetric\n");
+	gretl_matrix_xtr_symmetric(V);
+    }
+
+    gretl_matrix_free(W);
+    gretl_matrix_free(tmp);
+
+    return 0;
+}
+
+#else
+
 static int newey_west (const gretl_matrix *E, int h,
 		       gretl_matrix *V)
 {
@@ -873,6 +921,7 @@ static int newey_west (const gretl_matrix *E, int h,
     int i;
 
     W = gretl_matrix_alloc(E->rows, E->cols);
+
     if (W == NULL) {
 	return E_ALLOC;
     }
@@ -898,6 +947,8 @@ static int newey_west (const gretl_matrix *E, int h,
 
     return 0;
 }
+
+#endif
 
 /* Calculate the covariance matrix for the GMM estimator.  Right now
    we do an HC variant for non-time series, and a HAC variant for

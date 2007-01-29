@@ -20,11 +20,9 @@
 #include "gretl.h"
 #include "textbuf.h"
 
-#ifdef USE_GTKSOURCEVIEW
-# include <gtksourceview/gtksourceview.h>
-# include <gtksourceview/gtksourcelanguage.h>
-# include <gtksourceview/gtksourcelanguagesmanager.h>
-#endif
+#include <gtksourceview/gtksourceview.h>
+#include <gtksourceview/gtksourcelanguage.h>
+#include <gtksourceview/gtksourcelanguagesmanager.h>
 
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
@@ -99,6 +97,27 @@ gchar *textview_get_text (GtkWidget *view)
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
+gchar *textview_get_selection_or_all (GtkWidget *view,
+				      int *sel)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+
+    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
+	*sel = 1;
+	return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    } else {
+	*sel = 0;
+	gtk_text_buffer_get_start_iter(tbuf, &start);
+	gtk_text_buffer_get_end_iter(tbuf, &end);
+	return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    }
+}
+
 int textview_set_text (GtkWidget *view, const gchar *text)
 {
     GtkTextBuffer *tbuf;
@@ -144,7 +163,6 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 {
     gchar *old = NULL;
 
-#ifdef USE_GTKSOURCEVIEW
     if (vwin->sbuf != NULL) {
 	if (gtk_source_buffer_can_undo(vwin->sbuf)) {
 	    gtk_source_buffer_undo(vwin->sbuf);
@@ -153,7 +171,6 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 	}
 	return;
     }
-#endif
     
     old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
 
@@ -179,8 +196,6 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
-#ifdef USE_GTKSOURCEVIEW
-
 static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
 {
     char readbuf[MAXSTR], *chunk = NULL;
@@ -197,7 +212,7 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
     while (fgets(readbuf, sizeof readbuf, fp)) {
 	int len;
 
-# ifdef ENABLE_NLS
+#ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    if (i == 0) {
 		chunk = my_locale_to_utf8(readbuf);
@@ -211,9 +226,9 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
 	} else {
 	    chunk = readbuf;
 	}
-# else
+#else
 	chunk = readbuf;
-# endif /* ENABLE_NLS */
+#endif /* ENABLE_NLS */
 
 	len = strlen(chunk);
 	if (len >= 2 && chunk[len - 2] == '\r') {
@@ -370,8 +385,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     g_object_unref(cmap);
 }
 
-#endif /* USE_GTKSOURCEVIEW */
-
 static gchar *my_utf_string (char *t)
 {
     static gchar *s = NULL;
@@ -518,19 +531,25 @@ static GtkTextBuffer *gretl_text_buf_new (void)
     return tbuf;
 }
 
-void textview_set_text_colorized (GtkWidget *view, const char *buf)
+static void 
+real_textview_add_colorized (GtkWidget *view, const char *buf,
+			     int append)
 {
     GtkTextBuffer *tbuf;
-    GtkTextIter iter;    
-    int thiscolor, nextcolor;
+    GtkTextIter iter; 
+    int thiscolor = PLAIN_TEXT;
+    int nextcolor;
     char readbuf[MAXSTR];
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
-    thiscolor = PLAIN_TEXT;
-    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    if (append) {
+	gtk_text_buffer_get_end_iter(tbuf, &iter);
+    } else {
+	gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    }
 
     bufgets_init(buf);
 
@@ -561,6 +580,16 @@ void textview_set_text_colorized (GtkWidget *view, const char *buf)
     }
 
     bufgets_finalize(buf);
+}
+
+void textview_set_text_colorized (GtkWidget *view, const char *buf)
+{
+    real_textview_add_colorized(view, buf, 0);
+}
+
+void textview_append_text_colorized (GtkWidget *view, const char *buf)
+{
+    real_textview_add_colorized(view, buf, 1);
 }
 
 void textview_insert_file (windata_t *vwin, const char *fname)
@@ -1248,33 +1277,6 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     cursor_to_top(hwin);
     hwin->active_var = hcode;
 }
-
-#ifndef USE_GTKSOURCEVIEW
-
-void correct_line_color (windata_t *vwin)
-{
-    GtkTextBuffer *buf;
-    GtkTextIter start, end;
-    gint linelen;
-    gchar *txt;
-
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    gtk_text_buffer_get_iter_at_mark(buf, &end, 
-				     gtk_text_buffer_get_insert(buf));
-    linelen = gtk_text_iter_get_chars_in_line(&end);
-    start = end;
-    gtk_text_iter_backward_chars(&start, linelen);
-
-    txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-
-    if (*txt == '#') {
-	gtk_text_buffer_apply_tag_by_name (buf, "bluetext",
-					   &start, &end);
-    }
-    g_free(txt);
-}
-
-#endif /* not USE_GTKSOURCEVIEW */
 
 GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
 			gboolean editable)

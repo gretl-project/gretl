@@ -41,9 +41,7 @@
 
 #define GNULL (gconstpointer) NULL
 
-#ifdef USE_GTKSOURCEVIEW
-# include <gtksourceview/gtksourceview.h>
-#endif
+#include <gtksourceview/gtksourceview.h>
 
 #include "gretltypes.h"
 #include "gui_utils.h"

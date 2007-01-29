@@ -73,6 +73,8 @@ extern char tramodir[];
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
+static int execute_script (const char *runfile, const char *buf,
+			   PRN *prn, int exec_code);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -5119,20 +5121,48 @@ void display_var (void)
     }
 }
 
-/* Execute a script from the buffer in a viewer window.  This may
-   be a regular script, or it may be the "command log" from a
-   GUI session */
+static int suppress_logo;
+
+static int send_output_to_kid (windata_t *vwin, PRN *prn)
+{
+    windata_t *kid = vwin_first_child(vwin);
+
+    if (kid != NULL) {
+	const char *txt = gretl_print_get_buffer(prn);
+
+	textview_append_text_colorized(kid->w, txt);
+	gretl_print_destroy(prn);
+	return 1;
+    }
+
+    return 0;
+}
+
+/* Execute a script from the buffer in a viewer window.  This may be a
+   regular script, or part of one, or it may be the "command log" from
+   a GUI session.  */
 
 void do_run_script (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    gchar *buf = textview_get_text(vwin->w);
     GdkDisplay *disp;
     GdkCursor *cursor;
     GdkWindow *w1, *w2;
+    gpointer p = NULL;
+    gchar *buf;
     gint x, y;
     PRN *prn;
+    int shown = 0, sel = 0;
     int code, err;
+
+    /* were we passed a single line for execution? */
+    buf = g_object_get_data(G_OBJECT(w), "script-line");
+
+    if (buf != NULL) {
+	sel = 1;
+    } else {
+	buf = textview_get_selection_or_all(vwin->w, &sel);
+    }
 
     if (buf == NULL || *buf == '\0') {
 	errbox("No commands to execute");
@@ -5146,8 +5176,13 @@ void do_run_script (GtkWidget *w, gpointer data)
 	return;
     }
 
-    if (vwin->role == VIEW_LOG) {
+    if (vwin->role == VIEW_LOG && !sel) {
 	code = SESSION_EXEC;
+    } else if (sel) {
+	if (vwin_first_child(vwin) != NULL) {
+	    suppress_logo = 1;
+	}
+	code = SCRIPT_EXEC;
     } else {
 	gretl_command_sprintf("run %s", vwin->fname);
 	check_and_record_command();
@@ -5172,8 +5207,19 @@ void do_run_script (GtkWidget *w, gpointer data)
     gdk_window_set_cursor(w2, NULL);
 
     refresh_data();
+    suppress_logo = 0;
 
-    view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, NULL);
+    if (sel) {
+	if (send_output_to_kid(vwin, prn)) {
+	    shown = 1;
+	} else {
+	    p = vwin;
+	}
+    }
+
+    if (!shown) {
+	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, p);
+    }
 
     /* re-establish command echo (??) */
     set_gretl_echo(1);
@@ -5962,8 +6008,8 @@ static void output_line (const char *line, PRN *prn)
 
 /* run commands from runfile or buf, output to prn */
 
-int execute_script (const char *runfile, const char *buf,
-		    PRN *prn, int exec_code)
+static int execute_script (const char *runfile, const char *buf,
+			   PRN *prn, int exec_code)
 {
     ExecState state;
     FILE *fb = NULL;
@@ -5998,7 +6044,7 @@ int execute_script (const char *runfile, const char *buf,
 	reset_model_count();
     }
 
-    if (!including) {
+    if (!including && !suppress_logo) {
 	gui_script_logo(prn);
     }
 

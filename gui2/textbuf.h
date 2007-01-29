@@ -33,6 +33,9 @@ gint get_char_width (GtkWidget *widget);
 
 gchar *textview_get_text (GtkWidget *view);
 
+gchar *textview_get_selection_or_all (GtkWidget *view,
+				      int *sel);
+
 int textview_set_text (GtkWidget *view, const gchar *text);
 
 int viewer_char_count (windata_t *vwin);
@@ -42,6 +45,8 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget);
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget);
 
 void textview_set_text_colorized (GtkWidget *view, const char *buf);
+
+void textview_append_text_colorized (GtkWidget *view, const char *buf);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
@@ -55,19 +60,11 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
 			     gpointer p);
 
-#ifdef USE_GTKSOURCEVIEW
-
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);
 
 void sourceview_insert_file (windata_t *vwin, const char *fname);
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf);
-
-#else
-
-void correct_line_color (windata_t *vwin);
-
-#endif
 
 #endif /* TEXTBUF_H */

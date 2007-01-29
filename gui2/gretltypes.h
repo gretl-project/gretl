@@ -20,9 +20,7 @@
 #ifndef GRETLTYPES_H
 #define GRETLTYPES_H
 
-#ifdef USE_GTKSOURCEVIEW
-# include <gtksourceview/gtksourceview.h>
-#endif
+#include <gtksourceview/gtksourceview.h>
 
 #define GRETL_STOCK_TEX    "gretl-tex"
 #define GRETL_STOCK_MAIL   "gretl-mail"
@@ -57,9 +55,7 @@ struct _windata_t {
     int n_gretl_children;
     unsigned char flags;
     char fname[MAXLEN];
-#ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf;
-#endif
 };
 
 #define window_is_busy(w)    (w->flags & VWIN_BUSY)

@@ -281,9 +281,6 @@ void save_latex (PRN *prn, const char *fname);
 
 void do_save_text (char *fname, MODEL *pmod);
 
-int execute_script (const char *runfile, const char *buf,
-		    PRN *prn, int exec_code);
-
 int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
 
 int check_and_record_command (void);

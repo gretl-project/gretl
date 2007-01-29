@@ -126,7 +126,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_main();
 }
 
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
+void text_replace (windata_t *vwin, guint u, GtkWidget *w)
 {
     gchar *buf;
     int count = 0;
@@ -159,7 +159,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 	return;
     }
 
-    gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(mydata->w));
+    gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     gtk_text_buffer_get_start_iter(gedit, &start);
     gtk_text_buffer_get_end_iter(gedit, &end);
@@ -236,12 +236,12 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     }    
 
     /* save original buffer for "undo" */
-    old = g_object_steal_data(G_OBJECT(mydata->w), "undo");
+    old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
     if (old != NULL) {
 	g_free(old);
     }
 
-    g_object_set_data(G_OBJECT(mydata->w), "undo", 
+    g_object_set_data(G_OBJECT(vwin->w), "undo", 
 		      gtk_text_buffer_get_text(gedit, &start, &end, FALSE));
 
     /* now insert the modified buffer */
@@ -475,7 +475,7 @@ void window_save (windata_t *vwin, guint fmt)
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
 
-void window_print (windata_t *vwin, guint u, GtkWidget *widget) 
+void window_print (windata_t *vwin, guint u, GtkWidget *w) 
 {
     char *buf, *selbuf = NULL;
     GtkTextBuffer *tbuf;
