@@ -4034,6 +4034,148 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return w;
 }
 
+/**
+ * gretl_matrix_SVD:
+ * @a: matrix to decompose.
+ * @pu: location for matrix U (or %NULL if not wanted).
+ * @ps: location for vector of singular values, or %NULL if not wanted.
+ * @pvt: location for matrix V (transposed), or %NULL if not wanted.
+ * 
+ * Computes SVD factorization of a general matrix using the lapack
+ * function %dgesvd. A = u * diag(s) * vt.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+		      gretl_vector **ps, gretl_matrix **pvt)
+{
+    integer m = a->rows;
+    integer n = a->cols;
+    integer lda = m;
+
+    char jobu = 'N', jobvt = 'N';
+    integer ldu = 1, ldvt = 1;
+    integer lwork = -1;
+    integer info;
+
+    gretl_matrix *b = NULL;
+    gretl_matrix *s = NULL;
+    gretl_matrix *u = NULL;
+    gretl_matrix *vt = NULL;
+
+    double xu, xvt;
+    double *uval = NULL, *vtval = NULL;
+    double *work = NULL, *work2 = NULL;
+
+    int k, err = 0;
+
+    if (pu == NULL && ps == NULL && pvt == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    b = gretl_matrix_copy(a);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    k = (m < n)? m : n;
+
+    s = gretl_vector_alloc(k);
+    if (s == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (pu != NULL) {
+	u = gretl_matrix_alloc(m, n);
+	if (u == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    ldu = m;
+	    uval = u->val;
+	    jobu = 'A';
+	}
+    } else {
+	uval = &xu;
+    }	
+
+    if (pvt != NULL) {
+	vt = gretl_matrix_alloc(n, n);
+	if (vt == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    ldvt = n;
+	    vtval = vt->val;
+	    jobvt = 'A';
+	}
+    } else {
+	vtval = &xvt;
+    }
+
+    work = lapack_malloc(sizeof *work);
+
+    if (work == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    }	
+
+    /* workspace query */
+    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
+	    vtval, &ldvt, work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	goto bailout;
+    }	
+
+    lwork = (integer) work[0];
+
+    work2 = lapack_realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    } 
+    work = work2;
+
+    /* actual computation */
+    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
+	    vtval, &ldvt, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+    if (ps != NULL) {
+	*ps = s;
+	s = NULL;
+    }
+
+    if (pu != NULL) {
+	*pu = u;
+	u = NULL;
+    }
+
+    if (pvt != NULL) {
+	*pvt = vt;
+	vt = NULL;
+    }
+
+ bailout:
+    
+    lapack_free(work);
+    gretl_matrix_free(b);
+    gretl_matrix_free(s);
+    gretl_matrix_free(u);
+    gretl_matrix_free(vt);
+
+    return err;
+}
+
 /* return the row-index of the element in column col of
    matrix X that has the greatest absolute magnitude
 */
@@ -4054,164 +4196,21 @@ static int max_abs_index (const gretl_matrix *X, int col)
     return idx;
 }
 
-#if OLD_NULLSPACE
-
-/* given M = I - X'(XX')^{-1}X, normalize M and reduce to rank:
-   return result in newly allocate matrix
-*/
-
-static gretl_matrix *find_base (gretl_matrix *M)
-{
-    gretl_matrix *C = NULL;
-    char *keep = NULL;
-    double TOL = 1.0e-15;
-    double x, tmp;
-    int idx, rank = 0;
-    int i, j, k;
-
-    keep = calloc(M->cols, 1);
-    if (keep == NULL) {
-	return NULL;
-    }
-
-    for (j=0; j<M->cols; j++) {
-	idx = max_abs_index(M, j);
-	tmp = M->val[mdx(M, idx, j)];
-
-	if (fabs(tmp) > TOL) {
-	    rank++;
-	    keep[j] = 1;
-	    /* normalize column j */
-	    for (i=0; i<M->rows; i++) {
-		M->val[mdx(M, i, j)] /= tmp;
-	    }
-	    /* normalize columns to the right of j */
-	    for (k=j+1; k<M->cols; k++) {
-		tmp = M->val[mdx(M, idx, k)];
-		if (fabs(tmp) > TOL) {
-		    for (i=0; i<M->rows; i++) {
-			x = M->val[mdx(M, i, j)] * tmp;
-			M->val[mdx(M, i, k)] -= x;
-		    }
-		}
-	    }
-	} 
-    }
-
-    if (rank > 0) {
-	C = gretl_matrix_alloc(M->rows, rank);
-    }
-
-    if (C != NULL) {
-	k = 0;
-	for (j=0; j<M->cols && k<rank; j++) {
-	    if (keep[j]) {
-		for (i=0; i<M->rows; i++) {
-		    x = M->val[mdx(M, i, j)];
-		    if (fabs(x) < 1.0e-16) x = 0.0; /* ? */
-		    C->val[mdx(C, i, k)] = x;
-		}
-		k++;
-	    }
-	}
-    }
-
-    free(keep);
-
-    return C;
-}
-
-gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
-{
-    gretl_matrix *B = NULL;
-    gretl_matrix *C = NULL;
-    gretl_matrix *R = NULL;
-    int m = gretl_matrix_rows(M);
-    int n = gretl_matrix_cols(M);
-    double x;
-    int i, j;
-
-    B = gretl_matrix_alloc(m, m);
-    C = gretl_matrix_alloc(n, n);
-
-    if (B == NULL || C == NULL) {
-	*err = 1;
-    }
-
-    if (!*err) {
-	/* B = MM' */
-	*err = gretl_matrix_multiply_mod(M, GRETL_MOD_NONE,
-					 M, GRETL_MOD_TRANSPOSE,
-					 B, GRETL_MOD_NONE);
-    }
-
-    if (!*err) {
-	/* B = (MM')^{-1} */
-	*err = gretl_invert_symmetric_matrix(B);
-    }
-
-    if (!*err) {
-	/* C = M'(MM')^{-1}M */
-	gretl_matrix_qform(M, GRETL_MOD_TRANSPOSE, B,
-			   C, GRETL_MOD_NONE);
-    }
-
-    if (!*err) {
-	/* make C = I - M'(MM')^{-1}M */
-	for (i=0; i<n; i++) {
-	    for (j=0; j<=i; j++) {
-		if (i == j) {
-		    x = 1.0 - C->val[mdx(C, i, j)];
-		} else {
-		    x = - C->val[mdx(C, i, j)];
-		}
-		C->val[mdx(C, i, j)] = x;
-		C->val[mdx(C, j, i)] = x;
-	    }
-	}
-    }
-
-    if (!*err) {
-	/* now make R into the normalized matrix */
-	R = find_base(C);
-    }
-
-    gretl_matrix_free(B);
-    gretl_matrix_free(C);
-    
-    if (*err) {
-	gretl_matrix_free(R);
-	R = NULL;
-    }
-
-    return R;
-}
-
-#else /* !OLD_NULLSPACE */
-
 static void normalize_nullspace (gretl_matrix *M)
 {
     int i, j, k, idx;
     double x; 
 
-    for (j=0; j<M->cols; j++) {
+    /* FIXME? */
+
+    if (M->cols == 1) {
+	j = 0;
 	idx = max_abs_index(M, j);
 	x = M->val[mdx(M, idx, j)];
-
-	/* normalize column j */
 	for (i=0; i<M->rows; i++) {
 	    M->val[mdx(M, i, j)] /= x;
 	    if (fabs(x) < 1.0e-16) x = 0.0; /* ? */
 	}
-
-	/* normalize cols to the right of j */
-	for (k=j+1; k<M->cols; k++) {
-	    x = M->val[mdx(M, idx, k)];
-	    for (i=0; i<M->rows; i++) {
-		x = M->val[mdx(M, i, j)] * x;
-		M->val[mdx(M, i, k)] -= x;
-	    }
-	} 
     }
 
     /* remove ugliness for printing */
@@ -4239,63 +4238,21 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 {
     gretl_matrix *R = NULL;
     gretl_matrix *V = NULL;
-    integer m = M->rows;
-    integer n = M->cols;
-    integer r = (m < n)? m : n;
-    integer one = 1;
-    char jobu = 'N';
-    char jobvt = 'A';
-    integer lwork = -1;
-    integer info;
+    gretl_matrix *S = NULL;
 
-    double *work2, *work = NULL;
-    double u, *s = NULL, *xm = NULL;
+    double x;
+    int m = M->rows;
+    int n = M->cols;
+    int r = (m < n)? m : n;
+    int i, j, k;
 
-    xm = copyvec(M->val, M->rows * M->cols);
-    s = malloc(r * sizeof *s);
-    V = gretl_matrix_alloc(n, n);
-    work = lapack_malloc(sizeof *work);
-
-    if (xm == NULL || s == NULL || V == NULL || work == NULL) {
-	*err = E_ALLOC; 
-	goto bailout;
-    }	
-
-    /* workspace query */
-    dgesvd_(&jobu, &jobvt, &m, &n, xm, &m, s, &u, &one, V->val, &n, 
-	    work, &lwork, &info);
-
-    if (info != 0 || work[0] <= 0.0) {
-	*err = 1;
-	fputs(wspace_fail, stderr);
-	goto bailout;
-    }	
-
-    lwork = (integer) work[0];
-
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
-	*err = E_ALLOC; 
-	goto bailout;
-    } 
-    work = work2;
-
-    /* actual computation */
-    dgesvd_(&jobu, &jobvt, &m, &n, xm, &m, s, &u, &one, V->val, &n, 
-	    work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "gretl_matrix_right_nullspace: info = %d\n", (int) info);
-	*err = 1;
-    }
+    *err = gretl_matrix_SVD(M, NULL, &S, &V);
 
     if (!*err) {
-	int i, j, k = n;
-	double x;
-
 	/* rank plus nullity = n */
-
+	k = n;
 	for (i=0; i<r; i++) {
-	    if (s[i] > SVD_SMIN) {
+	    if (S->val[i] > SVD_SMIN) {
 		k--;
 	    }
 	}
@@ -4320,22 +4277,15 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     }
 
 #if 0
-    gretl_matrix_print(M, "M");
     gretl_matrix_print(V, "V'");
     gretl_matrix_print(R, "R");
 #endif
 
- bailout:
-
-    free(xm);
-    free(s);
-    lapack_free(work);
+    gretl_matrix_free(S);
     gretl_matrix_free(V);
 
     return R;
 }
-
-#endif /* old vs new nullspace method */
 
 /**
  * gretl_matrix_col_concat:
@@ -4821,16 +4771,11 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 int gretl_SVD_invert_matrix (gretl_matrix *a)
 {
     gretl_matrix *u = NULL;
+    gretl_matrix *s = NULL;
     gretl_matrix *vt = NULL;
-    integer n = a->rows;
-    char jobu = 'A';
-    char jobvt = 'A';
-    integer lwork = -1;
-    integer info;
 
-    double *work2, *work = NULL;
-    double x, *s = NULL;
-
+    double x;
+    int n = a->rows;
     int i, j, k;
     int err = 0;
 
@@ -4841,46 +4786,12 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
 
-    s = malloc(n * sizeof *s);
-    u = gretl_matrix_alloc(n, n);
-    vt = gretl_matrix_alloc(n, n);
-    work = lapack_malloc(sizeof *work);
-
-    if (s == NULL || u == NULL || vt == NULL || work == NULL) {
-	err = E_ALLOC; 
-	goto bailout;
-    }	
-
-    /* workspace query */
-    dgesvd_(&jobu, &jobvt, &n, &n, a->val, &n, s, u->val, &n, vt->val, &n, 
-	    work, &lwork, &info);
-
-    if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
-	goto bailout;
-    }	
-
-    lwork = (integer) work[0];
-
-    work2 = lapack_realloc(work, lwork * sizeof *work);
-    if (work2 == NULL) {
-	err = E_ALLOC; 
-	goto bailout;
-    } 
-    work = work2;
-
-    /* actual computation */
-    dgesvd_(&jobu, &jobvt, &n, &n, a->val, &n, s, u->val, &n, vt->val, &n, 
-	    work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "gretl_matrix_SVD_inverse: info = %d\n", (int) info);
-	err = 1;
-    }
+    err = gretl_matrix_SVD(a, &u, &s, &vt);
 
     if (!err) {
 	k = 0;
 	for (i=0; i<n; i++) {
-	    if (s[i] < SVD_SMIN) {
+	    if (s->val[i] < SVD_SMIN) {
 		break;
 	    }
 	    k++;
@@ -4913,7 +4824,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	/* invert singular values */
 	for (j=0; j<k; j++) {
 	    for (i=0; i<n; i++) {
-		u->val[mdx(u, i, j)] /= s[j];
+		u->val[mdx(u, i, j)] /= s->val[j];
 	    }
 	}
 	err = gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
@@ -4923,9 +4834,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
  bailout:
     
-    free(s);
-    lapack_free(work);
     gretl_matrix_free(u);
+    gretl_matrix_free(s);
     gretl_matrix_free(vt);
 
     return err;
