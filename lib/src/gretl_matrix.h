@@ -188,8 +188,8 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
 int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
 
 gretl_matrix *
-gretl_matrix_dot_pow (const gretl_matrix *a, const gretl_matrix *b,
-		      int *err);
+gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
+		     int op, int *err);
 
 void gretl_matrix_raise (gretl_matrix *m, double x);
 
@@ -256,14 +256,6 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 
 double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 				 int *errp);
-
-gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
-					 const gretl_matrix *b,
-					 int *err);
-
-gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a, 
-				       const gretl_matrix *b,
-				       int *err);
 
 gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m);
 

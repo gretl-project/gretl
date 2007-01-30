@@ -779,6 +779,19 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static int op_symbol (int op)
+{
+    switch (op) {
+    case DOTMULT: return '*';
+    case DOTDIV:  return '/';
+    case DOTPOW:  return '^';
+    case DOTADD:  return '+';
+    case DOTSUB:  return '-';
+    case DOTEQ:   return '=';
+    default: return 0;
+    }
+}
+
 /* return allocated result of binary operation performed on
    two matrices */
 
@@ -904,16 +917,13 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	}
 	break;
     case DOTMULT:
-	/* element-wise multiplication */
-	C = gretl_matrix_dot_multiply(A, B, err);
-	break;
     case DOTDIV:
-	/* element-wise division */
-	C = gretl_matrix_dot_divide(A, B, err);
-	break;
     case DOTPOW:
-	/* element-wise exponentiation */
-	C = gretl_matrix_dot_pow(A, B, err);
+    case DOTADD:
+    case DOTSUB:
+    case DOTEQ:
+	/* apply operator element-wise */
+	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
     case KRON:
     case B_POW: /* alias */
@@ -1024,9 +1034,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    return NULL;
 	}
 
-	if (op == DOTMULT) op = B_MUL;
-	if (op == DOTDIV)  op = B_DIV;
-	if (op == DOTPOW)  op = B_POW;
+	if      (op == DOTMULT) op = B_MUL;
+	else if (op == DOTDIV)  op = B_DIV;
+	else if (op == DOTPOW)  op = B_POW;
+	else if (op == DOTADD)  op = B_ADD;
+	else if (op == DOTSUB)  op = B_SUB;
+	else if (op == DOTEQ)   op = B_EQ;
 
 	if (l->t == NUM) {
 	    for (i=0; i<n; i++) {
@@ -2587,7 +2600,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_shape(A, r, c);
+	    m = gretl_matrix_shape(A, r, c);
 	}
 
     } else if (t->t == SVD) {
@@ -3198,7 +3211,8 @@ static NODE *object_var_node (NODE *t, parser *p)
        want from that object */
 
 #if EDEBUG
-    fprintf(stderr, "object_var_node: r->t = %d (%s)\n", r->t, getsymb(r->t, NULL));
+    fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
+	    t->t, getsymb(t->t, NULL), r->t, getsymb(r->t, NULL));
     fprintf(stderr, "scalar=%d, series=%d, matrix=%d, mslice=%d\n",
 	    scalar, series, matrix, mslice);
 #endif
@@ -3214,6 +3228,10 @@ static NODE *object_var_node (NODE *t, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *oname = (t->t == MVAR || t->t == DMSL)?
 	    NULL : t->v.b2.l->v.str;
+
+#if EDEBUG
+	fprintf(stderr, "object_var_node: oname = '%s'\n", oname);
+#endif
 
 	if (r->v.idnum == M_UHAT || r->v.idnum == M_YHAT) {
 	    /* could be series or matrix */
@@ -3231,12 +3249,12 @@ static NODE *object_var_node (NODE *t, parser *p)
 	} else if (series) {
 	    ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
 						  &p->err);
-	} else if (matrix) {
-	    ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
 	} else if (mslice) {
 	    /* the right subnode needs more work */
 	    ret->v.m = object_var_get_submatrix(oname, r, p);
-	}
+	} else if (matrix) {
+	    ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
+	} 
     } 
     
     return ret;
@@ -3420,6 +3438,9 @@ static NODE *eval (NODE *t, parser *p)
     case DOTMULT:
     case DOTDIV:
     case DOTPOW:
+    case DOTADD:
+    case DOTSUB:
+    case DOTEQ:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);

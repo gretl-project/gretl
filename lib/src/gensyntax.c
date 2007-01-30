@@ -34,6 +34,8 @@ enum {
     STR_STEAL
 };
 
+static NODE *powterm (parser *p);
+
 #if SDEBUG
 static void notify (const char *s, NODE *t, parser *p)
 {
@@ -646,15 +648,22 @@ static void get_ovar_ref (NODE *t, parser *p)
 {
     if (p->ch != '.' || parser_charpos(p, '$') != 0) {
 	p->err = E_PARSE;
+	return;
     }
 
     p->idnum = 0;
 
+    /* handle the '.' */
     lex(p);
+
+    /* get the following '$' name */
     lex(p);
 
     if (p->idnum == 0) {
 	p->err = E_PARSE;
+    } else if (p->sym == DMSL) {
+	/* followed by '[' slice mechanism? */
+	t->v.b2.r = powterm(p);
     } else {
 	t->v.b2.r = newref(p);
 	lex(p);
@@ -886,6 +895,7 @@ static NODE *expr4 (parser *p)
     }
 
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
+		       p->sym == DOTADD || p->sym == DOTSUB ||
 		       p->sym == MCAT)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
@@ -933,7 +943,8 @@ static NODE *expr2 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ)) {
+    while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ ||
+		       p->sym == DOTEQ)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

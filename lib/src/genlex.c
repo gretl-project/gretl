@@ -592,6 +592,10 @@ static void look_up_word (const char *s, parser *p)
 
 static void word_check_next_char (const char *s, parser *p)
 {
+#if LDEBUG
+    fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
+#endif
+
     if (p->ch == '(') {
 	/* series (lag) or function */
 	if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {
@@ -896,6 +900,18 @@ void lex (parser *p)
 		p->sym = DOTPOW;
 		parser_getc(p);
 		return;
+	    } else if (p->ch == '+') {
+		p->sym = DOTADD;
+		parser_getc(p);
+		return;
+	    } else if (p->ch == '-') {
+		p->sym = DOTSUB;
+		parser_getc(p);
+		return;
+	    } else if (p->ch == '=') {
+		p->sym = DOTEQ;
+		parser_getc(p);
+		return;
 	    } else {
 		/* not a "dot operator", back up */
 		parser_ungetc(p);
@@ -951,6 +967,8 @@ const char *getsymb (int t, const parser *p)
 	return "FARGS";
     } else if (t == LIST) {
 	return "LIST";
+    } else if (t == OVAR) {
+	return "OVAR";
     }
 
     if (p != NULL) {
@@ -1032,6 +1050,12 @@ const char *getsymb (int t, const parser *p)
 	return "./";
     case DOTPOW: 
 	return ".^";
+    case DOTADD: 
+	return ".+";
+    case DOTSUB: 
+	return ".-";
+    case DOTEQ: 
+	return ".=";
     case KRON: 
 	return "**";
     case MCAT: 

@@ -620,35 +620,37 @@ void gretl_matrix_zero (gretl_matrix *m)
 
 /**
  * gretl_matrix_get_diagonal:
- * @m: square input matrix.
+ * @m: input matrix.
  * @err: location to receive error code.
  *
  * Returns: a column vector containing the diagonal elements of
- * @m, if @m is square, otherwise %NULL.  A non-zero value is
- * assigned via @err on failure.
+ * @m, otherwise %NULL.  A non-zero value is assigned via @err 
+ * on failure.
  */
 
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 {
     gretl_matrix *d = NULL;
-    int i;
+    int i, n;
 
     *err = 0;
     
-    if (m == NULL || m->rows != m->cols) {
-	*err = E_NONCONF;
+    if (m == NULL) {
+	*err = E_DATA;
 	return NULL;
     }
 
-    d = gretl_column_vector_alloc(m->rows);
+    n = (m->rows < m->cols)? m->rows : m->cols;
 
-    if (d != NULL) {
-	for (i=0; i<m->rows; i++) {
+    d = gretl_column_vector_alloc(n);
+
+    if (d == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
 	    d->val[i] = m->val[mdx(m, i, i)];
 	}
-    } else {
-	*err = E_ALLOC;
-    }
+    } 
 
     return d;
 }
@@ -940,73 +942,6 @@ int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
     }
 
     return 0;
-}
-
-/**
- * gretl_matrix_dot_pow:
- * @a: m x n matrix.
- * @b: m x n or 1 x 1 matrix.
- * @err: location to receive error code.
- *
- * If @b is m x n, forms a matrix C for which c_{ij} =
- * a_{ij} ^ b_{ij}.  Else if b is 1 x 1, c_{ij} = 
- * a_{ij} ^ b_{1,1}.  
- *
- * Returns: a newly allocated matrix for %NULL on error.
- */
-
-gretl_matrix *
-gretl_matrix_dot_pow (const gretl_matrix *a, const gretl_matrix *b,
-		      int *err)
-{
-    gretl_matrix *c;
-    int i, n;
-
-    errno = 0;
-
-    if (a == NULL || b == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    *err = E_NONCONF;
-    if (b->rows == a->rows && b->cols == a->cols) {
-	*err = 0;
-    } else if (b->rows == 1 && b->cols == 1) {
-	*err = 0;
-    }
-
-    if (*err) {
-	return NULL;
-    }
-
-
-    c = gretl_matrix_copy(a);
-    if (c == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    n = c->rows * c->cols;
-
-    if (b->rows == c->rows && b->cols == c->cols) {
-	for (i=0; i<n; i++) {
-	    c->val[i] = pow(a->val[i], b->val[i]);
-	}
-    } else if (b->rows == 1 && b->cols == 1) {
-	for (i=0; i<n; i++) {
-	    c->val[i] = pow(a->val[i], b->val[0]);
-	}
-    }
-
-    if (errno == EDOM) {
-	gretl_matrix_free(c);
-	c = NULL;
-	*err = E_DATA;
-	strcpy(gretl_errmsg, _(strerror(errno)));
-    }
-
-    return c;
 }
 
 /**
@@ -2533,83 +2468,41 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     return ret;
 }
 
-/**
- * gretl_matrix_dot_multiply:
- * @a: left-hand matrix.
- * @b: right-hand matrix.
- * @err: location to receive error code.
- * 
- * Returns: a new matrix, each of whose elements is the product of the
- * corresponding elements of the matrices @a and @b (or %NULL on
- * failure).
- */
-
-gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
-					 const gretl_matrix *b,
-					 int *err)
+static double x_op_y (double x, double y, int op)
 {
-    gretl_matrix *c = NULL;
-    int m = a->rows;
-    int n = a->cols;
-    int p = b->rows;
-    int q = b->cols;
-    int i, j, k, nv;
-
-    if (m == p && n == q) {
-	c = gretl_matrix_copy(b);
-	if (c != NULL) {
-	    nv = m * n;
-	    for (i=0; i<nv; i++) {
-		c->val[i] *= a->val[i];
-	    }
-	}	    
-    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
-	c = gretl_matrix_alloc(p, q);
-	if (c != NULL) {
-	    for (i=0; i<c->rows; i++) {
-		for (j=0; j<c->cols; j++) {
-		    k = (m == 1)? j : i;
-		    c->val[mdx(c,i,j)] = a->val[k] * b->val[mdx(b,i,j)];
-		}
-	    }
-	}
-    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
-	c = gretl_matrix_alloc(m, n);
-	if (c != NULL) {
-	    for (i=0; i<c->rows; i++) {
-		for (j=0; j<c->cols; j++) {
-		    k = (p == 1)? j : i;
-		    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)] * b->val[k];
-		}
-	    }
-	}
-    } else {
-	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
-	*err = E_NONCONF;
-	return NULL;
+    switch (op) {
+    case '*': 
+	return x * y;
+    case '/':
+	return x / y;
+    case '+':
+	return x + y;
+    case '-':
+	return x - y;
+    case '^':
+	return pow(x, y);
+    case '=':
+	return x == y;
+    default:
+	return 0;
     }
-
-    if (c == NULL) {
-	*err = E_ALLOC;
-    }
-
-    return c;
 }
 
 /**
- * gretl_matrix_dot_divide:
+ * gretl_matrix_dot_op:
  * @a: left-hand matrix.
  * @b: right-hand matrix.
+ * @op: operator.
  * @err: location to receive error code.
  * 
- * Returns: a new matrix, each of whose elements is the quotient of the
- * corresponding elements of the matrices @a and @b (or %NULL on
- * failure).
+ * Returns: a new matrix, each of whose elements is the result
+ * of (x op y), where x and y are the  corresponding elements of 
+ * the matrices @a and @b (or %NULL on failure).
  */
 
-gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a, 
-				       const gretl_matrix *b,
-				       int *err)
+gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a, 
+				   const gretl_matrix *b,
+				   int op, int *err)
 {
     gretl_matrix *c = NULL;
     int m = a->rows;
@@ -2618,42 +2511,49 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
     int q = b->cols;
     int i, j, k, nv;
 
-    if (m == p && n == q) {
-	c = gretl_matrix_copy(a);
-	if (c != NULL) {
-	    nv = m * n;
-	    for (i=0; i<nv; i++) {
-		c->val[i] /= b->val[i];
-	    }
-	}	    
+    if ((m == p && n == q) || (p == 1 && n == q) || (q == 1 && m == p)) {
+	c = gretl_matrix_alloc(m, n);
     } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
 	c = gretl_matrix_alloc(p, q);
-	if (c != NULL) {
-	    for (i=0; i<c->rows; i++) {
-		for (j=0; j<c->cols; j++) {
-		    k = (m == 1)? j : i;
-		    c->val[mdx(c,i,j)] = a->val[k] / b->val[mdx(b,i,j)];
-		}
-	    }
-	}
-    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
-	c = gretl_matrix_alloc(m, n);
-	if (c != NULL) {
-	    for (i=0; i<c->rows; i++) {
-		for (j=0; j<c->cols; j++) {
-		    k = (p == 1)? j : i;
-		    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)] / b->val[k];
-		}
-	    }
-	}
     } else {
-	fputs("gretl_matrix_dot_divide: matrices not conformable\n", stderr);
+	fputs("gretl_matrix_dot_op: matrices not conformable\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
     }
 
     if (c == NULL) {
 	*err = E_ALLOC;
+	return NULL;
+    }
+
+    errno = 0;
+
+    if (m == p && n == q) {
+	nv = m * n;
+	for (i=0; i<nv; i++) {
+	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
+	}
+    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
+	for (i=0; i<c->rows; i++) {
+	    for (j=0; j<c->cols; j++) {
+		k = (m == 1)? j : i;
+		c->val[mdx(c,i,j)] = x_op_y(a->val[k], b->val[mdx(b,i,j)], op);
+	    }
+	}
+    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
+	for (i=0; i<c->rows; i++) {
+	    for (j=0; j<c->cols; j++) {
+		k = (p == 1)? j : i;
+		c->val[mdx(c,i,j)] = x_op_y(a->val[mdx(a,i,j)], b->val[k], op);
+	    }
+	}
+    } 
+
+    if (errno) {
+	gretl_matrix_free(c);
+	c = NULL;
+	*err = E_DATA;
+	strcpy(gretl_errmsg, _(strerror(errno)));
     }
 
     return c;

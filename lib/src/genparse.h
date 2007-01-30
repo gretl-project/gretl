@@ -59,146 +59,149 @@ enum {
     DOTMULT,
     DOTDIV,
     DOTPOW, /* 30 */
+    DOTADD,
+    DOTSUB,
+    DOTEQ,
     KRON,     /* Kronecker product */
     MCAT,     /* matrix concatenation */
     OP_MAX,   /* separator: end of operators */
     ABS,
     TOINT,
     SIN,
-    COS,
+    COS,    /* 40 */
     TAN,
     ATAN,
-    LOG,    /* 40 */
+    LOG,
     LOG10,
     LOG2,
     EXP,
     SQRT,
     DIF,      /* first difference */
     LDIF,     /* log difference */
-    SDIF,     /* seasonal difference */
+    SDIF,   /* 50: seasonal difference */
     SORT,     /* ascending sort */
     DSORT,    /* descending sort */
-    ODEV,   /* 50: orthogonal deviation */
+    ODEV,     /* orthogonal deviation */
     NOBS,
     T1,
     T2,
     CHISQ,
     STUDENT,
     CUM,
-    MISSING,
+    MISSING,  /* 60 */ 
     OK,
     MISSZERO,
-    ZEROMISS, /* 60 */ 
+    ZEROMISS,
     MEDIAN,
     GINI,
     SUM,
     MEAN,
     MIN,
     MAX,
-    SD,
+    SD,     /* 70 */
     VCE,      /* variance */
     LRVAR,    /* long-run variance */
-    SST,    /* 70 */
+    SST,
     CNORM,
     DNORM,
     QNORM,
     GAMMA,
     LNGAMMA,
     HPFILT,
-    BKFILT,
+    BKFILT,  /* 80 */
     RESAMPLE,
     PMEAN,
-    PSD,     /* 80 */
+    PSD,
     IMAT,
     SUMR,
     SUMC,
     MEANR,
     MEANC,
     MCOV,
-    MCORR,
+    MCORR,   /* 90 */
     CDEMEAN,
     CHOL,
-    INV,     /* 90 */
+    INV,
     DIAG,
     TRANSP,
     TVEC,
     VECH,
     UNVECH,
     ROWS,
-    COLS,
+    COLS,    /* 100 */
     DET,
     LDET,
-    TRACE,   /* 100 */
+    TRACE,
     NORM1,
     RCOND,
     VARNUM,
     OBSNUM,
     ISSERIES,
     ISLIST,
-    ISSTRING,
+    ISSTRING, /* 110 */
     ISNULL,
     LISTLEN,
-    PVAL,    /* 110 */
+    PVAL,
     CDF,
     CRIT,
     GENPOIS,
     MAKEMASK,
     VALUES,
     NULLSPC,
-    FUNC_MAX, /* separator: end of single-arg functions */
+    FUNC_MAX, /* 120: separator: end of single-arg functions */
     COR,
     COV,
-    UNIFORM, /* 120 */ 
+    UNIFORM,
     NORMAL,   
     BINOMIAL,
     FRACDIF,
     ZEROS,
     ONES,
     MUNIF,
-    MNORM,
+    MNORM,  /* 130 */ 
     QFORM,
     MLAG,
-    QR,     /* 130 */ 
+    QR,
     EIGSYM,  
     EIGGEN,
     FDJAC,
     BFGSMAX,
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
-    SVD,
+    SVD,    /* 140 */
     FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
-    DOT,    /* 140: period */
+    DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
-    UOBJ,     /* user-defined object (e.g. model) */
+    UOBJ,   /* 150: user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
-    IVEC,   /* 150: vector of integers, evaluated */
+    IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
-    MSPEC,    /* evaluated matrix subspec */
+    MSPEC,  /* 160: evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
-    LAG,    /* 160 */
+    LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
-    EROOT,    /* dummy root for (...) expression */
+    EROOT,  /* 170: dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
-    EMPTY,  /* 170 */
+    EMPTY,
     ABSENT, 
     INC,    
     DEC,

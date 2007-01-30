@@ -151,16 +151,15 @@ static int
 matrix_insert_diagonal (gretl_matrix *M, const gretl_matrix *S,
 			int mr, int mc)
 {
-    int i, len = gretl_vector_get_length(S);
-    double x;
+    int i, n = gretl_vector_get_length(S);
+    int k = (mr < mc)? mr : mc;
 
-    if (mr != mc || len != mr) {
+    if (n != k) {
 	return E_NONCONF;
     }
 
-    for (i=0; i<len; i++) {
-	x = gretl_vector_get(S, i);
-	gretl_matrix_set(M, i, i, x);
+    for (i=0; i<n; i++) {
+	gretl_matrix_set(M, i, i, S->val[i]);
     }
     
     return 0;
@@ -571,28 +570,6 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     return err;
 }
 
-static gretl_matrix *matrix_get_diagonal (const gretl_matrix *M,
-					  int *err)
-{
-    gretl_matrix *d = NULL;
-    int i;
-
-    if (M->rows != M->cols) {
-	*err = E_NONCONF;
-    } else {
-	d = gretl_column_vector_alloc(M->cols);
-	if (d == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    for (i=0; i<M->cols; i++) {
-		d->val[i] = gretl_matrix_get(M, i, i);
-	    }
-	}
-    }
-
-    return d;
-}
-
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,
 				    int *err)
@@ -603,7 +580,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     int r, c;
 
     if (spec->type[0] == SEL_DIAG) {
-	return matrix_get_diagonal(M, err);
+	return gretl_matrix_get_diagonal(M, err);
     }
 
     *err = get_slices(spec, &rslice, &cslice, M);
