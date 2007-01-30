@@ -2275,7 +2275,34 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     NODE *n;
     int r = nsep + 1;
     int c = (seppos > 0)? seppos : m;
-    int i, j, k, posbak = 0;
+    int nelem = m - nsep;
+    int i, j, k;
+
+    if (nelem != r * c) {
+	p->err = 1;
+    } else if (nsep > 0) {
+	k = 0;
+	for (i=0; i<m; i++) {
+	    n = t->v.bn.n[i];
+	    if (n->t == EMPTY) {
+		if (i - k != seppos) {
+		    p->err = 1;
+		    break;
+		}
+		k = i + 1;
+	    }
+	}
+    }
+
+    if (p->err) {
+	pprintf(p->prn, "matrix specification is not coherent\n");
+	return NULL;
+    }
+
+#if EDEBUG
+    fprintf(stderr, "matrix_from_scalars: m=%d, nsep=%d, seppos=%d, nelem=%d\n",
+	    m, nsep, seppos, nelem);
+#endif
 
     M = gretl_matrix_alloc(r, c);
     if (M == NULL) {
@@ -2286,16 +2313,7 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
 	    for (j=0; j<c; j++) {
 		n = t->v.bn.n[k++];
 		if (n->t == EMPTY) {
-		    /* check position */
-		    if (k - posbak != c + 1) {
-			pprintf(p->prn, "expected '%c' but found '%s'\n", 
-				',', ";");
-			p->err = 1;
-			break;
-		    } else {
-			posbak = k;
-			n = t->v.bn.n[k++];
-		    } 
+		    n = t->v.bn.n[k++];
 		} 
 		gretl_matrix_set(M, i, j, n->v.xval);
 	    }
