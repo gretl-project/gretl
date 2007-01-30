@@ -1968,6 +1968,7 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case LRVAR:
 	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
 						  x, 2 * p->dinfo->pd);
+	    break;
 	case NOBS:
 	    ret->v.xval = series_get_nobs(p->dinfo->t1, p->dinfo->t2, x);
 	    break;

@@ -798,10 +798,16 @@ void lex (parser *p)
         case '&': 
 	    p->sym = B_AND;
 	    parser_getc(p);
+	    if (p->ch == '&') {
+		parser_getc(p);
+	    }
 	    return;
         case '|': 
 	    p->sym = B_OR;
 	    parser_getc(p);
+	    if (p->ch == '|') {
+		parser_getc(p);
+	    }
 	    return;
         case '!': 
 	    parser_getc(p);
@@ -861,14 +867,13 @@ void lex (parser *p)
 	    p->sym = RBR;
 	    parser_getc(p);
 	    return;
-        case '~': 
+        case '~':
+	    p->sym = MCCAT;
 	    parser_getc(p);
-	    if (p->ch == '\'') {
-		p->sym = MRCAT;
-		parser_getc(p);
-	    } else {
-		p->sym = MCCAT;
-	    }
+	    return;
+        case '`': 
+	    p->sym = MRCAT;
+	    parser_getc(p);
 	    return;
         case ',': 
 	    p->sym = COM;

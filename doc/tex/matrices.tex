@@ -114,7 +114,7 @@ The following binary operators are available for matrices:
 \texttt{./} & element-wise division \\
 \verb+.^+ & element-wise exponentiation \\
 \verb+~+ & column-wise concatenation \\
-\verb+~'+ & row-wise concatenation \\
+\verb+`+ & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
 \texttt{=} & test for equality 
 \end{tabular}
@@ -204,7 +204,7 @@ an $p\times n$ matrix $B$ produces an $(m+p) \times n$ matrix.
 That is,
 %
 \begin{code}
-C = A ~' B
+C = A ` B
 \end{code}
 % 
 produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
