@@ -2278,6 +2278,8 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     int nelem = m - nsep;
     int i, j, k;
 
+    /* check that all rows are the same length */
+
     if (nelem != r * c) {
 	p->err = 1;
     } else if (nsep > 0) {
