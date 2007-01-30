@@ -865,7 +865,7 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     return 0;
 }
 
-#if 1
+#if 0
 
 static int newey_west (const gretl_matrix *E, int h,
 		       gretl_matrix *V)
