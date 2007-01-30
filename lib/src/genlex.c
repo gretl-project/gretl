@@ -797,17 +797,10 @@ void lex (parser *p)
 	    return;
         case '&': 
 	    p->sym = B_AND;
-	    if (p->ch == '&') {
-		parser_getc(p);
-	    }
 	    parser_getc(p);
 	    return;
         case '|': 
 	    p->sym = B_OR;
-	    parser_getc(p);
-	    if (p->ch == '|') {
-		parser_getc(p);
-	    }
 	    parser_getc(p);
 	    return;
         case '!': 
