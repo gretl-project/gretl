@@ -4249,6 +4249,56 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 }
 
 /**
+ * gretl_matrix_row_concat:
+ * @a: upper source matrix (m x n).
+ * @b: lower source matrix (p x n).
+ * @err: location to receive error code.
+ * 
+ * Returns: newly allocated matrix ((m+p) x n) that results from 
+ * the row-wise concatenation of @a and @b, or %NULL on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
+			 int *err)
+{
+    gretl_matrix *c = NULL;
+    int i, j, k;
+
+    if (a == NULL || b == NULL) {
+	*err = 1;
+	return NULL;
+    }
+
+    if (a->cols != b->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(a->rows + b->rows, a->cols);
+    if (c == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<a->rows; i++) {
+	for (j=0; j<a->cols; j++) {
+	    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)];
+	}
+    }  
+
+    k = a->rows;
+    for (i=0; i<b->rows; i++) {
+	for (j=0; j<b->cols; j++) {
+	    c->val[mdx(c,k,j)] = b->val[mdx(b,i,j)];
+	}
+	k++;
+    }      
+
+    return c;
+}
+
+/**
  * gretl_matrix_col_concat:
  * @a: left-hand source matrix (m x n).
  * @b: right-hand source matrix (m x p).

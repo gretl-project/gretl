@@ -896,7 +896,7 @@ static NODE *expr4 (parser *p)
 
     while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
 		       p->sym == DOTADD || p->sym == DOTSUB ||
-		       p->sym == MCAT)) {
+		       p->sym == MCCAT || p->sym == MRCAT)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

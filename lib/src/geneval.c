@@ -833,9 +833,11 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    }
 	}
 	break;
-    case MCAT:
-	/* column-wise concatenation */
+    case MCCAT:
 	C = gretl_matrix_col_concat(A, B, err);
+	break;
+    case MRCAT:
+	C = gretl_matrix_row_concat(A, B, err);
 	break;
     case B_MUL:
 	ra = gretl_matrix_rows(A);
@@ -3451,7 +3453,8 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case KRON:
-    case MCAT:
+    case MCCAT:
+    case MRCAT:
     case QFORM:
 	/* matrix-only binary operators */
 	if (l->t == MAT && r->t == MAT) {

@@ -324,6 +324,10 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M,
 					    int *err);
 
 gretl_matrix *
+gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
+			 int *err);
+
+gretl_matrix *
 gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 			 int *err);
 
