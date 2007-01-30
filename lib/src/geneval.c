@@ -2550,26 +2550,30 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     return ret;
 }
 
+static void n_args_error (int k, int n, const char *s, parser *p)
+{
+    pprintf(p->prn, _("Number of arguments (%d) does not "
+		      "match the number of\nparameters for "
+		      "function %s (%d)"),
+	    k, "mshape", n);
+    p->err = 1;
+}
+
 /* evaluate a built-in function that has more than two arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
 {
     NODE *e, *n = t->v.b1.b;
     NODE *ret = NULL;
+    gretl_matrix *m = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (t->t == MSHAPE || t->t == SVD) {
+    if (t->t == MSHAPE) {
 	gretl_matrix *A = NULL;
-	const char *lname = NULL;
-	const char *rname = NULL;
 	int r = 0, c = 0;
 
 	if (k != 3) {
-	    pprintf(p->prn, _("Number of arguments (%d) does not "
-			      "match the number of\nparameters for "
-			      "function %s (%d)"),
-		    k, (t->t == MSHAPE)? "mshape" : "svd", 3);
-	    p->err = 1;
+	    n_args_error(k, 3, "mshape", p);
 	} 
 
 	for (i=0; i<k && !p->err; i++) {
@@ -2582,44 +2586,71 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else {
 		    A = e->v.m;
 		}
-	    } else if (t->t == MSHAPE) {
-		if (e->t != NUM) {
-		    p->err = E_TYPES;
-		} else if (i == 1) {
-		    r = e->v.xval;
+	    } else if (e->t != NUM) {
+		p->err = E_TYPES;
+	    } else if (i == 1) {
+		r = e->v.xval;
+	    } else {
+		c = e->v.xval;
+	    }
+	}
+
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_shape(A, r, c);
+	}
+
+    } else if (t->t == SVD) {
+	gretl_matrix *A = NULL;
+	const char *lname = NULL;
+	const char *rname = NULL;
+	const char **name;
+
+	if (k != 3) {
+	    n_args_error(k, 3, "sdv", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    if (i == 0) {
+		e = eval(n->v.bn.n[i], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 		} else {
-		    c = e->v.xval;
+		    A = e->v.m;
 		}
 	    } else {
+		name = (i == 1)? &lname : &rname;
+		e = n->v.bn.n[i];
 		if (e->t == EMPTY) {
-		    if (i == 1) {
-			lname = "null";
-		    } else {
-			rname = "null";
-		    }
+		    *name = "null";
 		} else if (e->t == U_ADDR) {
-		    /* FIXME to be done */
-		    p->err = 1;
-		    ;
+		    e = e->v.b1.b;
+		    if (e->t == UMAT) {
+			*name = e->v.str;
+		    } else {
+			p->err = E_TYPES;
+			strcpy(gretl_errmsg, "Expected the address of a matrix");
+		    }
+		} else {
+		    p->err = E_TYPES;
 		}
 	    }
 	}
 
 	if (!p->err) {
-	    ret = aux_matrix_node(p);
+	    m = user_matrix_SVD(A, lname, rname, &p->err);
 	}
+    }
 
-	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
-	    if (t->t == MSHAPE) {
-		ret->v.m = gretl_matrix_shape(A, r, c);
-	    } else {
-		ret->v.m = user_matrix_SVD(A, lname, rname, &p->err);
-	    }
+    if (!p->err) {
+	ret = aux_matrix_node(p);
+    }
+
+    if (!p->err) {
+	if (ret->v.m != NULL) {
+	    gretl_matrix_free(ret->v.m);
 	}
-    } 
+	ret->v.m = m;
+    }
 
     return ret;
 }

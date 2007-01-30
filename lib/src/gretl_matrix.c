@@ -1228,6 +1228,29 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_xtr_symmetric:
+ * @m: gretl_matrix.
+ *
+ * Computes the symmetric part of @m by averaging its off-diagonal 
+ * elements.
+ */
+
+void gretl_matrix_xtr_symmetric (gretl_matrix *m)
+{
+    int i, j, idx0, idx1;
+    double x;
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<i; j++) {
+	    idx0 = mdx(m, i, j);
+	    idx1 = mdx(m, j, i);
+	    x = 0.5 * (m->val[idx0] + m->val[idx1]);
+	    m->val[idx0] = m->val[idx1] = x;
+	}
+    }
+}
+
+/**
  * gretl_matrix_add_self_transpose:
  * @m: (square) matrix to operate on.
  *
@@ -1731,29 +1754,6 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
     }
 
     return 1;
-}
-
-/**
- * gretl_matrix_xtr_symmetric:
- * @m: gretl_matrix.
- *
- * Computes the symmetric part of @m by averaging its off-diagonal 
- * elements.
- */
-
-void gretl_matrix_xtr_symmetric (gretl_matrix *m)
-{
-    int i, j, idx0, idx1;
-    double x;
-
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<i; j++) {
-	    idx0 = mdx(m, i, j);
-	    idx1 = mdx(m, j, i);
-	    x = 0.5 * (m->val[idx0] + m->val[idx1]);
-	    m->val[idx0] = m->val[idx1] = x;
-	}
-    }
 }
 
 /**
@@ -4037,7 +4037,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 /**
  * gretl_matrix_SVD:
  * @a: matrix to decompose.
- * @pu: location for matrix U (or %NULL if not wanted).
+ * @pu: location for matrix U, or %NULL if not wanted.
  * @ps: location for vector of singular values, or %NULL if not wanted.
  * @pvt: location for matrix V (transposed), or %NULL if not wanted.
  * 
@@ -4065,7 +4065,7 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix *vt = NULL;
 
     double xu, xvt;
-    double *uval = NULL, *vtval = NULL;
+    double *uval = &xu, *vtval = &xvt;
     double *work = NULL, *work2 = NULL;
 
     int k, err = 0;
@@ -4089,7 +4089,7 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
     if (pu != NULL) {
-	u = gretl_matrix_alloc(m, n);
+	u = gretl_matrix_alloc(m, m);
 	if (u == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -4098,9 +4098,7 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	    uval = u->val;
 	    jobu = 'A';
 	}
-    } else {
-	uval = &xu;
-    }	
+    } 
 
     if (pvt != NULL) {
 	vt = gretl_matrix_alloc(n, n);
@@ -4112,8 +4110,6 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	    vtval = vt->val;
 	    jobvt = 'A';
 	}
-    } else {
-	vtval = &xvt;
     }
 
     work = lapack_malloc(sizeof *work);
