@@ -114,6 +114,7 @@ The following binary operators are available for matrices:
 \texttt{./} & element-wise division \\
 \verb+.^+ & element-wise exponentiation \\
 \verb+~+ & column-wise concatenation \\
+\verb+~'+ & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
 \texttt{=} & test for equality 
 \end{tabular}
@@ -161,7 +162,7 @@ more on matrix functions).  The first form, however, may be more
 accurate than the second; the solution is obtained via LU
 decomposition, without the explicit calculation of the inverse matrix.
 
-In element-wise multiplication if we write
+In \textit{element-wise multiplication} if we write
 %
 \begin{code}
 matrix C = A .* B
@@ -183,21 +184,12 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
   undefined and an error is flagged.
 \end{itemize}
 
-Element-wise division works in a manner exactly analogous to
-element-wise multiplication, simply replacing $\times$ by $\div$ in
-the account given for multiplication.
+Element-wise division and element-wise exponentiation work in a manner
+exactly analogous to element-wise multiplication: simply replace
+$\times$ by $\div$, or the exponentation operation, in the account
+given for multiplication.
 
-Element-wise exponentiation works thus: if $A$ is $m\times n$ and $B$
-is also $m\times n$, then
-%
-\begin{code}
-matrix C = A .^ B
-\end{code}
-% 
-produces $c_{ij} = a_{ij}^{b_{ij}}$.  Otherwise if $k$ is a scalar (or a
-$1\times 1$ matrix), \verb|C = A.^k| gives $c_{ij} = a_{ij}^k$.
-
-In column-wise concatenation of an $m\times n$ matrix $A$ and
+In \textit{column-wise concatenation} of an $m\times n$ matrix $A$ and
 an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix.
 That is,
 %
@@ -206,6 +198,16 @@ C = A ~ B
 \end{code}
 % 
 produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
+
+\textit{Row-wise concatenation} of an $m\times n$ matrix $A$ and
+an $p\times n$ matrix $B$ produces an $(m+p) \times n$ matrix.
+That is,
+%
+\begin{code}
+C = A ~' B
+\end{code}
+% 
+produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
 
 \section{Matrix functions}
 \label{matrix-func}
@@ -552,21 +554,18 @@ one or more matrices are:
 
 The syntax for all but the last of these functions is of the form
 %
-\begin{textcode}
-matrix B = func(\textsl{A}, \&\textsl{C})
-\end{textcode}
+\begin{code}
+matrix B = func(A, &C)
+\end{code}
 %
 while for \texttt{svd()} it is
 %
-\begin{textcode}
-matrix B = func(\textsl{A}, \&\textsl{C}, \&\textsl{D})
-\end{textcode}
+\begin{code}
+matrix B = func(A, &C, &D)
+\end{code}
 %
-The first argument, \ttsl{A}, represents the input data, that is, the
-matrix whose decomposition or analysis is required.  This must be
-given as the name of an existing matrix; a compound expression that
-evaluates to a matrix is not accepted in this context. (FIXME is that
-true?)
+The first argument, \texttt{A}, represents the input data, that is,
+the matrix whose decomposition or analysis is required.
 
 The second argument (and in the case of \texttt{svd}, the third) must
 be either the name of an existing matrix preceded by \verb+&+ (to
@@ -628,8 +627,8 @@ is
 \[
 A = U \Sigma V'
 \]
-where $\Sigma$ is an $m \times n$ matrix which is zero except
-for its $\mbox{min}(m, n)$ diagonal elements, $U$ is an $m \times m$
+where $\Sigma$ is an $m \times n$ matrix which is zero except for its
+$k = \mbox{min}(m, n)$ diagonal elements, $U$ is an $m \times m$
 orthogonal matrix, and $V$ is an $n \times n$ orthogonal matrix.  The
 diagonal elements of $\Sigma$ are the singular values of $A$; they are
 real and non-negative, and are returned in descending order.  The
@@ -637,9 +636,9 @@ first $\mbox{min}(m, n)$ columns of $U$ and $V$ are the left and right
 singular vectors of $A$.
 
 The \texttt{svd} function returns the singular values, in a vector of
-length $\mbox{min}(m, n)$.  The left and/or right singular vectors may
-be obtained by supplying non-null values for the second or third
-arguments.  For example:
+length $k$.  The left and/or right singular vectors may be obtained by
+supplying non-null values for the second and/or third arguments
+respectively.  For example:
 %
 \begin{code}
 matrix s = svd(A, &U, &V)

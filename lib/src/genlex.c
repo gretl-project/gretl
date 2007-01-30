@@ -862,12 +862,13 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '~': 
-	    p->sym = MCCAT;
 	    parser_getc(p);
-	    return;
-        case '`': 
-	    p->sym = MRCAT;
-	    parser_getc(p);
+	    if (p->ch == '\'') {
+		p->sym = MRCAT;
+		parser_getc(p);
+	    } else {
+		p->sym = MCCAT;
+	    }
 	    return;
         case ',': 
 	    p->sym = COM;
