@@ -187,14 +187,15 @@ Element-wise division works in a manner exactly analogous to
 element-wise multiplication, simply replacing $\times$ by $\div$ in
 the account given for multiplication.
 
-Element-wise exponentiation, as in 
+Element-wise exponentiation works thus: if $A$ is $m\times n$ and $B$
+is also $m\times n$, then
 %
 \begin{code}
-matrix C = A .^ k
+matrix C = A .^ B
 \end{code}
 % 
-produces $c_{ij} = a_{ij}^k$.  The variable $k$ must be a scalar or
-$1\times 1$ matrix.
+produces $c_{ij} = a_{ij}^{b_{ij}}$.  Otherwise if $k$ is a scalar (or a
+$1\times 1$ matrix), \verb|C = A.^k| gives $c_{ij} = a_{ij}^k$.
 
 In column-wise concatenation of an $m\times n$ matrix $A$ and
 an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix.
@@ -254,13 +255,14 @@ produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 \texttt{sqrt}      \\
 \texttt{sumc}      &
 \texttt{sumr}      &
+\texttt{svd}       &
 \texttt{tan}       &
-\texttt{tr}        &
-\texttt{transp}    \\
+\texttt{tr}        \\
+\texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}     \\
 
 \end{tabular}      
@@ -536,33 +538,42 @@ is symmetric by construction.
 \subsection{Multiple-return matrix functions}
 \label{matrix-multiples}
 
-The functions that take one or two matrices as arguments and return
-one or two matrices are:
+The functions that take one or more matrices as arguments and compute
+one or more matrices are:
 
 \begin{center}
 \begin{tabular}{ll}
 \texttt{qrdecomp()} & QR decomposition \\
 \texttt{eigensym()} & Eigen-analysis of symmetric matrix \\
-\texttt{eigengen()} & Eigen-analysis of general matrix 
+\texttt{eigengen()} & Eigen-analysis of general matrix \\
+\texttt{svd()}      & Singular value decomposition (SVD) 
 \end{tabular}
 \end{center}
 
-The syntax for these functions is of the form
+The syntax for all but the last of these functions is of the form
 %
 \begin{textcode}
 matrix B = func(\textsl{A}, \&\textsl{C})
 \end{textcode}
 %
+while for \texttt{svd()} it is
+%
+\begin{textcode}
+matrix B = func(\textsl{A}, \&\textsl{C}, \&\textsl{D})
+\end{textcode}
+%
 The first argument, \ttsl{A}, represents the input data, that is, the
 matrix whose decomposition or analysis is required.  This must be
 given as the name of an existing matrix; a compound expression that
-evaluates to a matrix is not accepted in this context.
+evaluates to a matrix is not accepted in this context. (FIXME is that
+true?)
 
-The second argument must be either the name of an existing matrix
-preceded by \verb+&+ (to indicate the ``address'' of the matrix in
-question), in which case an auxiliary result is written to that
-matrix, or the keyword \texttt{null}, in which case the auxiliary
-result is not produced, or is discarded.
+The second argument (and in the case of \texttt{svd}, the third) must
+be either the name of an existing matrix preceded by \verb+&+ (to
+indicate the ``address'' of the matrix in question), in which case an
+auxiliary result is written to that matrix, or the keyword
+\texttt{null}, in which case the auxiliary result is not produced, or
+is discarded.
 
 In case a non-null second argument is given, the specified matrix will
 be over-written with the auxiliary result.  (It is not required that
@@ -610,6 +621,38 @@ the first $n$ elements are the real components and the remaining $n$
 are the imaginary components.  If the eigenvectors are required (that
 is, if the second argument to \texttt{eigengen} is not \texttt{null}),
 they are returned in an $n \times n$ matrix.
+
+The function \texttt{svd} computes all or part of the simgular value
+decomposition of the real $m \times n$ matrix $A$.  The decomposition
+is
+\[
+A = U \Sigma V'
+\]
+where $\Sigma$ is an $m \times n$ matrix which is zero except
+for its $\mbox{min}(m, n)$ diagonal elements, $U$ is an $m \times m$
+orthogonal matrix, and $V$ is an $n \times n$ orthogonal matrix.  The
+diagonal elements of $\Sigma$ are the singular values of $A$; they are
+real and non-negative, and are returned in descending order.  The
+first $\mbox{min}(m, n)$ columns of $U$ and $V$ are the left and right
+singular vectors of $A$.
+
+The \texttt{svd} function returns the singular values, in a vector of
+length $\mbox{min}(m, n)$.  The left and/or right singular vectors may
+be obtained by supplying non-null values for the second or third
+arguments.  For example:
+%
+\begin{code}
+matrix s = svd(A, &U, &V)
+matrix s = svd(A, null, null)
+matrix s = svd(A, null, &V)
+\end{code}
+%
+In the first case both sets of singular vectors are obtained, in the
+second case only the singular values are obtained; and in the third,
+the right singular vectors are obtained but $U$ is not computed.
+\emph{Please note}: when the third argument is non-null, it is
+actually $V'$ that is provided.
+
 
 \section{Matrix accessors}
 \label{matrix-accessors}

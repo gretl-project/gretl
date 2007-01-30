@@ -913,16 +913,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	break;
     case DOTPOW:
 	/* element-wise exponentiation */
-	if (!gretl_matrix_is_scalar(B)) {
-	    *err = E_NONCONF;
-	} else {
-	    C = gretl_matrix_copy(A);
-	    if (C == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		gretl_matrix_dot_pow(C, B->val[0]);
-	    }
-	}
+	C = gretl_matrix_dot_pow(A, B, err);
 	break;
     case KRON:
     case B_POW: /* alias */

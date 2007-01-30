@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
+#include <errno.h>
 #include <assert.h>
 
 #include "f2c.h"
@@ -943,22 +944,87 @@ int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 
 /**
  * gretl_matrix_dot_pow:
- * @m: matrix to operate on.
- * @x: scalar to use for exponentiation.
+ * @a: m x n matrix.
+ * @b: m x n or 1 x 1 matrix.
+ * @err: location to receive error code.
  *
- * Raises all elements of @m to the power @x.
+ * If @b is m x n, forms a matrix C for which c_{ij} =
+ * a_{ij} ^ b_{ij}.  Else if b is 1 x 1, c_{ij} = 
+ * a_{ij} ^ b_{1,1}.  
+ *
+ * Returns: a newly allocated matrix for %NULL on error.
  */
 
-void gretl_matrix_dot_pow (gretl_matrix *m, double x)
+gretl_matrix *
+gretl_matrix_dot_pow (const gretl_matrix *a, const gretl_matrix *b,
+		      int *err)
 {
+    gretl_matrix *c;
     int i, n;
 
-    if (m == NULL || m->val == NULL) return;
+    errno = 0;
 
-    n = m->rows * m->cols;
-    
-    for (i=0; i<n; i++) {
-	m->val[i] = pow(m->val[i], x);
+    if (a == NULL || b == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = E_NONCONF;
+    if (b->rows == a->rows && b->cols == a->cols) {
+	*err = 0;
+    } else if (b->rows == 1 && b->cols == 1) {
+	*err = 0;
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+
+    c = gretl_matrix_copy(a);
+    if (c == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    n = c->rows * c->cols;
+
+    if (b->rows == c->rows && b->cols == c->cols) {
+	for (i=0; i<n; i++) {
+	    c->val[i] = pow(a->val[i], b->val[i]);
+	}
+    } else if (b->rows == 1 && b->cols == 1) {
+	for (i=0; i<n; i++) {
+	    c->val[i] = pow(a->val[i], b->val[0]);
+	}
+    }
+
+    if (errno == EDOM) {
+	gretl_matrix_free(c);
+	c = NULL;
+	*err = E_DATA;
+	strcpy(gretl_errmsg, _(strerror(errno)));
+    }
+
+    return c;
+}
+
+/**
+ * gretl_matrix_raise:
+ * @m: matrix to operate on.
+ * @x: exponent.
+ *
+ * Raises each element of @m to the power @x.
+ */
+
+void gretl_matrix_raise (gretl_matrix *m, double x)
+{
+    if (m != NULL) {
+	int i, n = m->rows * m->cols;
+
+	for (i=0; i<n; i++) {
+	    m->val[i] = pow(m->val[i], x);
+	}
     }
 }
 
