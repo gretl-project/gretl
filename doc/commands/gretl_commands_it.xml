@@ -2203,7 +2203,7 @@
       <para>
 	Gli <emphasis>operatori Booleani</emphasis> disponibili sono
 	(ancora in ordine di precedenza): <lit>!</lit> (negazione),
-	<lit>&amp;</lit> (AND logico), <lit>|</lit> (OR logico),
+	<lit>&amp;&amp;</lit> (AND logico), <lit>||</lit> (OR logico),
 	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
 	<lit>&gt;=</lit> (maggiore o uguale), <lit>&lt;=</lit>
 	(minore o uguale) e <lit>!=</lit> (disuguale).  Gli operatori
@@ -6161,14 +6161,15 @@
         dummy vale 1.</para>
 
       <para>Scegliendo <quote>Campione/Imposta in base a
-      condizione...</quote>, viene chiesto di inserire un'espressione
-      Booleana (logica), dello stesso tipo di quella che si userebbe per
-      definire una variabile dummy. Ad esempio, l'espressione
-      <quote>sqft > 1400</quote> selezionerà solo le osservazioni per
-      cui la variabile sqft ha un valore maggiore di 1400. Le condizioni
-      possono essere concatenate con gli operatori logici <quote>&amp;</quote>
-	(AND) e <quote>|</quote> (OR) e possono essere negate usando
-	<quote>!</quote> (NOT).</para>
+	  condizione...</quote>, viene chiesto di inserire un'espressione
+	Booleana (logica), dello stesso tipo di quella che si userebbe per
+	definire una variabile dummy. Ad esempio, l'espressione
+	<quote>sqft > 1400</quote> selezionerà solo le osservazioni per
+	cui la variabile sqft ha un valore maggiore di 1400. Le condizioni
+	possono essere concatenate con gli operatori logici
+	<quote>&amp;&amp;</quote> (AND) e <quote>||</quote> (OR) e possono
+	essere negate usando <quote>!</quote> (NOT).
+      </para>
 
       <para>Il comando <quote>Campione/Scarta valori mancanti</quote>
       ridefinisce il campione in modo da escludere tutte le osservazioni

@@ -2219,14 +2219,14 @@
       </para>
 
       <para>
-	The available <emphasis>Boolean operators</emphasis> are (again, in
-	order of precedence): <lit>!</lit> (negation), <lit>&amp;</lit> (logical
-	AND), <lit>|</lit> (logical OR), <lit>&gt;</lit>, <lit>&lt;</lit>,
-	<lit>=</lit>, <lit>&gt;=</lit> (greater than or equal), <lit>&lt;=</lit>
-	(less than or equal) and <lit>!=</lit> (not equal).  The Boolean
-	operators can be used in constructing dummy variables: for instance
-	<lit>(x > 10)</lit> returns 1 if <lit>x</lit> &gt; 10, 0
-	otherwise.
+	The available <emphasis>Boolean operators</emphasis> are (again,
+	in order of precedence): <lit>!</lit> (negation),
+	<lit>&amp;&amp;</lit> (logical AND), <lit>||</lit> (logical OR),
+	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>, <lit>&gt;=</lit>
+	(greater than or equal), <lit>&lt;=</lit> (less than or equal) and
+	<lit>!=</lit> (not equal).  The Boolean operators can be used in
+	constructing dummy variables: for instance <lit>(x > 10)</lit>
+	returns 1 if <lit>x</lit> &gt; 10, 0 otherwise.
       </para>
 
       <para>Built-in constants are <lit>pi</lit> and <lit>NA</lit>.  The latter
@@ -6298,13 +6298,14 @@
 
       <para>If you choose <quote>Sample/Restrict based on
 	  criterion...</quote> you need to supply a Boolean (logical)
-	expression, of the same sort that you would use to define a
-	dummy variable.  For example the expression <quote>sqft >
-	  1400</quote> will select only cases for which the variable
-	sqft has a value greater than 1400. Conditions may be
-	concatenated using the logical operators <quote>&amp;</quote>
-	(AND) and <quote>|</quote> (OR), and may be negated using
-	<quote>!</quote> (NOT).</para>
+	expression, of the same sort that you would use to define a dummy
+	variable.  For example the expression <quote>sqft > 1400</quote>
+	will select only cases for which the variable sqft has a value
+	greater than 1400. Conditions may be concatenated using the
+	logical operators <quote>&amp;&amp;</quote> (AND) and
+	<quote>||</quote> (OR), and may be negated using <quote>!</quote>
+	(NOT).
+      </para>
 
       <para>The menu item <quote>Sample/Drop all obs with missing
 	  values</quote> redefines the sample to exclude all

@@ -1337,15 +1337,15 @@
       </para>
 
       <para>
-        Los <emphasis>operadores Booleanos</emphasis> disponibles son
-	(de nuevo, en orden de precedencia): <lit>!</lit> (negación),
-	<lit>&amp;</lit> (Y lógico), <lit>|</lit> (O lógico),
-	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
-	<lit>&gt;=</lit> (mayor o igual que), <lit>&lt;=</lit>
-	(menor o igual que) y <lit>!=</lit> (distinto que).  
-	Se pueden usar operadores Booleanos para construir variables 
-	ficticias: por ejemplo <lit>(x > 10)</lit> devuelve 1 si <lit>x</lit>
-	&gt; 10, y 0 en otro caso.</para>
+        Los <emphasis>operadores Booleanos</emphasis> disponibles son (de
+	nuevo, en orden de precedencia): <lit>!</lit> (negación),
+	<lit>&amp;&amp;</lit> (Y lógico), <lit>||</lit> (O lógico),
+	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>, <lit>&gt;=</lit>
+	(mayor o igual que), <lit>&lt;=</lit> (menor o igual que) y
+	<lit>!=</lit> (distinto que). Se pueden usar operadores Booleanos
+	para construir variables ficticias: por ejemplo <lit>(x >
+	  10)</lit> devuelve 1 si <lit>x</lit> &gt; 10, y 0 en otro caso.
+      </para>
 
       <para>Las <emphasis>funciones</emphasis> se clasifican en:
       </para>
@@ -4065,15 +4065,16 @@
 	ficticia vale 1.
 	</para>
 
-      <para>Si Vd. elige <quote>Muestra/Restringir, a partir de criterio...</quote> 
-        es necesario que Vd. proporcione una expresión Booleana (lógica) del mismo
-	tipo que Vd. usaría para definir una variable ficticia. Por
-	ejemplo, la expresión <quote>sqft >  1400</quote> seleccionará sólo 
-	casos para los que la variable sqft tiene un valor mayor que 1400.
-	Las condiciones pueden estar concatenadas utilizando para ello
-	los operadores lógicos <quote>&amp;</quote>(AND) y <quote>|</quote> (OR), 
-	y puede aplicarse también la negación usando
-	<quote>!</quote> (NOT).</para>
+      <para>Si Vd. elige <quote>Muestra/Restringir, a partir de
+	  criterio...</quote> es necesario que Vd. proporcione una
+	expresión Booleana (lógica) del mismo tipo que Vd. usaría para
+	definir una variable ficticia. Por ejemplo, la expresión
+	<quote>sqft >  1400</quote> seleccionará sólo casos para los que
+	la variable sqft tiene un valor mayor que 1400. Las condiciones
+	pueden estar concatenadas utilizando para ello los operadores
+	lógicos <quote>&amp;&amp;</quote>(AND) y <quote>||</quote> (OR), y
+	puede aplicarse también la negación usando <quote>!</quote> (NOT).
+      </para>
 
       <para>El elemento de menú <quote>Muestra/Quitar todas las obs. con valores
 	  perdidos</quote> redefine la muestra de manera que se excluyen todas
