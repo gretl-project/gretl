@@ -752,6 +752,19 @@ static double getdbl (parser *p)
     return dot_atof(xstr);
 }
 
+static void deprecation_note (parser *p)
+{
+    if (p->sym == B_AND) {
+	pprintf(p->prn, "Note: the recommended form for logical "
+		"AND is '&&'\n");
+    } else if (p->sym == B_OR) {
+	pprintf(p->prn, "Note: the recommended form for logical "
+		"OR is '||'\n");
+    }
+}
+
+# define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
+
 void lex (parser *p)
 {
     while (p->ch != 0) {
@@ -800,12 +813,19 @@ void lex (parser *p)
 	    parser_getc(p);
 	    if (p->ch == '&') {
 		parser_getc(p);
+	    } else {
+		deprecation_note(p);
 	    }
 	    return;
         case '|': 
-	    p->sym = B_OR;
+	    p->sym = (matrix_gen(p))? MRCAT : B_OR;
 	    parser_getc(p);
 	    if (p->ch == '|') {
+		if (p->sym == B_OR) {
+		   deprecation_note(p);
+		} else {
+		    p->sym = B_OR;
+		}
 		parser_getc(p);
 	    }
 	    return;

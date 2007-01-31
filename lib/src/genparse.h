@@ -235,7 +235,7 @@ enum {
 
 #define unary_op(s) (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
-#define bool_comp(s) (s >= B_EQ && s <= B_NEQ)
+#define bool_comp(s) (s >= B_EQ && s <= B_OR)
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL)

@@ -1174,7 +1174,10 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 		} else if (op == B_NEQ && a->val[i] == b->val[i]) {
 		    ret->v.xval = 0;
 		    break;
-		}
+		} else if (op == B_OR && !a->val[i] && !b->val[i]) {
+		    ret->v.xval = 0;
+		    break;
+		}		    
 	    }
 	}		    
     }
