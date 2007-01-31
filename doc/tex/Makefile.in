@@ -29,6 +29,7 @@ TEXSRC = cli.tex \
 	timeseries.tex \
 	functions.tex \
 	gretltex.tex \
+	cheatsheet.tex \
 	reftables.tex
 
 WEBDIR = /home/cottrell/stats/esl/website

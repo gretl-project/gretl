@@ -1,0 +1,175 @@
+\chapter{Cheat sheet}
+\label{chap:cheatsheet}
+
+This chapter explains how to perform some common --- and some not so
+common --- tasks in \app{gretl}'s scripting language.  Some but not
+all of the techniques listed here are also available through the
+graphic interface.  Although the graphical interface may be more
+intuitive and less intimidating at first, we encourage users to take
+advantage of the power of \app{gretl}'s scripting language as soon as
+they feel comfortable with the program.
+
+\section{Dataset handling}
+
+\subsection{``Weird'' periodicities}
+
+\emph{Problem:} You have data sampled each 3 minutes from 9am onwards;
+you'll probably want to specify the hour as 20 periods.
+
+\emph{Solution:}
+\begin{code}
+setobs 20 9:1 --special
+\end{code}
+
+\emph{Comment:} Now functions like \texttt{sdiff()} (``seasonal''
+difference) or estimation methods like seasonal ARIMA will work as
+expected.
+
+\subsection{Dropping missing observations selectively}
+
+\emph{Problem:} You have a dataset with many variables and want to
+restrict the sample to those observations for which there are no
+missing observations for the variables \texttt{x1}, \texttt{x2} and
+\texttt{x3}.
+
+\emph{Solution:}
+\begin{code}
+list X = x1 x2 x3
+genr sel = ok(X)
+smpl sel --restrict
+\end{code}
+
+\emph{Comment:} You can now save the file via a \texttt{store} command
+to preserve a subsampled version of the dataset.
+
+\subsection{``By'' operations}
+
+\emph{Problem:} You have a discrete variable \texttt{d} and you want
+to run some commands (for example, estimate a model) by splitting the
+sample according to the values of \texttt{d}.
+
+\emph{Solution:}
+\begin{code}
+matrix vd = values(d)
+m = rows(vd)
+loop for i=1..m
+  scalar sel = vd[i]
+  smpl (d=sel) --restrict --replace
+  ols y const x
+end loop
+smpl full
+\end{code}
+
+\emph{Comment:} The main ingredient here is a loop.  You can have
+\app{gretl} perform as many instructions as you want for each value of
+\texttt{d}, as long as they are allowed inside a loop.
+
+\section{Creating/modifying variables}
+
+\subsection{Generating an ARMA(1,1)}
+
+\emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
+\varepsilon_{t-1}$, with $\varepsilon_t \sim NIID(0,1)$.
+
+\emph{Solution:}
+\begin{code}
+alpha = 0.9
+theta = -0.5
+series e = normal()
+series y = 0
+series y = alpha * y(-1) + e + theta * e(-1)
+\end{code}
+
+\emph{Comment:} The statement \texttt{series y = 0} is necessary
+because the next statement evaluates \texttt{y} recursively, so
+\texttt{y[1]} must be set.  Note that you must use the keyword
+\texttt{series} here instead of writing \texttt{genr y = 0} or simply
+\texttt{y = 0}, to ensure that \texttt{y} is a series and
+not a scalar.
+
+\subsection{Conditional assignment}
+
+\emph{Problem:} Generate $y_t$ via the following rule:
+\[
+  y_t = \left\{ 
+    \begin{array}{ll} 
+      x_t & \mathrm{for} \quad d_t = 1 \\ 
+      z_t & \mathrm{for} \quad d_t = 0 
+    \end{array}
+    \right. 
+\]
+
+\emph{Solution:}
+\begin{code}
+series y = d ? x : z
+\end{code}
+
+\emph{Comment:} There are several alternatives to the one presented
+above. One is a brute force solution using loops. Another one, more
+efficient but still suboptimal, would be \verb|y = d*x + (1-d)*z|.
+The ternary conditional assignment operator is not only the most
+numerically efficient way to accomplish what we want, it is also
+remarkably transparent to read when one gets used to it. Some readers
+may find it helpful to note that the conditional assignment operator
+works exactly the same way as the \texttt{=IF()} function in
+spreadsheets.
+
+\section{Neat tricks}
+\label{sec:cheat-neat}
+
+\subsection{Interaction dummies}
+
+\emph{Problem:} You want to estimate the model $y_i = \mathbf{x}_i
+\beta_1 + \mathbf{z}_i \beta_2 + d_i \beta_3 + (d_i \cdot \mathbf{z}_i)
+\beta_4 + \varepsilon_t$, where $d_i$ is a dummy variable while
+$\mathbf{x}_i$ and $\mathbf{z}_i$ are vectors of explanatory
+variables.
+
+\emph{Solution:}
+\begin{code}
+list X = x1 x2 x3
+list Z = z1 z2
+list dZ = null
+loop foreach i Z
+  series d$i = d * $i
+  list dZ = dZ d$i
+end loop 
+
+ols y X Z d dZ
+\end{code} 
+%$
+
+\emph{Comment:} It's amazing what string substitution can do for
+you, isn't it?
+
+\subsection{Realized volatility}
+
+\emph{Problem:} Given data by the minute, you want to compute the
+``realized volatility'' for the hour as $RV_t = \frac{1}{60}
+\sum_{\tau=1}^{60} y_{t:\tau}^2$. Imagine your sample starts at time 1:1.
+
+\emph{Solution:}
+\begin{code}
+smpl full
+genr time
+genr minute = int(time/60) + 1
+genr second = time % 60
+setobs minute second --panel
+genr rv = psd(y)^2
+setobs 1 1
+smpl second=1 --restrict
+store foo rv
+\end{code}
+
+\emph{Comment:} Here we trick \app{gretl} into thinking that our
+dataset is a panel dataset, where the minutes are the ``units'' and
+the seconds are the ``time''; this way, we can take advantage of the
+special function \texttt{psd()}, panel standard deviation.  Then we
+simply drop all observations but one per minute and save the resulting
+file.
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
