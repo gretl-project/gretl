@@ -752,6 +752,8 @@ static double getdbl (parser *p)
     return dot_atof(xstr);
 }
 
+/* FIXME: '&' as "take-address" operator */
+
 static void deprecation_note (parser *p)
 {
     if (p->sym == B_AND) {
@@ -763,7 +765,9 @@ static void deprecation_note (parser *p)
     }
 }
 
-# define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
+#define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
+
+#define unary_context(p) (p->sym < F2_MAX || p->sym == COM)
 
 void lex (parser *p)
 {
@@ -809,6 +813,11 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '&': 
+	    if (unary_context(p)) {
+		p->sym = U_ADDR;
+		parser_getc(p);
+		return;
+	    }
 	    p->sym = B_AND;
 	    parser_getc(p);
 	    if (p->ch == '&') {
@@ -1056,10 +1065,11 @@ const char *getsymb (int t, const parser *p)
     case B_LTE: 
 	return "<=";
     case B_AND: 
+	return "&&";
     case U_ADDR:
 	return "&";
     case B_OR: 
-	return "|";	
+	return "||";	
     case U_NOT: 
 	return "!";
     case LPR: 
@@ -1090,6 +1100,8 @@ const char *getsymb (int t, const parser *p)
 	return "**";
     case MCCAT: 
 	return "~";
+    case MRCAT: 
+	return "|";
     case COM: 
 	return ",";
     case DOT: 

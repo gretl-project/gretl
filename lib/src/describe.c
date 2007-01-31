@@ -534,7 +534,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 {
     double zt, wt, xbar, s2 = 0.0;
     double *autocov;
-    int i, t, n;
+    int i, t, n, order;
 
     if (array_adjust_t1t2(x, &t1, &t2)) {
 	return NADBL;
@@ -548,29 +548,33 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 
     xbar = gretl_mean(t1, t2, x);
 
-    autocov = malloc(m * sizeof *autocov);
+    if (m<0) {
+	order = (int) exp(log(n)/3.0);
+    } else {
+	order = m;
+    }
+
+    autocov = malloc(order * sizeof *autocov);
     if (autocov == NULL) {
 	return NADBL;
     }
   
-    for (i=0; i<m; i++) {
+    for (i=0; i<order; i++) {
 	autocov[i] = 0.0;
     }
 
     for (t=t1; t<=t2; t++) {
 	zt = x[t] - xbar;
 	s2 += zt * zt;
-	for (i=0; i<m; i++) {
-	    int s = i + 1;
-
-	    if (t - s >= t1) {
-		autocov[i] += zt * (x[t - s] - xbar);
+	for (i=1; i<=order; i++) {
+	    if (t - i >= t1) {
+		autocov[i-1] += zt * (x[t - i] - xbar);
 	    }
 	}
     }
 
-    for (i=0; i<m; i++) {
-	wt = 1.0 - ((double) (i + 1)) / (m + 1.0);
+    for (i=0; i<order; i++) {
+	wt = 1.0 - ((double) (i + 1)) / (order + 1.0);
 	s2 += 2.0 * wt * autocov[i];
     }
 

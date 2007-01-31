@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #if GENDEBUG
-# define EDEBUG 1 /* can be set > 1 */
+# define EDEBUG GENDEBUG
 #else
 # define EDEBUG 0
 #endif
@@ -1146,6 +1146,12 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
+    if (op == B_OR || op == B_AND) {
+	/* not meaningful? */
+	p->err = E_TYPES;
+	return NULL;
+    }
+
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *a = l->v.m;
 	const gretl_matrix *b = r->v.m;
@@ -1174,10 +1180,7 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 		} else if (op == B_NEQ && a->val[i] == b->val[i]) {
 		    ret->v.xval = 0;
 		    break;
-		} else if (op == B_OR && !a->val[i] && !b->val[i]) {
-		    ret->v.xval = 0;
-		    break;
-		}		    
+		} 
 	    }
 	}		    
     }
@@ -1968,10 +1971,6 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case GINI:
 	    ret->v.xval = gretl_gini(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
-	case LRVAR:
-	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
-						  x, 2 * p->dinfo->pd);
-	    break;
 	case NOBS:
 	    ret->v.xval = series_get_nobs(p->dinfo->t1, p->dinfo->t2, x);
 	    break;
@@ -1987,6 +1986,43 @@ series_scalar_func (NODE *n, int f, parser *p)
 
 	if (n->t == MAT) {
 	    n->v.m = tmp;
+	}
+    }
+
+    return ret;
+}
+
+/* 
+   functions taking a series and a scalar as arguments and returning 
+   a scalar
+ */
+
+static NODE *
+series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_matrix *tmp = NULL;
+
+	if (l->t == MAT) {
+	    cast_to_series(l, f, &tmp, p);
+	    if (p->err) {
+		return NULL;
+	    }
+	}
+
+	switch (f) {
+	case LRVAR:
+	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
+						  l->v.xvec, (int) (r->v.xval));
+	    break;
+	default:
+	    break;
+	}
+
+	if (l->t == MAT) {
+	    l->v.m = tmp;
 	}
     }
 
@@ -3520,6 +3556,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == MAT) {
 	    ret = apply_matrix_func(l, t->t, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case MISSING:
@@ -3620,7 +3658,6 @@ static NODE *eval (NODE *t, parser *p)
     case MAX:
     case MEDIAN:
     case GINI:
-    case LRVAR:
     case NOBS:
     case T1:
     case T2:
@@ -3630,6 +3667,18 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	} 
+	break;	
+    case LRVAR:
+	/* functions taking series and scalar arg, returning scalar */
+	if (l->t == VEC || l->t == MAT) {
+	    if (r->t == NUM) {
+		ret = series_scalar_scalar_func(l, r, t->t, p);
+	    } else {
+		node_type_error(t->t, NUM, r, p);
+	    } 
+	} else {
+	    node_type_error(t->t, VEC, l, p);
+	}
 	break;	
     case UNIFORM:
     case NORMAL:
@@ -4841,14 +4890,23 @@ static void matrix_edit (parser *p)
     }
 }
 
+#define scalar_matrix(n) (n->t == MAT && n->v.m->rows == 1 && \
+			  n->v.m->cols == 1)
+
+#define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
+			   t == LIST)
+
 static int gen_check_return_type (parser *p)
 {
     NODE *r = p->ret;
 
     if (r == NULL) {
 	fprintf(stderr, "gen_check_return_type: p->ret = NULL!\n");
-	p->err = E_DATA;
-	return E_DATA;
+	return (p->err = E_DATA);
+    }
+
+    if (!ok_return_type(r->t)) {
+	return (p->err = E_TYPES);
     }
 
     if (p->targ == NUM) {
@@ -4878,8 +4936,7 @@ static int gen_check_return_type (parser *p)
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
-	if (r->t == MAT && r->v.m->rows == 1 &&
-	    r->v.m->cols == 1) {
+	if (scalar_matrix(r)) {
 	    p->targ = NUM;
 	} else {
 	    p->targ = r->t;
@@ -5282,7 +5339,7 @@ int realgen (const char *s, parser *p, double ***pZ,
     p->ret = eval(p->tree, p);
 
 #if EDEBUG > 1
-    printnode(p->ret, p, p->prn);
+    printnode(p->ret, p);
     pputc(prn, '\n');
 #endif
 

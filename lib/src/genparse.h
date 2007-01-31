@@ -101,15 +101,14 @@ enum {
     MAX,    /* 70 */
     SD,
     VCE,      /* variance */
-    LRVAR,    /* long-run variance */
     SST,
     CNORM,
     DNORM,
     QNORM,
     GAMMA,
     LNGAMMA,
-    HPFILT,  /* 80 */
-    BKFILT,
+    HPFILT,  
+    BKFILT,   /* 80 */
     RESAMPLE,
     PMEAN,
     PSD,
@@ -118,8 +117,8 @@ enum {
     SUMC,
     MEANR,
     MEANC,
-    MCOV,    /* 90 */
-    MCORR,
+    MCOV,    
+    MCORR,     /* 90 */
     CDEMEAN,
     CHOL,
     INV,
@@ -128,8 +127,8 @@ enum {
     TVEC,
     VECH,
     UNVECH,
-    ROWS,    /* 100 */
-    COLS,
+    ROWS,   
+    COLS,      /* 100 */
     DET,
     LDET,
     TRACE,
@@ -138,8 +137,8 @@ enum {
     VARNUM,
     OBSNUM,
     ISSERIES,
-    ISLIST,   /* 110 */
-    ISSTRING,
+    ISLIST,   
+    ISSTRING,  /* 110 */
     ISNULL,
     LISTLEN,
     PVAL,
@@ -148,8 +147,8 @@ enum {
     GENPOIS,
     MAKEMASK,
     VALUES,
-    NULLSPC,  /* 120 */
-    FUNC_MAX,   /* separator: end of single-arg functions */
+    NULLSPC,  
+    FUNC_MAX,   /* 120: separator: end of single-arg functions */
     COR,
     COV,
     UNIFORM,
@@ -158,8 +157,8 @@ enum {
     FRACDIF,
     ZEROS,
     ONES,
-    MUNIF,  /* 130 */ 
-    MNORM,
+    MUNIF, 
+    MNORM,   /* 130 */ 
     QFORM,
     MLAG,
     QR,
@@ -167,6 +166,7 @@ enum {
     EIGGEN,
     FDJAC,
     BFGSMAX,
+    LRVAR,    /* long-run variance */
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE, /* 140 */
     SVD,

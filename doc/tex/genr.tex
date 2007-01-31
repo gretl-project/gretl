@@ -9,6 +9,34 @@ variables.  It is documented in the \GCR.  This chapter offers a more
 expansive discussion of some of the special functions available via
 \verb+genr+ and some of the finer points of the command.
     
+\section{Long-run variance}
+\label{sec:lrvar}
+
+As is well known, the variance of the average of $T$ random variables
+$x_1, x_2, \ldots, x_T$ with equal variance $\sigma^2$ equals
+$\sigma^2/T$ if the data are uncorrelated. In this case, the sample
+variance of $x_t$ over the sample size provides a consistent estimator.
+
+If, however, there is serial correlation among the $x_t$s, the
+variance of $\bar{X} = T^{-1} \sum_{t=1}^T x_t$ must be estimated
+differently. One of the most widely used statistics for this purpose
+is a nonparametric kernel estimator with the Bartlett kernel defined
+as
+\[
+  \hat{\omega}^2(k) = T^{-1} \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i (x_t -
+  \bar{X}) (x_{t-i} - \bar{X}) \right] ,
+\]
+where the integer $k$ is known as the window size and the $w_i$ terms
+are the so-called \emph{Bartlett weights}, defined as $w_i = 1 -
+\frac{|i|}{k + 1}$. It can be shown that, for $k$ large enough,
+$\hat{\omega}^2(k)/T$ yields a consistent estimator of the variance of
+$\bar{X}$.
+
+\app{Gretl} implements this estimator by means of the function
+\texttt{lrvar()}, which takes two arguments: the series whose long-run
+variance must be estimated and the scalar $k$. If $k$ is negative, the
+popular choice $T^{1/3}$ is used.
+
 \section{Time-series filters}
 \label{sec:filters}
 
