@@ -148,7 +148,8 @@ enum {
     MAKEMASK,
     VALUES,
     NULLSPC,  
-    FUNC_MAX,   /* 120: separator: end of single-arg functions */
+    MEXP,     /* 120 */
+    FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,
     UNIFORM,
@@ -157,8 +158,8 @@ enum {
     FRACDIF,
     ZEROS,
     ONES,
-    MUNIF, 
-    MNORM,   /* 130 */ 
+    MUNIF,   /* 130 */  
+    MNORM,
     QFORM,
     MLAG,
     QR,
@@ -167,8 +168,8 @@ enum {
     FDJAC,
     BFGSMAX,
     LRVAR,    /* long-run variance */
-    F2_MAX,   /* separator: end of two-arg functions */
-    MSHAPE, /* 140 */
+    F2_MAX, /* 140: separator: end of two-arg functions */
+    MSHAPE,
     SVD,
     FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
@@ -177,8 +178,8 @@ enum {
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
-    UVAR,     /* user variable (scalar or series) */
-    UMAT,   /* 150: user-defined matrix */
+    UVAR,   /* 150: user variable (scalar or series) */
+    UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
@@ -187,8 +188,8 @@ enum {
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,   /* 160: unevaluated matrix subspec */
+    DMSTR,  /* 160: "dollar" matrix plus old-style string subspec */
+    MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
@@ -197,8 +198,8 @@ enum {
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
-    LIST,     /* reference to named list */
-    STR,    /* 170: string */
+    LIST,   /* 170: reference to named list */
+    STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */

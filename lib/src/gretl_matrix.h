@@ -191,6 +191,8 @@ gretl_matrix *
 gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
 		     int op, int *err);
 
+gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
+
 void gretl_matrix_raise (gretl_matrix *m, double x);
 
 void gretl_matrix_free (gretl_matrix *m);
@@ -249,6 +251,9 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 gretl_matrix *
 gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
 				    const gretl_matrix *B);
+
+gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
+				int k, int *err);
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,

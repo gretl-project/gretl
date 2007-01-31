@@ -928,13 +928,13 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
     case KRON:
-    case B_POW: /* alias */
 	/* Kronecker product */
 	C = gretl_matrix_kronecker_product_new(A, B);
 	if (C == NULL) {
 	    *err = E_ALLOC;
 	}
 	break;
+
     default:
 	*err = E_TYPES;
 	break;
@@ -1009,6 +1009,20 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+static int 
+matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
+{
+    if (t != MAT) {
+	p->err = E_TYPES;
+    } else if (m->rows != m->cols) {
+	p->err = E_NONCONF;
+    } else if (x <= 0 || x > (double) INT_MAX || floor(x) != x) {
+	p->err = E_DATA;
+    }
+
+    return p->err;
+}
+
 /* one of the operands is a matrix, the other a scalar, giving
    a matrix result
 */
@@ -1026,9 +1040,25 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	m = (l->t == MAT)? l->v.m : r->v.m;
 	n = m->rows * m->cols;
 
+	/* special: raising a matrix to an integer power */
+	if (op == B_POW && matrix_pow_check(l->t, x, m, p)) {
+	    return NULL;
+	}
+
+	/* mod: scalar must be on the right */
+	if (op == B_MOD && l->t == NUM) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
+
 	ret = aux_matrix_node(p);
 	if (ret == NULL) { 
 	    return NULL;
+	}
+
+	if (op == B_POW) {
+	    ret->v.m = gretl_matrix_pow(m, (int) x, &p->err);
+	    return ret;
 	}
 
 	if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
@@ -1127,6 +1157,11 @@ static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
 static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
+
+    if (op == B_POW) {
+	p->err = E_TYPES;
+	return NULL;
+    }
 
 #if EDEBUG
     fprintf(stderr, "matrix_matrix_calc: l=%p, r=%p, ret=%p\n",
@@ -1300,6 +1335,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    break;
 	case NULLSPC:
 	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
+	    break;
+	case MEXP:
+	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
 	default:
 	    break;
@@ -3482,7 +3520,7 @@ static NODE *eval (NODE *t, parser *p)
 		   r->t == STR) {
 	    ret = number_string_calc(l, r, t->t, p);
 	} else {
-	    p->err = E_TYPES; /* FIXME message? */
+	    p->err = E_TYPES;
 	}
 	break;
     case B_TRMUL:
@@ -3752,6 +3790,7 @@ static NODE *eval (NODE *t, parser *p)
     case VECH:
     case UNVECH:
     case NULLSPC:
+    case MEXP:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

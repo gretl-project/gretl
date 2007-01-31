@@ -15,8 +15,8 @@ Matrices can be created using any of these methods:
 
 \begin{enumerate}
 \item By direct specification of the scalar values that compose the
-  matrix, in numerical form or by reference to pre-existing
-  scalar variables, or both.
+  matrix, in numerical form, by reference to pre-existing
+  scalar variables, or using computed values.
 \item By providing a list of data series.
 \item By providing a \textit{named list} of series.
 \item Using a formula of the same general type that is used
@@ -56,9 +56,11 @@ a series.  For example, given a series \texttt{x} you could do
 matrix A = { x, x^2 }
 \end{code}
 %
-By default, each variable occupies a column (and there can only be one
-variable per column).  The range of data values included in the matrix
-depends on the current setting of the sample range.
+Each variable occupies a column (and there can only be one variable
+per column).  You cannot use the semi-colon as a row separator in this
+case: if you want the series arranged in rows, append the transpose
+symbol.  The range of data values included in the matrix depends on
+the current setting of the sample range.
 
 Please note: while gretl's built-in statistical functions are
 capable of handling missing values, the matrix arithmetic functions
@@ -87,7 +89,15 @@ matrix A = { dataset }
 \end{code}
 %
 This builds a matrix using all the series in the current dataset,
-apart from the constant (variable 0).
+apart from the constant (variable 0).  When this dummy list is used, it
+must be the sole element in the matrix definition \texttt{\{...\}}.  You
+can, however, create a matrix that includes the constant along with
+all other variables using column-wise concatenation (see below), as in
+%
+\begin{code}
+matrix A = {const}~{dataset}
+\end{code}
+%
 
 You can create new matrices, or replace existing matrices, by means of
 various transformations just as with scalars and data series.  The
@@ -160,7 +170,7 @@ matrix C = inv(B) * A
 where \texttt{inv()} is the matrix inversion function (see below for
 more on matrix functions).  The first form, however, may be more
 accurate than the second; the solution is obtained via LU
-decomposition, without the explicit calculation of the inverse matrix.
+decomposition, without the explicit calculation of the inverse.
 
 In \textit{element-wise multiplication} if we write
 %
@@ -209,6 +219,34 @@ matrix C = A | B
 % 
 produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
 
+\section{Matrix--scalar operators}
+\label{matrix-scalar-op}
+
+For $A$ a matrix and $k$ a scalar, the operators shown in
+Table~\ref{tab:matrix-scalar-ops} are available.  (The cases of
+addition and subtraction were discussed in section~\ref{matrix-op} but
+we include them in the table for completeness.)  In addition, for
+square $A$ and integer $k \geq 1$, \verb|B = A^k| produces $B = A
+\times A \times A\dots$, that is, the matrix $A$ multiplied by itself
+$k-1$ times.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\textit{Expression} & \textit{Effect} \\[4pt]
+\texttt{matrix B = A * k} & $b_{ij} = k a_{ij}$ \\
+\texttt{matrix B = A / k} & $b_{ij} = a_{ij} / k$ \\
+\texttt{matrix B = k / A} & $b_{ij} = k / a_{ij}$ \\
+\texttt{matrix B = A + k} & $b_{ij} = a_{ij} + k$ \\
+\texttt{matrix B = A - k} & $b_{ij} = a_{ij} - k$ \\
+\texttt{matrix B = k - A} & $b_{ij} = k - a_{ij}$ \\
+\texttt{matrix B = A \% k} & $b_{ij} = a_{ij} \mbox{ modulo } k$ \\
+\end{tabular}
+\caption{Matrix--scalar operators}
+\label{tab:matrix-scalar-ops}
+\end{table}
+
+
 \section{Matrix functions}
 \label{matrix-func}
 
@@ -240,33 +278,33 @@ produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
 \texttt{mcov}      &
 \texttt{meanc}     &
 \texttt{meanr}     \\
+\texttt{mexp}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
 \texttt{mshape}    &
-\texttt{muniform}  &
-\texttt{nullspace} \\
+\texttt{muniform}  \\
+\texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
 \texttt{qform}     &
-\texttt{qnorm}     &
-\texttt{qrdecomp}  \\
+\texttt{qnorm}     \\
+\texttt{qrdecomp}  &
 \texttt{rcond}     &
 \texttt{rows}      &
 \texttt{sin}       &
-\texttt{sort}      &
-\texttt{sqrt}      \\
+\texttt{sort}      \\
+\texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{svd}       &
-\texttt{tan}       &
-\texttt{tr}        \\
+\texttt{tan}       \\
+\texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
-\texttt{vec}       &
-\texttt{vech}      \\
-\texttt{zeros}     \\
-
+\texttt{vec}       \\
+\texttt{vech}      &
+\texttt{zeros}     
 \end{tabular}      
 \caption{Table of matrix functions}
 \label{tab:matrix_funcs}
@@ -290,11 +328,11 @@ generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.
 
-Note, in particular, that to find the ``matrix square root'' you need
-the \texttt{cholesky()} function (see below); moreover, the \texttt{exp()}
+Note that to find the ``matrix square root'' you need the
+\texttt{cholesky()} function (see below); moreover, the \texttt{exp()}
 function computes the exponential element by element, and therefore
 does \emph{not} return the matrix exponential unless the matrix is
-diagonal.
+diagonal --- to get the matrix exponential, use \texttt{mexp()}.
   
 The functions \texttt{sort()}, \texttt{dsort()} and \texttt{values()}
 are available for matrices as well as data series.  In the matrix case
@@ -364,6 +402,7 @@ matrix are:
 \texttt{meanr()} & mean by row \\
 \texttt{mcov()} & covariance matrix by columns \\
 \texttt{mcorr()} & correlation matrix by columns \\
+\texttt{mexp()} & matrix exponential \\
 \texttt{inv()} & inverse \\
 \texttt{cholesky()} & Cholesky decomposition \\
 \texttt{diag()} & extract principal diagonal \\
@@ -392,6 +431,12 @@ both return $k \times k$ symmetric matrices, in the first case
 containing the variances (on the diagonal) and covariances of the
 variables in the columns of $A$, and in the second, containing the
 correlations of the variables.
+
+For an $n \times n$ matrix $A$, \texttt{mexp(A)} returns an $n \times
+n$ matrix holding an approximation to the matrix exponential
+\[
+e^A = \sum_k^{\infty} \frac{A^k}{k!}
+\]
 
 The \texttt{cholesky} function computes the Cholesky decomposition $L$
 of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower

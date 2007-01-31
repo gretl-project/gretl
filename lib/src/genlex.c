@@ -193,6 +193,7 @@ struct str_table funcs[] = {
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
     { NULLSPC,  "nullspace" },
+    { MEXP,     "mexp" },
     { FDJAC,    "fdjac" },
     { BFGSMAX,  "BFGSmax" },
     { VARNUM,   "varnum" },

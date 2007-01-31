@@ -964,6 +964,88 @@ void gretl_matrix_raise (gretl_matrix *m, double x)
 }
 
 /**
+ * gretl_matrix_exp:
+ * @m: square matrix to operate on.
+ * @err: location to receive error code.
+ *
+ * Returns: the matrix exponential of @m, or %NULL on failure.
+ */
+
+/* FIXME this approach is not really much good, except for
+   nilpotent matrices?? */
+
+gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *a = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *r = NULL;
+    double dj, dmax, ifac;
+    double etol = 1.0e-12;
+    int K = 100;
+    int i, j, n;
+
+    if (m->rows != m->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+    
+    a = gretl_matrix_copy(m);
+    b = gretl_matrix_alloc(m->rows, m->cols);
+    r = gretl_matrix_copy(m);
+
+    if (a == NULL || b == NULL || r == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    errno = 0;
+
+    for (i=0; i<m->rows; i++) {
+	r->val[mdx(r,i,i)] += 1;
+    }
+
+    n = m->rows * m->cols;
+
+    for (i=0; i<K && errno == 0; i++) {
+	gretl_matrix_multiply(m, a, b);
+	gretl_matrix_copy_values(a, b);
+	ifac = x_factorial(i+2);
+	if (na(ifac)) {
+	    *err = E_DATA;
+	    break;
+	}
+	gretl_matrix_divide_by_scalar(b, ifac);
+	gretl_matrix_add_to(r, b);
+	dmax = 0.0;
+	for (j=0; j<n; j++) {
+	    dj = fabs(b->val[j]);
+	    if (dj > dmax) {
+		dmax = dj;
+	    }
+	}
+	if (dmax < etol) {
+	    break;
+	}
+    }
+
+    if (errno) {
+	strcpy(gretl_errmsg, _(strerror(errno)));
+	*err = E_DATA;
+    }
+
+ bailout:
+
+    gretl_matrix_free(a);
+    gretl_matrix_free(b);
+    if (*err) {
+	gretl_matrix_free(r);
+	r = NULL;
+    }	
+
+    return r;
+}
+
+/**
  * gretl_matrix_copy_values:
  * @targ: target matrix.
  * @src: source matrix.
@@ -2385,6 +2467,61 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     }
 
     return K;
+}
+
+/**
+ * gretl_matrix_pow:
+ * @A: square source matrix.
+ * @k: exponent >= 1.
+ * @err: location to receive error code.
+ * 
+ * Returns: a newly allocated matrix which is @A pre-multiplied
+ * by itself @k - 1 times, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
+				int k, int *err)
+{
+    gretl_matrix *B = NULL;
+    gretl_matrix *C = NULL;
+    int i;
+
+    if (k == 1) {
+	B = gretl_matrix_copy(A);
+	if (B == NULL) {
+	    *err = E_ALLOC;
+	}
+	return B;
+    }
+
+    if (k < 2) {
+	*err = E_DATA;
+    } else if (A->rows != A->cols) {
+	*err = E_NONCONF;
+    } else {
+	B = gretl_matrix_copy(A);
+	if (B == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    C = gretl_matrix_alloc(A->rows, A->cols);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (!*err) {
+	for (i=1; i<k; i++) {
+	    gretl_matrix_multiply(A, B, C);
+	    if (i < k - 1) {
+		gretl_matrix_copy_values(B, C);
+	    }
+	}
+    }
+
+    gretl_matrix_free(B);
+
+    return C;
 }
 
 /**
