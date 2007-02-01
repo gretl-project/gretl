@@ -963,86 +963,131 @@ void gretl_matrix_raise (gretl_matrix *m, double x)
     }
 }
 
+static double infinity_norm (const gretl_matrix *a)
+{
+    double jsum, jsmax = 0.0;
+    int i, j;
+
+    for (i=0; i<a->rows; i++) {
+	jsum = 0.0;
+	for (j=0; j<a->cols; j++) {
+	    jsum += fabs(a->val[mdx(a,i,j)]);
+	}
+	if (jsum > jsmax) {
+	    jsmax = jsum;
+	}
+    }
+
+    return jsmax;
+}
+
+static double mexp_error_eps (int q)
+{
+    double x1, x2, x3;
+    double qf = x_factorial(q);
+
+    x1 = pow(2, 3.0 - (q + q));
+    x2 = qf * qf;
+    x3 = x_factorial(2*q) * x_factorial(2*q+1);
+
+    return x1 * (x2 / x3);
+}
+
+#define log2(x) (log(x) / log(2.0))
+
 /**
  * gretl_matrix_exp:
  * @m: square matrix to operate on.
  * @err: location to receive error code.
  *
- * Returns: the matrix exponential of @m, or %NULL on failure.
+ * Calculates the matrix exponential of @m, using algorithm
+ * 11.3.1 from Golub and Van Loan, "Matrix Computations", 3e.
+ *
+ * Returns: the exponential, or %NULL on failure.
  */
-
-/* FIXME this approach is not really much good, except for
-   nilpotent matrices?? */
 
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 {
-    gretl_matrix *a = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *r = NULL;
-    double dj, dmax, ifac;
-    double etol = 1.0e-12;
-    int K = 100;
-    int i, j, n;
+    static int q;
 
-    if (m->rows != m->cols) {
-	*err = E_NONCONF;
-	return NULL;
-    }
+    gretl_matrix *A = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *N = NULL;
+    gretl_matrix *D = NULL;
+    gretl_matrix *W = NULL;
     
-    a = gretl_matrix_copy(m);
-    b = gretl_matrix_alloc(m->rows, m->cols);
-    r = gretl_matrix_copy(m);
+    double c, j, delta = 1.0e-8;
+    int k, n = m->rows;
 
-    if (a == NULL || b == NULL || r == NULL) {
+    A = gretl_matrix_copy(m);
+    X = gretl_identity_matrix_new(n);
+    N = gretl_identity_matrix_new(n);
+    D = gretl_identity_matrix_new(n);
+    W = gretl_matrix_alloc(n, n);
+
+    if (A == NULL || X == NULL || N == NULL || 
+	D == NULL || W == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    errno = 0;
-
-    for (i=0; i<m->rows; i++) {
-	r->val[mdx(r,i,i)] += 1;
+    j = floor(log2(infinity_norm(A)));
+    if (j < 0) {
+	j = 0;
     }
 
-    n = m->rows * m->cols;
+    gretl_matrix_divide_by_scalar(A, pow(2.0, j));
 
-    for (i=0; i<K && errno == 0; i++) {
-	gretl_matrix_multiply(m, a, b);
-	gretl_matrix_copy_values(a, b);
-	ifac = x_factorial(i+2);
-	if (na(ifac)) {
-	    *err = E_DATA;
-	    break;
-	}
-	gretl_matrix_divide_by_scalar(b, ifac);
-	gretl_matrix_add_to(r, b);
-	dmax = 0.0;
-	for (j=0; j<n; j++) {
-	    dj = fabs(b->val[j]);
-	    if (dj > dmax) {
-		dmax = dj;
+    if (q == 0) {
+	/* q (static) is not yet computed */
+	for (q=1; q<10; q++) {
+	    if (mexp_error_eps(q) <= delta) {
+		break;
 	    }
 	}
-	if (dmax < etol) {
-	    break;
+    }
+
+    c = 1.0;
+
+    for (k=1; k<=q; k++) {
+	c *= (q - k + 1.0) / ((2.0*q - k + 1) * k);
+	/* X = AX */
+	gretl_matrix_multiply(A, X, W);
+	gretl_matrix_copy_values(X, W);
+	/* N = N + cX */
+	gretl_matrix_multiply_by_scalar(W, c);
+	gretl_matrix_add_to(N, W);
+	/* D = D + (-1)^k cX */
+	if (k % 2) {
+	    gretl_matrix_subtract_from(D, W);
+	} else {
+	    gretl_matrix_add_to(D, W);
 	}
     }
 
-    if (errno) {
-	strcpy(gretl_errmsg, _(strerror(errno)));
-	*err = E_DATA;
+    /* "solve DF = N for F" */
+    *err = gretl_LU_solve(D, N);
+
+    if (!*err) {
+	for (k=0; k<j; k++) {
+	    gretl_matrix_multiply(N, N, W);
+	    gretl_matrix_copy_values(N, W);
+	}
     }
 
  bailout:
 
-    gretl_matrix_free(a);
-    gretl_matrix_free(b);
-    if (*err) {
-	gretl_matrix_free(r);
-	r = NULL;
-    }	
+    gretl_matrix_free(A);
+    gretl_matrix_free(X);
+    gretl_matrix_free(D);
+    gretl_matrix_free(W);
 
-    return r;
+    if (*err) {
+	gretl_matrix_free(N);
+	N = NULL;
+    }
+
+    return N;
 }
 
 /**
@@ -2082,11 +2127,11 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
 /**
  * gretl_LU_solve:
  * @a: gretl_matrix.
- * @b: gretl_vector.
+ * @b: gretl_matrix.
  *
- * Solves ax = b for the unknown vector x, using LU decomposition.
- * On exit, @b is replaced by the solution and @a is replaced by its 
- * LU decomposition.
+ * Solves ax = b for the unknown x, using LU decomposition.
+ * On exit, @b is replaced by the solution and @a is replaced 
+ * by its LU decomposition.
  * 
  * Returns: 0 on successful completion, or a non-zero error code
  * (from the lapack function %dgetrs) on error.
@@ -2098,16 +2143,18 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     integer info;
     integer m = a->rows;
     integer n = a->cols;
-    integer nrhs = 1;
-    integer ldb = gretl_vector_get_length(b);
+    integer nrhs, ldb;
     integer *ipiv;
 
-    if (ldb == 0) {
-	fprintf(stderr, "gretl_LU_solve:\n"
-		" a->rows = %d, a->cols = %d\n"
-		" b->rows = %d, b->cols = %d\n", 
-		a->rows, a->cols, b->rows, b->cols);
-	return E_NONCONF;
+    if (b->cols == 1) {
+	nrhs = 1;
+	ldb = b->rows;
+    } else if (b->rows == 1) {
+	nrhs = 1;
+	ldb = b->cols;
+    } else {
+	nrhs = b->cols;
+	ldb = b->rows;
     }
 
     ipiv = malloc(n * sizeof *ipiv);
