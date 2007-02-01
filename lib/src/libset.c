@@ -1130,13 +1130,17 @@ static int display_settings (PRN *prn)
     ival =  get_halt_on_error(); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
 
-    pprintf(prn, " shell_ok = %d\n", state->shell_ok);
+    pprintf(prn, " shell_ok = %d\n", get_shell_ok());
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
     pprintf(prn, " longdigits = %d\n", state->longdigits);
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
     print_initvals(state->initvals, prn);
 
-    pprintf(prn, " shelldir = '%s'\n", state->shelldir);
+    if (*state->shelldir) {
+	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
+    } else {
+	pputs(prn, " shelldir = unset\n");
+    }
 
     return 0;
 }
