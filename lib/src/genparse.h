@@ -117,8 +117,8 @@ enum {
     SUMC,
     MEANR,
     MEANC,
-    MCOV,    
-    MCORR,     /* 90 */
+    MCOV, 
+    MCORR,     /* 90 */   
     CDEMEAN,
     CHOL,
     INV,
@@ -127,8 +127,8 @@ enum {
     TVEC,
     VECH,
     UNVECH,
-    ROWS,   
-    COLS,      /* 100 */
+    ROWS,  
+    COLS,     /* 100 */ 
     DET,
     LDET,
     TRACE,
@@ -136,9 +136,9 @@ enum {
     INFNORM,
     RCOND,
     VARNUM,
-    OBSNUM,
+    OBSNUM,  
     ISSERIES,
-    ISLIST,    /* 110 */  
+    ISLIST,   /* 110 */  
     ISSTRING,
     ISNULL,
     LISTLEN,
@@ -148,7 +148,7 @@ enum {
     GENPOIS,
     MAKEMASK,
     VALUES,
-    NULLSPC,  /* 120 */
+    NULLSPC,   /* 120 */
     MEXP,
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
@@ -159,6 +159,7 @@ enum {
     FRACDIF,
     ZEROS,
     ONES,    /* 130 */  
+    SEQ,
     MUNIF,
     MNORM,
     QFORM,
@@ -167,8 +168,8 @@ enum {
     EIGSYM,  
     EIGGEN,
     FDJAC,
-    BFGSMAX,
-    LRVAR,  /* 140: long-run variance */
+    BFGSMAX, /* 140 */
+    LRVAR,    /* long-run variance */
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
@@ -177,8 +178,8 @@ enum {
     DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
-    CON,      /* named constant */
-    DUM,    /* 150: dummy variable */
+    CON,    /* 150: named constant */
+    DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
@@ -187,8 +188,8 @@ enum {
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
-    MSL,      /* matrix plus subspec */
-    DMSL,   /* 160: "dollar" matrix plus subspec */
+    MSL,    /* 160: matrix plus subspec */
+    DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
@@ -197,8 +198,8 @@ enum {
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX, /* 170: loop index variable */
+    OVAR,   /* 170: object variable: variable "under" an object */
+    LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
@@ -207,7 +208,7 @@ enum {
     EMPTY,
     ABSENT, 
     INC,    
-    DEC,
+    DEC,    /* 180 */
     QUERY,
     AST2,     /* prime facie ambiguous case of "**" */
     UNK

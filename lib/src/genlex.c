@@ -164,6 +164,7 @@ struct str_table funcs[] = {
     { IMAT,     "I" },
     { ZEROS,    "zeros" },
     { ONES,     "ones" },
+    { SEQ,      "seq" },
     { MUNIF,    "muniform" },
     { MNORM,    "mnormal" },
     { SUMR,     "sumr" },

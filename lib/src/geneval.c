@@ -1444,6 +1444,9 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	case ONES:
 	    ret->v.m = gretl_unit_matrix_new(rows, cols);
 	    break;
+	case SEQ:
+	    ret->v.m = gretl_matrix_seq(rows, cols);
+	    break;
 	case MUNIF:
 	    ret->v.m = gretl_random_matrix_new(rows, cols, 
 					       D_UNIFORM);
@@ -3778,6 +3781,7 @@ static NODE *eval (NODE *t, parser *p)
     case IMAT:
     case ZEROS:
     case ONES:
+    case SEQ:
     case MUNIF:
     case MNORM:
 	/* matrix-creation functions */
