@@ -222,13 +222,14 @@ produces $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
 \section{Matrix--scalar operators}
 \label{matrix-scalar-op}
 
-For $A$ a matrix and $k$ a scalar, the operators shown in
-Table~\ref{tab:matrix-scalar-ops} are available.  (The cases of
-addition and subtraction were discussed in section~\ref{matrix-op} but
-we include them in the table for completeness.)  In addition, for
-square $A$ and integer $k \geq 1$, \verb|B = A^k| produces $B = A
-\times A \times A\dots$, that is, the matrix $A$ multiplied by itself
-$k-1$ times.
+For matrix $A$ and scalar $k$, the operators shown in
+Table~\ref{tab:matrix-scalar-ops} are available.  (Addition and
+subtraction were discussed in section~\ref{matrix-op} but we include
+them in the table for completeness.)  In addition, for square $A$ and
+integer $k \geq 0$, \verb|B = A^k| produces a matrix $B$ which is $A$
+raised to the power $k$.  (Note that the operator \texttt{**} cannot
+be used in place of \verb|^| for this purpose because in a matrix
+context it is reserved for the Kronecker product.)
 
 \begin{table}[htbp]
 \centering
