@@ -433,10 +433,12 @@ variables in the columns of $A$, and in the second, containing the
 correlations of the variables.
 
 For an $n \times n$ matrix $A$, \texttt{mexp(A)} returns an $n \times
-n$ matrix holding an approximation to the matrix exponential
+n$ matrix holding the matrix exponential,
 \[
-e^A = \sum_k^{\infty} \frac{A^k}{k!}
+e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = I + A + \frac{A^2}{2!} 
+ + \frac{A^3}{3!} + \cdots
 \]
+(This series is sure to converge.)
 
 The \texttt{cholesky} function computes the Cholesky decomposition $L$
 of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
