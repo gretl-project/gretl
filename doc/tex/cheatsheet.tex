@@ -4,7 +4,7 @@
 This chapter explains how to perform some common --- and some not so
 common --- tasks in \app{gretl}'s scripting language.  Some but not
 all of the techniques listed here are also available through the
-graphic interface.  Although the graphical interface may be more
+graphical interface.  Although the graphical interface may be more
 intuitive and less intimidating at first, we encourage users to take
 advantage of the power of \app{gretl}'s scripting language as soon as
 they feel comfortable with the program.
@@ -166,7 +166,8 @@ dataset is a panel dataset, where the minutes are the ``units'' and
 the seconds are the ``time''; this way, we can take advantage of the
 special function \texttt{psd()}, panel standard deviation.  Then we
 simply drop all observations but one per minute and save the resulting
-file.
+data (\texttt{store foo rv} translates as ``store in the \app{gretl}
+datafile \texttt{foo.gdt} the series \texttt{rv}'').
 
 
 %%% Local Variables: 
