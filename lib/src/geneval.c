@@ -3506,7 +3506,7 @@ static NODE *eval (NODE *t, parser *p)
 	   flexible as possible with regard to argument types
 	*/
 	if (t->t == B_POW && t->ext && (l->t == MAT || r->t == MAT)) {
-	    /* user gave "**" following and/or preceding a matrix */
+	    /* user gave "**" with a matrix operand */
 	    t->t = KRON;
 	}
 	if (l->t == NUM && r->t == NUM) {
