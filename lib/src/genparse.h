@@ -133,12 +133,13 @@ enum {
     LDET,
     TRACE,
     NORM1,
+    INFNORM,
     RCOND,
     VARNUM,
     OBSNUM,
     ISSERIES,
-    ISLIST,   
-    ISSTRING,  /* 110 */
+    ISLIST,    /* 110 */  
+    ISSTRING,
     ISNULL,
     LISTLEN,
     PVAL,
@@ -147,8 +148,8 @@ enum {
     GENPOIS,
     MAKEMASK,
     VALUES,
-    NULLSPC,  
-    MEXP,     /* 120 */
+    NULLSPC,  /* 120 */
+    MEXP,
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,
@@ -157,8 +158,8 @@ enum {
     BINOMIAL,
     FRACDIF,
     ZEROS,
-    ONES,
-    MUNIF,   /* 130 */  
+    ONES,    /* 130 */  
+    MUNIF,
     MNORM,
     QFORM,
     MLAG,
@@ -167,8 +168,8 @@ enum {
     EIGGEN,
     FDJAC,
     BFGSMAX,
-    LRVAR,    /* long-run variance */
-    F2_MAX, /* 140: separator: end of two-arg functions */
+    LRVAR,  /* 140: long-run variance */
+    F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
     FN_MAX,   /* separator: end of n-arg functions */
@@ -177,8 +178,8 @@ enum {
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
-    DUM,      /* dummy variable */
-    UVAR,   /* 150: user variable (scalar or series) */
+    DUM,    /* 150: dummy variable */
+    UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
@@ -187,8 +188,8 @@ enum {
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
-    DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,  /* 160: "dollar" matrix plus old-style string subspec */
+    DMSL,   /* 160: "dollar" matrix plus subspec */
+    DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
@@ -197,8 +198,8 @@ enum {
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX,  /* loop index variable */
-    LIST,   /* 170: reference to named list */
+    LOOPIDX, /* 170: loop index variable */
+    LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
@@ -208,6 +209,7 @@ enum {
     INC,    
     DEC,
     QUERY,
+    AST2,     /* prime facie ambiguous case of "**" */
     UNK
 };
 

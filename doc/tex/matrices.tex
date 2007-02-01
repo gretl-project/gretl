@@ -269,40 +269,41 @@ $k-1$ times.
 \texttt{exp}       &
 \texttt{gamma}     \\
 \texttt{I}         &
+\texttt{infnorm}   &
 \texttt{int}       &
 \texttt{inv}       &
-\texttt{ldet}      &
-\texttt{lngamma}   \\
+\texttt{ldet}      \\
+\texttt{lngamma}   &
 \texttt{log}       &
 \texttt{mcorr}     &
 \texttt{mcov}      &
-\texttt{meanc}     &
-\texttt{meanr}     \\
+\texttt{meanc}     \\
+\texttt{meanr}     &
 \texttt{mexp}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
-\texttt{mshape}    &
-\texttt{muniform}  \\
+\texttt{mshape}    \\
+\texttt{muniform}  &
 \texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
-\texttt{qform}     &
-\texttt{qnorm}     \\
+\texttt{qform}     \\
+\texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rcond}     &
 \texttt{rows}      &
-\texttt{sin}       &
-\texttt{sort}      \\
+\texttt{sin}       \\
+\texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{svd}       &
-\texttt{tan}       \\
+\texttt{svd}       \\
+\texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
-\texttt{values}    &
-\texttt{vec}       \\
+\texttt{values}    \\
+\texttt{vec}       &
 \texttt{vech}      &
 \texttt{zeros}     
 \end{tabular}      
@@ -371,6 +372,7 @@ scalar are:
 \texttt{ldet()} & log-determinant \\
 \texttt{tr()} & trace \\
 \texttt{onenorm()} & 1-norm \\
+\texttt{infnorm()} & infinity-norm \\
 \texttt{rcond()} & reciprocal condition number \\
 \texttt{rows()} & number of rows \\
 \texttt{cols()} & number of columns 
@@ -382,11 +384,13 @@ of an existing matrix or as an expression that evaluates to a single
 matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
 \texttt{tr} require a square matrix as input.  
 
-The \texttt{onenorm} function returns the 1-norm of a matrix --- that
-is, the maximum across the columns of the matrix of the sums of the
-absolute values of the column elements.  The function \texttt{rcond}
-returns the reciprocal condition number for a symmetric, positive
-definite matrix.
+The functions \texttt{onenorm} and \texttt{infnorm} function return,
+respectively, the 1-norm and the infinity-norm of a matrix.  The
+former is the maximum across the columns of the matrix of the sums of
+the absolute values of the column elements, while the latter is the
+maximum across the rows of the matrix of the sums of the absolute
+values of the row elements.  The function \texttt{rcond} returns the
+reciprocal condition number for a symmetric, positive definite matrix.
 
 \subsection{Matrix to matrix functions}
 \label{matrix-to-matrix}

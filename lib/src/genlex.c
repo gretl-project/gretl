@@ -186,6 +186,7 @@ struct str_table funcs[] = {
     { LDET,     "ldet" },
     { TRACE,    "tr" },
     { NORM1,    "onenorm" },
+    { INFNORM,  "infnorm" },
     { RCOND,    "rcond" },
     { QFORM,    "qform" },
     { MLAG,     "mlag" },
@@ -791,7 +792,11 @@ void lex (parser *p)
         case '*': 
 	    parser_getc(p);
 	    if (p->ch == '*') {
-		p->sym = B_POW;
+		if (matrix_gen(p)) {
+		    p->sym = KRON;
+		} else {
+		    p->sym = AST2;
+		}
 		parser_getc(p);
 	    } else {
 		p->sym = B_MUL;

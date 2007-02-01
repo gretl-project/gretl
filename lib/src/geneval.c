@@ -1031,6 +1031,11 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 {
     NODE *ret = NULL;
 
+    if (op == KRON) {
+	p->err = E_TYPES;
+	return NULL;
+    }
+
     if (starting(p)) {
 	const gretl_matrix *m = NULL;
 	double y, x = 0.0;
@@ -1264,6 +1269,9 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	case NORM1:
 	    ret->v.xval = gretl_matrix_one_norm(m);
+	    break;
+	case INFNORM:
+	    ret->v.xval = gretl_matrix_infinity_norm(m);
 	    break;
 	case RCOND:
 	    ret->v.xval = gretl_symmetric_matrix_rcond(m, &p->err);
@@ -3497,6 +3505,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* arithmetic and logical binary operators: be as
 	   flexible as possible with regard to argument types
 	*/
+	if (t->t == B_POW && t->ext && (l->t == MAT || r->t == MAT)) {
+	    /* user gave "**" following and/or preceding a matrix */
+	    t->t = KRON;
+	}
 	if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if ((l->t == VEC && r->t == VEC) ||
@@ -3804,6 +3816,7 @@ static NODE *eval (NODE *t, parser *p)
     case LDET:
     case TRACE:
     case NORM1:
+    case INFNORM:
     case RCOND:
 	/* matrix -> scalar functions */
 	if (l->t == MAT) {

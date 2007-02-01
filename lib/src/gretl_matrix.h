@@ -253,7 +253,7 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 				    const gretl_matrix *B);
 
 gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
-				int k, int *err);
+				int s, int *err);
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,
@@ -289,6 +289,8 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err);
 double gretl_vcv_log_determinant (const gretl_matrix *m);
 
 double gretl_matrix_one_norm (const gretl_matrix *m);
+
+double gretl_matrix_infinity_norm (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 

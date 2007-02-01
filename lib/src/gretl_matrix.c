@@ -963,37 +963,51 @@ void gretl_matrix_raise (gretl_matrix *m, double x)
     }
 }
 
-static double infinity_norm (const gretl_matrix *a)
-{
-    double jsum, jsmax = 0.0;
-    int i, j;
+/* if x can be represented as an integer and is an exact power of 2,
+   return the exact log_2 of x, otherwise use log() to compute an
+   approximation.
+*/
 
-    for (i=0; i<a->rows; i++) {
-	jsum = 0.0;
-	for (j=0; j<a->cols; j++) {
-	    jsum += fabs(a->val[mdx(a,i,j)]);
+static double log_2 (double x)
+{
+    int i, s;
+
+    if (x <= 0) {
+	return log(x);
+    }
+
+    if (floor(x) != x || x < 2 || x > (double) INT_MAX) {
+	return log(x) / log(2.0);
+    }
+
+    s = floor(x);
+
+    for (i=1; ; i++) {
+	if (s % 2) {
+	    break;
 	}
-	if (jsum > jsmax) {
-	    jsmax = jsum;
+	s /= 2;
+	if (s == 1) {
+	    return (double) i;
 	}
     }
 
-    return jsmax;
+    return log(x) / log(2.0);
 }
 
 static double mexp_error_eps (int q)
 {
-    double x1, x2, x3;
+    double x1, x2, x3, x4;
     double qf = x_factorial(q);
 
-    x1 = pow(2, 3.0 - (q + q));
+    x1 = pow(2.0, 3.0 - (q + q));
     x2 = qf * qf;
-    x3 = x_factorial(2*q) * x_factorial(2*q+1);
+    x3 = x_factorial(2 * q);
+    x4 = (2 * q + 1) * x3;
+    x3 *= x4;
 
     return x1 * (x2 / x3);
 }
-
-#define log2(x) (log(x) / log(2.0))
 
 /**
  * gretl_matrix_exp:
@@ -1008,16 +1022,14 @@ static double mexp_error_eps (int q)
 
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 {
-    static int q;
-
     gretl_matrix *A = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *N = NULL;
     gretl_matrix *D = NULL;
     gretl_matrix *W = NULL;
     
-    double c, j, delta = 1.0e-8;
-    int k, n = m->rows;
+    double xa, c, j, delta = 1.0e-13;
+    int q, k, n = m->rows;
 
     A = gretl_matrix_copy(m);
     X = gretl_identity_matrix_new(n);
@@ -1031,19 +1043,19 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 	goto bailout;
     }
 
-    j = floor(log2(infinity_norm(A)));
+    xa = gretl_matrix_infinity_norm(A);
+
+    j = floor(log_2(xa));
     if (j < 0) {
 	j = 0;
     }
 
     gretl_matrix_divide_by_scalar(A, pow(2.0, j));
 
-    if (q == 0) {
-	/* q (static) is not yet computed */
-	for (q=1; q<10; q++) {
-	    if (mexp_error_eps(q) <= delta) {
-		break;
-	    }
+    for (q=1; q<16; q++) {
+	c = mexp_error_eps(q);
+	if (c * xa <= delta) {
+	    break;
 	}
     }
 
@@ -1885,6 +1897,33 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_infinity_norm:
+ * @m: gretl_matrix.
+ *
+ * Returns: the infinity-norm of @m (the maximum value across
+ * the rows of @m of the sum of the absolute values of
+ * the elements in the given row).
+ */
+
+double gretl_matrix_infinity_norm (const gretl_matrix *m)
+{
+    double rsum, rmax = 0.0;
+    int i, j;
+
+    for (i=0; i<m->rows; i++) {
+	rsum = 0.0;
+	for (j=0; j<m->cols; j++) {
+	    rsum += fabs(m->val[mdx(m,i,j)]);
+	}
+	if (rsum > rmax) {
+	    rmax = rsum;
+	}
+    }
+
+    return rmax;
+}
+
+/**
  * gretl_matrix_one_norm:
  * @m: gretl_matrix.
  *
@@ -1895,7 +1934,7 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 
 double gretl_matrix_one_norm (const gretl_matrix *m)
 {
-    double colsum, colmax = 0.0;
+    double csum, cmax = 0.0;
     int i, j;
 
     if (m == NULL) {
@@ -1903,16 +1942,16 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
     }
 
     for (j=0; j<m->cols; j++) {
-	colsum = 0.0;
+	csum = 0.0;
 	for (i=0; i<m->rows; i++) {
-	    colsum += fabs(m->val[mdx(m, i, j)]);
+	    csum += fabs(m->val[mdx(m,i,j)]);
 	}
-	if (colsum > colmax) {
-	    colmax = colsum;
+	if (csum > cmax) {
+	    cmax = csum;
 	}
     }
 
-    return colmax;
+    return cmax;
 }
 
 /**
@@ -2454,7 +2493,7 @@ int
 gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 				gretl_matrix *K)
 {
-    double aij, bkl;
+    double x, aij, bkl;
     int p = A->rows;
     int q = A->cols;
     int r = B->rows;
@@ -2478,7 +2517,11 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 		for (l=0; l<s; l++) {
 		    bkl = B->val[mdx(B, k, l)];
 		    Kj = joff + l;
-		    K->val[mdx(K, Ki, Kj)] = aij * bkl;
+		    x = aij * bkl;
+		    if (x == -0.0) {
+			x = 0.0;
+		    }
+		    K->val[mdx(K, Ki, Kj)] = x;
 		}
 	    }
 	}
@@ -2516,24 +2559,61 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     return K;
 }
 
+/* 
+   returns the sequence of bits in the binary expansion of s
+*/
+
+static char *binary_expansion (int s, int *t, int *pow2)
+{
+    char *bits = NULL;
+    double l2 = log_2(s);
+    int k = (int) floor(l2);
+
+    if (l2 == k) {
+	*pow2 = 1;
+    }
+
+    *t = k;
+    bits = calloc(k + 1, 1);
+    if (bits == NULL) {
+	return NULL;
+    }
+
+    while (1) {
+	bits[k] = 1;
+	s -= pow(2.0, k);
+	if (s == 0) {
+	    break;
+	}
+	l2 = log_2(s);
+	k = (int) floor(l2);
+    }
+
+    return bits;
+}
+
 /**
  * gretl_matrix_pow:
  * @A: square source matrix.
- * @k: exponent >= 1.
+ * @s: exponent >= 1.
  * @err: location to receive error code.
  * 
- * Returns: a newly allocated matrix which is @A pre-multiplied
- * by itself @k - 1 times, or %NULL on failure.
+ * Calculates the matrix A^k using Golub and Van Loan's Algorithm
+ * 11.2.2 ("Binary Powering").
+ *
+ * Returns: allocated matrix, or %NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
-				int k, int *err)
+				int s, int *err)
 {
     gretl_matrix *B = NULL;
     gretl_matrix *C = NULL;
-    int i;
+    gretl_matrix *W = NULL;
+    char *bits = NULL;
+    int t, pow2 = 0;
 
-    if (k == 1) {
+    if (s == 1) {
 	B = gretl_matrix_copy(A);
 	if (B == NULL) {
 	    *err = E_ALLOC;
@@ -2541,32 +2621,68 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 	return B;
     }
 
-    if (k < 2) {
+    if (s < 2) {
 	*err = E_DATA;
     } else if (A->rows != A->cols) {
 	*err = E_NONCONF;
-    } else {
-	B = gretl_matrix_copy(A);
-	if (B == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    C = gretl_matrix_alloc(A->rows, A->cols);
-	    if (C == NULL) {
-		*err = E_ALLOC;
-	    }
-	}
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    bits = binary_expansion(s, &t, &pow2);
+    if (bits == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    B = gretl_matrix_copy(A);
+    C = gretl_matrix_alloc(A->rows, A->cols);
+
+    if (!pow2) {
+	W = gretl_matrix_alloc(A->rows, A->cols);
+    }
+
+    if (B == NULL || C == NULL || (W == NULL && !pow2)) {
+	gretl_matrix_free(C);
+	C = NULL;
+	*err = E_ALLOC;
     }
 
     if (!*err) {
-	for (i=1; i<k; i++) {
-	    gretl_matrix_multiply(A, B, C);
-	    if (i < k - 1) {
-		gretl_matrix_copy_values(B, C);
+	int k, q = 0;
+
+	while (bits[q] == 0) {
+	    /* B = B^2 */
+	    gretl_matrix_multiply(B, B, C);
+	    gretl_matrix_copy_values(B, C);
+	    q++;
+	}
+
+	if (pow2) {
+	    goto done;
+	}
+
+	gretl_matrix_copy_values(C, B);
+
+	for (k=q+1; k<=t; k++) {
+	    /* B = B^2 */
+	    gretl_matrix_multiply(B, B, W);
+	    gretl_matrix_copy_values(B, W);
+	    if (bits[k]) {
+		/* C = CB */
+		gretl_matrix_multiply(C, B, W);
+		gretl_matrix_copy_values(C, W);
 	    }
 	}
     }
 
+ done:
+
     gretl_matrix_free(B);
+    gretl_matrix_free(W);
+    free(bits);
 
     return C;
 }

@@ -174,6 +174,11 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 	n->tmp = 0;
 	n->ext = 0;
 	n->aux = 0;
+
+	if (n->t == AST2) {
+	    n->t = B_POW;
+	    n->ext = 1; /* record possible ambiguity */
+	}
     }
 
     return n;
@@ -843,6 +848,7 @@ static NODE *factor (parser *p)
 	t = powterm(p);
 	if (t != NULL) {
 	    while (!p->err && (p->sym == B_POW || 
+			       p->sym == AST2 ||
 			       p->sym == DOTPOW ||
 			       p->sym == B_TRMUL)) {
 		t = newb2(p->sym, t, NULL);
