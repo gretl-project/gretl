@@ -2595,7 +2595,7 @@ static char *binary_expansion (int s, int *t, int *pow2)
 /**
  * gretl_matrix_pow:
  * @A: square source matrix.
- * @s: exponent >= 1.
+ * @s: exponent >= 0.
  * @err: location to receive error code.
  * 
  * Calculates the matrix A^k using Golub and Van Loan's Algorithm
@@ -2613,23 +2613,28 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     char *bits = NULL;
     int t, pow2 = 0;
 
-    if (s == 1) {
+    if (s < 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (A->rows != A->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (s == 0) {
+	B = gretl_identity_matrix_new(A->rows);
+    } else if (s == 1) {
 	B = gretl_matrix_copy(A);
+    }
+
+    if (s < 2) {
 	if (B == NULL) {
 	    *err = E_ALLOC;
 	}
 	return B;
-    }
-
-    if (s < 2) {
-	*err = E_DATA;
-    } else if (A->rows != A->cols) {
-	*err = E_NONCONF;
-    }
-
-    if (*err) {
-	return NULL;
-    }
+    }	
 
     bits = binary_expansion(s, &t, &pow2);
     if (bits == NULL) {

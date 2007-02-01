@@ -1016,7 +1016,7 @@ matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
 	p->err = E_TYPES;
     } else if (m->rows != m->cols) {
 	p->err = E_NONCONF;
-    } else if (x <= 0 || x > (double) INT_MAX || floor(x) != x) {
+    } else if (x < 0 || x > (double) INT_MAX || floor(x) != x) {
 	p->err = E_DATA;
     }
 
