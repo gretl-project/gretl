@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_string_table.h"
 
 #include <unistd.h>
 
@@ -614,6 +615,8 @@ struct INTERNAL_PATHS {
     char libpath[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
+    char tramo[MAXLEN];
+    char tramodir[MAXLEN];
     char pngfont[128];
     unsigned char status;
 };
@@ -643,11 +646,21 @@ static void set_gretl_libpath (const char *path)
 
 static void copy_paths_to_internal (const PATHS *paths)
 {
-    strcpy(gretl_paths.userdir, paths->userdir);
-    strcpy(gretl_paths.gnuplot, paths->gnuplot);
-    strcpy(gretl_paths.x12a, paths->x12a);
-    strcpy(gretl_paths.x12adir, paths->x12adir);
-    strcpy(gretl_paths.pngfont, paths->pngfont);
+    strcpy(gretl_paths.userdir,  paths->userdir);
+    strcpy(gretl_paths.gnuplot,  paths->gnuplot);
+    strcpy(gretl_paths.x12a,     paths->x12a);
+    strcpy(gretl_paths.x12adir,  paths->x12adir);
+    strcpy(gretl_paths.tramo,    paths->tramo);
+    strcpy(gretl_paths.tramodir, paths->tramodir);
+    strcpy(gretl_paths.pngfont,  paths->pngfont);
+
+    gretl_insert_builtin_string("gretldir",  paths->gretldir);
+    gretl_insert_builtin_string("userdir",   paths->userdir);
+    gretl_insert_builtin_string("gnuplot",   paths->gnuplot);
+    gretl_insert_builtin_string("x12a",      paths->x12a);
+    gretl_insert_builtin_string("x12adir",   paths->x12adir);
+    gretl_insert_builtin_string("tramo",     paths->tramo);
+    gretl_insert_builtin_string("tramodir",  paths->tramodir);
 }
 
 const char *gretl_lib_path (void)
@@ -764,6 +777,9 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
 	strcpy(ppaths->x12adir, "c:\\userdata\\x12arima");
 
+	strcpy(ppaths->tramo, "c:\\userdata\\tramo\\tramo.exe");
+	strcpy(ppaths->tramodir, "c:\\userdata\\tramo");
+
 	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 	} else {
@@ -854,6 +870,11 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 #ifdef HAVE_X12A
 	strcpy(ppaths->x12a, "x12a");
 	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
+#endif
+
+#ifdef HAVE_TRAMO
+	strcpy(ppaths->tramo, "tramo");
+	sprintf(ppaths->tramodir, "%stramo", ppaths->userdir);
 #endif
 
 	*gretl_paths.plotfile = '\0';

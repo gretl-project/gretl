@@ -56,11 +56,6 @@ char rcfile[MAXLEN];
 extern int want_toolbar;
 extern char Rcommand[MAXSTR];
 
-#ifdef HAVE_TRAMO
-extern char tramo[MAXSTR];
-extern char tramodir[MAXSTR];
-#endif
-
 char dbproxy[21];
 int use_proxy;
 
@@ -222,13 +217,13 @@ RCVAR rc_vars[] = {
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
-    { "tramo", N_("path to tramo"), NULL, tramo, 
+    { "tramo", N_("path to tramo"), NULL, paths.tramo, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef G_OS_WIN32
     { "x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
-    { "tramodir", N_("TRAMO working directory"), NULL, tramodir, 
+    { "tramodir", N_("TRAMO working directory"), NULL, paths.tramodir, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
@@ -553,7 +548,7 @@ static void set_tramo_x12a_dirs (void)
 {
     int ok;
     
-    ok = check_for_prog(tramo);
+    ok = check_for_prog(paths.tramo);
     set_tramo_ok(ok);
 
     ok = check_for_prog(paths.x12a);
@@ -602,16 +597,16 @@ static void set_tramo_x12a_dirs (void)
     int ok;
 
 #ifdef HAVE_TRAMO
-    ok =  check_for_prog(tramo);
+    ok =  check_for_prog(paths.tramo);
 # ifdef OSX_BUILD
     if (!ok) {
-        ok = alt_ok(tramo);
+        ok = alt_ok(paths.tramo);
     }
 # endif    
     set_tramo_ok(ok); 
        
-    if (*tramodir == '\0') {
-	build_path(tramodir, paths.userdir, "tramo", NULL);
+    if (*paths.tramodir == '\0') {
+	build_path(paths.tramodir, paths.userdir, "tramo", NULL);
     }
 #endif
 
@@ -642,20 +637,24 @@ static void set_tramo_x12a_dirs (void)
 #endif
 
 #ifdef HAVE_TRAMO
-    if (gretl_mkdir(tramodir)) return;
-    sprintf(dirname, "%s/output", tramodir);
+    if (gretl_mkdir(paths.tramodir)) {
+	return;
+    }
+    sprintf(dirname, "%s/output", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph", tramodir);
-    if (gretl_mkdir(dirname)) return;
-    sprintf(dirname, "%s/graph/acf", tramodir);
+    sprintf(dirname, "%s/graph", paths.tramodir);
+    if (gretl_mkdir(dirname)) {
+	return;
+    }
+    sprintf(dirname, "%s/graph/acf", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/filters", tramodir);
+    sprintf(dirname, "%s/graph/filters", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/forecast", tramodir);
+    sprintf(dirname, "%s/graph/forecast", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/series", tramodir);
+    sprintf(dirname, "%s/graph/series", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/spectra", tramodir);
+    sprintf(dirname, "%s/graph/spectra", paths.tramodir);
     gretl_mkdir(dirname);
 #endif /* HAVE_TRAMO */
 }
@@ -1676,7 +1675,7 @@ void read_rc (void)
     if (get_network_settings() && *paths.userdir != '\0') {
 	win32_make_user_dirs();
 	for (i=0; rc_vars[i].key != NULL; i++) {
-	    if (rc_vars[i].var == tramodir ||
+	    if (rc_vars[i].var == paths.tramodir ||
 		rc_vars[i].var == paths.x12adir) {
 		rc_vars[i].flags |= FIXSET;
 	    }

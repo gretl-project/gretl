@@ -278,7 +278,12 @@ static int run_cmd_wait (char *cmd)
     si.wShowWindow = SW_SHOWMINIMIZED;
 
     GetSystemDirectory(cmdline, MAX_PATH);
-    lstrcat(cmdline, "\\cmd.exe /c ");
+    lstrcat(cmdline, "\\cmd.exe ");
+    if (getenv("SHELLDEBUG")) {
+	lstrcat(cmdline, "/k ");
+    } else {
+	lstrcat(cmdline, "/c ");
+    }
     lstrcat(cmdline, cmd);
 
     child = CreateProcess(NULL, cmdline, 

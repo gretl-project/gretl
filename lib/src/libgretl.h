@@ -299,6 +299,8 @@ struct PATHS_ {
     char gnuplot[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
+    char tramo[MAXLEN];
+    char tramodir[MAXLEN];
     char dbhost[32];
     char pngfont[128];
 };

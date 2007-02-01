@@ -151,11 +151,6 @@ char Rcommand[MAXSTR] = "xterm -e R";
 char Browser[MAXSTR] = "mozilla";
 #endif
 
-#ifdef HAVE_TRAMO
-char tramo[MAXSTR] = "tramo";
-char tramodir[MAXSTR] = "";
-#endif
-
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
 {
     show_spreadsheet(SHEET_EDIT_VARLIST);

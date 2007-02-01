@@ -65,11 +65,6 @@
 
 #define CMD_DEBUG 0
 
-#ifdef HAVE_TRAMO
-extern char tramo[];
-extern char tramodir[];
-#endif
-
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
@@ -3487,8 +3482,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (opt == TRAMO) {
 #ifdef HAVE_TRAMO
-	prog = tramo;
-	workdir = tramodir;
+	prog = paths.tramo;
+	workdir = paths.tramodir;
 #else
 	return;
 #endif

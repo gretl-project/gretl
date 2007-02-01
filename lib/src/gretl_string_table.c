@@ -283,9 +283,44 @@ struct saved_string_ {
 static int n_saved_strings;
 static saved_string *saved_strings;
 
-static saved_string *get_saved_string_by_name (const char *name)
+static saved_string built_ins[] = {
+    { "gretldir", NULL },
+    { "userdir",  NULL },
+    { "gnuplot",  NULL },
+    { "x12a",     NULL },
+    { "x12adir",  NULL },
+    { "tramo",    NULL },
+    { "tramodir", NULL }
+};
+
+void gretl_insert_builtin_string (const char *name, const char *s)
+{
+    int i, n = sizeof built_ins / sizeof built_ins[0];
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(name, built_ins[i].name)) {
+	    free(built_ins[i].s);
+	    built_ins[i].s = gretl_strdup(s);
+	    return;
+	}
+    }
+}
+
+static saved_string *get_saved_string_by_name (const char *name,
+					       int *builtin)
 {
     int i;
+
+    if (builtin != NULL) {
+	int n = sizeof built_ins / sizeof built_ins[0];
+
+	for (i=0; i<n; i++) {
+	    if (!strcmp(name, built_ins[i].name)) {
+		*builtin = 1;
+		return &built_ins[i];
+	    }
+	}
+    }	
 
     for (i=0; i<n_saved_strings; i++) {
 	if (!strcmp(name, saved_strings[i].name)) {
@@ -302,7 +337,7 @@ static int append_to_saved_string (const char *name, char **s)
     char *tmp;
     int n;
 
-    str = get_saved_string_by_name(name);
+    str = get_saved_string_by_name(name, NULL);
     if (str == NULL) {
 	return E_UNKVAR;
     }
@@ -410,8 +445,9 @@ static char *get_string_element (const char **pline, int *err)
 int string_is_defined (const char *sname)
 {
     saved_string *str;
+    int builtin = 0;
     
-    str = get_saved_string_by_name(sname);
+    str = get_saved_string_by_name(sname, &builtin);
 
     return (str != NULL && str->s != NULL);
 }
@@ -421,12 +457,19 @@ int string_is_defined (const char *sname)
 int save_named_string (const char *name, const char *s, PRN *prn)
 {
     saved_string *str;
+    int builtin = 0;
 
     if (s == NULL) {
 	return E_DATA;
     }
 
-    str = get_saved_string_by_name(name);
+    str = get_saved_string_by_name(name, &builtin);
+    
+    if (str != NULL && builtin) {
+	pprintf(prn, "You cannot overwrite '%s'\n", name);
+	return E_DATA;
+    }
+
     if (str == NULL) {
 	str = add_named_string(name);
 	if (str == NULL) {
@@ -461,6 +504,7 @@ int process_string_command (const char *line, PRN *prn)
     saved_string *str;
     char *s1 = NULL;
     char targ[VNAMELEN];
+    int builtin = 0;
     int add = 0;
     int err = 0;
 
@@ -479,7 +523,7 @@ int process_string_command (const char *line, PRN *prn)
 
     if (*line == '\0') {
 	/* just a call to echo an existing string? */
-	str = get_saved_string_by_name(targ);
+	str = get_saved_string_by_name(targ, &builtin);
 	if (str == NULL) {
 	    return E_UNKVAR;
 	} else {
@@ -498,7 +542,13 @@ int process_string_command (const char *line, PRN *prn)
     line += (add)? 2 : 1;
 
     /* set up the target */
-    str = get_saved_string_by_name(targ);
+    str = get_saved_string_by_name(targ, &builtin);
+
+    if (str != NULL && builtin) {
+	pprintf(prn, "You cannot overwrite '%s'\n", targ);
+	return E_DATA;
+    }	
+
     if (str == NULL) {
 	if (add) {
 	    return E_UNKVAR;
@@ -533,11 +583,12 @@ int process_string_command (const char *line, PRN *prn)
 static char *maybe_get_subst (char *name, int *n)
 {
     saved_string *str;
+    int builtin = 0;
     int k = *n - 1;
 
     while (k >= 0) {
-	str = get_saved_string_by_name(name);
-	if (str != NULL) {
+	str = get_saved_string_by_name(name, &builtin);
+	if (str != NULL && str->s != NULL) {
 	    *n = k + 1;
 	    return str->s;
 	}

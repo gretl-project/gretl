@@ -483,7 +483,6 @@ int gretl_mkdir (const char *path)
 void win32_make_user_dirs (void)
 {
     char dirname[MAXLEN];
-    extern char *tramodir;
     size_t n;
 
     strcpy(dirname, paths.userdir);
@@ -506,24 +505,24 @@ void win32_make_user_dirs (void)
     build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
     gretl_mkdir(paths.x12adir);
 
-    build_path(tramodir, paths.userdir, "tramo", NULL);
-    if (gretl_mkdir(tramodir)) return;
+    build_path(paths.tramodir, paths.userdir, "tramo", NULL);
+    if (gretl_mkdir(paths.tramodir)) return;
 
-    sprintf(dirname, "%s\\output", tramodir);
+    sprintf(dirname, "%s\\output", paths.tramodir);
     gretl_mkdir(dirname);
 
-    sprintf(dirname, "%s\\graph", tramodir);
+    sprintf(dirname, "%s\\graph", paths.tramodir);
     if (gretl_mkdir(dirname)) return;
 
-    sprintf(dirname, "%s\\graph\\acf", tramodir);
+    sprintf(dirname, "%s\\graph\\acf", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\filters", tramodir);
+    sprintf(dirname, "%s\\graph\\filters", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\forecast", tramodir);
+    sprintf(dirname, "%s\\graph\\forecast", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\series", tramodir);
+    sprintf(dirname, "%s\\graph\\series", paths.tramodir);
     gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\spectra", tramodir);
+    sprintf(dirname, "%s\\graph\\spectra", paths.tramodir);
     gretl_mkdir(dirname);
 }
 

@@ -754,8 +754,6 @@ static double getdbl (parser *p)
     return dot_atof(xstr);
 }
 
-/* FIXME: '&' as "take-address" operator */
-
 static void deprecation_note (parser *p)
 {
     if (p->sym == B_AND) {
