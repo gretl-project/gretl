@@ -253,32 +253,32 @@ context it is reserved for the Kronecker product.)
 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{lllll}
+\begin{tabular}{llllll}
 \texttt{abs}       &
 \texttt{atan}      &
 \texttt{cdemean}   &
 \texttt{cholesky}  &
-\texttt{cnorm}     \\
-\texttt{cols}      &
+\texttt{cnorm}     &
+\texttt{cols}      \\
 \texttt{cos}       &
 \texttt{det}       &
 \texttt{diag}      &
-\texttt{dnorm}     \\
+\texttt{dnorm}     &
 \texttt{dsort}     &
-\texttt{eigengen}  &
+\texttt{eigengen}  \\
 \texttt{eigensym}  &
 \texttt{exp}       &
-\texttt{gamma}     \\
+\texttt{gamma}     &
 \texttt{I}         &
 \texttt{infnorm}   &
-\texttt{int}       &
+\texttt{int}       \\
 \texttt{inv}       &
-\texttt{ldet}      \\
+\texttt{ldet}      &
 \texttt{lngamma}   &
 \texttt{log}       &
 \texttt{mcorr}     &
-\texttt{mcov}      &
-\texttt{meanc}     \\
+\texttt{mcov}      \\
+\texttt{meanc}     &
 \texttt{meanr}     &
 \texttt{mexp}      &
 \texttt{mlag}      &
@@ -288,22 +288,23 @@ context it is reserved for the Kronecker product.)
 \texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
-\texttt{qform}     \\
-\texttt{qnorm}     &
+\texttt{qform}     &
+\texttt{qnorm}     \\
 \texttt{qrdecomp}  &
 \texttt{rcond}     &
 \texttt{rows}      &
-\texttt{sin}       \\
-\texttt{sort}      &
+\texttt{seq}       &
+\texttt{sin}       &
+\texttt{sort}      \\
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{svd}       \\
+\texttt{svd}       &
 \texttt{tan}       &
-\texttt{tr}        &
+\texttt{tr}        \\
 \texttt{transp}    &
 \texttt{unvech}    &
-\texttt{values}    \\
+\texttt{values}    &
 \texttt{vec}       &
 \texttt{vech}      &
 \texttt{zeros}     
@@ -493,7 +494,7 @@ matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
 \subsection{Matrix filling functions}
 \label{matrix-fill}
 
-The functions taking one or two dimensions as arguments and returning
+The functions taking one or two integers as arguments and returning
 a matrix are:
 
 \begin{center}
@@ -507,22 +508,22 @@ a matrix are:
    $m\times n$ matrix filled with uniform random values \\
 \texttt{mnormal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    $m\times n$ matrix filled with normal random values \\
+\texttt{seq(}\textsl{a}\texttt{,}\textsl{b}\texttt{)} &
+   row vector containing the numbers from $a$ to $b$
 \end{tabular}
 \end{center}
 
-The dimensions \textsl{m} and \textsl{n} may be given numerically, 
-by reference to pre-existing scalar variables, or as expressions that
-evaluate to scalars.  
-%
-\begin{code}
-scalar m = 4
-scalar n = 5
-matrix A = mnormal(m,n)
-\end{code}
-%
+The dimensions $m$ and $n$ --- or in the case of \texttt{seq()}, the
+limits $a$ and $b$ --- may be given numerically, by reference to
+pre-existing scalar variables, or as expressions that evaluate to
+scalars.
+
 The \texttt{muniform()} and \texttt{mnormal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
+
+The \texttt{seq()} function generates a sequence of integers from $a$
+to $b$ inclusive, increasing if $a<b$ or decreasing if $a>b$.
 
 \subsection{Matrix reshaping}
 \label{matrix-mshape}

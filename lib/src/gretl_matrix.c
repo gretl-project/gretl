@@ -433,17 +433,24 @@ gretl_matrix *gretl_null_matrix_new (void)
  * @end: last element.
  *
  * Returns: pointer to a row vector, containing the numbers from
- * start to end, in decreasing order if start>end.
+ * @start to @end, in decreasing order if @start > @end --
+ * or %NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_seq (int start, int end)
 {
-    int reverse = (start>end);
+    int reverse = (start > end);
     int i, k, n = 1 + (reverse ? (start-end) : (end-start));
+
+    if (n == 0) {
+	return NULL;
+    }
 
     gretl_matrix *v = gretl_vector_alloc(n);
   
-    if (v == NULL) return v;
+    if (v == NULL) {
+	return v;
+    }
 
     k = start;
     for (i=0; i<n; i++) {
