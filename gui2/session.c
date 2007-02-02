@@ -67,6 +67,7 @@ static void auto_save_gp (windata_t *vwin);
 #include "../pixmaps/summary.xpm"
 #include "../pixmaps/model_table.xpm"
 #include "../pixmaps/graph_page.xpm"
+#include "../pixmaps/matrix.xpm"
 
 #define SESSION_DEBUG 0
 
@@ -188,6 +189,12 @@ static char *info_items[] = {
     N_("Edit"),
 };
 
+static char *matrix_items[] = {
+    N_("View"),
+    N_("Edit"),
+    N_("Delete")
+};
+
 /* file-scope globals */
 
 SESSION session;            /* hold models, graphs */
@@ -205,6 +212,7 @@ static GtkWidget *graph_page_popup;
 static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
 static GtkWidget *info_popup;
+static GtkWidget *matrix_popup;
 
 static GList *icon_list;
 static gui_obj *active_object;
@@ -217,6 +225,7 @@ static void global_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
+static void matrix_popup_activated (GtkWidget *widget, gpointer data);
 static void session_delete_icon (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
 static void open_boxplot (gui_obj *gobj);
@@ -1529,6 +1538,13 @@ static void open_boxplot (gui_obj *gobj)
     retrieve_boxplot(tmp);
 }
 
+static void open_matrix (gui_obj *gobj)
+{
+    user_matrix *um = (user_matrix *) gobj->data;
+
+    edit_user_matrix_by_name(user_matrix_get_name(um));
+}
+
 static void open_gui_text (gui_obj *gobj)
 { 
     SESSION_TEXT *text = (SESSION_TEXT *) gobj->data;
@@ -1652,6 +1668,8 @@ static int delete_session_object (gui_obj *obj)
 	real_delete_graph_from_session(obj->data);
     } else if (obj->sort == GRETL_OBJ_TEXT) { 
 	real_delete_text_from_session(obj->data);
+    } else if (obj->sort == GRETL_OBJ_MATRIX) { 
+	user_matrix_destroy(obj->data);
     }
 
     set_replay_off();
@@ -1687,6 +1705,41 @@ static void maybe_delete_session_object (gui_obj *obj)
     g_free(msg);
 }
 
+static gui_obj *get_gui_obj_by_data (void *finddata)
+{
+    GList *mylist = icon_list;
+    gui_obj *gobj = NULL;
+
+    while (mylist != NULL) {
+	gobj = (gui_obj *) mylist->data;
+	if (gobj->data == finddata) {
+	    return gobj;
+	}
+	mylist = mylist->next;
+    }
+
+    return NULL;
+}
+
+int session_matrix_destroy_by_name (const char *name, PRN *prn)
+{
+    user_matrix *u = get_user_matrix_by_name(name);
+    int err;
+
+    if (u == NULL) {
+	err = E_UNKVAR;
+    } else {
+	gui_obj *obj = get_gui_obj_by_data(u);
+    
+	if (obj != NULL) {
+	    session_delete_icon(obj);
+	}
+	err = user_matrix_destroy(u);
+    } 
+    
+    return err;
+}
+
 static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
 {
     int i;
@@ -1709,28 +1762,14 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 	gretl_object_rename(sm->ptr, sm->type, newname);
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) { 
 	rename_session_graph(obj->data, newname);
+    } else if (obj->sort == GRETL_OBJ_MATRIX) {
+	user_matrix_set_name(obj->data, newname);
     }
 
     free(obj->name);
     obj->name = g_strdup(newname);
 
     set_replay_off();
-}
-
-static gui_obj *get_gui_obj_from_data (void *finddata)
-{
-    GList *mylist = icon_list;
-    gui_obj *gobj = NULL;
-
-    while (mylist != NULL) {
-	gobj = (gui_obj *) mylist->data;
-	if (gobj->data == finddata) {
-	    return gobj;
-	}
-	mylist = mylist->next;
-    }
-
-    return NULL;
 }
 
 void delete_text_from_session (void *p)
@@ -1742,7 +1781,7 @@ void delete_text_from_session (void *p)
 
     real_delete_text_from_session(text);
 
-    obj = get_gui_obj_from_data((void *) text);
+    obj = get_gui_obj_by_data((void *) text);
     if (obj != NULL) {
 	session_delete_icon(obj);
     }
@@ -1913,7 +1952,7 @@ static void batch_pack_icons (void)
 static void add_all_icons (void) 
 {
     int show_graph_page = check_for_prog(latex);
-    int i;
+    int i, n;
 
     active_object = NULL;
 
@@ -1952,6 +1991,12 @@ static void add_all_icons (void)
 	fprintf(stderr, "adding session.texts[%d] to view\n", i);
 #endif
 	session_add_icon(session.texts[i], GRETL_OBJ_TEXT, ICON_ADD_BATCH);
+    }
+
+    n = n_user_matrices();
+    for (i=0; i<n; i++) {
+	session_add_icon(get_user_matrix_by_index(i), GRETL_OBJ_MATRIX, 
+			 ICON_ADD_BATCH);
     }
 
     batch_pack_icons();
@@ -2009,6 +2054,9 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 	break;
     case GRETL_OBJ_INFO: 
 	w = info_popup; 
+	break;
+    case GRETL_OBJ_MATRIX: 
+	w = matrix_popup; 
 	break;
     default: 
 	break;
@@ -2073,6 +2121,9 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case GRETL_OBJ_DSET:
 	    show_spreadsheet(SHEET_EDIT_DATASET); 
 	    break;
+	case GRETL_OBJ_MATRIX:
+	    open_matrix(gobj); 
+	    break;
 	case GRETL_OBJ_INFO:
 	    open_info(NULL, 0, NULL); 
 	    break;
@@ -2100,7 +2151,8 @@ static gboolean session_icon_click (GtkWidget *widget,
 	    gobj->sort == GRETL_OBJ_TEXT || gobj->sort == GRETL_OBJ_DSET || 
 	    gobj->sort == GRETL_OBJ_INFO || gobj->sort == GRETL_OBJ_GPAGE ||
 	    gobj->sort == GRETL_OBJ_PLOT || gobj->sort == GRETL_OBJ_MODTAB ||
-	    gobj->sort == GRETL_OBJ_VAR  || gobj->sort == GRETL_OBJ_SYS) {
+	    gobj->sort == GRETL_OBJ_VAR  || gobj->sort == GRETL_OBJ_SYS ||
+	    gobj->sort == GRETL_OBJ_MATRIX) {
 	    object_popup_show(gobj, (GdkEventButton *) event);
 	}
 	return TRUE;
@@ -2129,6 +2181,28 @@ static void info_popup_activated (GtkWidget *widget, gpointer data)
 	edit_header(NULL, 0, NULL);
 }
 
+static void matrix_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gui_obj *obj = active_object;
+    user_matrix *u = (user_matrix *) obj->data;
+    const char *name = user_matrix_get_name(u);
+
+    if (strcmp(item, _("View")) == 0) {
+	gretl_matrix *m = user_matrix_get_matrix(u);
+	PRN *prn;
+
+	if (m != NULL && bufopen(&prn) == 0) {
+	    gretl_matrix_print_to_prn(m, name, prn);
+	    view_buffer(prn, 78, 400, name, PRINT, NULL);
+	} 
+    } else if (strcmp(item, _("Edit")) == 0) {
+	edit_user_matrix_by_name(name);
+    } else if (strcmp(item, _("Delete")) == 0) {
+	maybe_delete_session_object(obj);
+    }
+}
+
 static void data_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2146,9 +2220,7 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 static void object_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
-    gui_obj *obj;
-
-    obj = active_object;
+    gui_obj *obj = active_object;
 
     if (strcmp(item, _("Display")) == 0) {
 	if (obj->sort == GRETL_OBJ_EQN ||
@@ -2316,6 +2388,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 {
     gui_obj *gobj;
     gchar *name = NULL;
+    user_matrix *um = NULL;
     SESSION_GRAPH *graph = NULL;
     SESSION_MODEL *mod = NULL;
     SESSION_TEXT *text = NULL;
@@ -2358,6 +2431,10 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case GRETL_OBJ_GPAGE:
 	name = g_strdup(_("Graph page"));
 	break;
+    case GRETL_OBJ_MATRIX:
+	um = (user_matrix *) data;
+	name = g_strdup(user_matrix_get_name(um));
+	break;
     default:
 	break;
     }
@@ -2375,6 +2452,8 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	gobj->data = mod;
     } else if (sort == GRETL_OBJ_GRAPH || sort == GRETL_OBJ_PLOT) {
 	gobj->data = graph;
+    } else if (sort == GRETL_OBJ_MATRIX) {
+	gobj->data = um;
     }
 
     /* set up for drag and drop */
@@ -2447,45 +2526,45 @@ static void session_build_popups (void)
     if (model_popup == NULL) {
 	model_popup = gtk_menu_new();
 	for (i=0; i<sizeof model_items / sizeof model_items[0]; i++) {
-		create_popup_item(model_popup, 
-				  _(model_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(model_popup, 
+			      _(model_items[i]), 
+			      object_popup_activated);
 	}
     }
 
     if (model_table_popup == NULL) {
 	model_table_popup = gtk_menu_new();
 	for (i=0; i<sizeof model_table_items / sizeof model_table_items[0]; i++) {
-		create_popup_item(model_table_popup, 
-				  _(model_table_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(model_table_popup, 
+			      _(model_table_items[i]), 
+			      object_popup_activated);
 	}
     }
 
     if (var_popup == NULL) {
 	var_popup = gtk_menu_new();
 	for (i=0; i<sizeof var_items / sizeof var_items[0]; i++) {
-		create_popup_item(var_popup, 
-				  _(var_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(var_popup, 
+			      _(var_items[i]), 
+			      object_popup_activated);
 	}
     }
 
     if (graph_popup == NULL) {
 	graph_popup = gtk_menu_new();
 	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
-		create_popup_item(graph_popup, 
-				  _(graph_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(graph_popup, 
+			      _(graph_items[i]), 
+			      object_popup_activated);
 	}
     }
 
     if (graph_page_popup == NULL) {
 	graph_page_popup = gtk_menu_new();
 	for (i=0; i<sizeof graph_page_items / sizeof graph_page_items[0]; i++) {
-		create_popup_item(graph_page_popup, 
-				  _(graph_page_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(graph_page_popup, 
+			      _(graph_page_items[i]), 
+			      object_popup_activated);
 	}
     }
 
@@ -2493,27 +2572,36 @@ static void session_build_popups (void)
 	boxplot_popup = gtk_menu_new();
 	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
 	    if (strstr(graph_items[i], "GUI")) continue;
-		create_popup_item(boxplot_popup, 
-				  _(graph_items[i]), 
-				  object_popup_activated);
+	    create_popup_item(boxplot_popup, 
+			      _(graph_items[i]), 
+			      object_popup_activated);
 	}
     }
 
     if (data_popup == NULL) {
 	data_popup = gtk_menu_new();
 	for (i=0; i<sizeof dataset_items / sizeof dataset_items[0]; i++) {
-		create_popup_item(data_popup, 
-				  _(dataset_items[i]), 
-				  data_popup_activated);	    
+	    create_popup_item(data_popup, 
+			      _(dataset_items[i]), 
+			      data_popup_activated);	    
 	}
     }
 
     if (info_popup == NULL) {
 	info_popup = gtk_menu_new();
 	for (i=0; i<sizeof info_items / sizeof info_items[0]; i++) {
-		create_popup_item(info_popup, 
-				  _(info_items[i]), 
-				  info_popup_activated);	    
+	    create_popup_item(info_popup, 
+			      _(info_items[i]), 
+			      info_popup_activated);	    
+	}
+    }
+
+    if (matrix_popup == NULL) {
+	matrix_popup = gtk_menu_new();
+	for (i=0; i<sizeof matrix_items / sizeof matrix_items[0]; i++) {
+	    create_popup_item(matrix_popup, 
+			      _(matrix_items[i]), 
+			      matrix_popup_activated);	    
 	}
     }
 }
@@ -2698,9 +2786,8 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
 
     if (gobj->sort == GRETL_OBJ_EQN || gobj->sort == GRETL_OBJ_GRAPH ||
 	gobj->sort == GRETL_OBJ_VAR || gobj->sort == GRETL_OBJ_PLOT || 
-	gobj->sort == GRETL_OBJ_SYS) { 
+	gobj->sort == GRETL_OBJ_SYS || gobj->sort == GRETL_OBJ_MATRIX) { 
 	gobj->label = gtk_entry_new();
-	/* on gtk 2.0.N, the text is/was not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
@@ -2738,17 +2825,18 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     switch (sort) {
     case GRETL_OBJ_EQN:
     case GRETL_OBJ_VAR:
-    case GRETL_OBJ_SYS:    xpm = model_xpm;       break;
-    case GRETL_OBJ_PLOT:   xpm = boxplot_xpm;     break;
-    case GRETL_OBJ_GRAPH:  xpm = gnuplot_xpm;     break;
-    case GRETL_OBJ_DSET:   xpm = dot_sc_xpm;      break;
-    case GRETL_OBJ_INFO:   xpm = xfm_info_xpm;    break;
+    case GRETL_OBJ_SYS:     xpm = model_xpm;       break;
+    case GRETL_OBJ_PLOT:    xpm = boxplot_xpm;     break;
+    case GRETL_OBJ_GRAPH:   xpm = gnuplot_xpm;     break;
+    case GRETL_OBJ_DSET:    xpm = dot_sc_xpm;      break;
+    case GRETL_OBJ_INFO:    xpm = xfm_info_xpm;    break;
     case GRETL_OBJ_TEXT:
-    case GRETL_OBJ_NOTES:  xpm = text_xpm;        break;
-    case GRETL_OBJ_CORR:   xpm = rhohat_xpm;      break;
-    case GRETL_OBJ_STATS:  xpm = summary_xpm;     break;
-    case GRETL_OBJ_MODTAB: xpm = model_table_xpm; break;
-    case GRETL_OBJ_GPAGE:  xpm = graph_page_xpm;  break;
+    case GRETL_OBJ_NOTES:   xpm = text_xpm;        break;
+    case GRETL_OBJ_CORR:    xpm = rhohat_xpm;      break;
+    case GRETL_OBJ_STATS:   xpm = summary_xpm;     break;
+    case GRETL_OBJ_MODTAB:  xpm = model_table_xpm; break;
+    case GRETL_OBJ_GPAGE:   xpm = graph_page_xpm;  break;
+    case GRETL_OBJ_MATRIX:  xpm = matrix_xpm;      break;
     default: break;
     }
 

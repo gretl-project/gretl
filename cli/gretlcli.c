@@ -859,7 +859,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DELEET:
 	if (get_matrix_by_name(cmd->param)) {
-	    err = user_matrix_destroy(cmd->param, prn);
+	    err = user_matrix_destroy_by_name(cmd->param, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    } 

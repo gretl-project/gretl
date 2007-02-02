@@ -206,6 +206,15 @@ user_matrix *get_user_matrix_by_name (const char *name)
     return NULL;
 }
 
+user_matrix *get_user_matrix_by_index (int idx)
+{
+    if (idx >= 0 && idx < n_matrices) {
+	return matrices[idx];
+    } else {
+	return NULL;
+    }
+}
+
 int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
@@ -313,6 +322,26 @@ gretl_matrix *get_matrix_by_name (const char *name)
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
 {
     return real_get_matrix_by_name(name, level);
+}
+
+/**
+ * user_matrix_get_matrix:
+ * @u: user-matrix pointer.
+ *
+ * Returns: pointer to matrix, or %NULL if not found.
+ */
+
+gretl_matrix *user_matrix_get_matrix (user_matrix *u)
+{
+    int i;
+
+    for (i=0; i<n_matrices; i++) {
+	if (matrices[i] == u) {
+	    return matrices[i]->M;
+	}
+    }
+
+    return NULL;
 }
 
 /**
@@ -817,7 +846,7 @@ void destroy_user_matrices (void)
     n_matrices = 0;
 }
 
-static int real_delete_user_matrix (user_matrix *u)
+int user_matrix_destroy (user_matrix *u)
 {
     int err = 0;
 
@@ -857,13 +886,14 @@ static int real_delete_user_matrix (user_matrix *u)
     return err;
 }
 
-int user_matrix_destroy (const char *name, PRN *prn)
+int user_matrix_destroy_by_name (const char *name, PRN *prn)
 {
     user_matrix *u = get_user_matrix_by_name(name);
     int err;
 
-    err = real_delete_user_matrix(u);
-    if (!err) {
+    err = user_matrix_destroy(u);
+
+    if (!err && prn != NULL) {
 	pprintf(prn, _("Deleted matrix %s"), name);
 	pputc(prn, '\n');
     }

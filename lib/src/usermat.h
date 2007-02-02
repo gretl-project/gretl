@@ -50,11 +50,17 @@ gretl_matrix *get_matrix_by_name (const char *name);
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
 
+gretl_matrix *user_matrix_get_matrix (user_matrix *u);
+
 user_matrix *get_user_matrix_by_name (const char *name);
+
+user_matrix *get_user_matrix_by_index (int idx);
 
 int user_matrix_add (gretl_matrix *M, const char *name);
 
-int user_matrix_destroy (const char *name, PRN *prn);
+int user_matrix_destroy_by_name (const char *name, PRN *prn);
+
+int user_matrix_destroy (user_matrix *u);
 
 int user_matrix_adjust_level (user_matrix *u, int adj);
 

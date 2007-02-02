@@ -29,7 +29,9 @@ typedef enum {
 
 void show_spreadsheet (SheetCmd c);
 
-void edit_matrix (gretl_matrix *m);
+GtkWidget *edit_matrix (gretl_matrix *m);
+
+void edit_user_matrix_by_name (const char *name);
 
 int dataset_locked (void);
 

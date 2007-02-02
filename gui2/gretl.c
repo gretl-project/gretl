@@ -156,12 +156,10 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
     show_spreadsheet(SHEET_EDIT_VARLIST);
 }
 
-#if 0 /* not yet */
 static void matrix_edit_callback (gpointer p, guint u, GtkWidget *w) 
 {
     edit_matrix(NULL);
 }
-#endif
 
 static void manual_update_query (gpointer p, guint u, GtkWidget *w)
 {
@@ -345,9 +343,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
     { "/Data/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Data/_Refresh window"), NULL, refresh_data, 0, NULL, GNULL },
-#if 0 /* not ready */
-    { N_("/Data/_Matrix..."), NULL, matrix_edit_callback, 0, NULL, GNULL },
-#endif
+    { "/Data/sep4", NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Data/_Define matrix..."), NULL, matrix_edit_callback, 0, NULL, GNULL },
 
     /* View menu */
     { N_("/_View"), NULL, NULL, 0, "<Branch>", GNULL },

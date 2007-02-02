@@ -653,12 +653,12 @@ int highest_numbered_variable_in_winstack (void)
     return winstack(STACK_MAXVAR, NULL, NULL, NULL);
 }
 
-static void winstack_add (GtkWidget *w)
+void winstack_add (GtkWidget *w)
 {
     winstack(STACK_ADD, w, NULL, NULL);
 }
 
-static void winstack_remove (GtkWidget *w)
+void winstack_remove (GtkWidget *w)
 {
     winstack(STACK_REMOVE, w, NULL, NULL);
 }

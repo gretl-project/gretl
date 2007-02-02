@@ -27,6 +27,7 @@
 #include "gretl_www.h"
 #include "database.h"
 #include "guiprint.h"
+#include "ssheet.h"
 
 #define FCDEBUG 0
 
@@ -35,8 +36,9 @@ typedef struct call_info_ call_info;
 struct call_info_ {
     GtkWidget *dlg;
     GList *lsels;
+    GList *msels;
     int iface;
-    int need_list;
+    int extracol;
     const ufunc *func;
     int n_params;
     char rettype;
@@ -50,6 +52,7 @@ static void cinfo_init (call_info *cinfo)
     cinfo->iface = -1;
 
     cinfo->lsels = NULL;
+    cinfo->msels = NULL;
 
     cinfo->func = NULL;
     cinfo->n_params = 0;
@@ -59,7 +62,7 @@ static void cinfo_init (call_info *cinfo)
     cinfo->args = NULL;
     cinfo->ret = NULL;
 
-    cinfo->need_list = 0;
+    cinfo->extracol = 0;
     cinfo->canceled = 0;
 }
 
@@ -85,6 +88,7 @@ static void cinfo_free (call_info *cinfo)
     free_strings_array(cinfo->args, cinfo->n_params);
     free(cinfo->ret);
     g_list_free(cinfo->lsels);
+    g_list_free(cinfo->msels);
 }
 
 #define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
@@ -258,6 +262,40 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     }
 }
 
+static void update_matrix_selectors (call_info *cinfo)
+{
+    GList *slist = cinfo->msels;
+    GList *mlist = NULL;
+    GtkWidget *sel;
+    const char *mname;
+    const gchar *txt;
+    gchar *saved;
+    int i, nm = n_user_matrices();
+
+    for (i=0; i<nm; i++) {
+	mname = get_matrix_name_by_index(i);
+	mlist = g_list_append(mlist, (gpointer) mname);
+    }
+
+    while (slist != NULL) {
+	sel = GTK_WIDGET(slist->data);
+	saved = NULL;
+	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(sel)->entry));
+	if (*txt != 0) {
+	    saved = g_strdup(txt);
+	}
+	gtk_combo_set_popdown_strings(GTK_COMBO(sel), mlist);
+	if (saved != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sel)->entry), 
+			       saved);
+	    free(saved);
+	}
+	slist = slist->next;
+    }
+
+    g_list_free(mlist);
+}
+
 static void update_list_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->lsels;
@@ -351,6 +389,17 @@ static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
     simple_selection(_("Define list"), do_make_list, DEFINE_LIST, 
 		     entry);
+}
+
+static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
+{
+    int n = n_user_matrices();
+
+    edit_matrix(NULL);
+    if (n_user_matrices() > n) {
+	update_matrix_selectors(cinfo);
+    }
+    gdk_window_raise(cinfo->dlg->window);
 }
 
 static int spinner_arg (call_info *cinfo, int i)
@@ -466,7 +515,7 @@ static void function_call_dialog (call_info *cinfo)
     /* function argument selection */
 
     if (cinfo->n_params > 0) {
-	int tcols = (cinfo->need_list)? 4 : 3;
+	int tcols = (cinfo->extracol)? 4 : 3;
 
 	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, _("Arguments:"), 0);
 	gtk_widget_show(hbox);
@@ -525,7 +574,16 @@ static void function_call_dialog (call_info *cinfo)
 				 G_CALLBACK(launch_list_maker), 
 				 GTK_COMBO(sel)->entry);
 		gtk_widget_show(button);
-	    }
+	    } else if (ptype == ARG_MATRIX) {
+		cinfo->msels = g_list_append(cinfo->msels, sel);
+		button = gtk_button_new_with_label("More...");
+		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
+				 GTK_EXPAND, GTK_FILL, 5, 5);
+		g_signal_connect(G_OBJECT(button), "clicked", 
+				 G_CALLBACK(launch_matrix_maker), 
+				 cinfo);
+		gtk_widget_show(button);
+	    }		
 	}
 
 	gtk_widget_show(tbl);
@@ -651,14 +709,9 @@ static int function_data_check (call_info *cinfo)
 	    }
 	}
 	if (type == ARG_LIST) {
-	    cinfo->need_list = 1;
+	    cinfo->extracol = 1;
 	} else if (type == ARG_MATRIX || type == ARG_REF_MATRIX) {
-	    if (n_user_matrices() == 0) {
-		errbox(_("This function takes a matrix argument\n"
-			 "but no matrices are currently defined"));
-		err = 1;
-		break;
-	    }
+	    cinfo->extracol = 1;
 	}
     }
 

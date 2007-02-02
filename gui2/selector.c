@@ -1808,7 +1808,8 @@ static void cancel_selector (GtkWidget *widget, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-    if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS) {
+    if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS ||
+	sr->code == DEFINE_MATRIX) {
 	gtk_main_quit();
     }
 
@@ -3003,7 +3004,8 @@ build_selector_buttons (selector *sr)
     GtkWidget *tmp;
 
     if (sr->code != PRINT && sr->code != SAVE_FUNCTIONS &&
-	sr->code != DEFINE_LIST && !SAVE_DATA_ACTION(sr->code)) {
+	sr->code != DEFINE_LIST && sr->code != DEFINE_MATRIX &&
+	!SAVE_DATA_ACTION(sr->code)) {
 	tmp = standard_button(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
@@ -3044,7 +3046,7 @@ static int list_show_var (int v, int code, int show_lags)
 
     lags_hidden = 0;
 
-    if (v == 0 && code == DEFINE_LIST) {
+    if (v == 0 && (code == DEFINE_LIST || code == DEFINE_MATRIX)) {
 	;
     } else if (v == 0 && (!MODEL_CODE(code) || code == ARMA)) {
 	ret = 0;
@@ -3343,7 +3345,7 @@ static char *get_topstr (int cmdnum)
     case DEFINE_LIST:
 	return N_("Define named list");
     default:
-	return "";
+	return NULL;
     }
 }
 
@@ -3464,7 +3466,7 @@ static GtkWidget *simple_selection_top_label (int code)
     GtkWidget *label = NULL;
     const char *str = get_topstr(code);
 
-    if (*str != '\0') {
+    if (str != NULL && *str != '\0') {
 	label = gtk_label_new(_(str));
     } 
 
@@ -3621,7 +3623,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 			 G_CALLBACK(remove_busy_signal), 
 			 p);
     } else {
-	int start = (ci == DEFINE_LIST)? 0 : 1;
+	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
 
 	for (i=start; i<datainfo->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
@@ -3705,6 +3707,8 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 
     if (SAVE_DATA_ACTION(sr->code)) {
 	gretl_set_window_modal(sr->dlg);
+    } else if (sr->code == DEFINE_MATRIX) {
+	gtk_main();
     }
 }
 

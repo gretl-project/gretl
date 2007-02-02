@@ -73,6 +73,10 @@ void winstack_init (void);
 
 void winstack_destroy (void);
 
+void winstack_add (GtkWidget *w);
+
+void winstack_remove (GtkWidget *w);
+
 int winstack_match_data (gpointer p);
 
 GtkWidget *match_window_by_data (gpointer p);

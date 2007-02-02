@@ -82,6 +82,7 @@ enum extra_cmds {
     VLAGSEL,
     VAROMIT,
     DEFINE_LIST,
+    DEFINE_MATRIX,
     PANEL_WLS,
     PANEL_MODE,
     TSPLOTS,
