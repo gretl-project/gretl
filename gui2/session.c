@@ -192,6 +192,7 @@ static char *info_items[] = {
 static char *matrix_items[] = {
     N_("View"),
     N_("Edit"),
+    N_("Properties"),
     N_("Delete")
 };
 
@@ -234,6 +235,8 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void rename_session_object (gui_obj *obj, const char *newname);
+static void session_matrix_properties (const gretl_matrix *m, 
+				       const char *name);
 
 static int session_saved;
 
@@ -2187,17 +2190,21 @@ static void matrix_popup_activated (GtkWidget *widget, gpointer data)
     gui_obj *obj = active_object;
     user_matrix *u = (user_matrix *) obj->data;
     const char *name = user_matrix_get_name(u);
+    gretl_matrix *m;
 
     if (strcmp(item, _("View")) == 0) {
-	gretl_matrix *m = user_matrix_get_matrix(u);
 	PRN *prn;
 
+	m = user_matrix_get_matrix(u);
 	if (m != NULL && bufopen(&prn) == 0) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	    view_buffer(prn, 78, 400, name, PRINT, NULL);
 	} 
     } else if (strcmp(item, _("Edit")) == 0) {
 	edit_user_matrix_by_name(name);
+    } else if (strcmp(item, _("Properties")) == 0) {
+	m = user_matrix_get_matrix(u);
+	session_matrix_properties(m, name);
     } else if (strcmp(item, _("Delete")) == 0) {
 	maybe_delete_session_object(obj);
     }
@@ -2972,6 +2979,118 @@ void display_session_graph_by_data (void *p)
 
     session_file_make_path(tmp, graph->fname);
     display_session_graph_png(tmp);
+}
+
+static void 
+session_matrix_properties (const gretl_matrix *m, const char *name)
+{
+    const char *xfmt = "%-16s %.8g\n";
+    const char *ifmt = "%-12s %3d\n";
+    gretl_matrix *A = NULL;
+    double *evals = NULL;
+    PRN *prn;
+    int s, err = 0;
+
+    if (m == NULL || bufopen(&prn)) {
+	return;
+    }
+
+    pprintf(prn, _("Properties of matrix %s"), name);
+    pputs(prn, "\n\n");
+
+    if (m->rows == 1 && m->cols == 1) {
+	pprintf(prn, _("Scalar matrix, value %g\n"), m->val[0]);
+	goto done;
+    } else if (gretl_is_identity_matrix(m)) {
+	pprintf(prn, _("Identity matrix, order %d\n"), m->rows);
+	goto done;
+    } else if (gretl_is_zero_matrix(m)) {
+	pprintf(prn, _("Null matrix, %d x %d\n"), m->rows, m->cols);
+	goto done;
+    } 
+
+    pprintf(prn, ifmt, _("Rows"), m->rows);
+    pprintf(prn, ifmt, _("Columns"), m->cols);
+
+    s = gretl_matrix_get_structure(m);
+
+    if (s > 0) {
+	pprintf(prn, "%s\n", _("Square"));
+    }
+
+    if (s == GRETL_MATRIX_DIAGONAL) {
+	pprintf(prn, "%s\n", _("Diagonal"));
+    } else if (s == GRETL_MATRIX_LOWER_TRIANGULAR) {
+	pprintf(prn, "%s\n", _("Lower triangular"));
+    } else if (s == GRETL_MATRIX_UPPER_TRIANGULAR) {
+	pprintf(prn, "%s\n", _("Upper triangular"));
+    } else if (s == GRETL_MATRIX_SYMMETRIC) {
+	pprintf(prn, "%s\n", _("Symmetric"));
+	A = gretl_matrix_copy(m);
+	if (A != NULL) {
+	    err = gretl_matrix_cholesky_decomp(A);
+	    if (!err) {
+		pprintf(prn, "%s\n", _("Positive definite"));
+	    } else {
+		pprintf(prn, "%s\n", _("Not positive definite"));
+	    }
+	    gretl_matrix_copy_values(A, m);
+	    evals = gretl_symmetric_matrix_eigenvals(A, 0, &err);
+	}
+    } 
+
+    if (s > 0 && s != GRETL_MATRIX_SYMMETRIC) {
+	A = gretl_matrix_copy(m);
+	if (A != NULL) {
+	    evals = gretl_general_matrix_eigenvals(A, 0, &err);
+	}
+    }
+
+    pputc(prn, '\n');
+
+    pprintf(prn, xfmt, _("1-norm"), gretl_matrix_one_norm(m));
+    pprintf(prn, xfmt, _("Infinity-norm"), gretl_matrix_infinity_norm(m));
+	    
+    if (m->rows == m->cols) {
+	double det;
+
+	pprintf(prn, xfmt, _("Trace"), gretl_matrix_trace(m, &err));
+	if (A == NULL) {
+	    A = gretl_matrix_copy(m);
+	} else {
+	    gretl_matrix_copy_values(A, m);
+	}
+	if (A != NULL) {
+	    det = gretl_matrix_determinant(A, &err);
+	    if (!err) {
+		pprintf(prn, xfmt, _("Determinant"), det);
+	    }
+	}
+    }
+
+    if (evals != NULL) {
+	int i;
+
+	pprintf(prn, "\n%s:\n", _("Eigenvalues"));
+
+	for (i=0; i<m->rows; i++) {
+	    if (s != GRETL_MATRIX_SYMMETRIC) {
+		pprintf(prn, "  (%.8g, %.8g)\n", evals[i], evals[i+m->rows]);
+	    } else {
+		pprintf(prn, "  %.8g\n", evals[i]);
+	    }
+	}
+
+	free(evals);
+    }
+
+    if (A != NULL) {
+	gretl_matrix_free(A);
+    }
+
+ done:
+
+    view_buffer(prn, 78, 400, name, PRINT, NULL);
 }
 
 

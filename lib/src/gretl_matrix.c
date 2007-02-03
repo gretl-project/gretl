@@ -210,15 +210,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
-enum {
-    GRETL_MATRIX_SQUARE = 1,
-    GRETL_MATRIX_TRIANGULAR, /* 2 */
-    GRETL_MATRIX_SYMMETRIC,  /* 3 */
-    GRETL_MATRIX_DIAGONAL,   /* 4 */
-    GRETL_MATRIX_SCALAR      /* 5 */
-};
-
-static int gretl_matrix_get_structure (const gretl_matrix *m)
+int gretl_matrix_get_structure (const gretl_matrix *m)
 {
     int ret = 0;
 
@@ -259,8 +251,10 @@ static int gretl_matrix_get_structure (const gretl_matrix *m)
 
 	if (uzero && lzero) {
 	    ret = GRETL_MATRIX_DIAGONAL;
-	} else if (uzero || lzero) {
-	    ret = GRETL_MATRIX_TRIANGULAR;
+	} else if (uzero) {
+	    ret = GRETL_MATRIX_LOWER_TRIANGULAR;
+	} else if (lzero) {
+	    ret = GRETL_MATRIX_UPPER_TRIANGULAR;
 	} else if (symm) {
 	    ret = GRETL_MATRIX_SYMMETRIC;
 	}
@@ -317,7 +311,7 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 gretl_matrix *gretl_identity_matrix_new (int n)
 {
     gretl_matrix *m;
-    int i, j;
+    int i, k;
 
     if (n <= 0) {
 	return NULL;
@@ -326,16 +320,13 @@ gretl_matrix *gretl_identity_matrix_new (int n)
     m = gretl_matrix_alloc(n, n);
 
     if (m != NULL) {
-	for (i=0; i<n; i++) {
-	    for (j=0; j<n; j++) {
-		if (i == j) {
-		    m->val[mdx(m, i, j)] = 1.0;
-		} else {
-		    m->val[mdx(m, i, j)] = 0.0;
-		}
-	    }
+	k = n * n;
+	n++;
+	for (i=0; i<k; i++) {
+	    m->val[i] = (i % n)? 0.0 : 1.0;
 	}
     }
+
 
     return m;
 }

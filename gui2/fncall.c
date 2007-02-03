@@ -567,7 +567,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	    if (ptype == ARG_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
-		button = gtk_button_new_with_label(_("New..."));
+		button = gtk_button_new_with_label(_("More..."));
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 

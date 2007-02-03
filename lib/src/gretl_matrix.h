@@ -34,6 +34,15 @@ typedef enum {
     GRETL_MOD_CUMULATE
 } GretlMatrixMod;
 
+enum {
+    GRETL_MATRIX_SQUARE = 1,
+    GRETL_MATRIX_LOWER_TRIANGULAR,
+    GRETL_MATRIX_UPPER_TRIANGULAR,
+    GRETL_MATRIX_SYMMETRIC,
+    GRETL_MATRIX_DIAGONAL,
+    GRETL_MATRIX_SCALAR
+} GretlMatrixStructure;
+
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
@@ -411,6 +420,8 @@ int gretl_matrix_get_int (const gretl_matrix *m);
 int gretl_is_identity_matrix (const gretl_matrix *m);
 
 int gretl_is_zero_matrix (const gretl_matrix *m);
+
+int gretl_matrix_get_structure (const gretl_matrix *m);
 
 int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 			      int *err);
