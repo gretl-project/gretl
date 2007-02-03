@@ -169,13 +169,95 @@ list loglist = logs(xlist)
 \end{code}
 
 
+\subsection{Checking for missing values}
+
+\app{Gretl} offers several functions for recognizing and handling
+missing values (see the \GCR{} for details). In this context it is
+worth remarking that the \texttt{ok()} function can be used with a
+list argument.  For example,
+%
+\begin{code}
+list xlist = x1 x2 x3
+series xok = ok(xlist)
+\end{code}
+%
+After these commands, the series \texttt{xok} will have value 1 for
+observations where none of \texttt{x1}, \texttt{x2}, or
+\texttt{x3} has a missing value, and value 0 for any observations
+where this condition is not met.
 
 
+\section{Named strings}
+\label{named-strings}
 
+For some purposes it may be useful to save a string (that is, a
+sequence of characters) as a named variable that can be reused.  
+Versions of \app{gretl} higher than 1.6.0 offer this facility.
 
+To \textit{define} a string variable, you can use either of two
+commands, \texttt{string} or \texttt{sprintf}.  The \texttt{string}
+command is simpler: you just type, for example,
+%
+\begin{code}
+string foo = "some stuff I want to save"
+\end{code}
+%
+The first field after \texttt{string} is the name under which the
+string should be saved, then comes an equals sign, then comes the
+string to be saved, enclosed in double quotes.  The latter can be
+represented as a sequence of sub-strings if need be, as in
+%
+\begin{code}
+string bits = "first " "and" " second"
+\end{code}
+%
+The \texttt{sprintf} command is more flexible.  It works exactly as
+the \texttt{printf} command except that the ``format'' string must be
+preceded by the name of a string variable.  For example,
+%
+\begin{code}
+scalar x = 8
+sprintf foo "var%d", x
+\end{code}
+%
+To \textit{retrieve the value} of a string variable, you give the name
+of the variable preceded by the ``at'' sign, \verb|@|.  If a sequence
+of characters in a \app{gretl} command following the symbol \verb|@|
+is recognized as the name of a string variable, the value of that
+variable is sustituted into the command line.  This is illustrated in
+the following interactive session:
+%
+\begin{code}
+? scalar x = 8
+ scalar x = 8
+Generated scalar x (ID 2) = 8
+? sprintf foo "var%d", x
+Saved string as 'foo'
+? print "@foo"
+var8
+\end{code}
 
+\subsection{Built-in strings}
 
+Apart from any strings that the user may define, some string variables
+are defined by \app{gretl} itself.  These may be useful for people
+writing functions that include shell commands.  The built-in strings
+are as shown in Table~\ref{tab-strings}.
 
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+  \verb|@gretldir| & the \app{gretl} installation directory \\
+  \verb|@userdir| & user's \app{gretl} directory \\
+  \verb|@gnuplot| & path to, or name of, the \app{gnuplot} executable \\
+  \verb|@tramo|& path to, or name of, the \app{tramo} executable \\
+  \verb|@x12a| & path to, or name of, the \app{x-12-arima} executable \\
+  \verb|@tramodir| & \app{tramo} data directory \\
+  \verb|@x12adir| & \app{x-12-arima} data directory \\
+\end{tabular}
+\caption{Built-in string variables}
+\label{tab-strings}
+\end{table}
 
     
 %%% Local Variables: 
