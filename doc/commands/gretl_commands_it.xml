@@ -923,6 +923,10 @@
 	  <effect>include dummy stagionali centrate</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>mostra solo i test</effect>
+        </option>
+        <option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
         </option>
@@ -2335,29 +2339,49 @@
         accettano come unico argomento il nome di una variabile o un'espressione
         che si risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
       </para>
+       <para>
+	Le funzioni <func>pvalue</func>, <func>critical</func> e
+	<func>cdf</func> richiedono, come primo argomento, un codice formato
+        da un carattere, che indica la distribuzione di riferimento:
+      </para>
+      
+      <ilist>
+	<li><para><cmd>z</cmd> o <cmd>N</cmd>: Normale;</para></li>
+	<li><para><cmd>t</cmd>: <emphasis>t</emphasis> di Student;</para></li>
+	<li><para><cmd>X</cmd>: chi-quadro;</para></li>
+	<li><para><cmd>F</cmd>: Snedecor;</para></li>
+	<li><para><cmd>G</cmd>: Gamma (solo per <cmd>pvalue</cmd> e <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>B</cmd>: Binomiale (solo per <cmd>pvalue</cmd> e <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>D</cmd>: Normale bivariata (solo per <cmd>cdf</cmd>).</para></li>
+      </ilist>
+      
       <para>
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
 	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
 	gli argomenti con delle virgole. Questa funzione produce un p-value
         destro a una coda, ossia l'integrale della funzione di densità dal
-        valore specificato a più infinito. Anche la funzione
-        <func>cdf</func> accetta gli stessi argomenti del comando
-        <cmdref targ="pvalue"/>, ma produce il valore complementare, ossia
-        l'integrale della funzione di densità dal suo limite inferiore (meno
-        infinito o zero) al valore specificato. Per ulteriori precisazioni su
-        queste due funzioni, si veda la <guideref targ="chap-genr"/>.
+        valore specificato a più infinito.
+      </para>
+      
+      <para>
+        Anche la funzione <func>cdf</func> accetta gli stessi argomenti del comando
+	<cmdref targ="pvalue"/>, ma produce il valore complementare, ossia,
+        l'integrale della relativa funzione di densità valutato dal suo limite
+        inferiore (meno infinito o zero) al valore specificato. Per la
+        distribuzione normale bivariata, occorre indicare tre argomenti:
+	<emphasis>x</emphasis>, <emphasis>y</emphasis> e il coefficiente di
+        correlazione <emphasis>rho</emphasis>, in questo ordine. Per ulteriori
+        informazioni su queste funzioni, si veda la
+ 	<guideref targ="chap-genr"/>.
       </para>
 
       <para>
 	La funzione <func>critical</func> produce il valore critico per una
         certa distribuzione di probabilità, data la proporzione sulla coda di
-        destra (e dati i gradi di libertà, in alcuni casi). L'argomento che
-        indica la distribuzione deve essere il primo e può valere <cmd>z</cmd> o
-        <cmd>N</cmd> per la distribuzione normale, <cmd>t</cmd> per la
-        <emphasis>t</emphasis> di Student, <cmd>X</cmd> per la chi-quadro, o
-        <cmd>F</cmd>. L'ultimo argomento è la proporzione sulla coda di destra.
-        Se il primo argomento è <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare
-        un secondo argomento per i gradi di libertà, mentre per la distribuzione
+        destra (e dati i gradi di libertà, in alcuni casi).  L'ultimo argomento
+        è la proporzione sulla coda di destra.  Se il primo argomento è
+        <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare un secondo argomento
+        per i gradi di libertà, mentre per la distribuzione
         <emphasis>F</emphasis>, occorre indicare i gradi di libertà del
         numeratore e quelli del denominatore, rispettivamente come secondo e
         terzo argomento.
@@ -2370,8 +2394,10 @@
       <code>
 	genr p1 = pvalue(z, 2.2)
 	genr p2 = pvalue(X, 3, 5.67)
+	genr p3 = cdf(D, -1, 1, 0.25)
 	genr c1 = critical(t, 20, 0.025)
-	genr c2 = critical(F, 4, 48, 0.05)</code>
+	genr c2 = critical(F, 4, 48, 0.05)
+      </code>
 
       <para>
 	Le funzioni relative alla densità normale standard funzionano nel modo
@@ -6719,22 +6745,31 @@
       <examples>
         <example>! ls -al</example>
 	<example>! notepad</example>
+	<example>launch notepad</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Un <cmd>!</cmd> all'inizio di una riga di comando è
-        interpretato come passaggio all'interprete di comandi (shell)
-        usato dall'utente nel sistema operativo. In questo modo è
+        Un <cmd>!</cmd>, o la parola chiave <cmd>launch</cmd>, all'inizio di una
+        riga di comando è interpretato come passaggio all'interprete di comandi
+        (shell) usato dall'utente nel sistema operativo. In questo modo è
         possibile eseguire comandi shell arbitrari dall'interno di
-	<program>gretl</program>.
+	<program>gretl</program>. Quando si usa <cmd>!</cmd>, il comando esterno
+        viene eseguito in modalità sincrona, ossia <program>gretl</program> aspetta
+        il termine della sua esecuzione prima di procedere. Se invece si vuole
+        avviare un altro programma da dentro <program>gretl</program> senza
+        aspettare che abbia completato la sua esecuzione (modalità asincrona),
+        occorre usare <cmd>launch</cmd>.
       </para>
       
       <para>
         Per motivi di sicurezza, questa funzionalità è disabilitata in modalità
         predefinita. Per attivarla, occorre selezionare la casella
-        <quote>Abilita comandi shell</quote> nel menù File, Preferenze.
+        <quote>Abilita comandi shell</quote> nel menù File, Preferenze. In
+        questo modo si renderanno disponibili i comandi shell anche nella
+        modalità a riga di comando di <program>gretl</program> (questo è l'unico
+        modo per farlo).
       </para>
     </description>
 
