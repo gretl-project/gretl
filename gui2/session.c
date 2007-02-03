@@ -1952,12 +1952,26 @@ static void batch_pack_icons (void)
     }
 }
 
+static void add_user_matrix_callback (void)
+{
+    if (iconview != NULL) {
+	int n = n_user_matrices();
+
+	if (n > 0) {
+	    session_add_icon(get_user_matrix_by_index(n-1), GRETL_OBJ_MATRIX, 
+			     ICON_ADD_SINGLE);
+	}
+    }
+}
+
 static void add_all_icons (void) 
 {
     int show_graph_page = check_for_prog(latex);
     int i, n;
 
     active_object = NULL;
+
+    set_matrix_add_callback(add_user_matrix_callback);
 
     if (data_status) {
 	session_add_icon(NULL, GRETL_OBJ_INFO,   ICON_ADD_BATCH);  /* data info */

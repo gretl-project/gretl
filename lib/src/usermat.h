@@ -130,4 +130,6 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
 
 void write_matrices_to_file (FILE *fp);
 
+void set_matrix_add_callback (void (*callback));
+
 #endif /* USERMAT_H_ */

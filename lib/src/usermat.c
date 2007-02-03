@@ -99,6 +99,13 @@ static int matrix_is_user_matrix (const gretl_matrix *m)
     return 0;
 }
 
+static void (*matrix_add_callback)(void);
+
+void set_matrix_add_callback (void (*callback))
+{
+    matrix_add_callback = callback; 
+}
+
 int user_matrix_add (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
@@ -143,6 +150,10 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 	    name, (void *) matrices[n_matrices-1], (void *) M,
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
+
+    if (matrix_add_callback != NULL) {
+	(*matrix_add_callback)();
+    }
 
     return 0;
 }
