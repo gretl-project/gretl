@@ -567,7 +567,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	    if (ptype == ARG_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
-		button = gtk_button_new_with_label("More...");
+		button = gtk_button_new_with_label(_("New..."));
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 
@@ -576,7 +576,7 @@ static void function_call_dialog (call_info *cinfo)
 		gtk_widget_show(button);
 	    } else if (ptype == ARG_MATRIX) {
 		cinfo->msels = g_list_append(cinfo->msels, sel);
-		button = gtk_button_new_with_label("More...");
+		button = gtk_button_new_with_label(_("New..."));
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 

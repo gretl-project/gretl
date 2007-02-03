@@ -343,8 +343,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
     { "/Data/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Data/_Refresh window"), NULL, refresh_data, 0, NULL, GNULL },
-    { "/Data/sep4", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Data/_Define matrix..."), NULL, matrix_edit_callback, 0, NULL, GNULL },
 
     /* View menu */
     { N_("/_View"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -423,6 +421,7 @@ GtkItemFactoryEntry data_items[] = {
     /* genr */
     { N_("/Add/Define _new variable..."), NULL, gretl_callback, 
       GENR, NULL, GNULL },
+    { N_("/Add/_Define matrix..."), NULL, matrix_edit_callback, 0, NULL, GNULL },
 
     /* Sample menu */
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>", GNULL },
