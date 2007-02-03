@@ -48,11 +48,15 @@ typedef struct {
     GtkWidget *view;
     GtkWidget *win;
     GtkWidget *locator;
+#if 0
+    GtkWidget *entry;
+#endif
     GtkWidget *popup;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
     gchar location[64];
     gretl_matrix *matrix;
+    gretl_matrix *oldmat;
     int *varlist;
     int datacols, datarows;
     int totcols;
@@ -65,6 +69,8 @@ typedef struct {
     guint cid;
     guint point;
 } Spreadsheet;
+
+#define MATRIX_DIGITS DBL_DIG /* or 6? */
 
 static void sheet_add_var_callback (gpointer data, guint code, GtkWidget *w);
 static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w);
@@ -152,6 +158,27 @@ static char *single_underscores (char *targ, const char *src)
     return targ;
 }
 
+#if 0 /* complicated, not ready yet */
+
+static void 
+set_matrix_value_label (Spreadsheet *sheet, GtkTreePath *path,
+			GtkTreeViewColumn *column)
+{
+    char valstr[48];
+    int i, j;
+    gint *idx;
+
+    idx = gtk_tree_path_get_indices(path);
+    i = idx[0];
+    j = atoi(gtk_tree_view_column_get_title(column)) - 1;
+
+    sprintf(valstr, "%.*g", DBL_DIG, 
+	    gretl_matrix_get(sheet->matrix, i, j));
+    gtk_entry_set_text(GTK_ENTRY(sheet->entry), valstr);
+}
+
+#endif
+
 static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
@@ -160,6 +187,12 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
     gchar *rstr;
     const gchar *cstr;
     char tmp[VNAMELEN];
+
+#if 0
+    if (sheet->matrix != NULL) {
+	set_matrix_value_label(sheet, path, column);
+    }
+#endif
 
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, 0, &rstr, -1);
@@ -632,13 +665,13 @@ static void build_sheet_popup (Spreadsheet *sheet)
     }
 }
 
+/* the following is connected to the "cursor-changed" signal */
+
 static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 {
     GtkTreePath *path = NULL;
     GtkTreeViewColumn *column;
     static gint oldrow, oldcol;
-
-    /* this is connected to the "cursor-changed" signal */
 
 #if CELLDEBUG
     fprintf(stderr, "** update_cell_position()\n");
@@ -703,6 +736,12 @@ static void update_matrix_from_sheet (Spreadsheet *sheet)
 	    g_free(numstr);
 	}
 	gtk_tree_model_iter_next(model, &iter);
+    }
+
+    /* in case we're editing a pre-existing matrix, carry the
+       modifications back */
+    if (sheet->oldmat != NULL) {
+	gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
     }
 
     sheet->modified = 0;
@@ -865,11 +904,13 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
     for (i=0; i<sheet->datarows; i++) {
 	for (j=0; j<sheet->datacols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
-	    sprintf(tmpstr, "%.*g", DBL_DIG, x);
+	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
+
+    sheet->modified = 1;
 
     return 0;
 }
@@ -1122,7 +1163,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
     return FALSE;
 }
 
-/* requires gtk 2.2 and higher */
+/* requires gtk 2.2 or higher */
 
 static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				     Spreadsheet *sheet)
@@ -1294,13 +1335,13 @@ static int build_sheet_view (Spreadsheet *sheet)
     }
 
     /* set the selection property on the tree view */
-    select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode(select, GTK_SELECTION_NONE);
 
-    g_signal_connect (G_OBJECT(view), "cursor-changed",
-		      G_CALLBACK(update_cell_position), sheet);
-    g_signal_connect (G_OBJECT(view), "key_press_event",
-		      G_CALLBACK(catch_spreadsheet_key), sheet);
+    g_signal_connect(G_OBJECT(view), "cursor-changed",
+		     G_CALLBACK(update_cell_position), sheet);
+    g_signal_connect(G_OBJECT(view), "key_press_event",
+		     G_CALLBACK(catch_spreadsheet_key), sheet);
 
     /* attach to sheet struct */
     sheet->view = view;
@@ -1322,8 +1363,33 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 	set_dataset_locked(FALSE);
     }
 
+    if (sheet->matrix != NULL && sheet->oldmat != NULL) {
+	/* delete the copied matrix */
+	gretl_matrix_free(sheet->matrix);
+    }
+
     free(sheet);
     *psheet = NULL;
+}
+
+static void free_matrix_sheet (GtkWidget *widget, Spreadsheet *sheet) 
+{
+    if (sheet->popup != NULL) {
+	gtk_widget_destroy(sheet->popup);
+    }
+
+    free(sheet->varlist);
+
+    if (sheet->matrix == NULL) {
+	set_dataset_locked(FALSE);
+    }
+
+    if (sheet->matrix != NULL && sheet->oldmat != NULL) {
+	/* delete the copied matrix */
+	gretl_matrix_free(sheet->matrix);
+    }
+
+    free(sheet);
 }
 
 static int sheet_list_empty (Spreadsheet *sheet)
@@ -1365,6 +1431,9 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->view = NULL;
     sheet->win = NULL;
     sheet->locator = NULL;
+#if 0
+    sheet->entry = NULL;
+#endif
     sheet->popup = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
@@ -1377,6 +1446,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->cid = 0;
     sheet->varlist = NULL;
     sheet->matrix = NULL;
+    sheet->oldmat = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
 
@@ -1483,6 +1553,12 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
     return FALSE;
 }
 
+static gint simple_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
+{
+    gtk_widget_destroy(sheet->win);
+    return FALSE;
+}
+
 static void 
 sheet_adjust_menu_state (Spreadsheet *sheet, GtkItemFactory *ifac)
 {
@@ -1582,6 +1658,14 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
     gtk_widget_show(sheet->locator);
 
+#if 0 /* not ready */
+    if (sheet->matrix != NULL) {  
+	sheet->entry = gtk_entry_new(); 
+	gtk_box_pack_start(GTK_BOX(status_box), sheet->entry, FALSE, FALSE, 0);
+	gtk_widget_show(sheet->entry);
+    }
+#endif
+
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1608,12 +1692,15 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    gtk_container_add(GTK_CONTAINER(hbox), padbox);
 	    gtk_widget_show(padbox);
 	}
+	g_signal_connect(G_OBJECT(sheet->win), "destroy",
+			 G_CALLBACK(free_spreadsheet), psheet);
+    } else {
+	g_signal_connect(G_OBJECT(sheet->win), "destroy",
+			 G_CALLBACK(free_matrix_sheet), sheet);
     }
 
-    g_signal_connect(G_OBJECT(sheet->win), "destroy",
-		     G_CALLBACK(free_spreadsheet), psheet);
+    /* control buttons */
 
-    /* apply and close buttons */
     button_box = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
@@ -1623,17 +1710,29 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(get_data_from_sheet), sheet);
-    gtk_widget_show(tmp);
+    if (sheet->matrix != NULL && sheet->oldmat == NULL) {
+	/* if we're editing a newly created matrix, Apply/Close
+	   buttons do not really make sense */
+	tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(get_data_from_sheet), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(simple_exit_sheet), sheet);
+	gtk_widget_show(tmp);
+    } else {
+	tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(get_data_from_sheet), sheet);
+	gtk_widget_show(tmp);
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(maybe_exit_sheet), sheet);
-    gtk_widget_show(tmp);
+	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(maybe_exit_sheet), sheet);
+	gtk_widget_show(tmp);
+    }
 
     g_signal_connect(G_OBJECT(sheet->view), "button_press_event",
 		     G_CALLBACK(catch_spreadsheet_click),
@@ -1661,6 +1760,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     }
 
     if (block) {
+	gretl_set_window_modal(sheet->win);
 	gtk_main();
     }
 }
@@ -1728,6 +1828,17 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
     if (etxt == NULL || *etxt == '\0') {
 	infobox(_("You must give the matrix a name"));
 	return;
+    }
+
+    if (get_matrix_by_name(etxt) != NULL) {
+	gchar *msg = g_strdup_printf(_("A matrix named %s already exists\n" 
+				       "OK to overwrite it?"), etxt);
+	int resp;
+
+	resp = yes_no_dialog("gretl", msg, 0);
+	if (resp == GRETL_NO) {
+	    return;
+	}
     }
 
     if ((err = check_varname(etxt))) {
@@ -1815,7 +1926,8 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     int maxdim = 1000;
     int canceled = 0;
 
-    dlg = gretl_dialog_new("Matrix", mdata->w, GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new("Matrix", mdata->w, 
+			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
     vbox = GTK_DIALOG(dlg)->vbox;
     mdlg.dlg = dlg;
     mdlg.spec = spec;
@@ -1840,16 +1952,17 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     mdlg.nentry = w;
 
-    /* matrix construction */
+    /* matrix construction options */
 
-    /* build from series */
+    /* option: build from series */
+
     hbox = gtk_hbox_new(FALSE, 5);
     rb = gtk_radio_button_new_with_label(NULL, _("Build from series"));
     g_signal_connect(G_OBJECT(rb), "clicked", G_CALLBACK(choose_series), &mdlg);
     gtk_box_pack_start(GTK_BOX(hbox), rb, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* build numerically */
+    /* option: build numerically */
 
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
@@ -1899,7 +2012,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     gtk_widget_set_sensitive(hbox, FALSE);
     mdlg.numerics = hbox;
 
-    /* build from formula */
+    /* option: build from formula */
 
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
@@ -2002,20 +2115,15 @@ static void gui_matrix_spec_init (struct gui_matrix_spec *s)
     s->m = NULL;
 }
 
-/* return pointer to matrix-editing window */
+/* returns pointer to matrix-editing window */
 
 GtkWidget *edit_matrix (gretl_matrix *m)
 {
-    static Spreadsheet *sheet;
-    gretl_matrix *morig = m;
+    Spreadsheet *sheet = NULL;
+    gretl_matrix *oldmat = m;
     struct gui_matrix_spec spec;
     int newmat = 0;
     int err = 0;
-
-    if (sheet != NULL) {
-	gdk_window_raise(sheet->win->window);
-	return sheet->win;
-    }
 
     if (m == NULL) {
 	newmat = 1;
@@ -2025,8 +2133,8 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	    return NULL;
 	}
 	if (spec.uselist) {
-	    simple_selection(_("Define matrix"), matrix_from_list, DEFINE_MATRIX, 
-			     &spec);
+	    simple_selection(_("Define matrix"), matrix_from_list, 
+			     DEFINE_MATRIX, &spec);
 	    m = spec.m;
 	    if (m == NULL) {
 		return NULL;
@@ -2043,7 +2151,7 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	}
     }
 
-    if (morig == NULL && !newmat) {
+    if (oldmat == NULL && !newmat) {
 	/* new matrix from list or formula: don't bother with ssheet
 	   editor window? */
 	return NULL;
@@ -2054,9 +2162,20 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	return NULL;
     }
 
-    if (m != NULL) {
+    if (oldmat != NULL) {
+	/* if we're editing a pre-existing matrix, make a copy
+	   so the user can back out of the editing if desired 
+	*/
+	sheet->oldmat = oldmat;
+	sheet->matrix = gretl_matrix_copy(oldmat);
+	if (sheet->matrix == NULL) {
+	    err = E_ALLOC;
+	}
+    } else if (m != NULL) {
+	/* already created a new matrix */
 	sheet->matrix = m;
     } else {
+	/* no matrix created yet */
 	sheet->matrix = gretl_matrix_alloc(spec.rows, spec.cols);
 	if (sheet->matrix == NULL) {
 	    err = E_ALLOC;
@@ -2066,7 +2185,7 @@ GtkWidget *edit_matrix (gretl_matrix *m)
     }
 
     if (sheet->matrix != NULL && newmat) {
-	err = add_or_replace_user_matrix(sheet->matrix, spec.name); /* ?? */
+	err = add_or_replace_user_matrix(sheet->matrix, spec.name);
 	/* and if err? */
     }
 
@@ -2075,7 +2194,12 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	free(sheet);
 	sheet = NULL;
     } else {
-	int block = (morig == NULL);
+	int block = 0;
+
+	if (oldmat == NULL) {
+	    block = 1;
+	    sheet->modified = 1;
+	}
 
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
@@ -2090,6 +2214,14 @@ void edit_user_matrix_by_name (const char *name)
     user_matrix *u = get_user_matrix_by_name(name);
     gretl_matrix *m = get_matrix_by_name(name);
     GtkWidget *w;
+
+    /* do we already have a window open, editing this
+       matrix? */
+    w = match_window_by_data(u);
+    if (w != NULL) {
+	gtk_window_present(GTK_WINDOW(w));
+	return;
+    }
 
     if (m == NULL) {
 	errbox(_("Couldn't open '%s'"), name);
@@ -2123,5 +2255,3 @@ int dataset_locked (void)
 
     return locked;
 }
-
-
