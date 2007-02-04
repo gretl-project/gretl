@@ -233,6 +233,77 @@ residui generalizzati, come avviene per i modelli binari; in più, la variabile
 distorta della variabile latente $y^*_i$ semplicemente facendo l'addizione delle
 due.
 
+\subsection{Logit multinomiale}
+\label{sec:mlogit}
+
+Quando la variabile dipendente non è binaria e non ha un ordinamento naturale,
+si usano modelli \emph{multinomiali}. \app{Gretl} non fornisce ancora
+un'implementazione interna per questo tipo di modelli, ma alcuni casi semplici
+possono essere gestiti usando il comando \texttt{mle} command (si veda il
+capitolo \ref{chap:mle}). Di seguito viene presentato un esempio di modello
+logit multinomiale. Si assuma che la variabile dipendente $y_i$ possa avere
+valori interi $0,1,\dots p$.  La probabilità che sia $y_i = k$ è data da
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{\sum_{j=0}^p \exp(x_i \beta_j)}
+\]
+Ai fini dell'identificazione del modello, uno dei valori deve essere preso come
+quello ``di riferimento''; di solito si assume che valga $\beta_0 = 0$, nel cui caso
+\[
+  P(y_i = k |  x_i) = \frac{\exp(x_i \beta_k)}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} 
+\]
+e
+\[
+  P(y_i = 0 |  x_i) = \frac{1}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} .
+\]
+
+L'esempio~\ref{ex:mlogit} riproduce la Tabella 15.2 di Wooldridge (2002a),
+che si basa su dati sulle scelte di carriera contenuti in Keane e Wolpin (1997).
+La variabile dipendente è lo stato occupazionale di un individuo (0 = studente;
+1 = non studente e non occupato; 2 = occupato) e le variabili esplicative sono
+il livello di educazione e l'esperienza lavorativa (in livelli e nei quadrati),
+oltre a una variabile binaria ``oscura''. Il dataset completo è di tipo panel,
+ma l'analisi presentata di seguito riguarda solo i dati del 1987. Per i dettagli
+sulle operazioni matriciali usate in questo script, si veda il
+capitolo~\ref{chap:matrices}.
+
+\begin{script}[htbp]
+  \caption{Logit multinomiale}
+  \label{ex:mlogit}
+\begin{scode}
+function mlogitlogprobs(series y, matrix X, matrix theta)
+
+  scalar n = max(y)
+  scalar k = cols(X)
+  matrix b = mshape(theta,k,n)
+
+  matrix tmp = X*b
+  series ret = -ln(1 + sumr(exp(tmp)))
+
+  loop for i=1..n --quiet
+    series x = tmp[,i]
+    ret += (y=$i) ? x : 0 
+  end loop
+
+  return series ret
+
+end function
+
+open Keane.gdt
+status = status-1 # dep. var. must be 0-based
+smpl (year=87 & ok(status)) --restrict
+
+matrix X = { educ exper expersq black const }
+scalar k = cols(X)
+matrix theta = zeros(2*k, 1)
+
+mle loglik = mlogitlogprobs(status,X,theta)
+  params theta
+end mle --verbose --hessian
+\end{scode}
+%$
+\end{script}
+
+
 \section{Il modello Tobit}
 \label{sec:tobit}
 

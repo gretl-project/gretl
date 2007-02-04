@@ -1,5 +1,5 @@
 \chapter{Variabili discrete}
-\label{chap-discrete}
+\label{chap:discrete}
 
 Quando una variabile può assumere solo un numero finito, tipicamente basso, di
 valori, essa si può chiamare \emph{discreta}. Alcuni comandi di
@@ -120,8 +120,12 @@ di frequenza''.
 Per variabili discrete, le frequenze sono contate per ogni diverso valore
 assunto dalla variabile. Per le variabili continue, i valori sono raggruppati in
 ``classi'' e quindi le frequenze sono calcolate per ogni classe.
-Il numero di classi è calcolato in funzione del numero di osservazioni valide
-nel campione selezionato al momento, come mostrato nella Tabella~\ref{tab:bins}.
+Per impostazione predefinita, il numero di classi è calcolato in funzione del
+numero di osservazioni valide nel campione selezionato al momento, come mostrato
+nella Tabella~\ref{tab:bins}, ma quando il comando viene invocato attraverso la
+voce del menù ``Variabile, Grafico frequenze'', questa impostazione può essere
+modificata dall'utente.
+
 
 \begin{table}[htbp]
   \centering
@@ -205,6 +209,10 @@ Questo comando accetta due opzioni: \texttt{--quiet}, per evitare la stampa
 dell'istogramma, e \texttt{--gamma}, per sostituire il test di normalità con
 il test non parametrico di Locke, la cui ipotesi nulla è che i dati seguano una
 distribuzione Gamma.
+ 
+Se occorre salvare i valori distinti di una variabile discreta, è possibile
+usare il comando matriciale \texttt{values()} (si veda il capitolo
+\ref{chap:matrices}).
 
 
 \subsection{Il comando \texttt{xtab}}
