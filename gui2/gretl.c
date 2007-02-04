@@ -373,6 +373,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/View/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL, GNULL },
     { "/View/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/View/_Correlation matrix"), NULL, do_menu_op, CORR, NULL, GNULL },
+    { N_("/View/Cross Tabulation"), NULL, do_menu_op, XTAB, NULL, GNULL },
     { N_("/View/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
     { N_("/View/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL, GNULL },
     { N_("/View/C_ross-correlogram"), NULL, xcorrgm_callback, 0, NULL, GNULL },

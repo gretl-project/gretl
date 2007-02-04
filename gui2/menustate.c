@@ -95,6 +95,7 @@ void variable_menu_state (gboolean s)
 
     flip(mdata->ifac, "/Variable", s);
     flip(mdata->ifac, "/View/Correlation matrix", !s);
+    flip(mdata->ifac, "/View/Cross Tabulation", !s);
     flip(mdata->ifac, "/View/Principal components", !s);
     flip(mdata->ifac, "/View/Mahalanobis distances", !s);
 

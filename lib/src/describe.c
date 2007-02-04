@@ -1347,8 +1347,9 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     }
     
     if (freq->discrete) {
-	int *ifreq = NULL, *ivals = NULL;
-	int *sorted = NULL;
+	int *ifreq = NULL;
+	double *ivals = NULL;
+	double *sorted = NULL;
 	int i, last;
 
 	sorted = malloc(n * sizeof *sorted);
@@ -1360,12 +1361,12 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	n = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (!na(x[t])) {
-		sorted[n++] = (int) x[t];
+		sorted[n++] = x[t];
 	    }
 	}
 	
-	qsort(sorted, n, sizeof *sorted, gretl_compare_ints); 
-	nbins = count_distinct_int_values(sorted, n);
+	qsort(sorted, n, sizeof *sorted, gretl_compare_doubles); 
+	nbins = count_distinct_values(sorted, n);
 
 	ifreq = malloc(nbins * sizeof *ifreq);
 	ivals = malloc(nbins * sizeof *ivals);
@@ -1544,13 +1545,13 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
     tab->rows = rows;
     tab->cols = cols;
 
-    tab->rval = malloc(rows * sizeof tab->rval);
-    tab->rtotal = malloc(rows * sizeof tab->rtotal);
+    tab->rval = malloc(rows * sizeof *tab->rval);
+    tab->rtotal = malloc(rows * sizeof *tab->rtotal);
 
-    tab->cval = malloc(cols * sizeof tab->cval);
-    tab->ctotal = malloc(cols * sizeof tab->ctotal);
+    tab->cval = malloc(cols * sizeof *tab->cval);
+    tab->ctotal = malloc(cols * sizeof *tab->ctotal);
 
-    tab->f = malloc(rows * sizeof tab->f);
+    tab->f = malloc(rows * sizeof *tab->f);
 
     if (tab->rval == NULL || tab->rtotal == NULL ||
 	tab->cval == NULL || tab->ctotal == NULL ||
@@ -1563,7 +1564,7 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
     }
 
     for (i=0; i<rows; i++) {
-	tab->f[i] = malloc(cols * sizeof tab->f[i]);
+	tab->f[i] = malloc(cols * sizeof *tab->f[i]);
 	if (tab->f[i] == NULL) {
 	    return E_ALLOC;
 	} else {
@@ -1578,8 +1579,8 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
 
 int compare_xtab_rows (const void *a, const void *b) 
 {
-    const int **da = (const int **) a;
-    const int **db = (const int **) b;
+    const double **da = (const double **) a;
+    const double **db = (const double **) b;
     int ret;
     
     ret = da[0][0] - db[0][0];
@@ -1599,7 +1600,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 		       const DATAINFO *pdinfo, int *err)
 {
     Xtab *tab = NULL;
-    int **X = NULL;
+    double **X = NULL;
     int rx = 0, cx = 0;
     int rows, cols;
 
@@ -1697,8 +1698,8 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	    *err = E_ALLOC;
 	    break;
 	} else if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
-	    X[i][0] = (int) Z[rvarno][t];
-	    X[i][1] = (int) Z[cvarno][t];
+	    X[i][0] = Z[rvarno][t];
+	    X[i][1] = Z[cvarno][t];
 	    i++;
 	}
     }
@@ -1755,54 +1756,81 @@ int crosstab (const int *list, const double **Z,
     int i, j, k;
 
     int pos = gretl_list_separator_position(list);
-    int nrv = pos - 1;
-    int ncv = list[0] - pos;
     int err = 0;
+    int blanket = 0;
+    int nrv, ncv;
 
-    if (pos == 0 || nrv == 0 || ncv == 0) {
+    if (pos == 0) {
+	nrv = list[0];
+	ncv = nrv - 1;
+	blanket = 1;
+    } else {
+	nrv = pos - 1;
+	ncv = list[0] - pos;
+    } 
+
+    if (nrv == 0 || ncv == 0) {
 	return E_PARSE;
     }
 
     rowvar = gretl_list_new(nrv);
-    colvar = gretl_list_new(ncv);
-    if (rowvar == NULL || colvar == NULL) {
-	free(rowvar);
-	free(colvar);
+    if (rowvar == NULL) {
 	return E_ALLOC;
     }
 
     j = 1;
     for (i=1; i<=nrv; i++) {
-	if (var_is_discrete(pdinfo, list[i]) && !var_is_scalar(pdinfo, list[i])) {
+	if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[i]])) {
 	    rowvar[j++] = list[i];
 	} else {
 	    rowvar[0] -= 1;
 	}
     }
 
-    j = 1;
-    for (i=1; i<=ncv; i++) {
-	k = pos + i;
-	if (var_is_discrete(pdinfo, list[k]) && !var_is_scalar(pdinfo, list[k])) {
-	    colvar[j++] = list[k];
+    if (rowvar[0] == 0) {
+	strcpy(gretl_errmsg, "xtab: variables must be marked as discrete");
+	free(rowvar);
+	return E_DATATYPE;
+    }
+    
+    if (!blanket) {
+	colvar = gretl_list_new(ncv);
+	if (colvar == NULL) {
+	    err = E_ALLOC;
 	} else {
-	    colvar[0] -= 1;
+	    j = 1;
+	    for (i=1; i<=ncv; i++) {
+		k = pos + i;
+		if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[k]])) {
+		    colvar[j++] = list[k];
+		} else {
+		    colvar[0] -= 1;
+		}
+	    }
+	    if (colvar[0] == 0) {
+		err = E_DATATYPE;
+	    }
 	}
     }
 
-    if (rowvar[0] == 0 || colvar[0] == 0) {
-	free(rowvar);
-	free(colvar);
-	return E_DATATYPE;
-    }
-
     for (i=1; i<=rowvar[0] && !err; i++) {
-	for (j=1; j<=colvar[0] && !err; j++) {
-	    Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
-
-	    if (!err) {
-		print_xtab(tab, opt, prn); 
-		free_xtab(tab);
+	if (blanket) {
+	    for (j=1; j<i && !err; j++) {
+		Xtab *tab = get_xtab(rowvar[j], rowvar[i], Z, pdinfo, &err); 
+		
+		if (!err) {
+		    print_xtab(tab, opt, prn); 
+		    free_xtab(tab);
+		}
+	    }
+	} else {
+	    for (j=1; j<=colvar[0] && !err; j++) {
+		Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
+		
+		if (!err) {
+		    print_xtab(tab, opt, prn); 
+		    free_xtab(tab);
+		}
 	    }
 	}
     }

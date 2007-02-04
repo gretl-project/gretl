@@ -577,7 +577,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     strcpy(title, "gretl: ");
 
     if (action == CORR || action == SUMMARY || 
-	action == PCA || action == MAHAL) {
+	action == PCA || action == MAHAL || action == XTAB) {
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) return;
     }
@@ -604,6 +604,11 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case FREQ:
 	gretl_command_sprintf("freq %s", selected_varname());
 	strcat(title, _("frequency distribution"));
+	vsize = 340;
+	break;
+    case XTAB:
+	gretl_command_sprintf("xtab %s", liststr);
+	strcat(title, _("cross tabulation"));
 	vsize = 340;
 	break;
     case RUNS:
@@ -654,6 +659,11 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case FREQ:
 	err = freqdist(libcmd.list[1], (const double **) Z, datainfo,
 		       0, OPT_NONE, prn);
+	break;
+
+    case XTAB:
+	err = crosstab(libcmd.list, (const double **) Z, datainfo,
+		       OPT_NONE, prn);
 	break;
 
     case RUNS:

@@ -272,23 +272,29 @@ int gretl_isunits (int t1, int t2, const double *x)
  * @t2: ending observation. 
  *
  * Returns: 1 if @x contains only values whose decimal part is 
- * zero in the given sample range and 0 otherwise.  Missing 
- * values are skipped, but numbers that cannot be represented
+ * zero or a multiple of 0.25 in the given sample range, 0 otherwise.  
+ * Missing values are skipped, but numbers that cannot be represented
  * as integers as rejected as "not discrete".
  */
 
 int gretl_isdiscrete (int t1, int t2, const double *x)
 {
+    double r;
     int t, ret = 1;
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
 	    continue;
 	}
-	if (!ok_int(x[t]) || x[t] != floor(x[t])) {
+	if (!ok_int(x[t])) {
 	    ret = 0;
 	    break;
 	}
+	r = x[t] - floor(x[t]);
+	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
+	    ret = 0;
+	    break;
+	}	    
     }
 
     return ret;

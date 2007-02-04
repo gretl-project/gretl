@@ -405,12 +405,12 @@ void print_freq (const FreqDist *freq, PRN *prn)
 
 void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 {
-    int i, j, r, c;
-    r = tab->rows;
-    c = tab->cols;
+    int r = tab->rows;
+    int c = tab->cols;
     double x, y;
     int n5 = 0;
     double pearson = 0.0;
+    int i, j;
 
     pputc(prn, '\n');
     pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
@@ -418,28 +418,28 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
     pputs(prn, "\n\n       ");
     for (j=0; j<c; j++) {
-	pprintf(prn, "[%4d]", (tab->cval)[j]);
+	pprintf(prn, "[%4g]", tab->cval[j]);
     } 
 
     pprintf(prn,"  %s\n  \n", _("TOT."));
 
     for (i=0; i<r; i++) {
 
-	if (tab->rtotal[i]) {
-	    pprintf(prn,"[%4d] ",(tab->rval)[i]);
+	if (tab->rtotal[i] > 0) {
+	    pprintf(prn, "[%4g] ", tab->rval[i]);
 
 	    for (j=0; j<c; j++) {
 		if (tab->ctotal[j]) {
-		    if ((tab->f)[i][j] || (opt & OPT_Z)) {
+		    if (tab->f[i][j] || (opt & OPT_Z)) {
 			if (opt & (OPT_C | OPT_R)) {
 			    if (opt & OPT_C) {
-				x = 100.0 * (tab->f)[i][j] / tab->ctotal[j];
+				x = 100.0 * tab->f[i][j] / tab->ctotal[j];
 			    } else {
-				x = 100.0 * (tab->f)[i][j] / tab->rtotal[i];
+				x = 100.0 * tab->f[i][j] / tab->rtotal[i];
 			    }
 			    pprintf(prn, "%5.1f%%", x);
 			} else {
-			    pprintf(prn, "%5d ", (tab->f)[i][j]);
+			    pprintf(prn, "%5d ", tab->f[i][j]);
 			}
 		    } else {
 			pputs(prn,"      ");
@@ -448,7 +448,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 		if (!na(pearson)) {
 		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
-		    x = (double) (tab->f)[i][j] - y;
+		    x = (double) tab->f[i][j] - y;
 		    if (y < 1.0e-7) {
 			fprintf(stderr, "Error computing chi2 test: "
 				"expected n in cell (%d,%d) = %g\n",
@@ -478,7 +478,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	    x = 100.0 * tab->ctotal[j] / tab->n;
 	    pprintf(prn, "%5.1f%%", x);
 	} else {
-	    pprintf(prn, "%5d ", tab->ctotal[j]);
+	    pprintf(prn, "%5g ", tab->ctotal[j]);
 	}
     }
     

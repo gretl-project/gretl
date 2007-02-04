@@ -322,8 +322,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                           c == ARBOND || \
                           c == ARMA || \
                           c == GARCH || \
-                          c == TSLS || \
-                          c == XTAB)
+                          c == TSLS)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
