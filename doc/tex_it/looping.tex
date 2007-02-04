@@ -1,5 +1,5 @@
 \chapter{Costrutti loop}
-\label{looping}
+\label{chap:looping}
 
 \section{Introduzione}
 \label{loop-intro}
@@ -112,6 +112,28 @@ loop viene impostato. Inoltre, con dataset di serie storiche è
 possibile indicare i valori iniziale e finale sotto forma di date, ad
 esempio: \cmd{loop i=1950:1..1999:4}.
       
+Questo tipo di loop è particolarmente utile usato insieme alla funzione
+matriciale \texttt{values()} quando occorre compiere un'operazione per ciascun
+valore di una variabile discreta (si veda il capitolo \ref{chap:discrete}).
+Si consideri l'esempio seguente:
+
+\begin{code}
+open greene22_2
+open greene22_2
+discrete Z8
+v8 = values(Z8)
+n = rows(v8)
+n = rows(v8)
+loop for i=1..n
+  scalar xi = v8[$i]
+  smpl (Z8=xi) --restrict --replace
+  printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
+    xi, mean(Y), xi, sd(Y)
+end loop
+\end{code}
+
+In questo caso valutiamo la media condizionale e la deviazione standard della
+variabile Y per ciascun valore della variabile Z8.
 
 \subsection{Loop di tipo for each}
 \label{loop-each}

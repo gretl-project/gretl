@@ -28,14 +28,17 @@ grafica.
   disponibile per chiunque voglia criticarlo, correggerlo o
   estenderlo. Si veda l'appendice~\ref{app-technote}.
 \item[Sofisticato] \app{Gretl} offre un'ampia varietà
-  di stimatori basati sui minimi quadrati, compresi i minimi quadrati
-  a due stadi e i minimi quadrati non lineari.  Offre anche alcuni stimatori
-  di massima verosimiglianza (ad es.\ logit, probit, tobit), oltre alla stima
-  generica di massima verosimiglianza.
-  Il programma supporta la stima di sistemi di equazioni simultanee, GARCH,
-  ARMA, autoregressioni vettoriali e modelli vettoriali a correzione di errore.
-\item[Accurato] \app{Gretl} è stato testato a fondo con il dataset di
-  riferimento NIST. Si veda l'appendice~\ref{app-accuracy}.
+  di stimatori basati sui minimi quadrati, sia per singole equazioni
+  che per sistemi di equazioni, compresa l'autoregressione vettoriale e i
+  modelli a correzione di errore. Comprende anche vari stimatori
+  di massima verosimiglianza (ad es.\ probit, ARIMA, GARCH), mentre altri
+  metodi avanzati sono implementabili dall'utente attraverso la stima
+  generica di massima verosimiglianza o la stima GMM non lineare.
+\item[Estensibile] Gli utenti possono estendere \app{gretl} scrivendo le proprie
+  funzioni e procedure in un linguaggio di scripting che include una gamma abbastanza
+  ampia di funzioni matriciali.
+\item[Accurato] \app{Gretl} è stato testato a fondo con vari dataset di
+  riferimento, tra cui quelli del NIST. Si veda l'appendice~\ref{app-accuracy}.
 \item[Pronto per internet] \app{Gretl} può scaricare i database da un
   server alla Wake Forest University; inoltre, comprende una funzionalità
   di aggiornamento che controlla se è disponibile una nuova versione del programma
@@ -52,8 +55,8 @@ La base di codice di \app{Gretl} deriva da quella del programma \app{ESL}
 (``Econometrics Software Library''), scritto dal Professor
 Ramu Ramanathan della University of California, San Diego. Siamo molto
 grati al Professor Ramanathan per aver reso disponibile questo codice con
-licenza GNU General Public License e per aver aiutato nello sviluppo di
-\app{Gretl}.
+licenza GNU General Public License e per aver aiutato nello sviluppo iniziale
+di \app{Gretl}.
  
 Siamo anche grati agli autori di molti testi di econometria che hanno
 permesso la distribuzione delle versioni \app{Gretl} dei dataset contenuti
@@ -83,9 +86,9 @@ aver accettato di ``adottare'' \app{Gretl} come programma GNU.
 
 Molti utenti di \app{Gretl} hanno fornito utili suggerimenti e
 segnalazioni di errori. Un ringraziamento particolare a Ignacio
-Díaz-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cristian
-Rigamonti e Dirk Eddelbuettel, che cura il pacchetto \app{Gretl} per
-Debian GNU/Linux.
+Díaz-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cristian Rigamonti, Sven
+Schreiber, Talha Yalta e Dirk Eddelbuettel, che cura il pacchetto \app{Gretl}
+per Debian GNU/Linux.
 
 
 \section{Installazione del programma}

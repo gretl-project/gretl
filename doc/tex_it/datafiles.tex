@@ -91,7 +91,7 @@ legge correttamente.
 \section{Creazione di un file di dati}
 \label{scratch}
 
-Ci sono cinque modi per compiere questa operazione.
+Ci sono vari modi per compiere questa operazione.
 
 \begin{enumerate}
 \item Acquisire, o creare con un editor di testo, un file di testo
@@ -674,8 +674,8 @@ Quando un utente seleziona uno dei comandi visti sopra:
   relativi a \emph{Introductory Econometrics} di Ramanathan e a
   \emph{Econometric Analysis} di Greene).
 \item Il programma cerca alcune raccolte di dati opzionali, ad esempio
-  i file relativi ad alcuni libri di testo (Wooldridge, Gujarati,
-  Stock e Watson) e la Penn World Table (PWT 5.6). Si veda
+  i file relativi ad alcuni libri di testo (Davidson e MacKinnon, Gujarati,
+  Stock e Watson, Verbeek, Wooldridge) e la Penn World Table (PWT 5.6). Si veda
   \href{http://gretl.sourceforge.net/gretl_data_it.html}{la pagina dei
     dati} sul sito web di gretl per ulteriori informazioni su queste
   raccolte. Se queste raccolte vengono trovate, vengono aggiunte
@@ -708,27 +708,27 @@ Quando un utente seleziona uno dei comandi visti sopra:
     \label{tab-colls}
   \end{table}
 
-  Le raccolte trovate verranno aggiunte all'elenco dei file
-  disponibili. In che formato deve essere una raccolta per essere
-  riconosciuta come tale? Una raccolta può essere costituita da un
-  gruppo di file di dati di \app{gretl} in formato XML (con
-  l'estensione \verb+.gdt+) o da un gruppo di file di comandi (con
-  l'estensione \verb+.inp+), in entrambi i casi accompagnati da un
-  ``file principale'' o catalogo.  La distribuzione di \app{gretl}
-  contiene vari esempi di file di catalogo, ad esempio il file
-  \verb+descriptions+ nella sottodirectory \verb+misc+ della directory
-  dati di \app{gretl} e il file \verb+ps_descriptions+ nella
-  sottodirectory \verb+misc+ della directory dei comandi.  
+Le raccolte trovate verranno aggiunte all'elenco dei file
+disponibili. In che formato deve essere una raccolta per essere
+riconosciuta come tale? Una raccolta può essere costituita da un
+gruppo di file di dati di \app{gretl} in formato XML (con
+l'estensione \verb+.gdt+) o da un gruppo di file di comandi (con
+l'estensione \verb+.inp+), in entrambi i casi accompagnati da un
+``file principale'' o catalogo.  La distribuzione di \app{gretl}
+contiene vari esempi di file di catalogo, ad esempio il file
+\verb+descriptions+ nella sottodirectory \verb+misc+ della directory
+dati di \app{gretl} e il file \verb+ps_descriptions+ nella
+sottodirectory \verb+misc+ della directory dei comandi.  
 
-  Se si intende aggiungere una propria raccolta, occorrerà creare dei
-  file di catalogo, chiamati \verb+descriptions+ per i file di dati, e
-  \verb+ps_descriptions+ per i file di comandi, nelle rispettive
-  directory (ad es.  \verb+/usr/share/gretl/data/mydata+ o
-  \verb+c:\userdata\gretl\data\mydata+).
+Se si intende aggiungere una propria raccolta, occorrerà creare dei
+file di catalogo, chiamati \verb+descriptions+ per i file di dati, e
+\verb+ps_descriptions+ per i file di comandi, nelle rispettive
+directory (ad es.  \verb+/usr/share/gretl/data/mydata+ o
+\verb+c:\userdata\gretl\data\mydata+).
 
-  La sintassi dei file di catalogo (che sono file di testo) è
-  semplice; ecco ad esempio le prime righe del catalogo della raccolta
-  di file di dati ``misc'' inclusa nella distribuzione di gretl:
+La sintassi dei file di catalogo (che sono file di testo) è
+semplice; ecco ad esempio le prime righe del catalogo della raccolta
+di file di dati ``misc'' inclusa nella distribuzione di gretl:
 
 \begin{code}
 # Gretl: various illustrative datafiles
@@ -737,26 +737,26 @@ Quando un utente seleziona uno dei comandi visti sopra:
 "hamilton","Prices and exchange rate, U.S. and Italy"
 \end{code}
 
-  La prima riga, che deve iniziare con un carattere cancelletto,
-  contiene un nome breve, qui ``Gretl'', che comparirà come etichetta
-  identificativa per questa raccolta nella finestra di selezione dei
-  dati, seguito da una virgola e da una descrizione breve della
-  raccolta (opzionale).
+La prima riga, che deve iniziare con un carattere cancelletto,
+contiene un nome breve, qui ``Gretl'', che comparirà come etichetta
+identificativa per questa raccolta nella finestra di selezione dei
+dati, seguito da una virgola e da una descrizione breve della
+raccolta (opzionale).
 
-  Le righe seguenti contengono due elementi, separati da una virgola e
-  racchiusi tra virgolette doppie. Il primo è il nome del file di dati
-  (escludendo l'estensione \verb+.gdt+), mentre il secondo è una breve
-  descrizione del contenuto del file di dati. Dovrebbe esserci una
-  riga come questa per ogni file di dati della raccolta.
+Le righe seguenti contengono due elementi, separati da una virgola e
+racchiusi tra virgolette doppie. Il primo è il nome del file di dati
+(escludendo l'estensione \verb+.gdt+), mentre il secondo è una breve
+descrizione del contenuto del file di dati. Dovrebbe esserci una
+riga come questa per ogni file di dati della raccolta.
 
-  I file di catalogo per le raccolte di file di comandi sono molto
-  simili a quelli appena visti, tranne per il fatto che ogni riga del
-  file contiene tre campi: il nome del file (senza l'estensione
-  \verb+.inp+), una breve descrizione del significato econometrico
-  della serie di comandi contenuti nel file e una breve descrizione
-  dei dati usati. Ecco un altro esempio: le prime righe del catalogo
-  della raccolta di file di comandi ``misc'' inclusa nella
-  distribuzione di gretl:
+I file di catalogo per le raccolte di file di comandi sono molto
+simili a quelli appena visti, tranne per il fatto che ogni riga del
+file contiene tre campi: il nome del file (senza l'estensione
+\verb+.inp+), una breve descrizione del significato econometrico
+della serie di comandi contenuti nel file e una breve descrizione
+dei dati usati. Ecco un altro esempio: le prime righe del catalogo
+della raccolta di file di comandi ``misc'' inclusa nella
+distribuzione di gretl:
 
 \begin{code}
 # Gretl: various sample scripts
@@ -766,32 +766,32 @@ Quando un utente seleziona uno dei comandi visti sopra:
 "longley","Multicollinearity","US employment"
 \end{code}
 
-  La procedura per creare la propria raccolta di dati e renderla
-  disponibile agli utenti è la seguente:
+La procedura per creare la propria raccolta di dati e renderla
+disponibile agli utenti è la seguente:
 
-  \begin{enumerate}
-  \item Assemblare i dati, nel formato più comodo.
-  \item Convertire i dati in formato \app{gretl} e salvarli come file
-    \verb+gdt+. Probabilmente il modo più semplice consiste
-    nell'importare i dati nel programma come testo semplice, CSV o
-    formato foglio elettronico (MS Excel o Gnumeric) e quindi
-    salvarli. Può essere utile aggiungere delle descrizioni delle
-    singole variabili (usando il comando ``Variabile, Modifica
-    attributi'') e delle informazioni sulle fonti dei dati (usando il
-    comando ``Dati, Modifica descrizione'').
-  \item Scrivere un file di catalogo per la raccolta, usando un editor
-    di testi.
-  \item Copiare i file di dati e il file di catalogo in una
-    sottodirectory della directory dei dati (o utente) di \app{gretl}.
-  \item Se la raccolta deve essere distribuita ad altri utenti, creare
-    un pacchetto contenente i file di dati e il catalogo, ad esempio
-    sotto forma di file zip.
-  \end{enumerate}
+\begin{enumerate}
+\item Assemblare i dati, nel formato più comodo.
+\item Convertire i dati in formato \app{gretl} e salvarli come file
+  \verb+gdt+. Probabilmente il modo più semplice consiste
+  nell'importare i dati nel programma come testo semplice, CSV o
+  formato foglio elettronico (MS Excel o Gnumeric) e quindi
+  salvarli. Può essere utile aggiungere delle descrizioni delle
+  singole variabili (usando il comando ``Variabile, Modifica
+  attributi'') e delle informazioni sulle fonti dei dati (usando il
+  comando ``Dati, Modifica descrizione'').
+\item Scrivere un file di catalogo per la raccolta, usando un editor
+  di testi.
+\item Copiare i file di dati e il file di catalogo in una
+  sottodirectory della directory dei dati (o utente) di \app{gretl}.
+\item Se la raccolta deve essere distribuita ad altri utenti, creare
+  un pacchetto contenente i file di dati e il catalogo, ad esempio
+  sotto forma di file zip.
+\end{enumerate}
 
-  Se la raccolta creata non contiene dati proprietari, è possibile
-  inviarla al curatore di \app{gretl} in modo che venga resa
-  disponibile a tutti gli utenti del programma come pacchetto dati
-  opzionale.
+Se la raccolta creata non contiene dati proprietari, è possibile
+inviarla al curatore di \app{gretl} in modo che venga resa
+disponibile a tutti gli utenti del programma come pacchetto dati
+opzionale.
 
 %%% Local Variables: 
 %%% mode: latex

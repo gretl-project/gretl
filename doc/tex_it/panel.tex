@@ -129,7 +129,7 @@ contesto di dati panel), OLS non è lo stimatore più efficiente. È possibile
 raggiungere una maggior efficienza usando i minimi quadrati generalizzati (GLS)
 e tenendo conto della struttura di covarianza del termine di errore.
 
-Si considerino due osservazioni sulla stessa unità $i$ in due diversi periodi
+Si considerino le osservazioni sulla stessa unità $i$ in due diversi periodi
 $s$ e $t$. Per l'ipotesi precedente, si può concludere che
 $\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
 \sigma^2_{\varepsilon}$, mentre la covarianza tra $u_{is}$ e
@@ -219,13 +219,12 @@ statistiche:
   tempo e le dummy caratteristiche delle unità. Usando l'approccio della
   sottrazione delle medie di gruppo, le variabili che non cambiano nel tempo
   finiscono per avere valore zero.
-\item Un vincolo simile esiste per il modello a effetti casuali. Per
-  apprezzare questo punto occorre notare che lo stimatore a effetti casuali
-  è una media ponderata (in senso matriciale) dello stimatore ``pooled OLS'' e
-  dello stimatore ``between''. Se si hanno osservazioni su $m$ unità e $k$
-  variabili indipendenti, e se $k>m$ lo stimatore ``between'' non è definito, visto 
-  che abbiamo solo $m$ osservazioni effettive, e quindi non è definito neanche
-  lo stimatore a effetti casuali.
+\item Un vincolo simile esiste per lo stimatore a effetti casuali. Questo
+  stimatore in effetti è una media ponderata (in senso matriciale) dello
+  stimatore ``pooled OLS'' e dello stimatore ``between''. Se si hanno
+  osservazioni su $m$ unità e $k$ variabili indipendenti, e se $k>m$ lo
+  stimatore ``between'' non è definito, visto che abbiamo solo $m$ osservazioni
+  effettive, e quindi non è definito neanche lo stimatore a effetti casuali.
 \end{enumerate}
 
 Se non si ricade in una delle limitazioni appena viste, la scelta tra
@@ -254,8 +253,8 @@ efficiente i parametri dei regressori che variano nel tempo. Questi vantaggi
 dipendono però dalla validità delle ipotesi aggiuntive che sono state fatte. Se,
 ad esempio, c'è motivo di credere che gli effetti individuali possano essere
 correlati con alcune delle variabili esplicative, lo stimatore a effetti casuali
-sarebbe inconsistente, mentre quello a effetti fissi sarebbe perfettamente
-valido. È esattamente su questo principio che si basa il test di Hausman,
+sarebbe inconsistente, mentre quello a effetti fissi sarebbe valido.
+È esattamente su questo principio che si basa il test di Hausman,
 descritto in seguito: se gli stimatori a effetti fissi e casuali concordano, nel
 limite dei consueti margini di errore statistici, non c'è motivo di ritenere
 invalide le ipotesi aggiuntive, e di conseguenza, non c'è motivo di 
@@ -284,7 +283,7 @@ presentati automaticamente i test di Breusch--Pagan e quello di Hausman.
 
 Il test di Breusch--Pagan è la controparte del test $F$ menzionato sopra.
 L'ipotesi nulla è che la varianza di $v_i$ sia pari a zero; se questa ipotesi
-non viene rifiutata, si può concludere che il modello ``pooled'' è adeguato.
+non viene rifiutata, si può concludere che il semplice modello ``pooled'' è adeguato.
 
 Il test di Hausman verifica la consistenza delle stime GLS. L'ipotesi nulla è
 che queste stime siano consistenti, ossia che sia soddisfatto il requisito di
@@ -292,7 +291,7 @@ ortogonalità di $v_i$ e di $X_i$. Il test è basato su una misura, $H$, della
 ``distanza'' tra le stime a effetti fissi e quelle a effetti casuali,
 costruita in modo che sotto l'ipotesi nulla essa segue una distribuzione
 $\chi^2$ con gradi di libertà pari al numero di regressori che variano nel tempo
-contenuti nella matrice $X$. Se il valore di $H$ è abbastanza alto, significa
+contenuti nella matrice $X$. Se il valore di $H$ è ``alto'', significa
 che lo stimatore a effetti casuali non è consistente, e quindi il modello a
 effetti fissi è preferibile.
 

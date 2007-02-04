@@ -840,11 +840,12 @@ sono calcolati con le approssimazioni di Doornik (1998).
  
 Il codice seguente usa il database \cmd{denmark}, fornito con \app{gretl}, per
 replicare l'esempio di Johansen contenuto nel suo libro del 1995.
+%
 \begin{code}
 open denmark
 coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
-
+%
 In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:Joh-tests}) comprende
 le quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei ritardi
 è pari a $p$ nella (\ref{eq:Joh-tests}) più uno. Di seguito è riportata parte
@@ -862,8 +863,6 @@ Rango Autovalore Test traccia p-value   Test Lmax  p-value
    1    0,17758     19,057 [0,7833]     10,362 [0,8017]
    2    0,11279     8,6950 [0,7645]     6,3427 [0,7483]
    3   0,043411     2,3522 [0,7088]     2,3522 [0,7076]
-
-autovalore     0.43317      0.17758      0.11279     0.043411 
 \end{code}
 \end{center}
 Visto che sia la traccia, sia $\lambda$-max portano ad accettare l'ipotesi nulla
