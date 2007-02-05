@@ -265,39 +265,92 @@ int gretl_isunits (int t1, int t2, const double *x)
     return ret;
 }
 
+#define FEWVALS 8
+
+static int few_vals (int t1, int t2, const double *x)
+{
+    double test[FEWVALS];
+    int match;
+    int i, t, n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    match = 0;
+	    for (i=0; i<n; i++) {
+		if (x[t] == test[i]) {
+		    match = 1;
+		    break;
+		}
+	    }
+	    if (!match) {
+		if (n == FEWVALS) {
+		    n++;
+		    break;
+		}
+		test[n++] = x[t];
+	    }
+	}
+    }
+
+    return n;
+}
+
  /**
  * gretl_isdiscrete:
  * @x: data series to examine.
  * @t1: starting observation.
  * @t2: ending observation. 
  *
- * Returns: 1 if @x contains only values whose decimal part is 
- * zero or a multiple of 0.25 in the given sample range, 0 otherwise.  
- * Missing values are skipped, but numbers that cannot be represented
- * as integers as rejected as "not discrete".
+ * Checks the variable @x over the range @t1 to @t2 for discreteness.
+ * This is a heuristic whose components are (a) whether the values
+ * are "fairly round" (multiples of 0.25) or not, and, if test (a) is
+ * passed, then (b) whether the variable takes on only "few" distinct
+ * values.
+ * 
+ * Returns: 0 if test (a) is not passed or the number of distinct values
+ * is > 8; else 1 if the number of distinct values is <= 8; else 2 if 
+ * the number of distinct values is <= 4.  A return of 1 is supposed
+ * to indicate that it's "reasonable" to treat @x as discrete, while
+ * a return of 2 indicates that it's probably ureasonable _not_ to
+ * treat @x as discrete, for the purpose of drawing up a frequency
+ * distribution.
  */
 
 int gretl_isdiscrete (int t1, int t2, const double *x)
 {
+    int t, n = 0, d = 1;
     double r;
-    int t, ret = 1;
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
 	    continue;
 	}
+	n++;
 	if (!ok_int(x[t])) {
-	    ret = 0;
+	    d = 0;
 	    break;
 	}
 	r = x[t] - floor(x[t]);
 	if (r != 0.0 && r != 0.25 && r != 0.5 && r != 0.75) {
-	    ret = 0;
+	    d = 0;
 	    break;
 	}	    
     }
 
-    return ret;
+    if (n == 0) {
+	d = 0;
+    }
+
+    if (d) {
+	n = few_vals(t1, t2, x);
+	if (n > FEWVALS) {
+	    d = 0;
+	} else if (n < 5) {
+	    d = 2;
+	}
+    }
+
+    return d;
 }
 
 /**

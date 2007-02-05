@@ -886,6 +886,9 @@ static FreqDist *freq_new (void)
 
     freq->dist = 0;
     freq->discrete = 0;
+
+    freq->xbar = NADBL;
+    freq->sdx = NADBL;
     freq->test = NADBL;
 
     return freq;
@@ -1283,7 +1286,7 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 
 static FreqDist *
 get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo, 
-		   int *err)
+		   gretlopt opt, int *err)
 {
     FreqDist *freq;
     const double *x = Z[v];
@@ -1315,6 +1318,11 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 		pdinfo->varname[v]);
 	*err = E_DATA;
 	goto bailout;
+    }
+
+    if (opt & OPT_Z) {
+	freq->xbar = gretl_mean(freq->t1, freq->t2, x);
+	freq->sdx = gretl_stddev(freq->t1, freq->t2, x);
     }
 
     strcpy(freq->varname, pdinfo->varname[v]);
@@ -1389,7 +1397,8 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  * @nbins: number of bins to use (or 0 for automatic)
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
- * @opt: if includes %OPT_O, compare with gamma distribution, not normal;
+ * @opt: if includes %OPT_Z, set up for comparison with normal dist; 
+ * if includes %OPT_O, compare with gamma distribution;
  * if includes %OPT_Q, do not show a histogram; if includes %OPT_D,
  * treat the variable as discrete.
  * @err: location to receive error code.
@@ -1410,7 +1419,11 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     int t, k, n;
 
     if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
-	return get_discrete_freq(varno, Z, pdinfo, err);
+	return get_discrete_freq(varno, Z, pdinfo, opt, err);
+    }
+
+    if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[varno])) {
+	return get_discrete_freq(varno, Z, pdinfo, opt, err);
     }
 
     freq = freq_new();

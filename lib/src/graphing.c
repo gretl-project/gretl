@@ -2137,10 +2137,11 @@ int plot_freq (FreqDist *freq, DistCode dist)
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
     int i, K = freq->numbins;
-    char withstr[16] = {0};
+    char withstr[32] = {0};
     char label[80] = {0};
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth;
+    const double *endpt;
     int plottype, use_boxes = 1;
     int err;
 
@@ -2165,9 +2166,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
 #endif  
 
     if (freq->discrete) {
+	endpt = freq->midpt;
 	barwidth = minskip(freq); 
+	use_boxes = 0;
     } else {
 	/* equally sized bins, width to be determined */
+	endpt = freq->endpt;
 	barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     }
 
@@ -2181,12 +2185,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
 
-	    plotmin = freq->endpt[0] - barwidth;
+	    plotmin = endpt[0] - barwidth;
 	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
 		plotmin = freq->xbar - 3.3 * freq->sdx;
 	    }
 
-	    plotmax = freq->endpt[K-1] + barwidth;
+	    plotmax = endpt[K-1] + barwidth;
 	    if (plotmax < freq->xbar + 3.3 * freq->sdx) {
 		plotmax = freq->xbar + 3.3 * freq->sdx;
 	    }
@@ -2259,10 +2263,6 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	return 1;
     }
 
-    if (freq->discrete) {
-	fprintf(fp, "set boxwidth 0.75\n");
-    }
-
     /* plot instructions */
     if (use_boxes) {
 	if (gnuplot_has_style_fill()) {
@@ -2270,7 +2270,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	}
 	strcpy(withstr, "w boxes");
     } else {
-	strcpy(withstr, "w impulses");
+	strcpy(withstr, "w impulses linewidth 3");
     }
 
     if (!dist) {

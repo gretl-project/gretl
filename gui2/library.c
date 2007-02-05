@@ -3403,7 +3403,8 @@ series_has_negative_vals (const double *x)
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FreqDist *freq;
-    gretlopt opt = (dist == D_GAMMA)? OPT_O : OPT_NONE;
+    gretlopt opt = (dist == D_GAMMA)? OPT_O : 
+	(dist == D_NORMAL)? OPT_Z : OPT_NONE;
     int v = mdata_active_var();
     int nbins = 0;
     int err = 0;
@@ -3415,7 +3416,10 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
     if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[v])) {
 	nbins = 3;
-    } else if (!var_is_discrete(datainfo, v)) {
+    } else if (var_is_discrete(datainfo, v) ||
+	       gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[v])) {
+	; /* don't show dialog */
+    } else {
 	double xmax, xmin;
 	char *bintxt;
 	int n;

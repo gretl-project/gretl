@@ -347,7 +347,7 @@ void print_freq (const FreqDist *freq, PRN *prn)
     for (k=0; k<=K; k++) {
 	*word = '\0';
 	if (freq->discrete) {
-	    sprintf(word, "%4.0f", freq->midpt[k]);
+	    sprintf(word, "%4g", freq->midpt[k]);
 	} else {
 	    if (k == 0) {
 		pputs(prn, "          <  ");
