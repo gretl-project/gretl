@@ -6186,6 +6186,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 static int open_append (ExecState *s, double ***pZ,
 			DATAINFO **ppdinfo, PRN *prn)
 {
+    DataOpenCode ocode = DATA_NONE;
     DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -6217,9 +6218,13 @@ static int open_append (ExecState *s, double ***pZ,
     dbdata = (k == GRETL_NATIVE_DB || k == GRETL_NATIVE_DB_WWW ||
 	      k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
 
-    if (cmd->ci != APPEND && (data_status & HAVE_DATA) && !dbdata) {
-	close_session(s, pZ, ppdinfo);
-	pdinfo = *ppdinfo;
+    if (data_status & HAVE_DATA) {
+	if (dbdata || cmd->ci == APPEND) {
+	    ocode = DATA_APPEND;
+	} else {
+	    close_session(s, pZ, ppdinfo);
+	    pdinfo = *ppdinfo;
+	}
     }
 
     if (k == GRETL_CSV_DATA) {
@@ -6230,14 +6235,14 @@ static int open_append (ExecState *s, double ***pZ,
 	err = import_box(pZ, ppdinfo, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-			     data_status, prn, 1);
+			     ocode, prn, 1);
     } else if (WORKSHEET_IMPORT(k)) {
 	err = import_other(pZ, ppdinfo, k, datfile, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-			     data_status, prn);
+			     ocode, prn);
     }
 
     pdinfo = *ppdinfo;

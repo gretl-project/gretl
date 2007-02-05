@@ -1937,8 +1937,8 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * @ppdinfo: pointer to data information struct.
  * @fname: name of file to try.
  * @ppaths: path information struct.
- * @data_status: DATA_NONE: no datafile currently open; DATA_CLEAR: datafile
- * is open, should be cleared; DATA_APPEND: add to current dataset.
+ * @ocode: %DATA_NONE: no datafile currently open; %DATA_CLEAR: datafile
+ * is open, should be cleared; %DATA_APPEND: add to current dataset.
  * @prn: where messages should be written.
  * @gui: should = 1 if the function is launched from the GUI, else 0.
  * 
@@ -1949,7 +1949,7 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  */
 
 int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
-		    PATHS *ppaths, int data_status, PRN *prn, int gui) 
+		    PATHS *ppaths, DataOpenCode ocode, PRN *prn, int gui) 
 {
     DATAINFO *tmpdinfo;
     double **tmpZ = NULL;
@@ -2079,7 +2079,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     data_read_message(fname, tmpdinfo, prn);
 
-    if (data_status == DATA_APPEND) {
+    if (ocode == DATA_APPEND) {
 	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
 	if (err) {
 	    tmpZ = NULL;
@@ -2091,7 +2091,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    strcpy(ppaths->datfile, fname);
 	}
 	free_Z(*pZ, *ppdinfo);
-	if (data_status == DATA_CLEAR) {
+	if (ocode == DATA_CLEAR) {
 	    clear_datainfo(*ppdinfo, CLEAR_FULL);
 	}
 	free(*ppdinfo);

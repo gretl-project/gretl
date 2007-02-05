@@ -661,6 +661,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO **ppdinfo, MODEL **models,
 			    PRN *prn)
 {
+    DataOpenCode ocode = DATA_NONE;
     DATAINFO *pdinfo = *ppdinfo;
     char datfile[MAXLEN] = {0};
     char response[3];
@@ -698,10 +699,14 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	}
     }
 
-    if (data_status && !dbdata && cmd->ci != APPEND) {
-	clear_data(cmd, pZ, ppdinfo, models);
-	pdinfo = *ppdinfo;
-    }
+    if (data_status) {
+	if (dbdata || cmd->ci == APPEND) {
+	    ocode = DATA_APPEND;
+	} else {
+	    clear_data(cmd, pZ, ppdinfo, models);
+	    pdinfo = *ppdinfo;
+	}
+    } 
 
     if (k == GRETL_CSV_DATA) {
 	err = import_csv(pZ, ppdinfo, datfile, prn);
@@ -713,12 +718,12 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	err = import_other(pZ, ppdinfo, k, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-			     data_status, prn, 0);
+			     ocode, prn, 0);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-			     data_status, prn);
+			     ocode, prn);
     }
 
     pdinfo = *ppdinfo;

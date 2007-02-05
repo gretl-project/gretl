@@ -106,7 +106,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     GretlDataFormat fmt, PATHS *ppaths);
 
 int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
-		    PATHS *ppaths, int data_status, PRN *prn, int gui);
+		    PATHS *ppaths, DataOpenCode ocode, PRN *prn, int gui);
 
 char *gretl_get_gdt_description (const char *fname);
 

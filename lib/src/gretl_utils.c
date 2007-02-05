@@ -304,7 +304,7 @@ static int few_vals (int t1, int t2, const double *x)
  * Checks the variable @x over the range @t1 to @t2 for discreteness.
  * This is a heuristic whose components are (a) whether the values
  * are "fairly round" (multiples of 0.25) or not, and, if test (a) is
- * passed, then (b) whether the variable takes on only "few" distinct
+ * passed, (b) whether the variable takes on only "few" distinct
  * values.
  * 
  * Returns: 0 if test (a) is not passed or the number of distinct values

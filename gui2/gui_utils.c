@@ -1183,24 +1183,25 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     } else if (datatype == GRETL_BOX_DATA) {
 	do_open_csv_box(tryfile, OPEN_BOX, 0);
 	return;
-    } else { /* native data */
-	int clear_code = DATA_NONE;
+    } else { 
+	/* native data */
+	DataOpenCode ocode = DATA_NONE;
 	PRN *errprn;
 
 	errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
 	if (append) {
-	    clear_code = DATA_APPEND;
+	    ocode = DATA_APPEND;
 	} else if (data_status) {
-	    clear_code = DATA_CLEAR;
+	    ocode = DATA_CLEAR;
 	}
 
 	if (datatype == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, tryfile, &paths, 
-				 clear_code, errprn, 1);
+				 ocode, errprn, 1);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, tryfile, &paths, 
-				 clear_code, errprn);
+				 ocode, errprn);
 	}
 
 	gretl_print_destroy(errprn);

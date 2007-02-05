@@ -1320,7 +1320,7 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (opt & OPT_Z) {
+    if (opt & (OPT_Z | OPT_O)) {
 	freq->xbar = gretl_mean(freq->t1, freq->t2, x);
 	freq->sdx = gretl_stddev(freq->t1, freq->t2, x);
     }

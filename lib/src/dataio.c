@@ -1732,18 +1732,17 @@ static void try_gdt (char *fname)
  * @ppdinfo: pointer to data information struct.
  * @datfile: name of file to try.
  * @ppaths: path information struct.
- * @code: option.
+ * @ocode: %DATA_NONE, %DATA_CLEAR or %DATA_APPEND.
  * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as
  * required.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
-		    DataOpenCode code, PRN *prn) 
+		    DataOpenCode ocode, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
@@ -1798,7 +1797,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(datfile)) {
 	return gretl_read_gdt(pZ, ppdinfo, datfile, ppaths, 
-			      code, prn, 0);
+			      ocode, prn, 0);
     }
 
     tmpdinfo = datainfo_new();
@@ -1898,14 +1897,14 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readlbl(lblfile, tmpdinfo);
     if (err) goto bailout;
 
-    if (code == DATA_APPEND) {
+    if (ocode == DATA_APPEND) {
 	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
     } else {
 	if (ppaths != NULL && datfile != ppaths->datfile) {
 	    strcpy(ppaths->datfile, datfile);
 	}
 	free_Z(*pZ, *ppdinfo);
-	if (code == DATA_CLEAR) {
+	if (ocode == DATA_CLEAR) {
 	    clear_datainfo(*ppdinfo, CLEAR_FULL);
 	}
 	free(*ppdinfo);

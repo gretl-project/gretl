@@ -116,7 +116,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
 		    char *datfile, PATHS *ppaths, 
-		    DataOpenCode code, PRN *prn);
+		    DataOpenCode ocode, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,
