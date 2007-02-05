@@ -158,7 +158,7 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
 
 static void matrix_edit_callback (gpointer p, guint u, GtkWidget *w) 
 {
-    edit_matrix(NULL);
+    gui_new_matrix();
 }
 
 static void manual_update_query (gpointer p, guint u, GtkWidget *w)

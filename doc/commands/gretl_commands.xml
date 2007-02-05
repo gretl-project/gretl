@@ -1536,9 +1536,12 @@
 
     <description>
       <para>
-	For each variable in <repl>varlist</repl>, if it has previously
-	been marked as discrete, creates a set of dummy variables coding
-	for the distinct values of that variable. 
+	For any suitable variables in <repl>varlist</repl>, creates a set
+	of dummy variables coding for the distinct values of that
+	variable.   Suitable variables are those that have been explicitly
+	marked as discrete, or those that take on a fairly small number of
+	values all of which are <quote>fairly round</quote> (multiples of
+	0.25).
       </para>
       <para>
 	By default a dummy variable is added for each distinct value of

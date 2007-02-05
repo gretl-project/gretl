@@ -29,7 +29,7 @@ typedef enum {
 
 void show_spreadsheet (SheetCmd c);
 
-GtkWidget *edit_matrix (gretl_matrix *m);
+void gui_new_matrix (void);
 
 void edit_user_matrix_by_name (const char *name);
 

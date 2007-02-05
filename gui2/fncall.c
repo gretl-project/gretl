@@ -395,10 +395,12 @@ static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
 {
     int n = n_user_matrices();
 
-    edit_matrix(NULL);
+    gui_new_matrix();
+
     if (n_user_matrices() > n) {
 	update_matrix_selectors(cinfo);
     }
+
     gdk_window_raise(cinfo->dlg->window);
 }
 

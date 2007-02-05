@@ -3503,9 +3503,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case DUMMIFY:
 	err = list_dumgenr(&listcpy, pZ, pdinfo, cmd->opt);
-	if (err) {
-	    pputs(prn, _("Error adding dummy variables.\n"));
-	} else {
+	if (!err) {
 	    maybe_list_vars(pdinfo, prn);
 	}
 	break;

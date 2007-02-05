@@ -954,6 +954,24 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 
 #define DUMDEBUG 0
 
+static int dummify_candidate (int v, double **Z, DATAINFO *pdinfo)
+{
+    if (var_is_discrete(pdinfo, v)) {
+	/* pre-approved */
+	return 1;
+    }
+
+    if (v == 0 || var_is_scalar(pdinfo, v)) {
+	return 0;
+    }  
+
+    if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * list_dumgenr:
  * @plist: pointer to list of variables to process; on exit
@@ -1004,9 +1022,8 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	int jmin, jmax;
 	double xt;
 
-	if (vi == 0 || var_is_scalar(pdinfo, vi) || 
-	    !var_is_discrete(pdinfo, vi)) {
-	    continue; 
+	if (!dummify_candidate(vi, *pZ, pdinfo)) {
+	    continue;
 	}
 
 	n = 0;
@@ -1057,6 +1074,7 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && tmplist[0] == 0) {
+	strcpy(gretl_errmsg, _("dummify: no suitable variables were found"));
 	err = E_DATA;
     }
 

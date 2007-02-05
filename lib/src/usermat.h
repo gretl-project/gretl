@@ -128,6 +128,12 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
 					 matrix_subspec *spec,
 					 int *err);
 
+int matrix_invert_in_place (gretl_matrix *m);
+
+int matrix_transpose_in_place (gretl_matrix *m);
+
+int matrix_XTX_in_place (gretl_matrix *m);
+
 void write_matrices_to_file (FILE *fp);
 
 void set_matrix_add_callback (void (*callback));

@@ -235,8 +235,6 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
 static void rename_session_object (gui_obj *obj, const char *newname);
-static void session_matrix_properties (const gretl_matrix *m, 
-				       const char *name);
 
 static int session_saved;
 
@@ -2218,7 +2216,7 @@ static void matrix_popup_activated (GtkWidget *widget, gpointer data)
 	edit_user_matrix_by_name(name);
     } else if (strcmp(item, _("Properties")) == 0) {
 	m = user_matrix_get_matrix(u);
-	session_matrix_properties(m, name);
+	view_matrix_properties(m, name);
     } else if (strcmp(item, _("Delete")) == 0) {
 	maybe_delete_session_object(obj);
     }
@@ -2937,40 +2935,60 @@ static char *add_pause_to_plotfile (const char *fname)
     return tmpfile;
 }
 
-#endif /* G_OS_WIN32 */
-
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
-    gchar *buf = NULL;
     windata_t *vwin = (windata_t *) data;
-    int err = 0;
-# ifdef G_OS_WIN32
     gchar *tmpfile;
-# endif
+    int err = 0;
 
     auto_save_gp(vwin);
 
-# ifdef G_OS_WIN32
     tmpfile = add_pause_to_plotfile(vwin->fname);
+
     if (tmpfile != NULL) {
-	buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
+	gchar *buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
+
 	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
 	remove(tmpfile); /* is this OK? */
 	g_free(tmpfile);
+	g_free(buf);
     } else {
 	err = 1;
     }
-# else
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", vwin->fname);
-    err = gretl_spawn(buf);
-# endif
 
     if (err) {
 	errbox(_("gnuplot command failed"));
     }
-
-    g_free(buf);
 }
+
+#else /* !G_OS_WIN32 */
+
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *argv[4];
+    gboolean run;
+
+    auto_save_gp(vwin);
+
+    argv[0] = g_strdup(paths.gnuplot);
+    argv[1] = g_strdup("-persist");
+    argv[2] = g_strdup(vwin->fname);
+    argv[3] = NULL;
+    
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
+			NULL, NULL, NULL, NULL);
+
+    if (!run) {
+	errbox(_("gnuplot command failed"));
+    }
+
+    g_free(argv[0]);
+    g_free(argv[1]);
+    g_free(argv[2]);
+}
+
+#endif /* ? G_OS_WIN32 */
 
 void save_plot_commands_callback (GtkWidget *w, gpointer p)
 {
@@ -2995,8 +3013,8 @@ void display_session_graph_by_data (void *p)
     display_session_graph_png(tmp);
 }
 
-static void 
-session_matrix_properties (const gretl_matrix *m, const char *name)
+void 
+view_matrix_properties (const gretl_matrix *m, const char *name)
 {
     const char *xfmt = "%-16s %.8g\n";
     const char *ifmt = "%-12s %3d\n";
@@ -3009,7 +3027,7 @@ session_matrix_properties (const gretl_matrix *m, const char *name)
 	return;
     }
 
-    pprintf(prn, _("Properties of matrix %s"), name);
+    pprintf(prn, _("Properties of matrix %s"), (name != NULL)? name : "");
     pputs(prn, "\n\n");
 
     if (m->rows == 1 && m->cols == 1) {

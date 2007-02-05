@@ -1525,11 +1525,19 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     return freq;
 }
 
+/* wrapper function: get the distribution, print it, graph it
+   if wanted, then free stuff */
+
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq;
+    int realgraph = graph && !(opt & OPT_Q);
     int err = 0;
+
+    if (realgraph && !(opt & OPT_O)) {
+	opt |= OPT_Z;
+    }
 
     freq = get_freq(varno, Z, pdinfo, 0, 1, opt, &err); 
 
@@ -1539,10 +1547,8 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     print_freq(freq, prn); 
 
-    if (graph && !(opt & OPT_Q)) {
-	if (plot_freq(freq, (opt)? D_GAMMA : D_NORMAL)) {
-	    pputs(prn, _("gnuplot command failed\n"));
-	}
+    if (realgraph && plot_freq(freq, (opt & OPT_O)? D_GAMMA : D_NORMAL)) {
+	pputs(prn, _("gnuplot command failed\n"));
     }
 
     free_freq(freq);

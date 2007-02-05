@@ -23,6 +23,7 @@
 #include "dlgutils.h"
 #include "menustate.h"
 #include "selector.h"
+#include "session.h"
 #include "usermat.h"
 
 #include <errno.h>
@@ -52,11 +53,13 @@ typedef struct {
     GtkWidget *entry;
 #endif
     GtkWidget *popup;
+    GtkItemFactory *ifac;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
     gchar location[64];
     gretl_matrix *matrix;
     gretl_matrix *oldmat;
+    char mname[VNAMELEN];
     int *varlist;
     int datacols, datarows;
     int totcols;
@@ -83,12 +86,20 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet);
 static void set_dataset_locked (gboolean s);
 
 static void matrix_fill_callback (gpointer data, guint u, GtkWidget *w);
+static void matrix_props_callback (gpointer data, guint u, GtkWidget *w);
+static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w);
 static int update_sheet_from_matrix (Spreadsheet *sheet);
 
 enum {
     MATRIX_FILL_IDENTITY,
     MATRIX_FILL_UNIFORM,
     MATRIX_FILL_NORMAL
+};
+
+enum {
+    MATRIX_EDIT_XTX,
+    MATRIX_EDIT_TRANSPOSE,
+    MATRIX_EDIT_INVERT
 };
 
 static GtkItemFactoryEntry sheet_items[] = {
@@ -102,13 +113,23 @@ static GtkItemFactoryEntry sheet_items[] = {
 };
 
 static GtkItemFactoryEntry matrix_items[] = {
-    { N_("/_Insert"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Insert/_Identity matrix"), NULL, matrix_fill_callback, 
+    { N_("/_Fill"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Fill/_Identity matrix"), NULL, matrix_fill_callback, 
       MATRIX_FILL_IDENTITY, NULL, GNULL },
-    { N_("/Insert/_Uniform random"), NULL, matrix_fill_callback, 
+    { N_("/Fill/_Uniform random"), NULL, matrix_fill_callback, 
       MATRIX_FILL_UNIFORM, NULL, GNULL },
-    { N_("/Insert/_Normal random"), NULL, matrix_fill_callback, 
+    { N_("/Fill/_Normal random"), NULL, matrix_fill_callback, 
       MATRIX_FILL_NORMAL, NULL, GNULL },
+    { N_("/_Properties"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Properties/_View"), NULL, matrix_props_callback, 
+      0, NULL, GNULL },
+    { N_("/_Transform"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Transform/_X'X"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_XTX, NULL, GNULL },
+    { N_("/Transform/_Transpose"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_TRANSPOSE, NULL, GNULL },
+    { N_("/Transform/_Invert"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_INVERT, NULL, GNULL }
 };
 
 static void disable_obs_menu (GtkItemFactory *ifac)
@@ -197,8 +218,12 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, 0, &rstr, -1);
     cstr = gtk_tree_view_column_get_title(column);
-    single_underscores(tmp, cstr);
-    sprintf(sheet->location, "%s, %s", tmp, rstr);
+    if (sheet->matrix != NULL) {
+	sprintf(sheet->location, "%s, %s", rstr, cstr);
+    } else {
+	single_underscores(tmp, cstr);
+	sprintf(sheet->location, "%s, %s", tmp, rstr);
+    }
     gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
     gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), 
 		       sheet->cid, sheet->location);
@@ -309,24 +334,14 @@ spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
     g_free(pstr);
 }
 
-static int real_add_new_var (Spreadsheet *sheet, const char *varname)
+static GtkTreeViewColumn *
+add_treeview_column_with_title (Spreadsheet *sheet, const char *name)
 {
     GtkTreeViewColumn *column;
     gint cols, colnum;
-    char tmp[32];
-
-    if (add_data_column(sheet)) {
-	return 1;
-    }
-
-#if SSDEBUG
-    fprintf(stderr, "real_add_new_var, after add_data_column: sheet->totcols=%d\n", 
-	    sheet->totcols);
-#endif
 
     column = gtk_tree_view_column_new();
-    double_underscores(tmp, varname);
-    gtk_tree_view_column_set_title(column, tmp);
+    gtk_tree_view_column_set_title(column, name);
     set_up_sheet_column(column, get_data_col_width(), TRUE);
 
     cols = gtk_tree_view_insert_column(GTK_TREE_VIEW(sheet->view), column, -1);
@@ -338,6 +353,26 @@ static int real_add_new_var (Spreadsheet *sheet, const char *varname)
 					"text", colnum,
 					NULL);
     g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(colnum));
+
+    return column;
+}
+
+static int real_add_new_var (Spreadsheet *sheet, const char *varname)
+{
+    GtkTreeViewColumn *column;
+    char tmp[32];
+
+    if (add_data_column(sheet)) {
+	return 1;
+    }
+
+#if SSDEBUG
+    fprintf(stderr, "real_add_new_var, after add_data_column: sheet->totcols=%d\n", 
+	    sheet->totcols);
+#endif
+
+    double_underscores(tmp, varname);
+    column = add_treeview_column_with_title(sheet, tmp);
 
     /* scroll to editing position if need be */
     spreadsheet_scroll_to_new_col(sheet, column);
@@ -510,36 +545,51 @@ static void new_case_dialog (Spreadsheet *sheet)
 		 0, VARCLICK_NONE, NULL);
 }
 
+static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
+{
+    GtkListStore *store;
+    GType *types;
+    int i;
+
+    /* obs col, data cols */
+    sheet->totcols = sheet->datacols + 1;
+
+    types = mymalloc(sheet->totcols * sizeof *types);
+    if (types == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<sheet->totcols; i++) {
+	types[i] = G_TYPE_STRING;
+    }
+
+    store = gtk_list_store_newv(sheet->totcols, types);
+    free(types);
+
+    return store;
+}
+
 static int add_data_column (Spreadsheet *sheet)
 {
-    GType *types;
     GtkListStore *old_store, *new_store;
     GtkTreeIter old_iter, new_iter;
-    gint i, row;
+    gint row;
 
     /* This is relatively complex because, so far as I can tell, you can't
        append or insert additional columns in a GtkListStore: we have to
        create a whole new liststore and copy the old info across.
     */
 
-    /* make an expanded column types list */
-    types = mymalloc((sheet->totcols + 1) * sizeof *types);
-    if (types == NULL) {
-	return 1;
-    }
-
     sheet->datacols += 1;
-    sheet->totcols += 1;
-
-    /* configure the types */
-    for (i=0; i<sheet->totcols; i++) {
-	types[i] = G_TYPE_STRING;
-    }
 
     /* get pointers to original and new stores */
+    new_store = make_sheet_liststore(sheet);
+    if (new_store == NULL) {
+	sheet->datacols -= 1;
+	sheet->totcols -= 1;
+	return E_ALLOC;
+    }
     old_store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view)));
-    new_store = gtk_list_store_newv(sheet->totcols, types);
-    free(types);
 
     /* go to start of old and new lists */
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(old_store), &old_iter);
@@ -577,6 +627,37 @@ static int add_data_column (Spreadsheet *sheet)
 #endif
 
     return 0;
+}
+
+static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
+{
+    Spreadsheet *sheet = (Spreadsheet *) data;
+    int err = 0;
+
+    switch (u) {
+    case MATRIX_EDIT_XTX:
+	err = matrix_XTX_in_place(sheet->matrix);
+	break;
+    case MATRIX_EDIT_TRANSPOSE:
+	err = matrix_transpose_in_place(sheet->matrix);
+	break;
+    case MATRIX_EDIT_INVERT:
+	err = matrix_invert_in_place(sheet->matrix);
+	break;
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	update_sheet_from_matrix(sheet);
+    }
+}
+
+static void matrix_props_callback (gpointer data, guint u, GtkWidget *w)
+{
+    Spreadsheet *sheet = (Spreadsheet *) data;
+
+    view_matrix_properties(sheet->matrix, sheet->mname);
 }
 
 static void matrix_fill_callback (gpointer data, guint u, GtkWidget *w)
@@ -741,7 +822,24 @@ static void update_matrix_from_sheet (Spreadsheet *sheet)
     /* in case we're editing a pre-existing matrix, carry the
        modifications back */
     if (sheet->oldmat != NULL) {
-	gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	if (sheet->oldmat->rows == sheet->matrix->rows &&
+	    sheet->oldmat->cols == sheet->matrix->cols) {
+	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	} else if (sheet->oldmat->rows * sheet->oldmat->cols ==
+		   sheet->matrix->rows * sheet->matrix->cols) {
+	    sheet->oldmat->rows = sheet->matrix->rows;
+	    sheet->oldmat->cols = sheet->matrix->cols;
+	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	} else {
+	    gretl_matrix *m = gretl_matrix_copy(sheet->matrix);
+
+	    if (m == NULL) {
+		nomem();
+	    } else {
+		user_matrix_replace_matrix_by_name(sheet->mname, m);
+		sheet->oldmat = m;
+	    }
+	}
     }
 
     sheet->modified = 0;
@@ -888,29 +986,108 @@ static void select_first_editable_cell (Spreadsheet *sheet)
     gtk_tree_path_free(path);
 }
 
+static void set_allowable_transforms (Spreadsheet *sheet)
+{
+    int s = gretl_matrix_get_structure(sheet->matrix);
+    GtkWidget *w;
+
+    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Invert");
+    gtk_widget_set_sensitive(w, s != 0);
+
+    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Transpose");
+    gtk_widget_set_sensitive(w, s != GRETL_MATRIX_SYMMETRIC &&
+			     s != GRETL_MATRIX_DIAGONAL &&
+			     s != GRETL_MATRIX_SCALAR);
+}
+
+static int rejig_sheet_cols (Spreadsheet *sheet)
+{
+    int n = sheet->matrix->cols - sheet->datacols;
+    GtkTreeViewColumn *column;
+    GtkListStore *store;
+    char rstr[16];
+    int i;
+
+    sheet->datacols = sheet->matrix->cols;
+
+    store = make_sheet_liststore(sheet);
+    if (store == NULL) {
+	return E_ALLOC;
+    }
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(sheet->view), GTK_TREE_MODEL(store));
+    g_object_unref(G_OBJECT(store));
+
+    if (n > 0) {
+	for (i=0; i<n; i++) {
+	    sprintf(rstr, "%d", sheet->datacols - n + i + 1);
+	    add_treeview_column_with_title(sheet, rstr);
+	}
+    } else {
+	n = -n;
+	for (i=0; i<n; i++) {
+	    column = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view),
+					      sheet->datacols + n - i);
+	    gtk_tree_view_remove_column(GTK_TREE_VIEW(sheet->view),
+					column);
+	}
+    }
+
+    return 0;
+}
+
 static int update_sheet_from_matrix (Spreadsheet *sheet)
 {
     gchar tmpstr[32];
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreeIter iter;
     GtkListStore *store;
+    GtkTreeIter iter;
+    int i, j, colresize = 0;
     double x;
-    int i, j;
+    int err = 0;
+
+    if (sheet->matrix->cols != sheet->datacols) {
+	err = rejig_sheet_cols(sheet);
+	if (err) {
+	    return err;
+	}
+	colresize = 1;
+    }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=0; i<sheet->datarows; i++) {
+    for (i=0; i<sheet->matrix->rows; i++) {
+	if (colresize) {
+	    gtk_list_store_append(store, &iter);
+	}
+	if (colresize || i >= sheet->datarows) {
+	    sprintf(tmpstr, "%d", i + 1);
+	    gtk_list_store_set(store, &iter, 0, tmpstr, -1);
+	}	    
 	for (j=0; j<sheet->datacols; j++) {
 	    x = gretl_matrix_get(sheet->matrix, i, j);
 	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
-	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	if (colresize) {
+	    continue;
+	} else if (i < sheet->datarows) {
+	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	} else {
+	    gtk_list_store_append(store, &iter);
+	}
     }
 
+    if (!colresize) {
+	for (i=sheet->matrix->rows; i<sheet->datarows; i++) {
+	    gtk_list_store_remove(store, &iter);
+	}
+    }
+
+    sheet->datarows = sheet->matrix->rows;
     sheet->modified = 1;
+    set_allowable_transforms(sheet);
 
     return 0;
 }
@@ -945,6 +1122,8 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
+
+    set_allowable_transforms(sheet);
 
     return 0;
 }
@@ -1241,7 +1420,6 @@ static int build_sheet_view (Spreadsheet *sheet)
     GtkWidget *view;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    GType *types;
     gchar tmpstr[32];
     gint i, width, colnum;
 
@@ -1261,22 +1439,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	}
     }
 
-    /* obs col, data cols */
-    sheet->totcols = sheet->datacols + 1;
-
-    types = mymalloc(sheet->totcols * sizeof *types);
-    if (types == NULL) {
-	return 1;
-    }
-
-    /* configure the types */
-    for (i=0; i<sheet->totcols; i++) {
-	types[i] = G_TYPE_STRING;
-    }
-
-    store = gtk_list_store_newv(sheet->totcols, types);
-    free(types);
-
+    store = make_sheet_liststore(sheet);
     view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     g_object_unref(G_OBJECT(store));
 
@@ -1435,6 +1598,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->entry = NULL;
 #endif
     sheet->popup = NULL;
+    sheet->ifac = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
     sheet->datacols = sheet->datarows = 0;
@@ -1449,6 +1613,8 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->oldmat = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
+
+    sheet->mname[0] = '\0';
 
     if (c == SHEET_EDIT_MATRIX) {
 	return sheet;
@@ -1560,18 +1726,18 @@ static gint simple_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 }
 
 static void 
-sheet_adjust_menu_state (Spreadsheet *sheet, GtkItemFactory *ifac)
+sheet_adjust_menu_state (Spreadsheet *sheet)
 {
     sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
 
     if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_obs_menu(ifac);
+	disable_obs_menu(sheet->ifac);
     } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
 	       dataset_is_panel(datainfo)) {
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
-	disable_insert_obs_item(ifac);
+	disable_insert_obs_item(sheet->ifac);
     }
 }
 
@@ -1583,7 +1749,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     GtkWidget *scroller, *main_vbox;
     GtkWidget *hbox, *padbox;
     GtkWidget *status_box, *mbar;
-    GtkItemFactory *ifac = NULL;
     int width, height = 400;
     int err = 0;
 
@@ -1624,23 +1789,23 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_widget_show(main_vbox);
 
     /* add menu bar */
-    ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				NULL);
+    sheet->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
+				       NULL);
 #ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(ifac, menu_translate, NULL, NULL);
+    gtk_item_factory_set_translate_func(sheet->ifac, menu_translate, NULL, NULL);
 #endif
 
     if (sheet->matrix == NULL) {
-	gtk_item_factory_create_items(ifac, 
+	gtk_item_factory_create_items(sheet->ifac, 
 				      sizeof sheet_items / sizeof sheet_items[0],
 				      sheet_items, sheet);
     } else {
-	gtk_item_factory_create_items(ifac, 
+	gtk_item_factory_create_items(sheet->ifac, 
 				      sizeof matrix_items / sizeof matrix_items[0],
 				      matrix_items, sheet);
     }
 
-    mbar = gtk_item_factory_get_widget(ifac, "<main>");
+    mbar = gtk_item_factory_get_widget(sheet->ifac, "<main>");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
 
@@ -1684,7 +1849,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_widget_show(sheet->view); 
 
     if (sheet->matrix == NULL) {
-	sheet_adjust_menu_state(sheet, ifac);
+	sheet_adjust_menu_state(sheet);
 
 	if (sheet->varlist[0] < 7) {
 	    /* padding to fill out the spreadsheet */
@@ -2104,6 +2269,26 @@ matrix_from_formula (struct gui_matrix_spec *s)
     return err;
 }
 
+static int
+matrix_from_spec (struct gui_matrix_spec *s)
+{
+    int err = 0;
+
+    s->m = gretl_matrix_alloc(s->rows, s->cols);
+    if (s->m == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_fill(s->m, s->fill);
+	err = add_or_replace_user_matrix(s->m, s->name);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } 
+
+    return err;
+}
+
 static void gui_matrix_spec_init (struct gui_matrix_spec *s)
 {
     s->name[0] = '\0';
@@ -2115,45 +2300,58 @@ static void gui_matrix_spec_init (struct gui_matrix_spec *s)
     s->m = NULL;
 }
 
-/* returns pointer to matrix-editing window */
-
-GtkWidget *edit_matrix (gretl_matrix *m)
+void gui_new_matrix (void)
 {
     Spreadsheet *sheet = NULL;
-    gretl_matrix *oldmat = m;
     struct gui_matrix_spec spec;
-    int newmat = 0;
     int err = 0;
 
-    if (m == NULL) {
-	newmat = 1;
-	gui_matrix_spec_init(&spec);
-	err = new_matrix_dialog(&spec);
+    gui_matrix_spec_init(&spec);
+    err = new_matrix_dialog(&spec);
+    if (err) {
+	return;
+    }
+
+    if (spec.uselist) {
+	/* matrix from listed vars */
+	simple_selection(_("Define matrix"), matrix_from_list, 
+			 DEFINE_MATRIX, &spec);
+	return;
+    } else if (spec.formula != NULL) {
+	/* matrix from genr-style formula */
+	matrix_from_formula(&spec);
+	free(spec.formula);
+	return;
+    } else {
+	/* numerical specification: open editor if OK */
+	err = matrix_from_spec(&spec);
 	if (err) {
-	    return NULL;
-	}
-	if (spec.uselist) {
-	    simple_selection(_("Define matrix"), matrix_from_list, 
-			     DEFINE_MATRIX, &spec);
-	    m = spec.m;
-	    if (m == NULL) {
-		return NULL;
-	    }
-	    newmat = 0;
-	} else if (spec.formula != NULL) {
-	    err = matrix_from_formula(&spec);
-	    free(spec.formula);
-	    m = spec.m;
-	    if (m == NULL) {
-		return NULL;
-	    }	    
-	    newmat = 0;
+	    return;
 	}
     }
 
-    if (oldmat == NULL && !newmat) {
-	/* new matrix from list or formula: don't bother with ssheet
-	   editor window? */
+    sheet = spreadsheet_new(SHEET_EDIT_MATRIX);
+    if (sheet == NULL) {
+	return;
+    }
+
+    strcpy(sheet->mname, spec.name);
+    sheet->matrix = spec.m;
+    sheet->modified = 1;
+    sheet->datarows = gretl_matrix_rows(sheet->matrix);
+    sheet->datacols = gretl_matrix_cols(sheet->matrix);
+    real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 1);
+}
+
+/* returns pointer to matrix-editing window */
+
+static GtkWidget *edit_matrix (gretl_matrix *m, const char *name)
+{
+    Spreadsheet *sheet = NULL;
+    gretl_matrix *oldmat = m;
+    int err = 0;
+
+    if (m == NULL || name == NULL) {
 	return NULL;
     }
 
@@ -2162,31 +2360,11 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	return NULL;
     }
 
-    if (oldmat != NULL) {
-	/* if we're editing a pre-existing matrix, make a copy
-	   so the user can back out of the editing if desired 
-	*/
-	sheet->oldmat = oldmat;
-	sheet->matrix = gretl_matrix_copy(oldmat);
-	if (sheet->matrix == NULL) {
-	    err = E_ALLOC;
-	}
-    } else if (m != NULL) {
-	/* already created a new matrix */
-	sheet->matrix = m;
-    } else {
-	/* no matrix created yet */
-	sheet->matrix = gretl_matrix_alloc(spec.rows, spec.cols);
-	if (sheet->matrix == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    gretl_matrix_fill(sheet->matrix, spec.fill);
-	}
-    }
-
-    if (sheet->matrix != NULL && newmat) {
-	err = add_or_replace_user_matrix(sheet->matrix, spec.name);
-	/* and if err? */
+    strcpy(sheet->mname, name);
+    sheet->oldmat = oldmat;
+    sheet->matrix = gretl_matrix_copy(oldmat);
+    if (sheet->matrix == NULL) {
+	err = E_ALLOC;
     }
 
     if (err) {
@@ -2194,16 +2372,9 @@ GtkWidget *edit_matrix (gretl_matrix *m)
 	free(sheet);
 	sheet = NULL;
     } else {
-	int block = 0;
-
-	if (oldmat == NULL) {
-	    block = 1;
-	    sheet->modified = 1;
-	}
-
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
-	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);
+	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 0);
     }
 
     return (sheet != NULL)? sheet->win : NULL;
@@ -2226,7 +2397,7 @@ void edit_user_matrix_by_name (const char *name)
     if (m == NULL) {
 	errbox(_("Couldn't open '%s'"), name);
     } else {
-	w = edit_matrix(m);
+	w = edit_matrix(m, name);
 	if (w != NULL) {
 	    /* protect matrix from deletion while editing */
 	    g_object_set_data(G_OBJECT(w), "object", u);

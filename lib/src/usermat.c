@@ -964,6 +964,71 @@ gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
     return R;
 }
 
+static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
+{
+    targ->rows = src->rows;
+    targ->cols = src->cols;
+    free(targ->val);
+    targ->val = src->val;
+    src->val = NULL;
+}
+
+int matrix_invert_in_place (gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+    int err = 0;
+
+    R = gretl_matrix_copy(m);
+    if (R == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_invert_matrix(R);
+	if (!err) {
+	    matrix_cannibalize(m, R);
+	}
+	gretl_matrix_free(R);
+    } 
+
+    return err;
+}
+
+int matrix_transpose_in_place (gretl_matrix *m)
+{
+    gretl_matrix *R = gretl_matrix_copy_transpose(m);
+    int err = 0;
+
+    if (R == NULL) {
+	err = E_ALLOC;
+    } else {
+	matrix_cannibalize(m, R);
+	gretl_matrix_free(R);
+    }
+
+    return err;
+}
+
+int matrix_XTX_in_place (gretl_matrix *m)
+{
+    gretl_matrix *R = gretl_matrix_alloc(m->cols, m->cols);
+    int err;
+
+    if (R == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
+					m, GRETL_MOD_NONE,
+					R, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	matrix_cannibalize(m, R);
+    }
+
+    gretl_matrix_free(R);
+
+    return err;
+}
+
 gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m)
 {
     gretl_matrix *R = NULL;

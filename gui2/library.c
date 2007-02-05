@@ -3468,7 +3468,12 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 		 "appropriate"));
     } else {
 	if (plot_freq(freq, dist)) {
-	    errbox(_("gnuplot command failed"));
+	    const char *msg = gretl_errmsg_get();
+
+	    if (*msg == '\0') {
+		msg = _("gnuplot command failed");
+	    } 
+	    errbox(msg);
 	} else {
 	    register_graph();
 	}

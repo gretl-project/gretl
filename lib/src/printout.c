@@ -335,6 +335,11 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	return;
     } 
 
+    if (K == 0) {
+	pprintf(prn, "\n constant: value = %g\n", freq->midpt[0]);
+	return;
+    }
+
     if (!freq->discrete) {
 	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
 		freq->numbins, freq->xbar, freq->sdx);

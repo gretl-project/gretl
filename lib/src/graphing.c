@@ -2146,7 +2146,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
     int err;
 
     if (K == 0) {
-	return 1;
+	return E_DATA;
+    }
+
+    if (K == 1) {
+	sprintf(gretl_errmsg, _("'%s' is a constant"), freq->varname);
+	return E_DATA;
     }
 
     if (dist == D_NORMAL) {

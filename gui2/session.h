@@ -108,4 +108,6 @@ void disable_graph_page (void);
 
 void display_session_graph_by_data (void *p);
 
+void view_matrix_properties (const gretl_matrix *m, const char *name);
+
 #endif /* SESSION_H */
