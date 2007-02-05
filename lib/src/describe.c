@@ -1432,10 +1432,6 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 
     strcpy(freq->varname, pdinfo->varname[varno]);
 
-    if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
-	freq->discrete = 1;
-    }
-
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
 		  &skew, &kurt, params);
