@@ -607,7 +607,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	vsize = 340;
 	break;
     case XTAB:
-	gretl_command_sprintf("xtab %s", liststr);
+	gretl_command_sprintf("xtab %s --zeros", liststr);
 	strcat(title, _("cross tabulation"));
 	vsize = 340;
 	break;
@@ -663,7 +663,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     case XTAB:
 	err = crosstab(libcmd.list, (const double **) Z, datainfo,
-		       OPT_NONE, prn);
+		       OPT_Z, prn);
 	break;
 
     case RUNS:

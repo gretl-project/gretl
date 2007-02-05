@@ -409,6 +409,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     int c = tab->cols;
     double x, y;
     int n5 = 0;
+    double ymin = 1.0e-7;
     double pearson = 0.0;
     int i, j;
 
@@ -442,17 +443,14 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 			    pprintf(prn, "%5d ", tab->f[i][j]);
 			}
 		    } else {
-			pputs(prn,"      ");
+			pputs(prn, "      ");
 		    }
 		} 
 
 		if (!na(pearson)) {
 		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    x = (double) tab->f[i][j] - y;
-		    if (y < 1.0e-7) {
-			fprintf(stderr, "Error computing chi2 test: "
-				"expected n in cell (%d,%d) = %g\n",
-				i, j, y);
+		    if (y < ymin) {
 			pearson = NADBL;
 		    } else {
 			pearson += x * x / y;
@@ -478,7 +476,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	    x = 100.0 * tab->ctotal[j] / tab->n;
 	    pprintf(prn, "%5.1f%%", x);
 	} else {
-	    pprintf(prn, "%5g ", tab->ctotal[j]);
+	    pprintf(prn, "%5d ", tab->ctotal[j]);
 	}
     }
     
@@ -490,16 +488,21 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	pputc(prn, '\n');
     }
 
-    if (!na(pearson)) {
+    if (na(pearson)) {
+	pprintf(prn, _("Pearson chi-square test not computed: some "
+		       "expected frequencies were less\n"
+		       "than %g\n"), ymin);
+    } else {
 	double n5p = (double) n5 / (r * c);
-	int df;
+	int df = (r - 1) * (c - 1);
 
-	if (n5p >= .80 || (opt & OPT_X)) {
-	    df = (r - 1) * (c - 1);
-	    pputc(prn, '\n');
-	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
-		    pearson, df, chisq_cdf_comp(pearson, df));
-	    pputc(prn, '\n');
+	pputc(prn, '\n');
+	pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
+		pearson, df, chisq_cdf_comp(pearson, df));
+	pputc(prn, '\n');
+	if (n5p < 0.80) {
+	    pputs(prn, "Warning: Less than of 80% of cells had expected "
+		  "values of 5 or greater.\n");
 	}
     }
 }

@@ -1500,8 +1500,7 @@
 	default all variables are treated as continuous; marking a
 	variable as discrete affects the way the variable is handled in
 	frequency plots, and also allows you to select the variable for
-	the commands <cmdref targ="xtab"/> (cross-tabulation) 
-	and <cmdref targ="dummify"/>.
+	the command <cmdref targ="dummify"/>.
       </para>
       <para>
 	If the <lit>--reverse</lit> flag is given, the operation is reversed;
@@ -6651,9 +6650,7 @@
 	<lit>--continuous</lit> option flags is given, the variable's
 	numerical character is set accordingly.  The default is to treat
 	all variables as continuous; setting a variable as discrete
-	affects the way the variable is handled in frequency plots, and
-	also allows you to select the variable for the <cmdref
-	  targ="xtab"/> command (cross-tabulation). 
+	affects the way the variable is handled in frequency plots.
       </para>
 
     </description>
@@ -6684,9 +6681,7 @@
 
       <para>* Mark a variable as discrete (for series with integer values
 	only).  This affects the way the variable is handled when you ask
-	for a frequency plot, and also allows you to select the variable
-	for the <cmdref
-	  targ="xtab"/> command (cross-tabulation).
+	for a frequency plot.
       </para>
 
       <para>* (For a scalar variable) set the value of the variable.
@@ -8030,10 +8025,6 @@
 	<argument separated="true">xlist</argument>
       </arguments>
       <options>
-	<option>
-	  <flag>--chi-square</flag>
-	  <effect>force display of chi-square test</effect>
-        </option>
         <option>
 	  <flag>--row</flag>
 	  <effect>display row percentages</effect>
@@ -8065,11 +8056,12 @@
 	into another program, such as a spreadsheet.
       </para>
       <para>
-	Pearson's chi-square test for independence is automatically
-	displayed if the expected frequency under independence is 5 or
-	higher for at least 80 percent of the cells. The option
-	<lit>--chi-square</lit> causes the test to be displayed in all
-	cases.
+	Pearson's chi-square test for independence is displayed if the
+	expected frequency under independence is at least 1.0e-7 for all
+	cells.  A common rule of thumb for the validity of this statistic
+	is that at least 80 percent of cells should have expected
+	frequencies of 5 or greater; if this criterion is not met a
+	warning is printed.
       </para>
 
     </description>

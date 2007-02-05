@@ -885,6 +885,7 @@ static FreqDist *freq_new (void)
     freq->f = NULL;
 
     freq->dist = 0;
+    freq->discrete = 0;
     freq->test = NADBL;
 
     return freq;
@@ -1189,19 +1190,22 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     return err;
 }
 
-static int freq_add_arrays (FreqDist *freq, int nbins)
+static int freq_add_arrays (FreqDist *freq, int n)
 {
     int err = 0;
+
+    if (!freq->discrete) {
+	freq->endpt = malloc((n + 1) * sizeof *freq->endpt);
+    }
 	
-    freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
-    freq->midpt = malloc(nbins * sizeof *freq->midpt);
-    freq->f = malloc(nbins * sizeof *freq->f);
+    freq->midpt = malloc(n * sizeof *freq->midpt);
+    freq->f = malloc(n * sizeof *freq->f);
 	
-    if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+    if ((!freq->discrete && freq->endpt == NULL) || 
+	freq->midpt == NULL || freq->f == NULL) {
 	err = E_ALLOC;
-	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
     } else {
-	freq->numbins = nbins;
+	freq->numbins = n;
     }
 
     return err;
@@ -1277,6 +1281,106 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+static FreqDist *
+get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo, 
+		   int *err)
+{
+    FreqDist *freq;
+    const double *x = Z[v];
+    int *ifreq = NULL;
+    double *ivals = NULL;
+    double *sorted = NULL;
+    double last;
+    int i, t, nv;
+
+    freq = freq_new();
+    if (freq == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    freq->t1 = pdinfo->t1; 
+    freq->t2 = pdinfo->t2;
+
+    freq->n = 0;
+    for (t=freq->t1; t<=freq->t2; t++) {
+	if (!na(x[t])) {
+	    freq->n += 1;
+	}
+    }
+
+    if (freq->n < 3) {
+	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
+				"distribution for variable %s"), 
+		pdinfo->varname[v]);
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    strcpy(freq->varname, pdinfo->varname[v]);
+    freq->discrete = 1;
+    freq->test = NADBL;
+    freq->dist = 0;
+    
+    sorted = malloc(freq->n * sizeof *sorted);
+    if (sorted == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    i = 0;
+    for (t=freq->t1; t<=freq->t2; t++) {
+	if (!na(x[t])) {
+	    sorted[i++] = x[t];
+	}
+    }
+	
+    qsort(sorted, freq->n, sizeof *sorted, gretl_compare_doubles); 
+    nv = count_distinct_values(sorted, freq->n);
+
+    ifreq = malloc(nv * sizeof *ifreq);
+    ivals = malloc(nv * sizeof *ivals);
+    if (ifreq == NULL || ivals == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    ivals[0] = last = sorted[0];
+    ifreq[0] = i = 1;
+
+    for (t=1; t<freq->n; t++) {
+	if (sorted[t] != last) {
+	    last = sorted[t];
+	    ifreq[i] = 1;
+	    ivals[i++] = last;
+	} else {
+	    ifreq[i-1] += 1;
+	}
+    }
+
+    if (freq_add_arrays(freq, nv)) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<nv; i++) {
+	    freq->midpt[i] = ivals[i];
+	    freq->f[i] = ifreq[i];
+	}
+    }
+
+ bailout:
+
+    free(sorted);
+    free(ivals);
+    free(ifreq);
+	
+    if (*err && freq != NULL) {
+	free_freq(freq);
+	freq = NULL;
+    }
+	
+    return freq;
+}
+
 /**
  * get_freq:
  * @varno: ID number of variable to process.
@@ -1285,8 +1389,9 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
  * @nbins: number of bins to use (or 0 for automatic)
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
- * @opt: if & OPT_O, compare with gamma distribution, not normal;
- * if includes OPT_Q, do not show a histogram.
+ * @opt: if includes %OPT_O, compare with gamma distribution, not normal;
+ * if includes %OPT_Q, do not show a histogram; if includes %OPT_D,
+ * treat the variable as discrete.
  * @err: location to receive error code.
  *
  * Calculates the frequency distribution for the specified variable.
@@ -1298,17 +1403,23 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 		    int nbins, int params, gretlopt opt, int *err)
 {
     FreqDist *freq;
-    const double *x = Z[varno];
+    const double *x;
     double xx, xmin, xmax;
     double skew, kurt;
     double binwidth;
     int t, k, n;
+
+    if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
+	return get_discrete_freq(varno, Z, pdinfo, err);
+    }
 
     freq = freq_new();
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
+
+    x = Z[varno];
 
     if (freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth)) {
 	*err = E_DATA;
@@ -1320,7 +1431,10 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     freq->n = n;
 
     strcpy(freq->varname, pdinfo->varname[varno]);
-    freq->discrete = var_is_discrete(pdinfo, varno);
+
+    if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
+	freq->discrete = 1;
+    }
 
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
@@ -1346,113 +1460,48 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return freq;
     }
     
-    if (freq->discrete) {
-	int *ifreq = NULL;
-	double *ivals = NULL;
-	double *sorted = NULL;
-	int i, last;
+    if (freq_add_arrays(freq, nbins)) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
 
-	sorted = malloc(n * sizeof *sorted);
-	if (sorted == NULL) {
-	    *err = E_ALLOC;
-	    goto bailout;
-	}
+    freq->endpt[0] = xmin - .5 * binwidth;
 	
-	n = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (!na(x[t])) {
-		sorted[n++] = x[t];
-	    }
-	}
-	
-	qsort(sorted, n, sizeof *sorted, gretl_compare_doubles); 
-	nbins = count_distinct_values(sorted, n);
-
-	ifreq = malloc(nbins * sizeof *ifreq);
-	ivals = malloc(nbins * sizeof *ivals);
-	if (ifreq == NULL || ivals == NULL) {
-	    *err = E_ALLOC;
-	    goto discrete_end;
-	}
-
-	ivals[0] = last = sorted[0];
-	ifreq[0] = i = 1;
-
-	for (t=1; t<n; t++) {
-	    if (sorted[t] != last) {
-		last = sorted[t];
-		ifreq[i] = 1;
-		ivals[i++] = last;
-	    } else {
-		ifreq[i-1] += 1;
-	    }
-	}
-
-	if (freq_add_arrays(freq, nbins)) {
-	    *err = E_ALLOC;
-	} else {
-	    for (k=0; k<nbins; k++) {
-		freq->endpt[k] = freq->midpt[k] = ivals[k];
-		freq->f[k] = ifreq[k];
-	    }
-	    freq->endpt[nbins] = xmax;
-	}
-
-    discrete_end:
-
-	free(sorted);
-	free(ivals);
-	free(ifreq);
-	
-	if (*err) {
-	    goto bailout;
-	}
-    } else {
-	/* not discrete (integer) data */
-	
-	if (freq_add_arrays(freq, nbins)) {
-	    *err = E_ALLOC;
-	    goto bailout;
-	}
-
-	freq->endpt[0] = xmin - .5 * binwidth;
-	
-	if (xmin > 0.0 && freq->endpt[0] < 0.0) {
-	    double rshift;
+    if (xmin > 0.0 && freq->endpt[0] < 0.0) {
+	double rshift;
 	    
-	    freq->endpt[0] = 0.0;
-	    rshift = 1.0 - xmin / binwidth;
-	    freq->endpt[freq->numbins] = xmax + rshift * binwidth;
-	} else {
-	    freq->endpt[freq->numbins] = xmax + .5 * binwidth;
-	}
+	freq->endpt[0] = 0.0;
+	rshift = 1.0 - xmin / binwidth;
+	freq->endpt[freq->numbins] = xmax + rshift * binwidth;
+    } else {
+	freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+    }
 	
-	for (k=0; k<freq->numbins; k++) {
-	    freq->f[k] = 0;
-	    if (k > 0) {
-		freq->endpt[k] = freq->endpt[k-1] + binwidth;
-	    }
-	    freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
+    for (k=0; k<freq->numbins; k++) {
+	freq->f[k] = 0;
+	if (k > 0) {
+	    freq->endpt[k] = freq->endpt[k-1] + binwidth;
 	}
+	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
+    }
 	
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    xx = x[t];
-	    if (na(xx)) {
-		continue;
-	    }
-	    if (xx < freq->endpt[1]) {
-		freq->f[0] += 1;
-		continue;
-	    }
-	    if (xx >= freq->endpt[freq->numbins]) {
-		freq->f[freq->numbins-1] += 1;
-		continue;
-	    }
-	    for (k=1; k<freq->numbins; k++) {
-		if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
-		    freq->f[k] += 1;
-		    break;
-		}
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xx = x[t];
+	if (na(xx)) {
+	    continue;
+	}
+	if (xx < freq->endpt[1]) {
+	    freq->f[0] += 1;
+	    continue;
+	}
+	if (xx >= freq->endpt[freq->numbins]) {
+	    freq->f[freq->numbins-1] += 1;
+	    continue;
+	}
+	for (k=1; k<freq->numbins; k++) {
+	    if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
+		freq->f[k] += 1;
+		break;
 	    }
 	}
     }
@@ -1601,15 +1650,15 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 {
     Xtab *tab = NULL;
     double **X = NULL;
-    int rx = 0, cx = 0;
+    int ri = 0, cj = 0;
     int rows, cols;
 
     FreqDist *rowfreq = NULL, *colfreq = NULL;
 
-    int t, i, nr = 0, nc = 0;
+    double xr = 0.0, xc = 0.0;
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
-    int n = 0;
+    int i, t, n = 0;
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
@@ -1710,29 +1759,31 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     } else {
 	qsort(X, n, sizeof *X, compare_xtab_rows);
 
-	rx = cx = 0;
-	nr = tab->rval[0];
-	nc = tab->cval[0];
+	ri = cj = 0;
+	xr = tab->rval[0];
+	xc = tab->cval[0];
     }
 
     /* compute frequencies by going through sorted X */
 
     for (i=0; i<n && !*err; i++) {
-	while (X[i][0] > nr) { /* skip row */
-	    nr = tab->rval[++rx];
-	    cx = 0;
-	    nc = tab->cval[0];
+	while (X[i][0] > xr) { 
+	    /* skip row */
+	    xr = tab->rval[++ri];
+	    cj = 0;
+	    xc = tab->cval[0];
 	}
-	while (X[i][1] > nc) { /* skip column */
-	    nc = tab->cval[++cx];
+	while (X[i][1] > xc) { 
+	    /* skip column */
+	    xc = tab->cval[++cj];
 	}
 #if XTAB_DEBUG
-	fprintf(stderr,"%d: (%d,%d) [%d,%d] %d,%d\n",
-		i, rx, cx, nr, nc, X[i][0], X[i][1]);
+	fprintf(stderr,"%d: (%d,%d) [%g,%g] %g,%g\n",
+		i, ri, cj, xr, xc, X[i][0], X[i][1]);
 #endif
-	tab->f[rx][cx] += 1;
-	tab->rtotal[rx] += 1;
-	tab->ctotal[cx] += 1;
+	tab->f[ri][cj] += 1;
+	tab->rtotal[ri] += 1;
+	tab->ctotal[cj] += 1;
     }
 
     /* we're done; free stuff and quit */
@@ -1751,6 +1802,7 @@ int crosstab (const int *list, const double **Z,
 	      const DATAINFO *pdinfo, gretlopt opt, 
 	      PRN *prn)
 {
+    Xtab *tab;
     int *rowvar = NULL;
     int *colvar = NULL;
     int i, j, k;
@@ -1780,15 +1832,17 @@ int crosstab (const int *list, const double **Z,
 
     j = 1;
     for (i=1; i<=nrv; i++) {
-	if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[i]])) {
-	    rowvar[j++] = list[i];
+	k = list[i];
+	if (var_is_discrete(pdinfo, k) ||
+	    gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[k])) {
+	    rowvar[j++] = k;
 	} else {
 	    rowvar[0] -= 1;
 	}
     }
 
-    if (rowvar[0] == 0) {
-	strcpy(gretl_errmsg, "xtab: variables must be marked as discrete");
+    if (rowvar[0] == 0 || (blanket && rowvar[0] == 1)) {
+	strcpy(gretl_errmsg, "xtab: variables must be discrete");
 	free(rowvar);
 	return E_DATATYPE;
     }
@@ -1801,7 +1855,8 @@ int crosstab (const int *list, const double **Z,
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
 		k = pos + i;
-		if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[k]])) {
+		if (var_is_discrete(pdinfo, list[k]) ||
+		    gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[k]])) {
 		    colvar[j++] = list[k];
 		} else {
 		    colvar[0] -= 1;
@@ -1816,8 +1871,7 @@ int crosstab (const int *list, const double **Z,
     for (i=1; i<=rowvar[0] && !err; i++) {
 	if (blanket) {
 	    for (j=1; j<i && !err; j++) {
-		Xtab *tab = get_xtab(rowvar[j], rowvar[i], Z, pdinfo, &err); 
-		
+		tab = get_xtab(rowvar[j], rowvar[i], Z, pdinfo, &err); 
 		if (!err) {
 		    print_xtab(tab, opt, prn); 
 		    free_xtab(tab);
@@ -1825,8 +1879,7 @@ int crosstab (const int *list, const double **Z,
 	    }
 	} else {
 	    for (j=1; j<=colvar[0] && !err; j++) {
-		Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
-		
+		tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
 		if (!err) {
 		    print_xtab(tab, opt, prn); 
 		    free_xtab(tab);

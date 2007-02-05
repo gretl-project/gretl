@@ -61,7 +61,7 @@ struct Xtab_ {
     char cvarname[VNAMELEN]; 
     int rows, cols;
     double *rval, *cval;
-    double *rtotal, *ctotal;
+    int *rtotal, *ctotal;
     int **f;
     int n, missing;
     int t1, t2;

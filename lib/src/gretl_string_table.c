@@ -306,6 +306,15 @@ void gretl_insert_builtin_string (const char *name, const char *s)
     }
 }
 
+static void gretl_free_builtin_strings (void)
+{
+    int i, n = sizeof built_ins / sizeof built_ins[0];
+
+    for (i=0; i<n; i++) {
+	free(built_ins[i].s);
+    }    
+}
+
 static saved_string *get_saved_string_by_name (const char *name,
 					       int *builtin)
 {
@@ -398,6 +407,8 @@ void saved_strings_cleanup (void)
     free(saved_strings);
     saved_strings = NULL;
     n_saved_strings = 0;
+
+    gretl_free_builtin_strings();
 }
 
 static char *get_string_element (const char **pline, int *err)
