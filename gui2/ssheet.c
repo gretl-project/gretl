@@ -89,6 +89,7 @@ static void matrix_fill_callback (gpointer data, guint u, GtkWidget *w);
 static void matrix_props_callback (gpointer data, guint u, GtkWidget *w);
 static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w);
 static int update_sheet_from_matrix (Spreadsheet *sheet);
+static void size_matrix_window (Spreadsheet *sheet);
 
 enum {
     MATRIX_FILL_IDENTITY,
@@ -99,7 +100,9 @@ enum {
 enum {
     MATRIX_EDIT_XTX,
     MATRIX_EDIT_TRANSPOSE,
-    MATRIX_EDIT_INVERT
+    MATRIX_EDIT_INVERT,
+    MATRIX_EDIT_MULTIPLY,
+    MATRIX_EDIT_DIVIDE
 };
 
 static GtkItemFactoryEntry sheet_items[] = {
@@ -129,7 +132,11 @@ static GtkItemFactoryEntry matrix_items[] = {
     { N_("/Transform/_Transpose"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_TRANSPOSE, NULL, GNULL },
     { N_("/Transform/_Invert"), NULL, matrix_edit_callback, 
-      MATRIX_EDIT_INVERT, NULL, GNULL }
+      MATRIX_EDIT_INVERT, NULL, GNULL },
+    { N_("/Transform/_Multiply by scalar"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_MULTIPLY, NULL, GNULL },
+    { N_("/Transform/_Divide by scalar"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_DIVIDE, NULL, GNULL },
 };
 
 static void disable_obs_menu (GtkItemFactory *ifac)
@@ -629,10 +636,43 @@ static int add_data_column (Spreadsheet *sheet)
     return 0;
 }
 
+static void sheet_get_scalar (GtkWidget *w, dialog_t *dlg)
+{
+    double *x = (double *) edit_dialog_get_data(dlg);
+    const gchar *buf;
+    int err;
+
+    buf = edit_dialog_get_text(dlg);
+    if (buf == NULL) return;
+
+    err = check_atof(buf);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	*x = atof(buf);
+	close_dialog(dlg);
+    }
+}
+
 static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
 {
     Spreadsheet *sheet = (Spreadsheet *) data;
+    double x = NADBL;
     int err = 0;
+
+    if (u == MATRIX_EDIT_MULTIPLY ||
+	u == MATRIX_EDIT_DIVIDE) {
+	int cancel = 0;
+
+	edit_dialog(_("gretl: specify scalar"), 
+		    _("Enter a numerical value"),
+		    NULL, sheet_get_scalar, &x, 
+		    0, VARCLICK_NONE, &cancel);
+	if (cancel || na(x)) {
+	    return;
+	}
+    }
 
     switch (u) {
     case MATRIX_EDIT_XTX:
@@ -643,6 +683,12 @@ static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
 	break;
     case MATRIX_EDIT_INVERT:
 	err = matrix_invert_in_place(sheet->matrix);
+	break;
+    case MATRIX_EDIT_MULTIPLY:
+	gretl_matrix_multiply_by_scalar(sheet->matrix, x);
+	break;
+    case MATRIX_EDIT_DIVIDE:
+	gretl_matrix_divide_by_scalar(sheet->matrix, x);
 	break;
     }
 
@@ -988,11 +1034,25 @@ static void select_first_editable_cell (Spreadsheet *sheet)
 
 static void set_allowable_transforms (Spreadsheet *sheet)
 {
+    int z = gretl_is_zero_matrix(sheet->matrix);
     int s = gretl_matrix_get_structure(sheet->matrix);
     GtkWidget *w;
 
+    w = gtk_item_factory_get_item(sheet->ifac, 
+				  "/Transform/Multiply by scalar");
+    gtk_widget_set_sensitive(w, z == 0);
+
+    w = gtk_item_factory_get_item(sheet->ifac, 
+				  "/Transform/Divide by scalar");
+    gtk_widget_set_sensitive(w, z == 0);
+
+    w = gtk_item_factory_get_item(sheet->ifac, 
+				  "/Transform/X'X");
+    gtk_widget_set_sensitive(w, !(s > 0 && z));
+    
+
     w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Invert");
-    gtk_widget_set_sensitive(w, s != 0);
+    gtk_widget_set_sensitive(w, s != 0 && z == 0);
 
     w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Transpose");
     gtk_widget_set_sensitive(w, s != GRETL_MATRIX_SYMMETRIC &&
@@ -1042,7 +1102,7 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkListStore *store;
     GtkTreeIter iter;
-    int i, j, colresize = 0;
+    int i, j, resize = 0;
     double x;
     int err = 0;
 
@@ -1051,17 +1111,17 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	if (err) {
 	    return err;
 	}
-	colresize = 1;
+	resize = 1;
     }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<sheet->matrix->rows; i++) {
-	if (colresize) {
+	if (resize) {
 	    gtk_list_store_append(store, &iter);
 	}
-	if (colresize || i >= sheet->datarows) {
+	if (resize || i >= sheet->datarows) {
 	    sprintf(tmpstr, "%d", i + 1);
 	    gtk_list_store_set(store, &iter, 0, tmpstr, -1);
 	}	    
@@ -1070,7 +1130,7 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	    sprintf(tmpstr, "%.*g", MATRIX_DIGITS, x);
 	    gtk_list_store_set(store, &iter, j + 1, tmpstr, -1);
 	}
-	if (colresize) {
+	if (resize) {
 	    continue;
 	} else if (i < sheet->datarows) {
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
@@ -1079,15 +1139,23 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	}
     }
 
-    if (!colresize) {
+    if (!resize) {
 	for (i=sheet->matrix->rows; i<sheet->datarows; i++) {
 	    gtk_list_store_remove(store, &iter);
 	}
     }
 
-    sheet->datarows = sheet->matrix->rows;
+    if (sheet->datarows != sheet->matrix->rows) {
+	sheet->datarows = sheet->matrix->rows;
+	resize = 1;
+    } 
+
     sheet->modified = 1;
     set_allowable_transforms(sheet);
+
+    if (resize) {
+	size_matrix_window(sheet);
+    }
 
     return 0;
 }
@@ -1741,6 +1809,28 @@ sheet_adjust_menu_state (Spreadsheet *sheet)
     }
 }
 
+static void size_matrix_window (Spreadsheet *sheet)
+{
+    int nc = sheet->datacols;
+    int w, h;
+
+    if (nc < 2) {
+	nc = 2;
+    }
+
+    w = get_row_label_width() + nc * get_data_col_width() + 30;
+    if (w > 640) {
+	w = 640;
+    }
+
+    h = sheet->datarows * 20 + 160;
+    if (h > 480) {
+	h = 480;
+    }
+
+    gtk_window_resize(GTK_WINDOW(sheet->win), w, h);
+}
+
 static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 				   int block) 
 {
@@ -1749,8 +1839,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     GtkWidget *scroller, *main_vbox;
     GtkWidget *hbox, *padbox;
     GtkWidget *status_box, *mbar;
-    int width, height = 400;
-    int err = 0;
+    int w, err = 0;
 
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
@@ -1761,19 +1850,13 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     }
 
     if (sheet->matrix != NULL) {
-	int nc = (sheet->datacols < 6)? sheet->datacols : 6;
-
-	if (nc < 2) nc = 2;
-	width = get_row_label_width() + nc * get_data_col_width() + 30;
-	height = sheet->datarows * 30 + 130;
-	if (height > 480) {
-	    height = 480;
-	}
+	size_matrix_window(sheet);
     } else {
-	width = get_obs_col_width() + 4 * get_data_col_width() + 20;
-    }
+	int h = 400;
 
-    gtk_window_set_default_size(GTK_WINDOW(sheet->win), width, height);
+	w = get_obs_col_width() + 4 * get_data_col_width() + 20;
+	gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
+    }
 
     if (block) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
@@ -1815,8 +1898,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_widget_show(status_box);
 
     sheet->locator = gtk_statusbar_new(); 
-    width = (sheet->matrix == NULL)? get_obs_col_width() : get_row_label_width();
-    gtk_widget_set_size_request(sheet->locator, 2 * width, 20);
+    w = (sheet->matrix == NULL)? get_obs_col_width() : get_row_label_width();
+    gtk_widget_set_size_request(sheet->locator, 2 * w, 20);
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
 					      "current row and column");
@@ -1925,7 +2008,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     }
 
     if (block) {
-	gretl_set_window_modal(sheet->win);
+	/* gretl_set_window_modal(sheet->win); */
 	gtk_main();
     }
 }
