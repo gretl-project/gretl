@@ -53,6 +53,7 @@ typedef struct {
     GtkWidget *entry;
 #endif
     GtkWidget *popup;
+    GtkWidget *save;
     GtkItemFactory *ifac;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
@@ -100,6 +101,7 @@ enum {
 enum {
     MATRIX_EDIT_XTX,
     MATRIX_EDIT_TRANSPOSE,
+    MATRIX_EDIT_CHOLESKY,
     MATRIX_EDIT_INVERT,
     MATRIX_EDIT_MULTIPLY,
     MATRIX_EDIT_DIVIDE
@@ -131,6 +133,8 @@ static GtkItemFactoryEntry matrix_items[] = {
       MATRIX_EDIT_XTX, NULL, GNULL },
     { N_("/Transform/_Transpose"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_TRANSPOSE, NULL, GNULL },
+    { N_("/Transform/_Cholesky"), NULL, matrix_edit_callback, 
+      MATRIX_EDIT_CHOLESKY, NULL, GNULL },
     { N_("/Transform/_Invert"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_INVERT, NULL, GNULL },
     { N_("/Transform/_Multiply by scalar"), NULL, matrix_edit_callback, 
@@ -138,6 +142,14 @@ static GtkItemFactoryEntry matrix_items[] = {
     { N_("/Transform/_Divide by scalar"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_DIVIDE, NULL, GNULL },
 };
+
+static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
+{
+    sheet->modified = s;
+    if (sheet->save != NULL) {
+	gtk_widget_set_sensitive(sheet->save, s);
+    }
+}
 
 static void disable_obs_menu (GtkItemFactory *ifac)
 {
@@ -312,7 +324,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	if (old_text != NULL && strcmp(old_text, new_text)) {
 	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			       colnum, new_text, -1);
-	    sheet->modified = 1;
+	    sheet_set_modified(sheet, TRUE);
 	}
 	move_to_next_cell(sheet, path, column);
 	gtk_tree_path_free(path);
@@ -384,7 +396,7 @@ static int real_add_new_var (Spreadsheet *sheet, const char *varname)
     /* scroll to editing position if need be */
     spreadsheet_scroll_to_new_col(sheet, column);
 
-    sheet->modified = 1;
+    sheet_set_modified(sheet, TRUE);
 
     return 0;
 }
@@ -496,7 +508,7 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 	g_free(pstr);
     }
 
-    sheet->modified = 1;
+    sheet_set_modified(sheet, TRUE);
 }
 
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
@@ -680,6 +692,9 @@ static void matrix_edit_callback (gpointer data, guint u, GtkWidget *w)
 	break;
     case MATRIX_EDIT_TRANSPOSE:
 	err = matrix_transpose_in_place(sheet->matrix);
+	break;
+    case MATRIX_EDIT_CHOLESKY:
+	err = matrix_cholesky_in_place(sheet->matrix);
 	break;
     case MATRIX_EDIT_INVERT:
 	err = matrix_invert_in_place(sheet->matrix);
@@ -888,7 +903,7 @@ static void update_matrix_from_sheet (Spreadsheet *sheet)
 	}
     }
 
-    sheet->modified = 0;
+    sheet_set_modified(sheet, FALSE);
 }
 
 /* pull modified values from the data-editing spreadsheet
@@ -1003,13 +1018,70 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	infobox(_("Warning: there were missing observations"));
     } 
 
-    sheet->modified = 0;
+    sheet_set_modified(sheet, FALSE);
     sheet->added_vars -= newvars; /* record that these are handled */
 }
 
+static void matrix_new_name (GtkWidget *w, dialog_t *dlg)
+{
+    char *newname = (char *) edit_dialog_get_data(dlg);
+    const gchar *buf = edit_dialog_get_text(dlg);
+
+    if (buf == NULL || validate_varname(buf)) return;
+
+    *newname = 0;
+    strncat(newname, buf, VNAMELEN - 1);
+
+    close_dialog(dlg);
+}
+
+static int matrix_overwrite_check (const char *name)
+{
+    gchar *msg = g_strdup_printf(_("A matrix named %s already exists\n" 
+				   "OK to overwrite it?"), name);
+    int resp;
+
+    resp = yes_no_dialog("gretl", msg, 0);
+    g_free(msg);
+
+    return resp;
+}
+
+static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
+{
+    char newname[VNAMELEN];
+    int cancel = 0;
+
+    edit_dialog(_("gretl: save matrix"), 
+		_("Enter a name"),
+		NULL, matrix_new_name, newname, 
+		0, VARCLICK_NONE, &cancel);
+    
+    if (!cancel) {
+	user_matrix *u;
+
+	if (get_matrix_by_name(newname) != NULL &&
+	    matrix_overwrite_check(newname) == GRETL_NO) {
+	    return;
+	}
+
+	sheet->oldmat = gretl_matrix_copy(sheet->matrix);
+	add_or_replace_user_matrix(sheet->oldmat, newname);
+	strcpy(sheet->mname, newname);
+
+	u = get_user_matrix_by_name(newname);
+	g_object_set_data(G_OBJECT(sheet->win), "object", u);
+
+	sheet_set_modified(sheet, FALSE);
+    }
+}
+
+#define new_matrix(s) (s->cmd == SHEET_EDIT_MATRIX && \
+                       s->oldmat == NULL)
+
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
-    if (!sheet->modified) {
+    if (!sheet->modified && !new_matrix(sheet)) {
 	infobox(_("No changes were made"));
     } else if (sheet->cmd == SHEET_EDIT_MATRIX) {
 	update_matrix_from_sheet(sheet);
@@ -1049,7 +1121,9 @@ static void set_allowable_transforms (Spreadsheet *sheet)
     w = gtk_item_factory_get_item(sheet->ifac, 
 				  "/Transform/X'X");
     gtk_widget_set_sensitive(w, !(s > 0 && z));
-    
+
+    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Cholesky");
+    gtk_widget_set_sensitive(w, s == GRETL_MATRIX_SYMMETRIC && z == 0);
 
     w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Invert");
     gtk_widget_set_sensitive(w, s != 0 && z == 0);
@@ -1150,7 +1224,7 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
 	resize = 1;
     } 
 
-    sheet->modified = 1;
+    sheet_set_modified(sheet, TRUE);
     set_allowable_transforms(sheet);
 
     if (resize) {
@@ -1667,6 +1741,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
 #endif
     sheet->popup = NULL;
     sheet->ifac = NULL;
+    sheet->save = NULL;
     sheet->dumbcell = NULL;
     sheet->datacell = NULL;
     sheet->datacols = sheet->datarows = 0;
@@ -1959,14 +2034,32 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
 
     if (sheet->matrix != NULL && sheet->oldmat == NULL) {
-	/* if we're editing a newly created matrix, Apply/Close
-	   buttons do not really make sense */
 	tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(get_data_from_sheet), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(simple_exit_sheet), sheet);
+	gtk_widget_show(tmp);
+    } else if (sheet->matrix != NULL) {
+	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(matrix_save_as), sheet);
+	gtk_widget_show(tmp);
+
+	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(get_data_from_sheet), sheet);
+	gtk_widget_show(tmp);
+	sheet->save = tmp;
+	gtk_widget_set_sensitive(sheet->save, FALSE);
+
+	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(maybe_exit_sheet), sheet);
 	gtk_widget_show(tmp);
     } else {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
@@ -2078,15 +2171,9 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	return;
     }
 
-    if (get_matrix_by_name(etxt) != NULL) {
-	gchar *msg = g_strdup_printf(_("A matrix named %s already exists\n" 
-				       "OK to overwrite it?"), etxt);
-	int resp;
-
-	resp = yes_no_dialog("gretl", msg, 0);
-	if (resp == GRETL_NO) {
-	    return;
-	}
+    if (get_matrix_by_name(etxt) != NULL &&
+	matrix_overwrite_check(etxt) == GRETL_NO) {
+	return;
     }
 
     if ((err = check_varname(etxt))) {
@@ -2296,7 +2383,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
 
 static int matrix_from_list (selector *sr)
 {
-    struct gui_matrix_spec *spec = selector_get_data(sr);
+    struct gui_matrix_spec *s = selector_get_data(sr);
     const char *buf = selector_list(sr);
     int *list;
     int err = 0;
@@ -2313,12 +2400,12 @@ static int matrix_from_list (selector *sr)
 	return 1;
     }
 
-    spec->m = gretl_matrix_data_subset_skip_missing(list, (const double **) Z, 
-						    datainfo->t1, datainfo->t2, 
-						    &err);
+    s->m = gretl_matrix_data_subset_skip_missing(list, (const double **) Z, 
+						 datainfo->t1, datainfo->t2, 
+						 &err);
 
     if (!err) {
-	err = add_or_replace_user_matrix(spec->m, spec->name);
+	err = add_or_replace_user_matrix(s->m, s->name);
     }
 
     if (err) {
@@ -2420,7 +2507,6 @@ void gui_new_matrix (void)
 
     strcpy(sheet->mname, spec.name);
     sheet->matrix = spec.m;
-    sheet->modified = 1;
     sheet->datarows = gretl_matrix_rows(sheet->matrix);
     sheet->datacols = gretl_matrix_cols(sheet->matrix);
     real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 1);

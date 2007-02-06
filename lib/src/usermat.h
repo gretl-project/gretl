@@ -130,6 +130,8 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
 
 int matrix_invert_in_place (gretl_matrix *m);
 
+int matrix_cholesky_in_place (gretl_matrix *m);
+
 int matrix_transpose_in_place (gretl_matrix *m);
 
 int matrix_XTX_in_place (gretl_matrix *m);

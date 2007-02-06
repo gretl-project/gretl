@@ -975,14 +975,31 @@ static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
 
 int matrix_invert_in_place (gretl_matrix *m)
 {
-    gretl_matrix *R = NULL;
+    gretl_matrix *R = gretl_matrix_copy(m);
     int err = 0;
 
-    R = gretl_matrix_copy(m);
     if (R == NULL) {
 	err = E_ALLOC;
     } else {
 	err = gretl_invert_matrix(R);
+	if (!err) {
+	    matrix_cannibalize(m, R);
+	}
+	gretl_matrix_free(R);
+    } 
+
+    return err;
+}
+
+int matrix_cholesky_in_place (gretl_matrix *m)
+{
+    gretl_matrix *R = gretl_matrix_copy(m);
+    int err = 0;
+
+    if (R == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_cholesky_decomp(R);
 	if (!err) {
 	    matrix_cannibalize(m, R);
 	}
