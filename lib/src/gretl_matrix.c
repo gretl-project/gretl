@@ -3912,23 +3912,8 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
-/**
- * gretl_eigen_sort:
- * @evals: array of eigenvalues.
- * @evecs: matrix of eigenvectors.
- * @rank: desired number of columns in output.
- * 
- * Sorts the real components of the eigenvalues in @evals from 
- * largest to smallest, and rearranges the columns in @evecs 
- * correspondingly.  If @rank is greater than zero and less than 
- * the number of columns in @evecs, then on output @evecs is shrunk 
- * so that it contains only the columns associated with the
- * largest @rank eigenvalues.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
+			    int symm)
 {
     struct esort {
 	double vr;
@@ -3958,7 +3943,11 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 
     for (i=0; i<n; i++) {
 	es[i].vr = evals[i];
-	es[i].vi = evals[i + n];
+	if (symm) {
+	    es[i].vi = 0.0;
+	} else {
+	    es[i].vi = evals[i + n];
+	}
 	es[i].idx = i;
     }
 
@@ -3966,7 +3955,9 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 
     for (i=0; i<n; i++) {
 	evals[i] = es[i].vr;
-	evals[i + n] = es[i].vi;
+	if (!symm) {
+	    evals[i + n] = es[i].vi;
+	}
     }
 
     for (j=0; j<h; j++) {
@@ -3985,6 +3976,32 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
     free(es);
 
     return 0;
+}
+
+/**
+ * gretl_eigen_sort:
+ * @evals: array of eigenvalues.
+ * @evecs: matrix of eigenvectors.
+ * @rank: desired number of columns in output.
+ * 
+ * Sorts the real components of the eigenvalues in @evals from 
+ * largest to smallest, and rearranges the columns in @evecs 
+ * correspondingly.  If @rank is greater than zero and less than 
+ * the number of columns in @evecs, then on output @evecs is shrunk 
+ * so that it contains only the columns associated with the
+ * largest @rank eigenvalues.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+{
+    return real_eigen_sort(evals, evecs, rank, 0);
+}
+
+static int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+{
+    return real_eigen_sort(evals, evecs, rank, 1);    
 }
 
 /**
@@ -5532,20 +5549,13 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
     return 1;
 }
 
-/**
- * gretl_covariance_matrix:
- * @m: (x x n) matrix containing n observations on each of k 
- * variables.
- * @corr: flag for computing correlations.
- * @errp: pointer to receive non-zero error code in case of
- * failure, or %NULL.
- *
- * Returns: the covariance matrix of variables in the columns of
- * @m, or the correlation matrix if @corr is non-zero.
- */
+/* if pxbar, pssx are non-NULL, they get the vectors of column
+   means and sums of squares */
 
-gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
-				       int *errp)
+static gretl_matrix *
+real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
+			      gretl_matrix **pxbar, gretl_matrix **pssx,
+			      int *errp)
 {
     gretl_matrix *V = NULL;
     gretl_vector *xbar = NULL;
@@ -5624,8 +5634,17 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 
  bailout:
 
-    gretl_vector_free(xbar);
-    gretl_vector_free(ssx);
+    if (!err && pxbar != NULL) {
+	*pxbar = xbar;
+    } else {
+	gretl_vector_free(xbar);
+    }
+
+    if (!err && pssx != NULL) {
+	*pssx = ssx;
+    } else {
+	gretl_vector_free(ssx);
+    }
 
     if (err) {
 	if (errp != NULL) {
@@ -5636,6 +5655,24 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
     }
 
     return V;
+}
+
+/**
+ * gretl_covariance_matrix:
+ * @m: (x x n) matrix containing n observations on each of k 
+ * variables.
+ * @corr: flag for computing correlations.
+ * @errp: pointer to receive non-zero error code in case of
+ * failure, or %NULL.
+ *
+ * Returns: the covariance matrix of variables in the columns of
+ * @m, or the correlation matrix if @corr is non-zero.
+ */
+
+gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
+				       int *errp)
+{
+    return real_gretl_covariance_matrix(m, corr, NULL, NULL, errp);
 }
 
 /**
@@ -5887,4 +5924,73 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     }	
 
     return B;
+}
+
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
+{
+    gretl_matrix *C = NULL;
+    gretl_matrix *P = NULL;
+    gretl_matrix *xbar = NULL;
+    gretl_matrix *ssx = NULL;
+    
+    int T = X->rows;
+    int m = X->cols;
+    double x, load, val;
+    double *evals = NULL;
+    int i, j, k;
+
+    if (p <= 0 || p > m) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    C = real_gretl_covariance_matrix(X, 1, &xbar, &ssx, err);
+    if (*err) {
+	return NULL;
+    }
+
+    evals = gretl_symmetric_matrix_eigenvals(C, 1, err);
+    if (*err) {
+	goto bailout;
+    }
+
+    gretl_symmetric_eigen_sort(evals, C, p);
+
+    /* make matrix to contain the first p components */
+
+    P = gretl_matrix_alloc(T, p);
+    if (P == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* convert ssx to std deviations */
+
+    for (i=0; i<m; i++) {
+	x = ssx->val[i];
+	ssx->val[i] = sqrt(x / (T - 1));
+    }
+
+    /* compute the PCs */
+
+    for (j=0; j<p; j++) {
+	for (i=0; i<T; i++) {
+	    x = 0.0;
+	    for (k=0; k<m; k++) {
+		load = gretl_matrix_get(C, k, j);
+		val = gretl_matrix_get(X, i, k);
+		x += load * (val - xbar->val[k]) / ssx->val[k];
+	    }
+	    gretl_matrix_set(P, i, j, x);
+	}
+    }
+
+ bailout:
+    
+    gretl_matrix_free(xbar);
+    gretl_matrix_free(ssx);
+    gretl_matrix_free(C);
+    free(evals);
+
+    return P;
 }

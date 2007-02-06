@@ -24,33 +24,6 @@
 
 #undef PCA_DEBUG
 
-static double *standardize (const double *x, int n)
-{
-    double *sx;
-    double xbar, sd;
-    int i, err;
-
-    err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
-    if (err) {
-	return NULL;
-    }
-
-    sx = malloc(n * sizeof *sx);
-    if (sx == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    sx[i] = NADBL;
-	} else {
-	    sx[i] = (x[i] - xbar) / sd;
-	}
-    }
-
-    return sx;
-}
-
 struct flag_info {
     GtkWidget *dialog;
     gint *flag;
@@ -236,6 +209,33 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
 	cols -= colsdone;
 	pputc(prn, '\n');
     }
+}
+
+static double *standardize (const double *x, int n)
+{
+    double *sx;
+    double xbar, sd;
+    int i, err;
+
+    err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
+    if (err) {
+	return NULL;
+    }
+
+    sx = malloc(n * sizeof *sx);
+    if (sx == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	if (na(x[i])) {
+	    sx[i] = NADBL;
+	} else {
+	    sx[i] = (x[i] - xbar) / sd;
+	}
+    }
+
+    return sx;
 }
 
 int pca_from_corrmat (VMatrix *corrmat, double ***pZ,

@@ -426,6 +426,8 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 				   int mm, int rc, int idx,
 				   int *err);
 
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err);
+
 void lapack_mem_free (void);
 
 #endif /* GRETL_MATRIX_H */

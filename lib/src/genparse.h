@@ -179,6 +179,7 @@ enum {
     FDJAC,
     BFGSMAX,
     LRVAR,   /* 150: long-run variance */
+    PRINCOMP,
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
@@ -187,8 +188,8 @@ enum {
     DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
-    CON,      /* named constant */
-    DUM,    /* 160: dummy variable */
+    CON,    /* 160: named constant */
+    DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
@@ -197,8 +198,8 @@ enum {
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
-    MSL,      /* matrix plus subspec */
-    DMSL,   /* 170: "dollar" matrix plus subspec */
+    MSL,    /* 170: matrix plus subspec */
+    DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
@@ -207,8 +208,8 @@ enum {
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX, /* 180: loop index variable */
+    OVAR,   /* 180: object variable: variable "under" an object */
+    LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
@@ -217,8 +218,8 @@ enum {
     EMPTY,
     ABSENT, 
     INC,
-    DEC,
-    QUERY,  /* 190 */
+    DEC,    /* 190 */
+    QUERY,
     AST2,     /* prime facie ambiguous case of "**" */
     UNK
 };

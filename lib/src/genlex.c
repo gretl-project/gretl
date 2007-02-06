@@ -204,6 +204,7 @@ struct str_table funcs[] = {
     { EIGSYM,   "eigensym" },
     { EIGGEN,   "eigengen" },
     { NULLSPC,  "nullspace" },
+    { PRINCOMP, "princomp" },
     { MEXP,     "mexp" },
     { FDJAC,    "fdjac" },
     { BFGSMAX,  "BFGSmax" },

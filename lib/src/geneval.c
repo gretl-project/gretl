@@ -1293,6 +1293,20 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const gretl_matrix *m = l->v.m;
+	int k = r->v.xval;
+
+	ret->v.m = gretl_matrix_pca(m, k, &p->err);
+    }
+
+    return ret;
+}
+
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
     *mm = (f == MAXR || f == MAXC || f == MAXRIDX || f == MAXCIDX);
@@ -3893,6 +3907,14 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} 
 	break;
+    case PRINCOMP:
+	/* matrix, scalar as second arg */
+	if (l->t == MAT && r->t == NUM) {
+	    ret = matrix_princomp(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;	
     case MSHAPE:
     case SVD:
 	/* built-in functions taking more than two args */
