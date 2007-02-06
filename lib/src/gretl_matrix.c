@@ -5823,4 +5823,68 @@ gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
     return B;
 }
 
+/**
+ * gretl_matrix_minmax:
+ * @A: m x n matrix to examine.
+ * @mm: 0 for minimum, 1 for maximum.
+ * @rc: 0 for row, 1 for column.
+ * @idx: 0 for values, 1 for indices.
+ *
+ * Creates a matrix holding the row or column mimima or
+ * maxima from @A, either as values or as location indices.
+ * For example, if @mm = 0, @rc = 0, and @idx = 0, the
+ * created matrix is m x 1 and holds the values of the row
+ * minima.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
 
+gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A, 
+				   int mm, int rc, int idx,
+				   int *err)
+{
+    gretl_matrix *B;
+    double d, x;
+    int i, j, k;
+
+    if (rc > 0) {
+	B = gretl_matrix_alloc(A->rows, 1);
+    } else {
+	B = gretl_matrix_alloc(1, A->cols);
+    }
+
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (rc > 0) {
+	for (i=0; i<A->rows; i++) {
+	    d = A->val[mdx(A, i, 0)];
+	    k = 0;
+	    for (j=1; j<A->cols; j++) {
+		x = A->val[mdx(A, i, j)];
+		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
+		    d = x;
+		    k = j;
+		} 
+	    }
+	    B->val[i] = (idx > 0)? (double) k + 1 : d;
+	}
+    } else {
+	for (j=0; j<A->cols; j++) {
+	    d = A->val[mdx(A, 0, j)];
+	    k = 0;
+	    for (i=1; i<A->rows; i++) {
+		x = A->val[mdx(A, i, j)];
+		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
+		    d = x;
+		    k = i;
+		} 
+	    }
+	    B->val[j] = (idx > 0)? (double) k + 1 : d;
+	}
+    }	
+
+    return B;
+}

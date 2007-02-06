@@ -151,6 +151,14 @@ enum {
     VALUES,    /* 120 */
     NULLSPC,
     MEXP,
+    MINC,
+    MAXC,
+    MINR,
+    MAXR,
+    MINCIDX,
+    MAXCIDX,
+    MINRIDX,
+    MAXRIDX,   /* 130 */
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,
@@ -158,9 +166,9 @@ enum {
     NORMAL,   
     BINOMIAL,
     FRACDIF,
-    ZEROS,    /* 130 */  
+    ZEROS,
     ONES,
-    SEQ,
+    SEQ,      /* 140 */
     MUNIF,
     MNORM,
     QFORM,
@@ -168,9 +176,9 @@ enum {
     QR,
     EIGSYM,  
     EIGGEN,
-    FDJAC,   /* 140 */
+    FDJAC,
     BFGSMAX,
-    LRVAR,    /* long-run variance */
+    LRVAR,   /* 150: long-run variance */
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
@@ -178,9 +186,9 @@ enum {
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
-    COL,    /* 150: colon */
+    COL,      /* colon */
     CON,      /* named constant */
-    DUM,      /* dummy variable */
+    DUM,    /* 160: dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
@@ -188,9 +196,9 @@ enum {
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
-    OBS,    /* 160: observation from a series */
+    OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
-    DMSL,     /* "dollar" matrix plus subspec */
+    DMSL,   /* 170: "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
@@ -198,9 +206,9 @@ enum {
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,   /* 170: $ model var (scalar, series, or matrix) */
+    MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX,  /* loop index variable */
+    LOOPIDX, /* 180: loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
@@ -208,9 +216,9 @@ enum {
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT, 
-    INC,    /* 180 */    
+    INC,
     DEC,
-    QUERY,
+    QUERY,  /* 190 */
     AST2,     /* prime facie ambiguous case of "**" */
     UNK
 };

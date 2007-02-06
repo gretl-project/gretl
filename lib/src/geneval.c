@@ -1293,12 +1293,20 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
+{
+    *mm = (f == MAXR || f == MAXC || f == MAXRIDX || f == MAXCIDX);
+    *rc = (f == MINC || f == MAXC || f == MINCIDX || f == MAXCIDX);
+    *idx = (f == MINRIDX || f == MINCIDX || f == MAXRIDX || f == MAXCIDX);
+}
+
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 {
     const gretl_matrix *m = n->v.m;
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	int a, b, c;
 
 	gretl_error_clear();
 
@@ -1351,6 +1359,16 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MEXP:
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
+	case MINC:
+	case MAXC:
+	case MINR:
+	case MAXR:
+	case MINCIDX:
+	case MAXCIDX:
+	case MINRIDX:
+	case MAXRIDX:  
+	    matrix_minmax_indices(f, &a, &b, &c);
+	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	default:
 	    break;
 	}
@@ -3819,6 +3837,14 @@ static NODE *eval (NODE *t, parser *p)
     case UNVECH:
     case NULLSPC:
     case MEXP:
+    case MINC:
+    case MAXC:
+    case MINR:
+    case MAXR:
+    case MINCIDX:
+    case MAXCIDX:
+    case MINRIDX:
+    case MAXRIDX: 
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

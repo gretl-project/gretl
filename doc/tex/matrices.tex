@@ -278,36 +278,44 @@ context it is reserved for the Kronecker product.)
 \texttt{log}       &
 \texttt{mcorr}     &
 \texttt{mcov}      \\
+\texttt{maxc}      &   
+\texttt{maxr}      &
+\texttt{maxcidx}   &
+\texttt{maxridx}   &
 \texttt{meanc}     &
-\texttt{meanr}     &
+\texttt{meanr}     \\
 \texttt{mexp}      &
-\texttt{mlag}      &
+\texttt{minc}      &   
+\texttt{minr}      &
+\texttt{mincidx}   &
+\texttt{minridx}   &
+\texttt{mlag}      \\
 \texttt{mnormal}   &
-\texttt{mshape}    \\
+\texttt{mshape}    &
 \texttt{muniform}  &
 \texttt{nullspace} &
 \texttt{onenorm}   &
-\texttt{ones}      &
+\texttt{ones}      \\
 \texttt{qform}     &
-\texttt{qnorm}     \\
+\texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
-\texttt{rows}      &
+\texttt{rows}      \\
 \texttt{seq}       &
-\texttt{sin}       \\
+\texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
-\texttt{sumr}      &
+\texttt{sumr}      \\
 \texttt{svd}       &
-\texttt{tan}       \\
+\texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
-\texttt{values}    &
+\texttt{values}    \\
 \texttt{vec}       &
-\texttt{vech}      \\
+\texttt{vech}      &
 \texttt{zeros}     
 \end{tabular}      
 \caption{Table of matrix functions}
@@ -404,24 +412,32 @@ The functions which take a single matrix as argument and return a
 matrix are:
 
 \begin{center}
-\begin{tabular}{ll}
-\texttt{sumc()} & sum by column \\
-\texttt{sumr()} & sum by row \\
-\texttt{meanc()} & mean by column \\
-\texttt{meanr()} & mean by row \\
-\texttt{mcov()} & covariance matrix by columns \\
-\texttt{mcorr()} & correlation matrix by columns \\
-\texttt{mexp()} & matrix exponential \\
-\texttt{inv()} & inverse \\
-\texttt{cholesky()} & Cholesky decomposition \\
-\texttt{diag()} & extract principal diagonal \\
-\texttt{transp()} & transpose \\
+\begin{tabular}{llcll}
+\texttt{sumc()}    & sum by column & &
+\texttt{sumr()}    & sum by row \\
+\texttt{meanc()}   & mean by column & &
+\texttt{meanr()}   & mean by row \\
+\texttt{mcov()}    & covariance matrix & &
+\texttt{mcorr()}   & correlation matrix \\
+\texttt{mexp()}    & matrix exponential & &
+\texttt{inv()}     & inverse \\
+\texttt{cholesky()} & Cholesky decomposition & &
+\texttt{diag()}    & extract principal diagonal \\
+\texttt{transp()}  & transpose & &
 \texttt{cdemean()} & subtract column means \\ 
-\texttt{vec()} & organize elements as column vector \\
-\texttt{vech()} & vectorize lower triangle \\
-\texttt{unvech()} & undo \texttt{vech} \\
-\texttt{mlag()} & matrix lag or lead \\
-\texttt{nullspace()} & right nullspace
+\texttt{vec()}     & elements as column vector & &
+\texttt{vech()}    & vectorize lower triangle \\
+\texttt{unvech()}  & undo \texttt{vech} & &
+\texttt{mlag()}    & matrix lag or lead \\
+\texttt{nullspace()} & right nullspace & &
+\texttt{maxc}      & column maxima (values) \\ 
+\texttt{maxr}      & row maxima (values)  & &
+\texttt{maxcidx}   & column maxima (indices) \\ 
+\texttt{maxridx}   & row maxima (indices) & &
+\texttt{minc}      & column minima (values) \\   
+\texttt{minr}      & row minima (values) &  &
+\texttt{mincidx}   & column minima (indices) \\ 
+\texttt{minridx}   & row minima (indices) 
 \end{tabular}
 \end{center}
 
@@ -434,6 +450,14 @@ holding the $n$ column sums, and \texttt{sumr(A)} returns a column
 vector with the $m$ row sums.  \texttt{meanc(A)} returns a row vector
 with the $n$ column means, and \texttt{meanr(A)} a column vector with
 the $m$ row means.
+
+For an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
+family of functions return either a column vector of length $m$ (the
+\texttt{r} variants) or a row vector of length $n$ (the \texttt{c}
+variants).  The \texttt{max} vectors contain the values of the row or
+column maxima while the \texttt{min} ones hold the row or column
+minima.  The variants with an \texttt{idx} postfix return not the
+values but the (1-based) indices of the respective maxima or minima.
 
 For a $T \times k$ matrix $A$, \texttt{mcov(A)} and \texttt{mcorr(A)}
 both return $k \times k$ symmetric matrices, in the first case
