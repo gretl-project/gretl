@@ -1276,6 +1276,9 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	case RCOND:
 	    ret->v.xval = gretl_symmetric_matrix_rcond(m, &p->err);
 	    break;
+	case RANK:
+	    ret->v.xval = gretl_matrix_rank(m, &p->err);
+	    break;
 	default:
 	    p->err = 1;
 	    break;
@@ -3822,6 +3825,7 @@ static NODE *eval (NODE *t, parser *p)
     case NORM1:
     case INFNORM:
     case RCOND:
+    case RANK:
 	/* matrix -> scalar functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_scalar_func(l, t->t, p);

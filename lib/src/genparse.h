@@ -135,10 +135,11 @@ enum {
     NORM1,
     INFNORM,
     RCOND,
+    RANK,
     VARNUM,
     OBSNUM,  
-    ISSERIES,
-    ISLIST,   /* 110 */  
+    ISSERIES, /* 110 */  
+    ISLIST,  
     ISSTRING,
     ISNULL,
     LISTLEN,
@@ -147,8 +148,8 @@ enum {
     CRIT,
     GENPOIS,
     MAKEMASK,
-    VALUES,
-    NULLSPC,   /* 120 */
+    VALUES,    /* 120 */
+    NULLSPC,
     MEXP,
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
@@ -157,8 +158,8 @@ enum {
     NORMAL,   
     BINOMIAL,
     FRACDIF,
-    ZEROS,
-    ONES,    /* 130 */  
+    ZEROS,    /* 130 */  
+    ONES,
     SEQ,
     MUNIF,
     MNORM,
@@ -167,8 +168,8 @@ enum {
     QR,
     EIGSYM,  
     EIGGEN,
-    FDJAC,
-    BFGSMAX, /* 140 */
+    FDJAC,   /* 140 */
+    BFGSMAX,
     LRVAR,    /* long-run variance */
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
@@ -177,8 +178,8 @@ enum {
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
-    COL,      /* colon */
-    CON,    /* 150: named constant */
+    COL,    /* 150: colon */
+    CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
@@ -187,8 +188,8 @@ enum {
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
-    OBS,      /* observation from a series */
-    MSL,    /* 160: matrix plus subspec */
+    OBS,    /* 160: observation from a series */
+    MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
@@ -197,8 +198,8 @@ enum {
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,   /* 170: object variable: variable "under" an object */
+    MVAR,   /* 170: $ model var (scalar, series, or matrix) */
+    OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
@@ -207,8 +208,8 @@ enum {
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT, 
-    INC,    
-    DEC,    /* 180 */
+    INC,    /* 180 */    
+    DEC,
     QUERY,
     AST2,     /* prime facie ambiguous case of "**" */
     UNK

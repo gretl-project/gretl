@@ -3043,6 +3043,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
     pprintf(prn, ifmt, _("Rows"), m->rows);
     pprintf(prn, ifmt, _("Columns"), m->cols);
+    pprintf(prn, ifmt, _("Rank"), gretl_matrix_rank(m, &err));
 
     s = gretl_matrix_get_structure(m);
 

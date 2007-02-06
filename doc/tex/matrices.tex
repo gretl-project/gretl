@@ -291,22 +291,23 @@ context it is reserved for the Kronecker product.)
 \texttt{qform}     &
 \texttt{qnorm}     \\
 \texttt{qrdecomp}  &
+\texttt{rank}      &
 \texttt{rcond}     &
 \texttt{rows}      &
 \texttt{seq}       &
-\texttt{sin}       &
-\texttt{sort}      \\
+\texttt{sin}       \\
+\texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{svd}       &
-\texttt{tan}       &
-\texttt{tr}        \\
+\texttt{tan}       \\
+\texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}     
 \end{tabular}      
 \caption{Table of matrix functions}
@@ -370,21 +371,23 @@ scalar are:
 
 \begin{center}
 \begin{tabular}{ll}
+\texttt{rows()} & number of rows \\
+\texttt{cols()} & number of columns \\
+\texttt{rank()} & rank \\
 \texttt{det()} & determinant \\
 \texttt{ldet()} & log-determinant \\
 \texttt{tr()} & trace \\
 \texttt{onenorm()} & 1-norm \\
 \texttt{infnorm()} & infinity-norm \\
-\texttt{rcond()} & reciprocal condition number \\
-\texttt{rows()} & number of rows \\
-\texttt{cols()} & number of columns 
+\texttt{rcond()} & reciprocal condition number
 \end{tabular}
 \end{center}
 
 The single matrix argument to these functions may be given as the name
 of an existing matrix or as an expression that evaluates to a single
 matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
-\texttt{tr} require a square matrix as input.  
+\texttt{tr} require a square matrix as input.  The \texttt{rank()}
+function is computed via the QR decomposition.
 
 The functions \texttt{onenorm} and \texttt{infnorm} function return,
 respectively, the 1-norm and the infinity-norm of a matrix.  The

@@ -3591,10 +3591,17 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
+    int r = a->rows;
+    int c = a->cols;
     int rank = -1;
 
-    Q = gretl_matrix_copy(a);
-    R = gretl_matrix_alloc(a->rows, a->rows);
+    if (c > r) {
+	Q = gretl_matrix_copy_transpose(a);
+	R = gretl_matrix_alloc(r, r);
+    } else {
+	Q = gretl_matrix_copy(a);
+	R = gretl_matrix_alloc(c, c);
+    }
 
     if (Q == NULL || R == NULL) {
 	*err = E_ALLOC;
