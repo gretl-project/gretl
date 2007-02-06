@@ -9,6 +9,32 @@ variabili. Il comando è documentato nella \GCR, mentre questo
 capitolo offre una discussione più approfondita di alcune delle
 funzioni speciali disponibili con \verb+genr+ e di alcune
 particolarità del comando.
+     
+\section{Varianza di lungo periodo}
+\label{sec:lrvar}
+
+Come è noto, la varianza della media di $T$ variabili aleatorie
+$x_1, x_2, \ldots, x_T$ con uguale varianza $\sigma^2$ è pari a
+$\sigma^2/T$ se i dati sono non correlati. In questo caso, la varianza
+campionaria di $x_t$ rappresenta uno stimatore consistente.
+
+Se però esiste correlazione seriale tra le $x_t$, la varianza di
+$\bar{X} = T^{-1} \sum_{t=1}^T x_t$ va stimata in modo diverso. Una delle
+statistiche più usate a questo scopo è uno stimatore kernel non parametrico con
+il kernel di Bartlett definito come
+\[
+  \hat{\omega}^2(k) = T^{-1} \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i (x_t -
+  \bar{X}) (x_{t-i} - \bar{X}) \right] ,
+\]
+dove l'intero $k$ è definito come l'ampiezza della finestra, mentre i termini
+$w_i$ sono i cosiddetti \emph{pesi di Bartlett}, definiti come $w_i = 1 -
+\frac{|i|}{k + 1}$. Si può dimostrare che, per $k$ abbastanza alto,
+$\hat{\omega}^2(k)/T$ rappresenta uno stimatore consistente alla varianza di
+$\bar{X}$.
+
+\app{Gretl} implementa questo stimatore usando la funzione \texttt{lrvar()}, che
+accetta due argomenti: la serie di cui si vuole stimare la varianza di lungo
+periodo e lo scalare $k$. Se $k$ è negativo, viene usato il diffuso valore $T^{1/3}$.
 
 \section{Filtri per serie storiche}
 \label{sec:filters}
@@ -537,6 +563,109 @@ Generato lo scalare pv (ID 13) = 0.363844
   pv=Dickey-Fuller pvalue (scalar)
 \end{code}
 
+\section{Massimizzazione numerica}
+\label{genr-numerical}
+
+Esistono due funzioni particolarmente utili per costruire stimatori speciali,
+ossia \texttt{BFGSmax} (il massimizzatore BFGS, discusso nel Capitolo~\ref{chap:mle})
+e \texttt{fdjac}, che produce un'approssimazione del Jacobiano.
+% ??? ``a forward-difference approximation to the Jacobian''
+
+\subsection{Il massimizzatore BFGS}
+
+La funzione \texttt{BFGSmax} accetta due argomenti: un vettore che contiene i
+valori iniziali di un insieme di parametri, e una stringa che specifica una
+chiamata a una funzione che calcola il criterio (scalare) da massimizzare, dati
+i valori attuali dei parametri e gli altri dati rilevanti.
+Se si tratta di una minimizzazione, questa funzione dovrebbe produrre il
+criterio con segno negativo. In caso di successo, \texttt{BFGSmax}
+produce il valore massimo del criterio e la matrice indicata come primo
+argomento contiene i valori dei parametri che producono il massimo. Ecco un
+esempio:
+%
+\begin{code}
+matrix X = { dataset }
+matrix theta = { 1, 100 }'
+scalar J = BFGSmax(theta, "Funzione(&theta, &X)")
+\end{code}
+%
+Si assume che \texttt{Funzione} sia una funzione definita dall'utente
+(si veda il Capitolo~\ref{chap:functions}) con una struttura di questo tipo:
+%
+\begin{code}
+function Funzione (matrix *theta, matrix *X)
+  scalar val = ...  # Esegue dei calcoli
+  return scalar val
+end function
+\end{code}
+
+Il funzionamento del massimizzatore BFGS può essere regolato usando il comando
+\texttt{set} sulle variabili \verb+bfgs_maxiter+ e \verb+bfgs_toler+ (si veda
+il Capitolo~\ref{chap:mle}). Inoltre, è possibile vedere i dettagli della
+massimizzazione assegnando un valore positivo alla variabile
+\verb|max_verbose|, sempre con il comando \texttt{set}.
+
+Spesso, per testare gli algoritmi di ottimizzazione si usa la funzione di
+Rosenbrock, chiamata anche ``valle di Rosenbrock'' o la ``funzione a banana di
+Rosenbrock'', visto che le linee di contorno sono a forma di banana. Questa è
+definita come:
+%
+\[
+    f(x,y) = (1 - x)^2 + 100(y - x^2)^2
+\]
+%
+La dunzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
+L'Esempio~\ref{rosenbrock} mostra uno script di \app{gretl} che cerca il minimo
+usando la funzione \texttt{BFGSmax} (mostrando i dettagli sul progresso del
+calcolo).
+
+\begin{script}[htbp]
+  \caption{Ricerca del minimo della funzione di Rosenbrock}
+  \label{rosenbrock}
+\begin{scode}
+function Rosenbrock(matrix *param)
+  scalar x = param[1]
+  scalar y = param[2]
+  scalar f = -(1-x)^2 - 100 * (y - x^2)^2
+  return scalar f 
+end function
+
+nulldata 10
+
+matrix theta = { 0 , 0 }
+
+set max_verbose 1
+M = BFGSmax(theta, "Rosenbrock(&theta)")
+
+print theta
+\end{scode}
+\end{script}
+
+\subsection{Calcolo del Jacobiano}
+
+Per costruire una matrice di covarianza per le stime prodotte con
+\verb+BFGS_max+, può essere utile calcolare un'approssimazione numerica del
+Jacobiano rilevante.
+
+La funzione \texttt{fdjac} accetta due argomenti: una matrice $n \times 1$
+che contiene i valori iniziali dei parametri e una stringa che specifica una
+chiamata a una funzione che calcola e produce una matrice $m \times 1$ (con $n
+\leq m$), dati i valori attuali dei parametri e gli altri dati rilevanti.
+In caso di successo, viene prodotta una matrice $m \times n$ che contiene il
+Jacobiano. Ad esempio,
+%
+\begin{code}
+matrix Jac = fdjac(theta, "Somma(&theta, &X)")
+\end{code}
+dove si assume che \texttt{Somma} sia una funzione definita dall'utente con la
+struttura seguente:
+%
+\begin{code}
+function Somma (matrix *theta, matrix *X)
+  matrix V = ...  # Esegue dei calcoli
+  return matrix V
+end function
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
