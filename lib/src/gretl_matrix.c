@@ -5926,6 +5926,21 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     return B;
 }
 
+/**
+ * gretl_matrix_pca:
+ * @X: T x m data matrix.
+ * @p: number of principal components to return: 0 < p <= m,
+ * or p = -1 to return components for eigenvalues > 1.0.
+ * @err: location to receive error code.
+ *
+ * Carries out a Principal Components analysis of @X and
+ * returns the first @p components: the component corresponding
+ * to the largest eigenvalue of the correlation matrix of @X
+ * is placed in column 1, and so on.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
 gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
 {
     gretl_matrix *C = NULL;
@@ -5939,10 +5954,16 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     double *evals = NULL;
     int i, j, k;
 
-    if (p <= 0 || p > m) {
-	*err = E_DATA;
-	return NULL;
+    if (m == 1) {
+	P = gretl_matrix_copy(X);
+	if (P == NULL) {
+	    *err = E_ALLOC;
+	}
+	return P;
     }
+
+    if (p == 0) p = 1;
+    if (p > m) p = m;
 
     C = real_gretl_covariance_matrix(X, 1, &xbar, &ssx, err);
     if (*err) {
@@ -5957,7 +5978,6 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     gretl_symmetric_eigen_sort(evals, C, p);
 
     /* make matrix to contain the first p components */
-
     P = gretl_matrix_alloc(T, p);
     if (P == NULL) {
 	*err = E_ALLOC;
@@ -5965,14 +5985,12 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     }
 
     /* convert ssx to std deviations */
-
     for (i=0; i<m; i++) {
 	x = ssx->val[i];
 	ssx->val[i] = sqrt(x / (T - 1));
     }
 
     /* compute the PCs */
-
     for (j=0; j<p; j++) {
 	for (i=0; i<T; i++) {
 	    x = 0.0;
