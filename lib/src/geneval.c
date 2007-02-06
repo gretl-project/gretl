@@ -1407,10 +1407,18 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-static int ok_matrix_dim (double xr, double xc)
+static int ok_matrix_dim (double xr, double xc, int f)
 {
-    double imax = (double) INT_MAX;
-    double xm = xr * xc;
+    double xm, imax = (double) INT_MAX;
+
+    if (f == SEQ) {
+	/* negative parameters are OK */
+	return (fabs(xr) < imax && 
+		fabs(xc) < imax &&
+		xr != xc);
+    }
+
+    xm = xr * xc;
 
     return (xr > 0 && xr <= imax && 
 	    xc > 0 && xc <= imax &&
@@ -1428,7 +1436,7 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 	gretl_error_clear();
 
-	if (!ok_matrix_dim(xr, xc)) {
+	if (!ok_matrix_dim(xr, xc, f)) {
 	    p->err = E_DATA;
 	    matrix_error(p);
 	    return ret;
