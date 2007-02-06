@@ -160,6 +160,7 @@ LIBSRC = adf_kpss.c \
 	interact.c \
 	kalman.c \
 	libset.c \
+	matrix_extra.c \
 	missing.c \
 	modelprint.c \
 	modelspec.c \
@@ -313,7 +314,7 @@ plugins/lad.dll: lad.o dllinit.o
 
 plugins/vif.dll: vif.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 plugins/urcdist.dll: urcdist.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

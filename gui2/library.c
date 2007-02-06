@@ -43,6 +43,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "usermat.h"
+#include "matrix_extra.h"
 #include "texprint.h"
 
 #ifdef G_OS_WIN32 

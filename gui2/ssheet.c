@@ -25,6 +25,7 @@
 #include "selector.h"
 #include "session.h"
 #include "usermat.h"
+#include "matrix_extra.h"
 
 #include <errno.h>
 #include <ctype.h>

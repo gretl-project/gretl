@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "matrix_extra.h"
 #include "bhhh_max.h"
 
 #define BHHH_DEBUG 0

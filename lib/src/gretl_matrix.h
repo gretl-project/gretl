@@ -160,20 +160,6 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n);
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
 
-gretl_vector *gretl_column_vector_from_array (const double *x, 
-					      int n, GretlMatrixMod mod);
-
-gretl_vector *gretl_data_series_to_vector (const double **Z, int varno, 
-					   int t1, int t2);
-
-gretl_matrix *gretl_vector_from_array (const double *x, int n,
-				       GretlMatrixMod mod);
-
-gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
-					  int rows, int cols);
-
-gretl_matrix *gretl_matrix_from_scalar (double x);
-
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 
 double gretl_matrix_trace (const gretl_matrix *m, int *err);
@@ -398,12 +384,6 @@ int
 gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD);
 
-gretl_matrix *
-gretl_vcv_matrix_from_model (MODEL *pmod, const char *select);
-
-gretl_vector *
-gretl_coeff_vector_from_model (const MODEL *pmod, const char *select);
-
 void 
 gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn);
 
@@ -429,30 +409,12 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 				       int *errp);
 
-gretl_matrix *
-gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
-				      const DATAINFO *pdinfo, 
-				      gretl_matrix **means, int *errp);
-
-int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
-
 gretl_matrix **gretl_matrix_array_alloc (int n);
 
 gretl_matrix **
 gretl_matrix_array_alloc_with_size (int n, int rows, int cols);
 
 void gretl_matrix_array_free (gretl_matrix **A, int n);
-
-gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, const char *mask);
-
-gretl_matrix *
-gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
-				     int t1, int t2, int *err);
-
-gretl_matrix *
-gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
-				       int t1, int t2, int *err);
 
 gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   int *err);

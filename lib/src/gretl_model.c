@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "modelspec.h"
 #include "gretl_xml.h"
+#include "matrix_extra.h"
 
 #define MDEBUG 0
 

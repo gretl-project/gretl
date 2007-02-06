@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "matrix_extra.h"
 #include "libset.h"
 #include "compat.h"
 
@@ -2778,7 +2779,7 @@ int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
     double d, se, z;
     int T;
 
-    X = gretl_data_series_to_vector(Z, varno, t1, t2);
+    X = gretl_vector_from_series(Z[varno], t1, t2);
     if (X == NULL) {
 	return 1;
     }

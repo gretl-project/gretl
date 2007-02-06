@@ -23,6 +23,7 @@
 #include "qr_estimate.h"
 #include "libset.h"
 #include "estim_private.h"
+#include "matrix_extra.h"
 
 #define TDEBUG 0
 

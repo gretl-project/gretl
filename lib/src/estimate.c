@@ -50,9 +50,6 @@
 
 #define XPX_DEBUG 0
 
-static int xpxxpy (const int *list, int t1, int t2, 
-		   const double **Z, int nwt, double rho, int pwe,
-		   double *xpx, double *xpy, const char *mask);
 static void regress (MODEL *pmod, double *xpy, const double **Z, 
 		     double rho);
 static int cholbeta (MODEL *pmod, double *xpy,  double *rss);
@@ -647,8 +644,8 @@ static int gretl_choleski_regress (MODEL *pmod, const double **Z,
     }
 
     /* calculate regression results, Cholesky style */
-    xpxxpy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
-	   rho, pwe, pmod->xpx, xpy, pmod->missmask);
+    gretl_XTX_XTy(pmod->list, pmod->t1, pmod->t2, Z, pmod->nwt, 
+		  rho, pwe, pmod->xpx, xpy, pmod->missmask);
 
 #if XPX_DEBUG
     for (i=0; i<=l0; i++) {
@@ -962,35 +959,36 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     return ar1_lsq(list, pZ, pdinfo, ci, opt, 0.0);
 }
 
-/*
-  xpxxpy: form the X'X matrix and X'y vector
+/**
+ * gretl_XTX_XTy:
+ * @list: list of variables in model.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @Z: data array.
+ * @nwt: ID number of variable used as weight.
+ * @rho: quasi-differencing coefficent.
+ * @pwe: if non-zero, use Prais-Winsten for first observation.
+ * @xpx: on output, X'X matrix as lower triangle, stacked by columns.
+ * @xpy: on output, X'y vector (but see below).
+ * @mask: missing observations mask, or %NULL.
+ *
+ * Calculates X'X and X'y, with various possible transformations
+ * of the original data, depending on @nwt, @rho and @pwe.
+ * xpy[0] holds the sum of y (that is, Z[list[1]]) and xpy[list[0]]
+ * holds y'y.  If X'y is not required, @xpy can be given as %NULL.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
-  - if rho is non-zero, quasi-difference the data first
-  - if nwt is non-zero, use that variable as weight
-  - if pwe is non-zero (as well as rho) construct the
-    first observation as per Prais-Winsten
-
-    Z[v][t] = observation t on variable v
-    n = number of obs in data set
-    t1, t2 = starting and ending observations
-    rho = quasi-differencing coefficent
-    nwt = ID number of variable used as weight
-
-    xpx = X'X matrix as a lower triangle, stacked by columns
-    xpy = X'y vector
-    xpy[0] = sum of y
-    xpy[list[0]] = y'y
-*/
-
-static int xpxxpy (const int *list, int t1, int t2, 
+int gretl_XTX_XTy (const int *list, int t1, int t2, 
 		   const double **Z, int nwt, double rho, int pwe,
 		   double *xpx, double *xpy, const char *mask)
 {
-    int i, j, t;
-    int li, lj, m;
     int l0 = list[0], yno = list[1];
-    double x, pw1;
     int qdiff = (rho != 0.0);
+    double x, pw1;
+    int li, lj, m;
+    int i, j, t;
 
     /* Prais-Winsten term */
     if (qdiff && pwe) {
@@ -1000,29 +998,31 @@ static int xpxxpy (const int *list, int t1, int t2,
 	pw1 = 0.0;
     }
 
-    xpy[0] = xpy[l0] = 0.0;
+    if (xpy != NULL) {
+	xpy[0] = xpy[l0] = 0.0;
 
-    for (t=t1; t<=t2; t++) {
-	if (masked(mask, t)) {
-	    continue;
-	}
-	x = Z[yno][t]; 
-	if (qdiff) {
-	    if (pwe && t == t1) {
-		x = pw1 * Z[yno][t];
-	    } else {
-		x -= rho * Z[yno][t-1];
+	for (t=t1; t<=t2; t++) {
+	    if (masked(mask, t)) {
+		continue;
 	    }
-	} else if (nwt) {
-	    x *= sqrt(Z[nwt][t]);
+	    x = Z[yno][t]; 
+	    if (qdiff) {
+		if (pwe && t == t1) {
+		    x = pw1 * Z[yno][t];
+		} else {
+		    x -= rho * Z[yno][t-1];
+		}
+	    } else if (nwt) {
+		x *= sqrt(Z[nwt][t]);
+	    }
+	    xpy[0] += x;
+	    xpy[l0] += x * x;
 	}
-        xpy[0] += x;
-        xpy[l0] += x * x;
-    }
 
-    if (xpy[l0] <= 0.0) {
-         return yno; 
-    }    
+	if (xpy[l0] <= 0.0) {
+	    return yno; 
+	} 
+    }   
 
     m = 0;
 
@@ -1046,16 +1046,18 @@ static int xpxxpy (const int *list, int t1, int t2,
 		}
 		xpx[m++] = x;
 	    }
-	    x = 0.0;
-	    for (t=t1; t<=t2; t++) {
-		if (pwe && t == t1) {
-		    x += pw1 * Z[yno][t] * pw1 * Z[li][t];
-		} else {
-		    x += (Z[yno][t] - rho * Z[yno][t-1]) *
-			(Z[li][t] - rho * Z[li][t-1]);
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (pwe && t == t1) {
+			x += pw1 * Z[yno][t] * pw1 * Z[li][t];
+		    } else {
+			x += (Z[yno][t] - rho * Z[yno][t-1]) *
+			    (Z[li][t] - rho * Z[li][t-1]);
+		    }
 		}
+		xpy[i-1] = x;
 	    }
-	    xpy[i-1] = x;
 	}
     } else if (nwt) {
 	/* weight the data */
@@ -1074,13 +1076,15 @@ static int xpxxpy (const int *list, int t1, int t2,
 		}   
 		xpx[m++] = x;
 	    }
-	    x = 0.0;
-	    for (t=t1; t<=t2; t++) {
-		if (!masked(mask, t)) {
-		    x += Z[nwt][t] * Z[yno][t] * Z[li][t];
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[nwt][t] * Z[yno][t] * Z[li][t];
+		    }
 		}
+		xpy[i-1] = x;
 	    }
-	    xpy[i-1] = x;
 	}
     } else {
 	/* no quasi-differencing or weighting wanted */
@@ -1099,13 +1103,15 @@ static int xpxxpy (const int *list, int t1, int t2,
 		}
 		xpx[m++] = x;
 	    }
-	    x = 0.0;
-	    for (t=t1; t<=t2; t++) {
-		if (!masked(mask, t)) {
-		    x += Z[yno][t] * Z[li][t];
+	    if (xpy != NULL) {
+		x = 0.0;
+		for (t=t1; t<=t2; t++) {
+		    if (!masked(mask, t)) {
+			x += Z[yno][t] * Z[li][t];
+		    }
 		}
+		xpy[i-1] = x;
 	    }
-	    xpy[i-1] = x;
 	}
     }
 
@@ -1214,7 +1220,7 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 }
 
 /*
-  regress: takes xpx, the X'X matrix produced by xpxxpy(), and
+  regress: takes xpx, the X'X matrix produced by gretl_XTX_XTy(), and
   xpy (X'y), and computes ols estimates and associated statistics.
 
   n = total number of observations per series in data set

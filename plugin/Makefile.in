@@ -191,7 +191,7 @@ kernel.la: kernel.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 vif.la: vif.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 urcdist.la: urcdist.lo
 	$(LINK) -o $@ $< $(GRETLLIB)

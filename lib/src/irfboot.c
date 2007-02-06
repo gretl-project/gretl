@@ -1,5 +1,7 @@
 /* bootstrapped confidence intervals for impulse response functions */
 
+#include "matrix_extra.h"
+
 #if BDEBUG
 # define BOOT_ITERS 5
 #else

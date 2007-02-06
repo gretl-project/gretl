@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "matrix_extra.h"
 #include "forecast.h"
 #include "var.h"
 

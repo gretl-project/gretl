@@ -21,6 +21,7 @@
 #include "system.h"
 #include "var.h"
 #include "objstack.h"
+#include "matrix_extra.h"
 #include "gretl_restrict.h"
 
 #define RDEBUG 0

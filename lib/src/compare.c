@@ -26,6 +26,7 @@
 #include "gretl_panel.h"
 #include "var.h"
 #include "missing_private.h"
+#include "matrix_extra.h"
 
 #define WDEBUG 0
 
@@ -2234,10 +2235,6 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     err = (*print_vifs)(pmod, pZ, pdinfo, prn);
 
     close_plugin(handle);
-
-    if (err) {
-	gretl_errmsg_set(_("Command failed"));
-    }
 
     return err;
 }

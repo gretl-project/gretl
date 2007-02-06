@@ -98,6 +98,7 @@ PUBLIC_HDRS = \
 	kalman.h \
 	libgretl.h \
 	libset.h \
+	matrix_extra.h \
 	missing.h \
 	modelprint.h \
 	modelspec.h \
@@ -159,6 +160,7 @@ SRCS = adf_kpss.c \
 	interact.c \
 	kalman.c \
 	libset.c \
+	matrix_extra.c \
 	missing.c \
 	modelprint.c \
 	modelspec.c \

@@ -28,6 +28,7 @@
 #include "bhhh_max.h"
 #include "libset.h"
 #include "kalman.h"
+#include "matrix_extra.h"
 
 #define ARMA_DEBUG 0
 

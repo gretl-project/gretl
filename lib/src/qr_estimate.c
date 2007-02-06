@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_matrix.h"
+#include "matrix_extra.h"
 #include "libset.h"
 #include "estim_private.h"
 
@@ -399,15 +400,13 @@ static void do_X_prime_diag (const gretl_matrix *X,
 			     const gretl_vector *D,
 			     gretl_matrix *R)
 {
-    const double *d;
     double x;
     int i, j;
 
     for (i=0; i<R->rows; i++) {
-	d = D->val;
 	for (j=0; j<R->cols; j++) {
 	    x = X->val[mdx(X, j, i)];
-	    R->val[mdx(R, i, j)] = x * (*d++);
+	    R->val[mdx(R, i, j)] = x * D->val[j];
 	}
     }
 }
@@ -432,8 +431,8 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
-    diag = gretl_column_vector_from_array(pmod->uhat + pmod->t1, T,
-					  GRETL_MOD_SQUARE);
+    diag = gretl_vector_from_array(pmod->uhat + pmod->t1, T,
+				   GRETL_MOD_SQUARE);
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
