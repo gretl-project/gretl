@@ -455,11 +455,13 @@ the $m$ row means.
 
 Also for an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
 family of functions return either an $m \times 1$ matrix (the
-\texttt{r} variants) or a $1 \times n$ matrix (the \texttt{c}
-variants).  The \texttt{max} vectors contain the values of the row or
+\texttt{r} variants, which select the extremum of each row) or a $1
+\times n$ matrix (the \texttt{c} variants, which select the column
+extrema).  The \texttt{max} vectors contain the values of the row or
 column maxima while the \texttt{min} ones hold the row or column
-minima.  The variants with an \texttt{idx} postfix return not the
-values but the (1-based) indices of the respective maxima or minima.
+minima.  The variants with an \texttt{i} prefix (e.g.\ \texttt{imaxc})
+return not the values but the (1-based) indices of the respective
+maxima or minima.
 
 For a $T \times k$ matrix $A$, \texttt{mcov(A)} and \texttt{mcorr(A)}
 both return $k \times k$ symmetric matrices, in the first case
