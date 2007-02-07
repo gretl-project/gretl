@@ -1,54 +1,51 @@
-\chapter{Cheat sheet}
+\chapter{Esempi svolti}
 \label{chap:cheatsheet}
 
-This chapter explains how to perform some common --- and some not so
-common --- tasks in \app{gretl}'s scripting language.  Some but not
-all of the techniques listed here are also available through the
-graphical interface.  Although the graphical interface may be more
-intuitive and less intimidating at first, we encourage users to take
-advantage of the power of \app{gretl}'s scripting language as soon as
-they feel comfortable with the program.
+Questo capitolo spiega come eseguire alcuni compiti comuni (e altri meno comuni)
+usando il linguaggio di scripting di \app{gretl}. Alcune delle tecniche mostrate,
+ma non tutte, sono utilizzabili anche attraverso l'interfaccia grafica del
+programma; sebbene questa possa sembrare più intuitiva e facile da utilizzare a
+prima vista, incoraggiamo gli utenti a sfruttare le potenzialità del linguaggio
+di scripting di \app{gretl}, dopo aver preso confidenza col programma.
 
-\section{Dataset handling}
+\section{Gestione dei dataset}
 
-\subsection{``Weird'' periodicities}
+\subsection{Periodicità ``strane''}
 
-\emph{Problem:} You have data sampled each 3 minutes from 9am onwards;
-you'll probably want to specify the hour as 20 periods.
+\emph{Problema:} si hanno dati rilevati ogni 3 minuti a partire dalle ore 9,
+ossia ogni ora è suddivisa in 20 periodi.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 setobs 20 9:1 --special
 \end{code}
 
-\emph{Comment:} Now functions like \texttt{sdiff()} (``seasonal''
-difference) or estimation methods like seasonal ARIMA will work as
-expected.
+\emph{Commento:} ora le funzioni come \texttt{sdiff()} (differenza ``stagionale'')
+o i metodi di stima come l'ARIMA stagionale funzioneranno come ci si aspetta.
 
-\subsection{Dropping missing observations selectively}
+\subsection{Eliminare osservazioni mancanti in modo selettivo}
 
-\emph{Problem:} You have a dataset with many variables and want to
-restrict the sample to those observations for which there are no
-missing observations for the variables \texttt{x1}, \texttt{x2} and
-\texttt{x3}.
+\emph{Problema:} si ha un dataset con molte variabili e si vuole restringere il
+campione a quelle osservazioni per cui non ci sono osservazioni mancanti per
+nessuna delle variabili \texttt{x1}, \texttt{x2} e \texttt{x3}.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 list X = x1 x2 x3
 genr sel = ok(X)
 smpl sel --restrict
 \end{code}
 
-\emph{Comment:} You can now save the file via a \texttt{store} command
-to preserve a subsampled version of the dataset.
+\emph{Commento:} ora è possibile salvare il file con il comando \texttt{store} per
+preservare una versione ristretta del dataset.
 
-\subsection{``By'' operations}
+\subsection{Operazioni diverse a seconda dei valori di una variabile}
 
-\emph{Problem:} You have a discrete variable \texttt{d} and you want
-to run some commands (for example, estimate a model) by splitting the
-sample according to the values of \texttt{d}.
+\emph{Problema:} si ha una variabile discreta \texttt{d} e si vuole eseguire
+alcuni comandi (ad esempio, stimare un modello) suddividendo il campione a
+seconda dei valori di \texttt{d}.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 matrix vd = values(d)
 m = rows(vd)
@@ -60,18 +57,19 @@ end loop
 smpl full
 \end{code}
 
-\emph{Comment:} The main ingredient here is a loop.  You can have
-\app{gretl} perform as many instructions as you want for each value of
-\texttt{d}, as long as they are allowed inside a loop.
+\emph{Commento:} L'ingrediente principale è un loop, all'interno del quale è
+possibile eseguire tutte le istruzioni volute per ogni valore di
+\texttt{d}, a patto che siano istruzioni il cui uso è consentito all'interno di
+un loop.
 
-\section{Creating/modifying variables}
+\section{Creazione e modifica di variabili}
 
-\subsection{Generating an ARMA(1,1)}
+\subsection{Generazione di un ARMA(1,1)}
 
-\emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
-\varepsilon_{t-1}$, with $\varepsilon_t \sim NIID(0,1)$.
+\emph{Problema:} Generare $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
+\varepsilon_{t-1}$, con $\varepsilon_t \sim NIID(0,1)$.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 alpha = 0.9
 theta = -0.5
@@ -80,16 +78,15 @@ series y = 0
 series y = alpha * y(-1) + e + theta * e(-1)
 \end{code}
 
-\emph{Comment:} The statement \texttt{series y = 0} is necessary
-because the next statement evaluates \texttt{y} recursively, so
-\texttt{y[1]} must be set.  Note that you must use the keyword
-\texttt{series} here instead of writing \texttt{genr y = 0} or simply
-\texttt{y = 0}, to ensure that \texttt{y} is a series and
-not a scalar.
+\emph{Commento:} L'istruzione \texttt{series y = 0} è necessaria perché
+l'istruzione successiva valuta \texttt{y} ricorsivamente, quindi occorre
+impostare \texttt{y[1]}. Si noti che occorre usare la parola chiave
+\texttt{series}, invece di scrivere \texttt{genr y = 0} o semplicemente
+\texttt{y = 0}, per assicurarsi che \texttt{y} sia una serie e non uno scalare.
 
-\subsection{Conditional assignment}
+\subsection{Assegnazione condizionale}
 
-\emph{Problem:} Generate $y_t$ via the following rule:
+\emph{Problema:} Generare $y_t$ secondo la regola seguente:
 \[
   y_t = \left\{ 
     \begin{array}{ll} 
@@ -99,33 +96,30 @@ not a scalar.
     \right. 
 \]
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 series y = d ? x : z
 \end{code}
 
-\emph{Comment:} There are several alternatives to the one presented
-above. One is a brute force solution using loops. Another one, more
-efficient but still suboptimal, would be \verb|y = d*x + (1-d)*z|.
-The ternary conditional assignment operator is not only the most
-numerically efficient way to accomplish what we want, it is also
-remarkably transparent to read when one gets used to it. Some readers
-may find it helpful to note that the conditional assignment operator
-works exactly the same way as the \texttt{=IF()} function in
-spreadsheets.
+\emph{Commento:} ci sono varie alternative a quella presentata. La prima è
+quella di forza bruta usando i loop. Un'altra, più efficiente ma ancora
+subottimale, è quella di usare \verb|y = d*x + (1-d)*z|. L'operatore di
+assegnazione condizionale ternario non solo rappresenta la soluzione
+numericamente più efficiente, ma è anche quella di più semplice lettura, una volta
+che si è abituati alla sua sintassi, che per alcuni lettori può ricordare quella
+della funzione \texttt{=IF()} nei fogli di calcolo.
 
-\section{Neat tricks}
+\section{Trucchi utili}
 \label{sec:cheat-neat}
 
-\subsection{Interaction dummies}
+\subsection{Dummy di interazione}
 
-\emph{Problem:} You want to estimate the model $y_i = \mathbf{x}_i
+\emph{Problema:} si vuole stimare il modello $y_i = \mathbf{x}_i
 \beta_1 + \mathbf{z}_i \beta_2 + d_i \beta_3 + (d_i \cdot \mathbf{z}_i)
-\beta_4 + \varepsilon_t$, where $d_i$ is a dummy variable while
-$\mathbf{x}_i$ and $\mathbf{z}_i$ are vectors of explanatory
-variables.
+\beta_4 + \varepsilon_t$, dove $d_i$ è una variabile dummy, mentre
+$\mathbf{x}_i$ e $\mathbf{z}_i$ sono vettori di variabili esplicative.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 list X = x1 x2 x3
 list Z = z1 z2
@@ -139,16 +133,16 @@ ols y X Z d dZ
 \end{code} 
 %$
 
-\emph{Comment:} It's amazing what string substitution can do for
-you, isn't it?
+\emph{Commento:} incredibile cosa si può fare con la sostituzione delle
+stringhe, vero?
 
-\subsection{Realized volatility}
+\subsection{Volatilità percepita}
 
-\emph{Problem:} Given data by the minute, you want to compute the
-``realized volatility'' for the hour as $RV_t = \frac{1}{60}
-\sum_{\tau=1}^{60} y_{t:\tau}^2$. Imagine your sample starts at time 1:1.
+\emph{Problema:} avendo dati raccolti ogni minuto, si vuole calcolare la
+``realized volatility'' per ogni ora come $RV_t = \frac{1}{60}
+\sum_{\tau=1}^{60} y_{t:\tau}^2$. Il campione parte da 1:1.
 
-\emph{Solution:}
+\emph{Soluzione:}
 \begin{code}
 smpl full
 genr time
@@ -161,13 +155,12 @@ smpl second=1 --restrict
 store foo rv
 \end{code}
 
-\emph{Comment:} Here we trick \app{gretl} into thinking that our
-dataset is a panel dataset, where the minutes are the ``units'' and
-the seconds are the ``time''; this way, we can take advantage of the
-special function \texttt{psd()}, panel standard deviation.  Then we
-simply drop all observations but one per minute and save the resulting
-data (\texttt{store foo rv} translates as ``store in the \app{gretl}
-datafile \texttt{foo.gdt} the series \texttt{rv}'').
+\emph{Commento:} qui facciamo credere a \app{gretl} che il dataset sia di tipo
+panel, dove i minuti sono le ``unità'' e i secondi sono il ``tempo''; in questo
+modo possiamo utilizzare la funzione speciale \texttt{psd()} (panel standard deviation).
+Quindi eliminiamo semplicemente tutte le osservazioni tranne una per minuto e
+salviamo i dati risultanti (\texttt{store foo rv} significa ``salva nel file di dati
+\texttt{foo.gdt} la serie \texttt{rv}'').
 
 
 %%% Local Variables: 
