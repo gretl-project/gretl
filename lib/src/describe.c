@@ -916,11 +916,8 @@ double dh_root_b1_to_z1 (double rb1, double n)
 	((n-2) * (n+5) * (n+7) * (n+9));
 
     w2 = -1.0 + sqrt(2 * (b-1));
-    
     d = 1.0 / sqrt(log(sqrt(w2)));
-
     y = rb1 * sqrt(((w2-1.0)/2.0) * ((n+1.0)*(n+3.0))/(6.0*(n-2)));
-
     z1 = d * log(y + sqrt(y*y + 1));
 
     return z1;
@@ -945,16 +942,12 @@ double dh_b2_to_z2 (double b1, double b2, double n)
     double n2 = n * n;
 
     d = (n-3) * (n+1) * (n2 + 15*n - 4.0);
-
     a = ((n-2) * (n+5) * (n+7) * (n2 + 27*n - 70.0)) / (6.0 * d);
-
     c = ((n-7) * (n+5) * (n+7) * (n2 + 2*n - 5.0)) / (6.0 * d);
-
     k = ((n+5) * (n+7) * (n2*n + 37*n2 + 11*n - 313.0)) / (12.0 * d);
 
     alpha = a + b1 * c;
     z2 =  (1.0 / (9.0 * alpha)) - 1.0;
-
     chi = (b2 - 1.0 - b1) * 2.0 * k;
 
     if (chi > 0.0) {
@@ -1657,9 +1650,7 @@ int compare_xtab_rows (const void *a, const void *b)
     return ret;
 }
 
-/**
-  crosstab struct creation function
-*/
+/* crosstab struct creation function */
 
 static Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
 		       const DATAINFO *pdinfo, int *err)
@@ -1748,13 +1739,10 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	tab->ctotal[i] = 0;
     }
 
-    /* done with FreqDists */
     free_freq(rowfreq);
     free_freq(colfreq);
 
-    /* 
-       build the matrix X holding the values to be sorted
-    */
+    /* matrix X holds the values to be sorted */
 
     i = 0;
     for (t=t1; t<=t2 && i<n; t++) {
@@ -1774,7 +1762,6 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	tab = NULL;
     } else {
 	qsort(X, n, sizeof *X, compare_xtab_rows);
-
 	ri = cj = 0;
 	xr = tab->rval[0];
 	xc = tab->cval[0];
@@ -1801,8 +1788,6 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	tab->rtotal[ri] += 1;
 	tab->ctotal[cj] += 1;
     }
-
-    /* we're done; free stuff and quit */
 
     if (X != NULL) {
 	for (i=0; i<n; i++) {
@@ -1909,8 +1894,6 @@ int crosstab (const int *list, const double **Z,
 
     return err;
 }
-
-/* ---------- end crosstab stuff -------------------- */
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn)
@@ -3292,39 +3275,39 @@ void free_summary (Summary *summ)
 
 static Summary *summary_new (const int *list)
 {
-    Summary *summ;
+    Summary *s;
     int nv = list[0];
 
-    summ = malloc(sizeof *summ);
-    if (summ == NULL) {
+    s = malloc(sizeof *s);
+    if (s == NULL) {
 	return NULL;
     }
 
-    summ->list = gretl_list_copy(list);
-    if (summ->list == NULL) {
-	free(summ);
+    s->list = gretl_list_copy(list);
+    if (s->list == NULL) {
+	free(s);
 	return NULL;
     }
 
-    summ->n = 0;
-    summ->missing = 0;
+    s->n = 0;
+    s->missing = 0;
 
-    summ->stats = malloc(8 * nv * sizeof *summ->stats);
-    if (summ->stats == NULL) {
-	free_summary(summ);
+    s->stats = malloc(8 * nv * sizeof *s->stats);
+    if (s->stats == NULL) {
+	free_summary(s);
 	return NULL;
     }
 
-    summ->mean = summ->stats;
-    summ->median = summ->mean + nv;
-    summ->sd = summ->median + nv;
-    summ->skew = summ->sd + nv;
-    summ->xkurt = summ->skew + nv;
-    summ->low = summ->xkurt + nv;
-    summ->high = summ->low + nv;
-    summ->cv = summ->high + nv;
+    s->mean = s->stats;
+    s->median = s->mean + nv;
+    s->sd = s->median + nv;
+    s->skew = s->sd + nv;
+    s->xkurt = s->skew + nv;
+    s->low = s->xkurt + nv;
+    s->high = s->low + nv;
+    s->cv = s->high + nv;
 
-    return summ;
+    return s;
 }
 
 /**
@@ -3342,42 +3325,42 @@ static Summary *summary_new (const int *list)
 Summary *summary (const int *list, const double **Z, 
 		  const DATAINFO *pdinfo, PRN *prn) 
 {
-    Summary *summ;
+    Summary *s;
     int i, vi, sn, gn;
 
-    summ = summary_new(list);
-    if (summ == NULL) {
+    s = summary_new(list);
+    if (s == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<summ->list[0]; i++)  {
+    for (i=0; i<s->list[0]; i++)  {
 	double x0;
 
-	vi = summ->list[i + 1];
+	vi = s->list[i + 1];
 
 	sn = pdinfo->t2 - pdinfo->t1 + 1;
 	gn = good_obs(Z[vi] + pdinfo->t1, sn, &x0);
 
 	if (gn < sn) {
-	    summ->missing = 1;
+	    s->missing = 1;
 	}
 
-	if (gn > summ->n) {
-	    summ->n = gn;
+	if (gn > s->n) {
+	    s->n = gn;
 	}
 
 	if (sn < 2) { 
 	    /* zero or one observations */
-	    if (summ->n == 0) {
+	    if (s->n == 0) {
 		pprintf(prn, _("Dropping %s: sample range contains no valid "
 			"observations\n"), pdinfo->varname[vi]);
 	    } else {
 		pprintf(prn, _("Dropping %s: sample range has only one "
 			"obs, namely %g\n"), pdinfo->varname[vi], x0);
 	    }
-	    gretl_list_delete_at_pos(summ->list, i + 1);
-	    if (summ->list[0] == 0) {
-		free_summary(summ);
+	    gretl_list_delete_at_pos(s->list, i + 1);
+	    if (s->list[0] == 0) {
+		free_summary(s);
 		return NULL;
 	    } else {
 		i--;
@@ -3386,25 +3369,25 @@ Summary *summary (const int *list, const double **Z,
 	}
 
 	gretl_minmax(pdinfo->t1, pdinfo->t2, Z[vi], 
-		     &summ->low[i], 
-		     &summ->high[i]);
+		     &s->low[i], 
+		     &s->high[i]);
 	
 	gretl_moments(pdinfo->t1, pdinfo->t2, Z[vi], 
-		      &summ->mean[i], 
-		      &summ->sd[i], 
-		      &summ->skew[i], 
-		      &summ->xkurt[i], 1);
+		      &s->mean[i], 
+		      &s->sd[i], 
+		      &s->skew[i], 
+		      &s->xkurt[i], 1);
 
-	if (!floateq(summ->mean[i], 0.0)) {
-	    summ->cv[i] = fabs(summ->sd[i] / summ->mean[i]);
+	if (!floateq(s->mean[i], 0.0)) {
+	    s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	} else {
-	    summ->cv[i] = NADBL;
+	    s->cv[i] = NADBL;
 	}
 
-	summ->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
+	s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
     } 
 
-    return summ;
+    return s;
 }
 
 /**
@@ -3416,21 +3399,20 @@ Summary *summary (const int *list, const double **Z,
 
 VMatrix *vmatrix_new (void)
 {
-    VMatrix *vmat = malloc(sizeof *vmat);
+    VMatrix *v = malloc(sizeof *v);
 
-    if (vmat != NULL) {
-	vmat->vec = NULL;
-	vmat->list = NULL;
-	vmat->names = NULL;
-
-	vmat->ci = 0;
-	vmat->dim = 0;
-	vmat->t1 = 0;
-	vmat->t2 = 0;
-	vmat->missing = 0;
+    if (v != NULL) {
+	v->vec = NULL;
+	v->list = NULL;
+	v->names = NULL;
+	v->ci = 0;
+	v->dim = 0;
+	v->t1 = 0;
+	v->t2 = 0;
+	v->missing = 0;
     }
 
-    return vmat;
+    return v;
 }
 
 /**
@@ -3466,13 +3448,13 @@ void free_vmatrix (VMatrix *vmat)
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 {
-    VMatrix *corrmat;
+    VMatrix *v;
     int i, j, lo, nij, mm;
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
     int missing = 0;
 
-    corrmat = vmatrix_new();
-    if (corrmat == NULL) {
+    v = vmatrix_new();
+    if (v == NULL) {
 	return NULL;
     }
 
@@ -3484,51 +3466,50 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 	}
     }
 
-    corrmat->dim = lo = list[0];  
+    v->dim = lo = list[0];  
     mm = (lo * (lo + 1)) / 2;
 
-    corrmat->names = strings_array_new(lo);
-    if (corrmat->names == NULL) {
-	free(corrmat);
+    v->names = strings_array_new(lo);
+    if (v->names == NULL) {
+	free(v);
 	return NULL;
     }
 
-    corrmat->vec = malloc(mm * sizeof *corrmat->vec);
-    if (corrmat->vec == NULL) {
-	free_vmatrix(corrmat);
+    v->vec = malloc(mm * sizeof *v->vec);
+    if (v->vec == NULL) {
+	free_vmatrix(v);
 	return NULL;
     }
 
     for (i=0; i<lo; i++) {  
-	int vi = list[i+1];
+	int vj, vi = list[i+1];
 
-	corrmat->names[i] = gretl_strdup(pdinfo->varname[vi]);
-	if (corrmat->names[i] == NULL) {
-	    free_vmatrix(corrmat);
+	v->names[i] = gretl_strdup(pdinfo->varname[vi]);
+	if (v->names[i] == NULL) {
+	    free_vmatrix(v);
 	    return NULL;
 	}
 
 	for (j=0; j<lo; j++)  {
-	    int vj = list[j+1];
-
+	    vj = list[j+1];
 	    nij = ijton(i, j, lo);
 	    if (i == j) {
-		corrmat->vec[nij] = 1.0;
+		v->vec[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj], &missing);
+	    v->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj], &missing);
 	    if (missing > 0) {
-		corrmat->missing = 1;
+		v->missing = 1;
 	    }
 	}
     }
 
-    corrmat->list = gretl_list_copy(list);
-    corrmat->ci = CORR;
-    corrmat->t1 = t1;
-    corrmat->t2 = t2;
+    v->list = gretl_list_copy(list);
+    v->ci = CORR;
+    v->t1 = t1;
+    v->t2 = t2;
 
-    return corrmat;
+    return v;
 }
 
 /**

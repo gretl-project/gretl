@@ -155,10 +155,10 @@ enum {
     MAXC,
     MINR,
     MAXR,
-    MINCIDX,
-    MAXCIDX,
-    MINRIDX,
-    MAXRIDX,   /* 130 */
+    IMINC,
+    IMAXC,
+    IMINR,
+    IMAXR,     /* 130 */
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,

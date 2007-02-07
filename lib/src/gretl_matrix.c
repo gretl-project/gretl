@@ -3979,8 +3979,9 @@ static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
 }
 
 /**
- * gretl_eigen_sort:
- * @evals: array of eigenvalues.
+ * gretl_general_eigen_sort:
+ * @evals: array of eigenvalues, from general (not necessarily
+ * symmetric) matrix.
  * @evecs: matrix of eigenvectors.
  * @rank: desired number of columns in output.
  * 
@@ -3994,12 +3995,29 @@ static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+int gretl_general_eigen_sort (double *evals, gretl_matrix *evecs, 
+			      int rank)
 {
     return real_eigen_sort(evals, evecs, rank, 0);
 }
 
-static int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
+/**
+ * gretl_symmetric_eigen_sort:
+ * @evals: array of real eigenvalues, from symmetric matrix.
+ * @evecs: matrix of eigenvectors.
+ * @rank: desired number of columns in output.
+ * 
+ * Sorts the eigenvalues in @evals from largest to smallest, and 
+ * rearranges the columns in @evecs correspondingly.  If @rank is 
+ * greater than zero and less than the number of columns in @evecs, 
+ * then on output @evecs is shrunk so that it contains only the 
+ * columns associated with the largest @rank eigenvalues.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs, 
+				int rank)
 {
     return real_eigen_sort(evals, evecs, rank, 1);    
 }
@@ -5884,7 +5902,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     double d, x;
     int i, j, k;
 
-    if (rc > 0) {
+    if (rc == 0) {
 	B = gretl_matrix_alloc(A->rows, 1);
     } else {
 	B = gretl_matrix_alloc(1, A->cols);
@@ -5895,7 +5913,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (rc > 0) {
+    if (rc == 0) {
 	for (i=0; i<A->rows; i++) {
 	    d = A->val[mdx(A, i, 0)];
 	    k = 0;
@@ -5962,8 +5980,11 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
 	return P;
     }
 
-    if (p == 0) p = 1;
-    if (p > m) p = m;
+    if (p <= 0) {
+	p = 1;
+    } else if (p > m) {
+	p = m;
+    }
 
     C = real_gretl_covariance_matrix(X, 1, &xbar, &ssx, err);
     if (*err) {

@@ -1309,9 +1309,9 @@ static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
-    *mm = (f == MAXR || f == MAXC || f == MAXRIDX || f == MAXCIDX);
-    *rc = (f == MINC || f == MAXC || f == MINCIDX || f == MAXCIDX);
-    *idx = (f == MINRIDX || f == MINCIDX || f == MAXRIDX || f == MAXCIDX);
+    *mm = (f == MAXR || f == MAXC || f == IMAXR || f == IMAXC);
+    *rc = (f == MINC || f == MAXC || f == IMINC || f == IMAXC);
+    *idx = (f == IMINR || f == IMINC || f == IMAXR || f == IMAXC);
 }
 
 static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
@@ -1377,10 +1377,10 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MAXC:
 	case MINR:
 	case MAXR:
-	case MINCIDX:
-	case MAXCIDX:
-	case MINRIDX:
-	case MAXRIDX:  
+	case IMINC:
+	case IMAXC:
+	case IMINR:
+	case IMAXR:  
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	default:
@@ -3855,10 +3855,10 @@ static NODE *eval (NODE *t, parser *p)
     case MAXC:
     case MINR:
     case MAXR:
-    case MINCIDX:
-    case MAXCIDX:
-    case MINRIDX:
-    case MAXRIDX: 
+    case IMINC:
+    case IMAXC:
+    case IMINR:
+    case IMAXR: 
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

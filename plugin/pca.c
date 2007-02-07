@@ -211,192 +211,159 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
     }
 }
 
-static double *standardize (const double *x, int n)
+static int standardize (double *y, const double *x, int n)
 {
-    double *sx;
     double xbar, sd;
     int i, err;
 
     err = gretl_moments(0, n-1, x, &xbar, &sd, NULL, NULL, 1);
     if (err) {
-	return NULL;
-    }
-
-    sx = malloc(n * sizeof *sx);
-    if (sx == NULL) {
-	return NULL;
+	return err;
     }
 
     for (i=0; i<n; i++) {
 	if (na(x[i])) {
-	    sx[i] = NADBL;
+	    y[i] = NADBL;
 	} else {
-	    sx[i] = (x[i] - xbar) / sd;
+	    y[i] = (x[i] - xbar) / sd;
 	}
     }
 
-    return sx;
+    return 0;
 }
 
 int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, gretlopt *pflag,
+		      DATAINFO *pdinfo, gretlopt *popt,
 		      PRN *prn)
 {
-    gretl_matrix *m;
-    double x;
-    int i, j, idx, n = corrmat->dim;
-    double *evals;
-    gretlopt oflag = 0L;
+    gretl_matrix *C;
+    int k = corrmat->dim;
+    int i, j, t, vi, idx;
+    double x, *evals = NULL;
+    gretlopt opt = OPT_NONE;
     int err = 0;
 
-    if (pflag != NULL) oflag = *pflag;
+    if (popt != NULL) {
+	opt = *popt;
+    }
 
-    if (oflag & OPT_D) { 
-	oflag = pca_flag_dialog();
-	if (!oflag) {
+    if (opt & OPT_D) { 
+	opt = pca_flag_dialog();
+	if (!opt) {
 	    /* canceled */
-	    *pflag = 0L;
+	    *popt = OPT_NONE;
 	    return 0; 
 	}
     }    
 
-    m = gretl_matrix_alloc(n, n);
-    if (m == NULL) return E_ALLOC;
+    C = gretl_matrix_alloc(k, k);
+    if (C == NULL) {
+	return E_ALLOC;
+    }
 
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    idx = ijton(i, j, n);
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	    idx = ijton(i, j, k);
 	    x = corrmat->vec[idx];
-	    gretl_matrix_set(m, i, j, x);
+	    gretl_matrix_set(C, i, j, x);
 	}
     }
 
-    evals = gretl_symmetric_matrix_eigenvals(m, 1, &err);
+    evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
     if (err) {
-	gretl_matrix_free(m);
+	gretl_matrix_free(C);
 	return err;
     }
 
     if (prn != NULL) {
-	pca_print(corrmat, m, evals, prn);
+	pca_print(corrmat, C, evals, prn);
     }
 
-    if (oflag) {
-	/* add components with eigenvalues > 1 to the dataset */
-	int v = pdinfo->v;
-	int nc = 0, err = 0;
+    if (opt) {
+	/* add PCs to the dataset */
 	double **sZ = NULL;
-	int add_all = (oflag == OPT_A);
-	int *plist;
+	int *plist = NULL;
+	int m, v = pdinfo->v;
 
-	if (add_all) {
-	    nc = n;
+	if (opt & OPT_A) {
+	    m = k;
 	} else {
-	    for (i=0; i<n; i++) {
-		if (evals[i] > 1.0) nc++;
+	    m = 0;
+	    for (i=0; i<k; i++) {
+		if (evals[i] > 1.0) {
+		    m++;
+		}
 	    }
 	}
 
-	plist = malloc((nc + 1) * sizeof *plist);
-	if (plist == NULL) err = E_ALLOC;
+	plist = gretl_list_new(m);
+	if (plist == NULL) {
+	    err = E_ALLOC;
+	}
 
 	if (!err) {
-	    /* build list of PCs (with eigenvals > 1?) */
-	    plist[0] = nc;
+	    /* build list of PCs */
 	    j = 1;
-	    for (i=n-1; i>=0; i--) {
-		if (add_all || evals[i] > 1.0) {
+	    for (i=k-1; i>=0; i--) {
+		if ((opt & OPT_A) || evals[i] > 1.0) {
 		    plist[j++] = i;
 		}
 	    }
-#ifdef PCA_DEBUG
-	    printlist(plist, "pclist");
-#endif
-	    err = dataset_add_series(nc, pZ, pdinfo);
+	    err = dataset_add_series(m, pZ, pdinfo);
 	}
 
 	if (!err) {
 	    /* construct standardized versions of variables */
-	    sZ = malloc(n * sizeof *sZ);
+	    sZ = doubles_array_new(k, pdinfo->n); 
 	    if (sZ == NULL) {
 		err = E_ALLOC;
 	    } else {
-		for (i=0; i<n; i++) {
-		    sZ[i] = NULL;
-		}
-		for (i=0; i<n; i++) {
-		    int oldv = corrmat->list[i+1];
-
-#ifdef PCA_DEBUG
-		    fprintf(stderr, "Getting standardized version of "
-			    "var %d\n", oldv);
-#endif
-		    sZ[i] = standardize((const double *) (*pZ)[oldv], 
-					pdinfo->n);
-		    if (sZ[i] == NULL) {
-			err = E_ALLOC;
-			break;
-		    }
-		}
-		if (err) {
-		    for (i=0; i<n; i++) {
-			free(sZ[i]);
-		    }
-		    free(sZ);
-		    sZ = NULL;
+		for (i=0; i<k && !err; i++) {
+		    vi = corrmat->list[i+1];
+		    err = standardize(sZ[i], (const double *) (*pZ)[vi], 
+				      pdinfo->n);
 		}
 	    }
 	}
 
 	if (!err) {
 	    for (i=1; i<=plist[0]; i++) {
-		int newv = v + i - 1;
-		int pcnum = plist[i];
-		int t;
+		int pi = plist[i];
+		double load;
 
-		sprintf(pdinfo->varname[newv], "PC%d", i);
-		make_varname_unique(pdinfo->varname[newv], newv, pdinfo);
-		sprintf(VARLABEL(pdinfo, newv), "Component with "
-			"eigenvalue = %.4f", evals[pcnum]);
+		vi = v + i - 1;
+		sprintf(pdinfo->varname[vi], "PC%d", i);
+		make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
+		sprintf(VARLABEL(pdinfo, vi), "Component with "
+			"eigenvalue = %.4f", evals[pi]);
+
 		for (t=0; t<pdinfo->n; t++) {
-#ifdef PCA_DEBUG
-		    fprintf(stderr, "Obs %d\n", t);
-#endif
-		    (*pZ)[newv][t] = 0.0;
-		    for (j=0; j<n; j++) {
-			double load = gretl_matrix_get(m, j, pcnum);
-			double val = sZ[j][t];
-
-#ifdef PCA_DEBUG
-			fprintf(stderr, "j=%d,pcnum=%d,load=%g,val=%g\n",
-				j,pcnum,load,val);
-#endif
-
-			if (na(val)) {
-			    (*pZ)[newv][t] = NADBL;
+		    (*pZ)[vi][t] = 0.0;
+		    for (j=0; j<k; j++) {
+			x = sZ[j][t];
+			if (na(x)) {
+			    (*pZ)[vi][t] = NADBL;
 			    break;
 			} else {
-			    (*pZ)[newv][t] += load * val;
+			    load = gretl_matrix_get(C, j, pi);
+			    (*pZ)[vi][t] += load * x;
 			}
 		    }
-		} /* end loop over observations */
-	    } /* end loop over components */
-	} /* end !err conditional */
-
-	free(plist);
-	if (sZ != NULL) {
-	    for (i=0; i<n; i++) {
-		free(sZ[i]);
+		}
 	    }
-	    free(sZ);
 	}
 
-    } /* end oflag conditional */
+	free(plist);
+	doubles_array_free(sZ, k);
+
+    } /* end opt (save PCs) conditional */
 
     free(evals);
-    gretl_matrix_free(m);
+    gretl_matrix_free(C);
 
-    if (pflag != NULL) *pflag = oflag;
+    if (popt != NULL) {
+	*popt = opt;
+    }
 
     return 0;
 }

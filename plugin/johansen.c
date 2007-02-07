@@ -1104,7 +1104,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	pputs(prn, _("Failed to find eigenvalues\n"));
     } else {
-	err = gretl_eigen_sort(eigvals, M, rank);
+	err = gretl_general_eigen_sort(eigvals, M, rank);
     }
 
 #if JDEBUG
@@ -1227,7 +1227,7 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
 	if (!err) {
-	    err = gretl_eigen_sort(eigvals, M, jrank(jvar));
+	    err = gretl_general_eigen_sort(eigvals, M, jrank(jvar));
 	}
     }
 
@@ -1382,7 +1382,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     if (!err) {
 	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
 	if (!err) {
-	    err = gretl_eigen_sort(eigvals, M, jrank(jvar));
+	    err = gretl_general_eigen_sort(eigvals, M, jrank(jvar));
 	}
     }
 

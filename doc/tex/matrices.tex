@@ -270,25 +270,25 @@ context it is reserved for the Kronecker product.)
 \texttt{exp}       &
 \texttt{gamma}     &
 \texttt{I}         &
+\texttt{imaxc}     &
+\texttt{imaxr}     \\
+\texttt{iminc}     &
+\texttt{iminr}     &
 \texttt{infnorm}   &
-\texttt{int}       \\
+\texttt{int}       &
 \texttt{inv}       &
-\texttt{ldet}      &
+\texttt{ldet}      \\
 \texttt{lngamma}   &
 \texttt{log}       &
 \texttt{mcorr}     &
-\texttt{mcov}      \\
+\texttt{mcov}      &
 \texttt{maxc}      &   
-\texttt{maxr}      &
-\texttt{maxcidx}   &
-\texttt{maxridx}   &
+\texttt{maxr}      \\
 \texttt{meanc}     &
-\texttt{meanr}     \\
+\texttt{meanr}     &
 \texttt{mexp}      &
 \texttt{minc}      &   
 \texttt{minr}      &
-\texttt{mincidx}   &
-\texttt{minridx}   &
 \texttt{mlag}      \\
 \texttt{mnormal}   &
 \texttt{mshape}    &
@@ -432,12 +432,12 @@ matrix are:
 \texttt{nullspace()} & right nullspace & &
 \texttt{maxc}      & column maxima (values) \\ 
 \texttt{maxr}      & row maxima (values)  & &
-\texttt{maxcidx}   & column maxima (indices) \\ 
-\texttt{maxridx}   & row maxima (indices) & &
+\texttt{imaxc}     & column maxima (indices) \\ 
+\texttt{imaxr}     & row maxima (indices) & &
 \texttt{minc}      & column minima (values) \\   
 \texttt{minr}      & row minima (values) &  &
-\texttt{mincidx}   & column minima (indices) \\ 
-\texttt{minridx}   & row minima (indices) 
+\texttt{iminc}     & column minima (indices) \\ 
+\texttt{iminr}     & row minima (indices) 
 \end{tabular}
 \end{center}
 
@@ -451,9 +451,9 @@ vector with the $m$ row sums.  \texttt{meanc(A)} returns a row vector
 with the $n$ column means, and \texttt{meanr(A)} a column vector with
 the $m$ row means.
 
-For an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
-family of functions return either a column vector of length $m$ (the
-\texttt{r} variants) or a row vector of length $n$ (the \texttt{c}
+Also for an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
+family of functions return either an $m \times 1$ matrix (the
+\texttt{r} variants) or a $1 \times n$ matrix (the \texttt{c}
 variants).  The \texttt{max} vectors contain the values of the row or
 column maxima while the \texttt{min} ones hold the row or column
 minima.  The variants with an \texttt{idx} postfix return not the

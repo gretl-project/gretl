@@ -314,7 +314,11 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
 double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
 
-int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank);
+int gretl_general_eigen_sort (double *evals, gretl_matrix *evecs, 
+			      int rank);
+
+int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs, 
+				int rank);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m,
 					int eigenvecs, 
