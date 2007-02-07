@@ -570,12 +570,8 @@ wilcoxon_rank_sum (const double *x, const double *y, int t1, int t2,
     for (i=0; i<n; i++) {
 	int m = 1;
 
-	for (t=i+1; t<n; t++) {
-	    if (r[t].val == r[i].val) {
-		m++;
-	    } else {
-		break;
-	    }
+	for (t=i+1; t<n && r[t].val == r[i].val; t++) {
+	    m++;
 	}
 
 	if (m == 1) {
