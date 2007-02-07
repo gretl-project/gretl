@@ -29,5 +29,8 @@ double lockes_test (const double *x, int t1, int t2);
 int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
 
+int sign_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	       PRN *prn);
+
 #endif /* NONPARAM_H */
 

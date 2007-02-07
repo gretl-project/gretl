@@ -513,5 +513,166 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+struct ranker {
+    double val;
+    double rank;
+    char src;
+};
+
+static int 
+wilcoxon_rank_sum (const double *x, const double *y, int t1, int t2, 
+		   PRN *prn)
+{
+    gretlopt opt = OPT_V;
+    struct ranker *r;
+    double wa;
+    char xc = 'a', yc = 'b';
+    int na = 0, nb = 0;
+    int i, t, n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) na++;
+	if (!na(y[t])) nb++;
+    }
+
+    if (na == 0 || nb == 0) {
+	return E_MISSDATA;
+    }
+
+    n = na + nb;
+    r = malloc(n * sizeof *r);
+    if (r == NULL) {
+	return E_ALLOC;
+    }
+
+    if (na > nb) {
+	/* Make 'a' the smaller group */
+	xc = 'b';
+	yc = 'a';
+    }
+
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    r[i].val = x[t];
+	    r[i].src = xc;
+	    i++;
+	}
+	if (!na(y[t])) {
+	    r[i].val = y[t];
+	    r[i].src = yc;
+	    i++;
+	}
+    }
+
+    qsort(r, n, sizeof *r, gretl_compare_doubles);
+
+    for (i=0; i<n; i++) {
+	int m = 1;
+
+	for (t=i+1; t<n; t++) {
+	    if (r[t].val == r[i].val) {
+		m++;
+	    } else {
+		break;
+	    }
+	}
+
+	if (m == 1) {
+	    r[i].rank = i + 1;
+	} else {
+	    for (t=0; t<m; t++) {
+		r[i+t].rank = (i + 1 + i + m) / 2.0;
+	    }
+	    i += m - 1;
+	}
+    }
+
+    wa = 0;
+
+    if (opt & OPT_V) {
+	pprintf(prn, "%10s %7s %8s\n\n", "value", "rank", "group");
+    }
+
+    for (i=0; i<n; i++) {
+	if (opt & OPT_V) {
+	    pprintf(prn, "%10g %7g %8c\n", r[i].val, r[i].rank, r[i].src);
+	}
+	if (r[i].src == 'a') {
+	    wa += r[i].rank;
+	} else {
+	    wb += r[i].rank;
+	}
+    } 
+
+    pprintf(prn, "\nw_a = %g\n", wa);
+
+    free(r);
+
+    return 0;
+}
+
+/**
+ * sign_test:
+ * @list: list containing 2 variables.
+ * @Z: data array.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Performs, and prints the results of, the sign test for the
+ * null hypothesis of "no difference" between the variables in
+ * @list.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int sign_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	       PRN *prn)
+{
+    const double *x, *y;
+    int n, w, t;
+
+    if (list[0] != 2) {
+	pputs(prn, _("This command requires two variables\n"));
+	return 1;
+    }
+
+    x = Z[list[1]];
+    y = Z[list[2]];
+
+    n = w = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t]) && !na(y[t]) && x[t] != y[t]) {
+	    w += (x[t] > y[t]);
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	return E_MISSDATA;
+    }
+
+    pprintf(prn, _("\nFor the variables '%s' and '%s':\n\n"), 
+	    pdinfo->varname[list[1]], pdinfo->varname[list[2]]);
+    pputs(prn, "  ");
+    pprintf(prn, _("Number of valid cases with x != y: n = %d\n"), n);
+    pputs(prn, "  ");
+    pprintf(prn, _("Number of valid with x > y: w = %d (proportion = %f)\n"), 
+	    w, (double) w / n);
+
+    pputs(prn, "  ");
+    pprintf(prn, _("Under the null hypothesis of no difference, W "
+		   "follows B(%d, %.2f)\n"), n, 0.5);
+    pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w, 
+	    binomial_cdf(w, n, 0.5));
+    pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, 
+	    binomial_cdf_comp(w-1, n, 0.5));
+
+#if 0
+    wilcoxon_rank_sum(x, y, pdinfo->t1, pdinfo->t2, prn);
+#endif    
+
+    return 0;
+}
 
 
