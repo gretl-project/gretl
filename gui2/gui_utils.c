@@ -272,6 +272,7 @@ static GtkItemFactoryEntry model_items[] = {
       selector_callback, ELLIPSE, NULL, GNULL },
     { N_("/Analysis/Coefficient covariance _matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
+    { N_("/Analysis/ANOVA"), NULL, do_anova, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -2610,6 +2611,11 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (pmod->ci == ARBOND) {
 	flip(vwin->ifac, "/Analysis/Forecasts...", FALSE);
+    }
+
+    if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) ||
+	na(pmod->tss)) {
+	flip(vwin->ifac, "/Analysis/ANOVA", FALSE);
     }
 }
 

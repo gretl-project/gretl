@@ -67,7 +67,7 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
 
-void do_menu_op (gpointer data, guint action, GtkWidget *widget);
+void do_menu_op (gpointer data, guint action, GtkWidget *w);
 
 int do_two_var_test (selector *sr);
 
@@ -81,7 +81,7 @@ void register_graph (void);
 
 int bool_subsample (gretlopt opt);
 
-void do_samplebool (GtkWidget *widget, dialog_t *dlg);
+void do_samplebool (GtkWidget *w, dialog_t *dlg);
 
 int do_set_sample (void);
 
@@ -119,29 +119,29 @@ int do_VAR_omit (selector *sr);
 
 int do_confidence_region (selector *sr);
 
-void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
+void do_lmtest (gpointer data, guint aux_code, GtkWidget *w);
 
-void do_autocorr (gpointer data, guint u, GtkWidget *widget);
+void do_autocorr (gpointer data, guint u, GtkWidget *w);
 
 void do_chow_cusum (gpointer data, guint action, GtkWidget *w);
 
-void do_reset (gpointer data, guint u, GtkWidget *widget);
+void do_reset (gpointer data, guint u, GtkWidget *w);
 
-void unit_root_test (gpointer data, guint u, GtkWidget *widget);
+void unit_root_test (gpointer data, guint u, GtkWidget *w);
 
-void do_arch (gpointer data, guint u, GtkWidget *widget);
+void do_arch (gpointer data, guint u, GtkWidget *w);
 
-void do_restrict (GtkWidget *widget, dialog_t *dlg);
+void do_restrict (GtkWidget *w, dialog_t *dlg);
 
-void do_nls_model (GtkWidget *widget, dialog_t *dlg);
+void do_nls_model (GtkWidget *w, dialog_t *dlg);
 
-void do_mle_model (GtkWidget *widget, dialog_t *dlg);
+void do_mle_model (GtkWidget *w, dialog_t *dlg);
 
-void do_gmm_model (GtkWidget *widget, dialog_t *dlg);
+void do_gmm_model (GtkWidget *w, dialog_t *dlg);
 
-void do_eqn_system (GtkWidget *widget, dialog_t *dlg);
+void do_eqn_system (GtkWidget *w, dialog_t *dlg);
 
-void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg);
+void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg);
 
 int do_model (selector *sr);
 
@@ -169,77 +169,79 @@ int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */
 
-void do_minibuf (GtkWidget *widget, dialog_t *dlg);
+void do_minibuf (GtkWidget *w, dialog_t *dlg);
 
-void do_genr (GtkWidget *widget, dialog_t *dlg);
+void do_genr (GtkWidget *w, dialog_t *dlg);
 
-void do_model_genr (GtkWidget *widget, dialog_t *dlg);
+void do_model_genr (GtkWidget *w, dialog_t *dlg);
 
-void add_rand_series (GtkWidget *widget, dialog_t *dlg);
+void add_rand_series (GtkWidget *w, dialog_t *dlg);
 
-void do_global_setmiss (GtkWidget *widget, dialog_t *dlg);
+void do_global_setmiss (GtkWidget *w, dialog_t *dlg);
 
-void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg);
+void do_variable_setmiss (GtkWidget *w, dialog_t *dlg);
 
-void do_edit_label (GtkWidget *widget, dialog_t *dlg);
+void do_edit_label (GtkWidget *w, dialog_t *dlg);
 
 int do_rename_variable (int v, const char *newname, int full);
 
 int record_varlabel_change (int v);
 
-void do_resid_freq (gpointer data, guint action, GtkWidget *widget);
+void do_resid_freq (gpointer p, guint action, GtkWidget *w);
 
-void do_freqplot (gpointer data, guint gamma, GtkWidget *widget);
+void do_freqplot (gpointer p, guint gamma, GtkWidget *w);
 
-void do_corrgm (gpointer data, guint u, GtkWidget *widget);
+void do_corrgm (gpointer p, guint u, GtkWidget *w);
 
-void residual_correlogram (gpointer data, guint u, GtkWidget *widget);
+void residual_correlogram (gpointer p, guint u, GtkWidget *w);
 
-void do_pergm (gpointer data, guint opt, GtkWidget *widget);
+void do_pergm (gpointer p, guint opt, GtkWidget *w);
 
-void residual_periodogram (gpointer data, guint opt, GtkWidget *widget);
+void residual_periodogram (gpointer p, guint opt, GtkWidget *w);
 
 #if defined (HAVE_TRAMO) || defined (HAVE_X12A)
-void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget);
+void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w);
 #endif
 
-void do_range_mean (gpointer data, guint opt, GtkWidget *widget);
+void do_range_mean (gpointer p, guint opt, GtkWidget *w);
 
-void do_hurst (gpointer data, guint opt, GtkWidget *widget);
+void do_hurst (gpointer p, guint opt, GtkWidget *w);
 
-void do_outcovmx (gpointer data, guint action, GtkWidget *widget);
+void do_outcovmx (gpointer p, guint u, GtkWidget *w);
 
-void add_dummies (gpointer data, guint action, GtkWidget *widget);
+void do_anova (gpointer p, guint u, GtkWidget *w);
 
-void add_index (gpointer data, guint tm, GtkWidget *widget);
+void add_dummies (gpointer p, guint action, GtkWidget *w);
 
-void do_add_obs (gpointer data, guint u, GtkWidget *widget);
+void add_index (gpointer p, guint tm, GtkWidget *w);
 
-void do_remove_obs (gpointer data, guint u, GtkWidget *widget);
+void do_add_obs (gpointer p, guint u, GtkWidget *w);
 
-void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
+void do_remove_obs (gpointer p, guint u, GtkWidget *w);
 
-int add_system_resid (gpointer data, int eqnum, int ci);
+void add_logs_etc (gpointer p, guint action, GtkWidget *w);
+
+int add_system_resid (gpointer p, int eqnum, int ci);
 
 int add_fit_resid (MODEL *pmod, int code, int undo);
 
-int add_system_resid (gpointer data, int eqnum, int ci);
+int add_system_resid (gpointer p, int eqnum, int ci);
 
 void add_model_stat (MODEL *pmod, int which);
 
-void resid_plot (gpointer data, guint xvar, GtkWidget *widget);
+void resid_plot (gpointer p, guint xvar, GtkWidget *w);
 
-void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget);
+void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w);
 
-void fit_actual_splot (gpointer data, guint u, GtkWidget *widget);
+void fit_actual_splot (gpointer p, guint u, GtkWidget *w);
 
-void display_fit_resid (gpointer data, guint code, GtkWidget *widget);
+void display_fit_resid (gpointer p, guint code, GtkWidget *w);
 
 void do_graph_var (int varnum);
 
 void do_boxplot_var (int varnum);
 
-void ts_plot_var (gpointer data, guint opt, GtkWidget *widget);
+void ts_plot_var (gpointer p, guint opt, GtkWidget *w);
 
 int do_scatters (selector *sr);
 
@@ -247,9 +249,9 @@ int do_graph_from_selector (selector *sr);
 
 int do_splot_from_selector (selector *sr);
 
-void plot_from_selection (gpointer data, guint action, GtkWidget *widget);
+void plot_from_selection (gpointer p, guint action, GtkWidget *w);
 
-void do_box_graph (GtkWidget *widget, dialog_t *dlg);
+void do_box_graph (GtkWidget *w, dialog_t *dlg);
 
 int do_dummy_graph (selector *sr);
 
@@ -259,7 +261,7 @@ void delete_selected_vars (void);
 
 void delete_single_var (int id);
 
-void display_selected (gpointer data, guint action, GtkWidget *widget);
+void display_selected (gpointer p, guint action, GtkWidget *w);
 
 void display_var (void);
 
@@ -267,9 +269,9 @@ void display_var (void);
 
 void do_open_script (void);
 
-void open_info (gpointer data, guint edit, GtkWidget *widget);
+void open_info (gpointer p, guint edit, GtkWidget *w);
 
-void do_new_script (gpointer data, guint action, GtkWidget *widget);
+void do_new_script (gpointer p, guint action, GtkWidget *w);
 
 void do_open_csv_box (char *fname, int code, int append);
 

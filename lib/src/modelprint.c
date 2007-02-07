@@ -3025,3 +3025,40 @@ static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pputc(prn, '\n');
 }
 
+int ols_print_anova (const MODEL *pmod, PRN *prn)
+{
+    double mst, msr, mse, rss;
+
+    if (pmod->ci != OLS || !pmod->ifc ||
+	na(pmod->ess) || na(pmod->tss)) {
+	return 1;
+    }
+
+    pprintf(prn, "%s:\n\n", _("Analysis of Variance"));
+
+    rss = pmod->tss - pmod->ess;
+
+    pprintf(prn, "%35s %8s %16s\n\n", _("Sum of squares"), _("df"), _("Mean square"));
+
+    msr = rss / pmod->dfn;
+    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Regression"), rss, pmod->dfn, msr);
+
+    mse = pmod->ess / pmod->dfd;
+    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Residual"), pmod->ess, pmod->dfd, mse);
+
+    mst = pmod->tss / pmod->dfd;
+    pprintf(prn, "  %-16s %16g %8d %16g\n", _("Total"), pmod->tss, pmod->nobs - 1, mst);
+
+    pprintf(prn, "\n  R^2 = %g / %g = %.6f\n", rss, pmod->tss, rss / pmod->tss);
+
+    if (pmod->ess == 0) {
+	pprintf(prn, "  F(%d, %d) = %g / %g (%s)\n\n", pmod->dfn, pmod->dfd, 
+		msr, mse, _("undefined"));
+    } else {
+	pprintf(prn, "  F(%d, %d) = %g / %g = %g\n\n", 
+		pmod->dfn, pmod->dfd, msr, mse, msr / mse);
+    }
+
+    return 0;
+}
+

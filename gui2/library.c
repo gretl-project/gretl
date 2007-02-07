@@ -565,7 +565,7 @@ static const char *selected_varname (void)
     return datainfo->varname[mdata_active_var()];
 }
 
-void do_menu_op (gpointer data, guint action, GtkWidget *widget)
+void do_menu_op (gpointer p, guint action, GtkWidget *w)
 {
     PRN *prn;
     char title[48];
@@ -792,7 +792,7 @@ static int ok_obs_in_series (int varno)
     return t2 - t1 + 1;
 }
 
-void unit_root_test (gpointer data, guint action, GtkWidget *widget)
+void unit_root_test (gpointer p, guint action, GtkWidget *w)
 {
     PRN *prn;
     const char *adf_opts[] = {
@@ -1057,7 +1057,7 @@ int do_xcorrgm (selector *sr)
     return err;
 }
 
-void open_info (gpointer data, guint edit, GtkWidget *widget)
+void open_info (gpointer p, guint edit, GtkWidget *w)
 {
     if (datainfo->descrip == NULL) {
 	if (yes_no_dialog(_("gretl: add info"), 
@@ -1139,7 +1139,7 @@ int bool_subsample (gretlopt opt)
     return err;
 }
 
-void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
+void drop_all_missing (gpointer p, guint opt, GtkWidget *w)
 {
     int err = bool_subsample(OPT_M);
 
@@ -1149,7 +1149,7 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
     }
 }
 
-void do_samplebool (GtkWidget *widget, dialog_t *dlg)
+void do_samplebool (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     gretlopt opt;
@@ -1205,7 +1205,7 @@ void do_add_markers (const char *fname)
     }
 }
 
-void do_remove_markers (gpointer data, guint u, GtkWidget *w) 
+void do_remove_markers (gpointer p, guint u, GtkWidget *w) 
 {
     dataset_destroy_obs_markers(datainfo);
     mark_dataset_as_modified();
@@ -1246,9 +1246,9 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-void do_forecast (gpointer data, guint u, GtkWidget *w) 
+void do_forecast (gpointer p, guint u, GtkWidget *w) 
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
     int t2, t1 = 0;
@@ -1598,9 +1598,9 @@ static void update_model_tests (windata_t *vwin)
     }
 }
 
-void do_lmtest (gpointer data, guint action, GtkWidget *widget)
+void do_lmtest (gpointer p, guint action, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
     char title[64];
@@ -1653,9 +1653,9 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
+void do_panel_diagnostics (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     PRN *prn;
     gretlopt opt = OPT_NONE;
@@ -1729,9 +1729,9 @@ void add_leverage_data (windata_t *vwin)
     }
 }
 
-void do_leverage (gpointer data, guint u, GtkWidget *w)
+void do_leverage (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
@@ -1771,9 +1771,9 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     } 
 }
 
-void do_vif (gpointer data, guint u, GtkWidget *w)
+void do_vif (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
     void *handle;
@@ -1816,7 +1816,7 @@ static int reject_scalar (int vnum)
     return 0;
 }
 
-void do_gini (gpointer data, guint u, GtkWidget *w)
+void do_gini (gpointer p, guint u, GtkWidget *w)
 {
     gretlopt opt = OPT_NONE;
     PRN *prn;
@@ -1845,7 +1845,7 @@ void do_gini (gpointer data, guint u, GtkWidget *w)
     } 
 }
 
-void do_kernel (gpointer data, guint u, GtkWidget *w)
+void do_kernel (gpointer p, guint u, GtkWidget *w)
 {
     void *handle;
     int (*kernel_density) (int, const double **, const DATAINFO *,
@@ -1885,9 +1885,9 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
     } 
 }
 
-void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
+void do_chow_cusum (gpointer p, guint action, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
     int err = 0;
@@ -1960,9 +1960,9 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
     }
 }
 
-void do_reset (gpointer data, guint u, GtkWidget *widget)
+void do_reset (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
     char title[40];
@@ -1985,9 +1985,9 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-void do_autocorr (gpointer data, guint u, GtkWidget *widget)
+void do_autocorr (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
     char title[64];
@@ -2029,9 +2029,9 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-void do_arch (gpointer data, guint u, GtkWidget *widget)
+void do_arch (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
     char tmpstr[26];
@@ -2169,7 +2169,7 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
     return 0;
 }
 
-void do_restrict (GtkWidget *widget, dialog_t *dlg)
+void do_restrict (GtkWidget *w, dialog_t *dlg)
 {
     MODEL *pmod = NULL;
     gretl_equation_system *sys = NULL;
@@ -2314,7 +2314,7 @@ static void maybe_grab_system_name (const char *s, char *name)
     }
 }
 
-void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
+void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     gretl_equation_system *my_sys = NULL;
     gchar *buf;
@@ -2424,7 +2424,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 		SYSTEM, my_sys);
 }
 
-void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg)
+void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     gretl_equation_system *my_sys;
     PRN *prn;
@@ -2614,17 +2614,17 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     view_model(prn, pmod, 78, 420, title); 
 }
 
-void do_nls_model (GtkWidget *widget, dialog_t *dlg)
+void do_nls_model (GtkWidget *w, dialog_t *dlg)
 {
     real_do_nonlinear_model(dlg, NLS);
 }
 
-void do_mle_model (GtkWidget *widget, dialog_t *dlg)
+void do_mle_model (GtkWidget *w, dialog_t *dlg)
 {
     real_do_nonlinear_model(dlg, MLE);
 }
 
-void do_gmm_model (GtkWidget *widget, dialog_t *dlg)
+void do_gmm_model (GtkWidget *w, dialog_t *dlg)
 {
     real_do_nonlinear_model(dlg, GMM);
 }
@@ -2970,7 +2970,7 @@ void do_graph_model (GPT_SPEC *spec)
     view_model(prn, pmod, 78, 420, title);     
 }
 
-void do_minibuf (GtkWidget *widget, dialog_t *dlg) 
+void do_minibuf (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     ExecState state;
@@ -3024,7 +3024,7 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
     }
 }
 
-void do_genr (GtkWidget *widget, dialog_t *dlg) 
+void do_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     char test[8];
@@ -3047,7 +3047,7 @@ void do_genr (GtkWidget *widget, dialog_t *dlg)
     finish_genr(NULL, dlg);
 }
 
-void do_model_genr (GtkWidget *widget, dialog_t *dlg) 
+void do_model_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *buf;
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
@@ -3065,7 +3065,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
-void add_rand_series (GtkWidget *widget, dialog_t *dlg) 
+void add_rand_series (GtkWidget *w, dialog_t *dlg) 
 {
     guint r = GPOINTER_TO_UINT(edit_dialog_get_data(dlg));
     char vname[VNAMELEN] = {0};
@@ -3220,7 +3220,7 @@ static int real_do_setmiss (double missval, int varno)
     return count;
 }
 
-void do_global_setmiss (GtkWidget *widget, dialog_t *dlg)
+void do_global_setmiss (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *buf;
     double missval;
@@ -3247,7 +3247,7 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *dlg)
     }	
 }
 
-void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
+void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *buf;
     double missval;
@@ -3328,11 +3328,11 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
     }
 }
 
-void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
+void do_resid_freq (gpointer p, guint action, GtkWidget *w)
 {
     FreqDist *freq;
     PRN *prn;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***rZ;
     DATAINFO *rinfo;
@@ -3401,7 +3401,7 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
+void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 {
     FreqDist *freq;
     gretlopt opt = (dist == D_GAMMA)? OPT_O : 
@@ -3485,7 +3485,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
+void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 {
     gint err;
     int v = mdata_active_var();
@@ -3582,7 +3582,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
 
-void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
+void do_range_mean (gpointer p, guint opt, GtkWidget *w)
 {
     gint err;
     int v = mdata_active_var();
@@ -3619,7 +3619,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 		NULL);
 }
 
-void do_hurst (gpointer data, guint opt, GtkWidget *widget)
+void do_hurst (gpointer p, guint opt, GtkWidget *w)
 {
     gint err;
     int v = mdata_active_var();
@@ -3703,14 +3703,14 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
     view_buffer(prn, 78, 360, title, CORRGM, NULL);
 }
 
-void do_corrgm (gpointer data, guint u, GtkWidget *widget)
+void do_corrgm (gpointer p, guint u, GtkWidget *w)
 {
     real_do_corrgm(&Z, datainfo, SELECTED_VAR);
 }
 
-void residual_correlogram (gpointer data, guint u, GtkWidget *widget)
+void residual_correlogram (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int origv;
     double ***gZ;
@@ -3788,14 +3788,14 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
     view_buffer(prn, 60, 400, title, PERGM, NULL);
 }
 
-void do_pergm (gpointer data, guint opt, GtkWidget *widget)
+void do_pergm (gpointer p, guint u, GtkWidget *w)
 {
-    real_do_pergm(opt, &Z, datainfo, SELECTED_VAR);
+    real_do_pergm(u, &Z, datainfo, SELECTED_VAR);
 }
 
-void residual_periodogram (gpointer data, guint opt, GtkWidget *widget)
+void residual_periodogram (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int origv;
     double ***gZ;
@@ -3821,10 +3821,10 @@ void residual_periodogram (gpointer data, guint opt, GtkWidget *widget)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }
 
-void do_coeff_intervals (gpointer data, guint u, GtkWidget *w)
+void do_coeff_intervals (gpointer p, guint u, GtkWidget *w)
 {
     PRN *prn;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     CoeffIntervals *cf;
 
@@ -3840,12 +3840,12 @@ void do_coeff_intervals (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
+void do_outcovmx (gpointer p, guint u, GtkWidget *w)
 {
-    PRN *prn;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     VMatrix *vcv = NULL;
+    PRN *prn;
 
     if (Z == NULL || datainfo == NULL) {
 	errbox(_("Data set is gone"));
@@ -3865,7 +3865,27 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     }
 }
 
-void add_dummies (gpointer data, guint u, GtkWidget *widget)
+void do_anova (gpointer p, guint u, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = (MODEL *) vwin->data;
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) return;
+
+    err = ols_print_anova(pmod, prn);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	char title[32];
+
+	sprintf(title, "gretl: %s", _("ANOVA"));
+	view_buffer(prn, 80, 300, title, PRINT, NULL);
+    }
+}
+
+void add_dummies (gpointer p, guint u, GtkWidget *w)
 {
     gretlopt opt = OPT_NONE;
     gint err;
@@ -3902,7 +3922,7 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-void add_index (gpointer data, guint tm, GtkWidget *widget)
+void add_index (gpointer p, guint tm, GtkWidget *w)
 {
     gretl_command_strcpy((tm)? "genr time" : "genr index");
 
@@ -3918,7 +3938,7 @@ void add_index (gpointer data, guint tm, GtkWidget *widget)
     }
 }
 
-void do_add_obs (gpointer data, guint u, GtkWidget *widget)
+void do_add_obs (gpointer p, guint u, GtkWidget *w)
 {
     int n = add_obs_dialog(NULL, 1);
     int err = 0;
@@ -3933,7 +3953,7 @@ void do_add_obs (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
-void do_remove_obs (gpointer data, guint u, GtkWidget *widget)
+void do_remove_obs (gpointer p, guint u, GtkWidget *w)
 {
     int drop = 0;
 
@@ -3987,7 +4007,7 @@ static int dummify_dialog (gretlopt *opt)
     return ret;
 }
 
-void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
+void add_logs_etc (gpointer p, guint action, GtkWidget *w)
 {
     char *liststr;
     int order = 0;
@@ -4132,9 +4152,9 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     return 0;
 }
 
-int add_system_resid (gpointer data, int eqnum, int ci)
+int add_system_resid (gpointer p, int eqnum, int ci)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     int err, v;
 
     if (ci == VAR) {
@@ -4271,12 +4291,12 @@ void add_model_stat (MODEL *pmod, int which)
        as "modified" here. (FIXME saving scalars?) */
 }
 
-void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
+void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 {
     GnuplotFlags flags = 0;
     int plotlist[4], lines[1] = {0};
     int err, origv, ts;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
     int yno, uhatno;
@@ -4355,12 +4375,12 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
-void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
+void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 {
     GnuplotFlags flags = GP_GUI | GP_FA;
     int plotlist[4], lines[2] = {0};
     int err, origv;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
     DATAINFO *ginfo;
@@ -4441,9 +4461,9 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);
 }
 
-void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
+void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
     DATAINFO *ginfo;
@@ -4483,7 +4503,7 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
    use the buffer approach for displaying data, as opposed to
    disk file */
 
-void display_selected (gpointer data, guint action, GtkWidget *widget)
+void display_selected (gpointer p, guint action, GtkWidget *w)
 {
     int n = datainfo->t2 - datainfo->t1 + 1;
     PRN *prn = NULL;
@@ -4531,12 +4551,12 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     free(list);
 }
 
-void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
+void display_fit_resid (gpointer p, guint code, GtkWidget *w)
 {
-    PRN *prn;
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     FITRESID *fr;
+    PRN *prn;
 
     if (bufopen(&prn)) return;
 
@@ -4733,7 +4753,7 @@ void do_graph_var (int varnum)
     gui_graph_handler(err);
 }
 
-void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
+void ts_plot_var (gpointer p, guint opt, GtkWidget *w)
 {
     do_graph_var(mdata_active_var());
 }
@@ -4785,7 +4805,7 @@ int do_scatters (selector *sr)
     return 0;
 }
 
-void do_box_graph (GtkWidget *widget, dialog_t *dlg)
+void do_box_graph (GtkWidget *w, dialog_t *dlg)
 {
     int action = edit_dialog_get_action(dlg);
     const char *buf = edit_dialog_get_text(dlg);
@@ -5042,7 +5062,7 @@ static int maybe_reorder_list (char *liststr)
     return 0;
 }
 
-void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
+void plot_from_selection (gpointer p, guint action, GtkWidget *w)
 {
     GnuplotFlags flags = GP_GUI;
     char *liststr;
@@ -5157,13 +5177,13 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
    regular script, or part of one, or it may be the "command log" from
    a GUI session.  */
 
-void do_run_script (GtkWidget *w, gpointer data)
+void do_run_script (GtkWidget *w, gpointer p)
 {
-    windata_t *vwin = (windata_t *) data;
+    windata_t *vwin = (windata_t *) p;
     GdkDisplay *disp;
     GdkCursor *cursor;
     GdkWindow *w1, *w2;
-    gpointer p = NULL;
+    gpointer vp = NULL;
     gchar *buf;
     gint x, y;
     PRN *prn;
@@ -5228,12 +5248,12 @@ void do_run_script (GtkWidget *w, gpointer data)
 	if (send_output_to_kid(vwin, prn)) {
 	    shown = 1;
 	} else {
-	    p = vwin;
+	    vp = vwin;
 	}
     }
 
     if (!shown) {
-	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, p);
+	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
     }
 
     /* re-establish command echo (??) */
@@ -5266,7 +5286,7 @@ void do_open_script (void)
     }
 }
 
-void do_new_script (gpointer data, guint u, GtkWidget *widget) 
+void do_new_script (gpointer p, guint u, GtkWidget *w) 
 {
     char temp[MAXLEN];
     FILE *fp;

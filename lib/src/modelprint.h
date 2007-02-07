@@ -29,4 +29,6 @@ const char *estimator_string (int ci, PRN *prn);
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn);
 
+int ols_print_anova (const MODEL *pmod, PRN *prn);
+
 #endif /* MODELPRINT_H */
