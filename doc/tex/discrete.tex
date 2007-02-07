@@ -4,23 +4,37 @@
 When a variable can take only a finite, typically small, number of
 values, then the variable is said to be \emph{discrete}. Some
 \app{gretl} commands act in a slightly different way when applied to
-discrete variables; moreover, \app{gretl} provides a few extra
-commands that only apply to discrete variables.
+discrete variables; moreover, \app{gretl} provides a few commands that
+only apply to discrete variables.  Specifically, the \texttt{dummify}
+and \texttt{xtab} commands (see below) are available only for discrete
+variables, while the \texttt{freq} (frequency distribution) command
+produces different output for discrete variables.
 
 
 \section{Declaring variables as discrete}
 \label{discr-declare}
 
-When a data file is created from scratch, no variables are considered
-discrete. If you want to mark a variable as such, you can do it in two
-ways.
+\app{Gretl} uses a simple heuristic to judge whether a given variable
+should be treated as discrete, but you also have the option of
+explicitly marking a variable as discrete, in which case the heuristic
+check is bypassed.
+
+The heuristic is as follows: First, are all the values of the variable
+``reasonably round'', where this is taken to mean that they are all
+integer multiples of 0.25?  If this criterion is met, we then ask
+whether the variable takes on a ``fairly small'' set of distinct
+values, where ``fairly small'' is defined as less than or equal to 8.
+If both conditions are satisfied, the variable is automatically
+considered discrete.
+
+To mark a variable as discrete you have two options.
 \begin{enumerate}
 \item From the graphical interface, select ``Variable, Edit
-  Attributes'' from the menu. A dialog box will appear and, if the variable
-  has only integer values, you will see a tick box labeled ``Treat this
-  variable as discrete''.
-  The same dialog box can be invoked via the context menu (right-click on
-  a variable) or by pressing the F2 key.
+  Attributes'' from the menu. A dialog box will appear and, if the
+  variable seems suitable, you will see a tick box labeled ``Treat
+  this variable as discrete''.  This dialog box can also be invoked
+  via the context menu (right-click on a variable) or by pressing the
+  F2 key.
 \item From the command-line interface, via the \texttt{discrete}
   command. The command takes one or more arguments, which can be
   either variables or list of variables. For example:
@@ -41,11 +55,16 @@ discrete foo --reverse
 \end{code}
 \end{enumerate}
 
-Note that marking a variable as discrete does not affect its
-content. It is the user's responsibility to make sure that marking a
-variable as discrete is a sensible thing to do. If you want to recode
-a continuous variable into classes, you can use the \texttt{genr}
-command and its arithmetic functions, as in the following example:
+The command-line variant is more powerful, in that you can mark a
+variable as discrete even if it does not seem to be suitable for
+this treatment.
+
+Note that marking a variable as discrete does not affect its content.
+It is the user's responsibility to make sure that marking a variable
+as discrete is a sensible thing to do.  Note that if you want to
+recode a continuous variable into classes, you can use the
+\texttt{genr} command and its arithmetic functions, as in the
+following example:
 \begin{code}
 nulldata 100
 # generate a variable with mean 2 and variance 1
@@ -116,11 +135,11 @@ ols Y 0 dummify(Z5)
 
 The \texttt{freq} command displays absolute and relative frequencies
 for a given variable. The way frequencies are counted depends on
-whether the variable is continuous or discrete. This command is also
+whether the variable is continuous or discrete.  This command is also
 available via the graphical interface by selecting the ``Variable,
 Frequency distribution'' menu entry.
 
-For discrete variables, frequencies are counted for each different
+For discrete variables, frequencies are counted for each distinct
 value that the variable takes. For continuous variables, values are
 grouped into ``bins'' and then the frequencies are counted for each
 bin. The number of bins, by default, is computed as a function of the
@@ -219,23 +238,36 @@ If the distinct values of a discrete variable need to be saved, the
 \subsection{The \texttt{xtab} command}
 \label{discr-xtab}
 
-The \texttt{xtab} command has the following syntax
+The \texttt{xtab} command cab be invoked in either of the following
+ways.  First,
+%
 \begin{code}
 xtab ylist ; xlist
 \end{code}
+%
 where \texttt{ylist} and \texttt{xlist} are lists of discrete
-variables, and produces crosstabulations (two-way frequencies) of each
-of the variables in \texttt{ylist} (by row) against each of the
-variables in \texttt{xlist} (by column). At present, this
-functionality is not accessible via the graphical interface.
+variables.  This produces cross-tabulations (two-way frequencies) of
+each of the variables in \texttt{ylist} (by row) against each of the
+variables in \texttt{xlist} (by column).  Or second,
+%
+\begin{code}
+xtab xlist
+\end{code}
+%
+In the second case a full set of cross-tabulations is generated; that
+is, each variable in \texttt{xlist} is tabulated against each other
+variable in the list.  In the graphical interface, this command is
+represented by the ``Cross Tabulation'' item under the View menu,
+which is active if at least two variables are selected.
 
-For example, 
+Here is an example of use:
+%
 \begin{code}
 open greene22_2
 discrete Z* # mark Z1-Z8 as discrete
 xtab Z1 Z4 ; Z5 Z6
 \end{code}
-produces
+which produces
 \begin{code}
 Cross-tabulation of Z1 (rows) against Z5 (columns)
 
@@ -282,17 +314,19 @@ TOTAL      7    44   154   115    89   112    80    601
 Pearson chi-square test = 18.3426 (6 df, p-value = 0.0054306)
 \end{code}
 
-Pearson's $\chi^2$ test for independence is automatically displayed
-if the expected frequency under independence is 5 or higher for at
-least 80 percent of the cells. The option \texttt{--chi-square} causes
-the test to be displayed in all cases.
+Pearson's $\chi^2$ test for independence is automatically displayed,
+provided that all cells have expected frequencies under independence
+greater than $10^{-7}$.  However, a common rule of thumb states that
+this statistic is valid only if the expected frequency is 5 or
+greater for at least 80 percent of the cells.  If this condition is not
+met a warning is printed.
 
 Additionally, the options \texttt{--row} or \texttt{--column} options
 can be given: in this case, the output displays row or column
 percentages, respectively. 
 
 If you want to cut and paste the output of \texttt{xtab} to some other
-program, e.g. a spreadsheet, you may want to use the \texttt{--zeros}
+program, e.g.\ a spreadsheet, you may want to use the \texttt{--zeros}
 option; this option causes cells with zero frequency to display the
 number 0 instead of being empty.
 

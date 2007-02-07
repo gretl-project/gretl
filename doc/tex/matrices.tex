@@ -193,6 +193,20 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
 \item If none of the above conditions are satisfied the product is
   undefined and an error is flagged.
 \end{itemize}
+For example, if $A$ is a row vector with the same number of
+columns of $B$, then the columns of $C$ are the columns of $B$
+multiplied by the corresponding element of $A$.  Note that this
+convention makes it unnecessary, in most cases, to use diagonal
+matrices to perform transformations by means of ordinary matrix
+multiplication: if $Y = XV$, where $V$ is diagonal, it is
+computationally much more convenient to obtain $Y$ via the
+instruction
+%
+\begin{code}
+matrix Y = X .* v
+\end{code}
+%
+where \texttt{v} is a row vector containing the diagonal of $V$.
 
 Element-wise division and element-wise exponentiation work in a manner
 exactly analogous to element-wise multiplication: simply replace
@@ -253,85 +267,113 @@ context it is reserved for the Kronecker product.)
 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{llllll}
-\texttt{abs}       &
-\texttt{atan}      &
-\texttt{cdemean}   &
-\texttt{cholesky}  &
-\texttt{cnorm}     &
-\texttt{cols}      \\
-\texttt{cos}       &
-\texttt{det}       &
-\texttt{diag}      &
-\texttt{dnorm}     &
-\texttt{dsort}     &
-\texttt{eigengen}  \\
-\texttt{eigensym}  &
-\texttt{exp}       &
-\texttt{gamma}     &
+\textbf{Creation}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
 \texttt{I}         &
-\texttt{imaxc}     &
-\texttt{imaxr}     \\
-\texttt{iminc}     &
-\texttt{iminr}     &
-\texttt{infnorm}   &
-\texttt{int}       &
-\texttt{inv}       &
-\texttt{ldet}      \\
-\texttt{lngamma}   &
-\texttt{log}       &
-\texttt{mcorr}     &
-\texttt{mcov}      &
-\texttt{maxc}      &   
-\texttt{maxr}      \\
-\texttt{meanc}     &
-\texttt{meanr}     &
-\texttt{mexp}      &
-\texttt{minc}      &   
-\texttt{minr}      &
-\texttt{mlag}      \\
 \texttt{mnormal}   &
-\texttt{mshape}    &
 \texttt{muniform}  &
-\texttt{nullspace} &
-\texttt{onenorm}   &
-\texttt{ones}      \\
-\texttt{princomp}  &
-\texttt{qform}     &
-\texttt{qnorm}     &
-\texttt{qrdecomp}  &
-\texttt{rank}      &
-\texttt{rcond}     \\
-\texttt{rows}      &
+\texttt{ones}      &
 \texttt{seq}       &
-\texttt{sin}       &
-\texttt{sort}      &
-\texttt{sqrt}      &
-\texttt{sumc}      \\
-\texttt{sumr}      &
-\texttt{svd}       &
-\texttt{tan}       &
-\texttt{tr}        &
-\texttt{transp}    &
-\texttt{unvech}    \\
-\texttt{values}    &
-\texttt{vec}       &
-\texttt{vech}      &
 \texttt{zeros}     
 \end{tabular}      
-\caption{Table of matrix functions}
-\label{tab:matrix_funcs}
+
+\textbf{Shape/size}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cols}      &
+\texttt{diag}      &
+\texttt{dsort}     &
+\texttt{mlag}      &
+\texttt{mshape}    &
+\texttt{rows}      \\
+\texttt{sort}      &
+\texttt{transp}    &
+\texttt{unvech}    &
+\texttt{vec}       &
+\texttt{vech}      
+\end{tabular}      
+
+\textbf{Element by element}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cnorm}     &
+\texttt{cos}       &
+\texttt{dnorm}     &
+\texttt{exp}       \\
+\texttt{gamma}     &
+\texttt{int}       &
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{qnorm}     &
+\texttt{sin}       \\
+\texttt{sqrt}      &
+\texttt{tan}       
+\end{tabular}      
+
+\textbf{Matrix algebra}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cholesky}  &
+\texttt{det}       &
+\texttt{eigengen}  &
+\texttt{eigensym}  &
+\texttt{infnorm}   &
+\texttt{inv}       \\
+\texttt{ldet}      &
+\texttt{mexp}      &
+\texttt{nullspace} &
+\texttt{onenorm}   &
+\texttt{qform}     &
+\texttt{qrdecomp}  \\
+\texttt{rank}      &
+\texttt{rcond}     &
+\texttt{svd}       &
+\texttt{tr}        &
+\end{tabular}      
+
+\textbf{Statistical}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cdemean}   &
+\texttt{imaxc}     &
+\texttt{imaxr}     &
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{mcorr}     \\
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      &
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{minc}      \\   
+\texttt{minr}      &
+\texttt{princomp}  &
+\texttt{sumc}      &
+\texttt{sumr}      &
+\texttt{values}    &
+\end{tabular}      
+\caption{Table of matrix functions by category}
+\label{tab:matrix_funcs_cat}
 \end{table}
 
-Table \ref{tab:matrix_funcs} lists the matrix function that
-\app{gretl} provides. The following functions are available for
-\textit{element-by-element transformations} of matrices: \texttt{log},
-\texttt{exp}, \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan},
-\texttt{int}, \texttt{abs}, \texttt{sqrt}, \texttt{dnorm},
-\texttt{cnorm}, \texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.
-These functions have the effects documented in relation to the
-\texttt{genr} command.  For example, if a matrix \texttt{A} is already
-defined, then
+Table \ref{tab:matrix_funcs_cat} lists the matrix function that
+\app{gretl} provides (an alphabetized version of the table is
+provided at the end of this chapter as Table~\ref{tab:matrix_funcs}).
+The following functions are available for \textit{element-by-element
+  transformations} of matrices: \texttt{log}, \texttt{exp},
+\texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
+\texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
+\texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
+have the effects documented in relation to the \texttt{genr} command.
+For example, if a matrix \texttt{A} is already defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
@@ -357,7 +399,7 @@ magnitude.  For \texttt{values} the return is a vector containing the
 distinct values in the input vector, sorted in ascending order.
 
 Several matrix-specific functions are available.  These functions fall
-into four categories:
+into five categories:
 %
 \begin{enumerate}
 \item Those taking a single matrix as argument and returning a scalar.
@@ -472,8 +514,8 @@ correlations of the variables.
 For an $n \times n$ matrix $A$, \texttt{mexp(A)} returns an $n \times
 n$ matrix holding the matrix exponential,
 \[
-e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = I + A + \frac{A^2}{2!} 
- + \frac{A^3}{3!} + \cdots
+e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = \frac{I}{0!} + \frac{A}{1!}
+ + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots
 \]
 (This series is sure to converge.)
 
@@ -529,11 +571,11 @@ principal components of $X$.  The elements of $P$ are computed as
 \[
 P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i
 \]
-where $Z_{ti}$ is the standardized observation $t$ on variable $i$,
-$Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the
-$j$th eigenvector of the correlation matrix of the $X_i$s, with the
-eigenvectors ordered by descending value of the corresponding
-eigenvalues.
+where $Z_{ti}$ is the standardized value of variable $i$ at
+observation $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and
+$v^{(j)}$ is the $j$th eigenvector of the correlation matrix of the
+$X_i$s, with the eigenvectors ordered by decreasing value of the
+corresponding eigenvalues.
 
 
 \subsection{Matrix filling functions}
@@ -719,7 +761,7 @@ are the imaginary components.  If the eigenvectors are required (that
 is, if the second argument to \texttt{eigengen} is not \texttt{null}),
 they are returned in an $n \times n$ matrix.
 
-The function \texttt{svd} computes all or part of the simgular value
+The function \texttt{svd} computes all or part of the singular value
 decomposition of the real $m \times n$ matrix $A$.  The decomposition
 is
 \[
@@ -760,14 +802,14 @@ matrices associated with models previously estimated:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{\$coeff} & vector of estimated coefficients \\
+\texttt{\$coeff}  & vector of estimated coefficients \\
 \texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat} & vector of residuals \\
-\texttt{\$yhat} & vector of fitted values \\
-\texttt{\$vcv} & covariance matrix (see below) \\
-\texttt{\$rho} & autoregressive coefficients for error process \\
+\texttt{\$uhat}   & vector of residuals \\
+\texttt{\$yhat}   & vector of fitted values \\
+\texttt{\$vcv}    & covariance matrix (see below) \\
+\texttt{\$rho}    & autoregressive coefficients for error process \\
 \texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
-\texttt{\$jbeta} & matrix $\beta$ (cointegration vectors) from
+\texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
 Johansen's procedure \\
 \texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
 $\beta$ from Johansen's procedure
@@ -780,11 +822,11 @@ prefixed with the name of a saved model plus a period (\texttt{.}), in
 which case they retrieve results from the specified model.  Here are
 some examples:
 %
-\begin{textcode}
-matrix u = \$uhat\\
-matrix b = m1.\$coeff\\
-matrix v2 = m1.\$vcv[1:2,1:2]
-\end{textcode}
+\begin{code}
+matrix u = $uhat
+matrix b = m1.$coeff
+matrix v2 = m1.$vcv[1:2,1:2]
+\end{code}
 %
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
@@ -793,14 +835,14 @@ following section) grabs a portion of the covariance matrix from model
 \texttt{m1}.
 
 If the ``model'' in question is actually a system (a VAR or VECM, or
-system of simultaneous equations), \texttt{\$uhat} retrieves the
-matrix of residuals (one column per equation) and \texttt{\$vcv} gets
+system of simultaneous equations), \verb|$uhat| retrieves the
+matrix of residuals (one column per equation) and \verb|$vcv| gets
 the cross-equation covariance matrix; in the special case of a VAR or
-a VECM, \texttt{\$coeff} returns the companion matrix. At present the
+a VECM, \verb|$coeff| returns the companion matrix. At present the
 other accessors are not available for equation systems.
 
 After a vector error correction model is estimated via Johansen's
-procedure, the matrices \texttt{\$jalpha} and \texttt{\$jbeta} are
+procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are
 also available. These have a number of columns equal to the chosen
 cointegration rank; therefore, the product
 \begin{code}
@@ -810,7 +852,7 @@ returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
 automatically identified via the Phillips normalization (see section
 \ref{sec:johansen-ident}), its unrestricted elements do have a proper
 covariance matrix, which can be retrieved through the
-\texttt{\$jvbeta} accessor.
+\verb|$jvbeta| accessor.
 
 \section{Selecting sub-matrices}
 \label{matrix-sub}
@@ -1059,21 +1101,77 @@ ols price const sqft --vcv
 \end{scode}
 \end{script}
 
+\clearpage
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\begin{table}[p]
+\centering
+\begin{tabular}{llllll}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cdemean}   &
+\texttt{cholesky}  &
+\texttt{cnorm}     &
+\texttt{cols}      \\
+\texttt{cos}       &
+\texttt{det}       &
+\texttt{diag}      &
+\texttt{dnorm}     &
+\texttt{dsort}     &
+\texttt{eigengen}  \\
+\texttt{eigensym}  &
+\texttt{exp}       &
+\texttt{gamma}     &
+\texttt{I}         &
+\texttt{imaxc}     &
+\texttt{imaxr}     \\
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{infnorm}   &
+\texttt{int}       &
+\texttt{inv}       &
+\texttt{ldet}      \\
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{mcorr}     &
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      \\
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{mexp}      &
+\texttt{minc}      &   
+\texttt{minr}      &
+\texttt{mlag}      \\
+\texttt{mnormal}   &
+\texttt{mshape}    &
+\texttt{muniform}  &
+\texttt{nullspace} &
+\texttt{onenorm}   &
+\texttt{ones}      \\
+\texttt{princomp}  &
+\texttt{qform}     &
+\texttt{qnorm}     &
+\texttt{qrdecomp}  &
+\texttt{rank}      &
+\texttt{rcond}     \\
+\texttt{rows}      &
+\texttt{seq}       &
+\texttt{sin}       &
+\texttt{sort}      &
+\texttt{sqrt}      &
+\texttt{sumc}      \\
+\texttt{sumr}      &
+\texttt{svd}       &
+\texttt{tan}       &
+\texttt{tr}        &
+\texttt{transp}    &
+\texttt{unvech}    \\
+\texttt{values}    &
+\texttt{vec}       &
+\texttt{vech}      &
+\texttt{zeros}     
+\end{tabular}      
+\caption{Alphabetical listing of matrix functions}
+\label{tab:matrix_funcs}
+\end{table}
 
