@@ -115,18 +115,18 @@ The following binary operators are available for matrices:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{+} & addition \\
-\texttt{-} & subtraction \\
-\texttt{*} & ordinary matrix multiplication \\
-\texttt{'} & pre-multiplication by transpose \\
-\texttt{/} & matrix ``division'' (see below) \\
+\texttt{+}  & addition \\
+\texttt{-}  & subtraction \\
+\texttt{*}  & ordinary matrix multiplication \\
+\texttt{'}  & pre-multiplication by transpose \\
+\texttt{/}  & matrix ``division'' (see below) \\
 \texttt{.*} & element-wise multiplication \\
 \texttt{./} & element-wise division \\
-\verb+.^+ & element-wise exponentiation \\
-\verb+~+ & column-wise concatenation \\
-\verb+|+ & row-wise concatenation \\
+\verb+.^+   & element-wise exponentiation \\
+\verb+~+    & column-wise concatenation \\
+\verb+|+    & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
-\texttt{=} & test for equality 
+\texttt{=}  & test for equality 
 \end{tabular}
 \end{center}
 
@@ -296,24 +296,25 @@ context it is reserved for the Kronecker product.)
 \texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      \\
+\texttt{princomp}  &
 \texttt{qform}     &
 \texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     &
-\texttt{rows}      \\
+\texttt{rcond}     \\
+\texttt{rows}      &
 \texttt{seq}       &
 \texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
-\texttt{sumc}      &
-\texttt{sumr}      \\
+\texttt{sumc}      \\
+\texttt{sumr}      &
 \texttt{svd}       &
 \texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
-\texttt{unvech}    &
-\texttt{values}    \\
+\texttt{unvech}    \\
+\texttt{values}    &
 \texttt{vec}       &
 \texttt{vech}      &
 \texttt{zeros}     
@@ -430,13 +431,14 @@ matrix are:
 \texttt{unvech()}  & undo \texttt{vech} & &
 \texttt{mlag()}    & matrix lag or lead \\
 \texttt{nullspace()} & right nullspace & &
-\texttt{maxc}      & column maxima (values) \\ 
-\texttt{maxr}      & row maxima (values)  & &
-\texttt{imaxc}     & column maxima (indices) \\ 
-\texttt{imaxr}     & row maxima (indices) & &
-\texttt{minc}      & column minima (values) \\   
-\texttt{minr}      & row minima (values) &  &
-\texttt{iminc}     & column minima (indices) \\ 
+\texttt{princomp()} & principal components \\
+\texttt{maxc}      & column maxima (values) & &
+\texttt{maxr}      & row maxima (values) \\
+\texttt{imaxc}     & column maxima (indices) & &
+\texttt{imaxr}     & row maxima (indices) \\
+\texttt{minc}      & column minima (values) & &
+\texttt{minr}      & row minima (values) \\
+\texttt{iminc}     & column minima (indices) & &
 \texttt{iminr}     & row minima (indices) 
 \end{tabular}
 \end{center}
@@ -516,6 +518,20 @@ to generate leads instead of lags.
 The \texttt{nullspace} function yields $X$, the right null space of a
 matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
 \cdot X = 0$.
+
+The function \texttt{princomp} requires two argument, a $T \times k$
+matrix $X$ and a scalar $p$, $0 < p \leq k$.  It is assumed that $X$
+contains $T$ observations on each of $k$ variables (series).  The
+return value is a $T \times p$ matrix $P$ containing the first $p$
+principal components of $X$.  The elements of $P$ are computed as
+\[
+P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i
+\]
+where $Z_{ti}$ is the standardized observation $t$ on variable $i$,
+$Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, and $v^{(j)}$ is the
+$j$th eigenvector of the correlation matrix of the $X_i$s, with the
+eigenvectors ordered by descending value of the corresponding
+eigenvalues.
 
 
 \subsection{Matrix filling functions}
