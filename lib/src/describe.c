@@ -3101,7 +3101,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-static void print_summary_single (const Summary *summ, int j,
+static void print_summary_single (const Summary *s, int j,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
@@ -3124,17 +3124,17 @@ static void print_summary_single (const Summary *summ, int j,
 
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    pdinfo->varname[summ->list[j+1]], summ->n);
+	    pdinfo->varname[s->list[j+1]], s->n);
     center_line(tmp, prn, 1);
 
-    vals[0] = summ->mean[j];
-    vals[1] = summ->median[j];
-    vals[2] = summ->low[j];
-    vals[3] = summ->high[j];
-    vals[4] = summ->sd[j];
-    vals[5] = summ->cv[j];
-    vals[6] = summ->skew[j];
-    vals[7] = summ->xkurt[j];
+    vals[0] = s->mean[j];
+    vals[1] = s->median[j];
+    vals[2] = s->low[j];
+    vals[3] = s->high[j];
+    vals[4] = s->sd[j];
+    vals[5] = s->cv[j];
+    vals[6] = s->skew[j];
+    vals[7] = s->xkurt[j];
 
     for (i=0; i<8; i++) {
 	if (strlen(_(labels[i])) > slen) {
