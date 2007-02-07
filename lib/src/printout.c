@@ -1614,7 +1614,7 @@ int printdata (const int *list, const char *mstr,
 {
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int screenvar = 0;
-    int allconst, scalars = 0;
+    int scalars = 0;
     int nvars = 0, sortvar = 0;
     int maxlen = 0, bplen = 13;
     int *plist = NULL;
@@ -1680,33 +1680,14 @@ int printdata (const int *list, const char *mstr,
 	pputc(prn, '\n');
     }
 
-    /* special case: all vars have constant value over sample */
-    allconst = 1;
-    for (j=1; j<=plist[0]; j++) {
-	double xx = Z[plist[j]][pdinfo->t1];
-
-	for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
-	    if (Z[plist[j]][t] != xx) {
-		allconst = 0;
-		break;
-	    }
-	}
-	if (!allconst) break;
-    }
-
-    if (allconst) {
-	for (j=1; j<=plist[0]; j++) {
-	    print_scalar(Z[plist[j]][pdinfo->t1], pdinfo->varname[plist[j]],
-			 opt, 1, prn);
-	}
+    if (plist[0] == 0) {
+	pputc(prn, '\n');
 	goto endprint;
     }
 
     if (!(opt & OPT_O)) { 
 	/* not by observations, but by variable */
-	if (plist[0] > 0) {
-	    pputc(prn, '\n');
-	}
+	pputc(prn, '\n');
 	for (j=1; j<=plist[0]; j++) {
 	    if (plist[0] > 1) {
 		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
