@@ -1,5 +1,5 @@
 \chapter{Funzioni definite dall'utente}
-\label{functions}
+\label{chap:functions}
 
 \section{Definizione di una funzione}
 \label{func-define}
@@ -225,13 +225,14 @@ usando l'operatore \texttt{*}. Per accedere al contenuto della variabile
 nell'ambiente esterno è sufficiente usare il nome della variabile senza
 prefissi.
 
-La specificazione di uno o più parametri speciali nella definizione di una
-funzione può essere utile per offrire informazioni opzionali alla chiamata. Se
-il parametro ``indirizzo'' è opzionale, occorre fornire come valore predefinito
-\texttt{null}. In questo caso la funzione dovrebbe controllare se alla chiamata
-è stato fornito un argomento corrispondente, usando la funzione \texttt{isnull()}.
-Ad esempio, ecco la funzione vista in precedenza, modificata in modo da rendere
-opzionale l'indicazione del valore di \texttt{ess}.
+Un parametro di ``indirizzo'' di questo tipo può essere utile per offrire
+informazioni opzionali alla chiamata (ossia, l'argomento corrispondente non è
+strettamente necessario, ma sarà usato se presente). In questo caso, al
+parametro andrà assegnato un valore predefinito \texttt{null} e la funzione
+dovrebbe controllare se alla chiamata è stato fornito un argomento
+corrispondente, usando la funzione \texttt{isnull()}.  Ad esempio, ecco la
+funzione vista in precedenza, modificata in modo da rendere opzionale
+l'indicazione del valore di \texttt{ess}.
 %
 \begin{code}
 function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
@@ -254,7 +255,7 @@ series resid = get_uhat_and_ess(price, xlist, null)
 \subsection{Argomenti lista}
 
 L'uso di una lista come argomento di una funzione dà modo di fornire a una
-funzione un numero di argomenti che non è noto al momento della scrittura della
+funzione un gruppo di argomenti il cui numero non è noto al momento della scrittura della
 funzione, ad esempio un insieme di regressori o di strumenti. All'interno della
 funzione, la lista può essere passata a comandi come
 \texttt{ols}, oppure può essere ``espansa'' usando un costrutto loop
@@ -286,6 +287,19 @@ function funzione (scalar y, const list X)
 Quando una lista è marcata come \texttt{const}, ogni tentativo di rinomiare,
 cancellare o sovrascrivere i valori originali delle variabili nella lista
 produrrà un errore.
+ 
+Se un argomento lista per una funzione è opzionale, esso va indicato facendolo
+seguire da un valore predefinito \texttt{null}, nel modo seguente:
+%
+\begin{code}
+function myfunc (scalar y, list X[null])
+\end{code}
+%
+In questo caso, se la chiamata passa \texttt{null} come argomento di lista, la
+lista \texttt{X} all'interno della funzione sarà vuota. Questa condizione può
+essere riconosciuta usando la funzione \texttt{nelem()}, che restituisce il
+valore 0 se una lista è vuota (questo meccanismo può essere usato anche per
+controllare se è stata fornita una lista vuota come argomento).
 
 \subsection{Valori di uscita}
 
@@ -307,15 +321,22 @@ funzione di produrre il valore (terminare) nel punto in cui essa
 appare nel corpo della funzione. Piuttosto, essa specifica quale
 variabile è disponibile per l'assegnazione quando la funzione
 terminerà, cosa che può avvenire solo quando: a) viene raggiunta la
-fine del codice che definisce la funzione, oppure b) si incontra una
-dichiarazione \verb+funcerr+ (si veda oltre), o c) gretl produce un
-errore.
+fine del codice che definisce la funzione, oppure b) \app{gretl} produce
+un errore, o c) si incontra una dichiarazione \verb+funcerr+.
  
 La parola chiave \verb+funcerr+, che può essere seguita da una stringa
 contenuta fra virgolette doppie, fa terminare una funzione con un
-messaggio di errore, che può essere generico o rappresentato dalla
-stringa indicata.
-    
+messaggio di errore. Se si fornisce una stringa, questa viene stampata
+all'uscita, altrimenti viene mostrato un messaggio di errore generico.
+Questo meccanismo consente all'autore di una funzione di anticipare un possibile
+errore di esecuzione e/o di offrire un messaggio di errore più specifico. Ad
+esempio:
+%
+\begin{code}
+if nelem(xlist) = 0
+   funcerr "xlist non può essere vuota"
+end if
+\end{code}
 
 \subsection{Controllo degli errori}
 
@@ -340,20 +361,14 @@ set messages on
 \end{code}
 
 \section{Pacchetti di funzioni}
-\label{func-packages}
+\label{sec:func-packages}
 
 A partire dalla versione 1.6.0, \app{gretl} contiene un meccanismo per creare
 pacchetti di funzioni e renderli disponibili agli altri utenti. Questa
 funzionalità è ancora sperimentale, ma è già utilizzabile seguendo
 le istruzioni contenute in questa sezione.
 
-Usando l'interfaccia grafica del programma, nel menù ``File, Funzioni'', si trovano
-quattro voci: ``Sul sistema locale'', ``Sul server di gretl'', ``Modifica
-pacchetto'', ``Nuovo pacchetto''.
-
-Il comando ``Nuovo pacchetto'' funziona solo quando è stata caricata
-in memoria almeno una funzione definita dall'utente, altrimenti si otterrà
-un messaggio di avvertimento.
+\subsection{Caricamento in memoria di una funzione}
 
 Ci sono vari modi per caricare una funzione in memoria:
 
@@ -367,9 +382,46 @@ Ci sono vari modi per caricare una funzione in memoria:
   probabilmente più comodo definire una funzione in modalità non interattiva.
 \end{itemize}
 
-Dopo aver caricato una funzione, la voce ``Nuovo pacchetto'' nel menù
-``File, Funzioni'' è utilizzabile. La prima finestra di dialogo presenta due
-alternative:
+Ad esempio, si supponga di voler creare un pacchetto con una funzione che
+produce l'incremento percentuale di una serie storica. Basta aprire un file
+script e digitare
+
+\begin{code}
+function pc(series y)
+  series foo = diff(y)/y(-1)
+  return series foo
+end function
+\end{code}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/func_check}
+  \caption{Controllo del funzionamento di una funzione}
+  \label{fig:func_check}
+\end{figure}
+
+Ora si può eseguire la funzione e controllare che funzioni correttamente,
+facendo alcuni test; ad esempio si può aprire il terminale e digitare:
+
+\begin{code}
+genr x = uniform()
+genr dpcx = pc(x)
+print x dpcx --byobs
+\end{code}
+
+Si dovrebbe vedere qualcosa di simile alla figura \ref{fig:func_check}. La
+funzione sembra essere corretta, quindi è possibile procedere al passo
+successivo.
+
+\subsection{Creazione di un pacchetto}
+
+Usando l'interfaccia grafica del programma, nel menù ``File, Funzioni'', si trovano
+quattro voci: ``Sul sistema locale'', ``Sul server di gretl'', ``Modifica
+pacchetto'', ``Nuovo pacchetto''.
+
+Selezionare il comando ``Nuovo pacchetto'' (il comando funziona solo quando è
+stata caricata in memoria almeno una funzione definita dall'utente); nella prima
+finestra di dialogo occorre selezionare:
 
 \begin{itemize}
 \item Una funzione pubblica da impacchettare;
@@ -379,7 +431,15 @@ alternative:
 Le funzioni pubbliche sono direttamente disponibili per gli utenti, quelle private
 fanno parte del meccanismo che lavora ``dietro le quinte'' in un pacchetto di funzioni.
 
-Facendo clic su ``OK'' apparirà una seconda finestra di dialogo, in cui occorre
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/package_editor}
+  \caption{La finestra di modifica di un pacchetto}
+  \label{fig:package_editor}
+\end{figure}
+
+Facendo clic su ``OK'' apparirà una seconda finestra di dialogo (si veda la
+figura \ref{fig:package_editor}), in cui occorre
 inserire le informazioni sul pacchetto (al momento: l'autore, la versione, la
 data e una breve descrizione), oltre che un testo di aiuto che descrive
 l'interfaccia pubblica della funzione. Si ha l'opportunità di modificare il
@@ -414,6 +474,8 @@ funzione viene analizzata e caricata in modo veloce usando la \textsf{libxml}.
 
 \vspace{6pt}
 
+\subsection{Caricamento di un pacchetto}
+
 Perché impacchettare le funzioni in questo modo? Per scoprirlo, proviamo a
 chiudere gretl, a riaprirlo, e ad andare nel menù ``File, Funzioni, Sul sistema
 locale''. Se le operazioni precedenti sono andate a buon fine, troveremo il
@@ -423,13 +485,58 @@ pacchetto; facendo clic sull'icona ``Visualizza codice'' della barra degli
 strumenti di questa nuova finestra, si aprirà una finestra che mostra il codice
 delle funzioni contenute nel pacchetto. Tornando alla finestra ``Pacchetti funzioni'',
 facendo clic sul nome di un pacchetto, le funzioni verranno caricate, pronte per
-essere eseguite, usando il pulsante ``Chiama'' o l'interfaccia a riga di
-comando.
+essere eseguite, usando il pulsante ``Chiama''.
 
 Dopo aver caricato le funzioni contenute nel pacchetto, aprendo il terminale di
 gretl, sarà possibile richiamare il testo di aiuto relativo ad una delle nuove
 funzioni caricate, se esso esiste, con il comando \texttt{help funzione},
-dove \texttt{funzione} è il nome di una delle funzioni del pacchetto caricato.
+dove \texttt{funzione} è il nome della funzione pubblica del pacchetto caricato.
+
+In modo simile, è possibile consultare e caricare i pacchetti di funzioni
+disponibili sul server di \app{gretl}, selezionando ``File, Funzioni, Sul server
+di gretl''.
+
+Una volta che un pacchetto è installato sulla macchina locale, è possibile usare
+le funzioni contenute attraverso l'interfaccia grafica, come descritto sopra, o
+quella a riga di comando (in uno script o nel terminale), caricando la funzione
+con il comando \texttt{include} e specificando come argomento il nome del
+pacchetto, compresa l'estensione \texttt{.gfn}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/function_call}
+  \caption{Uso di un pacchetto}
+  \label{fig:function_call}
+\end{figure}
+
+Per continuare con l'esempio, caricare il file \texttt{np.gdt} (uno dei dataset
+di esempio forniti con \app{gretl}). Si supponga di voler calcolare il tasso di
+crescita per la variabile \texttt{iprod} usando la funzione appena creata e di
+salvare il risultato in una serie chiamata \texttt{pippo}.
+
+Basta selezionare ``File, Funzioni, Sul sistema locale'' e comparirà un elenco
+dei pacchetti installati, compreso quello appena creato. Selezionandolo e
+facendo clic su ``Esegui'' (o facendo doppio clic sul nome del pacchetto),
+apparirà una finestra simile a quella della figura \ref{fig:function_call}.
+Facendo clic su ``Ok'', la serie \texttt{pippo} verrà generata (si veda la
+figura \ref{fig:iprod_pc}). Per fare in modo che la nuova variabile compaia
+nell'elenco delle variabili nella finestra principale, può essere necessario
+usare il comando ``Dati, Aggiorna finestra'' (o semplicemente premere il tasto
+``r'').
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{figures/iprod_pc}
+  \caption{Incremento percentuale della produzione industriale}
+  \label{fig:iprod_pc}
+\end{figure}
+
+In alternativa, lo stesso risultato si ottiene con lo script
+\begin{code}
+include pc.gfn
+open np
+pippo = pc(iprod)
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
