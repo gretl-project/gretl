@@ -1,0 +1,214 @@
+\chapter{GMM estimation}
+\label{chap:gmm}
+
+\section{Introduction and terminology}
+\label{sec:gmm-intro}
+
+The Generalized Method of Moments (GMM) is a very powerful and general
+estimation method, which encompasses practically all the parametric
+estimation techniques used in econometrics. It was introduced in
+Hansen (1982) and Hansen and Singleton (1982); an excellent and
+thorough treatment is given in Davidson and MacKinnon (1993), chapter
+17.
+
+The basic principle on which GMM is built is rather straightforward:
+suppose that we are interested in estimating a scalar parameter
+$\theta$ from a sample $x_1, x_2, \ldots, x_T$; let $\theta_0$
+indicate the ``true'' value of $\theta$. Theoretical considerations
+(either of statistical or economic nature) may suggest that a
+relationship like the following holds:
+\begin{equation}
+  \label{eq:simple}
+  E \left[ x_t - g(\theta) \right] = 0 \Leftrightarrow \theta =
+  \theta_0 ,
+\end{equation}
+with $g(\cdot)$ a continuous and invertible function. For example,
+economic models with rational expectations lead to expressions like
+(\ref{eq:simple}) quite naturally.
+
+If the sampling model for the $x_t$s is such that some version of the
+Law of Large Numbers holds, then
+\[
+  \bar{X} = \frac{1}{T} \sum_{t=1}^T x_t \convp g(\theta_0) ;
+\]
+hence, since $g(\cdot)$ is invertible, the statistic
+\[
+  \hat{\theta} = g^{-1}(\bar{X}) \convp \theta_0 ,
+\]
+so $\hat{\theta}$ is a consistent estimator of $\theta$. A different
+way to obtain the same outcome is to choose, as an estimator of
+$\theta$, the value that minimizes the objective function
+\begin{equation}
+  \label{eq:obj-simple}
+  F(\theta) = \left[ \frac{1}{T} \sum_{t=1}^T (x_t  - g(\theta)) \right]^2 =
+  \left[ \bar{X} - g(\theta) \right]^2 ;
+\end{equation}
+the minimum is trivially reached at $\hat{\theta} = g^{-1}(\bar{X})$,
+since the expression in square brackets equals 0.
+
+The above reasoning can be generalized as follows: imagine $\theta$ is
+an $n$-vector and we have $m$ relations like
+\begin{equation}
+  \label{eq:general}
+  E \left[ f_i(x_t, \theta) \right] = 0 \quad\textrm{for\ } i=1 \ldots
+  m ,
+\end{equation}
+where $E[\cdot]$ is a conditional expectation on a set of $p$
+variables $z_t$, called the \emph{instruments}. In the above simple
+example, $m=1$ and $f(x_t, \theta) = x_t - g(\theta)$, and the only
+instrument used is $z_t = 1$. Then, it must also be true that
+\begin{equation}
+  \label{eq:oc}
+  E \left[ f_i(x_t, \theta) \cdot z_{j,t} \right] = E \left[ f_{i,j,t}(\theta) \right] = 
+  0 \quad\textrm{for\ } i=1 \ldots
+  m \quad\textrm{and \ } j=1 \ldots p;
+\end{equation}
+equation (\ref{eq:oc}) is known as an \emph{orthogonality condition},
+or \emph{moment condition}. The GMM estimator is defined as the
+minimum of the quadratic form
+\begin{equation}
+  \label{eq:obj-general}
+  F(\theta, \Omega) = \bar{\mathbf{f}}' \Omega \bar{\mathbf{f}},
+\end{equation}
+where $\bar{\mathbf{f}}$ is a $(1 \times m\cdot p)$ vector holding the
+average of the orthogonality conditions and $\Omega$ is some symmetric
+and positive definite matrix, known as the \emph{weights} matrix. A
+necessary condition for the minimum to exist is the order condition $n
+\le m \cdot p$. If $n = m \cdot p$, the minimum is zero and the
+solution is the same for any $\Omega$.
+
+The statistic
+\begin{equation}
+  \label{eq:gmmestimator}
+  \hat{\theta} = \stackunder{\theta}{\mathrm{Argmin}} F(\theta, \Omega)
+\end{equation}
+is a consistent estimator of $\theta$ whatever the choice of $\Omega$.
+However, to achieve maximum asymptotic efficiency $\Omega$ must be
+proportional to the inverse of the long-run covariance matrix of the
+orthogonality conditions; if $\Omega$ is not known, a consistent estimator
+will suffice.
+
+These considerations lead to the following empirical strategy:
+\begin{enumerate}
+\item Choose a positive definite $\Omega$ and compute the
+  \emph{one-step} GMM estimator $\hat{\theta}_1$. Customary choices
+  for $\Omega$ are $I_{m\cdot p}$ or $I_{m} \otimes (Z'Z)^{-1}$.
+\item Use $\hat{\theta}_1$ to estimate $V(f_{i,j,t}(\theta))$ and use its
+  inverse as the weights matrix. The resulting estimator
+  $\hat{\theta}_2$ is called the \emph{two-step} estimator.
+\item Re-estimate $V(f_{i,j,t}(\theta))$ by means of $\hat{\theta}_2$ and
+  obtain $\hat{\theta}_3$; iterate until convergence. Asymptotically,
+  these extra steps are unnecessary, since the two-step estimator is
+  consistent and efficient; however, the iterated estimator often has
+  better small-sample properties and should be independent of the
+  choice of $\Omega$ made at step 1. 
+\end{enumerate}
+
+In the special case when the number of parameters $n$ is equal to the
+total number of orthogonality conditions $m \cdot p$, the GMM
+estimator $\hat{\theta}$ is the same for any choice of the weights
+matrix $\Omega$, so the first step is sufficient.
+
+In the following sections, we will show how these ideas are
+implemented in \app{gretl} through some examples.
+
+\section{OLS as GMM}
+\label{sec:gmm-ols}
+
+It is instructive to start with a somewhat contrived example: consider
+the linear model $y_t = x_t \beta + u_t$.  Although most of us
+are used to read it as the sum of a hazily defined ``systematic part''
+plus an equally hazy ``disturbance'', a more rigorous interpretation
+of this familiar expression comes from the \emph{hypothesis} that the
+conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
+$u_t$ as $y_t - E(y_t|x_t)$.
+
+From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$; as a
+consequence, the following orthogonality condition is available:
+\begin{equation}
+  \label{eq:oc-ols}
+  E \left[ f(\beta) \right] = 0 ,
+\end{equation}
+where $f(\beta) = (y_t - x_t \beta) x_t$. The definitions given in the
+previous section therefore specialize here to:
+\begin{itemize}
+\item $\theta$ is $\beta$;
+\item the instrument is $x_t$;
+\item $f_{i,j,t}(\theta)$ is $(y_t - x_t \beta) x_t = u_t
+  x_t$; the orthogonality condition is interpretable as the
+  requirement that the regressors should be uncorrelated with the
+  disturbances;
+\item $\Omega$ can be any symmetric positive definite matrix, since
+  the number of parameters equals the number of orthogonality
+  conditions. Let's say we choose $I$.
+\item The function $F(\theta, \Omega)$ is in this case
+  \[
+    F(\theta, \Omega) = \left[ \frac{1}{T} \sum_{t=1}^T (\hat{u}_t x_t) \right]^2
+  \]
+  and it is easy to see why OLS and GMM coincide here: the GMM
+  objective function has the same minimizer as the objective function
+  of OLS, the residual sum of squares. Note, however, that the two
+  functions are not equal to one another: at the minimum, $F(\theta,
+  \Omega) = 0$.
+\end{itemize}
+
+The code snippet contained in Example~\ref{gmm-ols-ex} uses
+\app{gretl}'s \texttt{gmm} command to make the above operational.
+
+\begin{script}[htbp]
+  \caption{OLS via GMM}
+  \label{gmm-ols-ex}
+\begin{code}
+/* initialize stuff */
+series e = 0
+scalar beta = 0
+matrix V = I(1)
+
+/* proceed with estimation */
+gmm 
+  series e = y - x*beta
+  orthog e ; x
+  weights V
+  params beta
+end gmm
+\end{code}
+\end{script}
+
+We feed \app{gretl} with the necessary ingredients for GMM estimations
+in a command block, that starts with \texttt{gmm} and ends with
+\texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
+block:
+\begin{enumerate}
+\item one or more \texttt{orthog} statements
+\item one \texttt{weights} statement
+\item one \texttt{params} statement
+\end{enumerate}
+these three statements should be given in this order.
+
+The \texttt{orthog} statements are used to specify the orthogonality
+conditions, and must follow the syntax
+\begin{code}
+  orthog x ; Z
+\end{code}
+where \texttt{x} must be a vector or a series and \texttt{Z} a list or
+a matrix. In the above example, the series \texttt{e} holds the
+``residuals'' and the series \texttt{x} holds the regressor. If
+\texttt{x} had been a list (a matrix), the \texttt{orthog} statement would have
+generated one orthogonality conditon for each element (column) of \texttt{x}.
+
+The \texttt{weights} statement is only used to indicate the weights
+matrix and its syntax should be straightforward; the \texttt{params}
+statement follows the same logic and rules as in the \texttt{mle} and
+\texttt{nls} commands.
+
+The minimum is found through numerical minimization via BFGS (see
+section~\ref{genr-numerical} and chapter~\ref{chap:mle}), so in this
+case GMM estimation is a rather silly thing to do, since a closed form
+solution is trivially given by OLS. The progress of the numerical
+optimization procedure can be observed by appending the
+\verb|--verbose| switch to the \texttt{end gmm} line.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

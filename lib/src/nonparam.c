@@ -267,7 +267,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     } else if (m >= 7) {
 	pval = spearman_signif(m, fabs(rho));
 	if (pval < 1.0) {
-	    pprintf(prn, _("significant at the %g%% level (one-tailed)\n"), 100.0 * pval);
+	    pprintf(prn, _("significant at the %g%% level (one-tailed)\n"), 
+		    100.0 * pval);
 	} else {
 	    /* xgettext:no-c-format */
 	    pputs(prn, _("not significant at the 10% level\n"));
@@ -513,11 +514,11 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static const double w_signed_sig[] = {
+static const double signed_rank_p[] = {
     0.05, 0.025, 0.01, 0.005 /* one-tailed */
 };
 
-static const int w_signed_vals[5][4] = {
+static const int signed_rank_crit[5][4] = {
     { 15,  -1,  -1,  -1 }, /* N = 5 */
     { 17,  21,  -1,  -1 }, /* 6 */
     { 22,  24,  28,  -1 }, /* 7 */  
@@ -532,9 +533,9 @@ struct ranker {
 };
 
 static int 
-wilcoxon_signed_rank (const double *x, const double *y, 
-		      int v1, int v2, const DATAINFO *pdinfo,
-		      gretlopt opt, PRN *prn)
+signed_rank_test (const double *x, const double *y, 
+		  int v1, int v2, const DATAINFO *pdinfo,
+		  gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double d, w;
@@ -616,14 +617,13 @@ wilcoxon_signed_rank (const double *x, const double *y,
 	z = (w - 0.5) / s;
 	pprintf(prn, "  z = %g\n", z);
     } else if (n > 5) {
-	/* use w_signed_vals above */
 	int c, sig = 0, row = n - 5;
 	
 	for (i=3; i>=0; i--) {
-	    c = w_signed_vals[row][i];
+	    c = signed_rank_crit[row][i];
 	    if (c > 0 && w >= c) {
 		pprintf(prn, "  (significant at the %g level)\n", 
-			w_signed_sig[i]);
+			signed_rank_p[i]);
 		sig = 1;
 		break;
 	    }
@@ -640,9 +640,9 @@ wilcoxon_signed_rank (const double *x, const double *y,
     return 0;
 }
 
-static int wilcoxon_rank_sum (const double *x, const double *y, 
-			      int v1, int v2, const DATAINFO *pdinfo,
-			      gretlopt opt, PRN *prn)
+static int rank_sum_test (const double *x, const double *y, 
+			  int v1, int v2, const DATAINFO *pdinfo,
+			  gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double wa;
@@ -727,7 +727,8 @@ static int wilcoxon_rank_sum (const double *x, const double *y,
 	} 
     } 
 
-    pprintf(prn, "\nw_a = %g\n", wa);
+    pprintf(prn, "\n  n_a = %d, n_b = %d\n", na, nb);
+    pprintf(prn, "  w_a = %g\n", wa);
 
     if (na >= 10 && nb >= 10) {
 	double m, s, z;
@@ -735,7 +736,7 @@ static int wilcoxon_rank_sum (const double *x, const double *y,
 	m = na * (na + nb + 1) / 2.0;
 	s = sqrt(na * nb * (na + nb + 1) / 12.0);
 	z = (wa - m) / s;
-	pprintf(prn, "z = (%g - %g) / %g = %g\n", wa, m, s, z);
+	pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
     }
 
     free(r);
@@ -815,9 +816,9 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (opt == OPT_NONE || (opt & OPT_G)) {
 	return sign_test(x, y, v1, v2, pdinfo, opt, prn);
     } else if (opt & OPT_R) {
-	return wilcoxon_rank_sum(x, y, v1, v2, pdinfo, opt, prn);
+	return rank_sum_test(x, y, v1, v2, pdinfo, opt, prn);
     } else if (opt & OPT_I) {
-	return wilcoxon_signed_rank(x, y, v1, v2, pdinfo, opt, prn);
+	return signed_rank_test(x, y, v1, v2, pdinfo, opt, prn);
     }
 
     return 1;
