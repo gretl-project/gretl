@@ -3668,9 +3668,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		       cmd->opt, prn);
 	break;
 
-    case SIGNTEST:
-	err = sign_test(cmd->list, (const double **) *pZ, pdinfo, 
-			prn);
+    case DIFFTEST:
+	err = diff_test(cmd->list, (const double **) *pZ, pdinfo, 
+			cmd->opt, prn);
 	break;
 
     case OUTFILE:
