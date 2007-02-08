@@ -513,8 +513,11 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static const double w_signed_vals[5][4] = {
-  /* .05 .025  .01 .005 (one-tailed) */
+static const double w_signed_sig[] = {
+    0.05, 0.025, 0.01, 0.005 /* one-tailed */
+};
+
+static const int w_signed_vals[5][4] = {
     { 15,  -1,  -1,  -1 }, /* N = 5 */
     { 17,  21,  -1,  -1 }, /* 6 */
     { 22,  24,  28,  -1 }, /* 7 */  
@@ -613,7 +616,21 @@ wilcoxon_signed_rank (const double *x, const double *y,
 	z = (w - 0.5) / s;
 	pprintf(prn, "  z = %g\n", z);
     } else if (n > 5) {
-	;
+	/* use w_signed_vals above */
+	int c, sig = 0, row = n - 5;
+	
+	for (i=3; i>=0; i--) {
+	    c = w_signed_vals[row][i];
+	    if (c > 0 && w >= c) {
+		pprintf(prn, "  (significant at the %g level)\n", 
+			w_signed_sig[i]);
+		sig = 1;
+		break;
+	    }
+	}
+	if (!sig) {
+	    pprintf(prn, "  (not significant at the %.2f level)\n", 0.05);
+	}
     } else {
 	pprintf(prn, "  n < 5: results are not statistically significant\n");
     }
