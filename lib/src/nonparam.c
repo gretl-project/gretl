@@ -514,17 +514,28 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static const double signed_rank_p[] = {
-    0.05, 0.025, 0.01, 0.005 /* one-tailed */
-};
+static void print_z_prob (double z, PRN *prn)
+{
+    double p;
 
-static const int signed_rank_crit[5][4] = {
-    { 15,  -1,  -1,  -1 }, /* N = 5 */
-    { 17,  21,  -1,  -1 }, /* 6 */
-    { 22,  24,  28,  -1 }, /* 7 */  
-    { 26,  30,  34,  36 }, /* 8 */  
-    { 29,  35,  39,  43 }  /* 9 */ 
-};     
+    if (z > 0) {
+	p = normal_pvalue_1(z);
+	if (!na(p)) {
+	    pprintf(prn, "  Prob(Z > %g) = %g\n", z, p);
+	}
+    } else if (z < 0) {
+	p = normal_cdf(z);
+	if (!na(p)) {
+	    pprintf(prn, "  Prob(Z < %g) = %g\n", z, p);
+	}
+    }
+}
+
+static const double rank5[3][2] = {
+    { 0, 2 }, /* n = 6 */
+    { 2, 3 }, /* n = 7 */
+    { 3, 5 }  /* n = 8 */
+};
 
 struct ranker {
     double val;
@@ -538,7 +549,7 @@ signed_rank_test (const double *x, const double *y,
 		  gretlopt opt, PRN *prn)
 {
     struct ranker *r;
-    double d, w;
+    double d, wp;
     int i, t, n = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -592,48 +603,46 @@ signed_rank_test (const double *x, const double *y,
 		"signed rank");
     }
 
-    w = 0.0;
+    wp = 0.0;
 
     for (i=0; i<n; i++) {
 	d = r[i].rank;
 	if (r[i].c == '-') {
 	    d = -d;
 	    r[i].val = -r[i].val;
+	} else {
+	    wp += d;
 	}
 	if (opt & OPT_V) {
 	    pprintf(prn, "%16g %8g %16g\n", r[i].val, r[i].rank, d);
 	}
-	w += d;
     } 
 
-    pprintf(prn, "  n = %d\n", n);
-    pprintf(prn, "  W+ = %g\n", w);
-
-    if (n >= 10) {
-	double s, z;
-
-	s = sqrt((n * (n+1) * (2*n+1)) / 6.0);
-	pprintf(prn, "  %s = %g\n", _("std. error"), s);
-	z = (w - 0.5) / s;
-	pprintf(prn, "  z = %g\n", z);
-    } else if (n > 5) {
-	int c, sig = 0, row = n - 5;
-	
-	for (i=3; i>=0; i--) {
-	    c = signed_rank_crit[row][i];
-	    if (c > 0 && w >= c) {
-		pprintf(prn, "  (significant at the %g level)\n", 
-			signed_rank_p[i]);
-		sig = 1;
-		break;
-	    }
-	}
-	if (!sig) {
-	    pprintf(prn, "  (not significant at the %.2f level)\n", 0.05);
-	}
-    } else {
-	pprintf(prn, "  n < 5: results are not statistically significant\n");
+    if (opt & OPT_V) {
+	pputc(prn, '\n');
     }
+
+    pprintf(prn, "  n = %d\n", n);
+    pprintf(prn, "  W+ = %g\n", wp);
+
+    if (n > 8) {
+	double s, x, z;
+
+	x = n * (n+1) / 4.0;
+	pprintf(prn, "  %s = %g\n", _("Expected value"), x);
+	s = sqrt((n * (n+1) * (2*n+1)) / 24.0);
+	pprintf(prn, "  %s = %g\n", _("Variance"), s * s);
+	z = (wp - x) / s;
+	pprintf(prn, "  z = %g\n", z);
+	print_z_prob(z, prn);
+    } else if (n > 5) {
+	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
+		rank5[n-6][0], rank5[n-6][1]);
+    } else {
+	pprintf(prn, "  Sample too small for statistical significance\n");
+    }
+
+    pputc(prn, '\n');
 
     free(r);
 
@@ -725,9 +734,13 @@ static int rank_sum_test (const double *x, const double *y,
 	if (r[i].c == 'a') {
 	    wa += r[i].rank;
 	} 
-    } 
+    }
 
-    pprintf(prn, "\n  n_a = %d, n_b = %d\n", na, nb);
+    if (opt & OPT_V) {
+	pputc(prn, '\n');
+    }
+
+    pprintf(prn, "  n_a = %d, n_b = %d\n", na, nb);
     pprintf(prn, "  w_a = %g\n", wa);
 
     if (na >= 10 && nb >= 10) {
@@ -737,7 +750,10 @@ static int rank_sum_test (const double *x, const double *y,
 	s = sqrt(na * nb * (na + nb + 1) / 12.0);
 	z = (wa - m) / s;
 	pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
+	print_z_prob(z, prn);
     }
+
+    pputc(prn, '\n');
 
     free(r);
 

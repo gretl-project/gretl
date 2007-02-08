@@ -1479,6 +1479,91 @@
 
   </command>
 
+  <command name="difftest" section="Testing" 
+    label="Nonparametric tests for differences" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>var1 var2</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--sign</flag>
+	  <effect>Sign test, the default</effect>
+	</option>
+	<option>
+	  <flag>--rank-sum</flag>
+	  <effect>Wilcoxon rank-sum test</effect>
+	</option>
+	<option>
+	  <flag>--signed-rank</flag>
+	  <effect>Wilcoxon signed-rank test</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra output</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Carries out a nonparametric test for a difference between two
+	populations or groups, the specific test depending on the option
+	selected.
+      </para>
+      <para>
+	With the <lit>--sign</lit> option, the Sign test is performed.
+	This test is based on the fact that if two samples,
+	<mathvar>x</mathvar> and <mathvar>y</mathvar>, are drawn randomly
+	from the same distribution, the probability that
+	<mathvar>x<sub>i</sub></mathvar> &gt;
+	<mathvar>y<sub>i</sub></mathvar>, for each observation
+	<mathvar>i</mathvar>, should equal 0.5.  The test statistic is
+	<mathvar>w</mathvar>, the number of observations for which
+	<mathvar>x<sub>i</sub></mathvar> &gt;
+	<mathvar>y<sub>i</sub></mathvar>. Under the null hypothesis this
+	follows the Binomial distribution with parameters
+	(<mathvar>n</mathvar>, 0.5), where <mathvar>n</mathvar> is the
+	number of observations.
+      </para>
+      <para>
+	With the <lit>--rank-sum</lit> option, the Wilcoxon rank-sum test
+	is performed.  This test proceeds by ranking the observations from
+	both samples jointly, from smallest to largest, then finding the
+	sum of the ranks of the observations from one of the samples.  The
+	two samples do not have to be of the same size, and if they differ
+	the smaller sample is used in calculating the rank-sum.  Under the
+	null hypothesis that the samples are drawn from populations with
+	the same median, the probability distribution of the rank-sum can
+	be computed for any given sample sizes; and for reasonably large
+	samples a close Normal approximation exists.
+      </para>
+      <para>
+	With the <lit>--signed-rank</lit> option, the Wilcoxon signed-rank
+	test is performed.  This is designed for matched data pairs such
+	as, for example, the values of a variable for a sample of
+	individuals before and after some treatment.  The test proceeds by
+	finding the differences between the paired observations,
+	<mathvar>x<sub>i</sub></mathvar> &minus;
+	<mathvar>y<sub>i</sub></mathvar>, ranking these differences by
+	absolute value, then assigning to each pair a signed rank, the
+	sign agreeing with the sign of the difference.  One then
+	calculates <mathvar>W<sub>+</sub></mathvar>, the sum of the
+	positive signed ranks.  As with the rank-sum test, this statistic
+	has a well-defined distribution under the null that the median
+	difference is zero, which converges to the Normal for samples
+	of reasonable size.
+      </para>
+      <para>
+	For the Wilcoxon tests, if the <lit>--verbose</lit> option is
+	given then the ranking is printed.  (This option has no effect if
+	the Sign test is selected.)
+      </para>
+    </description>
+
+  </command>
+
   <command name="discrete" section="Transformations" 
     label="Mark variables as discrete" context="cli">
 
