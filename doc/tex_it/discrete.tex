@@ -5,19 +5,34 @@ Quando una variabile può assumere solo un numero finito, tipicamente basso, di
 valori, essa si può chiamare \emph{discreta}. Alcuni comandi di
 \app{gretl} si comportano in modo leggermente diverso quando sono usati su
 variabili discrete; in più, \app{gretl} fornisce alcuni comandi che si applicano
-solo alle variabili discrete.
+solo alle variabili discrete. Nello specifico, i comandi \texttt{dummify}
+e \texttt{xtab} (si veda oltre) sono disponibili solo per variabili discrete,
+mentre il comando \texttt{freq} (distribuzione di frequenza) produce risultati
+differenti nel caso di variabili discrete.
+
 
 
 \section{Dichiarazione delle variabili discrete}
 \label{discr-declare}
 
-Quando si crea un file di dati da zero, nessuna variabile viene considerata
-discreta. Per marcare una variabile come discreta, è possibile agire in due
-modi:
+\app{Gretl} usa una semplice euristica per decidere se una variabile deve essere
+considerata come discreta, ma è anche possibile marcare esplicitamente una
+variabile come discreta, nel qual caso il controllo automatico non viene
+eseguito.
+
+L'euristica è la seguente: per prima cosa si controlla se tutti i valori della
+variabile sono ``abbastanza arrotondati'', ossia se sono almeno multipli interi
+di 0.25; se questa condizione è soddisfatta, si controlla se la variabile assume
+un numero di valori distinti che sia ``abbastanza piccolo'', per la precisione
+uguale o minore di 8. Se entrambe le condizioni sono soddisfatte, la variabile
+viene automaticamente considerata come discreta.
+
+Se invece si vuole marcare esplicitamente una variabile come discreta, ci sono
+due modi:
 \begin{enumerate}
 \item Dall'interfaccia grafica, selezionare ``Variabile, Modifica attributi''
-  dal menù. Apparirà una finestra di dialogo che, se la variabile assume solo
-  valori interi, contiene la casella ``Tratta questa variabile come discreta''.
+  dal menù. Apparirà una finestra di dialogo che, se la variabile sembra adatta,
+  contiene la casella ``Tratta questa variabile come discreta''.
   La stessa finestra di dialogo può essere richiamata dal menù contestuale
   (facendo clic col tasto destro su una variabile) o premendo il tasto F2;
 \item Dall'interfaccia a riga di comando, usando il comando \texttt{discrete}.
@@ -39,6 +54,10 @@ discrete pippo --reverse
 # ora piipo è continua
 \end{code}
 \end{enumerate}
+
+La variante a riga di comando è più potente, visto che consente di marcare una
+variabile come discreta anche se non viene giudicata adatta dal programma per
+questa trasformazione.
 
 Si noti che marcare una variabile come discreta non ne modifica il contenuto. È
 quindi responsabilità dell'utente usare correttamente questa funzione. Per
@@ -218,23 +237,36 @@ usare il comando matriciale \texttt{values()} (si veda il capitolo
 \subsection{Il comando \texttt{xtab}}
 \label{discr-xtab}
 
-Il comando \texttt{xtab} ha la sintassi seguente
+Il comando \texttt{xtab} può essere invocato in uno dei due modi seguenti.
+Per primo:
+%
 \begin{code}
 xtab lista-y ; lista-x
 \end{code}
+%
 dove \texttt{lista-y} e \texttt{lista-x} sono liste di variabili discrete;
 esso produce tabulazioni incrociate per ognuna delle variabili nella
 \texttt{lista-y} (per riga) rispetto a ognuna delle variabili nella
-\texttt{lista-x} (per colonna). Al momento, questa funzionalità non è
-accessibile dall'interfaccia grafica.
+\texttt{lista-x} (per colonna).  In secondo luogo:
+%
+\begin{code}
+xtab lista-x
+\end{code}
+%
+In questo secondo caso, viene generata una tabulazione incrociata completa,
+ossia ogni variabile nella \texttt{lista-x} è tabulata rispetto ad ogni altra
+variabile. Nell'interfaccia grafica, questo comando è utilizzabile attraverso la
+voce ``Tabulazione incrociata'' nel menù Visualizza, che è attiva se sono state
+selezionate almeno due variabili.
 
-Ad esempio:
+Ecco un esempio di uso:
+%
 \begin{code}
 open greene22_2
 discrete Z* # Marca Z1-Z8 come discrete
 xtab Z1 Z4 ; Z5 Z6
 \end{code}
-produce questo risultato
+che produce questo risultato
 \begin{code}
 Tabulazione incrociata di Z1 (righe) rispetto a Z5 (colonne)
 
@@ -281,10 +313,12 @@ TOTALE     7    44   154   115    89   112    80    601
 Test chi-quadro di Pearson = 18,3426 (6 df, p-value = 0,0054306)
 \end{code}
 
-Il test $\chi^2$ di Pearson per l'indipendenza viene mostrato automaticamente
-se la frequenza attesa nell'ipotesi di indipendenza supera 5 per almeno l'80 per
-cento delle celle. L'opzione \texttt{--chi-square} fa in modo che il test venga
-sempre mostrato.
+Il test $\chi^2$ di Pearson per l'indipendenza viene mostrato automaticamente, a
+patto che tutte le celle abbiano frequenze attese nell'ipotesi di indipendenza
+pari almeno a $10^{-7}$. Poiché spesso si considera valida questa statistica se
+la frequenza attesa nell'ipotesi di indipendenza supera 5 per almeno l'80 per
+cento delle celle, se questa condizione non è soddisfatta, viene mostrato un
+messaggio di avvertimento.
 
 Inoltre, le opzioni \texttt{--row} o \texttt{--column} fanno in modo che vengano
 mostrate le percentuali di riga o di colonna.

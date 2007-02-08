@@ -1,5 +1,5 @@
 \chapter{Operazioni con le matrici}
-\label{chap-matrices}
+\label{chap:matrices}
 
 \section{Introduzione}
 \label{matrix-intro}
@@ -11,12 +11,12 @@ modifiche a questa funzionalità.
 \section{Creazione di matrici}
 \label{matrix-create}
 
-È possibile creare una matrice usando uno dei quattro metodi seguenti:
+È possibile creare una matrice usando uno dei metodi seguenti:
 
 \begin{enumerate}
 \item Specificando direttamente i valori scalari che compongono la matrice,
-  in forma numerica o per riferimento a variabili scalari preesistenti, o in un
-  modo misto;
+  in forma numerica, per riferimento a variabili scalari preesistenti, o usando
+  valori calcolati;
 \item fornendo una lista di serie di dati;
 \item fornendo una \textit{lista personalizzata} di serie;
 \item usando una formula simile a quelle usate con il comando
@@ -56,10 +56,12 @@ matrix A = { x, x^2 }
 \end{code}
 %
 
-Per impostazione predefinita, ogni variabile rappresenta una colonna (e può
-esserci solo una variabile per ogni colonna). L'intervallo dei valori dei dati
-inclusi nella matrice dipende dall'impostazione corrente dell'intervallo del
-campione.
+Ogni variabile rappresenta una colonna (e può esserci solo una variabile per
+ogni colonna). Non è possibile usare il carattere di punto e virgola come
+separatore di riga in questo caso: se si vuole che le serie siano disposte per
+righe, occorre usare il simbolo di trasposizione.  L'intervallo dei valori dei
+dati inclusi nella matrice dipende dall'impostazione corrente dell'intervallo
+del campione.
 
 Si noti che mentre le funzioni statistiche di gretl sono in grado di gestire
 valori mancanti, ciò non vale per le funzioni che trattano le matrici:
@@ -68,7 +70,7 @@ mancanti, le osservazioni per cui almeno una delle serie contiene valori
 mancanti sono saltate}.
 
 Invece di fornire una lista esplicita di variabili, è possibile fornire il
-\textit{nome di una lista personalizzata} (si veda il capitolo~\ref{persist}),
+\textit{nome di una lista personalizzata} (si veda il capitolo~\ref{chap-persist}),
 come nell'esempio seguente:
 %
 \begin{code}
@@ -88,7 +90,16 @@ matrix A = { dataset }
 \end{code}
 %
 In questo modo, si costruisce una matrice usando tutte le serie del dataset
-corrente, salvo la costante (variabile 0).
+corrente, salvo la costante (variabile 0). Quando si usa questa lista speciale,
+essa deve essere il solo elemento nella definizione della matrice \texttt{\{...\}}.
+È tuttavia possibile creare una matrice che includa la costante, oltre alle
+altre variabili, usando la concatenazione per colonne (si veda oltre), come
+in questo esempio:
+%
+\begin{code}
+matrix A = {const}~{dataset}
+\end{code}
+%
 
 È possibile creare nuove matrici, o sostituire matrici esistenti, usando varie
 trasformazioni, come per gli scalari e le serie di dati. I prossimi paragrafi
@@ -161,7 +172,7 @@ Però la prima forma può essere più accurata della seconda, perché la soluzione è
 ottenuta tramite la scomposizione LU, senza calcolare esplicitamente la matrice
 inversa.
 
-Nella moltiplicazione per elementi, scrivendo
+Nella \textit{moltiplicazione per elementi}, scrivendo
 %
 \begin{code}
 matrix C = A .* B
@@ -183,37 +194,177 @@ $m \times n$ e $B$ è una matrice $p \times q$.
 \item Se non è soddisfatta alcuna delle condizioni precedenti, il prodotto non è
   definito e viene segnalato un errore.
 \end{itemize}
- 
-Per una variante della moltiplicazione per elementi che può essere utile in
-alcuni contesti, si veda anche la funzione \texttt{colmult()} descritta in
-seguito (pagina~\pageref{matrix-two}).
-
-La divisione per elementi funziona in modo simile alla moltiplicazione per elementi,
-sostituendo $\times$ con $\div$ nella spiegazione precedente.
-
-L'elevamento a potenza per elementi, come in
+Ad esempio, se $A$ è un vettore riga con lo stesso numero di colonne di
+$B$, le colonne di $C$ sono le colonne di $B$ moltiplicate per i corrispondenti
+elementi di $A$. Si noti che questa convenzione rende superfluo, nella maggior
+parte dei casi, usare matrici diagonali per eseguire trasformazioni usando la
+moltiplicazione ordinaria tra matrici: se $Y = XV$, dove $V$ è diagonale, è
+molto più comodo dal punto di vista computazionale ottenere $Y$ usando
+l'istruzione
 %
 \begin{code}
-matrix C = A .^ k
+matrix Y = X .* v
 \end{code}
-% 
-produce $c_{ij} = a_{ij}^k$. La variabile $k$ deve essere uno scalare o una
-matrice $1\times 1$.
+%
+dove \texttt{v} è un vettore riga che contiene la diagonale di $V$.
+ 
+La divisione per elementi e l'elevamento a potenza per elementi funzionano in
+modo analogo alla moltiplicazione per elementi, sostituendo $\times$ con $\div$,
+o con l'operazione di elevamento a potenza, nella spiegazione precedente.
 
-Nella concatenazione tra una matrice $A$ $m\times n$ e una matrice $B$ $m\times
-p$, il risultato è una matrice $m\times (n+p)$. Ossia,
+Nella \textit{concatenazione per colonne} di una matrice $A$ $m\times n$ e di una
+matrice $B$ $m\times p$, il risultato è una matrice $m\times (n+p)$. Ossia:
 %
 \begin{code}
-C = A ~ B
+matrix C = A ~ k
 \end{code}
 % 
 produce $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 
+La \textit{concatenazione per righe} di una matrice $A$ $m\times n$ e di una matrice $B$
+$p\times n$ produce una matrice $(m+p) \times n$.
+%
+\begin{code}
+C = A | B
+\end{code}
+% 
+produce $C = \left[ \begin{array}{cc} A \\ B \end{array} \right]$.
+
+\section{Operatori matrice-scalare}
+\label{matrix-scalar-op}
+
+Per una matrice $A$ e uno scalare $k$, sono disponibili gli operatori mostrati nella
+Tabella~\ref{tab:matrix-scalar-ops} (addizione e sottrazione sono state
+presentate nella sezione~\ref{matrix-op} ma sono incluse nella tabella per
+completezza). Inoltre, per una matrice quadrata $A$ e un intero $k \geq 0$,
+\verb|B = A^k| produce una matrice $B$ che è $A$ elevata alla potenza $k$.
+Si noti che l'operatore \texttt{**} non può essere usato al posto di \verb|^|
+a questo scopo, perché in un contesto matriciale esso è riservato per il prodotto
+di Kronecker.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ll}
+\textit{Espressione} & \textit{Risultato} \\[4pt]
+\texttt{matrix B = A * k} & $b_{ij} = k a_{ij}$ \\
+\texttt{matrix B = A / k} & $b_{ij} = a_{ij} / k$ \\
+\texttt{matrix B = k / A} & $b_{ij} = k / a_{ij}$ \\
+\texttt{matrix B = A + k} & $b_{ij} = a_{ij} + k$ \\
+\texttt{matrix B = A - k} & $b_{ij} = a_{ij} - k$ \\
+\texttt{matrix B = k - A} & $b_{ij} = k - a_{ij}$ \\
+\texttt{matrix B = A \% k} & $b_{ij} = a_{ij} \mbox{ modulo } k$ \\
+\end{tabular}
+\caption{Operatori matrice--scalare}
+\label{tab:matrix-scalar-ops}
+\end{table}
+
 \section{Funzioni matriciali}
 \label{matrix-func}
 
-Sono disponibili le seguenti funzioni per \textit{la trasformazione
-elemento per elemento} delle matrici: \texttt{log}, \texttt{exp},
+\begin{table}[htbp]
+\centering
+\textbf{Creazione}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{I}         &
+\texttt{mnormal}   &
+\texttt{muniform}  &
+\texttt{ones}      &
+\texttt{seq}       &
+\texttt{zeros}     
+\end{tabular}      
+
+\textbf{Forma/dimensione}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cols}      &
+\texttt{diag}      &
+\texttt{dsort}     &
+\texttt{mlag}      &
+\texttt{mshape}    &
+\texttt{rows}      \\
+\texttt{sort}      &
+\texttt{transp}    &
+\texttt{unvech}    &
+\texttt{vec}       &
+\texttt{vech}      
+\end{tabular}      
+
+\textbf{Elemento per elemento}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cnorm}     &
+\texttt{cos}       &
+\texttt{dnorm}     &
+\texttt{exp}       \\
+\texttt{gamma}     &
+\texttt{int}       &
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{qnorm}     &
+\texttt{sin}       \\
+\texttt{sqrt}      &
+\texttt{tan}       
+\end{tabular}      
+
+\textbf{Algebra matriciale}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cholesky}  &
+\texttt{det}       &
+\texttt{eigengen}  &
+\texttt{eigensym}  &
+\texttt{infnorm}   &
+\texttt{inv}       \\
+\texttt{ldet}      &
+\texttt{mexp}      &
+\texttt{nullspace} &
+\texttt{onenorm}   &
+\texttt{qform}     &
+\texttt{qrdecomp}  \\
+\texttt{rank}      &
+\texttt{rcond}     &
+\texttt{svd}       &
+\texttt{tr}        &
+\end{tabular}      
+
+\textbf{Statistica}
+\hrulefill
+
+\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\texttt{cdemean}   &
+\texttt{imaxc}     &
+\texttt{imaxr}     &
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{mcorr}     \\
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      &
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{minc}      \\   
+\texttt{minr}      &
+\texttt{princomp}  &
+\texttt{sumc}      &
+\texttt{sumr}      &
+\texttt{values}    &
+\end{tabular}      
+\caption{Funzioni matriciali suddivise per categoria}
+\label{tab:matrix_funcs_cat}
+\end{table}
+
+La tabella \ref{tab:matrix_funcs_cat} elenca le funzioni matriciali fornite da
+\app{gretl} (una versione ordinata in ordine alfabetico della tabella è fornita
+alla fine di questo capitolo, si veda la Tabella~\ref{tab:matrix_funcs}).
+Per \textit{la trasformazione elemento per elemento} delle matrici sono
+disponibili le seguenti funzioni: \texttt{log}, \texttt{exp},
 \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
 \texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
 \texttt{qnorm}, \texttt{gamma} e \texttt{lngamma}. Queste funzioni operano in
