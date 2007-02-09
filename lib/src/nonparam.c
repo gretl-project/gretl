@@ -278,7 +278,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 		"the normal distribution\n"));
     }
 
-    if (opt & OPT_V) { /* print raw and ranked data */
+    if (opt & OPT_V) { 
+	/* print raw and ranked data */
 	int i = 0;
 
 	obs_marker_init(pdinfo);
@@ -305,7 +306,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-#undef LOCKE_DEBUG
+#define LOCKE_DEBUG 0
 
 static int randomize_doubles (const void *a, const void *b)
 {
@@ -531,7 +532,7 @@ static void print_z_prob (double z, PRN *prn)
     }
 }
 
-static const double rank5[3][2] = {
+static const int rank5[3][2] = {
     { 0, 2 }, /* n = 6 */
     { 2, 3 }, /* n = 7 */
     { 3, 5 }  /* n = 8 */
@@ -549,7 +550,7 @@ signed_rank_test (const double *x, const double *y,
 		  gretlopt opt, PRN *prn)
 {
     struct ranker *r;
-    double d, wp;
+    double d, wp, wm;
     int i, t, n = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -603,11 +604,12 @@ signed_rank_test (const double *x, const double *y,
 		"signed rank");
     }
 
-    wp = 0.0;
+    wp = wm = 0.0;
 
     for (i=0; i<n; i++) {
 	d = r[i].rank;
 	if (r[i].c == '-') {
+	    wm += d;
 	    d = -d;
 	    r[i].val = -r[i].val;
 	} else {
@@ -623,7 +625,7 @@ signed_rank_test (const double *x, const double *y,
     }
 
     pprintf(prn, "  n = %d\n", n);
-    pprintf(prn, "  W+ = %g\n", wp);
+    pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
 
     if (n > 8) {
 	double s, x, z;
@@ -778,17 +780,16 @@ static int sign_test (const double *x, const double *y,
 	return E_MISSDATA;
     }
 
-    pprintf(prn, _("\nFor the variables '%s' and '%s':\n\n"), 
-	    pdinfo->varname[v1], pdinfo->varname[v2]);
+    pputs(prn, "\n  ");
+    pprintf(prn, _("Number of differences: n = %d\n"), n);
     pputs(prn, "  ");
-    pprintf(prn, _("Number of valid cases with x != y: n = %d\n"), n);
-    pputs(prn, "  ");
-    pprintf(prn, _("Number of valid with x > y: w = %d (proportion = %f)\n"), 
-	    w, (double) w / n);
+    pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"), 
+	    pdinfo->varname[v1], pdinfo->varname[v2],
+	    w, 100.0 * w / n);
 
     pputs(prn, "  ");
     pprintf(prn, _("Under the null hypothesis of no difference, W "
-		   "follows B(%d, %.2f)\n"), n, 0.5);
+		   "follows B(%d, %.1f)\n"), n, 0.5);
     pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w, 
 	    binomial_cdf(w, n, 0.5));
     pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, 
