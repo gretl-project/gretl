@@ -113,7 +113,7 @@ static const int rank_sum_lower[39][3] = {
 };
 
 static const int rank_sum_upper[39][3] = {
-    /* (nA,nB) 0.1, 0.05, 0.01 */
+    /* (nA, nB) 0.1, 0.05, 0.01 */
     { 23, 25, -1 },
     { 26, 28, 30 },
     { 29, 31, 33 },
@@ -242,30 +242,30 @@ static int rank_table_row (int na, int nb)
 
 void rank_sum_lookup (int na, int nb, PRN *prn)
 {
-    int row = rank_table_row(na, nb);
+    int i = rank_table_row(na, nb);
 
-    if (row < 0) {
+    if (i < 0) {
 	return;
     }
 
     pprintf(prn, "\n%s:\n", _("Critical values"));
 
-    if (row > 0) {
+    if (i > 0) {
 	pprintf(prn, "  %s: %2d%% %d, %2d%% %d, %2d%% %d\n", _("lower tail"),
-		1,  rank_sum_lower[row][0], 
-		5,  rank_sum_lower[row][1], 
-		10, rank_sum_lower[row][2]);
+		1,  rank_sum_lower[i][0], 
+		5,  rank_sum_lower[i][1], 
+		10, rank_sum_lower[i][2]);
 	pprintf(prn, "  %s: %2d%% %d, %2d%% %d, %2d%% %d\n", _("upper tail"),
-		10, rank_sum_upper[row][0], 
-		5,  rank_sum_upper[row][1], 
-		1,  rank_sum_upper[row][2]);
+		10, rank_sum_upper[i][0], 
+		5,  rank_sum_upper[i][1], 
+		1,  rank_sum_upper[i][2]);
     } else {
 	pprintf(prn, "  %s: %2d%% %d, %2d%% %d\n", _("lower tail"),
-		5,  rank_sum_lower[row][1], 
-		10, rank_sum_lower[row][2]);
+		5,  rank_sum_lower[i][1], 
+		10, rank_sum_lower[i][2]);
 	pprintf(prn, "  %s: %2d%% %d, %2d%% %d\n",_("upper tail"),
-		10, rank_sum_upper[row][1], 
-		5,  rank_sum_upper[row][2]);
+		10, rank_sum_upper[i][1], 
+		5,  rank_sum_upper[i][2]);
     }	
 }
 
