@@ -1272,6 +1272,15 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
+static void swap_matrix_content (gretl_matrix *targ, gretl_matrix *src)
+{
+    free(targ->val);
+    targ->val = src->val;
+    src->val = NULL;
+    targ->rows = src->rows;
+    targ->cols = src->cols;
+}
+
 /* if we discover missing values after setting up the OC
    matrices, we'll have to shrink them down
 */
@@ -1314,13 +1323,13 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 	}
     }
 
-    gretl_matrix_free(s->oc->e);
-    gretl_matrix_free(s->oc->Z);
-    gretl_matrix_free(s->oc->tmp);
-
-    s->oc->e = e;
-    s->oc->Z = Z;
-    s->oc->tmp = M;
+    swap_matrix_content(s->oc->e, e);
+    swap_matrix_content(s->oc->Z, Z);
+    swap_matrix_content(s->oc->tmp, M);
+    
+    gretl_matrix_free(e);
+    gretl_matrix_free(Z);
+    gretl_matrix_free(M);
 
     return 0;
 }

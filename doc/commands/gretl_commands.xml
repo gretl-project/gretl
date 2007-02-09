@@ -1484,7 +1484,8 @@
 
     <usage>
       <arguments>
-        <argument>var1 var2</argument>
+        <argument>var1</argument>
+	<argument>var2</argument>
       </arguments>
       <options>
 	<option>
