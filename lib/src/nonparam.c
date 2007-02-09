@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *  Copyright (c) by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -544,22 +544,36 @@ struct ranker {
     char c;
 };
 
+/* Wilcoxon signed-rank test, with handling of zero-differences and
+   non-zero ties, plus continuity correction, as in E. Cureton, "The
+   Normal Approximation to the Signed-Rank Sampling Distribution when
+   Zero Differences are Present", JASA(62), 1967, 1068-1069.
+*/
+
 static int 
 signed_rank_test (const double *x, const double *y, 
 		  int v1, int v2, const DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
     struct ranker *r;
-    double d, wp, wm;
-    int i, t, n = 0;
+    double d, T, wp, wm;
+    int Z = 0, N = 0;
+    int i, k, t, n = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(x[t]) && !na(y[t]) && x[t] != y[t]) n++;
+	if (!na(x[t]) && !na(y[t])) {
+	    if (x[t] != y[t]) {
+		n++;
+	    }
+	    N++;
+	}
     }
 
     if (n == 0) {
 	return E_MISSDATA;
     }
+
+    Z = N - n; /* number of zero-differences */
 
     r = malloc(n * sizeof *r);
     if (r == NULL) {
@@ -578,20 +592,27 @@ signed_rank_test (const double *x, const double *y,
 
     qsort(r, n, sizeof *r, gretl_compare_doubles);
 
+    T = 0.0; /* non-zero ties correction */
+    k = 0;   /* number of non-zero ties */
+
     for (i=0; i<n; i++) {
-	int m = 1;
+	int m = 0;
 
 	for (t=i+1; t<n && r[t].val == r[i].val; t++) {
 	    m++;
 	}
 
-	if (m == 1) {
-	    r[i].rank = i + 1;
+	if (m == 0) {
+	    r[i].rank = Z + i + 1;
 	} else {
-	    for (t=0; t<m; t++) {
-		r[i+t].rank = (i + 1 + i + m) / 2.0;
+	    double avg = (Z + i + 1 + Z + i + m + 1) / 2.0;
+
+	    for (t=0; t<=m; t++) {
+		r[i+t].rank = avg;	
 	    }
-	    i += m - 1;
+	    i += m;
+	    T += pow((double) m, 3) - m;
+	    k++;
 	}
     }
 
@@ -626,15 +647,22 @@ signed_rank_test (const double *x, const double *y,
 
     pprintf(prn, "  n = %d\n", n);
     pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
+    pprintf(prn, "  (zero differences: %d, non-zero ties: %d)\n", Z, k);
 
     if (n > 8) {
-	double s, x, z;
+	double s2, x, num, z;
 
-	x = n * (n+1) / 4.0;
+	x = (N*(N+1) - Z*(Z+1)) / 4.0;
 	pprintf(prn, "  %s = %g\n", _("Expected value"), x);
-	s = sqrt((n * (n+1) * (2*n+1)) / 24.0);
-	pprintf(prn, "  %s = %g\n", _("Variance"), s * s);
-	z = (wp - x) / s;
+	s2 = (N*(N+1)*(2*N+1) - Z*(Z+1)*(2*Z+1) - T/2) / 24.0;
+	pprintf(prn, "  %s = %g\n", _("Variance"), s2);
+	num = wp - x;
+	if (num > 0.25) {
+	    num -= .5;
+	} else {
+	    num += .5;
+	}
+	z = num / sqrt(s2);
 	pprintf(prn, "  z = %g\n", z);
 	print_z_prob(z, prn);
     } else if (n > 5) {
@@ -742,8 +770,8 @@ static int rank_sum_test (const double *x, const double *y,
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "  n_a = %d, n_b = %d\n", na, nb);
-    pprintf(prn, "  w_a = %g\n", wa);
+    pprintf(prn, "  n1 = %d, n2 = %d\n", na, nb);
+    pprintf(prn, "  w = %g\n", wa);
 
     if (na >= 10 && nb >= 10) {
 	double m, s, z;
@@ -753,6 +781,17 @@ static int rank_sum_test (const double *x, const double *y,
 	z = (wa - m) / s;
 	pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
 	print_z_prob(z, prn);
+    } else if (na >= 4 && nb >= 4 && nb <= 12) {
+	void (*cv) (int, int, PRN *);
+	void *handle;
+
+	cv = get_plugin_function("rank_sum_lookup", &handle);
+	if (cv != NULL) {
+	    (*cv)(na, nb, prn);
+	    close_plugin(handle);
+	}
+    } else {
+	pprintf(prn, "  Sample too small for statistical significance\n");
     }
 
     pputc(prn, '\n');
@@ -803,12 +842,13 @@ static int sign_test (const double *x, const double *y,
  * @list: list containing 2 variables.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @opt: 
+ * @opt: %OPT_G, sign test; %OPT_R, rank sum; %OPT_I,
+ * signed rank; %OPT_V, verbose (for rank tests).
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, a non-parametric
- * test for a difference between two variables or group.
- * The specific test performed depends on @opt ...
+ * test for a difference between two variables or groups.
+ * The specific test performed depends on @opt.
  * 
  * Returns: 0 on successful completion, non-zero on error.
  */
@@ -830,7 +870,11 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     x = Z[v1];
     y = Z[v2];
 
-    if (opt == OPT_NONE || (opt & OPT_G)) {
+    if (opt == OPT_NONE || opt == OPT_V) {
+	opt = OPT_G;
+    }
+
+    if (opt & OPT_G) {
 	return sign_test(x, y, v1, v2, pdinfo, opt, prn);
     } else if (opt & OPT_R) {
 	return rank_sum_test(x, y, v1, v2, pdinfo, opt, prn);

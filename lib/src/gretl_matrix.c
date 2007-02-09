@@ -5973,6 +5973,7 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     int i, j, k;
 
     if (m == 1) {
+	/* match wit to wit */
 	P = gretl_matrix_copy(X);
 	if (P == NULL) {
 	    *err = E_ALLOC;

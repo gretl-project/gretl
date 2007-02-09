@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) by Allin Cottrell and Riccardo "Jack" Lucchetti
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -16,9 +16,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
-/* A collaborative effort between Allin Cottrell and Riccardo "Jack"
-   Lucchetti */
 
 #include "libgretl.h"
 #include "pvalues.h"
