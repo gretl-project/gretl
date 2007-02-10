@@ -2588,6 +2588,28 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 		sderr,
 		arinfo->rho[c] / arinfo->sderr[c],
 		t_pvalue_2(xx, dfd));
+    } else if (rtf_format(prn)) {
+	char pvalstr[16];
+	double pval;
+
+	pputs(prn, RTF_COEFF_ROW);
+	pprintf(prn, "\\ql u(-%d)\\cell", arinfo->arlist[c+1]);
+	rtf_print_double(arinfo->rho[c], prn);
+	rtf_print_double(arinfo->sderr[c], prn);
+	pprintf(prn, " \\qc %.4f\\cell", xx);
+	pval = t_pvalue_2(xx, dfd);
+	print_pval_str(pval, pvalstr);
+	pprintf(prn, " \\qc %s\\cell", pvalstr);
+	if (pval < 0.01) {
+	    pputs(prn, " \\ql ***\\cell");
+	} else if (pval < 0.05) { 
+	    pputs(prn, " \\ql **\\cell");
+	} else if (pval < 0.10) {
+	    pputs(prn, " \\ql *\\cell");
+	} else {
+	    pputs(prn, " \\ql \\cell");
+	}
+	pputs(prn, " \\intbl \\row\n");
     }
 }
 
