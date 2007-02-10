@@ -205,7 +205,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 
     m->rows = rows;
     m->cols = cols;
-    m->t = 0;
+    m->t1 = m->t2 = 0;
 
     return m;
 }
@@ -402,7 +402,7 @@ gretl_matrix *gretl_null_matrix_new (void)
     gretl_matrix *m = malloc(sizeof *m);
   
     if (m != NULL) {
-	m->t = 0;
+	m->t1 = m->t1 = 0;
 	m->rows = 1;
 	m->cols = 1;
 	m->val = malloc(sizeof *m->val);
@@ -509,6 +509,8 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	/* not transposing */
 	n = rows * cols;
 	memcpy(c->val, m->val, n * sizeof *m->val);
+	c->t1 = m->t1;
+	c->t2 = m->t2;
     }
 
     return c;
@@ -1645,17 +1647,22 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	return;
     }
 
-    if (msg != NULL && *msg != '\0') {
-	if (errout && m != NULL) {
-	    pprintf(prn, "%s (%d x %d)\n\n", msg, m->rows, m->cols);
+    if (m == NULL || m->val == NULL) {
+	if (msg != NULL && *msg != '\0') {
+	    pprintf(prn, "%s: matrix is NULL\n\n", msg);
 	} else {
-	    pprintf(prn, "%s\n\n", msg);
+	    pputs(prn, "matrix is NULL\n\n");
 	}
+	return;
     }
 
-    if (m == NULL || m->val == NULL) {
-	pputs(prn, " matrix is NULL\n\n");
-	return;
+    if (msg != NULL && *msg != '\0') {
+	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
+	if (!(m->t1 == 0 && m->t2 == 0)) {
+	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
+	} else {
+	    pputs(prn, "\n\n");
+	}
     }
 
     if (packed) {
@@ -4717,30 +4724,62 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 }
 
 /**
- * gretl_matrix_set_int:
+ * gretl_matrix_set_t1:
  * @m: matrix to operate on.
  * @t: integer value to set.
  * 
- * Sets an integer value on the gretl_matrix (used for internal
- * information).  
+ * Sets an integer value on the %t1 member of the gretl_matrix 
+ * (used for internal information).  
  */
 
-void gretl_matrix_set_int (gretl_matrix *m, int t)
+void gretl_matrix_set_t1 (gretl_matrix *m, int t)
 {
-    m->t = t;
+    m->t1 = t;
 }
 
 /**
- * gretl_matrix_get_int:
- * @m: matrix to read from.
+ * gretl_matrix_set_t2:
+ * @m: matrix to operate on.
+ * @t: integer value to set.
  * 
- * Returns: the integer that has been set on the matrix, or zero.
+ * Sets an integer value on the %t2 member of the gretl_matrix 
+ * (used for internal information).  
  */
 
-int gretl_matrix_get_int (const gretl_matrix *m)
+void gretl_matrix_set_t2 (gretl_matrix *m, int t)
+{
+    m->t2 = t;
+}
+
+/**
+ * gretl_matrix_get_t1:
+ * @m: matrix to read from.
+ * 
+ * Returns: the integer that has been set on the %t1 member
+ * of the matrix struct, or zero.
+ */
+
+int gretl_matrix_get_t1 (const gretl_matrix *m)
 {
     if (m != NULL) {
-	return m->t;
+	return m->t1;
+    } else {
+	return 0;
+    }
+}
+
+/**
+ * gretl_matrix_get_t2:
+ * @m: matrix to read from.
+ * 
+ * Returns: the integer that has been set on the %t2 member
+ * of the matrix struct, or zero.
+ */
+
+int gretl_matrix_get_t2 (const gretl_matrix *m)
+{
+    if (m != NULL) {
+	return m->t2;
     } else {
 	return 0;
     }

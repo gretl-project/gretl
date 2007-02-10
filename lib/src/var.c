@@ -421,7 +421,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	add_VAR_fcast_variance(var, F, nf, t1 - t0);
     }
 
-    gretl_matrix_set_int(F, t0);
+    gretl_matrix_set_t1(F, t0);
     var->F = F;
 
 #if 0
@@ -556,7 +556,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	add_VAR_fcast_variance(var, F, nf, t1 - t0);
     }
 
-    gretl_matrix_set_int(F, t0);
+    gretl_matrix_set_t1(F, t0);
     var->F = F;
 
 #if 0
@@ -573,7 +573,7 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
 {
     if (var->F != NULL) {
 	int ncols, nf = t2 - t0 + 1;
-	int ft1 = gretl_matrix_get_int(var->F);
+	int ft1 = gretl_matrix_get_t1(var->F);
 
 	ncols = (opt & OPT_S)? var->neqns: 2 * var->neqns;
 

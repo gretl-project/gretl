@@ -533,7 +533,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     if (S != NULL) {
-	gretl_matrix_set_int(S, pmod->t1);
+	gretl_matrix_set_t1(S, pmod->t1);
     }
 
     return S;    

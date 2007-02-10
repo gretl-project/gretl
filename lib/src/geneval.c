@@ -2903,6 +2903,11 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 		for (j=0; j<k; j++) {
 		    gretl_matrix_set(m, i, j, X[j][t]);
 		}
+		if (i == 0) {
+		    gretl_matrix_set_t1(m, t);
+		} else if (i == T - 1) {
+		    gretl_matrix_set_t2(m, t);
+		}
 		i++;
 	    }
 	}

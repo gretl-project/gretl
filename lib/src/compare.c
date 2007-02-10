@@ -2090,7 +2090,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    t1 = gretl_matrix_get_int(m);
+    t1 = gretl_matrix_get_t1(m);
     t2 = t1 + gretl_matrix_rows(m);
 
     /* add leverage? */

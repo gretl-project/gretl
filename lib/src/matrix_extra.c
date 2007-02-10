@@ -461,6 +461,12 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 		x = Z[list[j+1]][t];
 		gretl_matrix_set(M, s, j, x);
 	    }
+	    if (s == 0) {
+		M->t1 = t;
+	    } else if (s == T - 1) {
+		M->t2 = t;
+		break;
+	    }
 	    s++;
 	}
     }
@@ -468,7 +474,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
     if (*err) {
 	gretl_matrix_free(M);
 	M = NULL;
-    }
+    } 
 
     return M;
 }

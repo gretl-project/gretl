@@ -49,7 +49,7 @@ typedef struct _gretl_matrix gretl_vector;
 struct _gretl_matrix {
     int rows;
     int cols;
-    int t;
+    int t1, t2;
     double *val;
 };
 
@@ -397,9 +397,13 @@ void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg);
 
 void debug_print_matrix (const gretl_matrix *m, const char *msg);
 
-void gretl_matrix_set_int (gretl_matrix *m, int t);
+void gretl_matrix_set_t1 (gretl_matrix *m, int t);
 
-int gretl_matrix_get_int (const gretl_matrix *m);
+void gretl_matrix_set_t2 (gretl_matrix *m, int t);
+
+int gretl_matrix_get_t1 (const gretl_matrix *m);
+
+int gretl_matrix_get_t2 (const gretl_matrix *m);
 
 int gretl_is_identity_matrix (const gretl_matrix *m);
 

@@ -1281,6 +1281,34 @@ static void swap_matrix_content (gretl_matrix *targ, gretl_matrix *src)
     targ->cols = src->cols;
 }
 
+static int needs_rejigging (gretl_matrix *m, int t1, int t2)
+{
+    int T = t2 - t1 + 1;
+
+    if (m->rows != T) {
+	/* size is wrong */
+	return 1;
+    }
+
+    if (!(m->t1 == 0 && m->t2 == 0)) {
+	if (m->t1 != t1 || m->t2 != t2) {
+	    /* offset is wrong */
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int matrix_t1 (const gretl_matrix *m, int t1)
+{
+    if (m->t1 == 0 && m->t2 == 0) {
+	return t1;
+    } else {
+	return m->t1;
+    }
+}
+
 /* if we discover missing values after setting up the OC
    matrices, we'll have to shrink them down
 */
@@ -1293,43 +1321,78 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
     int T = t2 - t1 + 1;
     int m = s->oc->e->cols;
     int k = s->oc->Z->cols;
+    int rejig_e = 0;
+    int rejig_Z = 0;
+    int rejig_M = 0;
     double x;
     int j, t, offt;
 
-    e = gretl_matrix_alloc(T, m);
-    Z = gretl_matrix_alloc(T, k);
-    M = gretl_matrix_alloc(T, s->oc->noc);
+#if GMM_DEBUG
+    fprintf(stderr, "resize_oc_matrices: t1=%d, t2=%d\n", t1, t2);
+#endif
 
-    if (e == NULL || Z == NULL || M == NULL) {
+    if (needs_rejigging(s->oc->e, t1, t2)) {
+	rejig_e = 1;
+	e = gretl_matrix_alloc(T, m);
+    }
+
+    if (needs_rejigging(s->oc->Z, t1, t2)) {
+	rejig_Z = 1;
+	Z = gretl_matrix_alloc(T, k);
+    }
+
+    if (needs_rejigging(s->oc->tmp, t1, t2)) {
+	rejig_M = 1;
+	M = gretl_matrix_alloc(T, s->oc->noc);
+    } 
+
+#if GMM_DEBUG
+    fprintf(stderr, "rejig e? %s; rejig Z? %s; rejig tmp? %s\n", 
+	    rejig_e? "yes" : "no", rejig_Z? "yes" : "no",
+	    rejig_M? "yes" : "no");
+#endif
+
+    if ((rejig_e && e == NULL) || 
+	(rejig_Z && Z == NULL) || 
+	(rejig_M && M == NULL)) {
 	gretl_matrix_free(e);
 	gretl_matrix_free(Z);
 	gretl_matrix_free(M);
 	return E_ALLOC;
     }
 
-    offt = t1 - s->t1;
-
-    for (j=0; j<m; j++) {
-	for (t=0; t<T; t++) {
-	    x = gretl_matrix_get(s->oc->e, t + offt, j);
-	    gretl_matrix_set(e, t, j, x);
+    if (rejig_e) {
+	offt = t1 - matrix_t1(s->oc->e, s->t1);
+	for (j=0; j<m; j++) {
+	    for (t=0; t<T; t++) {
+		x = gretl_matrix_get(s->oc->e, t + offt, j);
+		gretl_matrix_set(e, t, j, x);
+	    }
 	}
+	swap_matrix_content(s->oc->e, e);
+	gretl_matrix_free(e);
+	s->oc->e->t1 = t1;
+	s->oc->e->t2 = t2;
     }
 
-    for (j=0; j<k; j++) {
-	for (t=0; t<T; t++) {
-	    x = gretl_matrix_get(s->oc->Z, t + offt, j);
-	    gretl_matrix_set(Z, t, j, x);
+    if (rejig_Z) {
+	offt = t1 - matrix_t1(s->oc->Z, s->t1);
+	for (j=0; j<k; j++) {
+	    for (t=0; t<T; t++) {
+		x = gretl_matrix_get(s->oc->Z, t + offt, j);
+		gretl_matrix_set(Z, t, j, x);
+	    }
 	}
+	swap_matrix_content(s->oc->Z, Z);
+	gretl_matrix_free(Z);
+	s->oc->Z->t1 = t1;
+	s->oc->Z->t2 = t2;
     }
 
-    swap_matrix_content(s->oc->e, e);
-    swap_matrix_content(s->oc->Z, Z);
-    swap_matrix_content(s->oc->tmp, M);
-    
-    gretl_matrix_free(e);
-    gretl_matrix_free(Z);
-    gretl_matrix_free(M);
+    if (rejig_M) {
+	swap_matrix_content(s->oc->tmp, M);
+	gretl_matrix_free(M);
+    }
 
     return 0;
 }
@@ -1338,13 +1401,38 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 
 int gmm_missval_check (nlspec *s)
 {
-    int i, t, t1 = s->t1, t2 = s->t2;
-    int m, k, p, all_ok;
+    int orig_t1 = s->t1;
+    int orig_t2 = s->t2;
+    int t, t1, t2;
+    int i, m, k, p, all_ok;
     double x;
     int err = 0;
 
 #if GMM_DEBUG
     fprintf(stderr, "gmm_missval_check: initial t1=%d, t2=%d\n",
+	    s->t1, s->t2);
+#endif
+
+    if (!(s->oc->e->t1 == 0 && s->oc->e->t2 == 0)) {
+	if (s->oc->e->t1 > s->t1) {
+	    s->t1 = s->oc->e->t1;
+	}
+	if (s->oc->e->t2 < s->t2) {
+	    s->t2 = s->oc->e->t2;
+	}
+    }
+
+    if (!(s->oc->Z->t1 == 0 && s->oc->Z->t2 == 0)) {
+	if (s->oc->Z->t1 > s->t1) {
+	    s->t1 = s->oc->Z->t1;
+	}
+	if (s->oc->Z->t2 < s->t2) {
+	    s->t2 = s->oc->Z->t2;
+	}
+    }
+
+#if GMM_DEBUG
+    fprintf(stderr, " after matrix adjustment: t1=%d, t2=%d\n",
 	    s->t1, s->t2);
 #endif
 
@@ -1434,7 +1522,10 @@ int gmm_missval_check (nlspec *s)
 	}	    
     } 
 
-    if (!err && (t1 > s->t1 || t2 < s->t2)) {
+    if (!err && (t1 > orig_t1 || t2 < orig_t2)) {
+	/* reset for reference */
+	s->t1 = orig_t1;
+	s->t2 = orig_t2;
 	err = resize_oc_matrices(s, t1, t2);
     }
 
@@ -1443,6 +1534,11 @@ int gmm_missval_check (nlspec *s)
 	s->t2 = t2;
 	s->nobs = t2 - t1 + 1;
     }
+
+#if GMM_DEBUG
+    fprintf(stderr, "gmm_missval_check: on exit t1=%d, t2=%d\n",
+	    s->t1, s->t2);
+#endif
 
     return err;
 }
