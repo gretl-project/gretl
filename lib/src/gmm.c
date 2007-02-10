@@ -1272,6 +1272,11 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
+static int matrix_is_dated (const gretl_matrix *m)
+{
+    return !(m->t1 == 0 && m->t2 == 0);
+}
+
 static void swap_matrix_content (gretl_matrix *targ, gretl_matrix *src)
 {
     free(targ->val);
@@ -1290,7 +1295,7 @@ static int needs_rejigging (gretl_matrix *m, int t1, int t2)
 	return 1;
     }
 
-    if (!(m->t1 == 0 && m->t2 == 0)) {
+    if (matrix_is_dated(m)) {
 	if (m->t1 != t1 || m->t2 != t2) {
 	    /* offset is wrong */
 	    return 1;
@@ -1317,13 +1322,11 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 {
     gretl_matrix *e = NULL;
     gretl_matrix *Z = NULL;
-    gretl_matrix *M = NULL;
-    int T = t2 - t1 + 1;
     int m = s->oc->e->cols;
     int k = s->oc->Z->cols;
+    int T = t2 - t1 + 1;
     int rejig_e = 0;
     int rejig_Z = 0;
-    int rejig_M = 0;
     double x;
     int j, t, offt;
 
@@ -1341,28 +1344,19 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 	Z = gretl_matrix_alloc(T, k);
     }
 
-    if (needs_rejigging(s->oc->tmp, t1, t2)) {
-	rejig_M = 1;
-	M = gretl_matrix_alloc(T, s->oc->noc);
-    } 
-
 #if GMM_DEBUG
-    fprintf(stderr, "rejig e? %s; rejig Z? %s; rejig tmp? %s\n", 
-	    rejig_e? "yes" : "no", rejig_Z? "yes" : "no",
-	    rejig_M? "yes" : "no");
+    fprintf(stderr, "rejig e? %s; rejig Z? %s\n", 
+	    rejig_e? "yes" : "no", rejig_Z? "yes" : "no");
 #endif
 
-    if ((rejig_e && e == NULL) || 
-	(rejig_Z && Z == NULL) || 
-	(rejig_M && M == NULL)) {
+    if ((rejig_e && e == NULL) || (rejig_Z && Z == NULL)) {
 	gretl_matrix_free(e);
 	gretl_matrix_free(Z);
-	gretl_matrix_free(M);
 	return E_ALLOC;
     }
 
     if (rejig_e) {
-	offt = t1 - matrix_t1(s->oc->e, s->t1);
+	offt = t1 - matrix_t1(s->oc->e, s->t1); /* ?? */
 	for (j=0; j<m; j++) {
 	    for (t=0; t<T; t++) {
 		x = gretl_matrix_get(s->oc->e, t + offt, j);
@@ -1389,10 +1383,7 @@ static int resize_oc_matrices (nlspec *s, int t1, int t2)
 	s->oc->Z->t2 = t2;
     }
 
-    if (rejig_M) {
-	swap_matrix_content(s->oc->tmp, M);
-	gretl_matrix_free(M);
-    }
+    gretl_matrix_reuse(s->oc->tmp, T, s->oc->tmp->cols);
 
     return 0;
 }
@@ -1403,17 +1394,18 @@ int gmm_missval_check (nlspec *s)
 {
     int orig_t1 = s->t1;
     int orig_t2 = s->t2;
-    int t, t1, t2;
-    int i, m, k, p, all_ok;
+    int t1 = s->t1;
+    int t2 = s->t2;
+    int i, m, k, p, t, all_ok;
     double x;
     int err = 0;
 
 #if GMM_DEBUG
-    fprintf(stderr, "gmm_missval_check: initial t1=%d, t2=%d\n",
+    fprintf(stderr, "gmm_missval_check: initial s->t1=%d, s->t2=%d\n",
 	    s->t1, s->t2);
 #endif
 
-    if (!(s->oc->e->t1 == 0 && s->oc->e->t2 == 0)) {
+    if (matrix_is_dated(s->oc->e)) {
 	if (s->oc->e->t1 > s->t1) {
 	    s->t1 = s->oc->e->t1;
 	}
@@ -1422,7 +1414,7 @@ int gmm_missval_check (nlspec *s)
 	}
     }
 
-    if (!(s->oc->Z->t1 == 0 && s->oc->Z->t2 == 0)) {
+    if (matrix_is_dated(s->oc->Z)) {
 	if (s->oc->Z->t1 > s->t1) {
 	    s->t1 = s->oc->Z->t1;
 	}
@@ -1432,7 +1424,7 @@ int gmm_missval_check (nlspec *s)
     }
 
 #if GMM_DEBUG
-    fprintf(stderr, " after matrix adjustment: t1=%d, t2=%d\n",
+    fprintf(stderr, " after checking matrix limits: t1=%d, t2=%d\n",
 	    s->t1, s->t2);
 #endif
 
@@ -1444,6 +1436,9 @@ int gmm_missval_check (nlspec *s)
     if (err) {
 	return err;
     }
+
+    s->t1 = t1;
+    s->t2 = t2;
 
     m = s->oc->e->cols;
     p = s->oc->Z->cols;
