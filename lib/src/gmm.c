@@ -96,6 +96,11 @@ static ocset *oc_set_new (void)
     return oc;
 }
 
+static int matrix_is_dated (const gretl_matrix *m)
+{
+    return !(m->t1 == 0 && m->t2 == 0);
+}
+
 /* Determine the type of an element in an "orthog" specification */
 
 static int oc_get_type (const char *name, const DATAINFO *pdinfo,
@@ -400,7 +405,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     int err = 0;
 
     /* First work on the left-hand side: have we been given a vector
-       or a series?
+       or a series?  If we get a series we convert it to a vector.
     */
 
 #if GMM_DEBUG
@@ -416,6 +421,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (e == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    e->t1 = s->t1;
+	    e->t2 = s->t2;
 	    for (t=0; t<s->nobs; t++) {
 		x = Z[v][t + s->t1];
 		gretl_vector_set(e, t, x);
@@ -452,6 +459,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    M->t1 = s->t1;
+	    M->t2 = s->t2;
 	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
@@ -469,6 +478,8 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	if (M == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    M->t1 = s->t1;
+	    M->t2 = s->t2;
 	    for (t=0; t<s->nobs; t++) {
 		x = Z[v][t + s->t1];
 		gretl_vector_set(M, t, x);
@@ -603,6 +614,89 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     return err;
 }
 
+static int matrix_t1 (const gretl_matrix *m, int t1)
+{
+    if (m->t1 == 0 && m->t2 == 0) {
+	return t1;
+    } else {
+	return m->t1;
+    }
+}
+
+static int gmm_matrix_resize (gretl_matrix *A, nlspec *s, int oldt1)
+{
+    gretl_matrix *B = NULL;
+    int T = s->t2 - s->t1 + 1;
+    int m = A->cols;
+    double x;
+    int j, t, offt;
+
+    B = gretl_matrix_alloc(T, m);
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    offt = s->t1 - matrix_t1(A, oldt1); /* ?? */
+
+    for (j=0; j<m; j++) {
+	for (t=0; t<T; t++) {
+	    x = gretl_matrix_get(A, t + offt, j);
+	    gretl_matrix_set(B, t, j, x);
+	}
+    }
+
+    free(A->val);
+    A->val = B->val;
+    B->val = NULL;
+    A->rows = T;
+    A->t1 = s->t1;
+    A->t2 = s->t2;
+
+    gretl_matrix_free(B);
+
+    return 0;
+}
+
+
+#define intmax3(a,b,c) (((a)>(b))? (((c)>(a))? (c) : (a)) : (((c)>(b))? (c) : (b)))
+#define intmin3(a,b,c) (((a)<(b))? (((c)<(a))? (c) : (a)) : (((c)<(b))? (c) : (b)))
+#define intdiff3(a,b,c) (a != b || a != c)
+
+static int gmm_fix_datarows (nlspec *s)
+{
+    int et1 = s->oc->e->t1;
+    int et2 = s->oc->e->t2;
+    int Zt1 = s->oc->Z->t1;
+    int Zt2 = s->oc->Z->t2;
+    int oldt1 = s->t1;
+    int err = 0;
+
+    if ((et1 == 0 && et2 == 0) || (Zt1 == 0 && Zt2 == 0)) {
+	/* we're jiggered: can't figure out alignment */
+	return E_DATA;
+    }
+
+    s->t1 = intmax3(s->t1, et1, Zt1);
+    s->t2 = intmin3(s->t2, et2, Zt2);
+    s->nobs = s->t2 - s->t1 + 1;
+
+    if (s->oc->e->rows > s->nobs) {
+#if GMM_DEBUG
+	fprintf(stderr, "gmm_fix_datarows: resizing e to %d rows\n", s->nobs);
+#endif
+	err = gmm_matrix_resize(s->oc->e, s, oldt1);
+    }
+
+    if (s->oc->Z->rows > s->nobs && !err) {
+#if GMM_DEBUG
+	fprintf(stderr, "gmm_fix_datarows: resizing Z to %d rows\n", s->nobs);
+#endif
+	err = gmm_matrix_resize(s->oc->Z, s, oldt1);
+    }    
+
+    return err;
+}
+
 /* Add the matrix of weights to the GMM specification: this must
    come after all the O.C.s are given, so that we can check the
    dimensions of the given matrix.
@@ -656,6 +750,12 @@ int nlspec_add_weights (nlspec *s, const char *str)
 	gretl_matrix_print(s->oc->W, "Weights");
     }
 #endif
+
+    if (!err) {
+	if (s->oc->e->rows != s->oc->Z->rows) {
+	    err = gmm_fix_datarows(s);
+	}
+    }
 
     /* now we're ready to add the workspace matrices */
 
@@ -1272,20 +1372,6 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     return err;    
 }
 
-static int matrix_is_dated (const gretl_matrix *m)
-{
-    return !(m->t1 == 0 && m->t2 == 0);
-}
-
-static void swap_matrix_content (gretl_matrix *targ, gretl_matrix *src)
-{
-    free(targ->val);
-    targ->val = src->val;
-    src->val = NULL;
-    targ->rows = src->rows;
-    targ->cols = src->cols;
-}
-
 static int needs_rejigging (gretl_matrix *m, int t1, int t2)
 {
     int T = t2 - t1 + 1;
@@ -1305,85 +1391,36 @@ static int needs_rejigging (gretl_matrix *m, int t1, int t2)
     return 0;
 }
 
-static int matrix_t1 (const gretl_matrix *m, int t1)
-{
-    if (m->t1 == 0 && m->t2 == 0) {
-	return t1;
-    } else {
-	return m->t1;
-    }
-}
-
 /* if we discover missing values after setting up the OC
    matrices, we'll have to shrink them down
 */
 
-static int resize_oc_matrices (nlspec *s, int t1, int t2)
+static int resize_oc_matrices (nlspec *s, int oldt1)
 {
-    gretl_matrix *e = NULL;
-    gretl_matrix *Z = NULL;
-    int m = s->oc->e->cols;
-    int k = s->oc->Z->cols;
-    int T = t2 - t1 + 1;
-    int rejig_e = 0;
-    int rejig_Z = 0;
-    double x;
-    int j, t, offt;
+    int T = s->t2 - s->t1 + 1;
+    int err = 0;
 
 #if GMM_DEBUG
-    fprintf(stderr, "resize_oc_matrices: t1=%d, t2=%d\n", t1, t2);
+    fprintf(stderr, "resize_oc_matrices: t1=%d, t2=%d\n", s->t1, s->t2);
 #endif
 
-    if (needs_rejigging(s->oc->e, t1, t2)) {
-	rejig_e = 1;
-	e = gretl_matrix_alloc(T, m);
-    }
-
-    if (needs_rejigging(s->oc->Z, t1, t2)) {
-	rejig_Z = 1;
-	Z = gretl_matrix_alloc(T, k);
-    }
-
+    if (needs_rejigging(s->oc->e, s->t1, s->t2)) {
 #if GMM_DEBUG
-    fprintf(stderr, "rejig e? %s; rejig Z? %s\n", 
-	    rejig_e? "yes" : "no", rejig_Z? "yes" : "no");
+	fprintf(stderr, "resize_oc_matrices: resizing e\n");
 #endif
-
-    if ((rejig_e && e == NULL) || (rejig_Z && Z == NULL)) {
-	gretl_matrix_free(e);
-	gretl_matrix_free(Z);
-	return E_ALLOC;
+	err = gmm_matrix_resize(s->oc->e, s, oldt1);
     }
 
-    if (rejig_e) {
-	offt = t1 - matrix_t1(s->oc->e, s->t1); /* ?? */
-	for (j=0; j<m; j++) {
-	    for (t=0; t<T; t++) {
-		x = gretl_matrix_get(s->oc->e, t + offt, j);
-		gretl_matrix_set(e, t, j, x);
-	    }
-	}
-	swap_matrix_content(s->oc->e, e);
-	gretl_matrix_free(e);
-	s->oc->e->t1 = t1;
-	s->oc->e->t2 = t2;
+    if (needs_rejigging(s->oc->Z, s->t1, s->t2) && !err) {
+#if GMM_DEBUG
+	fprintf(stderr, "resize_oc_matrices: resizing Z\n");
+#endif
+	err = gmm_matrix_resize(s->oc->Z, s, oldt1);
     }
 
-    if (rejig_Z) {
-	offt = t1 - matrix_t1(s->oc->Z, s->t1);
-	for (j=0; j<k; j++) {
-	    for (t=0; t<T; t++) {
-		x = gretl_matrix_get(s->oc->Z, t + offt, j);
-		gretl_matrix_set(Z, t, j, x);
-	    }
-	}
-	swap_matrix_content(s->oc->Z, Z);
-	gretl_matrix_free(Z);
-	s->oc->Z->t1 = t1;
-	s->oc->Z->t2 = t2;
+    if (!err) {
+	gretl_matrix_reuse(s->oc->tmp, T, 0);
     }
-
-    gretl_matrix_reuse(s->oc->tmp, T, s->oc->tmp->cols);
 
     return 0;
 }
@@ -1394,9 +1431,8 @@ int gmm_missval_check (nlspec *s)
 {
     int orig_t1 = s->t1;
     int orig_t2 = s->t2;
-    int t1 = s->t1;
-    int t2 = s->t2;
-    int i, m, k, p, t, all_ok;
+    int t, t1, t2;
+    int i, m, k, p, all_ok;
     double x;
     int err = 0;
 
@@ -1427,6 +1463,8 @@ int gmm_missval_check (nlspec *s)
     fprintf(stderr, " after checking matrix limits: t1=%d, t2=%d\n",
 	    s->t1, s->t2);
 #endif
+    
+    s->nobs = s->t2 - s->t1 + 1;
 
     err = nl_calculate_fvec(s);
     if (!err) {
@@ -1436,9 +1474,6 @@ int gmm_missval_check (nlspec *s)
     if (err) {
 	return err;
     }
-
-    s->t1 = t1;
-    s->t2 = t2;
 
     m = s->oc->e->cols;
     p = s->oc->Z->cols;
@@ -1517,17 +1552,12 @@ int gmm_missval_check (nlspec *s)
 	}	    
     } 
 
-    if (!err && (t1 > orig_t1 || t2 < orig_t2)) {
-	/* reset for reference */
-	s->t1 = orig_t1;
-	s->t2 = orig_t2;
-	err = resize_oc_matrices(s, t1, t2);
-    }
+    s->t1 = t1;
+    s->t2 = t2;
+    s->nobs = t2 - t1 + 1;
 
-    if (!err) {
-	s->t1 = t1;
-	s->t2 = t2;
-	s->nobs = t2 - t1 + 1;
+    if (!err && (s->t1 > orig_t1 || s->t2 < orig_t2)) {
+	err = resize_oc_matrices(s, orig_t1);
     }
 
 #if GMM_DEBUG

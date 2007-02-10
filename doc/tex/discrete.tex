@@ -165,13 +165,16 @@ default can be overridden by the user.
 \end{table}
 
 For example, the following code
+%
 \begin{code}
 open greene19_1
 freq TUCE
 discrete TUCE # mark TUCE as discrete
 freq TUCE
 \end{code}
+%
 yields
+%
 \begin{code}
 Read datafile /usr/local/share/gretl/data/greene/greene19_1.gdt
 periodicity: 1, maxobs: 32,
@@ -222,8 +225,11 @@ Frequency distribution for TUCE, obs 1-32
 Test for null hypothesis of normal distribution:
 Chi-square(2) = 1.872 with p-value 0.39211
 \end{code}
-As can be seen from the sample output, a Jarque--Bera test for
-normality is computed automatically.
+%
+As can be seen from the sample output, a (Doornik--Hansen) test for
+normality is computed automatically.  This test is suppressed for
+discrete variables where the number of distinct values is less than
+10.
 
 This command accepts two options: \texttt{--quiet}, to avoid
 generation of the histogram when invoked from the command line and

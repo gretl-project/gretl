@@ -1278,6 +1278,32 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+/* calculate test stat for distribution, if the sample 
+   is big enough */
+
+static void 
+freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
+{
+    double skew, kurt;
+
+    gretl_moments(freq->t1, freq->t2, x, 
+		  &freq->xbar, &freq->sdx, 
+		  &skew, &kurt, k);
+
+    if (freq->n > 7) {
+	if (opt & OPT_O) {
+	    freq->test = lockes_test(x, freq->t1, freq->t2);
+	    freq->dist = D_GAMMA;
+	} else {
+	    freq->test = doornik_chisq(skew, kurt, freq->n); 
+	    freq->dist = D_NORMAL;
+	}
+    } else {
+	freq->test = NADBL;
+	freq->dist = 0;
+    }
+}
+
 static FreqDist *
 get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo, 
 		   gretlopt opt, int *err)
@@ -1314,11 +1340,6 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (opt & (OPT_Z | OPT_O)) {
-	freq->xbar = gretl_mean(freq->t1, freq->t2, x);
-	freq->sdx = gretl_stddev(freq->t1, freq->t2, x);
-    }
-
     strcpy(freq->varname, pdinfo->varname[v]);
     freq->discrete = 1;
     freq->test = NADBL;
@@ -1339,6 +1360,13 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 	
     qsort(sorted, freq->n, sizeof *sorted, gretl_compare_doubles); 
     nv = count_distinct_values(sorted, freq->n);
+
+    if (nv >= 10 && !(opt & OPT_X)) {
+	freq_dist_stat(freq, x, opt, 1);
+    } else if (opt & (OPT_Z | OPT_O)) {
+	freq->xbar = gretl_mean(freq->t1, freq->t2, x);
+	freq->sdx = gretl_stddev(freq->t1, freq->t2, x);
+    }
 
     ifreq = malloc(nv * sizeof *ifreq);
     ivals = malloc(nv * sizeof *ivals);
@@ -1394,7 +1422,8 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  * @opt: if includes %OPT_Z, set up for comparison with normal dist; 
  * if includes %OPT_O, compare with gamma distribution;
  * if includes %OPT_Q, do not show a histogram; if includes %OPT_D,
- * treat the variable as discrete.
+ * treat the variable as discrete; %OPT_X indicates that this function
+ * is called as part of a cross-tabulation.
  * @err: location to receive error code.
  *
  * Calculates the frequency distribution for the specified variable.
@@ -1408,7 +1437,6 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     FreqDist *freq;
     const double *x;
     double xx, xmin, xmax;
-    double skew, kurt;
     double binwidth;
     int t, k, n;
 
@@ -1439,23 +1467,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 
     strcpy(freq->varname, pdinfo->varname[varno]);
 
-    gretl_moments(pdinfo->t1, pdinfo->t2, x, 
-		  &freq->xbar, &freq->sdx, 
-		  &skew, &kurt, params);
-
-    /* calculate test stat for distribution */
-    if (freq->n > 7) {
-	if (opt & OPT_O) {
-	    freq->test = lockes_test(x, pdinfo->t1, pdinfo->t2);
-	    freq->dist = D_GAMMA;
-	} else {
-	    freq->test = doornik_chisq(skew, kurt, freq->n); 
-	    freq->dist = D_NORMAL;
-	}
-    } else {
-	freq->test = NADBL;
-	freq->dist = 0;
-    }
+    freq_dist_stat(freq, x, opt, params);
 
     /* if the histogram is not wanted, we're done */
     if (opt & OPT_Q) {
@@ -1698,9 +1710,9 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, 0, 0, OPT_D, err); 
+    rowfreq = get_freq(rvarno, Z, pdinfo, 0, 0, OPT_D | OPT_X, err); 
     if (!*err) {
-	colfreq = get_freq(cvarno, Z, pdinfo, 0, 0, OPT_D, err); 
+	colfreq = get_freq(cvarno, Z, pdinfo, 0, 0, OPT_D | OPT_X, err); 
     }
     if (!*err) {
 	X = malloc(n * sizeof *X);
