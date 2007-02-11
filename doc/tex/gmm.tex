@@ -11,8 +11,8 @@ Hansen (1982) and Hansen and Singleton (1982); an excellent and
 thorough treatment is given in Davidson and MacKinnon (1993), chapter
 17.
 
-The basic principle on which GMM is built is rather straightforward:
-suppose that we wish to estimate a scalar parameter $\theta$ based on
+The basic principle on which GMM is built is rather straightforward.
+Suppose we wish to estimate a scalar parameter $\theta$ based on
 a sample $x_1, x_2, \ldots, x_T$.  Let $\theta_0$ indicate the ``true''
 value of $\theta$. Theoretical considerations (either of statistical
 or economic nature) may suggest that a relationship like the following
@@ -218,6 +218,75 @@ progress of the optimization procedure can be observed by appending
 the \verb|--verbose| switch to the \texttt{end gmm} line.  (In this
 example GMM estimation is clearly a rather silly thing to do, since a
 closed form solution is easily given by OLS.)
+
+\section{TSLS as GMM}
+\label{sec:gmm-tsls}
+
+Moving closer to the proper domain of GMM, we now consider two-stage
+least squares (TSLS) as a case of GMM.  
+
+TSLS is employed in the case where one wishes to estimate a linear
+model of the form $y_t = X_t \beta + u_t$, but where one or more of
+the variables in the matrix $X$ are potentially endogenous ---
+correlated with the error term, $u$.  We proceed by identifying a set
+of instruments, $Z_t$, which are explanatory for the endogenous
+variables in $X$ but which are plausibly uncorrelated with $u$.  The
+classic two-stage procedure is (1) regress the endogenous elements of
+$X$ on $Z$; then (2) estimate the equation of interest, with the
+endogenous elements of $X$ replaced by their fitted values from (1).
+
+An alternative perspective is given by GMM.  We define the residual
+$\hat{u}_t$ as $y_t - X_t \hat{\beta}$.  But instead of relying on
+$E(u|X) = 0$ as in OLS, we base estimation on the condition $E(u|Z) =
+0$.  In this case it is natural to base the initial weighting matrix
+on the covariance matrix of the instruments.
+Example~\ref{gmm-tsls-ex} gives the skeleton of the GMM approach.
+(FIXME make this example a complete working script?)
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM}
+  \label{gmm-tsls-ex}
+\begin{code}
+series e = 0
+matrix beta = ... # initialize the parameter estimates
+matrix X = ...    # form the matrix of regressors
+matrix Z = ...    # form the matrix of instruments
+matrix V = inv(Z'Z)
+
+gmm 
+  series e = y - X*beta
+  orthog e ; Z
+  weights V
+  params beta
+end gmm
+\end{code}
+\end{script}
+
+
+\section{Now for a real example}
+\label{sec:gmm-real}
+
+Add a specifically GMM example here (Favero, Hall?).
+
+Talk about one-step, two-step, iterated?
+
+
+\section{Covariance matrix options}
+\label{sec:gmm-vcv}
+
+Talk about HC, HAC.
+
+
+\section{Caveats}
+\label{sec:gmm-caveat}
+
+Warnings: possible non-robustness; dependence of parameter estimates
+on the precise specification of the weights; non-trivial dependence of
+estimates on re-scaling of the instruments.  Difficulty of replicating
+various well-known published studies.  Need to carefully record all
+details of estimation procedure.  
+
+
 
 %%% Local Variables: 
 %%% mode: latex
