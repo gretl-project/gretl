@@ -12,19 +12,22 @@ thorough treatment is given in Davidson and MacKinnon (1993), chapter
 17.
 
 The basic principle on which GMM is built is rather straightforward:
-suppose that we are interested in estimating a scalar parameter
-$\theta$ from a sample $x_1, x_2, \ldots, x_T$; let $\theta_0$
-indicate the ``true'' value of $\theta$. Theoretical considerations
-(either of statistical or economic nature) may suggest that a
-relationship like the following holds:
+suppose that we wish to estimate a scalar parameter $\theta$ based on
+a sample $x_1, x_2, \ldots, x_T$.  Let $\theta_0$ indicate the ``true''
+value of $\theta$. Theoretical considerations (either of statistical
+or economic nature) may suggest that a relationship like the following
+holds:
 \begin{equation}
   \label{eq:simple}
   E \left[ x_t - g(\theta) \right] = 0 \Leftrightarrow \theta =
   \theta_0 ,
 \end{equation}
-with $g(\cdot)$ a continuous and invertible function. For example,
-economic models with rational expectations lead to expressions like
-(\ref{eq:simple}) quite naturally.
+with $g(\cdot)$ a continuous and invertible function. That is to say,
+there exists a function of the data and the parameter, with the
+property that it has expectation zero if and only if it is evaluated
+at the true parameter value.  For example, economic models with
+rational expectations lead to expressions like (\ref{eq:simple}) quite
+naturally.
 
 If the sampling model for the $x_t$s is such that some version of the
 Law of Large Numbers holds, then
@@ -46,7 +49,7 @@ $\theta$, the value that minimizes the objective function
 the minimum is trivially reached at $\hat{\theta} = g^{-1}(\bar{X})$,
 since the expression in square brackets equals 0.
 
-The above reasoning can be generalized as follows: imagine $\theta$ is
+The above reasoning can be generalized as follows: suppose $\theta$ is
 an $n$-vector and we have $m$ relations like
 \begin{equation}
   \label{eq:general}
@@ -71,8 +74,8 @@ minimum of the quadratic form
   F(\theta, \Omega) = \bar{\mathbf{f}}' \Omega \bar{\mathbf{f}},
 \end{equation}
 where $\bar{\mathbf{f}}$ is a $(1 \times m\cdot p)$ vector holding the
-average of the orthogonality conditions and $\Omega$ is some symmetric
-and positive definite matrix, known as the \emph{weights} matrix. A
+average of the orthogonality conditions and $\Omega$ is some symmetric,
+positive definite matrix, known as the \emph{weights} matrix. A
 necessary condition for the minimum to exist is the order condition $n
 \le m \cdot p$. If $n = m \cdot p$, the minimum is zero and the
 solution is the same for any $\Omega$.
@@ -109,7 +112,7 @@ total number of orthogonality conditions $m \cdot p$, the GMM
 estimator $\hat{\theta}$ is the same for any choice of the weights
 matrix $\Omega$, so the first step is sufficient.
 
-In the following sections, we will show how these ideas are
+In the following sections we will show how these ideas are
 implemented in \app{gretl} through some examples.
 
 \section{OLS as GMM}
@@ -123,8 +126,8 @@ of this familiar expression comes from the \emph{hypothesis} that the
 conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
 $u_t$ as $y_t - E(y_t|x_t)$.
 
-From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$; as a
-consequence, the following orthogonality condition is available:
+From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
+The following orthogonality condition is therefore available:
 \begin{equation}
   \label{eq:oc-ols}
   E \left[ f(\beta) \right] = 0 ,
@@ -149,7 +152,8 @@ previous section therefore specialize here to:
   objective function has the same minimizer as the objective function
   of OLS, the residual sum of squares. Note, however, that the two
   functions are not equal to one another: at the minimum, $F(\theta,
-  \Omega) = 0$.
+  \Omega) = 0$ while the minimized sum of squared residuals is zero
+  only in the special case of a perfect linear fit.  
 \end{itemize}
 
 The code snippet contained in Example~\ref{gmm-ols-ex} uses
@@ -174,8 +178,8 @@ end gmm
 \end{code}
 \end{script}
 
-We feed \app{gretl} with the necessary ingredients for GMM estimations
-in a command block, that starts with \texttt{gmm} and ends with
+We feed \app{gretl} the necessary ingredients for GMM estimation
+in a command block, starting with \texttt{gmm} and ending with
 \texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
 block:
 \begin{enumerate}
@@ -183,30 +187,37 @@ block:
 \item one \texttt{weights} statement
 \item one \texttt{params} statement
 \end{enumerate}
-these three statements should be given in this order.
+The three elements should be given in the stated order.
 
 The \texttt{orthog} statements are used to specify the orthogonality
-conditions, and must follow the syntax
+conditions.  They must follow the syntax
 \begin{code}
   orthog x ; Z
 \end{code}
-where \texttt{x} must be a vector or a series and \texttt{Z} a list or
-a matrix. In the above example, the series \texttt{e} holds the
-``residuals'' and the series \texttt{x} holds the regressor. If
-\texttt{x} had been a list (a matrix), the \texttt{orthog} statement would have
-generated one orthogonality conditon for each element (column) of \texttt{x}.
+where \texttt{x} must be a vector or a series and \texttt{Z} a series,
+list or matrix. In example~\ref{gmm-ols-ex}, the series \texttt{e}
+holds the ``residuals'' and the series \texttt{x} holds the regressor.
+If \texttt{x} had been a list (a matrix), the \texttt{orthog}
+statement would have generated one orthogonality conditon for each
+element (column) of \texttt{x}.  Note the structure of the
+orthogonality condition: it is assumed that the term to the left of the
+semicolon represents a quantity that depends on the estimated
+parameters (and so must be updated in the process of iterative
+estimation), while the term on the right is a constant function of
+the data.
 
-The \texttt{weights} statement is only used to indicate the weights
-matrix and its syntax should be straightforward; the \texttt{params}
-statement follows the same logic and rules as in the \texttt{mle} and
-\texttt{nls} commands.
+The \texttt{weights} statement is used to specify the initial
+weighting matrix and its syntax is straightforward.  The
+\texttt{params} statement specifies the parameters with respect to
+which the GMM criterion should be minimized; it follows the same logic
+and rules as in the \texttt{mle} and \texttt{nls} commands.
 
 The minimum is found through numerical minimization via BFGS (see
-section~\ref{genr-numerical} and chapter~\ref{chap:mle}), so in this
-case GMM estimation is a rather silly thing to do, since a closed form
-solution is trivially given by OLS. The progress of the numerical
-optimization procedure can be observed by appending the
-\verb|--verbose| switch to the \texttt{end gmm} line.
+section~\ref{genr-numerical} and chapter~\ref{chap:mle}).  The
+progress of the optimization procedure can be observed by appending
+the \verb|--verbose| switch to the \texttt{end gmm} line.  (In this
+example GMM estimation is clearly a rather silly thing to do, since a
+closed form solution is easily given by OLS.)
 
 %%% Local Variables: 
 %%% mode: latex
