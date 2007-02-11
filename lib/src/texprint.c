@@ -915,7 +915,7 @@ void gretl_tex_preamble (PRN *prn, int ams)
 #ifdef ENABLE_NLS
 	if (tex_use_utf) {
 	    pputs(prn, "\\usepackage{ucs}\n");
-	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
+	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n\n");
 	} else {
 	    pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
 	}
