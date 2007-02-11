@@ -369,7 +369,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     vwin->w = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_WORD);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->w), 4);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
 
@@ -1284,7 +1284,7 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
 
@@ -1298,10 +1298,20 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
     if (dlg != NULL) {
 	gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
     }
+
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 
     return w;
+}
+
+void text_set_word_wrap (GtkWidget *w, gboolean wrap)
+{
+    if (wrap) {
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
+    } else {
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
+    }
 }
 
 void text_table_setup (GtkWidget *vbox, GtkWidget *w)

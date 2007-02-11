@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "texprint.h"
 
 #ifdef USE_GLIB2
 # include <glib.h>
@@ -176,6 +177,9 @@ void set_gretl_charset (const char *s)
 
 # ifdef USE_GLIB2
     using_utf8 = g_get_charset(&charset);
+    if (using_utf8) {
+	set_tex_use_utf(1);
+    }
 # else
     if (*s == 'p' || *s == 'P') {
 	/* guessing this means Polish */

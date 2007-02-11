@@ -1,5 +1,6 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ *
+ * Copyright (C) Allin Cottrell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -17,9 +18,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* texprint.h for gretl */
-
-/* functions follow */
+#ifndef TEXPRINT_H
+#define TEXPRINT_H
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn);
@@ -52,6 +52,8 @@ char *tex_float_string (double x, int prec, char *targ);
 
 void set_gretl_tex_preamble (void);
 
+void set_tex_use_utf (int s);
+
 void gretl_tex_preamble (PRN *prn, int ams);
 
 void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
@@ -61,3 +63,5 @@ void set_tex_param_format (const char *s);
 int tex_using_custom_tabular (void);
 
 const char *tex_column_format (int i);
+
+#endif /* TEXPRINT_H */

@@ -760,42 +760,6 @@
 
   </command>
 
-  <command name="critical" section="Utilities" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>distrib</argument>
-        <argument>param1</argument>
-	<argument optional="true">param2</argument>
-      </arguments>
-      <examples>
-        <example>critical t 20</example>
-        <example>critical X 5</example>
-        <example>critical F 3 37</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>Si <repl>distrib</repl> es <lit>t</lit>, <lit>X</lit> or
-	<lit>F</lit>, presenta los valores críticos para la distribución
-	<mathvar>t</mathvar> de Student, chi-cuadrado o <mathvar>F</mathvar>
-	respectivamente, para los niveles de significación más comunes y usando
-	los grados de libertad especificados, que se dan en <repl>param1</repl> 
-	para la t y chi-cuadrado, o <repl>param1</repl> y 
-	<repl>param2</repl> para la <mathvar>F</mathvar>. 
-	Si <repl>distrib</repl> es <lit>d</lit>, presenta los valores
-	superior e inferior del estadístico de Durbin-Watson al
-	5 por ciento de significación, para el número de observaciones dado en
-	<repl>param1</repl>, y para una rango de 1 a 5 variables explicativas.
-	</para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Utilidades/Tablas estadísticas</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="cusum" section="Tests" label="Contraste CUSUM">
 
     <description>
@@ -2148,45 +2112,6 @@
         ver <cmdref targ="genr"/>.  El bloque <cmd>else</cmd> es opcional; los 
 	bloques <lit>if</lit> &hellip; <lit>endif</lit> pueden estar anidados.</para>
     </description>
-
-  </command>
-
-  <command name="import" section="Dataset" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>nombre_fichero</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--box1</flag>
-	  <effect>datos BOX1</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-        Transfiere datos desde un fichero de formato CSV (Comma-separated 
-	values), tal y como los que pueden escribirse fácilmente desde 
-	cualquier programa de hoja de cálculo. El fichero debería de tener 
-	los nombres de las variables en la primera línea y una matriz rectangular 
-	de datos en las restantes.  Las variables deberían estar ordenadas
-	<quote>por observación</quote> (una columna para cada variable;
-	cada fila representa una observación).
-	Ver <guideref targ="datafiles"/> para más detalles.
-      </para>
-
-      <para>
-	Con la opción <lit>--box1</lit>, lee u  fichero de formato BOX1, 
-	como los que se obtienen utilizando el Servicio de Extracción de Datos
-	del  US Bureau of the Census.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Archivo/Abrir datos/importar</menu-path>
-    </gui-access>
 
   </command>
 

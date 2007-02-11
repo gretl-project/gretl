@@ -884,6 +884,13 @@ void set_gretl_tex_preamble (void)
     }
 }
 
+static int tex_use_utf;
+
+void set_tex_use_utf (int s)
+{
+    tex_use_utf = s;
+}
+
 void gretl_tex_preamble (PRN *prn, int ams)
 {
     FILE *fp = NULL;
@@ -906,7 +913,12 @@ void gretl_tex_preamble (PRN *prn, int ams)
 	pputs(prn, "\\documentclass[11pt]{article}\n");
 
 #ifdef ENABLE_NLS
-	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
+	if (tex_use_utf) {
+	    pputs(prn, "\\usepackage{ucs}\n");
+	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
+	} else {
+	    pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
+	}
 #endif
 	if (ams) {
 	    pputs(prn, "\\usepackage{amsmath}\n\n");

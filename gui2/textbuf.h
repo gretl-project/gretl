@@ -53,6 +53,8 @@ void textview_insert_file (windata_t *vwin, const char *fname);
 GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
 			gboolean editable);
 
+void text_set_word_wrap (GtkWidget *w, gboolean wrap);
+
 void text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
