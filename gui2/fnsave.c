@@ -601,7 +601,6 @@ static void finfo_dialog (function_info *finfo)
     g_free(ltxt);
 
     finfo->text = create_text(NULL, -1, -1, TRUE);
-    text_set_word_wrap(finfo->text, TRUE);
     text_table_setup(vbox, finfo->text);
 
     gretl_function_get_info(finfo->pub, "help", &hlp);

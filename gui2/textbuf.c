@@ -1284,7 +1284,7 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
 
