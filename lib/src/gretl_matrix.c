@@ -3637,14 +3637,20 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
 int gretl_invert_matrix (gretl_matrix *a)
 {
     int s = gretl_matrix_get_structure(a);
+    int err = 0;
 
     if (s == GRETL_MATRIX_DIAGONAL) {
-	return gretl_invert_diagonal_matrix(a);
+	err = gretl_invert_diagonal_matrix(a);
     } else if (s == GRETL_MATRIX_SYMMETRIC) {
-	return gretl_invert_symmetric_matrix(a);
+	err = gretl_invert_symmetric_matrix(a);
+	if (err) {
+	    err = gretl_invert_symmetric_indef_matrix(a);
+	}
     } else {
-	return gretl_invert_general_matrix(a);
+	err = gretl_invert_general_matrix(a);
     }
+
+    return err;
 }
 
 /**

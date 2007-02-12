@@ -524,8 +524,8 @@ static int get_quoted_filename (const char *line, char *fname)
 
 static int substitute_homedir (char *fname)
 {
-    int err = 0;
     char *homedir = getenv("HOME");
+    int err = 0;
 
     if (homedir != NULL) {
 	int len = strlen(fname);
@@ -641,7 +641,7 @@ static void set_gretl_libpath (const char *path)
     } else {
 	sprintf(gretl_paths.libpath, "%s/lib/gretl%s", path, sfx);
     }
-#endif /* WIN32 */
+#endif /* !WIN32 */
 }
 
 static void copy_paths_to_internal (const PATHS *paths)
@@ -675,10 +675,10 @@ const char *gretl_user_dir (void)
 
 void set_gretl_user_dir (const char *path, PATHS *ppaths)
 {
-    strcpy(gretl_paths.userdir, path);
-    ensure_slash(gretl_paths.userdir);
     strcpy(ppaths->userdir, path);
     ensure_slash(ppaths->userdir);
+    strcpy(gretl_paths.userdir, ppaths->userdir);
+    gretl_insert_builtin_string("userdir", ppaths->userdir);
 }
 
 const char *gretl_gnuplot_path (void)
@@ -787,9 +787,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	}
 
 	ppaths->currdir[0] = '\0';
-
 	*gretl_paths.plotfile = '\0';
-
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);
@@ -820,9 +818,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
     putenv(envstr);
 
     ensure_slash(ppaths->userdir);
-
     set_gretl_libpath(ppaths->gretldir);
-
     copy_paths_to_internal(ppaths);
 
     return 0;
@@ -833,9 +829,9 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 int set_paths (PATHS *ppaths, gretlopt opt)
 {
     if (opt & OPT_D) {
-	char *home;
+	/* defaults */
+	char *home = getenv("GRETL_HOME");
 
-	home = getenv("GRETL_HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->gretldir, home);
 	    ensure_slash(ppaths->gretldir);
@@ -855,7 +851,6 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
 	strcpy(ppaths->gnuplot, "gnuplot");
 	strcpy(ppaths->pngfont, "Vera 9");
-
 	ppaths->currdir[0] = '\0';	
 
 	/* try to set a default userdir */
@@ -902,9 +897,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
     }
 
     ensure_slash(ppaths->userdir);
-
     set_gretl_libpath(ppaths->gretldir);
-
     copy_paths_to_internal(ppaths);
 
     return 0;
