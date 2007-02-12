@@ -2104,6 +2104,17 @@ static char *corrgm_crit_string (void)
     }
 }
 
+static const char *graph_name (const DATAINFO *pdinfo, int v)
+{
+    const char *s = DISPLAYNAME(pdinfo, v);
+
+    if (s == NULL || *s == '\0') {
+	s = pdinfo->varname[v];
+    }
+
+    return s;
+}
+
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2130,6 +2141,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     double box, pm90, pm95, pm99;
     double *acf = NULL;
     double *pacf = NULL;
+    const char *vname = NULL;
     int k, acf_m, pacf_m; 
     int nobs, dfQ;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -2157,6 +2169,8 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[varno]);
 	return E_DATA;
     }
+
+    vname = graph_name(pdinfo, varno);
 
     acf_m = order;
     if (acf_m == 0) {
@@ -2187,7 +2201,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	    xk[k] = k + 1.0;
 	}
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-	graphyzx(NULL, acf, NULL, xk, acf_m, pdinfo->varname[varno], 
+	graphyzx(NULL, acf, NULL, xk, acf_m, vname, 
 		 _("lag"), NULL, 0, prn);
 	free(xk);
     } 
@@ -2195,8 +2209,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
     } else {
-	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
-		pdinfo->varname[varno]);
+	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), vname);
 	pprintf(prn, "\n%s\n\n", gretl_tmp_str);
     }
 
@@ -2287,8 +2300,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     if (opt & OPT_R) {
 	fprintf(fq, "set title '%s'\n", I_("Residual ACF"));
     } else {
-	fprintf(fq, "set title '%s %s'\n", I_("ACF for"), 
-		pdinfo->varname[varno]);
+	fprintf(fq, "set title '%s %s'\n", I_("ACF for"), vname);
     }
     fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fq, "plot \\\n"
@@ -2306,8 +2318,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	if (opt & OPT_R) {
 	    fprintf(fq, "set title '%s'\n", I_("Residual PACF"));
 	} else {
-	    fprintf(fq, "set title '%s %s'\n", I_("PACF for"), 
-		    pdinfo->varname[varno]);
+	    fprintf(fq, "set title '%s %s'\n", I_("PACF for"), vname);
 	}
 	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fq, "plot \\\n"
@@ -2837,6 +2848,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     double *hhat = NULL;
     double *savexx = NULL;
     double *stdy = NULL;
+    const char *vname = NULL;
     double xx, yy, varx, stdx, w;
     int k, xmax, L, m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -2870,6 +2882,8 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	pprintf(prn, "\n%s\n", gretl_tmp_str);
 	return 1;
     }
+
+    vname = graph_name(pdinfo, varno);
 
     /* Chatfield (1996); Greene 4ed, p. 772 */
     if (window) {
@@ -2957,7 +2971,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	if (opt & OPT_R) {
 	    strcpy(titlestr, I_("Residual spectrum"));
 	} else {
-	    sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
+	    sprintf(titlestr, I_("Spectrum of %s"), vname);
 	}
 	fprintf(fq, "set title '%s", titlestr);
 
@@ -2980,7 +2994,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n", _("Residual periodogram"));
     } else {
-	pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
+	pprintf(prn, _("\nPeriodogram for %s\n"), vname);
     }
 
     pprintf(prn, _("Number of observations = %d\n"), nobs);
