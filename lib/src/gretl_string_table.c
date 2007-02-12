@@ -591,22 +591,68 @@ int process_string_command (const char *line, PRN *prn)
     return err;
 }
 
-static char *maybe_get_subst (char *name, int *n)
+/* inserting string into format portion of (s)printf command:
+   double any backslashes to avoid breakage of Windows paths
+*/
+
+static char *mod_strdup (const char *s)
+{
+    char *ret = NULL;
+    int i, n = strlen(s);
+    int bs = 0;
+
+    for (i=0; i<n; i++) {
+	if (s[i] == '\\' && (i == n - 1 || s[i+1] != '\\')) {
+	    bs++;
+	}
+    }
+
+    ret = malloc(n + 1 + bs);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    if (bs == 0) {
+	strcpy(ret, s);
+    } else {
+	int j = 0;
+
+	for (i=0; i<n; i++) {
+	    if (s[i] == '\\' && (i == n - 1 || s[i+1] != '\\')) {
+		ret[j++] = '\\';
+	    } 
+	    ret[j++] = s[i];
+	}
+	ret[j] = '\0';
+    }
+
+    return ret;
+}
+
+static char *maybe_get_subst (char *name, int *n, int quoted,
+			      int *freeit)
 {
     saved_string *str;
     int builtin = 0;
     int k = *n - 1;
+    char *ret = NULL;
 
     while (k >= 0) {
 	str = get_saved_string_by_name(name, &builtin);
 	if (str != NULL && str->s != NULL) {
 	    *n = k + 1;
-	    return str->s;
+	    ret = str->s;
+	    break;
 	}
 	name[k--] = '\0';
     }
 
-    return NULL;
+    if (ret != NULL && quoted && strchr(ret, '\\')) {
+	ret = mod_strdup(ret);
+	*freeit = 1;
+    }
+
+    return ret;
 }
 
 static void too_long (void)
@@ -620,13 +666,23 @@ int substitute_named_strings (char *line)
     char sname[VNAMELEN];
     int len = strlen(line);
     char *sub, *tmp, *s = line;
-    int n, m, err = 0;
+    int pf = 0, quoted = 0, i = 0;
+    int n, m, freeit, err = 0;
 
     if (strchr(s, '@') == NULL) {
 	return 0;
     }
 
+    if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
+	pf = 1;
+    }
+
+    fprintf(stderr, "line='%s'\n", line);
+
     while (*s && !err) {
+	if (pf && i > 0 && *s == '"' && *(s-1) != '\\') {
+	    quoted = !quoted;
+	}
 	if (*s == '@') {
 	    n = gretl_varchar_spn(s + 1);
 	    if (n > 0) {
@@ -635,7 +691,8 @@ int substitute_named_strings (char *line)
 		}
 		*sname = '\0';
 		strncat(sname, s + 1, n);
-		sub = maybe_get_subst(sname, &n);
+		freeit = 0;
+		sub = maybe_get_subst(sname, &n, quoted, &freeit);
 		if (sub != NULL) {
 		    m = strlen(sub);
 		    if (len + m >= MAXLINE) {
@@ -653,10 +710,14 @@ int substitute_named_strings (char *line)
 			len += m - (n + 1);
 			s += m - 1;
 		    }
+		    if (freeit) {
+			free(sub);
+		    }
 		}
 	    }
 	}
 	s++;
+	i++;
     }
 
     return err;

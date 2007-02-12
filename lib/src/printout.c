@@ -2224,8 +2224,6 @@ print_iter_info (int iter, double crit, int type, int k,
 
 static int printf_escape (int c, PRN *prn)
 {
-    int err = 0;
-
     switch (c) {
     case 'n':
 	pputc(prn, '\n');
@@ -2240,10 +2238,12 @@ static int printf_escape (int c, PRN *prn)
 	pputc(prn, '\\');
 	break;
     default:
-	err = 1;
+	/* treat as literal backslash */
+	pputc(prn, '\\');
+	pputc(prn, c);
     }
 
-    return err;
+    return 0;
 }
 
 /* various string argument variants, optionally followed
