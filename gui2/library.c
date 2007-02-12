@@ -3743,7 +3743,7 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
     char title[64];
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     const char *opts[] = {
-	"log scale",
+	N_("log scale"),
 	NULL
     };
     int active[1] = {0};
@@ -3755,14 +3755,9 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 
     width = auto_spectrum_order(T, opt);
 
-#if 1
     err = checks_dialog(title, NULL, opts, 1, active, 0, NULL,
 			&width, _("Bandwidth:"),
 			2, T / 2, PERGM);
-#else
-    err = spin_dialog(title, NULL, &width, _("Bandwidth:"),
-		      2, T / 2, PERGM);
-#endif
     if (err < 0) {
 	return;
     }   

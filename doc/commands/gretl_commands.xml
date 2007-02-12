@@ -5507,6 +5507,10 @@
 	  <flag>--bartlett</flag>
 	  <effect>use Bartlett lag window</effect>
         </option>
+        <option>
+	  <flag>--log</flag>
+	  <effect>use log scale</effect>
+        </option>
       </options>
     </usage>
 
@@ -5519,8 +5523,9 @@
 	example, Greene's <book>Econometric Analysis</book> for a
 	discussion of this).  The default width of the Bartlett window is
 	twice the square root of the sample size but this can be set
-	manually using the <repl>bandwidth</repl> parameter, up to
-	a maximum of half the sample size.
+	manually using the <repl>bandwidth</repl> parameter, up to a
+	maximum of half the sample size.  If the <lit>--log</lit> option
+	is given the spectrum is represented on a logarithmic scale.
       </para>
       <para>
 	When the sample periodogram is printed, two tests for fractional
