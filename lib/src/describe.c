@@ -2830,7 +2830,7 @@ int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
  * @pdinfo: information on the data set.
  * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
  * if includes %OPT_N, don't display gnuplot graph; if includes
- * %OPT_R, the variable is a model residual.
+ * %OPT_R, the variable is a model residual; %OPT_L, use log scale.
  * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the variable specified 
@@ -2973,14 +2973,19 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	} else {
 	    sprintf(titlestr, I_("Spectrum of %s"), vname);
 	}
+
 	fprintf(fq, "set title '%s", titlestr);
 
 	if (window) {
 	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
-	    fprintf(fq, " (%s)'\n", titlestr);
-	} else {
-	    fputs("'\n", fq);
+	    fprintf(fq, " (%s)", titlestr);
+	} 
+
+	if (opt & OPT_L) {
+	    fputs(" (log scale)", fq);
 	}
+
+	fputs("'\n", fq);
 
 	fprintf(fq, "set xrange [0:%d]\n", roundup_mod(nobs, 0.5));
 	fputs("plot '-' using 1:2 w lines\n", fq);
@@ -3036,7 +3041,8 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	gretl_push_c_numeric_locale();
 
 	for (t=1; t<=nobs/2; t++) {
-	    fprintf(fq, "%d %g\n", t, savexx[t]);
+	    xx = (opt & OPT_L)? log(savexx[t]) : savexx[t];
+	    fprintf(fq, "%d %g\n", t, xx);
 	}
 
 	gretl_pop_c_numeric_locale();
@@ -3054,12 +3060,17 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	fract_int_LWE((const double **) *pZ, varno, width, t1, t2, prn);
     }
 
-    pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
+    if (opt & OPT_L) {
+	pputs(prn, _(" omega  scaled frequency  periods  log spectral density\n\n"));
+    } else {
+	pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
+    }
 
     for (t=1; t<=nobs/2; t++) {
 	yy = M_2PI * t / (double) nobs;
+	xx = (opt & OPT_L)? log(savexx[t]) : savexx[t];
 	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
-		(double) nobs / t, savexx[t]);
+		(double) nobs / t, xx);
     }
 
     pputc(prn, '\n');

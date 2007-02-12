@@ -3742,37 +3742,46 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
     PRN *prn;
     char title[64];
     int T = pdinfo->t2 - pdinfo->t1 + 1;
+    const char *opts[] = {
+	"log scale",
+	NULL
+    };
+    int active[1] = {0};
     int width = 0;
+    gretlopt opt = (bartlett)? OPT_O : OPT_NONE;
     int err;
 
     strcpy(title, _("gretl: periodogram"));
 
-    width = auto_spectrum_order(T, (bartlett)? OPT_O : OPT_NONE);
+    width = auto_spectrum_order(T, opt);
 
+#if 1
+    err = checks_dialog(title, NULL, opts, 1, active, 0, NULL,
+			&width, _("Bandwidth:"),
+			2, T / 2, PERGM);
+#else
     err = spin_dialog(title, NULL, &width, _("Bandwidth:"),
 		      2, T / 2, PERGM);
+#endif
     if (err < 0) {
 	return;
-    }        
+    }   
+
+    if (active[0]) {
+	opt |= OPT_L;
+    }
 
     if (bufopen(&prn)) return;
 
     if (code == SELECTED_VAR) {
-	if (bartlett) {
-	    gretl_command_sprintf("pergm %s --bartlett", selected_varname());
-	} else {
-	    gretl_command_sprintf("pergm %s", selected_varname());
-	}
+	gretl_command_sprintf("pergm %s%s", selected_varname(), print_flags(opt, PERGM));
 	if (check_and_record_command()) {
 	    gretl_print_destroy(prn);
 	    return;
 	}
 	err = periodogram(libcmd.list[1], width, pZ, pdinfo, libcmd.opt, prn);
     } else {
-	gretlopt opt = OPT_R;
-	if (bartlett) {
-	    opt |= OPT_O;
-	}
+	opt |= OPT_R;
 	err = periodogram(pdinfo->v - 1, width, pZ, pdinfo, opt, prn);
     }
 

@@ -197,6 +197,7 @@ struct gretl_option gretl_opts[] = {
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },
     { PERGM,    OPT_O, "bartlett" },
+    { PERGM,    OPT_L, "log" },
     { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_L, "long" },
