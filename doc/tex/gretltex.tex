@@ -14,12 +14,13 @@ further processing with \TeX.
 
 This chapter explains the finer points of \app{gretl}'s \TeX-related
 functionality.  The next section describes the relevant menu items;
-section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output; and
-section~\ref{tex-install} gives some pointers on installing (and
-learning) \TeX\ if you do not already have it on your computer.  (Just
-to be clear: \TeX\ is not included with the \app{gretl} distribution;
-it is a separate package, including several programs and a large
-number of supporting files.)
+section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output;
+section~\ref{tex-encode} explains how to handle the encoding of
+characters not found in English; and section~\ref{tex-install} gives
+some pointers on installing (and learning) \TeX\ if you do not already
+have it on your computer.  (Just to be clear: \TeX\ is not included
+with the \app{gretl} distribution; it is a separate package, including
+several programs and a large number of supporting files.)
 
 Before proceeding, however, it may be useful to set out briefly the
 stages of production of a final document using \TeX.  For the most
@@ -238,11 +239,16 @@ Standard errors in parentheses\\
 \section{Fine-tuning typeset output}
 \label{tex-tune}
 
-There are two aspects to this: adjusting the appearance of the output
-produced by \app{gretl} in \LaTeX\ preview mode, and incorporating
-\app{gretl}'s output into your own \TeX\ files.
+There are three aspects to this: adjusting the appearance of the
+output produced by \app{gretl} in \LaTeX\ preview mode; adjusting the
+formatting of \app{gretl}'s tabular output for models when uing the
+\texttt{tabprint} command; and incorporating \app{gretl}'s output into
+your own \TeX\ files.
 
-As regards preview mode, you can control the appearance of
+
+\subsection{Previewing in the GUI}
+
+As regards \emph{preview mode}, you can control the appearance of
 \app{gretl}'s output using a file named \verb+gretlpre.tex+, which
 should be placed in your \app{gretl} user directory (see the
 \emph{Gretl Command Reference}).  If such a file is found, its
@@ -263,6 +269,11 @@ Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
 needed.)  Beyond that you can, for instance, change the type size or
 the font by altering the \texttt{documentclass} declaration or
 including an alternative font package.
+
+The line \verb|\usepackage[latin1]{inputenc}| is automatically
+modified if \app{gretl} finds itself running on a system where UTF-8
+is the default character encoding --- see section~\ref{tex-encode}
+below.
 
 In addition, if you should wish to typeset \app{gretl} output in more
 than one language, you can set up per-language preamble files.  A
@@ -289,6 +300,48 @@ file \verb|gretlpre_en.tex|: this file will be used for the preamble
 when \app{gretl} is run with a language setting of, say,
 \verb|en_US|.  
 
+
+\subsection{Command-line options}
+
+After estimating a model via a script --- or interactively via the
+\app{gretl} console or using the command-line program \app{gretlcli}
+--- you can use the commands \texttt{tabprint} or \texttt{eqnprint} to
+print the model to file in tabular format or equation format
+respectively.  These options are explained in the \GCR{}.  
+
+If you wish alter the appearance of \app{gretl}'s tabular output for
+models in the context of the \texttt{tabprint} command, you can
+specify a custom row format using the \verb|--format| flag.  The
+format string must be enclosed in double quotes and must be tied to
+the flag with an equals sign.  The pattern for the format string is as
+follows.  There are four fields, representing the coefficient,
+standard error, $t$-ratio and p-value respectively.  These fields
+should be separated by vertical bars; they may contain a
+\texttt{printf}-type specification for the formatting of the numeric
+value in question, or may be left blank to suppress the printing of
+that column (subject to the constraint that you can't leave all the
+columns blank).  Here are a few examples:
+
+\begin{code}
+--format="%.4f|%.4f|%.4f|%.4f"
+--format="%.4f|%.4f|%.3f|"
+--format="%.5f|%.4f||%.4f"
+--format="%.8g|%.8g||%.4f"
+\end{code}
+
+The first of these specifications prints the values in all columns
+using 4 decimal places.  The second suppresses the p-value and prints
+the $t$-ratio to 3 places.  The third omits the $t$-ratio.  The last
+one again omits the $t$, and prints both coefficient and standard
+error to 8 significant figures.
+
+Once you set a custom format in this way, it is remembered and used
+for the duration of the gretl session.  To revert to the default
+formatting you can use the special variant \verb|--format=default|.
+
+
+\subsection{Further editing}
+
 Once you have pasted \app{gretl}'s \TeX\ output into your own
 document, or saved it to file and opened it in an editor, you can of
 course modify the material in any wish you wish.  In some cases,
@@ -298,6 +351,34 @@ it does not use any non-standard style packages.  Besides the standard
 \LaTeX\ document classes, the only files needed are, as noted above,
 the \verb+amsmath+, \verb+dcolumn+ and \verb+longtable+ packages.
 These should be included in any reasonably full \TeX\ implementation.
+
+
+\section{Character encodings}
+\label{tex-encode}
+
+People using \app{gretl} in English-speaking locales are unlikely to
+have a problem with this, but if you're generating \TeX\ output in a
+locale where accented characters (not in the ASCII character set) are
+employed, you may want to pay attention here.
+
+\app{Gretl} generates \TeX\ output using whatever character encoding
+is standard on the local system.  If the system encoding is in the
+ISO-8859 family, this will probably be OK wihout any special effort on
+the part of the user.  Newer GNU/Linux systems, however, typically use
+Unicode (UTF-8).  This is also OK, so long as your \TeX\ system can
+handle UTF-8 input, which requires use of the \app{latex-ucs} package.
+So: if you are using \app{gretl} to generate \TeX\ in a non-English
+locale, where the system encoding is UTF-8, you will need to ensure
+that the \app{latex-ucs} package is installed.  This package may or
+may not be installed by default when you install \TeX{}.
+
+For reference, if \app{gretl} detects a UTF-8 environment, the
+following lines are used in the \TeX\ preamble:
+%
+\begin{code}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\end{code}
 
 
 \section{Installing and learning \TeX}
