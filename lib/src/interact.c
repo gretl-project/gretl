@@ -2593,7 +2593,9 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
     int src, genpos;
     int bytes = 0;
 
-    if (v > 0 &&
+    /* FIXME TSLS (and any others like it?) */
+
+    if (v > 0 && cmd->ci != TSLS && 
 	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
 	if (is_first_lag(genpos, cmd->linfo, &src)) {
 	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, prn);

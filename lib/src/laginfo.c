@@ -54,6 +54,8 @@ get_lag_list_by_varnum (int v, const Laginfo *linfo)
     int *list = NULL;
     int i;
 
+    printlist(linfo->reflist, "linfo->reflist");
+
     if (linfo != NULL && linfo->reflist != NULL) {
 	for (i=1; i<=linfo->reflist[0]; i++) {
 	    if (linfo->reflist[i] == v) {
@@ -363,9 +365,3 @@ static int is_first_lag (int v, const Laginfo *linfo, int *src)
 
     return ret;
 }
-
-
-
-	    
-
-    
