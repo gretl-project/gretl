@@ -583,11 +583,17 @@ const char *get_gretl_png_term_line (PlotType ptype, PlotSpecFlags flags)
 	strcpy(color_string, " color"); /* old PNG driver */
     }
 
+#if 0 /* not yet */
     if (flags & GPTSPEC_LETTERBOX) {
 	strcpy(size_string, " size 680,400");
     } else if (ptype == PLOT_VAR_ROOTS) {
 	strcpy(size_string, " size 480,480");
     }
+#else
+    if (ptype == PLOT_VAR_ROOTS) {
+	strcpy(size_string, " size 480,480");
+    }
+#endif
 
     sprintf(png_term_line, "set term png%s%s%s",
 	    font_string, size_string, color_string);
@@ -706,26 +712,7 @@ static int write_plot_type_string (PlotType ptype, FILE *fp)
     return ret;
 }
 
-/**
- * gnuplot_init:
- * @ptype: indication of the sort of plot to be made.
- * @fpp: pointer to stream to be opened.
- *
- * If we're in GUI mode: writes a unique temporary filename into
- * the internal variable #gretl_plotfile; opens plotfile for writing 
- * as @fpp; and writes initial lines into the output file to select 
- * the PNG terminal type, and direct gnuplot's ouput to a temporary
- * file in the gretl user directory.  
- *
- * If not in GUI mode, opens as @fpp the file %gpttmp.plt in the
- * gretl user directory.  
- *
- * This function is not used in batch mode.
- *
- * Returns: 0 on success, 1 on failure.
- */
-
-int gnuplot_init (PlotType ptype, FILE **fpp)
+static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 {
     int gui = gretl_in_gui_mode();
     char plotfile[FILENAME_MAX] = {0};
@@ -757,7 +744,7 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
     } 
 
     if (gui) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, 0));
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, flags));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
 
@@ -769,6 +756,30 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
 #endif
 
     return 0;
+}
+
+/**
+ * gnuplot_init:
+ * @ptype: indication of the sort of plot to be made.
+ * @fpp: pointer to stream to be opened.
+ *
+ * If we're in GUI mode: writes a unique temporary filename into
+ * the internal variable #gretl_plotfile; opens plotfile for writing 
+ * as @fpp; and writes initial lines into the output file to select 
+ * the PNG terminal type, and direct gnuplot's ouput to a temporary
+ * file in the gretl user directory.  
+ *
+ * If not in GUI mode, opens as @fpp the file %gpttmp.plt in the
+ * gretl user directory.  
+ *
+ * This function is not used in batch mode.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gnuplot_init (PlotType ptype, FILE **fpp)
+{
+    return real_gnuplot_init(ptype, 0, fpp);
 }
 
 #ifdef ENABLE_NLS
@@ -995,7 +1006,7 @@ get_gnuplot_output_file (FILE **fpp, GnuplotFlags flags,
 	}
     } else {
 	/* note: gnuplot_init not used in batch mode */
-	err = gnuplot_init(code, fpp);
+	err = real_gnuplot_init(code, flags, fpp);
     }
 
     return err;
@@ -1486,6 +1497,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, GnuplotFlags flags)
 {
+    PRN *prn = NULL;
     FILE *fp = NULL;
     int *list = NULL;
     char s1[MAXDISP] = {0};
@@ -1510,11 +1522,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
        "width 1 box" otherwise */
     strcpy(keystr, "set key left top\n");
 
-    if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_REGULAR)) {
-	return E_FOPEN;
-    } 
-
-    gp_info_init(&gpinfo, flags, fp, plotlist, literal, 
+    gp_info_init(&gpinfo, flags, NULL, plotlist, literal, 
 		 pdinfo->t1, pdinfo->t2);
     if (gpinfo.err) {
 	goto bailout;
@@ -1539,15 +1547,21 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	} else {
 	    strcpy(xlabel, series_name(pdinfo, gpinfo.list[gpinfo.lo]));
 	}
-    }	
+    }
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER);
+    if (prn == NULL) {
+	gpinfo.err = E_ALLOC;
+	goto bailout;
+    }
 
     /* add a simple regression line if appropriate */
     if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
 	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
 	get_ols_line(&gpinfo, pZ, pdinfo, ols_line);
 	if (gpinfo.ols_ok) {
-	    fprintf(fp, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
-	    fprintf(fp, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
+	    pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
+	    pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
 	}
     }
 
@@ -1571,26 +1585,39 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     /* special tics for short time series plots */
     if (gpinfo.ts_plot) {
 	if (gpinfo.toomany) {
-	    fprintf(fp, "# multiple timeseries %d", pdinfo->pd);
+	    pprintf(prn, "# multiple timeseries %d", pdinfo->pd);
 	} else {
-	    fprintf(fp, "# timeseries %d", pdinfo->pd);
+	    pprintf(prn, "# timeseries %d", pdinfo->pd);
 	}
 	if (ts_letterbox) {
-	    fputs(" (letterbox)\n", fp);
+	    pputs(prn, " (letterbox)\n");
 	} else {
-	    fputc('\n', fp);
+	    pputc(prn, '\n');
 	}
 	if (pdinfo->pd == 4 && (gpinfo.t2 - gpinfo.t1) / 4 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
-	    fputs("set mxtics 4\n", fp);
+	    pputs(prn, "set xtics nomirror 0,1\n"); 
+	    pputs(prn, "set mxtics 4\n");
 	}
 	if (pdinfo->pd == 12 && (gpinfo.t2 - gpinfo.t1) / 12 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
-	    fputs("set mxtics 12\n", fp);
+	    pputs(prn, "set xtics nomirror 0,1\n"); 
+	    pputs(prn, "set mxtics 12\n");
 	}
     } else if (gpinfo.toomany) {
-	fputs("# multiple data series\n", fp);
+	pputs(prn, "# multiple data series\n");
     }
+
+    /* open file and dump the prn into it: we delaying writing
+       the file header till we know a bit more about the plot
+    */
+    if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_REGULAR)) {
+	gpinfo.err = E_FOPEN;
+	gretl_print_destroy(prn);
+	goto bailout;
+    } 
+
+    gpinfo.fp = fp;
+    fputs(gretl_print_get_buffer(prn), fp);
+    gretl_print_destroy(prn);
 
     fprintf(fp, "set xlabel '%s'\n", xlabel);
     fputs("set xzeroaxis\n", fp); 
