@@ -1420,7 +1420,7 @@ static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
     pprintf(prn, _("VAR system, maximum lag order %d"), maxlag);
     pputs(prn, "\n\n");
 
-    pputs(prn, ("The asterisks below indicate the best (that is, minimized) values\n"
+    pputs(prn, _("The asterisks below indicate the best (that is, minimized) values\n"
 	  "of the respective information criteria, AIC = Akaike criterion,\n"
 	  "BIC = Schwartz Bayesian criterion and HQC = Hannan-Quinn criterion."));
     pputs(prn, "\n\n");

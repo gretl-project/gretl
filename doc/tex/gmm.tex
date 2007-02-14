@@ -309,6 +309,33 @@ We have said nothing about the nature of the asset, so equation
 is possible to build a system of equations like (\ref{eq:gmm-CBAPM})
 for each asset whose price we observe.
 
+If we are willing to believe that
+\begin{itemize}
+\item the economy as a whole can be represented as a single gigantic
+  and immortal representative individual, and
+\item the function $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ is a
+  faithful representation of the representative individual's
+  preferences,
+\end{itemize}
+then, setting $k=1$, equation (\ref{eq:gmm-CBAPM}) implies the
+following for any asset $j$:
+\begin{equation}
+  \label{eq:gmm-CBAPM-est}
+  E\left[ \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} \bigg| \mathcal{F}_t \right] = 1 ,
+\end{equation}
+where $C_t$ is aggregate consumption and $\alpha$ and $\delta$ are the
+risk aversion and discount rate of the representative individual. In
+this case, it is easy to see that the ``deep'' parameters $\alpha$ and
+$\delta$ can be estimated via GMM by using
+\[
+  e_t = \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} - 1
+\]
+as the moment condition, while any variable known at time $t$ may serve as
+an instrument.
+
+
 \begin{script}[htbp]
   \caption{Estimation of the Consumption Based Asset Pricing Model}
   \label{gmm-CBAPM-script}
@@ -354,32 +381,6 @@ end gmm --iterate
 \end{scode}
 %$
 \end{script}
-
-If we are willing to believe that
-\begin{itemize}
-\item the economy as a whole can be represented as a single gigantic
-  and immortal representative individual, and
-\item the function $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ is a
-  faithful representation of the representative individual's
-  preferences,
-\end{itemize}
-then, setting $k=1$, equation (\ref{eq:gmm-CBAPM}) implies the
-following for any asset $j$:
-\begin{equation}
-  \label{eq:gmm-CBAPM-est}
-  E\left[ \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
-    \right)^{\alpha - 1} \bigg| \mathcal{F}_t \right] = 1 ,
-\end{equation}
-where $C_t$ is aggregate consumption and $\alpha$ and $\delta$ are the
-risk aversion and discount rate of the representative individual. In
-this case, it is easy to see that the ``deep'' parameters $\alpha$ and
-$\delta$ can be estimated via GMM by using
-\[
-  e_t = \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
-    \right)^{\alpha - 1} - 1
-\]
-as the moment condition, while any variable known at time $t$ may serve as
-an instrument.
 
 \begin{script}[htbp]
   \caption{Estimation of the Consumption Based Asset Pricing Model ---
@@ -431,21 +432,29 @@ e = d*ewr*consrat^(alpha-1) - 1
 \end{script}
 
 In the example code given in \ref{gmm-CBAPM-script}, we replicate
-selected portions of table 3.7 in Hall (2005). Part of the
-output is given in \ref{gmm-CBAPM-out}.
+selected portions of table 3.7 in Hall (2005).  The variable
+\texttt{consrat} is defined as the ratio of monthly consecutive real
+per capita consumption (services and nondurables) for the US, and
+\texttt{ewr} is the return--price ratio of a fictitious asset
+constructed by averaging all the stocks in the NYSE.  The instrument
+set contains the constant and two lags of each variable.
 
-In this example, the variable \texttt{consrat} is defined as the ratio
-of monthly consecutive real per capita consumption (services and
-nondurables) for the US, and \texttt{ewr} is the return--price ratio
-of a fictitious asset constructed by averaging all the stocks in the
-NYSE.  The instrument set contains the constant and two lags of each
-variable.  Since the number of orthogonality conditions (5) is greater
-than the number of estimated parameters (2), we can see that the
-choice of the weighting matrix does make a difference here in the
-one-step estimates (Models 1 and 2), while the iterated estimator
-converges to the same point (numerically) for both weights matrices
-(Models 3 and 4). Note, however, that the $J$ test leads to a
-rejection of the hypothesis of correct specification.
+We run \texttt{gmm} four times: one-step estimation for each of two
+initial weights matrices, then iterative estimation starting from each
+set of initial weights.  Since the number of orthogonality conditions
+(5) is greater than the number of estimated parameters (2), the choice
+of intial weights should make a difference, and indeed we see fairly
+substantial differences between the one-step estimates (Models 1 and
+2).  On the other hand, iteration reduces these differences almost to
+the vanishing point (Models 3 and 4). 
+
+Part of the output is given in \ref{gmm-CBAPM-out}.  It should be
+noted that the $J$ test leads to a rejection of the hypothesis of
+correct specification.  This is perhaps not surprising given the
+heroic assumptions required to move from the microeconomic principle
+in equation (\ref{eq:gmm-CBAPM}) to the aggregate system that is
+actually estimated.
+
 
 \section{Covariance matrix options}
 \label{sec:gmm-vcv}
