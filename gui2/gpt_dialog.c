@@ -265,7 +265,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     if (widget == filesavebutton) {
 	entry_to_gp_string(GTK_COMBO(termcombo)->entry, spec->termtype, 
 			   sizeof spec->termtype);
-	if (strcmp(spec->termtype, "screen")) save = 1;
+	if (strcmp(spec->termtype, "screen")) {
+	    save = 1;
+	}
     }
    
     for (i=0; i<NTITLES; i++) {
@@ -914,7 +916,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(termcombo);
 
     /* button to generate output to file */
-    filesavebutton = gtk_button_new_with_label(_("Save to file..."));
+    filesavebutton = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
     GTK_WIDGET_SET_FLAGS(filesavebutton, GTK_CAN_DEFAULT);
     tbl_len++;
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -923,7 +925,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
 		      G_CALLBACK(apply_gpt_changes), 
 		      spec);
     gtk_widget_grab_default(filesavebutton);
-    gtk_widget_show(filesavebutton);    
+    gtk_widget_show(filesavebutton);  
 }
 
 static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)

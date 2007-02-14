@@ -523,6 +523,7 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
  * get_gretl_png_term_line:
  * @ptype: indication of the sort of plot to be made, which
  * may made a difference to the color palette chosen.
+ * @flags: plot option flags.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the PNG "terminal".  Checks the environment for setting of 
@@ -532,7 +533,7 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
  * Returns: the terminal string, "set term png ..."
  */
 
-const char *get_gretl_png_term_line (PlotType ptype)
+const char *get_gretl_png_term_line (PlotType ptype, PlotSpecFlags flags)
 {
     static char png_term_line[256];
     char font_string[128];
@@ -582,7 +583,9 @@ const char *get_gretl_png_term_line (PlotType ptype)
 	strcpy(color_string, " color"); /* old PNG driver */
     }
 
-    if (ptype == PLOT_VAR_ROOTS) {
+    if (flags & GPTSPEC_LETTERBOX) {
+	strcpy(size_string, " size 680,400");
+    } else if (ptype == PLOT_VAR_ROOTS) {
 	strcpy(size_string, " size 480,480");
     }
 
@@ -754,7 +757,7 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
     } 
 
     if (gui) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype));
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ptype, 0));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
     }
 
@@ -1460,6 +1463,8 @@ static void maybe_add_plotx (gnuplot_info *gpinfo,
 #endif
 }
 
+#define ts_letterbox 0
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -1566,9 +1571,14 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     /* special tics for short time series plots */
     if (gpinfo.ts_plot) {
 	if (gpinfo.toomany) {
-	    fprintf(fp, "# multiple timeseries %d\n", pdinfo->pd);
+	    fprintf(fp, "# multiple timeseries %d", pdinfo->pd);
 	} else {
-	    fprintf(fp, "# timeseries %d\n", pdinfo->pd);
+	    fprintf(fp, "# timeseries %d", pdinfo->pd);
+	}
+	if (ts_letterbox) {
+	    fputs(" (letterbox)\n", fp);
+	} else {
+	    fputc('\n', fp);
 	}
 	if (pdinfo->pd == 4 && (gpinfo.t2 - gpinfo.t1) / 4 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
@@ -2543,7 +2553,7 @@ int get_termstr (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, "latex");
     } else if (!strcmp(spec->termtype, "png")) { 
 	const char *png_str = 
-	    get_gretl_png_term_line(spec->code);
+	    get_gretl_png_term_line(spec->code, 0);
 
 	strcpy(termstr, png_str + 9);
     } else if (!strcmp(spec->termtype, "emf color")) {

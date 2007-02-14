@@ -315,7 +315,8 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	}
 	if (need_term_line) {
 	    int ptype = (spec != NULL)? spec->code : PLOT_REGULAR;
-	    const char *pline = get_gretl_png_term_line(ptype);
+	    int flags = (spec != NULL)? spec->flags : 0;
+	    const char *pline = get_gretl_png_term_line(ptype, flags);
 
 	    fprintf(ftmp, "%s\n", pline);
 	}	    
@@ -390,7 +391,7 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 	return 1;
     }
 
-    fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code));
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code, spec->flags));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
 
     return 0;
@@ -1226,6 +1227,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 		*plot_pd = pd;
 	    }
 	    spec->flags |= GPTSPEC_TS;
+	    if (strstr(gpline, "letterbox")) {
+		spec->flags |= GPTSPEC_LETTERBOX;
+	    }
 	    continue;
 	}
 
@@ -2830,6 +2834,11 @@ png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     if (plot->spec->code == PLOT_VAR_ROOTS) {
 	plot->pixel_width = plot->pixel_height;
+    }
+
+    if (plot->spec->flags & GPTSPEC_LETTERBOX) {
+	plot->pixel_width = 680;
+	plot->pixel_height = 400;
     }
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);

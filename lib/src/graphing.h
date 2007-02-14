@@ -37,7 +37,7 @@ typedef enum {
     GP_OLS_OMIT   = 1 << 7,  /* Don't draw fitted line on graph */
     GP_DATA_STYLE = 1 << 8,  /* data style is set by user */
     GP_FILE       = 1 << 9,  /* send output to named file */
-    GP_IDX        = 1 << 10  /* plot against time or obs index */
+    GP_IDX        = 1 << 10, /* plot against time or obs index */
 } GnuplotFlags;
 
 typedef enum {
@@ -49,7 +49,8 @@ typedef enum {
     GPTSPEC_PNG_OUTPUT     = 1 << 5,
     GPTSPEC_ALL_MARKERS    = 1 << 6,
     GPTSPEC_ALL_MARKERS_OK = 1 << 7,
-    GPTSPEC_NO_BORDER      = 1 << 8
+    GPTSPEC_NO_BORDER      = 1 << 8,
+    GPTSPEC_LETTERBOX      = 1 << 9
 } PlotSpecFlags; 
 
 #define MAXTITLE 128
@@ -147,7 +148,7 @@ typedef struct {
     
 /* functions follow */
 
-const char *get_gretl_png_term_line (PlotType ptype);
+const char *get_gretl_png_term_line (PlotType ptype, PlotSpecFlags flags);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
