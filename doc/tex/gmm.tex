@@ -71,31 +71,30 @@ or \emph{moment condition}. The GMM estimator is defined as the
 minimum of the quadratic form
 \begin{equation}
   \label{eq:obj-general}
-  F(\theta, \Omega) = \bar{\mathbf{f}}' \Omega \bar{\mathbf{f}},
+  F(\theta, W) = \bar{\mathbf{f}}' W \bar{\mathbf{f}},
 \end{equation}
 where $\bar{\mathbf{f}}$ is a $(1 \times m\cdot p)$ vector holding the
-average of the orthogonality conditions and $\Omega$ is some symmetric,
+average of the orthogonality conditions and $W$ is some symmetric,
 positive definite matrix, known as the \emph{weights} matrix. A
 necessary condition for the minimum to exist is the order condition $n
-\le m \cdot p$. If $n = m \cdot p$, the minimum is zero and the
-solution is the same for any $\Omega$.
+\le m \cdot p$. 
 
 The statistic
 \begin{equation}
   \label{eq:gmmestimator}
-  \hat{\theta} = \stackunder{\theta}{\mathrm{Argmin}} F(\theta, \Omega)
+  \hat{\theta} = \stackunder{\theta}{\mathrm{Argmin}} F(\theta, W)
 \end{equation}
-is a consistent estimator of $\theta$ whatever the choice of $\Omega$.
-However, to achieve maximum asymptotic efficiency $\Omega$ must be
+is a consistent estimator of $\theta$ whatever the choice of $W$.
+However, to achieve maximum asymptotic efficiency $W$ must be
 proportional to the inverse of the long-run covariance matrix of the
-orthogonality conditions; if $\Omega$ is not known, a consistent estimator
+orthogonality conditions; if $W$ is not known, a consistent estimator
 will suffice.
 
 These considerations lead to the following empirical strategy:
 \begin{enumerate}
-\item Choose a positive definite $\Omega$ and compute the
+\item Choose a positive definite $W$ and compute the
   \emph{one-step} GMM estimator $\hat{\theta}_1$. Customary choices
-  for $\Omega$ are $I_{m\cdot p}$ or $I_{m} \otimes (Z'Z)^{-1}$.
+  for $W$ are $I_{m\cdot p}$ or $I_{m} \otimes (Z'Z)^{-1}$.
 \item Use $\hat{\theta}_1$ to estimate $V(f_{i,j,t}(\theta))$ and use its
   inverse as the weights matrix. The resulting estimator
   $\hat{\theta}_2$ is called the \emph{two-step} estimator.
@@ -104,13 +103,13 @@ These considerations lead to the following empirical strategy:
   these extra steps are unnecessary, since the two-step estimator is
   consistent and efficient; however, the iterated estimator often has
   better small-sample properties and should be independent of the
-  choice of $\Omega$ made at step 1. 
+  choice of $W$ made at step 1. 
 \end{enumerate}
 
 In the special case when the number of parameters $n$ is equal to the
 total number of orthogonality conditions $m \cdot p$, the GMM
 estimator $\hat{\theta}$ is the same for any choice of the weights
-matrix $\Omega$, so the first step is sufficient; in this case, the
+matrix $W$, so the first step is sufficient; in this case, the
 objective function is 0 at the minimum. 
 
 If, on the contrary, $n < m \cdot p$, the second step (or successive
@@ -152,19 +151,19 @@ previous section therefore specialize here to:
   x_t$; the orthogonality condition is interpretable as the
   requirement that the regressors should be uncorrelated with the
   disturbances;
-\item $\Omega$ can be any symmetric positive definite matrix, since
+\item $W$ can be any symmetric positive definite matrix, since
   the number of parameters equals the number of orthogonality
   conditions. Let's say we choose $I$.
-\item The function $F(\theta, \Omega)$ is in this case
+\item The function $F(\theta, W)$ is in this case
   \[
-    F(\theta, \Omega) = \left[ \frac{1}{T} \sum_{t=1}^T (\hat{u}_t x_t) \right]^2
+    F(\theta, W) = \left[ \frac{1}{T} \sum_{t=1}^T (\hat{u}_t x_t) \right]^2
   \]
   and it is easy to see why OLS and GMM coincide here: the GMM
   objective function has the same minimizer as the objective function
   of OLS, the residual sum of squares. Note, however, that the two
   functions are not equal to one another: at the minimum, $F(\theta,
-  \Omega) = 0$ while the minimized sum of squared residuals is zero
-  only in the special case of a perfect linear fit.  
+  W) = 0$ while the minimized sum of squared residuals is zero only in
+  the special case of a perfect linear fit.
 \end{itemize}
 
 The code snippet contained in Example~\ref{gmm-ols-ex} uses
@@ -273,6 +272,56 @@ end gmm
 \end{code}
 \end{script}
 
+\section{Covariance matrix options}
+\label{sec:gmm-vcv}
+
+The covariance matrix of the estimated parameters depends on the
+choice of $W$ through
+\begin{equation}
+  \label{eq:gmmest-vcv}
+    \hat{\Sigma} = (J'WJ)^{-1} J'W\Omega W J (J'WJ)^{-1}
+\end{equation}
+where $J$ is a Jacobian term
+\[
+  J_{ij} = \pder{\bar{f}_i}{\theta_j}
+\]
+and $\Omega$ is the long-run covariance matrix of the orthogonality
+conditions. 
+
+\app{Gretl} computes $J$ by numeric differentiation (there is no
+provision for specifying a user-supplied analytical expression for $J$
+at the moment). As for $\Omega$, a consistent estimate is needed. The
+simplest choice is the sample covariance matrix of the $f_t$s:
+\begin{equation}
+  \label{eq:gmm-hcvar}
+    \hat{\Omega}_0(\theta) = \frac{1}{T} \sum_{t=1}^T f_t(\theta) f_t(\theta)'
+\end{equation}
+
+This estimator is robust with respect to heteroskedasticity, but not
+with respect to autocorrelation.  A heteroskedasticity- and
+autocorrelation-consistent (HAC) variant can be obtained using the
+Bartlett kernel.  A univariate version of this is used in the
+context of the \texttt{lrvar()} function --- see
+equation (\ref{eq:scalar-lrvar}).  The multivariate version is set out
+in equation (\ref{eq:gmm-hacvar}).
+
+\begin{equation}
+  \label{eq:gmm-hacvar}
+    \hat{\Omega}_k(\theta) = \frac{1}{T} 
+    \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i f_t(\theta) f_{t-i}(\theta)'  \right] ,
+\end{equation}
+
+\app{Gretl} computes the HAC covariance matrix by default when a GMM
+model is estimated on time series data.  You can control the bandwith
+(that is, the value of $k$ in \ref{eq:gmm-hacvar}) using the
+\texttt{set} command.  You can also ask \app{gretl} \emph{not} to use
+the HAC version by saying
+%
+\begin{code}
+set force_hc on
+\end{code}
+%
+
 
 \section{A real example: the Consumption Based Asset Pricing Model}
 \label{sec:gmm-CBAPM}
@@ -314,8 +363,7 @@ If we are willing to believe that
 \item the economy as a whole can be represented as a single gigantic
   and immortal representative individual, and
 \item the function $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ is a
-  faithful representation of the representative individual's
-  preferences,
+  faithful representation of the individual's preferences,
 \end{itemize}
 then, setting $k=1$, equation (\ref{eq:gmm-CBAPM}) implies the
 following for any asset $j$:
@@ -341,19 +389,17 @@ an instrument.
   \label{gmm-CBAPM-script}
 \begin{scode}
 open hall.gdt
+set force_hc on
 
 scalar alpha = 0.5
 scalar delta = 0.5
 series e = 0
 
-set hac_lag 7
 list inst = const consrat(-1) consrat(-2) ewr(-1) ewr(-2)
 
 matrix V0 = 100000*I(nelem(inst))
 matrix Z = { inst }
 matrix V1 = $nobs*inv(Z'Z)
-
-set force_hc on
 
 gmm e = delta*ewr*consrat^(alpha-1) - 1
   orthog e ; inst
@@ -439,6 +485,12 @@ per capita consumption (services and nondurables) for the US, and
 constructed by averaging all the stocks in the NYSE.  The instrument
 set contains the constant and two lags of each variable.
 
+The command \texttt{set force\_hc on} on the second line of the script
+has the sole purpose of replicating the given example: as mentioned
+above, it forces \app{gretl} to compute the long-run variance of the
+orthogonality conditions according to equation (\ref{eq:gmm-hcvar})
+rather than (\ref{eq:gmm-hacvar}).
+
 We run \texttt{gmm} four times: one-step estimation for each of two
 initial weights matrices, then iterative estimation starting from each
 set of initial weights.  Since the number of orthogonality conditions
@@ -454,12 +506,6 @@ correct specification.  This is perhaps not surprising given the
 heroic assumptions required to move from the microeconomic principle
 in equation (\ref{eq:gmm-CBAPM}) to the aggregate system that is
 actually estimated.
-
-
-\section{Covariance matrix options}
-\label{sec:gmm-vcv}
-
-Talk about HC, HAC.
 
 
 \section{Caveats}
