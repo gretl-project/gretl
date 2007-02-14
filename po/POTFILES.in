@@ -39,6 +39,7 @@ lib/src/irfboot.c
 lib/src/kalman.c
 lib/src/laginfo.c
 lib/src/libset.c
+lib/src/matrix_extra.c
 lib/src/missing.c
 lib/src/modelprint.c
 lib/src/modelspec.c
