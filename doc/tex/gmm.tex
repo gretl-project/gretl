@@ -110,7 +110,18 @@ These considerations lead to the following empirical strategy:
 In the special case when the number of parameters $n$ is equal to the
 total number of orthogonality conditions $m \cdot p$, the GMM
 estimator $\hat{\theta}$ is the same for any choice of the weights
-matrix $\Omega$, so the first step is sufficient.
+matrix $\Omega$, so the first step is sufficient; in this case, the
+objective function is 0 at the minimum. 
+
+If, on the contrary, $n < m \cdot p$, the second step (or successive
+iterations) is needed to achieve efficiency, and the estimator so
+obtained can be very different, in finite samples, from the one-step
+estimator. Moreover, the value of the objective function at the
+minimum, suitably scaled by the number of observations, yields
+\emph{Hansen's J statistic}; this statistic can be interpreted as a
+test statistic that has a $\chi^2$ distribution with $m \cdot p -n $
+degrees of freedom under the null hypothesis of correct specification.
+See Davidson and MacKinnon (1993), section 17.6 for details.
 
 In the following sections we will show how these ideas are
 implemented in \app{gretl} through some examples.
@@ -126,7 +137,7 @@ of this familiar expression comes from the \emph{hypothesis} that the
 conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
 $u_t$ as $y_t - E(y_t|x_t)$.
 
-From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
+>From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
 The following orthogonality condition is therefore available:
 \begin{equation}
   \label{eq:oc-ols}
@@ -263,13 +274,178 @@ end gmm
 \end{script}
 
 
-\section{Now for a real example}
-\label{sec:gmm-real}
+\section{A real example: the Consumption Based Asset Pricing Model}
+\label{sec:gmm-CBAPM}
 
-Add a specifically GMM example here (Favero, Hall?).
+To illustrate \app{gretl}'s implementation of GMM, we will replicate
+the example given in Chapter 3 of Hall (2005). The model to estimate
+is a classic application of GMM, and provides an example of a case
+when orthogonality conditions do not stem from statistical
+considerations, but rather from economic theory.
 
-Talk about one-step, two-step, iterated?
+A rational individual who must allocate his income between consumption
+and investment in a financial asset must in fact choose the consumption
+path of his whole lifetime, since investment translates into future
+consumption. It can be shown that an optimal consumption path should
+satisfy the following condition:
+\begin{equation}
+  \label{eq:gmm-CBAPM}
+  p U'(c_t) = \delta^k E\left[ r_{t+k} U'(c_{t+k}) | \mathcal{F}_t
+  \right] ,
+\end{equation}
+where $p$ is the asset price, $U(\cdot)$ is the individual's utility
+function, $\delta$ is the individual's subjective discount rate and
+$r_{t+k}$ is the asset's rate of return between time $t$ and time
+$t+k$. $\mathcal{F}_t$ is the \emph{information set} at time $t$;
+equation (\ref{eq:gmm-CBAPM}) says that the utility ``lost'' at time
+$t$ by purchasing the asset instead of consumption goods must be
+matched by a corresponding increase in the (discounted) future utility
+of the consumption financed by the asset's return. Since the future is
+uncertain, the individual considers his expectation, conditional on
+what is known at the time when the choice is made.
 
+We have said nothing about the nature of the asset, so equation
+(\ref{eq:gmm-CBAPM}) should hold whatever asset we consider; hence, it
+is possible to build a system of equations like (\ref{eq:gmm-CBAPM})
+for each asset whose price we observe.
+
+\begin{script}[htbp]
+  \caption{Estimation of the Consumption Based Asset Pricing Model}
+  \label{gmm-CBAPM-script}
+\begin{scode}
+open hall.gdt
+
+scalar alpha = 0.5
+scalar delta = 0.5
+series e = 0
+
+set hac_lag 7
+list inst = const consrat(-1) consrat(-2) ewr(-1) ewr(-2)
+
+matrix V0 = 100000*I(nelem(inst))
+matrix Z = { inst }
+matrix V1 = $nobs*inv(Z'Z)
+
+set force_hc on
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm --iterate
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm --iterate
+\end{scode}
+%$
+\end{script}
+
+If we are willing to believe that
+\begin{itemize}
+\item the economy as a whole can be represented as a single gigantic
+  and immortal representative individual, and
+\item the function $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ is a
+  faithful representation of the representative individual's
+  preferences,
+\end{itemize}
+then, setting $k=1$, equation (\ref{eq:gmm-CBAPM}) implies the
+following for any asset $j$:
+\begin{equation}
+  \label{eq:gmm-CBAPM-est}
+  E\left[ \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} \bigg| \mathcal{F}_t \right] = 1 ,
+\end{equation}
+where $C_t$ is aggregate consumption and $\alpha$ and $\delta$ are the
+risk aversion and discount rate of the representative individual. In
+this case, it is easy to see that the ``deep'' parameters $\alpha$ and
+$\delta$ can be estimated via GMM by using
+\[
+  e_t = \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} - 1
+\]
+as the moment condition, while any variable known at time $t$ may serve as
+an instrument.
+
+\begin{script}[htbp]
+  \caption{Estimation of the Consumption Based Asset Pricing Model ---
+  output}
+  \label{gmm-CBAPM-out}
+\begin{scode}
+Model 1: 1-step GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -3.14475          6.84439      -0.459   0.64590
+  d                     0.999215         0.0121044    82.549  <0.00001 ***
+
+  GMM criterion = 2778.08
+
+Model 2: 1-step GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                 0.398194         2.26359       0.176   0.86036
+  d                     0.993180         0.00439367  226.048  <0.00001 ***
+
+  GMM criterion = 14.247
+
+Model 3: Iterated GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -0.344325         2.21458      -0.155   0.87644
+  d                     0.991566         0.00423620  234.070  <0.00001 ***
+
+  GMM criterion = 5491.78
+  J test: Chi-square(3) = 11.8103 (p-value 0.0081)
+
+Model 4: Iterated GMM estimates using the 465 observations 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  alpha                -0.344315         2.21359      -0.156   0.87639
+  d                     0.991566         0.00423469  234.153  <0.00001 ***
+
+  GMM criterion = 5491.78
+  J test: Chi-square(3) = 11.8103 (p-value 0.0081)
+\end{scode}
+\end{script}
+
+In the example code given in \ref{gmm-CBAPM-script}, we replicate
+selected portions of table 3.7 in Hall (2005). Part of the
+output is given in \ref{gmm-CBAPM-out}.
+
+In this example, the variable \texttt{consrat} is defined as the ratio
+of monthly consecutive real per capita consumption (services and
+nondurables) for the US, and \texttt{ewr} is the return--price ratio
+of a fictitious asset constructed by averaging all the stocks in the
+NYSE.  The instrument set contains the constant and two lags of each
+variable.  Since the number of orthogonality conditions (5) is greater
+than the number of estimated parameters (2), we can see that the
+choice of the weighting matrix does make a difference here in the
+one-step estimates (Models 1 and 2), while the iterated estimator
+converges to the same point (numerically) for both weights matrices
+(Models 3 and 4). Note, however, that the $J$ test leads to a
+rejection of the hypothesis of correct specification.
 
 \section{Covariance matrix options}
 \label{sec:gmm-vcv}
