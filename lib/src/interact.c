@@ -811,6 +811,9 @@ static int get_n_lags (LAGVAR *lv, int *incr)
     return nl;
 }
 
+/* see if we have a valid specification for automatically adding
+   lags of a given variable to the command list */
+
 int auto_lag_ok (const char *s, int *lpos,
 		 double ***pZ, DATAINFO *pdinfo,
 		 CMD *cmd)
@@ -868,12 +871,14 @@ int auto_lag_ok (const char *s, int *lpos,
 	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
 	    ok = 0;
 	} else {
-	    /* record info regarding the auto-generation of lags,
+	    /* Record info regarding the auto-generation of lags
 	       so that we'll be able to echo the command properly --
-	       see the echo_cmd() function. 
+	       see the echo_cmd() function.  Note: 'lagvar.v' is the
+	       "source" variable; 'lv' is the ID number of the
+	       generated lag.
 	    */
 	    cmd->list[llen++] = lv;
-	    cmd->err = add_to_list_lag_info(lagvar.v, order, lv, cmd);
+	    cmd->err = list_lag_info_add(lagvar.v, order, lv, llen - 1, cmd);
 	    if (cmd->err) {
 		ok = 0;
 	    }
@@ -2589,13 +2594,11 @@ static int
 cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 		    int gotsep, PRN *prn)
 {
-    int v = cmd->list[i];
-    int src, genpos;
+    int src, v = cmd->list[i];
     int bytes = 0;
 
-    if (v > 0 && 
-	(genpos = is_auto_generated_lag(v, gotsep, cmd->linfo)) > 0) {
-	if (is_first_lag(genpos, gotsep, cmd->linfo, &src)) {
+    if (v > 0 && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
+	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
 	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, 
 					  gotsep, prn);
 	} 
@@ -2614,12 +2617,11 @@ static int more_coming (const CMD *cmd, int i, int gotsep)
     } else if (cmd->linfo == NULL) {
 	return (i < cmd->list[0]);
     } else {
-	int j, v, pos;
+	int j;
 
 	for (j=i+1; j<=cmd->list[0]; j++) {
-	    v = cmd->list[j];
-	    pos = is_auto_generated_lag(v, gotsep, cmd->linfo);
-	    if (pos == 0 || is_first_lag(pos, gotsep, cmd->linfo, NULL)) {
+	    if (!is_auto_generated_lag(i, cmd->list, cmd->linfo) ||
+		is_first_lag(i, cmd->list, gotsep, cmd->linfo, NULL)) {
 		return 1;
 	    }
 	}
