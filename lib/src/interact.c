@@ -2590,14 +2590,30 @@ print_maybe_quoted_str (const char *s, PRN *prn)
     return ret;
 }
 
+static int is_real_model_cmd (const CMD *cmd)
+{
+    if (is_model_cmd(cmd->word) &&
+	strcmp(cmd->word, "omit") &&
+	strcmp(cmd->word, "add")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int 
 cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 		    int gotsep, PRN *prn)
 {
     int src, v = cmd->list[i];
+    int imin = 0;
     int bytes = 0;
 
-    if (v > 0 && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
+    if (is_real_model_cmd(cmd)) {
+	imin = 1;
+    }
+
+    if (v > 0 && i > imin && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
 	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
 	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, 
 					  gotsep, prn);

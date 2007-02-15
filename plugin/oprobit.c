@@ -434,14 +434,15 @@ numerical_ihess (op_container *OC, double *theta, gretl_matrix *invH)
 {
     double vij, *V;
     int i, j, k, npar = OC->k;
+    int err = 0;
 
     if (invH == NULL) {
 	return E_ALLOC;
     }
 
-    V = numerical_hessian(theta, npar, op_loglik, OC);
+    V = numerical_hessian(theta, npar, op_loglik, OC, &err);
     if (V == NULL) {
-	return E_ALLOC;
+	return err;
     }
 
     k = 0;

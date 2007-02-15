@@ -2049,7 +2049,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	if (!err && (s->opt & (OPT_H | OPT_R))) {
 	    /* doing Hessian or QML covariance matrix */
 	    s->hessvec = numerical_hessian(s->coeff, s->ncoeff, 
-					   get_mle_ll, s);
+					   get_mle_ll, s, &err);
 	}
     }
 
@@ -2961,7 +2961,8 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
    Allin Cottrell, June 2006.
 */
 
-double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
+double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
+			   int *err)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
@@ -2986,7 +2987,6 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
     int i, j, k, m, u;
-    int err = 0;
 
     c  = malloc(n * sizeof *c);
     h0 = malloc(n * sizeof *h0);
@@ -2996,19 +2996,19 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 
     if (c == NULL || h0 == NULL || h == NULL || 
 	Hd == NULL || D == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }
 
     /* vech form of variance matrix */
     V = gretl_column_vector_alloc(vn);
     if (V == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }	
 
     for (i=0; i<n; i++) {
-	h0[i] = d * b[i] + eps * (b[i] == 0.0);
+	h0[i] = (fabs(b[i]) < 0.01)? eps : d * b[i];
     }
 
     f0 = func(b, data);
@@ -3021,13 +3021,13 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 	    hess_b_adjust_i(c, b, h, n, i, 1);
 	    f1 = func(c, data);
 	    if (na(f1)) {
-		err = E_NAN;
+		*err = E_NAN;
 		goto bailout;
 	    }
 	    hess_b_adjust_i(c, b, h, n, i, -1);
 	    f2 = func(c, data);
 	    if (na(f2)) {
-		err = E_NAN;
+		*err = E_NAN;
 		goto bailout;
 	    }
 	    /* F'(i) */
@@ -3061,13 +3061,13 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 		    hess_b_adjust_ij(c, b, h, n, i, j, 1);
 		    f1 = func(c, data);
 		    if (na(f1)) {
-			err = E_NAN;
+			*err = E_NAN;
 			goto bailout;
 		    }
 		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
 		    f2 = func(c, data);
 		    if (na(f2)) {
-			err = E_NAN;
+			*err = E_NAN;
 			goto bailout;
 		    }
 		    /* cross-partial */
@@ -3097,8 +3097,8 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 	}
     }
 
-    err = gretl_invert_packed_symmetric_matrix(V);
-    if (!err) {
+    *err = gretl_invert_packed_symmetric_matrix(V);
+    if (!*err) {
 	vcv = gretl_matrix_steal_data(V);
     } else {
 	fprintf(stderr, "numerical hessian: failed to invert V\n");
@@ -3109,7 +3109,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data)
 
  bailout:
 
-    if (err == E_NAN) {
+    if (*err == E_NAN) {
 	fprintf(stderr, "Got E_NAN in numerical_hessian()\n");
     }
 

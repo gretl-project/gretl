@@ -1241,7 +1241,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} else if (1 || getenv("ARMA_HESSIAN")) { /* Hello! Testing */
 	    kalman_do_ma_check = 0;
-	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K);
+	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	    kalman_do_ma_check = 1;
 	}
     }

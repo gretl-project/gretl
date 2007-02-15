@@ -629,14 +629,15 @@ static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
 {
     double vij, *V;
     int i, j, k, npar = DH->k;
+    int err = 0;
 
     if (invH == NULL) {
 	return E_ALLOC;
     }
 
-    V = numerical_hessian(theta, npar, loglik, DH);
+    V = numerical_hessian(theta, npar, loglik, DH, &err);
     if (V == NULL) {
-	return E_ALLOC;
+	return err;
     }
 
     k = 0;
