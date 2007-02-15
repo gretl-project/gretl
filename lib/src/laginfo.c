@@ -5,12 +5,12 @@
 */
 
 struct Laginfo_ {
-    int *reflist;
-    int *genlist;
-    int **lag_lists;
+    int *reflist;    /* list of distinct var for which we'll generate lags */
+    int *genlist;    /* list of IDs for lags to be generated */
+    int **lag_lists; /* list of lags to be generated, per var */
 };
 
-#undef LLDEBUG
+#define LLDEBUG 0
 
 static Laginfo *list_lag_info_new (void)
 {
@@ -54,8 +54,6 @@ get_lag_list_by_varnum (int v, const Laginfo *linfo)
     int *list = NULL;
     int i;
 
-    printlist(linfo->reflist, "linfo->reflist");
-
     if (linfo != NULL && linfo->reflist != NULL) {
 	for (i=1; i<=linfo->reflist[0]; i++) {
 	    if (linfo->reflist[i] == v) {
@@ -68,13 +66,20 @@ get_lag_list_by_varnum (int v, const Laginfo *linfo)
     return list;
 }
 
-static int add_lagv_to_genlist (int lv, Laginfo *linfo)
+static int add_lagv_to_genlist (int lv, int spos, Laginfo *linfo)
 {
     int *genlist;
+    int addsep = 0;
+    int gsep = 0;
     int n, err = 0;
 
     if (linfo->genlist != NULL) {
+	gsep = gretl_list_separator_position(linfo->genlist);
 	n = linfo->genlist[0] + 2;
+	if (spos && !gsep) {
+	    addsep = 1;
+	    n++;
+	}
     } else {
 	n = 2;
     }
@@ -82,6 +87,9 @@ static int add_lagv_to_genlist (int lv, Laginfo *linfo)
     genlist = realloc(linfo->genlist, n * sizeof *genlist);
     if (genlist != NULL) {
 	linfo->genlist = genlist;
+	if (addsep) {
+	    genlist[n - 2] = LISTSEP;
+	} 
 	genlist[n - 1] = lv;
 	genlist[0] = n - 1;
     } else {
@@ -91,7 +99,8 @@ static int add_lagv_to_genlist (int lv, Laginfo *linfo)
     return err;
 }
 
-static int add_lag_to_laglist (int i, int lag, Laginfo *linfo)
+static int 
+add_lag_to_laglist (int i, int lag, int spos, Laginfo *linfo)
 {
     int err = 0;
 
@@ -103,12 +112,22 @@ static int add_lag_to_laglist (int i, int lag, Laginfo *linfo)
 	    err = E_ALLOC;
 	}
     } else {
+	int lspos = gretl_list_separator_position(linfo->lag_lists[i]);
 	int n = linfo->lag_lists[i][0] + 2;
+	int addsep = 0;
 	int *laglist;
+
+	if (spos && !lspos) {
+	    addsep = 1;
+	    n++;
+	}
 
 	laglist = realloc(linfo->lag_lists[i], n * sizeof *laglist);
 	if (laglist != NULL) {
 	    linfo->lag_lists[i] = laglist;
+	    if (addsep) {
+		laglist[n - 2] = LISTSEP;
+	    } 
 	    laglist[n - 1] = lag;
 	    laglist[0] = n - 1;
 	} else {
@@ -170,6 +189,7 @@ static int laginfo_expand_reflist (int n, int v, Laginfo *linfo)
 
 static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
 {
+    int spos = gretl_list_separator_position(cmd->list);
     int add_to_reflist = 0;
     int nl, llnum = 0, err = 0;
 
@@ -207,7 +227,7 @@ static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
     }
 
     if (!err) {
-	err = add_lagv_to_genlist(lagv, cmd->linfo);
+	err = add_lagv_to_genlist(lagv, spos, cmd->linfo);
 #if LLDEBUG
 	fprintf(stderr, " add_lagv_to_genlist: lagv = %d, err = %d\n", 
 		lagv, err);
@@ -222,18 +242,19 @@ static int add_to_list_lag_info (int v, int lag, int lagv, CMD *cmd)
 	fprintf(stderr, " doing add_lag_to_laglist(%d, %d, %p)\n", 
 		llnum, lag, (void *) cmd->linfo);
 #endif
-	err = add_lag_to_laglist(llnum, lag, cmd->linfo);
+	err = add_lag_to_laglist(llnum, lag, spos, cmd->linfo);
     }
 
     return err;
 }
 
-static int var_lags_contiguous (const int *laglist)
+static int 
+var_lags_contiguous (const int *laglist, int lstart, int lmax)
 {
     int i, ret = 1;
 
     /* actual lags */
-    for (i=2; i<=laglist[0]; i++) {
+    for (i=lstart+1; i<=lmax; i++) {
 	if (laglist[i] != laglist[i-1] + 1) {
 	    ret = 0;
 	    break;
@@ -244,7 +265,7 @@ static int var_lags_contiguous (const int *laglist)
 	/* check for contiguous leads? */
 	int test = 1;
 
-	for (i=2; i<=laglist[0]; i++) {
+	for (i=lstart+1; i<=lmax; i++) {
 	    if (laglist[i] != laglist[i-1] - 1) {
 		test = 0;
 		break;
@@ -265,24 +286,46 @@ static const char *lag_sign_str (int lag)
     else return "";
 }
 
+static void 
+get_lstart_lmax (const int *llist, int gotsep,
+		 int *lstart, int *lmax)
+{
+    int spos = gretl_list_separator_position(llist);
+
+    if (spos == 0) {
+	*lstart = 1;
+	*lmax = llist[0];
+    } else if (!gotsep) {
+	*lstart = 1;
+	*lmax = spos - 1;
+    } else {
+	*lstart = spos + 1;
+	*lmax = llist[0];
+    }
+}
+
 /* returns number of bytes printed */
 
-static int print_var_lags (const int *laglist, PRN *prn)
+static int print_var_lags (const int *laglist, int gotsep,
+			   PRN *prn)
 {
     char tmp[32];
     int lag, lsign;
-    int lmax = laglist[0];
-    int i, ret = 0;
-    
-    if (lmax == 1) {
-	lsign = laglist[1];
-	lag = abs(laglist[1]);
+    int lstart, lmax;
+    int i, n, ret = 0;
+
+    get_lstart_lmax(laglist, gotsep, &lstart, &lmax);
+    n = lmax - lstart + 1;
+
+    if (n == 1) {
+	lsign = laglist[lstart];
+	lag = abs(laglist[lstart]);
 	sprintf(tmp, "(%s%d)", lag_sign_str(lsign), lag);
 	ret += pputs(prn, tmp);	
-    } else if (var_lags_contiguous(laglist)) {
+    } else if (var_lags_contiguous(laglist, lstart, lmax)) {
 	/* first lag */
-	lsign = laglist[1];
-	lag = abs(laglist[1]);
+	lsign = laglist[lstart];
+	lag = abs(laglist[lstart]);
 	sprintf(tmp, "(%s%d to ", lag_sign_str(lsign), lag);
 	ret += pputs(prn, tmp);	
 	/* last lag */ 
@@ -293,7 +336,7 @@ static int print_var_lags (const int *laglist, PRN *prn)
     } else {
 	pputc(prn, '(');
 	ret++;
-	for (i=1; i<=lmax; i++) {
+	for (i=lstart; i<=lmax; i++) {
 	    lsign = laglist[i];
 	    lag = fabs(laglist[i]);
 	    sprintf(tmp, "%s%d", lag_sign_str(lsign), lag);
@@ -313,27 +356,47 @@ static int print_var_lags (const int *laglist, PRN *prn)
 static int 
 print_lags_by_varnum (int v, const Laginfo *linfo, 
 		      const DATAINFO *pdinfo, 
-		      PRN *prn)
+		      int gotsep, PRN *prn)
 {
     const int *laglist = NULL;
     int ret = 0;
+
+#if LLDEBUG
+    fprintf(stderr, "print_lags_by_varnum: v = %d, gotsep = %d\n",
+	    v, gotsep);
+#endif
 
     laglist = get_lag_list_by_varnum(v, linfo);
     if (laglist != NULL) {
 	pputc(prn, ' ');
 	ret = 1 + pputs(prn, pdinfo->varname[v]);
-	ret += print_var_lags(laglist, prn);
+	ret += print_var_lags(laglist, gotsep, prn);
     } 
 
     return ret;
 }
 
-static int is_auto_generated_lag (int v, const Laginfo *linfo)
+static int 
+is_auto_generated_lag (int v, int sep, const Laginfo *linfo)
 {
-    int i, ret = 0;
+    int ret = 0;
+
+#if LLDEBUG
+    printlist(linfo->genlist, "genlist, in is_auto_generated_lag");
+#endif
 
     if (linfo != NULL && linfo->genlist != NULL) {
-	for (i=1; i<=linfo->genlist[0]; i++) {
+	int gsep = gretl_list_separator_position(linfo->genlist);
+	int gmax = linfo->genlist[0];
+	int i, gmin = 1;
+
+	if (sep) {
+	    gmin = gsep + 1;
+	} else if (gsep) {
+	    gmax = gsep - 1;
+	}
+
+	for (i=gmin; i<=gmax; i++) {
 	    if (v == linfo->genlist[i]) {
 		ret = i;
 		break;
@@ -341,21 +404,28 @@ static int is_auto_generated_lag (int v, const Laginfo *linfo)
 	}
     }
 
+#if LLDEBUG
+    fprintf(stderr, "is_auto_generated_lag: v = %d, sep = %d, ret = %d\n", 
+	    v, sep, ret);
+#endif
+
     return ret;
 }
 
-static int is_first_lag (int v, const Laginfo *linfo, int *src)
+static int 
+is_first_lag (int v, int sep, const Laginfo *linfo, int *src)
 {
     int i, j, k = 0, ret = 0;
 
-    for (i=0; i<linfo->reflist[0]; i++) {
-	for (j=0; j<linfo->lag_lists[i][0]; j++) {
+    for (i=1; i<=linfo->reflist[0]; i++) {
+	for (j=1; j<=linfo->lag_lists[i-1][0]; j++) {
 	    k++;
 	    if (k == v) {
-		if (j == 0) {
+		if ((!sep && j == 1) || 
+		    (sep && linfo->lag_lists[i-1][j-1] == LISTSEP)) {
 		    ret = 1;
 		    if (src != NULL) {
-			*src = linfo->reflist[i+1];
+			*src = linfo->reflist[i];
 		    }
 		}
 		break;

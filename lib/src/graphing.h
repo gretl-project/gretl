@@ -27,31 +27,28 @@
 #define GRAPH_NO_DATA -999
 
 typedef enum {
-    GP_IMPULSES   = 1 << 0,  /* use impulses for plotting */
-    GP_LINES      = 1 << 1,  /* force use of lines for plotting */
-    GP_RESIDS     = 1 << 2,  /* doing residual plot */
-    GP_FA         = 1 << 3,  /* doing fitted/actual plot */
-    GP_DUMMY      = 1 << 4,  /* using a dummy for separation */
-    GP_BATCH      = 1 << 5,  /* working in batch mode */
-    GP_GUI        = 1 << 6,  /* called from GUI context */
-    GP_OLS_OMIT   = 1 << 7,  /* Don't draw fitted line on graph */
-    GP_DATA_STYLE = 1 << 8,  /* data style is set by user */
-    GP_FILE       = 1 << 9,  /* send output to named file */
-    GP_IDX        = 1 << 10, /* plot against time or obs index */
-} GnuplotFlags;
-
-typedef enum {
-    GPTSPEC_TS             = 1 << 0,
-    GPTSPEC_Y2AXIS         = 1 << 1,
-    GPTSPEC_AUTO_OLS       = 1 << 2,
-    GPTSPEC_OLS_HIDDEN     = 1 << 3,
-    GPTSPEC_MINIMAL_BORDER = 1 << 4,
-    GPTSPEC_PNG_OUTPUT     = 1 << 5,
-    GPTSPEC_ALL_MARKERS    = 1 << 6,
-    GPTSPEC_ALL_MARKERS_OK = 1 << 7,
-    GPTSPEC_NO_BORDER      = 1 << 8,
-    GPTSPEC_LETTERBOX      = 1 << 9
-} PlotSpecFlags; 
+    GPT_IMPULSES       = 1 << 0,  /* use impulses for plotting */
+    GPT_LINES          = 1 << 1,  /* force use of lines for plotting */
+    GPT_RESIDS         = 1 << 2,  /* doing residual plot */
+    GPT_FA             = 1 << 3,  /* doing fitted/actual plot */
+    GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
+    GPT_BATCH          = 1 << 5,  /* working in batch mode */
+    GPT_GUI            = 1 << 6,  /* called from GUI context */
+    GPT_OLS_OMIT       = 1 << 7,  /* Don't draw fitted line on graph */
+    GPT_DATA_STYLE     = 1 << 8,  /* data style is set by user */
+    GPT_FILE           = 1 << 9,  /* send output to named file */
+    GPT_IDX            = 1 << 10, /* plot against time or obs index */
+    GPT_TS             = 1 << 11,
+    GPT_Y2AXIS         = 1 << 12,
+    GPT_AUTO_OLS       = 1 << 13,
+    GPT_OLS_HIDDEN     = 1 << 14,
+    GPT_MINIMAL_BORDER = 1 << 15,
+    GPT_PNG_OUTPUT     = 1 << 16,
+    GPT_ALL_MARKERS    = 1 << 17,
+    GPT_ALL_MARKERS_OK = 1 << 18,
+    GPT_NO_BORDER      = 1 << 19,
+    GPT_LETTERBOX      = 1 << 20
+} GptFlags; 
 
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
@@ -116,7 +113,7 @@ typedef struct {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
-    PlotSpecFlags flags;        /* bitwise OR of options */
+    GptFlags flags;            /* bitwise OR of options */
     int nobs;                  /* number of observations */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
@@ -143,12 +140,12 @@ typedef struct {
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
 
-#define set_png_output(p) (p->flags |= GPTSPEC_PNG_OUTPUT)
-#define get_png_output(p) (p->flags & GPTSPEC_PNG_OUTPUT) 
+#define set_png_output(p) (p->flags |= GPT_PNG_OUTPUT)
+#define get_png_output(p) (p->flags & GPT_PNG_OUTPUT) 
     
 /* functions follow */
 
-const char *get_gretl_png_term_line (PlotType ptype, PlotSpecFlags flags);
+const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
@@ -160,19 +157,19 @@ PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
 
-GnuplotFlags gp_flags (int batch, gretlopt opt);
+GptFlags gp_flags (int batch, gretlopt opt);
 
 int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, GnuplotFlags flags);
+	     int *plot_count, GptFlags flags);
 
 int multi_scatters (const int *list, const double **Z,
 		    const DATAINFO *pdinfo, 
-		    int *plot_count, GnuplotFlags flags);
+		    int *plot_count, GptFlags flags);
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
-		int *plot_count, GnuplotFlags flags);
+		int *plot_count, GptFlags flags);
 
 int plot_freq (FreqDist *freq, DistCode dist);
 

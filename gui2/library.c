@@ -4297,7 +4297,7 @@ void add_model_stat (MODEL *pmod, int which)
 
 void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 {
-    GnuplotFlags flags = 0;
+    GptFlags flags = 0;
     int plotlist[4], lines[1] = {0};
     int err, origv, ts;
     windata_t *vwin = (windata_t *) p;
@@ -4335,9 +4335,9 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 	ginfo = datainfo;
     }    
 
-    flags = GP_GUI | GP_RESIDS;
+    flags = GPT_GUI | GPT_RESIDS;
     if (pdum) {
-	flags |= GP_DUMMY;
+	flags |= GPT_DUMMY;
     }
 
     ts = dataset_is_time_series(ginfo);
@@ -4357,7 +4357,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 	plotlist[2] = xvar;
     } else {    
 	/* plot against obs index or time */
-	flags |= GP_IDX;
+	flags |= GPT_IDX;
 	lines[0] = (ts)? 1 : 0;
     } 
 
@@ -4381,7 +4381,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 
 void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 {
-    GnuplotFlags flags = GP_GUI | GP_FA;
+    GptFlags flags = GPT_GUI | GPT_FA;
     int plotlist[4], lines[2] = {0};
     int err, origv;
     windata_t *vwin = (windata_t *) p;
@@ -4448,7 +4448,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	int ts = dataset_is_time_series(ginfo);
 
 	plotlist[0] -= 1;
-	flags |= GP_IDX;
+	flags |= GPT_IDX;
 	lines[0] = (ts)? 1 : 0; 
 	lines[1] = (ts)? 1 : 0;
     } 
@@ -4491,7 +4491,7 @@ void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
     list[3] = pmod->list[1];
 
     err = gnuplot_3d(list, NULL, gZ, ginfo,
-		     &plot_count, GP_GUI | GP_FA);
+		     &plot_count, GPT_GUI | GPT_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -4752,7 +4752,7 @@ void do_graph_var (int varnum)
     }
 
     err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GP_GUI | GP_IDX);
+		  &plot_count, GPT_GUI | GPT_IDX);
 
     gui_graph_handler(err);
 }
@@ -4781,14 +4781,14 @@ int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    GnuplotFlags flags = 0;
+    GptFlags flags = 0;
     int err; 
 
     if (buf == NULL) return 1;
 
     if (opt & OPT_L) {
 	gretl_command_sprintf("scatters %s --with-lines", buf);
-	flags |= GP_LINES;
+	flags |= GPT_LINES;
     } else {
 	gretl_command_sprintf("scatters %s", buf);
     }
@@ -4862,7 +4862,7 @@ int do_dummy_graph (selector *sr)
     }
 
     err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GP_GUI | GP_DUMMY);
+		  &plot_count, GPT_GUI | GPT_DUMMY);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4875,7 +4875,7 @@ int do_dummy_graph (selector *sr)
 
 int do_graph_from_selector (selector *sr)
 {
-    GnuplotFlags flags = GP_GUI;
+    GptFlags flags = GPT_GUI;
     const char *buf = selector_list(sr);
     int *lines = NULL;
     gint i, err;
@@ -4888,7 +4888,7 @@ int do_graph_from_selector (selector *sr)
 
     if (selector_code(sr) == GR_PLOT) { 
         gretl_command_strcat(" --time-series");
-	flags |= GP_IDX;
+	flags |= GPT_IDX;
     }
 
     if (check_and_record_command()) {
@@ -4896,7 +4896,7 @@ int do_graph_from_selector (selector *sr)
     }
 
     if (imp) {
-	flags |= GP_IMPULSES;
+	flags |= GPT_IMPULSES;
     } else {
 	lines = mymalloc(libcmd.list[0] * sizeof *lines);
 	if (lines == NULL) {
@@ -5004,7 +5004,7 @@ int do_splot_from_selector (selector *sr)
     }
 
     err = gnuplot_3d(libcmd.list, NULL, &Z, datainfo,
-		     &plot_count, GP_GUI);
+		     &plot_count, GPT_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -5068,7 +5068,7 @@ static int maybe_reorder_list (char *liststr)
 
 void plot_from_selection (gpointer p, guint action, GtkWidget *w)
 {
-    GnuplotFlags flags = GP_GUI;
+    GptFlags flags = GPT_GUI;
     char *liststr;
     int *lines = NULL;
     gint i, err;
@@ -5082,7 +5082,7 @@ void plot_from_selection (gpointer p, guint action, GtkWidget *w)
 	err = maybe_reorder_list(liststr);
 	if (err) return;
     } else if (action == GR_PLOT) {
-	flags |= GP_IDX;
+	flags |= GPT_IDX;
     }
 
     gretl_command_sprintf("gnuplot%s%s", liststr, 
@@ -6317,7 +6317,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     int grbatch = 0;
     char runfile[MAXLEN];
     int console_run = 0;
-    GnuplotFlags plotflags = 0;
+    GptFlags plotflags = 0;
     int k, err = 0;
 
 #if CMD_DEBUG

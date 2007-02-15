@@ -280,7 +280,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     entry_to_gp_string(GTK_COMBO(keycombo)->entry, spec->keyspec, 
 		       sizeof spec->keyspec);
 
-    spec->flags &= ~GPTSPEC_Y2AXIS;
+    spec->flags &= ~GPT_Y2AXIS;
 
     if (y2_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(y2_check)->active) {
@@ -299,12 +299,12 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	    spec->lines[i].yaxis = 2;	
 	}
 	if (spec->lines[i].yaxis == 2) {
-	    spec->flags |= GPTSPEC_Y2AXIS;
+	    spec->flags |= GPT_Y2AXIS;
 	}
     }
 
     if (spec->code == PLOT_REGULAR) {
-	k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
+	k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (axis_range[i].isauto != NULL) {
 		if (GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active) {
@@ -359,17 +359,17 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && border_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(border_check)->active) {
-	    spec->flags &= ~GPTSPEC_MINIMAL_BORDER;
+	    spec->flags &= ~GPT_MINIMAL_BORDER;
 	} else {
-	    spec->flags |= GPTSPEC_MINIMAL_BORDER;
+	    spec->flags |= GPT_MINIMAL_BORDER;
 	}
     } 
 
     if (!err && fitline_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(fitline_check)->active) {
-	    spec->flags |= GPTSPEC_OLS_HIDDEN;
+	    spec->flags |= GPT_OLS_HIDDEN;
 	} else {
-	    spec->flags &= ~GPTSPEC_OLS_HIDDEN;
+	    spec->flags &= ~GPT_OLS_HIDDEN;
 	}
     }
 
@@ -377,9 +377,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	if (GTK_TOGGLE_BUTTON(markers_check)->active) {
 	    free(spec->labeled);
 	    spec->labeled = NULL;
-	    spec->flags |= GPTSPEC_ALL_MARKERS;
+	    spec->flags |= GPT_ALL_MARKERS;
 	} else {
-	    spec->flags &= ~GPTSPEC_ALL_MARKERS;
+	    spec->flags &= ~GPT_ALL_MARKERS;
 	}
     }
 
@@ -407,7 +407,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	} else { 
 	    png_plot *plot = (png_plot *) spec->ptr;
 
-	    set_plot_has_y2_axis(plot, spec->flags & GPTSPEC_Y2AXIS);
+	    set_plot_has_y2_axis(plot, spec->flags & GPT_Y2AXIS);
 	    redisplay_edited_png(plot);
 	}
 	session_changed(1);
@@ -724,14 +724,14 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(keycombo);	
 
     /* give option of removing top & right border */
-    if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
+    if (!(spec->flags & GPT_Y2AXIS)) { 
 	y2_check = NULL;
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	border_check = gtk_check_button_new_with_label(_("Show full border"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  border_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	if (!(spec->flags & GPTSPEC_MINIMAL_BORDER)) {
+	if (!(spec->flags & GPT_MINIMAL_BORDER)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
 					 TRUE);
 	}	
@@ -751,13 +751,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* give option of removing an auto-fitted line */
-    if (spec->flags & GPTSPEC_AUTO_OLS) { 
+    if (spec->flags & GPT_AUTO_OLS) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	fitline_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  fitline_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	if (spec->flags & GPTSPEC_OLS_HIDDEN) {
+	if (spec->flags & GPT_OLS_HIDDEN) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fitline_check),
 					 TRUE);
 	}	
@@ -767,13 +767,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* give option of showing all case markers */
-    if (spec->flags & GPTSPEC_ALL_MARKERS_OK) { 
+    if (spec->flags & GPT_ALL_MARKERS_OK) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	markers_check = gtk_check_button_new_with_label(_("Show all data labels"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  markers_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	if (spec->flags & GPTSPEC_ALL_MARKERS) {
+	if (spec->flags & GPT_ALL_MARKERS) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(markers_check),
 					 TRUE);
 	}	
@@ -943,7 +943,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     GList *yaxis_loc = NULL;
     int do_scale_axis = 0;
 
-    if (spec->code == PLOT_REGULAR && (spec->flags & GPTSPEC_TS)) {
+    if (spec->code == PLOT_REGULAR && (spec->flags & GPT_TS)) {
 	do_scale_axis = 1;
     }
 
@@ -951,7 +951,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	plot_types = g_list_append(plot_types, "boxes");
     }
 
-    if (spec->flags & GPTSPEC_TS) {
+    if (spec->flags & GPT_TS) {
 	plot_types = g_list_append(plot_types, "lines");
 	plot_types = g_list_append(plot_types, "points");
     } else {
@@ -1453,7 +1453,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_XY(notebook, spec, 0);
     gpt_tab_XY(notebook, spec, 1);
 
-    if (spec->flags & GPTSPEC_Y2AXIS) {
+    if (spec->flags & GPT_Y2AXIS) {
 	gpt_tab_XY(notebook, spec, 2);
     }
 

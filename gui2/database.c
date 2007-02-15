@@ -199,7 +199,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     }
 
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
-		  &plot_count, GP_GUI | GP_IDX);
+		  &plot_count, GPT_GUI | GPT_IDX);
 
     if (err) {
 	errbox(_("gnuplot command failed"));

@@ -2587,18 +2587,17 @@ print_maybe_quoted_str (const char *s, PRN *prn)
 
 static int 
 cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
-		    PRN *prn)
+		    int gotsep, PRN *prn)
 {
     int v = cmd->list[i];
     int src, genpos;
     int bytes = 0;
 
-    /* FIXME TSLS (and any others like it?) */
-
-    if (v > 0 && cmd->ci != TSLS && 
-	(genpos = is_auto_generated_lag(v, cmd->linfo)) > 0) {
-	if (is_first_lag(genpos, cmd->linfo, &src)) {
-	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, prn);
+    if (v > 0 && 
+	(genpos = is_auto_generated_lag(v, gotsep, cmd->linfo)) > 0) {
+	if (is_first_lag(genpos, gotsep, cmd->linfo, &src)) {
+	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, 
+					  gotsep, prn);
 	} 
     } else {
 	pputc(prn, ' ');
@@ -2608,7 +2607,7 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
     return bytes;
 }
 
-static int more_coming (const CMD *cmd, int i)
+static int more_coming (const CMD *cmd, int i, int gotsep)
 {
     if (cmd->opt && cmd->ci != REMEMBER) {
 	return 1;
@@ -2619,8 +2618,8 @@ static int more_coming (const CMD *cmd, int i)
 
 	for (j=i+1; j<=cmd->list[0]; j++) {
 	    v = cmd->list[j];
-	    pos = is_auto_generated_lag(v, cmd->linfo);
-	    if (pos == 0 || is_first_lag(pos, cmd->linfo, NULL)) {
+	    pos = is_auto_generated_lag(v, gotsep, cmd->linfo);
+	    if (pos == 0 || is_first_lag(pos, gotsep, cmd->linfo, NULL)) {
 		return 1;
 	    }
 	}
@@ -2714,13 +2713,13 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
 
 	if (use_varnames) {
-	    *plen += cmd_list_print_var(cmd, i, pdinfo, prn);
+	    *plen += cmd_list_print_var(cmd, i, pdinfo, gotsep, prn);
 	} else {
 	    sprintf(numstr, " %d", cmd->list[i]);
 	    *plen += pputs(prn, numstr);
 	}
 
-	if (*plen > TESTLEN && more_coming(cmd, i)) {
+	if (*plen > TESTLEN && more_coming(cmd, i, gotsep)) {
 	    pputs(prn, " \\\n "); 
 	    *plen = 1;
 	}

@@ -92,7 +92,7 @@ enum {
 #define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
-#define plot_show_all_markers(p)    (p->spec->flags & GPTSPEC_ALL_MARKERS)
+#define plot_show_all_markers(p)    (p->spec->flags & GPT_ALL_MARKERS)
 
 enum {
     PNG_START,
@@ -346,7 +346,7 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		printit = 0;
 	    } else if (set_output_line(fline)) {
 		printit = 0;
-	    } else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
+	    } else if (spec != NULL && (spec->flags & GPT_OLS_HIDDEN)
 		       && is_auto_ols_string(fline)) {
 		printit = 0;
 	    }
@@ -855,10 +855,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     }
 
     if (strcmp(variable, "y2tics") == 0) {
-	spec->flags |= GPTSPEC_Y2AXIS;
+	spec->flags |= GPT_Y2AXIS;
 	return 0;
     } else if (strcmp(variable, "border 3") == 0) {
-	spec->flags |= GPTSPEC_MINIMAL_BORDER;
+	spec->flags |= GPT_MINIMAL_BORDER;
 	return 0;
     }    
 
@@ -1060,14 +1060,14 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
 	spec->lines[0].ncols == 2 &&
 	spec->lines[1].ncols == 0 &&
 	spec->n_markers > 0) {
-	spec->flags |= GPTSPEC_ALL_MARKERS_OK;
+	spec->flags |= GPT_ALL_MARKERS_OK;
 #if GPDEBUG > 1
-	fprintf(stderr, "set GPTSPEC_ALL_MARKERS_OK\n");
+	fprintf(stderr, "set GPT_ALL_MARKERS_OK\n");
 #endif
     } else {
-	spec->flags &= ~GPTSPEC_ALL_MARKERS_OK;
+	spec->flags &= ~GPT_ALL_MARKERS_OK;
 #if GPDEBUG > 1
-	fprintf(stderr, "unset GPTSPEC_ALL_MARKERS_OK\n");
+	fprintf(stderr, "unset GPT_ALL_MARKERS_OK\n");
 #endif
     }
 }
@@ -1226,9 +1226,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    if (sscanf(gpline, "# timeseries %d", &pd)) {
 		*plot_pd = pd;
 	    }
-	    spec->flags |= GPTSPEC_TS;
+	    spec->flags |= GPT_TS;
 	    if (strstr(gpline, "letterbox")) {
-		spec->flags |= GPTSPEC_LETTERBOX;
+		spec->flags |= GPT_LETTERBOX;
 	    }
 	    continue;
 	}
@@ -1264,12 +1264,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	}
 
 	if (strstr(gpline, "automatic OLS")) {
-	    spec->flags |= GPTSPEC_AUTO_OLS;
+	    spec->flags |= GPT_AUTO_OLS;
 	    continue;
 	}
 
 	if (strstr(gpline, "printing data labels")) {
-	    spec->flags |= GPTSPEC_ALL_MARKERS;
+	    spec->flags |= GPT_ALL_MARKERS;
 	    continue;
 	}	
 
@@ -1750,7 +1750,7 @@ static void set_plot_format_flags (png_plot *plot)
     if (!string_is_blank(plot->spec->titles[3])) {
 	plot->format |= PLOT_Y2LABEL;
     }
-    if (plot->spec->flags & GPTSPEC_Y2AXIS) {
+    if (plot->spec->flags & GPT_Y2AXIS) {
 	plot->format |= PLOT_Y2AXIS;
     }
 }
@@ -1919,7 +1919,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(HURST));
     } else if (!strcmp(item, _("Freeze data labels"))) {
-	plot->spec->flags |= GPTSPEC_ALL_MARKERS;
+	plot->spec->flags |= GPT_ALL_MARKERS;
 	redisplay_edited_png(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
 	zoom_unzoom_png(plot, PNG_REDISPLAY);
@@ -2687,15 +2687,17 @@ static int get_plot_ranges (png_plot *plot)
 		" xmin=%d xmax=%d ymin=%d ymax=%d\n", 
 		plot->pixel_xmin, plot->pixel_xmax,
 		plot->pixel_ymin, plot->pixel_ymax);
+	fprintf(stderr, "using px_height %d, px_width %d\n",
+		plot->pixel_height, plot->pixel_width);
 # endif
     } else {
 	fprintf(stderr, "get_png_bounds_info(): failed\n");
     }
 #endif /* PNG_COMMENTS */
 
-    /* If got_x = 0 at this point, we didn't an x-range out of
-       the gnuplot source file OR the PNG file, so we might as
-       well give up.
+    /* If got_x = 0 at this point, we didn't get an x-range out of the
+       gnuplot source file OR the PNG file, so we might as well give
+       up.
     */
 
     if (got_x) {
@@ -2820,7 +2822,6 @@ png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     } else if (cant_edit(plot->spec->code)) {
 	if (plot->spec->n_markers > 0) {
 	    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM);
-	    get_plot_ranges(plot);
 	    if (polar) {
 		plot->format |= PLOT_POLAR;
 	    }
@@ -2829,17 +2830,21 @@ png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	}
     } else {
 	set_plot_format_flags(plot);
-	get_plot_ranges(plot);
     } 
 
     if (plot->spec->code == PLOT_VAR_ROOTS) {
 	plot->pixel_width = plot->pixel_height;
     }
 
-    if (plot->spec->flags & GPTSPEC_LETTERBOX) {
+    if (plot->spec->flags & GPT_LETTERBOX) {
 	plot->pixel_width = 680;
 	plot->pixel_height = 400;
     }
+
+    if (!err) {
+	get_plot_ranges(plot);
+    }
+	
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
@@ -2862,7 +2867,7 @@ png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
     gtk_widget_show(canvas_hbox);
 
-    /*  eventbox and hbox for status area  */
+    /* eventbox and hbox for status area  */
     plot->statusarea = gtk_event_box_new();
     gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
 
