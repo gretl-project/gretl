@@ -828,6 +828,7 @@ void lex (parser *p)
 	    parser_getc(p);
 	    return;
         case '&': 
+#if 0 /* for later, but modified */
 	    if (unary_context(p)) {
 		p->sym = U_ADDR;
 		parser_getc(p);
@@ -840,6 +841,14 @@ void lex (parser *p)
 	    } else {
 		deprecation_note(p);
 	    }
+#else
+	    p->sym = B_AND;
+	    parser_getc(p);
+	    if (p->ch == '&') {
+		/* make "&&" equal to "&" */
+		parser_getc(p);
+	    }
+#endif
 	    return;
         case '|': 
 	    p->sym = (matrix_gen(p))? MRCAT : B_OR;
