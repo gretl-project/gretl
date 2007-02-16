@@ -799,43 +799,66 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, int *reglist)
     return 0;
 }
 
-static void compute_first_stage_F (MODEL *pmod, int v, int fitv, 
-				   gretl_matrix *Q, 
-				   double **Z, DATAINFO *pdinfo)
+static int 
+compute_first_stage_F (MODEL *pmod, int v, const int *reglist, 
+		       const int *instlist, double ***pZ, 
+		       DATAINFO *pdinfo, gretlopt opt)
 {
-    int n = 0;
-    int k = gretl_matrix_cols(Q);
-    int ifc = pmod->ifc;
-    double essr = 0.0, essu = 0.0;
-    double x, F, ybar = 0.0;
-    int t, dfn, dfd;
+    MODEL mod1;
+    gretlopt myopt;
+    int *list1 = NULL;
+    int *flist = NULL;
+    double F;
+    int i, vi;
+    int err = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
-	    ybar += Z[v][t];
-	    n++;
+    gretl_model_init(&mod1);
+
+    list1 = gretl_list_append_term(&list1, v);
+    if (list1 == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=instlist[0]; i++) {
+	vi = instlist[i];
+	list1 = gretl_list_append_term(&list1, vi);
+	if (list1 == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	if (!in_gretl_list(reglist, vi)) {
+	    flist = gretl_list_append_term(&flist, vi);
+	    if (flist == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
 	}
     }
 
-    ybar /= n;
+    if (!err) {
+	myopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
+	mod1 = lsq(list1, pZ, pdinfo, OLS, myopt);
+	err = mod1.errcode;
+    }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
-	    x = Z[v][t] - ybar;
-	    essr += x * x;
-	    x = Z[v][t] - Z[fitv][t];
-	    essu += x * x;
+    if (!err) {
+	F = robust_omit_F(flist, &mod1);
+	if (na(F)) {
+	    err = 1;
 	}
-    }  
+    }
 
-    dfd = n - k;
-    dfn = k - ifc;
+    if (!err) {
+	gretl_model_set_double(pmod, "stage1-F", F);
+	gretl_model_set_int(pmod, "stage1-dfn", flist[0]);
+	gretl_model_set_int(pmod, "stage1-dfd", mod1.dfd);
+    }
+    
+    clear_model(&mod1);
+    free(list1);
+    free(flist);
 
-    F = ((essr - essu) / dfn) / (essu / dfd);
-
-    gretl_model_set_double(pmod, "stage1-F", F);
-    gretl_model_set_int(pmod, "stage1-dfn", dfn);
-    gretl_model_set_int(pmod, "stage1-dfd", dfd);
+    return err;
 }
 
 static int 
@@ -1128,7 +1151,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (ci == TSLS && hatlist[0] == 1) {
-	compute_first_stage_F(&tsls, ev, hatlist[1], Q, *pZ, pdinfo);
+	compute_first_stage_F(&tsls, ev, reglist, instlist, pZ, pdinfo, opt);
     } 
 
     if (tsls.list[0] < s2list[0]) {
