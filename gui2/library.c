@@ -2721,6 +2721,12 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;
 
+    case ARCH:
+	*pmod = arch_model(libcmd.list, atoi(libcmd.param), &Z, datainfo, 
+			   libcmd.opt, prn); 
+	err = model_output(pmod, prn);
+	break;
+
     case GARCH:
 	*pmod = garch(libcmd.list, &Z, datainfo, libcmd.opt, prn); 
 	err = model_output(pmod, prn);

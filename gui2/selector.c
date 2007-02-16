@@ -66,14 +66,14 @@ struct _selector {
 
 #ifdef ENABLE_GMP
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == HCCM || c == HSK || c == ARMA || \
+                       c == HCCM || c == HSK || c == ARMA || c == ARCH || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS || c == PANEL_B || c == ARBOND)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == HCCM || c == HSK || c == ARMA || \
+                       c == HCCM || c == HSK || c == ARMA || c == ARCH || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
@@ -1288,7 +1288,15 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 	sprintf(s, "%d ; ", p);
 	add_to_cmdlist(sr, s);
 	return;
-    }    
+    }  
+
+    if (sr->code == ARCH) {
+	int p = spinner_get_int(sr->extra[0]);
+
+	sprintf(s, "%d ", p);
+	add_to_cmdlist(sr, s);
+	return;
+    }      
 
     arma_p = spinner_get_int(sr->extra[0]);
     arima_d = spinner_get_int(sr->extra[1]);
@@ -1676,7 +1684,8 @@ static void construct_cmdlist (selector *sr)
     *sr->cmdlist = '\0';
 
     /* deal with content of "extra" widgets */
-    if (sr->code == ARMA || sr->code == GARCH || sr->code == ARBOND) {
+    if (sr->code == ARMA || sr->code == ARCH || 
+	sr->code == GARCH || sr->code == ARBOND) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->code)) {
 	vec_get_spinner_data(sr, &order);
@@ -1860,6 +1869,8 @@ static char *est_str (int cmdnum)
 	return N_("Autoregressive model");
     case ARMA:
 	return N_("ARIMA");
+    case ARCH:
+	return N_("ARCH");
     case GARCH:
 	return N_("GARCH");
     case VAR:
@@ -2156,7 +2167,11 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gdouble maxlag = datainfo->pd;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("AR order:"));
+    if (sr->code == ARCH) {
+	tmp = gtk_label_new(_("ARCH order:"));
+    } else {
+	tmp = gtk_label_new(_("AR order:"));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
@@ -2300,7 +2315,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->code)) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-    } else if (sr->code == ARBOND) {
+    } else if (sr->code == ARBOND || sr->code == ARCH) {
 	AR_order_spin(sr, right_vbox);
     }
 
@@ -3241,7 +3256,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     }
 
     /* middle right: used for some estimators and factored plot */
-    if (ci == WLS || ci == AR || ci == TSLS || 
+    if (ci == WLS || ci == AR || ci == TSLS || ci == ARCH ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
 	ci == GR_DUMMY || ci == GR_3D) {
 	build_mid_section(sr, right_vbox);

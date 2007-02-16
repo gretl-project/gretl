@@ -461,7 +461,7 @@
 
   </command>
 
-  <command name="arch" section="Tests" label="ARCH test">
+  <command name="arch" section="Estimation" label="ARCH model">
 
     <usage>
       <arguments>
@@ -475,18 +475,17 @@
     </usage>
 
     <description>
-      <para context="gui">
-	This command needs an integer lag order.
-      </para>
       <para>
-	Tests the model for ARCH (Autoregressive Conditional
-	Heteroskedasticity) of the specified lag order. If the LM test
-	statistic has a p-value below 0.10, then ARCH estimation is
-	also carried out.  If the predicted variance of any
-	observation in the auxiliary regression is not positive, then
-	the corresponding squared residual is used instead. Weighted
-	least squares estimation is then performed on the original
-	model.
+	Estimates the given model specification allowing for ARCH
+	(Autoregressive Conditional Heteroskedasticity). The model is
+	first estimated via OLS, then an auxiliary regression is run where
+	the dependent variable is the squared residual from the first
+	stage and the independent variables are lags of the squared
+	residual.  The final stage is weighted least squares estimation,
+	using as weights the reciprocals of the fitted error variances
+	from the auxiliary regression.  (If the predicted variance of any
+	observation in the auxiliary regression is not positive, then the
+	corresponding squared residual is used instead).
       </para>
       <para>
 	See also <cmdref targ="garch"/>.
@@ -494,7 +493,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/ARCH</menu-path>
+      <menu-path>/Model/Time series/ARCH</menu-path>
     </gui-access>
 
   </command>

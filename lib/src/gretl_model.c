@@ -44,6 +44,72 @@ struct ModelTest_ {
     double alpha;
 };
 
+#if 0 /* not ready yet: this apparatus may be used for printing
+	 "matrix models" at some future point */
+
+typedef struct gretl_matrix_model_ gretl_matrix_model;
+
+struct gretl_matrix_model_ {
+    gretl_matrix *b;
+    gretl_matrix *se;
+    char **bnames;
+    int nobs;
+    double R2;
+};
+
+gretl_matrix_model *gretl_matrix_model_new (void)
+{
+    gretl_matrix_model *m = malloc(sizeof *m);
+    
+    if (m != NULL) {
+	m->b = NULL;
+	m->se = NULL;
+	m->bnames = NULL;
+	m->nobs = 0;
+	m->R2 = NADBL;
+    }
+
+    return m;
+}
+
+void gretl_matrix_model_destroy (gretl_matrix_model *m)
+{
+    if (m != NULL) {
+	if (m->b != NULL) {
+	    int k = gretl_vector_get_length(m->b);
+
+	    free_strings_array(m->bnames, k);
+	    gretl_matrix_free(m->b);
+	}
+	gretl_matrix_free(m->se);
+	free(m);
+    }
+}
+
+void gretl_matrix_model_set_data (gretl_matrix_model *m, gretl_matrix *b,
+				  gretl_matrix *se, char **bnames,
+				  int nobs, double R2)
+{
+    m->b = b;
+    m->se = se;
+    m->bnames = bnames;
+    m->nobs = nobs;
+    m->R2 = R2;
+}
+
+void gretl_matrix_model_get_data (gretl_matrix_model *m, gretl_matrix **b,
+				  gretl_matrix **se, char ***bnames,
+				  int *nobs, double *R2)
+{
+    *b = m->b;
+    *se = m->se;
+    *bnames = m->bnames;
+    *nobs = m->nobs;
+    *R2 = m->R2;
+}
+
+#endif
+
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
     test->type = ttype;

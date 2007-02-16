@@ -135,6 +135,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL, GNULL },
     { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL, GNULL },
     { N_("/Model/Time series/ARI_MA..."), NULL, model_callback, ARMA, NULL, GNULL },
+    { N_("/Model/Time series/_ARCH..."), NULL, model_callback, ARCH, NULL, GNULL },
     { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL, GNULL },
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, selector_callback, VAR, NULL, GNULL },
     { N_("/Model/Time series/VAR _lag selection..."), NULL, selector_callback, VLAGSEL, NULL, GNULL },
