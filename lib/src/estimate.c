@@ -2910,26 +2910,39 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* if 'full' is non-zero, do the whole thing (print the ARCH test
-   model, re-estimate if p-value is < .10); otherwise just do
-   the ARCH test itself and print the test result
-*/
+/**
+ * arch_test:
+ * @pmod: model to be tested.
+ * @order: lag order for ARCH process.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_Q, be less verbose.
+ * @prn: gretl printing struct.
+ *
+ * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
 
-static MODEL 
-real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		gretlopt opt, PRN *prn, int full)
+int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
+	       gretlopt opt, PRN *prn)
 {
-    MODEL archmod;
-    int *wlist = NULL, *arlist = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
-    int oldv = pdinfo->v;
-    int i, t, nwt, nv, n = pdinfo->n;
-    double LM, xx;
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *V = NULL;
+    int T = pmod->nobs;
+    int printing;
+    int i, k, s, t;
+    double x, s2, rsq;
+    double *ps2 = NULL;
     int err = 0;
 
-    gretl_error_clear();
+    if (pmod->missmask != NULL) {
+	return E_MISSDATA;
+    }
 
-    gretl_model_init(&archmod);
+    gretl_error_clear();
 
     if (order == 0) {
 	/* use data frequency as default lag order */
@@ -2937,197 +2950,106 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (order < 1 || order > T - pmod->list[0]) {
-	archmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
-	err = 1;
+	return E_DATA;
     }
 
-    if (!err) {
-	/* allocate workspace */
-	if (dataset_add_series(order + 1, pZ, pdinfo) || 
-	    (arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
-	    err = archmod.errcode = E_ALLOC;
-	}
+    T -= order;
+    k = order + 1;
+
+    X = gretl_matrix_alloc(T, k);
+    y = gretl_column_vector_alloc(T);
+    b = gretl_column_vector_alloc(k);
+
+    if (X == NULL || y == NULL || b == NULL) {
+	gretl_matrix_free(X);
+	gretl_matrix_free(y);
+	gretl_matrix_free(b);
+	return E_ALLOC;
     }
 
-    if (!err) {
-	/* start list for aux regression */
-	arlist[0] = 2 + order;
-	arlist[1] = pdinfo->v - order - 1;
-	arlist[2] = 0;
+    printing = (opt & OPT_Q)? 0 : 1;
 
-	/* run OLS and get squared residuals */
-	archmod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A | OPT_M);
-	err = archmod.errcode;
+    if (printing) {
+	V = gretl_matrix_alloc(k, k);
+	if (V == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+	ps2 = &s2;
     }
 
-    if (!err) {
-	nv = pdinfo->v - order - 1;
-	strcpy(pdinfo->varname[nv], "utsq");
-	for (t=0; t<n; t++) {
-	    (*pZ)[nv][t] = NADBL;
-	}
-	for (t=archmod.t1; t<=archmod.t2; t++) {
-	    xx = archmod.uhat[t];
-	    (*pZ)[nv][t] = xx * xx;
-	}
-	/* also lags of squared resids */
-	for (i=1; i<=order; i++) {
-	    nv =  pdinfo->v - order + i - 1;
-	    arlist[i+2] = nv;
-	    sprintf(pdinfo->varname[nv], "utsq_%d", i);
-	    for (t=0; t<n; t++) {
-		(*pZ)[nv][t] = NADBL;
-	    }
-	    for (t=archmod.t1+i; t<=archmod.t2; t++) {
-		(*pZ)[nv][t] = (*pZ)[arlist[1]][t-i];
-	    }
-	}
+    /* fill out the matrices with squared residuals
+       and lags of same */
 
-	/* run aux. regression */
-	clear_model(&archmod);
-	archmod = lsq(arlist, pZ, pdinfo, OLS, OPT_A);
-	err = archmod.errcode;
-    }
-
-    if (!err) {
-	archmod.aux = AUX_ARCH;
-	gretl_model_set_int(&archmod, "arch_order", order);
-	LM = archmod.nobs * archmod.rsq;
-	xx = chisq_cdf_comp(LM, order);
-
-	if (full) {
-	    printmodel(&archmod, pdinfo, OPT_NONE, prn);
-	    pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
-		    archmod.nobs, archmod.rsq);
-	}
-
-	if ((opt & OPT_S) || (opt & OPT_P)) {
-	    ModelTest *test = model_test_new(GRETL_TEST_ARCH);
-
-	    if (test != NULL) {
-		model_test_set_teststat(test, GRETL_STAT_TR2);
-		model_test_set_order(test, order);
-		model_test_set_dfn(test, order);
-		model_test_set_value(test, LM);
-		model_test_set_pvalue(test, xx);
-		if (opt & OPT_S) {
-		    maybe_add_test_to_model(pmod, test);
-		} else {
-		    gretl_model_test_print_direct(test, prn);
-		    model_test_free(test);
-		}
-	    }	    
-	}
-
-	record_test_result(LM, xx, "ARCH");
-
-	if (!full) {
-	    goto arch_test_exit;
-	}
-
-	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
-		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);
-
-	if (xx > 0.1) {
-	    pprintf(prn, "\n%s.\n%s.\n",
-		    _("ARCH effect is insignificant at the 10 percent level"),
-		    _("Weighted estimation not done"));
-	} else {
-	    pprintf(prn, "\n%s.\n",
-		    _("ARCH effect is significant at the 10 percent level"));
-	    /* do weighted estimation */
-	    wlist = gretl_list_new(pmod->list[0] + 1);
-	    if (wlist == NULL) {
-		archmod.errcode = E_ALLOC;
+    for (i=0; i<k; i++) {
+	for (t=0; t<T; t++) {
+	    s = t + pmod->t1 + order;
+	    if (i == 0) {
+		x = pmod->uhat[s];
+		gretl_vector_set(y, t, x * x);
+		gretl_matrix_set(X, t, i, 1.0);
 	    } else {
-		nwt = wlist[1] = pdinfo->v - 1; /* weight var */
-		for (i=2; i<=wlist[0]; i++) {
-		    wlist[i] = pmod->list[i-1];
-		}
-		nv = pdinfo->v - order - 1;
-		for (t=archmod.t1; t<=archmod.t2; t++) {
-		    xx = archmod.yhat[t];
-		    if (xx <= 0.0) {
-			xx = (*pZ)[nv][t];
-		    }
-		    (*pZ)[nwt][t] = 1.0 / xx; /* FIXME is this right? */
-		}
-
-		strcpy(pdinfo->varname[nwt], "1/sigma");
-
-		clear_model(&archmod);
-		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE);
-
-		archmod.ci = ARCH;
-		gretl_model_set_int(&archmod, "arch_order", order);
-		printmodel(&archmod, pdinfo, opt, prn);
+		x = pmod->uhat[s - i];
+		gretl_matrix_set(X, t, i, x * x);
 	    }
 	}
     }
 
- arch_test_exit:
+    err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
 
-    if (arlist != NULL) free(arlist);
-    if (wlist != NULL) free(wlist);
-
-    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo); 
-
-    return archmod;
-}
-
-/**
- * arch_test:
- * @pmod: model to be tested.
- * @order: lag order for ARCH process.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
- *       to save test results to model.
- * @prn: gretl printing struct.
- *
- * Tests @pmod for Auto-Regressive Conditional Heteroskedasticity.  
- * If this effect is significant, re-restimates the model using 
- * weighted least squares.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
-{
-    return real_arch_test(pmod, order, pZ, pdinfo, opt, prn, 1);
-}
-
-/**
- * arch_test_simple:
- * @pmod: model to be tested.
- * @order: lag order for ARCH process.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: if %OPT_S, the test is saved to @pmod and not printed,
- * otherwise it is printed to @prn and discarded.
- * @prn: gretl printing struct.
- *
- * Tests @pmod for Auto-Regressive Conditional Heteroskedasticity.  
- * 
- * Returns: 0 on success, non-zero code on error.
- */
-
-int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
-{
-    MODEL amod;
-    int err;
-
-    if (!(opt & OPT_S)) {
-	/* if not saving, then print test */
-	opt = OPT_P;
+    if (!err) {
+	rsq = gretl_matrix_r_squared(y, X, b, &err);
     }
 
-    amod = real_arch_test(pmod, order, pZ, pdinfo, opt, prn, 0);
-    err = amod.errcode;
-    clear_model(&amod);
+    if (!err) {
+	ModelTest *test = model_test_new(GRETL_TEST_ARCH);
+	double LM = T * rsq;
+	double pv = chisq_cdf_comp(LM, order);
+
+	if (printing) {
+	    char cname[16];
+
+	    pprintf(prn, "\n%s:\n\n", _("Estimates of the ARCH coefficients"));
+	    for (i=0; i<k; i++) {
+		if (i == 0) {
+		    strcpy(cname, "const");
+		} else {
+		    sprintf(cname, "%s %2d", _("lag"), i);
+		}
+		pprintf(prn, "  %-8s %12.6g (%g)\n", cname, b->val[i],
+			sqrt(gretl_matrix_get(V, i, i)));
+	    }
+	}
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_TR2);
+	    model_test_set_order(test, order);
+	    model_test_set_dfn(test, order);
+	    model_test_set_value(test, LM);
+	    model_test_set_pvalue(test, pv);
+
+	    if (printing) {
+		pputc(prn, '\n');
+		gretl_model_test_print_direct(test, prn);
+	    }
+
+	    if (opt & OPT_S) {
+		maybe_add_test_to_model(pmod, test);
+	    } else {
+		model_test_free(test);
+	    }
+	}	    
+
+	record_test_result(LM, pv, "ARCH");
+    }
+
+ bailout:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(b);
+    gretl_matrix_free(V);
 
     return err;
 }
@@ -3138,13 +3060,13 @@ int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
  * @order: lag order for ARCH process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may contain OPT_O to print covariance matrix. (?)
+ * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
- * Estimate the model given in @list via OLS, and test for Auto-
- * Regressive Conditional Heteroskedasticity.  If the latter is
- * significant, re-restimate the model using weighted least
- * squares.
+ * Estimate the model given in @list via weighted least squares,
+ * with the weights based on the predicted error variances from
+ * an auxiliary regression of the squared residuals on their lagged
+ * values.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -3152,19 +3074,116 @@ int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
-    MODEL lmod, amod;
+    MODEL amod;
+    int *wlist = NULL, *alist = NULL;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int oldv = pdinfo->v;
+    int i, t, nwt, k, n = pdinfo->n;
+    double xx;
 
-    gretl_model_init(&lmod);
-    lmod.list = gretl_list_copy(list);
-    if (lmod.list == NULL) {
-	lmod.errcode = E_ALLOC;
-	return lmod;
-    } 
+    gretl_error_clear();
+    gretl_model_init(&amod);
 
-    /* FIXME: vcv option? */
-    amod = real_arch_test(&lmod, order, pZ, pdinfo, opt, prn, 1);
+    if (order == 0) {
+	/* use data frequency as default lag order */
+	order = pdinfo->pd;
+    }
 
-    free(lmod.list);
+    if (order < 1 || order > T - list[0]) {
+	amod.errcode = E_UNSPEC;
+	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
+	return amod;
+    }
+
+    if (dataset_add_series(order + 1, pZ, pdinfo)) {
+	amod.errcode = E_ALLOC;
+    } else {
+	alist = gretl_list_new(order + 2);
+	if (alist == NULL) {
+	    amod.errcode = E_ALLOC;
+	}
+    }
+
+    if (amod.errcode) {
+	goto bailout;
+    }
+
+    /* start list for aux regression */
+    alist[1] = pdinfo->v - order - 1;
+    alist[2] = 0;
+
+    /* run initial OLS and get squared residuals */
+    amod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    if (amod.errcode) {
+	goto bailout;
+    }
+
+    k = pdinfo->v - order - 1;
+    strcpy(pdinfo->varname[k], "utsq");
+    for (t=0; t<n; t++) {
+	(*pZ)[k][t] = NADBL;
+    }
+    for (t=amod.t1; t<=amod.t2; t++) {
+	xx = amod.uhat[t];
+	(*pZ)[k][t] = xx * xx;
+    }
+    /* also lags of squared resids */
+    for (i=1; i<=order; i++) {
+	k =  pdinfo->v - order + i - 1;
+	alist[i+2] = k;
+	sprintf(pdinfo->varname[k], "utsq_%d", i);
+	for (t=0; t<n; t++) {
+	    (*pZ)[k][t] = NADBL;
+	}
+	for (t=amod.t1+i; t<=amod.t2; t++) {
+	    (*pZ)[k][t] = (*pZ)[alist[1]][t-i];
+	}
+    }
+
+    /* run auxiliary regression */
+    clear_model(&amod);
+    amod = lsq(alist, pZ, pdinfo, OLS, OPT_A);
+    if (amod.errcode) {
+	goto bailout;
+    }
+
+    /* do weighted estimation */
+    wlist = gretl_list_new(list[0] + 1);
+
+    if (wlist == NULL) {
+	amod.errcode = E_ALLOC;
+    } else {
+	/* construct the weight variable */
+	nwt = wlist[1] = pdinfo->v - 1;
+	strcpy(pdinfo->varname[nwt], "1/sigma");
+
+	for (i=2; i<=wlist[0]; i++) {
+	    wlist[i] = list[i-1];
+	}
+
+	k = pdinfo->v - order - 1;
+
+	for (t=amod.t1; t<=amod.t2; t++) {
+	    xx = amod.yhat[t];
+	    if (xx <= 0.0) {
+		xx = (*pZ)[k][t];
+	    }
+	    (*pZ)[nwt][t] = 1.0 / xx; /* FIXME is this right? */
+	}
+
+	clear_model(&amod);
+	amod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE);
+
+	amod.ci = ARCH;
+	gretl_model_set_int(&amod, "arch_order", order);
+    }
+
+ bailout:
+
+    if (alist != NULL) free(alist);
+    if (wlist != NULL) free(wlist);
+
+    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo); 
 
     return amod;
 }

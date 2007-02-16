@@ -1448,7 +1448,7 @@ gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if (!command_ok_for_model(COEFFSUM, pmod->ci)) {
+    if (!command_ok_for_model(COEFFSUM, 0, pmod->ci)) {
 	return E_NOTIMP;
     }
 

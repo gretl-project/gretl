@@ -255,7 +255,7 @@ int is_model_cmd (const char *line);
 
 int is_quiet_model_test (int ci, gretlopt opt);
 
-int command_ok_for_model (int test_ci, int model_ci);
+int command_ok_for_model (int test_ci, gretlopt opt, int model_ci);
 
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATAINFO *pdinfo);

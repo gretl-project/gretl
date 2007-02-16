@@ -2561,6 +2561,9 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    } else if (cmd_ci == LMTEST_WHITE) {
 		cmd_ci = LMTEST;
 		opt = OPT_W;
+	    } else if (cmd_ci == ARCH) {
+		cmd_ci = LMTEST;
+		opt = OPT_H;
 	    } else if (cmd_ci == LMTEST) { 
 		/* unqualified: autocorrelation */
 		opt = OPT_A;
@@ -2774,7 +2777,7 @@ static void add_model_tex_items (windata_t *vwin)
 {
     int i, n = sizeof model_tex_items / sizeof model_tex_items[0];
     MODEL *pmod = (MODEL *) vwin->data;
-    int eqn_ok = command_ok_for_model(EQNPRINT, pmod->ci);
+    int eqn_ok = command_ok_for_model(EQNPRINT, 0, pmod->ci);
     GtkWidget *w;
 
     for (i=0; i<n; i++) {
@@ -3278,7 +3281,7 @@ static void VAR_test_call (gpointer p, guint code, GtkWidget *w)
 					     prn);
     } else if (code == VAR_ARCH_TEST) {
 	strcpy(title, _("gretl: ARCH test"));
-	err = gretl_VAR_arch_test(var, order, &Z, datainfo, prn);
+	err = gretl_VAR_arch_test(var, order, datainfo, prn);
     } else if (code == VAR_NORMALITY_TEST) {
 	sprintf(title, "gretl: %s", _("Test for normality of residual"));
 	err = gretl_VAR_normality_test(var, prn);

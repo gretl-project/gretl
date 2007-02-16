@@ -362,6 +362,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);
 
+double gretl_matrix_r_squared (const gretl_matrix *y,
+			       const gretl_matrix *X,
+			       const gretl_matrix *b,
+			       int *err);
+
 int 
 gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 			     const gretl_matrix *R, const gretl_vector *q,

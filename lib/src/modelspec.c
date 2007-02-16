@@ -256,7 +256,7 @@ static int modelspec_sample_problem (int i, const DATAINFO *pdinfo)
     return model_submask_issue(mspec[i].submask, pdinfo);
 }
 
-int modelspec_test_check (int test_ci, int model_id, 
+int modelspec_test_check (int test_ci, gretlopt opt, int model_id, 
 			  DATAINFO *pdinfo, PRN *prn)
 {
     int m = modelspec_index_from_model_id(model_id);
@@ -275,7 +275,7 @@ int modelspec_test_check (int test_ci, int model_id,
 	return 1;
     }
      
-    if (!command_ok_for_model(test_ci, model_ci_from_modelspec(m))) {
+    if (!command_ok_for_model(test_ci, opt, model_ci_from_modelspec(m))) {
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	return 1;

@@ -634,14 +634,13 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 }
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 double ***pZ, DATAINFO *pdinfo,
-			 PRN *prn)
+			 DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
 
     for (i=0; i<var->neqns && !err; i++) {
 	pprintf(prn, "Equation %d:\n", i + 1);
-	err = arch_test_simple(var->models[i], order, pZ, pdinfo, OPT_NONE, prn);
+	err = arch_test(var->models[i], order, pdinfo, OPT_NONE, prn);
     }
 
     return err;

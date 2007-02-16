@@ -1675,6 +1675,9 @@ void gretl_model_init (MODEL *pmod)
     pmod->ID = 0;
     pmod->refcount = 0;
     pmod->full_n = 0;
+    pmod->t1 = 0;
+    pmod->t2 = 0;
+    pmod->nobs = 0;
 
     pmod->ncoeff = 0;
     pmod->ntests = 0;
@@ -3438,6 +3441,7 @@ int is_quiet_model_test (int ci, gretlopt opt)
 /**
  * command_ok_for_model:
  * @test_ci:  index of command to be tested.
+ * @opt: option for command to be tested.
  * @model_ci: command index of a gretl model (for example,
  * %OLS, %WLS or %CORC).
  *
@@ -3446,7 +3450,7 @@ int is_quiet_model_test (int ci, gretlopt opt)
  * sort of model indentified by @model_ci, otherwise 0.
  */
 
-int command_ok_for_model (int test_ci, int model_ci)
+int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 {
     int ok = 1;
 
@@ -3480,10 +3484,13 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case LMTEST:
-	if (model_ci != OLS) ok = 0;
+	if (opt & OPT_H) {
+	    ok = 1;
+	} else if (model_ci != OLS) {
+	    ok = 0; /* FIXME */
+	}
 	break;
 
-    case ARCH:
     case CHOW:
     case CUSUM:
     case QLRTEST:
@@ -3536,12 +3543,12 @@ int command_ok_for_model (int test_ci, int model_ci)
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATAINFO *pdinfo)
 {
-    int ok = command_ok_for_model(ci, pmod->ci);
+    int ok = command_ok_for_model(ci, opt, pmod->ci);
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */
-	if (ci == ARCH || ci == CUSUM || 
-	    (ci == LMTEST && (opt & OPT_A))) {
+	if (ci == CUSUM || 
+	    (ci == LMTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
     }
@@ -3559,7 +3566,8 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_time_series(pdinfo)) {
 	/* time-series-only tests */
-	if (ci == ARCH || ci == CHOW || ci == CUSUM || ci == QLRTEST) {
+	if (ci == CHOW || ci == CUSUM || ci == QLRTEST || 
+	    (ci == LMTEST && (opt & OPT_H))) {
 	    ok = 0;
 	}
     }

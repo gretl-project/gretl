@@ -732,7 +732,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     const int orig_nvar = pdinfo->v; 
     int err = 0;
 
-    if (!command_ok_for_model(ADD, pmod->ci)) {
+    if (!command_ok_for_model(ADD, 0, pmod->ci)) {
 	return E_NOTIMP;
     }
 
@@ -836,7 +836,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	return 1;
     }
 
-    if (!command_ok_for_model(ADD, orig->ci)) {
+    if (!command_ok_for_model(ADD, 0, orig->ci)) {
 	return E_NOTIMP;
     }
 
@@ -993,7 +993,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     if (orig == NULL || orig->list == NULL) {
 	err = E_DATA;
-    } else if (!command_ok_for_model(OMIT, orig->ci)) {
+    } else if (!command_ok_for_model(OMIT, 0, orig->ci)) {
 	err = E_NOTIMP;
     } else if (omit_options_inconsistent(opt)) {
 	err = E_BADOPT;
@@ -2272,7 +2272,7 @@ int lmtest_driver (const char *param,
 	return E_DATA;
     }
 
-    if ((opt & OPT_A) || (opt & OPT_H)) {
+    if (opt & (OPT_A | OPT_H)) {
 	k = atoi(param);
     }
 
@@ -2320,9 +2320,9 @@ int lmtest_driver (const char *param,
     /* ARCH */
     if (!err && (opt & OPT_H)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = arch_test_simple(ptr, k, pZ, pdinfo, OPT_NONE, prn);
+	    err = arch_test(ptr, k, pdinfo, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_arch_test(ptr, k, pZ, pdinfo, prn);
+	    err = gretl_VAR_arch_test(ptr, k, pdinfo, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

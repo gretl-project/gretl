@@ -3790,26 +3790,18 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case AR:
     case ARMA:
+    case ARCH:
 	clear_model(models[0]);
 	if (cmd->ci == AR) {
 	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, outprn);
-	} else {
+	} else if (cmd->ci == ARMA) {
 	    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo,
 			      cmd->opt, prn);
-	}
+	} else {
+	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
+				    cmd->opt, prn);
+	}	    
 	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
-	break;
-
-    case ARCH:
-	clear_model(models[1]);
-	*models[1] = arch_model(cmd->list, cmd->order, pZ, pdinfo, 
-				cmd->opt, outprn);
-	err = models[1]->errcode;
-	if (models[1]->ci == ARCH) {
-	    s->alt_model = 1;
-	    swap_models(models[0], models[1]);
-	}
-	clear_model(models[1]);
 	break;
 
     case CORC:
@@ -3907,7 +3899,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case ADDTO:
     case OMITFROM:
 	k = atoi(cmd->param);
-	if ((err = modelspec_test_check(cmd->ci, k, pdinfo, prn))) {
+	if ((err = modelspec_test_check(cmd->ci, 0, k, pdinfo, prn))) {
 	    break;
 	}
 	if (k == (models[0])->ID) {

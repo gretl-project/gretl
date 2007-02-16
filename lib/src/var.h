@@ -51,8 +51,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 				    PRN *prn);
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 double ***pZ, DATAINFO *pdinfo,
-			 PRN *prn);
+			 DATAINFO *pdinfo, PRN *prn);
 
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 

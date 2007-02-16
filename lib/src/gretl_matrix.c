@@ -4836,10 +4836,9 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
     return 0;
 }
 
-static void 
+static double 
 get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
-			const gretl_vector *b, gretl_matrix *vcv,
-			double *ps2)
+			const gretl_vector *b, gretl_matrix *vcv)
 {
     double u, s2 = 0.0;
     int k = X->cols;       /* number of regressors */
@@ -4861,7 +4860,7 @@ get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
 
     s2 /= (n - k + r);
 
-    *ps2 = s2;
+    return s2;
 }
 
 static int
@@ -5187,7 +5186,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	    b->val[i] = XTy->val[i];
 	}
 	if (s2 != NULL) {
-	    get_ols_error_variance(y, X, b, vcv, s2);
+	    *s2 = get_ols_error_variance(y, X, b, vcv);
 	}
 	if (vcv != NULL) {
 	    err = get_ols_vcv(y, X, b, vcv, s2);
@@ -5321,7 +5320,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
 	if (S != NULL) {
 	    if (s2 != NULL) {
-		get_ols_error_variance(y, X, b, S, s2);
+		*s2 = get_ols_error_variance(y, X, b, S);
 	    }
 	    err = get_ols_vcv(y, X, b, S, s2);
 	    if (!err) {
@@ -5340,6 +5339,47 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     if (W != NULL) gretl_matrix_free(W);
 
     return err;
+}
+
+/**
+ * gretl_matrix_r_squared:
+ * @y: dependent variable, T-vector.
+ * @X: independent variables matrix, T x k.
+ * @b: coefficients, k-vector.
+ * @err: location to receive error code.
+ *
+ * Returns: the unadjusted R-squared, based one the regression 
+ * represented by @y, @X and @b, or #NADBL on failure.
+ */
+
+double gretl_matrix_r_squared (const gretl_matrix *y,
+			       const gretl_matrix *X,
+			       const gretl_matrix *b,
+			       int *err)
+{
+    double ess = 0.0, tss = 0.0;
+    double xx, ybar;
+    int i, j;
+
+    if (gretl_vector_get_length(y) != X->rows ||
+	gretl_vector_get_length(b) != X->cols) {
+	*err = E_NONCONF;
+	return NADBL;
+    }
+
+    ybar = gretl_vector_mean(y);
+
+    for (i=0; i<X->rows; i++) {
+	xx = y->val[i];
+	for (j=0; j<X->cols; j++) {
+	    xx -= b->val[j] * gretl_matrix_get(X, i, j);
+	}
+	ess += xx * xx;
+	xx = y->val[i] - ybar;
+	tss += xx * xx;
+    }
+
+    return 1.0 - ess / tss;
 }
 
 /**

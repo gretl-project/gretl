@@ -1539,8 +1539,8 @@ static void print_model_heading (const MODEL *pmod,
 	pputc(prn, '\n');
     }
 
-    /* weight variable for WLS and ARCH */
-    else if ((pmod->ci == WLS && !pmod->aux) || pmod->ci == ARCH) {
+    /* weight variable for WLS */
+    else if ((pmod->ci == WLS && !pmod->aux)) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	    pputs(prn, "\\\\\n");
@@ -1552,6 +1552,19 @@ static void print_model_heading (const MODEL *pmod,
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
     }
+
+    /* weight variable for ARCH */
+    else if (pmod->ci == ARCH) {
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	}
+	if (csv) pputc(prn, '"');
+	pprintf(prn, "%s: %s", 
+		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
+		(tex)? "$1/\\hat{\\sigma}_t$" : "1/sigma");
+	if (csv) pputc(prn, '"');
+	pputc(prn, '\n');
+    }    
 
     /* rhohat for CORC and HILU (TeX) */
     else if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {

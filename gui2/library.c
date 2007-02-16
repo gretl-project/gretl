@@ -2034,66 +2034,34 @@ void do_arch (gpointer p, guint u, GtkWidget *w)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    char tmpstr[26];
-    int smpl_t1 = datainfo->t1;
-    int smpl_t2 = datainfo->t2;
-    int i, order;
-    int err = 0;
+    int order, err = 0;
 
     order = default_lag_order(datainfo);
 
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: ARCH test"), NULL,
 		      &order, _("Lag order for ARCH test:"),
-		      1, datainfo->n / 2, ARCH);
+		      1, datainfo->n / 2, LMTEST);
     unset_window_busy(vwin);
+
     if (err < 0) {
 	return;
     }
 
-    gretl_command_sprintf("arch %d ", order);
-
-    for (i=1; i<=pmod->list[0]; i++) {
-	sprintf(tmpstr, "%d ", pmod->list[i]);
-	gretl_command_strcat(tmpstr);
-    }
-
-    if (check_and_record_command()) {
+    if (bufopen(&prn)) {
 	return;
     }
 
-    order = atoi(libcmd.param);
-    if (!order) {
-	errbox(_("Couldn't read ARCH order"));
-	return;
-    }
-
-    if (bufopen(&prn)) return;
-
-    clear_model(models[1]);
-
-    /* temporarily reimpose the sample range in effect
-       when pmod was estimated */
-    impose_model_smpl(pmod, datainfo);
-
-    /* FIXME opt? */
-    *models[1] = arch_test(pmod, order, &Z, datainfo, OPT_S, prn);
-    if ((err = (models[1])->errcode)) { 
-	gui_errmsg(err);
-    } else {
-	update_model_tests(vwin);
-    }
-
-    clear_model(models[1]);
-
-    /* restore original sample */
-    datainfo->t1 = smpl_t1;
-    datainfo->t2 = smpl_t2;
+    err = arch_test(pmod, order, datainfo, OPT_S, prn);
 
     if (err) {
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, NULL);
+	update_model_tests(vwin);
+	gretl_command_sprintf("lmtest --arch %d", order);
+	model_command_init(pmod->ID);
+	view_buffer(prn, 78, 400, _("gretl: ARCH test"), LMTEST, NULL); 
     }
 }
 

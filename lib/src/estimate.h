@@ -67,12 +67,8 @@ MODEL ar_func (const int *list,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
-MODEL arch_test (MODEL *pmod, int order, 
-		 double ***pZ, DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn);
-
-int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn);
+int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
+	       gretlopt opt, PRN *prn);
 
 MODEL arch_model (const int *list, int order, 
 		  double ***pZ, DATAINFO *pdinfo, 

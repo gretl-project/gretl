@@ -24,7 +24,7 @@
 
 int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo);
 
-int modelspec_test_check (int test_ci, int model_id, 
+int modelspec_test_check (int test_ci, gretlopt opt, int model_id, 
 			  DATAINFO *pdinfo, PRN *prn);
 
 char *modelspec_get_command_by_id (int ID);
