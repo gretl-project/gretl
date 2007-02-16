@@ -2914,6 +2914,8 @@ int do_vector_model (selector *sr)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
+    } else {
+	lib_cmd_init();
     }
 
     return err;
