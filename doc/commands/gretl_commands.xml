@@ -478,14 +478,19 @@
       <para>
 	Estimates the given model specification allowing for ARCH
 	(Autoregressive Conditional Heteroskedasticity). The model is
-	first estimated via OLS, then an auxiliary regression is run where
-	the dependent variable is the squared residual from the first
-	stage and the independent variables are lags of the squared
-	residual.  The final stage is weighted least squares estimation,
-	using as weights the reciprocals of the fitted error variances
-	from the auxiliary regression.  (If the predicted variance of any
-	observation in the auxiliary regression is not positive, then the
-	corresponding squared residual is used instead).
+	first estimated via OLS, then an auxiliary regression is run, in
+	which the squared residual from the first stage is regressed on
+	its own lagged values. The final step is weighted least squares
+	estimation, using as weights the reciprocals of the fitted error
+	variances from the auxiliary regression.  (If the predicted
+	variance of any observation in the auxiliary regression is not
+	positive, then the corresponding squared residual is used
+	instead).
+      </para>
+      <para>
+	The <lit>alpha</lit> values displayed below the coefficients
+	are the estimated parameters of the ARCH process from the
+	auxiliary regression.
       </para>
       <para>
 	See also <cmdref targ="garch"/>.

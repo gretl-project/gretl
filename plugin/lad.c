@@ -608,8 +608,8 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 	    pmod->ess += e[i] * e[i];
 	}
 
-	/* sum of absolute residuals (abuse of "rho") */
-	pmod->rho = a[m + n * nrows];
+	/* sum of absolute residuals */
+	gretl_model_set_double(pmod, "ladsum", a[m + n * nrows]);
 
 	/* set ess-based stats to missing value */
 	pmod->rsq = NADBL;

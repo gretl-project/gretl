@@ -30,8 +30,7 @@
 
 #define WDEBUG 0
 
-#define print_add_omit_model(m,o) (m->ci != ARCH && \
-                                   !(opt & OPT_Q) && !(opt & OPT_I))
+#define print_add_omit_model(m,o) (!(opt & OPT_Q) && !(opt & OPT_I))
 
 enum {
     CHISQ_FORM,
@@ -1364,17 +1363,6 @@ int autocorr_test (MODEL *pmod, int order,
 
     return err;
 }
-
-#if 0
-/* shift the Chow split-point one period */
-
-static void shift_chow_split (int v, int n, int t, double **Z)
-{
-    for (i=0; i<n; i++) {
-	Z[v+i][t] = 0.0;
-    }
-}
-#endif
 
 /* compose list of variables to be added for Chow test and add
    them to the data set */

@@ -1071,7 +1071,7 @@ print_restricted_coeff (const MODEL *pmod, int i,
 	    char pvalstr[16];
 	    int dfd = pmod->dfd + k;
 
-	    pvalue = coeff_pval(pmod, t, dfd);
+	    pvalue = coeff_pval(pmod->ci, t, dfd);
 	    print_pval_str(pvalue, pvalstr);
 	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 	}

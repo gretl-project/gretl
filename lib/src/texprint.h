@@ -21,6 +21,19 @@
 #ifndef TEXPRINT_H
 #define TEXPRINT_H
 
+typedef struct model_coeff_ model_coeff;
+
+struct model_coeff_ {
+    double b;
+    double se;
+    double tval;
+    double pval;
+    double slope;
+    int show_pval;
+    int df_pval;
+    char name[32];
+};
+
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn);
 
@@ -32,8 +45,10 @@ void tex_coeff_table_start (const char *col1, const char *col2,
 
 void tex_coeff_table_end (PRN *prn);
 
-int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		     int i, PRN *prn);
+void tex_print_coeff (const model_coeff *mc, PRN *prn);
+
+void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo,
+			  int i, char *name);
 
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
 

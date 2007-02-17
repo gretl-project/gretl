@@ -2438,7 +2438,7 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_MAX, NULL, NULL }
 };   
 
-static int gretl_test_print_string (const ModelTest *test, PRN *prn)
+static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 {
     const char *descrip = NULL;
     char *param = NULL;
@@ -2516,7 +2516,8 @@ static int print_add_omit_varnames (const char *s, PRN *prn)
     return 0;
 }
 
-static void gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
+static void gretl_test_print_h_0 (const ModelTest *test, int heading,
+				  PRN *prn)
 {
     const char *H0 = NULL;
     int i;
@@ -2531,14 +2532,21 @@ static void gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 	return;
     }    
 
+    if (heading) {
+	pputs(prn, " -");
+	if (tex_format(prn)) {
+	    pputc(prn, '-');
+	}
+    }
+
     if (plain_format(prn)) {
-	pprintf(prn, " -\n  %s: ", _("Null hypothesis"));
+	pprintf(prn, "\n  %s: ", _("Null hypothesis"));
 	pputs(prn, _(H0));
     } else if (tex_format(prn)) {
-	pprintf(prn, " --\\\\\n\\quad %s: ", I_("Null hypothesis"));
+	pprintf(prn, "\\\\\n\\quad %s: ", I_("Null hypothesis"));
 	pputs(prn, I_(H0));
     } else if (rtf_format(prn)) {
-	pprintf(prn, " -\\par\n %s: ", I_("Null hypothesis"));
+	pprintf(prn, "\\par\n %s: ", I_("Null hypothesis"));
 	pputs(prn, I_(H0));
     }
 
@@ -2651,7 +2659,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
-void gretl_model_test_print_direct (const ModelTest *test, PRN *prn)
+void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
     char buf[128];
     const char *tstat;
@@ -2662,20 +2670,23 @@ void gretl_model_test_print_direct (const ModelTest *test, PRN *prn)
 	tstat = N_("Test statistic");
     }
 
+    if (rtf_format(prn)) {
+	pputs(prn, "\\par \\ql ");
+    }
+
     get_test_stat_string(test, buf, prn);
 
+    if (heading) {
+	gretl_test_print_heading(test, prn);
+    }
+
+    gretl_test_print_h_0(test, heading, prn);
+
     if (plain_format(prn)) {
-	gretl_test_print_string(test, prn);
-	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\n  %s: %s\n", _(tstat), buf);
     } else if (tex_format(prn)) {
-	gretl_test_print_string(test, prn);
-	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstat), buf);
     } else if (rtf_format(prn)) {
-	pputs(prn, "\\par \\ql ");
-	gretl_test_print_string(test, prn);
-	gretl_test_print_h_0(test, prn);
 	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstat), buf);
     }
 
@@ -2711,7 +2722,7 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 
     if (i < pmod->ntests) {
 	test = &pmod->tests[i];
-	gretl_model_test_print_direct(test, prn);
+	gretl_model_test_print_direct(test, 1, prn);
     }
 }
 
@@ -3764,9 +3775,11 @@ int mle_criteria (MODEL *pmod, int addk)
     return err;
 }
 
-double coeff_pval (const MODEL *pmod, double x, int df)
+double coeff_pval (int ci, double x, int df)
 {
-    if (ASYMPTOTIC_MODEL(pmod->ci)) {
+    if (xna(x)) {
+	return NADBL;
+    } else if (ASYMPTOTIC_MODEL(ci)) {
         return normal_pvalue_2(x);
     } else {
         return t_pvalue_2(x, df);

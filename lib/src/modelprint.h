@@ -31,4 +31,7 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn);
 
 int ols_print_anova (const MODEL *pmod, PRN *prn);
 
+void print_arch_coeffs (const double *a, const double *se,
+			int T, int order, PRN *prn, int aux);
+
 #endif /* MODELPRINT_H */

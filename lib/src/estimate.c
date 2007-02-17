@@ -2910,6 +2910,51 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
     return ret;
 }
 
+static void 
+arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
+			 int T, int order, double rsq, MODEL *pmod, 
+			 gretlopt opt, PRN *prn)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_ARCH);
+    double LM = T * rsq;
+    double pv = chisq_cdf_comp(LM, order);
+
+    if (V != NULL) {
+	int i, k = order + 1;
+	double *se = malloc(k * sizeof *se);
+
+	if (se != NULL) {
+	    for (i=0; i<k; i++) {
+		se[i] = sqrt(gretl_matrix_get(V, i, i));
+	    }
+	    print_arch_coeffs(b->val, se, T, order, prn, AUX_ARCH);
+	    free(se);
+	}
+    }
+
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_TR2);
+	model_test_set_order(test, order);
+	model_test_set_dfn(test, order);
+	model_test_set_value(test, LM);
+	model_test_set_pvalue(test, pv);
+
+	if (!(opt & OPT_Q)) {
+	    int heading = (V == NULL);
+
+	    gretl_model_test_print_direct(test, heading, prn);
+	}
+
+	if (opt & OPT_S) {
+	    maybe_add_test_to_model(pmod, test);
+	} else {
+	    model_test_free(test);
+	}
+    }	    
+
+    record_test_result(LM, pv, "ARCH");
+}
+
 /**
  * arch_test:
  * @pmod: model to be tested.
@@ -2932,7 +2977,6 @@ int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo,
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
     int T = pmod->nobs;
-    int printing;
     int i, k, s, t;
     double x, s2, rsq;
     double *ps2 = NULL;
@@ -2968,9 +3012,7 @@ int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    printing = (opt & OPT_Q)? 0 : 1;
-
-    if (printing) {
+    if (!(opt & OPT_Q)) {
 	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
 	    err = E_ALLOC;
@@ -3003,45 +3045,8 @@ int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo,
     }
 
     if (!err) {
-	ModelTest *test = model_test_new(GRETL_TEST_ARCH);
-	double LM = T * rsq;
-	double pv = chisq_cdf_comp(LM, order);
-
-	if (printing) {
-	    char cname[16];
-
-	    pprintf(prn, "\n%s:\n\n", _("Estimates of the ARCH coefficients"));
-	    for (i=0; i<k; i++) {
-		if (i == 0) {
-		    strcpy(cname, "const");
-		} else {
-		    sprintf(cname, "%s %2d", _("lag"), i);
-		}
-		pprintf(prn, "  %-8s %12.6g (%g)\n", cname, b->val[i],
-			sqrt(gretl_matrix_get(V, i, i)));
-	    }
-	}
-
-	if (test != NULL) {
-	    model_test_set_teststat(test, GRETL_STAT_TR2);
-	    model_test_set_order(test, order);
-	    model_test_set_dfn(test, order);
-	    model_test_set_value(test, LM);
-	    model_test_set_pvalue(test, pv);
-
-	    if (printing) {
-		pputc(prn, '\n');
-		gretl_model_test_print_direct(test, prn);
-	    }
-
-	    if (opt & OPT_S) {
-		maybe_add_test_to_model(pmod, test);
-	    } else {
-		model_test_free(test);
-	    }
-	}	    
-
-	record_test_result(LM, pv, "ARCH");
+	arch_test_save_or_print(b, V, T, order, rsq, pmod, 
+				opt, prn);
     }
 
  bailout:

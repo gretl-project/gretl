@@ -410,23 +410,19 @@ static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
     }
 }
 
-static int tex_print_coeff_custom (const char *pname, const MODEL *pmod, 
-				   int i, PRN *prn)
+static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 {
-    double bi = pmod->coeff[i];
-    double se = pmod->sderr[i];
     char fmt[12];
-    double x;
 
-    pprintf(prn, "%s & ", pname);
+    pprintf(prn, "%s & ", mc->name);
 
     if (colspec[0][0]) {
 	/* coefficient */
-	if (xna(bi)) {
+	if (na(mc->b)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
 	    sprintf(fmt, "$%s$", colspec[0]);
-	    pprintf(prn, fmt, pmod->coeff[i]);
+	    pprintf(prn, fmt, mc->b);
 	}
     }
 
@@ -440,10 +436,10 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 	    pputs(prn, " & ");
 	}
 	/* standard error */
-	if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	if (na(mc->se)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    pprintf(prn, colspec[1], pmod->sderr[i]);
+	    pprintf(prn, colspec[1], mc->se);
 	}
     }
 
@@ -457,12 +453,11 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 	    pputs(prn, " & ");
 	}
 	/* t-ratio */
-	if (xna(bi) || xna(se)) {
+	if (na(mc->tval)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    x = bi / se;
 	    sprintf(fmt, "$%s$", colspec[2]);
-	    pprintf(prn, fmt, x);
+	    pprintf(prn, fmt, mc->tval);
 	}
     } 
 
@@ -471,11 +466,10 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 	    pputs(prn, " & ");
 	}
 	/* p-value */
-	if (xna(bi) || xna(se)) {
+	if (na(mc->pval)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    x = coeff_pval(pmod, bi / se, pmod->dfd);
-	    pprintf(prn, colspec[3], x);
+	    pprintf(prn, colspec[3], mc->pval);
 	}
     }  
 
@@ -484,94 +478,86 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
     return 0;
 }
 
-int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		     int i, PRN *prn)
+void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
+			  char *name)
 {
-    char tmp[32], coeff[64], sderr[64], tratio[64], pval[64];
-    double bi = pmod->coeff[i];
-    double se = pmod->sderr[i];
     int j = i + 2;
 
-    *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
-	tex_make_cname(tmp, pdinfo->varname[pmod->list[i+2]]);
+	tex_make_cname(name, pdinfo->varname[pmod->list[i+2]]);
     } else if (pmod->ci == NLS) {
-	if (!tex_greek_param(tmp, pmod->params[i])) {
-	    tex_escape(tmp, pmod->params[i]);
+	if (!tex_greek_param(name, pmod->params[i])) {
+	    tex_escape(name, pmod->params[i]);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(tmp, pmod->params[i], 0);
+	tex_arma_coeff_name(name, pmod->params[i], 0);
     } else if (pmod->ci == GARCH) {
-	tex_garch_coeff_name(tmp, pmod->params[i], 0);
+	tex_garch_coeff_name(name, pmod->params[i], 0);
     } else if (pmod->ci == VAR) {
-	tex_lagname(tmp, pdinfo, pmod->list[j]);
+	tex_lagname(name, pdinfo, pmod->list[j]);
     } else if (pmod->aux == AUX_VECM) {
-	tex_vecm_varname(tmp, pdinfo, pmod->list[j]);
+	tex_vecm_varname(name, pdinfo, pmod->list[j]);
     } else if (pmod->ci == MPOLS && pmod->params != NULL) {
-	tex_mp_coeff_name(tmp, pmod->params[i], 0);
+	tex_mp_coeff_name(name, pmod->params[i], 0);
     } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
 	       pmod->params != NULL) {
-	tex_escape(tmp, pmod->params[i]);
+	tex_escape(name, pmod->params[i]);
     } else if (pmod->ci == PANEL) {
-	tex_escape(tmp, pmod->params[i]);
+	tex_escape(name, pmod->params[i]);
     } else if (pmod->ci == ARBOND) {
-	tex_arbond_coeff_name(tmp, pmod->params[i], 0);
+	tex_arbond_coeff_name(name, pmod->params[i], 0);
     } else {
-	tex_escape(tmp, pdinfo->varname[pmod->list[j]]);
+	tex_escape(name, pdinfo->varname[pmod->list[j]]);
     }
+}
+
+void tex_print_coeff (const model_coeff *mc, PRN *prn)
+{
+    char bstr[64], sestr[64], tstr[64], col4[64];
 
     if (use_custom) {
-	return tex_print_coeff_custom(tmp, pmod, i, prn);
+	tex_print_coeff_custom(mc, prn);
+	return;
     }
 
-    if (xna(bi)) {
-	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    if (na(mc->b)) {
+	sprintf(bstr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(bi, coeff);
+	tex_dcolumn_double(mc->b, bstr);
     }
 
-    if (xna(se)) {
-	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    if (na(mc->se)) {
+	sprintf(sestr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(se, sderr);
-	sprintf(tratio, "%.4f", bi / se);
-	sprintf(pval, "%.4f", coeff_pval(pmod, bi / se, pmod->dfd));
-    }    
-	
-    if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
-	pprintf(prn, "%s &\n"
-		"  %s &\n"
-		"    %s &\n"
-		"      %s &\n"
-		"        %s \\\\\n",  
-		tmp,
-		coeff,
-		sderr,
-		tratio,
-		pval);	
-    } else { 
-	/* LOGIT, PROBIT */
-	double *slopes = gretl_model_get_data(pmod, "slopes");
-	char slope[32];
+	tex_dcolumn_double(mc->se, sestr);
+    }
 
-	if (pmod->list[j]) {
-	    tex_dcolumn_double(slopes[i], slope);
+    if (na(mc->tval)) {
+	sprintf(tstr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    } else {
+	sprintf(tstr, "%.4f", mc->tval);
+    }
+
+    *col4 = '\0';
+
+    if (!na(mc->slope)) {
+	tex_dcolumn_double(mc->slope, col4);
+    } else if (mc->show_pval) {
+	if (!na(mc->pval)) {
+	    sprintf(col4, "%.4f", mc->pval);
 	}
-	pprintf(prn, "%s &\n"
-		"  %s &\n"
-		"    %s &\n"
-		"      %s &\n"
-		"        %s \\\\\n",  
-		tmp,
-		coeff,
-		sderr,
-		tratio,
-		(pmod->list[j])? slope : "");
     }
 
-    return 0;
+    pprintf(prn, "%s &\n"
+	    "  %s &\n"
+	    "    %s &\n"
+	    "      %s &\n"
+	    "        %s \\\\\n",  
+	    mc->name,
+	    bstr,
+	    sestr,
+	    tstr,
+	    col4);	    
 }
 
 void tex_custom_coeff_table_start (const char *col1, const char *col2,

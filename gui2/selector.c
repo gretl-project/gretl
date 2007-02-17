@@ -2164,18 +2164,24 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 {
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
-    gdouble maxlag = datainfo->pd;
+    gdouble val, maxlag;
 
     hbox = gtk_hbox_new(FALSE, 5);
+
     if (sr->code == ARCH) {
 	tmp = gtk_label_new(_("ARCH order:"));
+	val = datainfo->pd;
+	maxlag = 2 * datainfo->pd;
     } else {
 	tmp = gtk_label_new(_("AR order:"));
+	val = 1;
+	maxlag = datainfo->pd;
     }
+
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    adj = gtk_adjustment_new(1, 1, maxlag, 1, 1, 1);
+    adj = gtk_adjustment_new(val, 1, maxlag, 1, 1, 1);
 
     sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);

@@ -429,7 +429,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 			pval = 0.0001;
 		    }
 		} else {
-		    pval = coeff_pval(pmod, x / s, pmod->dfd);
+		    pval = coeff_pval(pmod->ci, x / s, pmod->dfd);
 		}
 
 		sprintf(numstr, "%#.4g", x);

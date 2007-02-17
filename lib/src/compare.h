@@ -40,9 +40,9 @@ typedef enum {
     AUX_CHOW,  /* aux. regression for Chow test */
     AUX_ADD,   /* aux. regression for adding variables */
     AUX_AR,    /* aux. regression for autocorrelation test */
+    AUX_ARCH,  /* aux. regression for ARCH test */
     AUX_WHITE, /* aux. regression for heteroskedasticity (White's test) */
     AUX_COINT, /* aux. regression for cointegreation test */
-    AUX_ARCH,  /* aux. regression for ARCH test */
     AUX_DF,    /* aux. regression for Dickey-Fuller test */
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
     AUX_KPSS,  /* aux. regression for KPSS test */

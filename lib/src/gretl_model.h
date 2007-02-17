@@ -295,7 +295,8 @@ void model_test_set_crit_and_alpha (ModelTest *test,
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
 void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
-void gretl_model_test_print_direct (const ModelTest *test, PRN *prn);
+void gretl_model_test_print_direct (const ModelTest *test, int heading,
+				    PRN *prn);
 
 void gretl_model_destroy_tests (MODEL *pmod);
 
@@ -306,7 +307,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 
 int mle_criteria (MODEL *pmod, int addk);
 
-double coeff_pval (const MODEL *pmod, double x, int df);
+double coeff_pval (int ci, double x, int df);
 
 int gretl_model_allocate_params (MODEL *pmod, int k);
 

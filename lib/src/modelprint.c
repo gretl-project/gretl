@@ -26,14 +26,8 @@
 
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
-static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int i, PRN *prn);
-static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			    int i, PRN *prn);
-static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			    int i, PRN *prn);
-static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
-			    int c, PRN *prn);
+static int 
+print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
 static void print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_binary_statistics (const MODEL *pmod, 
@@ -45,8 +39,6 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn);
 static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
-static void plain_print_tval (double tval, PRN *prn);
-static void plain_print_pval (double tval, int df, PRN *prn);
 
 #define RTFTAB "\\par \\ql \\tab "
 
@@ -272,7 +264,7 @@ static void pseudorsqline (const MODEL *pmod, PRN *prn)
 	char r2[32];
 
 	tex_dcolumn_double(pmod->rsq, r2);
-	pprintf(prn, "%s & %s \\\\\n", I_("McFadden's pseudo-$R^2$"), r2);
+	pprintf(prn, "%s = %s \\\\\n", I_("McFadden's pseudo-$R^2$"), r2);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("McFadden's pseudo-R-squared"), 
 		prn_delim(prn), pmod->rsq);
@@ -483,12 +475,13 @@ static void print_GMM_test_data (const MODEL *pmod, PRN *prn)
 
 static void ladstats (const MODEL *pmod, PRN *prn)
 {
+    double ladsum = gretl_model_get_double(pmod, "ladsum");
     int utf = plain_format(prn);
 
     if (tex_format(prn)) {  
 	char x1str[32], x2str[32];
 
-	tex_dcolumn_double(pmod->rho, x1str); /* "rho" is abused here! */
+	tex_dcolumn_double(ladsum, x1str);
 	tex_dcolumn_double(pmod->ess, x2str);
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Sum of absolute residuals"), x1str); 
@@ -496,14 +489,14 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		I_("Sum of squared residuals"), x2str); 
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of absolute residuals"),
-		prn_delim(prn), pmod->rho);
+		prn_delim(prn), ladsum);
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"),
 		prn_delim(prn), pmod->ess);
     } else {
 	pprintf(prn, "  %s = %.*g\n", 
 		(utf)? _("Sum of absolute residuals") :
 		I_("Sum of absolute residuals"),
-		GRETL_DIGITS, pmod->rho);
+		GRETL_DIGITS, ladsum);
 	pprintf(prn, "  %s = %.*g\n", 
 		(utf)? _("Sum of squared residuals") :
 		I_("Sum of squared residuals"),
@@ -744,7 +737,7 @@ static int least_signif_coeff (const MODEL *pmod)
 	}
     }
 
-    if (coeff_pval(pmod, tmin, pmod->dfd) > .10) {
+    if (coeff_pval(pmod->ci, tmin, pmod->dfd) > .10) {
 	return pmod->list[k+2];
     }
 
@@ -794,7 +787,7 @@ static const char *aux_string (int aux, PRN *prn)
 	return N_("Auxiliary regression for RESET specification test");
     } else if (aux == AUX_GROUPWISE) {
 	return N_("Groupwise heteroskedasticity");
-    }
+    } 
 
     else return "";
 }
@@ -894,13 +887,53 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
     }
 }
 
+static int any_tests (const MODEL *pmod)
+{
+    if (pmod->ntests > 0) {
+	return 1;
+    }
+
+    if (pmod->ci == TSLS && gretl_model_get_int(pmod, "stage1-dfn")) {
+	return 1;
+    }
+
+    return 0;
+}
+
+static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
+{
+    double F = gretl_model_get_double(pmod, "stage1-F");
+    int dfn, dfd;
+
+    if (na(F)) {
+	return;
+    }
+
+    dfn = gretl_model_get_int(pmod, "stage1-dfn");
+    dfd = gretl_model_get_int(pmod, "stage1-dfd");
+
+    if (dfn <= 0 || dfd <= 0) {
+	return;
+    }
+
+    if (plain_format(prn)) {
+	pprintf(prn, "%s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
+		dfn, dfd, GRETL_DIGITS, F);
+	pprintf(prn, "  %s\n\n", _("A value < 10 may indicate weak instruments"));
+    } else if (tex_format(prn)) {
+	char x1str[32];
+
+	tex_dcolumn_double(F, x1str);
+	pprintf(prn, "First-stage $F(%d, %d)$ = %s \\\\\n", dfn, dfd, x1str);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "%s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
+		dfn, dfd, F);
+    }
+}
+
 static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
-
-    if (pmod->ntests == 0) {
-	return;
-    }
 
     if (tex_format(prn)) {
 	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
@@ -910,11 +943,16 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 	    }
 	    gretl_model_test_print(pmod, i, prn);
 	}
+	if (pmod->ntests > 0) {
+	    pputs(prn, "\\vspace{1ex}\n");
+	}
+	maybe_print_first_stage_F(pmod, prn);
 	pputs(prn, "\\end{raggedright}\n");
     } else {
 	for (i=0; i<pmod->ntests; i++) {
 	    gretl_model_test_print(pmod, i, prn);
 	}
+	maybe_print_first_stage_F(pmod, prn);
     }
 }
 
@@ -1545,7 +1583,6 @@ static void print_model_heading (const MODEL *pmod,
     else if ((pmod->ci == WLS && !pmod->aux)) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
-	    pputs(prn, "\\\\\n");
 	}
 	if (csv) pputc(prn, '"');
 	pprintf(prn, "%s: %s", 
@@ -1557,9 +1594,6 @@ static void print_model_heading (const MODEL *pmod,
 
     /* weight variable for ARCH */
     else if (pmod->ci == ARCH) {
-	if (tex) {
-	    pputs(prn, "\\\\\n");
-	}
 	if (csv) pputc(prn, '"');
 	pprintf(prn, "%s: %s", 
 		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
@@ -1764,74 +1798,6 @@ static void model_format_end (PRN *prn)
     }
 } 
 
-static int 
-print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
-{
-    int nc = pmod->ncoeff;
-    int i, err = 0, gotnan = 0;
-    int gn = -1;
-
-    if (pmod->ci == GARCH) {
-	gn = pmod->list[0] - 4;
-    } else if (pmod->ci == PANEL) {
-	nc = pmod->list[0] - 1;
-    }
-
-    for (i=0; i<nc; i++) {
-	if (plain_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
-	    if (pmod->ci == MPOLS) {
-		print_mp_coeff(pdinfo, pmod, i, prn);
-	    } else {
-		err = print_coeff(pdinfo, pmod, i, prn);
-	    }
-	} else if (tex_format(prn)) {
-	    if (i == gn) {
-		pputs(prn, "\\\\ \n");
-	    }
-	    err = tex_print_coeff(pdinfo, pmod, i, prn);
-	} else if (rtf_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
-	    err = rtf_print_coeff(pdinfo, pmod, i, prn);
-	} else if (csv_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
-	    err = csv_print_coeff(pdinfo, pmod, i, prn);
-	}
-
-	if (err) gotnan = 1;
-    }
-
-    if (pmod->ci == ARCH && plain_format(prn)) {
-	double *a = gretl_model_get_data(pmod, "arch_coeff");
-	double *se = gretl_model_get_data(pmod, "arch_sderr");
-	int order = gretl_model_get_int(pmod, "arch_order");
-	char cname[12];
-
-	/* FIXME generalize this or get rid of it */
-
-	if (a != NULL && se != NULL && order > 0) {
-	    pputc(prn, '\n');
-	    for (i=0; i<=order; i++) {
-		sprintf(cname, "alpha(%d)", i);
-		pprintf(prn, "  %-15s ", cname);
-		gretl_print_value(a[i], prn);
-		gretl_print_value(se[i], prn); 
-		plain_print_tval(a[i] / se[i], prn);
-		plain_print_pval(a[i] / se[i], pmod->nobs - (order + 1), 
-				 prn);
-		pputc(prn, '\n');
-	    }
-	}
-    }
-
-    return gotnan;
-} 
 
 static void print_middle_table_start (PRN *prn)
 {
@@ -1969,36 +1935,7 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
-{
-    double F = gretl_model_get_double(pmod, "stage1-F");
-    int dfn, dfd;
 
-    if (na(F)) {
-	return;
-    }
-
-    dfn = gretl_model_get_int(pmod, "stage1-dfn");
-    dfd = gretl_model_get_int(pmod, "stage1-dfd");
-
-    if (dfn <= 0 || dfd <= 0) {
-	return;
-    }
-
-    if (plain_format(prn)) {
-	pprintf(prn, "%s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
-		dfn, dfd, GRETL_DIGITS, F);
-	pprintf(prn, "  %s\n\n", _("A value < 10 may indicate weak instruments"));
-    } else if (tex_format(prn)) {
-	char x1str[32];
-
-	tex_dcolumn_double(F, x1str);
-	pprintf(prn, "First-stage $F(%d, %d)$ & %s \\\\\n", dfn, dfd, x1str);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, "%s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
-		dfn, dfd, F);
-    }
-}
 
 static char active_decpoint (void)
 {
@@ -2337,12 +2274,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	outcovmx(pmod, pdinfo, prn);
     }
 
-    if (pmod->ntests > 0) {
+    if (any_tests(pmod)) {
 	print_model_tests(pmod, prn);
-    }
-
-    if (pmod->ci == TSLS) {
-	maybe_print_first_stage_F(pmod, prn);
     }
 
     if (!plain_format(prn)) {
@@ -2365,12 +2298,9 @@ static void print_pval_str (double pval, char *str)
     }
 }
 
-static void plain_print_pval (double tval, int df, PRN *prn)
+static void plain_print_pval (double pval, PRN *prn)
 {
     char pvstr[16];
-    double pval;
-
-    pval = t_pvalue_2(tval, df);
 
     if (pval < .00001) {
 	sprintf(pvstr, "<%.5f", 0.00001);
@@ -2404,83 +2334,102 @@ static void plain_print_tval (double tval, PRN *prn)
     }
 }
 
-static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			int i, PRN *prn)
+static int 
+prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
+		     int i, model_coeff *mc, PRN *prn)
 {
-    double bi = pmod->coeff[i];
-    double se = pmod->sderr[i];
-    double tval, pval = 999.0;
     int gotnan = 0;
-    int do_pval = !binary_model(pmod);
-    char varname[24];
 
-    gretl_model_get_param_name(pmod, pdinfo, i, varname);
-    pprintf(prn, "  %-15s ", varname);
-    
-    /* print coeff value if well-defined */
-    if (xna(bi)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
+    mc->b = NADBL;
+    mc->se = NADBL;
+    mc->tval = NADBL;
+    mc->pval = NADBL;
+    mc->slope = NADBL;  
+    mc->show_pval = !binary_model(pmod);
+    mc->df_pval = 0;
+    mc->name[0] = '\0';
+
+    if (tex_format(prn)) {
+	make_tex_coeff_name(pmod, pdinfo, i, mc->name);
+    } else {
+	gretl_model_get_param_name(pmod, pdinfo, i, mc->name);
+    }
+
+    if (xna(pmod->coeff[i])) {
 	gotnan = 1;
     } else {
-	gretl_print_value(bi, prn);
+	mc->b = pmod->coeff[i];
     }
 
-    /* get out if std error is undefined */
-    if (xna(se)) {
-	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
-	return 1;
+    if (!xna(pmod->sderr[i])) {
+	mc->se = pmod->sderr[i];
     }
 
-    gretl_print_value(se, prn); 
+    if (!na(mc->b) && !na(mc->se) && mc->se > 0.0) {
+	mc->tval = mc->b / mc->se;
+	if (xna(mc->tval)) {
+	    mc->tval = NADBL;
+	}
+    }
 
-    /* std error is well-defined, but is it positive? */
-    if (se > 0.) {
-	tval = bi / se;
-	plain_print_tval(tval, prn);
-
+    if (mc->show_pval && !na(mc->tval)) {
 	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    if (i + 2 == gretl_model_get_int(pmod, "dfnum")) {
-		char pvalstr[16];
-
-		pval = gretl_model_get_double(pmod, "dfpval");
-		print_pval_str(pval, pvalstr);
-		pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
+		mc->pval = gretl_model_get_double(pmod, "dfpval");
 	    } 
-	    do_pval = 0;
+	    mc->df_pval = 1;
+	} else {	
+	    mc->pval = coeff_pval(pmod->ci, mc->tval, pmod->dfd);
 	}
-
-	if (do_pval) {
-	    char pvalstr[16];
-
-	    pval = coeff_pval(pmod, tval, pmod->dfd);
-	    print_pval_str(pval, pvalstr);
-	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
-	}
-    } else if (do_pval) { 
-	/* case of zero standard error */
-	do_pval = 0;
-	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     }
 
-    if (do_pval) {
-	if (pval < 0.01) {
-	    pputs(prn, " ***");
-	} else if (pval < 0.05) {
-	    pputs(prn, " **");
-	} else if (pval < 0.10) {
-	    pputs(prn, " *");
-	}
-    } else if (binary_model(pmod) && pmod->list[i+2] != 0) { 
+    if (!gotnan && binary_model(pmod) && pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {
-	    gretl_print_value(slopes[i], prn);
+	    mc->slope = slopes[i];
 	}
     }
 
-    pputc(prn, '\n');
-
     return gotnan;
+}
+
+static void plain_print_coeff (const model_coeff *mc, PRN *prn)
+{
+    pprintf(prn, "  %-15s ", mc->name);
+
+    if (na(mc->b)) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
+    } else {
+	gretl_print_value(mc->b, prn);
+    }
+
+    /* get out if std error is undefined */
+    if (na(mc->se)) {
+	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
+	return;
+    }
+
+    gretl_print_value(mc->se, prn); 
+
+    if (!na(mc->tval)) {
+	plain_print_tval(mc->tval, prn);
+    }
+
+    if (!na(mc->slope)) {
+	/* slope for binary models */
+	gretl_print_value(mc->slope, prn);
+    } else if (mc->show_pval) {
+	if (na(mc->pval)) {
+	    if (!mc->df_pval) {
+		pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
+	    }
+	} else {
+	    plain_print_pval(mc->pval, prn);
+	} 
+    }
+
+    pputc(prn, '\n');
 }
 
 static void rtf_print_double (double xx, PRN *prn)
@@ -2493,138 +2442,223 @@ static void rtf_print_double (double xx, PRN *prn)
     pprintf(prn, " \\qc %s\\cell", numstr);
 }
 
-static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			    int i, PRN *prn)
+static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 {
-    double tval, pval = 999.0;
-    double bi = pmod->coeff[i];
-    double se = pmod->sderr[i];
-    int gotnan = 0;
-    int do_pval = !binary_model(pmod);
-    char varname[24];
-
-    gretl_model_get_param_name(pmod, pdinfo, i, varname);
-
     pputs(prn, RTF_COEFF_ROW);
+    pprintf(prn, "\\ql %s\\cell", mc->name);
 
-    pprintf(prn, "\\ql %s\\cell", varname);
-
-    if (xna(bi)) {
+    if (na(mc->b)) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
-	gotnan = 1;
     } else {
-	rtf_print_double(bi, prn);
+	rtf_print_double(mc->b, prn);
     }
 
-    if (xna(se)) {
+    if (na(mc->se)) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	goto rtf_coeff_getout;
     } 
 
-    rtf_print_double(se, prn); 
+    rtf_print_double(mc->se, prn); 
 
-    if (se > 0.) {
-	tval = bi / se;
-	pprintf(prn, " \\qc %.4f\\cell", tval);
-	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
-	    do_pval = 0;
-	    pprintf(prn, " \\qc %s\\cell", I_("unknown"));
-	}
-	if (do_pval) {
-	    char pvalstr[16];
-
-	    pval = coeff_pval(pmod, tval, pmod->dfd);
-	    print_pval_str(pval, pvalstr);
-	    pprintf(prn, " \\qc %s\\cell", pvalstr);
-	}	
-    } else if (do_pval) { 
-	/* case of zero standard error */
-	do_pval = 0;
+    if (!na(mc->tval)) {
+	pprintf(prn, " \\qc %.4f\\cell", mc->tval);
+    } else {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
     }
 
-    if (do_pval) {
-	if (pval < 0.01) {
-	    pputs(prn, " \\ql ***\\cell");
-	} else if (pval < 0.05) { 
-	    pputs(prn, " \\ql **\\cell");
-	} else if (pval < 0.10) {
-	    pputs(prn, " \\ql *\\cell");
+    if (!na(mc->slope)) {
+	rtf_print_double(mc->slope, prn);
+    } else if (mc->show_pval) {
+	if (na(mc->pval)) {
+	    if (mc->df_pval) {
+		pprintf(prn, " \\qc %s\\cell", I_("unknown"));
+	    } else {
+		pprintf(prn, " \\qc %s\\cell", I_("undefined"));
+	    }
 	} else {
-	    pputs(prn, " \\ql \\cell");
-	}
-    } else if (binary_model(pmod) && pmod->list[i+2] != 0) {
-	double *slopes = gretl_model_get_data(pmod, "slopes");
+	    char pvalstr[16];
 
-	if (slopes != NULL) {
-	    rtf_print_double(slopes[i], prn);
-	}	
+	    print_pval_str(mc->pval, pvalstr);
+	    pprintf(prn, " \\qc %s\\cell", pvalstr);
+	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
+
+	    if (mc->pval < 0.01) {
+		pputs(prn, " \\ql ***\\cell");
+	    } else if (mc->pval < 0.05) { 
+		pputs(prn, " \\ql **\\cell");
+	    } else if (mc->pval < 0.10) {
+		pputs(prn, " \\ql *\\cell");
+	    } else {
+		pputs(prn, " \\ql \\cell");
+	    }
+	} 
     }
 
  rtf_coeff_getout:
 
     pputs(prn, " \\intbl \\row\n");
-
-    return gotnan;
 }
 
-static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			    int i, PRN *prn)
+static void csv_print_coeff (const model_coeff *mc, PRN *prn)
 {
     char d = prn_delim(prn);
-    double bi = pmod->coeff[i];
-    double se = pmod->sderr[i];
-    double tval, pval = 999.0;
-    int gotnan = 0;
-    int do_pval = !binary_model(pmod);
-    char varname[24];
 
-    gretl_model_get_param_name(pmod, pdinfo, i, varname);
-    pprintf(prn, "\"%s\"", varname);
-    
-    /* print coeff value if well-defined */
-    if (xna(bi)) {
+    pprintf(prn, "\"%s\"", mc->name);
+
+    if (na(mc->b)) {
 	pprintf(prn, "%c\"%s\"", d, I_("undefined"));
-	gotnan = 1;
     } else {
-	pprintf(prn, "%c%.15g", d, bi);
+	pprintf(prn, "%c%.15g", d, mc->b);
     }
-
+    
     /* get out if std error is undefined */
-    if (xna(se)) {
+    if (na(mc->se)) {
 	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
-	return 1;
+	return;
     }
 
-    pprintf(prn, "%c%.15g", d, se);
+    pprintf(prn, "%c%.15g", d, mc->se);
 
-
-    /* std error is well-defined, but is it positive? */
-    if (se > 0.) {
-	tval = bi / se;
-	pprintf(prn, "%c%.15g", d, tval);
-	if (do_pval) {
-	    pval = coeff_pval(pmod, tval, pmod->dfd);
-	    pprintf(prn, "%c%.15g", d, pval);
-	}
-    } else if (do_pval) { 
+    if (!na(mc->tval)) {
+	pprintf(prn, "%c%.15g", d, mc->tval);
+    } else {
 	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
     }
 
-    if (binary_model(pmod) && pmod->list[i+2] != 0) { 
-	double *slopes = gretl_model_get_data(pmod, "slopes");
-
-	if (slopes != NULL) {
-	    pprintf(prn, "%c%.15g", d, slopes[i]);
-	}
+    if (!na(mc->slope)) {
+	/* slope for binary models */
+	pprintf(prn, "%c%.15g", d, mc->slope);
+    } else if (mc->show_pval) {
+	if (na(mc->pval)) {
+	    if (mc->df_pval) {
+		pprintf(prn, "%c\"%s\"\n", d, I_("unknown"));
+	    } else {
+		pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
+	    }
+	} else {
+	    pprintf(prn, "%c%.15g", d, mc->pval);
+	} 
     }
 
     pputc(prn, '\n');
+}
+
+static void print_mp_coeff (const model_coeff *mc, PRN *prn)
+{
+    pprintf(prn, "  %-*s", VNAMELEN - 1, mc->name);
+
+    gretl_print_fullwidth_double(mc->b, GRETL_MP_DIGITS, prn);
+    gretl_print_fullwidth_double(mc->se, GRETL_MP_DIGITS, prn); 
+
+    pputc(prn, '\n');
+}
+
+static void print_coeff (const model_coeff *mc, PRN *prn)
+{
+    if (plain_format(prn)) {
+	plain_print_coeff(mc, prn);
+    } else if (rtf_format(prn)) {
+	rtf_print_coeff(mc, prn);
+    } else if (tex_format(prn)) {
+	tex_print_coeff(mc, prn);
+    } else if (csv_format(prn)) {
+	csv_print_coeff(mc, prn);
+    }
+}
+
+void print_arch_coeffs (const double *a, const double *se,
+			int T, int order, PRN *prn,
+			int aux)
+{
+    model_coeff mc;
+    int i;
+
+    if (aux) {
+	pprintf(prn, "\n%s %d\n\n", _("Test for ARCH of order"),
+		order);
+	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
+		     "      T STAT   P-VALUE\n\n"));
+    } else {
+	gretl_prn_newline(prn);
+    }
+
+    for (i=0; i<=order; i++) {
+	mc.b = a[i];
+	mc.se = se[i];
+	mc.tval = a[i] / se[i];
+	mc.pval = t_pvalue_2(mc.tval, T - (order + 1));
+	mc.show_pval = 1;
+	mc.df_pval = 0;
+	mc.slope = NADBL;
+
+	if (tex_format(prn)) {
+	    sprintf(mc.name, "$\\alpha_%d$", i);
+	} else {
+	    sprintf(mc.name, "alpha(%d)", i);
+	}
+
+	print_coeff(&mc, prn);
+    }
+}
+
+static int 
+print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+{
+    model_coeff mc;
+    int nc = pmod->ncoeff;
+    int i, err = 0, gotnan = 0;
+    int gn = -1;
+
+    if (pmod->ci == GARCH) {
+	gn = pmod->list[0] - 4;
+    } else if (pmod->ci == PANEL) {
+	nc = pmod->list[0] - 1;
+    }
+
+    for (i=0; i<nc; i++) {
+
+	err = prepare_model_coeff(pmod, pdinfo, i, &mc, prn);
+	if (err) gotnan = 1;
+
+	if (plain_format(prn)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
+	    if (pmod->ci == MPOLS) {
+		print_mp_coeff(&mc, prn);
+		continue;
+	    } 
+	} else if (tex_format(prn)) {
+	    if (i == gn) {
+		pputs(prn, "\\\\ \n");
+	    }
+	} else if (rtf_format(prn)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
+	} else if (csv_format(prn)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
+	}
+
+	print_coeff(&mc, prn);
+    }
+
+    if (pmod->ci == ARCH) {
+	double *a = gretl_model_get_data(pmod, "arch_coeff");
+	double *se = gretl_model_get_data(pmod, "arch_sderr");
+	int order = gretl_model_get_int(pmod, "arch_order");
+
+	if (a != NULL && se != NULL && order > 0) {
+	    print_arch_coeffs(a, se, pmod->nobs, order, prn, 0);
+	}
+    }
 
     return gotnan;
-}
+} 
 
 static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 {
@@ -3106,21 +3140,6 @@ static void print_binary_statistics (const MODEL *pmod,
     }
 }
 
-static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
-			    int c, PRN *prn)
-{
-    char pname[VNAMELEN];
-
-    gretl_model_get_param_name(pmod, pdinfo, c, pname);
-    pprintf(prn, "  %-*s", VNAMELEN - 1, pname);
-
-    gretl_print_fullwidth_double(pmod->coeff[c], 
-				 GRETL_MP_DIGITS, prn);
-    gretl_print_fullwidth_double(pmod->sderr[c], 
-				 GRETL_MP_DIGITS, prn); 
-
-    pputc(prn, '\n');
-}
 
 int ols_print_anova (const MODEL *pmod, PRN *prn)
 {
