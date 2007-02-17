@@ -413,6 +413,8 @@ static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
 static int tex_print_coeff_custom (const char *pname, const MODEL *pmod, 
 				   int i, PRN *prn)
 {
+    double bi = pmod->coeff[i];
+    double se = pmod->sderr[i];
     char fmt[12];
     double x;
 
@@ -420,7 +422,7 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 
     if (colspec[0][0]) {
 	/* coefficient */
-	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+	if (xna(bi)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
 	    sprintf(fmt, "$%s$", colspec[0]);
@@ -455,11 +457,10 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 	    pputs(prn, " & ");
 	}
 	/* t-ratio */
-	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i]) ||
-	    isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	if (xna(bi) || xna(se)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    x = pmod->coeff[i] / pmod->sderr[i];
+	    x = bi / se;
 	    sprintf(fmt, "$%s$", colspec[2]);
 	    pprintf(prn, fmt, x);
 	}
@@ -470,11 +471,10 @@ static int tex_print_coeff_custom (const char *pname, const MODEL *pmod,
 	    pputs(prn, " & ");
 	}
 	/* p-value */
-	if (isnan(pmod->coeff[i]) || na(pmod->coeff[i]) ||
-	    isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	if (xna(bi) || xna(se)) {
 	    pprintf(prn, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	} else {
-	    x = coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], pmod->dfd);
+	    x = coeff_pval(pmod, bi / se, pmod->dfd);
 	    pprintf(prn, colspec[3], x);
 	}
     }  
@@ -488,6 +488,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		     int i, PRN *prn)
 {
     char tmp[32], coeff[64], sderr[64], tratio[64], pval[64];
+    double bi = pmod->coeff[i];
+    double se = pmod->sderr[i];
     int j = i + 2;
 
     *tmp = 0;
@@ -522,21 +524,20 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	return tex_print_coeff_custom(tmp, pmod, i, prn);
     }
 
-    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+    if (xna(bi)) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->coeff[i], coeff);
+	tex_dcolumn_double(bi, coeff);
     }
 
-    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+    if (xna(se)) {
 	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->sderr[i], sderr);
-	sprintf(tratio, "%.4f", pmod->coeff[i] / pmod->sderr[i]);
-	sprintf(pval, "%.4f", coeff_pval(pmod, pmod->coeff[i] / pmod->sderr[i], 
-					 pmod->dfd));
+	tex_dcolumn_double(se, sderr);
+	sprintf(tratio, "%.4f", bi / se);
+	sprintf(pval, "%.4f", coeff_pval(pmod, bi / se, pmod->dfd));
     }    
 	
     if (pmod->ci != LOGIT && pmod->ci != PROBIT) {

@@ -3079,6 +3079,8 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int oldv = pdinfo->v;
     int i, t, nwt, k, n = pdinfo->n;
+    double *a = NULL;
+    double *se = NULL;
     double xx;
 
     gretl_error_clear();
@@ -3147,6 +3149,12 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+    /* steal the coefficients for reference */
+    a = amod.coeff;
+    amod.coeff = NULL;
+    se = amod.sderr;
+    amod.sderr = NULL;
+
     /* do weighted estimation */
     wlist = gretl_list_new(list[0] + 1);
 
@@ -3173,9 +3181,17 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 
 	clear_model(&amod);
 	amod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE);
-
 	amod.ci = ARCH;
-	gretl_model_set_int(&amod, "arch_order", order);
+
+	if (!amod.errcode) {
+	    gretl_model_set_int(&amod, "arch_order", order);
+	    gretl_model_set_data(&amod, "arch_coeff", a,
+				 MODEL_DATA_DOUBLE_ARRAY,
+				 (order + 1) * sizeof *a);
+	    gretl_model_set_data(&amod, "arch_sderr", se,
+				 MODEL_DATA_DOUBLE_ARRAY,
+				 (order + 1) * sizeof *se);
+	}
     }
 
  bailout:

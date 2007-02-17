@@ -3551,7 +3551,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 
     case LMTEST:
 	if (opt & OPT_H) {
-	    ok = 1;
+	    ok = (model_ci != ARCH);
 	} else if (model_ci != OLS) {
 	    ok = 0; /* FIXME */
 	}

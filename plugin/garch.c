@@ -660,7 +660,7 @@ static int *get_garch_list (const int *list, const double **Z,
 
     *err = 0;
 
-    /* rule out pure AR in variance */
+    /* rule out pure AR in variance (FIXME, why?) */
     if (p > 0 && q == 0) {
 	gretl_errmsg_set(_("Error in garch command"));
 	*err = E_DATA;
@@ -668,7 +668,7 @@ static int *get_garch_list (const int *list, const double **Z,
     }
 
     /* rule out excessive total GARCH terms */
-    else if (p + q > 5) {
+    if (p + q > 5) {
 	gretl_errmsg_set(_("Error in garch command"));
 	*err = E_DATA;
 	return NULL;
@@ -772,50 +772,45 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 			  pdinfo, &err);
     if (err) {
 	model.errcode = err;
+	return model;
     }
 
-    if (!err) {
-	ols_list = make_ols_list(list);
-	if (ols_list == NULL) {
-	    err = model.errcode = E_ALLOC;
-	}
+    ols_list = make_ols_list(list);
+    if (ols_list == NULL) {
+	model.errcode = E_ALLOC;
+	return model;
     }
 
     /* run initial OLS */
-    if (!err) {
-	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M);
-	if (model.errcode) {
-	    err = model.errcode;
-	}
-#if 0
-	if (!err) {
-	    printmodel(&model, pdinfo, OPT_NONE, prn);
-	}
-#endif
+    model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    if (model.errcode) {
+	goto bailout;
     }
+
+#if 0
+    printmodel(&model, pdinfo, OPT_NONE, prn);
+#endif
 
 #if GARCH_AUTOCORR_TEST
     /* pretest the residuals for autocorrelation */
-    if (!err && prn != NULL) {
+    if (prn != NULL) {
 	garch_pretest(&model, pZ, pdinfo, &LMF, &pvF);
     }
 #endif
 
 #if GARCH_SCALE_SIGMA
-    if (!err) {
-	yno = ols_list[1];
-	scale = model.sigma;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na((*pZ)[yno][t])) {
-		(*pZ)[yno][t] /= scale;
-	    }
+    yno = ols_list[1];
+    scale = model.sigma;
+    for (t=0; t<pdinfo->n; t++) {
+	if (!na((*pZ)[yno][t])) {
+	    (*pZ)[yno][t] /= scale;
 	}
-	for (t=0; t<model.ncoeff; t++) {
-	    model.coeff[t] /= scale;
-	}
-	model.ess /= scale * scale;
-	model.sigma = 1.0;
-    } 
+    }
+    for (t=0; t<model.ncoeff; t++) {
+	model.coeff[t] /= scale;
+    }
+    model.ess /= scale * scale;
+    model.sigma = 1.0;
 #endif 
 
     /* default variance parameter initialization */
@@ -829,9 +824,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 				      pZ, pdinfo);
     }
 
-    if (!err) {
-	do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 
-    }
+    do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 
 
     if (scale != 1.0) {
 	/* undo scaling of dependent variable */
@@ -841,6 +834,8 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
     }
+
+ bailout:
 
     free(ols_list);
     free(list);

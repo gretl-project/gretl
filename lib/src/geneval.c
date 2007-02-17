@@ -32,16 +32,6 @@
 # define EDEBUG 0
 #endif
 
-/* xna = "extended NA", including regular NA for missing data
-   as well as NaNs and infinities */
-
-#ifndef isfinite
-# define isfinite(x) (!isnan(x) && !isinf(x))
-# define xna(x) ((x) == NADBL || isnan(x) || isinf(x))
-#else
-# define xna(x) ((x) == NADBL || !isfinite(x))
-#endif
-
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);

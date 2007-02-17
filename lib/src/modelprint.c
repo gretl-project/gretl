@@ -45,6 +45,8 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn);
 static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
+static void plain_print_tval (double tval, PRN *prn);
+static void plain_print_pval (double tval, int df, PRN *prn);
 
 #define RTFTAB "\\par \\ql \\tab "
 
@@ -1805,6 +1807,29 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (err) gotnan = 1;
     }
 
+    if (pmod->ci == ARCH && plain_format(prn)) {
+	double *a = gretl_model_get_data(pmod, "arch_coeff");
+	double *se = gretl_model_get_data(pmod, "arch_sderr");
+	int order = gretl_model_get_int(pmod, "arch_order");
+	char cname[12];
+
+	/* FIXME generalize this or get rid of it */
+
+	if (a != NULL && se != NULL && order > 0) {
+	    pputc(prn, '\n');
+	    for (i=0; i<=order; i++) {
+		sprintf(cname, "alpha(%d)", i);
+		pprintf(prn, "  %-15s ", cname);
+		gretl_print_value(a[i], prn);
+		gretl_print_value(se[i], prn); 
+		plain_print_tval(a[i] / se[i], prn);
+		plain_print_pval(a[i] / se[i], pmod->nobs - (order + 1), 
+				 prn);
+		pputc(prn, '\n');
+	    }
+	}
+    }
+
     return gotnan;
 } 
 
@@ -2340,10 +2365,51 @@ static void print_pval_str (double pval, char *str)
     }
 }
 
+static void plain_print_pval (double tval, int df, PRN *prn)
+{
+    char pvstr[16];
+    double pval;
+
+    pval = t_pvalue_2(tval, df);
+
+    if (pval < .00001) {
+	sprintf(pvstr, "<%.5f", 0.00001);
+    } else {
+	sprintf(pvstr, "%.5f", pval);
+    }
+
+    pprintf(prn, "%*s", UTF_WIDTH(pvstr, 10), pvstr);
+
+    if (pval < 0.01) {
+	pputs(prn, " ***");
+    } else if (pval < 0.05) {
+	pputs(prn, " **");
+    } else if (pval < 0.10) {
+	pputs(prn, " *");
+    }	
+}
+
+static void plain_print_tval (double tval, PRN *prn)
+{
+    if (fabs(tval) >= 1000) { 
+	/* || t < .001 ? */
+	char numstr[9];
+
+	sprintf(numstr, "%#8.2G", tval);
+	pprintf(prn, " %8s", numstr);
+    } else if (tval <= -100) {
+	pprintf(prn, " %7.2f", tval);
+    } else {
+	pprintf(prn, " %7.3f", tval);
+    }
+}
+
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int i, PRN *prn)
 {
-    double t, pvalue = 999.0;
+    double bi = pmod->coeff[i];
+    double se = pmod->sderr[i];
+    double tval, pval = 999.0;
     int gotnan = 0;
     int do_pval = !binary_model(pmod);
     char varname[24];
@@ -2352,41 +2418,32 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pprintf(prn, "  %-15s ", varname);
     
     /* print coeff value if well-defined */
-    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+    if (xna(bi)) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
 	gotnan = 1;
     } else {
-	gretl_print_value(pmod->coeff[i], prn);
+	gretl_print_value(bi, prn);
     }
 
     /* get out if std error is undefined */
-    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+    if (xna(se)) {
 	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
 	return 1;
     }
 
-    gretl_print_value(pmod->sderr[i], prn); 
+    gretl_print_value(se, prn); 
 
     /* std error is well-defined, but is it positive? */
-    if (pmod->sderr[i] > 0.) {
-	t = pmod->coeff[i] / pmod->sderr[i];
-	if (fabs(t) >= 1000) { /* || t < .001 ? */
-	    char numstr[9];
-
-	    sprintf(numstr, "%#8.2G", t);
-	    pprintf(prn, " %8s", numstr);
-	} else if (t <= -100) {
-	    pprintf(prn, " %7.2f", t);
-	} else {
-	    pprintf(prn, " %7.3f", t);
-	}
+    if (se > 0.) {
+	tval = bi / se;
+	plain_print_tval(tval, prn);
 
 	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    if (i + 2 == gretl_model_get_int(pmod, "dfnum")) {
 		char pvalstr[16];
 
-		pvalue = gretl_model_get_double(pmod, "dfpval");
-		print_pval_str(pvalue, pvalstr);
+		pval = gretl_model_get_double(pmod, "dfpval");
+		print_pval_str(pval, pvalstr);
 		pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 	    } 
 	    do_pval = 0;
@@ -2395,8 +2452,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (do_pval) {
 	    char pvalstr[16];
 
-	    pvalue = coeff_pval(pmod, t, pmod->dfd);
-	    print_pval_str(pvalue, pvalstr);
+	    pval = coeff_pval(pmod, tval, pmod->dfd);
+	    print_pval_str(pval, pvalstr);
 	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 	}
     } else if (do_pval) { 
@@ -2406,11 +2463,11 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     if (do_pval) {
-	if (pvalue < 0.01) {
+	if (pval < 0.01) {
 	    pputs(prn, " ***");
-	} else if (pvalue < 0.05) {
+	} else if (pval < 0.05) {
 	    pputs(prn, " **");
-	} else if (pvalue < 0.10) {
+	} else if (pval < 0.10) {
 	    pputs(prn, " *");
 	}
     } else if (binary_model(pmod) && pmod->list[i+2] != 0) { 
@@ -2439,7 +2496,9 @@ static void rtf_print_double (double xx, PRN *prn)
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int i, PRN *prn)
 {
-    double t, pvalue = 999.0;
+    double tval, pval = 999.0;
+    double bi = pmod->coeff[i];
+    double se = pmod->sderr[i];
     int gotnan = 0;
     int do_pval = !binary_model(pmod);
     char varname[24];
@@ -2450,25 +2509,25 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     pprintf(prn, "\\ql %s\\cell", varname);
 
-    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+    if (xna(bi)) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	gotnan = 1;
     } else {
-	rtf_print_double(pmod->coeff[i], prn);
+	rtf_print_double(bi, prn);
     }
 
-    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+    if (xna(se)) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	goto rtf_coeff_getout;
     } 
 
-    rtf_print_double(pmod->sderr[i], prn); 
+    rtf_print_double(se, prn); 
 
-    if (pmod->sderr[i] > 0.) {
-	t = pmod->coeff[i] / pmod->sderr[i];
-	pprintf(prn, " \\qc %.4f\\cell", t);
+    if (se > 0.) {
+	tval = bi / se;
+	pprintf(prn, " \\qc %.4f\\cell", tval);
 	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    do_pval = 0;
 	    pprintf(prn, " \\qc %s\\cell", I_("unknown"));
@@ -2476,8 +2535,8 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (do_pval) {
 	    char pvalstr[16];
 
-	    pvalue = coeff_pval(pmod, t, pmod->dfd);
-	    print_pval_str(pvalue, pvalstr);
+	    pval = coeff_pval(pmod, tval, pmod->dfd);
+	    print_pval_str(pval, pvalstr);
 	    pprintf(prn, " \\qc %s\\cell", pvalstr);
 	}	
     } else if (do_pval) { 
@@ -2487,11 +2546,11 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     if (do_pval) {
-	if (pvalue < 0.01) {
+	if (pval < 0.01) {
 	    pputs(prn, " \\ql ***\\cell");
-	} else if (pvalue < 0.05) { 
+	} else if (pval < 0.05) { 
 	    pputs(prn, " \\ql **\\cell");
-	} else if (pvalue < 0.10) {
+	} else if (pval < 0.10) {
 	    pputs(prn, " \\ql *\\cell");
 	} else {
 	    pputs(prn, " \\ql \\cell");
@@ -2505,6 +2564,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
  rtf_coeff_getout:
+
     pputs(prn, " \\intbl \\row\n");
 
     return gotnan;
@@ -2514,7 +2574,9 @@ static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			    int i, PRN *prn)
 {
     char d = prn_delim(prn);
-    double t, pvalue = 999.0;
+    double bi = pmod->coeff[i];
+    double se = pmod->sderr[i];
+    double tval, pval = 999.0;
     int gotnan = 0;
     int do_pval = !binary_model(pmod);
     char varname[24];
@@ -2523,29 +2585,29 @@ static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pprintf(prn, "\"%s\"", varname);
     
     /* print coeff value if well-defined */
-    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+    if (xna(bi)) {
 	pprintf(prn, "%c\"%s\"", d, I_("undefined"));
 	gotnan = 1;
     } else {
-	pprintf(prn, "%c%.15g", d, pmod->coeff[i]);
+	pprintf(prn, "%c%.15g", d, bi);
     }
 
     /* get out if std error is undefined */
-    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+    if (xna(se)) {
 	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
 	return 1;
     }
 
-    pprintf(prn, "%c%.15g", d, pmod->sderr[i]);
+    pprintf(prn, "%c%.15g", d, se);
 
 
     /* std error is well-defined, but is it positive? */
-    if (pmod->sderr[i] > 0.) {
-	t = pmod->coeff[i] / pmod->sderr[i];
-	pprintf(prn, "%c%.15g", d, t);
+    if (se > 0.) {
+	tval = bi / se;
+	pprintf(prn, "%c%.15g", d, tval);
 	if (do_pval) {
-	    pvalue = coeff_pval(pmod, t, pmod->dfd);
-	    pprintf(prn, "%c%.15g", d, pvalue);
+	    pval = coeff_pval(pmod, tval, pmod->dfd);
+	    pprintf(prn, "%c%.15g", d, pval);
 	}
     } else if (do_pval) { 
 	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
@@ -3096,4 +3158,3 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
     return 0;
 }
-

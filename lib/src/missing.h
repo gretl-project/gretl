@@ -25,6 +25,16 @@
 #define NADBL DBL_MAX
 #define na(x) ((x) == NADBL)
 
+/* xna = "extended NA", including regular NA for missing data
+   as well as NaNs and infinities */
+
+#ifndef isfinite
+# define isfinite(x) (!isnan(x) && !isinf(x))
+# define xna(x) ((x) == NADBL || isnan(x) || isinf(x))
+#else
+# define xna(x) ((x) == NADBL || !isfinite(x))
+#endif
+
 #define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
 
 int model_missval_count (const MODEL *pmod);
