@@ -50,6 +50,19 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                          !gretl_model_get_int(m, "ordered"))
 
+
+void model_coeff_init (model_coeff *mc)
+{
+    mc->b = NADBL;
+    mc->se = NADBL;
+    mc->tval = NADBL;
+    mc->pval = NADBL;
+    mc->slope = NADBL;  
+    mc->show_pval = 1;
+    mc->df_pval = 0;
+    mc->name[0] = '\0';
+}
+
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->ybar) || na(pmod->sdy)) {
@@ -1682,6 +1695,16 @@ static void model_format_start (PRN *prn)
                        "\\cellx500\\cellx1500\\cellx2900\\cellx4300" \
                        "\\cellx5700\\cellx7100\n\\intbl"
 
+void print_coeff_heading (int mode, PRN *prn)
+{
+    if (mode == COEFF_HEADING_VARNAME) {
+	pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
+		     "      T STAT   P-VALUE\n\n"));
+    } else {
+	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
+		     "      T STAT   P-VALUE\n\n"));
+    } 
+}
 
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
@@ -1698,12 +1721,8 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
-	} else if (use_param) {
-	    pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
-			 "      T STAT   P-VALUE\n\n"));
 	} else {
-	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
-			 "      T STAT   P-VALUE\n\n"));
+	    print_coeff_heading(use_param, prn);
 	}
 	return;
     } else if (csv_format(prn)) {
@@ -2340,14 +2359,9 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 {
     int gotnan = 0;
 
-    mc->b = NADBL;
-    mc->se = NADBL;
-    mc->tval = NADBL;
-    mc->pval = NADBL;
-    mc->slope = NADBL;  
+    model_coeff_init(mc);
+
     mc->show_pval = !binary_model(pmod);
-    mc->df_pval = 0;
-    mc->name[0] = '\0';
 
     if (tex_format(prn)) {
 	make_tex_coeff_name(pmod, pdinfo, i, mc->name);
@@ -2555,7 +2569,7 @@ static void print_mp_coeff (const model_coeff *mc, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void print_coeff (const model_coeff *mc, PRN *prn)
+void print_coeff (const model_coeff *mc, PRN *prn)
 {
     if (plain_format(prn)) {
 	plain_print_coeff(mc, prn);
@@ -2585,13 +2599,11 @@ void print_arch_coeffs (const double *a, const double *se,
     }
 
     for (i=0; i<=order; i++) {
+	model_coeff_init(&mc);
 	mc.b = a[i];
 	mc.se = se[i];
 	mc.tval = a[i] / se[i];
 	mc.pval = t_pvalue_2(mc.tval, T - (order + 1));
-	mc.show_pval = 1;
-	mc.df_pval = 0;
-	mc.slope = NADBL;
 
 	if (tex_format(prn)) {
 	    sprintf(mc.name, "$\\alpha_%d$", i);

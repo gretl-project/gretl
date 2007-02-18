@@ -22,6 +22,24 @@
 #ifndef MODELPRINT_H
 #define MODELPRINT_H
 
+typedef struct model_coeff_ model_coeff;
+
+struct model_coeff_ {
+    double b;
+    double se;
+    double tval;
+    double pval;
+    double slope;
+    int show_pval;
+    int df_pval;
+    char name[32];
+};
+
+enum {
+    COEFF_HEADING_VARNAME,
+    COEFF_HEADING_PARAM
+};
+
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		PRN *prn);
 
@@ -30,6 +48,12 @@ const char *estimator_string (int ci, PRN *prn);
 void print_model_vcv_info (const MODEL *pmod, PRN *prn);
 
 int ols_print_anova (const MODEL *pmod, PRN *prn);
+
+void print_coeff_heading (int mode, PRN *prn);
+
+void model_coeff_init (model_coeff *mc);
+
+void print_coeff (const model_coeff *mc, PRN *prn);
 
 void print_arch_coeffs (const double *a, const double *se,
 			int T, int order, PRN *prn, int aux);

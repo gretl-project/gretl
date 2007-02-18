@@ -29,10 +29,10 @@ static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     /* std error is well-defined, but is it positive? */
     if (pmod->sderr[i] > 0.) {
-	double t, pval;
+	double tval, pval;
 
-	t = pmod->coeff[i] / pmod->sderr[i];
-	pval = coeff_pval(pmod, t, pmod->dfd);
+	tval = pmod->coeff[i] / pmod->sderr[i];
+	pval = coeff_pval(pmod->ci, tval, pmod->dfd);
 	pprintf(prn, "P-value %.3g.\n", pval);
     } else { /* zero standard error */
 	pputs(prn, "Standard error is zero.\n");

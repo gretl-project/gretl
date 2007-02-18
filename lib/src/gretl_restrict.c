@@ -1019,78 +1019,32 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
     return rset;
 }
 
-static void print_pval_str (double pval, char *str)
-{
-    if (pval < .00001) {
-	sprintf(str, "<%.5f", 0.00001);
-    } else {
-	sprintf(str, "%.5f", pval);
-    }
-}
-
 static int 
 print_restricted_coeff (const MODEL *pmod, int i,
 			double coeff, double sderr, int k,
 			const DATAINFO *pdinfo, 
 			PRN *prn)
 {
-    int do_pval = 1;
-    double t, pvalue = 999.0;
+    model_coeff mc;
     int gotnan = 0;
-    char varname[24];
 
-    gretl_model_get_param_name(pmod, pdinfo, i, varname);
-    pprintf(prn, "  %-15s ", varname);
-    
-    if (isnan(coeff) || na(coeff)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
+    model_coeff_init(&mc);
+
+    if (xna(coeff)) {
 	gotnan = 1;
-    } else {
-	gretl_print_value(coeff, prn);
     }
 
-    if (isnan(sderr) || na(sderr)) {
-	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
-	return 1;
+    mc.b = coeff;
+    mc.se = sderr;
+
+    if (!xna(coeff) && !xna(sderr) && sderr > 0) {
+	mc.tval = coeff / sderr;
+	mc.pval = coeff_pval(pmod->ci, mc.tval, pmod->dfd + k);
     }
 
-    gretl_print_value(sderr, prn); 
+    gretl_model_get_param_name(pmod, pdinfo, i, mc.name);
 
-    if (sderr > 0.0) {
-	t = coeff / sderr;
-	if (fabs(t) >= 1000.0) {
-	    char numstr[9];
-
-	    sprintf(numstr, "%#8.2G", t);
-	    pprintf(prn, " %8s", numstr);
-	} else {
-	    pprintf(prn, " %7.3f", t);
-	}
-
-	if (do_pval) {
-	    char pvalstr[16];
-	    int dfd = pmod->dfd + k;
-
-	    pvalue = coeff_pval(pmod->ci, t, dfd);
-	    print_pval_str(pvalue, pvalstr);
-	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
-	}
-    } else if (do_pval) { 
-	do_pval = 0;
-	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
-    }
-
-    if (do_pval) {
-	if (pvalue < 0.01) {
-	    pputs(prn, " ***");
-	} else if (pvalue < 0.05) {
-	    pputs(prn, " **");
-	} else if (pvalue < 0.10) {
-	    pputs(prn, " *");
-	}
-    } 
-
-    pputc(prn, '\n');
+    print_coeff(&mc, prn);
 
     return gotnan;
 }
@@ -1099,13 +1053,7 @@ static void coeff_header (const MODEL *pmod, PRN *prn)
 {
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
 
-    if (use_param) {
-	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
-		     "      T STAT   P-VALUE\n\n"));
-    } else {
-	pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
-		     "      T STAT   P-VALUE\n\n"));
-    }
+    print_coeff_heading(use_param, prn);
 }
 
 static int 

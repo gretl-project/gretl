@@ -21,19 +21,6 @@
 #ifndef TEXPRINT_H
 #define TEXPRINT_H
 
-typedef struct model_coeff_ model_coeff;
-
-struct model_coeff_ {
-    double b;
-    double se;
-    double tval;
-    double pval;
-    double slope;
-    int show_pval;
-    int df_pval;
-    char name[32];
-};
-
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn);
 
