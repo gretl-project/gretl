@@ -2496,7 +2496,6 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 
 	    print_pval_str(mc->pval, pvalstr);
 	    pprintf(prn, " \\qc %s\\cell", pvalstr);
-	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 
 	    if (mc->pval < 0.01) {
 		pputs(prn, " \\ql ***\\cell");
