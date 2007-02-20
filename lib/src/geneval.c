@@ -4486,7 +4486,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
-    char test[MAXSTR], opstr[3];
+    char test[MAXSTR], opstr[3] = {0};
     int newvar = 1;
 
     while (isspace(*s)) s++;
@@ -4626,8 +4626,8 @@ static void pre_process (parser *p, int flags)
     }
 
     /* operator: '=' or '+=' etc. */
-    if (sscanf(s, "%2[+-*/&|^=]", opstr) != 1 ||
-	(p->op = get_op(opstr)) == 0) {
+    strncat(opstr, s, 2);
+    if ((p->op = get_op(opstr)) == 0) {
 	/* error message */
 	p->err = E_EQN;
 	return;
