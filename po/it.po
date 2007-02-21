@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-02-13 20:56-0500\n"
-"PO-Revision-Date: 2007-02-21 12:18+0100\n"
+"PO-Revision-Date: 2007-02-21 12:35+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2060,7 +2060,7 @@ msgstr "Modificata la matrice %s"
 #: lib/src/genmain.c:71
 #, c-format
 msgid "Replaced matrix %s"
-msgstr "Eliminata la matrice %s"
+msgstr "Sostituita la matrice %s"
 
 #: lib/src/genmain.c:73
 #, c-format
