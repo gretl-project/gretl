@@ -379,22 +379,30 @@ genera una matrice tale che $b_{ij} = \sqrt{a_{ij}}$.  Tutte queste
 funzioni richiedono una sola matrice come argomento, o un'espressione
 che si risolve in una singola matrice.
 
-Le funzioni \texttt{sort()} e \texttt{dsort()} utilizzabili con le serie di
-dati, possono essere usate anche con le matrici. In questo caso,
-l'argomento di queste funzioni deve essere un vettore ($p \times 1$ o
-$1\times p$).  Il valore restituito è un vettore che contiene gli elementi del
-vettore originale riordinati in ordine di grandezza crescente (\texttt{sort})
-o decrescente (\texttt{dsort}).
+Si noti che per calcolare la ``radice quadrata di una matrice'' occorre la
+funzione \texttt{cholesky()} (si veda oltre); inoltre, la funzione
+\texttt{exp()} calcola l'esponenziale elemento per elemento, quindi \emph{non}
+produce l'esponenziale della matrice, a meno che la matrice non sia diagonale;
+per calcolare l'esponenziale della matrice, si usi \texttt{mexp()}.
+
+Le funzioni \texttt{sort()}, \texttt{dsort()} e \texttt{values()}, utilizzabili
+con le serie di dati, possono essere usate anche con le matrici.  In questo
+caso, l'argomento di queste funzioni deve essere un vettore ($p \times 1$ o
+$1\times p$). Per \texttt{sort} e \texttt{dsort}, il valore restituito è un
+vettore che contiene gli elementi del vettore originale riordinati in ordine di
+grandezza crescente (\texttt{sort}) o decrescente (\texttt{dsort}). Per
+\texttt{values} il risultato è un vettore che contiene i valori distinti del
+vettore originale, riordinati in ordine crescente.
 
 Infine, ci sono funzioni dedicate in modo specifico alle matrici, che è
-possibile suddividere in quattro categorie:
+possibile suddividere in cinque categorie:
 %
 \begin{enumerate}
 \item Quelle che richiedono come argomento una sola matrice e producono uno scalare.
 \item Quelle che richiedono come argomento una sola matrice (e in alcuni casi un parametro aggiuntivo) e producono una matrice.
 \item Quelle che richiedono come argomento uno o due valori e producono una matrice.
 \item Quelle che richiedono come argomento due matrici e producono una matrice.
-\item Quelle che richiedono come argomento una o due matrici e producono una o due matrici.
+\item Quelle che richiedono come argomento una o più matrici e producono una o più matrici.
 \end{enumerate}
 %
 Questi gruppi di funzioni vengono presentati nell'ordine.
@@ -407,24 +415,29 @@ scalare sono:
 
 \begin{center}
 \begin{tabular}{ll}
+\texttt{rows()} & numero di righe \\
+\texttt{cols()} & numero di colonne \\
+\texttt{rank()} & rango \\
 \texttt{det()} & determinante \\
 \texttt{ldet()} & log-determinante \\
 \texttt{tr()} & traccia \\
 \texttt{onenorm()} & norma-1 \\
+\texttt{infnorm()} & norma infinita \\
 \texttt{rcond()} & reciproco del numero di condizione \\
-\texttt{rows()} & numero di righe \\
-\texttt{cols()} & numero di colonne 
 \end{tabular}
 \end{center}
 
 L'argomento di queste funzioni può essere il nome di una matrice esistente o
 un'espressione che si risolve in una matrice. Si noti che le funzioni
 \texttt{det}, \texttt{ldet} e \texttt{tr} richiedono una matrice quadrata.
+La funzione \texttt{rank()} è calcolata usando la decomposizione QR.
 
-La funzione \texttt{onenorm} restituisce la norma-1 di una matrice, ossia
-il massimo tra le colonne della matrice della somma dei valori assoluti degli
-elementi della colonna. La funzione \texttt{rcond} restituisce il reciproco del
-numero di condizione per una matrice simmetrica definita positiva.
+Le funzioni \texttt{onenorm} e \texttt{infnorm} restituiscono rispettivamente la
+norma-1 e la norma infinita di una matrice. La prima è il massimo, tra le
+colonne della matrice, della somma dei valori assoluti degli elementi della
+colonna; la seconda è il massimo, tra le righe, della somma dei valori assoluti
+degli elementi della riga. La funzione \texttt{rcond} restituisce il reciproco
+del numero di condizione per una matrice simmetrica definita positiva.
 
 \subsection{Funzioni da matrice a matrice}
 \label{matrix-to-matrix}
@@ -433,39 +446,67 @@ Le funzioni che richiedono come argomento una sola matrice e producono una
 matrice sono:
 
 \begin{center}
-\begin{tabular}{ll}
-\texttt{sumc()} & somma per colonna \\
+\begin{tabular}{llcll}
+\texttt{sumc()} & somma per colonna & &
 \texttt{sumr()} & somma per riga \\
-\texttt{meanc()} & media per colonna \\
+\texttt{meanc()} & media per colonna & &
 \texttt{meanr()} & media per riga \\
-\texttt{mcov()} & matrice di covarianza per colonne \\
+\texttt{mcov()} & matrice di covarianza per colonne & &
 \texttt{mcorr()} & matrice di correlazione per colonne \\
+\texttt{mexp()}    & esponenziale matriciale & &
 \texttt{inv()} & inversa \\
-\texttt{cholesky()} & scomposizione di Cholesky \\
+\texttt{cholesky()} & scomposizione di Cholesky & &
 \texttt{diag()} & diagonale principale \\
-\texttt{transp()} & trasposta \\
+\texttt{transp()} & trasposta & &
 \texttt{cdemean()} & sottrazione della media delle colonne \\
-\texttt{vec()} & organizza gli elementi come vettore colonna \\
-\texttt{vech()} & organizza gli elementi del triangolo inferiore come vettore colonna \\
-\texttt{unvech()} & annulla l'operazione \texttt{vech} \\
-\texttt{mlag()} & ritardo o anticipo per le matrici
+\texttt{vec()} & elementi come vettore colonna & &
+\texttt{vech()} & elementi del triangolo inferiore come vettore colonna \\
+\texttt{unvech()} & annulla l'operazione \texttt{vech} & &
+\texttt{mlag()} & ritardo o anticipo per le matrici \\
+\texttt{nullspace()} & spazio nullo destro & &
+\texttt{princomp()} & componenti principali \\
+\texttt{maxc}      & massimi delle colonne (valori) & &
+\texttt{maxr}      & massimi delle righe (valori) \\
+\texttt{imaxc}     & massimi delle colonne (indici) & &
+\texttt{imaxr}     & massimi delle righe (indici) \\
+\texttt{minc}      & minimi delle colonne (valori) & &
+\texttt{minr}      & minimi delle righe (valori) \\
+\texttt{iminc}     & minimi delle colonne (indici) & &
+\texttt{iminr}     & minimi delle righe (indici) 
 \end{tabular}
 \end{center}
 
 Come per il gruppo precedente di funzioni, l'argomento deve essere il nome di
 una matrice esistente o un'espressione che si risolve in una matrice.
 
-Per una matrice $A$ con $m$ righe e $n$ colonne, \texttt{sumc(A)}
-produce un vettore riga con le $n$ somme per colonna, mentre \texttt{sumr(A)}
-produce un vettore colonna con le $m$ somme per riga. \texttt{meanc(A)}
-produce un vettore riga con le $n$ medie per colonna e \texttt{meanr(A)}
-un vettore colonna con le $m$ medie per riga.
+Per una matrice $A$ $m \times n$, \texttt{sumc(A)} produce un vettore riga con
+le $n$ somme per colonna, mentre \texttt{sumr(A)} produce un vettore colonna con
+le $m$ somme per riga. \texttt{meanc(A)} produce un vettore riga con le $n$
+medie per colonna e \texttt{meanr(A)} un vettore colonna con le $m$ medie per
+riga.
 
-Per una matrice $A$ con $T$ righe e $k$ colonne, \texttt{mcov(A)} e
+Inoltre, per una matrice $A$ $m \times n$, la famiglia di funzioni
+\texttt{max} e \texttt{min} può produrre una matrice $m \times 1$ (le varianti
+\texttt{r}, che selezionano il valore estremo di ogni riga), o una matrice
+$1 \times n$ (le varianti \texttt{c}, che selezionano il valore estremo di ogni
+colonna). I vettori \texttt{max} contengono i valori massimi di ogni riga o
+colonna, mentre quelli \texttt{min} contengono i valori minimi. Le varianti
+delle funzioni prefissate con \texttt{i} (ad es. \texttt{imaxc}) producono non i
+valori ma gli indici (a partire da 1) degli elementi di valore massimo o minimo.
+
+Per una matrice $A$ $T \times k$, \texttt{mcov(A)} e
 \texttt{mcorr(A)} producono entrambe delle matrici simmetriche $k \times k$,
 nel primo caso contenenti le varianze (sulla diagonale) e le covarianze delle
 variabili nelle colonne di $A$, e nel secondo caso, le correlazioni delle
 variabili.
+
+Per una matrice $A$ $n \times n$, la funzione \texttt{mexp(A)} produce una matrice
+$n \timesa n$ che contiene l'esponenziale matriciale
+\[
+e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!} = \frac{I}{0!} + \frac{A}{1!}
+ + \frac{A^2}{2!} + \frac{A^3}{3!} + \cdots
+\]
+(questa serie converge sicuramente).
 
 La funzione \texttt{cholesky} calcola la scomposizione di Cholesky
 $L$ di una matrice simmetrica definita positiva $A$: $A = LL'$; $L$ è
@@ -506,11 +547,28 @@ funzione produce una matrice $B$ $T \times k$ tale che
 Ossia, le colonne di $B$ sono versioni ritardate delle colonne di $A$, in cui i
 valori mancanti vengono sostituiti da zeri. L'ordine $m$ può essere negativo, e
 in questo caso invece di ritardi verranno generati anticipi delle variabili.
+ 
+La funzione \texttt{nullspace} produce $X$, lo spazio nullo destro di una
+matrice $A$ (che si assume avere rango pieno): $X$ soddisfa la condizione
+$A \cdot X = 0$.
 
-\subsection{Funzioni da scalare a matrice}
+La funzione \texttt{princomp} richiede due argomenti: una matrice $X$ $T \times
+k$ e uno scalare $p$, tale che $0 < p \leq k$.  Si assume che $X$ contenga $T$
+osservazioni per ognuna delle $k$ variabili (serie). Il valore prodotto è una
+matrice $P$ $T \times p$ che contiene le prime $p$ componenti principali di $X$.
+Gli elementi di $P$ sono calcolati come
+\[
+P_{tj} = \sum_{i=1}^{k} Z_{ti} \, v^{(j)}_i
+\]
+dove $Z_{ti}$ è il valore standardizzato della variabile $i$ nell'osservazione
+$t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è
+l'autovettore $j$-esimo della matrice di correlazione degli $X_i$, con gli
+autovettori ordinati per valore decrescente dei corrispondenti autovalori.
+
+\subsection{Funzioni di riempimento delle matrici}
 \label{matrix-fill}
 
-Le funzioni che richiedono come argomento uno o due valori e producono una
+Le funzioni che richiedono come argomento uno o due valori interi e producono una
 matrice sono:
 
 \begin{center}
@@ -524,22 +582,71 @@ matrice sono:
    matrice $m\times n$ con elementi casuali uniformi \\
 \texttt{mnormal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    matrice $m\times n$ con elementi casuali normali \\
+\texttt{seq(}\textsl{a}\texttt{,}\textsl{b}\texttt{)} &
+   vettore riga che contiene i numeri da $a$ a $b$
 \end{tabular}
 \end{center}
 
-Le dimensioni \textsl{m} e \textsl{n} possono essere indicate numericamente,
-per riferimento a variabili scalari pre-esistenti, o con espressioni che,
-valutate, producono scalari.
-%
-\begin{code}
-scalar m = 4
-scalar n = 5
-matrix A = mnormal(m,n)
-\end{code}
-%
+Le dimensioni $m$ e $n$, o nel caso di \texttt{seq()} i valori estremi $a$ e
+$b$, possono essere indicate numericamente, per riferimento a variabili scalari
+pre-esistenti, o con espressioni che, valutate, producono scalari.
+
 Le funzioni matriciali \texttt{muniform()} e \texttt{mnormal()} riempiono la
 matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
 distribuzione normale standard.
+ 
+La funzione \texttt{seq()} genera una sequenza di numeri interi da $a$ a $b$
+inclusi, crescente se $a<b$ o decrescente se $a>b$.
+
+\subsection{Funzioni di ristrutturazione delle matrici}
+\label{matrix-mshape}
+
+È possibile creare una matrice anche ri-strutturando gli elementi di una matrice
+preesistente, usando la funzione \texttt{mshape()}; essa richiede tre argomenti:
+la matrice iniziale $A$ e le righe e colonne della matrice finale,
+rispettivamente $r$ e $c$. Gli elementi di $A$ vengono letti per colonne e
+scritti nella matrice finale con lo stesso metodo; se $A$ contiene meno elementi
+di $n = r \times c$, essi sono ripetuti ciclicamente, se invece $A$ contiene più
+elementi, sono usati solo i primi $n$.
+
+Ad esempio:
+\begin{code}
+matrix a = mnormal(2,3)
+a
+matrix b = mshape(a,3,1)
+b
+matrix b = mshape(a,5,2)
+b
+\end{code}
+produce
+\begin{code}
+?   a
+a
+
+      1.2323      0.99714     -0.39078
+     0.54363      0.43928     -0.48467
+
+?   matrix b = mshape(a,3,1)
+Generata la matrice b
+?   b
+b
+
+      1.2323
+     0.54363
+     0.99714
+
+?   matrix b = mshape(a,5,2)
+Sostituita la matrice b
+?   b
+b
+
+      1.2323     -0.48467
+     0.54363       1.2323
+     0.99714      0.54363
+     0.43928      0.99714
+    -0.39078      0.43928
+\end{code}
+
 
 \subsection{Funzioni da coppie di matrici a matrici}
 \label{matrix-two}
@@ -555,48 +662,41 @@ calcola $B = A X A^{\prime}$.  Questo risultato viene calcolato in modo più
 efficiente rispetto al comando alternativo \texttt{B = A*X*A'}. Inoltre, il
 risultato è simmetrico per costruzione.
 
-La funzione \texttt{colmult()} esegue la moltiplicazione per colonne di due
-matrici, se esse sono conformabili. La sintassi è la seguente:
-%
-\begin{code}
-C = colmult(A, B)
-\end{code}
-%  
-Se $A$ è una matrice $m \times n$ e $B$ è $m \times k$, la moltiplicazione per
-colonne è definita nel modo seguente: se $n = 1$, $c_{ij} = a_i
-\times b_{ij}$; altrimenti se $k = 1$, then $c_{ij} = a_{ij} \times b_{i}$;
-altrimenti se $k = n$, $c_{ij} = a_{ij} \times b_{ij}$; altrimenti il risultato
-è indefinito e viene segnalato un errore.
-
 \subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
 
-Le funzioni che richiedono come argomento una o due matrici e producono una
-o due matrici sono:
+Le funzioni che richiedono come argomento una o più matrici e producono una
+o più matrici sono:
 
 \begin{center}
 \begin{tabular}{ll}
 \texttt{qrdecomp()} & scomposizione QR \\
 \texttt{eigensym()} & auto-analisi di una matrice simmetrica \\
-\texttt{eigengen()} & auto-analisi di una matrice generica
+\texttt{eigengen()} & auto-analisi di una matrice generica \\
+\texttt{svd()}      & decomposizione in valori singolari (SVD) 
 \end{tabular}
 \end{center}
 
-La sintassi per queste funzioni segue la forma
+La sintassi per tutte queste funzioni, tranne l'ultima, segue la forma
 %
-\begin{textcode}
-matrix B = func(\textsl{A}, \&\textsl{C})
-\end{textcode}
+\begin{code}
+matrix B = func(A, &C)
+\end{code}
 %
-Il primo argomento, \ttsl{A}, rappresenta i dati in ingresso, ossia la matrice
-di cui è richiesta la scomposizione o l'analisi. Questo deve essere specificato
-sotto forma di nome di una matrice esistente; in questo caso non è accettata
-un'espressione che si risolve in una matrice.
+mentre per \texttt{svd()} è
+%
+\begin{code}
+matrix B = func(A, &C, &D)
+\end{code}
+%
+Il primo argomento, \texttt{A}, rappresenta i dati in ingresso, ossia la matrice
+di cui è richiesta la scomposizione o l'analisi.
 
-Il secondo argomento, deve essere il nome di una matrice esistente, preceduto da
-\verb+&+ (per indicare l'``indirizzo'' della matrice in questione), nel qual
-caso un risultato ausiliario viene scritto in quella matrice, oppure la parola
-chiave \texttt{null}, nel qual caso il risultato non è mostrato o è scartato.
+Il secondo argomento (il terzo nel caso di \texttt{svd}) deve essere il nome di
+una matrice esistente, preceduto da \verb+&+ (per indicare l'``indirizzo'' della
+matrice in questione), nel qual caso un risultato ausiliario viene scritto in
+quella matrice, oppure la parola chiave \texttt{null}, nel qual caso il
+risultato non è mostrato o è scartato.
 
 Nel caso in cui il secondo argomento venga indicato, la matrice specificata sarà
 sovrascritta con il risultato della funzione (non è richiesto che la matrice
@@ -645,6 +745,34 @@ $n$ elementi sono le componenti reali, mentre i restanti $n$ sono le componenti
 immaginarie. Se vengono richiesti gli autovettori (ossia il secondo argomento di
 \texttt{eigengen} non è \texttt{null}), essi vengono restituiti in una matrice
 $n \times n$.
+ 
+La funzione \texttt{svd} calcola la decomposizione in valori singolari (totale o
+parziale) della matrice reale $A$ $m \times n$. La decomposizione è
+\[
+A = U \Sigma V'
+\]
+dove $\Sigma$ è una matrice $m \times n$ che contiene zeri tranne che per i suoi
+$k = \mbox{min}(m, n)$ diagonali, $U$ è una matrice ortogonale $m \times m$ e
+$V$ è una matrice ortogonale $n \times n$. Gli elementi diagonali di
+$\Sigma$ sono i valori singolari di $A$, sono reali e non negativi, e sono
+prodotti in ordine decrescente. Le prime $\mbox{min}(m, n)$ colonne di $U$ e
+$V$ sono i vettori singolari destro e sinistro di $A$.
+
+La funzione \texttt{svd} produce i valori singolari in un vettore di ordine $k$.
+I vettori singolari sinistri e/o destri si possono ottenere indicando valori non
+nulli per il secondo e/o terzo argomento della funzione. Ad esempio:
+%
+\begin{code}
+matrix s = svd(A, &U, &V)
+matrix s = svd(A, null, null)
+matrix s = svd(A, null, &V)
+\end{code}
+%
+Nel primo caso si otterranno entrambi gli insiemi di vettori singolari; nel
+secondo caso si otterranno solo i valori singolari, nel terzo si ottengono i
+vettori singolari destri ma non viene calcolata $U$.
+\emph{Nota bene}: quando il terzo argomento è non nullo, in realtà viene
+prodotto $V'$.
 
 \section{Matrici accessorie}
 \label{matrix-accessors}
@@ -655,14 +783,14 @@ automaticamente dal programma quando viene stimato un modello:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{\$coeff} & vettore dei coefficienti stimati \\
+\texttt{\$coeff}  & vettore dei coefficienti stimati \\
 \texttt{\$stderr} & vettore degli errori standard stimati \\
-\texttt{\$uhat} & vettore dei residui \\
-\texttt{\$yhat} & vettore dei valori stimati \\
-\texttt{\$vcv} & matrice di covarianza (si veda oltre) \\
-\texttt{\$rho} & coefficienti di autoregressione per il processo di errore \\
+\texttt{\$uhat}   & vettore dei residui \\
+\texttt{\$yhat}   & vettore dei valori stimati \\
+\texttt{\$vcv}    & matrice di covarianza (si veda oltre) \\
+\texttt{\$rho}    & coefficienti di autoregressione per il processo di errore \\
 \texttt{\$jalpha} & matrice $\alpha$ (loading) della procedura di Johansen \\
-\texttt{\$jbeta} & matrice $\beta$ (vettori di cointegrazione) della procedura di Johansen \\
+\texttt{\$jbeta}  & matrice $\beta$ (vettori di cointegrazione) della procedura di Johansen \\
 \texttt{\$jvbeta} & matrice di covarianza per gli elementi non vincolati di $\beta$ della procedura di Johansen
 
 \end{tabular}
@@ -674,11 +802,11 @@ se sono prefissati dal nome di un modello salvato in precedenza, separato
 da un punto (\texttt{.}), producono i risultati dal modello specificato. Ecco
 alcuni esempi:
 %
-\begin{textcode}
-matrix u = \$uhat\\
-matrix b = m1.\$coeff\\
-matrix v2 = m1.\$vcv[1:2,1:2]
-\end{textcode}
+\begin{code}
+matrix u = $uhat
+matrix b = m1.$coeff
+matrix v2 = m1.$vcv[1:2,1:2]
+\end{code}
 %
 Il primo comando produce i residui dell'ultimo modello; il secondo produce il
 vettore dei coefficienti del modello \texttt{m1}, mentre il terzo (che usa il
@@ -687,13 +815,14 @@ produce una porzione della matrice di covarianza del modello
 \texttt{m1}.
 
 Se il ``modello'' in questione è in realtà un sistema (un VAR, un VECM, o un
-sistema di equazioni simultanee), \texttt{\$uhat} produce la matrice dei
-residui (una colonna per equazione) e \texttt{\$vcv} produce la matrice di
-covarianza tra le equazioni. Al momento non sono disponibili altri accessori
-per i sistemi di equazioni.
+sistema di equazioni simultanee), \verb|$uhat| produce la matrice dei
+residui (una colonna per equazione) e \verb|\$vcv| produce la matrice di
+covarianza tra le equazioni. Nel caso speciale di un VAR o un VECM,
+\verb|$coeff| produce la matrice associata. Al momento non sono disponibili 
+altri accessori per i sistemi di equazioni.
 
 Dopo aver stimato un modello vettoriale a correzione d'errore con la procedura
-di Johansen, sono disponibili anche le matrici \texttt{\$jalpha} e \texttt{\$jbeta}.
+di Johansen, sono disponibili anche le matrici \verb|jalpha| e \verb|$jbeta|.
 Esse hanno un numero di colonne pari al rango di cointegrazione scelto, quindi
 il prodotto
 \begin{code}
@@ -703,9 +832,7 @@ produce la stima a rango ridotto di $A(1)$. Poiché $\beta$ è identificato
 automaticamente attraverso la normalizzazione di Phillips (si veda la sezione
 \ref{sec:johansen-ident}), i suoi elementi non vincolati possiedono una
 matrice di covarianza che può essere recuperata attraverso l'accessorio
-\texttt{\$jvbeta}.
-
-
+\verb|$jvbeta|.
 
 \section{Selezione di sotto-matrici}
 \label{matrix-sub}
@@ -715,7 +842,7 @@ sintassi:
 
 \texttt{A[}\textsl{righe},\textsl{colonne}\texttt{]}
 
-dove \textsl{righe} può avere una delle seguenti quattro forme:
+dove \textsl{righe} può avere una delle seguenti forme:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -749,7 +876,7 @@ Il primo esempio seleziona la prima riga dalla matrice \texttt{A}; il secondo
 seleziona una sotto-matrice $2\times 3$; il terzo seleziona uno scalare, mentre
 il quarto seleziona le righe 1, 2 e 6 dalla matrice \texttt{A}.
 
-In aggiunta, c'è una ``matrice indice'' predefinita, \texttt{diag}, che
+In aggiunta, c'è una specificazione di indice predefinita, \texttt{diag},
 seleziona la diagonale principale di una matrice quadrata, come in
 \texttt{B[diag]}, dove \texttt{B} è quadrata.
 
@@ -830,6 +957,75 @@ rappresenta l'osservazione iniziale dell'intervallo del campione. Ad ogni valore
 della serie che non proviene dalla matrice viene assegnato il codice di
 valore mancante.
  
+\section{Matrici e liste}
+\label{matrix-and-list}
+
+Per facilitare la manipolazione di liste di variabili (si veda il
+capitolo~\ref{chap-persist}), è possibile convertire liste in matrici e
+viceversa. Nella sezione precedente \ref{matrix-create} è stato presentato
+il modo di creare una matrice a partire da una lista di variabili, come in
+%
+\begin{code}
+matrix M = { listname }
+\end{code}
+%
+Questa formulazione, con il nome della lista tra parentesi graffe, crea una
+matrice le cui colonne contengono le variabili indicate nella lista.
+Di seguito viene presentato un altra operazione: dicendo
+%
+\begin{code}
+matrix M = listname
+\end{code}
+%
+(senza le parentesi graffe) si ottiene un vettore riga i cui elementi sono
+i numeri identificativi delle variabili della lista. Questo caso speciale di
+generazione di matrici non può essere utilizzato all'interno di altre
+espressioni: la sintassi deve essere quella appena vista, ossia la semplice
+assegnazione di una lista a una matrice.
+
+Per lavorare nella direzione opposta, è possibile includere una matrice nella
+parte destra di un'espressione che definisce una lista, come in
+%
+\begin{code}
+list Xl = M
+\end{code}
+%
+dove \texttt{M} è una matrice che deve avere le dimensioni adatte per la
+conversione, ossia, deve essere un vettore riga o colonna che contenga valori
+interi e non negativi, nessuno dei quali ecceda il massimo numero identificativo
+di una variabile (serie o scalare) nel dataset attuale.
+
+L'esempio~\ref{normalize-list} illustra l'uso di questo tipo di conversione per
+``normalizzare'' una lista, spostando la costante (variabile 0) al primo posto.
+
+\begin{script}[htbp]
+  \caption{Manipolazione di una lista}
+  \label{normalize-list}
+\begin{scode}
+function normalize_list (matrix *x)
+  # Se la matrice (che rappresenta una lista) contiene la variabile 0
+  # ma non nella prima posizione, questa viene spostata nella prima posizione
+
+  if (x[1] != 0)
+     scalar k = cols(x)
+     loop for (i=2; i<=k; i++) --quiet
+        if (x[i] = 0)
+            x[i] = x[1]
+            x[1] = 0
+            break
+         endif
+     end loop
+  end if
+end function
+
+open data9-7
+list Xl = 2 3 0 4
+matrix x = Xl
+normalize_list(&x)
+list Xl = x
+\end{scode}
+\end{script}
+
 \section{Eliminazione di matrici}
 \label{matrix-delete}
 
@@ -843,21 +1039,24 @@ dove \texttt{M} è il nome della matrice da eliminare.
 
 \section{Stampa di matrici}
 
-Per stampare una matrice, basta indicare solo il suo nome su una riga:
+Per stampare una matrice, basta indicare solo il suo nome su una riga, oppure
+usare il comando \cmd{print}:
+%
 \begin{code}
 matrix M = mnormal(100,2)
 M
+print M
 \end{code}
 
 \section{Esempio: OLS usando le matrici}
 \label{matrix-example}
 
-L'esempio \ref{examp-matrix} mostra come usare i metodi matriciali per replicare
+L'esempio \ref{matrixOLS} mostra come usare i metodi matriciali per replicare
 la funzionalità OLS di gretl.
 
 \begin{script}[htbp]
   \caption{OLS usando le matrici}
-  \label{examp-matrix}
+  \label{matrixOLS}
 \begin{scode}
 open data4-1
 matrix X = { const, sqft }
@@ -865,8 +1064,8 @@ matrix y = { price }
 matrix b = inv(X'X) * X'y
 printf "vettore dei coefficienti stimati\n"
 b
-matrix uh = y - X*b
-scalar SSR = uh'uh
+matrix u = y - X*b
+scalar SSR = u'u
 scalar s2 = SSR / (rows(X) - rows(b))
 matrix V = s2 * inv(X'X)
 V
@@ -878,21 +1077,77 @@ ols price const sqft --vcv
 \end{scode}
 \end{script}
 
+\clearpage
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\begin{table}[p]
+\centering
+\begin{tabular}{llllll}
+\texttt{abs}       &
+\texttt{atan}      &
+\texttt{cdemean}   &
+\texttt{cholesky}  &
+\texttt{cnorm}     &
+\texttt{cols}      \\
+\texttt{cos}       &
+\texttt{det}       &
+\texttt{diag}      &
+\texttt{dnorm}     &
+\texttt{dsort}     &
+\texttt{eigengen}  \\
+\texttt{eigensym}  &
+\texttt{exp}       &
+\texttt{gamma}     &
+\texttt{I}         &
+\texttt{imaxc}     &
+\texttt{imaxr}     \\
+\texttt{iminc}     &
+\texttt{iminr}     &
+\texttt{infnorm}   &
+\texttt{int}       &
+\texttt{inv}       &
+\texttt{ldet}      \\
+\texttt{lngamma}   &
+\texttt{log}       &
+\texttt{mcorr}     &
+\texttt{mcov}      &
+\texttt{maxc}      &   
+\texttt{maxr}      \\
+\texttt{meanc}     &
+\texttt{meanr}     &
+\texttt{mexp}      &
+\texttt{minc}      &   
+\texttt{minr}      &
+\texttt{mlag}      \\
+\texttt{mnormal}   &
+\texttt{mshape}    &
+\texttt{muniform}  &
+\texttt{nullspace} &
+\texttt{onenorm}   &
+\texttt{ones}      \\
+\texttt{princomp}  &
+\texttt{qform}     &
+\texttt{qnorm}     &
+\texttt{qrdecomp}  &
+\texttt{rank}      &
+\texttt{rcond}     \\
+\texttt{rows}      &
+\texttt{seq}       &
+\texttt{sin}       &
+\texttt{sort}      &
+\texttt{sqrt}      &
+\texttt{sumc}      \\
+\texttt{sumr}      &
+\texttt{svd}       &
+\texttt{tan}       &
+\texttt{tr}        &
+\texttt{transp}    &
+\texttt{unvech}    \\
+\texttt{values}    &
+\texttt{vec}       &
+\texttt{vech}      &
+\texttt{zeros}     
+\end{tabular}      
+\caption{Elenco alfabetico delle funzioni matriciali}
+\label{tab:matrix_funcs}
+\end{table}
 
