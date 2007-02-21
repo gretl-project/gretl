@@ -408,8 +408,8 @@ into five categories:
 \item Those taking one or two dimensions as arguments and
   returning a matrix.
 \item Those taking two matrices as arguments and returning a matrix.
-\item Those taking one or two matrices as arguments and returning one
-  or two matrices.
+\item Those taking one or more matrices as arguments and returning one
+  or more matrices.
 \end{enumerate}
 %
 These sets of functions are discussed in turn below.
@@ -563,7 +563,7 @@ The \texttt{nullspace} function yields $X$, the right null space of a
 matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
 \cdot X = 0$.
 
-The function \texttt{princomp} requires two argument, a $T \times k$
+The function \texttt{princomp} requires two arguments, a $T \times k$
 matrix $X$ and a scalar $p$, $0 < p \leq k$.  It is assumed that $X$
 contains $T$ observations on each of $k$ variables (series).  The
 return value is a $T \times p$ matrix $P$ containing the first $p$
