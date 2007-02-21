@@ -163,13 +163,16 @@ modificata dall'utente.
 \end{table}
 
 Ad esempio, il codice seguente
+%
 \begin{code}
 open greene19_1
 freq TUCE
 discrete TUCE # marca TUCE come discreta
 freq TUCE
 \end{code}
+%
 produce questo risultato
+%
 \begin{code}
 Lettura del file dati /usr/local/share/gretl/data/greene/greene19_1.gdt
 Periodicità: 1, oss. max.: 32,
@@ -221,8 +224,10 @@ Distribuzione di frequenza per TUCE, oss. 1-32
 Test per l'ipotesi nulla di distribuzione normale:
 Chi-quadro(2) = 1,872 con p-value 0,39211
 \end{code}
+%
 Come si può vedere dall'esempio, viene calcolato automaticamente un test
-Jarque--Bera per la normalità.
+Doornik--Hansen per la normalità. Il test è soppresso per le variabili discrete
+che assumono un numero di valori distinti minore di 10.
 
 Questo comando accetta due opzioni: \texttt{--quiet}, per evitare la stampa
 dell'istogramma, e \texttt{--gamma}, per sostituire il test di normalità con

@@ -22,10 +22,11 @@ Se però esiste correlazione seriale tra le $x_t$, la varianza di
 $\bar{X} = T^{-1} \sum_{t=1}^T x_t$ va stimata in modo diverso. Una delle
 statistiche più usate a questo scopo è uno stimatore kernel non parametrico con
 il kernel di Bartlett definito come
-\[
+\begin{equation}
+  \label{eq:scalar-lrvar}
   \hat{\omega}^2(k) = T^{-1} \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i (x_t -
   \bar{X}) (x_{t-i} - \bar{X}) \right] ,
-\]
+\end{equation}
 dove l'intero $k$ è definito come l'ampiezza della finestra, mentre i termini
 $w_i$ sono i cosiddetti \emph{pesi di Bartlett}, definiti come $w_i = 1 -
 \frac{|i|}{k + 1}$. Si può dimostrare che, per $k$ abbastanza alto,
@@ -568,8 +569,8 @@ Generato lo scalare pv (ID 13) = 0.363844
 
 Esistono due funzioni particolarmente utili per costruire stimatori speciali,
 ossia \texttt{BFGSmax} (il massimizzatore BFGS, discusso nel Capitolo~\ref{chap:mle})
-e \texttt{fdjac}, che produce un'approssimazione del Jacobiano.
-% ??? ``a forward-difference approximation to the Jacobian''
+e \texttt{fdjac}, che produce un'approssimazione del Jacobiano calcolata col
+metodo della differenza finita in avanti.
 
 \subsection{Il massimizzatore BFGS}
 

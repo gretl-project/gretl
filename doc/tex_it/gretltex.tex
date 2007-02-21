@@ -14,13 +14,14 @@ o di stampare i risultati delle analisi econometriche usando
 successivamente modificati con \TeX.
 
 Questo capitolo spiega in dettaglio le funzionalità di \app{gretl}
-che interessano \TeX. La prima sezione descrive i menù nell'interfaccia
-grafica; la sezione~\ref{tex-tune} discute vari modi di personalizzare
-i risultati prodotti da \TeX, mentre la sezione~\ref{tex-install}
-fornisce alcune indicazioni per conoscere meglio \TeX e installarlo, se ancora
-non lo si ha sul proprio computer. Per chiarezza: \TeX\ non è incluso nella
-distribuzione standard di \app{gretl}, è un pacchetto separato, che comprende
-vari programmi e file di supporto.
+che interessano \TeX. La prima sezione descrive i menù nell'interfaccia grafica,
+la sezione~\ref{tex-tune} discute vari modi di personalizzare i risultati
+prodotti da \TeX, la sezione~\ref{tex-encode} spiega come gestire la codifica
+dei caratteri per le lingue diverse dall'inglese, mentre la
+sezione~\ref{tex-install} fornisce alcune indicazioni per conoscere meglio \TeX
+e installarlo, se ancora non lo si ha sul proprio computer. Per chiarezza: \TeX\
+non è incluso nella distribuzione standard di \app{gretl}, è un pacchetto
+separato, che comprende vari programmi e file di supporto.
 
 Prima di procedere, può essere utile chiarire brevemente il modo in cui
 viene prodotto un documento usando \TeX. La maggior parte di questi dettagli
@@ -233,11 +234,14 @@ Errori standard tra parentesi\\
 \section{Personalizzare l'output di \TeX}
 \label{tex-tune}
 
-È possibile operare su due aree: modificare l'aspetto dell'output prodotto
-da \app{gretl} nella modalità di anteprima \LaTeX, e incorporare l'output
-di \app{gretl} nei propri file \TeX.
+È possibile operare su tre aspetti: modificare l'aspetto dell'output prodotto
+da \app{gretl} nella modalità di anteprima \LaTeX, modificare la formattazione
+delle tabelle dei modelli create con il comando \texttt{tabprint}, e
+incorporare l'output di \app{gretl} nei propri file \TeX.
 
-Per quanto riguarda la visualizzazione, è possibile controllare l'aspetto
+\subsection{La modalità anteprima}
+
+Per quanto riguarda l'\emph{anteprima} dei documenti \LaTeX, è possibile controllare l'aspetto
 dell'output di \app{gretl} usando un file chiamato \verb+gretlpre.tex+, che deve
 trovarsi nella propria directory utente di \app{gretl} (si veda la \GCR).
 Il contenuto di questo file verrà usato come ``preambolo'' per il sorgente \TeX,
@@ -257,6 +261,10 @@ alcuni tipi di risultati è richiesto anche il pacchetto \verb+longtable+).
 Modificando questo file, è possibile, ad esempio, cambiare il carattere usato, o
 la dichiarazione \texttt{documentclass}, oppure ancora includere un pacchetto
 alternativo.
+ 
+La riga \verb|\usepackage[latin1]{inputenc}| viene automaticamente modificata se
+\app{gretl} si trova ad essere eseguito su un sistema che usa la codifica
+caratteri UTF-8, si veda la sezione~\ref{tex-encode} seguente.
 
 Inoltre, se occorre comporre l'output di \app{gretl} in più di una lingua, è
 possibile preparare file specializzati per ognuna delle lingue da usare,
@@ -279,6 +287,47 @@ un file \verb|gretlpre_en.tex|, che verrà usato per comporre il preambolo quando
 \app{gretl} è eseguito con la localizzazione inglese (ossia, ad esempio con
 \verb|LANG=en_US|).  
 
+\subsection{Opzioni a riga di comando}
+
+Dopo aver stimato un modello in uno script o interattivamente (usando il
+terminale di \app{gretl} o la versione a riga di comando del programma \app{gretlcli})
+è possibile usare i comandi \texttt{tabprint} o \texttt{eqnprint} per stampare
+il modello rispettivamente in formato tabulare o sotto forma di equazione.
+Questi comandi sono presentati nella \GCR{}.  
+
+È possibile modificare la visualizzazione del formato tabulare usato da
+\app{gretl} specificando un formato di riga personalizzato con l'opzione
+\verb|--format| del comando \texttt{tabprint}. La stringa di formato deve essere
+racchiusa tra virgolette doppie e preceduta da un segno di uguale, senza spazi.
+La composizione della stringa di formato è la seguente: ci sono
+quattro campi, che rappresentano il coefficiente, l'errore standard, il
+rapporto $t$ e il p-value. Questi campi vanno separati
+usando barre verticali e possono contenere una specificazione di formato
+per valori numerici nello stile della funzione \texttt{printf}, oppure
+possono essere lasciati in bianco, in modo da sopprimere la
+visualizzazione del campo nella rispettiva colonna dela tabella (con
+l'unico vincolo che non è possibile lasciare in bianco tutti i campi).
+Ecco alcuni esempi:
+
+\begin{code}
+--format="%.4f|%.4f|%.4f|%.4f"
+--format="%.4f|%.4f|%.3f|"
+--format="%.5f|%.4f||%.4f"
+--format="%.8g|%.8g||%.4f"
+\end{code}
+
+La prima specificazione stampa i valori di tutte le colonne usando 4
+cifre decimali. La seconda sopprime il p-value e mostra il rapporto $t$ con 3
+cifre decimali. La terza omette il rapporto $t$, mentre l'ultima omette il
+rapporto $t$ e mostra sia il coefficiente che l'errore standard con 8 cifre
+significative.
+
+Una volta che si imposta un formato in questo modo, esso viene ricordato
+e usato per tutta la sessione di lavoro. Per tornare ad usare il formato
+predefinito, basta usare la parola chiave \verb|--format=default|.
+
+\subsection{Modifiche ulteriori}
+
 Dopo aver incollato l'output \TeX\ di \app{gretl} nel proprio documento, o dopo
 averlo salvato in un file ed aperto nel proprio editor, è naturalmente possibile
 modificarlo a proprio piacimento. Di solito il codice \TeX\ generato dai
@@ -290,6 +339,30 @@ standard di \LaTeX, gli unici pacchetti richiesti sono
 \verb+amsmath+, \verb+dcolumn+ e \verb+longtable+, che sono compresi
 praticamente in qualsiasi distribuzione \TeX\ abbastanza completa.
 
+\section{Codifica dei caratteri}
+\label{tex-encode}
+
+Se si utilizza \app{gretl} su un sistema configurato per la lingua inglese non
+si dovrebbero incontrare problemi di codifica dei caratteri, ma se occorre
+generare documenti \Tex\ che contengono caratteri accentati (o comunque non
+appartenenti alla codifica ASCII) possono essere utili le indicazioni che
+seguono.
+
+\app{Gretl} genera l'output \TeX\ usando la codifica di caratteri impostata
+sul sistema locale. Se si usa una codifica appartenente alla famiglia
+ISO-8859 non dovrebbero esserci problemi, ma se si usa la codifica Unicode
+UTF-8 (impostazione predefinita su alcuni sistemi GNU/Linux recenti) occorre
+assicurarsi che il proprio sistema \TeX\ possa gestire l'input UTF-8, ossia
+installare il pacchetto \app{latex-ucs}, che potrebbe non essere stato
+installato automaticamente al momento dell'installazione di \TeX{}.
+
+Se \app{gretl} viene eseguito in un ambiente che usa la codifica UTF-8, vengono
+usate le seguenti righe nel preambolo dei file \TeX:
+%
+\begin{code}
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\end{code}
 
 \section{Installazione e utilizzo di \TeX}
 \label{tex-install}
