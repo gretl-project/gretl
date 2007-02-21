@@ -246,7 +246,7 @@ int eval_ytest (double y, GretlOp op, double test)
 	ret = (y != test);
 	break;
     case OP_GTE:
-	ret = (y <= test);
+	ret = (y >= test);
 	break;
     case OP_LTE:
 	ret = (y <= test);
