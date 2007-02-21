@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-02-13 20:56-0500\n"
-"PO-Revision-Date: 2007-02-20 15:53+0100\n"
+"PO-Revision-Date: 2007-02-21 12:18+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2526,7 +2526,7 @@ msgstr "La variabile %d non è nella lista originale"
 
 #: lib/src/gretl_matrix.c:4456
 msgid "Nullspace calculation failed"
-msgstr "Calcolo del nullspace fallito"
+msgstr "Calcolo dello spazio nullo fallito"
 
 #: lib/src/gretl_model.c:2313
 msgid "Test for addition of variables"
