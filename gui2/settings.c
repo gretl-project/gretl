@@ -580,7 +580,7 @@ static int alt_ok (const char *prog)
     
     if (ok) {
         if (tr) {
-            strcpy(tramo, test);
+            strcpy(paths.tramo, test);
 	} else {
 	    strcpy(paths.x12a, test);
 	}
