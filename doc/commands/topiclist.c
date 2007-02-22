@@ -22,7 +22,6 @@
 #define SECTLEN 64
 #define LBLLEN 128
 
-
 /* the order in which the topics should appear */
 enum {
     TAB_ESTIMATION,

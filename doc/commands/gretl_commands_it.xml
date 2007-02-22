@@ -1485,7 +1485,7 @@
 
   </command>
 
-  <command name="difftest" section="Testing" 
+  <command name="difftest" section="Tests" 
     label="Test non parametrici per le differenze" context="cli">
 
     <usage>

@@ -1483,7 +1483,7 @@
 
   </command>
 
-  <command name="difftest" section="Testing" 
+  <command name="difftest" section="Tests" 
     label="Nonparametric tests for differences" context="cli">
 
     <usage>
