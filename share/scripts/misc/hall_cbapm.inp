@@ -1,0 +1,44 @@
+# Replicate Alastair Hall's estimation of the Hansen-Singleton
+# Consumption-Based Asset Pricing model.  See Hall's "Generalized
+# Method of Moments" (Oxford University Press, 2005, chapter 3).
+
+open hall.gdt
+set force_hc on
+
+scalar alpha = 0.5
+scalar delta = 0.5
+series e = 0
+
+list inst = const consrat(-1) consrat(-2) ewr(-1) ewr(-2)
+
+matrix V0 = 100000*I(nelem(inst))
+matrix Z = { inst }
+matrix V1 = $nobs*inv(Z'Z)
+
+# one-step estimation, equally weighted portfolio
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm
+
+# one-step estimation, value weighted portfolio
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm
+
+# iterated estimation, equally weighted portfolio
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm --iterate
+
+# iterated estimation, value weighted portfolio
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm --iterate
