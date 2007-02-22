@@ -83,7 +83,7 @@ skeleton.o: skeleton.c
 validate.o: validate.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-topiclist.o: topiclist.c
+topiclist.o: topiclist.c $(topsrc)/lib/src/libgretl.h
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 tables.o: tables.c $(topsrc)/lib/src/genmain.c \
