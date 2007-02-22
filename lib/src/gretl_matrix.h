@@ -34,7 +34,7 @@ typedef enum {
     GRETL_MOD_CUMULATE
 } GretlMatrixMod;
 
-enum {
+typedef enum {
     GRETL_MATRIX_SQUARE = 1,
     GRETL_MATRIX_LOWER_TRIANGULAR,
     GRETL_MATRIX_UPPER_TRIANGULAR,
