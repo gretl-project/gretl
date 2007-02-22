@@ -15,28 +15,28 @@ matrix V0 = 100000*I(nelem(inst))
 matrix Z = { inst }
 matrix V1 = $nobs*inv(Z'Z)
 
-# one-step estimation, equally weighted portfolio
+# one-step estimation, identity matrix for initial weights
 gmm e = delta*ewr*consrat^(alpha-1) - 1
   orthog e ; inst
   weights V0
   params alpha delta
 end gmm
 
-# one-step estimation, value weighted portfolio
+# one-step estimation, T(Z'Z)^{-1} for initial weights
 gmm e = delta*ewr*consrat^(alpha-1) - 1
   orthog e ; inst
   weights V1
   params alpha delta
 end gmm
 
-# iterated estimation, equally weighted portfolio
+# iterated estimation, identity matrix for initial weights
 gmm e = delta*ewr*consrat^(alpha-1) - 1
   orthog e ; inst
   weights V0
   params alpha delta
 end gmm --iterate
 
-# iterated estimation, value weighted portfolio
+# iterated estimation, T(Z'Z)^{-1} for initial weights
 gmm e = delta*ewr*consrat^(alpha-1) - 1
   orthog e ; inst
   weights V1
