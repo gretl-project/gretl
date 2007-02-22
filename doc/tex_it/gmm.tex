@@ -1,0 +1,501 @@
+\chapter{Stima GMM}
+\label{chap:gmm}
+
+\section{Introduzione e terminologia}
+\label{sec:gmm-intro}
+
+Il metodo dei momenti generalizzato (Generalized Method of Moments, GMM)
+è un metodo di stima generale e molto potente, che racchiude in pratica
+tutte le tecniche di stima parametrica usate in econometria. È stato introdotto
+in Hansen (1982) e in Hansen e Singleton (1982); un'eccellente e approfondita
+trattazione si trova nel capitolo 17 di Davidson e MacKinnon (1993).
+
+Il principio di base su cui si basa il GMM è abbastanza semplice: si supponga di
+voler stimare un parametro scalare $\theta$ basandosi su un campione $x_1, x_2,
+\ldots, x_T$, con $\theta_0$ a indicare il ``vero'' valore di $\theta$.
+Considerazioni teoriche (di natura statistica o economica) suggeriscono di
+considerare valida una relazione come la seguente:
+\begin{equation}
+  \label{eq:simple}
+  E \left[ x_t - g(\theta) \right] = 0 \Leftrightarrow \theta =
+  \theta_0 ,
+\end{equation}
+con $g(\cdot)$ funzione continua e invertibile. Ossia, esiste una funzione dei
+dati e del parametro, con la proprietà di avere valore atteso pari a zero se e
+solo se essa è valutata in corrispondenza del vero valore del parametro. Ad
+esempio, i modelli economici con aspettative razionali conducono spesso ad
+espressioni come la (\ref{eq:simple}).
+
+Se il modello di campionamento per gli $x_t$ è tale per cui vale una versione
+della legge dei grandi numeri, segue
+\[
+  \bar{X} = \frac{1}{T} \sum_{t=1}^T x_t \convp g(\theta_0) ;
+\]
+quindi, visto che $g(\cdot)$ è invertibile, la statistica
+\[
+  \hat{\theta} = g^{-1}(\bar{X}) \convp \theta_0 ,
+\]
+così che $\hat{\theta}$ è uno stimatore consistente di $\theta$. Un modo diverso
+per ottenere lo stesso risultato consiste nello scegliere, come stimatore di
+$\theta$, il valore che minimizza la funzione obiettivo
+\begin{equation}
+  \label{eq:obj-simple}
+  F(\theta) = \left[ \frac{1}{T} \sum_{t=1}^T (x_t  - g(\theta)) \right]^2 =
+  \left[ \bar{X} - g(\theta) \right]^2 ;
+\end{equation}
+il minimo è ovviamente raggiunto in $\hat{\theta} = g^{-1}(\bar{X})$,
+visto che l'espressione tra parentesi quadre vale 0.
+
+Il ragionamento precedente può essere generalizzato come segue: si supponga che
+$\theta$ sia un vettore a $n$ dimensioni e che valgano $m$ relazioni come
+\begin{equation}
+  \label{eq:general}
+  E \left[ f_i(x_t, \theta) \right] = 0 \quad\textrm{for\ } i=1 \ldots
+  m ,
+\end{equation}
+dove $E[\cdot]$ è un valore atteso condizionato su un insieme di $p$ variabili
+$z_t$ chiamate \emph{strumenti}. Nel semplice esempio visto sopra, si ha $m=1$
+e $f(x_t, \theta) = x_t - g(\theta)$, e l'unico strumento usato è $z_t = 1$.
+Quindi, deve anche essere vero che
+\begin{equation}
+  \label{eq:oc}
+  E \left[ f_i(x_t, \theta) \cdot z_{j,t} \right] = E \left[ f_{i,j,t}(\theta) \right] = 
+  0 \quad\textrm{for\ } i=1 \ldots
+  m \quad\textrm{and \ } j=1 \ldots p;
+\end{equation}
+L'equazione (\ref{eq:oc}) è detta \emph{condizione di ortogonalità}, o
+\emph{condizione sul momento}. Lo stimatore GMM è definito come il minimo della
+forma quadratica
+\begin{equation}
+  \label{eq:obj-general}
+  F(\theta, W) = \bar{\mathbf{f}}' W \bar{\mathbf{f}},
+\end{equation}
+dove $\bar{\mathbf{f}}$ è un vettore $(1 \times m\cdot p)$ che contiene la media
+delle condizioni di ortogonalità e $W$ è una qualche matrice simmetrica e
+definita positiva, nota come matrice dei \emph{pesi}. Una condizione necessaria
+per l'esistenza del minimo è la condizione di ordine $n \le m \cdot p$. 
+
+La statistica
+\begin{equation}
+  \label{eq:gmmestimator}
+  \hat{\theta} = \stackunder{\theta}{\mathrm{Argmin}} F(\theta, W)
+\end{equation}
+è uno stimatore consistente di $\theta$ qualunque sia la scelta di $W$.
+Tuttavia, per raggiungere la massima efficienza asintotica, $W$ deve essere
+proporzionale all'inversa della matrice di convarianza di lungo periodo fra le
+condizioni di ortogonalità; se $W$ non è nota, è sufficiente uno stimatore
+consistente.
+
+Queste considerazioni portano a definire la seguente strategia nella pratica:
+\begin{enumerate}
+\item Scegliere una matrice $W$ definita positiva e calcolare lo stimatore GMM
+  \emph{a 1 passo} $\hat{\theta}_1$. Alcune scelte tipiche per $W$ sono
+  $I_{m\cdot p}$ oppure $I_{m} \otimes (Z'Z)^{-1}$.
+\item Usare $\hat{\theta}_1$ per stimare $V(f_{i,j,t}(\theta))$ e usare la sua
+  inversa come matrice dei pesi. Lo stimatore risultante
+  $\hat{\theta}_2$ è chiamato stimatore \emph{a 2 passi}.
+\item Ri-stimare $V(f_{i,j,t}(\theta))$ per mezzo di $\hat{\theta}_2$ e ottenere
+  $\hat{\theta}_3$; iterare fino alla convergenza. Asintoticamente questi passi
+  successivi non sono necessari, visto che lo stimatore a due passi è
+  consistente ed efficiente, ma lo stimatore iterato ha spesso proprietà
+  migliori sui piccoli campioni e dovrebbe essere indipendente dalla scelta di
+  $W$ fatta al passo 1.
+\end{enumerate}
+
+Nel caso speciale in cui il numero dei parametri $n$ sia pari al numero delle
+condizioni di ortogonalità $m \cdot p$, lo stimatore GMM $\hat{\theta}$ è lo
+stesso per qualsiasi scelta della matrice dei pesi $W$, quindi il primo passo è
+sufficiente; in questo caso la funzione obiettivo vale 0 al minimo.
+
+Se, al contrario, vale $n < m \cdot p$, occorre il secondo passo (o le
+successive iterazioni) per raggiungere l'efficienza, e lo stimatore così
+ottenuto può essere molti diverso, su campioni finiti, dallo stimatore a un
+passo. Inoltre, il valore della funzione obiettivo al minimo, scalato
+opportunamente per il numero delle osservazioni, produce la \emph{statistica J
+di Hansen}, che può essere interpretata come una statistica test che si
+distribuisce come una $\chi^2$ con $m \cdot p -n $ gradi di libertà sotto
+l'ipotesi nulla di corretta specificazione. Si veda il capitolo 17.6 di
+Davidson e MacKinnon (1993), per i dettagli.
+
+Nelle sezioni seguenti verrà mostrato come queste nozioni sono implementate in
+\app{gretl} usando alcuni esempi.
+
+\section{Minimi quadrati ordinari (OLS) come GMM}
+\label{sec:gmm-ols}
+
+È istruttivo iniziare con un esempio volutamente semplice: si consideri il
+modello lineare $y_t = x_t \beta + u_t$.  Anche se si è soliti interpretarlo
+come la somma di una certa ``parte sistematica'' e di un certo ``disturbo'',
+un'interpretazione più rigorosa consiste nell'\emph{ipotesi} che la media
+condizionale $E(y_t|x_t)$ sia lineare e nella \emph{definizione} di
+$u_t$ as $y_t - E(y_t|x_t)$.
+
+Dalla definizione di $u_t$, segue che $E(u_t|x_t) = 0$, quindi disponiamo della
+seguente condizione di ortogonalità:
+\begin{equation}
+  \label{eq:oc-ols}
+  E \left[ f(\beta) \right] = 0 ,
+\end{equation}
+dove $f(\beta) = (y_t - x_t \beta) x_t$. Le definizioni date nella sezione
+precedente diventano quindi le seguenti:
+\begin{itemize}
+\item $\theta$ è $\beta$;
+\item lo strumento è $x_t$;
+\item $f_{i,j,t}(\theta)$ is $(y_t - x_t \beta) x_t = u_t
+  x_t$; la condizione di ortogonalità è interpretabile come il requisito che i
+  regressori siano non correlati con i disturbi;
+\item $W$ può essere una qualsiasi matrice simmetrica definita positiva, visto
+  che il numero dei parametri uguaglia quello delle condizioni di ortogonalità.
+  Scegliamo ad esempio $I$.
+\item La funzione $F(\theta, W)$ in questo caso è
+  \[
+    F(\theta, W) = \left[ \frac{1}{T} \sum_{t=1}^T (\hat{u}_t x_t) \right]^2
+  \]
+  ed è semplice vedere perché OLS e GMM coincidono: la funzione obiettivo GMM e
+  quella OLS sono minimizzate rispetto alla stessa grandezza, la somma dei
+  quadrati dei residui. Si noti però che le due funzioni non sono uguali: al
+  minimo vale $F(\theta, W) = 0$ mentre la somma dei quadrati dei residui minimizzata
+  vale zero solo nel caso di relazione lineare perfetta.
+\end{itemize}
+
+Il codice contenuto nell'esempio~\ref{gmm-ols-ex} usa il comando
+\texttt{gmm} di \app{gretl} per rendere operative le considerazioni fatte sopra.
+
+\begin{script}[htbp]
+  \caption{OLS via GMM}
+  \label{gmm-ols-ex}
+\begin{code}
+/* Inizializzazioni varie */
+series e = 0
+scalar beta = 0
+matrix V = I(1)
+
+/* Esecuzione della stima */
+gmm 
+  series e = y - x*beta
+  orthog e ; x
+  weights V
+  params beta
+end gmm
+\end{code}
+\end{script}
+
+Gli ingredienti necessari per la stima GMM vengono forniti a \app{gretl}
+in un blocco di comandi che inizia con \texttt{gmm} e finisce con
+\texttt{end gmm}, all'interno del quale è obbligatoria la presenza di
+tre elementi:
+\begin{enumerate}
+\item una o più dichiarazioni \texttt{orthog}
+\item una dichiarazione \texttt{weights}
+\item una dichiarazione \texttt{params}
+\end{enumerate}
+I tre elementi vanno forniti nell'ordine presentato sopra.
+
+Le dichiarazioni \texttt{orthog} sono usate per specificare le condizioni di
+ortogonalità e devono seguire la sintassi
+\begin{code}
+  orthog x ; Z
+\end{code}
+dove \texttt{x} deve essere un vettore o una serie, e \texttt{Z} deve essere una
+serie, lista o matrice. Nell'esempio~\ref{gmm-ols-ex}, la serie \texttt{e}
+contiene i ``residui'' e la serie \texttt{x} contiene il regressore.  Se
+\texttt{x} fosse stata una lista (o una matrice), la dichiarazione
+\texttt{orthog} avrebbe generato una condizione di ortogonalità per ogni
+elemento (o colonna) di \texttt{x}. Si noti la struttura della condizione di
+ortogonalità: si assume che il termine a sinistra del punto e virgola
+rappresenti una quantità che dipende dai parametri stimati (e che va quindi
+aggiornata durante la stima iterativa), mentre il termine a destra è una
+funzione costante dei dati.
+
+La dichiarazione \texttt{weights} specifica la matrice iniziale dei pesi, e la
+sua sintassi è evidente. La dichiarazione \texttt{params} specifica i parametri
+rispetto a cui il criterio GMM va minimizzato: segue le stesse regole usate per
+i comandi \texttt{mle} e \texttt{nls}.
+
+Il valore minimo viene cercato tramite ottimizzazione numerica usando il metodo
+BFGS (si veda la sezione~\ref{genr-numerical} e il capitolo~\ref{chap:mle}). Il
+progresso della procedura di ottimizzazione può essere visualizzato aggiungendo
+l'opzione \verb|--verbose| alla riga \texttt{end gmm}. Ovviamente nell'esempio
+appena visto la stima GMM non è la scelta più naturale, visto che il metodo OLS
+fornisce facilmente una soluzione esatta senza dover ricorrere
+all'ottimizzazione.
+
+\section{Minimi quadrati a due stadi (TSLS) come GMM}
+\label{sec:gmm-tsls}
+
+Avvicinandoci al dominio proprio della stima GMM, consideriamo ora i minimi
+quadrati a due stadi (two-stage least squares, TSLS) come un caso della
+stima GMM.
+
+La stima TSLS si usa quando occorre stimare un modello lineare della forma
+$y_t = X_t \beta + u_t$, ma in cui una o più delle variabili nella matrice
+$X$ sono potenzialmente endogene (correlate con il termine di errore $u$).
+Procediamo identificando un insieme di strumenti, $Z_t$, che possono spiegare
+le variabili endogene $X$ ma che sono plausibilmente non correlati con $u$.
+La classica procedura a due stadi consiste nel (1) regredire gli elementi
+endogeni di $X$ su $Z$ e (2) stimare l'equazione che interessa, avendo
+sostituito gli elementi endogeni di $X$ con i relativi valori stimati nella (1).
+
+Una prospettiva alternativa è fornita dal metodo GMM. Si definisce il residuo
+$\hat{u}_t$ come $y_t - X_t \hat{\beta}$, al solito. Ma invece di basarsi su
+$E(u|X) = 0$ come in OLS, la stima si basa sulla condizione
+$E(u|Z) = 0$.  In questo caso è naturale basare la matrice iniziale dei pesi
+sulla matrice di covarianza degli strumenti. L'esempio~\ref{gmm-tsls-ex} mostra
+lo schema dell'approccio GMM.
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM}
+  \label{gmm-tsls-ex}
+\begin{code}
+series e = 0
+matrix beta = ... # Inizializzare le stime dei parametri
+matrix X = ...    # Formare la matrice dei regressori
+matrix Z = ...    # Formare la matrice degli strumenti
+matrix V = inv(Z'Z)
+
+gmm 
+  series e = y - X*beta
+  orthog e ; Z
+  weights V
+  params beta
+end gmm
+\end{code}
+\end{script}
+
+\section{Opzioni per la matrice di covarianza}
+\label{sec:gmm-vcv}
+
+La matrice di covarianza dei parametri stimati dipende dalla scelta di
+$W$ attraverso l'equazione
+\begin{equation}
+  \label{eq:gmmest-vcv}
+    \hat{\Sigma} = (J'WJ)^{-1} J'W\Omega W J (J'WJ)^{-1}
+\end{equation}
+dove $J$ è un termine Jacobiano
+\[
+  J_{ij} = \pder{\bar{f}_i}{\theta_j}
+\]
+e $\Omega$ è la matrice di covarianza di lungo periodo delle condizioni
+di ortogonalità.
+
+\app{Gretl} calcola $J$ tramite differenziazione numerica (non c'è modo
+di specificare un'espressione analitica per $J$ al momento). Per
+$\Omega$ serve una stima consistente: la scelta più semplice consiste nell'usare
+la matrice di covarianza campionaria delle $f_t$:
+\begin{equation}
+  \label{eq:gmm-hcvar}
+    \hat{\Omega}_0(\theta) = \frac{1}{T} \sum_{t=1}^T f_t(\theta) f_t(\theta)'
+\end{equation}
+
+Questo stimatore è robusto rispetto all'eteroschedasticità, ma non rispetto
+all'autocorrelazione. Una variante robusta rispetto all'eteroschedasticità e
+all'autocorrelazione (HAC, heteroskedasticity autocorrelation consistent) si può
+ottenere usando il kernel di Bartlett. Una sua versione univariata è usata nella
+funzione \texttt{lrvar()}, si veda l'equazione (\ref{eq:scalar-lrvar}). La
+versione multivariata è riassunta nell'equazione (\ref{eq:gmm-hacvar}).
+
+\begin{equation}
+  \label{eq:gmm-hacvar}
+    \hat{\Omega}_k(\theta) = \frac{1}{T} 
+    \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i f_t(\theta) f_{t-i}(\theta)'  \right] ,
+\end{equation}
+
+\app{Gretl} calcola in modo predefinito la matrice di covarianza HAC quando si stima
+un modello GMM su serie storiche. È possibile controllare la larghezza di banda
+(ossia il valore di $k$ nella \ref{eq:gmm-hacvar}) usando il comando
+\texttt{set}. È anche possibile dire a \app{gretl} di \emph{non} usare la
+versione HAC con il comando
+%
+\begin{code}
+set force_hc on
+\end{code}
+%
+
+
+\section{Un esempio reale: il Consumption Based Asset Pricing Model}
+\label{sec:gmm-CBAPM}
+
+Per illustrare l'implementazione di GMM in \app{gretl}, replichiamo
+l'esempio contenuto nel capitolo 3 di Hall (2005). Il modello da stimare è
+un'applicazione classica del metodo GMM, e fornisce un esempio in cui le
+condizioni di ortogonalità non derivano da considerazioni di tipo statistico, ma
+dalla teoria economica.
+
+Un individuo razionale che deve allocare il proprio reddito tra consumo e
+investimento in un'attività finanziaria deve in pratica scegliere il sentiero di
+consumo lungo tutto l'arco della propria vita, visto che l'investimento si
+trasforma in consumo futuro. Si può dimostrare che il sentiero di consumo
+ottimale deve soddisfare la condizione seguente:
+\begin{equation}
+  \label{eq:gmm-CBAPM}
+  p U'(c_t) = \delta^k E\left[ r_{t+k} U'(c_{t+k}) | \mathcal{F}_t
+  \right] ,
+\end{equation}
+dove $p$ è il prezzo dell'attività finanziaria, $U(\cdot)$ è la funzione di
+utilità individuale, $\delta$ è il saggio di sconto soggettivo dell'individuo
+e $r_{t+k}$ è il tasso di rendimento dell'attività tra il tempo $t$ e il tempo
+$t+k$. $\mathcal{F}_t$ è il \emph{set informativo} al tempo $t$;
+l'equazione (\ref{eq:gmm-CBAPM}) afferma che l'utilità ``persa'' al tempo
+$t$ acquistando l'attività finanziaria invece che beni di consumo deve essere
+bilanciata da un corrispondente aumento nell'utilità futura (scontata) del
+consumo finanziato dal rendimento dell'investimento. Poiché il futuro è incerto,
+l'individuo considera la propria aspettativa, condizionata alle informazioni
+conosciute al momento in cui viene fatta la scelta.
+
+Non si fa alcuna ipotesi sulla natura dell'attività finanziaria, quindi
+l'equazione (\ref{eq:gmm-CBAPM}) vale per qualsiasi attività, ed è possibile
+costruire un sistema di equazioni come la (\ref{eq:gmm-CBAPM}) per ogni attività
+di cui si osserva il prezzo.
+
+Se si accettano le seguenti ipotesi
+\begin{itemize}
+\item L'intera economia può essere riassunta da un unico individuo
+  rappresentativo e immortale
+\item La funzione $U(x) = \frac{x^{\alpha} - 1 }{\alpha}$ rappresenta fedelmente
+  le preferenze dell'individuo
+\end{itemize}
+imponendo $k=1$, l'equazione (\ref{eq:gmm-CBAPM}) implica la seguente per ogni
+attività $j$:
+\begin{equation}
+  \label{eq:gmm-CBAPM-est}
+  E\left[ \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} \bigg| \mathcal{F}_t \right] = 1 ,
+\end{equation}
+dove $C_t$ è la funzione di consumo aggregata e $\alpha$ e $\delta$ sono
+l'avversione al rischio e il saggio di sconto dell'individuo rappresentativo. In
+questo caso, è facile vedere come i parametri ``profondi'' $\alpha$ e $\delta$
+possono essere stimati tramite GMM usando
+\[
+  e_t = \delta \frac{r_{j,t+1}}{p_{j,t}} \left(\frac{C_{t+1}}{C_{t}}
+    \right)^{\alpha - 1} - 1
+\]
+come condizione dei momenti, mentre qualsiasi variabile nota al tempo $t$ può
+servire da strumento.
+
+
+\begin{script}[htbp]
+  \caption{Stima del Consumption Based Asset Pricing Model}
+  \label{gmm-CBAPM-script}
+\begin{scode}
+open hall.gdt
+set force_hc on
+
+scalar alpha = 0.5
+scalar delta = 0.5
+series e = 0
+
+list inst = const consrat(-1) consrat(-2) ewr(-1) ewr(-2)
+
+matrix V0 = 100000*I(nelem(inst))
+matrix Z = { inst }
+matrix V1 = $nobs*inv(Z'Z)
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V0
+  params alpha delta
+end gmm --iterate
+
+gmm e = delta*ewr*consrat^(alpha-1) - 1
+  orthog e ; inst
+  weights V1
+  params alpha delta
+end gmm --iterate
+\end{scode}
+%$
+\end{script}
+
+\begin{script}[htbp]
+  \caption{Stima del Consumption Based Asset Pricing Model: risultati}
+  \label{gmm-CBAPM-out}
+\begin{scode}
+Modello 1: stime GMM a un passo usando le 465 osservazioni 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETRO       STIMA             ERRORE STD    STAT-T   P-VALUE
+
+  alpha                -3.14475          6.84439      -0.459   0.64590
+  d                     0.999215         0.0121044    82.549  <0.00001 ***
+
+  Criterio GMM = 2778.08
+
+Modello 2: stime GMM a un passo usando le 465 osservazioni 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETRO       STIMA             ERRORE STD    STAT-T   P-VALUE
+
+  alpha                 0.398194         2.26359       0.176   0.86036
+  d                     0.993180         0.00439367  226.048  <0.00001 ***
+
+  Criterio GMM = 14.247
+
+Modello 3: stime GMM iterato usando le 465 osservazioni 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETRO       STIMA             ERRORE STD    STAT-T   P-VALUE
+
+  alpha                -0.344325         2.21458      -0.155   0.87644
+  d                     0.991566         0.00423620  234.070  <0.00001 ***
+
+  Criterio GMM = 5491.78
+  Test J: Chi-quadro(3) = 11.8103 (p-value 0.0081)
+
+Modello 4: stime GMM iterato usando le 465 osservazioni 1959:04-1997:12
+e = d*ewr*consrat^(alpha-1) - 1
+
+      PARAMETRO       STIMA             ERRORE STD    STAT-T   P-VALUE
+
+  alpha                -0.344315         2.21359      -0.156   0.87639
+  d                     0.991566         0.00423469  234.153  <0.00001 ***
+
+  Criterio GMM = 5491.78
+  Test J: Chi-quadro(3) = 11.8103 (p-value 0.0081)
+\end{scode}
+\end{script}
+
+Nel codice di esempio contenuto in \ref{gmm-CBAPM-script}, viene replicata
+una parte della tabella 3.7 contenuta in Hall (2005). La variabile
+\texttt{consrat} è definita come rapporto dei consumi pro capite (in servizi e
+beni non durevoli) in mesi successivi per gli USA, e
+\texttt{ewr} il rapporto rendimento--prezzo di un'attività finanziaria fittizia
+costruita prendendo la media di tutte le azioni quotate al NYSE. Il set degli
+strumenti contiene la costante e due ritardi di ogni variabile.
+
+Il comando \texttt{set force\_hc on} nella seconda riga dello script ha il solo
+scopo di replicare l'esempio: come spiegato in precedenza, forza
+\app{gretl} a calcolare la varianza di lungo periodo delle condizioni di
+ortogonalità secondo l'equazione (\ref{eq:gmm-hcvar}) piuttosto che secondo la
+(\ref{eq:gmm-hacvar}).
+
+Si esegue \texttt{gmm} quattro volte: la stima a un passo per ognuna delle due
+matrici iniziali dei pesi, quindi la stima iterativa a partire da ognuno dei due
+insiemi di pesi iniziali. Visto che il numero delle condizioni di ortogonalità
+(5) è maggiore di quello dei parametri stimati (2), la scelta dei pesi iniziali
+fa la differenza, e in effetti si notano differenze sostanziali tra le stime a
+un passo (modelli 1 e 2). D'altra parte, la procedura di iterazione riduce
+queste differenze quasi totalmente (modelli 3 e 4).
+
+Parte dei risultati viene mostrata nella \ref{gmm-CBAPM-out}. Occorre notare che
+il test $J$ porta a rifiutare l'ipotesi di specificazione corretta, e questo
+forse non è sorprendente, viste le ipotesi eroiche richieste per passare dal
+principio microeconomico contenuto nell'equazione (\ref{eq:gmm-CBAPM}) al
+sistema aggregato che viene in effetti stimato.
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
