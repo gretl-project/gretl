@@ -2943,7 +2943,70 @@
     </description>
   </command>
 
-<!-- GMM goes here when it's ready -->
+  <command name="gmm" section="Estimation" label="GMM estimation"
+    context="cli">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--two-step</flag>
+	  <effect>two step estimation</effect>
+	</option>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>continuously updated GMM</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+
+      <para>
+	Performs Generalized Method of Moments (GMM) estimation using the
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
+	specify one or more commands for updating the relevant quantities
+	(tyically, GMM residuals), one or more sets of orthogonality
+	conditions, an initial matrix of weights, and a listing of the
+	parameters to be estimated, all enclosed between the tags
+	<lit>gmm</lit> and <lit>end gmm</lit>.
+      </para>
+      <para>
+	Please see <guideref targ="chap:gmm"/> for details on this command.
+	Here we just illustrate with a simple example.
+      </para>
+      <code>
+	gmm e = y - X*b
+	  orthog e ; W
+	  weights V
+	  params b
+	end gmm
+      </code>
+      <para>
+	In the example above we assume that <lit>y</lit> and <lit>X</lit>
+	are data matrices, <lit>b</lit> is an appropriately sized vector
+	of parameter values, <lit>W</lit> is a matrix of instruments, and
+	<lit>V</lit> is a suitable matrix of weights.  The statement
+      </para>
+      <code>
+	orthog e ; W
+      </code>
+      <para>
+	indicates that the residual vector <lit>e</lit> is in principle
+	orthogonal to each of the instruments composing the columns of
+	<lit>W</lit>.
+      </para>
+
+    </description>
+
+  </command>
 
   <command name="gnuplot" section="Graphs" 
     label="Create a gnuplot graph" context="cli">
