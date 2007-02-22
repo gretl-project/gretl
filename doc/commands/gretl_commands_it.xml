@@ -2897,6 +2897,71 @@
     </description>
   </command>
 
+  <command name="gmm" section="Estimation" label="Stima GMM"
+    context="cli">
+
+    <usage>
+      <options>
+	<option>
+	  <flag>--two-step</flag>
+	  <effect>Stima a due passi</effect>
+	</option>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>GMM aggiornato di continuo</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>Mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>Mostra i dettagli delle iterazioni</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+
+      <para>
+        Esegue la stima col metodo dei momenti generalizzato (Generalized Method
+        of Moments, GMM) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb,
+        Shanno). Occorre specificare uno o più comandi per aggiornare le
+        quantità rilevanti (tipicamente i residui GMM), una o più condizioni di
+        ortogonalità, una matrice iniziale dei pesi e un elenco dei parametri da
+        stimare, il tutto racchiuso tra le parole chiave
+	<lit>gmm</lit> e <lit>end gmm</lit>.
+      </para>
+      <para>
+	Si veda la <guideref targ="chap:gmm"/> per i dettagli. Quello che segue
+        è un semplice esempio illustrativo.
+      </para>
+      <code>
+	gmm e = y - X*b
+	  orthog e ; W
+	  weights V
+	  params b
+	end gmm
+      </code>
+      <para>
+	Nell'esempio si assume che <lit>y</lit> e <lit>X</lit> siano matrici di
+        dati, <lit>b</lit> sia un vettore con i valori dei parametri, <lit>W</lit>
+        sia una  matrice di strumenti, e <lit>V</lit> un'appropriata matrice dei pesi.
+        La dichiarazione
+      </para>
+      <code>
+	orthog e ; W
+      </code>
+      <para>
+	indica che il vettore dei residui <lit>e</lit> è in linea di principio
+        ortogonale ad ognuno degli strumenti che compongono le colonne di
+	<lit>W</lit>.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="gnuplot" section="Graphs" label="Crea un grafico Gnuplot" context="cli">
 
     <usage>
@@ -5505,7 +5570,7 @@
         <equation status="display"
           tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
-          graphic="poisson2"/>,
+          graphic="poisson2"/>
       ossia il logaritmo di
       <mathvar>v</mathvar> è una funzione lineare delle variabili indipendenti.
       </para>
