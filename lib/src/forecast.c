@@ -226,7 +226,11 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     if (LIMDEP(pmod->ci)) {
 	fr->sigma = NADBL;
     } else {
-	fr->sigma = pmod->sigma;
+	fr->sigma = gretl_model_get_double(pmod, "sigma_orig");
+
+	if (na(fr->sigma)) {
+	    fr->sigma = pmod->sigma;
+	}
     }
 
     depvar = gretl_model_get_depvar(pmod);

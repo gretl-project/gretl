@@ -502,7 +502,8 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
 	       pmod->params != NULL) {
 	tex_escape(name, pmod->params[i]);
-    } else if (pmod->ci == PANEL) {
+    } else if (pmod->ci == PANEL || pmod->ci == MLE ||
+	       pmod->ci == GMM) {
 	tex_escape(name, pmod->params[i]);
     } else if (pmod->ci == ARBOND) {
 	tex_arbond_coeff_name(name, pmod->params[i], 0);

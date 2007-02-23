@@ -671,9 +671,6 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     /* close the calling window */
     gtk_widget_destroy(GTK_WIDGET(vwin->w));
 
-#if 0
-    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-#endif
     set_scriptpage(coll->title);
 
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);

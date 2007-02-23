@@ -5236,6 +5236,12 @@ void do_run_script (GtkWidget *w, gpointer p)
 	view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, vp);
     }
 
+    if (!err && !sel && code == SCRIPT_EXEC &&
+	*vwin->fname != '\0' && 
+	strstr(vwin->fname, "script_tmp") == NULL) {
+	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
+    }
+
     /* re-establish command echo (??) */
     set_gretl_echo(1);
 }

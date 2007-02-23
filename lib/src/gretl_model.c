@@ -3555,7 +3555,9 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 	break;
 
     case EQNPRINT:
-	if (model_ci == ARMA || model_ci == NLS) {
+	if (model_ci == ARMA || model_ci == NLS ||
+	    model_ci == ARBOND || model_ci == MLE ||
+	    model_ci == GMM) {
 	    ok = 0; 
 	}
 	break;

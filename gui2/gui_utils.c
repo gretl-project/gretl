@@ -2437,10 +2437,11 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     if (pmod->ci != MLE && pmod->ci != GMM) {
 	add_vars_to_plot_menu(vwin);
 	add_model_dataset_items(vwin);
-	if (latex_is_ok() && !pmod->errcode) {
-	    add_model_tex_items(vwin);
-	}
-    }	
+    }
+
+    if (latex_is_ok() && !pmod->errcode) {
+	add_model_tex_items(vwin);
+    }    
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
 	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
@@ -2522,6 +2523,7 @@ static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/LaTeX/View/Equation", s);
     flip(ifac, "/LaTeX/Save/Equation", s);
     flip(ifac, "/LaTeX/Copy/Equation", s);
+    flip(ifac, "/LaTeX/Equation options", s);
 }
 
 static void copy_no_underscore (char *targ, const char *src)
@@ -2610,6 +2612,10 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 
+
+    if (pmod->ci == GMM) {
+	flip(vwin->ifac, "/Save", FALSE);
+    }
 
     if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
 	panel_heteroskedasticity_menu(vwin);
