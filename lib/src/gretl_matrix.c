@@ -3653,6 +3653,8 @@ int gretl_invert_matrix (gretl_matrix *a)
     return err;
 }
 
+#define RS_RCOND_MIN 1.0e-15
+
 /**
  * gretl_invert_symmetric_indef_matrix:
  * @a: matrix to invert.
@@ -3671,7 +3673,9 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     integer n = a->rows;
     integer info;
     integer *ipiv;
+    integer *iwork;
     integer lwork = -1;
+    double anorm, rcond;
     double *work;
     int err = 0;
 
@@ -3682,22 +3686,22 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     }
 
     ipiv = malloc(n * sizeof *ipiv);
-    if (ipiv == NULL) {
-	return E_ALLOC;
-    }
-
+    iwork = malloc(n * sizeof *iwork);
     work = lapack_malloc(sizeof *work);
-    if (work == NULL) {
-	free(ipiv);
-	return E_ALLOC;
-    }    
 
+    if (ipiv == NULL || iwork == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }  
+
+    anorm = gretl_matrix_one_norm(a);
+
+    /* workspace query */
     dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);   
-
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
-	free(ipiv);
-	return 1;
+	err = 1;
+	goto bailout;
     }
 
     lwork = (integer) work[0];
@@ -3705,34 +3709,57 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     printf("dsytrf: workspace = %d\n", (int) lwork);
 #endif
 
-    work = lapack_realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
-	free(ipiv);
-	return E_ALLOC;
-    }  
-
-    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info); 
-
-    if (info != 0) {
-	free(ipiv);
-	fprintf(stderr, "dsytrf: matrix is singular\n");
-	return E_SINGULAR;
+    if (lwork < 2 * n) {
+	lwork = 2 * n;
     }
 
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }  
+
+    /* decompose */
+    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info); 
+    if (info != 0) {
+	fprintf(stderr, "dsytrf: matrix is singular\n");
+	err = E_SINGULAR;
+	goto bailout;
+    }
+
+    /* check condition number */
+    dsycon_(&uplo, &n, a->val, &n, ipiv, &anorm, &rcond,
+	    work, iwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dsycon: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    } else if (rcond < RS_RCOND_MIN) {
+	fprintf(stderr, "dsycon: rcond = %g\n", rcond);
+	err = E_SINGULAR;
+	goto bailout;
+    }
+
+    /* invert */
     dsytri_(&uplo, &n, a->val, &n, ipiv, work, &info);
 
 #ifdef LAPACK_DEBUG
     printf("dsytri: info = %d\n", (int) info);
 #endif
 
+ bailout:
+
     lapack_free(work);
     free(ipiv);
+    free(iwork);
 
-    if (info != 0) {
-	fputs("dsytri: matrix is singular\n", stderr);
-	err = E_SINGULAR;
-    } else {
-	gretl_symmetric_matrix_expand(a, uplo);
+    if (!err) {
+	if (info != 0) {
+	    fputs("dsytri: matrix is singular\n", stderr);
+	    err = E_SINGULAR;
+	} else {
+	    gretl_symmetric_matrix_expand(a, uplo);
+	}
     }
 
     return err;
@@ -3752,6 +3779,8 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 int gretl_invert_symmetric_matrix (gretl_matrix *a)
 {
     integer n, info;
+    double *aval = NULL;
+    size_t bytes;
     char uplo = 'U';
     int err = 0;
 
@@ -3773,6 +3802,15 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return 1;
     }
 
+    /* back-up, just in case */
+    bytes = n * n * sizeof *aval;
+    aval = lapack_malloc(bytes);
+    if (aval == NULL) {
+	return E_ALLOC;
+    }
+
+    memcpy(aval, a->val, bytes);
+
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
@@ -3781,6 +3819,10 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
+
+	memcpy(a->val, aval, bytes);
+	lapack_free(aval);
+
 	return E_SINGULAR;
     } 
 
@@ -3790,6 +3832,8 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	err = E_SINGULAR;
 	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
 		" dpotri failed with info = %d\n", (int) info);
+	memcpy(a->val, aval, bytes);
+	lapack_free(aval);
     } else {
 	gretl_symmetric_matrix_expand(a, uplo);
     }
