@@ -3819,24 +3819,25 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	if (info > 0) {
 	    fputs(" matrix is not positive definite\n", stderr);
 	}
-
-	memcpy(a->val, aval, bytes);
-	lapack_free(aval);
-
-	return E_SINGULAR;
+	err = E_SINGULAR;
     } 
 
-    dpotri_(&uplo, &n, a->val, &n, &info);
-
-    if (info != 0) {
-	err = E_SINGULAR;
-	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotri failed with info = %d\n", (int) info);
-	memcpy(a->val, aval, bytes);
-	lapack_free(aval);
-    } else {
-	gretl_symmetric_matrix_expand(a, uplo);
+    if (!err) {
+	dpotri_(&uplo, &n, a->val, &n, &info);
+	if (info != 0) {
+	    err = E_SINGULAR;
+	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		    " dpotri failed with info = %d\n", (int) info);
+	} else {
+	    gretl_symmetric_matrix_expand(a, uplo);
+	}
     }
+
+    if (err) {
+	memcpy(a->val, aval, bytes);
+    }
+    
+    lapack_free(aval);
 
     return err;
 }
