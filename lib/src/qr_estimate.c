@@ -831,7 +831,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt)
     } else {
 	qr_make_regular_vcv(pmod, V, OPT_NONE);
     }
-
+    
  qr_cleanup:
 
     gretl_matrix_free(Q);

@@ -37,16 +37,22 @@ gretl_vector *
 gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod)
 {
     gretl_matrix *v;
-    int i;
+    double xi;
     
     v = gretl_column_vector_alloc(n);
 
     if (v != NULL) {
-	for (i=0; i<n; i++) {
-	    if (mod == GRETL_MOD_SQUARE) {
-		v->val[i] = x[i] * x[i];
-	    } else {
-		v->val[i] = x[i];
+	int i = 0, j = 0;
+
+	while (j < n) {
+	    xi = x[i++];
+	    if (!na(xi)) {
+		if (mod == GRETL_MOD_SQUARE) {
+		    v->val[j] = xi * xi;
+		} else {
+		    v->val[j] = xi;
+		}
+		j++;
 	    }
 	}
     }
