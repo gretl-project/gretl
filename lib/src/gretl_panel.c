@@ -371,6 +371,25 @@ static int hausman_allocate (panelmod_t *pan)
 
 /* printing routines for the "panel diagnostics" test */
 
+#if 0
+
+static void print_panel_coeff (const MODEL *pmod,
+ 			       const char *vname,
+ 			       int i, PRN *prn)
+{
+    model_coeff mc;
+
+    model_coeff_init(&mc);
+    mc.b = pmod->coeff[i];
+    mc.se = pmod->sderr[i];
+    mc.tval = mc.b / mc.se;
+    mc.pval = t_pvalue_2(mc.tval, pmod->dfd);
+    strcpy(mc.name, vname);
+    print_coeff(&mc, prn);
+}
+
+#else
+
 static void print_panel_coeff (const MODEL *pmod,
  			       const char *vname,
  			       int i, PRN *prn)
@@ -384,6 +403,8 @@ static void print_panel_coeff (const MODEL *pmod,
     pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN, vname,
  	    pmod->coeff[i], errstr, pvstr);
 }
+
+#endif
 
 static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {

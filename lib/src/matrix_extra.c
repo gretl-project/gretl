@@ -31,6 +31,7 @@
  *
  * Returns: pointer to a newly allocated gretl_vector containing
  * the elements of x (or their squares), or %NULL on failure.  
+ * Missing valies in @x are skipped.
  */
 
 gretl_vector *
