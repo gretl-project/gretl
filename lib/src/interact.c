@@ -3872,6 +3872,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 			     pdinfo, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
+	} else {
+	    gretl_cmd_destroy_context(cmd);
 	}
 	break;
 
