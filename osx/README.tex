@@ -1,11 +1,11 @@
 \documentclass[11pt]{article}
-\usepackage{lucidabr}
+\usepackage[body={6.5in,9in},top=1in,left=1in,nohead]{geometry}
 \usepackage[pdftex]{color}
 \usepackage{hyperref}
 \usepackage{myguide}
-\usepackage[body={6.5in,9in},top=1in,left=1in,nohead]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lucidabr}
 
-\geometry{nohead}
 \hypersetup{pdftitle={README for Gretl on OS X},
   pdfsubject={gretl},
   pdfauthor={Allin Cottrell},
@@ -18,7 +18,7 @@
 
 \begin{center}
 {\color{gold} \titlefont gretl} \\[1ex]
-version 1.6.0 for Mac OS X \\[2ex]
+version 1.6.1 for Mac OS X \\[2ex]
 
 \textit{GNU Regression, Econometrics and Time-series Library\\
   This is free software under the GNU General Public License.}
@@ -28,18 +28,12 @@ version 1.6.0 for Mac OS X \\[2ex]
 \section{Installation}
 \label{sec:install}
 
-After downloading the gretl disk image to your desktop, double-click it
-to open. Then drag \textsf{Gretl\_Folder} to somewhere suitable on your
-system (such as your Applications folder or Desktop).  Once it is in
-place you can rename the folder if you wish (\textit{before} running the
-program for the first time).
+After downloading the gretl disk image to your desktop, double-click
+it to open. Then drag \textsf{Gretl} to somewhere suitable on your
+system (such as your \textsf{Applications} folder or Desktop).
 
-To run gretl, go into \textsf{Gretl\_Folder} and double-click on the
-gretl program icon.  You can drag this icon onto the dock if you want
-a quick launcher.  
-
-Note: although you may rename the top-level gretl folder, do not move
-or rename any components within that folder or the program will break.
+To run gretl, double-click on the gretl program icon.  You can drag
+this icon onto the dock if you want a quick launcher.
 
 \section{System requirements}
 \label{sec:os}
@@ -65,8 +59,7 @@ under the ``Preferences'' item on the File menu) try this fix:
 \begin{enumerate}
 \item Open a Terminal window.
 \item Type the command \texttt{sudo fc-cache}
-\item Hit the Enter key, then enter the root (admin) password if
-  prompted.
+\item Hit the Enter key, then enter your password if prompted.
 \item If you see something like \texttt{fc-cache: not found} then
    X11 is not installed (properly); otherwise the X11 font cache
    should be created/updated.
@@ -75,14 +68,14 @@ under the ``Preferences'' item on the File menu) try this fix:
 
 \section{Other problems?}
 
-If the AppleScript launcher for gretl doesn't work for you, try
-opening an xterm, going into the \textsf{bin} folder of the
-gretl package, and executing \textsf{gretl.sh} manually.  That is, do
-something like:
+If double-clicking on the gretl icon doesn't work for you, try
+starting X11, opening an xterm, navigating into the \textsf{bin}
+folder inside \textsf{Gretl.app}, and executing \textsf{gretl}
+manually.  That is, do something like:
 
 \begin{verbatim}
-cd Gretl_Folder/bin
-./gretl.sh
+cd Gretl.app/Contents/Resources/bin
+./gretl
 \end{verbatim}
 
 Hopefully this will give you an informative error message.
@@ -99,9 +92,7 @@ documentation in various formats.
 Allin Cottrell \\
 Wake Forest University \\
 \texttt{cottrell@wfu.edu} \\
-July, 2006
-
-
+February, 2007
 
 \end{document}
 

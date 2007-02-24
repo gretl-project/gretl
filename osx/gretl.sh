@@ -4,39 +4,37 @@
 #   sudo fc-cache
 # before running this program
 
-PREFIX=`pwd | sed s+/bin$++`
 
-# echo "PREFIX=$PREFIX" > ~/where
+CWD="`(cd \"\`dirname \\\"$0\\\"\`\"; echo $PWD)`"
+TOP="`dirname \"$CWD\"`"
+
+echo "TOP=$TOP" > ~/where
 
 if [ -f ~/.profile ] ; then
   . ~/.profile
 fi  
 
-GRETL_HOME="$PREFIX/share/gretl/"
-export GRETL_HOME
-GTK_EXE_PREFIX="$PREFIX"
-export GTK_EXE_PREFIX
-GDK_PIXBUF_MODULE_FILE="$PREFIX/etc/gtk-2.0/gdk-pixbuf.loaders"
-export GDK_PIXBUF_MODULE_FILE
-PANGO_RC_FILE="$PREFIX/etc/pangorc"
-export PANGO_RC_FILE
-GTK_IM_MODULE_FILE="$PREFIX/etc/gtk-2.0/gtk.immodules"
-export GTK_IM_MODULE_FILE
-DYLD_LIBRARY_PATH="$PREFIX/lib"
-export DYLD_LIBRARY_PATH
+export "GRETL_HOME=$TOP/share/gretl/"
+export "GTK_EXE_TOP=$TOP"
+export "GDK_PIXBUF_MODULE_FILE=$TOP/etc/gtk-2.0/gdk-pixbuf.loaders"
+export "PANGO_RC_FILE=$TOP/etc/pangorc"
+export "GTK_IM_MODULE_FILE=$TOP/etc/gtk-2.0/gtk.immodules"
+export "DYLD_LIBRARY_PATH=$TOP/lib"
+export "XDG_DATA_DIRS=$TOP/share"
+export "XDG_DATA_HOME=$TOP/share"
 
 # location of gnuplot help file
-GNUHELP=$PREFIX/share/gnuplot/4.0/gnuplot.gih
-export GNUHELP
+export "GNUHELP=$TOP/share/gnuplot/4.0/gnuplot.gih"
 # location of gnuplot X11 driver
-GNUPLOT_DRIVER_DIR=$PREFIX/libexec/gnuplot/4.0
-export GNUPLOT_DRIVER_DIR
+export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.0"
 # path for fonts for GD fonts (check this)
-GDFONTPATH=$PREFIX/fonts:/usr/X11R6/lib/X11/fonts/TTF
-export GDFONTPATH
+export "GDFONTPATH=$TOP/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG
-GNUPLOT_DEFAULT_GDFONT=$PREFIX/fonts/Vera.ttf
-export GNUPLOT_DEFAULT_GDFONT
+export "GNUPLOT_DEFAULT_GDFONT=$TOP/fonts/Vera.ttf"
 
-export PATH=$PREFIX/bin:$PATH
-exec "$PREFIX/bin/gretl_x11" "$@"
+export "PATH=$CWD:$PATH"
+
+# echo "pwd is `pwd`" >>~/where
+
+cd $CWD
+exec "$CWD/gretl_x11" "$@"
