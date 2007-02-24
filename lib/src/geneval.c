@@ -680,6 +680,13 @@ static NODE *retrieve_const (NODE *n, parser *p)
 	case CONST_NA:
 	    ret->v.xval = NADBL;
 	    break;
+	case CONST_WIN32:
+#ifdef WIN32
+	    ret->v.xval = 1;
+#else
+	    ret->v.xval = 0;
+#endif
+	    break;
 	}
     }
 

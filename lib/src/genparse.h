@@ -226,7 +226,8 @@ enum {
 
 enum {
     CONST_PI = 1,
-    CONST_NA
+    CONST_NA,
+    CONST_WIN32
 };
 
 enum {

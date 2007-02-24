@@ -51,8 +51,9 @@ struct str_table {
 };
 
 struct str_table consts[] = {
-    { CONST_PI, "pi" },
-    { CONST_NA, "NA" },
+    { CONST_PI,    "pi" },
+    { CONST_NA,    "NA" },
+    { CONST_WIN32, "WIN32" },
     { 0,        NULL }
 };
 
