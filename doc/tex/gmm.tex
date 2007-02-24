@@ -250,25 +250,86 @@ $\hat{u}_t$ as $y_t - X_t \hat{\beta}$, as usual.  But instead of
 relying on $E(u|X) = 0$ as in OLS, we base estimation on the condition
 $E(u|Z) = 0$.  In this case it is natural to base the initial
 weighting matrix on the covariance matrix of the instruments.
-Example~\ref{gmm-tsls-ex} gives the skeleton of the GMM approach.
-(FIXME make this example a complete working script?)
+Example~\ref{gmm-tsls-ex} presents a model from Stock and Watson's
+\textit{Introduction to Econometrics}.  The demand for cigarettes is
+modeled as a linear function of the logs of price and income; income
+is treated as exogenous while price is taken to be endogenous and two
+measures of tax are used as instruments.  Since we have two
+instruments and one endogenous variable the model is over-identified
+and therefore the weights matrix will influence the solution.  Partial
+output from this script is shown in~\ref{gmm-tsls-out}.  The estimated
+standard errors from GMM are robust by default; if we supply the
+\verb|--robust| option to the \texttt{tsls} command we get indentical
+results.\footnote{The data file used in this example is available in
+  the Stock and Watson package for \app{gretl}.  See
+  \url{http://gretl.sourceforge.net/gretl_data.html}.}
 
 \begin{script}[htbp]
   \caption{TSLS via GMM}
   \label{gmm-tsls-ex}
-\begin{code}
-series e = 0
-matrix beta = ... # initialize the parameter estimates
-matrix X = ...    # form the matrix of regressors
-matrix Z = ...    # form the matrix of instruments
-matrix V = inv(Z'Z)
+\begin{scode}
+open cig_ch10.gdt
+# real avg price including sales tax
+genr ravgprs = avgprs / cpi
+# real avg cig-specific tax
+genr rtax = tax / cpi
+# real average total tax
+genr rtaxs = taxs / cpi
+# real average sales tax
+genr rtaxso = rtaxs - rtax
+# logs of consumption, price, income
+genr lpackpc = log(packpc)
+genr lravgprs = log(ravgprs)
+genr perinc = income / (pop*cpi)
+genr lperinc = log(perinc)
+# restrict sample to 1995 observations
+smpl --restrict year=1995
+# Equation (10.16) by tsls
+list xlist = const lravgprs lperinc
+list zlist = const rtaxso rtax lperinc
+tsls lpackpc xlist ; zlist --robust
 
-gmm 
-  series e = y - X*beta
+# setup for gmm
+matrix Z = { zlist }
+matrix W = inv(Z'Z)
+series e = 0
+scalar b0 = 1
+scalar b1 = 1
+scalar b2 = 1
+
+gmm e = lpackpc - b0 - b1*lravgprs - b2*lperinc
   orthog e ; Z
-  weights V
-  params beta
-end gmm
+  weights W
+  params b0 b1 b2
+end gmm 
+\end{scode}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM: partial output}
+  \label{gmm-tsls-out}
+\begin{code}
+Model 1: TSLS estimates using the 48 observations 1-48
+Dependent variable: lpackpc
+Instruments: rtaxso rtax 
+Heteroskedasticity-robust standard errors, variant HC0
+
+      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE
+
+  const                 9.89496          0.928758     10.654  <0.00001 ***
+  lravgprs             -1.27742          0.241684     -5.286  <0.00001 ***
+  lperinc               0.280405         0.245828      1.141   0.25401
+
+Model 2: 1-step GMM estimates using the 48 observations 1-48
+e = lpackpc - b0 - b1*lravgprs - b2*lperinc
+
+      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE
+
+  b0                    9.89496          0.928758     10.654  <0.00001 ***
+  b1                   -1.27742          0.241684     -5.286  <0.00001 ***
+  b2                    0.280405         0.245828      1.141   0.25401
+
+  GMM criterion = 0.0110046
 \end{code}
 \end{script}
 
