@@ -1286,9 +1286,13 @@ get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
     gchar *tmp;
 
     gtk_tree_model_get(mod, iter, col, &tmp, -1);
-    strcpy(haystack, tmp);
-    lower(haystack);
-    g_free(tmp);
+    if (tmp != NULL) {
+	strcpy(haystack, tmp);
+	lower(haystack);
+	g_free(tmp);
+    } else {
+	*haystack = '\0';
+    }
 }
 
 static void find_in_listbox (GtkWidget *w, gpointer p)
