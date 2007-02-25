@@ -677,8 +677,6 @@ int substitute_named_strings (char *line)
 	pf = 1;
     }
 
-    fprintf(stderr, "line='%s'\n", line);
-
     while (*s && !err) {
 	if (pf && i > 0 && *s == '"' && *(s-1) != '\\') {
 	    quoted = !quoted;
