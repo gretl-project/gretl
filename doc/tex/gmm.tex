@@ -208,7 +208,7 @@ where \texttt{x} must be a vector or a series and \texttt{Z} a series,
 list or matrix. In example~\ref{gmm-ols-ex}, the series \texttt{e}
 holds the ``residuals'' and the series \texttt{x} holds the regressor.
 If \texttt{x} had been a list (a matrix), the \texttt{orthog}
-statement would have generated one orthogonality conditon for each
+statement would have generated one orthogonality condition for each
 element (column) of \texttt{x}.  Note the structure of the
 orthogonality condition: it is assumed that the term to the left of the
 semicolon represents a quantity that depends on the estimated
@@ -259,7 +259,7 @@ instruments and one endogenous variable the model is over-identified
 and therefore the weights matrix will influence the solution.  Partial
 output from this script is shown in~\ref{gmm-tsls-out}.  The estimated
 standard errors from GMM are robust by default; if we supply the
-\verb|--robust| option to the \texttt{tsls} command we get indentical
+\verb|--robust| option to the \texttt{tsls} command we get identical
 results.\footnote{The data file used in this example is available in
   the Stock and Watson package for \app{gretl}.  See
   \url{http://gretl.sourceforge.net/gretl_data.html}.}
@@ -373,7 +373,7 @@ in equation (\ref{eq:gmm-hacvar}).
 \end{equation}
 
 \app{Gretl} computes the HAC covariance matrix by default when a GMM
-model is estimated on time series data.  You can control the bandwith
+model is estimated on time series data.  You can control the bandwidth
 (that is, the value of $k$ in \ref{eq:gmm-hacvar}) using the
 \texttt{set} command.  You can also ask \app{gretl} \emph{not} to use
 the HAC version by saying
@@ -572,11 +572,12 @@ actually estimated.
 \section{Caveats}
 \label{sec:gmm-caveat}
 
-A few word of warning are in order: despite its ingenuity, GMM is
+A few words of warning are in order: despite its ingenuity, GMM is
 possibly the most fragile estimation method in econometrics. The
 number of non-obvious choices one has to make when using GMM is high,
 and in finite samples each of these can have dramatic consequences on
-the eventual output. Among the factors are:
+the eventual output. Some of the factors that may affect the results
+are:
 \begin{enumerate}
 \item Orthogonality conditions can be written in more than one way:
   for example, if $E(x_t - \mu) = 0$, then $E(x_t/\mu - 1) =
@@ -601,7 +602,7 @@ the eventual output. Among the factors are:
 
 One of the consequences of this state of things is that replicating
 various well-known published studies may be extremely difficult. Any
-non-trivial reult is virtually impossible to reproduce unless all
+non-trivial result is virtually impossible to reproduce unless all
 details of the estimation procedure are carefully recorded. 
 
 %%% Local Variables: 
