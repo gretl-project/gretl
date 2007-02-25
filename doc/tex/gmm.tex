@@ -572,13 +572,37 @@ actually estimated.
 \section{Caveats}
 \label{sec:gmm-caveat}
 
-Warnings: possible non-robustness; dependence of parameter estimates
-on the precise specification of the weights; non-trivial dependence of
-estimates on re-scaling of the instruments.  Difficulty of replicating
-various well-known published studies.  Need to carefully record all
-details of estimation procedure.  
+A few word of warning are in order: despite its ingenuity, GMM is
+possibly the most fragile estimation method in econometrics. The
+number of non-obvious choices one has to make when using GMM is high,
+and in finite samples each of these can have dramatic consequences on
+the eventual output. Among the factors are:
+\begin{enumerate}
+\item Orthogonality conditions can be written in more than one way:
+  for example, if $E(x_t - \mu) = 0$, then $E(x_t/\mu - 1) =
+  0$ holds too. It is possible that a different specification of the
+  moment conditions leads to different results.
+\item As with all other numerical optimization algorithms, weird
+  things may happen when the objective function is nearly flat in some
+  directions or has multiple minima. BFGS is usually quite good, but
+  there is no guarantee that it always delivers a sensible solution,
+  if one at all.
+\item The 1-step and, to a lesser extent, the 2-step estimators may be
+  sensitive to apparently trivial details, like the re-scaling of the
+  instruments. Different choices for the initial weights matrix can
+  also have noticeable consequences.
+\item With time-series data, there is no hard rule on the appropriate
+  number of lags to use when computing the long-run covariance matrix
+  (see section \ref{sec:gmm-vcv}). Our advice is to go by trial and
+  error, since results may be greatly influenced by a poor choice.
+  Future versions of \app{gretl} will include more options on
+  covariance matrix estimation.
+\end{enumerate}
 
-
+One of the consequences of this state of things is that replicating
+various well-known published studies may be extremely difficult. Any
+non-trivial reult is virtually impossible to reproduce unless all
+details of the estimation procedure are carefully recorded. 
 
 %%% Local Variables: 
 %%% mode: latex
