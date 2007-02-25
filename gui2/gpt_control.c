@@ -563,6 +563,16 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_VAR_ROOTS || \
 		      p == PLOT_ELLIPSE)
 
+/* graphs where we don't attempt to find data coordinates */
+
+#define no_readback(p) (p == PLOT_CORRELOGRAM || \
+                        p == PLOT_LEVERAGE || \
+                        p == PLOT_MULTI_IRF || \
+                        p == PLOT_MULTI_SCATTER || \
+                        p == PLOT_PANEL || \
+                        p == PLOT_TRI_GRAPH || \
+                        p == PLOT_BI_GRAPH)
+
 static void plot_label_init (GPT_LABEL *lbl)
 {
     lbl->text[0] = '\0';
@@ -2649,6 +2659,11 @@ static int get_plot_ranges (png_plot *plot)
     plot->ymin = plot->ymax = 0.0;   
     plot->xint = plot->yint = 0;
     plot->pd = 0;
+
+    if (no_readback(plot->spec->code)) {
+	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+	return 1;
+    }
 
     fp = gretl_fopen(plot->spec->fname, "r");
     if (fp == NULL) {
