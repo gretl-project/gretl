@@ -32,6 +32,13 @@ enum {
     AUTO_LAG_WOOLDRIDGE
 };
 
+enum {
+    STATE_USE_CWD        = 1 << 0,  /* store: use current dir as default */
+    STATE_ECHO_ON        = 1 << 1,  /* echoing commands or not */
+    STATE_MSGS_ON        = 1 << 2,  /* emitting non-error messages or not */
+    STATE_FORCE_DECPOINT = 1 << 3   /* override locale decimal separator */
+};    
+
 /* for values that really want a non-negative integer */
 #define UNSET_INT -1
 #define is_unset(i) (i == UNSET_INT)
@@ -61,16 +68,14 @@ struct max_opts {
 };
 
 struct set_vars_ {
-    int use_qr;                 /* use QR decomposition? */
-    int use_cwd;                /* store: use current dir as default */
-    unsigned int seed;          /* for PRNG */
+    int flags;
+    int use_qr;                 /* use QR decomposition by default? */
     int halt_on_error;          /* halt cli program on script error? */
+    unsigned int seed;          /* for PRNG */
     int shell_ok;               /* shell commands permitted? */
     double hp_lambda;           /* for Hodrick-Prescott filter */
     int horizon;                /* for VAR impulse responses */ 
     double nls_toler;           /* NLS convergence criterion */
-    int gretl_echo;             /* echoing commands or not */
-    int gretl_msgs;             /* emitting non-error messages or not */
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
     int max_verbose;            /* verbose output from maximizer? */
@@ -170,21 +175,23 @@ static int check_for_state (void)
     }
 }
 
+static int flag_to_bool (set_vars *sv, int flag)
+{
+    return (sv->flags & flag)? 1 : 0;
+}
+
 static void state_vars_copy (set_vars *sv)
 {
 #if PDEBUG
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
+    sv->flags = state->flags;
     sv->use_qr = state->use_qr;
-    sv->use_cwd = state->use_cwd;
     sv->seed = state->seed;
-    sv->halt_on_error = state->halt_on_error;
     sv->shell_ok = state->shell_ok;
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
     sv->nls_toler = state->nls_toler;
-    sv->gretl_echo = state->gretl_echo; 
-    sv->gretl_msgs = state->gretl_msgs; 
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
     sv->max_verbose = state->max_verbose;
@@ -203,16 +210,14 @@ static void state_vars_init (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_init called\n");
 #endif
+    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON;
     sv->use_qr = UNSET_INT; 
-    sv->use_cwd = 0;
     sv->seed = 0;
     sv->halt_on_error = UNSET_INT;
     sv->shell_ok = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
     sv->nls_toler = NADBL;
-    sv->gretl_echo = 1; 
-    sv->gretl_msgs = 1; 
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
     sv->max_verbose = 0;
@@ -626,25 +631,35 @@ int get_force_hc (void)
 void set_gretl_echo (int e)
 {
     if (check_for_state()) return;
-    state->gretl_echo = e;
+
+    if (e) {
+	state->flags |= STATE_ECHO_ON;
+    } else {
+	state->flags &= ~STATE_ECHO_ON;
+    }
 }
 
 int gretl_echo_on (void)
 {
     if (check_for_state()) return 1;
-    return state->gretl_echo;
+    return flag_to_bool(state, STATE_ECHO_ON);
 }
 
 void set_gretl_messages (int e)
 {
     if (check_for_state()) return;
-    state->gretl_msgs = e;
+
+    if (e) {
+	state->flags |= STATE_MSGS_ON;
+    } else {
+	state->flags &= ~STATE_MSGS_ON;
+    }
 }
 
 int gretl_messages_on (void)
 {
     if (check_for_state()) return 1;
-    return state->gretl_msgs;
+    return flag_to_bool(state, STATE_MSGS_ON);
 }
 
 char get_csv_delim (const DATAINFO *pdinfo)
@@ -1065,12 +1080,13 @@ static int display_settings (PRN *prn)
     pputs(prn, "Variables that can be set using \"set\" (do \"help set\""
 	  " for details):\n");
 
-    pprintf(prn, " echo = %d\n", state->gretl_echo);
+    pprintf(prn, " echo = %d\n", flag_to_bool(state, STATE_ECHO_ON));
 
     ival = get_use_qr(); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
 
-    pprintf(prn, " use_cwd = %d\n", state->use_cwd);
+    pprintf(prn, " use_cwd = %d\n", flag_to_bool(state, STATE_USE_CWD));
+    pprintf(prn, " force_decpoint = %d\n", flag_to_bool(state, STATE_FORCE_DECPOINT));
 
     uval = get_gretl_random_seed();
     pprintf(prn, " seed = %u\n", uval);
@@ -1125,7 +1141,7 @@ static int display_settings (PRN *prn)
     }
     pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
 
-    pprintf(prn, " messages = %d\n", state->gretl_msgs);
+    pprintf(prn, " messages = %d\n", flag_to_bool(state, STATE_MSGS_ON));
 
     ival =  get_halt_on_error(); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
@@ -1181,7 +1197,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 
     if (nw == 1) {
 	if (!strcmp(setobj, "echo")) {
-	    state->gretl_echo = 1;
+	    state->flags |= STATE_ECHO_ON;
 	    err = 0;
 	}
     } else if (nw == 2) {
@@ -1190,18 +1206,18 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	/* set command echo on/off */
 	if (!strcmp(setobj, "echo")) {
 	    if (boolean_off(setarg)) {
-		state->gretl_echo = 0;
+		state->flags &= ~STATE_ECHO_ON;
 		err = 0;
 	    } else if (boolean_on(setarg)) {
-		state->gretl_echo = 1;
+		state->flags |= STATE_ECHO_ON;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "messages")) {
 	    if (boolean_off(setarg)) {
-		state->gretl_msgs = 0;
+		state->flags &= ~STATE_MSGS_ON;
 		err = 0;
 	    } else if (boolean_on(setarg)) {
-		state->gretl_msgs = 1;
+		state->flags |= STATE_MSGS_ON;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "csv_delim")) {
@@ -1251,10 +1267,18 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    }
 	} else if (!strcmp(setobj, "use_cwd")) {
 	    if (boolean_on(setarg)) {
-		state->use_cwd = 1;
+		state->flags |= STATE_USE_CWD;
 		err = 0;
 	    } else if (boolean_off(setarg)) {
-		state->use_cwd = 0;
+		state->flags &= ~STATE_USE_CWD;
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "force_decpoint")) {
+	    if (boolean_on(setarg)) {
+		state->flags |= STATE_FORCE_DECPOINT;
+		err = 0;
+	    } else if (boolean_off(setarg)) {
+		state->flags &= ~STATE_FORCE_DECPOINT;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "halt_on_error")) {
@@ -1405,7 +1429,11 @@ void set_use_cwd (int set)
     check_for_state();
 
     if (state != NULL) {
-	state->use_cwd = set;
+	if (set) {
+	    state->flags |= STATE_USE_CWD;
+	} else {
+	    state->flags &= ~STATE_USE_CWD;
+	}
     }
 }
 
@@ -1415,7 +1443,7 @@ int get_use_cwd (void)
 	return 0;
     }
 
-    return state->use_cwd;
+    return flag_to_bool(state, STATE_USE_CWD);
 }
 
 int get_halt_on_error (void)
