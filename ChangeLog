@@ -41,9 +41,9 @@ version 1.6.1, in progress
 - Add facility to generate Binomial and Poisson random variables
 - Row format for tabular output of models in TeX: make this
   configurable
-- Add a few matrix functions
-- Add nonlinear GMM estimation (experimental)	
-
+- Add several matrix functions
+- Add nonlinear GMM estimation (experimental)
+- Numerous small bug-fixes
 
 9/13/2006 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we
