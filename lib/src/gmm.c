@@ -967,8 +967,8 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 
 #if 0
 
-static int newey_west (const gretl_matrix *E, int h,
-		       gretl_matrix *V)
+static int gmm_HAC (const gretl_matrix *E, int h,
+		    gretl_matrix *V)
 {
     gretl_matrix *W = NULL;
     gretl_matrix *tmp = NULL;
@@ -1001,7 +1001,7 @@ static int newey_west (const gretl_matrix *E, int h,
 
     if (!gretl_matrix_is_symmetric(V)) {
 	/* should we do this? */
-	fprintf(stderr, "newey_west: V is not symmetric\n");
+	fprintf(stderr, "gmm_HAC: V is not symmetric\n");
 	gretl_matrix_xtr_symmetric(V);
     }
 
@@ -1013,11 +1013,12 @@ static int newey_west (const gretl_matrix *E, int h,
 
 #else
 
-static int newey_west (const gretl_matrix *E, int h,
-		       gretl_matrix *V)
+static int gmm_HAC (const gretl_matrix *E, int h,
+		    gretl_matrix *V)
 {
+    int parzen = 0; /* just Bartlett for now */
     gretl_matrix *W;
-    double w;
+    double ai, w;
     int i;
 
     W = gretl_matrix_alloc(E->rows, E->cols);
@@ -1029,7 +1030,16 @@ static int newey_west (const gretl_matrix *E, int h,
     gretl_matrix_zero(V);
 
     for (i=-h; i<=h; i++) {
-	w = 1.0 - fabs((double) i) / (h + 1.0);
+	ai = fabs((double) i) / (h + 1.0);
+	if (parzen) {
+	    if (ai <= 0.5) {
+		w = 1.0 - 6*ai*ai + 6*pow(ai, 3.0);
+	    } else {
+		w = 2.0 * pow(1.0 - ai, 3.0);
+	    }
+	} else {
+	    w = 1.0 - ai;
+	}
 	gretl_matrix_inplace_lag(W, E, i);
 	gretl_matrix_multiply_by_scalar(W, w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -1039,7 +1049,7 @@ static int newey_west (const gretl_matrix *E, int h,
 
     if (!gretl_matrix_is_symmetric(V)) {
 	/* should we do this? */
-	fprintf(stderr, "newey_west: V is not symmetric\n");
+	fprintf(stderr, "gmm_HAC: V is not symmetric\n");
 	gretl_matrix_xtr_symmetric(V);
     }
 
@@ -1103,7 +1113,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 					s->oc->tmp, GRETL_MOD_NONE,
 					S, GRETL_MOD_NONE);
     } else {
-	err = newey_west(s->oc->tmp, hac_lag, S);
+	err = gmm_HAC(s->oc->tmp, hac_lag, S);
     }
 
     if (!err) {
@@ -1233,7 +1243,7 @@ static int gmm_recompute_weights (nlspec *s)
 					s->oc->tmp, GRETL_MOD_NONE,
 					W, GRETL_MOD_NONE);
     } else {
-	err = newey_west(s->oc->tmp, hac_lag, W);
+	err = gmm_HAC(s->oc->tmp, hac_lag, W);
     }
 
     if (!err) {
@@ -1267,7 +1277,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 					s->oc->tmp, GRETL_MOD_NONE,
 					V, GRETL_MOD_NONE);
     } else {
-	err = newey_west(s->oc->tmp, hac_lag, V);
+	err = gmm_HAC(s->oc->tmp, hac_lag, V);
     }
 
     pprintf(prn, "\n%s\n", 
