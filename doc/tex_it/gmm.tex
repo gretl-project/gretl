@@ -240,25 +240,87 @@ Una prospettiva alternativa è fornita dal metodo GMM. Si definisce il residuo
 $\hat{u}_t$ come $y_t - X_t \hat{\beta}$, al solito. Ma invece di basarsi su
 $E(u|X) = 0$ come in OLS, la stima si basa sulla condizione
 $E(u|Z) = 0$.  In questo caso è naturale basare la matrice iniziale dei pesi
-sulla matrice di covarianza degli strumenti. L'esempio~\ref{gmm-tsls-ex} mostra
-lo schema dell'approccio GMM.
+sulla matrice di covarianza degli strumenti. 
+L'esempio~\ref{gmm-tsls-ex} presenta un modello preso da \textit{Introduction to
+Econometrics} di Stock e Watson. La domanda di sigarette è modellata come
+funzione lineare dei logaritmi del prezzo e del reddito; il reddito è trattato
+come esogeno, mentre il prezzo è considerato endogeno; due misure della
+tassazione sono usate come strumenti. Poiché si hanno due strumenti e una
+variabile endogena, il modello è sovraidentificato, quindi la matrice dei pesi
+influenzerà la soluzione. Una parte dei risultati di questo script è mostrata
+in~\ref{gmm-tsls-out}.  Gli errori standard stimati con GMM sono robusti per
+impostazione predefinita: se usassimo l'opzione \verb|--robust| con il comando
+\texttt{tsls} otterremmo risultati identici\footnote{Il file di dati usato in
+questo esempio è tratto dal pacchetto che contiene altri dati dal libro di Stock
+e Watson, disponibile su \url{http://gretl.sourceforge.net/gretl_data_it.html}.}.
 
 \begin{script}[htbp]
   \caption{TSLS via GMM}
   \label{gmm-tsls-ex}
-\begin{code}
-series e = 0
-matrix beta = ... # Inizializzare le stime dei parametri
-matrix X = ...    # Formare la matrice dei regressori
-matrix Z = ...    # Formare la matrice degli strumenti
-matrix V = inv(Z'Z)
+\begin{scode}
+\begin{scode}
+open cig_ch10.gdt
+# Prezzo medio reale al lordo delle tasse sulla vendita
+genr ravgprs = avgprs / cpi
+# Tassa sulle sigarette media reale
+genr rtax = tax / cpi
+# Totale delle tasse medie reali
+genr rtaxs = taxs / cpi
+# Tassa sulla vendita media reale
+genr rtaxso = rtaxs - rtax
+# Logaritmi del consumo, prezzo, reddito
+genr lpackpc = log(packpc)
+genr lravgprs = log(ravgprs)
+genr perinc = income / (pop*cpi)
+genr lperinc = log(perinc)
+# Restrizione del campione alle osservazioni del 1995
+smpl --restrict year=1995
+# Equazione (10.16) usando tsls
+list xlist = const lravgprs lperinc
+list zlist = const rtaxso rtax lperinc
+tsls lpackpc xlist ; zlist --robust
 
-gmm 
-  series e = y - X*beta
+# Impostazioni per gmm
+matrix Z = { zlist }
+matrix W = inv(Z'Z)
+series e = 0
+scalar b0 = 1
+scalar b1 = 1
+scalar b2 = 1
+
+gmm e = lpackpc - b0 - b1*lravgprs - b2*lperinc
   orthog e ; Z
-  weights V
-  params beta
-end gmm
+  weights W
+  params b0 b1 b2
+end gmm 
+\end{scode}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{TSLS via GMM: risultati parziali}
+  \label{gmm-tsls-out}
+\begin{code}
+Modello 1: stime TSLS usando le 48 osservazioni 1-48
+Variabile dipendente: lpackpc
+Strumenti: rtaxso rtax 
+Errori standard robusti per l'eteroschedasticità, variante HC0
+
+      VARIABILE      COEFFICIENTE       ERRORE STD.   STAT T   P-VALUE
+
+  const                 9.89496          0.928758     10.654  <0.00001 ***
+  lravgprs             -1.27742          0.241684     -5.286  <0.00001 ***
+  lperinc               0.280405         0.245828      1.141   0.25401
+
+Modello 2: stime GMM a un passo usando le 48 osservazioni 1-48
+e = lpackpc - b0 - b1*lravgprs - b2*lperinc
+
+      PARAMETRO       STIMA             ERRORE STD.   STAT T   P-VALUE
+
+  b0                    9.89496          0.928758     10.654  <0.00001 ***
+  b1                   -1.27742          0.241684     -5.286  <0.00001 ***
+  b2                    0.280405         0.245828      1.141   0.25401
+
+  Criterio GMM = 0.0110046
 \end{code}
 \end{script}
 
@@ -493,6 +555,38 @@ forse non è sorprendente, viste le ipotesi eroiche richieste per passare dal
 principio microeconomico contenuto nell'equazione (\ref{eq:gmm-CBAPM}) al
 sistema aggregato che viene in effetti stimato.
 
+\section{Avvertenze}
+\label{sec:gmm-caveat}
+ 
+Nonostante la sua semplicità concettuale, il metodo GMM è probabilmente tra i
+più fragili disponibili in econometria. Il numero di scelte non banali che
+occorre fare è abbastanza alto, e su campioni finiti ognuna di esse può avere
+conseguenze drammatiche sul risultato finale. Alcuni dei fattori che possono
+influenzare i risultati sono i seguenti:
+\begin{enumerate}
+\item Le condizioni di ortogonalità possono essere scritte in più di un modo:
+  ad esempio, se $E(x_t - \mu) = 0$, vale anche $E(x_t/\mu - 1) = 0$. È possibile
+  che diverse specificazioni delle condizioni sui momenti conducano a diversi
+  risultati.
+\item Come accade con altri algoritmi di ottimizzazione numerica, possono
+  verificarsi casi in cui la funzione obiettivo è quasi piatta in alcune
+  direzioni, oppure ha più di un minimo. Il metodo BFGS di solito è adeguato, ma
+  non garantisce di fornire sempre la soluzione migliore.
+\item Gli stimatori a un passo e, in misura minore, quello a due passi, possono
+  essere sensibili a dettagli apparentemente insignificanti, come il fatto di
+  ri-scalare gli strumenti. Anche la scelta sulla matrice dei pesi iniziali può
+  avere conseguenze sensibili.
+\item Se i dati sono serie storiche, non c'è una regola precisa sul numero di
+  ritardi da usare nel calcolo della matrice di covarianza di lungo periodo (si
+  veda la sezione~\ref{sec:gmm-vcv}). Il nostro consiglio è di fare alcuni
+  tentativi, visto che i risultati possono variare di molto a seconda della
+  scelta. Le versioni future di \app{gretl} conterranno più opzioni sulla stima
+  della matrice di covarianza.
+\end{enumerate}
+
+Un'importante conseguenza di tutti questi aspetti è può essere molto difficile
+replicare i risultati di alcuni studi noti, se non si conoscono tutti i dettagli
+relativi alla procedura di stima usata.
 
 
 %%% Local Variables: 
