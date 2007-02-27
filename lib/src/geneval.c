@@ -542,6 +542,11 @@ static int dist_argc (char *s, int f)
     case 'D':
 	s[0] = 'D';
 	return 3;
+    case '8':
+    case 'p':
+    case 'P':
+	s[0] = 'P';
+	return 2;
     }
 
     return 0;

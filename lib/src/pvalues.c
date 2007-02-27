@@ -631,6 +631,40 @@ double bvnorm_cdf (double a, double b, double rho)
     return ret;
 }
 
+static double poisson_pmf (double lambda, int k)
+{
+    double den = x_factorial((double) k);
+    double l1 = exp(-lambda);
+
+    return l1 * pow(lambda, (double) k) / den;
+}
+
+/**
+ * poisson_cdf:
+ * @lambda: mean (also variance).
+ * @k: test value.
+ *
+ * Returns: the probability of X <= @k, for X an r.v. that follows
+ * the Poisson distribution with parameter @lambda.
+ */
+
+static double poisson_cdf (double lambda, int k)
+{
+    double l1, l2, den, x = 0.0;
+    int i;
+
+    l1 = exp(-lambda);
+    l2 = 1.0;
+
+    for (i=0; i<=k; i++) {
+	den = x_factorial((double) i);
+	x += l1 * l2 / den;
+	l2 *= lambda;
+    }
+
+    return x;
+}
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
@@ -685,6 +719,8 @@ double gretl_get_cdf (char st, double *p)
 	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
     } else if (st == 'D') {
 	x = bvnorm_cdf(p[0], p[1], p[2]);
+    } else if (st == 'P') {
+	x = poisson_cdf(p[0], (int) p[1]);
     }
 
     return x;
@@ -706,6 +742,8 @@ double gretl_get_pvalue (char st, const double *p)
 	x = gamma_cdf_comp(p[0], p[1], p[2], 2);
     } else if (st == 'B') {
 	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
+    } else if (st == 'P') {
+	x = 1.0 - poisson_cdf(p[0], (int) p[1]);
     }
 
     if (!na(x)) {
@@ -809,6 +847,15 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	}		
 	break;
 
+    case 'p':
+    case 'P':
+    case '8':
+	pprintf(prn, _("\nPoisson (mean = %g): "), p[0]);
+	print_pv_string(p[1], pv, prn);
+	pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
+		poisson_pmf(p[0], (int) p[1]));
+	break;	
+
     default:
 	break;
     }
@@ -823,6 +870,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
  * pvalue F dfn dfd x (F-distribution); or
  * pvalue G mean variance x (Gamma distribution).
  * pvalue B prob n x (Binomial distribution).
+ * pvalue P mean k (Poisson distribution).
  * @pZ: pointer to the data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.

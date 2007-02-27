@@ -80,9 +80,15 @@ int read_lang_info (const char *s, int i)
     }
 
     if (!err) {
-	printf("got '%s' for '%s' (lang=%s)\n", 
-	       lang_strings[i].longdate,
-	       pat, lang_strings[i].lang);
+	if (!strcmp(pat, "LONGDATE")) {
+	    printf("got '%s' for '%s' (lang=%s)\n", 
+		   lang_strings[i].longdate,
+		   pat, lang_strings[i].lang);
+	} else if (!strcmp(pat, "SHORTDATE")) {
+	    printf("got '%s' for '%s' (lang=%s)\n", 
+		   lang_strings[i].shortdate,
+		   pat, lang_strings[i].lang);
+	}	    
     }
 
     return err;
@@ -150,7 +156,7 @@ int print_subst (const char *verstr)
     return 0;
 }
 
-/* convert an input date of the form YY.MM.DD to an appropriately
+/* convert an input date of the form YYYY.MM.DD to an appropriately
    internationalized string like "Mar 14, 2005" */
 
 int get_intl_progdate (const char *s, int i)
@@ -493,7 +499,7 @@ int main (int argc, char **argv)
 	fprintf(stderr, "%s: Please give a gretl version number,\n"
 		"or say \"auto\" to read version info from the source tree.\n",
 		argv[0]);
-	fputs("You can specify a program date, YY.MM.DD, as a second arg\n", stderr);
+	fputs("You can specify a program date, YYYY.MM.DD, as a second arg\n", stderr);
 	exit(EXIT_FAILURE);
     }
 

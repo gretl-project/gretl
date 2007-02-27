@@ -20,7 +20,7 @@
 /* calculator.c for gretl */
 
 #define NTESTS 6
-#define NPVAL 6
+#define NPVAL 7
 #define NLOOKUPS 5
 #define NGRAPHS 4
 #define NTESTENTRY 7
@@ -62,7 +62,9 @@ enum {
     T_DIST,
     CHISQ_DIST,
     F_DIST,
-    DW_DIST
+    DW_DIST,
+    BINOMIAL_DIST,
+    POISSON_DIST
 };
 
 enum {
@@ -71,7 +73,8 @@ enum {
     CHISQ_PVAL,
     F_PVAL,
     GAMMA_PVAL,
-    BINOMIAL_PVAL
+    BINOMIAL_PVAL,
+    POISSON_PVAL
 };
 
 enum {
@@ -329,6 +332,21 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	if (na(xx)) return;
 	parm[0] = df;
 	parm[1] = xx;
+	break;
+
+    case POISSON_PVAL: 
+	st = 'P';
+	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
+	zz = getval(tmp, NULL, 0); /* mean */
+	if (na(zz)) return;
+	if (zz <= 0.0) {
+	    errbox(_("Invalid mean"));
+	    return;
+	}	
+	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
+	df = atoi(tmp); /* value, actually */
+	parm[0] = zz;
+	parm[1] = df;
 	break;
 
     case F_PVAL:
@@ -1243,7 +1261,8 @@ static void make_dist_tab (CalcChild *child, int d)
 	N_("chi-square"), 
 	N_(" F "), 
 	N_("gamma"),
-	N_("binomial")
+	N_("binomial"),
+	N_("poisson")
     };
    
     box = gtk_vbox_new(FALSE, 0);
@@ -1300,6 +1319,11 @@ static void make_dist_tab (CalcChild *child, int d)
     case BINOMIAL_PVAL:
 	add_lookup_entry(tbl, &tbl_len, N_("Prob"), child, d);
 	add_lookup_entry(tbl, &tbl_len, N_("trials"), child, d);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), child, d);
+	break;
+
+    case POISSON_PVAL:
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), child, d);
 	add_lookup_entry(tbl, &tbl_len, N_("x-value"), child, d);
 	break;
 
