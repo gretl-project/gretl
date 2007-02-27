@@ -4344,7 +4344,8 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
     }
 
     /* generate graph */
-    err = gnuplot(plotlist, lines, NULL, gZ, ginfo, &plot_count, flags);
+    err = gnuplot(plotlist, lines, NULL, (const double **) *gZ, 
+		  ginfo, &plot_count, flags);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4385,8 +4386,8 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	plotlist[1] = 0; /* placeholder entry */
 	plotlist[2] = gretl_model_get_depvar(pmod);
 	plotlist[3] = xvar;
-	err = gnuplot(plotlist, lines, formula, gZ, ginfo,
-		      &plot_count, flags);
+	err = gnuplot(plotlist, lines, formula, (const double **) *gZ, 
+		      ginfo, &plot_count, flags);
 	if (err) {
 	    errbox(_("gnuplot command failed"));
 	} else {
@@ -4429,8 +4430,8 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	lines[1] = (ts)? 1 : 0;
     } 
 
-    err = gnuplot(plotlist, lines, NULL, gZ, ginfo,
-		  &plot_count, flags);
+    err = gnuplot(plotlist, lines, NULL, (const double **) *gZ, 
+		  ginfo, &plot_count, flags);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4727,8 +4728,8 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GPT_GUI | GPT_IDX);
+    err = gnuplot(libcmd.list, lines, NULL, (const double **) Z, 
+		  datainfo, &plot_count, GPT_GUI | GPT_IDX);
 
     gui_graph_handler(err);
 }
@@ -4837,8 +4838,8 @@ int do_dummy_graph (selector *sr)
 	return 1;
     }
 
-    err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GPT_GUI | GPT_DUMMY);
+    err = gnuplot(libcmd.list, lines, NULL, (const double **) Z, 
+		  datainfo, &plot_count, GPT_GUI | GPT_DUMMY);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4883,8 +4884,8 @@ int do_graph_from_selector (selector *sr)
 	}
     }
 
-    err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, flags);
+    err = gnuplot(libcmd.list, lines, NULL, (const double **) Z, 
+		  datainfo, &plot_count, flags);
 
     gui_graph_handler(err);
 
@@ -5078,8 +5079,8 @@ void plot_from_selection (gpointer p, guint action, GtkWidget *w)
 	lines[i] = (action == GR_PLOT);
     }
 
-    err = gnuplot(libcmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, flags);
+    err = gnuplot(libcmd.list, lines, NULL, (const double **) Z, 
+		  datainfo, &plot_count, flags);
 
     gui_graph_handler(err);
 
@@ -6168,7 +6169,7 @@ gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     plotlist[1] = gretl_model_get_depvar(pmod);
     plotlist[2] = varindex(datainfo, "autofit");
 
-    err = gnuplot(plotlist, lines, NULL, pZ, pdinfo,
+    err = gnuplot(plotlist, lines, NULL, (const double **) *pZ, pdinfo,
 		  &plot_count, OPT_T); 
 
     if (err) {
@@ -6465,14 +6466,14 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	plotflags = gp_flags(grbatch, cmd->opt);
 	if (cmd->ci == GNUPLOT) {
 	    if ((cmd->opt & OPT_M) || (cmd->opt & OPT_Z) || (cmd->opt & OPT_S)) { 
-		err = gnuplot(cmd->list, NULL, cmd->param, pZ, pdinfo,
-			      &plot_count, plotflags); 
+		err = gnuplot(cmd->list, NULL, cmd->param, (const double **) *pZ, 
+			      pdinfo, &plot_count, plotflags); 
 	    } else {
 		int lines[1];
 
 		lines[0] = (cmd->opt != 0);
-		err = gnuplot(cmd->list, lines, cmd->param, 
-			      pZ, pdinfo, &plot_count, plotflags);
+		err = gnuplot(cmd->list, lines, cmd->param, (const double **) *pZ, 
+			      pdinfo, &plot_count, plotflags);
 	    }
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 

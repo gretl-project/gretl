@@ -500,7 +500,7 @@ static int read_datafile (const char *fname, dataset *dset)
 		/* can't handle more than two series! */
 		break;
 	    }
-	} else if (strstr(line, "automatic OLS")) {
+	} else if (strstr(line, "automatic fitted")) {
 	    fitline = 1;
 	} else if (isdigit((unsigned char) line[0])) {
 	    if (strstr(line, "title")) {

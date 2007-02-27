@@ -535,13 +535,13 @@ void set_x12a_ok (int set)
 
 static const char *get_reg_base (const char *key)
 {
-    if (strncmp(key, "x12a", 4) == 0) {
+    if (!strncmp(key, "x12a", 4)) {
         return "x12arima";
-    }
-    if (strncmp(key, "tramo", 5) == 0) {
+    } else if (!strncmp(key, "tramo", 5)) {
         return "tramo";
+    } else {
+	return "gretl";
     }
-    return "gretl";
 }
 
 static void set_tramo_x12a_dirs (void)
@@ -1355,6 +1355,8 @@ static void set_gp_colors (void)
     char cstr[N_GP_COLORS][8];
     int i, nc;
 
+    *cstr[0] = *cstr[1] = *cstr[2] = *cstr[3] = '\0';
+
     nc = sscanf(gpcolors, "%7s %7s %7s %7s", 
 		cstr[0], cstr[1], cstr[2], cstr[3]);
 
@@ -1578,7 +1580,9 @@ void write_rc (void)
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 
-	if (rc_vars[i].flags & FIXSET) continue;
+	if (rc_vars[i].flags & FIXSET) {
+	    continue;
+	}
 
 	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, bval);
@@ -2032,17 +2036,9 @@ static GtkWidget *get_image_for_color (const char *colstr)
     int i;
 
     if (xpm == NULL) {
-	xpm = malloc(XPMROWS * sizeof *xpm);
+	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
 	if (xpm != NULL) {
 	    for (i=0; i<XPMROWS; i++) {
-		xpm[i] = malloc(XPMCOLS * sizeof **xpm);
-		if (xpm[i] == NULL) {
-		    int j;
-
-		    for (j=0; j<i; j++) free(xpm[j]);
-		    free(xpm);
-		    xpm = NULL;
-		}
 		if (i == 0) {
 		    strcpy(xpm[i], "16 16 2 1");
 		} else if (i == 1) {
@@ -2092,12 +2088,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
 
     set_graph_palette(i, color_string);
-
-    sprintf(gpcolors, "%s %s %s %s", 
-	    graph_color_string(0),
-	    graph_color_string(1),
-	    graph_color_string(2),
-	    graph_color_string(3));
+    print_palette_string(gpcolors);
 
     /* update the "image" widget */
     image = g_object_get_data(G_OBJECT(color_button), "image");
@@ -2147,11 +2138,7 @@ void color_patch_button_reset (GtkWidget *button, int cnum)
     g_object_set_data(G_OBJECT(button), "image", image);
 
     if (cnum == BOXCOLOR || cnum == BOXCOLOR - 1) {
-	sprintf(gpcolors, "%s %s %s %s", 
-		graph_color_string(0),
-		graph_color_string(1),
-		graph_color_string(2),
-		graph_color_string(3));
+	print_palette_string(gpcolors);
     }
 }
 

@@ -346,8 +346,8 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		printit = 0;
 	    } else if (set_output_line(fline)) {
 		printit = 0;
-	    } else if (spec != NULL && (spec->flags & GPT_OLS_HIDDEN)
-		       && is_auto_ols_string(fline)) {
+	    } else if (spec != NULL && (spec->flags & GPT_FIT_HIDDEN)
+		       && is_auto_fit_string(fline)) {
 		printit = 0;
 	    }
 	    if (printit) {
@@ -634,6 +634,7 @@ static GPT_SPEC *plotspec_new (void)
 
     spec->code = PLOT_REGULAR;
     spec->flags = 0;
+    spec->fit = PLOT_FIT_NONE;
     spec->fp = NULL;
     spec->data = NULL;
     spec->markers = NULL;
@@ -1273,8 +1274,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 
-	if (strstr(gpline, "automatic OLS")) {
-	    spec->flags |= GPT_AUTO_OLS;
+	if (strstr(gpline, "automatic fitted")) {
+	    spec->flags |= GPT_AUTO_FIT;
 	    continue;
 	}
 

@@ -198,7 +198,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
+    err = gnuplot(list, lines, NULL, (const double **) *dbZ, dbdinfo,
 		  &plot_count, GPT_GUI | GPT_IDX);
 
     if (err) {

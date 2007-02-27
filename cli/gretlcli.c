@@ -637,8 +637,8 @@ cli_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     plotlist[1] = gretl_model_get_depvar(pmod);
     plotlist[2] = varindex(pdinfo, "autofit");
 
-    err = gnuplot(plotlist, lines, NULL, pZ, pdinfo,
-		  &plot_count, gp_flags(batch, OPT_T));
+    err = gnuplot(plotlist, lines, NULL, (const double **) *pZ, 
+		  pdinfo, &plot_count, gp_flags(batch, OPT_T));
 
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
@@ -898,14 +898,15 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		break;
 	    }
 	    if ((cmd->opt & OPT_M) || (cmd->opt & OPT_Z) || (cmd->opt & OPT_S)) { 
-		err = gnuplot(cmd->list, NULL, cmd->param, pZ, pdinfo,
-			      &plot_count, gp_flags(batch, cmd->opt));
+		err = gnuplot(cmd->list, NULL, cmd->param, 
+			      (const double **) *pZ, pdinfo, &plot_count, 
+			      gp_flags(batch, cmd->opt));
 	    } else {
 		int lines[1];
 
 		lines[0] = (cmd->opt & OPT_O)? 1 : 0;
 		err = gnuplot(cmd->list, lines, cmd->param, 
-			      pZ, pdinfo, &plot_count, 
+			      (const double **) *pZ, pdinfo, &plot_count, 
 			      gp_flags(batch, 0));
 	    }
 	} else {

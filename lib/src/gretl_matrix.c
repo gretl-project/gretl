@@ -5182,7 +5182,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  */
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b, gretl_matrix *vcv,
+		      gretl_vector *b, gretl_matrix *vcv, 
 		      gretl_vector *uhat, double *s2)
 {
     gretl_vector *XTy = NULL;
@@ -5193,6 +5193,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     if (gretl_vector_get_length(b) != k) {
 	err = E_NONCONF;
     }
+
+    if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
+	err = E_NONCONF;
+    }    
 
     if (!err) {
 	XTy = gretl_column_vector_alloc(k);

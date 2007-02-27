@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "var.h"
 #include "libset.h"
+#include "matrix_extra.h"
 
 #include <unistd.h>
 
@@ -48,7 +49,7 @@
 
 
 static char gnuplot_path[MAXLEN];
-static const char *auto_ols_string = "# plot includes automatic OLS line\n";
+static const char *auto_fit_string = "# plot includes automatic fitted line\n";
 static int gp_small_font_size;
 
 typedef struct gnuplot_info_ gnuplot_info;
@@ -60,7 +61,7 @@ struct gnuplot_info_ {
     int ts_plot;
     int yscale;
     int impulses;
-    int ols_ok;
+    int fit_ok;
     int t1;
     int t2;
     int npoints;
@@ -229,7 +230,7 @@ GptFlags gp_flags (int batch, gretlopt opt)
 	flags |= GPT_DUMMY;
     } else {
 	if (opt & OPT_S) {
-	    flags |= GPT_OLS_OMIT;
+	    flags |= GPT_FIT_OMIT;
 	}
 	if (opt & OPT_T) {
 	    flags |= GPT_IDX;
@@ -449,6 +450,13 @@ static char graph_palette[N_GP_COLORS][8] = {
     "x9ba6bb"   /* color for box fill */
 };
 
+void print_palette_string (char *targ)
+{
+    sprintf(targ, "%s %s %s %s", graph_palette[0],
+	    graph_palette[1], graph_palette[2],
+	    graph_palette[3]);
+}
+
 const char *graph_color_string (int i)
 {
 #if GP_DEBUG
@@ -479,7 +487,8 @@ static int colstr_is_valid (const char *colstr)
 void set_graph_palette (int i, const char *colstr)
 {
     if (i >= 0 && i < N_GP_COLORS && colstr_is_valid(colstr)) {
-	strcpy(graph_palette[i], colstr);
+	*graph_palette[i] = '\0';
+	strncat(graph_palette[i], colstr, 7);
     } else {
 	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
     }
@@ -1006,48 +1015,59 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
     return err;
 }
 
-static int get_ols_line (gnuplot_info *gpinfo, 
-			 double ***pZ, DATAINFO *pdinfo, 
-			 char *ols_line)
+static int get_fitted_line (gnuplot_info *gpinfo, 
+			    const double **Z, const DATAINFO *pdinfo, 
+			    char *targ)
 {
-    MODEL plotmod;
-    char title[48];
-    int olslist[4];
-    double pval = 1.0;
-    int err = 0;
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *V = NULL;
+    int yno = gpinfo->list[1];
+    int xno = gpinfo->list[2];
+    double s2, v, pv;
+    int T, k = 2;
+    int err;
 
-#if GP_DEBUG
-    fprintf(stderr, "gnuplot: doing get_ols_line\n");
-#endif
-
-    olslist[0] = 3;
-    olslist[1] = gpinfo->list[1];
-    olslist[2] = 0;
-    olslist[3] = gpinfo->list[2];
-	
-    plotmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
-    err = plotmod.errcode;
+    err = gretl_plotfit_matrices(yno, xno, PLOT_FIT_OLS, Z,
+				 pdinfo->t1, pdinfo->t2,
+				 &y, &X);
 
     if (!err) {
-	pval = t_pvalue_2(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd);
-	if (pval < .10) {
-	    sprintf(title, "Y = %#.3g %c %#.3gX", plotmod.coeff[0],
-		    (plotmod.coeff[1] > 0)? '+' : '-', 
-		    fabs(plotmod.coeff[1]));
+	b = gretl_vector_alloc(k);
+	V = gretl_matrix_alloc(k, k);
+	if (b == NULL || V == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
-    gretl_push_c_numeric_locale();
-
-    if (!err && pval < .10) {
-	sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
-		plotmod.coeff[0], plotmod.coeff[1], title);
-	gpinfo->ols_ok = 1;
+    if (!err) {
+	err = gretl_matrix_ols(y, X, b, V, NULL, &s2);
     }
 
-    gretl_pop_c_numeric_locale();
+    if (!err) {
+	v = gretl_matrix_get(V, 1, 1);
+	T = gretl_vector_get_length(y);
+	pv = t_pvalue_2(b->val[1] / sqrt(v), T - k);
 
-    clear_model(&plotmod);
+	if (pv < .10) {
+	    char title[48];
+
+	    sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
+		    (b->val[1] > 0)? '+' : '-', 
+		    fabs(b->val[1]));
+	    gretl_push_c_numeric_locale();
+	    sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+		    b->val[0], b->val[1], title);
+	    gretl_pop_c_numeric_locale();
+	    gpinfo->fit_ok = 1;
+	}
+    }
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(X);
+    gretl_matrix_free(b);
+    gretl_matrix_free(V);
 
     return err;
 }
@@ -1232,7 +1252,7 @@ gp_info_init (gnuplot_info *gpinfo, GptFlags flags, FILE *fp,
     gpinfo->yscale = 0;    /* two y axis scales needed? */
     gpinfo->impulses = 0;  /* plotting with impulses? */
     gpinfo->lo = lo;
-    gpinfo->ols_ok = 0;    /* plot automatic OLS line? */
+    gpinfo->fit_ok = 0;    /* plot automatic fitted line? */
     gpinfo->t1 = t1;
     gpinfo->t2 = t2;
     gpinfo->npoints = 0;
@@ -1323,8 +1343,8 @@ static void print_gnuplot_flags (GnuplotFlags flags)
     if (flags & GPT_GUI) {
 	fprintf(stderr, " GPT_GUI\n");
     }
-    if (flags & GPT_OLS_OMIT) {
-	fprintf(stderr, " GPT_OLS_OMIT\n");
+    if (flags & GPT_FIT_OMIT) {
+	fprintf(stderr, " GPT_FIT_OMIT\n");
     }
     if (flags & GPT_DATA_STYLE) {
 	fprintf(stderr, " GPT_DATA_STYLE\n");
@@ -1488,7 +1508,7 @@ static void maybe_add_plotx (gnuplot_info *gpinfo,
  */
 
 int gnuplot (const int *plotlist, const int *lines, const char *literal,
-	     double ***pZ, DATAINFO *pdinfo, 
+	     const double **Z, const DATAINFO *pdinfo, 
 	     int *plot_count, GptFlags flags)
 {
     PRN *prn = NULL;
@@ -1500,7 +1520,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     char withstr[16] = {0};
     char lwstr[8] = {0};
     char keystr[48] = {0};
-    char ols_line[128] = {0};
+    char fit_line[128] = {0};
     int i;
 
     gnuplot_info gpinfo;
@@ -1550,17 +1570,17 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     }
 
     /* add a simple regression line if appropriate */
-    if (!gpinfo.impulses && !(flags & GPT_OLS_OMIT) && gpinfo.lo == 2 && 
+    if (!gpinfo.impulses && !(flags & GPT_FIT_OMIT) && gpinfo.lo == 2 && 
 	!gpinfo.ts_plot && !(flags & GPT_RESIDS)) {
-	get_ols_line(&gpinfo, pZ, pdinfo, ols_line);
-	if (gpinfo.ols_ok) {
+	get_fitted_line(&gpinfo, Z, pdinfo, fit_line);
+	if (gpinfo.fit_ok) {
 	    pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	    pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
 	}
     }
 
     /* adjust sample range, and reject if it's empty */
-    graph_list_adjust_sample(list, &gpinfo, (const double **) *pZ);
+    graph_list_adjust_sample(list, &gpinfo, Z);
     if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
 	gpinfo.err = GRAPH_NO_DATA;
 	goto bailout;
@@ -1568,7 +1588,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
     /* separation by dummy: create special vars */
     if (flags & GPT_DUMMY) { 
-	if (gpinfo.lo != 3 || factorized_vars(&gpinfo, (const double **) *pZ)) {
+	if (gpinfo.lo != 3 || factorized_vars(&gpinfo, Z)) {
 	    gpinfo.err = E_DATA;
 	    goto bailout;
 	}
@@ -1620,8 +1640,8 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
     if (gpinfo.lo == 2) {
 	/* only two variables */
-	if (gpinfo.ols_ok) {
-	    fputs(auto_ols_string, fp);
+	if (gpinfo.fit_ok) {
+	    fputs(auto_fit_string, fp);
 	    if (flags & GPT_FA) {
 		make_gtitle(&gpinfo, GTITLE_AFV, series_name(pdinfo, list[1]), 
 			    series_name(pdinfo, list[2]));
@@ -1636,7 +1656,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	} else {
 	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
 	}
-	if (!gpinfo.ols_ok) {
+	if (!gpinfo.fit_ok) {
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((flags & GPT_RESIDS) && (flags & GPT_DUMMY)) { 
@@ -1666,11 +1686,11 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     } else {
 	int v = (flags & GPT_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
 
-	print_x_range(&gpinfo, (const double *) (*pZ)[v]);
+	print_x_range(&gpinfo, Z[v]);
     }
 
     if (gpinfo.yscale) { 
-	check_for_yscale(&gpinfo, (const double **) *pZ);
+	check_for_yscale(&gpinfo, Z);
 	if (gpinfo.yscale) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
@@ -1732,7 +1752,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 		set_withstr(gpinfo.flags, lines, i, withstr);
 	    }
 	    fprintf(fp, " '-' using 1:2 title '%s' %s%s", s1, withstr, lwstr);
-	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
+	    if (i < gpinfo.lo - 1 || gpinfo.fit_ok) {
 	        fputs(" , \\\n", fp); 
 	    } else {
 	        fputc('\n', fp);
@@ -1740,15 +1760,15 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	}
     } 
 
-    if (*ols_line != '\0') {
-        fputs(ols_line, fp);
+    if (*fit_line != '\0') {
+        fputs(fit_line, fp);
     }
 
     /* print the data to be graphed */
     if (flags & GPT_DUMMY) {
-	print_gp_dummy_data(&gpinfo, (const double **) *pZ, pdinfo);
+	print_gp_dummy_data(&gpinfo, Z, pdinfo);
     } else {
-	print_gp_data(&gpinfo, (const double **) *pZ, pdinfo);
+	print_gp_data(&gpinfo, Z, pdinfo);
     }
 
     /* flush stream */
@@ -2767,8 +2787,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     int miss = 0;
 
     if (!string_is_blank(spec->titles[0])) {
-	if ((spec->flags & GPT_OLS_HIDDEN) && 
-	    is_auto_ols_string(spec->titles[0])) {
+	if ((spec->flags & GPT_FIT_HIDDEN) && 
+	    is_auto_fit_string(spec->titles[0])) {
 	    n_lines--;
 	} else {
 	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
@@ -2864,8 +2884,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	}
     }
 
-    if (spec->flags & GPT_AUTO_OLS) {
-	fputs(auto_ols_string, fp);
+    if (spec->flags & GPT_AUTO_FIT) {
+	fputs(auto_fit_string, fp);
     }
 
     if ((spec->code == PLOT_FREQ_SIMPLE ||
@@ -3704,9 +3724,9 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
     return gnuplot_make_graph();
 }
 
-int is_auto_ols_string (const char *s)
+int is_auto_fit_string (const char *s)
 {
-    if (strstr(s, "automatic OLS")) return 1;
+    if (strstr(s, "automatic fitted")) return 1;
     if (strstr(s, I_("with least squares fit"))) return 1;
     return 0;
 }

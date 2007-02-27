@@ -52,6 +52,7 @@ GtkWidget *labelpos[MAX_PLOT_LABELS];
 
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
+static GtkWidget *fitcombo;
 static GtkWidget *termcombo;
 static GtkWidget *fitline_check;
 static GtkWidget *border_check;
@@ -131,6 +132,26 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 	if (trstr != NULL) {
 	    strncat(targ, trstr, n-1);
 	    g_free(trstr);
+	}
+    }
+}
+
+static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
+{
+    const gchar *wstr;
+    
+    g_return_if_fail(GTK_IS_ENTRY(w));
+    wstr = gtk_entry_get_text(GTK_ENTRY(w));
+
+    if (wstr != NULL && *wstr != '\0') {
+	if (strstr(wstr, "inear")) {
+	    spec->fit = PLOT_FIT_OLS;
+	} else if (strstr(wstr, "uadratic")) {
+	    spec->fit = PLOT_FIT_QUADRATIC;
+	} else if (strstr(wstr, "arametric")) {
+	    spec->fit = PLOT_FIT_LOESS;
+	} else {
+	    spec->fit = PLOT_FIT_NONE;
 	}
     }
 }
@@ -280,6 +301,10 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     entry_to_gp_string(GTK_COMBO(keycombo)->entry, spec->keyspec, 
 		       sizeof spec->keyspec);
 
+    if (fitcombo != NULL) {
+	fittype_from_entry(GTK_COMBO(fitcombo)->entry, spec);
+    }
+
     spec->flags &= ~GPT_Y2AXIS;
 
     if (y2_check != NULL) {
@@ -367,9 +392,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && fitline_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(fitline_check)->active) {
-	    spec->flags |= GPT_OLS_HIDDEN;
+	    spec->flags |= GPT_FIT_HIDDEN;
 	} else {
-	    spec->flags &= ~GPT_OLS_HIDDEN;
+	    spec->flags &= ~GPT_FIT_HIDDEN;
 	}
     }
 
@@ -651,7 +676,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
     GList *keypos_list = NULL;
-
     gchar *keypos[] = {
 	"left top",
 	"right top",
@@ -723,7 +747,44 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			      keycombo, 1, TAB_MAIN_COLS, rows-1, rows);
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
-    gtk_widget_show(keycombo);	
+    gtk_widget_show(keycombo);
+
+#if 0 /* not quite ready yet */
+    /* choice of fitted line type, if simple X-Y scatter */
+    if (spec->flags & GPT_AUTO_FIT) {
+	GList *fitlist = NULL;
+	gchar *fittype[] = {
+	    "none",
+	    "linear: y = a + b*x",
+	    "quadratic: y = a + b*x + c*x^2",
+	    "lowess (nonparametric local fit)",
+	    NULL
+	};
+
+	for (i=0; fittype[i] != NULL; i++) {
+	    fitlist = g_list_append(fitlist, fittype[i]);
+	}
+
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	label = gtk_label_new(_("fitted line"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  label, 0, 1, rows-1, rows);
+	gtk_widget_show(label);
+
+	fitcombo = gtk_combo_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
+	gtk_combo_set_popdown_strings(GTK_COMBO(fitcombo), fitlist); 
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(fitcombo)->entry), 
+			   fittype[spec->fit]);
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(fitcombo)->entry), FALSE);
+	gtk_widget_show(fitcombo);
+    } else {
+	fitcombo = NULL;
+    }
+#else
+    fitcombo = NULL;
+#endif
 
     /* give option of removing top & right border */
     if (!(spec->flags & GPT_Y2AXIS)) { 
@@ -753,13 +814,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     /* give option of removing an auto-fitted line */
-    if (spec->flags & GPT_AUTO_OLS) { 
+    if (spec->flags & GPT_AUTO_FIT) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	fitline_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  fitline_check, 0, TAB_MAIN_COLS, 
 				  rows-1, rows);
-	if (spec->flags & GPT_OLS_HIDDEN) {
+	if (spec->flags & GPT_FIT_HIDDEN) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fitline_check),
 					 TRUE);
 	}	

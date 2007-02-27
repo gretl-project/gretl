@@ -884,3 +884,286 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     return 1;
 }
+
+/* below: robust locally weighted regression */
+
+struct pair_sorter {
+    double xi;
+    double yi;
+    int i;
+};
+
+static struct pair_sorter *
+sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int *err)
+{
+    struct pair_sorter *s = NULL;
+    int t, T = gretl_vector_get_length(x);
+
+    if (gretl_vector_get_length(y) != T) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    s = malloc(T * sizeof *s);
+    if (s == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<T; t++) {
+	s[t].xi = x->val[t];
+	s[t].yi = y->val[t];
+	s[t].i = t;
+    }
+
+    qsort(s, T, sizeof *s, gretl_compare_doubles);
+
+    for (t=0; t<T; t++) {
+	x->val[t] = s[t].xi;
+	y->val[t] = s[t].yi;
+    }  
+
+    return s;
+}
+
+static int data_pre_sorted (const gretl_matrix *x)
+{
+    int t, T = gretl_vector_get_length(x);
+
+    for (t=1; t<T; t++) {
+	if (x->val[t] < x->val[t-1]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/* revised weigts based on bisquare function (Cleveland) */
+
+static void robust_weights (gretl_matrix *ei, const gretl_matrix *X, 
+			    const gretl_matrix *y, const gretl_matrix *bj, 
+			    gretl_matrix *wt, const gretl_matrix *wi,
+			    int d)
+{
+    int i, n = gretl_vector_get_length(wt);
+    double s, es, xi, di;
+
+    for (i=0; i<n; i++) {
+	ei->val[i] = y->val[i] - bj->val[0];
+	if (d > 0) {
+	    xi = gretl_matrix_get(X, i, 1);
+	    ei->val[i] -= bj->val[1] * xi;
+	    if (d == 2) {
+		ei->val[i] -= bj->val[2] * xi * xi;
+	    }
+	}
+	ei->val[i] = fabs(ei->val[i]);
+    }
+
+    s = gretl_median(0, n - 1, ei->val);
+
+    for (i=0; i<n; i++) {
+	es = ei->val[i] / (6.0 * s);
+	if (es < 1.0) {
+	    di = (1.0 - es * es) * (1.0 - es * es);
+	} else {
+	    di = 0.0;
+	}
+	wi->val[i] = di * wt->val[i];
+    }
+}
+
+static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
+			gretl_matrix *Xr, gretl_matrix *yr,
+			const gretl_matrix *w, int j, int d)
+{
+    int t, n = gretl_vector_get_length(w);
+    double xrt, wt;
+
+    for (t=0; t<n; t++) {
+	wt = sqrt(w->val[t]);
+	gretl_matrix_set(Xr, t, 0, wt);
+	if (d > 0) {
+	    xrt = x->val[t+j];
+	    gretl_matrix_set(Xr, t, 1, xrt * wt);
+	    if (d == 2) {
+		gretl_matrix_set(Xr, t, 1, xrt * xrt * wt);
+	    }
+	}		
+	yr->val[t] = y->val[t+j] * wt;
+    }
+}
+
+/* Based on William Cleveland, "Robust Locally Weighted Regression
+   and Smoothing Scatterplots", Journal of the American Statistical
+   Association, Vol. 74 (1979), pp. 829-836.
+*/
+
+gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
+			 int d, double q, gretlopt opt, 
+			 int *err)
+{
+    gretl_matrix *Xr = NULL;
+    gretl_matrix *yr = NULL;
+    gretl_matrix *wt = NULL;
+    gretl_matrix *bj = NULL;
+    gretl_matrix *yh = NULL;
+    gretl_matrix *ei = NULL;
+    gretl_matrix *wi = NULL;
+
+    struct pair_sorter *s = NULL;
+
+    int T = gretl_vector_get_length(y);
+    double xi, d1, d2, dmax;
+    int jmin, jmax;
+    int k, kmax;
+    int i, j, t, n;
+
+    if (d < 0 || d > 2) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (!data_pre_sorted(x)) {
+	/* we keep the sorter alive here so that we can stick the
+	   fitted values into the right observation slots */
+	s = sort_pairs_by_x(x, y, err);
+	if (*err) {
+	    goto bailout;
+	}
+    }
+
+    /* check the supplied q value */
+    if (q > 1.0) {
+	q = 1;
+    } else if (q < (d + 1.0) / T) {
+	q = (d + 1.0) / T;
+    }
+
+    n = (int) ceil(q * T);
+
+    Xr = gretl_matrix_alloc(n, d + 1);
+    yr = gretl_column_vector_alloc(n);
+    wt = gretl_column_vector_alloc(n);
+    bj = gretl_column_vector_alloc(d + 1);
+    yh = gretl_column_vector_alloc(T);
+
+    if (Xr == NULL || yr == NULL || wt == NULL || 
+	bj == NULL || yh == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (opt & OPT_R) {
+	ei = gretl_column_vector_alloc(n);
+	wi = gretl_column_vector_alloc(n);
+	if (ei == NULL || wi == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+	kmax = 3;
+    } else {
+	kmax = 1;
+    }
+
+    for (i=0; i<T && !*err; i++) {
+	double xdt, xds;
+
+	xi = x->val[i];
+
+	/* get the search bounds */
+	jmin = i - n + 1;
+	if (jmin < 0) {
+	    jmin = 0;
+	}
+	jmax = i;
+	if (jmax + n > T) {
+	    jmax = T - n;
+	}
+
+	/* find the n x-values closest to xi */
+	for (j=jmin; j<=jmax; j++) {
+	    if (j + n >= T) {
+		break;
+	    }
+	    d1 = fabs(xi - x->val[j]);
+	    d2 = fabs(xi - x->val[j + n]);
+	    if (d1 <= d2) {
+		break;
+	    }
+	}
+
+	dmax = 0.0;
+	for (t=0; t<n; t++) {
+	    xdt = fabs(xi - x->val[t+j]);
+	    if (xdt > dmax) {
+		dmax = xdt;
+	    }
+	}
+
+	for (t=0; t<n; t++) {
+	    /* compute scaled distances */
+	    xdt = fabs(xi - x->val[t+j]);
+	    xds = xdt / dmax;
+	    /* form tricube weights */
+	    if (xds >= 1.0) {
+		wt->val[t] = 0.0;
+	    } else {
+		wt->val[t] = pow(1.0 - pow(xds, 3.0), 3.0);
+	    }
+	}
+
+	/* form weighted vars */
+	weight_x_y(x, y, Xr, yr, wt, j, d);
+
+	for (k=0; k<kmax && !*err; k++) {
+	    /* run local WLS */
+	    *err = gretl_matrix_ols(yr, Xr, bj, NULL, NULL, NULL);
+
+	    if (!*err && k < kmax - 1) {
+		/* re-weight based on the previous residuals */
+		for (t=0; t<n; t++) {
+		    gretl_matrix_set(Xr, t, 1, x->val[t+j]);
+		    gretl_vector_set(yr, t, y->val[t+j]);
+		}
+		robust_weights(ei, Xr, yr, bj, wt, wi, d);
+		weight_x_y(x, y, Xr, yr, wi, j, d);
+	    }
+	}	
+
+	if (!*err) {
+	    int p = (s != NULL)? s[i].i : i;
+
+	    yh->val[p] = bj->val[0];
+	    if (d > 0) {
+		yh->val[p] += bj->val[1] * x->val[i];
+		if (d == 2) {
+		    yh->val[p] += bj->val[2] * x->val[i] * x->val[i];
+		}
+	    }
+	}
+    }
+
+ bailout:
+	
+    gretl_matrix_free(Xr);
+    gretl_matrix_free(yr);
+    gretl_matrix_free(wt);
+    gretl_matrix_free(bj);
+    gretl_matrix_free(ei);
+    gretl_matrix_free(wi);
+
+    if (*err) {
+	gretl_matrix_free(yh);
+	yh = NULL;
+    } 
+
+    if (s != NULL) {
+	free(s);
+    }
+
+    return yh;
+}
+
+

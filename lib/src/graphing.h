@@ -34,14 +34,14 @@ typedef enum {
     GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
     GPT_BATCH          = 1 << 5,  /* working in batch mode */
     GPT_GUI            = 1 << 6,  /* called from GUI context */
-    GPT_OLS_OMIT       = 1 << 7,  /* Don't draw fitted line on graph */
+    GPT_FIT_OMIT       = 1 << 7,  /* Don't draw fitted line on graph */
     GPT_DATA_STYLE     = 1 << 8,  /* data style is set by user */
     GPT_FILE           = 1 << 9,  /* send output to named file */
     GPT_IDX            = 1 << 10, /* plot against time or obs index */
     GPT_TS             = 1 << 11,
     GPT_Y2AXIS         = 1 << 12,
-    GPT_AUTO_OLS       = 1 << 13,
-    GPT_OLS_HIDDEN     = 1 << 14,
+    GPT_AUTO_FIT       = 1 << 13,
+    GPT_FIT_HIDDEN     = 1 << 14,
     GPT_MINIMAL_BORDER = 1 << 15,
     GPT_PNG_OUTPUT     = 1 << 16,
     GPT_ALL_MARKERS    = 1 << 17,
@@ -103,6 +103,14 @@ typedef enum {
     PLOT_TYPE_MAX
 } PlotType;
 
+typedef enum {
+    PLOT_FIT_NONE,
+    PLOT_FIT_OLS,
+    PLOT_FIT_QUADRATIC,
+    PLOT_FIT_LOESS,
+    PLOT_FIT_NA       /* fit option not applicable */
+} FitType;
+
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
     double pos[2];
@@ -114,6 +122,7 @@ typedef struct {
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
     GptFlags flags;            /* bitwise OR of options */
+    FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
@@ -160,7 +169,7 @@ int gnuplot_make_graph (void);
 GptFlags gp_flags (int batch, gretlopt opt);
 
 int gnuplot (const int *plotlist, const int *lines, const char *literal,
-	     double ***pZ, DATAINFO *pdinfo, 
+	     const double **Z, const DATAINFO *pdinfo, 
 	     int *plot_count, GptFlags flags);
 
 int multi_scatters (const int *list, const double **Z,
@@ -219,7 +228,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var);
 int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 			     const char *iname, const char *jname);
 
-int is_auto_ols_string (const char *s);
+int is_auto_fit_string (const char *s);
 
 int gnuplot_has_ttf (int reset);
 
@@ -230,6 +239,8 @@ int gnuplot_has_specified_colors (void);
 void set_graph_palette (int i, const char *colstr);
 
 void graph_palette_reset (int i);
+
+void print_palette_string (char *targ);
 
 const char *graph_color_string (int i);
 

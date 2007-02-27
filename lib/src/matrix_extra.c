@@ -562,3 +562,103 @@ gretl_matrix_data_subset_skip_missing (const int *list, const double **Z,
 					 OBS_MISS_SKIP, err);
 }
 
+/**
+ * gretl_plotfit_matrices:
+ * @yno: ID number of the y variable.
+ * @xno: ID number of the y variable.
+ * @fit: type of fit sought.
+ * @Z: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @py: location to receive y vector.
+ * @pX: location to receive X matrix.
+ *
+ * Creates a vector y and matrix X based on the input @yno, @xno
+ * and @fit, using the given sample range.  An observation is
+ * skipped if any of the variables in @list are missing at that
+ * observation.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int gretl_plotfit_matrices (int yno, int xno, FitType fit,
+			    const double **Z, int t1, int t2, 
+			    gretl_matrix **py, gretl_matrix **pX)
+{
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    char *mask = NULL;
+    int T = t2 - t1 + 1;
+    int n = 0;
+    int i, j, k, s, t;
+    int err = 0;
+
+    if (T <= 0) {
+	return E_DATA;
+    }
+
+    mask = calloc(T, 1);
+    if (mask == NULL) {
+	return E_ALLOC;
+    }
+
+    for (s=0; s<T; s++) {
+	t = s + t1;
+	if (na(Z[yno][t]) || na(Z[xno][t])) {
+	    mask[s] = 1;
+	} else {
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	free(mask);
+	return E_MISSDATA;
+    }
+
+    if (fit == PLOT_FIT_QUADRATIC) {
+	k = 3;
+    } else if (fit == PLOT_FIT_LOESS) {
+	k = 1;
+    } else {
+	k = 2;
+    }
+
+    y = gretl_column_vector_alloc(n);
+    X = gretl_matrix_alloc(n, k);
+    if (y == NULL || X == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    i = 0;
+    for (s=0; s<T; s++) {
+	t = s + t1;
+	if (!mask[s]) {
+	    j = 0;
+	    y->val[i] = Z[yno][t];
+	    if (fit != PLOT_FIT_LOESS) {
+		gretl_matrix_set(X, i, j++, 1.0);
+	    }
+	    gretl_matrix_set(X, i, j++, Z[xno][t]);
+	    if (fit == PLOT_FIT_QUADRATIC) {
+		gretl_matrix_set(X, i, j, Z[xno][t] * Z[xno][t]);
+	    }
+	    i++;
+	}
+    }
+
+ bailout:
+
+    free(mask);
+
+    if (err) {
+	gretl_matrix_free(y);
+	gretl_matrix_free(X);
+    } else {
+	*py = y;
+	*pX = X;
+    }
+
+    return err;
+}
