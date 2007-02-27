@@ -551,7 +551,9 @@ static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
 	if (i >= MAX_PLOT_LINES) {
 	    break;
 	}
-	gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
+	if (yaxiscombo[i] != NULL) {
+	    gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
+	}
     }
 }
 
