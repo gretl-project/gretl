@@ -1,4 +1,4 @@
-version 1.6.1, in progress
+2/26/2007 version 1.6.1
 - Revamp for internal "genr" mechanism plus some user-visible
   changes to genr
 - Make the "delete" command do what the manual says
