@@ -169,6 +169,7 @@ LIBSRC = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
+	plotspec.c \
 	plugins.c \
 	printout.c \
 	pvalues.c \
