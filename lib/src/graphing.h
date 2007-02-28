@@ -34,20 +34,19 @@ typedef enum {
     GPT_DUMMY          = 1 << 4,  /* using a dummy for separation */
     GPT_BATCH          = 1 << 5,  /* working in batch mode */
     GPT_GUI            = 1 << 6,  /* called from GUI context */
-    GPT_FIT_OMIT       = 1 << 7,  /* Don't draw fitted line on graph */
+    GPT_FIT_OMIT       = 1 << 7,  /* User said don't draw fitted line on graph */
     GPT_DATA_STYLE     = 1 << 8,  /* data style is set by user */
     GPT_FILE           = 1 << 9,  /* send output to named file */
     GPT_IDX            = 1 << 10, /* plot against time or obs index */
-    GPT_TS             = 1 << 11,
-    GPT_Y2AXIS         = 1 << 12,
-    GPT_AUTO_FIT       = 1 << 13,
-    GPT_FIT_HIDDEN     = 1 << 14,
-    GPT_MINIMAL_BORDER = 1 << 15,
-    GPT_PNG_OUTPUT     = 1 << 16,
-    GPT_ALL_MARKERS    = 1 << 17,
-    GPT_ALL_MARKERS_OK = 1 << 18,
-    GPT_NO_BORDER      = 1 << 19,
-    GPT_LETTERBOX      = 1 << 20
+    GPT_TS             = 1 << 11, /* doing time series plot */
+    GPT_Y2AXIS         = 1 << 12, /* plot has second y-axis */
+    GPT_AUTO_FIT       = 1 << 13, /* automatic (OLS) fitted line was added */
+    GPT_FIT_HIDDEN     = 1 << 14, /* autofit line calculated, but suppressed */
+    GPT_MINIMAL_BORDER = 1 << 15, /* omitting top and right borders */
+    GPT_PNG_OUTPUT     = 1 << 16, /* output is to PNG file */
+    GPT_ALL_MARKERS    = 1 << 17, /* all observation markers displayed */
+    GPT_ALL_MARKERS_OK = 1 << 18, /* OK to show all observation markers */
+    GPT_LETTERBOX      = 1 << 19  /* special format for time series graphs */
 } GptFlags; 
 
 #define MAXTITLE 128
@@ -55,26 +54,6 @@ typedef enum {
 #define MAX_PLOT_LINES 8
 #define N_GP_COLORS 4
 #define BOXCOLOR (N_GP_COLORS - 1)
-
-typedef struct {
-    int varnum;            /* ID number of variable to plot */
-    char title[MAXTITLE];  /* key or legend title */
-    char formula[128];     /* expression to plot (rather than data) */
-    char style[16];        /* lines, points, etc. */
-    char scale[8];         /* string representation of scale factor */
-    int yaxis;             /* 1 for left, 2 for right */
-    int type;              /* 1, 2, ... (color) */
-    int width;             /* default 1, could be bigger */
-    int ncols;             /* number of data columns (0 for formula) */
-} GPT_LINE;
-
-#define PLOT_LABEL_TEXT_LEN 31
-
-typedef enum {
-    GP_JUST_LEFT,
-    GP_JUST_CENTER,
-    GP_JUST_RIGHT
-} gp_just_codes;
 
 typedef enum {
     PLOT_REGULAR = 0,
@@ -111,40 +90,6 @@ typedef enum {
     PLOT_FIT_NA       /* fit option not applicable */
 } FitType;
 
-typedef struct {
-    char text[PLOT_LABEL_TEXT_LEN + 1]; 
-    double pos[2];
-    int just;
-} GPT_LABEL;
-
-typedef struct {
-    FILE *fp;
-    char fname[MAXLEN];        /* for gui purposes */
-    PlotType code;             /* to deal with FREQ, FCASTERR... */
-    GptFlags flags;            /* bitwise OR of options */
-    FitType fit;               /* type of fitted line shown */
-    int nobs;                  /* number of observations */
-    char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    double range[3][2];        /* axis range specifiers */
-    char keyspec[MAXTITLE];    /* position of key (or none) */
-    char xtics[16];            /* x-axis tic marks */
-    char mxtics[4];            /* minor tics */
-    char termtype[MAXTITLE];   /* gnuplot "term" setting */
-    int n_lines;               /* number of lines */
-    int xzeroaxis;             /* show x == 0 (1) or not (0) */
-    float boxwidth;            /* when using box style for frequency plots */
-    GPT_LINE *lines;           /* details on individual lines */
-    char **literal;            /* additional commands */
-    int n_literal;             /* number of the above */
-    double *data;              /* data to plot */
-    char **markers;            /* data-point markers (not always present) */
-    int n_markers;             /* number of such markers */
-    GPT_LABEL labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
-    int *reglist;              /* regression list for X-Y plot with fitted line */
-    char *labeled;             /* for GUI use */
-    void *ptr;                 /* for GUI use */
-} GPT_SPEC;
-
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
@@ -152,15 +97,17 @@ typedef struct {
 #define set_png_output(p) (p->flags |= GPT_PNG_OUTPUT)
 #define get_png_output(p) (p->flags & GPT_PNG_OUTPUT) 
     
-/* functions follow */
-
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
 const char *gp_justification_string (int j);
 
+const char *gnuplot_label_front_string (void);
+
 int gnuplot_init (PlotType ptype, FILE **fpp);
+
+int write_plot_type_string (PlotType ptype, FILE *fp);
 
 PlotType plot_type_from_string (const char *str);
 
@@ -183,16 +130,6 @@ int gnuplot_3d (int *list, const char *literal,
 int plot_freq (FreqDist *freq, DistCode dist);
 
 int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo); 
-
-int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
-
-int go_gnuplot (GPT_SPEC *spec, char *fname);
-
-void free_plotspec (GPT_SPEC *spec);
-
-int plotspec_add_line (GPT_SPEC *spec);
-
-int get_termstr (const GPT_SPEC *spec, char *termstr);
 
 int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, 
 	    PRN *prn);
@@ -235,6 +172,8 @@ int gnuplot_has_ttf (int reset);
 int gnuplot_has_pdf (void);
 
 int gnuplot_has_specified_colors (void);
+
+int gnuplot_has_style_fill (void);
 
 void set_graph_palette (int i, const char *colstr);
 

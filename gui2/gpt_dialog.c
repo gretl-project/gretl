@@ -20,6 +20,7 @@
 /* gpt_dialog.c for gretl -- GUI gnuplot controller dialog */
 
 #include "gretl.h"
+#include "plotspec.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "dlgutils.h"
@@ -95,7 +96,7 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
 #endif
 	plot_remove_controller(plot);
     } else {
-	free_plotspec(spec); 
+	plotspec_destroy(spec); 
     }
 } 
 
@@ -138,6 +139,7 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 
 static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
 {
+    FitType fit = PLOT_FIT_NONE;
     const gchar *wstr;
     
     g_return_if_fail(GTK_IS_ENTRY(w));
@@ -145,14 +147,20 @@ static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
 
     if (wstr != NULL && *wstr != '\0') {
 	if (strstr(wstr, "inear")) {
-	    spec->fit = PLOT_FIT_OLS;
+	    fit = PLOT_FIT_OLS;
 	} else if (strstr(wstr, "uadratic")) {
-	    spec->fit = PLOT_FIT_QUADRATIC;
+	    fit = PLOT_FIT_QUADRATIC;
 	} else if (strstr(wstr, "arametric")) {
-	    spec->fit = PLOT_FIT_LOESS;
+	    fit = PLOT_FIT_LOESS;
 	} else {
-	    spec->fit = PLOT_FIT_NONE;
+	    fit = PLOT_FIT_NONE;
 	}
+    }
+
+    if (fit == PLOT_FIT_OLS || fit == PLOT_FIT_QUADRATIC) {
+	plotspec_add_fit(spec, fit);
+    } else if (fit == PLOT_FIT_NONE) {
+	spec->fit = fit;
     }
 }
 
@@ -749,9 +757,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show(keycombo);
 
-#if 0 /* not quite ready yet */
-    /* choice of fitted line type, if simple X-Y scatter */
-    if (spec->flags & GPT_AUTO_FIT) {
+    /* choice of fitted line type, if appropriate */
+    if (!(spec->fit & PLOT_FIT_NA)) {
 	GList *fitlist = NULL;
 	gchar *fittype[] = {
 	    "none",
@@ -782,9 +789,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     } else {
 	fitcombo = NULL;
     }
-#else
-    fitcombo = NULL;
-#endif
 
     /* give option of removing top & right border */
     if (!(spec->flags & GPT_Y2AXIS)) { 
@@ -813,6 +817,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(y2_check);
     }
 
+#if 0
     /* give option of removing an auto-fitted line */
     if (spec->flags & GPT_AUTO_FIT) { 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -828,6 +833,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     } else {
 	fitline_check = NULL;
     }
+#else
+    fitline_check = NULL;
+#endif
 
     /* give option of showing all case markers */
     if (spec->flags & GPT_ALL_MARKERS_OK) { 
@@ -1285,7 +1293,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	    button = gtk_button_new();
 	    g_object_set_data(G_OBJECT(button), "labelpos_entry", labelpos[i]);
 	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(plot_label_position_click), spec);
+			     G_CALLBACK(plot_label_position_click), spec->ptr);
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
 	    gtk_widget_set_size_request(button, 32, 26);

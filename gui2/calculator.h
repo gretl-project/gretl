@@ -17,33 +17,25 @@
  *
  */
 
-#ifndef GPT_CONTROL_H
-#define GPT_CONTROL_H
+#ifndef CALCULATOR_H
+#define CALCULATOR_H
 
-typedef struct png_plot_t png_plot;
+typedef enum {
+    F_BINV,
+    F_CHI,
+    F_LOG2,
+    F_BIGCHI,
+    F_F
+} FormulaCode;
 
-int remove_png_term_from_plotfile_by_name (const char *fname);
+void stats_calculator (gpointer p, guint code, GtkWidget *w);
 
-void save_this_graph (gpointer data, const char *fname);
+double dist_xmax (int d, int df1, int df2);
 
-void display_session_graph_png (const char *pltname);
+gchar *dist_marker_line (int dist, int df1, int df2);
 
-void gnuplot_show_png_by_name (const char *fname);
+const char *dist_formula (FormulaCode c);
 
-void plot_label_position_click (GtkWidget *w, png_plot *plot);
+gchar *dist_graph_title (int dist, double x, int df1, int df2);
 
-int redisplay_edited_png (png_plot *plot);
-
-void plot_remove_controller (png_plot *plot);
-
-void set_plot_has_y2_axis (png_plot *plot, gboolean s);
-
-int plot_is_mouseable (const png_plot *plot);
-
-GtkWidget *plot_get_shell (png_plot *plot);
-
-int maybe_switch_emf_point_style (char *s, PRN *prn);
-
-void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
-
-#endif /* GPT_CONTROL_H */
+#endif /* CALCULATOR_H */

@@ -36,6 +36,7 @@
 #include "menustate.h"
 #include "fileselect.h"
 #include "filters.h"
+#include "calculator.h"
 
 #include <dirent.h>
 

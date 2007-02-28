@@ -24,6 +24,7 @@
 #include "selector.h"
 #include "boxplots.h"
 #include "ssheet.h"
+#include "plotspec.h"
 #include "gpt_control.h"
 #include "guiprint.h"
 #include "model_table.h"
@@ -592,25 +593,59 @@ static int session_dir_ok (void)
     return ret;
 }
 
-void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
+int add_graph_to_session (char *fname, char *fullname)
+{
+    char shortname[MAXSAVENAME];
+    char graphname[MAXSAVENAME];
+    int err = 0;
+
+    if (Z == NULL) {
+	/* we may be called via the "stats calculator" when
+	   there's no dataset yet */
+	err = open_nulldata(&Z, datainfo, DATA_NONE, 10, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	    return 1;
+	}
+	register_data(NULL, NULL, 0);
+    }
+    
+    errno = 0;
+
+    if (!session_dir_ok()) {
+	errbox(_("Failed to copy graph file"));
+	return 1;
+    }
+
+    chdir(paths.userdir);
+
+    sprintf(shortname, "graph.%d", plot_count + 1);
+    session_file_make_path(fullname, shortname);
+    sprintf(graphname, "%s %d", _("Graph"), plot_count + 1);
+
+    /* move temporary plot file to permanent */
+    if (copyfile(fname, fullname)) {
+	return 1;
+    } 
+
+    remove(fname);
+    strcpy(fname, shortname);
+
+    if (real_add_graph_to_session(shortname, graphname, GRETL_OBJ_GRAPH) ==
+	ADD_OBJECT_FAIL) {
+	err = 1;
+    }
+
+    return err;
+}
+
+void add_boxplot_to_session (void)
 {
     char fname[MAXSAVENAME];
     char grname[MAXSAVENAME];
     char grpath[MAXLEN];
     int boxplot_count;
 
-    if (Z == NULL) {
-	/* we may be called via the "stats calculator" when
-	   there's no dataset yet */
-	int err = open_nulldata(&Z, datainfo, DATA_NONE, 10, NULL);
-
-	if (err) {
-	    gui_errmsg(err);
-	    return;
-	}
-	register_data(NULL, NULL, 0);
-    }
-    
     errno = 0;
 
     if (!session_dir_ok()) {
@@ -620,38 +655,18 @@ void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
 
     chdir(paths.userdir);
 
-    if (type == GRETL_OBJ_GRAPH) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
+    boxplot_count = augment_boxplot_count();
+    sprintf(fname, "plot.%d", boxplot_count);
+    session_file_make_path(grpath, fname);
+    sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
 
-	sprintf(fname, "graph.%d", plot_count + 1);
-	session_file_make_path(grpath, fname);
-	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
-	/* move temporary plot file to permanent */
-	if (copyfile(plot->fname, grpath)) {
-	    return;
-	} 
-	if (remove_png_term_from_plotfile(grpath, plot)) {
-	    errbox(_("Failed to copy graph file"));
-	    return;
-	}
-	remove(plot->fname);
-	strcpy(plot->fname, fname);
-	mark_plot_as_saved(plot);	
-    } else if (type == GRETL_OBJ_PLOT) {
-	boxplot_count = augment_boxplot_count();
-	sprintf(fname, "plot.%d", boxplot_count);
-	session_file_make_path(grpath, fname);
-	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
-	if (copyfile(boxplottmp, grpath)) {
-	    return;
-	} 
-	remove(boxplottmp);
-    } else {
-	errbox("bad code in add_graph_to_session");
+    if (copyfile(boxplottmp, grpath)) {
 	return;
-    }
+    } 
 
-    real_add_graph_to_session(fname, grname, type);
+    remove(boxplottmp);
+
+    real_add_graph_to_session(fname, grname, GRETL_OBJ_PLOT);
 }
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
@@ -2264,7 +2279,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 
 	    chdir(paths.userdir);
 	    session_file_make_path(fullname, graph->fname);
-	    remove_png_term_from_plotfile(fullname, NULL);
+	    remove_png_term_from_plotfile_by_name(fullname);
 	    view_file(fullname, 1, 0, 78, 400, 
 		      (obj->sort == GRETL_OBJ_GRAPH)? GR_PLOT : GR_BOX);
 	}

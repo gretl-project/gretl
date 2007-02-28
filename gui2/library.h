@@ -147,7 +147,7 @@ int do_model (selector *sr);
 
 int do_vector_model (selector *sr);
 
-void do_graph_model (GPT_SPEC *spec);
+void do_graph_model (const int *list);
 
 void do_gini (gpointer data, guint u, GtkWidget *w);
 

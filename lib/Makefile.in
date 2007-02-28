@@ -107,6 +107,7 @@ PUBLIC_HDRS = \
 	nonparam.h \
 	objstack.h \
 	options.h \
+	plotspec.h \
 	plugins.h \
 	printout.h \
 	pvalues.h \
@@ -169,6 +170,7 @@ SRCS = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
+	plotspec.c \
 	plugins.c \
 	printout.c \
 	pvalues.c \

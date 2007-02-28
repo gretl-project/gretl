@@ -20,10 +20,12 @@
 /* gpt_control.c for gretl -- gnuplot controller */
 
 #include "gretl.h"
+#include "plotspec.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "gpt_dialog.h"
 #include "fileselect.h"
+#include "calculator.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -187,11 +189,6 @@ GtkWidget *plot_get_shell (png_plot *plot)
     return plot->shell;
 }
 
-GPT_SPEC *plot_get_spec (png_plot *plot)
-{
-    return plot->spec;
-}
-
 int plot_is_mouseable (const png_plot *plot)
 {
     return !(plot->status & PLOT_DONT_MOUSE);
@@ -206,10 +203,8 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s)
     }
 }
 
-void plot_label_position_click (GtkWidget *w, GPT_SPEC *spec)
+void plot_label_position_click (GtkWidget *w, png_plot *plot)
 {
-    png_plot *plot = (png_plot *) spec->ptr;
-
     if (plot != NULL) {
 	GtkWidget *entry;
 	GdkCursor* cursor;
@@ -368,14 +363,19 @@ static int add_png_term_to_plotfile (const char *fname)
     return add_or_remove_png_term(fname, 1, NULL);
 }
 
-/* public because called from session.c when saving a graph file */
-
-int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
+static int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
 {
     return add_or_remove_png_term(fname, 0, spec);
 }
 
-void mark_plot_as_saved (GPT_SPEC *spec)
+/* public because called from session.c when saving a graph file */
+
+int remove_png_term_from_plotfile_by_name (const char *fname)
+{
+    return add_or_remove_png_term(fname, 0, NULL);
+}
+
+static void mark_plot_as_saved (GPT_SPEC *spec)
 {
     png_plot *plot = (png_plot *) spec->ptr;
 
@@ -395,36 +395,6 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
 
     return 0;
-}
-
-/* take saved plot source file and make PNG from it, then display
-   the PNG */
-
-void display_session_graph_png (const char *fname) 
-{
-    char fullname[MAXLEN];
-    gchar *plotcmd;
-    int err = 0;
-
-    if (g_path_is_absolute(fname)) {
-	strcpy(fullname, fname);
-    } else {
-	sprintf(fullname, "%s%s", paths.userdir, fname);
-    }
-
-    if (add_png_term_to_plotfile(fullname)) {
-	return;
-    }
-
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fullname);
-    err = gretl_spawn(plotcmd);
-    g_free(plotcmd);
-
-    if (err) {
-	errbox(_("Gnuplot error creating graph"));
-    } else {
-	gnuplot_show_png(fullname, NULL, 1);
-    }
 }
 
 int maybe_switch_emf_point_style (char *s, PRN *prn)
@@ -453,29 +423,30 @@ int maybe_switch_emf_point_style (char *s, PRN *prn)
     return do_pt2;
 }
 
-void save_this_graph (GPT_SPEC *plot, const char *fname)
+void save_this_graph (gpointer data, const char *fname)
 {
-    FILE *fq;
-    PRN *prn;
+    GPT_SPEC *spec = (GPT_SPEC *) data;
     char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
     gchar *plotcmd = NULL;
+    FILE *fq;
+    PRN *prn;
     int cmds, err;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
 	return;
     }
 
-    fq = gretl_fopen(plot->fname, "r");
+    fq = gretl_fopen(spec->fname, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
 	return;
     }
  
-    cmds = get_termstr(plot, termstr);
+    cmds = plotspec_get_term_string(spec, termstr);
   
     if (cmds) {
-	if (copyfile(plot->fname, fname)) { 
+	if (copyfile(spec->fname, fname)) { 
 	    errbox(_("Failed to copy graph file"));
 	}
 	return;
@@ -573,84 +544,6 @@ static int get_gpt_marker (const char *line, char *label)
                         p == PLOT_TRI_GRAPH || \
                         p == PLOT_BI_GRAPH)
 
-static void plot_label_init (GPT_LABEL *lbl)
-{
-    lbl->text[0] = '\0';
-    lbl->just = GP_JUST_LEFT;
-    lbl->pos[0] = NADBL;
-    lbl->pos[1] = NADBL;
-}
-
-static GPT_SPEC *plotspec_new (void)
-{
-    GPT_SPEC *spec;
-    int i;
-
-    spec = mymalloc(sizeof *spec);
-    if (spec == NULL) {
-	return NULL;
-    }
-
-    spec->lines = mymalloc(MAX_PLOT_LINES * sizeof *spec->lines);
-
-    if (spec->lines == NULL) {
-	free(spec);
-	return NULL;
-    }
-
-    for (i=0; i<MAX_PLOT_LINES; i++) {
-	spec->lines[i].varnum = 0;
-	spec->lines[i].title[0] = 0;
-	spec->lines[i].formula[0] = 0;
-	spec->lines[i].style[0] = 0;
-	spec->lines[i].scale[0] = 0;
-	spec->lines[i].yaxis = 1;
-	spec->lines[i].type = 0;
-	spec->lines[i].width = 1;
-	spec->lines[i].ncols = 0;
-    }
-
-    for (i=0; i<4; i++) {
-	spec->titles[i][0] = 0;
-    }
-
-    spec->literal = NULL;
-    spec->n_literal = 0;
-
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
-	plot_label_init(&(spec->labels[i]));
-    }
-
-    spec->xtics[0] = 0;
-    spec->mxtics[0] = 0;
-    spec->fname[0] = 0;
-    strcpy(spec->keyspec, "left top");
-    spec->xzeroaxis = 0;
-
-    for (i=0; i<3; i++) {
-	spec->range[i][0] = NADBL;
-	spec->range[i][1] = NADBL;
-    }
-
-    spec->code = PLOT_REGULAR;
-    spec->flags = 0;
-    spec->fit = PLOT_FIT_NONE;
-    spec->fp = NULL;
-    spec->data = NULL;
-    spec->markers = NULL;
-    spec->n_markers = 0;
-    spec->labeled = NULL;
-    spec->ptr = NULL;
-    spec->reglist = NULL;
-    spec->n_lines = 0;
-    spec->nobs = 0;
-    spec->boxwidth = 0;
-
-    spec->termtype[0] = 0;
-
-    return spec;
-}
-
 static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 {
     char s[MAXLEN];
@@ -661,9 +554,12 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
     int i, j, t;
     int err = 0;
 
+    spec->okobs = spec->nobs;
+
     gretl_push_c_numeric_locale();
 
     for (i=0; i<spec->n_lines && !err; i++) {
+	int okobs = spec->nobs;
 	int offset = 1;
 
 	if (spec->lines[i].ncols == 0) {
@@ -681,6 +577,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	x[3] = x[2] + spec->nobs;	
 
 	for (t=0; t<spec->nobs; t++) {
+	    int missing = 0;
 	    int nf = 0;
 
 	    got = fgets(s, sizeof s, fp);
@@ -705,15 +602,24 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 	    for (j=offset; j<nf; j++) {
 		if (test[j][0] == '?') {
 		    x[j][t] = NADBL;
+		    missing++;
 		} else {
 		    x[j][t] = atof(test[j]);
 		}
+	    }
+
+	    if (missing) {
+		okobs--;
 	    }
 
 	    if (i == 0 && do_markers) {
 		get_gpt_marker(s, spec->markers[t]);
 	    }
 	}
+
+	if (okobs < spec->okobs) {
+	    spec->okobs = okobs;
+	} 
 
 	/* trailer line for data block */
 	fgets(s, sizeof s, fp);
@@ -743,7 +649,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 	return 1;
     }
 
-    plot_label_init(&(spec->labels[i]));
+    plotspec_label_init(&(spec->labels[i]));
 
     /* find first single or double quote */
     p = strchr(line, '\'');
@@ -985,6 +891,23 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
     return n;
 }
 
+static int grab_ols_coeffs (GPT_SPEC *spec, const char *s)
+{
+    int n;
+
+    spec->b_ols = gretl_column_vector_alloc(2);
+    if (spec->b_ols == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_push_c_numeric_locale();
+    n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
+	       &spec->b_ols->val[1]);
+    gretl_pop_c_numeric_locale();
+
+    return n != 2;
+}
+
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
@@ -1023,6 +946,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
 	}
 	if (p != NULL) {
 	    strncat(spec->lines[i].formula, s, p - s);
+	    if (i == 1 && spec->fit == PLOT_FIT_OLS) {
+		grab_ols_coeffs(spec, spec->lines[i].formula);
+	    }
 	}
     }
 
@@ -1080,6 +1006,19 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
 #if GPDEBUG > 1
 	fprintf(stderr, "unset GPT_ALL_MARKERS_OK\n");
 #endif
+    }
+}
+
+static void maybe_set_add_fit_ok (GPT_SPEC *spec)
+{
+    if (spec->data != NULL &&
+	spec->code == PLOT_REGULAR &&
+	spec->n_lines == 1 &&
+	spec->lines[0].ncols == 2 &&
+	!(spec->flags & (GPT_IMPULSES|GPT_LINES|GPT_RESIDS|GPT_TS))) {
+	spec->flags |= PLOT_FIT_NONE;
+    } else {
+	spec->flags |= PLOT_FIT_NA;
     }
 }
 
@@ -1244,12 +1183,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 
-	if (sscanf(gpline, "# X = '%8[^\']' (%d)", vname, &v) == 2) {
+	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
 	    if (plot_ols_var_ok(vname, v)) {
 		reglist[2] = v;
 	    }
 	    continue;
-	} else if (sscanf(gpline, "# Y = '%8[^\']' (%d)", vname, &v) == 2) {
+	} else if (sscanf(gpline, "# Y = '%15[^\']' (%d)", vname, &v) == 2) {
 	    if (reglist[2] > 0 && plot_ols_var_ok(vname, v)) {
 		reglist[0] = 3;
 		reglist[1] = v;
@@ -1276,6 +1215,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
 	if (strstr(gpline, "automatic fitted")) {
 	    spec->flags |= GPT_AUTO_FIT;
+	    spec->fit = PLOT_FIT_OLS;
 	    continue;
 	}
 
@@ -1381,6 +1321,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     if (!err && spec->markers != NULL) {
 	maybe_set_all_markers_ok(spec);
+    }
+
+    if (!err && spec->fit == 0) {
+	maybe_set_add_fit_ok(spec);
     }
 
  plot_bailout:
@@ -1903,6 +1847,19 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
     }
 }
 
+static void add_to_session_callback (GPT_SPEC *spec)
+{
+    char fullname[MAXLEN];
+    int err;
+
+    err = add_graph_to_session(spec->fname, fullname);
+
+    if (!err) {
+	remove_png_term_from_plotfile(fullname, spec);
+	mark_plot_as_saved(spec);
+    }
+}
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -1924,7 +1881,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
-	add_graph_to_session(plot->spec, GRETL_OBJ_GRAPH, NULL);
+	add_to_session_callback(plot->spec);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
     } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
@@ -1953,7 +1910,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif 
     else if (!strcmp(item, _("OLS estimates"))) { 
-	do_graph_model(plot->spec);
+	if (plot->spec != NULL) {
+	    do_graph_model(plot->spec->reglist);
+	}
     } else if (!strcmp(item, _("Numerical values"))) {
 	show_numbers_from_markers(plot->spec);
     } else if (!strcmp(item, _("Edit"))) { 
@@ -2139,7 +2098,7 @@ int redisplay_edited_png (png_plot *plot)
 
     /* dump the edited plot details to file */
     set_png_output(plot->spec);
-    print_plotspec_details(plot->spec, fp);
+    plotspec_print(plot->spec, fp);
     fclose(fp);
 
     /* get gnuplot to create a new PNG graph */
@@ -2320,7 +2279,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
     case GDK_s:
     case GDK_S:
-	add_graph_to_session(plot->spec, GRETL_OBJ_GRAPH, NULL);
+	add_to_session_callback(plot->spec);
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:
@@ -2435,7 +2394,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     } else {
 	/* no controller: take responsibility for freeing the
 	   plot specification */
-	free_plotspec(plot->spec);
+	plotspec_destroy(plot->spec);
     }
 
     if (plot->invert_gc != NULL) {
@@ -2788,7 +2747,8 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
+static png_plot *
+gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -2988,6 +2948,38 @@ png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     return plot;
 }
 
+void gnuplot_show_png_by_name (const char *fname)
+{
+    gnuplot_show_png(fname, NULL, 0);
+}
+
+void display_session_graph_png (const char *fname) 
+{
+    char fullname[MAXLEN];
+    gchar *plotcmd;
+    int err = 0;
+
+    if (g_path_is_absolute(fname)) {
+	strcpy(fullname, fname);
+    } else {
+	sprintf(fullname, "%s%s", paths.userdir, fname);
+    }
+
+    if (add_png_term_to_plotfile(fullname)) {
+	return;
+    }
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fullname);
+    err = gretl_spawn(plotcmd);
+    g_free(plotcmd);
+
+    if (err) {
+	errbox(_("Gnuplot error creating graph"));
+    } else {
+	gnuplot_show_png(fullname, NULL, 1);
+    }
+}
+
 /* apparatus for getting coordinate info out of PNG files created using
    Allin Cottrell's modified version of gnuplot, which writes such info
    into the PNG comment fields
@@ -3130,3 +3122,158 @@ static int get_png_bounds_info (png_bounds *bounds)
 }
 
 #endif /* PNG_COMMENTS */
+
+/* for graphs in the stats calculator */
+
+static int get_dist_and_df (const char *s, int *d, int *m, int *n)
+{
+    int ret = 1;
+
+    if (!strncmp(s, "# standard", 10)) {
+	*d = NORMAL_DIST;
+    } else if (sscanf(s, "# t(%d)", m) == 1) {
+	*d = T_DIST;
+    } else if (sscanf(s, "# chi-square(%d)", m) == 1) {
+	*d = CHISQ_DIST;
+    } else if (sscanf(s, "# F(%d,%d)", m, n) == 2) {
+	*d = F_DIST;
+    } else {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2)
+{
+    GPT_SPEC *spec = plot->spec;
+    gchar *title = NULL;
+    const char *s;
+    char dfstr[16];
+    int got[5] = {0};
+    int bigchi = 0;
+    int m, n, prevd, dfmax = 0;
+    int i, err = 0;
+
+    for (i=0; i<spec->n_literal; i++) {
+	int dfid;
+
+	s = spec->literal[i];
+	m = n = 0;
+	prevd = -1;
+	if (*s == '#') {
+	    if (get_dist_and_df(s, &prevd, &m, &n)) {
+		if (prevd == d && m == df1 && n == df2) {
+		    /* line is already present */
+		    return;
+		}
+		if (prevd == CHISQ_DIST && m > 69) {
+		    got[4] += 1;
+		} else {
+		    got[prevd] += 1;
+		}
+	    }
+	} else if (sscanf(s, "df%d=", &dfid) == 1) {
+	    if (dfid > dfmax) {
+		dfmax = dfid;
+	    }
+	}
+    }
+
+    /* adjust x-range if needed */
+    if (d == CHISQ_DIST || d == F_DIST) {
+	double x = dist_xmax(d, df1, df2);
+
+	if (x > spec->range[0][1]) {
+	    spec->range[0][1] = x;
+	}
+    }
+
+    /* add comment for current plot */
+    title = dist_marker_line(d, df1, df2);
+    err = strings_array_add(&spec->literal, &spec->n_literal, title);
+    g_free(title);
+
+    if (!err) {
+	/* add df line(s) if needed */
+	m = dfmax + 1;
+	if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
+	    sprintf(dfstr, "df%d=%.1f", m, (double) df1);
+	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
+	}
+	if (d == F_DIST && !err) {
+	    sprintf(dfstr, "df%d=%.1f", m + 1, (double) df2);
+	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }  
+
+    if (d == CHISQ_DIST && df1 > 69) {
+	bigchi = 1;
+    }
+
+    /* add any required formula lines */
+
+    if (d == T_DIST) {
+	if (!got[T_DIST] && !got[F_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    dist_formula(F_BINV));
+	}
+    } else if (d == CHISQ_DIST) {
+	if (bigchi && !got[4]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    dist_formula(F_LOG2));
+	    if (!err) {
+		err = strings_array_add(&spec->literal, &spec->n_literal, 
+					dist_formula(F_BIGCHI));
+	    }
+	} else if (!bigchi && !got[CHISQ_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    dist_formula(F_CHI));
+	}
+    } else if (d == F_DIST) {
+	if (!got[F_DIST] && !got[T_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    dist_formula(F_BINV));
+	} 
+	if (!err && !got[F_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    dist_formula(F_F));
+	}
+    }
+
+    if (!err) {
+	/* add new plot line */
+	err = plotspec_add_line(spec);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    n = spec->n_lines - 1;
+
+    strcpy(spec->lines[n].scale, "NA");
+    strcpy(spec->lines[n].style, "lines");
+    title = dist_graph_title(d, NADBL, df1, df2);
+    strcpy(spec->lines[n].title, title);
+    g_free(title);
+
+    if (d == NORMAL_DIST) {
+	strcpy(spec->lines[n].formula, "(1/(sqrt(2*pi))*exp(-(x)**2/2))");
+    } else if (d == T_DIST) {
+	sprintf(spec->lines[n].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
+		"**(-0.5*(df%d+1.0))", m, m, m, m);
+    } else if (d == CHISQ_DIST) {
+	sprintf(spec->lines[n].formula, "%s(x,df%d)", (bigchi)? "bigchi" : "chi", m);
+    } else if (d == F_DIST) {
+	sprintf(spec->lines[n].formula, "f(x,df%d,df%d)", m, m + 1);
+    }
+
+    redisplay_edited_png(plot);
+}

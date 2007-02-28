@@ -56,25 +56,19 @@ typedef struct gnuplot_info_ gnuplot_info;
 
 struct gnuplot_info_ {
     GptFlags flags;
-    int err;
-    int lo;
-    int ts_plot;
-    int yscale;
-    int impulses;
-    int fit_ok;
+    int *list;
     int t1;
     int t2;
-    int npoints;
-    int oddman;
-    int toomany;
     double xrange;
     FILE *fp;
-    int *list;
     const char *yformula;
     const double *x;
     double *yvar1;
     double *yvar2;
 };
+
+#define use_impulses(g) ((g)->flags & GPT_IMPULSES)
+#define ts_plot(g) ((g)->flags & GPT_TS)
 
 struct plot_type_info {
     PlotType ptype;
@@ -271,37 +265,37 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
     fputc('\n', fp);
 }
 
-static int factorized_vars (gnuplot_info *gpinfo, const double **Z)
+static int factorized_vars (gnuplot_info *gi, const double **Z)
 {
-    int ynum = gpinfo->list[1];
-    int dum = gpinfo->list[3];
+    int ynum = gi->list[1];
+    int dum = gi->list[3];
     int fn, t, i;
 
-    fn = gpinfo->t2 - gpinfo->t1 + 1;
+    fn = gi->t2 - gi->t1 + 1;
 
-    gpinfo->yvar1 = malloc(fn * sizeof *gpinfo->yvar1);
-    if (gpinfo->yvar1 == NULL) {
+    gi->yvar1 = malloc(fn * sizeof *gi->yvar1);
+    if (gi->yvar1 == NULL) {
 	return 1;
     }
 
-    gpinfo->yvar2 = malloc(fn * sizeof *gpinfo->yvar2);
-    if (gpinfo->yvar2 == NULL) {
-	free(gpinfo->yvar1);
+    gi->yvar2 = malloc(fn * sizeof *gi->yvar2);
+    if (gi->yvar2 == NULL) {
+	free(gi->yvar1);
 	return 1;
     }
 
     i = 0;
-    for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
+    for (t=gi->t1; t<=gi->t2; t++) {
 	if (na(Z[ynum][t])) {
-	    gpinfo->yvar1[i] = NADBL;
-	    gpinfo->yvar2[i] = NADBL;
+	    gi->yvar1[i] = NADBL;
+	    gi->yvar2[i] = NADBL;
 	} else {
 	    if (Z[dum][t] == 1.0) {
-		gpinfo->yvar1[i] = Z[ynum][t];
-		gpinfo->yvar2[i] = NADBL;
+		gi->yvar1[i] = Z[ynum][t];
+		gi->yvar2[i] = NADBL;
 	    } else {
-		gpinfo->yvar1[i] = NADBL;
-		gpinfo->yvar2[i] = Z[ynum][t];
+		gi->yvar1[i] = NADBL;
+		gi->yvar2[i] = Z[ynum][t];
 	    }
 	}
 	i++;
@@ -331,19 +325,19 @@ int gnuplot_has_specified_colors (void)
     return 1;
 }
 
+int gnuplot_has_style_fill (void)
+{
+    /* ... and that it does style fill */
+    return 1;
+}
+
 static int gnuplot_has_specified_emf_colors (void)
 {
     /* ... and we know it does specified emf colors */
     return 1;
 }
 
-static int gnuplot_has_style_fill (void)
-{
-    /* ... and that it does style fill */
-    return 1;
-}
-
-static char *label_front (void)
+const char *gnuplot_label_front_string (void)
 {
     /* ... and that it handles "front" for labels */
     return " front";
@@ -395,6 +389,17 @@ int gnuplot_has_specified_colors (void)
     return err;
 }
 
+int gnuplot_has_style_fill (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set style fill solid");
+    }
+
+    return !err;
+}
+
 static int gnuplot_has_specified_emf_colors (void)
 {
     static int err = -1; 
@@ -406,18 +411,7 @@ static int gnuplot_has_specified_emf_colors (void)
     return !err;
 }
 
-static int gnuplot_has_style_fill (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set style fill solid");
-    }
-
-    return !err;
-}
-
-static char *label_front (void)
+const char *gnuplot_label_front_string (void)
 {
     static int err = -1; 
 
@@ -700,7 +694,7 @@ PlotType plot_type_from_string (const char *str)
     return ret;
 }
 
-static int write_plot_type_string (PlotType ptype, FILE *fp)
+int write_plot_type_string (PlotType ptype, FILE *fp)
 {
     int i, ret = 0;
 
@@ -889,7 +883,7 @@ enum {
     GTITLE_AFV
 } graph_titles;
 
-static void make_gtitle (gnuplot_info *gpinfo, int code, 
+static void make_gtitle (gnuplot_info *gi, int code, 
 			 const char *s1, const char *s2)
 {
     char title[128];
@@ -910,7 +904,7 @@ static void make_gtitle (gnuplot_info *gpinfo, int code,
 	sprintf(title, I_("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
-	if (s2 == NULL || gpinfo->ts_plot) {
+	if (s2 == NULL || (gi->flags & GPT_TS)) {
 	    sprintf(title, I_("Actual and fitted %s"), s1);
 	} else {
 	    sprintf(title, I_("Actual and fitted %s versus %s"), s1, s2);
@@ -922,7 +916,7 @@ static void make_gtitle (gnuplot_info *gpinfo, int code,
     }
 
     if (*title != '\0') {
-	fprintf(gpinfo->fp, "set title '%s'\n", title);
+	fprintf(gi->fp, "set title '%s'\n", title);
     }
 }
 
@@ -1015,7 +1009,7 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
     return err;
 }
 
-static int get_fitted_line (gnuplot_info *gpinfo, 
+static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
 {
@@ -1023,8 +1017,8 @@ static int get_fitted_line (gnuplot_info *gpinfo,
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
-    int yno = gpinfo->list[1];
-    int xno = gpinfo->list[2];
+    int yno = gi->list[1];
+    int xno = gi->list[2];
     double s2, v, pv;
     int T, k = 2;
     int err;
@@ -1060,7 +1054,7 @@ static int get_fitted_line (gnuplot_info *gpinfo,
 	    sprintf(targ, "%g + %g*x title '%s' w lines\n", 
 		    b->val[0], b->val[1], title);
 	    gretl_pop_c_numeric_locale();
-	    gpinfo->fit_ok = 1;
+	    gi->flags |= GPT_AUTO_FIT;
 	}
     }
 
@@ -1073,21 +1067,21 @@ static int get_fitted_line (gnuplot_info *gpinfo,
 }
 
 static void 
-print_x_range (gnuplot_info *gpinfo, const double *x)
+print_x_range (gnuplot_info *gi, const double *x)
 {
-    if (gretl_isdummy(gpinfo->t1, gpinfo->t2, x)) {
-	fputs("set xrange [-1:2]\n", gpinfo->fp);	
-	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gpinfo->fp);
-	gpinfo->xrange = 3;
+    if (gretl_isdummy(gi->t1, gi->t2, x)) {
+	fputs("set xrange [-1:2]\n", gi->fp);	
+	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
+	gi->xrange = 3;
     } else {
 	double xmin, xmax;
 
-	gretl_minmax(gpinfo->t1, gpinfo->t2, x, &xmin, &xmax);
-	gpinfo->xrange = xmax - xmin;
-	xmin -= gpinfo->xrange * .025;
-	xmax += gpinfo->xrange * .025;
-	fprintf(gpinfo->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
-	gpinfo->xrange = xmax - xmin;
+	gretl_minmax(gi->t1, gi->t2, x, &xmin, &xmax);
+	gi->xrange = xmax - xmin;
+	xmin -= gi->xrange * .025;
+	xmax += gi->xrange * .025;
+	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+	gi->xrange = xmax - xmin;
     }
 }
 
@@ -1095,7 +1089,7 @@ print_x_range (gnuplot_info *gpinfo, const double *x)
    to use two y axes */
 
 static void
-check_for_yscale (gnuplot_info *gpinfo, const double **Z)
+check_for_yscale (gnuplot_info *gi, const double **Z, int *oddman)
 {
     double ymin[6], ymax[6];
     double ratio;
@@ -1106,33 +1100,33 @@ check_for_yscale (gnuplot_info *gpinfo, const double **Z)
 #endif
 
     /* find minima, maxima of the y-axis vars */
-    for (i=1; i<gpinfo->list[0]; i++) {
-	gretl_minmax(gpinfo->t1, gpinfo->t2, Z[gpinfo->list[i]], 
+    for (i=1; i<gi->list[0]; i++) {
+	gretl_minmax(gi->t1, gi->t2, Z[gi->list[i]], 
 		     &ymin[i], &ymax[i]);
     }
 
-    gpinfo->yscale = 0;
+    gi->flags &= ~GPT_Y2AXIS;
 
-    for (i=1; i<gpinfo->list[0]; i++) {
+    for (i=1; i<gi->list[0]; i++) {
 	oddcount = 0;
-	for (j=1; j<gpinfo->list[0]; j++) {
+	for (j=1; j<gi->list[0]; j++) {
 	    if (j == i) {
 		continue;
 	    }
 	    ratio = ymax[i] / ymax[j];
 	    if (ratio > 5.0 || ratio < 0.2) {
-		gpinfo->yscale = 1;
+		gi->flags |= GPT_Y2AXIS;
 		oddcount++;
 	    }
 	}
-	if (oddcount == gpinfo->list[0] - 2) {
-	    gpinfo->oddman = i;
+	if (oddcount == gi->list[0] - 2) {
+	    *oddman = i;
 	    break;
 	}
     }
 }
 
-static int print_gp_dummy_data (gnuplot_info *gpinfo, 
+static int print_gp_dummy_data (gnuplot_info *gi, 
 				const double **Z, 
 				const DATAINFO *pdinfo)
 {
@@ -1140,35 +1134,35 @@ static int print_gp_dummy_data (gnuplot_info *gpinfo,
     int i, s, t;
 
     for (i=0; i<2; i++) {
-	for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
-	    s = t - gpinfo->t1;
-	    if (gpinfo->x != NULL) {
-		xx = gpinfo->x[t];
+	for (t=gi->t1; t<=gi->t2; t++) {
+	    s = t - gi->t1;
+	    if (gi->x != NULL) {
+		xx = gi->x[t];
 	    } else {
-		xx = Z[gpinfo->list[2]][t];
+		xx = Z[gi->list[2]][t];
 		if (na(xx)) {
 		    continue;
 		}
 	    }
-	    yy = (i > 0)? gpinfo->yvar2[s] : gpinfo->yvar1[s];
+	    yy = (i > 0)? gi->yvar2[s] : gi->yvar1[s];
 	    if (na(yy)) {
-		fprintf(gpinfo->fp, "%.8g ?\n", xx);
+		fprintf(gi->fp, "%.8g ?\n", xx);
 	    } else {
-		fprintf(gpinfo->fp, "%.8g %.8g", xx, yy);
-		if (!gpinfo->ts_plot) {
+		fprintf(gi->fp, "%.8g %.8g", xx, yy);
+		if (!(gi->flags & GPT_TS)) {
 		    if (pdinfo->markers) {
-			fprintf(gpinfo->fp, " # %s", pdinfo->S[t]);
+			fprintf(gi->fp, " # %s", pdinfo->S[t]);
 		    } else if (dataset_is_time_series(pdinfo)) {
 			char obs[OBSLEN];
 
 			ntodate(obs, t, pdinfo);
-			fprintf(gpinfo->fp, " # %s", obs);
+			fprintf(gi->fp, " # %s", obs);
 		    }
 		}
-		fputc('\n', gpinfo->fp);
+		fputc('\n', gi->fp);
 	    }
 	}
-	fputs("e\n", gpinfo->fp);
+	fputs("e\n", gi->fp);
     }
 
     return 0;
@@ -1188,39 +1182,40 @@ maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
 }
 
 static void
-print_gp_data (gnuplot_info *gpinfo, const double **Z, 
+print_gp_data (gnuplot_info *gi, const double **Z, 
 	       const DATAINFO *pdinfo)
 {
+    int n = gi->t2 - gi->t1 + 1;
     double offset = 0.0;
     int datlist[3];
     int ynum = 2;
     int i, t;
 
     /* multi impulse plot? calculate offset for lines */
-    if ((gpinfo->flags & GPT_IMPULSES) && gpinfo->list[gpinfo->lo] > 2) {
-	offset = 0.10 * gpinfo->xrange / gpinfo->npoints;
+    if (use_impulses(gi) && gi->list[0] > 2) { 
+	offset = 0.10 * gi->xrange / n;
     }
 
-    if (gpinfo->x != NULL) {
+    if (gi->x != NULL) {
 	datlist[0] = 1;
 	ynum = 1;
     } else {
 	datlist[0] = 2;
-	datlist[1] = gpinfo->list[gpinfo->lo];
+	datlist[1] = gi->list[gi->list[0]];
     }
 
     /* loop across the variables, printing x then y[i] for each i */
 
-    for (i=1; i<gpinfo->lo; i++) {
+    for (i=1; i<gi->list[0]; i++) {
 	double xoff = offset * (i - 1);
 
-	datlist[ynum] = gpinfo->list[i];
+	datlist[ynum] = gi->list[i];
 
-	for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
+	for (t=gi->t1; t<=gi->t2; t++) {
 	    const char *label = NULL;
 	    char obs[OBSLEN];
 
-	    if (!gpinfo->ts_plot && i == 1) {
+	    if (!(gi->flags & GPT_TS) && i == 1) {
 		if (pdinfo->markers) {
 		    label = pdinfo->S[t];
 		} else if (dataset_is_time_series(pdinfo)) {
@@ -1229,94 +1224,76 @@ print_gp_data (gnuplot_info *gpinfo, const double **Z,
 		}
 	    }
 
-	    if (gpinfo->ts_plot && pdinfo->structure == STACKED_TIME_SERIES) {
-		maybe_print_panel_jot(t, pdinfo, gpinfo->fp);
+	    if ((gi->flags & GPT_TS) && pdinfo->structure == STACKED_TIME_SERIES) {
+		maybe_print_panel_jot(t, pdinfo, gi->fp);
 	    }
 
-	    printvars(gpinfo->fp, t, datlist, Z, gpinfo->x, label, xoff);
+	    printvars(gi->fp, t, datlist, Z, gi->x, label, xoff);
 	}
 
-	fputs("e\n", gpinfo->fp);
+	fputs("e\n", gi->fp);
     }
 }
 
-static void 
-gp_info_init (gnuplot_info *gpinfo, GptFlags flags, FILE *fp,
+static int
+gp_info_init (gnuplot_info *gi, GptFlags flags, FILE *fp,
 	      const int *list, const char *literal, int t1, int t2)
 {
-    int lo = list[0];
+    int l0 = list[0];
 
-    gpinfo->err = 0;
-    gpinfo->flags = flags;
-    gpinfo->ts_plot = 1;   /* plotting against time on x-axis? */
-    gpinfo->yscale = 0;    /* two y axis scales needed? */
-    gpinfo->impulses = 0;  /* plotting with impulses? */
-    gpinfo->lo = lo;
-    gpinfo->fit_ok = 0;    /* plot automatic fitted line? */
-    gpinfo->t1 = t1;
-    gpinfo->t2 = t2;
-    gpinfo->npoints = 0;
-    gpinfo->oddman = 0;
-    gpinfo->xrange = 0.0;
-    gpinfo->toomany = 0;
-    gpinfo->yformula = NULL;
-    gpinfo->fp = fp;
+    gi->flags = flags | GPT_TS;
+    gi->t1 = t1;
+    gi->t2 = t2;
+    gi->xrange = 0.0;
+    gi->yformula = NULL;
+    gi->fp = fp;
 
-    gpinfo->x = NULL;
-    gpinfo->yvar1 = NULL;
-    gpinfo->yvar2 = NULL;
-    gpinfo->list = NULL;
+    gi->x = NULL;
+    gi->yvar1 = NULL;
+    gi->yvar2 = NULL;
+    gi->list = NULL;
 
-    if (list[0] < 2 && !(flags & GPT_IDX)) {
-	gpinfo->err = E_ARGS;
-	return;
+    if (l0 < 2 && !(flags & GPT_IDX)) {
+	return E_ARGS;
     }
 
     if ((flags & GPT_DUMMY) && (flags & GPT_IDX)) {
-	gpinfo->err = E_BADOPT;
-	return;
+	return E_BADOPT;
     }
 
-    gpinfo->list = gretl_list_copy(list);
-    if (gpinfo->list == NULL) {
-	gpinfo->err = E_ALLOC;
-	return;
+    gi->list = gretl_list_copy(list);
+    if (gi->list == NULL) {
+	return E_ALLOC;
     }
 
-    if (lo > MAX_PLOT_LINES + 1) {
-	gpinfo->toomany = 1;
-    }
-
-    if ((lo > 2 || (lo > 1 && (flags & GPT_IDX))) && 
-	 lo < 7 && !(flags & GPT_RESIDS) && !(flags & GPT_FA)
+    if ((l0 > 2 || (l0 > 1 && (flags & GPT_IDX))) && 
+	 l0 < 7 && !(flags & GPT_RESIDS) && !(flags & GPT_FA)
 	&& !(flags & GPT_DUMMY)) {
 	/* allow probe for using two y axes */
-	gpinfo->yscale = 1;
+	gi->flags |= GPT_Y2AXIS;
     } 
 
-    if (flags & GPT_IMPULSES) {
-	gpinfo->impulses = 1;
-    }    
-
-    if (flags & GPT_FA && literal != NULL && 
+    if ((flags & GPT_FA) && literal != NULL && 
 	!strncmp(literal, "yformula: ", 10)) {
 	/* fitted vs actual plot with fitted given by formula */
-	gpinfo->yformula = literal + 10;
+	gi->yformula = literal + 10;
     }
 
     if (literal != NULL && strstr(literal, "set style data")) {
-	gpinfo->flags |= GPT_DATA_STYLE;
+	gi->flags |= GPT_DATA_STYLE;
     }
+
+    return 0;
 }
 
-static void destroy_gpinfo (gnuplot_info *gpinfo)
+static void clear_gpinfo (gnuplot_info *gi)
 {
-    free(gpinfo->yvar1);
-    free(gpinfo->yvar2);
-    free(gpinfo->list);
+    free(gi->yvar1);
+    free(gi->yvar2);
+    free(gi->list);
 
-    if (gpinfo->fp != NULL) {
-	fclose(gpinfo->fp);
+    if (gi->fp != NULL) {
+	fclose(gi->fp);
     }
 }
 
@@ -1327,6 +1304,9 @@ static void print_gnuplot_flags (GnuplotFlags flags)
 
     if (flags & GPT_IMPULSES) {
 	fprintf(stderr, " GPT_IMPULSES\n");
+    }
+    if (flags & GPT_LINES) {
+	fprintf(stderr, " GPT_LINES\n");
     }
     if (flags & GPT_RESIDS) {
 	fprintf(stderr, " GPT_RESIDS\n");
@@ -1354,6 +1334,9 @@ static void print_gnuplot_flags (GnuplotFlags flags)
     }
     if (flags & GPT_IDX) {
 	fprintf(stderr, " GPT_IDX\n");
+    }
+    if (flags & GPT_TS) {
+	fprintf(stderr, " GPT_TS\n");
     }
 }
 #endif
@@ -1446,46 +1429,46 @@ static void graph_list_adjust_sample (int *list,
 
     ginfo->t1 = t1min;
     ginfo->t2 = t2max;
-    ginfo->lo = list[0];
 }
 
-static void maybe_add_plotx (gnuplot_info *gpinfo, 
-			     const DATAINFO *pdinfo)
+static int maybe_add_plotx (gnuplot_info *gi, 
+			    const DATAINFO *pdinfo)
 {
+    int k = gi->list[0];
     int add0 = 0;
 
     /* are we really doing a time-series plot? */
-    if (!strcmp(pdinfo->varname[gpinfo->list[gpinfo->lo]], "time")) {
+    if (!strcmp(pdinfo->varname[gi->list[k]], "time")) {
 	; /* yes */
-    } else if (gpinfo->flags & GPT_IDX) {
+    } else if (gi->flags & GPT_IDX) {
 	add0 = 1; /* yes */
     } else {
 	/* no: get out */
-	gpinfo->ts_plot = 0;
-	return;
+	gi->flags &= ~GPT_TS;
+	return 0;
     }
 
-    gpinfo->x = gretl_plotx(pdinfo);
-    if (gpinfo->x == NULL) {
-	gpinfo->err = E_ALLOC;
+    gi->x = gretl_plotx(pdinfo);
+    if (gi->x == NULL) {
+	return E_ALLOC;
     }
 
     /* a bit ugly, but add a dummy list entry for
        the 'virtual' plot variable */
     if (add0) {
-	gretl_list_append_term(&gpinfo->list, 0);
-	if (gpinfo->list == NULL) {
-	    gpinfo->err = E_ALLOC;
-	} else {
-	    gpinfo->lo = gpinfo->list[0];
-	}
+	gretl_list_append_term(&gi->list, 0);
+	if (gi->list == NULL) {
+	    return E_ALLOC;
+	} 
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "maybe_add_plotx: gpinfo->x at %p\n", 
-	    (void *) gpinfo->x);
-    printlist(gpinfo->list, "gpinfo->list");
+    fprintf(stderr, "maybe_add_plotx: gi->x at %p\n", 
+	    (void *) gi->x);
+    printlist(gi->list, "gi->list");
 #endif
+
+    return 0;
 }
 
 #define ts_letterbox 1
@@ -1521,9 +1504,11 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     char lwstr[8] = {0};
     char keystr[48] = {0};
     char fit_line[128] = {0};
-    int i;
+    int oddman = 0;
+    int toomany = 0;
+    int i, err = 0;
 
-    gnuplot_info gpinfo;
+    gnuplot_info gi;
 
     gretl_error_clear();
 
@@ -1536,69 +1521,71 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
        "width 1 box" otherwise */
     strcpy(keystr, "set key left top\n");
 
-    gp_info_init(&gpinfo, flags, NULL, plotlist, literal, 
-		 pdinfo->t1, pdinfo->t2);
-    if (gpinfo.err) {
+    err = gp_info_init(&gi, flags, NULL, plotlist, literal, 
+		       pdinfo->t1, pdinfo->t2);
+    if (err) {
 	goto bailout;
-    }
-
-    maybe_add_plotx(&gpinfo, pdinfo);
-    if (gpinfo.err) {
-	goto bailout;
-    }
-
-    if (gpinfo.impulses) {
-	strcpy(withstr, "w i");
     }
 
     /* convenience pointer */
-    list = gpinfo.list;
+    list = gi.list;
+
+    if (list[0] > MAX_PLOT_LINES + 1) {
+	toomany = 1;
+    }
+
+    err = maybe_add_plotx(&gi, pdinfo);
+    if (err) {
+	goto bailout;
+    }
+
+    if (use_impulses(&gi)) {
+	strcpy(withstr, "w i");
+    }
 
     /* set x-axis label for non-time series plots */
-    if (!gpinfo.ts_plot) {
+    if (!(gi.flags & GPT_TS)) {
 	if (flags & GPT_DUMMY) {
-	    strcpy(xlabel, series_name(pdinfo, gpinfo.list[2])); 
+	    strcpy(xlabel, series_name(pdinfo, list[2])); 
 	} else {
-	    strcpy(xlabel, series_name(pdinfo, gpinfo.list[gpinfo.lo]));
+	    strcpy(xlabel, series_name(pdinfo, list[list[0]]));
 	}
     }
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER);
     if (prn == NULL) {
-	gpinfo.err = E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* adjust sample range, and reject if it's empty */
+    graph_list_adjust_sample(list, &gi, Z);
+    if (gi.t1 == gi.t2 || list[0] < 2) {
+	err = GRAPH_NO_DATA;
 	goto bailout;
     }
 
     /* add a simple regression line if appropriate */
-    if (!gpinfo.impulses && !(flags & GPT_FIT_OMIT) && gpinfo.lo == 2 && 
-	!gpinfo.ts_plot && !(flags & GPT_RESIDS)) {
-	get_fitted_line(&gpinfo, Z, pdinfo, fit_line);
-	if (gpinfo.fit_ok) {
+    if (!use_impulses(&gi) && !(flags & GPT_FIT_OMIT) && list[0] == 2 && 
+	!(gi.flags & GPT_TS) && !(flags & GPT_RESIDS)) {
+	get_fitted_line(&gi, Z, pdinfo, fit_line);
+	if (gi.flags & GPT_AUTO_FIT) {
 	    pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	    pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
 	}
     }
 
-    /* adjust sample range, and reject if it's empty */
-    graph_list_adjust_sample(list, &gpinfo, Z);
-    if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
-	gpinfo.err = GRAPH_NO_DATA;
-	goto bailout;
-    }
-
     /* separation by dummy: create special vars */
     if (flags & GPT_DUMMY) { 
-	if (gpinfo.lo != 3 || factorized_vars(&gpinfo, Z)) {
-	    gpinfo.err = E_DATA;
+	if (list[0] != 3 || factorized_vars(&gi, Z)) {
+	    err = E_DATA;
 	    goto bailout;
 	}
     } 
 
-    gpinfo.npoints = gpinfo.t2 - gpinfo.t1 + 1;
-
     /* special tics for short time series plots */
-    if (gpinfo.ts_plot) {
-	if (gpinfo.toomany) {
+    if (gi.flags & GPT_TS) {
+	if (toomany) {
 	    pprintf(prn, "# multiple timeseries %d", pdinfo->pd);
 	} else {
 	    pprintf(prn, "# timeseries %d", pdinfo->pd);
@@ -1609,15 +1596,15 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	} else {
 	    pputc(prn, '\n');
 	}
-	if (pdinfo->pd == 4 && (gpinfo.t2 - gpinfo.t1) / 4 < 8) {
+	if (pdinfo->pd == 4 && (gi.t2 - gi.t1) / 4 < 8) {
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 4\n");
 	}
-	if (pdinfo->pd == 12 && (gpinfo.t2 - gpinfo.t1) / 12 < 8) {
+	if (pdinfo->pd == 12 && (gi.t2 - gi.t1) / 12 < 8) {
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 12\n");
 	}
-    } else if (gpinfo.toomany) {
+    } else if (toomany) {
 	pputs(prn, "# multiple data series\n");
     }
 
@@ -1625,12 +1612,12 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
        the file header till we know a bit more about the plot
     */
     if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_REGULAR)) {
-	gpinfo.err = E_FOPEN;
+	err = E_FOPEN;
 	gretl_print_destroy(prn);
 	goto bailout;
     } 
 
-    gpinfo.fp = fp;
+    gi.fp = fp;
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
 
@@ -1638,42 +1625,42 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     fputs("set xzeroaxis\n", fp); 
     fputs("set missing \"?\"\n", fp);
 
-    if (gpinfo.lo == 2) {
+    if (list[0] == 2) {
 	/* only two variables */
-	if (gpinfo.fit_ok) {
+	if (gi.flags & GPT_AUTO_FIT) {
 	    fputs(auto_fit_string, fp);
 	    if (flags & GPT_FA) {
-		make_gtitle(&gpinfo, GTITLE_AFV, series_name(pdinfo, list[1]), 
+		make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[1]), 
 			    series_name(pdinfo, list[2]));
 	    } else {
-		make_gtitle(&gpinfo, GTITLE_VLS, series_name(pdinfo, list[1]), 
+		make_gtitle(&gi, GTITLE_VLS, series_name(pdinfo, list[1]), 
 			    xlabel);
 	    }
 	}
 	if (flags & GPT_RESIDS && !(flags & GPT_DUMMY)) { 
-	    make_gtitle(&gpinfo, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
+	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
 	} else {
 	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
 	}
-	if (!gpinfo.fit_ok) {
+	if (!(gi.flags & GPT_AUTO_FIT)) {
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((flags & GPT_RESIDS) && (flags & GPT_DUMMY)) { 
-	make_gtitle(&gpinfo, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
+	make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	fprintf(fp, "set ylabel '%s'\n", I_("residual"));
     } else if (flags & GPT_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(&gpinfo, GTITLE_AF, series_name(pdinfo, list[2]), NULL);
+	    make_gtitle(&gi, GTITLE_AF, series_name(pdinfo, list[2]), NULL);
 	} else {
-	    make_gtitle(&gpinfo, GTITLE_AFV, series_name(pdinfo, list[2]), 
+	    make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[2]), 
 			series_name(pdinfo, list[3]));
 	}
 	fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[2]));
     } 
 
-    if (gpinfo.toomany) {
+    if (toomany) {
 	strcpy(keystr, "set key outside\n");
     }
 
@@ -1681,17 +1668,18 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    if (gpinfo.x != NULL) {
-	print_x_range(&gpinfo, gpinfo.x);
+    if (gi.x != NULL) {
+	print_x_range(&gi, gi.x);
     } else {
-	int v = (flags & GPT_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
+	int k = list[0];
+	int v = (flags & GPT_DUMMY)? list[k - 1] : list[k];
 
-	print_x_range(&gpinfo, Z[v]);
+	print_x_range(&gi, Z[v]);
     }
 
-    if (gpinfo.yscale) { 
-	check_for_yscale(&gpinfo, Z);
-	if (gpinfo.yscale) {
+    if (gi.flags & GPT_Y2AXIS) { 
+	check_for_yscale(&gi, Z, &oddman);
+	if (gi.flags & GPT_Y2AXIS) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
 	}
@@ -1699,32 +1687,32 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
 #if GP_DEBUG    
     fprintf(stderr, "literal = '%s', yformula = '%s'\n", literal,
-	    gpinfo.yformula);
+	    gi.yformula);
 #endif
 
-    if (gpinfo.yformula != NULL) {
+    if (gi.yformula != NULL) {
 	/* cut out the "dummy" yvar that is in fact represented
 	   by a formula rather than raw data */
 	list[1] = list[2];
 	list[2] = list[3];
-	list[0] = gpinfo.lo = 2;
+	list[0] = 2;
     } else if (literal != NULL && *literal != '\0') {
 	print_gnuplot_literal_lines(literal, fp);
     }
 
     /* now print the 'plot' lines */
     fputs("plot \\\n", fp);
-    if (gpinfo.yscale) {
-	for (i=1; i<gpinfo.lo; i++) {
+    if (gi.flags & GPT_Y2AXIS) {
+	for (i=1; i<list[0]; i++) {
 	    set_lwstr(pdinfo, list[i], lwstr);
 	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s%s",
-		    (i == gpinfo.oddman)? "x1y2" : "x1y1",
+		    (i == oddman)? "x1y2" : "x1y1",
 		    series_name(pdinfo, list[i]), 
-		    (i == gpinfo.oddman)? I_("right") : I_("left"),
-		    (gpinfo.impulses)? "w impulses" : 
-		    (gpinfo.ts_plot)? "w lines" : "w points",
+		    (i == oddman)? I_("right") : I_("left"),
+		    (use_impulses(&gi))? "w impulses" : 
+		    (gi.flags & GPT_TS)? "w lines" : "w points",
 		    lwstr,
-		    (i == gpinfo.lo - 1)? "\n" : " , \\\n");
+		    (i == list[0] - 1)? "\n" : " , \\\n");
 	}
     } else if (flags & GPT_DUMMY) { 
 	strcpy(s1, (flags & GPT_RESIDS)? I_("residual") : 
@@ -1732,27 +1720,27 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	strcpy(s2, series_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:2 title '%s (%s=1)', \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:2 title '%s (%s=0)'\n", s1, s2);
-    } else if (gpinfo.yformula != NULL) {
+    } else if (gi.yformula != NULL) {
 	fprintf(fp, " '-' using 1:2 title '%s' w points , \\\n", I_("actual"));	
-	fprintf(fp, "%s title '%s' w lines\n", gpinfo.yformula, I_("fitted"));
+	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, I_("fitted"));
     } else if (flags & GPT_FA) {
 	set_withstr(flags, lines, 1, withstr);
 	fprintf(fp, " '-' using 1:2 title '%s' %s lt 2, \\\n", I_("fitted"), withstr);
 	set_withstr(flags, lines, 2, withstr);
 	fprintf(fp, " '-' using 1:2 title '%s' %s lt 1\n", I_("actual"), withstr);	
     } else {
-	for (i=1; i<gpinfo.lo; i++)  {
+	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
-	    if (gpinfo.lo == 2) {
+	    if (list[0] == 2) {
 		*s1 = '\0';
 	    } else {
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
-	    if (!gpinfo.impulses) { 
-		set_withstr(gpinfo.flags, lines, i, withstr);
+	    if (!use_impulses(&gi)) { 
+		set_withstr(gi.flags, lines, i, withstr);
 	    }
 	    fprintf(fp, " '-' using 1:2 title '%s' %s%s", s1, withstr, lwstr);
-	    if (i < gpinfo.lo - 1 || gpinfo.fit_ok) {
+	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(" , \\\n", fp); 
 	    } else {
 	        fputc('\n', fp);
@@ -1766,26 +1754,26 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 
     /* print the data to be graphed */
     if (flags & GPT_DUMMY) {
-	print_gp_dummy_data(&gpinfo, Z, pdinfo);
+	print_gp_dummy_data(&gi, Z, pdinfo);
     } else {
-	print_gp_data(&gpinfo, Z, pdinfo);
+	print_gp_data(&gi, Z, pdinfo);
     }
 
     /* flush stream */
-    fclose(gpinfo.fp);
-    gpinfo.fp = NULL;
+    fclose(gi.fp);
+    gi.fp = NULL;
 
     gretl_pop_c_numeric_locale();
 
     if (!(flags & GPT_BATCH)) {
-	gpinfo.err = gnuplot_make_graph();
+	err = gnuplot_make_graph();
     }
 
  bailout:
 
-    destroy_gpinfo(&gpinfo);
+    clear_gpinfo(&gi);
 
-    return gpinfo.err;
+    return err;
 }
 
 /**
@@ -2255,11 +2243,11 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97%s\n",
 			I_("Test statistic for normality"),
-			label_front());
+			gnuplot_label_front_string());
 		print_freq_test_label(label, I_("Chi-squared(2) = %.3f pvalue = %.5f"), 
 				      freq->test, chisq_cdf_comp(freq->test, 2));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			label, label_front());
+			label, gnuplot_label_front_string());
 	    }	
 	} else if (dist == D_GAMMA) {
 	    double var = freq->sdx * freq->sdx;
@@ -2278,11 +2266,11 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
 			I_("Test statistic for gamma"),
-			label_front());
+			gnuplot_label_front_string());
 		print_freq_test_label(label, I_("z = %.3f pvalue = %.5f"), 
 				      freq->test, normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			label, label_front());
+			label, gnuplot_label_front_string());
 	    }	
 	}
 
@@ -2528,570 +2516,6 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     fclose(fp);
 
     return gnuplot_make_graph();
-}
-
-int plotspec_add_line (GPT_SPEC *spec)
-{
-    GPT_LINE *lines;
-    int n = spec->n_lines;
-
-    lines = realloc(spec->lines, (n + 1) * sizeof *lines);
-    if (lines == NULL) {
-	return E_ALLOC;
-    }
-
-    spec->lines = lines;
-    spec->n_lines += 1;
-
-    lines[n].varnum = 0;
-    lines[n].title[0] = 0;
-    lines[n].formula[0] = 0;
-    lines[n].style[0] = 0;
-    lines[n].scale[0] = 0;
-    lines[n].yaxis = 1;
-    lines[n].type = 0;
-    lines[n].width = 1;
-    lines[n].ncols = 0;
-
-    return 0;
-}
-
-void free_plotspec (GPT_SPEC *spec)
-{
-    if (spec == NULL) return;
-
-    if (spec->lines != NULL) free(spec->lines);
-    if (spec->data != NULL) free(spec->data);
-    if (spec->reglist != NULL) free(spec->reglist);
-
-    if (spec->literal != NULL) {
-	free_strings_array(spec->literal, spec->n_literal);
-    }
-
-    if (spec->markers != NULL) {
-	free_strings_array(spec->markers, spec->n_markers);
-    }
-
-    if (spec->labeled != NULL) {
-	free(spec->labeled);
-    }
-
-    free(spec);
-}
-
-int get_termstr (const GPT_SPEC *spec, char *termstr)
-{
-    int cmds = 0;
-
-    if (!strcmp(spec->termtype, "postscript color")) {
-	strcpy(termstr, "postscript eps color"); 
-    } else if (!strcmp(spec->termtype, "postscript")) {
-	strcpy(termstr, "postscript eps"); 
-    } else if (!strcmp(spec->termtype, "PDF")) {
-	strcpy(termstr, "pdf");
-    } else if (!strcmp(spec->termtype, "fig")) {
-	strcpy(termstr, "fig");
-    } else if (!strcmp(spec->termtype, "latex")) {
-	strcpy(termstr, "latex");
-    } else if (!strcmp(spec->termtype, "png")) { 
-	const char *png_str = 
-	    get_gretl_png_term_line(spec->code, 0);
-
-	strcpy(termstr, png_str + 9);
-    } else if (!strcmp(spec->termtype, "emf color")) {
-	const char *emf_str = 
-	    get_gretl_emf_term_line(spec->code, 1);
-
-	strcpy(termstr, emf_str + 9);
-    } else if (!strcmp(spec->termtype, "plot commands")) { 
-	cmds = 1;
-    } else {
-	strcpy(termstr, spec->termtype);
-    }
-
-    return cmds;
-}
-
-static char *escape_quotes (const char *s)
-{
-    if (strchr(s, '"') == NULL) {
-	return NULL;
-    } else {
-	int qcount = 0;
-	char *ret, *r;
-	const char *p = s;
-
-	while (*p) {
-	    if (*p == '"') qcount++;
-	    p++;
-	}
-
-	ret = malloc(strlen(s) + 1 + qcount);
-	if (ret == NULL) {
-	    return NULL;
-	}
-
-	r = ret;
-	while (*s) {
-	    if (*s == '"') {
-		*r++ = '\\';
-		*r++ = '"';
-	    } else {
-		*r++ = *s;
-	    }
-	    s++;
-	}
-	*r = 0;
-
-	return ret;
-    }
-}
-
-static void 
-gp_string (FILE *fp, const char *fmt, const char *s, int png)
-{
-#ifdef ENABLE_NLS  
-    if (png && use_latin_2()) {
-	char htmlstr[128];
-
-	sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
-	fprintf(fp, fmt, htmlstr);
-    } else {
-	fprintf(fp, fmt, s); 
-    }
-#else
-    fprintf(fp, fmt, s);
-#endif
-}
-
-const char *gp_justification_string (int j)
-{
-    if (j == GP_JUST_LEFT) {
-	return "left";
-    } else if (j == GP_JUST_CENTER) {
-	return "center";
-    } else if (j == GP_JUST_RIGHT) {
-	return "right";
-    } else {
-	return "left";
-    }
-}
-
-static void 
-print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
-{
-    char *label = escape_quotes(lbl->text);
-
-    gp_string(fp, "set label \"%s\" ", (label != NULL)? 
-	      label : lbl->text, png);
-
-    gretl_push_c_numeric_locale();
-
-    fprintf(fp, "at %g,%g %s%s\n", 
-	    lbl->pos[0], lbl->pos[1],
-	    gp_justification_string(lbl->just),
-	    label_front());
-
-    gretl_pop_c_numeric_locale();
-
-    if (label != NULL) {
-	free(label);
-    }
-}
-
-static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
-{
-    const double *x, *y;
-    double xrange, yrange;
-    double yoff;
-    int t;
-
-    if (spec->n_lines > 2 || 
-	spec->lines[0].ncols != 2 || 
-	spec->markers == NULL) {
-	return 1;
-    }
-
-    x = spec->data;
-    y = x + spec->nobs;
-
-    xrange = spec->range[0][1] - spec->range[0][0];
-    yrange = spec->range[1][1] - spec->range[1][0];
-
-    if (xrange == 0.0 || yrange == 0.0) {
-	double ymin = 1.0e+16, ymax = -1.0e+16;
-	double xmin = 1.0e+16, xmax = -1.0e+16;
-
-	for (t=0; t<spec->nobs; t++) {
-	    if (!na(x[t]) && !na(y[t])) {
-		if (yrange == 0.0) {
-		    if (y[t] < ymin) {
-			ymin = y[t];
-		    } else if (y[t] > ymax) {
-			ymax = y[t];
-		    }
-		}
-		if (xrange == 0.0) {
-		    if (x[t] < xmin) {
-			xmin = x[t];
-		    } else if (x[t] > xmax) {
-			xmax = x[t];
-		    }
-		}		
-	    }
-	}
-	if (yrange == 0.0) {
-	    yrange = ymax - ymin;
-	}
-	if (xrange == 0.0) {
-	    xrange = xmax - xmin;
-	}
-    }   
-
-    yoff = 0.03 * yrange;
-
-    fputs("# printing data labels\n", fp);
-
-    gretl_push_c_numeric_locale();
-
-    for (t=0; t<spec->nobs; t++) {
-	double xoff = 0.0;
-
-	if (spec->labeled != NULL && !spec->labeled[t]) {
-	    /* printing only specified labels */
-	    continue;
-	}
-
-	if (!na(x[t]) && !na(y[t])) {
-	    if (x[t] > .90 * xrange) {
-		xoff = -.02 * xrange;
-	    }
-	    fprintf(fp, "set label '%s' at %.8g,%.8g\n", spec->markers[t],
-		    x[t] + xoff, y[t] + yoff);
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    return 0;
-}
-
-int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
-{
-    int i, k, t;
-    int png = get_png_output(spec);
-    int started_data_lines = 0;
-    int n_lines = spec->n_lines;
-    double *x[4];
-    int any_y2 = 0;
-    int miss = 0;
-
-    if (!string_is_blank(spec->titles[0])) {
-	if ((spec->flags & GPT_FIT_HIDDEN) && 
-	    is_auto_fit_string(spec->titles[0])) {
-	    n_lines--;
-	} else {
-	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
-	}
-    }
-
-    if (!string_is_blank(spec->titles[1])) {
-	gp_string(fp, "set xlabel '%s'\n", spec->titles[1], png);
-    }
-
-    if (!string_is_blank(spec->titles[2])) {
-	gp_string(fp, "set ylabel '%s'\n", spec->titles[2], png);
-    }
-
-    if ((spec->flags & GPT_Y2AXIS) && !string_is_blank(spec->titles[3])) {
-	gp_string(fp, "set y2label '%s'\n", spec->titles[3], png);
-    }
-
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
-	if (!string_is_blank(spec->labels[i].text)) {
-	    print_plot_labelspec(&(spec->labels[i]), png, fp);
-	}
-    }
-
-    if (spec->xzeroaxis) {
-	fputs("set xzeroaxis\n", fp);
-    }
-
-    fputs("set missing \"?\"\n", fp);
-
-    if (strcmp(spec->keyspec, "none") == 0) {
-	fputs("set nokey\n", fp);
-    } else {
-	fprintf(fp, "set key %s\n", spec->keyspec);
-    }
-
-    k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<k; i++) {
-	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
-	    spec->range[i][0] == spec->range[i][1]) {
-	    continue;
-	}
-	fprintf(fp, "set %srange [%.7g:%.7g]\n",
-		(i == 0)? "x" : (i == 1)? "y" : "y2",
-		spec->range[i][0], spec->range[i][1]);
-    }
-
-    if (spec->boxwidth > 0 && spec->boxwidth < 1) {
-	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    /* customized xtics? */
-    if (!string_is_blank(spec->xtics)) {
-	fprintf(fp, "set xtics %s\n", spec->xtics);
-    }
-    if (!string_is_blank(spec->mxtics)) {
-	fprintf(fp, "set mxtics %s\n", spec->mxtics);
-    }
-
-    if (spec->flags & GPT_Y2AXIS) {
-	/* using two y axes */
-	fputs("set ytics nomirror\n", fp);
-	fputs("set y2tics\n", fp);
-    } else if (spec->flags & GPT_MINIMAL_BORDER) {
-	/* suppressing part of border */
-	fputs("set border 3\n", fp);
-	if (string_is_blank(spec->xtics)) {
-	    fputs("set xtics nomirror\n", fp);
-	}
-	fputs("set ytics nomirror\n", fp);
-    }
-
-    /* in case of plots that are editable (see gui client), it is
-       important to write out the comment string that identifies the
-       sort of graph, so that it will be recognized by type when
-       it is redisplayed */
-
-    write_plot_type_string(spec->code, fp);
-
-    if (spec->n_literal > 0) {
-	fprintf(fp, "# literal lines = %d\n", spec->n_literal);
-	for (i=0; i<spec->n_literal; i++) {
-	    if (spec->literal[i] != NULL && *spec->literal[i] != '\0') {
-		fprintf(fp, "%s\n", spec->literal[i]);
-	    } else {
-		fputs("# empty line!\n", fp);
-	    }
-	}
-    }
-
-    if (spec->flags & GPT_AUTO_FIT) {
-	fputs(auto_fit_string, fp);
-    }
-
-    if ((spec->code == PLOT_FREQ_SIMPLE ||
-	 spec->code == PLOT_FREQ_NORMAL ||
-	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
-	fputs("set style fill solid 0.8\n", fp);
-    }  
-
-    if (spec->flags & GPT_ALL_MARKERS) {
-	print_data_labels(spec, fp);
-    }
-
-    fputs("plot \\\n", fp);
-
-    for (i=0; i<n_lines; i++) {
-	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
-	    any_y2 = 1;
-	    break;
-	}
-    }
-
-    for (i=0; i<n_lines; i++) {
-
-	if (strcmp(spec->lines[i].scale, "NA")) {
-	    if (!strcmp(spec->lines[i].scale, "1.0")) {
-		fputs("'-' using 1", fp);
-		for (k=2; k<=spec->lines[i].ncols; k++) {
-		    fprintf(fp, ":%d", k);
-		}
-		fputc(' ', fp);
-	    } else {
-		fprintf(fp, "'-' using 1:($2*%s) ", 
-			spec->lines[i].scale);
-	    }
-	} else {
-	    fprintf(fp, "%s ", spec->lines[i].formula); 
-	}
-
-	if ((spec->flags & GPT_Y2AXIS) && spec->lines[i].yaxis != 1) {
-	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
-	}
-
-	gp_string(fp, "title '%s", spec->lines[i].title, png);
-
-	if (any_y2) {
-	    if (spec->lines[i].yaxis == 1) {
-		fprintf(fp, " (%s)' ", I_("left"));
-	    } else {
-		fprintf(fp, " (%s)' ", I_("right"));
-	    }
-	} else {
-	    fputs("' ", fp);
-	}
-
-	fprintf(fp, "w %s", spec->lines[i].style);
-	if (spec->lines[i].type != 0) {
-	    fprintf(fp, " lt %d", spec->lines[i].type);
-	}
-	if (spec->lines[i].width != 1) {
-	    fprintf(fp, " lw %d", spec->lines[i].width);
-	}
-
-	if (i == n_lines - 1) {
-	    fputc('\n', fp);
-	} else {
-	    fputs(", \\\n", fp);
-	}
-    } 
-
-    miss = 0;
-
-    /* supply the data to gnuplot inline */
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<spec->n_lines; i++) { 
-	int j;
-
-	if (spec->lines[i].ncols == 0) {
-	    continue;
-	}
-
-	if (!started_data_lines) {
-	    x[0] = spec->data;
-	    x[1] = x[0] + spec->nobs;
-	    started_data_lines = 1;
-	} 
-
-	x[2] = x[1] + spec->nobs;
-	x[3] = x[2] + spec->nobs;
-
-	for (t=0; t<spec->nobs; t++) {
-	    if (na(x[0][t])) {
-		fputs("? ", fp);
-		miss = 1;
-	    } else {
-		fprintf(fp, "%.8g ", x[0][t]);
-	    }
-
-	    for (j=1; j<spec->lines[i].ncols; j++) {
-		if (na(x[j][t])) {
-		    fputs("? ", fp);
-		    miss = 1;
-		} else {
-		    fprintf(fp, "%.8g ",  x[j][t]);
-		}
-	    }
-
-	    if (spec->markers != NULL && i == 0) {
-		fprintf(fp, " # %s", spec->markers[t]);
-	    }
-
-	    fputc('\n', fp);
-	}
-
-	fputs("e\n", fp);
-
-	x[1] += (spec->lines[i].ncols - 1) * spec->nobs;
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    return miss;
-}
-
-/* ship out a plot struct, to gnuplot or file */
-
-int go_gnuplot (GPT_SPEC *spec, char *fname)
-{
-    FILE *fp = NULL;
-    int dump = 0;
-    int err = 0, miss;
-    char termstr[72];
-
-    dump = get_termstr(spec, termstr);
-
-    if (dump) {  
-	/* dump of gnuplot commands to named file */
-	if (fname == NULL) {
-	    return 1;  /* impossible */
-	}
-	fp = gretl_fopen(fname, "w");
-	if (fp == NULL) {
-	    return 1;
-	}
-    } else {     
-	/* output to gnuplot, for screen or other "term" */
-	if (spec->fp == NULL) {
-	    fp = gretl_fopen(gretl_plotfile(), "w");
-	}
-	if (fp == NULL) {
-	    return 1;
-	}
-
-	if (fname != NULL) { 
-#ifdef ENABLE_NLS
-	    fprint_gnuplot_encoding(termstr, fp);
-#endif 
-	    /* file, not screen display */
-	    fprintf(fp, "set term %s\n", termstr);
-	    fprintf(fp, "set output '%s'\n", fname);
-	}
-    }
-
-    if (strstr(termstr, "png")) {
-	set_png_output(spec);
-    }
-
-    miss = print_plotspec_details(spec, fp);
-    fflush(fp);
-
-    if (dump) {
-	/* we're finished */
-	fclose(fp);
-    }
-    
-    if (!dump) {
-	char plotcmd[MAXLEN];
-#ifdef WIN32
-	int winshow = 0;
-
-	if (fname == NULL) { 
-	    /* sending plot to screen */
-	    fputs("pause -1\n", fp);
-	    winshow = 1;
-	} 
-#endif
-	fclose(fp);
-	spec->fp = NULL;
-	sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
-#ifdef WIN32
-	if (winshow) {
-	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
-	} else {
-	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-	}
-#else
-	if (gretl_spawn(plotcmd)) err = 1;
-#endif 
-    }
-
-    if (miss) {
-	err = 2;
-    }
-
-    return err;
 }
 
 int 

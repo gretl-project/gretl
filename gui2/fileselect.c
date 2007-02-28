@@ -22,6 +22,7 @@
 
 #include "gretl.h"
 #include "boxplots.h"
+#include "plotspec.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "textbuf.h"
@@ -487,19 +488,17 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (SAVE_DATA_ACTION(action)) {
 	do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
-	int err = 0;
 	GPT_SPEC *plot = (GPT_SPEC *) data;
+	int err = 0;
 
-	err = go_gnuplot(plot, fname);
+	err = plotspec_ship_out(plot, fname);
 	if (err == 1) {
 	    errbox(_("gnuplot command failed"));
 	} else if (err == 2) {
 	    infobox(_("There were missing observations"));
 	}
     } else if (action == SAVE_THIS_GRAPH) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-
-	save_this_graph(plot, fname);
+	save_this_graph(data, fname);
     } else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 

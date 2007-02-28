@@ -51,7 +51,9 @@ void session_menu_state (gboolean s);
 
 int real_add_text_to_session (PRN *prn, const char *tname);
 
-void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
+int add_graph_to_session (char *fname, char *fullname);
+
+void add_boxplot_to_session (void);
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type);

@@ -27,6 +27,7 @@
 #define NLOOKUPENTRY 4
 
 #include "gretl.h"
+#include "calculator.h"
 #include "dlgutils.h"
 #include "gpt_control.h"
 
@@ -55,16 +56,6 @@ struct test_t_ {
 
 struct lookup_t_ {
     GtkWidget *entry[NLOOKUPENTRY];
-};
-
-enum {
-    NORMAL_DIST,
-    T_DIST,
-    CHISQ_DIST,
-    F_DIST,
-    DW_DIST,
-    BINOMIAL_DIST,
-    POISSON_DIST
 };
 
 enum {
@@ -409,7 +400,7 @@ static void print_pv (PRN *prn, double p1, double p2)
 	    p1, p2);
 }
 
-static gchar *dist_graph_title (int dist, double x, int df1, int df2)
+gchar *dist_graph_title (int dist, double x, int df1, int df2)
 {
     gchar *s = NULL;
 
@@ -438,7 +429,7 @@ static gchar *dist_graph_title (int dist, double x, int df1, int df2)
     return s;
 }
 
-static gchar *dist_marker_line (int dist, int df1, int df2)
+gchar *dist_marker_line (int dist, int df1, int df2)
 {
     gchar *s = NULL;
 
@@ -455,14 +446,6 @@ static gchar *dist_marker_line (int dist, int df1, int df2)
     return s;
 }
 
-enum {
-    F_BINV,
-    F_CHI,
-    F_LOG2,
-    F_BIGCHI,
-    F_F
-};
-
 static const char *formulae[] = {
     "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))",
     "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)",
@@ -472,7 +455,16 @@ static const char *formulae[] = {
     "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
 };
 
-static double dist_xmax (int d, int df1, int df2)
+const char *dist_formula (FormulaCode c)
+{
+    if (c <= F_F) {
+	return formulae[c];
+    }
+
+    return "";
+}
+
+double dist_xmax (int d, int df1, int df2)
 {
     double a = 0.005;
 
@@ -600,159 +592,6 @@ static void htest_graph (int d, double x, int df1, int df2)
     } else {
 	register_graph();
     }
-}
-
-static int get_dist_and_df (const char *s, int *d, int *m, int *n)
-{
-    int ret = 1;
-
-    if (!strncmp(s, "# standard", 10)) {
-	*d = NORMAL_DIST;
-    } else if (sscanf(s, "# t(%d)", m) == 1) {
-	*d = T_DIST;
-    } else if (sscanf(s, "# chi-square(%d)", m) == 1) {
-	*d = CHISQ_DIST;
-    } else if (sscanf(s, "# F(%d,%d)", m, n) == 2) {
-	*d = F_DIST;
-    } else {
-	ret = 0;
-    }
-
-    return ret;
-}
-
-static void revise_dist_plotspec (png_plot *plot, int d, int df1, int df2)
-{
-    GPT_SPEC *spec = plot_get_spec(plot);
-    gchar *title = NULL;
-    const char *s;
-    char dfstr[16];
-    int got[5] = {0};
-    int bigchi = 0;
-    int m, n, prevd, dfmax = 0;
-    int i, err = 0;
-
-    for (i=0; i<spec->n_literal; i++) {
-	int dfid;
-
-	s = spec->literal[i];
-	m = n = 0;
-	prevd = -1;
-	if (*s == '#') {
-	    if (get_dist_and_df(s, &prevd, &m, &n)) {
-		if (prevd == d && m == df1 && n == df2) {
-		    /* line is already present */
-		    return;
-		}
-		if (prevd == CHISQ_DIST && m > 69) {
-		    got[4] += 1;
-		} else {
-		    got[prevd] += 1;
-		}
-	    }
-	} else if (sscanf(s, "df%d=", &dfid) == 1) {
-	    if (dfid > dfmax) {
-		dfmax = dfid;
-	    }
-	}
-    }
-
-    /* adjust x-range if needed */
-    if (d == CHISQ_DIST || d == F_DIST) {
-	double x = dist_xmax(d, df1, df2);
-
-	if (x > spec->range[0][1]) {
-	    spec->range[0][1] = x;
-	}
-    }
-
-    /* add comment for current plot */
-    title = dist_marker_line(d, df1, df2);
-    err = strings_array_add(&spec->literal, &spec->n_literal, title);
-    g_free(title);
-
-    if (!err) {
-	/* add df line(s) if needed */
-	m = dfmax + 1;
-	if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
-	    sprintf(dfstr, "df%d=%.1f", m, (double) df1);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
-	}
-	if (d == F_DIST && !err) {
-	    sprintf(dfstr, "df%d=%.1f", m + 1, (double) df2);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
-	}
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }  
-
-    if (d == CHISQ_DIST && df1 > 69) {
-	bigchi = 1;
-    }
-
-    /* add any required formula lines */
-
-    if (d == T_DIST) {
-	if (!got[T_DIST] && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    formulae[F_BINV]);
-	}
-    } else if (d == CHISQ_DIST) {
-	if (bigchi && !got[4]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    formulae[F_LOG2]);
-	    if (!err) {
-		err = strings_array_add(&spec->literal, &spec->n_literal, 
-					formulae[F_BIGCHI]);
-	    }
-	} else if (!bigchi && !got[CHISQ_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    formulae[F_CHI]);
-	}
-    } else if (d == F_DIST) {
-	if (!got[F_DIST] && !got[T_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    formulae[F_BINV]);
-	} 
-	if (!err && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    formulae[F_F]);
-	}
-    }
-
-    if (!err) {
-	/* add new plot line */
-	err = plotspec_add_line(spec);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
-    n = spec->n_lines - 1;
-
-    strcpy(spec->lines[n].scale, "NA");
-    strcpy(spec->lines[n].style, "lines");
-    title = dist_graph_title(d, NADBL, df1, df2);
-    strcpy(spec->lines[n].title, title);
-    g_free(title);
-
-    if (d == NORMAL_DIST) {
-	strcpy(spec->lines[n].formula, "(1/(sqrt(2*pi))*exp(-(x)**2/2))");
-    } else if (d == T_DIST) {
-	sprintf(spec->lines[n].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
-		"**(-0.5*(df%d+1.0))", m, m, m, m);
-    } else if (d == CHISQ_DIST) {
-	sprintf(spec->lines[n].formula, "%s(x,df%d)", (bigchi)? "bigchi" : "chi", m);
-    } else if (d == F_DIST) {
-	sprintf(spec->lines[n].formula, "f(x,df%d,df%d)", m, m + 1);
-    }
-
-    redisplay_edited_png(plot);
 }
 
 static void h_test (GtkWidget *w, test_t *test)
@@ -1159,7 +998,7 @@ static void dist_graph (GtkWidget *w, CalcChild *child)
     }
 
     if (child->plot != NULL) {
-	revise_dist_plotspec(child->plot, d, m, n);
+	revise_distribution_plotspec(child->plot, d, m, n);
     } else {
 	htest_graph(d, NADBL, m, n);
     } 

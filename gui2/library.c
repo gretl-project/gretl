@@ -137,7 +137,7 @@ void register_graph (void)
 {
     const char *msg;
 
-    gnuplot_show_png(gretl_plotfile(), NULL, 0);
+    gnuplot_show_png_by_name(gretl_plotfile());
 
     msg = gretl_errmsg_get();
     if (msg != NULL && *msg != '\0') {
@@ -2895,7 +2895,7 @@ int do_vector_model (selector *sr)
     return err;
 }
 
-void do_graph_model (GPT_SPEC *spec)
+void do_graph_model (const int *list)
 {
     char *buf;
     PRN *prn;
@@ -2903,11 +2903,11 @@ void do_graph_model (GPT_SPEC *spec)
     char title[26];
     int err = 0;
 
-    if (spec == NULL || spec->reglist == NULL) {
+    if (list == NULL) {
 	return;
     }
 
-    buf = gretl_list_to_string(spec->reglist);
+    buf = gretl_list_to_string(list);
     if (buf == NULL) {
 	return;
     }

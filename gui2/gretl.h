@@ -128,6 +128,5 @@ int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (gpointer data);
-void stats_calculator (gpointer p, guint code, GtkWidget *w);
 
 #endif /* GRETL_H */
