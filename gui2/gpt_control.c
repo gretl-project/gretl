@@ -353,8 +353,8 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 
     fclose(fsrc);
     fclose(ftmp);
-
     remove(fname);
+
     return rename(temp, fname);
 }
 
@@ -756,6 +756,19 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     return err;
 }
 
+static void capture_varname (char *targ, const char *src)
+{
+    int n;
+
+    *targ = '\0';
+    if (*src == '\'') src++;
+    strncat(targ, src, MAXDISP - 1);
+    n = strlen(targ);
+    if (targ[n-1] == '\'') {
+	targ[n-1] = '\0';
+    }
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 {
     char variable[16] = {0};
@@ -792,8 +805,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	strcpy(spec->titles[0], value);
     } else if (!strcmp(variable, "xlabel")) {
 	strcpy(spec->titles[1], value);
+	capture_varname(spec->xvarname, value);
     } else if (!strcmp(variable, "ylabel")) {
 	strcpy(spec->titles[2], value);
+	capture_varname(spec->yvarname, value);
     } else if (!strcmp(variable, "y2label")) {
 	strcpy(spec->titles[3], value);
     } else if (!strcmp(variable, "key")) {
@@ -891,26 +906,58 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
     return n;
 }
 
-static int grab_ols_coeffs (GPT_SPEC *spec, const char *s)
+static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
 {
     int n, err = 0;
 
-    spec->b_ols = gretl_column_vector_alloc(2);
-    if (spec->b_ols == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_push_c_numeric_locale();
-	n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
-		   &spec->b_ols->val[1]);
-	gretl_pop_c_numeric_locale();
-	if (n != 2) {
-	    err = E_DATA;
+    if (spec->fit == PLOT_FIT_OLS) {
+	spec->b_ols = gretl_column_vector_alloc(2);
+	if (spec->b_ols == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_push_c_numeric_locale();
+	    n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
+		       &spec->b_ols->val[1]);
+	    gretl_pop_c_numeric_locale();
+	    if (n != 2) {
+		gretl_matrix_free(spec->b_ols);
+		spec->b_ols = NULL;
+		err = E_DATA;
+	    }
 	}
-    }
+    } else if (spec->fit == PLOT_FIT_INVERSE) {
+	spec->b_inv = gretl_column_vector_alloc(2);
+	if (spec->b_inv == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_push_c_numeric_locale();
+	    n = sscanf(s, "%lf + %lf", &spec->b_inv->val[0],
+		       &spec->b_inv->val[1]);
+	    gretl_pop_c_numeric_locale();
+	    if (n != 2) {
+		gretl_matrix_free(spec->b_inv);
+		spec->b_inv = NULL;
+		err = E_DATA;
+	    }
+	}
+    } else if (spec->fit == PLOT_FIT_QUADRATIC) {
+	spec->b_quad = gretl_column_vector_alloc(3);
+	if (spec->b_quad == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_push_c_numeric_locale();
+	    n = sscanf(s, "%lf + %lf*X + %lf", &spec->b_quad->val[0],
+		       &spec->b_quad->val[1], &spec->b_quad->val[2]);
+	    gretl_pop_c_numeric_locale();
+	    if (n != 3) {
+		gretl_matrix_free(spec->b_quad);
+		spec->b_quad = NULL;
+		err = E_DATA;
+	    }
+	}
+    }	
 
     if (err) {
-	gretl_matrix_free(spec->b_ols);
-	spec->b_ols = NULL;
 	spec->flags &= ~GPT_AUTO_FIT;
     }
 
@@ -955,8 +1002,8 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
 	}
 	if (p != NULL) {
 	    strncat(spec->lines[i].formula, s, p - s);
-	    if (i == 1 && spec->fit == PLOT_FIT_OLS) {
-		grab_ols_coeffs(spec, spec->lines[i].formula);
+	    if (i == 1 && spec->flags & GPT_AUTO_FIT) {
+		grab_fit_coeffs(spec, spec->lines[i].formula);
 	    }
 	}
     }
@@ -1007,29 +1054,23 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
 	spec->lines[1].ncols == 0 &&
 	spec->n_markers > 0) {
 	spec->flags |= GPT_ALL_MARKERS_OK;
-#if GPDEBUG > 1
-	fprintf(stderr, "set GPT_ALL_MARKERS_OK\n");
-#endif
     } else {
 	spec->flags &= ~GPT_ALL_MARKERS_OK;
-#if GPDEBUG > 1
-	fprintf(stderr, "unset GPT_ALL_MARKERS_OK\n");
-#endif
     }
 }
 
 static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 {
-    if (spec->n_lines == 2 && spec->fit == PLOT_FIT_OLS) {
-	*spec->titles[0] = '\0';
+    if (spec->n_lines == 2 && spec->fit != PLOT_FIT_NONE) {
+	; /* already OK */
     } else if (spec->data != NULL &&
 	spec->code == PLOT_REGULAR &&
 	spec->n_lines == 1 &&
 	spec->lines[0].ncols == 2 &&
 	!(spec->flags & (GPT_IMPULSES|GPT_LINES|GPT_RESIDS|GPT_TS))) {
-	spec->flags |= PLOT_FIT_NONE;
+	spec->fit = PLOT_FIT_NONE;
     } else {
-	spec->flags |= PLOT_FIT_NA;
+	spec->fit = PLOT_FIT_NA;
     }
 }
 
@@ -1109,6 +1150,21 @@ static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
     }
 
     return err;
+}
+
+static FitType recognize_fit_string (const char *s)
+{
+    if (strstr(s, "OLS")) {
+	return PLOT_FIT_OLS;
+    } else if (strstr(s, "quadratic")) {
+	return PLOT_FIT_QUADRATIC;
+    } else if (strstr(s, "inverse")) {
+	return PLOT_FIT_INVERSE;
+    } else if (strstr(s, "loess")) {
+	return PLOT_FIT_LOESS;
+    } else {
+	return PLOT_FIT_NONE;
+    }
 }
 
 #define plot_needs_obs(c) (c != PLOT_ELLIPSE && c != PLOT_PROB_DIST)
@@ -1224,9 +1280,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 
-	if (strstr(gpline, "automatic fitted")) {
+	if (strstr(gpline, "automatic fit")) {
 	    spec->flags |= GPT_AUTO_FIT;
-	    spec->fit = PLOT_FIT_OLS;
+	    spec->fit = recognize_fit_string(gpline);
 	    continue;
 	}
 
@@ -2055,7 +2111,8 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (!plot_has_regression_list(plot) &&
+	if ((!plot_has_regression_list(plot) || 
+	     plot->spec->fit != PLOT_FIT_OLS) &&
 	    !strcmp(plot_items[i], "OLS estimates")) {
 	    i++;
 	    continue;

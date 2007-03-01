@@ -54,6 +54,8 @@ typedef struct {
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
+    char xvarname[MAXDISP];    /* name of x variable */
+    char yvarname[MAXDISP];    /* name of y variable */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     double range[3][2];        /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
@@ -73,6 +75,7 @@ typedef struct {
     int *reglist;              /* regression list for X-Y plot with fitted line */
     gretl_matrix *b_ols;       /* coeffs for linear fit */
     gretl_matrix *b_quad;      /* coeffs for quadratic fit */
+    gretl_matrix *b_inv;       /* coeffs for inverse fit */
     char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;

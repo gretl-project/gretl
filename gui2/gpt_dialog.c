@@ -136,35 +136,79 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     }
 }
 
+static FitType fit_type_from_string (const char *s)
+{
+    FitType f = PLOT_FIT_NONE;
+
+    if (s != NULL && *s != '\0') {
+	if (strstr(s, "inear")) {
+	    f = PLOT_FIT_OLS;
+	} else if (strstr(s, "uadratic")) {
+	    f = PLOT_FIT_QUADRATIC;
+	} else if (strstr(s, "nverse")) {
+	    f = PLOT_FIT_INVERSE;
+	} else if (strstr(s, "arametric")) {
+	    f = PLOT_FIT_LOESS;
+	} 
+    }
+
+    return f;
+}
+
 static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
 {
-    FitType fit = PLOT_FIT_NONE;
+    FitType f = PLOT_FIT_NONE;
     const gchar *wstr;
     
     g_return_if_fail(GTK_IS_ENTRY(w));
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
+    f = fit_type_from_string(wstr);
 
-    if (wstr != NULL && *wstr != '\0') {
-	if (strstr(wstr, "inear")) {
-	    fit = PLOT_FIT_OLS;
-	} else if (strstr(wstr, "uadratic")) {
-	    fit = PLOT_FIT_QUADRATIC;
-	} else if (strstr(wstr, "arametric")) {
-	    fit = PLOT_FIT_LOESS;
-	} else {
-	    fit = PLOT_FIT_NONE;
-	}
-    }
-
-    if (fit == PLOT_FIT_OLS || fit == PLOT_FIT_QUADRATIC) {
-	plotspec_add_fit(spec, fit);
+    if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
+	f == PLOT_FIT_INVERSE || f == PLOT_FIT_LOESS) {
+	plotspec_add_fit(spec, f);
 	spec->flags &= ~GPT_FIT_HIDDEN;
-    } else if (fit == PLOT_FIT_NONE) {
+    } else if (f == PLOT_FIT_NONE) {
 	if (spec->n_lines == 2) {
 	    spec->flags |= GPT_FIT_HIDDEN;
 	}
-	spec->fit = fit;
+	spec->fit = f;
     }
+}
+
+static gboolean fit_type_changed (GtkEditable *entry, GPT_SPEC *spec)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(entry));
+    const char *s1 = spec->yvarname;
+    const char *s2 = spec->xvarname;
+    char title[128];
+    FitType f;
+
+    if (*s1 == '\0' || *s2 == '\0') {
+	return FALSE;
+    }
+
+    f = fit_type_from_string(s);
+
+    *title = '\0';
+
+    if (f == PLOT_FIT_OLS) {
+	sprintf(title, _("%s versus %s (with least squares fit)"),
+		s1, s2);
+    } else if (f == PLOT_FIT_QUADRATIC) {
+	sprintf(title, _("%s versus %s (with quadratic fit)"),
+		s1, s2);
+    } else if (f == PLOT_FIT_INVERSE) {
+	sprintf(title, _("%s versus %s (with inverse fit)"),
+		s1, s2);
+    } else if (f == PLOT_FIT_LOESS) {
+	sprintf(title, _("%s versus %s (with loess fit)"),
+		s1, s2);
+    }
+
+    gtk_entry_set_text(GTK_ENTRY(gpt_titles[0].widget), title);
+    
+    return FALSE;
 }
 
 /* take a double (which might be NA) and format it for
@@ -753,13 +797,14 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(keycombo);
 
     /* choice of fitted line type, if appropriate */
-    if (!(spec->fit & PLOT_FIT_NA)) {
+    if (spec->fit != PLOT_FIT_NA) {
 	GList *fitlist = NULL;
 	gchar *fittype[] = {
 	    "none",
 	    "linear: y = a + b*x",
 	    "quadratic: y = a + b*x + c*x^2",
-	    "lowess (nonparametric local fit)",
+	    "inverse: y = a + b*(1/x)",
+	    "loess (nonparametric local fit)",
 	    NULL
 	};
 
@@ -780,6 +825,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(fitcombo)->entry), 
 			   fittype[spec->fit]);
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(fitcombo)->entry), FALSE);
+	g_signal_connect(G_OBJECT(GTK_COMBO(fitcombo)->entry), "changed",
+			 G_CALLBACK(fit_type_changed), spec);
 	gtk_widget_show(fitcombo);
     } else {
 	fitcombo = NULL;

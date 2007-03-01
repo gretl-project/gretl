@@ -32,5 +32,11 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
+int sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int **order,
+		     char **labels);
+
+gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
+			 int d, double q, gretlopt opt, int *err);
+
 #endif /* NONPARAM_H */
 

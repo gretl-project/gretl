@@ -885,35 +885,56 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     return 1;
 }
 
-/* below: robust locally weighted regression */
-
 struct pair_sorter {
     double xi;
     double yi;
     int i;
+    char *s;
 };
 
-static struct pair_sorter *
-sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int *err)
+/**
+ * sort_pairs_by_x:
+ * @x: data vector by which to sort.
+ * @y: data vector. 
+ * @order: location to recieve sort order, or %NULL.
+ * @labels: array of strings to be sorted along with
+ * the data, or %NULL.
+ *
+ * Orders the elements of @x and @y by increasing value
+ * of @x.  Optionally, returns in @order an array of
+ * integers representing the order in which the original
+ * observations appear in the sorted vectors.  Also
+ * optionally sorts an accomanying array of observation
+ * labels.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int **order,
+		     char **labels)
 {
     struct pair_sorter *s = NULL;
     int t, T = gretl_vector_get_length(x);
+    int err = 0;
 
-    if (gretl_vector_get_length(y) != T) {
-	*err = E_DATA;
-	return NULL;
+    if (T == 0 || gretl_vector_get_length(y) != T) {
+	return E_NONCONF;
     }
 
     s = malloc(T * sizeof *s);
     if (s == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	return E_ALLOC;
     }
 
     for (t=0; t<T; t++) {
 	s[t].xi = x->val[t];
 	s[t].yi = y->val[t];
 	s[t].i = t;
+	if (labels != NULL) {
+	    s[t].s = labels[t];
+	} else {
+	    s[t].s = NULL;
+	}
     }
 
     qsort(s, T, sizeof *s, gretl_compare_doubles);
@@ -921,9 +942,27 @@ sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int *err)
     for (t=0; t<T; t++) {
 	x->val[t] = s[t].xi;
 	y->val[t] = s[t].yi;
+	if (labels != NULL) {
+	    labels[t] = s[t].s;
+	} 	
     }  
 
-    return s;
+    if (order != NULL) {
+	int *idx = malloc(T * sizeof *idx);
+
+	if (idx == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (t=0; t<T; t++) {
+		idx[t] = s[t].i;
+	    }
+	    *order = idx;
+	}
+    }
+
+    free(s);
+
+    return err;
 }
 
 static int data_pre_sorted (const gretl_matrix *x)
@@ -939,7 +978,7 @@ static int data_pre_sorted (const gretl_matrix *x)
     return 1;
 }
 
-/* revised weigts based on bisquare function (Cleveland) */
+/* revised weights based on bisquare function (Cleveland) */
 
 static void robust_weights (gretl_matrix *ei, const gretl_matrix *X, 
 			    const gretl_matrix *y, const gretl_matrix *bj, 
@@ -995,14 +1034,33 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
     }
 }
 
-/* Based on William Cleveland, "Robust Locally Weighted Regression
-   and Smoothing Scatterplots", Journal of the American Statistical
-   Association, Vol. 74 (1979), pp. 829-836.
-*/
+/**
+ * loess_fit:
+ * @x: x-axis variable (must be pre-sorted).
+ * @y: response variable.
+ * @d: order for polynomial fit (0 <= d <= 2).
+ * @q: bandwidth (0 < q < 1).
+ * @opt: give %OPT_R for robust variant (with re-weighting based on
+ * the first-stage residuals).
+ * @err: location to recieve error code.
+ *
+ * Computes loess estimates based on William Cleveland, "Robust Locally 
+ * Weighted Regression and Smoothing Scatterplots", Journal of the 
+ * American Statistical Association, Vol. 74 (1979), pp. 829-836.
+ * Generally one expects that @d = 1 and @q is in the neighborhood
+ * of 0.5.
+ *
+ * The x,y pairs must be pre-sorted by increasing value of x; an
+ * error is flagged if this is not the case.  See also
+ * sort_pairs_by_x().
+ * 
+ * Returns: allocated vector containing the loess fitted values, or
+ * %NULL on failure (in which case @err will contain a non-zero
+ * error code).
+ */
 
-gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
-			 int d, double q, gretlopt opt, 
-			 int *err)
+gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
+			 int d, double q, gretlopt opt, int *err)
 {
     gretl_matrix *Xr = NULL;
     gretl_matrix *yr = NULL;
@@ -1011,8 +1069,6 @@ gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
     gretl_matrix *yh = NULL;
     gretl_matrix *ei = NULL;
     gretl_matrix *wi = NULL;
-
-    struct pair_sorter *s = NULL;
 
     int T = gretl_vector_get_length(y);
     double xi, d1, d2, dmax;
@@ -1026,12 +1082,9 @@ gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
     }
 
     if (!data_pre_sorted(x)) {
-	/* we keep the sorter alive here so that we can stick the
-	   fitted values into the right observation slots */
-	s = sort_pairs_by_x(x, y, err);
-	if (*err) {
-	    goto bailout;
-	}
+	strcpy(gretl_errmsg, "loess: the data must be sorted by x");
+	*err = E_DATA;
+	return NULL;
     }
 
     /* check the supplied q value */
@@ -1133,13 +1186,11 @@ gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
 	}	
 
 	if (!*err) {
-	    int p = (s != NULL)? s[i].i : i;
-
-	    yh->val[p] = bj->val[0];
+	    yh->val[i] = bj->val[0];
 	    if (d > 0) {
-		yh->val[p] += bj->val[1] * x->val[i];
+		yh->val[i] += bj->val[1] * x->val[i];
 		if (d == 2) {
-		    yh->val[p] += bj->val[2] * x->val[i] * x->val[i];
+		    yh->val[i] += bj->val[2] * x->val[i] * x->val[i];
 		}
 	    }
 	}
@@ -1159,11 +1210,6 @@ gretl_matrix *loess_fit (gretl_matrix *x, gretl_matrix *y,
 	yh = NULL;
     } 
 
-    if (s != NULL) {
-	free(s);
-    }
-
     return yh;
 }
-
 

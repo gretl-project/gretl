@@ -49,13 +49,13 @@
 
 
 static char gnuplot_path[MAXLEN];
-static const char *auto_fit_string = "# plot includes automatic fitted line\n";
 static int gp_small_font_size;
 
 typedef struct gnuplot_info_ gnuplot_info;
 
 struct gnuplot_info_ {
     GptFlags flags;
+    FitType fit;
     int *list;
     int t1;
     int t2;
@@ -239,6 +239,13 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
 {
     double xt;
     int i;
+
+    if (x == NULL && list[0] == 2) {
+	/* skip missing obs for simple scatterplot */
+	if (na(Z[list[1]][t]) || na(Z[list[2]][t])) {
+	    return;
+	}
+    }
 
     if (x != NULL) {
 	xt = x[t] + offset;
@@ -847,8 +854,8 @@ static int recode_gnuplot_file (const char *fname)
 
 int gnuplot_make_graph (void)
 {
-    int err = 0;
     char plotcmd[MAXLEN];
+    int err = 0;
 
 #ifdef ENABLE_NLS  
     if (use_latin_2() && gnuplot_has_ttf(0)) {
@@ -1009,6 +1016,19 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
     return err;
 }
 
+static void print_auto_fit_string (gnuplot_info *gi)
+{
+    if (gi->fit == PLOT_FIT_OLS) {
+	fputs("# plot includes automatic fit: OLS\n", gi->fp);
+    } else if (gi->fit == PLOT_FIT_QUADRATIC) {
+	fputs("# plot includes automatic fit: quadratic\n", gi->fp);
+    } else if (gi->fit == PLOT_FIT_INVERSE) {
+	fputs("# plot includes automatic fit: inverse\n", gi->fp);
+    } else if (gi->fit == PLOT_FIT_LOESS) {
+	fputs("# plot includes automatic fit: loess\n", gi->fp);
+    }
+}
+
 static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
@@ -1055,6 +1075,7 @@ static int get_fitted_line (gnuplot_info *gi,
 		    b->val[0], b->val[1], title);
 	    gretl_pop_c_numeric_locale();
 	    gi->flags |= GPT_AUTO_FIT;
+	    gi->fit = PLOT_FIT_OLS;
 	}
     }
 
@@ -1569,7 +1590,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     if (!use_impulses(&gi) && !(flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(flags & GPT_RESIDS)) {
 	get_fitted_line(&gi, Z, pdinfo, fit_line);
-	if (gi.flags & GPT_AUTO_FIT) {
+	if (gi.fit == PLOT_FIT_OLS) {
 	    pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	    pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
 	}
@@ -1628,7 +1649,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     if (list[0] == 2) {
 	/* only two variables */
 	if (gi.flags & GPT_AUTO_FIT) {
-	    fputs(auto_fit_string, fp);
+	    print_auto_fit_string(&gi);
 	    if (flags & GPT_FA) {
 		make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[1]), 
 			    series_name(pdinfo, list[2]));
@@ -3150,7 +3171,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 
 int is_auto_fit_string (const char *s)
 {
-    if (strstr(s, "automatic fitted")) return 1;
+    if (strstr(s, "automatic fit")) return 1;
     if (strstr(s, I_("with least squares fit"))) return 1;
     return 0;
 }

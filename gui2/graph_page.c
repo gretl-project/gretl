@@ -612,6 +612,10 @@ int display_graph_page (void)
 
     gpage_cleanup();
 
+    if (err) {
+	gui_errmsg(err);
+    }
+
     return err;
 }
 

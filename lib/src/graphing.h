@@ -86,6 +86,7 @@ typedef enum {
     PLOT_FIT_NONE,
     PLOT_FIT_OLS,
     PLOT_FIT_QUADRATIC,
+    PLOT_FIT_INVERSE,
     PLOT_FIT_LOESS,
     PLOT_FIT_NA       /* fit option not applicable */
 } FitType;

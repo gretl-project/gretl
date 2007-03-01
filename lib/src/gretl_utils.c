@@ -1298,6 +1298,7 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "stderr: '%s'\n", errout);
 	if (!font_not_found(errout)) {
 	    strcpy(gretl_errmsg, errout);
+	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg);
 	    ret = 1;
 	}
     } else if (status != 0) {

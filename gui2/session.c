@@ -1414,31 +1414,41 @@ static char *model_cmd_str (MODEL *pmod)
 
 static gchar *graph_str (SESSION_GRAPH *graph)
 {
+    char tmp[MAXLEN];
     FILE *fp;
     gchar *buf = NULL;
 
-    fp = gretl_fopen(graph->fname, "r");
+    session_file_make_path(tmp, graph->fname);
+    fp = gretl_fopen(tmp, "r");
 
     if (fp != NULL) {
-	char xlabel[24], ylabel[24], line[48];
+	char line[128], title[64];
+	char xlabel[24], ylabel[24];
+	int gottitle = 0;
 	int gotxy = 0;
 
-	while (fgets(line, 47, fp) && gotxy < 2) {
-	    if (strstr(line, "# timeseries")) {
+	while (fgets(line, sizeof line, fp)) {
+	    if (strstr(line, "# timeseries") || strstr(line, "# frequency") ||
+		!strncmp(line, "plot", 4)) {
 		break;
-	    } else if (sscanf(line, "set xlabel %23s", xlabel) == 1) {
+	    } else if (sscanf(line, "set title '%63[^']", title) == 1) {
+		gottitle = 1;
+		break;
+	    } else if (sscanf(line, "set xlabel '%23[^']", xlabel) == 1) {
 		gotxy++;
-	    } else if (sscanf(line, "set ylabel %23s", ylabel) == 1) {
+	    } else if (sscanf(line, "set ylabel '%23[^']", ylabel) == 1) {
 		gotxy++;
-	    }
+	    } 
 	}
-	if (gotxy == 2) {
-	    char *tmp = 
-		g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 
-	    if (tmp != NULL) {
-		buf = my_locale_to_utf8(tmp);
-		free(tmp);
+	if (gottitle) {
+	    buf = my_locale_to_utf8(title);
+	} else if (gotxy == 2) {
+	    char *s = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
+
+	    if (s != NULL) {
+		buf = my_locale_to_utf8(s);
+		free(s);
 	    }
 	}
 
