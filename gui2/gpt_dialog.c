@@ -55,7 +55,6 @@ static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *fitcombo;
 static GtkWidget *termcombo;
-static GtkWidget *fitline_check;
 static GtkWidget *border_check;
 static GtkWidget *markers_check;
 static GtkWidget *y2_check;
@@ -159,7 +158,11 @@ static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
 
     if (fit == PLOT_FIT_OLS || fit == PLOT_FIT_QUADRATIC) {
 	plotspec_add_fit(spec, fit);
+	spec->flags &= ~GPT_FIT_HIDDEN;
     } else if (fit == PLOT_FIT_NONE) {
+	if (spec->n_lines == 2) {
+	    spec->flags |= GPT_FIT_HIDDEN;
+	}
 	spec->fit = fit;
     }
 }
@@ -309,10 +312,6 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     entry_to_gp_string(GTK_COMBO(keycombo)->entry, spec->keyspec, 
 		       sizeof spec->keyspec);
 
-    if (fitcombo != NULL) {
-	fittype_from_entry(GTK_COMBO(fitcombo)->entry, spec);
-    }
-
     spec->flags &= ~GPT_Y2AXIS;
 
     if (y2_check != NULL) {
@@ -398,14 +397,6 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     } 
 
-    if (!err && fitline_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(fitline_check)->active) {
-	    spec->flags |= GPT_FIT_HIDDEN;
-	} else {
-	    spec->flags &= ~GPT_FIT_HIDDEN;
-	}
-    }
-
     if (!err && markers_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(markers_check)->active) {
 	    free(spec->labeled);
@@ -431,6 +422,10 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	    }
 	    set_gretl_png_font(pngfont, &paths);
 	}
+    }
+
+    if (fitcombo != NULL) {
+	fittype_from_entry(GTK_COMBO(fitcombo)->entry, spec);
     }
 
     if (!err) {
@@ -816,26 +811,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			 G_CALLBACK(toggle_axis_selection), spec);
 	gtk_widget_show(y2_check);
     }
-
-#if 0
-    /* give option of removing an auto-fitted line */
-    if (spec->flags & GPT_AUTO_FIT) { 
-	table_add_row(tbl, &rows, TAB_MAIN_COLS);
-	fitline_check = gtk_check_button_new_with_label(_("Hide fitted line"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  fitline_check, 0, TAB_MAIN_COLS, 
-				  rows-1, rows);
-	if (spec->flags & GPT_FIT_HIDDEN) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fitline_check),
-					 TRUE);
-	}	
-	gtk_widget_show(fitline_check);
-    } else {
-	fitline_check = NULL;
-    }
-#else
-    fitline_check = NULL;
-#endif
 
     /* give option of showing all case markers */
     if (spec->flags & GPT_ALL_MARKERS_OK) { 

@@ -331,30 +331,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     return 0;
 }
 
-static void plot_print_fitted_line (const GPT_SPEC *spec, FILE *fp)
-{
-    const double *b; 
-    char title[64];
 
-    if (spec->fit == PLOT_FIT_OLS) {
-	b = spec->b_ols->val;
-	sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]));
-	gretl_push_c_numeric_locale();
-	fprintf(fp, "%g + %g*x title '%s' w lines\n", 
-		b[0], b[1], title);
-	gretl_pop_c_numeric_locale();
-    } else if (spec->fit == PLOT_FIT_QUADRATIC) {
-	b = spec->b_quad->val;
-	sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", b[0],
-		(b[1] > 0)? '+' : '-', fabs(b[1]),
-		(b[2] > 0)? '+' : '-', fabs(b[2]));
-	gretl_push_c_numeric_locale();
-	fprintf(fp, "%g + (%g)*x + (%g)*x**2 title '%s' w lines\n", 
-		b[0], b[1], b[2], title);
-	gretl_pop_c_numeric_locale();
-    }	 
-}
 
 static void print_fitted_title (const GPT_SPEC *spec, FILE *fp, int png)
 {
@@ -370,19 +347,23 @@ static void print_fitted_title (const GPT_SPEC *spec, FILE *fp, int png)
 
     if (spec->fit == PLOT_FIT_OLS) {
 	sprintf(title, I_("%s versus %s (with least squares fit)"),
-		s1, s2);
+		s2, s1);
     } else if (spec->fit == PLOT_FIT_QUADRATIC) {
 	sprintf(title, I_("%s versus %s (with quadratic fit)"),
-		s1, s2);
+		s2, s1);
     } else if (spec->fit == PLOT_FIT_LOESS) {
 	sprintf(title, I_("%s versus %s (with lowess fit)"),
-		s1, s2);
+		s2, s1);
     }
 	
     if (*title != '\0') {
 	gp_string(fp, "set title '%s'\n", title, png);
     }
 }
+
+#define show_fit(s) (s->fit == PLOT_FIT_OLS || \
+                     s->fit == PLOT_FIT_QUADRATIC || \
+                     s->fit == PLOT_FIT_LOESS)
 
 int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 {
@@ -394,17 +375,14 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     int any_y2 = 0;
     int miss = 0;
 
-    if (spec->fit == PLOT_FIT_OLS ||
-	spec->fit == PLOT_FIT_QUADRATIC ||
-	spec->fit == PLOT_FIT_LOESS) {
+    if (spec->flags & GPT_FIT_HIDDEN) {
+	n_lines--;
+    }
+
+    if (show_fit(spec)) {
 	print_fitted_title(spec, fp, png);
     } else if (!string_is_blank(spec->titles[0])) {
-	if ((spec->flags & GPT_FIT_HIDDEN) && 
-	    is_auto_fit_string(spec->titles[0])) {
-	    n_lines--;
-	} else {
-	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
-	}
+	gp_string(fp, "set title '%s'\n", spec->titles[0], png);
     }
 
     if (!string_is_blank(spec->titles[1])) {
@@ -737,6 +715,36 @@ int plotspec_ship_out (GPT_SPEC *spec, char *fname)
     return err;
 }
 
+static void set_fitted_line (GPT_SPEC *spec, FitType f)
+{
+    char *formula = spec->lines[1].formula;
+    char *title = spec->lines[1].title;
+    const double *b;
+
+    if (f == PLOT_FIT_OLS) {
+	b = spec->b_ols->val;
+	sprintf(title, "Y = %#.3g %c %#.3gX", b[0],
+		(b[1] > 0)? '+' : '-', fabs(b[1]));
+	gretl_push_c_numeric_locale();
+	sprintf(formula, "%g + %g*x", b[0], b[1]);
+	gretl_pop_c_numeric_locale();
+    } else if (f == PLOT_FIT_QUADRATIC) {
+	b = spec->b_quad->val;
+	sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", b[0],
+		(b[1] > 0)? '+' : '-', fabs(b[1]),
+		(b[2] > 0)? '+' : '-', fabs(b[2]));
+	gretl_push_c_numeric_locale();
+	sprintf(formula, "%g + %g*x + %g*x**2", b[0], b[1], b[2]);
+	gretl_pop_c_numeric_locale();
+    }
+
+    strcpy(spec->lines[1].scale, "NA");
+    strcpy(spec->lines[1].style, "lines");
+    *spec->titles[0] = '\0';
+
+    spec->fit = f;
+}
+
 int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 {
     gretl_matrix *y = NULL;
@@ -746,19 +754,18 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     const double *px;
     int T = spec->okobs;
     int i, t, k;
-    int err;
+    int err = 0;
 
+    if ((f == PLOT_FIT_OLS && spec->b_ols != NULL) ||
+	(f == PLOT_FIT_QUADRATIC && spec->b_quad != NULL)) {
+	/* just activate existing setup */
+	set_fitted_line(spec, f);
+	return 0;
+    }
+	
     if (f == PLOT_FIT_OLS) {
-	if (spec->b_ols != NULL) {
-	    spec->fit = f;
-	    return 0;
-	}
 	k = 2;
     } else if (f == PLOT_FIT_QUADRATIC) {
-	if (spec->b_quad != NULL) {
-	    spec->fit = f;
-	    return 0;
-	}	
 	k = 3;
     } else if (f == PLOT_FIT_LOESS) {
 	k = 1;
@@ -804,6 +811,10 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
 
     err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
 
+    if (!err && spec->n_lines == 1) {
+	err = plotspec_add_line(spec);
+    }
+
     if (!err) {
 	if (f == PLOT_FIT_OLS) {
 	    spec->b_ols = b;
@@ -820,7 +831,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     if (err) {
 	gretl_matrix_free(b);
     } else {
-	spec->fit = f;
+	set_fitted_line(spec, f);
     }
 
     return err;

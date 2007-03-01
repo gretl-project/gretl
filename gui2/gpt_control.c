@@ -893,19 +893,28 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
 
 static int grab_ols_coeffs (GPT_SPEC *spec, const char *s)
 {
-    int n;
+    int n, err = 0;
 
     spec->b_ols = gretl_column_vector_alloc(2);
     if (spec->b_ols == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	gretl_push_c_numeric_locale();
+	n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
+		   &spec->b_ols->val[1]);
+	gretl_pop_c_numeric_locale();
+	if (n != 2) {
+	    err = E_DATA;
+	}
     }
 
-    gretl_push_c_numeric_locale();
-    n = sscanf(s, "%lf + %lf", &spec->b_ols->val[0],
-	       &spec->b_ols->val[1]);
-    gretl_pop_c_numeric_locale();
+    if (err) {
+	gretl_matrix_free(spec->b_ols);
+	spec->b_ols = NULL;
+	spec->flags &= ~GPT_AUTO_FIT;
+    }
 
-    return n != 2;
+    return err;
 }
 
 /* parse the "using..." portion of plot specification for a
@@ -1011,7 +1020,9 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
 
 static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 {
-    if (spec->data != NULL &&
+    if (spec->n_lines == 2 && spec->fit == PLOT_FIT_OLS) {
+	*spec->titles[0] = '\0';
+    } else if (spec->data != NULL &&
 	spec->code == PLOT_REGULAR &&
 	spec->n_lines == 1 &&
 	spec->lines[0].ncols == 2 &&
@@ -1323,7 +1334,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	maybe_set_all_markers_ok(spec);
     }
 
-    if (!err && spec->fit == 0) {
+    if (!err && spec->fit == PLOT_FIT_NONE) {
 	maybe_set_add_fit_ok(spec);
     }
 
