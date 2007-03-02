@@ -1263,6 +1263,7 @@ gp_info_init (gnuplot_info *gi, GptFlags flags, FILE *fp,
     int l0 = list[0];
 
     gi->flags = flags | GPT_TS;
+    gi->fit = PLOT_FIT_NONE;
     gi->t1 = t1;
     gi->t2 = t2;
     gi->xrange = 0.0;
