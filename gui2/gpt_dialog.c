@@ -77,6 +77,15 @@ struct gpt_titles_t gpt_titles[] = {
     { N_("Title for axis"), 3, NULL },
 };
 
+const gchar *fittype_strings[] = {
+    N_("none"),
+    N_("linear: y = a + b*x"),
+    N_("quadratic: y = a + b*x + c*x^2"),
+    N_("inverse: y = a + b*(1/x)"),
+    N_("loess (locally weighted fit)"),
+    NULL
+};
+
 static const char *get_font_filename (const char *showname);
 
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
@@ -139,30 +148,28 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 static FitType fit_type_from_string (const char *s)
 {
     FitType f = PLOT_FIT_NONE;
+    int i;
 
     if (s != NULL && *s != '\0') {
-	if (strstr(s, "inear")) {
-	    f = PLOT_FIT_OLS;
-	} else if (strstr(s, "uadratic")) {
-	    f = PLOT_FIT_QUADRATIC;
-	} else if (strstr(s, "nverse")) {
-	    f = PLOT_FIT_INVERSE;
-	} else if (strstr(s, "arametric")) {
-	    f = PLOT_FIT_LOESS;
-	} 
+	for (i=0; fittype_strings[i] != NULL; i++) {
+	    if (!strcmp(s, _(fittype_strings[i]))) {
+		f = i;
+		break;
+	    }
+	}
     }
 
     return f;
 }
 
-static void fittype_from_entry (GtkWidget *w, GPT_SPEC *spec)
+static void fittype_from_combo (GtkWidget *w, GPT_SPEC *spec)
 {
     FitType f = PLOT_FIT_NONE;
-    const gchar *wstr;
-    
+    const char *s;
+
     g_return_if_fail(GTK_IS_ENTRY(w));
-    wstr = gtk_entry_get_text(GTK_ENTRY(w));
-    f = fit_type_from_string(wstr);
+    s = gtk_entry_get_text(GTK_ENTRY(w));
+    f = fit_type_from_string(s);
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
 	f == PLOT_FIT_INVERSE || f == PLOT_FIT_LOESS) {
@@ -469,7 +476,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (fitcombo != NULL) {
-	fittype_from_entry(GTK_COMBO(fitcombo)->entry, spec);
+	fittype_from_combo(GTK_COMBO(fitcombo)->entry, spec);
     }
 
     if (!err) {
@@ -796,21 +803,14 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show(keycombo);
+    g_list_free(keypos_list);
 
     /* choice of fitted line type, if appropriate */
     if (spec->fit != PLOT_FIT_NA) {
 	GList *fitlist = NULL;
-	gchar *fittype[] = {
-	    "none",
-	    "linear: y = a + b*x",
-	    "quadratic: y = a + b*x + c*x^2",
-	    "inverse: y = a + b*(1/x)",
-	    "loess (nonparametric local fit)",
-	    NULL
-	};
 
-	for (i=0; fittype[i] != NULL; i++) {
-	    fitlist = g_list_append(fitlist, fittype[i]);
+	for (i=0; fittype_strings[i] != NULL; i++) {
+	    fitlist = g_list_append(fitlist, _(fittype_strings[i]));
 	}
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -824,11 +824,12 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 				  fitcombo, 1, TAB_MAIN_COLS, rows-1, rows);
 	gtk_combo_set_popdown_strings(GTK_COMBO(fitcombo), fitlist); 
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(fitcombo)->entry), 
-			   fittype[spec->fit]);
+			   _(fittype_strings[spec->fit]));
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(fitcombo)->entry), FALSE);
 	g_signal_connect(G_OBJECT(GTK_COMBO(fitcombo)->entry), "changed",
 			 G_CALLBACK(fit_type_changed), spec);
 	gtk_widget_show(fitcombo);
+	g_list_free(fitlist);
     } else {
 	fitcombo = NULL;
     }
@@ -926,7 +927,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
-	gtk_widget_show (ttfcombo);
+	gtk_widget_show(ttfcombo);
+	g_list_free(fontnames);
 
 	ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
@@ -1006,8 +1008,9 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     termcombo = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), termcombo, 1, 2, 
 			      tbl_len-1, tbl_len);
-    gtk_combo_set_popdown_strings(GTK_COMBO(termcombo), termlist);   
+    gtk_combo_set_popdown_strings(GTK_COMBO(termcombo), termlist); 
     gtk_widget_show(termcombo);
+    g_list_free(termlist); 
 
     /* button to generate output to file */
     filesavebutton = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
@@ -1033,7 +1036,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     GtkWidget *vbox, *hbox;
     int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
-    GList *plot_types = NULL;
+    GList *stylist = NULL;
     GList *yaxis_loc = NULL;
     int do_scale_axis = 0;
 
@@ -1042,21 +1045,21 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     if (frequency_plot_code(spec->code)) {
-	plot_types = g_list_append(plot_types, "boxes");
+	stylist = g_list_append(stylist, "boxes");
     }
 
     if (spec->flags & GPT_TS) {
-	plot_types = g_list_append(plot_types, "lines");
-	plot_types = g_list_append(plot_types, "points");
+	stylist = g_list_append(stylist, "lines");
+	stylist = g_list_append(stylist, "points");
     } else {
-	plot_types = g_list_append(plot_types, "points");
-	plot_types = g_list_append(plot_types, "lines");
+	stylist = g_list_append(stylist, "points");
+	stylist = g_list_append(stylist, "lines");
     }
 
-    plot_types = g_list_append(plot_types, "linespoints"); 
-    plot_types = g_list_append(plot_types, "impulses");
-    plot_types = g_list_append(plot_types, "dots");
-    plot_types = g_list_append(plot_types, "steps");
+    stylist = g_list_append(stylist, "linespoints"); 
+    stylist = g_list_append(stylist, "impulses");
+    stylist = g_list_append(stylist, "dots");
+    stylist = g_list_append(stylist, "steps");
 
     if (do_scale_axis) {
 	yaxis_loc = g_list_append(yaxis_loc, "left");
@@ -1145,7 +1148,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 			       spec->lines[i].style); 
 	    gtk_widget_set_sensitive(stylecombo[i], FALSE);
 	} else {
-	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), plot_types); 
+	    gtk_combo_set_popdown_strings(GTK_COMBO(stylecombo[i]), stylist); 
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
 			       spec->lines[i].style); 
 	} 
@@ -1190,7 +1193,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
 	    gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
 				(spec->lines[i].yaxis == 1)? "left" : "right");  
-	    gtk_widget_show(yaxiscombo[i]);	
+	    gtk_widget_show(yaxiscombo[i]);
 	}
 
 	/* line-width adjustment */
@@ -1216,6 +1219,12 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
 				  tbl_len-1, tbl_len);
 	gtk_widget_show(hbox);
+    }
+
+    g_list_free(stylist);
+
+    if (yaxis_loc != NULL) {    
+	g_list_free(yaxis_loc);
     }
 }
 
