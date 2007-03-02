@@ -22,7 +22,6 @@
 
 #include "gretl.h"
 #include "boxplots.h"
-#include "plotspec.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "textbuf.h"
@@ -58,8 +57,6 @@
                                i == APPEND_JMULTI)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
-                              i == SAVE_THIS_GRAPH || \
-                              i == SAVE_LAST_GRAPH || \
                               i == SAVE_BOXPLOT_EPS || \
                               i == SAVE_BOXPLOT_PS || \
                               i == SAVE_BOXPLOT_XPM)
@@ -143,15 +140,16 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     return opt;
 }
 
-static const char *get_gp_ext (const char *termtype)
+static const char *get_gp_ext (int ttype)
 {
-    if (!strncmp(termtype, "postscript", 10))    return ".eps";
-    else if (!strcmp(termtype, "PDF"))           return ".pdf";
-    else if (!strcmp(termtype, "fig"))           return ".fig";
-    else if (!strcmp(termtype, "latex"))         return ".tex";
-    else if (!strncmp(termtype, "png", 3))       return ".png";
-    else if (!strncmp(termtype, "emf", 3))       return ".emf";
-    else if (!strcmp(termtype, "plot commands")) return ".plt";
+    if (ttype == GP_TERM_EPS)      return ".eps";
+    else if (ttype == GP_TERM_PDF) return ".pdf";
+    else if (ttype == GP_TERM_FIG) return ".fig";
+    else if (ttype == GP_TERM_TEX) return ".tex";
+    else if (ttype == GP_TERM_PNG) return ".png";
+    else if (ttype == GP_TERM_EMF) return ".emf";
+    else if (ttype == GP_TERM_SVG) return ".svg";
+    else if (ttype == GP_TERM_PLT) return ".plt";
     else return "*";
 }
 
@@ -181,11 +179,10 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-	s = get_gp_ext(plot->termtype);
-    } else if (action == SAVE_LAST_GRAPH) {
-	s = get_gp_ext(data);
+    if (action == SAVE_GNUPLOT) {
+	int ttype = gp_term_code(data);
+
+	s = get_gp_ext(ttype);
     } else {
 	size_t i;
 
@@ -488,17 +485,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (SAVE_DATA_ACTION(action)) {
 	do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-	int err = 0;
-
-	err = plotspec_ship_out(plot, fname);
-	if (err == 1) {
-	    errbox(_("gnuplot command failed"));
-	} else if (err == 2) {
-	    infobox(_("There were missing observations"));
-	}
-    } else if (action == SAVE_THIS_GRAPH) {
-	save_this_graph(data, fname);
+	save_graph_to_file(data, fname);
     } else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
@@ -543,9 +530,9 @@ struct win32_filtermap {
     struct winfilter filter;
 };
 
-static struct winfilter get_gp_filter (const char *termtype)
+static struct winfilter get_gp_filter (int ttype)
 {
-    static struct winfilter gpfilters[] = {
+    static struct winfilter gpfilt[] = {
 	{ N_("postscript files (*.eps)"), "*.eps" },
 	{ N_("xfig files (*.fig)"), "*.fig" },
 	{ N_("LaTeX files (*.tex)"), "*.tex" },
@@ -555,26 +542,24 @@ static struct winfilter get_gp_filter (const char *termtype)
 	{ N_("all files (*.*)"), "*.*" }
     };
 
-    if (!strncmp(termtype, "postscript", 10)) 
-	return gpfilters[0];
-    else if (!strcmp(termtype, "fig")) 
-	return gpfilters[1];
-    else if (!strcmp(termtype, "latex")) 
-	return gpfilters[2];
-    else if (!strncmp(termtype, "png", 3)) 
-	return gpfilters[3];
-    else if (!strncmp(termtype, "emf", 3)) 
-	return gpfilters[4];
-    else if (!strcmp(termtype, "plot commands")) 
-	return gpfilters[5];
-    else 
-	return gpfilters[6];
+    if (ttype == GP_TERM_EPS) 
+	return gpfilt[0];
+    else if (ttype == GP_TERM_FIG) 
+	return gpfilt[1];
+    else if (ttype == GP_TERM_TEX) 
+	return gpfilt[2];
+    else if (ttype == GP_TERM_PNG) 
+	return gpfilt[3];
+    else if (ttype == GP_TERM_EMF) 
+	return gpfilt[4];
+    else if (ttype == GP_TERM_PLT)
+	return gpfilt[5];
+    else
+	return gpfilt[6];
 }
 
 static struct winfilter get_filter (int action, gpointer data)
 {
-    int i;
-    struct winfilter filter;
     static struct win32_filtermap map[] = {
 	{ SAVE_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ SAVE_DATA_AS, { N_("gretl data files (*.gdt)"), "*.gdt" }},
@@ -619,31 +604,28 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ OPEN_PCGIVE_DB, { N_("PcGive data files (*.bn7)"), "*.bn7" }},
 	{ SET_PROG,     { N_("program files (*.exe)"), "*.exe" }}
     };
-
     static struct winfilter default_filter = {
 	N_("all files (*.*)"), "*.*" 
     };
+    struct winfilter filt;
+    int i;
 
-    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
+    if (action == SAVE_GNUPLOT) {
+	int ttype = gp_term_code(data);
 
-	return get_gp_filter(plot->termtype);
-    }
+	filt = get_gp_filter(ttype);
+    } else {
+	filt = default_filter;
 
-    if (action == SAVE_LAST_GRAPH) {
-	return get_gp_filter(data);
-    }
-
-    filter = default_filter;
-
-    for (i=0; i< sizeof map / sizeof *map; i++) {
-	if (action == map[i].action) {
-	    filter = map[i].filter;
-	    break;
+	for (i=0; i< sizeof map / sizeof *map; i++) {
+	    if (action == map[i].action) {
+		filt = map[i].filter;
+		break;
+	    }
 	}
     }
 
-    return filter;
+    return filt;
 }
 
 static char *make_winfilter (int action, gpointer data)
@@ -852,7 +834,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     }
 
     /* FIXME: parent window below should not always be mdata->w,
-       in particular when action == SAVE_THIS_GRAPH
+       in particular when action == SAVE_GNUPLOT
     */
 
     filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(parent), fa,

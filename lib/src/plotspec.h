@@ -90,10 +90,8 @@ int plotspec_add_line (GPT_SPEC *spec);
 
 int plotspec_print (const GPT_SPEC *spec, FILE *fp);
 
-int plotspec_get_term_string (const GPT_SPEC *spec, char *termstr);
-
-int plotspec_ship_out (GPT_SPEC *spec, char *fname);
-
 int plotspec_add_fit (GPT_SPEC *spec, FitType f);
+
+void print_auto_fit_string (FitType fit, FILE *fp);
 
 #endif /* PLOTSPEC_H */

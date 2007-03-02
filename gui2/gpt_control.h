@@ -24,8 +24,6 @@ typedef struct png_plot_t png_plot;
 
 int remove_png_term_from_plotfile_by_name (const char *fname);
 
-void save_this_graph (gpointer data, const char *fname);
-
 void display_session_graph_png (const char *pltname);
 
 void gnuplot_show_png_by_name (const char *fname);
@@ -45,5 +43,9 @@ GtkWidget *plot_get_shell (png_plot *plot);
 int maybe_switch_emf_point_style (char *s, PRN *prn);
 
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
+
+int gp_term_code (gpointer p);
+
+void save_graph_to_file (gpointer p, const char *fname);
 
 #endif /* GPT_CONTROL_H */

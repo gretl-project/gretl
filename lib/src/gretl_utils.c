@@ -533,7 +533,21 @@ void printlist (const int *list, const char *msg)
     fputc('\n', stderr);
 }
 
-/* Compute model selection criteria */
+/**
+ * gretl_calculate_criteria:
+ * @ess: error sum of squares.
+ * @n: number of observations.
+ * @k: number of parameters estimated.
+ * @pll: pointer to recieve loglikelihood.
+ * @aic: pointer to recieve Akaike criterion.
+ * @bic: pointer to recieve Schwartz Bayesian criterion.
+ * @hqc: pointer to recieve Hannan-Quinn criterion.
+ *
+ * Calculates model selection criteria based on @ess, @n and
+ * @k, for a model estimated via least squares.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_calculate_criteria (double ess, int n, int k,
 			      double *pll, double *aic, double *bic,
@@ -577,6 +591,16 @@ int gretl_calculate_criteria (double ess, int n, int k,
     return err;
 }
 
+/**
+ * ls_criteria:
+ * @pmod: pointer to gretl model structure.
+ *
+ * Fills out the model selection criteria members of @pmod, using
+ * gretl_calculate_criteria().
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int ls_criteria (MODEL *pmod)
 {
     double ll, aic, bic, hqc;
@@ -592,6 +616,19 @@ int ls_criteria (MODEL *pmod)
 
     return err;
 }
+
+/**
+ * gretl_print_criteria:
+ * @ess: error sum of squares.
+ * @nobs: number of observations.
+ * @ncoeff: number of parameters estimated.
+ * @prn: printing struct.
+ *
+ * Prints the values of the model selection criteria AIC, 
+ * BIC and HQC for the given parameters.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
 {
@@ -627,6 +664,19 @@ real_format_obs (char *obs, int maj, int min, int pd, char sep)
 
     return obs;
 }
+
+/**
+ * format_obs:
+ * @obs: target string (should be of length #OBSLEN).
+ * @maj: major period (e.g. year).
+ * @min: minor period (e.g. quarter, month).
+ * @pd: data frequency.
+ *
+ * Prints to @obs the gretl-type date string representing 
+ * the observation given by @maj, @min and @pd.
+ *
+ * Returns: @obs.
+ */
 
 char *format_obs (char *obs, int maj, int min, int pd)
 {
@@ -1181,12 +1231,23 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
     return X;
 }
 
+/**
+ * re_estimate:
+ * @model_spec: estimation command line.
+ * @tmpmod: pointer to model to recieve results.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo) 
 {
     CMD cmd;
     double rho = 0.0;
-    int err;
+    int err = 0;
 
     if (gretl_cmd_init(&cmd)) {
 	return 1;

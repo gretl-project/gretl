@@ -23,6 +23,7 @@
 #include "var.h"
 #include "libset.h"
 #include "matrix_extra.h"
+#include "plotspec.h"
 
 #include <unistd.h>
 
@@ -1016,19 +1017,6 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
     return err;
 }
 
-static void print_auto_fit_string (gnuplot_info *gi)
-{
-    if (gi->fit == PLOT_FIT_OLS) {
-	fputs("# plot includes automatic fit: OLS\n", gi->fp);
-    } else if (gi->fit == PLOT_FIT_QUADRATIC) {
-	fputs("# plot includes automatic fit: quadratic\n", gi->fp);
-    } else if (gi->fit == PLOT_FIT_INVERSE) {
-	fputs("# plot includes automatic fit: inverse\n", gi->fp);
-    } else if (gi->fit == PLOT_FIT_LOESS) {
-	fputs("# plot includes automatic fit: loess\n", gi->fp);
-    }
-}
-
 static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
@@ -1650,7 +1638,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     if (list[0] == 2) {
 	/* only two variables */
 	if (gi.flags & GPT_AUTO_FIT) {
-	    print_auto_fit_string(&gi);
+	    print_auto_fit_string(gi.fit, fp);
 	    if (flags & GPT_FA) {
 		make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[1]), 
 			    series_name(pdinfo, list[2]));

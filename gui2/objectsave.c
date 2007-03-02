@@ -21,7 +21,6 @@
 
 #include "gretl.h"
 #include "session.h"
-#include "plotspec.h"
 #include "gpt_control.h"
 #include "objectsave.h"
 

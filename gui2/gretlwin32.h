@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#include "plotspec.h"
+
 enum {
     TO_BACKSLASH,
     FROM_BACKSLASH

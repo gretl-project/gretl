@@ -91,6 +91,18 @@ typedef enum {
     PLOT_FIT_NA       /* fit option not applicable */
 } FitType;
 
+typedef enum {
+    GP_TERM_NONE,
+    GP_TERM_PNG,
+    GP_TERM_EPS,
+    GP_TERM_PDF,
+    GP_TERM_FIG,
+    GP_TERM_TEX,
+    GP_TERM_EMF,
+    GP_TERM_SVG,
+    GP_TERM_PLT
+} TermType;
+
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)

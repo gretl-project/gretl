@@ -20,6 +20,13 @@
 #include "libgretl.h"
 #include "plotspec.h"
 
+/**
+ * plotspec_label_init:
+ * @lbl: pointer to gnuplot label struct.
+ * 
+ * Initializes the label.
+ */
+
 void plotspec_label_init (GPT_LABEL *lbl)
 {
     lbl->text[0] = '\0';
@@ -333,15 +340,15 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     return 0;
 }
 
-static void print_auto_fit_string (const GPT_SPEC *spec, FILE *fp)
+void print_auto_fit_string (FitType fit, FILE *fp)
 {
-    if (spec->fit == PLOT_FIT_OLS) {
+    if (fit == PLOT_FIT_OLS) {
 	fputs("# plot includes automatic fit: OLS\n", fp);
-    } else if (spec->fit == PLOT_FIT_QUADRATIC) {
+    } else if (fit == PLOT_FIT_QUADRATIC) {
 	fputs("# plot includes automatic fit: quadratic\n", fp);
-    } else if (spec->fit == PLOT_FIT_INVERSE) {
+    } else if (fit == PLOT_FIT_INVERSE) {
 	fputs("# plot includes automatic fit: inverse\n", fp);
-    } else if (spec->fit == PLOT_FIT_LOESS) {
+    } else if (fit == PLOT_FIT_LOESS) {
 	fputs("# plot includes automatic fit: loess\n", fp);
     }
 }
@@ -459,7 +466,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (show_fit(spec)) {
-	print_auto_fit_string(spec, fp);
+	print_auto_fit_string(spec->fit, fp);
     }
 
     if ((spec->code == PLOT_FREQ_SIMPLE ||
@@ -583,120 +590,6 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 
     return miss;
-}
-
-int plotspec_get_term_string (const GPT_SPEC *spec, char *termstr)
-{
-    int cmds = 0;
-
-    if (!strcmp(spec->termtype, "postscript color")) {
-	strcpy(termstr, "postscript eps color"); 
-    } else if (!strcmp(spec->termtype, "postscript")) {
-	strcpy(termstr, "postscript eps"); 
-    } else if (!strcmp(spec->termtype, "PDF")) {
-	strcpy(termstr, "pdf");
-    } else if (!strcmp(spec->termtype, "fig")) {
-	strcpy(termstr, "fig");
-    } else if (!strcmp(spec->termtype, "latex")) {
-	strcpy(termstr, "latex");
-    } else if (!strcmp(spec->termtype, "png")) { 
-	const char *png_str = 
-	    get_gretl_png_term_line(spec->code, 0);
-
-	strcpy(termstr, png_str + 9);
-    } else if (!strcmp(spec->termtype, "emf color")) {
-	const char *emf_str = 
-	    get_gretl_emf_term_line(spec->code, 1);
-
-	strcpy(termstr, emf_str + 9);
-    } else if (!strcmp(spec->termtype, "plot commands")) { 
-	cmds = 1;
-    } else {
-	strcpy(termstr, spec->termtype);
-    }
-
-    return cmds;
-}
-
-int plotspec_ship_out (GPT_SPEC *spec, char *fname)
-{
-    FILE *fp = NULL;
-    int dump = 0;
-    int err = 0, miss;
-    char termstr[72];
-
-    dump = plotspec_get_term_string(spec, termstr);
-
-    if (dump) {  
-	/* dump of gnuplot commands to named file */
-	if (fname == NULL) {
-	    return 1;  /* impossible */
-	}
-	fp = gretl_fopen(fname, "w");
-	if (fp == NULL) {
-	    return 1;
-	}
-    } else {     
-	/* output to gnuplot, for screen or other "term" */
-	if (spec->fp == NULL) {
-	    fp = gretl_fopen(gretl_plotfile(), "w");
-	}
-	if (fp == NULL) {
-	    return 1;
-	}
-
-	if (fname != NULL) { 
-#ifdef ENABLE_NLS
-	    fprint_gnuplot_encoding(termstr, fp);
-#endif 
-	    /* file, not screen display */
-	    fprintf(fp, "set term %s\n", termstr);
-	    fprintf(fp, "set output '%s'\n", fname);
-	}
-    }
-
-    if (strstr(termstr, "png")) {
-	set_png_output(spec);
-    }
-
-    miss = plotspec_print(spec, fp);
-    fflush(fp);
-
-    if (dump) {
-	/* we're finished */
-	fclose(fp);
-    }
-    
-    if (!dump) {
-	char plotcmd[MAXLEN];
-#ifdef WIN32
-	int winshow = 0;
-
-	if (fname == NULL) { 
-	    /* sending plot to screen */
-	    fputs("pause -1\n", fp);
-	    winshow = 1;
-	} 
-#endif
-	fclose(fp);
-	spec->fp = NULL;
-	sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
-#ifdef WIN32
-	if (winshow) {
-	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
-	} else {
-	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-	}
-#else
-	if (gretl_spawn(plotcmd)) err = 1;
-#endif 
-    }
-
-    if (miss) {
-	err = 2;
-    }
-
-    return err;
 }
 
 static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,

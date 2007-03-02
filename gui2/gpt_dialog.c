@@ -332,7 +332,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 {
     const gchar *yaxis;
     int supress_y2 = 0;
-    int i, k, save = 0;
+    int i, k, fsave = 0;
     int err = 0;
 
     /* entry_to_gp_string translates from utf-8 to the locale, if
@@ -342,7 +342,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	entry_to_gp_string(GTK_COMBO(termcombo)->entry, spec->termtype, 
 			   sizeof spec->termtype);
 	if (strcmp(spec->termtype, "screen")) {
-	    save = 1;
+	    fsave = 1;
 	}
     }
    
@@ -473,7 +473,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     if (!err) {
-	if (save) { /* do something other than a screen graph? */
+	if (fsave) { 
+	    /* saving to file */
 	    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 			  FSEL_DATA_MISC, spec);
 	} else { 

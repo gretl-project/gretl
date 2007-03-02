@@ -423,7 +423,63 @@ int maybe_switch_emf_point_style (char *s, PRN *prn)
     return do_pt2;
 }
 
-void save_this_graph (gpointer data, const char *fname)
+int gp_term_code (gpointer p)
+{
+    GPT_SPEC *spec = (GPT_SPEC *) p;
+    const char *s = spec->termtype;
+
+    if (!strncmp(s, "postscript", 10)) 
+	return GP_TERM_EPS;
+    else if (!strcmp(s, "fig")) 
+	return GP_TERM_FIG;
+    else if (!strcmp(s, "latex")) 
+	return GP_TERM_TEX;
+    else if (!strncmp(s, "png", 3)) 
+	return GP_TERM_PNG;
+    else if (!strncmp(s, "emf", 3)) 
+	return GP_TERM_EMF;
+    else if (!strncmp(s, "svg", 3)) 
+	return GP_TERM_SVG;
+    else if (!strcmp(s, "plot commands")) 
+	return GP_TERM_PLT;
+    else 
+	return GP_TERM_NONE;
+}
+
+static int plotspec_get_term_string (const GPT_SPEC *spec, char *termstr)
+{
+    int cmds = 0;
+
+    if (!strcmp(spec->termtype, "postscript color")) {
+	strcpy(termstr, "postscript eps color"); 
+    } else if (!strcmp(spec->termtype, "postscript")) {
+	strcpy(termstr, "postscript eps"); 
+    } else if (!strcmp(spec->termtype, "PDF")) {
+	strcpy(termstr, "pdf");
+    } else if (!strcmp(spec->termtype, "fig")) {
+	strcpy(termstr, "fig");
+    } else if (!strcmp(spec->termtype, "latex")) {
+	strcpy(termstr, "latex");
+    } else if (!strcmp(spec->termtype, "png")) { 
+	const char *png_str = 
+	    get_gretl_png_term_line(spec->code, 0);
+
+	strcpy(termstr, png_str + 9);
+    } else if (!strcmp(spec->termtype, "emf color")) {
+	const char *emf_str = 
+	    get_gretl_emf_term_line(spec->code, 1);
+
+	strcpy(termstr, emf_str + 9);
+    } else if (!strcmp(spec->termtype, "plot commands")) { 
+	cmds = 1;
+    } else {
+	strcpy(termstr, spec->termtype);
+    }
+
+    return cmds;
+}
+
+void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
     char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
@@ -1836,7 +1892,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	if (color) {
 	    strcat(plot->spec->termtype, " color");
 	} 
-	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
 	strcpy(plot->spec->termtype, "emf");
@@ -1845,7 +1901,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	} else {
 	    strcat(plot->spec->termtype, " mono");
 	}
-	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } 
 #ifdef G_OS_WIN32
@@ -1941,11 +1997,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	stats_calculator(plot, CALC_GRAPH_ADD, NULL);
     } else if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
-        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+        file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save as PDF..."))) {
 	strcpy(plot->spec->termtype, "PDF");
-        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+        file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
