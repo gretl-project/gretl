@@ -49,6 +49,8 @@ void set_session_saved (int val);
 
 void session_menu_state (gboolean s);
 
+const char *get_session_dirname (void);
+
 int real_add_text_to_session (PRN *prn, const char *tname);
 
 int add_graph_to_session (char *fname, char *fullname);

@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "graph_page.h"
+#include "session.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -315,14 +316,18 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     int err = 0;
 
     fp = gretl_fopen(gfname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from %s\n", gfname);
+	return E_FOPEN;
+    }
 
     fname = gpage_fname(".plt", 0);
 
     fq = gretl_fopen(fname, "w");
     if (fq == NULL) {
+	fprintf(stderr, "Couldn't write to %s\n", fname);
 	fclose(fp);
-	return 1;
+	return E_FOPEN;
     }
 
     gretl_push_c_numeric_locale();
@@ -488,10 +493,13 @@ static int latex_compile_graph_page (void)
 
 static int make_gp_output (void)
 {
+    const char *sdir = get_session_dirname();
     char *fname;
     double scale = 1.0;
     int i;
     int err = 0;
+
+    chdir(sdir);
 
     if (gpage.ngraphs == 3) {
 	scale = 0.8;
@@ -671,6 +679,3 @@ int save_graph_page (const char *fname)
 
     return err;
 }
-
-
-
