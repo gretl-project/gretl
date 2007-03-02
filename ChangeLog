@@ -1,5 +1,9 @@
 version 1.6.2, in progress
 - Add Poisson distribution to p-value finder
+- Fix breakage in GUI "graph page" apparatus
+- Bivariate scatterplots: give the option of showing various sorts
+  of fitted line: linear, quadratic, inverse or loess
+- Internal clean-up of parts of the graphing code
 
 2/26/2007 version 1.6.1
 - Revamp for internal "genr" mechanism plus some user-visible
