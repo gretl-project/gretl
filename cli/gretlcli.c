@@ -73,7 +73,6 @@ FILE *fb;
 int errfatal, batch;
 int runit;
 int data_status;
-int plot_count;             /* graphs via gnuplot */
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
@@ -637,7 +636,7 @@ cli_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     plotlist[2] = varindex(pdinfo, "autofit");
 
     err = gnuplot(plotlist, NULL, (const double **) *pZ, 
-		  pdinfo, &plot_count, OPT_B | OPT_O | OPT_T);
+		  pdinfo, OPT_B | OPT_O | OPT_T);
 
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
@@ -897,10 +896,10 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		break;
 	    }
 	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, &plot_count, (cmd->opt | OPT_B));
+			  pdinfo, (cmd->opt | OPT_B));
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 &plot_count, (cmd->opt | OPT_B));
+				 (cmd->opt | OPT_B));
 	}
 
 	if (err) {

@@ -126,17 +126,18 @@ PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
 
+void reset_plot_count (void);
+
 int gnuplot (const int *plotlist, const char *literal,
 	     const double **Z, const DATAINFO *pdinfo, 
-	     int *plot_count, gretlopt opt);
+	     gretlopt opt);
 
 int multi_scatters (const int *list, const double **Z,
-		    const DATAINFO *pdinfo, 
-		    int *plot_count, gretlopt opt);
+		    const DATAINFO *pdinfo, gretlopt opt);
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
-		int *plot_count, gretlopt opt);
+		gretlopt opt);
 
 int plot_freq (FreqDist *freq, DistCode dist);
 

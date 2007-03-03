@@ -4347,7 +4347,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 
     /* generate graph */
     err = gnuplot(plotlist, NULL, (const double **) *gZ, 
-		  ginfo, &plot_count, opt);
+		  ginfo, opt);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4389,7 +4389,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	plotlist[2] = gretl_model_get_depvar(pmod);
 	plotlist[3] = xvar;
 	err = gnuplot(plotlist, formula, (const double **) *gZ, 
-		      ginfo, &plot_count, opt);
+		      ginfo, opt);
 	if (err) {
 	    errbox(_("gnuplot command failed"));
 	} else {
@@ -4427,7 +4427,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
     } 
 
     err = gnuplot(plotlist, NULL, (const double **) *gZ, 
-		  ginfo, &plot_count, opt);
+		  ginfo, opt);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4463,8 +4463,7 @@ void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
     list[2] = pmod->list[3];
     list[3] = pmod->list[1];
 
-    err = gnuplot_3d(list, NULL, gZ, ginfo,
-		     &plot_count, GPT_GUI | GPT_FA);
+    err = gnuplot_3d(list, NULL, gZ, ginfo, GPT_GUI | GPT_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -4724,8 +4723,7 @@ void do_graph_var (int varnum)
     }
 
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, &plot_count, 
-		  OPT_G | OPT_O | OPT_T);
+		  datainfo, OPT_G | OPT_O | OPT_T);
 
     gui_graph_handler(err);
 }
@@ -4754,14 +4752,12 @@ int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
     gretlopt opt = selector_get_opts(sr);
-    GptFlags flags = 0;
     int err; 
 
     if (buf == NULL) return 1;
 
     if (opt & OPT_L) {
 	gretl_command_sprintf("scatters %s --with-lines", buf);
-	flags |= GPT_LINES;
     } else {
 	gretl_command_sprintf("scatters %s", buf);
     }
@@ -4771,7 +4767,7 @@ int do_scatters (selector *sr)
     }
 
     err = multi_scatters(libcmd.list, (const double **) Z, datainfo, 
-			 NULL, flags);
+			 opt);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -4835,7 +4831,7 @@ int do_dummy_graph (selector *sr)
     }
 
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, &plot_count, OPT_G | OPT_Z);
+		  datainfo, OPT_G | OPT_Z);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -4874,7 +4870,7 @@ int do_graph_from_selector (selector *sr)
     }
 
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, &plot_count, opt);
+		  datainfo, opt);
 
     gui_graph_handler(err);
 
@@ -4965,8 +4961,7 @@ int do_splot_from_selector (selector *sr)
 	return 1;
     }
 
-    err = gnuplot_3d(libcmd.list, NULL, &Z, datainfo,
-		     &plot_count, GPT_GUI);
+    err = gnuplot_3d(libcmd.list, NULL, &Z, datainfo, GPT_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -5055,7 +5050,7 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
     }
 
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, &plot_count, opt);
+		  datainfo, opt);
 
     gui_graph_handler(err);
 }
@@ -6142,7 +6137,7 @@ gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     plotlist[2] = varindex(datainfo, "autofit");
 
     err = gnuplot(plotlist, NULL, (const double **) *pZ, pdinfo,
-		  &plot_count, OPT_T | OPT_O); 
+		  OPT_T | OPT_O); 
 
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
@@ -6436,10 +6431,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case SCATTERS:
 	if (cmd->ci == GNUPLOT) {
 	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, &plot_count, gopt | cmd->opt); 
+			  pdinfo, gopt | cmd->opt); 
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 &plot_count, gopt | cmd->opt);
+				 gopt | cmd->opt);
 	}
 	if (err) {
 	    pputs(prn, _("gnuplot command failed\n"));

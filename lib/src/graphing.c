@@ -102,6 +102,11 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BI_GRAPH,       "double time-series plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
+
+static void graph_list_adjust_sample (int *list, 
+				      gnuplot_info *ginfo,
+				      const double **Z);
+static void clear_gpinfo (gnuplot_info *gi);
     
 #ifdef USE_GSPAWN
 
@@ -207,7 +212,7 @@ int gnuplot_test_command (const char *cmd)
 
 #endif /* ! USE_GSPAWN, ! WIN32 */
 
-static GptFlags get_gp_flags (gretlopt opt, FitType *f)
+static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 {
     GptFlags flags = 0;
 
@@ -242,7 +247,7 @@ static GptFlags get_gp_flags (gretlopt opt, FitType *f)
 	}
     }
 
-    if (!(opt & OPT_S)) {
+    if (k == 2 && !(opt & OPT_S)) {
 	/* OPT_S suppresses auto-fit */
 	if (opt & OPT_I) {
 	    *f = PLOT_FIT_INVERSE;
@@ -922,8 +927,16 @@ static void make_gtitle (gnuplot_info *gi, int code,
 
     switch (code) {
     case GTITLE_VLS:
-	sprintf(title, I_("%s versus %s (with least squares fit)"),
-		s1, s2);
+	if (gi->fit == PLOT_FIT_OLS) {
+	    sprintf(title, I_("%s versus %s (with least squares fit)"),
+		    s1, s2);
+	} else if (gi->fit == PLOT_FIT_INVERSE) {
+	    sprintf(title, I_("%s versus %s (with inverse fit)"),
+		    s1, s2);
+	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
+	    sprintf(title, I_("%s versus %s (with quadratic fit)"),
+		    s1, s2);
+	}	    
 	break;
     case GTITLE_RESID:
 	if (sscanf(s1, "residual for %15s", depvar) == 1) {
@@ -1005,9 +1018,15 @@ static const char *series_name (const DATAINFO *pdinfo, int v)
     return ret;
 }
 
+static int gretl_plot_count;
+
+void reset_plot_count (void)
+{
+    gretl_plot_count = 0;
+}
+
 static int
-get_gnuplot_output_file (FILE **fpp, GptFlags flags, 
-			 int *plot_count, int code)
+get_gnuplot_output_file (FILE **fpp, GptFlags flags, int code)
 {
     const char *plotfile = gretl_plotfile();
     int err = 0;
@@ -1019,12 +1038,12 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
 	if (*fpp == NULL) {
 	    err = E_FOPEN;
 	}
-    } else if ((flags & GPT_BATCH) && plot_count != NULL) {  
+    } else if (flags & GPT_BATCH) {
 	char fname[FILENAME_MAX];
 
 	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
-	    *plot_count += 1; 
-	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), *plot_count);
+	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), 
+		    ++gretl_plot_count);
 	    set_gretl_plotfile(fname);
 	} 
 	plotfile = gretl_plotfile();
@@ -1040,6 +1059,93 @@ get_gnuplot_output_file (FILE **fpp, GptFlags flags,
     return err;
 }
 
+static int 
+loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
+{
+    gretl_matrix *y = NULL;
+    gretl_matrix *x = NULL;
+    gretl_matrix *yh = NULL;
+    int yno = gi->list[1];
+    int xno = gi->list[2];
+    const char *s1, *s2;
+    FILE *fp = NULL;
+    char title[96];
+    int t, T, d = 1;
+    double q = 0.5;
+    int err;
+
+    graph_list_adjust_sample(gi->list, gi, Z);
+    if (gi->t1 == gi->t2 || gi->list[0] != 2) {
+	return GRAPH_NO_DATA;
+    }
+
+    if (get_gnuplot_output_file(&fp, gi->flags, PLOT_REGULAR)) {
+	return E_FOPEN;
+    } 
+
+    err = gretl_plotfit_matrices(yno, xno, PLOT_FIT_LOESS, Z,
+				 gi->t1, gi->t2, &y, &x);
+
+    if (!err) {
+	err = sort_pairs_by_x(x, y, NULL, NULL); /* markers! */
+    }
+
+    if (!err) {
+	yh = loess_fit(x, y, d, q, OPT_R, &err);
+    }
+
+    if (err) {
+	fclose(fp);
+	goto bailout;
+    }
+
+    s1 = series_name(pdinfo, gi->list[1]);
+    s2 = series_name(pdinfo, gi->list[2]);
+
+    sprintf(title, I_("%s versus %s (with loess fit)"), s1, s2);
+    fputs("set key top left\n", fp);
+    fprintf(fp, "set title '%s'\n", title);
+    fprintf(fp, "set xlabel '%s'\n", s1);
+    fprintf(fp, "set ylabel '%s'\n", s2);
+    print_auto_fit_string(PLOT_FIT_LOESS, fp);
+
+    fputs("plot \\\n", fp);
+    fputs(" '-' using 1:2 title '' w points, \\\n", fp);
+    sprintf(title, I_("loess fit, d = %d, q = %g"), d, q);
+    fprintf(fp, " '-' using 1:2 title '%s' w lines\n", title);
+
+    T = gretl_vector_get_length(yh);
+
+    gretl_push_c_numeric_locale();
+
+    for (t=0; t<T; t++) {
+	fprintf(fp, "%.8g %.8g\n", x->val[t], y->val[t]);
+    }
+    fputs("e\n", fp);
+
+    for (t=0; t<T; t++) {
+	fprintf(fp, "%.8g %.8g\n", x->val[t], yh->val[t]);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    if (!(gi->flags & GPT_BATCH)) {
+	err = gnuplot_make_graph();
+    }    
+
+ bailout:
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(x);
+    gretl_matrix_free(yh);
+    clear_gpinfo(gi);
+
+    return err;
+} 
+
 static int get_fitted_line (gnuplot_info *gi, 
 			    const double **Z, const DATAINFO *pdinfo, 
 			    char *targ)
@@ -1050,43 +1156,83 @@ static int get_fitted_line (gnuplot_info *gi,
     gretl_matrix *V = NULL;
     int yno = gi->list[1];
     int xno = gi->list[2];
-    double s2, v, pv;
-    int T, k = 2;
-    int err;
+    double s2, *ps2 = NULL;
+    FitType f = gi->fit;
+    char title[72];
+    int k, err;
 
-    err = gretl_plotfit_matrices(yno, xno, PLOT_FIT_OLS, Z,
+    if (gi->fit == PLOT_FIT_NONE) {
+	f = PLOT_FIT_OLS;
+	ps2 = &s2;
+    }
+
+    k = (f == PLOT_FIT_QUADRATIC)? 3 : 2;
+
+    err = gretl_plotfit_matrices(yno, xno, f, Z,
 				 pdinfo->t1, pdinfo->t2,
 				 &y, &X);
 
     if (!err) {
 	b = gretl_vector_alloc(k);
-	V = gretl_matrix_alloc(k, k);
-	if (b == NULL || V == NULL) {
+	if (b == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (gi->fit == PLOT_FIT_NONE) {
+	V = gretl_matrix_alloc(2, 2);
+	if (V == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	err = gretl_matrix_ols(y, X, b, V, NULL, &s2);
+	err = gretl_matrix_ols(y, X, b, V, NULL, ps2);
     }
 
     if (!err) {
-	v = gretl_matrix_get(V, 1, 1);
-	T = gretl_vector_get_length(y);
-	pv = t_pvalue_2(b->val[1] / sqrt(v), T - k);
+	double *c = b->val;
 
-	if (pv < .10) {
-	    char title[48];
+	if (gi->fit == PLOT_FIT_NONE) {
+	    double v = gretl_matrix_get(V, 1, 1);
+	    int T = gretl_vector_get_length(y);
+	    double pv = t_pvalue_2(c[1] / sqrt(v), T - k);
 
-	    sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
-		    (b->val[1] > 0)? '+' : '-', 
-		    fabs(b->val[1]));
+	    if (pv < .10) {
+		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
+			(c[1] > 0)? '+' : '-', fabs(c[1]));
+		gretl_push_c_numeric_locale();
+		sprintf(targ, "%g + %g*x title '%s' w lines\n", 
+			c[0], c[1], title);
+		gretl_pop_c_numeric_locale();
+		gi->fit = PLOT_FIT_OLS;
+	    }
+	} else if (gi->fit == PLOT_FIT_OLS) {
+	    sprintf(title, "Y = %#.3g %c %#.3gX", c[0],
+		    (c[1] > 0)? '+' : '-', fabs(c[1]));
 	    gretl_push_c_numeric_locale();
 	    sprintf(targ, "%g + %g*x title '%s' w lines\n", 
-		    b->val[0], b->val[1], title);
+		    c[0], c[1], title);
 	    gretl_pop_c_numeric_locale();
+	} else if (gi->fit == PLOT_FIT_INVERSE) {
+	    sprintf(title, "Y = %#.3g %c %#.3g/X", c[0],
+		    (c[1] > 0)? '+' : '-', fabs(c[1]));
+	    gretl_push_c_numeric_locale();
+	    sprintf(targ, "%g + %g/x title '%s' w lines\n", 
+		    c[0], c[1], title);
+	    gretl_pop_c_numeric_locale();
+	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
+	    sprintf(title, "Y = %#.3g %c %#.3gX %c %#.3gX^2", c[0],
+		    (c[1] > 0)? '+' : '-', fabs(c[1]),
+		    (c[2] > 0)? '+' : '-', fabs(c[2])),
+	    gretl_push_c_numeric_locale();
+	    sprintf(targ, "%g + %g*x + %g*x**2 title '%s' w lines\n", 
+		    c[0], c[1], c[2], title);
+	    gretl_pop_c_numeric_locale();
+	}
+
+	if (gi->fit != PLOT_FIT_NONE) {
 	    gi->flags |= GPT_AUTO_FIT;
-	    gi->fit = PLOT_FIT_OLS;
 	}
     }
 
@@ -1106,11 +1252,14 @@ print_x_range (gnuplot_info *gi, const double *x)
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
 	gi->xrange = 3;
     } else {
-	double xmin, xmax;
+	double xmin0, xmin, xmax;
 
-	gretl_minmax(gi->t1, gi->t2, x, &xmin, &xmax);
-	gi->xrange = xmax - xmin;
-	xmin -= gi->xrange * .025;
+	gretl_minmax(gi->t1, gi->t2, x, &xmin0, &xmax);
+	gi->xrange = xmax - xmin0;
+	xmin = xmin0 - gi->xrange * .025;
+	if (xmin0 >= 0.0 && xmin < 0.0) {
+	    xmin = 0.0;
+	}
 	xmax += gi->xrange * .025;
 	fprintf(gi->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
 	gi->xrange = xmax - xmin;
@@ -1275,8 +1424,8 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     gi->fit = PLOT_FIT_NONE;
 
-    gi->flags = get_gp_flags(opt, &gi->fit);
-    gi->flags |= GPT_TS; /* maybe renounced later */
+    gi->flags = get_gp_flags(opt, l0, &gi->fit);
+    gi->flags |= GPT_TS; /* may be renounced later */
 
     gi->t1 = t1;
     gi->t2 = t2;
@@ -1505,7 +1654,6 @@ static int maybe_add_plotx (gnuplot_info *gi,
  * @literal: commands to be passed to gnuplot.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @plot_count: pointer to count of graphs drawn so far.
  * @opt: option flags.
  *
  * Writes a gnuplot plot file to display the values of the
@@ -1516,7 +1664,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
 
 int gnuplot (const int *plotlist, const char *literal,
 	     const double **Z, const DATAINFO *pdinfo, 
-	     int *plot_count, gretlopt opt)
+	     gretlopt opt)
 {
     PRN *prn = NULL;
     FILE *fp = NULL;
@@ -1549,6 +1697,10 @@ int gnuplot (const int *plotlist, const char *literal,
 		      pdinfo->t1, pdinfo->t2);
     if (err) {
 	goto bailout;
+    }
+
+    if (gi.fit == PLOT_FIT_LOESS) {
+	return loess_plot(&gi, Z, pdinfo);
     }
 
     if (gi.list[0] > MAX_PLOT_LINES + 1) {
@@ -1635,7 +1787,7 @@ int gnuplot (const int *plotlist, const char *literal,
     /* open file and dump the prn into it: we delaying writing
        the file header till we know a bit more about the plot
     */
-    if (get_gnuplot_output_file(&fp, gi.flags, plot_count, PLOT_REGULAR)) {
+    if (get_gnuplot_output_file(&fp, gi.flags, PLOT_REGULAR)) {
 	err = E_FOPEN;
 	gretl_print_destroy(prn);
 	goto bailout;
@@ -1804,8 +1956,7 @@ int gnuplot (const int *plotlist, const char *literal,
  * @list: list of variables to plot, by ID number.
  * @Z: data array.
  * @pdinfo: data information struct.
- * @plot_count: count of graphs shown to date.
- * @opt: option flags.
+ * @opt: can include %OPT_L to use lines.
  *
  * Writes a gnuplot plot file to display up to 6 small graphs
  * based on the variables in @list, and calls gnuplot to make 
@@ -1815,8 +1966,7 @@ int gnuplot (const int *plotlist, const char *literal,
  */
 
 int multi_scatters (const int *list, const double **Z, 
-		    const DATAINFO *pdinfo, int *plot_count, 
-		    gretlopt opt)
+		    const DATAINFO *pdinfo, gretlopt opt)
 {
     GptFlags flags = 0;
     int xvar = 0, yvar = 0;
@@ -1828,6 +1978,10 @@ int multi_scatters (const int *list, const double **Z,
 
     if (opt & OPT_B) {
 	flags = GPT_BATCH;
+    }
+
+    if (opt & OPT_L) {
+	flags |= GPT_LINES;
     }
 
     pos = gretl_list_separator_position(list);
@@ -1872,7 +2026,7 @@ int multi_scatters (const int *list, const double **Z,
     nplots = plotlist[0];
     gp_small_font_size = (nplots > 4)? 6 : 0;
 
-    if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_MULTI_SCATTER)) {
+    if (get_gnuplot_output_file(&fp, flags, PLOT_MULTI_SCATTER)) {
 	return E_FOPEN;
     }
 
@@ -2027,7 +2181,6 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @literal: literal command(s) to pass to gnuplot (or NULL)
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @plot_count: pointer to counter variable for plots (unused)
  * @opt: unused at present.
  *
  * Writes a gnuplot plot file to display a 3D plot (Z on
@@ -2038,7 +2191,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo,  
-		int *plot_count, gretlopt opt)
+		gretlopt opt)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -3178,6 +3331,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 
 int is_auto_fit_string (const char *s)
 {
+    /* FIXME? */
     if (strstr(s, "automatic fit")) return 1;
     if (strstr(s, I_("with least squares fit"))) return 1;
     return 0;

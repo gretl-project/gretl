@@ -588,6 +588,7 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     char *mask = NULL;
+    double xt;
     int T = t2 - t1 + 1;
     int n = 0;
     int i, j, k, s, t;
@@ -640,9 +641,14 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 	    if (fit != PLOT_FIT_LOESS) {
 		gretl_matrix_set(X, i, j++, 1.0);
 	    }
-	    gretl_matrix_set(X, i, j++, Z[xno][t]);
+	    xt = Z[xno][t];
+	    if (fit == PLOT_FIT_INVERSE) {
+		gretl_matrix_set(X, i, j++, 1.0 / xt);
+	    } else {
+		gretl_matrix_set(X, i, j++, xt);
+	    }
 	    if (fit == PLOT_FIT_QUADRATIC) {
-		gretl_matrix_set(X, i, j, Z[xno][t] * Z[xno][t]);
+		gretl_matrix_set(X, i, j, xt * xt);
 	    }
 	    i++;
 	}

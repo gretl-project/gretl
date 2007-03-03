@@ -119,7 +119,7 @@ PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
 
-int plot_count, data_status, orig_vars;
+int data_status, orig_vars;
 float gui_scale;
 
 /* defaults for some options */

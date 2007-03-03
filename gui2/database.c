@@ -198,7 +198,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     }
 
     err = gnuplot(list, NULL, (const double **) *dbZ, dbdinfo,
-		  &plot_count, OPT_G | OPT_O | OPT_T);
+		  OPT_G | OPT_O | OPT_T);
 
     if (err) {
 	errbox(_("gnuplot command failed"));

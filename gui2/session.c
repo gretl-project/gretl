@@ -238,6 +238,7 @@ static int real_delete_model_from_session (SESSION_MODEL *model);
 static void rename_session_object (gui_obj *obj, const char *newname);
 
 static int session_saved;
+static int session_plot_count;
 
 int session_is_saved (void)
 {
@@ -548,10 +549,10 @@ real_add_graph_to_session (const char *fname, const char *grname,
     if (graph != NULL) {
 	graph->type = type;
 	strcpy(graph->fname, fname);	
-	graph->ID = plot_count++;
+	graph->ID = session_plot_count++;
 	replace = 1;
     } else {
-	graph = session_graph_new(grname, fname, plot_count++, 
+	graph = session_graph_new(grname, fname, session_plot_count++, 
 				  type);
 	if (graph == NULL || session_append_graph(graph)) {
 	    return ADD_OBJECT_FAIL;
@@ -619,9 +620,9 @@ int add_graph_to_session (char *fname, char *fullname)
 
     chdir(paths.userdir);
 
-    sprintf(shortname, "graph.%d", plot_count + 1);
+    sprintf(shortname, "graph.%d", session_plot_count + 1);
     session_file_make_path(fullname, shortname);
-    sprintf(graphname, "%s %d", _("Graph"), plot_count + 1);
+    sprintf(graphname, "%s %d", _("Graph"), session_plot_count + 1);
 
     /* move temporary plot file to permanent */
     if (copyfile(fname, fullname)) {
@@ -1245,7 +1246,8 @@ void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	libgretl_session_cleanup();
     }
 
-    plot_count = 0;
+    session_plot_count = 0;
+    reset_plot_count();
     zero_boxplot_count();
 }
 

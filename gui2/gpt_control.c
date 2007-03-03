@@ -336,8 +336,7 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		    png_line_saved = 1;
 		} 
 		printit = 0;
-	    }
-	    else if (commented_term_line(fline)) {
+	    } else if (commented_term_line(fline)) {
 		printit = 0;
 	    } else if (set_output_line(fline)) {
 		printit = 0;

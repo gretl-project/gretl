@@ -66,7 +66,6 @@ extern PATHS paths;
 extern MODEL **models;
 
 /* global counters */
-extern int plot_count;
 extern int orig_vars;
 
 /* global state variables */
