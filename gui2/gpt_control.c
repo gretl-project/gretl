@@ -67,7 +67,7 @@ enum {
     PLOT_POLAR          = 1 << 6
 } plot_format_flags;
 
-#define MAX_MARKERS 100
+#define MAX_MARKERS 120
 
 #define plot_is_saved(p)        (p->status & PLOT_SAVED)
 #define plot_has_controller(p)  (p->status & PLOT_HAS_CONTROLLER)
