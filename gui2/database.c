@@ -186,7 +186,6 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
 
 static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
-    int lines[1] = {1};
     int list[2] = {1, 1};
     int err;
 
@@ -198,8 +197,8 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    err = gnuplot(list, lines, NULL, (const double **) *dbZ, dbdinfo,
-		  &plot_count, GPT_GUI | GPT_IDX);
+    err = gnuplot(list, NULL, (const double **) *dbZ, dbdinfo,
+		  &plot_count, OPT_G | OPT_O | OPT_T);
 
     if (err) {
 	errbox(_("gnuplot command failed"));
