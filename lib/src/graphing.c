@@ -1388,14 +1388,11 @@ static void set_lwstr (const DATAINFO *pdinfo, int v, char *s)
     }
 }
 
-static void set_withstr (GptFlags flags, int i, char *str)
+static void set_withstr (GptFlags flags, char *str)
 {
     if (flags & GPT_DATA_STYLE) {
 	*str = 0;
-	return;
-    }
-
-    if (flags & GPT_LINES) {
+    } else if (flags & GPT_LINES) {
 	strcpy(str, "w lines");
     } else {
 	strcpy(str, "w points");
@@ -1751,9 +1748,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	fprintf(fp, " '-' using 1:2 title '%s' w points , \\\n", I_("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, I_("fitted"));
     } else if (gi.flags & GPT_FA) {
-	set_withstr(gi.flags, 1, withstr);
+	set_withstr(gi.flags, withstr);
 	fprintf(fp, " '-' using 1:2 title '%s' %s lt 2, \\\n", I_("fitted"), withstr);
-	set_withstr(gi.flags, 2, withstr);
 	fprintf(fp, " '-' using 1:2 title '%s' %s lt 1\n", I_("actual"), withstr);	
     } else {
 	for (i=1; i<list[0]; i++)  {
@@ -1764,7 +1760,7 @@ int gnuplot (const int *plotlist, const char *literal,
 		strcpy(s1, series_name(pdinfo, list[i]));
 	    }
 	    if (!use_impulses(&gi)) { 
-		set_withstr(gi.flags, i, withstr);
+		set_withstr(gi.flags, withstr);
 	    }
 	    fprintf(fp, " '-' using 1:2 title '%s' %s%s", s1, withstr, lwstr);
 	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
