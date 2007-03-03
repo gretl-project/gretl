@@ -3027,8 +3027,24 @@
 	  <effect>use vertical lines</effect>
         </option>
         <option>
-	  <flag>--suppress-fitted</flag>
-	  <effect>don't show least squares fit</effect>
+	  <flag>--suppress-fit</flag>
+	  <effect>don't show fitted line</effect>
+        </option>
+        <option>
+	  <flag>--linear-fit</flag>
+	  <effect>show least squares fit</effect>
+        </option>
+        <option>
+	  <flag>--inverse-fit</flag>
+	  <effect>show inverse fit</effect>
+        </option>
+        <option>
+	  <flag>--quadratic-fit</flag>
+	  <effect>show quadratic fit</effect>
+        </option>
+        <option>
+	  <flag>--loess-fit</flag>
+	  <effect>show loess fit</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -3062,6 +3078,21 @@
 	= <lit>01</lit>. The actual plots may be generated later using
 	<program>gnuplot</program> (under MS Windows,
 	<program>wgnuplot</program>).
+      </para>
+
+      <para>
+	The various <quote>fit</quote> options are applicable only in
+	the case of a bivariate scatterplot.  The default behavior
+	is to show the OLS fitted line if and only if the slope
+	coefficient is significant at the 10 percent level. If the
+	<lit>suppress</lit> option is given, no fitted line is shown.
+	If the <lit>linear</lit> option is given, the OLS line is
+	shown regardless of whether or not it is significant.  The other
+	options&mdash;<lit>inverse</lit>, <lit>quadratic</lit> and
+	<fit>loess</fit>&mdash;produce respectively an inverse fit
+	(regression of <mathvar>y</mathvar> on 1/<mathvar>x</mathvar>), a
+	quadratic fit, or a loess fit.  Loess (also sometimes called
+	<quote>lowess</quote>) is a robust locally weighted regression.  
       </para>
 
       <para>A further option to this command is available: following
