@@ -20,14 +20,19 @@
 #ifndef LIBSET_H
 #define LIBSET_H
 
-enum vcv_codes {
+typedef enum {
     VCV_UNSET,
     VCV_HESSIAN,
     VCV_IM,
     VCV_OP,
     VCV_QML,
     VCV_BW
-};
+} VcvType;
+
+typedef enum {
+    KERNEL_BARTLETT,
+    KERNEL_PARZEN
+} HACKernel;
 
 int libset_init (void);
 void libset_cleanup (void);
@@ -55,6 +60,7 @@ int get_garch_robust_vcv_version (void);
 int get_force_hc (void);
 int get_hc_version (void);
 int get_hac_lag (int m);
+int get_hac_kernel (void);
 
 int get_halt_on_error (void);
 

@@ -21,6 +21,7 @@
 #include "usermat.h"
 #include "nlspec.h"
 #include "libset.h"
+#include "qr_estimate.h"
 
 #include "../../minpack/minpack.h"
 
@@ -1016,9 +1017,9 @@ static int gmm_HAC (const gretl_matrix *E, int h,
 static int gmm_HAC (const gretl_matrix *E, int h,
 		    gretl_matrix *V)
 {
-    int parzen = 0; /* just Bartlett for now */
+    int kern = get_hac_kernel();
     gretl_matrix *W;
-    double ai, w;
+    double w;
     int i;
 
     W = gretl_matrix_alloc(E->rows, E->cols);
@@ -1030,16 +1031,7 @@ static int gmm_HAC (const gretl_matrix *E, int h,
     gretl_matrix_zero(V);
 
     for (i=-h; i<=h; i++) {
-	ai = fabs((double) i) / (h + 1.0);
-	if (parzen) {
-	    if (ai <= 0.5) {
-		w = 1.0 - 6*ai*ai + 6*pow(ai, 3.0);
-	    } else {
-		w = 2.0 * pow(1.0 - ai, 3.0);
-	    }
-	} else {
-	    w = 1.0 - ai;
-	}
+	w = hac_weight(kern, h, i);
 	gretl_matrix_inplace_lag(W, E, i);
 	gretl_matrix_multiply_by_scalar(W, w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,

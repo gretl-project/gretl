@@ -310,15 +310,35 @@ static void wtw (gretl_matrix *wt, gretl_matrix *X,
     }
 }
 
-/* Calculate the Newey-West HAC covariance matrix.  Algorithm and
-   (basically) notation taken from Davidson and MacKinnon (DM), 
-   Econometric Theory and Methods, chapter 9.
+double hac_weight (int kern, int h, int i)
+{
+    double ai = fabs((double) i) / (h + 1.0);
+    double w;
+
+    if (kern == KERNEL_PARZEN) {
+	if (ai <= 0.5) {
+	    w = 1.0 - 6*ai*ai + 6*pow(ai, 3.0);
+	} else {
+	    w = 2.0 * pow(1.0 - ai, 3.0);
+	}
+    } else {
+	/* Bartlett kernel */
+	w = 1.0 - ai;
+    }
+
+    return w;
+}
+
+/* Calculate HAC covariance matrix.  Algorithm and (basically)
+   notation taken from Davidson and MacKinnon (DM), Econometric Theory
+   and Methods, chapter 9.
 */
 
 static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 {
     gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
     gretl_matrix *X;
+    int kern = get_hac_kernel();
     int T = pmod->nobs;
     int k = pmod->ncoeff;
     int p, j, t;
@@ -365,8 +385,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	if (j > 0) {
 	    /* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
 	    gretl_matrix_add_self_transpose(gammaj);
-	    weight = 1.0 - (double) j / (p + 1.0);
-	    /* multiply by Newey-West weight */
+	    weight = hac_weight(kern, p, j);
 	    gretl_matrix_multiply_by_scalar(gammaj, weight);
 	}
 

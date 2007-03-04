@@ -50,6 +50,7 @@ struct robust_opts {
     int user_lag;
     int hc_version;
     int force_hc;
+    int hkern;
 };
 
 struct garch_opts {
@@ -97,6 +98,7 @@ static void robust_opts_init (struct robust_opts *opts)
     opts->user_lag = 0;
     opts->hc_version = 0;
     opts->force_hc = 0; 
+    opts->hkern = KERNEL_BARTLETT;
 }
 
 static void robust_opts_copy (struct robust_opts *opts)
@@ -105,6 +107,19 @@ static void robust_opts_copy (struct robust_opts *opts)
     opts->user_lag = state->ropts.user_lag;
     opts->hc_version = state->ropts.hc_version;
     opts->force_hc = state->ropts.force_hc; 
+    opts->hkern = state->ropts.hkern; 
+}
+
+static const char *hac_kernel_string (void)
+{
+    switch (state->ropts.hkern) {
+    case KERNEL_BARTLETT:
+	return "bartlett";
+    case KERNEL_PARZEN:
+	return "parzen";
+    default:
+	return "";
+    }
 }
 
 static void garch_opts_init (struct garch_opts *opts)
@@ -727,6 +742,13 @@ int get_hac_lag (int m)
     return 0.75 * pow(m, 1.0 / 3.0);
 }
 
+int get_hac_kernel (void)
+{
+    check_for_state();
+
+    return state->ropts.hkern;
+}
+
 static const char *get_hac_lag_string (void)
 {
     check_for_state();
@@ -1094,6 +1116,7 @@ static int display_settings (PRN *prn)
     pprintf(prn, " hac_lag = %s\n", get_hac_lag_string());
     pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
     pprintf(prn, " force_hc = %d\n", state->ropts.force_hc);
+    pprintf(prn, " hac_kernel = %s\n", hac_kernel_string());
 
     pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
 
@@ -1253,6 +1276,14 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		set_force_hc(0);
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "hac_kernel")) {
+	    if (!strcmp(setarg, "bartlett")) {
+		state->ropts.hkern = KERNEL_BARTLETT;
+		err = 0;
+	    } else if (!strcmp(setarg, "parzen")) {
+		state->ropts.hkern = KERNEL_PARZEN;
+		err = 0;
+	    } 
 	} else if (!strcmp(setobj, "garch_vcv")) {
 	    /* set GARCH VCV variant */
 	    err = set_garch_vcv_variant(setarg);

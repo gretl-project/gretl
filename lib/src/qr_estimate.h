@@ -25,4 +25,6 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt);
 
+double hac_weight (int kern, int h, int i);
+
 #endif  /* QR_ESTIMATE_H */
