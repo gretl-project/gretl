@@ -2914,6 +2914,165 @@ int spin_dialog (const char *title, const char *blurb,
 			 spinmin, spinmax, hcode);
 }
 
+/* mechanism for adjusting properties of frequency plot */
+
+struct freqdist_info {
+    int *nbins;
+    double *fmin;
+    double *fwid;
+    GtkWidget *spin[3];
+};
+
+static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
+{
+    int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
+    double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+
+    if (snum == 0) {
+	/* numbins */
+	*f->nbins = (int) val;
+    } else if (snum == 1) {
+	/* minval */
+	*f->fmin = val;
+    } else {
+	/* bin width */
+	*f->fwid = val;
+    }
+
+    return FALSE;
+}
+
+static void freq_info_control (GtkWidget *w, struct freqdist_info *f)
+{
+    int snum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "snum"));
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	gtk_widget_set_sensitive(f->spin[0], snum == 0);
+	gtk_widget_set_sensitive(f->spin[1], snum == 1);
+	gtk_widget_set_sensitive(f->spin[2], snum == 1);
+    }
+}
+
+static void revise_finfo (GtkWidget *w, struct freqdist_info *f)
+{
+    if (!GTK_WIDGET_SENSITIVE(f->spin[0])) {
+	*f->nbins = 0;
+    } else {
+	*f->fmin = NADBL;
+	*f->fwid = NADBL;
+    }
+}
+
+int freq_dialog (const char *title, const char *blurb,
+		 int *nbins, int nbmax, double *f0, double *fwid,
+		 double xmin, double xmax)
+{
+    const char *strs[] = {
+	N_("Number of bins:"),
+	N_("Minimum value, left bin:"),
+	N_("Bin width:")
+    };
+    struct freqdist_info finfo;
+    GtkWidget *dialog, *rad;
+    GtkWidget *tmp, *okb, *tbl;
+    GtkObject *adj;
+    GSList *group = NULL;
+    double f0min, f0max, f0step;
+    double wmin, wmax, wstep;
+    int i, ret = 0;
+
+    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+
+    finfo.nbins = nbins;
+    finfo.fmin = f0;
+    finfo.fwid = fwid;
+
+    /* upper label */
+    tmp = dialog_blurb_box(blurb);
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
+		       tmp, TRUE, TRUE, 5);
+
+    tbl = gtk_table_new(3, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+
+    *f0 = xmin - 0.5 * (*fwid);
+    if (xmin >= 0.0 && *f0 < 0) {
+	*f0 = 0.0;
+    }
+
+    f0min = xmin - 0.2 * (xmax - xmin);
+    f0max = xmin - 0.01 * (*fwid);
+    f0step = .001; 
+
+    wmin = (xmax - xmin) / nbmax; 
+    wmax = (xmax - xmin) / 3.0; 
+    wstep = 0.001; 
+
+    for (i=0; i<3; i++) {
+	int dig = 3;
+
+	if (i < 2) {
+	    rad = gtk_radio_button_new_with_label(group, _(strs[i]));
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rad));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), rad, 0, 1, i, i+1);
+	    g_object_set_data(G_OBJECT(rad), "snum", GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(rad), "clicked",
+			     G_CALLBACK(freq_info_control), &finfo);
+	} else {
+	    tmp = gtk_label_new(_(strs[i]));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+	}
+
+	if (i == 0) {
+	    adj = gtk_adjustment_new(*nbins, 3, nbmax, 2, 2, 1);
+	    dig = 0;
+	} else if (i == 1) {
+	    adj = gtk_adjustment_new(*f0, f0min, f0max, f0step, 10.0 * f0step, 1);
+	} else {
+	    adj = gtk_adjustment_new(*fwid, wmin, wmax, wstep, 10.0 * wstep, 1);
+	}
+	
+	finfo.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, dig);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), finfo.spin[i], 1, 2, i, i+1);
+	g_object_set_data(G_OBJECT(finfo.spin[i]), "snum",
+			  GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(finfo.spin[i]), "value-changed",
+			 G_CALLBACK(freq_info_set), &finfo);
+	if (i > 0) {
+	    gtk_widget_set_sensitive(finfo.spin[i], FALSE);
+	}
+    }
+
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), tbl);
+    gtk_widget_show_all(tbl);
+
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* "OK" button */
+    okb = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(okb), "clicked", G_CALLBACK(revise_finfo), 
+		     &finfo);
+    g_signal_connect(G_OBJECT(okb), "clicked", G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default(okb);
+    gtk_widget_show(okb);
+
+    for (i=0; i<3; i++) {
+	g_signal_connect(G_OBJECT(finfo.spin[i]), "activate",
+			 G_CALLBACK(trigger_ok), okb);
+    }
+
+    /* Help button */
+    context_help_button(GTK_DIALOG(dialog)->action_area, FREQ);
+
+    gtk_widget_show(dialog);
+
+    return ret;
+}
+
 #if defined(G_OS_WIN32)
 
 static void msgbox (const char *msg, int err)

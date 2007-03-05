@@ -1461,7 +1461,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     FreqDist *freq;
     const double *x;
     double xx, xmin, xmax;
-    double binwidth;
+    double binwidth = fwid;
     int t, k, n;
 
     if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
@@ -1478,14 +1478,16 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (na(fmin) || na(fwid)) {
-	*err = freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth);
-    } else {
-	*err = freq_get_n(varno, Z, pdinfo, &n);
-    }
+    *err = freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth);
 
     if (*err) {
 	goto bailout;
+    }
+
+    if (!na(fmin) && !na(fwid)) {
+	/* endogenous implied number of bins */
+	nbins = (int) ceil((xmax - fmin) / fwid);
+	binwidth = fwid;
     }
 
     freq->t1 = pdinfo->t1; 
@@ -1502,7 +1504,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	freq->numbins = 0;
 	return freq;
     }
-    
+
     if (freq_add_arrays(freq, nbins)) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -1540,16 +1542,15 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
 	if (xx < freq->endpt[1]) {
 	    freq->f[0] += 1;
+	} else if (xx >= freq->endpt[freq->numbins]) {
+	    freq->f[freq->numbins - 1] += 1;
 	    continue;
-	}
-	if (xx >= freq->endpt[freq->numbins]) {
-	    freq->f[freq->numbins-1] += 1;
-	    continue;
-	}
-	for (k=1; k<freq->numbins; k++) {
-	    if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
-		freq->f[k] += 1;
-		break;
+	} else {
+	    for (k=1; k<freq->numbins; k++) {
+		if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
+		    freq->f[k] += 1;
+		    break;
+		}
 	    }
 	}
     }

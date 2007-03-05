@@ -3377,13 +3377,6 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
-#if 0
-static int calc_nbins (double xmax, double f0, double binwidth)
-{
-    nbins = ceil((xmax - f0) / binwidth);
-}
-#endif
-
 void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 {
     FreqDist *freq;
@@ -3424,10 +3417,8 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 
 	if (n % 2 == 0) n--;
 
-	/* FIXME need to write a custom dialog here */
-
-	err = spin_dialog("gretl: frequency plot setup", bintxt, &nbins, 
-			  _("Number of bins:"), 3, n, FREQ);
+	err = freq_dialog("gretl: frequency plot setup", bintxt, &nbins,
+			  n, &fmin, &fwid, xmin, xmax);
 
 	g_free(bintxt);
 

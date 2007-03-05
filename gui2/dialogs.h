@@ -99,6 +99,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 		     int pmin, int pmax, int *p,
 		     int dyn, MODEL *pmod);
 
+int freq_dialog (const char *title, const char *blurb,
+		 int *nbins, int nbmax, double *f0, double *fwid,
+		 double xmin, double xmax);
+
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 
 void data_structure_wizard (gpointer p, guint create, GtkWidget *w);
