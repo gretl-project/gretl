@@ -1208,6 +1208,27 @@ static int freq_add_arrays (FreqDist *freq, int n)
     return err;
 }
 
+static int freq_get_n (int v, const double **Z, const DATAINFO *pdinfo,
+		       int *pn)
+{
+    int t, n = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(Z[v][t])) {
+	    n++;
+	}
+    }
+
+    if (n < 8) {
+	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
+				"distribution for variable %s"), 
+		pdinfo->varname[v]);
+	return E_DATA;
+    }
+
+    return 0;
+}
+
 int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 		int *pn, double *pxmax, double *pxmin, int *nbins, 
 		double *binwidth)
@@ -1416,9 +1437,11 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  * @varno: ID number of variable to process.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @nbins: number of bins to use (or 0 for automatic)
+ * @fmin: lower limit of left-most bin (or #NADBL for automatic).
+ * @fwid: bin width (or #NADBL for automatic).
+ * @nbins: number of bins to use (or 0 for automatic).
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
- * with the residual from a regression)
+ * with the residual from a regression).
  * @opt: if includes %OPT_Z, set up for comparison with normal dist; 
  * if includes %OPT_O, compare with gamma distribution;
  * if includes %OPT_Q, do not show a histogram; if includes %OPT_D,
@@ -1432,7 +1455,8 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  */
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int nbins, int params, gretlopt opt, int *err)
+		    double fmin, double fwid, int nbins, int params, 
+		    gretlopt opt, int *err)
 {
     FreqDist *freq;
     const double *x;
@@ -1454,10 +1478,13 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    x = Z[varno];
+    if (na(fmin) || na(fwid)) {
+	*err = freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth);
+    } else {
+	*err = freq_get_n(varno, Z, pdinfo, &n);
+    }
 
-    if (freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth)) {
-	*err = E_DATA;
+    if (*err) {
 	goto bailout;
     }
 
@@ -1467,6 +1494,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 
     strcpy(freq->varname, pdinfo->varname[varno]);
 
+    x = Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
     /* if the histogram is not wanted, we're done */
@@ -1480,16 +1508,21 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    freq->endpt[0] = xmin - .5 * binwidth;
+    if (na(fmin) || na(fwid)) {
+	freq->endpt[0] = xmin - .5 * binwidth;
 	
-    if (xmin > 0.0 && freq->endpt[0] < 0.0) {
-	double rshift;
+	if (xmin > 0.0 && freq->endpt[0] < 0.0) {
+	    double rshift;
 	    
-	freq->endpt[0] = 0.0;
-	rshift = 1.0 - xmin / binwidth;
-	freq->endpt[freq->numbins] = xmax + rshift * binwidth;
+	    freq->endpt[0] = 0.0;
+	    rshift = 1.0 - xmin / binwidth;
+	    freq->endpt[freq->numbins] = xmax + rshift * binwidth;
+	} else {
+	    freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+	}
     } else {
-	freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+	freq->endpt[0] = fmin;
+	freq->endpt[freq->numbins] = fmin + nbins * fwid;
     }
 	
     for (k=0; k<freq->numbins; k++) {
@@ -1545,7 +1578,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	opt |= OPT_Z;
     }
 
-    freq = get_freq(varno, Z, pdinfo, 0, 1, opt, &err); 
+    freq = get_freq(varno, Z, pdinfo, NADBL, NADBL, 0, 1, opt, &err); 
 
     if (err) {
 	return err;
@@ -1710,9 +1743,11 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, 0, 0, OPT_D | OPT_X, err); 
+    rowfreq = get_freq(rvarno, Z, pdinfo, NADBL, NADBL, 0, 
+		       0, OPT_D | OPT_X, err); 
     if (!*err) {
-	colfreq = get_freq(cvarno, Z, pdinfo, 0, 0, OPT_D | OPT_X, err); 
+	colfreq = get_freq(cvarno, Z, pdinfo, NADBL, NADBL, 0, 
+			   0, OPT_D | OPT_X, err); 
     }
     if (!*err) {
 	X = malloc(n * sizeof *X);
@@ -1923,7 +1958,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
     if (!err) {
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			0, pmod->ncoeff, OPT_NONE, &err);
+			NADBL, NADBL, 0, pmod->ncoeff, OPT_NONE, &err);
     }
 
     if (!err) {

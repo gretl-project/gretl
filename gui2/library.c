@@ -3331,7 +3331,7 @@ void do_resid_freq (gpointer p, guint action, GtkWidget *w)
     }
 
     freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
-		    0, pmod->ncoeff, OPT_NONE, &err);
+		    NADBL, NADBL, 0, pmod->ncoeff, OPT_NONE, &err);
 
     dataset_drop_last_variables(1, rZ, rinfo);
 
@@ -3377,12 +3377,21 @@ series_has_negative_vals (const double *x)
     return 0;
 }
 
+#if 0
+static int calc_nbins (double xmax, double f0, double binwidth)
+{
+    nbins = ceil((xmax - f0) / binwidth);
+}
+#endif
+
 void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 {
     FreqDist *freq;
     gretlopt opt = (dist == D_GAMMA)? OPT_O : 
 	(dist == D_NORMAL)? OPT_Z : OPT_NONE;
     int v = mdata_active_var();
+    double fmin = NADBL;
+    double fwid = NADBL;
     int nbins = 0;
     int err = 0;
 
@@ -3402,7 +3411,7 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 	int n;
 
 	err = freq_setup(v, (const double **) Z, datainfo,
-			 &n, &xmax, &xmin, &nbins, NULL);
+			 &n, &xmax, &xmin, &nbins, &fwid);
 	if (err) {
 	    gui_errmsg(err);
 	    return;
@@ -3414,6 +3423,8 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 				 n, xmin, xmax);
 
 	if (n % 2 == 0) n--;
+
+	/* FIXME need to write a custom dialog here */
 
 	err = spin_dialog("gretl: frequency plot setup", bintxt, &nbins, 
 			  _("Number of bins:"), 3, n, FREQ);
@@ -3433,7 +3444,8 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 	return;
     }
 
-    freq = get_freq(v, (const double **) Z, datainfo, nbins, 1, opt, &err);
+    freq = get_freq(v, (const double **) Z, datainfo, fmin, fwid, nbins, 
+		    1, opt, &err);
 
     if (err) {
 	gui_errmsg(err);

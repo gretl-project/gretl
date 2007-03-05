@@ -126,7 +126,8 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 		double *binwidth);
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int nbins, int params, gretlopt opt, int *err);
+		    double fmin, double fwid, int nbins, int params, 
+		    gretlopt opt, int *err);
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn);
