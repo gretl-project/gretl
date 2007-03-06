@@ -2073,8 +2073,7 @@
 
   </command>
 
-  <command name="freq" section="Statistics" 
-    label="Frequency distribution" context="cli">
+  <command name="freq" section="Statistics" label="Frequency distribution">
 
     <usage>
       <arguments>
@@ -2092,7 +2091,7 @@
       </options>
     </usage>
 
-    <description>
+    <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
 	<repl>var</repl> (given by name or number) and shows the
@@ -2108,6 +2107,31 @@
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed.
+      </para>
+    </description>
+
+    <description context="gui">
+      <para>
+	In the frequency plot dialog box you can control the
+	characteristics of the plot in either of two ways.
+      </para>
+      <para>
+	First, you may choose the number of bins.  In this case the width
+	and placement of the bins are calculated automatically.
+      </para>
+      <para>
+	Alternatively, you may specify the lower limit of the left-most
+	bin, and the width of the bins.  In this case the number of bins
+	is calculated automatically.
+      </para>
+      <para>
+	If you wish to align the bins on round numbers, here is one way to
+	proceed: start by specifying the number of bins you want, and take
+	a look at the plot that is produced.  If it's not to your liking,
+	take note of the modification that is required (for example, make
+	the left-most bin start at 100 and impose a bin width of 200).
+	Then make a second pass where you specify the left-hand limit and
+	bin width.
       </para>
     </description>
 
@@ -6628,12 +6652,13 @@
 
     <description>
       <para>
-	Set the values of various program parameters.  The given value remains
-	in force for the duration of the gretl session unless it is changed by a
-	further call to <cmd>set</cmd>.  The parameters that can be set in this
-	way are enumerated below. Note that the settings of <lit>hac_lag</lit>
-	and <lit>hc_version</lit> are used when the <lit>--robust</lit> option
-	is given to the <cmd>ols</cmd> command. 
+	Set the values of various program parameters.  The given value
+	remains in force for the duration of the gretl session unless it
+	is changed by a further call to <cmd>set</cmd>.  The parameters
+	that can be set in this way are enumerated below. Note that the
+	settings of <lit>hc_version</lit>, <lit>hac_lag</lit> and
+	<lit>hac_kernel</lit> are used when the <lit>--robust</lit> option
+	is given to an estimation command. 
       </para>
       <para>
 	If the <cmd>set</cmd> command is given without any parameters, the
@@ -6689,6 +6714,12 @@
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>.	  
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (the default)
+	    or <lit>parzen</lit>.  Sets the kernel, or pattern of weights,
+	    used when calculating HAC standard errors.
 	  </para>
 	</li>
 	<li>
