@@ -3,7 +3,18 @@ version 1.6.2, in progress
 - Fix breakage in GUI "graph page" apparatus
 - Bivariate scatterplots: give the option of showing various sorts
   of fitted line: linear, quadratic, inverse or loess
-- Internal clean-up of parts of the graphing code
+- Internal clean-up of the graphing code
+- Make frequency plots more configurable via the GUI
+- Fix memory leaks in GUI graph editor dialog
+- Bugfix: estimating models inside nested functions could cause
+  a crash
+- Session icon window: don't display temporary matrices,
+  generated within functions
+- Icon window: fix display on one-character object names
+- Fix memory leak when generating some sorts of matrices
+- Add option of using Parzen kernel (the default is Bartlett)
+  when computing HAC covariance matrix
+- Update the API documentation (still very much incomplete)     
 
 2/26/2007 version 1.6.1
 - Revamp for internal "genr" mechanism plus some user-visible
