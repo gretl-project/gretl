@@ -87,8 +87,8 @@ static void free_tree (NODE *t, const char *msg)
     } 
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %d, aux = %d)\n", msg, 
-	    (void *) t, t->t, t->aux);
+    fprintf(stderr, "%-8s: freeing node at %p (type %d, aux = %d, ext = %d)\n", msg, 
+	    (void *) t, t->t, t->aux, t->ext);
 #endif
 
     if (t->tmp) {
@@ -186,6 +186,7 @@ static NODE *newvec (int n, int tmp)
     if (b != NULL) {
 	b->t = VEC;
 	b->tmp = tmp;
+	b->ext = 0;
 	b->v.xvec = NULL;
 	if (n > 0) {
 	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
@@ -216,6 +217,7 @@ static NODE *newivec (int n)
     if (b != NULL) {
 	b->t = IVEC;
 	b->tmp = 1;
+	b->ext = 0;
 	if (n > 0) {
 	    b->v.ivec = malloc(n * sizeof(int));
 	    if (b->v.ivec == NULL) {
@@ -243,6 +245,7 @@ static NODE *newmat (int tmp)
     if (b != NULL) {
 	b->t = MAT;
 	b->tmp = tmp;
+	b->ext = 0;
 	b->v.m = NULL;
     }
 
@@ -262,6 +265,7 @@ static NODE *newmspec (void)
     if (b != NULL) {
 	b->t = MSPEC;
 	b->tmp = 1;
+	b->ext = 0;
 	b->v.mspec = NULL;
     }
 

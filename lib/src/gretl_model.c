@@ -1858,15 +1858,20 @@ MODEL **gretl_model_array_new (int n)
 MODEL **allocate_working_models (int n)
 {
     MODEL **models;
-    int i;
+    int i, err = 0;
 
     models = gretl_model_array_new(n);
     if (models == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<n; i++) {
-	gretl_model_protect(models[i]);
+    for (i=0; i<n && !err; i++) {
+	err = gretl_model_protect(models[i]);
+    }
+
+    if (err) {
+	gretl_model_array_destroy(models, n);
+	models = NULL;
     }
 
     return models;

@@ -261,7 +261,8 @@ enum {
 #define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR && \
                    !func2_symb(s))
 
-#define b2sym(s) (evalb2(s) || s == DMSTR || s == OVAR || s == UFUN)
+#define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
+                  s == OVAR || s == UFUN)
 
 #define b3sym(s) (s == QUERY)
 

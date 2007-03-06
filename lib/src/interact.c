@@ -1872,7 +1872,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		cmd->err = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);
-		goto bailout;
+		goto cmd_exit;
 	    }
 	}
     }
@@ -1980,7 +1980,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     rem = copy_remainder(line, pos);
     if (rem == NULL) {
 	cmd->err = E_ALLOC;
-	goto bailout;
+	goto cmd_exit;
     }
 
 #if CMD_DEBUG
@@ -1990,7 +1990,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == DELEET && nf == 1 && get_matrix_by_name(rem)) {
 	/* special for deleting a named matrix */
 	cmd_param_grab_string(cmd, rem);
-	return cmd->err;
+	goto cmd_exit;
     }
 
     /* specials where there's something that goes into "param",
@@ -2004,7 +2004,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == RHODIFF) {
 	    /* rhodiff: param field is not optional */
 	    cmd->err = E_SYNTAX;
-	    goto bailout;
+	    goto cmd_exit;
 	} else {
 	    /* lags: param is optional */
 	    *rem = '\0';
@@ -2016,7 +2016,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == STORE && nf > 0) {
 	cmd->err = get_maybe_quoted_storename(cmd, rem, &nf);
 	if (cmd->err) {
-	    goto bailout;
+	    goto cmd_exit;
 	} else {
 	    pos = 0;
 	    if (--nf > 0) {
@@ -2041,7 +2041,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci == SETMISS) {
 	capture_param(line, cmd, &nf, (const double **) *pZ, pdinfo);
 	if (cmd->err) {
-	    goto bailout;
+	    goto cmd_exit;
 	} else {
 	    strcpy(rem, line + pos + 1 + strlen(cmd->param));
 	    pos = 0;
@@ -2054,22 +2054,22 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == REMEMBER) {
 	if (nf <= 1 && maybe_print_object(line, nf, cmd)) {
-	    return cmd->err;
+	    goto cmd_exit;
 	} else if (nf == 0) {
 	    /* creating empty object implicitly, OK */
-	    return cmd->err;
+	    goto cmd_exit;
 	} else if (creating_null_list(cmd, nf, rem)) {
 	    /* creating empty object with explicit "null" */
-	    return cmd->err;
+	    goto cmd_exit;
 	} 
 	line += strspn(line, " ");
 	if (!strncmp(line, "-=", 2) || !strncmp(line, "+=", 2)) {
 	    /* adding or subtracting lists */
 	    shrink_or_expand_list(cmd, line, pdinfo);
-	    return cmd->err;
+	    goto cmd_exit;
 	} else if (*line != '=') {
 	    cmd->err = E_PARSE;
-	    return cmd->err;
+	    goto cmd_exit;
 	}
 	line += strspn(line, "=");
 	pos = (*line == ' ')? 0 : -1;
@@ -2083,7 +2083,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	pos = 0;
 	linelen = strlen(line);
 	if (process_cmd_extra(cmd, (const double **) *pZ, pdinfo)) {
-	    return cmd->err;
+	    goto cmd_exit;
 	}
     } 
 
@@ -2093,8 +2093,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (NEEDS_LISTSEP(cmd->ci) && sepcount == 0) {
 	/* missing field in command */
 	cmd->err = E_ARGS;
-	free(rem);
-	return cmd->err;
+	goto cmd_exit;
     }
 
     if (cmd->ci == AR || cmd->ci == ARBOND ||
@@ -2105,7 +2104,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* allocate space for the command list */
     if (resize_command_list(cmd, nf)) {
-	goto bailout;
+	goto cmd_exit;
     }
 
     /* now assemble the command list */
@@ -2167,7 +2166,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->err) {
-	goto bailout;
+	goto cmd_exit;
     }
 
     /** By now we're looking at a command that takes a list,
@@ -2213,7 +2212,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} 
     }
 
- bailout:
+ cmd_exit:
 
     /* double-check that allocation hasn't failed */
     if (cmd->err == 0 && (cmd->list == NULL || cmd->param == NULL || 
@@ -2227,11 +2226,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    cmd->context);
 #endif
 
+    free(rem);
+
     if (cmd->err) {
 	cmd->context = 0;
     }
-
-    free(rem);
 
     return cmd->err;
 }
@@ -4177,6 +4176,8 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	err = gretl_cmd_exec(s, pZ, ppdinfo, s->prn);
 	pdinfo = *ppdinfo;
     }
+
+    /* FIXME: problem with "set_as_last_model" below */
 
     if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
 	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {

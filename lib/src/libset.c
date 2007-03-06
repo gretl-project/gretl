@@ -71,7 +71,7 @@ struct max_opts {
 struct set_vars_ {
     int flags;
     int use_qr;                 /* use QR decomposition by default? */
-    int halt_on_error;          /* halt cli program on script error? */
+    int halt_on_err;            /* halt cli program on script error? */
     unsigned int seed;          /* for PRNG */
     int shell_ok;               /* shell commands permitted? */
     double hp_lambda;           /* for Hodrick-Prescott filter */
@@ -202,6 +202,7 @@ static void state_vars_copy (set_vars *sv)
 #endif
     sv->flags = state->flags;
     sv->use_qr = state->use_qr;
+    sv->halt_on_err = state->halt_on_err;
     sv->seed = state->seed;
     sv->shell_ok = state->shell_ok;
     sv->hp_lambda = state->hp_lambda;
@@ -228,7 +229,7 @@ static void state_vars_init (set_vars *sv)
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON;
     sv->use_qr = UNSET_INT; 
     sv->seed = 0;
-    sv->halt_on_error = UNSET_INT;
+    sv->halt_on_err = UNSET_INT;
     sv->shell_ok = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
@@ -1167,7 +1168,7 @@ static int display_settings (PRN *prn)
     pprintf(prn, " messages = %d\n", flag_to_bool(state, STATE_MSGS_ON));
 
     ival =  get_halt_on_error(); /* checks env */
-    pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
+    pprintf(prn, " halt_on_error = %d\n", state->halt_on_err);
 
     pprintf(prn, " shell_ok = %d\n", get_shell_ok());
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
@@ -1314,10 +1315,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    }
 	} else if (!strcmp(setobj, "halt_on_error")) {
 	    if (boolean_on(setarg)) {
-		state->halt_on_error = 1;
+		state->halt_on_err = 1;
 		err = 0;
 	    } else if (boolean_off(setarg)) {
-		state->halt_on_error = 0;
+		state->halt_on_err = 0;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "shell_ok")) {
@@ -1483,17 +1484,22 @@ int get_halt_on_error (void)
 	return 1;
     }
 
-    if (is_unset(state->halt_on_error)) {
+#if PDEBUG
+    fprintf(stderr, "get_halt_on_error: state = %p, halt_on_err = %d\n",
+	    (void *) state, state->halt_on_err);
+#endif
+
+    if (is_unset(state->halt_on_err)) {
 	char *s = getenv("GRETL_KEEP_GOING");
 
 	if (s != NULL && *s != '\0' && *s != '0') {
-	    state->halt_on_error = 0;
+	    state->halt_on_err = 0;
 	} else {
-	    state->halt_on_error = 1;
+	    state->halt_on_err = 1;
 	}
     } 
 
-    return state->halt_on_error;
+    return state->halt_on_err;
 }
 
 #ifndef WIN32
@@ -1608,8 +1614,7 @@ int pop_program_state (void)
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "pop_program_state called: ns=%d, pdinfo=%p\n",
-	    ns, (void *) pdinfo);
+    fprintf(stderr, "pop_program_state called: ns=%d\n", ns);
 #endif
 
     if (ns < 2) {

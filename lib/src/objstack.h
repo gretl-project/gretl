@@ -63,7 +63,7 @@ enum {
 
 void set_as_last_model (void *ptr, GretlObjType type);
 
-void gretl_model_protect (MODEL *pmod);
+int gretl_model_protect (MODEL *pmod);
 
 void *get_last_model (GretlObjType *type);
 
