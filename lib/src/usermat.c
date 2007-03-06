@@ -152,7 +152,7 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
-    if (matrix_add_callback != NULL) {
+    if (matrix_add_callback != NULL && gretl_function_depth() == 0) {
 	(*matrix_add_callback)();
     }
 

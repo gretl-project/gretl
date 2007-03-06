@@ -2725,11 +2725,12 @@ void view_session (void)
 static void size_name_entry (GtkWidget *w, const char *name)
 {
     PangoLayout *layout;
-    PangoRectangle logrect;
+    PangoRectangle rect;
     PangoFontDescription *pfd;
 #ifdef USE_GNOME
     GtkSettings *settings;
     gchar *fontname;
+    int width;
 
     settings = gtk_settings_get_default();
     g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
@@ -2747,8 +2748,11 @@ static void size_name_entry (GtkWidget *w, const char *name)
     pango_layout_set_font_description(layout, pfd);
     pango_font_description_free(pfd);
 
-    pango_layout_get_pixel_extents(layout, NULL, &logrect);
-    gtk_widget_set_size_request(w, 1.1 * logrect.width, -1); 
+    pango_layout_get_pixel_extents(layout, NULL, &rect);
+    width = rect.width;
+    width = (width < 10)? width + 3 : 1.1 * width;
+
+    gtk_widget_set_size_request(w, width, -1); 
 }
 
 static gboolean object_name_return (GtkWidget *w,
