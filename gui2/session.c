@@ -2727,10 +2727,10 @@ static void size_name_entry (GtkWidget *w, const char *name)
     PangoLayout *layout;
     PangoRectangle rect;
     PangoFontDescription *pfd;
+    int width;
 #ifdef USE_GNOME
     GtkSettings *settings;
     gchar *fontname;
-    int width;
 
     settings = gtk_settings_get_default();
     g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
