@@ -513,7 +513,7 @@ static int real_adf_test (int varno, int order, int niv,
     }
 
     if (!err) {
-	if (!(flags & ADF_EG_TEST)) {
+	if (!(flags & ADF_EG_TEST) || (flags & ADF_EG_RESIDS)) {
 	    record_test_result(DFt, pv, "Dickey-Fuller");
 	}
 	if ((flags & ADF_PRINT_ACK) && !(opt & OPT_Q)) {

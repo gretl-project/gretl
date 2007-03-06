@@ -665,6 +665,14 @@ static void copy_paths_to_internal (const PATHS *paths)
 
 const char *gretl_lib_path (void)
 {
+    if (*gretl_paths.libpath == '\0') {
+	char *epath = getenv("GRETL_PLUGIN_PATH");
+
+	if (epath != NULL) {
+	    strncat(gretl_paths.libpath, epath, MAXLEN - 1);
+	}
+    }
+
     return gretl_paths.libpath;
 }
 

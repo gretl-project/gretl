@@ -323,10 +323,9 @@ gretl_matrix *get_matrix_by_name (const char *name)
  * get_matrix_by_name_at_level:
  * @name: name of the matrix.
  * @level: level of function execution at which to search.
- * @pdinfo: dataset information.
  *
- * Looks up a user-defined matrix by name, at the given
- * level fo function execution.
+ * Looks up a user-defined matrix by @name, at the given
+ * @level of function execution.
  *
  * Returns: pointer to matrix, or %NULL if not found.
  */

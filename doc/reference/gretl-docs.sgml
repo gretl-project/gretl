@@ -13,8 +13,8 @@
 <!ENTITY discrete SYSTEM "xml/discrete.xml">
 <!ENTITY estimate SYSTEM "xml/estimate.xml">
 <!ENTITY forecast SYSTEM "xml/forecast.xml">
-<!ENTITY generate SYSTEM "xml/generate.xml">
-<!ENTITY genrfuns SYSTEM "xml/genrfuncs.xml">
+<!ENTITY genfuncs SYSTEM "xml/genfuncs.xml">
+<!ENTITY genmain  SYSTEM "xml/genmain.xml">
 <!ENTITY graphing SYSTEM "xml/graphing.xml">
 <!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
 <!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
@@ -35,6 +35,7 @@
 <!ENTITY kalman         SYSTEM "xml/kalman.xml">
 <!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
 <!ENTITY libset         SYSTEM "xml/libset.xml">
+<!ENTITY matrix-extra   SYSTEM "xml/matrix_extra.xml">
 <!ENTITY missing        SYSTEM "xml/missing.xml">
 <!ENTITY modelprint     SYSTEM "xml/modelprint.xml">
 <!ENTITY modelspec      SYSTEM "xml/modelspec.xml">
@@ -43,6 +44,7 @@
 <!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
 <!ENTITY objstack       SYSTEM "xml/objstack.xml">
 <!ENTITY options        SYSTEM "xml/options.xml">
+<!ENTITY plotspec       SYSTEM "xml/plotspec.xml">
 <!ENTITY plugins        SYSTEM "xml/plugins.xml">
 <!ENTITY printout       SYSTEM "xml/printout.xml">
 <!ENTITY pvalues        SYSTEM "xml/pvalues.xml">
@@ -64,7 +66,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.5.2</releaseinfo>
+    <releaseinfo>for gretl 1.6.1</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
@@ -116,8 +118,8 @@
     <title>Manipulating datasets</title>
     &calendar; 
     &dataset;
-    &generate;
-    &genrfuns;
+    &genmain;
+    &genfuncs;
     &transforms;
     &subsample;
     &missing;
@@ -129,13 +131,15 @@
     &modelprint;
     &texprint;
     &graphing;
+    &plotspec;
     &gretl-prn;
     &varprint;
   </chapter>
 
   <chapter id="ch-matrix">
     <title>Matrix manipulation</title>
-    &gretl-matrix; 
+    &gretl-matrix;
+    &matrix-extra;
     &usermat;  
   </chapter>
 

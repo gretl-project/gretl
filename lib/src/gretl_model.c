@@ -616,10 +616,10 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
  * gretl_model_get_param_number:
  * @pmod: pointer to model.
  * @pdinfo: dataset information.
- * @pname: name of model parameter.
+ * @s: name of model parameter.
  *
  * Returns the zero-based index of the coefficient in @pmod
- * corresponding to @pname, or -1 if @pname is not the name
+ * corresponding to @s, or -1 if @s is not the name
  * of a parameter.
  */
 

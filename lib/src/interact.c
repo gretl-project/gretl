@@ -2169,9 +2169,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	goto cmd_exit;
     }
 
-    /** By now we're looking at a command that takes a list,
+    /* By now we're looking at a command that takes a list,
        which either has been specified already or needs to
-       be filled out automatically **/
+       be filled out automatically */
 
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables

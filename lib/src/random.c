@@ -89,6 +89,7 @@ void gretl_rand_set_seed (unsigned int seed)
 
 /**
  * gretl_one_snormal:
+ *
  */
 
 double gretl_one_snormal (void) 
@@ -108,14 +109,14 @@ double gretl_one_snormal (void)
 
 /**
  * gretl_uniform_dist_minmax:
- * @a: target array
- * @t1: start of the fill range
- * @t2: end of the fill range
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
  * @min: lower bound of range.
  * @min: upper bound of range.
  *
  * Fill the selected subset of array @a with pseudo-random drawings
- * from the uniform distribution on @min-@max, using the Mersenne
+ * from the uniform distribution on @min to @max, using the Mersenne
  * Twister.
  *
  * Returns: 0 on success, 1 on invalid input.

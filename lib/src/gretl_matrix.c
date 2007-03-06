@@ -2279,7 +2279,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
  * @b: right-hand matrix.
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @c: matrix to hold the product.
- * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
+ * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
  * add the result to the existing value of @c.
  * 
  * Multiplies @a (or a-transpose) into @b (or b transpose),

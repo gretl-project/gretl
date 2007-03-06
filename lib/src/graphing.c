@@ -1652,7 +1652,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
  * @literal: commands to be passed to gnuplot.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: data information struct.
  * @opt: option flags.
  *

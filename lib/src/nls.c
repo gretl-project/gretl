@@ -598,7 +598,7 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
 
 /**
  * nlspec_add_param_list:
- * @s: nls specification.
+ * @spec: nls specification.
  * @list: list of variables by ID number.
  * @Z: data array.
  * @pdinfo: information on dataset.
@@ -610,27 +610,27 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int nlspec_add_param_list (nlspec *s, const int *list,
+int nlspec_add_param_list (nlspec *spec, const int *list,
 			   const double **Z, const DATAINFO *pdinfo)
 {
     int i, v, np = list[0];
     int err = 0;
 
-    if (s->params != NULL || np == 0) {
+    if (spec->params != NULL || np == 0) {
 	return E_DATA;
     }
 
     for (i=0; i<np && !err; i++) {
 	v = list[i+1];
 	if (v > 0 && v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    err = nlspec_push_param(s, pdinfo->varname[v], v, Z, NULL);
+	    err = nlspec_push_param(spec, pdinfo->varname[v], v, Z, NULL);
 	} else {
 	    err = E_DATA;
 	}
     }
 
     if (err) {
-	nlspec_destroy_arrays(s);
+	nlspec_destroy_arrays(spec);
     } 
 
     return err;

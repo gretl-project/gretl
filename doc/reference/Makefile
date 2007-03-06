@@ -26,7 +26,6 @@ SCAN_OPTIONS =
 IGNORE_HFILES = \
         f2c.h \
 	clapack_double.h \
-	genstack.h \
 	cmd_private.h \
         estim_private.h \
 	gretl_matrix_private.h \

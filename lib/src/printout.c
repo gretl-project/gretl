@@ -2169,7 +2169,6 @@ static void print_iter_val (double x, int i, PRN *prn)
  * @b: parameter array.
  * @g: gradient array.
  * @sl: step length.
- * @neggrad: = 1 if gradients are in negative form, else 0.
  * @prn: gretl printing struct.
  *
  * Print to @prn information pertaining to step @iter of an 
@@ -2773,11 +2772,10 @@ static int real_do_printf (const char *line, double ***pZ,
 
 /**
  * do_printf:
- * @line: 
- * @pZ: 
- * @pdinfo: 
- * @opt: 
- * @prn:
+ * @line: command line.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @prn: printing struct.
  *
  * Implement a somewhat limited version of C's printf
  * for use in gretl scripts.

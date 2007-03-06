@@ -538,23 +538,22 @@ void printlist (const int *list, const char *msg)
  * @ess: error sum of squares.
  * @n: number of observations.
  * @k: number of parameters estimated.
- * @pll: pointer to recieve loglikelihood.
+ * @ll: pointer to recieve loglikelihood.
  * @aic: pointer to recieve Akaike criterion.
  * @bic: pointer to recieve Schwartz Bayesian criterion.
  * @hqc: pointer to recieve Hannan-Quinn criterion.
  *
- * Calculates model selection criteria based on @ess, @n and
+ * Calculates model selection criteria based on @ess, @nobs and
  * @k, for a model estimated via least squares.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_calculate_criteria (double ess, int n, int k,
-			      double *pll, double *aic, double *bic,
+			      double *ll, double *aic, double *bic,
 			      double *hqc)
 {
-    double ll;
-    double c[3];
+    double lnl, c[3];
     int err = 0;
 
     if (na(ess) || ess <= 0.0 || k < 1 || n <= k) {
@@ -564,25 +563,25 @@ int gretl_calculate_criteria (double ess, int n, int k,
 
 	errno = 0;
 
-	ll = -.5 * n * log(ess);
+	lnl = -.5 * n * log(ess);
 
 	if (errno == EDOM || errno == ERANGE) {
 	    err = 1;
 	} else {
-	    ll += -.5 * n * (ln2pi1 - log((double) n));
-	    c[0] = -2.0 * ll + 2 * k;
-	    c[1] = -2.0 * ll + k * log(n);
-	    c[2] = -2.0 * ll + 2 * k * log(log(n));
+	    lnl += -.5 * n * (ln2pi1 - log((double) n));
+	    c[0] = -2.0 * lnl + 2 * k;
+	    c[1] = -2.0 * lnl + k * log(n);
+	    c[2] = -2.0 * lnl + 2 * k * log(log(n));
 	}
     }
 
     if (err) {
-	*pll = NADBL;
+	*ll = NADBL;
 	*aic = NADBL;
 	*bic = NADBL;
 	*hqc = NADBL;
     } else {
-	*pll = ll;
+	*ll = lnl;
 	*aic = c[0];
 	*bic = c[1];
 	*hqc = c[2];

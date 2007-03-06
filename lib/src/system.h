@@ -45,7 +45,7 @@ enum {
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
 
-struct _gretl_equation_system {
+struct gretl_equation_system_ {
     char *name;                 /* user-specified name for system, or NULL */
     int refcount;               /* for saving/deleting */
     int t1;                     /* starting observation number */
