@@ -1208,27 +1208,6 @@ static int freq_add_arrays (FreqDist *freq, int n)
     return err;
 }
 
-static int freq_get_n (int v, const double **Z, const DATAINFO *pdinfo,
-		       int *pn)
-{
-    int t, n = 0;
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
-	    n++;
-	}
-    }
-
-    if (n < 8) {
-	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
-				"distribution for variable %s"), 
-		pdinfo->varname[v]);
-	return E_DATA;
-    }
-
-    return 0;
-}
-
 int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 		int *pn, double *pxmax, double *pxmin, int *nbins, 
 		double *binwidth)
