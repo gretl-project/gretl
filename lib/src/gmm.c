@@ -30,8 +30,9 @@
 typedef struct colsrc_ colsrc;
 
 struct colsrc_ {
-    int v;                 /* ID number of variable n column */
+    int v;                 /* ID number of variable in column */
     char mname[VNAMELEN];  /* or name of source matrix */
+    int j;                 /* and column within matrix */
 };
 
 struct ocset_ {
@@ -132,13 +133,7 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 
     /* failing that, a list */
     list = get_list_by_name(name);
-    if (list == NULL) {
-	*err = E_UNKVAR;
-	return ARG_NONE;
-    }
-    
-    if (rhs) {
-	/* lists are OK on the right-hand side */
+    if (list != NULL) {
 	int j;
 
 	for (j=1; j<=list[0]; j++) {
@@ -151,10 +146,9 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 	    }
 	}
 	return ARG_LIST;
-    } else {
-	/* but not on the left */
-	*err = E_TYPES;
     }
+
+    *err = E_UNKVAR;
 
     return ARG_NONE;
 }
@@ -210,12 +204,14 @@ col_present (const gretl_matrix *a, const gretl_matrix *b, int j,
 */
 
 static int 
-expand_selector_matrix (nlspec *s, int oldZcols, const char *mask)
+expand_selector_matrix (nlspec *s, int sm, int sn, const char *mask)
 {
     gretl_matrix *Z = s->oc->Z;
     gretl_matrix *S = s->oc->S;
+    int ecols = s->oc->e->cols;
     int Zcols = Z->cols;
-    int j, err = 0;
+    double xij, *x;
+    int i, j, err = 0;
 
 #if GMM_DEBUG
     fprintf(stderr, "expand_selector_matrix\n");
@@ -223,57 +219,47 @@ expand_selector_matrix (nlspec *s, int oldZcols, const char *mask)
 #endif    
 
     if (S == NULL) {
-	/* starting from scratch: one O.C. will already be present */
-	S = s->oc->S = gretl_matrix_alloc(2, Zcols);
-	if (s->oc->S == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (j=0; j<Zcols; j++) {
-		gretl_matrix_set(S, 0, j, (j < oldZcols)? 1 : 0);
-		gretl_matrix_set(S, 1, j, (j < oldZcols)? 
-				 (mask[j] ? 1 : 0) : 1);
+	/* starting from scratch */
+	S = s->oc->S = gretl_unit_matrix_new(sm, sn);
+	if (S == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    x = realloc(S->val, ecols * Zcols * sizeof *x);
+    if (x == NULL) {
+	err = E_ALLOC;
+    } else {
+	S->val = x;
+	S->rows = ecols;
+	S->cols = Zcols;
+
+	/* transcribe original entries */
+	for (j=sn-1; j>=0; j--) {
+	    for (i=sm-1; i>=0; i--) {
+		xij = x[Sidx(i,j,sm)];
+		gretl_matrix_set(S, i, j, xij);
 	    }
 	}
-    } else {
-	/* enlarging an existing S matrix */
-	int i, k = s->oc->e->cols;
-	double xij, *x;
 
-	x = realloc(S->val, k * Zcols * sizeof *x);
-	if (x == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    /* record original dimensions */
-	    int sm = S->rows;
-	    int sn = S->cols;
-
-	    S->val = x;
-	    S->rows = k;
-	    S->cols = Zcols;
-
-	    /* transcribe original entries */
-	    for (j=sn-1; j>=0; j--) {
-		for (i=sm-1; i>=0; i--) {
-		    xij = x[Sidx(i,j,sm)];
-		    gretl_matrix_set(S, i, j, xij);
-		}
+	/* 0s in upper-right block */
+	for (i=0; i<sm; i++) {
+	    for (j=sn; j<S->cols; j++) {
+		gretl_matrix_set(S, i, j, 0);
 	    }
+	}
 
-	    /* 0s in upper-right block */
-	    for (i=0; i<sm; i++) {
-		for (j=sn; j<Zcols; j++) {
-		    gretl_matrix_set(S, i, j, 0);
-		}
+	/* 1s in lower-right block */
+	for (i=sm; i<S->rows; i++) {
+	    for (j=sn; j<S->cols; j++) {
+		gretl_matrix_set(S, i, j, 1);
 	    }
+	}
 
-	    /* 1s in lower-right block */
-	    for (j=sn; j<Zcols; j++) {
-		gretl_matrix_set(S, k-1, j, 1);
-	    }
-
-	    /* mixed 0/1 in lower-left region */
+	/* mixed 0/1 in lower-left region */
+	for (i=sm; i<S->rows; i++) {
 	    for (j=0; j<sn; j++) {
-		gretl_matrix_set(S, k-1, j, mask[j] ? 1 : 0);
+		gretl_matrix_set(S, i, j, mask[j] ? 1 : 0);
 	    }
 	}
     }
@@ -290,7 +276,7 @@ expand_selector_matrix (nlspec *s, int oldZcols, const char *mask)
 */
 
 static int 
-add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
+add_new_cols_to_Z (nlspec *s, const gretl_matrix *M, int oldecols)
 {
     gretl_matrix *Z = s->oc->Z;
     int oldZcols = Z->cols;
@@ -342,7 +328,7 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
     }
 
     if (!err) {
-	err = expand_selector_matrix(s, oldZcols, mask + M->cols);
+	err = expand_selector_matrix(s, oldecols, oldZcols, mask + M->cols);
     }
     
     free(mask);
@@ -350,45 +336,47 @@ add_new_cols_to_Z (nlspec *s, const gretl_matrix *M)
     return err;
 }
 
-/* Record the source (ID number of variable, or name of matrix) for a
-   column on the left-hand side of the set of GMM orthogonality
-   conditions.  We need this later for updating the values in the
-   given column, after adjusting the parameters.
+/* Record the source (ID number of variable, or name of matrix and
+   column within matrix) for a column on the left-hand side of the set
+   of GMM orthogonality conditions.  We need this later for updating
+   the values in the given column, after adjusting the parameters.
 */
 
 static int 
 push_column_source (nlspec *s, int v, const char *mname)
 {
+    gretl_matrix *m;
     colsrc *cols;
-    int n = 0;
+    int j, k, n, p;
 
-    if (s->oc->e != NULL) {
-	n = s->oc->e->cols;
-    }
+    m = (mname != NULL)? get_matrix_by_name(mname) : NULL;
+    n = (s->oc->e != NULL)? s->oc->e->cols : 0;
+    k = (m != NULL)? m->cols : 1;
 
-    cols = realloc(s->oc->ecols, (n+1) * sizeof *cols);
+    cols = realloc(s->oc->ecols, (n + k) * sizeof *cols);
     if (cols == NULL) {
 	return E_ALLOC;
     }
 
     s->oc->ecols = cols;
 
-    if (v <= 0) {
-	cols[n].v = 0;
-    } else {
-	cols[n].v = v;
-    }
+    for (j=0; j<k; j++) {
+	p = n + j;
+	cols[p].v = (v < 0)? 0 : v;
+	cols[p].j = j;
 
-    if (mname == NULL) {
-	cols[n].mname[0] = '\0';
-    } else {
-	strcpy(cols[n].mname, mname);
-    }
+	if (mname == NULL) {
+	    cols[p].mname[0] = '\0';
+	} else {
+	    strcpy(cols[p].mname, mname);
+	}
 
 #if GMM_DEBUG
-    fprintf(stderr, "push_column_source: added source %d: v=%d, mname='%s'\n",
-	    n, cols[n].v, cols[n].mname);
+	fprintf(stderr, "push_column_source: added source %d: v=%d, "
+		"mname='%s', j=%d\n", p, cols[p].v, cols[p].mname, 
+		cols[p].j);
 #endif
+    }
 
     return 0;
 }
@@ -399,14 +387,19 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 {
     gretl_matrix *e = NULL;
     gretl_matrix *M = NULL;
+    int oldecols = 0;
     int i, k, t, v;
     int free_e = 0;
     int free_M = 0;
     double x;
     int err = 0;
 
-    /* First work on the left-hand side: have we been given a vector
-       or a series?  If we get a series we convert it to a vector.
+    if (s->oc->e != NULL) {
+	oldecols = s->oc->e->cols;
+    }
+
+    /* First work on the left-hand side: if we've been given a series,
+       convert to a vector; if a list, convert to a matrix.
     */
 
 #if GMM_DEBUG
@@ -416,6 +409,26 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     if (ltype == ARG_MATRIX) {
 	e = get_matrix_by_name(lname);
 	err = push_column_source(s, 0, lname);
+    } else if (ltype == ARG_LIST) {
+	int *list = get_list_by_name(lname);
+
+	k = list[0];
+	e = gretl_matrix_alloc(s->nobs, k);
+	if (e == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    e->t1 = s->t1;
+	    e->t2 = s->t2;
+	    for (i=0; i<k && !err; i++) {
+		v = list[i + 1];
+		for (t=0; t<s->nobs; t++) {
+		    x = Z[v][t + s->t1];
+		    gretl_matrix_set(e, t, i, x);
+		}
+		err = push_column_source(s, v, NULL);
+	    }
+	    free_e = s->oc->free_e = 1;
+	}	
     } else if (ltype == ARG_SERIES) {
 	v = varindex(pdinfo, lname);
 	e = gretl_column_vector_alloc(s->nobs);
@@ -532,7 +545,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		    }
 		}
 		if (!err) {
-		    err = add_new_cols_to_Z(s, M);
+		    err = add_new_cols_to_Z(s, M, oldecols);
 #if GMM_DEBUG > 1
 		    fprintf(stderr, "oc_add_matrices: expanded Z\n");
 		    gretl_matrix_print(s->oc->Z, "Z");
@@ -549,7 +562,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     }
 
     if (!err) {
-	s->oc->noc += k;
+	s->oc->noc += k * (s->oc->e->cols - oldecols); /* FIXME? */
     }
 
     return err;
@@ -558,7 +571,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 /* Add a set of orthogonality conditions to a GMM specification.
    The source command takes the form:
 
-   orthog { series | vector } ; { series | list | matrix }
+   orthog { series | list | matrix } ; { series | list | matrix }
 */
 
 int 
@@ -793,14 +806,12 @@ int check_gmm_requirements (nlspec *spec)
 
 static int gmm_update_e (nlspec *s)
 {
-    gretl_matrix *col;
+    gretl_matrix *e;
     double etj;
-    int j, m, t, v;
+    int j, t, v;
     int err = 0;
 
-    m = s->oc->e->cols;
-
-    for (j=0; j<m && !err; j++) {
+    for (j=0; j<s->oc->e->cols && !err; j++) {
 	v = s->oc->ecols[j].v;
 	if (v > 0) {
 #if GMM_DEBUG
@@ -814,16 +825,16 @@ static int gmm_update_e (nlspec *s)
 	    }
 	} else {
 #if GMM_DEBUG
-	    fprintf(stderr, "gmm_update_e: updating col %d from vector %s\n",
+	    fprintf(stderr, "gmm_update_e: updating col %d from matrix %s\n",
 		    j, s->oc->ecols[j].mname);
 #endif
-	    /* transcribe from vector */
-	    col = get_matrix_by_name(s->oc->ecols[j].mname);
-	    if (col == NULL) {
+	    /* transcribe from matrix */
+	    e = get_matrix_by_name(s->oc->ecols[j].mname);
+	    if (e == NULL) {
 		err = 1;
-	    } else if (col != s->oc->e) {
+	    } else if (e != s->oc->e) {
 		for (t=0; t<s->nobs; t++) {
-		    etj = col->val[t];
+		    etj = gretl_matrix_get(e, t, s->oc->ecols[j].j);
 		    gretl_matrix_set(s->oc->e, t, j, etj);
 		}
 	    }
@@ -870,6 +881,13 @@ static int gmm_multiply_ocs (nlspec *s)
 	    }
 	}
     }
+
+#if GMM_DEBUG > 1
+    gretl_matrix_print(s->oc->e, "gmm_multiply_ocs: s->oc->e");
+    gretl_matrix_print(s->oc->Z, "gmm_multiply_ocs: s->oc->Z");
+    gretl_matrix_print(s->oc->tmp, "gmm_multiply_ocs: s->oc->tmp");
+    fprintf(stderr, "err = %d\n", err);
+#endif
 
     return err;
 }

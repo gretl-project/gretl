@@ -3614,6 +3614,9 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix-matrix or matrix-scalar binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
+	} else if ((l->t == MAT && r->t == VEC) ||
+		   (l->t == VEC && r->t == MAT)) {
+	    ret = matrix_series_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == NUM) {
 	    ret = matrix_scalar_calc(l, r, t->t, p);
 	} else {
