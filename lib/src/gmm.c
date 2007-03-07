@@ -930,8 +930,6 @@ static double get_gmm_crit (const double *b, void *p)
     }
 
 #if GMM_DEBUG > 2
-    gretl_matrix_print(s->oc->e, "s->oc->e");
-    gretl_matrix_print(s->oc->tmp, "s->oc->tmp");
     gretl_matrix_print(s->oc->sum, "s->oc->sum");
     fprintf(stderr, "GMM: s->crit = %g\n", s->crit);
 #endif

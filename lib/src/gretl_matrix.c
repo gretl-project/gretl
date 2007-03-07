@@ -5439,9 +5439,9 @@ double gretl_matrix_r_squared (const gretl_matrix *y,
  *
  * Computes a columnwise product in k blocks, each of n columns.
  * The first block consists of the Hadamard product of the first
- * column of @A and the matrix @B, and so on, the second block
- * holds the Hadamard product of the second column of @A and
- * matrix @B, and so on.
+ * column of @A and the matrix @B, the second block holds the
+ * Hadamard product of the second column of @A and matrix @B, 
+ * and so on.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */

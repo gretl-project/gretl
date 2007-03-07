@@ -476,7 +476,7 @@ static int latex_compile_graph_page (void)
     }
     remove(fname);
 
-    err = latex_compile(gpage_base);
+    err = latex_compile(gpage_tex_base);
 
     if (err == LATEX_ERROR) {
 	char *fname = gpage_fname(".log", 0);
