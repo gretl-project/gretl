@@ -536,7 +536,6 @@ GtkItemFactoryEntry data_items[] = {
     { "/Model/sep6",  NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model/_Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },
     { N_("/Model/_GMM..."), NULL, gretl_callback, GMM, NULL, GNULL },
-    { "/Model/sep7",  NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model/_Simultaneous equations..."), NULL, gretl_callback, SYSTEM, NULL, GNULL },
 
     /* Help menu */

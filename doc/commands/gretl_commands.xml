@@ -2967,8 +2967,7 @@
     </description>
   </command>
 
-  <command name="gmm" section="Estimation" label="GMM estimation"
-    context="cli">
+  <command name="gmm" section="Estimation" label="GMM estimation">
 
     <usage>
       <options>
@@ -2978,7 +2977,7 @@
 	</option>
 	<option>
 	  <flag>--iterate</flag>
-	  <effect>continuously updated GMM</effect>
+	  <effect>iterated GMM</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -3029,6 +3028,10 @@
       </para>
 
     </description>
+
+    <gui-access>
+      <menu-path>/Model/GMM</menu-path>
+    </gui-access>
 
   </command>
 

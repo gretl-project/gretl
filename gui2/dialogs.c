@@ -2920,6 +2920,8 @@ struct freqdist_info {
     int *nbins;
     double *fmin;
     double *fwid;
+    double xmin;
+    double xmax;
     GtkWidget *spin[3];
 };
 
@@ -2937,6 +2939,21 @@ static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
     } else {
 	/* bin width */
 	*f->fwid = val;
+    }
+
+    /* update complementary fields */
+
+    if (snum == 0 && GTK_WIDGET_SENSITIVE(f->spin[0])) {
+	*f->fwid = (f->xmax - f->xmin) / (*f->nbins - 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[2]), *f->fwid);
+	*f->fmin = f->xmin - 0.5 * (*f->fwid);
+	if (f->xmin >= 0.0 && *f->fmin < 0) {
+	    *f->fmin = 0.0;
+	}
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[1]), *f->fmin);
+    } else if (snum == 2 && GTK_WIDGET_SENSITIVE(f->spin[2])) {
+	*f->nbins = ceil((f->xmax - *f->fmin) / *f->fwid);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[0]), *f->nbins);
     }
 
     return FALSE;
@@ -2986,6 +3003,8 @@ int freq_dialog (const char *title, const char *blurb,
     finfo.nbins = nbins;
     finfo.fmin = f0;
     finfo.fwid = fwid;
+    finfo.xmax = xmax;
+    finfo.xmin = xmin;
 
     /* upper label */
     tmp = dialog_blurb_box(blurb);
@@ -3059,11 +3078,6 @@ int freq_dialog (const char *title, const char *blurb,
 		     dialog);
     gtk_widget_grab_default(okb);
     gtk_widget_show(okb);
-
-    for (i=0; i<3; i++) {
-	g_signal_connect(G_OBJECT(finfo.spin[i]), "activate",
-			 G_CALLBACK(trigger_ok), okb);
-    }
 
     /* Help button */
     context_help_button(GTK_DIALOG(dialog)->action_area, FREQ);

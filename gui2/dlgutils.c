@@ -721,6 +721,55 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     gtk_widget_show(hbox);
 }
 
+static void gmm_option_callback (GtkWidget *w, dialog_t *d)
+{
+    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "i"));
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	switch (i) {
+	case 0:
+	    d->opt &= ~OPT_T;
+	    d->opt &= ~OPT_I;
+	    break;
+	case 1:
+	    d->opt |= OPT_T;
+	    d->opt &= ~OPT_I;
+	    break;
+	case 2:
+	    d->opt &= ~OPT_T;
+	    d->opt |= OPT_I;
+	    break;
+	}
+    }
+}
+
+static void build_gmm_radios (GtkWidget *vbox, dialog_t *d)
+{
+    GtkWidget *b, *hbox;
+    GSList *group = NULL;
+    const char *strs[] = {
+	N_("One-step estimation"),
+	N_("Two-step estimation"),
+	N_("Iterated estimation")
+    };
+    int i;
+
+    for (i=0; i<3; i++) {
+	b = gtk_radio_button_new_with_label(group, _(strs[i]));
+	g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(gmm_option_callback), d);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show_all(hbox);
+	if (i == 0) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
+	}
+    }
+}
+
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
 {
     gretl_equation_system *sys = NULL;
@@ -921,10 +970,13 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	sample_replace_buttons(top_vbox, d);
     } else if (cmdcode == SYSTEM) {
 	system_estimator_list(top_vbox, d);
-    } else if (cmdcode == NLS || cmdcode == MLE || cmdcode == GMM) {
+    } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
-    } 
+    } else if (cmdcode == GMM) {
+	dialog_option_switch(top_vbox, d, OPT_V);
+	build_gmm_radios(top_vbox, d);
+    }
 
     if (varclick == VARCLICK_INSERT_ID) { 
 	active_edit_id = d->edit; 
