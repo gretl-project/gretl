@@ -429,6 +429,8 @@ int gp_term_code (gpointer p)
 
     if (!strncmp(s, "postscript", 10)) 
 	return GP_TERM_EPS;
+    else if (!strncmp(s, "PDF", 3)) 
+	return GP_TERM_PDF;
     else if (!strcmp(s, "fig")) 
 	return GP_TERM_FIG;
     else if (!strcmp(s, "latex")) 

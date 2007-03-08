@@ -773,6 +773,7 @@ int main (int argc, char *argv[])
 
     libgretl_init();
     set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
+    set_program_startdir();
 
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);

@@ -26,6 +26,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "menustate.h"
+#include "session.h"
 
 #include "libset.h"
 #include "version.h"
@@ -471,6 +472,17 @@ static void get_functions_dir (char *dirname)
     *dirname = '\0';
 }
 
+static char startdir[MAXLEN];
+
+void set_program_startdir (void)
+{
+    char *test = getcwd(startdir, MAXLEN);
+
+    if (test == NULL) {
+	*startdir = '\0';
+    }
+}
+
 void get_default_dir (char *s, int action)
 {
     *s = '\0';
@@ -487,15 +499,20 @@ void get_default_dir (char *s, int action)
     }
 
     if (usecwd && action != SAVE_DBDATA) {
-	char *test = getcwd(s, MAXLEN);
+	if (*startdir != '\0') {
+	    strcpy(s, startdir);
+	} else {
+	    const char *sdir = get_session_dirname();
+	    char *test = getcwd(s, MAXLEN);
 
-	if (test == NULL) {
-	    strcpy(s, paths.userdir);
+	    if (test == NULL || (*sdir != '\0' && strstr(s, sdir))) {
+		strcpy(s, paths.userdir);
+	    }
 	} 
     } else {
 	strcpy(s, paths.userdir);   
-    } 
-    
+    }
+
     slash_terminate(s);
 }
 

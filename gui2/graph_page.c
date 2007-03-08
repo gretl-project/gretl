@@ -157,11 +157,18 @@ static int oddgraph (int ng, int i)
     return (ng % 2) && (i == ng - 1);
 }
 
+enum {
+    SCALE_LARGE,
+    SCALE_REGULAR,
+    SCALE_MEDIUM,
+    SCALE_SMALL
+};
+
 static int tex_graph_setup (int ng, FILE *fp)
 {
     char fname[FILENAME_MAX];
-    double scale = 1.0;
-    double vspace = 1.0;
+    double scale[] = { 1.2, 1.0, 0.9, 0.85 };
+    double s, vspace = 1.0;
     int i;
 
     if (ng > GRAPHS_MAX) {
@@ -172,29 +179,30 @@ static int tex_graph_setup (int ng, FILE *fp)
     gretl_push_c_numeric_locale();
 
     if (ng == 1) {
+	s = scale[SCALE_LARGE];
 	sprintf(fname, "%s_1", gpage_tex_base);
-	fprintf(fp, "\\includegraphics[scale=1.2]{%s}\n", fname);
+	fprintf(fp, "\\includegraphics[scale=%g]{%s}\n", s, fname);
     } else if (ng == 2) {
+	s = scale[SCALE_REGULAR];
 	sprintf(fname, "%s_%d", gpage_tex_base, 1);
-	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
+	fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n", s, fname);
 	fprintf(fp, "\\vspace{%gin}\n\n", vspace);
 	sprintf(fname, "%s_%d", gpage_tex_base, 2);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
     } else if (ng == 3) {
-	scale = 0.9;
+	s = scale[SCALE_MEDIUM];
 	vspace = 0.25;
 	for (i=0; i<3; i++) {
 	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
-	    fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n",
-		    scale, fname);
+	    fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n", s, fname);
 	    fprintf(fp, "\\vspace{%gin}\n", vspace);
 	}
     } else {
 	if (ng > 6) {
-	    scale = 0.85;
+	    s = scale[SCALE_SMALL];
 	    vspace = 0.20;
 	} else {
-	    scale = 0.9;
+	    s = scale[SCALE_MEDIUM];
 	    vspace = 0.25;
 	}	    
 	fputs("\\begin{tabular}{cc}\n", fp);
@@ -202,10 +210,9 @@ static int tex_graph_setup (int ng, FILE *fp)
 	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
 	    if (oddgraph(ng, i)) {
 		fprintf(fp, "\\multicolumn{2}{c}{\\includegraphics[scale=%g]{%s}}",
-			scale, fname);
+			s, fname);
 	    } else {
-		fprintf(fp, "\\includegraphics[scale=%g]{%s}",
-			scale, fname);
+		fprintf(fp, "\\includegraphics[scale=%g]{%s}", s, fname);
 		if (i % 2 == 0) {
 		    fputs(" &\n  ", fp);
 		} else if (i < ng - 1) {
@@ -333,9 +340,10 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     gretl_push_c_numeric_locale();
     
     if (gpage.output == PDF_OUTPUT) {
-	fputs("set term pdf\n", fq);
 	if (scale != 1.0) {
-	    fprintf(fq, "set size %g,%g\n", scale, scale);
+	    fprintf(fq, "set term pdf size %g,%g\n", scale * 5.0, scale * 3.0);
+	} else {
+	    fputs("set term pdf\n", fq);
 	}	
 	fname = gpage_fname(".pdf", i);
     } else {
@@ -493,13 +501,10 @@ static int latex_compile_graph_page (void)
 
 static int make_gp_output (void)
 {
-    const char *sdir = get_session_dirname();
     char *fname;
     double scale = 1.0;
     int i;
     int err = 0;
-
-    chdir(sdir);
 
     if (gpage.ngraphs == 3) {
 	scale = 0.8;
@@ -573,6 +578,7 @@ static void gpage_cleanup (void)
 
 int display_graph_page (void)
 {
+    const char *sdir = get_session_dirname();
     char *latex_orig = NULL;
     int err = 0;
 
@@ -580,6 +586,8 @@ int display_graph_page (void)
 	gpage_errmsg(_("The graph page is empty"), 1);
 	return 1;
     }
+
+    chdir(sdir);
 
     gpage_filenames_init(NULL);
 
@@ -645,9 +653,12 @@ int graph_page_get_n_graphs (void)
 }
 
 int save_graph_page (const char *fname)
-{
+{    
+    const char *sdir = get_session_dirname();
     char *latex_orig = NULL;
     int err = 0;
+
+    chdir(sdir);
 
     gpage_filenames_init(fname);
 

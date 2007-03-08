@@ -136,7 +136,7 @@ of this familiar expression comes from the \emph{hypothesis} that the
 conditional mean $E(y_t|x_t)$ is linear and the \emph{definition} of
 $u_t$ as $y_t - E(y_t|x_t)$.
 
->From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
+From the definition of $u_t$, it follows that $E(u_t|x_t) = 0$. 
 The following orthogonality condition is therefore available:
 \begin{equation}
   \label{eq:oc-ols}
@@ -204,17 +204,17 @@ conditions.  They must follow the syntax
 \begin{code}
   orthog x ; Z
 \end{code}
-where \texttt{x} must be a vector or a series and \texttt{Z} a series,
-list or matrix. In example~\ref{gmm-ols-ex}, the series \texttt{e}
-holds the ``residuals'' and the series \texttt{x} holds the regressor.
-If \texttt{x} had been a list (a matrix), the \texttt{orthog}
-statement would have generated one orthogonality condition for each
-element (column) of \texttt{x}.  Note the structure of the
-orthogonality condition: it is assumed that the term to the left of the
-semicolon represents a quantity that depends on the estimated
-parameters (and so must be updated in the process of iterative
-estimation), while the term on the right is a constant function of
-the data.
+where \texttt{x} may be a series, matrix or list of series and
+\texttt{Z} may also be a series, matrix or list. In
+example~\ref{gmm-ols-ex}, the series \texttt{e} holds the
+``residuals'' and the series \texttt{x} holds the regressor.  If
+\texttt{x} had been a list (a matrix), the \texttt{orthog} statement
+would have generated one orthogonality condition for each element
+(column) of \texttt{x}.  Note the structure of the orthogonality
+condition: it is assumed that the term to the left of the semicolon
+represents a quantity that depends on the estimated parameters (and so
+must be updated in the process of iterative estimation), while the
+term on the right is a constant function of the data.
 
 The \texttt{weights} statement is used to specify the initial
 weighting matrix and its syntax is straightforward.  The

@@ -534,6 +534,7 @@ static struct winfilter get_gp_filter (int ttype)
 {
     static struct winfilter gpfilt[] = {
 	{ N_("postscript files (*.eps)"), "*.eps" },
+	{ N_("PDF files (*.pdf)"), "*.pdf" },
 	{ N_("xfig files (*.fig)"), "*.fig" },
 	{ N_("LaTeX files (*.tex)"), "*.tex" },
 	{ N_("PNG files (*.png)"), "*.png" },
@@ -544,18 +545,20 @@ static struct winfilter get_gp_filter (int ttype)
 
     if (ttype == GP_TERM_EPS) 
 	return gpfilt[0];
-    else if (ttype == GP_TERM_FIG) 
+    else if (ttype == GP_TERM_PDF) 
 	return gpfilt[1];
-    else if (ttype == GP_TERM_TEX) 
+    else if (ttype == GP_TERM_FIG) 
 	return gpfilt[2];
-    else if (ttype == GP_TERM_PNG) 
+    else if (ttype == GP_TERM_TEX) 
 	return gpfilt[3];
-    else if (ttype == GP_TERM_EMF) 
+    else if (ttype == GP_TERM_PNG) 
 	return gpfilt[4];
-    else if (ttype == GP_TERM_PLT)
+    else if (ttype == GP_TERM_EMF) 
 	return gpfilt[5];
-    else
+    else if (ttype == GP_TERM_PLT)
 	return gpfilt[6];
+    else
+	return gpfilt[7];
 }
 
 static struct winfilter get_filter (int action, gpointer data)
@@ -859,6 +862,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
     }
 
+    /* FIXME session dir */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 
     /* special cases */

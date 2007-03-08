@@ -5748,7 +5748,7 @@ int latex_compile (char *texshort)
 	return LATEX_EXEC_FAILED;
     }
 
-    sprintf(tmp, "\"%s\" %s", latex_path, texshort);
+    sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
     if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return LATEX_EXEC_FAILED;
     }
