@@ -396,32 +396,6 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     return 0;
 }
 
-int maybe_switch_emf_point_style (char *s, PRN *prn)
-{
-    char *p = strstr(s, "w points");
-    int do_pt2 = 0;
-
-    if (p != NULL) {
-	if (strncmp(p + 8, " pt", 3)) {
-	    do_pt2 = 1;
-	}
-    }
-
-    if (do_pt2) {
-	int i, len = p + 8 - s;
-
-	for (i=0; i<len; i++) {
-	    pputc(prn, s[i]);
-	}
-	pputs(prn, " pt 2");
-	pputs(prn, p + 8);
-    } else {
-	pputs(prn, s);
-    }
-
-    return do_pt2;
-}
-
 int gp_term_code (gpointer p)
 {
     GPT_SPEC *spec = (GPT_SPEC *) p;
@@ -508,18 +482,14 @@ void save_graph_to_file (gpointer data, const char *fname)
 	}
 	return;
     } else {
-	int done_pt2 = strncmp(termstr, "emf", 3);
-
 #ifdef ENABLE_NLS
 	pprint_gnuplot_encoding(termstr, prn);
 #endif
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
-	    if (!done_pt2 && strstr(plotline, "using 1:2")) {
-		done_pt2 = maybe_switch_emf_point_style(plotline, prn);
-	    } else if (strncmp(plotline, "set term", 8) && 
-		       strncmp(plotline, "set output", 10)) {
+	    if (strncmp(plotline, "set term", 8) && 
+		strncmp(plotline, "set output", 10)) {
 		pputs(prn, plotline);
 	    }
 	}

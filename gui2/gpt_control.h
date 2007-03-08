@@ -40,8 +40,6 @@ int plot_is_mouseable (const png_plot *plot);
 
 GtkWidget *plot_get_shell (png_plot *plot);
 
-int maybe_switch_emf_point_style (char *s, PRN *prn);
-
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
 
 int gp_term_code (gpointer p);

@@ -812,9 +812,7 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set output '%s'\n", emfname);
     while (fgets(plotline, MAXLEN-1, fq)) {
-	if (!done_pt2 && strstr(plotline, "using 1:2")) {
-	    done_pt2 = maybe_switch_emf_point_style(plotline, prn);
-	} else if (strncmp(plotline, "set term", 8) && 
+	if (strncmp(plotline, "set term", 8) && 
 	    strncmp(plotline, "set output", 10)) {
 	    pputs(prn, plotline);
 	}
