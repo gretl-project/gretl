@@ -380,6 +380,25 @@ static int dlg_text_set_previous (dialog_t *d)
     }
 }
 
+static int dlg_text_set_gmm_skel (dialog_t *d)
+{
+    const char *skel = 
+	"# initializations go here\n\n\n"
+	"gmm\n\n"
+	"orthog\n"
+	"weights\n"
+	"params\n"
+	"end gmm\n";
+
+    if (d->code == GMM && edit_save_buf == NULL) {
+	textview_set_text(d->edit, skel);
+	textview_set_cursor_at_line(d->edit, 1);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* end edit saver apparatus */
 
 gchar *edit_dialog_special_get_text (dialog_t *dlg)
@@ -930,8 +949,11 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dialog_table_setup(d, hsize);
 
 	/* insert previous text, if any and if the command
-	   is the same as previously */
-	if (dlg_text_set_previous(d)) {
+	   is the same as previously -- or insert skeleton
+	   of command
+	*/
+	if (dlg_text_set_previous(d) ||
+	    dlg_text_set_gmm_skel(d)) {
 	    clear = 1;
 	}
 

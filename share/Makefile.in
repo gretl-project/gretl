@@ -1,4 +1,5 @@
 topsrc = @top_srcdir@
+datarootdir = @datarootdir@
 
 prefix = @prefix@
 have_gtk = @have_gtk@
@@ -23,8 +24,7 @@ IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
 IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
 IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 
-ifeq ($(build_docs),yes)
-  AUTO_HELPFILES = \
+AUTO_HELPFILES = \
 	$(EN_GUI_HLP) \
 	$(EN_CMD_HLP) \
 	$(EN_CLI_HLP) \
@@ -34,22 +34,23 @@ ifeq ($(build_docs),yes)
 	$(IT_GUI_HLP) \
 	$(IT_CMD_HLP) \
 	$(IT_CLI_HLP)
+
+ifeq ($(build_docs),yes)
+  query_make_help = help
+  query_install_help = install_help
 endif
 
 VPATH = $(sharesrc)
 
-all: $(AUTO_HELPFILES)
-
-$(AUTO_HELPFILES): 
-	make -C ../doc/commands help-all
-
-.PHONY :
+all: $(query_make_help)
 
 help:
 	make -C ../doc/commands help-all
 
+.PHONY :
+
 install: installdirs install_datafiles install_scripts install_functions \
-	install_help install_fonts
+	install_help install_fonts $(query_install_help)
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
 	make -C bcih install
 

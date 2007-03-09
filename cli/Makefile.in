@@ -1,4 +1,5 @@
 topsrc = @top_srcdir@
+datarootdir = @datarootdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@

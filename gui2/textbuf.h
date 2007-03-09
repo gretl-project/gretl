@@ -38,6 +38,8 @@ gchar *textview_get_selection_or_all (GtkWidget *view,
 
 int textview_set_text (GtkWidget *view, const gchar *text);
 
+int textview_set_cursor_at_line (GtkWidget *view, int line);
+
 int viewer_char_count (windata_t *vwin);
 
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget);

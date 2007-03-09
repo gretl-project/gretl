@@ -1,4 +1,5 @@
 topsrc = @top_srcdir@
+datarootdir = @datarootdir@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@

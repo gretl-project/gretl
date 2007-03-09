@@ -136,6 +136,22 @@ int textview_set_text (GtkWidget *view, const gchar *text)
     return 0;
 }
 
+int textview_set_cursor_at_line (GtkWidget *view, int line)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+    
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), 1);
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    g_return_val_if_fail(tbuf != NULL, 1);
+
+    gtk_text_buffer_get_iter_at_line(tbuf, &iter, line);
+    gtk_text_buffer_place_cursor(tbuf, &iter);
+
+    return 0;
+}
+
 int viewer_char_count (windata_t *vwin)
 {
     GtkTextBuffer *tbuf;

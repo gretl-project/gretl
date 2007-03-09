@@ -2439,7 +2439,9 @@ static int is_genr_line (char *s)
 {
     if (!strncmp(s, "genr", 4) ||
 	!strncmp(s, "series", 6) ||
-	!strncmp(s, "scalar", 6)) {
+	!strncmp(s, "scalar", 6) ||
+	!strncmp(s, "matrix", 6) ||
+	!strncmp(s, "list ", 5)) {
 	return 1;
     } else if (!strncmp(s, "param ", 6) && strchr(s, '=')) {
 	gchar *tmp = g_strdup_printf("genr %s", s + 6);
@@ -2486,7 +2488,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     while (bufgets(bufline, sizeof bufline, buf) && !err) {
 	int len, cont = 0;
 
-	if (string_is_blank(bufline)) {
+	if (string_is_blank(bufline) || *bufline == '#') {
 	    *realline = 0;
 	    continue;
 	}
@@ -2528,7 +2530,10 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	} 
 
 	err = nls_parse_line(ci, realline, (const double **) Z, datainfo, NULL);
-	started = 1;
+
+	if (!started) {
+	    started = 1;
+	}
 
 	if (err) {
 	    gui_errmsg(err);

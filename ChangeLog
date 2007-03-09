@@ -3,6 +3,8 @@ version 1.6.2, in progress
 - Fix breakage in GUI "graph page" apparatus
 - Bivariate scatterplots: give the option of showing various sorts
   of fitted line: linear, quadratic, inverse or loess
+- Monochrome EMF graphs: make sure point types are distinct for
+  different series
 - Internal clean-up of the graphing code
 - Make frequency plots more configurable via the GUI
 - Fix memory leaks in GUI graph editor dialog
