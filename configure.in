@@ -348,7 +348,7 @@ fi
 gnuplot_png=no
 if test "$build_gui" = "yes" ; then
   AC_MSG_CHECKING(for PNG support in gnuplot)
-  echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
+  echo "set term png" | GNUTERM=dumb `which gnuplot` 2>/dev/null && gnuplot_png=yes
   if test "$gnuplot_png" = yes ; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(GNUPLOT_PNG)
