@@ -1051,10 +1051,14 @@ static char *make_pkgname (const char *fname)
 	return NULL;
     }
 
-    p = strstr(ret, ".gfn");
+    p = strrchr(ret, '-');
+    if (p == NULL) {
+	p = strstr(ret, ".gfn");
+    }
+
     if (p != NULL) {
 	*p = 0;
-    }
+    } 
 
     return ret;
 }

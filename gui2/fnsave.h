@@ -24,7 +24,7 @@ void edit_function_package (const char *fname, int *loaderr);
 
 void prepare_functions_save (void);
 
-void save_user_functions (const char *fname, gpointer p);
+int save_user_functions (const char *fname, gpointer p);
 
 void get_default_package_name (char *fname, gpointer p);
 

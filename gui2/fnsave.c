@@ -43,6 +43,7 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
+    GtkWidget *fcheck;
     fnpkg *pkg;
     char *fname;
     char *author;
@@ -56,6 +57,7 @@ struct function_info_ {
     FuncDataReq dreq;
     float minver;
     int upload;
+    int usever;
     int saveas;
 };
 
@@ -84,6 +86,7 @@ function_info *finfo_new (void)
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
     finfo->upload = 0;
+    finfo->usever = 0;
     finfo->saveas = 0;
     finfo->iface = -1;
 
@@ -179,8 +182,61 @@ void get_default_package_name (char *fname, gpointer p)
 
     if (pubname != NULL) {
 	strcpy(fname, pubname);
+	if (finfo->usever) {
+	    strcat(fname, "-");
+	    strcat(fname, finfo->version);
+	}
 	strcat(fname, ".gfn");	
     }
+}
+
+static int check_version_string (const char *s)
+{
+    const char *dig = "0123456789";
+    int dc = 0;
+    int err = 0;
+
+    if (!isdigit(*s) || (*s && !isdigit(s[strlen(s) - 1]))) {
+	err = 1;
+    }
+
+    while (*s && !err) {
+	if (*s == '.' && ++dc > 2) {
+	    err = 1;
+	} else if (strspn(s, dig) == 0 && strspn(s, ".") != 1) {
+	    err = 1;
+	}
+	s++;
+    }
+
+    return err;
+}
+
+static int add_or_subtract_version_string (function_info *finfo)
+{
+    char *p;
+
+    if (finfo->usever) {
+	/* factor in version string */
+	gchar *base = g_strdup(finfo->fname);
+
+	p = strstr(base, ".gfn");
+	if (p != NULL && strlen(p) == 4) {
+	    *p = '\0';
+	}
+	free(finfo->fname);
+	finfo->fname = g_strdup_printf("%s-%s.gfn", base, finfo->version);
+	g_free(base);
+    } else {
+	/* remove version string */
+	p = strrchr(finfo->fname, '-');
+	if (p != NULL) {
+	    *p = '\0';
+	    strncat(p, ".gfn", 4);
+	}
+    }
+
+    return 0;
 }
 
 static void real_finfo_save (function_info *finfo)
@@ -191,6 +247,7 @@ static void real_finfo_save (function_info *finfo)
 	&finfo->date,
 	&finfo->pkgdesc
     };
+    int usever_old = finfo->usever;
     int i, hidx = 0;
     int err = 0;
 
@@ -207,8 +264,16 @@ static void real_finfo_save (function_info *finfo)
 	return;
     }
 
+    if (check_version_string(finfo->version)) {
+	errbox(_("Invalid version string: use numbers and '.' only"));
+	return;
+    }
+
     finfo->upload = 
 	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
+
+    finfo->usever = 
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->fcheck));
 
     if (hidx >= 0) {
 	char *tmp = textview_get_text(finfo->text);
@@ -221,7 +286,13 @@ static void real_finfo_save (function_info *finfo)
 	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     } else {
-	save_user_functions(finfo->fname, finfo);
+	if (finfo->usever != usever_old) {
+	    add_or_subtract_version_string(finfo);
+	}
+	err = save_user_functions(finfo->fname, finfo);
+	if (!err) {
+	    infobox(_("Saved package as %s"), finfo->fname);
+	}
     }
 }
 
@@ -542,7 +613,7 @@ static void finfo_dialog (function_info *finfo)
 
     gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
 			 _("gretl: function package editor")); 
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 480);
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 500);
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
@@ -629,6 +700,12 @@ static void finfo_dialog (function_info *finfo)
     /* check box for upload option */
     finfo->check = button_in_hbox(vbox, CHECK_BUTTON, 
 				  _("Upload package to server on save"));
+
+    /* check box for use version number in filename */
+    finfo->fcheck = button_in_hbox(vbox, CHECK_BUTTON, 
+				   _("Include version in file name"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(finfo->fcheck),
+				 finfo->usever);    
 
     /* control button area */
     hbox = gtk_hbutton_box_new();
@@ -856,7 +933,7 @@ fnpkg_check_filename (function_info *finfo, const char *fname)
 {
     const char *p = strrchr(fname, SLASH);
     char funname[FN_NAMELEN];
-    int n, err = 0;
+    int i, n, err = 0;
 
     if (p == NULL) {
 	p = fname;
@@ -864,9 +941,12 @@ fnpkg_check_filename (function_info *finfo, const char *fname)
 	p++;
     }
 
-    n = strlen(p);
-    if (has_suffix(fname, ".gfn")) {
-	n -= 4;
+    n = 0;
+    for (i=0; p[i] != '\0'; p++) {
+	if (p[i] == '-' || !strcmp(p + i, ".gfn")) {
+	    break;
+	}
+	n++;
     }
 
     if (n >= FN_NAMELEN) {
@@ -889,7 +969,7 @@ fnpkg_check_filename (function_info *finfo, const char *fname)
     return err;
 }
 
-void save_user_functions (const char *fname, gpointer p)
+int save_user_functions (const char *fname, gpointer p)
 {
     function_info *finfo = p;
     int i, err;
@@ -898,7 +978,7 @@ void save_user_functions (const char *fname, gpointer p)
     if (finfo->fname == NULL) {
 	err = fnpkg_check_filename(finfo, fname);
 	if (err) {
-	    return;
+	    return 1;
 	}
 	finfo->fname = g_strdup(fname);
     } 
@@ -942,6 +1022,8 @@ void save_user_functions (const char *fname, gpointer p)
 	    do_upload(fname);
 	}
     }
+
+    return err;
 }
 
 /* called from function selection dialog: a set of functions has been
@@ -996,6 +1078,7 @@ void prepare_functions_save (void)
 void edit_function_package (const char *fname, int *loaderr)
 {
     function_info *finfo;
+    const char *p;
     int err = 0;
 
     if (!function_package_is_loaded(fname)) {
@@ -1029,6 +1112,17 @@ void edit_function_package (const char *fname, int *loaderr)
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
 	return;
+    }
+
+    p = strrchr(fname, SLASH);
+    if (p == NULL) {
+	p = fname;
+    } else {
+	p++;
+    }
+
+    if (strchr(p, '-')) {
+	finfo->usever = 1;
     }
 
     finfo->fname = g_strdup(fname);
