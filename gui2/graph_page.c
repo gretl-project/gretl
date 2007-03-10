@@ -576,6 +576,8 @@ static void gpage_cleanup (void)
     remove(fname);
 }
 
+/* FIXME color/mono selection */
+
 int display_graph_page (void)
 {
     const char *sdir = get_session_dirname();

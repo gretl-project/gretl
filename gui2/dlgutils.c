@@ -1085,4 +1085,3 @@ char *entry_box_get_trimmed_text (GtkWidget *w)
 
     return ret;
 }
-

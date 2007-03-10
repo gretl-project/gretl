@@ -1193,6 +1193,8 @@ void open_named_db_index (char *dbname)
     } 
 }
 
+#define KEEP_BROWSER_OPEN 1
+
 void open_db_index (GtkWidget *w, gpointer data)
 {
     gchar *fname = NULL, *dbdir = NULL;
