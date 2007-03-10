@@ -340,17 +340,18 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     gretl_push_c_numeric_locale();
     
     if (gpage.output == PDF_OUTPUT) {
+	fprintf(fq, "set term pdf%s", (gpage.color)? " color" : " monochrome dashed");
 	if (scale != 1.0) {
-	    fprintf(fq, "set term pdf size %g,%g\n", scale * 5.0, scale * 3.0);
+	    fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.0);
 	} else {
-	    fputs("set term pdf\n", fq);
+	    fputc('\n', fq);
 	}	
 	fname = gpage_fname(".pdf", i);
     } else {
 #ifdef ENABLE_NLS
 	fprint_gnuplot_encoding("postscript", fq);
 #endif
-	fprintf(fq, "set term postscript eps%s\n", (gpage.color)? " color" : "");
+	fprintf(fq, "set term postscript eps%s\n", (gpage.color)? " color" : " monochrome");
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
@@ -580,14 +581,26 @@ static void gpage_cleanup (void)
 
 int display_graph_page (void)
 {
+    const char *opts[] = {
+	N_("color"),
+	N_("monochrome")
+    };
     const char *sdir = get_session_dirname();
     char *latex_orig = NULL;
-    int err = 0;
+    int resp, err = 0;
 
     if (gpage.ngraphs == 0) {
 	gpage_errmsg(_("The graph page is empty"), 1);
 	return 1;
     }
+
+    resp = radio_dialog(_("graph page options"), NULL, opts, 
+			2, 0, 0);
+    if (resp < 0) {
+	return 0;
+    }
+
+    gpage.color = (resp == 0);
 
     chdir(sdir);
 
