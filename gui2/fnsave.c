@@ -172,6 +172,8 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
+/* for use in File, Save dialog */
+
 void get_default_package_name (char *fname, gpointer p)
 {
     function_info *finfo = (function_info *) p;
@@ -192,7 +194,6 @@ void get_default_package_name (char *fname, gpointer p)
 
 static int check_version_string (const char *s)
 {
-    const char *dig = "0123456789";
     int dc = 0;
     int err = 0;
 
@@ -203,7 +204,7 @@ static int check_version_string (const char *s)
     while (*s && !err) {
 	if (*s == '.' && ++dc > 2) {
 	    err = 1;
-	} else if (strspn(s, dig) == 0 && strspn(s, ".") != 1) {
+	} else if (!isdigit(*s) && strspn(s, ".") != 1) {
 	    err = 1;
 	}
 	s++;
@@ -212,29 +213,31 @@ static int check_version_string (const char *s)
     return err;
 }
 
-static int add_or_subtract_version_string (function_info *finfo)
+static int maybe_revise_package_name (function_info *finfo)
 {
+    gchar *base = g_strdup(finfo->fname);
+    const char *pubname;
     char *p;
+
+    p = strrchr(base, SLASH);
+    if (p != NULL) {
+	*(p + 1) = '\0';
+    }
+
+    free(finfo->fname);
+    pubname = user_function_name_by_index(finfo->pub);
 
     if (finfo->usever) {
 	/* factor in version string */
-	gchar *base = g_strdup(finfo->fname);
-
-	p = strstr(base, ".gfn");
-	if (p != NULL && strlen(p) == 4) {
-	    *p = '\0';
-	}
-	free(finfo->fname);
-	finfo->fname = g_strdup_printf("%s-%s.gfn", base, finfo->version);
-	g_free(base);
+	finfo->fname = g_strdup_printf("%s%s-%s.gfn", base, 
+				       pubname, finfo->version);
     } else {
-	/* remove version string */
-	p = strrchr(finfo->fname, '-');
-	if (p != NULL) {
-	    *p = '\0';
-	    strncat(p, ".gfn", 4);
-	}
+	/* no version string */
+	finfo->fname = g_strdup_printf("%s%s.gfn", base, 
+				       pubname);
     }
+    
+    g_free(base);
 
     return 0;
 }
@@ -247,7 +250,6 @@ static void real_finfo_save (function_info *finfo)
 	&finfo->date,
 	&finfo->pkgdesc
     };
-    int usever_old = finfo->usever;
     int i, hidx = 0;
     int err = 0;
 
@@ -286,9 +288,7 @@ static void real_finfo_save (function_info *finfo)
 	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     } else {
-	if (finfo->usever != usever_old) {
-	    add_or_subtract_version_string(finfo);
-	}
+	maybe_revise_package_name(finfo);
 	err = save_user_functions(finfo->fname, finfo);
 	if (!err) {
 	    infobox(_("Saved package as %s"), finfo->fname);

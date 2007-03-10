@@ -1230,12 +1230,20 @@ void maybe_update_func_files_window (int editing)
 	lbox = vwin->listbox;
     }
 
+    if (editing && lbox != NULL) {
+	GtkListStore *store;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lbox)));	
+	gtk_list_store_clear(store);
+	populate_func_list(vwin, NULL);
+	return;
+    }
+
     if (lbox != NULL) {
 	GtkListStore *store = 
 	    GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lbox)));
 	GtkTreeIter iter;
 	char fullname[MAXLEN];
-	const char *desc;
 	gchar *fname;
 	gchar *fdir;
 	gboolean loaded;
@@ -1252,12 +1260,6 @@ void maybe_update_func_files_window (int editing)
 	    g_free(fdir);
 	    loaded = function_package_is_loaded(fullname);
 	    gtk_list_store_set(store, &iter, 2, loaded, -1);
-	    if (loaded && editing) {
-		desc = function_package_description(fullname);
-		if (desc != NULL) {
-		    gtk_list_store_set(store, &iter, 1, desc, -1);
-		}
-	    }
 	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
 		break;
 	    }
