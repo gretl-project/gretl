@@ -52,6 +52,7 @@
 #include <gtksourceview/gtksourceview.h>
 
 #define NEED_INFO_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
+#define NEED_EDIT_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
 
 char *storelist = NULL;
 
@@ -62,7 +63,10 @@ char *storelist = NULL;
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
 #if NEED_INFO_ICON
-# include "../pixmaps/info_16.xpm"
+# include "../pixmaps/info_24.xpm"
+#endif
+#if NEED_EDIT_ICON
+# include "../pixmaps/edit_24.xpm"
 #endif
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
@@ -1527,7 +1531,10 @@ void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
 #if NEED_INFO_ICON
-	info_16_xpm,
+	info_24_xpm,
+#endif
+#if NEED_EDIT_ICON
+	edit_24_xpm,
 #endif
 	mini_tex_xpm,
 	mail_16_xpm,
@@ -1539,6 +1546,9 @@ void gretl_stock_icons_init (void)
     const char *stocks[] = {
 #if NEED_INFO_ICON
 	GRETL_STOCK_INFO,
+#endif
+#if NEED_EDIT_ICON
+	GRETL_STOCK_EDIT,
 #endif
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
