@@ -28,6 +28,8 @@
 #define GRETL_STOCK_BOX    "gretl-boxplot"
 #define GRETL_STOCK_PDF    "gretl-pdf"
 #define GRETL_STOCK_BOOK   "gretl-book"
+#define GRETL_STOCK_INFO   "gretl-info"
+#define GRETL_STOCK_EDIT   "gretl-edit"
 
 enum windata_flags {
     VWIN_HELP_ACTIVE  = 1 << 0,
