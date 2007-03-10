@@ -938,7 +938,10 @@ struct files_item {
 };
 
 #ifndef GTK_STOCK_INFO
-# define GTK_STOCK_INFO GRETL_STOCK_INFO
+# define GTK_STOCK_INFO "gretl_info_icon"
+#endif
+#ifndef GTK_STOCK_EDIT
+# define GTK_STOCK_EDIT "gretl_edit_icon"
 #endif
 
 static struct files_item files_items[] = {
