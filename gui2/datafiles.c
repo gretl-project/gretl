@@ -1237,9 +1237,9 @@ gint populate_func_list (windata_t *vwin, int *wid)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     /* pick up any function files in system dir */
+
     build_path(fndir, paths.gretldir, "functions", NULL);
     dir = opendir(fndir);
-
     if (dir != NULL) {
 	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
 				    &maxlen);
@@ -1247,9 +1247,9 @@ gint populate_func_list (windata_t *vwin, int *wid)
     }
 
     /* pick up any function files in the user's personal dir */
+
     build_path(fndir, paths.userdir, "functions", NULL);
     dir = opendir(fndir);
-
     if (dir != NULL) {
 	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
 				    &maxlen);
@@ -1258,7 +1258,7 @@ gint populate_func_list (windata_t *vwin, int *wid)
 
     if (nfn == 0) {
 	errbox(_("No function files found"));
-	/* FIXME don't leak list store */
+	/* FIXME don't leak list store? */
 	return 1;
     } 
 
