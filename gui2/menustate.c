@@ -94,12 +94,7 @@ void variable_menu_state (gboolean s)
     if (mdata == NULL || mdata->ifac == NULL) return;
 
     flip(mdata->ifac, "/Variable", s);
-    flip(mdata->ifac, "/View/Correlation matrix", !s);
-    flip(mdata->ifac, "/View/Cross Tabulation", !s);
-    flip(mdata->ifac, "/View/Principal components", !s);
-    flip(mdata->ifac, "/View/Mahalanobis distances", !s);
-
-    flip(mdata->ifac, "/View/Cross-correlogram", !s && 
+    flip(mdata->ifac, "/View/Cross-correlogram",  
 	 dataset_is_time_series(datainfo));
 }
 

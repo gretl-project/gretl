@@ -20,6 +20,8 @@ version 1.6.2, in progress
 - Add a toolbar to windows that display lists of files
 - Various fixes for function package editor
 - Fix for "omit" command in relation to arbond estimation
+- Correlation matrix, etc, in GUI: don't disable menu items
+  if only one variable is selected
 - Update the API documentation (still very much incomplete)
 - Update gnuplot to version 4.2.0 in the Windows installer    
 

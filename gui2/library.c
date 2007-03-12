@@ -565,23 +565,21 @@ static const char *selected_varname (void)
     return datainfo->varname[mdata_active_var()];
 }
 
-void do_menu_op (gpointer p, guint action, GtkWidget *w)
+#define multivar_action(a) (a == CORR || \
+                            a == MAHAL || \
+                            a == PCA || \
+                            a == XTAB)
+
+static void real_do_menu_op (guint action, const char *liststr)
 {
     PRN *prn;
     char title[48];
-    char *liststr = NULL;
-    int err = 0;
     gpointer obj = NULL;
     gretlopt opt = OPT_NONE;
     gint hsize = 78, vsize = 380;
+    int err = 0;
 
     strcpy(title, "gretl: ");
-
-    if (action == CORR || action == SUMMARY || 
-	action == PCA || action == MAHAL || action == XTAB) {
-	liststr = main_window_selection_as_string();
-	if (liststr == NULL) return;
-    }
 
     switch (action) {
     case CORR:
@@ -635,10 +633,6 @@ void do_menu_op (gpointer p, guint action, GtkWidget *w)
 	break;
     default:
 	break;
-    }
-
-    if (liststr != NULL) {
-	free(liststr);
     }
 
     if (check_and_record_command() || bufopen(&prn)) {
@@ -709,10 +703,43 @@ void do_menu_op (gpointer p, guint action, GtkWidget *w)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
-    } 
+    } else {
+	view_buffer(prn, hsize, vsize, title, action, obj);
+    }
+}
 
-    view_buffer(prn, hsize, vsize, title, action, obj);
+static int menu_op_wrapper (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int action = selector_code(sr);
+
+    if (buf == NULL) {
+	return 1;
+    } else {
+	real_do_menu_op(action, buf);
+	return 0;
+    }
+}
+
+void do_menu_op (gpointer p, guint action, GtkWidget *w)
+{
+    if (multivar_action(action) && mdata_selection_count() < 2) {
+	char title[32];
+
+	sprintf(title, "gretl: %s", gretl_command_word(action));
+	simple_selection(title, menu_op_wrapper, action, NULL);
+	return;
+    } else if (action == CORR || action == SUMMARY || 
+	action == PCA || action == MAHAL || action == XTAB) {
+	char *liststr = main_window_selection_as_string();
+
+	if (liststr != NULL) {
+	    real_do_menu_op(action, liststr);
+	    free(liststr);
+	} 
+    } else {
+	real_do_menu_op(action, NULL);
+    }
 }
 
 int do_coint (selector *sr)

@@ -987,6 +987,7 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
 static int gmm_HAC (const gretl_matrix *E, int h,
 		    gretl_matrix *V)
 {
+    int kern = get_hac_kernel();
     gretl_matrix *W = NULL;
     gretl_matrix *tmp = NULL;
     double w;
@@ -1006,7 +1007,7 @@ static int gmm_HAC (const gretl_matrix *E, int h,
 			      V, GRETL_MOD_NONE);
 
     for (i=1; i<=h; i++) {
-	w = 1.0 - fabs((double) i) / (h + 1.0);
+	w = hac_weight(kern, h, i);
 	gretl_matrix_inplace_lag(W, E, i);
 	gretl_matrix_multiply_by_scalar(W, 2*w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
