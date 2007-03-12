@@ -98,6 +98,12 @@ static ocset *oc_set_new (void)
     return oc;
 }
 
+static int gmm_unkvar (const char *s)
+{
+    sprintf(gretl_errmsg, _("Unknown variable '%s'"), s);
+    return E_UNKVAR;
+}
+
 static int matrix_is_dated (const gretl_matrix *m)
 {
     return !(m->t1 == 0 && m->t2 == 0);
@@ -148,7 +154,7 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 	return ARG_LIST;
     }
 
-    *err = E_UNKVAR;
+    *err = gmm_unkvar(name);
 
     return ARG_NONE;
 }
@@ -445,7 +451,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    err = push_column_source(s, v, NULL);
 	}
     } else {
-	err = E_UNKVAR;
+	err = gmm_unkvar(lname);
     }
 
     if (err) {
@@ -500,7 +506,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    }
 	    free_M = s->oc->free_Z = 1;
 	}
-    }
+    } 
 
     if (!err) {
 	if (s->oc->e == NULL) {
@@ -745,7 +751,7 @@ int nlspec_add_weights (nlspec *s, const char *str)
 
     s->oc->W = get_matrix_by_name(name);
     if (s->oc->W == NULL) {
-	return E_UNKVAR;
+	return gmm_unkvar(name);
     }
 
     k = s->oc->noc;

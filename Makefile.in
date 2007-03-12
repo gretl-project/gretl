@@ -31,7 +31,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR)
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share
 ALLSUBDIRS = lib cli gui2 plugin po share tests
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
