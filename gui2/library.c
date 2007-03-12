@@ -731,11 +731,11 @@ void do_menu_op (gpointer p, guint action, GtkWidget *w)
 	return;
     } else if (action == CORR || action == SUMMARY || 
 	action == PCA || action == MAHAL || action == XTAB) {
-	char *liststr = main_window_selection_as_string();
+	char *buf = main_window_selection_as_string();
 
-	if (liststr != NULL) {
-	    real_do_menu_op(action, liststr);
-	    free(liststr);
+	if (buf != NULL) {
+	    real_do_menu_op(action, buf);
+	    free(buf);
 	} 
     } else {
 	real_do_menu_op(action, NULL);

@@ -1745,6 +1745,9 @@ void gretl_model_init (MODEL *pmod)
     pmod->t2 = 0;
     pmod->nobs = 0;
 
+    pmod->smpl.t1 = 0;
+    pmod->smpl.t2 = 0;
+
     pmod->ncoeff = 0;
     pmod->ntests = 0;
     pmod->nparams = 0;
