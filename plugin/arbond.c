@@ -386,6 +386,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, qmax = %d, qmin = %d, nx = %d, k = %d\n",
 	    ab->yno, ab->p, ab->qmax, ab->qmin, ab->nx, ab->k);
+    fprintf(stderr, "t1 = %d, T = %d, N = %d\n", ab->t1, ab->T, ab->N);
 #endif
 
     arbond_zero_matrices(ab);
@@ -2144,6 +2145,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     int err = 0;
 
     gretl_model_init(&mod);
+    gretl_model_smpl_init(&mod, pdinfo);
 
     if (istr != NULL && *istr != 0) {
 	mod.errcode = arbond_parse_istr(istr, pdinfo, &d, &nzb);

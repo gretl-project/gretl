@@ -8248,7 +8248,7 @@
     <usage>
       <arguments>
         <argument>ylist</argument>
-	<argument separated="true">xlist</argument>
+	<argument optional="true" separated="true">xlist</argument>
       </arguments>
       <options>
         <option>
@@ -8269,25 +8269,24 @@
     <description>
       <para>
 	With no options given, displays a contingency table or
-	cross-tabulation for each variable in <repl>ylist</repl> (by row)
-	against each variable in <repl>xlist</repl> (by column).
-	Variables in these lists can be referenced by name or by number.
-	Note that all the variables must have been marked as discrete.
-      </para>
-      <para>
-	The <lit>--row</lit> and <lit>--column</lit> options are
-	mutually exclusive, and instead of the frequency count yield
-	the percentages for each row or column, respectively. The
-	<lit>--zeros</lit> option may be useful for importing the table
-	into another program, such as a spreadsheet.
-      </para>
-      <para>
-	Pearson's chi-square test for independence is displayed if the
-	expected frequency under independence is at least 1.0e-7 for all
-	cells.  A common rule of thumb for the validity of this statistic
-	is that at least 80 percent of cells should have expected
-	frequencies of 5 or greater; if this criterion is not met a
-	warning is printed.
+	cross-tabulation for each combination of the variables
+	included in <repl>ylist</repl>; if a second list
+	<repl>xlist</repl> is given, each variable in
+	<repl>ylist</repl> is cross-tabulated by row against each
+	variable in <repl>xlist</repl> (by column).  Variables in
+	these lists can be referenced by name or by number.  Note that
+	all the variables must have been marked as discrete.  </para>
+	<para> The <lit>--row</lit> and <lit>--column</lit> options
+	are mutually exclusive, and instead of the frequency count
+	yield the percentages for each row or column,
+	respectively. The <lit>--zeros</lit> option may be useful for
+	importing the table into another program, such as a
+	spreadsheet.  </para> <para> Pearson's chi-square test for
+	independence is displayed if the expected frequency under
+	independence is at least 1.0e-7 for all cells.  A common rule
+	of thumb for the validity of this statistic is that at least
+	80 percent of cells should have expected frequencies of 5 or
+	greater; if this criterion is not met a warning is printed.
       </para>
 
     </description>

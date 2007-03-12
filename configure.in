@@ -33,6 +33,7 @@ dnl Variables controlling the gretl build
 dnl
 build_gui="yes"
 build_docs="no"
+build_po="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
@@ -436,6 +437,12 @@ if test "$highlight" = "yes" && \
      have_gnu_regex="no")
 fi
 
+if test x"${MSGFMT}" != x ; then
+   build_po="yes"
+else
+   echo "*** msgfmt not found, can't build message catalogs"
+fi
+
 dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
@@ -446,6 +453,7 @@ AC_SUBST(use_gtksourceview)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(build_mailer)
+AC_SUBST(build_po)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)
@@ -649,6 +657,7 @@ Configuration:
   Use installed gtksourceview:            ${have_gtksourceview}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
+  Build message catalogs:                 ${build_po}
   Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}

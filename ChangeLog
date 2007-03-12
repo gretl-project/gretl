@@ -19,6 +19,7 @@ version 1.6.2, in progress
   when computing HAC covariance matrix
 - Add a toolbar to windows that display lists of files
 - Various fixes for function package editor
+- Fix for "omit" command in relation to arbond estimation
 - Update the API documentation (still very much incomplete)
 - Update gnuplot to version 4.2.0 in the Windows installer    
 

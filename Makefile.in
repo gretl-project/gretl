@@ -10,6 +10,7 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 have_gtk = @have_gtk@
+build_po = @build_po@
 
 ifeq ($(CC),)
   CC = gcc
@@ -19,6 +20,10 @@ ifeq ($(have_gtk),2.0)
   GUIDIR = gui2
 endif
 
+ifeq ($(build_po),yes)
+  PODIR = po
+endif
+
 INSTALL_PROGRAM = ${INSTALL} -m 755
 INSTALL_DATA = ${INSTALL} -m 644
 
@@ -26,7 +31,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin po
+SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR)
 ALLSUBDIRS = lib cli gui2 plugin po share tests
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
