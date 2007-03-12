@@ -49,6 +49,7 @@ lib/src/nls.c
 lib/src/nonparam.c
 lib/src/objstack.c
 lib/src/options.c
+lib/src/plotspec.c
 lib/src/plugins.c
 lib/src/printout.c
 lib/src/pvalues.c
