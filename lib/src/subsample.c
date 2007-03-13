@@ -849,8 +849,12 @@ static int mask_contiguous (const char *mask,
     if (contig && dataset_is_panel(pdinfo)) {
 	int n = t2 - t1 + 1;
 
-	/* sample must leave a whole number of panel units */
+	/* sample must leave a whole number of panel units; moreover,
+	   to retain "panelness" this number must be greater than 1 
+	*/
 	if (t1 % pdinfo->pd != 0 || n % pdinfo->pd != 0) {
+	    contig = 0;
+	} else if (n == pdinfo->pd) {
 	    contig = 0;
 	}
     }
@@ -1221,6 +1225,8 @@ int restrict_sample (const char *line, const int *list,
     if (!err && mask != NULL) {
 	int t1 = 0, t2 = 0;
 	int contig = 0;
+
+	/* FIXME this is wrong in some circumstances */
 	
 	if (mode != SUBSAMPLE_RANDOM) {
 	    contig = mask_contiguous(mask, *ppdinfo, &t1, &t2);
