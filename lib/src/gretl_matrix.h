@@ -291,7 +291,9 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
-int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b);
+int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b);
+
+int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
 int gretl_invert_general_matrix (gretl_matrix *a);
 

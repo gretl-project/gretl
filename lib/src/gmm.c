@@ -988,47 +988,57 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     return 0;
 }
 
-#if 0 /* not yet */
-
-static int HAC_prewhiten (const gretl_matrix *E, gretl_matrix *A)
+static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
+    gretl_matrix *XTX = NULL;
     gretl_matrix *b = NULL;
+    gretl_matrix *e = NULL;
     int T = E->rows;
     int k = E->cols;
-    double xjt;
+    double xtj, eti;
     int i, j, t;
     int err = 0;
 
     y = gretl_column_vector_alloc(T - 1);
     X = gretl_matrix_alloc(T - 1, k);
+    XTX = gretl_matrix_alloc(k, k);
     b = gretl_column_vector_alloc(k);
+    e = gretl_column_vector_alloc(k);
 
-    if (y == NULL || X == NULL || b == NULL) {
-	gretl_matrix_free(y);
-	gretl_matrix_free(X);
-	gretl_matrix_free(b);
-	return E_ALLOC;
+    if (y == NULL || X == NULL || XTX == NULL ||
+	b == NULL || e == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
     /* make matrix of RHS vars */
     for (j=0; j<k; j++) {
 	for (t=1; t<T; t++) {
-	    xjt = gretl_matrix_get(E, t-1, j);
-	    gretl_matrix_set(X, t-1, j, xjt);
+	    xtj = gretl_matrix_get(E, t-1, j);
+	    gretl_matrix_set(X, t-1, j, xtj);
 	}
-    }     
+    }   
 
-    /* loop across LHS vars and run OLS */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XTX, GRETL_MOD_NONE);
+
+    err = gretl_matrix_cholesky_decomp(XTX);
+
+    /* loop across LHS vars and compute coeffs */
     for (i=0; i<k && !err; i++) {
 	for (t=1; t<T; t++) {
 	    y->val[t-1] = gretl_matrix_get(E, t, i);
 	}
-	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+				  y, GRETL_MOD_NONE,
+				  b, GRETL_MOD_NONE);
+	err = gretl_cholesky_solve(XTX, b);
 	if (!err) {
 	    for (j=0; j<k; j++) {
-		gretl_matrix_set(A, j, i, b->val[j]);
+		gretl_matrix_set(A, i, j, b->val[j]);
 	    }
 	}
     }
@@ -1041,22 +1051,39 @@ static int HAC_prewhiten (const gretl_matrix *E, gretl_matrix *A)
 	gretl_matrix *S = NULL;
 	gretl_matrix *V = NULL;
 	gretl_matrix *tmp = NULL;
+	int amod = 0;
 
 	err = gretl_matrix_SVD(A, &U, &S, &V);
 
 	for (i=0; i<k; i++) {
 	    if (S->val[i] > 0.97) {
 		S->val[i] = 0.97;
+		amod = 1;
 	    }
 	}
 
-	tmp = gretl_matrix_dot_op(U, S, '*', &err);
-	gretl_matrix_multiply(tmp, V, A);
+	if (amod) {
+	    tmp = gretl_matrix_dot_op(U, S, '*', &err);
+	    gretl_matrix_multiply(tmp, V, A);
+	}
 
-	/* modified VAR coefficients */
+	/* (possibly) modified VAR coefficients */
 	gretl_matrix_print(A, "A~");
 
-	/* FIXME now construct whitened series using A~ */
+	/* Now "whiten" E using A~ */
+	for (t=1; t<T; t++) {
+	    for (i=0; i<k; i++) {
+		/* get lagged E values */
+		e->val[i] = gretl_matrix_get(E, t-1, i);
+	    } 
+	    /* re-use 'b' for fitted values */
+	    gretl_matrix_multiply(A, e, b);
+	    for (i=0; i<k; i++) {
+		/* substitute prediction errors */
+		eti = gretl_matrix_get(E, t, i);
+		gretl_matrix_set(E, t-1, i, eti - b->val[i]);
+	    }
+	}
 
 	gretl_matrix_free(U);
 	gretl_matrix_free(S);
@@ -1064,54 +1091,72 @@ static int HAC_prewhiten (const gretl_matrix *E, gretl_matrix *A)
 	gretl_matrix_free(tmp);
     }
 
+ bailout:
+
     gretl_matrix_free(y);
     gretl_matrix_free(X);
+    gretl_matrix_free(XTX);
     gretl_matrix_free(b);
+    gretl_matrix_free(e);
 
     return err;
 }
-
-#endif /* not ready */
 
 #define NEW_HAC 1
 
 #if NEW_HAC
 
-static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
+static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 {
     static gretl_matrix *W;
-    static gretl_matrix *EW;
+    static gretl_matrix *Tmp;
+    static gretl_matrix *A;
+
     int kern = get_hac_kernel();
+    int T, k;
+    int prewhiten = 0;
     double w;
-    int i;
+    int i, err = 0;
+
+    if (getenv("GRETL_HAC_PREWHITEN")) {
+	prewhiten = 1;
+    }
 
     if (E == NULL) {
 	/* cleanup signal */
 	gretl_matrix_free(W);
-	gretl_matrix_free(EW);
-	W = EW = NULL;
+	gretl_matrix_free(Tmp);
+	gretl_matrix_free(A);
+	W = Tmp = A = NULL;
 	return 0;
     }
 
+    T = E->rows;
+    k = E->cols;
+
     if (W == NULL) {
-	W = gretl_matrix_alloc(E->rows, E->cols);
-	EW = gretl_matrix_alloc(E->cols, E->cols);
-	if (W == NULL || EW == NULL) {
-	    gretl_matrix_free(W);
-	    gretl_matrix_free(EW);
-	    W = EW = NULL;
+	W = gretl_matrix_alloc(T, k);
+	Tmp = gretl_matrix_alloc(k, k);
+	if (W == NULL || Tmp == NULL) {
 	    return E_ALLOC;
+	}
+	if (prewhiten) {
+	    A = gretl_matrix_alloc(k, k);
+	    if (A == NULL) {
+		return E_ALLOC;
+	    }
 	}
     }
 
-#if 0 /* just testing */
-    if (1) {
-	gretl_matrix *A = gretl_matrix_alloc(E->cols, E->cols);
-
-	HAC_prewhiten(E, A);
-	gretl_matrix_free(A);
+    if (prewhiten) {
+	err = HAC_prewhiten(E, A);
+	if (err) {
+	    return err;
+	} else {
+	    gretl_matrix_reuse(E, T - 1, 0);
+	    gretl_matrix_reuse(W, T - 1, 0);
+	}
     }
-#endif
 
     gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 			      E, GRETL_MOD_NONE,
@@ -1123,9 +1168,9 @@ static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
 	gretl_matrix_multiply_by_scalar(W, 2*w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				  W, GRETL_MOD_NONE,
-				  EW, GRETL_MOD_NONE);
-	gretl_matrix_xtr_symmetric(EW);
-	gretl_matrix_add_to(V, EW);
+				  Tmp, GRETL_MOD_NONE);
+	gretl_matrix_xtr_symmetric(Tmp);
+	gretl_matrix_add_to(V, Tmp);
     }
 
     if (!gretl_matrix_is_symmetric(V)) {
@@ -1134,12 +1179,40 @@ static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
 	gretl_matrix_xtr_symmetric(V);
     }
 
-    return 0;
+    if (prewhiten) {
+	double aij;
+	int j;
+
+	/* make A into (I - A) */
+	for (i=0; i<k; i++) {
+	    for (j=0; j<k; j++) {
+		aij = gretl_matrix_get(A, i, j);
+		aij = (i == j)? 1 - aij: -aij;
+		gretl_matrix_set(A, i, j, aij);
+	    }
+	}
+
+	err = gretl_invert_general_matrix(A);
+
+	/* we pre-whitened; now "re-color":
+	   form V = (I-A)^{-1} * V * (I-A)^{-1}' 
+	*/
+	if (!err) {
+	    gretl_matrix_copy_values(Tmp, V);
+	    gretl_matrix_qform(A, GRETL_MOD_NONE,
+			       Tmp, V, GRETL_MOD_NONE);
+	}
+
+	gretl_matrix_reuse(E, T, 0);
+	gretl_matrix_reuse(W, T, 0);
+    }
+
+    return err;
 }
 
 #else
 
-static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
+static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 {
     static gretl_matrix *W;
 

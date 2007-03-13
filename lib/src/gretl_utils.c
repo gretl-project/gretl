@@ -788,6 +788,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 {
     char stobs[OBSLEN];
     int structure = STRUCTURE_UNKNOWN;
+    double sd0 = pdinfo->sd0;
     int pd, dated = 0;
     int err = 0;
 
@@ -856,7 +857,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 		return 1;
 	    }
 
-	    pdinfo->sd0 = ed0;
+	    sd0 = ed0;
 	    structure = TIME_SERIES;
 
 	    /* replace any existing markers with date strings */
@@ -867,7 +868,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 	}
     } else if (structure == TIME_SERIES && pd == 10) {
 	/* decennial data */
-	pdinfo->sd0 = (double) atoi(stobs);
+	sd0 = (double) atoi(stobs);
     } else {
 	int maj = 0, min = 0;
 
@@ -879,7 +880,7 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 	/* catch undated daily or weekly data */
 	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52)  
 	    && min == 0 && opt != OPT_X && opt != OPT_S && opt != OPT_C) {
-	    pdinfo->structure = TIME_SERIES;
+	    structure = TIME_SERIES;
 	} else {
 	    if (catch_setobs_errors(stobs, pd, pdinfo->n, min, opt)) {
 		return 1;
@@ -903,11 +904,12 @@ int set_obs (const char *line, double **Z, DATAINFO *pdinfo,
 	}
 
 	/* for non-calendar data */
-	pdinfo->sd0 = dot_atof(stobs);
+	sd0 = dot_atof(stobs);
     }
 
     pdinfo->pd = pd;
     pdinfo->structure = structure;
+    pdinfo->sd0 = sd0;
 
     if (pdinfo->structure != STACKED_TIME_SERIES &&
 	pdinfo->structure != STACKED_CROSS_SECTION &&

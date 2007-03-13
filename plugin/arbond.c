@@ -1809,7 +1809,7 @@ static int arbond_calculate (arbond *ab)
     gretl_matrix_xtr_symmetric(ab->den);
 
     gretl_matrix_copy_values(ab->kktmp, ab->den);
-    err = gretl_cholesky_solve(ab->kktmp, ab->beta);
+    err = gretl_cholesky_decomp_solve(ab->kktmp, ab->beta);
 
 #if ADEBUG
     if (!err) {

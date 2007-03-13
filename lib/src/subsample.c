@@ -1226,9 +1226,9 @@ int restrict_sample (const char *line, const int *list,
 	int t1 = 0, t2 = 0;
 	int contig = 0;
 
-	/* FIXME this is wrong in some circumstances */
-	
-	if (mode != SUBSAMPLE_RANDOM) {
+	if (mode != SUBSAMPLE_RANDOM &&
+	    (dataset_is_time_series(*ppdinfo) ||
+	     dataset_is_panel(*ppdinfo))) {
 	    contig = mask_contiguous(mask, *ppdinfo, &t1, &t2);
 	}
 

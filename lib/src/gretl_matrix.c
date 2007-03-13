@@ -2187,21 +2187,21 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 }
 
 /**
- * gretl_cholesky_solve:
+ * gretl_cholesky_decomp_solve:
  * @a: symmetric positive-definite matrix.
  * @b: vector 'x'.
  *
  * Solves ax = b for the unknown vector x, using Cholesky decomposition.
  * On exit, @b is replaced by the solution and @a is replaced by its 
- * decomposition.
+ * Cholesky decomposition.
  * 
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
-int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b)
+int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b)
 {
     integer n, info, one = 1;
-    char uplo = 'U';
+    char uplo = 'L';
 
     n = a->cols;
 
@@ -2224,6 +2224,35 @@ int gretl_cholesky_solve (gretl_matrix *a, gretl_vector *b)
 
     return 0;
 }
+
+/**
+ * gretl_cholesky_solve:
+ * @a: Cholesky-decomposed symmetric positive-definite matrix.
+ * @b: vector 'x'.
+ *
+ * Solves ax = b for the unknown vector x, using the pre-computed
+ * Cholesky decomposition of @a. On exit, @b is replaced by the 
+ * solution.
+ * 
+ * Returns: 0 on successful completion, or non-zero code on error.
+ */
+
+int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
+{
+    integer n, info, one = 1;
+    char uplo = 'L';
+
+    n = a->cols;
+
+    dpotrs_(&uplo, &n, &one, a->val, &n, b->val, &n, &info);
+    if (info != 0) {
+	fprintf(stderr, "gretl_cholesky_solve:\n"
+		" dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
+	return E_SINGULAR;
+    }     
+
+    return 0;
+} 
 
 static int 
 matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
