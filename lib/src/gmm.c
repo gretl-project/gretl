@@ -988,25 +988,131 @@ gmm_jacobian_calc (integer *m, integer *n, double *x, double *f,
     return 0;
 }
 
-#if 0
+#if 0 /* not yet */
 
-static int gmm_HAC (const gretl_matrix *E, int h,
-		    gretl_matrix *V)
+static int HAC_prewhiten (const gretl_matrix *E, gretl_matrix *A)
 {
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *b = NULL;
+    int T = E->rows;
+    int k = E->cols;
+    double xjt;
+    int i, j, t;
+    int err = 0;
+
+    y = gretl_column_vector_alloc(T - 1);
+    X = gretl_matrix_alloc(T - 1, k);
+    b = gretl_column_vector_alloc(k);
+
+    if (y == NULL || X == NULL || b == NULL) {
+	gretl_matrix_free(y);
+	gretl_matrix_free(X);
+	gretl_matrix_free(b);
+	return E_ALLOC;
+    }
+
+    /* make matrix of RHS vars */
+    for (j=0; j<k; j++) {
+	for (t=1; t<T; t++) {
+	    xjt = gretl_matrix_get(E, t-1, j);
+	    gretl_matrix_set(X, t-1, j, xjt);
+	}
+    }     
+
+    /* loop across LHS vars and run OLS */
+    for (i=0; i<k && !err; i++) {
+	for (t=1; t<T; t++) {
+	    y->val[t-1] = gretl_matrix_get(E, t, i);
+	}
+	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	if (!err) {
+	    for (j=0; j<k; j++) {
+		gretl_matrix_set(A, j, i, b->val[j]);
+	    }
+	}
+    }
+
+    /* original VAR coefficients */
+    gretl_matrix_print(A, "A");
+
+    if (!err) {
+	gretl_matrix *U = NULL;
+	gretl_matrix *S = NULL;
+	gretl_matrix *V = NULL;
+	gretl_matrix *tmp = NULL;
+
+	err = gretl_matrix_SVD(A, &U, &S, &V);
+
+	for (i=0; i<k; i++) {
+	    if (S->val[i] > 0.97) {
+		S->val[i] = 0.97;
+	    }
+	}
+
+	tmp = gretl_matrix_dot_op(U, S, '*', &err);
+	gretl_matrix_multiply(tmp, V, A);
+
+	/* modified VAR coefficients */
+	gretl_matrix_print(A, "A~");
+
+	/* FIXME now construct whitened series using A~ */
+
+	gretl_matrix_free(U);
+	gretl_matrix_free(S);
+	gretl_matrix_free(V);
+	gretl_matrix_free(tmp);
+    }
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(X);
+    gretl_matrix_free(b);
+
+    return err;
+}
+
+#endif /* not ready */
+
+#define NEW_HAC 1
+
+#if NEW_HAC
+
+static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
+{
+    static gretl_matrix *W;
+    static gretl_matrix *EW;
+
     int kern = get_hac_kernel();
-    gretl_matrix *W = NULL;
-    gretl_matrix *tmp = NULL;
     double w;
     int i;
 
-    W = gretl_matrix_alloc(E->rows, E->cols);
-    tmp = gretl_matrix_alloc(E->cols, E->cols);
-
-    if (W == NULL || tmp == NULL) {
+    if (E == NULL) {
+	/* cleanup signal */
 	gretl_matrix_free(W);
-	gretl_matrix_free(tmp);
-	return E_ALLOC;
+	gretl_matrix_free(EW);
+	W = EW = NULL;
+	return 0;
     }
+
+    if (W == NULL) {
+	W = gretl_matrix_alloc(E->rows, E->cols);
+	EW = gretl_matrix_alloc(E->cols, E->cols);
+	if (W == NULL || EW == NULL) {
+	    gretl_matrix_free(W);
+	    gretl_matrix_free(EW);
+	    W = EW = NULL;
+	    return E_ALLOC;
+	}
+    }
+
+#if 0 /* just testing */
+    if (1) {
+	gretl_matrix *A = gretl_matrix_alloc(E->cols, E->cols);
+
+	HAC_prewhiten(E, A);
+	gretl_matrix_free(A);
+    }
+#endif
 
     gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 			      E, GRETL_MOD_NONE,
@@ -1018,9 +1124,9 @@ static int gmm_HAC (const gretl_matrix *E, int h,
 	gretl_matrix_multiply_by_scalar(W, 2*w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				  W, GRETL_MOD_NONE,
-				  tmp, GRETL_MOD_NONE);
-	gretl_matrix_xtr_symmetric(tmp);
-	gretl_matrix_add_to(V, tmp);
+				  EW, GRETL_MOD_NONE);
+	gretl_matrix_xtr_symmetric(EW);
+	gretl_matrix_add_to(V, EW);
     }
 
     if (!gretl_matrix_is_symmetric(V)) {
@@ -1029,26 +1135,32 @@ static int gmm_HAC (const gretl_matrix *E, int h,
 	gretl_matrix_xtr_symmetric(V);
     }
 
-    gretl_matrix_free(W);
-    gretl_matrix_free(tmp);
-
     return 0;
 }
 
 #else
 
-static int gmm_HAC (const gretl_matrix *E, int h,
-		    gretl_matrix *V)
+static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
 {
+    static gretl_matrix *W;
+
     int kern = get_hac_kernel();
     gretl_matrix *W;
     double w;
     int i;
 
-    W = gretl_matrix_alloc(E->rows, E->cols);
+    if (E == NULL) {
+	/* cleanup signal */
+	gretl_matrix_free(W);
+	W = NULL;
+	return 0;
+    }
 
     if (W == NULL) {
-	return E_ALLOC;
+	W = gretl_matrix_alloc(E->rows, E->cols);
+	if (W == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     gretl_matrix_zero(V);
@@ -1068,12 +1180,15 @@ static int gmm_HAC (const gretl_matrix *E, int h,
 	gretl_matrix_xtr_symmetric(V);
     }
 
-    gretl_matrix_free(W);
-
     return 0;
 }
 
 #endif
+
+static void gmm_HAC_cleanup (void)
+{
+    gmm_HAC(NULL, 0, NULL);
+}
 
 /* Calculate the covariance matrix for the GMM estimator.  Right now
    we do an HC variant for non-time series, and a HAC variant for
@@ -1129,6 +1244,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 					S, GRETL_MOD_NONE);
     } else {
 	err = gmm_HAC(s->oc->tmp, hac_lag, S);
+	gmm_HAC_cleanup();
     }
 
     if (!err) {
@@ -1321,6 +1437,8 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 
 int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 {
+    int full_fncount = 0;
+    int full_grcount = 0;
     double itol = 1.0e-12, icrit = 1;
     double *oldcoeff = NULL;
     int maxit = get_bfgs_maxiter();
@@ -1356,11 +1474,15 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 		       get_gmm_crit, C_GMM, NULL, s,
 		       s->opt, s->prn);
 
+	full_fncount += s->fncount;
+	full_grcount += s->grcount;
+
 	if (!err && outer_max > 1) {
 	    if (outer_max > 2) {
 		icrit = gmm_get_icrit(s, oldcoeff);
 		if (icrit < itol && outer_iters > 0) {
-		    fprintf(stderr, "Breaking on icrit = %g\n", icrit);
+		    fprintf(stderr, "Breaking on icrit = %g at iteration %d\n", 
+			    icrit, outer_iters);
 		    converged = 1;
 		} 
 	    }
@@ -1384,6 +1506,10 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 
     if (!err) {
 	s->oc->step = outer_iters;
+#if GMM_DEBUG
+	fprintf(stderr, "Total function evaluations = %d\n", full_fncount);
+	fprintf(stderr, "Total gradient evaluations = %d\n", full_grcount);
+#endif
     }
 
     if (oldcoeff != NULL) {
@@ -1393,6 +1519,8 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     if (s->opt & OPT_V) {
 	gmm_print_oc(s, prn);
     }
+
+    gmm_HAC_cleanup();
 
     return err;    
 }
