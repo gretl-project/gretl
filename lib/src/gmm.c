@@ -1081,7 +1081,6 @@ static int gmm_HAC (const gretl_matrix *E, int h, gretl_matrix *V)
 {
     static gretl_matrix *W;
     static gretl_matrix *EW;
-
     int kern = get_hac_kernel();
     double w;
     int i;
