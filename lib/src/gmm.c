@@ -1077,21 +1077,22 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 	gretl_matrix_print(A, "A~");
 #endif
 
+	for (i=0; i<k; i++) {
+	    /* get starting E values */
+	    e->val[i] = gretl_matrix_get(E, 0, i);
+	}	
+
 	/* Now "whiten" E using A~ */
 	for (t=1; t<T; t++) {
-	    if (t == 1) {
-		for (i=0; i<k; i++) {
-		    /* get lagged E values */
-		    e->val[i] = gretl_matrix_get(E, t-1, i);
-		}
-	    } 
 	    /* re-use 'b' for fitted values */
 	    gretl_matrix_multiply(A, e, b);
 	    for (i=0; i<k; i++) {
-		/* substitute prediction errors */
+		/* retrieve current value */
 		eti = gretl_matrix_get(E, t, i);
-		e->val[i] = eti; /* save lagged value for next round */
-		gretl_matrix_set(E, t, i, eti - b->val[i]); /* or t-1?? */
+		/* save lagged value for next round */
+		e->val[i] = eti;
+		/* substitute prediction error */
+		gretl_matrix_set(E, t, i, eti - b->val[i]);
 	    }
 	}
 
