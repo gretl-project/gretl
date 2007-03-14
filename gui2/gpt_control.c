@@ -1078,7 +1078,7 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
 {
     if (spec->n_lines <= 2 &&
 	spec->lines[0].ncols == 2 &&
-	spec->lines[1].ncols == 0 &&
+	(spec->n_lines == 1 || spec->lines[1].ncols == 0) &&
 	spec->n_markers > 0) {
 	spec->flags |= GPT_ALL_MARKERS_OK;
     } else {
@@ -1261,7 +1261,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     /* get the preamble and "set" lines */
     labelno = 0;
     while ((got = fgets(gpline, sizeof gpline, fp))) {
-	char vname[9];
+	char vname[VNAMELEN];
 	int v;
 
 	if (!strncmp(gpline, "# timeseries", 12)) {
@@ -1409,7 +1409,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     err = plot_get_data_and_markers(spec, fp, datacols, do_markers);
 
-    if (!err && reglist[0] > 0) {
+    if (!err && reglist != NULL && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
     }
 
