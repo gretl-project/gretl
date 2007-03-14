@@ -28,11 +28,19 @@
 #define GMM_DEBUG 0
 
 typedef struct colsrc_ colsrc;
+typedef struct hac_info_ hac_info;
 
 struct colsrc_ {
     int v;                 /* ID number of variable in column */
     char mname[VNAMELEN];  /* or name of source matrix */
     int j;                 /* and column within matrix */
+};
+
+struct hac_info_ {
+    int kern;              /* kernel type */
+    int h;                 /* integer bandwidth (Bartlett, Parzen) */                
+    double bt;             /* QS bandwidth */
+    int whiten;            /* pre-whiten (1) or not (0) */
 };
 
 struct ocset_ {
@@ -47,6 +55,7 @@ struct ocset_ {
     int step;            /* number of estimation steps */
     int free_e;          /* indicator: should 'e' be freed? */
     int free_Z;          /* indicator: should 'Z' be freed? */
+    hac_info hinfo;      /* HAC characteristics */
 };
 
 /* destructor for set of O.C. info */
@@ -1113,33 +1122,15 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
     return err;
 }
 
-struct hac_info {
-    int kern;
-    int h;
-    double bt;
-    int white;
-};
-
-static void hac_info_init (struct hac_info *h)
-{
-    h->kern = 0;
-    h->h = 0;
-    h->bt = 0.0;
-    h->white = 0;
-}
-
-static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
-		    struct hac_info *hinfo)
+static int gmm_HAC (gretl_matrix *E, gretl_matrix *V, hac_info *hinfo)
 {
     static gretl_matrix *W;
     static gretl_matrix *Tmp;
     static gretl_matrix *A;
     static gretl_matrix *E2;
 
-    int prewhiten = get_hac_prewhiten();
-    int kern = get_hac_kernel();
     int T, k;
-    double w, bt = 0;
+    double w;
     int i, err = 0;
 
     if (E == NULL) {
@@ -1161,7 +1152,7 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
 	if (W == NULL || Tmp == NULL) {
 	    return E_ALLOC;
 	}
-	if (prewhiten) {
+	if (hinfo->whiten) {
 	    A = gretl_matrix_alloc(k, k);
 	    E2 = gretl_matrix_alloc(T, k);
 	    if (A == NULL || E2 == NULL) {
@@ -1170,7 +1161,7 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
 	}
     }
 
-    if (prewhiten) {
+    if (hinfo->whiten) {
 	gretl_matrix_copy_values(E2, E); /* keep a back-up */
 	err = HAC_prewhiten(E, A);
 	if (err) {
@@ -1178,20 +1169,23 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
 	} 
     }
 
+    if (data_based_hac_bandwidth()) {
+	err = newey_west_bandwidth(E, hinfo->kern, &hinfo->h,
+				   &hinfo->bt);
+	if (err) {
+	    return err;
+	}
+    }
+
     gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 			      E, GRETL_MOD_NONE,
 			      V, GRETL_MOD_NONE);
 
-    if (kern == KERNEL_QS) {
-	bt = get_qs_bandwidth();
-	h = T - 1; /* ?? */
-    }
-
-    for (i=1; i<=h; i++) {
-	if (kern == KERNEL_QS) {
-	    w = qs_hac_weight(bt, i);
+    for (i=1; i<=hinfo->h; i++) {
+	if (hinfo->kern == KERNEL_QS) {
+	    w = qs_hac_weight(hinfo->bt, i);
 	} else {
-	    w = hac_weight(kern, h, i);
+	    w = hac_weight(hinfo->kern, hinfo->h, i);
 	}
 	gretl_matrix_inplace_lag(W, E, i);
 	gretl_matrix_multiply_by_scalar(W, 2*w);
@@ -1208,7 +1202,7 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
 	gretl_matrix_xtr_symmetric(V);
     }
 
-    if (prewhiten) {
+    if (hinfo->whiten) {
 	/* now we "re-color" */
 	double aij;
 	int j;
@@ -1235,19 +1229,12 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
 	gretl_matrix_copy_values(E, E2);
     }
 
-    if (!err && hinfo != NULL) {
-	hinfo->kern = kern;
-	hinfo->h = h;
-	hinfo->bt = bt;
-	hinfo->white = prewhiten;
-    }
-
     return err;
 }
 
 static void gmm_HAC_cleanup (void)
 {
-    gmm_HAC(NULL, 0, NULL, NULL);
+    gmm_HAC(NULL, NULL, NULL);
 }
 
 /* Calculate the covariance matrix for the GMM estimator.  We do an HC
@@ -1263,15 +1250,15 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     gretl_matrix *m1 = NULL;
     gretl_matrix *m2 = NULL;
     gretl_matrix *m3 = NULL;
-    struct hac_info hinfo;
     int i, j, k = s->ncoeff;
     int T = s->nobs;
+
     doublereal *wa4 = NULL;
     doublereal epsfcn = 0.0;
     integer m, n, ldjac;
     integer iflag = 0;
+
     double x, *f;
-    int hac_lag = 0;
     int err = 0;
 
     m = gretl_matrix_cols(s->oc->tmp);
@@ -1293,11 +1280,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	goto bailout;
     }
 
-    hac_info_init(&hinfo);
-
-    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
-	hac_lag = get_hac_lag(s->nobs);
-	err = gmm_HAC(s->oc->tmp, hac_lag, S, &hinfo);
+    if (s->oc->hinfo.kern != 0) {
+	err = gmm_HAC(s->oc->tmp, S, &s->oc->hinfo);
 	gmm_HAC_cleanup();
     } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
@@ -1361,14 +1345,14 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 		} 
 	    }
 	}
-	if (hinfo.kern) {
-	    gretl_model_set_int(pmod, "hac_kernel", hinfo.kern);
-	    if (hinfo.kern == KERNEL_QS) {
-		gretl_model_set_double(pmod, "qs_bandwidth", hinfo.bt);
+	if (s->oc->hinfo.kern) {
+	    gretl_model_set_int(pmod, "hac_kernel", s->oc->hinfo.kern);
+	    if (s->oc->hinfo.kern == KERNEL_QS) {
+		gretl_model_set_double(pmod, "qs_bandwidth", s->oc->hinfo.bt);
 	    } else {
-		gretl_model_set_int(pmod, "hac_lag", hinfo.h);
+		gretl_model_set_int(pmod, "hac_lag", s->oc->hinfo.h);
 	    }
-	    if (hinfo.white) {
+	    if (s->oc->hinfo.whiten) {
 		gretl_model_set_int(pmod, "hac_prewhiten", 1);
 	    }
 	}
@@ -1428,12 +1412,10 @@ static double gmm_get_icrit (nlspec *s, double *oldcoeff)
 static int gmm_recompute_weights (nlspec *s)
 {
     gretl_matrix *W = s->oc->W;
-    int hac_lag = 0;
     int err = 0;
 
-    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
-	hac_lag = get_hac_lag(s->nobs);
-	err = gmm_HAC(s->oc->tmp, hac_lag, W, NULL);
+    if (s->oc->hinfo.kern) {
+	err = gmm_HAC(s->oc->tmp, W, &s->oc->hinfo);
     } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
 					s->oc->tmp, GRETL_MOD_NONE,
@@ -1453,7 +1435,6 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix *V;
     int i, k = s->oc->noc;
     int T = s->nobs;
-    int hac_lag = 0;
     int err = 0;
 
     V = gretl_matrix_alloc(k, k);
@@ -1462,9 +1443,8 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 	return;
     }
 
-    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
-	hac_lag = get_hac_lag(s->nobs);
-	err = gmm_HAC(s->oc->tmp, hac_lag, V, NULL);
+    if (s->oc->hinfo.kern) {
+	err = gmm_HAC(s->oc->tmp, V, &s->oc->hinfo);
     } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
 					s->oc->tmp, GRETL_MOD_NONE,
@@ -1638,9 +1618,34 @@ static int resize_oc_matrices (nlspec *s, int oldt1)
     return 0;
 }
 
-/* Check the e and Z matrices for missing values */
+static void gmm_set_HAC_info (nlspec *s)
+{
+    hac_info *hinfo = &s->oc->hinfo;
 
-int gmm_missval_check (nlspec *s)
+    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
+	hinfo->whiten = get_hac_prewhiten();
+	hinfo->kern = get_hac_kernel();
+	if (hinfo->kern == KERNEL_QS) {
+	    hinfo->bt = get_qs_bandwidth();
+	    hinfo->h = s->nobs - 1;
+	} else {
+	    hinfo->h = get_hac_lag(s->nobs);
+	    hinfo->bt = 0.0;
+	}
+    } else {
+	hinfo->kern = 0;
+	hinfo->h = 0;
+	hinfo->bt = 0.0;
+	hinfo->whiten = 0;
+    }
+}
+
+/* Check the e and Z matrices for missing values; while we're
+   at it, if there's no error condition then set the HAC 
+   info for the GMM run.
+*/
+
+int gmm_missval_check_etc (nlspec *s)
 {
     int orig_t1 = s->t1;
     int orig_t2 = s->t2;
@@ -1771,6 +1776,10 @@ int gmm_missval_check (nlspec *s)
 
     if (!err && (s->t1 > orig_t1 || s->t2 < orig_t2)) {
 	err = resize_oc_matrices(s, orig_t1);
+    }
+
+    if (!err) {
+	gmm_set_HAC_info(s);
     }
 
 #if GMM_DEBUG

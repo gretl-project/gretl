@@ -2647,7 +2647,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (spec->ci == GMM) {
-	err = gmm_missval_check(spec);
+	err = gmm_missval_check_etc(spec);
     } else {
 	err = nl_missval_check(spec);
     }

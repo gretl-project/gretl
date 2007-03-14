@@ -29,7 +29,8 @@
 
 enum {
     AUTO_LAG_STOCK_WATSON,
-    AUTO_LAG_WOOLDRIDGE
+    AUTO_LAG_WOOLDRIDGE,
+    AUTO_LAG_NEWEYWEST
 };
 
 enum {
@@ -730,25 +731,32 @@ char *get_shelldir (void)
     }
 } 
 
-int get_hac_lag (int m)
+int get_hac_lag (int T)
 {
     check_for_state();
 
     /* Variants of Newey-West */
 
-    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < m - 2) {
+    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < T - 2) {
 	/* FIXME upper limit? */
 	return state->ropts.user_lag;
-    }
-
-    if (state->ropts.auto_lag == AUTO_LAG_STOCK_WATSON) {
-	return 0.75 * pow(m, 1.0 / 3.0);
     } else if (state->ropts.auto_lag == AUTO_LAG_WOOLDRIDGE) {
-	return 4.0 * pow(m / 100.0, 2.0 / 9.0);
+	return 4.0 * pow(T / 100.0, 2.0 / 9.0);
+    } else {
+	/* Stock-Watson default */
+	return 0.75 * pow(T, 1.0 / 3.0);
     }
+}
 
-    /* fallback -- should not be reached */
-    return 0.75 * pow(m, 1.0 / 3.0);
+int data_based_hac_bandwidth (void)
+{
+    if (is_unset(state->ropts.user_lag) && state->ropts.prewhite) {
+	return 1;
+    } else if (state->ropts.auto_lag == AUTO_LAG_NEWEYWEST) {
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 int get_hac_kernel (void)
@@ -1315,6 +1323,11 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    } else if (!strcmp(setarg, "nw2")) {
 		state->ropts.auto_lag = AUTO_LAG_WOOLDRIDGE;
+		state->ropts.user_lag = UNSET_INT;
+		err = 0;
+	    } else if (!strcmp(setarg, "nw3") ||
+		       !strcmp(setarg, "auto")) {
+		state->ropts.auto_lag = AUTO_LAG_NEWEYWEST;
 		state->ropts.user_lag = UNSET_INT;
 		err = 0;
 	    } else if (isdigit(*setarg)) {

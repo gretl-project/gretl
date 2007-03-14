@@ -1082,16 +1082,21 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 
     if (kern == KERNEL_QS) {
 	bt = gretl_model_get_double(pmod, "qs_bandwidth");
+	if (plain_format(prn)) {
+	    pprintf(prn, _("HAC standard errors, "
+			   "bandwidth %.2f"), bt);
+	} else {
+	    pprintf(prn, I_("HAC standard errors, "
+			    "bandwidth %.2f"), bt);
+	}
     } else {
-	bt = h;
-    }
-
-    if (plain_format(prn)) {
-	pprintf(prn, _("HAC standard errors, "
-		       "bandwidth %g"), bt);
-    } else {
-	pprintf(prn, I_("HAC standard errors, "
-			"bandwidth %g"), bt);
+	if (plain_format(prn)) {
+	    pprintf(prn, _("HAC standard errors, "
+			   "bandwidth %d"), h);
+	} else {
+	    pprintf(prn, I_("HAC standard errors, "
+			    "bandwidth %d"), h);
+	}
     }
 
     pputc(prn, ' ');

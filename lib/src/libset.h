@@ -60,7 +60,7 @@ int get_garch_robust_vcv_version (void);
 
 int get_force_hc (void);
 int get_hc_version (void);
-int get_hac_lag (int m);
+int get_hac_lag (int T);
 int get_hac_kernel (void);
 void set_hac_kernel (int k);
 
@@ -69,6 +69,8 @@ void set_hac_prewhiten (int w);
 
 double get_qs_bandwidth (void);
 void set_qs_bandwidth (double w);
+
+int data_based_hac_bandwidth (void);
 
 int get_halt_on_error (void);
 

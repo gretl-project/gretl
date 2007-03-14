@@ -87,4 +87,4 @@ int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 
 int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn);
 
-int gmm_missval_check (nlspec *s);
+int gmm_missval_check_etc (nlspec *s);

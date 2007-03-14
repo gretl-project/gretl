@@ -341,6 +341,82 @@ double hac_weight (int kern, int h, int i)
     return w;
 }
 
+/* Newey and West's data-based bandwidth selection, based on
+   the exposition in A. Hall, "Generalized Method of Moments"
+   (Oxford, 2005), p. 82.
+*/
+
+int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
+{
+    const double cg[] = { 1.4117, 2.6614, 1.3221 };
+    const double v[] = { 1, 2, 2 };
+    double g, p, s0, sv;
+    double *s = NULL, *c = NULL;
+    int T = f->rows;
+    int q = f->cols;
+    int n, i, j, t;
+    int err = 0;
+
+    if (kern == KERNEL_BARTLETT) {
+	n = (int) pow((double) T, 2.0 / 9);
+    } else if (kern == KERNEL_PARZEN) {
+	n = (int) pow((double) T, 4.0 / 25);
+    } else {
+	n = (int) pow((double) T, 2.0 / 25);
+    }
+
+    s = malloc((n + 1) * sizeof *s);
+    c = malloc(T * sizeof *c);
+
+    if (s == NULL || c == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (t=0; t<T; t++) {
+	c[t] = 0.0;
+	for (i=0; i<q; i++) {
+	    /* equal weighting here? */
+	    c[t] += gretl_matrix_get(f, t, i);
+	}
+    }
+
+    for (j=0; j<=n; j++) {
+	s[j] = 0.0;
+	for (t=j; t<T; t++) {
+	    s[j] += c[t] * c[t-j];
+	}
+	s[j] /= T;
+    }
+
+    s0 = s[0];
+    sv = 0.0;
+    
+    for (j=1; j<=n; j++) {
+	if (kern == KERNEL_BARTLETT) {
+	    sv += 2 * j * s[j];
+	} else {
+	    sv += 2 * j * j * s[j];
+	}
+	s0 += 2 * s[j];
+    }
+
+    i = kern - 1;
+
+    p = 1.0 / (2 * v[i] + 1);
+    g = cg[i] * pow((sv / s0) * (sv / s0), p);
+
+    *bt = g * pow((double) T, p);
+    *h = (int) floor(*bt);
+    
+ bailout:
+
+    free(s);
+    free(c);
+
+    return err;
+}
+
 static int prewhiten_uhat (double **pu, int T, double *pa)
 {
     double a, num = 0.0, den = 0.0;
@@ -388,7 +464,8 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     int k = pmod->ncoeff;
     int free_uhat = 0;
     int p, j, t;
-    double weight, uu, a = 0.0;
+    double wj, uu;
+    double a = 0, bt = 0;
     double *uhat;
     int err = 0;
 
@@ -409,13 +486,6 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	free_uhat = 1;
     }
 
-    /* get the user's preferred maximum lag setting */
-    p = get_hac_lag(T);
-
-    gretl_model_set_int(pmod, "hac_kernel", kern);
-    gretl_model_set_int(pmod, "hac_lag", p);
-    gretl_model_set_int(pmod, "hac_prewhiten", prewhiten);
-
     vcv = gretl_matrix_alloc(k, k);
     wtj = gretl_matrix_alloc(k, k);
     gammaj = gretl_matrix_alloc(k, k);
@@ -423,6 +493,33 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     if (vcv == NULL || wtj == NULL || gammaj == NULL) {
 	err = 1;
 	goto bailout;
+    }
+
+    /* determine the bandwidth setting */
+
+    if (data_based_hac_bandwidth()) {
+	gretl_matrix u;
+
+	u.rows = T;
+	u.cols = 1;
+	u.val = uhat;
+	err = newey_west_bandwidth(&u, kern, &p, &bt);
+	if (err) {
+	    goto bailout;
+	}
+    } else if (kern == KERNEL_QS) {
+	bt = get_qs_bandwidth();
+	p = pmod->nobs - 1;
+    } else {
+	p = get_hac_lag(T);
+    }
+
+    gretl_model_set_int(pmod, "hac_kernel", kern);
+    gretl_model_set_int(pmod, "hac_prewhiten", prewhiten);
+    if (kern == KERNEL_QS) {
+	gretl_model_set_double(pmod, "qs_bandwidth", bt);
+    } else {
+	gretl_model_set_int(pmod, "hac_lag", p);
     }
 
     gretl_matrix_zero(vcv);
@@ -442,8 +539,12 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	if (j > 0) {
 	    /* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
 	    gretl_matrix_add_self_transpose(gammaj);
-	    weight = hac_weight(kern, p, j);
-	    gretl_matrix_multiply_by_scalar(gammaj, weight);
+	    if (kern == KERNEL_QS) {
+		wj = qs_hac_weight(bt, j);
+	    } else {
+		wj = hac_weight(kern, p, j);
+	    }
+	    gretl_matrix_multiply_by_scalar(gammaj, wj);
 	}
 
 	/* DM equation (9.38), p. 364 */

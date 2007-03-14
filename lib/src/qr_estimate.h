@@ -29,4 +29,6 @@ double hac_weight (int kern, int h, int i);
 
 double qs_hac_weight (double bt, int i);
 
+int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt);
+
 #endif  /* QR_ESTIMATE_H */
