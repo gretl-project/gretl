@@ -783,11 +783,11 @@ static int estimate_with_test (gretl_equation_system *sys,
 static void 
 adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
 {
-    char old_flags = sys->flags;
+    char oldflags = sys->flags;
 
     sys->flags = 0;
 
-    if (old_flags & GRETL_SYS_ITERATE) {
+    if (oldflags & GRETL_SYS_ITERATE) {
 	/* the iterate option is only available for WLS, SUR or 3SLS */
 	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
 	    sys->method == SYS_3SLS) {
@@ -798,12 +798,12 @@ adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
     /* by default, apply a df correction for single-equation methods */
     if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
 	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
-	if (old_flags & GRETL_SYSTEM_DFCORR) {
+	if (oldflags & GRETL_SYSTEM_DFCORR) {
 	    sys->flags |= GRETL_SYSTEM_DFCORR;
 	}
     } 
 
-    if (old_flags & GRETL_SYS_VCV_GEOMEAN) {
+    if (oldflags & GRETL_SYS_VCV_GEOMEAN) {
 	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
     }    
 }
@@ -811,6 +811,8 @@ adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
 static void 
 set_sys_flags_from_opt (gretl_equation_system *sys, gretlopt opt)
 {
+    char oldflags = sys->flags;
+
     sys->flags = 0;
 
     if (opt & OPT_T) {
@@ -832,6 +834,14 @@ set_sys_flags_from_opt (gretl_equation_system *sys, gretlopt opt)
     if (opt & OPT_M) {
 	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
     } 
+
+    if (oldflags & GRETL_SYSTEM_SAVE_UHAT) {
+	sys->flags |= GRETL_SYSTEM_SAVE_UHAT;
+    }
+
+    if (oldflags & GRETL_SYSTEM_SAVE_YHAT) {
+	sys->flags |= GRETL_SYSTEM_SAVE_YHAT;
+    }
 }
 
 /**

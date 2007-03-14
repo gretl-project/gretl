@@ -681,7 +681,7 @@ save_and_print_results (gretl_equation_system *sys,
     if (system_save_uhat(sys)) {
 	j = pdinfo->v;
 	err = dataset_add_series(m, pZ, pdinfo);
-    }
+    } 
 
     if (system_save_yhat(sys)) {
 	if (j == 0) {
