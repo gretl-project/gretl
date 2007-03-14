@@ -27,4 +27,6 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt);
 
 double hac_weight (int kern, int h, int i);
 
+double qs_hac_weight (double bt, int i);
+
 #endif  /* QR_ESTIMATE_H */

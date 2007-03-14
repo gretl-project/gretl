@@ -1113,22 +1113,34 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
     return err;
 }
 
-static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
+struct hac_info {
+    int kern;
+    int h;
+    double bt;
+    int white;
+};
+
+static void hac_info_init (struct hac_info *h)
+{
+    h->kern = 0;
+    h->h = 0;
+    h->bt = 0.0;
+    h->white = 0;
+}
+
+static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V,
+		    struct hac_info *hinfo)
 {
     static gretl_matrix *W;
     static gretl_matrix *Tmp;
     static gretl_matrix *A;
     static gretl_matrix *E2;
 
+    int prewhiten = get_hac_prewhiten();
     int kern = get_hac_kernel();
     int T, k;
-    int prewhiten = 0;
-    double w;
+    double w, bt = 0;
     int i, err = 0;
-
-    if (getenv("GRETL_HAC_PREWHITEN")) {
-	prewhiten = 1;
-    }
 
     if (E == NULL) {
 	/* cleanup signal */
@@ -1170,8 +1182,17 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 			      E, GRETL_MOD_NONE,
 			      V, GRETL_MOD_NONE);
 
+    if (kern == KERNEL_QS) {
+	bt = get_qs_bandwidth();
+	h = T - 1; /* ?? */
+    }
+
     for (i=1; i<=h; i++) {
-	w = hac_weight(kern, h, i);
+	if (kern == KERNEL_QS) {
+	    w = qs_hac_weight(bt, i);
+	} else {
+	    w = hac_weight(kern, h, i);
+	}
 	gretl_matrix_inplace_lag(W, E, i);
 	gretl_matrix_multiply_by_scalar(W, 2*w);
 	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -1214,12 +1235,19 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 	gretl_matrix_copy_values(E, E2);
     }
 
+    if (!err && hinfo != NULL) {
+	hinfo->kern = kern;
+	hinfo->h = h;
+	hinfo->bt = bt;
+	hinfo->white = prewhiten;
+    }
+
     return err;
 }
 
 static void gmm_HAC_cleanup (void)
 {
-    gmm_HAC(NULL, 0, NULL);
+    gmm_HAC(NULL, 0, NULL, NULL);
 }
 
 /* Calculate the covariance matrix for the GMM estimator.  We do an HC
@@ -1235,6 +1263,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     gretl_matrix *m1 = NULL;
     gretl_matrix *m2 = NULL;
     gretl_matrix *m3 = NULL;
+    struct hac_info hinfo;
     int i, j, k = s->ncoeff;
     int T = s->nobs;
     doublereal *wa4 = NULL;
@@ -1264,18 +1293,17 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	goto bailout;
     }
 
+    hac_info_init(&hinfo);
+
     if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
 	hac_lag = get_hac_lag(s->nobs);
-    }
-
-    if (hac_lag == 0) {
+	err = gmm_HAC(s->oc->tmp, hac_lag, S, &hinfo);
+	gmm_HAC_cleanup();
+    } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
 					s->oc->tmp, GRETL_MOD_NONE,
 					S, GRETL_MOD_NONE);
-    } else {
-	err = gmm_HAC(s->oc->tmp, hac_lag, S);
-	gmm_HAC_cleanup();
-    }
+    } 
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(S, s->nobs);
@@ -1333,8 +1361,16 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 		} 
 	    }
 	}
-	if (hac_lag > 0) {
-	    gretl_model_set_int(pmod, "hac_lag", hac_lag);
+	if (hinfo.kern) {
+	    gretl_model_set_int(pmod, "hac_kernel", hinfo.kern);
+	    if (hinfo.kern == KERNEL_QS) {
+		gretl_model_set_double(pmod, "qs_bandwidth", hinfo.bt);
+	    } else {
+		gretl_model_set_int(pmod, "hac_lag", hinfo.h);
+	    }
+	    if (hinfo.white) {
+		gretl_model_set_int(pmod, "hac_prewhiten", 1);
+	    }
 	}
     }
 
@@ -1397,15 +1433,12 @@ static int gmm_recompute_weights (nlspec *s)
 
     if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
 	hac_lag = get_hac_lag(s->nobs);
-    }
-
-    if (hac_lag == 0) {
+	err = gmm_HAC(s->oc->tmp, hac_lag, W, NULL);
+    } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
 					s->oc->tmp, GRETL_MOD_NONE,
 					W, GRETL_MOD_NONE);
-    } else {
-	err = gmm_HAC(s->oc->tmp, hac_lag, W);
-    }
+    } 
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(W, s->nobs);
@@ -1423,23 +1456,20 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     int hac_lag = 0;
     int err = 0;
 
-    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
-	hac_lag = get_hac_lag(s->nobs);
-    }
-
     V = gretl_matrix_alloc(k, k);
     if (V == NULL) {
 	pprintf(prn, "gmm_print_oc: allocation failed!\n");
 	return;
     }
 
-    if (hac_lag == 0) {
+    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
+	hac_lag = get_hac_lag(s->nobs);
+	err = gmm_HAC(s->oc->tmp, hac_lag, V, NULL);
+    } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
 					s->oc->tmp, GRETL_MOD_NONE,
 					V, GRETL_MOD_NONE);
-    } else {
-	err = gmm_HAC(s->oc->tmp, hac_lag, V);
-    }
+    } 
 
     pprintf(prn, "\n%s\n", 
 	    _("Orthogonality conditions - descriptive statistics"));

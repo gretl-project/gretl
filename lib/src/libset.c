@@ -51,6 +51,8 @@ struct robust_opts {
     int hc_version;
     int force_hc;
     int hkern;
+    int prewhite;
+    double qsband;
 };
 
 struct garch_opts {
@@ -95,10 +97,12 @@ set_vars *state;
 static void robust_opts_init (struct robust_opts *opts)
 {
     opts->auto_lag = AUTO_LAG_STOCK_WATSON;
-    opts->user_lag = 0;
+    opts->user_lag = UNSET_INT;
     opts->hc_version = 0;
     opts->force_hc = 0; 
     opts->hkern = KERNEL_BARTLETT;
+    opts->prewhite = 0;
+    opts->qsband = NADBL;
 }
 
 static void robust_opts_copy (struct robust_opts *opts)
@@ -108,6 +112,8 @@ static void robust_opts_copy (struct robust_opts *opts)
     opts->hc_version = state->ropts.hc_version;
     opts->force_hc = state->ropts.force_hc; 
     opts->hkern = state->ropts.hkern; 
+    opts->prewhite = state->ropts.prewhite;
+    opts->qsband = state->ropts.qsband;
 }
 
 static const char *hac_kernel_string (void)
@@ -117,6 +123,8 @@ static const char *hac_kernel_string (void)
 	return "bartlett";
     case KERNEL_PARZEN:
 	return "parzen";
+    case KERNEL_QS:
+	return "quadratic-spectral";
     default:
 	return "";
     }
@@ -728,7 +736,7 @@ int get_hac_lag (int m)
 
     /* Variants of Newey-West */
 
-    if (state->ropts.user_lag != 0 && state->ropts.user_lag < m - 2) {
+    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < m - 2) {
 	/* FIXME upper limit? */
 	return state->ropts.user_lag;
     }
@@ -750,11 +758,53 @@ int get_hac_kernel (void)
     return state->ropts.hkern;
 }
 
+void set_hac_kernel (int k)
+{
+    check_for_state();
+
+    if (k >= KERNEL_BARTLETT && k <= KERNEL_QS) {
+	state->ropts.hkern = k;
+    }
+}
+
+int get_hac_prewhiten (void)
+{
+    check_for_state();
+
+    return state->ropts.prewhite;
+}
+
+void set_hac_prewhiten (int w)
+{
+    check_for_state();
+    state->ropts.prewhite = (w != 0);
+}
+
+double get_qs_bandwidth (void)
+{
+    check_for_state();
+
+    if (!na(state->ropts.qsband) && state->ropts.qsband > 0) {
+	return state->ropts.qsband;
+    } else {
+	/* what's a sensible default here? */
+	return 2.0;
+    }
+}
+
+void set_qs_bandwidth (double w)
+{
+    check_for_state();
+    if (w >= 0.0) {
+	state->ropts.qsband = w;
+    }
+}
+
 static const char *get_hac_lag_string (void)
 {
     check_for_state();
 
-    if (state->ropts.user_lag > 0 && state->ropts.user_lag < 1000) {
+    if (state->ropts.user_lag >= 0 && state->ropts.user_lag < 1000) {
 	static char lagstr[6];
 
 	sprintf(lagstr, "%d", state->ropts.user_lag);
@@ -1118,6 +1168,12 @@ static int display_settings (PRN *prn)
     pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
     pprintf(prn, " force_hc = %d\n", state->ropts.force_hc);
     pprintf(prn, " hac_kernel = %s\n", hac_kernel_string());
+    pprintf(prn, " hac_prewhiten = %s\n", state->ropts.prewhite);
+    if (na(state->ropts.qsband)) {
+	pputs(prn, " qs_bandwidth: auto\n");
+    } else {
+	pprintf(prn, " qs_bandwidth = %g\n", state->ropts.qsband);
+    }
 
     pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
 
@@ -1255,11 +1311,11 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    /* set max lag for HAC estimation */
 	    if (!strcmp(setarg, "nw1")) {
 		state->ropts.auto_lag = AUTO_LAG_STOCK_WATSON;
-		state->ropts.user_lag = 0;
+		state->ropts.user_lag = UNSET_INT;
 		err = 0;
 	    } else if (!strcmp(setarg, "nw2")) {
 		state->ropts.auto_lag = AUTO_LAG_WOOLDRIDGE;
-		state->ropts.user_lag = 0;
+		state->ropts.user_lag = UNSET_INT;
 		err = 0;
 	    } else if (isdigit(*setarg)) {
 		state->ropts.user_lag = atoi(setarg);
@@ -1284,7 +1340,23 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    } else if (!strcmp(setarg, "parzen")) {
 		state->ropts.hkern = KERNEL_PARZEN;
 		err = 0;
-	    } 
+	    } else if (!strcmp(setarg, "qs")) {
+		state->ropts.hkern = KERNEL_QS;
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "hac_prewhiten")) {
+	    if (boolean_on(setarg)) { 
+		set_hac_prewhiten(1);
+		err = 0;
+	    } else if (boolean_off(setarg)) { 
+		set_hac_prewhiten(0);
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "qs_bandwidth")) {
+	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+	    if (!err) {
+		state->ropts.qsband = x;
+	    }	    
 	} else if (!strcmp(setobj, "garch_vcv")) {
 	    /* set GARCH VCV variant */
 	    err = set_garch_vcv_variant(setarg);

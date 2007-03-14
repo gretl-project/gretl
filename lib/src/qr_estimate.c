@@ -310,6 +310,18 @@ static void wtw (gretl_matrix *wt, gretl_matrix *X,
     }
 }
 
+double qs_hac_weight (double bt, int i)
+{
+    double di = i / bt;
+    double mi = 6 * M_PI * di / 5;
+    double w;
+
+    w = 25 / (12 * M_PI * M_PI * di * di);
+    w *= sin(mi) / mi - cos(mi);
+
+    return w;
+}
+
 double hac_weight (int kern, int h, int i)
 {
     double ai = fabs((double) i) / (h + 1.0);
@@ -329,6 +341,38 @@ double hac_weight (int kern, int h, int i)
     return w;
 }
 
+static int prewhiten_uhat (double **pu, int T, double *pa)
+{
+    double a, num = 0.0, den = 0.0;
+    double *uw, *u = *pu;
+    int sgn, t;
+
+    uw = malloc(T * sizeof *uw);
+    if (uw == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=1; t<T; t++) {
+	num += u[t-1] * u[t];
+	den += u[t-1] * u[t-1];
+    }
+
+    a = num / den;
+    sgn = (a < 0.0)? -1 : 1;
+    if (fabs(a) > 0.97) {
+	a = sgn * 0.97;
+    }
+
+    for (t=1; t<T; t++) {
+	uw[t] = u[t] - a * u[t-1];
+    } 
+
+    *pa = a;
+    *pu = uw;
+
+    return 0;
+}
+
 /* Calculate HAC covariance matrix.  Algorithm and (basically)
    notation taken from Davidson and MacKinnon (DM), Econometric Theory
    and Methods, chapter 9.
@@ -338,11 +382,13 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 {
     gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
     gretl_matrix *X;
+    int prewhiten = get_hac_prewhiten();
     int kern = get_hac_kernel();
     int T = pmod->nobs;
     int k = pmod->ncoeff;
+    int free_uhat = 0;
     int p, j, t;
-    double weight, uu;
+    double weight, uu, a = 0.0;
     double *uhat;
     int err = 0;
 
@@ -355,9 +401,20 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     */
     uhat = pmod->uhat + pmod->t1;
 
+    if (prewhiten) {
+	err = prewhiten_uhat(&uhat, T, &a);
+	if (err) {
+	    return err;
+	}
+	free_uhat = 1;
+    }
+
     /* get the user's preferred maximum lag setting */
     p = get_hac_lag(T);
+
+    gretl_model_set_int(pmod, "hac_kernel", kern);
     gretl_model_set_int(pmod, "hac_lag", p);
+    gretl_model_set_int(pmod, "hac_prewhiten", prewhiten);
 
     vcv = gretl_matrix_alloc(k, k);
     wtj = gretl_matrix_alloc(k, k);
@@ -393,6 +450,11 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	gretl_matrix_add_to(vcv, gammaj);
     }
 
+    if (prewhiten) {
+	/* re-color */
+	gretl_matrix_divide_by_scalar(vcv, (1-a) * (1-a));
+    }
+
     gretl_matrix_copy_values(wtj, vcv);
     gretl_matrix_qform(xpxinv, GRETL_MOD_TRANSPOSE, wtj,
 		       vcv, GRETL_MOD_NONE);
@@ -406,6 +468,10 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     gretl_matrix_free(gammaj);
     gretl_matrix_free(vcv);
     gretl_matrix_free(X);
+
+    if (free_uhat) {
+	free(uhat);
+    }
 
     return err;
 }

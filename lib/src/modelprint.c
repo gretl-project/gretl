@@ -1070,15 +1070,44 @@ static void panel_robust_vcv_line (const MODEL *pmod, PRN *prn)
 
 static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 {
-    int lag = gretl_model_get_int(pmod, "hac_lag");
+    const char *kstrs[] = {
+	N_("Bartlett kernel"),
+	N_("Parzen kernel"),
+	N_("QS kernel")
+    };
+    int kern = gretl_model_get_int(pmod, "hac_kernel");
+    int h = gretl_model_get_int(pmod, "hac_lag");
+    int white = gretl_model_get_int(pmod, "hac_prewhiten");
+    double bt;
+
+    if (kern == KERNEL_QS) {
+	bt = gretl_model_get_double(pmod, "qs_bandwidth");
+    } else {
+	bt = h;
+    }
 
     if (plain_format(prn)) {
-	pprintf(prn, _("Serial correlation-robust standard errors, "
-		       "lag order %d\n"), lag);
+	pprintf(prn, _("HAC standard errors, "
+		       "bandwidth %g"), bt);
     } else {
-	pprintf(prn, I_("Serial correlation-robust standard errors, "
-		       "lag order %d\n"), lag);
-    }	
+	pprintf(prn, I_("HAC standard errors, "
+			"bandwidth %g"), bt);
+    }
+
+    pputc(prn, ' ');
+    if (plain_format(prn)) {
+	pprintf(prn, "(%s", _(kstrs[kern - 1]));
+    } else {
+	pprintf(prn, "(%s", I_(kstrs[kern - 1]));
+		    
+    }
+    if (white) {
+	pputs(prn, ", ");
+	pputs(prn, (plain_format(prn))? _("prewhitened") : 
+	      I_("prewhitened"));
+    }
+
+    pputs(prn, ")\n");
 }
 
 static void hc_vcv_line (const MODEL *pmod, PRN *prn)
@@ -1180,7 +1209,7 @@ static void tex_arbond_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
-    if (gretl_model_get_int(pmod, "hac_lag")) {
+    if (gretl_model_get_int(pmod, "hac_kernel")) {
 	hac_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "hc")) {
 	hc_vcv_line(pmod, prn);
