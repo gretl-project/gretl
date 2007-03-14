@@ -1,3 +1,4 @@
+# translation of de-alt.po to
 # translation of de.po to
 # Copyright (C) 2004, 2007 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
@@ -6,10 +7,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: de\n"
+"Project-Id-Version: de-alt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-11 20:40-0400\n"
-"PO-Revision-Date: 2007-02-26 09:00-0500\n"
+"PO-Revision-Date: 2007-03-14 10:43+0100\n"
 "Last-Translator: Sven Schreiber\n"
 "Language-Team:  <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -887,10 +888,8 @@ msgstr "   scheint Beobachtungsbezeichner zu sein\n"
 
 #: lib/src/dataio.c:2873
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   leere Zelle bei Variable %d, Beobachtung %d: behandle als Fehlwert\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   leere Zelle bei Variable %d, Beobachtung %d: behandle als Fehlwert\n"
 
 #: lib/src/dataio.c:2882
 #, c-format
@@ -2054,8 +2053,7 @@ msgstr "eine Funktion"
 #: lib/src/genmain.c:241
 #, c-format
 msgid "'%s' refers to %s and may not be used as a variable name"
-msgstr ""
-"'%s' bezieht sich auf %s und darf nicht als Variablenname verwendet werden"
+msgstr "'%s' bezieht sich auf %s und darf nicht als Variablenname verwendet werden"
 
 #: lib/src/genmain.c:323
 msgid "Periodic dummy variables generated.\n"
@@ -2128,14 +2126,14 @@ msgid "%s versus %s (with least squares fit)"
 msgstr "%s gegen %s (mit Kleinst-Quadrate-Anpassung)"
 
 #: lib/src/graphing.c:934 gui2/gpt_dialog.c:209
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with inverse fit)"
-msgstr "%s gegen %s (mit Kleinst-Quadrate-Anpassung)"
+msgstr "%s gegen %s (mit inverser Anpassung)"
 
 #: lib/src/graphing.c:937 gui2/gpt_dialog.c:206
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with quadratic fit)"
-msgstr "%s gegen %s (mit Kleinst-Quadrate-Anpassung)"
+msgstr "%s gegen %s (mit quadrat. Anpassung)"
 
 #: lib/src/graphing.c:943
 #, c-format
@@ -2153,14 +2151,14 @@ msgid "Actual and fitted %s versus %s"
 msgstr "Tatsächliche und angepasste %s gegen %s"
 
 #: lib/src/graphing.c:1105 gui2/gpt_dialog.c:212
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with loess fit)"
-msgstr "%s gegen %s (mit Kleinst-Quadrate-Anpassung)"
+msgstr "%s gegen %s (mit Loess-Anpassung)"
 
 #: lib/src/graphing.c:1114 lib/src/plotspec.c:615
 #, c-format
 msgid "loess fit, d = %d, q = %g"
-msgstr ""
+msgstr "Loess-Anpassung, d = %d, q = %g"
 
 #: lib/src/graphing.c:1887 lib/src/plotspec.c:518 gui2/gpt_dialog.c:617
 msgid "right"
@@ -2315,10 +2313,8 @@ msgid "Unknown variable name in command"
 msgstr "Unbekannter Variablenname im Befehl"
 
 #: lib/src/gretl_errors.c:43
-msgid ""
-"The observations specified for the regression exceed those in the data set"
-msgstr ""
-"Angegebene Beobachtungen für die Regression sind außerhalb des Datensatzes"
+msgid "The observations specified for the regression exceed those in the data set"
+msgstr "Angegebene Beobachtungen für die Regression sind außerhalb des Datensatzes"
 
 #: lib/src/gretl_errors.c:45
 msgid "Command has insufficient arguments"
@@ -2342,8 +2338,7 @@ msgstr "Syntax-Fehler in Befehlszeile"
 
 #: lib/src/gretl_errors.c:50
 msgid "No independent variables left after omissions"
-msgstr ""
-"Keine unabhängigen Variablen sind nach den Auslassungen übrig geblieben"
+msgstr "Keine unabhängigen Variablen sind nach den Auslassungen übrig geblieben"
 
 #: lib/src/gretl_errors.c:51
 msgid "No independent variables were omitted"
@@ -3520,8 +3515,7 @@ msgstr "Daten geschrieben OK.\n"
 
 #: lib/src/interact.c:3753
 msgid "Warning: case markers not saved in binary datafile\n"
-msgstr ""
-"Warnung: Beobachtungsbezeichner nicht in binärer Datendatei gespeichert\n"
+msgstr "Warnung: Beobachtungsbezeichner nicht in binärer Datendatei gespeichert\n"
 
 #: lib/src/interact.c:3821
 msgid "This estimator requires panel data"
@@ -4223,10 +4217,8 @@ msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
 msgstr "       VARIABLE          KOEFFIZIENT                   STD.FEHLER\n"
 
 #: lib/src/modelprint.c:1720
-msgid ""
-"      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-msgstr ""
-"      VARIABLE       KOEFFIZIENT        STDFEHLER       T-STAT       STEIG\n"
+msgid "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
+msgstr "      VARIABLE       KOEFFIZIENT        STDFEHLER       T-STAT       STEIG\n"
 
 #: lib/src/modelprint.c:1723
 msgid "(at mean)"
@@ -4757,8 +4749,7 @@ msgid "not significant at the 10% level\n"
 msgstr "nicht signifikant zum 10% Niveau\n"
 
 #: lib/src/nonparam.c:277
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "Stichprobe zu klein zum Berechnen eines p-Werts auf Basis der "
 "Normalverteilung\n"
@@ -4898,10 +4889,8 @@ msgid "gretl version %s\n"
 msgstr "gretl-Version %s\n"
 
 #: lib/src/printout.c:97
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell und Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell und Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:98
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5240,6 +5229,8 @@ msgid ""
 "\n"
 "Poisson (mean = %g): "
 msgstr ""
+"\n"
+"Poisson (mean = %g): "
 
 #: lib/src/strutils.c:1482
 #, c-format
@@ -5306,8 +5297,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1501
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Gesamtzahl von Fehlwerten = %d (%.2f%% aller Werte)\n"
 
 #: lib/src/system.c:67
@@ -5818,8 +5808,7 @@ msgstr "Geben Sie \"open dateiname\" ein um einen Datensatz zu öffnen\n"
 #: cli/gretlcli.c:691
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
-msgstr ""
-"Öffnen einer neuen Datendatei schließt die momentane. Fortfahren? (y/n)"
+msgstr "Öffnen einer neuen Datendatei schließt die momentane. Fortfahren? (y/n)"
 
 #: cli/gretlcli.c:695
 msgid "OK, staying with current data set\n"
@@ -5833,13 +5822,11 @@ msgstr "Sie müssen zuerst eine Datendatei öffnen\n"
 #: cli/gretlcli.c:817 gui2/library.c:6337
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr ""
-"Befehl '%s' ignoriert; nicht zulässig innerhalb von Gleichungssystemen\n"
+msgstr "Befehl '%s' ignoriert; nicht zulässig innerhalb von Gleichungssystemen\n"
 
 #: cli/gretlcli.c:825 gui2/library.c:6345
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr ""
-"Geben Sie Befehle für die Schleife ein. Zum Verlassen 'endloop' eingeben\n"
+msgstr "Geben Sie Befehle für die Schleife ein. Zum Verlassen 'endloop' eingeben\n"
 
 #: cli/gretlcli.c:832
 #, c-format
@@ -5928,8 +5915,7 @@ msgstr ""
 
 #: gui2/about.c:103
 #, c-format
-msgid ""
-"Cannot find the license agreement file COPYING. Please make sure it's in %s"
+msgid "Cannot find the license agreement file COPYING. Please make sure it's in %s"
 msgstr ""
 "Kann die Lizenzvereinbarungsdatei COPYING nicht finden. Bitte in %s "
 "bereitstellen"
@@ -6001,8 +5987,7 @@ msgstr "Median"
 
 #: gui2/boxplots.c:840
 msgid "Five-number summary with bootstrapped confidence interval for median"
-msgstr ""
-"Fünf-Werte-Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
+msgstr "Fünf-Werte-Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
 
 #: gui2/boxplots.c:845
 #, no-c-format
@@ -6133,9 +6118,8 @@ msgid "Invalid standard deviation"
 msgstr "Ungültige Standardabweichung"
 
 #: gui2/calculator.c:334
-#, fuzzy
 msgid "Invalid mean"
-msgstr "Ungültige Eingabe"
+msgstr "Ungültiger Mittelwert"
 
 #: gui2/calculator.c:381 gui2/calculator.c:390
 msgid "Failed to compute p-value"
@@ -6408,7 +6392,6 @@ msgid "binomial"
 msgstr "binomial"
 
 #: gui2/calculator.c:1104
-#, fuzzy
 msgid "poisson"
 msgstr "Poisson"
 
@@ -7592,12 +7575,11 @@ msgstr "Anzahl Klassen:"
 
 #: gui2/dialogs.c:2989
 msgid "Minimum value, left bin:"
-msgstr ""
+msgstr "Minimum, linke Klasse:"
 
 #: gui2/dialogs.c:2990
-#, fuzzy
 msgid "Bin width:"
-msgstr "Linienbreite"
+msgstr "Klassenbreite:"
 
 #: gui2/dialogs.c:3183
 msgid "Structure of dataset"
@@ -7861,19 +7843,16 @@ msgid "Robust standard errors"
 msgstr "Robuste Standardfehler"
 
 #: gui2/dlgutils.c:770
-#, fuzzy
 msgid "One-step estimation"
 msgstr "Einstufige Schätzung"
 
 #: gui2/dlgutils.c:771
-#, fuzzy
 msgid "Two-step estimation"
-msgstr "Einstufige Schätzung"
+msgstr "Zweistufige Schätzung"
 
 #: gui2/dlgutils.c:772
-#, fuzzy
 msgid "Iterated estimation"
-msgstr "Einstufige Schätzung"
+msgstr "Iterierte Schätzung"
 
 #: gui2/dlgutils.c:820 plugin/sysest.c:697
 msgid "Estimator"
@@ -7916,9 +7895,8 @@ msgid "postscript files (*.eps)"
 msgstr "Postscript-Dateien (*.eps)"
 
 #: gui2/fileselect.c:537
-#, fuzzy
 msgid "PDF files (*.pdf)"
-msgstr "PNG-Dateien (*.png)"
+msgstr "PDF-Dateien (*.pdf)"
 
 #: gui2/fileselect.c:538
 msgid "xfig files (*.fig)"
@@ -8238,16 +8216,16 @@ msgstr "Notwendige Information fehlt"
 
 #: gui2/fnsave.c:270
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
+msgstr "Ungültige Versionsbezeichnung: nur Ziffern und '.' benutzen"
 
 #: gui2/fnsave.c:288
 msgid "Save function package"
 msgstr "Funktionspaket speichern"
 
 #: gui2/fnsave.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "Saved package as %s"
-msgstr "Änderungen speichern?"
+msgstr "Paket als %s gespeichert"
 
 #: gui2/fnsave.c:466
 msgid "No special requirement"
@@ -8307,9 +8285,8 @@ msgid "Upload package to server on save"
 msgstr "Beim Speichern Paket auf Server hochladen"
 
 #: gui2/fnsave.c:706
-#, fuzzy
 msgid "Include version in file name"
-msgstr "mit Saisondummies"
+msgstr "mit Versionsnummer im Dateinamen"
 
 #: gui2/fnsave.c:750
 msgid "gretl: upload"
@@ -8479,19 +8456,19 @@ msgstr "Titel für die Achsen"
 
 #: gui2/gpt_dialog.c:82
 msgid "linear: y = a + b*x"
-msgstr ""
+msgstr "linear: y = a + b*x"
 
 #: gui2/gpt_dialog.c:83
 msgid "quadratic: y = a + b*x + c*x^2"
-msgstr ""
+msgstr "quadratisch: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:84
 msgid "inverse: y = a + b*(1/x)"
-msgstr ""
+msgstr "invers: y = a + b*(1/x)"
 
 #: gui2/gpt_dialog.c:85
 msgid "loess (locally weighted fit)"
-msgstr ""
+msgstr "Loess (lokal gewichtete Anpassung)"
 
 #: gui2/gpt_dialog.c:311
 msgid "Invalid label position, must be X Y"
@@ -8519,9 +8496,8 @@ msgid "key position"
 msgstr "Schlüsselposition"
 
 #: gui2/gpt_dialog.c:817
-#, fuzzy
 msgid "fitted line"
-msgstr "Ohne Regressionsgerade"
+msgstr "angepasste Kurve"
 
 #: gui2/gpt_dialog.c:841
 msgid "Show full border"
@@ -8650,9 +8626,8 @@ msgid "The graph page is empty"
 msgstr "Die Graphenseite ist leer"
 
 #: gui2/graph_page.c:597
-#, fuzzy
 msgid "graph page options"
-msgstr "gretl: Optionen"
+msgstr "Optionen für Graphenseite"
 
 #: gui2/gretl.c:96
 msgid "open a script file on startup"
@@ -9448,8 +9423,7 @@ msgid "/Model/Bivariate tests/Difference of means/Assuming _equal variances..."
 msgstr "Bei Annahme _gleicher Varianzen..."
 
 #: gui2/gretl.c:532
-msgid ""
-"/Model/Bivariate tests/Difference of means/Assuming _unequal variances..."
+msgid "/Model/Bivariate tests/Difference of means/Assuming _unequal variances..."
 msgstr "Bei _ungleichen Varianzen..."
 
 #: gui2/gretl.c:534
@@ -11426,8 +11400,7 @@ msgstr "Modelltabelle geleert"
 
 #: gui2/model_table.c:144
 msgid "Sorry, this model can't be put in the model table"
-msgstr ""
-"Leider kann dieses Modell nicht in die Modelltabelle aufgenommen werden "
+msgstr "Leider kann dieses Modell nicht in die Modelltabelle aufgenommen werden "
 
 #: gui2/model_table.c:151
 msgid "Sorry, ARMA models can't be put in the model table"
@@ -11438,8 +11411,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Sorry, 2S-KQ-Modelle nicht möglich in Modelltabelle "
 
 #: gui2/model_table.c:176
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Kann Modell nicht zu Tabelle hinzufügen -- dieses hat andere abhängige "
 "Variable"
@@ -13549,33 +13521,3 @@ msgstr "Dies ist keine 'OLE'-Datei -- evtl. zu alt zum Einlesen durch gretl\n"
 msgid "Unexpected error reading the file\n"
 msgstr "Unerwarteter Fehler beim Lesen der Datei\n"
 
-#~ msgid "Get series listing"
-#~ msgstr "Hole Daten-Liste"
-
-#~ msgid "There were missing observations"
-#~ msgstr "Es gab fehlende Beobachtungen"
-
-#~ msgid "No of obs. = %d, unadjusted R^2 = %f\n"
-#~ msgstr "Beob.zahl = %d, unbereinigtes R^2 = %f\n"
-
-#~ msgid ""
-#~ "LM test statistic (%f) is distributed as Chi-square (%d)\n"
-#~ "Area to the right of LM = %f  "
-#~ msgstr ""
-#~ "LM-Teststatistik (%f) ist chi-Quadrat-(%d)-verteilt\n"
-#~ "Fläche rechts von LM = %f"
-
-#~ msgid "ARCH effect is insignificant at the 10 percent level"
-#~ msgstr "ARCH-Effekt ist insignifikant zum 10-Prozent-Niveau"
-
-#~ msgid "Weighted estimation not done"
-#~ msgstr "Gewichtete Schätzung nicht durchgeführt"
-
-#~ msgid "ARCH effect is significant at the 10 percent level"
-#~ msgstr "ARCH-Effekt ist signifikant zum 10-Prozent-Niveau"
-
-#~ msgid "Save to file..."
-#~ msgstr "Speichern in Datei..."
-
-#~ msgid "Couldn't read ARCH order"
-#~ msgstr "Konnte ARCH-Ordnung nicht lesen"
