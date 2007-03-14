@@ -1043,8 +1043,10 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 	}
     }
 
+#if GMM_DEBUG
     /* original VAR coefficients */
     gretl_matrix_print(A, "A");
+#endif
 
     if (!err) {
 	gretl_matrix *U = NULL;
@@ -1054,6 +1056,9 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 	int amod = 0;
 
 	err = gretl_matrix_SVD(A, &U, &S, &V);
+	if (err) {
+	    goto bailout;
+	}
 
 	for (i=0; i<k; i++) {
 	    if (S->val[i] > 0.97) {
@@ -1067,21 +1072,26 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
 	    gretl_matrix_multiply(tmp, V, A);
 	}
 
+#if GMM_DEBUG
 	/* (possibly) modified VAR coefficients */
 	gretl_matrix_print(A, "A~");
+#endif
 
 	/* Now "whiten" E using A~ */
 	for (t=1; t<T; t++) {
-	    for (i=0; i<k; i++) {
-		/* get lagged E values */
-		e->val[i] = gretl_matrix_get(E, t-1, i);
+	    if (t == 1) {
+		for (i=0; i<k; i++) {
+		    /* get lagged E values */
+		    e->val[i] = gretl_matrix_get(E, t-1, i);
+		}
 	    } 
 	    /* re-use 'b' for fitted values */
 	    gretl_matrix_multiply(A, e, b);
 	    for (i=0; i<k; i++) {
 		/* substitute prediction errors */
 		eti = gretl_matrix_get(E, t, i);
-		gretl_matrix_set(E, t-1, i, eti - b->val[i]);
+		e->val[i] = eti; /* save lagged value for next round */
+		gretl_matrix_set(E, t, i, eti - b->val[i]); /* or t-1?? */
 	    }
 	}
 
@@ -1102,15 +1112,12 @@ static int HAC_prewhiten (gretl_matrix *E, gretl_matrix *A)
     return err;
 }
 
-#define NEW_HAC 1
-
-#if NEW_HAC
-
 static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 {
     static gretl_matrix *W;
     static gretl_matrix *Tmp;
     static gretl_matrix *A;
+    static gretl_matrix *E2;
 
     int kern = get_hac_kernel();
     int T, k;
@@ -1127,7 +1134,8 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 	gretl_matrix_free(W);
 	gretl_matrix_free(Tmp);
 	gretl_matrix_free(A);
-	W = Tmp = A = NULL;
+	gretl_matrix_free(E2);
+	W = Tmp = A = E2 = NULL;
 	return 0;
     }
 
@@ -1142,20 +1150,19 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 	}
 	if (prewhiten) {
 	    A = gretl_matrix_alloc(k, k);
-	    if (A == NULL) {
+	    E2 = gretl_matrix_alloc(T, k);
+	    if (A == NULL || E2 == NULL) {
 		return E_ALLOC;
 	    }
 	}
     }
 
     if (prewhiten) {
+	gretl_matrix_copy_values(E2, E); /* keep a back-up */
 	err = HAC_prewhiten(E, A);
 	if (err) {
 	    return err;
-	} else {
-	    gretl_matrix_reuse(E, T - 1, 0);
-	    gretl_matrix_reuse(W, T - 1, 0);
-	}
+	} 
     }
 
     gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -1202,70 +1209,21 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 			       Tmp, V, GRETL_MOD_NONE);
 	}
 
-	gretl_matrix_reuse(E, T, 0);
-	gretl_matrix_reuse(W, T, 0);
+	/* put back the original E values */
+	gretl_matrix_copy_values(E, E2);
     }
 
     return err;
 }
-
-#else
-
-static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
-{
-    static gretl_matrix *W;
-
-    int kern = get_hac_kernel();
-    gretl_matrix *W;
-    double w;
-    int i;
-
-    if (E == NULL) {
-	/* cleanup signal */
-	gretl_matrix_free(W);
-	W = NULL;
-	return 0;
-    }
-
-    if (W == NULL) {
-	W = gretl_matrix_alloc(E->rows, E->cols);
-	if (W == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    gretl_matrix_zero(V);
-
-    for (i=-h; i<=h; i++) {
-	w = hac_weight(kern, h, i);
-	gretl_matrix_inplace_lag(W, E, i);
-	gretl_matrix_multiply_by_scalar(W, w);
-	gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
-				  W, GRETL_MOD_NONE,
-				  V, GRETL_MOD_CUMULATE);
-    }
-
-    if (!gretl_matrix_is_symmetric(V)) {
-	/* should we do this? */
-	fprintf(stderr, "gmm_HAC: V is not symmetric\n");
-	gretl_matrix_xtr_symmetric(V);
-    }
-
-    return 0;
-}
-
-#endif
 
 static void gmm_HAC_cleanup (void)
 {
     gmm_HAC(NULL, 0, NULL);
 }
 
-/* Calculate the covariance matrix for the GMM estimator.  Right now
-   we do an HC variant for non-time series, and a HAC variant for
-   time-series, subject to (some) control for the libset.c apparatus.
-   Perhaps we should allow for selection of a "straight" asymptotic
-   version?
+/* Calculate the covariance matrix for the GMM estimator.  We do an HC
+   variant for non-time series, and a HAC variant for time-series,
+   subject to (some) control via the libset.c apparatus.
 */
 
 int gmm_add_vcv (MODEL *pmod, nlspec *s)
