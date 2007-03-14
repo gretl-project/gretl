@@ -1180,6 +1180,7 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
     }
 
     if (prewhiten) {
+	/* now we "re-color" */
 	double aij;
 	int j;
 
@@ -1194,9 +1195,7 @@ static int gmm_HAC (gretl_matrix *E, int h, gretl_matrix *V)
 
 	err = gretl_invert_general_matrix(A);
 
-	/* we pre-whitened; now "re-color":
-	   form V = (I-A)^{-1} * V * (I-A)^{-1}' 
-	*/
+	/* form V = (I-A)^{-1} * V * (I-A)^{-1}' */
 	if (!err) {
 	    gretl_matrix_copy_values(Tmp, V);
 	    gretl_matrix_qform(A, GRETL_MOD_NONE,
