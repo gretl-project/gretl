@@ -877,20 +877,6 @@ static gpointer get_browser (int role)
     return browsers[i];
 }
 
-static void build_datafiles_popup (windata_t *vwin)
-{
-    if (vwin->popup == NULL) {
-	vwin->popup = gtk_menu_new();
-
-	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(display_datafile_info), 
-		       vwin);
-	add_popup_item(_("Open"), vwin->popup, 
-		       G_CALLBACK(browser_open_data), 
-		       vwin);
-    }
-}
-
 static int browser_busy (guint code)
 {
     int ret = 0;
@@ -916,7 +902,56 @@ static void new_package_callback (GtkWidget *w , gpointer p)
 static void close_files_viewer (GtkWidget *w, windata_t *vwin)
 {
     gtk_widget_destroy(vwin->w);
-}    
+} 
+
+static void build_datafiles_popup (windata_t *vwin)
+{
+    if (vwin->popup == NULL) {
+	vwin->popup = gtk_menu_new();
+
+	add_popup_item(_("Info"), vwin->popup, 
+		       G_CALLBACK(display_datafile_info), 
+		       vwin);
+	add_popup_item(_("Open"), vwin->popup, 
+		       G_CALLBACK(browser_open_data), 
+		       vwin);
+    }
+}   
+
+static void build_funcfiles_popup (windata_t *vwin)
+{
+    if (vwin->popup == NULL) {
+	vwin->popup = gtk_menu_new();
+
+	if (vwin->role == FUNC_FILES) {
+	    add_popup_item(_("Edit"), vwin->popup, 
+			   G_CALLBACK(browser_edit_func), 
+			   vwin);
+	    add_popup_item(_("Info"), vwin->popup, 
+			   G_CALLBACK(display_function_info), 
+			   vwin);
+	    add_popup_item(_("Execute"), vwin->popup, 
+			   G_CALLBACK(browser_call_func), 
+			   vwin);
+	    add_popup_item(_("Delete"), vwin->popup, 
+			   G_CALLBACK(browser_del_func), 
+			   vwin);
+	    add_popup_item(_("New"), vwin->popup, 
+			   G_CALLBACK(new_package_callback), 
+			   vwin);
+	} else {
+	    add_popup_item(_("Info"), vwin->popup, 
+			   G_CALLBACK(file_info_from_server), 
+			   vwin);
+	    add_popup_item(_("Install"), vwin->popup, 
+			   G_CALLBACK(install_file_from_server), 
+			   vwin);
+	    add_popup_item(_("Execute"), vwin->popup, 
+			   G_CALLBACK(browser_call_func), 
+			   vwin);
+	}
+    }
+}
 
 enum {
     BTN_EDIT = 1,
@@ -1120,7 +1155,14 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			     vwin->popup);
 	}
 	reset_data_stack();
-    } else if (REMOTE_ACTION(code)) {
+    } else if (code == FUNC_FILES || code == REMOTE_FUNC_FILES) {
+	build_funcfiles_popup(vwin);
+	g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
+			 G_CALLBACK(popup_menu_handler), 
+			 vwin->popup);
+    }
+
+    if (REMOTE_ACTION(code)) {
 	GtkWidget *hbox;
 
 	hbox = gtk_hbox_new(FALSE, 0);
