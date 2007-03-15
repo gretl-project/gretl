@@ -15,13 +15,15 @@ version 1.6.2, in progress
   generated within functions
 - Icon window: fix display on one-character object names
 - Fix memory leak when generating some sorts of matrices
-- Add option of using Parzen kernel (the default is Bartlett)
-  when computing HAC covariance matrix
+- Add option of using Parzen or Quadratic Spectral kernel (the 
+  default is Bartlett) when computing HAC covariance matrix
 - Add a toolbar to windows that display lists of files
 - Various fixes for function package editor
 - Fix for "omit" command in relation to arbond estimation
 - Correlation matrix, etc, in GUI: don't disable menu items
   if only one variable is selected
+- System estimation: fix breakage of the "save=" mechanism
+  for residuals and/or fitted values
 - Update the API documentation (still very much incomplete)
 - Update gnuplot to version 4.2.0 in the Windows installer    
 

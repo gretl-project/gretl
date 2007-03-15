@@ -942,7 +942,7 @@ fnpkg_check_filename (function_info *finfo, const char *fname)
     }
 
     n = 0;
-    for (i=0; p[i] != '\0'; p++) {
+    for (i=0; p[i] != '\0'; i++) {
 	if (p[i] == '-' || !strcmp(p + i, ".gfn")) {
 	    break;
 	}
