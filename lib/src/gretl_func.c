@@ -86,6 +86,7 @@ static int drop_function_vars = 1;
 
 static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
 static void delete_ufunc_from_list (ufunc *fun);
+static int function_package_remove_by_ID (int ID);
 
 /* record of state, and communication of state with outside world */
 
@@ -792,6 +793,21 @@ static void print_function_end (ufunc *fun, PRN *prn)
     pputs(prn, "end function\n");
 }
 
+static int unload_package_by_ID (int ID)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkgID == ID) {
+	    delete_ufunc_from_list(ufuns[i]);
+	}
+    }
+
+    function_package_remove_by_ID(ID);
+
+    return 0;
+}
+
 static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, 
 				int task, PRN *prn)
 {
@@ -816,20 +832,29 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	fun->pkgID = pkg->ID;
     }
 
+    gretl_xml_get_prop_as_int(node, "private", &fun->private);
+
 #if PKG_DEBUG
-    fprintf(stderr, "read_ufunc_from_xml: got function name '%s'\n",
-	    fname);
+    fprintf(stderr, "read_ufunc_from_xml: name '%s', private = %d\n",
+	    fun->name, fun->private);
 #endif
 
     /* check for name collisions */
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fname, ufuns[i]->name) && fun->pkgID == ufuns[i]->pkgID) {
-	    pprintf(prn, "Redefining function '%s'\n", fname);
-	    delete_ufunc_from_list(ufuns[i]);
+	if (!strcmp(fun->name, ufuns[i]->name)) {
+	    if (fun->pkgID == ufuns[i]->pkgID) {
+		pprintf(prn, "Redefining function '%s'\n", fname);
+		delete_ufunc_from_list(ufuns[i]);
+	    } else if (!fun->private && !ufuns[i]->private) {
+		pprintf(prn, "Redefining function '%s'\n", fname);
+		if (ufuns[i]->pkgID == 0) {
+		    delete_ufunc_from_list(ufuns[i]);
+		} else {
+		    unload_package_by_ID(ufuns[i]->pkgID);
+		}
+	    } 
 	}
     }
-
-    gretl_xml_get_prop_as_int(node, "private", &fun->private);
 
     cur = node->xmlChildrenNode;
 
@@ -1384,6 +1409,60 @@ int write_user_function_file (const char *fname)
     return 0;
 }
 
+static void function_package_free (fnpkg *pkg)
+{
+    if (pkg != NULL) {
+	int i;
+
+	for (i=0; i<n_ufuns; i++) {
+	    if (ufuns[i]->pkgID == pkg->ID) {
+		ufuns[i]->pkgID = 0;
+	    }
+	}
+
+	free(pkg->fname);
+	free(pkg->author);
+	free(pkg->version);
+	free(pkg->date);
+	free(pkg->descrip);
+	free(pkg);
+    }
+}
+
+static int function_package_remove_by_ID (int ID)
+{
+    int i, j, err = E_DATA;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (pkgs[i]->ID == ID) {
+	    function_package_free(pkgs[i]);
+	    for (j=i; j<n_pkgs-1; j++) {
+		pkgs[j] = pkgs[j+1];
+	    }
+	    err = 0;
+	    break;
+	}
+    }
+
+    if (!err && n_pkgs == 1) {
+	free(pkgs);
+	pkgs = NULL;
+	n_pkgs = 0;
+    } else {
+	fnpkg **tmp;
+
+	tmp = realloc(pkgs, (n_pkgs - 1) * sizeof *tmp);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pkgs = tmp;
+	    n_pkgs--;
+	}
+    }
+
+    return err;
+}
+
 static int function_package_add (fnpkg *pkg)
 {
     fnpkg **tmp;
@@ -1426,26 +1505,6 @@ static fnpkg *function_package_new (const char *fname)
     return pkg;
 }
 
-static void function_package_free (fnpkg *pkg)
-{
-    if (pkg != NULL) {
-	int i;
-
-	for (i=0; i<n_ufuns; i++) {
-	    if (ufuns[i]->pkgID == pkg->ID) {
-		ufuns[i]->pkgID = 0;
-	    }
-	}
-
-	free(pkg->fname);
-	free(pkg->author);
-	free(pkg->version);
-	free(pkg->date);
-	free(pkg->descrip);
-	free(pkg);
-    }
-}
-
 static void packages_destroy (void)
 {
     int i;
@@ -1476,6 +1535,11 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
     fnpkg *pkg;
     char *vstr = NULL;
     int id, err = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "\nread_user_function_package: fname='%s'\n",
+	    fname);
+#endif
 
     pkg = function_package_new(fname);
     if (pkg == NULL) {
