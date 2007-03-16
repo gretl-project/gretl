@@ -1444,7 +1444,11 @@ static int function_package_remove_by_ID (int ID)
 	}
     }
 
-    if (!err && n_pkgs == 1) {
+    if (err) {
+	return err;
+    }
+
+    if (n_pkgs == 1) {
 	free(pkgs);
 	pkgs = NULL;
 	n_pkgs = 0;
@@ -1622,8 +1626,9 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 /* if prn is non-NULL, we're just reading the contents
    of this file in order to display them */
 
-static int real_read_user_function_file (const char *fname, int task, PRN *prn,
-					 char **pname)
+static int 
+real_read_user_function_file (const char *fname, int task, 
+			      PRN *prn, char **pname)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -1641,7 +1646,8 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
     cur = node->xmlChildrenNode;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    err = read_user_function_package(doc, cur, fname, task, prn, pname);
+	    err = read_user_function_package(doc, cur, fname, task, 
+					     prn, pname);
 	} 
 	cur = cur->next;
     }
