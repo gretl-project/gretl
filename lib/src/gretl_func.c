@@ -27,7 +27,7 @@
 #include "cmd_private.h"
 
 #define FN_DEBUG 0
-#define PKG_DEBUG 0
+#define PKG_DEBUG 1
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
@@ -797,6 +797,10 @@ static int unload_package_by_ID (int ID)
 {
     int i;
 
+#if PKG_DEBUG
+    fprintf(stderr, "unload_package_by_ID: unloading %d\n", ID);
+#endif
+
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkgID == ID) {
 	    delete_ufunc_from_list(ufuns[i]);
@@ -828,7 +832,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
     strncat(fun->name, fname, FN_NAMELEN - 1);
     free(fname);
 
-    if (pkg != NULL) {
+    if (pkg != NULL && task == FUNCS_LOAD) {
 	fun->pkgID = pkg->ID;
     }
 
@@ -839,20 +843,22 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	    fun->name, fun->private);
 #endif
 
-    /* check for name collisions */
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fun->name, ufuns[i]->name)) {
-	    if (fun->pkgID == ufuns[i]->pkgID) {
-		pprintf(prn, "Redefining function '%s'\n", fname);
-		delete_ufunc_from_list(ufuns[i]);
-	    } else if (!fun->private && !ufuns[i]->private) {
-		pprintf(prn, "Redefining function '%s'\n", fname);
-		if (ufuns[i]->pkgID == 0) {
+    if (task == FUNCS_LOAD) {
+	/* check for name collisions */
+	for (i=0; i<n_ufuns; i++) {
+	    if (!strcmp(fun->name, ufuns[i]->name)) {
+		if (fun->pkgID == ufuns[i]->pkgID) {
+		    pprintf(prn, "Redefining function '%s'\n", fun->name);
 		    delete_ufunc_from_list(ufuns[i]);
-		} else {
-		    unload_package_by_ID(ufuns[i]->pkgID);
-		}
-	    } 
+		} else if (!fun->private && !ufuns[i]->private) {
+		    pprintf(prn, "Redefining function '%s'\n", fun->name);
+		    if (ufuns[i]->pkgID == 0) {
+			delete_ufunc_from_list(ufuns[i]);
+		    } else {
+			unload_package_by_ID(ufuns[i]->pkgID);
+		    }
+		} 
+	    }
 	}
     }
 
@@ -900,7 +906,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	free_ufunc(fun);
     }
 
-#if FN_DEBUG
+#if PKG_DEBUG
     if (err) {
 	fprintf(stderr, "read_ufunc_from_xml: error reading spec\n");
     } 
@@ -1254,6 +1260,12 @@ int write_function_package (fnpkg *pkg,
 	}
     }
 
+#if 1
+    /* sync program state with new info */
+    /* FIXME there's something wrong here */
+    err = load_user_function_file(fname);
+#endif
+
     return err;
 }
 
@@ -1291,6 +1303,10 @@ int function_package_get_info (const char *fname,
 	return 1;
     }
 
+#if PKG_DEBUG
+    fprintf(stderr, "Found package, ID = %d\n", pkg->ID);
+#endif
+
     if (ppkg != NULL) {
 	*ppkg = pkg;
     }
@@ -1314,6 +1330,10 @@ int function_package_get_info (const char *fname,
     }
 
     for (i=0; i<n_ufuns; i++) {
+#if PKG_DEBUG
+	fprintf(stderr, "checking func %i, pkgID = %d\n", i, 
+		ufuns[i]->pkgID);
+#endif
 	if (ufuns[i]->pkgID == pkg->ID) {
 	    if (ufuns[i]->private) {
 		npriv++;
@@ -1322,6 +1342,10 @@ int function_package_get_info (const char *fname,
 	    }
 	}
     }
+
+#if PKG_DEBUG
+    fprintf(stderr, "npriv = 0, pubnum = %d\n", pubnum);
+#endif
 
     if (!err && pub != NULL && pubnum >= 0) {
 	*pub = pubnum;
@@ -1541,7 +1565,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
     int id, err = 0;
 
 #if PKG_DEBUG
-    fprintf(stderr, "\nread_user_function_package: fname='%s'\n",
+    fprintf(stderr, "read_user_function_package: fname='%s'\n",
 	    fname);
 #endif
 
@@ -1634,6 +1658,11 @@ real_read_user_function_file (const char *fname, int task,
     xmlNodePtr node = NULL;
     xmlNodePtr cur;
     int err = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "real_read_user_function_file:\n"
+	    " starting on '%s', task %d\n", fname, task);
+#endif
 
     xmlKeepBlanksDefault(0);
 
@@ -2089,34 +2118,37 @@ static int parse_fn_definition (char *fname,
 				PRN *prn)
 {
     fn_param *params = NULL;
-    char fmt[8] = "%31s";
     char *p, *s = NULL;
     int i, len, np = 0;
     int err = 0;
 
     while (isspace(*str)) str++;
 
-    /* get the function name */
+    /* get the length of the function name */
     len = strcspn(str, " (");
     if (len == 0) {
-	err = E_PARSE;
-    } else if (len < FN_NAMELEN - 1) {
-	sprintf(fmt, "%%%ds", len);
-    }
+	return E_PARSE;
+    } 
 
-    if (!err) {
+    if (*fname == '\0') {
+	char fmt[8] = "%31s";
+
+	if (len < FN_NAMELEN - 1) {
+	    sprintf(fmt, "%%%ds", len);
+	}
 	if (sscanf(str, fmt, fname) != 1) {
 	    err = E_PARSE;
 	}
+	if (!err) {
+	    err = check_func_name(fname, pfun, prn);
+	}
     }
 
-    if (!err) {
-	err = check_func_name(fname, pfun, prn);
+    if (err) {
+	return err;
     }
 
-    if (!err) {
-	str += len;
-    }
+    str += len;
 
     if (*str == '\0') {
 	/* void function */
@@ -2124,15 +2156,13 @@ static int parse_fn_definition (char *fname,
     }
 
     /* move to next bit and make a copy */
-    if (!err) {
-	str += strspn(str, " (");
-	if (*str == 0) {
-	    err = E_PARSE;
-	} else {
-	    s = gretl_strdup(str);
-	    if (s == NULL) {
-		err = E_ALLOC;
-	    }
+    str += strspn(str, " (");
+    if (*str == 0) {
+	err = E_PARSE;
+    } else {
+	s = gretl_strdup(str);
+	if (s == NULL) {
+	    return E_ALLOC;
 	}
     }
 
@@ -2142,24 +2172,21 @@ static int parse_fn_definition (char *fname,
 	return 0;
     }
 
-    if (!err) {
-	/* strip trailing ')' and space */
-	arg_tail_strip(s);
-	np = comma_count(s) + 1;
-	if (np == 1 && !strcmp(s, "void")) {
-	    free(s);
-	    return 0;
-	}
-	params = allocate_params(np);
-	if (params == NULL) {
-	    err = E_ALLOC;
-	}
-	if (!err) {
-	    charsub(s, ',', 0);
-	}
+    /* strip trailing ')' and space */
+    arg_tail_strip(s);
+    np = comma_count(s) + 1;
+    if (np == 1 && !strcmp(s, "void")) {
+	free(s);
+	return 0;
+    }
+
+    params = allocate_params(np);
+    if (params == NULL) {
+	err = E_ALLOC;
     }
 
     if (!err) {
+	charsub(s, ',', 0);
 	p = s;
 	for (i=0; i<np && !err; i++) {
 	    err = parse_function_param(p, &params[i], i);
@@ -2203,6 +2230,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     /* the following takes care of replacing an existing function
        of the same name, if any */
 
+    *fname = '\0';
     err = parse_fn_definition(fname, &params, &n_params,
 			      line + 8, &fun, prn);
 
@@ -2277,10 +2305,15 @@ static int end_of_function (const char *s)
     return ret;
 }
 
-int gretl_function_append_line (const char *line)
+static int real_function_append_line (const char *line, ufunc *fun)
 {
-    ufunc *fun = current_ufun;
+    int editing = 1;
     int err = 0;
+
+    if (fun == NULL) {
+	fun = current_ufun;
+	editing = 0;
+    } 
 
 #if FN_DEBUG
     fprintf(stderr, "gretl_function_append_line: '%s'\n", line);
@@ -2310,32 +2343,25 @@ int gretl_function_append_line (const char *line)
     if (end_of_function(line)) {
 	if (fun->n_lines == 0) {
 	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
-	    delete_ufunc_from_list(fun);
 	    err = 1;
 	}
 	set_compiling_off();
-	return err;
-    }
-
-    if (!strncmp(line, "quit", 4)) {
+    } else if (!strncmp(line, "quit", 4)) {
 	/* abort compilation */
-	delete_ufunc_from_list(fun);
+	if (!editing) {
+	    delete_ufunc_from_list(fun);
+	}
 	set_compiling_off();
-	return err;
-    }
-
-    if (!strncmp(line, "function", 8)) {
+    } else if (!strncmp(line, "function", 8)) {
 	strcpy(gretl_errmsg, "You can't define a function within a function");
-	return 1;
-    }
-
-    if (!strncmp(line, "return ", 7)) {
+	err = 1;
+    } else if (!strncmp(line, "return ", 7)) {
 	err = add_function_return(fun, line + 7);
     } else {  
 	err = strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
-    if (err) {
+    if (err && !editing) {
 	delete_ufunc_from_list(fun);
 	set_compiling_off();
     }	
@@ -2343,9 +2369,36 @@ int gretl_function_append_line (const char *line)
     return err;
 }
 
+int gretl_function_append_line (const char *line)
+{
+    return real_function_append_line(line, NULL);
+}
+
+static int extract_funcname (char *name, const char *s)
+{
+    int n = strcspn(s, " (");
+
+    if (n == 0 || n >= FN_NAMELEN) {
+	return E_DATA;
+    } else {
+	*name = '\0';
+	strncat(name, s, n);
+	return 0;
+    }
+}
+
+/* Called from GUI window within the package-editing apparatus: the
+   content of the script-editing window is dumped to file and we're
+   passed the filename, along with the index number of the function
+   interface that is being edited.  We parse the new function
+   definition, but hold off replacing the original until we know there
+   are no compilation errors.
+*/
+
 int update_function_from_script (const char *fname, int idx)
 {
     char line[MAXLINE];
+    ufunc *fun, *orig;
     char *s;
     FILE *fp;
     int gotfn = 0;
@@ -2360,39 +2413,71 @@ int update_function_from_script (const char *fname, int idx)
 	return E_FOPEN;
     }
 
-    fprintf(stderr, "Going to update function id %d from %s\n",
-	    idx, fname);
+    fun = ufunc_new();
+    if (fun == NULL) {
+	fclose(fp);
+	return E_ALLOC;
+    }
+
+    orig = ufuns[idx];
+
+    fprintf(stderr, "Going to update function id %d '%s' from %s\n",
+	    idx, orig->name, fname);
 
     while (fgets(line, sizeof line, fp) && !err) {
 	s = line;
 	while (*s == ' ') s++;
 	tailstrip(s);
 	if (!strncmp(s, "function ", 9)) {
-	    if (gotfn) {
+	    if (gotfn || extract_funcname(fun->name, s + 9)) {
 		err = 1;
+	    } else if (strcmp(fun->name, orig->name)) {
+		err = 1;
+		strcpy(gretl_errmsg, 
+		       _("You can't change the name of a function here"));
 	    } else {
 		gotfn = 1;
-		err = gretl_start_compiling_function(s, NULL);
-		strcpy(gretl_errmsg, "Error compiling function");
+		err = parse_fn_definition(fun->name, &fun->params,
+					  &fun->n_params, s + 8, 
+					  NULL, NULL);
+		if (err) {
+		    strcpy(gretl_errmsg, _("Error compiling function"));
+		}
 	    }
 	} else {
-	    err = gretl_function_append_line(s);
-	    strcpy(gretl_errmsg, "Error compiling function");
+	    err = real_function_append_line(s, fun);
+	    if (err) {
+		strcpy(gretl_errmsg, _("Error compiling function"));
+	    }
 	}
     }
 
     fclose(fp);
 
-    if (!err && current_ufun != NULL) {
-	int ichk = user_function_index_by_name(current_ufun->name);
+    if (!err) {
+	/* actually replace function content */
+	free_strings_array(orig->lines, orig->n_lines);
+	orig->n_lines = fun->n_lines;
+	orig->lines = fun->lines;
+	fun->lines = NULL;
 
-	if (ichk != idx) {
-	    strcpy(gretl_errmsg, _("You can't change the name of a function here"));
-	    fprintf(stderr, "idx = %d, but user_function_index_by_name() "
-		    "gives %d for '%s'\n", idx, ichk, current_ufun->name);
-	    err = 1;
-	}
+	free_params_array(orig->params, orig->n_params);
+	orig->n_params = fun->n_params;
+	orig->params = fun->params;
+	fun->params = NULL;
+
+	orig->rettype = fun->rettype;
+	free(orig->retname);
+	orig->retname = fun->retname;
+	fun->retname = NULL;
+    } else {
+	/* just trash the attempt */
+	free_strings_array(fun->lines, fun->n_lines);
+	free_params_array(fun->params, fun->n_params);
+	free(fun->retname);
     }
+
+    free(fun);
 
     return err;
 }

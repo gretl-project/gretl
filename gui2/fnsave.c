@@ -94,7 +94,7 @@ function_info *finfo_new (void)
     finfo->pub = -1;
     finfo->privlist = NULL;
     finfo->dreq = 0;
-    finfo->minver = 1.5;
+    finfo->minver = 1.6;
 
     return finfo;
 }
@@ -1129,5 +1129,3 @@ void edit_function_package (const char *fname, int *loaderr)
 
     finfo_dialog(finfo);
 }
-
-
