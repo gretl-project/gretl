@@ -229,25 +229,22 @@ static file_collection *file_collection_new (const char *path,
 	return NULL;
     }
 
-    coll->path = malloc(strlen(path) + 1);
+    coll->title = NULL;
+    
+    coll->path = gretl_strdup(path);
     if (coll->path == NULL) {
 	free(coll);
 	*err = 1;
 	return NULL;
     }
 
-    coll->descfile = malloc(strlen(descfile) + 1);
+    coll->descfile = gretl_strdup(descfile);
     if (coll->descfile == NULL) {
 	free(coll->path);
 	free(coll);
 	*err = 1;
 	return NULL;
     }  
-
-    strcpy(coll->path, path);
-    strcpy(coll->descfile, descfile);
-
-    coll->title = NULL;
 
     if (strstr(coll->descfile, "ps_")) {
 	coll->which = COLL_PS;
@@ -677,7 +674,8 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 } 
 
 enum {
-    VIEW_FN_PKG,
+    VIEW_FN_PKG_INFO,
+    VIEW_FN_PKG_CODE,
     LOAD_FN_PKG,
     EDIT_FN_PKG,
     DELETE_FN_PKG,
@@ -796,8 +794,10 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	err = gui_load_user_functions(fnfile);
     } else if (task == DELETE_FN_PKG) {
 	err = gui_delete_fn_pkg(fnfile, vwin);
-    } else if (task == VIEW_FN_PKG) {
+    } else if (task == VIEW_FN_PKG_INFO) {
 	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
+    } else if (task == VIEW_FN_PKG_CODE) {
+	gui_show_function_info(fnfile, VIEW_FUNC_CODE);
     } else if (task == EDIT_FN_PKG) {
 	edit_function_package(fnfile, &err);
     } else if (task == CALL_FN_PKG) {
@@ -834,7 +834,14 @@ static void display_function_info (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, VIEW_FN_PKG);
+    browser_functions_handler(vwin, VIEW_FN_PKG_INFO);
+}
+
+static void display_function_code (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, VIEW_FN_PKG_CODE);
 }
 
 static void browser_del_func (GtkWidget *w, gpointer data)
@@ -930,6 +937,9 @@ static void build_funcfiles_popup (windata_t *vwin)
 	    add_popup_item(_("Info"), vwin->popup, 
 			   G_CALLBACK(display_function_info), 
 			   vwin);
+	    add_popup_item(_("View code"), vwin->popup, 
+			   G_CALLBACK(display_function_code), 
+			   vwin);
 	    add_popup_item(_("Execute"), vwin->popup, 
 			   G_CALLBACK(browser_call_func), 
 			   vwin);
@@ -956,6 +966,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 enum {
     BTN_EDIT = 1,
     BTN_INFO,
+    BTN_CODE,
     BTN_INDX,
     BTN_INST,
     BTN_EXEC,
@@ -980,16 +991,17 @@ struct files_item {
 #endif
 
 static struct files_item files_items[] = {
-    { N_("Open"),    BTN_OPEN,  GTK_STOCK_OK },
-    { N_("Edit"),    BTN_EDIT,  GTK_STOCK_EDIT },
-    { N_("Info"),    BTN_INFO,  GTK_STOCK_INFO },
-    { N_("Index"),   BTN_INDX,  GTK_STOCK_INDEX },
-    { N_("Install"), BTN_INST,  GTK_STOCK_SAVE },
-    { N_("Execute"), BTN_EXEC,  GTK_STOCK_EXECUTE },
-    { N_("Delete"),  BTN_DEL,   GTK_STOCK_DELETE },
-    { N_("New"),     BTN_NEW,   GTK_STOCK_NEW },
-    { N_("Find"),    BTN_FIND,  GTK_STOCK_FIND },
-    { N_("Close"),   BTN_CLOSE, GTK_STOCK_CLOSE },
+    { N_("Open"),      BTN_OPEN,  GTK_STOCK_OK },
+    { N_("Edit"),      BTN_EDIT,  GTK_STOCK_EDIT },
+    { N_("Info"),      BTN_INFO,  GTK_STOCK_INFO },
+    { N_("View code"), BTN_CODE,  GTK_STOCK_PROPERTIES },
+    { N_("Index"),     BTN_INDX,  GTK_STOCK_INDEX },
+    { N_("Install"),   BTN_INST,  GTK_STOCK_SAVE },
+    { N_("Execute"),   BTN_EXEC,  GTK_STOCK_EXECUTE },
+    { N_("Delete"),    BTN_DEL,   GTK_STOCK_DELETE },
+    { N_("New"),       BTN_NEW,   GTK_STOCK_NEW },
+    { N_("Find"),      BTN_FIND,  GTK_STOCK_FIND },
+    { N_("Close"),     BTN_CLOSE, GTK_STOCK_CLOSE },
     { NULL, 0, NULL }
 };
 
@@ -1016,6 +1028,8 @@ static void make_filesbar (windata_t *vwin)
 		toolfunc = browser_edit_func;
 	    } else if (files_items[i].action == BTN_INFO) {
 		toolfunc = display_function_info;
+	    } else if (files_items[i].action == BTN_CODE) {
+		toolfunc = display_function_code;
 	    } else if (files_items[i].action == BTN_EXEC) {
 		toolfunc = browser_call_func;
 	    } else if (files_items[i].action == BTN_DEL) {

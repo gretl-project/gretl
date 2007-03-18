@@ -104,7 +104,6 @@ enum {
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
-    CODE_ITEM,
     INDEX_ITEM
 } viewbar_flags;
 
@@ -1699,20 +1698,6 @@ static void script_index (GtkWidget *w, windata_t *vwin)
     display_files(NULL, PS_FILES, NULL);
 }
 
-static void view_code_callback (GtkWidget *w, windata_t *vwin)
-{
-    windata_t *child = vwin_first_child(vwin);
-
-    if (child != NULL) {
-	gdk_window_raise(child->dialog->window);
-    } else {
-	child = gui_show_function_info(vwin->fname, VIEW_FUNC_CODE);
-	if (child != NULL) {
-	    vwin_add_child(vwin, child);
-	}
-    }
-}
-
 struct viewbar_item {
     const char *str;
     const gchar *icon;
@@ -1731,7 +1716,6 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
-    { N_("View code"), GTK_STOCK_PROPERTIES, view_code_callback, CODE_ITEM },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
@@ -1834,10 +1818,6 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (vwin->role == VIEW_SCALAR && viewbar_items[i].flag == 0) {
-	    continue;
-	}
-
-	if (vwin->role != VIEW_FUNC_INFO && viewbar_items[i].flag == CODE_ITEM) {
 	    continue;
 	}
 

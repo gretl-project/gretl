@@ -32,8 +32,6 @@ void browser_edit_func (GtkWidget *w, gpointer data);
 
 void browser_call_func (GtkWidget *w, gpointer data);
 
-windata_t *gui_show_function_info (const char *fname, int role);
-
 void destroy_file_collections (void);
 
 void display_files (gpointer p, guint code, GtkWidget *w);
@@ -41,6 +39,8 @@ void display_files (gpointer p, guint code, GtkWidget *w);
 gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
+
+windata_t *gui_show_function_info (const char *fname, int role);
 
 void maybe_update_func_files_window (int code);
 
