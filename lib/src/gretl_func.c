@@ -861,7 +861,10 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     strncat(fun->name, tmp, FN_NAMELEN - 1);
     free(tmp);
 
-    fun->pkgID = pkg->ID;
+    if (pkg != NULL) {
+	fun->pkgID = pkg->ID;
+    }
+
     gretl_xml_get_prop_as_int(node, "private", &fun->private);
 
 #if PKG_DEBUG
@@ -893,7 +896,11 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     if (!err) {
-	err = attach_ufunc_to_package(fun, pkg);
+	if (pkg != NULL) {
+	    err = attach_ufunc_to_package(fun, pkg);
+	} else {
+	    err = add_allocated_ufunc(fun);
+	}
     }
 
     if (err) {
@@ -1710,6 +1717,9 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
     pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
     pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
     pprintf(prn, "Description: %s\n", (pkg->descrip)? pkg->descrip : "none");
+
+    pputc(prn, '\n');
+    real_user_function_help(pkg->iface, NULL, prn);
 }
 
 static void print_package_code (const fnpkg *pkg, PRN *prn)
@@ -1804,6 +1814,61 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
 #endif
 
     return pkg;
+}
+
+/* read aggregated file that may contain one or more function packages
+   and one or more "loose" functions */
+
+int read_session_functions_file (const char *fname)
+{
+    fnpkg *pkg = NULL;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    xmlNodePtr cur;
+    int err = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "read_session_functions_file: starting on '%s'\n", fname);
+#endif
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
+    if (err) {
+	return err;
+    }
+
+    /* first get any function packages from this file */
+    cur = node->xmlChildrenNode;
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
+	    pkg = real_read_package(doc, cur, fname, &err);
+	    if (!err) {
+		err = real_load_package(pkg);
+	    }
+	} 
+	cur = cur->next;
+    }
+
+    /* then get any unpackaged functions */
+    cur = node->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+	    err = read_ufunc_from_xml(cur, doc, NULL);
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+#if PKG_DEBUG
+    fprintf(stderr, "read_session_functions_file: returning %d\n", err);
+#endif
+
+    return err;
 }
 
 static fnpkg *read_package_file (const char *fname, int *err)

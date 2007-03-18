@@ -149,6 +149,8 @@ int function_package_is_loaded (const char *fname);
 
 const char *function_package_description (const char *fname);
 
+int read_session_functions_file (const char *fname);
+
 int load_user_function_file (const char *fname);
 
 int get_function_file_info (const char *fname, PRN *prn, char **pname);

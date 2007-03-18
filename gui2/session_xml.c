@@ -419,7 +419,7 @@ static int maybe_read_functions_file (const char *fname)
 
     fclose(fp);
 
-    return load_user_function_file(fname); /* FIXME */
+    return read_session_functions_file(fname);
 }
 
 static int maybe_read_lists_file (const char *fname) 
