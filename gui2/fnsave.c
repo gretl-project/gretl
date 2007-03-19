@@ -841,8 +841,7 @@ static int count_specials (const char *s)
 
 static char *url_encode_string (const char *s)
 {
-    char *encstr;
-    char encc[4];
+    char *encstr, *p;
     int n;
 
     if (s == NULL) {
@@ -857,18 +856,19 @@ static char *url_encode_string (const char *s)
     encstr = malloc(strlen(s) + n * 2 + 1);
 
     if (encstr != NULL) {
-	*encstr = '\0';
+	p = encstr;
 	while (*s) {
 	    if (*s == ' ') {
-		strcat(encstr, "+");
+		*p++ = '+';
 	    } else if (url_reserved(*s) || !isprint(*s)) {
-		sprintf(encc, "%%%.2X", *s);
-		strcat(encstr, encc);
+		sprintf(p, "%%%.2X", *s);
+		p += 3;
 	    } else {
-		strncat(encstr, s, 1);
+		*p++ = *s;
 	    } 
 	    s++;
 	}
+	*p = '\0';
     }
 
     return encstr;
@@ -883,6 +883,10 @@ static void do_upload (const char *fname)
     char *buf = NULL;
     char *retbuf = NULL;
     login_info linfo;
+    GdkDisplay *disp;
+    GdkCursor *cursor;
+    GdkWindow *w1;
+    gint x, y;
     int err = 0;
 
     login_dialog(&linfo);
@@ -891,7 +895,15 @@ static void do_upload (const char *fname)
 	linfo_free(&linfo);
 	return;
     }
-	
+
+    /* set waiting cursor */
+    disp = gdk_display_get_default();
+    cursor = gdk_cursor_new(GDK_WATCH);
+    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+    gdk_window_set_cursor(w1, cursor);
+    gdk_display_sync(disp);
+    gdk_cursor_unref(cursor);
+
     g_file_get_contents(fname, &buf, NULL, NULL);
 
     if (buf == NULL) {
@@ -911,6 +923,9 @@ static void do_upload (const char *fname)
 	err = upload_function_package(ulogin, upass, ufname, ubuf,
 				      &retbuf);
     }
+
+    /* reset default cursor */
+    gdk_window_set_cursor(w1, NULL);
 
     if (err) {
 	gui_errmsg(err);
