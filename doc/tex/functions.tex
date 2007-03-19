@@ -329,12 +329,11 @@ descriptive labels for variables generated in a function.
 \begin{code}
 function make_cubes (list xlist)
    list cubes = null
-   loop foreach i xlist 
+   loop foreach i xlist --quiet
       series $i3 = $i^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3
     end loop
-    labels
     return list cubes
 end function
 
