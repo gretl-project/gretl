@@ -1137,42 +1137,14 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
     return sinfo;
 }
 
-static int has_rats_suffix (const char *dbname)
-{
-    const char *p = strrchr(dbname, '.');
-    int ret = 0;
-
-    if (p != NULL) {
-	if (!strcmp(p, ".rat") || 
-	    !strcmp(p, ".Rat") || 
-	    !strcmp(p, ".RAT")) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
-static int has_pcgive_suffix (const char *dbname)
-{
-    const char *p = strrchr(dbname, '.');
-    int ret = 0;
-
-    if (p != NULL && !strcmp(p, ".bn7")) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
 void open_named_db_index (char *dbname)
 {
     int action;
     FILE *fp;
 
-    if (has_rats_suffix(dbname)) {
+    if (has_suffix(dbname, ".rat")) {
 	action = RATS_SERIES;
-    } else if (has_pcgive_suffix(dbname)) {
+    } else if (has_suffix(dbname, ".bn7")) {
 	action = PCGIVE_SERIES;
     } else {
 	action = NATIVE_SERIES;
@@ -1205,7 +1177,7 @@ void open_db_index (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &fname);
 
-    if (has_rats_suffix(fname)) {
+    if (has_suffix(fname, ".rat")) {
 	action = RATS_SERIES;
     }
 
@@ -1392,6 +1364,7 @@ static int ggz_extract (char *errbuf, char *ggzname)
     }
 
     bytesleft = datalen;
+
     while (bytesleft > 0) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
         if ((bgot = gzread(fgz, gzbuf, sizeof(long) + sizeof(short))) > 0) {
@@ -1419,6 +1392,7 @@ static int ggz_extract (char *errbuf, char *ggzname)
     }
 
     bytesleft = cblen;
+
     while (bytesleft > 0) {
 	memset(gzbuf, 0, GRETL_BUFSIZE);
 	bgot = gzread(fgz, gzbuf, (bytesleft > GRETL_BUFSIZE)? 
@@ -1504,8 +1478,10 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     }
 
     /* try test write to target file */
+
     errno = 0;
     fp = gretl_fopen(target, "w");
+
     if (fp == NULL) {
 	if (errno == EACCES && vwin->role != REMOTE_FUNC_FILES) { 
 	    /* write to user dir instead? */
@@ -1782,7 +1758,7 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
        and <year> is 4-digit year; <day> is not used.
     */
 
-    if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
+    if (sscanf(line, "%*s%*s%3s%2d%8s%4d%31s", 
 	       mon, &mday, hrs, &yr, fname) != 5) {
 	return 1;
     }
@@ -1884,7 +1860,7 @@ gint populate_remote_db_list (windata_t *vwin)
     GtkTreeIter iter, child_iter; 
     char *getbuf = NULL;
     char line[1024];
-    char fname[16], status[20];
+    char fname[32], status[20];
     char src[96], srcbak[96];
     gchar *row[3];
     time_t remtime;
@@ -2008,7 +1984,8 @@ gint populate_remote_db_list (windata_t *vwin)
 
 /* fill a list box with names and short descriptions of function
    packages, retrieved from server: this was previously used for
-   remote databases too */
+   remote databases too 
+*/
 
 gint populate_remote_object_list (windata_t *vwin)
 {
@@ -2016,7 +1993,7 @@ gint populate_remote_object_list (windata_t *vwin)
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
-    char fname[16], status[20];
+    char fname[32], status[20];
     gchar *row[3];
     time_t remtime;
     int n, err = 0;
