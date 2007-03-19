@@ -238,10 +238,12 @@ struct urlinfo {
     char *url;               /* the URL */
     uerr_t proto;            /* URL protocol */
     unsigned short port;
-    int saveopt;             /* saving to buffer or file? */   
+    int saveopt;             /* saving to buffer or file? */  
     char *path; 
     char *localfile;
     char *getbuf;
+    const char *upload;      /* content of file to upload */
+    int upsize;              /* size of the above */
     char host[32];
     char errbuf[80];
     FILE *fp;                /* for saving content locally */
@@ -323,7 +325,7 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize);
 static uerr_t make_connection (int *sock, char *hostname, 
 			       unsigned short port);
 static int iread (int fd, char *buf, int len);
-static int iwrite (int fd, char *buf, int len);
+static int iwrite (int fd, const char *buf, int len);
 static char *print_option (int opt);
 
 static int get_host_ip (char *h_ip, const char *h_name)
@@ -806,9 +808,11 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 {
     char *request, *type, *command, *path;
     char *pragma_h, *range, useragent[16];
-    char *all_headers = NULL;
+    char *postpath = NULL;
+    char *posthead = NULL;
+    int postlen = 0;
     urlinfo_t *conn;
-    int sock, hcount, num_written, all_length, statcode;
+    int sock, hcount, num_written, statcode;
     long contlen, contrange;
     uerr_t err;
     struct rbuf rbuf;
@@ -868,11 +872,16 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 
     if (path == NULL) {
 	close(sock);
-	free(all_headers);
 	return NOTENOUGHMEM;
     }
 
-    command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
+    if (*dt & HEAD_ONLY) {
+	command = "HEAD";
+    } else if (u->upload != NULL) {
+	command = "POST";
+    } else {
+	command = "GET";
+    }
 
     if (*dt & SEND_NOCACHE) {
 	pragma_h = "Pragma: no-cache\r\n";
@@ -888,16 +897,34 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     strcat(useragent, "w");
 #endif
 
+    if (u->upload != NULL) {
+	char *p = strchr(path, '?');
+
+	if (p != NULL) {
+	    *p = '\0';
+	    postpath = gretl_strdup(p + 1);
+	}
+	posthead = malloc(96);
+	if (posthead == NULL || postpath == NULL) {
+	    close(sock);
+	    return NOTENOUGHMEM;
+	} else {
+	    sprintf(posthead, "Content-Type: "
+		    "application/x-www-form-urlencoded\r\n"
+		    "Content-Length: %d\r\n", strlen(postpath) + u->upsize);
+	    postlen = strlen(posthead);
+	}
+    }
+
     request = malloc(strlen(command) + strlen(path)
 		     + strlen(useragent)
 		     + strlen(u->host) + numdigit(u->port)
 		     + strlen(HTTP_ACCEPT)
 		     + strlen(pragma_h)
-		     + 64);
+		     + 64 + postlen);
 
     if (request == NULL) {
 	close(sock);
-	free(all_headers);
 	return NOTENOUGHMEM;
     }
 
@@ -905,21 +932,30 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	    "User-Agent: %s\r\n"
 	    "Host: %s:%d\r\n"
 	    "Accept: %s\r\n"
-	    "%s\r\n",
+	    "%s",
 	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
 	    pragma_h); 
+
+    if (posthead != NULL) {
+	strcat(request, posthead);
+	free(posthead);
+    }
+
+    strcat(request, "\r\n");
 
     if (proxy) {
 	free(path);
     }
 
-#if WDEBUG
+#if WDEBUG > 1
     fprintf(stderr, "Request:\n%s", request);
 #endif
 
     /* Send the request to server */
     num_written = iwrite(sock, request, strlen(request));
-    free(request); /* moved from within following conditional, 03/25/01 */
+
+    free(request);
+
     if (num_written < 0) {
 	close(sock);
 #if WDEBUG
@@ -928,14 +964,24 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	return WRITEFAILED;
     }
 
+    if (u->upload != NULL) {
+	num_written = iwrite(sock, postpath, strlen(postpath));
+	free(postpath);
+	if (num_written > 0) {
+	    num_written = iwrite(sock, u->upload, u->upsize);
+	}
+	if (num_written < 0) {
+	    close(sock);
+	    return WRITEFAILED;
+	}	
+    }
+
     contlen = contrange = -1;
     type = NULL;
     statcode = -1;
     *dt &= ~RETROKF;
 
     rbuf_init(&rbuf, sock);
-    all_headers = NULL;
-    all_length = 0;
 
     /* Header-fetching loop */
     hcount = 0;
@@ -957,7 +1003,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	    free(hdr);
 	    free(type);
 	    free(hs->newloc);
-	    free(all_headers);
 	    close(sock);
 	    return HEOF;
 	} else if (status == HG_ERROR) {
@@ -967,7 +1012,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	    free(hdr);
 	    free(type);
 	    free(hs->newloc);
-	    free(all_headers);
 	    close(sock);
 	    return HERR;
 	}
@@ -1080,7 +1124,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	} else {
 	    close(sock);
 	    free(type);
-	    free(all_headers);
 	    return NEWLOCATION;
 	}
     }
@@ -1093,7 +1136,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	hs->len = 0L;
 	hs->res = 0;
 	free(type);
-	free(all_headers);
 	close(sock);
 	return RETRFINISHED;
     }
@@ -1107,7 +1149,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     fprintf(stderr, "real_get_http: get_contents returned %d\n", hs->res);
 #endif
 
-    free(all_headers);
     close(sock);
 
     if (hs->res == -2) {
@@ -1241,6 +1282,8 @@ static void url_init (urlinfo_t *u)
     u->host[0] = '\0';
     u->errbuf[0] = '\0';
     u->saveopt = 0;
+    u->upload = NULL;
+    u->upsize = 0;
     u->fp = NULL;
 }
 
@@ -1349,7 +1392,7 @@ static int iread (int fd, char *buf, int len)
    with checking that the return value equals to LEN.  Instead, you
    should simply check for -1.  */
 
-static int iwrite (int fd, char *buf, int len)
+static int iwrite (int fd, const char *buf, int len)
 {
     int res = 0;
 
@@ -1679,8 +1722,10 @@ int upload_function_package (const char *login, const char *pass,
     }
 
     sprintf(u->path, "%s?opt=UPLOAD&login=%s&pass=%s"
-	    "&fname=%s&content=%s", cgi, login, pass, 
-	    fname, buf);
+	    "&fname=%s&content=", cgi, login, pass, fname);
+
+    u->upload = buf;
+    u->upsize = strlen(buf) + 1;
 
     err = get_host_ip(u->host, host);
     if (err) {

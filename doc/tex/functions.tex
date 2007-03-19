@@ -34,8 +34,8 @@ below.
 \begin{tabular}{ll}
 \multicolumn{1}{c}{Type} & 
 \multicolumn{1}{c}{Description} \\ [4pt]
-\texttt{bool} & scalar variable acting as a Boolean switch \\
-\texttt{int}  & scalar variable acting as an integer  \\
+\texttt{bool}   & scalar variable acting as a Boolean switch \\
+\texttt{int}    & scalar variable acting as an integer  \\
 \texttt{scalar} & scalar variable \\
 \texttt{series} & data series \\
 \texttt{list}   & named list of series \\
@@ -308,10 +308,10 @@ argument.)
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series or matrix.  The
-return value, if any, is specified via a statement within the function
-body beginning with the keyword \verb+return+, followed by a type
-specifier and the name of a variable (as in the listing of
+they can return a single variable --- a scalar, series, list or
+matrix.  The return value, if any, is specified via a statement within
+the function body beginning with the keyword \verb+return+, followed
+by a type specifier and the name of a variable (as in the listing of
 parameters).  There can be only one such statement.  An example of a
 valid return statement is shown below:
 %    
@@ -319,6 +319,33 @@ valid return statement is shown below:
 return scalar SSR
 \end{code}
 %
+Having a function return a list is one way of permitting the
+``return'' of more than one variable.  That is, you can define several
+variable inside a function and package them as a list; in this case
+they are not destroyed when the function exits.  Here is a simple
+example, which also illustrates the possibility of setting the
+descriptive labels for variables generated in a function.
+%    
+\begin{code}
+function make_cubes (list xlist)
+   list cubes = null
+   loop foreach i xlist 
+      series $i3 = $i^3
+      setinfo $i3 -d "cube of $i"
+      list cubes += $i3
+    end loop
+    labels
+    return list cubes
+end function
+
+open data4-1
+list xlist = price sqft
+list cubelist = make_cubes(xlist)
+print xlist cubelist --byobs
+labels
+\end{code}
+%
+
 Note that the \verb+return+ statement does \emph{not} cause the
 function to return (exit) at the point where it appears within the
 body of the function. Rather, it specifies which variable is available

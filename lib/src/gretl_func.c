@@ -1879,6 +1879,9 @@ int read_session_functions_file (const char *fname)
     return err;
 }
 
+/* parse an XML function package file and return an allocated
+   package struct with the functions attached */
+
 static fnpkg *read_package_file (const char *fname, int *err)
 {
     fnpkg *pkg = NULL;
