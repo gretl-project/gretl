@@ -612,7 +612,9 @@ nlspec_add_orthcond (nlspec *s, const char *str,
     fprintf(stderr, "nlspec_add_orthcond: line = '%s'\n", str);
 #endif
 
-    if (sscanf(str, "%15s ; %15s", lname, rname) != 2) {
+    str += strspn(str, " ");
+
+    if (sscanf(str, "%15[^; ] ; %15s", lname, rname) != 2) {
 	return E_PARSE;
     }
 
