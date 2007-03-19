@@ -623,7 +623,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
     int i, err = 0;
 
     for (i=0; i<var->neqns && !err; i++) {
-	pprintf(prn, "Equation %d:\n", i + 1);
+	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
 	err = autocorr_test(var->models[i], order, pZ, pdinfo,
 			    OPT_Q | OPT_S, prn);
 	gretl_model_test_print(var->models[i], 0, prn);
@@ -639,7 +639,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     int i, err = 0;
 
     for (i=0; i<var->neqns && !err; i++) {
-	pprintf(prn, "Equation %d:\n", i + 1);
+	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
 	err = arch_test(var->models[i], order, pdinfo, OPT_NONE, prn);
     }
 

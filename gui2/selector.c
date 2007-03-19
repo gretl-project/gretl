@@ -1787,9 +1787,12 @@ static void construct_cmdlist (selector *sr)
 
     if (!sr->error) {
 	/* record some choices as defaults */
-	if ((sr->code == VECM || sr->code == VAR || sr->code == VLAGSEL) 
-	    && (sr->opts & OPT_D)) {
-	    want_seasonals = 1;
+	if (sr->code == VECM || sr->code == VAR || sr->code == VLAGSEL) {
+	    if (sr->opts & OPT_D) {
+		want_seasonals = 1;
+	    } else {
+		want_seasonals = 0;
+	    }
 	}
 	if (sr->code == VECM || sr->code == VAR) {
 	    default_order = order;
