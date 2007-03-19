@@ -835,7 +835,8 @@ static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
     }
 
 #if PKG_DEBUG
-    fprintf(stderr, "attach_ufunc_to_package: private = %d, err = %d\n",
+    fprintf(stderr, "attach_ufunc_to_package: id = %d, "
+	    "private = %d, err = %d\n", fun->pkgID, 
 	    fun->private, err);
 #endif
 
@@ -1685,13 +1686,18 @@ static int real_load_package (fnpkg *pkg)
 {
     int i, err;
 
+#if PKG_DEBUG
+    fprintf(stderr, "real_load_package: name='%s', ID = %d\n",
+	    pkg->name, pkg->ID);
+#endif
+
     err = function_package_add(pkg);
 
     if (!err && pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
 	    maybe_clear_out_duplicate(pkg->priv[i]);
+	    err = add_allocated_ufunc(pkg->priv[i]);
 	}
-	err = add_allocated_ufunc(pkg->priv[i]);
     }
 
     if (!err && pkg->iface != NULL) {
