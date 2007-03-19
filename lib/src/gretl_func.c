@@ -1402,7 +1402,7 @@ int function_package_get_info (const char *fname,
     }
 
 #if PKG_DEBUG
-    fprintf(stderr, "npriv = 0, pubnum = %d\n", pubnum);
+    fprintf(stderr, "npriv = %d, pubnum = %d\n", npriv, pubnum);
 #endif
 
     if (!err && pub != NULL && pubnum >= 0) {
@@ -1857,12 +1857,14 @@ int read_session_functions_file (const char *fname)
     }
 
     /* then get any unpackaged functions */
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
-	    err = read_ufunc_from_xml(cur, doc, NULL);
+    if (!err) {
+	cur = node->xmlChildrenNode;
+	while (cur != NULL && !err) {
+	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+		err = read_ufunc_from_xml(cur, doc, NULL);
+	    }
+	    cur = cur->next;
 	}
-	cur = cur->next;
     }
 
     if (doc != NULL) {
