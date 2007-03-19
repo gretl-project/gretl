@@ -88,7 +88,7 @@ static fnpkg **pkgs;
 
 static int drop_function_vars = 1;
 
-static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
+static void real_user_function_help (ufunc *fun, int ci, PRN *prn);
 static void delete_ufunc_from_list (ufunc *fun);
 static fnpkg *function_package_new (const char *fname);
 static int function_package_add (fnpkg *pkg);
@@ -1719,7 +1719,7 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
     pprintf(prn, "Description: %s\n", (pkg->descrip)? pkg->descrip : "none");
 
     pputc(prn, '\n');
-    real_user_function_help(pkg->iface, NULL, prn);
+    real_user_function_help(pkg->iface, 0, prn);
 }
 
 static void print_package_code (const fnpkg *pkg, PRN *prn)
@@ -2212,6 +2212,9 @@ static int maybe_delete_function (const char *fname)
     } else if (fun->in_use != NULL) {
 	sprintf(gretl_errmsg, "%s: function is in use", fname);
 	err = 1;
+    } else if (fun->pkgID != 0) {
+	sprintf(gretl_errmsg, "%s: function belongs to package", fname);
+	err = 1;
     } else {
 	delete_ufunc_from_list(fun);
     } 
@@ -2492,8 +2495,7 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 
     if (nf == 2) {
 	if (!strcmp(extra, "clear") || !strcmp(extra, "delete")) {
-	    maybe_delete_function(fname);
-	    return 0;
+	    return maybe_delete_function(fname);
 	}
     } 
 
@@ -3386,11 +3388,12 @@ void gretl_functions_cleanup (void)
     packages_destroy();
 }
 
-static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
+static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
 {
+    fnpkg *pkg = NULL;
     int i;
 
-    if (pkg == NULL) {
+    if (ci == HELP) {
 	pkg = ufunc_get_parent_package(fun);
     }
 
@@ -3434,7 +3437,7 @@ int user_function_help (const char *fnname, PRN *prn)
 	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
 	err = 1;
     } else {
-	real_user_function_help(fun, NULL, prn);
+	real_user_function_help(fun, HELP, prn);
     }
 
     return err;
