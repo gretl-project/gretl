@@ -1633,6 +1633,19 @@ static int pkg_name_from_filename (fnpkg *pkg)
     return err;
 }
 
+static int fname_is_tmpfile (const char *fname)
+{
+    const char *p = strrchr(fname, SLASH);
+
+    if (p == NULL) {
+	p = fname;
+    } else {
+	p++;
+    }
+
+    return strncmp(p, "dltmp.", 6) == 0;
+}
+
 static fnpkg *function_package_new (const char *fname)
 {
     fnpkg *pkg = malloc(sizeof *pkg);
@@ -1658,7 +1671,7 @@ static fnpkg *function_package_new (const char *fname)
     if (pkg->fname == NULL) {
 	free(pkg);
 	pkg = NULL;
-    } else {
+    } else if (!fname_is_tmpfile(fname)) {
 	pkg_name_from_filename(pkg);
     }
 
@@ -1790,7 +1803,19 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname, int *err)
     }
 
     gretl_xml_get_prop_as_string(node, "name", &tmp);
-    check_package_name(pkg->name, tmp);
+
+    if (tmp == NULL) {
+	*err = E_DATA;
+	function_package_free(pkg, PKG_FREE_PKG);
+	return NULL;
+    }
+
+    if (fname_is_tmpfile(fname)) {
+	strncat(pkg->name, tmp, FN_NAMELEN - 1);
+    } else {
+	check_package_name(pkg->name, tmp);
+    }
+
     free(tmp);
 
     if (gretl_xml_get_prop_as_bool(node, NEEDS_TS)) {

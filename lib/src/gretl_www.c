@@ -62,10 +62,14 @@ extern int errno;
 extern int h_errno;
 #endif
 
-#define RICARDO "ricardo.ecn.wfu.edu"
+#define RICARDO   "ricardo.ecn.wfu.edu"
+#define DATACGI   "/gretl/cgi-bin/gretldata.cgi"
+#define UPDATECGI "/gretl/cgi-bin/gretl_update.cgi"
+#define MPATH     "/pub/gretl/manual/PDF/"
+#define DBHLEN    64
 
 static int wproxy;
-static char dbhost[64] = "ricardo.ecn.wfu.edu";
+static char dbhost[DBHLEN] = "ricardo.ecn.wfu.edu";
 
 typedef enum {
     SAVE_NONE,
@@ -74,7 +78,6 @@ typedef enum {
 } SaveOpt;
 
 #ifdef WIN32
-/*  #define REALCLOSE(x) closesocket (x) */
 #define EWOULDBLOCK             WSAEWOULDBLOCK
 #define EINPROGRESS             WSAEINPROGRESS
 #define EALREADY                WSAEALREADY
@@ -232,19 +235,21 @@ struct proto {
     unsigned short port;
 };
 
-typedef struct urlinfo urlinfo_t;
+typedef struct urlinfo_ urlinfo;
 
-struct urlinfo {
+struct urlinfo_ {
     char *url;               /* the URL */
     uerr_t proto;            /* URL protocol */
     unsigned short port;
     int saveopt;             /* saving to buffer or file? */  
-    char *path; 
-    char *localfile;
-    char *getbuf;
+    char *path;              /* path to CGI program or file to grab */
+    char *params;            /* parameters to be passed to CGI */
+    char *localfile;         /* name of local file to write or NULL */
+    char *getbuf;            /* buffer to which to write result or NULL */
     const char *upload;      /* content of file to upload */
     int upsize;              /* size of the above */
-    char host[32];
+    char agent[16];          /* to communicate gretl version */
+    char host[32];           /* host, in IP form */
     char errbuf[80];
     FILE *fp;                /* for saving content locally */
 };
@@ -318,9 +323,8 @@ enum header_get_flags {
     HG_NO_CONTINUATIONS = 0x2 
 };
 
-static urlinfo_t gretlproxy; 
+static urlinfo gretlproxy; 
 
-/* prototypes */
 static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize);
 static uerr_t make_connection (int *sock, char *hostname, 
 			       unsigned short port);
@@ -330,9 +334,8 @@ static char *print_option (int opt);
 
 static int get_host_ip (char *h_ip, const char *h_name)
 {
-    struct hostent *h_ent;
+    struct hostent *h_ent = gethostbyname(h_name);
 
-    h_ent = gethostbyname(h_name);
     if (h_ent == NULL) {
 	*h_ip = '\0';
 #ifndef WIN32
@@ -348,22 +351,6 @@ static int get_host_ip (char *h_ip, const char *h_name)
 	   (unsigned char) h_ent->h_addr[3]);
 
     return 0;
-}
-
-static char *time_str (time_t *tm)
-{
-    static char tms[15];
-    struct tm *ptm;
-    time_t tim;
-
-    *tms = '\0';
-    tim = time (tm);
-    if (tim == -1) {
-	return tms;
-    }
-    ptm = localtime (&tim);
-    sprintf(tms, "%02d:%02d:%02d", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
-    return tms;
 }
 
 /* http header functions -- based on Wget */
@@ -709,11 +696,10 @@ static char *herrmsg (int error)
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 long expected, struct rbuf *rbuf)
 {
-    int res = 0;
-    int sp_ret = SP_RETURN_OK;
     static char cbuf[WBUFSIZE];
+    int sp_ret = SP_RETURN_OK;
     size_t allocated;
-    int nchunks;
+    int nchunks, res = 0;
 #ifdef STANDALONE
     int show = 0;
 #else
@@ -803,17 +789,13 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     return res;
 }
 
-static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs, 
-			     int *dt, urlinfo_t *proxy)
+static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 {
-    char *request, *type, *command, *path;
-    char *pragma_h, *range, useragent[16];
-    char *postpath = NULL;
+    char *request, *type, *cmd;
     char *posthead = NULL;
-    int postlen = 0;
-    urlinfo_t *conn;
     int sock, hcount, num_written, statcode;
-    long contlen, contrange;
+    long contlen, contrange, rlen = 0;
+    urlinfo *conn;
     uerr_t err;
     struct rbuf rbuf;
 
@@ -824,8 +806,8 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     hs->remote_time = NULL;
     hs->error = NULL;
 
-    /* If we're using a proxy, we'll connect to the proxy server */
-    conn = (proxy != NULL)? proxy : u;
+    /* If we're using a proxy, we connect to the proxy server */
+    conn = (wproxy)? &gretlproxy : u;
 
     err = make_connection(&sock, conn->host, conn->port);
 
@@ -861,80 +843,47 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 	    conn->host, conn->port, sock);
 #endif   
 
-    if (proxy) {
-	path = malloc(strlen(u->host) + strlen(u->path) + 8);
-	if (path != NULL) {
-	    sprintf(path, "http://%s%s", u->host, u->path);
-	}
-    } else {
-	path = u->path; 
-    }
+    cmd = (u->upload != NULL)? "POST" : "GET";
 
-    if (path == NULL) {
-	close(sock);
-	return NOTENOUGHMEM;
-    }
-
-    if (*dt & HEAD_ONLY) {
-	command = "HEAD";
-    } else if (u->upload != NULL) {
-	command = "POST";
-    } else {
-	command = "GET";
-    }
-
-    if (*dt & SEND_NOCACHE) {
-	pragma_h = "Pragma: no-cache\r\n";
-    } else {
-	pragma_h = "";
-    }
-
-    range = NULL;
-    sprintf(useragent, "gretl-%s", GRETL_VERSION);
-
-#if defined(STANDALONE) || defined (WIN32)
-    /* the linux test updater program pretends to be Windows */
-    strcat(useragent, "w");
-#endif
+    rlen = strlen(cmd) + strlen(u->path) + strlen(u->agent) +
+	strlen(u->host) + numdigit(u->port) + strlen(HTTP_ACCEPT) +
+	64;
 
     if (u->upload != NULL) {
-	char *p = strchr(path, '?');
-
-	if (p != NULL) {
-	    *p = '\0';
-	    postpath = gretl_strdup(p + 1);
-	}
 	posthead = malloc(96);
-	if (posthead == NULL || postpath == NULL) {
+	if (posthead == NULL) {
 	    close(sock);
 	    return NOTENOUGHMEM;
 	} else {
 	    sprintf(posthead, "Content-Type: "
 		    "application/x-www-form-urlencoded\r\n"
-		    "Content-Length: %d\r\n", strlen(postpath) + u->upsize);
-	    postlen = strlen(posthead);
+		    "Content-Length: %d\r\n", strlen(u->params) + u->upsize);
+	    rlen += strlen(posthead);
 	}
+    } else if (u->params != NULL) {
+	rlen += strlen(u->params);
     }
 
-    request = malloc(strlen(command) + strlen(path)
-		     + strlen(useragent)
-		     + strlen(u->host) + numdigit(u->port)
-		     + strlen(HTTP_ACCEPT)
-		     + strlen(pragma_h)
-		     + 64 + postlen);
+    request = malloc(rlen);
 
     if (request == NULL) {
 	close(sock);
 	return NOTENOUGHMEM;
     }
 
-    sprintf(request, "%s %s HTTP/1.0\r\n"
-	    "User-Agent: %s\r\n"
-	    "Host: %s:%d\r\n"
-	    "Accept: %s\r\n"
-	    "%s",
-	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
-	    pragma_h); 
+    if (u->params != NULL && u->upload == NULL) {
+	sprintf(request, "%s %s?%s HTTP/1.0\r\n"
+		"User-Agent: %s\r\n"
+		"Host: %s:%d\r\n"
+		"Accept: %s\r\n",
+		cmd, u->path, u->params, u->agent, u->host, u->port, HTTP_ACCEPT);
+    } else {
+	sprintf(request, "%s %s HTTP/1.0\r\n"
+		"User-Agent: %s\r\n"
+		"Host: %s:%d\r\n"
+		"Accept: %s\r\n",
+		cmd, u->path, u->agent, u->host, u->port, HTTP_ACCEPT);
+    }
 
     if (posthead != NULL) {
 	strcat(request, posthead);
@@ -942,10 +891,6 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     }
 
     strcat(request, "\r\n");
-
-    if (proxy) {
-	free(path);
-    }
 
 #if WDEBUG > 1
     fprintf(stderr, "Request:\n%s", request);
@@ -965,8 +910,8 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     }
 
     if (u->upload != NULL) {
-	num_written = iwrite(sock, postpath, strlen(postpath));
-	free(postpath);
+	/* use POST for params and file content */
+	num_written = iwrite(sock, u->params, strlen(u->params));
 	if (num_written > 0) {
 	    num_written = iwrite(sock, u->upload, u->upsize);
 	}
@@ -1132,7 +1077,7 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
     type = NULL;	
 
     /* Return if we have no intention of further downloading */
-    if (!(*dt & RETROKF) || (*dt & HEAD_ONLY)) {
+    if (!(*dt & RETROKF)) {
 	hs->len = 0L;
 	hs->res = 0;
 	free(type);
@@ -1160,34 +1105,24 @@ static uerr_t real_get_http (urlinfo_t *u, struct http_stat *hs,
 
 #define MAXTRY 5
 
-static uerr_t try_http (urlinfo_t *u, int *dt, urlinfo_t *proxy)
+static uerr_t try_http (urlinfo *u)
 {
     struct http_stat hstat;
-    int count = 0;
-    char *tms;
+    int i, dt = 0 | ACCEPTRANGES;
     uerr_t err;
 
 #if WDEBUG
     fprintf(stderr, "try_http: u->path = '%s'\n", u->path);
 #endif
 
-    *dt = 0 | ACCEPTRANGES;
+    for (i=0; i<MAXTRY; i++) {
 
-    do {
-	++count;
-	tms = time_str(NULL);
-
-	*dt &= ~HEAD_ONLY;
-	*dt &= ~SEND_NOCACHE;
-
-	/* Try fetching the document */
-	err = real_get_http(u, &hstat, dt, proxy);
-	tms = time_str(NULL);
+	err = real_get_http(u, &hstat, &dt);
 
 #if WDEBUG
 	fprintf(stderr, "try_http: err (from real_get_http) = %d\n"
 		" errbuf = '%s'\n", err,
-		(proxy)? proxy->errbuf : u->errbuf);
+		(wproxy)? gretlproxy.errbuf : u->errbuf);
 	if (err == RETRFINISHED) {
 	    fprintf(stderr, " (%d == RETRFINISHED)\n", err);
 	}
@@ -1207,10 +1142,11 @@ static uerr_t try_http (urlinfo_t *u, int *dt, urlinfo_t *proxy)
 	case RETRFINISHED:
 	    break;
 	default:
-	    abort();
+	    FREEHSTAT(hstat);
+	    return err;
 	}
 
-	if (!(*dt & RETROKF)) {
+	if (!(dt & RETROKF)) {
 	    FREEHSTAT(hstat);
 	    return WRONGCODE;
 	}
@@ -1233,14 +1169,15 @@ static uerr_t try_http (urlinfo_t *u, int *dt, urlinfo_t *proxy)
 	    }
 	}
 	break;
-    } while (count < MAXTRY);
+    } 
 
     return TRYLIMEXC;
 }
 
-/* Flush RBUF's buffer to WHERE.  Flush MAXSIZE bytes at most.
+/* Flush rbuf's buffer to where.  Flush maxsize bytes at most.
    Returns the number of bytes actually copied.  If the buffer is
-   empty, 0 is returned.  */
+   empty, 0 is returned.  
+*/
 
 static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 {
@@ -1258,7 +1195,7 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
     }
 }
 
-static int getbuf_init (urlinfo_t *u)
+static int getbuf_init (urlinfo *u)
 {
     u->getbuf = calloc(WBUFSIZE, 1);
 
@@ -1269,10 +1206,11 @@ static int getbuf_init (urlinfo_t *u)
     }
 }
 
-static void url_init (urlinfo_t *u)
+static void url_init (urlinfo *u)
 {
     u->url = NULL;
     u->path = NULL;
+    u->params = NULL;
     u->localfile = NULL;
     u->getbuf = NULL;
 
@@ -1285,11 +1223,18 @@ static void url_init (urlinfo_t *u)
     u->upload = NULL;
     u->upsize = 0;
     u->fp = NULL;
+
+    sprintf(u->agent, "gretl-%s", GRETL_VERSION);
+
+#if defined(STANDALONE) || defined (WIN32)
+    /* the linux test updater program pretends to be Windows */
+    strcat(u->agent, "w");
+#endif
 }
 
-static urlinfo_t *urlinfo_new (void)
+static urlinfo *urlinfo_new (void)
 {
-    urlinfo_t *u = malloc(sizeof *u);
+    urlinfo *u = malloc(sizeof *u);
 
     if (u == NULL) {
 	return NULL;
@@ -1304,12 +1249,13 @@ static urlinfo_t *urlinfo_new (void)
    non-zero and there's a local file open, delete that file.
 */
 
-static void urlinfo_destroy (urlinfo_t *u, int delfile)
+static void urlinfo_destroy (urlinfo *u, int delfile)
 {
     if (u == NULL) return;
 
     free(u->url);
     free(u->path);
+    free(u->params);
 
     if (u->localfile != NULL) {
 	if (u->fp != NULL) {
@@ -1345,18 +1291,19 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 #endif
 
 /* Create an internet connection to HOSTNAME on PORT.  The created
-   socket will be stored to *sock.  */
+   socket is be stored to *sock.  
+*/
 
 static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
 {
     struct sockaddr_in sock_name;
 
-    if (!store_hostaddress((unsigned char *)&sock_name.sin_addr, hostname)) {
+    if (!store_hostaddress((unsigned char *) &sock_name.sin_addr, hostname)) {
 	return HOSTERR;
     }
 
     sock_name.sin_family = AF_INET;
-    sock_name.sin_port = htons(port); /* was g_htons */
+    sock_name.sin_port = htons(port);
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 	return CONSOCKERR;
@@ -1373,7 +1320,7 @@ static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
     return NOCONERROR;
 }
 
-/* Read at most len bytes from FD, storing them to buf. */
+/* read at most len bytes from FD, storing them to buf */
 
 static int iread (int fd, char *buf, int len)
 {
@@ -1441,7 +1388,7 @@ static char *print_option (int opt)
     return NULL;
 } 
 
-static int open_local_file (urlinfo_t *u)
+static int open_local_file (urlinfo *u)
 {
     int err = 0;
 
@@ -1452,6 +1399,80 @@ static int open_local_file (urlinfo_t *u)
     }
 
     return err;
+}
+
+static int 
+urlinfo_set_path (urlinfo *u, const char *cgi, const char *mname)
+{
+    int len = 1;
+
+    if (wproxy) {
+	len += strlen(u->host) + 7;
+    }
+
+    if (cgi != NULL && *cgi != '\0') {
+	len += strlen(cgi);
+    } else if (mname != NULL && *mname != '\0') {
+	len += strlen(MPATH) + strlen(mname);
+    }
+
+    u->path = malloc(len);
+    if (u->path == NULL) {
+	return 1;
+    }
+
+    *u->path = '\0';
+
+    if (wproxy) {
+	sprintf(u->path, "http://%s", u->host);
+    }
+    
+    if (cgi != NULL && *cgi != '\0') {
+	strcat(u->path, cgi);
+    } else if (mname != NULL && *mname != '\0') {
+	strcat(u->path, MPATH);
+	strcat(u->path, mname);
+    }
+	
+    return 0;
+}
+
+static int 
+urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
+		    const char *series)
+{
+    int len = 24; /* allow for opt and termination */
+
+    if (fname != NULL) {
+	len += 7 + strlen(fname);
+    }
+
+    if (series != NULL) {
+	len += 8 + strlen(series);
+    }    
+
+    u->params = malloc(len);
+    if (u->params == NULL) {
+	return 1;
+    }
+
+    sprintf(u->params, "opt=%s", print_option(opt));
+
+    if (fname != NULL) {
+	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
+	    strcat(u->params, "&fname=");
+	} else {
+	    strcat(u->params, "&dbase=");
+	}
+	strcat(u->params, fname);
+    }
+
+    if (series != NULL) {
+	strcat(u->params, "&series=");
+	strcat(u->params, series);
+    }
+
+    return (u->params != NULL);
 }
 
 /* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
@@ -1465,42 +1486,38 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	      const char *dbseries, SaveOpt saveopt, const char *savefile, 
 	      char **getbuf)
 {
+    urlinfo *u;
     uerr_t result;
-    urlinfo_t *u;
-    urlinfo_t *proxy = NULL; 
-    const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
-    const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
-    const char *cgi = "";
-    int dt, err = 0;
-    size_t fnlen = 0L;
+    int err = 0;
 
     if (getbuf != NULL) {
 	*getbuf = NULL;
-    }
-
-    if (wproxy) {
-	proxy = &gretlproxy;
-    }
-
-    if (fname != NULL) {
-	fnlen = strlen(fname);
-    }
-
-    if (opt == GRAB_FILE) {
-	cgi = updatecgi;
-    } else if (opt != GRAB_PDF) {
-	cgi = datacgi;
     }
 
     u = urlinfo_new();
     if (u == NULL) {
 	return E_ALLOC;
     }
+    
+    if (opt == GRAB_FILE) {
+	urlinfo_set_path(u, UPDATECGI, NULL);
+    } else if (opt == GRAB_PDF) {
+	urlinfo_set_path(u, NULL, fname);
+    } else {
+	urlinfo_set_path(u, DATACGI, NULL);
+    }
 
-    u->path = malloc(strlen(cgi) + fnlen + 64);
     if (u->path == NULL) {
 	urlinfo_destroy(u, 0);
 	return 1;
+    }
+
+    if (opt != GRAB_PDF) {
+	urlinfo_set_params(u, opt, fname, dbseries);
+	if (u->params == NULL) {
+	    urlinfo_destroy(u, 0);
+	    return 1;
+	}
     }
 
     err = get_host_ip(u->host, host);
@@ -1509,27 +1526,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return err;
     }
 
-    if (opt == GRAB_PDF) {
-	sprintf(u->path, "/pub/gretl/manual/PDF/%s", fname);
-    } else {
-	sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
-    }
-
     u->saveopt = saveopt;
-
-    if (opt == CHECK_DB || (fnlen > 0 && opt != GRAB_PDF)) {
-	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
-	    strcat(u->path, "&fname=");
-	} else {
-	    strcat(u->path, "&dbase=");
-	}
-	strcat(u->path, fname);
-    }
-
-    if (dbseries != NULL) {
-	strcat(u->path, "&series=");
-	strcat(u->path, dbseries);
-    }
 
     if (saveopt == SAVE_TO_FILE) {
 	u->localfile = gretl_strdup(savefile);
@@ -1543,7 +1540,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return err;
     }
 
-    result = try_http(u, &dt, proxy);
+    result = try_http(u);
 
 #if WDEBUG
     fprintf(stderr, "try_http returned %d, u->errbuf='%s'\n",
@@ -1572,7 +1569,8 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
     size_t iplen;
 
     if (host != NULL && *host != '\0') {
-	strcpy(dbhost, host);
+	*dbhost = '\0';
+	strncat(dbhost, host, DBHLEN - 1);
     }
 
     url_init(&gretlproxy);
@@ -1611,56 +1609,62 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
     return 0;
 } 
 
+static int 
+urlinfo_set_update_params (urlinfo *u, time_t date, int qopt)
+{
+    char tmp[32];
+
+    u->params = malloc(64);
+
+    if (u->params == NULL) {
+	return 1;
+    }
+
+    if (qopt == QUERY_VERBOSE) {
+	strcpy(u->params, "opt=MANUAL_QUERY&date=");
+    } else {
+	strcpy(u->params, "opt=QUERY&date=");
+    }
+
+    sprintf(tmp, "%lu", date); /* FIXME */
+    strcat(u->params, tmp);
+
+    return 0;
+}
+
 int get_update_info (char **saver, time_t filedate, int queryopt)
 {
-    const char *host = "ricardo.ecn.wfu.edu";
+    urlinfo *u;
     uerr_t result;
-    urlinfo_t *u;
-    int dt, err = 0;
-    char datestr[32];
-    const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
-    struct urlinfo *proxy = NULL; 
+    int err = 0;
 
     *saver = NULL;
-
-    if (wproxy) {
-	proxy = &gretlproxy;
-    }
 
     u = urlinfo_new();
     if (u == NULL) {
 	return E_ALLOC;
     }
 
-    u->path = malloc(strlen(cgi) + 64);
+    urlinfo_set_path(u, UPDATECGI, NULL);
+    urlinfo_set_update_params(u, filedate, queryopt);
     getbuf_init(u);
 
-    if (u->path == NULL || u->getbuf == NULL) {
+    if (u->path == NULL || u->params == NULL || u->getbuf == NULL) {
 	free(u->getbuf);
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
     }
 
-    err = get_host_ip(u->host, host);
+    err = get_host_ip(u->host, RICARDO);
     if (err) {
 	free(u->getbuf);
 	urlinfo_destroy(u, 0);
 	return err;
     }
 
-    if (queryopt == QUERY_VERBOSE) {
-	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
-    } else {
-	sprintf(u->path, "%s?opt=QUERY", cgi);
-    }
-
-    strcat(u->path, "&date=");
-    sprintf(datestr, "%lu", filedate);
-    strcat(u->path, datestr);
-
     u->saveopt = SAVE_TO_BUFFER;
 
-    result = try_http(u, &dt, proxy); 
+    result = try_http(u); 
 
 #if WDEBUG
     fprintf(stderr, "http_loop returned %d (RETROK=%d), u->errbuf='%s'\n",
@@ -1679,6 +1683,23 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
     return err;
 }
 
+static int 
+urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
+			   const char *fname)
+{
+    int len = strlen(login) + strlen(pass) + strlen(fname) + 40;
+
+    u->params = malloc(len);
+    if (u->params == NULL) {
+	return 1;
+    }
+
+    sprintf(u->params, "opt=UPLOAD&login=%s&pass=%s"
+	    "&fname=%s&content=", login, pass, fname);
+
+    return 0;
+}
+
 #ifndef STANDALONE /* functions below not needed for updater */
 
 /* The content of the function package to be uploaded is URL-encoded
@@ -1691,43 +1712,28 @@ int upload_function_package (const char *login, const char *pass,
 			     const char *fname, const char *buf,
 			     char **retbuf)
 {
-    const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
-    const char *host = "ricardo.ecn.wfu.edu";
-    struct urlinfo *proxy = NULL; 
-    struct urlinfo *u;
-    size_t plen;
-    int dt, err = 0;
+    urlinfo *u;
     uerr_t result;
-
-    if (wproxy) {
-	proxy = &gretlproxy;
-    }
+    int err = 0;
 
     u = urlinfo_new();
     if (u == NULL) {
 	return E_ALLOC;
     }
 
-    plen = strlen(cgi) + strlen(login) + strlen(pass) +
-	+ strlen(fname) + strlen(buf) + 64;
-    u->path = malloc(plen);
-    if (u->path == NULL) {
+    urlinfo_set_path(u, DATACGI, NULL);
+    urlinfo_set_upload_params(u, login, pass, fname);
+    getbuf_init(u);
+
+    if (u->path == NULL || u->params == NULL || u->getbuf == NULL) {
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
     }
-
-    if (getbuf_init(u)) {
-	urlinfo_destroy(u, 0);
-	return E_ALLOC;
-    }
-
-    sprintf(u->path, "%s?opt=UPLOAD&login=%s&pass=%s"
-	    "&fname=%s&content=", cgi, login, pass, fname);
 
     u->upload = buf;
     u->upsize = strlen(buf) + 1;
 
-    err = get_host_ip(u->host, host);
+    err = get_host_ip(u->host, RICARDO);
     if (err) {
 	urlinfo_destroy(u, 0);
 	return E_ALLOC;
@@ -1735,7 +1741,7 @@ int upload_function_package (const char *login, const char *pass,
 
     u->saveopt = SAVE_TO_BUFFER;
 
-    result = try_http(u, &dt, proxy);
+    result = try_http(u);
 
     if (result != RETROK) {
 	strcpy(gretl_errmsg, u->getbuf);
