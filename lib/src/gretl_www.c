@@ -332,6 +332,20 @@ static int iread (int fd, char *buf, int len);
 static int iwrite (int fd, const char *buf, int len);
 static char *print_option (int opt);
 
+static char *w_strdup (const char *src)
+{
+    char *targ = NULL;
+
+    if (src != NULL) {
+	targ = malloc(strlen(src) + 1);
+	if (targ != NULL) {
+	    strcpy(targ, src);
+	}
+    }
+
+    return targ;
+}
+
 static int get_host_ip (char *h_ip, const char *h_name)
 {
     struct hostent *h_ent = gethostbyname(h_name);
@@ -455,11 +469,7 @@ static int header_extract_number (const char *header, void *closure)
 
 static int header_strdup (const char *header, void *closure)
 {
-    char *dup = malloc(strlen(header + 1));
-
-    if (dup != NULL) {
-	strcpy(dup, header);
-    }
+    char *dup = w_strdup(header);
 
     *(char **) closure = dup;
 
@@ -969,16 +979,16 @@ static uerr_t real_get_http (urlinfo *u, struct http_stat *hs, int *dt)
 	    hs->statcode = statcode;
 	    if (statcode == -1) { 
 		if (!*hdr) {
-		    hs->error = gretl_strdup(_("No data received"));
+		    hs->error = w_strdup(_("No data received"));
 		} else {
-		    hs->error = gretl_strdup(_("Malformed status line"));
+		    hs->error = w_strdup(_("Malformed status line"));
 		}
 		free(hdr);
 		break;
 	    } else if (!*error) {
-		hs->error = gretl_strdup(_("(no description)"));
+		hs->error = w_strdup(_("(no description)"));
 	    } else {
-		hs->error = gretl_strdup(error);
+		hs->error = w_strdup(error);
 	    }
 	    goto done_header;
 	}
@@ -1529,7 +1539,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     u->saveopt = saveopt;
 
     if (saveopt == SAVE_TO_FILE) {
-	u->localfile = gretl_strdup(savefile);
+	u->localfile = w_strdup(savefile);
 	err = open_local_file(u);
     } else {
 	err = getbuf_init(u);
@@ -1683,6 +1693,8 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
     return err;
 }
 
+#ifndef STANDALONE /* functions below not needed for updater */
+
 static int 
 urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
 			   const char *fname)
@@ -1699,8 +1711,6 @@ urlinfo_set_upload_params (urlinfo *u, const char *login, const char *pass,
 
     return 0;
 }
-
-#ifndef STANDALONE /* functions below not needed for updater */
 
 /* The content of the function package to be uploaded is URL-encoded
    in 'buf'; the (short, pathless) filename for this package is in

@@ -792,7 +792,7 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     char plottmp[MAXLEN], plotline[MAXLEN];
     gchar *plotcmd = NULL;
     gchar *emfname = NULL;
-    int err, done_pt2 = 0;
+    int err;
 
     /* create temporary file to hold the special gnuplot commands */
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
