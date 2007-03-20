@@ -1603,6 +1603,7 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
     int pref, err = 0;
 
     pref = get_manpref();
+
     err = find_or_download_pdf(uguide, pref, fname);
     if (err) {
 	return;
