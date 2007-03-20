@@ -551,6 +551,19 @@ static const char *arg_type_string (int type)
     }
 }
 
+static const char *arg_type_xml_string (int type)
+{
+    if (type == ARG_REF_SCALAR) {
+	return "scalarref";
+    } else if (type == ARG_REF_SERIES) {
+	return "seriesref";
+    } else if (type == ARG_REF_MATRIX) {
+	return "matrixref";
+    } else {
+	return arg_type_string(type);
+    }
+}
+
 static int arg_type_from_string (const char *s)
 {
     if (!strncmp(s, "bool", 4)) return ARG_BOOL;
@@ -563,6 +576,10 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "scalar *"))  return ARG_REF_SCALAR;
     if (!strcmp(s, "series *"))  return ARG_REF_SERIES;
     if (!strcmp(s, "matrix *"))  return ARG_REF_MATRIX;
+
+    if (!strcmp(s, "scalarref"))  return ARG_REF_SCALAR;
+    if (!strcmp(s, "seriesref"))  return ARG_REF_SERIES;
+    if (!strcmp(s, "matrixref"))  return ARG_REF_MATRIX;
 
     return 0;
 }
@@ -965,7 +982,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	for (i=0; i<fun->n_params; i++) {
 	    fprintf(fp, "  <param name=\"%s\" type=\"%s\"",
 		    fun->params[i].name, 
-		    arg_type_string(fun->params[i].type));
+		    arg_type_xml_string(fun->params[i].type));
 	    if (!na(fun->params[i].min)) {
 		fprintf(fp, " min=\"%g\"", fun->params[i].min);
 	    }

@@ -44,7 +44,7 @@
    max     CDATA #IMPLIED
    optional (true|false) 'false'
    const    (true|false) 'false'
-   type (bool|boolean|int|scalar|series|list|matrix) 'series'
+   type (bool|boolean|int|scalar|series|list|matrix|scalarref|seriesref|matrixref) 'series'
 >
 
 <!ELEMENT return EMPTY>
