@@ -1204,7 +1204,6 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
 		ahat[bigt] = ahi;
-		pmod->yhat[bigt] = Z[pmod->list[1]][bigt] - pmod->uhat[bigt];
 	    }
 	}
     }
@@ -1237,9 +1236,10 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     int Ti, Tmin, bigt;
     int i, j, s, t;
 
-    if (Z != NULL) {
+    y = Z[pan->pooled->list[1]];
+
+    if (pan->opt & OPT_U) {
 	/* random effects model */
-	y = Z[pan->pooled->list[1]];
 	pmod->ess = 0.0;
 	Tmin = 1;
     } else {
@@ -1260,7 +1260,8 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 	    if (panel_missing(pan, bigt)) {
 		continue;
 	    }
-	    if (Z != NULL) {
+	    if (pan->opt & OPT_U) {
+		/* random effects */
 		yht = 0.0;
 		for (j=0; j<pmod->ncoeff; j++) {
 		    yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][bigt];
@@ -1270,8 +1271,9 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 		uhat[bigt] = y[bigt] - yht;
 		pmod->ess += uhat[bigt] * uhat[bigt];
 	    } else {
+		/* fixed effects */
 		uhat[bigt] = pmod->uhat[s];
-		yhat[bigt] = pmod->yhat[s];
+		yhat[bigt] = y[bigt] - uhat[bigt];
 	    }
 	    if (s == 0) {
 		pmod->t1 = bigt;
@@ -1282,8 +1284,7 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 	}
     }
 
-    if (Z != NULL) {
-	/* random effects model */
+    if (pan->opt & OPT_U) {
 	pmod->sigma = sqrt(pmod->ess / (re_n - (pmod->ncoeff - 1)));
     }
 
@@ -1355,7 +1356,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
-	    fix_panel_hatvars(&femod, winfo, pan, NULL);
+	    fix_panel_hatvars(&femod, winfo, pan, Z);
 	    if (pan->opt & OPT_R) {
 		fe_robust_vcv(&femod, pan, (const double **) wZ);
 	    } 
