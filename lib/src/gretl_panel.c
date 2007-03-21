@@ -1217,7 +1217,8 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 
 /* Fix uhat and yhat in two cases: (a) when using a de-meaned dataset,
    we need to ensure that the uhat, yhat values get written to the
-   right observation slots in relation to the full dataset; (b) when
+   right observation slots in relation to the full dataset (and that
+   the yhat values get corrected, outting the means back in); (b) when
    estimating the random effects model we need to compute residuals
    based on the untransformed data (and again, place them correctly in
    relation to the full dataset).
@@ -1456,6 +1457,7 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 
 static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
 {
+    gretl_model_set_int(pmod, "n_included_units", pan->effn);
     gretl_model_set_int(pmod, "Tmin", pan->Tmin);
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
 }
@@ -1928,7 +1930,7 @@ static int panel_obs_accounts (panelmod_t *pan)
     pan->effn = 0;
     pan->N_fe = 0;
     pan->Tmax = 0;
-    pan->Tmin = pan->nunits;
+    pan->Tmin = pan->T;
 
     for (i=0; i<N; i++) {
 	uobs[i] = 0;
