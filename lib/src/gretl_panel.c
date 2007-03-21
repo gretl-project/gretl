@@ -1199,10 +1199,12 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 	    }
 	}
 	ahi /= Ti;
+
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
 		ahat[bigt] = ahi;
+		pmod->yhat[bigt] = Z[pmod->list[1]][bigt] - pmod->uhat[bigt];
 	    }
 	}
     }

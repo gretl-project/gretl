@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.6.0.pre2
+# Polish translation for gretl-1.6.2
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006, 2007
@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-02-26 08:56-0500\n"
-"PO-Revision-Date: 2007-03-14 16:11-0400\n"
+"PO-Revision-Date: 2007-03-21 01:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3571,7 +3571,7 @@ msgstr "Sta³a startowa do generowania liczb pseudolosowych wynosi: %d\n"
 #: lib/src/libset.c:1320
 #, c-format
 msgid "Baxter-King approximation = %d\n"
-msgstr "aproksymacja Baxtera-Kinga = %d\n"
+msgstr "aproksymacja Baxter-King = %d\n"
 
 #: lib/src/missing.c:754
 #, c-format
@@ -3675,7 +3675,7 @@ msgstr "McFaddena pseudo-$R^2$"
 
 #: lib/src/modelprint.c:287
 msgid "Akaike information criterion"
-msgstr "Kryterium informacyjne Akaika "
+msgstr "Kryterium informacyjne Akaike'a "
 
 #: lib/src/modelprint.c:288
 msgid "Schwarz Bayesian criterion"
@@ -5519,7 +5519,7 @@ msgid ""
 "BIC = Schwartz Bayesian criterion and HQC = Hannan-Quinn criterion."
 msgstr ""
 "Gwiazdka (*) wskazuje najlepsz± (to jest minimaln±) warto¶æ dla\n"
-"odpowiednich kryteriów informacyjnych, AIC = kryterium Akaike,\n"
+"odpowiednich kryteriów informacyjnych, AIC = kryterium Akaike'a,\n"
 "BIC = kryterium Schwartz-Bayesian i HQC = kryterium Hannan-Quinna."
 
 #: lib/src/var.c:1427
@@ -7996,7 +7996,7 @@ msgstr "Filtr Hodricka-Prescotta"
 
 #: gui2/filters.c:71
 msgid "Baxter-King Band-pass filter"
-msgstr "Pasmo filtru Baxtera-Kinga"
+msgstr "Pasmo filtru Baxter-King"
 
 #: gui2/filters.c:262
 msgid "Variable name is missing"
@@ -8092,7 +8092,7 @@ msgstr "Sk³adnik cykliczny dla %s"
 #: gui2/filters.c:672
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
-msgstr "Sk³adnik filtru Baxtera-Kinga dla %s o czêsto¶ciach od %d do %d"
+msgstr "Sk³adnik filtru Baxter-King dla %s o czêsto¶ciach od %d do %d"
 
 #: gui2/filters.c:885 gui2/library.c:3238 gui2/library.c:3390
 msgid "This variable is a scalar"
@@ -9005,7 +9005,7 @@ msgstr "/Widok/Odleg³o¶æ _Mahalanobisa"
 
 #: gui2/gretl.c:379
 msgid "/View/C_ross-correlogram"
-msgstr "/Zmienna/Korelogram_wzajemny"
+msgstr "/Zmienna/Korelogram _wzajemny"
 
 #: gui2/gretl.c:382
 msgid "/_Add"
@@ -9225,7 +9225,7 @@ msgstr "/Zmienna/Filtracja/filtr _Hodricka-Prescotta"
 
 #: gui2/gretl.c:476
 msgid "/Variable/Filter/_Baxter-King"
-msgstr "/Zmienna/Filtracja/filtr _Baxtera-Kinga"
+msgstr "/Zmienna/Filtracja/filtr _Baxter-King"
 
 #: gui2/gretl.c:479
 msgid "/Variable/_X-12-ARIMA analysis"
@@ -9288,7 +9288,7 @@ msgstr "/Model/Inne _liniowe modele/MNK _wysokiej precyzji..."
 
 #: gui2/gretl.c:508
 msgid "/Model/_Time series"
-msgstr "/Model/_Szeregi czasowe"
+msgstr "/Model/Modele _szeregów czasowych"
 
 #: gui2/gretl.c:510
 msgid "/Model/_Panel"
@@ -10125,7 +10125,7 @@ msgstr "/Zapisz/_Logarytm wiarygodno¶ci"
 
 #: gui2/gui_utils.c:2692
 msgid "/Save/_Akaike Information Criterion"
-msgstr "/Zapisz/Kryterium Informacyjne _Akaika"
+msgstr "/Zapisz/Kryterium Informacyjne _Akaike'a"
 
 #: gui2/gui_utils.c:2694
 msgid "/Save/_Bayesian Information Criterion"
@@ -10989,7 +10989,7 @@ msgstr "logarytm wiarygodno¶ci z modelu %d"
 #: gui2/library.c:4231
 #, c-format
 msgid "Akaike Information Criterion from model %d"
-msgstr "Kryterium informacyjne Akaika dla modelu %d"
+msgstr "Kryterium informacyjne Akaike'a dla modelu %d"
 
 #: gui2/library.c:4238
 #, c-format
@@ -12538,7 +12538,7 @@ msgid ""
 "A matrix named %s already exists\n"
 "OK to overwrite it?"
 msgstr ""
-"Macierz %s ju¿ istnieje\n"
+"Macierz o nazwie %s ju¿ istnieje\n"
 "Czy nadpisaæ istniej±c± macierz?"
 
 #: gui2/ssheet.c:1056
