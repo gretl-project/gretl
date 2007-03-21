@@ -174,9 +174,16 @@ static gboolean update_arg (GtkEditable *entry,
 {
     int i = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "argnum"));
+    char *s;
 
     free(cinfo->args[i]);
-    cinfo->args[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
+    s = cinfo->args[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
+
+    if (s != NULL && fn_param_type(cinfo->func, i) == ARG_SCALAR) {
+	if (isdigit(*s) || *s == '-' || *s == '+' || *s == ',') {
+	    charsub(s, ',', '.');
+	}
+    }
 
     return FALSE;
 }

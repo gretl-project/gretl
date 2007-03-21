@@ -27,7 +27,7 @@
 #include "cmd_private.h"
 
 #define FN_DEBUG 0
-#define PKG_DEBUG 1
+#define PKG_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;

@@ -1016,12 +1016,15 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
 		fprintf(stderr, " set g[%d] = s->Z[%d][%d] = %.14g\n", 
 			t, v, s, gi[t]);
 #endif
-	    }		
+	    }
 
-	    if (g != NULL) {
-		gi += T;
-	    } else {
-		gi = *(++G) + offset;
+	    if (j < spec->nparam - 1) {
+		/* advance the writing position */
+		if (g != NULL) {
+		    gi += T;
+		} else {
+		    gi = *(++G) + offset;
+		}
 	    }
 	}
     }
