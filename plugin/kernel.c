@@ -98,8 +98,8 @@ static void get_xmin_xmax (const double *x, double s, int n,
 }
 
 static int density_plot (const double *x, double s, double h, 
-			 int n, int kn, gretlopt opt, int vnum,
-			 const DATAINFO *pdinfo)
+			 int n, int kn, gretlopt opt,
+			 const char *vname)
 {
     FILE *fp = NULL;
     char tmp[128];
@@ -132,7 +132,7 @@ static int density_plot (const double *x, double s, double h,
     sprintf(tmp, I_("bandwidth = %g"), h);
     fprintf(fp, "set label '%s' at graph .65, graph .93\n", tmp);
 
-    sprintf(tmp, I_("Estimated density of %s"), pdinfo->varname[vnum]);
+    sprintf(tmp, I_("Estimated density of %s"), vname);
     fprintf(fp, "set title '%s'\n", tmp);
 
     fputs("plot \\\n'-' using 1:2 w lines\n", fp);
@@ -260,12 +260,33 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
 	    nobs, kn, h);
 #endif
 
-    err = density_plot(x, s, h, nobs, kn, opt, varnum, pdinfo);
+    err = density_plot(x, s, h, nobs, kn, opt, pdinfo->varname[varnum]);
 
     free(x);
 
     return err;
 }
     
+int 
+array_kernel_density (const double *x, int n, const char *label)
+{
+    double h, s, kn;
+    int err = 0;
 
+    if (n < MINOBS) {
+	gretl_errmsg_set(_("Insufficient observations for density estimation"));
+	return E_DATA;
+    }
+
+    /* get standard deviation and bandwidth */
+    s = gretl_stddev(0, n - 1, x);
+    h = silverman_bandwidth(x, s, n);
+
+    /* number of evenly spaced points to use */
+    kn = get_kn(n);
+
+    err = density_plot(x, s, h, n, kn, OPT_NONE, label);
+
+    return err;
+}
 

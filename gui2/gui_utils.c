@@ -281,7 +281,8 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Analysis/Coefficient covariance _matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
     { N_("/Analysis/ANOVA"), NULL, do_anova, 0, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
+    { N_("/Analysis/Bootstrap..."), NULL, do_bootstrap, 0, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL },
 };
 
 static GtkItemFactoryEntry model_tex_items[] = {
@@ -2629,6 +2630,10 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     if (pmod->ci != OLS || !pmod->ifc || na(pmod->ess) ||
 	na(pmod->tss)) {
 	flip(vwin->ifac, "/Analysis/ANOVA", FALSE);
+    }
+
+    if (pmod->ci != OLS) {
+	flip(vwin->ifac, "/Analysis/Bootstrap", FALSE);
     }
 }
 

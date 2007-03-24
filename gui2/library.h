@@ -109,7 +109,9 @@ int get_original_n (void);
 
 int do_coint (selector *sr);
 
-void do_forecast (gpointer data, guint u, GtkWidget *w);
+void do_forecast (gpointer p, guint u, GtkWidget *w);
+
+void do_bootstrap (gpointer p, guint u, GtkWidget *w) ;
 
 int do_coeff_sum (selector *sr);
 

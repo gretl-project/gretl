@@ -45,6 +45,7 @@
 #include "usermat.h"
 #include "matrix_extra.h"
 #include "texprint.h"
+#include "bootstrap.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -71,6 +72,7 @@ static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
 static int execute_script (const char *runfile, const char *buf,
 			   PRN *prn, int exec_code);
+static int make_and_display_graph (void);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -1391,6 +1393,36 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
 	    width = 60;
 	}
 	view_buffer(prn, width, 400, _("gretl: forecasts"), FCASTERR, fr);
+    }
+}
+
+void do_bootstrap (gpointer p, guint u, GtkWidget *w) 
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    gretlopt opt = OPT_NONE;
+    int cancelled = 0;
+    int B = 9999;
+    int k = 0;
+    PRN *prn;
+    int err;
+
+    bootstrap_dialog(vwin, &k, &B, &opt, &cancelled);
+
+    if (cancelled || bufopen(&prn)) {
+	return;
+    }
+
+    err = bootstrap_analysis(pmod, k, B, (const double **) Z,
+			     datainfo, opt, prn);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 78, 300, _("gretl: bootstrap analysis"), PRINT, NULL);
+	if (opt & OPT_G) {
+	    make_and_display_graph();
+	}
     }
 }
 

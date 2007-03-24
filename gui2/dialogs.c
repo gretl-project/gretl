@@ -656,6 +656,237 @@ void copy_format_dialog (windata_t *vwin, int action)
     gtk_widget_show(dialog);
 }
 
+enum {
+    UNSET_PVAL = 1,
+    SET_PVAL,
+    UNSET_NORMAL,
+    SET_NORMAL
+};
+
+static void set_bs_opt (GtkWidget *w, gretlopt *opt)
+{
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+
+    switch (i) {
+    case UNSET_PVAL:
+	*opt &= ~OPT_P;
+	break;
+    case SET_PVAL:
+	*opt |= OPT_P;
+	break;
+    case UNSET_NORMAL:
+	*opt &= ~OPT_N;
+	break;
+    case SET_NORMAL:
+	*opt |= OPT_N;
+	break;
+    }
+}
+
+static void set_bs_graph (GtkWidget *w, gretlopt *opt)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	*opt |= OPT_G;
+    } else {
+	*opt &= ~OPT_G;
+    }
+}
+
+static void bs_select_coeff (GtkWidget *w, int *p)
+{
+    *p = gtk_option_menu_get_history(GTK_OPTION_MENU(w));
+}
+
+struct replic_set {
+    GtkWidget *dlg;
+    GtkWidget *w;
+    int *B;
+};
+
+static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
+{
+    GtkWidget *e = GTK_COMBO(rs->w)->entry;
+    const char *s = gtk_entry_get_text(GTK_ENTRY(e));
+    char *test = NULL;
+    unsigned long u;
+    
+    errno = 0;
+    u = strtoul(s, &test, 10);
+    if (*test != '\0' || errno || (int) u <= 0) {
+	errbox(_("Invalid entry"));
+    } else {
+	*rs->B = (int) u;
+	gtk_widget_destroy(rs->dlg);
+    }
+}
+
+static GList *make_replics_list (void)
+{
+    GList *list = NULL;
+
+    list = g_list_append(list, "999");
+    list = g_list_append(list, "9999");
+    list = g_list_append(list, "99999");
+
+    return list;
+}
+
+void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
+		       gretlopt *popt, int *cancelled)
+{
+    MODEL *pmod = vwin->data;
+    GtkWidget *dialog, *hbox;
+    GtkWidget *popdown;
+    GtkWidget *menu;
+    GtkWidget *button;
+    GtkWidget *vbox;
+    GtkWidget *tmp;
+    GSList *group = NULL;
+    GList *replist;
+    struct replic_set rs;
+    int i;
+
+    dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->dialog, 
+			      GRETL_DLG_BLOCK);
+
+    rs.dlg = dialog;
+
+    vbox = gtk_vbox_new(FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("Coefficient:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
+
+    /* coefficient / variable selection */
+
+    popdown = gtk_option_menu_new();
+    menu = gtk_menu_new();
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	GtkWidget *child;
+	int vi = pmod->list[i];
+
+	child = gtk_menu_item_new_with_label(datainfo->varname[vi]);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+	gtk_widget_show(child);
+    }
+
+    g_signal_connect(G_OBJECT(popdown), "changed",
+		     G_CALLBACK(bs_select_coeff), pp);
+    gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
+    gtk_box_pack_start(GTK_BOX(hbox), popdown, TRUE, TRUE, 5);
+    if (pmod->ifc && pmod->ncoeff > 1) {
+	gtk_option_menu_set_history(GTK_OPTION_MENU(popdown), 1);
+    }
+    gtk_widget_show(popdown);
+    
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    vbox_add_hsep(vbox);
+
+    /* confidence interval vs p-value */
+
+    button = gtk_radio_button_new_with_label(NULL, _("Confidence interval"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(UNSET_PVAL));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+    gtk_widget_show(button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("P-value"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PVAL));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+    gtk_widget_show(button);
+
+    vbox_add_hsep(vbox);
+
+    /* resample vs simulated normal */
+
+    button = gtk_radio_button_new_with_label(NULL, _("Resample residuals"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(UNSET_NORMAL));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+    gtk_widget_show(button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("Simulate normal errors"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_NORMAL));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+    gtk_widget_show(button);
+
+    vbox_add_hsep(vbox);
+
+    /* Number of replications */
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Number of replications:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
+
+    rs.B = pB;
+    rs.w = gtk_combo_new();
+    replist = make_replics_list();
+    gtk_combo_set_popdown_strings(GTK_COMBO(rs.w), replist); 
+    g_list_free(replist);
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rs.w)->entry), 7);
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rs.w)->entry), "9999");
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rs.w)->entry), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), rs.w, FALSE, FALSE, 5);
+    gtk_widget_show(rs.w);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* graph check box */
+
+    button = gtk_check_button_new_with_label(_("Show graph of sampling "
+					       "distribution"));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(set_bs_graph), popt);
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
+    gtk_widget_show(button);
+
+    /* pack all of the above */
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox);
+    gtk_widget_show(vbox);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox);
+
+    /* "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, 
+			 cancelled);
+
+    /* "OK" button */
+    button = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_replics), &rs);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
+
+#if 0
+    /* Help button */
+    context_help_button(GTK_DIALOG(dialog)->action_area, BOOTSTRAP);
+#endif
+
+    gtk_widget_show(dialog);
+}
+
 /* dialog for setting various properties of individual variables */
 
 struct varinfo_settings {
