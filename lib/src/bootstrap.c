@@ -46,7 +46,6 @@ struct boot_ {
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
-    gretl_matrix *V0;   /* original covariance matrix */
     gretl_matrix *u0;   /* original residuals for resampling */
     gretl_matrix *Xr;   /* restricted set of indep. vars (p-value case) */
     double SE;          /* original std. error of residuals */
@@ -61,7 +60,6 @@ static void boot_destroy (boot *bs)
     gretl_matrix_free(bs->y);
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
-    gretl_matrix_free(bs->V0);
     gretl_matrix_free(bs->u0);
     gretl_matrix_free(bs->Xr);
 
@@ -93,7 +91,6 @@ static boot *boot_new (gretl_matrix *y,
     bs->b0 = b;
     bs->u0 = u;
     bs->Xr = NULL;
-    bs->V0 = NULL;
 
     bs->SE = NADBL;
     bs->point = NADBL;
@@ -168,10 +165,9 @@ make_resampled_y (gretl_matrix *y, const gretl_matrix *X,
     }
 }
 
-/* when doing a bootstrap p-value: record the original t-stat for the
-   coefficient in question, then run a restricted regression that
-   excludes that variable, and save the coefficient vector and
-   residuals
+/* when doing a bootstrap p-value: run a restricted regression that
+   excludes the variable of interest, and save the coefficient vector
+   and residuals
 */
 
 static int do_restricted_ols (boot *bs)
@@ -183,9 +179,8 @@ static int do_restricted_ols (boot *bs)
     int err = 0;
 
     bs->Xr = gretl_matrix_alloc(bs->T, k - 1);
-    bs->V0 = gretl_matrix_alloc(k - 1, k - 1);
 
-    if (bs->Xr == NULL || bs->V0 == NULL) {
+    if (bs->Xr == NULL) {
 	return E_ALLOC;
     }
 
@@ -206,7 +201,7 @@ static int do_restricted_ols (boot *bs)
 
     /* estimate restricted model, coeffs into bs->b0 and residuals
        into bs->u */
-    err = gretl_matrix_ols(bs->y, bs->Xr, bs->b0, bs->V0, bs->u0, &s2);
+    err = gretl_matrix_ols(bs->y, bs->Xr, bs->b0, NULL, bs->u0, &s2);
 
     if (!err) {
 	bs->SE = sqrt(s2);
