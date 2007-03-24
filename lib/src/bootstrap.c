@@ -19,6 +19,8 @@
 #include "libgretl.h"
 #include "bootstrap.h"
 
+#define BDEBUG 0
+
 enum {
     BOOT_CI          = 1 << 0,  /* compute confidence interval */
     BOOT_PVAL        = 1 << 1,  /* compute p-value */
@@ -364,7 +366,6 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	err = gretl_invert_symmetric_matrix(XTXI);
     }
 
-
     if (verbose(bs)) {
 	pprintf(prn, "%13s %13s %13s\n", "b", "se", "tval");
     }
@@ -375,15 +376,17 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	double v, se, SSR, ut, tval;
 	gretl_matrix *X;
 
+#if BDEBUG > 1
+	fprintf(stderr, "do_bootstrap: round %d\n", i);
+#endif
+
 	X = (bs->flags & BOOT_PVAL)? bs->Xr : bs->X;
 
-#if 1
 	if (bs->flags & BOOT_NORMAL_U) {
 	    make_normal_y(bs->y, X, bs->b0, bs->SE);
 	} else {
 	    make_resampled_y(bs->y, X, bs->b0, bs->u0, z); 
 	} 
-#endif
 
 	gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
 				  bs->y, GRETL_MOD_NONE,
@@ -394,7 +397,7 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    /* form fitted values */
 	    gretl_matrix_multiply(bs->X, b, yh);
 
-	    /* coeff standard error and t-stat */
+	    /* coeff, standard error and t-stat */
 	    SSR = 0.0;
 	    for (t=0; t<bs->T; t++) {
 		ut = bs->y->val[t] - yh->val[t];
@@ -450,7 +453,7 @@ make_model_matrices (const MODEL *pmod, const double **Z,
     gretl_matrix *u = NULL;
     double xti;
     int T = pmod->nobs;
-    int k = pmod->list[0] - 1;
+    int k = pmod->ncoeff;
     int i, s, t;
 
     y = gretl_column_vector_alloc(T);
@@ -520,9 +523,8 @@ int maybe_adjust_B (int B, double a)
 {
     double x = a * (B + 1);
 
-    while (floor(x) != x) {
-	B++;
-	x = a * (B + 1);
+    while (x - floor(x) > 1e-9) {
+	x = a * (++B + 1);
     }
 
     return B;
@@ -559,12 +561,16 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
     gretl_matrix *u = NULL;
     boot *bs = NULL;
     double alpha = .05;
-    int flags;
+    int flags = 0;
     int err = 0;
 
     /* only OLS models for now */
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
+    }
+
+    if (p < 0 || p >= pmod->ncoeff) {
+	return E_DATA;
     }
 
     err = make_model_matrices(pmod, Z, &y, &X, &b, &u);
