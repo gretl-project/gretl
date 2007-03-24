@@ -123,6 +123,7 @@ PLUGINS = plugins/stats_tables.dll \
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
+	bootstrap.c \
 	calendar.c \
 	compare.c \
 	compat.c \
