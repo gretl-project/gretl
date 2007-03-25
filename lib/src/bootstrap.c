@@ -19,21 +19,20 @@
 #include "libgretl.h"
 #include "bootstrap.h"
 
-#define BDEBUG 0
+#define BDEBUG 1
 
 enum {
     BOOT_CI          = 1 << 0,  /* compute confidence interval */
     BOOT_PVAL        = 1 << 1,  /* compute p-value */
     BOOT_RESAMPLE_U  = 1 << 2,  /* resample the empirical residuals */
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
-    BOOT_RESAMPLE_XY = 1 << 4,  /* resample the data rows (not used) */
-    BOOT_RESCALE     = 1 << 5,  /* rescale the residuals */
-    BOOT_GRAPH       = 1 << 6,  /* graph the distribution */
-    BOOT_LDV         = 1 << 7,  /* model includes lagged dep var */
-    BOOT_VERBOSE     = 1 << 8   /* unused */
+    BOOT_RESCALE     = 1 << 4,  /* rescale the residuals */
+    BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
+    BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
+    BOOT_VERBOSE     = 1 << 8   /* for debugging */
 };
 
-#define resampling(b) (b->flags & (BOOT_RESAMPLE_U | BOOT_RESAMPLE_XY))
+#define resampling(b) (b->flags & BOOT_RESAMPLE_U)
 #define verbose(b) (b->flags & BOOT_VERBOSE)
 
 typedef struct boot_ boot;
@@ -44,12 +43,11 @@ struct boot_ {
     int k;              /* number of coefficients */
     int T;              /* number of observations used */
     int p;              /* index number of coeff to examine */
-    int ldvpos;         /* list position of lagged dependent var, if any */
+    int ldvpos;         /* coeff position of lagged dependent var, if any */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
     gretl_matrix *u0;   /* original residuals for resampling */
-    gretl_matrix *u;    /* holder for resampled residuals, if needed */
     gretl_matrix *Xr;   /* restricted set of indep. vars (p-value case) */
     double SE;          /* original std. error of residuals */
     double point;       /* point estimate of coeff */
@@ -64,7 +62,6 @@ static void boot_destroy (boot *bs)
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
     gretl_matrix_free(bs->u0);
-    gretl_matrix_free(bs->u);
     gretl_matrix_free(bs->Xr);
 
     free(bs);
@@ -88,14 +85,13 @@ static boot *boot_new (gretl_matrix *y,
     bs->a = a;
     bs->B = 0;
     bs->p = 0;
-    bs->ldvpos = 0;
+    bs->ldvpos = -1;
     *bs->vname = '\0';
 
     bs->y = y;
     bs->X = X;
     bs->b0 = b;
     bs->u0 = u;
-    bs->u = NULL;
     bs->Xr = NULL;
 
     bs->SE = NADBL;
@@ -104,14 +100,6 @@ static boot *boot_new (gretl_matrix *y,
 
     bs->k = X->cols;
     bs->T = X->rows;
-
-    if (flags & BOOT_LDV) {
-	bs->u = gretl_column_vector_alloc(X->rows);
-	if (bs->u == NULL) {
-	    free(bs);
-	    bs = NULL;
-	}
-    }
 
     return bs;
 }
@@ -122,41 +110,23 @@ static void make_normal_y (boot *bs)
     int i, t;
     double xti;
 
-    if (bs->flags & BOOT_LDV) {
-	/* generate scaled normal errors */
-	gretl_normal_dist(bs->u->val, 0, bs->T - 1);
-	for (t=0; t<bs->T; t++) {
-	    bs->u->val[t] *= bs->SE;
-	}
+    /* generate scaled normal errors */
+    gretl_normal_dist(bs->y->val, 0, bs->T - 1);
+    for (t=0; t<bs->T; t++) {
+	bs->y->val[t] *= bs->SE;
+    }
 
-	/* construct y recursively FIXME */
-	for (t=0; t<X->rows; t++) {
-	    bs->y->val[t] = 0.0;
-	    for (i=0; i<X->cols; i++) {
-		if (t > 0 && i + 2 == bs->ldvpos) {
-		    xti = bs->y->val[t-1];
-		} else {
-		    xti = gretl_matrix_get(X, t, i);
-		}
-		bs->y->val[t] += bs->b0->val[i] * xti;
-	    }
-	    bs->y->val[t] += bs->u->val[t];
-	}  	
-    } else {
-	/* generate scaled normal errors */
-	gretl_normal_dist(bs->y->val, 0, bs->T - 1);
-	for (t=0; t<bs->T; t++) {
-	    bs->y->val[t] *= bs->SE;
-	}
-
-	/* construct y = error + fitted */
-	for (t=0; t<X->rows; t++) {
-	    for (i=0; i<X->cols; i++) {
+    /* construct y recursively */
+    for (t=0; t<X->rows; t++) {
+	for (i=0; i<X->cols; i++) {
+	    if (t > 0 && i == bs->ldvpos) {
+		xti = bs->y->val[t-1];
+	    } else {
 		xti = gretl_matrix_get(X, t, i);
-		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
-	}  
-    }  
+	    bs->y->val[t] += bs->b0->val[i] * xti;
+	}
+    }  	
 }
 
 static void 
@@ -186,35 +156,20 @@ make_resampled_y (boot *bs, double *z)
     double xti;
     int i, t;
 
-    if (bs->flags & BOOT_LDV) {
-	/* resample the residuals, into u */
-	resample_vector(bs->u0, bs->u, z);
+    /* resample the residuals, into y */
+    resample_vector(bs->u0, bs->y, z);
 
-	/* construct y recursively FIXME */
-	for (t=0; t<X->rows; t++) {
-	    bs->y->val[t] = 0.0;
-	    for (i=0; i<X->cols; i++) {
-		if (t > 0 && i + 2 == bs->ldvpos) {
-		    xti = bs->y->val[t-1];
-		} else {
-		    xti = gretl_matrix_get(X, t, i);
-		}
-		bs->y->val[t] += bs->b0->val[i] * xti;
-	    }
-	    bs->y->val[t] += bs->u->val[t];
-	}	
-    } else {
-	/* resample the residuals, into y */
-	resample_vector(bs->u0, bs->y, z);
-
-	/* construct y = residual + fitted */
-	for (t=0; t<X->rows; t++) {
-	    for (i=0; i<X->cols; i++) {
+    /* construct y recursively */
+    for (t=0; t<X->rows; t++) {
+	for (i=0; i<X->cols; i++) {
+	    if (t > 0 && i == bs->ldvpos) {
+		xti = bs->y->val[t-1];
+	    } else {
 		xti = gretl_matrix_get(X, t, i);
-		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
+	    bs->y->val[t] += bs->b0->val[i] * xti;
 	}
-    }
+    }	
 }
 
 /* when doing a bootstrap p-value: run a restricted regression that
@@ -248,12 +203,32 @@ static int do_restricted_ols (boot *bs)
 	}
     }
 
+    /* adjust ldv info, if needed */
+    if (bs->flags & BOOT_LDV) {
+	if (bs->ldvpos == p) {
+	    /* excluding lagged dep var */
+	    bs->flags &= ~BOOT_LDV;
+	    bs->ldvpos = -1;
+	} else if (bs->ldvpos > p) {
+	    /* move it forward one slot */
+	    bs->ldvpos -= 1;
+	}
+    }
+
     /* shrink b0 */
     gretl_matrix_reuse(bs->b0, k - 1, 1);
 
     /* estimate restricted model, coeffs into bs->b0 and residuals
        into bs->u */
     err = gretl_matrix_ols(bs->y, bs->Xr, bs->b0, NULL, bs->u0, &s2);
+
+#if BDEBUG
+    fprintf(stderr, "Restricted estimates:\n");
+    for (i=0; i<k-1; i++) {
+	fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
+    }
+    fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
+#endif
 
     if (!err) {
 	bs->SE = sqrt(s2);
@@ -300,6 +275,11 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	pputs(prn, "using resampled residuals");
     } else {
 	pputs(prn, "with simulated normal errors");
+    }
+
+    if (bs->flags & BOOT_LDV) {
+	pputc(prn, '\n');
+	pputs(prn, "(recognized lagged dependent variable)");
     }
 
     if (bs->flags & BOOT_GRAPH) {
@@ -538,7 +518,7 @@ make_model_matrices (const MODEL *pmod, const double **Z,
     return 0;
 }
 
-static int make_flags (gretlopt opt, MODEL *pmod)
+static int make_flags (gretlopt opt, int ldv)
 {
     int flags = BOOT_RESCALE;
 
@@ -558,7 +538,7 @@ static int make_flags (gretlopt opt, MODEL *pmod)
 	flags |= BOOT_GRAPH;
     }
 
-    if (gretl_model_get_int(pmod, "ldepvar")) {
+    if (ldv > 0) {
 	flags |= BOOT_LDV;
     }
 
@@ -573,7 +553,7 @@ int maybe_adjust_B (int B, double a)
 {
     double x = a * (B + 1);
 
-    while (x - floor(x) > 1e-9) {
+    while (x - floor(x) > 1e-13) {
 	x = a * (++B + 1);
     }
 
@@ -595,8 +575,9 @@ int maybe_adjust_B (int B, double a)
  *
  * Calculates a bootstrap confidence interval or p-value for
  * a given coefficient in a given model, estimated via OLS.
- * FIXME: there's no proper handling for models with a 
- * lagged dependent variable at present.
+ * If the first lag of the dependent variable is present as a
+ * regressor it is handled correctly but more complex lag
+ * autoregressive schemes are not (yet) handled.
  * 
  * Returns: 0 on success, non-zero code on error.
  */
@@ -611,7 +592,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
     gretl_matrix *u = NULL;
     boot *bs = NULL;
     double alpha = .05;
-    int flags = 0;
+    int ldv, flags = 0;
     int err = 0;
 
     /* only OLS models for now */
@@ -628,7 +609,9 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	return err;
     }
 
-    flags = make_flags(opt, pmod);
+    ldv = gretl_model_get_int(pmod, "ldepvar");
+
+    flags = make_flags(opt, ldv);
     B = maybe_adjust_B(B, alpha);
 
     bs = boot_new(y, X, b, u, alpha, flags);
@@ -645,7 +628,9 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	strcpy(bs->vname, pdinfo->varname[v]);
 	bs->point = pmod->coeff[p];
 	bs->tp = pmod->coeff[p] / pmod->sderr[p];
-	bs->ldvpos = gretl_model_get_int(pmod, "ldepvar");
+	if (flags & BOOT_LDV) {
+	    bs->ldvpos = ldv - 2;
+	}
 	err = do_bootstrap(bs, prn);
     }
 
