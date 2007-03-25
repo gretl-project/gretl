@@ -133,7 +133,11 @@ static void make_normal_y (boot *bs)
 	for (t=0; t<X->rows; t++) {
 	    bs->y->val[t] = 0.0;
 	    for (i=0; i<X->cols; i++) {
-		xti = gretl_matrix_get(X, t, i);
+		if (t > 0 && i + 2 == bs->ldvpos) {
+		    xti = bs->y->val[t-1];
+		} else {
+		    xti = gretl_matrix_get(X, t, i);
+		}
 		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
 	    bs->y->val[t] += bs->u->val[t];
@@ -190,7 +194,11 @@ make_resampled_y (boot *bs, double *z)
 	for (t=0; t<X->rows; t++) {
 	    bs->y->val[t] = 0.0;
 	    for (i=0; i<X->cols; i++) {
-		xti = gretl_matrix_get(X, t, i);
+		if (t > 0 && i + 2 == bs->ldvpos) {
+		    xti = bs->y->val[t-1];
+		} else {
+		    xti = gretl_matrix_get(X, t, i);
+		}
 		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
 	    bs->y->val[t] += bs->u->val[t];
