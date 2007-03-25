@@ -180,6 +180,7 @@ struct str_table funcs[] = {
     { IMAXC,    "imaxc" },
     { IMINR,    "iminr" },
     { IMAXR,    "imaxr" }, 
+    { FFT,      "fft" },
     { MCOV,     "mcov" },
     { MCORR,    "mcorr" },
     { CDEMEAN,  "cdemean" },

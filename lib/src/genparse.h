@@ -159,6 +159,7 @@ enum {
     IMAXC,
     IMINR,
     IMAXR,     /* 130 */
+    FFT,
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,
@@ -167,8 +168,8 @@ enum {
     BINOMIAL,
     FRACDIF,
     ZEROS,
-    ONES,
-    SEQ,      /* 140 */
+    ONES,      /* 140 */
+    SEQ,
     MUNIF,
     MNORM,
     QFORM,
@@ -177,8 +178,8 @@ enum {
     EIGSYM,  
     EIGGEN,
     FDJAC,
-    BFGSMAX,
-    LRVAR,   /* 150: long-run variance */
+    BFGSMAX,   /* 150 */
+    LRVAR,
     PRINCOMP,
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
@@ -187,8 +188,8 @@ enum {
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
-    COL,      /* colon */
-    CON,    /* 160: named constant */
+    COL,    /* 160: colon */
+    CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
     UMAT,     /* user-defined matrix */
@@ -197,8 +198,8 @@ enum {
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
-    OBS,      /* observation from a series */
-    MSL,    /* 170: matrix plus subspec */
+    OBS,    /* 170: observation from a series */
+    MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
     MSL2,     /* unevaluated matrix subspec */
@@ -207,8 +208,8 @@ enum {
     MDEF,     /* explicit matrix definition {...} */
     LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,   /* 180: object variable: variable "under" an object */
+    MVAR,   /* 180: $ model var (scalar, series, or matrix) */
+    OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
     STR,      /* string */
@@ -217,8 +218,8 @@ enum {
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT, 
-    INC,
-    DEC,    /* 190 */
+    INC,    /* 190 */
+    DEC,
     QUERY,
     AST2,     /* prime facie ambiguous case of "**" */
     UNK

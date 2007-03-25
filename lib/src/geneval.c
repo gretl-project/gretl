@@ -1379,6 +1379,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MEXP:
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
+	case FFT:
+	    ret->v.m = gretl_matrix_fft(m, &p->err);
+	    break;
 	case MINC:
 	case MAXC:
 	case MINR:
@@ -3873,6 +3876,7 @@ static NODE *eval (NODE *t, parser *p)
     case IMAXC:
     case IMINR:
     case IMAXR: 
+    case FFT:
 	/* matrix -> matrix functions */
 	if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, t->t, p);

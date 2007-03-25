@@ -129,12 +129,14 @@ static void make_normal_y (boot *bs)
 	    bs->u->val[t] *= bs->SE;
 	}
 
-	/* construct y recursively */
+	/* construct y recursively FIXME */
 	for (t=0; t<X->rows; t++) {
+	    bs->y->val[t] = 0.0;
 	    for (i=0; i<X->cols; i++) {
 		xti = gretl_matrix_get(X, t, i);
 		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
+	    bs->y->val[t] += bs->u->val[t];
 	}  	
     } else {
 	/* generate scaled normal errors */
@@ -184,12 +186,14 @@ make_resampled_y (boot *bs, double *z)
 	/* resample the residuals, into u */
 	resample_vector(bs->u0, bs->u, z);
 
-	/* construct y recursively */
+	/* construct y recursively FIXME */
 	for (t=0; t<X->rows; t++) {
+	    bs->y->val[t] = 0.0;
 	    for (i=0; i<X->cols; i++) {
 		xti = gretl_matrix_get(X, t, i);
 		bs->y->val[t] += bs->b0->val[i] * xti;
 	    }
+	    bs->y->val[t] += bs->u->val[t];
 	}	
     } else {
 	/* resample the residuals, into y */
@@ -553,7 +557,9 @@ static int make_flags (gretlopt opt, MODEL *pmod)
     return flags;
 }
 
-/* alpha * (B + 1) should be an integer */
+/* alpha * (B + 1) should be an integer, when constructing confidence
+   intervals
+*/
 
 int maybe_adjust_B (int B, double a)
 {
