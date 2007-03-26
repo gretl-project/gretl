@@ -31,6 +31,8 @@
 #include "gretl_panel.h"
 #include "texprint.h"
 
+#include <errno.h>
+
 static int all_done;
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
