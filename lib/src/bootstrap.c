@@ -43,7 +43,8 @@ struct boot_ {
     int k;              /* number of coefficients */
     int T;              /* number of observations used */
     int p;              /* index number of coeff to examine */
-    int ldvpos;         /* coeff position of lagged dependent var, if any */
+    int ldvpos;         /* col. number of lagged dep var in X matrix */
+    int ldvpos0;        /* col. number of lagged dep var in full X matrix */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
@@ -86,6 +87,7 @@ static boot *boot_new (gretl_matrix *y,
     bs->B = 0;
     bs->p = 0;
     bs->ldvpos = -1;
+    bs->ldvpos0 = -1;
     *bs->vname = '\0';
 
     bs->y = y;
@@ -120,10 +122,9 @@ static void make_normal_y (boot *bs)
     for (t=0; t<X->rows; t++) {
 	for (i=0; i<X->cols; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		xti = bs->y->val[t-1];
-	    } else {
-		xti = gretl_matrix_get(X, t, i);
-	    }
+		gretl_matrix_set(X, t, i, bs->y->val[t-1]);
+	    } 
+	    xti = gretl_matrix_get(X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
 	}
     }  	
@@ -163,13 +164,12 @@ make_resampled_y (boot *bs, double *z)
     for (t=0; t<X->rows; t++) {
 	for (i=0; i<X->cols; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		xti = bs->y->val[t-1];
-	    } else {
-		xti = gretl_matrix_get(X, t, i);
+		gretl_matrix_set(X, t, i, bs->y->val[t-1]);
 	    }
+	    xti = gretl_matrix_get(X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
 	}
-    }	
+    }
 }
 
 /* when doing a bootstrap p-value: run a restricted regression that
@@ -227,7 +227,8 @@ static int do_restricted_ols (boot *bs)
     for (i=0; i<k-1; i++) {
 	fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
     }
-    fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
+    fprintf(stderr, "bs->ldvpos = %d (bs->ldvpos0 = %d)\n", bs->ldvpos,
+	    bs->ldvpos0);
 #endif
 
     if (!err) {
@@ -382,15 +383,15 @@ static int do_bootstrap (boot *bs, PRN *prn)
 			      bs->X, GRETL_MOD_NONE,
 			      XTX, GRETL_MOD_NONE);
 
-    XTXI = gretl_matrix_copy(XTX);
+    XTXI = gretl_matrix_alloc(XTX->rows, XTX->cols);
     if (XTXI == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-	
+
     err = gretl_matrix_cholesky_decomp(XTX);
     if (!err) {
-	err = gretl_invert_symmetric_matrix(XTXI);
+	err = gretl_inverse_from_cholesky_decomp(XTXI, XTX);
     }
 
     if (verbose(bs)) {
@@ -399,7 +400,7 @@ static int do_bootstrap (boot *bs, PRN *prn)
 
     /* carry out B replications */
 
-    for (i=0; i<bs->B; i++) {
+    for (i=0; i<bs->B && !err; i++) {
 	double v, se, SSR, ut, tval;
 
 #if BDEBUG > 1
@@ -412,10 +413,30 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    make_resampled_y(bs, z); 
 	} 
 
-	gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
-				  bs->y, GRETL_MOD_NONE,
-				  b, GRETL_MOD_NONE);
-	err = gretl_cholesky_solve(XTX, b);
+	if (bs->ldvpos0 >= 0) {
+	    /* X matrix includes lagged dependent variable, so it has
+	       to be modified */
+	    for (t=1; t<bs->T; t++) {
+		gretl_matrix_set(bs->X, t, bs->ldvpos0, bs->y->val[t-1]);
+	    }
+	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
+				      bs->X, GRETL_MOD_NONE,
+				      XTX, GRETL_MOD_NONE);
+	    err = gretl_matrix_cholesky_decomp(XTX);
+	    if (!err) {
+		err = gretl_inverse_from_cholesky_decomp(XTXI, XTX);
+	    }
+	}
+
+	if (!err) {
+	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
+				      bs->y, GRETL_MOD_NONE,
+				      b, GRETL_MOD_NONE);
+	}
+
+	if (!err) {
+	    err = gretl_cholesky_solve(XTX, b);
+	}
 
 	if (!err) {
 	    /* form fitted values */
@@ -629,7 +650,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	bs->point = pmod->coeff[p];
 	bs->tp = pmod->coeff[p] / pmod->sderr[p];
 	if (flags & BOOT_LDV) {
-	    bs->ldvpos = ldv - 2;
+	    bs->ldvpos = bs->ldvpos0 = ldv - 2;
 	}
 	err = do_bootstrap(bs, prn);
     }

@@ -1931,7 +1931,7 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
 double gretl_vcv_log_determinant (const gretl_matrix *m)
 {
     gretl_matrix *a = NULL;
-    char uplo = 'U';
+    char uplo = 'L';
     integer info;
     integer n = m->rows;
     double det = NADBL;
@@ -3810,7 +3810,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     integer n, info;
     double *aval = NULL;
     size_t bytes;
-    char uplo = 'U';
+    char uplo = 'L';
     int err = 0;
 
     if (a->cols != a->rows) {
@@ -3872,6 +3872,43 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 }
 
 /**
+ * gretl_inverse_from_cholesky_decomp:
+ * @targ: matrix to hold inverse.
+ * @src: Cholesky-decomposed matrix.
+ * 
+ * Computes in @targ the inverse of a symmetric positive definite matrix,
+ * which has already been Cholesky-decomposed in @src.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
+					const gretl_matrix *src)
+{
+    integer info, n = src->cols;
+    char uplo = 'L';
+    int err = 0;
+
+    if (n != src->rows || targ->cols != targ->rows || targ->cols != n) {
+	return E_NONCONF;
+    }
+
+    memcpy(targ->val, src->val, n * n * sizeof *src->val);
+
+    dpotri_(&uplo, &n, targ->val, &n, &info);
+
+    if (info != 0) {
+	err = E_SINGULAR;
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotri failed with info = %d\n", (int) info);
+    } else {
+	gretl_symmetric_matrix_expand(targ, uplo);
+    }
+
+    return err;
+}
+
+/**
  * gretl_invert_symmetric_matrix2:
  * @a: matrix to invert.
  * @ldet: location to recieve log determinant, or %NULL.
@@ -3888,7 +3925,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 {
     integer n, info;
-    char uplo = 'U';
+    char uplo = 'L';
     int i, err = 0;
 
     if (a->cols != a->rows) {

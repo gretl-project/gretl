@@ -295,6 +295,9 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b);
 
 int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
+int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
+					const gretl_matrix *src);
+
 int gretl_invert_general_matrix (gretl_matrix *a);
 
 int gretl_invert_symmetric_indef_matrix (gretl_matrix *a);
