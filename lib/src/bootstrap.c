@@ -19,17 +19,17 @@
 #include "libgretl.h"
 #include "bootstrap.h"
 
-#define BDEBUG 1
+#define BDEBUG 0
 
 enum {
     BOOT_CI          = 1 << 0,  /* compute confidence interval */
     BOOT_PVAL        = 1 << 1,  /* compute p-value */
     BOOT_RESAMPLE_U  = 1 << 2,  /* resample the empirical residuals */
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
-    BOOT_RESCALE     = 1 << 4,  /* rescale the residuals */
+    BOOT_RESCALE     = 1 << 4,  /* rescale the residuals, if resampling */
     BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
     BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
-    BOOT_VERBOSE     = 1 << 8   /* for debugging */
+    BOOT_VERBOSE     = 1 << 7   /* for debugging */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -219,7 +219,7 @@ static int do_restricted_ols (boot *bs)
     gretl_matrix_reuse(bs->b0, k - 1, 1);
 
     /* estimate restricted model, coeffs into bs->b0 and residuals
-       into bs->u */
+       into bs->u0 */
     err = gretl_matrix_ols(bs->y, bs->Xr, bs->b0, NULL, bs->u0, &s2);
 
 #if BDEBUG
