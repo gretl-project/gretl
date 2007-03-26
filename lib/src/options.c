@@ -210,6 +210,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_R, "robust" },
     { PROBIT,   OPT_V, "verbose" },
     { QUIT,     OPT_X, "exit" },
+    { RESTRICT, OPT_B, "bootstrap" },
     { RESTRICT, OPT_Q, "quiet" },
     { SCATTERS, OPT_L, "with-lines" },
     { SETINFO,  OPT_C, "continuous" },

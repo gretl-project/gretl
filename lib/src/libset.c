@@ -79,6 +79,7 @@ struct set_vars_ {
     int shell_ok;               /* shell commands permitted? */
     double hp_lambda;           /* for Hodrick-Prescott filter */
     int horizon;                /* for VAR impulse responses */ 
+    int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
@@ -216,6 +217,7 @@ static void state_vars_copy (set_vars *sv)
     sv->shell_ok = state->shell_ok;
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
+    sv->bootrep = state->bootrep;
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
@@ -242,6 +244,7 @@ static void state_vars_init (set_vars *sv)
     sv->shell_ok = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
+    sv->bootrep = UNSET_INT;
     sv->nls_toler = NADBL;
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
@@ -515,6 +518,17 @@ int get_VAR_horizon (void)
 	return 0;
     } else {
 	return state->horizon;
+    }
+}
+
+int get_bootstrap_replications (int ci)
+{
+    if (check_for_state()) {
+	return 0;
+    } else if (is_unset(state->bootrep)) {
+	return (ci)? 999 : 1000;
+    } else {
+	return state->bootrep;
     }
 }
 
@@ -1211,6 +1225,12 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " horizon = %d\n", state->horizon);
     }
 
+    if (is_unset(state->bootrep)) {
+	pputs(prn, " bootrep: auto\n");
+    } else {
+	pprintf(prn, " bootrep = %d\n", state->bootrep);
+    }
+
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
 
     dval = get_bhhh_toler();
@@ -1448,7 +1468,17 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		} else {
 		    state->horizon = UNSET_INT;
 		}
-	    }	    
+	    }
+	} else if (!strcmp(setobj, "bootrep")) {
+	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
+	    if (!err) {
+		err = (k <= 0);
+	    }
+	    if (!err) {
+		state->bootrep = k;
+	    } else {
+		state->bootrep = UNSET_INT;
+	    }
 	} else if (!strcmp(setobj, "nls_toler")) {
 	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
 	    if (!err) {

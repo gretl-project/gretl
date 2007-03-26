@@ -99,6 +99,7 @@ int set_bfgs_maxiter (int n);
 const gretl_matrix *get_init_vals (void);
 
 int get_VAR_horizon (void);
+int get_bootstrap_replications (int ci);
 
 double get_nls_toler (void);
 int set_nls_toler (double tol);

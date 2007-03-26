@@ -17,6 +17,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "bootstrap.h"
 
 #define BDEBUG 0
@@ -29,7 +30,8 @@ enum {
     BOOT_RESCALE     = 1 << 4,  /* rescale the residuals, if resampling */
     BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
     BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
-    BOOT_VERBOSE     = 1 << 7   /* for debugging */
+    BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
+    BOOT_VERBOSE     = 1 << 8   /* for debugging */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -240,10 +242,13 @@ static int do_restricted_ols (boot *bs)
 
 static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 {
-    pprintf(prn, _("For the coefficient on %s (point estimate %g)"), 
-	    bs->vname, bs->point);
-    
-    pputs(prn, ":\n\n  ");
+    if (bs->flags & BOOT_RESTRICT) {
+	pputs(prn, "\n  ");;
+    } else {
+	pprintf(prn, _("For the coefficient on %s (point estimate %g)"), 
+		bs->vname, bs->point);
+	pputs(prn, ":\n\n  ");
+    }
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH)) {
 	qsort(xi, bs->B, sizeof *xi, gretl_compare_doubles);
@@ -278,8 +283,9 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	pputs(prn, "with simulated normal errors");
     }
 
+    pputc(prn, '\n');
+
     if (bs->flags & BOOT_LDV) {
-	pputc(prn, '\n');
 	pputs(prn, "(recognized lagged dependent variable)");
     }
 
@@ -563,19 +569,32 @@ static int make_flags (gretlopt opt, int ldv)
 	flags |= BOOT_LDV;
     }
 
+    if (opt & OPT_R) {
+	flags |= BOOT_RESTRICT;
+    }
+
     return flags;
 }
 
-/* alpha * (B + 1) should be an integer, when constructing confidence
-   intervals
+/* check in with libset for current default number of replications if
+   need be; in addition, alpha * (B + 1) should be an integer, when
+   constructing confidence intervals
 */
 
-int maybe_adjust_B (int B, double a)
+int maybe_adjust_B (int B, double a, int flags)
 {
-    double x = a * (B + 1);
+    int ci = (flags & BOOT_CI)? 1 : 0;
 
-    while (x - floor(x) > 1e-13) {
-	x = a * (++B + 1);
+    if (B <= 0) {
+	B = get_bootstrap_replications(ci);
+    }
+
+    if (ci) {
+	double x = a * (B + 1);
+
+	while (x - floor(x) > 1e-13) {
+	    x = a * (++B + 1);
+	}
     }
 
     return B;
@@ -633,7 +652,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
     ldv = gretl_model_get_int(pmod, "ldepvar");
 
     flags = make_flags(opt, ldv);
-    B = maybe_adjust_B(B, alpha);
+    B = maybe_adjust_B(B, alpha, flags);
 
     bs = boot_new(y, X, b, u, alpha, flags);
     if (bs == NULL) {

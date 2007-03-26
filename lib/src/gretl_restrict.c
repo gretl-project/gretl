@@ -23,6 +23,7 @@
 #include "objstack.h"
 #include "matrix_extra.h"
 #include "gretl_restrict.h"
+#include "bootstrap.h"
 
 #define RDEBUG 0
 
@@ -1305,6 +1306,37 @@ static int test_restriction_set (gretl_restriction_set *rset,
     return err;
 }
 
+static int do_single_equation_test (gretl_restriction_set *rset,
+				    const double **Z,
+				    const DATAINFO *pdinfo,
+				    PRN *prn)
+{
+    int err, done = 0;
+
+    if (rset->opt & OPT_B) {
+	/* we currently offer a bootstrap test only for simple zero
+	   restrictions, in relation to OLS models */
+	restriction *r = rset->restrictions[0];
+	MODEL *pmod = rset->obj;
+
+	if (rset->k == 1 && r->nterms == 1 && r->rhs == 0 &&
+	    r->mult[0] == 1 && pmod->ci == OLS) {
+
+	    err = bootstrap_analysis(pmod, r->bnum[0], 0, Z, pdinfo, 
+				     OPT_P | OPT_R, prn);
+	    done = 1;
+	} else {
+	    pputs(prn, "Sorry, the bootstrap option is not supported for this test");
+	}
+    }
+
+    if (!done) {
+	err = test_restriction_set(rset, Z, pdinfo, prn);
+    }
+
+    return err;
+}
+
 /* Respond to "end restrict": in the case of a single equation, go
    ahead and do the test; in the case of a system of equations,
    form the restriction matrices R and q and attach these to the
@@ -1358,7 +1390,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	err = restriction_set_make_mask(rset);
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
-	    test_restriction_set(rset, Z, pdinfo, prn);
+	    err = do_single_equation_test(rset, Z, pdinfo, prn);
 	    if (!(rset->opt & OPT_C)) {
 		destroy_restriction_set(rset);
 	    }
