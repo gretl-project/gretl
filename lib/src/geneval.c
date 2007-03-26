@@ -23,6 +23,7 @@
 #include "monte_carlo.h"
 #include "gretl_string_table.h"
 #include "matrix_extra.h"
+#include "gretl_fft.h"
 
 #include <errno.h>
 
