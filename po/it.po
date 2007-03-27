@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-11 20:40-0400\n"
-"PO-Revision-Date: 2007-02-26 08:57-0500\n"
+"PO-Revision-Date: 2007-03-27 12:21+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2147,14 +2147,14 @@ msgid "%s versus %s (with least squares fit)"
 msgstr "%s rispetto a %s (con retta dei minimi quadrati)"
 
 #: lib/src/graphing.c:934 gui2/gpt_dialog.c:209
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with inverse fit)"
-msgstr "%s rispetto a %s (con retta dei minimi quadrati)"
+msgstr "%s rispetto a %s (con fit inverso)"
 
 #: lib/src/graphing.c:937 gui2/gpt_dialog.c:206
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with quadratic fit)"
-msgstr "%s rispetto a %s (con retta dei minimi quadrati)"
+msgstr "%s rispetto a %s (con fit quadratico)"
 
 #: lib/src/graphing.c:943
 #, c-format
@@ -2172,14 +2172,14 @@ msgid "Actual and fitted %s versus %s"
 msgstr "%s: valori effettivi e stimati, rispetto a %s"
 
 #: lib/src/graphing.c:1105 gui2/gpt_dialog.c:212
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with loess fit)"
-msgstr "%s rispetto a %s (con retta dei minimi quadrati)"
+msgstr "%s rispetto a %s (con fit loess)"
 
 #: lib/src/graphing.c:1114 lib/src/plotspec.c:615
 #, c-format
 msgid "loess fit, d = %d, q = %g"
-msgstr ""
+msgstr "loess fit, d = %d, q = %g"
 
 #: lib/src/graphing.c:1887 lib/src/plotspec.c:518 gui2/gpt_dialog.c:617
 msgid "right"
@@ -5273,6 +5273,8 @@ msgid ""
 "\n"
 "Poisson (mean = %g): "
 msgstr ""
+"\n"
+"Poisson (media = %g): "
 
 #: lib/src/strutils.c:1482
 #, c-format
@@ -6170,9 +6172,8 @@ msgid "Invalid standard deviation"
 msgstr "Deviazione standard non valida"
 
 #: gui2/calculator.c:334
-#, fuzzy
 msgid "Invalid mean"
-msgstr "Valore non valido"
+msgstr "Media non valida"
 
 #: gui2/calculator.c:381 gui2/calculator.c:390
 msgid "Failed to compute p-value"
@@ -6445,7 +6446,6 @@ msgid "binomial"
 msgstr "binomiale"
 
 #: gui2/calculator.c:1104
-#, fuzzy
 msgid "poisson"
 msgstr "Poisson"
 
@@ -7632,12 +7632,11 @@ msgstr "Numero di intervalli:"
 
 #: gui2/dialogs.c:2989
 msgid "Minimum value, left bin:"
-msgstr ""
+msgstr "Valore minimo, intervallo sinistro:"
 
 #: gui2/dialogs.c:2990
-#, fuzzy
 msgid "Bin width:"
-msgstr "Spessore della linea"
+msgstr "Ampiezza dell'intervallo:"
 
 #: gui2/dialogs.c:3183
 msgid "Structure of dataset"
@@ -7901,19 +7900,16 @@ msgid "Robust standard errors"
 msgstr "Errori standard robusti"
 
 #: gui2/dlgutils.c:770
-#, fuzzy
 msgid "One-step estimation"
 msgstr "Stima a un passo"
 
 #: gui2/dlgutils.c:771
-#, fuzzy
 msgid "Two-step estimation"
-msgstr "Stima a un passo"
+msgstr "Stima a due passi"
 
 #: gui2/dlgutils.c:772
-#, fuzzy
 msgid "Iterated estimation"
-msgstr "Stima a un passo"
+msgstr "Stima iterata"
 
 #: gui2/dlgutils.c:820 plugin/sysest.c:697
 msgid "Estimator"
@@ -7956,9 +7952,8 @@ msgid "postscript files (*.eps)"
 msgstr "file postscript (*.eps)"
 
 #: gui2/fileselect.c:537
-#, fuzzy
 msgid "PDF files (*.pdf)"
-msgstr "file PNG (*.png)"
+msgstr "file PDF (*.pdf)"
 
 #: gui2/fileselect.c:538
 msgid "xfig files (*.fig)"
@@ -8280,16 +8275,16 @@ msgstr "Mancano alcune informazioni richieste"
 
 #: gui2/fnsave.c:270
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
+msgstr "Stringa di versione non valida: usare solo numeri e \".\""
 
 #: gui2/fnsave.c:288
 msgid "Save function package"
 msgstr "Salva pacchetto di funzioni"
 
 #: gui2/fnsave.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "Saved package as %s"
-msgstr "Salva le modifiche?"
+msgstr "Pacchetto salvato con il nome %s"
 
 #: gui2/fnsave.c:466
 msgid "No special requirement"
@@ -8349,9 +8344,8 @@ msgid "Upload package to server on save"
 msgstr "Carica il pacchetto sul server subito dopo il salvataggio"
 
 #: gui2/fnsave.c:706
-#, fuzzy
 msgid "Include version in file name"
-msgstr "Includi dummy stagionali"
+msgstr "Includi il numero di versione nel nome del file"
 
 #: gui2/fnsave.c:750
 msgid "gretl: upload"
@@ -8521,19 +8515,19 @@ msgstr "Titolo per l'asse"
 
 #: gui2/gpt_dialog.c:82
 msgid "linear: y = a + b*x"
-msgstr ""
+msgstr "lineare: y = a + b*x"
 
 #: gui2/gpt_dialog.c:83
 msgid "quadratic: y = a + b*x + c*x^2"
-msgstr ""
+msgstr "quadratico: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:84
 msgid "inverse: y = a + b*(1/x)"
-msgstr ""
+msgstr "inverso: y = a + b*(1/x)"
 
 #: gui2/gpt_dialog.c:85
 msgid "loess (locally weighted fit)"
-msgstr ""
+msgstr "loess (fit pesato localmente)"
 
 #: gui2/gpt_dialog.c:311
 msgid "Invalid label position, must be X Y"
@@ -8561,9 +8555,8 @@ msgid "key position"
 msgstr "Posizione della legenda"
 
 #: gui2/gpt_dialog.c:817
-#, fuzzy
 msgid "fitted line"
-msgstr "Nascondi la linea dei valori stimati"
+msgstr "linea stimata"
 
 #: gui2/gpt_dialog.c:841
 msgid "Show full border"
@@ -8692,9 +8685,8 @@ msgid "The graph page is empty"
 msgstr "La pagina dei grafici è vuota"
 
 #: gui2/graph_page.c:597
-#, fuzzy
 msgid "graph page options"
-msgstr "gretl: opzioni"
+msgstr "Opzioni per la pagina dei grafici"
 
 #: gui2/gretl.c:96
 msgid "open a script file on startup"
