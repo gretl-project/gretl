@@ -5327,6 +5327,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or %NULL if this is not needed.
+ * @uhat: vector to hold residuals, if wanted.
  * @s2: pointer ro receive residual variance, or NULL.  If vcv is non-NULL
  * and s2 is NULL, the vcv estimate is just W^{-1}.
  *
@@ -5341,7 +5342,7 @@ int
 gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 			     const gretl_matrix *R, const gretl_vector *q,
 			     gretl_vector *b, gretl_matrix *vcv,
-			     double *s2)
+			     gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
     gretl_vector *V = NULL;
@@ -5447,6 +5448,9 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 		}		
 	    }
 	    gretl_matrix_free(S);
+	}
+	if (uhat != NULL) {
+	    get_ols_uhat(y, X, b, uhat);
 	}
     }
 

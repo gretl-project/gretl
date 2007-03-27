@@ -31,7 +31,8 @@ enum {
     BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
     BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
     BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
-    BOOT_VERBOSE     = 1 << 8   /* for debugging */
+    BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
+    BOOT_VERBOSE     = 1 << 9   /* for debugging */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -46,17 +47,17 @@ struct boot_ {
     int T;              /* number of observations used */
     int p;              /* index number of coeff to examine */
     int ldvpos;         /* col. number of lagged dep var in X matrix */
-    int ldvpos0;        /* col. number of lagged dep var in full X matrix */
+    int dfu;            /* unrestricted degrees of freedom */
     gretl_matrix *y;    /* holds original, then artificial, dep. var. */
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
     gretl_matrix *u0;   /* original residuals for resampling */
-    gretl_matrix *Xr;   /* restricted set of indep. vars (p-value case) */
+    double SSRu;        /* unrestricted sum of squared residuals */
     double SE;          /* original std. error of residuals */
     double point;       /* point estimate of coeff */
     double se_p;        /* original std error for coeff of interest */
-    double t_p;         /* original t-stat for variable of interest */
-    double b_p;         /* test value of coeff */
+    double t_p;         /* original test statistic for variable of interest */
+    double b_p;         /* test value for coeff */
     double a;           /* alpha, for confidence interval */
     char vname[VNAMELEN]; /* name of variable analysed */
 };
@@ -67,7 +68,6 @@ static void boot_destroy (boot *bs)
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
     gretl_matrix_free(bs->u0);
-    gretl_matrix_free(bs->Xr);
 
     free(bs);
 }
@@ -91,15 +91,15 @@ static boot *boot_new (gretl_matrix *y,
     bs->B = 0;
     bs->p = 0;
     bs->ldvpos = -1;
-    bs->ldvpos0 = -1;
+    bs->dfu = 0;
     *bs->vname = '\0';
 
     bs->y = y;
     bs->X = X;
     bs->b0 = b;
     bs->u0 = u;
-    bs->Xr = NULL;
 
+    bs->SSRu = NADBL;
     bs->SE = NADBL;
     bs->point = NADBL;
     bs->se_p = NADBL;
@@ -114,9 +114,8 @@ static boot *boot_new (gretl_matrix *y,
 
 static void make_normal_y (boot *bs)
 {
-    gretl_matrix *X = (bs->flags & BOOT_PVAL)? bs->Xr : bs->X;
-    int i, t;
     double xti;
+    int i, t;
 
     /* generate scaled normal errors */
     gretl_normal_dist(bs->y->val, 0, bs->T - 1);
@@ -125,12 +124,12 @@ static void make_normal_y (boot *bs)
     }
 
     /* construct y recursively */
-    for (t=0; t<X->rows; t++) {
-	for (i=0; i<X->cols; i++) {
+    for (t=0; t<bs->X->rows; t++) {
+	for (i=0; i<bs->X->cols; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(X, t, i, bs->y->val[t-1]);
+		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
 	    } 
-	    xti = gretl_matrix_get(X, t, i);
+	    xti = gretl_matrix_get(bs->X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
 	}
     }  	
@@ -159,7 +158,6 @@ resample_vector (const gretl_matrix *u0, gretl_matrix *u,
 static void 
 make_resampled_y (boot *bs, double *z)
 {
-    gretl_matrix *X = (bs->flags & BOOT_PVAL)? bs->Xr : bs->X;
     double xti;
     int i, t;
 
@@ -167,75 +165,55 @@ make_resampled_y (boot *bs, double *z)
     resample_vector(bs->u0, bs->y, z);
 
     /* construct y recursively */
-    for (t=0; t<X->rows; t++) {
-	for (i=0; i<X->cols; i++) {
+    for (t=0; t<bs->X->rows; t++) {
+	for (i=0; i<bs->X->cols; i++) {
 	    if (t > 0 && i == bs->ldvpos) {
-		gretl_matrix_set(X, t, i, bs->y->val[t-1]);
+		gretl_matrix_set(bs->X, t, i, bs->y->val[t-1]);
 	    }
-	    xti = gretl_matrix_get(X, t, i);
+	    xti = gretl_matrix_get(bs->X, t, i);
 	    bs->y->val[t] += bs->b0->val[i] * xti;
 	}
     }
 }
 
-/* when doing a bootstrap p-value: run a restricted regression that
-   excludes the variable of interest, and save the coefficient vector
-   and residuals
+/* when doing a bootstrap p-value: run the restricted regression and
+   save the coefficient vector and residuals
 */
 
 static int do_restricted_ols (boot *bs)
 {
-    double s2, xti;
-    int k = bs->k;
-    int p = bs->p;
-    int i, j, t;
+    gretl_matrix *R = NULL;
+    gretl_matrix *q = NULL;
+    double s2;
     int err = 0;
+    
+    R = gretl_zero_matrix_new(1, bs->k);
+    q = gretl_zero_matrix_new(1, 1);
 
-    bs->Xr = gretl_matrix_alloc(bs->T, k - 1);
-
-    if (bs->Xr == NULL) {
+    if (R == NULL || q == NULL) {
+	gretl_matrix_free(R);
+	gretl_matrix_free(q);
 	return E_ALLOC;
     }
 
-    /* make restricted X matrix, Xr */
-    j = 0;
-    for (i=0; i<k; i++) {
-	if (i != p) {
-	    for (t=0; t<bs->T; t++) {
-		xti = gretl_matrix_get(bs->X, t, i);
-		gretl_matrix_set(bs->Xr, t, j, xti);
-	    }
-	    j++;
-	}
-    }
-
-    /* adjust ldv info, if needed */
-    if (bs->flags & BOOT_LDV) {
-	if (bs->ldvpos == p) {
-	    /* excluding lagged dep var */
-	    bs->flags &= ~BOOT_LDV;
-	    bs->ldvpos = -1;
-	} else if (bs->ldvpos > p) {
-	    /* move it forward one slot */
-	    bs->ldvpos -= 1;
-	}
-    }
-
-    /* shrink b0 */
-    gretl_matrix_reuse(bs->b0, k - 1, 1);
+    R->val[bs->p] = 1;
 
     /* estimate restricted model, coeffs into bs->b0 and residuals
        into bs->u0 */
-    err = gretl_matrix_ols(bs->y, bs->Xr, bs->b0, NULL, bs->u0, &s2);
+    err = gretl_matrix_restricted_ols(bs->y, bs->X, R, q, bs->b0, 
+				      NULL, bs->u0, &s2);
 
 #if BDEBUG
+    int i;
     fprintf(stderr, "Restricted estimates:\n");
-    for (i=0; i<k-1; i++) {
+    for (i=0; i<k; i++) {
 	fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
     }
-    fprintf(stderr, "bs->ldvpos = %d (bs->ldvpos0 = %d)\n", bs->ldvpos,
-	    bs->ldvpos0);
+    fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
 #endif
+
+    gretl_matrix_free(R);
+    gretl_matrix_free(q);
 
     if (!err) {
 	bs->SE = sqrt(s2);
@@ -247,7 +225,7 @@ static int do_restricted_ols (boot *bs)
 static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 {
     if (bs->flags & BOOT_RESTRICT) {
-	pputs(prn, "\n  ");;
+	pputs(prn, "\n  ");
     } else {
 	pprintf(prn, _("For the coefficient on %s (point estimate %g)"), 
 		bs->vname, bs->point);
@@ -296,6 +274,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 
     if (bs->flags & BOOT_LDV) {
 	pputs(prn, "(recognized lagged dependent variable)");
+	pputc(prn, '\n');
     }
 
     if (bs->flags & BOOT_GRAPH) {
@@ -309,7 +288,9 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    return;
 	}
 
-	if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
+	if (bs->flags & BOOT_F_FORM) {
+	    strcpy(label, "bootstrap F-test");
+	} else if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
 	    strcpy(label, "bootstrap t-ratio");
 	} else {
 	    strcpy(label, "bootstrap coefficient");
@@ -426,11 +407,11 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    make_resampled_y(bs, z); 
 	} 
 
-	if (bs->ldvpos0 >= 0) {
+	if (bs->ldvpos >= 0) {
 	    /* X matrix includes lagged dependent variable, so it has
 	       to be modified */
 	    for (t=1; t<bs->T; t++) {
-		gretl_matrix_set(bs->X, t, bs->ldvpos0, bs->y->val[t-1]);
+		gretl_matrix_set(bs->X, t, bs->ldvpos, bs->y->val[t-1]);
 	    }
 	    gretl_matrix_multiply_mod(bs->X, GRETL_MOD_TRANSPOSE,
 				      bs->X, GRETL_MOD_NONE,
@@ -455,22 +436,23 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    /* form fitted values */
 	    gretl_matrix_multiply(bs->X, b, yh);
 
-	    /* coeff, standard error and t-stat */
 	    SSR = 0.0;
 	    for (t=0; t<bs->T; t++) {
 		ut = bs->y->val[t] - yh->val[t];
 		SSR += ut * ut;
 	    } 
-	    v = gretl_matrix_get(XTXI, p, p);
-	    se = sqrt(v * SSR / (bs->T - k));
-	    if (bs->flags & BOOT_PVAL) {
-		tval = b->val[p] / se;
-	    } else {
-		tval = (b->val[p] - bs->point) / se;
-	    }
 
-	    if (verbose(bs)) {
-		pprintf(prn, "%13g %13g %13g\n", b->val[p], se, tval);
+	    if (bs->flags & BOOT_F_FORM) {
+		/* F-stat: FIXME!! */
+		tval = ((SSR - bs->SSRu) / 1) / (bs->SSRu / bs->dfu);
+	    } else {
+		/* coeff, standard error and t-stat */
+		v = gretl_matrix_get(XTXI, p, p);
+		se = sqrt(v * SSR / (bs->T - k));
+		tval = (b->val[p] - bs->b_p) / se;
+		if (verbose(bs)) {
+		    pprintf(prn, "%13g %13g %13g\n", b->val[p], se, tval);
+		}
 	    }
 
 	    if (bs->flags & BOOT_CI) {
@@ -484,7 +466,11 @@ static int do_bootstrap (boot *bs, PRN *prn)
 		if (bs->flags & BOOT_GRAPH) {
 		    xi[i] = tval;
 		}
-		if (fabs(tval) > fabs(bs->t_p)) {
+		if (bs->flags & BOOT_F_FORM) {
+		    if (tval > bs->t_p) {
+			tail++;
+		    }
+		} else if (fabs(tval) > fabs(bs->t_p)) {
 		    tail++;
 		}
 	    } 
@@ -683,19 +669,25 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 
 	bs->p = p;  /* coeff to examine */
 	bs->B = B;  /* replications */ 
+	bs->dfu = pmod->dfd;
+	bs->SSRu = pmod->ess;
 	bs->SE = pmod->sigma;
 	strcpy(bs->vname, pdinfo->varname[v]);
 	bs->point = pmod->coeff[p];
 	bs->se_p = pmod->sderr[p];
 	bs->t_p = pmod->coeff[p] / pmod->sderr[p];
+	if (flags & BOOT_F_FORM) {
+	    /* FIXME */
+	    bs->t_p = bs->t_p * bs->t_p;
+	}
 	if (flags & BOOT_PVAL) {
-	    /* could be made more flexible */
+	    /* FIXME make more flexible */
 	    bs->b_p = 0.0;
 	} else {
 	    bs->b_p = bs->point;
 	}
 	if (flags & BOOT_LDV) {
-	    bs->ldvpos = bs->ldvpos0 = ldv - 2;
+	    bs->ldvpos = ldv - 2;
 	}
 	err = do_bootstrap(bs, prn);
     }

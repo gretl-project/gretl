@@ -842,7 +842,7 @@ static int fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
     
     if (R != NULL) {
 	err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
-					  fsys->artb, vcv, NULL);
+					  fsys->artb, vcv, NULL, NULL);
     } else {
 	err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
 				   vcv, NULL, NULL);
@@ -953,7 +953,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	/* run artificial regression (ETM, equation 12.86) */
 	if (R != NULL) {
 	    err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
-					      fsys->artb, NULL, NULL);
+					      fsys->artb, NULL, NULL, NULL);
 	} else {
 #if 0
 	    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 

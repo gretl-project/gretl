@@ -1115,7 +1115,7 @@ do_restricted_estimates (gretl_restriction_set *rset,
     gretl_matrix_print(q, "q");
 #endif
 
-    err = gretl_matrix_restricted_ols(y, X, R, q, b, S, &s2);
+    err = gretl_matrix_restricted_ols(y, X, R, q, b, S, NULL, &s2);
 
     if (!err) {
 	double v, coeff, se;
