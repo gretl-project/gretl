@@ -27,7 +27,7 @@ enum {
     BOOT_PVAL        = 1 << 1,  /* compute p-value */
     BOOT_RESAMPLE_U  = 1 << 2,  /* resample the empirical residuals */
     BOOT_NORMAL_U    = 1 << 3,  /* simulate normal residuals */
-    BOOT_RESCALE     = 1 << 4,  /* rescale the residuals, if resampling */
+    BOOT_STUDENTIZE  = 1 << 4,  /* studentize, when doing confidence interval */
     BOOT_GRAPH       = 1 << 5,  /* graph the distribution */
     BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
     BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
@@ -54,7 +54,8 @@ struct boot_ {
     gretl_matrix *Xr;   /* restricted set of indep. vars (p-value case) */
     double SE;          /* original std. error of residuals */
     double point;       /* point estimate of coeff */
-    double tp;          /* original t-stat for variable of interest */
+    double se_p;        /* original std error for coeff of interest */
+    double t_p;         /* original t-stat for variable of interest */
     double a;           /* alpha, for confidence interval */
     char vname[VNAMELEN]; /* name of variable analysed */
 };
@@ -100,7 +101,8 @@ static boot *boot_new (gretl_matrix *y,
 
     bs->SE = NADBL;
     bs->point = NADBL;
-    bs->tp = NADBL;
+    bs->se_p = NADBL;
+    bs->t_p = NADBL;
 
     bs->k = X->cols;
     bs->T = X->rows;
@@ -260,19 +262,25 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	pprintf(prn, "%s = %d / %d = %g", _("p-value"), tail, bs->B, pv);
     } else {
 	double ql, qu;
-	int i;
-
-	/* FIXME: do something more sophisticated than simple
-	   quantiles here? */
+	int i, j;
 
 	i = bs->a * (bs->B + 1) / 2.0;
 	ql = xi[i-1];
 
-	i = bs->B - i + 1;
-	qu = xi[i-1];
+	j = bs->B - i + 1;
+	qu = xi[j-1];
 
-	pprintf(prn, "%g%% confidence interval = %g to %g", 
-		100 * (1 - bs->a), ql, qu);	
+	if (bs->flags & BOOT_STUDENTIZE) {
+	    double cl = ql;
+
+	    ql = bs->point - bs->se_p * qu;
+	    qu = bs->point - bs->se_p * cl;
+	    pprintf(prn, "Studentized %g%% confidence interval = %g to %g", 
+		    100 * (1 - bs->a), ql, qu);
+	} else {
+	    pprintf(prn, "%g%% confidence interval = %g to %g", 
+		    100 * (1 - bs->a), ql, qu);
+	}
     }
     
     pputs(prn, "\n\n");
@@ -282,7 +290,6 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
     } else {
 	pputs(prn, "with simulated normal errors");
     }
-
     pputc(prn, '\n');
 
     if (bs->flags & BOOT_LDV) {
@@ -300,11 +307,11 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    return;
 	}
 
-	if (bs->flags & BOOT_CI) {
-	    strcpy(label, "bootstrap coefficient");
-	} else {
+	if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
 	    strcpy(label, "bootstrap t-ratio");
-	}
+	} else {
+	    strcpy(label, "bootstrap coefficient");
+	} 
 
 	err = (*kdfunc)(xi, bs->B, label);
 	close_plugin(handle);
@@ -371,9 +378,7 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    err = E_ALLOC;
 	    goto bailout;
 	}
-	if (bs->flags & BOOT_RESCALE) {
-	    rescale_residuals(bs);
-	}
+	rescale_residuals(bs);
     }
 
     if (bs->flags & (BOOT_CI | BOOT_GRAPH)) {
@@ -456,20 +461,28 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    } 
 	    v = gretl_matrix_get(XTXI, p, p);
 	    se = sqrt(v * SSR / (bs->T - k));
-	    tval = b->val[p] / se;
+	    if (bs->flags & BOOT_PVAL) {
+		tval = b->val[p] / se;
+	    } else {
+		tval = (b->val[p] - bs->point) / se;
+	    }
 
 	    if (verbose(bs)) {
 		pprintf(prn, "%13g %13g %13g\n", b->val[p], se, tval);
 	    }
 
 	    if (bs->flags & BOOT_CI) {
-		xi[i] = b->val[p];
+		if (bs->flags & BOOT_STUDENTIZE) {
+		    xi[i] = tval;
+		} else {
+		    xi[i] = b->val[p];
+		}
 	    } else {
 		/* doing p-value */
 		if (bs->flags & BOOT_GRAPH) {
 		    xi[i] = tval;
 		}
-		if (fabs(tval) > fabs(bs->tp)) {
+		if (fabs(tval) > fabs(bs->t_p)) {
 		    tail++;
 		}
 	    } 
@@ -547,7 +560,7 @@ make_model_matrices (const MODEL *pmod, const double **Z,
 
 static int make_flags (gretlopt opt, int ldv)
 {
-    int flags = BOOT_RESCALE;
+    int flags = 0;
 
     if (opt & OPT_P) {
 	flags |= BOOT_PVAL;
@@ -563,6 +576,10 @@ static int make_flags (gretlopt opt, int ldv)
 
     if (opt & OPT_G) {
 	flags |= BOOT_GRAPH;
+    }
+
+    if (opt & OPT_T) {
+	flags |= BOOT_STUDENTIZE;
     }
 
     if (ldv > 0) {
@@ -667,7 +684,8 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	bs->SE = pmod->sigma;
 	strcpy(bs->vname, pdinfo->varname[v]);
 	bs->point = pmod->coeff[p];
-	bs->tp = pmod->coeff[p] / pmod->sderr[p];
+	bs->se_p = pmod->sderr[p];
+	bs->t_p = pmod->coeff[p] / pmod->sderr[p];
 	if (flags & BOOT_LDV) {
 	    bs->ldvpos = bs->ldvpos0 = ldv - 2;
 	}

@@ -659,10 +659,11 @@ void copy_format_dialog (windata_t *vwin, int action)
 }
 
 enum {
-    UNSET_PVAL = 1,
+    SET_CI = 1,
     SET_PVAL,
     UNSET_NORMAL,
-    SET_NORMAL
+    SET_NORMAL,
+    SET_STUDENT
 };
 
 static void set_bs_opt (GtkWidget *w, gretlopt *opt)
@@ -670,10 +671,12 @@ static void set_bs_opt (GtkWidget *w, gretlopt *opt)
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
     switch (i) {
-    case UNSET_PVAL:
+    case SET_CI:
+	*opt &= ~OPT_T;
 	*opt &= ~OPT_P;
 	break;
     case SET_PVAL:
+	*opt &= ~OPT_T;
 	*opt |= OPT_P;
 	break;
     case UNSET_NORMAL:
@@ -681,6 +684,10 @@ static void set_bs_opt (GtkWidget *w, gretlopt *opt)
 	break;
     case SET_NORMAL:
 	*opt |= OPT_N;
+	break;
+    case SET_STUDENT:
+	*opt &= ~OPT_P;
+	*opt |= OPT_T;
 	break;
     }
 }
@@ -793,7 +800,16 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     button = gtk_radio_button_new_with_label(NULL, _("Confidence interval"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(UNSET_PVAL));
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_CI));
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bs_opt), popt);
+    gtk_widget_show(button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("Studentized confidence interval"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
+    g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_STUDENT));
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_bs_opt), popt);
     gtk_widget_show(button);
