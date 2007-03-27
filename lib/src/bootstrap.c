@@ -56,6 +56,7 @@ struct boot_ {
     double point;       /* point estimate of coeff */
     double se_p;        /* original std error for coeff of interest */
     double t_p;         /* original t-stat for variable of interest */
+    double b_p;         /* test value of coeff */
     double a;           /* alpha, for confidence interval */
     char vname[VNAMELEN]; /* name of variable analysed */
 };
@@ -103,6 +104,7 @@ static boot *boot_new (gretl_matrix *y,
     bs->point = NADBL;
     bs->se_p = NADBL;
     bs->t_p = NADBL;
+    bs->b_p = NADBL;
 
     bs->k = X->cols;
     bs->T = X->rows;
@@ -686,6 +688,12 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	bs->point = pmod->coeff[p];
 	bs->se_p = pmod->sderr[p];
 	bs->t_p = pmod->coeff[p] / pmod->sderr[p];
+	if (flags & BOOT_PVAL) {
+	    /* could be made more flexible */
+	    bs->b_p = 0.0;
+	} else {
+	    bs->b_p = bs->point;
+	}
 	if (flags & BOOT_LDV) {
 	    bs->ldvpos = bs->ldvpos0 = ldv - 2;
 	}
