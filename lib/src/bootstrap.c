@@ -703,3 +703,107 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 
     return err;
 }
+
+#if 0 /* not ready */
+
+/**
+ * bootstrap_test_restriction:
+ * @pmod: model to be examined.
+ * @R: left-hand restriction matrix, as in Rb = q.
+ * @q: right-hand restriction matrix.
+ * @B: number of replications.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: may contain %OPT_N to use simulated normal errors 
+ * (default is to resample the empirical residuals), %OPT_G 
+ * to display graph.
+ * @prn: printing struct.
+ *
+ * Calculates a bootstrap p-value for the restriction on the
+ * coefficients of @pmod represented by the matrices @R and @q.
+ * If the first lag of the dependent variable is present as a
+ * regressor it is handled correctly but more complex lag
+ * autoregressive schemes are not (yet) handled.
+ * 
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
+				gretl_matrix *q, int B, 
+				const double **Z, const DATAINFO *pdinfo, 
+				gretlopt opt, PRN *prn)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *u = NULL;
+    boot *bs = NULL;
+    double alpha = .05;
+    int ldv, flags = 0;
+    int err = 0;
+
+    /* only OLS models for now */
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
+
+    if (p < 0 || p >= pmod->ncoeff) {
+	return E_DATA;
+    }
+
+    err = make_model_matrices(pmod, Z, &y, &X, &b, &u);
+    if (err) {
+	return err;
+    }
+
+    ldv = gretl_model_get_int(pmod, "ldepvar");
+
+    flags = make_flags(opt, ldv);
+    B = maybe_adjust_B(B, alpha, flags);
+
+    bs = boot_new(y, X, b, u, alpha, flags);
+    if (bs == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	int v = pmod->list[p+2];
+
+	bs->p = p;  /* coeff to examine */
+	bs->B = B;  /* replications */ 
+	bs->dfu = pmod->dfd;
+	bs->SSRu = pmod->ess;
+	bs->SE = pmod->sigma;
+	strcpy(bs->vname, pdinfo->varname[v]);
+	bs->point = pmod->coeff[p];
+	bs->se_p = pmod->sderr[p];
+	bs->t_p = pmod->coeff[p] / pmod->sderr[p];
+	if (flags & BOOT_F_FORM) {
+	    /* FIXME */
+	    bs->t_p = bs->t_p * bs->t_p;
+	}
+	if (flags & BOOT_PVAL) {
+	    /* FIXME make more flexible */
+	    bs->b_p = 0.0;
+	} else {
+	    bs->b_p = bs->point;
+	}
+	if (flags & BOOT_LDV) {
+	    bs->ldvpos = ldv - 2;
+	}
+	err = do_bootstrap(bs, prn);
+    }
+
+    if (bs != NULL) {
+	boot_destroy(bs);
+    } else {
+	gretl_matrix_free(X);
+	gretl_matrix_free(y);
+	gretl_matrix_free(b);
+	gretl_matrix_free(u);
+    }
+
+    return err;
+}
+
+#endif
