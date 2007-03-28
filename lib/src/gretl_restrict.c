@@ -40,6 +40,8 @@ struct restriction_ {
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
     int cross;                    /* includes cross-equation restrictions? */
+    gretl_matrix *R;              /* LHS restriction matrix */
+    gretl_matrix *q;              /* RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
     restriction **restrictions;
     void *obj;
@@ -147,10 +149,14 @@ static int R_n_columns (gretl_restriction_set *rset)
 	cols = system_n_indep_vars(rset->obj);
     } else {
 	MODEL *pmod = rset->obj;
-
-	for (i=0; i<pmod->ncoeff; i++) {
-	    if (rset->mask[i]) {
-		cols++;
+	
+	if (rset->mask == NULL) {
+	    cols = pmod->ncoeff;
+	} else {
+	    for (i=0; i<pmod->ncoeff; i++) {
+		if (rset->mask[i]) {
+		    cols++;
+		}
 	    }
 	}
     }
@@ -159,19 +165,16 @@ static int R_n_columns (gretl_restriction_set *rset)
 }
 
 static int 
-restriction_set_form_full_matrices (gretl_restriction_set *rset,
-				    gretl_matrix **Rin,
-				    gretl_vector **qin)
+restriction_set_form_full_matrices (gretl_restriction_set *rset)
 {
     MODEL *pmod;
-    gretl_matrix *R;
-    gretl_vector *q;
+    gretl_matrix *R = NULL;
+    gretl_vector *q = NULL;
     restriction *r;
     double x;
     int i, j, k;
 
-    if (rset->type != GRETL_OBJ_EQN ||
-	rset->obj == NULL) {
+    if (rset->type != GRETL_OBJ_EQN || rset->obj == NULL) {
 	return 1;
     }
 
@@ -203,20 +206,18 @@ restriction_set_form_full_matrices (gretl_restriction_set *rset,
 	gretl_vector_set(q, i, r->rhs);
     }
 
-    *Rin = R;
-    *qin = q;
+    rset->R = R;
+    rset->q = q;
 
     return 0;
 }
 
 static int 
-restriction_set_form_matrices (gretl_restriction_set *rset,
-			       gretl_matrix **Rin,
-			       gretl_vector **qin)
+restriction_set_form_matrices (gretl_restriction_set *rset)
 {
     MODEL *pmod = NULL;
-    gretl_matrix *R;
-    gretl_vector *q;
+    gretl_matrix *R = NULL;
+    gretl_vector *q = NULL;
     restriction *r;
     double x;
     int col, i, j;
@@ -276,8 +277,8 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
 	gretl_matrix_free(R);
 	gretl_matrix_free(q);
     } else {
-	*Rin = R;
-	*qin = q;
+	rset->R = R;
+	rset->q = q;
     }
 
     return err;
@@ -524,6 +525,10 @@ static void destroy_restriction_set (gretl_restriction_set *rset)
 
     free(rset->restrictions);
     free(rset->mask);
+    
+    gretl_matrix_free(rset->R);
+    gretl_matrix_free(rset->q);
+
     free(rset);
 }
 
@@ -533,7 +538,9 @@ static restriction *restriction_new (int n, int cross)
     int i;
 
     r = malloc(sizeof *r);
-    if (r == NULL) return NULL;
+    if (r == NULL) {
+	return NULL;
+    }
 
     r->mult = NULL;
     r->eq = NULL;
@@ -696,6 +703,8 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->bsd = NADBL;
 
     rset->k = 0;
+    rset->R = NULL;
+    rset->q = NULL;
     rset->mask = NULL;
     rset->restrictions = NULL;
     rset->cross = 0;
@@ -1065,8 +1074,6 @@ do_restricted_estimates (gretl_restriction_set *rset,
     MODEL *pmod = rset->obj;
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
-    gretl_matrix *R = NULL;
-    gretl_matrix *q = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *S = NULL;
     int *xlist = NULL;
@@ -1086,7 +1093,7 @@ do_restricted_estimates (gretl_restriction_set *rset,
 	goto bailout;
     }
 
-    err = restriction_set_form_full_matrices(rset, &R, &q);
+    err = restriction_set_form_full_matrices(rset);
     if (err) {
 	goto bailout;
     }
@@ -1111,11 +1118,12 @@ do_restricted_estimates (gretl_restriction_set *rset,
     }
 
 #if RDEBUG
-    gretl_matrix_print(R, "R");
-    gretl_matrix_print(q, "q");
+    gretl_matrix_print(rset->R, "R");
+    gretl_matrix_print(rset->q, "q");
 #endif
 
-    err = gretl_matrix_restricted_ols(y, X, R, q, b, S, NULL, &s2);
+    err = gretl_matrix_restricted_ols(y, X, rset->R, rset->q, 
+				      b, S, NULL, &s2);
 
     if (!err) {
 	double v, coeff, se;
@@ -1137,8 +1145,6 @@ do_restricted_estimates (gretl_restriction_set *rset,
     
     gretl_matrix_free(X);
     gretl_matrix_free(y);
-    gretl_matrix_free(R);
-    gretl_matrix_free(q);
     gretl_matrix_free(b);
     gretl_matrix_free(S);
 
@@ -1147,122 +1153,18 @@ do_restricted_estimates (gretl_restriction_set *rset,
     return err;
 }
 
-/* execute the test, for a single equation */
+/* print result, single equation */
 
-static int test_restriction_set (gretl_restriction_set *rset, 
-				 const double **Z,
-				 const DATAINFO *pdinfo,
-				 PRN *prn)
+static void 
+restriction_set_print_result (gretl_restriction_set *rset, 
+			      const double **Z, const DATAINFO *pdinfo,
+			      PRN *prn)
 {
     MODEL *pmod = rset->obj;
-    gretl_matrix *R;
-    gretl_vector *q;
-    gretl_matrix *vcv = NULL;
-    gretl_vector *b = NULL;
-    gretl_vector *br = NULL;
-    gretl_matrix *RvR = NULL;
-    int err, robust, freeRvR = 1;
-
-    int asym = ASYMPTOTIC_MODEL(pmod->ci);
-
-    gretl_error_clear();
-
-    err = restriction_set_form_matrices(rset, &R, &q);
-    if (err) {
-	return err;
-    }
-
-#if RDEBUG
-    gretl_matrix_print(R, "R matrix");
-    gretl_matrix_print(q, "q vector");
-#endif
-
-    if ((err = check_R_matrix(R))) {
-	if (err == E_SINGULAR) {
-	    pputs(prn, _("Matrix inversion failed:\n"
-			 " restrictions may be inconsistent or redundant\n"));
-	} else {
-	    err = E_ALLOC;
-	}
-	goto bailout;
-    }
-
-    b = gretl_coeff_vector_from_model(pmod, rset->mask);
-    vcv = gretl_vcv_matrix_from_model(pmod, rset->mask);
-    if (b == NULL || vcv == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    br = gretl_column_vector_alloc(rset->k);
-    if (br == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-#if RDEBUG
-    gretl_matrix_print(vcv, "VCV matrix");
-    gretl_matrix_print(b, "coeff vector");
-#endif  
-
-    err = gretl_matrix_multiply(R, b, br);
-    if (err) {
-	fprintf(stderr, "Failed: gretl_matrix_multiply(R, b, br)\n");
-	goto bailout;
-    }
-
-#if RDEBUG
-    gretl_matrix_print(br, "br");
-#endif  
-
-    if (rset->opt & OPT_C) {
-	rset->bsum = br->val[0];
-    }
-
-    if (!gretl_is_zero_matrix(q)) {
-	err = gretl_matrix_subtract_from(br, q);
-	if (err) {
-	    fprintf(stderr, "Failed: gretl_matrix_subtract_from(br, q)\n");
-	    goto bailout;
-	}
-    }
-
-    if (gretl_is_identity_matrix(R)) {
-#if RDEBUG
-	fprintf(stderr, "R is identity matrix: taking shortcut\n");
-#endif  
-	RvR = vcv;
-	freeRvR = 0;
-    } else {
-	RvR = gretl_matrix_alloc(R->rows, R->rows);
-	if (RvR == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-	gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
-			   RvR, GRETL_MOD_NONE);
-#if RDEBUG
-	gretl_matrix_print(RvR, "RvR");
-#endif  
-	if (rset->opt & OPT_C) {
-	    rset->bsd = sqrt(RvR->val[0]);
-	}
-    }
-
-    err = gretl_invert_symmetric_matrix(RvR);
-    if (err) {
-	pputs(prn, _("Matrix inversion failed:\n"
-		     " restrictions may be inconsistent or redundant\n"));
-	goto bailout;
-    }
-    
-    rset->test = gretl_scalar_qform(br, RvR, &err);
-    if (err) {
-	pputs(prn, _("Failed to compute test statistic\n"));
-	goto bailout;
-    }
+    int robust, asym;
 
     robust = gretl_model_get_int(pmod, "robust");
+    asym = ASYMPTOTIC_MODEL(pmod->ci);
 
     if (asym) {
 	rset->code = GRETL_STAT_WALD_CHISQ;
@@ -1290,11 +1192,119 @@ static int test_restriction_set (gretl_restriction_set *rset,
 	&& pmod->ci == OLS) {
 	do_restricted_estimates(rset, Z, pdinfo, prn);
     }
+}
+
+/* execute the test, for a single equation */
+
+static int 
+test_restriction_set (gretl_restriction_set *rset, PRN *prn)
+{
+    MODEL *pmod = rset->obj;
+    gretl_matrix *vcv = NULL;
+    gretl_vector *b = NULL;
+    gretl_vector *br = NULL;
+    gretl_matrix *RvR = NULL;
+    int err, freeRvR = 1;
+
+    gretl_error_clear();
+
+    err = restriction_set_form_matrices(rset);
+    if (err) {
+	return err;
+    }
+
+#if RDEBUG
+    gretl_matrix_print(rset->R, "R matrix");
+    gretl_matrix_print(rset->q, "q vector");
+#endif
+
+    if ((err = check_R_matrix(rset->R))) {
+	if (err == E_SINGULAR) {
+	    pputs(prn, _("Matrix inversion failed:\n"
+			 " restrictions may be inconsistent or redundant\n"));
+	} else {
+	    err = E_ALLOC;
+	}
+	goto bailout;
+    }
+
+    b = gretl_coeff_vector_from_model(pmod, rset->mask);
+    vcv = gretl_vcv_matrix_from_model(pmod, rset->mask);
+    if (b == NULL || vcv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    br = gretl_column_vector_alloc(rset->k);
+    if (br == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+#if RDEBUG
+    gretl_matrix_print(vcv, "VCV matrix");
+    gretl_matrix_print(b, "coeff vector");
+#endif  
+
+    err = gretl_matrix_multiply(rset->R, b, br);
+    if (err) {
+	fprintf(stderr, "Failed: gretl_matrix_multiply(R, b, br)\n");
+	goto bailout;
+    }
+
+#if RDEBUG
+    gretl_matrix_print(br, "br");
+#endif  
+
+    if (rset->opt & OPT_C) {
+	rset->bsum = br->val[0];
+    }
+
+    if (!gretl_is_zero_matrix(rset->q)) {
+	err = gretl_matrix_subtract_from(br, rset->q);
+	if (err) {
+	    fprintf(stderr, "Failed: gretl_matrix_subtract_from(br, q)\n");
+	    goto bailout;
+	}
+    }
+
+    if (gretl_is_identity_matrix(rset->R)) {
+#if RDEBUG
+	fprintf(stderr, "R is identity matrix: taking shortcut\n");
+#endif  
+	RvR = vcv;
+	freeRvR = 0;
+    } else {
+	RvR = gretl_matrix_alloc(rset->R->rows, rset->R->rows);
+	if (RvR == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+	gretl_matrix_qform(rset->R, GRETL_MOD_NONE, vcv,
+			   RvR, GRETL_MOD_NONE);
+#if RDEBUG
+	gretl_matrix_print(RvR, "RvR");
+#endif  
+	if (rset->opt & OPT_C) {
+	    rset->bsd = sqrt(RvR->val[0]);
+	}
+    }
+
+    err = gretl_invert_symmetric_matrix(RvR);
+    if (err) {
+	pputs(prn, _("Matrix inversion failed:\n"
+		     " restrictions may be inconsistent or redundant\n"));
+	goto bailout;
+    }
+    
+    rset->test = gretl_scalar_qform(br, RvR, &err);
+    if (err) {
+	pputs(prn, _("Failed to compute test statistic\n"));
+	goto bailout;
+    }
 
  bailout:
 
-    gretl_matrix_free(R);
-    gretl_vector_free(q);
     gretl_matrix_free(vcv);
     gretl_vector_free(b);
     gretl_vector_free(br);
@@ -1306,6 +1316,34 @@ static int test_restriction_set (gretl_restriction_set *rset,
     return err;
 }
 
+static int rset_expand_R (gretl_restriction_set *rset, int k)
+{
+    gretl_matrix *R = NULL;
+    double rij;
+    int i, j, jj;
+
+    R = gretl_zero_matrix_new(rset->k, k);
+    if (R == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<rset->k; i++) {
+	jj = 0;
+	for (j=0; j<k; j++) {
+	    if (rset->mask[j]) {
+		rij = gretl_matrix_get(rset->R, i, jj);
+		gretl_matrix_set(R, i, j, rij);
+		jj++;
+	    }
+	}
+    }
+
+    gretl_matrix_free(rset->R);
+    rset->R = R;
+
+    return 0;
+}
+
 static int do_single_equation_test (gretl_restriction_set *rset,
 				    const double **Z,
 				    const DATAINFO *pdinfo,
@@ -1314,24 +1352,38 @@ static int do_single_equation_test (gretl_restriction_set *rset,
     int err, done = 0;
 
     if (rset->opt & OPT_B) {
-	/* we currently offer a bootstrap test only for simple zero
-	   restrictions, in relation to OLS models */
-	restriction *r = rset->restrictions[0];
 	MODEL *pmod = rset->obj;
 
-	if (rset->k == 1 && r->nterms == 1 && r->rhs == 0 &&
-	    r->mult[0] == 1 && pmod->ci == OLS) {
-
-	    err = bootstrap_analysis(pmod, r->bnum[0], 0, Z, pdinfo, 
-				     OPT_P | OPT_R, prn);
-	    done = 1;
-	} else {
+	if (pmod->ci != OLS) {
 	    pputs(prn, "Sorry, the bootstrap option is not supported for this test");
+	} else {
+	    restriction *r = rset->restrictions[0];
+
+	    if (rset->k == 1 && r->nterms == 1 && r->rhs == 0) {
+		/* a simple zero restriction */
+		err = bootstrap_analysis(pmod, r->bnum[0], 0, Z, pdinfo, 
+					 OPT_P | OPT_R, prn);
+		done = 1;
+	    } else {
+		/* a more complex restriction */
+		err = test_restriction_set(rset, prn);
+		if (!err) {
+		    rset->test /= rset->k;
+		    rset_expand_R(rset, pmod->ncoeff);
+		    err = bootstrap_test_restriction(pmod, rset->R, rset->q,
+						     rset->test, rset->k, Z, 
+						     pdinfo, prn);
+		}
+	    }
+	    done = 1;
 	}
     }
 
     if (!done) {
-	err = test_restriction_set(rset, Z, pdinfo, prn);
+	err = test_restriction_set(rset, prn);
+	if (!err) {
+	    restriction_set_print_result(rset, Z, pdinfo, prn);
+	}
     }
 
     return err;
@@ -1357,7 +1409,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 
     if (rset->type == GRETL_OBJ_VAR) {
 	/* vecm */
-	err = restriction_set_form_matrices(rset, NULL, NULL);
+	err = restriction_set_form_matrices(rset);
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
 	    gretl_VECM_test_beta(rset->obj, prn);
@@ -1365,15 +1417,12 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {
 	/* simultaneous equations system */
-	gretl_matrix *R;
-	gretl_matrix *q;
-
 #if RDEBUG
 	print_restriction_set(rset, pdinfo, prn);
 #endif
-	err = restriction_set_form_matrices(rset, &R, &q);
+	err = restriction_set_form_matrices(rset);
 	if (!err) {
-	    err = check_R_matrix(R);
+	    err = check_R_matrix(rset->R);
 	    if (err == E_SINGULAR) {
 		pputs(prn, _("Matrix inversion failed:\n"
 			     " restrictions may be inconsistent or redundant\n"));
@@ -1382,7 +1431,9 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	    }
 	}	
 	if (!err) {
-	    system_set_restriction_matrices(rset->obj, R, q);
+	    system_set_restriction_matrices(rset->obj, rset->R, rset->q);
+	    rset->R = NULL;
+	    rset->q = NULL;
 	    destroy_restriction_set(rset);
 	}
     } else {
