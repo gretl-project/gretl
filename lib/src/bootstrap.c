@@ -32,7 +32,8 @@ enum {
     BOOT_LDV         = 1 << 6,  /* model includes lagged dep var */
     BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
     BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
-    BOOT_VERBOSE     = 1 << 9   /* for debugging */
+    BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
+    BOOT_VERBOSE     = 1 << 10   /* for debugging */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -52,7 +53,8 @@ struct boot_ {
     gretl_matrix *X;    /* independent variables */
     gretl_matrix *b0;   /* coefficients used to generate dep var */
     gretl_matrix *u0;   /* original residuals for resampling */
-    double SSRu;        /* unrestricted sum of squared residuals */
+    gretl_matrix *R;    /* LHS restriction matrix */
+    gretl_matrix *q;    /* RHS restriction matrix */
     double SE;          /* original std. error of residuals */
     double point;       /* point estimate of coeff */
     double se_p;        /* original std error for coeff of interest */
@@ -68,6 +70,11 @@ static void boot_destroy (boot *bs)
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
     gretl_matrix_free(bs->u0);
+
+    if (bs->flags & BOOT_FREE_RQ) {
+	gretl_matrix_free(bs->R);
+	gretl_matrix_free(bs->q);
+    }
 
     free(bs);
 }
@@ -99,7 +106,9 @@ static boot *boot_new (gretl_matrix *y,
     bs->b0 = b;
     bs->u0 = u;
 
-    bs->SSRu = NADBL;
+    bs->R = NULL;
+    bs->q = NULL;
+
     bs->SE = NADBL;
     bs->point = NADBL;
     bs->se_p = NADBL;
@@ -319,6 +328,73 @@ static void rescale_residuals (boot *bs)
     }
 }
 
+static double bs_F_test (const gretl_matrix *b,
+			 gretl_matrix *V, 
+			 const gretl_matrix *R,
+			 const gretl_matrix *q,
+			 int k, int *err)
+{
+    gretl_vector *br = NULL;
+    gretl_matrix *RVR = NULL;
+    double test = 0.0;
+    int freeRVR = 1;
+
+    br = gretl_column_vector_alloc(k);
+    if (br == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    *err = gretl_matrix_multiply(R, b, br);
+    if (*err) {
+	fprintf(stderr, "Failed: gretl_matrix_multiply(R, b, br)\n");
+	goto bailout;
+    }
+
+    if (!gretl_is_zero_matrix(q)) {
+	*err = gretl_matrix_subtract_from(br, q);
+	if (*err) {
+	    fprintf(stderr, "Failed: gretl_matrix_subtract_from(br, q)\n");
+	    goto bailout;
+	}
+    }
+
+    if (gretl_is_identity_matrix(R)) {
+	RVR = V;
+	freeRVR = 0;
+    } else {
+	RVR = gretl_matrix_alloc(R->rows, R->rows);
+	if (RVR == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+	gretl_matrix_qform(R, GRETL_MOD_NONE, V,
+			   RVR, GRETL_MOD_NONE);
+    }
+
+    *err = gretl_invert_symmetric_matrix(RVR);
+    if (*err) {
+	goto bailout;
+    }
+    
+    test = gretl_scalar_qform(br, RVR, err);
+    if (*err) {
+	goto bailout;
+    }
+
+    test /= k;
+
+ bailout:
+
+    gretl_vector_free(br);
+    
+    if (freeRVR) {
+	gretl_matrix_free(RVR);
+    }
+
+    return test;
+}
+
 /* do the actual bootstrap analysis: the objective is either to form a
    confidence interval or to compute a p-value; the methodology is
    either to resample the original residuals or to simulate normal
@@ -444,7 +520,10 @@ static int do_bootstrap (boot *bs, PRN *prn)
 
 	    if (bs->flags & BOOT_F_FORM) {
 		/* F-stat: FIXME!! */
-		tval = ((SSR - bs->SSRu) / 1) / (bs->SSRu / bs->dfu);
+		double s2 = SSR / (bs->T - k);
+
+		gretl_matrix_multiply_by_scalar(XTXI, s2);
+		tval = bs_F_test(b, XTXI, bs->R, bs->q, 1, &err);
 	    } else {
 		/* coeff, standard error and t-stat */
 		v = gretl_matrix_get(XTXI, p, p);
@@ -670,7 +749,6 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	bs->p = p;  /* coeff to examine */
 	bs->B = B;  /* replications */ 
 	bs->dfu = pmod->dfd;
-	bs->SSRu = pmod->ess;
 	bs->SE = pmod->sigma;
 	strcpy(bs->vname, pdinfo->varname[v]);
 	bs->point = pmod->coeff[p];
@@ -772,7 +850,6 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	bs->p = p;  /* coeff to examine */
 	bs->B = B;  /* replications */ 
 	bs->dfu = pmod->dfd;
-	bs->SSRu = pmod->ess;
 	bs->SE = pmod->sigma;
 	strcpy(bs->vname, pdinfo->varname[v]);
 	bs->point = pmod->coeff[p];
