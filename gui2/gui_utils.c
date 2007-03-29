@@ -2632,8 +2632,8 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ifac, "/Analysis/ANOVA", FALSE);
     }
 
-    if (pmod->ci != OLS) {
-	flip(vwin->ifac, "/Analysis/Bootstrap", FALSE);
+    if (pmod->ci != OLS && pmod->ci != WLS) {
+	flip(vwin->ifac, "/Analysis/Bootstrap...", FALSE);
     }
 }
 

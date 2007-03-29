@@ -55,6 +55,7 @@ struct boot_ {
     gretl_matrix *u0;   /* original residuals for resampling */
     gretl_matrix *R;    /* LHS restriction matrix */
     gretl_matrix *q;    /* RHS restriction matrix */
+    gretl_matrix *w;    /* weights for WLS */
     double SE;          /* original std. error of residuals */
     double point;       /* point estimate of coeff */
     double se0;         /* original std. error for coeff of interest */
@@ -70,6 +71,7 @@ static void boot_destroy (boot *bs)
     gretl_matrix_free(bs->X);
     gretl_matrix_free(bs->b0);
     gretl_matrix_free(bs->u0);
+    gretl_matrix_free(bs->w);
 
     if (bs->flags & BOOT_FREE_RQ) {
 	gretl_matrix_free(bs->R);
@@ -108,6 +110,7 @@ static boot *boot_new (gretl_matrix *y,
 
     bs->R = NULL;
     bs->q = NULL;
+    bs->w = NULL;
 
     bs->SE = NADBL;
     bs->point = NADBL;
@@ -568,12 +571,14 @@ static int do_bootstrap (boot *bs, PRN *prn)
 static int 
 make_model_matrices (const MODEL *pmod, const double **Z,
 		     gretl_matrix **py, gretl_matrix **pX,
-		     gretl_matrix **pb, gretl_matrix **pu)
+		     gretl_matrix **pb, gretl_matrix **pu,
+		     gretl_matrix **pw)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *u = NULL;
+    gretl_matrix *w = NULL;
     double xti;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
@@ -584,35 +589,52 @@ make_model_matrices (const MODEL *pmod, const double **Z,
     b = gretl_column_vector_alloc(k);
     u = gretl_column_vector_alloc(T);
 
-    if (y == NULL || X == NULL || b == NULL || u == NULL) {
+    if (pmod->ci == WLS) {
+	w = gretl_column_vector_alloc(T);
+    }
+
+    if (y == NULL || X == NULL || b == NULL || u == NULL ||
+	(pmod->ci == WLS && w == NULL)) {
 	gretl_matrix_free(y);
 	gretl_matrix_free(X);
 	gretl_matrix_free(b);
 	gretl_matrix_free(u);
+	gretl_matrix_free(w);
 	return E_ALLOC;
     }
+
+    for (i=0; i<k; i++) {
+	b->val[i] = pmod->coeff[i];
+    }    
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
 	    y->val[s] = Z[pmod->list[1]][t];
-	    u->val[s] = pmod->uhat[t];
+	    if (w != NULL) {
+		w->val[s] = sqrt(Z[pmod->nwt][t]);
+		y->val[s] *= w->val[s];
+		u->val[s] = y->val[s];
+	    } else {
+		u->val[s] = pmod->uhat[t];
+	    }
 	    for (i=2; i<=pmod->list[0]; i++) {
 		xti = Z[pmod->list[i]][t];
+		if (w != NULL) {
+		    xti *= w->val[s];
+		    u->val[s] -= b->val[i-2] * xti;
+		}
 		gretl_matrix_set(X, s, i-2, xti);
 	    }
 	    s++;
 	}
     }
 
-    for (i=0; i<k; i++) {
-	b->val[i] = pmod->coeff[i];
-    }
-
     *py = y;
     *pX = X;
     *pb = b;
     *pu = u;
+    *pw = w;
 
     return 0;
 }
@@ -730,21 +752,21 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
     gretl_matrix *y = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *u = NULL;
+    gretl_matrix *w = NULL;
     boot *bs = NULL;
     double alpha = .05;
     int ldv, flags = 0;
     int err = 0;
 
-    /* only OLS models for now */
-    if (pmod->ci != OLS) {
-	return E_OLSONLY;
+    if (pmod->ci != OLS && pmod->ci != WLS) {
+	return E_NOTIMP;
     }
 
     if (p < 0 || p >= pmod->ncoeff) {
 	return E_DATA;
     }
 
-    err = make_model_matrices(pmod, Z, &y, &X, &b, &u);
+    err = make_model_matrices(pmod, Z, &y, &X, &b, &u, &w);
     if (err) {
 	return err;
     }
@@ -791,6 +813,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	gretl_matrix_free(y);
 	gretl_matrix_free(b);
 	gretl_matrix_free(u);
+	gretl_matrix_free(w);
     }
 
     return err;
@@ -825,6 +848,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     gretl_matrix *y = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *u = NULL;
+    gretl_matrix *w = NULL;
     boot *bs = NULL;
     double alpha = .05;
     int ldv, flags = 0;
@@ -838,7 +862,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     gretl_matrix_print(q, "q");
 #endif    
 
-    err = make_model_matrices(pmod, Z, &y, &X, &b, &u);
+    err = make_model_matrices(pmod, Z, &y, &X, &b, &u, &w);
     if (err) {
 	return err;
     }
@@ -873,6 +897,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	gretl_matrix_free(y);
 	gretl_matrix_free(b);
 	gretl_matrix_free(u);
+	gretl_matrix_free(w);
     }
 
     return err;
