@@ -1008,6 +1008,7 @@ check_all_varnames (wbook *book, int *ncols, const char *blank_col)
 
     if (book_obs_labels(book)) {
 	startcol++;
+	gotcols = 1;
     }
 
     if (rows[i].cells == NULL) {
