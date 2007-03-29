@@ -2136,8 +2136,7 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
  * On exit, @b is replaced by the solution and @a is replaced 
  * by its LU decomposition.
  * 
- * Returns: 0 on successful completion, or a non-zero error code
- * (from the lapack function %dgetrs) on error.
+ * Returns: 0 on successful completion, non-zero code on error.
  */
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
@@ -2148,6 +2147,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     integer n = a->cols;
     integer nrhs, ldb;
     integer *ipiv;
+    int err = 0;
 
     if (b->cols == 1) {
 	nrhs = 1;
@@ -2162,7 +2162,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 
     ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     dgetrf_(&m, &n, a->val, &n, ipiv, &info);
@@ -2170,20 +2170,21 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     if (info != 0) {
 	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n", 
 		(int) info);
-	free(ipiv);
-	return info;
+	err = (info < 0)? E_DATA : E_SINGULAR;
     }
 
-    dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
-
-    if (info != 0) {
-	fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n", 
-		(int) info);
+    if (!err) {
+	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+	if (info != 0) {
+	    fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n", 
+		    (int) info);
+	    err = E_DATA;
+	}
     }    
 
     free(ipiv);
 
-    return info;
+    return err;
 }
 
 /**

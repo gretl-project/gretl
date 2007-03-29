@@ -26,6 +26,7 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "system.h"
+#include "bootstrap.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -2632,7 +2633,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ifac, "/Analysis/ANOVA", FALSE);
     }
 
-    if (pmod->ci != OLS && pmod->ci != WLS) {
+    if (!bootstrap_ok(pmod->ci)) {
 	flip(vwin->ifac, "/Analysis/Bootstrap...", FALSE);
     }
 }

@@ -1354,7 +1354,7 @@ static int do_single_equation_test (gretl_restriction_set *rset,
     if (rset->opt & OPT_B) {
 	MODEL *pmod = rset->obj;
 
-	if (pmod->ci != OLS && pmod->ci != WLS) {
+	if (!bootstrap_ok(pmod->ci)) {
 	    pputs(prn, "Sorry, the bootstrap option is not supported for this test");
 	} else {
 	    restriction *r = rset->restrictions[0];

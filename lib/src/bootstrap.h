@@ -28,5 +28,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 				const double **Z, const DATAINFO *pdinfo, 
 				PRN *prn);
 
+int bootstrap_ok (int ci);
+
 
 #endif /* BOOTSTRAP_H */
