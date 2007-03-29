@@ -951,11 +951,11 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 /* set-up for a set of restrictions on a single equation */
 
 gretl_restriction_set *
-eqn_restriction_set_start (const char *line, MODEL *pmod)
+eqn_restriction_set_start (const char *line, MODEL *pmod, gretlopt opt)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(pmod, GRETL_OBJ_EQN, OPT_NONE);
+    rset = real_restriction_set_start(pmod, GRETL_OBJ_EQN, opt);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;

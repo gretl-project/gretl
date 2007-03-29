@@ -733,9 +733,10 @@ static GList *make_replics_list (void)
 {
     GList *list = NULL;
 
-    list = g_list_append(list, "999");
-    list = g_list_append(list, "9999");
-    list = g_list_append(list, "99999");
+    list = g_list_append(list, "100");
+    list = g_list_append(list, "1000");
+    list = g_list_append(list, "10000");
+    list = g_list_append(list, "100000");
 
     return list;
 }
@@ -859,7 +860,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_combo_set_popdown_strings(GTK_COMBO(rs.w), replist); 
     g_list_free(replist);
     gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rs.w)->entry), 7);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rs.w)->entry), "9999");
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rs.w)->entry), "1000");
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rs.w)->entry), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), rs.w, FALSE, FALSE, 5);
     gtk_widget_show(rs.w);

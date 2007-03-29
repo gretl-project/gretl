@@ -2206,6 +2206,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     PRN *prn;
     char title[64], bufline[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
+    gretlopt opt = edit_dialog_get_opt(dlg);
     gretl_restriction_set *my_rset = NULL;
     int got_start_line = 0, got_end_line = 0;
     int height = 300;
@@ -2245,7 +2246,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
-		my_rset = eqn_restriction_set_start(bufline, pmod);
+		my_rset = eqn_restriction_set_start(bufline, pmod, opt);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
 	    } else {

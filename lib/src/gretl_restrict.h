@@ -32,7 +32,7 @@ gretl_restriction_set *
 var_restriction_set_start (const char *line, GRETL_VAR *var);
 
 gretl_restriction_set *
-eqn_restriction_set_start (const char *line, MODEL *pmod);
+eqn_restriction_set_start (const char *line, MODEL *pmod, gretlopt opt);
 
 int 
 restriction_set_parse_line (gretl_restriction_set *rset, const char *line,

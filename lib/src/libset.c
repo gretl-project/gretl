@@ -521,12 +521,12 @@ int get_VAR_horizon (void)
     }
 }
 
-int get_bootstrap_replications (int ci)
+int get_bootstrap_replications (void)
 {
     if (check_for_state()) {
 	return 0;
     } else if (is_unset(state->bootrep)) {
-	return (ci)? 999 : 1000;
+	return 1000;
     } else {
 	return state->bootrep;
     }

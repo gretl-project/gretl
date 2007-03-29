@@ -715,6 +715,17 @@ static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
+static gboolean opt_b_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_B;
+    } else {
+	dlg->opt &= ~OPT_B;
+    }
+
+    return FALSE;
+}
+
 static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 				  gretlopt opt)
 {
@@ -728,6 +739,10 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_r_callback), dlg);
+    } else if (opt == OPT_B) {
+	b = gtk_check_button_new_with_label(_("Use bootstrap"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_b_callback), dlg);
     } else {
 	return;
     }
@@ -898,6 +913,19 @@ static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
     gtk_widget_destroy(d->dialog);
 }
 
+static int ols_model_window (windata_t *vwin)
+{
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = (MODEL *) vwin->data;
+	
+	if (pmod->ci == OLS) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick, 
@@ -926,7 +954,6 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     button_box = GTK_DIALOG(d->dialog)->action_area;
     gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
 			      GTK_BUTTONBOX_END);
-    
 
     if (cmdcode == SYSTEM && d->data != NULL) {
 	/* revisiting saved equation system */
@@ -998,6 +1025,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
     } else if (cmdcode == GMM) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	build_gmm_radios(top_vbox, d);
+    } else if (cmdcode == RESTRICT && ols_model_window(okptr)) {
+	dialog_option_switch(top_vbox, d, OPT_B);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 

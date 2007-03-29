@@ -680,15 +680,18 @@ static int make_flags (gretlopt opt, int ldv)
 
 int maybe_adjust_B (int B, double a, int flags)
 {
-    int ci = (flags & BOOT_CI)? 1 : 0;
-
     if (B <= 0) {
-	B = get_bootstrap_replications(ci);
+	B = get_bootstrap_replications();
     }
 
-    if (ci) {
-	double x = a * (B + 1);
+    if (flags & BOOT_CI) {
+	double x;
 
+	if (B % 10 == 0) {
+	    B--;
+	}
+
+	x = a * (B + 1);
 	while (x - floor(x) > 1e-13) {
 	    x = a * (++B + 1);
 	}
