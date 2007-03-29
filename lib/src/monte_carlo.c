@@ -2046,7 +2046,7 @@ static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 
     pputc(prn, '\n');
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(lmod->model0->ci, prn)), lmod->model0->nobs, 
+	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs, 
 	    startdate, enddate);
     print_model_vcv_info(lmod->model0, prn);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 

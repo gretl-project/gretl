@@ -43,7 +43,7 @@ enum {
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		PRN *prn);
 
-const char *estimator_string (int ci, PRN *prn);
+const char *estimator_string (const MODEL *pmod, PRN *prn);
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn);
 

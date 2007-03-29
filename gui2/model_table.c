@@ -28,6 +28,8 @@
 static MODEL **table_models;
 static int n_models;
 static int *grand_list;
+static char **param_names;
+static int n_param_names;
 static int use_tstats;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
@@ -107,8 +109,13 @@ void clear_model_table (PRN *prn)
     free(table_models);
     table_models = NULL;
 
+    free_strings_array(param_names, n_param_names);
+    param_names = NULL;
+    n_param_names = 0;
+
     free(grand_list);
     grand_list = NULL;
+
     n_models = 0;
     
     if (prn != NULL) {
@@ -243,16 +250,23 @@ static int on_grand_list (int v)
     return 0;
 }
 
-static void add_to_grand_list (const int *list)
+static int add_to_grand_list (const MODEL *pmod)
 {
+    const int *list = pmod->list;
+    char pname[VNAMELEN];
     int i, j = grand_list[0] + 1;
+    int err = 0;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=2; i<=list[0] && !err; i++) {
 	if (!on_grand_list(list[i])) {
 	    grand_list[0] += 1;
 	    grand_list[j++] = list[i];
+	    gretl_model_get_param_name(pmod, datainfo, i-2, pname);
+	    err = strings_array_add(&param_names, &n_param_names, pname);
 	}
     }
+
+    return err;
 }
 
 static int real_list_length (int *list)
@@ -268,11 +282,33 @@ static int real_list_length (int *list)
     return list[0];
 }
 
+static int grand_list_start (const MODEL *pmod)
+{
+    char pname[VNAMELEN];
+    int i, vi;
+    int err = 0;
+
+    for (i=0; i<=pmod->list[0] && !err; i++) {
+	vi = pmod->list[i];
+	if (vi == LISTSEP) {
+	    break;
+	}
+	grand_list[i] = vi;
+	if (i > 1) {
+	    gretl_model_get_param_name(pmod, datainfo, i-2, pname);
+	    err = strings_array_add(&param_names, &n_param_names, pname);
+	}
+    }
+
+    return err;
+}
+
 static int make_grand_varlist (void)
 {
-    int i, j, first = 1;
-    int l0 = 0;
     const MODEL *pmod;
+    int i, first = 1;
+    int l0 = 0;
+    int err = 0;
 
     free(grand_list);
 
@@ -287,24 +323,19 @@ static int make_grand_varlist (void)
 	return 1;
     }
 
-    for (i=0; i<n_models; i++) {
+    for (i=0; i<n_models && !err; i++) {
 	if (table_models[i] != NULL) {
 	    pmod = table_models[i];
 	    if (first) {
-		for (j=0; j<=pmod->list[0]; j++) {
-		    if (pmod->list[j] == LISTSEP) {
-			break;
-		    }
-		    grand_list[j] = pmod->list[j];
-		}
+		err = grand_list_start(pmod);
 		first = 0;
 	    } else {
-		add_to_grand_list(pmod->list);
+		err = add_to_grand_list(pmod);
 	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int model_table_is_empty (void)
@@ -362,14 +393,14 @@ static int common_df (void)
     return 1;
 }
 
-static const char *short_estimator_string (int ci, PRN *prn)
+static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
 {
-    if (ci == HSK) return N_("HSK");
-    else if (ci == CORC) return N_("CORC");
-    else if (ci == HILU) return N_("HILU");
-    else if (ci == PWE) return N_("PWE");
-    else if (ci == ARCH) return N_("ARCH");
-    else return estimator_string(ci, prn);
+    if (pmod->ci == HSK) return N_("HSK");
+    else if (pmod->ci == CORC) return N_("CORC");
+    else if (pmod->ci == HILU) return N_("HILU");
+    else if (pmod->ci == PWE) return N_("PWE");
+    else if (pmod->ci == ARCH) return N_("ARCH");
+    else return estimator_string(pmod, prn);
 }
 
 static const char *get_asts (double pval)
@@ -397,17 +428,18 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 
     /* loop across all variables that appear in any model */
     for (i=2; i<=grand_list[0]; i++) {
+	char *pname = param_names[i-2];
 	int v = grand_list[i];
 	int f = 1;
 
 	if (tex) {
-	    tex_escape(tmp, datainfo->varname[v]);
+	    tex_escape(tmp, pname);
 	    pprintf(prn, "%s ", tmp);
 	} else if (rtf) {
 	    print_rtf_row_spec(prn, 0);
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pname);
 	} else {
-	    pprintf(prn, "%-*s ", nwidth, datainfo->varname[v]);
+	    pprintf(prn, "%-*s ", nwidth, pname);
 	}
 
 	/* print the coefficient estimates across a row */
@@ -719,8 +751,8 @@ static int grand_list_namelen (void)
 {
     int i, len, maxlen = 8;
 
-    for (i=2; i<=grand_list[0]; i++) {
-	len = strlen(datainfo->varname[grand_list[i]]);
+    for (i=0; i<n_param_names; i++) {
+	len = strlen(param_names[i]);
 	if (len > maxlen) {
 	    maxlen = len;
 	}
@@ -758,7 +790,7 @@ int display_model_table (int gui)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, _("%s estimates"), 
-		_(estimator_string(ci, prn)));
+		_(estimator_string(table_models[0], prn)));
 	pputc(prn, '\n');
     }
 
@@ -791,8 +823,7 @@ int display_model_table (int gui)
 	for (j=0; j<n_models; j++) {
 	    if (table_models[j] != NULL) {
 		strcpy(est, 
-		       _(short_estimator_string(table_models[j]->ci,
-						prn)));
+		       _(short_estimator_string(table_models[j], prn)));
 		print_centered(est, 12, prn);
 	    }
 	}
@@ -852,7 +883,7 @@ static int tex_print_model_table (PRN *prn)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn)));
+		I_(estimator_string(table_models[0], prn)));
 	pputs(prn, "\\\\\n");
     }
 
@@ -894,8 +925,7 @@ static int tex_print_model_table (PRN *prn)
 		continue;
 	    }
 	    strcpy(est, 
-		   I_(short_estimator_string(table_models[j]->ci,
-					     prn)));
+		   I_(short_estimator_string(table_models[j], prn)));
 	    pprintf(prn, " & %s ", est);
 	}
 	pputs(prn, "\\\\ ");
@@ -965,7 +995,7 @@ static int rtf_print_model_table (PRN *prn)
 	/* all models use same estimation procedure */
 	pputs(prn, "\\par \\qc ");
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn)));
+		I_(estimator_string(table_models[0], prn)));
 	pputc(prn, '\n');
     }
 
@@ -1001,7 +1031,7 @@ static int rtf_print_model_table (PRN *prn)
 	for (j=0; j<n_models; j++) {
 	    if (table_models[j] == NULL) continue;
 	    strcpy(est, 
-		   I_(short_estimator_string(table_models[j]->ci, prn)));
+		   I_(short_estimator_string(table_models[j], prn)));
 	    pprintf(prn, "\\qc %s\\cell ", est);
 	}
 	pputs(prn, "\\intbl \\row\n");

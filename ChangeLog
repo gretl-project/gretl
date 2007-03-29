@@ -1,5 +1,8 @@
 version 1.6.3, in progress
-- Add facility for bootstrap analysis (in progress)
+- Add facility for bootstrap analysis in GUI
+- Model table: fixes for including panel models
+- Fix bug in panel autocorrelation test (lmtest command)
+- Add fft() matrix function (Fast Fourier Transform)
 
 3/24/2007 version 1.6.2
 - Add Poisson distribution to p-value finder

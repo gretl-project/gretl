@@ -805,7 +805,7 @@ static const char *aux_string (int aux, PRN *prn)
     else return "";
 }
 
-const char *estimator_string (int ci, PRN *prn)
+static const char *simple_estimator_string (int ci, PRN *prn)
 {
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS) return N_("WLS"); 
@@ -841,8 +841,7 @@ const char *estimator_string (int ci, PRN *prn)
     }
 }
 
-static const char *
-my_estimator_string (const MODEL *pmod, PRN *prn)
+const char *estimator_string (const MODEL *pmod, PRN *prn)
 {
     if (pmod->ci == ARMA) {
 	if (gretl_model_get_int(pmod, "armax")) {
@@ -896,7 +895,7 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Probit");
 	}
     } else {
-	return estimator_string(pmod->ci, prn);
+	return simple_estimator_string(pmod->ci, prn);
     }
 }
 
@@ -1486,7 +1485,7 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, (utf)?
 		    _("%s estimates using %d observations from %s%s%s") :
 		    I_("%s estimates using %d observations from %s%s%s"),
-		    _(my_estimator_string(pmod, prn)), 
+		    _(estimator_string(pmod, prn)), 
 		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
 	    gretl_prn_newline(prn);
 	    pprintf(prn, "%s: %d",
@@ -1496,7 +1495,7 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, (utf)?
 		    _("%s estimates using the %d observations %s%s%s") :
 		    I_("%s estimates using the %d observations %s%s%s"),
-		    _(my_estimator_string(pmod, prn)), 
+		    _(estimator_string(pmod, prn)), 
 		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
 	}
     } else {
@@ -1507,7 +1506,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, (utf)?
 		_("%s estimates using %d observations") :
 		I_("%s estimates using %d observations"),
-		_(my_estimator_string(pmod, prn)), 
+		_(estimator_string(pmod, prn)), 
 		pmod->nobs);
 	if (effn > 0) {
 	    gretl_prn_newline(prn);
