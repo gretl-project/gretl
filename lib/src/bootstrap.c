@@ -404,7 +404,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 {
     gretl_matrix *X = NULL;
     gretl_matrix *g = NULL;
-    int Xcols = bs->X->cols;
+    int Xcols = bs->k;
     double *xi, *xj;
     double ut;
     char *mask = NULL;
@@ -431,7 +431,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 	goto bailout;
     }
 
-    if (Xcols > bs->X->cols) {
+    if (Xcols > bs->k) {
 	bigX = 1;
     }
 	    
@@ -444,7 +444,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
     xi = bs->X->val;
     xj = X->val;
 
-    for (i=0; i<bs->X->cols; i++) {
+    for (i=0; i<bs->k; i++) {
 	for (t=0; t<bs->T; t++) {
 	    xj[t] = xi[t];
 	}
@@ -454,7 +454,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
     if (bigX) {
 	xi = bs->X->val;
-	for (i=0; i<bs->X->cols; i++) {
+	for (i=0; i<bs->k; i++) {
 	    if (mask[i]) {
 		for (t=0; t<bs->T; t++) {
 		    xj[t] = xi[t] * xi[t];
@@ -477,9 +477,9 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 	bs->w->val[t] = sqrt(1.0 / exp(yh->val[t]));
     }
 
-    gretl_matrix_reuse(X, bs->T, bs->X->cols);
+    gretl_matrix_reuse(X, bs->T, bs->k);
     xi = X->val;
-    for (i=0; i<X->cols; i++) {
+    for (i=0; i<bs->k; i++) {
 	for (t=0; t<bs->T; t++) {
 	    xi[t] *= bs->w->val[t];
 	}
@@ -1052,6 +1052,6 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
 int bootstrap_ok (int ci)
 {
-    return (ci == OLS || ci == WLS || ci == HSK);
+    return (ci == OLS || ci == WLS); /* HSK?? */
 }
 
