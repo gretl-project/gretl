@@ -431,7 +431,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 	goto bailout;
     }
 
-    if (Xcols > X->cols) {
+    if (Xcols > bs->X->cols) {
 	bigX = 1;
     }
 	    
@@ -444,7 +444,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
     xi = bs->X->val;
     xj = X->val;
 
-    for (i=0; i<X->cols; i++) {
+    for (i=0; i<bs->X->cols; i++) {
 	for (t=0; t<bs->T; t++) {
 	    xj[t] = xi[t];
 	}
@@ -454,7 +454,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
     if (bigX) {
 	xi = bs->X->val;
-	for (i=0; i<X->cols; i++) {
+	for (i=0; i<bs->X->cols; i++) {
 	    if (mask[i]) {
 		for (t=0; t<bs->T; t++) {
 		    xj[t] = xi[t] * xi[t];
@@ -597,7 +597,7 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	    make_normal_y(bs);
 	} else {
 	    make_resampled_y(bs, z); 
-	} 
+	}
 
 	if (bs->ldvpos >= 0) {
 	    /* X matrix includes lagged dependent variable, so it has
@@ -624,10 +624,12 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	if (!err) {
 	    /* solve for current parameter estimates */
 	    err = gretl_cholesky_solve(XTX, b);
+	    gretl_matrix_print(b, "b(1)");
 	}
 
 	if (!err && bs->mci == HSK) {
 	    err = hsk_transform_data(bs, b, yh);
+	    gretl_matrix_print(b, "b(2)");
 	}
 
 	if (err) {
