@@ -826,7 +826,7 @@ static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
 			      PRN *prn)
 {
     if (plt->bool != NULL) {
-	pprintf(prn, "%s\n %-*s", plt->varname, offset, plt->bool);
+	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
 	pprintf(prn, "%-*s", offset, plt->varname);
     }
@@ -852,7 +852,7 @@ static void five_numbers_with_interval (BOXPLOT *plt, int offset, PRN *prn)
     sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
 
     if (plt->bool != NULL) {
-	pprintf(prn, "%s\n %-*s", plt->varname, offset, plt->bool);
+	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
 	pprintf(prn, "%-*s", offset, plt->varname);
     }
@@ -882,7 +882,7 @@ static int get_format_offset (PLOTGROUP *grp)
 
     for (i=0; i<grp->nplots; i++) {
 	if (grp->plots[i].bool != NULL) {
-	    n = strlen(grp->plots[i].bool) + 1;
+	    n = strlen(grp->plots[i].bool);
 	} else {
 	    n = strlen(grp->plots[i].varname);
 	}
