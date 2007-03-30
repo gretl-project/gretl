@@ -27,10 +27,10 @@
 
 static MODEL **table_models;
 static int n_models;
-static int *grand_list;
-static char **param_names;
-static int n_param_names;
+static char **pnames;
+static int n_params;
 static int use_tstats;
+static int depvarnum;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -109,12 +109,9 @@ void clear_model_table (PRN *prn)
     free(table_models);
     table_models = NULL;
 
-    free_strings_array(param_names, n_param_names);
-    param_names = NULL;
-    n_param_names = 0;
-
-    free(grand_list);
-    grand_list = NULL;
+    free_strings_array(pnames, n_params);
+    pnames = NULL;
+    n_params = 0;
 
     n_models = 0;
     
@@ -221,28 +218,12 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
     return 0;
 }
 
-static int var_is_in_model (int v, const MODEL *pmod)
+static int on_param_list (const char *pname)
 {
     int i;
 
-    for (i=2; i<=pmod->list[0]; i++) {
-	if (pmod->list[i] == LISTSEP) {
-	    break;
-	}
-	if (v == pmod->list[i]) {
-	    return i;
-	}
-    }
-
-    return 0;    
-}
-
-static int on_grand_list (int v)
-{
-    int i;
-
-    for (i=2; i<=grand_list[0]; i++) {
-	if (v == grand_list[i]) {
+    for (i=0; i<n_params; i++) {
+	if (!strcmp(pname, pnames[i])) {
 	    return 1;
 	}
     }
@@ -250,88 +231,39 @@ static int on_grand_list (int v)
     return 0;
 }
 
-static int add_to_grand_list (const MODEL *pmod)
+static int add_to_param_list (const MODEL *pmod)
 {
-    const int *list = pmod->list;
     char pname[VNAMELEN];
-    int i, j = grand_list[0] + 1;
-    int err = 0;
+    int i, err = 0;
 
-    for (i=2; i<=list[0] && !err; i++) {
-	if (!on_grand_list(list[i])) {
-	    grand_list[0] += 1;
-	    grand_list[j++] = list[i];
-	    gretl_model_get_param_name(pmod, datainfo, i-2, pname);
-	    err = strings_array_add(&param_names, &n_param_names, pname);
+    for (i=0; i<pmod->ncoeff && !err; i++) {
+	gretl_model_get_param_name(pmod, datainfo, i, pname);
+	if (!on_param_list(pname)) {
+	    err = strings_array_add(&pnames, &n_params, pname);
 	}
     }
 
     return err;
 }
 
-static int real_list_length (int *list)
-{
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    return i - 1;
-	}
-    }
-
-    return list[0];
-}
-
-static int grand_list_start (const MODEL *pmod)
-{
-    char pname[VNAMELEN];
-    int i, vi;
-    int err = 0;
-
-    for (i=0; i<=pmod->list[0] && !err; i++) {
-	vi = pmod->list[i];
-	if (vi == LISTSEP) {
-	    break;
-	}
-	grand_list[i] = vi;
-	if (i > 1) {
-	    gretl_model_get_param_name(pmod, datainfo, i-2, pname);
-	    err = strings_array_add(&param_names, &n_param_names, pname);
-	}
-    }
-
-    return err;
-}
-
-static int make_grand_varlist (void)
+static int make_full_param_list (void)
 {
     const MODEL *pmod;
-    int i, first = 1;
-    int l0 = 0;
-    int err = 0;
+    int first = 1;
+    int i, err = 0;
 
-    free(grand_list);
-
-    for (i=0; i<n_models; i++) {
-	if (table_models[i] != NULL) {
-	    l0 += real_list_length(table_models[i]->list);
-	}
-    }
-
-    grand_list = gretl_list_new(l0);
-    if (grand_list == NULL) {
-	return 1;
-    }
+    free_strings_array(pnames, n_params);
+    pnames = NULL;
+    n_params = 0;
 
     for (i=0; i<n_models && !err; i++) {
 	if (table_models[i] != NULL) {
 	    pmod = table_models[i];
 	    if (first) {
-		err = grand_list_start(pmod);
+		depvarnum = gretl_model_get_depvar(pmod);
 		first = 0;
-	    } else {
-		err = add_to_grand_list(pmod);
-	    }
+	    } 
+	    err = add_to_param_list(pmod);
 	}
     }
 
@@ -400,7 +332,23 @@ static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
     else if (pmod->ci == HILU) return N_("HILU");
     else if (pmod->ci == PWE) return N_("PWE");
     else if (pmod->ci == ARCH) return N_("ARCH");
-    else return estimator_string(pmod, prn);
+    else if (pmod->ci == WLS) {
+	if (gretl_model_get_int(pmod, "iters")) {
+	    return N_("MLE");
+	} else {
+	    return N_("WLS");
+	}
+    } else if (pmod->ci == PANEL) {
+	if (gretl_model_get_int(pmod, "fixed-effects")) {
+	    return N_("Within");
+	} else if (gretl_model_get_int(pmod, "random-effects")) {
+	    return N_("GLS");
+	} else {
+	    return N_("Between");
+	}
+    } else {
+	return estimator_string(pmod, prn);
+    }
 }
 
 static const char *get_asts (double pval)
@@ -427,9 +375,9 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
     int rtf = rtf_format(prn);
 
     /* loop across all variables that appear in any model */
-    for (i=2; i<=grand_list[0]; i++) {
-	char *pname = param_names[i-2];
-	int v = grand_list[i];
+
+    for (i=0; i<n_params; i++) {
+	char *pname = pnames[i];
 	int f = 1;
 
 	if (tex) {
@@ -448,9 +396,9 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 	    if (pmod == NULL) {
 		continue;
 	    }
-	    if ((k = var_is_in_model(v, pmod))) {
-		double x = screen_zero(pmod->coeff[k-2]);
-		double s = screen_zero(pmod->sderr[k-2]);
+	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
+		double x = screen_zero(pmod->coeff[k]);
+		double s = screen_zero(pmod->sderr[k]);
 		double pval;
 		char numstr[32];
 
@@ -515,14 +463,14 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 	    if (pmod == NULL) {
 		continue;
 	    }
-	    if ((k = var_is_in_model(v, pmod))) {
+	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
 		char numstr[32];
 		double val;
 
 		if (use_tstats) {
-		    val = pmod->coeff[k-2] / pmod->sderr[k-2];
+		    val = pmod->coeff[k] / pmod->sderr[k];
 		} else {
-		    val = pmod->sderr[k-2];
+		    val = pmod->sderr[k];
 		}
 
 		sprintf(numstr, "%#.4g", val);
@@ -747,12 +695,12 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
     }
 }
 
-static int grand_list_namelen (void)
+static int max_namelen (void)
 {
     int i, len, maxlen = 8;
 
-    for (i=0; i<n_param_names; i++) {
-	len = strlen(param_names[i]);
+    for (i=0; i<n_params; i++) {
+	len = strlen(pnames[i]);
 	if (len > maxlen) {
 	    maxlen = len;
 	}
@@ -774,11 +722,11 @@ int display_model_table (int gui)
 	return 1;
     }
 
-    if (make_grand_varlist()) {
+    if (make_full_param_list()) {
 	return 1;
     }
 
-    namelen = grand_list_namelen();
+    namelen = max_namelen();
 
     if (bufopen(&prn)) {
 	clear_model_table(NULL);
@@ -794,8 +742,7 @@ int display_model_table (int gui)
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, _("Dependent variable: %s\n"),
-	    datainfo->varname[grand_list[1]]);
+    pprintf(prn, _("Dependent variable: %s\n"), datainfo->varname[depvarnum]);
 
     pputc(prn, '\n');
     bufspace(namelen + 4, prn);
@@ -870,7 +817,7 @@ static int tex_print_model_table (PRN *prn)
 	return 1;
     }
 
-    if (make_grand_varlist()) {
+    if (make_full_param_list()) {
 	return 1;
     }
 
@@ -887,7 +834,7 @@ static int tex_print_model_table (PRN *prn)
 	pputs(prn, "\\\\\n");
     }
 
-    tex_escape(tmp, datainfo->varname[grand_list[1]]);
+    tex_escape(tmp, datainfo->varname[depvarnum]);
     pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
@@ -983,7 +930,9 @@ static int rtf_print_model_table (PRN *prn)
 	return 1;
     }
 
-    if (make_grand_varlist()) return 1;
+    if (make_full_param_list()) {
+	return 1;
+    }
 
     gretl_print_set_format(prn, GRETL_FORMAT_RTF);
 
@@ -1000,8 +949,7 @@ static int rtf_print_model_table (PRN *prn)
     }
 
     pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
-	    I_("Dependent variable"),
-	    datainfo->varname[grand_list[1]]);
+	    I_("Dependent variable"), datainfo->varname[depvarnum]);
 
     /* RTF row stuff */
     print_rtf_row_spec(prn, 1);
