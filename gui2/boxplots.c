@@ -38,6 +38,7 @@ typedef struct {
 } OUTLIERS;
 
 typedef struct {
+    double mean;
     double median;
     double conf[2];
     double uq, lq;
@@ -69,7 +70,7 @@ static double scalepos = 75.0; /* was 60 */
 static char boxfont[64] = "Helvetica";
 static int boxfontsize = 12;
 
-static int five_numbers (gpointer data);
+static int six_numbers (gpointer data);
 static int dump_boxplot (PLOTGROUP *grp);
 
 #ifdef G_OS_WIN32
@@ -131,7 +132,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
 		      FSEL_DATA_MISC, data);
     } else if (key->keyval == GDK_p) {  
-	five_numbers(data);
+	six_numbers(data);
     }
 #ifdef G_OS_WIN32
     else if (key->keyval == GDK_c) {  
@@ -152,23 +153,28 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = g_object_get_data(G_OBJECT(w), "group");
     PLOTGROUP *grp = (PLOTGROUP *) ptr;
 
-    if (!strcmp(item, _("Five-number summary"))) {
-        five_numbers(grp);
-    }
-    else if (!strcmp(item, _("Save to session as icon"))) {
+    if (!strcmp(item, _("Numerical summary"))) {
+        six_numbers(grp);
+    } else if (!strcmp(item, _("Save to session as icon"))) {
         if (dump_boxplot(grp) == 0) {
 	    add_boxplot_to_session();
 	    grp->saved = 1;
 	}
-    }
-    else if (!strcmp(item, _("Save as EPS..."))) {
+    } else if (!strcmp(item, _("Save as EPS..."))) {
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, 
 		      FSEL_DATA_MISC, ptr);
-    }
-    else if (!strcmp(item, _("Save as PS..."))) {
+    } else if (!strcmp(item, _("Save as PS..."))) {
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, 
 		      FSEL_DATA_MISC, ptr);
+    } else if (!strcmp(item, _("Help"))) {
+	context_help(NULL, GINT_TO_POINTER(BXPLOT));
+    } else if (!strcmp(item, _("Close"))) { 
+	gtk_widget_destroy(grp->popup);
+	grp->popup = NULL;
+        gtk_widget_destroy(grp->window);
+	return TRUE;
     }
+
 #ifdef G_OS_WIN32
     else if (!strcmp(item, _("Copy to clipboard"))) {
 	cb_copy_image(ptr);
@@ -179,15 +185,6 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 		      FSEL_DATA_MISC, ptr);
     }
 #endif
-    else if (!strcmp(item, _("Help"))) {
-	context_help(NULL, GINT_TO_POINTER(BXPLOT));
-    }
-    else if (!strcmp(item, _("Close"))) { 
-	gtk_widget_destroy(grp->popup);
-	grp->popup = NULL;
-        gtk_widget_destroy(grp->window);
-	return TRUE;
-    }
 
     gtk_widget_destroy(grp->popup);
     grp->popup = NULL;
@@ -199,7 +196,7 @@ static GtkWidget *build_menu (PLOTGROUP *grp)
 {
     GtkWidget *menu, *item;    
     static char *items[] = {
-        N_("Five-number summary"),
+        N_("Numerical summary"),
 	N_("Save to session as icon"),
         N_("Save as EPS..."),
         N_("Save as PS..."),
@@ -283,8 +280,8 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 	    x -= width;
 	}
 
-	gdk_draw_layout (pixmap, gc, x, y, pl);
-	g_object_unref (G_OBJECT(pl));
+	gdk_draw_layout(pixmap, gc, x, y, pl);
+	g_object_unref(G_OBJECT(pl));
     }
 }
 
@@ -293,9 +290,9 @@ draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
 	   GdkGC *gc, GtkPlotPC *pc)
 {
     if (pc != NULL) {
-	gtk_plot_pc_draw_line (pc, points[0], points[1], points[2], points[3]); 
+	gtk_plot_pc_draw_line(pc, points[0], points[1], points[2], points[3]); 
     } else {
-	gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
+	gdk_draw_line(pixmap, gc, points[0], points[1], points[2], points[3]);
     }
 }
 
@@ -304,11 +301,26 @@ draw_outlier (double x, double y,
 	      GtkWidget *area, GdkPixmap *pixmap, 
 	      GdkGC *gc, GtkPlotPC *pc)
 {
+    int fullcircle = 360 * 64;
+
     if (pc != NULL) {
-	gtk_plot_pc_draw_circle (pc, FALSE, x, y, 8);
+	gtk_plot_pc_draw_circle(pc, FALSE, x, y, 8);
     } else {
-	gdk_draw_line (pixmap, gc, x - 4, y - 4, x + 4, y + 4);
-	gdk_draw_line (pixmap, gc, x - 4, y + 4, x + 4, y - 4);
+	gdk_draw_arc(pixmap, gc, FALSE, x - 4, y - 4, 8, 8, 0, fullcircle);
+    }
+}
+
+static void 
+draw_mean (double x, double y, 
+	   GtkWidget *area, GdkPixmap *pixmap, 
+	   GdkGC *gc, GtkPlotPC *pc)
+{
+    if (pc != NULL) {
+	gtk_plot_pc_draw_line(pc, x - 4, y, x + 4, y);
+	gtk_plot_pc_draw_line(pc, x, y + 4, x, y - 4);
+    } else {
+	gdk_draw_line(pixmap, gc, x - 4, y, x + 4, y);
+	gdk_draw_line(pixmap, gc, x, y + 4, x, y - 4);
     }
 }
 
@@ -345,8 +357,9 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     gchar *numstr = NULL;
     GdkGC *gc = NULL;
 
-    if (pc == NULL) gc = grp->window->style->fg_gc[GTK_STATE_NORMAL];
-    /* gc = grp->window->style->bg_gc[GTK_STATE_SELECTED]; */
+    if (pc == NULL) {
+	gc = grp->window->style->fg_gc[GTK_STATE_NORMAL];
+    }
 
     /* draw vertical line */
     points[0] = points[2] = scalepos;
@@ -393,13 +406,19 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double ybase = height * headroom / 2.0;
     double xcenter = plot->xbase + boxwidth / 2.0;
     double scale = (1.0 - headroom) * height / (gmax - gmin);
-    double median, uq, lq, maxval, minval;
+    double mean, median, uq, lq, maxval, minval;
     double conflo = 0., confhi = 0.;
     double nameoff = headroom / 4.0;
     GdkGC *gc = NULL;
 
     if (pc == NULL) {
 	gc = style->fg_gc[GTK_STATE_NORMAL];
+    }
+
+    if (na(plot->mean)) {
+	mean = NADBL;
+    } else {
+	mean = ybase + (gmax - plot->mean) * scale;
     }
 
     median = ybase + (gmax - plot->median) * scale;
@@ -494,6 +513,10 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     points[2] = plot->xbase + ((confhi > 0.)? (0.9 * boxwidth) : boxwidth);
     draw_line(points, area, pixmap, gc, pc); /* was whitegc */
 
+    /* draw '+' at mean */
+    if (!na(mean)) {
+	draw_mean(xcenter, mean, area, pixmap, gc, pc);
+    }
 
     /* insert numerical values for median and quartiles? */
     if (numbers != NULL) {
@@ -537,15 +560,14 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 
     /* draw outliers, if any */
     if (plot->outliers != NULL) {
-	int i;
 	double y, ybak = NADBL;
+	int i;
 
 	for (i=0; i<plot->outliers->n; i++) {
 	    /* fprintf(stderr, "outlier: %g\n", plot->outliers->vals[i]); */
 	    y = ybase + (gmax - plot->outliers->vals[i]) * scale;
 	    if (y == ybak) y += 1.0;
-	    draw_outlier(xcenter, y,
-			 area, pixmap, gc, pc);
+	    draw_outlier(xcenter, y, area, pixmap, gc, pc);
 	    ybak = y;
 	}
     }
@@ -554,11 +576,11 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     if (plot->bool) {
 	nameoff = headroom / 3.5;
     }
-    setup_text (area, pixmap, gc, pc, plot->varname, xcenter, 
-		height * (1.0 - nameoff), GTK_JUSTIFY_CENTER);
+    setup_text(area, pixmap, gc, pc, plot->varname, xcenter, 
+	       height * (1.0 - nameoff), GTK_JUSTIFY_CENTER);
     if (plot->bool) {
-	setup_text (area, pixmap, gc, pc, plot->bool, xcenter, 
-		    height * (1.0 - headroom/6.0), GTK_JUSTIFY_CENTER);
+	setup_text(area, pixmap, gc, pc, plot->bool, xcenter, 
+		   height * (1.0 - headroom/6.0), GTK_JUSTIFY_CENTER);
     }
 }
 
@@ -769,8 +791,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 				      orient, 
 				      eps, 
 				      GTK_PLOT_LETTER, 
-				      pscale, pscale)
-		     );
+				      pscale, pscale));
 
     if (ps == NULL) return 1;
 
@@ -801,73 +822,126 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     return 0;
 }
 
-static int five_numbers (gpointer data) 
+static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
+			      PRN *prn)
+{
+    if (plt->bool != NULL) {
+	pprintf(prn, "%s\n %-*s", plt->varname, offset, plt->bool);
+    } else {
+	pprintf(prn, "%-*s", offset, plt->varname);
+    }
+
+    if (do_mean) {
+	pprintf(prn, "%9.5g", plt->mean);
+    }
+
+    pprintf(prn, "%9.5g%9.5g%9.5g%9.5g%9.5g", plt->min, 
+	    plt->lq, plt->median, plt->uq, plt->max);
+
+    if (plt->n > 0) {
+	pprintf(prn, "  (n=%d)\n", plt->n);
+    } else {
+	pputc(prn, '\n');
+    }
+}
+
+static void five_numbers_with_interval (BOXPLOT *plt, int offset, PRN *prn)
+{
+    char tmp[32];
+
+    sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
+
+    if (plt->bool != NULL) {
+	pprintf(prn, "%s\n %-*s", plt->varname, offset, plt->bool);
+    } else {
+	pprintf(prn, "%-*s", offset, plt->varname);
+    }
+	    
+    pprintf(prn, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
+	    plt->min, plt->lq, plt->median,
+	    tmp, plt->uq, plt->max);
+}
+
+static int has_mean (PLOTGROUP *grp)
+{
+    int i;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (na(grp->plots[i].mean)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int get_format_offset (PLOTGROUP *grp)
+{
+    int L = 6;
+    int i, n;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (grp->plots[i].bool != NULL) {
+	    n = strlen(grp->plots[i].bool) + 1;
+	} else {
+	    n = strlen(grp->plots[i].varname);
+	}
+	if (n > L) {
+	    L = n;
+	}	    
+    }
+
+    return L + 2;
+}
+
+static int six_numbers (gpointer data) 
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
-    int i;
     PRN *prn;
+    int offset;
+    int i;
 
-    if (bufopen(&prn)) return 1;
+    if (bufopen(&prn)) {
+	return 1;
+    }
 
-    if (na(grp->plots[0].conf[0])) { /* no confidence intervals */
-	pprintf(prn, "%s\n\n%20s%10s%10s%10s%10s\n",
-		_("Five-number summary"), 
-		"min", "Q1", _("median"), "Q3", "max");
+    offset = get_format_offset(grp);
+
+    if (na(grp->plots[0].conf[0])) { 
+	/* no confidence intervals */
+	int do_mean = has_mean(grp);
+
+	pprintf(prn, "%s\n\n", _("Numerical summary"));
+
+	if (do_mean) {
+	    pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", offset + 9, _("mean"),
+		    "min", "Q1", _("median"), "Q3", "max");
+	} else {
+	    pprintf(prn, "%*s%10s%10s%10s%10s\n", offset + 10,
+		    "min", "Q1", _("median"), "Q3", "max");
+	}	    
 
 	for (i=0; i<grp->nplots; i++) {
-	    char nstr[12];
-
-	    sprintf(nstr, "  (n=%d)", grp->plots[i].n);
-	    if (grp->plots[i].bool != NULL) {
-		pprintf(prn, "%s\n %10s%9g%10g%10g%10g%10g%s\n",
-			grp->plots[i].varname, grp->plots[i].bool,
-			grp->plots[i].min, 
-			grp->plots[i].lq, grp->plots[i].median,
-			grp->plots[i].uq, grp->plots[i].max,
-			nstr);
-	    } else {
-		pprintf(prn, "%-10s%10g%10g%10g%10g%10g%s\n",
-			grp->plots[i].varname, grp->plots[i].min, 
-			grp->plots[i].lq, grp->plots[i].median,
-			grp->plots[i].uq, grp->plots[i].max,
-			nstr);
-	    }
+	    real_six_numbers(&grp->plots[i], offset, do_mean, prn);
 	}
-    } else { /* confidence intervals */
-	char intstr[32];
+    } else { 
+	/* with confidence intervals */
+	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
+				 "interval for median"));	 
 
-	pprintf(prn, "%s\n\n%s%18s%10s%10s%17s%10s%10s\n",
-		_("Five-number summary with bootstrapped confidence "
-		  "interval for median"),
+	pprintf(prn, "%s%*s%10s%10s%17s%10s%10s\n",
 		(grp->plots[0].bool != NULL)? " " : "",
-		"min", "Q1", _("median"), 
+		offset + 8, "min", "Q1", _("median"), 
 		/* xgettext:no-c-format */
 		_("(90% interval)"), 
 		"Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
-		    grp->plots[i].conf[1]);
-	    
-	    if (grp->plots[i].bool != NULL) {
-		pprintf(prn, "%s\n %10s%8g%10g%10g%17s%10g%10g\n",
-			grp->plots[i].varname, grp->plots[i].bool,
-			grp->plots[i].min, 
-			grp->plots[i].lq, grp->plots[i].median,
-			intstr,
-			grp->plots[i].uq, grp->plots[i].max);
-	    } else {
-		pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
-			grp->plots[i].varname, grp->plots[i].min, 
-			grp->plots[i].lq, grp->plots[i].median,
-			intstr,
-			grp->plots[i].uq, grp->plots[i].max);
-	    }
+	    five_numbers_with_interval(&grp->plots[i], offset, prn);
 	}
     }
 
-    (void) view_buffer(prn, 78, 240, _("gretl: 5 numbers"), BXPLOT,
-                       NULL);
+    view_buffer(prn, 78, 240, _("gretl: boxplot data"), BXPLOT, NULL);
 
     return 0;
 }
@@ -883,12 +957,14 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     int width = 576, height = 448;
 
     x = mymalloc(n * sizeof *x);
-    if (x == NULL) return 1;
+    if (x == NULL) {
+	return E_ALLOC;
+    }
 
     plotgrp = mymalloc(sizeof *plotgrp);
     if (plotgrp == NULL) {
 	free(x);
-	return 1;
+	return E_ALLOC;
     }
 
     plotgrp->saved = 0;
@@ -898,7 +974,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     if (plotgrp->plots == NULL) {
 	free(plotgrp);
 	free(x);
-	return 1;
+	return E_ALLOC;
     }
 
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
@@ -911,7 +987,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 		free(plotgrp->plots);
 		free(plotgrp);
 		free(x);
-		return 1;
+		return E_DATA;
 	    } else {
 		plotgrp->nplots -= 1;
 		i--;
@@ -920,6 +996,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	}
 
 	plotgrp->plots[i].outliers = NULL;
+	plotgrp->plots[i].mean = gretl_mean(0, n, x);
 	qsort(x, n, sizeof *x, compare_doubles);
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
@@ -961,6 +1038,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	    add_outliers(x, n, &plotgrp->plots[i]);
 	}
     }
+
     free(x);
 
     plotgrp->popup = NULL;
@@ -1312,9 +1390,11 @@ static int dump_boxplot (PLOTGROUP *grp)
 		    plt->outliers->rmax, plt->outliers->rmin);
 	    for (j=0; j<plt->outliers->n; j++) 
 		fprintf(fp, "%d vals %g\n", i, plt->outliers->vals[j]); 
-	} else
+	} else {
 	    fprintf(fp, "%d n_outliers = 0\n", i);
-	
+	}
+	fprintf(fp, "%d mean = %g\n", i, plt->mean);
+	fprintf(fp, "%d nobs = %d\n", i, plt->n);
     }
 
     fclose(fp);
@@ -1339,6 +1419,74 @@ static void screen_confidence_interval (BOXPLOT *plt)
     }
 }
 
+static int plot_retrieve_outliers (BOXPLOT *plt, int n, FILE *fp)
+{
+    char line[80];
+    int i;
+
+    plt->outliers = malloc(sizeof *plt->outliers);
+    if (plt->outliers == NULL) {
+	return E_ALLOC;
+    }
+
+    plt->outliers->vals = malloc(n * sizeof *plt->outliers->vals);
+    if (plt->outliers->vals == NULL) {
+	free(plt->outliers);
+	plt->outliers = NULL;
+	return E_ALLOC;
+    }
+
+    plt->outliers->n = n;
+
+    if (fgets(line, sizeof line, fp) == NULL) {
+	return E_DATA;
+    }
+
+    if (sscanf(line, "%*d rmax rmin = %lf %lf", &plt->outliers->rmax, 
+	       &plt->outliers->rmin) != 2) {
+	return E_DATA;
+    }
+
+    for (i=0; i<n; i++) {
+	if (fgets(line, sizeof line, fp) == NULL ||
+	    sscanf(line, "%*d vals %lf", &plt->outliers->vals[i]) != 1) {
+	    return E_DATA;
+	}
+    }
+
+    return 0;
+}
+
+static void maybe_get_plot_mean (BOXPLOT *plt, FILE *fp)
+{
+    char line[80];
+    long pos = ftell(fp);
+    double x = NADBL;
+    int n = 0;
+
+    plt->mean = NADBL;
+    plt->n = 0;
+
+    if (fgets(line, sizeof line, fp) == NULL) {
+	return;
+    } else if (sscanf(line, "%*d mean = %lf", &x) == 1) {
+	plt->mean = x;
+    } else {
+	fseek(fp, pos, SEEK_SET);
+	return;
+    }
+
+    pos = ftell(fp);
+
+    if (fgets(line, sizeof line, fp) == NULL) {
+	return;
+    } else if (sscanf(line, "%*d nobs = %d", &n) == 1) {
+	plt->mean = x;
+    } else {
+	fseek(fp, pos, SEEK_SET);
+    }
+}
+
 int retrieve_boxplot (const char *fname)
 {
     FILE *fp;
@@ -1347,6 +1495,7 @@ int retrieve_boxplot (const char *fname)
     BOXPLOT *plt = NULL;
     char line[80], numstr[24];
     gchar *msg;
+    int err = 0;
 
     fp = gretl_fopen(fname, "r");
 
@@ -1402,6 +1551,7 @@ int retrieve_boxplot (const char *fname)
 	plt->outliers = NULL;
 	plt->bool = NULL;
 	nout = 0;
+
 	for (j=0; j<7 && fgets(line, 79, fp); j++) {
 	    if (j == 0 && 
 		sscanf(line, "%*d median = %lf", &plt->median) != 1) {
@@ -1436,21 +1586,14 @@ int retrieve_boxplot (const char *fname)
 	screen_confidence_interval(plt);
 
 	/* any outliers? */
-	if (nout && 
-	    (plt->outliers = malloc(sizeof(OUTLIERS))) &&
-	    (plt->outliers->vals = malloc(nout * sizeof(double)))) {
-	    plt->outliers->n = nout;
-	    for (j=-1; j<nout && fgets(line, 79, fp); j++) {
-		if (j == -1 &&
-		    sscanf(line, "%*d rmax rmin = %lf %lf", 
-			   &plt->outliers->rmax, &plt->outliers->rmin) != 2) {
-		    goto corrupt;
-		} else if (j >=0 && sscanf(line, "%*d vals %lf", 
-					   &plt->outliers->vals[j]) != 1) {
-		    goto corrupt;
-		}
+	if (nout > 0) {
+	    err = plot_retrieve_outliers(plt, nout, fp);
+	    if (err == E_DATA) {
+		goto corrupt;
 	    }
 	} 
+
+	maybe_get_plot_mean(plt, fp);
     }
     
     fclose(fp);
@@ -1480,8 +1623,10 @@ int retrieve_boxplot (const char *fname)
     return 0;
 
  corrupt:
+
     errbox(_("boxplot file is corrupt"));
     fclose(fp);
+
     return 1;
 }
 
