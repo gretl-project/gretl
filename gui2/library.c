@@ -1479,6 +1479,8 @@ int do_add_omit (selector *sr)
 	return 1;
     }
 
+    opt |= selector_get_opts(sr);
+
     orig = vwin->data;
 
     if (orig->ci == TSLS) {

@@ -30,6 +30,9 @@
 #include "var.h"
 #include "gretl_func.h"
 #include "libset.h"
+#if 0
+#include "bootstrap.h"
+#endif
 
 #define VLDEBUG 0
 
@@ -2822,19 +2825,49 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
 static void unhide_lags_switch (selector *sr) 
 {
     GtkWidget *hbox;
-    GtkWidget *button;
+    GtkWidget *b;
 
     vbox_add_hsep(sr->vbox);
 
-    button = gtk_check_button_new_with_label(_("Show lagged variables"));
-    g_signal_connect(G_OBJECT(button), "toggled",
+    b = gtk_check_button_new_with_label(_("Show lagged variables"));
+    g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(unhide_lags_callback), sr);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
-} 
+}
+
+#if 0 /* not ready */ 
+
+static void boot_switch_callback (GtkWidget *w, selector *sr)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	sr->opts |= OPT_P;
+    } else {
+	sr->opts &= ~OPT_P;
+    }
+}
+
+static void test_boot_switch (selector *sr) 
+{
+    GtkWidget *hbox;
+    GtkWidget *b;
+
+    vbox_add_hsep(sr->vbox);
+
+    b = gtk_check_button_new_with_label(_("Use bootstrap"));
+    g_signal_connect(G_OBJECT(b), "toggled",
+		     G_CALLBACK(boot_switch_callback), sr);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
+}
+
+#endif 
 
 static void build_scatters_radios (selector *sr)
 {
@@ -3576,6 +3609,21 @@ static void selector_add_top_entry (selector *sr)
     gtk_widget_show_all(hbox);
 }
 
+#if 0 /* not ready */
+
+static int ols_omit_select (windata_t *vwin)
+{
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+
+	return bootstrap_ok(pmod->ci);
+    } else {
+	return 0;
+    }
+}
+
+#endif
+
 void simple_selection (const char *title, int (*callback)(), guint ci,
 		       gpointer p) 
 {
@@ -3704,6 +3752,13 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     if (SAVE_DATA_ACTION(sr->code) && lags_hidden) {
 	unhide_lags_switch(sr);
     }
+
+#if 0 /* not ready */
+    /* bootstrap check box? */
+    if (ci == OMIT && ols_omit_select(p)) {
+	test_boot_switch(sr);
+    }
+#endif
 
     /* buttons: Help, Clear, Cancel, OK */
     build_selector_buttons(sr);

@@ -83,39 +83,170 @@ static void boot_destroy (boot *bs)
     free(bs);
 }
 
-static boot *boot_new (gretl_matrix *y,
-		       gretl_matrix *X,
-		       gretl_matrix *b,
-		       gretl_matrix *u,
-		       gretl_matrix *w,
-		       double a,
-		       int flags,
-		       int ci)
+static int 
+make_model_matrices (boot *bs, const MODEL *pmod, const double **Z)
+{
+    double xti;
+    int T = pmod->nobs;
+    int k = pmod->ncoeff;
+    int needw = 0;
+    int i, s, t;
+
+    bs->y = gretl_column_vector_alloc(T);
+    bs->X = gretl_matrix_alloc(T, k);
+    bs->b0 = gretl_column_vector_alloc(k);
+    bs->u0 = gretl_column_vector_alloc(T);
+
+    if (pmod->ci == WLS || pmod->ci == HSK) {
+	needw = 1;
+	bs->w = gretl_column_vector_alloc(T);
+    }
+
+    if (bs->y == NULL || bs->X == NULL || bs->b0 == NULL || 
+	bs->u0 == NULL || (needw && bs->w == NULL)) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<k; i++) {
+	bs->b0->val[i] = pmod->coeff[i];
+    }    
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    bs->y->val[s] = Z[pmod->list[1]][t];
+	    if (pmod->ci == WLS) {
+		bs->w->val[s] = sqrt(Z[pmod->nwt][t]);
+		bs->y->val[s] *= bs->w->val[s];
+		bs->u0->val[s] = bs->y->val[s];
+	    } else {
+		bs->u0->val[s] = pmod->uhat[t];
+	    }
+	    for (i=2; i<=pmod->list[0]; i++) {
+		xti = Z[pmod->list[i]][t];
+		if (pmod->ci == WLS) {
+		    xti *= bs->w->val[s];
+		    bs->u0->val[s] -= bs->b0->val[i-2] * xti;
+		}
+		gretl_matrix_set(bs->X, s, i-2, xti);
+	    }
+	    s++;
+	}
+    }
+
+    return 0;
+}
+
+static int make_bs_flags (gretlopt opt)
+{
+    int flags = 0;
+
+    if (opt & OPT_P) {
+	flags |= BOOT_PVAL;
+    } else {
+	flags |= BOOT_CI;
+    }
+
+    if (opt & OPT_N) {
+	flags |= BOOT_NORMAL_U;
+    } else {
+	flags |= BOOT_RESAMPLE_U;
+    }
+
+    if (opt & OPT_G) {
+	flags |= BOOT_GRAPH;
+    }
+
+    if (opt & OPT_T) {
+	flags |= BOOT_STUDENTIZE;
+    }
+
+    if (opt & OPT_R) {
+	flags |= BOOT_RESTRICT;
+    }
+
+    if (opt & OPT_F) {
+	flags |= BOOT_F_FORM;
+    }
+
+#if BDEBUG > 1
+    flags |= BOOT_VERBOSE;
+#endif
+
+    return flags;
+}
+
+/* check in with libset for current default number of replications if
+   need be; in addition, alpha * (B + 1) should be an integer, when
+   constructing confidence intervals
+*/
+
+int maybe_adjust_B (int B, double a, int flags)
+{
+    if (B <= 0) {
+	B = get_bootstrap_replications();
+    }
+
+    if (flags & BOOT_CI) {
+	double x;
+
+	if (B % 10 == 0) {
+	    B--;
+	}
+
+	x = a * (B + 1);
+	while (x - floor(x) > 1e-13) {
+	    x = a * (++B + 1);
+	}
+    }
+
+    return B;
+}
+
+static boot *boot_new (const MODEL *pmod,
+		       const double **Z,
+		       int B, gretlopt opt)
 {
     boot *bs;
+    int ldv;
 
     bs = malloc(sizeof *bs);
     if (bs == NULL) {
 	return NULL;
     }
 
-    bs->flags = flags;
-    bs->mci = ci;
-    bs->a = a;
-    bs->B = 0;
-    bs->p = 0;
-    bs->g = 0;
-    bs->ldvpos = -1;
-    *bs->vname = '\0';
-
-    bs->y = y;
-    bs->X = X;
-    bs->b0 = b;
-    bs->u0 = u;
-    bs->w = w;
+    bs->y = NULL;
+    bs->X = NULL;
+    bs->b0 = NULL;
+    bs->u0 = NULL;
+    bs->w = NULL;
 
     bs->R = NULL;
     bs->q = NULL;
+
+    if (make_model_matrices(bs, pmod, Z)) {
+	boot_destroy(bs);
+	return NULL;
+    }
+
+    bs->flags = make_bs_flags(opt);
+
+    bs->mci = pmod->ci;
+    bs->a = 0.05; /* make configurable? */
+    bs->B = maybe_adjust_B(B, bs->a, bs->flags);
+
+    bs->p = 0;
+    bs->g = 0;
+
+    ldv = gretl_model_get_int(pmod, "ldepvar");
+    if (ldv > 0) {
+	bs->flags |= BOOT_LDV;
+	bs->ldvpos = ldv - 2;
+    } else {
+	bs->ldvpos = -1;
+    }
+
+    *bs->vname = '\0';
 
     bs->SE = NADBL;
     bs->point = NADBL;
@@ -123,8 +254,8 @@ static boot *boot_new (gretl_matrix *y,
     bs->test0 = NADBL;
     bs->b_p = NADBL;
 
-    bs->k = X->cols;
-    bs->T = X->rows;
+    bs->k = bs->X->cols;
+    bs->T = bs->X->rows;
 
     return bs;
 }
@@ -708,79 +839,6 @@ static int real_bootstrap (boot *bs, PRN *prn)
     return err;
 }
 
-static int 
-make_model_matrices (const MODEL *pmod, const double **Z,
-		     gretl_matrix **py, gretl_matrix **pX,
-		     gretl_matrix **pb, gretl_matrix **pu,
-		     gretl_matrix **pw)
-{
-    gretl_matrix *y = NULL;
-    gretl_matrix *X = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *u = NULL;
-    gretl_matrix *w = NULL;
-    double xti;
-    int T = pmod->nobs;
-    int k = pmod->ncoeff;
-    int needw = 0;
-    int i, s, t;
-
-    y = gretl_column_vector_alloc(T);
-    X = gretl_matrix_alloc(T, k);
-    b = gretl_column_vector_alloc(k);
-    u = gretl_column_vector_alloc(T);
-
-    if (pmod->ci == WLS || pmod->ci == HSK) {
-	needw = 1;
-	w = gretl_column_vector_alloc(T);
-    }
-
-    if (y == NULL || X == NULL || b == NULL || u == NULL ||
-	(needw && w == NULL)) {
-	gretl_matrix_free(y);
-	gretl_matrix_free(X);
-	gretl_matrix_free(b);
-	gretl_matrix_free(u);
-	gretl_matrix_free(w);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<k; i++) {
-	b->val[i] = pmod->coeff[i];
-    }    
-
-    s = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t])) {
-	    y->val[s] = Z[pmod->list[1]][t];
-	    if (pmod->ci == WLS) {
-		w->val[s] = sqrt(Z[pmod->nwt][t]);
-		y->val[s] *= w->val[s];
-		u->val[s] = y->val[s];
-	    } else {
-		u->val[s] = pmod->uhat[t];
-	    }
-	    for (i=2; i<=pmod->list[0]; i++) {
-		xti = Z[pmod->list[i]][t];
-		if (pmod->ci == WLS) {
-		    xti *= w->val[s];
-		    u->val[s] -= b->val[i-2] * xti;
-		}
-		gretl_matrix_set(X, s, i-2, xti);
-	    }
-	    s++;
-	}
-    }
-
-    *py = y;
-    *pX = X;
-    *pb = b;
-    *pu = u;
-    *pw = w;
-
-    return 0;
-}
-
 /* add basic restriction matrices R and q when doing a p-value
    calculation for a single variable */
 
@@ -796,76 +854,6 @@ static int bs_add_restriction (boot *bs, int p)
     bs->R->val[p] = 1.0;
 
     return 0;
-}
-
-static int make_flags (gretlopt opt, int ldv)
-{
-    int flags = 0;
-
-    if (opt & OPT_P) {
-	flags |= BOOT_PVAL;
-    } else {
-	flags |= BOOT_CI;
-    }
-
-    if (opt & OPT_N) {
-	flags |= BOOT_NORMAL_U;
-    } else {
-	flags |= BOOT_RESAMPLE_U;
-    }
-
-    if (opt & OPT_G) {
-	flags |= BOOT_GRAPH;
-    }
-
-    if (opt & OPT_T) {
-	flags |= BOOT_STUDENTIZE;
-    }
-
-    if (opt & OPT_R) {
-	flags |= BOOT_RESTRICT;
-    }
-
-    if (opt & OPT_F) {
-	flags |= BOOT_F_FORM;
-    }
-
-    if (ldv > 0) {
-	flags |= BOOT_LDV;
-    }
-
-#if BDEBUG > 1
-    flags |= BOOT_VERBOSE;
-#endif
-
-    return flags;
-}
-
-/* check in with libset for current default number of replications if
-   need be; in addition, alpha * (B + 1) should be an integer, when
-   constructing confidence intervals
-*/
-
-int maybe_adjust_B (int B, double a, int flags)
-{
-    if (B <= 0) {
-	B = get_bootstrap_replications();
-    }
-
-    if (flags & BOOT_CI) {
-	double x;
-
-	if (B % 10 == 0) {
-	    B--;
-	}
-
-	x = a * (B + 1);
-	while (x - floor(x) > 1e-13) {
-	    x = a * (++B + 1);
-	}
-    }
-
-    return B;
 }
 
 /**
@@ -894,14 +882,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 			const DATAINFO *pdinfo, gretlopt opt,
 			PRN *prn)
 {
-    gretl_matrix *X = NULL;
-    gretl_matrix *y = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *u = NULL;
-    gretl_matrix *w = NULL;
     boot *bs = NULL;
-    double alpha = .05;
-    int ldv, flags = 0;
     int err = 0;
 
     if (!bootstrap_ok(pmod->ci)) {
@@ -912,22 +893,12 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	return E_DATA;
     }
 
-    err = make_model_matrices(pmod, Z, &y, &X, &b, &u, &w);
-    if (err) {
-	return err;
-    }
-
-    ldv = gretl_model_get_int(pmod, "ldepvar");
-
-    flags = make_flags(opt, ldv);
-    B = maybe_adjust_B(B, alpha, flags);
-
-    bs = boot_new(y, X, b, u, w, alpha, flags, pmod->ci);
+    bs = boot_new(pmod, Z, B, opt);
     if (bs == NULL) {
 	err = E_ALLOC;
-    }
+    }    
 
-    if (!err && (flags & BOOT_PVAL)) {
+    if (!err && (bs->flags & BOOT_PVAL)) {
 	err = bs_add_restriction(bs, p);
     }
 
@@ -935,7 +906,6 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	int v = pmod->list[p+2];
 
 	bs->p = p;  /* coeff to examine */
-	bs->B = B;  /* replications */ 
 	if (pmod->ci == HSK) {
 	    bs->SE = gretl_model_get_double(pmod, "sigma_orig");
 	} else {
@@ -945,26 +915,15 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	bs->point = pmod->coeff[p];
 	bs->se0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
-	if (flags & BOOT_PVAL) {
+	if (bs->flags & BOOT_PVAL) {
 	    bs->b_p = 0.0;
 	} else {
 	    bs->b_p = bs->point;
 	}
-	if (flags & BOOT_LDV) {
-	    bs->ldvpos = ldv - 2;
-	}
 	err = real_bootstrap(bs, prn);
     }
 
-    if (bs != NULL) {
-	boot_destroy(bs);
-    } else {
-	gretl_matrix_free(X);
-	gretl_matrix_free(y);
-	gretl_matrix_free(b);
-	gretl_matrix_free(u);
-	gretl_matrix_free(w);
-    }
+    boot_destroy(bs);
 
     return err;
 }
@@ -994,15 +953,8 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 				const double **Z, const DATAINFO *pdinfo, 
 				PRN *prn)
 {
-    gretl_matrix *X = NULL;
-    gretl_matrix *y = NULL;
-    gretl_matrix *b = NULL;
-    gretl_matrix *u = NULL;
-    gretl_matrix *w = NULL;
     boot *bs = NULL;
     gretlopt bopt;
-    double alpha = .05;
-    int ldv, flags = 0;
     int B = 0;
     int err = 0;
 
@@ -1013,46 +965,24 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     gretl_matrix_print(q, "q");
 #endif    
 
-    err = make_model_matrices(pmod, Z, &y, &X, &b, &u, &w);
-    if (err) {
-	return err;
-    }
-
     bopt = (OPT_P | OPT_R | OPT_F);
     gretl_restriction_get_boot_params(&B, &bopt);
 
-    ldv = gretl_model_get_int(pmod, "ldepvar");
-    flags = make_flags(bopt, ldv);
-
-    B = maybe_adjust_B(B, alpha, flags);
-
-    bs = boot_new(y, X, b, u, w, alpha, flags, pmod->ci);
+    bs = boot_new(pmod, Z, B, bopt);
     if (bs == NULL) {
 	err = E_ALLOC;
     } 
 
     if (!err) {
-	bs->B = B;
 	bs->R = R;
 	bs->q = q;
 	bs->g = g;
 	bs->test0 = test;
 	strcpy(bs->vname, "F-test");
-	if (flags & BOOT_LDV) {
-	    bs->ldvpos = ldv - 2;
-	}
 	err = real_bootstrap(bs, prn);
     }
 
-    if (bs != NULL) {
-	boot_destroy(bs);
-    } else {
-	gretl_matrix_free(X);
-	gretl_matrix_free(y);
-	gretl_matrix_free(b);
-	gretl_matrix_free(u);
-	gretl_matrix_free(w);
-    }
+    boot_destroy(bs);
 
     return err;
 }
