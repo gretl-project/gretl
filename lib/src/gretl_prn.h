@@ -55,6 +55,8 @@ const char *gretl_print_get_buffer (PRN *prn);
 
 int gretl_print_set_save_position (PRN *prn);
 
+void gretl_print_unset_save_position (PRN *prn);
+
 char *gretl_print_get_chunk (PRN *prn);
 
 void gretl_print_set_format (PRN *prn, PrnFormat format);

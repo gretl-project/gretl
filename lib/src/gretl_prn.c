@@ -268,6 +268,21 @@ int gretl_print_set_save_position (PRN *prn)
 }
 
 /**
+ * gretl_print_unset_save_position:
+ * @prn: printing struct.
+ * 
+ * Erases the "save position" offset as set by
+ * gretl_print_set_save_position().
+ */
+
+void gretl_print_unset_save_position (PRN *prn)
+{
+    if (prn != NULL) {
+	prn->savepos = -1;
+    }
+}
+
+/**
  * gretl_print_get_chunk:
  * @prn: printing struct.
  * 
@@ -283,7 +298,7 @@ char *gretl_print_get_chunk (PRN *prn)
     char *buf;
 
     if (prn == NULL || prn->buf == NULL ||
-	prn->savepos < 0) {
+	prn->savepos < 0 || prn->savepos > strlen(prn->buf)) {
 	return NULL;
     }
 

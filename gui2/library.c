@@ -6630,8 +6630,12 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     /* save specific output buffer? */
-    if (!err && *cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
-	save_text_buffer(prn, cmd->savename);
+    if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
+	if (!err) {
+	    save_text_buffer(prn, cmd->savename);
+	} else {
+	    gretl_print_unset_save_position(prn);
+	}
     }
 
     if (!err && (is_model_cmd(cmd->word) || s->alt_model)
