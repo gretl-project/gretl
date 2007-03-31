@@ -348,13 +348,26 @@ place_plots (PLOTGROUP *plotgrp)
     }
 }
 
+static int has_any_mean (PLOTGROUP *grp)
+{
+    int i;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (!na(grp->plots[i].mean)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void 
 gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 {
     double points[4];
     double top = (headroom / 2.0) * grp->height;
     double bottom = (1.0 - headroom / 2.0) * grp->height;
-    gchar *numstr = NULL;
+    gchar *tmp = NULL;
     GdkGC *gc = NULL;
 
     if (pc == NULL) {
@@ -365,35 +378,37 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     points[0] = points[2] = scalepos;
     points[1] = top;
     points[3] = bottom;
-    draw_line (points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, pc);
 
     /* draw backticks top and bottom */
     points[2] = points[0] - 5;
     points[1] = points[3] = top;
     draw_line (points, grp->area, grp->pixmap, gc, pc);
     points[1] = points[3] = bottom;
-    draw_line (points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, pc);
 
     /* draw backtick at middle */
     points[1] = points[3] = top + (bottom - top) / 2.0;
-    draw_line (points, grp->area, grp->pixmap, gc, pc);
+    draw_line(points, grp->area, grp->pixmap, gc, pc);
     
-    /* mark max and min values on scale */
-    numstr = g_strdup_printf("%.4g", grp->gmax);
-    gretl_fix_exponent(numstr);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, top, 
-		GTK_JUSTIFY_RIGHT);
-    g_free(numstr);
-    numstr = g_strdup_printf("%.4g", grp->gmin);
-    gretl_fix_exponent(numstr);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, bottom, 
-		GTK_JUSTIFY_RIGHT);
-    g_free(numstr);
-    numstr = g_strdup_printf("%.4g", (grp->gmax + grp->gmin) / 2.0);
-    gretl_fix_exponent(numstr);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, 
-		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
-    g_free(numstr);
+    /* mark three values on scale */
+    tmp = g_strdup_printf("%.4g", grp->gmax);
+    gretl_fix_exponent(tmp);
+    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, top, 
+	       GTK_JUSTIFY_RIGHT);
+    g_free(tmp);
+
+    tmp = g_strdup_printf("%.4g", grp->gmin);
+    gretl_fix_exponent(tmp);
+    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, bottom, 
+	       GTK_JUSTIFY_RIGHT);
+    g_free(tmp);
+
+    tmp = g_strdup_printf("%.4g", (grp->gmax + grp->gmin) / 2.0);
+    gretl_fix_exponent(tmp);
+    setup_text(grp->area, grp->pixmap, gc, pc, tmp, scalepos - 8, 
+	       top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
+    g_free(tmp);
 }
 
 static void 
@@ -812,7 +827,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 			  grp->height, grp->boxwidth, 
 			  grp->gmax, grp->gmin, grp->numbers);
     
-    gtk_boxplot_yscale (grp, &ps->pc);
+    gtk_boxplot_yscale(grp, &ps->pc);
 
     psleave(GTK_PLOT_PC(ps));
 
@@ -929,8 +944,7 @@ static int six_numbers (gpointer data)
 	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
 				 "interval for median"));	 
 
-	pprintf(prn, "%s%*s%10s%10s%17s%10s%10s\n",
-		(grp->plots[0].bool != NULL)? " " : "",
+	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n",
 		offset + 8, "min", "Q1", _("median"), 
 		/* xgettext:no-c-format */
 		_("(90% interval)"), 

@@ -29,7 +29,7 @@ int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn);
 int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type, 
 		      PRN *prn);
 
-int save_text_buffer (PRN *prn, const char *savename, PRN *errprn);
+int save_text_buffer (PRN *prn, const char *savename);
 
 int saved_object_action (const char *line, PRN *prn);
 

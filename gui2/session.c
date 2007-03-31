@@ -259,21 +259,6 @@ static void free_session_text (SESSION_TEXT *text)
     free(text);
 }
 
-static SESSION_TEXT *session_text_new (const char *name, char *buf)
-{
-    SESSION_TEXT *text = mymalloc(sizeof *text);
-    
-    if (text != NULL) {
-	*text->name = '\0';
-	if (name != NULL) {
-	    strncat(text->name, name, MAXSAVENAME - 1);
-	}
-	text->buf = buf;
-    }
-
-    return text;
-}
-
 static void free_session_model (SESSION_MODEL *mod)
 {
     /* note: remove a reference to this model */
@@ -312,19 +297,33 @@ static void free_session_graph (SESSION_GRAPH *graph)
     free(graph);
 }
 
-static int session_append_text (SESSION_TEXT *txt)
+static int session_append_text (const char *tname, char *buf)
 {
+    SESSION_TEXT *text;
     SESSION_TEXT **texts;
     int nt = session.ntexts;
 
+    text = mymalloc(sizeof *text);
+    if (text == NULL) {
+	return 1;
+    }
+
+    text->buf = buf;
+
+    *text->name = '\0';
+    if (tname != NULL) {
+	strncat(text->name, tname, MAXSAVENAME - 1);
+    }
+
     texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
+
     if (texts == NULL) {
-	free_session_text(txt);
+	free_session_text(text);
 	return 1;
     }
 
     session.texts = texts;
-    session.texts[nt] = txt;
+    session.texts[nt] = text;
     session.ntexts += 1;
 
     return 0;
@@ -500,16 +499,19 @@ static SESSION_TEXT *get_session_text_by_name (const char *name)
 int real_add_text_to_session (PRN *prn, const char *tname)
 {
     SESSION_TEXT *text = get_session_text_by_name(tname);
-    char *buf = g_strdup(gretl_print_get_buffer(prn));
+    char *buf = gretl_print_get_chunk(prn);
     int replace = 0;
+
+    if (buf == NULL) {
+	return ADD_OBJECT_FAIL;
+    }
 
     if (text != NULL) {
 	free(text->buf);
 	text->buf = buf;
 	replace = 1;
     } else {
-	text = session_text_new(tname, buf);
-	if (text == NULL || session_append_text(text)) {
+	if (session_append_text(tname, buf)) {
 	    return ADD_OBJECT_FAIL;
 	}
     }

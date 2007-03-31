@@ -1022,7 +1022,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     default:
-	err = gretl_cmd_exec(s, pZ, ppdinfo, prn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;
 	break;
     }

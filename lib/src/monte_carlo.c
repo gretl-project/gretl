@@ -2729,7 +2729,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
-		err = gretl_cmd_exec(s, pZ, ppdinfo, prn);
+		err = gretl_cmd_exec(s, pZ, ppdinfo);
 		pdinfo = *ppdinfo;
 		break;
 

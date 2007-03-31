@@ -3325,8 +3325,7 @@ static int append_data (const char *line, double ***pZ,
     return err;
 }
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
-		    PRN *outprn)
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
@@ -3792,7 +3791,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case ARCH:
 	clear_model(models[0]);
 	if (cmd->ci == AR) {
-	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, outprn);
+	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
 	    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo,
 			      cmd->opt, prn);
@@ -3882,10 +3881,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	clear_model(models[1]);
 	if (cmd->ci == ADD || cmd->ci == ADDTO) {
 	    err = add_test(cmd->list, models[0], models[1], 
-			   pZ, pdinfo, cmd->opt, outprn);
+			   pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    err = omit_test(cmd->list, models[0], models[1],
-			    pZ, pdinfo, cmd->opt, outprn);
+			    pZ, pdinfo, cmd->opt, prn);
 	}
 	if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
 	    /* for command-line use, we keep a stack of 
@@ -3918,10 +3917,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	    tmpmod.ID = k;
 	    if (cmd->ci == ADDTO) {
 		err = add_test(cmd->list, &tmpmod, models[1], 
-			       pZ, pdinfo, cmd->opt, outprn);
+			       pZ, pdinfo, cmd->opt, prn);
 	    } else {
 		err = omit_test(cmd->list, &tmpmod, models[1],
-				pZ, pdinfo, cmd->opt, outprn);
+				pZ, pdinfo, cmd->opt, prn);
 	    }
 	    if (err) {
 		errmsg(err, prn);
@@ -3944,32 +3943,32 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     case QLRTEST:
     case VIF:
 	if (cmd->ci == COEFFSUM) {
-	    err = gretl_sum_test(cmd->list, models[0], pdinfo, outprn);
+	    err = gretl_sum_test(cmd->list, models[0], pdinfo, prn);
 	} else if (cmd->ci == CUSUM) {
-	    err = cusum_test(models[0], pZ, pdinfo, cmd->opt, outprn);
+	    err = cusum_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {
-	    err = reset_test(models[0], pZ, pdinfo, OPT_NONE, outprn);
+	    err = reset_test(models[0], pZ, pdinfo, OPT_NONE, prn);
 	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {
-	    err = chow_test(line, models[0], pZ, pdinfo, OPT_NONE, outprn);
+	    err = chow_test(line, models[0], pZ, pdinfo, OPT_NONE, prn);
 	} else {
-	    err = vif_test(models[0], pZ, pdinfo, outprn);
+	    err = vif_test(models[0], pZ, pdinfo, prn);
 	}
 	break;
 
     case TESTUHAT:
-	err = last_model_test_uhat(pZ, pdinfo, outprn);
+	err = last_model_test_uhat(pZ, pdinfo, prn);
 	break;
 
     case HAUSMAN:
-	err = panel_hausman_test(models[0], pZ, pdinfo, cmd->opt, outprn);
+	err = panel_hausman_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LMTEST:
-	err = lmtest_driver(cmd->param, pZ, pdinfo, cmd->opt, outprn);
+	err = lmtest_driver(cmd->param, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LEVERAGE:
-	err = leverage_test(models[0], pZ, pdinfo, cmd->opt, outprn);
+	err = leverage_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	if (!err && (cmd->opt & OPT_S)) {
 	    /* FIXME gui notification? */
 	    maybe_list_vars(pdinfo, prn);
@@ -3997,7 +3996,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case FCASTERR:
 	err = display_forecast(line, models[0], pZ, pdinfo, 
-			       cmd->opt, outprn);
+			       cmd->opt, prn);
 	break;
 
     case RESTRICT:
@@ -4046,7 +4045,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 
     case END:
 	if (!strcmp(cmd->param, "system")) {
-	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, outprn);
+	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, prn);
 	    if (err || s->sys->name == NULL) {
 		s->sys = NULL;
 	    } else {
@@ -4056,8 +4055,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
-	    *models[0] = nls(pZ, pdinfo, cmd->opt, outprn);
-	    err = maybe_print_model(models[0], pdinfo, outprn, cmd->opt);
+	    *models[0] = nls(pZ, pdinfo, cmd->opt, prn);
+	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	    if (!err) {
 		s->alt_model = 1;
 	    }
@@ -4173,7 +4172,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	}
 	err = 1;
     } else {
-	err = gretl_cmd_exec(s, pZ, ppdinfo, s->prn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;
     }
 

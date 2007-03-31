@@ -664,11 +664,11 @@
     <description>
 
       <para>These plots (after Tukey and Chambers) display the
-	distribution of a variable. The central box encloses the
-	middle 50 percent of the data, &ie; it is bounded by the first
-	and third quartiles.  The <quote>whiskers</quote> extend to
-	the minimum and maximum values.  A line is drawn across the
-	box at the median.</para> 
+	distribution of a variable. The central box encloses the middle 50
+	percent of the data, &ie; it is bounded by the first and third
+	quartiles.  The <quote>whiskers</quote> extend to the minimum and
+	maximum values.  A line is drawn across the box at the median.  A
+	<quote>+</quote> sign indicates the mean.</para>
 
       <para>In the case of notched boxes, the notch shows the limits
 	of an approximate 90 percent confidence interval for the

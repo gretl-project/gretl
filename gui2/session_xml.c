@@ -103,15 +103,8 @@ static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
 	    if (buf == NULL) {
 		err = 1;
 	    } else {
-		SESSION_TEXT *text;
-
-		text = session_text_new((const char *) name,
-					(char *) buf);
-		if (text == NULL) {
-		    err = 1;
-		} else {
-		    err = session_append_text(text);
-		}
+		err = session_append_text((const char *) name,
+					  (char *) buf);
 	    }
 	}
 
@@ -250,6 +243,9 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	if (!err) {
 	    fprintf(stderr, "reattaching model to session\n");
 	    err = reattach_model(ptr, type, (const char *) name, flags);
+	    if (!err) {
+		model_count_plus();
+	    }
 	}
 
 	free(fname);

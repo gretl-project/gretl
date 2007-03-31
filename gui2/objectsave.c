@@ -172,7 +172,7 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
     return err;
 }
 
-int save_text_buffer (PRN *prn, const char *savename, PRN *errprn)
+int save_text_buffer (PRN *prn, const char *savename)
 {
     int add, err = 0;
 
@@ -181,12 +181,10 @@ int save_text_buffer (PRN *prn, const char *savename, PRN *errprn)
     if (add == ADD_OBJECT_FAIL) {
 	err = 1;
     } else if (add == ADD_OBJECT_REPLACE) {
-	pprintf(errprn, _("%s replaced\n"), savename);
+	pprintf(prn, _("%s replaced\n"), savename);
     } else {
-	pprintf(errprn, _("%s saved\n"), savename);
+	pprintf(prn, _("%s saved\n"), savename);
     }
-
-    gretl_print_destroy(prn);
 
     return err;
 }

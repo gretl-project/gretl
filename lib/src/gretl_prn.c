@@ -25,6 +25,7 @@ struct PRN_ {
     FILE *fpaux;    
     char *buf;
     size_t bufsize;
+    int savepos;
     PrnFormat format;
     int fixed;
     char delim;
@@ -89,6 +90,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->fpaux = NULL;
     prn->buf = NULL;
     prn->bufsize = 0;
+    prn->savepos = -1;
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
     prn->delim = ',';
@@ -240,11 +242,55 @@ int gretl_print_reset_buffer (PRN *prn)
 
 const char *gretl_print_get_buffer (PRN *prn)
 {
-    if (prn != NULL) {
-	return prn->buf;
-    } else {
+    return (prn != NULL)? prn->buf : NULL;
+}
+
+/**
+ * gretl_print_set_save_position:
+ * @prn: printing struct.
+ * 
+ * Sets the current buffer offset as the position from 
+ * which a chunk of the current buffer may be saved, 
+ * using gretl_print_get_chunk().  
+ *
+ * Returns: 0 on success, error code if @prn is not
+ * connected to a buffer.
+ */
+
+int gretl_print_set_save_position (PRN *prn)
+{
+    if (prn == NULL || prn->buf == NULL) {
+	return E_DATA;
+    }
+
+    prn->savepos = strlen(prn->buf);
+    return 0;
+}
+
+/**
+ * gretl_print_get_chunk:
+ * @prn: printing struct.
+ * 
+ * Retrieves a copy of the buffer associated with @prn,
+ * starting at the offset from the start of the buffer 
+ * as set by gretl_print_set_save_position().
+ *
+ * Returns: allocated buffer on success, or %NULL on error.
+ */
+
+char *gretl_print_get_chunk (PRN *prn)
+{
+    char *buf;
+
+    if (prn == NULL || prn->buf == NULL ||
+	prn->savepos < 0) {
 	return NULL;
     }
+
+    buf = gretl_strdup(prn->buf + prn->savepos);
+    prn->savepos = -1;
+
+    return buf;
 }
 
 /**

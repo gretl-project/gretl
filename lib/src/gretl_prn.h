@@ -53,6 +53,10 @@ int gretl_print_reset_buffer (PRN *prn);
 
 const char *gretl_print_get_buffer (PRN *prn);
 
+int gretl_print_set_save_position (PRN *prn);
+
+char *gretl_print_get_chunk (PRN *prn);
+
 void gretl_print_set_format (PRN *prn, PrnFormat format);
 
 void gretl_print_toggle_doc_flag (PRN *prn);

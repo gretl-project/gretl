@@ -6331,7 +6331,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     MODEL **models = s->models;
-    PRN *outprn = NULL;
     gretlopt gopt = OPT_NONE;
     char runfile[MAXLEN];
     int console_run = 0;
@@ -6423,12 +6422,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	return 0;
     } 
 
-    /* Attach outprn to a specific buffer, if wanted */
+    /* Set up to save output to a specific buffer, if wanted */
     if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
-	if (bufopen(&outprn)) return 1;
-    } else {
-	outprn = s->prn;
-    }
+	gretl_print_set_save_position(prn);
+    } 
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
@@ -6622,7 +6619,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
   	break;
 
     default:
-	err = gretl_cmd_exec(s, pZ, ppdinfo, outprn);
+	err = gretl_cmd_exec(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;
 	break;
     } /* end of command switch */
@@ -6632,14 +6629,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	console_cmd_init(line, &console_run);
     }
 
-    /* save specific output (text) buffer? */
-    if (outprn != NULL && outprn != prn) {
-	if (!err) {
-	    err = save_text_buffer(outprn, cmd->savename, prn);
-	} else {
-	    gretl_print_destroy(outprn);
-	}
-	outprn = NULL;
+    /* save specific output buffer? */
+    if (!err && *cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
+	save_text_buffer(prn, cmd->savename);
     }
 
     if (!err && (is_model_cmd(cmd->word) || s->alt_model)
