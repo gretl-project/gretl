@@ -116,6 +116,7 @@ static struct gui_help_item gui_help_items[] = {
     { PANEL_MODE,     "panel-mode" },
     { PANEL_WLS,      "panel-wls" },
     { PANEL_B,        "panel-between" },
+    { BOOTSTRAP,      "bootstrap" },
     { -1,          NULL },
 };
 

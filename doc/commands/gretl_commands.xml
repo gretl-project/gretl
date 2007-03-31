@@ -647,6 +647,67 @@
 
   </command>
 
+  <command name="bootstrap" section="Tests" label="Bootstrap options"
+    context="gui">
+
+    <description>
+
+      <para>In this dialog you get to choose:</para>
+
+      <ilist>
+	<li>
+	  <para>
+	    The variable/coefficient to examine.  (You can test only one
+	    coefficient at a time using this method.)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The sort of analysis to perform.  The default (95 percent)
+	    confidence interval is based directly on the quantiles of the
+	    bootstrap coefficient estimates.  The
+	    <quote>studentized</quote> version is as per Davidson and
+	    MacKinnon's <book>Economic Theory and Methods</book> (ETM),
+	    chapter 5: at each bootstrap replication a
+	    <mathvar>t</mathvar>-ratio is formed as (a) the difference
+	    between the current and the baseline coefficient estimate,
+	    divided by (b) the baseline estimated standard error. Then the
+	    confidence interval is formed based on the quantiles of this
+	    t-ratio, as explained in ETM.  The P-value option is based on
+	    the distribution of the bootstrap <mathvar>t</mathvar>-ratio:
+	    it is the proportion of the replications where the absolute
+	    value of this statistic exceeds the absolute value of the
+	    baseline <mathvar>t</mathvar>-ratio. 
+	  </para>
+	</li>
+	<li>
+	  <para>Resampled residuals versus simulate normal errors. In the
+	    first case the original residuals (rescaled as suggested in
+	    ETM) are resampled with replacement.  In the second case
+	    pseudo-random normal values are generated with the original
+	    residual variance.
+	  </para>
+	</li>
+	<li>
+	  <para>The number of replications to perform. Note that when
+	    you're constructing a 95 percent confidence interval it is
+	    desirable that 0.05(<mathvar>B</mathvar> + 1)/2 is an integer
+	    (where <mathvar>B</mathvar> is the number of replications).
+	    So gretl may adjust the chosen number of replications to
+	    ensure this is the case.
+	  </para>
+	</li>
+	<li>
+	  <para>Whether or not to produce a graph of the bootstrap
+	    distribution. This option employs gretl's kernel density
+	    estimation facility.
+	  </para>
+	</li>
+      </ilist>
+
+    </description>
+  </command>
+
   <command name="boxplot" section="Graphs" label="Boxplots">
 
     <usage>

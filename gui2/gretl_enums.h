@@ -90,6 +90,7 @@ enum extra_cmds {
     CUSUMSQ,
     PANEL_B,
     IMPORT,
+    BOOTSTRAP,
     GUI_CMD_MAX
 };
 

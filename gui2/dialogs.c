@@ -898,10 +898,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
-#if 0
     /* Help button */
     context_help_button(GTK_DIALOG(dialog)->action_area, BOOTSTRAP);
-#endif
 
     gtk_widget_show(dialog);
 }

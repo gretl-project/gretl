@@ -624,12 +624,10 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	if (!err) {
 	    /* solve for current parameter estimates */
 	    err = gretl_cholesky_solve(XTX, b);
-	    gretl_matrix_print(b, "b(1)");
 	}
 
 	if (!err && bs->mci == HSK) {
 	    err = hsk_transform_data(bs, b, yh);
-	    gretl_matrix_print(b, "b(2)");
 	}
 
 	if (err) {
