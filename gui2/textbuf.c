@@ -523,7 +523,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("indented");
-    g_object_set(tag, "left_margin", 30, NULL);
+    g_object_set(tag, "left_margin", 16, "indent", -12, NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("code");

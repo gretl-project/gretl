@@ -18,6 +18,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_restrict.h"
 #include "bootstrap.h"
 
 #define BDEBUG 0
@@ -198,19 +199,23 @@ make_resampled_y (boot *bs, double *z)
 
 static int do_restricted_ols (boot *bs)
 {
-    double s2;
+    double s2 = 0.0;
     int err = 0;
     
     err = gretl_matrix_restricted_ols(bs->y, bs->X, bs->R, bs->q, bs->b0, 
 				      NULL, bs->u0, &s2);
 
 #if BDEBUG
-    int i;
-    fprintf(stderr, "Restricted estimates:\n");
-    for (i=0; i<bs->b0->rows; i++) {
-	fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
+    if (1) {
+	int i;
+
+	fprintf(stderr, "Restricted estimates (err = %d):\n", err);
+	for (i=0; i<bs->b0->rows; i++) {
+	    fprintf(stderr, "b[%d] = %g\n", i, bs->b0->val[i]);
+	}
+	fprintf(stderr, "s2 = %g\n", s2);
+	fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
     }
-    fprintf(stderr, "bs->ldvpos = %d\n", bs->ldvpos);
 #endif
 
     if (!err) {
@@ -507,7 +512,7 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
    errors with the empirically given variance.
 */
 
-static int do_bootstrap (boot *bs, PRN *prn)
+static int real_bootstrap (boot *bs, PRN *prn)
 {
     gretl_matrix *XTX = NULL;   /* X'X */
     gretl_matrix *XTXI = NULL;  /* X'X^{-1} */
@@ -590,7 +595,7 @@ static int do_bootstrap (boot *bs, PRN *prn)
 	double vpp, se, SSR, s2, ut, test;
 
 #if BDEBUG > 1
-	fprintf(stderr, "do_bootstrap: round %d\n", i);
+	fprintf(stderr, "real_bootstrap: round %d\n", i);
 #endif
 
 	if (bs->flags & BOOT_NORMAL_U) {
@@ -948,7 +953,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	if (flags & BOOT_LDV) {
 	    bs->ldvpos = ldv - 2;
 	}
-	err = do_bootstrap(bs, prn);
+	err = real_bootstrap(bs, prn);
     }
 
     if (bs != NULL) {
@@ -995,6 +1000,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
     gretl_matrix *u = NULL;
     gretl_matrix *w = NULL;
     boot *bs = NULL;
+    gretlopt bopt;
     double alpha = .05;
     int ldv, flags = 0;
     int B = 0;
@@ -1012,8 +1018,11 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	return err;
     }
 
+    bopt = (OPT_P | OPT_R | OPT_F);
+    gretl_restriction_get_boot_params(&B, &bopt);
+
     ldv = gretl_model_get_int(pmod, "ldepvar");
-    flags = make_flags(OPT_P | OPT_R | OPT_F, ldv);
+    flags = make_flags(bopt, ldv);
 
     B = maybe_adjust_B(B, alpha, flags);
 
@@ -1032,7 +1041,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 	if (flags & BOOT_LDV) {
 	    bs->ldvpos = ldv - 2;
 	}
-	err = do_bootstrap(bs, prn);
+	err = real_bootstrap(bs, prn);
     }
 
     if (bs != NULL) {

@@ -327,6 +327,9 @@
   <xsl:choose>
     <xsl:when test="parent::li and ancestor::ilist">
       <xsl:text>&#xa;[ILISTPAR]</xsl:text>
+      <xsl:if test="count(../*)=1">
+        <xsl:text>&#x2022; </xsl:text>
+      </xsl:if>
       <xsl:apply-templates/>[/ILISTPAR]
     </xsl:when>
     <xsl:when test="parent::li and ancestor::nlist">

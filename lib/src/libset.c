@@ -244,7 +244,7 @@ static void state_vars_init (set_vars *sv)
     sv->shell_ok = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
-    sv->bootrep = UNSET_INT;
+    sv->bootrep = 1000;
     sv->nls_toler = NADBL;
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
@@ -525,8 +525,6 @@ int get_bootstrap_replications (void)
 {
     if (check_for_state()) {
 	return 0;
-    } else if (is_unset(state->bootrep)) {
-	return 1000;
     } else {
 	return state->bootrep;
     }
@@ -1225,11 +1223,7 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " horizon = %d\n", state->horizon);
     }
 
-    if (is_unset(state->bootrep)) {
-	pputs(prn, " bootrep: auto\n");
-    } else {
-	pprintf(prn, " bootrep = %d\n", state->bootrep);
-    }
+    pprintf(prn, " bootrep = %d\n", state->bootrep);
 
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
 
@@ -1476,9 +1470,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    }
 	    if (!err) {
 		state->bootrep = k;
-	    } else {
-		state->bootrep = UNSET_INT;
-	    }
+	    } 
 	} else if (!strcmp(setobj, "nls_toler")) {
 	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
 	    if (!err) {

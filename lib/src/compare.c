@@ -795,6 +795,9 @@ static void remove_special_flags (gretlopt *popt)
     if (opt & OPT_B) {
 	opt &= ~OPT_B;
     } 
+    if (opt & OPT_P) {
+	opt &= ~OPT_P;
+    }
 
     *popt = opt;
 }

@@ -754,6 +754,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     GSList *group = NULL;
     GList *replist;
     struct replic_set rs;
+    int htest = (pp == NULL);
     int i;
 
     dialog = gretl_dialog_new(_("gretl: bootstrap analysis"), vwin->dialog, 
@@ -767,6 +768,11 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     tmp = gtk_label_new("Coefficient:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
+
+    if (htest) {
+	/* not selecting coeff, or conf int vs p-value */
+	goto htest_only;
+    }
 
     /* coefficient / variable selection */
 
@@ -826,6 +832,8 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 
     vbox_add_hsep(vbox);
 
+ htest_only:
+
     /* resample vs simulated normal */
 
     button = gtk_radio_button_new_with_label(NULL, _("Resample residuals"));
@@ -868,14 +876,15 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
-    /* graph check box */
-
-    button = gtk_check_button_new_with_label(_("Show graph of sampling "
-					       "distribution"));
-    g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(set_bs_graph), popt);
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
-    gtk_widget_show(button);
+    if (!htest) {
+	/* graph check box */
+	button = gtk_check_button_new_with_label(_("Show graph of sampling "
+						   "distribution"));
+	g_signal_connect(G_OBJECT(button), "toggled",
+			 G_CALLBACK(set_bs_graph), popt);
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
+	gtk_widget_show(button);
+    }
 
     /* pack all of the above */
 
@@ -898,8 +907,10 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
-    /* Help button */
-    context_help_button(GTK_DIALOG(dialog)->action_area, BOOTSTRAP);
+    if (!htest) {
+	/* Help button */
+	context_help_button(GTK_DIALOG(dialog)->action_area, BOOTSTRAP);
+    }
 
     gtk_widget_show(dialog);
 }

@@ -1402,7 +1402,7 @@ void do_bootstrap (gpointer p, guint u, GtkWidget *w)
     MODEL *pmod = vwin->data;
     gretlopt opt = OPT_NONE;
     int cancelled = 0;
-    int B = 9999;
+    int B = 1000;
     int k = 0;
     PRN *prn;
     int err;
@@ -2273,6 +2273,20 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     close_dialog(dlg);
 
+    if (opt & OPT_B) {
+	gretlopt bootopt = OPT_NONE;
+	int cancel = 0;
+	int B = 1000;
+
+	bootstrap_dialog(vwin, NULL, &B, &bootopt, &cancel);
+	if (cancel) {
+	    /* command context? */
+	    destroy_restriction_set(my_rset);
+	    return;
+	}
+	gretl_restriction_set_boot_params(B, bootopt);
+    }
+
     if (bufopen(&prn)) return; 
 
     err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
@@ -2282,6 +2296,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	errmsg(err, prn);
     } else {
 	if (pmod != NULL) {
+	    /* FIXME --boot option */
 	    record_model_commands_from_buf(buf, pmod, got_start_line,
 					   got_end_line);
 	} else if (sys != NULL) {

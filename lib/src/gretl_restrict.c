@@ -54,8 +54,6 @@ struct restriction_set_ {
     int code;
 };
 
-static void destroy_restriction_set (gretl_restriction_set *rset);
-
 static int check_R_matrix (const gretl_matrix *R)
 {
     gretl_matrix *m;
@@ -515,7 +513,7 @@ static void destroy_restriction (restriction *r)
     free(r);
 }
 
-static void destroy_restriction_set (gretl_restriction_set *rset)
+void destroy_restriction_set (gretl_restriction_set *rset)
 {
     int i;
 
@@ -1361,8 +1359,12 @@ static int do_single_equation_test (gretl_restriction_set *rset,
 
 	    if (rset->k == 1 && r->nterms == 1 && r->rhs == 0) {
 		/* a simple zero restriction */
-		err = bootstrap_analysis(pmod, r->bnum[0], 0, Z, pdinfo, 
-					 OPT_P | OPT_R, prn);
+		gretlopt bopt = OPT_P | OPT_R;
+		int B = 0;
+
+		gretl_restriction_get_boot_params(&B, &bopt);
+		err = bootstrap_analysis(pmod, r->bnum[0], B, Z, pdinfo, 
+					 bopt, prn);
 		done = 1;
 	    } else {
 		/* a more complex restriction */
@@ -1552,4 +1554,30 @@ gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
     return err;
 }
 
+static int restrict_B;
+static gretlopt rboot_opt;
 
+int gretl_restriction_set_boot_params (int B, gretlopt opt)
+{
+    int err = 0;
+
+    rboot_opt = opt;
+
+    if (B > 0) {
+	restrict_B = B;
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+void gretl_restriction_get_boot_params (int *pB, gretlopt *popt)
+{
+    *pB = restrict_B;
+    *popt |= rboot_opt;
+
+    /* these are ad hoc values */
+    restrict_B = 0;
+    rboot_opt = OPT_NONE;
+}
