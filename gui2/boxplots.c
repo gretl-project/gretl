@@ -348,19 +348,6 @@ place_plots (PLOTGROUP *plotgrp)
     }
 }
 
-static int has_any_mean (PLOTGROUP *grp)
-{
-    int i;
-
-    for (i=0; i<grp->nplots; i++) {
-	if (!na(grp->plots[i].mean)) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static void 
 gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 {
