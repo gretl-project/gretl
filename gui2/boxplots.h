@@ -37,10 +37,6 @@ int ps_print_plots (const char *fname, int flag, gpointer data);
 int plot_to_xpm (const char *fname, gpointer data);
 #endif
 
-int augment_boxplot_count (void);
-
-void zero_boxplot_count (void);
-
 const char *get_boxplots_string (void);
 
 #endif /* BOXPLOTS_H */

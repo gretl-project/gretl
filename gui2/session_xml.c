@@ -60,16 +60,9 @@ static int restore_session_graphs (xmlNodePtr node)
 	}
 
 	if (!err) {
-	    SESSION_GRAPH *graph;
-	    
-	    graph = session_graph_new((const char *) name, 
-				      (const char *) fname, 
-				      ID, type);
-	    if (graph == NULL) {
-		err = 1;
-	    } else {
-		err = session_append_graph(graph);
-	    }
+	    err = session_append_graph((const char *) name,
+				       (const char *) fname,
+				       type);
 	}
 
 	if (!err) {

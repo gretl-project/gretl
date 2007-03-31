@@ -238,7 +238,8 @@ static int real_delete_model_from_session (SESSION_MODEL *model);
 static void rename_session_object (gui_obj *obj, const char *newname);
 
 static int session_saved;
-static int session_plot_count;
+static int session_graph_count;
+static int session_bplot_count;
 
 int session_is_saved (void)
 {
@@ -311,27 +312,6 @@ static void free_session_graph (SESSION_GRAPH *graph)
     free(graph);
 }
 
-static SESSION_GRAPH *session_graph_new (const char *name, const char *fname, 
-					 int ID, GretlObjType type)
-{
-    SESSION_GRAPH *graph = mymalloc(sizeof *graph);
-    
-    if (graph != NULL) {
-	*graph->name = '\0';
-	if (name != NULL) {
-	    strncat(graph->name, name, MAXSAVENAME - 1);
-	}
-	*graph->fname = '\0';
-	if (fname != NULL) {
-	    strncat(graph->fname, fname, MAXLEN - 1);
-	}	
-	graph->ID = ID;
-	graph->type = type;
-    }
-
-    return graph;
-}
-
 static int session_append_text (SESSION_TEXT *txt)
 {
     SESSION_TEXT **texts;
@@ -373,12 +353,33 @@ static int session_append_model (SESSION_MODEL *mod)
     return 0;
 }
 
-static int session_append_graph (SESSION_GRAPH *graph)
+static int session_append_graph (const char *grname,
+				 const char *fname,
+				 GretlObjType type)
 {
+    SESSION_GRAPH *graph;
     SESSION_GRAPH **graphs;
     int ng = session.ngraphs;
 
+    graph = mymalloc(sizeof *graph);
+    if (graph == NULL) {
+	return 1;
+    }
+
+    *graph->name = '\0';
+    if (grname != NULL) {
+	strncat(graph->name, grname, MAXSAVENAME - 1);
+    }
+
+    *graph->fname = '\0';
+    if (fname != NULL) {
+	strncat(graph->fname, fname, MAXLEN - 1);
+    }	
+
+    graph->type = type;
+
     graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
+
     if (graphs == NULL) {
 	free_session_graph(graph);
 	return 1;
@@ -386,7 +387,13 @@ static int session_append_graph (SESSION_GRAPH *graph)
 
     session.graphs = graphs;
     session.graphs[ng] = graph;
-    session.ngraphs += 1;
+    graph->ID = session.ngraphs++;
+
+    if (type == GRETL_OBJ_GRAPH) {
+	session_graph_count++;
+    } else {
+	session_bplot_count++;
+    }
 
     return 0;
 }
@@ -549,12 +556,9 @@ real_add_graph_to_session (const char *fname, const char *grname,
     if (graph != NULL) {
 	graph->type = type;
 	strcpy(graph->fname, fname);	
-	graph->ID = session_plot_count++;
 	replace = 1;
     } else {
-	graph = session_graph_new(grname, fname, session_plot_count++, 
-				  type);
-	if (graph == NULL || session_append_graph(graph)) {
+	if (session_append_graph(grname, fname, type)) {
 	    return ADD_OBJECT_FAIL;
 	}
     }
@@ -620,9 +624,9 @@ int add_graph_to_session (char *fname, char *fullname)
 
     chdir(paths.userdir);
 
-    sprintf(shortname, "graph.%d", session_plot_count + 1);
+    sprintf(shortname, "graph.%d", session_graph_count + 1);
     session_file_make_path(fullname, shortname);
-    sprintf(graphname, "%s %d", _("Graph"), session_plot_count + 1);
+    sprintf(graphname, "%s %d", _("Graph"), session_graph_count + 1);
 
     /* move temporary plot file to permanent */
     if (copyfile(fname, fullname)) {
@@ -645,7 +649,6 @@ void add_boxplot_to_session (void)
     char fname[MAXSAVENAME];
     char grname[MAXSAVENAME];
     char grpath[MAXLEN];
-    int boxplot_count;
 
     errno = 0;
 
@@ -656,10 +659,9 @@ void add_boxplot_to_session (void)
 
     chdir(paths.userdir);
 
-    boxplot_count = augment_boxplot_count();
-    sprintf(fname, "plot.%d", boxplot_count);
+    sprintf(fname, "plot.%d", session_bplot_count + 1);
     session_file_make_path(grpath, fname);
-    sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
+    sprintf(grname, "%s %d", _("Boxplot"), session_bplot_count + 1);
 
     if (copyfile(boxplottmp, grpath)) {
 	return;
@@ -1246,9 +1248,10 @@ void close_session (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	libgretl_session_cleanup();
     }
 
-    session_plot_count = 0;
+    session_graph_count = 0;
+    session_bplot_count = 0;
+
     reset_plot_count();
-    zero_boxplot_count();
 }
 
 static int session_overwrite_check (const char *fname)

@@ -1817,27 +1817,4 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-enum {
-    BPLOTNUM_ZERO,  
-    BPLOTNUM_AUGMENT
-};
 
-static int boxplot_number (int code)
-{
-    static int bplots;
-
-    if (code == BPLOTNUM_AUGMENT) bplots++;
-    else if (code == BPLOTNUM_ZERO) bplots = 0;
-
-    return bplots;
-}
-
-int augment_boxplot_count (void)
-{
-    return boxplot_number(BPLOTNUM_AUGMENT);
-}
-
-void zero_boxplot_count (void)
-{
-    (void) boxplot_number(BPLOTNUM_ZERO);
-}
