@@ -32,8 +32,8 @@ separata da virgole. I parametri possono essere di uno dei seguenti tipi:
 \begin{tabular}{ll}
 \multicolumn{1}{c}{Tipo} &
 \multicolumn{1}{c}{Descrizione} \\ [4pt]
-\texttt{bool} & variabile scalare usata come interruttore Booleano \\
-\texttt{int}  & variabile scalare usata come numero intero \\
+\texttt{bool}   & variabile scalare usata come interruttore Booleano \\
+\texttt{int}    & variabile scalare usata come numero intero \\
 \texttt{scalar} & variabile scalare \\
 \texttt{series} & serie di dati \\
 \texttt{list}   & lista di serie \\
@@ -305,7 +305,7 @@ controllare se è stata fornita una lista vuota come argomento).
 
 Le funzioni possono non produrre alcun valore (limitandosi ad esempio
 a stampare un risultato), oppure possono produrre una singola variabile:
-una scalare, una serie o una matrice. Il valore di uscita è specificato
+una scalare, una serie, una lista o una matrice. Il valore di uscita è specificato
 con una dichiarazione all'interno del corpo della funzione
 che comincia con la parola chiave \verb+return+, seguita dall'indicatore del
 tipo e dal nome della variabile (in modo analogo a quanto avviene per la lista
@@ -314,6 +314,31 @@ una di queste dichiarazioni. Ecco un esempio di dichiarazione return valida:
 %
 \begin{code}
 return scalar SSR
+\end{code}
+%
+Per fare in modo che una funzione produca più di una variabile in uscita, è
+possibile farle produrre una lista, ossia è possibile definire alcune variabili
+all'interno della funzione e accorparle in una lista; in questo caso esse non
+vengono distrutte all'uscita della funzione. Ecco un semplice esempio, che
+illustra anche la possibilità di impostare delle etichette descrittive per le
+variabili generate in una funzione.
+%    
+\begin{code}
+function make_cubes (list xlist)
+   list cubes = null
+   loop foreach i xlist --quiet
+      series $i3 = $i^3
+      setinfo $i3 -d "cube of $i"
+      list cubes += $i3
+    end loop
+    return list cubes
+end function
+
+open data4-1
+list xlist = price sqft
+list cubelist = make_cubes(xlist)
+print xlist cubelist --byobs
+labels
 \end{code}
 %
 Si noti che la dichiarazione \verb+return+ \emph{non} indica alla
