@@ -645,6 +645,66 @@
     </gui-access>
 
   </command>
+ 
+  <command name="bootstrap" section="Tests" label="Opzioni bootstrap"
+    context="gui">
+
+    <description>
+
+      <para>In questa finestra di dialogo è possibile scegliere:</para>
+
+      <ilist>
+	<li>
+	  <para>
+	    La variabile o il coefficiente da esaminare (è possibile testare
+            solo un coefficiente alla volta usando questo metodo).
+	  </para>
+	</li>
+	<li>
+	  <para>
+            Il tipo di analisi da eseguire. L'intervallo di confidenza
+            predefinito (95 per cento) è basato direttamente sui quantili delle
+            stime bootstrap del coefficiente. La versione
+	    <quote>studentizzata</quote> corrisponde a quella presentata nel
+            capitolo 5 di <book>Economic Theory and Methods</book> (ETM) di
+            Davidson e MacKinnon: ad ogni replicazione bootstrap, viene
+            calcolato un rapporto
+	    <mathvar>t</mathvar> come (a) la differenza tra la stima corrente
+            del coefficiente e quella di riferimento, divisa per (b) l'errore
+            standard di riferimento. Quindi l'intervallo di confidenza viene
+            calcolato usando i quantili di questo rapporto t, come spiegato in
+            ETM. L'opzione p-value si basa sulla distribuzione del rapporto
+	    <mathvar>t</mathvar> bootstrap: è la proporzione delle replicazioni
+            in cui il valore assoluto di questa statistica eccede il valore
+            assoluto del rapporto <mathvar>t</mathvar> di riferimento.
+	  </para>
+	</li>
+	<li>
+	  <para>Residui ricampionati o simulazione degli errori normali. Nel
+            primo caso i residui originali (riscalati, come suggerito in ETM)
+            vengono ricampionati con rimpiazzo. Nel secondo caso, vengono generati
+	    valori normali pseudo-casuali con la varianza dei residui originali.
+	  </para>
+	</li>
+	<li>
+	  <para>Il numero di replicazioni da eseguire. Si noti che quando si
+            costruisce un intervallo di confidenza al 95 per cento è opportuno
+            che 0.05(<mathvar>B</mathvar> + 1)/2 sia un intero
+	    (dove <mathvar>B</mathvar> è il numero di replicazioni), quindi
+            gretl può aggiustare il numero scelto di replicazioni per assicurare
+            questa condizione.
+	  </para>
+	</li>
+	<li>
+	  <para>Se produrre o no un grafico della distribuzione bootstrap.
+            Questa opzione usa la procedura di stima kernel di gretl.
+	  </para>
+	</li>
+      </ilist>
+
+    </description>
+  </command>
+
 
   <command name="boxplot" section="Graphs" label="Grafici boxplot">
 
@@ -666,8 +726,9 @@
         di una variabile. La <quote>scatola</quote> centrale (box) racchiude il
         50 per cento centrale dei dati, ossia è delimitato dal primo e terzo
         quartile. I <quote>baffi</quote> (whiskers) si estendono fino ai valori
-        minimo e massimo. Una linea trasversale sulla scatola indica la mediana.
-	</para> 
+        minimo e massimo. Una linea trasversale sulla scatola indica la mediana,
+        mentre un segno <quote>+</quote> indica la media.
+      </para> 
 
       <para>Nel caso dei grafici a tacca ("notches"), una tacca indica i limiti
         dell'intervallo di confidenza approssimato al 90 per cento per la
@@ -2065,7 +2126,7 @@
 
   </command>
 
-  <command name="freq" section="Statistics" label="Distribuzione di frequenza" context="cli">
+  <command name="freq" section="Statistics" label="Distribuzione di frequenza">
 
     <usage>
       <arguments>
@@ -2083,7 +2144,7 @@
       </options>
     </usage>
 
-    <description>
+    <description context="cli">
       <para>
         Se non vengono indicate opzioni, mostra la distribuzione di frequenza
         per la <repl>variabile</repl> (indicata con il nome o il numero) e i
@@ -2098,6 +2159,31 @@
       </para>
       <para>
         In modalità interattiva viene mostrato anche un grafico della distribuzione.
+      </para>
+    </description>
+ 
+    <description context="gui">
+      <para>
+        Nella finestra di dialogo della distribuzione di frequenza è possibile
+        controllare le caratteristiche del grafico in due modi diversi.
+      </para>
+      <para>
+	Per prima cosa è possibile scegliere il numero di intervalli; in questo caso la
+        larghezza e la posizione degli intervalli sono calcolate
+        automaticamente.
+      </para>
+      <para>
+        In alternativa, è possibile specificare il limite inferiore del primo
+        intervallo e la larghezza degli intervalli; in questo caso il numero di
+        intervalli viene calcolato automaticamente.
+      </para>
+      <para>
+        Se si vuole che gli intervalli corrispondano a numeri interi, è
+        possibile procedere in questo modo: iniziare specificando il numero di
+        intervalli, controllare il grafico prodotto, prendere nota delle
+        modifiche da fare (ad esempio impostare l'inizio del primo intervallo al
+        valore 100 e la larghezza pari a 200), quindi ricreare il grafico
+        specificando i valori scelti.
       </para>
     </description>
 
@@ -2684,30 +2770,16 @@
       </para>
 
       <para>
-	Ecco qualche esempio di utilizzo delle variabili dummy:
+        Ecco un esempio di utilizzo delle variabili dummy: si supponga che
+        <lit>x</lit> abbia valori 1, 2, o 3 e si desiderino tre variabili dummy,
+        <lit>d1</lit> = 1 se <lit>x</lit> = 1, e 0 altrove, <lit>d2</lit> = 1 se
+        <lit>x</lit> = 2 e così via. Per crearle, basta usare i comandi:
       </para>
 
-      <ilist>
-	<li><para>Si supponga che <lit>x</lit> abbia valori 1, 2, o 3
-	    e si desiderino tre variabili dummy, <lit>d1</lit> = 1 se
-	    <lit>x</lit> = 1, e 0 altrove, <lit>d2</lit> = 1 se
-	    <lit>x</lit> = 2 e così via. Per crearle, basta usare i comandi:
-	    </para>
-
-	  <code>
+      <code>
 	    genr d1 = (x=1)
 	    genr d2 = (x=2)
 	    genr d3 = (x=3)</code>
-	</li>
-
-	<li><para>Per creare <lit>z</lit> = <lit>max(x,y)</lit>
-	    usare</para>
-
-	  <code>
-	    genr d = x&gt;y
-	    genr z = (x*d)+(y*(1-d))</code>
-	</li>
-      </ilist>
 
       <table id="tab-genr" title="Esempi di utilizzo del comando genr"
 	lhead="Formula" rhead="Commento"
@@ -2897,8 +2969,7 @@
     </description>
   </command>
 
-  <command name="gmm" section="Estimation" label="Stima GMM"
-    context="cli">
+  <command name="gmm" section="Estimation" label="Stima GMM">
 
     <usage>
       <options>
@@ -2908,7 +2979,7 @@
 	</option>
 	<option>
 	  <flag>--iterate</flag>
-	  <effect>GMM aggiornato di continuo</effect>
+	  <effect>GMM iterato</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -2959,6 +3030,10 @@
       </para>
 
     </description>
+ 
+    <gui-access>
+      <menu-path>/Modello/GMM</menu-path>
+    </gui-access>
 
   </command>
 
@@ -2980,8 +3055,24 @@
 	  <effect>usa linee verticali</effect>
         </option>
         <option>
-	  <flag>--suppress-fitted</flag>
-	  <effect>non mostra le stime minimi quadrati</effect>
+	  <flag>--suppress-fit</flag>
+	  <effect>non mostra la linea stimata</effect>
+        </option>
+        <option>
+	  <flag>--linear-fit</flag>
+	  <effect>mostra fit minimi quadrati</effect>
+        </option>
+        <option>
+	  <flag>--inverse-fit</flag>
+	  <effect>mostra fit inverso</effect>
+        </option>
+        <option>
+	  <flag>--quadratic-fit</flag>
+	  <effect>mostra fit quadratico</effect>
+        </option>
+        <option>
+	  <flag>--loess-fit</flag>
+	  <effect>mostra fit loess</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -3014,6 +3105,20 @@
 	= <lit>01</lit>; il grafico vero e proprio può essere generato
         usando il programma <program>gnuplot</program> (su MS Windows:
 	<program>wgnuplot</program>).
+      </para>
+ 
+      <para>
+	Le varie opzioni <quote>fit</quote> si applicano solo nel caso di un
+        diagramma a dispersione bivariato. Il comportamento predefinito consiste
+        nel mostrare la linea con le stime OLS, se e solo se il coefficiente di
+        pendenza è significativo almeno al 10 per cento. Se si usa l'opzione
+	<lit>suppress</lit> non viene mostrata alcuna linea.
+        Se si usa l'opzione <lit>linear</lit>, la linea OLS viene mostrata a
+        prescindere dalla sua significatività. Le altre opzioni
+        (<lit>inverse</lit>, <lit>quadratic</lit> e <fit>loess</fit>) mostrano
+        rispettivamente un fit inverso (la regressione di <mathvar>y</mathvar>
+        su 1/<mathvar>x</mathvar>), un fit quadratico o un fit loess (chiamato
+        a volte anche <quote>lowess</quote>, una regressione robusta con pesi locali).
       </para>
 
       <para>È disponibile un'ulteriore opzione per questo comando: dopo la
@@ -6492,9 +6597,9 @@
         gretl, a meno di non essere modificato da un ulteriore
         esecuzione del comando <cmd>set</cmd>. I parametri che possono
         essere impostati in questo modo sono elencati di seguito.
-	Si noti che le impostazioni di <lit>hac_lag</lit> e
-	<lit>hc_version</lit> sono usate quando viene data l'opzione
-        <lit>--robust</lit> al comando <cmd>ols</cmd>. 
+        Si noti che le impostazioni di <lit>hac_lag</lit>, <lit>hc_version</lit>
+        e <lit>hac_kernel</lit> sono usate quando viene data l'opzione
+        <lit>--robust</lit> a un comando di stima.
       </para>
       <para>
         Se il comando <cmd>set</cmd> è usato senza parametri, vengono
@@ -6543,7 +6648,7 @@
 	  <para><lit>hac_lag</lit>:
 	  <lit>nw1</lit> (valore predefinito) o
 	    <lit>nw2</lit>, o un intero.  Imposta il massimo valore di
-            ritardo, <mathvar>p</mathvar>, usato nel calcolo degli
+            ritardo, o la larghezza di banda, <mathvar>p</mathvar>, usato nel calcolo degli
             errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
 	    con l'approccio Newey-West, per le serie storiche.
             <lit>nw1</lit> e <lit>nw2</lit> rappresentano due varianti
@@ -6557,7 +6662,22 @@
 	  <equation status="inline"
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
-	    graphic="nw2"/>.	  
+	    graphic="nw2"/>.
+	    Si veda anche <lit>qs_bandwidth</lit> sotto.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (valore predefinito),
+	    <lit>parzen</lit>, o <lit>qs</lit> (Quadratic Spectral). Imposta il
+            kernel, o struttura di pesi, usato nel calcolo degli errori standard
+            HAC.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>qs_bandwidth</lit>: larghezza di banda per la stima HAC
+            nel caso in cui si scelga il kernel "Quadratic Spectral" (a differenza
+            dei kernel Bartlett e Parzen, la larghezza di banda QS non deve essere
+            necessariamente un intero).
 	  </para>
 	</li>
 	<li>
@@ -8075,7 +8195,7 @@
     <usage>
       <arguments>
         <argument>lista-y</argument>
-        <argument separated="true">lista-x</argument>
+        <argument optional="true" separated="true">lista-x</argument>
       </arguments>
       <options>
         <option>
@@ -8096,9 +8216,11 @@
     <description>
       <para>
         Se non vengono usate opzioni, mostra la tabella di contingenza, o la
-        tabulazione incrociata, tra ognuna delle variabili della <repl>lista-y</repl>
-        (per riga) e ognuna delle variabili della <repl>lista-x</repl> (per
-        colonna). Le variabili in queste liste possono essere referenziate per
+        tabulazione incrociata, tra ogni combinazione delle variabili della
+        <repl>lista-y</repl>; se si indica anche una seconda lista,
+        <repl>lista-x</repl>, ogni variabile della <repl>lista-y</repl> viene
+        tabulata (per riga) rispetto ad ogni variabile della <repl>lista-x</repl>
+        (per colonna). Le variabili in queste liste possono essere referenziate per
         nome o per numero, e devono essere state marcate come discrete.
       </para>
       <para>
