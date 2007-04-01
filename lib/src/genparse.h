@@ -181,14 +181,15 @@ enum {
     BFGSMAX,   /* 150 */
     LRVAR,
     PRINCOMP,
+    QUANTILE,
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
     FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
     DOT,      /* period */
-    SEMI,     /* semi-colon */
-    COL,    /* 160: colon */
+    SEMI,   /* 160: semi-colon */
+    COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
@@ -197,8 +198,8 @@ enum {
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
-    MAT,      /* matrix, evaluated */
-    OBS,    /* 170: observation from a series */
+    MAT,    /* 170: matrix, evaluated */
+    OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
@@ -207,8 +208,8 @@ enum {
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,
-    DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,   /* 180: $ model var (scalar, series, or matrix) */
+    DVAR,   /* 180: $ dataset variable (scalar or series) */
+    MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
@@ -217,8 +218,8 @@ enum {
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
-    ABSENT, 
-    INC,    /* 190 */
+    ABSENT, /* 190 */ 
+    INC,   
     DEC,
     QUERY,
     AST2,     /* prime facie ambiguous case of "**" */

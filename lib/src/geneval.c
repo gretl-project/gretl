@@ -2120,6 +2120,10 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
 						  l->v.xvec, (int) (r->v.xval));
 	    break;
+	case QUANTILE:
+	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, l->v.xvec, 
+					 r->v.xval);
+	    break;
 	default:
 	    break;
 	}
@@ -3784,6 +3788,7 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;	
     case LRVAR:
+    case QUANTILE:
 	/* functions taking series and scalar arg, returning scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    if (r->t == NUM) {

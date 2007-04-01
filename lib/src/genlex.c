@@ -139,6 +139,7 @@ struct str_table funcs[] = {
     { OK,       "ok" },        /* opposite of missing */
     { MISSZERO, "misszero" },
     { LRVAR,    "lrvar" },
+    { QUANTILE, "quantile" },
     { MEDIAN,   "median" },
     { GINI,     "gini" },
     { ZEROMISS, "zeromiss" },

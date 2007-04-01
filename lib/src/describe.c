@@ -312,6 +312,66 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 }
 
 /**
+ * gretl_quantile:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ * @p: required quantile.
+ *
+ * Returns: the p-quantile value of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_quantile (int t1, int t2, const double *x, double p)
+{
+    int m = t2 - t1 + 1;
+    double *sx, ret, cpd;
+    int t, n, cpi;
+    double q;
+    
+    /* sanity check */
+    q = (p > 1)? 1 : (p < 0)? 0: p;
+
+    cpd = q * (m-1);
+    cpi = (int) floor(cpd);
+    cpd -= cpi;
+
+    sx = malloc(m * sizeof *sx);
+
+    if (sx == NULL) {
+	return NADBL;
+    }
+
+    n = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    sx[n++] = x[t];
+	}
+    }
+
+    if (n == 0) {
+	return NADBL;
+    }
+
+    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
+
+    ret = sx[cpi];
+    if (cpd > 0) {
+	ret += (1.0 - cpd) * (sx[cpi+1] - sx[cpi]);
+	/* 
+	   The above formula makes sense, but so does
+	   ret += 0.5 * (sx[cpi+1] - sx[cpi]);
+	   which one is best?
+	*/
+    }
+
+    free(sx);
+
+    return ret;
+}
+
+/**
  * gretl_median:
  * @t1: starting observation.
  * @t2: ending observation.
@@ -339,6 +399,10 @@ double gretl_median (int t1, int t2, const double *x)
 	if (!na(x[t])) {
 	    sx[n++] = x[t];
 	}
+    }
+
+    if (n == 0) {
+	return NADBL;
     }
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
