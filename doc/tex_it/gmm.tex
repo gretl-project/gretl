@@ -196,8 +196,9 @@ ortogonalità e devono seguire la sintassi
 \begin{code}
   orthog x ; Z
 \end{code}
-dove \texttt{x} deve essere un vettore o una serie, e \texttt{Z} deve essere una
-serie, lista o matrice. Nell'esempio~\ref{gmm-ols-ex}, la serie \texttt{e}
+dove \texttt{x} può essere una serie, matrice, o una lista di serie, e
+\texttt{Z} può anche essa essere una serie, lista o matrice.
+Nell'esempio~\ref{gmm-ols-ex}, la serie \texttt{e}
 contiene i ``residui'' e la serie \texttt{x} contiene il regressore.  Se
 \texttt{x} fosse stata una lista (o una matrice), la dichiarazione
 \texttt{orthog} avrebbe generato una condizione di ortogonalità per ogni
