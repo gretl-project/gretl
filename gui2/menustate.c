@@ -162,12 +162,15 @@ static GtkItemFactoryEntry panel_model_items[] = {
 			(d)->structure == SPECIAL_TIME_SERIES || \
                         (d)->structure == STACKED_TIME_SERIES)
 
-#define seasonal_ts(d) ((d)->structure == TIME_SERIES && (d->pd == 4 || d->pd == 12))
+#define tramo_ts(d) ((d)->structure == TIME_SERIES && \
+                     (d->pd == 1 || d->pd == 4 || d->pd == 12))
+
+#define x12_ts(d) ((d)->structure == TIME_SERIES && \
+                   (d->pd == 4 || d->pd == 12))
 
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
-    gboolean ss = seasonal_ts(datainfo);
 
     if (mdata->ifac == NULL) {
 	return;
@@ -189,10 +192,10 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ifac, "/Variable/KPSS test", s);
     flip(mdata->ifac, "/Variable/Filter", s);
 #ifdef HAVE_X12A
-    flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ss);
+    flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", x12_ts(datainfo));
 #endif
 #ifdef HAVE_TRAMO
-    flip(mdata->ifac, "/Variable/TRAMO analysis", ss);
+    flip(mdata->ifac, "/Variable/TRAMO analysis", tramo_ts(datainfo));
 #endif
     flip(mdata->ifac, "/Variable/Hurst exponent", s);
     /* Model menu */
