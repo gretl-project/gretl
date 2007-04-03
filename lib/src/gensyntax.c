@@ -90,7 +90,14 @@ static NODE *newref (parser *p)
 
 static NODE *newstr (char *s, int ext, int flag)
 {  
-    NODE *n = malloc(sizeof *n);
+    NODE *n;
+
+    if (s == NULL) {
+	fprintf(stderr, "newstr: input is NULL\n");
+	return NULL;
+    }
+
+    n = malloc(sizeof *n);
 
 #if MDEBUG
     fprintf(stderr, "newstr: allocated node at %p (s = '%s')\n", 

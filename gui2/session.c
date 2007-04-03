@@ -2062,7 +2062,20 @@ static void rearrange_icons (void)
 static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key, 
 				gpointer p)
 {
+    /* 'q' quits, but not if we're editing a label */
+
     if (key->keyval == GDK_q) { 
+	GList *mylist = icon_list;
+	gui_obj *gobj = NULL;
+
+	while (mylist != NULL) {
+	    gobj = (gui_obj *) mylist->data;
+	    if (gtk_editable_get_editable(GTK_EDITABLE(gobj->label))) {
+		return FALSE;
+	    }
+	    mylist = mylist->next;
+	}
+
         gtk_widget_destroy(w);
     }
 

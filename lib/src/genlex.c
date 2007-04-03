@@ -445,9 +445,13 @@ static char *get_quoted_string (parser *p)
     int n = parser_charpos(p, '"');
     char *s = NULL;
 
-    if (n >= 0) {
+    if (n > 0) {
 	s = gretl_strndup(p->point, n);
 	parser_advance(p, n + 1);
+    } else if (n == 0) {	
+	parser_print_input(p);
+	pprintf(p->prn, _("Empty string\n"));
+	p->err = E_PARSE;
     } else {
 	parser_print_input(p);
 	pprintf(p->prn, _("Unmatched '%c'\n"), '"');
