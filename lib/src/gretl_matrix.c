@@ -4347,6 +4347,122 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return w;
 }
 
+static int gensymm_conformable (const gretl_matrix *A,
+				const gretl_matrix *B)
+{
+    if (!gretl_matrix_is_symmetric(A)) {
+	fputs("gretl_gensymm_eigenvals: matrix A is not symmetric\n", 
+	      stderr);
+	return 0;
+    }
+
+    if (!gretl_matrix_is_symmetric(B)) {
+	fputs("gretl_gensymm_eigenvals: matrix B is not symmetric\n", 
+	      stderr);
+	return 0;
+    }
+
+    if (B->rows != A->rows) {
+	fputs("gretl_gensymm_eigenvals: matrices A and B have different size\n", 
+	      stderr);
+	return 0;
+    }
+
+    return 1;
+}
+
+/**
+ * gretl_gensymm_eigenvals:
+ * @A: matrix.
+ * @B: matrix.
+ * @V: location for generalized eigenvectors.
+ * @err: location to receive error code.
+ * 
+ * Solves the generalized eigenvalue problem
+ * | A - \lambda B | = 0 , where both A and B are symmetric.
+ *
+ * Returns: allocated storage containing the eigenvalues, or %NULL
+ * on failure.
+ */
+
+double *gretl_gensymm_eigenvals (const gretl_matrix *A, 
+				 const gretl_matrix *B, 
+				 gretl_matrix *V, int *err)
+{
+    gretl_matrix *K = NULL;
+    gretl_matrix *tmp = NULL;
+    double *eigvals = NULL;
+    int n = A->rows;
+
+#if 0
+    gretl_matrix_print(A, "A");
+    gretl_matrix_print(B, "B");
+#endif
+
+    if (!gensymm_conformable(A, B)) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+    
+    K = gretl_matrix_copy(B);
+    tmp = gretl_matrix_alloc(n, n);
+
+    if (K == NULL || tmp == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    *err = gretl_matrix_cholesky_decomp(K);
+    if (*err) {
+	fputs("gretl_symmetric_matrix_eigenvecs: matrix B not p.d.\n", 
+	      stderr);
+	*err = E_NONCONF;
+	goto bailout;
+    }
+
+#if 0
+    gretl_matrix_print(K, "K, after Cholesky");
+#endif
+
+    *err = gretl_invert_general_matrix(K);
+    if (*err) {
+	fputs("gretl_symmetric_matrix_eigenvecs: matrix B only spd\n", 
+	      stderr);
+	*err = E_NONCONF;
+	goto bailout;
+    }
+
+    gretl_matrix_qform(K, GRETL_MOD_NONE, A, tmp, GRETL_MOD_NONE);
+
+#if 0
+    gretl_matrix_print(tmp, "tmp");
+#endif
+
+    eigvals = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
+    if (*err) {
+	goto bailout;
+    }
+
+    *err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE, 
+				     tmp, GRETL_MOD_NONE, 
+				     V, GRETL_MOD_NONE);
+#if 0
+    gretl_matrix_print(V, "V");
+#endif
+
+ bailout:
+
+    gretl_matrix_free(K);
+    gretl_matrix_free(tmp);
+
+    if (*err && eigvals != NULL) {
+	free(eigvals);
+	eigvals = NULL;
+    }
+
+    return eigvals;
+}
+
 /**
  * gretl_matrix_SVD:
  * @a: matrix to decompose.

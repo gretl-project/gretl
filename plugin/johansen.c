@@ -23,6 +23,7 @@
 #include "var.h"
 
 #define JDEBUG 0
+#define OLDEIG 0
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -1055,6 +1056,8 @@ static int johansen_form_M (gretl_matrix *Suu, gretl_matrix *Svv,
 /* Public entry point for both cointegration test and VECM
    estimation */
 
+#if OLDEIG
+
 int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
@@ -1174,6 +1177,116 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
+
+#else
+
+int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *Suu = NULL, *Svv = NULL, *tmp = NULL;
+    double *eigvals = NULL;
+
+    int n = jvar->neqns;
+    int nv = gretl_matrix_cols(jvar->jinfo->Svv);
+    int rank = jrank(jvar);
+    int err = 0;
+
+#if JDEBUG
+    fprintf(stderr, "\n*** starting johansen_analysis()\n\n");
+#endif
+
+    M = gretl_matrix_alloc(nv, nv);
+
+    /* We want to preserve Svv and Suu, so copy them before
+       inverting */
+    Svv = gretl_matrix_copy(jvar->jinfo->Svv);
+    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
+    tmp = gretl_matrix_alloc(nv,nv);
+
+    if (Suu == NULL || Svv == NULL || M == NULL || tmp == NULL) {
+	err = E_ALLOC;
+	goto eigenvals_bailout;
+    }
+
+    err = gretl_invert_symmetric_matrix(Suu);
+    if (err) {
+	goto eigenvals_bailout;
+    }
+
+    gretl_matrix_qform(jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, Suu, tmp, 
+		       GRETL_MOD_NONE);
+
+    eigvals = gretl_gensymm_eigenvals(tmp, Svv, M, &err);
+    if (err) {
+	pputs(prn, _("Failed to find eigenvalues\n"));
+	goto eigenvals_bailout;
+    } else {
+	err = gretl_symmetric_eigen_sort(eigvals, M, rank);
+    }
+
+#if JDEBUG
+    gretl_matrix_print(M, "raw eigenvector(s)");
+#endif
+
+    if (!err) {
+	johansen_ll_calc(jvar, eigvals);
+
+	if (rank == 0) {
+	    compute_coint_test(jvar, eigvals, prn);
+	    /* just running cointegration test */
+	    if (opt & OPT_Q) {
+		goto eigenvals_bailout;
+	    }
+	    jvar->jinfo->Beta = M;
+	    M = NULL;
+	    err = compute_alpha(jvar->jinfo, n);
+	    if (!err) {
+		print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
+		compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
+	    }
+	} else {
+	    /* estimating VECM */
+	    int do_stderrs = rank < jvar->neqns;
+
+	    jvar->jinfo->Beta = gretl_matrix_copy(M);
+	    if (jvar->jinfo->Beta == NULL) {
+		err = E_ALLOC;
+	    }
+	    if (!err) {
+		err = phillips_normalize_beta(jvar); 
+	    }
+	    if (!err) {
+		err = build_VECM_models(jvar, pZ, pdinfo, 0);
+	    }
+	    if (!err) {
+		err = compute_omega(jvar);
+	    }
+	    if (!err && do_stderrs) {
+		err = beta_variance(jvar);
+	    }
+	    if (!err) {
+		err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+	    }
+	    if (!err) {
+		err = vecm_ll_stats(jvar);
+	    }
+	}
+    } 
+
+ eigenvals_bailout:    
+
+    gretl_matrix_free(tmp);
+    gretl_matrix_free(M);
+    gretl_matrix_free(Svv);
+    gretl_matrix_free(Suu);
+
+    free(eigvals);
+
+    return err;
+}
+#endif 
+
 
 /* Simplified version of the Johansen procedure, to be called in
    the process of computing bootstrap confidence intervals for

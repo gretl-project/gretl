@@ -333,6 +333,10 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 					  int eigenvecs, 
 					  int *err);
 
+double *gretl_gensymm_eigenvals (const gretl_matrix *A, 
+				 const gretl_matrix *B, 
+				 gretl_matrix *V, int *err);
+
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, 
 					    int *err);
 
