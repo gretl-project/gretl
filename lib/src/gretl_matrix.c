@@ -3501,6 +3501,40 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 }
 
 /**
+ * gretl_invert_triangular_matrix:
+ * @a: triangular matrix to invert.
+ * @uplo: 'L' for lower triangular @a, 'U' for upper.
+ * 
+ * Computes the inverse of a triangular matrix.  On exit
+ * @a is overwritten with the inverse.  Uses the lapack 
+ * function %dtrtri.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
+{
+    char diag = 'N';
+    integer info = 0;
+    integer n = a->rows;
+    int err = 0;
+
+    if (a->rows != a->cols) {
+	return E_NONCONF;
+    }
+
+    dtrtri_(&uplo, &diag, &n, a->val, &n, &info);
+
+    if (info < 0) {
+	err = E_DATA;
+    } else if (info > 0) {
+	err = E_SINGULAR;
+    }
+
+    return err;
+}
+
+/**
  * gretl_invert_general_matrix:
  * @a: matrix to invert.
  * 
@@ -3676,6 +3710,10 @@ int gretl_invert_matrix (gretl_matrix *a)
 	if (err) {
 	    err = gretl_invert_symmetric_indef_matrix(a);
 	}
+    } else if (s == GRETL_MATRIX_LOWER_TRIANGULAR) {
+	err = gretl_invert_triangular_matrix(a, 'L');
+    } else if (s == GRETL_MATRIX_UPPER_TRIANGULAR) {
+	err = gretl_invert_triangular_matrix(a, 'U');
     } else {
 	err = gretl_invert_general_matrix(a);
     }
@@ -4371,11 +4409,13 @@ static int gensymm_conformable (const gretl_matrix *A,
     return 1;
 }
 
+#define GSDEBUG 0
+
 /**
  * gretl_gensymm_eigenvals:
  * @A: symmetric matrix.
  * @B: symmetric positive definite matrix.
- * @V: location for generalized eigenvectors.
+ * @V: matrix to hold the generalized eigenvectors.
  * @err: location to receive error code.
  * 
  * Solves the generalized eigenvalue problem
@@ -4388,14 +4428,15 @@ static int gensymm_conformable (const gretl_matrix *A,
 
 double *gretl_gensymm_eigenvals (const gretl_matrix *A, 
 				 const gretl_matrix *B, 
-				 gretl_matrix *V, int *err)
+				 gretl_matrix *V, 
+				 int *err)
 {
     gretl_matrix *K = NULL;
     gretl_matrix *tmp = NULL;
     double *eigvals = NULL;
     int n = A->rows;
 
-#if 0
+#if GSDEBUG
     gretl_matrix_print(A, "A");
     gretl_matrix_print(B, "B");
 #endif
@@ -4421,15 +4462,9 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
 	goto bailout;
     }
 
-#if 0
-    gretl_matrix_print(K, "K, after Cholesky");
-#endif
-
-    /* I don't fully understand the next step here -- AC */
-
-    *err = gretl_invert_general_matrix(K);
+    *err = gretl_invert_triangular_matrix(K, 'L');
     if (*err) {
-	fputs("gretl_gensymm_eigenvals: matrix B only spd\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B only p.s.d.\n", 
 	      stderr);
 	*err = E_NONCONF;
 	goto bailout;
@@ -4437,7 +4472,7 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
 
     gretl_matrix_qform(K, GRETL_MOD_NONE, A, tmp, GRETL_MOD_NONE);
 
-#if 0
+#if GSDEBUG
     gretl_matrix_print(tmp, "tmp");
 #endif
 
@@ -4449,7 +4484,7 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
     *err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE, 
 				     tmp, GRETL_MOD_NONE, 
 				     V, GRETL_MOD_NONE);
-#if 0
+#if GSDEBUG
     gretl_matrix_print(V, "V");
 #endif
 

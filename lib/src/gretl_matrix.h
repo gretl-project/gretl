@@ -308,6 +308,8 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet);
 
 int gretl_invert_packed_symmetric_matrix (gretl_matrix *v);
 
+int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo);
+
 int gretl_invert_diagonal_matrix (gretl_matrix *a);
 
 int gretl_invert_matrix (gretl_matrix *a);
@@ -335,7 +337,8 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 
 double *gretl_gensymm_eigenvals (const gretl_matrix *A, 
 				 const gretl_matrix *B, 
-				 gretl_matrix *V, int *err);
+				 gretl_matrix *V, 
+				 int *err);
 
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, 
 					    int *err);

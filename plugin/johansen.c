@@ -157,57 +157,6 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     return 0;
 }
 
-/* normalize the eigenvectors, based on the Svv matrix */
-
-static int johansen_normalize (JohansenInfo *jv, gretl_matrix *evecs)
-{
-    gretl_matrix *a = NULL, *b = NULL;
-    double x, den;
-    int nv = gretl_matrix_rows(jv->Svv);
-    int i, j, h;
-    int err = 0;
-
-    if (jv->rank > 0) {
-	h = jv->rank;
-    } else {
-	h = nv;
-    }
-
-    a = gretl_column_vector_alloc(nv);
-    b = gretl_column_vector_alloc(nv);
-
-    if (a == NULL || b == NULL) {
-	gretl_matrix_free(a);
-	gretl_matrix_free(b);
-	return E_ALLOC;
-    }
-
-    for (j=0; j<h; j++) {
-	/* select column from evecs */
-	for (i=0; i<nv; i++) {
-	    x = gretl_matrix_get(evecs, i, j);
-	    gretl_vector_set(a, i, x);
-	}
-
-	/* find value of appropriate denominator */
-	gretl_matrix_multiply(jv->Svv, a, b);
-	den = gretl_vector_dot_product(a, b, &err);
-
-	if (!err) {
-	    den = sqrt(den);
-	    for (i=0; i<nv; i++) {
-		x = gretl_matrix_get(evecs, i, j);
-		gretl_matrix_set(evecs, i, j, x / den);
-	    }
-	} 
-    }
-
-    gretl_matrix_free(a);
-    gretl_matrix_free(b);
-
-    return err;
-}
-
 enum {
     PRINT_ALPHA,
     PRINT_BETA
@@ -1023,32 +972,37 @@ compute_coint_test (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
     return 0;
 }
 
-static int johansen_form_M (gretl_matrix *Suu, gretl_matrix *Svv,
-			    const gretl_matrix *Suv,
-			    gretl_matrix *R, gretl_matrix *L,
-			    gretl_matrix *M)
+static int johansen_get_eigenvalues (gretl_matrix *Suu,
+				     const gretl_matrix *Suv,
+				     const gretl_matrix *Svv,
+				     gretl_matrix *M,
+				     double **evals,
+				     int rank)
 {
-    int err = 0;
+    gretl_matrix *Tmp = NULL;
+    int n = Svv->cols;
+    int err;
 
-    /* calculate Suu^{-1} Suv */
     err = gretl_invert_symmetric_matrix(Suu);
-    if (!err) {
-	err = gretl_matrix_multiply(Suu, Suv, R);
+    if (err) {
+	return err;
     }
 
-    /* calculate Svv^{-1} Suv' */
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(Svv);
-    }
-    if (!err) {
-	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-					Suv, GRETL_MOD_TRANSPOSE, 
-					L, GRETL_MOD_NONE);
+    Tmp = gretl_matrix_alloc(n, n);
+    if (Tmp == NULL) {
+	return E_ALLOC;
     }
 
+    gretl_matrix_qform(Suv, GRETL_MOD_TRANSPOSE, 
+		       Suu, Tmp, GRETL_MOD_NONE);
+
+    *evals = gretl_gensymm_eigenvals(Tmp, Svv, M, &err);
+
     if (!err) {
-	err = gretl_matrix_multiply(L, R, M);
+	err = gretl_symmetric_eigen_sort(*evals, M, rank);
     }
+
+    gretl_matrix_free(Tmp);
 
     return err;
 }
@@ -1056,135 +1010,11 @@ static int johansen_form_M (gretl_matrix *Suu, gretl_matrix *Svv,
 /* Public entry point for both cointegration test and VECM
    estimation */
 
-#if OLDEIG
-
 int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
     gretl_matrix *M = NULL;
-    gretl_matrix *TmpL = NULL, *TmpR = NULL;
-    gretl_matrix *Suu = NULL, *Svv = NULL;
-
-    double *eigvals = NULL;
-
-    int n = jvar->neqns;
-    int nv = gretl_matrix_cols(jvar->jinfo->Svv);
-    int rank = jrank(jvar);
-    int err = 0;
-
-#if JDEBUG
-    fprintf(stderr, "\n*** starting johansen_analysis()\n\n");
-#endif
-
-    TmpL = gretl_matrix_alloc(nv, n);
-    TmpR = gretl_matrix_alloc(nv, nv);
-    M = gretl_matrix_alloc(nv, nv);
-
-    /* We want to preserve Svv and Suu, so copy them before
-       inverting */
-    Svv = gretl_matrix_copy(jvar->jinfo->Svv);
-    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
-
-    if (Suu == NULL || Svv == NULL || TmpL == NULL || 
-	TmpR == NULL || M == NULL) {
-	err = 1;
-	goto eigenvals_bailout;
-    }
-
-    if (nv > n) {
-	gretl_matrix_reuse(TmpR, n, nv);
-    }
-
-    err = johansen_form_M(Suu, Svv, jvar->jinfo->Suv, TmpR, TmpL, M);
-    if (err) {
-	goto eigenvals_bailout;
-    }
-
-    eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
-    if (err) {
-	pputs(prn, _("Failed to find eigenvalues\n"));
-    } else {
-	err = gretl_general_eigen_sort(eigvals, M, rank);
-    }
-
-#if JDEBUG
-    gretl_matrix_print(M, "raw eigenvector(s)");
-#endif
-
-    if (!err) {
-	johansen_ll_calc(jvar, eigvals);
-
-	if (rank == 0) {
-	    compute_coint_test(jvar, eigvals, prn);
-	} 
-
-	/* normalize the eigenvectors */
-	johansen_normalize(jvar->jinfo, M);
-#if JDEBUG
-	gretl_matrix_print(M, "normalized tmpR");
-#endif
-
-	if (rank == 0) {
-	    /* just running cointegration test */
-	    if (opt & OPT_Q) {
-		goto eigenvals_bailout;
-	    }
-	    jvar->jinfo->Beta = M;
-	    M = NULL;
-	    err = compute_alpha(jvar->jinfo, n);
-	    if (!err) {
-		print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
-		compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
-	    }
-	} else {
-	    /* estimating VECM */
-	    int do_stderrs = rank < jvar->neqns;
-
-	    jvar->jinfo->Beta = gretl_matrix_copy(M);
-	    if (jvar->jinfo->Beta == NULL) {
-		err = E_ALLOC;
-	    }
-	    if (!err) {
-		err = phillips_normalize_beta(jvar); 
-	    }
-	    if (!err) {
-		err = build_VECM_models(jvar, pZ, pdinfo, 0);
-	    }
-	    if (!err) {
-		err = compute_omega(jvar);
-	    }
-	    if (!err && do_stderrs) {
-		err = beta_variance(jvar);
-	    }
-	    if (!err) {
-		err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
-	    }
-	    if (!err) {
-		err = vecm_ll_stats(jvar);
-	    }
-	}
-    } 
-
- eigenvals_bailout:    
-
-    gretl_matrix_free(TmpL);
-    gretl_matrix_free(TmpR);
-    gretl_matrix_free(M);
-    gretl_matrix_free(Svv);
-    gretl_matrix_free(Suu);
-
-    free(eigvals);
-
-    return err;
-}
-
-#else
-
-int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
-{
-    gretl_matrix *M = NULL;
-    gretl_matrix *Suu = NULL, *Svv = NULL, *tmp = NULL;
+    gretl_matrix *Suu = NULL;
     double *eigvals = NULL;
 
     int n = jvar->neqns;
@@ -1198,32 +1028,20 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     M = gretl_matrix_alloc(nv, nv);
 
-    /* We want to preserve Svv and Suu, so copy them before
-       inverting */
-    Svv = gretl_matrix_copy(jvar->jinfo->Svv);
+    /* We want to preserve Suu, so copy before processing */
     Suu = gretl_matrix_copy(jvar->jinfo->Suu);
-    tmp = gretl_matrix_alloc(nv,nv);
 
-    if (Suu == NULL || Svv == NULL || M == NULL || tmp == NULL) {
+    if (Suu == NULL || M == NULL) {
 	err = E_ALLOC;
-	goto eigenvals_bailout;
+	goto bailout;
     }
 
-    err = gretl_invert_symmetric_matrix(Suu);
-    if (err) {
-	goto eigenvals_bailout;
-    }
-
-    gretl_matrix_qform(jvar->jinfo->Suv, GRETL_MOD_TRANSPOSE, Suu, tmp, 
-		       GRETL_MOD_NONE);
-
-    eigvals = gretl_gensymm_eigenvals(tmp, Svv, M, &err);
+    err = johansen_get_eigenvalues(Suu, jvar->jinfo->Suv, jvar->jinfo->Svv,
+				   M, &eigvals, rank);
     if (err) {
 	pputs(prn, _("Failed to find eigenvalues\n"));
-	goto eigenvals_bailout;
-    } else {
-	err = gretl_symmetric_eigen_sort(eigvals, M, rank);
-    }
+	goto bailout;
+    } 
 
 #if JDEBUG
     gretl_matrix_print(M, "raw eigenvector(s)");
@@ -1236,7 +1054,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    compute_coint_test(jvar, eigvals, prn);
 	    /* just running cointegration test */
 	    if (opt & OPT_Q) {
-		goto eigenvals_bailout;
+		goto bailout;
 	    }
 	    jvar->jinfo->Beta = M;
 	    M = NULL;
@@ -1274,19 +1092,15 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
- eigenvals_bailout:    
+ bailout:    
 
-    gretl_matrix_free(tmp);
     gretl_matrix_free(M);
-    gretl_matrix_free(Svv);
     gretl_matrix_free(Suu);
 
     free(eigvals);
 
     return err;
 }
-#endif 
-
 
 /* Simplified version of the Johansen procedure, to be called in
    the process of computing bootstrap confidence intervals for
@@ -1299,13 +1113,8 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 			  int iter)
 {
     gretl_matrix *M = NULL;
-    gretl_matrix *TmpL = NULL;
-    gretl_matrix *TmpR = NULL;
-    gretl_matrix *Svv = NULL;
-
     double *eigvals = NULL;
 
-    int n = jvar->neqns;
     int nv = gretl_matrix_cols(jvar->jinfo->Svv);
     int err = 0;
 
@@ -1313,32 +1122,17 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
 #endif
 
-    TmpL = gretl_matrix_alloc(nv, n);
-    TmpR = gretl_matrix_alloc(nv, nv);
     M = gretl_matrix_alloc(nv, nv);
-    Svv = gretl_matrix_copy(jvar->jinfo->Svv);
-
-    if (TmpL == NULL || TmpR == NULL || M == NULL || Svv == NULL) {
-	err = 1;
-	goto eigenvals_bailout;
+    if (M == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    if (nv > n) {
-	gretl_matrix_reuse(TmpR, n, nv);
-    }
-
-    err = johansen_form_M(jvar->jinfo->Suu, Svv, jvar->jinfo->Suv,
-			  TmpR, TmpL, M);
-
+    err = johansen_get_eigenvalues(jvar->jinfo->Suu, jvar->jinfo->Suv, 
+				   jvar->jinfo->Svv, M, &eigvals, 
+				   jrank(jvar));
     if (err) {
-	goto eigenvals_bailout;
-    }    
-
-    if (!err) {
-	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
-	if (!err) {
-	    err = gretl_general_eigen_sort(eigvals, M, jrank(jvar));
-	}
+	goto bailout;
     }
 
 #if JDEBUG
@@ -1346,10 +1140,6 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (!err) {
-	johansen_normalize(jvar->jinfo, M); 
-#if JDEBUG
-	gretl_matrix_print(M, "normalized M");
-#endif
 	if (jvar->jinfo->Beta == NULL) {
 	    jvar->jinfo->Beta = gretl_matrix_copy(M);
 	} else {
@@ -1369,13 +1159,9 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
- eigenvals_bailout:    
+ bailout:    
 
-    gretl_matrix_free(TmpL);
-    gretl_matrix_free(TmpR);
     gretl_matrix_free(M);
-    gretl_matrix_free(Svv);
-
     free(eigvals);
 
     return err;
@@ -1439,12 +1225,9 @@ johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 {
     gretl_matrix *M = NULL;
-    gretl_matrix *TmpL = NULL;
-    gretl_matrix *TmpR = NULL;
     gretl_matrix *Svv = NULL;
     gretl_matrix *Suv = NULL;
     gretl_matrix *Suu = NULL;
-
     double *eigvals = NULL;
 
     int n = jvar->neqns;
@@ -1452,14 +1235,11 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     int err = 0;
 
     M = gretl_matrix_alloc(m, m);
-    TmpL = gretl_matrix_alloc(m, n);
-    TmpR = gretl_matrix_alloc(n, m);
     Svv = gretl_matrix_alloc(m, m);
     Suv = gretl_matrix_alloc(n, m);
     Suu = gretl_matrix_copy(jvar->jinfo->Suu);
 
-    if (TmpL == NULL || TmpR == NULL || M == NULL || 
-	Svv == NULL || Suv == NULL || Suu == NULL) {
+    if (M == NULL || Svv == NULL || Suv == NULL || Suu == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1483,28 +1263,17 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 
     gretl_matrix_print_to_prn(Suv, "SuvD", prn);
 
-    if (!err) {
-	err = johansen_form_M(Suu, Svv, Suv, TmpR, TmpL, M);
-    }
-
-    gretl_matrix_print_to_prn(M, "M", prn);
+    err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &eigvals, 
+				   jrank(jvar));
 
     if (!err) {
-	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
-	if (!err) {
-	    err = gretl_general_eigen_sort(eigvals, M, jrank(jvar));
-	}
-    }
-
-    if (!err) {
+	gretl_matrix_print_to_prn(M, "M", prn);
 	johansen_LR_calc(jvar, eigvals, prn);
     } 
 
  bailout:    
 
     gretl_matrix_free(M);
-    gretl_matrix_free(TmpL);
-    gretl_matrix_free(TmpR);
     gretl_matrix_free(Svv);
     gretl_matrix_free(Suv);
     gretl_matrix_free(Suu);
