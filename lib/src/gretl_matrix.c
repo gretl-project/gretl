@@ -4373,13 +4373,14 @@ static int gensymm_conformable (const gretl_matrix *A,
 
 /**
  * gretl_gensymm_eigenvals:
- * @A: matrix.
- * @B: matrix.
+ * @A: symmetric matrix.
+ * @B: symmetric positive definite matrix.
  * @V: location for generalized eigenvectors.
  * @err: location to receive error code.
  * 
  * Solves the generalized eigenvalue problem
- * | A - \lambda B | = 0 , where both A and B are symmetric.
+ * | A - \lambda B | = 0 , where both A and B are symmetric
+ * and B is positive definite.
  *
  * Returns: allocated storage containing the eigenvalues, or %NULL
  * on failure.
@@ -4414,7 +4415,7 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
 
     *err = gretl_matrix_cholesky_decomp(K);
     if (*err) {
-	fputs("gretl_symmetric_matrix_eigenvecs: matrix B not p.d.\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B not p.d.\n", 
 	      stderr);
 	*err = E_NONCONF;
 	goto bailout;
@@ -4424,9 +4425,11 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
     gretl_matrix_print(K, "K, after Cholesky");
 #endif
 
+    /* I don't fully understand the next step here -- AC */
+
     *err = gretl_invert_general_matrix(K);
     if (*err) {
-	fputs("gretl_symmetric_matrix_eigenvecs: matrix B only spd\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B only spd\n", 
 	      stderr);
 	*err = E_NONCONF;
 	goto bailout;
