@@ -1793,6 +1793,8 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 	SESSION_MODEL *sm = obj->data;
 
 	gretl_object_rename(sm->ptr, sm->type, newname);
+	sm->name[0] = '\0';
+	strncat(sm->name, newname, MAXSAVENAME - 1);
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) { 
 	rename_session_graph(obj->data, newname);
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
