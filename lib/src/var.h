@@ -99,7 +99,8 @@ int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 
 int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn);
+int gretl_VECM_test_beta (GRETL_VAR *vecm, const DATAINFO *pdinfo, 
+			  PRN *prn);
 
 int gretl_VECM_rank (const GRETL_VAR *vecm);
 

@@ -2090,10 +2090,11 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
+int gretl_VECM_test_beta (GRETL_VAR *vecm, const DATAINFO *pdinfo, 
+			  PRN *prn)
 {
     void *handle = NULL;
-    int (*vecm_beta_test) (GRETL_VAR *, PRN *);
+    int (*vecm_beta_test) (GRETL_VAR *, const DATAINFO *, PRN *);
     int err = 0;
 
     if (vecm->jinfo == NULL || vecm->jinfo->D == NULL) {
@@ -2107,7 +2108,7 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, PRN *prn)
     if (vecm_beta_test == NULL) {
 	err = 1;
     } else {
-	err = (* vecm_beta_test) (vecm, prn);
+	err = (* vecm_beta_test) (vecm, pdinfo, prn);
 	close_plugin(handle);
     }
     

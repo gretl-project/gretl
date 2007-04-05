@@ -1414,7 +1414,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
-	    gretl_VECM_test_beta(rset->obj, prn);
+	    gretl_VECM_test_beta(rset->obj, pdinfo, prn);
 	}
 	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {

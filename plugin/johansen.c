@@ -157,6 +157,20 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     return 0;
 }
 
+/* Remove a possible excess zero from the end of a floating point
+   number printed to the given precision p: are we working around
+   a bug in the C library?
+*/
+
+static void fix_xstr (char *s, int p)
+{
+    int n = strlen(s);
+
+    if (n > p && strspn(s + n - p, "0") == p) {
+	s[n-1] = 0;
+    }
+}
+
 enum {
     PRINT_ALPHA,
     PRINT_BETA
@@ -171,8 +185,9 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 {
     gretl_matrix *c = (which == PRINT_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
+    char xstr[32];
     int i, j;
-    double x;
+    double x, y;
 
     if (rescale) {
 	pprintf(prn, "\n%s\n", (which == PRINT_BETA)? 
@@ -193,16 +208,21 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 	    pprintf(prn, "%-10s", "trend");
 	}
 	for (j=0; j<k; j++) {
+	    x = gretl_matrix_get(c, i, j);
 	    if (rescale) {
-		x = gretl_matrix_get(jv->Beta, j, j);
+		y = gretl_matrix_get(jv->Beta, j, j);
 		if (which == PRINT_BETA) {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j) / x);
+		    x /= y;
 		} else {
-		    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j) * x);
+		    x *= y;
 		}
-	    } else {
-		pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
 	    }
+	    if (x == -0.0) {
+		x = 0.0;
+	    }
+	    sprintf(xstr, "%#.5g", x);
+	    fix_xstr(xstr, 5);
+	    pprintf(prn, "%12s ", xstr);
 	}
 	pputc(prn, '\n');
     }
@@ -1222,7 +1242,7 @@ johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
    restricted constant or trend
 */
 
-int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
+int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
@@ -1232,6 +1252,7 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 
     int n = jvar->neqns;
     int m = gretl_matrix_cols(jvar->jinfo->D);
+    int rank = jrank(jvar);
     int err = 0;
 
     M = gretl_matrix_alloc(m, m);
@@ -1246,14 +1267,10 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
-    gretl_matrix_print_to_prn(jvar->jinfo->D, "Restriction matrix, D", prn);
-
     /* calculate Svv <- D' Svv D */
     gretl_matrix_qform(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
 		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
-    gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
-    
     if (!err) {
 	/* Suv <- SuvD */
 	err = gretl_matrix_multiply(jvar->jinfo->Suv, 
@@ -1261,15 +1278,30 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
 				    Suv);
     }
 
-    gretl_matrix_print_to_prn(Suv, "SuvD", prn);
-
     err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &eigvals, 
-				   jrank(jvar));
+				   rank);
 
     if (!err) {
-	gretl_matrix_print_to_prn(M, "M", prn);
 	johansen_LR_calc(jvar, eigvals, prn);
     } 
+
+    if (!err) {
+	gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_NONE,
+				  M, GRETL_MOD_NONE,
+				  jvar->jinfo->Beta, GRETL_MOD_NONE);
+	err = compute_alpha(jvar->jinfo, n);
+    }
+
+    if (!err) {
+	err = phillips_normalize_beta(jvar); 
+    }
+
+    if (!err) {
+	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_BETA, 0);
+	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_ALPHA, 0);
+	pputc(prn, '\n');
+	compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
+    }
 
  bailout:    
 
