@@ -221,6 +221,7 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 		x = 0.0;
 	    }
 	    sprintf(xstr, "%#.5g", x);
+	    fix_xstr(xstr, 5);
 	    pprintf(prn, "%12s ", xstr);
 	}
 	pputc(prn, '\n');

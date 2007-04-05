@@ -4,6 +4,8 @@ version 1.6.3, in progress
 - Fix bug in panel autocorrelation test (lmtest command)
 - Add fft() matrix function (Fast Fourier Transform)
 - Add quantile() function in genr
+- Add production of restricted estimates to the "restrict"
+  command as applied to VECMs
 - Multiple fixes for session icon handling
 
 3/24/2007 version 1.6.2
