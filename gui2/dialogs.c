@@ -104,7 +104,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
-    int resp;
     const char regular_save_msg[] = {
 	N_("Do you want to save the commands and\n"
 	   "output from this gretl session?")
@@ -113,6 +112,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	N_("Do you want to save the changes you made\n"
 	   "to this session?")
     };
+    int resp;
 
 #ifdef ALWAYS_SAVE_SESSION
     char fname[MAXLEN];
@@ -126,8 +126,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	return TRUE;
     }
 
-    if (!expert && !replaying() && 
-	(session_changed(-1) || (work_done() && !session_is_saved()))) {
+    if (!expert && !replaying() && work_done() && !session_is_saved()) {
 
 	resp = yes_no_dialog ("gretl", 
 			      (session_file_is_open()) ?

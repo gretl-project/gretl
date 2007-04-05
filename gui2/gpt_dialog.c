@@ -490,7 +490,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	    set_plot_has_y2_axis(plot, spec->flags & GPT_Y2AXIS);
 	    redisplay_edited_png(plot);
 	}
-	session_changed(1);
+	mark_session_changed();
     }
 }
 

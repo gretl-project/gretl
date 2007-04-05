@@ -45,8 +45,6 @@ int save_session (char *fname);
 
 int session_is_saved (void);
 
-void set_session_saved (int val);
-
 void session_menu_state (gboolean s);
 
 const char *get_session_dirname (void);
@@ -76,7 +74,7 @@ void delete_text_from_session (void *p);
 
 void display_saved_text (void *p);
 
-int session_changed (int set);
+void mark_session_changed (void);
 
 void session_init (void);
 

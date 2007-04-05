@@ -95,8 +95,7 @@ struct _selector {
 
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
-#define TWO_VARS_CODE(c) (c == SPEARMAN || c == MEANTEST || c == MEANTEST2 || \
-                          c == VARTEST || c == ELLIPSE || c == XCORRGM)
+#define TWO_VARS_CODE(c) (c == SPEARMAN || c == ELLIPSE || c == XCORRGM)
 
 #define WANT_TOGGLES(c) (c == ARBOND || \
                          c == ARMA || \
@@ -3378,9 +3377,6 @@ static char *get_topstr (int cmdnum)
     case COEFFSUM:
 	return N_("Select coefficients to sum");
     case SPEARMAN:
-    case MEANTEST:
-    case MEANTEST2:
-    case VARTEST:
     case ELLIPSE:
 	return N_("Select two variables");
     case PRINT:

@@ -879,9 +879,6 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
 					  savename);
 	g_free(savename);
-    } else if (action == SAVE_SESSION && *scriptfile != '\0') {
-	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
-				      scriptfile);
     } else if (action == SET_PROG) {
 	char *strvar = (char *) data;
 

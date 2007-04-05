@@ -386,12 +386,6 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     } else if (action == SPEARMAN) {
 	strcat(title, _("rank correlation"));
 	simple_selection(title, do_spearman, action, vwin);
-    } else if (action == MEANTEST || action == MEANTEST2) {
-	strcpy(title, _("gretl: means test"));
-	simple_selection(title, do_two_var_test, action, vwin);
-    } else if (action == VARTEST) {
-	strcpy(title, _("gretl: variances test"));
-	simple_selection(title, do_two_var_test, action, vwin);
     } else {
 	errbox("selector_callback: code was not recognized");
     }

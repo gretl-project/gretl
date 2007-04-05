@@ -975,55 +975,7 @@ int do_spearman (selector *sr)
     return 0;
 }
 
-int do_two_var_test (selector *sr)
-{
-    int action = selector_code(sr);
-    const char *buf = selector_list(sr);
-    PRN *prn;
-    char title[64];
-    int err = 0;
-
-    if (buf == NULL) return 1;
-
-    strcpy(title, "gretl: ");
-
-    if (action == MEANTEST) {
-	gretl_command_sprintf("meantest %s", buf);
-	strcat(title, _("means test"));
-    } else if (action == MEANTEST2) {
-	gretl_command_sprintf("meantest %s --unequal-vars", buf);
-	strcat(title, _("means test"));
-    } else if (action == VARTEST) {
-	gretl_command_sprintf("vartest %s", buf);
-	strcat(title, _("variances test"));
-    } else {
-	dummy_call();
-	return 1;
-    }
-
-    if (check_and_record_command() || bufopen(&prn)) {
-	return 1;
-    }
-
-    if (action == MEANTEST) {
-	err = means_test(libcmd.list, (const double **) Z, datainfo, OPT_NONE, prn);
-    } else if (action == MEANTEST2) {
-	err = means_test(libcmd.list, (const double **) Z, datainfo, OPT_O, prn);
-    } else if (action == VARTEST) {
-	err = vars_test(libcmd.list, (const double **) Z, datainfo, prn);
-    }
-
-    if (err) {
-        gui_errmsg(err);
-        gretl_print_destroy(prn);
-    } else {
-	view_buffer(prn, 78, 300, title, action, NULL); 
-    }
-
-    return err;
-}
-
-/* cross-corellogram: if two variables are selected in the main
+/* cross-correlogram: if two variables are selected in the main
    window we use those, otherwise we present a selection dialog
    (with a max of two selected variables) and use that
    selection */

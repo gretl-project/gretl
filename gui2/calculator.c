@@ -594,6 +594,10 @@ static void htest_graph (int d, double x, int df1, int df2)
     }
 }
 
+/* FIXME : should we record a relevant command when a test is done
+   using dataset variables? (Two means, or two variances)
+*/
+
 static void h_test (GtkWidget *w, test_t *test)
 {
     int j, n1, n2, grf;
@@ -1252,7 +1256,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 }
 
 /* fill out the sample statistics boxes based on the user's
-   choice or variable (or variable plus restriction) */
+   choice of variable (or variable plus restriction) */
 
 static void populate_stats (GtkWidget *w, gpointer p)
 {

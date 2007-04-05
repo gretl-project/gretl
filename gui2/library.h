@@ -69,8 +69,6 @@ gint bufopen (PRN **pprn);
 
 void do_menu_op (gpointer data, guint action, GtkWidget *w);
 
-int do_two_var_test (selector *sr);
-
 void do_run_script (GtkWidget *w, gpointer data);
 
 void gui_errmsg (const int errcode);
