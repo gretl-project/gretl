@@ -578,6 +578,8 @@ static char *squarable_cols_mask (const gretl_matrix *X, int *n)
     return mask;
 }
 
+#if 0
+
 static int hsk_transform_data (boot *bs, gretl_matrix *b,
 			       gretl_matrix *yh)
 {
@@ -679,6 +681,8 @@ static int hsk_transform_data (boot *bs, gretl_matrix *b,
 
     return err;
 }
+
+#endif
 
 /* do the actual bootstrap analysis: the objective is either to form a
    confidence interval or to compute a p-value; the methodology is
@@ -805,9 +809,11 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    err = gretl_cholesky_solve(XTX, b);
 	}
 
+#if 0
 	if (!err && bs->mci == HSK) {
 	    err = hsk_transform_data(bs, b, yh);
 	}
+#endif
 
 	if (err) {
 	    break;

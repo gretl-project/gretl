@@ -1154,7 +1154,7 @@ static int query_print_panel_obs (const DATAINFO *pdinfo)
  * @varnames: column names.
  * @labels: descriptive labels for the variables, or %NULL.
  * 
- * Write out in xml a data file containing the elements of
+ * Write out a .gdt data file containing the elements of
  * of the given matrix.
  * 
  * Returns: 0 on successful completion, non-zero on error.
@@ -1220,7 +1220,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
     for (i=0; i<k; i++) {
 	gzprintf(fz, "<variable name=\"%s\"", varnames[i]);
 	if (labels != NULL && labels[i] != NULL) {
-	    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
+	    gzprintf(fz, "\n label=\"%s\"", labels[i]);
 	}
 	gzputs(fz, "\n/>\n");
     }
