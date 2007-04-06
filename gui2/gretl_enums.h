@@ -142,6 +142,7 @@ enum file_ops {
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
     SAVE_FUNCTIONS,
+    SAVE_BOOT_DATA,
     SET_PROG,
     SET_DIR,
     FILE_OP_MAX

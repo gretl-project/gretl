@@ -46,6 +46,7 @@
 #include "matrix_extra.h"
 #include "texprint.h"
 #include "bootstrap.h"
+#include "fileselect.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -1374,6 +1375,10 @@ void do_bootstrap (gpointer p, guint u, GtkWidget *w)
 	view_buffer(prn, 78, 300, _("gretl: bootstrap analysis"), PRINT, NULL);
 	if (opt & OPT_G) {
 	    make_and_display_graph();
+	}
+	if (opt & OPT_S) {
+	    file_selector(_("Save bootstrap data to file"), SAVE_BOOT_DATA, 
+			  FSEL_DATA_NONE, NULL);
 	}
     }
 }

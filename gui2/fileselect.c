@@ -30,6 +30,7 @@
 #include "fileselect.h"
 #include "fnsave.h"
 #include "database.h"
+#include "bootstrap.h"
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
@@ -67,14 +68,18 @@
                              a == EXPORT_DAT || \
                              a == EXPORT_JM) && s != FSEL_DATA_PRN)
 
+#define GDT_ACTION(i) (i == SAVE_DATA || \
+                       i == SAVE_DATA_AS || \
+                       i == SAVE_BOOT_DATA || \
+                       i == OPEN_DATA || \
+                       i == APPEND_DATA)
+
 struct extmap {
     int action;
     char *ext;
 };
 
 static struct extmap action_map[] = {
-    { SAVE_DATA,         ".gdt" },
-    { SAVE_DATA_AS,      ".gdt" },
     { SAVE_DBDATA,       ".bin" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_CONSOLE,      ".inp" },
@@ -93,8 +98,6 @@ static struct extmap action_map[] = {
     { SAVE_OUTPUT,       ".txt" },
     { SAVE_TEX,          ".tex" },
     { SAVE_RTF,          ".rtf" },
-    { OPEN_DATA,         ".gdt" },
-    { APPEND_DATA,       ".gdt" },    
     { OPEN_SCRIPT,       ".inp" },
     { OPEN_SESSION,      ".gretl" },
     { OPEN_CSV,          ".csv" },
@@ -122,14 +125,15 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     gretlopt opt = OPT_NONE;
 
     switch (action) {
-    case SAVE_DATA:     opt = OPT_Z; break;
-    case SAVE_DATA_AS:  opt = OPT_Z; break;
-    case SAVE_DBDATA:   opt = OPT_D; break;
-    case EXPORT_OCTAVE: opt = OPT_M; break;
-    case EXPORT_R:      opt = OPT_R; break;
-    case EXPORT_CSV:    opt = OPT_C; break;
-    case EXPORT_DAT:    opt = OPT_G; break; /* PcGive */
-    case EXPORT_JM:     opt = OPT_J; break; /* JMulti */
+    case SAVE_DATA:
+    case SAVE_DATA_AS:
+    case SAVE_BOOT_DATA: opt = OPT_Z; break;
+    case SAVE_DBDATA:    opt = OPT_D; break;
+    case EXPORT_OCTAVE:  opt = OPT_M; break;
+    case EXPORT_R:       opt = OPT_R; break;
+    case EXPORT_CSV:     opt = OPT_C; break;
+    case EXPORT_DAT:     opt = OPT_G; break; /* PcGive */
+    case EXPORT_JM:      opt = OPT_J; break; /* JMulti */
     default: break;
     }
 
@@ -179,7 +183,9 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (action == SAVE_GNUPLOT) {
+    if (GDT_ACTION(action)) {
+	return ".gdt";
+    } else if (action == SAVE_GNUPLOT) {
 	int ttype = gp_term_code(data);
 
 	s = get_gp_ext(ttype);
@@ -422,6 +428,17 @@ static char *suggested_exportname (const char *fname, int action)
     return s;
 }
 
+static void bootstrap_save_callback (const char *fname)
+{
+    int err = bootstrap_save_data(fname);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	infobox(_("Saved data as %s"), fname);
+    }
+}
+
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
@@ -497,6 +514,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
 	save_user_functions(fname, data);
+    } else if (action == SAVE_BOOT_DATA) {
+	bootstrap_save_callback(fname);
     } else if (action == SET_PROG || action == SET_DIR) {
 	char *strvar = (char *) data;
 
@@ -565,7 +584,6 @@ static struct winfilter get_filter (int action, gpointer data)
 {
     static struct win32_filtermap map[] = {
 	{ SAVE_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_DATA_AS, { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ SAVE_DBDATA,  { N_("gretl database files (*.bin)"), "*.bin" }},
 	{ SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{ SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
@@ -584,8 +602,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{ SAVE_TEX,     { N_("TeX files (*.tex)"), "*.tex" }},
 	{ SAVE_RTF,     { N_("RTF files (*.rtf)"), "*.rtf" }},
-	{ OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ APPEND_DATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{ OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
 	{ OPEN_CSV,     { N_("CSV files (*.csv)"), "*.csv" }},
@@ -641,7 +657,11 @@ static char *make_winfilter (int action, gpointer data)
 	return NULL;
     }
 
-    filter = get_filter(action, data);
+    if (GDT_ACTION(action)) {
+	filter = get_filter(SAVE_DATA, data);
+    } else {
+	filter = get_filter(action, data);
+    }
 
     strcpy(p, I_(filter.descrip));
     p += strlen(p) + 1;

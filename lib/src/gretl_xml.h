@@ -101,6 +101,11 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
 
 #endif /* !GRETLCLI */
 
+int gretl_write_matrix_as_gdt (const char *fname, 
+			       const gretl_matrix *X,
+			       const char **varnames, 
+			       const char **labels);
+
 int gretl_write_gdt (const char *fname, const int *list, 
 		     const double **Z, const DATAINFO *pdinfo, 
 		     GretlDataFormat fmt, PATHS *ppaths);

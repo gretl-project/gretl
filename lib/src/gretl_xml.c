@@ -1148,6 +1148,115 @@ static int query_print_panel_obs (const DATAINFO *pdinfo)
 }
 
 /**
+ * gretl_write_matrix_as_gdt:
+ * @fname: name of file to write.
+ * @X: matrix, variable in columns.
+ * @varnames: column names.
+ * @labels: descriptive labels for the variables, or %NULL.
+ * 
+ * Write out in xml a data file containing the elements of
+ * of the given matrix.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int gretl_write_matrix_as_gdt (const char *fname, 
+			       const gretl_matrix *X,
+			       const char **varnames, 
+			       const char **labels)
+{
+    gzFile *fz = Z_NULL;
+    char datname[MAXLEN];
+    void *handle = NULL;
+    char *xmlbuf = NULL;
+    int (*show_progress) (long, long, int) = NULL;
+    long sz = 0L;
+    int T = X->rows;
+    int k = X->cols;
+    int i, t, err = 0;
+
+    fz = gretl_gzopen(fname, "wb");
+
+    if (fz == Z_NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), fname);
+	return 1;
+    }
+
+    sz = (T * k * sizeof(double));
+    if (sz > 100000) {
+	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
+    } else {
+	sz = 0L;
+    }
+
+    if (sz) {
+	show_progress = get_plugin_function("show_progress", &handle);
+	if (show_progress == NULL) {
+	    sz = 0L;
+	}
+    }
+
+    if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
+
+    simple_fname(datname, fname);
+    xmlbuf = gretl_xml_encode(datname);
+    if (xmlbuf == NULL) {
+	err = 1;
+	goto cleanup;
+    }
+
+    gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+	     "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
+	     "<gretldata name=\"%s\" frequency=\"1\" "
+	     "startobs=\"1\" endobs=\"%d\" type=\"cross-section\">\n", 
+	     datname, T);
+
+    free(xmlbuf);
+
+    gretl_push_c_numeric_locale();
+
+    gzprintf(fz, "<variables count=\"%d\">\n", k);
+
+    for (i=0; i<k; i++) {
+	gzprintf(fz, "<variable name=\"%s\"", varnames[i]);
+	if (labels != NULL && labels[i] != NULL) {
+	    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
+	}
+	gzputs(fz, "\n/>\n");
+    }
+
+    gzputs(fz, "</variables>\n");
+
+    gzprintf(fz, "<observations count=\"%d\" labels=\"false\">\n", T);
+
+    for (t=0; t<T; t++) {
+	gzputs(fz, "<obs>");
+	for (i=0; i<k; i++) {
+	    gzprintf(fz, "%.12g ", gretl_matrix_get(X, t, i));
+	}
+	gzputs(fz, "</obs>\n");
+	if (sz && t && (t % 50 == 0)) { 
+	    (*show_progress) (50, T, SP_NONE);
+	}
+    }
+
+    gzputs(fz, "</observations>\n</gretldata>\n");
+
+ cleanup: 
+
+    gretl_pop_c_numeric_locale();
+
+    if (sz) {
+	(*show_progress)(0, T, SP_FINISH);
+	close_plugin(handle);
+    } 
+
+    gzclose(fz);
+
+    return err;
+}
+
+/**
  * gretl_write_gdt:
  * @fname: name of file to write.
  * @list: list of variables to write (or %NULL to write all).

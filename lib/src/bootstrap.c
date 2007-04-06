@@ -19,6 +19,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_restrict.h"
+#include "gretl_xml.h"
 #include "bootstrap.h"
 
 #define BDEBUG 0
@@ -34,7 +35,8 @@ enum {
     BOOT_RESTRICT    = 1 << 7,  /* called via "restrict" command */
     BOOT_F_FORM      = 1 << 8,  /* compute F-statistics */
     BOOT_FREE_RQ     = 1 << 9,  /* free restriction matrices */
-    BOOT_VERBOSE     = 1 << 10  /* for debugging */
+    BOOT_SAVE        = 1 << 10, /* save results vector */
+    BOOT_VERBOSE     = 1 << 11  /* for debugging */
 };
 
 #define resampling(b) (b->flags & BOOT_RESAMPLE_U)
@@ -66,6 +68,9 @@ struct boot_ {
     double a;           /* alpha, for confidence interval */
     char vname[VNAMELEN]; /* name of variable analysed */
 };
+
+static gretl_vector *bs_data;
+static char bs_vname[VNAMELEN];
 
 static void boot_destroy (boot *bs)
 {
@@ -167,6 +172,10 @@ static int make_bs_flags (gretlopt opt)
 
     if (opt & OPT_F) {
 	flags |= BOOT_F_FORM;
+    }
+
+    if (opt & OPT_S) {
+	flags |= BOOT_SAVE;
     }
 
 #if BDEBUG > 1
@@ -354,6 +363,40 @@ static int do_restricted_ols (boot *bs)
     }
 
     return err;
+}
+
+static int bs_store_result (boot *bs, double *xi)
+{
+    int i;
+
+    if (bs_data != NULL) {
+	gretl_matrix_free(bs_data);
+	bs_data = NULL;
+    }
+
+    bs_data = gretl_column_vector_alloc(bs->B);
+    if (bs_data == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<bs->B; i++) {
+	bs_data->val[i] = xi[i];
+    }
+
+    *bs_vname = '\0';
+
+    if (bs->flags & BOOT_F_FORM) {
+	strcpy(bs_vname, "F_test");
+    } else {
+	if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
+	    strcpy(bs_vname, "t_");
+	} else {
+	    strcpy(bs_vname, "b_");
+	}
+	strncat(bs_vname, bs->vname, VNAMELEN - 3);
+    }
+
+    return 0;
 }
 
 static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
@@ -683,7 +726,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	rescale_residuals(bs);
     }
 
-    if (bs->flags & (BOOT_CI | BOOT_GRAPH)) {
+    if (bs->flags & (BOOT_CI | BOOT_GRAPH | BOOT_SAVE)) {
 	/* array for storing results */
 	xi = malloc(bs->B * sizeof *xi);
 	if (xi == NULL) {
@@ -789,7 +832,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    if (test > bs->test0) {
 		tail++;
 	    }
-	    if (bs->flags & BOOT_GRAPH) {
+	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
 		xi[i] = test;
 	    }
 	    continue;
@@ -812,7 +855,7 @@ static int real_bootstrap (boot *bs, PRN *prn)
 	    }
 	} else {
 	    /* doing p-value */
-	    if (bs->flags & BOOT_GRAPH) {
+	    if (bs->flags & (BOOT_GRAPH | BOOT_SAVE)) {
 		xi[i] = test;
 	    }
 	    if (fabs(test) > fabs(bs->test0)) {
@@ -822,6 +865,9 @@ static int real_bootstrap (boot *bs, PRN *prn)
     }
 
     if (!err) {
+	if (bs->flags & BOOT_SAVE) {
+	    bs_store_result(bs, xi);
+	}
 	bs_print_result(bs, xi, tail, prn);
     }
 
@@ -991,4 +1037,31 @@ int bootstrap_ok (int ci)
 {
     return (ci == OLS || ci == WLS); /* HSK?? */
 }
+
+int bootstrap_save_data (const char *fname)
+{
+    char **S = NULL;
+    int err, ns = 0;
+
+    if (bs_data == NULL) {
+	return E_DATA;
+    }
+
+    err = strings_array_add(&S, &ns, bs_vname);
+    if (err) {
+	return err;
+    }
+
+    err = gretl_write_matrix_as_gdt(fname, bs_data, (const char **) S, 
+				    NULL);
+
+    gretl_matrix_free(bs_data);
+    bs_data = NULL;
+    free_strings_array(S, ns);
+    *bs_vname = '\0';
+
+    return err;
+}
+
+
 

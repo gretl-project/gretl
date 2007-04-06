@@ -30,5 +30,6 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
 int bootstrap_ok (int ci);
 
+int bootstrap_save_data (const char *fname);
 
 #endif /* BOOTSTRAP_H */

@@ -700,6 +700,15 @@ static void set_bs_graph (GtkWidget *w, gretlopt *opt)
     }
 }
 
+static void set_bs_save (GtkWidget *w, gretlopt *opt)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	*opt |= OPT_S;
+    } else {
+	*opt &= ~OPT_S;
+    }
+}
+
 static void bs_select_coeff (GtkWidget *w, int *p)
 {
     *p = gtk_option_menu_get_history(GTK_OPTION_MENU(w));
@@ -884,6 +893,13 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
 	gtk_widget_show(button);
     }
+
+    /* save output switch */
+    button = gtk_check_button_new_with_label(_("Save bootstrap data to file"));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(set_bs_save), popt);
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
+    gtk_widget_show(button);    
 
     /* pack all of the above */
 
