@@ -4,8 +4,8 @@
 
 static double toler = 1.0e-9;
 
-static void col_(double *v1, double *v2, double amlt, 
-		 int m1, int iout)
+static void col_ (double *v1, double *v2, double amlt, 
+		  int m1, int iout)
 {
     int i;
 
@@ -526,6 +526,42 @@ static int bootstrap_vcv (MODEL *pmod, double **Z,
     return 0;
 }
 
+static int record_y_median (MODEL *pmod, const double *y)
+{
+    int T = pmod->t2 - pmod->t1 + 1;
+    double *sy, m;
+    int t, n, n2p;
+
+    sy = malloc(T * sizeof *sy);
+
+    if (sy == NULL) {
+	return E_ALLOC;
+    }
+
+    n = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t)) {
+	    sy[n++] = y[t];
+	}
+    }
+
+    if (n == 0) {
+	free(sy);
+	return E_DATA;
+    }
+
+    qsort(sy, n, sizeof *sy, gretl_compare_doubles); 
+
+    n2p = (T = n / 2) + 1;
+    m = (n % 2)? sy[n2p - 1] : 0.5 * (sy[T - 1] + sy[n2p - 1]);
+
+    gretl_model_set_double(pmod, "ymedian", m);
+
+    free(sy);
+
+    return 0;
+}
+
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
@@ -610,6 +646,9 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
 	/* sum of absolute residuals */
 	gretl_model_set_double(pmod, "ladsum", a[m + n * nrows]);
+
+	/* median of dependent variable */
+	record_y_median(pmod, Z[yno]);
 
 	/* set ess-based stats to missing value */
 	pmod->rsq = NADBL;

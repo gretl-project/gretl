@@ -622,11 +622,6 @@ static void fix_dbname (char *db)
     }
 }
 
-static void destroy (GtkWidget *widget, gpointer data)
-{
-    gtk_main_quit();
-}
-
 #ifdef ENABLE_NLS
 
 # if defined(G_OS_WIN32)
@@ -1463,7 +1458,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     g_signal_connect(G_OBJECT(mdata->w), "delete_event",
 		     G_CALLBACK(exit_check), NULL);
     g_signal_connect(G_OBJECT(mdata->w), "destroy",
-		     G_CALLBACK(destroy), NULL);
+		     G_CALLBACK(gtk_main_quit), NULL);
 
     gtk_window_set_title(GTK_WINDOW(mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW(mdata->w), 

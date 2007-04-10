@@ -63,8 +63,37 @@ void model_coeff_init (model_coeff *mc)
     mc->name[0] = '\0';
 }
 
+static void print_y_median (const MODEL *pmod, PRN *prn)
+{
+    double m = gretl_model_get_double(pmod, "ymedian");
+
+    if (na(m)) {
+	return;
+    }
+
+    if (plain_format(prn)) {
+	pprintf(prn, "  %s = %.*g\n", _("Median of dependent variable"), 
+		XDIGITS(pmod), m);
+    } else if (tex_format(prn)) {
+	char s[32];
+
+	tex_dcolumn_double(m, s);
+	pprintf(prn, "%s & %s \\\\\n", I_("Median of dependent variable"), s);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Median of dependent variable"), 
+		m);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Median of dependent variable"), 
+		prn_delim(prn), m);
+    }	
+}
+
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
+    if (pmod->ci == LAD) {
+	print_y_median(pmod, prn);
+    }
+
     if (na(pmod->ybar) || na(pmod->sdy)) {
 	return;
     }

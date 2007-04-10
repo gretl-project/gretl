@@ -82,8 +82,8 @@ typedef struct SESSION_GRAPH_ SESSION_GRAPH;
 typedef struct gui_obj_ gui_obj;
 
 enum {
-    SESSION_SAVED   = 0,
-    SESSION_CHANGED = 1
+    SESSION_CHANGED = 1 << 0,
+    SESSION_SAVED   = 1 << 1
 };
 
 struct SESSION_ {
@@ -254,7 +254,7 @@ static int session_bplot_count;
 
 int session_is_saved (void)
 {
-    return (session.status == SESSION_SAVED);
+    return session.status & SESSION_SAVED;
 }
 
 void mark_session_changed (void)
@@ -1026,6 +1026,7 @@ void do_open_session (void)
     set_replay_on();
 
     view_session();
+    mark_session_saved();
 }
 
 int is_session_file (const char *fname)
@@ -1112,7 +1113,7 @@ void session_init (void)
     session.texts = NULL;
     session.notes = NULL;
 
-    session.status = 0;
+    session.status = 0; /* note: neither changed nor saved */
     session.nmodels = 0;
     session.ngraphs = 0;
     session.ntexts = 0;

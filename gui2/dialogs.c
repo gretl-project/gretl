@@ -40,11 +40,9 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int hcode, gpointer p);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
-void menu_exit_check (GtkWidget *w, gpointer data)
+void menu_exit_check (void)
 {
-    int ret = exit_check(w, NULL, data);
-
-    if (ret == FALSE) {
+    if (!exit_check()) {
 	gtk_main_quit();
     }
 }
@@ -102,25 +100,16 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     }
 }
 
-gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
+gboolean exit_check (void) 
 {
     const char regular_save_msg[] = {
-	N_("Do you want to save the commands and\n"
-	   "output from this gretl session?")
+	N_("Do you want to save this gretl session?")
     };
     const char session_save_msg[] = {
 	N_("Do you want to save the changes you made\n"
 	   "to this session?")
     };
     int resp;
-
-#ifdef ALWAYS_SAVE_SESSION
-    char fname[MAXLEN];
-    
-    strcpy(fname, paths.userdir);
-    strcat(fname, "session.inp");
-    dump_cmd_stack(fname, 0);
-#endif
 
     if (maybe_raise_dialog()) {
 	return TRUE;

@@ -58,8 +58,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 static int hatvar (MODEL *pmod, int n, const double **Z);
 static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt);
-static int depvar_zero (int t1, int t2, int yno, int nwt, 
-			const double **Z);
+static int depvar_zero (MODEL *pmod, int yno, const double **Z);
 static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
 static int jackknife_vcv (MODEL *pmod, const double **Z);
 
@@ -789,7 +788,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* check for zero dependent var */
-    if (depvar_zero(mdl.t1, mdl.t2, yno, mdl.nwt, (const double **) *pZ)) {  
+    if (depvar_zero(&mdl, yno, (const double **) *pZ)) {  
         mdl.errcode = E_ZERO;
         goto lsq_abort; 
     } 
@@ -2858,21 +2857,20 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
     }
 }
 
-static int depvar_zero (int t1, int t2, int yno, int nwt,
-			const double **Z)
+static int depvar_zero (MODEL *pmod, int yno, const double **Z)
 {
-    double y;
+    double yt;
     int t, ret = 1;
 
-    for (t=t1; t<=t2; t++) {
-	y = Z[yno][t];
-	if (na(y)) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
 	    continue;
 	}
-	if (nwt) {
-	    y *= Z[nwt][t];
+	yt = Z[yno][t];
+	if (pmod->nwt) {
+	    yt *= Z[pmod->nwt][t];
 	}
-	if (y != 0.0) {
+	if (yt != 0.0) {
 	    ret = 0;
 	    break;
 	}

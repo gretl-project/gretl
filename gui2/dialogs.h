@@ -43,9 +43,9 @@ gint yes_no_dialog (char *title, char *msg, int cancel);
 
 int make_default_storelist (void);
 
-gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
+gboolean exit_check (void);
 
-void menu_exit_check (GtkWidget *w, gpointer data);
+void menu_exit_check (void);
 
 void delimiter_dialog (gretlopt *optp);
 
