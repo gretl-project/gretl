@@ -88,7 +88,7 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
 	}
 	if (!model_missing(pmod, t)) {
 	    sum += Z[yno][t];
-	}
+	} 
     }
 
     pmod->ybar = sum / pmod->nobs;
@@ -1378,12 +1378,14 @@ cholbeta (MODEL *pmod, double *xpy, double *rss)
 	/* diagonal elements */
         d = d1 = 0.0;
         k = jm1 = j;
+
         for (l=1; l<=jm1; l++) {
             xx = xpx[k];
             d1 += xx * xpy[l];
             d += xx * xx;
             k += nc-l;
         }
+
         d2 = xpx[kk] - d;
 	test = d2 / xpx[kk];
 
@@ -2785,6 +2787,19 @@ MODEL ar_func (const int *list, double ***pZ,
     return ar;
 }
 
+static int modelvar_iszero (const MODEL *pmod, const double *x)
+{
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t) && floatneq(x[t], 0.0)) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* From 2 to end of list, omits variables with all zero observations
    and re-packs the rest of them */
 
@@ -2803,10 +2818,11 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 
     for (i=offset; i<=pmod->list[0]; i++) {
         v = pmod->list[i];
-        if (gretl_iszero(pmod->t1, pmod->t2, Z[v])) {
+        if (modelvar_iszero(pmod, Z[v])) {
 	    if (zlist != NULL) {
 		gretl_list_append_term(&zlist, v);
 	    }
+	    fprintf(stderr, "Deleting var at pos %d, all zero\n", i);
 	    gretl_list_delete_at_pos(pmod->list, i--);
 	}
     }
@@ -2819,7 +2835,7 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	    wtzero = 1;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
 		x = Z[v][t] * Z[pmod->nwt][t];
-		if (floatneq(x, 0.0)) {
+		if (!model_missing(pmod, t) && floatneq(x, 0.0)) {
 		    wtzero = 0;
 		    break;
 		}
