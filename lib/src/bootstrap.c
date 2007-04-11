@@ -553,6 +553,8 @@ static double bs_F_test (const gretl_matrix *b,
     return test;
 }
 
+#if 0
+
 static char *squarable_cols_mask (const gretl_matrix *X, int *n)
 {
     const double *xi = X->val;
@@ -577,8 +579,6 @@ static char *squarable_cols_mask (const gretl_matrix *X, int *n)
 
     return mask;
 }
-
-#if 0
 
 static int hsk_transform_data (boot *bs, gretl_matrix *b,
 			       gretl_matrix *yh)

@@ -37,6 +37,7 @@ typedef enum {
     GRETL_FORMAT_SELECTION = 1 << 6,
     GRETL_FORMAT_CSV       = 1 << 7,
     GRETL_FORMAT_TAB       = 1 << 8,
+    GRETL_FORMAT_LANDSCAPE = 1 << 9
 } PrnFormat;
 
 /* functions follow */
@@ -96,6 +97,8 @@ int tex_doc_format (PRN *prn);
 int tex_eqn_format (PRN *prn);
 
 int csv_format (PRN *prn);
+
+int prn_format (PRN *prn);
 
 char prn_delim (PRN *prn);
 

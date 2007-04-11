@@ -182,19 +182,17 @@ unsigned char leverage_data_dialog (void)
 static void 
 leverage_x_range (int t1, int t2, const double *x, FILE *fp)
 {
-    double xrange, xmin0, xmin, xmax;
-
-    xmin0 = x[t1];
-    xmax = x[t2];
+    double xrange, xmin;
+    double xmin0 = x[t1];
+    double xmax = x[t2];
 
     xrange = xmax - xmin0;
     xmin = xmin0 - xrange * .025;
+    xmax += xrange * .025;
 
-    if (xmin < 0.0) {
+    if (xmin0 >= 0.0 && xmin < 0.0) {
 	xmin = 0.0;
     }
-
-    xmax += xrange * .025;
 
     fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
 }
@@ -226,12 +224,12 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp); 
 
-    if (obs == NULL) { 
+    if (obs != NULL) {
+	leverage_x_range(pmod->t1, pmod->t2, obs, fp);
+    } else {
 	fprintf(fp, "set xrange [%g:%g]\n", 
 		pmod->t1 + 0.5, pmod->t2 + 1.5);
-    } else {
-	leverage_x_range(pmod->t1, pmod->t2, obs, fp);
-    }
+    } 
 
     /* upper plot: leverage factor */
     fputs("set origin 0.0,0.50\n", fp);

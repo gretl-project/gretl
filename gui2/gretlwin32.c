@@ -461,7 +461,9 @@ void gretl_win32_init (const char *progname)
 # endif 
 
     ws_startup(); 
+#if 0
     atexit(write_rc);
+#endif
 }
 
 int gretl_mkdir (const char *path)

@@ -34,7 +34,8 @@ static int depvarnum;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
-#define MAX_TABLE_MODELS 6
+#define MAX_PORTRAIT_MODELS 6
+#define MAX_TABLE_MODELS 12
 
 static void mtable_errmsg (char *msg, int gui)
 {
@@ -84,6 +85,11 @@ int in_model_table (const MODEL *pmod)
 int model_table_n_models (void)
 {
     return n_models;
+}
+
+int model_table_landscape (void)
+{
+    return n_models > MAX_PORTRAIT_MODELS;
 }
 
 MODEL *model_table_model_by_index (int i)
@@ -820,8 +826,6 @@ static int tex_print_model_table (PRN *prn)
     if (make_full_param_list()) {
 	return 1;
     }
-
-    gretl_print_set_format(prn, GRETL_FORMAT_TEX);
 
     ci = common_estimator();
 

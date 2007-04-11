@@ -354,7 +354,12 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
     int opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0);
 
     if (opt >= 0) {
-	special_text_handler(vwin, GRETL_FORMAT_TEX, opt);
+	int fmt = GRETL_FORMAT_TEX;
+
+	if (vwin->role == VIEW_MODELTABLE && model_table_landscape()) {
+	    fmt |= GRETL_FORMAT_LANDSCAPE;
+	}
+	special_text_handler(vwin, fmt, opt);
     }
 }
 

@@ -769,6 +769,18 @@ int csv_format (PRN *prn)
 }
 
 /**
+ * prn_format:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: The formatting flags for @prn.
+ */
+
+int prn_format (PRN *prn)
+{
+    return (prn != NULL)? prn->format : 0;
+}
+
+/**
  * prn_delim:
  * @prn: gretl printing struct.
  * 

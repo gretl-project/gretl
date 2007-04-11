@@ -5864,7 +5864,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	return;
     }
 
-    gretl_tex_preamble(fprn, tex_eqn_format(bprn));
+    gretl_tex_preamble(fprn, prn_format(bprn));
     buf = gretl_print_get_buffer(bprn);
     pputs(fprn, buf);
     pputs(fprn, "\n\\end{document}\n");

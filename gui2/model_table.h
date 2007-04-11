@@ -42,6 +42,8 @@ int in_model_table (const MODEL *pmod);
 
 int model_table_n_models (void);
 
+int model_table_landscape (void);
+
 MODEL *model_table_model_by_index (int i);
 
 #endif /* MODEL_TABLE_H */

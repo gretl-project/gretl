@@ -872,6 +872,37 @@ void set_gretl_tex_preamble (void)
     }
 }
 
+static void landscape_modify_line (char *line)
+{
+    char *p, *rem;
+
+    if (strstr(line, "landscape")) {
+	return;
+    }
+
+    p = strstr(line, "documentclass");
+
+    if (p != NULL) {
+	if (*(p + 13) == '[') {
+	    p = strchr(p, ']');
+	    if (p != NULL) {
+		rem = gretl_strdup(p);
+		if (rem != NULL) {
+		    sprintf(p, ",landscape%s", rem);
+		    free(rem);
+		}
+	    }
+	} else {
+	    p += 13;
+	    rem = gretl_strdup(p); 
+	    if (rem != NULL) {
+		sprintf(p, "[landscape]%s", rem);
+		free(rem);
+	    }
+	}
+    }
+}
+
 static int tex_use_utf;
 
 void set_tex_use_utf (int s)
@@ -879,7 +910,7 @@ void set_tex_use_utf (int s)
     tex_use_utf = s;
 }
 
-void gretl_tex_preamble (PRN *prn, int ams)
+void gretl_tex_preamble (PRN *prn, int fmt)
 {
     FILE *fp = NULL;
     int userfile = 0;
@@ -887,9 +918,13 @@ void gretl_tex_preamble (PRN *prn, int ams)
     if (tex_preamble_file[0] != '\0') {
 	fp = gretl_fopen(tex_preamble_file, "r");
 	if (fp != NULL) {
-	    char line[128];
+	    char line[256];
 
 	    while (fgets(line, sizeof line, fp)) {
+		if (strstr(line, "documentclass") && 
+		    (fmt & GRETL_FORMAT_LANDSCAPE)) {
+		    landscape_modify_line(line);
+		}
 		pputs(prn, line);
 	    }
 	    userfile = 1;
@@ -898,7 +933,11 @@ void gretl_tex_preamble (PRN *prn, int ams)
     }
 
     if (!userfile) {
-	pputs(prn, "\\documentclass[11pt]{article}\n");
+	if (fmt & GRETL_FORMAT_LANDSCAPE) {
+	    pputs(prn, "\\documentclass[11pt,landscape]{article}\n");
+	} else {
+	    pputs(prn, "\\documentclass[11pt]{article}\n");
+	}
 
 #ifdef ENABLE_NLS
 	if (tex_use_utf) {
@@ -908,7 +947,7 @@ void gretl_tex_preamble (PRN *prn, int ams)
 	    pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
 	}
 #endif
-	if (ams) {
+	if (fmt & GRETL_FORMAT_EQN) {
 	    pputs(prn, "\\usepackage{amsmath}\n\n");
 	} else {
 	    pputs(prn, "\\usepackage{dcolumn,longtable}\n\n");
@@ -955,7 +994,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     split = (nc > MAXCOEFF);
 
     if (opt & OPT_S) {
-	gretl_tex_preamble(prn, 1);
+	gretl_tex_preamble(prn, GRETL_FORMAT_EQN);
     } else{
 	pputs(prn, "%%% the following needs the amsmath LaTeX package\n\n");
     }
