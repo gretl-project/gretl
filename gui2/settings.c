@@ -1486,6 +1486,8 @@ static void common_read_rc_setup (void)
     set_paths(&paths, set_paths_opt);
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 
+    set_tex_use_pdf(latex);
+
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 # endif

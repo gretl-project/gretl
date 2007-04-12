@@ -25,6 +25,7 @@
 
 static char colspec[4][8];
 static int use_custom;
+static int use_pdf;
 
 int tex_using_custom_tabular (void)
 {
@@ -38,6 +39,12 @@ const char *tex_column_format (int i)
     } else {
 	return "";
     }
+}
+
+void set_tex_use_pdf (const char *prog)
+{
+    use_pdf = strstr(prog, "pdf") != NULL ||
+	strstr(prog, "PDF") != NULL;
 }
 
 #define tex_screen_zero(x)  ((fabs(x) > 1.0e-17)? x : 0.0)
@@ -942,13 +949,20 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 #ifdef ENABLE_NLS
 	if (tex_use_utf) {
 	    pputs(prn, "\\usepackage{ucs}\n");
-	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n\n");
+	    pputs(prn, "\\usepackage[utf8x]{inputenc}\n");
 	} else {
-	    pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
+	    pputs(prn, "\\usepackage[latin1]{inputenc}\n");
 	}
 #endif
 	if (fmt & GRETL_FORMAT_EQN) {
 	    pputs(prn, "\\usepackage{amsmath}\n\n");
+	} else if (fmt & GRETL_FORMAT_MODELTAB) {
+	    pputs(prn, "\\usepackage{longtable}\n");
+	    if (use_pdf) {
+		pputs(prn, "\\usepackage[pdftex]{geometry}\n\n");
+	    } else {
+		pputs(prn, "\\usepackage[dvips]{geometry}\n\n");
+	    }
 	} else {
 	    pputs(prn, "\\usepackage{dcolumn,longtable}\n\n");
 	}

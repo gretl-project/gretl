@@ -356,9 +356,14 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
     if (opt >= 0) {
 	int fmt = GRETL_FORMAT_TEX;
 
-	if (vwin->role == VIEW_MODELTABLE && model_table_landscape()) {
-	    fmt |= GRETL_FORMAT_LANDSCAPE;
+	if (vwin->role == VIEW_MODELTABLE) {
+	    fmt |= GRETL_FORMAT_MODELTAB;
+
+	    if (model_table_landscape()) {
+		fmt |= GRETL_FORMAT_LANDSCAPE;
+	    }
 	}
+
 	special_text_handler(vwin, fmt, opt);
     }
 }

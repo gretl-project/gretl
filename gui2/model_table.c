@@ -842,7 +842,7 @@ static int tex_print_model_table (PRN *prn)
     pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
-    pputs(prn, "\\begin{tabular}{l");
+    pputs(prn, "\\begin{longtable}{l");
     for (j=0; j<n_models; j++) {
 	pputs(prn, "c");
     }
@@ -887,7 +887,7 @@ static int tex_print_model_table (PRN *prn)
     print_model_table_coeffs(0, prn);
     print_n_r_squared(0, prn, &binary);
 
-    pputs(prn, "\\end{tabular}\n\n");
+    pputs(prn, "\\end{longtable}\n\n");
     pputs(prn, "\\vspace{1em}\n");
 
     if (use_tstats) {
