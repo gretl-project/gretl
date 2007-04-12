@@ -5842,6 +5842,29 @@ int osx_open_url (const char *url)
 
 #endif /* OSX_BUILD */
 
+static int check_for_rerun (const char *texbase)
+{
+    char logfile[MAXLEN];
+    char lline[512];
+    FILE *fp;
+    int ret = 0;
+
+    sprintf(logfile, "%s.log", texbase);
+    fp = gretl_fopen(logfile, "r");
+
+    if (fp != NULL) {
+	while (fgets(lline, sizeof lline, fp)) {
+	    if (strstr(lline, "Rerun LaTeX")) {
+		ret = 1;
+		break;
+	    }
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
@@ -5886,6 +5909,13 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     } 
 
     err = latex_compile(texshort);
+
+    /* now maybe re-run latex (e.g. for longtable) */
+    if (err == LATEX_OK) {
+	if (check_for_rerun(texbase)) {
+	    err = latex_compile(texshort);
+	}
+    }
 
     if (err == LATEX_OK) {
 #if defined(G_OS_WIN32)

@@ -100,9 +100,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     }
 }
 
-#ifdef G_OS_WIN32
-# define EXIT_DEBUG 1
-#endif
+#define EXIT_DEBUG 0
 
 #if EXIT_DEBUG
 static void debug_print (const char *s, FILE *fp)

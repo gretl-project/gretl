@@ -2113,7 +2113,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	create_source(vwin, hsize, vsize, TRUE);
     } else {
 	vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
-	if (role == PRINT) {
+	if (role == PRINT || role == VIEW_MODELTABLE) {
 	    text_set_word_wrap(vwin->w, 0);
 	}
     }

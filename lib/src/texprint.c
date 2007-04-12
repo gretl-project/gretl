@@ -940,11 +940,19 @@ void gretl_tex_preamble (PRN *prn, int fmt)
     }
 
     if (!userfile) {
-	if (fmt & GRETL_FORMAT_LANDSCAPE) {
-	    pputs(prn, "\\documentclass[11pt,landscape]{article}\n");
+	pputs(prn, "\\documentclass");
+	
+	if (fmt & GRETL_FORMAT_MODELTAB) {
+	    if (fmt & GRETL_FORMAT_LANDSCAPE) {
+		pputs(prn, "[landscape]");
+	    }
+	} else if (fmt & GRETL_FORMAT_LANDSCAPE) {
+	    pputs(prn, "[11pt,landscape]");
 	} else {
-	    pputs(prn, "\\documentclass[11pt]{article}\n");
+	    pputs(prn, "[11pt]");
 	}
+
+	pputs(prn, "{article}\n");
 
 #ifdef ENABLE_NLS
 	if (tex_use_utf) {
@@ -959,9 +967,9 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	} else if (fmt & GRETL_FORMAT_MODELTAB) {
 	    pputs(prn, "\\usepackage{longtable}\n");
 	    if (use_pdf) {
-		pputs(prn, "\\usepackage[pdftex]{geometry}\n\n");
+		pputs(prn, "\\usepackage[margin=2cm,pdftex]{geometry}\n\n");
 	    } else {
-		pputs(prn, "\\usepackage[dvips]{geometry}\n\n");
+		pputs(prn, "\\usepackage[margin=2cm,dvips]{geometry}\n\n");
 	    }
 	} else {
 	    pputs(prn, "\\usepackage{dcolumn,longtable}\n\n");
