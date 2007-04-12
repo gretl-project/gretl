@@ -466,12 +466,34 @@ void gretl_win32_init (const char *progname)
 #endif
 }
 
+DIR *win32_opendir (const char *dname)
+{
+    char tmp[MAXLEN];
+    int n;
+    
+    *tmp = '\0';
+    strncat(tmp, dname, MAXLEN - 2);
+    n = strlen(tmp);
+
+    /* opendir doesn't work on e.g. c:\foo\ !! */
+    if (n > 3 && tmp[n - 1] == '\\') {
+	tmp[n - 1] = '\0';
+    }
+
+    /* but neither does it work on e.g. f: */
+    if (tmp[strlen(tmp) - 1] == ':') {
+	strcat(tmp, "\\");
+    }
+
+    return opendir(tmp);
+}
+
 int gretl_mkdir (const char *path)
 {
     DIR *test;
     int done;
 
-    test = opendir(path);
+    test = win32_opendir(path);
     if (test != NULL) {
 	closedir(test);
 	return 0;
@@ -900,28 +922,6 @@ int browser_open (const char *url)
     }
 
     return err;
-}
-
-DIR *win32_opendir (const char *dname)
-{
-    char tmp[MAXLEN];
-    int n;
-    
-    *tmp = '\0';
-    strncat(tmp, dname, MAXLEN - 2);
-    n = strlen(tmp);
-
-    /* opendir doesn't work on e.g. c:\foo\ !! */
-    if (n > 3 && tmp[n - 1] == '\\') {
-	tmp[n - 1] = '\0';
-    }
-
-    /* but neither does it work on e.g. f: */
-    if (tmp[strlen(tmp) - 1] == ':') {
-	strcat(tmp, "\\");
-    }
-
-    return opendir(tmp);
 }
 
 int win32_delete_dir (const char *path)

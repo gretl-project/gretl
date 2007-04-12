@@ -927,6 +927,8 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	if (fp != NULL) {
 	    char line[256];
 
+	    /* FIXME model table: longtable and geom packages */
+
 	    while (fgets(line, sizeof line, fp)) {
 		if (strstr(line, "documentclass") && 
 		    (fmt & GRETL_FORMAT_LANDSCAPE)) {

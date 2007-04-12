@@ -1473,7 +1473,63 @@ static void boolvar_to_str (void *b, char *s)
     }
 }
 
-static void common_read_rc_setup (void)
+static int dir_exists (const char *dname, FILE *fp)
+{
+    DIR *test;
+    int ok = 0;
+
+#ifdef G_OS_WIN32
+    test = win32_opendir(dname);
+#else
+    test = opendir(dname);
+#endif
+
+    if (test != NULL) {
+	ok = 1;
+	if (fp != NULL) {
+	    fprintf(fp, "Directory '%s' exists, OK\n", dname);
+	}
+	closedir(test);
+    } else if (fp != NULL) {
+	fprintf(fp, "Directory '%s' does not exist\n", dname);
+    }
+
+    return ok;
+}
+
+static int validate_userdir (const char *dirname)
+{
+    int err = 0;
+
+    err = gretl_mkdir(dirname);
+    if (err) {
+	errbox(_("Couldn't create directory '%s'"), dirname);
+    }
+
+    if (!err) {
+	/* ensure the directory is writable */
+	char *testname;
+	FILE *fp;
+
+	testname = g_strdup_printf("%s%cwrite.chk", dirname, SLASH);
+	if (testname != NULL) {
+	    fp = gretl_fopen(testname, "w");
+	    if (fp == NULL) {
+		errbox(_("Couldn't write to '%s': gretl will not work properly!"), 
+		       dirname);
+		err = 1;
+	    } else {
+		fclose(fp);
+		remove(testname);
+	    }
+	    g_free(testname);
+	}
+    }
+
+    return err;
+}
+
+static int common_read_rc_setup (void)
 {
     set_use_qr(useqr);
     set_use_cwd(usecwd);
@@ -1496,6 +1552,8 @@ static void common_read_rc_setup (void)
 # ifdef ENABLE_NLS
     set_lcnumeric();
 # endif
+
+    return validate_userdir(paths.userdir);
 }
 
 /* next section: variant versions of write_rc and read_rc, depending
@@ -2197,43 +2255,7 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 
 /* end graph color selection apparatus */
 
-static int dir_exists (const char *dname, FILE *fp)
-{
-    DIR *test;
-    int ok = 0;
-
-    test = opendir(dname);
-
-    if (test != NULL) {
-	ok = 1;
-	if (fp != NULL) {
-	    fprintf(fp, "Directory '%s' exists, OK\n", dname);
-	}
-	closedir(test);
-    } else if (fp != NULL) {
-	fprintf(fp, "Directory '%s' does not exist\n", dname);
-    }
-
-    return ok;
-}
-
 #ifndef G_OS_WIN32
-
-static int validate_dir (const char *dirname)
-{
-    int err = 0;
-
-    if (!dir_exists(dirname, NULL)) {
-	err = mkdir(dirname, 0755);
-	if (err) {
-	    errbox(_("Couldn't create directory '%s'"), dirname);
-	} else {
-	    infobox(_("Working directory created OK"));
-	}
-    }
-
-    return err;
-}
 
 static void real_set_userdir (GtkWidget *widget, dialog_t *dlg)
 {
@@ -2241,7 +2263,7 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *dlg)
 
     dirname = edit_dialog_get_text(dlg);
 
-    if (validate_dir(dirname)) {
+    if (validate_userdir(dirname)) {
 	return;
     } else {
 	set_gretl_user_dir(dirname, &paths);
