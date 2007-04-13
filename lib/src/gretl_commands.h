@@ -128,6 +128,7 @@ typedef enum {
     SHELL,  
     SMPL,
     SPEARMAN,
+    SPRINTF,
     SQUARE,  
     STORE, 
     STRING,

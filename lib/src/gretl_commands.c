@@ -138,6 +138,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SHELL,    "shell" },
     { SMPL,     "smpl" },
     { SPEARMAN, "spearman" },
+    { SPRINTF,  "sprintf" },
     { SQUARE,   "square" },  
     { STORE,    "store" },   
     { STRING,   "string" },

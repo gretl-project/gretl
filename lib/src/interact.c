@@ -203,8 +203,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = OPEN;
     } else if (!strcmp(s, "label")) {
 	cmd->ci = SETINFO;
-    } else if (!strcmp(s, "sprintf")) {
-	cmd->ci = PRINTF;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
@@ -296,6 +294,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == SETINFO || \
 	               c == SETOBS || \
 	               c == SHELL || \
+                       c == SPRINTF || \
                        c == STRING || \
                        c == SYSTEM || \
                        c == TABPRINT || \
@@ -3627,6 +3626,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case PRINTF:
+    case SPRINTF:
 	err = do_printf(line, pZ, pdinfo, prn);
 	break;
 
