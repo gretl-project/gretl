@@ -3165,6 +3165,25 @@ void display_session_graph_by_data (void *p)
     display_session_graph_png(tmp);
 }
 
+static int is_idempotent (int n, int s, const double *e)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (e[i] != 0.0 && e[i] != 1.0) {
+	    return 0;
+	}
+	if (s != GRETL_MATRIX_SYMMETRIC) {
+	    /* imaginary parts? */
+	    if (e[i+n] != 0.0) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
 void 
 view_matrix_properties (const gretl_matrix *m, const char *name)
 {
@@ -3224,10 +3243,18 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	}
     } 
 
-    if (s > 0 && s != GRETL_MATRIX_SYMMETRIC) {
+    if (s > 0 && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
 	A = gretl_matrix_copy(m);
 	if (A != NULL) {
 	    evals = gretl_general_matrix_eigenvals(A, 0, &err);
+	}
+    }
+
+    if (evals != NULL && s > 0) {
+	if (is_idempotent(m->rows, s, evals)) {
+	    pprintf(prn, "%s\n", _("Idempotent"));
+	} else {
+	    pprintf(prn, "%s\n", _("Not idempotent"));
 	}
     }
 

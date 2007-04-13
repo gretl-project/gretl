@@ -293,14 +293,27 @@ static saved_string built_ins[] = {
     { "tramodir", NULL }
 };
 
+#ifdef WIN32
+static saved_string dsep = { "dirsep",  "\\" };
+#else
+static saved_string dsep = { "dirsep",  "/" };
+#endif
+
 void gretl_insert_builtin_string (const char *name, const char *s)
 {
-    int i, n = sizeof built_ins / sizeof built_ins[0];
+    int n = sizeof built_ins / sizeof built_ins[0];
+    int i, m;
 
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
 	    free(built_ins[i].s);
-	    built_ins[i].s = gretl_strdup(s);
+	    m = strlen(s);
+	    if (s[m-1] == SLASH) {
+		/* drop trailing dir separator for paths */
+		built_ins[i].s = gretl_strndup(s, m - 1);
+	    } else {
+		built_ins[i].s = gretl_strdup(s);
+	    }
 	    return;
 	}
     }
@@ -319,6 +332,11 @@ static saved_string *get_saved_string_by_name (const char *name,
 					       int *builtin)
 {
     int i;
+
+    if (builtin != NULL && !strcmp(name, "dirsep")) {
+	*builtin = 1;
+	return &dsep;
+    }
 
     if (builtin != NULL) {
 	int n = sizeof built_ins / sizeof built_ins[0];
@@ -411,12 +429,34 @@ void saved_strings_cleanup (void)
     gretl_free_builtin_strings();
 }
 
+static void copy_unescape (char *targ, const char *src, int n)
+{
+    int c, i = 0;
+
+    for (i=0; i<n; i++) {
+	if (src[i] == '\\') {
+	    c = src[i+1];
+	    if (c == '\\' || c == '"') {
+		*targ++ = c;
+		i++;
+	    } else {
+		*targ++ = src[i];
+	    }
+	} else {
+	    *targ++ = src[i];
+	}
+    }	
+
+    *targ = '\0';
+}
+
 static char *get_string_element (const char **pline, int *err)
 {
     const char *line = *pline;
     const char *s;
     char *cpy;
     int closed = 0;
+    int bs = 0;
     int n = 0;
 
     line += strspn(line, " \t");
@@ -429,22 +469,31 @@ static char *get_string_element (const char **pline, int *err)
     s = line;
     while (*s) {
 	/* allow for escaped quotes */
-	if (*s == '"' && *(s-1) != '\\') {
+	if (*s == '\\') {
+	    bs++;
+	} else if (*s == '"' && (bs % 2 == 0)) {
 	    closed = 1;
 	    break;
+	}
+	if (*s != '\\') {
+	    bs = 0;
 	}
 	s++;
 	n++;
     }
 
     if (!closed) {
+	fprintf(stderr, "quote not closed\n");
 	*err = E_PARSE;
 	return NULL;
     }
-	
-    cpy = gretl_strndup(line, n);
+
+    cpy = malloc(n + 1);
+
     if (cpy == NULL) {
 	*err = E_ALLOC;
+    } else {
+	copy_unescape(cpy, line, n);
     }
 
     s++; /* eat closing quote */
@@ -647,9 +696,13 @@ static char *maybe_get_subst (char *name, int *n, int quoted,
 	name[k--] = '\0';
     }
 
-    if (ret != NULL && quoted && strchr(ret, '\\')) {
-	ret = mod_strdup(ret);
-	*freeit = 1;
+    if (ret != NULL) {
+	if (quoted) {
+	    if (strchr(ret, '\\')) {
+		ret = mod_strdup(ret);
+		*freeit = 1;
+	    }
+	} 
     }
 
     return ret;
@@ -666,20 +719,29 @@ int substitute_named_strings (char *line)
     char sname[VNAMELEN];
     int len = strlen(line);
     char *sub, *tmp, *s = line;
-    int pf = 0, quoted = 0, i = 0;
-    int n, m, freeit, err = 0;
+    int bs = 0, pf = 0, quoted = 0;
+    int freeit, addquote;
+    int n, m, err = 0;
 
-    if (strchr(s, '@') == NULL) {
+    if (*s == '#' || strchr(s, '@') == NULL) {
 	return 0;
     }
 
     if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
 	pf = 1;
+	s += 7;
     }
 
     while (*s && !err) {
-	if (pf && i > 0 && *s == '"' && *(s-1) != '\\') {
-	    quoted = !quoted;
+	if (pf) {
+	    if (*s == '"' && (bs % 2 != 0)) {
+		quoted = !quoted;
+	    }
+	    if (*s == '\\') {
+		bs++;
+	    } else {
+		bs = 0;
+	    }
 	}
 	if (*s == '@') {
 	    n = gretl_varchar_spn(s + 1);
@@ -687,13 +749,17 @@ int substitute_named_strings (char *line)
 		if (n >= VNAMELEN) {
 		    n = VNAMELEN - 1;
 		}
+		addquote = 0;
+		if (pf && !quoted) {
+		    addquote = 1;
+		}
 		*sname = '\0';
 		strncat(sname, s + 1, n);
 		freeit = 0;
 		sub = maybe_get_subst(sname, &n, quoted, &freeit);
 		if (sub != NULL) {
 		    m = strlen(sub);
-		    if (len + m >= MAXLINE) {
+		    if (len + m + 2 >= MAXLINE) {
 			too_long();
 			err = 1;
 			break;
@@ -702,7 +768,14 @@ int substitute_named_strings (char *line)
 		    if (tmp == NULL) {
 			err = E_ALLOC;
 		    } else {
+			if (addquote) {
+			    strcpy(s++, "\"");
+			} 
 			strcpy(s, sub);
+			if (addquote) {
+			    strcpy(s + m, "\"");
+			    m++;
+			}
 			strcpy(s + m, tmp);
 			free(tmp);
 			len += m - (n + 1);
@@ -715,8 +788,11 @@ int substitute_named_strings (char *line)
 	    }
 	}
 	s++;
-	i++;
     }
+
+#if 0
+    fprintf(stderr, "done: line = '%s'\n", line);
+#endif
 
     return err;
 }

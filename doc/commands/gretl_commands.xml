@@ -7307,6 +7307,28 @@
 
   </command>
 
+  <command name="sprintf" section="Printing" 
+    label="Printing to a string" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>stringvar</argument>
+        <argument>format</argument>
+        <argument>args</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	This command works exactly like the <cmdref targ="printf"/>
+	command, printing the given arguments under the control of the
+	format string, except that the result is written into the named
+	string, <repl>stringvar</repl>.
+      </para>
+    </description>
+
+  </command>
+
   <command name="square" section="Transformations" 
     label="Create squares of variables" context="cli">
 

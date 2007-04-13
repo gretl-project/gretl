@@ -2236,6 +2236,9 @@ static int printf_escape (int c, PRN *prn)
     case '\\':
 	pputc(prn, '\\');
 	break;
+    case '"':
+	pputc(prn, '"');
+	break;
     default:
 	/* treat as literal backslash */
 	pputc(prn, '\\');
