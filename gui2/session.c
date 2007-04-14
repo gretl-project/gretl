@@ -252,9 +252,9 @@ static void rename_session_object (gui_obj *obj, const char *newname);
 static int session_graph_count;
 static int session_bplot_count;
 
-int session_is_saved (void)
+int session_is_modified (void)
 {
-    return session.status & SESSION_SAVED;
+    return session.status & SESSION_CHANGED;
 }
 
 void mark_session_changed (void)
@@ -3165,23 +3165,20 @@ void display_session_graph_by_data (void *p)
     display_session_graph_png(tmp);
 }
 
-static int is_idempotent (int n, int s, const double *e)
+static int is_idempotent (const gretl_matrix *m,
+			  const double *evals)
 {
-    int i;
+    if (evals != NULL) {
+	int i;
 
-    for (i=0; i<n; i++) {
-	if (e[i] != 0.0 && e[i] != 1.0) {
-	    return 0;
-	}
-	if (s != GRETL_MATRIX_SYMMETRIC) {
-	    /* imaginary parts? */
-	    if (e[i+n] != 0.0) {
+	for (i=0; i<m->rows; i++) {
+	    if (evals[i] != 0.0 && evals[i] != 1.0) {
 		return 0;
 	    }
 	}
     }
 
-    return 1;
+    return gretl_matrix_is_idempotent(m);
 }
 
 void 
@@ -3250,8 +3247,8 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	}
     }
 
-    if (evals != NULL && s > 0) {
-	if (is_idempotent(m->rows, s, evals)) {
+    if (s > 0) {
+	if (is_idempotent(m, evals)) {
 	    pprintf(prn, "%s\n", _("Idempotent"));
 	} else {
 	    pprintf(prn, "%s\n", _("Not idempotent"));

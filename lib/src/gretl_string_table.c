@@ -358,6 +358,9 @@ static saved_string *get_saved_string_by_name (const char *name,
     return NULL;
 }
 
+/* for use in the context of the "printf" and "sprintf" commands:
+   access a saved string by name */
+
 char *get_named_string (const char *name)
 {
     int i, n;
@@ -475,6 +478,36 @@ static void copy_unescape (char *targ, const char *src, int n)
     *targ = '\0';
 }
 
+static char *retrieve_string_var (const char **pline, 
+				  const char *s,
+				  int *err)
+{
+    char sname[VNAMELEN] = {0};
+    char *p, *ret = NULL;
+    int n, spn;
+
+    spn = n = gretl_varchar_spn(s);
+    if (n >= VNAMELEN) {
+	n = VNAMELEN - 1;
+    }
+
+    strncat(sname, s, n);
+    p = get_named_string(sname);
+
+    if (p == NULL) {
+	*err = E_UNKVAR;
+    } else {
+	ret = gretl_strdup(p);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *pline = s + spn;
+	}
+    }
+
+    return ret;
+}
+
 static char *get_string_element (const char **pline, int *err)
 {
     const char *line = *pline;
@@ -485,6 +518,12 @@ static char *get_string_element (const char **pline, int *err)
     int n = 0;
 
     line += strspn(line, " \t");
+
+    if (*line == '@') {
+	/* should be saved string variable */
+	return retrieve_string_var(pline, line + 1, err);
+    }
+
     if (*line != '"') {
 	*err = E_PARSE;
 	return NULL;
@@ -752,6 +791,11 @@ int substitute_named_strings (char *line)
 	return 0;
     }
 
+    if (!strncmp(line, "string", 6)) {
+	/* when defining a string, let @foo be handled as a variable */
+	return 0;
+    }
+
     if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
 	pf = 1;
 	s = strchr(s, '"');
@@ -766,7 +810,7 @@ int substitute_named_strings (char *line)
     while (*s && !err) {
 	if (pf) {
 	    if (*s == '"' && (bs % 2 == 0)) {
-		/* end of format string */
+		/* reached end of format string: stop substituting */
 		break;
 	    }
 	    if (*s == '\\') {

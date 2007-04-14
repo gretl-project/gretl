@@ -1861,6 +1861,35 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_is_idempotent:
+ * @m: gretl_matrix.
+ *
+ * Returns: 1 if @m is idempotent, otherwise 0.
+ */
+
+int gretl_matrix_is_idempotent (const gretl_matrix *m)
+{
+    gretl_matrix *b;
+    int k = m->rows;
+    int ret, err;
+
+    if (m->cols != k) {
+	return 0;
+    }
+
+    b = gretl_matrix_alloc(k, k);
+    if (b == NULL) {
+	return 0;
+    }
+
+    gretl_matrix_multiply(m, m, b);
+    ret = gretl_matrices_are_equal(m, b, &err);
+    gretl_matrix_free(b);
+
+    return ret;
+}
+
+/**
  * gretl_matrix_infinity_norm:
  * @m: gretl_matrix.
  *

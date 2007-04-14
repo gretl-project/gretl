@@ -100,62 +100,38 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     }
 }
 
-#define EXIT_DEBUG 0
-
-#if EXIT_DEBUG
-static void debug_print (const char *s, FILE *fp)
-{
-    if (fp != NULL) {
-	fputs(s, fp);
-	fflush(fp);
-    }
-}
-#endif
-
 gboolean exit_check (void) 
 {
-    const char regular_save_msg[] = {
+    const char save_as_msg[] = {
 	N_("Do you want to save this gretl session?")
     };
-    const char session_save_msg[] = {
+    const char save_msg[] = {
 	N_("Do you want to save the changes you made\n"
 	   "to this session?")
     };
     int resp;
-#if EXIT_DEBUG
-    char fname[MAXLEN];
-    FILE *fp;
-
-    sprintf(fname, "%sdebug.txt", paths.userdir);
-    fp = fopen("debug.txt", "w");
-    if (fp == NULL) {
-	errbox("Couldn't write to %s", fname);
-    } else {
-	debug_print("Entered exit_check\n", fp);
-    }
-#endif
 
     if (maybe_raise_dialog()) {
 	return TRUE;
     }
 
-#if EXIT_DEBUG
-    debug_print("done maybe_raise_dialog()\n", fp);
-#endif
+    if ((!expert && !replaying() && work_done()) ||
+	session_is_modified()) {
+	const char *msg;
+	guint code;
 
-    if (!expert && !replaying() && work_done() && !session_is_saved()) {
+	if (session_file_is_open()) {
+	    msg = save_msg;
+	    code = SAVE_AS_IS;
+	} else {
+	    msg = save_as_msg;
+	    code = SAVE_RENAME;
+	}
 
-#if EXIT_DEBUG
-	debug_print("calling yes_no_dialog() for session save\n", fp);
-#endif
-
-	resp = yes_no_dialog ("gretl", 
-			      (session_file_is_open()) ?
-			      _(session_save_msg) : _(regular_save_msg), 
-			      1);		      
+	resp = yes_no_dialog ("gretl", _(msg), 1);
 
 	if (resp == GRETL_YES) {
-	    save_session_callback(NULL, SAVE_RENAME, NULL);
+	    save_session_callback(NULL, code, NULL);
 	    return TRUE; /* bodge */
 	} else if (resp == GRETL_CANCEL || resp == -1) {
 	    /* resp -1 = wm close */
@@ -164,17 +140,7 @@ gboolean exit_check (void)
 	/* else resp = GRETL_NO: so fall through */
     }
 
-#if EXIT_DEBUG
-    else {
-	debug_print("skipped yes_no_dialog() for session\n", fp);
-    }
-#endif
-
     if (data_status & MODIFIED_DATA) {
-
-#if EXIT_DEBUG
-	debug_print("calling yes_no_dialog() for data save\n", fp);
-#endif
 	resp = yes_no_dialog ("gretl", 
 			      _("Do you want to save changes you have\n"
 				"made to the current data set?"), 1);
@@ -186,25 +152,7 @@ gboolean exit_check (void)
 	}
     } 
 
-#if EXIT_DEBUG
-    else {
-	debug_print("skipped yes_no_dialog() for data\n", fp);
-    }
-#endif
-
-#if EXIT_DEBUG
-    debug_print("calling write_rc()\n", fp);
-#endif
-
     write_rc();
-
-#if EXIT_DEBUG
-    debug_print("done write_rc()\n", fp);
-    if (fp != NULL) {
-	fclose(fp);
-    }
-#endif
-
     all_done = 1;
 
     return FALSE;

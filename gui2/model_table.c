@@ -31,6 +31,7 @@ static char **pnames;
 static int n_params;
 static int use_tstats;
 static int depvarnum;
+static int colwidth;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -221,6 +222,8 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 	pputc(prn, '\n');
     }
 
+    mark_session_changed();
+
     return 0;
 }
 
@@ -372,7 +375,7 @@ static const char *get_pre_asts (double pval)
     return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
 }
 
-static void print_model_table_coeffs (int nwidth, PRN *prn)
+static void print_model_table_coeffs (int namewidth, PRN *prn)
 {
     int i, j, k;
     const MODEL *pmod;
@@ -384,7 +387,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 
     for (i=0; i<n_params; i++) {
 	char *pname = pnames[i];
-	int f = 1;
+	int first = 1;
 
 	if (tex) {
 	    tex_escape(tmp, pname);
@@ -393,7 +396,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 	    print_rtf_row_spec(prn, 0);
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pname);
 	} else {
-	    pprintf(prn, "%-*s ", nwidth, pname);
+	    pprintf(prn, "%-*s ", namewidth, pname);
 	}
 
 	/* print the coefficient estimates across a row */
@@ -433,10 +436,10 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
 		} else {
 		    /* note: strlen(asts) = 2 */
-		    pprintf(prn, "%*s%s", (f == 1)? 12 : 10,
+		    pprintf(prn, "%*s%s", (first)? colwidth : colwidth - 2,
 			    numstr, get_asts(pval));
 		}
-		f = 0;
+		first = 0;
 	    } else {
 		/* variable not present in this column */
 		if (tex) {
@@ -444,7 +447,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 		} else if (rtf) {
 		    pputs(prn, "\\qc \\cell ");
 		} else {
-		    pputs(prn, "            "); /* 12 */
+		    bufspace(colwidth, prn);
 		}
 	    }
 	}
@@ -459,11 +462,11 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 	    pputs(prn, "\\intbl ");
 	} else {
 	    pputc(prn, '\n');
-	    bufspace(nwidth + 2, prn);
+	    bufspace(namewidth + 2, prn);
 	}
 
 	/* print the t-stats or standard errors across a row */
-	f = 1;
+	first = 1;
 	for (j=0; j<n_models; j++) {
 	    pmod = table_models[j];
 	    if (pmod == NULL) {
@@ -489,14 +492,14 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 			pprintf(prn, "& \\footnotesize{(%s)} ", numstr);
 		    }
 		} else if (rtf) {
-		    if (f == 1) {
+		    if (first) {
 			pputs(prn, "\\qc \\cell ");
 		    }
 		    pprintf(prn, "\\qc (%s)\\cell ", numstr);
-		    f = 0;
+		    first = 0;
 		} else {
 		    sprintf(tmp, "(%s)", numstr);
-		    pprintf(prn, "%12s", tmp);
+		    pprintf(prn, "%*s", colwidth, tmp);
 		}
 	    } else {
 		/* variable not present in this column */
@@ -505,7 +508,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 		} else if (rtf) {
 		    pputs(prn, "\\qc \\cell ");
 		} else {
-		    pputs(prn, "            "); /* 12 */
+		    bufspace(colwidth, prn);
 		}
 	    }
 	}
@@ -552,10 +555,10 @@ static int any_r_squared (void)
     return 0;
 }
 
-static void print_n_r_squared (int wid, PRN *prn, int *binary)
+static void print_n_r_squared (int width0, PRN *prn, int *binary)
 {
-    int same_df, any_R2, any_ll;
     const MODEL *pmod;
+    int same_df, any_R2, any_ll;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
     int j;
@@ -569,7 +572,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
     } else if (rtf) {
 	pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
     } else {
-	pprintf(prn, "%*s", wid, _("n"));
+	pprintf(prn, "%*s", width0, _("n"));
     }
 
     for (j=0; j<n_models; j++) {
@@ -580,7 +583,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 	    } else if (rtf) {
 		pprintf(prn, "\\qc %d\\cell ", pmod->nobs);
 	    } else {
-		pprintf(prn, "%12d", pmod->nobs);
+		pprintf(prn, "%*d", colwidth, pmod->nobs);
 	    }
 	}
     }
@@ -605,7 +608,8 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 	    pprintf(prn, "\\qc %s\\cell ", 
 		    (same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
 	} else {
-	    pprintf(prn, "%*s", wid, (same_df)? _("R-squared") : _("Adj. R**2"));
+	    pprintf(prn, "%*s", width0, (same_df)? _("R-squared") : 
+		    _("Adj. R**2"));
 	}
 
 	for (j=0; j<n_models; j++) {
@@ -627,7 +631,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.4f\\cell ", pmod->rsq);
 		} else {
-		    pprintf(prn, "%#12.4g", pmod->rsq);
+		    pprintf(prn, "%#*.4g", colwidth, pmod->rsq);
 		}
 	    } else {
 		double rsq = (same_df)? pmod->rsq : pmod->adjrsq;
@@ -637,7 +641,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.4f\\cell ", rsq);
 		} else {
-		    pprintf(prn, "%#12.4g", rsq);
+		    pprintf(prn, "%#*.4g", colwidth, rsq);
 		}
 	    }
 	}
@@ -662,7 +666,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 	} else if (rtf) {
 	    pputs(prn, "\\qc lnL\\cell ");
 	} else {
-	    pprintf(prn, "%*s", wid, "lnL");
+	    pprintf(prn, "%*s", width0, "lnL");
 	}
 
 	for (j=0; j<n_models; j++) {
@@ -686,7 +690,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.3f\\cell ", pmod->lnL);
 		} else {
-		    pprintf(prn, "%#12.6g", pmod->lnL);
+		    pprintf(prn, "%#*.6g", colwidth, pmod->lnL);
 		}
 	    }
 	}
@@ -733,6 +737,7 @@ int display_model_table (int gui)
     }
 
     namelen = max_namelen();
+    colwidth = 13;
 
     if (bufopen(&prn)) {
 	clear_model_table(NULL);
@@ -765,7 +770,7 @@ int display_model_table (int gui)
 	} else {
 	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
 	}
-	print_centered(modhd, 12, prn);
+	print_centered(modhd, colwidth, prn);
     }
     pputc(prn, '\n');
     
@@ -777,7 +782,7 @@ int display_model_table (int gui)
 	    if (table_models[j] != NULL) {
 		strcpy(est, 
 		       _(short_estimator_string(table_models[j], prn)));
-		print_centered(est, 12, prn);
+		print_centered(est, colwidth, prn);
 	    }
 	}
 	pputc(prn, '\n');

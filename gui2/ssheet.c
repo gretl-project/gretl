@@ -902,6 +902,8 @@ static void update_matrix_from_sheet (Spreadsheet *sheet)
 		sheet->oldmat = m;
 	    }
 	}
+	/* record the fact that a matrix has been changed */
+	mark_session_changed();
     }
 
     sheet_set_modified(sheet, FALSE);
