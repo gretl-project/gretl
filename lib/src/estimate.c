@@ -1517,7 +1517,7 @@ int makevcv (MODEL *pmod, double sigma)
 
     if (pmod->xpx == NULL) {
 	fprintf(stderr, "makevcv: pmod->xpx = NULL\n");
-	return 1;
+	return E_DATA;
     }
 
     mst = nxpx;
@@ -3534,17 +3534,18 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 
 static int check_panel_options (gretlopt opt)
 {
-    int err = 0;
-
-    if ((opt & OPT_R) && (opt & OPT_W)) {
+    if ((opt & OPT_U) && (opt & OPT_W)) {
 	/* can't specify random effects + weighted least squares */
-	err = E_DATA;
+	return E_BADOPT;
     } else if ((opt & OPT_T) && !(opt & OPT_W)) {
 	/* iterate option requires weighted least squares option */
-	err = E_DATA;
+	return E_BADOPT;
+    } else if (incompatible_options(opt, OPT_B | OPT_U | OPT_P)) {
+	/* mutually exclusive estimator requests */
+	return E_BADOPT;
     }
 
-    return err;
+    return 0;
 }
 
 /**

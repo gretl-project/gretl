@@ -30,4 +30,6 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
 char **get_all_option_strings (int *pn);
 
+int incompatible_options (gretlopt opt, gretlopt test);
+
 #endif /* OPTIONS_H */

@@ -572,6 +572,21 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     gtk_widget_show_all(hbox);
 }
 
+static GtkWidget *editable_text_box (void)
+{
+    GtkTextBuffer *tbuf = gretl_text_buf_new();
+    GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
+
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
+    gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(w), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), TRUE);
+
+    return w;
+}
+
 static const gchar *get_user_string (void)
 {
     const gchar *name;
@@ -671,7 +686,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_widget_show(hbox);
     g_free(ltxt);
 
-    finfo->text = create_text(NULL, -1, -1, TRUE);
+    finfo->text = editable_text_box();
     text_table_setup(vbox, finfo->text);
 
     gretl_function_get_info(finfo->pub, "help", &hlp);

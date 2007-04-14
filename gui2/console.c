@@ -148,9 +148,7 @@ static char *pop_history_line (int keyval)
 	} else {
 	    ret = cmd_history[hl];
 	}
-    }
-
-    else if (keyval == GDK_Down) {
+    } else if (keyval == GDK_Down) {
 	if (hl >= 0) hl--;
 	if (hl < 0) {
 	    if (beeptime) {
@@ -408,7 +406,9 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     last_line = gtk_text_buffer_get_line_count(buf) - 1;
 
     /* if at start of command line, backspacing does nothing */
-    if (IS_BACKKEY(key->keyval) && line_pos < 3) return TRUE;
+    if (IS_BACKKEY(key->keyval) && line_pos < 3) {
+	return TRUE;
+    }
 
     /* if not on prompt line, return to (the end of) it */
     if (curr_line < last_line) {

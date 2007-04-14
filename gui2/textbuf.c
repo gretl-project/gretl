@@ -533,7 +533,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     return table;
 }
 
-static GtkTextBuffer *gretl_text_buf_new (void)
+GtkTextBuffer *gretl_text_buf_new (void)
 {
     static GtkTextTagTable *tags = NULL;
     GtkTextBuffer *tbuf; 
@@ -1294,11 +1294,13 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     hwin->active_var = hcode;
 }
 
-GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
-			gboolean editable)
+void create_text (windata_t *vwin, int hsize, int vsize, 
+		  gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
+
+    vwin->w = w;
 
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
@@ -1311,14 +1313,10 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
 	hsize += 48;
     }
 
-    if (dlg != NULL) {
-	gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
-    }
+    gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
-
-    return w;
 }
 
 void text_set_word_wrap (GtkWidget *w, gboolean wrap)

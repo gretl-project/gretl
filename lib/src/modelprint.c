@@ -892,6 +892,8 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Fixed-effects");
 	} else if (gretl_model_get_int(pmod, "random-effects")) {
 	    return N_("Random-effects (GLS)");
+	} else if (gretl_model_get_int(pmod, "pooled")) {
+	    return N_("Pooled OLS");
 	} else {
 	    return N_("Between-groups");
 	}
@@ -2025,6 +2027,9 @@ static char active_decpoint (void)
     sprintf(test, "%.1f", 1.0);
     return test[1];
 }
+
+#define pooled_model(m) (m->ci == PANEL && \
+                         gretl_model_get_int(m, "pooled")) 
  
 #define fixed_effects_model(m) (m->ci == PANEL && \
                                 gretl_model_get_int(m, "fixed-effects"))
@@ -2263,7 +2268,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (pmod->aux != AUX_VECM) {
 	    if (pmod->ci == OLS || pmod->ci == MPOLS ||
-		fixed_effects_model(pmod)) {
+		fixed_effects_model(pmod) || pooled_model(pmod)) {
 		print_ll(pmod, prn);
 	    }
 	    info_stats_lines(pmod, prn);

@@ -2112,7 +2112,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     } else if (role == EDIT_FUNC_CODE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else {
-	vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+	create_text(vwin, hsize, vsize, FALSE);
 	if (role == PRINT || role == VIEW_MODELTABLE) {
 	    text_set_word_wrap(vwin->w, 0);
 	}
@@ -2147,7 +2147,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	attach_content_changed_signal(vwin);
 	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
 			 G_CALLBACK(query_save_text), vwin);
-	/* FIXME add callback for updating fn code */
     }
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
@@ -2156,6 +2155,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     return vwin;
 }
+
+#define view_file_use_sourceview(r) (r == EDIT_SCRIPT || \
+                                     r == VIEW_SCRIPT || \
+                                     r == VIEW_LOG || \
+                                     r == GR_PLOT)
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
@@ -2191,10 +2195,10 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     viewer_box_config(vwin);
     make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
 
-    if (doing_script || role == GR_PLOT) {
+    if (view_file_use_sourceview(role)) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
-	vwin->w = create_text(vwin->dialog, hsize, vsize, editable);
+	create_text(vwin, hsize, vsize, editable);
     }
 
     text_table_setup(vwin->vbox, vwin->w);
@@ -2217,7 +2221,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* "Close" button */
     viewer_add_close_button(vwin);
 
-    if (doing_script || role == GR_PLOT) {
+    if (view_file_use_sourceview(role)) {
 	sourceview_insert_file(vwin, filename);
     } else {
 	textview_insert_file(vwin, filename);
@@ -2286,7 +2290,7 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
-    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+    create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
 
     /* "Close" button */
@@ -2370,7 +2374,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* add a menu bar */
     make_viewbar(vwin, 0);
 
-    vwin->w = create_text(vwin->dialog, hsize, vsize, TRUE);
+    create_text(vwin, hsize, vsize, TRUE);
     text_table_setup(vwin->vbox, vwin->w);
     
     /* insert the buffer text */
@@ -2458,7 +2462,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
-    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+    create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
 
     /* "Close" button */

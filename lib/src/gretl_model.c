@@ -561,6 +561,12 @@ static void make_cname (const char *orig, char *cname)
     }
 }
 
+static int pooled_ols (const MODEL *pmod)
+{
+    return (pmod->ci == PANEL && 
+	    gretl_model_get_int(pmod, "pooled"));
+}
+
 /**
  * gretl_model_get_param_name:
  * @pmod: pointer to model.
@@ -588,6 +594,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
+	} else if (pooled_ols(pmod)) {
+	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	} else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == GARCH) {

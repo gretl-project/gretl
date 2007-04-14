@@ -3354,6 +3354,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	}
     }
 
+    if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
+	/* FIXME is this too funky? */
+	cmd->ci = PANEL;
+	cmd->opt |= OPT_P; /* panel pooled flag */
+    }
+
     gretl_error_clear();
 
     s->alt_model = 0;

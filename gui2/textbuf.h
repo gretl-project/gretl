@@ -31,6 +31,8 @@ void cursor_to_top (windata_t *vwin);
 
 gint get_char_width (GtkWidget *widget);
 
+GtkTextBuffer *gretl_text_buf_new (void);
+
 gchar *textview_get_text (GtkWidget *view);
 
 gchar *textview_get_selection_or_all (GtkWidget *view,
@@ -52,8 +54,8 @@ void textview_append_text_colorized (GtkWidget *view, const char *buf);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
-GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
-			gboolean editable);
+void create_text (windata_t *vwin, int hsize, int vsize, 
+		  gboolean editable);
 
 void text_set_word_wrap (GtkWidget *w, gboolean wrap);
 

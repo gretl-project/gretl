@@ -2833,6 +2833,7 @@ int do_model (selector *sr)
     const char *buf;
     char estimator[9];
     int action;
+    int pols = 0;
 
     if (selector_error(sr)) {
 	return 1;
@@ -2844,8 +2845,17 @@ int do_model (selector *sr)
     }
 
     action = selector_code(sr);
+    if (action == OLS && dataset_is_panel(datainfo)) {
+	action = PANEL;
+	pols = 1;
+    }
+
     strcpy(estimator, gretl_command_word(action));
     libcmd.opt = selector_get_opts(sr);
+
+    if (pols) {
+	libcmd.opt |= OPT_P;
+    }
 
     gretl_command_sprintf("%s %s%s", estimator, buf, 
 			  print_flags(libcmd.opt, action));
@@ -6658,4 +6668,3 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     return (err != 0);
 }
-

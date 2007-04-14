@@ -169,19 +169,32 @@ static int var_is_varying (const panelmod_t *pan, int v)
     return 0;
 }
 
-/* retrieve X'X^{-1} from the fixed effects model */
+/* retrieve X'X^{-1} from the pooled or fixed effects model */
 
-static gretl_matrix *fe_model_xpx (MODEL *pmod)
+static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
 {
     gretl_matrix *X;
     int k = pmod->ncoeff;
     double x;
     int i, j, m;
 
-    makevcv(pmod, 1.0); /* invert X'X into pmod->vcv */
+    if (pmod->vcv != NULL) {
+	double s2 = pmod->sigma * pmod->sigma;
+	int nv = (k * k + k) / 2;
+
+	for (i=0; i<nv; i++) {
+	    pmod->vcv[i] /= s2;
+	}
+    } else {
+	*err = makevcv(pmod, 1.0); /* invert X'X into pmod->vcv */
+	if (*err) {
+	    return NULL;
+	}
+    }
 
     X = gretl_matrix_alloc(k, k);
     if (X == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }  
 
@@ -196,14 +209,14 @@ static gretl_matrix *fe_model_xpx (MODEL *pmod)
     return X;
 }
 
-/* HAC covariance matrix for the fixed-effects model, given "fixed T
-   and large N".  In the case of "large T" a different form is needed
-   for robustness in respect of autocorrelation.  See Arellano, "Panel
-   Data Econometrics" (Oxford, 2003), pages 18-19.
+/* HAC covariance matrix for the pooled or fixed-effects model, given
+   "fixed T and large N".  In the case of "large T" a different form
+   is needed for robustness in respect of autocorrelation.  See
+   Arellano, "Panel Data Econometrics" (Oxford, 2003), pages 18-19.
 */
 
 static int 
-fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 {
     gretl_vector *e = NULL;
     gretl_matrix *Xi = NULL;
@@ -212,28 +225,35 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix *XX = NULL;
     gretl_matrix *W = NULL;
     int Ti, T = pan->Tmax;
-    int k = pmod->ncoeff;
+    int minobs, k = pmod->ncoeff;
     int i, j, v, s, t;
     int err = 0;
 
-    e = gretl_vector_alloc(T);
-    Xi = gretl_matrix_alloc(T, k);
+    e   = gretl_vector_alloc(T);
+    Xi  = gretl_matrix_alloc(T, k);
     eXi = gretl_vector_alloc(k);
-    V = gretl_matrix_alloc(k, k);
-    XX = fe_model_xpx(pmod);
-    W = gretl_zero_matrix_new(k, k);
+    V   = gretl_matrix_alloc(k, k);
+    W   = gretl_zero_matrix_new(k, k);
 
     if (e == NULL || Xi == NULL || eXi == NULL ||
-	V == NULL || XX == NULL || W == NULL) {
+	V == NULL || W == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
+    XX = panel_model_xpx(pmod, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    minobs = (pan->opt & OPT_P)? 1 : FE_MINOBS;
+
     s = 0;
+
     for (i=0; i<pan->nunits; i++) {
 	Ti = pan->unit_obs[i];
 
-	if (Ti < FE_MINOBS) {
+	if (Ti < minobs) {
 	    continue;
 	}
 
@@ -241,6 +261,9 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
 
 	for (t=0; t<Ti; t++) {
+	    if (pan->opt & OPT_P) {
+		s = panel_index(i, t);
+	    }
 	    if (na(pmod->uhat[s])) {
 		gretl_vector_set(e, t, 0.0);
 	    } else {
@@ -250,7 +273,9 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 		v = pmod->list[j + 2];
 		gretl_matrix_set(Xi, t, j, Z[v][s]);
 	    }
-	    s++;
+	    if (!(pan->opt & OPT_P)) {
+		s++;
+	    }
 	}
 
 	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
@@ -264,6 +289,12 @@ fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     /* form V(b_W) = (X'X)^{-1} W (X'X)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
+
+#if 0
+    gretl_matrix_print(XX, "X'X^{-1}");
+    gretl_matrix_print(W, "W");
+    gretl_matrix_print(V, "V");
+#endif
 
     s = 0;
     for (i=0; i<k; i++) {
@@ -1359,7 +1390,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	    /* estimating the FE model in its own right */
 	    fix_panel_hatvars(&femod, winfo, pan, Z);
 	    if (pan->opt & OPT_R) {
-		fe_robust_vcv(&femod, pan, (const double **) wZ);
+		panel_robust_vcv(&femod, pan, (const double **) wZ);
 	    } 
 	}
     }
@@ -2247,19 +2278,32 @@ static int get_ntdum (const int *orig, const int *new)
     return n;
 }
 
+static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
+			       const double **Z)
+{
+    pmod->ci = PANEL;
+    gretl_model_set_int(pmod, "pooled", 1);
+    add_panel_obs_info(pmod, pan);
+    set_model_id(pmod);
+
+    if (pan->opt & OPT_R) {
+	panel_robust_vcv(pmod, pan, Z);
+    }
+}
+
 /* real_panel_model:
  * @list: list containing model specification.
  * @pZ: pointer to data array.  
  * @pdinfo: data info pointer. 
- * @opt: may include %OPT_U for the random effects model,
+ * @opt: may include %OPT_U for the random effects model;
  * %OPT_R for robust standard errors (fixed effects model
- * only), %OPT_H to use the regression approach to the Hausman
- * test (random effects only), %OPT_B for "between" model,
- * %OPT_D to include time dummies.
+ * and pooled OLS only); %OPT_H to use the regression approach 
+ * to the Hausman test (random effects only); %OPT_B for 
+ * the "between" model; %OPT_P for pooled OLS; and %OPT_D to 
+ * include time dummies.
  * @prn: printing struct.
  *
- * Estimates a panel model, either fixed effects or random
- * effects if %OPT_U is included.
+ * Estimates a panel model, by default the fixed effects model.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -2314,12 +2358,12 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     printmodel(&mod, pdinfo, OPT_NONE, prn);
 #endif
 
-    if (!(opt & OPT_U) && !(opt & OPT_B)) {
+    if (!(opt & OPT_U) && !(opt & OPT_B) && !(opt & OPT_P)) {
 	/* default: add OPT_F to save the fixed effects model */
 	pan_opt |= OPT_F;
     }
 
-    if (opt & OPT_D && !(opt & OPT_B)) {
+    if ((opt & OPT_D) && !(opt & OPT_B)) {
 	ntdum = get_ntdum(list, mod.list);
     }
 
@@ -2327,6 +2371,11 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	goto bailout;
     }   
+
+    if (opt & OPT_P) {
+	save_pooled_model(&mod, &pan, (const double **) *pZ);
+	goto bailout;
+    }
 
     if (opt & OPT_B) {
 	err = between_model(&pan, (const double **) *pZ, pdinfo);
@@ -2399,8 +2448,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  bailout:
 
     if (!err) {
-	clear_model(&mod);
-	mod = *pan.realmod;
+	if (!(opt & OPT_P)) {
+	    clear_model(&mod);
+	    mod = *pan.realmod;
+	}
 	gretl_model_smpl_init(&mod, pdinfo);
     }
 
@@ -3614,7 +3665,8 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 
     if (v == pdinfo->v) {
 	ret = 0; /* can't guess */
-    } else if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
+    } else if (floateq(Z[v][0], Z[v][1])) { 
+	/* "year" is same for first two obs */
 	pdinfo->structure = STACKED_CROSS_SECTION; 
 	ret = STACKED_CROSS_SECTION;
     } else {
@@ -3961,8 +4013,3 @@ int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     return 0;
 }   
-
-
-
-
-

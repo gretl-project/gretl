@@ -192,6 +192,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_D, "time-dummies" },
     { PANEL,    OPT_H, "hausman-reg" },
     { PANEL,    OPT_O, "vcv" },
+    { PANEL,    OPT_P, "pooled" },
     { PANEL,    OPT_Q, "quiet" },
     { PANEL,    OPT_R, "robust" },
     { PANEL,    OPT_S, "silent" },
@@ -698,4 +699,30 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
     }
 
     return ret;
+}
+
+/**
+ * incompatible_options:
+ * @opt: option flags to be tested.
+ * @test: bitwise OR of flags that are incompatible in context.
+ * 
+ * Returns: %E_BADOPT if @opt contains more than one of the flags
+ * in @test, otherwise 0.
+ */
+
+int incompatible_options (gretlopt opt, gretlopt test)
+{
+    int optcount = 0;
+    gretlopt o;
+
+    for (o=OPT_A; o<=OPT_Z; o=o<<1) {
+	if ((opt & o) && (test & o)) {
+	    optcount++;
+	    if (optcount > 1) {
+		return E_BADOPT;
+	    }
+	}
+    }
+
+    return 0;
 }
