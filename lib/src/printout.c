@@ -2265,7 +2265,21 @@ static char *printf_get_string (const char *s, const double **Z,
     fprintf(stderr, "printf_get_string: looking at '%s'\n", s);
 #endif
 
-    if (*s == '"') {
+    if (*s == '@') {
+	char sname[VNAMELEN] = {0};
+	int n = gretl_varchar_spn(s + 1);
+
+	len = n;
+	if (len >= VNAMELEN) {
+	    len = VNAMELEN - 1;
+	}
+	strncat(sname, s + 1, len);
+	p = get_named_string(sname);
+	if (p != NULL) {
+	    len = strlen(p);
+	    q = s + 1 + n;
+	}
+    } else if (*s == '"') {
 	/* literal string */
 	p = strrchr(s + 1, '"');
 	if (p != NULL) {

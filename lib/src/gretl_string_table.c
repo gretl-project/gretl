@@ -358,6 +358,31 @@ static saved_string *get_saved_string_by_name (const char *name,
     return NULL;
 }
 
+char *get_named_string (const char *name)
+{
+    int i, n;
+
+    if (!strcmp(name, "dirsep")) {
+	return dsep.s;
+    }
+
+    n = sizeof built_ins / sizeof built_ins[0];
+
+    for (i=0; i<n; i++) {
+	if (!strcmp(name, built_ins[i].name)) {
+	    return built_ins[i].s;
+	}
+    }
+
+    for (i=0; i<n_saved_strings; i++) {
+	if (!strcmp(name, saved_strings[i].name)) {
+	    return saved_strings[i].s;
+	}
+    }
+
+    return NULL;
+}
+
 static int append_to_saved_string (const char *name, char **s)
 {
     saved_string *str;
@@ -720,7 +745,7 @@ int substitute_named_strings (char *line)
     int len = strlen(line);
     char *sub, *tmp, *s = line;
     int bs = 0, pf = 0, quoted = 0;
-    int freeit, addquote;
+    int freeit;
     int n, m, err = 0;
 
     if (*s == '#' || strchr(s, '@') == NULL) {
@@ -729,13 +754,20 @@ int substitute_named_strings (char *line)
 
     if (!strncmp(line, "printf", 6) || !strncmp(line, "sprintf", 7)) {
 	pf = 1;
-	s += 7;
+	s = strchr(s, '"');
+	if (s == NULL) {
+	    /* no format string */
+	    return E_PARSE;
+	}
+	s++;
+	quoted = 1;
     }
 
     while (*s && !err) {
 	if (pf) {
-	    if (*s == '"' && (bs % 2 != 0)) {
-		quoted = !quoted;
+	    if (*s == '"' && (bs % 2 == 0)) {
+		/* end of format string */
+		break;
 	    }
 	    if (*s == '\\') {
 		bs++;
@@ -748,10 +780,6 @@ int substitute_named_strings (char *line)
 	    if (n > 0) {
 		if (n >= VNAMELEN) {
 		    n = VNAMELEN - 1;
-		}
-		addquote = 0;
-		if (pf && !quoted) {
-		    addquote = 1;
 		}
 		*sname = '\0';
 		strncat(sname, s + 1, n);
@@ -768,14 +796,7 @@ int substitute_named_strings (char *line)
 		    if (tmp == NULL) {
 			err = E_ALLOC;
 		    } else {
-			if (addquote) {
-			    strcpy(s++, "\"");
-			} 
 			strcpy(s, sub);
-			if (addquote) {
-			    strcpy(s + m, "\"");
-			    m++;
-			}
 			strcpy(s + m, tmp);
 			free(tmp);
 			len += m - (n + 1);
@@ -789,10 +810,6 @@ int substitute_named_strings (char *line)
 	}
 	s++;
     }
-
-#if 0
-    fprintf(stderr, "done: line = '%s'\n", line);
-#endif
 
     return err;
 }

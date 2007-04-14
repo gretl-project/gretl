@@ -38,6 +38,8 @@ void gretl_insert_builtin_string (const char *name, const char *s);
 
 int save_named_string (const char *name, const char *s, PRN *prn);
 
+char *get_named_string (const char *name);
+
 int process_string_command (const char *line, PRN *prn);
 
 int substitute_named_strings (char *line);
