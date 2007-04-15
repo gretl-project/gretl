@@ -50,6 +50,8 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 #define binary_model(m) ((m->ci == LOGIT || m->ci == PROBIT) && \
                          !gretl_model_get_int(m, "ordered"))
 
+#define pooled_model(m) (m->ci == OLS && \
+                         gretl_model_get_int(m, "pooled")) 
 
 void model_coeff_init (model_coeff *mc)
 {
@@ -892,11 +894,11 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Fixed-effects");
 	} else if (gretl_model_get_int(pmod, "random-effects")) {
 	    return N_("Random-effects (GLS)");
-	} else if (gretl_model_get_int(pmod, "pooled")) {
-	    return N_("Pooled OLS");
 	} else {
 	    return N_("Between-groups");
 	}
+    } else if (pooled_model(pmod)) {
+	return N_("Pooled OLS");
     } else if (pmod->ci == ARBOND) {
 	if (gretl_model_get_int(pmod, "step") == 2) {
 	    return N_("2-step Arellano-Bond");
@@ -2028,9 +2030,6 @@ static char active_decpoint (void)
     return test[1];
 }
 
-#define pooled_model(m) (m->ci == PANEL && \
-                         gretl_model_get_int(m, "pooled")) 
- 
 #define fixed_effects_model(m) (m->ci == PANEL && \
                                 gretl_model_get_int(m, "fixed-effects"))
 
@@ -2268,7 +2267,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (pmod->aux != AUX_VECM) {
 	    if (pmod->ci == OLS || pmod->ci == MPOLS ||
-		fixed_effects_model(pmod) || pooled_model(pmod)) {
+		fixed_effects_model(pmod)) {
 		print_ll(pmod, prn);
 	    }
 	    info_stats_lines(pmod, prn);

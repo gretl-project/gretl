@@ -2281,7 +2281,6 @@ static int get_ntdum (const int *orig, const int *new)
 static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 			       const double **Z)
 {
-    pmod->ci = PANEL;
     gretl_model_set_int(pmod, "pooled", 1);
     add_panel_obs_info(pmod, pan);
     set_model_id(pmod);
@@ -2290,6 +2289,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 	panel_robust_vcv(pmod, pan, Z);
     }
 }
+
+#define estimator_specified(o) (o & (OPT_U|OPT_B|OPT_P))
 
 /* real_panel_model:
  * @list: list containing model specification.
@@ -2358,7 +2359,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     printmodel(&mod, pdinfo, OPT_NONE, prn);
 #endif
 
-    if (!(opt & OPT_U) && !(opt & OPT_B) && !(opt & OPT_P)) {
+    if (!estimator_specified(opt)) {
 	/* default: add OPT_F to save the fixed effects model */
 	pan_opt |= OPT_F;
     }
