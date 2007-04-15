@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-03-11 20:40-0400\n"
-"PO-Revision-Date: 2007-03-16 13:19+0100\n"
+"PO-Revision-Date: 2007-04-15 20:47+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -153,7 +153,7 @@ msgstr "valeur estimée de (a - 1)"
 #: lib/src/describe.c:2832
 #: gui2/calculator.c:579
 msgid "test statistic"
-msgstr "tatistique de test"
+msgstr "statistique de test"
 
 #: lib/src/adf_kpss.c:520
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
@@ -540,7 +540,7 @@ msgstr "('*' indique une valeur en dehors de l'intervalle de confiance 95%)"
 
 #: lib/src/compare.c:2031
 msgid "This test is only relevant for pooled models\n"
-msgstr "Ce test est significatif que pour les modèles en pooling\n"
+msgstr "Ce test n'est pertinent que pour les modèles en pooling\n"
 
 #: lib/src/compare.c:2036
 msgid "This test requires that the model contains a constant\n"
@@ -2908,7 +2908,7 @@ msgstr "tous les instruments sont valides"
 #: lib/src/gretl_model.c:2429
 #: lib/src/gretl_model.c:2432
 msgid "Hausman test"
-msgstr "test de Hausman"
+msgstr "Test de Hausman"
 
 #: lib/src/gretl_model.c:2430
 msgid "OLS estimates are consistent"
@@ -3266,7 +3266,7 @@ msgstr "Chi^2 robuste"
 
 #: lib/src/gretl_restrict.c:1285
 msgid "restriction"
-msgstr "estriction"
+msgstr "restriction"
 
 #: lib/src/gretl_restrict.c:1395
 msgid "Invalid input\n"
@@ -4549,12 +4549,12 @@ msgstr "Utilisation de X-12-ARIMA"
 #: lib/src/modelprint.c:1329
 #: lib/src/modelprint.c:1334
 msgid "exact ML"
-msgstr "MV exact"
+msgstr "MV exacte"
 
 #: lib/src/modelprint.c:1329
 #: lib/src/modelprint.c:1339
 msgid "conditional ML"
-msgstr "MV conditionnel"
+msgstr "MV conditionnelle"
 
 #: lib/src/modelprint.c:1332
 msgid "Estimated using Kalman filter"
