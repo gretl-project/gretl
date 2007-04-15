@@ -1817,8 +1817,11 @@ static int random_effects (panelmod_t *pan,
     return err;
 }
 
+/* compute the per-unit error variances */
+
 static void 
-unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
+unit_error_variances (double *uvar, const MODEL *pmod, 
+		      const DATAINFO *pdinfo,
 		      panelmod_t *pan)
 {
     int i, t;
@@ -1826,6 +1829,10 @@ unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 
     for (i=0; i<pan->nunits; i++) {
 	uvar[i] = 0.0;
+	if (pan->unit_obs[i] == 0) {
+	    /* is this possible? */
+	    continue;
+	}
 	for (t=0; t<pan->T; t++) {
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
@@ -1833,7 +1840,7 @@ unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 	    }
 	}
 	if (pan->unit_obs[i] > 1) {
-	    uvar[i] /= (double) pan->unit_obs[i]; 
+	    uvar[i] /= pan->unit_obs[i]; 
 	}	
     }
 }
@@ -2516,13 +2523,15 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
     return maxdiff;
 }
 
+#define S2MINOBS 2
+
 static void
 print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
 {
     int i, df = 0;
 
     for (i=0; i<nunits; i++) {
-	if (unit_obs[i] > 1) df++;
+	if (unit_obs[i] >= S2MINOBS) df++;
     }
 
     pprintf(prn, "\n%s\n%s:\n",
@@ -2531,6 +2540,12 @@ print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
     pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
     pprintf(prn, _("with p-value = %g\n\n"), chisq_cdf_comp(W, df));
 }
+
+/* Wald test for groupwise heteroskedasticity, without assuming
+   normality of the errors: see Greene, 4e, p. 598.  Note that the
+   computation involves a factor of (1/(T_i - 1)) so this is not
+   usable when some of the groups have only one observation.
+*/
 
 static double 
 wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo, 
@@ -2541,10 +2556,10 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
     int i, t, Ti;
 
     for (i=0; i<pan->nunits; i++) {
-	double fii = 0.0;
+	double Vi = 0.0;
 
 	Ti = pan->unit_obs[i];
-	if (Ti == 1) {
+	if (Ti < S2MINOBS) {
 	    W = NADBL;
 	    break;
 	}
@@ -2552,20 +2567,25 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
 		x = x * x - uvar[i];
-		fii += x * x;
+		Vi += x * x;
 	    }
 	}
-	if (fii <= 0) {
+	if (Vi <= 0) {
 	    W = NADBL;
 	    break;
 	}	    
-	fii *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
+	Vi *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
 	x = uvar[i] - s2;
-	W += x * x / fii;
+	W += x * x / Vi;
     }
 
     return W;
 }
+
+/* Likelihood-ratio test for groupwise heteroskedasticity: see Greene,
+   4e, pp. 597 and 599.  This test requires that we're able to
+   calculate the ML estimates using iterated WLS.
+*/
 
 static int
 ml_hetero_test (MODEL *pmod, double s2, const double *uvar, 
@@ -2578,7 +2598,7 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
 
     for (i=0; i<nunits; i++) {
 	Ti = unit_obs[i];
-	if (Ti > 0) {
+	if (Ti >= S2MINOBS) {
 	    s2h += Ti * log(uvar[i]);
 	    df++;
 	}
@@ -2616,7 +2636,7 @@ static double real_ll (const MODEL *pmod, const double *uvar,
 
     for (i=0; i<nunits; i++) {
 	Ti = unit_obs[i];
-	if (Ti > 0) {
+	if (Ti >= S2MINOBS) { /* ?? */
 	    ll -= (Ti / 2.0) * (1.0 + log(uvar[i]));
 	}
     }
@@ -2688,6 +2708,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mdl;
     }  
 
+#if 1
     if (opt & OPT_T) {
 	if (singleton_check(pan.unit_obs, pan.nunits)) {
 	    pprintf(prn, _("Can't produce ML estimates: "
@@ -2696,6 +2717,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    opt ^= OPT_T;
 	}
     }
+#endif
 
     s2 = mdl.ess / mdl.nobs;
 
@@ -2718,11 +2740,13 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* allocate and construct WLS regression list */
+
     wlist = gretl_list_new(mdl.list[0] + 1);
     if (wlist == NULL) {
 	mdl.errcode = E_ALLOC;
 	goto bailout;
     }
+
     wlist[1] = pdinfo->v - 1; /* weight variable: the last var added */
     for (i=2; i<=wlist[0]; i++) {
 	wlist[i] = mdl.list[i-1];

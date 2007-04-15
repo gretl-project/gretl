@@ -1025,7 +1025,7 @@ static int set_bkbp_limits (const char *s0, const char *s1,
 
     err = libset_get_scalar(s0, Z, pdinfo, &p0, NULL);
     if (!err) {
-	err = libset_get_scalar(s0, Z, pdinfo, &p1, NULL);
+	err = libset_get_scalar(s1, Z, pdinfo, &p1, NULL);
     }
 
     if (err) {
