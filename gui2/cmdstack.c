@@ -22,6 +22,7 @@
 #include "lib_private.h"
 #include "cmd_private.h"
 #include "fileselect.h"
+#include "session.h"
 
 #define CMD_DEBUG 0
 
@@ -85,6 +86,14 @@ int add_command_to_stack (const char *str)
 
     if (cmd_stack[n_cmds] == NULL) {
 	return 1;
+    }
+
+    if (strlen(str) > 2 && 
+	strncmp(str, "help", 4) &&
+	strncmp(str, "info", 4) &&
+	strncmp(str, "list", 4) &&
+	strncmp(str, "quit", 4)) {
+	mark_session_changed();
     }
 
 #if CMD_DEBUG
@@ -166,6 +175,8 @@ static int add_command_to_mstack (model_stack *mstack, const char *str)
     }
 
     mstack->n += 1;
+
+
 
 #if CMD_DEBUG
     fprintf(stderr, "add_command_to_mstack, with ID=%d:\n"

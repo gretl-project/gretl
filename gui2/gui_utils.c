@@ -1313,7 +1313,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     } else if (vwin->role == EDIT_NOTES) {
 	mark_content_saved(vwin);
 	mark_session_changed();
-	set_replay_off();
     }
 }
 

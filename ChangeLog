@@ -1,12 +1,21 @@
 version 1.6.3, in progress
-- Add facility for bootstrap analysis in GUI
-- Model table: fixes for including panel models
+- Add facility for bootstrap analysis in GUI, for OLS
+- Model table: fixes for including panel models; allow up to
+  12 models; formatting enhancements
 - Fix bug in panel autocorrelation test (lmtest command)
 - Add fft() matrix function (Fast Fourier Transform)
 - Add quantile() function in genr
 - Add production of restricted estimates to the "restrict"
   command as applied to VECMs
 - Multiple fixes for session icon handling
+- LAD models: print the median of the dependent variable
+- Matrix properties window in GUI: add an indication of whether
+  or not a square matrix is idempotent
+- Panel data, pooled OLS model: when robust standard errors are
+  chosen, use the Arellano-type HAC estimator (well, it's HAC
+  when the time-series dimension is small) 
+- Fix bug that could cause a crash when exiting the program on
+  MS Windows
 
 3/24/2007 version 1.6.2
 - Add Poisson distribution to p-value finder

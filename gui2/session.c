@@ -1023,7 +1023,6 @@ void do_open_session (void)
     /* sync gui with session */
     session_file_open = 1;
     session_menu_state(TRUE);
-    set_replay_on();
 
     view_session();
     mark_session_saved();
@@ -1759,7 +1758,6 @@ static int delete_session_object (gui_obj *obj)
 	user_matrix_destroy(obj->data);
     }
 
-    set_replay_off();
     session_delete_icon(obj);
 
     return 0;
@@ -1858,8 +1856,6 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 
     free(obj->name);
     obj->name = g_strdup(newname);
-
-    set_replay_off();
 }
 
 void delete_text_from_session (void *p)

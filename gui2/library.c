@@ -83,7 +83,6 @@ const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 /* file scope state variables */
 static CMD libcmd;
 static char cmdline[MAXLINE];
-static int replay;
 static int original_n;
 
 char *get_lib_cmdline (void)
@@ -119,21 +118,6 @@ void library_command_init (void)
 void library_command_free (void)
 {
     gretl_cmd_free(&libcmd);
-}
-
-int replaying (void)
-{
-    return replay;
-}
-
-void set_replay_on (void)
-{
-    replay = 1;
-}
-
-void set_replay_off (void)
-{
-    replay = 0;
 }
 
 void register_graph (void)
@@ -368,11 +352,7 @@ int check_specific_command (char *s)
     err = parse_command_line(s, &libcmd, &Z, datainfo); 
     if (err) {
 	gui_errmsg(err);
-    } else {
-	/* At this point we're not just replaying 
-	   saved session commands. */
-	set_replay_off();
-    }
+    } 
 
     return err;
 }

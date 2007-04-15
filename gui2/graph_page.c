@@ -277,11 +277,15 @@ int graph_page_add_file (const char *fname)
     }
 
     fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
-    if (fnames == NULL) return 1;
+    if (fnames == NULL) {
+	return E_ALLOC;
+    }
 
     fnames[ng - 1] = g_strdup(fname);
     gpage.fnames = fnames;
     gpage.ngraphs = ng;
+
+    mark_session_changed();
 
     return 0;
 }

@@ -51,12 +51,6 @@ void library_command_free (void);
 
 CMD *get_lib_cmd (void);
 
-int replaying (void);
-
-void set_replay_on (void);
-
-void set_replay_off (void);
-
 int gretl_command_sprintf (const char *template, ...);
 
 int gretl_command_strcpy (const char *s);

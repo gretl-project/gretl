@@ -34,7 +34,4 @@ int dump_command_stack (const char *fname, int insert_open_data);
 
 void view_command_log (void);
 
-int work_done (void);
-
-
 #endif /* CMDSTACK_H */

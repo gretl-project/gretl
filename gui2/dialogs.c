@@ -115,8 +115,7 @@ gboolean exit_check (void)
 	return TRUE;
     }
 
-    if ((!expert && !replaying() && work_done()) ||
-	session_is_modified()) {
+    if (session_is_modified()) {
 	const char *msg;
 	guint code;
 
