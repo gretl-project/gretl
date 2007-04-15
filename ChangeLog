@@ -14,6 +14,10 @@ version 1.6.3, in progress
 - Panel data, pooled OLS model: when robust standard errors are
   chosen, use the Arellano-type HAC estimator (well, it's HAC
   when the time-series dimension is small) 
+- Add "--quiet" option to lmtest command (don't print the
+  auxiliary regression)
+- Observation labels: ensure these are properly XML-encoded when
+  saving a data set as gdt
 - Fix bug that could cause a crash when exiting the program on
   MS Windows
 

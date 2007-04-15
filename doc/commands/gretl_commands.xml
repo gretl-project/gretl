@@ -4097,6 +4097,10 @@
 	  <flag>--panel</flag>
 	  <effect>heteroskedasticity, groupwise</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print auxiliary regression</effect>
+        </option>
       </options>
     </usage>
 
@@ -4139,6 +4143,11 @@
 	is estimated on panel data: in this case a test for groupwise
 	heteroskedasticity is performed (that is, for a differing
 	error variance across the cross-sectional units).
+      </para>
+      <para>
+	By default, the program prints the auxiliary regression on which
+	the test statistic is based.  This may be suppressed by using the
+	<lit>--quiet</lit> flag.
       </para>
     </description>
 

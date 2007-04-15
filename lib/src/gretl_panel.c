@@ -1817,34 +1817,6 @@ static int random_effects (panelmod_t *pan,
     return err;
 }
 
-/* compute the per-unit error variances */
-
-static void 
-unit_error_variances (double *uvar, const MODEL *pmod, 
-		      const DATAINFO *pdinfo,
-		      panelmod_t *pan)
-{
-    int i, t;
-    double x;
-
-    for (i=0; i<pan->nunits; i++) {
-	uvar[i] = 0.0;
-	if (pan->unit_obs[i] == 0) {
-	    /* is this possible? */
-	    continue;
-	}
-	for (t=0; t<pan->T; t++) {
-	    x = pmod->uhat[panel_index(i, t)];
-	    if (!na(x)) {
-		uvar[i] += x * x;
-	    }
-	}
-	if (pan->unit_obs[i] > 1) {
-	    uvar[i] /= pan->unit_obs[i]; 
-	}	
-    }
-}
-
 static void save_breusch_pagan_result (panelmod_t *pan)
 {
     ModelTest *test;
@@ -2476,20 +2448,25 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return mod;    
 }
 
+/* write weights for groupwise weighted least squares into the
+   last variable in the dataset */
+
 static int 
-write_uvar_to_dataset (double *uvar, int nunits, int T,
-		       double **Z, DATAINFO *pdinfo)
+write_weights_to_dataset (double *uvar, int nunits, int T,
+			  double **Z, DATAINFO *pdinfo)
 {
+    int w = pdinfo->v - 1;
+    double wi;
     int i, t;
-    int uv = pdinfo->v - 1;
 
     for (i=0; i<nunits; i++) {
+	if (uvar[i] <= 0.0 || na(uvar[i])) {
+	    wi = 0.0;
+	} else {
+	    wi = 1.0 / uvar[i];
+	}
 	for (t=0; t<T; t++) {
-	    if (uvar[i] <= 0.0) {
-		Z[uv][panel_index(i, t)] = 0.0;
-	    } else {
-		Z[uv][panel_index(i, t)] = 1.0 / uvar[i];
-	    }
+	    Z[w][panel_index(i, t)] = wi;
 	}
     }
 
@@ -2559,10 +2536,15 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 	double Vi = 0.0;
 
 	Ti = pan->unit_obs[i];
+	if (Ti == 0) {
+	    continue;
+	}
+
 	if (Ti < S2MINOBS) {
 	    W = NADBL;
 	    break;
 	}
+
 	for (t=0; t<pan->T; t++) {
 	    x = pmod->uhat[panel_index(i, t)];
 	    if (!na(x)) {
@@ -2570,10 +2552,12 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 		Vi += x * x;
 	    }
 	}
+
 	if (Vi <= 0) {
 	    W = NADBL;
 	    break;
-	}	    
+	}
+	    
 	Vi *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
 	x = uvar[i] - s2;
 	W += x * x / Vi;
@@ -2584,7 +2568,7 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* Likelihood-ratio test for groupwise heteroskedasticity: see Greene,
    4e, pp. 597 and 599.  This test requires that we're able to
-   calculate the ML estimates using iterated WLS.
+   calculate the ML estimates (using iterated WLS).
 */
 
 static int
@@ -2598,7 +2582,7 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
 
     for (i=0; i<nunits; i++) {
 	Ti = unit_obs[i];
-	if (Ti >= S2MINOBS) {
+	if (Ti > 0) {
 	    s2h += Ti * log(uvar[i]);
 	    df++;
 	}
@@ -2628,15 +2612,19 @@ static double pooled_ll (const MODEL *pmod)
     return -(n / 2.0) * (1.0 + LN_2_PI - log(n) + log(pmod->ess));
 }
 
-static double real_ll (const MODEL *pmod, const double *uvar, 
-		       int nunits, const int *unit_obs)
+/* calculate log-likelihood for panel MLE with groupwise
+   heteroskedasticity
+*/
+
+static double panel_ML_ll (const MODEL *pmod, const double *uvar, 
+			   int nunits, const int *unit_obs)
 {
     double ll = -(pmod->nobs / 2.0) * LN_2_PI;
     int i, Ti;
 
     for (i=0; i<nunits; i++) {
 	Ti = unit_obs[i];
-	if (Ti >= S2MINOBS) { /* ?? */
+	if (Ti > 0) {
 	    ll -= (Ti / 2.0) * (1.0 + log(uvar[i]));
 	}
     }
@@ -2660,8 +2648,34 @@ static int singleton_check (const int *unit_obs, int nunits)
     return 0;
 }
 
+/* compute per-unit error variances */
+
+static void 
+unit_error_variances (double *uvar, const MODEL *pmod, 
+		      const DATAINFO *pdinfo,
+		      panelmod_t *pan)
+{
+    int i, t;
+    double uit;
+
+    for (i=0; i<pan->nunits; i++) {
+	if (pan->unit_obs[i] == 0) {
+	    uvar[i] = NADBL;
+	    continue;
+	}
+	uvar[i] = 0.0;
+	for (t=0; t<pan->T; t++) {
+	    uit = pmod->uhat[panel_index(i, t)];
+	    if (!na(uit)) {
+		uvar[i] += uit * uit;
+	    }
+	}
+	uvar[i] /= pan->unit_obs[i]; 
+    }
+}
+
 #define SMALLDIFF 0.0001
-#define WLS_MAX   20
+#define WLS_MAX   30
 
 MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
@@ -2678,7 +2692,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     int i, iter = 0;
 
     gretl_error_clear();
-
     panelmod_init(&pan);
 
     if (opt & OPT_T) {
@@ -2708,7 +2721,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mdl;
     }  
 
-#if 1
     if (opt & OPT_T) {
 	if (singleton_check(pan.unit_obs, pan.nunits)) {
 	    pprintf(prn, _("Can't produce ML estimates: "
@@ -2717,7 +2729,6 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    opt ^= OPT_T;
 	}
     }
-#endif
 
     s2 = mdl.ess / mdl.nobs;
 
@@ -2752,7 +2763,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	wlist[i] = mdl.list[i-1];
     }
 
-    /* if wanted, iterate to ML solution; otherwise just do
+    /* if wanted (and possible) iterate to ML solution; otherwise just do
        one-step FGLS estimation 
     */
 
@@ -2772,7 +2783,9 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, " unit    variance\n");
 	    for (i=0; i<pan.nunits; i++) {
 		if (pan.unit_obs[i] > 0) {
-		    pprintf(prn, "%5d%12g\n", i + 1, uvar[i]);
+		    pprintf(prn, "%5d%12g (T = %d)\n", i + 1, uvar[i], pan.unit_obs[i]);
+		} else {
+		    pprintf(prn, "%5d%12s (T = %d)\n", i + 1, "NA", pan.unit_obs[i]);
 		}
 	    }
 	}
@@ -2781,7 +2794,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, &pan);
 	}
 
-	write_uvar_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
+	write_weights_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
 
 	if (opt & OPT_T) {
 	    /* save coefficients for comparison */
@@ -2825,7 +2838,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
 	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
-	    mdl.lnL = real_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
+	    mdl.lnL = panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
 	    }
@@ -2846,7 +2859,9 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(wlist);
     free(bvec);
 
-    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    if (!(opt & OPT_V)) {
+	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    }
     
     return mdl;
 }

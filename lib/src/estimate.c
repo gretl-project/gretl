@@ -2424,12 +2424,22 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
+static void print_whites_test (double TR2, int df, double pval, PRN *prn)
+{
+    pprintf(prn, "\n%s\n", _("White's test for heteroskedasticity"));
+    pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), TR2);
+    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
+	    _("with p-value"), _("Chi-square"), 
+	    df, TR2, chisq_cdf_comp(TR2, df)); 
+}
+
 /**
  * whites_test:
  * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save results to model.
+ * @opt: if flags include %OPT_S, save results to model; %OPT_Q
+ * means don't print the auxiliary regression.
  * @prn: gretl printing struct.
  *
  * Runs White's test for heteroskedasticity on the given model.
@@ -2500,10 +2510,17 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	double TR2, pval;
 
 	white.aux = AUX_WHITE;
-	printmodel(&white, pdinfo, OPT_NONE, prn);
+
+	if (!(opt & OPT_Q)) {
+	    printmodel(&white, pdinfo, OPT_NONE, prn);
+	}
 
 	TR2 = white.rsq * white.nobs;
 	pval = chisq_cdf_comp(TR2, white.ncoeff - 1);
+
+	if (opt & OPT_Q) {
+	    print_whites_test(TR2, white.ncoeff - 1, pval, prn);
+	}
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_WHITES);

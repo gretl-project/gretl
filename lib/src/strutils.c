@@ -1454,41 +1454,33 @@ int gretl_xml_validate (const char *s)
  * gretl_xml_encode:
  * @str: NUL-terminated source string.
  *
- * Returns: an allocated re-write of @buf, with characters that are
+ * Returns: an allocated re-write of @str, with characters that are
  * special in XML encoded as character entities.  See also
  * gretl_xml_validate().
  */
 
 char *gretl_xml_encode (const char *str)
 {
-    char *xmlstr, *p;
+    char *targ, *p;
     const char *s = str;
-    size_t sz = strlen(str) + 1;
-
-#ifdef XML_DEBUG
-    fprintf(stderr, "gretl_xml_encode: original buffer size=%d\n", sz);
-#endif
+    int len = strlen(s) + 1;
 
     while (*s) {
-	if (*s == '&') sz += 4;
-	else if (*s == '<') sz += 3;
-	else if (*s == '>') sz += 3;
-	else if (*s == '"') sz += 5;
+	if (*s == '&') len += 4;
+	else if (*s == '<') len += 3;
+	else if (*s == '>') len += 3;
+	else if (*s == '"') len += 5;
 	s++;
     }
 
-    xmlstr = malloc(sz);
-    if (xmlstr == NULL) {
+    targ = malloc(len);
+    if (targ == NULL) {
 	sprintf(gretl_errmsg, _("out of memory in XML encoding"));
 	return NULL;
     }
 
-#ifdef XML_DEBUG
-    fprintf(stderr, "gretl_xml_encode: malloc'd xmlstr at size %d\n", sz);
-#endif
-
     s = str;
-    p = xmlstr;
+    p = targ;
     
     while (*s) {
 	if (*s == '&') {
@@ -1509,13 +1501,75 @@ char *gretl_xml_encode (const char *str)
 	s++;
     }
 
-    xmlstr[sz-1] = '\0';
+    targ[len-1] = '\0';
 
 #ifdef XML_DEBUG
-    fprintf(stderr, "done gretl_xml_encode: xmlstr='%s'\n", xmlstr);
+    fprintf(stderr, "done gretl_xml_encode: targ='%s'\n", targ);
 #endif
 
-    return xmlstr;
+    return targ;
+}
+
+/**
+ * gretl_xml_encode_to_buf:
+ * @targ: target buffer.
+ * @src: NUL-terminated source string.
+ * @n: size of @targ in bytes.
+ *
+ * Writes into @targ a version of @src in which characters that are
+ * special in XML are encoded as character entities.  See also
+ * gretl_xml_encode() for the case where the encoding of @src is
+ * of unknown size at compile time.
+ *
+ * Returns: 0 on success or 1 if the encoded version of @src is longer
+ * than @n bytes (allowing for NUL termination), in which case the
+ * conversion is not done.
+ */
+
+int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
+{
+    const char *s = src;
+    int len = strlen(s) + 1;
+
+    while (*s) {
+	if (*s == '&') len += 4;
+	else if (*s == '<') len += 3;
+	else if (*s == '>') len += 3;
+	else if (*s == '"') len += 5;
+	s++;
+    }
+
+    *targ = '\0';
+    
+    if (len > n) {
+	fprintf(stderr, "gretl_xml_encode_to_buf: bufer too small\n");
+	return 1;
+    }
+
+    s = src;
+    
+    while (*s) {
+	if (*s == '&') {
+	    strcpy(targ, "&amp;");
+	    targ += 5;
+	} else if (*s == '<') {
+	    strcpy(targ, "&lt;");
+	    targ += 4;
+	} else if (*s == '>') {
+	    strcpy(targ, "&gt;");
+	    targ += 4;
+	} else if (*s == '"') {
+	    strcpy(targ, "&quot;");
+	    targ += 6;
+	} else {
+	    *targ++ = *s;
+	}
+	s++;
+    }
+
+    *targ = '\0';
+
+    return 0;
 }
 
 static char x2c (char *s) 

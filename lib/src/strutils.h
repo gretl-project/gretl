@@ -133,6 +133,8 @@ int gretl_xml_validate (const char *s);
 
 char *gretl_xml_encode (const char *str);
 
+int gretl_xml_encode_to_buf (char *targ, const char *src, int n);
+
 void unescape_url (char *url);
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);

@@ -147,6 +147,7 @@ struct gretl_option gretl_opts[] = {
     { LMTEST,   OPT_L, "logs" },
     { LMTEST,   OPT_S, "squares" }, 
     { LMTEST,   OPT_P, "panel" },
+    { LMTEST,   OPT_Q, "quiet" },
     { LMTEST,   OPT_W, "white" },
     { LOGIT,    OPT_R, "robust" },
     { LOGIT,    OPT_V, "verbose" },

@@ -1284,7 +1284,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char numstr[128];
-    char *xmlbuf = NULL;
+    char xmlbuf[256];
     void *handle = NULL;
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
@@ -1349,11 +1349,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     ntodate_full(enddate, pdinfo->t2, pdinfo);
 
     simple_fname(datname, fname);
-    xmlbuf = gretl_xml_encode(datname);
-    if (xmlbuf == NULL) {
-	err = 1;
-	goto cleanup;
-    }
+    gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);
 
     if (custom_time_series(pdinfo)) {
 	sprintf(freqstr, "special:%d", pdinfo->pd);
@@ -1366,16 +1362,14 @@ int gretl_write_gdt (const char *fname, const int *list,
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		 "<gretldata name=\"%s\" frequency=\"%s\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 datname, freqstr, startdate, enddate);
+		 xmlbuf, freqstr, startdate, enddate);
     } else {
 	fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		"<gretldata name=\"%s\" frequency=\"%s\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		datname, freqstr, startdate, enddate);
+		xmlbuf, freqstr, startdate, enddate);
     }
-
-    free(xmlbuf);
 
     if (gz) {
 	gzprintf(fz, "type=\"%s\">\n", data_structure_string(pdinfo->structure));
@@ -1385,22 +1379,20 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     /* deal with description, if any */
     if (pdinfo->descrip != NULL) {
-	xmlbuf = gretl_xml_encode(pdinfo->descrip);
-	if (xmlbuf == NULL) {
+	char *dbuf = gretl_xml_encode(pdinfo->descrip);
+
+	if (dbuf == NULL) {
 	    err = 1;
 	    goto cleanup;
 	} else {
 	    if (gz) {
 		gzputs(fz, "<description>");
-		gzputs(fz, xmlbuf);
+		gzputs(fz, dbuf);
 		gzputs(fz, "</description>\n");
 	    } else {
-		fprintf(fp, "<description>%s</description>\n", xmlbuf);
+		fprintf(fp, "<description>%s</description>\n", dbuf);
 	    }
-	    free(xmlbuf);
-#ifdef XML_DEBUG
-	    fprintf(stderr, "xmlbuf encoded buffer freed\n");
-#endif
+	    free(dbuf);
 	}
     }
 
@@ -1415,18 +1407,12 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	xmlbuf = gretl_xml_encode(pdinfo->varname[v]);
+	gretl_xml_encode_to_buf(xmlbuf, pdinfo->varname[v], sizeof xmlbuf);
 
-	if (xmlbuf == NULL) {
-	    err = 1;
-	    goto cleanup;
+	if (gz) {
+	    gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
 	} else {
-	    if (gz) {
-		gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
-	    } else {
-		fprintf(fp, "<variable name=\"%s\"", xmlbuf);
-	    }
-	    free(xmlbuf);
+	    fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	}
 
 	if (var_is_scalar(pdinfo, v) && !na(Z[v][0])) {
@@ -1441,32 +1427,20 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
 
 	if (*VARLABEL(pdinfo, v)) {
-	    xmlbuf = gretl_xml_encode(VARLABEL(pdinfo, v));
-	    if (xmlbuf == NULL) {
-		err = 1;
-		goto cleanup;
+	    gretl_xml_encode_to_buf(xmlbuf, VARLABEL(pdinfo, v), sizeof xmlbuf);
+	    if (gz) {
+		gzprintf(fz, "\n label=\"%s\"", xmlbuf);
 	    } else {
-		if (gz) {
-		    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
-		} else {
-		    fprintf(fp, "\n label=\"%s\"", xmlbuf);
-		}
-		free(xmlbuf);
+		fprintf(fp, "\n label=\"%s\"", xmlbuf);
 	    }
 	} 
 
 	if (*DISPLAYNAME(pdinfo, v)) {
-	    xmlbuf = gretl_xml_encode(DISPLAYNAME(pdinfo, v));
-	    if (xmlbuf == NULL) {
-		err = 1;
-		goto cleanup;
+	    gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(pdinfo, v), sizeof xmlbuf);
+	    if (gz) {
+		gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
 	    } else {
-		if (gz) {
-		    gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
-		} else {
-		    fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
-		}
-		free(xmlbuf);
+		fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
 	    }
 	} 
 
@@ -1508,10 +1482,11 @@ int gretl_write_gdt (const char *fname, const int *list,
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	alt_puts("<obs", fp, fz);
 	if (pdinfo->markers && pdinfo->S != NULL) {
+	    gretl_xml_encode_to_buf(xmlbuf, pdinfo->S[t], sizeof xmlbuf);
 	    if (gz) {
-		gzprintf(fz, " label=\"%s\"", pdinfo->S[t]);
+		gzprintf(fz, " label=\"%s\"", xmlbuf);
 	    } else {
-		fprintf(fp, " label=\"%s\"", pdinfo->S[t]);
+		fprintf(fp, " label=\"%s\"", xmlbuf);
 	    }
 	} 
 	if (panelobs) {

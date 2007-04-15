@@ -647,6 +647,17 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     return rep;
 }
 
+static void nonlin_test_header (int code, PRN *prn)
+{
+    pputc(prn, '\n');
+    if (code == AUX_SQ) {
+	pputs(prn, _("Non-linearity test (squared terms)"));
+    } else {
+	pputs(prn, _("Non-linearity test (log terms)"));
+    }
+    pputs(prn, "\n\n");
+}
+
 static int
 real_nonlinearity_test (MODEL *pmod, int *list,
 			double ***pZ, DATAINFO *pdinfo,
@@ -678,9 +689,14 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	double pval = chisq_cdf_comp(trsq, df);
 
 	aux.aux = aux_code;
-	printmodel(&aux, pdinfo, opt, prn);
 
-	pprintf(prn, "\n%s: TR^2 = %g,\n", _("Test statistic"), trsq);
+	if (opt & OPT_Q) {
+	    nonlin_test_header(aux_code, prn);
+	} else {
+	    printmodel(&aux, pdinfo, opt, prn);
+	}
+
+	pprintf(prn, "%s: TR^2 = %g,\n", _("Test statistic"), trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
 		df, trsq, pval);
 
@@ -1217,6 +1233,18 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static void bg_test_header (int order, PRN *prn)
+{
+    pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
+    if (order > 1) {
+	pprintf(prn, "%s %d\n", _("autocorrelation up to order"),
+		order);
+    } else {
+	pprintf(prn, "%s\n", _("first-order autocorrelation"));
+    }
+    pputc(prn, '\n');
+}
+
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -1325,8 +1353,12 @@ int autocorr_test (MODEL *pmod, int order,
 	pval = f_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
 
 	if (pmod->aux != AUX_VAR) {
-	    printmodel(&aux, pdinfo, OPT_NONE, prn);
-	    pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
+	    if (opt & OPT_Q) {
+		bg_test_header(order, prn);
+	    } else {
+		printmodel(&aux, pdinfo, OPT_NONE, prn);
+	    } 
+	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
 	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
 	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
@@ -1338,6 +1370,7 @@ int autocorr_test (MODEL *pmod, int order,
 			lb, _("with p-value"), _("Chi-square"), order,
 			lb, chisq_cdf_comp(lb, order));
 	    }
+	    pputc(prn, '\n');
 	    record_test_result(LMF, pval, _("autocorrelation"));
 	}
 
@@ -2235,7 +2268,8 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * @param: auxiliary parameter for some uses.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: controls which test(s) will be performed.
+ * @opt: controls which test(s) will be performed; %OPT_Q
+ * gives less verbose results.
  * @prn: gretl printing struct.
  * 
  * Performs some subset of gretl's "lmtest" tests on the
@@ -2249,11 +2283,12 @@ int lmtest_driver (const char *param,
 		   gretlopt opt, PRN *prn)
 {
     GretlObjType type;
+    gretlopt testopt;
     void *ptr;
     int k = 0;
     int err = 0;
 
-    if (opt == OPT_NONE) {
+    if (opt == OPT_NONE || opt == OPT_Q) {
 	pprintf(prn, "lmtest: no options selected\n");
 	return 0;
     }
@@ -2267,11 +2302,13 @@ int lmtest_driver (const char *param,
 	k = atoi(param);
     }
 
+    testopt = (opt & OPT_Q)? OPT_Q : OPT_NONE;
+
     /* non-linearity (squares) */
     if (!err && (opt & OPT_S)) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = nonlinearity_test(ptr, pZ, pdinfo, 
-				    AUX_SQ, OPT_NONE, prn);
+				    AUX_SQ, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2281,7 +2318,7 @@ int lmtest_driver (const char *param,
     if (!err && (opt & OPT_L)) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = nonlinearity_test(ptr, pZ, pdinfo, 
-				    AUX_LOG, OPT_NONE, prn);
+				    AUX_LOG, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2290,7 +2327,7 @@ int lmtest_driver (const char *param,
     /* heteroskedasticity, White */
     if (!err && (opt & OPT_W)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = whites_test(ptr, pZ, pdinfo, OPT_NONE, prn);
+	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2300,7 +2337,7 @@ int lmtest_driver (const char *param,
     if (!err && (opt & OPT_A)) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = autocorr_test(ptr, k, pZ, pdinfo, 
-				OPT_NONE, prn);
+				testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
 	} else {
@@ -2311,7 +2348,7 @@ int lmtest_driver (const char *param,
     /* ARCH */
     if (!err && (opt & OPT_H)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = arch_test(ptr, k, pdinfo, OPT_NONE, prn);
+	    err = arch_test(ptr, k, pdinfo, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_arch_test(ptr, k, pdinfo, prn);
 	} else {
