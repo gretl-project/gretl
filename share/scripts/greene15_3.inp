@@ -1,0 +1,39 @@
+# Groupwise heteroskedasticity analysis using the Grunfeld
+# investment data (see Greene, 4e, pp. 594-599), including
+# the inset "Example 15.3"
+
+open greene13_1.gdt
+
+# generate panelized variables (stacked time series)
+genr It = stack(I_GM,I_CH,I_GE,I_WE,I_US)
+genr Ft = stack(F_GM,F_CH,F_GE,F_WE,F_US)
+genr Ct = stack(C_GM,C_CH,C_GE,C_WE,C_US)
+
+# first, treat as if plain cross-sectional regression
+setobs 1 1 --cross
+ols It 0 Ft Ct 
+
+# note: "robust" below gives regular White's standard errors
+ols It 0 Ft Ct --robust
+
+# Run White's test
+lmtest --white --quiet
+
+# Now treat as panel
+setobs 20 1:1 --stacked-time
+
+# OLS estimates should be exactly as above
+ols It 0 Ft Ct
+
+# With the dataset defined as a panel, "robust" now produces Arellano-type 
+# HAC estimates.  Note this does not agree with what Greene calls "correct" 
+# standard errors in 4e (in 5e he gives somewhat different numbers and 
+# calls them Beck-Katz).  The standard errors Greene gives are robust with
+# respect to heteroskedasticity but not autocorrelation.
+ols It 0 Ft Ct --robust
+
+# groupwise wls
+panel It 0 Ft Ct --unit-weights
+# iterate to ML solution
+panel It 0 Ft Ct --unit-weights --iterate --verbose
+
