@@ -663,6 +663,122 @@ function SumOC (matrix *theta, matrix *X)
 end function
 \end{code}
 
+\section{The discrete Fourier transform}
+\label{sec:genr-fft}
+
+The discrete Fourier transform can be best thought of as a linear,
+invertible transform of a complex vector. Hence, if $\mathbf{x}$ is an
+$n$-dimensional vector whose $k$-th element is $x_k = a_k + i b_k$,
+then the output of the discrete Fourier transform is a vector
+$\mathbf{f} = \mathcal{F}(\mathbf{x})$ whose $k$-th element is
+\[
+  f_k = \sum_{j=1}^n e^{-i \omega_{j,k} } x_j 
+\]
+where $\omega_{j,k} = 2 \pi i \frac{(j-1) k}{n}$. Since the transformation
+is invertible, the vector $\mathbf{x}$ can be recovered from
+$\mathbf{f}$ via the so-called inverse transform
+\[
+  x_k = \frac{1}{n} \sum_{j=1}^n e^{i \omega_{j,k} } f_j .
+\]
+
+The Fourier transform is used in a number of diverse situation,
+because of its main property: the convolution of two vectors can be
+performed efficiently by multiplying the elements of their Fourier
+transforms and inverting the result: if
+\[
+  z_k = \sum_{j=1}^n x_j y_{k-j} ,
+\]
+then
+\[
+  \mathcal{F}(\mathbf{z}) = \mathcal{F}(\mathbf{x}) \odot
+  \mathcal{F}(\mathbf{y}) ,
+\]
+that is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
+\mathcal{F}(\mathbf{y})_k$.
+
+\app{Gretl} provides two matrix functions\footnote{See chapter
+  \ref{chap:matrices}.} for performing the Fourier transform and its
+inverse: \texttt{fft} and \texttt{ffti}. In fact, \app{gretl}'s
+implementation of the Fourier transform is somewhat more specialized:
+the input to the \texttt{fft} function is understood to be real.
+Conversely, \texttt{ffti} takes a complex argument and yields a real
+output. For example:
+\begin{code}
+x1 = { 1 ; 2 ; 3 }
+# perform the transform
+f = fft(a)
+# perform the inverse transform
+x2 = ffti(f)
+\end{code}
+yields
+\[
+  x_1 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+  \qquad
+  f = \left[ \begin{array}{rr} 
+      6 & 0 \\ -1.5 & 0.866 \\ -1.5 & -0.866 
+   \end{array} \right] 
+  \qquad
+  x_2 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+\]
+where the first column of \emph{f} holds the real part and the second
+holds the complex part. In general, if the input to \texttt{fft} has
+$n$ columns, the output has $2n$ columns, where the real parts are
+stored in the odd columns and the complex parts in the even
+ones. Should it be necessary to compute the Fourier transform on
+several vector with the same number of elements, it is more
+numerically efficient to group the into a matrix rather than invoking
+\texttt{fft} for each vector separately.
+
+As an example, consider the multiplication of two polynomals:
+\begin{eqnarray*}
+  a(x) & = & 1 + 0.5 x \\
+  b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
+  c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3 ;
+\end{eqnarray*}
+the coefficient of the polynomial $c(x)$ are the convolution of the
+coefficents of the two polynomials $a(x)$ and $b(x)$; the following
+\app{gretl} code illustrates how to compute the coefficients of
+$c(x)$:
+\begin{code}
+# define the two polynomials
+a = { 1 ; 0.5; 0 ; 0 }
+b = { 1 ; 0.3 ; -0.8 ; 0 }
+# perform the transform
+fa = fft(a)
+fb = fft(b)
+# complex-multiply the two tranforms 
+fc = (fa[,1].*fb[,1] - fa[,2].*fb[,2]) ~ (fa[,1].*fb[,2] + fa[,2].*fb[,1])  
+# compute the coefficients of c via the inverse transform
+c = ffti(fc)
+\end{code}
+
+\ldots FFT and time series \ldots
+
+\begin{script}[htbp]
+  \caption{Periodogram via the Fourier transform}
+  \label{scr:pergm-fft}
+\begin{scode}
+nulldata 100
+
+set seed 78346
+
+e = normal()
+series x = 0
+x = 0.9*x(-1) + e
+
+scale = (2*pi*$nobs)
+X = { x }
+F = fft(X)
+S = sumr(F.^2)
+S = S[2:($nobs/2)]/scale
+omega = seq(1,($nobs/2)-1)' .* (2*pi/$nobs) 
+
+omega = omega ~ S
+pergm x  
+omega
+\end{scode}
+\end{script}
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"

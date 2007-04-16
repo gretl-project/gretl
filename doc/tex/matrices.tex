@@ -167,7 +167,7 @@ matrix C = A / B
 matrix C = inv(B) * A
 \end{code}
 %
-where \texttt{inv()} is the matrix inversion function (see below for
+where \texttt{inv} is the matrix inversion function (see below for
 more on matrix functions).  The first form, however, may be more
 accurate than the second; the solution is obtained via LU
 decomposition, without the explicit calculation of the inverse.
@@ -324,18 +324,20 @@ context it is reserved for the Kronecker product.)
 \texttt{det}       &
 \texttt{eigengen}  &
 \texttt{eigensym}  &
+\texttt{fft}       &
+\texttt{ffti}      \\
 \texttt{infnorm}   &
-\texttt{inv}       \\
+\texttt{inv}       &
 \texttt{ldet}      &
 \texttt{mexp}      &
 \texttt{nullspace} &
-\texttt{onenorm}   &
+\texttt{onenorm}   \\
 \texttt{qform}     &
-\texttt{qrdecomp}  \\
+\texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{svd}       &
-\texttt{tr}        &
+\texttt{tr}        
 \end{tabular}      
 
 \textbf{Statistical}
@@ -384,12 +386,12 @@ functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.
 
 Note that to find the ``matrix square root'' you need the
-\texttt{cholesky()} function (see below); moreover, the \texttt{exp()}
+\texttt{cholesky} function (see below); moreover, the \texttt{exp}
 function computes the exponential element by element, and therefore
 does \emph{not} return the matrix exponential unless the matrix is
-diagonal --- to get the matrix exponential, use \texttt{mexp()}.
+diagonal --- to get the matrix exponential, use \texttt{mexp}.
   
-The functions \texttt{sort()}, \texttt{dsort()} and \texttt{values()}
+The functions \texttt{sort}, \texttt{dsort} and \texttt{values}
 are available for matrices as well as data series.  In the matrix case
 the argument to these functions must be a vector ($p \times 1$ or
 $1\times p$).  For \texttt{sort} and \texttt{dsort} the return value
@@ -422,22 +424,22 @@ scalar are:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{rows()} & number of rows \\
-\texttt{cols()} & number of columns \\
-\texttt{rank()} & rank \\
-\texttt{det()} & determinant \\
-\texttt{ldet()} & log-determinant \\
-\texttt{tr()} & trace \\
-\texttt{onenorm()} & 1-norm \\
-\texttt{infnorm()} & infinity-norm \\
-\texttt{rcond()} & reciprocal condition number
+\texttt{rows} & number of rows \\
+\texttt{cols} & number of columns \\
+\texttt{rank} & rank \\
+\texttt{det} & determinant \\
+\texttt{ldet} & log-determinant \\
+\texttt{tr} & trace \\
+\texttt{onenorm} & 1-norm \\
+\texttt{infnorm} & infinity-norm \\
+\texttt{rcond} & reciprocal condition number
 \end{tabular}
 \end{center}
 
 The single matrix argument to these functions may be given as the name
 of an existing matrix or as an expression that evaluates to a single
 matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
-\texttt{tr} require a square matrix as input.  The \texttt{rank()}
+\texttt{tr} require a square matrix as input.  The \texttt{rank}
 function is computed via the QR decomposition.
 
 The functions \texttt{onenorm} and \texttt{infnorm} return,
@@ -456,24 +458,24 @@ matrix are:
 
 \begin{center}
 \begin{tabular}{llcll}
-\texttt{sumc()}    & sum by column & &
-\texttt{sumr()}    & sum by row \\
-\texttt{meanc()}   & mean by column & &
-\texttt{meanr()}   & mean by row \\
-\texttt{mcov()}    & covariance matrix & &
-\texttt{mcorr()}   & correlation matrix \\
-\texttt{mexp()}    & matrix exponential & &
-\texttt{inv()}     & inverse \\
-\texttt{cholesky()} & Cholesky decomposition & &
-\texttt{diag()}    & extract principal diagonal \\
-\texttt{transp()}  & transpose & &
-\texttt{cdemean()} & subtract column means \\ 
-\texttt{vec()}     & elements as column vector & &
-\texttt{vech()}    & vectorize lower triangle \\
-\texttt{unvech()}  & undo \texttt{vech} & &
-\texttt{mlag()}    & matrix lag or lead \\
-\texttt{nullspace()} & right nullspace & &
-\texttt{princomp()} & principal components \\
+\texttt{sumc}    & sum by column & &
+\texttt{sumr}    & sum by row \\
+\texttt{meanc}   & mean by column & &
+\texttt{meanr}   & mean by row \\
+\texttt{mcov}    & covariance matrix & &
+\texttt{mcorr}   & correlation matrix \\
+\texttt{mexp}    & matrix exponential & &
+\texttt{inv}     & inverse \\
+\texttt{cholesky} & Cholesky decomposition & &
+\texttt{diag}    & extract principal diagonal \\
+\texttt{transp}  & transpose & &
+\texttt{cdemean} & subtract column means \\ 
+\texttt{vec}     & elements as column vector & &
+\texttt{vech}    & vectorize lower triangle \\
+\texttt{unvech}  & undo \texttt{vech} & &
+\texttt{mlag}    & matrix lag or lead \\
+\texttt{nullspace} & right nullspace & &
+\texttt{princomp} & principal components \\
 \texttt{maxc}      & column maxima (values) & &
 \texttt{maxr}      & row maxima (values) \\
 \texttt{imaxc}     & column maxima (indices) & &
@@ -481,7 +483,9 @@ matrix are:
 \texttt{minc}      & column minima (values) & &
 \texttt{minr}      & row minima (values) \\
 \texttt{iminc}     & column minima (indices) & &
-\texttt{iminr}     & row minima (indices) 
+\texttt{iminr}     & row minima (indices) \\
+\texttt{fft}       & discrete Fourier transform & &
+\texttt{ffti}      & discrete inverse Fourier transform 
 \end{tabular}
 \end{center}
 
@@ -600,23 +604,23 @@ a matrix are:
 \end{tabular}
 \end{center}
 
-The dimensions $m$ and $n$ --- or in the case of \texttt{seq()}, the
+The dimensions $m$ and $n$ --- or in the case of \texttt{seq}, the
 limits $a$ and $b$ --- may be given numerically, by reference to
 pre-existing scalar variables, or as expressions that evaluate to
 scalars.
 
-The \texttt{muniform()} and \texttt{mnormal()} matrix functions fill the
+The \texttt{muniform} and \texttt{mnormal} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 
-The \texttt{seq()} function generates a sequence of integers from $a$
+The \texttt{seq} function generates a sequence of integers from $a$
 to $b$ inclusive, increasing if $a<b$ or decreasing if $a>b$.
 
 \subsection{Matrix reshaping}
 \label{matrix-mshape}
 
 A matrix can also be created by re-arranging the elements of a
-pre-existing matrix. This is accomplished via the \texttt{mshape()}
+pre-existing matrix. This is accomplished via the \texttt{mshape}
 function. It takes three arguments: the input matrix, $A$, and the
 rows and columns of the target matrix, $r$ and $c$ respectively.
 Elements are read from $A$ and written to the target in column-major
@@ -665,7 +669,7 @@ b
 \subsection{Single-return two-matrix functions}
 \label{matrix-two}
 
-The function \texttt{qform()} constructs a quadratic form in a matrix
+The function \texttt{qform} constructs a quadratic form in a matrix
 $A$ and a conformable symmetric matrix $X$.  The command
 %
 \begin{code}
@@ -685,10 +689,10 @@ one or more matrices are:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{qrdecomp()} & QR decomposition \\
-\texttt{eigensym()} & Eigen-analysis of symmetric matrix \\
-\texttt{eigengen()} & Eigen-analysis of general matrix \\
-\texttt{svd()}      & Singular value decomposition (SVD) 
+\texttt{qrdecomp} & QR decomposition \\
+\texttt{eigensym} & Eigen-analysis of symmetric matrix \\
+\texttt{eigengen} & Eigen-analysis of general matrix \\
+\texttt{svd}      & Singular value decomposition (SVD) 
 \end{tabular}
 \end{center}
 
@@ -698,7 +702,7 @@ The syntax for all but the last of these functions is of the form
 matrix B = func(A, &C)
 \end{code}
 %
-while for \texttt{svd()} it is
+while for \texttt{svd} it is
 %
 \begin{code}
 matrix B = func(A, &C, &D)
@@ -1100,7 +1104,7 @@ se
 ols price const sqft --vcv
 \end{scode}
 \end{script}
-
+%$
 \clearpage
 
 \begin{table}[p]
@@ -1120,52 +1124,54 @@ ols price const sqft --vcv
 \texttt{eigengen}  \\
 \texttt{eigensym}  &
 \texttt{exp}       &
+\texttt{fft}       &
+\texttt{ffti}      &
 \texttt{gamma}     &
-\texttt{I}         &
+\texttt{I}         \\
 \texttt{imaxc}     &
-\texttt{imaxr}     \\
+\texttt{imaxr}     &
 \texttt{iminc}     &
 \texttt{iminr}     &
 \texttt{infnorm}   &
-\texttt{int}       &
+\texttt{int}       \\
 \texttt{inv}       &
-\texttt{ldet}      \\
+\texttt{ldet}      &
 \texttt{lngamma}   &
 \texttt{log}       &
 \texttt{mcorr}     &
-\texttt{mcov}      &
+\texttt{mcov}      \\
 \texttt{maxc}      &   
-\texttt{maxr}      \\
+\texttt{maxr}      &
 \texttt{meanc}     &
 \texttt{meanr}     &
 \texttt{mexp}      &
-\texttt{minc}      &   
+\texttt{minc}      \\  
 \texttt{minr}      &
-\texttt{mlag}      \\
+\texttt{mlag}      &
 \texttt{mnormal}   &
 \texttt{mshape}    &
 \texttt{muniform}  &
-\texttt{nullspace} &
+\texttt{nullspace} \\
 \texttt{onenorm}   &
-\texttt{ones}      \\
+\texttt{ones}      &
 \texttt{princomp}  &
 \texttt{qform}     &
 \texttt{qnorm}     &
-\texttt{qrdecomp}  &
+\texttt{qrdecomp}  \\
 \texttt{rank}      &
-\texttt{rcond}     \\
+\texttt{rcond}     &
 \texttt{rows}      &
 \texttt{seq}       &
 \texttt{sin}       &
-\texttt{sort}      &
+\texttt{sort}      \\
 \texttt{sqrt}      &
-\texttt{sumc}      \\
+\texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{svd}       &
 \texttt{tan}       &
-\texttt{tr}        &
+\texttt{tr}        \\
 \texttt{transp}    &
-\texttt{unvech}    \\
+\texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
 \texttt{vech}      &
