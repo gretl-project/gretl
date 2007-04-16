@@ -43,6 +43,7 @@ have_gnome="no"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
+have_fftw3="no"
 seek_inet_addr="no"
 png_comments="yes"
 highlight="yes"
@@ -390,6 +391,13 @@ fi
 orig_CFLAGS=$CFLAGS
 
 dnl
+dnl fftw3
+dnl
+if test "$PKG_CONFIG" != "no" ; then
+   PKG_CHECK_MODULES(FFTW, fftw3,have_fftw3="yes", have_fftw3="no")
+fi
+
+dnl
 dnl glib 2.0 (desirable even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
@@ -640,6 +648,12 @@ Please install lapack and then reconfigure gretl.
 Lapack is available from http://www.netlib.org/lapack/
 "
 
+elif test "${have_fftw3}" = "no" ; then
+echo "
+Please install fftw3 and then reconfigure gretl.
+fftw3 is available from http://www.fftw.org/
+"
+
 else
 echo "
 Configuration:
@@ -652,6 +666,7 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   MPFR support:                           ${have_mpfr}
   LAPACK support:                         ${have_lapack}
+  FFTW3 support:                          ${have_fftw3}
   Build with GTK version:                 ${have_gtk}
   Script syntax highlighting:             ${use_gtksourceview}
   Use installed gtksourceview:            ${have_gtksourceview}

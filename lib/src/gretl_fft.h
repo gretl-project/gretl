@@ -17,9 +17,11 @@
  *
  */
 
-#ifndef FFT_H
-#define FFT_H
+#ifndef GRETL_FFT_H
+#define GRETL_FFT_H
 
 gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
-#endif /* FFT_H */
+gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
+
+#endif /* GRETL_FFT_H */

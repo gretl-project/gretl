@@ -160,6 +160,7 @@ enum {
     IMINR,
     IMAXR,     /* 130 */
     FFT,
+    FFTI,
     FUNC_MAX,   /*separator: end of single-arg functions */
     COR,
     COV,
@@ -167,8 +168,8 @@ enum {
     NORMAL,   
     BINOMIAL,
     FRACDIF,
-    ZEROS,
-    ONES,      /* 140 */
+    ZEROS,     /* 140 */
+    ONES,
     SEQ,
     MUNIF,
     MNORM,
@@ -177,8 +178,8 @@ enum {
     QR,
     EIGSYM,  
     EIGGEN,
-    FDJAC,
-    BFGSMAX,   /* 150 */
+    FDJAC,     /* 150 */  
+    BFGSMAX,
     LRVAR,
     PRINCOMP,
     QUANTILE,
@@ -187,8 +188,8 @@ enum {
     SVD,
     FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
-    DOT,      /* period */
-    SEMI,   /* 160: semi-colon */
+    DOT,    /* 160: period */
+    SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
@@ -197,8 +198,8 @@ enum {
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
-    IVEC,     /* vector of integers, evaluated */
-    MAT,    /* 170: matrix, evaluated */
+    IVEC,   /* 170: vector of integers, evaluated */
+    MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
@@ -207,8 +208,8 @@ enum {
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
-    LAG,
-    DVAR,   /* 180: $ dataset variable (scalar or series) */
+    LAG,    /* 180 */
+    DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
@@ -217,8 +218,8 @@ enum {
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
-    EMPTY,
-    ABSENT, /* 190 */ 
+    EMPTY,  /* 190 */
+    ABSENT,
     INC,   
     DEC,
     QUERY,

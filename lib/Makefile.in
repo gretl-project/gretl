@@ -16,6 +16,8 @@ GLIB_LIBS = @GLIB_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
+FFTW_CFLAGS = @FFTW_CFLAGS@
+FFTW_LIBS = @FFTW_LIBS@
 
 CURRENT=@LIBGRETL_CURRENT@
 REVISION=@LIBGRETL_REVISION@
@@ -54,7 +56,7 @@ endif
 # hard-coded -L/usr/local/lib is a bodge!!
 
 LIBS = $(LAPACK_LIBS) -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) \
-	$(GLIB_LIBS) $(GMP_LIBS)
+	$(GLIB_LIBS) $(GMP_LIBS) $(FFTW_LIBS)
 
 #### End of system configuration section. ####
 
@@ -205,7 +207,7 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) -DHAVE_CONFIG_H
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
 

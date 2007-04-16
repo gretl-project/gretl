@@ -182,6 +182,7 @@ struct str_table funcs[] = {
     { IMINR,    "iminr" },
     { IMAXR,    "imaxr" }, 
     { FFT,      "fft" },
+    { FFTI,     "ffti" },
     { MCOV,     "mcov" },
     { MCORR,    "mcorr" },
     { CDEMEAN,  "cdemean" },
