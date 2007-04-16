@@ -3978,6 +3978,77 @@ static int panel_obs_freq (FreqDist *fr, int *x, int n)
 
 #endif
 
+/* calculate the within and between standard deviations for a given
+   variable in a panel data set */
+
+int panel_variance_info (const double *x, const DATAINFO *pdinfo,
+			 double xbar, double *psw, double *psb)
+{
+    double sw = 0.0, sb = 0.0;
+    double xibar, d;
+    int effn, effnT;
+    int n, T, nT, Ti;
+    int i, t, s;
+    
+    if (pdinfo->paninfo == NULL) {
+	return E_PDWRONG;
+    }
+
+    nT = pdinfo->t2 - pdinfo->t1 + 1;
+    T = pdinfo->pd;
+    n = nT / T;
+
+    effn = 0;
+    effnT = 0;
+
+    for (i=0; i<n; i++) {
+	Ti = 0;
+	xibar = 0.0;
+	for (t=0; t<T; t++) {
+	    s = pdinfo->t1 + i * T + t;
+	    if (!na(x[s])) {
+		Ti++;
+		xibar += x[s];
+	    }
+	}
+	if (Ti > 1) {
+	    xibar /= Ti;
+	    for (t=0; t<T; t++) {
+		s = pdinfo->t1 + i * T + t;
+		if (!na(x[s])) {
+		    d = x[s] - xibar;
+		    sw += d * d;
+		}
+	    }
+	}
+	if (Ti > 0) {
+	    d = xibar - xbar;
+	    sb += d * d;
+	    effn++;
+	    effnT += Ti;
+	}
+    }
+
+    if (effn > 1) {
+	sb /= (effn - 1);
+	sb = sqrt(sb);
+    } else {
+	sb = NADBL;
+    }
+
+    if (effnT - effn > 0) {
+	sw /= (effnT - effn);
+	sw = sqrt(sw);
+    } else {
+	sw = NADBL;
+    }
+
+    *psw = sw;
+    *psb = sb;
+
+    return 0;
+}   
+
 int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
 		    PRN *prn)
 {

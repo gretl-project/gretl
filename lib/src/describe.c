@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
+#include "gretl_panel.h"
 #include "libset.h"
 #include "compat.h"
 
@@ -3233,6 +3234,8 @@ static void print_summary_single (const Summary *s, int j,
 	N_("Skewness"),
 	N_("Ex. kurtosis")
     };
+    const char *wstr = N_("Within s.d.");
+    const char *bstr = N_("Between s.d.");
     int slen = 0, i = 0;
 
     ntodate(obs1, pdinfo->t1, pdinfo);
@@ -3268,6 +3271,16 @@ static void print_summary_single (const Summary *s, int j,
 	printf15(vals[i], prn);
 	pputc(prn, '\n');
     }
+
+    if (!na(s->sw) && !na(s->sb)) {
+	pputc(prn, '\n');
+	pprintf(prn, "  %-*s", UTF_WIDTH(_(wstr), slen), _(wstr));
+	printf15(s->sw, prn);
+	pputc(prn, '\n');
+	pprintf(prn, "  %-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
+	printf15(s->sb, prn);
+	pputc(prn, '\n');
+    }  
 
     pputs(prn, "\n\n");    
 }
@@ -3423,6 +3436,8 @@ static Summary *summary_new (const int *list)
     s->high = s->low + nv;
     s->cv = s->high + nv;
 
+    s->sb = s->sw = NADBL;
+
     return s;
 }
 
@@ -3502,6 +3517,10 @@ Summary *summary (const int *list, const double **Z,
 
 	s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
     } 
+
+    if (dataset_is_panel(pdinfo) && list[0] == 1) {
+	panel_variance_info(Z[list[1]], pdinfo, s->mean[0], &s->sw, &s->sb);
+    }
 
     return s;
 }

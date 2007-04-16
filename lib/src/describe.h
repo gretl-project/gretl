@@ -38,6 +38,8 @@ struct Summary_ {
     double *low;
     double *high;
     double *cv;
+    double sw;
+    double sb;
 };
 
 struct FreqDist_ {

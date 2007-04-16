@@ -14,6 +14,8 @@ version 1.6.3, in progress
 - Panel data, pooled OLS model: when robust standard errors are
   chosen, use the Arellano-type HAC estimator (well, it's HAC
   when the time-series dimension is small) 
+- Panel data, "summary" command for single variable: show the
+  within and between standard deviations
 - Add "--quiet" option to lmtest command (don't print the
   auxiliary regression)
 - Observation labels: ensure these are properly XML-encoded when

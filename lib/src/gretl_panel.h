@@ -49,6 +49,9 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err);
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err);
 
+int panel_variance_info (const double *x, const DATAINFO *pdinfo,
+			 double xbar, double *psw, double *psb);
+
 int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
 		    PRN *prn);
 
