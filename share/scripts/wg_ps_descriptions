@@ -10,6 +10,7 @@
 "greene12_1","heteroskedasticity","credit-card spending"
 "greene14_1","panel methods, Hausman test","airline costs data"
 "greene14_2","seemingly unrelated regressions","Grunfeld investment data"
+"greene15_3","groupwise heteroskedasticity","Grunfeld investment data"
 "greene18_6","time-series models","Gross National Product"
 "greene19_1","logit and probit","economics test scores"
 "greene19_3","poisson regression","ship damage data"
