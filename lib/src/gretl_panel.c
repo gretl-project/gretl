@@ -206,13 +206,180 @@ static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
 	}
     }
 
+#if 0
+    gretl_matrix_print(X, "panel (X'X)^{-1}");
+#endif
+
     return X;
+}
+
+/* Beck and Katz, as outlined in Greene.  We offer the following only
+   for pooled OLS.  FIXME this can produce negative variances for
+   some unbalanced panels.  Look up Beck and Katz article?
+*/
+
+static int 
+beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+{
+    gretl_matrix *Xi = NULL;
+    gretl_matrix *Xj = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *W = NULL;
+    gretl_matrix *V = NULL;
+    int Ti, T = pan->T;
+    int k = pmod->ncoeff;
+    int s, si, sj;
+    int i, j, p, v, t;
+    int err = 0;
+
+    Xi = gretl_matrix_alloc(pan->Tmax, k);
+    Xj = gretl_matrix_alloc(pan->Tmax, k);
+    W  = gretl_zero_matrix_new(k, k);
+    V  = gretl_matrix_alloc(k, k);
+
+    if (Xi == NULL || Xj == NULL || V == NULL || W == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    XX = panel_model_xpx(pmod, &err);
+    if (err) {
+	goto bailout;
+    }    
+
+    for (i=0; i<pan->nunits; i++) {
+	double sii = 0.0;
+
+	Ti = pan->unit_obs[i];
+
+	if (Ti == 0) {
+	    continue;
+	}
+
+	Xi = gretl_matrix_reuse(Xi, Ti, k);
+
+	s = 0;
+	for (t=0; t<T; t++) {
+	    si = panel_index(i, t);
+	    if (!na(pmod->uhat[si])) {
+		sii += pmod->uhat[si] * pmod->uhat[si];
+		for (p=0; p<k; p++) {
+		    v = pmod->list[p + 2];
+		    gretl_matrix_set(Xi, s, p, Z[v][si]);
+		}
+		s++;
+	    }
+	}
+
+	sii /= Ti;
+	sii = sqrt(sii);
+
+	/* diagonal component of W */
+	gretl_matrix_multiply_by_scalar(Xi, sii);
+	gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
+				  Xi, GRETL_MOD_NONE,
+				  W, GRETL_MOD_CUMULATE);
+
+	for (j=i+1; j<pan->nunits; j++) {
+	    int Tij = 0;
+	    double sij = 0.0;
+
+	    if (pan->unit_obs[j] == 0) {
+		continue;
+	    }
+
+	    /* count matching observations */
+	    for (t=0; t<T; t++) {
+		si = panel_index(i, t);
+		sj = panel_index(j, t);
+		if (!na(pmod->uhat[si]) && !na(pmod->uhat[sj])) {
+		    sij += pmod->uhat[si] * pmod->uhat[sj];
+		    Tij++;
+		}
+	    }
+
+	    if (Tij == 0) {
+		continue;
+	    }
+
+	    sij /= Tij;
+	    Xi = gretl_matrix_reuse(Xi, Tij, k);
+	    Xj = gretl_matrix_reuse(Xj, Tij, k);
+
+	    s = 0;
+	    for (t=0; t<T; t++) {
+		si = panel_index(i, t);
+		sj = panel_index(j, t);
+		if (!na(pmod->uhat[si]) && !na(pmod->uhat[sj])) {
+		    for (p=0; p<k; p++) {
+			v = pmod->list[p + 2];
+			gretl_matrix_set(Xi, s, p, Z[v][si]);
+			gretl_matrix_set(Xj, s, p, Z[v][sj]);
+		    }
+		    s++;
+		}
+	    }
+
+	    /* cumulate s_ij * Xi'Xj into W */
+	    gretl_matrix_multiply_by_scalar(Xi, 2.0 * sij);
+	    gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
+				      Xj, GRETL_MOD_NONE,
+				      W, GRETL_MOD_CUMULATE);
+	}
+    }
+
+    gretl_matrix_print(W, "W");
+
+    /* note W is not symmetric */
+
+#if 1
+    gretl_matrix_multiply(XX, W, V);
+    gretl_matrix_multiply(V, XX, W);
+    gretl_matrix_copy_values(V, W);
+    gretl_matrix_xtr_symmetric(V);
+#else
+    /* form V = (Xi'Xi)^{-1} W (Xi'Xi)^{-1} */
+    gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
+		       V, GRETL_MOD_NONE);
+#endif
+
+    gretl_matrix_print(V, "V");
+
+    p = 0;
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    pmod->vcv[p++] = V->val[mdx(V, i, j)];
+	}
+	pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
+    }
+
+    gretl_model_set_int(pmod, "panel_bk", 1);
+
+ bailout:
+
+    gretl_matrix_free(Xi);
+    gretl_matrix_free(Xj);
+    gretl_matrix_free(XX);
+    gretl_matrix_free(W);
+    gretl_matrix_free(V);
+
+    if (err && pmod->vcv != NULL) {
+	free(pmod->vcv);
+	pmod->vcv = NULL;
+    }
+
+    return err;
 }
 
 /* HAC covariance matrix for the pooled or fixed-effects model, given
    "fixed T and large N".  In the case of "large T" a different form
    is needed for robustness in respect of autocorrelation.  See
    Arellano, "Panel Data Econometrics" (Oxford, 2003), pages 18-19.
+
+   In the case of fixed effects there should be no missing values,
+   since we created a special "within" dataset purged of same.
+   But with the pooled model we need to index into the full dataset,
+   and work around any missing values.
 */
 
 static int 
@@ -247,7 +414,6 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     }
 
     minobs = (pan->opt & OPT_P)? 1 : FE_MINOBS;
-
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
@@ -260,20 +426,35 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	e = gretl_matrix_reuse(e, Ti, 1);
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
 
-	for (t=0; t<Ti; t++) {
-	    if (pan->opt & OPT_P) {
+	if (pan->opt & OPT_P) {
+	    /* pooled model (using full dataset) */
+	    int p = 0;
+
+	    for (t=0; t<pan->T; t++) {
 		s = panel_index(i, t);
+		if (na(pmod->uhat[s])) {
+		    continue;
+		}
+		gretl_vector_set(e, p, pmod->uhat[s]);
+		for (j=0; j<k; j++) {
+		    v = pmod->list[j + 2];
+		    gretl_matrix_set(Xi, p, j, Z[v][s]);
+		}
+		p++;
 	    }
-	    if (na(pmod->uhat[s])) {
-		gretl_vector_set(e, t, 0.0);
-	    } else {
-		gretl_vector_set(e, t, pmod->uhat[s]);
-	    }
-	    for (j=0; j<k; j++) {
-		v = pmod->list[j + 2];
-		gretl_matrix_set(Xi, t, j, Z[v][s]);
-	    }
-	    if (!(pan->opt & OPT_P)) {
+	} else {
+	    /* fixed effects (using within dataset) */
+	    for (t=0; t<Ti; t++) {
+		if (na(pmod->uhat[s])) {
+		    /* should be impossible! */
+		    gretl_vector_set(e, t, 0.0);
+		} else {
+		    gretl_vector_set(e, t, pmod->uhat[s]);
+		}
+		for (j=0; j<k; j++) {
+		    v = pmod->list[j + 2];
+		    gretl_matrix_set(Xi, t, j, Z[v][s]);
+		}
 		s++;
 	    }
 	}
@@ -484,7 +665,8 @@ static void within_depvarstats (panelmod_t *pan, double *y, int n)
 
 /* Construct a version of the dataset from which the group means are
    subtracted, for the "within" regression.  Nota bene: this auxiliary
-   dataset is not necessarily of full length.
+   dataset is not necessarily of full length: missing observations
+   are skipped.
 */
 
 static DATAINFO *
@@ -1246,13 +1428,20 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
     return err;
 }
 
-/* Fix uhat and yhat in two cases: (a) when using a de-meaned dataset,
-   we need to ensure that the uhat, yhat values get written to the
-   right observation slots in relation to the full dataset (and that
-   the yhat values get corrected, outting the means back in); (b) when
-   estimating the random effects model we need to compute residuals
-   based on the untransformed data (and again, place them correctly in
-   relation to the full dataset).
+/* Fix uhat and yhat in two cases: 
+
+   (a) when we estimated fixed effects using a de-meaned dataset we
+   need to ensure that the uhat and yhat values get written to the
+   right observation slots in relation to the full dataset, and also
+   that the yhat values get corrected, putting the means back in.
+
+   (b) when estimating the random effects model we need to compute
+   residuals based on the untransformed data (and again, place them
+   correctly in relation to the full dataset).
+
+   The placement issue arises because the special datasets used in
+   these cases are not necessarily of full length, since they are
+   purged of missing observations.
 */
 
 static void 
@@ -1333,7 +1522,29 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     pan->pooled->yhat = NULL;
 }
 
-/* Estimate the fixed-effects model by means of a parallel dataset
+#if PDEBUG > 1
+
+static void verbose_femod_print (MODEL *femod, const double *wZ,
+				 DATAINFO *winfo, PRN *prn)
+{
+    int i, j;
+
+    printmodel(femod, winfo, OPT_O, prn);
+
+    fprintf(stderr, "femod: data series length = %d\n", winfo->n);
+    for (i=0; i<winfo->n; i++) {
+	fprintf(stderr, "femod.uhat[%d] = %g, ", i, femod->uhat[i]);
+	fprintf(stderr, "data: ");
+	for (j=0; j<winfo->v; j++) {
+	    fprintf(stderr, "%g ", wZ[j][i]);
+	}
+	fputc('\n', stderr);
+    }    
+}
+
+#endif
+
+/* Estimate the fixed-effects model using a parallel dataset
    with the group means subtracted from all variables.
 */
 
@@ -1384,14 +1595,14 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	   subtract degrees of freedom */
 	panel_df_correction(&femod, pan->N_fe);
 #if PDEBUG > 1
-	printmodel(&femod, winfo, OPT_O, prn);
+	verbose_femod_print(&femod, wZ, winfo, prn);
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
-	    fix_panel_hatvars(&femod, winfo, pan, Z);
 	    if (pan->opt & OPT_R) {
 		panel_robust_vcv(&femod, pan, (const double **) wZ);
 	    } 
+	    fix_panel_hatvars(&femod, winfo, pan, Z);
 	}
     }
 
@@ -1948,7 +2159,7 @@ static int panel_obs_accounts (panelmod_t *pan)
 	    bigt = panel_index(i, t);
 #if PDEBUG > 1
 	    fprintf(stderr, "unit %d, t=%d, pmod->uhat[%d]: %s\n", i, t,
-		    panel_index(i, t), panel_missing(pan, bigt))? 
+		    panel_index(i, t), (panel_missing(pan, bigt))? 
 		    "NA" : "OK");
 #endif
 	    if (!panel_missing(pan, bigt)) {
@@ -2265,6 +2476,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
+	/* beck_katz_vcv(pmod, pan, Z); */
 	panel_robust_vcv(pmod, pan, Z);
     }
 }
@@ -4022,6 +4234,7 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
 	    }
 	}
 	if (Ti > 0) {
+	    /* is this right for singleton observations? */
 	    d = xibar - xbar;
 	    sb += d * d;
 	    effn++;

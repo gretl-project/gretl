@@ -1100,6 +1100,21 @@ static void panel_robust_vcv_line (const MODEL *pmod, PRN *prn)
     pputc(prn, '\n');
 }
 
+static void beck_katz_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"", I_("Beck-Katz standard errors"));
+    } else if (plain_format(prn)) {
+	pputs(prn, _("Beck-Katz standard errors"));
+    } else if (tex_format(prn)) {
+	pputs(prn, I_("Beck--Katz standard errors"));
+    } else {
+	pputs(prn, I_("Beck-Katz standard errors"));
+    } 
+
+    pputc(prn, '\n');
+}
+
 static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 {
     const char *kstrs[] = {
@@ -1254,6 +1269,8 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	ml_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "panel_hac")) {
 	panel_robust_vcv_line(pmod, prn);
+    } else if (gretl_model_get_int(pmod, "panel_bk")) {
+	beck_katz_vcv_line(pmod, prn);
     } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
 	arbond_asy_vcv_line(pmod, prn);
     }
