@@ -215,7 +215,16 @@ static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
 
 /* Beck and Katz, as outlined in Greene.  We offer the following only
    for pooled OLS.  FIXME this can produce negative variances for
-   some unbalanced panels.  Look up Beck and Katz article?
+   some unbalanced panels.
+
+   Greene writes:
+
+   Var(b) = XX^{-1} (\sum_{i=1}^n \sum_{j=1}^n \sigma_{ij}
+        X'_{i}X_{j}) XX^{-1}
+
+   where XX = (\sum_{i=1}^n X'_i X_i)
+
+   Below, I'm calling the central double-sum "W".
 */
 
 static int 
@@ -242,7 +251,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	goto bailout;
     }
 
-    XX = panel_model_xpx(pmod, &err);
+    XX = panel_model_xpx(pmod, &err); /* (X'X)^{-1} */
     if (err) {
 	goto bailout;
     }    
@@ -274,7 +283,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	sii /= Ti;
 	sii = sqrt(sii);
 
-	/* diagonal component of W */
+	/* "diagonal" component of W */
 	gretl_matrix_multiply_by_scalar(Xi, sii);
 	gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
 				  Xi, GRETL_MOD_NONE,
@@ -326,6 +335,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 				      Xj, GRETL_MOD_NONE,
 				      V, GRETL_MOD_NONE);
 	    gretl_matrix_add_to(W, V);
+	    /* and take in s_ij * Xj'Xi */
 	    gretl_matrix_add_transpose_to(W, V);
 	}
     }
@@ -2465,8 +2475,11 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
+#if 0
 	beck_katz_vcv(pmod, pan, Z);
-	/* panel_robust_vcv(pmod, pan, Z); */
+#else
+	panel_robust_vcv(pmod, pan, Z); /* Arellano */
+#endif
     }
 }
 
