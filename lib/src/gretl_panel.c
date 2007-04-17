@@ -217,14 +217,15 @@ static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
    for pooled OLS.  FIXME this can produce negative variances for
    some unbalanced panels.
 
-   Greene writes:
+   Greene writes (in effect):
 
-   Var(b) = XX^{-1} (\sum_{i=1}^n \sum_{j=1}^n \sigma_{ij}
-        X'_{i}X_{j}) XX^{-1}
+   Var(b) = A^{-1} W A^{-1}
 
-   where XX = (\sum_{i=1}^n X'_i X_i)
+   where A = \sum_{i=1}^n X'_i X_i
+         W = \sum_{i=1}^n \sum_{j=1}^n \sigma_{ij} X'_{i} X_{j} 
 
-   Below, I'm calling the central double-sum "W".
+   and \sigma_{ij} is estimated as (1/T) \sum_{t=1}^T e_i e_j,
+   with the e's being OLS residuals.
 */
 
 static int 
