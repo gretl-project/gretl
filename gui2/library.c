@@ -4747,7 +4747,7 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    gretl_command_sprintf("gnuplot %s --time-series", 
+    gretl_command_sprintf("gnuplot %s --time-series --with-lines", 
 			  datainfo->varname[varnum]);
 
     if (check_and_record_command()) {
@@ -4878,27 +4878,23 @@ int do_graph_from_selector (selector *sr)
 {
     gretlopt opt = OPT_G;
     const char *buf = selector_list(sr);
-    gint imp = (selector_code(sr) == GR_IMP);
+    int code = selector_code(sr);
     int err;
 
     if (buf == NULL) return 1;
 
-    gretl_command_sprintf("gnuplot %s%s", buf, 
-			 (imp)? " --with-impulses" : "");
+    gretl_command_sprintf("gnuplot %s", buf);
 
-    if (selector_code(sr) == GR_PLOT) { 
-        gretl_command_strcat(" --time-series");
-	opt |= OPT_T;
+    if (code == GR_IMP) {
+	gretl_command_strcat(" --with-impulses");
+	opt |= OPT_M;
+    } else if (code == GR_PLOT) { 
+	gretl_command_strcat(" --time-series --with-lines");
+	opt |= (OPT_T | OPT_O);
     }
 
     if (check_and_record_command()) {
 	return 1;
-    }
-
-    if (imp) {
-	opt |= OPT_M; /* with impulses */
-    } else if (selector_code(sr) == GR_PLOT) {
-	opt |= OPT_O; /* lines */
     }
 
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
