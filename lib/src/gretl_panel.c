@@ -320,30 +320,19 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 		}
 	    }
 
-	    /* cumulate s_ij * Xi'Xj into W */
-	    gretl_matrix_multiply_by_scalar(Xi, 2.0 * sij);
+	    /* cumulate s_ij * Xi'Xj into W (using V as storage) */
+	    gretl_matrix_multiply_by_scalar(Xi, sij);
 	    gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
 				      Xj, GRETL_MOD_NONE,
-				      W, GRETL_MOD_CUMULATE);
+				      V, GRETL_MOD_NONE);
+	    gretl_matrix_add_to(W, V);
+	    gretl_matrix_add_transpose_to(W, V);
 	}
     }
 
-    gretl_matrix_print(W, "W");
-
-    /* note W is not symmetric */
-
-#if 1
-    gretl_matrix_multiply(XX, W, V);
-    gretl_matrix_multiply(V, XX, W);
-    gretl_matrix_copy_values(V, W);
-    gretl_matrix_xtr_symmetric(V);
-#else
     /* form V = (Xi'Xi)^{-1} W (Xi'Xi)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
-#endif
-
-    gretl_matrix_print(V, "V");
 
     p = 0;
     for (i=0; i<k; i++) {
@@ -2476,8 +2465,8 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
-	/* beck_katz_vcv(pmod, pan, Z); */
-	panel_robust_vcv(pmod, pan, Z);
+	beck_katz_vcv(pmod, pan, Z);
+	/* panel_robust_vcv(pmod, pan, Z); */
     }
 }
 

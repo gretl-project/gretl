@@ -1151,6 +1151,41 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_add_transpose_to:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * Adds the elements of @src, transposed, to the corresponding 
+ * elements of @targ.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * two matrices are not conformable for the operation.
+ */
+
+int gretl_matrix_add_transpose_to (gretl_matrix *targ, 
+				   const gretl_matrix *src)
+{
+    int i, j, k = 0;
+
+    if (targ->rows != src->cols || targ->cols != src->rows) {
+	fprintf(stderr, "gretl_matrix_add_transpose_to: "
+		"adding %d x %d to %d x %d\n",
+		src->cols, src->rows, targ->rows, targ->cols);
+	return E_NONCONF;
+    }
+
+    /* note: the k index follows column-major order */
+
+    for (i=0; i<src->rows; i++) {
+	for (j=0; j<src->cols; j++) {
+	    targ->val[k++] += src->val[mdx(src, i, j)];
+	}
+    } 
+
+    return 0;
+}
+
+/**
  * gretl_matrix_subtract_from:
  * @targ: target matrix.
  * @src: source matrix.

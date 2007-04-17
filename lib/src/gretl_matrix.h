@@ -203,6 +203,9 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 
+int gretl_matrix_add_transpose_to (gretl_matrix *targ, 
+				   const gretl_matrix *src);
+
 int 
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
 

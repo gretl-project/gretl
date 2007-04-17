@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "gretl_fft.h"
 #include "matrix_extra.h"
 #include "gretl_panel.h"
 #include "libset.h"
@@ -2653,69 +2654,39 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
     return err;
 }
 
-/* Fractional integration via Local Whittle Estimator */
-
-gretl_matrix *gretl_matrix_periodogram (const gretl_matrix *x, int m)
+static gretl_matrix *
+gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
 {
-    gretl_matrix *p;
-    double *autocov;
-    double xbar, varx;
-    double xx, yy;
-    int k, T, t; 
-
-    T = gretl_vector_get_length(x);
+    gretl_matrix *p = NULL;
+    gretl_matrix *f = NULL;
+    int T = gretl_vector_get_length(x);
+    double re, im, s, scale = M_2PI * T;
+    int i, err;
 
     p = gretl_column_vector_alloc(m);
-    if (p == NULL) {
-	return NULL;
-    }
+    f = gretl_matrix_alloc(T, 2);
 
-    autocov = malloc(T * sizeof *autocov);
-    if (autocov == NULL) {
+    if (p == NULL || f == NULL) {
 	gretl_matrix_free(p);
+	gretl_matrix_free(f);
+	return NULL;
+    }
+    
+    f = gretl_matrix_fft(x, &err);
+    if (err) {
+	gretl_matrix_free(p);
+	gretl_matrix_free(f);
 	return NULL;
     }
 
-    xbar = gretl_vector_mean(x);
-    varx = gretl_vector_variance(x);
-
-#if LWE_DEBUG
-    fprintf(stderr, "gretl_matrix_periodogram: T = %d, m = %d\n"
-	    "  xbar = %g, varx = %g\n", T, m, xbar, varx);
-#endif
-
-    /* find autocovariances */
-    for (k=1; k<=T-1; k++) {
-	double xt, xtk;
-
-	autocov[k] = 0.0;
-	for (t=k; t<T; t++) {
-	    xt = gretl_vector_get(x, t);
-	    xtk = gretl_vector_get(x, t - k);
-	    autocov[k] += (xt - xbar) * (xtk - xbar);
-	}
-	autocov[k] /= T;
-
-#if LWE_DEBUG > 1
-	fprintf(stderr, "autocov[%d] = %g\n", k, autocov[k]);
-#endif
+    for (i=0; i<m; i++) {
+	re = gretl_matrix_get(f, i+1, 0);
+	im = gretl_matrix_get(f, i+1, 1);
+	s = (re*re + im*im) / scale;
+	gretl_vector_set(p, i, s);
     }
 
-    for (t=1; t<=m; t++) {
-	yy = M_2PI * t / (double) T;
-	xx = varx; 
-	for (k=1; k<=T-1; k++) {
-	    xx += 2.0 * autocov[k] * cos(yy * k);
-	}
-	xx /= M_2PI;
-	xx *= T;
-	gretl_vector_set(p, t-1, xx);
-#if LWE_DEBUG
-	fprintf(stderr, "periodogram[%d] = %g\n", t, xx);
-#endif
-    }
-
-    free(autocov);
+    gretl_vector_free(f);
 
     return p;
 }
@@ -2790,7 +2761,7 @@ double LWE (const gretl_matrix *X, int m)
     int iter = 0;
     const int MAX_ITER = 100;
       
-    I = gretl_matrix_periodogram(X, m);
+    I = gretl_matrix_fft_pergm(X, m);
     if (I == NULL) {
 	return NADBL;
     }

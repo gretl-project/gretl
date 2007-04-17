@@ -374,6 +374,7 @@ int ok_in_loop (int c)
 	c == MULTIPLY || 
 	c == OUTFILE ||
 	c == PCA ||
+	c == PERGM ||
 	c == REMEMBER ||
         c == RENAME || 
 	c == RHODIFF ||
@@ -2485,7 +2486,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char errline[MAXLINE];
-    int mod_id = 0;
+    int order, mod_id = 0;
     int err = 0;
 
     /* for the benefit of the caller: register the fact that execution
@@ -2685,6 +2686,15 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    err = 1;
 		} else {
 		    goto cmd_exec;
+		}
+		break;
+
+	    case PERGM:
+		order = atoi(cmd->param);
+		err = periodogram(cmd->list[1], order, pZ, pdinfo, 
+				  cmd->opt | OPT_N, prn);
+		if (err) {
+		    pputs(prn, _("Failed to generate periodogram\n"));
 		}
 		break;
 
