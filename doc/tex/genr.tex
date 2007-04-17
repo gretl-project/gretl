@@ -672,13 +672,13 @@ $n$-dimensional vector whose $k$-th element is $x_k = a_k + i b_k$,
 then the output of the discrete Fourier transform is a vector
 $\mathbf{f} = \mathcal{F}(\mathbf{x})$ whose $k$-th element is
 \[
-  f_k = \sum_{j=1}^n e^{-i \omega_{j,k} } x_j 
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega_{j,k} } x_j 
 \]
-where $\omega_{j,k} = 2 \pi i \frac{(j-1) k}{n}$. Since the transformation
+where $\omega_{j,k} = 2 \pi i \frac{j k}{n}$. Since the transformation
 is invertible, the vector $\mathbf{x}$ can be recovered from
 $\mathbf{f}$ via the so-called inverse transform
 \[
-  x_k = \frac{1}{n} \sum_{j=1}^n e^{i \omega_{j,k} } f_j .
+  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
 \]
 
 The Fourier transform is used in a number of diverse situation,
@@ -696,13 +696,20 @@ then
 that is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
 \mathcal{F}(\mathbf{y})_k$.
 
+For computing the Fourier transform, \app{gretl} uses the external
+library \texttt{fftw3}: see Frigo and Johnson (2003). This guarantees
+extreme speed and accuracy. In fact, the CPU time needed to perform
+the transform is $O(n \log n)$ for any $n$. This is why the array of
+numerical techniques employed in \texttt{fftw3} are commonly known as
+the \emph{Fast} Fourier Transform.
+
 \app{Gretl} provides two matrix functions\footnote{See chapter
   \ref{chap:matrices}.} for performing the Fourier transform and its
 inverse: \texttt{fft} and \texttt{ffti}. In fact, \app{gretl}'s
 implementation of the Fourier transform is somewhat more specialized:
 the input to the \texttt{fft} function is understood to be real.
-Conversely, \texttt{ffti} takes a complex argument and yields a real
-output. For example:
+Conversely, \texttt{ffti} takes a complex argument and delivers a real
+result. For example:
 \begin{code}
 x1 = { 1 ; 2 ; 3 }
 # perform the transform
@@ -725,8 +732,8 @@ holds the complex part. In general, if the input to \texttt{fft} has
 $n$ columns, the output has $2n$ columns, where the real parts are
 stored in the odd columns and the complex parts in the even
 ones. Should it be necessary to compute the Fourier transform on
-several vector with the same number of elements, it is more
-numerically efficient to group the into a matrix rather than invoking
+several vectors with the same number of elements, it is numerically more
+efficient to group them into a matrix rather than invoking
 \texttt{fft} for each vector separately.
 
 As an example, consider the multiplication of two polynomals:
@@ -735,10 +742,9 @@ As an example, consider the multiplication of two polynomals:
   b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
   c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3 ;
 \end{eqnarray*}
-the coefficient of the polynomial $c(x)$ are the convolution of the
-coefficents of the two polynomials $a(x)$ and $b(x)$; the following
-\app{gretl} code illustrates how to compute the coefficients of
-$c(x)$:
+the coefficients of the polynomial $c(x)$ are the convolution of the
+coefficents of $a(x)$ and $b(x)$; the following \app{gretl} code fragment
+illustrates how to compute the coefficients of $c(x)$:
 \begin{code}
 # define the two polynomials
 a = { 1 ; 0.5; 0 ; 0 }
@@ -752,28 +758,46 @@ fc = (fa[,1].*fb[,1] - fa[,2].*fb[,2]) ~ (fa[,1].*fb[,2] + fa[,2].*fb[,1])
 c = ffti(fc)
 \end{code}
 
-\ldots FFT and time series \ldots
+Maximum efficiency would have been reached by grouping \texttt{a} and
+\texttt{b} into a matrix: the computational advantage is so little in
+this case that the exercise is a bit silly, but the following
+alternative may have considerable advantages for a large number of
+rows/columns:
+\begin{code}
+# define the two polynomials
+a = { 1 ; 0.5; 0 ; 0 }
+b = { 1 ; 0.3 ; -0.8 ; 0 }
+# perform the transform
+f = fft(a ~ b)
+# complex-multiply the two tranforms 
+fc = (f[,1].*f[,3] - f[,2].*f[,4]) ~ (f[,1].*f[,4] + f[,2].*f[,3]) 
+# compute the coefficients of c via the inverse transform
+c = ffti(fc)
+\end{code}
+
+Traditionally, the Fourier tranform in econometrics has been mostly
+used in time-series analysis, the periodogram being the most famous
+example. Example script \ref{scr:pergm-fft} shows how to compute the
+periodogram of a time series via the \texttt{fft} function.
 
 \begin{script}[htbp]
   \caption{Periodogram via the Fourier transform}
   \label{scr:pergm-fft}
 \begin{scode}
-nulldata 100
-
-set seed 78346
-
-e = normal()
+nulldata 50
+# generate an AR(1) process
+series e = normal()
 series x = 0
 x = 0.9*x(-1) + e
-
-scale = (2*pi*$nobs)
+# compute the periodogram
+scale = 2*pi*$nobs
 X = { x }
 F = fft(X)
 S = sumr(F.^2)
-S = S[2:($nobs/2)]/scale
-omega = seq(1,($nobs/2)-1)' .* (2*pi/$nobs) 
-
+S = S[2:($nobs/2)+1]/scale
+omega = seq(1,($nobs/2))' .* (2*pi/$nobs)
 omega = omega ~ S
+# compare
 pergm x  
 omega
 \end{scode}

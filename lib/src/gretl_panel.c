@@ -171,7 +171,7 @@ static int var_is_varying (const panelmod_t *pan, int v)
 
 /* retrieve X'X^{-1} from the pooled or fixed effects model */
 
-static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
+static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 {
     gretl_matrix *X;
     int k = pmod->ncoeff;
@@ -221,7 +221,7 @@ static gretl_matrix *panel_model_xpx (MODEL *pmod, int *err)
 
    Var(b) = A^{-1} W A^{-1}
 
-   where A = \sum_{i=1}^n X'_i X_i
+   where A = \sum_{i=1}^n X'_i X_i (called "XX" below)
          W = \sum_{i=1}^n \sum_{j=1}^n \sigma_{ij} X'_{i} X_{j} 
 
    and \sigma_{ij} is estimated as (1/T) \sum_{t=1}^T e_i e_j,
@@ -252,7 +252,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	goto bailout;
     }
 
-    XX = panel_model_xpx(pmod, &err); /* (X'X)^{-1} */
+    XX = panel_model_xpxinv(pmod, &err);
     if (err) {
 	goto bailout;
     }    
@@ -345,6 +345,12 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
+#if 1
+    gretl_matrix_print(XX, "(X'X)^{-1}");
+    gretl_matrix_print(W, "W");
+    gretl_matrix_print(V, "V");
+#endif
+
     p = 0;
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
@@ -408,7 +414,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	goto bailout;
     }
 
-    XX = panel_model_xpx(pmod, &err);
+    XX = panel_model_xpxinv(pmod, &err);
     if (err) {
 	goto bailout;
     }
@@ -2476,11 +2482,12 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
-#if 0
-	beck_katz_vcv(pmod, pan, Z);
-#else
-	panel_robust_vcv(pmod, pan, Z); /* Arellano */
-#endif
+	/* temporary */
+	if (getenv("BECK_KATZ") != NULL) {
+	    beck_katz_vcv(pmod, pan, Z);
+	} else {
+	    panel_robust_vcv(pmod, pan, Z); /* Arellano */
+	}
     }
 }
 

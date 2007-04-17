@@ -66,7 +66,7 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 	    tmp[i] = gretl_matrix_get(y, i, j);
 	}
 		
-	if (j==0) {
+	if (j == 0) {
 	    /* make the plan just once */
 	    p = fftw_plan_dft_r2c_1d(r, tmp, out, FFTW_ESTIMATE);
 	}
@@ -87,6 +87,7 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 	ci +=2;
     }
 
+    *err = 0;
     fftw_destroy_plan(p);
     fftw_free(out);
     free(tmp);
@@ -155,6 +156,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 	ci += 2;
     }
 
+    *err = 0;
     fftw_destroy_plan(p);
     fftw_free(in);
     free(tmp);

@@ -581,6 +581,13 @@ $v^{(j)}$ is the $j$th eigenvector of the correlation matrix of the
 $X_i$s, with the eigenvectors ordered by decreasing value of the
 corresponding eigenvalues.
 
+The functions \texttt{fft} and \texttt{ffti} return the real discrete
+Fourier transform and its inverse, respectively. if \texttt{X} is an $n
+\times k$ matrix, then \texttt{fft(X)} is an $n \times 2k$ matrix
+containing the real part of the transform in the odd columns and the
+complex part in the even ones. Conversely, \texttt{ffti} takes a $n
+\times 2k$ argument and yields an $n \times k$ result. See section
+\ref{sec:genr-fft} for some examples.
 
 \subsection{Matrix filling functions}
 \label{matrix-fill}

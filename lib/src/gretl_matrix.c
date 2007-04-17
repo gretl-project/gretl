@@ -723,37 +723,21 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
 double gretl_vector_mean (const gretl_vector *v)
 {
     double ret = 0.0;
-    int i, n, den;
+    int i, n, den = 0;
 
-    if (v == NULL || v->val == NULL) {
+    n = gretl_vector_get_length(v);
+    if (n == 0) {
 	return NADBL;
-    }
-
-    if (v->rows > 1 && v->cols > 1) {
-	return NADBL;
-    }
-    
-    if (v->rows > 1) {
-	den = n = v->rows;
-    } else {
-	den = n = v->cols;
     }
 
     for (i=0; i<n; i++) {
 	if (!na(v->val[i])) {
 	    ret += v->val[i];
-	} else {
-	    den--;
-	}
+	    den++;
+	} 
     }
 
-    if (den > 0) {
-	ret /= den;
-    } else {
-	ret = NADBL;
-    }
-
-    return ret;
+    return (den > 0)? (ret / den) : NADBL;
 }
 
 /**
@@ -767,33 +751,36 @@ double gretl_vector_mean (const gretl_vector *v)
 double gretl_vector_variance (const gretl_vector *v)
 {
     double s2 = 0.0;
-    double x, xbar;
-    int i, n, den;
+    double x, xbar = 0.0;
+    int i, n, den = 0;
 
-    if (v == NULL || v->val == NULL) {
+    n = gretl_vector_get_length(v);
+    if (n == 0) {
+	return NADBL;
+    }    
+
+    for (i=0; i<n; i++) {
+	if (!na(v->val[i])) {
+	    xbar += v->val[i];
+	    den++;
+	} 
+    }
+
+    if (den == 0) {
 	return NADBL;
     }
 
-    den = n = gretl_vector_get_length(v);
-    xbar = gretl_vector_mean(v);
+    xbar /= den;
 
     for (i=0; i<n; i++) {
 	x = v->val[i];
 	if (!na(x)) {
 	    x -= xbar;
 	    s2 += x * x;
-	} else {
-	    den--;
-	}
+	} 
     }
 
-    if (den > 0) {
-	s2 /= den;
-    } else {
-	s2 = NADBL;
-    }
-
-    return s2;
+    return s2 / den;
 }
 
 static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
