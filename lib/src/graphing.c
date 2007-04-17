@@ -1685,7 +1685,6 @@ int gnuplot (const int *plotlist, const char *literal,
     gretl_error_clear();
 
 #if GP_DEBUG
-    print_gnuplot_flags(flags);
     printlist(plotlist, "gnuplot: plotlist");
 #endif
 

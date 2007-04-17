@@ -105,7 +105,7 @@ static int filter_comments (char *s, CMD *cmd)
 {
     char tmp[MAXLINE];
     char *p = s;
-    int j = 0, ret = 0;
+    int j = 0, filt = 0;
 
     if (strlen(s) >= MAXLINE) {
 	return 0;
@@ -125,26 +125,27 @@ static int filter_comments (char *s, CMD *cmd)
 	if (!(cmd->flags & CMD_IGNORE) && *p != '\r') {
 	    tmp[j++] = *p;
 	}
-	p++;
+	if (*p) {
+	    p++;
+	}
     }
 
     tmp[j] = '\0';
     strcpy(s, tmp);
 
     if (*s == '\0') {
-	ret = 1;
+	filt = 1;
     } else if (!(cmd->flags & CMD_IGNORE)) {
 	/* '#' or C++ style comments */
-	ret = strip_inline_comments(s);
+	filt = strip_inline_comments(s);
     }
 
-    if (ret) {
+    if (filt) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_COMMENT;
-	ret = 1;
     }
 
-    return ret;
+    return filt;
 }
 
 static int get_rhodiff_or_lags_param (char *s, CMD *cmd)

@@ -1558,6 +1558,7 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 			    const int *list, DATAINFO *pdinfo,
 			    gretlopt opt)
 {
+    char *p;
     int i;
 
     if (loop->sZ != NULL) {
@@ -1576,9 +1577,12 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     strncat(loop->storefile, fname, MAXLEN - 1);
     loop->storeopt = opt;
 
-    for (i=1; i<loop->sdinfo->v; i++) {
-	char *p;
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
+	    loop->sdinfo->v, loop->sdinfo->n);
+#endif
 
+    for (i=1; i<loop->sdinfo->v; i++) {
 	strcpy(loop->sdinfo->varname[i], pdinfo->varname[list[i]]);
 	strcpy(VARLABEL(loop->sdinfo, i), VARLABEL(pdinfo, list[i]));
 	if ((p = strstr(VARLABEL(loop->sdinfo, i), "(scalar)"))) {
@@ -2195,8 +2199,7 @@ static int save_loop_store (LOOPSET *loop, PRN *prn)
 	strcpy(fname, loop->storefile);
     }
 
-    if (loop->storeopt == OPT_NONE &&
-	strchr(fname, '.') == NULL) {
+    if (loop->storeopt == OPT_NONE && !has_suffix(fname, ".gdt")) {
 	strcat(fname, ".gdt");
     }
 
@@ -2286,13 +2289,17 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 static void update_loop_store (const int *list, LOOPSET *loop,
 			       const double **Z, DATAINFO *pdinfo)
 {
-    int i;
+    int i, vi, t = loop->iter;
 
     for (i=1; i<=list[0]; i++) {
-	if (var_is_series(pdinfo, list[i])) { 
-	    loop->sZ[i][loop->iter] = Z[list[i]][pdinfo->t1 + 1]; /* ?? */
+	vi = list[i];
+#if 0
+	fprintf(stderr, "setting sZ[%d][%d]...\n", i, t);
+#endif
+	if (var_is_series(pdinfo, vi)) { 
+	    loop->sZ[i][t] = Z[vi][pdinfo->t1 + 1]; /* ?? */
 	} else {
-	    loop->sZ[i][loop->iter] = Z[list[i]][0];
+	    loop->sZ[i][t] = Z[vi][0];
 	}
     }
 }
@@ -2486,7 +2493,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     char errline[MAXLINE];
-    int order, mod_id = 0;
+    int mod_id = 0;
     int err = 0;
 
     /* for the benefit of the caller: register the fact that execution
@@ -2686,15 +2693,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    err = 1;
 		} else {
 		    goto cmd_exec;
-		}
-		break;
-
-	    case PERGM:
-		order = atoi(cmd->param);
-		err = periodogram(cmd->list[1], order, pZ, pdinfo, 
-				  cmd->opt | OPT_N, prn);
-		if (err) {
-		    pputs(prn, _("Failed to generate periodogram\n"));
 		}
 		break;
 

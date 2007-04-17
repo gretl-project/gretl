@@ -46,6 +46,8 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
     int cr = 0;
     int ci = 1;
 
+    *err = 0;
+
     tmp = malloc(r * sizeof *tmp);
     ft = gretl_matrix_alloc(r, 2 * c);
     out = fftw_malloc(r * sizeof *out);
@@ -87,7 +89,6 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 	ci +=2;
     }
 
-    *err = 0;
     fftw_destroy_plan(p);
     fftw_free(out);
     free(tmp);
@@ -119,6 +120,8 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     int m = r/2;
     int cr = 0;
     int ci = 1;
+
+    *err = 0;
 
     tmp = malloc(r * sizeof *tmp);
     ft = gretl_matrix_alloc(r, c);
@@ -156,7 +159,6 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 	ci += 2;
     }
 
-    *err = 0;
     fftw_destroy_plan(p);
     fftw_free(in);
     free(tmp);
