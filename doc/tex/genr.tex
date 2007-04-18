@@ -681,26 +681,26 @@ $\mathbf{f}$ via the so-called inverse transform
   x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
 \]
 
-The Fourier transform is used in a number of diverse situation,
-because of its main property: the convolution of two vectors can be
+The Fourier transform is used in many diverse situations
+on account of this key property: the convolution of two vectors can be
 performed efficiently by multiplying the elements of their Fourier
-transforms and inverting the result: if
+transforms and inverting the result.  If
 \[
   z_k = \sum_{j=1}^n x_j y_{k-j} ,
 \]
 then
 \[
   \mathcal{F}(\mathbf{z}) = \mathcal{F}(\mathbf{x}) \odot
-  \mathcal{F}(\mathbf{y}) ,
+  \mathcal{F}(\mathbf{y}) .
 \]
-that is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
+That is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
 \mathcal{F}(\mathbf{y})_k$.
 
 For computing the Fourier transform, \app{gretl} uses the external
 library \texttt{fftw3}: see Frigo and Johnson (2003). This guarantees
 extreme speed and accuracy. In fact, the CPU time needed to perform
 the transform is $O(n \log n)$ for any $n$. This is why the array of
-numerical techniques employed in \texttt{fftw3} are commonly known as
+numerical techniques employed in \texttt{fftw3} is commonly known as
 the \emph{Fast} Fourier Transform.
 
 \app{Gretl} provides two matrix functions\footnote{See chapter
@@ -749,34 +749,34 @@ illustrates how to compute the coefficients of $c(x)$:
 # define the two polynomials
 a = { 1 ; 0.5; 0 ; 0 }
 b = { 1 ; 0.3 ; -0.8 ; 0 }
-# perform the transform
+# perform the transforms
 fa = fft(a)
 fb = fft(b)
-# complex-multiply the two tranforms 
-fc = (fa[,1].*fb[,1] - fa[,2].*fb[,2]) ~ (fa[,1].*fb[,2] + fa[,2].*fb[,1])  
+# complex-multiply the two transforms 
+fc = cmult(fa, fb)
 # compute the coefficients of c via the inverse transform
 c = ffti(fc)
 \end{code}
 
-Maximum efficiency would have been reached by grouping \texttt{a} and
-\texttt{b} into a matrix: the computational advantage is so little in
+Maximum efficiency would have been achieved by grouping \texttt{a} and
+\texttt{b} into a matrix.  The computational advantage is so little in
 this case that the exercise is a bit silly, but the following
-alternative may have considerable advantages for a large number of
+alternative may be preferable for a large number of
 rows/columns:
 \begin{code}
 # define the two polynomials
 a = { 1 ; 0.5; 0 ; 0 }
 b = { 1 ; 0.3 ; -0.8 ; 0 }
-# perform the transform
+# perform the transforms jointly
 f = fft(a ~ b)
-# complex-multiply the two tranforms 
-fc = (f[,1].*f[,3] - f[,2].*f[,4]) ~ (f[,1].*f[,4] + f[,2].*f[,3]) 
+# complex-multiply the two transforms 
+fc = cmult(f[,1:2], f[,3:4])
 # compute the coefficients of c via the inverse transform
 c = ffti(fc)
 \end{code}
 
 Traditionally, the Fourier tranform in econometrics has been mostly
-used in time-series analysis, the periodogram being the most famous
+used in time-series analysis, the periodogram being the best known
 example. Example script \ref{scr:pergm-fft} shows how to compute the
 periodogram of a time series via the \texttt{fft} function.
 
@@ -797,9 +797,9 @@ S = sumr(F.^2)
 S = S[2:($nobs/2)+1]/scale
 omega = seq(1,($nobs/2))' .* (2*pi/$nobs)
 omega = omega ~ S
-# compare
+# compare the built-in command
 pergm x  
-omega
+print omega
 \end{scode}
 \end{script}
 

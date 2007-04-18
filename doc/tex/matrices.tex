@@ -265,12 +265,15 @@ context it is reserved for the Kronecker product.)
 \section{Matrix functions}
 \label{matrix-func}
 
+\newlength{\cwid}
+\setlength{\cwid}{0.1\textwidth}
+
 \begin{table}[htbp]
 \centering
 \textbf{Creation}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{I}         &
 \texttt{mnormal}   &
 \texttt{muniform}  &
@@ -282,7 +285,7 @@ context it is reserved for the Kronecker product.)
 \textbf{Shape/size}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cols}      &
 \texttt{diag}      &
 \texttt{dsort}     &
@@ -299,7 +302,7 @@ context it is reserved for the Kronecker product.)
 \textbf{Element by element}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{abs}       &
 \texttt{atan}      &
 \texttt{cnorm}     &
@@ -319,7 +322,7 @@ context it is reserved for the Kronecker product.)
 \textbf{Matrix algebra}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cholesky}  &
 \texttt{det}       &
 \texttt{eigengen}  &
@@ -337,13 +340,14 @@ context it is reserved for the Kronecker product.)
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{svd}       &
-\texttt{tr}        
+\texttt{tr}        \\
+\texttt{cmult}      
 \end{tabular}      
 
 \textbf{Statistical}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cdemean}   &
 \texttt{imaxc}     &
 \texttt{imaxr}     &
@@ -686,6 +690,33 @@ B = qform(A, X)
 calculates $B = A X A^{\prime}$.  This is computed more efficiently than
 the alternative command \texttt{B = A*X*A'}.  In addition, the result
 is symmetric by construction.
+
+The function \texttt{cmult} computes the complex product of pairs of
+columns in two input matrices, $A$ and $B$, which must be of the same
+dimensions and must have an even number of columns.  Let $A$ be
+$m \times n$.  The first two columns of $A$ are taken to represent $m$
+complex values, 
+%
+\[
+a_{k1} + a_{k2}i, \quad k = 1,2, \dots{}, m
+\]
+%
+and similarly for $B$.  The command
+%
+\begin{code}
+C = cmult(A, B)
+\end{code}
+%
+produces an $m \times n$ matrix $C$ such that
+%
+\begin{eqnarray*}
+c_{k1} &=& a_{k1} b_{k1} - a_{k2} b_{k2} \\
+c_{k2} &=& a_{k2} b_{k1} + a_{k1} b_{k2}
+\end{eqnarray*}
+%
+If $n > 2$, the operation is repeated for the remaining pairs of
+columns in $A$ and $B$, the column subscripts advancing by 2 at each
+step.  
 
 
 \subsection{Multiple-return matrix functions}
@@ -1121,67 +1152,68 @@ ols price const sqft --vcv
 \texttt{atan}      &
 \texttt{cdemean}   &
 \texttt{cholesky}  &
-\texttt{cnorm}     &
-\texttt{cols}      \\
+\texttt{cmult}     &
+\texttt{cnorm}     \\
+\texttt{cols}      &
 \texttt{cos}       &
 \texttt{det}       &
 \texttt{diag}      &
 \texttt{dnorm}     &
-\texttt{dsort}     &
-\texttt{eigengen}  \\
+\texttt{dsort}     \\
+\texttt{eigengen}  &
 \texttt{eigensym}  &
 \texttt{exp}       &
 \texttt{fft}       &
 \texttt{ffti}      &
-\texttt{gamma}     &
-\texttt{I}         \\
+\texttt{gamma}     \\
+\texttt{I}         &
 \texttt{imaxc}     &
 \texttt{imaxr}     &
 \texttt{iminc}     &
 \texttt{iminr}     &
-\texttt{infnorm}   &
-\texttt{int}       \\
+\texttt{infnorm}   \\
+\texttt{int}       &
 \texttt{inv}       &
 \texttt{ldet}      &
 \texttt{lngamma}   &
 \texttt{log}       &
-\texttt{mcorr}     &
-\texttt{mcov}      \\
+\texttt{mcorr}     \\
+\texttt{mcov}      &
 \texttt{maxc}      &   
 \texttt{maxr}      &
 \texttt{meanc}     &
 \texttt{meanr}     &
-\texttt{mexp}      &
-\texttt{minc}      \\  
+\texttt{mexp}      \\
+\texttt{minc}      &  
 \texttt{minr}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
 \texttt{mshape}    &
-\texttt{muniform}  &
-\texttt{nullspace} \\
+\texttt{muniform}  \\
+\texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
 \texttt{princomp}  &
 \texttt{qform}     &
-\texttt{qnorm}     &
-\texttt{qrdecomp}  \\
+\texttt{qnorm}     \\
+\texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{rows}      &
 \texttt{seq}       &
-\texttt{sin}       &
-\texttt{sort}      \\
+\texttt{sin}       \\
+\texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{svd}       &
-\texttt{tan}       &
-\texttt{tr}        \\
+\texttt{tan}       \\
+\texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}     
 \end{tabular}      
 \caption{Alphabetical listing of matrix functions}

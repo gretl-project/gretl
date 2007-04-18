@@ -88,7 +88,7 @@ enum {
     T2,
     CHISQ,
     STUDENT,
-    CUM,      /* 60 */  
+    CUM,      /* 60 */ 
     MISSING,
     OK,
     MISSZERO,
@@ -98,7 +98,7 @@ enum {
     SUM,
     MEAN,
     MIN,
-    MAX,    /* 70 */
+    MAX,     /* 70 */
     SD,
     VCE,      /* variance */
     SST,
@@ -107,8 +107,8 @@ enum {
     QNORM,
     GAMMA,
     LNGAMMA,
-    HPFILT,  
-    BKFILT,   /* 80 */
+    HPFILT,
+    BKFILT,   /* 80 */ 
     RESAMPLE,
     PMEAN,
     PSD,
@@ -117,8 +117,8 @@ enum {
     SUMC,
     MEANR,
     MEANC,
-    MCOV, 
-    MCORR,     /* 90 */   
+    MCOV,
+    MCORR,     /* 90 */
     CDEMEAN,
     CHOL,
     INV,
@@ -127,7 +127,7 @@ enum {
     TVEC,
     VECH,
     UNVECH,
-    ROWS,  
+    ROWS,
     COLS,     /* 100 */ 
     DET,
     LDET,
@@ -137,8 +137,8 @@ enum {
     RCOND,
     RANK,
     VARNUM,
-    OBSNUM,  
-    ISSERIES, /* 110 */  
+    OBSNUM,
+    ISSERIES, /* 110 */   
     ISLIST,  
     ISSTRING,
     ISNULL,
@@ -148,7 +148,7 @@ enum {
     CRIT,
     GENPOIS,
     MAKEMASK,
-    VALUES,    /* 120 */
+    VALUES,    /* 120 */ 
     NULLSPC,
     MEXP,
     MINC,
@@ -161,7 +161,7 @@ enum {
     IMAXR,     /* 130 */
     FFT,
     FFTI,
-    FUNC_MAX,   /*separator: end of single-arg functions */
+    FUNC_MAX,   /* separator: end of single-arg functions */
     COR,
     COV,
     UNIFORM,
@@ -183,12 +183,13 @@ enum {
     LRVAR,
     PRINCOMP,
     QUANTILE,
+    CMULT,    /* complex multiplication */
     F2_MAX,   /* separator: end of two-arg functions */
     MSHAPE,
     SVD,
     FN_MAX,   /* separator: end of n-arg functions */
-    COM,      /* comma */
-    DOT,    /* 160: period */
+    COM,    /* 160: comma */
+    DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
@@ -197,8 +198,8 @@ enum {
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
-    VEC,      /* series, evaluated */
-    IVEC,   /* 170: vector of integers, evaluated */
+    VEC,    /* 170: series, evaluated */
+    IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
@@ -207,8 +208,8 @@ enum {
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
-    MDEF,     /* explicit matrix definition {...} */
-    LAG,    /* 180 */
+    MDEF,   /* 180: explicit matrix definition {...} */
+    LAG,      
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
@@ -217,8 +218,8 @@ enum {
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
-    FARGS,    /* set of n function arguments */
-    EMPTY,  /* 190 */
+    FARGS,  /* 190: set of n function arguments */
+    EMPTY,
     ABSENT,
     INC,   
     DEC,

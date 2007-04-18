@@ -2825,6 +2825,87 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
+/**
+ * gretl_matrix_complex_multiply:
+ * @a: m x n matrix (with n even).
+ * @b: m x n matrix.
+ * @err: location to receive error code.
+ *
+ * Computes the complex product of @a and @b.  Even-numbered
+ * columns in these matrices are assumed to contain real
+ * values, and odd-numbered columns imaginary coefficients.
+ * That is, the first two columns of @a contain m complex
+ * values whch may be represented as a(k,1) + a(k,2)*i,
+ * where k indexes the rows, and similarly for @b.  The 
+ * resulting matrix, c, then has
+ * c(k,1) = a(k,1)*b(k,1) - a(k,2)*b(k,2) and
+ * c(k,2) = a(k,2)*b(k,1) + a(k,1)*b(k,2).
+ * If n > 2, the operation is repeated for the remaining
+ * pairs of columns in @a and @b.
+ * 
+ * Returns: a new m x n matrix containing the complex products or
+ * %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
+					     const gretl_matrix *b,
+					     int *err)
+{
+    gretl_matrix *c = NULL;
+    double *ar, *ai;
+    double *br, *bi;
+    double *cr, *ci;
+    int m = a->rows;
+    int n = a->cols;
+    int p = b->rows;
+    int q = b->cols;
+    int i, j;
+
+    if (m != p || n != q) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (n % 2 != 0 || q % 2 != 0) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(m, n);
+    if (c == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    errno = 0;
+
+    ar = a->val; ai = ar + m;
+    br = b->val; bi = br + m;
+    cr = c->val; ci = cr + m;
+    p = 2 * m;
+
+    for (j=0; j<n; j+=2) {
+	for (i=0; i<m; i++) {
+	    cr[i] = ar[i] * br[i] - ai[i] * bi[i];
+	    ci[i] = ar[i] * bi[i] + br[i] * ai[i];
+	}
+	if (j < n - 2) {
+	    ar += p; ai += p;
+	    br += p; bi += p;
+	    cr += p; ci += p;
+	}
+    }
+
+    if (errno) {
+	gretl_matrix_free(c);
+	c = NULL;
+	*err = E_DATA;
+	strcpy(gretl_errmsg, _(strerror(errno)));
+    }
+
+    return c;
+}
+
 /* return sum of elements in row i */
 
 static double row_sum (const gretl_matrix *m, int i)

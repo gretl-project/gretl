@@ -190,6 +190,10 @@ gretl_matrix *
 gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
 		     int op, int *err);
 
+gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
+					     const gretl_matrix *b,
+					     int *err);
+
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
 
 void gretl_matrix_raise (gretl_matrix *m, double x);

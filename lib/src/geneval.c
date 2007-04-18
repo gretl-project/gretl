@@ -942,7 +942,9 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    *err = E_ALLOC;
 	}
 	break;
-
+    case CMULT:
+	C = gretl_matrix_complex_multiply(A, B, err);
+	break;
     default:
 	*err = E_TYPES;
 	break;
@@ -3638,6 +3640,7 @@ static NODE *eval (NODE *t, parser *p)
     case MCCAT:
     case MRCAT:
     case QFORM:
+    case CMULT:
 	/* matrix-only binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);
