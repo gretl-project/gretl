@@ -170,14 +170,14 @@ void print_summary (const Summary *summ,
 void free_summary (Summary *summ);
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
-		   int *err);
+		   gretlopt opt, int *err);
 
 VMatrix *vmatrix_new (void);
 
 void free_vmatrix (VMatrix *vmat);
 
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
-		  PRN *prn);
+		  gretlopt opt, PRN *prn);
 
 int means_test (const int *list, const double **Z, 
 		const DATAINFO *pdinfo, 

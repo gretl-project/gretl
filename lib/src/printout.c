@@ -238,42 +238,24 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
  * @corrmat: gretl correlation matrix struct.
  * @prn: gretl printing struct.
  *
- * Print correlation matrix to @prn in a simple columnar format.
+ * Print a single correlation to @prn.
  */
 
 void printcorr (const VMatrix *corrmat, PRN *prn)
 {
-    int i, j, k = 0;
-    int m, nterms;
-    char corrstring[32];
+    double r = corrmat->vec[1];
+    int n = corrmat->n;
 
-    m = corrmat->dim;
-    nterms = (m * (m + 1)) / 2;
+    pprintf(prn, "\ncorr(%s, %s)", corrmat->names[0], corrmat->names[1]);
 
-    pputs(prn, _("\nPairwise correlation coefficients:\n\n"));
-
-    while (k < nterms) {
-        for (i=1; i<=m; i++) {
-	    k++;
-	    for (j=i+1; j<=m; j++) {
-		sprintf(corrstring, "corr(%s, %s)", 
-			corrmat->names[i-1], corrmat->names[j-1]);
-		if (na(corrmat->vec[k])) {
-		    pprintf(prn, "  %-24s    %s\n", 
-			    corrstring, _("undefined"));
-		} else if (corrmat->vec[k] < 0.0) {
-		    pprintf(prn, "  %-24s = %.4f\n", corrstring, 
-			    corrmat->vec[k]);
-		} else {
-		    pprintf(prn, "  %-24s =  %.4f\n", corrstring, 
-			    corrmat->vec[k]);
-		}
-		k++;
-	    }
-        }
+    if (na(r)) {
+	pprintf(prn, ": %s\n\n", _("undefined"));
+    } else {
+	pprintf(prn, " = %f\n\n", r);
+	pprintf(prn, _("5%% critical value (two-tailed) = "
+		       "%.4f for n = %d"), rhocrit95(n), n);
+	pputs(prn, "\n\n");
     }
-
-    pputc(prn, '\n');
 }
 
 static void print_freq_test (const FreqDist *freq, PRN *prn)

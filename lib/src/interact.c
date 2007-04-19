@@ -3394,17 +3394,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case CORR:
-	if (cmd->list[0] > 3) {
-	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
-			       prn);
-	} else {
-	    /* print in list, not matrix, form */
-	    corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, &err);
-	    if (!err) {
-		printcorr(corrmat, prn);
-		free_vmatrix(corrmat);
-	    }
-	}
+	err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
+			   cmd->opt, prn);
 	break;
 
     case CORRGM:
@@ -3482,7 +3473,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case PCA:
-	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, &err);
+	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, 
+			   OPT_U, &err);
 	if (!err) {
 	    err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
 	    if (cmd->opt && !err) {

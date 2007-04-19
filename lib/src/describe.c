@@ -3566,6 +3566,7 @@ VMatrix *vmatrix_new (void)
 	v->dim = 0;
 	v->t1 = 0;
 	v->t2 = 0;
+	v->n = 0;
 	v->missing = 0;
     }
 
@@ -3595,8 +3596,47 @@ void free_vmatrix (VMatrix *vmat)
     }
 }
 
-static int make_correlation_matrix (VMatrix *v, const double **Z,
-				    const DATAINFO *pdinfo)
+/* compute correlation matrix, using maximum possible sample
+   for each coefficient */
+
+static int max_correlation_matrix (VMatrix *v, const double **Z)
+{
+    int i, j, vi, vj, nij;
+    int nmaxmin = v->t2 - v->t1 + 1;
+    int m = v->dim;
+    int missing = 0;
+
+    for (i=0; i<m; i++) {  
+	vi = v->list[i+1];
+	for (j=i; j<m; j++)  {
+	    vj = v->list[j+1];
+	    nij = ijton(i, j, m);
+	    if (i == j) {
+		v->vec[nij] = 1.0;
+	    } else {
+		v->vec[nij] = gretl_corr(v->t1, v->t2, Z[vi], Z[vj], 
+					 &missing);
+		if (missing > 0) {
+		    int n = v->t2 - v->t1 + 1 - missing;
+
+		    if (n < nmaxmin && n > 0) {
+			nmaxmin = n;
+		    }
+		    v->missing = 1;
+		}
+	    }
+	}
+    }
+
+    v->n = nmaxmin;
+
+    return 0;
+}
+
+/* compute correlation matrix, ensuring we use the same sample
+   for all coefficients */
+
+static int uniform_correlation_matrix (VMatrix *v, const double **Z)
 {
     double *xbar = NULL, *ssx = NULL;
     int m = v->dim;
@@ -3620,7 +3660,7 @@ static int make_correlation_matrix (VMatrix *v, const double **Z,
 
     /* first pass: get sample size and sums */
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=v->t1; t<=v->t2; t++) {
 	miss = 0;
 	for (i=0; i<m; i++) {
 	    if (na(Z[v->list[i+1]][t])) {
@@ -3653,7 +3693,7 @@ static int make_correlation_matrix (VMatrix *v, const double **Z,
 
     /* second pass: get deviations from means and cumulate */
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=v->t1; t<=v->t2; t++) {
 	miss = 0;
 	for (i=0; i<m; i++) {
 	    if (na(Z[v->list[i+1]][t])) {
@@ -3689,6 +3729,8 @@ static int make_correlation_matrix (VMatrix *v, const double **Z,
 	}
     }
 
+    v->n = n;
+
     free(xbar);
     free(ssx);
 
@@ -3700,6 +3742,7 @@ static int make_correlation_matrix (VMatrix *v, const double **Z,
  * @list: list of variables to process, by ID number.
  * @Z: data matrix.
  * @pdinfo: data information struct.
+ * @opt: option flags.
  * @err: location to receive error code.
  *
  * Computes pairwise correlation coefficients for the variables
@@ -3709,7 +3752,7 @@ static int make_correlation_matrix (VMatrix *v, const double **Z,
  */
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
-		   int *err)
+		   gretlopt opt, int *err)
 {
     VMatrix *v;
     int i, m, mm;
@@ -3745,7 +3788,16 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    *err = make_correlation_matrix(v, Z, pdinfo);
+    v->t1 = pdinfo->t1;
+    v->t2 = pdinfo->t2;
+
+    if (opt & OPT_U) {
+	/* impose uniform sample size */
+	*err = uniform_correlation_matrix(v, Z);
+    } else {
+	/* sample sizes may differ */
+	*err = max_correlation_matrix(v, Z);
+    }
 
     if (!*err) {
 	for (i=0; i<m; i++) {  
@@ -3758,8 +3810,6 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
     }	
 
     v->ci = CORR;
-    v->t1 = pdinfo->t1;
-    v->t2 = pdinfo->t2;
 
  bailout:
     
@@ -3783,12 +3833,11 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 {
     char tmp[96];
-    int n = corr->t2 - corr->t1 + 1;
 
     prhdr(_("Correlation Coefficients"), pdinfo, CORR, corr->missing, 
 	  prn);
     sprintf(tmp, _("5%% critical value (two-tailed) = "
-	    "%.4f for n = %d"), rhocrit95(n), n);
+	    "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
     center_line(tmp, prn, 1);
     text_print_vmatrix(corr, prn);
 }
@@ -3798,6 +3847,7 @@ void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
  * @list: gives the ID numbers of the variables to process.
  * @Z: data array.
  * @pdinfo: data information struct.
+ * @opt: option flags: %OPT_U = use uniform sample size.
  * @prn: gretl printing struct.
  *
  * Computes and prints the correlation matrix for the specified list
@@ -3807,17 +3857,22 @@ void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
  */
 
 int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
-		  PRN *prn)
+		  gretlopt opt, PRN *prn)
 {
     VMatrix *corr;
     int err = 0;
 
-    corr = corrlist(list, Z, pdinfo, &err);
+    corr = corrlist(list, Z, pdinfo, opt, &err);
     if (err) {
 	return err;
     }
 
-    matrix_print_corr(corr, pdinfo, prn);
+    if (list[0] == 2) {
+	printcorr(corr, prn);
+    } else {
+	matrix_print_corr(corr, pdinfo, prn);
+    }
+
     free_vmatrix(corr);
 
     return 0;

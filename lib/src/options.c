@@ -99,6 +99,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { COINT2,   OPT_V, "verbose" },
+    { CORR,     OPT_U, "uniform" },
     { CUSUM,    OPT_R, "squares" },
     { DIFFTEST, OPT_G, "sign" },
     { DIFFTEST, OPT_R, "rank-sum" },

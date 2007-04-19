@@ -308,7 +308,7 @@ struct PATHS_ {
 struct VMatrix_ {
     int ci;
     int dim;
-    int t1, t2;
+    int t1, t2, n;
     char **names;
     double *vec;
     int *list;

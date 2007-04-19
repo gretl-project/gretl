@@ -626,14 +626,19 @@ static void real_do_menu_op (guint action, const char *liststr)
 
     case CORR:
     case PCA:
-	obj = corrlist(libcmd.list, (const double **) Z, datainfo, &err);
+	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
+		       OPT_U, &err); /* FIXME opt? */
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	    return;
 	} 
 	if (action == CORR) {
-	    matrix_print_corr(obj, datainfo, prn);
+	    if (libcmd.list[0] > 2) {
+		matrix_print_corr(obj, datainfo, prn);
+	    } else {
+		printcorr(obj, prn);
+	    }
 	} else {
 	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
 				  NULL, prn);
