@@ -3582,8 +3582,12 @@ VMatrix *vmatrix_new (void)
 void free_vmatrix (VMatrix *vmat)
 {
     if (vmat != NULL) {
-	free_strings_array(vmat->names, vmat->dim);
-	free(vmat->vec);
+	if (vmat->names != NULL) {
+	    free_strings_array(vmat->names, vmat->dim);
+	}
+	if (vmat->vec != NULL) {
+	    free(vmat->vec);
+	}
 	if (vmat->list != NULL) {
 	    free(vmat->list);
 	}
@@ -3591,11 +3595,112 @@ void free_vmatrix (VMatrix *vmat)
     }
 }
 
+static int make_correlation_matrix (VMatrix *v, const double **Z,
+				    const DATAINFO *pdinfo)
+{
+    double *xbar = NULL, *ssx = NULL;
+    int m = v->dim;
+    int mm = (m * (m + 1)) / 2;
+    double d1, d2;
+    int i, j, nij, t;
+    int miss, n = 0;
+
+    xbar = malloc(m * sizeof *xbar);
+    ssx = malloc(m * sizeof *ssx);
+
+    if (xbar == NULL || ssx == NULL) {
+	free(xbar);
+	free(ssx);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<m; i++) {
+	xbar[i] = ssx[i] = 0.0;
+    }       
+
+    /* first pass: get sample size and sums */
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	miss = 0;
+	for (i=0; i<m; i++) {
+	    if (na(Z[v->list[i+1]][t])) {
+		miss = 1;
+		v->missing = 1;
+		break;
+	    }
+	}
+	if (!miss) {
+	    n++;
+	    for (i=0; i<m; i++) {
+		xbar[i] += Z[v->list[i+1]][t];
+	    }	    
+	}
+    }
+		
+    if (n < 2) {
+	free(xbar);
+	free(ssx);
+	return E_MISSDATA;
+    }
+
+    for (i=0; i<m; i++) {
+	xbar[i] /= n;
+    }    
+
+    for (i=0; i<mm; i++) {
+	v->vec[i] = 0.0;
+    }
+
+    /* second pass: get deviations from means and cumulate */
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	miss = 0;
+	for (i=0; i<m; i++) {
+	    if (na(Z[v->list[i+1]][t])) {
+		miss = 1;
+		break;
+	    }
+	}
+	if (!miss) {
+	    for (i=0; i<m; i++) {
+		d1 = Z[v->list[i+1]][t] - xbar[i];
+		ssx[i] += d1 * d1;
+		for (j=i+1; j<m; j++) {
+		    nij = ijton(i, j, m);
+		    d2 = Z[v->list[j+1]][t] - xbar[j];
+		    v->vec[nij] += d1 * d2;
+		}
+	    }	    
+	}
+    } 
+
+    /* finalize: compute correlations */
+
+    for (i=0; i<m; i++) {  
+	for (j=i; j<m; j++)  {
+	    nij = ijton(i, j, m);
+	    if (i == j) {
+		v->vec[nij] = 1.0;
+	    } else if (ssx[i] == 0.0 || ssx[j] == 0.0) {
+		v->vec[nij] = NADBL;
+	    } else {
+		v->vec[nij] /= sqrt(ssx[i] * ssx[j]);
+	    }
+	}
+    }
+
+    free(xbar);
+    free(ssx);
+
+    return 0;
+}
+
 /**
  * corrlist:
  * @list: list of variables to process, by ID number.
  * @Z: data matrix.
  * @pdinfo: data information struct.
+ * @err: location to receive error code.
  *
  * Computes pairwise correlation coefficients for the variables
  * specified in @list, skipping any constants.
@@ -3603,68 +3708,65 @@ void free_vmatrix (VMatrix *vmat)
  * Returns: gretl correlation matrix struct, or %NULL on failure.
  */
 
-VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
+VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
+		   int *err)
 {
     VMatrix *v;
-    int i, j, lo, nij, mm;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2; 
-    int missing = 0;
+    int i, m, mm;
 
     v = vmatrix_new();
     if (v == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     /* drop any constants from list */
     for (i=1; i<=list[0]; i++) {
-	if (gretl_isconst(t1, t2, Z[list[i]])) {
+	if (gretl_isconst(pdinfo->t1, pdinfo->t2, Z[list[i]])) {
 	    gretl_list_delete_at_pos(list, i);
 	    i--;
 	}
     }
 
-    v->dim = lo = list[0];  
-    mm = (lo * (lo + 1)) / 2;
+    if (list[0] == 0) {
+	*err = E_DATA;
+	goto bailout;
+    }	
 
-    v->names = strings_array_new(lo);
-    if (v->names == NULL) {
-	free(v);
-	return NULL;
-    }
+    v->dim = m = list[0];  
+    mm = (m * (m + 1)) / 2;
 
+    v->names = strings_array_new(m);
     v->vec = malloc(mm * sizeof *v->vec);
-    if (v->vec == NULL) {
-	free_vmatrix(v);
-	return NULL;
-    }
-
-    for (i=0; i<lo; i++) {  
-	int vj, vi = list[i+1];
-
-	v->names[i] = gretl_strdup(pdinfo->varname[vi]);
-	if (v->names[i] == NULL) {
-	    free_vmatrix(v);
-	    return NULL;
-	}
-
-	for (j=0; j<lo; j++)  {
-	    vj = list[j+1];
-	    nij = ijton(i, j, lo);
-	    if (i == j) {
-		v->vec[nij] = 1.0;
-		continue;
-	    }
-	    v->vec[nij] = gretl_corr(t1, t2, Z[vi], Z[vj], &missing);
-	    if (missing > 0) {
-		v->missing = 1;
-	    }
-	}
-    }
-
     v->list = gretl_list_copy(list);
+
+    if (v->names == NULL || v->vec == NULL || v->list == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    *err = make_correlation_matrix(v, Z, pdinfo);
+
+    if (!*err) {
+	for (i=0; i<m; i++) {  
+	    v->names[i] = gretl_strdup(pdinfo->varname[list[i+1]]);
+	    if (v->names[i] == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+	}
+    }	
+
     v->ci = CORR;
-    v->t1 = t1;
-    v->t2 = t2;
+    v->t1 = pdinfo->t1;
+    v->t2 = pdinfo->t2;
+
+ bailout:
+    
+    if (*err) {
+	free_vmatrix(v);
+	v = NULL;
+    }
 
     return v;
 }
@@ -3708,10 +3810,11 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 		  PRN *prn)
 {
     VMatrix *corr;
+    int err = 0;
 
-    corr = corrlist(list, Z, pdinfo);
-    if (corr == NULL) {
-	return 1;
+    corr = corrlist(list, Z, pdinfo, &err);
+    if (err) {
+	return err;
     }
 
     matrix_print_corr(corr, pdinfo, prn);

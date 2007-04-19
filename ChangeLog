@@ -20,6 +20,8 @@ version 1.6.3, in progress
   auxiliary regression)
 - Observation labels: ensure these are properly XML-encoded when
   saving a data set as gdt
+- Correlation matrix: ensure that the same number of observations
+  is used for all coefficients
 - Fix bug that could cause a crash when exiting the program on
   MS Windows
 

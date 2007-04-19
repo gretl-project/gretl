@@ -625,13 +625,19 @@ static void real_do_menu_op (guint action, const char *liststr)
     switch (action) {
 
     case CORR:
-	obj = corrlist(libcmd.list, (const double **) Z, datainfo);
-	if (obj == NULL) {
-	    errbox(_("Failed to generate correlation matrix"));
+    case PCA:
+	obj = corrlist(libcmd.list, (const double **) Z, datainfo, &err);
+	if (err) {
+	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	    return;
 	} 
-	matrix_print_corr(obj, datainfo, prn);
+	if (action == CORR) {
+	    matrix_print_corr(obj, datainfo, prn);
+	} else {
+	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
+				  NULL, prn);
+	}	    
 	break;
 
     case FREQ:
@@ -646,18 +652,6 @@ static void real_do_menu_op (guint action, const char *liststr)
 
     case RUNS:
 	err = runs_test(libcmd.list[1], (const double **) Z, datainfo, prn);
-	break;
-
-    case PCA:
-	obj = corrlist(libcmd.list, (const double **) Z, datainfo);
-	if (obj == NULL) {
-	    errbox(_("Failed to generate correlation matrix"));
-	    gretl_print_destroy(prn);
-	    return;
-	} else {
-	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
-				  NULL, prn);
-	}
 	break;
 
     case MAHAL:
@@ -2929,9 +2923,10 @@ static char *quadratic_list_buf (const int *list)
     char *buf;
     int qlist[5];
     int vs = list[2];
-    int v, t;
+    int v;
 
     v = xpxgenr(vs, vs, &Z, datainfo);
+
     if (v < 0) {
 	errbox(_("Failed to generate squares\n"));
 	return NULL;
@@ -2960,7 +2955,8 @@ void do_graph_model (const int *list, int quadratic)
     char title[32];
     int err = 0;
 
-    if (list == NULL) {
+    if (list == NULL || list[1] >= datainfo->v || list[2] >= datainfo->v) {
+	gui_errmsg(E_DATA);
 	return;
     }
 

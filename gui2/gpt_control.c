@@ -1954,6 +1954,94 @@ static void add_to_session_callback (GPT_SPEC *spec)
     }
 }
 
+#if 0
+
+/* estimate a "graph model" based on the data present within
+   the graph file itself: this is robust with respect to
+   changes in the dataset subsequent to displaying the
+   graph */
+
+static void do_graph_model2 (GPT_SPEC *spec)
+{
+    int quad = spec->fit == PLOT_FIT_QUADRATIC;
+    double **gZ = NULL;
+    DATAINFO *ginfo;
+    MODEL *pmod = NULL;
+    PRN *prn = NULL;
+    double *x, *y;
+    int list[5];
+    int t, nv;
+    int err = 0;
+
+    nv = list[0] = (quad)? 4 : 3;
+
+    ginfo = create_new_dataset(&gZ, nv, spec->nobs, 0);
+    if (ginfo == NULL) {
+	return;
+    }
+
+    x = spec->data;
+    y = spec->data + spec->nobs;
+
+    for (t=0; t<ginfo->n; t++) {
+	gZ[1][t] = y[t];
+	gZ[2][t] = x[t];
+	if (quad) {
+	    gZ[3][t] = (na(x[t]))? NADBL : x[t] * x[t];
+	}
+    }
+
+    strncat(ginfo->varname[1], spec->yvarname, VNAMELEN - 1);
+    strncat(ginfo->varname[2], spec->xvarname, VNAMELEN - 1);
+
+    if (quad) {
+	strncat(ginfo->varname[3], spec->xvarname, VNAMELEN - 3);
+	strcat(ginfo->varname[3], "^2");
+    }
+
+    list[1] = 1;
+    list[2] = 2;
+    if (quad) {
+	list[3] = 3;
+	list[4] = 0;
+    } else {
+	list[3] = 0;
+    }
+
+    if (bufopen(&prn)) {
+	goto bailout;
+    }
+
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	nomem();
+	goto bailout;
+    }
+
+    *pmod = lsq(list, &gZ, ginfo, OLS, OPT_NONE);
+
+    if (pmod->errcode) {
+	gui_errmsg(pmod->errcode);
+	err = 1;
+    } else {
+	model_count_minus();
+	pmod->ID = -1;
+	printmodel(pmod, ginfo, OPT_NONE, prn);
+	view_buffer(prn, 78, 420, _("gretl: OLS estimates"),
+		    PRINT, NULL);
+    }
+
+ bailout:
+
+    gretl_model_free(pmod);
+    destroy_dataset(gZ, ginfo);
+    if (err && prn != NULL) {
+	gretl_print_destroy(prn);
+    }
+}
+
+#endif
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -2005,8 +2093,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 #endif 
     else if (!strcmp(item, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
+#if 0
+	    do_graph_model2(plot->spec);
+#else
 	    do_graph_model(plot->spec->reglist, 
 			   plot->spec->fit == PLOT_FIT_QUADRATIC);
+#endif
 	}
     } else if (!strcmp(item, _("Numerical values"))) {
 	show_numbers_from_markers(plot->spec);

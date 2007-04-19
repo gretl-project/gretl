@@ -169,7 +169,8 @@ void print_summary (const Summary *summ,
 
 void free_summary (Summary *summ);
 
-VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
+VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
+		   int *err);
 
 VMatrix *vmatrix_new (void);
 

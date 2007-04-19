@@ -3397,17 +3397,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (cmd->list[0] > 3) {
 	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
 			       prn);
-	    if (err) {
-		pputs(prn, _("Error in generating correlation matrix\n"));
-	    }
-	    break;
-	}
-	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo);
-	if (corrmat == NULL) {
-	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    printcorr(corrmat, prn);
-	    free_vmatrix(corrmat);
+	    /* print in list, not matrix, form */
+	    corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, &err);
+	    if (!err) {
+		printcorr(corrmat, prn);
+		free_vmatrix(corrmat);
+	    }
 	}
 	break;
 
@@ -3486,10 +3482,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case PCA:
-	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo);
-	if (corrmat == NULL) {
-	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
-	} else {
+	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo, &err);
+	if (!err) {
 	    err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
 	    if (cmd->opt && !err) {
 		maybe_list_vars(pdinfo, prn);
