@@ -1943,7 +1943,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 
 static void add_to_session_callback (GPT_SPEC *spec)
 {
-    char fullname[MAXLEN];
+    char fullname[MAXLEN] = {0};
     int err;
 
     err = add_graph_to_session(spec->fname, fullname);
@@ -2005,7 +2005,8 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 #endif 
     else if (!strcmp(item, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
-	    do_graph_model(plot->spec->reglist);
+	    do_graph_model(plot->spec->reglist, 
+			   plot->spec->fit == PLOT_FIT_QUADRATIC);
 	}
     } else if (!strcmp(item, _("Numerical values"))) {
 	show_numbers_from_markers(plot->spec);
@@ -2139,7 +2140,8 @@ static void build_plot_menu (png_plot *plot)
 	    continue;
 	}
 	if ((!plot_has_regression_list(plot) || 
-	     plot->spec->fit != PLOT_FIT_OLS) &&
+	     (plot->spec->fit != PLOT_FIT_OLS &&
+	      plot->spec->fit != PLOT_FIT_QUADRATIC)) &&
 	    !strcmp(plot_items[i], "OLS estimates")) {
 	    i++;
 	    continue;

@@ -2924,19 +2924,52 @@ int do_vector_model (selector *sr)
     return err;
 }
 
-void do_graph_model (const int *list)
+static char *quadratic_list_buf (const int *list)
 {
     char *buf;
+    int qlist[5];
+    int vs = list[2];
+    int v, t;
+
+    v = xpxgenr(vs, vs, &Z, datainfo);
+    if (v < 0) {
+	errbox(_("Failed to generate squares\n"));
+	return NULL;
+    }
+
+    qlist[0] = 4;
+    qlist[1] = list[1];
+    qlist[2] = list[2];
+    qlist[3] = list[3];
+    qlist[4] = v;
+
+    buf = gretl_list_to_string(qlist);
+
+    if (buf == NULL) {
+	nomem();
+    }
+
+    return buf;
+}
+
+void do_graph_model (const int *list, int quadratic)
+{
+    char *buf = NULL;
     PRN *prn;
     MODEL *pmod = NULL;
-    char title[26];
+    char title[32];
     int err = 0;
 
     if (list == NULL) {
 	return;
     }
 
-    buf = gretl_list_to_string(list);
+    if (quadratic) {
+	buf = quadratic_list_buf(list);
+    } else {
+	buf = gretl_list_to_string(list);
+    }
+
     if (buf == NULL) {
 	return;
     }
@@ -2950,6 +2983,7 @@ void do_graph_model (const int *list)
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
+	gretl_print_destroy(prn);
 	nomem();
 	return;
     }
@@ -2964,6 +2998,7 @@ void do_graph_model (const int *list)
 
     if (lib_cmd_init()) {
 	errbox(_("Error saving model information"));
+	gretl_print_destroy(prn);
 	return;
     }
 
@@ -2972,7 +3007,7 @@ void do_graph_model (const int *list)
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
-    view_model(prn, pmod, 78, 420, title);     
+    view_model(prn, pmod, 78, 420, title);  
 }
 
 void do_minibuf (GtkWidget *w, dialog_t *dlg) 
