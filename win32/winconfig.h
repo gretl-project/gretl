@@ -21,9 +21,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef WINCONFIG_H
 #define WINCONFIG_H
 
-/* Are we using glib-2.0 ? */
-#define USE_GLIB2 1
-
 /* Native language support */
 #define ENABLE_NLS 1
 #define PACKAGE "gretl"

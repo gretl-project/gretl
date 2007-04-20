@@ -638,7 +638,7 @@ Please install pkg-config and then reconfigure gretl.
 pkg-config is available from http://www.freedesktop.org/
 "
 
-if test "${have_zlib}" = "no" ; then
+elif test "${have_zlib}" = "no" ; then
 echo "
 Please install zlib (compression library) and then reconfigure gretl.
 zlib is available via http://www.info-zip.org/pub/infozip/zlib/
