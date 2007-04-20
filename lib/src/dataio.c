@@ -28,9 +28,7 @@
 #include <time.h>
 #include <errno.h>
 
-#ifdef USE_GLIB2
-# include <glib.h>
-#endif
+#include <glib.h>
 
 #define QUOTE                  '\''
 #define CSVSTRLEN               72
@@ -3110,7 +3108,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     csvinfo->delim = delim;
 
-#if USE_GLIB2
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *trfname = g_locale_to_utf8(fname, -1, NULL, NULL, NULL);
 
@@ -3119,9 +3116,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     } else {
 	pprintf(mprn, "%s %s...\n", M_("parsing"), fname);
     }
-#else
-    pprintf(mprn, "%s %s...\n", M_("parsing"), fname);
-#endif
 
     /* get line length, also check for binary data, etc. */
     maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, prn);    

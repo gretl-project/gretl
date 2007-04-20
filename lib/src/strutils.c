@@ -23,12 +23,7 @@
 
 #include <errno.h>
 #include <time.h>
-
-#if defined(USE_GLIB2)
-# include <glib.h>
-#else
-# include <fnmatch.h>
-#endif
+#include <glib.h>
 
 /**
  * string_is_blank:
@@ -1769,8 +1764,6 @@ const char *path_last_element (const char *path)
     return p;
 }
 
-#if defined(USE_GLIB2)
-
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 {
     GPatternSpec *pspec;
@@ -1805,39 +1798,6 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     return list;
 }
 
-#elif defined(HAVE_FNMATCH_H) 
-
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
-{
-    int *list = NULL;
-    int i, n = 0;
-
-    for (i=1; i<pdinfo->v; i++) { 
-	if (var_is_series(pdinfo, i) &&
-	    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
-	    n++;
-	}
-    }
-
-    if (n > 0) {
-	list = malloc((n + 1) * sizeof *list);
-	if (list != NULL) {
-	    int j = 1;
-
-	    list[0] = n;
-	    for (i=1; i<pdinfo->v; i++) { 
-		if (var_is_series(pdinfo, i) &&
-		    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
-		    list[j++] = i;
-		}
-	    }
-	}
-    }
-
-    return list;
-}
-
-#endif
     
 
 

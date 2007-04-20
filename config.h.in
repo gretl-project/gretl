@@ -20,9 +20,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* Using glib version 2.0? */
-#undef USE_GLIB2
-
 /* for NLS use */
 #define PACKAGE gretl
 

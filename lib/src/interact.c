@@ -36,6 +36,8 @@
 #include "gretl_xml.h"
 #include "gretl_string_table.h"
 
+#include <glib.h>
+
 /* equipment for the "shell" command */
 #ifndef WIN32
 # include <sys/wait.h>
@@ -1071,8 +1073,6 @@ static int truncate_varname (const char *s, int *k, const DATAINFO *pdinfo,
     return ok;
 }
 
-#if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
-
 static int wildcard_expand (const char *s, int *lpos,
 			    const DATAINFO *pdinfo, CMD *cmd)
 {
@@ -1099,16 +1099,6 @@ static int wildcard_expand (const char *s, int *lpos,
 
     return ok;
 }
-
-#else
-
-static int wildcard_expand (const char *s, int *lpos,
-			    const DATAINFO *pdinfo, CMD *cmd)
-{
-    return 0;
-}
-
-#endif /* no globbing available */
 
 static int matrix_name_ok (const char *s, CMD *cmd)
 {
@@ -2235,10 +2225,42 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     return cmd->err;
 }
 
+static int maybe_need_recode (void)
+{
+    const gchar *cset = NULL;
+    int utf = g_get_charset(&cset);
+
+    return !utf;
+}
+
+static int recode_print_line (const char *s, PRN *prn)
+{
+    gchar *trs;
+    gsize bytes;
+    GError *err = NULL;
+
+    trs = g_locale_from_utf8(s, -1, NULL, &bytes, &err);  
+
+    if (err != NULL) {
+	pputs(prn, "Recoding error!\n");
+	g_error_free(err);
+    } else {
+	pputs(prn, trs);
+    }
+
+    if (trs != NULL) {
+	g_free(trs);
+    }
+
+    return 0;
+}
+
 /**
- * help:
+ * cli_help:
  * @cmdword: the command on which help is wanted.
  * @helpfile: path to the gretl help file.
+ * @locale: if non-zero, check to see if we need to recode into
+ * the local character set.
  * @prn: pointer to gretl printing struct.
  *
  * Searches in @helpfile for help on @cmdword and, if help is found,
@@ -2249,8 +2271,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
  * requested topic was not found.
  */
 
-int help (const char *cmdword, const char *helpfile, PRN *prn)
+int cli_help (const char *cmdword, const char *helpfile, 
+	      int locale, PRN *prn)
 {
+    static int recode = -1;
     FILE *fp;
     char word[9];
     char line[128];
@@ -2294,6 +2318,10 @@ int help (const char *cmdword, const char *helpfile, PRN *prn)
 	return 1;
     } 
 
+    if (locale && recode < 0) {
+	recode = maybe_need_recode();
+    }
+
     ok = 0;
     while (fgets(line, sizeof line, fp) != NULL) {
 	if (*line != '#') {
@@ -2307,7 +2335,11 @@ int help (const char *cmdword, const char *helpfile, PRN *prn)
 		if (*line == '#') {
 		    break;
 		}
-		pputs(prn, line);
+		if (recode > 0) {
+		    recode_print_line(line, prn);
+		} else {
+		    pputs(prn, line);
+		}
 	    }
 	    break;
 	}

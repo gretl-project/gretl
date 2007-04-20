@@ -32,20 +32,18 @@
 #ifdef _WIN32
 # include <windows.h>
 #else
-# ifdef USE_GLIB2
-#  define USE_GSPAWN
-#  include <glib.h>
-#  include <signal.h>
-#  if HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
-#  endif
-#  ifndef WEXITSTATUS
-#   define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-#  endif
-#  ifndef WIFEXITED
-#   define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#  endif
-# endif /* GLIB2 */
+# define USE_GSPAWN
+# include <glib.h>
+# include <signal.h>
+# if HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+# endif
+# ifndef WEXITSTATUS
+#  define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+# endif
+# ifndef WIFEXITED
+#  define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+# endif
 #endif /* ! _WIN32 */
 
 

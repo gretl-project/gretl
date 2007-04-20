@@ -20,9 +20,7 @@
 #include "libgretl.h"
 #include "texprint.h"
 
-#ifdef USE_GLIB2
-# include <glib.h>
-#endif
+#include <glib.h>
 
 #ifdef ENABLE_NLS
 
@@ -167,25 +165,14 @@ static int gretl_cpage;
 
 void set_gretl_charset (const char *s)
 {
-# ifdef USE_GLIB2
     const char *charset = NULL;
-# else
-    char charset[16] = {0};
-#endif
     char gretl_charset[32];
     int using_utf8 = 0;
 
-# ifdef USE_GLIB2
     using_utf8 = g_get_charset(&charset);
     if (using_utf8) {
 	set_tex_use_utf(1);
     }
-# else
-    if (*s == 'p' || *s == 'P') {
-	/* guessing this means Polish */
-	strcpy(charset, "iso-8859-2");
-    }
-# endif
 
     *gretl_charset = '\0';
 
@@ -857,9 +844,7 @@ char *get_month_name (char *mname, int m)
 
 int get_utf_width (const char *str, int width)
 {
-# ifdef USE_GLIB2
     width += strlen(str) - g_utf8_strlen(str, -1);
-# endif
 
     return width;
 }
@@ -868,9 +853,7 @@ int get_translated_width (const char *str)
 {
     int w = strlen(str);
 
-# ifdef USE_GLIB2
     w += w - g_utf8_strlen(str, -1);
-# endif
 
     return w;
 }

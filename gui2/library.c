@@ -6537,7 +6537,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case HELP:
-	help(cmd->param, paths.cli_helpfile, prn);
+	cli_help(cmd->param, paths.cli_helpfile, 0, prn);
 	break;
 
     case OPEN:

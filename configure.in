@@ -34,6 +34,7 @@ dnl
 build_gui="yes"
 build_docs="no"
 build_po="no"
+have_pkgconfig="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
@@ -383,9 +384,10 @@ dnl
 if test -z "$PKG_CONFIG"; then
    AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 fi
-if test "$PKG_CONFIG" = "no" && test "$build_gui" = "yes" ; then
-   echo "*** pkg-config not found, can't build graphical interface"
+if test "$PKG_CONFIG" = "no" ; then
    build_gui="no"
+else
+   have_pkgconfig="yes"
 fi
 
 orig_CFLAGS=$CFLAGS
@@ -398,10 +400,10 @@ if test "$PKG_CONFIG" != "no" ; then
 fi
 
 dnl
-dnl glib 2.0 (desirable even if not building GUI)
+dnl glib 2.0 (needed even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0, AC_DEFINE(USE_GLIB2), have_glib2="no")
+   PKG_CHECK_MODULES(GLIB, glib-2.0, have_glib2="yes", have_glib2="no")
 fi
 
 dnl
@@ -630,6 +632,12 @@ if test "${build_docs}" = "yes" ; then
   ])
 fi
 
+if test "${have_pkgconfig}" = "no" ; then
+echo "
+Please install pkg-config and then reconfigure gretl.
+pkg-config is available from http://www.freedesktop.org/
+"
+
 if test "${have_zlib}" = "no" ; then
 echo "
 Please install zlib (compression library) and then reconfigure gretl.
@@ -652,6 +660,12 @@ elif test "${have_fftw3}" = "no" ; then
 echo "
 Please install fftw3 and then reconfigure gretl.
 fftw3 is available from http://www.fftw.org/
+"
+
+elif test "${have_glib2}" = "no" ; then
+echo "
+Please install glib-2.0 and then reconfigure gretl.
+glib-2.0 is available from http://www.gtk.org/
 "
 
 else

@@ -31,12 +31,10 @@
 # include <dirent.h>
 #endif
 
-#ifdef USE_GLIB2
-# include <glib.h>
-# if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
-#  ifdef WIN32
-#   define USE_G_FOPEN
-#  endif
+#include <glib.h>
+#if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
+# ifdef WIN32
+#  define USE_G_FOPEN
 # endif
 #endif
 

@@ -33,7 +33,7 @@
 # include <windows.h>
 #endif
 
-#if defined(ENABLE_NLS) && defined(USE_GLIB2)
+#if defined(ENABLE_NLS)
 # include <glib.h>
 #endif
 
@@ -3279,7 +3279,7 @@ static void print_summary_single (const Summary *s, int j,
 
     for (i=0; i<8; i++) {
 	if (strlen(_(labels[i])) > slen) {
-#if defined(ENABLE_NLS) && defined(USE_GLIB2)
+#if defined(ENABLE_NLS)
 	    slen = g_utf8_strlen(_(labels[i]), -1);	    
 #else
 	    slen = strlen(_(labels[i]));

@@ -22,16 +22,9 @@
 #include "libgretl.h"
 
 #include <time.h>
+#include <glib.h>
 
-#ifdef USE_GLIB2
-# include <glib.h>
-#else
-# include "mt19937ar.c"
-#endif
-
-#ifdef USE_GLIB2
 static GRand *gretl_rand;
-#endif
 
 static unsigned int useed;
 
@@ -49,12 +42,8 @@ unsigned int get_gretl_random_seed (void)
 void gretl_rand_init (void)
 {
     useed = time(NULL);
-#ifdef USE_GLIB2
     gretl_rand = g_rand_new();
     gretl_rand_set_seed((guint32) useed);
-#else
-    init_genrand(useed);
-#endif
 }
 
 /**
@@ -74,18 +63,10 @@ void gretl_rand_set_seed (unsigned int seed)
     } else {
 	useed = seed;
     }
-#ifdef USE_GLIB2
     g_rand_set_seed(gretl_rand, useed);
-#else
-    init_genrand(useed);
-#endif
 }
 
-#ifdef USE_GLIB2
 #define gretl_one_uniform() (g_rand_double_range(gretl_rand, 0, 1))
-#else
-#define gretl_one_uniform() (genrand_int32() * (1.0 / 4294967296))
-#endif
 
 /**
  * gretl_one_snormal:
@@ -135,11 +116,7 @@ int gretl_uniform_dist_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-#ifdef USE_GLIB2
 	a[t] = g_rand_double_range(gretl_rand, min, max);
-#else
-	a[t] = min + genrand_int32() * (max / 4294967296.0);
-#endif 
     }
 
     return 0;
@@ -403,11 +380,7 @@ void gretl_poisson_dist (double *a, int t1, int t2, double *m,
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-#ifdef USE_GLIB2
     return g_rand_int_range(gretl_rand, 0, max);
-#else
-    return genrand_int32() * (max / 4294967296.0);
-#endif
 }
 
 /**
@@ -419,11 +392,7 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-#ifdef USE_GLIB2
     return g_rand_int(gretl_rand);
-#else
-    return genrand_int32();
-#endif
 }
 
 /**
@@ -434,11 +403,7 @@ unsigned int gretl_rand_int (void)
 
 void gretl_rand_free (void)
 {
-#ifdef USE_GLIB2
     g_rand_free(gretl_rand);
-#else
-    return;
-#endif
 }
 
 
