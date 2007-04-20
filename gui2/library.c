@@ -627,7 +627,7 @@ static void real_do_menu_op (guint action, const char *liststr)
     case CORR:
     case PCA:
 	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
-		       OPT_U, &err); /* FIXME opt? */
+		       (action == PCA)? OPT_U : OPT_NONE, &err);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);

@@ -699,8 +699,8 @@ static void outxx (const double xx, int ci, int wid, PRN *prn)
 {
     if (isnan(xx) || na(xx)) { 
 	if (ci == CORR) {
-	    pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), wid), 
-		    _("undefined"));
+	    pprintf(prn, "%*s", UTF_WIDTH(_("NA"), wid), 
+		    _("NA"));
 	} else {
 	    bufspace(wid, prn);
 	}

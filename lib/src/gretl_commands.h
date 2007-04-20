@@ -151,9 +151,9 @@ typedef enum {
 } GretlCmdIndex;
 
 #define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
-                            (c) == CORC || (c) == HCCM || (c) == HILU || \
-                            (c) == HSK || (c) == LOGIT || (c) == SPEARMAN || \
-                            (c) == OLS || (c) == PROBIT || \
+                            (c) == CORC || (c) == CORR || (c) == HCCM || \
+                            (c) == HILU || (c) == HSK || (c) == LOGIT || \
+                            (c) == SPEARMAN || (c) == OLS || (c) == PROBIT || \
                             (c) == TSLS || (c) == VAR || (c) == WLS || \
 			    (c) == PWE || (c) == XTAB)
 

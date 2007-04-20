@@ -3189,8 +3189,8 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 static void printf15 (double zz, PRN *prn)
 {
     if (na(zz)) {
-	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 15), 
-		_("undefined"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("NA"), 15), 
+		_("NA"));
     } else {
 	pputc(prn, ' ');
 	gretl_print_fullwidth_double(zz, 5, prn);	
@@ -3301,7 +3301,6 @@ static void print_summary_single (const Summary *s, int j,
 	pputc(prn, '\n');
 	pprintf(prn, "  %-*s", UTF_WIDTH(_(bstr), slen), _(bstr));
 	printf15(s->sb, prn);
-	pputc(prn, '\n');
     }  
 
     pputs(prn, "\n\n");    
@@ -3603,6 +3602,7 @@ static int max_correlation_matrix (VMatrix *v, const double **Z)
 {
     int i, j, vi, vj, nij;
     int nmaxmin = v->t2 - v->t1 + 1;
+    int nmaxmax = 0;
     int m = v->dim;
     int missing = 0;
 
@@ -3621,14 +3621,30 @@ static int max_correlation_matrix (VMatrix *v, const double **Z)
 
 		    if (n < nmaxmin && n > 0) {
 			nmaxmin = n;
+		    } 
+		    if (n > nmaxmax) {
+			nmaxmax = n;
 		    }
 		    v->missing = 1;
+		} else {
+		    nmaxmax = v->t2 - v->t1 + 1;
 		}
 	    }
 	}
     }
 
-    v->n = nmaxmin;
+    /* we'll record an "n" value if there's something resembling
+       a common value across the coefficients */
+
+    if (!v->missing) {
+	v->n = v->t2 - v->t1 + 1;
+    } else if (nmaxmax > 0) {
+	double d = (nmaxmax - nmaxmin) / (double) nmaxmax;
+
+	if (d < .10) {
+	    v->n = nmaxmin;
+	}
+    } 
 
     return 0;
 }
@@ -3866,10 +3882,13 @@ void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 	    strcpy(tmp, _("(missing values were skipped)"));
 	    center_line(tmp, prn, 1);
 	}	
-	
-	sprintf(tmp, _("5%% critical value (two-tailed) = "
-		       "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
-	center_line(tmp, prn, 1);
+
+	if (corr->n > 0) {
+	    sprintf(tmp, _("5%% critical value (two-tailed) = "
+			   "%.4f for n = %d"), rhocrit95(corr->n), 
+		    corr->n);
+	    center_line(tmp, prn, 1);
+	}
 
 	text_print_vmatrix(corr, prn);
     }
