@@ -370,7 +370,7 @@
         </option>
         <option>
 	  <flag>--asymptotic</flag>
-	  <effect>standard asymptotic standard errors</effect>
+	  <effect>uncorrected asymptotic standard errors</effect>
         </option>
       </options>
       <examples>
