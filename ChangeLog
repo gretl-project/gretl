@@ -4,6 +4,7 @@ version 1.6.3, in progress
   12 models; formatting enhancements
 - Fix bug in panel autocorrelation test (lmtest command)
 - Add fft() matrix function (Fast Fourier Transform)
+- Add cmult() matrix function (complex multiplication)
 - Add quantile() function in genr
 - Add production of restricted estimates to the "restrict"
   command as applied to VECMs
@@ -20,10 +21,13 @@ version 1.6.3, in progress
   auxiliary regression)
 - Observation labels: ensure these are properly XML-encoded when
   saving a data set as gdt
-- Correlation matrix: ensure that the same number of observations
-  is used for all coefficients
 - Fix bug that could cause a crash when exiting the program on
   MS Windows
+- Fix an encoding issue with the command-line help files on
+  platforms where the default encoding is UTF-8
+- Correlation matrix: try to be smarter in face of non-aligned
+  missing observations
+- Various modifications to the configuration process
 
 3/24/2007 version 1.6.2
 - Add Poisson distribution to p-value finder
