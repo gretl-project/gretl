@@ -281,8 +281,10 @@ static void console_exec (void)
 	    gchar *trbuf = my_locale_to_utf8(cbuf);
 
 	    fprintf(stderr, "console text did not validate as utf8\n");
-	    gtk_text_buffer_insert(buf, &start, trbuf, strlen(trbuf));
-	    g_free(trbuf);
+	    if (trbuf != NULL) {
+		gtk_text_buffer_insert(buf, &start, trbuf, strlen(trbuf));
+		g_free(trbuf);
+	    }
 	} else {
 	    gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
 	}

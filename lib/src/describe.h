@@ -186,7 +186,7 @@ int means_test (const int *list, const double **Z,
 int vars_test (const int *list, const double **Z, 
 	       const DATAINFO *pdinfo, PRN *prn);
 
-void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn);
+void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn);
 
 double dh_root_b1_to_z1 (double rb1, double n);
 

@@ -634,11 +634,7 @@ static void real_do_menu_op (guint action, const char *liststr)
 	    return;
 	} 
 	if (action == CORR) {
-	    if (libcmd.list[0] > 2) {
-		matrix_print_corr(obj, datainfo, prn);
-	    } else {
-		printcorr(obj, prn);
-	    }
+	    print_corrmat(obj, datainfo, prn);
 	} else {
 	    err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
 				  NULL, prn);

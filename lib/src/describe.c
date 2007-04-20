@@ -3821,25 +3821,58 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
     return v;
 }
 
+static void printcorr (const VMatrix *v, PRN *prn)
+{
+    double r = v->vec[1];
+
+    pprintf(prn, "\ncorr(%s, %s)", v->names[0], v->names[1]);
+
+    if (na(r)) {
+	pprintf(prn, ": %s\n\n", _("undefined"));
+    } else {
+	pprintf(prn, " = %f\n\n", r);
+	pprintf(prn, _("5%% critical value (two-tailed) = "
+		       "%.4f for n = %d"), rhocrit95(v->n), v->n);
+	pputs(prn, "\n\n");
+    }
+}
+
 /**
- * matrix_print_corr:
- * @corr: gretl correlation matrix
+ * print_corrmat:
+ * @corr: gretl correlation matrix.
  * @pdinfo: dataset information.
  * @prn: gretl printing struct.
  *
  * Prints a gretl correlation matrix to @prn.
  */
 
-void matrix_print_corr (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
+void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 {
-    char tmp[96];
+    if (corr->dim == 2) {
+	printcorr(corr, prn);
+    } else {
+	char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
-    prhdr(_("Correlation Coefficients"), pdinfo, CORR, corr->missing, 
-	  prn);
-    sprintf(tmp, _("5%% critical value (two-tailed) = "
-	    "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
-    center_line(tmp, prn, 1);
-    text_print_vmatrix(corr, prn);
+	ntodate(date1, corr->t1, pdinfo);
+	ntodate(date2, corr->t2, pdinfo);
+
+	pputc(prn, '\n');
+
+	sprintf(tmp, _("%s, using the observations %s - %s"), 
+		_("Correlation Coefficients"), date1, date2);
+	center_line(tmp, prn, 0);
+
+	if (corr->missing) {
+	    strcpy(tmp, _("(missing values were skipped)"));
+	    center_line(tmp, prn, 1);
+	}	
+	
+	sprintf(tmp, _("5%% critical value (two-tailed) = "
+		       "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
+	center_line(tmp, prn, 1);
+
+	text_print_vmatrix(corr, prn);
+    }
 }
 
 /**
@@ -3867,12 +3900,7 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 	return err;
     }
 
-    if (list[0] == 2) {
-	printcorr(corr, prn);
-    } else {
-	matrix_print_corr(corr, pdinfo, prn);
-    }
-
+    print_corrmat(corr, pdinfo, prn);
     free_vmatrix(corr);
 
     return 0;

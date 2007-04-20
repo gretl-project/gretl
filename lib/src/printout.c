@@ -233,31 +233,6 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
     pputc(prn, '\n');
 }
 
-/**
- * printcorr:
- * @corrmat: gretl correlation matrix struct.
- * @prn: gretl printing struct.
- *
- * Print a single correlation to @prn.
- */
-
-void printcorr (const VMatrix *corrmat, PRN *prn)
-{
-    double r = corrmat->vec[1];
-    int n = corrmat->n;
-
-    pprintf(prn, "\ncorr(%s, %s)", corrmat->names[0], corrmat->names[1]);
-
-    if (na(r)) {
-	pprintf(prn, ": %s\n\n", _("undefined"));
-    } else {
-	pprintf(prn, " = %f\n\n", r);
-	pprintf(prn, _("5%% critical value (two-tailed) = "
-		       "%.4f for n = %d"), rhocrit95(n), n);
-	pputs(prn, "\n\n");
-    }
-}
-
 static void print_freq_test (const FreqDist *freq, PRN *prn)
 {
     double pval = NADBL;
