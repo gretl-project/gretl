@@ -2654,54 +2654,6 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
     return err;
 }
 
-gretl_matrix *gretl_matrix_periodogram (const gretl_matrix *x, int m)
-{
-    gretl_matrix *p;
-    double *autocov;
-    double xbar, varx;
-    double xx, yy;
-    int k, T, t; 
-
-    T = gretl_vector_get_length(x);
-
-    p = gretl_column_vector_alloc(m);
-    if (p == NULL) {
-	return NULL;
-    }
-
-    autocov = malloc(T * sizeof *autocov);
-    if (autocov == NULL) {
-	gretl_matrix_free(p);
-	return NULL;
-    }
-
-    xbar = gretl_vector_mean(x);
-    varx = gretl_vector_variance(x);
-
-    /* find autocovariances */
-
-    for (k=1; k<=T-1; k++) {
-	autocov[k] = 0.0;
-	for (t=k; t<T; t++) {
-	    autocov[k] += (x->val[t] - xbar) * (x->val[t-k] - xbar);
-	}
-	autocov[k] /= T;
-    }
-
-    for (t=1; t<=m; t++) {
-	yy = M_2PI * t / (double) T;
-	xx = varx; 
-	for (k=1; k<=T-1; k++) {
-	    xx += 2.0 * autocov[k] * cos(yy * k);
-	}
-	p->val[t-1] = xx * T / M_2PI;
-    }
-
-    free(autocov);
-
-    return p;
-}
-
 static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
 {
     gretl_matrix *p = NULL;
@@ -2807,12 +2759,7 @@ double LWE (const gretl_matrix *X, int m)
     int iter = 0;
     const int MAX_ITER = 100;
       
-    if (getenv("NATIVE_PGM") != NULL) {
-	I = gretl_matrix_periodogram(X, m);
-    } else {
-	I = gretl_matrix_fft_pergm(X, m);
-    }
-    
+    I = gretl_matrix_fft_pergm(X, m);
     if (I == NULL) {
 	return NADBL;
     }
