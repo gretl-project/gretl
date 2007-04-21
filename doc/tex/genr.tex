@@ -740,15 +740,15 @@ As an example, consider the multiplication of two polynomals:
 \begin{eqnarray*}
   a(x) & = & 1 + 0.5 x \\
   b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
-  c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3 ;
+  c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
 \end{eqnarray*}
-the coefficients of the polynomial $c(x)$ are the convolution of the
+The coefficients of the polynomial $c(x)$ are the convolution of the
 coefficents of $a(x)$ and $b(x)$; the following \app{gretl} code fragment
 illustrates how to compute the coefficients of $c(x)$:
 \begin{code}
 # define the two polynomials
-a = { 1 ; 0.5; 0 ; 0 }
-b = { 1 ; 0.3 ; -0.8 ; 0 }
+a = { 1, 0.5, 0, 0 }'
+b = { 1, 0.3, -0.8, 0 }'
 # perform the transforms
 fa = fft(a)
 fb = fft(b)

@@ -2827,24 +2827,19 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
 /**
  * gretl_matrix_complex_multiply:
- * @a: m x n matrix (with n even).
- * @b: m x n matrix.
+ * @a: m x (1 or 2) matrix.
+ * @b: m x (1 or 2) matrix.
  * @err: location to receive error code.
  *
- * Computes the complex product of @a and @b.  Even-numbered
- * columns in these matrices are assumed to contain real
- * values, and odd-numbered columns imaginary coefficients.
- * That is, the first two columns of @a contain m complex
- * values whch may be represented as a(k,1) + a(k,2)*i,
- * where k indexes the rows, and similarly for @b.  The 
- * resulting matrix, c, then has
- * c(k,1) = a(k,1)*b(k,1) - a(k,2)*b(k,2) and
- * c(k,2) = a(k,2)*b(k,1) + a(k,1)*b(k,2).
- * If n > 2, the operation is repeated for the remaining
- * pairs of columns in @a and @b.
+ * Computes the complex product of @a and @b.  The first
+ * column in these matrices is assumed to contain real
+ * values, and the second column (if present) imaginary 
+ * coefficients.
  * 
- * Returns: a new m x n matrix containing the complex products or
- * %NULL on failure.
+ * Returns: an m x 2 matrix with the result of the multiplication 
+ * of the two vectors of complex numbers. If both @a and @b have no 
+ * imaginary part, the return value will be m x 1.  Or %NULL on 
+ * failure.
  */
 
 gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
@@ -2859,19 +2854,21 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
     int n = a->cols;
     int p = b->rows;
     int q = b->cols;
-    int i, j;
+    int i, izero = 1;
 
-    if (m != p || n != q) {
+    if (m != p) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    if (n % 2 != 0 || q % 2 != 0) {
+    if ((n != 1 && n != 2) || (q != 1 && q != 2)) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    c = gretl_matrix_alloc(m, n);
+    p = (n == 1 && q == 1)? 1 : 2;
+
+    c = gretl_matrix_alloc(m, p);
     if (c == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -2879,20 +2876,31 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 
     errno = 0;
 
-    ar = a->val; ai = ar + m;
-    br = b->val; bi = br + m;
-    cr = c->val; ci = cr + m;
-    p = 2 * m;
+    ar = a->val; 
+    ai = (a->cols == 2)? ar + m : NULL;
 
-    for (j=0; j<n; j+=2) {
-	for (i=0; i<m; i++) {
-	    cr[i] = ar[i] * br[i] - ai[i] * bi[i];
-	    ci[i] = ar[i] * bi[i] + br[i] * ai[i];
+    br = b->val; 
+    bi = (b->cols == 2)? br + m : NULL;
+
+    cr = c->val; 
+    ci = (c->cols == 2)? cr + m : NULL;
+
+    for (i=0; i<m; i++) {
+	cr[i] = ar[i] * br[i];
+	if (ai != NULL && bi != NULL) {
+	    cr[i] -= ai[i] * bi[i];
 	}
-	if (j < n - 2) {
-	    ar += p; ai += p;
-	    br += p; bi += p;
-	    cr += p; ci += p;
+	if (ci != NULL) {
+	    ci[i] = 0.0;
+	}
+	if (bi != NULL) {
+	    ci[i] += ar[i] * bi[i];
+	}
+	if (ai != NULL) {
+	    ci[i] += br[i] * ai[i];
+	}
+	if (ci != NULL && ci[i] != 0.0) {
+	    izero = 0;
 	}
     }
 
@@ -2901,6 +2909,15 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 	c = NULL;
 	*err = E_DATA;
 	strcpy(gretl_errmsg, _(strerror(errno)));
+    } else if (c->cols == 2 && izero) {
+	c->val = realloc(c->val, c->rows * sizeof *c->val);
+	if (c->val == NULL) {
+	    *err = E_ALLOC;
+	    gretl_matrix_free(c);
+	    c = NULL;
+	} else {
+	    c->cols = 1;
+	}
     }
 
     return c;

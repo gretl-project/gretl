@@ -691,32 +691,12 @@ calculates $B = A X A^{\prime}$.  This is computed more efficiently than
 the alternative command \texttt{B = A*X*A'}.  In addition, the result
 is symmetric by construction.
 
-The function \texttt{cmult} computes the complex product of pairs of
-columns in two input matrices, $A$ and $B$, which must be of the same
-dimensions and must have an even number of columns.  Let $A$ be
-$m \times n$.  The first two columns of $A$ are taken to represent $m$
-complex values, 
-%
-\[
-a_{k1} + a_{k2}i, \quad k = 1,2, \dots{}, m
-\]
-%
-and similarly for $B$.  The command
-%
-\begin{code}
-C = cmult(A, B)
-\end{code}
-%
-produces an $m \times n$ matrix $C$ such that
-%
-\begin{eqnarray*}
-c_{k1} &=& a_{k1} b_{k1} - a_{k2} b_{k2} \\
-c_{k2} &=& a_{k2} b_{k1} + a_{k1} b_{k2}
-\end{eqnarray*}
-%
-If $n > 2$, the operation is repeated for the remaining pairs of
-columns in $A$ and $B$, the column subscripts advancing by 2 at each
-step.  
+The function \texttt{cmult} computes the complex product of two input
+matrices, $A$ and $B$, representing complex numbers.  These matrices
+must have the same number of rows, $n$, and either one or two columns.
+The first column contains the real part and the second (if present)
+the imaginary part.  The return value is an $n \times 2$ matrix, or,
+if the product has no imaginary part, an $n$-vector.
 
 
 \subsection{Multiple-return matrix functions}
