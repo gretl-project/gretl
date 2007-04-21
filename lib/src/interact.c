@@ -2426,48 +2426,37 @@ static int parse_criteria (const char *line, const double **Z,
 int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 {
     int opt = 0;
-    const char *s = argv[1];
 
     *fname = '\0';
     *force_lang = 0;
 
+    while (*++argv) {
+	const char *s = *argv;
+
 #ifdef ENABLE_NLS
-    if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
-	*force_lang = ENGLISH;
-    } else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
-	*force_lang = BASQUE;
-    }
-    if (*force_lang) {
-	if (--argc < 2) {
-	    return 0;
+	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
+	    *force_lang = ENGLISH;
+	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
+	    *force_lang = BASQUE;
 	}
-	argv++;
-	s = argv[1];
-    }	
 #endif
-
-    if (strcmp(s, "-b") == 0 || strncmp(s, "--batch", 7) == 0) 
-	opt = OPT_BATCH;
-    else if (strcmp(s, "-h") == 0 || strcmp(s, "--help") == 0) 
-	opt = OPT_HELP;
-    else if (strcmp(s, "-v") == 0 || strcmp(s, "--version") == 0) 
-	opt = OPT_VERSION;
-    else if (strcmp(s, "-r") == 0 || strncmp(s, "--run", 5) == 0) 
-	opt = OPT_RUNIT;
-    else if (strcmp(s, "-d") == 0 || strncmp(s, "--db", 4) == 0) 
-	opt = OPT_DBOPEN;
-    else if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
-	opt = OPT_WEBDB;
-    else if (strcmp(s, "-c") == 0 || strncmp(s, "--dump", 6) == 0) 
-	opt = OPT_DUMP;
-
-    if (opt != 0) {
-	argv++;
-	argc--;
-    }
-
-    if (argc >= 2) {
-	strncat(fname, argv[1], MAXLEN - 1);
+	else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) { 
+	    opt = OPT_BATCH;
+	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 
+	    opt = OPT_HELP;
+	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) { 
+	    opt = OPT_VERSION;
+	} else if (!strcmp(s, "-r") || !strncmp(s, "--run", 5)) { 
+	    opt = OPT_RUNIT;
+	} else if (!strcmp(s, "-d") || !strncmp(s, "--db", 4)) { 
+	    opt = OPT_DBOPEN;
+	} else if (!strcmp(s, "-w") || !strncmp(s, "--webdb", 7)) { 
+	    opt = OPT_WEBDB;
+	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
+	    opt = OPT_DUMP;
+	} else {
+	    strncat(fname, s, MAXLEN - 1);
+	}
     }
 
     return opt;

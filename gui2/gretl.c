@@ -677,7 +677,7 @@ static void force_language (int f)
     } else if (f == BASQUE) {
 # ifdef G_OS_WIN32
 	setlocale(LC_ALL, "eu");
-#else
+# else
 	setlocale(LC_ALL, "eu_ES");
 # endif
     }
