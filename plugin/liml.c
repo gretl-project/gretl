@@ -102,16 +102,14 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 
 /* find the least characteristic root */
 
-static double lambda_min (const double *lambda, int k)
+static double lambda_min (const gretl_matrix *lambda, int k)
 {
-    double lmin = 1.0;
+    double lmin = lambda->val[0];
     int i;
 
-    for (i=0; i<k; i++) {
-	if (i == 0) {
-	    lmin = lambda[i];
-	} else if (lambda[i] < lmin) {
-	    lmin = lambda[i];
+    for (i=1; i<k; i++) {
+	if (lambda->val[i] < lmin) {
+	    lmin = lambda->val[i];
 	}
     }
 
@@ -233,8 +231,9 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     gretl_matrix *Inv = NULL;
     gretl_matrix *g = NULL;
     gretl_matrix *V = NULL;
+    gretl_matrix *lambda = NULL;
 
-    double *lambda, lmin = 1.0;
+    double lmin = 1.0;
     double ll = 0.0;
     MODEL *pmod;
     MODEL lmod;
@@ -307,12 +306,16 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
 		      T, pZ, pdinfo);
-    if (err) goto bailout;
+    if (err) {
+	goto bailout;
+    }
     
     err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 				    E, GRETL_MOD_NONE,
 				    W1, GRETL_MOD_NONE);
-    if (err) goto bailout;
+    if (err) {
+	goto bailout;
+    }
 
 #if LDEBUG
     gretl_matrix_print(W1, "W1", NULL);
@@ -332,7 +335,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     }
 
     lmin = lambda_min(lambda, k);
-    free(lambda);
+    gretl_matrix_free(lambda);
     gretl_model_set_double(pmod, "lmin", lmin);
     gretl_model_set_int(pmod, "idf", idf);
 

@@ -3262,7 +3262,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
     double maxerr[2];
     double xcoeff[2];
     double ycoeff[2];
-    double *e = NULL;
+    gretl_matrix *e = NULL;
     int err = 0;
 
     maxerr[0] = t * sqrt(gretl_matrix_get(V, 0, 0));
@@ -3278,16 +3278,16 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 	return err;
     }
 
-    e[0] = sqrt(1.0 / e[0] * c);
-    e[1] = sqrt(1.0 / e[1] * c);
+    e->val[0] = sqrt(1.0 / e->val[0] * c);
+    e->val[1] = sqrt(1.0 / e->val[1] * c);
 
-    xcoeff[0] = e[0] * gretl_matrix_get(V, 0, 0);
-    xcoeff[1] = e[1] * gretl_matrix_get(V, 0, 1);
+    xcoeff[0] = e->val[0] * gretl_matrix_get(V, 0, 0);
+    xcoeff[1] = e->val[1] * gretl_matrix_get(V, 0, 1);
 
-    ycoeff[0] = e[0] * gretl_matrix_get(V, 1, 0);
-    ycoeff[1] = e[1] * gretl_matrix_get(V, 1, 1);
+    ycoeff[0] = e->val[0] * gretl_matrix_get(V, 1, 0);
+    ycoeff[1] = e->val[1] * gretl_matrix_get(V, 1, 1);
 
-    free(e);
+    gretl_matrix_free(e);
 
     err = gnuplot_init(PLOT_ELLIPSE, &fp);
     if (err) {

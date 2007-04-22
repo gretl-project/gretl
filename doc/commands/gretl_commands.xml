@@ -2534,9 +2534,9 @@
 	    Uniform series, which form the basis for the more complex
 	    distributions, are generated using the Mersenne
 	    Twister;<footnote><para>See Matsumoto and Nishimura (1998).
-		The implementation is provided by <program>glib</program>,
-		if available, or by the C code written by Nishimura and
-		Matsumoto.</para></footnote> for normal series the method
+		The implementation is provided by
+		<program>glib-2.0</program>.
+		</para></footnote> for normal series the method
 	    of Box and Muller (1958) is used, taking input from the
 	    Mersenne Twister. See also the <cmdref
 	      targ="set"/> command, <lit>seed</lit> option.
@@ -2788,14 +2788,15 @@
       </para>
 
       <para>
-	The variable <lit>t</lit> serves as an index of the observations. For
-	instance <lit>genr dum = (t=15)</lit> will generate a dummy variable
-	that has value 1 for observation 15, 0 otherwise.  The variable
-	<lit>obs</lit> is similar but more flexible: you can use this to pick
-	out particular observations by date or name.  For example, <lit>genr d =
-	  (obs&gt;1986:4)</lit> or <lit>genr d = (obs="CA")</lit>. The last form
-	presumes that the observations are labeled; the label must be put in
-	double quotes.
+	The variable <lit>t</lit> serves as an index of the observations.
+	For instance <lit>genr dum = (t=15)</lit> will generate a dummy
+	variable that has value 1 for observation 15, 0 otherwise.  The
+	variable <lit>obs</lit> is similar but more flexible: you can use
+	this to pick out particular observations by (1-based) number, date
+	or name.  When using a date or observation name, this must be
+	enclosed in double quotes: for example, <lit>genr d =
+	  (obs&gt;"1986:4")</lit> or <lit>genr d = (obs="CA")</lit>. The
+	last form presumes that the observations are labeled.
       </para>
 
       <para>

@@ -4225,7 +4225,7 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
     return err;
 }
 
-static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
+static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
 			    int symm)
 {
     struct esort {
@@ -4255,11 +4255,11 @@ static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
     }
 
     for (i=0; i<n; i++) {
-	es[i].vr = evals[i];
+	es[i].vr = evals->val[i];
 	if (symm) {
 	    es[i].vi = 0.0;
 	} else {
-	    es[i].vi = evals[i + n];
+	    es[i].vi = evals->val[i + n];
 	}
 	es[i].idx = i;
     }
@@ -4267,9 +4267,9 @@ static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
     qsort(es, n, sizeof *es, gretl_inverse_compare_doubles);
 
     for (i=0; i<n; i++) {
-	evals[i] = es[i].vr;
+	evals->val[i] = es[i].vr;
 	if (!symm) {
-	    evals[i + n] = es[i].vi;
+	    evals->val[i + n] = es[i].vi;
 	}
     }
 
@@ -4308,7 +4308,7 @@ static int real_eigen_sort (double *evals, gretl_matrix *evecs, int rank,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_general_eigen_sort (double *evals, gretl_matrix *evecs, 
+int gretl_general_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 			      int rank)
 {
     return real_eigen_sort(evals, evecs, rank, 0);
@@ -4329,7 +4329,7 @@ int gretl_general_eigen_sort (double *evals, gretl_matrix *evecs,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs, 
+int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
 				int rank)
 {
     return real_eigen_sort(evals, evecs, rank, 1);    
@@ -4346,17 +4346,18 @@ int gretl_symmetric_eigen_sort (double *evals, gretl_matrix *evecs,
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
  * function %dgeev.
  * 
- * Returns: allocated storage containing the eigenvalues, or %NULL
- * on failure.  The returned array, on successful completion,
- * has 2n elements (where n = the number of rows and columns in the
- * matrix @m), the first n of which contain the real components of 
- * the eigenvalues of @m, and the remainder of which hold the 
- * imaginary components.
+ * Returns: allocated matrix containing the eigenvalues, or %NULL
+ * on failure.  The returned matrix, on successful completion,
+ * is n x 2 (where n = the number of rows and columns in the
+ * matrix @m); the first column contains the real parts of 
+ * the eigenvalues of @m, and the second holds the 
+ * imaginary parts.
  */
 
-double *
+gretl_matrix *
 gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
+    gretl_matrix *evals = NULL;
     integer n = m->rows;
     integer info;
     integer lwork;
@@ -4380,11 +4381,12 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    wr = malloc(2 * n * sizeof *wr);
-    if (wr == NULL) {
+    evals = gretl_matrix_alloc(n, 2);
+    if (evals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     } else {
+	wr = evals->val;
 	wi = wr + n;
     }
 
@@ -4428,30 +4430,29 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     if (info != 0) {
 	*err = 1;
-	goto bailout;
     } 
-
-    if (eigenvecs) {
-	free(m->val);
-	m->val = vr;
-    }
-
-    lapack_free(work);
-
-    return wr;
 
  bailout:
 
     lapack_free(work);
-    free(wr);
-    free(vr);
 
-    return NULL;    
+    if (*err) {
+	gretl_matrix_free(evals);
+	evals = NULL;
+	if (vr != NULL) {
+	    free(vr);
+	}
+    } else if (eigenvecs) {
+	free(m->val);
+	m->val = vr;
+    }	
+
+    return evals;
 }
 
 /**
  * gretl_symmetric_matrix_eigenvals:
- * @m: matrix to operate on.
+ * @m: n x n matrix to operate on.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * @err: location to receive error code.
  * 
@@ -4460,17 +4461,18 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
  * function %dsyev.
  *
- * Returns: allocated storage containing the eigenvalues, or %NULL
+ * Returns: n x 1 matrix containing the eigenvalues, or %NULL
  * on failure.
  */
 
-double *
+gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
     integer n = m->rows;
     integer info;
     integer lwork;
 
+    gretl_matrix *evals = NULL;
     double *work = NULL;
     double *work2 = NULL;
     double *w = NULL;
@@ -4489,11 +4491,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    w = malloc(n * sizeof *w);
-    if (w == NULL) {
+    evals = gretl_column_vector_alloc(n);
+    if (evals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
+
+    w = evals->val;
 
     lwork = -1; /* find optimal workspace size */
     dsyev_(&jobz, &uplo, &n, m->val, &n, 
@@ -4511,27 +4515,27 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     if (work2 == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    } else {
-	work = work2;
-    }
-    
-    dsyev_(&jobz, &uplo, &n, m->val, &n, 
-	   w, work, &lwork, &info);
+    } 
 
-    if (info != 0) {
-	*err = 1;
+    if (!*err) {
+	work = work2;
+	dsyev_(&jobz, &uplo, &n, m->val, &n, 
+	       w, work, &lwork, &info);
+	if (info != 0) {
+	    *err = 1;
+	}
     }
 
  bailout:
 
     lapack_free(work);
 
-    if (*err && w != NULL) {
-	free(w);
-	w = NULL;
+    if (*err && evals != NULL) {
+	gretl_matrix_free(evals);
+	evals = NULL;
     }
 
-    return w;
+    return evals;
 }
 
 static int gensymm_conformable (const gretl_matrix *A,
@@ -4575,14 +4579,14 @@ static int gensymm_conformable (const gretl_matrix *A,
  * on failure.
  */
 
-double *gretl_gensymm_eigenvals (const gretl_matrix *A, 
-				 const gretl_matrix *B, 
-				 gretl_matrix *V, 
-				 int *err)
+gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A, 
+				       const gretl_matrix *B, 
+				       gretl_matrix *V, 
+				       int *err)
 {
     gretl_matrix *K = NULL;
     gretl_matrix *tmp = NULL;
-    double *eigvals = NULL;
+    gretl_matrix *evals = NULL;
     int n = A->rows;
 
 #if GSDEBUG
@@ -4625,7 +4629,7 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
     gretl_matrix_print(tmp, "tmp");
 #endif
 
-    eigvals = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
+    evals = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
     if (*err) {
 	goto bailout;
     }
@@ -4642,12 +4646,12 @@ double *gretl_gensymm_eigenvals (const gretl_matrix *A,
     gretl_matrix_free(K);
     gretl_matrix_free(tmp);
 
-    if (*err && eigvals != NULL) {
-	free(eigvals);
-	eigvals = NULL;
+    if (*err && evals != NULL) {
+	gretl_matrix_free(evals);
+	evals = NULL;
     }
 
-    return eigvals;
+    return evals;
 }
 
 /**
@@ -6468,11 +6472,11 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     gretl_matrix *P = NULL;
     gretl_matrix *xbar = NULL;
     gretl_matrix *ssx = NULL;
+    gretl_matrix *evals = NULL;
     
     int T = X->rows;
     int m = X->cols;
     double x, load, val;
-    double *evals = NULL;
     int i, j, k;
 
     if (m == 1) {
@@ -6533,7 +6537,7 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     gretl_matrix_free(xbar);
     gretl_matrix_free(ssx);
     gretl_matrix_free(C);
-    free(evals);
+    gretl_matrix_free(evals);
 
     return P;
 }

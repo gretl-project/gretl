@@ -1255,8 +1255,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 {
     gretl_matrix *C = NULL;
     gretl_matrix *E = NULL;
-    double *ev = NULL;
-    int en, vecs = 0;
+    int vecs = 0;
 
     if (m == NULL) {
 	*err = E_DATA;
@@ -1271,11 +1270,6 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 	}
     }
 
-    en = gretl_matrix_rows(m);
-    if (!symm) {
-	en *= 2; /* allow for imaginary components */
-    }
-
     C = gretl_matrix_copy(m);
     if (C == NULL) {
 	*err = E_ALLOC;
@@ -1283,15 +1277,10 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 
     if (!*err) {
 	if (symm) {
-	    ev = gretl_symmetric_matrix_eigenvals(C, vecs, err);
+	    E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
 	} else {
-	    ev = gretl_general_matrix_eigenvals(C, vecs, err);
+	    E = gretl_general_matrix_eigenvals(C, vecs, err);
 	}
-    }
-
-    if (ev != NULL) {
-	E = gretl_vector_from_array(ev, en, GRETL_MOD_NONE);
-	free(ev);
     }
 
     if (!*err && vecs) {

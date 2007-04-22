@@ -38,7 +38,7 @@ struct utf_stuff {
 
 struct utf_stuff replacers[] = {
     { "&#8211;", "-" },      /* &ndash; */
-    { "&#8212;", " -- " },   /* &ndash; */
+    { "&#8212;", " -- " },   /* &mdash; */
     { "&gt;", ">" }, 
     { "&lt;", "<" }, 
     { "&amp;", "&" },

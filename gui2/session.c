@@ -3162,13 +3162,13 @@ void display_session_graph_by_data (void *p)
 }
 
 static int is_idempotent (const gretl_matrix *m,
-			  const double *evals)
+			  const gretl_matrix *evals)
 {
     if (evals != NULL) {
 	int i;
 
 	for (i=0; i<m->rows; i++) {
-	    if (evals[i] != 0.0 && evals[i] != 1.0) {
+	    if (evals->val[i] != 0.0 && evals->val[i] != 1.0) {
 		return 0;
 	    }
 	}
@@ -3183,7 +3183,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     const char *xfmt = "%-16s %.8g\n";
     const char *ifmt = "%-12s %3d\n";
     gretl_matrix *A = NULL;
-    double *evals = NULL;
+    gretl_matrix *evals = NULL;
     PRN *prn;
     int s, err = 0;
 
@@ -3280,13 +3280,14 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 
 	for (i=0; i<m->rows; i++) {
 	    if (s != GRETL_MATRIX_SYMMETRIC) {
-		pprintf(prn, "  (%.8g, %.8g)\n", evals[i], evals[i+m->rows]);
+		pprintf(prn, "  (%.8g, %.8g)\n", gretl_matrix_get(evals, i, 0),
+			gretl_matrix_get(evals, i, 1));
 	    } else {
-		pprintf(prn, "  %.8g\n", evals[i]);
+		pprintf(prn, "  %.8g\n", evals->val[i]);
 	    }
 	}
 
-	free(evals);
+	gretl_matrix_free(evals);
     }
 
     if (A != NULL) {

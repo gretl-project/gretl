@@ -158,7 +158,7 @@ static gretlopt pca_flag_dialog (void)
 }
 
 static void pca_print (VMatrix *vmat, gretl_matrix *m,
-		       double *evals, PRN *prn)
+		       gretl_matrix *evals, PRN *prn)
 {
     double x, y;
     int n = vmat->dim;
@@ -173,10 +173,10 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
     y = 0.0;
 
     for (i=n-1; i>=0; i--) {
-	y += evals[i] / n;
+	y += evals->val[i] / n;
 	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", n - i,
-		evals[i], evals[i] / n, y);
-	x += evals[i];
+		evals->val[i], evals->val[i] / n, y);
+	x += evals->val[i];
     }
     pputc(prn, '\n');
 
@@ -237,9 +237,10 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 		      PRN *prn)
 {
     gretl_matrix *C;
+    gretl_matrix *evals = NULL;
     int k = corrmat->dim;
     int i, j, t, vi, idx;
-    double x, *evals = NULL;
+    double x;
     gretlopt opt = OPT_NONE;
     int err = 0;
 
@@ -290,7 +291,7 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 	} else {
 	    m = 0;
 	    for (i=0; i<k; i++) {
-		if (evals[i] > 1.0) {
+		if (evals->val[i] > 1.0) {
 		    m++;
 		}
 	    }
@@ -305,7 +306,7 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 	    /* build list of PCs */
 	    j = 1;
 	    for (i=k-1; i>=0; i--) {
-		if ((opt & OPT_A) || evals[i] > 1.0) {
+		if ((opt & OPT_A) || evals->val[i] > 1.0) {
 		    plist[j++] = i;
 		}
 	    }
@@ -335,7 +336,7 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 		sprintf(pdinfo->varname[vi], "PC%d", i);
 		make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
 		sprintf(VARLABEL(pdinfo, vi), "Component with "
-			"eigenvalue = %.4f", evals[pi]);
+			"eigenvalue = %.4f", evals->val[pi]);
 
 		for (t=0; t<pdinfo->n; t++) {
 		    (*pZ)[vi][t] = 0.0;
@@ -358,7 +359,7 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 
     } /* end opt (save PCs) conditional */
 
-    free(evals);
+    gretl_matrix_free(evals);
     gretl_matrix_free(C);
 
     if (popt != NULL) {

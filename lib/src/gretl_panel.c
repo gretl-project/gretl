@@ -2524,9 +2524,11 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&mod);
     panelmod_init(&pan);
 
-    mod.errcode = panel_check_for_const(list);
-    if (mod.errcode) {
-	return mod;
+    if (!(opt & OPT_P)) {
+	mod.errcode = panel_check_for_const(list);
+	if (mod.errcode) {
+	    return mod;
+	}
     }
 
     /* add time dummies to list? */

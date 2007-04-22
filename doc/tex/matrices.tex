@@ -777,11 +777,11 @@ the eigenvalues but the eigenvectors are not computed.
 
 The function \texttt{eigengen} computes the eigenvalues, and
 optionally the eigenvectors, of a general $n \times n$ matrix.  The
-eigenvalues are returned directly in a column vector of length $2n$:
-the first $n$ elements are the real components and the remaining $n$
-are the imaginary components.  If the eigenvectors are required (that
-is, if the second argument to \texttt{eigengen} is not \texttt{null}),
-they are returned in an $n \times n$ matrix.
+eigenvalues are returned directly in an $n \times 2$ matrix, the first
+column holding the real components and the second column the imaginary
+components.  If the eigenvectors are required (that is, if the second
+argument to \texttt{eigengen} is not \texttt{null}), they are returned
+in an $n \times n$ matrix.
 
 The function \texttt{svd} computes all or part of the singular value
 decomposition of the real $m \times n$ matrix $A$.  The decomposition

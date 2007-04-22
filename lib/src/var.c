@@ -1291,46 +1291,28 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 static int VAR_add_roots (GRETL_VAR *var)
 {
     gretl_matrix *CompForm = NULL;
-    double *eigA = NULL;
-    double x, y;
-    int i, np, err = 0;
+    int err = 0;
 
     if (var->A == NULL) {
 	return 1;
     }
 
-    np = gretl_matrix_rows(var->A);
+    var->lambda = NULL;
 
-    var->lambda = gretl_matrix_alloc(np, 2);
-    if (var->lambda == NULL) {
-        err = E_ALLOC;
-    }
-
-    if (!err) {
-	CompForm = gretl_matrix_copy(var->A);
-	if (CompForm == NULL) {
-	    err = E_ALLOC;
-	}
+    CompForm = gretl_matrix_copy(var->A);
+    if (CompForm == NULL) {
+	err = E_ALLOC;
     }
 
     /* save eigenvalues of companion form matrix */
     if (!err) {
-        eigA = gretl_general_matrix_eigenvals(CompForm, 0, &err);
-	if (!err) {
-	    for (i=0; i<np; i++) {
-		x = eigA[i];
-		y = eigA[np + i];
-		gretl_matrix_set(var->lambda, i, 0, x);
-		gretl_matrix_set(var->lambda, i, 1, y);
-	    }
+        var->lambda = gretl_general_matrix_eigenvals(CompForm, 0, &err);
 #if 0
-	    gretl_matrix_print(var->A, "Companion form matrix");
-	    gretl_matrix_print(var->lambda, "Eigenvalues");
+	gretl_matrix_print(var->A, "Companion form matrix");
+	gretl_matrix_print(var->lambda, "Eigenvalues");
 #endif
-	}
     }
 
-    free(eigA);
     gretl_matrix_free(CompForm);
 
     if (err) {

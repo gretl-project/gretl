@@ -1105,6 +1105,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     gretl_matrix *C = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *R = NULL;
+    gretl_matrix *evals = NULL;
     gretl_matrix *tmp = NULL;
 
     /* convenience pointers: do not free! */
@@ -1112,7 +1113,6 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     gretl_vector *Z1;
     gretl_vector *Z2;
 
-    double *evals = NULL;
     double x, skew, kurt;
     double X2 = NADBL;
     int n, p;
@@ -1159,7 +1159,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
 
     pputs(prn, "Eigenvalues of the correlation matrix:\n\n");
     for (i=0; i<p; i++) {
-	pprintf(prn, " %10g\n", evals[i]);
+	pprintf(prn, " %10g\n", evals->val[i]);
     }
     pputc(prn, '\n');
 
@@ -1175,7 +1175,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     for (i=0; i<p; i++) {
 	for (j=0; j<p; j++) {
 	    x = gretl_matrix_get(tmp, i, j);
-	    x *= 1.0 / sqrt(evals[j]);
+	    x *= 1.0 / sqrt(evals->val[j]);
 	    gretl_matrix_set(tmp, i, j, x);
 	}
     }
@@ -1246,9 +1246,8 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     gretl_matrix_free(C);
     gretl_matrix_free(X);
     gretl_matrix_free(R);
+    gretl_matrix_free(evals);
     gretl_matrix_free(tmp);
-
-    free(evals);
 
     return err;
 }
