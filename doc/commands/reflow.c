@@ -31,48 +31,41 @@ struct table_row {
     char *cells[2];
 };
 
-struct utf_stuff {
-    char *targ;
-    char *sub;
-};
-
-struct utf_stuff replacers[] = {
-    { "&#8211;", "-" },      /* &ndash; */
-    { "&#8212;", " -- " },   /* &mdash; */
-    { "&gt;", ">" }, 
-    { "&lt;", "<" }, 
-    { "&amp;", "&" },
-    { "&#955;", "lambda" },  /* &lgr; */
-    { "&#956;", "mu" },      /* &mu; */
-    { "&#963;", "sigma" },   /* &sigma; */
-    { "&#0955;", "lambda" }, /* &lgr; */
-    { "&#0956;", "mu" },     /* &mu; */
-    { "&#0963;", "sigma" },  /* &sigma; */
-    { "&#8230;", "..." },    /* &hellip; */
-    { NULL, NULL }
-};
-
-static void trash_utf (char *s, int i)
+static void utf_replace (unsigned char *s)
 {
-    char *p;
-    int slen = strlen(replacers[i].sub);
-    int tlen = strlen(replacers[i].targ);
-    int j, r = tlen - slen;
-
-    while ((p = strstr(s, replacers[i].targ))) {
-	for (j=0; j<slen; j++) {
-	    *p++ = replacers[i].sub[j];
+    while (*s) {
+	if (s[0] == 0xe2) {
+	    if (s[1] == 0x80 && s[2] == 0x93) {
+		/* &ndash; */
+		s[0] = '-';
+		memmove(s + 1, s + 3, strlen((char *) s + 3) + 1);
+	    } else if (s[1] == 0x80 && s[2] == 0x94) {
+		/* &mdash; */
+		memmove(s + 4, s + 3, strlen((char *) s + 3) + 1);
+		s[0] = ' ';
+		s[1] = '-';
+		s[2] = '-';
+		s[3] = ' ';
+	    } else if (s[1] == 0x80 && s[2] == 0xa6) {
+		/* &hellip; */
+		s[0] = '.';
+		s[1] = '.';
+		s[2] = '.';
+	    }
+	} else if (s[0] == 0xce && s[1] == 0xbc) {
+	    /* &mu; */
+	    s[0] = 'm';
+	    s[1] = 'u';
+	} else if (s[0] == 0xcf && s[1] == 0x83) {
+	    /* &sigma; */
+	    memmove(s + 5, s + 2, strlen((char *) s + 2) + 1);
+	    s[0] = 's';
+	    s[1] = 'i';
+	    s[2] = 'g';
+	    s[3] = 'm';
+	    s[4] = 'a';
 	}
-	memmove(p, p + r, strlen(p + r) + 1);
-    }
-}
-
-static void utf_replace (char *s)
-{
-    int i;
-
-    for (i=0; replacers[i].targ != NULL; i++) {
-	trash_utf(s, i);
+	s++;
     }
 }
 
@@ -83,7 +76,7 @@ static void compress_spaces (char *s)
     if (s == NULL || *s == 0) return;
 
     /* replace endashes (and other entities?) */
-    utf_replace(s);
+    utf_replace((unsigned char *) s);
 
     p = s;
     while (*s) {
@@ -553,7 +546,7 @@ int main (int argc, char **argv)
 		    putchar('\n');
 		}
 	    } else {
-		utf_replace(line);
+		utf_replace((unsigned char *) line);
 		fputs(line, stdout);
 		blank = 0;
 	    }

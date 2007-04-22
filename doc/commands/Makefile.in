@@ -52,8 +52,6 @@ EQNXSL = $(CMDSDIR)/equations.xsl
 
 HLPSTAMP = $(SHAREDIR)/hlp.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
-HLPOPT = --hlp --markup
-FLOWOPT = --markup
 OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
@@ -106,24 +104,24 @@ $(FIGSTAMP): $(EQNLIST)
 
 # Generate "online" help files
 $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
+	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
 	if test -f cmdlist.txt ; then \
-	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp ; \
+	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp ; \
 	fi
-	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp
+	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
 	if test -f cmdlist.txt ; then \
-	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es ; \
+	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es ; \
 	fi 
-	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.es
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.es
+	./xsltrans --hlp --markup $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
 	if test -f cmdlist.txt ; then \
-	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it ; \
+	  ./reflow --markup < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it ; \
 	fi
-	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
+	./reflow --markup < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
 .PHONY: test
