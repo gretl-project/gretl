@@ -24,6 +24,7 @@
 #include "clapack_double.h"
 #include "gretl_model.h"
 #include "gretl_panel.h"
+#include "libset.h"
 
 #define PDEBUG 0
 
@@ -214,10 +215,7 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 }
 
 /* Beck and Katz, as outlined in Greene.  We offer the following only
-   for pooled OLS.  FIXME this can produce negative variances for
-   some unbalanced panels.
-
-   Greene writes (in effect):
+   for pooled OLS.  Greene writes (in effect):
 
    Var(b) = A^{-1} W A^{-1}
 
@@ -226,6 +224,9 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 
    and \sigma_{ij} is estimated as (1/T) \sum_{t=1}^T e_i e_j,
    with the e's being OLS residuals.
+
+   In computing this, we need to check that W is positive definite:
+   this seems not to be guaranteed for unbalanced panels.
 */
 
 static int 
@@ -341,15 +342,17 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	}
     }
 
+    /* check that the middle term is p.d. */
+    gretl_matrix_copy_values(V, W);
+    err = gretl_matrix_cholesky_decomp(V);
+    if (err) {
+	gretl_model_set_int(pmod, "panel_bk_failed", 1);
+	goto bailout;
+    }
+
     /* form V = (Xi'Xi)^{-1} W (Xi'Xi)^{-1} */
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
-
-#if 1
-    gretl_matrix_print(XX, "(X'X)^{-1}");
-    gretl_matrix_print(W, "W");
-    gretl_matrix_print(V, "V");
-#endif
 
     p = 0;
     for (i=0; i<k; i++) {
@@ -2482,8 +2485,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
-	/* temporary */
-	if (getenv("BECK_KATZ") != NULL) {
+	if (get_panel_beck_katz()) {
 	    beck_katz_vcv(pmod, pan, Z);
 	} else {
 	    panel_robust_vcv(pmod, pan, Z); /* Arellano */

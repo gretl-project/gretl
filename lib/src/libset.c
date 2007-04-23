@@ -53,6 +53,7 @@ struct robust_opts {
     int force_hc;
     int hkern;
     int prewhite;
+    int pcse;
     double qsband;
 };
 
@@ -104,6 +105,7 @@ static void robust_opts_init (struct robust_opts *opts)
     opts->force_hc = 0; 
     opts->hkern = KERNEL_BARTLETT;
     opts->prewhite = 0;
+    opts->pcse = 0;
     opts->qsband = NADBL;
 }
 
@@ -115,6 +117,7 @@ static void robust_opts_copy (struct robust_opts *opts)
     opts->force_hc = state->ropts.force_hc; 
     opts->hkern = state->ropts.hkern; 
     opts->prewhite = state->ropts.prewhite;
+    opts->pcse = state->ropts.pcse;
     opts->qsband = state->ropts.qsband;
 }
 
@@ -800,6 +803,19 @@ void set_hac_prewhiten (int w)
     state->ropts.prewhite = (w != 0);
 }
 
+int get_panel_beck_katz (void)
+{
+    check_for_state();
+
+    return state->ropts.pcse;
+}
+
+void set_panel_beck_katz (int b)
+{
+    check_for_state();
+    state->ropts.pcse = (b != 0);
+}
+
 double get_qs_bandwidth (void)
 {
     check_for_state();
@@ -1194,6 +1210,7 @@ static int display_settings (PRN *prn)
     } else {
 	pprintf(prn, " qs_bandwidth = %g\n", state->ropts.qsband);
     }
+    pprintf(prn, " pcse = %s\n", state->ropts.pcse);
 
     pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
 
@@ -1379,6 +1396,14 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		set_hac_prewhiten(0);
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "pcse")) {
+	    if (boolean_on(setarg)) { 
+		set_panel_beck_katz(1);
+		err = 0;
+	    } else if (boolean_off(setarg)) { 
+		set_panel_beck_katz(0);
+		err = 0;
+	    }	    
 	} else if (!strcmp(setobj, "qs_bandwidth")) {
 	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
 	    if (!err) {

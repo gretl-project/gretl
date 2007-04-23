@@ -1,0 +1,201 @@
+\chapter{Robust covariance matrix estimation}
+\label{chap-robust-vcv}
+
+\section{Introduction}
+\label{vcv-intro}
+
+Consider (once again) the linear regression model
+%
+\begin{equation}
+\label{eq:ols-again}
+y = X\beta + u
+\end{equation}
+%
+where $y$ and $u$ are $T$-vectors, $X$ is a $T \times k$ matrix of
+regressors, and $\beta$ is a $k$-vector of parameters.  As is well
+known, the estimator of $\beta$ given by Ordinary Least Squares (OLS)
+is
+%
+\begin{equation}
+\label{eq:ols-betahat}
+\hat{\beta} = (X'X)^{-1} X'y
+\end{equation}
+%
+If the condition $E(u|X) = 0$ is satisfied, this is an unbiased
+estimator; under somewhat weaker conditions the estimator is biased
+but consistent.  It is straightforward to show that when the OLS
+estimator is unbiased, its variance is
+%
+\begin{equation}
+\label{eq:ols-varb}
+\mbox{Var}(\hat{\beta}) = (X'X)^{-1} X' \Omega X (X'X)^{-1}
+\end{equation}
+%
+where $\Omega = E(uu')$ is the covariance matrix of the error terms.
+
+Under the assumption that the error terms are independently and
+identically distributed (iid) we can write $\Omega = \sigma^2 I$,
+where $\sigma^2$ is the (common) variance of the errors (and the
+covariances are zero).  In that case (\ref{eq:ols-varb}) simplifies to
+the ``classical'' formula,
+%
+\begin{equation}
+\label{eq:ols-classical-varb}
+\mbox{Var}(\hat{\beta}) = \sigma^2(X'X)^{-1}
+\end{equation}
+
+If the iid assumption is not satisfied, two things follow.  First, it
+is possible in principle to construct a more efficient estimator than
+OLS --- for instance some sort of Feasible Generalized Least Squares
+(FGLS).  Second, the simple ``classical'' formula for the variance of
+the least squares estimator is no longer correct, and hence the
+conventional OLS standard errors --- which are just the square roots
+of the diagonal elements of the matrix defined by
+(\ref{eq:ols-classical-varb}) --- do not provide valid means of
+statistical inference.
+
+In the recent history of econometrics there are broadly two approaches
+to the problem of non-iid errors.  The ``traditional'' approach is to
+use an FGLS estimator.  For example, if the departure from the iid
+condition takes the form of time-series dependence, and if one
+believes that this could be modeled as a case of first-order
+autocorrelation, one might employ an AR(1) estimation method such as
+Cochrane--Orcutt, Hildreth--Lu, or Prais--Winsten.  If the problem is
+that the error variance is non-constant across observations, one might
+estimate the variance as a function of the independent variables and
+then perform weighted least squares, using as weights the reciprocals
+of the estimated variances.
+
+While these methods are still in use, an alternative approach has
+found increasing favor: that is, use OLS but compute standard errors
+(or more generally, covariance matrices) that are robust with respect
+to deviations from the iid assumption.  This is typically combined
+with an emphasis on using large datasets --- large enough that the
+researcher can place some reliance on the (asymptotic) consistency
+property of OLS.  This approach has been enabled by the availability
+of cheap computing power.  The computation of robust standard errors
+and the handling of very large datasets were daunting tasks at one
+time, but now they are unproblematic.  The other point favoring the
+newer methodology is that while FGLS offers an efficiency advantage in
+principle, it often involves making additional statistical assumptions
+which may or may not be justified, which may not be easy to test
+rigorously, and which may threaten the consistency of the estimator
+--- for example, the ``common factor restriction'' that is implied by
+traditional FGLS ``corrections'' for autocorrelated errors.
+
+Stock and Watson's \textit{Introduction to Econometrics} illustrates
+this approach at the level of undergraduate instruction: many of the
+datasets they use comprise thousands or tens of thousands of
+observations; FGLS is downplayed; and robust standard errors are
+reported as a matter of course.  In fact, the discussion of the
+classical standard errors (labeled ``homoskedasticity-only'') is
+confined to an Appendix.  
+
+Against this background it may be useful to set out and discuss all
+the various options offered by \app{gretl} in respect of robust
+covariance matrix estimation.  The first point to notice is that
+\app{gretl} produces ``classical'' standard errors by default (in all
+cases apart from GMM estimation).  In script mode you can get robust
+standard errors by appending the \verb|--robust| flag to estimation
+commands.  In the GUI program the model specification dialog usually
+contains a ``Robust standard errors'' check box, along with a
+``configure'' button that is activated when the box is checked.  The
+configure button takes you to a configuration dialog (which can also
+be reached from the main menu bar: Tools $\rightarrow$ Preferences
+$\rightarrow$ General $\rightarrow$ HCCME).  There you can select from
+a set of possible robust estimation variants, and can also choose to
+make robust estimation the default.
+
+The specifics of the available options depend on the nature of the
+data under consideration --- cross-sectional, time series or panel ---
+and also to some extent the choice of estimator.  (Although we
+introduced robust standard errors in the context of OLS above, they
+may be used in conjunction with other estimators too.)  The next three
+sections of this chapter deal with matters that are specific to the
+three sorts of data just mentioned.  Note that additional details
+regarding covariance matrix estimation in the context of GMM are given
+in chapter~\ref{chap:gmm}.
+
+\section{Cross-sectional data and the HCCME}
+\label{vcv-hccme}
+
+With cross-sectional data, the most likely departure from iid errors
+is heteroskedasticity (non-constant variance).\footnote{In some
+  specialized contexts spatial autocorrelation may be an issue.  Gretl
+  does not have any built-in methods to handle this and we will not
+  discuss it here.}  In some cases one may be able to arrive at a
+judgment regarding the likely form of the heteroskedasticity, and
+hence to apply a specific correction.  The more common case, however,
+is where the heteroskedasticity is of unknown form.  We seek an
+estimator of the covariance matrix of the parameter estimates that
+retains its validity, at least asymptotically, in face of unspecified
+heteroskedasticity.  It is not obvious, a priori, that this should be
+possible, but White (1980) showed that
+%
+\begin{equation}
+\label{eq:ols-varb-h}
+\widehat{\mbox{Var}}_{\rm h}(\hat{\beta}) = 
+       (X'X)^{-1} X' \hat{\Omega} X (X'X)^{-1}
+\end{equation}
+%
+does the trick.  $\hat{\Omega}$ is in this context a diagonal matrix,
+whose non-zero elements may be estimated using squared OLS residuals.
+White referred to (\ref{eq:ols-varb-h}) as a
+heteroskedasticity-consistent covariance matrix estimator (HCCME).
+
+Davidson and MacKinnon (2004) offer a useful discussion of several
+variants on White's HCCME theme that have since been proposed. They
+refer to the original variant of (\ref{eq:ols-varb-h}) --- in which the
+diagonal elements of $\hat{\Omega}$ are estimated directly by the
+squared OLS residuals, $\hat{u}^2_t$ --- as HC$_0$.  In addition we have
+\begin{itemize}
+\item HC$_1$: Applies a degrees-of-freedom correction, multiplying
+  the HC$_0$ matrix by $T/(T-k)$.
+\item HC$_2$: Instead of using $\hat{u}^2_t$ for the diagonal elements
+  of $\hat{\Omega}$, uses $\hat{u}^2_t/(1-h_t)$, where $h_t =
+  X_t(X'X)^{-1}X'_t$, the $t^{\rm th}$ diagonal element of the ``hat''
+  matrix, $P$, which has the property that $P\cdot X = \hat{y}$.  The
+  relevance of $h_t$ is that if the variance of all the $u_t$ is
+  $\sigma^2$, the expectation of $\hat{u}^2_t$ is $\sigma^2(1-h_t)$,
+  or in other words, the ratio $\hat{u}^2_t/(1-h_t)$ has expectation
+  $\sigma^2$.  
+\item HC$_3$: Uses $\hat{u}^2_t/(1-h_t)^2$.  The additional factor of
+  $(1-h_t)$ in the denominator, relative to HC$_2$, may be justified
+  on the grounds that observations with large variances tend to exert
+  a lot of influence on the OLS estimates, so that the corresponding
+  residuals tend to be under-estimated.  FIXME explain a bit more.
+\end{itemize}
+
+The relative merits of these variants have been explored by means of
+both simulations and theoretical analysis.  Unfortunately there is not
+a clear consensus on which is ``best''.  Davidson and MacKinnon argue
+that the original HC$_0$ is likely to perform worse than the others;
+nonetheless, ``White's standard errors'' are probably reported more
+often than the more sophisticated variants and for reasons of
+comparability this is the default HCCME in gretl.  
+
+If you want to use HC$_1$, HC$_2$ or HC$_3$ you can arrange for this
+in either of two ways.  In script mode, you can do, for example,
+%
+\begin{code}
+set hc_version 2
+\end{code}
+%
+In the GUI program you can go to the HCCME configuration dialog, as
+noted above, and choose any of these variants to be the default.
+
+
+\section{Time series data and the HAC}
+\label{vcv-hac}
+
+
+\section{Special issues with panel data}
+\label{vcv-panel}
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

@@ -67,6 +67,9 @@ void set_hac_kernel (int k);
 int get_hac_prewhiten (void);
 void set_hac_prewhiten (int w);
 
+int get_panel_beck_katz (void);
+void set_panel_beck_katz (int b);
+
 double get_qs_bandwidth (void);
 void set_qs_bandwidth (double w);
 

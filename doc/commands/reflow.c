@@ -34,19 +34,19 @@ struct table_row {
 static void utf_replace (unsigned char *s)
 {
     while (*s) {
-	if (s[0] == 0xe2) {
-	    if (s[1] == 0x80 && s[2] == 0x93) {
+	if (s[0] == 0xe2 && s[1] == 0x80) {
+	    if (s[2] == 0x93) {
 		/* &ndash; */
 		s[0] = '-';
 		memmove(s + 1, s + 3, strlen((char *) s + 3) + 1);
-	    } else if (s[1] == 0x80 && s[2] == 0x94) {
+	    } else if (s[2] == 0x94) {
 		/* &mdash; */
 		memmove(s + 4, s + 3, strlen((char *) s + 3) + 1);
 		s[0] = ' ';
 		s[1] = '-';
 		s[2] = '-';
 		s[3] = ' ';
-	    } else if (s[1] == 0x80 && s[2] == 0xa6) {
+	    } else if (s[2] == 0xa6) {
 		/* &hellip; */
 		s[0] = '.';
 		s[1] = '.';
