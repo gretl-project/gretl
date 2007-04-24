@@ -769,8 +769,8 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 
 int gretl_is_arima_model (const MODEL *pmod)
 {
-    int d = (int) gretl_model_get_data(pmod, "arima_d");
-    int D = (int) gretl_model_get_data(pmod, "arima_D");
+    int d = gretl_model_get_int(pmod, "arima_d");
+    int D = gretl_model_get_int(pmod, "arima_D");
 
     return (d > 0 || D > 0);
 }
