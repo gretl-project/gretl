@@ -265,36 +265,135 @@ autocorrelation of the error process are termed HAC
 
 The issue of HAC estimation is treated in more technical terms in
 chapter~\ref{chap:gmm}.  Here we try to convey some of the intuition
-at a more basic level.
+at a more basic level.  We begin with a general comment: HAC
+estimation should \textit{not} be seen as the first resort in dealing
+with an autocorrelated error process.  Even without going to FGLS, it
+is often possible to mitigate the problem of autocorrelation by
+including relevant lagged variables in a time series model, or in
+other words, by specifying the dynamics of the model more fully.
 
-The ``obvious'' extension of White's HCCME to the case of
+That said, the ``obvious'' extension of White's HCCME to the case of
 autocorrelated errors would seem to be this: estimate the off-diagonal
-elements (autocovariances) of $\hat{\Omega}$ using, once again, the
-appropriate OLS residuals: $\hat{\omega}_{ts} = \hat{u}_t \hat{u}_s$.
-This is basically right, but demands an important amendment.  We seek
-a \textit{consistent} estimator, one that converges towards the true
-$\Omega$ as the sample size tends towards infinity.  This can't work
-if we allow unbounded serial dependence.  Bigger samples will enable
-us to estimate more of the true $\omega_{ts}$ elements (that is, for
-$t$ and $s$ more widely separated in time) but will \textit{not}
-contribute ever-increasing information regarding the maximally
-separated $\omega_{ts}$ pairs, since the maximal accessible separation
-itself grows with the sample size.  To ensure consistency, we have to
-confine our attention to processes exhibiting temporally limited
-dependence, or in other words cut off the computation of the
-$\hat{\omega}_{ts}$ values at some maximum value of $p = t-s$ (where
-$p$ may be treated as an increasing function of the sample size, $T$,
-though it cannot increase in proportion to $T$).
+elements of $\hat{\Omega}$ (that is, the autocovariances, $E(u_t
+u_s)$) using, once again, the appropriate OLS residuals:
+$\hat{\omega}_{ts} = \hat{u}_t \hat{u}_s$.  This is basically right,
+but demands an important amendment.  We seek a \textit{consistent}
+estimator, one that converges towards the true $\Omega$ as the sample
+size tends towards infinity.  This can't work if we allow unbounded
+serial dependence.  Bigger samples will enable us to estimate more of
+the true $\omega_{ts}$ elements (that is, for $t$ and $s$ more widely
+separated in time) but will \textit{not} contribute ever-increasing
+information regarding the maximally separated $\omega_{ts}$ pairs,
+since the maximal separation itself grows with the sample size.  To
+ensure consistency, we have to confine our attention to processes
+exhibiting temporally limited dependence, or in other words cut off
+the computation of the $\hat{\omega}_{ts}$ values at some maximum
+value of $p = t-s$ (where $p$ is treated as an increasing function
+of the sample size, $T$, although it cannot increase in proportion to
+$T$).
 
 The simplest variant of this idea is to truncate the computation at
 some finite lag order $p$, where $p$ grows as, say, $T^{1/4}$.  The
 trouble with this is that the resulting $\hat{\Omega}$ may not be a
 positive definite matrix.  In practical terms, we may end up with
-negative estimated variances, in which case the robust standard errors
-that we seek are undefined (being the square roots of negative
-numbers).  The Newey--West estimator works around this problem by
-assigning declining weights to the sample autocovariances as the
-temporal separation increases.
+negative estimated variances.  One solution to this problem is offered
+by The Newey--West estimator (Newey and West, 1987), which assigns
+declining weights to the sample autocovariances as the temporal
+separation increases.
+
+To understand this properly it is helpful to look more closely at the
+covariance matrix given in (\ref{eq:ols-varb-h}), namely,
+%
+\[
+(X'X)^{-1} (X' \hat{\Omega} X) (X'X)^{-1}
+\]
+%
+This is known as a ``sandwich'' estimator.  The bread, which appears
+on both sides, is $(X'X)^{-1}$.  This is a $k \times k$ matrix, and is
+also the key ingredient in the computation of the classical covariance
+matrix.  The filling in the sandwich is
+%
+\[
+\begin{array}{ccccc}
+\hat{\Sigma} & = & X' & \hat{\Omega} & X \\
+{\scriptstyle (k \times k)} & &
+{\scriptstyle (k \times T)} & {\scriptstyle (T \times T)} & 
+  {\scriptstyle (T \times k)}
+\end{array}
+\]
+%
+From a computational point of view, it is not necessary or desirable
+to store the (potentially very large) $T \times T$ matrix
+$\hat{\Omega}$ as such.  Rather, one computes the sandwich filling 
+by summation as
+%
+\[
+\hat{\Sigma} = \hat{\Gamma}(0) + \sum_{j=1}^p w_j 
+  \left(\hat{\Gamma}(j) + \hat{\Gamma}'(j) \right)
+\]
+%
+where the $k \times k$ sample autocovariance matrix $\hat{\Gamma}(j)$,
+for $j \geq 0$, is given by
+\[
+\hat{\Gamma}(j) = \frac{1}{T} \sum_{t=j+1}^T
+  \hat{u}_t \hat{u}_{t-j}\, X'_t\, X_{t-j}
+\]
+and $w_j$ is the weight given to the autocovariance at lag $j > 0$.
+
+This leaves two questions.  How exactly do we determine the maximum
+lag length or ``bandwidth'', $p$, of the HAC estimator?  And how
+exactly are the weights $w_j$ to be determined?  We will return to the
+(difficult) question of the bandwidth shortly.  As regards the
+weights, \app{Gretl} offers three variants.  The default is the
+Bartlett kernel, as used by Newey and West.  This sets
+\[
+w_j = \left\{ \begin{array}{cc}
+     1 - \frac{j}{p+1} & j \leq p \\
+     0 & j > p
+     \end{array}
+    \right.
+\]
+so the weights decline linearly as $j$ increases.  The other two
+options are the Parzen kernel and the Quadratic Spectral (QS) kernel.
+For the Parzen kernel,
+\[
+w_j = \left\{ \begin{array}{cc}
+    1 - 6a_j^2 + 6a_j^3 & 0 \leq a_j \leq 0.5 \\
+    2(1 - a_j)^3 & 0.5 < a_j \leq 1 \\
+    0 & a_j > 1
+    \end{array}
+    \right.
+\]
+where $a_j = j/(p+1)$, and for the QS kernel,
+\[
+w_j = \frac{25}{12\pi^2 d_j^2} 
+   \left(\frac{\sin{m_j}}{m_j} - \cos{m_j} \right)
+\]
+where $d_j = j/p$ and $m_j = 6\pi d_i/5$.  
+
+Figure~\ref{fig:kernels} shows the weights generated by these kernels,
+for $p=4$ and $j$ = 1 to 9.
+
+\begin{figure}[htbp]
+\caption{Three HAC kernels}
+\label{fig:kernels}
+\centering
+\includegraphics{figures/kernels}
+\end{figure}
+
+In \app{gretl} you select the kernel using the \texttt{set} command
+with the \verb|hac_kernel| parameter:
+%
+\begin{code}
+set hac_kernel parzen
+set hac_kernel qs
+set hac_kernel bartlett
+\end{code}
+
+\subsection{Selecting the HAC bandwidth}
+
+
+
 
 
 
