@@ -32,6 +32,8 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo);
 
+int invgenr (int v, double ***pZ, DATAINFO *pdinfo);
+
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
 int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);

@@ -1742,10 +1742,8 @@ int gnuplot (const int *plotlist, const char *literal,
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
 	get_fitted_line(&gi, Z, pdinfo, fit_line);
-	if (gi.fit == PLOT_FIT_OLS) {
-	    pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
-	    pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
-	}
+	pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
+	pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
     }
 
     /* separation by dummy: create special vars */

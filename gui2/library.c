@@ -2919,27 +2919,38 @@ int do_vector_model (selector *sr)
     return err;
 }
 
-static char *quadratic_list_buf (const int *list)
+static char *alt_list_buf (const int *inlist, int fit)
 {
     char *buf;
-    int qlist[5];
-    int vs = list[2];
+    int list[5];
+    int src = inlist[2];
     int v;
 
-    v = xpxgenr(vs, vs, &Z, datainfo);
+    if (fit == PLOT_FIT_QUADRATIC) {
+	v = xpxgenr(src, src, &Z, datainfo);
+    } else {
+	v = invgenr(src, &Z, datainfo);
+    }
 
     if (v < 0) {
-	errbox(_("Failed to generate squares\n"));
+	nomem();
 	return NULL;
     }
 
-    qlist[0] = 4;
-    qlist[1] = list[1];
-    qlist[2] = list[2];
-    qlist[3] = list[3];
-    qlist[4] = v;
+    if (fit == PLOT_FIT_QUADRATIC) {
+	list[0] = 4;
+	list[1] = inlist[1];
+	list[2] = inlist[2];
+	list[3] = inlist[3];
+	list[4] = v;
+    } else {
+	list[0] = 3;
+	list[1] = inlist[1];
+	list[2] = v;
+	list[3] = inlist[3];
+    }	
 
-    buf = gretl_list_to_string(qlist);
+    buf = gretl_list_to_string(list);
 
     if (buf == NULL) {
 	nomem();
@@ -2948,7 +2959,7 @@ static char *quadratic_list_buf (const int *list)
     return buf;
 }
 
-void do_graph_model (const int *list, int quadratic)
+void do_graph_model (const int *list, int fit)
 {
     char *buf = NULL;
     PRN *prn;
@@ -2961,8 +2972,8 @@ void do_graph_model (const int *list, int quadratic)
 	return;
     }
 
-    if (quadratic) {
-	buf = quadratic_list_buf(list);
+    if (fit == PLOT_FIT_QUADRATIC || fit == PLOT_FIT_INVERSE) {
+	buf = alt_list_buf(list, fit);
     } else {
 	buf = gretl_list_to_string(list);
     }

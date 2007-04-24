@@ -28,6 +28,10 @@ enum {
     VARS_DIFFER
 } varcomp_codes;
 
+enum {
+    INVERSE = NC + 1
+};
+
 static int check_vals (const double *x, const double *y, int n)
 {
     int ret = VARS_IDENTICAL;
@@ -100,7 +104,10 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	strcpy(vname, "D");
 	strncat(vname, orig, len - strlen(ext) - 1);
 	strcat(vname, ext);
-    }	
+    } else if (ci == INVERSE) {
+	strcpy(vname, "i_");
+	strncat(vname, orig, len - 2);
+    }
 
     return 0;
 }
@@ -127,6 +134,8 @@ make_transform_label (char *label, const char *parent,
 	} else {
 	    sprintf(label, "= %s(t + %d)", parent, -lag);
 	}
+    } else if (ci == INVERSE) {
+	sprintf(label, "= 1/%s", parent);
     } else {
 	err = 1;
     }
@@ -364,6 +373,26 @@ static int get_xpx (int vi, int vj, double *xvec, const double **Z,
     return 0;
 }
 
+/* write reciprocal into xvec */
+
+static int get_inverse (int v, double *xvec, const double **Z, 
+			const DATAINFO *pdinfo)
+{
+    double xt;
+    int t;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xt = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
+	if (na(xt) || xt == 0.0) {
+	    xvec[t] = NADBL;
+	} else {
+	    xvec[t] = 1.0 / xt;
+	}
+    }
+
+    return 0;
+}
+
 /* write dummy for (v == value) into xvec */
 
 static int get_discdum (int v, double val, double *xvec, const double **Z, 
@@ -488,6 +517,8 @@ static int get_transform (int ci, int v, int aux, double x,
     } else if (ci == DUMMIFY) {
 	/* "x" = value for dummy */
 	err = get_discdum(v, x, vx, (const double **) *pZ, pdinfo);
+    } else if (ci == INVERSE) {
+	err = get_inverse(v, vx, (const double **) *pZ, pdinfo);
     }
 
     if (err) {
@@ -577,6 +608,23 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
     return get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
+}
+
+/**
+ * invgenr: 
+ * @v: ID number in dataset of source variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on dataset.
+ *
+ * Creates the reciprocal of variable @v if this variable does
+ * not already exist.
+ *
+ * Returns: the ID number of the reciprocal, or -1 on error.
+ */
+
+int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
+{
+    return get_transform(INVERSE, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 /**
