@@ -24,11 +24,14 @@ is
 If the condition $E(u|X) = 0$ is satisfied, this is an unbiased
 estimator; under somewhat weaker conditions the estimator is biased
 but consistent.  It is straightforward to show that when the OLS
-estimator is unbiased, its variance is
+estimator is unbiased (that is, when $E(\hat{\beta}-\beta) = 0$), its
+variance is
 %
 \begin{equation}
 \label{eq:ols-varb}
-\mbox{Var}(\hat{\beta}) = (X'X)^{-1} X' \Omega X (X'X)^{-1}
+\mbox{Var}(\hat{\beta}) = 
+  E\left((\hat{\beta}-\beta)(\hat{\beta}-\beta)'\right) 
+  = (X'X)^{-1} X' \Omega X (X'X)^{-1}
 \end{equation}
 %
 where $\Omega = E(uu')$ is the covariance matrix of the error terms.
@@ -83,13 +86,13 @@ rigorously, and which may threaten the consistency of the estimator
 --- for example, the ``common factor restriction'' that is implied by
 traditional FGLS ``corrections'' for autocorrelated errors.
 
-Stock and Watson's \textit{Introduction to Econometrics} illustrates
-this approach at the level of undergraduate instruction: many of the
-datasets they use comprise thousands or tens of thousands of
-observations; FGLS is downplayed; and robust standard errors are
+James Stock and Mark Watson's \textit{Introduction to Econometrics}
+illustrates this approach at the level of undergraduate instruction:
+many of the datasets they use comprise thousands or tens of thousands
+of observations; FGLS is downplayed; and robust standard errors are
 reported as a matter of course.  In fact, the discussion of the
 classical standard errors (labeled ``homoskedasticity-only'') is
-confined to an Appendix.  
+confined to an Appendix.
 
 Against this background it may be useful to set out and discuss all
 the various options offered by \app{gretl} in respect of robust
@@ -110,11 +113,22 @@ The specifics of the available options depend on the nature of the
 data under consideration --- cross-sectional, time series or panel ---
 and also to some extent the choice of estimator.  (Although we
 introduced robust standard errors in the context of OLS above, they
-may be used in conjunction with other estimators too.)  The next three
-sections of this chapter deal with matters that are specific to the
-three sorts of data just mentioned.  Note that additional details
+may be used in conjunction with other estimators too.)  The following
+three sections of this chapter deal with matters that are specific to
+the three sorts of data just mentioned.  Note that additional details
 regarding covariance matrix estimation in the context of GMM are given
 in chapter~\ref{chap:gmm}.
+
+We close this introduction with a brief statement of what ``robust
+standard errors'' can and cannot achieve.  They can provide for
+asymptotically valid statistical inference in models that are
+basically correctly specified, but in which the errors are not iid.
+The ``asymptotic'' part means that they may be of little use in small
+samples.  The ``correct specification'' part means that they are not a
+magic bullet: if the error term is correlated with the regressors, so
+that the parameter estimates themselves are biased and inconsistent,
+robust standard errors will not save the day.
+
 
 \section{Cross-sectional data and the HCCME}
 \label{vcv-hccme}
@@ -138,19 +152,40 @@ possible, but White (1980) showed that
        (X'X)^{-1} X' \hat{\Omega} X (X'X)^{-1}
 \end{equation}
 %
-does the trick.  $\hat{\Omega}$ is in this context a diagonal matrix,
-whose non-zero elements may be estimated using squared OLS residuals.
-White referred to (\ref{eq:ols-varb-h}) as a
-heteroskedasticity-consistent covariance matrix estimator (HCCME).
+does the trick. (As usual in statistics, we need to say ``under
+certain conditions'', but the conditions are not very restrictive.)
+$\hat{\Omega}$ is in this context a diagonal matrix, whose non-zero
+elements may be estimated using squared OLS residuals.  White referred
+to (\ref{eq:ols-varb-h}) as a heteroskedasticity-consistent covariance
+matrix estimator (HCCME).
 
-Davidson and MacKinnon (2004) offer a useful discussion of several
-variants on White's HCCME theme that have since been proposed. They
-refer to the original variant of (\ref{eq:ols-varb-h}) --- in which the
-diagonal elements of $\hat{\Omega}$ are estimated directly by the
-squared OLS residuals, $\hat{u}^2_t$ --- as HC$_0$.  In addition we have
+Davidson and MacKinnon (2004, chapter 5) offer a useful discussion of
+several variants on White's HCCME theme. They refer to the original
+variant of (\ref{eq:ols-varb-h}) --- in which the diagonal elements of
+$\hat{\Omega}$ are estimated directly by the squared OLS residuals,
+$\hat{u}^2_t$ --- as HC$_0$.  (The associated standard errors are
+often called ``White's standard errors''.)  The various refinements of
+White's proposal share a common point of departure, namely the idea
+that the squared OLS residuals are likely to be ``too small'' on
+average.  This point is quite intuitive.  The OLS parameter estimates,
+$\hat{\beta}$, satisfy by design the criterion that the sum of
+squared residuals,
+%
+\[
+\sum \hat{u}^2_t = \sum \left( y_t - X_t \hat{\beta} \right)^2
+\]
+%
+is minimized for given $X$ and $y$.  Suppose that $\hat{\beta} \neq
+\beta$.  This is almost certain to be the case: even is OLS is not
+biased, it would be a miracle if the $\hat{\beta}$ calculated from any
+finite sample were exactly equal to $\beta$.  But in that case the sum
+of squares of the true, unobserved \textit{errors}, $\sum u^2_t = \sum
+(y_t - X_t \beta)^2$ is bound to be greater than $\sum \hat{u}^2_t$.
+The elaborated variants on HC$_0$ take this point on board as follows:
+%
 \begin{itemize}
-\item HC$_1$: Applies a degrees-of-freedom correction, multiplying
-  the HC$_0$ matrix by $T/(T-k)$.
+\item HC$_1$: Applies a degrees-of-freedom correction, multiplying the
+  HC$_0$ matrix by $T/(T-k)$.
 \item HC$_2$: Instead of using $\hat{u}^2_t$ for the diagonal elements
   of $\hat{\Omega}$, uses $\hat{u}^2_t/(1-h_t)$, where $h_t =
   X_t(X'X)^{-1}X'_t$, the $t^{\rm th}$ diagonal element of the ``hat''
@@ -158,23 +193,26 @@ squared OLS residuals, $\hat{u}^2_t$ --- as HC$_0$.  In addition we have
   relevance of $h_t$ is that if the variance of all the $u_t$ is
   $\sigma^2$, the expectation of $\hat{u}^2_t$ is $\sigma^2(1-h_t)$,
   or in other words, the ratio $\hat{u}^2_t/(1-h_t)$ has expectation
-  $\sigma^2$.  
+  $\sigma^2$.  As Davidson and MacKinnon show, $0\leq h_t <1$ for all
+  $t$, so this adjustment cannot reduce the the diagonal elements of
+  $\hat{\Omega}$ and in general revises them upward.
 \item HC$_3$: Uses $\hat{u}^2_t/(1-h_t)^2$.  The additional factor of
   $(1-h_t)$ in the denominator, relative to HC$_2$, may be justified
   on the grounds that observations with large variances tend to exert
   a lot of influence on the OLS estimates, so that the corresponding
-  residuals tend to be under-estimated.  FIXME explain a bit more.
+  residuals tend to be under-estimated.  See Davidson and MacKinnon
+  for more details.  
 \end{itemize}
 
 The relative merits of these variants have been explored by means of
 both simulations and theoretical analysis.  Unfortunately there is not
 a clear consensus on which is ``best''.  Davidson and MacKinnon argue
 that the original HC$_0$ is likely to perform worse than the others;
-nonetheless, ``White's standard errors'' are probably reported more
-often than the more sophisticated variants and for reasons of
-comparability this is the default HCCME in gretl.  
+nonetheless, ``White's standard errors'' are reported more often than
+the more sophisticated variants and therefore, for reasons of
+comparability, HC$_0$ is the default HCCME in \app{gretl}.
 
-If you want to use HC$_1$, HC$_2$ or HC$_3$ you can arrange for this
+If you wish to use HC$_1$, HC$_2$ or HC$_3$ you can arrange for this
 in either of two ways.  In script mode, you can do, for example,
 %
 \begin{code}
@@ -185,8 +223,79 @@ In the GUI program you can go to the HCCME configuration dialog, as
 noted above, and choose any of these variants to be the default.
 
 
-\section{Time series data and the HAC}
+\section{Time series data and HAC covariance matrices}
 \label{vcv-hac}
+
+Heteroskedasticity may be an issue with time series data too, but it
+is unlikely to be the only, or even the primary, concern.  
+
+One form of heteroskedasticity is common in macroeconomic time series,
+but is fairly easily dealt with.  That is, in the case of strongly
+trending series such as Gross Domestic Product, aggregate consumption,
+aggregate investment, and so on, higher levels of the variable in
+question are likely to be associated with higher variability in
+absolute terms.  The obvious ``fix'', employed in many
+macroeconometric studies, is to use the logs of such series rather
+than the raw levels.  Provided the \textit{proportional} variability
+of such series remains roughly constant over time, the log
+transformation is effective.  
+
+Other forms of heteroskedasticity may resist the log transformation,
+but may demand a special treatment distinct from the calculation of
+robust standard errors.  We have in mind here \textit{autoregressive
+  conditional} heteroskedasticity, for example in the behavior of
+asset prices, where large disturbances to the market may usher in
+periods of increased volatility.  Such phenomena call for specific
+estimation strategies, such as GARCH (see chapter~\ref{chap:timeser}).
+
+Despite the points made above, some residual degree of
+heteroskedasticity may be present in time series data: the key point
+is that in most cases it is likely to be combined with serial
+correlation (autocorrelation), hence demanding a special treatment.
+In White's approach, $\hat{\Omega}$, the estimated covariance matrix
+of the $u_t$, remains conveniently diagonal: the variances,
+$E(u^2_t)$, may differ by $t$ but the covariances, $E(u_t u_s)$, are
+all zero.  Autocorrelation in time series data means that at least
+some of the the diagonal elements of $\hat{\Omega}$ should be
+non-zero.  This introduces a substantial complication and requires
+another piece of terminology; estimates of the covariance matrix that
+are asymptotically valid in face of both heteroskedasticity and
+autocorrelation of the error process are termed HAC
+(heteroskedasticity and autocorrelation consistent).
+
+The issue of HAC estimation is treated in more technical terms in
+chapter~\ref{chap:gmm}.  Here we try to convey some of the intuition
+at a more basic level.
+
+The ``obvious'' extension of White's HCCME to the case of
+autocorrelated errors would seem to be this: estimate the off-diagonal
+elements (autocovariances) of $\hat{\Omega}$ using, once again, the
+appropriate OLS residuals: $\hat{\omega}_{ts} = \hat{u}_t \hat{u}_s$.
+This is basically right, but demands an important amendment.  We seek
+a \textit{consistent} estimator, one that converges towards the true
+$\Omega$ as the sample size tends towards infinity.  This can't work
+if we allow unbounded serial dependence.  Bigger samples will enable
+us to estimate more of the true $\omega_{ts}$ elements (that is, for
+$t$ and $s$ more widely separated in time) but will \textit{not}
+contribute ever-increasing information regarding the maximally
+separated $\omega_{ts}$ pairs, since the maximal accessible separation
+itself grows with the sample size.  To ensure consistency, we have to
+confine our attention to processes exhibiting temporally limited
+dependence, or in other words cut off the computation of the
+$\hat{\omega}_{ts}$ values at some maximum value of $p = t-s$ (where
+$p$ may be treated as an increasing function of the sample size, $T$,
+though it cannot increase in proportion to $T$).
+
+The simplest variant of this idea is to truncate the computation at
+some finite lag order $p$, where $p$ grows as, say, $T^{1/4}$.  The
+trouble with this is that the resulting $\hat{\Omega}$ may not be a
+positive definite matrix.  In practical terms, we may end up with
+negative estimated variances, in which case the robust standard errors
+that we seek are undefined (being the square roots of negative
+numbers).  The Newey--West estimator works around this problem by
+assigning declining weights to the sample autocovariances as the
+temporal separation increases.
+
 
 
 \section{Special issues with panel data}
