@@ -985,6 +985,17 @@ void set_tseries_hccme (const char *s)
     free(scpy);
 }
 
+void set_panel_hccme (const char *s)
+{
+    check_for_state();
+
+    if (!strcmp(s, "Arellano")) {
+	state->ropts.pcse = 0;
+    } else if (!strcmp(s, "PCSE")) {
+	state->ropts.pcse = 1;
+    }
+}
+
 void set_garch_robust_vcv (const char *s)
 {
     char *scpy = gretl_strdup(s);

@@ -53,6 +53,7 @@ int get_shell_ok (void);
 
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
+void set_panel_hccme (const char *s);
 
 void set_garch_robust_vcv (const char *s);
 int get_garch_vcv_version (void);

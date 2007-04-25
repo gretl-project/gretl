@@ -101,6 +101,7 @@ static char scriptpage[24];
 static int hc_by_default;
 static char hc_xsect[5] = "HC1";
 static char hc_tseri[5] = "HAC";
+static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
 #ifdef G_OS_WIN32
@@ -271,6 +272,8 @@ RCVAR rc_vars[] = {
       LISTSET, 5, TAB_VCV, NULL },
     { "HC_tseri", N_("For time-series data"), NULL, hc_tseri, 
       LISTSET, 5, TAB_VCV, NULL },
+    { "HC_panel", N_("For panel data"), NULL, hc_panel, 
+      LISTSET, 9, TAB_VCV, NULL },
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
@@ -976,6 +979,9 @@ static GList *get_settings_list (void *var)
     char *hc_strs[] = {
 	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
     };
+    char *hc_panel_strs[] = {
+	"Arellano", "PCSE"
+    };
     char *garch_strs[] = {
 	"QML", "BW"
     };
@@ -993,6 +999,11 @@ static GList *get_settings_list (void *var)
 	if (var == hc_xsect) n--;
 	for (i=0; i<n; i++) {
 	    list = g_list_append(list, hc_strs[i]);
+	}
+    } else if (var == hc_panel) {
+	n = sizeof hc_panel_strs / sizeof hc_panel_strs[0];
+	for (i=0; i<n; i++) {
+	    list = g_list_append(list, hc_panel_strs[i]);
 	}
     } else if (var == hc_garch) {
 	n = sizeof garch_strs / sizeof garch_strs[0];
@@ -1223,8 +1234,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    list = get_settings_list(rc->var);
 	    gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), strvar);
-	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 
-				      rc->len - 1);
+	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 8);
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
 				      FALSE);
 	    gtk_widget_show(rc->widget);
@@ -1428,6 +1438,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_shell_ok(shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
+    set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
