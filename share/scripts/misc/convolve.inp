@@ -1,0 +1,16 @@
+nulldata 10
+# define two polynomials
+a = { 1, 0.5,    0, 0 }'
+b = { 1, 0.3, -0.8, 0 }'
+# perform the transforms
+f = fft(a ~ b)
+# complex-multiply the two transforms 
+fc = cmult(f[,1:2], f[,3:4]) 
+print fc
+# compute the coefficients of c = a * b via the inverse transform
+c = ffti(fc)
+print c
+
+
+
+
