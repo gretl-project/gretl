@@ -201,7 +201,7 @@ The elaborated variants on HC$_0$ take this point on board as follows:
   on the grounds that observations with large variances tend to exert
   a lot of influence on the OLS estimates, so that the corresponding
   residuals tend to be under-estimated.  See Davidson and MacKinnon
-  for more details.  
+  for a fuller explanation.
 \end{itemize}
 
 The relative merits of these variants have been explored by means of
@@ -266,26 +266,16 @@ autocorrelation of the error process are termed HAC
 The issue of HAC estimation is treated in more technical terms in
 chapter~\ref{chap:gmm}.  Here we try to convey some of the intuition
 at a more basic level.  We begin with a general comment: residual
-autocorrelation is not a property of the data, it is a symptom of an
-indequate model. Data may be persistent though time, and if we try to
-fit a model that does not take this aspect into account properly, we
-end up with a model with autocorrelated disturbances.
+autocorrelation is not so much a property of the data, as a symptom of
+an indequate model.  Data may be persistent though time, and if we fit
+a model that does not take this aspect into account properly, we end
+up with a model with autocorrelated disturbances.  Conversely, it is
+often possible to mitigate or even eliminate the problem of
+autocorrelation by including relevant lagged variables in a time
+series model, or in other words, by specifying the dynamics of the
+model more fully.  HAC estimation should \textit{not} be seen as the
+first resort in dealing with an autocorrelated error process.
 
-As a consequence, it is often possible to mitigate or to eliminate the
-problem of autocorrelation altogether by including relevant lagged
-variables in a time series model, or in other words, by specifying the
-dynamics of the model more fully. HAC estimation should \textit{not} be
-seen as the first resort in dealing with an autocorrelated error
-process. 
-
-In this context, the matrix $X' \Omega X$ is sometimes called the
-\emph{long-run} covariance matrix of the vector $X_t u_t$, and it can
-be shown to be the asymptotic covariance matrix of the time average
-%
-\[
-\frac{1}{T} \sum_{t=1}^T X_t u_t. 
-\]
-%
 That said, the ``obvious'' extension of White's HCCME to the case of
 autocorrelated errors would seem to be this: estimate the off-diagonal
 elements of $\hat{\Omega}$ (that is, the autocovariances, $E(u_t
@@ -337,6 +327,15 @@ matrix.  The filling in the sandwich is
 \end{array}
 \]
 %
+Since $\Omega = E(uu')$, the matrix being estimated here can also be
+written as
+\[
+\Sigma = E(X'u\,u'X)
+\]
+%
+which expresses $\Sigma$ as the long-run covariance of the random
+$k$-vector $X'u$.   
+
 From a computational point of view, it is not necessary or desirable
 to store the (potentially very large) $T \times T$ matrix
 $\hat{\Omega}$ as such.  Rather, one computes the sandwich filling 
@@ -408,12 +407,66 @@ set hac_kernel bartlett
 \subsection{Selecting the HAC bandwidth}
 \label{sec:hac-bw}
 
-(\ldots)
+The asymptotic theory developed by Newey, West and others tells us in
+general terms how the HAC bandwidth, $p$, should grow with the sample
+size, $T$ --- that is, $p$ should grow in proportion to some
+fractional power of $T$.  Unfortunately this is of little help to the
+applied econometrician, working with a given dataset of fixed size.
+Various rules of thumb have been suggested, and \app{gretl} implements
+two such.  The default is $p = 0.75 T^{1/3}$, as recommended by Stock
+and Watson (2003).  An alternative is $p = 4(T/100)^{2/9}$, as in
+Wooldridge (2002b).  In each case one takes the integer part of the
+result.  These variants are labeled \texttt{nw1} and \texttt{nw2}
+respectively, in the context of the \texttt{set} command with the
+\verb|hac_lag| parameter.  That is, you can switch to the version
+given by Wooldridge with
+%
+\begin{code}
+set hac_lag nw2
+\end{code}
+%
+As shown in Table~\ref{tab:haclag} the chice between \texttt{nw1} and
+\texttt{nw2} does not make a great deal of difference.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{ccc}
+    $T$ & $p$ (\texttt{nw1}) & $p$ (\texttt{nw2}) \\[4pt]
+50& 	2& 	3 \\
+100& 	3& 	4 \\
+150& 	3& 	4 \\
+200& 	4& 	4 \\
+300& 	5& 	5 \\
+400& 	5& 	5 \\
+  \end{tabular}
+\caption{HAC bandwidth: two rules of thumb}
+\label{tab:haclag}
+\end{table}
+
+You also have the option of specifying a fixed numerical value for
+$p$, as in
+%
+\begin{code}
+set hac_lag 6
+\end{code}
+%
+In addition you can set a distinct bandwidth for use with the
+Quadratic Spectral kernel (since this need not be an integer).  For
+example,
+%
+\begin{code}
+set qs_bandwidth 3.5
+\end{code}
+
+\subsection{Data-based bandwidth selection and prewhitening}
+\label{sec:hac-prewhiten}
+
+
 
 An alternative approach is to deal with residual autocorrelation by
 attacking the problem from two sides. The intuition behind the
 technique known as \emph{VAR prewhitening} (Andrews and Monahan, 1992)
-can be illustrated by a simple example: if $u_t$ is a sequence of
+can be illustrated by a simple example: if $x_t$ is a sequence of
 first-order autocorrelated random variables
 %
 \[
@@ -423,31 +476,31 @@ first-order autocorrelated random variables
 then the long-run variance of $x_t$ can be shown to be
 %
 \[
-  V_{LR}(x_t) = \frac{V_{LR}(u_t)}{(1-\rho)^2} .
+  V_{LR}(x_t) = \frac{V_{LR}(u_t)}{(1-\rho)^2}
 \]
 %
 In most cases, $u_t$ is likely to be less autocorrelated than $x_t$,
 so a smaller bandwidth should suffice. Estimation of $V_{LR}(x_t)$ can
-therefore proceed in two steps: first, estimate $\rho$; then, obtain
-a HAC estimate of $\hat{u}_t = x_t - \hat{\rho} x_{t-1}$ and divide
-the result by $(1-\rho)^2$.
+therefore proceed in three steps: (1) estimate $\rho$; (2) obtain a
+HAC estimate of $\hat{u}_t = x_t - \hat{\rho} x_{t-1}$; and (3) and
+divide the result by $(1-\rho)^2$.
 
 The application of the above concept to our problem implies estimating
 a finite-order Vector Autoregression on the vector variables $\xi_t =
-X_t u_t$. In general, the VAR can be of any order, but in most cases 1
-is sufficient: the aim is not to build a waterproof model for $\xi_t$,
-but just to have the VAR ``mop up'' a substantial part of the
+X_t \hat{u}_t$. In general, the VAR can be of any order, but in most
+cases 1 is sufficient: the aim is not to build a watertight model for
+$\xi_t$, but just to have the VAR ``mop up'' a substantial part of the
 autocorrelation. Hence, the following VAR is estimated
 %
 \[
-  \xi_t = A \xi_{t-1} + u_t
+  \xi_t = A \xi_{t-1} + \varepsilon_t
 \]
 %
-Then, the matrix $X'\Omega X$ can be recovered via
+Then an estimate of the matrix $X'\Omega X$ can be recovered via
 \[
-  (I- \hat{A})^{-1} \hat{\Sigma}_u (I- \hat{A}')^{-1} ,
+  (I- \hat{A})^{-1} \hat{\Sigma}_{\varepsilon} (I- \hat{A}')^{-1}
 \]
-where $\hat{\Sigma}_u$ is any HAC estimator, applied to the VAR
+where $\hat{\Sigma}_{\varepsilon}$ is any HAC estimator, applied to the VAR
 residuals.
 
 \section{Special issues with panel data}
