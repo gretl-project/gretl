@@ -2,6 +2,9 @@ topsrc = @top_srcdir@
 datarootdir = @datarootdir@
 
 prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+
 CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
@@ -48,7 +51,7 @@ LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
-plugindir = $(prefix)/lib/gretl-gtk2
+plugindir = $(libdir)/gretl-gtk2
 GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
 GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(shell pkg-config --cflags glib-2.0)
 GRETL_ZIP_LIBS := $(shell pkg-config --libs glib-2.0) -lz
