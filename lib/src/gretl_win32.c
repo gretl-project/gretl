@@ -30,8 +30,8 @@ int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
-    char regpath[32];
-    int error = 0;
+    char regpath[64];
+    int err = 0;
     HKEY regkey;
 
     sprintf(regpath, "Software\\%s", base);
@@ -56,19 +56,19 @@ int read_reg_val (HKEY tree, const char *base,
 			&datalen
 			) != ERROR_SUCCESS) {
 	*keyval = '\0';
-	error = 1;
+	err = 1;
     }
 
     RegCloseKey(regkey);
 
-    return error;
+    return err;
 }
 
 int write_reg_val (HKEY tree, const char *base, 
 		   const char *keyname, const char *keyval)
 {
-    char regpath[32];
-    int error = 0;
+    char regpath[64];
+    int err = 0;
     HKEY regkey;
 
     sprintf(regpath, "Software\\%s", base);
@@ -94,12 +94,12 @@ int write_reg_val (HKEY tree, const char *base,
                   REG_SZ,
                   keyval,
                   strlen(keyval) + 1) != ERROR_SUCCESS) {
-        error = 1;
+        err = 1;
     }
                   
     RegCloseKey(regkey);
 
-    return error;
+    return err;
 }
 
 void cli_read_registry (char *callname, PATHS *ppaths)

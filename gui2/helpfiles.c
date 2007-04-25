@@ -25,7 +25,9 @@
 #include "treeutils.h"
 #include "dlgutils.h"
 
-#ifndef G_OS_WIN32
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#else
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <fcntl.h>
@@ -1611,10 +1613,7 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
     }
 
 #if defined(G_OS_WIN32)
-    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
-    }
+    win32_open_file(fname);
 #elif defined(OSX_BUILD)
     osx_open_file(fname);
 #else

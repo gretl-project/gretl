@@ -400,7 +400,7 @@ static NODE *base (parser *p, NODE *up)
 
 static NODE *get_string_arg (parser *p)
 {
-    char str[MAXSTR] = {0};
+    char str[GENSTRLEN] = {0};
     int i, close = -1;
 
     if (p->ch != ')') {
@@ -409,11 +409,11 @@ static NODE *get_string_arg (parser *p)
 
 	close = parser_charpos(p, ')');
 
-	if (close < 0 || close > MAXSTR - 2) {
+	if (close < 0 || close > GENSTRLEN - 2) {
 	    p->err = E_PARSE;
 	    if (close > 0) {
 		pprintf(p->prn, _("String is too long (%d versus %d max)\n"),
-			close, MAXSTR);
+			close, GENSTRLEN);
 	    } else {
 		unmatched_symbol_error('(', p);
 	    }

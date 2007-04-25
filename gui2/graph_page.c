@@ -23,6 +23,7 @@
 
 #ifdef G_OS_WIN32 
 # include <io.h>
+# include "gretlwin32.h"
 #else
 # include <unistd.h>
 # include <sys/stat.h>
@@ -542,11 +543,7 @@ static int real_display_gpage (void)
     }
 
 #if defined(G_OS_WIN32)
-    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
-	err = 1;
-    }
+    err = win32_open_file(fname);
 #elif defined(OSX_BUILD)
     err = osx_open_file(fname);
 #else

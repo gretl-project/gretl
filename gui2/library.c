@@ -5950,10 +5950,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #if defined(G_OS_WIN32)
 	if (!strncmp(latex, "pdf", 3)) {
 	    sprintf(tmp, "%s.pdf", texbase);
-	    if ((int) ShellExecute(NULL, "open", tmp, NULL, NULL, SW_SHOW) <= 32) {
-		DWORD dw = GetLastError();
-		win_show_error(dw);
-	    }
+	    win32_open_file(tmp);
 	} else {
 	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
 	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {

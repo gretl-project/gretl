@@ -240,7 +240,7 @@ enum {
     DUM_DATASET
 };
 
-#define MAXSTR 128
+#define GENSTRLEN 128
 
 #define func_symb(s) ((s > OP_MAX && s < FUNC_MAX) || \
                        s == LAG || s == OBS)

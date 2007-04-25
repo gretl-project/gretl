@@ -4510,7 +4510,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 	}
     }
 
-    if (n > 0 && n < MAXSTR && b == 0) {
+    if (n > 0 && n < GENSTRLEN && b == 0) {
 	strncat(lhs, s, n);
     }
 
@@ -4522,7 +4522,7 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
-    char test[MAXSTR], opstr[3] = {0};
+    char test[GENSTRLEN], opstr[3] = {0};
     int newvar = 1;
 
     while (isspace(*s)) s++;

@@ -3,7 +3,7 @@
 
 <commandlist language="english">
 
-<?PSGML NOFILL label code altforms altform menu-path other-access?>
+<?PSGML NOFILL label code altforms altform menu-path equation other-access?>
 
   <command name="add" section="Tests" label="Add variables to model">
 
@@ -3504,6 +3504,13 @@
 	command.  Please see the gretl manual or the script commands
 	help file for details.</para>
 
+      <para>When estimating a model via OLS using panel data, the default
+	robust estimator of the covariance matrix is that given by
+	Arellano.  The alternative is Beck and Katz's Panel Corrected
+	Standard Errors (PCSE).  The latter take into account
+	heteroskedastcity but not autocorrelation.  
+      </para>
+
       <para>Two robust estimators of the covariance matrix are
 	offered for GARCH models: QML is the Quasi-Maximum Likelihood
 	Estimator, and BW is the Bollerslev-Wooldridge estimator.
@@ -6760,23 +6767,24 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default) or
-	    <lit>nw2</lit>, or an integer.  Sets the maximum lag value or
-	    bandwidth, <mathvar>p</mathvar>, used when calculating HAC
-	    (Heteroskedasticity and Autocorrelation Consistent) standard
-	    errors using the Newey-West approach, for time series data.
-	    <lit>nw1</lit> and <lit>nw2</lit> represent two variant
-	    automatic calculations based on the sample size,
+	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default),
+	    <lit>nw2</lit>, <lit>nw3</lit> or an integer.  Sets the
+	    maximum lag value or bandwidth, <mathvar>p</mathvar>, used
+	    when calculating HAC (Heteroskedasticity and Autocorrelation
+	    Consistent) standard errors using the Newey-West approach, for
+	    time series data.  <lit>nw1</lit> and <lit>nw2</lit> represent
+	    two variant automatic calculations based on the sample size,
 	    <mathvar>T</mathvar>: for nw1, 
-	  <equation status="inline"
-	    tex="$p = 0.75 \times T^{1/3}$"
-	    ascii="p = 0.75 * T^(1/3)"
-	    graphic="nw1"/>, and for nw2, 
-	  <equation status="inline"
-	    tex="$p = 4 \times (T/100)^{2/9}$"
-	    ascii="p = 4 * (T/100)^(2/9)"
-	    graphic="nw2"/>.
-	    See also <lit>qs_bandwidth</lit> below. 
+	    <equation status="inline"
+	      tex="$p = 0.75 \times T^{1/3}$" 
+	      ascii="p = 0.75 * T^(1/3)"
+	      graphic="nw1"/>, and for nw2, 
+	    <equation status="inline"
+	      tex="$p = 4 \times (T/100)^{2/9}$" 
+	      ascii="p = 4 * (T/100)^(2/9)" 
+	      graphic="nw2"/>. <lit>nw3</lit> calls for data-based
+	    bandwidth selection.  See also <lit>qs_bandwidth</lit> and
+	    <lit>hac_prewhiten</lit> below.
 	  </para>
 	</li>
 	<li>
@@ -6784,6 +6792,13 @@
 	    <lit>parzen</lit>, or <lit>qs</lit> (Quadratic Spectral).
 	    Sets the kernel, or pattern of weights, used when calculating
 	    HAC standard errors.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> or <lit>off</lit>
+	    (the default). Use Andrews-Monahan prewhitening and
+	    re-coloring when computing HAC standard errors.  This also
+	    implies use of data-based bandwidth selection.
 	  </para>
 	</li>
 	<li>
@@ -6812,6 +6827,16 @@
 	    <quote>on</quote>, this forces calculation of the regular
 	    Heteroskedasticity Consistent Covariance Matrix (which does not take
 	    autocorrelation into account).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>pcse</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>.  By default, when estimating a model using
+	    pooled OLS on panel data with the <lit>--robust</lit> option,
+	    the Arellano estimator is used for the covariance matrix.  If
+	    you set <lit>pcse</lit> to <quote>on</quote>, this forces use
+	    of the Beck and Katz Panel Corrected Standard Errors (which do
+	    not take autocorrelation into account).
 	  </para>
 	</li>
 	<li>

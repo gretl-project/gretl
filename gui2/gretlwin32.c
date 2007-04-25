@@ -70,7 +70,7 @@ int create_child_process (char *prog, char *env)
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 
-    int ret;
+    int ret, err = 0;
 
     ZeroMemory(&proc_info, sizeof proc_info);
     ZeroMemory(&start_info, sizeof start_info);
@@ -90,6 +90,7 @@ int create_child_process (char *prog, char *env)
     if (ret == 0) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
+	err = 1;
     }
 
 #ifdef CHILD_DEBUG
@@ -105,17 +106,17 @@ int create_child_process (char *prog, char *env)
     }	
 #endif
 
-    return ret;
+    return err;
 }
 
-void startR (const char *Rcommand)
+void startR (char *Rcommand)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], Rline[MAXLEN];
     const char *supp1 = "--no-init-file";
     const char *supp2 = "--no-restore-data";
     int *list;
     FILE *fp;
-    int enverr;
+    int err = 0;
 
     if (!data_status) {
 	errbox(_("Please open a data file first"));
@@ -129,8 +130,8 @@ void startR (const char *Rcommand)
 	return;
     }
 
-    enverr = ! SetEnvironmentVariable("R_PROFILE", Rprofile);
-    if (enverr) {
+    err = ! SetEnvironmentVariable("R_PROFILE", Rprofile);
+    if (err) {
 	errbox(_("Couldn't set R_PROFILE environment variable"));
 	fclose(fp);
 	return;
@@ -175,7 +176,27 @@ void startR (const char *Rcommand)
     fclose(fp);
 
     sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
-    create_child_process(Rline, NULL);
+    err = create_child_process(Rline, NULL);
+
+    if (err) {
+	/* failed: try registry for Rgui.exe path? */
+	char tmp[MAX_PATH] = {0}; 
+
+	err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", tmp);
+	if (err) {
+	    err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", tmp);
+	}
+	if (!err) {
+	    strcat(tmp, "\\bin\\Rgui.exe");
+	    sprintf(Rline, "\"%s\" %s %s", tmp, supp1, supp2);
+	    err = create_child_process(Rline, NULL);
+	    if (!err) {
+		/* got a good R path, so record it */
+		*Rcommand = '\0';
+		strncat(Rcommand, tmp, MAXSTR - 1);
+	    }
+	}
+    }
 }
 
 char *slash_convert (char *str, int which)
@@ -884,15 +905,15 @@ static long GetRegKey (HKEY key, char *subkey, char *retdata)
     return err;
 }
 
-int browser_open (const char *url)
+static int win32_open_arg (const char *arg, char *ext)
 {
     char key[MAX_PATH + MAX_PATH];
     int err = 0;
 
-    if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
-	/* if the above fails, get the .htm regkey and 
+    if ((long) ShellExecute(NULL, "open", arg, NULL, NULL, SW_SHOW) <= 32) {
+	/* if the above fails, get the appropriate fileext regkey and 
 	   look up the program */
-	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
+	if (GetRegKey(HKEY_CLASSES_ROOT, ext, key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");
 	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
 		char *p;
@@ -912,10 +933,38 @@ int browser_open (const char *url)
 		}
 
 		lstrcat(p, " ");
-		lstrcat(p, url);
+		lstrcat(p, arg);
 		if (WinExec(key, SW_SHOW) < 32) err = 1;
 	    }
 	}
+    }
+
+    return err;
+}
+
+int browser_open (const char *url)
+{
+    char sfx[5] = ".htm";
+
+    return win32_open_arg(url, sfx);
+}
+
+int win32_open_file (const char *fname)
+{
+    char sfx[5];
+    int err = 0;
+
+    if (has_suffix(fname, ".pdf")) {
+	strcpy(sfx, ".pdf");
+    } else {
+	strcpy(sfx, ".ps");
+    }
+
+    err = win32_open_arg(fname, sfx);
+
+    if (err) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
     }
 
     return err;

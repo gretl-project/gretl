@@ -37,7 +37,7 @@ enum {
 
 int create_child_process (char *prog, char *env);
 
-void startR (const char *Rcommand);
+void startR (char *Rcommand);
 
 char *slash_convert (char *str, int which);
 
@@ -66,6 +66,8 @@ int send_file (char *fullname);
 void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 
 int browser_open (const char *url);
+
+int win32_open_file (const char *fname);
 
 DIR *win32_opendir (const char *dname);
 
