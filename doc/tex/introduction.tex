@@ -24,10 +24,10 @@ command-line client program and a graphical user interface.
 \item[Cross-platform] \app{Gretl}'s ``home'' platform is Linux but it
   is also available for MS Windows and Mac OS X, and should work on
   any unix-like system that has the appropriate basic libraries (see
-  Appendix~\ref{app-technote}).
+  Appendix~\ref{app-build}).
 \item[Open source] The full source code for \app{gretl} is available
   to anyone who wants to critique it, patch it, or extend it.
-  See Appendix~\ref{app-technote}.
+  See Appendix~\ref{app-build}.
 \item[Sophisticated] \app{Gretl} offers a full range of least-squares
   based estimators, either for single equations and for systems,
   including vector autoregressions and vector error correction models.
@@ -84,7 +84,7 @@ Pawel Kufel (Polish), and Markus Hahn and Sven Schreiber (German).
 
 \app{Gretl} has benefitted greatly from the work of numerous
 developers of free, open-source software: for specifics please see
-Appendix~\ref{app-technote}.  Our thanks are due to Richard Stallman
+Appendix~\ref{app-build}.  Our thanks are due to Richard Stallman
 of the Free Software Foundation, for his support of free software in
 general and for agreeing to ``adopt'' \app{gretl} as a GNU program in
 particular.
@@ -107,56 +107,32 @@ On the Linux\footnote{In this manual we use ``Linux'' as shorthand to
   Linux mostly applies to other unix-type systems too, though some
   local modifications may be needed.} platform you have the choice of
 compiling the \app{gretl} code yourself or making use of a pre-built
-package. Ready-to-run packages are available in \app{rpm} format
-(suitable for Red Hat Linux and related systems) and also \app{deb}
-format (Debian GNU/Linux).  If you prefer to compile your own (or are
-using a unix system for which pre-built packages are not available)
-here is what to do.
+package. Building \app{gretl} from the source is necessary if you want
+to access the development version or customize \app{gretl} to your
+needs, but this takes quite a few skills; most users will want to go
+for a pre-built package.
+
+Some Linux distributions feature \app{gretl} as part of their standard
+offering: Debian, for example, or Ubuntu (in the \emph{universe}
+repository). If this is the case, all you need to do is install
+\app{gretl} through your package manager of choice (eg synaptic).
+
+Ready-to-run packages are available in \app{rpm} format
+(suitable for Red Hat Linux and related systems) on the \app{gretl}
+webpage \url{http://gretl.sourceforge.net}.  
       
-\begin{enumerate}
-\item Download the latest \app{gretl} source package from
-  \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-\item Unzip and untar the package.  On a system with the GNU utilities
-  available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
-  (replace \cmd{N} with the specific version number of the file you
-  downloaded at step 1).
-\item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.1.5+).
-          
-\item The basic routine is then
-            
-\begin{code}
-./configure 
-make 
-make check
-make install
-\end{code}
-However, you should probably read the \verb+INSTALL+ file first,
-and/or do
-\begin{code}
-./configure --help
-\end{code}
-first to see what options are available. One option you way wish to
-tweak is \cmd{--prefix}.  By default the installation goes under
-\verb+/usr/local+ but you can change this.  For example
-\begin{code}
-./configure --prefix=/usr
-\end{code}
-will put everything under the \verb+/usr+ tree.  In the event that a
-required library is not found on your system, so that the configure
-process fails, please see Appendix~\ref{app-technote}.
-On most systems, the \texttt{make install} command requires you to
-have administrative privileges. Hence, either you log in as
-\texttt{root} before launching  \texttt{make install} or, more
-correctly, you may want to use the \texttt{sudo} utility. 
-\end{enumerate}
+However, we're hopeful that some users with coding skills may consider
+\app{gretl} sufficiently interesting to be worth improving and
+extending.  The documentation of the libgretl API is by no means
+complete, but you can find some details by following the link
+``Libgretl API docs'' on the \app{gretl} homepage. People interested
+in the \app{gretl} development are welcome to subscribe to the
+\href{http://gretl.sourceforge.net/lists.html}{gretl-devel} mailing
+list. 
 
-\app{Gretl} offers support for the \app{gnome} desktop.  To take
-advantage of this you should compile the program yourself (as
-described above).  If you want to suppress the \app{gnome}-specific
-features you can pass the option \verb+--without-gnome+ to
-\cmd{configure}.
-
+If you prefer to compile your own (or are using a unix system for
+which pre-built packages are not available), instructions on building
+\app{gretl} can be found in Appendix~\ref{app-build}.
 
 \subsection{MS Windows}
 \label{windows-install}

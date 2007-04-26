@@ -162,8 +162,11 @@ numbers, typically taking four bytes apiece.  The numbers are packed
 observations of variable 1, the next \emph{m} the observations on
 variable 2, and so on.
 
-\chapter{Technical notes}
-\label{app-technote}
+\chapter{Building \app{gretl}}
+\label{app-build}
+
+\section{Requirements}
+\label{sec:build-req}
 
 \app{Gretl} is written in the C programming language, abiding as far
 as possible by the ISO/ANSI C Standard (C90) although the graphical
@@ -173,11 +176,13 @@ platform-specific extensions.
 The program was developed under Linux. The shared library and
 command-line client should compile and run on any platform that (a)
 supports ISO/ANSI C, and (b) has the following libraries installed:
-zlib (data compression), libxml2 (XML manipulation), and LAPACK
-(linear algebra support). The homepage for zlib can be found at
+zlib (data compression), libxml2 (XML manipulation), LAPACK (linear
+algebra support) and FFTW3 (Fast Fourier Transform). The homepage for
+zlib can be found at
 \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org};
 libxml2 is at \href{http://xmlsoft.org/}{xmlsoft.org}; LAPACK is at
-\href{http://www.netlib.org/lapack/}{netlib.org}. If the GNU readline
+\href{http://www.netlib.org/lapack/}{netlib.org}; FFTW3 is at
+\href{http://www.fftw.org/}{fftw.org}. If the GNU readline
 library is found on the host system this will be used for
 \app{gretcli}, providing a much enhanced editable command line.  See
 the
@@ -213,29 +218,71 @@ It uses Tor Lillqvist's port of GTK 2.0 to win32.  The (free,
 open-source) Windows installer program is courtesy of Jordan Russell
 (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
 
-We're hopeful that some users with coding skills may consider
-\app{gretl} sufficiently interesting to be worth improving and
-extending.  The documentation of the libgretl API is by no means
-complete, but you can find some details by following the link
-``Libgretl API docs'' on the \app{gretl} homepage. People interested
-in the \app{gretl} development are welcome to subscribe to the
-\href{http://gretl.sourceforge.net/lists.html}{gretl-devel} mailing
-list.
+\section{Build instructions}
+\label{sec:build-inst}
+
+
+\begin{enumerate}
+\item Download the latest \app{gretl} source package from
+  \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+\item Unzip and untar the package.  On a system with the GNU utilities
+  available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
+  (replace \cmd{N} with the specific version number of the file you
+  downloaded at step 1).
+\item Change directory to the gretl source directory created at step 2
+  (e.g.\ \verb+gretl-1.6.2+).
+          
+\item The basic routine is then
+            
+\begin{code}
+./configure 
+make 
+make check
+make install
+\end{code}
+However, you should probably read the \verb+INSTALL+ file first,
+and/or do
+\begin{code}
+./configure --help
+\end{code}
+first to see what options are available. One option you way wish to
+tweak is \cmd{--prefix}.  By default the installation goes under
+\verb+/usr/local+ but you can change this.  For example
+\begin{code}
+./configure --prefix=/usr
+\end{code}
+will put everything under the \verb+/usr+ tree.  
+
+On most systems, the \texttt{make install} command requires you to
+have administrative privileges.  Hence, either you log in as
+\texttt{root} before launching \texttt{make install} or you may want
+to use the \texttt{sudo} utility:
+\begin{code}
+sudo make install
+\end{code}
+\end{enumerate}
+
+\app{Gretl} offers support for the \app{gnome} desktop.  To take
+advantage of this you should compile the program yourself (as
+described above).  If you want to suppress the \app{gnome}-specific
+features you can pass the option \verb+--without-gnome+ to
+\cmd{configure}.
 
 \chapter{Numerical accuracy}
 \label{app-accuracy}
 
 \app{Gretl} uses double-precision arithmetic throughout --- except for
 the multiple-precision plugin invoked by the menu item ``Model, Other
-linear models, High precision OLS'' which represents floating-point values using a number
-of bits given by the environment variable \verb+GRETL_MP_BITS+
-(default value 256).  The normal equations of Least Squares are by
-default solved via Cholesky decomposition, which is accurate enough
-for most purposes (with the option of using QR decomposition instead).
-The program has been tested rather thoroughly on the statistical
-reference datasets provided by NIST (the U.S. National Institute of
-Standards and Technology) and a full account of the results may be
-found on the gretl website (follow the link ``Numerical accuracy'').
+linear models, High precision OLS'' which represents floating-point
+values using a number of bits given by the environment variable
+\verb+GRETL_MP_BITS+ (default value 256).  The normal equations of
+Least Squares are by default solved via Cholesky decomposition, which
+is accurate enough for most purposes (with the option of using QR
+decomposition instead).  The program has been tested rather thoroughly
+on the statistical reference datasets provided by NIST (the U.S.
+National Institute of Standards and Technology) and a full account of
+the results may be found on the gretl website (follow the link
+``Numerical accuracy'').
 
 Giovanni Baiocchi and Walter Distaso published a review of \app{gretl}
 in the \emph{Journal of Applied Econometrics} (2003).  We are grateful
