@@ -770,7 +770,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     int err = 0;
 
     if (vwin->role == FUNC_FILES) {
-	dircol = 3;
+	dircol = 4;
     } else if (vwin->role != REMOTE_FUNC_FILES) {
 	dummy_call();
 	return;
