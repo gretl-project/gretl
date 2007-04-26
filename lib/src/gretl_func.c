@@ -2073,9 +2073,12 @@ int get_function_file_code (const char *fname, PRN *prn, char **pname)
 }
 
 /* Just read the header from a function package file -- this is
-   used when displaying the available packages */
+   used when displaying the available packages.  We write the
+   version number (as a string) into *pver.
+*/
 
-char *get_function_file_header (const char *fname, int *err)
+char *get_function_file_header (const char *fname, char **pver,
+				int *err)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -2096,11 +2099,17 @@ char *get_function_file_header (const char *fname, int *err)
 	    while (sub != NULL) {
 		if (!xmlStrcmp(sub->name, (XUC) "description")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, &descrip);
+		} else if (!xmlStrcmp(sub->name, (XUC) "version")) {
+		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
+		}
+		if (descrip != NULL && *pver != NULL) {
 		    break;
 		}
 		sub = sub->next;
 	    }
-	    if (descrip != NULL) break;
+	    if (descrip != NULL && *pver != NULL) {
+		break;
+	    }
 	}
 	node = node->next;
     }
@@ -2112,6 +2121,13 @@ char *get_function_file_header (const char *fname, int *err)
 
     if (descrip == NULL) {
 	descrip = gretl_strdup(_("No description available"));
+    }
+    if (*pver == NULL) {
+	*pver = gretl_strdup("unknown");
+    }
+
+    if (descrip == NULL || *pver == NULL) {
+	*err = 1;
     }
 
     return descrip;

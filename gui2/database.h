@@ -17,7 +17,7 @@ gint populate_dbfilelist (windata_t *ddata);
 
 gint populate_remote_db_list (windata_t *vwin);
 
-gint populate_remote_object_list (windata_t *win);
+gint populate_remote_func_list (windata_t *win);
 
 void gui_get_db_series (gpointer p, guint action, GtkWidget *w);
 

@@ -1220,19 +1220,19 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 }
 
-static char *get_func_description (const char *fname, const char *fndir)
+static int get_func_info (const char *fname, const char *fndir,
+			  char **pdesc, char **pver)
 {
     char fullname[FILENAME_MAX];
-    char *descrip = NULL;
     int err = 0;
 
     build_path(fullname, fndir, fname, NULL);
-    descrip = get_function_file_header(fullname, &err);
+    *pdesc = get_function_file_header(fullname, pver, &err);
     if (err) {
 	gui_errmsg(err);
     }
 
-    return descrip;
+    return err;
 }
 
 static int
@@ -1245,7 +1245,9 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
     gboolean loaded;
     char *fname;
     char *descrip;
+    char *version;
     int n, nfn = 0;
+    int err;
 
     while ((dirent = readdir(dir)) != NULL) {
 	if (!strcmp(dirent->d_name, ".") ||
@@ -1258,8 +1260,8 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
 	}
 	n = strlen(fname);
 	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
-	    descrip = get_func_description(fname, fndir);
-	    if (descrip != NULL) {
+	    err = get_func_info(fname, fndir, &descrip, &version);
+	    if (!err) {
 		gtk_list_store_append(store, iter);
 		build_path(fullname, fndir, fname, NULL);
 		n -= 4;
@@ -1268,9 +1270,14 @@ read_fn_files_in_dir (int role, DIR *dir, const char *fndir,
 		    *maxlen = n;
 		}
 		loaded = function_package_is_loaded(fullname);
-		gtk_list_store_set(store, iter, 0, fname, 1, descrip,
-				   2, loaded, 3, fndir, -1);
-		g_free(descrip);
+		gtk_list_store_set(store, iter, 
+				   0, fname, 
+				   1, version,
+				   2, descrip, 
+				   3, loaded, 
+				   4, fndir, -1);
+		free(descrip);
+		free(version);
 		nfn++;
 	    }
 	}
@@ -1365,12 +1372,12 @@ void maybe_update_func_files_window (int editing)
 
 	while (1) {
 	    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &fname, 
-			       3, &fdir, -1);
+			       4, &fdir, -1);
 	    sprintf(fullname, "%s%c%s.gfn", fdir, SLASH, fname);
 	    g_free(fname);
 	    g_free(fdir);
 	    loaded = function_package_is_loaded(fullname);
-	    gtk_list_store_set(store, &iter, 2, loaded, -1);
+	    gtk_list_store_set(store, &iter, 3, loaded, -1);
 	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
 		break;
 	    }
@@ -1384,8 +1391,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbfilelist(vwin);
     } else if (vwin->role == REMOTE_DB) {
 	return populate_remote_db_list(vwin);
-    } else if (REMOTE_ACTION(vwin->role)) {
-	return populate_remote_object_list(vwin);
+    } else if (vwin->role == REMOTE_FUNC_FILES) {
+	return populate_remote_func_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
 	return populate_func_list(vwin, p);
     } else {
@@ -1415,11 +1422,13 @@ static GtkWidget *files_window (windata_t *vwin)
     };
     const char *func_titles[] = {
 	N_("Package"), 
+	N_("Version"),
 	N_("Summary"), 
 	N_("Loaded?")
     };
     const char *remote_func_titles[] = {
 	N_("Package"), 
+	N_("Version"),
 	N_("Summary"), 
 	N_("Local status")
     };
@@ -1434,6 +1443,13 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_STRING
     };
     GType types_4[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING
+    };
+    GType types_5[] = {
+	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,
@@ -1470,13 +1486,16 @@ static GtkWidget *files_window (windata_t *vwin)
 	break;
     case FUNC_FILES:
 	titles = func_titles;
-	cols = 4;
-	types = types_4;
+	cols = 5;
+	types = types_5;
 	hidden_col = TRUE;
+	full_width = 560;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
-	cols = 3;
+	cols = 4;
+	types = types_4;
+	full_width = 580;
 	break;
     default:
 	break;

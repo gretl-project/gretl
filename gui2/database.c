@@ -1982,28 +1982,24 @@ gint populate_remote_db_list (windata_t *vwin)
     return err;
 }
 
-/* fill a list box with names and short descriptions of function
-   packages, retrieved from server: this was previously used for
-   remote databases too 
+/* Fill a list box with names, version numbers, and short descriptions
+   of function packages, retrieved from server.
 */
 
-gint populate_remote_object_list (windata_t *vwin)
+gint populate_remote_func_list (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
     char fname[32], status[20];
-    gchar *row[3];
+    char *basename;
+    char *descrip;
+    char *version;
     time_t remtime;
     int n, err = 0;
 
-    if (vwin->role == REMOTE_DB) {
-	err = list_remote_dbs(&getbuf);
-    } else {
-	err = list_remote_function_packages(&getbuf);
-    }
-
+    err = list_remote_function_packages(&getbuf);
     if (err) {
 	show_network_error(NULL);
 	free(getbuf);
@@ -2019,27 +2015,39 @@ gint populate_remote_object_list (windata_t *vwin)
     bufgets_init(getbuf);
 
     while (bufgets(line, sizeof line, getbuf)) {
-	if (strstr(line, "idx")) {
-	    continue;
-	}
+	descrip = NULL;
+	version = NULL;
+
 	if (read_remote_filetime(line, fname, &remtime)) {
 	    continue;
 	}
 
 	get_local_object_status(fname, vwin->role, status, remtime);
-	row[0] = strip_extension(fname);
+	basename = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
 	    utf8_correct(line);
-	    row[1] = line + 2;
-	} else {
-	    row[1] = NULL;
+	    descrip = gretl_strdup(line + 2);
+	} 
+
+	if (bufgets(line, sizeof line, getbuf)) {
+	    version = line + 2;
+	} 
+
+	if (descrip == NULL || version == NULL) {
+	    free(descrip);
+	    continue;
 	}
 
-	row[2] = status;
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
-			   2, row[2], -1);
+	gtk_list_store_set(store, &iter, 
+			   0, basename, 
+			   1, version,
+			   2, descrip, 
+			   3, status,
+			   -1);
+
+	free(descrip);
 	n++;
     }
 
@@ -2047,11 +2055,7 @@ gint populate_remote_object_list (windata_t *vwin)
     free(getbuf);
 
     if (n == 0) {
-	if (vwin->role == REMOTE_DB) {
-	    errbox(_("No database files found"));
-	} else {
-	    errbox(_("No function packages found"));
-	}
+	errbox(_("No function packages found"));
 	err = 1;
     }
 

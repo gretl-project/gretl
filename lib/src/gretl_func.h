@@ -157,7 +157,8 @@ int get_function_file_info (const char *fname, PRN *prn, char **pname);
 
 int get_function_file_code (const char *fname, PRN *prn, char **pname);
 
-char *get_function_file_header (const char *fname, int *err);
+char *get_function_file_header (const char *fname, char **pver,
+				int *err);
 
 int update_function_from_script (const char *fname, int idx);
 
