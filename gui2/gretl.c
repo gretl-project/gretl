@@ -720,6 +720,7 @@ int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
     int ftype = 0;
+    int debug = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
 #ifdef USE_GNOME
@@ -762,7 +763,7 @@ int main (int argc, char *argv[])
     set_program_startdir();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argv[0]);
+    gretl_win32_init(argv[0], debug);
 #else 
     gretl_config_init();
 #endif
@@ -770,6 +771,12 @@ int main (int argc, char *argv[])
     if (argc > 1) {
 	int force_lang = 0;
 	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
+
+	if (opt & OPT_DEBUG) {
+	    /* record and extract debugging option */
+	    debug = 1;
+	    opt &= ~OPT_DEBUG;
+	}
 
 	switch (opt) {
 	case OPT_HELP:

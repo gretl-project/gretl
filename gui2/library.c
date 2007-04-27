@@ -4549,10 +4549,11 @@ void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
     }
 }
 
-#define MAXDISPLAY 4096
-/* max number of observations for which we expect to be able to 
-   use the buffer approach for displaying data, as opposed to
-   disk file */
+/* max number of observations for which we use the buffer approach for
+   displaying data, as opposed to disk file 
+*/
+
+#define MAXDISPLAY 8192
 
 void display_selected (gpointer p, guint action, GtkWidget *w)
 {

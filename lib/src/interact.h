@@ -37,13 +37,14 @@ typedef enum {
 } CmdEchoFlags;
 
 typedef enum {
-    OPT_BATCH = 1,
-    OPT_HELP,
-    OPT_VERSION,
-    OPT_RUNIT,
-    OPT_DBOPEN,
-    OPT_WEBDB,
-    OPT_DUMP
+    OPT_BATCH   = 1 << 0,
+    OPT_HELP    = 1 << 1,
+    OPT_VERSION = 1 << 2,
+    OPT_RUNIT   = 1 << 3,
+    OPT_DBOPEN  = 1 << 4,
+    OPT_WEBDB   = 1 << 5,
+    OPT_DUMP    = 1 << 6,
+    OPT_DEBUG   = 1 << 7
 } ProgramOptions;
 
 typedef enum {

@@ -2425,7 +2425,7 @@ static int parse_criteria (const char *line, const double **Z,
 
 int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 {
-    int opt = 0;
+    int opt = 0, extra = 0;
 
     *fname = '\0';
     *force_lang = 0;
@@ -2454,10 +2454,14 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 	    opt = OPT_WEBDB;
 	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
 	    opt = OPT_DUMP;
+	} else if (!strcmp(s, "-g") || !strncmp(s, "--debug", 7)) {
+	    extra = OPT_DEBUG;
 	} else {
 	    strncat(fname, s, MAXLEN - 1);
 	}
     }
+
+    opt |= extra;
 
     return opt;
 }

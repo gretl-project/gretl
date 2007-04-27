@@ -269,8 +269,8 @@ apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
 libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
 \end{code}
 
-Then it is necessary to install the development versions of the
-libraries that \app{gretl} uses:
+Then it is necessary to install the ``development'' (\texttt{dev})
+packages for the libraries that \app{gretl} uses:
 
 \begin{center}
   \begin{tabular}{ll}
@@ -285,12 +285,12 @@ libraries that \app{gretl} uses:
   \end{tabular}
 \end{center}
 
-(GMP is optional, but recommended.)  Note that the ``development''
-packages for these libraries are necessary to \emph{compile}
-\app{gretl}, but you'll need the non-development versions to
-\emph{run} \app{gretl}; however, most of these should already be part
-of a standard installation. In order to enable other optional
-features, like audio support, you may need to install more libraries.
+(GMP is optional, but recommended.)  The \texttt{dev} packages for
+these libraries are necessary to \emph{compile} \app{gretl} --- you'll
+also need the plain, non-\texttt{dev} library packages to \emph{run}
+\app{gretl}, but most of these should already be part of a standard
+installation.  In order to enable other optional features, like audio
+support, you may need to install more libraries.
 
 At this point, it is possible to build from the source.
 \begin{enumerate}
@@ -336,7 +336,7 @@ option to \texttt{configure}, as in
 \end{code}
 You will see a number of checks being run, and if everything goes
 according to plan, you should see a summary similar to that displayed
-in \ref{configure-output}.
+in Example~\ref{configure-output}.
 
 \begin{script}[htbp]
   \caption{Output from \texttt{./configure --enable-build-doc}}

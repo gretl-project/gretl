@@ -34,7 +34,6 @@
 #include <shellapi.h>
 #include <fcntl.h>
 
-#define HUSH_RUNTIME_WARNINGS
 #define MAX_CONSOLE_LINES 500
 
 extern int wimp; /* settings.c */
@@ -339,8 +338,6 @@ void win_help (void)
     }
 }
 
-#ifdef HUSH_RUNTIME_WARNINGS
-
 static void dummy_output_handler (const gchar *log_domain,
 				  GLogLevelFlags log_level,
 				  const gchar *message,
@@ -368,8 +365,6 @@ static void hush_warnings (void)
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
 }
-
-#endif /* HUSH_RUNTIME_WARNINGS */
 
 char *default_windows_menu_fontspec (void)
 {
@@ -513,16 +508,18 @@ static int set_gd_fontpath (void)
     return 0;        
 }
 
-void gretl_win32_init (const char *progname)
+void gretl_win32_init (const char *progname, int debug)
 {
     set_network_cfg_filename(progname);
 
     read_rc(); /* get config info from registry */
     set_gd_fontpath();
 
-# ifdef HUSH_RUNTIME_WARNINGS
-    hush_warnings();
-# endif 
+    if (debug) {
+	redirect_io_to_console();
+    } else {
+	hush_warnings();
+    }
 
     ws_startup(); 
 }
