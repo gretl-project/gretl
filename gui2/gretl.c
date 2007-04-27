@@ -1029,7 +1029,12 @@ int main (int argc, char *argv[])
 static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
-	int sc = selection_count(select, NULL);
+	int vnum = 0;
+	int sc = selection_count(select, &vnum);
+
+	if (sc == 1 && vnum > 0) {
+	    mdata->active_var = vnum;
+	}
 
 	variable_menu_state(sc == 1);
     }

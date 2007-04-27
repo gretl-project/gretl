@@ -342,14 +342,16 @@ spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
     GtkTreePath *path;
     gchar *pstr;
     GtkAdjustment *adj;
-    GtkWidget *vp;
+    GtkWidget *sw;
 
     pstr = g_strdup("0");
     path = gtk_tree_path_new_from_string(pstr);
     gtk_tree_view_set_cursor(view, path, column, TRUE);
-    vp = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
-    adj = gtk_viewport_get_hadjustment(GTK_VIEWPORT(vp));
-    gtk_adjustment_set_value(adj, adj->upper);
+    sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
+    if (sw != NULL) {
+	adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(sw));
+	gtk_adjustment_set_value(adj, adj->upper);
+    }
     gtk_tree_path_free(path);
     g_free(pstr);
 }
@@ -410,15 +412,17 @@ spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col)
     gchar *pstr;
     GtkTreeViewColumn *column;
     GtkAdjustment *adj;
-    GtkWidget *vp;
+    GtkWidget *sw;
 
     pstr = g_strdup_printf("%d", row);
     path = gtk_tree_path_new_from_string(pstr);
     column = gtk_tree_view_get_column(view, col);
     gtk_tree_view_set_cursor(view, path, column, FALSE);
-    vp = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
-    adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(vp));
-    gtk_adjustment_set_value(adj, adj->upper);
+    sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
+    if (sw != NULL) {
+	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(sw));
+	gtk_adjustment_set_value(adj, adj->upper);
+    }
     gtk_tree_path_free(path);
     g_free(pstr);
 }
@@ -589,16 +593,16 @@ static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
     return store;
 }
 
+/* This is relatively complex because, so far as I can tell, you can't
+   append or insert additional columns in a GtkListStore: we have to
+   create a whole new liststore and copy the old info across.
+*/
+
 static int add_data_column (Spreadsheet *sheet)
 {
     GtkListStore *old_store, *new_store;
     GtkTreeIter old_iter, new_iter;
     gint row;
-
-    /* This is relatively complex because, so far as I can tell, you can't
-       append or insert additional columns in a GtkListStore: we have to
-       create a whole new liststore and copy the old info across.
-    */
 
     sheet->datacols += 1;
 
@@ -609,6 +613,7 @@ static int add_data_column (Spreadsheet *sheet)
 	sheet->totcols -= 1;
 	return E_ALLOC;
     }
+
     old_store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view)));
 
     /* go to start of old and new lists */
@@ -853,7 +858,7 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 	gtk_tree_path_free(path);
     }
 
-    return TRUE; /* is this right? */
+    return FALSE; /* is this right? (was TRUE) */
 }
 
 /* put modified values from the spreadsheet into the attached
@@ -1062,6 +1067,7 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
     
     if (!cancel) {
 	user_matrix *u;
+	gchar *tmp;
 
 	if (get_matrix_by_name(newname) != NULL &&
 	    matrix_overwrite_check(newname) == GRETL_NO) {
@@ -1071,6 +1077,10 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 	sheet->oldmat = gretl_matrix_copy(sheet->matrix);
 	add_or_replace_user_matrix(sheet->oldmat, newname);
 	strcpy(sheet->mname, newname);
+
+	tmp = g_strdup_printf("gretl: %s", sheet->mname);
+	gtk_window_set_title(GTK_WINDOW(sheet->win), tmp);
+	g_free(tmp);
 
 	u = get_user_matrix_by_name(newname);
 	g_object_set_data(G_OBJECT(sheet->win), "object", u);
@@ -1909,20 +1919,43 @@ static void size_matrix_window (Spreadsheet *sheet)
     gtk_window_resize(GTK_WINDOW(sheet->win), w, h);
 }
 
+static void size_data_window (Spreadsheet *sheet)
+{
+    int ocw = get_obs_col_width();
+    int dcw = get_data_col_width();
+    int extra = 40;
+    int nc, w, h = 400;
+
+    nc = (sheet->varlist[0] > 4)? 4 : sheet->varlist[0];
+    if (nc < 2) {
+	extra += 40;
+    }
+
+    w = ocw + nc * dcw + extra;
+
+    gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
+}
+
 static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 				   int block) 
 {
     Spreadsheet *sheet = *psheet;
     GtkWidget *tmp, *button_box;
     GtkWidget *scroller, *main_vbox;
-    GtkWidget *hbox, *padbox;
     GtkWidget *status_box, *mbar;
     int w, err = 0;
 
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
     if (sheet->matrix != NULL) {
-	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
+	if (sheet->mname[0] != '\0') {
+	    gchar *tmp = g_strdup_printf("gretl: %s", sheet->mname);
+
+	    gtk_window_set_title(GTK_WINDOW(sheet->win), tmp);
+	    g_free(tmp);
+	} else {
+	    gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
+	}
     } else {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
     }
@@ -1930,10 +1963,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     if (sheet->matrix != NULL) {
 	size_matrix_window(sheet);
     } else {
-	int h = 400;
-
-	w = get_obs_col_width() + 4 * get_data_col_width() + 20;
-	gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
+	size_data_window(sheet);
     }
 
     if (block) {
@@ -1993,32 +2023,21 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 #endif
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller), 
-					GTK_SHADOW_IN);
-
-
-    gtk_box_pack_start(GTK_BOX(main_vbox), scroller, TRUE, TRUE, 0);
-    gtk_widget_show(scroller);
-
-    hbox = gtk_hbox_new(FALSE, 1);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), hbox);
-    gtk_widget_show(hbox);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
+					GTK_SHADOW_IN);    
 
     build_sheet_view(sheet);
-    gtk_container_add(GTK_CONTAINER(hbox), sheet->view);
+    gtk_container_add(GTK_CONTAINER(scroller), sheet->view);
+    gtk_box_pack_start(GTK_BOX(main_vbox), scroller, TRUE, TRUE, TRUE);
+
     gtk_widget_show(sheet->view);
+    gtk_widget_show(scroller);
 
     if (sheet->matrix == NULL) {
 	sheet_adjust_menu_state(sheet);
 
-	if (sheet->varlist[0] < 7) {
-	    /* padding to fill out the spreadsheet */
-	    padbox = gtk_vbox_new(FALSE, 1);
-	    gtk_container_add(GTK_CONTAINER(hbox), padbox);
-	    gtk_widget_show(padbox);
-	}
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet);
     } else {

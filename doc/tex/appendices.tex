@@ -174,29 +174,38 @@ user interface and some other components necessarily make use of
 platform-specific extensions.
   
 The program was developed under Linux. The shared library and
-command-line client should compile and run on any platform that (a)
-supports ISO/ANSI C, and (b) has the following libraries installed:
-zlib (data compression), libxml2 (XML manipulation), LAPACK (linear
-algebra support) and FFTW3 (Fast Fourier Transform). The homepage for
-zlib can be found at
-\href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org};
-libxml2 is at \href{http://xmlsoft.org/}{xmlsoft.org}; LAPACK is at
-\href{http://www.netlib.org/lapack/}{netlib.org}; FFTW3 is at
-\href{http://www.fftw.org/}{fftw.org}. If the GNU readline
-library is found on the host system this will be used for
-\app{gretcli}, providing a much enhanced editable command line.  See
-the
+command-line client should compile and run on any platform that
+supports ISO/ANSI C and has the libraries listed in
+Table~\ref{tab:depend}.  If the GNU readline library is found on the
+host system this will be used for \app{gretcli}, providing a much
+enhanced editable command line.  See the
 \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{readline
   homepage}.
 
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+\textit{Library} & \textit{purpose} & \textit{website} \\ [4pt]
+zlib & data compression &  
+   \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org} \\
+libxml2 & XML manipulation &
+   \href{http://xmlsoft.org/}{xmlsoft.org} \\
+LAPACK & linear algebra & 
+   \href{http://www.netlib.org/lapack/}{netlib.org} \\
+FFTW3 & Fast Fourier Transform & 
+   \href{http://www.fftw.org/}{fftw.org} \\
+glib-2.0 & Numerous utilities & 
+  \href{http://www.gtk.org/}{gtk.org}
+  \end{tabular}
+  \caption{Libraries required for building gretl}
+  \label{tab:depend}
+\end{table}
+
 The graphical client program should compile and run on any system
 that, in addition to the above requirements, offers GTK version 2.4.0
-or higher (see \href{http://www.gtk.org/}{gtk.org}).  As of this
-writing there are two main variants of the GTK libraries: the 1.2
-series and the 2.0 series which was launched in summer 2002.  These
-variants are mutually incompatible.  Up to version 1.5.1, \app{gretl}
-could be built using either variant of GTK, but at version 1.6.0 we
-dropped support for GTK 1.2.
+or higher (see \href{http://www.gtk.org/}{gtk.org}).\footnote{Up till
+  version 1.5.1, \app{gretl} could also be built using GTK 1.2.
+  Support for this was dropped at version 1.6.0 of \app{gretl}.}
   
 \app{Gretl} calls gnuplot for graphing. You can find gnuplot at
 \href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
@@ -218,30 +227,93 @@ It uses Tor Lillqvist's port of GTK 2.0 to win32.  The (free,
 open-source) Windows installer program is courtesy of Jordan Russell
 (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
 
-\section{Build instructions}
+\section{Build instructions: a step-by-step example}
 \label{sec:build-inst}
 
+In this section we give instructions detailed enough to allow a user
+with only a basic knowledge of a Unix system to build \app{gretl}.
+These steps were tested on a fresh installation of Debian Etch. For
+other Linux distributions (especially Debian-based ones, like Ubuntu
+and its derivatives) little should change. Other Unix-like operating
+systems such as MacOSX and BSD would probably require more substantial
+adjustments.
 
+In this guided example, we will build \app{gretl} complete with
+documentation.  This introduces a few more requirements, but gives you
+the ability to modify the documentation files as well, like the help
+files or the manuals.
+
+We assume that the basic GNU utilities are already installed on the
+system, together with these other programs:
+\begin{itemize}
+\item some \TeX/\LaTeX system (\texttt{tetex} or \texttt{texlive} will
+  do beautifully)
+\item Gnuplot
+\item ImageMagick
+\end{itemize}
+We also assume that the user has administrative privileges and knows
+how to install packages.  The examples below are carried out using the
+\texttt{apt-get} shell command, but they can be performed with
+menu-based utilities like \texttt{aptitude}, \texttt{dselect} or the
+GUI-based program \texttt{synaptic}. Users of Linux distributions
+which employ rpm packages (e.g.\ Red Hat/Fedora, Mandriva, SuSE) may
+want to refer to the
+\href{http://gretl.sourceforge.net/depend.html}{dependencies} page on
+the \app{gretl} website.
+
+The first step is installing the C compiler and related utilities. On
+a Debian system, these are contained in a bunch of packages that can
+be installed via the command
+\begin{code}
+apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
+libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
+\end{code}
+
+Then it is necessary to install the development versions of the
+libraries that \app{gretl} uses:
+
+\begin{center}
+  \begin{tabular}{ll}
+    \textit{Library} & \textit{command} \\ [4pt]
+    GLIB & \texttt{apt-get install libglib2.0-dev} \\
+    GTK 2.0 & \texttt{apt-get install libgtk2.0-dev} \\
+    PNG & \texttt{apt-get install libpng12-dev} \\
+    XSLT & \texttt{apt-get install libxslt1-dev} \\
+    LAPACK & \texttt{apt-get install lapack3-dev} \\
+    FFTW & \texttt{apt-get install fftw3-dev} \\
+    GMP & \texttt{apt-get install libgmp3-dev}
+  \end{tabular}
+\end{center}
+
+(GMP is optional, but recommended.)  Note that the ``development''
+packages for these libraries are necessary to \emph{compile}
+\app{gretl}, but you'll need the non-development versions to
+\emph{run} \app{gretl}; however, most of these should already be part
+of a standard installation. In order to enable other optional
+features, like audio support, you may need to install more libraries.
+
+At this point, it is possible to build from the source.
 \begin{enumerate}
 \item Download the latest \app{gretl} source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+  The released versions are guaranteed to build correctly. However, if
+  you like to live dangerously, you may download the CVS version,
+  which contains the work in progress towards the next release. For
+  instructions on how to download the CVS version, please refer to the
+  appropriate
+  \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{SourceForge page}.
 \item Unzip and untar the package.  On a system with the GNU utilities
   available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
   (e.g.\ \verb+gretl-1.6.2+).
+\end{enumerate}
           
-\item The basic routine is then
-            
-\begin{code}
-./configure 
-make 
-make check
-make install
-\end{code}
-However, you should probably read the \verb+INSTALL+ file first,
-and/or do
+The next command you need is \texttt{./configure}; this is a complex
+script that detects which tools you have on your system and sets
+things up. The \texttt{configure} command accepts many
+options; you may want to run 
 \begin{code}
 ./configure --help
 \end{code}
@@ -251,7 +323,65 @@ tweak is \cmd{--prefix}.  By default the installation goes under
 \begin{code}
 ./configure --prefix=/usr
 \end{code}
-will put everything under the \verb+/usr+ tree.  
+will put everything under the \verb+/usr+ tree.  Another useful option
+refers to the fact that, by default, \app{gretl} offers support for
+the \app{gnome} desktop.  If you want to suppress the
+\app{gnome}-specific features you can pass the option
+\verb+--without-gnome+ to \cmd{configure}.
+
+In order to have the documentation built, we need to pass the relevant
+option to \texttt{configure}, as in
+\begin{code}
+./configure --enable-build-doc
+\end{code}
+You will see a number of checks being run, and if everything goes
+according to plan, you should see a summary similar to that displayed
+in \ref{configure-output}.
+
+\begin{script}[htbp]
+  \caption{Output from \texttt{./configure --enable-build-doc}}
+  \label{configure-output}
+\begin{scode}
+Configuration:
+
+  Installation path:                      /usr/local
+  Use readline library:                   yes
+  Use gnuplot for graphs:                 yes
+  Use PNG for gnuplot graphs:             yes
+  Use LaTeX for typesetting output:       yes
+  Gnu Multiple Precision support:         yes
+  MPFR support:                           no
+  LAPACK support:                         yes
+  FFTW3 support:                          yes
+  Build with GTK version:                 2.0
+  Script syntax highlighting:             yes
+  Use installed gtksourceview:            yes
+  Build with gnome support:               no
+  Build gretl documentation:              yes
+  Build message catalogs:                 yes
+  Gnome installation prefix:              NA
+  X-12-ARIMA support:                     yes
+  TRAMO/SEATS support:                    yes
+  Experimental audio support:             no
+
+Now type 'make' to build gretl.
+\end{scode}
+\end{script}
+
+We are now ready to undertake the compilation proper: this is done by
+running the \texttt{make} command, which takes care of compiling all
+the necessary source files in the correct order. All you need to do is
+type
+\begin{code}
+make 
+\end{code}
+
+This step will likely take several minutes to complete; a lot of
+output will be produced on screen. Once this is done, you can install
+your freshly baked copy of \app{gretl} on your system via
+\begin{code}
+make install
+\end{code}
 
 On most systems, the \texttt{make install} command requires you to
 have administrative privileges.  Hence, either you log in as
@@ -260,13 +390,7 @@ to use the \texttt{sudo} utility:
 \begin{code}
 sudo make install
 \end{code}
-\end{enumerate}
 
-\app{Gretl} offers support for the \app{gnome} desktop.  To take
-advantage of this you should compile the program yourself (as
-described above).  If you want to suppress the \app{gnome}-specific
-features you can pass the option \verb+--without-gnome+ to
-\cmd{configure}.
 
 \chapter{Numerical accuracy}
 \label{app-accuracy}

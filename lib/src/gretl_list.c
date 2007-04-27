@@ -185,6 +185,11 @@ static int real_remember_list (const int *list, const char *name,
     } else {
 	saved_list **lstack;
 
+	err = check_varname(name);
+	if (err) {
+	    return err;
+	}
+
 	lstack = realloc(list_stack, (n_lists + 1) * sizeof *lstack);
 	if (lstack == NULL) {
 	    return E_ALLOC;
@@ -229,7 +234,7 @@ static int real_remember_list (const int *list, const char *name,
  * name in which case the original list is replaced.  A status
  * message is printed to @prn.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int remember_list (const int *list, const char *name, PRN *prn)

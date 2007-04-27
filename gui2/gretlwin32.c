@@ -32,10 +32,53 @@
 #include <mapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <fcntl.h>
 
 #define HUSH_RUNTIME_WARNINGS
+#define MAX_CONSOLE_LINES 500
 
 extern int wimp; /* settings.c */
+
+void redirect_io_to_console (void)
+{
+    int conhandle;
+    long stdhandle;
+    CONSOLE_SCREEN_BUFFER_INFO coninfo;
+    FILE *fp;
+
+    AllocConsole();
+
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),
+			       &coninfo);
+
+    coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
+			       coninfo.dwSize);
+
+    /* redirect unbuffered STDOUT to the console */
+    stdhandle = (long) GetStdHandle(STD_OUTPUT_HANDLE);
+    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
+
+    fp = _fdopen(conhandle, "w");
+    *stdout = *fp;
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    /* redirect unbuffered STDIN to the console */
+    stdhandle = (long) GetStdHandle(STD_INPUT_HANDLE);
+    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
+
+    fp = _fdopen(conhandle, "r");
+    *stdin = *fp;
+    setvbuf(stdin, NULL, _IONBF, 0);
+
+    /* redirect unbuffered STDERR to the console */
+    stdhandle = (long) GetStdHandle(STD_ERROR_HANDLE);
+    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
+
+    fp = _fdopen(conhandle, "w");
+    *stderr = *fp;
+    setvbuf(stderr, NULL, _IONBF, 0);
+}
 
 static void ws_cleanup (void)
 {
