@@ -1998,6 +1998,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller), 
 					GTK_SHADOW_IN);
 
+
     gtk_box_pack_start(GTK_BOX(main_vbox), scroller, TRUE, TRUE, 0);
     gtk_widget_show(scroller);
 
@@ -2007,7 +2008,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     build_sheet_view(sheet);
     gtk_container_add(GTK_CONTAINER(hbox), sheet->view);
-    gtk_widget_show(sheet->view); 
+    gtk_widget_show(sheet->view);
 
     if (sheet->matrix == NULL) {
 	sheet_adjust_menu_state(sheet);

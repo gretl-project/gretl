@@ -395,7 +395,6 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 					GTK_SHADOW_IN);    
 
     gtk_container_add(GTK_CONTAINER(scroller), view);
-
     gtk_box_pack_start(box, scroller, TRUE, TRUE, TRUE);
 
     gtk_widget_show(view);

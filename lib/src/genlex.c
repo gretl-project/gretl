@@ -716,44 +716,61 @@ static void getword (parser *p)
 #endif
 }
 
+static int colon_ok (char *s, int n)
+{
+    int i;
+
+    if (n != 1 && n != 3) {
+	return 0;
+    }
+
+    for (i=0; i<=n; i++) {
+	if (!isdigit(s[i])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* below: we're testing 'ch' for validity, given what we've already
    packed into string 's' up to element 'i'
 */
 
 static int ok_dbl_char (int ch, char *s, int i)
 {
-    int ret = 0;
-
     if (i < 0) {
 	return 1;
     }
 
     if (ch >= '0' && ch <= '9') {
-	/* numeral: always OK */
-	ret = 1;
-    } else if (s[i] == 'e' || s[i] == 'E') {
-	if (ch == '+' || ch == '-') {
-	    /* +/- "inside" a double: only OK at the start of the exponent */
-	    ret = 1;
-	}
-    } else if (ch == '.' && !strchr(s, '.') && 
-	       !strchr(s, 'e') && !strchr(s, 'E')) {
-	/* point is OK is we haven't already got one, and
-	   we're not already in the exponent part */
-	ret = 1;
-    } else if (ch == 'e' || ch == 'E') {
-	if (!strchr(s, 'e') && !strchr(s, 'E')) {
-	    /* exponent char is OK if we don't already have one */
-	    ret = 1;
-	}
+	return 1;
     }
 
-    return ret;
+    switch (ch) {
+    case '+':
+    case '-':
+	return s[i] == 'e' || s[i] == 'E';
+    case '.':
+	return !strchr(s, '.') && !strchr(s, ':') &&
+	    !strchr(s, 'e') && !strchr(s, 'E');
+    case 'e':
+    case 'E':
+	return !strchr(s, 'e') && !strchr(s, 'E') && 
+	    !strchr(s, ':');
+    case ':':
+	return colon_ok(s, i);
+    default:
+	break;
+    }
+
+    return 0;
 }
 
 static double getdbl (parser *p)
 {
     char xstr[NUMLEN] = {0};
+    double d = NADBL;
     int i = 0;
 
     while (ok_dbl_char(p->ch, xstr, i - 1) && i < NUMLEN - 1) {
@@ -767,11 +784,26 @@ static double getdbl (parser *p)
     } 
 
 #if LDEBUG
-    fprintf(stderr, "getdbl: xstr = '%s', x = %g\n", xstr,
-	    dot_atof(xstr));
+    fprintf(stderr, "getdbl: xstr = '%s'\n", xstr);
 #endif
+    
+    if (strchr(xstr, ':')) {
+	if (p->dinfo->pd == 1) {
+	    p->err = E_PDWRONG;
+	} else {
+	    d = (double) dateton(xstr, p->dinfo);
+	    if (d < 0) {
+		p->err = E_DATA;
+		d = NADBL;
+	    } else {
+		d += 1.0;
+	    }
+	}
+    } else {
+	d = dot_atof(xstr);
+    }
 
-    return dot_atof(xstr);
+    return d;
 }
 
 static void deprecation_note (parser *p)
