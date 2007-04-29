@@ -1477,6 +1477,27 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	}
     } 
 
+    else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+	GtkTreePath *path = NULL;
+	GtkTreeViewColumn *column;
+	int i;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
+	i = (gtk_tree_path_get_indices(path))[0];
+	
+
+	if (key->keyval == GDK_Down && i < sheet->datarows - 1) {
+	    gtk_tree_path_next(path);
+	} else if (key->keyval == GDK_Up && i > 0) {
+	    gtk_tree_path_prev(path);
+	    
+	}
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, 
+				 FALSE);
+	gtk_tree_path_free(path);
+	return TRUE;
+    } 
+
     /* numeric key: start editing */
 
     else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||

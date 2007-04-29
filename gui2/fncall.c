@@ -44,11 +44,17 @@ struct call_info_ {
     char rettype;
     char **args;
     char *ret;
-    int canceled;
+    int ok;
 };
 
-static void cinfo_init (call_info *cinfo)
+static call_info *cinfo_new (void)
 {
+    call_info *cinfo = mymalloc(sizeof *cinfo);
+
+    if (cinfo == NULL) {
+	return NULL;
+    }
+
     cinfo->iface = -1;
 
     cinfo->lsels = NULL;
@@ -63,7 +69,9 @@ static void cinfo_init (call_info *cinfo)
     cinfo->ret = NULL;
 
     cinfo->extracol = 0;
-    cinfo->canceled = 0;
+    cinfo->ok = 0;
+
+    return cinfo;
 }
 
 static int cinfo_args_init (call_info *cinfo)
@@ -89,6 +97,7 @@ static void cinfo_free (call_info *cinfo)
     free(cinfo->ret);
     g_list_free(cinfo->lsels);
     g_list_free(cinfo->msels);
+    free(cinfo);
 }
 
 #define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
@@ -110,18 +119,13 @@ static const char *arg_type_string (int type)
 
 static void fncall_finalize (GtkWidget *w, call_info *cinfo)
 {
+    cinfo->ok = 1;
     gtk_widget_destroy(cinfo->dlg);
 }
 
 static void fncall_cancel (GtkWidget *w, call_info *cinfo)
 {
-    cinfo->canceled = 1;
     gtk_widget_destroy(cinfo->dlg);
-}
-
-static void fncall_delete (GtkWidget *w, call_info *cinfo)
-{
-    cinfo->canceled = 1;
 }
 
 static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
@@ -506,15 +510,11 @@ static void function_call_dialog (call_info *cinfo)
     err = cinfo_args_init(cinfo);
     if (err) {
 	gui_errmsg(err);
-	cinfo->canceled = 1;
 	return;
     }
 
     cinfo->dlg = gretl_dialog_new(_("gretl: function call"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
-
-    g_signal_connect(G_OBJECT(cinfo->dlg), "delete_event",
-		     G_CALLBACK(fncall_delete), cinfo);
 
     fnname = user_function_name_by_index(cinfo->iface);
     txt = g_strdup_printf(_("Call to function %s"), fnname);
@@ -794,7 +794,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     FuncDataReq dreq;
     float minver;
     PRN *prn;
-    call_info cinfo;
+    call_info *cinfo;
     int i, err = 0;
 
     *tmpfile = 0;
@@ -817,12 +817,15 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-    cinfo_init(&cinfo);
+    cinfo = cinfo_new();
+    if (cinfo == NULL) {
+	return;
+    }
 
     /* get interface for package */
     err = function_package_get_info((*tmpfile)? tmpfile : fname,
 				    NULL,
-				    &cinfo.iface,
+				    &cinfo->iface,
 				    NULL,
 				    NULL,
 				    NULL,
@@ -835,49 +838,49 @@ void call_function_package (const char *fname, GtkWidget *w,
 	remove(tmpfile);
     }
 
-    if (cinfo.iface < 0) {
+    if (cinfo->iface < 0) {
 	errbox(_("Function package is broken"));
+	free(cinfo);
 	return;
     }
 
     err = check_function_needs(datainfo, dreq, minver);
     if (err) {
 	gui_errmsg(err);
+	free(cinfo);
 	return;
     }
 
-    cinfo.func = get_user_function_by_index(cinfo.iface);
+    cinfo->func = get_user_function_by_index(cinfo->iface);
 
-    if (cinfo.func == NULL) {
+    if (cinfo->func == NULL) {
 	fprintf(stderr, "get_user_function_by_index: got NULL for idx = %d\n", 
-		cinfo.iface);
+		cinfo->iface);
 	errbox(_("Couldn't get function package information"));
+	free(cinfo);
 	return;
     }
 
-    cinfo.n_params = fn_n_params(cinfo.func);
+    cinfo->n_params = fn_n_params(cinfo->func);
 
-    if (function_data_check(&cinfo)) {
-	cinfo_free(&cinfo);
+    if (function_data_check(cinfo)) {
+	cinfo_free(cinfo);
 	return;
     }
 
-    cinfo.rettype = user_func_get_return_type(cinfo.func);
+    cinfo->rettype = user_func_get_return_type(cinfo->func);
 
     if (err) {
 	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
-		cinfo.iface);
+		cinfo->iface);
 	errbox(_("Couldn't get function package information"));
 	return;
     }
 
-    function_call_dialog(&cinfo);
-    if (cinfo.canceled) {
-	return;
-    }
+    function_call_dialog(cinfo);
 
-    if (check_args(&cinfo)) {
-	cinfo_free(&cinfo);
+    if (!cinfo->ok || check_args(cinfo)) {
+	cinfo_free(cinfo);
 	return;
     }
 
@@ -886,35 +889,35 @@ void call_function_package (const char *fname, GtkWidget *w,
     gtk_widget_destroy(w);
 #endif
 
-    fnname = user_function_name_by_index(cinfo.iface);
+    fnname = user_function_name_by_index(cinfo->iface);
     *fnline = 0;
 
-    if (cinfo.ret != NULL) {
-	strcat(fnline, cinfo.ret);
+    if (cinfo->ret != NULL) {
+	strcat(fnline, cinfo->ret);
 	strcat(fnline, " = ");
     }    
 
     strcat(fnline, fnname);
 
-    if (cinfo.args != NULL) {
+    if (cinfo->args != NULL) {
 	strcat(fnline, "(");
-	for (i=0; i<cinfo.n_params; i++) {
+	for (i=0; i<cinfo->n_params; i++) {
 	    char auxname[VNAMELEN];
 
-	    if (addressify_var(&cinfo, i)) {
+	    if (addressify_var(cinfo, i)) {
 		sprintf(auxname, "FNARG%d", i + 1);
-		sprintf(auxline, "genr %s=%s", auxname, cinfo.args[i]);
+		sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
 		err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
 		if (!err) {
-		    free(cinfo.args[i]);
-		    cinfo.args[i] = g_strdup(auxname);
+		    free(cinfo->args[i]);
+		    cinfo->args[i] = g_strdup(auxname);
 		}
 	    } 
-	    if (needs_amp(&cinfo, i)) {
+	    if (needs_amp(cinfo, i)) {
 		strcat(fnline, "&");
 	    }
-	    strcat(fnline, cinfo.args[i]);
-	    if (i < cinfo.n_params - 1) {
+	    strcat(fnline, cinfo->args[i]);
+	    if (i < cinfo->n_params - 1) {
 		strcat(fnline, ", ");
 	    }
 	}
@@ -925,7 +928,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     /* FIXME destroy any "ARG" vars or matrices that were created? */
 
-    cinfo_free(&cinfo);
+    cinfo_free(cinfo);
 
     if (bufopen(&prn)) {
 	return;
