@@ -6603,9 +6603,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = load_user_function_file(runfile);
+	    err = load_user_XML_file(runfile);
 	    if (err) {
-		pputs(prn, _("Error reading function definitions\n"));
+		pprintf(prn, _("Error reading %s\n"), runfile);
 	    }
 	    break;
 	}

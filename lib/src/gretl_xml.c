@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "gretl_func.h"
+#include "usermat.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -2268,5 +2270,95 @@ char *gretl_get_gdt_description (const char *fname)
     xmlCleanupParser();
 
     return (char *) buf;
+}
+
+static char *gretl_xml_get_doc_type (const char *fname, int *err)
+{
+    xmlDocPtr doc;
+    xmlNodePtr node;
+    char *ret = NULL;
+
+    doc = gretl_xmlParseFile(fname);
+
+    if (doc == NULL) {
+	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	*err = 1;
+    } else {
+	node = xmlDocGetRootElement(doc);
+	if (node == NULL) {
+	    sprintf(gretl_errmsg, _("%s: empty document"), fname);
+	    *err = 1;
+	} else {
+	    ret = gretl_strdup((char *) node->name);
+	    if (ret == NULL) {
+		*err = 1;
+	    }
+	}
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return ret;
+}
+
+int load_user_matrix_file (const char *fname) 
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    gretl_matrix *m;
+    char *name;
+    int err = 0;
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
+    if (err) {
+	return err;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+	    name = (char *) xmlGetProp(cur, (XUC) "name");
+	    if (name == NULL) {
+		err = 1;
+	    } else {
+		m = gretl_xml_get_matrix(cur, doc, &err);
+		if (m != NULL) {
+		    err = user_matrix_add(m, name);
+		}
+		free(name);
+	    }
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+int load_user_XML_file (const char *fname)
+{
+    char *rootname = NULL;
+    int err = 0;
+
+    rootname = gretl_xml_get_doc_type(fname, &err);
+
+    if (!strcmp(rootname, "gretl-functions")) {
+	err = load_user_function_file(fname);
+    } else if (!strcmp(rootname, "gretl-matrices")) {
+	err = load_user_matrix_file(fname);
+    }
+
+    free(rootname);
+
+    return err;
 }
 

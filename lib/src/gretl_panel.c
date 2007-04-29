@@ -214,8 +214,26 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
     return X;
 }
 
-/* Beck and Katz, as outlined in Greene.  We offer the following only
-   for pooled OLS.  Greene writes (in effect):
+#if 0
+
+static int fe_data_index (panelmod_t *pan, int i, int ti)
+{
+    int t, s = i * pan->T + ti;
+    int ret = s;
+
+    for (t=0; t<s; t++) {
+	if (panel_missing(pan, t)) {
+	    ret--;
+	}
+    }
+
+    return ret;
+}
+
+#endif
+
+/* Beck and Katz, as outlined in Greene.  We offer the following 
+   for pooled OLS only.  Greene writes (in effect):
 
    Var(b) = A^{-1} W A^{-1}
 
@@ -230,13 +248,11 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 */
 
 static int 
-beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
+	       gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
     gretl_matrix *Xi = NULL;
     gretl_matrix *Xj = NULL;
-    gretl_matrix *XX = NULL;
-    gretl_matrix *W = NULL;
-    gretl_matrix *V = NULL;
     int Ti, T = pan->T;
     int k = pmod->ncoeff;
     int s, si, sj;
@@ -245,18 +261,11 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 
     Xi = gretl_matrix_alloc(pan->Tmax, k);
     Xj = gretl_matrix_alloc(pan->Tmax, k);
-    W  = gretl_zero_matrix_new(k, k);
-    V  = gretl_matrix_alloc(k, k);
 
-    if (Xi == NULL || Xj == NULL || V == NULL || W == NULL) {
+    if (Xi == NULL || Xj == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    XX = panel_model_xpxinv(pmod, &err);
-    if (err) {
-	goto bailout;
-    }    
 
     for (i=0; i<pan->nunits; i++) {
 	double sii = 0.0;
@@ -354,28 +363,12 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_qform(XX, GRETL_MOD_NONE, W,
 		       V, GRETL_MOD_NONE);
 
-    p = 0;
-    for (i=0; i<k; i++) {
-	for (j=i; j<k; j++) {
-	    pmod->vcv[p++] = V->val[mdx(V, i, j)];
-	}
-	pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
-    }
-
     gretl_model_set_int(pmod, "panel_bk", 1);
 
  bailout:
 
     gretl_matrix_free(Xi);
     gretl_matrix_free(Xj);
-    gretl_matrix_free(XX);
-    gretl_matrix_free(W);
-    gretl_matrix_free(V);
-
-    if (err && pmod->vcv != NULL) {
-	free(pmod->vcv);
-	pmod->vcv = NULL;
-    }
 
     return err;
 }
@@ -392,14 +385,12 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 */
 
 static int 
-panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
+	      gretl_matrix *XX, gretl_matrix *W, gretl_matrix *V)
 {
     gretl_vector *e = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
-    gretl_matrix *V = NULL;
-    gretl_matrix *XX = NULL;
-    gretl_matrix *W = NULL;
     int Ti, T = pan->Tmax;
     int minobs, k = pmod->ncoeff;
     int i, j, v, s, t;
@@ -408,17 +399,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     e   = gretl_vector_alloc(T);
     Xi  = gretl_matrix_alloc(T, k);
     eXi = gretl_vector_alloc(k);
-    V   = gretl_matrix_alloc(k, k);
-    W   = gretl_zero_matrix_new(k, k);
 
-    if (e == NULL || Xi == NULL || eXi == NULL ||
-	V == NULL || W == NULL) {
+    if (e == NULL || Xi == NULL || eXi == NULL) {
 	err = E_ALLOC;
-	goto bailout;
-    }
-
-    XX = panel_model_xpxinv(pmod, &err);
-    if (err) {
 	goto bailout;
     }
 
@@ -486,14 +469,6 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_print(V, "V");
 #endif
 
-    s = 0;
-    for (i=0; i<k; i++) {
-	for (j=i; j<k; j++) {
-	    pmod->vcv[s++] = V->val[mdx(V, i, j)];
-	}
-	pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
-    }
-
     gretl_model_set_int(pmod, "panel_hac", 1);
 
  bailout:
@@ -501,9 +476,62 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     gretl_matrix_free(e);
     gretl_matrix_free(Xi);
     gretl_matrix_free(eXi);
+
+    return err;
+}
+
+/* common setup for Arellano and Beck-Katz VCV estimators */
+
+static int 
+panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+{
+    gretl_matrix *W = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *XX = NULL;
+    int k = pmod->ncoeff;
+    int err = 0;
+
+    W  = gretl_zero_matrix_new(k, k);
+    V  = gretl_matrix_alloc(k, k);
+
+    if (W == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    XX = panel_model_xpxinv(pmod, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    /* call the appropriate function */
+    if ((pan->opt & OPT_P) && get_panel_beck_katz()) {
+	err = beck_katz_vcv(pmod, pan, Z, XX, W, V);
+    } else {
+	err = arellano_vcv(pmod, pan, Z, XX, W, V);
+    }
+
+    if (!err) {
+	int i, j, s = 0;
+
+	for (i=0; i<k; i++) {
+	    for (j=i; j<k; j++) {
+		pmod->vcv[s++] = V->val[mdx(V, i, j)];
+	    }
+	    pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(W);
     gretl_matrix_free(V);
     gretl_matrix_free(XX);
-    gretl_matrix_free(W);
+
+    if (err && pmod->vcv != NULL) {
+	free(pmod->vcv);
+	pmod->vcv = NULL;
+    }
 
     return err;
 }
@@ -2485,11 +2513,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     set_model_id(pmod);
 
     if (pan->opt & OPT_R) {
-	if (get_panel_beck_katz()) {
-	    beck_katz_vcv(pmod, pan, Z);
-	} else {
-	    panel_robust_vcv(pmod, pan, Z); /* Arellano */
-	}
+	panel_robust_vcv(pmod, pan, Z);
     }
 }
 

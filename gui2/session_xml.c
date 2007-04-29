@@ -349,12 +349,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 
 static int maybe_read_matrix_file (const char *fname) 
 {
-    xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
-    gretl_matrix *m;
-    char *name;
     FILE *fp;
-    int err = 0;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -363,37 +358,8 @@ static int maybe_read_matrix_file (const char *fname)
     }
 
     fclose(fp);
-    xmlKeepBlanksDefault(0);
 
-    err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
-    if (err) {
-	gui_errmsg(err);
-	return 1;
-    }
-
-    cur = cur->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
-	    name = (char *) xmlGetProp(cur, (XUC) "name");
-	    if (name == NULL) {
-		err = 1;
-	    } else {
-		m = gretl_xml_get_matrix(cur, doc, &err);
-		if (m != NULL) {
-		    err = user_matrix_add(m, name);
-		}
-		free(name);
-	    }
-	}
-	cur = cur->next;
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-	xmlCleanupParser();
-    }
-
-    return err;
+    return load_user_matrix_file(fname);
 }
 
 static int maybe_read_functions_file (const char *fname) 
