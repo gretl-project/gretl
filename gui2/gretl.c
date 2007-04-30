@@ -720,11 +720,13 @@ int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
     int ftype = 0;
-    int debug = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
 #ifdef USE_GNOME
     GnomeProgram *program;
+#endif
+#ifdef G_OS_WIN32
+    int debug = 0;
 #endif
 
 #ifdef WINDEBUG
@@ -763,7 +765,7 @@ int main (int argc, char *argv[])
     set_program_startdir();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(argv[0], debug);
+    gretl_win32_init(argv[0]);
 #else 
     gretl_config_init();
 #endif
@@ -772,11 +774,12 @@ int main (int argc, char *argv[])
 	int force_lang = 0;
 	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
+#ifdef G_OS_WIN32
 	if (opt & OPT_DEBUG) {
-	    /* record and extract debugging option */
 	    debug = 1;
 	    opt &= ~OPT_DEBUG;
 	}
+#endif
 
 	switch (opt) {
 	case OPT_HELP:
@@ -1008,6 +1011,12 @@ int main (int argc, char *argv[])
     } else if (gui_get_data == OPT_WEBDB) {
 	open_named_remote_db_index(dbname);
     }
+
+#ifdef G_OS_WIN32
+    if (debug) {
+	gretl_win32_debug();
+    }
+#endif
 
     /* Enter the event loop */
     gtk_main();

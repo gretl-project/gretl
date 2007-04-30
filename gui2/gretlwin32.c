@@ -40,9 +40,9 @@ extern int wimp; /* settings.c */
 
 void redirect_io_to_console (void)
 {
+    CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
     long stdhandle;
-    CONSOLE_SCREEN_BUFFER_INFO coninfo;
     FILE *fp;
 
     AllocConsole();
@@ -57,23 +57,13 @@ void redirect_io_to_console (void)
     /* redirect unbuffered STDOUT to the console */
     stdhandle = (long) GetStdHandle(STD_OUTPUT_HANDLE);
     conhandle = _open_osfhandle(stdhandle, _O_TEXT);
-
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    /* redirect unbuffered STDIN to the console */
-    stdhandle = (long) GetStdHandle(STD_INPUT_HANDLE);
-    conhandle = _open_osfhandle(stdhandle, _O_TEXT);
-
-    fp = _fdopen(conhandle, "r");
-    *stdin = *fp;
-    setvbuf(stdin, NULL, _IONBF, 0);
-
     /* redirect unbuffered STDERR to the console */
     stdhandle = (long) GetStdHandle(STD_ERROR_HANDLE);
     conhandle = _open_osfhandle(stdhandle, _O_TEXT);
-
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -508,20 +498,19 @@ static int set_gd_fontpath (void)
     return 0;        
 }
 
-void gretl_win32_init (const char *progname, int debug)
+void gretl_win32_init (const char *progname)
 {
     set_network_cfg_filename(progname);
 
     read_rc(); /* get config info from registry */
     set_gd_fontpath();
-
-    if (debug) {
-	redirect_io_to_console();
-    } else {
-	hush_warnings();
-    }
-
+    hush_warnings();
     ws_startup(); 
+}
+
+void gretl_win32_debug (void)
+{
+    redirect_io_to_console();
 }
 
 DIR *win32_opendir (const char *dname)

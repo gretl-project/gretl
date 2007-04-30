@@ -43,7 +43,6 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
-    GtkWidget *fcheck;
     fnpkg *pkg;
     char *fname;
     char *author;
@@ -57,7 +56,6 @@ struct function_info_ {
     FuncDataReq dreq;
     float minver;
     int upload;
-    int usever;
     int saveas;
 };
 
@@ -86,7 +84,6 @@ function_info *finfo_new (void)
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
     finfo->upload = 0;
-    finfo->usever = 0;
     finfo->saveas = 0;
     finfo->iface = -1;
 
@@ -184,10 +181,6 @@ void get_default_package_name (char *fname, gpointer p)
 
     if (pubname != NULL) {
 	strcpy(fname, pubname);
-	if (finfo->usever) {
-	    strcat(fname, "-");
-	    strcat(fname, finfo->version);
-	}
 	strcat(fname, ".gfn");	
     }
 }
@@ -226,17 +219,7 @@ static int maybe_revise_package_name (function_info *finfo)
 
     free(finfo->fname);
     pubname = user_function_name_by_index(finfo->pub);
-
-    if (finfo->usever) {
-	/* factor in version string */
-	finfo->fname = g_strdup_printf("%s%s-%s.gfn", base, 
-				       pubname, finfo->version);
-    } else {
-	/* no version string */
-	finfo->fname = g_strdup_printf("%s%s.gfn", base, 
-				       pubname);
-    }
-    
+    finfo->fname = g_strdup_printf("%s%s.gfn", base, pubname);
     g_free(base);
 
     return 0;
@@ -273,9 +256,6 @@ static void real_finfo_save (function_info *finfo)
 
     finfo->upload = 
 	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
-
-    finfo->usever = 
-	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->fcheck));
 
     if (hidx >= 0) {
 	char *tmp = textview_get_text(finfo->text);
@@ -716,12 +696,6 @@ static void finfo_dialog (function_info *finfo)
     finfo->check = button_in_hbox(vbox, CHECK_BUTTON, 
 				  _("Upload package to server on save"));
 
-    /* check box for use version number in filename */
-    finfo->fcheck = button_in_hbox(vbox, CHECK_BUTTON, 
-				   _("Include version in file name"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(finfo->fcheck),
-				 finfo->usever);    
-
     /* control button area */
     hbox = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
@@ -1149,10 +1123,6 @@ void edit_function_package (const char *fname, int *loaderr)
 	p = fname;
     } else {
 	p++;
-    }
-
-    if (strchr(p, '-')) {
-	finfo->usever = 1;
     }
 
     finfo->fname = g_strdup(fname);
