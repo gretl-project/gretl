@@ -168,6 +168,10 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int flag)
 	return E_ALLOC;
     }
 
+    if (flag == VCV_XPX) {
+	gretl_model_set_int(pmod, "vcv_xpx", 1);
+    }
+
     for (i=0; i<k; i++) {
 	for (j=0; j<=i; j++) {
 	    idx = ijton(i, j, k);

@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) by Allin Cottrell
+ *   Copyright (c) by Allin Cottrell and Riccardo "Jack" Lucchetti
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -45,8 +45,6 @@ struct panelmod_t_ {
     int Tmin;             /* shortest usable times-series */
     double Tbar;          /* harmonic mean of per-units time-series lengths */
     int NT;               /* total observations used (based on pooled model) */
-    int NT_fe;            /* total observations used in fixed-effects model */
-    int k_fe;             /* number of coefficients, fixed-effects model */
     int ntdum;            /* number of time dummies added */
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
@@ -55,9 +53,6 @@ struct panelmod_t_ {
     int nbeta;            /* number of slope coeffs for Hausman test */
     int Fdfn;             /* numerator df, F for differing intercepts */
     int Fdfd;             /* denominator df, F for differing intercepts */
-    double ybar;          /* mean of dependent variable */
-    double sdy;           /* standard deviation of dependent variable */
-    double tss;           /* total sum of squares, dependent variable */
     double sigma_e;       /* fixed-effects standard error */
     double theta;         /* quasi-demeaning coefficient */
     double F;             /* joint significance of differing unit intercepts */
@@ -79,8 +74,6 @@ struct {
     int T;      /* number of observations per unit */
     int offset; /* sampling offset into full dataset */
 } panidx;
-
-#define FE_MINOBS 1
 
 static int 
 varying_vars_list (const double **Z, const DATAINFO *pdinfo,
@@ -214,7 +207,10 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod,
     double x;
     int i, j, m;
 
-    if ((pan->opt & OPT_P) && pmod->vcv != NULL) {
+    if (gretl_model_get_int(pmod, "vcv_xpx")) {
+	/* already done */
+	gretl_model_set_int(pmod, "vcv_xpx", 0); 
+    } else if (pmod->vcv != NULL) {
 	double s2 = pmod->sigma * pmod->sigma;
 	int nv = (k * k + k) / 2;
 
@@ -270,7 +266,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 {
     gretl_matrix *Xi = NULL;
     gretl_matrix *Xj = NULL;
-    int Tmin, T = pan->T;
+    int T = pan->T;
     int k = pmod->ncoeff;
     int s, si, sj;
     int i, j, p, v, t;
@@ -284,13 +280,11 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	goto bailout;
     }
 
-    Tmin = (pan->opt & OPT_P)? 1 : FE_MINOBS;
-
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
 	double sii = 0.0;
 
-	if (Ti < Tmin) {
+	if (Ti == 0) {
 	    continue;
 	}
 
@@ -323,7 +317,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	    int Tij = 0;
 	    double sij = 0.0;
 
-	    if (pan->unit_obs[j] < Tmin) {
+	    if (pan->unit_obs[j] == 0) {
 		continue;
 	    }
 
@@ -412,7 +406,7 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_vector *e = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
-    int Tmin, T = pan->Tmax;
+    int T = pan->Tmax;
     int k = pmod->ncoeff;
     int i, j, v, s, t;
     int err = 0;
@@ -426,14 +420,13 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	goto bailout;
     }
 
-    Tmin = (pan->opt & OPT_P)? 1 : FE_MINOBS;
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
 	int p = 0;
 
-	if (Ti < Tmin) {
+	if (Ti == 0) {
 	    continue;
 	}
 
@@ -565,7 +558,7 @@ static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
     double ut, u1;
     double num = 0.0;
     double den = 0.0;
-    int i, t, bigt, Ti;
+    int i, t, ti, Ti;
     int started;
 
     pmod->dw = NADBL;
@@ -583,10 +576,10 @@ static void panel_dwstat (MODEL *pmod, const panelmod_t *pan)
 	}
 
 	started = 0;
-	for (t=1; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    ut = pmod->uhat[bigt];
-	    u1 = pmod->uhat[bigt - 1];
+	for (ti=1; ti<pan->T; ti++) {
+	    t = panel_index(i, ti);
+	    ut = pmod->uhat[t];
+	    u1 = pmod->uhat[t-1];
 	    if (!na(ut) && !na(u1)) {
 		num += (ut - u1) * (ut - u1);
 		den += ut * ut;
@@ -614,7 +607,7 @@ static int hausman_allocate (panelmod_t *pan)
     pan->nbeta = k;
 
     if (pan->opt & OPT_H) {
-	/* regression approach to Hausman: we don't need
+	/* taking the regression approach to Hausman: we don't need
 	   the allocations below */
 	return 0;
     }
@@ -696,30 +689,6 @@ static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 
 }
 
-/* Fix for statistics on the dependent variable, after doing the
-   "within" regression on de-meaned data.
-*/
-
-static void within_depvarstats (panelmod_t *pan, double *y, int n)
-{
-    double x = 0.0;
-    int t;
-
-    for (t=0; t<n; t++) {
-	x += y[t];
-    }
-
-    pan->ybar = x / n;
-    pan->tss = 0.0;
-
-    for (t=0; t<n; t++) {
-	x = y[t] - pan->ybar;
-	pan->tss += x * x;
-    }
-
-    pan->sdy = sqrt(pan->tss / (n - 1));
-}
-
 static int *real_varying_list (panelmod_t *pan)
 {
     int *vlist = gretl_list_copy(pan->vlist);
@@ -748,7 +717,6 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 		       double ***wZ, panelmod_t *pan)
 {
     DATAINFO *winfo = NULL;
-    double *wy = NULL;
     double *xbar = NULL;
     int *vlist = NULL;
     int i, j, vj;
@@ -756,27 +724,24 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
     int err = 0;
 
     pan->balanced = 1;
-    pan->NT_fe = 0;
 
     for (i=0; i<pan->nunits; i++) {
- 	if (pan->unit_obs[i] >= FE_MINOBS) {
- 	    pan->NT_fe += pan->unit_obs[i];
+ 	if (pan->unit_obs[i] > 0) {
  	    if (pan->unit_obs[i] != pan->Tmax) {
  		pan->balanced = 0;
  	    }
  	}
     }
 
-    if (pan->NT_fe < pdinfo->n) {
-	err = allocate_data_finders(pan, pan->NT_fe, pdinfo->n);
+    if (pan->NT < pdinfo->n) {
+	err = allocate_data_finders(pan, pan->NT, pdinfo->n);
 	if (err) {
 	    return NULL;
 	}
     }
 
-    wy = malloc(pan->NT_fe * sizeof *wy);
     vlist = real_varying_list(pan);
-    if (wy == NULL || vlist == NULL) {
+    if (vlist == NULL) {
 	goto bailout;
     }
 
@@ -787,10 +752,10 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 
 #if PDEBUG
     fprintf(stderr, "within_groups dataset: nvars=%d, nobs=%d\n", 
-	    pan->vlist[0], pan->NT_fe);
+	    pan->vlist[0], pan->NT);
 #endif
 
-    winfo = create_new_dataset(wZ, pan->vlist[0], pan->NT_fe, 0);
+    winfo = create_new_dataset(wZ, pan->vlist[0], pan->NT, 0);
     if (winfo == NULL) {
 	goto bailout;
     }
@@ -801,7 +766,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	int Ti = pan->unit_obs[i];
 	int got = 0;
 
-	if (Ti < FE_MINOBS) {
+	if (Ti == 0) {
 	    continue;
 	}
 
@@ -829,10 +794,6 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 		for (j=0; j<vlist[0]; j++) {
 		    vj = vlist[j+1];
 		    (*wZ)[j+1][s] = Z[vj][bigt] - xbar[j];
-		    if (j == 0) {
-			/* dependent var */
-			wy[s] = Z[vj][bigt];
-		    }
 		}
 		got++;
 		if (pan->small2big != NULL) {
@@ -844,11 +805,8 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	}	    
     }
 
-    within_depvarstats(pan, wy, pan->NT_fe);
-
  bailout:
 
-    free(wy);
     free(vlist);
     free(xbar);
 
@@ -1424,39 +1382,40 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
    from which the group means were subtracted.
 */
 
-static int fix_within_stats (MODEL *targ, panelmod_t *pan)
+static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 {
-    int nc = targ->ncoeff;
+    int nc = fmod->ncoeff;
     int err = 0;
 
-    err = fix_panelmod_list(targ, pan);
+    err = fix_panelmod_list(fmod, pan);
     if (err) {
 	return err;
     }
 
-    targ->ybar = pan->ybar;
-    targ->sdy = pan->sdy;
-    targ->ifc = 1;
+    fmod->ybar = pan->pooled->ybar;
+    fmod->sdy = pan->pooled->sdy;
+    fmod->tss = pan->pooled->tss;
+    fmod->ifc = 1;
 
     /* should we modify R^2 in this way? */
-    targ->rsq = 1.0 - (targ->ess / pan->tss);
+    fmod->rsq = 1.0 - (fmod->ess / fmod->tss);
 
-    if (targ->dfd > 0) {
-	double den = pan->tss * targ->dfd;
+    if (fmod->dfd > 0) {
+	double den = fmod->tss * fmod->dfd;
 
-	targ->adjrsq = 1 - (targ->ess * (targ->nobs - 1) / den);
+	fmod->adjrsq = 1 - (fmod->ess * (fmod->nobs - 1) / den);
     }
 
-    if (targ->rsq < 0.0) {
-	targ->rsq = 0.0;
+    if (fmod->rsq < 0.0) {
+	fmod->rsq = 0.0;
     } else {
-	targ->fstt = (targ->rsq / (1.0 - targ->rsq)) * 
-	    ((double) targ->dfd / targ->dfn);
+	fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
+	    ((double) fmod->dfd / fmod->dfn);
     }
 
-    targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ);
-    targ->ncoeff = nc;
+    fmod->ncoeff = fmod->dfn + 1;
+    ls_criteria(fmod);
+    fmod->ncoeff = nc;
 
     return err;
 }
@@ -1547,7 +1506,7 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     int n = pan->pooled->full_n;
     int re_n = 0;
     double yht;
-    int ti, Tmin;
+    int ti;
     int i, j, s, t;
 
     y = Z[pan->pooled->list[1]];
@@ -1555,17 +1514,14 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     if (pan->opt & OPT_U) {
 	/* random effects model */
 	pmod->ess = 0.0;
-	Tmin = 1;
-    } else {
-	Tmin = FE_MINOBS;
-    }
+    } 
 
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
 
-	if (Ti < Tmin) {
+	if (Ti == 0) {
 	    continue;
 	}
 
@@ -1716,7 +1672,7 @@ static int *fe_units_list (const panelmod_t *pan)
     int i, j, n = 0;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= FE_MINOBS) {
+	if (pan->unit_obs[i] > 0) {
 	    n++;
 	}
     }
@@ -1726,7 +1682,7 @@ static int *fe_units_list (const panelmod_t *pan)
     if (ulist != NULL) {
 	j = 1;
 	for (i=0; i<pan->nunits; i++) { 
-	    if (pan->unit_obs[i] >= FE_MINOBS) {
+	    if (pan->unit_obs[i] > 0) {
 		ulist[j++] = i + 1;
 	    }
 	} 
@@ -1899,6 +1855,7 @@ static void fix_gls_stats (MODEL *gmod, panelmod_t *pan)
 
     gmod->ybar = pan->pooled->ybar;
     gmod->sdy = pan->pooled->sdy;
+    gmod->tss = pan->pooled->tss;
 
     gmod->rsq = NADBL;
     gmod->adjrsq = NADBL;
@@ -2178,7 +2135,7 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-static int complete_hausman_test (panelmod_t *pan, PRN *prn)
+static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 {
     int err = 0;
 
@@ -2250,7 +2207,7 @@ static int panel_obs_accounts (panelmod_t *pan)
 	    }
 	    pan->NT += uobs[i];
 	}
-	if (uobs[i] >= FE_MINOBS) {
+	if (uobs[i] > 0) {
 	    pan->N_fe += 1;
 	}
     }
@@ -2443,7 +2400,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, ginfo, prn);
-	    complete_hausman_test(&pan, prn);
+	    finalize_hausman_test(&pan, prn);
 	}
 
 	if (ginfo != NULL) {
@@ -2705,7 +2662,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, ginfo, prn);
 	    save_breusch_pagan_result(&pan);
-	    complete_hausman_test(&pan, prn);
+	    finalize_hausman_test(&pan, prn);
 	}
 
 	if (ginfo != NULL) {
