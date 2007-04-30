@@ -2691,7 +2691,7 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
 
 #endif
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT && c != PANEL)
+#define robust_conf(c) (c != LOGIT && c != PROBIT)
 
 static void build_selector_switches (selector *sr) 
 {

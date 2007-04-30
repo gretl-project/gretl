@@ -4105,11 +4105,19 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case RUN:
+    case INCLUDE:
 	err = getopenfile(line, runfile, NULL, OPT_S);
 	if (err) { 
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	} 
+	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
+	    err = load_user_matrix_file(runfile);
+	    if (err) {
+		pprintf(prn, _("Error reading %s\n"), runfile);
+	    }
+	    break;
+	}
 	if (!strcmp(runfile, s->runfile)) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;

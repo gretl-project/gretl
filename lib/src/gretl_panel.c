@@ -68,6 +68,8 @@ struct panelmod_t_ {
     double between_s2;    /* group-means or "between" error variance */
     double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
     double s2u;           /* \hat{sigma}^2_u measure */
+    int *small2big;       /* data indexation array */
+    int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */
     MODEL *realmod;       /* fixed or random effects model */
 };
@@ -104,6 +106,31 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 #endif
 }
 
+static int allocate_data_finders (panelmod_t *pan, int smalln, int bign)
+{
+    int s;
+
+    pan->small2big = malloc(smalln * sizeof *pan->small2big);
+    pan->big2small = malloc(bign * sizeof *pan->big2small);
+
+    if (pan->small2big == NULL || pan->big2small == NULL) {
+	free(pan->small2big);
+	pan->small2big = NULL;
+	free(pan->big2small);
+	pan->big2small = NULL;
+	return E_ALLOC;
+    }
+
+    for (s=0; s<bign; s++) {
+	pan->big2small[s] = -1;
+    }
+
+    return 0;
+}
+
+#define small_index(p,t) ((p->big2small == NULL)? t : p->big2small[t])
+#define big_index(p,t) ((p->small2big == NULL)? t : p->small2big[t])
+
 static void panelmod_init (panelmod_t *pan)
 {
     pan->nunits = 0;
@@ -134,6 +161,9 @@ static void panelmod_init (panelmod_t *pan)
 
     pan->bdiff = NULL;
     pan->sigma = NULL;
+
+    pan->small2big = NULL;
+    pan->big2small = NULL;
     
     pan->pooled = NULL;
     pan->realmod = NULL;
@@ -147,6 +177,9 @@ static void panelmod_free (panelmod_t *pan)
 
     free(pan->bdiff);
     free(pan->sigma);
+    
+    free(pan->small2big);
+    free(pan->big2small);
 
     free(pan->realmod);
 }
@@ -172,14 +205,16 @@ static int var_is_varying (const panelmod_t *pan, int v)
 
 /* retrieve X'X^{-1} from the pooled or fixed effects model */
 
-static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
+static gretl_matrix *panel_model_xpxinv (MODEL *pmod, 
+					 const panelmod_t *pan,
+					 int *err)
 {
     gretl_matrix *X;
     int k = pmod->ncoeff;
     double x;
     int i, j, m;
 
-    if (pmod->vcv != NULL) {
+    if ((pan->opt & OPT_P) && pmod->vcv != NULL) {
 	double s2 = pmod->sigma * pmod->sigma;
 	int nv = (k * k + k) / 2;
 
@@ -214,26 +249,8 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
     return X;
 }
 
-#if 0
-
-static int fe_data_index (panelmod_t *pan, int i, int ti)
-{
-    int t, s = i * pan->T + ti;
-    int ret = s;
-
-    for (t=0; t<s; t++) {
-	if (panel_missing(pan, t)) {
-	    ret--;
-	}
-    }
-
-    return ret;
-}
-
-#endif
-
 /* Beck and Katz, as outlined in Greene.  We offer the following 
-   for pooled OLS only.  Greene writes (in effect):
+   for pooled OLS and FE.  Greene writes (in effect):
 
    Var(b) = A^{-1} W A^{-1}
 
@@ -241,7 +258,7 @@ static int fe_data_index (panelmod_t *pan, int i, int ti)
          W = \sum_{i=1}^n \sum_{j=1}^n \sigma_{ij} X'_{i} X_{j} 
 
    and \sigma_{ij} is estimated as (1/T) \sum_{t=1}^T e_i e_j,
-   with the e's being OLS residuals.
+   with the e's being OLS (or FE) residuals.
 
    In computing this, we need to check that W is positive definite:
    this seems not to be guaranteed for unbalanced panels.
@@ -253,7 +270,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 {
     gretl_matrix *Xi = NULL;
     gretl_matrix *Xj = NULL;
-    int Ti, T = pan->T;
+    int Tmin, T = pan->T;
     int k = pmod->ncoeff;
     int s, si, sj;
     int i, j, p, v, t;
@@ -267,12 +284,13 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	goto bailout;
     }
 
+    Tmin = (pan->opt & OPT_P)? 1 : FE_MINOBS;
+
     for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->unit_obs[i];
 	double sii = 0.0;
 
-	Ti = pan->unit_obs[i];
-
-	if (Ti == 0) {
+	if (Ti < Tmin) {
 	    continue;
 	}
 
@@ -283,6 +301,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	    si = panel_index(i, t);
 	    if (!na(pmod->uhat[si])) {
 		sii += pmod->uhat[si] * pmod->uhat[si];
+		si = small_index(pan, si);
 		for (p=0; p<k; p++) {
 		    v = pmod->list[p + 2];
 		    gretl_matrix_set(Xi, s, p, Z[v][si]);
@@ -304,7 +323,7 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	    int Tij = 0;
 	    double sij = 0.0;
 
-	    if (pan->unit_obs[j] == 0) {
+	    if (pan->unit_obs[j] < Tmin) {
 		continue;
 	    }
 
@@ -331,6 +350,8 @@ beck_katz_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 		si = panel_index(i, t);
 		sj = panel_index(j, t);
 		if (!na(pmod->uhat[si]) && !na(pmod->uhat[sj])) {
+		    si = small_index(pan, si);
+		    sj = small_index(pan, sj);
 		    for (p=0; p<k; p++) {
 			v = pmod->list[p + 2];
 			gretl_matrix_set(Xi, s, p, Z[v][si]);
@@ -391,8 +412,8 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
     gretl_vector *e = NULL;
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
-    int Ti, T = pan->Tmax;
-    int minobs, k = pmod->ncoeff;
+    int Tmin, T = pan->Tmax;
+    int k = pmod->ncoeff;
     int i, j, v, s, t;
     int err = 0;
 
@@ -405,50 +426,32 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const double **Z,
 	goto bailout;
     }
 
-    minobs = (pan->opt & OPT_P)? 1 : FE_MINOBS;
+    Tmin = (pan->opt & OPT_P)? 1 : FE_MINOBS;
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
-	Ti = pan->unit_obs[i];
+	int Ti = pan->unit_obs[i];
+	int p = 0;
 
-	if (Ti < minobs) {
+	if (Ti < Tmin) {
 	    continue;
 	}
 
 	e = gretl_matrix_reuse(e, Ti, 1);
 	Xi = gretl_matrix_reuse(Xi, Ti, k);
 
-	if (pan->opt & OPT_P) {
-	    /* pooled model (using full dataset) */
-	    int p = 0;
-
-	    for (t=0; t<pan->T; t++) {
-		s = panel_index(i, t);
-		if (na(pmod->uhat[s])) {
-		    continue;
-		}
-		gretl_vector_set(e, p, pmod->uhat[s]);
-		for (j=0; j<k; j++) {
-		    v = pmod->list[j + 2];
-		    gretl_matrix_set(Xi, p, j, Z[v][s]);
-		}
-		p++;
+	for (t=0; t<pan->T; t++) {
+	    s = panel_index(i, t);
+	    if (na(pmod->uhat[s])) {
+		continue;
 	    }
-	} else {
-	    /* fixed effects (using within dataset) */
-	    for (t=0; t<Ti; t++) {
-		if (na(pmod->uhat[s])) {
-		    /* should be impossible! */
-		    gretl_vector_set(e, t, 0.0);
-		} else {
-		    gretl_vector_set(e, t, pmod->uhat[s]);
-		}
-		for (j=0; j<k; j++) {
-		    v = pmod->list[j + 2];
-		    gretl_matrix_set(Xi, t, j, Z[v][s]);
-		}
-		s++;
+	    gretl_vector_set(e, p, pmod->uhat[s]);
+	    s = small_index(pan, s);
+	    for (j=0; j<k; j++) {
+		v = pmod->list[j+2];
+		gretl_matrix_set(Xi, p, j, Z[v][s]);
 	    }
+	    p++;
 	}
 
 	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
@@ -499,13 +502,13 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	goto bailout;
     }
 
-    XX = panel_model_xpxinv(pmod, &err);
+    XX = panel_model_xpxinv(pmod, pan, &err);
     if (err) {
 	goto bailout;
     }
 
     /* call the appropriate function */
-    if ((pan->opt & OPT_P) && get_panel_beck_katz()) {
+    if (get_panel_beck_katz()) {
 	err = beck_katz_vcv(pmod, pan, Z, XX, W, V);
     } else {
 	err = arellano_vcv(pmod, pan, Z, XX, W, V);
@@ -534,6 +537,23 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     }
 
     return err;
+}
+
+static void femod_regular_vcv (MODEL *pmod)
+{
+    if (pmod->vcv == NULL) {
+	/* estimated via Cholesky: no vcv yet */
+	makevcv(pmod, pmod->sigma);
+    } else {
+	/* estimated via QR: "vcv" = (X'X)^{-1} */
+	int i, k = pmod->ncoeff;
+	int n = k * (k + 1) / 2;
+	double s2 = pmod->sigma * pmod->sigma;
+
+	for (i=0; i<n; i++) {
+	    pmod->vcv[i] *= s2;
+	}
+    }
 }
 
 /* Durbin-Watson statistic for the fixed effects model.  We only
@@ -700,6 +720,23 @@ static void within_depvarstats (panelmod_t *pan, double *y, int n)
     pan->sdy = sqrt(pan->tss / (n - 1));
 }
 
+static int *real_varying_list (panelmod_t *pan)
+{
+    int *vlist = gretl_list_copy(pan->vlist);
+    int i;
+
+    if (vlist != NULL) {
+	for (i=2; i<=vlist[0]; i++) {
+	    if (vlist[i] == 0) {
+		gretl_list_delete_at_pos(vlist, i);
+		break;
+	    }
+	}
+    }
+
+    return vlist;
+}
+
 /* Construct a version of the dataset from which the group means are
    subtracted, for the "within" regression.  Nota bene: this auxiliary
    dataset is not necessarily of full length: missing observations
@@ -707,101 +744,113 @@ static void within_depvarstats (panelmod_t *pan, double *y, int n)
 */
 
 static DATAINFO *
-within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
+within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
+		       double ***wZ, panelmod_t *pan)
 {
-    DATAINFO *winfo;
+    DATAINFO *winfo = NULL;
     double *wy = NULL;
-    int wn = 0;
-    double xbar;
-    int i, j, k;
+    double *xbar = NULL;
+    int *vlist = NULL;
+    int i, j, vj;
     int s, t, bigt;
+    int err = 0;
 
     pan->balanced = 1;
+    pan->NT_fe = 0;
 
     for (i=0; i<pan->nunits; i++) {
  	if (pan->unit_obs[i] >= FE_MINOBS) {
- 	    wn += pan->unit_obs[i];
+ 	    pan->NT_fe += pan->unit_obs[i];
  	    if (pan->unit_obs[i] != pan->Tmax) {
  		pan->balanced = 0;
  	    }
  	}
     }
 
-    wy = malloc(wn * sizeof *wy);
-    if (wy == NULL) {
-	return NULL;
+    if (pan->NT_fe < pdinfo->n) {
+	err = allocate_data_finders(pan, pan->NT_fe, pdinfo->n);
+	if (err) {
+	    return NULL;
+	}
+    }
+
+    wy = malloc(pan->NT_fe * sizeof *wy);
+    vlist = real_varying_list(pan);
+    if (wy == NULL || vlist == NULL) {
+	goto bailout;
+    }
+
+    xbar = malloc(vlist[0] * sizeof *xbar);
+    if (xbar == NULL) {
+	goto bailout;
     }
 
 #if PDEBUG
     fprintf(stderr, "within_groups dataset: nvars=%d, nobs=%d\n", 
-	    pan->vlist[0], wn);
+	    pan->vlist[0], pan->NT_fe);
 #endif
 
-    winfo = create_new_dataset(wZ, pan->vlist[0], wn, 0);
+    winfo = create_new_dataset(wZ, pan->vlist[0], pan->NT_fe, 0);
     if (winfo == NULL) {
-	free(wy);
-	return NULL;
+	goto bailout;
     }
 
-    k = 0;
-    for (j=1; j<=pan->vlist[0]; j++) { 
-	int vj = pan->vlist[j];
+    s = 0;
 
-	if (vj == 0) {
+    for (i=0; i<pan->nunits; i++) { 
+	int Ti = pan->unit_obs[i];
+	int got = 0;
+
+	if (Ti < FE_MINOBS) {
 	    continue;
-	} 
+	}
 
-	s = 0;
-	k++;
-
-#if PDEBUG
-	fprintf(stderr, "working on list[%d] (original var %d, var %d in wZ)\n",
-		j, pan->vlist[j], k);
-#endif
-
-	for (i=0; i<pan->nunits; i++) { 
-	    int Ti = pan->unit_obs[i];
-	    int got = 0;
-
-#if PDEBUG
-	    fprintf(stderr, "looking at x-sect unit %d: Ti = %d\n", i, Ti);
-#endif
-	    if (Ti < FE_MINOBS) {
-		continue;
-	    }
-
-	    xbar = 0.0;
-	    for (t=0; t<pan->T; t++) {
-		bigt = panel_index(i, t);
-		if (!panel_missing(pan, bigt)) {
-		    xbar += Z[vj][bigt];
-		}
-	    }
-	    xbar /= (double) Ti;
-
-#if PDEBUG > 1
-	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
-		    pan->vlist[j], i, xbar);
-#endif
-	    for (t=0; t<pan->T && got<Ti; t++) { 
-		bigt = panel_index(i, t);
-		if (!panel_missing(pan, bigt)) {
-		    (*wZ)[k][s] = Z[vj][bigt] - xbar;
-#if PDEBUG > 1
-		    fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, s, (*wZ)[k][s]);
-#endif
-		    if (j == 1) {
-			wy[s] = Z[vj][bigt];
-		    }
-		    got++;
-		    s++;
+	/* first pass: find the group means */
+	for (j=0; j<vlist[0]; j++) {
+	    xbar[j] = 0.0;
+	}
+	for (t=0; t<pan->T; t++) {
+	    bigt = panel_index(i, t);
+	    if (!panel_missing(pan, bigt)) {
+		for (j=0; j<vlist[0]; j++) {
+		    vj = vlist[j+1];
+		    xbar[j] += Z[vj][bigt];
 		}
 	    }
 	}
+	for (j=0; j<vlist[0]; j++) {
+	    xbar[j] /= Ti;
+	}	
+
+	/* second pass: calculate de-meaned values */
+	for (t=0; t<pan->T && got<Ti; t++) { 
+	    bigt = panel_index(i, t);
+	    if (!panel_missing(pan, bigt)) {
+		for (j=0; j<vlist[0]; j++) {
+		    vj = vlist[j+1];
+		    (*wZ)[j+1][s] = Z[vj][bigt] - xbar[j];
+		    if (j == 0) {
+			/* dependent var */
+			wy[s] = Z[vj][bigt];
+		    }
+		}
+		got++;
+		if (pan->small2big != NULL) {
+		    pan->small2big[s] = bigt;
+		    pan->big2small[bigt] = s;
+		}
+		s++;
+	    }
+	}	    
     }
 
-    within_depvarstats(pan, wy, wn);
+    within_depvarstats(pan, wy, pan->NT_fe);
+
+ bailout:
+
     free(wy);
+    free(vlist);
+    free(xbar);
 
     return winfo;
 }
@@ -822,13 +871,12 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 {
     DATAINFO *reinfo;
     double xbar, theta_i;
-    const double *xj;
-    const double *gm;
     int hreg = (hlist != NULL);
     int v1 = relist[0];
     int v2 = 0;
     int i, j, k, k2, t;
-    int vvar, vj, s, bigt, u;
+    int vj, s, bigt, u;
+    int err = 0;
 
     if (hreg) {
 	/* apparatus for regression version of Hausman test */
@@ -840,6 +888,13 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	}
     }  
 
+    if (pan->NT < pdinfo->n) {
+	err = allocate_data_finders(pan, pan->NT, pdinfo->n);
+	if (err) {
+	    return NULL;
+	}
+    }
+
 #if PDEBUG
     fprintf(stderr, "random_effects_dataset: nvars=%d, nobs=%d\n",
 	    v1 + v2, pan->NT);
@@ -850,75 +905,76 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    /* Now create the transformed variables: original data minus theta
-       times the appropriate group mean.
-    */    
+    /* build GLS regression list, and process varnames for regression
+       version of Hausman test if wanted */
+
     k = 0;
     k2 = v1 - 1;
     for (j=1; j<=v1; j++) {
 	vj = pan->pooled->list[j];
-	xj = Z[vj];
-	gm = NULL;
-	vvar = var_is_varying(pan, vj);
-	u = 0;
-
 	if (vj == 0) {
 	    relist[j] = 0;
 	} else {
-	    k++;
-	    relist[j] = k; /* build GLS regression list */
-	    if (k < ginfo->v) {
-		gm = gZ[k];
-	    } 
+	    relist[j] = ++k;
 	    strcpy(reinfo->varname[k], pdinfo->varname[vj]);
-	    if (hreg && vvar && j > 1) {
+	    if (hreg && j > 1 && var_is_varying(pan, vj)) {
 		k2++;
 		strcpy(reinfo->varname[k2], "_");
 		strncat(reinfo->varname[k2], pdinfo->varname[vj],
 			VNAMELEN - 2);
 	    }
 	}
+    }
 
-	s = 0;
-	for (i=0; i<pan->nunits; i++) {
-	    int Ti = pan->unit_obs[i];
-	    int got = 0;
+    /* Now create the transformed variables: original data minus theta
+       times the appropriate group mean (and in addition, original
+       data minus the group mean for time-varying vars, if doing the
+       Hausman test by the regression method).
+    */    
 
-	    if (Ti == 0) {
-		continue;
-	    }
+    s = u = 0;
 
-	    if (Ti != pan->Tmax) {
-		theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2u + pan->s2e));
-#if PDEBUG
-		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
-			i, Ti, theta_i);
-#endif
-	    } else {
-		theta_i = pan->theta;
-	    }
+    for (i=0; i<pan->nunits; i++) {
+	int Ti = pan->unit_obs[i];
+	int got = 0;
 
-	    for (t=0; t<pan->T && got<Ti; t++) {
-		bigt = panel_index(i, t);
-		if (!panel_missing(pan, bigt)) {
-		    if (relist[j] == 0) {
+	if (Ti == 0) {
+	    continue;
+	}
+
+	if (Ti != pan->Tmax) {
+	    theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2u + pan->s2e));
+	} else {
+	    theta_i = pan->theta;
+	}
+
+	for (t=0; t<pan->T && got<Ti; t++) {
+	    bigt = panel_index(i, t);
+	    k = 0;
+	    k2 = v1 - 1;
+	    if (!panel_missing(pan, bigt)) {
+		for (j=0; j<v1; j++) {
+		    vj = pan->pooled->list[j+1];
+		    if (vj == 0) {
 			(*reZ)[0][s] -= theta_i;
 		    } else {
-			xbar = (gm == NULL)? 1.0 / pan->Tmax : gm[u];
-			(*reZ)[k][s] = xj[bigt] - theta_i * xbar;
-#if PDEBUG > 1
-			fprintf(stderr, "Set reZ[%d][%d] = %g\n", k, s, (*reZ)[k][s]);
-#endif
-			if (hreg && vvar) {
-			    (*reZ)[k2][s] = xj[bigt] - gm[u];
+			k++;
+			xbar = (k < ginfo->v)? gZ[k][u] : 1.0 / pan->Tmax;
+			(*reZ)[k][s] = Z[vj][bigt] - theta_i * xbar;
+			if (hreg && var_is_varying(pan, vj)) {
+			    (*reZ)[++k2][s] = Z[vj][bigt] - xbar;
 			}
 		    }
-		    got++;
-		    s++;
 		}
+		got++;
+		if (pan->small2big != NULL) {
+		    pan->small2big[s] = bigt;
+		    pan->big2small[bigt] = s;
+		}
+		s++;
 	    }
-	    u++;
 	}
+	u++;
     }
 
     return reinfo;
@@ -1491,7 +1547,7 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     int n = pan->pooled->full_n;
     int re_n = 0;
     double yht;
-    int Ti, Tmin, bigt;
+    int ti, Tmin;
     int i, j, s, t;
 
     y = Z[pan->pooled->list[1]];
@@ -1507,36 +1563,33 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     s = 0;
 
     for (i=0; i<pan->nunits; i++) {
-	Ti = pan->unit_obs[i];
+	int Ti = pan->unit_obs[i];
 
 	if (Ti < Tmin) {
 	    continue;
 	}
 
-	for (t=0; t<pan->T; t++) {
-	    bigt = panel_index(i, t);
-	    if (panel_missing(pan, bigt)) {
-		continue;
-	    }
+	for (ti=0; ti<Ti; ti++) {
+	    t = big_index(pan, s);
 	    if (pan->opt & OPT_U) {
 		/* random effects */
 		yht = 0.0;
 		for (j=0; j<pmod->ncoeff; j++) {
-		    yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][bigt];
+		    yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][t];
 		}
-		yhat[bigt] = yht;
+		yhat[t] = yht;
 		re_n++;
-		uhat[bigt] = y[bigt] - yht;
-		pmod->ess += uhat[bigt] * uhat[bigt];
+		uhat[t] = y[t] - yht;
+		pmod->ess += uhat[t] * uhat[t];
 	    } else {
 		/* fixed effects */
-		uhat[bigt] = pmod->uhat[s];
-		yhat[bigt] = y[bigt] - uhat[bigt];
+		uhat[t] = pmod->uhat[s];
+		yhat[t] = y[t] - uhat[t];
 	    }
 	    if (s == 0) {
-		pmod->t1 = bigt;
+		pmod->t1 = t;
 	    } else if (s == pmod->nobs - 1) {
-		pmod->t2 = bigt;
+		pmod->t2 = t;
 	    }
 	    s++;
 	}
@@ -1608,7 +1661,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	return femod;
     }	
 
-    winfo = within_groups_dataset(Z, &wZ, pan);
+    winfo = within_groups_dataset(Z, pdinfo, &wZ, pan);
     if (winfo == NULL) {
 	free(felist);
 	femod.errcode = E_ALLOC;
@@ -1636,10 +1689,12 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
+	    fix_panel_hatvars(&femod, winfo, pan, Z);
 	    if (pan->opt & OPT_R) {
 		panel_robust_vcv(&femod, pan, (const double **) wZ);
-	    } 
-	    fix_panel_hatvars(&femod, winfo, pan, Z);
+	    } else {
+		femod_regular_vcv(&femod);
+	    }
 	}
     }
 
@@ -1778,23 +1833,6 @@ static int save_fixed_effects_model (MODEL *pmod, panelmod_t *pan,
     return err;
 }
 
-static void femod_hausman_vcv (MODEL *pmod)
-{
-    if (pmod->vcv == NULL) {
-	/* estimated via Cholesky: no vcv yet */
-	makevcv(pmod, pmod->sigma);
-    } else {
-	/* estimated via QR: "vcv" = (X'X)^{-1} */
-	int i, p = pmod->ncoeff;
-	int n = p * (p + 1) / 2;
-	double s2 = pmod->sigma * pmod->sigma;
-
-	for (i=0; i<n; i++) {
-	    pmod->vcv[i] *= s2;
-	}
-    }
-}
-
 /* drive the calculation of the fixed effects regression, print the
    results (if wanted), and compute the "within" error variance */
 
@@ -1833,7 +1871,7 @@ static int within_variance (panelmod_t *pan,
 	    for (i=0; i<femod.ncoeff; i++) {
 		pan->bdiff[i] = femod.coeff[i];
 	    }
-	    femod_hausman_vcv(&femod);
+	    femod_regular_vcv(&femod);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
 	}
