@@ -3712,8 +3712,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_rvars1_callback), sr);
 
-    if (p == NULL && !TWO_VARS_CODE(sr->code) && sr->code != TSPLOTS) {
-	/* data save action */
+    if (SAVE_DATA_ACTION(sr->code)) {
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
 	g_signal_connect (G_OBJECT(tmp), "clicked", 

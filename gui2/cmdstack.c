@@ -92,6 +92,7 @@ int add_command_to_stack (const char *str)
 	strncmp(str, "help", 4) &&
 	strncmp(str, "info", 4) &&
 	strncmp(str, "list", 4) &&
+	strncmp(str, "open", 4) &&
 	strncmp(str, "quit", 4)) {
 	mark_session_changed();
     }
