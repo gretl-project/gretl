@@ -49,12 +49,6 @@
 # include "gretlwin32.h"
 #endif
 
-/* #define WINDEBUG 1 */
-
-#ifdef WINDEBUG
-FILE *dbg;
-#endif
-
 /* update.c */
 extern int silent_update_query (void);
 extern int update_query (void); 
@@ -729,10 +723,6 @@ int main (int argc, char *argv[])
     int debug = 0;
 #endif
 
-#ifdef WINDEBUG
-    dbg = fopen("debug.txt", "w");
-#endif    
-
 #ifdef ENABLE_NLS
     nls_init();
 #endif  
@@ -945,11 +935,6 @@ int main (int argc, char *argv[])
 
 	gretl_print_destroy(prn);
     }
-
-#ifdef WINDEBUG
-    fprintf(dbg, "starting on GUI building\n");
-    fclose(dbg);
-#endif
 
     /* create the GUI */
     gretl_tooltips_init();
