@@ -2693,6 +2693,24 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return mod;    
 }
 
+int panel_tsls_robust_vcv (MODEL *pmod, const double **Z, 
+			   const DATAINFO *pdinfo)
+{
+    panelmod_t pan;
+    int err = 0;
+
+    panelmod_init(&pan);
+
+    err = panelmod_setup(&pan, pmod, pdinfo, 0, OPT_NONE);
+    if (!err) {
+	err = panel_robust_vcv(pmod, &pan, Z);
+    }
+
+    panelmod_free(&pan); 
+
+    return err;
+}
+
 /* write weights for groupwise weighted least squares into the
    last variable in the dataset */
 

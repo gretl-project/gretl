@@ -770,8 +770,8 @@ static void dhline (const MODEL *pmod, PRN *prn)
 
 static int least_signif_coeff (const MODEL *pmod)
 {
-    int i, k = 0;
     double tstat, tmin = 4.0;
+    int i, k = 0;
     
     for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 	tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
@@ -798,8 +798,13 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
     if ((k = least_signif_coeff(pmod))) {
 	char tmp[128];
 
-	sprintf(tmp, _("Excluding the constant, p-value was highest "
-		       "for variable %d (%s)"), k, pdinfo->varname[k]);
+	if (pmod->ifc) {
+	    sprintf(tmp, _("Excluding the constant, p-value was highest "
+			   "for variable %d (%s)"), k, pdinfo->varname[k]);
+	} else {
+	    sprintf(tmp, _("P-value was highest for variable %d (%s)"), 
+		    k, pdinfo->varname[k]);
+	}	    
 	pprintf(prn, "%s\n\n", tmp);
     }
 }

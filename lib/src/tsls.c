@@ -1167,12 +1167,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* compute standard errors */
     if ((opt & OPT_R) || get_use_qr()) {
 	/* QR decomp in force, or robust standard errors called for */
-	gretlopt vopt = opt;
-
-	if (dataset_is_time_series(pdinfo) && !get_force_hc()) {
-	    vopt |= OPT_T;
-	}
-	qr_tsls_vcv(&tsls, (const double **) *pZ, vopt);
+	qr_tsls_vcv(&tsls, (const double **) *pZ, pdinfo, opt);
 	if (tsls.errcode) {
 	    goto bailout;
 	}	

@@ -23,7 +23,8 @@
 int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 		      gretlopt opt);
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt);
+int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+		 gretlopt opt);
 
 double hac_weight (int kern, int h, int i);
 

@@ -1146,6 +1146,8 @@ static int make_ess (MODEL *pmod, const double **Z)
     return 0;
 }
 
+#define SMALLDIFF 9.0e-16
+
 int check_for_effective_const (MODEL *pmod, const double *y)
 {
     double x1 = 0.0, x2 = 0.0;
@@ -1161,7 +1163,7 @@ int check_for_effective_const (MODEL *pmod, const double *y)
 
     reldiff = fabs((x1 - x2) / x2);
 
-    if (floateq(reldiff, 0.0)) {
+    if (reldiff < SMALLDIFF) {
 	gretl_model_set_int(pmod, "effconst", 1);
 	pmod->dfn -= 1;
 	ret = 1;

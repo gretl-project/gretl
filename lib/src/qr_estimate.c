@@ -22,6 +22,7 @@
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "gretl_panel.h"
 #include "estim_private.h"
 
 #include "f2c.h"
@@ -980,7 +981,8 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     return err;    
 }
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt)
+int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+		 gretlopt opt)
 {
     integer T, k;
     gretl_matrix *Q = NULL;
@@ -1011,12 +1013,18 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opt)
 			      V, GRETL_MOD_NONE);
 
     /* VCV and standard errors */
-    if (opt & OPT_R) { 
-	gretl_model_set_int(pmod, "robust", 1);
-	if (opt & OPT_T) {
-	    qr_make_hac(pmod, Z, V);
+    if (opt & OPT_R) {
+	if (dataset_is_panel(pdinfo)) {
+	    err = qr_make_regular_vcv(pmod, V, OPT_X);
+	    if (!err) {
+		err = panel_tsls_robust_vcv(pmod, Z, pdinfo);
+	    }
+	} else if (dataset_is_time_series(pdinfo) && !get_force_hc()) {
+	    gretl_model_set_int(pmod, "robust", 1);
+	    err = qr_make_hac(pmod, Z, V);
 	} else {
-	    qr_make_hccme(pmod, Z, Q, V);
+	    gretl_model_set_int(pmod, "robust", 1);
+	    err = qr_make_hccme(pmod, Z, Q, V);
 	}
     } else {
 	qr_make_regular_vcv(pmod, V, OPT_NONE);
