@@ -99,18 +99,19 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 #endif
 }
 
-static int allocate_data_finders (panelmod_t *pan, int smalln, int bign)
+static int allocate_data_finders (panelmod_t *pan, int bign)
 {
     int s;
 
-    pan->small2big = malloc(smalln * sizeof *pan->small2big);
+    if (pan->small2big != NULL) {
+	/* already done */
+	return 0;
+    }
+
+    pan->small2big = malloc(pan->NT * sizeof *pan->small2big);
     pan->big2small = malloc(bign * sizeof *pan->big2small);
 
     if (pan->small2big == NULL || pan->big2small == NULL) {
-	free(pan->small2big);
-	pan->small2big = NULL;
-	free(pan->big2small);
-	pan->big2small = NULL;
 	return E_ALLOC;
     }
 
@@ -734,7 +735,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
     }
 
     if (pan->NT < pdinfo->n) {
-	err = allocate_data_finders(pan, pan->NT, pdinfo->n);
+	err = allocate_data_finders(pan, pdinfo->n);
 	if (err) {
 	    return NULL;
 	}
@@ -847,7 +848,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
     }  
 
     if (pan->NT < pdinfo->n) {
-	err = allocate_data_finders(pan, pan->NT, pdinfo->n);
+	err = allocate_data_finders(pan, pdinfo->n);
 	if (err) {
 	    return NULL;
 	}
