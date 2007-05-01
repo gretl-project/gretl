@@ -225,9 +225,9 @@ issues must be taken into account.
 \item A somewhat analogous prohibition applies to the random effects
   estimator.  This estimator is in effect a matrix-weighted average of
   pooled OLS and the ``between'' estimator.  Suppose we have
-  observations on $m$ units or individuals and there are $k$
-  independent variables of interest.  If $k>m$, the ``between''
-  estimator is undefined --- since we have only $m$ effective
+  observations on $n$ units or individuals and there are $k$
+  independent variables of interest.  If $k>n$, the ``between''
+  estimator is undefined --- since we have only $n$ effective
   observations --- and hence so is the random effects estimator.
 \end{enumerate}
 
@@ -357,22 +357,11 @@ option \verb+--hausman-reg+ to the \cmd{panel} command.
 For most estimators, \app{gretl} offers the option of computing an
 estimate of the covariance matrix that is robust with respect to
 heteroskedasticity and/or autocorrelation (and hence also robust
-standard errors).  In the case of panel data, a robust covariance
-matrix is available for the fixed effects model but not currently for
-random effects.  The estimator used for fixed effects is
-\[
-\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
-\left[ \sum_{i=1}^m \tilde{X}_i^{\prime} \tilde{u}_i 
-    \tilde{u}_i^{\prime} \tilde{X}_i \right]
-\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
-\]
-where $\tilde{X}$ is the matrix of regressors with the group means
-subtracted, $\tilde{u}_i$ denotes the FE residuals for unit $i$, and
-$m$ is the number of cross-sectional units.  This estimator is robust
-with respect to heteroskedasticity; it is also robust with respect to
-autocorrelation provided the time-series length of the panel is
-relatively small.\footnote{See, for example, Arellano (2003, section
-  2.3).}
+standard errors).  In the case of panel data, robust covariance matrix
+estimators are available for the pooled and fixed effects model but
+not currently for random effects.  Please see
+section~\ref{sec:vcv-panel} for details.
+
 
 \section{Dynamic panel models}
 \label{panel-dyn}

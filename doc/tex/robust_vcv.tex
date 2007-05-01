@@ -504,7 +504,71 @@ where $\hat{\Sigma}_{\varepsilon}$ is any HAC estimator, applied to the VAR
 residuals.
 
 \section{Special issues with panel data}
-\label{vcv-panel}
+\label{sec:vcv-panel}
+
+Since panel data have both a time-series and a cross-sectional
+dimension one might expect that, in general, robust estimation of the
+covariance matrix would require handling both heteroskedasticity and
+autocorrelation (the HAC approach).  In addition, some special features of
+panel data require attention.
+\begin{itemize}
+\item The variance of the error term may differ across the
+  cross-sectional units.
+\item The covariance of the errors across the units may be non-zero in
+  each time period.
+\item If the ``between'' variation is not removed, the errors may
+  exhibit autocorrelation, not in the usual time-series sense but in
+  the sense that the mean error for unit $i$ may differ from that of
+  unit $j$.  (This is particularly relevant when estimation
+  is by pooled OLS.)
+\end{itemize}
+
+\app{Gretl} currently offers two robust covariance matrix estimators
+specifically for panel data.  These are available for models estimated
+via fixed effects (FE), pooled OLS, and pooled two-stage least
+squares.  The default robust estimator is that suggested by Arellano
+(2003), which is HAC provided the panel is of the ``large $n$, small
+$T$'' variety (that is, many units are observed in relatively few
+periods).  The Arellano estimator is
+\[
+\hat{\Sigma}_{\rm A} = 
+\left(X^{\prime}X\right)^{-1}
+\left( \sum_{i=1}^n X_i^{\prime} \hat{u}_i 
+    \hat{u}_i^{\prime} X_i \right)
+\left(X^{\prime}X\right)^{-1}
+\]
+where $X$ is the matrix of regressors (with the group means
+subtracted, in the case of fixed effects) $\hat{u}_i$ denotes the
+vector of residuals for unit $i$, and $n$ is the number of
+cross-sectional units.  Cameron and Trivedi (2005) make a strong case
+for using this estimator; they note that the ordinary White HCCME
+can produce misleadingly small standard errors in the panel context
+because it fails to take autocorrelation into account.
+
+In cases where autocorrelation is not an issue, however, the estimator
+proposed by Beck and Katz (1995) and discussed by Greene (2003,
+chapter 13) may be appropriate.  This estimator, which takes into
+account contemporaneous correlation across the units and
+heteroskedasticity by unit, is
+\[
+\hat{\Sigma}_{\rm BK} = 
+\left(X^{\prime}X\right)^{-1}
+\left( \sum_{i=1}^n \sum_{j=1}^n \hat{\sigma}_{ij} X'_iX_i \right)
+\left(X^{\prime}X\right)^{-1}
+\]
+The covariances $\hat{\sigma}_{ij}$ are estimated via
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{T}
+\]
+where $T$ is the length of the time series for each unit.  Beck and
+Katz call the associated standard errors ``Panel-Corrected Standard
+Errors'' (PCSE).  This estimator can be invoked in \app{gretl} via the
+command
+%
+\begin{code}
+set pcse on
+\end{code}
+
 
 
 
