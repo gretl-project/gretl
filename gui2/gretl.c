@@ -55,7 +55,7 @@ extern int update_query (void);
 
 /* functions private to gretl.c */
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
-static GtkWidget *make_main_window (int gui_get_data);
+static GtkWidget *make_main_window (void);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
@@ -710,18 +710,25 @@ static void record_filearg (char *targ, const char *src)
 }
 #endif
 
+static int have_data (void)
+{
+    return datainfo != NULL && datainfo->v > 0;
+}
+
 int main (int argc, char *argv[])
 {
-    int err = 0, gui_get_data = 0;
+    int open_datafile = 0;
     int ftype = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
+    int opt = 0;
 #ifdef USE_GNOME
     GnomeProgram *program;
 #endif
 #ifdef G_OS_WIN32
     int debug = 0;
 #endif
+    int err = 0;
 
 #ifdef ENABLE_NLS
     nls_init();
@@ -762,12 +769,12 @@ int main (int argc, char *argv[])
 
     if (argc > 1) {
 	int force_lang = 0;
-	int opt = parseopt((const char **) argv, argc, filearg, &force_lang);
+
+	opt = parseopt((const char **) argv, argc, filearg, &force_lang);
 
 #ifdef G_OS_WIN32
 	if (opt & OPT_DEBUG) {
 	    debug = 1;
-	    opt &= ~OPT_DEBUG;
 	}
 #endif
 
@@ -788,7 +795,6 @@ int main (int argc, char *argv[])
 	    }
 	    get_runfile(filearg);
 #endif
-	    gui_get_data = 1;
 	    break;
 	case OPT_DBOPEN:
 	case OPT_WEBDB:
@@ -803,28 +809,25 @@ int main (int argc, char *argv[])
 	    if (opt == OPT_DBOPEN) {
 		fix_dbname(dbname);
 	    }
-	    gui_get_data = opt;
 	    break;
 	case OPT_DUMP:
 	    dump_rc();
 	    exit(EXIT_SUCCESS);
 	    break;
 	default:
-	    /* let's suppose the argument is a data file */
+	    /* let's suppose any string argument is a data file */
+	    if (*filearg != '\0') {
+		open_datafile = 1;
+	    }
 	    break;
 	}
 
 #ifdef ENABLE_NLS
 	if (force_lang) {
 	    force_language(force_lang);
-	    if (argc == 2) {
-		gui_get_data = 1;
-	    }	
 	}
 #endif
-    } else {
-	gui_get_data = 1;
-    }
+    } 
 
     /* allocate data information struct */
     datainfo = datainfo_new();
@@ -845,7 +848,7 @@ int main (int argc, char *argv[])
     init_fileptrs();
 
     /* get the data file, if specified on the command line */
-    if (!gui_get_data) {
+    if (open_datafile) {
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR);
@@ -894,7 +897,6 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_SCRIPT:
 	case GRETL_SESSION:
-	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    *paths.datfile = '\0';
 	    break;
@@ -905,7 +907,7 @@ int main (int argc, char *argv[])
 	    *tryfile = '\0';
 	    *paths.datfile = '\0';
 	    fix_dbname(dbname);
-	    gui_get_data = OPT_DBOPEN;
+	    opt = OPT_DBOPEN;
 	    break;
 	case GRETL_UNRECOGNIZED:
 	    gui_usage();
@@ -925,7 +927,6 @@ int main (int argc, char *argv[])
 	    ftype = 0;
 	    *tryfile = '\0';
 	    *paths.datfile = '\0';
-	    gui_get_data = 1;
 	}
 
 	if (ftype != GRETL_SCRIPT && err) {
@@ -943,9 +944,9 @@ int main (int argc, char *argv[])
     /* create main window */
     if ((mdata = mymalloc(sizeof *mdata)) == NULL)
 	noalloc(_("GUI"));
-    if (make_main_window(gui_get_data) == NULL) 
+    if (make_main_window() == NULL) 
 	noalloc(_("main window"));
-    if (!gui_get_data) {
+    if (have_data()) {
 	set_sample_label(datainfo);
     }
 
@@ -967,7 +968,7 @@ int main (int argc, char *argv[])
     set_x12a_ok(-1);
 #endif
 
-    if (!gui_get_data) {
+    if (have_data()) {
 	register_data(paths.datfile, tryfile, 1);
 	maybe_display_string_table();
 	*tryfile = 0;
@@ -991,9 +992,9 @@ int main (int argc, char *argv[])
     }
 
     /* try opening specified database */
-    if (gui_get_data == OPT_DBOPEN) {
+    if (opt == OPT_DBOPEN) {
 	open_named_db_index(dbname);
-    } else if (gui_get_data == OPT_WEBDB) {
+    } else if (opt == OPT_WEBDB) {
 	open_named_remote_db_index(dbname);
     }
 
@@ -1419,7 +1420,7 @@ static void scale_main_window (void)
     }
 }
 
-static GtkWidget *make_main_window (int gui_get_data) 
+static GtkWidget *make_main_window (void) 
 {
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel, *align;
@@ -1520,7 +1521,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
-    if (!gui_get_data) {
+    if (have_data()) {
 	populate_varlist();
     }
 
