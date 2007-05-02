@@ -2895,7 +2895,7 @@ static int allocate_function_args (ufunc *fun,
     for (i=0; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
 	if (scalar_arg(fp->type)) {
-	    if (xi >= args->nx) {
+	    if (i >= argc || args->types[i] == ARG_NONE) {
 		err = add_scalar_arg_default(fp, pZ, pdinfo);
 	    } else {
 		err = dataset_add_scalar_as(args->x[xi++], fp->name, 
@@ -2907,10 +2907,10 @@ static int allocate_function_args (ufunc *fun,
 	} else if (fp->type == ARG_MATRIX) {
 	    err = copy_matrix_as(args->M[Mi++], fp->name);
 	} else if (fp->type == ARG_LIST) {
-	    if (li < args->nl) {
-		err = localize_list(args->lists[li++], fp, pdinfo);
-	    } else {
+	    if (i >= argc || args->types[i] == ARG_NONE) {
 		err = create_named_null_list(fp->name);
+	    } else {
+		err = localize_list(args->lists[li++], fp, pdinfo);
 	    } 
 	} 
     }
