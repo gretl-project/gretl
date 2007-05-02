@@ -485,6 +485,8 @@ void set_program_startdir (void)
     if (test == NULL) {
 	*startdir = '\0';
     }
+
+    shelldir_init();
 }
 
 void get_default_dir (char *s, int action)

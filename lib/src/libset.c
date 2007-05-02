@@ -1103,6 +1103,15 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+void shelldir_init (void)
+{
+    char *test = getcwd(state->shelldir, MAXLEN);
+
+    if (test == NULL) {
+	*state->shelldir = '\0';
+    }
+}
+
 static int set_shelldir (const char *s)
 {
     int err = 0;

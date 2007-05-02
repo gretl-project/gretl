@@ -649,13 +649,15 @@ static struct winfilter get_filter (int action, gpointer data)
 
 static char *make_winfilter (int action, gpointer data)
 {
-    char *p = mymalloc(128);
-    char *start = p;
     struct winfilter filter;
+    char *ret, *p;
 
-    if (p == NULL) {
+    ret = calloc(128, 1);
+    if (ret == NULL) {
 	return NULL;
     }
+
+    p = ret;
 
     if (GDT_ACTION(action)) {
 	filter = get_filter(SAVE_DATA, data);
@@ -674,10 +676,7 @@ static char *make_winfilter (int action, gpointer data)
 	strcpy(p, "*.*");
     }
 
-    p += strlen(p) + 1;
-    *p = '\0';
-
-    return start;
+    return ret;
 }
 
 static int select_dirname (char *fname, char *trmsg)

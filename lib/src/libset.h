@@ -131,6 +131,7 @@ int get_long_digits (void);
 int set_max_verbose (int n);
 int get_max_verbose (void);
 
+void shelldir_init (void);
 char *get_shelldir (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
