@@ -814,6 +814,8 @@ static PRN *make_tex_prn (int ID, char *texfile,
     if (*texfile == '\0') {
 	sprintf(texfile, "%s%s_%d.tex", gretl_user_dir(),
 		(eqn)? "equation" : "model", ID);
+    } else {
+	gretl_maybe_switch_dir(texfile);
     }
 
     prn = gretl_print_new_with_filename(texfile);

@@ -508,6 +508,45 @@ static char *retrieve_string_var (const char **pline,
     return ret;
 }
 
+static char *gretl_getenv (const char **pline, int *err)
+{
+    const char *s = strchr(*pline, '"') + 1;
+    char *p = strchr(s, '"');
+    char *key = NULL;
+    char *test = NULL;
+    char *val = NULL;
+    int n;
+
+    if (p == NULL || *(p+1) != ')') {
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    n = strcspn(s, "\"");
+    key = gretl_strndup(s, n);
+    if (key == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *pline = p + 2;
+
+    test = getenv(key);
+    if (test == NULL) {
+	val = gretl_strdup("");
+    } else {
+	val = gretl_strdup(test);
+    }
+
+    if (val == NULL) {
+	*err = E_ALLOC;
+    }
+
+    free(key);
+    
+    return val;
+}
+
 static char *get_string_element (const char **pline, int *err)
 {
     const char *line = *pline;
@@ -522,6 +561,10 @@ static char *get_string_element (const char **pline, int *err)
     if (*line == '@') {
 	/* should be saved string variable */
 	return retrieve_string_var(pline, line + 1, err);
+    }
+
+    if (!strncmp(line, "getenv(\"", 8)) {
+	return gretl_getenv(pline, err);
     }
 
     if (*line != '"') {

@@ -6746,6 +6746,11 @@
 	  generated or when the sample range is changed.
          </para>
 	</li>
+	<li>
+	  <para><lit>shelldir</lit>: <repl>path</repl>.  Sets the current
+	    working directory for shell commands.
+         </para>
+	</li>
       <li>
 	<para>
 	  <lit>nls_toler</lit>: a floating-point value (the default is the

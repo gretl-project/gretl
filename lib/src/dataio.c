@@ -1180,6 +1180,8 @@ int write_data (const char *fname, const int *list,
 
     fmt = format_from_opt_or_name(opt, fname);
 
+    gretl_maybe_switch_dir(fname);
+
     if (fmt == 0 || fmt == GRETL_DATA_GZIPPED) {
 	return gretl_write_gdt(fname, list, Z, pdinfo, fmt, ppaths);
     }
@@ -2694,7 +2696,8 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
    a comment line is one that starts with '#').  
 
    Optionally, we check whether the file has a trailing comma on every
-   line, and check for Mac-style '\r' line termination.
+   line, and check for Mac-style '\r' line termination.  The heuristic
+   for the latter is that we find '\r' not followed by '\n'.
 */
 
 static int get_max_line_length (FILE *fp, char delim, int *gotdelim, 

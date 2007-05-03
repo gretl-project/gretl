@@ -354,22 +354,32 @@ static char *search_dir (char *fname, const char *topdir, int code)
     return NULL;
 }
 
-int gretl_path_is_absolute (const char *fname)
-{
-    int ret = 0;
-
 #ifdef WIN32
-    if (fname[1] == ':') {
-	ret = 1; /* drive letter? */
-    }
+# define fslash(c) (c == '/' || c == '\\')
+#else
+# define fslash(c) (c == '/')
 #endif
 
-    /* we'll count as absolute paths specified using "." */
-    if (*fname == '.' || *fname == SLASH) {
-	ret = 1;
+static int dotpath (const char *fname)
+{
+    if (fname[0] == '.') {
+	if (fslash(fname[1])) {
+	    return 1;
+	} else if (fname[1] == '.' && fslash(fname[2])) {
+	    return 1;
+	}
     }
 
-    return ret;
+    return 0;
+}
+
+/* note: for our purposes we count filenames beginning with "./" or
+   "../" as absolute 
+*/
+
+int gretl_path_is_absolute (const char *fname)
+{
+    return g_path_is_absolute(fname) || dotpath(fname);
 }
 
 static void make_path_absolute (char *fname, const char *orig)
@@ -792,6 +802,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    ppaths->dbhost[0] = '\0';
 	}
 
+	shelldir_init();
 	ppaths->currdir[0] = '\0';
 	*gretl_paths.plotfile = '\0';
 	strcpy(ppaths->pngfont, "verdana 8");
@@ -858,6 +869,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->gnuplot, "gnuplot");
 	strcpy(ppaths->pngfont, "Vera 9");
 	ppaths->currdir[0] = '\0';	
+	shelldir_init();
 
 	/* try to set a default userdir */
 	home = getenv("HOME");
@@ -910,3 +922,24 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 }
 
 #endif /* win32 versus unix */
+
+/* for writing a file, name given by user: if the path is not
+   absolute, switch to the gretl user dir (for a plain filename and
+   use_cwd not set) or to the current "shelldir" (for a filename
+   beginning with '.', or if use_cwd is set).
+*/
+
+void gretl_maybe_switch_dir (const char *fname)
+{
+    if (!g_path_is_absolute(fname)) {
+	if (dotpath(fname) || get_use_cwd()) {
+	    char *sdir = get_shelldir();
+
+	    if (sdir != NULL) {
+		chdir(sdir);
+	    }
+	} else {
+	    chdir(gretl_paths.userdir);
+	}
+    }
+}

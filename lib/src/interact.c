@@ -474,6 +474,8 @@ static void maybe_extract_savename (char *s, CMD *cmd)
     }
 }
 
+/* grab a filename, possibly prepending userdir */
+
 static int filename_to_param (CMD *cmd, char *s, int *len,
 			      int *quoted)
 {
@@ -3166,6 +3168,8 @@ do_outfile_command (gretlopt flag, char *fname, PRN *prn)
 	return E_ARGS;
     } else {
 	FILE *fp;
+
+	gretl_maybe_switch_dir(fname);
 
 	if (flag == OPT_W) {
 	    fp = gretl_fopen(fname, "w");
