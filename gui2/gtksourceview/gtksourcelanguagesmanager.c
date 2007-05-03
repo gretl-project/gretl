@@ -217,6 +217,8 @@ gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager	*lm,
 			
 	if (dirs == NULL)
 	{
+	        gchar *env_language_dir = getenv("GRETL_LANGS_DIR");
+
 		lm->priv->language_specs_directories =
 			g_slist_prepend (lm->priv->language_specs_directories,
 					g_strdup (DEFAULT_LANGUAGE_DIR));
@@ -225,6 +227,14 @@ gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager	*lm,
 					g_build_filename (g_get_home_dir(), 
 						USER_CONFIG_BASE_DIR, USER_LANGUAGE_DIR, 
 						NULL));
+
+                if (env_language_dir != NULL) 
+                {
+                        lm->priv->language_specs_directories = 
+                                g_slist_prepend (lm->priv->language_specs_directories,
+                                        g_strdup (env_language_dir));
+                }
+
 
 		return;
 	}
