@@ -27,6 +27,7 @@ version 1.6.3, in progress
   platforms where the default encoding is UTF-8
 - Correlation matrix: try to be smarter in face of non-aligned
   missing observations
+- CSV data: add support for Mac-style text files
 - Various modifications to the configuration process
 
 3/24/2007 version 1.6.2

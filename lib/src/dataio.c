@@ -2691,21 +2691,43 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
    file.  It also checks for extraneous binary data (the file is 
    supposed to be plain text), and checks whether the 'delim'
    character is present in the file, on a non-comment line (where
-   a comment line is one that starts with '#').  Finally, checks
-   whether the file has a trailing comma on every line.
+   a comment line is one that starts with '#').  
+
+   Optionally, we check whether the file has a trailing comma on every
+   line, and check for Mac-style '\r' line termination.
 */
 
 static int get_max_line_length (FILE *fp, char delim, int *gotdelim, 
-				int *gottab, int *trail, PRN *prn)
+				int *gottab, int *trail, int *mac,
+				PRN *prn)
 {
-    int c, cbak = 0, cc = 0;
+    int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
 
     if (trail != NULL) {
 	*trail = 1;
     }
 
+    if (mac != NULL) {
+	*mac = 0;
+    }
+
     while ((c = fgetc(fp)) != EOF) {
+	if (c == '\r') {
+	    c1 = fgetc(fp);
+	    if (c1 == EOF) {
+		break;
+	    } else if (c1 == '\n') {
+		c = c1;
+	    } else {
+		/* Mac-type file */
+		if (mac != NULL) {
+		    *mac = 1;
+		}
+		c = '\n';
+		ungetc(c1, fp);
+	    }
+	}
 	if (c == '\n') {
 	    if (cc > maxlen) {
 		maxlen = cc;
@@ -3025,6 +3047,33 @@ static char *get_csv_descrip (FILE *fp)
     return desc;
 }
 
+/* wrapper for fgets() that allows for handling a Mac-style
+   text file */
+
+static char *csv_fgets (char *s, int n, int mac, FILE *fp)
+{
+    if (!mac) {
+	return fgets(s, n, fp);
+    } else {
+	int c, i = 0;
+
+	for (i=0; i<n-1; i++) {
+	    c = fgetc(fp);
+	    if (c == EOF) {
+		break;
+	    } else if (c == '\r') {
+		s[i++] = '\n';
+		break;
+	    }
+	    s[i] = c;
+	}
+
+	s[i] = '\0';
+
+	return s;
+    }
+}
+
 static int 
 csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 {
@@ -3079,6 +3128,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     char delim = '\t';
     int numcount, auto_name_vars = 0;
+    int mactext = 0;
     gretl_string_table *st = NULL;
 
     if (*ppdinfo != NULL) {
@@ -3118,7 +3168,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     /* get line length, also check for binary data, etc. */
-    maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, prn);    
+    maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, 
+				 &mactext, prn);    
     if (maxlen <= 0) {
 	goto csv_bailout;
     } 
@@ -3138,6 +3189,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (trail && delim != ',') trail = 0;
 
     /* create buffer to hold lines */
+
     line = malloc(maxlen);
     if (line == NULL) {
 	pputs(prn, M_("Out of memory\n"));
@@ -3147,8 +3199,10 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     rewind(fp);
     
     /* read lines, check for consistency in number of fields */
+
     chkcols = ncols = nrows = gotdata = 0;
-    while (fgets(line, maxlen, fp)) {
+
+    while (csv_fgets(line, maxlen, mactext, fp)) {
 	/* skip comment lines */
 	if (*line == '#') {
 	    continue;
@@ -3219,7 +3273,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     /* parse the line containing variable names */
     pputs(mprn, M_("scanning for variable names...\n"));
 
-    while (fgets(line, maxlen, fp)) {
+    while (csv_fgets(line, maxlen, mactext, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	} else {
@@ -3310,7 +3364,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     pputs(mprn, M_("scanning for row labels and data...\n"));
 
     t = 0;
-    while (fgets(line, maxlen, fp)) {
+    while (csv_fgets(line, maxlen, mactext, fp)) {
 	int nv;
 
 	if (*line == '#' || string_is_blank(line)) {
@@ -3580,7 +3634,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
 
-    maxlen = get_max_line_length(fp, 0, NULL, NULL, NULL, prn);
+    maxlen = get_max_line_length(fp, 0, NULL, NULL, NULL, NULL, prn);
     if (maxlen <= 0) {
 	goto oct_bailout;
     }
