@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "usermat.h"
 
+#include <unistd.h>
 #include <errno.h>
 
 #define PDEBUG 0
