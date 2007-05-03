@@ -15,7 +15,7 @@ if [ -f ~/.profile ] ; then
 fi  
 
 export "GRETL_HOME=$TOP/share/gretl/"
-export "GRETL_LANGS_DIR=$TOP/share/gretl/gtksourceview"
+export "GTKSOURCEVIEW_LANGUAGE_DIR=$TOP/share/gretl/gtksourceview"
 export "GTK_EXE_TOP=$TOP"
 export "GDK_PIXBUF_MODULE_FILE=$TOP/etc/gtk-2.0/gdk-pixbuf.loaders"
 export "PANGO_RC_FILE=$TOP/etc/pangorc"

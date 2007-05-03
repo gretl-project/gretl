@@ -217,7 +217,7 @@ gtk_source_languages_manager_set_specs_dirs (GtkSourceLanguagesManager	*lm,
 			
 	if (dirs == NULL)
 	{
-	        gchar *env_language_dir = getenv("GRETL_LANGS_DIR");
+	        gchar *env_language_dir = getenv("GTKSOURCEVIEW_LANGUAGE_DIR");
 
 		lm->priv->language_specs_directories =
 			g_slist_prepend (lm->priv->language_specs_directories,

@@ -914,6 +914,14 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
     }
 
+    if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
+	char envstr[MAXLEN];
+
+	sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sgtksourceview",
+		ppaths->gretldir);
+	putenv(envstr);
+    }
+
     ensure_slash(ppaths->userdir);
     set_gretl_libpath(ppaths->gretldir);
     copy_paths_to_internal(ppaths);

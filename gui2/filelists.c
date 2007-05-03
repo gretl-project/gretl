@@ -140,54 +140,6 @@ void read_file_lists (GConfClient *client)
     }
 }
 
-#elif defined(USE_GNOME)
-
-static void printfilelist (int filetype)
-{
-    char gpath[MAXLEN];
-    char **filep;
-    int i;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/%s/%d", file_sections[filetype], i);
-	gnome_config_set_string(gpath, filep[i]);
-    }
-}
-
-void save_file_lists (void)
-{
-    printfilelist(FILE_LIST_DATA);
-    printfilelist(FILE_LIST_SESSION);
-    printfilelist(FILE_LIST_SCRIPT);
-}
-
-void read_file_lists (void)
-{
-    char key[MAXSTR];
-    gchar *value;
-    int i, j;
-
-    initialize_file_lists();
-
-    for (i=0; i<3; i++) {
-	for (j=0; j<MAXRECENT; j++) {
-	    sprintf(key, "/gretl/%s/%d", file_sections[i], j);
-	    value = gnome_config_get_string(key);
-	    if (value != NULL) {
-		write_filename_to_list(i, j, value);
-		g_free(value);
-	    } else {
-		break;
-	    }
-	}
-    }
-}  
-
 #elif defined(G_OS_WIN32)
 
 static void printfilelist (int filetype)
@@ -235,7 +187,7 @@ void read_file_lists (void)
     } 
 }
 
-#else /* "plain" version follows */
+#else /* "plain" GTK version follows */
 
 static void printfilelist (int filetype, FILE *fp)
 {
@@ -264,34 +216,27 @@ void save_file_lists (FILE *fp)
 void read_file_lists (FILE *fp, char *prev)
 {
     char line[MAXLEN];
-    int i, j, len;
+    int i, len, n[3] = {0};
 
     initialize_file_lists();
-
     strcpy(line, prev);
-    while (strncmp(line, "recent", 6)) {
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    return;
-	}
-    }
 
-    j = 0;
-    for (i=0; i<3; ) {
-	len = strlen(file_sections[i]);
-	if (!strncmp(line, file_sections[i], len)) {
-	    chopstr(line);
-	    if (*line != '\0') {
-		write_filename_to_list(i, j++, line + len + 2);
+    while (1) {
+	for (i=0; i<3; i++) {
+	    len = strlen(file_sections[i]);
+	    if (!strncmp(line, file_sections[i], len)) {
+		chopstr(line);
+		if (*line != '\0') {
+		    write_filename_to_list(i, n[i], line + len + 2);
+		    n[i] += 1;
+		}
+		break;
 	    }
 	}
 	if (fgets(line, sizeof line, fp) == NULL) {
 	    break;
 	}
-	if (i < 2 && strstr(line, file_sections[i+1])) {
-	    i++;
-	    j = 0;
-	}
-    }	    
+    }
 }
 
 #endif 
