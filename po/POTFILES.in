@@ -1,5 +1,6 @@
 lib/src/adf_kpss.c
 lib/src/bhhh_max.c
+lib/src/bootstrap.c
 lib/src/calendar.c
 lib/src/compare.c
 lib/src/compat.c
@@ -20,6 +21,7 @@ lib/src/gmm.c
 lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
+lib/src/gretl_fft.c
 lib/src/gretl_func.c
 lib/src/gretl_intl.c
 lib/src/gretl_list.c
@@ -44,7 +46,6 @@ lib/src/missing.c
 lib/src/modelprint.c
 lib/src/modelspec.c
 lib/src/monte_carlo.c
-lib/src/mt19937ar.c
 lib/src/nls.c
 lib/src/nonparam.c
 lib/src/objstack.c
