@@ -90,6 +90,16 @@
       output).  May be useful for trouble-shooting.
     </para>
 
+    <para>
+      <command>gretlw32 --debug</command> (or <command>gretlw32 -g</command>)
+    </para>
+
+    <para>&mdash; (MS Windows only) Open a console window to display any
+      messages sent to the <quote>standard output</quote> or
+      <quote>standard error</quote> streams.   Such messages are not
+      usually visible on Windows; this may be useful for trouble-shooting.
+    </para>
+
     <para>Various things in <application>gretl</application> are
       configurable under the <quote>File, Preferences</quote>
       menu.</para>  

@@ -1210,6 +1210,7 @@ static int display_settings (PRN *prn)
 	  " for details):\n");
 
     pprintf(prn, " echo = %d\n", flag_to_bool(state, STATE_ECHO_ON));
+    pprintf(prn, " messages = %d\n", flag_to_bool(state, STATE_MSGS_ON));
 
     ival = get_use_qr(); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
@@ -1224,13 +1225,13 @@ static int display_settings (PRN *prn)
     pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
     pprintf(prn, " force_hc = %d\n", state->ropts.force_hc);
     pprintf(prn, " hac_kernel = %s\n", hac_kernel_string());
-    pprintf(prn, " hac_prewhiten = %s\n", state->ropts.prewhite);
+    pprintf(prn, " hac_prewhiten = %d\n", state->ropts.prewhite);
     if (na(state->ropts.qsband)) {
 	pputs(prn, " qs_bandwidth: auto\n");
     } else {
 	pprintf(prn, " qs_bandwidth = %g\n", state->ropts.qsband);
     }
-    pprintf(prn, " pcse = %s\n", state->ropts.pcse);
+    pprintf(prn, " pcse = %d\n", state->ropts.pcse);
 
     pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
 
@@ -1280,9 +1281,7 @@ static int display_settings (PRN *prn)
     }
     pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
 
-    pprintf(prn, " messages = %d\n", flag_to_bool(state, STATE_MSGS_ON));
-
-    ival =  get_halt_on_error(); /* checks env */
+    ival = get_halt_on_error(); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_err);
 
     pprintf(prn, " shell_ok = %d\n", get_shell_ok());
