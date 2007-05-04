@@ -843,6 +843,28 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
 #else /* not Windows */
 
+static void check_gretldir (PATHS *ppaths)
+{
+    char *epath = getenv("GRETL_HOME");
+
+    ensure_slash(ppaths->gretldir);
+
+    if (epath != NULL && strcmp(epath, ppaths->gretldir)) {
+	/* which one is right? */
+	char test[FILENAME_MAX];
+	FILE *fp;
+
+	sprintf(test, "%sCOPYING", epath);
+	fp = gretl_fopen(test, "r");
+	if (fp != NULL) {
+	    *ppaths->gretldir = '\0';
+	    strncat(ppaths->gretldir, epath, MAXLEN - 2);
+	    fclose(fp);
+	}
+	ensure_slash(ppaths->gretldir);
+    }
+}
+
 int set_paths (PATHS *ppaths, gretlopt opt)
 {
     if (opt & OPT_D) {
@@ -892,7 +914,8 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
 	*gretl_paths.plotfile = '\0';
     } else {
-	ensure_slash(ppaths->gretldir);
+	/* check validity of gretldir */
+	check_gretldir(ppaths);
     }
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
