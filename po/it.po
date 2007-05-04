@@ -1,14 +1,14 @@
 # Italian messages for gretl
-# Copyright (C) 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2004, 2005, 2006,2007 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
-# Cristian Rigamonti <cri@linux.it>, 2003, 2004, 2005, 2006
+# Cristian Rigamonti <cri@linux.it>, 2003, 2004, 2005, 2006, 2007
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.6.0\n"
+"Project-Id-Version: gretl 1.6.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-03 19:37-0400\n"
-"PO-Revision-Date: 2007-03-27 12:21+0200\n"
+"PO-Revision-Date: 2007-05-04 11:08+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -211,7 +211,7 @@ msgstr ""
 #: lib/src/bootstrap.c:407
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
-msgstr ""
+msgstr "Per il coefficiente su %s (stima puntuale %g)"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -295,14 +295,12 @@ msgstr ""
 "\n"
 
 #: lib/src/compare.c:654
-#, fuzzy
 msgid "Non-linearity test (squared terms)"
-msgstr "Test di non linearità (quadrati)"
+msgstr "Test di non linearità (termini quadratici)"
 
 #: lib/src/compare.c:656
-#, fuzzy
 msgid "Non-linearity test (log terms)"
-msgstr "Test di non linearità (logaritmi)"
+msgstr "Test di non linearità (termini logaritmici)"
 
 #: lib/src/compare.c:700
 #, c-format
@@ -1489,7 +1487,7 @@ msgstr ""
 #: lib/src/describe.c:3138 lib/src/describe.c:3139 lib/src/printout.c:702
 #: lib/src/printout.c:703
 msgid "NA"
-msgstr ""
+msgstr "NA"
 
 #: lib/src/describe.c:3180 lib/src/describe.c:3823
 #, c-format
@@ -1536,12 +1534,11 @@ msgstr "Curtosi"
 
 #: lib/src/describe.c:3205
 msgid "Within s.d."
-msgstr ""
+msgstr "D.s. nei gruppi"
 
 #: lib/src/describe.c:3206
-#, fuzzy
 msgid "Between s.d."
-msgstr "Tra i gruppi"
+msgstr "D.s. tra i gruppi"
 
 #: lib/src/describe.c:3212 lib/src/describe.c:3295
 msgid "Summary Statistics"
@@ -2040,9 +2037,8 @@ msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Il simbolo '%s' non è valido in questo contesto\n"
 
 #: lib/src/genlex.c:455
-#, fuzzy
 msgid "Empty string\n"
-msgstr "Osservazione vuota []\n"
+msgstr "Stringa vuota\n"
 
 #: lib/src/genlex.c:513
 msgid "Empty observation []\n"
@@ -2543,11 +2539,8 @@ msgid "You can't change the name of a function here"
 msgstr "Non è possibile il nome di una funzione qui"
 
 #: lib/src/gretl_func.c:2785 lib/src/gretl_func.c:2791
-#, fuzzy
 msgid "Error compiling function"
-msgstr ""
-"\n"
-"Errore nel calcolo del p-value\n"
+msgstr "Errore nella compilazione della funzione"
 
 #: lib/src/gretl_func.c:3290
 #, c-format
@@ -3623,9 +3616,9 @@ msgid "Command is malformed\n"
 msgstr "Il comando è malformato\n"
 
 #: lib/src/interact.c:4121 cli/gretlcli.c:997 gui2/library.c:6608
-#, fuzzy, c-format
+#, c-format
 msgid "Error reading %s\n"
-msgstr "errore nella lettura della riga smpl"
+msgstr "Errore nella lettura di %s\n"
 
 #: lib/src/interact.c:4126 cli/gretlcli.c:1002 gui2/library.c:6613
 msgid "Infinite loop detected in script\n"
@@ -3691,9 +3684,8 @@ msgstr "%s: Non è stata trovata alcuna osservazione corrispondente\n"
 
 #: lib/src/modelprint.c:77 lib/src/modelprint.c:83 lib/src/modelprint.c:85
 #: lib/src/modelprint.c:88
-#, fuzzy
 msgid "Median of dependent variable"
-msgstr "Media della variabile dipendente"
+msgstr "Mediana della variabile dipendente"
 
 #: lib/src/modelprint.c:104 lib/src/modelprint.c:114 lib/src/modelprint.c:117
 #: lib/src/modelprint.c:122
@@ -3902,9 +3894,9 @@ msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr "Escludendo la costante, il p-value è massimo per la variabile %d (%s)"
 
 #: lib/src/modelprint.c:805
-#, fuzzy, c-format
+#, c-format
 msgid "P-value was highest for variable %d (%s)"
-msgstr "Escludendo la costante, il p-value è massimo per la variabile %d (%s)"
+msgstr "Il p-value è massimo per la variabile %d (%s)"
 
 #: lib/src/modelprint.c:815
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -4147,47 +4139,42 @@ msgstr "Errori standard robusti (HAC)"
 
 #: lib/src/modelprint.c:1111 lib/src/modelprint.c:1113
 #: lib/src/modelprint.c:1117
-#, fuzzy
 msgid "Beck-Katz standard errors"
-msgstr "errori standard della previsione"
+msgstr "Errori standard di Beck-Katz"
 
 #: lib/src/modelprint.c:1115
-#, fuzzy
 msgid "Beck--Katz standard errors"
-msgstr "errori standard della previsione"
+msgstr "Errori standard di Beck--Katz"
 
 #: lib/src/modelprint.c:1126
-#, fuzzy
 msgid "Could not compute Beck-Katz standard errors"
-msgstr "errori standard della previsione"
+msgstr "Impossibile calcolare gli errori standard di Beck-Katz"
 
 #: lib/src/modelprint.c:1134
 msgid "Bartlett kernel"
-msgstr ""
+msgstr "Kernel di Bartlett"
 
 #: lib/src/modelprint.c:1135
-#, fuzzy
 msgid "Parzen kernel"
-msgstr "Kernel gaussiano"
+msgstr "Kernel di Parzen"
 
 #: lib/src/modelprint.c:1136
 msgid "QS kernel"
-msgstr ""
+msgstr "Kernel QS"
 
 #: lib/src/modelprint.c:1146 lib/src/modelprint.c:1149
-#, fuzzy, c-format
+#, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr " errore standard della media = %g\n"
+msgstr "Errori standard HAC, larghezza di banda %.2f"
 
 #: lib/src/modelprint.c:1154 lib/src/modelprint.c:1157
-#, fuzzy, c-format
+#, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr " errore standard della media = %g\n"
+msgstr "Errori standard HAC, larghezza di banda %d"
 
 #: lib/src/modelprint.c:1171 lib/src/modelprint.c:1172
-#, fuzzy
 msgid "prewhitened"
-msgstr "Previsto"
+msgstr "Con prewhitening"
 
 #: lib/src/modelprint.c:1190 lib/src/modelprint.c:1196
 msgid "Heteroskedasticity-robust standard errors"
@@ -6071,9 +6058,8 @@ msgid "Save boxplot file"
 msgstr "Salva file boxplot"
 
 #: gui2/boxplots.c:156 gui2/boxplots.c:199 gui2/boxplots.c:916
-#, fuzzy
 msgid "Numerical summary"
-msgstr "Riassunto in cinque numeri"
+msgstr "Riassunto numerico"
 
 #: gui2/boxplots.c:158 gui2/boxplots.c:200 gui2/gpt_control.c:1977
 #: gui2/gpt_control.c:2070
@@ -6120,11 +6106,8 @@ msgid "median"
 msgstr "mediana"
 
 #: gui2/boxplots.c:931
-#, fuzzy
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Riassunto in cinque numeri con intervallo di confidenza bootstrap per la "
-"mediana"
+msgstr "Riassunto numerico con intervallo di confidenza bootstrap per la mediana"
 
 #: gui2/boxplots.c:937
 #, no-c-format
@@ -6132,7 +6115,6 @@ msgid "(90% interval)"
 msgstr "(intervallo al 90%)"
 
 #: gui2/boxplots.c:945
-#, fuzzy
 msgid "gretl: boxplot data"
 msgstr "gretl: boxplot"
 
@@ -7321,11 +7303,8 @@ msgid "Loaded?"
 msgstr "Caricato?"
 
 #: gui2/dialogs.c:106
-#, fuzzy
 msgid "Do you want to save this gretl session?"
-msgstr ""
-"Si desidera salvare le modifiche fatte\n"
-"a questa sessione?"
+msgstr "Si desidera salvare questa sessione di gretl?"
 
 #: gui2/dialogs.c:109
 msgid ""
@@ -7404,43 +7383,36 @@ msgid "Save as"
 msgstr "Salva come"
 
 #: gui2/dialogs.c:763 gui2/library.c:1350
-#, fuzzy
 msgid "gretl: bootstrap analysis"
-msgstr "gretl: analisi TRAMO"
+msgstr "gretl: analisi bootstrap"
 
 #: gui2/dialogs.c:810
-#, fuzzy
 msgid "Confidence interval"
-msgstr "Intervallo di confidenza al 95%"
+msgstr "Intervallo di confidenza"
 
 #: gui2/dialogs.c:819
-#, fuzzy
 msgid "Studentized confidence interval"
-msgstr "Impossibile calcolare l'intervallo di confidenza"
+msgstr "Intervallo di confidenza studentizzato"
 
 #: gui2/dialogs.c:828
-#, fuzzy
 msgid "P-value"
-msgstr "p-value"
+msgstr "P-value"
 
 #: gui2/dialogs.c:842
-#, fuzzy
 msgid "Resample residuals"
-msgstr "Residui del VAR"
+msgstr "Residui del ricampionamento"
 
 #: gui2/dialogs.c:851
 msgid "Simulate normal errors"
-msgstr ""
+msgstr "Simula errori normali"
 
 #: gui2/dialogs.c:864
-#, fuzzy
 msgid "Number of replications:"
-msgstr "Numero di equazioni"
+msgstr "Numero di replicazioni:"
 
 #: gui2/dialogs.c:893 gui2/library.c:1355
-#, fuzzy
 msgid "Save bootstrap data to file"
-msgstr "Salva file di dati octave"
+msgstr "Salva i dati bootstrap in un file"
 
 #: gui2/dialogs.c:1150 gui2/dialogs.c:1155
 msgid "not set"
@@ -8024,9 +7996,8 @@ msgid "Robust standard errors"
 msgstr "Errori standard robusti"
 
 #: gui2/dlgutils.c:743 gui2/selector.c:2859
-#, fuzzy
 msgid "Use bootstrap"
-msgstr "Usa punti"
+msgstr "Usa bootstrap"
 
 #: gui2/dlgutils.c:785
 msgid "One-step estimation"
@@ -8073,9 +8044,9 @@ msgid "Couldn't open file for writing"
 msgstr "Impossibile aprire il file per la scrittura"
 
 #: gui2/fileselect.c:438
-#, fuzzy, c-format
+#, c-format
 msgid "Saved data as %s"
-msgstr "Pacchetto salvato con il nome %s"
+msgstr "Dati salvati con il nome %s"
 
 #: gui2/fileselect.c:511
 msgid "boxplot save failed"
@@ -10104,9 +10075,8 @@ msgid "/Analysis/ANOVA"
 msgstr "/Analisi/_ANOVA"
 
 #: gui2/gui_utils.c:285
-#, fuzzy
 msgid "/Analysis/Bootstrap..."
-msgstr "/Analisi/_Previsione..."
+msgstr "/Analisi/_Bootstrap..."
 
 #: gui2/gui_utils.c:290 gui2/gui_utils.c:317
 msgid "/_LaTeX"
@@ -11606,21 +11576,18 @@ msgid "PWE"
 msgstr "PWE"
 
 #: gui2/model_table.c:346
-#, fuzzy
 msgid "MLE"
-msgstr "ML"
+msgstr "MLE"
 
 #: gui2/model_table.c:352
 msgid "Within"
-msgstr ""
+msgstr "Nei gruppi"
 
 #: gui2/model_table.c:354
-#, fuzzy
 msgid "GLS"
-msgstr "OLS"
+msgstr "GLS"
 
 #: gui2/model_table.c:356
-#, fuzzy
 msgid "Between"
 msgstr "Tra i gruppi"
 
@@ -12380,13 +12347,12 @@ msgid "Not positive definite"
 msgstr "Non definita positiva"
 
 #: gui2/session.c:3248
-#, fuzzy
 msgid "Idempotent"
-msgstr "Importa"
+msgstr "Idempotente"
 
 #: gui2/session.c:3250
 msgid "Not idempotent"
-msgstr ""
+msgstr "Non idempotente"
 
 #: gui2/session.c:3256 plugin/vif.c:125
 msgid "1-norm"
@@ -12566,9 +12532,8 @@ msgid "For time-series data"
 msgstr "per dati serie storiche"
 
 #: gui2/settings.c:275
-#, fuzzy
 msgid "For panel data"
-msgstr "Dati panel"
+msgstr "Per dati panel"
 
 #: gui2/settings.c:277
 msgid "For GARCH estimation"
@@ -12642,7 +12607,7 @@ msgstr "Impossibile creare la directory '%s'"
 #: gui2/settings.c:1530
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr ""
+msgstr "Impossibile scrivere in '%s': gretl non funzionerà correttamente!"
 
 #: gui2/settings.c:1830 gui2/settings.c:2326
 msgid "Couldn't open config file for writing"
