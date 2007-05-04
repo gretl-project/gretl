@@ -680,20 +680,23 @@ int process_string_command (const char *line, PRN *prn)
     char *s1 = NULL;
     char targ[VNAMELEN];
     int builtin = 0;
-    int add = 0;
+    int n, add = 0;
     int err = 0;
 
     /* skip "string" plus any following space */
     line += 6;
     line += strspn(line, " \t");
 
-    if (sscanf(line, "%15s", targ) != 1) {
+    n = gretl_varchar_spn(line);
+    if (n == 0 || n >= VNAMELEN) {
 	return E_PARSE;
     }
 
-    /* eat space before operator */
-    line += strlen(targ);
-    line += strcspn(line, " \t");
+    *targ = '\0';
+    strncat(targ, line, n);
+    line += n;
+
+    /* eat any space before operator */
     line += strspn(line, " \t");
 
     if (*line == '\0') {
