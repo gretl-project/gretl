@@ -89,6 +89,17 @@
 	essere utile nella risoluzione di problemi di funzionamento.
     </para>
 
+    <para>
+      <command>gretlw32 --debug</command> (o <command>gretlw32 -g</command>)
+    </para>
+
+    <para>&mdash; (solo MS Windows) Apre una finestra di terminale per mostrare
+      eventuali messaggi inviati allo <quote>standard output</quote> o allo
+      <quote>standard error</quote>. Questi messaggi, che di solito non sono
+      visibili in Windows, possono essere utili per risolvere problemi di
+      funzionamento.
+    </para>
+
     <para>Varie funzionalità di <application>gretl</application> sono configurabili
       nel menù <guimenuitem>File, Preferenze</guimenuitem>
       menu.</para>  
