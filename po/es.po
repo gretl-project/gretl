@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-03 19:37-0400\n"
-"PO-Revision-Date: 2007-05-04 10:10+0200\n"
+"PO-Revision-Date: 2007-05-04 10:32+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team:  <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4308,7 +4308,7 @@ msgstr "La variable de pesos es una variable ficticia, observaciones efectivas =
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
-msgstr "  VARIABLE        COEFICIENTE      DESV.TÍP.      ESTAD T      VALOR P\n"
+msgstr " VARIABLE        COEFICIENTE       DESV.TÍP.         ESTAD T   VALOR P\n"
 
 #: lib/src/modelprint.c:1802 lib/src/modelprint.c:2692
 msgid ""
@@ -4324,7 +4324,7 @@ msgstr "      VARIABLE            COEFICIENTE                DESV. TÍPICA\n"
 
 #: lib/src/modelprint.c:1818
 msgid "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-msgstr "      VARIABLE      COEFICIENTE      DESV.TÍP.      ESTAD T      PENDIENTE\n"
+msgstr " VARIABLE       COEFICIENTE      DESV.TÍP.         ESTAD T   PENDIENTE\n"
 
 #: lib/src/modelprint.c:1821
 msgid "(at mean)"
