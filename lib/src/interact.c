@@ -204,8 +204,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = OLS;
     } else if (!strcmp(s, "import")) {
 	cmd->ci = OPEN;
-    } else if (!strcmp(s, "label")) {
-	cmd->ci = SETINFO;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;

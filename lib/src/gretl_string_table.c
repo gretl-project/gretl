@@ -613,10 +613,14 @@ int string_is_defined (const char *sname)
 {
     saved_string *str;
     int builtin = 0;
+
+    if (*sname == '@' && *(sname + 1) != '@') {
+	sname++;
+    }
     
     str = get_saved_string_by_name(sname, &builtin);
 
-    return (str != NULL && str->s != NULL);
+    return (str != NULL && str->s != NULL && str->s[0]);
 }
 
 /* for use in "sprintf" command */
@@ -654,7 +658,11 @@ int save_named_string (const char *name, const char *s, PRN *prn)
     }
 
     if (gretl_messages_on()) {
-	pprintf(prn, "Saved string as '%s'\n", name);
+	if (str->s[0] == '\0') {
+	    pprintf(prn, "Saved empty string as '%s'\n", name);
+	} else {
+	    pprintf(prn, "Saved string as '%s'\n", name);
+	}
     }
 
     return 0;
@@ -741,7 +749,11 @@ int process_string_command (const char *line, PRN *prn)
     if (err) {
 	free(s1);
     } else if (gretl_messages_on()) {
-	pprintf(prn, "Saved string as '%s'\n", targ);
+	if (str->s[0] == '\0') {
+	    pprintf(prn, "Saved empty string as '%s'\n", targ);
+	} else {
+	    pprintf(prn, "Saved string as '%s'\n", targ);
+	}
     }
 
     return err;
@@ -821,6 +833,8 @@ static void too_long (void)
 			    "(%d bytes) exceeded\n"), MAXLINE);
 }
 
+#define var_context(s,i) (i > 8 && !strncmp(s - 9, "isstring(", 9))
+
 int substitute_named_strings (char *line)
 {
     char sname[VNAMELEN];
@@ -828,7 +842,7 @@ int substitute_named_strings (char *line)
     char *sub, *tmp, *s = line;
     int bs = 0, pf = 0, quoted = 0;
     int freeit;
-    int n, m, err = 0;
+    int i, n, m, err = 0;
 
     if (*s == '#' || strchr(s, '@') == NULL) {
 	return 0;
@@ -850,6 +864,8 @@ int substitute_named_strings (char *line)
 	quoted = 1;
     }
 
+    i = s - line;
+
     while (*s && !err) {
 	if (pf) {
 	    if (*s == '"' && (bs % 2 == 0)) {
@@ -862,7 +878,7 @@ int substitute_named_strings (char *line)
 		bs = 0;
 	    }
 	}
-	if (*s == '@') {
+	if (*s == '@' && !var_context(s, i)) {
 	    n = gretl_varchar_spn(s + 1);
 	    if (n > 0) {
 		if (n >= VNAMELEN) {
@@ -888,6 +904,7 @@ int substitute_named_strings (char *line)
 			free(tmp);
 			len += m - (n + 1);
 			s += m - 1;
+			i += m - 1;
 		    }
 		    if (freeit) {
 			free(sub);
@@ -896,6 +913,7 @@ int substitute_named_strings (char *line)
 	    }
 	}
 	s++;
+	i++;
     }
 
     return err;

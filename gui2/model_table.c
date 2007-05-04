@@ -74,8 +74,12 @@ int in_model_table (const MODEL *pmod)
 {
     int i;
 
+    if (pmod == NULL || n_models == 0) {
+	return 0;
+    }
+
     for (i=0; i<n_models; i++) {
-	if (pmod == table_models[i]) {
+	if (pmod == table_models[i] || pmod->ID == table_models[i]->ID) {
 	    return 1;
 	}
     }
@@ -141,13 +145,13 @@ static int model_table_depvar (void)
     return -1;
 }
 
-int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
+static int model_table_precheck (MODEL *pmod, int add_mode)
 {
     int gui = (add_mode != MODEL_ADD_BY_CMD);
 
     if (pmod == NULL) {
 	return 1;
-    }
+    }    
 
     /* NLS, MLE and GMM models won't work */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
@@ -171,16 +175,8 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 	return 1;
     }    
 
-    /* is the list started or not? */
-    if (n_models == 0) {
-	table_models = mymalloc(sizeof *table_models);
-	if (table_models == NULL) {
-	    return 1;
-	}
-	n_models = 1;
-    } else {
+    if (n_models > 0) {
 	int dv = model_table_depvar();
-	MODEL **mods;
 
 	/* check that the dependent variable is in common */
 	if (pmod->list[1] != dv) {
@@ -199,6 +195,22 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 	if (model_table_too_many(gui)) {
 	    return 1;
 	}
+    }
+
+    return 0;
+}
+
+static int real_add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
+{
+    /* is the list started or not? */
+    if (n_models == 0) {
+	table_models = mymalloc(sizeof *table_models);
+	if (table_models == NULL) {
+	    return 1;
+	}
+	n_models = 1;
+    } else {
+	MODEL **mods;
 
 	n_models++;
 	mods = myrealloc(table_models, n_models * sizeof *mods);
@@ -225,6 +237,15 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
     mark_session_changed();
 
     return 0;
+}
+
+int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
+{
+    if (model_table_precheck(pmod, add_mode)) {
+	return 1;
+    }
+
+    return real_add_to_model_table(pmod, add_mode, prn);
 }
 
 static int on_param_list (const char *pname)
@@ -1027,7 +1048,48 @@ int special_print_model_table (PRN *prn)
     }
 }
 
-int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn)
+static int cli_modeltab_add (PRN *prn)
+{
+    GretlObjType type;
+    void *ptr = get_last_model(&type);
+    int err = 0;
+
+    if (type != GRETL_OBJ_EQN) {
+	gretl_errmsg_set(_("No model is available"));
+	err = 1;
+    } else {
+	MODEL *pmod = (MODEL *) ptr;
+	MODEL *cpy = NULL;
+	int freeit = 0;
+
+	err = model_table_precheck(pmod, MODEL_ADD_BY_CMD);
+	if (err) {
+	    return err;
+	}
+
+	cpy = get_model_by_ID(pmod->ID);
+	if (cpy == NULL) {
+	    cpy = gretl_model_copy(pmod);
+	    if (cpy == NULL) {
+		err = E_ALLOC;
+	    } else {
+		freeit = 1;
+	    }
+	}
+
+	if (!err) {
+	    err = real_add_to_model_table(cpy, MODEL_ADD_BY_CMD, prn);
+	}
+
+	if (err && freeit) {
+	    gretl_model_free(cpy);
+	}
+    }
+
+    return err;
+}
+
+int modeltab_parse_line (const char *line, PRN *prn)
 {
     char cmdword[9];
     int err = 0;
@@ -1037,12 +1099,7 @@ int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn)
     }
 
     if (!strcmp(cmdword, "add")) {
-	if (pmod == NULL || pmod->ID == 0) {
-	    gretl_errmsg_set(_("No model is available"));
-	    err = 1;
-	} else {
-	    err = add_to_model_table(pmod, MODEL_ADD_BY_CMD, prn);
-	}
+	err = cli_modeltab_add(prn);
     } else if (!strcmp(cmdword, "show")) {
 	err = display_model_table(0);
     } else if (!strcmp(cmdword, "free")) {

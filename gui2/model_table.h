@@ -34,7 +34,7 @@ int display_model_table (int gui);
 
 int special_print_model_table (PRN *prn);
 
-int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn);
+int modeltab_parse_line (const char *line, PRN *prn);
 
 void model_table_dialog (void);
 

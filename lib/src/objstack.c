@@ -494,6 +494,23 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
     return err;
 }
 
+MODEL *get_model_by_ID (int ID) 
+{
+    MODEL *pmod;
+    int i;
+
+    for (i=0; i<n_obj; i++) {
+	if (ostack[i].type == GRETL_OBJ_EQN) {
+	    pmod = (MODEL *) ostack[i].ptr;
+	    if (pmod->ID == ID) {
+		return pmod;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
 MODEL *get_model_by_name (const char *mname)
 {
     return get_object_by_name(mname, GRETL_OBJ_EQN, NULL);

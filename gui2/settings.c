@@ -156,14 +156,11 @@ typedef struct {
     GtkWidget *widget;
 } RCVAR;
 
-/* Note: actually "len" above is overloaded: (1) if an rc_var is of
+/* Note: actually "len" above is overloaded: if an rc_var is of
    type BOOLSET and not part of a radio group, then a non-zero value
    for len will link the var's toggle button with the sensitivity of
    the preceding rc_var's entry field.  For example, the "use_proxy"
-   button controls the sensitivity of the "dbproxy" entry widget. (2)
-   if an rc_var is of type RADIOSET, len is used to represent the
-   number of radio (i.e. mutually incompatible) options for the
-   variable.
+   button controls the sensitivity of the "dbproxy" entry widget.
 */
 
 RCVAR rc_vars[] = {
@@ -277,7 +274,7 @@ RCVAR rc_vars[] = {
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
-      RADIOSET | INTSET, 4, TAB_MAN, NULL },
+      RADIOSET | INTSET, 0, TAB_MAN, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
@@ -974,7 +971,9 @@ static gboolean takes_effect_on_restart (void)
     return FALSE;
 }
 
-static GList *get_settings_list (void *var)
+#define HIDE_SPANISH_MANUAL 1
+
+static GList *get_settings_list (void *var, int *nopt)
 {
     char *hc_strs[] = {
 	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
@@ -989,10 +988,10 @@ static GList *get_settings_list (void *var)
         N_("English (US letter paper)"),
         N_("English (A4 paper)"),
         N_("Italian"),
-	N_("Spanish"),
+	N_("Spanish")
     };
     GList *list = NULL;
-    int i, n;
+    int i, n = 0;
 
     if (var == hc_xsect || var == hc_tseri) {
 	n = sizeof hc_strs / sizeof hc_strs[0];
@@ -1012,10 +1011,17 @@ static GList *get_settings_list (void *var)
 	}
     } else if (var == &manpref) {
 	n = sizeof man_strs / sizeof man_strs[0];
+#if HIDE_SPANISH_MANUAL
+	n--;
+#endif
 	for (i=0; i<n; i++) {
 	    list = g_list_append(list, _(man_strs[i]));
 	}
-    }	
+    }
+
+    if (nopt != NULL) {
+	*nopt = n;
+    }
 
     return list;
 }
@@ -1231,7 +1237,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 			     1, 2, s_len-1, s_len,
 			     0, 0, 0, 0);
 
-	    list = get_settings_list(rc->var);
+	    list = get_settings_list(rc->var, NULL);
 	    gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), strvar);
 	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 8);
@@ -1240,6 +1246,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_widget_show(rc->widget);
 	} else if (rc->flags & RADIOSET) {
 	    int i, rcval = *(int *) (rc->var);
+	    int nopt = 0;
 	    GtkWidget *b;
 	    GSList *group = NULL;
 	    GList *list, *mylist;
@@ -1251,9 +1258,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 				      b_len - 1, b_len);
 	    gtk_widget_show(b);
 
-	    mylist = list = get_settings_list(rc->var);
+	    mylist = list = get_settings_list(rc->var, &nopt);
 
-	    for (i=0; i<rc->len; i++) {
+	    for (i=0; i<nopt; i++) {
 		b_len++;
 		gtk_table_resize(GTK_TABLE(b_table), b_len, 2);
 		b = gtk_radio_button_new_with_label(group, mylist->data);

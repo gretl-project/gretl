@@ -1,9 +1,7 @@
-\chapter{Persistent objects}
+\chapter{Named lists and strings}
 \label{chap-persist}
 
-%%% Work in progress, not really ready for translation yet.
-
-FIXME This chapter needs to deal with saving models too.
+%%% Should this chapter deal with saving models too?
 
 \section{Named lists}
 \label{named-lists}
@@ -191,8 +189,10 @@ where this condition is not met.
 \label{named-strings}
 
 For some purposes it may be useful to save a string (that is, a
-sequence of characters) as a named variable that can be reused.  
-Versions of \app{gretl} higher than 1.6.0 offer this facility.
+sequence of characters) as a named variable that can be reused.
+Versions of \app{gretl} higher than 1.6.0 offer this facility, but
+some of the refinements noted below are available only in \app{gretl}
+1.6.3 and higher.
 
 To \textit{define} a string variable, you can use either of two
 commands, \texttt{string} or \texttt{sprintf}.  The \texttt{string}
@@ -211,21 +211,29 @@ represented as a sequence of sub-strings if need be, as in
 string bits = "first " "and" " second"
 \end{code}
 %
+See below for further variants of the string command, including use of
+\texttt{getenv}.  
+
 The \texttt{sprintf} command is more flexible.  It works exactly as
-the \texttt{printf} command except that the ``format'' string must be
-preceded by the name of a string variable.  For example,
+\app{gretl}'s \texttt{printf} command except that the ``format''
+string must be preceded by the name of a string variable.  For
+example,
 %
 \begin{code}
 scalar x = 8
 sprintf foo "var%d", x
 \end{code}
-%
+
 To \textit{retrieve the value} of a string variable, you give the name
-of the variable preceded by the ``at'' sign, \verb|@|.  If a sequence
-of characters in a \app{gretl} command following the symbol \verb|@|
-is recognized as the name of a string variable, the value of that
-variable is sustituted into the command line.  This is illustrated in
-the following interactive session:
+of the variable preceded by the ``at'' sign, \verb|@|.  
+
+In most contexts, the \verb|@| notation is treated as a ``macro''.
+That is, if a sequence of characters in a \app{gretl} command
+following the symbol \verb|@| is recognized as the name of a string
+variable, the value of that variable is sustituted literally into the
+command line before the regular parsing of the command is
+carried out.  This is illustrated in the following interactive
+session:
 %
 \begin{code}
 ? scalar x = 8
@@ -235,6 +243,50 @@ Generated scalar x (ID 2) = 8
 Saved string as 'foo'
 ? print "@foo"
 var8
+\end{code}
+%
+Note the effect of the quotation marks in the line 
+\verb|print "@foo"|.  The line
+%
+\begin{code}
+? print @foo
+\end{code}
+%
+would \textit{not} print a literal ``\texttt{var8}'' as above.  After
+pre-processing the line would read
+%
+\begin{code}
+print var8
+\end{code}
+%
+It would therefore print the value(s) of the variable \texttt{var8},
+if such a variable exists, or would generate an error otherwise.
+
+In certain specific contexts, however, it is natural to treat
+\verb|@|-variables as variables in their own right, and \app{gretl}
+does so.  These contexts are:
+\begin{itemize}
+\item When they appear among the arguments to the commands \texttt{printf} and
+  \texttt{sprintf}.
+\item On the right-hand side of a \texttt{string} assignment.
+\item When they appear as an argument to the function
+  \texttt{isstring} (see below).
+\end{itemize}
+
+Here is an illustration of the use of named string arguments with
+\texttt{printf}:
+%
+\begin{code}
+? string vstr = "variance"
+Saved string as 'vstr'
+? printf "vstr: %12s\n", @vstr
+vstr:     variance
+\end{code}
+%
+Note that \verb|@vstr| should not be put in quotes in this context.
+Similarly with
+\begin{code}
+? string copy = @vstr
 \end{code}
 
 \subsection{Built-in strings}
@@ -259,6 +311,38 @@ are as shown in Table~\ref{tab-strings}.
 \label{tab-strings}
 \end{table}
 
+\subsection{Reading strings from the environment}
+
+In addition, it is possible to read into \app{gretl}'s named strings,
+values that are defined in the external environment.  To do this you
+use the function \texttt{getenv}, which takes the name of an environment
+variable as its argument.  For example:
+%
+\begin{code}
+? string user = getenv("USER")
+Saved string as 'user'
+? string home = getenv("HOME")
+Saved string as 'home'
+? print "@user's home directory is @home"
+cottrell's home directory is /home/cottrell
+\end{code}
+%
+To check whether you got a non-empty value from a given call to
+\texttt{getenv}, you can use the function \texttt{isstring}, as in
+%
+\begin{code}
+? string temp = getenv("TEMP")
+Saved empty string as 'temp'
+? scalar x = isstring(@temp)
+Generated scalar x (ID 2) = 0
+\end{code}
+%
+Note that \texttt{isstring} is really shorthand for ``is a string that
+actually contains something''.  
+
+At present the \texttt{getenv} function can only be used on the
+right-hand side of a \texttt{string} assignment, as in the above
+illustrations.
     
 %%% Local Variables: 
 %%% mode: latex

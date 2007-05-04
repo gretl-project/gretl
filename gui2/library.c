@@ -6556,7 +6556,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case MODELTAB:
-	err = modeltab_parse_line(line, models[0], prn);
+	err = modeltab_parse_line(line, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

@@ -71,6 +71,8 @@ void *get_genr_model (GretlObjType *type);
 
 MODEL *get_model_by_name (const char *mname);
 
+MODEL *get_model_by_ID (int ID);
+
 GRETL_VAR *get_VAR_by_name (const char *vname);
 
 GRETL_VAR *get_VECM_by_name (const char *vname);
