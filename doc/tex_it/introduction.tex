@@ -23,10 +23,10 @@ grafica.
   Linux, ma il programma è disponibile anche per MS Windows e
   Mac OS X, e dovrebbe funzionare su qualsiasi sistema operativo simile a UNIX
   che comprenda le librerie di base richieste (si veda
-  l'appendice~\ref{app-technote}).
+  l'appendice~\ref{app-build}).
 \item[Open source] L'intero codice sorgente di \app{Gretl} è
   disponibile per chiunque voglia criticarlo, correggerlo o
-  estenderlo. Si veda l'appendice~\ref{app-technote}.
+  estenderlo. Si veda l'appendice~\ref{app-build}.
 \item[Sofisticato] \app{Gretl} offre un'ampia varietà
   di stimatori basati sui minimi quadrati, sia per singole equazioni
   che per sistemi di equazioni, compresa l'autoregressione vettoriale e i
@@ -79,7 +79,7 @@ Cristian Rigamonti (italiano), Tadeusz Kufel e Pawel Kufel (polacco), e
 Markus Hahn e Sven Schreiber (tedesco).
 
 \app{Gretl} ha beneficiato largamente del lavoro di molti sviluppatori di software
-libero e open-source: per i dettagli si veda l'appendice~\ref{app-technote}.
+libero e open-source: per i dettagli si veda l'appendice~\ref{app-build}.
 Devo ringraziare Richard Stallman della Free Software Foundation per
 il suo supporto al software libero in generale, ma in particolare per
 aver accettato di ``adottare'' \app{Gretl} come programma GNU.
@@ -103,57 +103,31 @@ Sulla piattaforma Linux\footnote{In questo manuale
   anche per altri sistemi simili a UNIX, anche se potrebbero essere
   necessari alcuni adattamenti.}, è possibile compilare da sé il
 codice di \app{Gretl}, oppure usare un pacchetto pre-compilato.
-Pacchetti già pronti sono disponibili in formato \app{rpm}
-(appropriato per sistemi Red Hat Linux e simili) e anche in formato
-\app{deb} (per Debian GNU/Linux). Se si preferisce compilare da sé (o si usa un
-sistema UNIX per cui non sono disponibili pacchetti pre-compilati), ecco come
-procedere:
-      
-\begin{enumerate}
-\item Scaricare il più recente pacchetto dei sorgenti di \app{Gretl}
-  da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-        
-\item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
-  usare il comando \cmd{tar xvfz gretl-N.tar.gz} (sostituire \cmd{N}
-  con il numero di versione specifico del file scaricato).
-\item Spostarsi nella directory del codice sorgente di Gretl appena
-  creata (ad es. \verb+gretl-1.1.5+).
-          
-\item La sequenza basilare di comandi da eseguire è:
-          
-\begin{code}
-./configure 
-make 
-make check
-make install
-\end{code}
 
-Tuttavia, potrebbe essere utile leggere per prima cosa il file
-  \verb+INSTALL+ e/o eseguire
-\begin{code}
-./configure --help
-\end{code}
-per capire quali opzioni di configurazione sono disponibili.
-Un'opzione che può essere utile utilizzare è \cmd{--prefix}; il
-comportamento predefinito è quello di installare il programma in
-\verb+/usr/local+, ma è possibile modificarlo.  Ad esempio
-\begin{code}
-./configure --prefix=/usr
-\end{code}
-installerà il tutto sotto la directory \verb+/usr+.  Se la procedura
-di configurazione si interrompe perché una delle librerie richieste
-non è disponibile sul sistema, si veda l'appendice~\ref{app-technote}.
-Sulla maggior parte dei sistemi, il comando \texttt{make install} richiede
-di avere i privilegi di amministratore. Quindi, occorre assumere l'identità
-di \texttt{root} prima di eseguire  \texttt{make install}, oppure si può
-usare il comando \texttt{sudo}.
-\end{enumerate}
+Se si vuole utilizzare la versione di sviluppo di \app{gretl}, o modificare il
+programma per le proprie esigenze, occorre compilare dai sorgenti; visto che
+questa operazione richiede una certa abilità, la maggior parte degli utenti
+preferirà usare un pacchetto pre-compilato.
 
-\app{Gretl} supporta il desktop \app{gnome}. Per abilitare il supporto, occorre
-compilare il programma da sé (come descritto sopra), mentre per disabilitare le
-funzionalità specifiche di \app{gnome}, occorre usare l'opzione
-\verb+--without-gnome+ con il comando \cmd{configure}.
+Alcune distribuzioni Linux contengono già \app{gretl}, ad esempio Debian o
+Ubuntu (nell'archivio \emph{universe}). Chi usa queste distribuzioni deve solo
+installare \app{gretl} usando il proprio gestore di pacchetti preferito (ad es.
+synaptic).
 
+Pacchetti binari in formato \app{rpm} (utilizzabili su sistemi Red Hat Linux e
+simili) sono disponibili sul sito di \app{gretl}:
+\url{http://gretl.sourceforge.net}.
+
+In ogni caso, speriamo che gli utenti che possiedono conoscenze di
+programmazione trovino \app{gretl} abbastanza interessante da migliorare ed
+estendere. La documentazione dell'API di libgretl non è ancora completa, ma è
+possibile trovare alcuni dettagli seguendo il link
+``Libgretl API docs'' sul sito web di \app{gretl}. Chi è interessato allo
+sviluppo del programma è invitato a iscriversi alla mailing list
+\href{http://gretl.sourceforge.net/lists.html}{gretl-devel}.
+
+Per chi vuole compilare \app{gretl} da sé, le istruzioni si trovano
+nell'Appendice~\ref{app-build}.
 
 \subsection{MS Windows}
 \label{windows-install}

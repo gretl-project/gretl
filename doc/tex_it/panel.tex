@@ -222,8 +222,8 @@ statistiche:
 \item Un vincolo simile esiste per lo stimatore a effetti casuali. Questo
   stimatore in effetti è una media ponderata (in senso matriciale) dello
   stimatore ``pooled OLS'' e dello stimatore ``between''. Se si hanno
-  osservazioni su $m$ unità e $k$ variabili indipendenti, e se $k>m$ lo
-  stimatore ``between'' non è definito, visto che abbiamo solo $m$ osservazioni
+  osservazioni su $n$ unità e $k$ variabili indipendenti, e se $k>n$ lo
+  stimatore ``between'' non è definito, visto che abbiamo solo $n$ osservazioni
   effettive, e quindi non è definito neanche lo stimatore a effetti casuali.
 \end{enumerate}
 
@@ -345,21 +345,10 @@ programmi), ma usa il metodo della regressione se si usa l'opzione
 Per la maggior parte degli stimatori, \app{gretl} offre la possibilità di
 calcolare una stima della matrice di covarianza che sia robusta rispetto
 all'eteroschedasticità e/o all'autocorrelazione (e di conseguenza anche errori
-standard robusti). Nel caso di dati panel, una matrice di covarianza robusta è
-disponibile per il modello a effetti fissi, ma al momento non per quello a
-effetti casuali. Lo stimatore usato per gli effetti fissi è
-\[
-\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
-\left[ \sum_{i=1}^m \tilde{X}_i^{\prime} \tilde{u}_i 
-    \tilde{u}_i^{\prime} \tilde{X}_i \right]
-\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
-\]
-dove $\tilde{X}$ è la matrice dei regressori con le medie di gruppo sottratte,
-$\tilde{u}_i$ denota i residui del modello a effetti fissi per l'unità $i$, e
-$m$ è il numero di unità cross-section. Questo stimatore è robusto rispetto
-all'eteroschedasticità; è robusto anche rispetto all'autocorrelazione, a patto
-che la dimensione temporale del panel sia relativamente ridotta\footnote{Si veda,
-ad esempio, Arellano (2003, capitolo 2.3).}.
+standard robusti). Nel caso di dati panel, sono disponibili stimatori robusti
+della matrice di covarianza robusta per i modelli pooled e a effetti fissi, ma
+al momento non per il modello a effetti casuali. Per i dettagli, si veda la
+sezione~\ref{sec:vcv-panel}.
 
 \section{Modelli panel dinamici}
 \label{panel-dyn}
