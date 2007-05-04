@@ -3,7 +3,7 @@
 
 <commandlist language="italian">
 
-<?PSGML NOFILL label code altforms altform menu-path other-access?>
+<?PSGML NOFILL label code altforms altform menu-path equation other-access?>
 
   <command name="add" section="Tests" label="Aggiunge variabili al modello">
 
@@ -2502,10 +2502,13 @@
             Le serie dalla distribuzione uniforme, che sono usate come base per
             calcolare le distribuzioni più complesse, sono generate usando il
             Mersenne Twister
-            <footnote><para>Si veda Matsumoto e Nishimura
-            (1998). L'implementazione è fornita da <program>glib</program>, se è
-            disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
-            </footnote>; per le serie dalla distribuzione normale, viene usato il
+                <footnote>
+                  <para>
+                  Si veda Matsumoto e Nishimura (1998).  L'implementazione è
+                  fornita da <program>glib-2.0</program>
+                  </para>
+                </footnote>;
+            per le serie dalla distribuzione normale, viene usato il
             metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.
             Si veda anche il comando <cmdref targ="set"/>, opzione
             <lit>seed</lit>.
@@ -2745,11 +2748,13 @@
 	Ad esempio, <lit>genr dum = (t=15)</lit> crea una variabile dummy
 	che vale 1 per l'osservazione 15 e 0 altrove. La variabile
         <lit>obs</lit> è simile ma più flessibile: è possibile usarla per
-        isolare alcune osservazioni indicandole con una data o un nome.
-        Ad esempio, <lit>genr d = (obs&gt;1986:4)</lit> o 
-        <lit>genr d = (obs="CA")</lit>. L'ultima forma richiede che
-        siano definite delle etichette, da usare tra virgolette doppie,
-        per le osservazioni.</para>
+        isolare alcune osservazioni indicandole con un numero (a partire da 1),
+        una data, o un nome. Quando si usa una data o un nome dell'osservazione,
+        questi vanno racchiusi tra virgolette doppie: ad esempio
+        <lit>genr d = (obs&gt;"1986:4")</lit> o <lit>genr d = (obs="CA")</lit>.
+        L'ultima forma assume che siano state definite delle etichette per le
+        osservazioni.
+      </para>
 
       <para>È possibile estrarre dei valori scalari da una serie usando
         una formula <lit>genr</lit> con la sintassi
@@ -3458,6 +3463,13 @@
         la lunghezza dei ritardi usando il comando <cmd>set</cmd>. Si veda il
         manuale di gretl o i file di aiuto per i dettagli.</para>
 
+      <para>Quando si stima un  modello OLS su dati panel, lo stimatore robusto
+        predefinito per la matrice di covarianza è quello dato da Arellano.
+        L'alternativa è lo stimatore PCSE (Panel Corrected Standard Errors) di
+        Beck e Katz, che tiene conto dell'eteroschedasticità, ma non
+        dell'autocorrelazione.
+      </para>
+
       <para>Per i modelli GARCH sono disponibili due stimatori robusti della
         matrice di covarianza: QML è lo stimatore di quasi massima verosimiglianza,
         e BW è lo stimatore di Bollerslev-Wooldridge.
@@ -4038,6 +4050,10 @@
 	  <flag>--panel</flag>
 	  <effect>eteroschedasticità, a gruppi</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra la regressione ausiliaria</effect>
+        </option>
       </options>
     </usage>
 
@@ -4080,6 +4096,11 @@
         stimato su dati panel: in questo caso viene eseguito un test per
         eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
         fra le unità cross section).
+      </para>
+      <para>
+	Per impostazione predefinita, il programma mostra la regressione
+        ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
+        usando l'opzione <lit>--quiet</lit>.
       </para>
     </description>
 
@@ -6621,6 +6642,11 @@
             campione.
          </para>
 	</li>
+	<li>
+	  <para><lit>shelldir</lit>: <repl>percorso</repl>. Imposta la directory
+           di lavoro corrente per i comandi shell.
+         </para>
+	</li>
         <li>
 	<para>
 	  <lit>nls_toler</lit>: un valore in virgola mobile (il valore
@@ -6646,24 +6672,26 @@
         </li>
 	<li>
 	  <para><lit>hac_lag</lit>:
-	  <lit>nw1</lit> (valore predefinito) o
-	    <lit>nw2</lit>, o un intero.  Imposta il massimo valore di
+	  <lit>nw1</lit> (valore predefinito), <lit>nw2</lit>,
+	    <lit>nw3</lit>, o un intero.  Imposta il massimo valore di
             ritardo, o la larghezza di banda, <mathvar>p</mathvar>, usato nel calcolo degli
             errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
 	    con l'approccio Newey-West, per le serie storiche.
             <lit>nw1</lit> e <lit>nw2</lit> rappresentano due varianti
             di calcolo automatico basate sulla dimensione del campione,
 	    <mathvar>T</mathvar>: per nw1, 
-	  <equation status="inline"
-	    tex="$p = 0.75 \times T^{1/3}$"
-	    ascii="p = 0.75 * T^(1/3)"
-	    graphic="nw1"/>,
-	    e per nw2, 
-	  <equation status="inline"
-	    tex="$p = 4 \times (T/100)^{2/9}$"
-	    ascii="p = 4 * (T/100)^(2/9)"
-	    graphic="nw2"/>.
-	    Si veda anche <lit>qs_bandwidth</lit> sotto.
+            <equation status="inline"
+              tex="$p = 0.75 \times T^{1/3}$"
+              ascii="p = 0.75 * T^(1/3)"
+              graphic="nw1"/>,
+              e per nw2, 
+            <equation status="inline"
+              tex="$p = 4 \times (T/100)^{2/9}$"
+              ascii="p = 4 * (T/100)^(2/9)"
+              graphic="nw2"/>.
+            <lit>nw3</lit> permette di selezionare la larghezza di banda
+            basandosi sui dati.  Si veda anche <lit>qs_bandwidth</lit> e
+            <lit>hac_prewhiten</lit>.
 	  </para>
 	</li>
 	<li>
@@ -6671,6 +6699,14 @@
 	    <lit>parzen</lit>, o <lit>qs</lit> (Quadratic Spectral). Imposta il
             kernel, o struttura di pesi, usato nel calcolo degli errori standard
             HAC.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> o <lit>off</lit>
+	    (valore predefinito). Usa le procedure di <quote>prewhitening</quote> e
+            <quote>re-coloring</quote> di Andrews-Monahan nel calcolo degli
+            errori standard HAC. Questo comporta anche la selezione della
+            larghezza di banda basata sui dati.
 	  </para>
 	</li>
 	<li>
@@ -6697,6 +6733,16 @@
             <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
             <quote>on</quote>, si forza l'uso della matrice di covarianza
 	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>pcse</lit>: <lit>off</lit> (impostazione predefinita) o
+	    <lit>on</lit>.  Di solito, quando si stima un modello con pooled OLS
+            su dati panel usando l'opzione <lit>--robust</lit>, viene usato lo
+            stimatore di Arellano per la matrice di covarianza. Se si imposta
+            <lit>pcse</lit> a <quote>on</quote>, verranno usati i Panel
+            Corrected Standard Errors (PCSE) di Beck e Katz, che non tengono
+            conto dell'autocorrelazione.
 	  </para>
 	</li>
 	<li>
