@@ -859,9 +859,9 @@ static void check_gretldir (PATHS *ppaths)
 	if (fp != NULL) {
 	    *ppaths->gretldir = '\0';
 	    strncat(ppaths->gretldir, epath, MAXLEN - 2);
+	    ensure_slash(ppaths->gretldir);
 	    fclose(fp);
 	}
-	ensure_slash(ppaths->gretldir);
     }
 }
 
