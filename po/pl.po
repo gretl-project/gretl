@@ -1,14 +1,14 @@
-# Polish translation for gretl-1.6.2
+# Polish translation for gretl-1.6.3
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006, 2007
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.6.2\n"
+"Project-Id-Version: gretl-1.6.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-03 19:37-0400\n"
-"PO-Revision-Date: 2007-03-21 01:00-0500\n"
+"PO-Revision-Date: 2007-05-04 20:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -215,7 +215,7 @@ msgstr ""
 #: lib/src/bootstrap.c:407
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
-msgstr ""
+msgstr "Analiza parametru zmiennej %s (estymacja punktowa %g)"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -295,12 +295,10 @@ msgstr ""
 "\n"
 
 #: lib/src/compare.c:654
-#, fuzzy
 msgid "Non-linearity test (squared terms)"
 msgstr "Test na nieliniowo¶æ (kwadraty)"
 
 #: lib/src/compare.c:656
-#, fuzzy
 msgid "Non-linearity test (log terms)"
 msgstr "Test na nieliniowo¶æ (logarytmy)"
 
@@ -1488,7 +1486,7 @@ msgstr ""
 #: lib/src/describe.c:3138 lib/src/describe.c:3139 lib/src/printout.c:702
 #: lib/src/printout.c:703
 msgid "NA"
-msgstr ""
+msgstr "NA"
 
 #: lib/src/describe.c:3180 lib/src/describe.c:3823
 #, c-format
@@ -1534,12 +1532,11 @@ msgstr "Kurtoza"
 
 #: lib/src/describe.c:3205
 msgid "Within s.d."
-msgstr ""
+msgstr "Within s.d."
 
 #: lib/src/describe.c:3206
-#, fuzzy
 msgid "Between s.d."
-msgstr "Pomiêdzy grupowe"
+msgstr "Between s.d."
 
 #: lib/src/describe.c:3212 lib/src/describe.c:3295
 msgid "Summary Statistics"
@@ -2034,9 +2031,8 @@ msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Symbol '%s' jest niepoprawny w tym kontek¶cie\n"
 
 #: lib/src/genlex.c:455
-#, fuzzy
 msgid "Empty string\n"
-msgstr "Pusta obserwacja []\n"
+msgstr "Pusty ³añcuch znaków\n"
 
 #: lib/src/genlex.c:513
 msgid "Empty observation []\n"
@@ -2199,14 +2195,14 @@ msgid "%s versus %s (with least squares fit)"
 msgstr "%s wzglêdem %s (z regresj± liniow±)"
 
 #: lib/src/graphing.c:932 gui2/gpt_dialog.c:209
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with inverse fit)"
-msgstr "%s wzglêdem %s (z regresj± liniow±)"
+msgstr "%s wzglêdem %s (z regresj± odwrotn±)"
 
 #: lib/src/graphing.c:935 gui2/gpt_dialog.c:206
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with quadratic fit)"
-msgstr "%s wzglêdem %s (z regresj± liniow±)"
+msgstr "%s wzglêdem %s (z regresj± kwadratow±)"
 
 #: lib/src/graphing.c:941
 #, c-format
@@ -2224,14 +2220,14 @@ msgid "Actual and fitted %s versus %s"
 msgstr "Empiryczne i wyrównane wartosci %s wzgledem %s"
 
 #: lib/src/graphing.c:1103 gui2/gpt_dialog.c:212
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with loess fit)"
-msgstr "%s wzglêdem %s (z regresj± liniow±)"
+msgstr "%s wzglêdem %s (z regresj± wa¿on±)"
 
 #: lib/src/graphing.c:1112 lib/src/plotspec.c:615
 #, c-format
 msgid "loess fit, d = %d, q = %g"
-msgstr ""
+msgstr "paramatry wag, d = %d, q = %g"
 
 #: lib/src/graphing.c:1882 lib/src/plotspec.c:518 gui2/gpt_dialog.c:617
 msgid "right"
@@ -2261,7 +2257,7 @@ msgstr "Chi-kwadrat(2) = %.3f, warto¶æ p = %.5f"
 
 #: lib/src/graphing.c:2444
 msgid "Test statistic for gamma"
-msgstr "Test statystyczny dla gamma"
+msgstr "Statystyka testu dla gamma"
 
 #: lib/src/graphing.c:2446
 #, c-format
@@ -2536,9 +2532,8 @@ msgid "You can't change the name of a function here"
 msgstr "Nie mo¿na zmieniaæ nazwy funkcji"
 
 #: lib/src/gretl_func.c:2785 lib/src/gretl_func.c:2791
-#, fuzzy
 msgid "Error compiling function"
-msgstr "B³±d wczytania definicji funkcji\n"
+msgstr "B³±d kompilacji funkcji"
 
 #: lib/src/gretl_func.c:3290
 #, c-format
@@ -3610,9 +3605,9 @@ msgid "Command is malformed\n"
 msgstr "B³êdna komenda\n"
 
 #: lib/src/interact.c:4121 cli/gretlcli.c:997 gui2/library.c:6608
-#, fuzzy, c-format
+#, c-format
 msgid "Error reading %s\n"
-msgstr "B³±d wczytania lini z poleceniem zakresu próby (smpl)"
+msgstr "B³±d wczytania %s\n"
 
 #: lib/src/interact.c:4126 cli/gretlcli.c:1002 gui2/library.c:6613
 msgid "Infinite loop detected in script\n"
@@ -3678,9 +3673,8 @@ msgstr "%s: Nie znaleziono ¿adnej pasuj±cej obserwacji\n"
 
 #: lib/src/modelprint.c:77 lib/src/modelprint.c:83 lib/src/modelprint.c:85
 #: lib/src/modelprint.c:88
-#, fuzzy
 msgid "Median of dependent variable"
-msgstr "Srednia  arytmetyczna  zmiennej zale¿nej"
+msgstr "Mediana zmiennej zale¿nej"
 
 #: lib/src/modelprint.c:104 lib/src/modelprint.c:114 lib/src/modelprint.c:117
 #: lib/src/modelprint.c:122
@@ -3889,9 +3883,9 @@ msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr "Wy³±czaj±c sta³±, najwiêksza warto¶æ p jest dla zmiennej %d (%s)"
 
 #: lib/src/modelprint.c:805
-#, fuzzy, c-format
+#, c-format
 msgid "P-value was highest for variable %d (%s)"
-msgstr "Wy³±czaj±c sta³±, najwiêksza warto¶æ p jest dla zmiennej %d (%s)"
+msgstr "Najwiêksza warto¶æ p jest dla zmiennej %d (%s)"
 
 #: lib/src/modelprint.c:815
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -4075,7 +4069,7 @@ msgstr "Pomiêdzy grupowe"
 
 #: lib/src/modelprint.c:906
 msgid "Pooled OLS"
-msgstr ""
+msgstr "Panelowe MNK"
 
 #: lib/src/modelprint.c:909
 msgid "2-step Arellano-Bond"
@@ -4134,47 +4128,42 @@ msgstr "Odporne b³êdy standardowe (robust HAC)"
 
 #: lib/src/modelprint.c:1111 lib/src/modelprint.c:1113
 #: lib/src/modelprint.c:1117
-#, fuzzy
 msgid "Beck-Katz standard errors"
-msgstr "b³êdy standardowe prognozy"
+msgstr "B³êdy standardowe Beck-Katz"
 
 #: lib/src/modelprint.c:1115
-#, fuzzy
 msgid "Beck--Katz standard errors"
-msgstr "b³êdy standardowe prognozy"
+msgstr "B³êdy standardowe Beck--Katz"
 
 #: lib/src/modelprint.c:1126
-#, fuzzy
 msgid "Could not compute Beck-Katz standard errors"
-msgstr "b³êdy standardowe prognozy"
+msgstr "Nie mo¿liwe wyznaczenie b³êdów standardowych Beck-Katz"
 
 #: lib/src/modelprint.c:1134
 msgid "Bartlett kernel"
-msgstr ""
+msgstr "j±dro Bartletta"
 
 #: lib/src/modelprint.c:1135
-#, fuzzy
 msgid "Parzen kernel"
-msgstr "j±dro Gaussa"
+msgstr "j±dro Parzena"
 
 #: lib/src/modelprint.c:1136
 msgid "QS kernel"
-msgstr ""
+msgstr "j±dro QS"
 
 #: lib/src/modelprint.c:1146 lib/src/modelprint.c:1149
-#, fuzzy, c-format
+#, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr " B³±d standardowy reszt = %g\n"
+msgstr "B³±d standardowy HAC, pasmo = %.2f"
 
 #: lib/src/modelprint.c:1154 lib/src/modelprint.c:1157
-#, fuzzy, c-format
+#, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr " B³±d standardowy reszt = %g\n"
+msgstr "B³±d standardowy HAC, pasmo = %d"
 
 #: lib/src/modelprint.c:1171 lib/src/modelprint.c:1172
-#, fuzzy
 msgid "prewhitened"
-msgstr "Prognoza"
+msgstr "prewhitened"
 
 #: lib/src/modelprint.c:1190 lib/src/modelprint.c:1196
 msgid "Heteroskedasticity-robust standard errors"
@@ -5339,6 +5328,8 @@ msgid ""
 "\n"
 "Poisson (mean = %g): "
 msgstr ""
+"\n"
+"Poisson (¶rednia = %g): "
 
 #: lib/src/strutils.c:1473
 #, c-format
@@ -6047,9 +6038,8 @@ msgid "Save boxplot file"
 msgstr "Zapisz plik boxplot"
 
 #: gui2/boxplots.c:156 gui2/boxplots.c:199 gui2/boxplots.c:916
-#, fuzzy
 msgid "Numerical summary"
-msgstr "Piêæ miar pozycyjnych"
+msgstr "Pozycyjne miary opisu"
 
 #: gui2/boxplots.c:158 gui2/boxplots.c:200 gui2/gpt_control.c:1977
 #: gui2/gpt_control.c:2070
@@ -6096,11 +6086,8 @@ msgid "median"
 msgstr "mediana"
 
 #: gui2/boxplots.c:931
-#, fuzzy
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Piêæ miar pozycyjnych z przedzia³em ufno¶ci dla mediany (estymacja metod± "
-"bootstrap)"
+msgstr "Pozycyjne miary z przedzia³em ufno¶ci dla mediany (estymacja metod± bootstrap)"
 
 #: gui2/boxplots.c:937
 #, no-c-format
@@ -6108,7 +6095,6 @@ msgid "(90% interval)"
 msgstr "(90% przedzia³)"
 
 #: gui2/boxplots.c:945
-#, fuzzy
 msgid "gretl: boxplot data"
 msgstr "gretl: wykres pude³kowy"
 
@@ -6232,9 +6218,8 @@ msgid "Invalid standard deviation"
 msgstr "B³êdne odchylenie standardowe"
 
 #: gui2/calculator.c:334
-#, fuzzy
 msgid "Invalid mean"
-msgstr "B³êdne dane"
+msgstr "B³êdna ¶rednia"
 
 #: gui2/calculator.c:381 gui2/calculator.c:390
 msgid "Failed to compute p-value"
@@ -6505,9 +6490,8 @@ msgid "binomial"
 msgstr "binomial"
 
 #: gui2/calculator.c:1108
-#, fuzzy
 msgid "poisson"
-msgstr "Poisson"
+msgstr "poisson"
 
 #: gui2/calculator.c:1129 gui2/calculator.c:1138
 msgid "value"
@@ -7295,11 +7279,8 @@ msgid "Loaded?"
 msgstr "Loaded?"
 
 #: gui2/dialogs.c:106
-#, fuzzy
 msgid "Do you want to save this gretl session?"
-msgstr ""
-"Czy chcesz zapisaæ wykonane zmiany\n"
-"w tej sesji?"
+msgstr "Czy chcesz zapisaæ sesjê gretla?"
 
 #: gui2/dialogs.c:109
 msgid ""
@@ -7378,43 +7359,36 @@ msgid "Save as"
 msgstr "Zapisz jako..."
 
 #: gui2/dialogs.c:763 gui2/library.c:1350
-#, fuzzy
 msgid "gretl: bootstrap analysis"
-msgstr "gretl: analiza TRAMO"
+msgstr "gretl: analiza bootstrapowa"
 
 #: gui2/dialogs.c:810
-#, fuzzy
 msgid "Confidence interval"
-msgstr "95% przedzia³ ufno¶ci"
+msgstr "Przedzia³ ufno¶ci parametru"
 
 #: gui2/dialogs.c:819
-#, fuzzy
 msgid "Studentized confidence interval"
-msgstr "Niemo¿na uzyskaæ przedzia³u ufno¶ci"
+msgstr "Studentyzowany przedzia³ ufno¶ci parametru"
 
 #: gui2/dialogs.c:828
-#, fuzzy
 msgid "P-value"
-msgstr "warto¶æ p"
+msgstr "Warto¶æ p"
 
 #: gui2/dialogs.c:842
-#, fuzzy
 msgid "Resample residuals"
-msgstr "reszty VAR"
+msgstr "Ponowne pobranie próby reszt"
 
 #: gui2/dialogs.c:851
 msgid "Simulate normal errors"
-msgstr ""
+msgstr "Symulacja b³êdów z rozk³adu normalnego"
 
 #: gui2/dialogs.c:864
-#, fuzzy
 msgid "Number of replications:"
-msgstr "Liczba równañ"
+msgstr "Liczba replikacji:"
 
 #: gui2/dialogs.c:893 gui2/library.c:1355
-#, fuzzy
 msgid "Save bootstrap data to file"
-msgstr "Zapisywanie pliku danych Octave"
+msgstr "Zapisz plik z bootstrapowymi danymi"
 
 #: gui2/dialogs.c:1150 gui2/dialogs.c:1155
 msgid "not set"
@@ -7730,12 +7704,11 @@ msgstr "Liczba przedzia³ów:"
 
 #: gui2/dialogs.c:3258
 msgid "Minimum value, left bin:"
-msgstr ""
+msgstr "Minimalna warto¶æ, dolna granica:"
 
 #: gui2/dialogs.c:3259
-#, fuzzy
 msgid "Bin width:"
-msgstr "szeroko¶æ lini"
+msgstr "szeroko¶æ przedzia³u:"
 
 #: gui2/dialogs.c:3452
 msgid "Structure of dataset"
@@ -7999,24 +7972,20 @@ msgid "Robust standard errors"
 msgstr "Odporne b³êdy standardowe (robust)"
 
 #: gui2/dlgutils.c:743 gui2/selector.c:2859
-#, fuzzy
 msgid "Use bootstrap"
-msgstr "Wykorzystaj punkty"
+msgstr "Wykorzystaj bootstrap"
 
 #: gui2/dlgutils.c:785
-#, fuzzy
 msgid "One-step estimation"
-msgstr "Estymacja 1-step"
+msgstr "Estymacja one-step"
 
 #: gui2/dlgutils.c:786
-#, fuzzy
 msgid "Two-step estimation"
-msgstr "Estymacja 1-step"
+msgstr "Estymacja two-step"
 
 #: gui2/dlgutils.c:787
-#, fuzzy
 msgid "Iterated estimation"
-msgstr "Estymacja 1-step"
+msgstr "Estymacja iteracyjna"
 
 #: gui2/dlgutils.c:835 plugin/sysest.c:697
 msgid "Estimator"
@@ -8051,9 +8020,9 @@ msgid "Couldn't open file for writing"
 msgstr "Nie mo¿na otworzyæ pliku dla zapisu"
 
 #: gui2/fileselect.c:438
-#, fuzzy, c-format
+#, c-format
 msgid "Saved data as %s"
-msgstr "Zapisywanie danych"
+msgstr "Zapisano dane jako %s"
 
 #: gui2/fileselect.c:511
 msgid "boxplot save failed"
@@ -8064,9 +8033,8 @@ msgid "postscript files (*.eps)"
 msgstr "pliki postscriptowe (*.eps)"
 
 #: gui2/fileselect.c:556
-#, fuzzy
 msgid "PDF files (*.pdf)"
-msgstr "pliki PNG (*.png)"
+msgstr "pliki PDF (*.pdf)"
 
 #: gui2/fileselect.c:557
 msgid "xfig files (*.fig)"
@@ -8385,16 +8353,16 @@ msgstr "Brak wymaganych informacji"
 
 #: gui2/fnsave.c:253
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
+msgstr "B³êdny wersja ³añcucha: wykorzystaj liczby i '.'"
 
 #: gui2/fnsave.c:268
 msgid "Save function package"
 msgstr "Zapisz pakiet funkcji"
 
 #: gui2/fnsave.c:274
-#, fuzzy, c-format
+#, c-format
 msgid "Saved package as %s"
-msgstr "Zapisaæ zmiany?"
+msgstr "Zapisano pakiet jako %s"
 
 #: gui2/fnsave.c:446
 msgid "No special requirement"
@@ -8617,19 +8585,19 @@ msgstr "Tytu³ osi"
 
 #: gui2/gpt_dialog.c:82
 msgid "linear: y = a + b*x"
-msgstr ""
+msgstr "liniowa: y = a + b*x"
 
 #: gui2/gpt_dialog.c:83
 msgid "quadratic: y = a + b*x + c*x^2"
-msgstr ""
+msgstr "kwadratowa: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:84
 msgid "inverse: y = a + b*(1/x)"
-msgstr ""
+msgstr "odwrotna: y = a + b*(1/x)"
 
 #: gui2/gpt_dialog.c:85
 msgid "loess (locally weighted fit)"
-msgstr ""
+msgstr "wa¿ona (lokalne wa¿one wyrównanie)"
 
 #: gui2/gpt_dialog.c:311
 msgid "Invalid label position, must be X Y"
@@ -8657,9 +8625,8 @@ msgid "key position"
 msgstr "Po³o¿enie"
 
 #: gui2/gpt_dialog.c:817
-#, fuzzy
 msgid "fitted line"
-msgstr "Ukryj linie dopasowania"
+msgstr "linia wyrównana"
 
 #: gui2/gpt_dialog.c:841
 msgid "Show full border"
@@ -8788,9 +8755,8 @@ msgid "The graph page is empty"
 msgstr "Tabela wykresów jest pusta"
 
 #: gui2/graph_page.c:598
-#, fuzzy
 msgid "graph page options"
-msgstr "gretl: opcje"
+msgstr "opcje tabeli wykresów"
 
 #: gui2/gretl.c:90
 msgid "open a script file on startup"
@@ -10085,9 +10051,8 @@ msgid "/Analysis/ANOVA"
 msgstr "/Analiza/Analiza wariancji ANOVA"
 
 #: gui2/gui_utils.c:285
-#, fuzzy
 msgid "/Analysis/Bootstrap..."
-msgstr "/Analiza/Prognoza..."
+msgstr "/Analiza/Bootstrapowa analiza parametrów..."
 
 #: gui2/gui_utils.c:290 gui2/gui_utils.c:317
 msgid "/_LaTeX"
@@ -11584,23 +11549,20 @@ msgid "PWE"
 msgstr "PWE"
 
 #: gui2/model_table.c:346
-#, fuzzy
 msgid "MLE"
-msgstr "ML"
+msgstr "MLE"
 
 #: gui2/model_table.c:352
 msgid "Within"
-msgstr ""
+msgstr "Within"
 
 #: gui2/model_table.c:354
-#, fuzzy
 msgid "GLS"
-msgstr "KMNK"
+msgstr "GLS"
 
 #: gui2/model_table.c:356
-#, fuzzy
 msgid "Between"
-msgstr "Pomiêdzy grupowe"
+msgstr "Between"
 
 #: gui2/model_table.c:609
 msgid "Adj. R{\\super 2}"
@@ -12365,13 +12327,12 @@ msgid "Not positive definite"
 msgstr "Nie dodatnio okre¶lona"
 
 #: gui2/session.c:3248
-#, fuzzy
 msgid "Idempotent"
-msgstr "Import"
+msgstr "Idempotentna"
 
 #: gui2/session.c:3250
 msgid "Not idempotent"
-msgstr ""
+msgstr "Nie idempotentna"
 
 #: gui2/session.c:3256 plugin/vif.c:125
 msgid "1-norm"
@@ -12551,9 +12512,8 @@ msgid "For time-series data"
 msgstr "Dla szeregów czasowych"
 
 #: gui2/settings.c:275
-#, fuzzy
 msgid "For panel data"
-msgstr "Dane panelowe"
+msgstr "Dla danych panelowych"
 
 #: gui2/settings.c:277
 msgid "For GARCH estimation"
@@ -12627,7 +12587,7 @@ msgstr "Niemo¿liwe utworzenie katalogu '%s'"
 #: gui2/settings.c:1530
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr ""
+msgstr "Niemo¿liwe zapisanie '%s': gretl mo¿e pracowaæ niew³a¶ciwie!"
 
 #: gui2/settings.c:1830 gui2/settings.c:2326
 msgid "Couldn't open config file for writing"
@@ -13710,76 +13670,3 @@ msgstr ""
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
 
-#~ msgid "Error in generating correlation matrix\n"
-#~ msgstr "B³±d w obliczeniach wspó³czynników macierzy korelacji\n"
-
-#~ msgid "Couldn't allocate memory for correlation matrix.\n"
-#~ msgstr "Niemo¿liwa alokacja pamiêci dla macierzy korelacji.\n"
-
-#~ msgid "Serial correlation-robust standard errors, lag order %d\n"
-#~ msgstr ""
-#~ "B³êdy standardowe parametrów wed³ug odpornej autokorelacji rz±du %d\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Pairwise correlation coefficients:\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Wspó³czynnik korelacji Pairwise:\n"
-#~ "\n"
-
-#~ msgid "gretl: 5 numbers"
-#~ msgstr "gretl: piêæ miar pozycyjnych"
-
-#~ msgid "gretl: means test"
-#~ msgstr "gretl: test dla dwóch ¶rednich"
-
-#~ msgid "gretl: variances test"
-#~ msgstr "gret: test dla dwóch wariancji"
-
-#~ msgid "Get series listing"
-#~ msgstr "Pobierz listê serii"
-
-#~ msgid ""
-#~ "Do you want to save the commands and\n"
-#~ "output from this gretl session?"
-#~ msgstr ""
-#~ "Czy chcesz zapisaæ polecenia\n"
-#~ "i wyniki z tej sesji gretla?"
-
-#~ msgid "There were missing observations"
-#~ msgstr "Znajduj± siê puste obserwacje w bazie"
-
-#~ msgid "/Model/_Bivariate tests"
-#~ msgstr "/Model/_Testy dwóch zmiennych"
-
-#~ msgid "/Model/Bivariate tests/Difference of _means"
-#~ msgstr "/Model/Testy dwóch zmiennych/Test równo¶ci dwóch ¶rednich"
-
-#~ msgid ""
-#~ "/Model/Bivariate tests/Difference of means/Assuming _equal variances..."
-#~ msgstr ""
-#~ "/Model/Testy dwóch zmiennych/Test równo¶ci dwóch ¶rednich/przypadek "
-#~ "jednakowych warinacji..."
-
-#~ msgid ""
-#~ "/Model/Bivariate tests/Difference of means/Assuming _unequal variances..."
-#~ msgstr ""
-#~ "/Model/Testy dwóch zmiennych/Test równo¶ci dwóch ¶rednich/przypadek "
-#~ "ró¿nych warinacji..."
-
-#~ msgid "/Model/Bivariate tests/Difference of _variances..."
-#~ msgstr "/Model/Testy dwóch zmiennych/Test równo¶ci dwóch wariancji..."
-
-#~ msgid "Failed to generate correlation matrix"
-#~ msgstr "B³±d w wyznaczaniu macierzy korelacji"
-
-#~ msgid "means test"
-#~ msgstr "test ¶rednich"
-
-#~ msgid "variances test"
-#~ msgstr "test wariancji"
-
-#~ msgid "Working directory created OK"
-#~ msgstr "Katalog roboczy utworzony"
