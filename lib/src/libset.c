@@ -764,15 +764,18 @@ int get_hac_lag (int T)
     }
 }
 
+/* prewhitening implies nw3, but not vice versa */
+
 int data_based_hac_bandwidth (void)
 {
-    if (is_unset(state->ropts.user_lag) && state->ropts.prewhite) {
-	return 1;
-    } else if (state->ropts.auto_lag == AUTO_LAG_NEWEYWEST) {
-	return 1;
-    } else {
-	return 0;
+    if (is_unset(state->ropts.user_lag)) {
+	if (state->ropts.auto_lag == AUTO_LAG_NEWEYWEST ||
+	    state->ropts.prewhite) {
+	    return 1;
+	}
     }
+
+    return 0;
 }
 
 int get_hac_kernel (void)
