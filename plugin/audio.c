@@ -32,7 +32,7 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#undef DEBUG
+#define ADEBUG 0
 
 #ifdef HAVE_FLITE
 # include <flite/flite.h>
@@ -113,7 +113,7 @@ struct _note_event {
 
 #define delta_time_zero(f) (putc(0x00, f))
 
-#define YMAX   60
+#define YMAX 60
 
 static int write_note_event (note_event *event, midi_spec *spec)
 {
@@ -138,9 +138,9 @@ static int write_note_event (note_event *event, midi_spec *spec)
 static void write_midi_track (midi_track *track, 
 			      midi_spec *spec)
 {
+    unsigned char bal = 0x7f * (track->channel % 2);
     char tmp[32];
     long len = 0;
-    unsigned char bal = 0x7f * (track->channel % 2);
     int i, n;
 
     fwrite(track_hdr, 1, 4, spec->fp);
@@ -201,10 +201,10 @@ static void write_midi_track (midi_track *track,
 
 static void four_four_header (midi_spec *spec)
 {
+    long min_note_time = 40000;
+    long max_note_time = 180000;
     int ticklen, len = 0;
     long pos, pos1;
-    long min_note_time = 60000;
-    long max_note_time = 180000;
 
     write_midi_header(1, spec->ntracks + 1, spec->nticks, spec->fp);
 
@@ -213,7 +213,8 @@ static void four_four_header (midi_spec *spec)
     pos = ftell(spec->fp);
     write_be_long(0, spec->fp); /* revisited below */
 
-    /* time sig */
+#if 0
+    /* time signature (4/4 is the MIDI default) */
     delta_time_zero(spec->fp);
     len++;
     len += write_midi_meta(MIDI_TIME_SIG, spec->fp);
@@ -226,6 +227,7 @@ static void four_four_header (midi_spec *spec)
     len += write_midi_byte(24, spec->fp);
     /* 8 32nd notes per tick */
     len += write_midi_byte(8, spec->fp);
+#endif
 
     /* tempo */
     delta_time_zero(spec->fp);
@@ -233,12 +235,19 @@ static void four_four_header (midi_spec *spec)
     len += write_midi_meta(MIDI_TEMPO, spec->fp);
     /* bytes */
     len += write_midi_byte(3, spec->fp);
-    /* microseconds per quarter note */
     if (spec->dset == NULL) {
+	/* microseconds per quarter note */
 	len += write_be_24(500000, spec->fp);
     } else {
+	/* total number of microseconds */
 	double nms = spec->nsecs * 1.0e6;
+	/* microseconds per quarter note */
 	long msq = nms / spec->dset->n;
+
+#if ADEBUG
+	fprintf(stderr, "Secs = %d, microsecs = %g, msq = %d\n",
+		spec->nsecs, nms, (int) msq);
+#endif 
 
 	if (msq > max_note_time) {
 	    msq = max_note_time;
@@ -246,14 +255,25 @@ static void four_four_header (midi_spec *spec)
 	    msq = min_note_time;
 	}
 
+#if ADEBUG
+	fprintf(stderr, "After adj, msq = %d\n", (int) msq);
+#endif 
+
 	len += write_be_24(msq, spec->fp);
     }
 
     /* end */
     if (spec->dset == NULL) {
 	ticklen = 4 * spec->nticks;
+#if ADEBUG
+	fprintf(stderr, "dset is NULL, ticklen = %d\n", ticklen);
+#endif 
     } else {
 	ticklen = spec->dset->n * spec->nticks;
+#if ADEBUG
+	fprintf(stderr, "ticklen = %d * %d = %d\n", 
+		spec->dset->n, spec->nticks, ticklen);
+#endif 
     }
     len += write_var_len(ticklen, spec->fp);
     len += write_midi_eot(spec->fp);
@@ -815,9 +835,13 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	if (y2max > ymax) ymax = y2max;
     }
 
-    xavg = (xmax - xmin) / dset->n;
+    xavg = (xmax - xmin) / (dset->n - 1);
     /* normalize average x step to quarter note */
     xscale = 1.0 / xavg;
+
+#if ADEBUG
+    fprintf(stderr, "xavg = %g, xscale = %g\n", xavg, xscale);
+#endif
 
     yscale = YMAX / (ymax - ymin);
 
@@ -852,7 +876,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	    track->notes[i].force = 0;
 	}	    
 
-#ifdef DEBUG
+#if ADEBUG
 	fprintf(stderr, "Obs %d: x = %g, y = %g, ypos = %g\n", i, 
 		dset->points[i].x, dset->points[i].y, ypos);
 	fprintf(stderr, " dtime=%g, duration=%g, pitch=%d\n",
@@ -865,7 +889,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
     if (dset->series2) {
 	for (i=0; i<dset->n; i++) {
-	    double yi, ypos;
+	    double yi, ypos = 0;
 
 	    if (dset->y2 != NULL) {
 		yi = dset->y2[i];
@@ -881,7 +905,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 		track->notes[i].pitch = 36;
 		track->notes[i].force = 0;
 	    }
-#ifdef DEBUG
+#if ADEBUG
 	    fprintf(stderr, "Series2, Obs %d: x = %g, y = %g, ypos = %g\n", i, 
 		    dset->points[i].x, yi, ypos);
 	    fprintf(stderr, " dtime=%g, duration=%g, pitch=%d\n",
@@ -891,7 +915,8 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	}
 
 	track->channel = 1;
-	track->patch = PC_MARIMBA; 
+	/* below: was PC_MARIMBA, but that's not in freepats */
+	track->patch = PC_CELLO;
 	write_midi_track(track, spec);
     }	
 
@@ -1027,7 +1052,7 @@ int midi_play_graph (const char *fname, const char *userdir,
     spec.ntracks = 1 + dset.series2;
     spec.nticks = 96;
     spec.dset = &dset;
-    spec.nsecs = 16;
+    spec.nsecs = 8;
     four_four_header(&spec);
     print_dataset_comments(&dset);
     play_dataset(&spec, &track, &dset);

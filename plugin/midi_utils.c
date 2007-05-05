@@ -28,7 +28,8 @@ int write_var_len (long val, FILE *fp)
 
 int delta_time (double beat, int nticks, FILE *fp)
 {
-    long val = beat * nticks;
+    double dval = beat * nticks;
+    long val = (long) dval;
 
     return write_var_len(val, fp); 
 }
@@ -123,6 +124,8 @@ const char *get_patch_name (int pnum)
 	return "Bassoon";
     case PC_MARIMBA:
 	return "Marimba";
+    case PC_CELLO:
+	return "Cello";
     default:
 	return "Unknown";
     }

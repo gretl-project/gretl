@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-03 19:37-0400\n"
-"PO-Revision-Date: 2007-05-04 20:00-0500\n"
+"PO-Revision-Date: 2007-05-05 18:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -9972,11 +9972,11 @@ msgstr "/Testy/test _normalno¶ci rozk³adu reszt"
 
 #: gui2/gui_utils.c:258
 msgid "/Tests/_Influential observations"
-msgstr "/Testy/test _wp³ywowych obserwacji"
+msgstr "/Testy/ocena _wp³ywowych obserwacji"
 
 #: gui2/gui_utils.c:259
 msgid "/Tests/_Collinearity"
-msgstr "/Testy/test wspó³liniowo¶ci _VIF"
+msgstr "/Testy/ocena wspó³liniowo¶ci _VIF"
 
 #: gui2/gui_utils.c:261
 msgid "/Tests/_Autocorrelation"
@@ -10833,11 +10833,11 @@ msgstr "gretl: diagnostyka modelu panelowego"
 
 #: gui2/library.c:1756
 msgid "gretl: leverage and influence"
-msgstr "gretl: obserwacje d¼wigniowe i  wp³ywowe (leverage and influence)"
+msgstr "gretl: obserwacje d¼wigniowe (leverage) i wp³ywowe (influence)"
 
 #: gui2/library.c:1792
 msgid "gretl: collinearity"
-msgstr "gretl: test wspó³liniowo¶ci VIF (Variance Inflation Factor)"
+msgstr "gretl: ocena wspó³liniowo¶ci VIF (Variance Inflation Factor)"
 
 #: gui2/library.c:1833 gui2/menustate.c:327
 msgid "Gini coefficient"
@@ -13220,11 +13220,11 @@ msgstr "DFFITS"
 
 #: plugin/leverage.c:536
 msgid "('*' indicates a leverage point)"
-msgstr "('*' oznacza wp³ywow± obserwacjê - leverage point)"
+msgstr "('*' oznacza d¼wigniow¹ obserwacjê - leverage point)"
 
 #: plugin/leverage.c:538
 msgid "No leverage points were found"
-msgstr "Nie znaleziono wp³ywowych obserwacji (leverage points)"
+msgstr "Nie znaleziono d¼wigniowych obserwacji (leverage points)"
 
 #: plugin/mailer.c:507
 msgid "To:"
@@ -13636,7 +13636,7 @@ msgstr "Nieodpowiednia statystyka dla tego modelu"
 
 #: plugin/vif.c:253
 msgid "Variance Inflation Factors"
-msgstr "Test wspó³liniowo¶ci VIF - czynnika powiêkszania wariancji"
+msgstr "Ocena wspó³liniowo¶ci VIF - czynnika powiêkszania wariancji"
 
 #: plugin/vif.c:255
 msgid "Minimum possible value = 1.0"
