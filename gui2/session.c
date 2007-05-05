@@ -377,9 +377,10 @@ static int session_append_model (SESSION_MODEL *mod)
     return 0;
 }
 
-static int session_append_graph (const char *grname,
-				 const char *fname,
-				 GretlObjType type)
+static SESSION_GRAPH *
+session_append_graph (const char *grname,
+		      const char *fname,
+		      GretlObjType type)
 {
     SESSION_GRAPH *graph;
     SESSION_GRAPH **graphs;
@@ -387,7 +388,7 @@ static int session_append_graph (const char *grname,
 
     graph = mymalloc(sizeof *graph);
     if (graph == NULL) {
-	return 1;
+	return NULL;
     }
 
     *graph->name = '\0';
@@ -406,7 +407,7 @@ static int session_append_graph (const char *grname,
 
     if (graphs == NULL) {
 	free_session_graph(graph);
-	return 1;
+	return NULL;
     }
 
     session.graphs = graphs;
@@ -419,7 +420,7 @@ static int session_append_graph (const char *grname,
 	session_bplot_count++;
     }
 
-    return 0;
+    return graph;
 }
 
 /* first arg should be a MAXLEN string */
@@ -585,7 +586,8 @@ real_add_graph_to_session (const char *fname, const char *grname,
 	strcpy(graph->fname, fname);	
 	replace = 1;
     } else {
-	if (session_append_graph(grname, fname, type)) {
+	graph = session_append_graph(grname, fname, type);
+	if (graph == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
     }
@@ -663,8 +665,8 @@ int add_graph_to_session (char *fname, char *fullname)
     remove(fname);
     strcpy(fname, shortname);
 
-    if (real_add_graph_to_session(shortname, graphname, GRETL_OBJ_GRAPH) ==
-	ADD_OBJECT_FAIL) {
+    err = real_add_graph_to_session(shortname, graphname, GRETL_OBJ_GRAPH);
+    if (err == ADD_OBJECT_FAIL) {
 	err = 1;
     }
 
@@ -2569,6 +2571,11 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	break;
     default:
 	break;
+    }
+
+    if (name == NULL) {
+	fprintf(stderr, "session_add_icon: got NULL name\n");
+	return NULL;
     }
 
     obj = gui_object_new(name, sort);

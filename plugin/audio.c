@@ -443,18 +443,14 @@ static int get_comment (const char *line, dataset *dset)
     if (!strncmp(line, "# timeseries", 12)) {
 	make_ts_comment(line, dset);
 	ret = 1;
-    }
-
-    else if (!strncmp(line, "set ylabel", 10) ||
+    } else if (!strncmp(line, "set ylabel", 10) ||
 	     !strncmp(line, "set xlabel", 10)) {
 	make_axis_label_comment(line, dset);
 	ret = 1;
-    }
-    
-    else if (!strncmp(line, "set xrange", 10)) {
+    } else if (!strncmp(line, "set xrange", 10)) {
 	make_xrange_comment(line, dset);
 	ret = 1;
-    }
+    } 
 
     return ret;
 }
