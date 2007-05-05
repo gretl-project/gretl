@@ -175,46 +175,58 @@ numeri sono immagazzinati ``per variabile'', così che i primi \emph{n}
 numeri sono le osservazioni della variabile 1, i successivi \emph{m}
 sono le osservazioni per la variabile 2 e così via.
 
-\chapter{Note tecniche}
-\label{app-technote}
+\chapter{Compilare \app{gretl}}
+\label{app-build}
 
+\section{Requisiti}
+\label{sec:build-req}
 
 \app{Gretl} è scritto nel linguaggio di programmazione C, aderendo
 nel modo più stretto possibile allo standard C ISO/ANSI (C90), anche
 se l'interfaccia grafica e alcune altre componenti devono fare uso
 necessariamente di estensioni specifiche per certe piattaforme.
   
-Il programma è stato sviluppato sotto Linux.  La libreria condivisa e
+Il programma è sviluppato in ambiente Linux.  La libreria condivisa e
 il client a riga di comando dovrebbero essere compilabili su qualsiasi
-piattaforma che (a) supporti l'ISO/ANSI C e (b) abbia installate le
-seguenti librerie: zlib (per la compressione dei dati), libxml2
-(manipolazione dell'XML) e LAPACK (supporto per l'algebra lineare). La
-home page di zlib si trova a
-\href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org}, libxml2
-si trova a \href{http:/xmlsoft.org/}{xmlsoft.org}, mentre LAPACK è a
-\href{http://www.netlib.org/lapack/}{netlib.org}.  Se il sistema
-ospita anche la libreria GNU readline, essa sarà usata per
+piattaforma che supporti l'ISO/ANSI C e abbia installate le
+librerie elencate nella Tabella~\ref{tab:depend}. Se il sistema
+dispone anche della libreria GNU readline, essa sarà usata per
 \app{gretcli}, fornendo una riga di comando molto più comoda da
-utilizzare. Si veda la
+utilizzare.  Si veda la
 \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{home page
   di readline}.  
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+\textit{Libreria} & \textit{Funzione} & \textit{Sito web} \\ [4pt]
+zlib & compressione dei dati &  
+   \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org} \\
+libxml2 & manipolazione XML &
+   \href{http://xmlsoft.org/}{xmlsoft.org} \\
+LAPACK & algebra lineare & 
+   \href{http://www.netlib.org/lapack/}{netlib.org} \\
+FFTW3 & Trasformata veloce di Fourier & 
+   \href{http://www.fftw.org/}{fftw.org} \\
+glib-2.0 & Varie utilità & 
+  \href{http://www.gtk.org/}{gtk.org}
+  \end{tabular}
+  \caption{Librerie richieste per compilare gretl}
+  \label{tab:depend}
+\end{table}
 
 Il client grafico dovrebbe essere compilabile e utilizzabile su ogni
 sistema che, oltre ai requisiti visti sopra, offra la libreria GTK
 nella versione 2.4.0 o superiore (si veda
-\href{http://www.gtk.org/}{gtk.org}). Al momento della scrittura di
-questo manuale esistono due varianti principali delle librerie GTK: la
-serie 1.2 e la serie 2.0, lanciata nell'estate 2002.  Queste
-varianti sono mutualmente incompatibili, e fino alla versione 1.5.1 di \app{gretl},
-il programma poteva essere compilato scegliendo una delle due variabili
-di GTK, mentre a partire dalla versione 1.6.0 è stato abbandonato il supporto
-per GTK 1.2.
-  
-\app{Gretl} chiama gnuplot per produrre grafici. È possibile trovare
+\href{http://www.gtk.org/}{gtk.org})\footnote{Fino alla versione 1.5.1,
+\app{gretl} poteva essere compilato anche usando GTK 1.2, ma il supporto per
+questa libreria è stato abbandonato a partire dalla versione 1.6.0 di \app{gretl}.}.
+
+\app{Gretl} usa gnuplot per produrre grafici. È possibile trovare
 gnuplot a \href{http://www.gnuplot.info/}{gnuplot.info}. Al momento
 della scrittura di questo manuale, la versione ufficiale più recente
-di gnuplot è la 4.0 (dell'Aprile 2004).  La versione MS Windows di
-\app{Gretl} comprende la versione 4.0 di gnuplot per Windows; sul sito
+di gnuplot è la 4.2 (di marzo 2007).  La versione MS Windows di
+\app{Gretl} comprende la versione 4.2 di gnuplot per Windows; sul sito
 web di Gretl è possibile trovare un pacchetto rpm di gnuplot 3.8j0 per
 sistemi Linux x86.
   
@@ -239,6 +251,167 @@ completa, ma è possibile trovare alcuni dettagli seguendo il link
 ``Libgretl API docs'' sul sito web di \app{Gretl}. Chiunque sia interessato
 allo sviluppo di \app{gretl} è invitato a iscriversi alla mailing list
 \href{http://gretl.sourceforge.net/lists.html}{gretl-devel}.
+
+\section{Istruzioni per la compilazione: un esempio}
+\label{sec:build-inst}
+
+Questa sezione contiene istruzioni che permettono di compilare \app{gretl}
+a un utente con una conoscenza di base di un sistema Unix.
+La procedura è stata testata su una nuova installazione della distribuzione
+Debian Etch e dovrebbe funzionare anche su altre distribuzioni Linux
+(specialmente quelle derivate da Debian, come Ubuntu e simili). Su altri sistemi
+simili a Unix, come MacOSX e BSD, potrebbero esserci differenze maggiori nella
+procedura.
+
+In questo esempio guidato, compileremo \app{gretl} insieme alla sua
+documentazione completa. Questa scelta implica alcuni requisiti in più, ma in
+cambio permette di modificare anche i file della documentazione, come l'aiuto in
+linea o i manuali.
+
+Assumiamo che le utilità GNU di base siano già installate sul sistema, insieme
+a questi altri programmi:
+\begin{itemize}
+  \item Un sistema \TeX/\LaTeX (\texttt{tetex} o \texttt{texlive} vanno
+    benissimo)
+  \item Gnuplot
+  \item ImageMagick
+\end{itemize}
+Assumiamo anche che l'utente abbia i privilegi di amministratore e sappia come
+installare i pacchetti. Gli esempi seguenti mostrano  l'uso del comando shell
+\texttt{apt-get}, ma possono essere replicati anche con comandi come
+\texttt{aptitude}, \texttt{dselect}, con il programma a interfaccia grafica
+\texttt{synaptic}. Gli utenti di distribuzioni Linux che usano pacchetti rpm
+(es.\ Red Hat/Fedora, Mandriva, SuSE) possono consultare la pagina
+\href{http://gretl.sourceforge.net/depend_it.html}{dipendenze} sul sito di
+\app{gretl}.
+
+Il primo passo consiste nell'installare il compilatore C e le utilità correlate.
+Su un sistema Debian, occorre installare i seguenti pacchetti:
+\begin{code}
+apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
+libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
+\end{code}
+
+Quindi occorre installare i pacchetti ``di sviluppo'' (\texttt{dev})
+per le librerie usate da \app{gretl}:
+
+\begin{center}
+  \begin{tabular}{ll}
+    \textit{Libreria} & \textit{Comando} \\ [4pt]
+    GLIB & \texttt{apt-get install libglib2.0-dev} \\
+    GTK 2.0 & \texttt{apt-get install libgtk2.0-dev} \\
+    PNG & \texttt{apt-get install libpng12-dev} \\
+    XSLT & \texttt{apt-get install libxslt1-dev} \\
+    LAPACK & \texttt{apt-get install lapack3-dev} \\
+    FFTW & \texttt{apt-get install fftw3-dev} \\
+    GMP & \texttt{apt-get install libgmp3-dev}
+  \end{tabular}
+\end{center}
+
+GMP è opzionale, ma raccomandata.  I pacchetti \texttt{dev} di queste librerie
+sono necessari per \emph{compilare} \app{gretl}, mentre per \emph{eseguire} il
+programma occorrono anche i pacchetti normali (non-\texttt{dev}) delle librerie;
+la maggior parte di questi pacchetti fa già parte delle installazioni standard.
+Per abilitare funzionalità aggiuntive, come il supporto audio, occorre
+installare altre librerie.
+
+A questo punto è possibile iniziare a compilare.
+
+\begin{enumerate}
+  \item Scaricare il più recente pacchetto dei sorgenti di \app{Gretl}
+    da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+    Le versioni rilasciate sotto forma di pacchetto sono testate e possono
+    essere compilate senza problemi, ma se si vuole correre qualche rischio,
+    è possibile compilare la versione CVS, che contiene modifiche più recenti,
+    che saranno incluse nella successiva versione. Le istruzioni per scaricare
+    la versione CVS si trovano sull'apposita
+    \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{pagina
+    di SourceForge}.
+  \item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
+    usare il comando \cmd{tar xvfz gretl-N.tar.gz} (sostituire \cmd{N}
+    con il numero di versione specifico del file scaricato).
+  \item Spostarsi nella directory del codice sorgente di gretl appena
+    creata (ad es. \verb+gretl-1.6.2+).
+\end{enumerate}
+          
+Il successivo comando da eseguire è \texttt{./configure}; si tratta di uno
+script sofisticato che cerca gli strumenti disponibili sul sistema e prepara
+la compilazione. Il comando \texttt{configure} accetta molte opzioni: eseguendo
+\begin{code}
+./configure --help
+\end{code}
+si ottiene l'elenco di quelle disponibili. Un'opzione che può essere utile usare
+è \cmd{--prefix}, che modifica il percorso principale in cui verrà installato il
+programma; il valore predefinito è \verb+/usr/local+. Ad esempio usando
+\begin{code}
+./configure --prefix=/usr
+\end{code}
+i file verranno installati sotto il percorso \verb+/usr+. Un'altra opzione ha a
+che fare col supporto per il desktop \app{gnome}, che \app{gretl} offre in
+modalità predefinita. Se non si è interessati alle funzionalità specifiche di
+\app{gnome} è possibile usare l'opzione
+\verb+--without-gnome+ di \cmd{configure}.
+
+Per compilare anche la documentazione, c'è un'altra opzione di
+\texttt{configure}:
+\begin{code}
+./configure --enable-build-doc
+\end{code}
+Quando si esegue il comando, si vedranno i risultati di una serie di controlli,
+e se tutto funziona correttamente, un riassunto finale simile a quello mostrato
+nell'Esempio~\ref{configure-output}.
+
+\begin{script}[htbp]
+  \caption{Risultato di \texttt{./configure --enable-build-doc}}
+  \label{configure-output}
+\begin{scode}
+Configuration:
+
+  Installation path:                      /usr/local
+  Use readline library:                   yes
+  Use gnuplot for graphs:                 yes
+  Use PNG for gnuplot graphs:             yes
+  Use LaTeX for typesetting output:       yes
+  Gnu Multiple Precision support:         yes
+  MPFR support:                           no
+  LAPACK support:                         yes
+  FFTW3 support:                          yes
+  Build with GTK version:                 2.0
+  Script syntax highlighting:             yes
+  Use installed gtksourceview:            yes
+  Build with gnome support:               no
+  Build gretl documentation:              yes
+  Build message catalogs:                 yes
+  Gnome installation prefix:              NA
+  X-12-ARIMA support:                     yes
+  TRAMO/SEATS support:                    yes
+  Experimental audio support:             no
+
+Now type 'make' to build gretl.
+\end{scode}
+\end{script}
+
+Siamo quindi pronti per iniziare la vera e propria compilazione: questa si
+ottiene col comando \texttt{make}, che compila tutti i file sorgenti nell'ordine
+corretto. Basta semplicemente eseguire
+\begin{code}
+make 
+\end{code}
+
+Questo passo della procedura richiederà qualche minuto e produrrà molti messaggi
+sullo schermo. Alla fine, per installare la copia di \app{gretl} appena
+prodotta, basterà eseguire:
+\begin{code}
+make install
+\end{code}
+
+Sulla maggior parte dei sistemi, il comando \texttt{make install} richiede di avere
+i privilegi di amministratore di sistema. Quindi occorrerà fare login come
+\texttt{root} prima di eseguirlo, oppure occorrerà usare il comando
+\texttt{sudo}:
+\begin{code}
+sudo make install
+\end{code}
 
 \chapter{Accuratezza numerica}
 \label{app-accuracy}
@@ -374,6 +547,7 @@ Quello che segue è un elenco degli URL citati nel testo.
 \begin{description}
 
 \item[Estima (RATS)] \url{http://www.estima.com/}
+\item[FFTW3] \url{http://www.fftw.org/}
 \item[Home page del desktop Gnome] \url{http://www.gnome.org/}
 \item[Libreria GNU Multiple Precision (GMP)]
   \url{http://swox.com/gmp/}

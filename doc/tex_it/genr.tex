@@ -615,7 +615,7 @@ definita come:
     f(x,y) = (1 - x)^2 + 100(y - x^2)^2
 \]
 %
-La dunzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
+La funzione ha un minimo globale in $(x,y) = (1,1)$ dove vale $f(x,y) = 0$.
 L'Esempio~\ref{rosenbrock} mostra uno script di \app{gretl} che cerca il minimo
 usando la funzione \texttt{BFGSmax} (mostrando i dettagli sul progresso del
 calcolo).
@@ -667,6 +667,145 @@ function Somma (matrix *theta, matrix *X)
   return matrix V
 end function
 \end{code}
+
+\section{La trasformata discreta di Fourier}
+\label{sec:genr-fft}
+
+La trasformata discreta di Fourier è una trasformazione lineare invertibile
+di un vettore complesso. Quindi, se $\mathbf{x}$ è un vettore
+$n$-dimensionale il cui $k$-esimo elemento è $x_k = a_k + i b_k$, il risultato
+della trasformata discreta di Fourier è un vettore
+$\mathbf{f} = \mathcal{F}(\mathbf{x})$ il cui $k$-esimo elemento è
+\[
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega_{j,k} } x_j 
+\]
+dove $\omega_{j,k} = 2 \pi i \frac{j k}{n}$. Poiché la trasformazione
+è invertibile, il vettore $\mathbf{x}$ può essere ricavato da
+$\mathbf{f}$ usando la cosidetta trasformata inversa
+\[
+  x_k = \frac{1}{n} \sum_{j=0}^{n-1} e^{i \omega_{j,k} } f_j .
+\]
+
+La trasformata di Fourier è usata in varie situazioni, grazie a questa sua
+proprietà fondamentale: la convoluzione di due vettori può essere calcolata in
+modo efficiente moltiplicando gli elementi delle loro trasformate di Fourier e
+invertendo il risultato. Se
+\[
+  z_k = \sum_{j=1}^n x_j y_{k-j} ,
+\]
+allora vale
+\[
+  \mathcal{F}(\mathbf{z}) = \mathcal{F}(\mathbf{x}) \odot
+  \mathcal{F}(\mathbf{y}) .
+\]
+Ossia, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
+\mathcal{F}(\mathbf{y})_k$.
+
+Per calcolare la trasformata di Fourier, \app{gretl} usa la libreria esterna
+\texttt{fftw3} (si veda Frigo e Johnson 2003), che garantisce velocità e
+accuratezza estreme. Infatti il tempo di processore necessario a compiere la
+trasformazione è $O(n \log n)$ per ogni $n$. Ecco perché l'insieme di tecniche
+numeriche impiegate in \texttt{fftw3} è chiamato comunemente Trasformata
+\emph{Veloce} di Fourier.
+
+\app{Gretl} fornisce due funzioni matriciali\footnote{Si veda il capitolo
+  \ref{chap:matrices}.} per calcolare la trasformata di Fourier e la sua
+inversa: \texttt{fft} e   \texttt{ffti}. In realtà l'implementazione della
+trasformata di Fourier di \app{gretl} è un po' più specializzata: il valore di
+ingresso della funzione \texttt{fft} deve essere reale. Al contrario,
+\texttt{ffti} richiede un argomento complesso e produce un risultato reale. Ad
+esempio:
+\begin{code}
+x1 = { 1 ; 2 ; 3 }
+# Esegue la trasformazione
+f = fft(a)
+# Esegue la trasformazione inversa
+x2 = ffti(f)
+\end{code}
+produce
+\[
+  x_1 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+  \qquad
+  f = \left[ \begin{array}{rr} 
+      6 & 0 \\ -1.5 & 0.866 \\ -1.5 & -0.866 
+   \end{array} \right] 
+  \qquad
+  x_2 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+\]
+dove la prima colonna di \emph{f} contiene la parte reale, mentre la seconda la
+parte complessa. In generale, se l'argomento di \texttt{fft} ha
+$n$ colonne, il risultato ne ha $2n$, dove le parti reali sono contenute
+nelle colonne dispari, mentre le parti complesse in quelle pari. Se fosse
+necessario calcolare la trasformata di Fourier su molti vettori con lo stesso
+numero di elementi, è numericamente più efficiente raggrupparli in una matrice,
+piuttosto che eseguire \texttt{fft} separatamente per ogni vettore.
+
+Ad esempio, si consideri la moltiplicazione di due polinomi:
+\begin{eqnarray*}
+  a(x) & = & 1 + 0.5 x \\
+  b(x) & = & 1 + 0.3 x - 0.8 x^2 \\
+  c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
+\end{eqnarray*}
+I coefficienti del polinomio $c(x)$ sono la convoluzione dei coefficienti di
+$a(x)$ e $b(x)$; il seguente codice per \app{gretl} illustra come calcolare i
+coefficienti di $c(x)$:
+\begin{code}
+# Definizione dei due polinomi
+a = { 1, 0.5, 0, 0 }'
+b = { 1, 0.3, -0.8, 0 }'
+# Calcolo delle trasformate
+fa = fft(a)
+fb = fft(b)
+# Moltiplicazione complessa delle due trasformate
+fc = cmult(fa, fb)
+# Calcolo dei coefficienti di c usando la trasformata inversa
+c = ffti(fc)
+\end{code}
+
+L'efficienza massima si otterrebbe raggruppando \texttt{a} e
+\texttt{b} in una matrice. Il vantaggio computazionale nell'esempio appena visto
+è trascurabile, ma nel caso di un gran numero di righe o colonne, è preferibile
+procedere nel modo seguente:
+\begin{code}
+# Definizione dei due polinomi
+a = { 1 ; 0.5; 0 ; 0 }
+b = { 1 ; 0.3 ; -0.8 ; 0 }
+# Calcolo congiunto delle trasformate
+f = fft(a ~ b)
+# Moltiplicazione complessa delle due trasformate
+fc = cmult(f[,1:2], f[,3:4])
+# Calcolo dei coefficienti di c usando la trasformata inversa
+c = ffti(fc)
+\end{code}
+
+In econometria la trasformata di Fourier è usata per lo più nell'analisi delle
+serie storiche, ad esempio nel calcolo del periodogramma. Lo script
+\ref{scr:pergm-fft} mostra come calcolare il periodogramma di una serie storica
+usando la funzione \texttt{fft}.
+
+\begin{script}[htbp]
+  \caption{Periodogramma usando la trasformata di Fourier}
+  \label{scr:pergm-fft}
+\begin{scode}
+nulldata 50
+# Genera un processo AR(1)
+series e = normal()
+series x = 0
+x = 0.9*x(-1) + e
+# Calcola il periodogramma
+scale = 2*pi*$nobs
+X = { x }
+F = fft(X)
+S = sumr(F.^2)
+S = S[2:($nobs/2)+1]/scale
+omega = seq(1,($nobs/2))' .* (2*pi/$nobs)
+omega = omega ~ S
+# Confronto con il comando pergm
+pergm x  
+print omega
+\end{scode}
+\end{script}
+
 
 %%% Local Variables: 
 %%% mode: latex

@@ -167,7 +167,7 @@ matrix C = A / B
 matrix C = inv(B) * A
 \end{code}
 %
-dove \texttt{inv()} è la funzione di inversione tra matrici (si veda oltre).
+dove \texttt{inv} è la funzione di inversione tra matrici (si veda oltre).
 Però la prima forma può essere più accurata della seconda, perché la soluzione è
 ottenuta tramite la scomposizione LU, senza calcolare esplicitamente la matrice
 inversa.
@@ -261,12 +261,15 @@ di Kronecker.
 \section{Funzioni matriciali}
 \label{matrix-func}
 
+\newlength{\cwid}
+\setlength{\cwid}{0.1\textwidth}
+
 \begin{table}[htbp]
 \centering
 \textbf{Creazione}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{I}         &
 \texttt{mnormal}   &
 \texttt{muniform}  &
@@ -278,7 +281,7 @@ di Kronecker.
 \textbf{Forma/dimensione}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cols}      &
 \texttt{diag}      &
 \texttt{dsort}     &
@@ -295,7 +298,7 @@ di Kronecker.
 \textbf{Elemento per elemento}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{abs}       &
 \texttt{atan}      &
 \texttt{cnorm}     &
@@ -315,29 +318,32 @@ di Kronecker.
 \textbf{Algebra matriciale}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cholesky}  &
 \texttt{det}       &
 \texttt{eigengen}  &
 \texttt{eigensym}  &
+\texttt{fft}       &
+\texttt{ffti}      \\
 \texttt{infnorm}   &
-\texttt{inv}       \\
+\texttt{inv}       &
 \texttt{ldet}      &
 \texttt{mexp}      &
 \texttt{nullspace} &
-\texttt{onenorm}   &
+\texttt{onenorm}   \\
 \texttt{qform}     &
-\texttt{qrdecomp}  \\
+\texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{svd}       &
-\texttt{tr}        &
+\texttt{tr}        \\
+\texttt{cmult}      
 \end{tabular}      
 
 \textbf{Statistica}
 \hrulefill
 
-\begin{tabular}{p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}p{0.1\textwidth}}
+\begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{cdemean}   &
 \texttt{imaxc}     &
 \texttt{imaxr}     &
@@ -380,12 +386,12 @@ funzioni richiedono una sola matrice come argomento, o un'espressione
 che si risolve in una singola matrice.
 
 Si noti che per calcolare la ``radice quadrata di una matrice'' occorre la
-funzione \texttt{cholesky()} (si veda oltre); inoltre, la funzione
-\texttt{exp()} calcola l'esponenziale elemento per elemento, quindi \emph{non}
+funzione \texttt{cholesky} (si veda oltre); inoltre, la funzione
+\texttt{exp} calcola l'esponenziale elemento per elemento, quindi \emph{non}
 produce l'esponenziale della matrice, a meno che la matrice non sia diagonale;
-per calcolare l'esponenziale della matrice, si usi \texttt{mexp()}.
+per calcolare l'esponenziale della matrice, si usi \texttt{mexp}.
 
-Le funzioni \texttt{sort()}, \texttt{dsort()} e \texttt{values()}, utilizzabili
+Le funzioni \texttt{sort}, \texttt{dsort} e \texttt{values}, utilizzabili
 con le serie di dati, possono essere usate anche con le matrici.  In questo
 caso, l'argomento di queste funzioni deve essere un vettore ($p \times 1$ o
 $1\times p$). Per \texttt{sort} e \texttt{dsort}, il valore restituito è un
@@ -415,22 +421,22 @@ scalare sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{rows()} & numero di righe \\
-\texttt{cols()} & numero di colonne \\
-\texttt{rank()} & rango \\
-\texttt{det()} & determinante \\
-\texttt{ldet()} & log-determinante \\
-\texttt{tr()} & traccia \\
-\texttt{onenorm()} & norma-1 \\
-\texttt{infnorm()} & norma infinita \\
-\texttt{rcond()} & reciproco del numero di condizione \\
+\texttt{rows} & numero di righe \\
+\texttt{cols} & numero di colonne \\
+\texttt{rank} & rango \\
+\texttt{det} & determinante \\
+\texttt{ldet} & log-determinante \\
+\texttt{tr} & traccia \\
+\texttt{onenorm} & norma-1 \\
+\texttt{infnorm} & norma infinita \\
+\texttt{rcond} & reciproco del numero di condizione \\
 \end{tabular}
 \end{center}
 
 L'argomento di queste funzioni può essere il nome di una matrice esistente o
 un'espressione che si risolve in una matrice. Si noti che le funzioni
 \texttt{det}, \texttt{ldet} e \texttt{tr} richiedono una matrice quadrata.
-La funzione \texttt{rank()} è calcolata usando la decomposizione QR.
+La funzione \texttt{rank} è calcolata usando la decomposizione QR.
 
 Le funzioni \texttt{onenorm} e \texttt{infnorm} restituiscono rispettivamente la
 norma-1 e la norma infinita di una matrice. La prima è il massimo, tra le
@@ -447,24 +453,24 @@ matrice sono:
 
 \begin{center}
 \begin{tabular}{llcll}
-\texttt{sumc()} & somma per colonna & &
-\texttt{sumr()} & somma per riga \\
-\texttt{meanc()} & media per colonna & &
-\texttt{meanr()} & media per riga \\
-\texttt{mcov()} & matrice di covarianza per colonne & &
-\texttt{mcorr()} & matrice di correlazione per colonne \\
-\texttt{mexp()}    & esponenziale matriciale & &
-\texttt{inv()} & inversa \\
-\texttt{cholesky()} & scomposizione di Cholesky & &
-\texttt{diag()} & diagonale principale \\
-\texttt{transp()} & trasposta & &
-\texttt{cdemean()} & sottrazione della media delle colonne \\
-\texttt{vec()} & elementi come vettore colonna & &
-\texttt{vech()} & elementi del triangolo inferiore come vettore colonna \\
-\texttt{unvech()} & annulla l'operazione \texttt{vech} & &
-\texttt{mlag()} & ritardo o anticipo per le matrici \\
-\texttt{nullspace()} & spazio nullo destro & &
-\texttt{princomp()} & componenti principali \\
+\texttt{sumc} & somma per colonna & &
+\texttt{sumr} & somma per riga \\
+\texttt{meanc} & media per colonna & &
+\texttt{meanr} & media per riga \\
+\texttt{mcov} & matrice di covarianza per colonne & &
+\texttt{mcorr} & matrice di correlazione per colonne \\
+\texttt{mexp}    & esponenziale matriciale & &
+\texttt{inv} & inversa \\
+\texttt{cholesky} & scomposizione di Cholesky & &
+\texttt{diag} & diagonale principale \\
+\texttt{transp} & trasposta & &
+\texttt{cdemean} & sottrazione della media delle colonne \\
+\texttt{vec} & elementi come vettore colonna & &
+\texttt{vech} & elementi del triangolo inferiore come vettore colonna \\
+\texttt{unvech} & annulla l'operazione \texttt{vech} & &
+\texttt{mlag} & ritardo o anticipo per le matrici \\
+\texttt{nullspace} & spazio nullo destro & &
+\texttt{princomp} & componenti principali \\
 \texttt{maxc}      & massimi delle colonne (valori) & &
 \texttt{maxr}      & massimi delle righe (valori) \\
 \texttt{imaxc}     & massimi delle colonne (indici) & &
@@ -472,7 +478,9 @@ matrice sono:
 \texttt{minc}      & minimi delle colonne (valori) & &
 \texttt{minr}      & minimi delle righe (valori) \\
 \texttt{iminc}     & minimi delle colonne (indici) & &
-\texttt{iminr}     & minimi delle righe (indici) 
+\texttt{iminr}     & minimi delle righe (indici) \\
+\texttt{fft}       & trasformata discreta di Fourier & &
+\texttt{ffti}      & trasformata discreta inversa di Fourier
 \end{tabular}
 \end{center}
 
@@ -565,6 +573,13 @@ $t$, $Z_{ti} = (X_{ti} - \bar{X}_i) / \hat{\sigma}_i$, e $v^{(j)}$ è
 l'autovettore $j$-esimo della matrice di correlazione degli $X_i$, con gli
 autovettori ordinati per valore decrescente dei corrispondenti autovalori.
 
+Le funzioni \texttt{fft} e \texttt{ffti} producono la trasformata di Fourier
+reale discreta e la sua inversa. Se \texttt{X} è una matrice $n \times k$,
+\texttt{fft(X)} è una matrice $n \times 2k$ che contiene la parte reale della
+trasformata nelle colonne dispari e la parte immaginaria in quelle pari. Al
+contrario, \texttt{ffti} richiede un argomento $n \times 2k$ e produce un
+risultato $n \times k$. Si veda la Sezione~\ref{sec:genr-fft} per alcuni esempi.
+
 \subsection{Funzioni di riempimento delle matrici}
 \label{matrix-fill}
 
@@ -587,22 +602,22 @@ matrice sono:
 \end{tabular}
 \end{center}
 
-Le dimensioni $m$ e $n$, o nel caso di \texttt{seq()} i valori estremi $a$ e
+Le dimensioni $m$ e $n$, o nel caso di \texttt{seq} i valori estremi $a$ e
 $b$, possono essere indicate numericamente, per riferimento a variabili scalari
 pre-esistenti, o con espressioni che, valutate, producono scalari.
 
-Le funzioni matriciali \texttt{muniform()} e \texttt{mnormal()} riempiono la
+Le funzioni matriciali \texttt{muniform} e \texttt{mnormal} riempiono la
 matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
 distribuzione normale standard.
  
-La funzione \texttt{seq()} genera una sequenza di numeri interi da $a$ a $b$
+La funzione \texttt{seq} genera una sequenza di numeri interi da $a$ a $b$
 inclusi, crescente se $a<b$ o decrescente se $a>b$.
 
 \subsection{Funzioni di ristrutturazione delle matrici}
 \label{matrix-mshape}
 
 È possibile creare una matrice anche ri-strutturando gli elementi di una matrice
-preesistente, usando la funzione \texttt{mshape()}; essa richiede tre argomenti:
+preesistente, usando la funzione \texttt{mshape}; essa richiede tre argomenti:
 la matrice iniziale $A$ e le righe e colonne della matrice finale,
 rispettivamente $r$ e $c$. Gli elementi di $A$ vengono letti per colonne e
 scritti nella matrice finale con lo stesso metodo; se $A$ contiene meno elementi
@@ -651,7 +666,7 @@ b
 \subsection{Funzioni da coppie di matrici a matrici}
 \label{matrix-two}
 
-La funzione \texttt{qform()} costruisce una forma quadratica in una matrice
+La funzione \texttt{qform} costruisce una forma quadratica in una matrice
 $A$ e una matrice simmetrica $X$ conformabile. Il comando
 %
 \begin{code}
@@ -662,6 +677,13 @@ calcola $B = A X A^{\prime}$.  Questo risultato viene calcolato in modo più
 efficiente rispetto al comando alternativo \texttt{B = A*X*A'}. Inoltre, il
 risultato è simmetrico per costruzione.
 
+La funzione \texttt{cmult} calcola il prodotto complesso di due matrici
+$A$ e $B$ che rappresentano numeri complessi. Queste  matrici devono avere lo
+stesso numero di righe, $n$, e una o due colonne. La prima colonna contiene la
+parte reale, mentre la seconda (se presente) la parte immaginaria. Il valore
+prodotto è una matrice $n \times 2$, o se il prodotto non ha parte immaginaria,
+un vettore di dimensione $n$.
+
 \subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
 
@@ -670,10 +692,10 @@ o più matrici sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{qrdecomp()} & scomposizione QR \\
-\texttt{eigensym()} & auto-analisi di una matrice simmetrica \\
-\texttt{eigengen()} & auto-analisi di una matrice generica \\
-\texttt{svd()}      & decomposizione in valori singolari (SVD) 
+\texttt{qrdecomp} & scomposizione QR \\
+\texttt{eigensym} & auto-analisi di una matrice simmetrica \\
+\texttt{eigengen} & auto-analisi di una matrice generica \\
+\texttt{svd}      & decomposizione in valori singolari (SVD) 
 \end{tabular}
 \end{center}
 
@@ -683,7 +705,7 @@ La sintassi per tutte queste funzioni, tranne l'ultima, segue la forma
 matrix B = func(A, &C)
 \end{code}
 %
-mentre per \texttt{svd()} è
+mentre per \texttt{svd} è
 %
 \begin{code}
 matrix B = func(A, &C, &D)
@@ -739,12 +761,11 @@ Nel primo caso \texttt{E} contiene gli autovalori di \texttt{M} e
 autovalori, ma gli autovettori non vengono calcolati.
 
 La funzione \texttt{eigengen} calcola gli autovalori, e opzionalmente gli
-autovettori, di una matrice generica $n \times n$. Gli autovalori vengono
-restituiti direttamente in un vettore colonna di lunghezza $2n$: i primi
-$n$ elementi sono le componenti reali, mentre i restanti $n$ sono le componenti
-immaginarie. Se vengono richiesti gli autovettori (ossia il secondo argomento di
-\texttt{eigengen} non è \texttt{null}), essi vengono restituiti in una matrice
-$n \times n$.
+autovettori, di una matrice generica $n \times n$.  Gli autovalori vengono
+restituiti direttamente in una matrice $n \times 2$, in cui la prima colonna
+contiene le componenti reali e la seconda quelle immaginarie. Se vengono
+richiesti gli autovettori (ossia il secondo argomento di \texttt{eigengen} non è
+\texttt{null}), essi vengono restituiti in una matrice $n \times n$.
  
 La funzione \texttt{svd} calcola la decomposizione in valori singolari (totale o
 parziale) della matrice reale $A$ $m \times n$. La decomposizione è
@@ -1076,7 +1097,7 @@ se
 ols price const sqft --vcv
 \end{scode}
 \end{script}
-
+%
 \clearpage
 
 \begin{table}[p]
@@ -1086,65 +1107,68 @@ ols price const sqft --vcv
 \texttt{atan}      &
 \texttt{cdemean}   &
 \texttt{cholesky}  &
-\texttt{cnorm}     &
-\texttt{cols}      \\
+\texttt{cmult}     &
+\texttt{cnorm}     \\
+\texttt{cols}      &
 \texttt{cos}       &
 \texttt{det}       &
 \texttt{diag}      &
 \texttt{dnorm}     &
-\texttt{dsort}     &
-\texttt{eigengen}  \\
+\texttt{dsort}     \\
+\texttt{eigengen}  &
 \texttt{eigensym}  &
 \texttt{exp}       &
-\texttt{gamma}     &
+\texttt{fft}       &
+\texttt{ffti}      &
+\texttt{gamma}     \\
 \texttt{I}         &
 \texttt{imaxc}     &
-\texttt{imaxr}     \\
+\texttt{imaxr}     &
 \texttt{iminc}     &
 \texttt{iminr}     &
-\texttt{infnorm}   &
+\texttt{infnorm}   \\
 \texttt{int}       &
 \texttt{inv}       &
-\texttt{ldet}      \\
+\texttt{ldet}      &
 \texttt{lngamma}   &
 \texttt{log}       &
-\texttt{mcorr}     &
+\texttt{mcorr}     \\
 \texttt{mcov}      &
 \texttt{maxc}      &   
-\texttt{maxr}      \\
+\texttt{maxr}      &
 \texttt{meanc}     &
 \texttt{meanr}     &
-\texttt{mexp}      &
-\texttt{minc}      &   
+\texttt{mexp}      \\
+\texttt{minc}      &  
 \texttt{minr}      &
-\texttt{mlag}      \\
+\texttt{mlag}      &
 \texttt{mnormal}   &
 \texttt{mshape}    &
-\texttt{muniform}  &
+\texttt{muniform}  \\
 \texttt{nullspace} &
 \texttt{onenorm}   &
-\texttt{ones}      \\
+\texttt{ones}      &
 \texttt{princomp}  &
 \texttt{qform}     &
-\texttt{qnorm}     &
+\texttt{qnorm}     \\
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     \\
+\texttt{rcond}     &
 \texttt{rows}      &
 \texttt{seq}       &
-\texttt{sin}       &
+\texttt{sin}       \\
 \texttt{sort}      &
 \texttt{sqrt}      &
-\texttt{sumc}      \\
+\texttt{sumc}      &
 \texttt{sumr}      &
 \texttt{svd}       &
-\texttt{tan}       &
+\texttt{tan}       \\
 \texttt{tr}        &
 \texttt{transp}    &
-\texttt{unvech}    \\
+\texttt{unvech}    &
 \texttt{values}    &
 \texttt{vec}       &
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}     
 \end{tabular}      
 \caption{Elenco alfabetico delle funzioni matriciali}

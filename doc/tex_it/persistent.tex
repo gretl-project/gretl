@@ -1,9 +1,5 @@
-\chapter{Oggetti persistenti}
+\chapter{Liste e stringhe definite dall'utente}
 \label{chap-persist}
-
-%%% Work in progress, not really ready for translation yet.
-
-%FIXME This chapter needs to deal with saving models too.
 
 \section{Liste definite dall'utente}
 \label{named-lists}
@@ -190,7 +186,9 @@ soddisfano questa condizione.
 
 In alcuni casi può essere utile salvare una stringa (ossia una sequenza di
 caratteri) sotto forma di variabile che possa essere riutilizzata.
-\app{Gretl} offre questa funzionalità a partire dalla versione 1.6.0.
+\app{Gretl} offre questa funzionalità a partire dalla versione 1.6.0, ma alcune
+delle caratteristiche mostrate di seguito sono disponibili solo a partire dalla
+versione 1.6.3.
 
 Per \textit{definire} una variabile stringa è possibile usare uno dei comandi
 seguenti: \texttt{string} o \texttt{sprintf}.  Il comando \texttt{string}
@@ -209,21 +207,26 @@ sotto-stringhe, come in questo esempio:
 string pezzi = "Primo " "e" " secondo"
 \end{code}
 %
+Si veda oltre per altre varianti del comando string, tra cui l'uso di
+\texttt{getenv}.
+
 Il comando \texttt{sprintf} è più flessibile. Funziona esattamente come
-\texttt{printf}, tranne per il fatto che la stringa ``di formato'' deve
+\texttt{printf} di \app{gretl}, tranne per il fatto che la stringa ``di formato'' deve
 essere preceduta dal nome di una variabile stringa. Ad esempio,
 %
 \begin{code}
 scalar x = 8
 sprintf pippo "var%d", x
 \end{code}
-%
+
 Per \textit{recuperare il valore} di una variabile stringa, basta usare il nome
-della variabile preceduto dal carattere ``at'', \verb|@|.  In un comando
-\app{gretl}, una sequenza di caratteri che segue il simbolo \verb|@| viene
-trattata come il nome di una variabile stringa e il valore della variabile viene
-sostituito sulla riga di comando, come avviene in questo esempio di sessione
-interattiva:
+della variabile preceduto dal carattere ``at'', \verb|@|.
+
+In molti contesti la notazione \verb|@| è trattata come una ``macro'', ossia in
+un comando \app{gretl} una sequenza di caratteri che segue il simbolo \verb|@|
+viene trattata come il nome di una variabile stringa e il valore della variabile
+viene sostituito sulla riga di comando, come avviene in questo esempio di
+sessione interattiva:
 %
 \begin{code}
 ? scalar x = 8
@@ -233,6 +236,49 @@ Generato lo scalare x (ID 2) = 8
 Salvata la stringa 'pippo'
 ? print "@foo"
 var8
+\end{code}
+%
+Si noti l'effetto delle virgolette doppie nella riga
+\verb|print "@foo"|.  La riga
+%
+\begin{code}
+? print @foo
+\end{code}
+%
+\textit{non} stamperebbe un ``\texttt{var8}'' letteralmente, come visto sopra.
+La riga verrebbe processata e letta come
+%
+\begin{code}
+print var8
+\end{code}
+%
+Quindi stamperebbe i valori della variabile \texttt{var8}, se esiste, oppure un
+messaggio di errore.
+
+In alcuni contesti specifici, comunque, è naturale trattare le variabili
+\verb|@| come variabili a tutti gli effetti, e \app{gretl} si comporta proprio
+così. Questo avviene quando le variabili appaiono:
+\begin{itemize}
+\item come argomenti dei comandi \texttt{printf} e
+  \texttt{sprintf}.
+\item nella parte destra di un'istruzione \texttt{string}.
+\item come argomenti della funzione \texttt{isstring} (si veda sotto).
+\end{itemize}
+
+Ecco un esempio di uso delle stringhe come argomenti di
+\texttt{printf}:
+%
+\begin{code}
+? string vstr = "varianza"
+Salvata stringa 'vstr'
+? printf "vstr: %12s\n", @vstr
+vstr:     varianza
+\end{code}
+%
+Si noti che \verb|@vstr| non dovrebbe essere messa tra virgolette in questo
+contesto. Allo stesso modo con
+\begin{code}
+? string copy = @vstr
 \end{code}
 
 \subsection{Stringhe predefinite}
@@ -256,6 +302,38 @@ Tabella~\ref{tab-strings}.
 \caption{Variabili stringa predefinite}
 \label{tab-strings}
 \end{table}
+
+\subsection{Lettura delle stringhe dall'ambiente}
+
+In aggiunta, è possibile importare all'interno delle stringhe di \app{gretl}
+dei valori che sono definiti nell'ambiente esterno. Per fare questo occorre
+usare la funzione \texttt{getenv}, che richiede come argomento il nome di una
+variabile di ambiente. Ad esempio:
+%
+\begin{code}
+? string user = getenv("USER")
+Salvata la stringa 'user'
+? string home = getenv("HOME")
+Salvata la stringa 'home'
+? print "La home directory di @user è @home"
+La home directory di cottrell è /home/cottrell
+\end{code}
+%
+Per controllare se la variabile di ambiente richiamata da \texttt{getenv} è
+non-vuota, si può usare la funzione \texttt{isstring}, come in questo esempio
+%
+\begin{code}
+? string temp = getenv("TEMP")
+Salvata la stringa vuota 'temp'
+? scalar x = isstring(@temp)
+Generato lo scalare x (ID 2) = 0
+\end{code}
+%
+Si noti che \texttt{isstring} significa ``è una stringa che contiene
+effettivamente qualcosa''.
+
+Al momento la funzione \texttt{getenv} può essere usata solo nella parte destra
+di un'istruzione \texttt{string}, come negli esempi visti sopra.
 
 %%% Local Variables: 
 %%% mode: latex
