@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-03 19:37-0400\n"
-"PO-Revision-Date: 2007-05-05 18:00-0500\n"
+"PO-Revision-Date: 2007-05-05 22:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -215,7 +215,7 @@ msgstr ""
 #: lib/src/bootstrap.c:407
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
-msgstr "Analiza parametru zmiennej %s (estymacja punktowa %g)"
+msgstr "Analiza parametru zmiennej: %s (estymacja punktowa %g)"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -366,7 +366,7 @@ msgstr "zmienna zero-jedynkowa dla testu Chowa"
 
 #: lib/src/compare.c:1480
 msgid "Chow F-test for break"
-msgstr "Statystyka test F-Chowa na za³amanie strukturalne"
+msgstr "Statystyka testu F-Chowa na za³amanie strukturalne"
 
 #: lib/src/compare.c:1522
 msgid ""
@@ -461,7 +461,7 @@ msgstr "Skumulowana suma kwadratów reszt"
 
 #: lib/src/compare.c:1989
 msgid "CUSUM test for stability of parameters"
-msgstr "Test CUSUM (Cumulated sum of residual) na stabilno¶æ parametrów modelu"
+msgstr "Test CUSUM (CUmulated SUM of residual) na stabilno¶æ parametrów modelu"
 
 #: lib/src/compare.c:1990
 #, c-format
@@ -2618,7 +2618,7 @@ msgstr "brak zmian w parametrach"
 
 #: lib/src/gretl_model.c:2405
 msgid "QLR test for structural break"
-msgstr "Test QLR na za³amanie strukturalne w nieokre¶lonym momencie"
+msgstr "Test QLR (Quandta) na za³amanie strukturalne w nieokre¶lonym momencie"
 
 #: lib/src/gretl_model.c:2408
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
@@ -3827,11 +3827,11 @@ msgstr "warto¶æ p dla"
 
 #: lib/src/modelprint.c:596 lib/src/modelprint.c:613 lib/src/modelprint.c:621
 msgid "'Within' variance"
-msgstr "'Within' wariancji"
+msgstr "'Within' wariance"
 
 #: lib/src/modelprint.c:597 lib/src/modelprint.c:614 lib/src/modelprint.c:622
 msgid "'Between' variance"
-msgstr "'Between' wariancji"
+msgstr "'Between' wariance"
 
 #: lib/src/modelprint.c:599 lib/src/modelprint.c:616 lib/src/modelprint.c:624
 msgid "theta used for quasi-demeaning"
@@ -4085,11 +4085,11 @@ msgstr "Iteracyjna GMM"
 
 #: lib/src/modelprint.c:919
 msgid "2-step GMM"
-msgstr "2-step GMM"
+msgstr "GMM 2-step"
 
 #: lib/src/modelprint.c:921
 msgid "1-step GMM"
-msgstr "1-step GMM"
+msgstr "GMM 1-step"
 
 #: lib/src/modelprint.c:925
 msgid "Ordered Logit"
@@ -10052,7 +10052,7 @@ msgstr "/Analiza/Analiza wariancji ANOVA"
 
 #: gui2/gui_utils.c:285
 msgid "/Analysis/Bootstrap..."
-msgstr "/Analiza/Bootstrapowa analiza parametrów..."
+msgstr "/Analiza/Bootstrapowe przedzia³y ufno¶ci..."
 
 #: gui2/gui_utils.c:290 gui2/gui_utils.c:317
 msgid "/_LaTeX"
@@ -13220,11 +13220,11 @@ msgstr "DFFITS"
 
 #: plugin/leverage.c:536
 msgid "('*' indicates a leverage point)"
-msgstr "('*' oznacza d¼wigniow¹ obserwacjê - leverage point)"
+msgstr "'*' oznacza d¼wigniow± obserwacjê (leverage point), h(i)>2(k+1)/n"
 
 #: plugin/leverage.c:538
 msgid "No leverage points were found"
-msgstr "Nie znaleziono d¼wigniowych obserwacji (leverage points)"
+msgstr "Nie znaleziono d¼wigniowych obserwacji (leverage points), h(i)<2(k+1)/n"
 
 #: plugin/mailer.c:507
 msgid "To:"
