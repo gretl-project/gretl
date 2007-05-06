@@ -361,10 +361,10 @@ simplest choice is the sample covariance matrix of the $f_t$s:
 This estimator is robust with respect to heteroskedasticity, but not
 with respect to autocorrelation.  A heteroskedasticity- and
 autocorrelation-consistent (HAC) variant can be obtained using the
-Bartlett kernel.  A univariate version of this is used in the
-context of the \texttt{lrvar()} function --- see
-equation (\ref{eq:scalar-lrvar}).  The multivariate version is set out
-in equation (\ref{eq:gmm-hacvar}).
+Bartlett kernel or similar.  A univariate version of this is used in
+the context of the \texttt{lrvar()} function --- see equation
+(\ref{eq:scalar-lrvar}).  The multivariate version is set out in
+equation (\ref{eq:gmm-hacvar}).
 
 \begin{equation}
   \label{eq:gmm-hacvar}
@@ -373,10 +373,11 @@ in equation (\ref{eq:gmm-hacvar}).
 \end{equation}
 
 \app{Gretl} computes the HAC covariance matrix by default when a GMM
-model is estimated on time series data.  You can control the bandwidth
-(that is, the value of $k$ in \ref{eq:gmm-hacvar}) using the
-\texttt{set} command.  You can also ask \app{gretl} \emph{not} to use
-the HAC version by saying
+model is estimated on time series data.  You can control the kernel
+and the bandwidth (that is, the value of $k$ in \ref{eq:gmm-hacvar})
+using the \texttt{set} command.  See chapter~\ref{chap-robust-vcv} for
+further discussion of HAC estimation.  You can also ask \app{gretl}
+\emph{not} to use the HAC version by saying
 %
 \begin{code}
 set force_hc on
@@ -388,7 +389,7 @@ set force_hc on
 \label{sec:gmm-CBAPM}
 
 To illustrate \app{gretl}'s implementation of GMM, we will replicate
-the example given in Chapter 3 of Hall (2005). The model to estimate
+the example given in chapter 3 of Hall (2005). The model to estimate
 is a classic application of GMM, and provides an example of a case
 when orthogonality conditions do not stem from statistical
 considerations, but rather from economic theory.

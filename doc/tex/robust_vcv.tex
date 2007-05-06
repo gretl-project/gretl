@@ -457,7 +457,8 @@ example,
 set qs_bandwidth 3.5
 \end{code}
 
-\subsection{Data-based bandwidth selection and prewhitening}
+
+\subsection{Prewhitening and data-based bandwidth selection}
 \label{sec:hac-prewhiten}
 
 An alternative approach is to deal with residual autocorrelation by
@@ -483,11 +484,11 @@ HAC estimate of $\hat{u}_t = x_t - \hat{\rho} x_{t-1}$; and (3) and
 divide the result by $(1-\rho)^2$.
 
 The application of the above concept to our problem implies estimating
-a finite-order Vector Autoregression on the vector variables $\xi_t =
-X_t \hat{u}_t$. In general, the VAR can be of any order, but in most
-cases 1 is sufficient; the aim is not to build a watertight model for
-$\xi_t$, but just to have the VAR ``mop up'' a substantial part of the
-autocorrelation. Hence, the following VAR is estimated
+a finite-order Vector Autoregression (VAR) on the vector variables
+$\xi_t = X_t \hat{u}_t$. In general, the VAR can be of any order, but
+in most cases 1 is sufficient; the aim is not to build a watertight
+model for $\xi_t$, but just to ``mop up'' a substantial part of the
+autocorrelation.  Hence, the following VAR is estimated
 %
 \[
   \xi_t = A \xi_{t-1} + \varepsilon_t
@@ -499,6 +500,39 @@ Then an estimate of the matrix $X'\Omega X$ can be recovered via
 \]
 where $\hat{\Sigma}_{\varepsilon}$ is any HAC estimator, applied to the VAR
 residuals.
+
+You can ask for prewhitening in \app{gretl} using
+%
+\begin{code}
+set hac_prewhiten on
+\end{code}
+%
+There is at present no mechanism for specifying an order other than 1
+for the initial VAR.
+
+A further refinement is available in this context, namely data-based
+bandwidth selection.  It makes intuitive sense that the HAC bandwidth
+should not simply be based on the size of the sample, but should
+somehow take into account the time-series properties of the data (and
+also the kernel chosen).  A nonparametric method for doing this was
+proposed by Newey and West (1994); a good concise account of the
+method is given in Hall (2005).  This option can be invoked in gretl
+via
+%
+\begin{code}
+set hac_lag nw3
+\end{code}
+%
+This option is the default when prewhitening is selected, but you can
+override it by giving a specific numerical value for \verb|hac_lag|.
+
+Even the Newey--West data-based method does not fully pin down the
+bandwidth for any particular sample.  The first step involves 
+calculating a series of residual covariances.  The length of this
+series is given as a function of the sample size, but only up to a
+scalar multiple --- for example, it is given as $O(T^{2/9})$ for the
+Bartlett kernel.  \app{Gretl} uses an implied multiple of 1.  
+
 
 \section{Special issues with panel data}
 \label{sec:vcv-panel}
@@ -560,10 +594,21 @@ The covariances $\hat{\sigma}_{ij}$ are estimated via
 where $T$ is the length of the time series for each unit.  Beck and
 Katz call the associated standard errors ``Panel-Corrected Standard
 Errors'' (PCSE).  This estimator can be invoked in \app{gretl} via the
-command \texttt{set pcse on}; the Arellano default can be
-re-established via \texttt{set pcse off}.  (Note that in either case
-the robust estimator is not used unless the \verb|--robust| flag is
-given, or the ``Robust'' box is checked in the GUI program.)
+command 
+%
+\begin{code}
+set pcse on
+\end{code}
+%
+The Arellano default can be re-established via 
+%
+\begin{code}
+set pcse off
+\end{code}
+%
+(Note that regardless of the \texttt{pcse} setting, the robust
+estimator is not used unless the \verb|--robust| flag is given, or the
+``Robust'' box is checked in the GUI program.)
 
 
 
