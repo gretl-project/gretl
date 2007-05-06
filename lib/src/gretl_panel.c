@@ -2172,7 +2172,6 @@ static int finalize_hausman_test (panelmod_t *pan, PRN *prn)
 static int panel_obs_accounts (panelmod_t *pan)
 {
     int *uobs;
-    int N = pan->nunits;
     int i, t, bigt;
 
     uobs = malloc(pan->nunits * sizeof *uobs);
@@ -2186,14 +2185,13 @@ static int panel_obs_accounts (panelmod_t *pan)
     pan->Tmax = 0;
     pan->Tmin = pan->T;
 
-    for (i=0; i<N; i++) {
+    for (i=0; i<pan->nunits; i++) {
 	uobs[i] = 0;
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
 #if PDEBUG > 1
-	    fprintf(stderr, "unit %d, t=%d, pmod->uhat[%d]: %s\n", i, t,
-		    panel_index(i, t), (panel_missing(pan, bigt))? 
-		    "NA" : "OK");
+	    fprintf(stderr, "unit %d, bigt=%d, pmod->uhat[%d]: %s\n", i, t,
+		    bigt, (panel_missing(pan, bigt))? "NA" : "OK");
 #endif
 	    if (!panel_missing(pan, bigt)) {
 		uobs[i] += 1;
@@ -2203,7 +2201,8 @@ static int panel_obs_accounts (panelmod_t *pan)
 	    pan->effn += 1;
 	    if (uobs[i] > pan->Tmax) {
 		pan->Tmax = uobs[i];
-	    } else if (uobs[i] < pan->Tmin) {
+	    }
+	    if (uobs[i] < pan->Tmin) {
 		pan->Tmin = uobs[i];
 	    }
 	    pan->NT += uobs[i];
@@ -2213,7 +2212,7 @@ static int panel_obs_accounts (panelmod_t *pan)
 	}
     }
 
-    for (i=0; i<N; i++) {
+    for (i=0; i<pan->nunits; i++) {
 	if (uobs[i] > 0 && uobs[i] != pan->Tmax) {
 	    pan->balanced = 0;
 	    break;

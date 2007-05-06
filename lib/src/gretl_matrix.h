@@ -53,8 +53,52 @@ struct _gretl_matrix {
     double *val;
 };
 
-#define mdx(a,i,j)   ((j)*(a)->rows+(i))
-#define mdxtr(a,i,j) ((i)*(a)->rows+(j))
+#define mdx(a,i,j)   ((j)*a->rows+(i))
+#define mdxtr(a,i,j) ((i)*a->rows+(j))
+
+/**
+ * gretl_matrix_get:
+ * @m: matrix.
+ * @i: row.
+ * @column.
+ * 
+ * Gives the @i, @j element of @m.
+ */
+
+#define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
+
+/**
+ * gretl_vector_get:
+ * @v: vector.
+ * @i: index.
+ * 
+ * Gives element @i of @v.
+ */
+
+#define gretl_vector_get(v,i) (v->val[i])
+
+/**
+ * gretl_matrix_get:
+ * @m: matrix.
+ * @i: row.
+ * @column.
+ * @x: value to set.
+ * 
+ * Sets the @i, @j element of @m to @x.
+ */
+
+#define gretl_matrix_set(m,i,j,x) (m->val[(j)*m->rows+(i)]=x)
+
+/**
+ * gretl_vector_set:
+ * @v: vector.
+ * @i: index.
+ * @x: value to set.
+ * 
+ * Sets element @i of @v to @x.
+ */
+
+#define gretl_vector_set(v,i,x) (v->val[i]=x)
 
 /**
  * gretl_matrix_cols:
@@ -133,14 +177,6 @@ void gretl_matrix_xtr_symmetric (gretl_matrix *m);
 void gretl_matrix_set_equals_tolerance (double tol);
 
 void gretl_matrix_unset_equals_tolerance (void);
-
-double gretl_matrix_get (const gretl_matrix *m, int i, int j);
-
-double gretl_vector_get (const gretl_vector *v, int i);
-
-int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
-
-int gretl_vector_set (gretl_vector *v, int i, double x);
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 

@@ -14,7 +14,9 @@ version 1.6.3, in progress
   or not a square matrix is idempotent
 - Panel data, pooled OLS model: when robust standard errors are
   chosen, use the Arellano-type HAC estimator (well, it's HAC
-  when the time-series dimension is small) 
+  when the time-series dimension is small); also offer Beck-Katz
+  Panel Corrected Standard Errors
+- Apply the above to tsls in a panel context also
 - Panel data, "summary" command for single variable: show the
   within and between standard deviations
 - Add "--quiet" option to lmtest command (don't print the
@@ -23,6 +25,8 @@ version 1.6.3, in progress
   saving a data set as gdt
 - Fix bug that could cause a crash when exiting the program on
   MS Windows
+- Fix bug: crash when saving a graph as an icon, when the icon
+  window is currently displayed
 - Fix an encoding issue with the command-line help files on
   platforms where the default encoding is UTF-8
 - Correlation matrix: try to be smarter in face of non-aligned
