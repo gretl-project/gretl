@@ -376,7 +376,7 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
 	err = 1;
     } else {
 	for (j=0; j<m->cols; j++) {
-	    x[j] = m->val[mdx(m, i, j)];
+	    x[j] = gretl_matrix_get(m, i, j);
 	}
     }
 

@@ -225,7 +225,7 @@ expand_selector_matrix (nlspec *s, int sm, int sn, const char *mask)
     gretl_matrix *S = s->oc->S;
     int ecols = s->oc->e->cols;
     int Zcols = Z->cols;
-    double xij, *x;
+    double xij;
     int i, j, err = 0;
 
 #if GMM_DEBUG
@@ -241,41 +241,37 @@ expand_selector_matrix (nlspec *s, int sm, int sn, const char *mask)
 	}
     }
 
-    x = realloc(S->val, ecols * Zcols * sizeof *x);
-    if (x == NULL) {
-	err = E_ALLOC;
-    } else {
-	S->val = x;
-	S->rows = ecols;
-	S->cols = Zcols;
+    err = gretl_matrix_realloc(S, ecols, Zcols);
+    if (err) {
+	return err;
+    }
 
-	/* transcribe original entries */
-	for (j=sn-1; j>=0; j--) {
-	    for (i=sm-1; i>=0; i--) {
-		xij = x[Sidx(i,j,sm)];
-		gretl_matrix_set(S, i, j, xij);
-	    }
+    /* transcribe original entries */
+    for (j=sn-1; j>=0; j--) {
+	for (i=sm-1; i>=0; i--) {
+	    xij = S->val[Sidx(i,j,sm)];
+	    gretl_matrix_set(S, i, j, xij);
 	}
+    }
 
-	/* 0s in upper-right block */
-	for (i=0; i<sm; i++) {
-	    for (j=sn; j<S->cols; j++) {
-		gretl_matrix_set(S, i, j, 0);
-	    }
+    /* 0s in upper-right block */
+    for (i=0; i<sm; i++) {
+	for (j=sn; j<S->cols; j++) {
+	    gretl_matrix_set(S, i, j, 0);
 	}
+    }
 
-	/* 1s in lower-right block */
-	for (i=sm; i<S->rows; i++) {
-	    for (j=sn; j<S->cols; j++) {
-		gretl_matrix_set(S, i, j, 1);
-	    }
+    /* 1s in lower-right block */
+    for (i=sm; i<S->rows; i++) {
+	for (j=sn; j<S->cols; j++) {
+	    gretl_matrix_set(S, i, j, 1);
 	}
+    }
 
-	/* mixed 0/1 in lower-left region */
-	for (i=sm; i<S->rows; i++) {
-	    for (j=0; j<sn; j++) {
-		gretl_matrix_set(S, i, j, mask[j] ? 1 : 0);
-	    }
+    /* mixed 0/1 in lower-left region */
+    for (i=sm; i<S->rows; i++) {
+	for (j=0; j<sn; j++) {
+	    gretl_matrix_set(S, i, j, mask[j] ? 1 : 0);
 	}
     }
 
@@ -654,8 +650,9 @@ static int matrix_t1 (const gretl_matrix *m, int t1)
     }
 }
 
-static int gmm_matrix_resize (gretl_matrix *A, nlspec *s, int oldt1)
+static int gmm_matrix_resize (gretl_matrix **pA, nlspec *s, int oldt1)
 {
+    gretl_matrix *A = *pA;
     gretl_matrix *B = NULL;
     int T = s->t2 - s->t1 + 1;
     int m = A->cols;
@@ -676,14 +673,11 @@ static int gmm_matrix_resize (gretl_matrix *A, nlspec *s, int oldt1)
 	}
     }
 
-    free(A->val);
-    A->val = B->val;
-    B->val = NULL;
-    A->rows = T;
-    A->t1 = s->t1;
-    A->t2 = s->t2;
+    B->t1 = s->t1;
+    B->t2 = s->t2;
 
-    gretl_matrix_free(B);
+    gretl_matrix_free(A);
+    *pA = B;
 
     return 0;
 }
@@ -715,14 +709,14 @@ static int gmm_fix_datarows (nlspec *s)
 #if GMM_DEBUG
 	fprintf(stderr, "gmm_fix_datarows: resizing e to %d rows\n", s->nobs);
 #endif
-	err = gmm_matrix_resize(s->oc->e, s, oldt1);
+	err = gmm_matrix_resize(&s->oc->e, s, oldt1);
     }
 
     if (s->oc->Z->rows > s->nobs && !err) {
 #if GMM_DEBUG
 	fprintf(stderr, "gmm_fix_datarows: resizing Z to %d rows\n", s->nobs);
 #endif
-	err = gmm_matrix_resize(s->oc->Z, s, oldt1);
+	err = gmm_matrix_resize(&s->oc->Z, s, oldt1);
     }    
 
     return err;
@@ -1603,14 +1597,14 @@ static int resize_oc_matrices (nlspec *s, int oldt1)
 #if GMM_DEBUG
 	fprintf(stderr, "resize_oc_matrices: resizing e\n");
 #endif
-	err = gmm_matrix_resize(s->oc->e, s, oldt1);
+	err = gmm_matrix_resize(&s->oc->e, s, oldt1);
     }
 
     if (needs_rejigging(s->oc->Z, s->t1, s->t2) && !err) {
 #if GMM_DEBUG
 	fprintf(stderr, "resize_oc_matrices: resizing Z\n");
 #endif
-	err = gmm_matrix_resize(s->oc->Z, s, oldt1);
+	err = gmm_matrix_resize(&s->oc->Z, s, oldt1);
     }
 
     if (!err) {

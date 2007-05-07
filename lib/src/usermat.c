@@ -968,9 +968,16 @@ static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
 {
     targ->rows = src->rows;
     targ->cols = src->cols;
+
     free(targ->val);
     targ->val = src->val;
     src->val = NULL;
+
+#if USE_COLS
+    free(targ->col);
+    targ->col = src->col;
+    src->col = NULL;
+#endif
 }
 
 int matrix_invert_in_place (gretl_matrix *m)

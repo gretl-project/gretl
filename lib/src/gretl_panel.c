@@ -235,7 +235,8 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod,
     for (j=0; j<k; j++) {
 	for (i=j; i<k; i++) {
 	    x = pmod->vcv[m++];
-	    X->val[mdx(X, i, j)] = X->val[mdx(X, j, i)] = x;
+	    gretl_matrix_set(X, i, j, x);
+	    gretl_matrix_set(X, j, i, x);
 	}
     }
 
@@ -513,9 +514,9 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 
 	for (i=0; i<k; i++) {
 	    for (j=i; j<k; j++) {
-		pmod->vcv[s++] = V->val[mdx(V, i, j)];
+		pmod->vcv[s++] = gretl_matrix_get(V, i, j);
 	    }
-	    pmod->sderr[i] = sqrt(V->val[mdx(V, i, i)]);
+	    pmod->sderr[i] = sqrt(gretl_matrix_get(V, i, i));
 	}
     }
 

@@ -307,10 +307,10 @@ static void wtw (gretl_matrix *wt, gretl_matrix *X,
     double xi, xj;
 
     for (i=0; i<n; i++) {
-	xi = X->val[mdx(X, t, i)];
+	xi = gretl_matrix_get(X, t, i);
 	for (j=0; j<n; j++) {
-	    xj = X->val[mdx(X, t - lag, j)];
-	    wt->val[mdx(wt, i, j)] = xi * xj;
+	    xj = gretl_matrix_get(X, t - lag, j);
+	    gretl_matrix_set(wt, i, j, xi * xj);
 	}
     }
 }
@@ -357,10 +357,16 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
     const double v[] = { 1, 2, 2 };
     double g, p, s0, sv;
     double *s = NULL, *c = NULL;
-    int T = f->rows;
-    int q = f->cols;
-    int n, i, j, t;
+    int n, T, q;
+    int i, j, t;
     int err = 0;
+
+    if (f == NULL) {
+	return E_ALLOC;
+    }
+
+    T = f->rows;
+    q = f->cols;
 
     if (kern == KERNEL_BARTLETT) {
 	n = (int) pow((double) T, 2.0 / 9);
@@ -503,12 +509,10 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     /* determine the bandwidth setting */
 
     if (data_based_hac_bandwidth()) {
-	gretl_matrix u;
+	gretl_matrix *u = gretl_vector_from_array(uhat, T, GRETL_MOD_NONE);
 
-	u.rows = T;
-	u.cols = 1;
-	u.val = uhat;
-	err = newey_west_bandwidth(&u, kern, &p, &bt);
+	err = newey_west_bandwidth(u, kern, &p, &bt);
+	gretl_matrix_free(u);
 	if (err) {
 	    goto bailout;
 	}
@@ -596,8 +600,8 @@ static void do_X_prime_diag (const gretl_matrix *X,
 
     for (i=0; i<R->rows; i++) {
 	for (j=0; j<R->cols; j++) {
-	    x = X->val[mdx(X, j, i)];
-	    R->val[mdx(R, i, j)] = x * D->val[j];
+	    x = gretl_matrix_get(X, j, i);
+	    gretl_matrix_set(R, i, j, x * D->val[j]);
 	}
     }
 }
@@ -653,7 +657,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 	    double q, ht = 0.0;
 
 	    for (i=0; i<k; i++) {
-		q = Q->val[mdx(Q, t, i)];
+		q = gretl_matrix_get(Q, t, i);
 		ht += q * q;
 	    }
 	    if (hc_version == 2) {

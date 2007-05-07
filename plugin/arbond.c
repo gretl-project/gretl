@@ -841,6 +841,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
     gretl_matrix *tmpk = NULL;
     gretl_matrix *ui = NULL; 
     gretl_matrix *m1 = NULL; 
+    gretl_matrix *m1t = NULL;
     gretl_matrix *SZv = NULL;
     
     double x, num, den;
@@ -873,11 +874,12 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
 	tmpk = gretl_matrix_alloc(1, ab->k);
 	ui = gretl_column_vector_alloc(ab->maxTi);
 	m1 = gretl_matrix_alloc(ab->m, 1);
+	m1t = gretl_matrix_alloc(1, ab->m);
 	SZv = gretl_zero_matrix_new(ab->m, 1);
 
 	if (v == NULL || vk == NULL || X == NULL || 
 	    vkX == NULL || tmpk == NULL || ui == NULL ||
-	    m1 == NULL || SZv == NULL) {
+	    m1 == NULL || m1t == NULL || SZv == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
@@ -885,7 +887,6 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
 	gretl_matrix_reuse(v, Q, 1);
 	gretl_matrix_reuse(vk, Q, 1);
 	gretl_matrix_reuse(X, Q, -1);
-	gretl_matrix_reuse(m1, ab->m, 1);
 	gretl_matrix_zero(SZv);
     }
 
@@ -978,9 +979,8 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
     
     /* vk' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
     gretl_matrix_multiply(vkX, C, tmpk);
-    gretl_matrix_reuse(m1, 1, ab->m);
-    gretl_matrix_multiply(tmpk, ab->XZA, m1);
-    den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
+    gretl_matrix_multiply(tmpk, ab->XZA, m1t);
+    den2 = gretl_matrix_dot_product(m1t, GRETL_MOD_NONE,
 				    SZv, GRETL_MOD_NONE,
 				    &err);
     den -= 2.0 * den2;
@@ -1022,6 +1022,7 @@ static int ar_test (arbond *ab, const gretl_matrix *C)
     gretl_matrix_free(tmpk);
     gretl_matrix_free(ui);
     gretl_matrix_free(m1);
+    gretl_matrix_free(m1t);
     gretl_matrix_free(SZv);
 
     return err;
