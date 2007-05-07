@@ -46,7 +46,7 @@ typedef enum {
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
-#define USE_COLS 1
+#define USE_COLS 0
 
 struct _gretl_matrix {
     int rows;
