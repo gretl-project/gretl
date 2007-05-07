@@ -353,9 +353,10 @@ la matrice di covarianza campionaria delle $f_t$:
 Questo stimatore è robusto rispetto all'eteroschedasticità, ma non rispetto
 all'autocorrelazione. Una variante robusta rispetto all'eteroschedasticità e
 all'autocorrelazione (HAC, heteroskedasticity autocorrelation consistent) si può
-ottenere usando il kernel di Bartlett. Una sua versione univariata è usata nella
-funzione \texttt{lrvar()}, si veda l'equazione (\ref{eq:scalar-lrvar}). La
-versione multivariata è riassunta nell'equazione (\ref{eq:gmm-hacvar}).
+ottenere usando il kernel di Bartlett, o altri kernel. Una sua versione
+univariata è usata nella funzione \texttt{lrvar()}, si veda l'equazione
+(\ref{eq:scalar-lrvar}). La versione multivariata è riassunta nell'equazione
+(\ref{eq:gmm-hacvar}).
 
 \begin{equation}
   \label{eq:gmm-hacvar}
@@ -363,11 +364,12 @@ versione multivariata è riassunta nell'equazione (\ref{eq:gmm-hacvar}).
     \sum_{t=k}^{T-k} \left[ \sum_{i=-k}^k w_i f_t(\theta) f_{t-i}(\theta)'  \right] ,
 \end{equation}
 
-\app{Gretl} calcola in modo predefinito la matrice di covarianza HAC quando si stima
-un modello GMM su serie storiche. È possibile controllare la larghezza di banda
-(ossia il valore di $k$ nella \ref{eq:gmm-hacvar}) usando il comando
-\texttt{set}. È anche possibile dire a \app{gretl} di \emph{non} usare la
-versione HAC con il comando
+\app{Gretl} calcola in modo predefinito la matrice di covarianza HAC quando si
+stima un modello GMM su serie storiche. È possibile controllare il kernel e la
+larghezza di banda (ossia il valore di $k$ nella \ref{eq:gmm-hacvar}) usando il
+comando \texttt{set}. Si veda il capitolo~\ref{chap-robust-vcv} per una
+discussione approfondita della stima HAC.  È anche possibile dire a \app{gretl}
+di \emph{non} usare la versione HAC con il comando
 %
 \begin{code}
 set force_hc on
