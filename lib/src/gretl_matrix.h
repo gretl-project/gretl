@@ -46,16 +46,11 @@ typedef enum {
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
-#define USE_COLS 0
-
 struct _gretl_matrix {
     int rows;
     int cols;
     int t1, t2;
     double *val;
-#if USE_COLS
-    double **col;
-#endif
 };
 
 /**
@@ -67,11 +62,7 @@ struct _gretl_matrix {
  * Gives the @i, @j element of @m.
  */
 
-#if USE_COLS
-# define gretl_matrix_get(m,i,j) (m->col[j][i])
-#else
-# define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
-#endif
+#define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
 
 /**
  * gretl_vector_get:
@@ -93,11 +84,7 @@ struct _gretl_matrix {
  * Sets the @i, @j element of @m to @x.
  */
 
-#if USE_COLS
-# define gretl_matrix_set(m,i,j,x) (m->col[j][i]=x)
-#else
-# define gretl_matrix_set(m,i,j,x) (m->val[(j)*m->rows+(i)]=x)
-#endif
+#define gretl_matrix_set(m,i,j,x) (m->val[(j)*m->rows+(i)]=x)
 
 /**
  * gretl_vector_set:

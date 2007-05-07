@@ -34,7 +34,9 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 #define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
 #define mdx(a,i,j)   ((j)*a->rows+(i))
-#define mdxtr(a,i,j) ((i)*a->rows+(j))
+
+#define matrix_transp_get(m,i,j) (m->val[(i)*m->rows+(j)])
+#define matrix_transp_set(m,i,j,x) (m->val[(i)*m->rows+(j)]=x)
 
 #define SVD_SMIN 1.0e-9
 
@@ -133,6 +135,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
     }
 
     if (ret == GRETL_MATRIX_SQUARE) {
+	double x;
 	int uzero = 1;
 	int lzero = 1;
 	int symm = 1;
@@ -141,12 +144,13 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
-		if (j > i && m->val[mdx(m, i, j)] != 0.0) {
+		x = gretl_matrix_get(m,i,j);
+		if (j > i && x != 0.0) {
 		    uzero = 0;
-		} else if (i > j && m->val[mdx(m, i, j)] != 0.0) {
+		} else if (i > j && x != 0.0) {
 		    lzero = 0;
 		}
-		if (j != i && m->val[mdx(m, i, j)] != m->val[mdx(m, j, i)]) {
+		if (j != i && x != gretl_matrix_get(m,j,i)) {
 		    symm = 0;
 		}
 		if (!uzero && !lzero && !symm) {
@@ -192,8 +196,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
  * new, and the when the matrix is to be freed, gretl_matrix_free()
  * should be applied only once. 
  *
- * Returns: pointer to the "resized" gretl_matrix, or %NULL
- * if the product of @rows and @cols is out of bounds.
+ * Returns: pointer to the "resized" gretl_matrix.
  */
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
@@ -239,21 +242,8 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     m->rows = rows;
     m->cols = cols;
 
-#if USE_COLS
-    if (cols > 0) {
-	double **col;
-
-	col = realloc(m->col, cols * sizeof *m->col);
-	if (col == NULL) {
-	    return E_ALLOC;
-	}
-	gretl_matrix_align_columns(m);
-    }
-#endif
-
     return 0;
 }
-
 
 /**
  * gretl_identity_matrix_new:
@@ -354,19 +344,10 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 
 gretl_matrix *gretl_null_matrix_new (void)
 {
-    gretl_matrix *m = malloc(sizeof *m);
-  
+    gretl_matrix *m = gretl_matrix_alloc(1, 1);
+
     if (m != NULL) {
-	m->t1 = m->t1 = 0;
-	m->rows = 1;
-	m->cols = 1;
-	m->val = malloc(sizeof *m->val);
-	if (m->val == NULL) {
-	    free(m);
-	    m = NULL;
-	} else {
-	    m->val[0] = 0.0;
-	}
+	m->val[0] = 0.0;
     }
 
     return m;
@@ -455,9 +436,12 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     }
 
     if (mod == GRETL_MOD_TRANSPOSE) {
+	double x;
+
 	for (i=0; i<c->rows; i++) {
 	    for (j=0; j<c->cols; j++) {
-		c->val[mdx(c, i, j)] = m->val[mdx(m, j, i)];
+		x = matrix_transp_get(m, i, j);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
     } else { 
@@ -509,6 +493,7 @@ void gretl_matrix_free (gretl_matrix *m)
     if (m->val != NULL) {
 	free(m->val);
     }
+
     free(m);
 }
 
@@ -521,12 +506,8 @@ void gretl_matrix_free (gretl_matrix *m)
 
 void gretl_matrix_zero (gretl_matrix *m)
 {
-    int i, n;
+    int i, n = m->rows * m->cols;
 
-    if (m == NULL || m->val == NULL) return;
-
-    n = m->rows * m->cols;
-    
     for (i=0; i<n; i++) {
 	m->val[i] = 0.0;
     }
@@ -562,7 +543,7 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 	*err = E_ALLOC;
     } else {
 	for (i=0; i<n; i++) {
-	    d->val[i] = m->val[mdx(m, i, i)];
+	    d->val[i] = gretl_matrix_get(m, i, i);
 	}
     } 
 
@@ -596,7 +577,7 @@ double gretl_matrix_trace (const gretl_matrix *m, int *err)
     }
 
     for (i=0; i<m->rows; i++) {
-	tr += m->val[mdx(m, i, i)];
+	tr += gretl_matrix_get(m, i, i);
     }
 
     return tr;
@@ -745,19 +726,20 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
     if (m == NULL || m->val == NULL) 
 	return 1;
 
-    if (m->rows != m->cols)
+    if (m->rows != m->cols) {
 	return E_NONCONF;
+    }
 
     if (t == 'U') {
 	for (i=0; i<m->rows-1; i++) {
 	    for (j=i+1; j<m->cols; j++) {
-		m->val[mdx(m, i, j)] = 0.0;
+		gretl_matrix_set(m, i, j, 0.0);
 	    }
 	}
     } else {
 	for (i=1; i<m->rows; i++) {
 	    for (j=0; j<i; j++) {
-		m->val[mdx(m, i, j)] = 0.0;
+		gretl_matrix_set(m, i, j, 0.0);
 	    }
 	}
     }
@@ -803,12 +785,8 @@ int gretl_matrix_zero_lower (gretl_matrix *m)
 
 void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 {
-    int i, n;
+    int i, n = m->rows * m->cols;
 
-    if (m == NULL || m->val == NULL) return;
-
-    n = m->rows * m->cols;
-    
     for (i=0; i<n; i++) {
 	m->val[i] *= x;
     }
@@ -1120,7 +1098,7 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 
     for (i=0; i<src->rows; i++) {
 	for (j=0; j<src->cols; j++) {
-	    targ->val[k++] += src->val[mdx(src, i, j)];
+	    targ->val[k++] += gretl_matrix_get(src, i, j);
 	}
     } 
 
@@ -1178,7 +1156,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 int gretl_matrix_I_minus (gretl_matrix *m)
 {
     double x;
-    int i, j, k;
+    int i, j;
 
     if (m->rows != m->cols) {
 	return E_NONCONF;
@@ -1186,12 +1164,11 @@ int gretl_matrix_I_minus (gretl_matrix *m)
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
-	    k = mdx(m, i, j);
-	    x = m->val[k];
+	    x = gretl_matrix_get(m, i, j);
 	    if (i == j) {
-		m->val[k] = 1.0 - x;
+		gretl_matrix_set(m, i, j, 1.0 - x);
 	    } else if (x != 0.0) {
-		m->val[k] = -x;
+		gretl_matrix_set(m, i, j, -x);
 	    }
 	}
     }
@@ -1235,7 +1212,7 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 	mi = row + i;
 	for (j=0; j<n; j++) {
 	    mj = col + j;
-	    m->val[mdx(m, mi, mj)] = (i == j)? 1.0 : 0.0;
+	    gretl_matrix_set(m, mi, mj, (i == j)? 1.0 : 0.0);
 	}
     }
     
@@ -1264,8 +1241,8 @@ int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
 
     for (i=0; i<src->rows; i++) {
 	for (j=0; j<src->cols; j++) {
-	    x = src->val[mdx(src, i, j)];
-	    targ->val[mdx(targ, j, i)] = x;
+	    x = gretl_matrix_get(src, i, j);
+	    gretl_matrix_set(targ, j, i, x);
 	}
     }
 
@@ -1284,7 +1261,7 @@ int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src)
 int gretl_square_matrix_transpose (gretl_matrix *m)
 {
     int i, j;
-    double x;
+    double x, y;
 
     if (m->rows != m->cols) {
 	fputs("gretl_square_matrix_transpose: matrix must be square\n", 
@@ -1294,9 +1271,10 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
 
     for (i=0; i<m->rows-1; i++) {
 	for (j=i+1; j<m->rows; j++) {
-	    x = m->val[mdx(m, i, j)];
-	    m->val[mdx(m, i, j)] = m->val[mdx(m, j, i)];
-	    m->val[mdx(m, j, i)] = x;
+	    x = gretl_matrix_get(m, i, j);
+	    y = gretl_matrix_get(m, j, i);
+	    gretl_matrix_set(m, i, j, y);
+	    gretl_matrix_set(m, j, i, x);
 	}
     }
 
@@ -1313,15 +1291,16 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
 
 void gretl_matrix_xtr_symmetric (gretl_matrix *m)
 {
-    int i, j, idx0, idx1;
     double x;
+    int i, j;
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<i; j++) {
-	    idx0 = mdx(m, i, j);
-	    idx1 = mdx(m, j, i);
-	    x = 0.5 * (m->val[idx0] + m->val[idx1]);
-	    m->val[idx0] = m->val[idx1] = x;
+	    x = gretl_matrix_get(m, i, j);
+	    x += gretl_matrix_get(m, j, i);
+	    x *= 0.5;
+	    gretl_matrix_set(m, i, j, x);
+	    gretl_matrix_set(m, j, i, x);
 	}
     }
 }
@@ -1339,7 +1318,7 @@ void gretl_matrix_xtr_symmetric (gretl_matrix *m)
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m)
 {
-    double x1, x2;
+    double x;
     int i, j;
 
     if (m->rows != m->cols) {
@@ -1350,9 +1329,10 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
 
     for (i=0; i<m->rows; i++) {
 	for (j=i; j<m->rows; j++) {
-	    x1 = m->val[mdx(m,i,j)];
-	    x2 = m->val[mdx(m,j,i)];
-	    m->val[mdx(m,i,j)] = m->val[mdx(m,j,i)] = x1 + x2;
+	    x = gretl_matrix_get(m, i, j);
+	    x += gretl_matrix_get(m, j, i);
+	    gretl_matrix_set(m, i, j, x);
+	    gretl_matrix_set(m, j, i, x);
 	}
     }
 
@@ -1444,7 +1424,7 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     m = 0;
     for (i=0; i<n; i++) {
 	for (j=i; j<n; j++) {
-	    targ->val[m++] = src->val[mdx(src, i, j)];
+	    targ->val[m++] = gretl_matrix_get(src, i, j);
 	}
     }
 
@@ -1479,7 +1459,8 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
     for (j=0; j<n; j++) {
 	for (i=j; i<n; i++) {
 	    x = src->val[m++];
-	    targ->val[mdx(targ, i, j)] = targ->val[mdx(targ, j, i)] = x;
+	    gretl_matrix_set(targ, i, j, x);
+	    gretl_matrix_set(targ, j, i, x);
 	}
     }
 
@@ -1526,7 +1507,7 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
     for (i=0; i<m; i++) {
 	for (j=0; j<n; j++) {
 	    if (mod == GRETL_MOD_TRANSPOSE) {
-		x = gretl_matrix_get(src, j, i);
+		x = matrix_transp_get(src, i, j);
 	    } else {
 		x = gretl_matrix_get(src, i, j);
 	    }
@@ -1578,11 +1559,11 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
     for (i=0; i<m; i++) {
 	sj = col;
 	for (j=0; j<n; j++) {
-	    x = src->val[mdx(src, si, sj++)];
+	    x = gretl_matrix_get(src, si, sj++);
 	    if (mod == GRETL_MOD_TRANSPOSE) {
-		targ->val[mdx(targ,j,i)] = x;
+		matrix_transp_set(targ, i, j, x);
 	    } else {
-		targ->val[mdx(targ,i,j)] = x;
+		gretl_matrix_set(targ, i, j, x);
 	    }
 	}
 	si++;
@@ -1666,7 +1647,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     } else {
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
-		sprintf(numstr, "%#.5g", m->val[mdx(m, i, j)]);
+		sprintf(numstr, "%#.5g", gretl_matrix_get(m, i, j));
 		if (strstr(numstr, ".00000")) {
 		    numstr[strlen(numstr) - 1] = 0;
 		}
@@ -1816,14 +1797,14 @@ static int sneq (double x, double y)
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m)
 {
+    double x, y;
     int i, j;
 
     for (i=1; i<m->rows; i++) {
 	for (j=0; j<i; j++) {
-	    if (sneq(m->val[mdx(m, i, j)], m->val[mdx(m, j, i)])) {
-		double x = m->val[mdx(m, i, j)];
-		double y = m->val[mdx(m, j, i)];
-
+	    x = gretl_matrix_get(m, i, j);
+	    y = gretl_matrix_get(m, j, i);
+	    if (sneq(x, y)) {
 		fprintf(stderr, "M(%d,%d) = %.16g but M(%d,%d) = %.16g\n",
 			i, j, x, j, i, y);
 		if (m->rows < 100) {
@@ -1883,7 +1864,7 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m)
     for (i=0; i<m->rows; i++) {
 	rsum = 0.0;
 	for (j=0; j<m->cols; j++) {
-	    rsum += fabs(m->val[mdx(m,i,j)]);
+	    rsum += fabs(gretl_matrix_get(m, i, j));
 	}
 	if (rsum > rmax) {
 	    rmax = rsum;
@@ -1914,7 +1895,7 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
     for (j=0; j<m->cols; j++) {
 	csum = 0.0;
 	for (i=0; i<m->rows; i++) {
-	    csum += fabs(m->val[mdx(m,i,j)]);
+	    csum += fabs(gretl_matrix_get(m, i, j));
 	}
 	if (csum > cmax) {
 	    cmax = csum;
@@ -1970,9 +1951,12 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
 		  stderr);
 	}
     } else {
+	double x;
+
 	det = 1.0;
 	for (i=0; i<n; i++) {
-	    det *= a->val[mdx(a, i, i)] * a->val[mdx(a, i, i)];
+	    x = gretl_matrix_get(a, i, i);
+	    det *= x * x;
 	}
 	det = log(det);
     }
@@ -2044,7 +2028,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 
 	det = 0.0;
 	for (i=0; i<n; i++) {
-	    double aii = a->val[mdx(a, i, i)];
+	    double aii = gretl_matrix_get(a, i, i);
 
 	    if (aii == 0.0) {
 		fputs("gretl_matrix_log_determinant: determinant = 0\n", stderr);
@@ -2073,7 +2057,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	    if (ipiv[i] != i + 1) {
 		det = -det;
 	    }
-	    det *= a->val[mdx(a, i, i)];
+	    det *= gretl_matrix_get(a, i, i);
 	}
     }
 
@@ -2261,6 +2245,8 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
     return 0;
 } 
 
+#define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
+
 static int 
 matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 				gretl_matrix *c, GretlMatrixMod cmod)
@@ -2288,18 +2274,18 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	    for (j=i; j<nc; j++) {
 		x = 0.0;
 		for (k=0; k<nr; k++) {
-		    idx1 = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
-		    idx2 = (atr)? mdx(a,k,j) : mdxtr(a,k,j);
+		    idx1 = (atr)? mdx(a,k,i) : mdx(a,i,k);
+		    idx2 = (atr)? mdx(a,k,j) : mdx(a,j,k);
 		    x += a->val[idx1] * a->val[idx2];
 		}
 		if (cmod == GRETL_MOD_CUMULATE) {
-		    c->val[mdx(c,i,j)] += x;
+		    gretl_matrix_cum(c,i,j,x);
 		    if (i != j) {
-			c->val[mdx(c,j,i)] += x;
+			gretl_matrix_cum(c,j,i,x);
 		    }
 		} else {
-		    c->val[mdx(c,i,j)] = x;
-		    c->val[mdx(c,j,i)] = x;
+		    gretl_matrix_set(c,i,j,x);
+		    gretl_matrix_set(c,j,i,x);
 		}
 	    }
 	} 
@@ -2378,14 +2364,14 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	for (j=0; j<rcols; j++) {
 	    x = 0.0;
 	    for (k=0; k<lcols; k++) {
-		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
-		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
+		aidx = (atr)? mdx(a,k,i) : mdx(a,i,k);
+		bidx = (btr)? mdx(b,j,k) : mdx(b,k,j);
 		x += a->val[aidx] * b->val[bidx];
 	    }
 	    if (cmod == GRETL_MOD_CUMULATE) {
-		c->val[mdx(c,i,j)] += x;
+		gretl_matrix_cum(c,i,j,x);
 	    } else {
-		c->val[mdx(c,i,j)] = x;
+		gretl_matrix_set(c,i,j,x);
 	    }
 	}
     }
@@ -2426,18 +2412,18 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 	ioff = i * r;
 	for (j=0; j<q; j++) {
 	    /* block ij is an r * s matrix, a_{ij} * B */
-	    aij = A->val[mdx(A, i, j)];
+	    aij = gretl_matrix_get(A, i, j);
 	    joff = j * s;
 	    for (k=0; k<r; k++) {
 		Ki = ioff + k;
 		for (l=0; l<s; l++) {
-		    bkl = B->val[mdx(B, k, l)];
+		    bkl = gretl_matrix_get(B, k, l);
 		    Kj = joff + l;
 		    x = aij * bkl;
 		    if (x == -0.0) {
 			x = 0.0;
 		    }
-		    K->val[mdx(K, Ki, Kj)] = x;
+		    gretl_matrix_set(K, Ki, Kj, x);
 		}
 	    }
 	}
@@ -2726,6 +2712,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 				   int op, int *err)
 {
     gretl_matrix *c = NULL;
+    double x, ax, bx;
     int m = a->rows;
     int n = a->cols;
     int p = b->rows;
@@ -2758,14 +2745,20 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	for (i=0; i<c->rows; i++) {
 	    for (j=0; j<c->cols; j++) {
 		k = (m == 1)? j : i;
-		c->val[mdx(c,i,j)] = x_op_y(a->val[k], b->val[mdx(b,i,j)], op);
+		ax = a->val[k];
+		bx = gretl_matrix_get(b, i, j);
+		x = x_op_y(ax, bx, op);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
     } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
 	for (i=0; i<c->rows; i++) {
 	    for (j=0; j<c->cols; j++) {
 		k = (p == 1)? j : i;
-		c->val[mdx(c,i,j)] = x_op_y(a->val[mdx(a,i,j)], b->val[k], op);
+		ax = gretl_matrix_get(a, i, j);
+		bx = b->val[k];
+		x = x_op_y(ax, bx, op);
+		gretl_matrix_set(c, i, j, x);
 	    }
 	}
     } 
@@ -2865,14 +2858,11 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 	*err = E_DATA;
 	strcpy(gretl_errmsg, _(strerror(errno)));
     } else if (c->cols == 2 && izero) {
-	c->val = realloc(c->val, c->rows * sizeof *c->val);
-	if (c->val == NULL) {
-	    *err = E_ALLOC;
+	*err = gretl_matrix_realloc(c, c->rows, 1);
+	if (*err) {
 	    gretl_matrix_free(c);
 	    c = NULL;
-	} else {
-	    c->cols = 1;
-	}
+	}	    
     }
 
     return c;
@@ -2890,7 +2880,7 @@ static double row_sum (const gretl_matrix *m, int i)
     }
 
     for (j=0; j<m->cols; j++) {
-	x += m->val[mdx(m, i, j)];
+	x += gretl_matrix_get(m, i, j);
     }
 
     return x;
@@ -2908,7 +2898,7 @@ static double col_sum (const gretl_matrix *m, int j)
     }
 
     for (i=0; i<m->rows; i++) {
-	x += m->val[mdx(m, i, j)];
+	x += gretl_matrix_get(m, i, j);
     }
 
     return x;
@@ -3070,7 +3060,7 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
     for (i=0; i<m->rows; i++) {
 	rowmean = gretl_matrix_row_i_mean(m, i);
 	for (j=0; j<m->cols; j++) {
-	    m->val[mdx(m, i, j)] -= rowmean;
+	    gretl_matrix_cum(m, i, j, -rowmean);
 	}
     }    
 }
@@ -3091,7 +3081,7 @@ void gretl_matrix_demean_by_column (gretl_matrix *m)
     for (j=0; j<m->cols; j++) {
 	colmean = gretl_matrix_column_j_mean(m, j);
 	for (i=0; i<m->rows; i++) {
-	    m->val[mdx(m, i, j)] -= colmean;
+	    gretl_matrix_cum(m, i, j, -colmean);
 	}
     }    
 }
@@ -3461,12 +3451,15 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 
     if (R != NULL) {
 	/* copy the upper triangular R out of M */
+	double x;
+
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
 		if (i <= j) {
-		    R->val[mdx(R, i, j)] = M->val[mdx(M, i, j)];
+		    x = gretl_matrix_get(M, i, j);
+		    gretl_matrix_set(R, i, j, x);
 		} else {
-		    R->val[mdx(R, i, j)] = 0.0;
+		    gretl_matrix_set(R, i, j, 0.0);
 		}
 	    }
 	}
@@ -3496,7 +3489,7 @@ static int get_R_rank (const gretl_matrix *R)
     int i, rank = R->rows;
 
     for (i=0; i<R->rows; i++) {
-	d = R->val[mdx(R, i, i)];
+	d = gretl_matrix_get(R, i, i);
 	if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
 	    rank--;
 	}
@@ -3743,11 +3736,11 @@ gretl_symmetric_matrix_expand (gretl_matrix *m, char uplo)
     for (i=0; i<n; i++) {
 	for (j=i+1; j<n; j++) {
 	    if (uplo == 'U') {
-		x = m->val[mdx(m, i, j)];
-		m->val[mdx(m, j, i)] = x;
+		x = gretl_matrix_get(m, i, j);
+		gretl_matrix_set(m, j, i, x);
 	    } else {
-		x = m->val[mdx(m, j, i)];
-		m->val[mdx(m, i, j)] = x;
+		x = gretl_matrix_get(m, j, i);
+		gretl_matrix_set(m, i, j, x);
 	    }
 	}
     }
@@ -3777,14 +3770,14 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
     }
 
     for (i=0; i<a->rows; i++) {
-	if (a->val[mdx(a,i,i)] == 0.0) {
+	if (gretl_matrix_get(a, i, i) == 0.0) {
 	    return E_SINGULAR;
 	}
     }
 
     for (i=0; i<a->rows; i++) {
-	x = a->val[mdx(a,i,i)];
-	a->val[mdx(a,i,i)] = 1.0 / x;
+	x = gretl_matrix_get(a, i, i);
+	gretl_matrix_set(a, i, i, 1.0 / x);
     }
 
     return 0;
@@ -4230,17 +4223,18 @@ static int real_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, int rank,
 
     for (j=0; j<h; j++) {
 	for (i=0; i<n; i++) {
-	    x = evecs->val[mdx(evecs, i, es[j].idx)];
-	    tmp->val[mdx(tmp, i, j)] = x;
+	    x = gretl_matrix_get(evecs, i, es[j].idx);
+	    gretl_matrix_set(tmp, i, j, x);
 	}
     }
 
     free(evecs->val);
     evecs->val = tmp->val;
-    evecs->cols = tmp->cols;
     tmp->val = NULL;
-    free(tmp);
 
+    evecs->cols = tmp->cols;
+
+    free(tmp);
     free(es);
 
     return 0;
@@ -4288,6 +4282,12 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 				int rank)
 {
     return real_eigen_sort(evals, evecs, rank, 1);    
+}
+
+static void gretl_matrix_replace_data (gretl_matrix *m, double *x)
+{
+    free(m->val);
+    m->val = x;
 }
 
 /**
@@ -4398,8 +4398,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	    free(vr);
 	}
     } else if (eigenvecs) {
-	free(m->val);
-	m->val = vr;
+	gretl_matrix_replace_data(m, vr);
     }	
 
     return evals;
@@ -4756,7 +4755,7 @@ static int max_abs_index (const gretl_matrix *X, int col)
     int i, idx = 0;
 
     for (i=0; i<X->rows; i++) {
-	aij = fabs(X->val[mdx(X, i, col)]);
+	aij = fabs(gretl_matrix_get(X, i, col));
 	if (aij > tmp) {
 	    tmp = aij;
 	    idx = i;
@@ -4766,20 +4765,24 @@ static int max_abs_index (const gretl_matrix *X, int col)
     return idx;
 }
 
+#define NSMIN 1.0e-16
+
 static void normalize_nullspace (gretl_matrix *M)
 {
     int i, j, k, idx;
-    double x; 
+    double x, y; 
 
     /* FIXME? */
 
     if (M->cols == 1) {
 	j = 0;
 	idx = max_abs_index(M, j);
-	x = M->val[mdx(M, idx, j)];
+	x = gretl_matrix_get(M, idx, j);
 	for (i=0; i<M->rows; i++) {
-	    M->val[mdx(M, i, j)] /= x;
-	    if (fabs(x) < 1.0e-16) x = 0.0; /* ? */
+	    y = gretl_matrix_get(M, i, j);
+	    y /= x;
+	    if (fabs(y) < NSMIN) y = 0.0;
+	    gretl_matrix_set(M, i, j, y);
 	}
     }
 
@@ -4872,6 +4875,7 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 			 int *err)
 {
     gretl_matrix *c = NULL;
+    double x;
     int i, j, k;
 
     if (a == NULL || b == NULL) {
@@ -4892,14 +4896,16 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 
     for (i=0; i<a->rows; i++) {
 	for (j=0; j<a->cols; j++) {
-	    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)];
+	    x = gretl_matrix_get(a, i, j);
+	    gretl_matrix_set(c, i, j, x);
 	}
     }  
 
     k = a->rows;
     for (i=0; i<b->rows; i++) {
 	for (j=0; j<b->cols; j++) {
-	    c->val[mdx(c,k,j)] = b->val[mdx(b,i,j)];
+	    x = gretl_matrix_get(b, i, j);
+	    gretl_matrix_set(c, k, j, x);
 	}
 	k++;
     }      
@@ -4970,9 +4976,8 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
 				 const gretl_matrix *b,
 				 const char *mask)
 {
-    double x, *val;
-    size_t asize, bsize;
-    int addc, anelem;
+    double x;
+    int addc;
     int i, j, k;
 
     if (a == NULL || b == NULL) {
@@ -4995,23 +5000,17 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
 	}
     }
 
-    anelem = a->rows * a->cols;
-    asize = anelem * sizeof *a->val;
-    bsize = b->rows * addc * sizeof *b->val;
+    k = a->cols;
 
-    val = realloc(a->val, asize + bsize);
-    if (val == NULL) {
+    if (gretl_matrix_realloc(a, a->rows, k + addc)) {
 	return E_ALLOC;
     }
 
-    a->val = val;
-
     if (mask == NULL) {
-	memcpy(a->val + anelem, b->val, bsize);
-	a->cols += addc;
+	size_t bsize = b->rows * b->cols * sizeof *b->val;
+
+	memcpy(a->val + a->rows * k, b->val, bsize);
     } else {
-	k = a->cols;
-	a->cols += addc;
 	for (j=0; j<b->cols; j++) {
 	    if (mask[j]) {
 		for (i=0; i<b->rows; i++) {
@@ -5041,6 +5040,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k,
 				double missval)
 {
     gretl_matrix *a = gretl_matrix_alloc(m->rows, m->cols);
+    double x;
     int s, t, i;
 
     if (a == NULL) {
@@ -5051,11 +5051,12 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, int k,
 	s = t - k;
 	if (s < 0 || s >= m->rows) {
 	    for (i=0; i<m->cols; i++) {
-		a->val[mdx(a, t, i)] = missval;
+		gretl_matrix_set(a, t, i, missval);
 	    }
 	} else {
 	    for (i=0; i<m->cols; i++) {
-		a->val[mdx(a, t, i)] = m->val[mdx(m, s, i)];
+		x = gretl_matrix_get(m, s, i);
+		gretl_matrix_set(a, t, i, x);
 	    }
 	}
     }
@@ -5082,6 +5083,7 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 {
     int m = src->rows;
     int n = src->cols;
+    double x;
     int s, t, i;
 
     if (targ->rows != m || targ->cols != n) {
@@ -5092,11 +5094,12 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 	s = t - k;
 	if (s < 0 || s >= m) {
 	    for (i=0; i<n; i++) {
-		targ->val[mdx(targ, t, i)] = 0.0;
+		gretl_matrix_set(targ, t, i, 0.0);
 	    }
 	} else {
 	    for (i=0; i<n; i++) {
-		targ->val[mdx(targ, t, i)] = src->val[mdx(src, s, i)];
+		x = gretl_matrix_get(src, s, i);
+		gretl_matrix_set(targ, t, i, x);
 	    }
 	}
     }
@@ -5184,14 +5187,14 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 	    vij = 0.0;
 	    for (k=0; k<m; k++) {
 		if (s[k] > 0.0) {
-		    aik = A->val[mdx(A, k, i)];
-		    ajk = A->val[mdx(A, k, j)];
+		    aik = gretl_matrix_get(A, k, i);
+		    ajk = gretl_matrix_get(A, k, j);
 		    vij += aik * ajk / (s[k] * s[k]);
 		}
 	    }
-	    vcv->val[mdx(vcv, i, j)] = vij;
+	    gretl_matrix_set(vcv, i, j, vij);
 	    if (j != i) {
-		vcv->val[mdx(vcv, j, i)] = vij;
+		gretl_matrix_set(vcv, j, i, vij);
 	    }
 	}
     }
@@ -5223,7 +5226,7 @@ get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
     for (i=0; i<n; i++) {
 	u = y->val[i];
 	for (j=0; j<k; j++) {
-	    u -= X->val[mdx(X, i, j)] * b->val[j];
+	    u -= gretl_matrix_get(X, i, j) * b->val[j];
 	}
 	s2 += u * u;
     }
@@ -5262,7 +5265,7 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
     for (i=0; i<n; i++) {
 	uh = y->val[i];
 	for (j=0; j<ncoeff; j++) {
-	    uh -= b->val[j] * X->val[mdx(X, i, j)];
+	    uh -= b->val[j] * gretl_matrix_get(X, i, j);
 	}
 	uhat->val[i] = uh;
     }
@@ -5470,7 +5473,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	/* invert singular values */
 	for (j=0; j<k; j++) {
 	    for (i=0; i<n; i++) {
-		u->val[mdx(u, i, j)] /= s->val[j];
+		x = gretl_matrix_get(u, i, j);
+		gretl_matrix_set(u, i, j, x / s->val[j]);
 	    }
 	}
 	err = gretl_matrix_multiply_mod(vt, GRETL_MOD_TRANSPOSE,
@@ -5606,6 +5610,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     gretl_vector *V = NULL;
     gretl_matrix *W = NULL;
     gretl_matrix *S = NULL;
+    double x;
     int k = X->cols;
     int nr = R->rows;
     int ldW = k + nr;
@@ -5661,17 +5666,20 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     if (!err) {
 	for (i=0; i<XTX->rows; i++) {
 	    for (j=0; j<XTX->cols; j++) {
-		W->val[mdx(W,i,j)] = XTX->val[mdx(XTX,i,j)];
+		x = gretl_matrix_get(XTX, i, j);
+		gretl_matrix_set(W, i, j, x);
 	    }
 	}
 	for (i=0; i<R->rows; i++) {
 	    for (j=0; j<R->cols; j++) {
-		W->val[mdx(W,i+k,j)] = R->val[mdx(R,i,j)];
+		x = gretl_matrix_get(R, i, j);
+		gretl_matrix_set(W, i+k, j, x);
 	    }
 	}
 	for (i=0; i<R->cols; i++) {
 	    for (j=0; j<R->rows; j++) {
-		W->val[mdx(W,i,j+k)] = R->val[mdx(R,j,i)];
+		x = gretl_matrix_get(R, j, i);
+		gretl_matrix_set(W, i, j+k, x);
 	    }
 	}
     } 
@@ -5701,7 +5709,8 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	    if (!err) {
 		for (i=0; i<k; i++) {
 		    for (j=0; j<k; j++) {
-			vcv->val[mdx(vcv,i,j)] = S->val[mdx(S,i,j)];
+			x = gretl_matrix_get(S, i, j);
+			gretl_matrix_set(vcv, i, j, x);
 		    }
 		}		
 	    }
@@ -5797,9 +5806,9 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
     for (i=0; i<k; i++) {
 	for (j=0; j<n; j++) {
 	    for (t=0; t<T; t++) {
-		x = A->val[mdx(A, t, i)];
-		y = B->val[mdx(B, t, j)];
-		C->val[mdx(C, t, p)] = x * y;
+		x = gretl_matrix_get(A, t, i);
+		y = gretl_matrix_get(B, t, j);
+		gretl_matrix_set(C, t, p, x * y);
 	    }
 	    p++;
 	}
@@ -5834,10 +5843,10 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 			GretlMatrixMod cmod)
 {
     register int i, j, ii, jj;
-    int ipos, jpos;
-    double xi, xj, xx;
+    double xi, xj, xij, xx;
     int m = (amod)? A->cols : A->rows;
     int k = (amod)? A->rows : A->cols;
+    int ipos, jpos;
 
     if (k != gretl_matrix_rows(X)) {
 	fputs("gretl_matrix_qform: matrices not conformable\n", stderr);
@@ -5859,15 +5868,16 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 		    for (jj=0; jj<k; jj++) {
 			jpos = (amod)? mdx(A,jj,j) : mdx(A,j,jj);
 			xj = A->val[jpos];
-			xx += X->val[mdx(X,ii,jj)] * xi * xj;
+			xij = gretl_matrix_get(X,ii,jj);
+			xx += xij * xi * xj;
 		    }
 		}
 	    }
 	    if (cmod) {
-		xx += C->val[mdx(C,i,j)];
+		xx += gretl_matrix_get(C, i, j);
 	    }
-	    C->val[mdx(C,i,j)] = xx;
-	    C->val[mdx(C,j,i)] = xx;
+	    gretl_matrix_set(C, i, j, xx);
+	    gretl_matrix_set(C, j, i, xx);
 	}
     }
 
@@ -5935,7 +5945,7 @@ gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 				gretl_matrix *DXD)
 {
     int dim = (d->rows == 1)? d->cols : d->rows;
-    double xij;
+    double x, xij;
     int i, j, err = 0;
 
     if (dim != X->rows || dim != X->cols ||
@@ -5944,8 +5954,9 @@ gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
     } else {
 	for (i=0; i<dim; i++) {
 	    for (j=0; j<dim; j++) {
-		xij = X->val[mdx(X, i, j)];
-		DXD->val[mdx(DXD, i, j)] = xij * d->val[i] * d->val[j];
+		xij = gretl_matrix_get(X, i, j);
+		x = xij * d->val[i] * d->val[j];
+		gretl_matrix_set(DXD, i, j, x);
 	    }
 	}
     }
@@ -5962,13 +5973,14 @@ gretl_matrix_diagonal_sandwich (const gretl_vector *d, const gretl_matrix *X,
 
 int gretl_is_identity_matrix (const gretl_matrix *m)
 {
-    int i, j, idx;
+    double x;
+    int i, j;
 
-    for (i=0; i<m->rows; i++) {
-	for (j=0; j<m->cols; j++) {
-	    idx = mdx(m, i, j);
-	    if (i == j && m->val[idx] != 1.0) return 0;
-	    if (i != j && m->val[idx] != 0.0) return 0;
+    for (j=0; j<m->cols; j++) {
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j);
+	    if (i == j && x != 1.0) return 0;
+	    if (i != j && x != 0.0) return 0;
 	}
     }
 
@@ -6007,7 +6019,8 @@ int gretl_is_zero_matrix (const gretl_matrix *m)
 int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 			      int *err)
 {
-    int i, j, idx;
+    double ax, bx;
+    int i, j;
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	*err = E_NONCONF;
@@ -6016,11 +6029,12 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 
     for (i=0; i<a->rows; i++) {
 	for (j=0; j<a->cols; j++) {
-	    idx = mdx(a,i,j);
-	    if (a->val[idx] != b->val[idx]) {
+	    ax = gretl_matrix_get(a, i, j);
+	    bx = gretl_matrix_get(b, i, j);
+	    if (ax != bx) {
 		fprintf(stderr, "gretl_matrices_are_equal:\n "
 			"a(%d,%d) = %.15g but b(%d,%d) = %.15g\n",
-			i, j, a->val[idx], i, j, b->val[idx]);
+			i, j, ax, i, j, bx);
 		return 0;
 	    }
 	}
@@ -6076,7 +6090,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     for (i=0; i<k; i++) {
 	xbar->val[i] = 0.0;
 	for (t=0; t<n; t++) {
-	    xbar->val[i] += m->val[mdx(m, t, i)];
+	    xbar->val[i] += gretl_matrix_get(m, t, i);
 	}
 	xbar->val[i] /= n;
     }
@@ -6085,7 +6099,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	for (i=0; i<k; i++) {
 	    ssx->val[i] = 0.0;
 	    for (t=0; t<n; t++) {
-		x = m->val[mdx(m, t, i)] - xbar->val[i];
+		x = gretl_matrix_get(m, t, i) - xbar->val[i];
 		ssx->val[i] += x * x;
 	    }
 	}
@@ -6095,8 +6109,8 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	for (j=i; j<k; j++) {
 	    vv = 0.0;
 	    for (t=0; t<n; t++) {
-		x = m->val[mdx(m, t, i)];
-		y = m->val[mdx(m, t, j)];
+		x = gretl_matrix_get(m, t, i);
+		y = gretl_matrix_get(m, t, j);
 		vv += (x - xbar->val[i]) * (y - xbar->val[j]);
 	    }
 	    if (ssx != NULL) {
@@ -6377,10 +6391,10 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 
     if (rc == 0) {
 	for (i=0; i<A->rows; i++) {
-	    d = A->val[mdx(A, i, 0)];
+	    d = gretl_matrix_get(A, i, 0);
 	    k = 0;
 	    for (j=1; j<A->cols; j++) {
-		x = A->val[mdx(A, i, j)];
+		x = gretl_matrix_get(A, i, j);
 		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
 		    d = x;
 		    k = j;
@@ -6390,10 +6404,10 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 	}
     } else {
 	for (j=0; j<A->cols; j++) {
-	    d = A->val[mdx(A, 0, j)];
+	    d = gretl_matrix_get(A, 0, j);
 	    k = 0;
 	    for (i=1; i<A->rows; i++) {
-		x = A->val[mdx(A, i, j)];
+		x = gretl_matrix_get(A, i, j);
 		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
 		    d = x;
 		    k = i;
