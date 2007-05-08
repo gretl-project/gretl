@@ -1373,11 +1373,11 @@ static void set_lcnumeric (void)
 
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");
+	    putenv("LC_NUMERIC=");
 	}
-	putenv("LC_NUMERIC=");
     } else {
-	putenv("LC_NUMERIC=C");
 	setlocale(LC_NUMERIC, "C");
+	putenv("LC_NUMERIC=C");
     }
 
     reset_local_decpoint();
@@ -1399,8 +1399,8 @@ static void set_lcnumeric (void)
 	    putenv("LC_NUMERIC=");
 	}
     } else {
-	putenv("LC_NUMERIC=C");
 	setlocale(LC_NUMERIC, "C");
+	putenv("LC_NUMERIC=C");
     }
 
     reset_local_decpoint();
