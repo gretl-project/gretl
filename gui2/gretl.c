@@ -667,6 +667,7 @@ void nls_init (void)
 static void force_language (int f)
 {
     if (f == ENGLISH) {
+	putenv("LANGUAGE=english");
 	setlocale(LC_ALL, "C");
     } else if (f == BASQUE) {
 # ifdef G_OS_WIN32
