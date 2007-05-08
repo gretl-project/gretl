@@ -1,18 +1,590 @@
-\chapter{Robust covariance matrix estimation}
+\chapter{Stima robusta della matrice di covarianza}
 \label{chap-robust-vcv}
 
-\section{Introduction}
+\section{Introduzione}
 \label{vcv-intro}
 
-\section{Cross-sectional data and the HCCME}
+Si consideri (ancora una volta) il modello di regressione lineare
+%
+\begin{equation}
+\label{eq:ols-again}
+y = X\beta + u
+\end{equation}
+%
+dove $y$ e $u$ sono vettori di dimensione $T$, $X$ è una matrice
+$T \times k$ di regressori, e $\beta$ è un vettore di parametri di
+dimensione $k$. Come è noto, lo stimatore di $\beta$ dato dai minimi
+quadrati ordinari (OLS) è
+%
+\begin{equation}
+\label{eq:ols-betahat}
+\hat{\beta} = (X'X)^{-1} X'y
+\end{equation}
+%
+Se la condizione $E(u|X) = 0$ è soddisfatta, questo stimatore è non distorto;
+sotto condizioni meno restrittive, lo stimatore è distorto ma consistente. È
+semplice mostrare che quando lo stimatore OLS non è distorto (ossia quando
+$E(\hat{\beta}-\beta) = 0$), la sua varianza è
+%
+\begin{equation}
+\label{eq:ols-varb}
+\mbox{Var}(\hat{\beta}) = 
+  E\left((\hat{\beta}-\beta)(\hat{\beta}-\beta)'\right) 
+  = (X'X)^{-1} X' \Omega X (X'X)^{-1}
+\end{equation}
+%
+dove $\Omega = E(uu')$ è la matrice di covarianza dei termini di errore.
+
+Sotto l'ipotesi che i termini di errore siano indipendenti e identicamente
+distribuiti (iid), si può scrivere $\Omega = \sigma^2 I$, dove $\sigma^2$
+è la varianza (comune) degli errori (e le covarianze sono zero). In questo caso,
+la (\ref{eq:ols-varb}) si riduce alla ``classica'' formula,
+%
+\begin{equation}
+\label{eq:ols-classical-varb}
+\mbox{Var}(\hat{\beta}) = \sigma^2(X'X)^{-1}
+\end{equation}
+
+Se la condizione iid non è soddisfatta, ne derivano due conseguenze. Per prima
+cosa è possibile costruire uno stimatore più efficiente di quello OLS, ad
+esempio un qualche tipo di stimatore FGLS (Feasible Generalized Least Squares).
+Inoltre, la semplice formula ``classica'' per la varianza dello stimatore dei
+minimi quadrati non è più corretta, e quindi gli errori standard da essa
+derivati (ossia le radici quadrate degli elementi sulla diagonale della matrice
+definita dalla \ref{eq:ols-classical-varb}) non sono strumenti corretti per
+l'inferenza statistica.
+
+Nella storia recente dell'econometria ci sono due approcci principali al
+problema rappresentato dagli errori non iid. L'approccio ``tradizionale''
+consiste nell'usare uno stimatore FGLS. Ad esempio, se l'ipotesi iid viene
+violata a causa di una dipendenza di tipo temporale tra i termini di errore, e
+se si ha ragione di pensare che questo si possa modellare con un processo di
+autocorrelazione del prim'ordine, si potrebbe utilizzare un metodo di stima
+AR(1), come quello di Cochrane--Orcutt, o di Hildreth--Lu, o di Prais--Winsten.
+Se il problema sta nel fatto che la varianza dell'errore non è costante tra le
+osservazioni, si potrebbe stimare la varianza come funzione delle variabili
+indipendenti e usare quindi i minimi quadrati ponderati, prendendo come pesi i
+reciproci delle varianze stimate.
+
+Mentre questi metodi sono tuttora utilizzati, un approccio alternativo sta
+guadagnando favore: usare lo stimatore OLS ma calcolare gli errori standard (o
+più in generale le matrici di covarianza) in modo che siano robusti rispetto
+alle deviazioni dall'ipotesi iid. Questo approccio è spesso associato all'uso di
+grandi dataset, abbastanza grandi da suggerire la validità della proprietà di
+consistenza (asintotica) dello stimatore OLS, ed è stato reso possibile anche
+dalla disponibilità di sempre maggiori potenze di calcolo: il calcolo degli
+errori standard robusti e l'uso di grandi dataset erano compiti scoraggianti
+fino a qualche tempo fa, ma ora non pongono alcun problema. Un punto a favore di
+questo approccio  consiste nel fatto che, mentre la stima FGLS offre un
+vantaggio in termini di efficienza, spesso richiede di fare delle ipotesi
+statistiche aggiuntive, che potrebbero non essere giustificate, che potrebbe
+essere difficile testare, e che potrebbero mettere in discussione la consistenza
+dello stimatore; ad esempio, l'ipotesi di ``fattore comune'' che è
+implicata dalle tradizionali ``correzioni'' per i termini di errore
+autocorrelati.
+
+\textit{Introduction to Econometrics} di James Stock e Mark Watson illustra
+questo approccio in modo comprensibile agli studenti universitari: molti dei
+dataset usati sono composti da migliaia o decine di migliaia di osservazioni, la
+stima FGLS è poco considerata, mentre si pone l'enfasi sull'uso di errori
+standard robusti (in effetti la discussione degli errori standard classici nel
+caso di omoschedasticità è confinata in un'appendice).
+
+Può essere utile passare in rassegna le opzioni fornite da \app{gretl} per la
+stima robusta della matrice di covarianza. Il primo punto da notare è che
+\app{gretl} produce errori standard ``classici'' come risultato predefinito
+(in tutti i casi tranne quello della stima GMM). In modalità a riga di comando
+(o negli script) è possibile ottenere gli errori standard robusti aggiungendo
+l'opzione \verb|--robust| ai comandi di stima. Se si usa l'interfaccia grafica,
+le finestre di dialogo per la specificazione dei modelli contengono una casella
+``Errori standard robusti'', insieme a un pulsante ``Configura'' che viene
+attivato se si seleziona la casella. Premendo il pulsante si ottiene una
+finestra (raggiungibile anche attraverso il menù principale: Strumenti
+$\rightarrow$ Preferenze $\rightarrow$ Generali $\rightarrow$ HCCME), da cui è
+possibile scegliere tra diverse varianti di stima robusta, e anche rendere
+predefinita la stima robusta.
+
+Le specifiche opzioni disponibili dipendono dalla natura dei dati in esame
+(cross-section, serie storiche o panel) e anche, in qualche misura, dalla scelta
+dello stimatore (anche se finora si è parlato di errori standard robusti in
+relazione allo stimatore OLS, questi possono essere usati anche con altri
+stimatori). Le successive sezioni di questo capitolo presentano argomenti
+caratteristici di ognuno dei tre tipi di dati appena ricordati. Dettagli
+ulteriori riguardanti la stima della matrice di covarianza nel contesto GMM
+si trovano nel capitolo~\ref{chap:gmm}.
+
+Per concludere questa introduzione, ricordiamo ancora quello che gli ``errori
+standard robusti'' possono e non possono garantire: possono fornire un'inferenza
+statistica asintoticamente valida in modelli che sono correttamente specificati,
+ma in cui gli errori non sono iid. Il termine ``asintotico'' significa che
+questo approccio può essere poco utile su piccoli campioni. Il termine
+``correttamente specificati'' significa che non si ha una bacchetta
+magica: se il termine di errore è correlato con i regressori, le stime dei
+parametri sono distorte e inconsistenti, gli errori standard robusti non possono
+risolvere questo problema.
+
+\section{Dati cross-section e HCCME}
 \label{vcv-hccme}
 
-\section{Time series data and HAC covariance matrices}
+Con dati cross-section, la causa più comune di violazione dell'ipotesi iid è
+data dall'eteroschedasticità (varianza non costante)\footnote{In alcuni contesti
+speciali, il problema può essere invece l'autocorrelazione spaziale. Gretl
+  non ha funzioni per gestire questo caso, che quindi verrà trascurato in questa
+  trattazione.}. Il alcuni casi è possibile fare delle ipotesi plausibili sulla
+forma specifica dell'eteroschedasticità e quindi applicare una correzione ad
+hoc, ma di solito non si sa con che tipo di eteroschedasticità si ha a che fare.
+Vogliamo quindi trovare uno stimatore della matrice di covarianza delle stime
+dei parametri che mantenga la sua validità, almeno dal punto di vista
+asintotico, anche in caso di eteroschedasticità. Che questo sia possibile non è
+ovvio a priori, ma White (1980) ha mostrato che
+%
+\begin{equation}
+\label{eq:ols-varb-h}
+\widehat{\mbox{Var}}_{\rm h}(\hat{\beta}) = 
+       (X'X)^{-1} X' \hat{\Omega} X (X'X)^{-1}
+\end{equation}
+%
+fa al caso nostro (come al solito in statistica dobbiamo dire ``sotto alcune
+condizioni'', ma in questo caso le condizioni non sono molto restrittive).
+$\hat{\Omega}$ è una matrice diagonale i cui elementi diversi da zero possono
+essere stimati usando i quadrati dei residui OLS. White ha chiamato la
+(\ref{eq:ols-varb-h}) uno stimatore HCCME (heteroskedasticity-consistent covariance
+matrix estimator).
+
+Davidson e MacKinnon (2004, capitolo 5) offrono una discussione utile di
+alcune varianti dello stimatore HCCME di White. Chiamano HC$_0$ la variante
+originale della (\ref{eq:ols-varb-h}), in cui gli elementi diagonali di
+$\hat{\Omega}$ sono stimati direttamente con i quadrati dei residui OLS,
+$\hat{u}^2_t$ (gli errori standard associati sono chiamati spesso ``errori
+standard di White''). Le varie estensioni dell'approccio di White hanno in
+comune un punto: l'idea che i quadrati dei residui OLS siano probabilmente
+``troppo piccoli'' in media. Questa idea è piuttosto intuitiva: le stime OLS dei
+parametri, $\hat{\beta}$, per costruzione soddisfano il criterio che la somma
+dei quadrati dei residui
+%
+\[
+\sum \hat{u}^2_t = \sum \left( y_t - X_t \hat{\beta} \right)^2
+\]
+%
+è minimizzata, dati $X$ e $y$.  Si supponga che $\hat{\beta} \neq
+\beta$.  È quasi certo che sia così: anche se OLS non è distorto, sarebbe un
+miracolo se i $\hat{\beta}$ calcolati da un campione finito fossero esattamente
+uguali a $\beta$. Ma in questo caso la somma dei quadrati dei veri errori (non
+osservati), $\sum u^2_t = \sum
+(y_t - X_t \beta)^2$ è certamente maggiore di $\sum \hat{u}^2_t$.
+Le varianti di HC$_0$ partono da questo punto nel modo seguente:
+%
+\begin{itemize}
+\item HC$_1$: applica una correzione per gradi di libertà, moltiplicando la
+  matrice HC$_0$ per $T/(T-k)$.
+\item HC$_2$: invece di usare $\hat{u}^2_t$ per gli elementi diagonali di
+  $\hat{\Omega}$, usa $\hat{u}^2_t/(1-h_t)$, dove $h_t =
+  X_t(X'X)^{-1}X'_t$, il $t^{\rm esimo}$ elemento diagonale della matrice di
+  proiezione, $P$, che ha la proprietà che $P\cdot y = \hat{y}$. La rilevanza di
+  $h_t$ sta nel fatto che se la varianza di tutti gli $u_t$ è
+  $\sigma^2$, il valore atteso di $\hat{u}^2_t$ è $\sigma^2(1-h_t)$, o in altre
+  parole, il rapporto $\hat{u}^2_t/(1-h_t)$ ha un valore atteso di
+  $\sigma^2$. Come mostrano Davidson e MacKinnon, $0\leq h_t <1$ per ogni
+  $t$, quindi questa correzione non può ridurre gli elementi diagonali di
+  $\hat{\Omega}$ e in generale li corregge verso l'alto.
+\item HC$_3$: Usa $\hat{u}^2_t/(1-h_t)^2$.  Il fattore aggiuntivo
+  $(1-h_t)$ nel denominatore, relativo a HC$_2$, può essere giustificato col
+  fatto che le osservazioni con ampia varianza tendono a esercitare una grossa
+  influenza sulle stime OLS, così che i corrispondenti residui tendono ad essere
+  sottostimati. Si veda Davidson e MacKinnon per ulteriori dettagli.
+\end{itemize}
+
+I rispettivi meriti di queste varianti sono stati analizzati sia dal punto di
+vista teorico che attraverso simulazioni, ma sfortunatamente non c'è un consenso
+preciso su quale di esse sia ``la migliore''. Davidson e MacKinnon sostengono
+che l'originale HC$_0$ probabilmente si comporta peggio delle altre varianti,
+tuttavia gli ``errori standard di White'' sono citati più spesso delle altre
+varianti più sofisticate e quindi per motivi di comparabilità, HC$_0$ è
+lo stimatore HCCME usato da \app{gretl} in modo predefinito.
+
+Se si preferisce usare HC$_1$, HC$_2$ o HC$_3$, è possibile farlo in due modi.
+In modalità script, basta eseguire ad esempio
+%
+\begin{code}
+set hc_version 2
+\end{code}
+%
+Con l'interfaccia grafica, basta andare nella finestra di configurazione di
+HCCME come mostrato sopra e impostare come predefinita una delle varianti.
+
+
+\section{Serie storiche e matrici di covarianza HAC}
 \label{vcv-hac}
 
-\section{Special issues with panel data}
+L'eteroschedasticità può essere un problema anche con le serie storiche, ma
+raramente è l'unico, o il principale, problema.
+
+Un tipo di eteroschedasticità è comune nelle serie storiche macroeconomiche, ma
+è abbastanza semplice da trattare: nel caso di serie con una forte tendenza,
+come il prodotto interno lordo, il consumo o l'investimento aggregato, e simili,
+alti valori della variabile sono probabilmente associati ad alta variabilità in
+termini assoluti. Il rimedio ovvio, usato da molti studi macroeconomici,
+consiste nell'usare i logaritmi di queste serie, al posto dei livelli. A patto
+che la variabilità \textit{proporzionale} di queste serie rimanga abbastanza
+costante nel tempo, la trasformazione logaritmica è efficace.
+
+Altre forme di eteroschedasticità possono sopravvivere alla trasformazione
+logaritmica e richiedono un trattamento distinto dal calcolo degli errori
+standard robusti. Ad esempio l'\textit{eteroschedasticità autoregressiva
+condizionale} riscontrabile ad esempio nelle serie dei prezzi di borsa, dove
+grandi disturbi sul mercato possono causare periodi di aumento della volatilità;
+fenomeni come questo giustificano l'uso di specifiche strategie di stima, come
+nei modelli GARCH (si veda il capitolo~\ref{chap:timeser}).
+
+Nonostante tutto questo, è possibile che un certo grado di eteroschedasticità
+sia presente nelle serie storiche: il punto chiave è che nella maggior parte dei
+casi, questa è probabilmente combinata con un certo grado di correlazione
+seriale (autocorrelazione), e quindi richiede un trattamento speciale.
+Nell'approccio di White, $\hat{\Omega}$, la matrice di covarianza stimata degli
+$u_t$, rimane diagonale: le varianze,
+$E(u^2_t)$, possono differire per $t$, ma le covarianze, $E(u_t u_s)$, sono
+sempre zero. L'autocorrelazione nelle serie storiche implica che almeno alcuni
+degli elementi fuori dalla diagonale di $\hat{\Omega}$ possono essere diversi da
+zero. Questo introduce una complicazione evidente e un ulteriore termine da
+tenere presente: le stime della matrice di covarianza che sono asintoticamente
+valide anche in presenza di eteroschedasticità e autocorrelazione nel processo
+di errore vengono definite HAC (heteroskedasticity and autocorrelation
+consistent).
+
+Il tema della stima HAC è trattato in termini più tecnici nel capitolo~\ref{chap:gmm},
+qui cerchiamo di fornire un'intuizione basilare. Iniziamo da un commento
+generale: l'autocorrelazione dei residui non è tanto una proprietà dei dati,
+quanto il sintomo di un modello inadeguato. I dati possono avere proprietà
+persistenti nel tempo, ma se imponiamo un modello che non tiene conto
+adeguatamente di questo aspetto, finiamo con avere disturbi autocorrelati. Al
+contrario, spesso è possibile mitigare o addirittura eliminare il problema
+dell'autocorrelazione includendo opportune variabili ritardate in un modello di
+serie storiche, o in altre parole specificando meglio la dinamica del modello.
+La stima HAC \textit{non} dovrebbe essere considerata il primo strumento per
+affrontare l'autocorrelazione del termine di errore.
+
+Detto questo, la ``ovvia'' estensione dello stimatore HCCME di White al caso di
+errori autocorrelati sembra questa: stimare gli elementi fuori dalla diagonale
+di $\hat{\Omega}$ (ossia le autocovarianze, $E(u_t u_s)$) usando, ancora una
+volta, gli opportuni residui OLS: $\hat{\omega}_{ts} = \hat{u}_t \hat{u}_s$.
+Questo approccio sembra giusto, ma richiede una correzione importante:
+cerchiamo uno stimatore \textit{consistente}, che converga verso il vero
+$\Omega$ quando l'ampiezza del campione tende a infinito. Campioni più ampi
+permettono di stimare più elementi di $\omega_{ts}$ (ossia, per $t$ e $s$
+più separati nel tempo), ma \textit{non} forniscono più informazione a proposito
+delle coppie $\omega_{ts}$ più distanti nel tempo, visto che la massima separazione nel
+tempo cresce anch'essa al crescere della dimensione del campione. Per assicurare
+la consistenza, dobbiamo confinare la nostra attenzione ai processi che
+esibiscono una dipendenza limitata nel tempo, o in altre parole interrompere il
+calcolo dei valori $\hat{\omega}_{ts}$ a un certo valore massimo di
+$p = t-s$ (dove $p$ è trattato come una funzione crescente dell'ampiezza
+campionaria, $T$, anche se non è detto che cresca proporzionalmente a $T$).
+
+La variante più semplice di questa idea consiste nel troncare il calcolo a un
+certo ordine di ritardo finito $p$, che cresce ad esempio come $T^{1/4}$. Il
+problema è che la matrice $\hat{\Omega}$ risultante potrebbe  non essere
+definita positiva, ossia potremmo ritrovarci con delle varianze stimate
+negative. Una soluzione a questo problema è offerta dallo stimatore di
+Newey--West (Newey e West, 1987), che assegna pesi declinanti alle
+autocovarianze campionarie, man mano che la separazione temporale aumenta.
+
+Per capire questo punto può essere utile guardare più da vicino la
+matrice di covarianza definita nella (\ref{eq:ols-varb-h}), ossia,
+%
+\[
+(X'X)^{-1} (X' \hat{\Omega} X) (X'X)^{-1}
+\]
+%
+Questo è noto come lo stimatore ``sandwich''. La fetta di pane è
+$(X'X)^{-1}$, ossia una matrice $k \times k$, che è anche l'ingrediente
+principale per il calcolo della classica  matrice di covarianza.
+Il contenuto del sandwich è
+%
+\[
+\begin{array}{ccccc}
+\hat{\Sigma} & = & X' & \hat{\Omega} & X \\
+{\scriptstyle (k \times k)} & &
+{\scriptstyle (k \times T)} & {\scriptstyle (T \times T)} & 
+  {\scriptstyle (T \times k)}
+\end{array}
+\]
+%
+Poiché $\Omega = E(uu')$, la matrice che si sta stimando può essere scritta
+anche come
+\[
+\Sigma = E(X'u\,u'X)
+\]
+%
+che esprime $\Sigma$ come la covarianza di lungo periodo del vettore casuale
+$X'u$ di dimensione $k$.
+
+Dal punto di vista computazionale, non è necessario salvare la matrice
+$T \times T$ $\hat{\Omega}$, che può essere molto grande. Piuttosto, si può
+calcolare il contenuto del sandwich per somma, come
+%
+\[
+\hat{\Sigma} = \hat{\Gamma}(0) + \sum_{j=1}^p w_j 
+  \left(\hat{\Gamma}(j) + \hat{\Gamma}'(j) \right)
+\]
+%
+dove la matrice $k \times k$ di autocovarianza campionaria $\hat{\Gamma}(j)$,
+per $j \geq 0$, è data da
+\[
+\hat{\Gamma}(j) = \frac{1}{T} \sum_{t=j+1}^T
+  \hat{u}_t \hat{u}_{t-j}\, X'_t\, X_{t-j}
+\]
+e $w_j$ è il peso dato dall'autocovarianza al ritardo $j > 0$.
+
+Rimangono due questioni. Come determiniamo esattamente la massima lunghezza del
+ritardo (o ``larghezza di banda'') $p$ dello stimatore HAC? E come determiniamo
+esattamente i pesi $w_j$? Torneremo presto sul (difficile) problema della
+larghezza di banda, ma per quanto riguarda i pesi, \app{gretl} offre tre varianti.
+Quella predefinita è il kernel di Bartlett, come è usato da
+Newey e West. Questo stabilisce che
+\[
+w_j = \left\{ \begin{array}{cc}
+     1 - \frac{j}{p+1} & j \leq p \\
+     0 & j > p
+     \end{array}
+    \right.
+\]
+in  modo che i pesi declinino linearmente mentre $j$ aumenta. Le altre due
+opzioni sono il kernel di Parzen e il kernel QS (Quadratic Spectral).
+Per il kernel di Parzen,
+\[
+w_j = \left\{ \begin{array}{cc}
+    1 - 6a_j^2 + 6a_j^3 & 0 \leq a_j \leq 0.5 \\
+    2(1 - a_j)^3 & 0.5 < a_j \leq 1 \\
+    0 & a_j > 1
+    \end{array}
+    \right.
+\]
+dove $a_j = j/(p+1)$, mentre per il kernel QS
+\[
+w_j = \frac{25}{12\pi^2 d_j^2} 
+   \left(\frac{\sin{m_j}}{m_j} - \cos{m_j} \right)
+\]
+dove $d_j = j/p$ e $m_j = 6\pi d_i/5$.  
+
+La figura~\ref{fig:kernels} mostra i pesi generati da questi kernel per
+$p=4$ e $j$ che va da 1 a 9.
+
+\begin{figure}[htbp]
+\caption{Tre kernel per HAC}
+\label{fig:kernels}
+\centering
+\includegraphics{figures/kernels}
+\end{figure}
+
+In \app{gretl} è possibile scegliere il kernel usando il comando \texttt{set}
+col parametro \verb|hac_kernel|:
+%
+\begin{code}
+set hac_kernel parzen
+set hac_kernel qs
+set hac_kernel bartlett
+\end{code}
+
+\subsection{Scelta della larghezza di banda HAC}
+\label{sec:hac-bw}
+
+La teoria asintotica sviluppata da Newey, West ed altri ci dice in termini
+generali come la larghezza di banda HAC, $p$, deve crescere in relazione
+all'ampiezza campionaria, $T$, ossia dice che $p$ dovrebbe crescere
+proporzionalmente a qualche potenza frazionaria di $T$. Purtroppo questo non è
+di molto aiuto quando nella pratica si ha a che fare con un dataset di ampiezza
+fissa. Sono state suggerite varie regole pratiche, due delle quali sono
+implementate da \app{gretl}. L'impostazione predefinita è $p = 0.75 T^{1/3}$,
+come raccomandato da Stock e Watson (2003). Un'alternativa è $p =
+4(T/100)^{2/9}$, come raccomandato in Wooldridge (2002b). In entrambi i casi si
+prende la parte intera del risultato. Queste varianti sono chiamate
+rispettivamente \texttt{nw1} e \texttt{nw2} nel contesto del comando \texttt{set} col parametro
+\verb|hac_lag|. Ossia, è possibile impostare la versione data da
+Wooldridge con il comando
+%
+\begin{code}
+set hac_lag nw2
+\end{code}
+%
+Come mostrato nella Tabella~\ref{tab:haclag} la scelta tra \texttt{nw1} e
+\texttt{nw2} non causa rilevanti differenze.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{ccc}
+    $T$ & $p$ (\texttt{nw1}) & $p$ (\texttt{nw2}) \\[4pt]
+50& 	2& 	3 \\
+100& 	3& 	4 \\
+150& 	3& 	4 \\
+200& 	4& 	4 \\
+300& 	5& 	5 \\
+400& 	5& 	5 \\
+  \end{tabular}
+\caption{Larghezza di banda HAC: confronto tra due regole pratiche}
+\label{tab:haclag}
+\end{table}
+
+È anche possibile specificare un valore numerico fisso per $p$, come in
+%
+\begin{code}
+set hac_lag 6
+\end{code}
+%
+Inoltre è possibile impostare un valore diverso per il kernel QS (visto che
+questo non deve essere necessariamente un valore intero).  Ad esempio:
+%
+\begin{code}
+set qs_bandwidth 3.5
+\end{code}
+
+
+\subsection{Prewhitening e scelta della larghezza di banda basata sui dati}
+\label{sec:hac-prewhiten}
+
+Un approccio alternativo per trattare l'autocorrelazione dei residui consiste
+nell'attaccare il problema da due fronti. L'intuizione alla base di questa
+tecnica, nota come \emph{VAR prewhitening} (Andrews e Monahan, 1992) può essere
+illustrata con un semplice esempio. Sia $x_t$ una serie di variabili casuali con
+autocorrelazione del prim'ordine
+%
+\[
+  x_t = \rho x_{t-1} + u_t
+\]
+%
+Si può dimostrare che la varianza di lungo periodo di $x_t$ è
+%
+\[
+  V_{LR}(x_t) = \frac{V_{LR}(u_t)}{(1-\rho)^2}
+\]
+%
+Nella maggior parte dei casi, $u_t$ è meno autocorrelato di $x_t$,
+quindi dovrebbe richiedere una minore larghezza di banda. La stima di
+$V_{LR}(x_t)$ può quindi procedere in tre passi: (1) stimare $\rho$; (2)
+ottenere una stima HAC di $\hat{u}_t = x_t - \hat{\rho} x_{t-1}$; (3)
+dividere il risultato per $(1-\rho)^2$.
+
+Applicare questo approccio al nostro problema implica stimare un'autoregressione
+vettoriale (VAR) di ordine finito sulle variabili vettoriali
+$\xi_t = X_t \hat{u}_t$. In generale, il VAR può essere di ordine qualsiasi, ma
+nella maggior parte dei casi è sufficiente l'ordine 1; lo scopo non è quello di
+produrre un modello preciso per $\xi_t$, ma solo quello di catturare la maggior parte
+dell'autocorrelazione.  Quindi viene stimato il VAR seguente
+%
+\[
+  \xi_t = A \xi_{t-1} + \varepsilon_t
+\]
+%
+Una stima della matrice $X'\Omega X$ può essere ottenuta con
+\[
+  (I- \hat{A})^{-1} \hat{\Sigma}_{\varepsilon} (I- \hat{A}')^{-1}
+\]
+dove $\hat{\Sigma}_{\varepsilon}$ è uno stimatore HAC, applicato ai residui del
+VAR.
+
+In \app{gretl} è possibile usare il prewhitening con
+%
+\begin{code}
+set hac_prewhiten on
+\end{code}
+%
+Al momento non è possibile calcolare un VAR iniziale con un ordine diverso da 1.
+
+Un ulteriore miglioramento di questo approccio consiste nello scegliere la
+larghezza di banda in base ai dati. Intuitivamente, ha senso che la larghezza di
+banda non tenga conto soltanto dell'ampiezza campionaria, ma anche delle
+proprietà temporali dei dati (e anche del kernel scelto). Un metodo non
+parametrico di scelta è stato proposto da Newey e West (1994) ed è spiegato
+bene e in modo sintetico da Hall (2005). Questa opzione può essere abilitata in
+gretl con il comando
+%
+\begin{code}
+set hac_lag nw3
+\end{code}
+%
+ed è abilitata in modo predefinito quando si seleziona il prewhitening, ma è
+possibile modificarla utilizzando un valore numerico specifico per
+\verb|hac_lag|.
+
+Anche il metodo basato sui dati proposto da Newey--West non identifica univocamente
+la larghezza di banda per una data ampiezza del campione. Il primo passo
+consiste nel calcolare una serie di covarianze dei residui, e la lunghezza di
+questa serie è una funzione dell'ampiezza campionaria, ma solo per un certo
+multiplo scalare; ad esempio, è data da $O(T^{2/9})$ per il kernel di Bartlett.
+\app{Gretl} usa un multiplo implicito pari a 1.
+
+
+\section{Problemi speciali con dati panel}
 \label{sec:vcv-panel}
 
+Visto che i dati panel hanno sia caratteristiche di serie storiche sia
+caratteristiche di dati cross-section, ci si può aspettare che in generale
+la stima robusta della matrice di covarianza debba richiedere di gestire sia
+l'eteroschedasticità che l'autocorrelazione (l'approccio HAC). Inoltre ci sono
+altre caratteristiche dei dati panel che richiedono attenzione particolare:
+\begin{itemize}
+\item La varianza del termine di errore può differire tra le unità
+  cross-section.
+\item La covarianza degli errori tra le unità può essere diversa da zero in ogni
+  periodo temporale.
+\item Se non si rimuove la variazione ``between'', gli errori possono esibire
+  autocorrelazione, non nel senso classico delle serie storiche, ma nel senso
+  che l'errore medio per l'unità $i$ può essere diverso da quello per l'unità $j$
+  (questo è particolarmente rilevante quando il metodo di stima è pooled OLS).
+\end{itemize}
+
+\app{Gretl} al momento offre due stimatori robusti per la matrice di covarianza
+da usare con dati panel, disponibili per modelli stimati con effetti fissi,
+pooled OLS, e minimi quadrati a due stadi. Lo stimatore robusto predefinito è
+quello suggerito da Arellano (2003), che è HAC a patto che il panel sia del tipo
+``$n$ grande, $T$ piccolo'' (ossia si osservano molte unità per pochi periodi).
+Lo stimatore di Arellano è
+\[
+\hat{\Sigma}_{\rm A} = 
+\left(X^{\prime}X\right)^{-1}
+\left( \sum_{i=1}^n X_i^{\prime} \hat{u}_i 
+    \hat{u}_i^{\prime} X_i \right)
+\left(X^{\prime}X\right)^{-1}
+\]
+dove $X$ è la matrice dei regressori (con le medie di gruppo sottratte, nel caso
+degli effetti fissi), $\hat{u}_i$ denota il vettore dei residui per l'unità $i$,
+e $n$ è il numero delle unità cross-section. Cameron e Trivedi (2005) difendono
+l'uso di questo stimatore, notando che il classico HCCME di White può produrre
+errori standard artificialmente bassi in un contesto panel, perché non tiene
+conto dell'autocorrelazione.
+
+Nei casi in cui l'autocorrelazione non è un problema, lo stimatore proposto da
+Beck e Katz (1995) e discusso da Greene (2003, capitolo 13) può essere appropriato.
+Questo stimatore, che tiene conto della correlazione contemporanea tra le unità
+e l'eteroschedasticità per unità, è
+\[
+\hat{\Sigma}_{\rm BK} = 
+\left(X^{\prime}X\right)^{-1}
+\left( \sum_{i=1}^n \sum_{j=1}^n \hat{\sigma}_{ij} X^{\prime}_iX_j \right)
+\left(X^{\prime}X\right)^{-1}
+\]
+Le covarianze $\hat{\sigma}_{ij}$ sono stimate con
+\[
+\hat{\sigma}_{ij} = \frac{\hat{u}^{\prime}_i \hat{u}_j}{T}
+\]
+dove $T$ è la lunghezza della serie storica per ogni unità. Beck e
+Katz chiamano gli errori standard associati ``Panel-Corrected Standard
+Errors'' (PCSE). Per usare questo stimatore in \app{gretl} basta eseguire
+il comando
+%
+\begin{code}
+set pcse on
+\end{code}
+%
+Per reimpostare come predefinito lo stimatore di Arellano occorre eseguire
+%
+\begin{code}
+set pcse off
+\end{code}
+%
+Si noti che a prescindere dall'impostazione di \texttt{pcse}, lo stimatore
+robusto non è usato a meno che non si aggiunga l'opzione \verb|--robust| ai
+comandi di stima, o non si selezioni la casella ``Robusto'' nell'interfaccia
+grafica.
 
 %%% Local Variables: 
 %%% mode: latex
