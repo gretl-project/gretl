@@ -509,10 +509,12 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     /* determine the bandwidth setting */
 
     if (data_based_hac_bandwidth()) {
-	gretl_matrix *u = gretl_vector_from_array(uhat, T, GRETL_MOD_NONE);
+	gretl_matrix u;
 
-	err = newey_west_bandwidth(u, kern, &p, &bt);
-	gretl_matrix_free(u);
+	u.rows = T;
+	u.cols = 1;
+	u.val = uhat;
+	err = newey_west_bandwidth(&u, kern, &p, &bt);
 	if (err) {
 	    goto bailout;
 	}

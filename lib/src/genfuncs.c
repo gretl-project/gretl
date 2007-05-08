@@ -1503,26 +1503,24 @@ int get_t_from_obs_string (const char *s, const double **Z,
 #if OBS_DEBUG
 		fprintf(stderr, " loop_scalar_read gave t = %d\n", t);
 #endif
-		if (t > 0) {
-		    t--;
-		}
 	    } else if (v < pdinfo->v) {
 		t = (int) Z[v][0];
 #if OBS_DEBUG
 		fprintf(stderr, " based on var %d: t = %d\n", v, t);
 #endif
-		if (t > pdinfo->n) {
-		    char try[16];
+	    }
 
-		    sprintf(try, "%d", t);
-		    t = dateton(try, pdinfo);
+	    if (t > pdinfo->n) {
+		char try[16];
+
+		sprintf(try, "%d", t);
+		t = dateton(try, pdinfo);
 #if OBS_DEBUG
-		    fprintf(stderr, " revised via dateton: t = %d\n", t);
+		fprintf(stderr, " revised via dateton: t = %d\n", t);
 #endif
-		} else {
-		    /* convert to 0-based */
-		    t--;
-		}
+	    } else {
+		/* convert to 0-based */
+		t--;
 	    }
 	}
     }

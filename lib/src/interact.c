@@ -1134,15 +1134,18 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 
     if (isdigit(*targ)) {
 	vtarg = atoi(targ);
+	if (vtarg >= pdinfo->v || vtarg < 1) {
+	    cmd->err = E_DATA;
+	    sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vtarg);
+	    return;
+	}
     } else {
 	/* we're given the name of a variable? */
 	vtarg = varindex(pdinfo, targ);
-    }
-
-    if (vtarg >= pdinfo->v || vtarg < 1) {
-	cmd->err = E_DATA;
-	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vtarg);
-	return;
+	if (vtarg >= pdinfo->v) {
+	    cmd->err = E_UNKVAR;
+	    return;
+	}
     } 
 
     vtest = varindex(pdinfo, newname);

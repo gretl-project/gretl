@@ -1404,7 +1404,7 @@ int do_add_omit (selector *sr)
     char title[48];
     char *optstr = "";
     gretlopt opt = OPT_S;
-    MODEL *orig, *pmod;
+    MODEL *orig, *pmod = NULL;
     gint err;
 
     if (buf == NULL) {
@@ -1431,11 +1431,16 @@ int do_add_omit (selector *sr)
 	return 1;
     }
 
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-	nomem();
-	gretl_print_destroy(prn);
-	return 0;
+    if (selector_code(sr) == OMIT && (opt & OPT_W)) {
+	/* pmod is not needed */
+	;
+    } else {
+	pmod = gretl_model_new();
+	if (pmod == NULL) {
+	    nomem();
+	    gretl_print_destroy(prn);
+	    return 0;
+	}
     }
 
     if (selector_code(sr) == ADD) { 
@@ -1458,13 +1463,16 @@ int do_add_omit (selector *sr)
 	return 0;
     }
 
-    /* record sub-sample info (if any) with the model */
-    attach_subsample_to_model(pmod, datainfo);
-
-    gretl_object_ref(pmod, GRETL_OBJ_EQN);
-
-    sprintf(title, _("gretl: model %d"), pmod->ID);
-    view_model(prn, pmod, 78, 420, title);
+    if (pmod != NULL) {
+	/* record sub-sample info (if any) with the model */
+	attach_subsample_to_model(pmod, datainfo);
+	gretl_object_ref(pmod, GRETL_OBJ_EQN);
+	sprintf(title, _("gretl: model %d"), pmod->ID);
+	view_model(prn, pmod, 78, 420, title);
+    } else {
+	view_buffer(prn, 78, 400, _("gretl: Wald omit test"), 
+		    PRINT, NULL);
+    }
 
     return 0;
 }
@@ -3355,7 +3363,7 @@ int do_rename_variable (int v, const char *newname, int full)
 
 int record_varlabel_change (int v)
 {
-    gretl_command_sprintf("label %s -d \"%s\" -n \"%s\"", 
+    gretl_command_sprintf("setinfo %s -d \"%s\" -n \"%s\"", 
 			  datainfo->varname[v],
 			  VARLABEL(datainfo, v), 
 			  DISPLAYNAME(datainfo, v));

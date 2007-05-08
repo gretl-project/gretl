@@ -243,17 +243,24 @@ const char *get_gnuplot_charset (void)
     return NULL;
 }
 
-int use_latin_2 (void)
+int iso_latin_version (void)
 {
-    int l2 = gretl_cset_maj == 8859 && gretl_cset_min == 2;
+    if (gretl_cset_maj == 8859 &&
+	(gretl_cset_min == 1 || 
+	 gretl_cset_min == 2 ||
+	 gretl_cset_min == 15)) {
+	return gretl_cset_min;
+    }
 
 # ifdef WIN32
-    if (!l2) {
-	l2 = gretl_cpage == 1250;
+    if (gretl_cpage == 1252) {
+	return 1;
+    } else if (gretl_cpage == 1250) {
+	return 2;
     }
 # endif
 
-    return l2;
+    return 0;
 }
 
 char *iso_gettext (const char *msgid)

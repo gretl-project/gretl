@@ -135,7 +135,8 @@ typedef enum {
     RADIOSET = 1 << 5,
     INVISET  = 1 << 6,
     FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
-    BROWSER  = 1 << 8   /* wants "Browse" button */
+    MACHSET  = 1 << 8,  /* "local machine" setting */
+    BROWSER  = 1 << 9   /* wants "Browse" button */
 } rcflags;
 
 typedef struct {
@@ -145,6 +146,7 @@ typedef struct {
     void *var;         /* pointer to variable */
     rcflags flags;     /* ROOTSET user string
 			  USERSET root string
+			  MACHSET local machine string
 			  BOOLSET boolean (user)
                           INTSET integer (user)
 			  LISTSET user string, from fixed menu
@@ -165,7 +167,7 @@ typedef struct {
 
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
-      ROOTSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
+      MACHSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.userdir, 
       USERSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
@@ -188,23 +190,23 @@ RCVAR rc_vars[] = {
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
       BOOLSET, 0, TAB_MAIN, NULL },
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
-      ROOTSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
     { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
@@ -1439,7 +1441,9 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		} else {
 		    *(int *) (rc_vars[i].var) = FALSE;
 		}
-	    } else if (rc_vars[i].flags & USERSET || rc_vars[i].flags & ROOTSET) {
+	    } else if ((rc_vars[i].flags & USERSET) || 
+		       (rc_vars[i].flags & ROOTSET) ||
+		       (rc_vars[i].flags & MACHSET)) {
 		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
 		if (str != NULL && *str != '\0') { 
 		    strvar = (char *) rc_vars[i].var;
@@ -1723,6 +1727,12 @@ void write_rc (void)
 			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, 
 			  strval);
+	} else if (rc_vars[i].flags & MACHSET) {
+	    strval = (char *) rc_vars[i].var;
+	    write_reg_val(HKEY_LOCAL_MACHINE, 
+			  get_reg_base(rc_vars[i].key),
+			  rc_vars[i].key, 
+			  strval);
 	} else {
 	    strval = (char *) rc_vars[i].var;
 	    write_reg_val(HKEY_CURRENT_USER, 
@@ -1818,6 +1828,11 @@ void read_rc (void)
 
 	if (rc_vars[i].flags & ROOTSET) {
 	    err = read_reg_val (HKEY_CLASSES_ROOT, 
+				get_reg_base(rc_vars[i].key),
+				rc_vars[i].key, 
+				value);
+	} else if (rc_vars[i].flags & MACHSET) {
+	    err = read_reg_val (HKEY_LOCAL_MACHINE, 
 				get_reg_base(rc_vars[i].key),
 				rc_vars[i].key, 
 				value);

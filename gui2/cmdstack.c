@@ -266,7 +266,7 @@ static void dump_model_cmds (const model_stack *mstack, FILE *fp)
 }
 
 /* get the ID number of a variable operated upon by 
-   "genr" or "label" 
+   "genr" or "setinfo" 
 */
 
 static int vnum_from_data_command (const char *s)
@@ -354,7 +354,7 @@ static char *mark_redundant_commands (void)
 
     for (i=0; i<n_cmds; i++) {
 	s = cmd_stack[i];
-	if (!strncmp(s, "genr", 4) || !strncmp(s, "label", 5)) {
+	if (!strncmp(s, "genr", 4) || !strncmp(s, "setinfo", 7)) {
 	    int v = vnum_from_data_command(s);
 
 	    if (v > 0 && var_is_stored(v, i)) {

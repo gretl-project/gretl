@@ -885,7 +885,7 @@ int gnuplot_make_graph (void)
     int err = 0;
 
 #ifdef ENABLE_NLS  
-    if (use_latin_2() && gnuplot_has_ttf(0)) {
+    if (iso_latin_version() == 2 && gnuplot_has_ttf(0)) {
 # if GP_DEBUG
 	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
 # endif
@@ -920,8 +920,8 @@ enum {
 static void make_gtitle (gnuplot_info *gi, int code, 
 			 const char *s1, const char *s2)
 {
-    char title[128];
     char depvar[VNAMELEN];
+    char title[128];
 
     switch (code) {
     case GTITLE_VLS:
@@ -958,7 +958,20 @@ static void make_gtitle (gnuplot_info *gi, int code,
     }
 
     if (*title != '\0') {
-	fprintf(gi->fp, "set title '%s'\n", title);
+	if (strchr(s1, '\'') || strchr(s1, '\'')) {
+	    fprintf(gi->fp, "set title \"%s\"\n", title);
+	} else {
+	    fprintf(gi->fp, "set title '%s'\n", title);
+	}
+    }
+}
+
+static void print_axis_label (char axis, const char *s, FILE *fp)
+{
+    if (strchr(s, '\'')) {
+	fprintf(fp, "set %clabel \"%s\"\n", axis, s);
+    } else {
+	fprintf(fp, "set %clabel '%s'\n", axis, s);
     }
 }
 
@@ -1102,15 +1115,15 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 
     sprintf(title, I_("%s versus %s (with loess fit)"), s1, s2);
     fputs("set key top left\n", fp);
-    fprintf(fp, "set title '%s'\n", title);
-    fprintf(fp, "set xlabel '%s'\n", s1);
-    fprintf(fp, "set ylabel '%s'\n", s2);
+    fprintf(fp, "set title \"%s\"\n", title);
+    print_axis_label('x', s1, fp);
+    print_axis_label('y', s2, fp);
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w points, \\\n", fp);
     sprintf(title, I_("loess fit, d = %d, q = %g"), d, q);
-    fprintf(fp, " '-' using 1:2 title '%s' w lines\n", title);
+    fprintf(fp, " '-' using 1:2 title \"%s\" w lines\n", title);
 
     T = gretl_vector_get_length(yh);
 
@@ -1792,7 +1805,7 @@ int gnuplot (const int *plotlist, const char *literal,
     fputs(gretl_print_get_buffer(prn), fp);
     gretl_print_destroy(prn);
 
-    fprintf(fp, "set xlabel '%s'\n", xlabel);
+    print_axis_label('x', xlabel, fp);
     fputs("set xzeroaxis\n", fp); 
     fputs("set missing \"?\"\n", fp);
 
@@ -1812,7 +1825,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
 	} else {
-	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
+	    print_axis_label('y', series_name(pdinfo, list[1]), fp);
 	}
 	if (!(gi.flags & GPT_AUTO_FIT)) {
 	    strcpy(keystr, "set nokey\n");
@@ -1828,7 +1841,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[2]), 
 			series_name(pdinfo, list[3]));
 	}
-	fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[2]));
+	print_axis_label('y', series_name(pdinfo, list[2]), fp);
     } 
 
     if (toomany) {
@@ -1876,7 +1889,7 @@ int gnuplot (const int *plotlist, const char *literal,
     if (gi.flags & GPT_Y2AXIS) {
 	for (i=1; i<list[0]; i++) {
 	    set_lwstr(pdinfo, list[i], lwstr);
-	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s%s",
+	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    series_name(pdinfo, list[i]), 
 		    (i == oddman)? I_("right") : I_("left"),
@@ -1889,15 +1902,15 @@ int gnuplot (const int *plotlist, const char *literal,
 	strcpy(s1, (gi.flags & GPT_RESIDS)? I_("residual") : 
 	       series_name(pdinfo, list[1]));
 	strcpy(s2, series_name(pdinfo, list[3]));
-	fprintf(fp, " '-' using 1:2 title '%s (%s=1)', \\\n", s1, s2);
-	fprintf(fp, " '-' using 1:2 title '%s (%s=0)'\n", s1, s2);
+	fprintf(fp, " '-' using 1:2 title \"%s (%s=1)\", \\\n", s1, s2);
+	fprintf(fp, " '-' using 1:2 title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
-	fprintf(fp, " '-' using 1:2 title '%s' w points , \\\n", I_("actual"));	
+	fprintf(fp, " '-' using 1:2 title \"%s\" w points , \\\n", I_("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, I_("fitted"));
     } else if (gi.flags & GPT_FA) {
 	set_withstr(gi.flags, withstr);
-	fprintf(fp, " '-' using 1:2 title '%s' %s lt 2, \\\n", I_("fitted"), withstr);
-	fprintf(fp, " '-' using 1:2 title '%s' %s lt 1\n", I_("actual"), withstr);	
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 2, \\\n", I_("fitted"), withstr);
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 1\n", I_("actual"), withstr);	
     } else {
 	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
@@ -1909,7 +1922,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    if (!use_impulses(&gi)) { 
 		set_withstr(gi.flags, withstr);
 	    }
-	    fprintf(fp, " '-' using 1:2 title '%s' %s%s", s1, withstr, lwstr);
+	    fprintf(fp, " '-' using 1:2 title \"%s\" %s%s", s1, withstr, lwstr);
 	    if (i < list[0] - 1 || (gi.flags & GPT_AUTO_FIT)) {
 	        fputs(" , \\\n", fp); 
 	    } else {
@@ -2218,10 +2231,10 @@ int gnuplot_3d (int *list, const char *literal,
     gretl_push_c_numeric_locale();
 
     maybe_add_surface(list, pZ, pdinfo, opt, surface);
-
-    fprintf(fq, "set xlabel '%s'\n", series_name(pdinfo, list[2]));
-    fprintf(fq, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
-    fprintf(fq, "set zlabel '%s'\n", series_name(pdinfo, list[3]));
+    
+    print_axis_label('x', series_name(pdinfo, list[2]), fq);
+    print_axis_label('y', series_name(pdinfo, list[1]), fq);
+    print_axis_label('z', series_name(pdinfo, list[3]), fq);
 
     fputs("set missing \"?\"\n", fq);
 
@@ -2499,16 +2512,16 @@ int plot_freq (FreqDist *freq, DistCode dist)
     } else if (dist == D_NORMAL) {
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title '%s' %s , \\\n"
+	fprintf(fp, "'-' using 1:2 title \"%s\" %s , \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
-		"title '%s' w lines\n",
+		"title \"%s\" w lines\n",
 		freq->varname, withstr, label);
     } else if (dist == D_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
-		"title '%s' w lines\n",
+		"title \"%s\" w lines\n",
 		freq->varname, withstr, label); 
     }
 

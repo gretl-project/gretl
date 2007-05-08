@@ -506,6 +506,24 @@ static gretlopt retrieve_arbond_opts (MODEL *pmod)
     return opt;
 }
 
+static int obs_diff_ok (const MODEL *old, const MODEL *new)
+{
+    int tdiff, ndiff = new->nobs - old->nobs;
+
+    if (old->ci == CORC || old->ci == HILU || old->ci == PWE) {
+	return 0;
+    }
+
+    if (ndiff > 0) {
+	tdiff = (new->t2 - new->t1) - (old->t2 - old->t1);
+	if (ndiff == tdiff) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
 
 #define SMPL_DEBUG 0
@@ -521,8 +539,11 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     int mc = get_model_count();
     int repci = orig->ci;
     int order = 0;
+    int first = 1;
 
     gretl_model_init(&rep);
+
+    /* recreate options and auxiliary vars, if required */
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
 	gretlopt hlopt = OPT_NONE;
@@ -548,11 +569,27 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     } else if (orig->ci == ARBOND) {
 	param = gretl_model_get_data(orig, "istr");
 	myopt |= retrieve_arbond_opts(orig);
+    } else if (orig->ci == ARCH) {
+	order = gretl_model_get_int(orig, "arch_order");
+    } else if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	if (gretl_model_get_int(orig, "robust")) {
+	    myopt = OPT_R;
+	} else if (gretl_model_get_int(orig, "ordered")) {
+	    myopt = OPT_D;
+	} else {
+	    myopt = OPT_NONE;
+	}
+    } else if (orig->ci == PANEL) {
+	if (gretl_model_get_int(orig, "random-effects")) {
+	    myopt |= OPT_U;
+	}
     }
 
     if (rep.errcode) {
 	return rep;
     }
+
+ try_again:
 
     switch (orig->ci) {
 
@@ -564,18 +601,10 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 			   pdinfo, myopt, prn);
 	break;
     case ARCH:
-	order = gretl_model_get_int(orig, "arch_order");
 	rep = arch_model(list, order, pZ, pdinfo, myopt, prn);
 	break;
     case LOGIT:
     case PROBIT:
-	if (gretl_model_get_int(orig, "robust")) {
-	    myopt = OPT_R;
-	} else if (gretl_model_get_int(orig, "ordered")) {
-	    myopt = OPT_D;
-	} else {
-	    myopt = OPT_NONE;
-	}
 	rep = logit_probit(list, pZ, pdinfo, orig->ci, myopt, NULL);
 	break;
     case TOBIT:
@@ -601,10 +630,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	}
 	break;
     case PANEL:
-	if (gretl_model_get_int(orig, "random-effects")) {
-	    myopt |= OPT_R;
-	}
-	rep = real_panel_model(list, pZ, pdinfo, myopt, prn); /* prn was NULL */
+	rep = real_panel_model(list, pZ, pdinfo, myopt, prn);
 	break;
     default:
 	/* handles OLS, WLS, HSK, HCCM, etc. */
@@ -632,8 +658,15 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 #endif
 
     /* check that we got the same sample as the original */
-    if (!rep.errcode) {
-	if (rep.nobs > orig->nobs) {
+    if (!rep.errcode && rep.nobs != orig->nobs) {
+	if (first && obs_diff_ok(orig, &rep)) {
+	    pdinfo->t1 = orig->t1;
+	    pdinfo->t2 = orig->t2;
+	    clear_model(&rep);
+	    first = 0;
+	    goto try_again;
+	} else {
+	    fprintf(stderr, "Original obs = %d but new = %d\n", orig->nobs, rep.nobs);
 	    rep.errcode = E_DATA;
 	}
     } 

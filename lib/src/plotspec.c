@@ -215,7 +215,7 @@ static void
 gp_string (FILE *fp, const char *fmt, const char *s, int png)
 {
 #ifdef ENABLE_NLS  
-    if (png && use_latin_2()) {
+    if (png && iso_latin_version() == 2) {
 	char htmlstr[128];
 
 	sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
@@ -330,7 +330,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	    if (x[t] > .90 * xrange) {
 		xoff = -.02 * xrange;
 	    }
-	    fprintf(fp, "set label '%s' at %.8g,%.8g\n", spec->markers[t],
+	    fprintf(fp, "set label \"%s\" at %.8g,%.8g\n", spec->markers[t],
 		    x[t] + xoff, y[t] + yoff);
 	}
     }
@@ -373,19 +373,19 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     }
 
     if (!string_is_blank(spec->titles[0])) {
-	gp_string(fp, "set title '%s'\n", spec->titles[0], png);
+	gp_string(fp, "set title \"%s\"\n", spec->titles[0], png);
     }
 
     if (!string_is_blank(spec->titles[1])) {
-	gp_string(fp, "set xlabel '%s'\n", spec->titles[1], png);
+	gp_string(fp, "set xlabel \"%s\"\n", spec->titles[1], png);
     }
 
     if (!string_is_blank(spec->titles[2])) {
-	gp_string(fp, "set ylabel '%s'\n", spec->titles[2], png);
+	gp_string(fp, "set ylabel \"%s\"\n", spec->titles[2], png);
     }
 
     if ((spec->flags & GPT_Y2AXIS) && !string_is_blank(spec->titles[3])) {
-	gp_string(fp, "set y2label '%s'\n", spec->titles[3], png);
+	gp_string(fp, "set y2label \"%s\"\n", spec->titles[3], png);
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
@@ -473,6 +473,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
 	fputs("set style fill solid 0.8\n", fp);
+	/* FIXME 0.8 for monochrome? */
     }  
 
     if (spec->flags & GPT_ALL_MARKERS) {
@@ -509,16 +510,16 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
 
-	gp_string(fp, "title '%s", spec->lines[i].title, png);
+	gp_string(fp, "title \"%s", spec->lines[i].title, png);
 
 	if (any_y2) {
 	    if (spec->lines[i].yaxis == 1) {
-		fprintf(fp, " (%s)' ", I_("left"));
+		fprintf(fp, " (%s)\" ", I_("left"));
 	    } else {
-		fprintf(fp, " (%s)' ", I_("right"));
+		fprintf(fp, " (%s)\" ", I_("right"));
 	    }
 	} else {
-	    fputs("' ", fp);
+	    fputs("\" ", fp);
 	}
 
 	fprintf(fp, "w %s", spec->lines[i].style);

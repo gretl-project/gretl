@@ -117,7 +117,7 @@ struct _selector {
                          c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
-                        c == SCATTERS || c == COINT || c == ARBOND)
+                        c == SCATTERS || c == COINT || c == ARBOND || c == OMIT)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -2884,6 +2884,24 @@ static void build_scatters_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_omit_test_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    vbox_add_hsep(sr->vbox);
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Estimate reduced model"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Wald test, based on covariance matrix"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_W, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_arma_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
@@ -3017,6 +3035,8 @@ static void build_selector_radios (selector *sr)
 	build_scatters_radios(sr);
     } else if (sr->code == COINT) {
 	build_coint_radios(sr);
+    } else if (sr->code == OMIT) {
+	build_omit_test_radios(sr);
     } else {
 	build_vec_radios(sr);
     }
@@ -3746,6 +3766,11 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     /* unhide lags check box? */
     if (SAVE_DATA_ACTION(sr->code) && lags_hidden) {
 	unhide_lags_switch(sr);
+    }
+
+    /* radio buttons? */
+    if (WANT_RADIOS(sr->code)) {
+	build_selector_radios(sr);
     }
 
 #if 0 /* not ready */

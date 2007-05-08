@@ -216,6 +216,25 @@ int console_sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
+static int console_vars_changed (const char *line, int oldv, int err)
+{
+    int ret = 0;
+
+    if (datainfo->v != oldv) {
+	ret = 1;
+    } else if (!err) {
+	if (!strncmp(line, "rename", 6) ||
+	    !strncmp(line, "setinfo", 7) ||
+	    !strncmp(line, "genr", 4) ||
+	    !strncmp(line, "series", 6) ||
+	    !strncmp(line, "scalar", 6)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 static void console_exec (void)
 {
     GtkTextBuffer *buf;
@@ -304,7 +323,8 @@ static void console_exec (void)
     console_scroll_to_end(buf, &start);
 
     /* update variable listing in main window if needed */
-    if (datainfo->v != oldv || !strncmp(execline, "rename", 6)) {
+    if (console_vars_changed(execline, oldv, err)) {
+	mark_dataset_as_modified();
 	populate_varlist();
     }
 

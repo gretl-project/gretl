@@ -266,3 +266,16 @@ gchar *my_locale_to_utf8_next (const gchar *src)
 {
     return real_my_locale_to_utf8(src, 0);
 }
+
+gchar *latin2_to_utf8 (const gchar *src)
+{
+    gsize read, wrote;
+
+#ifdef G_OS_WIN32
+    return g_convert(src, -1, "UTF-8", "CP1250",
+		     &read, &wrote, NULL);
+#else
+    return g_convert(src, -1, "UTF-8", "ISO-8859-2",
+		     &read, &wrote, NULL);
+#endif
+}

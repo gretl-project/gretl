@@ -220,12 +220,12 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
     }
 }
 
-static void line_to_file (const char *s, FILE *fp, int l2)
+static void line_to_file (const char *s, FILE *fp, int lv)
 {
 #ifdef ENABLE_NLS
-    if (l2 == -1) {
+    if (lv == -2) {
 	print_as_html(s, fp);
-    } else if (l2 == 1) {
+    } else if (lv == 2) {
 	print_as_locale(s, fp);
     } else {
 	fputs(s, fp);
@@ -268,9 +268,9 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     char restore_line[MAXLEN] = {0};
     int png_line_saved = 0;
 #ifdef ENABLE_NLS
-    int l2 = use_latin_2();
+    int lv = iso_latin_version();
 #else
-    int l2 = 0;
+    int lv = 0;
 #endif
 
     sprintf(temp, "%sgpttmp", paths.userdir);
@@ -323,7 +323,7 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     while (fgets(fline, sizeof fline, fsrc)) {
 	if (add) {
 	    if (!commented_term_line(fline) && !set_output_line(fline)) {
-		line_to_file(fline, ftmp, -l2);
+		line_to_file(fline, ftmp, -lv);
 	    }
 	} else {
 	    /* we're removing the png term line */
@@ -345,7 +345,7 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		printit = 0;
 	    }
 	    if (printit) {
-		line_to_file(fline, ftmp, l2);
+		line_to_file(fline, ftmp, lv);
 	    }
 	}
     }
@@ -783,16 +783,30 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     return err;
 }
 
-static void capture_varname (char *targ, const char *src)
+static void catch_value (char *targ, const char *src, int maxlen)
 {
-    int n;
+    int i, n;
+
+    src += strspn(src, " \t\r\n");
+
+    if (*src == '\'' || *src == '"') {
+	src++;
+    }
 
     *targ = '\0';
-    if (*src == '\'') src++;
-    strncat(targ, src, MAXDISP - 1);
+    strncat(targ, src, maxlen - 1);
     n = strlen(targ);
-    if (targ[n-1] == '\'') {
-	targ[n-1] = '\0';
+    
+    for (i=n-1; i>=0; i--) {
+	if (isspace((unsigned char) targ[i])) {
+	    targ[i] = '\0';
+	} else {
+	    break;
+	}
+    }    
+
+    if (targ[i] == '\'' || targ[i] == '"') {
+	targ[i] = '\0';
     }
 }
 
@@ -802,6 +816,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     char value[MAXLEN] = {0};
 
     if (strstr(s, "encoding") != NULL) {
+	fprintf(stderr, "Got encoding: '%s'\n", s);
 	return 0;
     }
 
@@ -819,8 +834,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	return 0;
     }    
 
-    strcpy(value, s + 4 + strlen(variable));
-    top_n_tail(value);
+    catch_value(value, s + 4 + strlen(variable), MAXLEN);
 
     if (strstr(variable, "range")) {
 	if (read_plotspec_range(variable, value, spec)) {
@@ -832,10 +846,12 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	strcpy(spec->titles[0], value);
     } else if (!strcmp(variable, "xlabel")) {
 	strcpy(spec->titles[1], value);
-	capture_varname(spec->xvarname, value);
+	*spec->xvarname = '\0';
+	strncat(spec->xvarname, value, MAXDISP-1);
     } else if (!strcmp(variable, "ylabel")) {
 	strcpy(spec->titles[2], value);
-	capture_varname(spec->yvarname, value);
+	*spec->yvarname = '\0';
+	strncat(spec->yvarname, value, MAXDISP-1);
     } else if (!strcmp(variable, "y2label")) {
 	strcpy(spec->titles[3], value);
     } else if (!strcmp(variable, "key")) {
@@ -991,6 +1007,21 @@ static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
     return err;
 }
 
+/* scan the stuff after "title '" or 'title "' */
+
+static void grab_line_title (char *targ, const char *src)
+{
+    char *fmt;
+
+    if (*src == '\'') {
+	fmt = "%79[^']'";
+    } else {
+	fmt = "%79[^\"]\"";
+    }
+
+    sscanf(src + 1, fmt, targ);
+}
+
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
@@ -1040,7 +1071,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
     } 
 
     if ((p = strstr(s, " title "))) {
-	sscanf(p + 8, "%79[^']'", spec->lines[i].title);
+	grab_line_title(spec->lines[i].title, p + 7);
     }
 
     if ((p = strstr(s, " w "))) {
@@ -1341,7 +1372,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     for (i=0; i<4; i++) {
 	if (spec->titles[i][0] != '\0') {
-	    delchar('\'', spec->titles[i]);
+	    delchar('"', spec->titles[i]);
 	}
     }
 

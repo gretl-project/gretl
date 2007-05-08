@@ -46,7 +46,7 @@ const char *get_gretl_charset (void);
 
 const char *get_gnuplot_charset (void);
 
-int use_latin_2 (void);
+int iso_latin_version (void);
 
 char *sprint_l2_to_html (char *targ, const char *s, size_t len);
 

@@ -1031,6 +1031,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 
     if (newstr != NULL && strcmp(datainfo->varname[v], newstr)) {
 	if (do_rename_variable(v, newstr, vset->full)) {
+	    free(newstr);
 	    return;
 	} else {
 	    gui_changed = 1;
@@ -1045,6 +1046,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     if (newstr != NULL && strcmp(VARLABEL(datainfo, v), newstr)) {
 	if (vset->formula) {
 	    if (try_regenerate_var(v, newstr)) {
+		free(newstr);
 		return;
 	    }
 	}
@@ -1060,9 +1062,16 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	edttext = gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry));
 	newstr = trim_text(edttext);
 	if (newstr != NULL && strcmp(DISPLAYNAME(datainfo, v), newstr)) {
-	    *DISPLAYNAME(datainfo, v) = 0;
-	    strncat(DISPLAYNAME(datainfo, v), newstr, MAXDISP - 1);
-	    changed = 1;
+	    if (strchr(newstr, '"')) {
+		errbox(_("The display name for a variable cannot "
+			 "contain double quotes"));
+		free(newstr);
+		return;
+	    } else {
+		*DISPLAYNAME(datainfo, v) = 0;
+		strncat(DISPLAYNAME(datainfo, v), newstr, MAXDISP - 1);
+		changed = 1;
+	    }
 	}
 	free(newstr);
     }
@@ -1123,8 +1132,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	}
 
 	if (changed || comp_changed || gui_changed || disc_changed) {
-	    data_status |= MODIFIED_DATA;
-	    set_sample_label(datainfo);
+	    mark_dataset_as_modified();
 	}
     }
 

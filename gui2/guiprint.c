@@ -126,7 +126,7 @@ void winprint (char *fullbuf, char *selbuf)
     px = GetDeviceCaps(dc, LOGPIXELSY);
 
     /* select character set */
-    if (use_latin_2()) {
+    if (iso_latin_version() == 2) {
 	charset = EASTEUROPE_CHARSET;
     } else {
 	charset = ANSI_CHARSET;

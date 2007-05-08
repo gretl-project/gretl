@@ -270,25 +270,32 @@ static double entry_to_gp_double (GtkWidget *w)
 }
 
 /* Take text from a gnuplot spec string and put it into a gtkentry.
-   Under gtk2, we have to ensure that the text is put into utf-8.
+   We have to ensure that the text is put into utf-8.
 */
 
 static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
 #ifdef ENABLE_NLS
-    int l2 = use_latin_2();
+    int lv = iso_latin_version();
 #else
-    int l2 = 0;
+    int lv = 0;
 #endif
-    gchar *trstr;
+    gchar *trstr = NULL;
 
-    if (l2) {
+    if (*str == '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), str);
+	return;
+    }
+
+    if (lv == 2) {
 	char lstr[MAXTITLE];
 	
 	sprint_html_to_l2(lstr, str);
-	trstr = my_locale_to_utf8(lstr);
-    } else {
+	trstr = latin2_to_utf8(lstr);
+    } else if (!g_utf8_validate(str, -1, NULL)) {
 	trstr = my_locale_to_utf8(str);
+    } else {
+	trstr = g_strdup(str);
     }
 
     if (trstr != NULL) {

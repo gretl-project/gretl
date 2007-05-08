@@ -183,7 +183,7 @@ enum clipstuff {
     TARGET_RTF
 };
 
-enum data_status {
+enum data_status_flags {
     HAVE_DATA     = 1 << 0,
     BOOK_DATA     = 1 << 1,
     USER_DATA     = 1 << 2,
