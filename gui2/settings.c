@@ -1334,6 +1334,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 #ifdef ENABLE_NLS
 
+# ifdef G_OS_WIN32
+
 struct langname {
     const char *abbr;
     const char *full;
@@ -1380,7 +1382,33 @@ static void set_lcnumeric (void)
 
     reset_local_decpoint();
 }
-#endif
+
+# else /* ! G_OS_WIN32 */
+
+static void set_lcnumeric (void)
+{
+    if (lcnumeric) {
+	char *lang = getenv("LANG");
+	char *set = NULL;
+
+	if (lang != NULL) {
+	    set = setlocale(LC_NUMERIC, lang);
+	}
+	if (set == NULL) {
+	    setlocale(LC_NUMERIC, "");
+	    putenv("LC_NUMERIC=");
+	}
+    } else {
+	putenv("LC_NUMERIC=C");
+	setlocale(LC_NUMERIC, "C");
+    }
+
+    reset_local_decpoint();
+}
+
+# endif
+
+#endif /* ENABLE_NLS */
 
 static void set_gp_colors (void)
 {
