@@ -777,9 +777,8 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
     if (opt & OPT_D) {
 	/* set defaults */
-	char *home;
+	char *home = getenv("GRETL_HOME");
 
-	home = getenv("GRETL_HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->gretldir, home);
 	    ensure_slash(ppaths->gretldir);
