@@ -2371,7 +2371,8 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-#if 1 /* mildly optimized for each possible configuration */
+    /* multiplication is mildly optimized for each possible configuration */
+
     if (!atr && !btr) {
 	/* AB */
 	const double *xb;
@@ -2430,21 +2431,6 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	    }
 	}
     }
-#else
-    for (i=0; i<lrows; i++) {
-	int aidx, bidx;
-
-	for (j=0; j<rcols; j++) {
-	    x = 0.0;
-	    for (k=0; k<lcols; k++) {
-		aidx = (atr)? mdx(a,k,i) : mdx(a,i,k);
-		bidx = (btr)? mdx(b,j,k) : mdx(b,k,j);
-		x += a->val[aidx] * b->val[bidx];
-	    }
-	    gretl_mmult_result(c,i,j,x,cmod);
-	}
-    }
-#endif
 
     return 0;
 }
