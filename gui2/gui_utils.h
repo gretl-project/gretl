@@ -20,8 +20,6 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-#define standard_button(s) gtk_button_new_from_stock(s)
-
 void gretl_stock_icons_init (void);
 
 #ifdef ENABLE_NLS

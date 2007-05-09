@@ -1322,7 +1322,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_box_pack_start(GTK_BOX(hb), w, TRUE, TRUE, 0);
 	gtk_widget_show(w);
 
-	w = standard_button(GTK_STOCK_HELP);
+	w = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(context_help), 

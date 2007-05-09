@@ -1459,7 +1459,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer p)
     gtk_widget_show(button);
 
     /* find button */
-    button = standard_button(GTK_STOCK_FIND);
+    button = gtk_button_new_from_stock(GTK_STOCK_FIND);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",

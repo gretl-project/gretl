@@ -40,7 +40,7 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_HELP);
+    w = gtk_button_new_from_stock(GTK_STOCK_HELP);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
@@ -65,7 +65,7 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_CANCEL);
+    w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
     if (canceled != NULL) {
@@ -97,7 +97,7 @@ static void maybe_opt_invalid (GtkDialog *d, int resp, int *opt)
 GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 				  int *opt)
 {
-    GtkWidget *w = standard_button(GTK_STOCK_CANCEL);
+    GtkWidget *w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
 
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
@@ -123,7 +123,7 @@ GtkWidget *ok_button (GtkWidget *hbox)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_OK);
+    w = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
@@ -134,7 +134,7 @@ GtkWidget *apply_button (GtkWidget *hbox)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_APPLY);
+    w = gtk_button_new_from_stock(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
@@ -145,7 +145,7 @@ GtkWidget *cancel_button (GtkWidget *hbox)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_CANCEL);
+    w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
@@ -156,7 +156,7 @@ GtkWidget *next_button (GtkWidget *hbox)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_GO_FORWARD);
+    w = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
@@ -167,7 +167,7 @@ GtkWidget *back_button (GtkWidget *hbox)
 {
     GtkWidget *w;
 
-    w = standard_button(GTK_STOCK_GO_BACK);
+    w = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 

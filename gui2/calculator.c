@@ -1924,7 +1924,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     }
 
     /* Close button */
-    tmp = standard_button(GTK_STOCK_CLOSE);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -1933,7 +1933,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_widget_show(tmp);
 
     /* OK button */
-    tmp = standard_button(GTK_STOCK_OK);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
     g_signal_connect(G_OBJECT (tmp), "clicked", 
@@ -1947,7 +1947,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 
     /* Help button? */
     if (code == CALC_TEST) {
-	tmp = standard_button(GTK_STOCK_HELP);
+	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
 	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(child->bbox),

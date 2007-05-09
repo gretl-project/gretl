@@ -3082,7 +3082,7 @@ build_selector_buttons (selector *sr)
     if (sr->code != PRINT && sr->code != SAVE_FUNCTIONS &&
 	sr->code != DEFINE_LIST && sr->code != DEFINE_MATRIX &&
 	!SAVE_DATA_ACTION(sr->code)) {
-	tmp = standard_button(GTK_STOCK_HELP);
+	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
 	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(sr->action_area),
@@ -3093,21 +3093,21 @@ build_selector_buttons (selector *sr)
 	gtk_widget_show(tmp);
     }
 
-    tmp = standard_button(GTK_STOCK_CLEAR);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(clear_vars), sr);
     gtk_widget_show(tmp);
 
-    tmp = standard_button(GTK_STOCK_CANCEL);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_selector), sr);
     gtk_widget_show(tmp);
 
-    tmp = standard_button(GTK_STOCK_OK);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 

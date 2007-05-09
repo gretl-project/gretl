@@ -6514,13 +6514,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	maybe_prune_delete_list(cmd->list);
-	if (cmd->list[0] == 0) {
-	    err = 1;
-	} else {
-	    err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
-	}
+	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
+	    pputc(prn, '\n');
 	} else {
 	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));

@@ -1589,7 +1589,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_widget_show(button);
 
     /* Close button (do not apply changes) */
-    button = standard_button(GTK_STOCK_CLOSE);
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
