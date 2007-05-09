@@ -73,7 +73,6 @@ struct kalman_ {
     gretl_matrix *VE;
     gretl_matrix *PHV;
     gretl_matrix *Ax;
-    gretl_matrix *Tmprn;
     gretl_matrix *Tmpnn;
     gretl_matrix *Tmprr;
     gretl_matrix *Tmprr_2a;
@@ -102,7 +101,6 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->PHV);
     gretl_matrix_free(K->Ax);
 
-    gretl_matrix_free(K->Tmprn);
     gretl_matrix_free(K->Tmpnn);
     gretl_matrix_free(K->Tmprr);
     gretl_matrix_free(K->Tmprr_2a);
@@ -313,7 +311,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->PHV = NULL;
     K->Ax = NULL;
 
-    K->Tmprn = NULL;
     K->Tmpnn = NULL;
     K->Tmprr = NULL;
     K->Tmprr_2a = NULL;
@@ -370,7 +367,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Ax = gretl_matrix_alloc(K->n, 1);
 
     /* will hold various intermediate products */
-    K->Tmprn = gretl_matrix_alloc(K->r, K->n);
     K->Tmpnn = gretl_matrix_alloc(K->n, K->n);
     K->Tmprr = gretl_matrix_alloc(K->r, K->r);
     K->Tmprr_2a = gretl_matrix_alloc(K->r, K->r);
@@ -382,8 +378,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	K->PH == NULL || K->HPH == NULL ||
 	K->FPH == NULL || K->V == NULL || K->VE == NULL ||
 	K->PHV == NULL || K->Ax == NULL ||
-	K->Tmprn == NULL || K->Tmpnn == NULL ||
-	K->Tmprr == NULL || K->Tmprr_2a == NULL || K->Tmprr_2b == NULL) {
+	K->Tmpnn == NULL || K->Tmprr == NULL || 
+	K->Tmprr_2a == NULL || K->Tmprr_2b == NULL) {
 	*err = E_ALLOC;
 	kalman_free(K);
 	K = NULL;
@@ -410,76 +406,6 @@ matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
     return 0;
 }
 
-/* matrix multiplication, a * b, with no checks */
-
-static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
-			   gretl_matrix *c)
-{
-    double x;
-    int i, j, k;
-    int aidx, bidx;
-
-    for (i=0; i<a->rows; i++) {
-	for (j=0; j<b->cols; j++) {
-	    x = 0.0;
-	    aidx = i;
-	    bidx = j * b->rows;
-	    for (k=0; k<a->cols; k++) {
-		x += a->val[aidx] * b->val[bidx];
-		aidx += a->rows;
-		bidx++;
-	    }
-	    gretl_matrix_set(c, i, j, x);
-	}
-    }
-}
-
-/* matrix multiplication, a' * b, with no checks */
-
-static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
-			    gretl_matrix *c)
-{
-    double x;
-    int i, j, k;
-    int aidx, bidx;
-
-    for (i=0; i<a->cols; i++) {
-	for (j=0; j<b->cols; j++) {
-	    x = 0.0;
-	    aidx = i * a->rows;
-	    bidx = j * b->rows;
-	    for (k=0; k<a->rows; k++) {
-		x += a->val[aidx++] * b->val[bidx++];
-	    }
-	    gretl_matrix_set(c, i, j, x);
-	}
-    }
-}
-
-/* matrix multiplication, a * b', with no checks */
-
-static void fast_A_B_prime (const gretl_matrix *a, const gretl_matrix *b,
-			    gretl_matrix *c)
-{
-    double x;
-    int i, j, k;
-    int aidx, bidx;
-
-    for (i=0; i<a->rows; i++) {
-	for (j=0; j<b->rows; j++) {
-	    x = 0.0;
-	    aidx = i;
-	    bidx = j;
-	    for (k=0; k<a->cols; k++) {
-		x += a->val[aidx] * b->val[bidx];
-		aidx += a->rows;
-		bidx += b->rows;
-	    }
-	    gretl_matrix_set(c, i, j, x);
-	}
-    }
-}
-
 /* below: if postmult is non-zero, we're post-multiplying by the
    transpose of F */
 
@@ -496,9 +422,11 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 	}
     } else if (K->nonshift == K->r) {
 	if (postmult) {
-	    fast_A_B_prime(A, K->F, B);
+	    gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+				      K->F, GRETL_MOD_TRANSPOSE,
+				      B, GRETL_MOD_NONE);
 	} else {
-	    fast_multiply(K->F, A, B);
+	    gretl_matrix_multiply(K->F, A, B);
 	}
     } else { 
 	int i, j, c;
@@ -527,7 +455,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 		}
 	    }
 
-	    fast_multiply(A, topF, top);
+	    gretl_matrix_multiply(A, topF, top);
 
 	    for (i=0; i<c; i++) {
 		for (j=0; j<r1; j++) {
@@ -561,8 +489,8 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 		}
 	    }
 
-	    fast_multiply(topF, A, top);
-	    
+	    gretl_matrix_multiply(topF, A, top);
+
 	    for (i=0; i<r1; i++) {
 		for (j=0; j<c; j++) {
 		    x = gretl_matrix_get(top, i, j);
@@ -632,15 +560,18 @@ static int kalman_iter_1 (kalman *K, double *llt)
 
     /* form E = y - A'x - H'S */
     err += gretl_matrix_subtract_from(K->e, K->Ax);
-    fast_A_prime_B(K->H, K->S0, K->Tmpnn);
-    err += gretl_matrix_subtract_from(K->e, K->Tmpnn);
+    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
+			      K->S0, GRETL_MOD_NONE,
+			      K->e, GRETL_MOD_DECUMULATE);
     
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
-    fast_multiply(K->V, K->e, K->VE);
+    gretl_matrix_multiply(K->V, K->e, K->VE);
 
     if (llt != NULL) {
 	/* form (y - Ax - H'S)' * (H'PH + R)^{-1} * (y - Ax - H'S) */
-	fast_A_prime_B(K->e, K->VE, K->Tmpnn);
+	gretl_matrix_multiply_mod(K->e, GRETL_MOD_TRANSPOSE,
+				  K->VE, GRETL_MOD_NONE,
+				  K->Tmpnn, GRETL_MOD_NONE);
 
 	/* contribution to log-likelihood of the above -- see Hamilton
 	   (1994) equation [13.4.1] page 385.
@@ -651,11 +582,11 @@ static int kalman_iter_1 (kalman *K, double *llt)
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
 
-    /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) */
-    fast_multiply(K->FPH, K->VE, K->Tmprn);
-
-    /* complete calculation of S+ */
-    err += gretl_matrix_add_to(K->S1, K->Tmprn);
+    /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) 
+       and add to S+ */
+    gretl_matrix_multiply_mod(K->FPH, GRETL_MOD_NONE,
+			      K->VE, GRETL_MOD_NONE,
+			      K->S1, GRETL_MOD_CUMULATE);
 
     return err;
 }
@@ -846,7 +777,7 @@ int kalman_forecast (kalman *K)
 	}	
 
 	/* initial matrix calculations */
-	fast_multiply(K->P0, K->H, K->PH);
+	gretl_matrix_multiply(K->P0, K->H, K->PH);
 	if (arma_ll(K)) {
 	    K->HPH->val[0] = 0.0;
 	    for (i=0; i<K->r; i++) {
@@ -855,7 +786,9 @@ int kalman_forecast (kalman *K)
 	    ldet = log(K->HPH->val[0]);
 	    K->V->val[0] = 1.0 / K->HPH->val[0];
 	} else {
-	    fast_A_prime_B(K->H, K->PH, K->HPH);
+	    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
+				      K->PH, GRETL_MOD_NONE,
+				      K->HPH, GRETL_MOD_NONE);
 	    if (K->R != NULL) {
 		gretl_matrix_add_to(K->HPH, K->R);
 	    }

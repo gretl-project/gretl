@@ -2294,6 +2294,18 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     return 0;
 }
 
+#define gretl_mmult_result(c,i,j,x,m) \
+    do { \
+       if (m==GRETL_MOD_CUMULATE) { \
+           gretl_matrix_cum(c,i,j,x); \
+       } else if (m==GRETL_MOD_DECUMULATE) { \
+           gretl_matrix_cum(c,i,j,-(x)); \
+       } else { \
+	   gretl_matrix_set(c,i,j,x); \
+       } \
+    } while (0);      
+                                       
+
 /**
  * gretl_matrix_multiply_mod:
  * @a: left-hand matrix.
@@ -2320,7 +2332,6 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     int rrows, rcols;
     const int atr = (amod == GRETL_MOD_TRANSPOSE);
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
-    int aidx, bidx;
     double x;
 
 #if 0
@@ -2360,7 +2371,69 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
+#if 1 /* mildly optimized for each possible configuration */
+    if (!atr && !btr) {
+	/* AB */
+	const double *xb;
+
+	for (i=0; i<a->rows; i++) {
+	    xb = b->val;
+	    for (j=0; j<b->cols; j++) {
+		x = 0.0;
+		for (k=0; k<a->cols; k++) {
+		    x += a->val[mdx(a,i,k)] * xb[k];
+		}
+		gretl_mmult_result(c,i,j,x,cmod);
+		xb += b->rows;
+	    }
+	}
+    } else if (atr && btr) {
+	/* A'B' = (BA)' */
+	const double *xa;
+
+	for (i=0; i<b->rows; i++) {
+	    xa = a->val;
+	    for (j=0; j<a->cols; j++) {
+		x = 0.0;
+		for (k=0; k<b->cols; k++) {
+		    x += b->val[mdx(b,i,k)] * xa[k];
+		}
+		gretl_mmult_result(c,j,i,x,cmod);
+		xa += a->rows;
+	    }
+	}
+    } else if (atr) {
+	/* A'B (nice) */
+	const double *xb, *xa = a->val;
+
+	for (i=0; i<a->cols; i++) {
+	    xb = b->val;
+	    for (j=0; j<b->cols; j++) {
+		x = 0.0;
+		for (k=0; k<a->rows; k++) {
+		    x += xa[k] * xb[k];
+		}
+		gretl_mmult_result(c,i,j,x,cmod);
+		xb += b->rows;
+	    }
+	    xa += a->rows;
+	}
+    } else {
+	/* AB' (awkward) */
+	for (i=0; i<lrows; i++) {
+	    for (j=0; j<rcols; j++) {
+		x = 0.0;
+		for (k=0; k<lcols; k++) {
+		    x += a->val[mdx(a,i,k)] * b->val[mdx(b,j,k)];
+		}
+		gretl_mmult_result(c,i,j,x,cmod);
+	    }
+	}
+    }
+#else
     for (i=0; i<lrows; i++) {
+	int aidx, bidx;
+
 	for (j=0; j<rcols; j++) {
 	    x = 0.0;
 	    for (k=0; k<lcols; k++) {
@@ -2368,13 +2441,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 		bidx = (btr)? mdx(b,j,k) : mdx(b,k,j);
 		x += a->val[aidx] * b->val[bidx];
 	    }
-	    if (cmod == GRETL_MOD_CUMULATE) {
-		gretl_matrix_cum(c,i,j,x);
-	    } else {
-		gretl_matrix_set(c,i,j,x);
-	    }
+	    gretl_mmult_result(c,i,j,x,cmod);
 	}
     }
+#endif
 
     return 0;
 }
