@@ -461,8 +461,7 @@ int dvips_compile (char *texshort)
 
 #if defined(G_OS_WIN32)
     if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	win_show_last_error();
 	return 1;
     }
 

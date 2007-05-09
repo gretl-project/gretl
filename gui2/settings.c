@@ -1701,7 +1701,7 @@ void write_rc (void)
     char bval[6];
     char ival[16];
     const char *strval;
-    int i = 0;
+    int i = 0, err = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 
@@ -1711,35 +1711,39 @@ void write_rc (void)
 
 	if (rc_vars[i].flags & BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, bval);
-	    write_reg_val(HKEY_CURRENT_USER, 
-			  "gretl", 
-			  rc_vars[i].key, 
-			  bval);
+	    err += write_reg_val(HKEY_CURRENT_USER, 
+				 "gretl", 
+				 rc_vars[i].key, 
+				 bval);
 	} else if (rc_vars[i].flags & INTSET) {
 	    sprintf(ival, "%d", *(int *) rc_vars[i].var);
-	    write_reg_val(HKEY_CURRENT_USER, 
-			  "gretl", 
-			  rc_vars[i].key, 
-			  ival);	    
+	    err += write_reg_val(HKEY_CURRENT_USER, 
+				 "gretl", 
+				 rc_vars[i].key, 
+				 ival);	    
 	} else if (rc_vars[i].flags & ROOTSET) {
 	    strval = (char *) rc_vars[i].var;
-	    write_reg_val(HKEY_CLASSES_ROOT, 
-			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, 
-			  strval);
+	    err += write_reg_val(HKEY_CLASSES_ROOT, 
+				 get_reg_base(rc_vars[i].key),
+				 rc_vars[i].key, 
+				 strval);
 	} else if (rc_vars[i].flags & MACHSET) {
 	    strval = (char *) rc_vars[i].var;
-	    write_reg_val(HKEY_LOCAL_MACHINE, 
-			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, 
-			  strval);
+	    err += write_reg_val(HKEY_LOCAL_MACHINE, 
+				 get_reg_base(rc_vars[i].key),
+				 rc_vars[i].key, 
+				 strval);
 	} else {
 	    strval = (char *) rc_vars[i].var;
-	    write_reg_val(HKEY_CURRENT_USER, 
-			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, 
-			  strval);
+	    err += write_reg_val(HKEY_CURRENT_USER, 
+				 get_reg_base(rc_vars[i].key),
+				 rc_vars[i].key, 
+				 strval);
 	}
+    }
+
+    if (err) {
+	win_show_last_error();
     }
 
     save_file_lists();
@@ -1827,20 +1831,20 @@ void read_rc (void)
 	*value = '\0';
 
 	if (rc_vars[i].flags & ROOTSET) {
-	    err = read_reg_val (HKEY_CLASSES_ROOT, 
-				get_reg_base(rc_vars[i].key),
-				rc_vars[i].key, 
-				value);
+	    err = read_reg_val(HKEY_CLASSES_ROOT, 
+			       get_reg_base(rc_vars[i].key),
+			       rc_vars[i].key, 
+			       value);
 	} else if (rc_vars[i].flags & MACHSET) {
-	    err = read_reg_val (HKEY_LOCAL_MACHINE, 
-				get_reg_base(rc_vars[i].key),
-				rc_vars[i].key, 
-				value);
+	    err = read_reg_val(HKEY_LOCAL_MACHINE, 
+			       get_reg_base(rc_vars[i].key),
+			       rc_vars[i].key, 
+			       value);
 	} else {
-	    err = read_reg_val (HKEY_CURRENT_USER, 
-				get_reg_base(rc_vars[i].key),
-				rc_vars[i].key, 
-				value);
+	    err = read_reg_val(HKEY_CURRENT_USER, 
+			       get_reg_base(rc_vars[i].key),
+			       rc_vars[i].key, 
+			       value);
 	}
 	    
 	if (!err && *value != '\0') {

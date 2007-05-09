@@ -98,7 +98,7 @@ static int ws_startup (void)
     return 0;
 }
 
-int create_child_process (char *prog, char *env) 
+int create_child_process (char *prog, int showerr) 
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 
@@ -114,27 +114,23 @@ int create_child_process (char *prog, char *env)
 			NULL,          /* primary thread security attributes */ 
 			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
-			(LPVOID) env,  /* NULL => use parent's environment  */
+			NULL,          /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
 			&start_info,   /* receives STARTUPINFO */ 
 			&proc_info);   /* receives PROCESS_INFORMATION  */
 
     if (ret == 0) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	if (showerr) {
+	    win_show_last_error();
+	}
 	err = 1;
     }
 
 #ifdef CHILD_DEBUG
-    if (1) {
-	FILE *fp = fopen("gretlbug.txt", "w");
-
-	if (fp != NULL) {
-	    fprintf(fp, "gretl: create_child_process():\n"
-		    " prog='%s'\n env='%s'\n", prog, env);
-	    fprintf(fp, " return from CreateProcess() = %d\n", ret);
-	    fclose(fp);
-	}
+    if (err) {
+	fprintf(stderr, "gretl: create_child_process():\n"
+		" prog='%s'\n\n", prog);
+	fprintf(stderr, " return from CreateProcess() = %d\n", ret);
     }	
 #endif
 
@@ -208,7 +204,7 @@ void startR (char *Rcommand)
     fclose(fp);
 
     sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
-    err = create_child_process(Rline, NULL);
+    err = create_child_process(Rline, 0);
 
     if (err) {
 	/* failed: try registry for Rgui.exe path? */
@@ -221,7 +217,7 @@ void startR (char *Rcommand)
 	if (!err) {
 	    strcat(tmp, "\\bin\\Rgui.exe");
 	    sprintf(Rline, "\"%s\" %s %s", tmp, supp1, supp2);
-	    err = create_child_process(Rline, NULL);
+	    err = create_child_process(Rline, 1);
 	    if (!err) {
 		/* got a good R path, so record it */
 		*Rcommand = '\0';
@@ -992,8 +988,7 @@ int win32_open_file (const char *fname)
     err = win32_open_arg(fname, sfx);
 
     if (err) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	win_show_last_error();
     }
 
     return err;

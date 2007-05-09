@@ -196,11 +196,7 @@ static int latex_is_ok (void)
     static int latex_ok = -1; 
   
     if (latex_ok == -1) {
-#ifdef G_OS_WIN32
-	latex_ok = check_for_prog("latex.exe");
-#else
-	latex_ok = check_for_prog("latex");
-#endif
+	latex_ok = check_for_prog(latex);
     }
 
     return latex_ok;

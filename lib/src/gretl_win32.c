@@ -112,6 +112,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     ppaths->gretldir[0] = '\0';
     read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0') {
+	read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
+    }
+    if (ppaths->gretldir[0] == '\0') {
 	read_reg_val(HKEY_CURRENT_USER, "gretl", "gretldir", ppaths->gretldir);
     }
     if (ppaths->gretldir[0] == '\0') {
@@ -125,9 +128,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     }
 
     ppaths->gnuplot[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
+    read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0') {
-	read_reg_val(HKEY_CURRENT_USER, "gretl", "gnuplot", ppaths->gnuplot);;
+	read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
     }
     if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
@@ -181,8 +184,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     gretl_www_init(ppaths->dbhost, dbproxy, use_proxy);
 }
 
-void win_show_error (DWORD dw)
+void win_show_last_error (void)
 {
+    DWORD dw = GetLastError();
     LPVOID buf;
 
     FormatMessage( 
@@ -196,6 +200,7 @@ void win_show_error (DWORD dw)
 		  0,
 		  NULL 
 		  );
+
     MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
     LocalFree(buf);
 }
@@ -223,8 +228,7 @@ int winfork (char *cmdline, const char *dir,
 			  &si, &pi);
 
     if (!child) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	win_show_last_error();
 	return 1;
     }
 
@@ -293,8 +297,7 @@ static int run_cmd_wait (char *cmd)
 			  &si, &pi);
 
     if (!child) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	win_show_last_error();
 	return 1;
     }
 

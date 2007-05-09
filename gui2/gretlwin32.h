@@ -35,7 +35,7 @@ enum {
     WIN32_TO_PRINTER
 };
 
-int create_child_process (char *prog, char *env);
+int create_child_process (char *prog, int showerr);
 
 void startR (char *Rcommand);
 

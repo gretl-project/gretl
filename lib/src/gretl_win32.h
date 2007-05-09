@@ -32,7 +32,7 @@ int write_reg_val (HKEY tree, const char *base,
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 
-void win_show_error (DWORD dw);
+void win_show_last_error (void);
 
 int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);

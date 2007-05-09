@@ -156,7 +156,7 @@ static void launch_gnuplot_interactive (void)
 
     gpline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
 			     gretl_plotfile());
-    create_child_process(gpline, NULL);
+    create_child_process(gpline, 1);
     g_free(gpline);
 # else
     char term[8];
@@ -5820,8 +5820,7 @@ int latex_compile (char *texshort)
 
 #ifdef G_OS_WIN32
     if (*latex_path == 0 && get_latex_path(latex_path)) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
+	win_show_last_error();
 	return LATEX_EXEC_FAILED;
     }
 
@@ -5963,8 +5962,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	} else {
 	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
 	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
-		DWORD dw = GetLastError();
-		win_show_error(dw);
+		win_show_last_error();
 	    }
 	}
 #elif defined(OSX_BUILD)
