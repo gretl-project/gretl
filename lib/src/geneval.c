@@ -3283,7 +3283,7 @@ static NODE *eval_query (NODE *t, parser *p)
     return ret;
 }
 
-#define dvar_scalar(i) (i <= R_TEST_PVAL)
+#define dvar_scalar(i) (i < R_SCALAR_MAX)
 #define dvar_series(i) (i == R_INDEX)
 
 static double dvar_get_value (int i, parser *p)
@@ -3303,6 +3303,8 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_pvalue(p->lh.label);
     case R_TEST_STAT:
 	return get_last_test_statistic(p->lh.label);
+    case R_STOPWATCH:
+	return gretl_stopwatch();
     default:
 	return NADBL;
     }

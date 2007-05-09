@@ -30,6 +30,7 @@
 #include "gretl_string_table.h"
 
 #include <errno.h>
+#include <time.h>
 
 #ifndef WIN32
 # include <signal.h>
@@ -1437,7 +1438,26 @@ int gretl_copy_file (const char *src, const char *dest)
     fclose(destfd);
 
     return 0;
-}    
+}  
+
+/* timer */  
+
+static clock_t tim0;
+
+static void gretl_stopwatch_init (void)
+{
+    tim0 = clock();
+}
+
+double gretl_stopwatch (void)
+{
+    clock_t tim1 = clock();
+    double x = (double) (tim1 - tim0) / CLOCKS_PER_SEC;
+
+    tim0 = tim1;
+
+    return x;
+} 
 
 /* library init and cleanup functions */
 
@@ -1445,6 +1465,7 @@ void libgretl_init (void)
 {
     libset_init();
     gretl_rand_init();
+    gretl_stopwatch_init();
     set_gretl_tex_preamble(); 
 }
 
@@ -1534,3 +1555,4 @@ double get_last_pvalue (char *blurb)
 {
     return record_or_get_test_result(0, 0, blurb, GET_TEST_PVAL);
 }
+

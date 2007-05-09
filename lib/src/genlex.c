@@ -74,6 +74,7 @@ struct str_table dvars[] = {
     { R_INDEX,     "obs" },
     { R_T1,        "$t1" },
     { R_T2,        "$t2" },
+    { R_STOPWATCH, "$stopwatch" },
     { 0,           NULL },
 };
 

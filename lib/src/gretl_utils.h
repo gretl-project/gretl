@@ -131,4 +131,8 @@ double get_last_test_statistic (char *blurb);
 
 double get_last_pvalue (char *blurb);
 
+/* timer */
+
+double gretl_stopwatch (void);
+
 #endif /* GRETL_UTILS_H */

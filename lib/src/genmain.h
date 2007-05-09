@@ -23,15 +23,17 @@
 #include "gretl_matrix.h"
 
 typedef enum {
-    R_NOBS = 1,  /* number of observations in current sample range */
-    R_NVARS,     /* number of variables in dataset (including the constant) */
-    R_PD,        /* periodicity of dataset */
-    R_T1,        /* start of current sample range */
-    R_T2,        /* end of current sample range */
-    R_DSET_MAX,  /* separator */
-    R_TEST_STAT, /* test statistic from last explicit test performed */
-    R_TEST_PVAL, /* p-value from last explicit test performed */
-    R_INDEX,     /* consecutive observations index */
+    R_NOBS = 1,   /* number of observations in current sample range */
+    R_NVARS,      /* number of variables in dataset (including the constant) */
+    R_PD,         /* periodicity of dataset */
+    R_T1,         /* start of current sample range */
+    R_T2,         /* end of current sample range */
+    R_DSET_MAX,   /* separator */
+    R_TEST_STAT,  /* test statistic from last explicit test performed */
+    R_TEST_PVAL,  /* p-value from last explicit test performed */
+    R_STOPWATCH,  /* stopwatch */ 
+    R_SCALAR_MAX, /* separator: scalars vs series */
+    R_INDEX,      /* consecutive observations index */
     R_MAX
 } RetrievalIndex;
 

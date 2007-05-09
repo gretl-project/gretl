@@ -1341,6 +1341,9 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	if (!strcmp(setobj, "echo")) {
 	    state->flags |= STATE_ECHO_ON;
 	    err = 0;
+	} else if (!strcmp(setobj, "stopwatch")) {
+	    gretl_stopwatch();
+	    err = 0;
 	}
     } else if (nw == 2) {
 	lower(setarg);
