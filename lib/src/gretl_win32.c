@@ -110,9 +110,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
+    read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0') {
-	read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
+	read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
     }
     if (ppaths->gretldir[0] == '\0') {
 	read_reg_val(HKEY_CURRENT_USER, "gretl", "gretldir", ppaths->gretldir);

@@ -1395,6 +1395,10 @@ static void set_lcnumeric (void)
 
 	if (lang != NULL) {
 	    set = setlocale(LC_NUMERIC, lang);
+	    fprintf(stderr, "setlocale(LC_NUMERIC, \"%s\") returned %s\n", 
+		    lang, set);
+	} else {
+	    fprintf(stderr, "set_lcnumeric: getenv(\"LANG\") gave NULL\n");
 	}
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");
@@ -1650,6 +1654,8 @@ static void read_rc (void)
     char key[MAXSTR];
     int i;
 
+    fprintf(stderr, "read_rc (gconf)\n");
+
     client = gconf_client_get_default();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1660,7 +1666,7 @@ static void read_rc (void)
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else {
-		*(int *) rc_vars[i].var = bval;
+		*(int *) rc_vars[i].var = (int) bval;
 	    }
 	} else if (rc_vars[i].flags & INTSET) {
 	    ival = gconf_client_get_int(client, key, &error);
@@ -1875,6 +1881,8 @@ void write_rc (void)
     char *strvar;
     int i;
 
+    fprintf(stderr, "old write_rc\n");
+
     rc = fopen(rcfile, "w");
     if (rc == NULL) {
 	errbox(_("Couldn't open config file for writing"));
@@ -1909,8 +1917,13 @@ static void read_rc (void)
     char *strvar;
     int i, j;
 
+    fprintf(stderr, "old read_rc\n");
+
     fp = fopen(rcfile, "r");
-    if (fp == NULL) return;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read %s\n", rcfile);
+	return;
+    }
 
     i = 0;
     while (rc_vars[i].var != NULL) {

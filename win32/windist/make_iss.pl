@@ -92,7 +92,7 @@ print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 print "Root: HKLM; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 
 # specific entries
-print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "Root: HKLM; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"userdir\"; ValueData: \"{code:GetDataDir}\"\n";
