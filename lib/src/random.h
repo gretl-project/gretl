@@ -22,6 +22,8 @@
 
 void gretl_rand_set_seed (unsigned int seed);
 
+double gretl_one_snormal (void);
+
 void gretl_uniform_dist (double *a, int t1, int t2);
 
 int gretl_uniform_dist_minmax (double *a, int t1, int t2,
