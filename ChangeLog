@@ -32,6 +32,7 @@ version 1.6.3, in progress
 - Correlation matrix: try to be smarter in face of non-aligned
   missing observations
 - CSV data: add support for Mac-style text files
+- Further optimization of gretl_matrix functions
 - Various modifications to the configuration process
 
 3/24/2007 version 1.6.2
