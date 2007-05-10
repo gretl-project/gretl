@@ -415,11 +415,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
     int ret = 0;
 
     if (gretl_is_zero_matrix(A)) {
-	int i, n = B->rows * B->cols;
-
-	for (i=0; i<n; i++) {
-	    B->val[i] = 0.0;
-	}
+	gretl_matrix_zero(B);
     } else if (K->nonshift == K->r) {
 	if (postmult) {
 	    gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
@@ -602,12 +598,17 @@ static int kalman_iter_2 (kalman *K)
 
     /* form P - PH(H'PH + R)^{-1}H'P */
     err += gretl_matrix_qform(K->PH, GRETL_MOD_NONE, K->V,
-			      K->Tmprr, GRETL_MOD_NONE);
-    err += gretl_matrix_subtract_from(K->P0, K->Tmprr);
+			      K->P0, GRETL_MOD_DECUMULATE);
 
     /* pre-multiply by F, post-multiply by F' */
-    err += multiply_by_F(K, K->P0, K->Tmprr, 0);
-    err += multiply_by_F(K, K->Tmprr, K->P1, 1);
+    if (K->nonshift == K->r) {
+	gretl_matrix_qform(K->F, GRETL_MOD_NONE, K->P0,
+			   K->P1, GRETL_MOD_NONE);
+    } else {
+	err += multiply_by_F(K, K->P0, K->Tmprr, 0);
+	err += multiply_by_F(K, K->Tmprr, K->P1, 1);
+	gretl_matrix_xtr_symmetric(K->P1);
+    }
 
     /* add Q */
     err += gretl_matrix_add_to(K->P1, K->Q);

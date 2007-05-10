@@ -1654,8 +1654,6 @@ static void read_rc (void)
     char key[MAXSTR];
     int i;
 
-    fprintf(stderr, "read_rc (gconf)\n");
-
     client = gconf_client_get_default();
 
     for (i=0; rc_vars[i].key != NULL; i++) {

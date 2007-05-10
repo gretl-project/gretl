@@ -131,7 +131,7 @@ end loop
 \end{code}
 
 In this case, we evaluate the conditional mean and standard deviation
-of the variable Y for each value of Z8.
+of the variable \texttt{Y} for each value of \texttt{Z8}.
 
 \subsection{For each loop}
 \label{loop-each}
@@ -200,9 +200,9 @@ expression:
 \item The initial condition must take the form LHS1 = RHS1.  RHS1 must
   be a numeric constant or a predefined variable.  If the LHS1
   variable does not exist already, it is automatically created.
-\item The continuation condition must be of the form LHS1 op RHS2,
-  where op can be \verb+<+, \verb+>+, \verb+<=+ or \verb+>=+ and RHS2
-  must be a numeric constant or a predefined variable.  If RHS2 is a
+\item The continuation condition must be of the form LHS1 \textsl{op} RHS2,
+  where \textsl{op} can be \verb+<+, \verb+>+, \verb+<=+ or \verb+>=+ and RHS2
+  is a numeric constant or a predefined variable.  If RHS2 is a
   variable it is evaluated each time round the loop.
 \item The increment or decrement expression must be of the form LHS1
   += DELTA or LHS1 -= DELTA, where DELTA is a numeric constant or a

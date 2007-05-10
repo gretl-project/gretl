@@ -63,6 +63,8 @@ enum loop_val_codes {
     LOOP_VAL_UNDEF = -9999
 };
 
+#define DEFAULT_NOBS 512
+
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
                          l->type == DATED_LOOP || \
 			 l->type == EACH_LOOP)
@@ -71,6 +73,8 @@ typedef struct {
     int *list;
     bigval *sum;
     bigval *ssq;
+    double *xbak;  /* previous values */
+    int *diff;     /* indicator for difference */
 } LOOP_PRINT;  
 
 /* below: used for special "progressive" loop */ 
@@ -82,6 +86,10 @@ typedef struct {
     bigval *ssq_coeff;      /* sums of squares of coeff estimates */
     bigval *sum_sderr;      /* sums of estimated std. errors */
     bigval *ssq_sderr;      /* sums of squares of estd std. errs */
+    double *cbak;           /* previous values of coeffs */
+    double *sbak;           /* previous values of std. errs */
+    int *cdiff;             /* indicator for difference in coeff */
+    int *sdiff;             /* indicator for difference in s.e. */
 } LOOP_MODEL;
 
 enum loop_flags {
@@ -156,7 +164,7 @@ static void gretl_loop_init (LOOPSET *loop);
 static int prepare_loop_for_action (LOOPSET *loop);
 static void free_loop_model (LOOP_MODEL *lmod);
 static void free_loop_print (LOOP_PRINT *lprn);
-static void loop_store_free (LOOPSET *loop);
+static void free_loop_store (LOOPSET *loop);
 static void controller_free (controller *clr);
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn);
@@ -519,7 +527,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	free(loop->prns);
     }
 
-    loop_store_free(loop);
+    free_loop_store(loop);
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1430,6 +1438,8 @@ static void loop_model_zero (LOOP_MODEL *lmod)
 	lmod->sum_coeff[i] = lmod->ssq_coeff[i] = 0.0;
 	lmod->sum_sderr[i] = lmod->ssq_sderr[i] = 0.0;
 #endif
+	lmod->cbak[i] = lmod->sbak[i] = NADBL;
+	lmod->cdiff[i] = lmod->sdiff[i] = 0;
     }
 }
 
@@ -1470,6 +1480,18 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod)
     lmod->ssq_sderr = malloc(nc * sizeof *lmod->ssq_sderr);
     if (lmod->ssq_sderr == NULL) goto cleanup;
 
+    lmod->cbak = malloc(nc * sizeof *lmod->cbak);
+    if (lmod->cbak == NULL) goto cleanup;
+
+    lmod->sbak = malloc(nc * sizeof *lmod->sbak);
+    if (lmod->sbak == NULL) goto cleanup;
+
+    lmod->cdiff = malloc(nc * sizeof *lmod->cdiff);
+    if (lmod->cdiff == NULL) goto cleanup;
+
+    lmod->sdiff = malloc(nc * sizeof *lmod->sdiff);
+    if (lmod->sdiff == NULL) goto cleanup;
+
     loop_model_zero(lmod);
 
 #if LOOP_DEBUG
@@ -1483,6 +1505,10 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod)
     free(lmod->ssq_coeff);
     free(lmod->sum_sderr);
     free(lmod->ssq_sderr);
+    free(lmod->cbak);
+    free(lmod->sbak);
+    free(lmod->cdiff);
+    free(lmod->sdiff);
 
     return E_ALLOC;
 }
@@ -1498,6 +1524,8 @@ static void loop_print_zero (LOOP_PRINT *lprn)
 #else
 	lprn->sum[i] = lprn->ssq[i] = 0.0;
 #endif
+	lprn->xbak[i] = NADBL;
+	lprn->diff[i] = 0;
     }
 }
 
@@ -1513,28 +1541,39 @@ static void loop_print_zero (LOOP_PRINT *lprn)
 
 static int loop_print_init (LOOP_PRINT *lprn, const int *list)
 {
+    int k = list[0];
+
     lprn->list = gretl_list_copy(list);
     if (lprn->list == NULL) return 1;
 
-    lprn->sum = malloc(list[0] * sizeof *lprn->sum);
+    lprn->sum = malloc(k * sizeof *lprn->sum);
     if (lprn->sum == NULL) goto cleanup;
 
-    lprn->ssq = malloc(list[0] * sizeof *lprn->ssq);
+    lprn->ssq = malloc(k * sizeof *lprn->ssq);
     if (lprn->ssq == NULL) goto cleanup;
+
+    lprn->xbak = malloc(k * sizeof *lprn->xbak);
+    if (lprn->xbak == NULL) goto cleanup;
+
+    lprn->diff = malloc(k * sizeof *lprn->diff);
+    if (lprn->diff == NULL) goto cleanup;
 
     loop_print_zero(lprn);
 
     return 0;
 
  cleanup:
+
     free(lprn->list);
     free(lprn->sum);
     free(lprn->ssq);
+    free(lprn->xbak);
+    free(lprn->diff);
 
     return 1;
 }
 
-static void loop_store_free (LOOPSET *loop)
+static void free_loop_store (LOOPSET *loop)
 {
     destroy_dataset(loop->sZ, loop->sdinfo);
     loop->sZ = NULL;
@@ -1558,8 +1597,7 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 			    const int *list, DATAINFO *pdinfo,
 			    gretlopt opt)
 {
-    char *p;
-    int i;
+    int i, n;
 
     if (loop->sZ != NULL) {
 	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
@@ -1567,8 +1605,9 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 	return E_DATA;
     }
 
-    loop->sdinfo = create_new_dataset(&loop->sZ, list[0] + 1, 
-				      loop->itermax, 0);
+    n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
+
+    loop->sdinfo = create_new_dataset(&loop->sZ, list[0] + 1, n, 0);
     if (loop->sdinfo == NULL) {
 	return E_ALLOC;
     }
@@ -1583,6 +1622,8 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 #endif
 
     for (i=1; i<loop->sdinfo->v; i++) {
+	char *p;
+
 	strcpy(loop->sdinfo->varname[i], pdinfo->varname[list[i]]);
 	strcpy(VARLABEL(loop->sdinfo, i), VARLABEL(pdinfo, list[i]));
 	if ((p = strstr(VARLABEL(loop->sdinfo, i), "(scalar)"))) {
@@ -1656,6 +1697,8 @@ static int add_loop_model (LOOPSET *loop)
     return err;
 }
 
+#define realdiff(x,y) (fabs((x)-(y)) > 2.0e-13)
+
 /**
  * update_loop_model:
  * @loop: pointer to loop struct.
@@ -1700,6 +1743,14 @@ static void update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
 	lmod->sum_sderr[j] += pmod->sderr[j];
 	lmod->ssq_sderr[j] += pmod->sderr[j] * pmod->sderr[j];
 #endif
+	if (!na(lmod->cbak[j]) && realdiff(pmod->coeff[j], lmod->cbak[j])) {
+	    lmod->cdiff[j] = 1;
+	}
+	if (!na(lmod->sbak[j]) && realdiff(pmod->sderr[j], lmod->sbak[j])) {
+	    lmod->sdiff[j] = 1;
+	}
+	lmod->cbak[j] = pmod->coeff[j];
+	lmod->sbak[j] = pmod->sderr[j];
     }
 
 #ifdef ENABLE_GMP
@@ -1749,32 +1800,33 @@ static int add_loop_print (LOOPSET *loop, const int *list)
  */
 
 static void update_loop_print (LOOPSET *loop, int i, 
-			       const int *list, double ***pZ, 
+			       const int *list, const double **Z, 
 			       const DATAINFO *pdinfo)
 {
     LOOP_PRINT *lprn = &loop->prns[i];
-    int j, t;
+    int j, vj, t;
 #ifdef ENABLE_GMP
     mpf_t m;
 
     mpf_init(m);
 #endif
     
-    for (j=1; j<=list[0]; j++) {
-	if (var_is_series(pdinfo, list[j])) {
-	    t = pdinfo->t1;
-	} else {
-	    t = 0;
-	}
+    for (j=0; j<list[0]; j++) {
+	vj = list[j+1];
+	t = (var_is_series(pdinfo, vj))? pdinfo->t1 : 0;
 #ifdef ENABLE_GMP
-	mpf_set_d(m, (*pZ)[list[j]][t]); 
-	mpf_add(lprn->sum[j-1], lprn->sum[j-1], m);
+	mpf_set_d(m, Z[vj][t]); 
+	mpf_add(lprn->sum[j], lprn->sum[j], m);
 	mpf_mul(m, m, m);
-	mpf_add(lprn->ssq[j-1], lprn->ssq[j-1], m);
+	mpf_add(lprn->ssq[j], lprn->ssq[j], m);
 #else
-	lprn->sum[j-1] += (*pZ)[list[j]][t];
-	lprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
+	lprn->sum[j] += Z[vj][t];
+	lprn->ssq[j] += Z[vj][t] * Z[vj][t];
 #endif
+	if (!na(lprn->xbak[j]) && realdiff(Z[vj][t], lprn->xbak[j])) {
+	    lprn->diff[j] = 1;
+	}
+	lprn->xbak[j] = Z[vj][t];
     }
 
 #ifdef ENABLE_GMP
@@ -1795,10 +1847,11 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 				PRN *prn)
 {
     char linecpy[MAXLINE];
+    int iters = loop->iter;
     int i, j, k;
 
     if (loop->type != COUNT_LOOP && !(loop_is_quiet(loop))) {
-	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->iter);
+	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
     }
 
     j = 0;
@@ -1826,13 +1879,11 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 
 	if (loop_is_progressive(loop)) {
 	    if (OK_LOOP_MODEL(loop->ci[i])) {
-		print_loop_model(&loop->lmodels[j], 
-				 loop->itermax, pdinfo, prn);
+		print_loop_model(&loop->lmodels[j], iters, pdinfo, prn);
 		loop_model_zero(&loop->lmodels[j]);
 		j++;
 	    } else if (loop->ci[i] == PRINT) {
-		print_loop_prn(&loop->prns[k], 
-			       loop->itermax, pdinfo, prn);
+		print_loop_prn(&loop->prns[k], iters, pdinfo, prn);
 		loop_print_zero(&loop->prns[k]);
 		k++;
 	    } else if (loop->ci[i] == STORE) {
@@ -1865,6 +1916,11 @@ static void free_loop_model (LOOP_MODEL *lmod)
     free(lmod->ssq_coeff);
     free(lmod->ssq_sderr);
 
+    free(lmod->cbak);
+    free(lmod->sbak);
+    free(lmod->cdiff);
+    free(lmod->sdiff);
+
     gretl_model_free(lmod->model0);
 }
 
@@ -1881,7 +1937,9 @@ static void free_loop_print (LOOP_PRINT *lprn)
 
     free(lprn->sum);
     free(lprn->ssq);
-    free(lprn->list);    
+    free(lprn->list);
+    free(lprn->xbak);
+    free(lprn->diff);
 }
 
 static int add_more_loop_lines (LOOPSET *loop)
@@ -1925,8 +1983,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	return E_ALLOC;
     }
 
-    if (s->cmd->ci == PRINT && loop->type != COUNT_LOOP) {
-	/* fixme: what's going on here? */
+    if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
 	loop->ci[nc] = 0;
     } else {
 	loop->ci[nc] = s->cmd->ci;
@@ -2087,28 +2144,36 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     mpf_init(sd2);
 
     mpf_div_ui(c1, lmod->sum_coeff[c], ln);
-    mpf_mul(m, c1, c1);
-    mpf_mul_ui(m, m, ln);
-    mpf_sub(m, lmod->ssq_coeff[c], m);
-    mpf_div_ui(sd1, m, ln);
-    if (mpf_cmp_d(sd1, 0.0) > 0) {
-	mpf_sqrt(sd1, sd1);
-    } else {
+    if (lmod->cdiff[c] == 0) {
 	mpf_set_d(sd1, 0.0);
+    } else {
+	mpf_mul(m, c1, c1);
+	mpf_mul_ui(m, m, ln);
+	mpf_sub(m, lmod->ssq_coeff[c], m);
+	mpf_div_ui(sd1, m, ln);
+	if (mpf_cmp_d(sd1, 0.0) > 0) {
+	    mpf_sqrt(sd1, sd1);
+	} else {
+	    mpf_set_d(sd1, 0.0);
+	}
     }
 
     mpf_div_ui(c2, lmod->sum_sderr[c], ln);
-    mpf_mul(m, c2, c2);
-    mpf_mul_ui(m, m, ln);
-    mpf_sub(m, lmod->ssq_sderr[c], m);
-    mpf_div_ui(sd2, m, ln);
-    if (mpf_cmp_d(sd2, 0.0) > 0) {
-	mpf_sqrt(sd2, sd2);
-    } else {
+    if (lmod->sdiff[c] == 0) {
 	mpf_set_d(sd2, 0.0);
+    } else {
+	mpf_mul(m, c2, c2);
+	mpf_mul_ui(m, m, ln);
+	mpf_sub(m, lmod->ssq_sderr[c], m);
+	mpf_div_ui(sd2, m, ln);
+	if (mpf_cmp_d(sd2, 0.0) > 0) {
+	    mpf_sqrt(sd2, sd2);
+	} else {
+	    mpf_set_d(sd2, 0.0);
+	}
     }
 
-    pprintf(prn, " %*s ", VNAMELEN, 
+    pprintf(prn, "%*s", VNAMELEN - 1, 
 	    pdinfo->varname[lmod->model0->list[c+2]]);
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
@@ -2119,17 +2184,25 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     mpf_clear(sd1);
     mpf_clear(sd2);
 #else /* non-GMP */
-    bigval m1, m2, var1, var2, sd1, sd2;
-    
+    bigval m1, m2, sd1, sd2;
+
     m1 = lmod->sum_coeff[c] / n;
-    var1 = (lmod->ssq_coeff[c] - n * m1 * m1) / n;
-    sd1 = (var1 <= 0.0)? 0.0 : sqrt((double) var1);
+    if (lmod->cdiff[c] == 0) {
+	sd1 = 0.0;
+    } else {
+	sd1 = (lmod->ssq_coeff[c] - n * m1 * m1) / n;
+	sd1 = (sd1 <= 0.0)? 0.0 : sqrt((double) sd1);
+    }
 
     m2 = lmod->sum_sderr[c] / n;
-    var2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
-    sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
+    if (lmod->sdiff[c] == 0) {
+	sd2 = 0.0;
+    } else {
+	sd2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
+	sd2 = (sd2 <= 0.0)? 0 : sqrt((double) sd2);
+    }
 
-    pprintf(prn, " %*s ", VNAMELEN, 
+    pprintf(prn, "%*s", VNAMELEN - 1, 
 	   pdinfo->varname[lmod->model0->list[c+2]]);
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);
@@ -2139,11 +2212,14 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn)
 {
-    int i;
+    int i, vi;
     bigval mean, m, sd;
 
-    if (lprn == NULL) return;
+    if (lprn == NULL) {
+	return;
+    }
 
+    pputs(prn, "    ");
     pputs(prn, _("   Variable     mean         std. dev.\n"));
 
 #ifdef ENABLE_GMP
@@ -2151,18 +2227,23 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     mpf_init(m);
     mpf_init(sd);
     
-    for (i=1; i<=lprn->list[0]; i++) {
-	mpf_div_ui(mean, lprn->sum[i-1], (unsigned long) n);
-	mpf_mul(m, mean, mean);
-	mpf_mul_ui(m, m, (unsigned long) n);
-	mpf_sub(sd, lprn->ssq[i-1], m);
-	mpf_div_ui(sd, sd, (unsigned long) n);
-	if (mpf_cmp_d(sd, 0.0) > 0) {
-	    mpf_sqrt(sd, sd);
-	} else {
+    for (i=0; i<lprn->list[0]; i++) {
+	vi = lprn->list[i+1];
+	mpf_div_ui(mean, lprn->sum[i], (unsigned long) n);
+	if (lprn->diff[i] == 0) {
 	    mpf_set_d(sd, 0.0);
+	} else {
+	    mpf_mul(m, mean, mean);
+	    mpf_mul_ui(m, m, (unsigned long) n);
+	    mpf_sub(sd, lprn->ssq[i], m);
+	    mpf_div_ui(sd, sd, (unsigned long) n);
+	    if (mpf_cmp_d(sd, 0.0) > 0) {
+		mpf_sqrt(sd, sd);
+	    } else {
+		mpf_set_d(sd, 0.0);
+	    }
 	}
-	pprintf(prn, " %*s ", VNAMELEN, pdinfo->varname[lprn->list[i]]);
+	pprintf(prn, "%*s", VNAMELEN - 1, pdinfo->varname[vi]);
 	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
     }
 
@@ -2170,11 +2251,16 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     mpf_clear(m);
     mpf_clear(sd);
 #else
-    for (i=1; i<=lprn->list[0]; i++) {
-	mean = lprn->sum[i-1] / n;
-	m = (lprn->ssq[i-1] - n * mean * mean) / n;
-	sd = (m < 0)? 0 : sqrt((double) m);
-	pprintf(prn, " %*s ", VNAMELEN, pdinfo->varname[lprn->list[i]]);
+    for (i=0; i<lprn->list[0]; i++) {
+	vi = lprn->list[i+1];
+	mean = lprn->sum[i] / n;
+	if (lprn->diff[i] == 0) {
+	    sd = 0.0;
+	} else {
+	    m = (lprn->ssq[i] - n * mean * mean) / n;
+	    sd = (m < 0)? 0 : sqrt((double) m);
+	}
+	pprintf(prn, "%*s", VNAMELEN - 1, pdinfo->varname[vi]);
 	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
     }
 #endif
@@ -2202,6 +2288,8 @@ static int save_loop_store (LOOPSET *loop, PRN *prn)
     if (loop->storeopt == OPT_NONE && !has_suffix(fname, ".gdt")) {
 	strcat(fname, ".gdt");
     }
+
+    loop->sdinfo->t2 = loop->iter - 1;
 
     err = write_data(fname, list, (const double **) loop->sZ, 
 		     loop->sdinfo, loop->storeopt, NULL);
@@ -2286,22 +2374,53 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     return err;
 }
 
-static void update_loop_store (const int *list, LOOPSET *loop,
-			       const double **Z, DATAINFO *pdinfo)
+static int extend_loop_dataset (LOOPSET *loop)
+{
+    double *x;
+    int oldn = loop->sdinfo->n;
+    int n = oldn + DEFAULT_NOBS;
+    int i, t;
+
+    for (i=0; i<loop->sdinfo->v; i++) {
+	x = realloc(loop->sZ[i], n * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
+	}
+	loop->sZ[i] = x;
+	for (t=oldn; t<n; t++) {
+	    loop->sZ[i][t] = (i == 0)? 1.0 : NADBL;
+	}	    
+    }
+    
+    loop->sdinfo->n = n;
+    loop->sdinfo->t2 = n - 1;
+
+    ntodate(loop->sdinfo->endobs, n - 1, loop->sdinfo);
+
+    return 0;
+}
+
+static int update_loop_store (const int *list, LOOPSET *loop,
+			      const double **Z, DATAINFO *pdinfo)
 {
     int i, vi, t = loop->iter;
 
+    if (t >= loop->sdinfo->n) {
+	if (extend_loop_dataset(loop)) {
+	    return E_ALLOC;
+	}
+    }
+
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-#if 0
-	fprintf(stderr, "setting sZ[%d][%d]...\n", i, t);
-#endif
 	if (var_is_series(pdinfo, vi)) { 
-	    loop->sZ[i][t] = Z[vi][pdinfo->t1 + 1]; /* ?? */
+	    loop->sZ[i][t] = Z[vi][pdinfo->t1];
 	} else {
 	    loop->sZ[i][t] = Z[vi][0];
 	}
     }
+
+    return 0;
 }
 
 static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
@@ -2365,7 +2484,7 @@ static void progressive_loop_zero (LOOPSET *loop)
 
     loop->n_prints = 0;
 
-    loop_store_free(loop);
+    free_loop_store(loop);
 }
 
 static int 
@@ -2529,8 +2648,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
 
-	if (gretl_echo_on() && indexed_loop(loop) &&
-	    !loop_is_quiet(loop)) {
+	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, pdinfo, prn);
 	}
 
@@ -2708,7 +2826,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			    break;
 			}
 		    }
-		    update_loop_print(loop, p, cmd->list, pZ, pdinfo);
+		    update_loop_print(loop, p, cmd->list, (const double **) *pZ, 
+				      pdinfo);
 		} else {
 		    err = printdata(cmd->list, cmd->extra,
 				    (const double **) *pZ, pdinfo, 
@@ -2725,8 +2844,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			    break;
 			}
 		    }
-		    update_loop_store(cmd->list, loop, (const double **) *pZ, 
-				      pdinfo);
+		    err = update_loop_store(cmd->list, loop, (const double **) *pZ, 
+					    pdinfo);
 		} else {
 		    goto cmd_exec;
 		}
