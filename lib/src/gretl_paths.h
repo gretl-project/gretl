@@ -30,6 +30,8 @@ FILE *gretl_fopen (const char *filename, const char *mode);
 
 gzFile gretl_gzopen (const char *filename, const char *mode);
 
+int gretl_mkdir (const char *path);
+
 int gretl_is_xml_file (const char *fname);
 
 char *addpath (char *fname, PATHS *ppaths, int script);
@@ -41,13 +43,13 @@ int gretl_path_is_absolute (const char *fname);
 
 void show_paths (const PATHS *ppaths);
 
-int set_paths (PATHS *ppaths, gretlopt opt);
+int gretl_set_paths (PATHS *ppaths, gretlopt opt);
 
 const char *gretl_lib_path (void);
 
 const char *gretl_user_dir (void);
 
-void set_gretl_user_dir (const char *path, PATHS *ppaths);
+int set_gretl_user_dir (const char *path, PATHS *ppaths);
 
 void gretl_maybe_switch_dir (const char *fname);
 

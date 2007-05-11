@@ -35,7 +35,7 @@ enum {
     WIN32_TO_PRINTER
 };
 
-int create_child_process (char *prog, int showerr);
+int create_child_process (char *prog);
 
 void startR (char *Rcommand);
 
@@ -55,8 +55,6 @@ void gretl_win32_debug (void);
 
 const char *get_network_cfg_filename (void);
 
-void win32_make_user_dirs (void);
-
 int prn_to_clipboard (PRN *prn, int copycode);
 
 int win_buf_to_clipboard (const char *buf);
@@ -70,8 +68,6 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 int browser_open (const char *url);
 
 int win32_open_file (const char *fname);
-
-DIR *win32_opendir (const char *dname);
 
 int win32_delete_dir (const char *path);
 

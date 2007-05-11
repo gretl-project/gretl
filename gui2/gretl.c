@@ -759,7 +759,7 @@ int main (int argc, char *argv[])
 #endif /* USE_GNOME */
 
     libgretl_init();
-    set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
+    gretl_set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
     set_program_startdir();
 
 #ifdef G_OS_WIN32
@@ -961,13 +961,6 @@ int main (int argc, char *argv[])
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
-
-#ifdef HAVE_TRAMO
-    set_tramo_ok(-1);
-#endif
-#ifdef HAVE_X12A
-    set_x12a_ok(-1);
-#endif
 
     if (have_data()) {
 	register_data(paths.datfile, tryfile, 1);

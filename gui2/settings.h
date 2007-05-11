@@ -53,14 +53,6 @@ const char *get_datapage (void);
 
 const char *get_scriptpage (void);
 
-#ifdef HAVE_TRAMO
-void set_tramo_ok (int set);
-#endif
-
-#ifdef HAVE_X12A
-void set_x12a_ok (int set);
-#endif
-
 #ifndef G_OS_WIN32
 void first_time_set_user_dir (void);
 #endif

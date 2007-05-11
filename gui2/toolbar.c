@@ -47,7 +47,7 @@ static GtkWidget *toolbar_box;
 static void show_calc (void)
 {
 #ifdef G_OS_WIN32
-    create_child_process(calculator, 1);
+    create_child_process(calculator);
 #else
     gretl_fork(calculator, NULL);
 #endif 

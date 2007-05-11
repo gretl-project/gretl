@@ -396,27 +396,6 @@ int isdir (const char *path)
     return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
 }
 
-#ifndef G_OS_WIN32
-
-int gretl_mkdir (const char *path)
-{
-    int err = 0;
-    extern int errno;
-
-    errno = 0;
-
-    if (mkdir(path, 0755)) {
-	if (errno != EEXIST) { 
-	    fprintf(stderr, "%s: %s\n", path, strerror(errno));
-	    err = 1;
-	}
-    }
-
-    return err;
-}
-
-#endif
-
 FILE *gretl_tempfile_open (char *fname)
 {
     FILE *fp = NULL;

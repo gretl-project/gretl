@@ -32,8 +32,6 @@ int probably_script_file (const char *fname);
 
 int probably_session_file (const char *fname);
 
-int gretl_mkdir (const char *path);
-
 int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);

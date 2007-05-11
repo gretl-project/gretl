@@ -22,7 +22,11 @@
 
 #ifdef WIN32
 
+#include <sys/types.h>
+#include <dirent.h>
 #include <windows.h>
+
+DIR *win32_opendir (const char *dname);
 
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);
@@ -40,6 +44,8 @@ int winfork (char *cmdline, const char *dir, int wshow,
 int gretl_spawn (char *cmdline);
 
 char *desktop_path (void);
+
+char *appdata_path (void);
 
 int gretl_shell (const char *arg);
 

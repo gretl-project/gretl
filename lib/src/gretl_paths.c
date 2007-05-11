@@ -28,7 +28,9 @@
 #ifdef WIN32
 # include <windows.h>
 #else
+# include <sys/stat.h>
 # include <dirent.h>
+# include <errno.h>
 #endif
 
 #include <glib.h>
@@ -106,6 +108,45 @@ gzFile gretl_gzopen (const char *filename, const char *mode)
 
     return fz;
 }
+
+#ifdef WIN32
+
+int gretl_mkdir (const char *path)
+{
+    DIR *test;
+    int done;
+
+    test = win32_opendir(path);
+    if (test != NULL) {
+	closedir(test);
+	return 0;
+    }
+
+    done = CreateDirectory(path, NULL);
+    
+    return !done;
+}
+
+#else
+
+int gretl_mkdir (const char *path)
+{
+    int err = 0;
+    extern int errno;
+
+    errno = 0;
+
+    if (mkdir(path, 0755)) {
+	if (errno != EEXIST) { 
+	    fprintf(stderr, "%s: %s\n", path, strerror(errno));
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+#endif
 
 int gretl_is_xml_file (const char *fname)
 {
@@ -652,6 +693,72 @@ static void set_gretl_libpath (const char *path)
 #endif /* !WIN32 */
 }
 
+#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
+
+static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
+{
+    char dirname[MAXLEN];
+    size_t n;
+    int err = 0;
+
+    if (baddir) {
+# ifdef HAVE_TRAMO
+	*ppaths->tramodir = '\0';
+# endif
+# ifdef HAVE_X12A
+	*ppaths->x12adir = '\0';
+# endif
+	return baddir;
+    }
+
+    strcpy(dirname, ppaths->userdir);
+    n = strlen(dirname);
+
+    if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
+	dirname[n-1] = '\0';
+    }
+
+# ifdef HAVE_X12A
+    build_path(ppaths->x12adir, ppaths->userdir, "x12arima", NULL);
+    err = gretl_mkdir(ppaths->x12adir);
+    if (err) {
+	*ppaths->x12adir = '\0';
+    }
+# endif
+
+# ifdef HAVE_TRAMO
+    build_path(ppaths->tramodir, ppaths->userdir, "tramo", NULL);
+    if (gretl_mkdir(ppaths->tramodir)) {
+	*ppaths->tramodir = '\0';
+	return E_FOPEN;
+    }
+
+    sprintf(dirname, "%s%coutput", ppaths->tramodir, SLASH);
+    gretl_mkdir(dirname);
+
+    sprintf(dirname, "%s%cgraph", ppaths->tramodir, SLASH);
+    if (gretl_mkdir(dirname)) {
+	*ppaths->tramodir = '\0';
+	return E_FOPEN;
+    }
+
+    sprintf(dirname, "%s%cgraph%cacf", ppaths->tramodir, SLASH, SLASH);
+    gretl_mkdir(dirname);
+    sprintf(dirname, "%s%cgraph%cfilters", ppaths->tramodir, SLASH, SLASH);
+    gretl_mkdir(dirname);
+    sprintf(dirname, "%s%cgraph%cforecast", ppaths->tramodir, SLASH, SLASH);
+    gretl_mkdir(dirname);
+    sprintf(dirname, "%s%cgraph%cseries", ppaths->tramodir, SLASH, SLASH);
+    gretl_mkdir(dirname);
+    sprintf(dirname, "%s%cgraph%cspectra", ppaths->tramodir, SLASH, SLASH);
+    gretl_mkdir(dirname);
+# endif
+
+    return err;
+}
+
+#endif /* x12a || tramo */
+
 static void copy_paths_to_internal (const PATHS *paths)
 {
     strcpy(gretl_paths.userdir,  paths->userdir);
@@ -689,12 +796,91 @@ const char *gretl_user_dir (void)
     return gretl_paths.userdir;
 }
 
-void set_gretl_user_dir (const char *path, PATHS *ppaths)
+#ifdef WIN32
+
+static void correct_blank_userdir (PATHS *paths)
 {
-    strcpy(ppaths->userdir, path);
+    char *home = appdata_path();
+
+    if (home != NULL) {
+	sprintf(paths->userdir, "%s\\gretl\\", home);
+	free(home);
+    } 
+}
+
+#else
+
+static void correct_blank_userdir (PATHS *paths)
+{
+    char *home = getenv("HOME");
+
+    if (home != NULL) {
+	sprintf(paths->userdir, "%s/gretl/", home);
+    } 
+}
+
+#endif    
+
+static int validate_userdir (const char *dirname)
+{
+    int err = 0;
+
+    if (*dirname == '\0') {
+	strcpy(gretl_errmsg, _("User directory is not set"));
+	return E_DATA;
+    }
+
+    err = gretl_mkdir(dirname);
+    if (err) {
+	sprintf(gretl_errmsg, _("Couldn't create directory '%s'"), dirname);
+    }
+
+    if (!err) {
+	/* ensure the directory is writable */
+	char *testname;
+	FILE *fp;
+
+	testname = g_strdup_printf("%s%cwrite.chk", dirname, SLASH);
+	if (testname != NULL) {
+	    fp = gretl_fopen(testname, "w");
+	    if (fp == NULL) {
+		sprintf(gretl_errmsg, _("Couldn't write to '%s': gretl will not work properly!"), 
+			dirname);
+		err = 1;
+	    } else {
+		fclose(fp);
+		remove(testname);
+	    }
+	    g_free(testname);
+	}
+    }
+
+    return err;
+}
+
+int set_gretl_user_dir (const char *path, PATHS *ppaths)
+{
+    int err = validate_userdir(path);
+
+    if (err) {
+	return err;
+    }
+
+    if (path != ppaths->userdir) {
+	strcpy(ppaths->userdir, path);
+    }
     ensure_slash(ppaths->userdir);
+    set_tramo_x12a_dirs(ppaths, 0);
+
     strcpy(gretl_paths.userdir, ppaths->userdir);
+    strcpy(gretl_paths.x12adir, ppaths->x12adir);
+    strcpy(gretl_paths.tramodir, ppaths->tramodir);
+
     gretl_insert_builtin_string("userdir", ppaths->userdir);
+    gretl_insert_builtin_string("x12adir",  ppaths->x12adir);
+    gretl_insert_builtin_string("tramodir", ppaths->tramodir);
+
+    return 0;
 }
 
 const char *gretl_gnuplot_path (void)
@@ -771,9 +957,10 @@ void show_paths (const PATHS *ppaths)
 
 #ifdef WIN32
 
-int set_paths (PATHS *ppaths, gretlopt opt)
+int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 {
     char envstr[MAXLEN];
+    int err = 0;
 
     if (opt & OPT_D) {
 	/* set defaults */
@@ -790,10 +977,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->ratsbase, "f:\\"); 
 
 	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
-	strcpy(ppaths->x12adir, "c:\\userdata\\x12arima");
-
 	strcpy(ppaths->tramo, "c:\\userdata\\tramo\\tramo.exe");
-	strcpy(ppaths->tramodir, "c:\\userdata\\tramo");
 
 	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
@@ -807,6 +991,11 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);
+	correct_blank_userdir(ppaths);
+	err = validate_userdir(ppaths->userdir);
+#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
+	err = set_tramo_x12a_dirs(ppaths, err);
+#endif
     }
 
     sprintf(ppaths->datadir, "%sdata\\", ppaths->gretldir);
@@ -837,7 +1026,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
     set_gretl_libpath(ppaths->gretldir);
     copy_paths_to_internal(ppaths);
 
-    return 0;
+    return err;
 }
 
 #else /* not Windows */
@@ -864,8 +1053,10 @@ static void check_gretldir (PATHS *ppaths)
     }
 }
 
-int set_paths (PATHS *ppaths, gretlopt opt)
+int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 {
+    int err = 0;
+
     if (opt & OPT_D) {
 	/* defaults */
 	char *home = getenv("GRETL_HOME");
@@ -901,20 +1092,12 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    *ppaths->userdir = '\0';
 	}
 
-#ifdef HAVE_X12A
-	strcpy(ppaths->x12a, "x12a");
-	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
-#endif
-
-#ifdef HAVE_TRAMO
-	strcpy(ppaths->tramo, "tramo");
-	sprintf(ppaths->tramodir, "%stramo", ppaths->userdir);
-#endif
-
 	*gretl_paths.plotfile = '\0';
     } else {
-	/* check validity of gretldir */
+	/* check validity of gretldir, userdir */
 	check_gretldir(ppaths);
+	correct_blank_userdir(ppaths);
+	err = validate_userdir(ppaths->userdir);
     }
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
@@ -946,9 +1129,16 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
     ensure_slash(ppaths->userdir);
     set_gretl_libpath(ppaths->gretldir);
+
+#if defined(HAVE_X12A) || defined(HAVE_TRAMO)
+    if ((!(opt & OPT_D) || !(opt & OPT_X))) {
+	err = set_tramo_x12a_dirs(ppaths, err);
+    }
+#endif
+
     copy_paths_to_internal(ppaths);
 
-    return 0;
+    return err;
 }
 
 #endif /* win32 versus unix */

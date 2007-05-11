@@ -222,12 +222,6 @@ RCVAR rc_vars[] = {
     { "tramo", N_("path to tramo"), NULL, paths.tramo, 
       ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
-#ifdef G_OS_WIN32
-    { "x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
-    { "tramodir", N_("TRAMO working directory"), NULL, paths.tramodir, 
-      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
-#endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
       USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
@@ -317,7 +311,7 @@ static gretlopt set_paths_opt = OPT_X;
 void force_english_help (void)
 {
     set_paths_opt |= OPT_N;
-    set_paths(&paths, set_paths_opt);
+    gretl_set_paths(&paths, set_paths_opt);
 }
 
 void set_fixed_font (void)
@@ -519,40 +513,7 @@ void get_default_dir (char *s, int action)
     slash_terminate(s);
 }
 
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-
-# ifdef HAVE_TRAMO
-void set_tramo_ok (int set)
-{
-    static int ok;
-
-    if (set >= 0) {
-	ok = set;
-    }
-
-    if (mdata != NULL) {
-	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
-    }
-}
-# endif /* HAVE_TRAMO */
-
-# ifdef HAVE_X12A
-void set_x12a_ok (int set)
-{
-    static int ok;
-
-    if (set >= 0) {
-	ok = set;
-    }
-
-    if (mdata != NULL) {
-	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
-    }
-}
-# endif /* HAVE_X12A */
-
-# ifdef G_OS_WIN32
-
+#ifdef G_OS_WIN32
 static const char *get_reg_base (const char *key)
 {
     if (!strncmp(key, "x12a", 4)) {
@@ -563,19 +524,7 @@ static const char *get_reg_base (const char *key)
 	return "gretl";
     }
 }
-
-static void set_tramo_x12a_dirs (void)
-{
-    int ok;
-    
-    ok = check_for_prog(paths.tramo);
-    set_tramo_ok(ok);
-
-    ok = check_for_prog(paths.x12a);
-    set_x12a_ok(ok);
-}
-
-# else /* not G_OS_WIN32 */
+#endif
 
 #ifdef OSX_BUILD
 static int alt_ok (const char *prog)
@@ -610,76 +559,44 @@ static int alt_ok (const char *prog)
 }
 #endif
 
-static void set_tramo_x12a_dirs (void)
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+
+static void set_tramo_x12a_status (void)
 {
-    char dirname[MAXLEN];
-    DIR *test;
     int ok;
 
 #ifdef HAVE_TRAMO
-    ok =  check_for_prog(paths.tramo);
+    ok = 0;
+    if (*paths.tramodir != '\0') {
+	ok = check_for_prog(paths.tramo);
 # ifdef OSX_BUILD
-    if (!ok) {
-        ok = alt_ok(paths.tramo);
-    }
+	if (!ok) {
+	    ok = alt_ok(paths.tramo);
+	}
 # endif    
-    set_tramo_ok(ok); 
-       
-    if (*paths.tramodir == '\0') {
-	build_path(paths.tramodir, paths.userdir, "tramo", NULL);
     }
-#endif
+
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
+    }
+#endif /* TRAMO */
 
 #ifdef HAVE_X12A
-    ok = check_for_prog(paths.x12a);
+    ok = 0;
+    if (*paths.x12adir != '\0') {
+	ok = check_for_prog(paths.x12a);
 # ifdef OSX_BUILD    
-    if (!ok) {
-	ok = alt_ok(paths.x12a);
-    }
-# endif    
-    set_x12a_ok(ok);
-    
-    if (*paths.x12adir == '\0') {
-	build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
+	if (!ok) {
+	    ok = alt_ok(paths.x12a);
+	}
+# endif  
     }
 
-    /* don't make dir structure (yet) if userdir doesn't exist */
-    test = opendir(paths.userdir);
-    if (test == NULL) {
-	return;
-    } else {
-	closedir(test);
-    }
-#endif
-    
-#ifdef HAVE_X12A
-    gretl_mkdir(paths.x12adir);
-#endif
-
-#ifdef HAVE_TRAMO
-    if (gretl_mkdir(paths.tramodir)) {
-	return;
-    }
-    sprintf(dirname, "%s/output", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph", paths.tramodir);
-    if (gretl_mkdir(dirname)) {
-	return;
-    }
-    sprintf(dirname, "%s/graph/acf", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/filters", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/forecast", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/series", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s/graph/spectra", paths.tramodir);
-    gretl_mkdir(dirname);
-#endif /* HAVE_TRAMO */
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
+    }    
+#endif /* X12A */
 }
-
-# endif /* G_OS_WIN32 */
 
 #endif /* tramo || x12a */
 
@@ -1431,6 +1348,8 @@ static void set_gp_colors (void)
     }
 }
 
+/* register and react to changes from Preferences dialog */
+
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
     const gchar *str;
@@ -1480,9 +1399,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
 
+    if (strcmp(paths.userdir, gretl_user_dir())) {
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
+	set_tramo_x12a_status();
 #endif
+    }
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 }
@@ -1548,40 +1469,10 @@ static int dir_exists (const char *dname, FILE *fp)
     return ok;
 }
 
-static int validate_userdir (const char *dirname)
+static int common_read_rc_setup (void)
 {
     int err = 0;
 
-    err = gretl_mkdir(dirname);
-    if (err) {
-	errbox(_("Couldn't create directory '%s'"), dirname);
-    }
-
-    if (!err) {
-	/* ensure the directory is writable */
-	char *testname;
-	FILE *fp;
-
-	testname = g_strdup_printf("%s%cwrite.chk", dirname, SLASH);
-	if (testname != NULL) {
-	    fp = gretl_fopen(testname, "w");
-	    if (fp == NULL) {
-		errbox(_("Couldn't write to '%s': gretl will not work properly!"), 
-		       dirname);
-		err = 1;
-	    } else {
-		fclose(fp);
-		remove(testname);
-	    }
-	    g_free(testname);
-	}
-    }
-
-    return err;
-}
-
-static int common_read_rc_setup (void)
-{
     set_use_qr(useqr);
     set_use_cwd(usecwd);
     set_shell_ok(shellok);
@@ -1591,20 +1482,20 @@ static int common_read_rc_setup (void)
     set_tseries_hccme(hc_tseri);
     set_garch_robust_vcv(hc_garch);
 
-    set_paths(&paths, set_paths_opt);
-    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
+    err = gretl_set_paths(&paths, set_paths_opt);
 
+    gretl_www_init(paths.dbhost, dbproxy, use_proxy);
     set_tex_use_pdf(latex);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
+    set_tramo_x12a_status();
 # endif
 
 # ifdef ENABLE_NLS
     set_lcnumeric();
 # endif
 
-    return validate_userdir(paths.userdir);
+    return err;
 }
 
 /* next section: variant versions of write_rc and read_rc, depending
@@ -1640,7 +1531,7 @@ void write_rc (void)
 
     save_file_lists(client);
     g_object_unref(G_OBJECT(client));
-    set_paths(&paths, set_paths_opt);
+    gretl_set_paths(&paths, set_paths_opt);
     record_shell_opt();
 }
 
@@ -1709,7 +1600,8 @@ void write_rc (void)
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 
-	if (rc_vars[i].flags & FIXSET) {
+	if (rc_vars[i].flags & (FIXSET | ROOTSET)) {
+	    /* read-only variables */
 	    continue;
 	}
 
@@ -1725,12 +1617,6 @@ void write_rc (void)
 				 "gretl", 
 				 rc_vars[i].key, 
 				 ival);	    
-	} else if (rc_vars[i].flags & ROOTSET) {
-	    strval = (char *) rc_vars[i].var;
-	    err += write_reg_val(HKEY_CLASSES_ROOT, 
-				 get_reg_base(rc_vars[i].key),
-				 rc_vars[i].key, 
-				 strval);
 	} else if (rc_vars[i].flags & MACHSET) {
 	    strval = (char *) rc_vars[i].var;
 	    err += write_reg_val(HKEY_LOCAL_MACHINE, 
@@ -1746,12 +1632,14 @@ void write_rc (void)
 	}
     }
 
+#if 0
     if (err) {
 	win_show_last_error();
     }
+#endif
 
     save_file_lists();
-    set_paths(&paths, set_paths_opt);
+    gretl_set_paths(&paths, set_paths_opt);
 }
 
 static int get_network_settings (void)
@@ -1816,7 +1704,11 @@ void read_rc (void)
     int i;
 
     if (get_network_settings() && *paths.userdir != '\0') {
-	win32_make_user_dirs();
+	int err = set_gretl_user_dir(paths.userdir, &paths);
+
+	if (err) {
+	    gui_errmsg(err);
+	}
 	for (i=0; rc_vars[i].key != NULL; i++) {
 	    if (rc_vars[i].var == paths.tramodir ||
 		rc_vars[i].var == paths.x12adir) {
@@ -1904,7 +1796,7 @@ void write_rc (void)
 
     save_file_lists(rc);
     fclose(rc);
-    set_paths(&paths, set_paths_opt);
+    gretl_set_paths(&paths, set_paths_opt);
     record_shell_opt();
 }
 
@@ -2333,15 +2225,17 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 static void real_set_userdir (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *dirname;
+    int err;
 
     dirname = edit_dialog_get_text(dlg);
+    err = set_gretl_user_dir(dirname, &paths);
 
-    if (validate_userdir(dirname)) {
+    if (err) {
+	gui_errmsg(err);
 	return;
     } else {
-	set_gretl_user_dir(dirname, &paths);
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-	set_tramo_x12a_dirs();
+	set_tramo_x12a_status();
 #endif
 	close_dialog(dlg);
     }

@@ -156,7 +156,7 @@ static void launch_gnuplot_interactive (void)
 
     gpline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
 			     gretl_plotfile());
-    create_child_process(gpline, 1);
+    create_child_process(gpline);
     g_free(gpline);
 # else
     char term[8];

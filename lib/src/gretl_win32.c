@@ -84,6 +84,7 @@ int write_reg_val (HKEY tree, const char *base,
                        &regkey,
                        NULL                         
                        ) != ERROR_SUCCESS) {
+	fprintf(stderr, "RegCreateKeyEx: failed on '%s'\n", regpath);
         return 1;
     }
 
@@ -94,12 +95,35 @@ int write_reg_val (HKEY tree, const char *base,
                   REG_SZ,
                   keyval,
                   strlen(keyval) + 1) != ERROR_SUCCESS) {
+	fprintf(stderr, "RegSetValueEx: failed on '%s'\n", keyname);
         err = 1;
     }
                   
     RegCloseKey(regkey);
 
     return err;
+}
+
+DIR *win32_opendir (const char *dname)
+{
+    char tmp[MAXLEN];
+    int n;
+    
+    *tmp = '\0';
+    strncat(tmp, dname, MAXLEN - 2);
+    n = strlen(tmp);
+
+    /* opendir doesn't work on e.g. c:\foo\ !! */
+    if (n > 3 && tmp[n - 1] == '\\') {
+	tmp[n - 1] = '\0';
+    }
+
+    /* but neither does it work on e.g. f: */
+    if (tmp[strlen(tmp) - 1] == ':') {
+	strcat(tmp, "\\");
+    }
+
+    return opendir(tmp);
 }
 
 void cli_read_registry (char *callname, PATHS *ppaths)
@@ -150,12 +174,6 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12a", ppaths->x12a);
     if (ppaths->x12a[0] == '\0') {
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
-    }
-
-    ppaths->x12adir[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12adir", ppaths->x12adir);
-    if (ppaths->x12adir[0] == '\0') {
-	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima", drive);
     }
 
     ppaths->dbhost[0] = '\0';
@@ -246,14 +264,14 @@ int gretl_spawn (char *cmdline)
     return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
 }
 
-char *desktop_path (void)
+static char *win_special_path (int folder)
 {
     TCHAR dpath[MAX_PATH];
     LPITEMIDLIST id_list;
     DWORD result;
     LPMALLOC allocator;
 
-    if (SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOPDIRECTORY, &id_list) != S_OK) {
+    if (SHGetSpecialFolderLocation(NULL, folder, &id_list) != S_OK) {
 	return NULL;
     }
 
@@ -265,6 +283,16 @@ char *desktop_path (void)
     }
 
     return (result == TRUE) ? gretl_strdup(dpath) : NULL;
+}
+
+char *desktop_path (void)
+{
+    return win_special_path(CSIDL_DESKTOPDIRECTORY);
+}
+
+char *appdata_path (void)
+{
+    return win_special_path(CSIDL_APPDATA);
 }
 
 static int run_cmd_wait (char *cmd)

@@ -98,7 +98,7 @@ static int ws_startup (void)
     return 0;
 }
 
-int create_child_process (char *prog, int showerr) 
+int real_create_child_process (char *prog, int showerr) 
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 
@@ -114,7 +114,7 @@ int create_child_process (char *prog, int showerr)
 			NULL,          /* primary thread security attributes */ 
 			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
-			NULL,          /* NULL => use parent's environment  */
+			(LPVOID) NULL, /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
 			&start_info,   /* receives STARTUPINFO */ 
 			&proc_info);   /* receives PROCESS_INFORMATION  */
@@ -135,6 +135,11 @@ int create_child_process (char *prog, int showerr)
 #endif
 
     return err;
+}
+
+int create_child_process (char *prog) 
+{
+    return real_create_child_process(prog, 1);
 }
 
 void startR (char *Rcommand)
@@ -206,7 +211,7 @@ void startR (char *Rcommand)
     fclose(fp);
 
     sprintf(Rline, "\"%s\" %s %s", Rcommand, supp1, supp2);
-    err = create_child_process(Rline, 0);
+    err = real_create_child_process(Rline, 0);
 
     if (err) {
 	/* failed: try registry for Rgui.exe path? */
@@ -219,7 +224,7 @@ void startR (char *Rcommand)
 	if (!err) {
 	    strcat(tmp, "\\bin\\Rgui.exe");
 	    sprintf(Rline, "\"%s\" %s %s", tmp, supp1, supp2);
-	    err = create_child_process(Rline, 1);
+	    err = real_create_child_process(Rline, 1);
 	    if (!err) {
 		/* got a good R path, so record it */
 		*Rcommand = '\0';
@@ -509,90 +514,6 @@ void gretl_win32_init (const char *progname)
 void gretl_win32_debug (void)
 {
     redirect_io_to_console();
-}
-
-DIR *win32_opendir (const char *dname)
-{
-    char tmp[MAXLEN];
-    int n;
-    
-    *tmp = '\0';
-    strncat(tmp, dname, MAXLEN - 2);
-    n = strlen(tmp);
-
-    /* opendir doesn't work on e.g. c:\foo\ !! */
-    if (n > 3 && tmp[n - 1] == '\\') {
-	tmp[n - 1] = '\0';
-    }
-
-    /* but neither does it work on e.g. f: */
-    if (tmp[strlen(tmp) - 1] == ':') {
-	strcat(tmp, "\\");
-    }
-
-    return opendir(tmp);
-}
-
-int gretl_mkdir (const char *path)
-{
-    DIR *test;
-    int done;
-
-    test = win32_opendir(path);
-    if (test != NULL) {
-	closedir(test);
-	return 0;
-    }
-
-    done = CreateDirectory(path, NULL);
-    
-    return !done;
-}
-
-void win32_make_user_dirs (void)
-{
-    char dirname[MAXLEN];
-    size_t n;
-
-    strcpy(dirname, paths.userdir);
-    n = strlen(dirname);
-
-    if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
-	dirname[n-1] = '\0';
-    }
-
-    if (gretl_mkdir(dirname)) {
-	gchar *msg;
-
-	msg = g_strdup_printf("Couldn't open or create gretl "
-			      "user directory\n%s", paths.userdir);
-	errbox(msg);
-	g_free(msg);
-	return;
-    }
-
-    build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
-    gretl_mkdir(paths.x12adir);
-
-    build_path(paths.tramodir, paths.userdir, "tramo", NULL);
-    if (gretl_mkdir(paths.tramodir)) return;
-
-    sprintf(dirname, "%s\\output", paths.tramodir);
-    gretl_mkdir(dirname);
-
-    sprintf(dirname, "%s\\graph", paths.tramodir);
-    if (gretl_mkdir(dirname)) return;
-
-    sprintf(dirname, "%s\\graph\\acf", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\filters", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\forecast", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\series", paths.tramodir);
-    gretl_mkdir(dirname);
-    sprintf(dirname, "%s\\graph\\spectra", paths.tramodir);
-    gretl_mkdir(dirname);
 }
 
 static int win_copy_buf (const char *buf, int fmt, size_t buflen)
