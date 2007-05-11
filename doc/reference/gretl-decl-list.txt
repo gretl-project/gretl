@@ -125,7 +125,7 @@ gretl_XTX_XTy
 read_reg_val
 write_reg_val
 cli_read_registry
-win_show_error
+win_show_last_error
 winfork
 gretl_spawn
 desktop_path
@@ -181,6 +181,7 @@ gretl_max
 gretl_sum
 gretl_mean
 gretl_restricted_mean
+gretl_quantile
 gretl_median
 gretl_sst
 gretl_variance
@@ -214,7 +215,7 @@ free_vmatrix
 gretl_corrmx
 means_test
 vars_test
-matrix_print_corr
+print_corrmat
 dh_root_b1_to_z1
 dh_b2_to_z2
 doornik_chisq
@@ -306,7 +307,7 @@ gretl_cmd_set_opt
 parse_command_line
 get_command_index
 command_number
-help
+cli_help
 parseopt
 gretl_shell
 echo_cmd
@@ -394,6 +395,7 @@ print_pvalue
 <SECTION>
 <FILE>random</FILE>
 gretl_rand_set_seed
+gretl_one_snormal
 gretl_uniform_dist
 gretl_uniform_dist_minmax
 gretl_normal_dist
@@ -462,6 +464,7 @@ csv_obs_to_prn
 print_time
 gretl_xml_validate
 gretl_xml_encode
+gretl_xml_encode_to_buf
 unescape_url
 make_varname_unique
 fix_varname_duplicates
@@ -620,7 +623,6 @@ gui_script_logo
 gui_logo
 text_print_model_confints
 print_freq
-printcorr
 print_xtab
 print_smpl
 print_contemp_covariance_matrix
@@ -667,6 +669,8 @@ gretl_error_clear
 gretl_qr_regress
 qr_tsls_vcv
 hac_weight
+qs_hac_weight
+newey_west_bandwidth
 </SECTION>
 
 <SECTION>
@@ -676,8 +680,10 @@ GretlMatrixMod
 GretlMatrixStructure
 gretl_matrix
 gretl_vector
-mdx
-mdxtr
+gretl_matrix_get
+gretl_vector_get
+gretl_matrix_set
+gretl_vector_set
 gretl_matrix_cols
 gretl_matrix_rows
 gretl_vector_get_length
@@ -686,15 +692,13 @@ gretl_column_vector_alloc
 gretl_vector_free
 gretl_matrix_is_scalar
 gretl_matrix_is_symmetric
+gretl_matrix_is_idempotent
 gretl_matrix_xtr_symmetric
 gretl_matrix_set_equals_tolerance
 gretl_matrix_unset_equals_tolerance
-gretl_matrix_get
-gretl_vector_get
-gretl_matrix_set
-gretl_vector_set
 gretl_matrix_alloc
 gretl_matrix_reuse
+gretl_matrix_realloc
 gretl_identity_matrix_new
 gretl_zero_matrix_new
 gretl_unit_matrix_new
@@ -716,12 +720,14 @@ gretl_matrix_fill
 gretl_matrix_multiply_by_scalar
 gretl_matrix_divide_by_scalar
 gretl_matrix_dot_op
+gretl_matrix_complex_multiply
 gretl_matrix_exp
 gretl_matrix_raise
 gretl_matrix_free
 gretl_matrix_steal_data
 gretl_matrix_copy_values
 gretl_matrix_add_to
+gretl_matrix_add_transpose_to
 gretl_matrix_subtract_from
 gretl_matrix_I_minus
 gretl_matrix_transpose
@@ -756,12 +762,15 @@ gretl_vcv_log_determinant
 gretl_matrix_one_norm
 gretl_matrix_infinity_norm
 gretl_LU_solve
+gretl_cholesky_decomp_solve
 gretl_cholesky_solve
+gretl_inverse_from_cholesky_decomp
 gretl_invert_general_matrix
 gretl_invert_symmetric_indef_matrix
 gretl_invert_symmetric_matrix
 gretl_invert_symmetric_matrix2
 gretl_invert_packed_symmetric_matrix
+gretl_invert_triangular_matrix
 gretl_invert_diagonal_matrix
 gretl_invert_matrix
 gretl_SVD_invert_matrix
@@ -771,6 +780,7 @@ gretl_general_eigen_sort
 gretl_symmetric_eigen_sort
 gretl_general_matrix_eigenvals
 gretl_symmetric_matrix_eigenvals
+gretl_gensymm_eigenvals
 gretl_matrix_right_nullspace
 gretl_matrix_row_concat
 gretl_matrix_col_concat
@@ -910,6 +920,7 @@ tex_dcolumn_double
 tex_float_string
 set_gretl_tex_preamble
 set_tex_use_utf
+set_tex_use_pdf
 gretl_tex_preamble
 tex_print_obs_marker
 set_tex_param_format
@@ -933,6 +944,7 @@ set_paths
 gretl_lib_path
 gretl_user_dir
 set_gretl_user_dir
+gretl_maybe_switch_dir
 gretl_gnuplot_path
 gretl_plotfile
 set_gretl_plotfile
@@ -972,9 +984,12 @@ gretl_xml_get_cmplx_array
 gretl_xml_get_strings_array
 gretl_xml_get_matrix
 gretl_xml_get_submask
+gretl_write_matrix_as_gdt
 gretl_write_gdt
 gretl_read_gdt
 gretl_get_gdt_description
+load_user_matrix_file
+load_user_XML_file
 </SECTION>
 
 <SECTION>
@@ -1102,6 +1117,7 @@ set_shell_ok
 get_shell_ok
 set_xsect_hccme
 set_tseries_hccme
+set_panel_hccme
 set_garch_robust_vcv
 get_garch_vcv_version
 get_garch_robust_vcv_version
@@ -1109,6 +1125,14 @@ get_force_hc
 get_hc_version
 get_hac_lag
 get_hac_kernel
+set_hac_kernel
+get_hac_prewhiten
+set_hac_prewhiten
+get_panel_beck_katz
+set_panel_beck_katz
+get_qs_bandwidth
+set_qs_bandwidth
+data_based_hac_bandwidth
 get_halt_on_error
 get_hp_lambda
 set_hp_lambda
@@ -1129,6 +1153,7 @@ set_bfgs_toler
 set_bfgs_maxiter
 get_init_vals
 get_VAR_horizon
+get_bootstrap_replications
 get_nls_toler
 set_nls_toler
 set_loop_on
@@ -1146,6 +1171,7 @@ set_long_digits
 get_long_digits
 set_max_verbose
 get_max_verbose
+shelldir_init
 get_shelldir
 get_csv_delim
 execute_set_line
@@ -1158,6 +1184,7 @@ print_flags
 get_opts_for_command
 check_for_loop_only_options
 get_all_option_strings
+incompatible_options
 </SECTION>
 
 <SECTION>
@@ -1170,6 +1197,7 @@ gretl_string_table_print
 gretl_string_table_destroy
 gretl_insert_builtin_string
 save_named_string
+get_named_string
 process_string_command
 substitute_named_strings
 string_is_defined
@@ -1253,7 +1281,10 @@ var_restriction_set_start
 eqn_restriction_set_start
 restriction_set_parse_line
 gretl_restriction_set_finalize
+destroy_restriction_set
 gretl_sum_test
+gretl_restriction_set_boot_params
+gretl_restriction_get_boot_params
 </SECTION>
 
 <SECTION>
@@ -1304,6 +1335,7 @@ check_function_needs
 write_user_function_file
 function_package_is_loaded
 function_package_description
+read_session_functions_file
 load_user_function_file
 get_function_file_info
 get_function_file_code
@@ -1345,6 +1377,7 @@ is_dummy_child
 diffgenr
 laggenr
 loggenr
+invgenr
 xpxgenr
 list_diffgenr
 list_laggenr
@@ -1366,6 +1399,9 @@ gretl_print_new_with_filename
 gretl_print_new_with_buffer
 gretl_print_reset_buffer
 gretl_print_get_buffer
+gretl_print_set_save_position
+gretl_print_unset_save_position
+gretl_print_get_chunk
 gretl_print_set_format
 gretl_print_toggle_doc_flag
 gretl_print_set_delim
@@ -1385,6 +1421,7 @@ tex_format
 tex_doc_format
 tex_eqn_format
 csv_format
+prn_format
 prn_delim
 </SECTION>
 
@@ -1424,7 +1461,7 @@ maybe_iso_gettext
 set_gretl_charset
 get_gretl_charset
 get_gnuplot_charset
-use_latin_2
+iso_latin_version
 sprint_l2_to_html
 sprint_l2_to_ascii
 sprint_html_to_l2
@@ -1522,6 +1559,7 @@ gretl_model_protect
 get_last_model
 get_genr_model
 get_model_by_name
+get_model_by_ID
 get_VAR_by_name
 get_VECM_by_name
 get_equation_system_by_name
@@ -1606,7 +1644,7 @@ nlspec_add_orthcond
 nlspec_add_weights
 gmm_add_vcv
 gmm_calculate
-gmm_missval_check
+gmm_missval_check_etc
 </SECTION>
 
 <SECTION>
@@ -1674,6 +1712,7 @@ ls_criteria
 record_test_result
 get_last_test_statistic
 get_last_pvalue
+gretl_stopwatch
 </SECTION>
 
 <SECTION>
@@ -1731,12 +1770,14 @@ panel_diagnostics
 real_panel_model
 panel_wls_by_unit
 panel_autocorr_test
+panel_tsls_robust_vcv
 set_panel_structure_from_vars
 set_panel_structure_from_line
 switch_panel_orientation
 balanced_panel
 panel_list_omit
 panel_list_add
+panel_variance_info
 panel_obs_info
 </SECTION>
 
@@ -1795,7 +1836,7 @@ const_lookup
 <FILE>genparse</FILE>
 GENDEBUG
 PRESERVE_AUX_NODES
-MAXSTR
+GENSTRLEN
 func_symb
 func2_symb
 funcn_symb
@@ -1892,6 +1933,20 @@ gretl_matrix_data_subset
 gretl_matrix_data_subset_no_missing
 gretl_matrix_data_subset_skip_missing
 gretl_plotfit_matrices
+</SECTION>
+
+<SECTION>
+<FILE>gretl_fft</FILE>
+gretl_matrix_fft
+gretl_matrix_ffti
+</SECTION>
+
+<SECTION>
+<FILE>bootstrap</FILE>
+bootstrap_analysis
+bootstrap_test_restriction
+bootstrap_ok
+bootstrap_save_data
 </SECTION>
 
 <SECTION>

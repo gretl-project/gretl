@@ -1,4 +1,4 @@
-version 1.6.3, in progress
+5/10/2007 version 1.6.3
 - Add facility for bootstrap analysis in GUI, for OLS
 - Model table: fixes for including panel models; allow up to
   12 models; formatting enhancements
