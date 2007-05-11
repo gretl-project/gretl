@@ -181,6 +181,7 @@ void startR (char *Rcommand)
     free(list);
 
     if (dataset_is_time_series(datainfo)) {
+	fputs("# load data from gretl\n", fp);
 	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
 	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
@@ -192,6 +193,7 @@ void startR (char *Rcommand)
 	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = gretl_fopen(Rtmp, "w");
 	if (fq != NULL) {
+	    fputs("# load data from gretl\n", fq);
 	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", 
 		    slash_convert(Rdata, FROM_BACKSLASH));
 	    fprintf(fq, "attach(gretldata)\n");

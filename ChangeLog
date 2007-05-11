@@ -32,6 +32,9 @@ version 1.6.3, in progress
 - Correlation matrix: try to be smarter in face of non-aligned
   missing observations
 - CSV data: add support for Mac-style text files
+- "loop" command, "progressive" option: fixes for the case
+  where this is invoked for loops other than the simple
+  "count" type
 - Further optimization of gretl_matrix functions
 - Various modifications to the configuration process
 
