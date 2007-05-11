@@ -89,6 +89,45 @@ double gretl_one_snormal (void)
 }
 
 /**
+ * gretl_two_snormals:
+ *
+ */
+
+#define MOD_POLAR 0
+
+void gretl_two_snormals (double *z1, double *z2) 
+{
+    double x, y, z;
+
+#if MOD_POLAR
+ tryagain:
+    x = 2 * gretl_one_uniform() - 1;
+    y = 2 * gretl_one_uniform() - 1;
+    z = x*x + y*y;
+    if (z >= 1) {
+	goto tryagain;
+    }
+
+    z = sqrt(-2 * log(z)/z);
+    *z1 = z * x;
+    *z2 = z * y;
+#else
+ tryagain:
+    x = gretl_one_uniform();
+    y = gretl_one_uniform();
+    z = sqrt(-2 * log(x));
+    if (isnan(z) || isinf(z)) {
+	goto tryagain;
+    }
+
+    y *= M_2PI;
+
+    *z1 = z * cos(y);
+    *z2 = z * sin(y);
+#endif
+}
+
+/**
  * gretl_uniform_dist_minmax:
  * @a: target array.
  * @t1: start of the fill range.
@@ -156,10 +195,15 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
+    double z1, z2;
     int t;
 
     for (t=t1; t<=t2; t++) {
-	a[t] = gretl_one_snormal();
+	gretl_two_snormals(&z1, &z2);
+	a[t] = z1;
+	if (t < t2) {
+	    a[++t] = z2;
+	}
     }
 }
 
