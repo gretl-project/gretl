@@ -161,10 +161,10 @@ struct LOOPSET_ {
 #define loop_set_quiet(l) (l->flags |= LOOP_QUIET)
 
 static void gretl_loop_init (LOOPSET *loop);
-static int prepare_loop_for_action (LOOPSET *loop);
-static void free_loop_model (LOOP_MODEL *lmod);
-static void free_loop_print (LOOP_PRINT *lprn);
-static void free_loop_store (LOOPSET *loop);
+static int gretl_loop_prepare (LOOPSET *loop);
+static void loop_model_free (LOOP_MODEL *lmod);
+static void loop_print_free (LOOP_PRINT *lprn);
+static void loop_store_free (LOOPSET *loop);
 static void controller_free (controller *clr);
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn);
@@ -172,7 +172,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod,
 			      int c, int n, PRN *prn);
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
-static int save_loop_store (LOOPSET *loop, PRN *prn);
+static int loop_store_save (LOOPSET *loop, PRN *prn);
 static void set_active_loop (LOOPSET *loop);
 
 #define LOOP_BLOCK 32
@@ -515,19 +515,19 @@ static void gretl_loop_destroy (LOOPSET *loop)
 #if LOOP_DEBUG
 	    fprintf(stderr, "freeing loop->lmodels[%d]\n", i);
 #endif
-	    free_loop_model(&loop->lmodels[i]);
+	    loop_model_free(&loop->lmodels[i]);
 	}
 	free(loop->lmodels);
     }
 
     if (loop->prns != NULL) {
 	for (i=0; i<loop->n_prints; i++) { 
-	    free_loop_print(&loop->prns[i]);
+	    loop_print_free(&loop->prns[i]);
 	}
 	free(loop->prns);
     }
 
-    free_loop_store(loop);
+    loop_store_free(loop);
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1233,7 +1233,7 @@ start_new_loop (char *s, LOOPSET *inloop,
 
     if (!*err) {
 	/* allocate loop->lines, loop->ci */
-	*err = prepare_loop_for_action(loop);
+	*err = gretl_loop_prepare(loop);
     }
 
     if (*err) {
@@ -1407,7 +1407,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->n_children = 0;
 }
 
-static int prepare_loop_for_action (LOOPSET *loop)
+static int gretl_loop_prepare (LOOPSET *loop)
 {
 #ifdef ENABLE_GMP
     mpf_set_default_prec(256);
@@ -1573,7 +1573,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
     return 1;
 }
 
-static void free_loop_store (LOOPSET *loop)
+static void loop_store_free (LOOPSET *loop)
 {
     destroy_dataset(loop->sZ, loop->sdinfo);
     loop->sZ = NULL;
@@ -1605,6 +1605,11 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 	return E_DATA;
     }
 
+    if (list == NULL || list[0] == 0) {
+	strcpy(gretl_errmsg, "'store' list is empty");
+	return E_DATA;
+    }
+
     n = (loop->itermax > 0)? loop->itermax : DEFAULT_NOBS;
 
     loop->sdinfo = create_new_dataset(&loop->sZ, list[0] + 1, n, 0);
@@ -1621,11 +1626,12 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 	    loop->sdinfo->v, loop->sdinfo->n);
 #endif
 
-    for (i=1; i<loop->sdinfo->v; i++) {
+    for (i=1; i<=list[0]; i++) {
+	int vi = list[i];
 	char *p;
 
-	strcpy(loop->sdinfo->varname[i], pdinfo->varname[list[i]]);
-	strcpy(VARLABEL(loop->sdinfo, i), VARLABEL(pdinfo, list[i]));
+	strcpy(loop->sdinfo->varname[i], pdinfo->varname[vi]);
+	strcpy(VARLABEL(loop->sdinfo, i), VARLABEL(pdinfo, vi));
 	if ((p = strstr(VARLABEL(loop->sdinfo, i), "(scalar)"))) {
 	    *p = 0;
 	}
@@ -1700,7 +1706,7 @@ static int add_loop_model (LOOPSET *loop)
 #define realdiff(x,y) (fabs((x)-(y)) > 2.0e-13)
 
 /**
- * update_loop_model:
+ * loop_model_update:
  * @loop: pointer to loop struct.
  * @i: index number of the #LOOP_MODEL within @loop.
  * @pmod: contains estimates from the current iteration.
@@ -1709,7 +1715,7 @@ static int add_loop_model (LOOPSET *loop)
  * in @pmod.
  */
 
-static void update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
+static void loop_model_update (LOOPSET *loop, int i, MODEL *pmod)
 {
     LOOP_MODEL *lmod;
     int j;
@@ -1722,7 +1728,7 @@ static void update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
     lmod = &loop->lmodels[i];
 
 #if LOOP_DEBUG
-    fprintf(stderr, "update_loop_model: i=%d\n", i);
+    fprintf(stderr, "loop_model_update: i=%d\n", i);
     fprintf(stderr, "pmod = %p, lmod = %p\n", (void *) pmod, (void *) lmod);
 #endif
 
@@ -1758,11 +1764,11 @@ static void update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
 #endif
 
 #if LOOP_DEBUG
-    fprintf(stderr, "update_loop_model: returning 0\n");
+    fprintf(stderr, "loop_model_update: returning 0\n");
 #endif
 }
 
-static int add_loop_print (LOOPSET *loop, const int *list)
+static int loop_print_add (LOOPSET *loop, const int *list)
 {
     LOOP_PRINT *prns;
     int np = loop->n_prints;
@@ -1788,7 +1794,7 @@ static int add_loop_print (LOOPSET *loop, const int *list)
 }
 
 /**
- * update_loop_print:
+ * loop_print_update:
  * @loop: pointer to loop struct.
  * @cmdnum: sequential index number of the command within @loop.
  * @list: list of variables to be printed.
@@ -1799,7 +1805,7 @@ static int add_loop_print (LOOPSET *loop, const int *list)
  * data values.
  */
 
-static void update_loop_print (LOOPSET *loop, int i, 
+static void loop_print_update (LOOPSET *loop, int i, 
 			       const int *list, const double **Z, 
 			       const DATAINFO *pdinfo)
 {
@@ -1887,16 +1893,16 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		loop_print_zero(&loop->prns[k]);
 		k++;
 	    } else if (loop->ci[i] == STORE) {
-		save_loop_store(loop, prn);
+		loop_store_save(loop, prn);
 	    }
 	}
     }
 }
 
-static void free_loop_model (LOOP_MODEL *lmod)
+static void loop_model_free (LOOP_MODEL *lmod)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "free_loop_model: lmod at %p, model0 at %p\n",
+    fprintf(stderr, "loop_model_free: lmod at %p, model0 at %p\n",
 	    (void *) lmod, (void *) lmod->model0);
 #endif
 
@@ -1924,7 +1930,7 @@ static void free_loop_model (LOOP_MODEL *lmod)
     gretl_model_free(lmod->model0);
 }
 
-static void free_loop_print (LOOP_PRINT *lprn)
+static void loop_print_free (LOOP_PRINT *lprn)
 {
 #ifdef ENABLE_GMP
     int i;
@@ -2267,7 +2273,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     pputc(prn, '\n');
 }
 
-static int save_loop_store (LOOPSET *loop, PRN *prn)
+static int loop_store_save (LOOPSET *loop, PRN *prn)
 {
     char fname[MAXLEN];
     int *list;
@@ -2291,8 +2297,16 @@ static int save_loop_store (LOOPSET *loop, PRN *prn)
 
     loop->sdinfo->t2 = loop->iter - 1;
 
+    pprintf(prn, _("store: using filename %s\n"), fname);
+
     err = write_data(fname, list, (const double **) loop->sZ, 
 		     loop->sdinfo, loop->storeopt, NULL);
+
+    if (!err) {
+	pprintf(prn, _("Data written OK.\n"));
+    } else {
+	pprintf(prn, _("write of data file failed\n"));
+    }
 
     free(list);
 
@@ -2400,7 +2414,7 @@ static int extend_loop_dataset (LOOPSET *loop)
     return 0;
 }
 
-static int update_loop_store (const int *list, LOOPSET *loop,
+static int loop_store_update (const int *list, LOOPSET *loop,
 			      const double **Z, DATAINFO *pdinfo)
 {
     int i, vi, t = loop->iter;
@@ -2473,18 +2487,18 @@ static void progressive_loop_zero (LOOPSET *loop)
     int i;
 
     for (i=0; i<loop->n_loop_models; i++) {
-	free_loop_model(&loop->lmodels[i]);
+	loop_model_free(&loop->lmodels[i]);
     }
 
     loop->n_loop_models = 0;
 
     for (i=0; i<loop->n_prints; i++) { 
-	free_loop_print(&loop->prns[i]);
+	loop_print_free(&loop->prns[i]);
     }
 
     loop->n_prints = 0;
 
-    free_loop_store(loop);
+    loop_store_free(loop);
 }
 
 static int 
@@ -2785,7 +2799,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			    break;
 			}
 		    }
-		    update_loop_model(loop, m, models[0]);
+		    loop_model_update(loop, m, models[0]);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		} else if (cmd->opt & OPT_P) {
 		    /* deferred printing of model results */
@@ -2821,12 +2835,12 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		    int p = printnum++;
 
 		    if (loop->iter == 0) {
-			err = add_loop_print(loop, cmd->list);
+			err = loop_print_add(loop, cmd->list);
 			if (err) {
 			    break;
 			}
 		    }
-		    update_loop_print(loop, p, cmd->list, (const double **) *pZ, 
+		    loop_print_update(loop, p, cmd->list, (const double **) *pZ, 
 				      pdinfo);
 		} else {
 		    err = printdata(cmd->list, cmd->extra,
@@ -2844,7 +2858,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			    break;
 			}
 		    }
-		    err = update_loop_store(cmd->list, loop, (const double **) *pZ, 
+		    err = loop_store_update(cmd->list, loop, (const double **) *pZ, 
 					    pdinfo);
 		} else {
 		    goto cmd_exec;

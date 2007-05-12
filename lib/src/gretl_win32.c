@@ -64,6 +64,19 @@ int read_reg_val (HKEY tree, const char *base,
     return err;
 }
 
+int read_reg_val_with_fallback (HKEY tree0, HKEY tree1, const char *base, 
+				char *keyname, char *keyval)
+{
+    int err;
+
+    err = read_reg_val(tree0, base, keyname, keyval);
+    if (err) {
+	err = read_reg_val(tree1, base, keyname, keyval);
+    }
+
+    return err;
+}
+
 int write_reg_val (HKEY tree, const char *base, 
 		   const char *keyname, const char *keyval)
 {
@@ -134,13 +147,8 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
+
     read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", ppaths->gretldir);
-    if (ppaths->gretldir[0] == '\0') {
-	read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
-    }
-    if (ppaths->gretldir[0] == '\0') {
-	read_reg_val(HKEY_CURRENT_USER, "gretl", "gretldir", ppaths->gretldir);
-    }
     if (ppaths->gretldir[0] == '\0') {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
     }
@@ -152,10 +160,8 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     }
 
     ppaths->gnuplot[0] = '\0';
-    read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gnuplot", ppaths->gnuplot);
-    if (ppaths->gnuplot[0] == '\0') {
-	read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
-    }
+    read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
+			       "gretl", "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
 		"%c:\\userdata\\gretl\\wgnuplot.exe", drive);
@@ -171,19 +177,20 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     read_reg_val(HKEY_CURRENT_USER, "gretl", "ratsbase", ppaths->ratsbase);
 
     ppaths->x12a[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12a", ppaths->x12a);
+    read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, HKEY_CLASSES_ROOT,
+			       "x12arima", "x12a", ppaths->x12a);
     if (ppaths->x12a[0] == '\0') {
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima\\x12a.exe", drive);
     }
 
     ppaths->dbhost[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "dbhost", ppaths->dbhost);
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "dbhost", ppaths->dbhost);
     if (ppaths->dbhost[0] == '\0') {
 	strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
     }
 
     dbproxy[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "dbproxy", dbproxy);
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "dbproxy", dbproxy);
 
     valstr[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "use_proxy", valstr);

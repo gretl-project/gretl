@@ -2184,17 +2184,6 @@ static char *corrgm_crit_string (void)
     }
 }
 
-static const char *graph_name (const DATAINFO *pdinfo, int v)
-{
-    const char *s = DISPLAYNAME(pdinfo, v);
-
-    if (s == NULL || *s == '\0') {
-	s = pdinfo->varname[v];
-    }
-
-    return s;
-}
-
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2250,7 +2239,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	return E_DATA;
     }
 
-    vname = graph_name(pdinfo, varno);
+    vname = var_get_graph_name(pdinfo, varno);
 
     acf_m = order;
     if (acf_m == 0) {
@@ -2931,7 +2920,7 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    vname = graph_name(pdinfo, varno);
+    vname = var_get_graph_name(pdinfo, varno);
 
     /* Chatfield (1996); Greene 4ed, p. 772 */
     if (window) {

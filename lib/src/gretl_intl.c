@@ -278,12 +278,14 @@ char *iso_gettext (const char *msgid)
        return NULL;
    }
 
-   if (cli) { /* command line program: switch not required */
+   if (cli) { 
+       /* command line program: switch not required */
        return gettext(msgid);
    }
 
    if (iso_ok < 0) {
        cset = get_gretl_charset();
+       fprintf(stderr, "get_gretl_charset gave %s\n", cset);
        if (cset == NULL) {
 	   iso_ok = 0;
        } else {
@@ -293,9 +295,11 @@ char *iso_gettext (const char *msgid)
 
    if (iso_ok) {
        bind_textdomain_codeset(PACKAGE, cset);
+       fprintf(stderr, "returning msgid in %s\n", cset);
        ret = gettext(msgid);
        bind_textdomain_codeset(PACKAGE, "UTF-8");
    } else {
+       fprintf(stderr, "returning default msgid\n");
        ret = gettext(msgid);
    }
 
@@ -828,6 +832,19 @@ int print_as_locale (const char *s, FILE *fp)
     }
 
     return nwrote;
+}
+
+char *utf8_to_latin (const char *s)
+{
+    gsize read, wrote;
+
+    if (iso_latin_version() == 2) {
+	return g_convert(s, -1, "ISO-8859-2", "UTF-8",
+			 &read, &wrote, NULL);
+    } else {
+	return g_convert(s, -1, "ISO-8859-1", "UTF-8",
+			 &read, &wrote, NULL);
+    }
 }
 
 char *get_month_name (char *mname, int m)

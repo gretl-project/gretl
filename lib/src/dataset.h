@@ -344,4 +344,9 @@ void var_set_linewidth (DATAINFO *pdinfo, int i, int w);
 
 int var_get_linewidth (const DATAINFO *pdinfo, int i);
 
+int var_set_display_name (DATAINFO *pdinfo, int i,
+			  const char *s); 
+
+const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
+
 #endif /* DATASET_H */

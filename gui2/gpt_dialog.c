@@ -293,7 +293,7 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 	sprint_html_to_l2(lstr, str);
 	trstr = latin2_to_utf8(lstr);
     } else if (!g_utf8_validate(str, -1, NULL)) {
-	trstr = my_locale_to_utf8(str);
+	trstr = latin1_to_utf8(str);
     } else {
 	trstr = g_strdup(str);
     }

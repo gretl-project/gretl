@@ -58,6 +58,8 @@ int print_as_html (const char *s, FILE *fp);
 
 int print_as_locale (const char *s, FILE *fp);
 
+char *utf8_to_latin (const char *s);
+
 int get_utf_width (const char *str, int width);
 
 int get_translated_width (const char *str);

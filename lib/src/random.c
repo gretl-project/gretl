@@ -195,6 +195,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
+#if NOTYET
     double z1, z2;
     int t;
 
@@ -205,6 +206,13 @@ void gretl_normal_dist (double *a, int t1, int t2)
 	    a[++t] = z2;
 	}
     }
+#else
+    int t;
+    
+    for (t=t1; t<=t2; t++) {
+	a[t] = gretl_one_snormal();
+    }
+#endif
 }
 
 /**

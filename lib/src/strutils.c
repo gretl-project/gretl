@@ -1516,15 +1516,21 @@ char *gretl_xml_encode (const char *str)
  * gretl_xml_encode() for the case where the encoding of @src is
  * of unknown size at compile time.
  *
- * Returns: 0 on success or 1 if the encoded version of @src is longer
- * than @n bytes (allowing for NUL termination), in which case the
- * conversion is not done.
+ * Returns: 0 on success or 1 on error.  An error occurs if (a) the 
+ * encoded version of @src is longer than @n bytes (allowing for NUL 
+ * termination), or (b) @src does not validate as UTF-8.  On error
+ * the conversion is not done.  
  */
 
 int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
 {
     const char *s = src;
     int len = strlen(s) + 1;
+
+    if (!g_utf8_validate(src, -1, NULL)) {
+	fprintf(stderr, "gretl_xml_encode_to_buf: source not UTF-8\n");
+	return 1;
+    }
 
     while (*s) {
 	if (*s == '&') len += 4;
@@ -1537,7 +1543,7 @@ int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
     *targ = '\0';
     
     if (len > n) {
-	fprintf(stderr, "gretl_xml_encode_to_buf: bufer too small\n");
+	fprintf(stderr, "gretl_xml_encode_to_buf: buffer too small\n");
 	return 1;
     }
 

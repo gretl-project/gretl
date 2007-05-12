@@ -1291,6 +1291,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
     int i, t, v, nvars;
+    int uerr = 0;
     int err = 0;
 
     if (gz) {
@@ -1351,7 +1352,10 @@ int gretl_write_gdt (const char *fname, const int *list,
     ntodate_full(enddate, pdinfo->t2, pdinfo);
 
     simple_fname(datname, fname);
-    gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);
+    uerr = gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);
+    if (uerr) {
+	strcpy(xmlbuf, "unknown");
+    }
 
     if (custom_time_series(pdinfo)) {
 	sprintf(freqstr, "special:%d", pdinfo->pd);
@@ -1429,20 +1433,24 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
 
 	if (*VARLABEL(pdinfo, v)) {
-	    gretl_xml_encode_to_buf(xmlbuf, VARLABEL(pdinfo, v), sizeof xmlbuf);
-	    if (gz) {
-		gzprintf(fz, "\n label=\"%s\"", xmlbuf);
-	    } else {
-		fprintf(fp, "\n label=\"%s\"", xmlbuf);
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, VARLABEL(pdinfo, v), sizeof xmlbuf);
+	    if (!uerr) {
+		if (gz) {
+		    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
+		} else {
+		    fprintf(fp, "\n label=\"%s\"", xmlbuf);
+		}
 	    }
 	} 
 
 	if (*DISPLAYNAME(pdinfo, v)) {
-	    gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(pdinfo, v), sizeof xmlbuf);
-	    if (gz) {
-		gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
-	    } else {
-		fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(pdinfo, v), sizeof xmlbuf);
+	    if (!uerr) {
+		if (gz) {
+		    gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
+		} else {
+		    fprintf(fp, "\n displayname=\"%s\"", xmlbuf);
+		}
 	    }
 	} 
 
@@ -1484,11 +1492,13 @@ int gretl_write_gdt (const char *fname, const int *list,
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	alt_puts("<obs", fp, fz);
 	if (pdinfo->markers && pdinfo->S != NULL) {
-	    gretl_xml_encode_to_buf(xmlbuf, pdinfo->S[t], sizeof xmlbuf);
-	    if (gz) {
-		gzprintf(fz, " label=\"%s\"", xmlbuf);
-	    } else {
-		fprintf(fp, " label=\"%s\"", xmlbuf);
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, pdinfo->S[t], sizeof xmlbuf);
+	    if (!uerr) {
+		if (gz) {
+		    gzprintf(fz, " label=\"%s\"", xmlbuf);
+		} else {
+		    fprintf(fp, " label=\"%s\"", xmlbuf);
+		}
 	    }
 	} 
 	if (panelobs) {
@@ -1613,7 +1623,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
-		transcribe_string(DISPLAYNAME(pdinfo, i), (char *) tmp, MAXDISP);
+		var_set_display_name(pdinfo, i, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");

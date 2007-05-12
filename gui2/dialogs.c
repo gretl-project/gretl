@@ -1068,8 +1068,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 		free(newstr);
 		return;
 	    } else {
-		*DISPLAYNAME(datainfo, v) = 0;
-		strncat(DISPLAYNAME(datainfo, v), newstr, MAXDISP - 1);
+		var_set_display_name(datainfo, v, newstr);
 		changed = 1;
 	    }
 	}

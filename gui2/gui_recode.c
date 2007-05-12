@@ -267,6 +267,14 @@ gchar *my_locale_to_utf8_next (const gchar *src)
     return real_my_locale_to_utf8(src, 0);
 }
 
+gchar *latin1_to_utf8 (const gchar *src)
+{
+    gsize read, wrote;
+
+    return g_convert(src, -1, "UTF-8", "ISO-8859-1",
+		     &read, &wrote, NULL);
+}
+
 gchar *latin2_to_utf8 (const gchar *src)
 {
     gsize read, wrote;
@@ -279,3 +287,5 @@ gchar *latin2_to_utf8 (const gchar *src)
 		     &read, &wrote, NULL);
 #endif
 }
+
+

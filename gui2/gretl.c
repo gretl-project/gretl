@@ -625,7 +625,7 @@ static void real_nls_init (void)
     char gretldir[MAXSTR], localedir[MAXSTR];
     char *loc;
 
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
+    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", gretldir)) {
 	return;
     }
 

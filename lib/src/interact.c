@@ -475,7 +475,7 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 /* grab a filename, possibly prepending userdir */
 
 static int filename_to_param (CMD *cmd, char *s, int *len,
-			      int *quoted)
+			      int *quoted, int *nsp)
 {
     char *fname;
 
@@ -504,6 +504,16 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 	return E_ALLOC;
     }
 
+    if (nsp != NULL) {
+	/* count spaces in supplied filename */
+	int i;
+
+	*nsp = 0;
+	for (i=0; i<*len; i++) {
+	    if (fname[i] == ' ') *nsp += 1;
+	}
+    }
+
     if (get_use_cwd() || gretl_path_is_absolute(fname)) {
 	cmd->param = fname;
     } else {
@@ -522,24 +532,21 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 {
     int err, len = 0;
     int quoted = 0;
+    int nsp = 0;
 
-    err = filename_to_param(cmd, s, &len, &quoted);
+    err = filename_to_param(cmd, s, &len, &quoted, &nsp);
     if (err) {
 	return err;
     }
 
-    if (quoted) {
-	char *p = cmd->param;
-
-	while (*p) {
-	    if (*p == ' ') {
-		*nf -= 1;
-	    }
-	    p++;
-	}
+    if (nsp) {
+	*nf -= nsp;
     }
 
     shift_string_left(s, len + 2 * quoted);
+
+    fprintf(stderr, "get_maybe_quoted_storename:\n"
+	    "name='%s', s now = '%s'\n", cmd->param, s);
 
     return 0;
 } 
@@ -1185,7 +1192,7 @@ static void parse_outfile_cmd (char *s, CMD *cmd)
     }
 
     if (*s) {
-	cmd->err = filename_to_param(cmd, s, &len, &quoted);
+	cmd->err = filename_to_param(cmd, s, &len, &quoted, NULL);
     }
 }
 
@@ -3091,8 +3098,7 @@ static int set_var_info (const char *line, gretlopt opt,
     p = get_flag_field(line, 'n');
     if (p != NULL) {
 	setstuff = 1;
-	*DISPLAYNAME(pdinfo, v) = 0;
-	strncat(DISPLAYNAME(pdinfo, v), p, MAXDISP - 1);
+	var_set_display_name(pdinfo, v, p);
 	free(p);
     } 
 

@@ -932,7 +932,7 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	    sprintf(title, I_("%s versus %s (with inverse fit)"),
 		    s1, s2);
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
-	    sprintf(title, I_("%s versus %s (with quadratic fit)"),
+	    sprintf(title, _("%s versus %s (with quadratic fit)"),
 		    s1, s2);
 	}	    
 	break;
@@ -1013,20 +1013,6 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
 	}
 	s++;
     }
-}
-
-static const char *series_name (const DATAINFO *pdinfo, int v)
-{
-    const char *ret = pdinfo->varname[v];
-
-    if (pdinfo->varinfo != NULL && pdinfo->varinfo[v] != NULL) {
-	ret = DISPLAYNAME(pdinfo, v);
-	if (ret[0] == '\0') {
-	    ret = pdinfo->varname[v];
-	}
-    } 
-
-    return ret;
 }
 
 static int gretl_plot_count;
@@ -1110,8 +1096,8 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    s1 = series_name(pdinfo, gi->list[1]);
-    s2 = series_name(pdinfo, gi->list[2]);
+    s1 = var_get_graph_name(pdinfo, gi->list[1]);
+    s2 = var_get_graph_name(pdinfo, gi->list[2]);
 
     sprintf(title, I_("%s versus %s (with loess fit)"), s1, s2);
     fputs("set key top left\n", fp);
@@ -1731,11 +1717,9 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* set x-axis label for non-time series plots */
     if (!(gi.flags & GPT_TS)) {
-	if (gi.flags & GPT_DUMMY) {
-	    strcpy(xlabel, series_name(pdinfo, list[2])); 
-	} else {
-	    strcpy(xlabel, series_name(pdinfo, list[list[0]]));
-	}
+	int v = (gi.flags & GPT_DUMMY)? list[2] : list[list[0]];
+
+	strcpy(xlabel, var_get_graph_name(pdinfo, v));
     }
 
     prn = gretl_print_new(GRETL_PRINT_BUFFER);
@@ -1814,10 +1798,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (gi.flags & GPT_AUTO_FIT) {
 	    print_auto_fit_string(gi.fit, fp);
 	    if (gi.flags & GPT_FA) {
-		make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[1]), 
-			    series_name(pdinfo, list[2]));
+		make_gtitle(&gi, GTITLE_AFV, var_get_graph_name(pdinfo, list[1]), 
+			    var_get_graph_name(pdinfo, list[2]));
 	    } else {
-		make_gtitle(&gi, GTITLE_VLS, series_name(pdinfo, list[1]), 
+		make_gtitle(&gi, GTITLE_VLS, var_get_graph_name(pdinfo, list[1]), 
 			    xlabel);
 	    }
 	}
@@ -1825,7 +1809,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
 	} else {
-	    print_axis_label('y', series_name(pdinfo, list[1]), fp);
+	    print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fp);
 	}
 	if (!(gi.flags & GPT_AUTO_FIT)) {
 	    strcpy(keystr, "set nokey\n");
@@ -1836,12 +1820,12 @@ int gnuplot (const int *plotlist, const char *literal,
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(&gi, GTITLE_AF, series_name(pdinfo, list[2]), NULL);
+	    make_gtitle(&gi, GTITLE_AF, var_get_graph_name(pdinfo, list[2]), NULL);
 	} else {
-	    make_gtitle(&gi, GTITLE_AFV, series_name(pdinfo, list[2]), 
-			series_name(pdinfo, list[3]));
+	    make_gtitle(&gi, GTITLE_AFV, var_get_graph_name(pdinfo, list[2]), 
+			var_get_graph_name(pdinfo, list[3]));
 	}
-	print_axis_label('y', series_name(pdinfo, list[2]), fp);
+	print_axis_label('y', var_get_graph_name(pdinfo, list[2]), fp);
     } 
 
     if (toomany) {
@@ -1891,7 +1875,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    set_lwstr(pdinfo, list[i], lwstr);
 	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
-		    series_name(pdinfo, list[i]), 
+		    var_get_graph_name(pdinfo, list[i]), 
 		    (i == oddman)? I_("right") : I_("left"),
 		    (use_impulses(&gi))? "w impulses" : 
 		    (gi.flags & GPT_TS)? "w lines" : "w points",
@@ -1900,8 +1884,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	strcpy(s1, (gi.flags & GPT_RESIDS)? I_("residual") : 
-	       series_name(pdinfo, list[1]));
-	strcpy(s2, series_name(pdinfo, list[3]));
+	       var_get_graph_name(pdinfo, list[1]));
+	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:2 title \"%s (%s=1)\", \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:2 title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
@@ -1917,7 +1901,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    if (list[0] == 2) {
 		*s1 = '\0';
 	    } else {
-		strcpy(s1, series_name(pdinfo, list[i]));
+		strcpy(s1, var_get_graph_name(pdinfo, list[i]));
 	    }
 	    if (!use_impulses(&gi)) { 
 		set_withstr(gi.flags, withstr);
@@ -2232,9 +2216,9 @@ int gnuplot_3d (int *list, const char *literal,
 
     maybe_add_surface(list, pZ, pdinfo, opt, surface);
     
-    print_axis_label('x', series_name(pdinfo, list[2]), fq);
-    print_axis_label('y', series_name(pdinfo, list[1]), fq);
-    print_axis_label('z', series_name(pdinfo, list[3]), fq);
+    print_axis_label('x', var_get_graph_name(pdinfo, list[2]), fq);
+    print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fq);
+    print_axis_label('z', var_get_graph_name(pdinfo, list[3]), fq);
 
     fputs("set missing \"?\"\n", fq);
 

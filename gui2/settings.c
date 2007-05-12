@@ -1727,10 +1727,11 @@ void read_rc (void)
 	*value = '\0';
 
 	if (rc_vars[i].flags & ROOTSET) {
-	    err = read_reg_val(HKEY_CLASSES_ROOT, 
-			       get_reg_base(rc_vars[i].key),
-			       rc_vars[i].key, 
-			       value);
+	    err = read_reg_val_with_fallback(HKEY_LOCAL_MACHINE, 
+					     HKEY_CLASSES_ROOT,
+					     get_reg_base(rc_vars[i].key),
+					     rc_vars[i].key, 
+					     value);
 	} else if (rc_vars[i].flags & MACHSET) {
 	    err = read_reg_val(HKEY_LOCAL_MACHINE, 
 			       get_reg_base(rc_vars[i].key),

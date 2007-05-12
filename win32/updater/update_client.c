@@ -659,7 +659,7 @@ int main (int argc, char *argv[])
     }    
 
 #ifdef WIN32
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
+    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
 	       "from the Windows registry");
 	exit(EXIT_FAILURE);
