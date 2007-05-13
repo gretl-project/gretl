@@ -472,8 +472,11 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
-	fputs("set style fill solid 0.8\n", fp);
-	/* FIXME 0.8 for monochrome? */
+	if (strstr(spec->termtype, " mono")) {
+	    fputs("set style fill solid 0.3\n", fp);
+	} else {
+	    fputs("set style fill solid 0.6\n", fp);
+	}
     }  
 
     if (spec->flags & GPT_ALL_MARKERS) {

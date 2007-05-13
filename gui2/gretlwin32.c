@@ -801,9 +801,17 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set output '%s'\n", emfname);
+
     while (fgets(plotline, MAXLEN-1, fq)) {
-	if (strncmp(plotline, "set term", 8) && 
-	    strncmp(plotline, "set output", 10)) {
+	if (!strncmp(plotline, "set term", 8) ||
+	    !strncmp(plotline, "set output", 10)) {
+	    continue;
+	}
+	if (!color && strstr(plotline, "set style fill solid")) {
+	    pputs(prn, "set style fill solid 0.3\n");
+	} else if (html_encoded(plotline)) {
+	    pprint_as_latin(prn, plotline, 1);
+	} else {
 	    pputs(prn, plotline);
 	}
     }

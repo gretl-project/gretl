@@ -2175,15 +2175,6 @@ double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
     return num / sqrt(den1 * den2);
 }
 
-static char *corrgm_crit_string (void)
-{
-    if (get_local_decpoint() == ',') {
-	return "1,96/T^0,5";
-    } else {
-	return "1.96/T^0.5";
-    }
-}
-
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2207,6 +2198,7 @@ static char *corrgm_crit_string (void)
 int corrgram (int varno, int order, int nparam, double ***pZ, 
 	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
+    char crit_string[16];
     double box, pm90, pm95, pm99;
     double *acf = NULL;
     double *pacf = NULL;
@@ -2351,6 +2343,8 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	goto acf_getout;
     }
 
+    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+
     gretl_push_c_numeric_locale();
 
     /* create two separate plots, if both are OK */
@@ -2375,7 +2369,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     fprintf(fq, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
 	    "%g title '+- %s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
+	    "%g notitle lt 2\n", pm95, crit_string, -pm95);
     for (k=0; k<acf_m; k++) {
 	fprintf(fq, "%d %g\n", k + 1, acf[k]);
     }
@@ -2393,7 +2387,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
+		"%g notitle lt 2\n", pm95, crit_string, -pm95);
 	for (k=0; k<pacf_m; k++) {
 	    fprintf(fq, "%d %g\n", k + 1, pacf[k]);
 	}
@@ -2436,6 +2430,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 int xcorrgram (const int *list, int order, double ***pZ, 
 	       DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
+    char crit_string[16];
     char titlestr[128];
     double *xcf = NULL;
     double pm90, pm95, pm99;
@@ -2548,6 +2543,8 @@ int xcorrgram (const int *list, int order, double ***pZ,
 	goto xcf_getout;
     }
 
+    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+
     gretl_push_c_numeric_locale();
 
     fputs("set xzeroaxis\n", fq);
@@ -2566,12 +2563,12 @@ int xcorrgram (const int *list, int order, double ***pZ,
     if (allpos) {
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
-		"%g title '%s' lt 2\n", pm95, corrgm_crit_string());
+		"%g title '%s' lt 2\n", pm95, crit_string);
     } else {
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
+		"%g notitle lt 2\n", pm95, crit_string, -pm95);
     }	
 
     for (k=-xcf_m; k<=xcf_m; k++) {

@@ -197,10 +197,5 @@ const char *graph_color_string (int i);
 
 int gnuplot_test_command (const char *cmd);
 
-#ifdef ENABLE_NLS
-void pprint_gnuplot_encoding (const char *termstr, PRN *prn);
-void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
-#endif
-
 #endif /* GRAPHING_H */
 

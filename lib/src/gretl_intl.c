@@ -116,7 +116,10 @@ static int decpoint;
 /**
  * reset_local_decpoint:
  *
- * Returns: the character representing a decimal point in the current locale.
+ * Uses localeconv() to determine the representation of the decimal
+ * point in the current locale.
+ *
+ * Returns: the decimal character for the current locale.
  */
 
 int reset_local_decpoint (void)
@@ -135,7 +138,7 @@ int reset_local_decpoint (void)
 /**
  * get_local_decpoint:
  *
- * Returns: the character representing a decimal point in the current locale.
+ * Returns: the decimal character for the current locale.
  */
 
 int get_local_decpoint (void)
@@ -150,10 +153,11 @@ int get_local_decpoint (void)
 #endif
 }
 
-/* fudges for strings that should not be in utf-8 under some 
-   conditions: under gtk2, translations usually come out in
-   utf-8 in the GUI, but when we're sending stuff to stderr,
-   it should probably be in ISO-8859-N. */
+/* fudges for strings that should not be in utf-8 under some
+   conditions: under GTK translations always come out in utf-8 in the
+   GUI, but when we're sending stuff to stderr we may have to put it
+   into ISO-8859-N.
+*/
 
 #ifdef ENABLE_NLS
 
@@ -162,6 +166,13 @@ static int gretl_cset_min;
 # ifdef WIN32
 static int gretl_cpage;
 # endif
+
+/* Use g_get_charset() to determine the current local character set,
+   and record this information.  If we get an "ISO-XXXX-Y" locale,
+   record the numerical elements as gretl_cset_maj and gretl_cset_min
+   respectively.  If we get a Windows "CPXXXX" reading, record the
+   codepage as gretl_cpage.
+ */
 
 void set_gretl_charset (const char *s)
 {
@@ -209,7 +220,7 @@ void set_gretl_charset (const char *s)
     }
 }
 
-const char *get_gretl_charset (void)
+static const char *get_gretl_charset (void)
 {
     static char cset[12];
 
@@ -228,7 +239,7 @@ const char *get_gretl_charset (void)
     return NULL;
 }
 
-const char *get_gnuplot_charset (void)
+static const char *gnuplot_encoding_string (void)
 {
     static char gp_enc[12];
 
@@ -236,15 +247,39 @@ const char *get_gnuplot_charset (void)
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
 	 gretl_cset_min == 15)) {
-	sprintf(gp_enc, "iso_%d_%d\n", gretl_cset_maj, gretl_cset_min);
+	sprintf(gp_enc, "iso_%d_%d", gretl_cset_maj, gretl_cset_min);
 	return gp_enc;
     } 
 
     return NULL;
 }
 
+void pprint_gnuplot_encoding (const char *termstr, PRN *prn)
+{
+    if (strstr(termstr, "postscript")) {
+	const char *enc = gnuplot_encoding_string();
+
+	if (enc != NULL) {
+	    pprintf(prn, "set encoding %s\n", enc);
+	}
+    }
+}
+
+void fprint_gnuplot_encoding (const char *termstr, FILE *fp)
+{
+    if (strstr(termstr, "postscript")) {
+	const char *enc = gnuplot_encoding_string();
+
+	if (enc != NULL) {
+	    fprintf(fp, "set encoding %s\n", enc);
+	}
+    }
+}
+
 int iso_latin_version (void)
 {
+    char *lang = NULL;
+
     if (gretl_cset_maj == 8859 &&
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
@@ -260,14 +295,18 @@ int iso_latin_version (void)
     }
 # endif
 
-    return 0;
+    /* handle Polish UTF-8 locale? */
+    lang = getenv("LANG");
+    if (lang != NULL && !strncmp(lang, "pl", 2)) {
+	return 2;
+    } 
+
+    return 1;
 }
 
 static const char *get_gp_charset (void)
 {
-    char *lang = getenv("LANG");
-
-    if (!strncmp(lang, "pl", 2)) {
+    if (iso_latin_version() == 2) {
 #ifdef WIN32
 	return "CP1250";
 #else
@@ -285,7 +324,6 @@ char *gp_gettext (const char *msgid)
 
     if (cset == NULL) {
 	cset = get_gp_charset();
-	fprintf(stderr, "get_gp_charset gave %s\n", cset);
     }
 
     bind_textdomain_codeset(PACKAGE, cset);
@@ -297,25 +335,23 @@ char *gp_gettext (const char *msgid)
 
 char *iso_gettext (const char *msgid)
 {
-    char *ret;
-    static int cli;
     static int iso_ok = -1;
     static const char *cset;
+    static int cli;
+    char *ret;
 
-    /* the command-line program is "special": it doesn't emit
-       utf-8 at all, so we omit the redundant switching of
-       codesets */
+    /* command line program: switching of codesets is not required */
     if (!strcmp(msgid, "@CLI_INIT")) {
 	cli = 1;
 	return NULL;
     }
 
     if (cli) { 
-	/* command line program: switch not required */
 	return gettext(msgid);
     }
 
     if (iso_ok < 0) {
+	/* not yet determined */
 	cset = get_gretl_charset();
 	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
 	if (cset == NULL) {
@@ -585,13 +621,13 @@ char *iso_to_ascii (char *s)
 #ifdef ENABLE_NLS
 
 struct l2sym {
-    int l2val;   /* iso-8859-2 (or CP1250) character code */
+    int l2val;   /* ISO-8859-2 (or CP1250) character code */
     int ucs2val; /* corresponding UCS-2 code */
 };
 
 # ifndef WIN32
 
-/* iso-8859-2 */
+/* ISO-8859-2 */
 
 static struct l2sym l2table[] = { 
     { 161, 260 }, /*  A; */
@@ -653,11 +689,37 @@ static struct l2sym l2table[] = {
     { 255, 729 }  /*  '. */
 };
 
-# else
+static int l2_to_ucs (int c)
+{
+    int i, n = sizeof l2table / sizeof l2table[0];
+
+    for (i=0; i<n; i++) {
+	if (c == l2table[i].l2val) {
+	    return l2table[i].ucs2val;
+	}
+    }
+
+    return c;
+}
+
+static int ucs_to_l2 (int c)
+{
+    int i, n = sizeof l2table / sizeof l2table[0];
+
+    for (i=0; i<n; i++) {
+	if (c == l2table[i].ucs2val) {
+	    return l2table[i].l2val;
+	}
+    }
+
+    return c;
+}
+
+# endif
 
 /* Windows codepage 1250 */
 
-static struct l2sym l2table[] = { 
+static struct l2sym cptable[] = { 
     { 128, 8364 }, /*  Eu */
     { 130, 8218 }, /*  .9 */
     { 132, 8222 }, /*  :9 */
@@ -734,28 +796,30 @@ static struct l2sym l2table[] = {
     { 255,  729 }  /*  '. */
 };
 
-# endif
+# ifdef WIN32
 
-static int l2_lookup (int c)
+static int cp_to_ucs (int c)
 {
-    int i, n = sizeof l2table / sizeof l2table[0];
+    int i, n = sizeof cptable / sizeof cptable[0];
 
     for (i=0; i<n; i++) {
-	if (c == l2table[i].l2val) {
-	    return l2table[i].ucs2val;
+	if (c == cptable[i].l2val) {
+	    return cptable[i].ucs2val;
 	}
     }
 
     return c;
 }
 
-static int ucs_lookup (int c)
+# endif
+
+static int ucs_to_cp (int c)
 {
-    int i, n = sizeof l2table / sizeof l2table[0];
+    int i, n = sizeof cptable / sizeof cptable[0];
 
     for (i=0; i<n; i++) {
-	if (c == l2table[i].ucs2val) {
-	    return l2table[i].l2val;
+	if (c == cptable[i].ucs2val) {
+	    return cptable[i].l2val;
 	}
     }
 
@@ -772,7 +836,7 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
     while ((c = *s)) {
 # ifndef WIN32
 	if (c > 160) {
-	    sprintf(p, "&#%d;", l2_lookup(c));
+	    sprintf(p, "&#%d;", l2_to_ucs(c));
 	    p = strchr(p, ';') + 1;
 	} else if (c > 127) {
 	    sprintf(p, "&#%d;", c);
@@ -782,7 +846,7 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
 	}
 # else
 	if (c > 127) {
-	    sprintf(p, "&#%d;", l2_lookup(c));
+	    sprintf(p, "&#%d;", cp_to_ucs(c));
 	    p = strchr(p, ';') + 1;
 	} else {
 	    *p++ = c;
@@ -808,7 +872,11 @@ char *sprint_html_to_l2 (char *targ, const char *s)
 
     while (*s) {
 	if (sscanf(s, "&#%d;", &u)) {
-	    *p++ = ucs_lookup(u);
+# ifdef WIN32
+	    *p++ = ucs_to_cp(u);
+# else
+	    *p++ = ucs_to_l2(u);
+# endif
 	    s = strchr(s, ';') + 1;
 	} else {
 	    *p++ = *s++;
@@ -834,7 +902,11 @@ int print_as_html (const char *s, FILE *fp)
 
     while ((c = *s)) {
         if (c > 160) {
-            fprintf(fp, "&#%d;", l2_lookup(c));
+# ifdef WIN32
+	    fprintf(fp, "&#%d;", cp_to_ucs(c));
+# else
+            fprintf(fp, "&#%d;", l2_to_ucs(c));
+# endif
         } else if (c > 127) {
             fprintf(fp, "&#%d;", c);
         } else {
@@ -853,10 +925,39 @@ int print_as_locale (const char *s, FILE *fp)
 
     while (*s) {
 	if (sscanf(s, "&#%d;", &u)) {
-	    fputc(ucs_lookup(u), fp);
+# ifdef WIN32
+	    fputc(ucs_to_cp(u), fp);
+# else
+	    fputc(ucs_to_l2(u), fp);
+# endif
 	    s = strchr(s, ';') + 1;
 	} else {
 	    fputc(*s++, fp);
+	}
+	nwrote++;
+    }
+
+    return nwrote;
+}
+
+int pprint_as_latin (PRN *prn, const char *s, int emf)
+{
+    int u, nwrote = 0;
+
+    while (*s) {
+	if (sscanf(s, "&#%d;", &u)) {
+# ifdef WIN32
+	    pputc(prn, ucs_to_cp(u));
+# else
+	    if (emf) {
+		pputc(prn, ucs_to_cp(u));
+	    } else {
+		pputc(prn, ucs_to_l2(u));
+	    }
+# endif
+	    s = strchr(s, ';') + 1;
+	} else {
+	    pputc(prn, *s++);
 	}
 	nwrote++;
     }
@@ -869,13 +970,13 @@ char *utf8_to_latin (const char *s)
     gsize read, wrote;
 
     if (iso_latin_version() == 2) {
-#ifdef WIN32
+# ifdef WIN32
 	return g_convert(s, -1, "CP1250", "UTF-8",
 			 &read, &wrote, NULL);
-#else
+# else
 	return g_convert(s, -1, "ISO-8859-2", "UTF-8",
 			 &read, &wrote, NULL);
-#endif
+# endif
     } else {
 	return g_convert(s, -1, "ISO-8859-1", "UTF-8",
 			 &read, &wrote, NULL);

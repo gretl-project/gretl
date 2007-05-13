@@ -817,7 +817,7 @@ int gnuplot_init (PlotType ptype, FILE **fpp)
 
 #undef RECODE_DBG
 
-static int recode_gnuplot_file (const char *fname)
+static int html_recode_gnuplot_file (const char *fname)
 {
     FILE *fp, *fq;
     const char *font;
@@ -889,7 +889,7 @@ int gnuplot_make_graph (void)
 # if GP_DEBUG
 	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
 # endif
-	recode_gnuplot_file(gretl_plotfile());
+	html_recode_gnuplot_file(gretl_plotfile());
     } 
 #endif
 
@@ -2484,7 +2484,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     /* plot instructions */
     if (use_boxes) {
 	if (gnuplot_has_style_fill()) {
-	    fputs("set style fill solid 0.8\n", fp);
+	    fputs("set style fill solid 0.6\n", fp);
 	}
 	strcpy(withstr, "w boxes");
     } else {
@@ -3329,28 +3329,3 @@ int is_auto_fit_string (const char *s)
     return 0;
 }
 
-#ifdef ENABLE_NLS
-
-void pprint_gnuplot_encoding (const char *termstr, PRN *prn)
-{
-    if (strstr(termstr, "postscript")) {
-	const char *enc = get_gnuplot_charset();
-
-	if (enc != NULL) {
-	    pprintf(prn, "set encoding %s\n", enc);
-	}
-    }
-}
-
-void fprint_gnuplot_encoding (const char *termstr, FILE *fp)
-{
-    if (strstr(termstr, "postscript")) {
-	const char *enc = get_gnuplot_charset();
-
-	if (enc != NULL) {
-	    fprintf(fp, "set encoding %s\n", enc);
-	}
-    }
-}
-
-#endif 

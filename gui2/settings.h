@@ -7,7 +7,7 @@ void read_rc (void);
 void gretl_config_init (void);
 #endif
 
-void set_program_startdir (void);
+void set_program_startdir (const char *callname);
 
 int using_hc_by_default (void);
 

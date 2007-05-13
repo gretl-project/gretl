@@ -44,9 +44,9 @@ char *maybe_iso_gettext (const char *msgid);
 
 void set_gretl_charset (const char *s);
 
-const char *get_gretl_charset (void);
+void pprint_gnuplot_encoding (const char *termstr, PRN *prn);
 
-const char *get_gnuplot_charset (void);
+void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
 
 int iso_latin_version (void);
 
@@ -59,6 +59,8 @@ char *sprint_html_to_l2 (char *targ, const char *s);
 int print_as_html (const char *s, FILE *fp);
 
 int print_as_locale (const char *s, FILE *fp);
+
+int pprint_as_latin (PRN *prn, const char *s, int emf);
 
 char *utf8_to_latin (const char *s);
 

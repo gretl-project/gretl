@@ -220,12 +220,17 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
     }
 }
 
+/* do or undo conversion between latin-2 and HTML representation,
+   if needed; otherwise pass the line through straight */
+
 static void line_to_file (const char *s, FILE *fp, int lv)
 {
 #ifdef ENABLE_NLS
     if (lv == -2) {
+	fprintf(stderr, "line_to_file: lv=-2, doing print_as_html\n");
 	print_as_html(s, fp);
     } else if (lv == 2) {
+	fprintf(stderr, "line_to_file: lv=2, doing print_as_locale\n");
 	print_as_locale(s, fp);
     } else {
 	fputs(s, fp);
@@ -295,6 +300,8 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	}
 	rewind(fsrc);
     }
+
+    fprintf(stderr, "add_or_remove_png_term: add = %d\n", add);
 
     if (add) {
 	int need_term_line = 1;
@@ -421,7 +428,7 @@ int gp_term_code (gpointer p)
 	return GP_TERM_NONE;
 }
 
-static int plotspec_get_term_string (const GPT_SPEC *spec, char *termstr)
+static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
 {
     int cmds = 0;
 
@@ -461,6 +468,7 @@ void save_graph_to_file (gpointer data, const char *fname)
     gchar *plotcmd = NULL;
     FILE *fq;
     PRN *prn;
+    int mono = 0, png = 0, emf = 0;
     int cmds, err;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
@@ -474,8 +482,18 @@ void save_graph_to_file (gpointer data, const char *fname)
 	return;
     }
  
-    cmds = plotspec_get_term_string(spec, termstr);
-  
+    cmds = get_full_term_string(spec, termstr);
+
+    if (strstr(termstr, " mono")) {
+	mono = 1;
+    }
+
+    if (!strncmp(termstr, "png", 3)) {
+	png = 1;
+    } else if (!strncmp(termstr, "emf", 3)) {
+	emf = 1;
+    }
+
     if (cmds) {
 	if (copyfile(spec->fname, fname)) { 
 	    errbox(_("Failed to copy graph file"));
@@ -488,6 +506,18 @@ void save_graph_to_file (gpointer data, const char *fname)
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
+	    if (!strncmp(plotline, "set term", 8) ||
+		!strncmp(plotline, "set output", 10)) {
+		continue;
+	    }
+	    if (mono && strstr(plotline, "set style fill solid")) {
+		pputs(prn, "set style fill solid 0.3\n");
+	    } else if (!png && html_encoded(plotline)) {
+		pprint_as_latin(prn, plotline, emf);
+	    } else {
+		pputs(prn, plotline);
+	    }
+#if 0
 	    if (!gretl_is_ascii(plotline)) {
 		fprintf(stderr, "non-ascii line: '%s'\n", plotline);
 		if (g_utf8_validate(plotline, -1, NULL)) {
@@ -496,10 +526,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 		    fprintf(stderr, " not valid UTF-8\n");
 		}
 	    }
-	    if (strncmp(plotline, "set term", 8) && 
-		strncmp(plotline, "set output", 10)) {
-		pputs(prn, plotline);
-	    }
+#endif
 	}
     }
 
@@ -510,7 +537,8 @@ void save_graph_to_file (gpointer data, const char *fname)
 			      plottmp);
     err = gretl_spawn(plotcmd);
 
-    remove(plottmp);
+    /* remove(plottmp); */
+    fprintf(stderr, "plottmp = %s\n", plottmp);
     g_free(plotcmd);
 
     if (err) {
