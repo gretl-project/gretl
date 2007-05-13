@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-13 00:12-0400\n"
-"PO-Revision-Date: 2007-05-04 11:08+0200\n"
+"PO-Revision-Date: 2007-05-13 21:46+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2890,9 +2890,8 @@ msgid "iteration"
 msgstr "iterazione"
 
 #: lib/src/gretl_paths.c:829
-#, fuzzy
 msgid "User directory is not set"
-msgstr "Usa la directory utente di gretl come predefinita"
+msgstr "La directory utente non è impostata"
 
 #: lib/src/gretl_paths.c:835
 #, c-format
@@ -5534,7 +5533,7 @@ msgstr "Errore\\ Std."
 
 #: lib/src/texprint.c:616 lib/src/texprint.c:657
 msgid "$t$-statistic"
-msgstr "statistica $t$"
+msgstr "Statistica $t$"
 
 #: lib/src/texprint.c:678 lib/src/varprint.c:680 gui2/gui_utils.c:3434
 msgid "Cross-equation covariance matrix"
@@ -7407,7 +7406,7 @@ msgstr "Salva i dati bootstrap in un file"
 
 #: gui2/dialogs.c:1066
 msgid "The display name for a variable cannot contain double quotes"
-msgstr ""
+msgstr "Il nome di una variabile non può contenere virgolette doppie"
 
 #: gui2/dialogs.c:1157 gui2/dialogs.c:1162
 msgid "not set"
@@ -10840,9 +10839,8 @@ msgid "gretl: model %d"
 msgstr "gretl: modello %d"
 
 #: gui2/library.c:1473
-#, fuzzy
 msgid "gretl: Wald omit test"
-msgstr "gretl: test Chow"
+msgstr "gretl: test di Wald per le variabili omesse"
 
 #: gui2/library.c:1511 gui2/library.c:2899
 msgid "gretl: vector autoregression"
@@ -11939,14 +11937,12 @@ msgid "Use lines"
 msgstr "Usa linee"
 
 #: gui2/selector.c:2894
-#, fuzzy
 msgid "Estimate reduced model"
-msgstr "Errore nella stima del modello range-mean\n"
+msgstr "Stima modello ridotto"
 
 #: gui2/selector.c:2898
-#, fuzzy
 msgid "Wald test, based on covariance matrix"
-msgstr "Test LR per la matrice di covarianza diagonale"
+msgstr "Test di Wald, basato sulla matrice di covarianza"
 
 #: gui2/selector.c:2912
 msgid "Exact Maximum Likelihood"
