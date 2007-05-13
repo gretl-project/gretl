@@ -1,3 +1,9 @@
+version 1.6.4, in progress
+- Fix breakage in relation to the Windows registry
+- Fixes for accented characters in graphs, on systems with
+  UTF-8 as the standard character encoding
+- Additional fixes for Polish text in graphs
+
 5/10/2007 version 1.6.3
 - Add facility for bootstrap analysis in GUI, for OLS
 - Model table: fixes for including panel models; allow up to
