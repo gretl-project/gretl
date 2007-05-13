@@ -212,7 +212,8 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
-static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
+static int source_buffer_load_file (GtkSourceBuffer *sbuf, 
+				    int role, FILE *fp)
 {
     char readbuf[MAXSTR], *chunk = NULL;
     GtkTextIter iter;
@@ -231,10 +232,18 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
 #ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    if (i == 0) {
-		chunk = my_locale_to_utf8(readbuf);
+		if (role == GR_PLOT) {
+		    chunk = gp_locale_to_utf8(readbuf);
+		} else {
+		    chunk = my_locale_to_utf8(readbuf);
+		}
 		i++;
 	    } else {
-		chunk = my_locale_to_utf8_next(readbuf);
+		if (role == GR_PLOT) {
+		    chunk = gp_locale_to_utf8_next(readbuf);
+		} else {
+		    chunk = my_locale_to_utf8_next(readbuf);
+		}
 	    }
 	    if (chunk == NULL) {
 		continue;
@@ -333,7 +342,7 @@ real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
     }
 
     if (fp != NULL) {
-	source_buffer_load_file(vwin->sbuf, fp);
+	source_buffer_load_file(vwin->sbuf, vwin->role, fp);
 	fclose(fp);
     } else {
 	source_buffer_load_buf(vwin->sbuf, buf);

@@ -295,11 +295,9 @@ char *iso_gettext (const char *msgid)
 
    if (iso_ok) {
        bind_textdomain_codeset(PACKAGE, cset);
-       fprintf(stderr, "returning msgid in %s\n", cset);
        ret = gettext(msgid);
        bind_textdomain_codeset(PACKAGE, "UTF-8");
    } else {
-       fprintf(stderr, "returning default msgid\n");
        ret = gettext(msgid);
    }
 
