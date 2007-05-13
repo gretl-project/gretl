@@ -36,6 +36,8 @@ char *get_month_name (char *mname, int m);
 
 #ifdef ENABLE_NLS
 
+char *gp_gettext (const char *msgid);
+
 char *iso_gettext (const char *msgid);
 
 char *maybe_iso_gettext (const char *msgid);
@@ -59,6 +61,8 @@ int print_as_html (const char *s, FILE *fp);
 int print_as_locale (const char *s, FILE *fp);
 
 char *utf8_to_latin (const char *s);
+
+int gretl_is_ascii (const char *buf);
 
 int get_utf_width (const char *str, int width);
 

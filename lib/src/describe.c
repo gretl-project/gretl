@@ -2359,7 +2359,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     }
     fputs("set xzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
-    fprintf(fq, "set xlabel '%s'\n", I_("lag"));
+    fprintf(fq, "set xlabel '%s'\n", G_("lag"));
     fputs("set yrange [-1.1:1.1]\n", fq);
 
     /* upper plot: Autocorrelation Function or ACF */
@@ -2367,9 +2367,9 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	fputs("set origin 0.0,0.50\n", fq);
     }
     if (opt & OPT_R) {
-	fprintf(fq, "set title '%s'\n", I_("Residual ACF"));
+	fprintf(fq, "set title '%s'\n", G_("Residual ACF"));
     } else {
-	fprintf(fq, "set title '%s %s'\n", I_("ACF for"), vname);
+	fprintf(fq, "set title '%s %s'\n", G_("ACF for"), vname);
     }
     fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fq, "plot \\\n"
@@ -2385,9 +2385,9 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	/* lower plot: Partial Autocorrelation Function or PACF */
 	fputs("set origin 0.0,0.0\n", fq);
 	if (opt & OPT_R) {
-	    fprintf(fq, "set title '%s'\n", I_("Residual PACF"));
+	    fprintf(fq, "set title '%s'\n", G_("Residual PACF"));
 	} else {
-	    fprintf(fq, "set title '%s %s'\n", I_("PACF for"), vname);
+	    fprintf(fq, "set title '%s %s'\n", G_("PACF for"), vname);
 	}
 	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fq, "plot \\\n"
@@ -2553,13 +2553,13 @@ int xcorrgram (const int *list, int order, double ***pZ,
     fputs("set xzeroaxis\n", fq);
     fputs("set yzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
-    fprintf(fq, "set xlabel '%s'\n", I_("lag"));
+    fprintf(fq, "set xlabel '%s'\n", G_("lag"));
     if (allpos) {
 	fputs("set yrange [-0.1:1.1]\n", fq);
     } else {
 	fputs("set yrange [-1.1:1.1]\n", fq);
     } 
-    sprintf(titlestr, I_("Correlations of %s and lagged %s"),
+    sprintf(titlestr, G_("Correlations of %s and lagged %s"),
 	    pdinfo->varname[xno], pdinfo->varname[yno]);
     fprintf(fq, "set title '%s'\n", titlestr);
     fprintf(fq, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
@@ -2985,13 +2985,13 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	fputs("set xtics nomirror\n", fq); 
 
 	if (pdinfo->pd == 4) {
-	    fprintf(fq, "set x2label '%s'\n", I_("quarters"));
+	    fprintf(fq, "set x2label '%s'\n", G_("quarters"));
 	} else if (pdinfo->pd == 12) {
-	    fprintf(fq, "set x2label '%s'\n", I_("months"));
+	    fprintf(fq, "set x2label '%s'\n", G_("months"));
 	} else if (pdinfo->pd == 1 && pdinfo->structure == TIME_SERIES) {
-	    fprintf(fq, "set x2label '%s'\n", I_("years"));
+	    fprintf(fq, "set x2label '%s'\n", G_("years"));
 	} else {
-	    fprintf(fq, "set x2label '%s'\n", I_("periods"));
+	    fprintf(fq, "set x2label '%s'\n", G_("periods"));
 	}
 
 	fprintf(fq, "set x2range [0:%d]\n", xmax);
@@ -3001,20 +3001,20 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	    fprintf(fq, "\"%.1f\" %d, ", (double) nobs / t, 4 * t);
 	}
 	fprintf(fq, "\"\" %d)\n", 2 * nobs);
-	fprintf(fq, "set xlabel '%s'\n", I_("scaled frequency"));
+	fprintf(fq, "set xlabel '%s'\n", G_("scaled frequency"));
 	fputs("set xzeroaxis\n", fq);
 	fputs("set nokey\n", fq);
 
 	if (opt & OPT_R) {
-	    strcpy(titlestr, I_("Residual spectrum"));
+	    strcpy(titlestr, G_("Residual spectrum"));
 	} else {
-	    sprintf(titlestr, I_("Spectrum of %s"), vname);
+	    sprintf(titlestr, G_("Spectrum of %s"), vname);
 	}
 
 	fprintf(fq, "set title '%s", titlestr);
 
 	if (window) {
-	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
+	    sprintf(titlestr, G_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)", titlestr);
 	} 
 
@@ -4371,7 +4371,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 title '%s' w lines, \\\n"
 	    "'-' using 1:2 notitle w lines\n",
-	    I_("Lorenz curve"));
+	    G_("Lorenz curve"));
 
     gretl_push_c_numeric_locale();
 

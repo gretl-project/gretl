@@ -235,7 +235,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set origin 0.0,0.50\n", fp);
     fputs("set missing '?'\n", fp);
     fputs("set yrange [0:1]\n", fp);
-    fprintf(fp, "set title '%s'\n", I_("leverage"));
+    fprintf(fp, "set title '%s'\n", G_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -261,7 +261,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set origin 0.0,0.0\n", fp);
     fputs("set missing '?'\n", fp);
     fputs("set yrange [*:*]\n", fp);
-    fprintf(fp, "set title '%s'\n", I_("influence")); 
+    fprintf(fp, "set title '%s'\n", G_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {

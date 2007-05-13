@@ -130,36 +130,18 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
-#define TR_DEBUG 0
-
-static gchar *
-real_locale_from_utf8 (const gchar *src, int force)
+gchar *my_locale_from_utf8 (const gchar *src)
 {
+    const gchar *cset;
     gchar *trstr;
     gsize bytes;
     GError *err = NULL;
-    const gchar *cset = NULL;
 
-#if TR_DEBUG
-    gchar *msg;
-    int u = g_get_charset(&cset);
-    msg = g_strdup_printf("real_locale_from_utf8: force=%d, "
-			  "g_get_charset returned %d and gave "
-			  "'%s'\n", force, u, 
-			  (cset != NULL)? cset : "NULL");
-    infobox(msg);
-    g_free(msg);
-
-    if (!force && u) {
+    if (g_get_charset(&cset)) {
+	/* g_get_charset returns TRUE if the returned 
+	   charset is UTF-8 */ 
 	return g_strdup(src);
     }
-#else
-    if (!force && g_get_charset(&cset)) {
-	/* According to the glib manual, g_get_charset returns TRUE if 
-	   the returned charset is UTF-8 */ 
-	return g_strdup(src);
-    }
-#endif
 
     trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 
@@ -173,16 +155,6 @@ real_locale_from_utf8 (const gchar *src, int force)
     }
 
     return trstr;
-}
-
-gchar *my_locale_from_utf8 (const gchar *src)
-{
-    return real_locale_from_utf8(src, 0);
-}
-
-gchar *force_locale_from_utf8 (const gchar *src)
-{
-    return real_locale_from_utf8(src, 1);
 }
 
 #define FNAME_DEBUG 0
@@ -257,25 +229,32 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
     return trstr;
 }
 
+static const char *gp_cset (void)
+{
+    if (iso_latin_version() == 2) {
+#ifdef GO_OS_WIN32
+	return "CP1250";
+#else
+	return "ISO-8859-2";
+#endif
+    } else {
+	return "ISO-8859-1";
+    } 
+}
+
 static gchar *real_gp_locale_to_utf8 (const gchar *src,
 				      int starting)
 {
     static int errcount;
-    const char *cset;
+    static const char *cset;
     gchar *trstr;
     gsize read;
     gsize wrote;
     GError *err = NULL;
 
-    if (iso_latin_version() == 2) {
-#ifdef GO_OS_WIN32
-	cset = "CP1250";
-#else
-	cset = "ISO-8859-2";
-#endif
-    } else {
-	cset = "ISO-8859-1";
-    } 
+    if (cset == NULL) {
+	cset = gp_cset();
+    }
 
     if (starting) {
 	errcount = 0;
@@ -290,7 +269,7 @@ static gchar *real_gp_locale_to_utf8 (const gchar *src,
     }
 
     if (err != NULL) {
-	errbox("g_covert (character set conversion) failed");
+	errbox("g_convert (character set conversion) failed");
 	g_error_free(err);
 	errcount++;
     }
@@ -316,6 +295,27 @@ gchar *gp_locale_to_utf8 (const gchar *src)
 gchar *gp_locale_to_utf8_next (const gchar *src)
 {
     return real_gp_locale_to_utf8(src, 0);
+}
+
+gchar *gp_locale_from_utf8 (const gchar *src)
+{
+    static const char *cset;
+    gchar *trstr;
+    gsize read;
+    gsize wrote;
+
+    if (gretl_is_ascii(src)) {
+	return NULL;
+    }
+
+    if (cset == NULL) {
+	cset = gp_cset();
+    }
+
+    trstr = g_convert(src, -1, cset, "UTF-8",
+		      &read, &wrote, NULL);
+
+    return trstr;
 }
 
 gchar *latin1_to_utf8 (const gchar *src)

@@ -19,6 +19,8 @@ gchar *gp_locale_to_utf8 (const gchar *src);
 
 gchar *gp_locale_to_utf8_next (const gchar *src);
 
+gchar *gp_locale_from_utf8 (const gchar *src);
+
 gchar *latin1_to_utf8 (const gchar *src);
 
 gchar *latin2_to_utf8 (const gchar *src);

@@ -514,9 +514,9 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
 	if (any_y2) {
 	    if (spec->lines[i].yaxis == 1) {
-		fprintf(fp, " (%s)\" ", I_("left"));
+		fprintf(fp, " (%s)\" ", G_("left"));
 	    } else {
-		fprintf(fp, " (%s)\" ", I_("right"));
+		fprintf(fp, " (%s)\" ", G_("right"));
 	    }
 	} else {
 	    fputs("\" ", fp);
@@ -613,7 +613,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
     spec->data = data;
     spec->nobs = spec->okobs = T;
 
-    sprintf(spec->lines[1].title, I_("loess fit, d = %d, q = %g"), d, q);
+    sprintf(spec->lines[1].title, G_("loess fit, d = %d, q = %g"), d, q);
     strcpy(spec->lines[1].scale, "1.0");
     strcpy(spec->lines[1].style, "lines");
     spec->lines[1].ncols = 2;

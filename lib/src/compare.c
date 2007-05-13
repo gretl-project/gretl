@@ -1510,7 +1510,7 @@ static int QLR_graph (const double *Ft, int t1, int t2,
 
     fprintf(fp, "plot \\\n"
 	    "'-' using 1:2 title '%s' w lines\n",
-	    I_("Chow F-test for break"));
+	    G_("Chow F-test for break"));
     for (t=t1; t<=t2; t++) {
 	fprintf(fp, "%g %g\n", x[t], Ft[t-t1]);
     }
@@ -1870,13 +1870,13 @@ static int cusum_do_graph (double a, double b, const double *W,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fq, "set xlabel '%s'\n", I_("Observation"));
+    fprintf(fq, "set xlabel '%s'\n", G_("Observation"));
     fputs("set nokey\n", fq);
 
     if (opt & OPT_R) {
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
-		I_("CUSUMSQ plot with 95% confidence band"));
+		G_("CUSUMSQ plot with 95% confidence band"));
 	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - 1);
 	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - 1);
 	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - 1);
@@ -1884,7 +1884,7 @@ static int cusum_do_graph (double a, double b, const double *W,
 	fputs("set xzeroaxis\n", fq);
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
-		I_("CUSUM plot with 95% confidence band"));
+		G_("CUSUM plot with 95% confidence band"));
 	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
 	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
     }	

@@ -268,9 +268,9 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 
     /* irregular component */
     if (opt == TRAMO_SEATS && !tramo_got_irfin) {
-	sprintf(title, "%s", I_("irregular"));
+	sprintf(title, "%s", G_("irregular"));
     } else {
-	sprintf(title, "%s - 1", I_("irregular"));
+	sprintf(title, "%s - 1", G_("irregular"));
     }
 
     fprintf(fp, "set bars 0\n"
@@ -291,7 +291,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     fprintf(fp, "set origin 0.0,0.33\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
-	    pdinfo->varname[0], I_("trend/cycle"));
+	    pdinfo->varname[0], G_("trend/cycle"));
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);
@@ -308,7 +308,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     fprintf(fp, "set origin 0.0,0.66\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
-	    pdinfo->varname[0], I_("adjusted"));
+	    pdinfo->varname[0], G_("adjusted"));
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);

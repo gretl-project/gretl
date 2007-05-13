@@ -3039,7 +3039,7 @@ static void auto_save_gp (windata_t *vwin)
     }
 
 # ifdef ENABLE_NLS
-    trbuf = force_locale_from_utf8(buf);
+    trbuf = gp_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	fputs(trbuf, fp);
 	g_free(trbuf);
@@ -3077,7 +3077,9 @@ static char *add_pause_to_plotfile (const char *fname)
 
     while (fgets(fline, MAXLEN - 1, fin)) {
 	fputs(fline, fout);
-	if (strstr(fline, "pause -1")) gotpause = 1;
+	if (strstr(fline, "pause -1")) {
+	    gotpause = 1;
+	}
     }
 
     if (!gotpause) {

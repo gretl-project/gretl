@@ -926,10 +926,10 @@ static void make_gtitle (gnuplot_info *gi, int code,
     switch (code) {
     case GTITLE_VLS:
 	if (gi->fit == PLOT_FIT_OLS) {
-	    sprintf(title, I_("%s versus %s (with least squares fit)"),
+	    sprintf(title, G_("%s versus %s (with least squares fit)"),
 		    s1, s2);
 	} else if (gi->fit == PLOT_FIT_INVERSE) {
-	    sprintf(title, I_("%s versus %s (with inverse fit)"),
+	    sprintf(title, G_("%s versus %s (with inverse fit)"),
 		    s1, s2);
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
 	    sprintf(title, _("%s versus %s (with quadratic fit)"),
@@ -938,18 +938,18 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	break;
     case GTITLE_RESID:
 	if (sscanf(s1, "residual for %15s", depvar) == 1) {
-	    sprintf(title, I_("Regression residuals (= observed - fitted %s)"), 
+	    sprintf(title, G_("Regression residuals (= observed - fitted %s)"), 
 		    depvar);
 	}
 	break;
     case GTITLE_AF:
-	sprintf(title, I_("Actual and fitted %s"), s1);
+	sprintf(title, G_("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
 	if (s2 == NULL || (gi->flags & GPT_TS)) {
-	    sprintf(title, I_("Actual and fitted %s"), s1);
+	    sprintf(title, G_("Actual and fitted %s"), s1);
 	} else {
-	    sprintf(title, I_("Actual and fitted %s versus %s"), s1, s2);
+	    sprintf(title, G_("Actual and fitted %s versus %s"), s1, s2);
 	}
 	break;
     default:
@@ -1099,7 +1099,7 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
     s1 = var_get_graph_name(pdinfo, gi->list[1]);
     s2 = var_get_graph_name(pdinfo, gi->list[2]);
 
-    sprintf(title, I_("%s versus %s (with loess fit)"), s1, s2);
+    sprintf(title, G_("%s versus %s (with loess fit)"), s1, s2);
     fputs("set key top left\n", fp);
     fprintf(fp, "set title \"%s\"\n", title);
     print_axis_label('x', s1, fp);
@@ -1108,7 +1108,7 @@ loess_plot (gnuplot_info *gi, const double **Z, const DATAINFO *pdinfo)
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 title '' w points, \\\n", fp);
-    sprintf(title, I_("loess fit, d = %d, q = %g"), d, q);
+    sprintf(title, G_("loess fit, d = %d, q = %g"), d, q);
     fprintf(fp, " '-' using 1:2 title \"%s\" w lines\n", title);
 
     T = gretl_vector_get_length(yh);
@@ -1807,7 +1807,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) { 
 	    make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
-	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
+	    fprintf(fp, "set ylabel '%s'\n", G_("residual"));
 	} else {
 	    print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fp);
 	}
@@ -1816,7 +1816,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) { 
 	make_gtitle(&gi, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
-	fprintf(fp, "set ylabel '%s'\n", I_("residual"));
+	fprintf(fp, "set ylabel '%s'\n", G_("residual"));
     } else if (gi.flags & GPT_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
@@ -1876,25 +1876,25 @@ int gnuplot (const int *plotlist, const char *literal,
 	    fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    var_get_graph_name(pdinfo, list[i]), 
-		    (i == oddman)? I_("right") : I_("left"),
+		    (i == oddman)? G_("right") : G_("left"),
 		    (use_impulses(&gi))? "w impulses" : 
 		    (gi.flags & GPT_TS)? "w lines" : "w points",
 		    lwstr,
 		    (i == list[0] - 1)? "\n" : " , \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
-	strcpy(s1, (gi.flags & GPT_RESIDS)? I_("residual") : 
+	strcpy(s1, (gi.flags & GPT_RESIDS)? G_("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:2 title \"%s (%s=1)\", \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:2 title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
-	fprintf(fp, " '-' using 1:2 title \"%s\" w points , \\\n", I_("actual"));	
-	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, I_("fitted"));
+	fprintf(fp, " '-' using 1:2 title \"%s\" w points , \\\n", G_("actual"));	
+	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, G_("fitted"));
     } else if (gi.flags & GPT_FA) {
 	set_withstr(gi.flags, withstr);
-	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 2, \\\n", I_("fitted"), withstr);
-	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 1\n", I_("actual"), withstr);	
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 2, \\\n", G_("fitted"), withstr);
+	fprintf(fp, " '-' using 1:2 title \"%s\" %s lt 1\n", G_("actual"), withstr);	
     } else {
 	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
@@ -2415,9 +2415,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97%s\n",
-			I_("Test statistic for normality"),
+			G_("Test statistic for normality"),
 			gnuplot_label_front_string());
-		print_freq_test_label(label, I_("Chi-squared(2) = %.3f pvalue = %.5f"), 
+		print_freq_test_label(label, G_("Chi-squared(2) = %.3f pvalue = %.5f"), 
 				      freq->test, chisq_cdf_comp(freq->test, 2));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, gnuplot_label_front_string());
@@ -2438,9 +2438,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
-			I_("Test statistic for gamma"),
+			G_("Test statistic for gamma"),
 			gnuplot_label_front_string());
-		print_freq_test_label(label, I_("z = %.3f pvalue = %.5f"), 
+		print_freq_test_label(label, G_("z = %.3f pvalue = %.5f"), 
 				      freq->test, normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, gnuplot_label_front_string());
@@ -2469,9 +2469,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     fprintf(fp, "set xlabel '%s'\n", freq->varname);
     if (dist) {
-	fprintf(fp, "set ylabel '%s'\n", I_("Density"));
+	fprintf(fp, "set ylabel '%s'\n", G_("Density"));
     } else {
-	fprintf(fp, "set ylabel '%s'\n", I_("Relative frequency"));
+	fprintf(fp, "set ylabel '%s'\n", G_("Relative frequency"));
     }
 
     if (isnan(lambda)) {
@@ -2589,10 +2589,10 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 	fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n",
 		varname);
     }
-    fprintf(fp, "'-' using 1:2 title '%s' w lines", I_("forecast"));
+    fprintf(fp, "'-' using 1:2 title '%s' w lines", G_("forecast"));
     if (do_errs) {
 	fprintf(fp, " , \\\n'-' using 1:2:3 title '%s' w errorbars\n",
-		I_("95 percent confidence interval"));
+		G_("95 percent confidence interval"));
     } else {
 	fputc('\n', fp);
     }
@@ -2663,7 +2663,7 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title '%s' w lines lt 2, \\\n" 
 	    "'-' using 1:2 notitle w lines lt 2\n", 
-	    I_("residual"), I_("+- sqrt(h(t))"));
+	    G_("residual"), G_("+- sqrt(h(t))"));
 
     gretl_push_c_numeric_locale();
 
@@ -2886,12 +2886,12 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     if (confint) {
 	fputs("set key top left\n", fp);
-	sprintf(title, I_("response of %s to a shock in %s, "
+	sprintf(title, G_("response of %s to a shock in %s, "
 			  "with bootstrap confidence interval"),
 		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     } else {
 	fputs("set nokey\n", fp);
-	sprintf(title, I_("response of %s to a shock in %s"), 
+	sprintf(title, G_("response of %s to a shock in %s"), 
 		pdinfo->varname[vtarg], pdinfo->varname[vshock]);
     }
 
@@ -2901,9 +2901,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 
     if (confint) {
 	fprintf(fp, "plot \\\n'-' using 1:2 title '%s' w lines,\\\n", 
-		I_("point estimate"));
+		G_("point estimate"));
 	fprintf(fp, "'-' using 1:2:3:4 title '%s' w errorbars\n",
-		I_("0.025 and 0.975 quantiles"));
+		G_("0.025 and 0.975 quantiles"));
     } else {
 	fputs("plot \\\n'-' using 1:2 w lines\n", fp);
     }
@@ -3062,7 +3062,7 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
     fputs("# VAR residual plot\n", fp);
     fputs("set key top left\n", fp);
     fputs("set xzeroaxis\n", fp);
-    fprintf(fp, "set title '%s'\n", I_("VAR residuals"));
+    fprintf(fp, "set title '%s'\n", G_("VAR residuals"));
 
     fputs("plot \\\n", fp);
     for (i=0; i<nvars; i++) {
@@ -3218,7 +3218,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     n = gretl_matrix_rows(lam);
 
     fprintf(fp, "set title '%s'\n", 
-	    I_("VAR inverse roots in relation to the unit circle"));
+	    G_("VAR inverse roots in relation to the unit circle"));
     fputs("# literal lines = 8\n", fp);
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
@@ -3291,7 +3291,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 
     fprintf(fp, "set title '%s'\n",
 	    /* xgettext:no-c-format */
-	    I_("95% confidence ellipse and 95% marginal intervals"));
+	    G_("95% confidence ellipse and 95% marginal intervals"));
     fputs("# literal lines = 9\n", fp);
     fputs("set parametric\n", fp);
     fputs("set xzeroaxis\n", fp);
@@ -3325,7 +3325,7 @@ int is_auto_fit_string (const char *s)
 {
     /* FIXME? */
     if (strstr(s, "automatic fit")) return 1;
-    if (strstr(s, I_("with least squares fit"))) return 1;
+    if (strstr(s, G_("with least squares fit"))) return 1;
     return 0;
 }
 

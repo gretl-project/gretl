@@ -62,10 +62,10 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
     fprintf(fp, "# for %s\n", vname);
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s %s'\n", 
-	    I_("range-mean plot for"), vname, 
-	    (fitline)? I_("with least squares fit") : "");
+	    G_("range-mean plot for"), vname, 
+	    (fitline)? G_("with least squares fit") : "");
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
-	    I_("mean"), I_("range"));
+	    G_("mean"), G_("range"));
     fputs("plot \\\n", fp);
 
     gretl_push_c_numeric_locale();

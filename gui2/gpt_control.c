@@ -488,6 +488,14 @@ void save_graph_to_file (gpointer data, const char *fname)
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
+	    if (!gretl_is_ascii(plotline)) {
+		fprintf(stderr, "non-ascii line: '%s'\n", plotline);
+		if (g_utf8_validate(plotline, -1, NULL)) {
+		    fprintf(stderr, " valid UTF-8\n");
+		} else {
+		    fprintf(stderr, " not valid UTF-8\n");
+		}
+	    }
 	    if (strncmp(plotline, "set term", 8) && 
 		strncmp(plotline, "set output", 10)) {
 		pputs(prn, plotline);

@@ -263,45 +263,77 @@ int iso_latin_version (void)
     return 0;
 }
 
+static const char *get_gp_charset (void)
+{
+    char *lang = getenv("LANG");
+
+    if (!strncmp(lang, "pl", 2)) {
+#ifdef WIN32
+	return "CP1250";
+#else
+	return "ISO-8859-2";
+#endif
+    } else {
+	return "ISO-8859-1";
+    }
+}
+
+char *gp_gettext (const char *msgid)
+{
+    static const char *cset;
+    char *ret;
+
+    if (cset == NULL) {
+	cset = get_gp_charset();
+	fprintf(stderr, "get_gp_charset gave %s\n", cset);
+    }
+
+    bind_textdomain_codeset(PACKAGE, cset);
+    ret = gettext(msgid);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
+
+    return ret;
+} 
+
 char *iso_gettext (const char *msgid)
 {
-   char *ret;
-   static int cli;
-   static int iso_ok = -1;
-   static const char *cset;
+    char *ret;
+    static int cli;
+    static int iso_ok = -1;
+    static const char *cset;
 
-   /* the command-line program is "special": it doesn't emit
-      utf-8 at all, so we omit the redundant switching of
-      codesets */
-   if (!strcmp(msgid, "@CLI_INIT")) {
-       cli = 1;
-       return NULL;
-   }
+    /* the command-line program is "special": it doesn't emit
+       utf-8 at all, so we omit the redundant switching of
+       codesets */
+    if (!strcmp(msgid, "@CLI_INIT")) {
+	cli = 1;
+	return NULL;
+    }
 
-   if (cli) { 
-       /* command line program: switch not required */
-       return gettext(msgid);
-   }
+    if (cli) { 
+	/* command line program: switch not required */
+	return gettext(msgid);
+    }
 
-   if (iso_ok < 0) {
-       cset = get_gretl_charset();
-       fprintf(stderr, "get_gretl_charset gave %s\n", cset);
-       if (cset == NULL) {
-	   iso_ok = 0;
-       } else {
-	   iso_ok = 1;
-       }
-   }
+    if (iso_ok < 0) {
+	cset = get_gretl_charset();
+	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
+	if (cset == NULL) {
+	    iso_ok = 0;
+	} else {
+	    iso_ok = 1;
+	}
+    }
 
-   if (iso_ok) {
-       bind_textdomain_codeset(PACKAGE, cset);
-       ret = gettext(msgid);
-       bind_textdomain_codeset(PACKAGE, "UTF-8");
-   } else {
-       ret = gettext(msgid);
-   }
+    if (iso_ok) {
+	bind_textdomain_codeset(PACKAGE, cset);
+	ret = gettext(msgid);
+	bind_textdomain_codeset(PACKAGE, "UTF-8");
+    } else {
+	ret = gettext(msgid);
+    }
 
-   return ret;
+    return ret;
 } 
 
 #endif  /* ENABLE_NLS */
@@ -837,12 +869,36 @@ char *utf8_to_latin (const char *s)
     gsize read, wrote;
 
     if (iso_latin_version() == 2) {
+#ifdef WIN32
+	return g_convert(s, -1, "CP1250", "UTF-8",
+			 &read, &wrote, NULL);
+#else
 	return g_convert(s, -1, "ISO-8859-2", "UTF-8",
 			 &read, &wrote, NULL);
+#endif
     } else {
 	return g_convert(s, -1, "ISO-8859-1", "UTF-8",
 			 &read, &wrote, NULL);
     }
+}
+
+/* allow TAB, CR, LF, FF */
+
+#define ascii_ctrl(a) (a==9 || a==10 || a==12 || a==13)
+
+int gretl_is_ascii (const char *buf)
+{
+    int a;
+
+    while (*buf) {
+	a = *buf;
+	if ((a < 32 && !(ascii_ctrl(a))) || a > 126) {
+	    return 0;
+	}
+	buf++;
+    }
+
+    return 1;
 }
 
 char *get_month_name (char *mname, int m)

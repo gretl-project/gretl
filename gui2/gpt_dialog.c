@@ -136,11 +136,13 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (wstr != NULL && *wstr != '\0') {
-	gchar *trstr = force_locale_from_utf8(wstr);
+	gchar *trstr = gp_locale_from_utf8(wstr);
 
 	if (trstr != NULL) {
 	    strncat(targ, trstr, n-1);
 	    g_free(trstr);
+	} else {
+	    strncat(targ, wstr, n-1);
 	}
     }
 }
