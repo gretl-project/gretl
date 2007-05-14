@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "session.h"
 #include "gpt_control.h"
+#include "boxplots.h"
 #include "objectsave.h"
 
 #include "cmd_private.h"

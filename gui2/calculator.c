@@ -20,6 +20,7 @@
 /* calculator.c for gretl */
 
 #define NTESTS 6
+#define NPTESTS 2
 #define NPVAL 7
 #define NLOOKUPS 5
 #define NGRAPHS 4
@@ -51,7 +52,8 @@ struct test_t_ {
     GtkWidget *entry[NTESTENTRY];
     GtkWidget *combo[2];
     GtkWidget *check;
-    GtkWidget *graph;
+    GtkWidget *radio[3];
+    GtkWidget *extra;
 };
 
 struct lookup_t_ {
@@ -75,6 +77,11 @@ enum {
     TWO_MEANS,
     TWO_VARIANCES,
     TWO_PROPNS
+};
+
+enum {
+    NP_RUNS,
+    NP_DIFF
 };
 
 /* if pos != 0, value must be positive or it is invalid */ 
@@ -594,6 +601,66 @@ static void htest_graph (int d, double x, int df1, int df2)
     }
 }
 
+static void np_test (GtkWidget *w, test_t *test)
+{
+    const char *var1, *var2;
+    int v1, v2 = 0;
+    PRN *prn = NULL;
+    int err = 0;
+
+    var1 = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
+    v1 = varindex(datainfo, var1);
+
+    if (v1 == datainfo->v) {
+	gui_errmsg(E_UNKVAR);
+	return;
+    }
+
+    if (test->code == NP_DIFF) {
+	var2 = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
+	v2 = varindex(datainfo, var2);
+	if (v2 == datainfo->v) {
+	    gui_errmsg(E_UNKVAR);
+	    return;
+	}
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    if (test->code == NP_RUNS) {
+	err = runs_test(v1, (const double **) Z, datainfo, 
+			prn);
+    } else if (test->code == NP_DIFF) {
+	int list[3] = { 2, v1, v2 };
+	gretlopt opt = OPT_NONE;
+
+	if (test->extra != NULL &&
+	    GTK_TOGGLE_BUTTON(test->extra)->active) {
+	    opt |= OPT_V;
+	}
+
+	if (GTK_TOGGLE_BUTTON(test->radio[0])->active) {
+	    opt |= OPT_G;
+	} else if (GTK_TOGGLE_BUTTON(test->radio[1])->active) {
+	    opt |= OPT_R;
+	} else if (GTK_TOGGLE_BUTTON(test->radio[2])->active) {
+	    opt |= OPT_I;
+	}
+
+	err = diff_test(list, (const double **) Z, datainfo, 
+			opt, prn);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 78, 380, "gretl: nonparametric test", 
+		    PRINT, NULL);
+    }
+}
+
 /* FIXME : should we record a relevant command when a test is done
    using dataset variables? (Two means, or two variances)
 */
@@ -609,7 +676,7 @@ static void h_test (GtkWidget *w, test_t *test)
 	return;
     }
 
-    grf = GTK_TOGGLE_BUTTON(test->graph)->active;
+    grf = GTK_TOGGLE_BUTTON(test->extra)->active;
 
     x[4] = 0.0;
 
@@ -967,6 +1034,15 @@ static void h_test_global (GtkWidget *w, CalcChild *child)
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     h_test(NULL, test[i]);
+}
+
+static void np_test_global (GtkWidget *w, CalcChild *child)
+{
+    test_t **test = child->calcp;
+    int i;
+
+    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
+    np_test(NULL, test[i]);
 }
 
 static void dist_graph (GtkWidget *w, CalcChild *child)
@@ -1441,6 +1517,50 @@ static void select_child_callback (GtkList *l, GtkWidget *w, gpointer p)
     populate_stats(NULL, p);
 }
 
+static void add_test_var_selector (GtkWidget *tbl, gint *tbl_len, 
+				   test_t *test, int pos,
+				   int labelit)
+{
+    GtkWidget *label, *tmp;
+    gchar **pbuf;
+
+    *tbl_len += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    if (labelit) {
+	gchar *tmp = g_strdup_printf(_("Variable %d"), pos + 1);
+	label = gtk_label_new(tmp);
+	g_free(tmp);
+    } else {
+	label = gtk_label_new(_("Variable"));
+    }
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      label, 0, 1, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(label);
+
+    tmp = gtk_combo_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+    gtk_widget_show(tmp);
+    g_object_set_data(G_OBJECT(tmp), "test", test);
+    g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
+    test->entry[pos] = GTK_COMBO(tmp)->entry;
+
+    pbuf = malloc(sizeof *pbuf);
+    if (pbuf != NULL) {
+	*pbuf = NULL;
+	g_object_set_data(G_OBJECT(tmp), "pbuf", pbuf);
+	g_signal_connect(G_OBJECT(tmp), "destroy", G_CALLBACK(free_pbuf), NULL);
+    }
+
+    if (pos > 0) {
+	test->combo[1] = tmp;
+    } else {
+	test->combo[0] = tmp;
+    }
+
+    add_vars_to_combo(tmp, test->code, pos);
+}
+
 static void add_test_combo (GtkWidget *tbl, gint *tbl_len, 
 			    test_t *test, int pos)
 {
@@ -1571,6 +1691,101 @@ static int n_ok_dummies (void)
     return nv;
 }
 
+static void make_nptest_tab (CalcChild *child, int idx) 
+{
+    test_t **tests = child->calcp;
+    test_t *test = tests[idx];
+    GtkWidget *tmp, *box, *tbl;
+    GSList *group;
+    int nv = 0;
+    gint i, tbl_len;
+    const gchar *titles[] = {
+	N_("Runs test"), 
+	N_("Difference test") 
+    };
+
+    if (idx == NP_RUNS) {
+	nv = n_ok_series();
+    } else {
+	nv = (n_ok_series() > 1);
+    } 
+
+    if (nv == 0) {
+	errbox(_("No suitable data are available"));
+    }
+   
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
+    gtk_widget_show(box);
+
+    tmp = gtk_label_new(_(titles[idx]));
+    gtk_widget_show(tmp);
+    gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tmp);   
+
+    tbl_len = 1;
+    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
+
+    test->combo[0] = test->combo[1] = NULL;
+    for (i=0; i<NTESTENTRY; i++) {
+	test->entry[i] = NULL;
+    }
+
+    switch (idx) {
+
+    case NP_RUNS: 
+	add_test_var_selector(tbl, &tbl_len, test, 0, 0);
+	break;
+
+    case NP_DIFF: 
+	add_test_var_selector(tbl, &tbl_len, test, 0, 1);
+	add_test_var_selector(tbl, &tbl_len, test, 1, 1);
+
+	/* option radios */
+	tbl_len += 3;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+
+	test->radio[0] = gtk_radio_button_new_with_label(NULL, "Sign test");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[0], 0, 2, 
+				  tbl_len - 3, tbl_len - 2);
+	gtk_widget_show(test->radio[0]);
+
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[0]));
+	test->radio[1] = gtk_radio_button_new_with_label(group, "Rank sum test");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[1], 0, 2, 
+				  tbl_len - 2, tbl_len - 1);
+	gtk_widget_show(test->radio[1]);
+
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[1]));
+	test->radio[2] = gtk_radio_button_new_with_label(group, "Signed rank test");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[2], 0, 2, 
+				  tbl_len - 1, tbl_len);
+	gtk_widget_show(test->radio[2]);
+	break;
+
+    default:
+	break;
+    } 
+
+    if (0 && idx == NP_DIFF) {
+	/* add check box for verbose output */
+	tbl_len += 1;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+	tmp = gtk_check_button_new_with_label(_("Show details"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, 
+				  tbl_len - 1, tbl_len);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+	gtk_widget_show(tmp);
+
+	test->extra = tmp; 
+    } else {
+	test->extra = NULL;
+    }
+}
+
 static void make_test_tab (CalcChild *child, int idx) 
 {
     test_t **tests = child->calcp;
@@ -1697,7 +1912,7 @@ static void make_test_tab (CalcChild *child, int idx)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tempwid), TRUE);
     gtk_widget_show(tempwid);
 
-    test->graph = tempwid; 
+    test->extra = tempwid; 
 }
 
 static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
@@ -1712,6 +1927,13 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
 	test_t **test = child->calcp;
 
 	for (i=0; i<NTESTS; i++) {
+	    free(test[i]);
+	}
+	free(test);
+    } else if (c == CALC_NPTEST) {
+	test_t **test = child->calcp;
+
+	for (i=0; i<NPTESTS; i++) {
 	    free(test[i]);
 	}
 	free(test);
@@ -1744,6 +1966,19 @@ static int child_allocate_calcp (CalcChild *child)
 	if (test != NULL) {
 	    child->calcp = test;
 	    for (i=0; i<NTESTS && !err; i++) {
+		test[i] = mymalloc(sizeof **test);
+		if (test[i] == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    test[i]->code = i;
+		}
+	    }
+	} 
+    } else if (c == CALC_NPTEST) {
+	test = mymalloc(NPTESTS * sizeof *test);
+	if (test != NULL) {
+	    child->calcp = test;
+	    for (i=0; i<NPTESTS && !err; i++) {
 		test[i] = mymalloc(sizeof **test);
 		if (test[i] == NULL) {
 		    err = E_ALLOC;
@@ -1865,6 +2100,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	N_("gretl: p-value finder"),
 	N_("gretl: statistical tables"),
 	N_("gretl: test calculator"),
+	N_("gretl: nonparametric tests"),
 	N_("gretl: distribution graphs"),
 	N_("gretl: add distribution graph"),
     };
@@ -1873,6 +2109,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     g_return_if_fail(code == CALC_PVAL || 
 		     code == CALC_DIST || 
 		     code == CALC_TEST ||
+		     code == CALC_NPTEST ||
 		     code == CALC_GRAPH ||
 		     code == CALC_GRAPH_ADD);
 
@@ -1904,6 +2141,10 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     if (code == CALC_TEST) {
 	for (i=0; i<NTESTS; i++) {
 	    make_test_tab(child, i);
+	}
+    } else if (code == CALC_NPTEST) {
+	for (i=0; i<NPTESTS; i++) {
+	    make_nptest_tab(child, i);
 	}
     } else if (code == CALC_PVAL) {
 	for (i=0; i<NPVAL; i++) {
@@ -1939,6 +2180,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     g_signal_connect(G_OBJECT (tmp), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		     (code == CALC_DIST)? G_CALLBACK(get_critical) :
+		     (code == CALC_NPTEST)? G_CALLBACK(np_test_global) :
 		     (code == CALC_GRAPH || code == CALC_GRAPH_ADD)? 
 		     G_CALLBACK(dist_graph) :
 		     G_CALLBACK(h_test_global),
@@ -1946,7 +2188,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_widget_show(tmp);
 
     /* Help button? */
-    if (code == CALC_TEST) {
+    if (code == CALC_TEST) {  /* FIXME NPTEST */
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);

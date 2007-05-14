@@ -195,7 +195,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
-#if NOTYET
+#if 1
     double z1, z2;
     int t;
 

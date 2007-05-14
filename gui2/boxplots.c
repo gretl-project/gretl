@@ -1352,7 +1352,7 @@ static int dump_boxplot (PLOTGROUP *grp)
     int i;
     BOXPLOT *plt;
 
-    build_path(boxplottmp, paths.usertmp, "boxdump.tmp", NULL);
+    build_path(boxplottmp, paths.userdir, "boxdump.tmp", NULL);
 
     fp = gretl_fopen(boxplottmp, "w");
     if (fp == NULL) {

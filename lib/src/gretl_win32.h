@@ -51,6 +51,8 @@ char *desktop_path (void);
 
 char *appdata_path (void);
 
+char *mydocs_path (void);
+
 int gretl_shell (const char *arg);
 
 #endif /* WIN32 */

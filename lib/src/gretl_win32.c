@@ -278,7 +278,8 @@ static char *win_special_path (int folder)
     DWORD result;
     LPMALLOC allocator;
 
-    if (SHGetSpecialFolderLocation(NULL, folder, &id_list) != S_OK) {
+    if (SHGetSpecialFolderLocation(NULL, folder | CSIDL_FLAG_CREATE, 
+				   &id_list) != S_OK) {
 	return NULL;
     }
 
@@ -289,7 +290,7 @@ static char *win_special_path (int folder)
 	allocator->lpVtbl->Release(allocator);
     }
 
-    return (result == TRUE) ? gretl_strdup(dpath) : NULL;
+    return (result == TRUE)? gretl_strdup(dpath) : NULL;
 }
 
 char *desktop_path (void)
@@ -300,6 +301,11 @@ char *desktop_path (void)
 char *appdata_path (void)
 {
     return win_special_path(CSIDL_APPDATA);
+}
+
+char *mydocs_path (void)
+{
+    return win_special_path(CSIDL_PERSONAL);
 }
 
 static int run_cmd_wait (char *cmd)

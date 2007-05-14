@@ -1463,7 +1463,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (op == TMP_INSTALL) {
-	    build_path(target, paths.usertmp, "dltmp", NULL);
+	    build_path(target, paths.userdir, "dltmp", NULL);
 	    err = gretl_tempname(target);
 	} else {
 	    get_default_dir(fndir, SAVE_FUNCTIONS);

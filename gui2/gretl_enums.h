@@ -222,6 +222,7 @@ enum calc_functions {
     CALC_PVAL,
     CALC_DIST,
     CALC_TEST,
+    CALC_NPTEST,
     CALC_GRAPH,
     CALC_GRAPH_ADD
 };

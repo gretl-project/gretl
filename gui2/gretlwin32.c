@@ -156,7 +156,7 @@ void startR (char *Rcommand)
 	return;
     }
 
-    build_path(Rprofile, paths.usertmp, "gretl.Rprofile", NULL);
+    build_path(Rprofile, paths.userdir, "gretl.Rprofile", NULL);
     fp = gretl_fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
@@ -170,7 +170,7 @@ void startR (char *Rcommand)
 	return;
     } 	
 
-    build_path(Rdata, paths.usertmp, "Rdata.tmp", NULL);
+    build_path(Rdata, paths.userdir, "Rdata.tmp", NULL);
 
     sprintf(Rline, "store \"%s\" -r", Rdata);
     list = command_list_from_string(Rline);
@@ -195,7 +195,7 @@ void startR (char *Rcommand)
 	char Rtmp[MAXLEN];
 	FILE *fq;
 
-	build_path(Rtmp, paths.usertmp, "Rtmp", NULL);
+	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = gretl_fopen(Rtmp, "w");
 	if (fq != NULL) {
 	    fputs("# load data from gretl\n", fq);
@@ -799,7 +799,7 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 
     /* generate gnuplot source file to make emf */
     pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
-    emfname = g_strdup_printf("%sgpttmp.emf", paths.usertmp);
+    emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set output '%s'\n", emfname);
 
     while (fgets(plotline, MAXLEN-1, fq)) {

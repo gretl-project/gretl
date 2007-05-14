@@ -37,6 +37,8 @@ int plot_to_xpm (const char *fname, gpointer data);
 
 const char *get_boxplots_string (void);
 
+const char *get_boxdump_name (void);
+
 #endif /* BOXPLOTS_H */
 
 

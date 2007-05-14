@@ -465,39 +465,38 @@ double lockes_test (const double *x, int t1, int t2)
 int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn)
 {
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
-    int nn, runs = 1;
-    double xx, *x, mean, sd;
+    double xt, *x, mean, sd;
     double z, pval;
+    int t, n, runs = 1;
 
-    nn = t2 - t1 + 1;
-    x = malloc(nn * sizeof *x);
+    n = pdinfo->t2 - pdinfo->t1 + 1;
+    x = malloc(n * sizeof *x);
     if (x == NULL) {
 	return E_ALLOC;
     }
 
-    nn = 0;
-    for (t=t1; t<=t2; t++) {
-	xx = Z[varno][t];
-	if (na(xx)) {
+    n = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xt = Z[varno][t];
+	if (na(xt)) {
 	    continue;
 	}
-	x[nn++] = xx;
+	x[n++] = xt;
     } 
 
-    if (nn <= 1) {
+    if (n <= 1) {
 	pputs(prn, _("\nInsufficient data for runs test\n"));
 	free(x);
 	return 1;
     }
 
-    for (t=1; t<nn; t++) {
+    for (t=1; t<n; t++) {
 	if ((x[t] > 0 && x[t-1] < 0) || (x[t] < 0 && x[t-1] > 0)) { 
 	    runs++;
 	}
     }
 
-    mean = (1 + nn / 2.0);
+    mean = (1 + n / 2.0);
     sd = sqrt((double) n - 1) / 2.0;
     z = fabs((runs - mean) / sd);
     pval = normal_pvalue_2(z);
@@ -805,6 +804,7 @@ static int sign_test (const double *x, const double *y,
 		      int v1, int v2, const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn)
 {
+    double pv;
     int n, w, t;
 
     n = w = 0;
@@ -819,7 +819,7 @@ static int sign_test (const double *x, const double *y,
 	return E_MISSDATA;
     }
 
-    pputs(prn, "\n  ");
+    pprintf(prn, "\n%s\n\n", _("Sign Test"));
     pprintf(prn, _("Number of differences: n = %d\n"), n);
     pputs(prn, "  ");
     pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"), 
@@ -831,8 +831,12 @@ static int sign_test (const double *x, const double *y,
 		   "follows B(%d, %.1f)\n"), n, 0.5);
     pprintf(prn, "  %s(W <= %d) = %g\n", _("Prob"), w, 
 	    binomial_cdf(w, n, 0.5));
-    pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, 
-	    binomial_cdf_comp(w-1, n, 0.5));
+    if (w == 0) {
+	pv = 1.0;
+    } else {
+	pv = binomial_cdf_comp(w - 1, n, 0.5);
+    }
+    pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
 
     return 0;
 }

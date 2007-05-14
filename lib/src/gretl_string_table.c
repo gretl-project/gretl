@@ -286,7 +286,6 @@ static saved_string *saved_strings;
 static saved_string built_ins[] = {
     { "gretldir", NULL },
     { "userdir",  NULL },
-    { "usertmp",  NULL },
     { "gnuplot",  NULL },
     { "x12a",     NULL },
     { "x12adir",  NULL },
