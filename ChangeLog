@@ -1,4 +1,4 @@
-version 1.6.4, in progress
+5/13/2007 in progress
 - Fix breakage in relation to the Windows registry
 - Fixes for accented characters in graphs, on systems with
   UTF-8 as the standard character encoding
