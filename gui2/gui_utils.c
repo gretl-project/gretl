@@ -3887,6 +3887,7 @@ void startR (const char *Rcommand)
 	fq = fopen(Rtmp, "w");
 	if (fq != NULL) {
 	    fputs("# load data from gretl\n", fq);
+	    fputs("library(stats)\n", fq);
 	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	    fprintf(fq, "attach(gretldata)\n");
 	    fclose(fq);
