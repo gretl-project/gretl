@@ -673,7 +673,7 @@ int add_graph_to_session (char *fname, char *fullname)
     return err;
 }
 
-void add_boxplot_to_session (void)
+void add_boxplot_to_session (const char *boxtmp)
 {
     char fname[MAXSAVENAME];
     char grname[MAXSAVENAME];
@@ -692,11 +692,9 @@ void add_boxplot_to_session (void)
     session_file_make_path(grpath, fname);
     sprintf(grname, "%s %d", _("Boxplot"), session_bplot_count + 1);
 
-    if (copyfile(boxplottmp, grpath)) {
+    if (copyfile(boxtmp, grpath)) {
 	return;
     } 
-
-    remove(boxplottmp);
 
     real_add_graph_to_session(fname, grname, GRETL_OBJ_PLOT);
 }

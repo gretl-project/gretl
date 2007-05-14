@@ -6481,8 +6481,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    err = boxplots(cmd->list, NULL, pZ, pdinfo, cmd->opt | OPT_B);
 	}
 	if (!err) {
-	    err = maybe_save_graph(cmd, boxplottmp,
-				   GRETL_OBJ_PLOT, prn);
+	    err = maybe_save_graph(cmd, NULL, GRETL_OBJ_PLOT, prn);
 	}
 	break;
 

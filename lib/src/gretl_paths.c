@@ -49,6 +49,7 @@ enum {
 };
 
 static void ensure_slash (char *str);
+static void set_usertmp (PATHS *paths);
 
 static int add_suffix (char *fname, const char *sfx)
 {
@@ -659,6 +660,7 @@ enum paths_status_flags {
 
 struct INTERNAL_PATHS {
     char userdir[MAXLEN];
+    char usertmp[MAXLEN];
     char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
     char libpath[MAXLEN];
@@ -759,9 +761,12 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 
 #endif /* x12a || tramo */
 
-static void copy_paths_to_internal (const PATHS *paths)
+static void copy_paths_to_internal (PATHS *paths)
 {
+    set_usertmp(paths);
+
     strcpy(gretl_paths.userdir,  paths->userdir);
+    strcpy(gretl_paths.usertmp,  paths->usertmp);
     strcpy(gretl_paths.gnuplot,  paths->gnuplot);
     strcpy(gretl_paths.x12a,     paths->x12a);
     strcpy(gretl_paths.x12adir,  paths->x12adir);
@@ -771,6 +776,7 @@ static void copy_paths_to_internal (const PATHS *paths)
 
     gretl_insert_builtin_string("gretldir",  paths->gretldir);
     gretl_insert_builtin_string("userdir",   paths->userdir);
+    gretl_insert_builtin_string("usertmp",   paths->usertmp);
     gretl_insert_builtin_string("gnuplot",   paths->gnuplot);
     gretl_insert_builtin_string("x12a",      paths->x12a);
     gretl_insert_builtin_string("x12adir",   paths->x12adir);
@@ -808,6 +814,21 @@ static void correct_blank_userdir (PATHS *paths)
     } 
 }
 
+static void set_usertmp (PATHS *paths)
+{
+    char *home = appdata_path();
+    int err = 1;
+
+    if (home != NULL) {
+	sprintf(paths->usertmp, "%s\\gretl\\", home);
+	err = gretl_mkdir(paths->usertmp);
+    } 
+
+    if (err) {
+	strcpy(paths->usertmp, paths->userdir);
+    }
+}
+
 #else
 
 static void correct_blank_userdir (PATHS *paths)
@@ -819,7 +840,15 @@ static void correct_blank_userdir (PATHS *paths)
     } 
 }
 
-#endif    
+static void set_usertmp (PATHS *paths)
+{
+    sprintf(paths->usertmp, "%stmp/", paths->userdir);
+    if (gretl_mkdir(paths->usertmp)) {
+	strcpy(paths->usertmp, paths->userdir);
+    }
+}
+
+#endif
 
 static int validate_userdir (const char *dirname)
 {

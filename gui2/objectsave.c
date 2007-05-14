@@ -154,6 +154,10 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
     char gname[MAXSAVENAME];
     int ret, err = 0;
 
+    if (type == GRETL_OBJ_PLOT && fname == NULL) {
+	fname = get_boxdump_name();
+    }
+
     gretl_cmd_get_savename(gname);
     if (*gname == 0) {
 	return 0;

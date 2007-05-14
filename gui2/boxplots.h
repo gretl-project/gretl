@@ -20,8 +20,6 @@
 #ifndef BOXPLOTS_H
 #define BOXPLOTS_H
 
-extern char boxplottmp[MAXLEN];
-
 int boxplots (int *list, char **bools, 
 	      double ***pZ, const DATAINFO *pdinfo, 
 	      gretlopt opt);

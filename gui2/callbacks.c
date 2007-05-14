@@ -588,7 +588,7 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 	return;
     }
 
-    fname = g_strdup_printf("%snist.out", paths.userdir);
+    fname = g_strdup_printf("%snist.out", paths.usertmp);
 
     (*run_nist_tests)(paths.datadir, fname, (int) v);
 
@@ -610,7 +610,7 @@ void send_file (char *fullname)
         return;
     }
     
-    email_file(fullname, paths.userdir);
+    email_file(fullname, paths.usertmp);
     close_plugin(handle);
 }
 

@@ -290,6 +290,7 @@ struct DATASET_ {
 struct PATHS_ {
     char currdir[MAXLEN];
     char userdir[MAXLEN];
+    char usertmp[MAXLEN];
     char gretldir[MAXLEN];
     char datadir[MAXLEN];
     char scriptdir[MAXLEN];

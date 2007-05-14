@@ -63,7 +63,7 @@ typedef struct {
     int saved;
 } PLOTGROUP;
 
-char boxplottmp[MAXLEN];
+static char boxplottmp[MAXLEN];
 
 static double headroom = 0.24;
 static double scalepos = 75.0; /* was 60 */
@@ -79,6 +79,11 @@ static int cb_copy_image (gpointer data);
 int plot_to_xpm (const char *fname, gpointer data);
 #endif
 
+
+const char *get_boxdump_name (void)
+{
+    return boxplottmp;
+}
 
 /* Create a new backing pixmap of the appropriate size */
 
@@ -157,7 +162,8 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
         six_numbers(grp);
     } else if (!strcmp(item, _("Save to session as icon"))) {
         if (dump_boxplot(grp) == 0) {
-	    add_boxplot_to_session();
+	    add_boxplot_to_session(boxplottmp);
+	    remove(boxplottmp);
 	    grp->saved = 1;
 	}
     } else if (!strcmp(item, _("Save as EPS..."))) {
@@ -1346,7 +1352,7 @@ static int dump_boxplot (PLOTGROUP *grp)
     int i;
     BOXPLOT *plt;
 
-    build_path(boxplottmp, paths.userdir, "boxdump.tmp", NULL);
+    build_path(boxplottmp, paths.usertmp, "boxdump.tmp", NULL);
 
     fp = gretl_fopen(boxplottmp, "w");
     if (fp == NULL) {
