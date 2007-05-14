@@ -537,8 +537,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 			      plottmp);
     err = gretl_spawn(plotcmd);
 
-    /* remove(plottmp); */
-    fprintf(stderr, "plottmp = %s\n", plottmp);
+    remove(plottmp);
     g_free(plotcmd);
 
     if (err) {
