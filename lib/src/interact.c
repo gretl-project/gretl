@@ -545,9 +545,6 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
 
     shift_string_left(s, len + 2 * quoted);
 
-    fprintf(stderr, "get_maybe_quoted_storename:\n"
-	    "name='%s', s now = '%s'\n", cmd->param, s);
-
     return 0;
 } 
 
@@ -2176,7 +2173,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* commands that can take a specified list, but where if the
        list is null or just ";" we want to operate on all variables
     */    
-    if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
+    if (DEFAULTS_TO_FULL_LIST(cmd->ci) && !gretl_looping()) {
 	if (cmd->list[0] == 0) {
 	    cmd_full_list(pdinfo, cmd);
 	    /* suppress echo of the list -- may be too long */

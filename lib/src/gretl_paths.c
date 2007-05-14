@@ -869,6 +869,7 @@ int set_gretl_user_dir (const char *path, PATHS *ppaths)
     if (path != ppaths->userdir) {
 	strcpy(ppaths->userdir, path);
     }
+
     ensure_slash(ppaths->userdir);
     set_tramo_x12a_dirs(ppaths, 0);
 
@@ -899,6 +900,11 @@ char *set_gretl_plotfile (const char *fname)
     strncat(gretl_paths.plotfile, fname, MAXLEN - 1);
 
     return gretl_paths.plotfile;
+}
+
+const char *gretl_tramo (void)
+{
+    return gretl_paths.tramo;
 }
 
 const char *gretl_x12_arima (void)
@@ -991,7 +997,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);
-	correct_blank_userdir(ppaths);
+	if (*ppaths->userdir = '\0') {
+	    correct_blank_userdir(ppaths);
+	}
 	err = validate_userdir(ppaths->userdir);
 #if defined(HAVE_X12A) || defined(HAVE_TRAMO)
 	err = set_tramo_x12a_dirs(ppaths, err);
@@ -1096,7 +1104,9 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
     } else {
 	/* check validity of gretldir, userdir */
 	check_gretldir(ppaths);
-	correct_blank_userdir(ppaths);
+	if (*ppaths->userdir == '\0') {
+	    correct_blank_userdir(ppaths);
+	}
 	err = validate_userdir(ppaths->userdir);
     }
 

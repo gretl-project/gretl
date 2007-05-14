@@ -1353,6 +1353,33 @@ static void set_gp_colors (void)
     }
 }
 
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+
+static void maybe_revise_tramo_x12a_status (void)
+{
+    int doit = 0;
+
+# ifdef HAVE_TRAMO
+    if (strcmp(paths.tramo, gretl_tramo())) {
+	doit = 1;
+    } 
+# endif
+
+# ifdef HAVE_X12A
+    if (strcmp(paths.x12a, gretl_x12_arima())) {
+	doit = 1;
+    }
+# endif
+
+    fprintf(stderr, "maybe_revise_tramo_x12a_status: doit = %d\n", doit);
+
+    if (doit) {
+	set_tramo_x12a_status();
+    }
+}
+
+#endif
+
 /* register and react to changes from Preferences dialog */
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
@@ -1390,8 +1417,12 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    }
 	}
     }
-    
-    write_rc();
+
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+    maybe_revise_tramo_x12a_status();
+#endif
+
+    write_rc(); /* note: calls gretl_set_paths */
 
     show_or_hide_toolbar(want_toolbar);
 
@@ -1403,12 +1434,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
     set_garch_robust_vcv(hc_garch);
-
-    if (strcmp(paths.userdir, gretl_user_dir())) {
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-	set_tramo_x12a_status();
-#endif
-    }
 
     gretl_www_init(paths.dbhost, dbproxy, use_proxy);
 }

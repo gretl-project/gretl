@@ -59,6 +59,8 @@ const char *gretl_plotfile (void);
 
 char *set_gretl_plotfile (const char *fname);
 
+const char *gretl_tramo (void);
+
 const char *gretl_x12_arima (void);
 
 const char *gretl_x12_arima_dir (void);
