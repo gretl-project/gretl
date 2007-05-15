@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de-alt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-14 17:48-0400\n"
+"POT-Creation-Date: 2007-05-14 20:27-0400\n"
 "PO-Revision-Date: 2007-05-07 09:03+0100\n"
 "Last-Translator: \n"
 "Language-Team:  <de@li.org>\n"
@@ -218,6 +218,51 @@ msgstr ""
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
 msgstr "Für den Koeffizienten von %s (Punkschätzung %g)"
+
+#: lib/src/bootstrap.c:435
+#, fuzzy, c-format
+msgid "Studentized %g%% confidence interval = %g to %g"
+msgstr "Studentisiertes Konfidenzintervall"
+
+#: lib/src/bootstrap.c:438
+#, fuzzy, c-format
+msgid "%g%% confidence interval = %g to %g"
+msgstr " 95%%-Konfidenzintervall für Mittelwert: %g to %g\n"
+
+#: lib/src/bootstrap.c:444
+#, fuzzy, c-format
+msgid "Based on %d replications"
+msgstr "Anzahl Wiederholungen:"
+
+#: lib/src/bootstrap.c:447
+#, fuzzy
+msgid "using resampled residuals"
+msgstr "Residuen erneut 'ziehen'"
+
+#: lib/src/bootstrap.c:449
+#, fuzzy
+msgid "with simulated normal errors"
+msgstr "Normalvert. Störterme simulieren"
+
+#: lib/src/bootstrap.c:454
+#, fuzzy
+msgid "recognized lagged dependent variable"
+msgstr "Mittelwert der abhängigen Variable"
+
+#: lib/src/bootstrap.c:470
+#, fuzzy
+msgid "bootstrap F-test"
+msgstr "Bootstrap verwenden"
+
+#: lib/src/bootstrap.c:472
+#, fuzzy
+msgid "bootstrap t-ratio"
+msgstr "Bootstrap-Daten als Datei speichern"
+
+#: lib/src/bootstrap.c:474
+#, fuzzy
+msgid "bootstrap coefficient"
+msgstr "Summe der Koeffizienten"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -1681,7 +1726,7 @@ msgstr "Verhältnis der Stichprobenvarianzen = %g\n"
 
 #: lib/src/describe.c:4022 lib/src/gretl_model.c:2551
 #: lib/src/gretl_model.c:2554 lib/src/gretl_model.c:2557
-#: lib/src/nonparam.c:620 lib/src/nonparam.c:751 lib/src/varprint.c:973
+#: lib/src/nonparam.c:619 lib/src/nonparam.c:750 lib/src/varprint.c:973
 #: lib/src/varprint.c:980 lib/src/varprint.c:989
 msgid "Null hypothesis"
 msgstr "Nullhypothese"
@@ -2169,7 +2214,7 @@ msgstr "OB"
 
 #: lib/src/gmm.c:1453 gui2/boxplots.c:925 gui2/calculator.c:1206
 #: gui2/calculator.c:1215 gui2/calculator.c:1233 gui2/calculator.c:1245
-#: gui2/calculator.c:1797 plugin/range-mean.c:68 plugin/range-mean.c:157
+#: gui2/calculator.c:1801 plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "Mittel"
 
@@ -4874,7 +4919,7 @@ msgstr "Beob."
 msgid "rank"
 msgstr "Rang"
 
-#: lib/src/nonparam.c:489
+#: lib/src/nonparam.c:488
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
@@ -4882,7 +4927,7 @@ msgstr ""
 "\n"
 "Zu wenig Daten für Iterationstest\n"
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:504
 #, c-format
 msgid ""
 "\n"
@@ -4891,65 +4936,65 @@ msgstr ""
 "\n"
 "Zahl der Iterationen (R) in der Variable '%s' = %d\n"
 
-#: lib/src/nonparam.c:507
+#: lib/src/nonparam.c:506
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr "Unter der Nullhypothese (Zufälligkeit) ist R ~ N(%f, %f)\n"
 
-#: lib/src/nonparam.c:509
+#: lib/src/nonparam.c:508
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr "z-Wert = %f, mit zweiseitigem p-Wert %f\n"
 
-#: lib/src/nonparam.c:619
+#: lib/src/nonparam.c:618
 msgid "Wilcoxon Signed-Rank Test"
 msgstr "Wilcoxon Vorzeichen-Rangtest"
 
-#: lib/src/nonparam.c:621
+#: lib/src/nonparam.c:620
 msgid "the median difference is zero"
 msgstr "die Mediandifferenz ist Null"
 
-#: lib/src/nonparam.c:656
+#: lib/src/nonparam.c:655
 msgid "Expected value"
 msgstr "Erwartungswert"
 
-#: lib/src/nonparam.c:658
+#: lib/src/nonparam.c:657
 msgid "Variance"
 msgstr "Varianz"
 
-#: lib/src/nonparam.c:750
+#: lib/src/nonparam.c:749
 msgid "Wilcoxon Rank-Sum Test"
 msgstr "Wilcoxon Rangsummentest"
 
-#: lib/src/nonparam.c:752
+#: lib/src/nonparam.c:751
 msgid "the two medians are equal"
 msgstr "Beide Mediane sind gleich"
 
-#: lib/src/nonparam.c:823
+#: lib/src/nonparam.c:822
 #, fuzzy
 msgid "Sign Test"
 msgstr "Sargan-Test"
 
-#: lib/src/nonparam.c:824
+#: lib/src/nonparam.c:823
 #, c-format
 msgid "Number of differences: n = %d\n"
 msgstr "Anzahl an Differenzen: n = %d\n"
 
-#: lib/src/nonparam.c:826
+#: lib/src/nonparam.c:825
 #, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
 msgstr "Zahl der Fälle mit %s > %s: w = %d (%.2f%%)\n"
 
-#: lib/src/nonparam.c:831
+#: lib/src/nonparam.c:830
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
 msgstr "Unter der Nullhypothese der Gleichheit ist W: B(%d, %.1f)\n"
 
-#: lib/src/nonparam.c:833 lib/src/nonparam.c:840 gui2/calculator.c:1239
+#: lib/src/nonparam.c:832 lib/src/nonparam.c:839 gui2/calculator.c:1239
 msgid "Prob"
 msgstr "W...keit (p)"
 
-#: lib/src/nonparam.c:868
+#: lib/src/nonparam.c:867
 msgid "This command requires two variables\n"
 msgstr "Dieser Befehl benötigt zwei Variablen.\n"
 
@@ -6508,7 +6553,7 @@ msgstr "Poisson"
 msgid "value"
 msgstr "Wert"
 
-#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1844
+#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1848
 msgid "std. deviation"
 msgstr "Std'abweichung"
 
@@ -6521,7 +6566,7 @@ msgstr "x-Wert"
 msgid "F-value"
 msgstr "F-Wert"
 
-#: gui2/calculator.c:1234 gui2/calculator.c:1798
+#: gui2/calculator.c:1234 gui2/calculator.c:1802
 msgid "variance"
 msgstr "Varianz"
 
@@ -6557,141 +6602,156 @@ msgstr "Differenz:"
 msgid "No suitable data are available"
 msgstr "Keine Variablen verfügbar"
 
-#: gui2/calculator.c:1777
+#: gui2/calculator.c:1751
+#, fuzzy
+msgid "Sign test"
+msgstr "Sargan-Test"
+
+#: gui2/calculator.c:1757
+#, fuzzy
+msgid "Rank sum test"
+msgstr "Iterationstest"
+
+#: gui2/calculator.c:1763
+#, fuzzy
+msgid "Signed rank test"
+msgstr "Sargan-Test"
+
+#: gui2/calculator.c:1778
 #, fuzzy
 msgid "Show details"
 msgstr "Volle Details"
 
-#: gui2/calculator.c:1799
+#: gui2/calculator.c:1803
 msgid "proportion"
 msgstr "Anteil"
 
-#: gui2/calculator.c:1800
+#: gui2/calculator.c:1804
 msgid "2 means"
 msgstr "2 Mittel"
 
-#: gui2/calculator.c:1801
+#: gui2/calculator.c:1805
 msgid "2 variances"
 msgstr "2 Varianzen"
 
-#: gui2/calculator.c:1802
+#: gui2/calculator.c:1806
 msgid "2 proportions"
 msgstr "2 Anteile"
 
-#: gui2/calculator.c:1843
+#: gui2/calculator.c:1847
 msgid "sample mean"
 msgstr "Stichprobenmittel"
 
-#: gui2/calculator.c:1845 gui2/calculator.c:1853 gui2/calculator.c:1859
+#: gui2/calculator.c:1849 gui2/calculator.c:1857 gui2/calculator.c:1863
 msgid "sample size"
 msgstr "Stichprobengröße"
 
-#: gui2/calculator.c:1846
+#: gui2/calculator.c:1850
 msgid "H0: mean ="
 msgstr "H0: Mittel ="
 
-#: gui2/calculator.c:1847
+#: gui2/calculator.c:1851
 msgid "Assume standard deviation is population value"
 msgstr "Annahme, dass Stand'abw. aus Grundgesamtheit"
 
-#: gui2/calculator.c:1852
+#: gui2/calculator.c:1856
 msgid "sample variance"
 msgstr "Stichprobenvarianz"
 
-#: gui2/calculator.c:1854
+#: gui2/calculator.c:1858
 msgid "H0: variance ="
 msgstr "H0: Varianz ="
 
-#: gui2/calculator.c:1858
+#: gui2/calculator.c:1862
 msgid "sample proportion"
 msgstr "Geschätzter Anteil"
 
-#: gui2/calculator.c:1860
+#: gui2/calculator.c:1864
 msgid "H0: proportion ="
 msgstr "H0: Anteil ="
 
-#: gui2/calculator.c:1864
+#: gui2/calculator.c:1868
 msgid "mean of sample 1"
 msgstr "Mittel von Stichprobe 1"
 
-#: gui2/calculator.c:1865
+#: gui2/calculator.c:1869
 msgid "std. deviation, sample 1"
 msgstr "Standardabw., Stichprobe 1"
 
-#: gui2/calculator.c:1866 gui2/calculator.c:1881 gui2/calculator.c:1892
+#: gui2/calculator.c:1870 gui2/calculator.c:1885 gui2/calculator.c:1896
 msgid "size of sample 1"
 msgstr "Größe Stichprobe 1"
 
-#: gui2/calculator.c:1870
+#: gui2/calculator.c:1874
 msgid "mean of sample 2"
 msgstr "Mittel von Stichprobe 2"
 
-#: gui2/calculator.c:1871
+#: gui2/calculator.c:1875
 msgid "std. deviation, sample 2"
 msgstr "Standardabw., Stichprobe 2"
 
-#: gui2/calculator.c:1872 gui2/calculator.c:1886 gui2/calculator.c:1897
+#: gui2/calculator.c:1876 gui2/calculator.c:1890 gui2/calculator.c:1901
 msgid "size of sample 2"
 msgstr "Größe Stichprobe 2"
 
-#: gui2/calculator.c:1873
+#: gui2/calculator.c:1877
 msgid "H0: Difference of means ="
 msgstr "H0: Differenz der Mittel ="
 
-#: gui2/calculator.c:1875
+#: gui2/calculator.c:1879
 msgid "Assume common population standard deviation"
 msgstr "Nehme gleiche Stand'abw. der Grundgesamtheiten an"
 
-#: gui2/calculator.c:1880
+#: gui2/calculator.c:1884
 msgid "variance of sample 1"
 msgstr "Varianz von Stichprobe 1"
 
-#: gui2/calculator.c:1885
+#: gui2/calculator.c:1889
 msgid "variance of sample 2"
 msgstr "Varianz von Stichprobe 2"
 
-#: gui2/calculator.c:1887
+#: gui2/calculator.c:1891
 msgid "H0: Ratio of variances = 1"
 msgstr "H0: Verhältnis der Varianzen = 1"
 
-#: gui2/calculator.c:1891
+#: gui2/calculator.c:1895
 msgid "proportion, sample 1"
 msgstr "Anteil, Stichprobe 1"
 
-#: gui2/calculator.c:1896
+#: gui2/calculator.c:1900
 msgid "proportion, sample 2"
 msgstr "Anteil, Stichprobe 2"
 
-#: gui2/calculator.c:1898
+#: gui2/calculator.c:1902
 msgid "H0: Difference of proportions = 0"
 msgstr "H0: Differenz der Anteile = 0"
 
-#: gui2/calculator.c:1908 gui2/dialogs.c:884
+#: gui2/calculator.c:1912 gui2/dialogs.c:884
 msgid "Show graph of sampling distribution"
 msgstr "Zeige Graphen der Stichprobenverteilung"
 
-#: gui2/calculator.c:2082 gui2/calculator.c:2105
+#: gui2/calculator.c:2086 gui2/calculator.c:2109
 msgid "gretl: add distribution graph"
 msgstr "gretl: Füge Verteilungs-Graphen hinzu"
 
-#: gui2/calculator.c:2100
+#: gui2/calculator.c:2104
 msgid "gretl: p-value finder"
 msgstr "gretl: p-Wert-Finder"
 
-#: gui2/calculator.c:2101
+#: gui2/calculator.c:2105
 msgid "gretl: statistical tables"
 msgstr "gretl: Statistiktabellen"
 
-#: gui2/calculator.c:2102
+#: gui2/calculator.c:2106
 msgid "gretl: test calculator"
 msgstr "gretl: Test-Rechner"
 
-#: gui2/calculator.c:2103
+#: gui2/calculator.c:2107
 #, fuzzy
 msgid "gretl: nonparametric tests"
 msgstr "gretl: Kointegrationstest"
 
-#: gui2/calculator.c:2104
+#: gui2/calculator.c:2108
 msgid "gretl: distribution graphs"
 msgstr "gretl: Verteilungs-Graphen"
 
@@ -8500,7 +8560,7 @@ msgstr ""
 msgid " Click to set label position"
 msgstr "  Für Bezeichnerposition klicken"
 
-#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:795
+#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:796
 msgid "Couldn't access graph info"
 msgstr "Konnte auf Graphen-Info nicht zugreifen"
 
@@ -8509,7 +8569,7 @@ msgstr "Konnte auf Graphen-Info nicht zugreifen"
 msgid "Failed to copy graph file"
 msgstr "Kopieren der Graphendatei fehlgeschlagen"
 
-#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:830
+#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:831
 msgid "Gnuplot error creating graph"
 msgstr "Gnuplot-Fehler bei Graphen-Erzeugung"
 
@@ -9714,33 +9774,33 @@ msgstr "Konnte R_PROFILE Umgebungsvariable nicht setzen"
 msgid "Write of R data file failed"
 msgstr "Schreiben der R-Datendatei fehlgeschlagen"
 
-#: gui2/gretlwin32.c:317 gui2/gretlwin32.c:320
+#: gui2/gretlwin32.c:318 gui2/gretlwin32.c:321
 msgid "gretl.chm"
 msgstr "gretl.chm"
 
-#: gui2/gretlwin32.c:330
+#: gui2/gretlwin32.c:331
 msgid "Couldn't access help file"
 msgstr "Konnte auf Hilfedatei nicht zugreifen"
 
-#: gui2/gretlwin32.c:529
+#: gui2/gretlwin32.c:530
 msgid "Copy buffer was empty"
 msgstr "Kopierzwischenspeicher war leer"
 
-#: gui2/gretlwin32.c:534 gui2/gretlwin32.c:603 gui2/gretlwin32.c:747
+#: gui2/gretlwin32.c:535 gui2/gretlwin32.c:604 gui2/gretlwin32.c:748
 msgid "Cannot open the clipboard"
 msgstr "Kann die Zwischenablage nicht öffnen"
 
-#: gui2/gretlwin32.c:690 plugin/mailer.c:590
+#: gui2/gretlwin32.c:691 plugin/mailer.c:590
 #, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "Angehängt finden Sie die gretl-Datendatei %s."
 
-#: gui2/gretlwin32.c:694 plugin/mailer.c:593
+#: gui2/gretlwin32.c:695 plugin/mailer.c:593
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr "Angehängt finden Sie das gretl-Skript %s."
 
-#: gui2/gretlwin32.c:834
+#: gui2/gretlwin32.c:835
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
 msgstr "Zum Einfügen: Bearbeiten/Inhalte einfügen.../Erweiterte Metadatei "
 
@@ -10594,11 +10654,11 @@ msgstr ""
 "Name enthält verbotenes Zeichen (an Stelle %d)\n"
 "Nur akzentfreie Buchstaben, Ziffern und Unterstrich benutzen"
 
-#: gui2/gui_utils.c:3907
+#: gui2/gui_utils.c:3908
 msgid "No command was supplied to start R"
 msgstr "Kein Befehl zum Start von R angegeben"
 
-#: gui2/gui_utils.c:3916
+#: gui2/gui_utils.c:3917
 msgid "Couldn't fork"
 msgstr "Konnte nicht verzweigen"
 

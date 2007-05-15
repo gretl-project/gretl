@@ -16,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-14 17:48-0400\n"
+"POT-Creation-Date: 2007-05-14 20:27-0400\n"
 "PO-Revision-Date: 2005-04-04 10:55-0700\n"
 "Last-Translator: Steven Michael Murphy <murf@e-tools.com>\n"
 "Language-Team: Kinyarwanda <translation-team-rw@lists.sourceforge.net>\n"
@@ -221,6 +221,49 @@ msgstr ""
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
 msgstr ""
+
+#: lib/src/bootstrap.c:435
+#, fuzzy, c-format
+msgid "Studentized %g%% confidence interval = %g to %g"
+msgstr "UKWIYIZERA Intera"
+
+#: lib/src/bootstrap.c:438
+#, fuzzy, c-format
+msgid "%g%% confidence interval = %g to %g"
+msgstr "UKWIYIZERA"
+
+#: lib/src/bootstrap.c:444
+#, fuzzy, c-format
+msgid "Based on %d replications"
+msgstr "Bya"
+
+#: lib/src/bootstrap.c:447
+#, fuzzy
+msgid "using resampled residuals"
+msgstr "Impuzandengo Bya"
+
+#: lib/src/bootstrap.c:449
+msgid "with simulated normal errors"
+msgstr ""
+
+#: lib/src/bootstrap.c:454
+#, fuzzy
+msgid "recognized lagged dependent variable"
+msgstr "Impuzandengo Bya IMPINDURAGACIRO"
+
+#: lib/src/bootstrap.c:470
+msgid "bootstrap F-test"
+msgstr ""
+
+#: lib/src/bootstrap.c:472
+#, fuzzy
+msgid "bootstrap t-ratio"
+msgstr "Kubika Ibyatanzwe IDOSIYE"
+
+#: lib/src/bootstrap.c:474
+#, fuzzy
+msgid "bootstrap coefficient"
+msgstr "Bya imibarwa"
 
 #: lib/src/compare.c:294
 #, fuzzy, c-format
@@ -1709,7 +1752,7 @@ msgstr "Bya Urugero"
 
 #: lib/src/describe.c:4022 lib/src/gretl_model.c:2551
 #: lib/src/gretl_model.c:2554 lib/src/gretl_model.c:2557
-#: lib/src/nonparam.c:620 lib/src/nonparam.c:751 lib/src/varprint.c:973
+#: lib/src/nonparam.c:619 lib/src/nonparam.c:750 lib/src/varprint.c:973
 #: lib/src/varprint.c:980 lib/src/varprint.c:989
 msgid "Null hypothesis"
 msgstr ""
@@ -2228,7 +2271,7 @@ msgstr ""
 
 #: lib/src/gmm.c:1453 gui2/boxplots.c:925 gui2/calculator.c:1206
 #: gui2/calculator.c:1215 gui2/calculator.c:1233 gui2/calculator.c:1245
-#: gui2/calculator.c:1797 plugin/range-mean.c:68 plugin/range-mean.c:157
+#: gui2/calculator.c:1801 plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "impuzandengo"
 
@@ -5136,40 +5179,40 @@ msgstr ""
 msgid "rank"
 msgstr "IGICE"
 
-#: lib/src/nonparam.c:489
+#: lib/src/nonparam.c:488
 #, fuzzy
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
 msgstr "Ibyatanzwe kugirango"
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:504
 #, fuzzy, c-format
 msgid ""
 "\n"
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr "Bya in i IMPINDURAGACIRO"
 
-#: lib/src/nonparam.c:507
+#: lib/src/nonparam.c:506
 #, fuzzy, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr "i NTAGIHARI Bya"
 
-#: lib/src/nonparam.c:509
+#: lib/src/nonparam.c:508
 #, fuzzy, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr "Z Na: P Agaciro"
 
-#: lib/src/nonparam.c:619
+#: lib/src/nonparam.c:618
 msgid "Wilcoxon Signed-Rank Test"
 msgstr ""
 
-#: lib/src/nonparam.c:621
+#: lib/src/nonparam.c:620
 #, fuzzy
 msgid "the median difference is zero"
 msgstr "%s=LOG Ikinyuranyo/ Itandukaniro Bya"
 
-#: lib/src/nonparam.c:656
+#: lib/src/nonparam.c:655
 #, fuzzy
 msgid "Expected value"
 msgstr "Uduciro"
@@ -5178,45 +5221,45 @@ msgstr "Uduciro"
 # sch/source\ui\dlg\attrib4.src:TP_STAT.RBT_VARIANT.text
 # #-#-#-#-#  sch.pot (PACKAGE VERSION)  #-#-#-#-#
 # sch/source\ui\dlg\datstat.src:DLG_DATA_STAT.RBT_VARIANT.text
-#: lib/src/nonparam.c:658
+#: lib/src/nonparam.c:657
 #, fuzzy
 msgid "Variance"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 
-#: lib/src/nonparam.c:750
+#: lib/src/nonparam.c:749
 msgid "Wilcoxon Rank-Sum Test"
 msgstr ""
 
-#: lib/src/nonparam.c:752
+#: lib/src/nonparam.c:751
 #, fuzzy
 msgid "the two medians are equal"
 msgstr "bingana"
 
-#: lib/src/nonparam.c:823
+#: lib/src/nonparam.c:822
 #, fuzzy
 msgid "Sign Test"
 msgstr "Igerageza"
 
-#: lib/src/nonparam.c:824
+#: lib/src/nonparam.c:823
 #, fuzzy, c-format
 msgid "Number of differences: n = %d\n"
 msgstr "Bya Amasubiramo"
 
-#: lib/src/nonparam.c:826
+#: lib/src/nonparam.c:825
 #, fuzzy, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
 msgstr "Bya Imbariro Na: Ibuze Ibyatanzwe Uduciro"
 
-#: lib/src/nonparam.c:831
+#: lib/src/nonparam.c:830
 #, fuzzy, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
 msgstr "i NTAGIHARI Bya"
 
-#: lib/src/nonparam.c:833 lib/src/nonparam.c:840 gui2/calculator.c:1239
+#: lib/src/nonparam.c:832 lib/src/nonparam.c:839 gui2/calculator.c:1239
 msgid "Prob"
 msgstr ""
 
-#: lib/src/nonparam.c:868
+#: lib/src/nonparam.c:867
 #, fuzzy
 msgid "This command requires two variables\n"
 msgstr "Komandi: IMPINDURAGACIRO"
@@ -6816,7 +6859,7 @@ msgstr ""
 msgid "value"
 msgstr "Agaciro"
 
-#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1844
+#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1848
 #, fuzzy
 msgid "std. deviation"
 msgstr "STD."
@@ -6836,7 +6879,7 @@ msgstr "Agaciro"
 # sch/source\ui\dlg\attrib4.src:TP_STAT.RBT_VARIANT.text
 # #-#-#-#-#  sch.pot (PACKAGE VERSION)  #-#-#-#-#
 # sch/source\ui\dlg\datstat.src:DLG_DATA_STAT.RBT_VARIANT.text
-#: gui2/calculator.c:1234 gui2/calculator.c:1798
+#: gui2/calculator.c:1234 gui2/calculator.c:1802
 #, fuzzy
 msgid "variance"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
@@ -6876,170 +6919,185 @@ msgstr "/Bya"
 msgid "No suitable data are available"
 msgstr "Ibihinduka"
 
-#: gui2/calculator.c:1777
+#: gui2/calculator.c:1751
+#, fuzzy
+msgid "Sign test"
+msgstr "Igerageza"
+
+#: gui2/calculator.c:1757
+#, fuzzy
+msgid "Rank sum test"
+msgstr "Igerageza"
+
+#: gui2/calculator.c:1763
+#, fuzzy
+msgid "Signed rank test"
+msgstr "Igerageza"
+
+#: gui2/calculator.c:1778
 #, fuzzy
 msgid "Show details"
 msgstr "Birambuye"
 
-#: gui2/calculator.c:1799
+#: gui2/calculator.c:1803
 msgid "proportion"
 msgstr ""
 
-#: gui2/calculator.c:1800
+#: gui2/calculator.c:1804
 #, fuzzy
 msgid "2 means"
 msgstr "2."
 
-#: gui2/calculator.c:1801
+#: gui2/calculator.c:1805
 #, fuzzy
 msgid "2 variances"
 msgstr "2."
 
-#: gui2/calculator.c:1802
+#: gui2/calculator.c:1806
 #, fuzzy
 msgid "2 proportions"
 msgstr "2."
 
-#: gui2/calculator.c:1843
+#: gui2/calculator.c:1847
 #, fuzzy
 msgid "sample mean"
 msgstr "Urugero Impuzandengo-"
 
-#: gui2/calculator.c:1845 gui2/calculator.c:1853 gui2/calculator.c:1859
+#: gui2/calculator.c:1849 gui2/calculator.c:1857 gui2/calculator.c:1863
 #, fuzzy
 msgid "sample size"
 msgstr "Urugero Ingano"
 
-#: gui2/calculator.c:1846
+#: gui2/calculator.c:1850
 #, fuzzy
 msgid "H0: mean ="
 msgstr "Impuzandengo-"
 
-#: gui2/calculator.c:1847
+#: gui2/calculator.c:1851
 #, fuzzy
 msgid "Assume standard deviation is population value"
 msgstr "Bisanzwe ni Agaciro"
 
-#: gui2/calculator.c:1852
+#: gui2/calculator.c:1856
 #, fuzzy
 msgid "sample variance"
 msgstr "Urugero Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 
-#: gui2/calculator.c:1854
+#: gui2/calculator.c:1858
 #, fuzzy
 msgid "H0: variance ="
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo"
 
-#: gui2/calculator.c:1858
+#: gui2/calculator.c:1862
 #, fuzzy
 msgid "sample proportion"
 msgstr "Urugero"
 
-#: gui2/calculator.c:1860
+#: gui2/calculator.c:1864
 msgid "H0: proportion ="
 msgstr ""
 
-#: gui2/calculator.c:1864
+#: gui2/calculator.c:1868
 #, fuzzy
 msgid "mean of sample 1"
 msgstr "Impuzandengo- Bya Urugero 1."
 
-#: gui2/calculator.c:1865
+#: gui2/calculator.c:1869
 #, fuzzy
 msgid "std. deviation, sample 1"
 msgstr "STD."
 
-#: gui2/calculator.c:1866 gui2/calculator.c:1881 gui2/calculator.c:1892
+#: gui2/calculator.c:1870 gui2/calculator.c:1885 gui2/calculator.c:1896
 #, fuzzy
 msgid "size of sample 1"
 msgstr "Ingano Bya Urugero 1."
 
-#: gui2/calculator.c:1870
+#: gui2/calculator.c:1874
 #, fuzzy
 msgid "mean of sample 2"
 msgstr "Impuzandengo- Bya Urugero 2."
 
-#: gui2/calculator.c:1871
+#: gui2/calculator.c:1875
 #, fuzzy
 msgid "std. deviation, sample 2"
 msgstr "STD."
 
-#: gui2/calculator.c:1872 gui2/calculator.c:1886 gui2/calculator.c:1897
+#: gui2/calculator.c:1876 gui2/calculator.c:1890 gui2/calculator.c:1901
 #, fuzzy
 msgid "size of sample 2"
 msgstr "Ingano Bya Urugero 2."
 
-#: gui2/calculator.c:1873
+#: gui2/calculator.c:1877
 #, fuzzy
 msgid "H0: Difference of means ="
 msgstr "Bya"
 
-#: gui2/calculator.c:1875
+#: gui2/calculator.c:1879
 #, fuzzy
 msgid "Assume common population standard deviation"
 msgstr "Bisanzwe"
 
-#: gui2/calculator.c:1880
+#: gui2/calculator.c:1884
 #, fuzzy
 msgid "variance of sample 1"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo Bya Urugero 1."
 
-#: gui2/calculator.c:1885
+#: gui2/calculator.c:1889
 #, fuzzy
 msgid "variance of sample 2"
 msgstr "Ubwikube kabiri bw'ihindagurika ku mpuzandengo Bya Urugero 2."
 
-#: gui2/calculator.c:1887
+#: gui2/calculator.c:1891
 #, fuzzy
 msgid "H0: Ratio of variances = 1"
 msgstr "Bya 1."
 
-#: gui2/calculator.c:1891
+#: gui2/calculator.c:1895
 #, fuzzy
 msgid "proportion, sample 1"
 msgstr "Urugero 1."
 
-#: gui2/calculator.c:1896
+#: gui2/calculator.c:1900
 #, fuzzy
 msgid "proportion, sample 2"
 msgstr "Urugero 2."
 
-#: gui2/calculator.c:1898
+#: gui2/calculator.c:1902
 #, fuzzy
 msgid "H0: Difference of proportions = 0"
 msgstr "Bya 0"
 
-#: gui2/calculator.c:1908 gui2/dialogs.c:884
+#: gui2/calculator.c:1912 gui2/dialogs.c:884
 #, fuzzy
 msgid "Show graph of sampling distribution"
 msgstr "Bya Ikwirakwiza..."
 
-#: gui2/calculator.c:2082 gui2/calculator.c:2105
+#: gui2/calculator.c:2086 gui2/calculator.c:2109
 #, fuzzy
 msgid "gretl: add distribution graph"
 msgstr "Kugaragaza..."
 
-#: gui2/calculator.c:2100
+#: gui2/calculator.c:2104
 #, fuzzy
 msgid "gretl: p-value finder"
 msgstr "P Agaciro"
 
-#: gui2/calculator.c:2101
+#: gui2/calculator.c:2105
 #, fuzzy
 msgid "gretl: statistical tables"
 msgstr "Bijyanye na sitatisitike Imbonerahamwe"
 
-#: gui2/calculator.c:2102
+#: gui2/calculator.c:2106
 #, fuzzy
 msgid "gretl: test calculator"
 msgstr "Igerageza"
 
-#: gui2/calculator.c:2103
+#: gui2/calculator.c:2107
 #, fuzzy
 msgid "gretl: nonparametric tests"
 msgstr "Igerageza"
 
-#: gui2/calculator.c:2104
+#: gui2/calculator.c:2108
 #, fuzzy
 msgid "gretl: distribution graphs"
 msgstr "Kugaragaza..."
@@ -9139,7 +9197,7 @@ msgstr ""
 msgid " Click to set label position"
 msgstr "Kuri Gushyiraho Akarango Ibirindiro"
 
-#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:795
+#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:796
 #, fuzzy
 msgid "Couldn't access graph info"
 msgstr "Ibisobanuro"
@@ -9150,7 +9208,7 @@ msgstr "Ibisobanuro"
 msgid "Failed to copy graph file"
 msgstr "Kuri Gukoporora IDOSIYE"
 
-#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:830
+#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:831
 #, fuzzy
 msgid "Gnuplot error creating graph"
 msgstr "Ikosa"
@@ -10610,36 +10668,36 @@ msgstr "Gushyiraho IMPINDURAGACIRO"
 msgid "Write of R data file failed"
 msgstr "Bya Ibyatanzwe IDOSIYE Byanze"
 
-#: gui2/gretlwin32.c:317 gui2/gretlwin32.c:320
+#: gui2/gretlwin32.c:318 gui2/gretlwin32.c:321
 msgid "gretl.chm"
 msgstr ""
 
-#: gui2/gretlwin32.c:330
+#: gui2/gretlwin32.c:331
 #, fuzzy
 msgid "Couldn't access help file"
 msgstr "Ifashayobora IDOSIYE"
 
-#: gui2/gretlwin32.c:529
+#: gui2/gretlwin32.c:530
 #, fuzzy
 msgid "Copy buffer was empty"
 msgstr "ubusa"
 
-#: gui2/gretlwin32.c:534 gui2/gretlwin32.c:603 gui2/gretlwin32.c:747
+#: gui2/gretlwin32.c:535 gui2/gretlwin32.c:604 gui2/gretlwin32.c:748
 #, fuzzy
 msgid "Cannot open the clipboard"
 msgstr "Gufungura i Ububikokoporora"
 
-#: gui2/gretlwin32.c:690 plugin/mailer.c:590
+#: gui2/gretlwin32.c:691 plugin/mailer.c:590
 #, fuzzy, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "i KIGEZWEHO a Izina:"
 
-#: gui2/gretlwin32.c:694 plugin/mailer.c:593
+#: gui2/gretlwin32.c:695 plugin/mailer.c:593
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr ""
 
-#: gui2/gretlwin32.c:834
+#: gui2/gretlwin32.c:835
 #, fuzzy
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
 msgstr "Komeka Gukoresha Bidasanzwe Idosiye idasanzwe"
@@ -11609,12 +11667,12 @@ msgid ""
 "Use only unaccented letters, digits and underscore"
 msgstr "Kirimo INYUGUTI in Na"
 
-#: gui2/gui_utils.c:3907
+#: gui2/gui_utils.c:3908
 #, fuzzy
 msgid "No command was supplied to start R"
 msgstr "Komandi: Kuri Gutangira"
 
-#: gui2/gui_utils.c:3916
+#: gui2/gui_utils.c:3917
 msgid "Couldn't fork"
 msgstr ""
 
@@ -15291,10 +15349,6 @@ msgstr "Ikosa i"
 #, fuzzy
 #~ msgid "Number of observations used"
 #~ msgstr "Bya"
-
-#, fuzzy
-#~ msgid "Number of coefficients"
-#~ msgstr "Bya imibarwa"
 
 #, fuzzy
 #~ msgid "Akaike Information Criterion"

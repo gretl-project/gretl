@@ -1748,19 +1748,19 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	tbl_len += 3;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
 
-	test->radio[0] = gtk_radio_button_new_with_label(NULL, "Sign test");
+	test->radio[0] = gtk_radio_button_new_with_label(NULL, _("Sign test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[0], 0, 2, 
 				  tbl_len - 3, tbl_len - 2);
 	gtk_widget_show(test->radio[0]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[0]));
-	test->radio[1] = gtk_radio_button_new_with_label(group, "Rank sum test");
+	test->radio[1] = gtk_radio_button_new_with_label(group, _("Rank sum test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[1], 0, 2, 
 				  tbl_len - 2, tbl_len - 1);
 	gtk_widget_show(test->radio[1]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[1]));
-	test->radio[2] = gtk_radio_button_new_with_label(group, "Signed rank test");
+	test->radio[2] = gtk_radio_button_new_with_label(group, _("Signed rank test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[2], 0, 2, 
 				  tbl_len - 1, tbl_len);
 	gtk_widget_show(test->radio[2]);
@@ -1770,7 +1770,8 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	break;
     } 
 
-    if (0 && idx == NP_DIFF) {
+#if 0
+    if (idx == NP_DIFF) {
 	/* add check box for verbose output */
 	tbl_len += 1;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
@@ -1784,6 +1785,9 @@ static void make_nptest_tab (CalcChild *child, int idx)
     } else {
 	test->extra = NULL;
     }
+#else
+    test->extra = NULL;
+#endif
 }
 
 static void make_test_tab (CalcChild *child, int idx) 

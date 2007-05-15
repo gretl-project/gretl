@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.4.99\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-14 17:48-0400\n"
+"POT-Creation-Date: 2007-05-14 20:27-0400\n"
 "PO-Revision-Date: 2006-04-07 15:58+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
@@ -198,6 +198,49 @@ msgstr ""
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
 msgstr ""
+
+#: lib/src/bootstrap.c:435
+#, fuzzy, c-format
+msgid "Studentized %g%% confidence interval = %g to %g"
+msgstr "ehuneko 95eko konfidantza tartea"
+
+#: lib/src/bootstrap.c:438
+#, fuzzy, c-format
+msgid "%g%% confidence interval = %g to %g"
+msgstr "   %%95eko konfidantza tartea\n"
+
+#: lib/src/bootstrap.c:444
+#, fuzzy, c-format
+msgid "Based on %d replications"
+msgstr "Ekuazioen kopurua"
+
+#: lib/src/bootstrap.c:447
+#, fuzzy
+msgid "using resampled residuals"
+msgstr "Hondarren batezbestekoa"
+
+#: lib/src/bootstrap.c:449
+msgid "with simulated normal errors"
+msgstr ""
+
+#: lib/src/bootstrap.c:454
+#, fuzzy
+msgid "recognized lagged dependent variable"
+msgstr "Adagai dependentearen batezbestekoa"
+
+#: lib/src/bootstrap.c:470
+msgid "bootstrap F-test"
+msgstr ""
+
+#: lib/src/bootstrap.c:472
+#, fuzzy
+msgid "bootstrap t-ratio"
+msgstr "Gorde octave data fitxategia"
+
+#: lib/src/bootstrap.c:474
+#, fuzzy
+msgid "bootstrap coefficient"
+msgstr "Koefizienteen batura"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -1611,7 +1654,7 @@ msgstr "  Lagin bariantzen ratioa  = %g\n"
 
 #: lib/src/describe.c:4022 lib/src/gretl_model.c:2551
 #: lib/src/gretl_model.c:2554 lib/src/gretl_model.c:2557
-#: lib/src/nonparam.c:620 lib/src/nonparam.c:751 lib/src/varprint.c:973
+#: lib/src/nonparam.c:619 lib/src/nonparam.c:750 lib/src/varprint.c:973
 #: lib/src/varprint.c:980 lib/src/varprint.c:989
 msgid "Null hypothesis"
 msgstr "Hipotesi hutsa"
@@ -2100,7 +2143,7 @@ msgstr "CORC"
 
 #: lib/src/gmm.c:1453 gui2/boxplots.c:925 gui2/calculator.c:1206
 #: gui2/calculator.c:1215 gui2/calculator.c:1233 gui2/calculator.c:1245
-#: gui2/calculator.c:1797 plugin/range-mean.c:68 plugin/range-mean.c:157
+#: gui2/calculator.c:1801 plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "mean"
 msgstr "batezbestekoa"
 
@@ -4782,82 +4825,82 @@ msgstr "Behaketa"
 msgid "rank"
 msgstr ""
 
-#: lib/src/nonparam.c:489
+#: lib/src/nonparam.c:488
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
 msgstr ""
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:504
 #, c-format
 msgid ""
 "\n"
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr ""
 
-#: lib/src/nonparam.c:507
+#: lib/src/nonparam.c:506
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:509
+#: lib/src/nonparam.c:508
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr ""
 
-#: lib/src/nonparam.c:619
+#: lib/src/nonparam.c:618
 msgid "Wilcoxon Signed-Rank Test"
 msgstr ""
 
-#: lib/src/nonparam.c:621
+#: lib/src/nonparam.c:620
 #, fuzzy
 msgid "the median difference is zero"
 msgstr "Urtealdien diferentziak:"
 
-#: lib/src/nonparam.c:656
+#: lib/src/nonparam.c:655
 #, fuzzy
 msgid "Expected value"
 msgstr "aurresandako balioak"
 
-#: lib/src/nonparam.c:658
+#: lib/src/nonparam.c:657
 #, fuzzy
 msgid "Variance"
 msgstr "bariantza"
 
-#: lib/src/nonparam.c:750
+#: lib/src/nonparam.c:749
 msgid "Wilcoxon Rank-Sum Test"
 msgstr ""
 
-#: lib/src/nonparam.c:752
+#: lib/src/nonparam.c:751
 #, fuzzy
 msgid "the two medians are equal"
 msgstr "Populazio bariantza biak berdinak dira"
 
-#: lib/src/nonparam.c:823
+#: lib/src/nonparam.c:822
 #, fuzzy
 msgid "Sign Test"
 msgstr "bariantzen testa"
 
-#: lib/src/nonparam.c:824
+#: lib/src/nonparam.c:823
 #, fuzzy, c-format
 msgid "Number of differences: n = %d\n"
 msgstr "Behaketan kopurua = %d\n"
 
-#: lib/src/nonparam.c:826
+#: lib/src/nonparam.c:825
 #, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:831
+#: lib/src/nonparam.c:830
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:833 lib/src/nonparam.c:840 gui2/calculator.c:1239
+#: lib/src/nonparam.c:832 lib/src/nonparam.c:839 gui2/calculator.c:1239
 msgid "Prob"
 msgstr ""
 
-#: lib/src/nonparam.c:868
+#: lib/src/nonparam.c:867
 #, fuzzy
 msgid "This command requires two variables\n"
 msgstr "Komando honek aldagai bat behar du.\n"
@@ -6369,7 +6412,7 @@ msgstr ""
 msgid "value"
 msgstr "balioa"
 
-#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1844
+#: gui2/calculator.c:1208 gui2/calculator.c:1217 gui2/calculator.c:1848
 msgid "std. deviation"
 msgstr "desbiderazio tipikoa"
 
@@ -6382,7 +6425,7 @@ msgstr "x-balioa"
 msgid "F-value"
 msgstr "F-balioa"
 
-#: gui2/calculator.c:1234 gui2/calculator.c:1798
+#: gui2/calculator.c:1234 gui2/calculator.c:1802
 msgid "variance"
 msgstr "bariantza"
 
@@ -6418,142 +6461,157 @@ msgstr "Urtealdien diferentziak:"
 msgid "No suitable data are available"
 msgstr "Ez dago eskuragarri datuen informaziorik.\n"
 
-#: gui2/calculator.c:1777
+#: gui2/calculator.c:1751
+#, fuzzy
+msgid "Sign test"
+msgstr "bariantzen testa"
+
+#: gui2/calculator.c:1757
+#, fuzzy
+msgid "Rank sum test"
+msgstr "batezbestekoen testa"
+
+#: gui2/calculator.c:1763
+#, fuzzy
+msgid "Signed rank test"
+msgstr "bariantzen testa"
+
+#: gui2/calculator.c:1778
 #, fuzzy
 msgid "Show details"
 msgstr "Xehetasun guztiak"
 
-#: gui2/calculator.c:1799
+#: gui2/calculator.c:1803
 msgid "proportion"
 msgstr "proportzioa"
 
-#: gui2/calculator.c:1800
+#: gui2/calculator.c:1804
 msgid "2 means"
 msgstr "2 batezbesteko"
 
-#: gui2/calculator.c:1801
+#: gui2/calculator.c:1805
 msgid "2 variances"
 msgstr "2 bariantza"
 
-#: gui2/calculator.c:1802
+#: gui2/calculator.c:1806
 msgid "2 proportions"
 msgstr "2 proportzio"
 
-#: gui2/calculator.c:1843
+#: gui2/calculator.c:1847
 msgid "sample mean"
 msgstr "lagin batezbesekoa"
 
-#: gui2/calculator.c:1845 gui2/calculator.c:1853 gui2/calculator.c:1859
+#: gui2/calculator.c:1849 gui2/calculator.c:1857 gui2/calculator.c:1863
 msgid "sample size"
 msgstr "lagin tamainua"
 
-#: gui2/calculator.c:1846
+#: gui2/calculator.c:1850
 msgid "H0: mean ="
 msgstr "H0: batezbestekoa ="
 
-#: gui2/calculator.c:1847
+#: gui2/calculator.c:1851
 msgid "Assume standard deviation is population value"
 msgstr ""
 
-#: gui2/calculator.c:1852
+#: gui2/calculator.c:1856
 msgid "sample variance"
 msgstr "lagin bariantza"
 
-#: gui2/calculator.c:1854
+#: gui2/calculator.c:1858
 msgid "H0: variance ="
 msgstr "H0: bariantza ="
 
-#: gui2/calculator.c:1858
+#: gui2/calculator.c:1862
 msgid "sample proportion"
 msgstr "lagin proportzioa"
 
-#: gui2/calculator.c:1860
+#: gui2/calculator.c:1864
 msgid "H0: proportion ="
 msgstr "H0: proportzioa ="
 
-#: gui2/calculator.c:1864
+#: gui2/calculator.c:1868
 msgid "mean of sample 1"
 msgstr "1 lagineko batezbestekoa"
 
-#: gui2/calculator.c:1865
+#: gui2/calculator.c:1869
 msgid "std. deviation, sample 1"
 msgstr "desb. tipikoa, 1 lagina"
 
-#: gui2/calculator.c:1866 gui2/calculator.c:1881 gui2/calculator.c:1892
+#: gui2/calculator.c:1870 gui2/calculator.c:1885 gui2/calculator.c:1896
 msgid "size of sample 1"
 msgstr "1 lagineko tamainua"
 
-#: gui2/calculator.c:1870
+#: gui2/calculator.c:1874
 msgid "mean of sample 2"
 msgstr "2 lagineko batezbestekoa"
 
-#: gui2/calculator.c:1871
+#: gui2/calculator.c:1875
 msgid "std. deviation, sample 2"
 msgstr "desb. tipikoa, 2 lagina"
 
-#: gui2/calculator.c:1872 gui2/calculator.c:1886 gui2/calculator.c:1897
+#: gui2/calculator.c:1876 gui2/calculator.c:1890 gui2/calculator.c:1901
 msgid "size of sample 2"
 msgstr "2 lagineko tamainua"
 
-#: gui2/calculator.c:1873
+#: gui2/calculator.c:1877
 msgid "H0: Difference of means ="
 msgstr "H0: Batezbestekoen diferentzia ="
 
-#: gui2/calculator.c:1875
+#: gui2/calculator.c:1879
 msgid "Assume common population standard deviation"
 msgstr ""
 
-#: gui2/calculator.c:1880
+#: gui2/calculator.c:1884
 msgid "variance of sample 1"
 msgstr "1 lagineko bariantza"
 
-#: gui2/calculator.c:1885
+#: gui2/calculator.c:1889
 msgid "variance of sample 2"
 msgstr "2 lagineko bariantza"
 
-#: gui2/calculator.c:1887
+#: gui2/calculator.c:1891
 msgid "H0: Ratio of variances = 1"
 msgstr "H0: Bariantzen ratioa = 1"
 
-#: gui2/calculator.c:1891
+#: gui2/calculator.c:1895
 msgid "proportion, sample 1"
 msgstr "proportzioa, 1 lagina"
 
-#: gui2/calculator.c:1896
+#: gui2/calculator.c:1900
 msgid "proportion, sample 2"
 msgstr "proportzioa, 2 lagina"
 
-#: gui2/calculator.c:1898
+#: gui2/calculator.c:1902
 msgid "H0: Difference of proportions = 0"
 msgstr "H0: Proportzioen diferentzia = 0"
 
-#: gui2/calculator.c:1908 gui2/dialogs.c:884
+#: gui2/calculator.c:1912 gui2/dialogs.c:884
 msgid "Show graph of sampling distribution"
 msgstr ""
 
-#: gui2/calculator.c:2082 gui2/calculator.c:2105
+#: gui2/calculator.c:2086 gui2/calculator.c:2109
 #, fuzzy
 msgid "gretl: add distribution graph"
 msgstr "gretl: definitu grafikoa"
 
-#: gui2/calculator.c:2100
+#: gui2/calculator.c:2104
 msgid "gretl: p-value finder"
 msgstr "gretl: p-balioaren aurkitzailea"
 
-#: gui2/calculator.c:2101
+#: gui2/calculator.c:2105
 msgid "gretl: statistical tables"
 msgstr "gretl: estatistikoen taulak"
 
-#: gui2/calculator.c:2102
+#: gui2/calculator.c:2106
 msgid "gretl: test calculator"
 msgstr ""
 
-#: gui2/calculator.c:2103
+#: gui2/calculator.c:2107
 #, fuzzy
 msgid "gretl: nonparametric tests"
 msgstr "gretl: kointegrazio testa"
 
-#: gui2/calculator.c:2104
+#: gui2/calculator.c:2108
 #, fuzzy
 msgid "gretl: distribution graphs"
 msgstr "gretl: definitu grafikoa"
@@ -8420,7 +8478,7 @@ msgstr ""
 msgid " Click to set label position"
 msgstr ""
 
-#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:795
+#: gui2/gpt_control.c:480 gui2/gpt_control.c:1882 gui2/gretlwin32.c:796
 msgid "Couldn't access graph info"
 msgstr ""
 
@@ -8429,7 +8487,7 @@ msgstr ""
 msgid "Failed to copy graph file"
 msgstr ""
 
-#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:830
+#: gui2/gpt_control.c:544 gui2/gpt_control.c:3142 gui2/gretlwin32.c:831
 msgid "Gnuplot error creating graph"
 msgstr ""
 
@@ -9747,33 +9805,33 @@ msgstr ""
 msgid "Write of R data file failed"
 msgstr ""
 
-#: gui2/gretlwin32.c:317 gui2/gretlwin32.c:320
+#: gui2/gretlwin32.c:318 gui2/gretlwin32.c:321
 msgid "gretl.chm"
 msgstr "gretl.chm"
 
-#: gui2/gretlwin32.c:330
+#: gui2/gretlwin32.c:331
 msgid "Couldn't access help file"
 msgstr ""
 
-#: gui2/gretlwin32.c:529
+#: gui2/gretlwin32.c:530
 msgid "Copy buffer was empty"
 msgstr ""
 
-#: gui2/gretlwin32.c:534 gui2/gretlwin32.c:603 gui2/gretlwin32.c:747
+#: gui2/gretlwin32.c:535 gui2/gretlwin32.c:604 gui2/gretlwin32.c:748
 msgid "Cannot open the clipboard"
 msgstr ""
 
-#: gui2/gretlwin32.c:690 plugin/mailer.c:590
+#: gui2/gretlwin32.c:691 plugin/mailer.c:590
 #, fuzzy, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "Mesedez, ireki datu fitxategia lehenik"
 
-#: gui2/gretlwin32.c:694 plugin/mailer.c:593
+#: gui2/gretlwin32.c:695 plugin/mailer.c:593
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr ""
 
-#: gui2/gretlwin32.c:834
+#: gui2/gretlwin32.c:835
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
 msgstr ""
 
@@ -10662,11 +10720,11 @@ msgid ""
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 
-#: gui2/gui_utils.c:3907
+#: gui2/gui_utils.c:3908
 msgid "No command was supplied to start R"
 msgstr ""
 
-#: gui2/gui_utils.c:3916
+#: gui2/gui_utils.c:3917
 msgid "Couldn't fork"
 msgstr ""
 
@@ -13778,9 +13836,6 @@ msgstr "Ustegabeko errorea fitxategia irakurtzerakoan\n"
 #~ msgid "/Model/Bivariate tests/Difference of _variances..."
 #~ msgstr "/Datuak/Bariantzen diferentzia..."
 
-#~ msgid "means test"
-#~ msgstr "batezbestekoen testa"
-
 #~ msgid "variances test"
 #~ msgstr "bariantzen testa"
 
@@ -13861,10 +13916,6 @@ msgstr "Ustegabeko errorea fitxategia irakurtzerakoan\n"
 #, fuzzy
 #~ msgid "Number of observations used"
 #~ msgstr "Behaketan kopurua = %d\n"
-
-#, fuzzy
-#~ msgid "Number of coefficients"
-#~ msgstr "Koefizienteen batura"
 
 #, fuzzy
 #~ msgid "Akaike Information Criterion"

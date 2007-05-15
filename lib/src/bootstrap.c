@@ -432,25 +432,26 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 
 	    ql = bs->point - bs->se0 * qu;
 	    qu = bs->point - bs->se0 * cl;
-	    pprintf(prn, "Studentized %g%% confidence interval = %g to %g", 
+	    pprintf(prn, _("Studentized %g%% confidence interval = %g to %g"), 
 		    100 * (1 - bs->a), ql, qu);
 	} else {
-	    pprintf(prn, "%g%% confidence interval = %g to %g", 
+	    pprintf(prn, _("%g%% confidence interval = %g to %g"), 
 		    100 * (1 - bs->a), ql, qu);
 	}
     }
     
     pputs(prn, "\n\n");
-    pprintf(prn, "Based on %d replications, ", bs->B);
+    pprintf(prn, _("Based on %d replications"), bs->B);
+    pputs(prn, ", ");
     if (bs->flags & BOOT_RESAMPLE_U) {
-	pputs(prn, "using resampled residuals");
+	pputs(prn, _("using resampled residuals"));
     } else {
-	pputs(prn, "with simulated normal errors");
+	pputs(prn, _("with simulated normal errors"));
     }
     pputc(prn, '\n');
 
     if (bs->flags & BOOT_LDV) {
-	pputs(prn, "(recognized lagged dependent variable)");
+	pprintf(prn, "(%s)",  _("recognized lagged dependent variable"));
 	pputc(prn, '\n');
     }
 
@@ -466,11 +467,11 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	}
 
 	if (bs->flags & BOOT_F_FORM) {
-	    strcpy(label, "bootstrap F-test");
+	    strcpy(label, G_("bootstrap F-test"));
 	} else if (bs->flags & (BOOT_PVAL | BOOT_STUDENTIZE)) {
-	    strcpy(label, "bootstrap t-ratio");
+	    strcpy(label, G_("bootstrap t-ratio"));
 	} else {
-	    strcpy(label, "bootstrap coefficient");
+	    strcpy(label, G_("bootstrap coefficient"));
 	} 
 
 	err = (*kdfunc)(xi, bs->B, label);
