@@ -1712,23 +1712,12 @@ static void make_nptest_tab (CalcChild *child, int idx)
     test_t *test = tests[idx];
     GtkWidget *tmp, *box, *tbl;
     GSList *group;
-    int nv = 0;
     gint i, tbl_len;
     const gchar *titles[] = {
 	N_("Difference test"),
 	N_("Runs test")
     };
 
-    if (idx == NP_RUNS) {
-	nv = n_ok_series();
-    } else {
-	nv = (n_ok_series() > 1);
-    } 
-
-    if (nv == 0) {
-	errbox(_("No suitable data are available"));
-    }
-   
     box = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
@@ -2126,7 +2115,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	N_("gretl: distribution graphs"),
 	N_("gretl: add distribution graph"),
     };
-    int i;
+    int i, nv = 0;
 
     g_return_if_fail(code == CALC_PVAL || 
 		     code == CALC_DIST || 
@@ -2146,6 +2135,14 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	if (oldwin != NULL) {
 	    switch_child_role(oldwin, data);
 	    gtk_window_present(GTK_WINDOW(oldwin));
+	    return;
+	}
+    }
+
+    if (code == CALC_NPTEST) {
+	nv = n_ok_series();
+	if (nv == 0) {
+	    errbox(_("No suitable data are available"));
 	    return;
 	}
     }
@@ -2184,6 +2181,14 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 
     if (code == CALC_GRAPH || code == CALC_GRAPH_ADD) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), T_DIST);
+    }
+
+    if (code == CALC_NPTEST && nv < 2) {
+	GtkWidget *p = gtk_notebook_get_nth_page(GTK_NOTEBOOK(child->book), NP_DIFF);
+
+	gtk_widget_set_sensitive(p, FALSE);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), NP_RUNS);
+	
     }
 
     /* Close button */
