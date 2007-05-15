@@ -237,16 +237,16 @@ it is the user's responsibility to ensure that the function is
 always evaluated at an admissible point in the parameter space during
 the iterative search for the maximum. An effective technique is to
 define a variable for checking that the parameters are admissible and
-setting the log-likelihood as undefined if the check fails. An example
-follows:
+setting the log-likelihood as undefined if the check fails. An
+example, which uses the conditional assignment operator, follows:
 \begin{code}
 scalar m = mean(x)
 scalar alpha = m/var(x)
 scalar p = m*alpha
 
-mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
-series ax = alpha*x
-scalar check = (alpha>0) * (p>0)
+mle logl = check ? p*ln(ax) - lngamma(p) - ln(x) - ax : NA
+  series ax = alpha*x
+  scalar check = (alpha>0) & (p>0)
 params alpha p
 end mle 
 \end{code}
