@@ -458,7 +458,8 @@ double lockes_test (const double *x, int t1, int t2)
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, the runs test for randomness
- * for the variable specified by @varno.
+ * for the variable specified by @varno.  The normal approximation
+ * is that given in Gary Smith, Statistical Reasoning, 2e, p. 674.
  * 
  * Returns: 0 on successful completion, non-zero on error.
  */
@@ -511,7 +512,7 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
-    mean = (1 + n / 2.0);
+    mean = (1.0 + n / 2.0);
     sd = sqrt((double) n - 1) / 2.0;
     z = fabs((runs - mean) / sd);
     pval = normal_pvalue_2(z);
