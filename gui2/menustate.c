@@ -187,7 +187,6 @@ void time_series_menu_state (gboolean s)
     /* Variable menu */
     flip(mdata->ifac, "/Variable/Correlogram", s);
     flip(mdata->ifac, "/Variable/Spectrum", s);
-    flip(mdata->ifac, "/Variable/Runs test", s);
     flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
     flip(mdata->ifac, "/Variable/KPSS test", s);
     flip(mdata->ifac, "/Variable/Filter", s);
@@ -343,8 +342,6 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	unit_root_test(NULL, ADF, NULL);
     else if (!strcmp(item, _("KPSS test"))) 
 	unit_root_test(NULL, KPSS, NULL);
-    else if (!strcmp(item, _("Runs test"))) 
-	do_menu_op(NULL, RUNS, NULL);
     else if (!strcmp(item, _("Hurst exponent"))) 
 	do_hurst(NULL, 0, NULL);
     else if (!strcmp(item, _("Edit attributes")))  

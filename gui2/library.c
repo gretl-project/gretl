@@ -593,11 +593,6 @@ static void real_do_menu_op (guint action, const char *liststr)
 	strcat(title, _("cross tabulation"));
 	vsize = 340;
 	break;
-    case RUNS:
-	gretl_command_sprintf("runs %s", selected_varname());
-	strcat(title, _("runs test"));
-	vsize = 200;
-	break;
     case SUMMARY:
 	gretl_command_sprintf("summary%s", liststr);
 	strcat(title, _("summary statistics"));
@@ -649,10 +644,6 @@ static void real_do_menu_op (guint action, const char *liststr)
     case XTAB:
 	err = crosstab(libcmd.list, (const double **) Z, datainfo,
 		       OPT_Z, prn);
-	break;
-
-    case RUNS:
-	err = runs_test(libcmd.list[1], (const double **) Z, datainfo, prn);
 	break;
 
     case MAHAL:

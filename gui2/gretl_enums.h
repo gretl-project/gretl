@@ -72,6 +72,7 @@ enum extra_cmds {
     VAR_DECOMP,
     IRF_BOOT,
     HTEST, 
+    HTESTNP,
     MODEL_RESTR,
     SYS_RESTR,
     VECM_RESTR,

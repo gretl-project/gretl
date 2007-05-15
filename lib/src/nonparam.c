@@ -454,6 +454,7 @@ double lockes_test (const double *x, int t1, int t2)
  * @varno: ID number of the variable to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
+ * @opt: %OPT_D to use first difference of variable.
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, the runs test for randomness
@@ -463,7 +464,7 @@ double lockes_test (const double *x, int t1, int t2)
  */
 
 int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
-	       PRN *prn)
+	       gretlopt opt, PRN *prn)
 {
     double xt, *x, mean, sd;
     double z, pval;
@@ -476,13 +477,27 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     }
 
     n = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xt = Z[varno][t];
-	if (na(xt)) {
-	    continue;
-	}
-	x[n++] = xt;
-    } 
+
+    if (opt & OPT_D) {
+	double xt1;
+
+	for (t=pdinfo->t1 + 1; t<=pdinfo->t2; t++) {
+	    xt = Z[varno][t];
+	    xt1 = Z[varno][t-1];
+	    if (na(xt) || na(xt1)) {
+		continue;
+	    }
+	    x[n++] = xt - xt1;
+	} 	
+    } else {
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    xt = Z[varno][t];
+	    if (na(xt)) {
+		continue;
+	    }
+	    x[n++] = xt;
+	} 
+    }
 
     if (n <= 1) {
 	pputs(prn, _("\nInsufficient data for runs test\n"));
@@ -500,6 +515,12 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     sd = sqrt((double) n - 1) / 2.0;
     z = fabs((runs - mean) / sd);
     pval = normal_pvalue_2(z);
+
+    if (opt & OPT_D) {
+	pprintf(prn, "\n%s\n", _("Runs test (first difference)"));
+    } else {
+	pprintf(prn, "\n%s\n", _("Runs test (level)"));
+    }
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);

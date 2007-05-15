@@ -80,8 +80,8 @@ enum {
 };
 
 enum {
-    NP_RUNS,
-    NP_DIFF
+    NP_DIFF,
+    NP_RUNS
 };
 
 /* if pos != 0, value must be positive or it is invalid */ 
@@ -603,6 +603,7 @@ static void htest_graph (int d, double x, int df1, int df2)
 
 static void np_test (GtkWidget *w, test_t *test)
 {
+    gretlopt opt = OPT_NONE;
     const char *var1, *var2;
     int v1, v2 = 0;
     PRN *prn = NULL;
@@ -629,12 +630,8 @@ static void np_test (GtkWidget *w, test_t *test)
 	return;
     }
 
-    if (test->code == NP_RUNS) {
-	err = runs_test(v1, (const double **) Z, datainfo, 
-			prn);
-    } else if (test->code == NP_DIFF) {
+    if (test->code == NP_DIFF) {
 	int list[3] = { 2, v1, v2 };
-	gretlopt opt = OPT_NONE;
 
 	if (test->extra != NULL &&
 	    GTK_TOGGLE_BUTTON(test->extra)->active) {
@@ -651,7 +648,14 @@ static void np_test (GtkWidget *w, test_t *test)
 
 	err = diff_test(list, (const double **) Z, datainfo, 
 			opt, prn);
-    }
+    } else if (test->code == NP_RUNS) {
+	if (test->extra != NULL &&
+	    GTK_TOGGLE_BUTTON(test->extra)->active) {
+	    opt |= OPT_D;
+	}
+	err = runs_test(v1, (const double **) Z, datainfo, 
+			opt, prn);
+    }	
 
     if (err) {
 	gui_errmsg(err);
@@ -1691,6 +1695,17 @@ static int n_ok_dummies (void)
     return nv;
 }
 
+static gint toggle_verbose_state (GtkWidget *w, GtkWidget *b)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	gtk_widget_set_sensitive(b, FALSE);
+    } else {
+	gtk_widget_set_sensitive(b, TRUE);
+    }
+
+    return FALSE;
+}
+
 static void make_nptest_tab (CalcChild *child, int idx) 
 {
     test_t **tests = child->calcp;
@@ -1700,8 +1715,8 @@ static void make_nptest_tab (CalcChild *child, int idx)
     int nv = 0;
     gint i, tbl_len;
     const gchar *titles[] = {
-	N_("Runs test"), 
-	N_("Difference test") 
+	N_("Difference test"),
+	N_("Runs test")
     };
 
     if (idx == NP_RUNS) {
@@ -1736,10 +1751,6 @@ static void make_nptest_tab (CalcChild *child, int idx)
 
     switch (idx) {
 
-    case NP_RUNS: 
-	add_test_var_selector(tbl, &tbl_len, test, 0, 0);
-	break;
-
     case NP_DIFF: 
 	add_test_var_selector(tbl, &tbl_len, test, 0, 1);
 	add_test_var_selector(tbl, &tbl_len, test, 1, 1);
@@ -1766,28 +1777,35 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	gtk_widget_show(test->radio[2]);
 	break;
 
+    case NP_RUNS: 
+	add_test_var_selector(tbl, &tbl_len, test, 0, 0);
+	break;
+
     default:
 	break;
     } 
 
-#if 0
+    /* check box for extra option */
+    tbl_len += 1;
+    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
     if (idx == NP_DIFF) {
-	/* add check box for verbose output */
-	tbl_len += 1;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
 	tmp = gtk_check_button_new_with_label(_("Show details"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, 
-				  tbl_len - 1, tbl_len);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-	gtk_widget_show(tmp);
-
-	test->extra = tmp; 
     } else {
-	test->extra = NULL;
+	tmp = gtk_check_button_new_with_label(_("Use first difference"));
     }
-#else
-    test->extra = NULL;
-#endif
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, 
+			      tbl_len - 1, tbl_len);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+
+    if (idx == NP_DIFF) {
+	gtk_widget_set_sensitive(tmp, FALSE);
+	g_signal_connect(G_OBJECT(test->radio[0]), "toggled",
+			 G_CALLBACK(toggle_verbose_state),
+			 tmp);
+    }
+
+    gtk_widget_show(tmp);
+    test->extra = tmp; 
 }
 
 static void make_test_tab (CalcChild *child, int idx) 
@@ -2192,7 +2210,9 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_widget_show(tmp);
 
     /* Help button? */
-    if (code == CALC_TEST) {  /* FIXME NPTEST */
+    if (code == CALC_TEST || code == CALC_NPTEST) { 
+	int hcode = (code == CALC_TEST)? HTEST : HTESTNP;
+
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
@@ -2200,7 +2220,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 					   tmp, TRUE);
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(HTEST));
+			 GINT_TO_POINTER(hcode));
 	gtk_widget_show(tmp);
     }
 

@@ -479,7 +479,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_TRAMO analysis"), NULL, do_tramo_x12a, TRAMO, NULL, GNULL },
 #endif
     { N_("/Variable/_Hurst exponent"), NULL, do_hurst, 0, NULL, GNULL }, 
-    { N_("/Variable/_Runs test"), NULL, do_menu_op, RUNS, NULL, GNULL }, 
     { "/Variable/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Variable/_Edit attributes"), NULL, varinfo_callback, 0, NULL, GNULL },
     { N_("/Variable/Set missing _value code..."), NULL, gretl_callback, 

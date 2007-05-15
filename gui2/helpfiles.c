@@ -107,6 +107,7 @@ static struct gui_help_item gui_help_items[] = {
     { HCCME,          "hccme" },
     { IRF_BOOT,       "irfboot" },
     { HTEST,          "gui-htest" },
+    { HTESTNP,        "gui-htest-np" },
     { MODEL_RESTR,    "restrict-model" },
     { SYS_RESTR,      "restrict-system" },
     { VECM_RESTR,     "restrict-vecm" },

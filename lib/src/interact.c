@@ -3703,7 +3703,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case RUNS:
 	err = runs_test(cmd->list[1], (const double **) *pZ, pdinfo, 
-			prn);
+			cmd->opt, prn);
 	break;
 
     case SPEARMAN:
