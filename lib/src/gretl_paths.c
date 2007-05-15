@@ -998,7 +998,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	strcpy(ppaths->pngfont, "verdana 8");
     } else {
 	ensure_slash(ppaths->gretldir);
-	if (*ppaths->userdir = '\0') {
+	if (*ppaths->userdir == '\0') {
 	    correct_blank_userdir(ppaths);
 	}
 	err = validate_userdir(ppaths->userdir);
