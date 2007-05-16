@@ -108,6 +108,73 @@ relevant mechanisms are discussed in the next several sections.
   characters, must start with a letter, and must be composed of
   nothing but letters, numbers and the underscore character.}
 
+\section{Selecting sub-matrices}
+\label{matrix-sub}
+
+You can select sub-matrices of a given matrix using the syntax
+
+\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
+
+where \textsl{rows} can take any of these forms:
+
+\begin{center}
+\begin{tabular}{ll}
+empty & selects all rows \\
+a single integer & selects the single specified row \\
+two integers separated by a colon & selects a range of rows \\
+the name of a matrix & selects the specified rows \\
+\end{tabular}
+\end{center}
+
+With regard to the second option, the integer value can be given
+numerically, as the name of an existing scalar variable, or as an
+expression that evaluates to a scalar.  With the last option, the
+index matrix given in the \textsl{rows} field must be either $p\times
+1$ or $1\times p$, and should contain integer values in the range 1 to
+$n$, where $n$ is the number of rows in the matrix from which the
+selection is to be made.
+
+The \textsl{cols} specification works in the same way, \textit{mutatis
+  mutandis}.  Here are some examples.
+%
+\begin{code}
+matrix B = A[1,]
+matrix B = A[2:3,3:5]
+matrix B = A[2,2]
+matrix idx = { 1, 2, 6 }
+matrix B = A[idx,]
+\end{code}
+%
+The first example selects row 1 from matrix \texttt{A}; the second
+selects a $2\times 3$ submatrix; the third selects a scalar; and
+the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+
+In addition there is a pre-defined index specification, \texttt{diag},
+which selects the principal diagonal of a square matrix, as in
+\texttt{B[diag]}, where \texttt{B} is square.
+
+You can use selections of this sort on either the right-hand side of
+a matrix-generating formula or the left.  Here is an example of use of
+a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
+$3\times 3$ matrix $A$:
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix B = A[1:2,2:3]
+\end{code}
+%
+And here are examples of selection on the left.  The second line below
+writes a $2\times 2$ identity matrix into the bottom right corner of the
+$3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$ 
+with 1s.
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A[2:3,2:3] = I(2)
+matrix d = { 1, 1, 1 }
+matrix A[diag] = d
+\end{code}
+
 \section{Matrix operators}
 \label{matrix-op}
 
@@ -899,9 +966,8 @@ matrix v2 = m1.$vcv[1:2,1:2]
 %
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
-(which uses the mechanism of sub-matrix selection described in the
-following section) grabs a portion of the covariance matrix from model
-\texttt{m1}.
+(which uses the mechanism of sub-matrix selection described above)
+grabs a portion of the covariance matrix from model \texttt{m1}.
 
 If the ``model'' in question is actually a system (a VAR or VECM, or
 system of simultaneous equations), \verb|$uhat| retrieves the
@@ -922,73 +988,6 @@ automatically identified via the Phillips normalization (see section
 \ref{sec:johansen-ident}), its unrestricted elements do have a proper
 covariance matrix, which can be retrieved through the
 \verb|$jvbeta| accessor.
-
-\section{Selecting sub-matrices}
-\label{matrix-sub}
-
-You can select sub-matrices of a given matrix using the syntax
-
-\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
-
-where \textsl{rows} can take any of these forms:
-
-\begin{center}
-\begin{tabular}{ll}
-empty & selects all rows \\
-a single integer & selects the single specified row \\
-two integers separated by a colon & selects a range of rows \\
-the name of a matrix & selects the specified rows \\
-\end{tabular}
-\end{center}
-
-With regard to the second option, the integer value can be given
-numerically, as the name of an existing scalar variable, or as an
-expression that evaluates to a scalar.  With the last option, the
-index matrix given in the \textsl{rows} field must be either $p\times
-1$ or $1\times p$, and should contain integer values in the range 1 to
-$n$, where $n$ is the number of rows in the matrix from which the
-selection is to be made.
-
-The \textsl{cols} specification works in the same way, \textit{mutatis
-  mutandis}.  Here are some examples.
-%
-\begin{code}
-matrix B = A[1,]
-matrix B = A[2:3,3:5]
-matrix B = A[2,2]
-matrix idx = { 1, 2, 6 }
-matrix B = A[idx,]
-\end{code}
-%
-The first example selects row 1 from matrix \texttt{A}; the second
-selects a $2\times 3$ submatrix; the third selects a scalar; and
-the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
-
-In addition there is a pre-defined index specification, \texttt{diag},
-which selects the principal diagonal of a square matrix, as in
-\texttt{B[diag]}, where \texttt{B} is square.
-
-You can use selections of this sort on either the right-hand side of
-a matrix-generating formula or the left.  Here is an example of use of
-a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
-$3\times 3$ matrix $A$:
-%
-\begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
-matrix B = A[1:2,2:3]
-\end{code}
-%
-And here are examples of selection on the left.  The second line below
-writes a $2\times 2$ identity matrix into the bottom right corner of the
-$3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$ 
-with 1s.
-%
-\begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
-matrix A[2:3,2:3] = I(2)
-matrix d = { 1, 1, 1 }
-matrix A[diag] = d
-\end{code}
 
 \section{Namespace issues}
 \label{matrix-namespace}

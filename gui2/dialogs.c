@@ -756,6 +756,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     GtkWidget *tmp;
     GSList *group = NULL;
     GList *replist;
+    gchar *tmpstr;
     struct replic_set rs;
     int htest = (pp == NULL);
     int i;
@@ -768,7 +769,9 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     vbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Coefficient:");
+    tmpstr = g_strdup_printf("%s:", _("Coefficient"));
+    tmp = gtk_label_new(tmpstr);
+    g_free(tmpstr);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
 
