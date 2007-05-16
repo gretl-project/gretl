@@ -2343,6 +2343,11 @@ static char *get_next_arg (const char *s, int *len, int *err)
     int quoted = 0;
     int n = 0;
 
+    if (s == NULL) {
+	*err = E_PARSE;
+	return NULL;
+    }
+
     *len = strspn(s, ", ");
     s += *len;
     p = s;
