@@ -110,7 +110,8 @@ void set_matrix_add_callback (void (*callback))
     matrix_add_callback = callback; 
 }
 
-int user_matrix_add (gretl_matrix *M, const char *name)
+static int real_user_matrix_add (gretl_matrix *M, const char *name,
+				 int callback_ok)
 {
     user_matrix **tmp;
 
@@ -155,12 +156,23 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
-    if (matrix_add_callback != NULL && gretl_function_depth() == 0) {
-	fprintf(stderr, "invoking matrix_add_callback\n");
+    if (callback_ok && 
+	matrix_add_callback != NULL && 
+	gretl_function_depth() == 0) {
 	(*matrix_add_callback)();
     }
 
     return 0;
+}
+
+int user_matrix_add (gretl_matrix *M, const char *name)
+{
+    return real_user_matrix_add(M, name, 1);
+}
+
+int matrix_copy_add (gretl_matrix *M, const char *name)
+{
+    return real_user_matrix_add(M, name, 0);
 }
 
 static int 
@@ -420,7 +432,7 @@ int copy_matrix_as (const gretl_matrix *m, const char *new)
     if (m2 == NULL) {
 	err = E_ALLOC;
     } else {
-	err = user_matrix_add(m2, new);
+	err = matrix_copy_add(m2, new);
     }
 
     if (!err) {

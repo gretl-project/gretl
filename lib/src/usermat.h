@@ -58,6 +58,8 @@ user_matrix *get_user_matrix_by_index (int idx);
 
 int user_matrix_add (gretl_matrix *M, const char *name);
 
+int matrix_copy_add (gretl_matrix *M, const char *name);
+
 int user_matrix_destroy_by_name (const char *name, PRN *prn);
 
 int user_matrix_destroy (user_matrix *u);
