@@ -1568,7 +1568,9 @@ static void x_to_date (double x, int pd, char *str)
     int subper = (int) ((x - yr + frac) * pd);
     static int decpoint;
 
-    if (decpoint == 0) decpoint = get_local_decpoint();
+    if (decpoint == 0) {
+	decpoint = get_local_decpoint();
+    }
 
     t = yr + subper / ((pd < 10)? 10.0 : 100.0);
     sprintf(str, "%.*f", (pd < 10)? 1 : 2, t);
@@ -1789,6 +1791,8 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     return TRUE;
 }
 
+#define float_fmt(i,x) ((i) && fabs(x) < 1.0e7)
+
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 {
@@ -1815,7 +1819,9 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
-	if (na(data_x)) return TRUE;
+	if (na(data_x)) {
+	    return TRUE;
+	}
 
 	if (!plot_has_no_markers(plot) && !plot_show_all_markers(plot) &&
 	    !plot_is_zooming(plot) &&
@@ -1826,18 +1832,21 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
 	} else {
-	    sprintf(label, (plot->xint)? "%7.0f" : "%7.4g", data_x);
+	    sprintf(label, (float_fmt(plot->xint, data_x))? "%7.0f" : 
+		    "%7.4g", data_x);
 	}
 
 	if (!na(data_y)) {
 	    if (plot_has_png_coords(plot)) {
-		sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
+		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
+			" %-7.4g", data_y);
 	    } else {
 		/* pretty much guessing at y coordinate here */
-		sprintf(label_y, (plot->yint)? " %-7.0f" : " %-6.3g", data_y);
+		sprintf(label_y, (float_fmt(plot->yint, data_y))? " %-7.0f" : 
+				  " %-6.3g", data_y);
+			}
+		strcat(label, label_y);
 	    }
-	    strcat(label, label_y);
-	}
 
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
