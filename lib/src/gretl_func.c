@@ -28,6 +28,7 @@
 
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
+#define EXEC_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
@@ -142,7 +143,7 @@ static void set_executing_on (ufunc *fun)
 {
     fn_executing++;
     gretl_list_append_term(&fun->in_use, fn_executing);
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "set_executing_on: fun = %s, fn_executing=%d\n", 
 	    fun->name, fn_executing);
 #endif
@@ -180,7 +181,7 @@ static void set_executing_off (ufunc *fun)
 {
     use_list_delete_last(fun);
     fn_executing--;
-#if FN_DEBUG
+#if EXEC_DEBUG
     fprintf(stderr, "set_executing_off: fun=%s, fn_executing=%d\n",
 	    fun->name, fn_executing);
 #endif

@@ -117,8 +117,30 @@ static const char *arg_type_string (int type)
     return "";
 }
 
+static int check_args (call_info *cinfo)
+{
+    int i;
+
+    /* FIXME optional args? */
+
+    if (cinfo->args != NULL) {
+	for (i=0; i<cinfo->n_params; i++) {
+	    if (cinfo->args[i] == NULL) {
+		errbox(_("Argument %d (%s) is missing"), i + 1,
+		       fn_param_name(cinfo->func, i));
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 static void fncall_finalize (GtkWidget *w, call_info *cinfo)
 {
+    if (check_args(cinfo)) {
+	return;
+    }
     cinfo->ok = 1;
     gtk_widget_destroy(cinfo->dlg);
 }
@@ -269,7 +291,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 	gretl_print_destroy(prn);
 	dummy_call();
     } else {
-	view_buffer(prn, 80, 400, "help", PRINT, NULL);
+	view_buffer(prn, 80, 400, fnname, VIEW_FUNC_INFO, NULL);
     }
 }
 
@@ -673,25 +695,6 @@ static void function_call_dialog (call_info *cinfo)
     }  
 
     gtk_widget_show(cinfo->dlg);
-}
-
-static int check_args (call_info *cinfo)
-{
-    int i;
-
-    /* FIXME optional args */
-
-    if (cinfo->args != NULL) {
-	for (i=0; i<cinfo->n_params; i++) {
-	    if (cinfo->args[i] == NULL) {
-		errbox(_("Argument %d (%s) is missing"), i + 1,
-		       fn_param_name(cinfo->func, i));
-		return 1;
-	    }
-	}
-    }
-
-    return 0;
 }
 
 static int function_data_check (call_info *cinfo)

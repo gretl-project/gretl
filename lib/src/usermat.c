@@ -100,6 +100,9 @@ static int matrix_is_user_matrix (const gretl_matrix *m)
     return 0;
 }
 
+/* callback for adding icons representing matrices to the GUI
+   session window */
+
 static void (*matrix_add_callback)(void);
 
 void set_matrix_add_callback (void (*callback))
@@ -153,6 +156,7 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 #endif
 
     if (matrix_add_callback != NULL && gretl_function_depth() == 0) {
+	fprintf(stderr, "invoking matrix_add_callback\n");
 	(*matrix_add_callback)();
     }
 
