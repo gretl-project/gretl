@@ -1,14 +1,15 @@
 # Italian messages for gretl
-# Copyright (C) 2003, 2004, 2005, 2006,2007 Free Software Foundation, Inc.
+# Copyright (C) 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 # Cristian Rigamonti <cri@linux.it>, 2003, 2004, 2005, 2006, 2007
-# Thanks to Daniele "Madrid" Medri for useful suggestions.
+# Thanks to Daniele "Madrid" Medri, Riccardo "Jack" Lucchetti and
+# Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.6.3\n"
+"Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-15 22:09-0400\n"
-"PO-Revision-Date: 2007-05-13 21:46+0200\n"
+"PO-Revision-Date: 2007-05-16 13:24+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -214,49 +215,43 @@ msgid "For the coefficient on %s (point estimate %g)"
 msgstr "Per il coefficiente su %s (stima puntuale %g)"
 
 #: lib/src/bootstrap.c:435
-#, fuzzy, c-format
+#, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Intervallo di confidenza studentizzato"
+msgstr "Intervallo di confidenza studentizzato al %g%%: da %g a %g"
 
 #: lib/src/bootstrap.c:438
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% confidence interval = %g to %g"
-msgstr " intervallo di confidenza al 95%% per la media: da %g a %g\n"
+msgstr "Intervallo di confidenza al %g%%: da %g a %g"
 
 #: lib/src/bootstrap.c:444
-#, fuzzy, c-format
+#, c-format
 msgid "Based on %d replications"
-msgstr "Numero di replicazioni:"
+msgstr "Basato su %d replicazioni"
 
 #: lib/src/bootstrap.c:447
-#, fuzzy
 msgid "using resampled residuals"
-msgstr "Residui del ricampionamento"
+msgstr "usando residui del ricampionamento"
 
 #: lib/src/bootstrap.c:449
-#, fuzzy
 msgid "with simulated normal errors"
-msgstr "Simula errori normali"
+msgstr "con errori normali simulati"
 
 #: lib/src/bootstrap.c:454
-#, fuzzy
 msgid "recognized lagged dependent variable"
-msgstr "Media della variabile dipendente"
+msgstr "riconosciuta variabile dipendente ritardata"
 
 #: lib/src/bootstrap.c:470
-#, fuzzy
 msgid "bootstrap F-test"
-msgstr "Usa bootstrap"
+msgstr "Test F bootstrap"
 
 #: lib/src/bootstrap.c:472
-#, fuzzy
 msgid "bootstrap t-ratio"
-msgstr "Salva i dati bootstrap in un file"
+msgstr "Rapporto t bootstrap"
 
 #: lib/src/bootstrap.c:474
-#, fuzzy
 msgid "bootstrap coefficient"
-msgstr "Numero dei coefficienti"
+msgstr "Coefficiente bootstrap"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -1562,7 +1557,7 @@ msgstr "Massimo"
 
 #: lib/src/describe.c:3186
 msgid "Standard deviation"
-msgstr "Deviazione standard"
+msgstr "Scarto quadratico medio"
 
 #  C'è spazio a sufficienza...
 #: lib/src/describe.c:3187 gui2/guiprint.c:774 gui2/guiprint.c:872
@@ -3753,7 +3748,7 @@ msgstr "Media della variabile dipendente"
 
 #: lib/src/modelprint.c:106 lib/src/modelprint.c:119 lib/src/modelprint.c:124
 msgid "Standard deviation of dep. var."
-msgstr "Deviazione standard della variabile dipendente"
+msgstr "Scarto quadratico medio della variabile dipendente"
 
 #: lib/src/modelprint.c:115
 msgid "S.D. of dependent variable"
@@ -4955,14 +4950,12 @@ msgstr ""
 "Dati insufficienti per il test delle successioni\n"
 
 #: lib/src/nonparam.c:521
-#, fuzzy
 msgid "Runs test (first difference)"
-msgstr "Sistema VAR nelle differenze prime"
+msgstr "Test delle successioni (differenze prime)"
 
 #: lib/src/nonparam.c:523
-#, fuzzy
 msgid "Runs test (level)"
-msgstr "Test delle successioni"
+msgstr "Test delle successioni (livelli)"
 
 #: lib/src/nonparam.c:526
 #, c-format
@@ -5008,9 +5001,8 @@ msgid "the two medians are equal"
 msgstr "le due mediane sono uguali"
 
 #: lib/src/nonparam.c:844
-#, fuzzy
 msgid "Sign Test"
-msgstr "Test di Sargan"
+msgstr "Test del segno"
 
 #: lib/src/nonparam.c:845
 #, c-format
@@ -5137,7 +5129,7 @@ msgstr ""
 #: lib/src/printout.c:301
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
-msgstr "Numero di intervalli = %d, media = %g, deviazione standard = %g\n"
+msgstr "Numero di intervalli = %d, media = %g, scarto quadratico medio = %g\n"
 
 #: lib/src/printout.c:304
 msgid ""
@@ -6310,7 +6302,7 @@ msgstr "gretl: valori critici"
 
 #: gui2/calculator.c:285 gui2/calculator.c:313
 msgid "Invalid standard deviation"
-msgstr "Deviazione standard non valida"
+msgstr "Scarto quadratico medio non valido"
 
 #: gui2/calculator.c:341
 msgid "Invalid mean"
@@ -6389,7 +6381,7 @@ msgstr "Ampiezza del campione: n = %d\n"
 #: gui2/calculator.c:715
 #, c-format
 msgid "Sample mean = %g, std. deviation = %g\n"
-msgstr "Media campionaria = %g, deviazione standard = %g\n"
+msgstr "Media campionaria = %g, scarto quadratico medio = %g\n"
 
 #: gui2/calculator.c:719 gui2/calculator.c:805 gui2/calculator.c:917
 #, c-format
@@ -6596,7 +6588,7 @@ msgstr "Valore"
 
 #: gui2/calculator.c:1212 gui2/calculator.c:1221 gui2/calculator.c:1855
 msgid "std. deviation"
-msgstr "Deviazione standard"
+msgstr "Scarto quadratico medio"
 
 #: gui2/calculator.c:1227 gui2/calculator.c:1239 gui2/calculator.c:1245
 #: gui2/calculator.c:1250
@@ -6621,47 +6613,43 @@ msgid "Data missing for variable '%s'"
 msgstr "Dati mancanti per la variabile '%s'"
 
 #: gui2/calculator.c:1534
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %d"
-msgstr "Variabile"
+msgstr "Variabile %d"
 
 #: gui2/calculator.c:1576
 msgid "Use variable from dataset"
 msgstr "Usa variabile dal dataset"
 
 #: gui2/calculator.c:1717
-#, fuzzy
 msgid "Difference test"
-msgstr "Differenza:"
+msgstr "Test delle differenze"
 
 #: gui2/calculator.c:1718
 msgid "Runs test"
 msgstr "Test delle successioni"
 
 #: gui2/calculator.c:1751
-#, fuzzy
 msgid "Sign test"
-msgstr "Test di Sargan"
+msgstr "Test dei segni"
 
 #: gui2/calculator.c:1757
 #, fuzzy
 msgid "Rank sum test"
-msgstr "Test delle successioni"
+msgstr "Test rank sum"
 
 #: gui2/calculator.c:1763
 #, fuzzy
 msgid "Signed rank test"
-msgstr "Test di Sargan"
+msgstr "Test signed rank"
 
 #: gui2/calculator.c:1781
-#, fuzzy
 msgid "Show details"
-msgstr "Dettagli completi"
+msgstr "Mostra dettagli"
 
 #: gui2/calculator.c:1783
-#, fuzzy
 msgid "Use first difference"
-msgstr "= differenza prima di %s"
+msgstr "Usa la differenza prima"
 
 #: gui2/calculator.c:1810
 msgid "proportion"
@@ -6693,7 +6681,7 @@ msgstr "H0: media ="
 
 #: gui2/calculator.c:1858
 msgid "Assume standard deviation is population value"
-msgstr "Assumi che la deviazione standard sia il valore della popolazione"
+msgstr "Assumi che lo scarto quadratico medio sia il valore della popolazione"
 
 #: gui2/calculator.c:1863
 msgid "sample variance"
@@ -6717,7 +6705,7 @@ msgstr "Media del campione 1"
 
 #: gui2/calculator.c:1876
 msgid "std. deviation, sample 1"
-msgstr "Deviazione standard del campione 1"
+msgstr "Scarto quadratico medio del campione 1"
 
 #: gui2/calculator.c:1877 gui2/calculator.c:1892 gui2/calculator.c:1903
 msgid "size of sample 1"
@@ -6729,7 +6717,7 @@ msgstr "Media del campione 2"
 
 #: gui2/calculator.c:1882
 msgid "std. deviation, sample 2"
-msgstr "Deviazione standard del campione 2"
+msgstr "Scarto quadratico medio del campione 2"
 
 #: gui2/calculator.c:1883 gui2/calculator.c:1897 gui2/calculator.c:1908
 msgid "size of sample 2"
@@ -6741,7 +6729,7 @@ msgstr "H0: differenza delle medie ="
 
 #: gui2/calculator.c:1886
 msgid "Assume common population standard deviation"
-msgstr "Assumi che la deviazione standard sia comune tra le popolazioni"
+msgstr "Assumi che lo scarto quadratico medio sia comune tra le popolazioni"
 
 #: gui2/calculator.c:1891
 msgid "variance of sample 1"
@@ -6788,18 +6776,16 @@ msgid "gretl: test calculator"
 msgstr "gretl: calcola test"
 
 #: gui2/calculator.c:2114
-#, fuzzy
 msgid "gretl: nonparametric tests"
-msgstr "gretl: test di cointegrazione"
+msgstr "gretl: test non parametrici"
 
 #: gui2/calculator.c:2115
 msgid "gretl: distribution graphs"
 msgstr "gretl: grafici distribuzione"
 
 #: gui2/calculator.c:2145
-#, fuzzy
 msgid "No suitable data are available"
-msgstr "Non è disponibile alcuna variabile"
+msgstr "Non sono disponibili dati adeguati"
 
 #: gui2/callbacks.c:160
 msgid "Open data file"
@@ -7038,7 +7024,7 @@ msgstr ""
 
 #: gui2/callbacks.c:521
 msgid "Enter name, mean and standard deviation:"
-msgstr "Indicare nome, media e deviazione standard:"
+msgstr "Indicare nome, media e scarto quadratico medio:"
 
 #: gui2/callbacks.c:522 gui2/callbacks.c:523
 msgid "Enter name and degrees of freedom:"
@@ -9167,9 +9153,8 @@ msgid "/Tools/_Test statistic calculator"
 msgstr "/Strumenti/Calcola _test"
 
 #: gui2/gretl.c:289
-#, fuzzy
 msgid "/Tools/_Nonparametric tests"
-msgstr "/Strumenti/_Ordina variabili"
+msgstr "/Strumenti/Test _non parametrici"
 
 #: gui2/gretl.c:291
 msgid "/Tools/_Probability distributions"
@@ -11094,7 +11079,7 @@ msgstr ""
 
 #: gui2/library.c:3158
 msgid "Can't have a negative standard deviation!"
-msgstr "Impossibile avere una deviazione standard negativa!"
+msgstr "Impossibile avere uno scarto quadratico medio negativo!"
 
 #: gui2/library.c:3161
 msgid "Range is non-positive!"
