@@ -1,10 +1,11 @@
-version 1.6.5, in progress
-- Fix new breakage in confuration of user directory
+5/17/2007 version 1.6.5
+- Fix new breakage in configuration of user directory
 - Updates to manual
 - Mark some more strings for translation
 - Add new menu set /Tools/Nonparametric tests, with GUI
   access to the "difftest" and "runs" commands
 - Add --difference option for runs command
+- Various small bug-fixes
 
 5/13/2007 version 1.6.4
 - Fix breakage in relation to the Windows registry
