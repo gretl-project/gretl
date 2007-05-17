@@ -1,14 +1,14 @@
-# Polish translation for gretl-1.6.3
+# Polish translation for gretl-1.6.5
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006, 2007
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.6.3\n"
+"Project-Id-Version: gretl-1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-15 22:09-0400\n"
-"PO-Revision-Date: 2007-05-05 22:00-0500\n"
+"PO-Revision-Date: 2007-05-17 15:00-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -31,7 +31,7 @@ msgstr "z wyrazem wolnym i trendem liniowym"
 
 #: lib/src/adf_kpss.c:126 gui2/selector.c:2968
 msgid "with constant and quadratic trend"
-msgstr "z wyrazem wolnym, trendem liniowym i trendem kwadratowym "
+msgstr "z wyrazem wolnym, trendem liniowym i trendem kwadratowym"
 
 #: lib/src/adf_kpss.c:137 lib/src/adf_kpss.c:140 lib/src/bootstrap.c:419
 #: lib/src/modelprint.c:417 lib/src/modelprint.c:466 lib/src/modelprint.c:476
@@ -218,49 +218,43 @@ msgid "For the coefficient on %s (point estimate %g)"
 msgstr "Analiza parametru zmiennej: %s (estymacja punktowa %g)"
 
 #: lib/src/bootstrap.c:435
-#, fuzzy, c-format
+#, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Studentyzowany przedzia³ ufno¶ci parametru"
+msgstr "Studentyzowany %g%% przedzia³ ufno¶ci parametru = %g to %g"
 
 #: lib/src/bootstrap.c:438
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% confidence interval = %g to %g"
-msgstr " 95%% przedzia³ ufno¶ci dla ¶redniej: od %g do %g\n"
+msgstr "%g%% przedzia³ ufno¶ci parametru od %g do %g"
 
 #: lib/src/bootstrap.c:444
-#, fuzzy, c-format
+#, c-format
 msgid "Based on %d replications"
-msgstr "Liczba replikacji:"
+msgstr "Liczba replikacji: %d"
 
 #: lib/src/bootstrap.c:447
-#, fuzzy
 msgid "using resampled residuals"
-msgstr "Ponowne pobranie próby reszt"
+msgstr "ponowne pobieranie próby reszt"
 
 #: lib/src/bootstrap.c:449
-#, fuzzy
 msgid "with simulated normal errors"
-msgstr "Symulacja b³êdów z rozk³adu normalnego"
+msgstr "z symulacji b³êdów z rozk³adu normalnego"
 
 #: lib/src/bootstrap.c:454
-#, fuzzy
 msgid "recognized lagged dependent variable"
-msgstr "Srednia  arytmetyczna  zmiennej zale¿nej"
+msgstr "rozpoznane opó¼nienie zmiennej zale¿nej"
 
 #: lib/src/bootstrap.c:470
-#, fuzzy
 msgid "bootstrap F-test"
-msgstr "Wykorzystaj bootstrap"
+msgstr "bootstrapowy test F"
 
 #: lib/src/bootstrap.c:472
-#, fuzzy
 msgid "bootstrap t-ratio"
-msgstr "Zapisz plik z bootstrapowymi danymi"
+msgstr "bootstrapowy t-ratio"
 
 #: lib/src/bootstrap.c:474
-#, fuzzy
 msgid "bootstrap coefficient"
-msgstr "Suma wspó³czynników"
+msgstr "bootstrapowy wspó³czynnik"
 
 #: lib/src/compare.c:294
 #, c-format
@@ -2950,9 +2944,8 @@ msgid "iteration"
 msgstr "iteracja"
 
 #: lib/src/gretl_paths.c:829
-#, fuzzy
 msgid "User directory is not set"
-msgstr "Wykorzystaj folder user gretla jako domy¶lny"
+msgstr "Katalog u¿ytkownika nie okre¶lony"
 
 #: lib/src/gretl_paths.c:835
 #, c-format
@@ -3814,15 +3807,15 @@ msgstr "McFaddena pseudo-$R^2$"
 
 #: lib/src/modelprint.c:318
 msgid "Akaike information criterion"
-msgstr "Kryterium informacyjne Akaike'a "
+msgstr "Kryterium informacyjne Akaike'a"
 
 #: lib/src/modelprint.c:319
 msgid "Schwarz Bayesian criterion"
-msgstr "Kryterium bayesowskie Schwarza"
+msgstr "Kryterium bayesowskie  Schwarza"
 
 #: lib/src/modelprint.c:320
 msgid "Hannan-Quinn criterion"
-msgstr "Kryterium infor.Hannana-Quinna"
+msgstr "Kryterium infor. Hannana-Quinna"
 
 #: lib/src/modelprint.c:321
 msgid "Hannan--Quinn criterion"
@@ -4938,14 +4931,12 @@ msgstr ""
 "Nieodpowiednie dane dla testu serii\n"
 
 #: lib/src/nonparam.c:521
-#, fuzzy
 msgid "Runs test (first difference)"
-msgstr "System VAR dla pierwszych ró¿nic"
+msgstr "Test serii (dla pierwszych ró¿nic)"
 
 #: lib/src/nonparam.c:523
-#, fuzzy
 msgid "Runs test (level)"
-msgstr "Test serii"
+msgstr "Test serii (dla poziomów zmiennej)"
 
 #: lib/src/nonparam.c:526
 #, c-format
@@ -4972,7 +4963,7 @@ msgstr "Test Znaków Rang Wilcoxona"
 
 #: lib/src/nonparam.c:642
 msgid "the median difference is zero"
-msgstr "mediana ró¿nic jest równa zero"
+msgstr "ró¿nica median jest równa zero"
 
 #: lib/src/nonparam.c:677
 msgid "Expected value"
@@ -4988,12 +4979,11 @@ msgstr "Test Sumy Rang Wilcoxona"
 
 #: lib/src/nonparam.c:773
 msgid "the two medians are equal"
-msgstr "Dwie mediany s± jednakowe"
+msgstr "dwie mediany s± jednakowe"
 
 #: lib/src/nonparam.c:844
-#, fuzzy
 msgid "Sign Test"
-msgstr "test Sargana"
+msgstr "Test znaków"
 
 #: lib/src/nonparam.c:845
 #, c-format
@@ -6601,47 +6591,41 @@ msgid "Data missing for variable '%s'"
 msgstr "Brak danych dla zmiennej '%s'"
 
 #: gui2/calculator.c:1534
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %d"
-msgstr "Zmienna"
+msgstr "Zmienna %d"
 
 #: gui2/calculator.c:1576
 msgid "Use variable from dataset"
 msgstr "U¿yj zmiennej z bazy danych"
 
 #: gui2/calculator.c:1717
-#, fuzzy
 msgid "Difference test"
-msgstr "Ró¿nice:"
+msgstr "Test ró¿nic"
 
 #: gui2/calculator.c:1718
 msgid "Runs test"
 msgstr "Test serii"
 
 #: gui2/calculator.c:1751
-#, fuzzy
 msgid "Sign test"
-msgstr "test Sargana"
+msgstr "Test znaków"
 
 #: gui2/calculator.c:1757
-#, fuzzy
 msgid "Rank sum test"
-msgstr "Test serii"
+msgstr "Test sumy rang"
 
 #: gui2/calculator.c:1763
-#, fuzzy
 msgid "Signed rank test"
-msgstr "test Sargana"
+msgstr "Test rangowanych znaków"
 
 #: gui2/calculator.c:1781
-#, fuzzy
 msgid "Show details"
 msgstr "Pe³ne wyniki"
 
 #: gui2/calculator.c:1783
-#, fuzzy
 msgid "Use first difference"
-msgstr "= pierwsze ró¿nice %s"
+msgstr "wykorzystaj pierwsze ró¿nice zmiennej"
 
 #: gui2/calculator.c:1810
 msgid "proportion"
@@ -6768,18 +6752,16 @@ msgid "gretl: test calculator"
 msgstr "gretl: kalkulator testów"
 
 #: gui2/calculator.c:2114
-#, fuzzy
 msgid "gretl: nonparametric tests"
-msgstr "gretl: test kointegracji"
+msgstr "gretl: testy nieparametryczne"
 
 #: gui2/calculator.c:2115
 msgid "gretl: distribution graphs"
 msgstr "gretl: wykresy rozk³adów"
 
 #: gui2/calculator.c:2145
-#, fuzzy
 msgid "No suitable data are available"
-msgstr "Brak dostêpnych zmiennych"
+msgstr "Nie s± dostêpne odpowiednie dane"
 
 #: gui2/callbacks.c:160
 msgid "Open data file"
@@ -6887,11 +6869,11 @@ msgstr "gretl: test kointegracji"
 
 #: gui2/callbacks.c:348
 msgid "gretl: VAR"
-msgstr "gretl: VAR"
+msgstr "gretl: model wektorowej autoregrasji (VAR)"
 
 #: gui2/callbacks.c:348 gui2/library.c:2905
 msgid "gretl: VECM"
-msgstr "gretl: VECM"
+msgstr "gretl: model wektorowej korekty b³êdem (VECM)"
 
 #: gui2/callbacks.c:351 gui2/library.c:2897
 msgid "gretl: VAR lag selection"
@@ -7518,7 +7500,7 @@ msgstr "Zapisz plik z bootstrapowymi danymi"
 
 #: gui2/dialogs.c:1069
 msgid "The display name for a variable cannot contain double quotes"
-msgstr ""
+msgstr "Nazwa zmiennej nie mo¿e zawieraæ podwójnego znaku cudzys³owu"
 
 #: gui2/dialogs.c:1160 gui2/dialogs.c:1165
 msgid "not set"
@@ -9139,12 +9121,11 @@ msgstr "/Narzêdzia/Wyznaczanie warto¶ci _p"
 
 #: gui2/gretl.c:287
 msgid "/Tools/_Test statistic calculator"
-msgstr "/Narzêdzia/Kalkulator te_stów"
+msgstr "/Narzêdzia/Te_sty parametryczne"
 
 #: gui2/gretl.c:289
-#, fuzzy
 msgid "/Tools/_Nonparametric tests"
-msgstr "/Narzêdzia/Sortuj _zmienne"
+msgstr "/Narzêdzia/Testy _nieparametryczne"
 
 #: gui2/gretl.c:291
 msgid "/Tools/_Probability distributions"
@@ -10935,17 +10916,16 @@ msgid "gretl: model %d"
 msgstr "gretl: model %d"
 
 #: gui2/library.c:1464
-#, fuzzy
 msgid "gretl: Wald omit test"
-msgstr "gretl: test stabilno¶ci Chowa"
+msgstr "gretl: test Walda pominietych zmiennych"
 
 #: gui2/library.c:1502 gui2/library.c:2890
 msgid "gretl: vector autoregression"
-msgstr "gretl: model VAR"
+msgstr "gretl: model wektorowej autoregresji (VAR)"
 
 #: gui2/library.c:1603
 msgid "gretl: LM test "
-msgstr "gretl: test mno¿nika Lagrange'a (LM)"
+msgstr "gretl: test mno¿nika Lagrange'a (LM) "
 
 #: gui2/library.c:1612
 msgid "(heteroskedasticity)"
@@ -10997,7 +10977,7 @@ msgstr "gretl: wyniki testu QLR (ilorazu wiarygodno¶ci Quandta)"
 
 #: gui2/library.c:1949
 msgid "gretl: CUSUM test output"
-msgstr "gretl: wyniki testu CUSUM"
+msgstr "gretl: wyniki testu CUSUM (Cumulated Sum of Residual)"
 
 #: gui2/library.c:1950
 msgid "gretl: CUSUMSQ test output"
@@ -11156,7 +11136,7 @@ msgstr "Maksymalne opó¼nienie:"
 
 #: gui2/library.c:3796
 msgid "log scale"
-msgstr "skala log"
+msgstr "skala logarytmiczna"
 
 #: gui2/library.c:3804
 msgid "gretl: periodogram"
@@ -12036,15 +12016,12 @@ msgid "Use lines"
 msgstr "Wykorzystaj linie"
 
 #: gui2/selector.c:2894
-#, fuzzy
 msgid "Estimate reduced model"
-msgstr "B³±d w szacowaniu ¶rednich-przedzia³owych\n"
+msgstr "Oszacowany zredukowany model"
 
 #: gui2/selector.c:2898
-#, fuzzy
 msgid "Wald test, based on covariance matrix"
-msgstr ""
-"Test ilorazu wiarygodno¶ci dla diagonalnych elementów macierzy kowariancji"
+msgstr "Test Walda, bazuj±cy na macierzy kowariancji"
 
 #: gui2/selector.c:2912
 msgid "Exact Maximum Likelihood"
@@ -13792,14 +13769,3 @@ msgstr ""
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
 
-#~ msgid "/Variable/_Runs test"
-#~ msgstr "/Zmienna/Test _serii..."
-
-#~ msgid "runs test"
-#~ msgstr "test serii"
-
-#~ msgid "X-12-ARIMA working directory"
-#~ msgstr "Folder roboczy X-12-ARIMA"
-
-#~ msgid "TRAMO working directory"
-#~ msgstr "Folder roboczy TRAMO"
