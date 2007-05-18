@@ -958,11 +958,7 @@ static void make_gtitle (gnuplot_info *gi, int code,
     }
 
     if (*title != '\0') {
-	if (strchr(s1, '\'') || strchr(s1, '\'')) {
-	    fprintf(gi->fp, "set title \"%s\"\n", title);
-	} else {
-	    fprintf(gi->fp, "set title '%s'\n", title);
-	}
+	fprintf(gi->fp, "set title \"%s\"\n", title);
     }
 }
 
