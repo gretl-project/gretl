@@ -233,16 +233,17 @@ condizioni: è responsabilità dell'utente assicurarsi che la funzione venga
 sempre valutata in un punto ammissibile dello spazio dei parametri, durante la
 ricerca iterativa del massimo. Un metodo efficace per far questo consiste nel
 definire una variabile per controllare che i parametri siano ammissibili e
-impostare la log-verosimiglianza come indefinita se il controllo fallisce. Ad
-esempio:
+impostare la log-verosimiglianza come indefinita se il controllo fallisce. Si
+veda il seguente esempio, che usa l'operatore di assegnazione condizionale:
 \begin{code}
 scalar m = mean(x)
 scalar alpha = m/var(x)
 scalar p = m*alpha
 scalar p = m*alpha
-mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
-series ax = alpha*x
-scalar check = (alpha>0) * (p>0)
+
+mle logl = check ? p*ln(ax) - lngamma(p) - ln(x) - ax : NA
+  series ax = alpha*x
+  scalar check = (alpha>0) & (p>0)
 params alpha p
 end mle 
 \end{code}

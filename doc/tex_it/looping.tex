@@ -132,7 +132,7 @@ loop for i=1..n
 end loop
 \end{code}
 
-In questo caso valutiamo la media condizionale e la deviazione standard della
+In questo caso valutiamo la media condizionale e lo scarto quadratico medio della
 variabile \texttt{Y} per ciascun valore della variabile \texttt{Z8}.
 
 \subsection{Loop di tipo for each}
@@ -225,15 +225,15 @@ seguente.
 \cmd{ols}: i risultati di ogni iterazione della regressione non
 vengono mostrati. Al contrario, una volta terminato il loop si ottiene
 un elenco dei seguenti valori: (a) il valore medio di ognuno dei
-coefficienti stimati, calcolato su tutte le iterazioni; (b) la
-deviazione standard relativa a questa media; (c) il valore medio
-dell'errore standard stimato per ogni coefficiente; (d) la deviazione
-standard degli errori standard stimati. Tutto ciò ha senso solo se
+coefficienti stimati, calcolato su tutte le iterazioni; (b) lo
+scarto quadratico medio relativa a questa media; (c) il valore medio
+dell'errore standard stimato per ogni coefficiente; (d) lo scarto quadratico
+medio degli errori standard stimati. Tutto ciò ha senso solo se
 ogni iterazione del loop contiene un elemento di casualità.
 
 \cmd{print}: se si usa questo comando per mostrare il valore di una
 variabile, questo non viene mostrato ad ogni iterazione. Al contrario,
-alla fine del loop si ottiene il valore medio e la deviazione standard
+alla fine del loop si ottiene il valore medio e lo scarto quadratico medio
 della variabile, calcolata su tutte le iterazioni del ciclo. Questa
 funzione è utile per le variabili che assumono un singolo valore per
 ogni iterazione, ad esempio la somma dei quadrati degli errori di una

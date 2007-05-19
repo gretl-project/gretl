@@ -110,6 +110,73 @@ variabili in gretl: il nome non può essere più lungo di 15 caratteri, deve
 iniziare per una lettera e deve essere composto da lettere, numeri e il
 carattere trattino basso.}
 
+\section{Selezione di sotto-matrici}
+\label{matrix-sub}
+
+È possibile selezionare delle sotto-matrici a partire da una matrice usando la
+sintassi:
+
+\texttt{A[}\textsl{righe},\textsl{colonne}\texttt{]}
+
+dove \textsl{righe} può avere una delle seguenti forme:
+
+\begin{center}
+\begin{tabular}{ll}
+Vuoto & seleziona tutte le righe \\
+Un valore intero & seleziona la riga identificata dal numero \\
+Due interi separati dal carattere due punti & seleziona un intervallo di righe \\
+Il nome di una matrice & seleziona le righe specificate dai valori della matrice \\
+\end{tabular}
+\end{center}
+
+Rispetto alla seconda opzione, il valore intero può essere indicato
+numericamente, attraverso il nome di una variabile scalare esistente, o
+con un'espressione che, valutata, produce uno scalare.
+Con l'ultima opzione, la matrice indicata nel campo \textsl{righe} deve
+avere dimensioni $p\times 1$ o $1\times p$ e deve contenere valori interi
+nell'intervallo da 1 a $n$, dove $n$ è il numero di righe da selezionare
+dalla matrice principale.
+
+L'uso del parametro \textsl{colonne} è simile, \textit{mutatis
+  mutandis}.  Ecco alcuni esempi.
+%
+\begin{code}
+matrix B = A[1,]
+matrix B = A[2:3,3:5]
+matrix B = A[2,2]
+matrix idx = { 1, 2, 6 }
+matrix B = A[idx,]
+\end{code}
+%
+Il primo esempio seleziona la prima riga dalla matrice \texttt{A}; il secondo
+seleziona una sotto-matrice $2\times 3$; il terzo seleziona uno scalare, mentre
+il quarto seleziona le righe 1, 2 e 6 dalla matrice \texttt{A}.
+
+In aggiunta, c'è una specificazione di indice predefinita, \texttt{diag},
+seleziona la diagonale principale di una matrice quadrata, come in
+\texttt{B[diag]}, dove \texttt{B} è quadrata.
+
+È possibile usare la selezione di sotto-matrici sia a destra sia a sinistra in
+una formula che genera una matrice. Ecco un esempio di uso della selezione nella
+parte destra, per estrarre una sotto-matrice $2\times 2$ $B$ da una matrice
+$3\times 3$ $A$:
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix B = A[1:2,2:3]
+\end{code}
+%
+Ed ecco un esempio di selezione sulla sinistra. La seconda riga nell'esempio
+scrive una matrice identità $2\times 2$ nell'angolo inferiore destro della matrice
+$3\times 3$ $A$. La quarta riga rimpiazza la diagonale di $A$ con valori 1.
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A[2:3,2:3] = I(2)
+matrix d = { 1, 1, 1 }
+matrix A[diag] = d
+\end{code}
+
 \section{Operatori matriciali}
 \label{matrix-op}
 
@@ -765,9 +832,54 @@ autovalori, ma gli autovettori non vengono calcolati.
 La funzione \texttt{eigengen} calcola gli autovalori, e opzionalmente gli
 autovettori, di una matrice generica $n \times n$.  Gli autovalori vengono
 restituiti direttamente in una matrice $n \times 2$, in cui la prima colonna
-contiene le componenti reali e la seconda quelle immaginarie. Se vengono
-richiesti gli autovettori (ossia il secondo argomento di \texttt{eigengen} non è
-\texttt{null}), essi vengono restituiti in una matrice $n \times n$.
+contiene le componenti reali e la seconda quelle immaginarie.
+
+Se vengono richiesti gli autovettori (ossia il secondo argomento di
+\texttt{eigengen} non è \texttt{null}), essi vengono restituiti in una matrice
+$n \times n$. La disposizione delle colonne in questa matrice è particolare: gli
+autovettori sono disposti nello stesso ordine degli autovalori, ma gli
+autovettori reali occupano una colonna, mentre quelli complessi ne occupano due
+(la parte reale nella prima colonna); il numero totale di colonne è sempre $n$,
+visto che l'autovettore coniugato viene saltato. L'esempio \ref{cmplx-evecs}
+dovrebbe chiarire la situazione.
+
+\begin{script}[htbp]
+  \caption{Autovalori e autovettori complessi}
+  \label{cmplx-evecs}
+\begin{scode}
+set seed 34756
+
+matrix v
+A = mnormal(3,3)
+
+/* Genera gli autovalori e autovettori */
+l = eigengen(A,&v)
+/* L'autovalore 1 è reale, 2 e 3 sono complessi coniugati */
+print l
+print v
+
+/* 
+  La colonna 1 contiene il primo autovettore (reale)
+*/
+
+B = A*v[,1]
+c = l[1,1] * v[,1]
+/* B dovrebbe essere pari a c */
+print B
+print c
+
+
+/* 
+  Le colonne 2:3 contengono le parti reale e immaginaria dell'autovettore 2
+*/
+
+B = A*v[,2:3]
+c = cmult(ones(3,1)*(l[2,]),v[,2:3])
+/* B dovrebbe essere pari a c */
+print B
+print c
+\end{scode}
+\end{script}
  
 La funzione \texttt{svd} calcola la decomposizione in valori singolari (totale o
 parziale) della matrice reale $A$ $m \times n$. La decomposizione è
@@ -833,7 +945,7 @@ matrix v2 = m1.$vcv[1:2,1:2]
 %
 Il primo comando produce i residui dell'ultimo modello; il secondo produce il
 vettore dei coefficienti del modello \texttt{m1}, mentre il terzo (che usa il
-meccanismo della selezione di sotto-matrici descritto nel prossimo paragrafo)
+meccanismo della selezione di sotto-matrici descritto in precedenza)
 produce una porzione della matrice di covarianza del modello
 \texttt{m1}.
 
@@ -856,73 +968,6 @@ automaticamente attraverso la normalizzazione di Phillips (si veda la sezione
 \ref{sec:johansen-ident}), i suoi elementi non vincolati possiedono una
 matrice di covarianza che può essere recuperata attraverso l'accessorio
 \verb|$jvbeta|.
-
-\section{Selezione di sotto-matrici}
-\label{matrix-sub}
-
-È possibile selezionare delle sotto-matrici a partire da una matrice usando la
-sintassi:
-
-\texttt{A[}\textsl{righe},\textsl{colonne}\texttt{]}
-
-dove \textsl{righe} può avere una delle seguenti forme:
-
-\begin{center}
-\begin{tabular}{ll}
-Vuoto & seleziona tutte le righe \\
-Un valore intero & seleziona la riga identificata dal numero \\
-Due interi separati dal carattere due punti & seleziona un intervallo di righe \\
-Il nome di una matrice & seleziona le righe specificate dai valori della matrice \\
-\end{tabular}
-\end{center}
-
-Rispetto alla seconda opzione, il valore intero può essere indicato
-numericamente, attraverso il nome di una variabile scalare esistente, o
-con un'espressione che, valutata, produce uno scalare.
-Con l'ultima opzione, la matrice indicata nel campo \textsl{righe} deve
-avere dimensioni $p\times 1$ o $1\times p$ e deve contenere valori interi
-nell'intervallo da 1 a $n$, dove $n$ è il numero di righe da selezionare
-dalla matrice principale.
-
-L'uso del parametro \textsl{colonne} è simile, \textit{mutatis
-  mutandis}.  Ecco alcuni esempi.
-%
-\begin{code}
-matrix B = A[1,]
-matrix B = A[2:3,3:5]
-matrix B = A[2,2]
-matrix idx = { 1, 2, 6 }
-matrix B = A[idx,]
-\end{code}
-%
-Il primo esempio seleziona la prima riga dalla matrice \texttt{A}; il secondo
-seleziona una sotto-matrice $2\times 3$; il terzo seleziona uno scalare, mentre
-il quarto seleziona le righe 1, 2 e 6 dalla matrice \texttt{A}.
-
-In aggiunta, c'è una specificazione di indice predefinita, \texttt{diag},
-seleziona la diagonale principale di una matrice quadrata, come in
-\texttt{B[diag]}, dove \texttt{B} è quadrata.
-
-È possibile usare la selezione di sotto-matrici sia a destra sia a sinistra in
-una formula che genera una matrice. Ecco un esempio di uso della selezione nella
-parte destra, per estrarre una sotto-matrice $2\times 2$ $B$ da una matrice
-$3\times 3$ $A$:
-%
-\begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
-matrix B = A[1:2,2:3]
-\end{code}
-%
-Ed ecco un esempio di selezione sulla sinistra. La seconda riga nell'esempio
-scrive una matrice identità $2\times 2$ nell'angolo inferiore destro della matrice
-$3\times 3$ $A$. La quarta riga rimpiazza la diagonale di $A$ con valori 1.
-%
-\begin{code}
-matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
-matrix A[2:3,2:3] = I(2)
-matrix d = { 1, 1, 1 }
-matrix A[diag] = d
-\end{code}
 
 \section{Conflitti tra nomi}
 \label{matrix-namespace}

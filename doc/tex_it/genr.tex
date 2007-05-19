@@ -266,7 +266,7 @@ Per creare un indice che assuma valori compresi tra 1 e $m\times T$, dove $m$
 \label{panel-stats}
 
 Le funzioni \texttt{pmean()} e \texttt{psd()} possono essere usate per generare
-semplici statistiche descrittive (media e deviazione standard) per una data
+semplici statistiche descrittive (media e scarto quadratico medio) per una data
 variabile, calcolate per gruppo.
 
 Supponendo di avere un dataset panel che comprende 8 osservazioni temporali per
@@ -279,15 +279,15 @@ genr pmx = pmean(x)
 crea una serie di questo tipo: i primi 8 valori (che corrispondono all'unità 1)
 contengono la media di \varname{x} per l'unità 1, i successivi 8 valori
 contengono la media per l'unità 2 e così via. La funzione \texttt{psd()}
-funziona in modo simile. La deviazione standard campionaria per il gruppo
-$i$ è calcolata come
+funziona in modo simile. Lo scarto quadratico medio campionario per il gruppo
+$i$ è calcolato come
 \[
 s_i = \sqrt{\frac{\sum(x-\bar{x}_i)^2}{T_i-1}}
 \]
 dove $T_i$ denota il numero di osservazioni valide su \varname{x}
 per l'unità data, $\bar{x}_i$ denota la media di gruppo, e la somma viene fatta
 su tutte le osservazioni valide per il gruppo. Se però vale $T_i < 2$,
-la deviazione standard viene impostata pari a 0.
+lo scarto quadratico medio viene impostato pari a 0.
 
 È interessante notare un uso particolare di \texttt{psd()}: se si vuole formare
 un sotto-campione di un panel che contenga solo quelle unità per cui la
