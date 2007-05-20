@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-15 22:09-0400\n"
-"PO-Revision-Date: 2007-05-17 10:20+0100\n"
+"PO-Revision-Date: 2007-05-20 23:15+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -1136,7 +1136,7 @@ msgstr "   nombre de colonnes = %d\n"
 #: lib/src/dataio.c:3237
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr "   ...mais la rangée %d a %d champs: abandon\n"
+msgstr "   ...mais la rangée %d a %d champs: arrêt\n"
 
 #: lib/src/dataio.c:3249
 #: lib/src/dataio.c:3731
@@ -1167,7 +1167,7 @@ msgstr "   ligne : %s\n"
 #: lib/src/dataio.c:3315
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
-msgstr "   le nom de variable %d est manquant : abandon\n"
+msgstr "   le nom de variable %d est manquant : arrêt\n"
 
 #: lib/src/dataio.c:3337
 #: plugin/excel_import.c:1440
@@ -1968,7 +1968,7 @@ msgstr "   Taux des variances de l'échantillon = %g\n"
 #: lib/src/varprint.c:980
 #: lib/src/varprint.c:989
 msgid "Null hypothesis"
-msgstr "Hypothèse nulle"
+msgstr "Hypothèse nulle "
 
 #: lib/src/describe.c:4023
 msgid "The two population variances are equal"
@@ -2568,7 +2568,7 @@ msgstr "ajusté"
 
 #: lib/src/graphing.c:2418
 msgid "Test statistic for normality"
-msgstr "Test statistique de la normalité"
+msgstr "Test de normalité"
 
 #: lib/src/graphing.c:2420
 #, c-format
@@ -2664,7 +2664,7 @@ msgstr "Y-prime * Y égal zéro"
 
 #: lib/src/gretl_errors.c:31
 msgid "Dependent variable is all zeros, aborting regression"
-msgstr "La variable dépendante est nulle, abandon de la régression"
+msgstr "La variable dépendante est nulle, arrêt de la régression"
 
 #: lib/src/gretl_errors.c:32
 msgid "Total sum of squares was not positive"
@@ -2771,7 +2771,7 @@ msgstr "Exposant excessif dans la formule genr"
 
 #: lib/src/gretl_errors.c:61
 msgid "Weight variable is all zeros, aborting regression"
-msgstr "La variable de pondération ne contient que zéro, abandon de la régression"
+msgstr "La variable de pondération ne contient que zéro, arrêt de la régression"
 
 #: lib/src/gretl_errors.c:62
 msgid "Weight variable contains negative values"
@@ -2985,7 +2985,7 @@ msgstr "Test pour la normalité des résidus"
 
 #: lib/src/gretl_model.c:2415
 msgid "error is normally distributed"
-msgstr "l'erreur est normalement distribué"
+msgstr "l'erreur est distribuée selon une loi normale"
 
 #: lib/src/gretl_model.c:2417
 msgid "Test for omission of variables"
@@ -3005,7 +3005,7 @@ msgstr "Test de non linéarité (carrés)"
 
 #: lib/src/gretl_model.c:2427
 msgid "heteroskedasticity not present"
-msgstr "hétéroscédasticité non présente"
+msgstr "homoscédasticité"
 
 #: lib/src/gretl_model.c:2429
 #: lib/src/modelprint.c:433
@@ -4764,7 +4764,7 @@ msgstr "Modèle"
 #: lib/src/modelprint.c:1562
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
-msgstr "Estimation %s utilisant les %d observations %s%s%s"
+msgstr "Estimation en %s avec %d observations %s%s%s"
 
 #: lib/src/modelprint.c:1551
 #: lib/src/modelprint.c:1552
@@ -4775,7 +4775,7 @@ msgstr "Estimation %s utilisant %d observations %s%s%s"
 #: lib/src/modelprint.c:1557
 #: lib/src/modelprint.c:1558
 msgid "Missing or incomplete observations dropped"
-msgstr "Observations manquantes ont été abandonnée"
+msgstr "Observations manquantes ou incomplètes"
 
 #: lib/src/modelprint.c:1572
 #: lib/src/modelprint.c:1573
@@ -7032,8 +7032,8 @@ msgid ""
 "The assumption of a normal sampling distribution\n"
 "is not justified here.  Abandoning the test."
 msgstr ""
-"La supposition d'une distribution normale de l'échantillon\n"
-"n'est pas justifiée ici. Abandon du test."
+"L'hypothèse d'une distribution normale de l'échantillon\n"
+"n'est pas justifiée ici. Arrêt du test."
 
 #: gui2/calculator.c:802
 #, c-format
