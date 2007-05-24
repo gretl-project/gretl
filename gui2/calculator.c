@@ -1754,13 +1754,13 @@ static void make_nptest_tab (CalcChild *child, int idx)
 	gtk_widget_show(test->radio[0]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[0]));
-	test->radio[1] = gtk_radio_button_new_with_label(group, _("Rank sum test"));
+	test->radio[1] = gtk_radio_button_new_with_label(group, _("Wilcoxon rank sum test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[1], 0, 2, 
 				  tbl_len - 2, tbl_len - 1);
 	gtk_widget_show(test->radio[1]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[1]));
-	test->radio[2] = gtk_radio_button_new_with_label(group, _("Signed rank test"));
+	test->radio[2] = gtk_radio_button_new_with_label(group, _("Wilcoxon signed rank test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[2], 0, 2, 
 				  tbl_len - 1, tbl_len);
 	gtk_widget_show(test->radio[2]);

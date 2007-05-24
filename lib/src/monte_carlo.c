@@ -921,12 +921,16 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 
     if (list == NULL) {
 	err = E_UNKVAR;
+    } else if (list[0] == 0) {
+	/* empty list */
+	*nf = 0;
+	return 0;
     } else {
 	err = allocate_each_strings(loop, list[0]);
     }
 
-    /* when cashing out list-members, use varnames rather than numbers
-    */
+    /* when cashing out list-members, use varnames rather than numbers */
+
     if (!err) {
 	int i, li;
 
@@ -1171,7 +1175,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     if (!err && !na(loop->init.val) && !na(loop->final.val)) {
 	int nt = loop->final.val - loop->init.val + 1;
 
-	if (loop->type != FOR_LOOP && nt <= 0) {
+	if (loop->type != FOR_LOOP && loop->type != EACH_LOOP && nt <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count missing or invalid"));
 	    err = 1;
 	}
@@ -1331,14 +1335,6 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 	    ok = loop_testval(loop, pZ, pdinfo);
 	} else if (loop->type == WHILE_LOOP) {
 	    ok = loop_testval(loop, pZ, pdinfo);
-	}
-    }
-
-    if (!ok) {
-	if (loop->iter == 0) {
-	    strcpy(gretl_errmsg, _("Loop condition not satisfied at first round"));
-	    loop->err = 1;
-	    loop->brk = 1;
 	}
     }
 
@@ -2636,11 +2632,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     if (loop == NULL) {
 	pputs(prn, "Got a NULL loop\n");
 	return 1;
-    }
-
-    if (loop->n_cmds == 0) {
-	pputs(prn, _("No commands in loop\n"));
-	return 0;
     }
 
     set_loop_on(); /* libset.c */

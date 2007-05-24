@@ -29,6 +29,7 @@
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
 #define EXEC_DEBUG 0
+#define UDEBUG 1
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
@@ -2845,6 +2846,11 @@ static int localize_list (const char *oldname, fn_param *fp,
 	err = copy_named_list_as(oldname, fp->name);
     }
 
+#if UDEBUG
+    fprintf(stderr, "localize_list: localizing '%s' as '%s'\n",
+	    oldname, fp->name);
+#endif
+
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] != 0) {
@@ -3070,11 +3076,25 @@ get_matrix_return (const char *mname, int action, int *err)
     return ret;
 }
 
-static int unlocalize_list (const char *listname, DATAINFO *pdinfo)
+static int unlocalize_list (const char *upname, fn_param *fp, DATAINFO *pdinfo)
 {
-    const int *list = get_list_by_name(listname);
+    const char *listname;
+    const int *list;
     int d = gretl_function_depth();
     int i, vi, err = 0;
+
+    if (fp != NULL) {
+	listname = fp->name;
+    } else {
+	listname = upname;
+    }
+
+    list = get_list_by_name(listname);
+
+#if UDEBUG
+    fprintf(stderr, "unlocalize_list: %s, d = %d\n", listname, d);
+    printlist(list, listname);
+#endif	    
 
     if (list == NULL) {
 	err = E_DATA;
@@ -3102,7 +3122,7 @@ get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = unlocalize_list(lname, pdinfo);
+	*err = unlocalize_list(lname, NULL, pdinfo);
 	if (!*err) {
 	    *err = named_list_lower_level(lname);
 	}
@@ -3178,7 +3198,9 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 	    }
 	} else if (fp->type == ARG_LIST) {
 	    if (li < args->nl) {
-		unlocalize_list(args->lists[li++], pdinfo);
+		fprintf(stderr, "function_assign_returns: i=%d, li=%d, doing unlocalize_list\n", 
+			i, li);	
+		unlocalize_list(args->lists[li++], fp, pdinfo);
 	    } 
 	}
     }
@@ -3405,15 +3427,25 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	strcpy(line, u->lines[i]);
 	err = maybe_exec_line(&state, pZ, &pdinfo, &funcerr);
 	if (funcerr) {
+#if UDEBUG
+	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", i, line);
+#endif
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
 	}
+	/* FIXME: error condition inside loop */
 	if (gretl_execute_loop()) { 
+#if UDEBUG
+	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
+#endif
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);
 	    if (err) {
 		fprintf(stderr, "function_exec: breaking on error in loop\n");
 		break;
 	    }
+#if UDEBUG
+	    fprintf(stderr, "gretl_function_exec: gretl_loop_exec done, err = %d\n", err);
+#endif
 	}
     }
 

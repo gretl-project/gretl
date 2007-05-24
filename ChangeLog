@@ -1,3 +1,9 @@
+version 1.6.6, in progress
+- Fix for loop on empty list
+- Fix for remaining issues with apostrophes in graph titles
+- Fix for lists as arguments for user-defined functions
+- Add "ceil" function in genr
+
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
 - Updates to manual

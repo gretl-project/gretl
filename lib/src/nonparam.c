@@ -526,8 +526,8 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);
     pprintf(prn, _("Under the null hypothesis of randomness, R "
-	    "follows N(%f, %f)\n"), mean, sd);
-    pprintf(prn, _("z-score = %f, with two-tailed p-value %f\n"), z, pval);
+	    "follows N(%g, %g)\n"), mean, sd);
+    pprintf(prn, _("z-score = %g, with two-tailed p-value %g\n"), z, pval);
 
     record_test_result(z, pval, "runs");
   
@@ -768,7 +768,7 @@ static int rank_sum_test (const double *x, const double *y,
 	}
     }
 
-    pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
+    pprintf(prn, "\n%s:\n", _("Wilcoxon Rank-Sum Test"));
     pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 	    _("the two medians are equal"));
 

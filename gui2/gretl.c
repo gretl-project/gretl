@@ -245,7 +245,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Script files/_Practice file..."), "", display_files, PS_FILES, 
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Script files/_New script"), "", do_new_script, 0, "<StockItem>", GTK_STOCK_NEW },
+#if 0
     { "/File/sep2", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
 
     /* File, session files */
     { N_("/File/_Session files"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -255,7 +257,9 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_SAVE },
     { N_("/File/Session files/Save session _as..."), "", save_session_callback, SAVE_RENAME, 
       "<StockItem>", GTK_STOCK_SAVE_AS }, 
+#if 0
     { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
 
     /* File, databases */
     { N_("/File/_Databases"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -267,7 +271,9 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Databases/On database _server..."), "", display_files, REMOTE_DB, 
       "<StockItem>", GTK_STOCK_NETWORK },
+#if 0
     { "/File/sep4", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
 
     /* File, function packages */
     { N_("/File/_Function files"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -300,12 +306,16 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Tools/_Sort variables"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/Sort variables/By _ID number"), NULL, sort_varlist, 0, NULL, GNULL },
     { N_("/Tools/Sort variables/By _name"), NULL, sort_varlist, 1, NULL, GNULL },
+#if 0
     { "/Tools/sep3", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Tools/_NIST test suite"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/NIST test suite/_Basic"), NULL, do_nistcheck, 0, NULL, GNULL },
     { N_("/Tools/NIST test suite/_Verbose"), NULL, do_nistcheck, 1, NULL, GNULL },
     { N_("/Tools/NIST test suite/V_ery verbose"), NULL, do_nistcheck, 2, NULL, GNULL },
+#if 0
     { "/Tools/sep4", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     /* Tools, preferences */
     { N_("/Tools/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/_Preferences/_General..."), NULL, options_dialog_callback, 0, 
@@ -368,7 +378,9 @@ GtkItemFactoryEntry data_items[] = {
     { "/View/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     /* descriptive statistics */
     { N_("/View/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL, GNULL },
+#if 0
     { "/View/sep2", NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/View/_Correlation matrix"), NULL, do_menu_op, CORR, NULL, GNULL },
     { N_("/View/Cross _Tabulation"), NULL, do_menu_op, XTAB, NULL, GNULL },
     { N_("/View/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
@@ -500,11 +512,17 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Other linear models/High _precision OLS..."), NULL, 
       model_callback, MPOLS, NULL, GNULL },
 #endif
+#if 0
     { "/Model/sep1",  NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Model/_Time series"), NULL, NULL, 0, "<Branch>", GNULL },
+#if 0
     { "/Model/sep2",  NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Model/_Panel"), NULL, NULL, 0, "<Branch>", GNULL },
+#if 0
     { "/Model/sep3",  NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Model/_Nonlinear models"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Model/Nonlinear models/_Logit..."), NULL, model_callback, LOGIT, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Probit..."), NULL, model_callback, PROBIT, NULL, GNULL },
@@ -513,13 +531,17 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Nonlinear models/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Nonlinear Least Squares..."), NULL, 
       gretl_callback, NLS, NULL, GNULL },
+#if 0
     { "/Model/sep4",  NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Model/_Robust estimation"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Model/Robust estimation/Least _Absolute Deviation..."), NULL, 
       model_callback, LAD, NULL, GNULL },
     { N_("/Model/Robust estimation/_Rank correlation..."), NULL, 
       selector_callback, SPEARMAN, NULL, GNULL },
+#if 0
     { "/Model/sep5",  NULL, NULL, 0, "<Separator>", GNULL },
+#endif
     { N_("/Model/_Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },
     { N_("/Model/_GMM..."), NULL, gretl_callback, GMM, NULL, GNULL },
     { N_("/Model/_Simultaneous equations..."), NULL, gretl_callback, SYSTEM, NULL, GNULL },

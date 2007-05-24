@@ -123,6 +123,7 @@ struct str_table funcs[] = {
     { LDIF,     "ldiff" },
     { SDIF,     "sdiff" },
     { TOINT,    "int" },
+    { CEIL,     "ceil" },
     { SORT,     "sort" }, 
     { DSORT,    "dsort" }, 
     { ODEV,     "orthdev" },
