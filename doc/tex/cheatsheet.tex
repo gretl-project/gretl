@@ -66,10 +66,34 @@ smpl full
 
 \section{Creating/modifying variables}
 
+\subsection{Generating a dummy variable for a specific observation}
+
+\emph{Problem:} Generate $d_t = 0$ for all observation but one, for
+which $d_t = 1$.
+
+\emph{Solution:}
+\begin{code}
+  genr d = (t="1984:2")
+\end{code}
+
+\emph{Comment:} The internal variable \texttt{t} is used to refer to
+observations in string form, so if you have a cross-section sample you
+may just use \texttt{d = (t="123")}; of course, if the dataset has
+data labels, use the corresponding label. For example, if you open the
+dataset \texttt{mrw.gdt}, supplied with \app{gretl} among the
+examples, a dummy variable for Italy could be generated via
+\begin{code}
+  genr DIta = (t="Italy")
+\end{code}
+
+Note that this method does not require scripting at all. In fact, you
+might as well use the GUI Menu ``Add/Define new variable'' for the
+same purpose, with the same syntax.
+
 \subsection{Generating an ARMA(1,1)}
 
 \emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
-\varepsilon_{t-1}$, with $\varepsilon_t \sim NIID(0,1)$.
+\varepsilon_{t-1}$, with $\varepsilon_t \sim N\!I\!I\!D(0,1)$.
 
 \emph{Solution:}
 \begin{code}
