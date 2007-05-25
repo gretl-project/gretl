@@ -3197,11 +3197,15 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		err = gretl_model_set_double(pmod, key, xval);
 	    }
 	} else if (type == MODEL_DATA_LIST) {
-	    int *list;
+	    if (!strcmp(key, "xlist")) {
+		/* broken: track down and FIXME */
+		;
+	    } else {
+		int *list = gretl_xml_node_get_list(cur, doc, &err);
 
-	    list = gretl_xml_node_get_list(cur, doc, &err);
-	    if (!err) {
-		err = gretl_model_set_list_as_data(pmod, key, list);
+		if (!err && list != NULL) {
+		    err = gretl_model_set_list_as_data(pmod, key, list);
+		} 
 	    }
 	} else if (type == MODEL_DATA_STRING) {
 	    char *s;
@@ -3309,6 +3313,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     got += gretl_xml_get_prop_as_string(node, "ci", &buf);
 
     if (got < 12) {
+	fprintf(stderr, "gretl_model_from_XML: got(1) = %d (expected 12)\n", got);
 	if (buf != NULL) {
 	    free(buf);
 	}
@@ -3345,6 +3350,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     got += gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
 
     if (got < 14) {
+	fprintf(stderr, "gretl_model_from_XML: got(2) = %d (expected 14)\n", got);
 	*err = E_DATA;
 	gretl_pop_c_numeric_locale();
 	goto bailout;
@@ -3387,6 +3393,9 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    *err = arinfo_from_xml(cur, doc, pmod);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-items")) {
 	    *err = model_data_items_from_xml(cur, doc, pmod);
+	}
+	if (*err) {
+	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d on %s\n", *err, cur->name);
 	}
 	cur = cur->next;
     }

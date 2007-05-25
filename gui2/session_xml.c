@@ -149,6 +149,7 @@ static gpointer rebuild_session_model (const char *fname,
 				   (type == GRETL_OBJ_VAR)? "gretl-VAR" :
 				   "gretl-equation-system", &doc, &node);
     if (*err) {
+	fprintf(stderr, "Failed on gretl_xml_open_doc_root\n");
 	return NULL;
     }
 
@@ -248,7 +249,13 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	    err = reattach_model(ptr, type, (const char *) name, flags);
 	    if (!err) {
 		model_count_plus();
+	    } else {
+		fprintf(stderr, "reattach_model: failed on %s (err = %d)\n",
+			name, err);
 	    }
+	} else {
+	    fprintf(stderr, "rebuild_session_model: failed on %s (err = %d)\n",
+		    fullname, err);
 	}
 
 	free(fname);

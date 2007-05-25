@@ -713,7 +713,10 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	p += strspn(p, " \r\n");
 	if (sscanf(p, "%d", &n) != 1) {
 	    *err = E_DATA;
-	} else if (n <= 0) {
+	} else if (n == 0) {
+	    free(tmp);
+	    return NULL;
+	} else if (n < 0) {
 	    *err = E_DATA;
 	} else {
 	    p += strcspn(p, " \r\n");

@@ -874,9 +874,11 @@ static int unzip_session_file (const char *fname)
 
     err = (*gretl_unzip_file)(fname, &gerr);
     if (gerr != NULL) {
+	fprintf(stderr, "gretl_unzip_file: '%s'\n", gerr->message);
 	ret = SAVEFILE_ERROR;
 	g_error_free(gerr);
     } else if (err) {
+	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
 	ret = SAVEFILE_ERROR;
     }
 
@@ -967,6 +969,7 @@ void do_open_session (void)
     
     err = set_session_dirname(sname);
     if (err) {
+	fprintf(stderr, "Failed on set_session_dirname\n");
 	errbox(_("Couldn't open %s"), "session.xml");
 	return;
     }
@@ -976,6 +979,7 @@ void do_open_session (void)
 
     if (err) {
 	/* FIXME more explicit error message */
+	fprintf(stderr, "Failed on read_session_xml\n");
 	errbox(_("Couldn't open %s"), "session.xml");
 	return;
     }

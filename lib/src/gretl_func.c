@@ -3076,24 +3076,15 @@ get_matrix_return (const char *mname, int action, int *err)
     return ret;
 }
 
-static int unlocalize_list (const char *upname, fn_param *fp, DATAINFO *pdinfo)
+static int unlocalize_list (const char *lname, DATAINFO *pdinfo)
 {
-    const char *listname;
-    const int *list;
+    const int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
     int i, vi, err = 0;
 
-    if (fp != NULL) {
-	listname = fp->name;
-    } else {
-	listname = upname;
-    }
-
-    list = get_list_by_name(listname);
-
 #if UDEBUG
-    fprintf(stderr, "unlocalize_list: %s, d = %d\n", listname, d);
-    printlist(list, listname);
+    fprintf(stderr, "unlocalize_list: %s, d = %d\n", lname, d);
+    printlist(list, lname);
 #endif	    
 
     if (list == NULL) {
@@ -3122,7 +3113,7 @@ get_list_return (const char *lname, DATAINFO *pdinfo, int *err)
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = unlocalize_list(lname, NULL, pdinfo);
+	*err = unlocalize_list(lname, pdinfo);
 	if (!*err) {
 	    *err = named_list_lower_level(lname);
 	}
@@ -3151,7 +3142,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 			 int *perr)
 {
     fn_param *fp;
-    int vi = 0, mi = 0, li = 0;
+    int vi = 0, mi = 0;
     int i, j, err = 0;
 
     if (*perr == 0) {
@@ -3197,11 +3188,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 		mi++;
 	    }
 	} else if (fp->type == ARG_LIST) {
-	    if (li < args->nl) {
-		fprintf(stderr, "function_assign_returns: i=%d, li=%d, doing unlocalize_list\n", 
-			i, li);	
-		unlocalize_list(args->lists[li++], fp, pdinfo);
-	    } 
+	    unlocalize_list(fp->name, pdinfo);
 	}
     }
 
