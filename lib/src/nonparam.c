@@ -553,6 +553,14 @@ static void print_z_prob (double z, PRN *prn)
     }
 }
 
+static void diff_test_header (int v1, int v2, const DATAINFO *pdinfo,
+			      PRN *prn)
+{
+    pputc(prn, '\n');
+    pprintf(prn, _("Test for difference between %s and %s"),
+	    pdinfo->varname[v1], pdinfo->varname[v2]);
+}
+
 static const int rank5[3][2] = {
     { 0, 2 }, /* n = 6 */
     { 2, 3 }, /* n = 7 */
@@ -637,6 +645,7 @@ signed_rank_test (const double *x, const double *y,
 	}
     }
 
+    diff_test_header(v1, v2, pdinfo, prn);
     pprintf(prn, "\n%s\n", _("Wilcoxon Signed-Rank Test"));
     pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 	    _("the median difference is zero"));
@@ -768,7 +777,8 @@ static int rank_sum_test (const double *x, const double *y,
 	}
     }
 
-    pprintf(prn, "\n%s:\n", _("Wilcoxon Rank-Sum Test"));
+    diff_test_header(v1, v2, pdinfo, prn);
+    pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
     pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 	    _("the two medians are equal"));
 
@@ -841,6 +851,7 @@ static int sign_test (const double *x, const double *y,
 	return E_MISSDATA;
     }
 
+    diff_test_header(v1, v2, pdinfo, prn);
     pprintf(prn, "\n%s\n\n", _("Sign Test"));
     pprintf(prn, _("Number of differences: n = %d\n"), n);
     pputs(prn, "  ");

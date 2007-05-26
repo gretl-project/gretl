@@ -136,9 +136,8 @@ static model_data_item *create_data_item (const char *key, void *ptr,
 					  ModelDataType type, size_t size,
 					  void (*destructor) (void *))
 {
-    model_data_item *item;
+    model_data_item *item = malloc(sizeof *item);
 
-    item = malloc(sizeof *item);
     if (item != NULL) {
 	item->key = gretl_strdup(key);
 	if (item->key == NULL) {
@@ -2851,7 +2850,7 @@ static void print_model_data_items (const MODEL *pmod, FILE *fp)
 	    int *list = (int *) item->ptr;
 
 	    for (j=0; j<=list[0]; j++) {
-		fprintf(fp, "%d ", list[i]);
+		fprintf(fp, "%d ", list[j]);
 	    }
 	} else if (item->type == MODEL_DATA_STRING) {
 	    fprintf(fp, "%s", (char *) item->ptr);
@@ -3198,7 +3197,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    }
 	} else if (type == MODEL_DATA_LIST) {
 	    if (!strcmp(key, "xlist")) {
-		/* broken: track down and FIXME */
+		/* ad hoc (for forecasting): will be recreated if need be */
 		;
 	    } else {
 		int *list = gretl_xml_node_get_list(cur, doc, &err);

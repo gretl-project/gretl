@@ -2783,6 +2783,8 @@ static void add_model_tex_items (windata_t *vwin)
 				   (gboolean) get_tex_eqn_opt());
 }
 
+#define VNAMELEN2 32
+
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
     int i, j, varstart;
@@ -2792,7 +2794,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	N_("/Graphs/Fitted, actual plot")
     };
     MODEL *pmod = vwin->data;
-    char tmp[16];
+    char tmp[VNAMELEN2];
 
    varitem.accelerator = NULL; 
    varitem.item_type = NULL;
@@ -2840,7 +2842,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
 		g_strdup_printf(_("%s/_Against %s"), mpath[i], tmp);
-	    varitem.callback = (i==0)? resid_plot : fit_actual_plot;
+	    varitem.callback = (i == 0)? resid_plot : fit_actual_plot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
 	}
@@ -2850,7 +2852,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	/* if the model has two independent vars, offer a 3-D fitted
 	   versus actual plot */
 	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
-	    char tmp2[16];
+	    char tmp2[VNAMELEN2];
 
 	    double_underscores(tmp, datainfo->varname[pmod->list[3]]);
 	    double_underscores(tmp2, datainfo->varname[pmod->list[4]]);
@@ -2881,7 +2883,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	N_("/Graphs/Separation")
     };
     gchar *radiopath = NULL;
-    char tmp[16];
+    char tmp[VNAMELEN2];
     int i, done_branch = 0;
 
     dumitem.path = NULL;
@@ -3345,7 +3347,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 
     GRETL_VAR *var = NULL;
     int neqns, vtarg, vshock;
-    char tmp[32];
+    char tmp[VNAMELEN2];
     int i, j;
 
     var = (GRETL_VAR *) vwin->data;
