@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-26 12:07+0100\n"
-"PO-Revision-Date: 2007-05-16 13:24+0200\n"
+"PO-Revision-Date: 2007-05-27 22:48+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4959,19 +4959,19 @@ msgstr ""
 "Numero di successioni (R) nella variabile '%s' = %d\n"
 
 #: lib/src/nonparam.c:528
-#, fuzzy, c-format
+#, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%g, %g)\n"
-msgstr "Sotto l'ipotesi nulla di casualità, R segue N(%f, %f)\n"
+msgstr "Sotto l'ipotesi nulla di casualità, R segue N(%g, %g)\n"
 
 #: lib/src/nonparam.c:530
-#, fuzzy, c-format
+#, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "Valore z = %f, con p-value a due code %f\n"
+msgstr "Valore z = %g, con p-value a due code %g\n"
 
 #: lib/src/nonparam.c:560
 #, c-format
 msgid "Test for difference between %s and %s"
-msgstr ""
+msgstr "Test per la differenza tra %s e %s"
 
 #: lib/src/nonparam.c:649
 msgid "Wilcoxon Signed-Rank Test"
@@ -6630,13 +6630,13 @@ msgstr "Test delle successioni"
 msgid "Sign test"
 msgstr "Test dei segni"
 
+# Traduzione migliore???
 #: gui2/calculator.c:1757
-#, fuzzy
 msgid "Wilcoxon rank sum test"
 msgstr "Test della somma del rango di Wilcoxon"
 
+# Traduzione migliore???
 #: gui2/calculator.c:1763
-#, fuzzy
 msgid "Wilcoxon signed rank test"
 msgstr "Test del rango con segno di Wilcoxon"
 
