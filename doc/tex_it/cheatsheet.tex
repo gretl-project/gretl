@@ -64,10 +64,34 @@ un loop.
 
 \section{Creazione e modifica di variabili}
 
+\subsection{Generazione di una variabile dummy per una specifica osservazione}
+
+\emph{Problema:} Generare $d_t = 0$ per tutte le osservazioni tranne una, per
+cui vale $d_t = 1$.
+
+\emph{Soluzione:}
+\begin{code}
+  genr d = (t="1984:2")
+\end{code}
+
+\emph{Commento:} La variabile interna \texttt{t} viene usata per riferirsi alle
+osservazioni sotto forma di stringa, quindi se si ha un campione cross-section
+si può usare semplicemente \texttt{d = (t="123")}; ovviamente, se il dataset
+ha delle etichette per i dati si può usare l'etichetta corrispondente. Ad
+esempio, se si apre il dataset \texttt{mrw.gdt}, fornito con \app{gretl}, si può
+generare una variabile dummy per l'Italia usando
+\begin{code}
+  genr DIta = (t="Italy")
+\end{code}
+
+Si noti che questo metodo non richiede di creare uno script: è possibile inserire i
+comandi appena visti usando il comando dell'interfaccia grafica
+``Aggiungi/Definisci nuova variabile''.
+
 \subsection{Generazione di un ARMA(1,1)}
 
 \emph{Problema:} Generare $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
-\varepsilon_{t-1}$, con $\varepsilon_t \sim NIID(0,1)$.
+\varepsilon_{t-1}$, con $\varepsilon_t \sim N\!I\!I\!D(0,1)$.
 
 \emph{Soluzione:}
 \begin{code}
