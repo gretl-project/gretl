@@ -47,6 +47,9 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2);
 int varlist_adjust_sample (const int *list, int *t1, int *t2, 
 			   const double **Z);
 
+int set_reference_missmask_from_list (const int *list, const double **Z,
+				      const DATAINFO *pdinfo);
+
 int check_for_missing_obs (const int *list, int *t1, int *t2,
 			   const double **Z, int *misst);
 

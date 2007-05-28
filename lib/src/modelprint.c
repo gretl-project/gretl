@@ -1806,7 +1806,7 @@ void print_coeff_heading (int mode, PRN *prn)
 
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
-    int binary = binary_model(pmod);
+    int slopes = binary_model(pmod) && !gretl_model_get_int(pmod, "show-pvals");
     int use_param = pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM;
 
     if (plain_format(prn)) {
@@ -1814,7 +1814,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	    pputs(prn, _("      VARIABLE            COEFFICIENT          "
 		       "        STDERROR\n"));
 	    pputc(prn, '\n');
-	} else if (binary) {
+	} else if (slopes) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
 			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
@@ -1829,7 +1829,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	if (pmod->ci == MPOLS) {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"));
-	} else if (binary) {
+	} else if (slopes) {
 	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
 		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
 		    d, I_("T STAT"), d, I_("SLOPE at mean"));
@@ -1854,12 +1854,12 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 	}	    
 
 	if (tex_format(prn)) {
-	    tex_coeff_table_start(col1, col2, binary, prn);
+	    tex_coeff_table_start(col1, col2, slopes, prn);
 	    return;
 	}   
 
 	if (rtf_format(prn)) {
-	    if (binary) {
+	    if (slopes) {
 		pprintf(prn, "{" RTF_BINARY_ROW
 			" \\qc {\\i %s}\\cell"
 			" \\qc {\\i %s}\\cell"
@@ -2459,7 +2459,7 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 
     model_coeff_init(mc);
 
-    mc->show_pval = !binary_model(pmod);
+    mc->show_pval = !binary_model(pmod) || gretl_model_get_int(pmod, "show-pvals");
 
     if (tex_format(prn)) {
 	make_tex_coeff_name(pmod, pdinfo, i, mc->name);
@@ -2495,7 +2495,9 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
     }
 
-    if (!gotnan && binary_model(pmod) && pmod->list[i+2] != 0) { 
+    if (!gotnan && !mc->show_pval && 
+	binary_model(pmod) && 
+	pmod->list[i+2] != 0) { 
 	double *slopes = gretl_model_get_data(pmod, "slopes");
 
 	if (slopes != NULL) {
@@ -3138,6 +3140,7 @@ static void print_binary_statistics (const MODEL *pmod,
 				     const DATAINFO *pdinfo,
 				     PRN *prn)
 {
+    int slopes = !gretl_model_get_int(pmod, "show-pvals");
     double model_chisq = gretl_model_get_double(pmod, "chisq");
     const double *crit = pmod->criterion;
     const int *act_pred;
@@ -3181,11 +3184,11 @@ static void print_binary_statistics (const MODEL *pmod,
 	if (act_pred != NULL) {
 	    plain_print_act_pred(act_pred, prn);
 	}
-    }
-
-    else if (rtf_format(prn)) {
+    } else if (rtf_format(prn)) {
 	pputc(prn, '\n');
-	pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
+	if (slopes) {
+	    pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
+	}
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	if (correct >= 0) {
@@ -3211,13 +3214,13 @@ static void print_binary_statistics (const MODEL *pmod,
 	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(hqc_str), I_(hqc_abbrev),
 		crit[C_HQC]);
 	pputc(prn, '\n');
-    }
-
-    else if (tex_format(prn)) {
+    } else if (tex_format(prn)) {
 	char lnlstr[16];
 
-	pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
-		I_("Evaluated at the mean"));
+	if (slopes) {
+	    pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
+		    I_("Evaluated at the mean"));
+	}
 
 	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	pprintf(prn, "%s %s = %.3f\\\\\n", I_("Mean of"), 

@@ -117,7 +117,8 @@ struct _selector {
                          c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
-                        c == SCATTERS || c == COINT || c == ARBOND || c == OMIT)
+                        c == SCATTERS || c == COINT || c == ARBOND || c == OMIT || \
+                        c == LOGIT || c == PROBIT)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -2868,6 +2869,22 @@ static void test_boot_switch (selector *sr)
 
 #endif 
 
+static void build_pvalues_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Show slopes at mean"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Show p-values"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_P, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_scatters_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
@@ -3037,6 +3054,8 @@ static void build_selector_radios (selector *sr)
 	build_coint_radios(sr);
     } else if (sr->code == OMIT) {
 	build_omit_test_radios(sr);
+    } else if (sr->code == LOGIT || sr->code == PROBIT) {
+	build_pvalues_radios(sr);
     } else {
 	build_vec_radios(sr);
     }

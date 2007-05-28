@@ -1096,7 +1096,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     /* set the mask for missing obs within the sample range, based
        on the original model */
-    set_reference_missmask(orig);
+    set_reference_missmask_from_model(orig);
 
     /* extract option flags that should not be passed to estimator
        functions */

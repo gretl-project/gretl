@@ -671,7 +671,7 @@ static char *refmask;
 
 /* Set the "reference" mask based on a target model */
 
-void set_reference_missmask (const MODEL *pmod)
+void set_reference_missmask_from_model (const MODEL *pmod)
 {
 #if MASKDEBUG
     fprintf(stderr, "set_reference_missmask: using model = %p\n", 
@@ -680,6 +680,35 @@ void set_reference_missmask (const MODEL *pmod)
     if (pmod != NULL) {
 	refmask = gretl_strdup(pmod->missmask);
     } 
+}
+
+int set_reference_missmask_from_list (const int *list,
+				      const double **Z,
+				      const DATAINFO *pdinfo)
+{
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    char *mask;
+    int nmiss = 0;
+    int err = 0;
+
+    mask = model_missmask(list, pdinfo->t1, pdinfo->t2, 
+			  pdinfo->n, Z, 0, &nmiss);
+
+    if (nmiss == T) {
+	return E_DATA;
+    } else if (nmiss == 0 && mask != NULL) {
+	free(mask);
+	mask = NULL;
+    } else if (mask == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	free(refmask);
+	refmask = mask;
+    }
+
+    return err;
 }
 
 /* attach the reference missing obs mask to a specified model */

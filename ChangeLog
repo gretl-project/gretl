@@ -6,6 +6,8 @@ version 1.6.6, in progress
 - Fix for long variable names in Model Graph menus
 - Improve formatting for nonparametric difference test
 - Add "ceil" function in genr
+- Add "--p-values" option to show p-values instead of slopes
+  for logit, probit models
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

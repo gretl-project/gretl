@@ -23,7 +23,7 @@
 #define masked(m,t) (m != NULL && m[t] == '1')
 #define has_missing_obs(m)  ((m)->missmask != NULL)
 
-void set_reference_missmask (const MODEL *pmod);
+void set_reference_missmask_from_model (const MODEL *pmod);
 
 int apply_reference_missmask (MODEL *pmod);
 

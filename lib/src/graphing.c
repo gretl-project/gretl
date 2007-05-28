@@ -1606,7 +1606,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
     int add0 = 0;
 
     /* are we really doing a time-series plot? */
-    if (!strcmp(pdinfo->varname[gi->list[k]], "time")) {
+    if (k > 1 && !strcmp(pdinfo->varname[gi->list[k]], "time")) {
 	; /* yes */
     } else if (gi->flags & GPT_IDX) {
 	add0 = 1; /* yes */

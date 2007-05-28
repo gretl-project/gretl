@@ -616,7 +616,9 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fbx = normal_pdf(xx);
     }
 
-    if (add_slopes_to_model(&dmod, fbx)) {
+    if (opt & OPT_P) {
+	gretl_model_set_int(&dmod, "show-pvals", 1);
+    } else if (add_slopes_to_model(&dmod, fbx)) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
