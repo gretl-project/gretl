@@ -616,6 +616,9 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     case POISSON:
 	rep = poisson_model(list, pZ, pdinfo, NULL);
 	break;
+    case HECKIT:
+	rep = heckit_model(list, pZ, pdinfo, NULL);
+	break;
     case TSLS:
 	rep = tsls_func(list, TSLS, pZ, pdinfo, myopt);
 	break;

@@ -3453,6 +3453,45 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 }
 
 /**
+ * heckit_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the data set.
+ * @prn: printing struct for iteration info (or %NULL is this is not
+ * wanted).
+ *
+ * Produce Heckit estimates of the model given in @list. The list must
+ * include a separator to divide the main equation from the selection
+ * equation.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    MODEL hmod;
+    void *handle;
+    MODEL (* heckit_estimate) (const int *, double ***, DATAINFO *, PRN *);
+
+    gretl_error_clear();
+
+    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
+    if (heckit_estimate == NULL) {
+	gretl_model_init(&hmod);
+	hmod.errcode = E_FOPEN;
+	return hmod;
+    }
+
+    hmod = (*heckit_estimate) (list, pZ, pdinfo, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&hmod);
+
+    return hmod;
+}
+
+/**
  * garch:
  * @list: dependent variable plus arch and garch orders.
  * @pZ: pointer to data array.

@@ -77,6 +77,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { GNUPLOT,  "gnuplot" },  
     { GRAPH,    "graph" }, 
     { HAUSMAN,  "hausman" },
+    { HECKIT,   "heckit" },
     { HCCM,     "hccm" }, 
     { HELP,     "help" },    
     { HILU,     "hilu" },    

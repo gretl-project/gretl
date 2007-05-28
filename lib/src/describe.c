@@ -2237,7 +2237,11 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     if (acf_m == 0) {
 	acf_m = auto_acf_order(pdinfo->pd, nobs);
     } else if (acf_m > nobs - pdinfo->pd) {
-	acf_m = nobs - 1; /* ?? */
+	int nmax = nobs - 1; 
+
+	if (nmax < acf_m) {
+	    acf_m = nmax; /* ?? */
+	}
     }
 
     acf = malloc(acf_m * sizeof *acf);

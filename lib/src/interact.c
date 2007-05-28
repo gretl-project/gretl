@@ -308,6 +308,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == ARBOND || \
                          c == ARMA || \
                          c == EQUATION || \
+                         c == HECKIT || \
                          c == GARCH || \
                          c == MPOLS || \
                          c == POISSON || \
@@ -321,6 +322,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARBOND || \
                           c == ARMA || \
+                          c == HECKIT || \
                           c == GARCH || \
                           c == TSLS)
 
@@ -3848,6 +3850,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
     case GARCH:
+    case HECKIT:
     case HSK:
     case LAD:
     case LOGISTIC:
@@ -3870,6 +3873,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	} else if (cmd->ci == POISSON) {
 	    *models[0] = poisson_model(cmd->list, pZ, pdinfo,
 				       (cmd->opt & OPT_V)? prn : NULL);
+	} else if (cmd->ci == HECKIT) {
+	    *models[0] = heckit_model(cmd->list, pZ, pdinfo,
+				     (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == TSLS) {
 	    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
 	} else if (cmd->ci == LAD) {

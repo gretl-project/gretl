@@ -68,6 +68,7 @@ typedef enum {
     GRAPH,
     HAUSMAN,
     HCCM,    
+    HECKIT,
     HELP,    
     HILU,    
     HSK,

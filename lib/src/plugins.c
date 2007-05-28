@@ -57,7 +57,8 @@ enum {
     P_JMULTI_IMPORT,
     P_ZIPFILE,
     P_OPROBIT,
-    P_ARBOND
+    P_ARBOND,
+    P_HECKIT
 } plugin_codes;
 
 struct plugin_info {
@@ -101,7 +102,8 @@ struct plugin_info plugins[] = {
     { P_JMULTI_IMPORT,   "jmulti_import" },
     { P_ZIPFILE,         "gretlzip" },
     { P_OPROBIT,         "oprobit" },
-    { P_ARBOND,          "arbond" }
+    { P_ARBOND,          "arbond" },
+    { P_HECKIT,          "heckit" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -165,6 +167,7 @@ struct plugin_function plugin_functions[] = {
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },
     { "ordered_estimate",  P_OPROBIT },
+    { "heckit_estimate",   P_HECKIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

@@ -36,6 +36,7 @@ static void print_binary_statistics (const MODEL *pmod,
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
+static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
@@ -2199,6 +2200,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }   
 
+    if (pmod->ci == HECKIT) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_heckit_stats(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }
+	
     if (pmod->aux == AUX_SYS) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
@@ -3047,6 +3056,30 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenc, cenpc);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
+    } else if (tex_format(prn)) {
+	char xstr[32];
+
+	pprintf(prn, "%s & \\multicolumn{1}{r}{%.1f\\%%} \\\\\n", 
+		I_("Censored observations"), cenpc);
+	tex_dcolumn_double(pmod->sigma, xstr);
+	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
+    }
+}
+
+static void print_heckit_stats (const MODEL *pmod, PRN *prn)
+{
+    int totobs = gretl_model_get_int(pmod, "totobs");
+    int cenobs = totobs - pmod->nobs;
+    double cenpc = 100.0 * cenobs / totobs;
+
+    if (plain_format(prn)) {
+	pprintf(prn, "  %s: %d\n", _("Total observations"), totobs);
+	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenobs, cenpc);
+	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s: %d\n", I_("Total observations"), totobs);
+	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenobs, cenpc);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
     } else if (tex_format(prn)) {
 	char xstr[32];

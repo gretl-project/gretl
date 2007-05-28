@@ -595,8 +595,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    adjust_vecm_name(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    k = i;
-	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT)
-		   && pmod->params != NULL) {
+	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT ||
+		    pmod->ci == HECKIT) && pmod->params != NULL) {
 	    k = i;
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
@@ -3495,6 +3495,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "wls")  ||
 	!strcmp(s, "pwe")  ||
 	!strcmp(s, "hccm") ||
+	!strcmp(s, "heckit")  ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "add")  ||
 	!strcmp(s, "lad")  ||

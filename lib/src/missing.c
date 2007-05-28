@@ -703,6 +703,12 @@ int set_reference_missmask_from_list (const int *list,
 	err = E_ALLOC;
     }
 
+#if 1
+    fprintf(stderr, "set_reference_missmask_from_list\n");
+    printlist(list, "list");
+    fprintf(stderr, "nmiss = %d, mask = %p\n", nmiss, (void *) mask);
+#endif
+
     if (!err) {
 	free(refmask);
 	refmask = mask;

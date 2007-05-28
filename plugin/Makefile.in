@@ -87,7 +87,8 @@ SRCS = excel_import.c \
 	urcdist.c \
 	vif.c \
 	poisson.c \
-	gretlzip.c
+	gretlzip.c \
+	heckit.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -115,7 +116,8 @@ PLUGINS = arbond.la \
 	urcdist.la \
 	vif.la \
 	poisson.la \
-	gretlzip.la 
+	gretlzip.la \
+	heckit.la
 
 GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
@@ -246,6 +248,9 @@ oprobit.la: oprobit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
 poisson.la: poisson.lo
+	$(LINK) -o $@ $< $(GRETLLIB) 
+
+heckit.la: heckit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo mod_garch.lo

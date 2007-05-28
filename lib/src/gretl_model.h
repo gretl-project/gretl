@@ -76,6 +76,7 @@ struct CoeffIntervals_ {
 
 #define ML_ESTIMATOR(c) (c == ARMA || \
                          c == GARCH || \
+                         c == HECKIT || \
                          c == LOGIT || \
                          c == MLE || \
                          c == POISSON || \
@@ -98,6 +99,7 @@ struct CoeffIntervals_ {
                              c == ARMA || \
                              c == GARCH || \
                              c == GMM || \
+                             c == HECKIT || \
                              c == LOGIT || \
                              c == MLE || \
                              c == POISSON || \
