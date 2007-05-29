@@ -73,14 +73,16 @@ struct _selector {
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == PANEL_B || c == ARBOND)
+                       c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
+		       c == HECKIT)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == HCCM || c == HSK || c == ARMA || c == ARCH || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
-                       c == PANEL_WLS || c == PANEL_B || c == ARBOND)
+                       c == PANEL_WLS || c == PANEL_B || c == ARBOND || \
+                       c == HECKIT)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -123,16 +125,19 @@ struct _selector {
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
 #define AUX_LAST(c) (c == TSLS || \
+                     c == HECKIT || \
                      c == VAR || \
                      c == VLAGSEL || \
                      c == VECM)
+
+#define USE_ZLIST(c) (c == TSLS || c == HECKIT)
 
 #define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
 			    (d)->structure == SPECIAL_TIME_SERIES || \
                             (d)->structure == STACKED_TIME_SERIES)
 
 #define select_lags_primary(c) (MODEL_CODE(c))
-#define select_lags_aux(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
+#define select_lags_aux(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS || c == HECKIT)
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
 
 static int default_var = -1;
@@ -198,7 +203,7 @@ static int sr_get_lag_context (selector *sr, int locus)
     if (locus == SR_RVARS1 && select_lags_primary(sr->code)) {
 	c = LAG_X;
     } else if (locus == SR_RVARS2 && select_lags_aux(sr->code)) {
-	c = (sr->code == TSLS)? LAG_W : LAG_X;
+	c = (USE_ZLIST(sr->code))? LAG_W : LAG_X;
     }
 
     return c;
@@ -1153,7 +1158,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
     if (sr->rvars2 != NULL) {
 	/* empty lower right variable list */
 	clear_varlist(sr->rvars2);
-	if (sr->code == TSLS) {
+	if (USE_ZLIST(sr->code)) {
 	    varlist_insert_const(sr->rvars2);
 	}
     }
@@ -1432,10 +1437,10 @@ static int maybe_resize_exog_recorder_lists (selector *sr, int n)
 {
     int err = 0;
 
-    if (sr->code == TSLS || USE_VECXLIST(sr->code)) {
+    if (USE_ZLIST(sr->code) || USE_VECXLIST(sr->code)) {
 	int *newlist;
 
-	if (sr->code == TSLS) {
+	if (USE_ZLIST(sr->code)) {
 	    newlist = gretl_list_resize(&instlist, n);
 	} else {
 	    newlist = gretl_list_resize(&vecxlist, n);
@@ -1513,7 +1518,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
     gtk_tree_model_get_iter_first(model, &iter);
 
-    if (sr->code == TSLS) {
+    if (USE_ZLIST(sr->code)) {
 	reclist = instlist;
     } else if (USE_VECXLIST(sr->code)) {
 	reclist = vecxlist;
@@ -1525,7 +1530,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
 
-	if (sr->code == TSLS && exog == ynum && lag == 0) {
+	if (sr->code == TSLS && exog == ynum && lag == 0) { /* HECKIT? */
 	    errbox("You can't use the dependent variable as an instrument");
 	    err = 1;
 	    break;
@@ -1638,7 +1643,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	if (dataset_lags_ok(datainfo) && 
 	    select_lags_depvar(sr->code)) {
 	    *dvlags = get_lagpref_string(ynum, LAG_Y_X);
-	    if (sr->code == TSLS) {
+	    if (USE_ZLIST(sr->code)) {
 		*idvlags = get_lagpref_string(ynum, LAG_Y_W);
 	    }
 	}
@@ -1738,7 +1743,7 @@ static void construct_cmdlist (selector *sr)
     get_rvars1_data(sr, rows, context);
 
     /* cases with a (possibly optional) secondary RHS list */
-    if (sr->code == TSLS || USE_VECXLIST(sr->code)) {
+    if (USE_ZLIST(sr->code) || USE_VECXLIST(sr->code)) {
 	rows = varlist_row_count(sr, SR_RVARS2, &realrows);
 	if (rows > 0) {
 	    if (realrows > 0) {
@@ -1746,7 +1751,7 @@ static void construct_cmdlist (selector *sr)
 	    }
 	    context = sr_get_lag_context(sr, SR_RVARS2);
 
-	    if (sr->code == TSLS && dvlags != NULL) {
+	    if (USE_ZLIST(sr->code) && dvlags != NULL) {
 		add_to_cmdlist(sr, dvlags);
 		free(dvlags);
 		dvlags = NULL;
@@ -1758,10 +1763,12 @@ static void construct_cmdlist (selector *sr)
 
 	    sr->error = get_rvars2_data(sr, rows, context);
 	} else if (sr->code == TSLS) {
-	    /* only tsls requires a "secondary" variable selection */
 	    errbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
-	} 
+	} else if (sr->code == HECKIT) {
+	    errbox(_("You must specify a set of Z variables"));
+	    sr->error = 1;
+	}
     }
 
     /* deal with any trailing strings */
@@ -1855,6 +1862,8 @@ static char *est_str (int cmdnum)
 	return N_("Probit");
     case TOBIT:
 	return N_("Tobit");
+    case HECKIT:
+	return N_("Heckit");
     case LOGISTIC:
 	return N_("Logistic");
     case POISSON:
@@ -2232,6 +2241,8 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Exogenous variables"));
     } else if (sr->code == TSLS) {
 	tmp = gtk_label_new(_("Instruments"));
+    } else if (sr->code == HECKIT) {
+	tmp = gtk_label_new(_("FIXME"));
     }
 
     if (tmp != NULL) {
@@ -2267,7 +2278,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (sr->code == TSLS) {
+    if (USE_ZLIST(sr->code)) {
 	reclist = instlist;
     } else if (sr->code == VAR || sr->code == VLAGSEL || sr->code == VECM) {
 	reclist = vecxlist;
@@ -2310,7 +2321,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box(sr, right_vbox);
-    } else if (sr->code == TSLS) {
+    } else if (USE_ZLIST(sr->code)) {
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->code == AR) {
 	sr->extra[0] = gtk_entry_new();
@@ -2366,7 +2377,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     if (code == WLS || code == POISSON || code == AR) {
 	dlgy += 30;
-    } else if (code == TSLS) {
+    } else if (USE_ZLIST(code)) {
 	dlgy += 40;
     } else if (VEC_CODE(code)) {
 	dlgy = 450;
@@ -3336,7 +3347,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     }
 
     /* middle right: used for some estimators and factored plot */
-    if (ci == WLS || ci == AR || ci == TSLS || ci == ARCH ||
+    if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == POISSON || ci == ARBOND ||
 	ci == GR_DUMMY || ci == GR_3D) {
 	build_mid_section(sr, right_vbox);
@@ -4491,7 +4502,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
     }
 
     list[0] = (select_lags_primary(sr->code))? sr->rvars1 : sr->rvars2;
-    if (sr->code == TSLS) {
+    if (USE_ZLIST(sr->code)) {
 	list[1] = sr->rvars2;
     } 
 

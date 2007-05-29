@@ -641,7 +641,7 @@ static void fix_dbname (char *db)
 
 #ifdef ENABLE_NLS
 
-# if defined(G_OS_WIN32)
+# if defined(G_OS_WIN32) 
 
 static void real_nls_init (void)
 {
@@ -653,6 +653,31 @@ static void real_nls_init (void)
     }
 
     build_path(localedir, gretldir, "locale", NULL);
+    loc = setlocale(LC_ALL, "");
+    set_gretl_charset(loc);
+    bindtextdomain(PACKAGE, localedir);
+    textdomain(PACKAGE);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
+}
+
+# elif defined(OSX_BUILD) 
+
+static void real_nls_init (void)
+{
+    char *gretlhome = getenv("GRETL_HOME");
+    char localedir[MAXSTR];
+    char *p, *loc;
+
+    if (gretlhome == NULL) {
+	return;
+    }
+
+    strcpy(localedir, gretlhome);
+    p = strstr(localedir, "share/gretl");
+    if (p != NULL) {
+	strcpy(p, "share/locale");
+    }
+
     loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, localedir);
