@@ -49,7 +49,7 @@
 # endif
 #endif
 
-#define CMD_DEBUG 0
+#define CMD_DEBUG 1
 
 #include "laginfo.c"
 
@@ -2714,7 +2714,8 @@ static int effective_ci (const CMD *cmd)
 #define hold_param(c) (c == TSLS || c == AR || c == ARBOND || c == ARMA || \
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
-                       c == EQUATION || c == POISSON || c == XCORRGM)
+                       c == EQUATION || c == POISSON || c == XCORRGM || \
+                       c == HECKIT)
 
 #define TESTLEN 62
 #define LINELEN 78

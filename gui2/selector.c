@@ -1766,7 +1766,7 @@ static void construct_cmdlist (selector *sr)
 	    errbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
 	} else if (sr->code == HECKIT) {
-	    errbox(_("You must specify a set of Z variables"));
+	    errbox(_("You must specify regressors for the selection equation"));
 	    sr->error = 1;
 	}
     }
@@ -2242,7 +2242,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
     } else if (sr->code == TSLS) {
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->code == HECKIT) {
-	tmp = gtk_label_new(_("FIXME"));
+	tmp = gtk_label_new(_("Selection equation regressors"));
     }
 
     if (tmp != NULL) {
@@ -2378,7 +2378,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     if (code == WLS || code == POISSON || code == AR) {
 	dlgy += 30;
     } else if (USE_ZLIST(code)) {
-	dlgy += 40;
+	dlgy += 60;
     } else if (VEC_CODE(code)) {
 	dlgy = 450;
 	if (code == VAR || code == VECM) {

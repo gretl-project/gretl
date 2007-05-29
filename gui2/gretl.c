@@ -527,6 +527,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Nonlinear models/_Logit..."), NULL, model_callback, LOGIT, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Probit..."), NULL, model_callback, PROBIT, NULL, GNULL },
     { N_("/Model/Nonlinear models/To_bit..."), NULL, model_callback, TOBIT, NULL, GNULL },
+    { N_("/Model/Nonlinear models/_Heckit..."), NULL, model_callback, HECKIT, NULL, GNULL },
     { N_("/Model/Nonlinear models/Poi_sson..."), NULL, model_callback, POISSON, NULL, GNULL },
     { N_("/Model/Nonlinear models/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Nonlinear Least Squares..."), NULL, 

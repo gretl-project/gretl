@@ -2722,6 +2722,12 @@ static int real_do_model (int action)
 	err = model_output(pmod, prn);
 	break;
 
+    case HECKIT:
+	*pmod = heckit_model(libcmd.list, &Z, datainfo, 
+			     (libcmd.opt & OPT_V)? prn : NULL); 
+	err = model_output(pmod, prn);
+	break;
+
     case POISSON:
 	*pmod = poisson_model(libcmd.list, &Z, datainfo,
 			      (libcmd.opt & OPT_V)? prn : NULL);
