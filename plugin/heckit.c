@@ -23,25 +23,56 @@
 #include "missing_private.h"
 
 #define HDEBUG 0
-#define VCV 1
 
-#if VCV
-static int make_heckit_vcv (int *Xl, int *Zl, int vdelta, 
-			    const double **Z, DATAINFO *pdinfo, 
-			    MODEL *olsmod, gretl_matrix *Vp, gretl_matrix *V)
+static int transcribe_heckit_vcv (MODEL *pmod, const gretl_matrix *S)
 {
-    int i, j, k, v, n;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int m = S->rows;
+    int i, j, k = 0;
+
+    if (pmod->vcv == NULL) {
+	int nvc = (m * m + m) / 2;
+
+	pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
+	if (pmod->vcv == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=0; i<m; i++) {
+	pmod->sderr[i] = sqrt(gretl_matrix_get(S,i,i));
+	for (j=i; j<m; j++) {
+	    pmod->vcv[k++] = gretl_matrix_get(S,i,j);
+	}
+    }
+
+    return 0;
+}
+
+static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta, 
+			    const double **Z, DATAINFO *pdinfo, 
+			    MODEL *olsmod, gretl_matrix *Vp)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *w = NULL;
+    gretl_matrix *Xw = NULL;
+    gretl_matrix *W = NULL;
+
+    gretl_matrix *XX = NULL;
+    gretl_matrix *XXi = NULL;
+    gretl_matrix *XXw = NULL;
+    gretl_matrix *XwZ = NULL;
+    gretl_matrix *S = NULL;
+
     int *Xlist = NULL;
     int *Zlist = NULL;
+    char *mmask = NULL;
+
+    int i, v, n;
     int nX, nZ;
-    int dlist[2] = { 1 , 1 };
-    dlist[1] = vdelta;
-    char *mmask;
+    int dlist[2] = { 1 , vdelta };
     int err = 0;
 
-    double delta, s2, sigma, bmills, rho, rho2, mdelta = 0;
+    double delta, s2, sigma, bmills, rho, mdelta = 0;
 
     n = 0;
     for (i=pdinfo->t1; i<=pdinfo->t2; i++) {
@@ -51,17 +82,21 @@ static int make_heckit_vcv (int *Xl, int *Zl, int vdelta,
 	    n++;
 	}
     }
-    mdelta = mdelta / n;
+    mdelta /= n;
 
     bmills = olsmod->coeff[olsmod->ncoeff-1];
-    s2 = olsmod->ess/olsmod->nobs + mdelta*(bmills*bmills);
+    s2 = olsmod->ess / olsmod->nobs + mdelta * bmills * bmills;
     sigma = sqrt(s2);
-    rho = bmills/sigma;
-    rho2 = rho*rho;
+    rho = bmills / sigma;
+
+    mmask = malloc(pdinfo->t2 - pdinfo->t1 + 1);
+    if (mmask == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     v = Xl[0];
-    mmask = malloc((t2-t1+1)* sizeof *mmask);
-    for (i=t1; i<=t2; i++) {
+    for (i=pdinfo->t1; i<=pdinfo->t2; i++) {
 	mmask[i] = na(Z[Xl[v]][i]);
     }
 
@@ -70,6 +105,10 @@ static int make_heckit_vcv (int *Xl, int *Zl, int vdelta,
 
     Xlist = gretl_list_new(nX);
     Zlist = gretl_list_new(nZ);
+    if (Xlist == NULL || Zlist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     for (i=1; i<=Xlist[0]; i++) {
 	Xlist[i] = Xl[i+1];
@@ -79,71 +118,74 @@ static int make_heckit_vcv (int *Xl, int *Zl, int vdelta,
 	Zlist[i] = Zl[i+1];
     }
 
-    gretl_matrix *X = NULL;
-    gretl_matrix *w = NULL;
-    gretl_matrix *Xw = NULL;
-    gretl_matrix *W = NULL;
+    X = gretl_matrix_data_subset(Xlist, Z, pdinfo->t1, pdinfo->t2, mmask);
+    w = gretl_matrix_data_subset(dlist, Z, pdinfo->t1, pdinfo->t2, mmask);
+    W = gretl_matrix_data_subset(Zlist, Z, pdinfo->t1, pdinfo->t2, mmask);
+    Xw = gretl_matrix_dot_op(w, X, '*', &err);
 
-    X = gretl_matrix_data_subset(Xlist, Z, t1, t2, mmask);
-    w = gretl_matrix_data_subset(dlist, Z, t1, t2, mmask);
-    W = gretl_matrix_data_subset(Zlist, Z, t1, t2, mmask);
-    Xw = gretl_matrix_dot_op (w, X, '*', &err);
+    XX = gretl_matrix_alloc(nX, nX);
+    XXi = gretl_matrix_alloc(nX, nX);
+    XXw = gretl_matrix_alloc(nX, nX);
+    XwZ = gretl_matrix_alloc(nX, nZ);
+    S = gretl_matrix_alloc(nX, nX);
 
-    gretl_matrix *XX = gretl_matrix_alloc(nX, nX);
-    gretl_matrix *XXi = gretl_matrix_alloc(nX, nX);
-    gretl_matrix *XXw = gretl_matrix_alloc(nX, nX);
-    gretl_matrix *XwZ = gretl_matrix_alloc(nX, nZ);
-    gretl_matrix *tmp = gretl_matrix_alloc(nX, nX);
-    gretl_matrix *S = gretl_matrix_alloc(nX, nX);
+    if (X == NULL || w == NULL || W == NULL || Xw == NULL ||
+	XX == NULL || XXi == NULL || XXw == NULL ||
+	XwZ == NULL || S == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
-    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
-				    X, GRETL_MOD_NONE, 
-				    XX, GRETL_MOD_NONE);
-    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
-				    Xw, GRETL_MOD_NONE, 
-				    XXw, GRETL_MOD_NONE);
-    err = gretl_matrix_multiply_mod(Xw, GRETL_MOD_TRANSPOSE, 
-				    W, GRETL_MOD_NONE, 
-				    XwZ, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
+			      X, GRETL_MOD_NONE, 
+			      XX, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
+			      Xw, GRETL_MOD_NONE, 
+			      XXw, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(Xw, GRETL_MOD_TRANSPOSE, 
+			      W, GRETL_MOD_NONE, 
+			      XwZ, GRETL_MOD_NONE);
+
+    gretl_matrix_copy_values(XXi, XX);
+    err = gretl_invert_symmetric_matrix(XXi); 
+    if (err) {
+	fprintf(stderr, "make_heckit_vcv: error inverting X'X\n");
+	goto bailout;
+    }
+
+    gretl_matrix_qform(XwZ, GRETL_MOD_NONE,
+		       Vp, S, GRETL_MOD_NONE);
+    gretl_matrix_subtract_from(XXw, S);
+    gretl_matrix_multiply_by_scalar(XXw, rho * rho);
+    gretl_matrix_subtract_from(XX, XXw);
+    gretl_matrix_qform(XXi, GRETL_MOD_NONE,
+		       XX, S, GRETL_MOD_NONE);
+    gretl_matrix_multiply_by_scalar(S, s2);
+
+    olsmod->sigma = sigma;
+    olsmod->rho = rho;
+
+    err = transcribe_heckit_vcv(olsmod, S);
+
+ bailout:
+
+    free(Xlist);
+    free(Zlist);
+    free(mmask);
 
     gretl_matrix_free(X);
     gretl_matrix_free(w);
     gretl_matrix_free(W);
     gretl_matrix_free(Xw);
 
-    XXi = gretl_matrix_copy(XX);
-    err = gretl_invert_symmetric_matrix(XXi); 
-    err = gretl_matrix_qform (XwZ, GRETL_MOD_NONE,
-			      Vp, tmp, GRETL_MOD_NONE);
-    err = gretl_matrix_subtract_from(XXw, tmp);
-    gretl_matrix_multiply_by_scalar (XXw, rho2);
-    err = gretl_matrix_subtract_from(XX, XXw);
-    err = gretl_matrix_qform (XXi, GRETL_MOD_NONE,
-			      XX, S, GRETL_MOD_NONE);
-    gretl_matrix_multiply_by_scalar (S, s2);
-
-    olsmod->sigma = sigma;
-    olsmod->rho = rho;
-
-    k = 0;
-    makevcv(olsmod, sigma);
-    for (i=0; i<nX; i++) {
-	olsmod->sderr[i] = sqrt(gretl_matrix_get(S,i,i));
-	for (j=i; j<nX; j++) {
-	    olsmod->vcv[k++] = gretl_matrix_get(S,i,j);
-	}
-    }
-
     gretl_matrix_free(XX);
     gretl_matrix_free(XXi);
     gretl_matrix_free(XXw);
     gretl_matrix_free(XwZ);
-    gretl_matrix_free(tmp);
     gretl_matrix_free(S);
 
     return err;
 }
-#endif
 
 static char *heckit_suppress_mask (int sel, const int *list, const double **Z,
 				   const DATAINFO *pdinfo, int *err)
@@ -200,9 +242,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     MODEL probmod;
     int *Xlist = NULL;
     int *Zlist = NULL;
-    gretl_matrix *V = NULL;
     gretl_matrix *Vp = NULL;
-
     char *mask = NULL;
     int v = pdinfo->v;
     int i, N, T, t, k, sel, nsel;
@@ -210,8 +250,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     gretl_model_init(&hm);
-
-    /* adjust sample --- TODO */
+    gretl_model_init(&probmod);
 
     err = gretl_list_split_on_separator(list, &Xlist, &Zlist);
     if (err) {
@@ -239,7 +278,6 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     T = probmod.nobs;
-    fprintf(stderr, "Probit obs = %d\n", T);
     if (prn != NULL) {
 	printmodel(&probmod, pdinfo, OPT_NONE, prn);
     }
@@ -283,15 +321,21 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_set_int(&hm, "totobs", T);
 
     /* compute  appropriate correction to covariances */
-    make_heckit_vcv(Xlist, Zlist, v+1, (const double **) *pZ, 
-		    pdinfo, &hm, Vp, V);
+    err = make_heckit_vcv(Xlist, Zlist, v+1, (const double **) *pZ, 
+			  pdinfo, &hm, Vp);
 
-    gretl_model_allocate_params(&hm, k);
-
-    for (i=0; i<k-1; i++) {
-	strcpy(hm.params[i], pdinfo->varname[hm.list[i+2]]);
+    if (err) {
+	hm.errcode = err;
+    } else {
+	err = gretl_model_allocate_params(&hm, k);
     }
-    strcpy(hm.params[k-1], "lambda");
+
+    if (!err) {
+	for (i=0; i<k-1; i++) {
+	    strcpy(hm.params[i], pdinfo->varname[hm.list[i+2]]);
+	}
+	strcpy(hm.params[k-1], "lambda");
+    }
 	
     dataset_drop_last_variables(2, pZ, pdinfo);
 
@@ -300,6 +344,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(Xlist);
     free(Zlist);
     free(mask);
+    gretl_matrix_free(Vp);
 
     return hm;
 }
