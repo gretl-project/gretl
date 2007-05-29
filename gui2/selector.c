@@ -1566,7 +1566,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     char numstr[8];
     int k;
 
-    if (sr->code == WLS || sr->code == POISSON || sr->code == AR ||
+    if (sr->code == WLS || sr->code == POISSON || 
+	sr->code == AR || sr->code == HECKIT ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
@@ -1575,6 +1576,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    } else if (sr->code == AR) {
 		errbox(_("You must specify a list of lags"));
+		sr->error = 1;
+	    } else if (sr->code == HECKIT) {
+		errbox(_("You must specify a selection variable"));
 		sr->error = 1;
 	    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 		errbox(("You must select a Y-axis variable"));
@@ -1596,6 +1600,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	    k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	    sprintf(endbit, " ; %d", k);
 	}
+    } else if (sr->code == HECKIT) {
+	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
+	sprintf(endbit, " %d", k);
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
@@ -1677,7 +1684,7 @@ static void parse_special_graph_data (selector *sr)
 static void construct_cmdlist (selector *sr)
 {
     gint rows = 0, realrows = 0;
-    gchar endbit[12] = {0};
+    char endbit[12] = {0};
     char *dvlags = NULL;
     char *idvlags = NULL;
     int context = 0;
@@ -1757,7 +1764,11 @@ static void construct_cmdlist (selector *sr)
 		dvlags = NULL;
 	    }
 
-	    if (*sr->cmdlist != '\0') {
+	    if (sr->code == HECKIT) {
+		add_to_cmdlist(sr, " ;");
+		add_to_cmdlist(sr, endbit);
+		*endbit = '\0';
+	    } else if (*sr->cmdlist != '\0') {
 		add_to_cmdlist(sr, " ;");
 	    }
 
@@ -1915,6 +1926,8 @@ static char *extra_string (int ci)
 	return N_("Weight variable");
     case POISSON:
 	return N_("Offset variable");
+    case HECKIT:
+	return N_("Selection variable");
     case AR:
 	return N_("List of AR lags");
     case GR_DUMMY:
@@ -2318,7 +2331,11 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == POISSON ||
+    if (sr->code == HECKIT) {
+	extra_var_box(sr, right_vbox);
+	vbox_add_hsep(right_vbox);
+	primary_rhs_varlist(sr, right_vbox);
+    } else if (sr->code == WLS || sr->code == POISSON || 
 	sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box(sr, right_vbox);
     } else if (USE_ZLIST(sr->code)) {
@@ -2377,7 +2394,9 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     if (code == WLS || code == POISSON || code == AR) {
 	dlgy += 30;
-    } else if (USE_ZLIST(code)) {
+    } else if (code == HECKIT) {
+	dlgy += 80;
+    } else if (code == TSLS) {
 	dlgy += 60;
     } else if (VEC_CODE(code)) {
 	dlgy = 450;

@@ -24,24 +24,82 @@
 
 #define HDEBUG 0
 
-static int transcribe_heckit_vcv (MODEL *pmod, const gretl_matrix *S)
+static int transcribe_heckit_params (MODEL *hm, MODEL *pm, DATAINFO *pdinfo)
 {
-    int m = S->rows;
-    int i, j, k = 0;
+    double *fullcoeff;
+    int ko = hm->ncoeff;
+    int kp = pm->ncoeff;
+    int k = ko + kp;
+    int i, err = 0;
 
-    if (pmod->vcv == NULL) {
-	int nvc = (m * m + m) / 2;
+    fullcoeff = malloc(k * sizeof *fullcoeff);
+    if (fullcoeff == NULL) {
+	err = E_ALLOC;
+    }
 
-	pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
-	if (pmod->vcv == NULL) {
-	    return E_ALLOC;
+    if (!err) {
+	err = gretl_model_allocate_params(hm, k);
+    }
+
+    if (!err) {
+	for (i=0; i<ko; i++) {
+	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
+	    fullcoeff[i] = hm->coeff[i];
+	}
+	for (i=0; i<kp; i++) {
+	    strcpy(hm->params[i+ko], pdinfo->varname[pm->list[i+2]]);
+	    fullcoeff[i+ko] = pm->coeff[i];
 	}
     }
 
-    for (i=0; i<m; i++) {
-	pmod->sderr[i] = sqrt(gretl_matrix_get(S,i,i));
-	for (j=i; j<m; j++) {
-	    pmod->vcv[k++] = gretl_matrix_get(S,i,j);
+    if (!err) {
+	free(hm->coeff);
+	hm->coeff = fullcoeff;
+	hm->ncoeff = k;
+	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko);
+	hm->list[hm->list[0]] = 0;
+    }
+    
+    return err;
+}
+
+static int transcribe_heckit_vcv (MODEL *pmod, const gretl_matrix *S, 
+				  const gretl_matrix *Vp)
+{
+    int m = S->rows;
+    int n = Vp->rows;
+    int nvc, tot = m + n;
+    int i, j, k = 0;
+    double vij;
+
+    if (pmod->vcv != NULL) {
+	free(pmod->vcv);
+    }
+
+    if (pmod->sderr != NULL) {
+	free(pmod->sderr);
+    }
+    
+    nvc = (tot * tot + tot) / 2;
+
+    pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
+    pmod->sderr = malloc(tot * sizeof *pmod->sderr);
+
+    if (pmod->vcv == NULL || pmod->sderr == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<tot; i++) {
+	for (j=i; j<tot; j++) {
+	    if (i < m) {
+		vij = (j < m)? gretl_matrix_get(S, i, j) : NADBL;
+	    } else {
+		vij = gretl_matrix_get(Vp, i-m, j-m);
+	    }
+	    pmod->vcv[k++] = vij;
+	    if (i == j) {
+		pmod->sderr[i] = sqrt(vij);
+	    }
 	}
     }
 
@@ -165,14 +223,13 @@ static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta,
     olsmod->sigma = sigma;
     olsmod->rho = rho;
 
-    err = transcribe_heckit_vcv(olsmod, S);
+    err = transcribe_heckit_vcv(olsmod, S, Vp);
 
  bailout:
 
     free(Xlist);
     free(Zlist);
     free(mmask);
-
     gretl_matrix_free(X);
     gretl_matrix_free(w);
     gretl_matrix_free(W);
@@ -235,7 +292,7 @@ static char *heckit_suppress_mask (int sel, const int *list, const double **Z,
 
 /* the driver function for the plugin */
 
-MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL heckit_2step (int *list, double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn) 
 {
     MODEL hm;
@@ -245,7 +302,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *Vp = NULL;
     char *mask = NULL;
     int v = pdinfo->v;
-    int i, N, T, t, k, sel, nsel;
+    int N, T, t, sel, nsel;
     double u, xb, delta;
     int err = 0;
 
@@ -307,37 +364,31 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    clear_model(&probmod);
-
-    strcpy(pdinfo->varname[v], "Mills factor");
+    strcpy(pdinfo->varname[v], "lambda");
     strcpy(pdinfo->varname[v+1], "delta");
     gretl_list_append_term(&Xlist, v);
 
     /* run OLS */
     hm = lsq(Xlist, pZ, pdinfo, OLS, OPT_A);
     hm.ci = HECKIT;
-    k = hm.ncoeff;
     N = hm.nobs;
     gretl_model_set_int(&hm, "totobs", T);
 
-    /* compute  appropriate correction to covariances */
+    /* compute appropriate correction to covariances */
     err = make_heckit_vcv(Xlist, Zlist, v+1, (const double **) *pZ, 
 			  pdinfo, &hm, Vp);
 
     if (err) {
 	hm.errcode = err;
     } else {
-	err = gretl_model_allocate_params(&hm, k);
+	err = transcribe_heckit_params(&hm, &probmod, pdinfo);
     }
 
-    if (!err) {
-	for (i=0; i<k-1; i++) {
-	    strcpy(hm.params[i], pdinfo->varname[hm.list[i+2]]);
-	}
-	strcpy(hm.params[k-1], "lambda");
-	hm.list[hm.list[0]] = 0; /* avoid trouble later */
+    if (err) {
+	hm.errcode = err;
     }
 	
+    clear_model(&probmod);
     dataset_drop_last_variables(2, pZ, pdinfo);
 
  bailout:

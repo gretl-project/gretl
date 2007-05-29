@@ -44,6 +44,15 @@ struct ModelTest_ {
     double alpha;
 };
 
+typedef struct CoeffSep_ CoeffSep;
+
+#define CSLEN 64
+
+struct CoeffSep_ {
+    char str[CSLEN];
+    int pos;
+};
+
 #if 0 /* not ready yet: this apparatus may be used for printing
 	 "matrix models" at some future point */
 
@@ -523,6 +532,70 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key)
     }
 
     return list;
+}
+
+/**
+ * gretl_model_set_coeff_separator:
+ * @pmod: pointer to model.
+ * @s: informative string (or %NULL).
+ * @pos: position in the array of coefficients.
+ *
+ * Arranges for the insertion of the given string (or a blank line if
+ * @s is %NULL) at the given position in the array of coefficients,
+ * when the model is printed.  The extra line is printed before 
+ * coefficient @pos, where @pos is interpreted as a zero-based
+ * index.
+ *
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
+{
+    CoeffSep *cs = malloc(sizeof *cs);
+    int err = 0;
+
+    if (cs == NULL) {
+	return E_ALLOC;
+    }
+
+    cs->str[0] = '\0';
+    if (s != NULL) {
+	strncat(cs->str, s, CSLEN - 1);
+    }
+    cs->pos = pos;
+
+    err = gretl_model_set_data(pmod, "coeffsep", cs, MODEL_DATA_STRUCT, sizeof *cs);
+    if (err) {
+	free(cs);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_model_get_coeff_separator:
+ * @pmod: pointer to model.
+ * @ps: location to receive string, if any.
+ * @ppos: location to receive position, if any.
+ *
+ * Retrieves information that has been set on @pmod regarding the
+ * insertion of an extra line when printing the coefficients, if any.
+ *
+ * Returns: 1 if such information is present, 0 otherwise.
+ */
+
+int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos)
+{
+    CoeffSep *cs = gretl_model_get_data(pmod, "coeffsep");
+
+    if (cs == NULL) {
+	return 0;
+    }
+
+    *ps = cs->str;
+    *ppos = cs->pos;
+
+    return 1;
 }
 
 static void adjust_vecm_name (const char *orig, char *cname)

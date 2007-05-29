@@ -3475,7 +3475,7 @@ MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     gretl_error_clear();
 
-    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
+    heckit_estimate = get_plugin_function("heckit_2step", &handle);
     if (heckit_estimate == NULL) {
 	gretl_model_init(&hmod);
 	hmod.errcode = E_FOPEN;

@@ -243,6 +243,10 @@ int regarima_model_get_AR_coeffs (const MODEL *pmod,
 				  double **phi0,
 				  int *pp);
 
+int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos);
+
+int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos);
+
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);

@@ -2732,18 +2732,37 @@ void print_arch_coeffs (const double *a, const double *se,
     }
 }
 
+static void print_coeff_separator (const char *s, PRN *prn)
+{
+    if (tex_format(prn)) {
+	/* FIXME */
+	pputs(prn, "\\\\ \n");
+    } else {
+	if (s != NULL) {
+	    pputc(prn, '\n');
+	    print_centered((rtf_format(prn))? I_(s) : _(s), 78, prn);
+	    pputc(prn, '\n');
+	}
+	pputc(prn, '\n');
+    }
+}
+
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
+    const char *sepstr = NULL;
+    int seppos = -1;
     model_coeff mc;
     int nc = pmod->ncoeff;
     int i, err = 0, gotnan = 0;
-    int gn = -1;
 
-    if (pmod->ci == GARCH) {
-	gn = pmod->list[0] - 4;
-    } else if (pmod->ci == PANEL) {
+    if (pmod->ci == PANEL) {
 	nc = pmod->list[0] - 1;
+    }
+
+    gretl_model_get_coeff_separator(pmod, &sepstr, &seppos);
+    if (seppos == -1 && pmod->ci == GARCH) {
+	seppos = pmod->list[0] - 4;
     }
 
     for (i=0; i<nc; i++) {
@@ -2751,27 +2770,14 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	err = prepare_model_coeff(pmod, pdinfo, i, &mc, prn);
 	if (err) gotnan = 1;
 
-	if (plain_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
-	    if (pmod->ci == MPOLS) {
-		print_mp_coeff(&mc, prn);
-		continue;
-	    } 
-	} else if (tex_format(prn)) {
-	    if (i == gn) {
-		pputs(prn, "\\\\ \n");
-	    }
-	} else if (rtf_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
-	} else if (csv_format(prn)) {
-	    if (i == gn) {
-		pputc(prn, '\n');
-	    }
+	if (i == seppos) {
+	    print_coeff_separator(sepstr, prn);
 	}
+
+	if (plain_format(prn) && pmod->ci == MPOLS) {
+	    print_mp_coeff(&mc, prn);
+	    continue;
+	}	    
 
 	print_coeff(&mc, prn);
     }

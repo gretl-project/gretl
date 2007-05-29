@@ -25,6 +25,7 @@
                        c == ARBOND || \
                        c == ARMA || \
                        c == CORC || \
+                       c == HECKIT || \
                        c == GARCH || \
                        c == GMM || \
                        c == HCCM || \
