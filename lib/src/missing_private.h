@@ -25,6 +25,8 @@
 
 void set_reference_missmask_from_model (const MODEL *pmod);
 
+int copy_to_reference_missmask (const char *mask);
+
 int apply_reference_missmask (MODEL *pmod);
 
 int reference_missmask_present (void);

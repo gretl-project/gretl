@@ -682,6 +682,17 @@ void set_reference_missmask_from_model (const MODEL *pmod)
     } 
 }
 
+int copy_to_reference_missmask (const char *mask)
+{
+    if (refmask != NULL) {
+	free(refmask);
+    }
+
+    refmask = gretl_strdup(mask);
+
+    return (refmask == NULL)? E_ALLOC : 0;
+}
+
 int set_reference_missmask_from_list (const int *list,
 				      const double **Z,
 				      const DATAINFO *pdinfo)

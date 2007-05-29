@@ -845,16 +845,17 @@ static const char *aux_string (int aux, PRN *prn)
 static const char *simple_estimator_string (int ci, PRN *prn)
 {
     if (ci == OLS || ci == VAR) return N_("OLS");
-    else if (ci == WLS) return N_("WLS"); 
+    else if (ci == WLS)  return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
     else if (ci == TSLS) return N_("TSLS");
-    else if (ci == HSK) return N_("Heteroskedasticity-corrected");
-    else if (ci == AR) return N_("AR");
-    else if (ci == LAD) return N_("LAD");
+    else if (ci == HSK)  return N_("Heteroskedasticity-corrected");
+    else if (ci == AR)   return N_("AR");
+    else if (ci == LAD)  return N_("LAD");
     else if (ci == MPOLS) return N_("High-Precision OLS");
     else if (ci == PROBIT) return N_("Probit");
-    else if (ci == LOGIT) return N_("Logit");
-    else if (ci == TOBIT) return N_("Tobit");
+    else if (ci == LOGIT)  return N_("Logit");
+    else if (ci == TOBIT)  return N_("Tobit");
+    else if (ci == HECKIT) return N_("Heckit");
     else if (ci == POISSON) return N_("Poisson");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
@@ -1548,15 +1549,23 @@ static void print_model_heading (const MODEL *pmod,
 	if (pmod->missmask != NULL) {
 	    int mc = model_missval_count(pmod);
 
+	    if (pmod->ci == HECKIT) {
+		int Tmax = pmod->t2 - pmod->t1 + 1;
+		
+		mc = Tmax - gretl_model_get_int(pmod, "totobs");
+	    }
+
 	    pprintf(prn, (utf)?
 		    _("%s estimates using %d observations from %s%s%s") :
 		    I_("%s estimates using %d observations from %s%s%s"),
 		    _(estimator_string(pmod, prn)), 
 		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
-	    gretl_prn_newline(prn);
-	    pprintf(prn, "%s: %d",
-		    (utf)? _("Missing or incomplete observations dropped") :
-		    I_("Missing or incomplete observations dropped"), mc);
+	    if (mc > 0) {
+		gretl_prn_newline(prn);
+		pprintf(prn, "%s: %d",
+			(utf)? _("Missing or incomplete observations dropped") :
+			I_("Missing or incomplete observations dropped"), mc);
+	    }
 	} else {
 	    pprintf(prn, (utf)?
 		    _("%s estimates using the %d observations %s%s%s") :
