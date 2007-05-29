@@ -57,7 +57,7 @@ static int transcribe_heckit_params (MODEL *hm, MODEL *pm, DATAINFO *pdinfo)
 	hm->coeff = fullcoeff;
 	hm->ncoeff = k;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko);
-	hm->list[hm->list[0]] = 0;
+	hm->list[0] -= 1;
     }
     
     return err;
