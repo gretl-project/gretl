@@ -335,6 +335,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    strcpy(hm.params[i], pdinfo->varname[hm.list[i+2]]);
 	}
 	strcpy(hm.params[k-1], "lambda");
+	hm.list[hm.list[0]] = 0; /* avoid trouble later */
     }
 	
     dataset_drop_last_variables(2, pZ, pdinfo);

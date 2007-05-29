@@ -3092,7 +3092,9 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
     } else if (tex_format(prn)) {
 	char xstr[32];
-
+	
+	pprintf(prn, "%s & \\multicolumn{1}{r}{%d} \\\\\n", 
+		I_("Total observations"), totobs);
 	pprintf(prn, "%s & \\multicolumn{1}{r}{%.1f\\%%} \\\\\n", 
 		I_("Censored observations"), cenpc);
 	tex_dcolumn_double(pmod->sigma, xstr);

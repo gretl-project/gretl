@@ -506,11 +506,10 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
 	tex_vecm_varname(name, pdinfo, pmod->list[j]);
     } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	tex_mp_coeff_name(name, pmod->params[i], 0);
-    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT) &&
+    } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT || pmod->ci == HECKIT) &&
 	       pmod->params != NULL) {
 	tex_escape(name, pmod->params[i]);
-    } else if (pmod->ci == PANEL || pmod->ci == MLE ||
-	       pmod->ci == GMM) {
+    } else if (pmod->ci == PANEL || pmod->ci == MLE || pmod->ci == GMM) {
 	tex_escape(name, pmod->params[i]);
     } else if (pmod->ci == ARBOND) {
 	tex_arbond_coeff_name(name, pmod->params[i], 0);
