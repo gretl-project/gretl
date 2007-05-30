@@ -24,6 +24,22 @@
 
 #define HDEBUG 0
 
+/* remove the "lambda" effect from the fitted values */
+
+static void fix_heckit_resids (MODEL *hm, const double *lam)
+{
+    int t, k = hm->ncoeff - 1;
+    double x;
+
+    for (t=hm->t1; t<=hm->t2; t++) {
+	if (!na(hm->uhat[t])) {
+	    x = hm->coeff[k] * lam[t];
+	    hm->uhat[t] += x;
+	    hm->yhat[t] -= x;
+	}
+    }
+}
+
 static int transcribe_heckit_params (MODEL *hm, MODEL *pm, DATAINFO *pdinfo)
 {
     double *fullcoeff;
@@ -407,6 +423,7 @@ MODEL heckit_2step (int *list, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	hm.errcode = err;
     } else {
+	fix_heckit_resids(&hm, (*pZ)[v]);
 	err = transcribe_heckit_params(&hm, &probmod, pdinfo);
     }
 

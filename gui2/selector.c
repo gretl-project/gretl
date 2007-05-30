@@ -119,10 +119,6 @@ struct _selector {
                          c == VLAGSEL || \
                          c == WLS)
 
-#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
-                        c == SCATTERS || c == COINT || c == ARBOND || c == OMIT || \
-                        c == LOGIT || c == PROBIT)
-
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
 #define AUX_LAST(c) (c == TSLS || \
@@ -179,6 +175,29 @@ static int selector_get_depvar_number(selector *sr);
 static int spinner_get_int (GtkWidget *w);
 static int functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
+
+static int want_radios (selector *sr)
+{
+    int c = sr->code;
+
+    if (c == COINT2 || c == VECM || c == ARMA || c == PANEL || 
+	c == SCATTERS || c == COINT || c == ARBOND || 
+	c == LOGIT || c == PROBIT) {
+	return 1;
+    } else if (c == OMIT) {
+	windata_t *vwin = (windata_t *) sr->data;
+	MODEL *pmod = (MODEL *) vwin->data;
+
+	if (pmod->ci == HECKIT) {
+	    /* omit: Wald test only */
+	    sr->opts |= OPT_W;
+	} else {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
 
 #include "lagpref.c"
 
@@ -2384,6 +2403,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     sr->code = code;
     sr->opts = (code == PANEL_WLS)? OPT_W : OPT_NONE;
+    sr->data = p;
     
     if (MODEL_CODE(code)) {
 	if (datainfo->v > 9) {
@@ -2412,7 +2432,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgy += 40;
     }
 
-    if (WANT_RADIOS(code)) {
+    if (want_radios(sr)) {
 	dlgy += 60;
     }
 
@@ -2445,7 +2465,6 @@ static void selector_init (selector *sr, guint code, const char *title,
     }    
 
     sr->cmdlist = NULL;
-    sr->data = p;
     sr->callback = callback;
 
     sr->active_var = 0;
@@ -3405,7 +3424,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     }
 
     /* and radio buttons for some */
-    if (WANT_RADIOS(ci)) {
+    if (want_radios(sr)) {
 	build_selector_radios(sr);
     }
 
@@ -3494,8 +3513,13 @@ static int add_omit_list (gpointer p, selector *sr)
 
     if (sr->code == ELLIPSE) {
 	char pname[VNAMELEN];
+	int nc = gretl_model_get_int(pmod, "base-coeffs"); /* FIXME? */
 
-	for (i=0; i<pmod->ncoeff; i++) {
+	if (nc == 0) {
+	    nc = pmod->ncoeff;
+	}
+
+	for (i=0; i<nc; i++) {
 	    gretl_model_get_param_name(pmod, datainfo, i, pname);
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
@@ -3819,7 +3843,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     }
 
     /* radio buttons? */
-    if (WANT_RADIOS(sr->code)) {
+    if (want_radios(sr)) {
 	build_selector_radios(sr);
     }
 
