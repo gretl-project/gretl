@@ -664,7 +664,11 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     mle_criteria(&dmod, 0);
 
-    dmod.ID = model_count_plus();
+    if (opt & OPT_A) {
+	dmod.aux = AUX_AUX;
+    } else {
+	dmod.ID = model_count_plus();
+    }
 
  bailout:
 
@@ -708,7 +712,9 @@ ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
  * @ci: command index: if = %LOGIT, perform logit regression, otherwise
  * perform probit regression.
  * @opt: if includes %OPT_R form robust (QML) estimates of standard
- * errors and covariance matrix, in binary case.
+ * errors and covariance matrix, in binary case; if %OPT_P arrange for
+ * printing of p-values, not slopes at mean; if %OPT_A treat as an
+ * auxiliary regression.
  * @prn: printing struct in case additional information is
  * wanted (%OPT_V).
  *

@@ -107,6 +107,36 @@ static int transcribe_heckit_vcv (MODEL *pmod, const gretl_matrix *S,
     return 0;
 }
 
+static char *heckit_vcv_mask (const double *x, const MODEL *pmod, int *err)
+{
+    char *mask = NULL;
+    int i, t, miss = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(x[t])) {
+	    miss = 1;
+	    break;
+	}
+    } 
+
+    if (miss == 0) {
+	return NULL;
+    }
+
+    mask = malloc(pmod->t2 - pmod->t1 + 1);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	mask[i++] = na(x[t]);
+    }
+
+    return mask;
+}
+
 static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta, 
 			    const double **Z, DATAINFO *pdinfo, 
 			    MODEL *olsmod, gretl_matrix *Vp)
@@ -148,15 +178,10 @@ static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta,
     sigma = sqrt(s2);
     rho = bmills / sigma;
 
-    mmask = malloc(pdinfo->t2 - pdinfo->t1 + 1);
-    if (mmask == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     v = Xl[0];
-    for (i=pdinfo->t1; i<=pdinfo->t2; i++) {
-	mmask[i] = na(Z[Xl[v]][i]);
+    mmask = heckit_vcv_mask(Z[Xl[v]], olsmod, &err);
+    if (err) {
+	goto bailout;
     }
 
     nX = Xl[0] - 1;
@@ -177,9 +202,9 @@ static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta,
 	Zlist[i] = Zl[i+1];
     }
 
-    X = gretl_matrix_data_subset(Xlist, Z, pdinfo->t1, pdinfo->t2, mmask);
-    w = gretl_matrix_data_subset(dlist, Z, pdinfo->t1, pdinfo->t2, mmask);
-    W = gretl_matrix_data_subset(Zlist, Z, pdinfo->t1, pdinfo->t2, mmask);
+    X = gretl_matrix_data_subset(Xlist, Z, olsmod->t1, olsmod->t2, mmask);
+    w = gretl_matrix_data_subset(dlist, Z, olsmod->t1, olsmod->t2, mmask);
+    W = gretl_matrix_data_subset(Zlist, Z, olsmod->t1, olsmod->t2, mmask);
     Xw = gretl_matrix_dot_op(w, X, '*', &err);
 
     XX = gretl_matrix_alloc(nX, nX);
@@ -231,6 +256,7 @@ static int make_heckit_vcv (const int *Xl, const int *Zl, int vdelta,
     free(Xlist);
     free(Zlist);
     free(mmask);
+
     gretl_matrix_free(X);
     gretl_matrix_free(w);
     gretl_matrix_free(W);
@@ -303,7 +329,7 @@ MODEL heckit_2step (int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *Vp = NULL;
     char *mask = NULL;
     int v = pdinfo->v;
-    int N, T, t, sel, nsel;
+    int t, sel, nsel;
     double u, xb, delta;
     int err = 0;
 
@@ -327,16 +353,16 @@ MODEL heckit_2step (int *list, double ***pZ, DATAINFO *pdinfo,
 	copy_to_reference_missmask(mask);
     }
 
-    /* run initial probit */
-    probmod = logit_probit(Zlist, pZ, pdinfo, PROBIT, OPT_NONE, prn);
+    /* run initial auxiliary probit */
+    probmod = logit_probit(Zlist, pZ, pdinfo, PROBIT, OPT_A, prn);
     if (probmod.errcode) {
 	free(Xlist);
 	free(Zlist);
 	goto bailout;
     }
 
-    T = probmod.nobs;
     if (prn != NULL) {
+	/* OPT_V, verbose */
 	printmodel(&probmod, pdinfo, OPT_NONE, prn);
     }
 
@@ -372,8 +398,7 @@ MODEL heckit_2step (int *list, double ***pZ, DATAINFO *pdinfo,
     /* run OLS */
     hm = lsq(Xlist, pZ, pdinfo, OLS, OPT_A);
     hm.ci = HECKIT;
-    N = hm.nobs;
-    gretl_model_set_int(&hm, "totobs", T);
+    gretl_model_set_int(&hm, "totobs", probmod.nobs);
 
     /* compute appropriate correction to covariances */
     err = make_heckit_vcv(Xlist, Zlist, v+1, (const double **) *pZ, 

@@ -2994,7 +2994,6 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     if (!err) {
 	get_plot_ranges(plot);
     }
-	
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 

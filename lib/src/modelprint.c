@@ -1515,6 +1515,9 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID);
 	break;
+    case AUX_AUX:
+	pputc(prn, '\n');
+	break;
     case AUX_ADD:
     default:
 	if (pmod->ID < 0 || (opt & OPT_S)) {

@@ -104,6 +104,7 @@ struct _selector {
                          c == COINT || \
                          c == COINT2 || \
                          c == GARCH || \
+                         c == HECKIT || \
                          c == HILU || \
                          c == LOGIT || \
                          c == OLS || \
@@ -2775,7 +2776,7 @@ static void build_selector_switches (selector *sr)
     }
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == LOGIT || sr->code == PROBIT) {
+	sr->code == LOGIT || sr->code == PROBIT || sr->code == HECKIT) {
 	if (sr->code == ARMA) {
 	    vbox_add_hsep(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));

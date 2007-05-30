@@ -35,7 +35,6 @@
 #ifndef WIN32
 # include <signal.h>
 # include <glib.h>
-# define USE_GSPAWN
 #endif
 
 /**
@@ -1322,7 +1321,6 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 }
 
 #ifndef WIN32
-# ifdef USE_GSPAWN
 
 static int font_not_found (const char *s)
 {
@@ -1388,26 +1386,6 @@ int gretl_spawn (char *cmdline)
     return ret;
 }
 
-# else /* now non-glib2 version */
-
-int gretl_spawn (char *cmdline)
-{
-    int err;
-
-    errno = 0;
-
-    signal(SIGCHLD, SIG_DFL);
-
-    err = system(cmdline);
-    if (err) {
-	fprintf(stderr, "Failed command: '%s'\n", cmdline);
-	perror(NULL);
-    }
-
-    return err;
-}
-
-# endif
 #endif /* !WIN32 */
 
 /* file copying */

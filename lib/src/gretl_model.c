@@ -3669,8 +3669,15 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
     }
 
     switch (test_ci) {
+
     case ADD:
     case ADDTO:
+	if (model_ci == NLS || model_ci == ARMA || 
+	    model_ci == GARCH || model_ci == HECKIT) {
+	    ok = 0;
+	}
+	break;
+
     case OMIT:
     case OMITFROM:
 	if (model_ci == NLS || model_ci == ARMA || 
