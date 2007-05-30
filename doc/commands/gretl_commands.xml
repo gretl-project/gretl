@@ -3585,6 +3585,42 @@
 
   </command>
 
+  <command name="heckit" section="Estimation" context="cli"
+    label="Heckman selection model">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+	<argument separated="true">selection equation</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra output</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Heckman-type selection model.  In the specification, the list before
+	the semicolon represents the outcome equation, and the second list
+	represents the selection equation.  The dependent variable in the
+	selection equation (<lit>ys</lit> in the example above) must be
+	a binary variable.  FIXME this entry needs to be completed.
+      </para>
+    </description>
+
+  </command>
+
   <command name="help" section="Utilities" 
     label="Help on commands" context="cli">
 

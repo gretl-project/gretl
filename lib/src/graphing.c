@@ -399,6 +399,17 @@ int gnuplot_has_ttf (int reset)
     return !err;
 }
 
+static int gnuplot_has_size (void)
+{
+    static int err = -1; 
+    
+    if (err == -1) {
+	err = gnuplot_test_command("set term png size 640,480");
+    }
+
+    return !err;
+}
+
 int gnuplot_has_pdf (void)
 {
     static int err = -1; 
@@ -554,6 +565,20 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
     }
 }
 
+#ifndef WIN32
+
+static void 
+write_old_gnuplot_font_string (char *fstr, PlotType ptype)
+{
+    if (ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) {
+	strcpy(fstr, " tiny");
+    } else {
+	strcpy(fstr, " small");
+    }
+}
+
+#endif
+
 /* end colors apparatus */
 
 /**
@@ -576,7 +601,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char font_string[128];
     char size_string[16];
     char color_string[64];
-    int gpcolors = 1, gpttf = 1;
+    int gpcolors = 1, gpttf = 1, gpsize = 1;
     const char *grfont = NULL;
 
     *font_string = 0;
@@ -586,6 +611,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 #ifndef WIN32
     gpcolors = gnuplot_has_specified_colors();
     gpttf = gnuplot_has_ttf(0);
+    gpsize = gnuplot_has_size();
 #endif
 
     /* plot font setup */
@@ -597,7 +623,13 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	if (grfont != NULL && *grfont != 0) {
 	    write_gnuplot_font_string(font_string, grfont, ptype);
 	}
+    } 
+
+#ifndef WIN32
+    if (!gpttf) {
+	write_old_gnuplot_font_string(font_string, ptype);
     }
+#endif
 
     /* plot color setup */
     if (gpcolors) {
@@ -620,10 +652,12 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	strcpy(color_string, " color"); /* old PNG driver */
     }
 
-    if (flags & GPT_LETTERBOX) {
-	strcpy(size_string, " size 680,400");
-    } else if (ptype == PLOT_VAR_ROOTS) {
-	strcpy(size_string, " size 480,480");
+    if (gpsize) {
+	if (flags & GPT_LETTERBOX) {
+	    strcpy(size_string, " size 680,400");
+	} else if (ptype == PLOT_VAR_ROOTS) {
+	    strcpy(size_string, " size 480,480");
+	}
     }
 
     sprintf(png_term_line, "set term png%s%s%s",
@@ -1639,8 +1673,6 @@ static int maybe_add_plotx (gnuplot_info *gi,
     return 0;
 }
 
-#define ts_letterbox 1
-
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -1669,6 +1701,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char lwstr[8] = {0};
     char keystr[48] = {0};
     char fit_line[128] = {0};
+    int gpsize = 1;
     int oddman = 0;
     int toomany = 0;
     int i, err = 0;
@@ -1747,6 +1780,10 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } 
 
+#ifndef WIN32
+    gpsize = gnuplot_has_size();
+#endif
+
     /* special tics for short time series plots */
     if (gi.flags & GPT_TS) {
 	if (toomany) {
@@ -1754,7 +1791,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	} else {
 	    pprintf(prn, "# timeseries %d", pdinfo->pd);
 	}
-	if (ts_letterbox) {
+	if (gpsize) {
 	    gi.flags |= GPT_LETTERBOX;
 	    pputs(prn, " (letterbox)\n");
 	} else {
