@@ -512,17 +512,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Other linear models/High _precision OLS..."), NULL, 
       model_callback, MPOLS, NULL, GNULL },
 #endif
-#if 0
-    { "/Model/sep1",  NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Model/_Time series"), NULL, NULL, 0, "<Branch>", GNULL },
-#if 0
-    { "/Model/sep2",  NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Model/_Panel"), NULL, NULL, 0, "<Branch>", GNULL },
-#if 0
-    { "/Model/sep3",  NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Model/_Nonlinear models"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Model/Nonlinear models/_Logit..."), NULL, model_callback, LOGIT, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Probit..."), NULL, model_callback, PROBIT, NULL, GNULL },
@@ -532,17 +523,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Nonlinear models/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL, GNULL },
     { N_("/Model/Nonlinear models/_Nonlinear Least Squares..."), NULL, 
       gretl_callback, NLS, NULL, GNULL },
-#if 0
-    { "/Model/sep4",  NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Model/_Robust estimation"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Model/Robust estimation/Least _Absolute Deviation..."), NULL, 
       model_callback, LAD, NULL, GNULL },
     { N_("/Model/Robust estimation/_Rank correlation..."), NULL, 
       selector_callback, SPEARMAN, NULL, GNULL },
-#if 0
-    { "/Model/sep5",  NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Model/_Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },
     { N_("/Model/_GMM..."), NULL, gretl_callback, GMM, NULL, GNULL },
     { N_("/Model/_Simultaneous equations..."), NULL, gretl_callback, SYSTEM, NULL, GNULL },

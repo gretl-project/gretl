@@ -43,9 +43,16 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 				const double **Z, const DATAINFO *pdinfo,
 				PRN *prn);
 
+GRETL_VAR *
+gretl_restricted_vecm (gretl_restriction_set *rset, 
+		       double ***pZ,
+		       DATAINFO *pdinfo,
+		       PRN *prn,
+		       int *err);
+
 void destroy_restriction_set (gretl_restriction_set *rset);
 
-int gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
+int gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 		    PRN *prn);
 
 int gretl_restriction_set_boot_params (int B, gretlopt opt);

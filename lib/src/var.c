@@ -35,7 +35,12 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 				    int targ, int shock, int periods,
 				    const double **Z, 
 				    const DATAINFO *pdinfo);
+
 static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
+
+static GRETL_VAR *gretl_VECM_clone (GRETL_VAR *orig, double ***pZ,
+				    DATAINFO *pdinfo, PRN *prn,
+				    int *err);
 
 struct var_lists {
     int *detvars;
@@ -2072,24 +2077,66 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, const DATAINFO *pdinfo, 
-			  PRN *prn)
+GRETL_VAR *
+real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
+			    double ***pZ, DATAINFO *pdinfo, 
+			    PRN *prn, int *err)
+{
+    void *handle = NULL;
+    int (*restricted_johansen_analysis) (GRETL_VAR *, double ***, DATAINFO *, PRN *);
+    GRETL_VAR *jnew = NULL;
+
+    if (orig->jinfo == NULL || D == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }    
+
+    gretl_error_clear();
+
+    restricted_johansen_analysis = get_plugin_function("restricted_johansen_analysis", &handle);
+    
+    if (restricted_johansen_analysis == NULL) {
+	*err = E_FOPEN;
+    } else {
+	jnew = gretl_VECM_clone(orig, pZ, pdinfo, prn, err);
+	if (!*err) {
+#if 0
+	    gretl_VAR_print(jnew, pdinfo, OPT_NONE, prn);
+#endif
+	    jnew->jinfo->D = D;
+	    *err = (* restricted_johansen_analysis) (jnew, pZ, pdinfo, prn);
+	}
+	close_plugin(handle);
+    }
+
+    if (!*err) {
+	gretl_VAR_print(jnew, pdinfo, OPT_NONE, prn);
+    }
+    
+    return jnew;    
+}
+
+/* FIXME break the OPT_F case out to a separate function */
+
+int gretl_VECM_test_beta (GRETL_VAR *vecm, gretl_matrix *D,
+			  const DATAINFO *pdinfo, PRN *prn)
 {
     void *handle = NULL;
     int (*vecm_beta_test) (GRETL_VAR *, const DATAINFO *, PRN *);
     int err = 0;
 
-    if (vecm->jinfo == NULL || vecm->jinfo->D == NULL) {
+    if (vecm->jinfo == NULL || D == NULL) {
 	return E_DATA;
     }    
 
     gretl_error_clear();
-    
+
     vecm_beta_test = get_plugin_function("vecm_beta_test", &handle);
     
     if (vecm_beta_test == NULL) {
 	err = 1;
     } else {
+	vecm->jinfo->D = D;
 	err = (* vecm_beta_test) (vecm, pdinfo, prn);
 	close_plugin(handle);
     }
@@ -2809,8 +2856,33 @@ int johansen_test_simple (int order, const int *list, double ***pZ,
     return err;
 }
 
+static GRETL_VAR *gretl_VECM_clone (GRETL_VAR *orig, double ***pZ,
+				    DATAINFO *pdinfo, PRN *prn,
+				    int *err)
+{
+    GRETL_VAR *jvar = NULL;
+    
+    jvar = johansen_wrapper(orig->order + 1, 
+			    orig->jinfo->rank, 
+			    orig->jinfo->list,
+			    orig->jinfo->exolist,
+			    pZ, pdinfo, 
+			    OPT_NONE, /* ?? */
+			    prn);
+    
+    if (jvar != NULL) {
+	if (jvar->err) {
+	    *err = jvar->err;
+	}
+    } else {
+	*err = 1;
+    }
+
+    return jvar;
+}
+
 /**
- * vecm:
+ * gretl_VECM:
  * @order: lag order for test.
  * @rank: pre-specified cointegration rank.
  * @list: list of variables to test for cointegration.

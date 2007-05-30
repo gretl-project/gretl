@@ -2134,6 +2134,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     MODEL *pmod = NULL;
     gretl_equation_system *sys = NULL;
     GRETL_VAR *vecm = NULL;
+    GRETL_VAR *vnew = NULL;
 
     gchar *buf;
     PRN *prn;
@@ -2222,8 +2223,12 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     if (bufopen(&prn)) return; 
 
-    err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
-					 datainfo, prn);
+    if (opt & OPT_F) {
+	vnew = gretl_restricted_vecm(my_rset, &Z, datainfo, prn, &err);
+    } else {
+	err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
+					     datainfo, prn);
+    }
 
     if (err) {
 	errmsg(err, prn);
@@ -2242,10 +2247,13 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     g_free(buf);
 
-    strcpy(title, "gretl: ");
-    strcat(title, _("linear restrictions"));
-
-    view_buffer(prn, 78, height, title, PRINT, NULL);
+    if (vnew != NULL) {
+	view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, vnew);
+    } else {
+	strcpy(title, "gretl: ");
+	strcat(title, _("linear restrictions"));
+	view_buffer(prn, 78, height, title, PRINT, NULL);
+    }
 }
 
 static int 

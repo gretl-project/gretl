@@ -261,23 +261,8 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
     gretl_matrix_print(q, "q");
 #endif
 
-    if (rset->type == GRETL_OBJ_VAR) {
-	gretl_matrix *D = gretl_matrix_right_nullspace(R, &err);
-
-	if (!err) {
-	    GRETL_VAR *var = rset->obj;
-
-#if RDEBUG
-	    gretl_matrix_print(D, "D");
-#endif
-	    gretl_VAR_attach_restrictions(var, D);
-	}
-	gretl_matrix_free(R);
-	gretl_matrix_free(q);
-    } else {
-	rset->R = R;
-	rset->q = q;
-    }
+    rset->R = R;
+    rset->q = q;
 
     return err;
 }
@@ -1391,6 +1376,37 @@ static int do_single_equation_test (gretl_restriction_set *rset,
     return err;
 }
 
+GRETL_VAR *
+gretl_restricted_vecm (gretl_restriction_set *rset, 
+		       double ***pZ,
+		       DATAINFO *pdinfo,
+		       PRN *prn,
+		       int *err)
+{
+    gretl_matrix *D = NULL;
+    GRETL_VAR *jvar = NULL;
+
+    if (rset == NULL || rset->type != GRETL_OBJ_VAR) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = restriction_set_form_matrices(rset);
+
+    if (!*err) {
+	D = gretl_matrix_right_nullspace(rset->R, err);
+    }
+
+    if (!*err) {
+	print_restriction_set(rset, pdinfo, prn);
+	jvar = real_gretl_restricted_vecm(rset->obj, D, pZ, pdinfo, prn, err);
+    }
+
+    destroy_restriction_set(rset);
+
+    return jvar;
+}
+
 /* Respond to "end restrict": in the case of a single equation, go
    ahead and do the test; in the case of a system of equations,
    form the restriction matrices R and q and attach these to the
@@ -1410,11 +1426,15 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
     }
 
     if (rset->type == GRETL_OBJ_VAR) {
-	/* vecm */
+	gretl_matrix *D = NULL;
+
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
+	    D = gretl_matrix_right_nullspace(rset->R, &err);
+	}
+	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
-	    gretl_VECM_test_beta(rset->obj, pdinfo, prn);
+	    gretl_VECM_test_beta(rset->obj, D, pdinfo, prn);
 	}
 	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {
@@ -1468,7 +1488,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
  */
 
 int 
-gretl_sum_test (const int *list, MODEL *pmod, const DATAINFO *pdinfo,
+gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 		PRN *prn)
 {
     gretl_restriction_set *r;

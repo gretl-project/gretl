@@ -4094,9 +4094,19 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		s->alt_model = 1;
 	    }
 	} else if (!strcmp(cmd->param, "restrict")) {
-	    err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
-						 pdinfo, prn);
-	    s->rset = NULL;
+	    if (cmd->opt & OPT_F) {
+		/* FIXME */
+		s->var = gretl_restricted_vecm(s->rset, pZ, pdinfo, prn, &err);
+		if (s->var != NULL) {
+		    if (s->callback != NULL) {
+			s->callback(s, pZ, pdinfo);
+		    }
+		}		
+	    } else {
+		err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
+						     pdinfo, prn);
+		s->rset = NULL;
+	    }
 	} else {
 	    err = 1;
 	}

@@ -120,6 +120,7 @@ struct plugin_function plugin_functions[] = {
     { "johansen_analysis",        P_JOHANSEN },
     { "johansen_bootstrap_round", P_JOHANSEN },
     { "vecm_beta_test",           P_JOHANSEN },
+    { "restricted_johansen_analysis", P_JOHANSEN },
 
     /* least absolute deviations */
     { "lad_driver", P_LAD },
