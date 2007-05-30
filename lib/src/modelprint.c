@@ -2740,6 +2740,7 @@ static void print_coeff_separator (const char *s, PRN *prn)
     } else {
 	if (s != NULL) {
 	    pputc(prn, '\n');
+	    /* FIXME RTF */
 	    print_centered((rtf_format(prn))? I_(s) : _(s), 78, prn);
 	    pputc(prn, '\n');
 	}

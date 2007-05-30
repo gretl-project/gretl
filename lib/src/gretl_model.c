@@ -24,6 +24,10 @@
 
 #define MDEBUG 0
 
+enum {
+    MODEL_DATA_COEFFSEP = MODEL_DATA_STRUCT + 1
+};
+
 struct model_data_item_ {
     char *key;
     void *ptr;
@@ -564,7 +568,7 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
     }
     cs->pos = pos;
 
-    err = gretl_model_set_data(pmod, "coeffsep", cs, MODEL_DATA_STRUCT, sizeof *cs);
+    err = gretl_model_set_data(pmod, "coeffsep", cs, MODEL_DATA_COEFFSEP, sizeof *cs);
     if (err) {
 	free(cs);
     }
@@ -1351,6 +1355,16 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
+    } else if (pmod->ci == HECKIT) {
+	nx = gretl_model_get_int(pmod, "base-coeffs");
+	if (nx > 0) {
+	    list = gretl_list_new(nx);
+	    if (list != NULL) {
+		for (i=1; i<=list[0]; i++) {
+		    list[i] = pmod->list[i + 1];
+		}
+	    }
+	}	    
     } else if (pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
@@ -2869,6 +2883,19 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
     return 0;
 }
 
+static void print_model_coeff_sep (model_data_item *item, FILE *fp)
+{
+    CoeffSep *cs = (CoeffSep *) item->ptr;
+
+    fprintf(fp, " pos=\"%d\"", cs->pos);
+    if (cs->str != NULL) {
+	fputs(" string=\"", fp);
+	gretl_xml_put_raw_string(cs->str, fp);
+	fputc('"', fp);
+    }
+    fputs("/>\n", fp);
+}
+
 static void print_model_data_items (const MODEL *pmod, FILE *fp)
 {
     model_data_item *item;
@@ -2882,6 +2909,11 @@ static void print_model_data_items (const MODEL *pmod, FILE *fp)
 
 	fprintf(fp, "<data-item key=\"%s\" type=\"%d\"", 
 		item->key, item->type);
+
+	if (item->type == MODEL_DATA_COEFFSEP) {
+	    print_model_coeff_sep(item, fp);
+	    continue;
+	}
 
 	if (item->type == MODEL_DATA_INT_ARRAY) {
 	    nelem = item->size / sizeof(int);
@@ -3291,26 +3323,37 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    int *ivals = gretl_xml_get_int_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, ivals, 
-					   MODEL_DATA_INT_ARRAY,
+		err = gretl_model_set_data(pmod, key, ivals, type,
 					   nelem * sizeof *ivals);
 	    }
 	} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
 	    double *xvals = gretl_xml_get_double_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, xvals, 
-					   MODEL_DATA_DOUBLE_ARRAY,
+		err = gretl_model_set_data(pmod, key, xvals, type,
 					   nelem * sizeof *xvals);
 	    }
 	} else if (type == MODEL_DATA_CMPLX_ARRAY) {
 	    cmplx *cvals = gretl_xml_get_cmplx_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, cvals,
-					   MODEL_DATA_CMPLX_ARRAY,
+		err = gretl_model_set_data(pmod, key, cvals, type,
 					   nelem * sizeof *cvals);
 	    }	    
+	} else if (type == MODEL_DATA_COEFFSEP) {
+	    CoeffSep *cs = malloc(sizeof *cs);
+	    char *tmp = NULL;
+
+	    if (cs != NULL) {
+		cs->str[0] = '\0';
+		gretl_xml_get_prop_as_int(cur, "pos", &cs->pos);
+		gretl_xml_get_prop_as_string(cur, "string", &tmp);
+		if (tmp != NULL) {
+		    strcpy(cs->str, tmp);
+		    free(tmp);
+		}
+		err = gretl_model_set_data(pmod, key, cs, type, sizeof *cs);
+	    }
 	}
 
 	cur = cur->next;
