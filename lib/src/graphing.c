@@ -128,9 +128,15 @@ int gnuplot_test_command (const char *cmd)
     int child_pid = 0, sinp = 0, serr = 0;
     GError *error = NULL;
     gchar *argv[] = {
-	(*gnuplot_path == 0)? "gnuplot" : gnuplot_path,
+	NULL,
 	NULL
     };
+
+    if (*gnuplot_path == 0) {
+	strcpy(gnuplot_path, gretl_gnuplot_path());
+    }
+
+    argv[0] = gnuplot_path;
 
     signal(SIGCHLD, SIG_DFL);
 

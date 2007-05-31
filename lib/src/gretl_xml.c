@@ -185,6 +185,20 @@ static int savenum (const int *list, int i)
 }
 
 /**
+ * gretl_xml_put_int:
+ * @tag: name to give value.
+ * @i: value to put.
+ * @fp: file to which to write.
+ * 
+ * Writes to @fp a string of the form "%s=%d".
+ */
+
+void gretl_xml_put_int (const char *tag, int i, FILE *fp)
+{
+    fprintf(fp, "%s=\"%d\" ", tag, i);
+}
+
+/**
  * gretl_xml_put_double:
  * @tag: name to give value.
  * @x: value to put.

@@ -1079,6 +1079,63 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return err;
 }
 
+static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *D)
+{
+    int h = jrank(jvar);
+    int nb = gretl_matrix_rows(jvar->jinfo->Beta);
+
+    jvar->jinfo->bdf = h * (nb - gretl_matrix_cols(D));
+}
+
+static int
+johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
+		  const gretl_matrix *D, PRN *prn)
+{
+    gretl_matrix *Suu;
+    double llr = 0.0;
+    double ldet = 0.0;
+    double T_2 = (double) jvar->T / 2.0;
+    int n = jvar->neqns;
+    int h, i, err = 0;
+
+    h = (jrank(jvar) > 0)? jrank(jvar) : n;
+
+    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
+
+    if (Suu == NULL) {
+	err = E_ALLOC;
+    } else {
+	ldet = gretl_matrix_log_determinant(Suu, &err);
+    }
+
+    if (!err) {
+	llr = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
+	for (i=0; i<h; i++) {
+	    pprintf(prn, _("eigenvalue %d = %g\n"), i+1, evals->val[i]);
+	    llr -= T_2 * log(1.0 - evals->val[i]); 
+	}
+	pputc(prn, '\n');
+    }
+
+    if (Suu != NULL) {
+	gretl_matrix_free(Suu);
+    }
+
+    if (!err) {
+	double x = 2.0 * (jvar->ll - llr);
+	int nb = gretl_matrix_rows(jvar->jinfo->Beta);
+	int df = h * (nb - gretl_matrix_cols(D));
+
+	pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
+	pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), llr);
+	pprintf(prn, "2 * (lu - lr) = %g\n", x);
+	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
+		chisq_cdf_comp(x, df));
+    }
+
+    return err;
+}
+
 static int johansen_prep_restriction (GRETL_VAR *jvar, 
 				      gretl_matrix *Suu,
 				      const gretl_matrix *D)
@@ -1174,6 +1231,7 @@ int johansen_estimate (GRETL_VAR *jvar, const gretl_matrix *D,
 
     if (D != NULL) {
 	err = gretl_matrix_multiply(D, M, jvar->jinfo->Beta);
+	set_beta_test_df(jvar, D);
     } else {
 	jvar->jinfo->Beta = M;
 	M = NULL;
@@ -1277,59 +1335,6 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int
-johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
-		  const gretl_matrix *D, int save_ll, PRN *prn)
-{
-    gretl_matrix *Suu;
-    double llr = 0.0;
-    double ldet = 0.0;
-    double T_2 = (double) jvar->T / 2.0;
-    int n = jvar->neqns;
-    int h, i, err = 0;
-
-    h = (jrank(jvar) > 0)? jrank(jvar) : n;
-
-    Suu = gretl_matrix_copy(jvar->jinfo->Suu);
-
-    if (Suu == NULL) {
-	err = E_ALLOC;
-    } else {
-	ldet = gretl_matrix_log_determinant(Suu, &err);
-    }
-
-    if (!err) {
-	llr = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
-	for (i=0; i<h; i++) {
-	    pprintf(prn, _("eigenvalue %d = %g\n"), i+1, evals->val[i]);
-	    llr -= T_2 * log(1.0 - evals->val[i]); 
-	}
-	pputc(prn, '\n');
-    }
-
-    if (Suu != NULL) {
-	gretl_matrix_free(Suu);
-    }
-
-    if (!err) {
-	double x = 2.0 * (jvar->ll - llr);
-	int nb = gretl_matrix_rows(jvar->jinfo->Beta);
-	int df = h * (nb - gretl_matrix_cols(D));
-
-	pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
-	pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), llr);
-	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
-		chisq_cdf_comp(x, df));
-
-	if (save_ll) {
-	    jvar->ll = llr;
-	}
-    }
-
-    return err;
-}
-
 /* 
    Test of (homogeneous) linear restrictions on the cointegrating
    relations in a VECM.  This all needs verification and possibly
@@ -1382,7 +1387,7 @@ int vecm_beta_test (GRETL_VAR *jvar, const gretl_matrix *D, const DATAINFO *pdin
 
     if (!err) {
 	gretl_matrix_print_to_prn(M, "M", prn);
-	johansen_LR_calc(jvar, evals, D, 0, prn);
+	johansen_LR_calc(jvar, evals, D, prn);
     } 
 
  bailout:    

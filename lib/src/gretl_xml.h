@@ -31,6 +31,8 @@ int gretl_xml_open_doc_root (const char *fname,
 			     xmlDocPtr *pdoc, 
 			     xmlNodePtr *pnode);
 
+void gretl_xml_put_int (const char *tag, int i, FILE *fp);
+
 void gretl_xml_put_double (const char *tag, double x, FILE *fp);
 
 void gretl_xml_put_double_array (const char *tag, double *x, int n,

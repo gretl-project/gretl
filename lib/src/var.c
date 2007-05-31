@@ -2480,6 +2480,8 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Bse = NULL;
     jv->Bvar = NULL;
     jv->R = NULL;
+    jv->ll0 = NADBL;
+    jv->bdf = 0;
 
     jv->difflist = NULL;
     jv->biglist = NULL;
@@ -2771,7 +2773,7 @@ johansen_driver (GRETL_VAR *jvar, const gretl_matrix *D,
 
 static GRETL_VAR *johansen_wrapper (int order, int rank, 
 				    const int *list, const int *exolist, 
-				    const gretl_matrix *D,
+				    const gretl_matrix *D, 
 				    double ***pZ, DATAINFO *pdinfo, 
 				    gretlopt opt, PRN *prn)
 {
@@ -2818,7 +2820,7 @@ static GRETL_VAR *johansen_wrapper (int order, int rank,
 GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
-    return johansen_wrapper(order, 0, list, NULL, NULL,
+    return johansen_wrapper(order, 0, list, NULL, NULL, 
 			    pZ, pdinfo, opt, prn);
 }
 
@@ -2848,7 +2850,7 @@ int johansen_test_simple (int order, const int *list, double ***pZ,
     GRETL_VAR *jvar;
     int err;
 
-    jvar = johansen_wrapper(order, 0, list, NULL, NULL,
+    jvar = johansen_wrapper(order, 0, list, NULL, NULL, 
 			    pZ, pdinfo, opt, prn);
     if (jvar == NULL) {
 	err = E_ALLOC;
@@ -2903,7 +2905,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 	return jvar;
     }
 
-    jvar = johansen_wrapper(order, rank, vecm_list, exo_list,
+    jvar = johansen_wrapper(order, rank, vecm_list, exo_list, 
 			    NULL, pZ, pdinfo, opt | OPT_S, prn);
     
     if (jvar != NULL) {
@@ -2968,6 +2970,7 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 
     if (jvar != NULL) {
 	jvar->jinfo->R = R;
+	jvar->jinfo->ll0 = orig->ll;
 	if (!jvar->err) {
 	    gretl_VAR_print(jvar, pdinfo, opt, prn);
 	} else {
@@ -3328,6 +3331,10 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
 	    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
+	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
+	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
+	    gretl_xml_node_get_int(cur, doc, &jinfo->bdf);
 	}
 	cur = cur->next;
     }
@@ -3504,6 +3511,11 @@ static void johansen_serialize (JohansenInfo *jinfo, FILE *fp)
     gretl_xml_put_matrix(jinfo->Alpha, "Alpha", fp);
     gretl_xml_put_matrix(jinfo->Bse, "Bse", fp);
     gretl_xml_put_matrix(jinfo->R, "R", fp);
+
+    if (!na(jinfo->ll0) && jinfo->bdf > 0) {
+	gretl_xml_put_double("ll0", jinfo->ll0, fp);
+	gretl_xml_put_int("bdf", jinfo->bdf, fp);
+    }
 
     fputs("</gretl-johansen>\n", fp);
 }

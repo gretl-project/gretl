@@ -1371,8 +1371,6 @@ static void maybe_revise_tramo_x12a_status (void)
     }
 # endif
 
-    fprintf(stderr, "maybe_revise_tramo_x12a_status: doit = %d\n", doit);
-
     if (doit) {
 	set_tramo_x12a_status();
     }

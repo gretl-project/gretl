@@ -725,7 +725,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 }
 
 static void 
-print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
+print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 {
     gretl_prn_newline(prn);
 
@@ -739,9 +739,29 @@ print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
     gretl_prn_newline(prn);
     print_Johansen_test_case(jcode(vecm), prn); 
 
+    /* FIXME TeX below */
+
     if (vecm->jinfo->R != NULL) {
 	pprintf(prn, "\n\nRestriction on beta: R * beta = 0, where R =\n\n");
 	gretl_matrix_print_to_prn(vecm->jinfo->R, NULL, prn);
+
+	if (!na(vecm->jinfo->ll0) && vecm->jinfo->bdf > 0) {
+	    double ll0 = vecm->jinfo->ll0;
+	    double x = 2.0 * (ll0 - vecm->ll);
+	    int df = vecm->jinfo->bdf;
+
+	    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g"), ll0);
+	    gretl_prn_newline(prn);
+	    pprintf(prn, _("Restricted loglikelihood (lr) = %g"), vecm->ll);
+	    gretl_prn_newline(prn);
+	    pprintf(prn, "2 * (lu - lr) = %g", x);
+	    gretl_prn_newline(prn);
+	    pprintf(prn, _("P(Chi-Square(%d) > %g = %g"), df, x, 
+		    chisq_cdf_comp(x, df));
+	    gretl_prn_newline(prn);
+
+	    *lldone = 1;
+	}
     } else {
 	pputc(prn, '\n');
     }
@@ -772,6 +792,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
     int quiet = (opt & OPT_Q);
+    int lldone = 0;
     int pause = 0;
     int i, j, k, v;
 
@@ -806,7 +827,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pprintf(prn, I_("%s estimates, observations %s--%s ($T=%d$)"),
 		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
 	if (vecm) {
-	    print_vecm_header_info(var, prn);
+	    print_vecm_header_info(var, &lldone, prn);
 	}
 	pputs(prn, "\n\\end{center}\n");
     } else if (rtf) {
@@ -815,7 +836,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pprintf(prn, I_("%s estimates, observations %s-%s (T = %d)"),
 		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
 	if (vecm) {
-	    print_vecm_header_info(var, prn);
+	    print_vecm_header_info(var, &lldone, prn);
 	}	
 	pputs(prn, "\\par\n\n");
     } else {
@@ -824,7 +845,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
 		(vecm)? ("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
 	if (vecm) {
-	    print_vecm_header_info(var, prn);
+	    print_vecm_header_info(var, &lldone, prn);
 	}
 	pputc(prn, '\n');
     }
@@ -840,14 +861,18 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     if (tex) {
 	tex_print_VAR_ll_stats(var, prn);
     } else if (rtf) {
-	pprintf(prn, "%s = %#g\\par\n", I_("Log-likelihood"), var->ll);
+	if (!lldone) {
+	    pprintf(prn, "%s = %#g\\par\n", I_("Log-likelihood"), var->ll);
+	}
 	pprintf(prn, "%s = %#g\\par\n", I_("Determinant of covariance matrix"), 
 		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("HQC"), var->HQC);
     } else {
-	pprintf(prn, "%s = %#g\n", _("Log-likelihood"), var->ll);
+	if (!lldone) {
+	    pprintf(prn, "%s = %#g\n", _("Log-likelihood"), var->ll);
+	}
 	pprintf(prn, "%s = %#g\n", _("Determinant of covariance matrix"), exp(var->ldet));
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
