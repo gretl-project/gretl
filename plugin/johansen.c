@@ -904,6 +904,19 @@ static int beta_variance (GRETL_VAR *vecm)
     return err;
 }
 
+static void trash_beta_variance (GRETL_VAR *jvar)
+{
+    if (jvar->jinfo->Bvar != NULL) {
+	gretl_matrix_free(jvar->jinfo->Bvar);
+	jvar->jinfo->Bvar = NULL;
+    }
+
+    if (jvar->jinfo->Bse != NULL) {
+	gretl_matrix_free(jvar->jinfo->Bse);
+	jvar->jinfo->Bse = NULL;
+    }
+}
+
 static int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *eigvals)
 {
     gretl_matrix *Suu;
@@ -1193,8 +1206,8 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 }
 
 static int
-johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, int save_ll, 
-		  PRN *prn)
+johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
+		  const gretl_matrix *D, int save_ll, PRN *prn)
 {
     gretl_matrix *Suu;
     double llr = 0.0;
@@ -1229,7 +1242,7 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, int save_ll,
     if (!err) {
 	double x = 2.0 * (jvar->ll - llr);
 	int nb = gretl_matrix_rows(jvar->jinfo->Beta);
-	int df = h * (nb - gretl_matrix_cols(jvar->jinfo->D));
+	int df = h * (nb - gretl_matrix_cols(D));
 
 	pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
 	pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), llr);
@@ -1252,7 +1265,8 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, int save_ll,
    restricted constant or trend
 */
 
-int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
+int vecm_beta_test (GRETL_VAR *jvar, const gretl_matrix *D, const DATAINFO *pdinfo, 
+		    PRN *prn)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
@@ -1261,7 +1275,7 @@ int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
     gretl_matrix *evals = NULL;
 
     int n = jvar->neqns;
-    int m = gretl_matrix_cols(jvar->jinfo->D);
+    int m = gretl_matrix_cols(D);
     int rank = jrank(jvar);
     int err = 0;
 
@@ -1277,19 +1291,17 @@ int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
-    gretl_matrix_print_to_prn(jvar->jinfo->D, "Restriction matrix, D", prn);
+    gretl_matrix_print_to_prn(D, "Restriction matrix, D", prn);
 
     /* calculate Svv <- D' Svv D */
-    gretl_matrix_qform(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
+    gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
 		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
     gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
 
     if (!err) {
 	/* Suv <- SuvD */
-	err = gretl_matrix_multiply(jvar->jinfo->Suv, 
-				    jvar->jinfo->D,
-				    Suv);
+	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, Suv);
     }
 
     gretl_matrix_print_to_prn(Suv, "SuvD", prn);
@@ -1298,7 +1310,7 @@ int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 
     if (!err) {
 	gretl_matrix_print_to_prn(M, "M", prn);
-	johansen_LR_calc(jvar, evals, 0, prn);
+	johansen_LR_calc(jvar, evals, D, 0, prn);
     } 
 
  bailout:    
@@ -1312,8 +1324,9 @@ int vecm_beta_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
-				  PRN *prn)
+int restricted_johansen (GRETL_VAR *jvar, const gretl_matrix *D,
+			 double ***pZ, DATAINFO *pdinfo, 
+			 PRN *prn)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
@@ -1322,7 +1335,7 @@ int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinf
     gretl_matrix *evals = NULL;
 
     int n = jvar->neqns;
-    int m = gretl_matrix_cols(jvar->jinfo->D);
+    int m = gretl_matrix_cols(D);
     int rank = jrank(jvar);
     int err = 0;
 
@@ -1339,15 +1352,13 @@ int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinf
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
     /* calculate Svv <- D' Svv D */
-    gretl_matrix_qform(jvar->jinfo->D, GRETL_MOD_TRANSPOSE,
+    gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
 		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
 
     if (!err) {
 	/* Suv <- SuvD */
-	err = gretl_matrix_multiply(jvar->jinfo->Suv, 
-				    jvar->jinfo->D,
-				    Suv);
+	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, Suv);
     }
 
     err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
@@ -1356,9 +1367,9 @@ int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinf
 	goto bailout;
     }
 
-    johansen_LR_calc(jvar, evals, 1, prn);
+    johansen_LR_calc(jvar, evals, D, 1, prn);
 
-    gretl_matrix_multiply_mod(jvar->jinfo->D, GRETL_MOD_NONE,
+    gretl_matrix_multiply_mod(D, GRETL_MOD_NONE,
 			      M, GRETL_MOD_NONE,
 			      jvar->jinfo->Beta, GRETL_MOD_NONE);
 
@@ -1372,22 +1383,20 @@ int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinf
 
     if (!err) {
 	err = phillips_normalize_beta(jvar); 
-	fprintf(stderr, "phillips_normalize_beta: err = %d\n", err);
     }
 
     if (!err) {
 	err = build_VECM_models(jvar, pZ, pdinfo, 0);
-	fprintf(stderr, "build_VECM_models: err = %d\n", err);
     }
     if (!err) {
 	err = compute_omega(jvar);
-	fprintf(stderr, "compute_omega: err = %d\n", err);
     }
 #if 0
     if (!err) {
 	err = beta_variance(jvar);
-	fprintf(stderr, "beta_variance: err = %d\n", err);
     }
+#else
+    trash_beta_variance(jvar);
 #endif
     if (!err) {
 	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
@@ -1401,7 +1410,6 @@ int restricted_johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinf
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);
-
     gretl_matrix_free(Svv);
     gretl_matrix_free(Suv);
 

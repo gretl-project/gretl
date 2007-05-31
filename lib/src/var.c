@@ -262,7 +262,7 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->Bvar);
-    gretl_matrix_free(jv->D);
+    gretl_matrix_free(jv->R);
 
     free(jv);
 }
@@ -2078,12 +2078,14 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
 }
 
 GRETL_VAR *
-real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
+real_gretl_restricted_vecm (GRETL_VAR *orig, 
+			    gretl_matrix *R, const gretl_matrix *D,
 			    double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn, int *err)
 {
     void *handle = NULL;
-    int (*restricted_johansen_analysis) (GRETL_VAR *, double ***, DATAINFO *, PRN *);
+    int (*restricted_johansen) (GRETL_VAR *, const gretl_matrix *, double ***, 
+				DATAINFO *, PRN *);
     GRETL_VAR *jnew = NULL;
 
     if (orig->jinfo == NULL || D == NULL) {
@@ -2093,9 +2095,9 @@ real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
 
     gretl_error_clear();
 
-    restricted_johansen_analysis = get_plugin_function("restricted_johansen_analysis", &handle);
+    restricted_johansen = get_plugin_function("restricted_johansen", &handle);
     
-    if (restricted_johansen_analysis == NULL) {
+    if (restricted_johansen == NULL) {
 	*err = E_FOPEN;
     } else {
 	jnew = gretl_VECM_clone(orig, pZ, pdinfo, prn, err);
@@ -2103,8 +2105,8 @@ real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
 #if 0
 	    gretl_VAR_print(jnew, pdinfo, OPT_NONE, prn);
 #endif
-	    jnew->jinfo->D = D;
-	    *err = (* restricted_johansen_analysis) (jnew, pZ, pdinfo, prn);
+	    jnew->jinfo->R = R;
+	    *err = (* restricted_johansen) (jnew, D, pZ, pdinfo, prn);
 	}
 	close_plugin(handle);
     }
@@ -2118,11 +2120,12 @@ real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
 
 /* FIXME break the OPT_F case out to a separate function */
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, gretl_matrix *D,
+int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
 			  const DATAINFO *pdinfo, PRN *prn)
 {
     void *handle = NULL;
-    int (*vecm_beta_test) (GRETL_VAR *, const DATAINFO *, PRN *);
+    int (*vecm_beta_test) (GRETL_VAR *, const gretl_matrix *D,
+			   const DATAINFO *, PRN *);
     int err = 0;
 
     if (vecm->jinfo == NULL || D == NULL) {
@@ -2136,11 +2139,10 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, gretl_matrix *D,
     if (vecm_beta_test == NULL) {
 	err = 1;
     } else {
-	vecm->jinfo->D = D;
-	err = (* vecm_beta_test) (vecm, pdinfo, prn);
+	err = (* vecm_beta_test) (vecm, D, pdinfo, prn);
 	close_plugin(handle);
     }
-    
+
     return err;    
 }
 
@@ -2481,7 +2483,7 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Alpha = NULL;
     jv->Bse = NULL;
     jv->Bvar = NULL;
-    jv->D = NULL;
+    jv->R = NULL;
 
     jv->difflist = NULL;
     jv->biglist = NULL;
@@ -2939,21 +2941,6 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     return jvar;
 }
 
-int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D)
-{
-    if (var->jinfo == NULL) {
-	return 1;
-    }
-
-    if (var->jinfo->D != NULL) {
-	gretl_matrix_free(var->jinfo->D);
-    }
-
-    var->jinfo->D = D;
-
-    return 0;
-}
-
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name)
 {
     if (var->name != NULL) {
@@ -3300,8 +3287,8 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Bse")) {
 	    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "D")) {
-	    jinfo->D = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
+	    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
 	}
 	cur = cur->next;
     }
@@ -3477,7 +3464,7 @@ static void johansen_serialize (JohansenInfo *jinfo, FILE *fp)
     gretl_xml_put_matrix(jinfo->Beta, "Beta", fp);
     gretl_xml_put_matrix(jinfo->Alpha, "Alpha", fp);
     gretl_xml_put_matrix(jinfo->Bse, "Bse", fp);
-    gretl_xml_put_matrix(jinfo->D, "D", fp);
+    gretl_xml_put_matrix(jinfo->R, "R", fp);
 
     fputs("</gretl-johansen>\n", fp);
 }

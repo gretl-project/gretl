@@ -1399,10 +1399,13 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
 
     if (!*err) {
 	print_restriction_set(rset, pdinfo, prn);
-	jvar = real_gretl_restricted_vecm(rset->obj, D, pZ, pdinfo, prn, err);
+	jvar = real_gretl_restricted_vecm(rset->obj, rset->R, D, pZ, pdinfo, 
+					  prn, err);
+	rset->R = NULL; /* transfer to vecm */
     }
 
     destroy_restriction_set(rset);
+    gretl_matrix_free(D);
 
     return jvar;
 }
@@ -1435,6 +1438,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
 	    gretl_VECM_test_beta(rset->obj, D, pdinfo, prn);
+	    gretl_matrix_free(D);
 	}
 	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {

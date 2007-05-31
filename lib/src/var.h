@@ -74,8 +74,6 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name);
 
-int gretl_VAR_attach_restrictions (GRETL_VAR *var, gretl_matrix *D);
-
 const char *gretl_VAR_get_name (const GRETL_VAR *var);
 
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k);
@@ -99,11 +97,12 @@ int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 
 int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, gretl_matrix *D,
+int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
 			  const DATAINFO *pdinfo, PRN *prn);
 
 GRETL_VAR *
-real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *D,
+real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *R,
+			    const gretl_matrix *D,
 			    double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn, int *err);
 
