@@ -38,9 +38,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 
 static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
 
-static GRETL_VAR *gretl_VECM_clone (GRETL_VAR *orig, double ***pZ,
-				    DATAINFO *pdinfo, PRN *prn,
-				    int *err);
+static gretlopt opt_from_jcode (JohansenCode jc);
 
 struct var_lists {
     int *detvars;
@@ -2077,49 +2075,6 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
-GRETL_VAR *
-real_gretl_restricted_vecm (GRETL_VAR *orig, 
-			    gretl_matrix *R, const gretl_matrix *D,
-			    double ***pZ, DATAINFO *pdinfo, 
-			    PRN *prn, int *err)
-{
-    void *handle = NULL;
-    int (*restricted_johansen) (GRETL_VAR *, const gretl_matrix *, double ***, 
-				DATAINFO *, PRN *);
-    GRETL_VAR *jnew = NULL;
-
-    if (orig->jinfo == NULL || D == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }    
-
-    gretl_error_clear();
-
-    restricted_johansen = get_plugin_function("restricted_johansen", &handle);
-    
-    if (restricted_johansen == NULL) {
-	*err = E_FOPEN;
-    } else {
-	jnew = gretl_VECM_clone(orig, pZ, pdinfo, prn, err);
-	if (!*err) {
-#if 0
-	    gretl_VAR_print(jnew, pdinfo, OPT_NONE, prn);
-#endif
-	    jnew->jinfo->R = R;
-	    *err = (* restricted_johansen) (jnew, D, pZ, pdinfo, prn);
-	}
-	close_plugin(handle);
-    }
-
-    if (!*err) {
-	gretl_VAR_print(jnew, pdinfo, OPT_NONE, prn);
-    }
-    
-    return jnew;    
-}
-
-/* FIXME break the OPT_F case out to a separate function */
-
 int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
 			  const DATAINFO *pdinfo, PRN *prn)
 {
@@ -2147,21 +2102,45 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
 }
 
 static int 
-johansen_complete (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn)
+johansen_test_complete (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (GRETL_VAR *, double ***, DATAINFO *, gretlopt, PRN *);
+    int (*johansen) (GRETL_VAR *, const DATAINFO *, gretlopt, PRN *);
     int err = 0;
 
     gretl_error_clear();
     
-    johansen = get_plugin_function("johansen_analysis", &handle);
+    johansen = get_plugin_function("johansen_coint_test", &handle);
 
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (jvar, pZ, pdinfo, opt, prn);
+	err = (* johansen) (jvar, pdinfo, opt, prn);
+	close_plugin(handle);
+    }
+    
+    return err;
+}
+
+static int 
+johansen_estimate_complete (GRETL_VAR *jvar, const gretl_matrix *D,
+			    double ***pZ, DATAINFO *pdinfo, 
+			    gretlopt opt, PRN *prn)
+{
+    void *handle = NULL;
+    int (*johansen) (GRETL_VAR *, const gretl_matrix *,
+		     double ***, DATAINFO *, gretlopt, PRN *);
+    int err = 0;
+
+    gretl_error_clear();
+    
+    johansen = get_plugin_function("johansen_estimate", &handle);
+
+    if (johansen == NULL) {
+	err = 1;
+    } else {
+	err = (* johansen) (jvar, D, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
     
@@ -2436,7 +2415,7 @@ static gretlopt opt_from_jcode (JohansenCode jc)
 	opt = OPT_A;
     }
 
-    return jc;
+    return opt;
 }
 
 static JohansenCode jcode_from_opt (gretlopt opt)
@@ -2716,7 +2695,8 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 */
 
 static int
-johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, 
+johansen_driver (GRETL_VAR *jvar, const gretl_matrix *D,
+		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
     PRN *varprn = (opt & OPT_V)? prn : NULL;
@@ -2778,16 +2758,22 @@ johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	   by the special code in irfboot.c
 	*/
 	if (!jvar->err && !(opt & OPT_B)) {
-	    jvar->err = johansen_complete(jvar, pZ, pdinfo, opt, prn);
+	    if (jrank(jvar) > 0) {
+		jvar->err = johansen_estimate_complete(jvar, D, pZ, pdinfo, opt, prn);
+	    } else {
+		jvar->err = johansen_test_complete(jvar, pdinfo, opt, prn);
+	    }
 	}
     } 
 
     return jvar->err;
 }
 
-static GRETL_VAR *
-johansen_wrapper (int order, int rank, const int *list, const int *exolist, 
-		  double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+static GRETL_VAR *johansen_wrapper (int order, int rank, 
+				    const int *list, const int *exolist, 
+				    const gretl_matrix *D,
+				    double ***pZ, DATAINFO *pdinfo, 
+				    gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar;
     int oldt1 = pdinfo->t1;
@@ -2797,7 +2783,7 @@ johansen_wrapper (int order, int rank, const int *list, const int *exolist,
     jvar = johansen_VAR_prepare(order, rank, list, exolist, pZ, pdinfo, opt);
 
     if (jvar != NULL && !jvar->err) {
-	jvar->err = johansen_driver(jvar, pZ, pdinfo, opt, prn);
+	jvar->err = johansen_driver(jvar, D, pZ, pdinfo, opt, prn);
     }
 
     pdinfo->t1 = oldt1;
@@ -2832,7 +2818,8 @@ johansen_wrapper (int order, int rank, const int *list, const int *exolist,
 GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
-    return johansen_wrapper(order, 0, list, NULL, pZ, pdinfo, opt, prn);
+    return johansen_wrapper(order, 0, list, NULL, NULL,
+			    pZ, pdinfo, opt, prn);
 }
 
 /**
@@ -2861,7 +2848,8 @@ int johansen_test_simple (int order, const int *list, double ***pZ,
     GRETL_VAR *jvar;
     int err;
 
-    jvar = johansen_wrapper(order, 0, list, NULL, pZ, pdinfo, opt, prn);
+    jvar = johansen_wrapper(order, 0, list, NULL, NULL,
+			    pZ, pdinfo, opt, prn);
     if (jvar == NULL) {
 	err = E_ALLOC;
     } else {
@@ -2875,34 +2863,6 @@ int johansen_test_simple (int order, const int *list, double ***pZ,
     return err;
 }
 
-static GRETL_VAR *gretl_VECM_clone (GRETL_VAR *orig, double ***pZ,
-				    DATAINFO *pdinfo, PRN *prn,
-				    int *err)
-{
-    GRETL_VAR *jvar = NULL;
-    gretlopt opt = opt_from_jcode(orig->jinfo->code);
-
-    if (orig->jinfo->seasonals > 0) {
-	opt |= OPT_D;
-    }
-    
-    jvar = johansen_wrapper(orig->order + 1, 
-			    orig->jinfo->rank, 
-			    orig->jinfo->list,
-			    orig->jinfo->exolist,
-			    pZ, pdinfo, 
-			    opt, prn);
-    
-    if (jvar != NULL) {
-	if (jvar->err) {
-	    *err = jvar->err;
-	}
-    } else {
-	*err = 1;
-    }
-
-    return jvar;
-}
 
 /**
  * gretl_VECM:
@@ -2944,7 +2904,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     }
 
     jvar = johansen_wrapper(order, rank, vecm_list, exo_list,
-			    pZ, pdinfo, opt | OPT_S, prn);
+			    NULL, pZ, pdinfo, opt | OPT_S, prn);
     
     if (jvar != NULL) {
 	if (!jvar->err) {
@@ -2960,6 +2920,64 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     free(exo_list);
 
     return jvar;
+}
+
+/**
+ * real_gretl_restricted_vecm:
+ * @order: lag order for test.
+ * @rank: pre-specified cointegration rank.
+ * @list: list of variables to test for cointegration.
+ * @R: restriction matrix for beta, user form.
+ * @D: restriction matrix for beta, nullspace form.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt:
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Returns: pointer to struct containing information on 
+ * the VECM system or %NULL on failure.
+ */
+
+GRETL_VAR *
+real_gretl_restricted_vecm (GRETL_VAR *orig, 
+			    gretl_matrix *R, const gretl_matrix *D,
+			    double ***pZ, DATAINFO *pdinfo, 
+			    PRN *prn, int *err)
+{
+    GRETL_VAR *jvar = NULL;
+    gretlopt opt = OPT_S;
+
+    if (orig->jinfo == NULL || D == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }   
+
+    opt |= opt_from_jcode(orig->jinfo->code);
+
+    if (orig->jinfo->seasonals > 0) {
+	opt |= OPT_D;
+    }
+
+    jvar = johansen_wrapper(orig->order + 1, 
+			    orig->jinfo->rank, 
+			    orig->jinfo->list,
+			    orig->jinfo->exolist,
+			    D, pZ, pdinfo, 
+			    opt, prn);
+
+    if (jvar != NULL) {
+	jvar->jinfo->R = R;
+	if (!jvar->err) {
+	    gretl_VAR_print(jvar, pdinfo, opt, prn);
+	} else {
+	    *err = jvar->err;
+	}
+    } else {
+	*err = 1;
+    }
+    
+    return jvar;    
 }
 
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name)

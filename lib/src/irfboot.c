@@ -306,14 +306,15 @@ re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock,
 
     if (iter == 0) {
 	/* first round: open the Johansen plugin */
-	jbr = get_plugin_function("johansen_bootstrap_round", &handle);
+	jbr = get_plugin_function("johansen_boot_round", &handle);
 	if (jbr == NULL) {
 	    err = 1;
 	}
     }
 
     if (!err) {
-	err = johansen_driver(jvar, &boot->Z, boot->dinfo, boot->opt, NULL);
+	/* FIXME restricted vecm */
+	err = johansen_driver(jvar, NULL, &boot->Z, boot->dinfo, boot->opt, NULL);
     }
 
     if (!err) {

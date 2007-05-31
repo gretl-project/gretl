@@ -1401,7 +1401,7 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
 	print_restriction_set(rset, pdinfo, prn);
 	jvar = real_gretl_restricted_vecm(rset->obj, rset->R, D, pZ, pdinfo, 
 					  prn, err);
-	rset->R = NULL; /* transfer to vecm */
+	rset->R = NULL; /* transfer R to vecm */
     }
 
     destroy_restriction_set(rset);
