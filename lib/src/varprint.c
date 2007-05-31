@@ -739,7 +739,7 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     gretl_prn_newline(prn);
     print_Johansen_test_case(jcode(vecm), prn); 
 
-    /* FIXME TeX below */
+    /* FIXME TeX (and RTF?) below */
 
     if (vecm->jinfo->R != NULL) {
 	pprintf(prn, "\n\nRestriction on beta: R * beta = 0, where R =\n\n");
@@ -750,15 +750,37 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 	    double x = 2.0 * (ll0 - vecm->ll);
 	    int df = vecm->jinfo->bdf;
 
-	    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g"), ll0);
-	    gretl_prn_newline(prn);
-	    pprintf(prn, _("Restricted loglikelihood (lr) = %g"), vecm->ll);
-	    gretl_prn_newline(prn);
-	    pprintf(prn, "2 * (lu - lr) = %g", x);
-	    gretl_prn_newline(prn);
-	    pprintf(prn, _("P(Chi-Square(%d) > %g = %g"), df, x, 
-		    chisq_cdf_comp(x, df));
-	    gretl_prn_newline(prn);
+	    if (tex_format(prn)) {
+		pprintf(prn, I_("Unrestricted loglikelihood $(l_u) = %g$"), ll0);
+		gretl_prn_newline(prn);
+		pprintf(prn, I_("Restricted loglikelihood $(l_r) = %g$"), vecm->ll);
+		gretl_prn_newline(prn);
+		pprintf(prn, "$2 (l_u - l_r) = %g$", x);
+		gretl_prn_newline(prn);
+		pprintf(prn, "$P(\\chi^2_{%d} > %g = %g$", df, x, 
+			chisq_cdf_comp(x, df));
+		gretl_prn_newline(prn);		
+	    } else if (rtf_format(prn)) {
+		pprintf(prn, I_("Unrestricted loglikelihood (lu) = %g"), ll0);
+		gretl_prn_newline(prn);
+		pprintf(prn, I_("Restricted loglikelihood (lr) = %g"), vecm->ll);
+		gretl_prn_newline(prn);
+		pprintf(prn, "2 * (lu - lr) = %g", x);
+		gretl_prn_newline(prn);
+		pprintf(prn, I_("P(Chi-Square(%d) > %g = %g"), df, x, 
+			chisq_cdf_comp(x, df));
+		gretl_prn_newline(prn);
+	    } else {
+		pprintf(prn, _("Unrestricted loglikelihood (lu) = %g"), ll0);
+		gretl_prn_newline(prn);
+		pprintf(prn, _("Restricted loglikelihood (lr) = %g"), vecm->ll);
+		gretl_prn_newline(prn);
+		pprintf(prn, "2 * (lu - lr) = %g", x);
+		gretl_prn_newline(prn);
+		pprintf(prn, _("P(Chi-Square(%d) > %g = %g"), df, x, 
+			chisq_cdf_comp(x, df));
+		gretl_prn_newline(prn);
+	    }
 
 	    *lldone = 1;
 	}
