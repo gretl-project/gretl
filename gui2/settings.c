@@ -1802,8 +1802,6 @@ void write_rc (void)
     char *strvar;
     int i;
 
-    fprintf(stderr, "old write_rc\n");
-
     rc = fopen(rcfile, "w");
     if (rc == NULL) {
 	errbox(_("Couldn't open config file for writing"));
@@ -1837,8 +1835,6 @@ static void read_rc (void)
     char line[MAXLEN], key[32], linevar[MAXLEN];
     char *strvar;
     int i, j;
-
-    fprintf(stderr, "old read_rc\n");
 
     fp = fopen(rcfile, "r");
     if (fp == NULL) {
