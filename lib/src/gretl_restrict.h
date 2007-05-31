@@ -59,6 +59,8 @@ int gretl_restriction_set_boot_params (int B, gretlopt opt);
 
 void gretl_restriction_get_boot_params (int *pB, gretlopt *popt);
 
+gretlopt gretl_restriction_get_options (const gretl_restriction_set *rset);
+
 #endif /* GRETL_RESTRICT_H */
 
 

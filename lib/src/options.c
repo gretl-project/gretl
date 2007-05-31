@@ -612,6 +612,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = MLE;
     } else if (strstr(line, "end gmm")) {
 	ci = GMM;
+    } else if (strstr(line, "end restrict")) {
+	ci = RESTRICT;
     } else {
 	ci = gretl_command_number(cmdword);
     }

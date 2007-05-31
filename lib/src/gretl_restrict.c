@@ -1601,3 +1601,12 @@ void gretl_restriction_get_boot_params (int *pB, gretlopt *popt)
     restrict_B = 0;
     rboot_opt = OPT_NONE;
 }
+
+gretlopt gretl_restriction_get_options (const gretl_restriction_set *rset)
+{
+    if (rset != NULL) {
+	return rset->opt;
+    } else {
+	return OPT_NONE;
+    }
+}

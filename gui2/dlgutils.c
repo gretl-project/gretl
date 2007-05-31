@@ -726,6 +726,17 @@ static gboolean opt_b_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
+static gboolean opt_f_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_F;
+    } else {
+	dlg->opt &= ~OPT_F;
+    }
+
+    return FALSE;
+}
+
 static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 				  gretlopt opt)
 {
@@ -743,6 +754,10 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Use bootstrap"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_b_callback), dlg);
+    } else if (opt == OPT_F) {
+	b = gtk_check_button_new_with_label(_("Show full restricted estimates"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_f_callback), dlg);
     } else {
 	return;
     }
@@ -926,6 +941,11 @@ static int ols_model_window (windata_t *vwin)
     return 0;
 }
 
+static int vecm_model_window (windata_t *vwin)
+{
+    return vwin->role == VECM;
+}
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick, 
@@ -1027,6 +1047,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	build_gmm_radios(top_vbox, d);
     } else if (cmdcode == RESTRICT && ols_model_window(okptr)) {
 	dialog_option_switch(top_vbox, d, OPT_B);
+    } else if (cmdcode == RESTRICT && vecm_model_window(okptr)) {
+	dialog_option_switch(top_vbox, d, OPT_F);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 

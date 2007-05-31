@@ -2703,6 +2703,8 @@ static int effective_ci (const CMD *cmd)
 	    ci = MLE;
 	} else if (!strcmp(cmd->param, "gmm")) {
 	    ci = GMM;
+	} else if (!strcmp(cmd->param, "restrict")) {
+	    ci = RESTRICT;
 	}
     }
 
@@ -3356,6 +3358,30 @@ static int append_data (const char *line, double ***pZ,
     } else {
 	err = gretl_get_data(pZ, ppdinfo, fname, NULL, 
 			     DATA_APPEND, prn);
+    }
+
+    return err;
+}
+
+static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+{
+    gretlopt ropt = gretl_restriction_get_options(s->rset);
+    CMD *cmd = s->cmd;
+    PRN *prn = s->prn;
+    int err = 0;
+
+    if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
+	/* FIXME non-vecm case */
+	s->var = gretl_restricted_vecm(s->rset, pZ, pdinfo, prn, &err);
+	if (s->var != NULL) {
+	    if (s->callback != NULL) {
+		s->callback(s, pZ, pdinfo);
+	    }
+	}		
+    } else {
+	err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
+					     pdinfo, prn);
+	s->rset = NULL;
     }
 
     return err;
@@ -4094,19 +4120,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		s->alt_model = 1;
 	    }
 	} else if (!strcmp(cmd->param, "restrict")) {
-	    if (cmd->opt & OPT_F) {
-		/* FIXME */
-		s->var = gretl_restricted_vecm(s->rset, pZ, pdinfo, prn, &err);
-		if (s->var != NULL) {
-		    if (s->callback != NULL) {
-			s->callback(s, pZ, pdinfo);
-		    }
-		}		
-	    } else {
-		err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
-						     pdinfo, prn);
-		s->rset = NULL;
-	    }
+	    err = do_end_restrict(s, pZ, pdinfo);
 	} else {
 	    err = 1;
 	}
