@@ -738,6 +738,13 @@ print_vecm_header_info (GRETL_VAR *vecm, PRN *prn)
 	    jrank(vecm));
     gretl_prn_newline(prn);
     print_Johansen_test_case(jcode(vecm), prn); 
+
+    if (vecm->jinfo->R != NULL) {
+	pprintf(prn, "\n\nRestriction on beta: R * beta = 0, where R =\n\n");
+	gretl_matrix_print_to_prn(vecm->jinfo->R, NULL, prn);
+    } else {
+	pputc(prn, '\n');
+    }
 }
 
 /**
@@ -819,7 +826,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (vecm) {
 	    print_vecm_header_info(var, prn);
 	}
-	pputs(prn, "\n\n");
+	pputc(prn, '\n');
     }
 
     if (vecm) {
