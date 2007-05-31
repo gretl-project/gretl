@@ -2422,6 +2422,23 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static gretlopt opt_from_jcode (JohansenCode jc)
+{
+    gretlopt opt = OPT_NONE;
+
+    if (jc == J_NO_CONST) {
+	opt = OPT_N;
+    } else if (jc == J_UNREST_TREND) {
+	opt = OPT_T;
+    } else if (jc == J_REST_CONST) {
+	opt =  OPT_R;
+    } else if (jc == J_REST_TREND) {
+	opt = OPT_A;
+    }
+
+    return jc;
+}
+
 static JohansenCode jcode_from_opt (gretlopt opt)
 {
     JohansenCode jc = J_UNREST_CONST;
@@ -2863,14 +2880,18 @@ static GRETL_VAR *gretl_VECM_clone (GRETL_VAR *orig, double ***pZ,
 				    int *err)
 {
     GRETL_VAR *jvar = NULL;
+    gretlopt opt = opt_from_jcode(orig->jinfo->code);
+
+    if (orig->jinfo->seasonals > 0) {
+	opt |= OPT_D;
+    }
     
     jvar = johansen_wrapper(orig->order + 1, 
 			    orig->jinfo->rank, 
 			    orig->jinfo->list,
 			    orig->jinfo->exolist,
 			    pZ, pdinfo, 
-			    OPT_NONE, /* ?? */
-			    prn);
+			    opt, prn);
     
     if (jvar != NULL) {
 	if (jvar->err) {
