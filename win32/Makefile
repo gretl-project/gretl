@@ -88,7 +88,8 @@ PLUGINSRC = \
 	garch.c \
         audio.c \
 	urcdist.c \
-	gretlzip.c 
+	gretlzip.c \
+	heckit.c 
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -120,7 +121,8 @@ PLUGINS = plugins/stats_tables.dll \
         plugins/audio.dll \
 	plugins/vif.dll \
 	plugins/urcdist.dll \
-	plugins/gretlzip.dll
+	plugins/gretlzip.dll \
+	plugins/heckit.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -409,6 +411,10 @@ plugins/gretlzip.dll: gretlzip.o zfileio.o zipfile.o zipmain.o zipwork.o \
 	zsystem.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lz $(GRETLLIB)
+
+plugins/heckit.dll: heckit.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
