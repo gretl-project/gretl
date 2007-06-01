@@ -1018,6 +1018,14 @@ void lex (parser *p)
 		p->sym = DOTEQ;
 		parser_getc(p);
 		return;
+	    } else if (p->ch == '>') {
+		p->sym = DOTGT;
+		parser_getc(p);
+		return;
+	    } else if (p->ch == '<') {
+		p->sym = DOTLT;
+		parser_getc(p);
+		return;
 	    } else {
 		/* not a "dot operator", back up */
 		parser_ungetc(p);
@@ -1163,6 +1171,10 @@ const char *getsymb (int t, const parser *p)
 	return ".-";
     case DOTEQ: 
 	return ".=";
+    case DOTGT: 
+	return ".>";
+    case DOTLT: 
+	return ".<";
     case KRON: 
 	return "**";
     case MCCAT: 

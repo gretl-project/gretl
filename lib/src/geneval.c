@@ -796,6 +796,8 @@ static int op_symbol (int op)
     case DOTADD:  return '+';
     case DOTSUB:  return '-';
     case DOTEQ:   return '=';
+    case DOTGT:   return '>';
+    case DOTLT:   return '<';
     default: return 0;
     }
 }
@@ -932,6 +934,8 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case DOTADD:
     case DOTSUB:
     case DOTEQ:
+    case DOTGT:
+    case DOTLT:
 	/* apply operator element-wise */
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), err);
 	break;
@@ -1087,6 +1091,8 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	else if (op == DOTADD)  op = B_ADD;
 	else if (op == DOTSUB)  op = B_SUB;
 	else if (op == DOTEQ)   op = B_EQ;
+	else if (op == DOTGT)   op = B_GT;
+	else if (op == DOTLT)   op = B_LT;
 
 	if (l->t == NUM) {
 	    for (i=0; i<n; i++) {
@@ -3628,6 +3634,8 @@ static NODE *eval (NODE *t, parser *p)
     case DOTADD:
     case DOTSUB:
     case DOTEQ:
+    case DOTGT:
+    case DOTLT:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);

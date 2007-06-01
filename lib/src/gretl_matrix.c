@@ -2280,31 +2280,49 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	return 0;
     }
 
-    for (i=0; i<nc; i++) {
-	for (j=i; j<nc; j++) {
-	    idx1 = (atr)? i * a->rows : i;
-	    idx2 = (atr)? j * a->rows : j;
-	    x = 0.0;
-	    for (k=0; k<nr; k++) {
-		if (atr) {
+    if (atr) {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i * a->rows;
+		idx2 = j * a->rows;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
 		    x += a->val[idx1++] * a->val[idx2++];
+		}
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    gretl_matrix_cum(c,i,j,x);
+		    if (i != j) {
+			gretl_matrix_cum(c,j,i,x);
+		    }
 		} else {
+		    gretl_matrix_set(c,i,j,x);
+		    gretl_matrix_set(c,j,i,x);
+		}
+	    }
+	} 
+    } else {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		idx1 = i;
+		idx2 = j;
+		x = 0.0;
+		for (k=0; k<nr; k++) {
 		    x += a->val[idx1] * a->val[idx2];
 		    idx1 += a->rows;
 		    idx2 += a->rows;
 		}
-	    }
-	    if (cmod == GRETL_MOD_CUMULATE) {
-		gretl_matrix_cum(c,i,j,x);
-		if (i != j) {
-		    gretl_matrix_cum(c,j,i,x);
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    gretl_matrix_cum(c,i,j,x);
+		    if (i != j) {
+			gretl_matrix_cum(c,j,i,x);
+		    }
+		} else {
+		    gretl_matrix_set(c,i,j,x);
+		    gretl_matrix_set(c,j,i,x);
 		}
-	    } else {
-		gretl_matrix_set(c,i,j,x);
-		gretl_matrix_set(c,j,i,x);
 	    }
-	}
-    } 
+	} 
+    }
 
     return 0;
 }
@@ -2330,13 +2348,14 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
  * @c: matrix to hold the product.
  * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
  * add the result to the existing value of @c.
- * 
+ *
  * Multiplies @a (or a-transpose) into @b (or b transpose),
  * with the result written into @c.
  *
  * Returns: 0 on success; non-zero error code on
  * failure.
- */
+*/
+
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
@@ -2391,16 +2410,18 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
     if (!atr && !btr) {
 	/* AB */
+	double xa[a->cols];
 	const double *xb;
 
 	for (i=0; i<a->rows; i++) {
+	    for (k=0; k<a->cols; k++) {
+		xa[k] = gretl_matrix_get(a, i, k);
+	    }
 	    xb = b->val;
 	    for (j=0; j<b->cols; j++) {
 		x = 0.0;
-		aidx = i;
 		for (k=0; k<a->cols; k++) {
-		    x += a->val[aidx] * xb[k];
-		    aidx += a->rows;
+		    x += xa[k] * xb[k];
 		}
 		gretl_mmult_result(c,i,j,x,cmod);
 		xb += b->rows;
@@ -2770,6 +2791,10 @@ static double x_op_y (double x, double y, int op)
 	return pow(x, y);
     case '=':
 	return x == y;
+    case '>':
+	return x > y;
+    case '<':
+	return x < y;
     default:
 	return 0;
     }

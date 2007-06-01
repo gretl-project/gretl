@@ -933,6 +933,7 @@ static NODE *expr3 (parser *p)
     }
 
     while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
+		       p->sym == DOTGT || p->sym == DOTLT || 
 		       p->sym == B_GTE || p->sym == B_LTE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {

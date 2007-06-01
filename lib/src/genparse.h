@@ -62,13 +62,15 @@ enum {
     DOTADD,
     DOTSUB,
     DOTEQ,
+    DOTGT,
+    DOTLT,
     KRON,     /* Kronecker product */
     MCCAT,    /* matrix concatenation (columns) */
     MRCAT,    /* matrix concatenation (rows) */
     OP_MAX,   /* separator: end of operators */
-    ABS,
+    ABS,    /* 40 */
     TOINT,
-    CEIL,   /* 40 */
+    CEIL,
     SIN,
     COS,
     TAN,
@@ -76,9 +78,9 @@ enum {
     LOG,
     LOG10,
     LOG2,
-    EXP,
+    EXP,    /* 50 */
     SQRT,
-    DIF,    /* 50: first difference */
+    DIF,      /* first difference */
     LDIF,     /* log difference */
     SDIF,     /* seasonal difference */
     SORT,     /* ascending sort */
@@ -86,9 +88,9 @@ enum {
     ODEV,     /* orthogonal deviation */
     NOBS,
     T1,
-    T2,
+    T2,     /* 60 */ 
     CHISQ,
-    STUDENT,  /* 60 */ 
+    STUDENT,
     CUM,
     MISSING,
     OK,
@@ -96,9 +98,9 @@ enum {
     ZEROMISS,
     MEDIAN,
     GINI,
-    SUM,
+    SUM,     /* 70 */
     MEAN,
-    MIN,     /* 70 */
+    MIN,
     MAX,
     SD,
     VCE,      /* variance */
@@ -106,9 +108,9 @@ enum {
     CNORM,
     DNORM,
     QNORM,
-    GAMMA,
+    GAMMA,   /* 80 */ 
     LNGAMMA,
-    HPFILT,   /* 80 */ 
+    HPFILT,
     BKFILT,
     RESAMPLE,
     PMEAN,
@@ -116,9 +118,9 @@ enum {
     IMAT,
     SUMR,
     SUMC,
-    MEANR,
+    MEANR,    /* 90 */
     MEANC,
-    MCOV,      /* 90 */
+    MCOV,
     MCORR,
     CDEMEAN,
     CHOL,
@@ -126,9 +128,9 @@ enum {
     DIAG,
     TRANSP,
     TVEC,
-    VECH,
+    VECH,     /* 100 */ 
     UNVECH,
-    ROWS,     /* 100 */ 
+    ROWS,
     COLS,
     DET,
     LDET,
@@ -136,9 +138,9 @@ enum {
     NORM1,
     INFNORM,
     RCOND,
-    RANK,
+    RANK,    /* 110 */  
     VARNUM,
-    OBSNUM,   /* 110 */  
+    OBSNUM,
     ISSERIES,
     ISLIST,  
     ISSTRING,
@@ -146,9 +148,9 @@ enum {
     LISTLEN,
     PVAL,
     CDF,
-    CRIT,
+    CRIT,    /* 120 */ 
     GENPOIS,
-    MAKEMASK,  /* 120 */ 
+    MAKEMASK,
     VALUES,
     NULLSPC,
     MEXP,
@@ -156,9 +158,9 @@ enum {
     MAXC,
     MINR,
     MAXR,
-    IMINC,
+    IMINC,   /* 130 */
     IMAXC,
-    IMINR,     /* 130 */
+    IMINR,
     IMAXR,
     FFT,
     FFTI,
@@ -166,9 +168,9 @@ enum {
     COR,
     COV,
     UNIFORM,
-    NORMAL,   
+    NORMAL,  /* 140 */  
     BINOMIAL,
-    FRACDIF,   /* 140 */
+    FRACDIF,
     ZEROS,
     ONES,
     SEQ,
@@ -176,9 +178,9 @@ enum {
     MNORM,
     QFORM,
     MLAG,
-    QR,
+    QR,      /* 150 */  
     EIGSYM,  
-    EIGGEN,    /* 150 */  
+    EIGGEN,
     FDJAC,
     BFGSMAX,
     LRVAR,
@@ -186,9 +188,9 @@ enum {
     QUANTILE,
     CMULT,    /* complex multiplication */
     F2_MAX,   /* separator: end of two-arg functions */
-    MSHAPE,
+    MSHAPE, /* 160 */
     SVD,
-    FN_MAX, /* 160: separator: end of n-arg functions */
+    FN_MAX,   /* separator: end of n-arg functions */
     COM,      /* comma */
     DOT,      /* period */
     SEMI,     /* semi-colon */
@@ -196,9 +198,9 @@ enum {
     CON,      /* named constant */
     DUM,      /* dummy variable */
     UVAR,     /* user variable (scalar or series) */
-    UMAT,     /* user-defined matrix */
+    UMAT,   /* 170: user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
-    NUM,    /* 170: scalar, evaluated */
+    NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
     IVEC,     /* vector of integers, evaluated */
     MAT,      /* matrix, evaluated */
@@ -206,9 +208,9 @@ enum {
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
     DMSTR,    /* "dollar" matrix plus old-style string subspec */
-    MSL2,     /* unevaluated matrix subspec */
+    MSL2,   /* 180: unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
-    SUBSL,  /* 180: row or column component of MSPEC */
+    SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
     LAG,      
     DVAR,     /* $ dataset variable (scalar or series) */
@@ -216,9 +218,9 @@ enum {
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
     LIST,     /* reference to named list */
-    STR,      /* string */
+    STR,    /* 190: string */
     EROOT,    /* dummy root for (...) expression */
-    UFUN,   /* 190: user-defined function */
+    UFUN,     /* user-defined function */
     FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT,
@@ -226,7 +228,7 @@ enum {
     DEC,
     QUERY,
     AST2,     /* prime facie ambiguous case of "**" */
-    UNK
+    UNK     /* 200 */
 };
 
 enum {

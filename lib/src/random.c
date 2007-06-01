@@ -93,7 +93,7 @@ double gretl_one_snormal (void)
  *
  */
 
-#define MOD_POLAR 0
+#define MOD_POLAR 1
 
 void gretl_two_snormals (double *z1, double *z2) 
 {
