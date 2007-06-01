@@ -3131,11 +3131,6 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm)
 
 int gretl_is_restricted_VECM (const GRETL_VAR *vecm)
 {
-    fprintf(stderr, "vecm = %p\n", (void *) vecm);
-    fprintf(stderr, "vecm->jinfo = %p\n", (void *) vecm->jinfo);
-    fprintf(stderr, "vecm->jinfo->R = %p\n", (void *) vecm->jinfo->R);
-    
-
     if (vecm->jinfo != NULL &&
 	vecm->jinfo->R != NULL) {
 	return 1;

@@ -990,11 +990,6 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	goto bailout;
     }
 
-    if (type == GRETL_OBJ_VAR) {
-	fprintf(stderr, "Got GRETL_OBJ_VAR, restricted = %d\n",
-		gretl_is_restricted_VECM(ptr));
-    }
-
     if (type == GRETL_OBJ_VAR && gretl_is_restricted_VECM(ptr)) {
 	strcpy(gretl_errmsg, _("The model is already restricted"));
 	*err = E_DATA;

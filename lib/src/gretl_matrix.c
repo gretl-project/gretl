@@ -2410,7 +2410,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
     if (!atr && !btr) {
 	/* AB */
-	double xa[a->cols];
+	double xa[a->cols]; /* VLA */
 	const double *xb;
 
 	for (i=0; i<a->rows; i++) {
