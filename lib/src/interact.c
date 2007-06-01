@@ -3377,12 +3377,13 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
 	    }
-	}		
+	}
     } else {
 	err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
 					     pdinfo, prn);
-	s->rset = NULL;
     }
+
+    s->rset = NULL;
 
     return err;
 }
