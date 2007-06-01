@@ -187,13 +187,20 @@ The following binary operators are available for matrices:
 \texttt{*}  & ordinary matrix multiplication \\
 \texttt{'}  & pre-multiplication by transpose \\
 \texttt{/}  & matrix ``division'' (see below) \\
-\texttt{.*} & element-wise multiplication \\
-\texttt{./} & element-wise division \\
-\verb+.^+   & element-wise exponentiation \\
 \verb+~+    & column-wise concatenation \\
 \verb+|+    & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
 \texttt{=}  & test for equality 
+\end{tabular}
+\end{center}
+
+In addition, the following operators (``dot'' operators) apply on an
+element-by-element basis:
+
+\begin{center}
+\begin{tabular}{cccccc}
+\texttt{.*}  &  \texttt{./}  &  \verb+.^+  &
+\texttt{.=}  &  \texttt{.>}  &  \texttt{.<} 
 \end{tabular}
 \end{center}
 
