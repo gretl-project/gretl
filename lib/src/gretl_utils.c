@@ -1368,10 +1368,10 @@ int gretl_spawn (char *cmdline)
 	    sprintf(gretl_errmsg, "%s\n%s", 
 		    _("Command failed"),
 		    sout);
-	    fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
 	} else {
 	    strcpy(gretl_errmsg, _("Command failed"));
-	    fprintf(stderr, "status=%d\n", status);
+	    fprintf(stderr, "gretl_spawn: status = %d\n", status);
 	}
 	ret = 1;
     }

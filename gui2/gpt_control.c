@@ -2653,7 +2653,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	    fputs("set term dumb\n", fpout);
 	} else if (strstr(line, "set output")) { 
 	    fprintf(fpout, "set output '%s'\n", dumbtxt);
-	} else {
+	} else if (strstr(line, "x2tics") == NULL) {
 	    fputs(line, fpout);
 	}
 	if (strstr(line, "x2range")) {
@@ -2664,8 +2664,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
     fclose(fpin);
     fclose(fpout);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
-			      dumbgp);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, dumbgp);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
 
@@ -2675,6 +2674,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 #if POINTS_DEBUG
 	fputs("get_dumb_plot_yrange(): plot command failed\n", stderr);
 #endif
+	gretl_error_clear();
 	return 1;
     } else {
 	double y[16] = {0};

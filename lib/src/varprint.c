@@ -910,7 +910,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     for (i=0; i<var->neqns; i++) {
 	char Fstr[24];
 
-	if(!quiet) {
+	if (!quiet) {
 	    printmodel(var->models[i], pdinfo, OPT_NONE, prn);
 	} else {
 	    if (!var->ecm) {
