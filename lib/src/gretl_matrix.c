@@ -806,23 +806,12 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 
 int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 {
-    int i, n;
-
-    if (m == NULL || m->val == NULL) {
-	return 0;
-    }
-
     if (x == 0.0) {
 	return 1;
+    } else {
+	gretl_matrix_multiply_by_scalar(m, 1.0 / x);
+	return 0;
     }
-
-    n = m->rows * m->cols;
-    
-    for (i=0; i<n; i++) {
-	m->val[i] /= x;
-    }
-
-    return 0;
 }
 
 /**
@@ -2197,12 +2186,12 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
-int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b)
+int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 {
-    integer n, info, one = 1;
+    integer n = a->cols;
+    integer m = b->cols;
+    integer info = 0;
     char uplo = 'L';
-
-    n = a->cols;
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
     if (info != 0) {
@@ -2214,7 +2203,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b)
 	return E_SINGULAR;
     } 
 
-    dpotrs_(&uplo, &n, &one, a->val, &n, b->val, &n, &info);
+    dpotrs_(&uplo, &n, &m, a->val, &n, b->val, &n, &info);
     if (info != 0) {
 	fprintf(stderr, "gretl_cholesky_solve:\n"
 		" dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
@@ -5619,7 +5608,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv, 
 		      gretl_vector *uhat, double *s2)
 {
-    gretl_vector *XTy = NULL;
     gretl_matrix *XTX = NULL;
     int k = X->cols;
     int err = 0;
@@ -5633,11 +5621,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }    
 
     if (!err) {
-	XTy = gretl_column_vector_alloc(k);
-	if (XTy == NULL) err = E_ALLOC;
-    }
-
-    if (!err) {
 	XTX = gretl_matrix_alloc(k, k);
 	if (XTX == NULL) err = E_ALLOC;
     }
@@ -5645,7 +5628,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     if (!err) {
 	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					y, GRETL_MOD_NONE,
-					XTy, GRETL_MOD_NONE);
+					b, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -5659,15 +5642,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	err = gretl_LU_solve(XTX, XTy);
+	err = gretl_LU_solve(XTX, b);
     }
 
     if (!err) {
-	int i;
-	
-	for (i=0; i<k; i++) {
-	    b->val[i] = XTy->val[i];
-	}
 	if (s2 != NULL) {
 	    *s2 = get_ols_error_variance(y, X, b, 0);
 	}
@@ -5679,8 +5657,75 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
     }
 
-    if (XTy != NULL) gretl_vector_free(XTy);
     if (XTX != NULL) gretl_matrix_free(XTX);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_multi_ols:
+ * @y: T x g matrix of dependent variables.
+ * @X: T x k matrix of independent variables.
+ * @B: k x g matrix to hold coefficient estimates.
+ * @E: T x g matrix to hold the regression residuals, or %NULL if these are 
+ * not needed.
+ *
+ * Computes OLS estimates using Cholesky decomposition, and puts the
+ * coefficient estimates in @B.  Optionally, calculates the
+ * residuals in @E.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
+			    gretl_matrix *B, gretl_matrix *E)
+{
+    gretl_matrix *XTX = NULL;
+    int ny = Y->cols;
+    int k = X->cols;
+    int err = 0;
+
+    if (B->rows != k || B->cols != ny) {
+	err = E_NONCONF;
+    } else if (E != NULL && (E->cols != Y->cols || E->rows != Y->rows)) {
+	err = E_NONCONF;
+    }
+
+    if (!err) {
+	XTX = gretl_matrix_alloc(k, k);
+	if (XTX == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					Y, GRETL_MOD_NONE,
+					B, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					X, GRETL_MOD_NONE,
+					XTX, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_cholesky_decomp_solve(XTX, B);
+    }
+
+    if (!err && E != NULL) {
+	int i, imax = E->rows * E->cols;
+
+	gretl_matrix_multiply(X, B, E);
+	for (i=0; i<imax; i++) {
+	    E->val[i] = Y->val[i] - E->val[i];
+	}
+    }
+
+    if (XTX != NULL) {
+	gretl_matrix_free(XTX);
+    }
 
     return err;
 }

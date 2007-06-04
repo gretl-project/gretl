@@ -336,7 +336,7 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
-int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_vector *b);
+int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b);
 
 int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
@@ -421,6 +421,9 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err);
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);
+
+int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
+			    gretl_matrix *B, gretl_matrix *E);
 
 double gretl_matrix_r_squared (const gretl_matrix *y,
 			       const gretl_matrix *X,

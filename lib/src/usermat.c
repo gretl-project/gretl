@@ -1272,6 +1272,65 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     return S;
 }
 
+gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
+			       const gretl_matrix *X, 
+			       const char *Uname, 
+			       int *err)
+{
+    gretl_matrix *B = NULL;
+    gretl_matrix *U = NULL;
+    int newU = 0;
+
+    if (X == NULL || Y == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (X->rows != Y->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (Uname != NULL && strcmp(Uname, "null")) {
+	U = get_matrix_by_name(Uname);
+	if (U == NULL) {
+	    *err = E_UNKVAR;
+	    return NULL;
+	} 
+	if (U->rows != Y->rows || U->cols != Y->cols) {
+	    newU = 1;
+	}
+    }
+
+    if (newU) {
+	U = gretl_matrix_alloc(Y->rows, Y->cols);
+	if (U == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }
+
+    B = gretl_matrix_alloc(X->cols, Y->cols);
+    if (B == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	*err = gretl_matrix_multi_ols(Y, X, B, U);
+    }
+
+    if (*err) {
+	gretl_matrix_free(B);
+	if (newU) {
+	    gretl_matrix_free(U);
+	}
+    } else if (newU) {
+	user_matrix_replace_matrix_by_name(Uname, U);
+    }
+
+    return B;
+}
+
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err)

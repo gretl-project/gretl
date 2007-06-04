@@ -229,7 +229,8 @@ struct str_table funcs[] = {
     { VALUES,   "values" },
     { MSHAPE,   "mshape" },
     { SVD,      "svd" },
-    { 0,     NULL }
+    { MOLS,     "mols" },
+    { 0,        NULL }
 };
 
 int const_lookup (const char *s)

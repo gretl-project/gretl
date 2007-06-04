@@ -2825,7 +2825,47 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    m = user_matrix_SVD(A, lname, rname, &p->err);
 	}
-    }
+    } else if (t->t == MOLS) {
+	gretl_matrix *Y = NULL;
+	gretl_matrix *X = NULL;
+	const char *Uname = NULL;
+
+	if (k != 3) {
+	    n_args_error(k, 3, "sdv", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    if (i < 2) {
+		e = eval(n->v.bn.n[i], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+		} else if (i == 0) {
+		    Y = e->v.m;
+		} else {
+		    X = e->v.m;
+		}
+	    } else {
+		e = n->v.bn.n[i];
+		if (e->t == EMPTY) {
+		    Uname = "null";
+		} else if (e->t == U_ADDR) {
+		    e = e->v.b1.b;
+		    if (e->t == UMAT) {
+			Uname = e->v.str;
+		    } else {
+			p->err = E_TYPES;
+			strcpy(gretl_errmsg, "Expected the address of a matrix");
+		    }
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    m = user_matrix_ols(Y, X, Uname, &p->err);
+	}
+    }	
 
     if (!p->err) {
 	ret = aux_matrix_node(p);
@@ -3961,6 +4001,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;	
     case MSHAPE:
     case SVD:
+    case MOLS:
 	/* built-in functions taking more than two args */
 	ret = eval_nargs_func(t, p);
 	break;
