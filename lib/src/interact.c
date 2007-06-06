@@ -2487,7 +2487,7 @@ int gretl_shell (const char *arg)
     int pid, async = 0;
 
     if (!get_shell_ok()) {
-	strcpy(gretl_errmsg, "The shell command is not activated.");
+	strcpy(gretl_errmsg, _("The shell command is not activated."));
 	return 1;
     }
 
