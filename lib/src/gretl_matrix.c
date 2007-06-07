@@ -991,6 +991,8 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     int n;
 
     if (targ->rows != src->rows || targ->cols != src->cols) {
+	fprintf(stderr, "gretl_matrix_copy_values: targ is %d x %d but src is %d x %d\n",
+		targ->rows, targ->cols, src->rows, src->cols);
 	return E_NONCONF;
     }
 
@@ -1498,6 +1500,7 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
 
     if (row + m > targ->rows ||
 	col + n > targ->cols) {
+	fprintf(stderr, "gretl_matrix_inscribe_matrix: out of bounds\n");
 	return E_NONCONF;
     }
 
@@ -2244,6 +2247,21 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
+#define gretl_st_result(c,i,j,x,m) \
+    do { \
+       if (m==GRETL_MOD_CUMULATE) { \
+           c->val[(j)*c->rows+(i)]+=x; \
+           if (i!=j) c->val[(i)*c->rows+(j)]+=x; \
+       } else if (m==GRETL_MOD_DECUMULATE) { \
+           c->val[(j)*c->rows+(i)]-=x; \
+           if (i!=j) c->val[(i)*c->rows+(j)]-=x; \
+       } else { \
+	   gretl_matrix_set(c,i,j,x); \
+           gretl_matrix_set(c,j,i,x); \
+       } \
+    } while (0);      
+
+
 static int 
 matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 				gretl_matrix *c, GretlMatrixMod cmod)
@@ -2278,15 +2296,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		for (k=0; k<nr; k++) {
 		    x += a->val[idx1++] * a->val[idx2++];
 		}
-		if (cmod == GRETL_MOD_CUMULATE) {
-		    gretl_matrix_cum(c,i,j,x);
-		    if (i != j) {
-			gretl_matrix_cum(c,j,i,x);
-		    }
-		} else {
-		    gretl_matrix_set(c,i,j,x);
-		    gretl_matrix_set(c,j,i,x);
-		}
+		gretl_st_result(c,i,j,x,cmod);
 	    }
 	} 
     } else {
@@ -2300,15 +2310,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		    idx1 += a->rows;
 		    idx2 += a->rows;
 		}
-		if (cmod == GRETL_MOD_CUMULATE) {
-		    gretl_matrix_cum(c,i,j,x);
-		    if (i != j) {
-			gretl_matrix_cum(c,j,i,x);
-		    }
-		} else {
-		    gretl_matrix_set(c,i,j,x);
-		    gretl_matrix_set(c,j,i,x);
-		}
+		gretl_st_result(c,i,j,x,cmod);
 	    }
 	} 
     }
@@ -5996,7 +5998,6 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     double xi, xj, xij, xx;
     int m = (amod)? A->cols : A->rows;
     int k = (amod)? A->rows : A->cols;
-    int ipos, jpos;
 
     if (k != gretl_matrix_rows(X)) {
 	fputs("gretl_matrix_qform: matrices not conformable\n", stderr);
@@ -6008,28 +6009,51 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-    for (i=0; i<m; i++) {
-	for (j=i; j<m; j++) {
-	    xx = 0.0;
-	    for (ii=0; ii<k; ii++) {
-		ipos = (amod)? mdx(A,ii,i) : mdx(A,i,ii);
-		xi = A->val[ipos];
-		if (fabs(xi) > QFORM_SMALL) {
-		    for (jj=0; jj<k; jj++) {
-			jpos = (amod)? mdx(A,jj,j) : mdx(A,j,jj);
-			xj = A->val[jpos];
-			xij = gretl_matrix_get(X,ii,jj);
-			xx += xij * xi * xj;
+    if (amod) {
+	for (i=0; i<m; i++) {
+	    for (j=i; j<m; j++) {
+		xx = 0.0;
+		for (ii=0; ii<k; ii++) {
+		    xi = gretl_matrix_get(A,ii,i);
+		    if (fabs(xi) > QFORM_SMALL) {
+			for (jj=0; jj<k; jj++) {
+			    xj = gretl_matrix_get(A,jj,j);
+			    xij = gretl_matrix_get(X,ii,jj);
+			    xx += xij * xi * xj;
+			}
 		    }
 		}
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    xx += gretl_matrix_get(C, i, j);
+		} else if (cmod == GRETL_MOD_DECUMULATE) {
+		    xx = gretl_matrix_get(C, i, j) - xx;
+		}
+		gretl_matrix_set(C, i, j, xx);
+		gretl_matrix_set(C, j, i, xx);
 	    }
-	    if (cmod == GRETL_MOD_CUMULATE) {
-		xx += gretl_matrix_get(C, i, j);
-	    } else if (cmod == GRETL_MOD_DECUMULATE) {
-		xx = gretl_matrix_get(C, i, j) - xx;
+	}
+    } else {
+	for (i=0; i<m; i++) {
+	    for (j=i; j<m; j++) {
+		xx = 0.0;
+		for (ii=0; ii<k; ii++) {
+		    xi = gretl_matrix_get(A,i,ii);
+		    if (fabs(xi) > QFORM_SMALL) {
+			for (jj=0; jj<k; jj++) {
+			    xj = gretl_matrix_get(A,j,jj);
+			    xij = gretl_matrix_get(X,ii,jj);
+			    xx += xij * xi * xj;
+			}
+		    }
+		}
+		if (cmod == GRETL_MOD_CUMULATE) {
+		    xx += gretl_matrix_get(C, i, j);
+		} else if (cmod == GRETL_MOD_DECUMULATE) {
+		    xx = gretl_matrix_get(C, i, j) - xx;
+		}
+		gretl_matrix_set(C, i, j, xx);
+		gretl_matrix_set(C, j, i, xx);
 	    }
-	    gretl_matrix_set(C, i, j, xx);
-	    gretl_matrix_set(C, j, i, xx);
 	}
     }
 
