@@ -1101,6 +1101,14 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 	    *ppaths->userdir = '\0';
 	}
 
+#ifdef HAVE_X12A 	 
+	strcpy(ppaths->x12a, "x12a"); 	 
+#endif 	 
+	  	 
+#ifdef HAVE_TRAMO 	 
+	strcpy(ppaths->tramo, "tramo"); 	 
+#endif
+
 	*gretl_paths.plotfile = '\0';
     } else {
 	/* check validity of gretldir, userdir */

@@ -3179,7 +3179,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
     int ndelta, fcount, gcount;
-    double d, fmax, f, sumgrad;
+    double d, fmax, f, f0, sumgrad;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
     double D1, D2;
@@ -3208,7 +3208,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	goto bailout;
     }
 
-    fmax = f;
+    f0 = fmax = f;
     iter = ilast = fcount = gcount = 1;
     gradfunc(b, g, n, cfunc, data);
     reverse_gradient(g, n);
@@ -3359,6 +3359,10 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
     if (iter >= maxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
+	err = E_NOCONV;
+    } else if (fmax < f0) {
+	/* FIXME this should never happen */
+	fprintf(stderr, "failed to match initial value of objective function, %g\n", f0);
 	err = E_NOCONV;
     }
 
