@@ -769,18 +769,31 @@ static int addressify_var (call_info *cinfo, int i)
 	(t == ARG_REF_MATRIX && *s == '{');
 }
 
-static int needs_amp (call_info *cinfo, int i)
+static int needs_amp (call_info *cinfo, int i, int *err)
 {
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
 
-    if (*s == '&') {
+    if (*s == '&' || !strcmp(s, "null")) {
 	return 0;
     }
 
     if (t != ARG_REF_SCALAR && t != ARG_REF_SERIES &&
 	t != ARG_REF_MATRIX) {
 	return 0;
+    }
+
+    if (t == ARG_REF_MATRIX) {
+	/* handle case where indirect return matrix does not yet exist */
+	if (get_matrix_by_name(s) == NULL) {
+	    gretl_matrix *m = gretl_null_matrix_new();
+
+	    if (m == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		*err = add_or_replace_user_matrix(m, s);
+	    }
+	}
     }
 
     return 1;
@@ -904,7 +917,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     if (cinfo->args != NULL) {
 	strcat(fnline, "(");
-	for (i=0; i<cinfo->n_params; i++) {
+	for (i=0; i<cinfo->n_params && !err; i++) {
 	    char auxname[VNAMELEN];
 
 	    if (addressify_var(cinfo, i)) {
@@ -916,7 +929,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 		    cinfo->args[i] = g_strdup(auxname);
 		}
 	    } 
-	    if (needs_amp(cinfo, i)) {
+	    if (needs_amp(cinfo, i, &err)) {
 		strcat(fnline, "&");
 	    }
 	    strcat(fnline, cinfo->args[i]);
@@ -932,6 +945,11 @@ void call_function_package (const char *fname, GtkWidget *w,
     /* FIXME destroy any "ARG" vars or matrices that were created? */
 
     cinfo_free(cinfo);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
 
     if (bufopen(&prn)) {
 	return;

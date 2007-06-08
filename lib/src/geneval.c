@@ -88,7 +88,7 @@ static void free_tree (NODE *t, const char *msg)
     } 
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %d, aux = %d, ext = %d)\n", msg, 
+    fprintf(stderr, "%-8s: freeing node at %p (type %03d, aux = %d, ext = %d)\n", msg, 
 	    (void *) t, t->t, t->aux, t->ext);
 #endif
 
@@ -2656,11 +2656,16 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (n->t == LIST) {
 	    p->err = push_fn_arg(&args, ARG_LIST, n->v.str);
 	}
+
+	if (p->err) {
+	    fprintf(stderr, "eval_ufunc: error evaluating arg %d\n", i);
+	}
     }
 
 #if EDEBUG
     fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
 	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
+    fprintf(stderr, "(p->err = %d)\n", p->err);
 #endif
 
     /* try sending args to function */

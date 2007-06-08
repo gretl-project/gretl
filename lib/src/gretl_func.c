@@ -3323,6 +3323,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     *funcerr_msg = '\0';
 
+#if FN_DEBUG
+    fprintf(stderr, "gretl_function_exec: starting\n");
+#endif
+
     err = maybe_check_function_needs(pdinfo, u);
     if (err) {
 	return err;

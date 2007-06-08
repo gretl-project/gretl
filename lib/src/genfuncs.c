@@ -1576,6 +1576,10 @@ int push_fn_arg (fnargs *args, int type, void *p)
     char *types;
     int n, err = 0;
 
+#if 0
+    fprintf(stderr, "push_fn_arg: starting on type %d\n", type);
+#endif
+
     n = args->nx + args->nX + args->nM + args->nl + 
 	args->nrefv + args->nrefm + args->nnull + 1;
 
@@ -1664,6 +1668,10 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	}
     } else {
 	err = E_TYPES;
+    }
+
+    if (err) {
+	fprintf(stderr, "push_fn_arg: type = %d, err = %d\n", type, err);
     }
 
     return err;

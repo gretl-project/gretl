@@ -930,7 +930,7 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
     if (missobs == T) {
 	err = E_MISSDATA;
     } else if (missobs > 0) {
-	mask = calloc(T, 1);
+	mask = calloc(T, 1); /* all NUL bytes */
 	if (mask == NULL) {
 	    err = E_ALLOC;
 	} else {
