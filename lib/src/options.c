@@ -138,6 +138,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_T, "time-series" },
     { GNUPLOT,  OPT_Z, "dummy" },
     { GRAPH,    OPT_O, "tall" },
+    { HECKIT,   OPT_M, "ml" },
+    { HECKIT,   OPT_T, "two-step" },
     { HECKIT,   OPT_V, "verbose" },
     { HILU,     OPT_B, "no-corc" },
     { KPSS,     OPT_T, "trend" },

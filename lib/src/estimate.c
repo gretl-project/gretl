@@ -3457,6 +3457,7 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
+ * @opt: option flags (may include %OPT_V for verbose output).
  * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
@@ -3467,22 +3468,24 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
 {
     MODEL hmod;
     void *handle;
-    MODEL (* heckit_estimate) (const int *, double ***, DATAINFO *, PRN *);
+    MODEL (* heckit_estimate) (const int *, double ***, DATAINFO *, 
+			       gretlopt, PRN *);
 
     gretl_error_clear();
 
-    heckit_estimate = get_plugin_function("heckit_2step", &handle);
+    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
     if (heckit_estimate == NULL) {
 	gretl_model_init(&hmod);
 	hmod.errcode = E_FOPEN;
 	return hmod;
     }
 
-    hmod = (*heckit_estimate) (list, pZ, pdinfo, prn);
+    hmod = (*heckit_estimate) (list, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
 

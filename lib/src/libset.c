@@ -868,6 +868,8 @@ int libset_numeric_string (const char *s, int *pi, double *px)
 
     errno = 0;
 
+    gretl_push_c_numeric_locale();
+
     if (px != NULL) {
 	*px = strtod(s, &test);
 	if (*test != '\0' || errno == ERANGE) {
@@ -882,6 +884,8 @@ int libset_numeric_string (const char *s, int *pi, double *px)
 	    *pi = (int) li;
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     return ret;
 }
@@ -907,6 +911,7 @@ static int libset_get_scalar (const char *s, double **Z,
     v = varindex(pdinfo, s);
 
     if (v >= pdinfo->v) {
+	sprintf(gretl_errmsg, "'%s': unrecognized name", s);
 	return E_UNKVAR;
     } else if (var_is_series(pdinfo, v)) {
 	return E_DATATYPE;

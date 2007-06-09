@@ -25,8 +25,9 @@
 #include <glib.h>
 
 static GRand *gretl_rand;
-
 static unsigned int useed;
+
+#undef OLD_NORMAL
 
 unsigned int get_gretl_random_seed (void)
 {
@@ -88,12 +89,12 @@ double gretl_one_snormal (void)
     return (z * cos(M_2PI * y));
 }
 
+#define MOD_POLAR 1
+
 /**
  * gretl_two_snormals:
  *
  */
-
-#define MOD_POLAR 1
 
 void gretl_two_snormals (double *z1, double *z2) 
 {
@@ -195,7 +196,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
-#if 1
+#ifndef OLD_NORMAL
     double z1, z2;
     int t;
 

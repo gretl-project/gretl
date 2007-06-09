@@ -3288,6 +3288,12 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
 	    if (ndelta > 0) {
 		/* making progress */
+#if 1
+		if (f < fmax) {
+		    fprintf(stderr, "@@@ over-writing fmax = %g with %g (ndelta = %d)\n",
+			    fmax, f, ndelta);
+		}
+#endif
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
 		reverse_gradient(g, n);

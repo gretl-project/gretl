@@ -168,7 +168,7 @@ struct plugin_function plugin_functions[] = {
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },
     { "ordered_estimate",  P_OPROBIT },
-    { "heckit_2step",      P_HECKIT },
+    { "heckit_estimate",   P_HECKIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

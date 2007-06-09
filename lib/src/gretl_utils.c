@@ -1288,7 +1288,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	*tmpmod = poisson_model(cmd.list, pZ, pdinfo, NULL);
 	break;
     case HECKIT:
-	*tmpmod = heckit_model(cmd.list, pZ, pdinfo, NULL);
+	*tmpmod = heckit_model(cmd.list, pZ, pdinfo, cmd.opt, NULL);
 	break;
     case OLS:
     case WLS:

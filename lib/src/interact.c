@@ -3902,7 +3902,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    *models[0] = poisson_model(cmd->list, pZ, pdinfo,
 				       (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == HECKIT) {
-	    *models[0] = heckit_model(cmd->list, pZ, pdinfo,
+	    *models[0] = heckit_model(cmd->list, pZ, pdinfo, cmd->opt, 
 				     (cmd->opt & OPT_V)? prn : NULL);
 	} else if (cmd->ci == TSLS) {
 	    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);

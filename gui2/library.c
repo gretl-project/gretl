@@ -2731,7 +2731,7 @@ static int real_do_model (int action)
 	break;
 
     case HECKIT:
-	*pmod = heckit_model(libcmd.list, &Z, datainfo, 
+	*pmod = heckit_model(libcmd.list, &Z, datainfo, libcmd.opt, 
 			     (libcmd.opt & OPT_V)? prn : NULL); 
 	err = model_output(pmod, prn);
 	break;
