@@ -282,15 +282,15 @@ static int h_container_fill (h_container *HC, const int *Xl,
     tmplist[0] = 1;
     tmplist[1] = Xl[1];
 
-    HC->y = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->uncmask);
+    HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
     HC->nunc = gretl_matrix_rows(HC->y);
 
     tmplist[1] = Zl[1];
-    HC->d = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->fullmask);
+    HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->fullmask);
     HC->ntot = gretl_matrix_rows(HC->d);
 
     tmplist[1] = v;
-    HC->mills = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->uncmask);
+    HC->mills = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
 
     HC->Xlist = gretl_list_new(HC->kmain);
     HC->Zlist = gretl_list_new(HC->ksel);
@@ -367,10 +367,10 @@ static double h_loglik(const double *param, void *ptr)
     gretl_matrix_print(HC->beta, "beta");
     gretl_matrix_print(HC->gama, "gama");
     fprintf(stderr, "sigma = %12.6f, rho = %12.6f", HC->sigma, HC->rho);
-    fputc('\n',stderr);
+    fputc('\n', stderr);
 #endif
 
-    if((HC->sigma <=0) || (fabs(HC->rho) >= 1)) {
+    if (HC->sigma <= 0 || fabs(HC->rho) >= 1) {
 	return ll;
     } else {
 	isqrtrhoc = 1 / sqrt(1 - HC->rho * HC->rho);
@@ -407,7 +407,7 @@ static double h_loglik(const double *param, void *ptr)
 	*/
 	j = 0;
 	for (i=0; i<HC->ntot; i++) {
-	    sel = (1.0 == gretl_vector_get(HC->d,i));
+	    sel = (1.0 == gretl_vector_get(HC->d, i));
 	    ndxt = gretl_vector_get(HC->ndx,i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
@@ -436,6 +436,7 @@ static void fix_heckit_resids (MODEL *hm, h_container *HC)
 {
     int t, k = hm->ncoeff - 1;
     double x;
+
     for (t=hm->t1; t<=hm->t2; t++) {
 	if (!na(hm->uhat[t])) {
 	    x = hm->coeff[k] * lam[t];
@@ -451,6 +452,7 @@ static void fix_heckit_resids (MODEL *hm, h_container *HC)
   estimators: all the relevant items are taken from the container HC
   anyway.
 */
+
 static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinfo)
 {
     double *fullcoeff;
@@ -469,7 +471,6 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
     }
 
     if (!err) {
-
 	for (i=0; i<ko; i++) {
 	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
@@ -643,33 +644,38 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
   we compute the augmented vcv matrix via the delta method
 */
 
-int add_lambda_to_ml_vcv(h_container *HC)
+int add_lambda_to_ml_vcv (h_container *HC)
 {
-    int err, i, k, npar = HC->vcv->rows;
+    int i, k, npar = HC->vcv->rows;
     gretl_matrix *J = NULL;
     gretl_matrix *tmp = NULL;
+    int err = 0;
 
-    err = 0;
-    tmp = gretl_matrix_alloc(npar+1,npar+1);
-    J = gretl_zero_matrix_new(npar+1,npar);
+    tmp = gretl_matrix_alloc(npar+1, npar+1);
+    J = gretl_zero_matrix_new(npar+1, npar);
 
-    if(tmp==NULL || J==NULL) {
+    if (tmp == NULL || J == NULL) {
+	gretl_matrix_free(tmp);
+	gretl_matrix_free(J);
 	return E_ALLOC;
     }
 
     k = HC->kmain;
 
-    for(i=0; i<k; i++) {
+    for (i=0; i<k; i++) {
 	gretl_matrix_set(J, i, i, 1);
     }
+
     gretl_matrix_set(J, k, npar-2, HC->rho);
     gretl_matrix_set(J, k, npar-1, HC->sigma);
-    for(i=k+1; i<=npar; i++) {
+
+    for (i=k+1; i<=npar; i++) {
 	gretl_matrix_set(J, i, i-1, 1);
     }
 
     gretl_matrix_qform(J, GRETL_MOD_NONE, HC->vcv, tmp, GRETL_MOD_NONE);
 
+    gretl_matrix_free(J);
     gretl_matrix_free(HC->vcv);
     HC->vcv = tmp;
     
@@ -679,7 +685,7 @@ int add_lambda_to_ml_vcv(h_container *HC)
 int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
     int fncount, grcount;
-    double hij;
+    double hij, rho;
     double *hess = NULL;
     double *theta = NULL;
     int i, j, k, np = HC->kmain+HC->ksel+2;
@@ -690,20 +696,20 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	return E_ALLOC;
     }
 
-    for(i=0; i<HC->kmain; i++) {
+    for (i=0; i<HC->kmain; i++) {
 	theta[i] = gretl_vector_get(HC->beta,i);
     }
 
     j = 0;
-    for(i=HC->kmain; i<np-2; i++) {
+    for (i=HC->kmain; i<np-2; i++) {
 	theta[i] = gretl_vector_get(HC->gama,j++);
     }
 
     theta[np-2] = HC->sigma;
-    double rho = HC->rho;
+    rho = HC->rho;
 
-    if(fabs(rho)>0.99) {
-	rho = (rho>0) ? 0.99 : -0.99;
+    if (fabs(rho) > 0.99) {
+	rho = (rho > 0)? 0.99 : -0.99;
     }
 
     theta[np-1] = rho;
@@ -712,13 +718,13 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 		   &fncount, &grcount, h_loglik, C_LOGLIK,
 		   NULL, HC, (prn != NULL)? OPT_V : OPT_NONE, prn);
 
-    if(!err) {
+    if (!err) {
 	HC->ll = h_loglik(theta, HC);
 	HC->lambda = HC->sigma*HC->rho;
 	hess = numerical_hessian(theta, np, h_loglik, HC, &err);
     }
 
-    if(!err) {
+    if (!err) {
         HC->vcv = gretl_matrix_alloc(np,np);
 	k = 0;
 	for (i=0; i<np; i++) {
@@ -733,7 +739,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	add_lambda_to_ml_vcv(HC);
 
 #if HDEBUG
-	for(i=0; i<np; i++) {
+	for (i=0; i<np; i++) {
 	    hij = gretl_matrix_get(HC->vcv, i, i);
 	    fprintf(stderr, "theta[%d] = %12.6f, (%12.6f)\n", i, theta[i], sqrt(hij));
 	}
@@ -917,8 +923,8 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return hm;
     }
     
-    if(opt & OPT_M) {
-	err = heckit_ml (&hm, HC, prn);
+    if (opt & OPT_M) {
+	err = heckit_ml(&hm, HC, prn);
 	if(!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
