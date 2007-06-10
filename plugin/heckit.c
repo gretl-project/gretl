@@ -28,35 +28,36 @@
 typedef struct h_container_ h_container;
 
 struct h_container_ {
-    int kmain;
-    int ksel;
-    double ll;
+    int kmain;			/* no. of params in the main eq. */
+    int ksel;			/* no. of params in the selection eq. */
+    double ll;			/* log-likelihood */
 
-    int ntot, nunc;
-    int *Xlist;
-    int *Zlist;
+    int ntot, nunc;		/* total & uncensored obs */
+    int *Xlist;			/* regressor list for the main eq. */
+    int *Zlist;			/* regressor list for the selection eq. */
 
-    gretl_matrix *y;
-    gretl_matrix *reg;
-    gretl_matrix *mills;
-    gretl_matrix *delta;
-    gretl_matrix *d;
-    gretl_matrix *selreg;
-    gretl_matrix *selreg_u;
+    gretl_matrix *y;		/* dependent var */
+    gretl_matrix *reg;		/* main eq. regressors */
+    gretl_matrix *mills;	/* Mills ratios from selection eq */
+    gretl_matrix *delta;	/* used in 2-step vcv calculations */
+    gretl_matrix *d;		/* selection dummy variable */
+    gretl_matrix *selreg;	/* selection eq. regressors */ 
+    gretl_matrix *selreg_u;	/* selection eq. regressors (subsample d==1) */
     gretl_vector *fitted;
     gretl_vector *u;
     gretl_vector *ndx;
 
-    gretl_vector *beta;
-    gretl_vector *gama;
+    gretl_vector *beta;		/* main eq. parameters */
+    gretl_vector *gama;		/* selection eq. parameters */
     double sigma;
     double rho;
+    double lambda;		/* rho*sigma by definiton */
 
-    gretl_matrix *vcv;
-    gretl_matrix *VProbit;
+    gretl_matrix *vcv;		/* Variance-covariance matrix */
+    gretl_matrix *VProbit;	/* 1st stage probit covariance matrix */
 
-    char *fullmask;
-    char *uncmask;
+    char *fullmask;		/* mask NAs */
+    char *uncmask;		/* mask NAs and (d==0) */
 
 };
 
@@ -100,6 +101,8 @@ static h_container *h_container_new (void)
 	return NULL;
     }
 
+    HC->ll = NADBL;
+
     HC->Xlist = NULL;
     HC->Zlist = NULL;
 
@@ -116,6 +119,9 @@ static h_container *h_container_new (void)
 
     HC->beta = NULL;
     HC->gama = NULL;
+    HC->sigma = NADBL;
+    HC->rho = NADBL;
+    HC->lambda = NADBL;
 
     HC->vcv = NULL;
     HC->VProbit = NULL;
@@ -202,6 +208,7 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
     return 0;
 }
 
+
 static int h_container_fill (h_container *HC, const int *Xl, 
 			     const int *Zl, const double **Z, 
 			     DATAINFO *pdinfo, MODEL *probmod, 
@@ -220,7 +227,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
     */
     v = pdinfo->v - 1;
 
-    HC->kmain = Xl[0] - 1;
+    /* X does NOT include the Mills ratios: hence the "-2" */
+    HC->kmain = Xl[0] - 2;
     HC->ksel = Zl[0] - 1;
 
     HC->beta = gretl_vector_alloc(HC->kmain);
@@ -230,13 +238,20 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	gretl_vector_set(HC->beta, i, olsmod->coeff[i]);
     }
 
+    HC->lambda = olsmod->coeff[HC->kmain];
+
     for (i=0; i<HC->ksel; i++) {
 	gretl_vector_set(HC->gama, i, probmod->coeff[i]);
     }
 
+    /*
+      we'll be working with 2 masks: fullmask just masks unusable
+      observations, and may be NULL; uncmasks skips censored
+      observations too.
+    */
     err = make_uncens_mask(HC, Xl, Zl, Z, pdinfo);
 
-#if 0
+#if HDEBUG
     double x;
     int t;
 
@@ -267,18 +282,18 @@ static int h_container_fill (h_container *HC, const int *Xl,
     tmplist[0] = 1;
     tmplist[1] = Xl[1];
 
-    HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
+    HC->y = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->uncmask);
     HC->nunc = gretl_matrix_rows(HC->y);
 
     tmplist[1] = Zl[1];
-    HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->fullmask);
+    HC->d = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->fullmask);
     HC->ntot = gretl_matrix_rows(HC->d);
 
     tmplist[1] = v;
-    HC->mills = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
+    HC->mills = gretl_matrix_data_subset (tmplist, Z, t1, t2, HC->uncmask);
 
-    HC->Xlist = gretl_list_new(Xl[0]-1);
-    HC->Zlist = gretl_list_new(Zl[0]-1);
+    HC->Xlist = gretl_list_new(HC->kmain);
+    HC->Zlist = gretl_list_new(HC->ksel);
 
     if (HC->Xlist == NULL || HC->Zlist == NULL) {
 	err = E_ALLOC;
@@ -326,32 +341,36 @@ static int h_container_fill (h_container *HC, const int *Xl,
     return err;
 }
 
-static double h_loglik (const double *param, void *ptr)
+static double h_loglik(const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double lnsig, isqrtrhoc, x, ll = NADBL;
-    int k1 = HC->kmain - 1;
+    int k1 = HC->kmain;
     int k2 = HC->ksel;
     int i, j, err = 0;
-
+    
     for (i=0; i<k1; i++) {
 	gretl_vector_set(HC->beta, i, param[i]);
     }
-
-    /* No Mills ratios here */
-    gretl_vector_set(HC->beta, k1, 0.0);
 
     j = 0;
     for (i=k1; i<k1+k2; i++) {
 	gretl_vector_set(HC->gama, j++, param[i]);
     }
-    
+
     HC->sigma = param[k1+k2];
     lnsig = log(HC->sigma);
 
     HC->rho = param[k1+k2+1];
 
-    if (fabs(HC->rho) >= 1) {
+#if HDEBUG
+    gretl_matrix_print(HC->beta, "beta");
+    gretl_matrix_print(HC->gama, "gama");
+    fprintf(stderr, "sigma = %12.6f, rho = %12.6f", HC->sigma, HC->rho);
+    fputc('\n',stderr);
+#endif
+
+    if((HC->sigma <=0) || (fabs(HC->rho) >= 1)) {
 	return ll;
     } else {
 	isqrtrhoc = 1 / sqrt(1 - HC->rho * HC->rho);
@@ -361,16 +380,16 @@ static double h_loglik (const double *param, void *ptr)
 				    HC->beta, GRETL_MOD_TRANSPOSE,
 				    HC->fitted, GRETL_MOD_NONE);
     
-    if (!err) {
+    if(!err) {
 	gretl_matrix_copy_values(HC->u, HC->y);
 	err = gretl_matrix_subtract_from(HC->u, HC->fitted);
     }
 
-    if (!err) {
+    if(!err) {
 	err = gretl_matrix_divide_by_scalar(HC->u, HC->sigma);
     }
 
-    if (!err) {
+    if(!err) {
 	err = gretl_matrix_multiply_mod(HC->selreg, GRETL_MOD_NONE,
 					HC->gama, GRETL_MOD_TRANSPOSE,
 					HC->ndx, GRETL_MOD_NONE);
@@ -382,21 +401,25 @@ static double h_loglik (const double *param, void *ptr)
 	double ll1 = 0;
 	double ll2 = 0;
 	int sel;
-
+	/* 
+	   i goes through all obs, while j keeps track of the uncensored
+	   ones
+	*/
 	j = 0;
 	for (i=0; i<HC->ntot; i++) {
-	    ndxt = gretl_vector_get(HC->ndx, i);
-	    sel = (1.0 == gretl_vector_get(HC->d, i));
+	    sel = (1.0 == gretl_vector_get(HC->d,i));
+	    ndxt = gretl_vector_get(HC->ndx,i);
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j++);
-		x = (ndxt + HC->rho * ut) * isqrtrhoc;
+		x = (ndxt + HC->rho*ut) * isqrtrhoc;
 		ll1 += log(normal_pdf(ut)) - lnsig;
 		ll2 += log(normal_cdf(x));
 	    } else {
 		ll0 += log(normal_cdf(-ndxt));
 	    }
 	}
-#if 0
+	
+#if HDEBUG
 	fprintf(stderr, "ll0 = %g, ll1 = %g, ll2 = %g\n", ll0, ll1, ll2);
 #endif
 	ll = ll0 + ll1 + ll2;
@@ -407,12 +430,12 @@ static double h_loglik (const double *param, void *ptr)
 
 #if 0
 /* remove the "lambda" effect from the fitted values */
+/* TODO: this may be wrong and is obsolete anyway */
 
 static void fix_heckit_resids (MODEL *hm, h_container *HC)
 {
     int t, k = hm->ncoeff - 1;
     double x;
-    /*
     for (t=hm->t1; t<=hm->t2; t++) {
 	if (!na(hm->uhat[t])) {
 	    x = hm->coeff[k] * lam[t];
@@ -420,16 +443,20 @@ static void fix_heckit_resids (MODEL *hm, h_container *HC)
 	    hm->yhat[t] -= x;
 	}
     }
-    */
 }
 #endif
 
+/*
+  This function works the same way for the 2-step and the ML
+  estimators: all the relevant items are taken from the container HC
+  anyway.
+*/
 static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinfo)
 {
     double *fullcoeff;
-    int ko = hm->ncoeff;
+    int ko = HC->kmain;
     int kp = HC->ksel;
-    int k = ko + kp;
+    int k = ko + kp + 1;
     int i, err = 0;
 
     fullcoeff = malloc(k * sizeof *fullcoeff);
@@ -442,23 +469,32 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
     }
 
     if (!err) {
+
 	for (i=0; i<ko; i++) {
 	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
     
 	}
+	
+	strcpy(hm->params[ko], "lambda");
+	fullcoeff[ko] = HC->lambda;
+
 	for (i=0; i<kp; i++) {
-	    strcpy(hm->params[i+ko], pdinfo->varname[HC->Zlist[i+1]]);
-	    fullcoeff[i+ko] = gretl_vector_get(HC->gama, i);
+	    strcpy(hm->params[i+ko+1], pdinfo->varname[HC->Zlist[i+1]]);
+	    fullcoeff[i+ko+1] = gretl_vector_get(HC->gama, i);
 	}
+
     }
+
+    hm->sigma = HC->sigma;
+    hm->rho = HC->rho;
 
     if (!err) {
 	free(hm->coeff);
 	hm->coeff = fullcoeff;
 	hm->ncoeff = k;
-	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko);
-	gretl_model_set_int(hm, "base-coeffs", ko - 1);
+	gretl_model_set_coeff_separator(hm, N_("Selection equation"), ko + 1);
+	gretl_model_set_int(hm, "base-coeffs", ko);
 	hm->list[0] -= 1;
     }
     
@@ -466,7 +502,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 }
 
 static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S, 
-				 const gretl_matrix *Vp)
+				  const gretl_matrix *Vp)
 {
     int m = S->rows;
     int n = Vp->rows;
@@ -508,6 +544,11 @@ static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
     return 0;
 }
 
+/*
+  This function computes the adjusted VCV matrix for the 2-step estimator
+  and copies it into the model struct
+*/
+
 static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 {
     gretl_matrix *X = NULL;
@@ -523,8 +564,8 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 
     gretl_matrix *Vp = HC->VProbit;
 
-    int nX = gretl_matrix_cols(HC->reg);
-    int nZ = gretl_matrix_cols(HC->selreg);
+    int nX = HC->kmain + 1;
+    int nZ = HC->ksel;
     int err = 0;
 
     double s2, sigma, rho;
@@ -533,8 +574,15 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
     rho = HC->rho;
     s2 = sigma * sigma;
 
-    X = HC->reg;
+    X = gretl_matrix_col_concat(HC->reg, HC->mills, &err);
+    if (err) {
+	goto bailout;
+    }
+
     Xw = gretl_matrix_dot_op(w, X, '*', &err);
+    if (err) {
+	goto bailout;
+    }
 
     XX = gretl_matrix_alloc(nX, nX);
     XXi = gretl_matrix_alloc(nX, nX);
@@ -575,13 +623,11 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 		       XX, S, GRETL_MOD_NONE);
     gretl_matrix_multiply_by_scalar(S, s2);
 
-    olsmod->sigma = sigma;
-    olsmod->rho = rho;
-
     err = transcribe_2step_vcv(olsmod, S, Vp);
 
  bailout:
 
+    gretl_matrix_free(X);
     gretl_matrix_free(Xw);
     gretl_matrix_free(XX);
     gretl_matrix_free(XXi);
@@ -592,14 +638,51 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
     return err;
 }
 
-static int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
+/*
+  since lambda is not a parameter that is directly estimated by ML, 
+  we compute the augmented vcv matrix via the delta method
+*/
+
+int add_lambda_to_ml_vcv(h_container *HC)
+{
+    int err, i, k, npar = HC->vcv->rows;
+    gretl_matrix *J = NULL;
+    gretl_matrix *tmp = NULL;
+
+    err = 0;
+    tmp = gretl_matrix_alloc(npar+1,npar+1);
+    J = gretl_zero_matrix_new(npar+1,npar);
+
+    if(tmp==NULL || J==NULL) {
+	return E_ALLOC;
+    }
+
+    k = HC->kmain;
+
+    for(i=0; i<k; i++) {
+	gretl_matrix_set(J, i, i, 1);
+    }
+    gretl_matrix_set(J, k, npar-2, HC->rho);
+    gretl_matrix_set(J, k, npar-1, HC->sigma);
+    for(i=k+1; i<=npar; i++) {
+	gretl_matrix_set(J, i, i-1, 1);
+    }
+
+    gretl_matrix_qform(J, GRETL_MOD_NONE, HC->vcv, tmp, GRETL_MOD_NONE);
+
+    gretl_matrix_free(HC->vcv);
+    HC->vcv = tmp;
+    
+    return err;
+}
+
+int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 {
     int fncount, grcount;
     double hij;
     double *hess = NULL;
     double *theta = NULL;
-    gretl_matrix *V = NULL;
-    int i, j, k, np = HC->kmain+HC->ksel+1;
+    int i, j, k, np = HC->kmain+HC->ksel+2;
     int err = 0;
 
     theta = malloc(np * sizeof *theta);
@@ -607,47 +690,51 @@ static int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	return E_ALLOC;
     }
 
-    for (i=0; i<HC->kmain-1; i++) {
-	theta[i] = gretl_vector_get(HC->beta, i);
+    for(i=0; i<HC->kmain; i++) {
+	theta[i] = gretl_vector_get(HC->beta,i);
     }
 
     j = 0;
-    for (i=HC->kmain-1; i<np-2; i++) {
-	theta[i] = gretl_vector_get(HC->beta, j++);
+    for(i=HC->kmain; i<np-2; i++) {
+	theta[i] = gretl_vector_get(HC->gama,j++);
     }
 
     theta[np-2] = HC->sigma;
-    theta[np-1] = HC->rho;
+    double rho = HC->rho;
+
+    if(fabs(rho)>0.99) {
+	rho = (rho>0) ? 0.99 : -0.99;
+    }
+
+    theta[np-1] = rho;
 
     err = BFGS_max(theta, np, 1000, HTOL, 
 		   &fncount, &grcount, h_loglik, C_LOGLIK,
 		   NULL, HC, (prn != NULL)? OPT_V : OPT_NONE, prn);
 
-    if (!err) {
+    if(!err) {
+	HC->ll = h_loglik(theta, HC);
+	HC->lambda = HC->sigma*HC->rho;
 	hess = numerical_hessian(theta, np, h_loglik, HC, &err);
     }
 
-    if (!err) {
-	V = gretl_matrix_alloc(np, np);
-	if (V == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
+    if(!err) {
+        HC->vcv = gretl_matrix_alloc(np,np);
 	k = 0;
 	for (i=0; i<np; i++) {
 	    for (j=i; j<np; j++) {
 		hij = hess[k++];
-		gretl_matrix_set(V, i, j, hij);
+		gretl_matrix_set(HC->vcv, i, j, hij);
 		if (i != j) {
-		    gretl_matrix_set(V, j, i, hij);
+		    gretl_matrix_set(HC->vcv, j, i, hij);
 		}
 	    }
 	}
-#if 1
-	for (i=0; i<np; i++) {
-	    hij = gretl_matrix_get(V, i, i);
+	add_lambda_to_ml_vcv(HC);
+
+#if HDEBUG
+	for(i=0; i<np; i++) {
+	    hij = gretl_matrix_get(HC->vcv, i, i);
 	    fprintf(stderr, "theta[%d] = %12.6f, (%12.6f)\n", i, theta[i], sqrt(hij));
 	}
 #endif
@@ -656,11 +743,13 @@ static int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
     free(hess);
     free(theta);
 
-    HC->vcv = V;
-
     return err;
 }
 
+/*
+  This function just copies the VCV matrix for the ML estimator into
+  the model struct
+*/
 static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
 {
     int nvc, npar = HC->vcv->rows;
@@ -724,7 +813,7 @@ static int translate_to_reference_missmask (const char *shortmask,
 }
 
 static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
-			  PRN *prn, h_container *HC) 
+			  h_container *HC) 
 {
 
     MODEL hm;
@@ -745,21 +834,21 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     HC->fullmask = heckit_suppress_mask(Zlist[1], Xlist, (const double **) *pZ, 
-					pdinfo, &err);
+				pdinfo, &err);
 
     if (HC->fullmask != NULL) {
 	translate_to_reference_missmask(HC->fullmask, pdinfo);
     }
 
     /* run initial auxiliary probit */
-    probmod = logit_probit(Zlist, pZ, pdinfo, PROBIT, OPT_A, prn);
+    probmod = logit_probit(Zlist, pZ, pdinfo, PROBIT, OPT_A, NULL);
     if (probmod.errcode) {
 	free(Xlist);
 	free(Zlist);
 	goto bailout;
     }
 
-    /* add the auxiliary series to the dataset */
+    /* add the inverse Mills ratio to the dataset */
 
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
@@ -783,6 +872,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     /* FIXME: this definitely doesn't belong here */
     gretl_model_set_int(&hm, "totobs", probmod.nobs);
 
+    /* fill the container with all the relevant data */
     err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
 			   pdinfo, &probmod, &hm);
 
@@ -796,7 +886,15 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     return hm;
 }
 
-/* the driver function for the plugin */
+/* 
+   The driver function for the plugin. 
+
+   The function heckit_init runs the 2-step estimation and fills up
+   the container HC with all the various items to be used later. Then,
+   if we just want a 2-step estimate, then we just adjust the vcv
+   matrix and transcribe the result into the returned
+   model. Otherwise, we go for ML.
+*/
 
 MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn) 
@@ -813,28 +911,31 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return hm;
     }
 
-    hm = heckit_init(list, pZ, pdinfo, prn, HC);
+    hm = heckit_init(list, pZ, pdinfo, HC);
     if (hm.errcode) {
 	h_container_destroy(HC);
 	return hm;
     }
-
-    if (opt & OPT_M) {
-	/* use MLE */
-	err = heckit_ml(&hm, HC, prn);
-	if (!err) {
-	    err = transcribe_heckit_params(&hm, HC, pdinfo);
-	} 
-	if (!err) {
+    
+    if(opt & OPT_M) {
+	err = heckit_ml (&hm, HC, prn);
+	if(!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
     } else {
 	/* two-step: compute appropriate correction to covariances */
 	err = heckit_2step_vcv(HC, &hm);
-	if (!err) {
-	    err = transcribe_heckit_params(&hm, HC, pdinfo);
-	}
-    } 
+    }
+
+    if (err) {
+	hm.errcode = err;
+    } else {
+	err = transcribe_heckit_params(&hm, HC, pdinfo);
+    }
+
+    if (err) {
+	hm.errcode = err;
+    }
 
     dataset_drop_last_variables(1, pZ, pdinfo);
     h_container_destroy(HC);
