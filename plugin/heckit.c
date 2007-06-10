@@ -487,6 +487,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 
     }
 
+    hm->lnL = HC->ll;
     hm->sigma = HC->sigma;
     hm->rho = HC->rho;
 
@@ -719,7 +720,9 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 		   NULL, HC, (prn != NULL)? OPT_V : OPT_NONE, prn);
 
     if (!err) {
-	HC->ll = h_loglik(theta, HC);
+	HC->ll = hm->lnL = h_loglik(theta, HC);
+	gretl_model_set_int(hm, "fncount", fncount);	
+	gretl_model_set_int(hm, "grcount", grcount);	
 	HC->lambda = HC->sigma*HC->rho;
 	hess = numerical_hessian(theta, np, h_loglik, HC, &err);
     }
@@ -758,7 +761,14 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 */
 static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
 {
-    int nvc, npar = HC->vcv->rows;
+    int nvc, npar;
+
+    /*
+      We don't transcribe the variances for sigma and rho into the
+      model
+    */
+    npar = HC->vcv->rows - 2;
+
     int i, j, k = 0;
     double vij;
 

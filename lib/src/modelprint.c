@@ -2216,6 +2216,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_heckit_stats(pmod, prn);
+	print_ll(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }
@@ -3096,10 +3097,12 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  %s: %d\n", _("Total observations"), totobs);
 	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenobs, cenpc);
 	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "  %s = %.*g\n", _("rho"), GRETL_DIGITS, pmod->rho);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d\n", I_("Total observations"), totobs);
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenobs, cenpc);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("rho"), pmod->rho);
     } else if (tex_format(prn)) {
 	char xstr[32];
 	
@@ -3109,6 +3112,8 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn)
 		I_("Censored observations"), cenpc);
 	tex_dcolumn_double(pmod->sigma, xstr);
 	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
+	tex_dcolumn_double(pmod->rho, xstr);
+	pprintf(prn, "$\\hat{\\rho}$ & %s \\\\\n", xstr);
     }
 }
 
