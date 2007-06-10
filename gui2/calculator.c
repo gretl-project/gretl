@@ -301,20 +301,8 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	xx = getval(tmp, NULL, 0); /* value */
 	if (na(xx)) return;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
-	zz = getval(tmp, NULL, 0); /* mean */
-	if (na(zz)) return;
-
-	xx -= zz;
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[3]));
-	val = getval(tmp, NULL, 0); /* std. deviation */
-	if (na(val)) return;
-	if (val <= 0) {
-	    errbox(_("Invalid standard deviation"));
-	    return;
-	}
 	parm[0] = df;
-	parm[1] = xx / val;
+	parm[1] = xx;
 	break;
 
     case CHISQ_PVAL:
@@ -1216,10 +1204,6 @@ static void make_dist_tab (CalcChild *child, int d)
     case T_PVAL:
 	add_lookup_entry(tbl, &tbl_len, N_("df"), child, d);
 	add_lookup_entry(tbl, &tbl_len, N_("value"), child, d);
-	add_lookup_entry(tbl, &tbl_len, N_("mean"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[2]), "0");
-	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[3]), "1");
 	break;
 
     case CHISQ_PVAL:

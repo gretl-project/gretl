@@ -208,6 +208,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 			     MODEL *olsmod)
 {
     gretl_vector *gama = NULL;
+    gretl_vector *tmp = NULL;
     double bmills, s2, mdelta;
     int tmplist[2];
     int t1 = pdinfo->t1;
@@ -298,10 +299,13 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
     gama = gretl_coeff_vector_from_model(probmod, NULL);
 
-    HC->delta = gretl_matrix_alloc(HC->nunc,1);
+    HC->delta = gretl_column_vector_alloc(HC->nunc);
     err = gretl_matrix_multiply(HC->selreg_u, gama, HC->delta);
     gretl_matrix_add_to(HC->delta, HC->mills);
-    HC->delta = gretl_matrix_dot_op(HC->delta, HC->mills, '*', &err);
+    
+    tmp = gretl_matrix_dot_op(HC->delta, HC->mills, '*', &err);
+    gretl_matrix_free(HC->delta);
+    HC->delta = tmp;
 
     bmills = olsmod->coeff[olsmod->ncoeff-1];
     mdelta  = gretl_vector_mean(HC->delta);
@@ -578,6 +582,7 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 
  bailout:
 
+    gretl_matrix_free(Xw);
     gretl_matrix_free(XX);
     gretl_matrix_free(XXi);
     gretl_matrix_free(XXw);
