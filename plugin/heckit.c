@@ -922,16 +922,16 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	h_container_destroy(HC);
 	return hm;
     }
-    
-    if (opt & OPT_M) {
+
+    if (opt & OPT_T) {
+	/* two-step: compute appropriate correction to covariances */
+	err = heckit_2step_vcv(HC, &hm);
+    } else {
 	err = heckit_ml(&hm, HC, prn);
 	if(!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
-    } else {
-	/* two-step: compute appropriate correction to covariances */
-	err = heckit_2step_vcv(HC, &hm);
-    }
+    } 
 
     if (err) {
 	hm.errcode = err;
