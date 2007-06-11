@@ -937,6 +937,7 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	/* two-step: compute appropriate correction to covariances */
 	err = heckit_2step_vcv(HC, &hm);
     } else {
+	/* use MLE */
 	err = heckit_ml(&hm, HC, prn);
 	if(!err) {
 	    err = transcribe_ml_vcv(&hm, HC);

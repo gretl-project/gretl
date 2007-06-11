@@ -3126,7 +3126,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 }
 
 #define stepfrac	0.2
-#define acctol		1.0e-7 /* was 0.0001 */
+#define acctol		1.0e-7 /* alt: 0.0001 or 1.0e-7 */
 #define reltest		10.0
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
@@ -3288,12 +3288,6 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 
 	    if (ndelta > 0) {
 		/* making progress */
-#if 1
-		if (f < fmax) {
-		    fprintf(stderr, "bad: over-writing fmax = %g with %g (ndelta = %d)\n",
-			    fmax, f, ndelta);
-		}
-#endif
 		fmax = f;
 		gradfunc(b, g, n, cfunc, data);
 		reverse_gradient(g, n);

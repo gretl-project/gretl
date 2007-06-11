@@ -286,6 +286,69 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
     /* couldn't find a "next cell" to go to */
 }
 
+static void update_sheet_matrix (Spreadsheet *sheet)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    gchar *numstr;
+    double x;
+    int i, j;
+
+    model = gtk_tree_view_get_model(view);
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    for (i=0; i<sheet->datarows; i++) {
+	for (j=0; j<sheet->datacols; j++) {
+	    gtk_tree_model_get(model, &iter, j+1, &numstr, -1);
+	    x = atof(numstr); 
+	    gretl_matrix_set(sheet->matrix, i, j, x);
+	    g_free(numstr);
+	}
+	gtk_tree_model_iter_next(model, &iter);
+    }
+}
+
+/* in case we're editing a pre-existing matrix, carry the
+   modifications back */
+
+static void update_saved_matrix (Spreadsheet *sheet)
+{
+    if (sheet->oldmat != NULL) {
+	if (sheet->oldmat->rows == sheet->matrix->rows &&
+	    sheet->oldmat->cols == sheet->matrix->cols) {
+	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	} else if (sheet->oldmat->rows * sheet->oldmat->cols ==
+		   sheet->matrix->rows * sheet->matrix->cols) {
+	    sheet->oldmat->rows = sheet->matrix->rows;
+	    sheet->oldmat->cols = sheet->matrix->cols;
+	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
+	} else {
+	    gretl_matrix *m = gretl_matrix_copy(sheet->matrix);
+
+	    if (m == NULL) {
+		nomem();
+	    } else {
+		user_matrix_replace_matrix_by_name(sheet->mname, m);
+		sheet->oldmat = m;
+	    }
+	}
+	/* record the fact that a matrix has been changed */
+	mark_session_changed();
+    }
+}
+
+static void update_sheet_matrix_element (Spreadsheet *sheet,
+					 const gchar *new_text,
+					 const gchar *path_string,
+					 int colnum)
+{
+    int i = atoi(path_string);
+    int j = colnum - 1;
+
+    gretl_matrix_set(sheet->matrix, i, j, atof(new_text));
+}
+
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *user_text,
@@ -325,6 +388,9 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	if (old_text != NULL && strcmp(old_text, new_text)) {
 	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			       colnum, new_text, -1);
+	    if (sheet->matrix != NULL) {
+		update_sheet_matrix_element(sheet, new_text, path_string, colnum);
+	    }
 	    sheet_set_modified(sheet, TRUE);
 	}
 	move_to_next_cell(sheet, path, column);
@@ -864,51 +930,14 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 /* put modified values from the spreadsheet into the attached
    matrix */
 
-static void update_matrix_from_sheet (Spreadsheet *sheet)
+static void update_matrix_from_sheet_full (Spreadsheet *sheet)
 {
-    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreeIter iter;
-    GtkTreeModel *model;
-    gchar *numstr;
-    double x;
-    int i, j;
-
-    model = gtk_tree_view_get_model(view);
-    gtk_tree_model_get_iter_first(model, &iter);
-
-    for (i=0; i<sheet->datarows; i++) {
-	for (j=0; j<sheet->datacols; j++) {
-	    gtk_tree_model_get(model, &iter, j+1, &numstr, -1);
-	    x = atof(numstr); 
-	    gretl_matrix_set(sheet->matrix, i, j, x);
-	    g_free(numstr);
-	}
-	gtk_tree_model_iter_next(model, &iter);
-    }
+    update_sheet_matrix(sheet);
 
     /* in case we're editing a pre-existing matrix, carry the
        modifications back */
     if (sheet->oldmat != NULL) {
-	if (sheet->oldmat->rows == sheet->matrix->rows &&
-	    sheet->oldmat->cols == sheet->matrix->cols) {
-	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
-	} else if (sheet->oldmat->rows * sheet->oldmat->cols ==
-		   sheet->matrix->rows * sheet->matrix->cols) {
-	    sheet->oldmat->rows = sheet->matrix->rows;
-	    sheet->oldmat->cols = sheet->matrix->cols;
-	    gretl_matrix_copy_values(sheet->oldmat, sheet->matrix);
-	} else {
-	    gretl_matrix *m = gretl_matrix_copy(sheet->matrix);
-
-	    if (m == NULL) {
-		nomem();
-	    } else {
-		user_matrix_replace_matrix_by_name(sheet->mname, m);
-		sheet->oldmat = m;
-	    }
-	}
-	/* record the fact that a matrix has been changed */
-	mark_session_changed();
+	update_saved_matrix(sheet);
     }
 
     sheet_set_modified(sheet, FALSE);
@@ -1066,6 +1095,7 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 		0, VARCLICK_NONE, &cancel);
     
     if (!cancel) {
+	gretl_matrix *m;
 	user_matrix *u;
 	gchar *tmp;
 
@@ -1074,8 +1104,8 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 	    return;
 	}
 
-	sheet->oldmat = gretl_matrix_copy(sheet->matrix);
-	add_or_replace_user_matrix(sheet->oldmat, newname);
+	m = gretl_matrix_copy(sheet->matrix);
+	add_or_replace_user_matrix(m, newname);
 	strcpy(sheet->mname, newname);
 
 	tmp = g_strdup_printf("gretl: %s", sheet->mname);
@@ -1085,6 +1115,7 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
 	u = get_user_matrix_by_name(newname);
 	g_object_set_data(G_OBJECT(sheet->win), "object", u);
 
+	sheet->oldmat = m;
 	sheet_set_modified(sheet, FALSE);
     }
 }
@@ -1097,7 +1128,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
     if (!sheet->modified && !new_matrix(sheet)) {
 	infobox(_("No changes were made"));
     } else if (sheet->cmd == SHEET_EDIT_MATRIX) {
-	update_matrix_from_sheet(sheet);
+	update_matrix_from_sheet_full(sheet);
     } else {
 	update_dataset_from_sheet(sheet);
     }

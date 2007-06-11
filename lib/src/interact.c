@@ -3377,6 +3377,8 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
 	    }
+	    /* FIXME is the following really right? */
+	    set_as_last_model(s->var, GRETL_OBJ_VAR);
 	}
     } else {
 	err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 

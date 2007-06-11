@@ -885,8 +885,7 @@ int user_matrix_destroy (user_matrix *u)
 	for (i=0; i<n_matrices; i++) {
 	    if (matrices[i] == u) {
 		destroy_user_matrix(matrices[i]);
-		for (j=i; j<n_matrices - 1; j++) {
-		    matrices[j] = matrices[j+1];
+		for (j=i; j<nm; j++) {
 		}
 		matrices[nm] = NULL;
 		break;
@@ -899,7 +898,6 @@ int user_matrix_destroy (user_matrix *u)
 	} else {
 	    user_matrix **tmp = realloc(matrices, nm * sizeof *tmp);
 
-	    n_matrices = nm;
 	    if (tmp == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -907,7 +905,7 @@ int user_matrix_destroy (user_matrix *u)
 	    }
 	}
 
-	n_matrices--;
+	n_matrices = nm;
     }
 
     return err;
