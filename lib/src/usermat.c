@@ -886,6 +886,7 @@ int user_matrix_destroy (user_matrix *u)
 	    if (matrices[i] == u) {
 		destroy_user_matrix(matrices[i]);
 		for (j=i; j<nm; j++) {
+		    matrices[j] = matrices[j+1];
 		}
 		matrices[nm] = NULL;
 		break;
