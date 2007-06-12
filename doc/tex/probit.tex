@@ -14,7 +14,7 @@ distribution conditional on the explanatory variables $x_i$.  That is,
 %
 \begin{equation}
   \label{eq:qr-Bernoulli}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll} 
       1 & P_i \\ 0 & 1 - P_i 
     \end{array}
@@ -332,7 +332,7 @@ On the contrary, suppose that we observe $y_i$, defined as
 %
 \begin{equation}
   \label{eq:tobit}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll} 
       y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
       0 & \mathrm{for} \quad y^*_i \le 0 
@@ -362,10 +362,11 @@ more severe: non-normality implies inconsistency for the Tobit
 estimator. For this reason, the output for the tobit model includes
 the Chesher--Irish (1987) test for normality by default.
 
-\subsection{Generalized Tobit model}
+\subsection{Sample selection model}
 \label{sec:heckit}
 
-In the so-called ``Tobit II'' model, there are two latent variables:
+In the sample selection model (also known as ``Tobit II'' model),
+there are two latent variables:
 %
 \begin{eqnarray}
   \label{eq:heckit1}
@@ -378,7 +379,7 @@ and the observation rule is given by
 %
 \begin{equation}
   \label{eq:tobitII}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll} 
       y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
       0 & \mathrm{for} \quad s^*_i \le 0 
@@ -393,24 +394,41 @@ only observe the wage for the employed. If $y^*_i$ and $s^*_i$ were
 for estimating equation (\ref{eq:heckit1}); otherwise, OLS does not
 yield consistent estimates of the parameters $\beta_j$.
 
-A widely used estimator is the so-called \emph{Heckit} estimator,
-named after Heckman (1979). The procedure can be briefly outlined as
-follows: first, a probit model is fit on equation (\ref{eq:heckit2});
-next, the generalized residuals are inserted in equation
-(\ref{eq:heckit1}) to correct for the effect of sample selection.
+The parameters can be estimated via maximum likelihood under the
+assumption of joint normality of $\varepsilon_i$ and $\eta_i$;
+however, a widely used alternative method yields the so-called
+\emph{Heckit} estimator, named after Heckman (1979). The procedure can
+be briefly outlined as follows: first, a probit model is fit on
+equation (\ref{eq:heckit2}); next, the generalized residuals are
+inserted in equation (\ref{eq:heckit1}) to correct for the effect of
+sample selection.
+
+\app{Gretl} provides the \texttt{heckit} command to carry out
+estimation; its syntax is
+%
+\begin{code}
+heckit y X ; d Z
+\end{code}
+where \texttt{y} is the dependent variable, \texttt{X} is a list of
+regressors, \texttt{d} is a dummy variable holding 1 for uncensored
+observations and \texttt{Z} is a list of explanatory variables for the
+censoring equation.
+
+Since in most cases maximum likelihood is the method of
+choice, by default \app{gretl} computes ML estimates. The 2-step
+Heckit estimates can be obtained by using the \texttt{--two-step}
+option. After estimation, the \verb|$uhat| accessor contains the
+generalised residuals.
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
 Mroz (1987): the first one replicates Table 22.7 in Greene (2003),
-while the second one replicates table 17.1 in Wooldridge (2002a). Note
-that the \texttt{heckit.inp} script (provided with \app{gretl} as an
-example script) is invoked.
+while the second one replicates table 17.1 in Wooldridge (2002a). 
 
 \begin{script}[htbp]
   \caption{Heckit model}
   \label{ex:heckit}
 \begin{scode}
 open mroz.gdt
-include heckit.inp
 
 genr EXP2 = AX^2
 genr WA2 = WA^2
@@ -421,7 +439,8 @@ genr KIDS = (KL6+K618)>0
 list X = const AX EXP2 WE CIT
 list Z = const WA WA2 FAMINC KIDS WE
 
-heckit(WW,X,LFP,Z)
+heckit WW X ; LFP Z --two-step 
+heckit WW X ; LFP Z 
 
 # Wooldridge's specification
 
@@ -430,7 +449,7 @@ series lww = log(WW)
 list X = const WE AX EXP2
 list Z = X NWINC WA KL6 K618
 
-heckit(lww,X,LFP,Z)
+heckit lww X ; LFP Z --two-step 
 \end{scode}
 \end{script}
 
