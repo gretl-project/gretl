@@ -33,6 +33,8 @@ struct h_container_ {
     double ll;			/* log-likelihood */
 
     int ntot, nunc;		/* total & uncensored obs */
+    int depvar;			/* location of y in array Z */
+    int selvar;			/* location of selection variable in array Z */
     int *Xlist;			/* regressor list for the main eq. */
     int *Zlist;			/* regressor list for the selection eq. */
 
@@ -153,7 +155,7 @@ static char *heckit_suppress_mask (int sel, const int *list, const double **Z,
     if (s == T) {
 	*err = E_DATA;
 	return NULL;
-    } else if (s > 0) {
+    } else if (1 || s > 0) {
 	mask = calloc(T, 1);
 	if (mask == NULL) {
 	    *err = E_ALLOC;
@@ -183,6 +185,7 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
 {
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int t, s = 0;
+    int selvar = Zl[1];
 
     HC->uncmask = calloc(T, 1);
     if (HC->uncmask == NULL) {
@@ -191,14 +194,14 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
 
     if (HC->fullmask == NULL) {
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (Z[Zl[1]][t] == 0.0) {
+	    if (Z[selvar][t] == 0.0) {
 		HC->uncmask[s] = 1;
 	    }
 	    s++;
 	}
     } else {
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (Z[Zl[1]][t] == 0.0 || HC->fullmask[s]) {
+	    if (Z[selvar][t] == 0.0 || HC->fullmask[s]) {
 		HC->uncmask[s] = 1;
 	    }
 	    s++;
@@ -207,7 +210,6 @@ static int make_uncens_mask (h_container *HC, const int *Xl,
 
     return 0;
 }
-
 
 static int h_container_fill (h_container *HC, const int *Xl, 
 			     const int *Zl, const double **Z, 
@@ -220,6 +222,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     int tmplist[2];
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
+    int depvar, selvar;
     int v, i, err = 0;
 
     /* it is assumed that the Mills ratios have just been added to the dataset;
@@ -228,6 +231,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
     v = pdinfo->v - 1;
 
     /* X does NOT include the Mills ratios: hence the "-2" */
+    HC->depvar = depvar = Xl[1];
+    HC->selvar = selvar = Zl[1];
     HC->kmain = Xl[0] - 2;
     HC->ksel = Zl[0] - 1;
 
@@ -261,10 +266,10 @@ static int h_container_fill (h_container *HC, const int *Xl,
 		fputc('F', stderr);
 	    }
 	    if (HC->uncmask[t] == '1') {
-		fputs('U', stderr);
+		fputc('U', stderr);
 	    }
 	    fputc('\t', stderr);
-	    x = Z[Zl[1]][t];
+	    x = Z[selvar][t];
 	    fprintf(stderr, "%12.4f", x);
 	    for (i=1; i<=Xl[0]; i++) {
 		x = Z[Xl[i]][t];
@@ -280,12 +285,12 @@ static int h_container_fill (h_container *HC, const int *Xl,
 #endif
 
     tmplist[0] = 1;
-    tmplist[1] = Xl[1];
+    tmplist[1] = depvar;
 
     HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
     HC->nunc = gretl_matrix_rows(HC->y);
 
-    tmplist[1] = Zl[1];
+    tmplist[1] = selvar;
     HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->fullmask);
     HC->ntot = gretl_matrix_rows(HC->d);
 
@@ -341,7 +346,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     return err;
 }
 
-static double h_loglik(const double *param, void *ptr)
+static double h_loglik (const double *param, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double lnsig, isqrtrhoc, x, ll = NADBL;
@@ -380,16 +385,16 @@ static double h_loglik(const double *param, void *ptr)
 				    HC->beta, GRETL_MOD_TRANSPOSE,
 				    HC->fitted, GRETL_MOD_NONE);
     
-    if(!err) {
+    if (!err) {
 	gretl_matrix_copy_values(HC->u, HC->y);
 	err = gretl_matrix_subtract_from(HC->u, HC->fitted);
     }
 
-    if(!err) {
+    if (!err) {
 	err = gretl_matrix_divide_by_scalar(HC->u, HC->sigma);
     }
 
-    if(!err) {
+    if (!err) {
 	err = gretl_matrix_multiply_mod(HC->selreg, GRETL_MOD_NONE,
 					HC->gama, GRETL_MOD_TRANSPOSE,
 					HC->ndx, GRETL_MOD_NONE);
@@ -428,24 +433,83 @@ static double h_loglik(const double *param, void *ptr)
     return ll;
 }
 
-#if 0
-/* remove the "lambda" effect from the fitted values */
-/* TODO: this may be wrong and is obsolete anyway */
+/*
+  What we should do here is not entirely clear: we set yhat to the
+  linear predictor, computed over uncensored AND censored
+  observations.  
 
-static void fix_heckit_resids (MODEL *hm, h_container *HC)
+  On the contrary, uhat is defined as 
+  y - yhat	for uncensored observations, and as
+  E(u|d=0)	for censored observations
+*/
+
+static void heckit_yhat_uhat (MODEL *hm, h_container *HC, 
+			      const double **Z, DATAINFO *pdinfo)
 {
-    int t, k = hm->ncoeff - 1;
-    double x;
 
-    for (t=hm->t1; t<=hm->t2; t++) {
-	if (!na(hm->uhat[t])) {
-	    x = hm->coeff[k] * lam[t];
-	    hm->uhat[t] += x;
-	    hm->yhat[t] -= x;
+    int i, t, v, kb, kg;
+    int depvar, selvar;
+    double x, xb, zg;
+    double f, F, lam = HC->lambda;
+
+    depvar = HC->depvar;
+    selvar = HC->selvar;
+    kb = HC->kmain;
+    kg = HC->ksel;
+
+    fprintf(stderr, "pdinfo->t1 = %d, t2 = %d\n", pdinfo->t1, pdinfo->t2);
+    fprintf(stderr, "hm->t1 = %d, t2 = %d, nobs = %d\n", hm->t1, hm->t2, hm->nobs);
+    fprintf(stderr, "orig: hm->uhat[0] = %g, hm->uhat[49] = %g\n",
+	    hm->uhat[0], hm->uhat[49]);
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xb = 0;
+	for (i=0; i<kb; i++) {
+	    v = HC->Xlist[i+1];
+	    x = Z[v][t];
+	    if (na(x)) {
+		xb = NADBL;
+		break;
+	    } else {
+		xb += x * gretl_vector_get(HC->beta,i);
+	    }
+	}
+
+	if (!na(xb)) {
+	    hm->yhat[t] = xb;
+	}
+
+	if (Z[selvar][t] == 0) {
+	    /* censored */
+	    zg = 0;
+	    for (i=0; i<kg; i++) {
+		v = HC->Zlist[i+1];
+		x = Z[v][t];
+		if (na(x)) {
+		    zg = NADBL;
+		    break;
+		} else {
+		    zg += x * gretl_vector_get(HC->gama,i);
+		}
+	    }
+
+	    if (!na(zg)) {
+		f = normal_pdf(zg);
+		F = normal_cdf(-zg);
+		hm->uhat[t] = -lam * f / F;
+	    } else {
+		hm->uhat[t] = NADBL;
+	    }
+	} else {
+	    /* uncensored */
+	    if (!na(xb)) {
+		if (Z[selvar][t] == 1) {
+		    hm->uhat[t] = Z[depvar][t] - xb;
+		}
+	    }
 	}
     }
 }
-#endif
 
 /*
   This function works the same way for the 2-step and the ML
@@ -822,6 +886,10 @@ static int translate_to_reference_missmask (const char *shortmask,
 	}
     }
 
+#if HDEBUG
+    fprintf(stderr, "Doing copy_to_reference_missmask\n");
+#endif
+
     err = copy_to_reference_missmask(longmask);
     free(longmask);
 
@@ -831,7 +899,9 @@ static int translate_to_reference_missmask (const char *shortmask,
 static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 			  h_container *HC) 
 {
-
+#if HDEBUG
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT);
+#endif
     MODEL hm;
     MODEL probmod;
     int *Xlist = NULL;
@@ -840,7 +910,6 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     int t, sel;
     int err = 0;
 
-    gretl_model_init(&hm);
     gretl_model_init(&probmod);
 
     err = gretl_list_split_on_separator(list, &Xlist, &Zlist);
@@ -850,7 +919,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     HC->fullmask = heckit_suppress_mask(Zlist[1], Xlist, (const double **) *pZ, 
-				pdinfo, &err);
+					pdinfo, &err);
 
     if (HC->fullmask != NULL) {
 	translate_to_reference_missmask(HC->fullmask, pdinfo);
@@ -864,6 +933,10 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+#if HDEBUG
+    printmodel(&probmod, pdinfo, OPT_NONE, prn);
+#endif
+
     /* add the inverse Mills ratio to the dataset */
 
     err = dataset_add_series(1, pZ, pdinfo);
@@ -875,7 +948,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	sel = ((*pZ)[Zlist[1]][t] == 1.0);
-	(*pZ)[v][t] = (sel) ? probmod.uhat[t] : NADBL;
+	(*pZ)[v][t] = (sel)? probmod.uhat[t] : NADBL;
     }
 
     strcpy(pdinfo->varname[v], "lambda");
@@ -887,6 +960,11 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* FIXME: this definitely doesn't belong here */
     gretl_model_set_int(&hm, "totobs", probmod.nobs);
+
+#if HDEBUG
+    printmodel(&hm, pdinfo, OPT_NONE, prn);
+    gretl_print_destroy(prn);
+#endif
 
     /* fill the container with all the relevant data */
     err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
@@ -948,6 +1026,7 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	hm.errcode = err;
     } else {
 	err = transcribe_heckit_params(&hm, HC, pdinfo);
+	heckit_yhat_uhat (&hm, HC, (const double **) *pZ, pdinfo);
     }
 
     if (err) {

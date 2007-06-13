@@ -690,6 +690,11 @@ int copy_to_reference_missmask (const char *mask)
 
     refmask = gretl_strdup(mask);
 
+#if MASKDEBUG
+    fprintf(stderr, "copy_to_reference_missmask: refmask = %p\n", 
+	    (void *) refmask);
+#endif
+
     return (refmask == NULL)? E_ALLOC : 0;
 }
 
@@ -714,7 +719,7 @@ int set_reference_missmask_from_list (const int *list,
 	err = E_ALLOC;
     }
 
-#if 1
+#if MASKDEBUG
     fprintf(stderr, "set_reference_missmask_from_list\n");
     printlist(list, "list");
     fprintf(stderr, "nmiss = %d, mask = %p\n", nmiss, (void *) mask);
