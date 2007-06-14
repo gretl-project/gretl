@@ -8498,7 +8498,7 @@
   </command>
 
   <command name="xtab" section="Statistics" 
-    label="Cross-tabulate variables" context="cli">
+    label="Cross-tabulate variables">
 
     <usage>
       <arguments>
@@ -8521,7 +8521,7 @@
       </options>
     </usage>
 
-    <description>
+    <description context="cli">
       <para>
         With no options given, displays a contingency table or
         cross-tabulation for each combination of the variables included in
@@ -8545,7 +8545,30 @@
         that at least 80 percent of cells should have expected frequencies
         of 5 or greater; if this criterion is not met a warning is printed.
       </para>
+    </description>
 
+    <description context="gui">
+      <para>
+        Displays a contingency table or cross-tabulation for each
+	combination of the selected variables.  Note that all the
+	variables must be discrete.
+      </para>
+      <para>
+	By default, plain integer values are shown in the cells and
+	on the margins of the table.  However, you can choose to display
+	either row or column percentages instead.
+      </para>
+      <para>
+	By default, empty cells are shown as empty, but you can choose to
+	have zero values shown as such.
+      </para>
+      <para>
+        Pearson's chi-square test for independence is displayed if the
+        expected frequency under independence is at least 1.0e-7 for all
+        cells.  A common rule of thumb for the validity of this statistic is
+        that at least 80 percent of cells should have expected frequencies
+        of 5 or greater; if this criterion is not met a warning is printed.
+      </para>
     </description>
 
   </command>

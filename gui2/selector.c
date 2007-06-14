@@ -43,7 +43,7 @@ enum {
 };
 
 #define N_EXTRA  6
-#define N_RADIOS 2
+#define N_RADIOS 3
 
 struct _selector {
     GtkWidget *dlg;
@@ -117,7 +117,8 @@ struct _selector {
                          c == VAR || \
                          c == VECM || \
                          c == VLAGSEL || \
-                         c == WLS)
+                         c == WLS || \
+                         c == XTAB)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -182,7 +183,7 @@ static int want_radios (selector *sr)
 
     if (c == COINT2 || c == VECM || c == ARMA || c == PANEL || 
 	c == SCATTERS || c == COINT || c == ARBOND || 
-	c == LOGIT || c == PROBIT) {
+	c == LOGIT || c == PROBIT || c == XTAB) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -2845,6 +2846,9 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == PANEL || sr->code == ARBOND) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_D, 0);
+    } else if (sr->code == XTAB) {
+	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
     }	
 
 #ifdef HAVE_X12A    
@@ -3024,6 +3028,27 @@ static void build_arbond_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_xtab_radios (selector *sr)
+{
+    GtkWidget *b1, *b2, *b3;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Plain numerical values"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Show row percentages"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_R, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
+    b3 = gtk_radio_button_new_with_label(group, _("Show column percentages"));
+    pack_switch(b3, sr, FALSE, FALSE, OPT_C, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+    sr->radios[2] = b3;
+}
+
 static void build_coint_radios (selector *sr)
 {
     GtkWidget *button = NULL;
@@ -3106,6 +3131,8 @@ static void build_selector_radios (selector *sr)
 	build_omit_test_radios(sr);
     } else if (sr->code == LOGIT || sr->code == PROBIT) {
 	build_pvalues_radios(sr);
+    } else if (sr->code == XTAB) {
+	build_xtab_radios(sr);
     } else {
 	build_vec_radios(sr);
     }
@@ -3202,6 +3229,12 @@ static int list_show_var (int v, int code, int show_lags)
     } else if (!show_lags && is_standard_lag(v, datainfo, NULL)) {
 	lags_hidden = 1;
 	ret = 0;
+    } else if (code == XTAB) {
+	ret = 0;
+	if (var_is_discrete(datainfo, v) || 
+	    gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[v])) {
+	    ret = 1;
+	}
     }
 
     return ret;
@@ -3845,6 +3878,11 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     /* radio buttons? */
     if (want_radios(sr)) {
 	build_selector_radios(sr);
+    }
+
+    /* toggle switches for some cases */
+    if (WANT_TOGGLES(ci)) {
+	build_selector_switches(sr);
     }
 
 #if 0 /* not ready */

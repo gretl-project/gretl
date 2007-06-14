@@ -412,6 +412,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 {
     int i, t, dwt = 0, t1min = *t1, t2max = *t2;
     int vi, missobs, ret = 0;
+    int move_ends = 1;
     double xx;
 
     if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) {
@@ -516,18 +517,26 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    /* no valid observations */
 	    pmod->errcode = E_MISSDATA;
 	    ret = 1;
-	} else if (missobs > 0) {	
+	} else if (missobs > 0) {
+#if 1
+	    pmod->missmask = model_missmask(list, *t1, *t2, 
+					    n, Z, dwt, NULL);
+	    move_ends = 0;
+#else	
 	    pmod->missmask = model_missmask(list, t1min, t2max, 
 					    n, Z, dwt, NULL);
+#endif
 	    if (pmod->missmask == NULL) {
 		pmod->errcode = E_ALLOC;
 		ret = 1;
 	    }
 	}
-    }    
+    } 
 
-    *t1 = t1min; 
-    *t2 = t2max;
+    if (move_ends) {
+	*t1 = t1min; 
+	*t2 = t2max;
+    }
 
     return ret;
 }

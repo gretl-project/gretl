@@ -155,7 +155,7 @@ static char *heckit_suppress_mask (int sel, const int *list, const double **Z,
     if (s == T) {
 	*err = E_DATA;
 	return NULL;
-    } else if (1 || s > 0) {
+    } else if (s > 0) {
 	mask = calloc(T, 1);
 	if (mask == NULL) {
 	    *err = E_ALLOC;
@@ -456,11 +456,6 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     selvar = HC->selvar;
     kb = HC->kmain;
     kg = HC->ksel;
-
-    fprintf(stderr, "pdinfo->t1 = %d, t2 = %d\n", pdinfo->t1, pdinfo->t2);
-    fprintf(stderr, "hm->t1 = %d, t2 = %d, nobs = %d\n", hm->t1, hm->t2, hm->nobs);
-    fprintf(stderr, "orig: hm->uhat[0] = %g, hm->uhat[49] = %g\n",
-	    hm->uhat[0], hm->uhat[49]);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xb = 0;
@@ -823,14 +818,13 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
   This function just copies the VCV matrix for the ML estimator into
   the model struct
 */
+
 static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
 {
     int nvc, npar;
 
-    /*
-      We don't transcribe the variances for sigma and rho into the
-      model
-    */
+    /* We don't transcribe the variances for sigma and rho into the
+       model */
     npar = HC->vcv->rows - 2;
 
     int i, j, k = 0;
@@ -949,6 +943,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	sel = ((*pZ)[Zlist[1]][t] == 1.0);
 	(*pZ)[v][t] = (sel)? probmod.uhat[t] : NADBL;
+	/* (*pZ)[v][t] = probmod.uhat[t]; */
     }
 
     strcpy(pdinfo->varname[v], "lambda");
@@ -985,9 +980,9 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
    The function heckit_init runs the 2-step estimation and fills up
    the container HC with all the various items to be used later. Then,
-   if we just want a 2-step estimate, then we just adjust the vcv
-   matrix and transcribe the result into the returned
-   model. Otherwise, we go for ML.
+   if we just want a 2-step estimate we adjust the vcv matrix and
+   transcribe the result into the returned model. Otherwise, we go for
+   ML.
 */
 
 MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo, 

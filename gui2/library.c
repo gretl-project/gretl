@@ -553,12 +553,11 @@ static const char *selected_varname (void)
                             a == PCA || \
                             a == XTAB)
 
-static void real_do_menu_op (guint action, const char *liststr)
+static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 {
     PRN *prn;
     char title[48];
     gpointer obj = NULL;
-    gretlopt opt = OPT_NONE;
     gint hsize = 78, vsize = 380;
     int err = 0;
 
@@ -589,7 +588,7 @@ static void real_do_menu_op (guint action, const char *liststr)
 	vsize = 340;
 	break;
     case XTAB:
-	gretl_command_sprintf("xtab %s --zeros", liststr);
+	gretl_command_sprintf("xtab %s%s", liststr, print_flags(opt, XTAB));
 	strcat(title, _("cross tabulation"));
 	vsize = 340;
 	break;
@@ -643,7 +642,7 @@ static void real_do_menu_op (guint action, const char *liststr)
 
     case XTAB:
 	err = crosstab(libcmd.list, (const double **) Z, datainfo,
-		       OPT_Z, prn);
+		       opt, prn);
 	break;
 
     case MAHAL:
@@ -681,11 +680,12 @@ static int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
     int action = selector_code(sr);
+    gretlopt opt = selector_get_opts(sr);
 
     if (buf == NULL) {
 	return 1;
     } else {
-	real_do_menu_op(action, buf);
+	real_do_menu_op(action, buf, opt);
 	return 0;
     }
 }
@@ -698,16 +698,16 @@ void do_menu_op (gpointer p, guint action, GtkWidget *w)
 	sprintf(title, "gretl: %s", gretl_command_word(action));
 	simple_selection(title, menu_op_wrapper, action, NULL);
 	return;
-    } else if (action == CORR || action == SUMMARY || 
-	action == PCA || action == MAHAL || action == XTAB) {
+    } else if (action == CORR || action == SUMMARY || action == PCA || 
+	       action == MAHAL || action == XTAB) {
 	char *buf = main_window_selection_as_string();
 
 	if (buf != NULL) {
-	    real_do_menu_op(action, buf);
+	    real_do_menu_op(action, buf, OPT_NONE);
 	    free(buf);
 	} 
     } else {
-	real_do_menu_op(action, NULL);
+	real_do_menu_op(action, NULL, OPT_NONE);
     }
 }
 
