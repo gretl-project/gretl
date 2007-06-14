@@ -1049,3 +1049,87 @@ MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     
     return lmod;
 }
+
+static double table_prob (double a, double b, double c, double d,
+			  double num, double nf)
+{
+    double den, P;
+
+    den = nf * x_factorial(a) * x_factorial(b) * 
+	x_factorial(c) * x_factorial(d);
+    P = num / den;
+
+#if 0
+    fprintf(stderr, "\n%6g %6g\n", a, b);
+    fprintf(stderr, "%6g %6g\n", c, d);
+    fprintf(stderr, " Pi = %g\n", P);
+#endif
+
+    return P;
+}
+
+int fishers_exact_test (const Xtab *tab, PRN *prn)
+{
+    double a, b, c, d, E0;
+    double P0, Pi, PL, PR, P2;
+    double num, nf;
+
+    a = tab->f[0][0];
+    b = tab->f[0][1];
+    c = tab->f[1][0];
+    d = tab->f[1][1];
+
+    E0 = (tab->rtotal[0] * tab->ctotal[0]) / (double) tab->n;
+    fprintf(stderr, "Expected value for (0,0) = %g\n", E0);
+
+    num = x_factorial(a + b) * x_factorial(c + d) * x_factorial(a + c) * 
+	x_factorial(b + d);
+    nf = x_factorial(tab->n);
+    
+    /* Probability of the observed table */
+    PL = PR = P2 = P0 = table_prob(a, b, c, d, num, nf);
+
+    while (a > 0 && d > 0) {
+	a -= 1;
+	d -= 1;
+	c += 1;
+	b += 1;
+	Pi = table_prob(a, b, c, d, num, nf);
+	if (Pi <= P0 || tab->f[0][0] > E0) {
+	    PL += Pi;
+	}
+	if (Pi <= P0) {
+	    P2 += Pi;
+	}
+    }
+
+    a = tab->f[0][0];
+    b = tab->f[0][1];
+    c = tab->f[1][0];
+    d = tab->f[1][1];
+
+    while (c > 0 && b > 0) {
+	c -= 1;
+	b -= 1;
+	a += 1;
+	d += 1;
+	Pi = table_prob(a, b, c, d, num, nf);
+	if (Pi <= P0 || tab->f[0][0] < E0) {
+	    PR += Pi;
+	}
+	if (Pi <= P0) {
+	    P2 += Pi;
+	}
+    } 
+
+    if (P2 > 1) {
+	P2 = 1.0;
+    }
+
+    pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
+    pprintf(prn, "  Left:   P-value = %g\n", PL);
+    pprintf(prn, "  Right:  P-value = %g\n", PR);
+    pprintf(prn, "  2-Tail: P-value = %g\n", P2);
+
+    return 0;
+}

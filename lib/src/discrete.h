@@ -29,6 +29,8 @@ MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 			double *ymax, double *lmax);
 
+int fishers_exact_test (const Xtab *tab, PRN *prn);
+
 #endif /* DISCRETE_H */
 
 

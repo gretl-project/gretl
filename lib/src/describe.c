@@ -1725,7 +1725,7 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
     return 0;
 }
 
-int compare_xtab_rows (const void *a, const void *b) 
+static int compare_xtab_rows (const void *a, const void *b) 
 {
     const double **da = (const double **) a;
     const double **db = (const double **) b;
@@ -2678,7 +2678,7 @@ static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
     return p;
 }
 
-gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
+static gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
 {
     int m = gretl_vector_get_length(I);
     gretl_matrix *lambda;
@@ -2707,8 +2707,8 @@ gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
     return lambda;
 }
 
-double LWE_obj_func (const gretl_matrix *I, double d,
-		     const gretl_matrix *lambda, double lcm)
+static double LWE_obj_func (const gretl_matrix *I, double d,
+			    const gretl_matrix *lambda, double lcm)
 {
     gretl_matrix *lambda2, *Itmp;
     double dd = 2.0 * d;
@@ -2736,7 +2736,7 @@ double LWE_obj_func (const gretl_matrix *I, double d,
     return ret;
 }
 
-double LWE (const gretl_matrix *X, int m)
+static double LWE (const gretl_matrix *X, int m)
 {
     gretl_matrix *I;
     gretl_matrix *lambda;
@@ -2816,8 +2816,8 @@ int auto_spectrum_order (int T, gretlopt opt)
     return m;
 }
 
-int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
-		   PRN *prn)
+static int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
+			  PRN *prn)
 {
     gretl_matrix *X;
     double d, se, z;

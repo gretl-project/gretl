@@ -467,6 +467,10 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 		  "values of 5 or greater.\n");
 	}
     }
+
+    if (r == 2 && c == 2) {
+	fishers_exact_test(tab, prn);
+    }
 }
 
 /**
