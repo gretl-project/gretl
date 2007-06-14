@@ -904,6 +904,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     int t, sel;
     int err = 0;
 
+    gretl_model_init(&hm);
     gretl_model_init(&probmod);
 
     err = gretl_list_split_on_separator(list, &Xlist, &Zlist);
@@ -922,8 +923,7 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     /* run initial auxiliary probit */
     probmod = logit_probit(Zlist, pZ, pdinfo, PROBIT, OPT_A, NULL);
     if (probmod.errcode) {
-	free(Xlist);
-	free(Zlist);
+	hm.errcode = probmod.errcode;
 	goto bailout;
     }
 
@@ -936,14 +936,12 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
 	hm.errcode = err;
-	clear_model(&probmod);
 	goto bailout;
     } 
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	sel = ((*pZ)[Zlist[1]][t] == 1.0);
 	(*pZ)[v][t] = (sel)? probmod.uhat[t] : NADBL;
-	/* (*pZ)[v][t] = probmod.uhat[t]; */
     }
 
     strcpy(pdinfo->varname[v], "lambda");
@@ -965,10 +963,9 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
     err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
 			   pdinfo, &probmod, &hm);
 
-    clear_model(&probmod);
-
  bailout:
 
+    clear_model(&probmod);
     free(Xlist);
     free(Zlist);
 
@@ -990,6 +987,7 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 {
     h_container *HC = NULL;
     MODEL hm;
+    int oldv = pdinfo->v;
     int err = 0;
 
     gretl_model_init(&hm);
@@ -1012,7 +1010,7 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     } else {
 	/* use MLE */
 	err = heckit_ml(&hm, HC, prn);
-	if(!err) {
+	if (!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
     } 
@@ -1021,14 +1019,21 @@ MODEL heckit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	hm.errcode = err;
     } else {
 	err = transcribe_heckit_params(&hm, HC, pdinfo);
-	heckit_yhat_uhat (&hm, HC, (const double **) *pZ, pdinfo);
+	heckit_yhat_uhat(&hm, HC, (const double **) *pZ, pdinfo);
     }
 
-    if (err) {
+    if (err && hm.errcode == 0) {
 	hm.errcode = err;
     }
 
-    dataset_drop_last_variables(1, pZ, pdinfo);
+    if (hm.errcode == 0 && (opt & OPT_T)) {
+	gretl_model_set_int(&hm, "two-step", 1);
+    }
+
+    if (pdinfo->v > oldv) {
+	dataset_drop_last_variables(1, pZ, pdinfo);
+    }
+
     h_container_destroy(HC);
 
     return hm;

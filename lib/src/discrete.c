@@ -1068,6 +1068,10 @@ static double table_prob (double a, double b, double c, double d,
     return P;
 }
 
+/* for use with cross-tabulation (xtab command) in the
+   2 x 2 case
+*/
+
 int fishers_exact_test (const Xtab *tab, PRN *prn)
 {
     double a, b, c, d, E0;
@@ -1080,7 +1084,6 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
     d = tab->f[1][1];
 
     E0 = (tab->rtotal[0] * tab->ctotal[0]) / (double) tab->n;
-    fprintf(stderr, "Expected value for (0,0) = %g\n", E0);
 
     num = x_factorial(a + b) * x_factorial(c + d) * x_factorial(a + c) * 
 	x_factorial(b + d);
@@ -1090,10 +1093,8 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
     PL = PR = P2 = P0 = table_prob(a, b, c, d, num, nf);
 
     while (a > 0 && d > 0) {
-	a -= 1;
-	d -= 1;
-	c += 1;
-	b += 1;
+	a -= 1; d -= 1;
+	c += 1; b += 1;
 	Pi = table_prob(a, b, c, d, num, nf);
 	if (Pi <= P0 || tab->f[0][0] > E0) {
 	    PL += Pi;
@@ -1109,10 +1110,8 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
     d = tab->f[1][1];
 
     while (c > 0 && b > 0) {
-	c -= 1;
-	b -= 1;
-	a += 1;
-	d += 1;
+	c -= 1; b -= 1;
+	a += 1; d += 1;
 	Pi = table_prob(a, b, c, d, num, nf);
 	if (Pi <= P0 || tab->f[0][0] < E0) {
 	    PR += Pi;
@@ -1122,14 +1121,11 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 	}
     } 
 
-    if (P2 > 1) {
-	P2 = 1.0;
-    }
-
     pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
     pprintf(prn, "  Left:   P-value = %g\n", PL);
     pprintf(prn, "  Right:  P-value = %g\n", PR);
     pprintf(prn, "  2-Tail: P-value = %g\n", P2);
+    pputc(prn, '\n');
 
     return 0;
 }

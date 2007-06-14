@@ -8523,20 +8523,22 @@
 
     <description context="cli">
       <para>
-        With no options given, displays a contingency table or
-        cross-tabulation for each combination of the variables included in
-        <repl>ylist</repl>; if a second list <repl>xlist</repl> is given,
-        each variable in <repl>ylist</repl> is cross-tabulated by row
-        against each variable in <repl>xlist</repl> (by column).  Variables
-        in these lists can be referenced by name or by number.  Note that
-        all the variables must have been marked as discrete.
+        Displays a contingency table or cross-tabulation for each
+	combination of the variables included in <repl>ylist</repl>; if a
+	second list <repl>xlist</repl> is given, each variable in
+	<repl>ylist</repl> is cross-tabulated by row against each variable
+	in <repl>xlist</repl> (by column).  Variables in these lists can
+	be referenced by name or by number.  Note that all the variables
+	must have been marked as discrete.
       </para>
       <para>
-        The <lit>--row</lit> and <lit>--column</lit> options are mutually
-        exclusive, and instead of the frequency count yield the percentages
-        for each row or column, respectively. The <lit>--zeros</lit> option
-        may be useful for importing the table into another program, such as
-        a spreadsheet.
+	By default the cell entries are given as frequency counts. The
+	<lit>--row</lit> and <lit>--column</lit> options (which are
+	mutually exclusive), replace the counts with the percentages for
+	each row or column, respectively.  By default, cells with a zero
+	count are left blank; the <lit>--zeros</lit> option, which has the
+	effect of showing zero counts explicitly, may be useful for
+	importing the table into another program, such as a spreadsheet.
       </para>
       <para>
         Pearson's chi-square test for independence is displayed if the
@@ -8544,6 +8546,20 @@
         cells.  A common rule of thumb for the validity of this statistic is
         that at least 80 percent of cells should have expected frequencies
         of 5 or greater; if this criterion is not met a warning is printed.
+      </para>
+      <para>
+	If the contingency table is 2 by 2, Fisher's Exact Test for
+	independence is computed.  Note that this test is based on the
+	assumption that the row and column totals are fixed, which may or
+	may not be approriate depending on how the data were generated.
+	The left p-value should be used when the alternative to
+	independence is negative association (values tend to cluster
+	in the lower left and upper right cells); the right p-value should
+	be used if the alternative is positive association.  The two-tailed
+	p-value for this test is calculated by method (b) in Agresti
+	(1992, section 2.1): it is the sum of the probabilities of all
+	possible tables having the given row and column totals and having
+	a probability less than or equal to that of the observed table.
       </para>
     </description>
 
@@ -8554,13 +8570,13 @@
 	variables must be discrete.
       </para>
       <para>
-	By default, plain integer values are shown in the cells and
-	on the margins of the table.  However, you can choose to display
+	By default, frequency count values are shown in the cells and on
+	the margins of the table.  However, you can choose to display
 	either row or column percentages instead.
       </para>
       <para>
-	By default, empty cells are shown as empty, but you can choose to
-	have zero values shown as such.
+	By default, cells with a zero count are shown as empty, but you
+	can choose to show zero values explicitly.
       </para>
       <para>
         Pearson's chi-square test for independence is displayed if the
@@ -8568,6 +8584,20 @@
         cells.  A common rule of thumb for the validity of this statistic is
         that at least 80 percent of cells should have expected frequencies
         of 5 or greater; if this criterion is not met a warning is printed.
+      </para>
+      <para>
+	If the contingency table is 2 by 2, Fisher's Exact Test for
+	independence is computed.  Note that this test is based on the
+	assumption that the row and column totals are fixed, which may or
+	may not be approriate depending on how the data were generated.
+	The left p-value should be used when the alternative to
+	independence is negative association (values tend to cluster
+	in the lower left and upper right cells); the right p-value should
+	be used if the alternative is positive association.  The two-tailed
+	p-value for this test is calculated by method (b) in Agresti
+	(1992, section 2.1): it is the sum of the probabilities of all
+	possible tables having the given row and column totals and having
+	a probability less than or equal to that of the observed table.
       </para>
     </description>
 

@@ -155,6 +155,7 @@ static int garch_p = 1;
 static int garch_q = 1;
 static int arma_const = 1;
 static int arma_x12 = 0;
+static int selvar;
 
 static int *xlist;
 static int *instlist;
@@ -183,7 +184,8 @@ static int want_radios (selector *sr)
 
     if (c == COINT2 || c == VECM || c == ARMA || c == PANEL || 
 	c == SCATTERS || c == COINT || c == ARBOND || 
-	c == LOGIT || c == PROBIT || c == XTAB) {
+	c == LOGIT || c == PROBIT || c == HECKIT ||
+	c == XTAB) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -260,6 +262,7 @@ void clear_selector (void)
 {
     default_var = -1;
     default_order = 0;
+    selvar = 0;
     vartrend = 0;
 
     arma_p = 1;
@@ -572,8 +575,16 @@ static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
 {
     gint vnum;
     gchar *vname;
-    
+
     gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
+
+    if (sr->code == HECKIT) {
+	if (!gretl_isdummy(datainfo->t1, datainfo->t2, Z[vnum])) {
+	    errbox(_("The variable '%s' is not a 0/1 variable."), vname);
+	    return;
+	}
+    }
+    
     gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
     g_free(vname);
     g_object_set_data(G_OBJECT(sr->extra[0]), "data",
@@ -1624,6 +1635,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->code == HECKIT) {
 	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
 	sprintf(endbit, " %d", k);
+	selvar = k;
     } else if (sr->code == AR) {
 	add_to_cmdlist(sr, txt);
 	add_to_cmdlist(sr, " ; ");
@@ -1701,6 +1713,9 @@ static void parse_special_graph_data (selector *sr)
 	add_to_cmdlist(sr, numstr);
     }
 }
+
+/* main function for building a command list from information stored
+   in the various selector widgets */
 
 static void construct_cmdlist (selector *sr)
 {
@@ -2259,6 +2274,14 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
     sr->extra[0] = entry_with_label_and_chooser(sr, vbox,
 						NULL, 0,
 						set_extra_var_callback);
+
+    if (sr->code == HECKIT && selvar > 0 && selvar < datainfo->v) {
+	const char *vname = datainfo->varname[selvar];
+
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
+	g_object_set_data(G_OBJECT(sr->extra[0]), "data",
+			  GINT_TO_POINTER(selvar));
+    }
 }
 
 static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
@@ -3028,6 +3051,22 @@ static void build_arbond_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_heckit_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Maximum likelihood estimation"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("2-step estimation"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_xtab_radios (selector *sr)
 {
     GtkWidget *b1, *b2, *b3;
@@ -3131,6 +3170,8 @@ static void build_selector_radios (selector *sr)
 	build_omit_test_radios(sr);
     } else if (sr->code == LOGIT || sr->code == PROBIT) {
 	build_pvalues_radios(sr);
+    } else if (sr->code == HECKIT) {
+	build_heckit_radios(sr);
     } else if (sr->code == XTAB) {
 	build_xtab_radios(sr);
     } else {

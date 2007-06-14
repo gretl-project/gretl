@@ -223,7 +223,8 @@ static gboolean update_return (GtkEditable *entry,
     return FALSE;
 }
 
-static GList *get_selection_list (call_info *cinfo, int i, int type)
+static GList *get_selection_list (call_info *cinfo, int i, int type,
+				  int set_default)
 {
     GList *list = NULL;
     const char *name;
@@ -233,6 +234,10 @@ static GList *get_selection_list (call_info *cinfo, int i, int type)
 
     if (i >= 0) {
 	optional = fn_param_optional(cinfo->func, i);
+    }
+
+    if (!set_default) {
+	list = g_list_append(list, "");
     }
 
     if (series_type(type) || scalar_type(type)) {
@@ -498,7 +503,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     gtk_entry_set_activates_default(GTK_ENTRY(GTK_COMBO(combo)->entry), 
 				    TRUE);
 
-    list = get_selection_list(cinfo, i, ptype);
+    list = get_selection_list(cinfo, i, ptype, 1);
     if (list != NULL) {
 	gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);
 	g_list_free(list);
@@ -660,7 +665,7 @@ static void function_call_dialog (call_info *cinfo)
 	sel = gtk_combo_new();
 	g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			 G_CALLBACK(update_return), cinfo);
-	list = get_selection_list(cinfo, -1, cinfo->rettype);
+	list = get_selection_list(cinfo, -1, cinfo->rettype, 0);
 	if (list != NULL) {
 	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
 	    g_list_free(list);

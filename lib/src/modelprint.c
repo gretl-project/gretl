@@ -934,6 +934,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("Probit");
 	}
+    } else if (pmod->ci == HECKIT) {
+	if (gretl_model_get_int(pmod, "two-step")) {
+	    return N_("Two-step Heckit");
+	} else {
+	    return N_("ML Heckit");
+	}	
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }
