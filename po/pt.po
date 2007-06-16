@@ -6081,9 +6081,7 @@ msgstr ""
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
-"Fórum de discussão sobre o Gretl em Português:\n"
-"http://gretlpt.mybbland.com\n"
-"Tradução de 31 de Maio de 2007."
+"Tradução de 16 de Junho de 2007."
 
 #: gui2/about.c:103
 #, c-format
@@ -9230,7 +9228,7 @@ msgstr "/Dados/Ed_itar informação"
 
 #: gui2/gretl.c:342
 msgid "/Data/_Print description"
-msgstr "/Dados/Im_primir descrição"
+msgstr "/Dados/Ver descrição"
 
 #: gui2/gretl.c:343
 msgid "/Data/Add _case markers..."
@@ -12028,7 +12026,7 @@ msgstr "Estimação de uma fase"
 
 #: gui2/selector.c:2953
 msgid "2-step estimation"
-msgstr "Estimação de duas fazes"
+msgstr "Estimação de duas fases"
 
 #: gui2/selector.c:2997
 msgid "No constant"
@@ -13028,7 +13026,7 @@ msgstr "Erro no comando arma"
 
 #: plugin/arma_x12.c:848
 msgid "Failed to execute x12arima"
-msgstr "Falhou a exeução de x12arima"
+msgstr "Falhou a execução de x12arima"
 
 #: plugin/eviews_import.c:196
 msgid "No variables were read\n"
