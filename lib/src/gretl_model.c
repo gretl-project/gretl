@@ -3629,6 +3629,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "arma") ||
 	!strcmp(s, "arima") ||
 	!strcmp(s, "arbond") ||
+	!strcmp(s, "arch") ||
 	!strcmp(s, "ar")) {
 	ret = 1;
     }

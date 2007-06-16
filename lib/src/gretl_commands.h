@@ -161,7 +161,6 @@ typedef enum {
 #define TEXTSAVE_OK(c) (c == ADD || \
                         c == ADDTO || \
                         c == ADF || \
-                        c == ARCH || \
                         c == CHOW || \
                         c == COEFFSUM || \
                         c == COINT || \

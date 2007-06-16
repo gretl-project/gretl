@@ -493,7 +493,8 @@
 	auxiliary regression.
       </para>
       <para>
-	See also <cmdref targ="garch"/>.
+	See also <cmdref targ="garch"/> and <cmdref targ="lmtest"/> (the
+	<lit>--arch</lit> option).  
       </para>
     </description>
 
