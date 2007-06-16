@@ -45,24 +45,7 @@ GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
-    spec->lines = malloc(MAX_PLOT_LINES * sizeof *spec->lines);
-
-    if (spec->lines == NULL) {
-	free(spec);
-	return NULL;
-    }
-
-    for (i=0; i<MAX_PLOT_LINES; i++) {
-	spec->lines[i].varnum = 0;
-	spec->lines[i].title[0] = 0;
-	spec->lines[i].formula[0] = 0;
-	spec->lines[i].style[0] = 0;
-	spec->lines[i].scale[0] = 0;
-	spec->lines[i].yaxis = 1;
-	spec->lines[i].type = 0;
-	spec->lines[i].width = 1;
-	spec->lines[i].ncols = 0;
-    }
+    spec->lines = NULL;
 
     for (i=0; i<4; i++) {
 	spec->titles[i][0] = 0;

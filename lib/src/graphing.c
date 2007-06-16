@@ -66,6 +66,8 @@ struct gnuplot_info_ {
     double *yvar2;
 };
 
+#define MAX_LETTERBOX_LINES 8
+
 #define use_impulses(g) ((g)->flags & GPT_IMPULSES)
 #define ts_plot(g) ((g)->flags & GPT_TS)
 
@@ -98,6 +100,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_MULTI_IRF,      "multiple impulse responses" },
     { PLOT_PANEL,          "multiple panel plots" },
     { PLOT_BI_GRAPH,       "double time-series plot" },
+    { PLOT_MANY_TS,        "multiple timeseries" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -756,10 +759,11 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 
 PlotType plot_type_from_string (const char *str)
 {
-    int i, ret = PLOT_REGULAR;
+    int i, len, ret = PLOT_REGULAR;
 
     for (i=1; i<PLOT_TYPE_MAX; i++) {
-	if (!strcmp(str + 2, ptinfo[i].pstr)) {
+	len = strlen(ptinfo[i].pstr);
+	if (!strncmp(str + 2, ptinfo[i].pstr, len)) {
 	    ret = ptinfo[i].ptype;
 	    break;
 	}
@@ -1707,9 +1711,8 @@ int gnuplot (const int *plotlist, const char *literal,
     char lwstr[8] = {0};
     char keystr[48] = {0};
     char fit_line[128] = {0};
-    int gpsize = 1;
     int oddman = 0;
-    int toomany = 0;
+    int many = 0;
     int i, err = 0;
 
     gnuplot_info gi;
@@ -1734,8 +1737,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	return loess_plot(&gi, Z, pdinfo);
     }
 
-    if (gi.list[0] > MAX_PLOT_LINES + 1) {
-	toomany = 1;
+    if (gi.list[0] > MAX_LETTERBOX_LINES + 1) {
+	many = 1;
     }
 
     err = maybe_add_plotx(&gi, pdinfo);
@@ -1786,23 +1789,24 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } 
 
-#ifndef WIN32
-    gpsize = gnuplot_has_size();
-#endif
-
-    /* special tics for short time series plots */
+    /* special tics for time series plots */
     if (gi.flags & GPT_TS) {
-	if (toomany) {
-	    pprintf(prn, "# multiple timeseries %d", pdinfo->pd);
+	if (many) {
+	    pprintf(prn, "# multiple timeseries %d\n", pdinfo->pd);
 	} else {
+	    int gpsize = 1;
+
+#ifndef WIN32
+	    gpsize = gnuplot_has_size();
+#endif
 	    pprintf(prn, "# timeseries %d", pdinfo->pd);
-	}
-	if (gpsize) {
-	    gi.flags |= GPT_LETTERBOX;
-	    pputs(prn, " (letterbox)\n");
-	} else {
-	    pputc(prn, '\n');
-	}
+	    if (gpsize) {
+		gi.flags |= GPT_LETTERBOX;
+		pputs(prn, " (letterbox)\n");
+	    } else {
+		pputc(prn, '\n');
+	    }
+	} 
 	if (pdinfo->pd == 4 && (gi.t2 - gi.t1) / 4 < 8) {
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 4\n");
@@ -1811,9 +1815,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 12\n");
 	}
-    } else if (toomany) {
-	pputs(prn, "# multiple data series\n");
-    }
+    } 
 
     /* open file and dump the prn into it: we delaying writing
        the file header till we know a bit more about the plot
@@ -1867,7 +1869,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	print_axis_label('y', var_get_graph_name(pdinfo, list[2]), fp);
     } 
 
-    if (toomany) {
+    if (many) {
 	strcpy(keystr, "set key outside\n");
     }
 

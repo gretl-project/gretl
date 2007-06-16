@@ -41,15 +41,15 @@ struct gpt_range_t {
     GtkWidget *max;
 };
 
-GtkWidget *linetitle[MAX_PLOT_LINES];
-GtkWidget *stylecombo[MAX_PLOT_LINES];
-GtkWidget *yaxiscombo[MAX_PLOT_LINES];
-GtkWidget *linescale[MAX_PLOT_LINES];
-GtkWidget *linewidth[MAX_PLOT_LINES];
+static GtkWidget **linetitle;
+static GtkWidget **stylecombo;
+static GtkWidget **yaxiscombo;
+static GtkWidget **linescale;
+static GtkWidget **linewidth;
 
-GtkWidget *labeltext[MAX_PLOT_LABELS];
-GtkWidget *labeljust[MAX_PLOT_LABELS];
-GtkWidget *labelpos[MAX_PLOT_LABELS];
+static GtkWidget *labeltext[MAX_PLOT_LABELS];
+static GtkWidget *labeljust[MAX_PLOT_LABELS];
+static GtkWidget *labelpos[MAX_PLOT_LABELS];
 
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
@@ -637,9 +637,6 @@ static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
     int i;
 
     for (i=0; i<spec->n_lines; i++) {
-	if (i >= MAX_PLOT_LINES) {
-	    break;
-	}
 	if (yaxiscombo[i] != NULL) {
 	    gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
 	}
@@ -1519,7 +1516,50 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
 void close_gnuplot_dialog (GtkWidget *w, gpointer p)
 {
+    free(linetitle);
+    free(stylecombo);
+    free(yaxiscombo);
+    free(linescale);
+    free(linewidth);
+
+    linetitle = NULL;
+    stylecombo = NULL;
+    yaxiscombo = NULL;
+    linescale = NULL;
+    linewidth = NULL;
+
     gtk_widget_destroy(GTK_WIDGET(p));
+}
+
+static int gpt_allocate_widgets (int n)
+{
+    int i;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    linetitle = malloc(n * sizeof *linetitle);
+    stylecombo = malloc(n * sizeof *stylecombo);
+    yaxiscombo = malloc(n * sizeof *yaxiscombo);
+    linescale = malloc(n * sizeof *linescale);
+    linewidth = malloc(n * sizeof *linewidth);
+    
+    if (linetitle == NULL || stylecombo == NULL ||
+	yaxiscombo == NULL || linescale == NULL ||
+	linewidth == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	linetitle[i] = NULL;
+	stylecombo[i] = NULL;
+	yaxiscombo[i] = NULL;
+	linescale[i] = NULL;
+	linewidth[i] = NULL;
+    }
+
+    return 0;
 }
 
 int show_gnuplot_dialog (GPT_SPEC *spec) 
@@ -1532,6 +1572,11 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     if (gpt_control != NULL) {
 	errbox(_("You can only have one plot controller open\n"
 		 "at any given time"));
+	return 1;
+    }
+
+    if (gpt_allocate_widgets(spec->n_lines)) {
+	nomem();
 	return 1;
     }
 
@@ -1569,7 +1614,9 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_tab_XY(notebook, spec, 2);
     }
 
-    gpt_tab_lines(notebook, spec);
+    if (spec->lines != NULL) {
+	gpt_tab_lines(notebook, spec);
+    }
     gpt_tab_labels(notebook, spec); 
     gpt_tab_output(notebook, spec);
 

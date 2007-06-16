@@ -301,8 +301,6 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	rewind(fsrc);
     }
 
-    fprintf(stderr, "add_or_remove_png_term: add = %d\n", add);
-
     if (add) {
 	int need_term_line = 1;
 
@@ -1063,10 +1061,17 @@ static void grab_line_title (char *targ, const char *src)
      using XX axes XX title XX w XX lt XX lw XX
 */
 
-static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
+static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 {
     const char *p;
-    int err = 0;
+    int i, err;
+
+    err = plotspec_add_line(spec);
+    if (err) {
+	return err;
+    }
+
+    i = spec->n_lines - 1;
 
     if ((p = strstr(s, " using "))) {
 	/* data column spec */
@@ -1341,7 +1346,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 		spec->flags |= GPT_LETTERBOX;
 	    }
 	    continue;
-	}
+	} else if (!strncmp(gpline, "# multiple timeseries", 21)) {
+	    int pd;
+
+	    if (sscanf(gpline, "# multiple timeseries %d", &pd)) {
+		*plot_pd = pd;
+	    }
+	    spec->flags |= GPT_TS;
+	    continue;
+	}	    
 
 	if (sscanf(gpline, "# X = '%15[^\']' (%d)", vname, &v) == 2) {
 	    if (plot_ols_var_ok(vname, v)) {
@@ -1424,8 +1437,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	goto plot_bailout;
     }
 
-    i = 0;
     done = 0;
+
     while (!err) {
 	top_n_tail(gpline);
 
@@ -1435,15 +1448,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    done = 1;
 	} 
 
-	err = parse_gp_line_line(gpline, spec, i);
+	err = parse_gp_line_line(gpline, spec);
 
-	if (done) {
-	    break;
-	}
-
-	i++;
-
-	if ((got = fgets(gpline, MAXLEN - 1, fp)) == NULL) {
+	if (err || done || (got = fgets(gpline, MAXLEN - 1, fp)) == NULL) {
 	    break;
 	}
     }
@@ -1451,14 +1458,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     if (err || got == NULL) {
 	err = 1;
 	goto plot_bailout;
-    }
-
-    spec->n_lines = i + 1; /* i is a zero-based index */
-
-    /* free any unused lines */
-    if (spec->n_lines < MAX_PLOT_LINES) {
-	spec->lines = myrealloc(spec->lines, 
-				spec->n_lines * sizeof *spec->lines);
     }
 
     /* determine total number of required data columns */

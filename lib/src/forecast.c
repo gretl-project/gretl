@@ -96,8 +96,17 @@ allocate_basic_fit_resid_arrays (FITRESID *fr)
 	return E_ALLOC;
     }
 
+    fr->resid = malloc(fr->nobs * sizeof *fr->resid);
+    if (fr->resid == NULL) {
+	free(fr->actual);
+	free(fr->fitted);
+	fr->actual = NULL;
+	fr->fitted = NULL;
+	return E_ALLOC;
+    }
+
     for (t=0; t<fr->nobs; t++) {
-	fr->actual[t] = fr->fitted[t] = NADBL;
+	fr->actual[t] = fr->fitted[t] = fr->resid[t] = NADBL;
     }
 
     fr->sderr = NULL;
@@ -161,6 +170,7 @@ static FITRESID *fit_resid_new (int n)
     } else {
 	fr->actual = NULL;
 	fr->fitted = NULL;
+	fr->resid = NULL;
 	fr->sderr = NULL;
     } 
     
@@ -179,6 +189,7 @@ void free_fit_resid (FITRESID *fr)
 {
     free(fr->actual);
     free(fr->fitted);
+    free(fr->resid);
     free(fr->sderr);
     free(fr);
 }
@@ -242,6 +253,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     for (t=0; t<fr->nobs; t++) {
 	fr->actual[t] = Z[depvar][t];
 	fr->fitted[t] = pmod->yhat[t];
+	fr->resid[t] = pmod->uhat[t];
     }
 
     fit_resid_set_dec_places(fr);
@@ -1821,8 +1833,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	if (t < fr->t1) {
 	    if (t >= pmod->t1 && t <= pmod->t2) {
 		fr->fitted[t] = pmod->yhat[t];
+		fr->resid[t] = pmod->uhat[t];
 	    } else {
-		fr->fitted[t] = NADBL;
+		fr->fitted[t] = fr->resid[t] = NADBL;
 	    }
 	    if (fr->sderr != NULL) {
 		fr->sderr[t] = NADBL;

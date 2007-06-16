@@ -3890,6 +3890,8 @@ void startR (const char *Rcommand)
 	if (fq != NULL) {
 	    fputs("# load data from gretl\n", fq);
 	    fputs("library(stats)\n", fq);
+	    fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fq);
+	    fputs("if (vnum > 2.41) library(utils)\n", fq);
 	    fprintf(fq, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	    fprintf(fq, "attach(gretldata)\n");
 	    fclose(fq);

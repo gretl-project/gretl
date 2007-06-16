@@ -34,6 +34,7 @@ struct FITRESID_ {
     int method;
     double *actual;
     double *fitted;
+    double *resid;
     double *sderr;
     double sigma;
     double tval;

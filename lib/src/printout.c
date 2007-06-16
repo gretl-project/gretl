@@ -1881,7 +1881,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
     int onestep = fr->method == FC_ONESTEP;
     int t, anyast = 0;
-    double yt, yf;
+    double yt, yf, et;
     double MSE = 0.0;
     double AE = 0.0;
     int effn = 0;
@@ -1896,6 +1896,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 	yt = fr->actual[t];
 	yf = fr->fitted[t];
+	et = fr->resid[t];
 
 	if (na(yt)) {
 	    pputc(prn, '\n');
@@ -1905,8 +1906,13 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    } else {
 		pprintf(prn, "%13g\n", yt);
 	    }
+	} else if (na(et)) {
+	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
+		pprintf(prn, "%13.*f%13.*f\n", fr->pmax, yt, yf);
+	    } else {
+		pprintf(prn, "%13g%13g\n", yt, yf);
+	    }
 	} else {
-	    double et = yt - yf;
 	    int ast = 0;
 
 	    if (onestep) {

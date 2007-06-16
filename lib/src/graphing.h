@@ -51,7 +51,6 @@ typedef enum {
 
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
-#define MAX_PLOT_LINES 8
 #define N_GP_COLORS 4
 #define BOXCOLOR (N_GP_COLORS - 1)
 
@@ -79,6 +78,7 @@ typedef enum {
     PLOT_MULTI_IRF,
     PLOT_PANEL,
     PLOT_BI_GRAPH,
+    PLOT_MANY_TS,
     PLOT_TYPE_MAX
 } PlotType;
 
