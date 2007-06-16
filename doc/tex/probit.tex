@@ -354,7 +354,10 @@ tobit depvar indvars
 
 As usual, progress of the maximization algorithm can be tracked via
 the \texttt{--verbose} switch, while \verb+$uhat+ returns the
-generalized residuals.
+generalized residuals. Note that in this case the generalized residual
+is defined as $\hat{u}_i = E(\varepsilon_i | y_i = 0)$ for censored
+observations, so the familiar equality $\hat{u}_i = y_i - \hat{y}_i$
+only holds for uncensored observations, that is, when $y_i>0$.
 
 An important difference between the Tobit estimator and OLS is that
 the consequences of non-normality of the disturbance term are much
@@ -382,10 +385,15 @@ and the observation rule is given by
   y_i = \left\{ 
     \begin{array}{ll} 
       y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
-      0 & \mathrm{for} \quad s^*_i \le 0 
+      \diamondsuit & \mathrm{for} \quad s^*_i \le 0 
     \end{array}
     \right. 
 \end{equation}
+
+In this context, the $\diamondsuit$ symbol indicates that for some observations
+we simply do not have data on $y$: $y_i$ may be 0, or missing, or
+anything else. A dummy variable $d_i$ is normally used to set censored
+observations apart.
 
 One of the most popular applications of this model in econometrics is
 a wage equation coupled with a labor force participation equation: we
@@ -393,6 +401,21 @@ only observe the wage for the employed. If $y^*_i$ and $s^*_i$ were
 (conditionally) independent, there would be no reason not to use OLS
 for estimating equation (\ref{eq:heckit1}); otherwise, OLS does not
 yield consistent estimates of the parameters $\beta_j$.
+
+Since conditional independence between $y^*_i$ and $s^*_i$ is
+equivalent to conditional independence between $\varepsilon_i$ and
+$\eta_i$, one may model the co-dependence between $\varepsilon_i$ and
+$\eta_i$ as 
+\[
+  \varepsilon_i = \lambda \eta_i + v_i ;
+\]
+substituting the above expression in (\ref{eq:heckit1}), you obtain
+the model that is actually estimated:
+\[
+  y_i = \sum_{j=1}^k x_{ij} \beta_j + \lambda \hat{\eta}_i + v_i ,
+\]
+so the hypothesis that censoring does not matter is equivalent to the
+hypothesis $H_0: \lambda = 0$, which can be easily tested.
 
 The parameters can be estimated via maximum likelihood under the
 assumption of joint normality of $\varepsilon_i$ and $\eta_i$;
@@ -418,13 +441,15 @@ Since in most cases maximum likelihood is the method of
 choice, by default \app{gretl} computes ML estimates. The 2-step
 Heckit estimates can be obtained by using the \texttt{--two-step}
 option. After estimation, the \verb|$uhat| accessor contains the
-generalised residuals.
+generalised residuals. As in the ordinary Tobit model, the residuals
+equal th difference between actual and fitted $y_i$ only for
+uncensored observations (those for which $d_i = 1$).
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
 Mroz (1987): the first one replicates Table 22.7 in Greene
-(2003)\footnote{Note that the estimates that \app{gretl} gives are
-  correct and those found in the printed volume are not: the error is
-  acknowledged on the errata web page for the book
+(2003)\footnote{Note that the estimates that \app{gretl} gives do not
+  coincide with those found in the printed volume: however, they match
+  those found on the errata web page for Greene's book
   (\url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}).},
 while the second one replicates table 17.1 in Wooldridge (2002a).
 
