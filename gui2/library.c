@@ -641,8 +641,14 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	break;
 
     case XTAB:
-	err = crosstab(libcmd.list, (const double **) Z, datainfo,
-		       opt, prn);
+	if (libcmd.list[0] == 2) {
+	    obj = single_crosstab(libcmd.list, (const double **) Z,
+				  datainfo, opt, prn, &err);
+	} else {
+	    err = crosstab(libcmd.list, (const double **) Z, datainfo,
+			   opt, prn);
+	    action = PRINT;
+	}
 	break;
 
     case MAHAL:

@@ -140,6 +140,14 @@ int crosstab (const int *list, const double **Z,
 	      const DATAINFO *pdinfo, gretlopt opt,
 	      PRN *prn);
 
+Xtab *single_crosstab (const int *list, const double **Z, 
+		       const DATAINFO *pdinfo, gretlopt opt, 
+		       PRN *prn, int *err);
+
+gretl_matrix *xtab_to_matrix (const Xtab *tab);
+
+void free_xtab (Xtab *tab);
+
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn);
 

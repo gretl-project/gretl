@@ -99,7 +99,8 @@ enum {
     RUN_ITEM,
     COPY_ITEM,
     TEX_ITEM,
-    ADD_ITEM,
+    ADD_DATA_ITEM,
+    ADD_MATRIX_ITEM,
     MAIL_ITEM,
     HELP_ITEM,
     SORT_ITEM,
@@ -1472,6 +1473,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
 	    free_mahal_dist(vwin->data);
+	} else if (vwin->role == XTAB) {
+	    free_xtab(vwin->data);
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
 	} else if (vwin->role == SYSTEM) {
@@ -1645,6 +1648,48 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     }	
 }
 
+static void matrix_savename (GtkWidget *w, dialog_t *dlg)
+{
+    char *newname = (char *) edit_dialog_get_data(dlg);
+    const gchar *buf = edit_dialog_get_text(dlg);
+
+    if (buf == NULL || validate_varname(buf)) return;
+
+    *newname = 0;
+    strncat(newname, buf, VNAMELEN - 1);
+
+    close_dialog(dlg);
+}
+
+static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
+{
+    gretl_matrix *m = NULL;
+    char mname[VNAMELEN];
+    int err, cancel = 0;
+
+    if (vwin->role == XTAB) {
+	m = xtab_to_matrix(vwin->data);
+	if (m == NULL) {
+	    nomem();
+	} else {
+	    edit_dialog(_("gretl: save matrix"), 
+			_("Enter a name"),
+			NULL, matrix_savename, mname, 
+			0, VARCLICK_NONE, &cancel);
+	    if (cancel) {
+		gretl_matrix_free(m);
+	    } else {
+		err = add_or_replace_user_matrix(m, mname);
+		if (err) {
+		    gui_errmsg(err);
+		} else {
+		    infobox(_("Saved matrix as %s"), mname);
+		}
+	    }
+	}
+    }
+}
+
 static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 {
     if (viewer_char_count(vwin) == 0) {
@@ -1702,7 +1747,8 @@ static struct viewbar_item viewbar_items[] = {
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
-    { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
+    { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_DATA_ITEM },
+    { N_("Add as matrix..."), GTK_STOCK_ADD, add_matrix_callback, ADD_MATRIX_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }
@@ -1804,7 +1850,11 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
 	if (vwin->role != PCA && vwin->role != LEVERAGE && 
 	    vwin->role != MAHAL && vwin->role != FCASTERR &&
-	    viewbar_items[i].flag == ADD_ITEM) {
+	    viewbar_items[i].flag == ADD_DATA_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != XTAB && viewbar_items[i].flag == ADD_MATRIX_ITEM) {
 	    continue;
 	}
 

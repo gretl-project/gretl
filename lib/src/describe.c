@@ -33,7 +33,7 @@
 # include <windows.h>
 #endif
 
-#if defined(ENABLE_NLS)
+#ifdef ENABLE_NLS
 # include <glib.h>
 #endif
 
@@ -1640,6 +1640,31 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+gretl_matrix *xtab_to_matrix (const Xtab *tab)
+{
+    gretl_matrix *m;
+    double x;
+    int i, j;
+
+    if (tab == NULL) {
+	return NULL;
+    }
+
+    m = gretl_matrix_alloc(tab->rows, tab->cols);
+    if (m == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<tab->cols; j++) {
+	for (i=0; i<tab->rows; i++) {
+	    x = (double) tab->f[i][j];
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+
+    return m;
+}
+
 /**
  * free_xtab:
  * @xtab: gretl crosstab struct
@@ -1651,6 +1676,10 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 void free_xtab (Xtab *tab)
 {
     int i;
+
+    if (tab == NULL) {
+	return;
+    }
 
     free(tab->rtotal);
     free(tab->ctotal);
@@ -1985,6 +2014,41 @@ int crosstab (const int *list, const double **Z,
     free(colvar);
 
     return err;
+}
+
+Xtab *single_crosstab (const int *list, const double **Z, 
+		       const DATAINFO *pdinfo, gretlopt opt, 
+		       PRN *prn, int *err)
+{
+    Xtab *tab = NULL;
+    int rv, cv;
+
+    if (list[0] != 2) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    rv = list[1];
+    cv = list[2];
+
+    if (!var_is_discrete(pdinfo, rv) &&
+	!gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[rv])) {
+	*err = E_DATATYPE;
+	return NULL;
+    }
+
+    if (!var_is_discrete(pdinfo, cv) &&
+	!gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[cv])) {
+	*err = E_DATATYPE;
+	return NULL;
+    }
+
+    tab = get_xtab(rv, cv, Z, pdinfo, err);
+    if (!*err) {
+	print_xtab(tab, opt, prn); 
+    }
+
+    return tab;
 }
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
