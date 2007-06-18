@@ -187,14 +187,22 @@ Per le matrici sono disponibili i seguenti operatori binari:
 \texttt{+} & addizione \\
 \texttt{-} & sottrazione \\
 \texttt{*} & moltiplicazione matriciale \\
+\texttt{'} & premoltiplicazione per la trasposta \\
 \texttt{/} & ``divisione'' matriciale (si veda oltre) \\
-\texttt{.*} & moltiplicazione per elementi \\
-\texttt{'} & moltiplicazione per la trasposta \\
-\texttt{./} & divisione per elementi \\
-\verb+.^+ & elevazione a potenza per elementi \\
 \verb+~+ & concatenazione per colonne \\
+\verb+|+ & concatenazione per righe \\
 \texttt{**} & prodotto di Kronecker \\
 \texttt{=} & test per l'uguaglianza 
+\end{tabular}
+\end{center}
+
+Inoltre, i seguenti operatori (operatori ``punto'') funzionano elemento per
+elemento:
+
+\begin{center}
+\begin{tabular}{cccccc}
+\texttt{.*}  &  \texttt{./}  &  \verb+.^+  &
+\texttt{.=}  &  \texttt{.>}  &  \texttt{.<} 
 \end{tabular}
 \end{center}
 
@@ -496,7 +504,7 @@ scalare sono:
 \texttt{tr} & traccia \\
 \texttt{onenorm} & norma-1 \\
 \texttt{infnorm} & norma infinita \\
-\texttt{rcond} & reciproco del numero di condizione \\
+\texttt{rcond} & reciproco del numero di condizione
 \end{tabular}
 \end{center}
 

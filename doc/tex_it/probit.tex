@@ -13,7 +13,7 @@ Bernoulli e analizzarne la distribuzione condizionata alle variabili esplicative
 $x_i$, ossia
 \begin{equation}
   \label{eq:qr-Bernoulli}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll}
       1 & P_i \\ 0 & 1 - P_i
     \end{array}
@@ -329,7 +329,7 @@ come
 %
 \begin{equation}
   \label{eq:tobit}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll} 
       y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
       0 & \mathrm{for} \quad y^*_i \le 0 
@@ -350,7 +350,10 @@ tobit depvar indvars
 
 Come al solito, è possibile visualizzare i progressi dell'algoritmo di
 massimizzazione usando l'opzione \texttt{--verbose} e \verb+$uhat+
-contiene i residui generalizzati.
+contiene i residui generalizzati. Si noti che in questo caso il residuo
+generalizzato è definito come $\hat{u}_i = E(\varepsilon_i | y_i = 0)$ per
+le osservazioni censurate, quindi l'uguaglianza $\hat{u}_i = y_i - \hat{y}_i$
+vale solo per le osservazioni non censurate, ossia quando vale $y_i>0$.
 
 Un'importante differenza tra lo stimatore Tobit e quello OLS è che le
 conseguenze della non-normalità del termine di disturbo sono molto più severe,
@@ -358,10 +361,11 @@ visto che la non-normalità implica la non consistenza per lo stimatore Tobit.
 Per questo motivo, fra i risultati del modello Tobit viene mostrato anche il
 test di normalità di Chesher--Irish (1987).
 
-\subsection{Modello Tobit generalizzato}
+\subsection{Modello di selezione del campione}
 \label{sec:heckit}
 
-Nel cosiddetto modello ``Tobit II'', esistono due variabili latenti:
+Nel modello di selezione del campione (noto anche come modello ``Tobit II''),
+esistono due variabili latenti:
 %
 \begin{eqnarray}
   \label{eq:heckit1}
@@ -374,13 +378,18 @@ e la regola di osservazione è data da
 %
 \begin{equation}
   \label{eq:tobitII}
-  y_i \left\{ 
+  y_i = \left\{ 
     \begin{array}{ll} 
       y^*_i & \mathrm{for} \quad s^*_i > 0 \\ 
-      0 & \mathrm{for} \quad s^*_i \le 0 
+      \diamondsuit & \mathrm{for} \quad s^*_i \le 0 
     \end{array}
     \right. 
 \end{equation}
+
+In questo contesto, il simbolo $\diamondsuit$ indica che per alcune osservazioni
+non sono disponibili dati per $y$: $y_i$ può essere 0 o mancante, o assumere
+qualsiasi altro valore. Di solito si usa una variabile dummy $d_i$ per escludere
+le osservazioni censurate.
 
 Una delle applicazioni più popolari di questo modello in econometria prevede
 un'equazione dei salari e un'equazione della partecipazione alla forza lavoro:
@@ -389,23 +398,60 @@ viene osservato solo il salario delle persone occupate. Se $y^*_i$ e $s^*_i$ fos
 stimatore OLS per stimare l'equazione (\ref{eq:heckit1}); ma in altri casi, lo
 stimatore OLS non produce stime consistenti dei parametri $\beta_j$.
 
-Uno stimatore molto usato è il cosidetto stimatore \emph{Heckit}, che prende il
+Visto che l'indipendenza condizionale tra $y^*_i$ e $s^*_i$ è equivalente
+all'indipendenza condizionale tra $\varepsilon_i$ e $\eta_i$, si può modellare
+la co-dipendenza tra $\varepsilon_i$ e $\eta_i$ come
+\[
+  \varepsilon_i = \lambda \eta_i + v_i ;
+\]
+sostituendo l'espressione precedente nella (\ref{eq:heckit1}), si ottiene il
+modello che viene effettivamente stimato:
+\[
+  y_i = \sum_{j=1}^k x_{ij} \beta_j + \lambda \hat{\eta}_i + v_i ,
+\]
+quindi l'ipotesi per cui la censura non ha importanza equivale all'ipotesi
+$H_0: \lambda = 0$, che può essere testata facilmente.
+
+I parametri possono essere stimati con la massima verosimiglianza nell'ipotesi
+di normalità congiunta di $\varepsilon_i$ e $\eta_i$, ma un metodo alternativo
+molto usato è il cosidetto stimatore \emph{Heckit}, che prende il
 nome da Heckman (1979). La procedura può essere schematizzata nel modo seguente:
 per prima cosa viene stimato un modello probit per l'equazione (\ref{eq:heckit2});
 quindi, vengono inseriti i residui generalizzati nell'equazione (\ref{eq:heckit1})
 per correggere gli effetti della selezione del campione.
 
+\app{Gretl} fornisce il comando \texttt{heckit} per eseguire la stima; la
+sintassi è
+%
+\begin{code}
+heckit y X ; d Z
+\end{code}
+%
+dove \texttt{y} è la variabile dipendente, \texttt{X} è una lista di
+regressori, \texttt{d} è una variabile dummy che vale 1 per le osservazioni non
+censurate, e \texttt{Z} è una lista di variabili esplicative per l'equazione di
+censura.
+
+Visto che quello della massima verosimiglianza è il metodo scelto più spesso,
+per impostazione predefinita \app{gretl} calcola le stime ML. Le stime
+Heckit a due passi si ottengono usando l'opzione \texttt{--two-step}. Dopo la
+stima, la variabile \verb|$uhat| contiene i residui generalizzati. Come nel
+modello Tobit ordinario, i residui sono pari alla differenza tra i valori
+$y_i$ effettivi e stimati solo per le osservazioni non censurate (quelle per cui
+vale $d_i = 1$).
+
 L'esempio \ref{ex:heckit} mostra due stime dal dataset usato in
-Mroz (1987): la prima replica la tabella 22.7 di Greene (2003), mentre la
-seconda replica la tabella 17.1 di Wooldridge (2002a). Si noti che lo script
-usato, \texttt{heckit.inp}, fa parte degli script di esempio forniti con \app{gretl}.
+Mroz (1987): la prima replica la tabella 22.7 di Greene (2003)\footnote{Si noti
+che le stime prodotte da \app{gretl} non coincidono con quelle contenute nel
+libro, ma con quelle elencate nella pagina degli errata corrige del
+libro: \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.},
+mentre la seconda replica la tabella 17.1 di Wooldridge (2002a)
 
 \begin{script}[htbp]
   \caption{Modello Heckit}
   \label{ex:heckit}
 \begin{scode}
 open mroz.gdt
-include heckit.inp
 
 genr EXP2 = AX^2
 genr WA2 = WA^2
@@ -416,7 +462,8 @@ genr KIDS = (KL6+K618)>0
 list X = const AX EXP2 WE CIT
 list Z = const WA WA2 FAMINC KIDS WE
 
-heckit(WW,X,LFP,Z)
+heckit WW X ; LFP Z --two-step 
+heckit WW X ; LFP Z 
 
 # Wooldridge's specification
 
@@ -425,7 +472,7 @@ series lww = log(WW)
 list X = const WE AX EXP2
 list Z = X NWINC WA KL6 K618
 
-heckit(lww,X,LFP,Z)
+heckit lww X ; LFP Z --two-step 
 \end{scode}
 \end{script}
 
