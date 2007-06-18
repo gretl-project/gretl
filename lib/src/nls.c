@@ -3126,7 +3126,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 }
 
 #define stepfrac	0.2
-#define acctol		1.0e-7 /* alt: 0.0001 or 1.0e-7 */
+#define acctol		1.0e-7 /* alt: 0.0001 or 1.0e-7 (?) */
 #define reltest		10.0
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
@@ -3184,6 +3184,40 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     double s, steplen = 0.0;
     double D1, D2;
     int err = 0;
+
+    /* 
+       if "set inivals" has been used, supersede whatever initial
+       values were there by those given by the user (the customer is
+       always right)
+    */
+
+    const gretl_matrix *userinit = get_init_vals();
+    int uilen = gretl_vector_get_length(userinit);
+
+    fprintf(stderr, "uilen = %d\n", uilen);
+
+    if (uilen > 0) {
+	/* the user has given something */
+	if (uilen < n) {
+	    fprintf(stderr, "Only %d initial values given, but %d "
+		    "are necessary\n", uilen, n);
+	} else {
+	    for (i=0; i<n; i++) {
+		b[i] = userinit->val[i];
+	    }
+	    if (opt & OPT_V) {
+		pputs(prn, _("\n\n*** User-specified starting values:\n"));
+		for (i=0; i<n; i++) {
+		    b[i] = userinit->val[i];
+		    pprintf(prn, " %12.6f", b[i]);
+		    if (i%6 == 5) {
+			pputc(prn, '\n');
+		    }
+		}
+		pputs(prn, "\n\n");
+	    }
+	}
+    }
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -3250,8 +3284,8 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	    steplen = 1.0;
 	    crit_ok = 0;
 	    do {
-		/* loop so long as (a) we haven't achieved a definite
-		   improvement in the criterion and (b) there is
+		/* loop so long as (a) we haven't achieved an
+		   acceptable value of the criterion and (b) there is
 		   still some prospect of doing so */
 		ndelta = n;
 		for (i=0; i<n; i++) {

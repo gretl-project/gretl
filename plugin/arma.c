@@ -2099,7 +2099,7 @@ static int hr_arma_init (const int *list, double *coeff,
 }
 
 static int user_arma_init (double *coeff, struct arma_info *ainfo, 
-			   int *init_done, PRN *prn)
+			   char flags, int *init_done, PRN *prn)
 {
     const gretl_matrix *m = get_init_vals();
     int i, nc;
@@ -2116,9 +2116,12 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 	return E_DATA;
     }
 
-    pputs(prn, "\narma initialization: at user-specified values\n\n");
-    for (i=0; i<ainfo->nc; i++) {
-	coeff[i] = gretl_vector_get(m, i);
+    if (!(flags & ARMA_EXACT)) {
+	/* in EXACT case, this is handled within BFGS */
+	pputs(prn, "\narma initialization: at user-specified values\n\n");
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = gretl_vector_get(m, i);
+	}
     }
 
     *init_done = 1;
@@ -2310,7 +2313,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, &init_done, errprn);
+    err = user_arma_init(coeff, &ainfo, flags, &init_done, errprn);
     if (err) {
 	armod.errcode = err;
 	goto bailout;
