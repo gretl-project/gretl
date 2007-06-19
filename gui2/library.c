@@ -5267,18 +5267,24 @@ void do_run_script (GtkWidget *w, gpointer p)
     disp = gdk_display_get_default();
     cursor = gdk_cursor_new(GDK_WATCH);
 
-    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+    if (disp != NULL) {
+	w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+	gdk_window_set_cursor(w1, cursor);
+	gdk_display_sync(disp);
+    }
+
     w2 = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
 				  GTK_TEXT_WINDOW_TEXT);
-    gdk_window_set_cursor(w1, cursor);
+
     gdk_window_set_cursor(w2, cursor);
-    gdk_display_sync(disp);
     gdk_cursor_unref(cursor);
 
     err = execute_script(NULL, buf, prn, code);
     g_free(buf);
 
-    gdk_window_set_cursor(w1, NULL);
+    if (disp != NULL) {
+	gdk_window_set_cursor(w1, NULL);
+    }
     gdk_window_set_cursor(w2, NULL);
 
     refresh_data();
