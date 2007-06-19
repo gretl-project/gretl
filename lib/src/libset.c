@@ -727,14 +727,27 @@ int get_max_verbose (void)
 
 const gretl_matrix *get_init_vals (void)
 {
-    const gretl_matrix *m = NULL;
-
     check_for_state();
-    m = state->initvals;
-    state->initvals = NULL;
+    return state->initvals;
+}
 
-    return m;
-}   
+void free_init_vals (void)
+{
+    if (state->initvals != NULL) {
+	gretl_matrix_free(state->initvals);
+	state->initvals = NULL;
+    }
+}
+
+int n_init_vals (void)
+{
+    check_for_state();
+    if (state->initvals != NULL) {
+	return gretl_vector_get_length(state->initvals);
+    } else {
+	return 0;
+    }
+}
 
 char *get_shelldir (void)
 {

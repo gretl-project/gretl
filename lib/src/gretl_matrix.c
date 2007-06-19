@@ -6688,3 +6688,140 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
 }
 
 
+/**
+ * gretl_matrix_xtab:
+ * @x: data vector
+ * @y: data vector
+ * @t1: start
+ * @t2: end
+ * @err: error code
+ *
+ * Computes the cross tabulation of the values contained in the
+ * vectors x (by row) and y (by column). These must be integer values.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x, 
+				 const double *y, int *err)
+{
+    gretl_matrix *tab = NULL;
+    gretl_matrix *vx = NULL;
+    gretl_matrix *vy = NULL;
+    double *tmp;
+    double **X = NULL;
+    int i, t, nmax = t2 - t1 + 1;
+    int counter;
+    int xr, xc, rndx, cndx;
+
+    *err = 0;
+
+    tmp = malloc(nmax * sizeof *tmp);
+
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return tab;
+    }
+
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	tmp[i++] = x[t];
+    }
+
+    vx = gretl_matrix_values(tmp, nmax, err);
+    if (*err) {
+	free(tmp);
+	return tab;
+    }
+
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	tmp[i++] = y[t];
+    }
+
+    vy = gretl_matrix_values(tmp, nmax, err);
+    if (*err) {
+	free(tmp);
+	gretl_matrix_free(vx);
+	return tab;
+    }
+
+    tab = gretl_zero_matrix_new(gretl_matrix_rows(vx), 
+				gretl_matrix_rows(vy));
+    if (tab == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    X = doubles_array_new(nmax, 2);
+    if (X == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    i = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]) || na(y[t]))) { 
+	    X[i][0] = (int) x[t];
+	    X[i][1] = (int) y[t];
+	    i++;
+	}
+    }
+
+    if (*err) {
+	i = 0;
+	for (t=t1; t<=t2 && i<nmax; t++) {
+	    if (X[i] != NULL) {
+		free(X[i++]);
+	    }
+	}
+    } else {
+	qsort(X, nmax, sizeof *X, compare_xtab_rows);
+    }
+
+#if 0
+    for (i = 0; i < nmax; i++) {
+	fprintf(stderr, "X[%d] = [%g, %g]\n", i, X[i][0], X[i][1]);
+    }
+#endif
+
+    /* compute frequencies by going through sorted X */
+
+    rndx = 0;
+    cndx = 0;
+    xr = (int) gretl_vector_get(vx, 0);
+    xc = (int) gretl_vector_get(vy, 0);
+
+    counter = 0;
+    for (i=0; i<nmax && !*err; i++) {
+	while (X[i][0] > xr) { 
+	    /* skip row */
+	    gretl_matrix_set(tab, rndx, cndx, counter);
+	    counter = 0;
+	    xr = gretl_vector_get(vx, ++rndx);
+	    cndx = 0;
+	    xc = gretl_vector_get(vy, 0);
+	}
+	while (X[i][1] > xc) { 
+	    /* skip column */
+	    gretl_matrix_set(tab, rndx, cndx, counter);
+	    counter = 0;
+	    xc = gretl_vector_get(vy, ++cndx);
+	}
+	counter++;
+    }
+    gretl_matrix_set(tab, rndx, cndx, counter);
+
+ bailout:
+
+    if (tmp != NULL) free(tmp);
+    if (vx != NULL) gretl_matrix_free(vx);
+    if (vy != NULL) gretl_matrix_free(vy);
+    if (X != NULL) {
+	doubles_array_free(X, nmax);
+    }
+
+    return tab;
+}
+
+

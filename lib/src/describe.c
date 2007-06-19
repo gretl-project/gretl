@@ -1754,7 +1754,7 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
     return 0;
 }
 
-static int compare_xtab_rows (const void *a, const void *b) 
+int compare_xtab_rows (const void *a, const void *b) 
 {
     const double **da = (const double **) a;
     const double **db = (const double **) b;
@@ -1823,8 +1823,9 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	colfreq = get_freq(cvarno, Z, pdinfo, NADBL, NADBL, 0, 
 			   0, OPT_D | OPT_X, err); 
     }
+
     if (!*err) {
-	X = malloc(n * sizeof *X);
+	X = doubles_array_new(n, 2);
 	if (X == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -1835,10 +1836,6 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	free_freq(colfreq);
 	free(X);
 	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	X[i] = NULL;
     }
 
     rows = rowfreq->numbins;
@@ -1867,11 +1864,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     i = 0;
     for (t=t1; t<=t2 && i<n; t++) {
-	X[i] = malloc(2 * sizeof **X);
-	if (X[i] == NULL) {
-	    *err = E_ALLOC;
-	    break;
-	} else if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
+	if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
 	    X[i][0] = Z[rvarno][t];
 	    X[i][1] = Z[cvarno][t];
 	    i++;
@@ -1911,10 +1904,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     }
 
     if (X != NULL) {
-	for (i=0; i<n; i++) {
-	    free(X[i]);
-	}
-	free(X);
+	doubles_array_free(X, n);
     }
 
     return tab;

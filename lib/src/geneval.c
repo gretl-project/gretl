@@ -1945,6 +1945,29 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* functions taking two series as arguments and returning a matrix
+   result */
+
+static NODE *series_2_mat_func (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+    const double *x = l->v.xvec;
+    const double *y = r->v.xvec;
+
+    if (ret != NULL && starting(p)) {
+	switch (f) {
+	case MXTAB:
+	    ret->v.m = gretl_matrix_xtab(p->dinfo->t1, p->dinfo->t2, 
+					 x, y, &p->err);
+	    break;
+	default:
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *object_status (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -3905,6 +3928,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* functions taking two series as args */
 	if (l->t == VEC && r->t == VEC) {
 	    ret = series_2_func(l, r, t->t, p);
+	} else {
+	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
+	} 
+	break;
+    case MXTAB:
+	/* functions taking two series as args and returning a matrix */
+	if (l->t == VEC && r->t == VEC) {
+	    ret = series_2_mat_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 

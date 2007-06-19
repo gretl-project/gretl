@@ -313,10 +313,10 @@ static int garch_manual_init (double *a, int p, int q,
 			      double *coeff, double *b,
 			      int k, PRN *prn)
 {
-    const gretl_matrix *m = get_init_vals();
-    int mlen = gretl_vector_get_length(m);
+    int mlen = n_init_vals();
     int n = p + q + 1 + k;
 #ifdef USE_FCP
+    const gretl_matrix *m;
     int i, j;
 #endif
 
@@ -332,6 +332,8 @@ static int garch_manual_init (double *a, int p, int q,
        within the BFGS routine */
 
 #ifdef USE_FCP
+    m = get_init_vals();
+
     /* coefficients on regressors */
     for (i=0; i<k; i++) {
 	coeff[i] = m->val[i];
@@ -346,6 +348,8 @@ static int garch_manual_init (double *a, int p, int q,
     }
 
     garch_print_init(coeff, k, a, p, q, 1, prn);
+
+    free_init_vals();
 #endif
 
     return 1;

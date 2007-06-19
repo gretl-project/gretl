@@ -101,6 +101,8 @@ int set_bfgs_toler (double tol);
 int set_bfgs_maxiter (int n);
 
 const gretl_matrix *get_init_vals (void);
+int n_init_vals (void);
+void free_init_vals (void);
 
 int get_VAR_horizon (void);
 

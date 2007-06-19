@@ -29,207 +29,208 @@
 #define PRESERVE_AUX_NODES 0
 
 enum {
-    U_NEG = 1,
-    U_POS,
-    U_NOT,
-    U_ADDR,
-    U_MAX,   /* separator: end of unary operators */ 
-    B_ASN,
-    B_ADD,
-    B_SUB,
-    B_MUL,
-    B_DIV,  /* 10 */
-    B_MOD, 
-    B_POW,
-    B_EQ,
-    B_LT,
-    B_GT,
-    B_LTE,
-    B_GTE,
-    B_NEQ,
-    B_AND,
-    B_OR,   /* 20 */
-    B_TRMUL,
-    LPR,     /* left paren */
-    RPR,     /* right paren */
-    LBR,     /* left bracket */
-    RBR,     /* right bracket */
-    LCB,     /* left curly bracket */
-    RCB,     /* right curly bracket */
-    DOTMULT,
-    DOTDIV,
-    DOTPOW, /* 30 */
-    DOTADD,
-    DOTSUB,
-    DOTEQ,
-    DOTGT,
-    DOTLT,
-    KRON,     /* Kronecker product */
-    MCCAT,    /* matrix concatenation (columns) */
-    MRCAT,    /* matrix concatenation (rows) */
-    OP_MAX,   /* separator: end of operators */
-    ABS,    /* 40 */
-    TOINT,
-    CEIL,
-    SIN,
-    COS,
-    TAN,
-    ATAN,
-    LOG,
-    LOG10,
-    LOG2,
-    EXP,    /* 50 */
-    SQRT,
-    DIF,      /* first difference */
-    LDIF,     /* log difference */
-    SDIF,     /* seasonal difference */
-    SORT,     /* ascending sort */
-    DSORT,    /* descending sort */
-    ODEV,     /* orthogonal deviation */
-    NOBS,
-    T1,
-    T2,     /* 60 */ 
-    CHISQ,
-    STUDENT,
-    CUM,
-    MISSING,
-    OK,
-    MISSZERO,
-    ZEROMISS,
-    MEDIAN,
-    GINI,
-    SUM,     /* 70 */
-    MEAN,
-    MIN,
-    MAX,
-    SD,
-    VCE,      /* variance */
-    SST,
-    CNORM,
-    DNORM,
-    QNORM,
-    GAMMA,   /* 80 */ 
-    LNGAMMA,
-    HPFILT,
-    BKFILT,
-    RESAMPLE,
-    PMEAN,
-    PSD,
-    IMAT,
-    SUMR,
-    SUMC,
-    MEANR,    /* 90 */
-    MEANC,
-    MCOV,
-    MCORR,
-    CDEMEAN,
-    CHOL,
-    INV,
-    DIAG,
-    TRANSP,
-    TVEC,
-    VECH,     /* 100 */ 
-    UNVECH,
-    ROWS,
-    COLS,
-    DET,
-    LDET,
-    TRACE,
-    NORM1,
-    INFNORM,
-    RCOND,
-    RANK,    /* 110 */  
-    VARNUM,
-    OBSNUM,
-    ISSERIES,
-    ISLIST,  
-    ISSTRING,
-    ISNULL,
-    LISTLEN,
-    PVAL,
-    CDF,
-    CRIT,    /* 120 */ 
-    GENPOIS,
-    MAKEMASK,
-    VALUES,
-    NULLSPC,
-    MEXP,
-    MINC,
-    MAXC,
-    MINR,
-    MAXR,
-    IMINC,   /* 130 */
-    IMAXC,
-    IMINR,
-    IMAXR,
-    FFT,
-    FFTI,
-    FUNC_MAX,   /* separator: end of single-arg functions */
-    COR,
-    COV,
-    UNIFORM,
-    NORMAL,  /* 140 */  
-    BINOMIAL,
-    FRACDIF,
-    ZEROS,
-    ONES,
-    SEQ,
-    MUNIF,
-    MNORM,
-    QFORM,
-    MLAG,
-    QR,      /* 150 */  
-    EIGSYM,  
-    EIGGEN,
-    FDJAC,
-    BFGSMAX,
-    LRVAR,
-    PRINCOMP,
-    QUANTILE,
-    CMULT,    /* complex multiplication */
-    F2_MAX,   /* separator: end of two-arg functions */
-    MSHAPE, /* 160 */
-    SVD,
-    MOLS,
-    FN_MAX,   /* separator: end of n-arg functions */
-    COM,      /* comma */
-    DOT,      /* period */
-    SEMI,     /* semi-colon */
-    COL,      /* colon */
-    CON,      /* named constant */
-    DUM,      /* dummy variable */
-    UVAR,   /* 170: user variable (scalar or series) */
-    UMAT,     /* user-defined matrix */
-    UOBJ,     /* user-defined object (e.g. model) */
-    NUM,      /* scalar, evaluated */
-    VEC,      /* series, evaluated */
-    IVEC,     /* vector of integers, evaluated */
-    MAT,      /* matrix, evaluated */
-    OBS,      /* observation from a series */
-    MSL,      /* matrix plus subspec */
-    DMSL,     /* "dollar" matrix plus subspec */
-    DMSTR,  /* 180: "dollar" matrix plus old-style string subspec */
-    MSL2,     /* unevaluated matrix subspec */
-    MSPEC,    /* evaluated matrix subspec */
-    SUBSL,    /* row or column component of MSPEC */
-    MDEF,     /* explicit matrix definition {...} */
-    LAG,      
-    DVAR,     /* $ dataset variable (scalar or series) */
-    MVAR,     /* $ model var (scalar, series, or matrix) */
-    OVAR,     /* object variable: variable "under" an object */
-    LOOPIDX,  /* loop index variable */
-    LIST,   /* 190: reference to named list */
-    STR,      /* string */
-    EROOT,    /* dummy root for (...) expression */
-    UFUN,     /* user-defined function */
-    FARGS,    /* set of n function arguments */
-    EMPTY,
-    ABSENT,
-    INC,   
-    DEC,
-    QUERY,
-    AST2,   /* 200: prime facie ambiguous case of "**" */
-    UNK 
+              U_NEG = 1,
+              U_POS,
+              U_NOT,
+              U_ADDR,
+              U_MAX,   /* separator: end of unary operators */ 
+              B_ASN,
+              B_ADD,
+              B_SUB,
+              B_MUL,
+  /* 10 */    B_DIV,
+              B_MOD, 
+              B_POW,
+              B_EQ,
+              B_LT,
+              B_GT,
+              B_LTE,
+              B_GTE,
+              B_NEQ,
+              B_AND,
+  /* 20 */    B_OR,
+              B_TRMUL,
+              LPR,     /* left paren */
+              RPR,     /* right paren */
+              LBR,     /* left bracket */
+              RBR,     /* right bracket */
+              LCB,     /* left curly bracket */
+              RCB,     /* right curly bracket */
+              DOTMULT,
+              DOTDIV,
+  /* 30 */    DOTPOW,
+              DOTADD,
+              DOTSUB,
+              DOTEQ,
+              DOTGT,
+              DOTLT,
+              KRON,     /* Kronecker product */
+              MCCAT,    /* matrix concatenation (columns) */
+              MRCAT,    /* matrix concatenation (rows) */
+              OP_MAX,   /* separator: end of operators */
+  /* 40 */    ABS,
+              TOINT,
+              CEIL,
+              SIN,
+              COS,
+              TAN,
+              ATAN,
+              LOG,
+              LOG10,
+              LOG2,
+  /* 50 */    EXP,
+              SQRT,
+              DIF,      /* first difference */
+              LDIF,     /* log difference */
+              SDIF,     /* seasonal difference */
+              SORT,     /* ascending sort */
+              DSORT,    /* descending sort */
+              ODEV,     /* orthogonal deviation */
+              NOBS,
+              T1,
+  /* 60 */    T2,   
+              CHISQ,
+              STUDENT,
+              CUM,
+              MISSING,
+              OK,
+              MISSZERO,
+              ZEROMISS,
+              MEDIAN,
+              GINI,
+  /* 70 */    SUM,   
+              MEAN,
+              MIN,
+              MAX,
+              SD,
+              VCE,      /* variance */
+              SST,
+              CNORM,
+              DNORM,
+              QNORM,
+  /* 80 */    GAMMA,  
+              LNGAMMA,
+              HPFILT,
+              BKFILT,
+              RESAMPLE,
+              PMEAN,
+              PSD,
+              IMAT,
+              SUMR,
+              SUMC,
+  /* 90 */    MEANR,   
+              MEANC,
+              MCOV,
+              MCORR,
+              CDEMEAN,
+              CHOL,
+              INV,
+              DIAG,
+              TRANSP,
+              TVEC,
+  /* 100 */   VECH,   
+              UNVECH,
+              ROWS,
+              COLS,
+              DET,
+              LDET,
+              TRACE,
+              NORM1,
+              INFNORM,
+              RCOND,
+  /* 110 */   RANK, 
+              VARNUM,
+              OBSNUM,
+              ISSERIES,
+              ISLIST,  
+              ISSTRING,
+              ISNULL,
+              LISTLEN,
+              PVAL,
+              CDF,
+  /* 120 */   CRIT,  
+              GENPOIS,
+              MAKEMASK,
+              VALUES,
+              NULLSPC,
+              MEXP,
+              MINC,
+              MAXC,
+              MINR,
+              MAXR,
+  /* 130 */   IMINC, 
+              IMAXC,
+              IMINR,
+              IMAXR,
+              FFT,
+              FFTI,
+              FUNC_MAX,   /* separator: end of single-arg functions */
+              COR,
+              COV,
+              UNIFORM,
+  /* 140 */   NORMAL,
+              BINOMIAL,
+              FRACDIF,
+              ZEROS,
+              ONES,
+              SEQ,
+              MUNIF,
+              MNORM,
+              QFORM,
+              MLAG,
+  /* 150 */   QR,
+              EIGSYM,  
+              EIGGEN,
+              FDJAC,
+              BFGSMAX,
+              LRVAR,
+              PRINCOMP,
+              QUANTILE,
+              CMULT,    /* complex multiplication */
+              MXTAB,
+  /* 160 */   F2_MAX,   /* separator: end of two-arg functions */
+              MSHAPE,
+              SVD,
+              MOLS,
+              FN_MAX,   /* separator: end of n-arg functions */
+              COM,      /* comma */
+              DOT,      /* period */
+              SEMI,     /* semi-colon */
+              COL,      /* colon */
+              CON,      /* named constant */
+  /* 170 */   DUM,      /* dummy variable */
+              UVAR,     /* user variable (scalar or series) */
+              UMAT,     /* user-defined matrix */
+              UOBJ,     /* user-defined object (e.g. model) */
+              NUM,      /* scalar, evaluated */
+              VEC,      /* series, evaluated */
+              IVEC,     /* vector of integers, evaluated */
+              MAT,      /* matrix, evaluated */
+              OBS,      /* observation from a series */
+              MSL,      /* matrix plus subspec */
+  /* 180 */   DMSL,     /* "dollar" matrix plus subspec */
+              DMSTR,    /* "dollar" matrix plus old-style string subspec */
+              MSL2,     /* unevaluated matrix subspec */
+              MSPEC,    /* evaluated matrix subspec */
+              SUBSL,    /* row or column component of MSPEC */
+              MDEF,     /* explicit matrix definition {...} */
+              LAG,      
+              DVAR,     /* $ dataset variable (scalar or series) */
+              MVAR,     /* $ model var (scalar, series, or matrix) */
+              OVAR,     /* object variable: variable "under" an object */
+  /* 190 */   LOOPIDX,  /* loop index variable */
+              LIST,     /* reference to named list */
+              STR,      /* string */
+              EROOT,    /* dummy root for (...) expression */
+              UFUN,     /* user-defined function */
+              FARGS,    /* set of n function arguments */
+              EMPTY,
+              ABSENT,
+              INC,   
+              DEC,
+  /* 200 */   QUERY,
+              AST2,   /* prime facie ambiguous case of "**" */
+              UNK 
 };
 
 enum {

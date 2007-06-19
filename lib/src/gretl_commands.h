@@ -218,6 +218,13 @@ typedef enum {
                               c == LMTEST || \
                               c == TESTUHAT)
 
+#define USES_BFGS(c) ((c) == ARMA || \
+                      (c) == GARCH || \
+                      (c) == GMM || \
+		      (c) == HECKIT || \
+                      (c) == MLE || \
+                      (c) == TOBIT)
+
 int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);

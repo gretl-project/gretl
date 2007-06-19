@@ -2101,14 +2101,7 @@ static int hr_arma_init (const int *list, double *coeff,
 static int user_arma_init (double *coeff, struct arma_info *ainfo, 
 			   char flags, int *init_done, PRN *prn)
 {
-    const gretl_matrix *m = get_init_vals();
-    int i, nc;
-
-    if (m == NULL) {
-	return 0;
-    }
-
-    nc = gretl_vector_get_length(m);
+    int i, nc = n_init_vals();
 
     if (nc != ainfo->nc) {
 	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
@@ -2118,10 +2111,13 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 
     if (!(flags & ARMA_EXACT)) {
 	/* in EXACT case, this is handled within BFGS */
+	const gretl_matrix *m = get_init_vals();
+
 	pputs(prn, "\narma initialization: at user-specified values\n\n");
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = gretl_vector_get(m, i);
 	}
+	free_init_vals();
     }
 
     *init_done = 1;

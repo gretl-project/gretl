@@ -2681,7 +2681,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get tolerance from user setting or default */
-    if (spec->ci == MLE || spec->ci == GMM) {
+    if (USES_BFGS(spec->ci)) {
 	spec->tol = get_bfgs_toler();
     } else {
 	spec->tol = get_nls_toler();
@@ -3191,10 +3191,11 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
        always right)
     */
 
+    int realmaxit = maxit;
+    double realtol = reltol;
+
     const gretl_matrix *userinit = get_init_vals();
     int uilen = gretl_vector_get_length(userinit);
-
-    fprintf(stderr, "uilen = %d\n", uilen);
 
     if (uilen > 0) {
 	/* the user has given something */
@@ -3208,7 +3209,6 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	    if (opt & OPT_V) {
 		pputs(prn, _("\n\n*** User-specified starting values:\n"));
 		for (i=0; i<n; i++) {
-		    b[i] = userinit->val[i];
 		    pprintf(prn, " %12.6f", b[i]);
 		    if (i%6 == 5) {
 			pputc(prn, '\n');
@@ -3216,8 +3216,23 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		}
 		pputs(prn, "\n\n");
 	    }
+	    free_init_vals();
 	}
     }
+
+    int umaxit = get_bfgs_maxiter();
+    realmaxit = (umaxit>0) ? umaxit : maxit;
+    
+    double utol = get_bfgs_toler();
+    
+    if (utol == get_default_nls_toler()) {
+	/* unset */
+	fprintf(stderr, "utol = NA\n");
+    } else {
+	realtol = utol;
+	fprintf(stderr, "utol = %g\n", utol);
+    }	
+
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -3306,11 +3321,11 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 		}
 	    } while (ndelta != 0 && !crit_ok);
 
-	    done = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
+	    done = fabs(fmax - f) <= realtol * (fabs(fmax) + realtol);
 
 #if BFGS_DEBUG
 	    fprintf(stderr, "LHS=%g, RHS=%g; done = %d\n",
-		    fabs(fmax - f), reltol * (fabs(fmax) + reltol),
+		    fabs(fmax - f), realtol * (fabs(fmax) + realtol),
 		    done);
 #endif
 
@@ -3375,7 +3390,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	    }
 	}
 
-	if (iter >= maxit) {
+	if (iter >= realmaxit) {
 	    break;
 	}
 
@@ -3391,7 +3406,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	    ndelta, ilast, gcount);
 #endif
 
-    if (iter >= maxit) {
+    if (iter >= realmaxit) {
 	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
     } else if (fmax < f0) {

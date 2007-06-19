@@ -188,6 +188,7 @@ struct str_table funcs[] = {
     { CMULT,    "cmult" },
     { MCOV,     "mcov" },
     { MCORR,    "mcorr" },
+    { MXTAB,    "mxtab" },
     { CDEMEAN,  "cdemean" },
     { CHOL,     "cholesky" },
     { INV,      "inv" },
