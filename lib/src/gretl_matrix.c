@@ -6768,6 +6768,13 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 	}
     }
 
+    /*
+      with missing data, nmax could be less than the value it had 
+      before: here,
+      nmax = #(!(na(x[t]) || na(y[t])) <= (t2 - t1 + 1)
+     */
+    nmax = i;
+
     if (*err) {
 	i = 0;
 	for (t=t1; t<=t2 && i<nmax; t++) {
