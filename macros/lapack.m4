@@ -17,7 +17,7 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
 
   if test x"${LAPACK_LIBS}" = x ; then 
      AC_MSG_CHECKING(for libgfortran, libg2c or libf2c)
-     AC_CHECK_LIB(gfortran,etime_,FLIB="-lgfortran",FLIB="none")
+     AC_CHECK_LIB(gfortran,_gfortran_abort,FLIB="-lgfortran",FLIB="none")
      if test $FLIB = "none" ; then
         AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
      fi
@@ -25,7 +25,7 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
         AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
      fi
      if test $FLIB = "none" ; then
-        echo "*** Couldn't find ligfortran, libg2c or libf2c"
+        echo "*** Couldn't find libgfortran, libg2c or libf2c"
      fi
   fi
 

@@ -24639,9 +24639,9 @@ fi;
   if test x"${LAPACK_LIBS}" = x ; then
      echo "$as_me:$LINENO: checking for libgfortran" >&5
 echo $ECHO_N "checking for libgfortran... $ECHO_C" >&6
-     echo "$as_me:$LINENO: checking for etime_ in -lgfortran" >&5
-echo $ECHO_N "checking for etime_ in -lgfortran... $ECHO_C" >&6
-if test "${ac_cv_lib_gfortran_etime_+set}" = set; then
+     echo "$as_me:$LINENO: checking for _gfortran_abort in -lgfortran" >&5
+echo $ECHO_N "checking for _gfortran_abort in -lgfortran... $ECHO_C" >&6
+if test "${ac_cv_lib_gfortran__gfortran_abort+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -24659,11 +24659,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char etime_ ();
+char _gfortran_abort ();
 int
 main ()
 {
-etime_ ();
+_gfortran_abort ();
   ;
   return 0;
 }
@@ -24690,20 +24690,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_gfortran_etime_=yes
+  ac_cv_lib_gfortran__gfortran_abort=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_gfortran_etime_=no
+ac_cv_lib_gfortran__gfortran_abort=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gfortran_etime_" >&5
-echo "${ECHO_T}$ac_cv_lib_gfortran_etime_" >&6
-if test $ac_cv_lib_gfortran_etime_ = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_gfortran__gfortran_abort" >&5
+echo "${ECHO_T}$ac_cv_lib_gfortran__gfortran_abort" >&6
+if test $ac_cv_lib_gfortran__gfortran_abort = yes; then
   FLIB="-lgfortran"
 else
   FLIB="none"
@@ -24854,7 +24854,7 @@ fi
 
      fi
      if test $FLIB = "none" ; then
-        echo "*** Couldn't find ligfortran, libg2c or libf2c"
+        echo "*** Couldn't find libgfortran, libg2c or libf2c"
      fi
   fi
 
