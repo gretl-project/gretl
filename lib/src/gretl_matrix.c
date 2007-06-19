@@ -6687,6 +6687,20 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err)
     return P;
 }
 
+#define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
+
+static int ok_xy_count (int t1, int t2, const double *x, const double *y)
+{
+    int t, n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (complete_obs(x, y, t)) {
+	    n++;
+	}
+    }
+    
+    return n;
+}
 
 /**
  * gretl_matrix_xtab:
@@ -6708,7 +6722,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
     gretl_matrix *tab = NULL;
     gretl_matrix *vx = NULL;
     gretl_matrix *vy = NULL;
-    double *tmp;
+    double *tmp = NULL;
     double **X = NULL;
     int i, t, nmax = t2 - t1 + 1;
     int counter;
@@ -6716,34 +6730,41 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
     *err = 0;
 
-    tmp = malloc(nmax * sizeof *tmp);
+    nmax = ok_xy_count(t1, t2, x, y);
+    if (nmax < 2) {
+	*err = E_MISSDATA;
+	return NULL;
+    }
 
+    tmp = malloc(nmax * sizeof *tmp);
     if (tmp == NULL) {
 	*err = E_ALLOC;
-	return tab;
+	return NULL;
     }
 
     i = 0;
     for (t=t1; t<=t2; t++) {
-	tmp[i++] = x[t];
+	if (complete_obs(x, y, t)) {
+	    tmp[i++] = x[t];
+	}
     }
 
     vx = gretl_matrix_values(tmp, nmax, err);
     if (*err) {
 	free(tmp);
-	return tab;
+	return NULL;
     }
 
     i = 0;
     for (t=t1; t<=t2; t++) {
-	tmp[i++] = y[t];
+	if (complete_obs(x, y, t)) {
+	    tmp[i++] = y[t];
+	}
     }
 
     vy = gretl_matrix_values(tmp, nmax, err);
     if (*err) {
-	free(tmp);
-	gretl_matrix_free(vx);
-	return tab;
+	goto bailout;
     }
 
     tab = gretl_zero_matrix_new(gretl_matrix_rows(vx), 
@@ -6761,30 +6782,14 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
     i = 0;
     for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]) || na(y[t]))) { 
+	if (complete_obs(x, y, t)) {
 	    X[i][0] = (int) x[t];
 	    X[i][1] = (int) y[t];
 	    i++;
 	}
     }
 
-    /*
-      with missing data, nmax could be less than the value it had 
-      before: here,
-      nmax = #(!(na(x[t]) || na(y[t])) <= (t2 - t1 + 1)
-     */
-    nmax = i;
-
-    if (*err) {
-	i = 0;
-	for (t=t1; t<=t2 && i<nmax; t++) {
-	    if (X[i] != NULL) {
-		free(X[i++]);
-	    }
-	}
-    } else {
-	qsort(X, nmax, sizeof *X, compare_xtab_rows);
-    }
+    qsort(X, nmax, sizeof *X, compare_xtab_rows);
 
 #if 0
     for (i = 0; i < nmax; i++) {
@@ -6821,12 +6826,10 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
  bailout:
 
-    if (tmp != NULL) free(tmp);
-    if (vx != NULL) gretl_matrix_free(vx);
-    if (vy != NULL) gretl_matrix_free(vy);
-    if (X != NULL) {
-	doubles_array_free(X, nmax);
-    }
+    free(tmp);
+    gretl_matrix_free(vx);
+    gretl_matrix_free(vy);
+    doubles_array_free(X, nmax);
 
     return tab;
 }

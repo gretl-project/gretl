@@ -1769,6 +1769,8 @@ int compare_xtab_rows (const void *a, const void *b)
     return ret;
 }
 
+#define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
+
 /* crosstab struct creation function */
 
 static Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
@@ -1788,14 +1790,14 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
-	if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) {
+	if (complete_obs(Z[rvarno], Z[cvarno], t)) {
 	    n++;
 	}
     }
 
     if (n == 0) {
 	fprintf(stderr, "All values invalid!\n");
-	*err = E_DATA;
+	*err = E_MISSDATA;
 	return NULL;
     }
 
@@ -1817,6 +1819,12 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
+    X = doubles_array_new(n, 2);
+    if (X == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
     rowfreq = get_freq(rvarno, Z, pdinfo, NADBL, NADBL, 0, 
 		       0, OPT_D | OPT_X, err); 
     if (!*err) {
@@ -1824,18 +1832,8 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 			   0, OPT_D | OPT_X, err); 
     }
 
-    if (!*err) {
-	X = doubles_array_new(n, 2);
-	if (X == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (rowfreq == NULL || colfreq == NULL || X == NULL) {
-	free_freq(rowfreq);
-	free_freq(colfreq);
-	free(X);
-	return NULL;
+    if (*err) {
+	goto bailout;
     }
 
     rows = rowfreq->numbins;
@@ -1843,8 +1841,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     if (xtab_allocate_arrays(tab, rows, cols)) {
 	*err = E_ALLOC;
-	free_xtab(tab);
-	return NULL;
+	goto bailout;
     }
 
     for (i=0; i<rows; i++) {
@@ -1857,33 +1854,25 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	tab->ctotal[i] = 0;
     }
 
-    free_freq(rowfreq);
-    free_freq(colfreq);
-
     /* matrix X holds the values to be sorted */
 
     i = 0;
     for (t=t1; t<=t2 && i<n; t++) {
-	if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
+	if (complete_obs(Z[rvarno], Z[cvarno], t)) {
 	    X[i][0] = Z[rvarno][t];
 	    X[i][1] = Z[cvarno][t];
 	    i++;
 	}
     }
 
-    if (*err) {
-	free_xtab(tab);
-	tab = NULL;
-    } else {
-	qsort(X, n, sizeof *X, compare_xtab_rows);
-	ri = cj = 0;
-	xr = tab->rval[0];
-	xc = tab->cval[0];
-    }
+    qsort(X, n, sizeof *X, compare_xtab_rows);
+    ri = cj = 0;
+    xr = tab->rval[0];
+    xc = tab->cval[0];
 
     /* compute frequencies by going through sorted X */
 
-    for (i=0; i<n && !*err; i++) {
+    for (i=0; i<n; i++) {
 	while (X[i][0] > xr) { 
 	    /* skip row */
 	    xr = tab->rval[++ri];
@@ -1903,8 +1892,15 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	tab->ctotal[cj] += 1;
     }
 
-    if (X != NULL) {
-	doubles_array_free(X, n);
+ bailout:
+    
+    doubles_array_free(X, n);
+    free_freq(rowfreq);
+    free_freq(colfreq);
+
+    if (*err) {
+	free_xtab(tab);	
+	tab = NULL;
     }
 
     return tab;

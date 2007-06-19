@@ -695,8 +695,10 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
     return FALSE;
 }
 
-/* when Ctrl-Return is pressed in a script window, send the
-   current line for execution */
+/* Special keystrokes in script window: Ctrl-Return sends the current
+   line for execution; Ctrl-R sends the whole script for execution
+   (i.e. is the keyboard equivalent of the "execute" icon).
+*/
 
 static gint 
 script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
@@ -705,7 +707,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
-    if ((mods & GDK_CONTROL_MASK))
+    if (mods & GDK_CONTROL_MASK) {
 	if (key->keyval == GDK_r)  {
 	    do_run_script(w, vwin);
 	    return TRUE;
@@ -732,9 +734,9 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    } else if (str != NULL) {
 		g_free(str);
 	    }
-	    
 	    return TRUE;
 	}
+    }
 
     return FALSE;
 }

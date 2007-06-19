@@ -5222,7 +5222,8 @@ void do_run_script (GtkWidget *w, gpointer p)
     windata_t *vwin = (windata_t *) p;
     GdkDisplay *disp;
     GdkCursor *cursor;
-    GdkWindow *w1, *w2;
+    GdkWindow *wcurr = NULL;
+    GdkWindow *wtxt;
     gpointer vp = NULL;
     gchar *buf;
     gint x, y;
@@ -5264,28 +5265,27 @@ void do_run_script (GtkWidget *w, gpointer p)
 	code = SCRIPT_EXEC;
     } 
 
-    disp = gdk_display_get_default();
     cursor = gdk_cursor_new(GDK_WATCH);
 
+    disp = gdk_display_get_default();
     if (disp != NULL) {
-	w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
-	gdk_window_set_cursor(w1, cursor);
+	wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
+	gdk_window_set_cursor(wcurr, cursor);
 	gdk_display_sync(disp);
     }
 
-    w2 = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
-				  GTK_TEXT_WINDOW_TEXT);
-
-    gdk_window_set_cursor(w2, cursor);
+    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
+				    GTK_TEXT_WINDOW_TEXT);
+    gdk_window_set_cursor(wtxt, cursor);
     gdk_cursor_unref(cursor);
 
     err = execute_script(NULL, buf, prn, code);
     g_free(buf);
 
-    if (disp != NULL) {
-	gdk_window_set_cursor(w1, NULL);
+    if (wcurr != NULL) {
+	gdk_window_set_cursor(wcurr, NULL);
     }
-    gdk_window_set_cursor(w2, NULL);
+    gdk_window_set_cursor(wtxt, NULL);
 
     refresh_data();
     suppress_logo = 0;

@@ -2103,7 +2103,7 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 {
     int i, nc = n_init_vals();
 
-    if ((nc > 0) && (nc < ainfo->nc)) {
+    if (nc > 0 && nc < ainfo->nc) {
 	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
 		ainfo->nc, nc);
 	return E_DATA;
