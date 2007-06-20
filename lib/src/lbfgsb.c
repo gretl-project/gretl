@@ -2634,102 +2634,65 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	gradfunc = BFGS_numeric_gradient;
     }
 
-    /* Suppress code-supplied stopping tests; we'll provide
-       our own criteria. */
+    /* Convergence criteria: we don't use "reltol" because I haven't
+       yet figured out exactly how it relates to the stopping
+       criteria used here. */
     factr = 100.;
-    pgtol = 0.;
+    pgtol = 0.; /* should set this here? */
 
-    /* Specify nbd which defines the bounds on the variables: */
-    /*  l   specifies the lower bounds, */
-    /*  u   specifies the upper bounds. */
+    /* Bounds on the parameters: for now we just set them all to be
+       less than some ridiculously large number */
     for (i=0; i<n; i++) {
-	nbd[i] = 3;
+	nbd[i] = 3; /* case 3: upper bound only */
 	u[i] = NADBL / 100;
     }	
 
     /* Start the iteration by initializing 'task' */
     strcpy(task, "START");
 
- loopstart:
+    while (1) {
+	/* Call the L-BFGS-B code */
+	setulb_(n, m, b, l, u, nbd, &f, g, factr, pgtol, wa, iwa, task,
+		csave, lsave, isave, dsave);
 
-    /* Call the L-BFGS-B code */
-    setulb_(n, m, b, l, u, nbd, &f, g, factr, pgtol, wa, iwa, task,
-	    csave, lsave, isave, dsave);
+	if (!strncmp(task, "FG", 2)) {
+	    double minusf;
 
-    if (!strncmp(task, "FG", 2)) {
-	double minusf;
-
-	/* Compute function value, f */
-	minusf = cfunc(b, data);
-	if (!na(minusf)) {
-	    f = -minusf;
-	}
-	*fncount += 1;
-
-	/* Compute gradient, g */
-	gradfunc(b, g, n, cfunc, data);
-	for (i=0; i<n; i++) {
-	    g[i] = -g[i];
-	}	
-	*grcount += 1;
-
-	/* go back to the minimization routine. */
-	goto loopstart;
-    }
-
-    if (!strncmp(task, "NEW_X", 5)) {
-
-	/* Terminate if the total number of f and g evaluations 
-	   exceeds maxit */
-
-	if (isave[33] >= maxit) {
-	    strcpy(task, "STOP: TOTAL NO. of f AND g "
-		     "EVALUATIONS EXCEEDS LIMIT");
-	    err = E_NOCONV;
-	}
-
-	/* Terminate if  |proj g|/(1+|f|) < 1.0d-10, where
-	   "proj g" denoted the projected gradient */
-
-	if (dsave[12] <= (abs(f) + 1.) * 1e-10) {
-	    strcpy(task, "STOP: THE PROJECTED GRADIENT IS "
-		     "SUFFICIENTLY SMALL");
-	}
-
-	/* Print the following information at each iteration:
-
-	   1) the current iteration number, isave(30),
-	   2) the total number of f and g evaluations, isave(34),
-	   3) the value of the objective function f,
-	   4) the norm of the projected gradient, dsave(13) 
-	 */
-
-	if (opt & OPT_V) {
-	    reverse_gradient(g, n);
-	    print_iter_info(isave[29], -f, crittype, n, b, g, dsave[13], prn);
-	    reverse_gradient(g, n);
-	}
-
-	/* If the run is to be terminated, print the information
-	   contained in task as well as the final value of b. */
-
-	if (!strncmp(task, "STOP", 4)) {
-	    pprintf(prn, " %s\n", task);
-	    pprintf(prn, " Final X=\n   ");
-	    for (i=1; i<=n; i++) {
-		pprintf(prn, "%.4E", b[i-1]);
-		if (i%6 == 0) {
-		    pputs(prn, "\n   ");
-		} else if (i < n) {
-		    pputs(prn, "  ");
-		} else {
-		    pputc(prn, '\n');
-		}
+	    /* Compute function value, f */
+	    minusf = cfunc(b, data);
+	    if (!na(minusf)) {
+		f = -minusf;
 	    }
-	}
+	    *fncount += 1;
 
-	/* go back to the minimization routine */
-	goto loopstart;
+	    /* Compute gradient, g */
+	    gradfunc(b, g, n, cfunc, data);
+	    for (i=0; i<n; i++) {
+		g[i] = -g[i];
+	    }	
+	    *grcount += 1;
+	} else if (!strncmp(task, "NEW_X", 5)) {
+	    /* The optimizer has produced a new set of parameter values */
+
+	    if (isave[33] >= maxit) {
+		strcpy(task, "STOP: TOTAL NO. of f AND g "
+		       "EVALUATIONS EXCEEDS LIMIT");
+		err = E_NOCONV;
+	    } else if (dsave[12] <= (abs(f) + 1.) * 1e-10) {
+		/* Terminate if  |proj g|/(1+|f|) < 1.0e-10, where
+		   "proj g" denoted the projected gradient -- or could
+		   rely on built-in mechanism? */
+		strcpy(task, "STOP: THE PROJECTED GRADIENT IS "
+		       "SUFFICIENTLY SMALL");
+	    } else if (opt & OPT_V) {
+		reverse_gradient(g, n);
+		print_iter_info(isave[29], -f, crittype, n, b, g, dsave[13], prn);
+		reverse_gradient(g, n);
+	    }
+	} else {
+	    /* ?? study up on other possible "task" contents! */
+	    break;
+	}
     }
 
     if (opt & OPT_V) {

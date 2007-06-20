@@ -3171,7 +3171,7 @@ static void reverse_gradient (double *g, int n)
  * on error.
  */
 
-#define BFGS_EXPERIMENT 0 
+#define BFGS_EXPERIMENT 0
 
 #if BFGS_EXPERIMENT
 
