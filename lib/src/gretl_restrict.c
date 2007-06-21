@@ -32,10 +32,17 @@ typedef struct restriction_ restriction;
 struct restriction_ {
     int nterms;      /* number of terms in restriction */
     double *mult;    /* array of numerical multipliers on coeffs */
-    int *eq;         /* array of equation numbers (for cross-equation case) */
+    int *eq;         /* array of equation numbers (for multi-equation case) */
     int *bnum;       /* array of coeff numbers */
     double rhs;      /* numerical value on right-hand side */
 };
+
+/* FIXME: "cross" below is a misnomer.  At least for VECM purposes we
+   need to distinguish between multi-equation restrictions (which
+   will be OK before too long) and true cross-equation (which we're
+   not yet ready to handle).  What's designated as "cross" below is
+   mostly just the multi-equation case.
+*/
 
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
@@ -137,12 +144,30 @@ static double get_restriction_param (const restriction *r, int k)
     return x;
 }
 
+/* FIXME this can be done more elegantly */
+
+static int multiple_eq (gretl_restriction_set *rset)
+{
+    int i;
+
+    for (i=0; i<rset->k; i++) { 
+	if (rset->restrictions[i]->eq != NULL) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int R_n_columns (gretl_restriction_set *rset)
 {
     int i, cols = 0;
 
     if (rset->type == GRETL_OBJ_VAR) {
 	cols = gretl_VECM_n_beta(rset->obj);
+	if (multiple_eq(rset)) {
+	    cols *= gretl_VECM_rank(rset->obj);
+	}
     } else if (rset->type == GRETL_OBJ_SYS) {
 	cols = system_n_indep_vars(rset->obj);
     } else {
@@ -161,6 +186,9 @@ static int R_n_columns (gretl_restriction_set *rset)
 
     return cols;
 }
+
+/* used when generating restricted estimates (single-equation OLS
+   only) */
 
 static int 
 restriction_set_form_full_matrices (gretl_restriction_set *rset)
@@ -209,6 +237,8 @@ restriction_set_form_full_matrices (gretl_restriction_set *rset)
 
     return 0;
 }
+
+/* create the matrices needed for testing a set of restrictions */
 
 static int 
 restriction_set_form_matrices (gretl_restriction_set *rset)
@@ -1054,6 +1084,9 @@ static void coeff_header (const MODEL *pmod, PRN *prn)
 
     print_coeff_heading(use_param, prn);
 }
+
+/* generate full restricted estimates: this function is used
+   only for single-equation models, estimated via OLS */
 
 static int 
 do_restricted_estimates (gretl_restriction_set *rset,
