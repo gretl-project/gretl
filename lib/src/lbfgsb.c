@@ -2659,8 +2659,12 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 
     BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
 
-    /* the number of limited memory corrections stored:
-       3 < m < 15 is recommended */
+    /*
+      m: the number of corrections used in the limited memory matrix.
+      It is not altered by the routine.  Values of m < 3 are not
+      recommended, and large values of m can result in excessive
+      computing time. The range 3 <= m <= 20 is recommended.
+    */
     m = 5;
 
     wadim = (2*m+4)*n + 12*m*m + 12*m;
@@ -2682,9 +2686,11 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 	gradfunc = BFGS_numeric_gradient;
     }
 
-    /* Convergence criteria: we don't use "reltol" because I haven't
-       yet figured out exactly how it relates to the stopping
-       criteria used here. */
+    /* Convergence criteria: we don't use "reltol" here because I
+       haven't yet figured out exactly how it relates to the stopping
+       criteria used in this implementation. See the long comment
+       above this function.
+    */
     factr = 100.;
     pgtol = 0.; /* should set this here? */
 
@@ -2715,10 +2721,9 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 
 	    /* Compute gradient, g */
 	    gradfunc(b, g, n, cfunc, data);
-	    for (i=0; i<n; i++) {
-		g[i] = -g[i];
-	    }	
+	    reverse_gradient(g, n);
 	    *grcount += 1;
+
 	} else if (!strncmp(task, "NEW_X", 5)) {
 	    /* The optimizer has produced a new set of parameter values */
 
