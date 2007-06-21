@@ -3140,6 +3140,61 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
+/* 
+   If "set inivals" has been used, supersede whatever initial
+   values were there by those given by the user (the customer is
+   always right).  In addition, respect user settings for the
+   maximum number of iterations and the convergence tolerance.
+*/
+
+static void BFGS_get_user_values (double *b, int n, int *maxit,
+				  double *reltol, gretlopt opt,
+				  PRN *prn)
+{
+    const gretl_matrix *uinit;
+    int uilen, umaxit;
+    double utol;
+    int i;
+
+    uinit = get_init_vals();
+    uilen = gretl_vector_get_length(uinit);
+
+    if (uilen > 0) {
+	/* the user has given something */
+	if (uilen < n) {
+	    fprintf(stderr, "Only %d initial values given, but %d "
+		    "are necessary\n", uilen, n);
+	} else {
+	    for (i=0; i<n; i++) {
+		b[i] = uinit->val[i];
+	    }
+	    if (opt & OPT_V) {
+		pputs(prn, _("\n\n*** User-specified starting values:\n"));
+		for (i=0; i<n; i++) {
+		    pprintf(prn, " %12.6f", b[i]);
+		    if (i%6 == 5) {
+			pputc(prn, '\n');
+		    }
+		}
+		pputs(prn, "\n\n");
+	    }
+	    free_init_vals();
+	}
+    }
+
+    umaxit = get_bfgs_maxiter();
+    if (umaxit > 0) {
+	*maxit = umaxit;
+    }
+    
+    utol = get_bfgs_toler();
+    if (utol != get_default_nls_toler()) {
+	/* it has actually been set */
+	*reltol = utol;
+	fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);
+    }	
+}
+
 /**
  * BFGS_max:
  * @b: array of adjustable coefficients.
@@ -3171,74 +3226,21 @@ static void reverse_gradient (double *g, int n)
  * on error.
  */
 
-#define BFGS_EXPERIMENT 0
-
-#if BFGS_EXPERIMENT
-
-#include "lbfgsb.c"
-
-#else
-
-int BFGS_max (double *b, int n, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretlopt opt, PRN *prn)
+int BFGS_orig (double *b, int n, int maxit, double reltol,
+	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+	       gretlopt opt, PRN *prn)
 {
-    const gretl_matrix *userinit;
     int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
     int ndelta, fcount, gcount;
     double d, fmax, f, f0, sumgrad;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
-    int umaxit, uilen;
-    double utol;
     double D1, D2;
     int err = 0;
 
-    /* 
-       if "set inivals" has been used, supersede whatever initial
-       values were there by those given by the user (the customer is
-       always right)
-    */
-
-    userinit = get_init_vals();
-    uilen = gretl_vector_get_length(userinit);
-
-    if (uilen > 0) {
-	/* the user has given something */
-	if (uilen < n) {
-	    fprintf(stderr, "Only %d initial values given, but %d "
-		    "are necessary\n", uilen, n);
-	} else {
-	    for (i=0; i<n; i++) {
-		b[i] = userinit->val[i];
-	    }
-	    if (opt & OPT_V) {
-		pputs(prn, _("\n\n*** User-specified starting values:\n"));
-		for (i=0; i<n; i++) {
-		    pprintf(prn, " %12.6f", b[i]);
-		    if (i%6 == 5) {
-			pputc(prn, '\n');
-		    }
-		}
-		pputs(prn, "\n\n");
-	    }
-	    free_init_vals();
-	}
-    }
-
-    umaxit = get_bfgs_maxiter();
-    if (umaxit > 0) {
-	maxit = umaxit;
-    }
-    
-    utol = get_bfgs_toler();
-    if (utol != get_default_nls_toler()) {
-	/* it has actually been set */
-	reltol = utol;
-	fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);
-    }	
+    BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -3442,7 +3444,25 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     return err;
 }
 
-#endif /* BFGS variants */
+#include "lbfgsb.c"
+
+int BFGS_max (double *b, int n, int maxit, double reltol,
+	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+	      gretlopt opt, PRN *prn)
+{
+    if (getenv("BFGS_NEW") != NULL) {
+	return BFGS_test(b, n, maxit, reltol,
+			 fncount, grcount, cfunc, 
+			 crittype, gradfunc, data, 
+			 opt, prn);
+    } else {
+	return BFGS_orig(b, n, maxit, reltol,
+			 fncount, grcount, cfunc, 
+			 crittype, gradfunc, data, 
+			 opt, prn);
+    }
+}
 
 /* user-level access to BFGS */
 
