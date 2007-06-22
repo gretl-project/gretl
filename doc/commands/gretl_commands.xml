@@ -8552,7 +8552,7 @@
 	If the contingency table is 2 by 2, Fisher's Exact Test for
 	independence is computed.  Note that this test is based on the
 	assumption that the row and column totals are fixed, which may or
-	may not be approriate depending on how the data were generated.
+	may not be appropriate depending on how the data were generated.
 	The left p-value should be used when the alternative to
 	independence is negative association (values tend to cluster
 	in the lower left and upper right cells); the right p-value should
