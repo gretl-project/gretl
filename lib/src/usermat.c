@@ -1154,6 +1154,20 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
     return R;
 }
 
+gretl_matrix *user_matrix_upper (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *R = gretl_matrix_copy(m);
+    *err = gretl_matrix_zero_lower(R);
+    return R;
+}
+
+gretl_matrix *user_matrix_lower (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *R = gretl_matrix_copy(m);
+    *err = gretl_matrix_zero_upper(R);
+    return R;
+}
+
 static int 
 real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q, 
 			    gretl_matrix **R)

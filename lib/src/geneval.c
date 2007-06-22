@@ -1394,6 +1394,12 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case FFTI:
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
+	case UPPER:
+	    ret->v.m = user_matrix_upper(m, &p->err);
+	    break;
+	case LOWER:
+	    ret->v.m = user_matrix_lower(m, &p->err);
+	    break;
 	case MINC:
 	case MAXC:
 	case MINR:
@@ -3967,6 +3973,8 @@ static NODE *eval (NODE *t, parser *p)
     case TVEC:
     case VECH:
     case UNVECH:
+    case UPPER:
+    case LOWER:
     case NULLSPC:
     case MEXP:
     case MINC:

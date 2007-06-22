@@ -2122,7 +2122,7 @@ static void print_iter_val (double x, int i, PRN *prn)
     } else {
 	pprintf(prn, "%#12.5g", x);
     }
-    if (i && i % 5 == 0) {
+    if (i && i % 6 == 5) {
 	pprintf(prn, "\n%12s", " ");
     }
 }

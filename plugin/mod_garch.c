@@ -63,6 +63,7 @@ struct garch_container_ {
     double **blockglue;  /* derivatives of the loglik wrt residuals and variances */
     double **G;          /* score matrix */
     double *tot_score;   /* score vector (sum of G) */
+    int boundcheck;      /* enable bounds check */
 };
 
 #if 0
@@ -155,6 +156,8 @@ garch_container_new (double *y, const double **X,
 	}
     }
 
+    DH->boundcheck = 1;
+
     return DH;
 }
 
@@ -202,6 +205,27 @@ static void normal_score (const garch_container *DH)
 
 /* Compute the GARCH quantities */
 
+static int check_nonnegative(const double *par, int ncm, int k)
+{
+    int nonzero = 1;
+    int i;
+    double sum = 0.0;
+
+    nonzero = (par[ncm+1] >= 0.0);
+
+    for(i=ncm+2; i<k; i++) {
+	nonzero &= (par[i] >= 1.0e-12);
+	sum += par[i];
+	if(!nonzero) {
+	    break;
+	}
+    }
+
+    nonzero &= (sum<=1.0);
+
+    return nonzero;
+}
+
 static int garch_etht (const double *par, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
@@ -222,6 +246,15 @@ static int garch_etht (const double *par, void *ptr)
     int t, T = t2 - t1 + 1;
     double et, ht, tmp, h0 = 0.0;
     double u_var = 0.0;
+
+    /* check for nonnegative params */
+
+    if(DH->boundcheck) {
+	ret = !check_nonnegative(par, ncm, DH->k);
+	if (ret) {
+	    return E_DATA;
+	}
+    }
 
     /* compute residuals */
 
@@ -635,7 +668,10 @@ static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
 	return E_ALLOC;
     }
 
+    int tmp = DH->boundcheck;
+    DH->boundcheck = 0;
     V = numerical_hessian(theta, npar, loglik, DH, &err);
+    DH->boundcheck = tmp;
     if (V == NULL) {
 	return err;
     }

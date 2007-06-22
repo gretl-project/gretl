@@ -109,6 +109,10 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
 
+gretl_matrix *user_matrix_upper (const gretl_matrix *m, int *err);
+
+gretl_matrix *user_matrix_lower (const gretl_matrix *m, int *err);
+
 gretl_matrix *
 user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, 
 		       int *err);

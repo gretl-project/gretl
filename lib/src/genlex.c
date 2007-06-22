@@ -197,6 +197,8 @@ struct str_table funcs[] = {
     { TVEC,     "vec" },
     { VECH,     "vech" },
     { UNVECH,   "unvech" },
+    { UPPER,    "upper" },
+    { LOWER,    "lower" },
     { ROWS,     "rows" },
     { COLS,     "cols" },
     { DET,      "det" },
