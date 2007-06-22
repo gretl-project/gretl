@@ -486,7 +486,8 @@
         del processo ARCH stimati nella regressione ausiliaria.
       </para>
       <para>
-	Si veda anche <cmdref targ="garch"/>.
+	Si veda anche <cmdref targ="garch"/> e <cmdref targ="lmtest"/>
+        (l'opzione <lit>--arch</lit>).
       </para>
     </description>
 
@@ -3540,6 +3541,63 @@
       </para>
 
     </description>
+
+  </command>
+
+  <command name="heckit" section="Estimation" context="cli"
+    label="Modello di selezione di Heckman">
+
+    <usage>
+      <arguments>
+        <argument>variabile-dipendente</argument>
+        <argument>variabili-indipendenti</argument>
+	<argument separated="true">equazione di selezione</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--two-step</flag>
+	  <effect>esegue la stima in due passi</effect>
+        </option>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra risultati aggiuntivi</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>heckit y 0 x1 x2 ; ys 0 x3 x4</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Modello di selezione di tipo Heckman. Nella specificazione, la lista che
+        precede il punto e virgola rappresenta l'equazione principale, mentre la
+        seconda lista rappresenta l'equazione di selezione. La variabile
+        dipendente nell'equazione di selezione (<lit>ys</lit>
+        nell'esempio visto sopra) deve essere una variabile binaria.
+      </para>
+
+      <para>
+	Per impostazione predefinita, i parametri sono stimati per massima
+        verosimiglianza. La matrice di covarianza dei parametri è calcolata
+        usando l'inversa negativa dell'Hessiana. Se si vuole usare la procedura
+        di stima in due passi, basta usare l'opzione <lit>--two-step</lit>.
+        In questo caso, la matrice di covarianza dei parametri dell'equazione
+        principale è corretta nel modo descritto da Heckman (1979).
+      </para>
+
+      <para>
+      FIXME this entry needs to be completed.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Modelli non lineari/Heckit</menu-path>
+    </gui-access>
 
   </command>
 
@@ -8313,7 +8371,7 @@
 
   </command>
  
-  <command name="xtab" section="Statistics" label="Tabulazione incrociata" context="cli">
+  <command name="xtab" section="Statistics" label="Tabulazione incrociata">
 
     <usage>
       <arguments>
@@ -8336,9 +8394,9 @@
       </options>
     </usage>
 
-    <description>
+    <description context="cli">
       <para>
-        Se non vengono usate opzioni, mostra la tabella di contingenza, o la
+        Mostra la tabella di contingenza, o la
         tabulazione incrociata, tra ogni combinazione delle variabili della
         <repl>lista-y</repl>; se si indica anche una seconda lista,
         <repl>lista-x</repl>, ogni variabile della <repl>lista-y</repl> viene
@@ -8347,11 +8405,14 @@
         nome o per numero, e devono essere state marcate come discrete.
       </para>
       <para>
-	Le opzioni <lit>--row</lit> e <lit>--column</lit> sono mutualmente
-        esclusive; al posto del conteggio delle frequenze, mostrano le
-        percentuali, rispettivamente per ogni riga e ogni colonna. L'opzione
-	<lit>--zeros</lit> può essere utile per importare la tabella in un altro
-        programma, ad esempio un foglio elettronico.
+	Per impostazione predefinita le celle indicano la frequenza assoluta.
+        Le opzioni <lit>--row</lit> e <lit>--column</lit> (che sono mutualmente
+        esclusive) sostituiscono la frequenza assoluta con le frequenze in
+        percentuale relativamente a ciascuna riga o colonna. Le celle con valore
+        di frequenza nullo sono lasciate vuote, a meno che non venga usata l'opzione
+	<lit>--zeros</lit>, che mostra esplicitamente i valori pari a zero;
+        questa opzione può essere comoda se occorre importare la tabella in un
+        altro programma, come un foglio di calcolo.
       </para>
       <para>
         Il test chi quadro di Pearson per l'indipendenza viene mostrato
@@ -8362,7 +8423,64 @@
         questa condizione non viene soddisfatta viene mostrato un messaggio di
         avvertimento.
       </para>
+      <para>
+	Se la tabella di contingenza è 2 x 2, viene calcolato il test esatto di
+        Fisher per l'indipendenza. Si noti che questo test si basa sull'ipotesi
+        che i totali per riga e colonna siano fissi; questo può essere
+        appropriato o meno a seconda di come sono stati generati i dati.
+	Il p-value sinistro va usato nel caso in cui l'ipotesi alternativa a
+        quella di indipendenza sia quella dell'associazione negativa (ossia i
+        valori tendono ad accumularsi nelle celle che non appartengono alla
+        diagonale della tabella), mentre il p-value destro va usato nell'ipotesi
+        alternativa di associazione positiva. Il p-value a due code di questo
+        test è calcolato seguendo il metodo (b) descritto in Agresti
+	(1992, capitolo 2.1): esso è la somma delle probabilità di tutte le
+        possibili tabelle che hanno i totali per riga e per colonna pari a
+        quelli della tabella data e che hanno una probabilità minore o uguale a
+        quella della tabella data.
+      </para>
+    </description>
 
+    <description context="gui">
+      <para>
+        Mostra la tabella di contingenza, o la tabulazione incrociata, tra ogni
+        combinazione delle variabili selezionate. Si noti che tutte le variabili
+        devono essere discrete.
+      </para>
+      <para>
+	Per impostazione predefinita le celle indicano la frequenza assoluta, ma
+        è possibile scegliere di avere le percentuali relative alle righe o alle
+        colonne.
+      </para>
+      <para>
+        Inoltre, le celle con un valore di frequenza nullo sono lasciate vuote,
+        ma è possibile scegliere di avere i valori pari a zero esplicitamente.
+      </para>
+      <para>
+        Il test chi quadro di Pearson per l'indipendenza viene mostrato
+        se la frequenza attesa nell'ipotesi di indipendenza è pari almeno a
+        1.0e-7 per tutte le celle. Una regola approssimativa usata spesso nel
+        giudicare la validità di questa statistica richiede che la frequenza
+        attesa sia superiore a 5 per almeno l'80 per cento delle celle; se
+        questa condizione non viene soddisfatta viene mostrato un messaggio di
+        avvertimento.
+      </para>
+      <para>
+	Se la tabella di contingenza è 2 x 2, viene calcolato il test esatto di
+        Fisher per l'indipendenza. Si noti che questo test si basa sull'ipotesi
+        che i totali per riga e colonna siano fissi; questo può essere
+        appropriato o meno a seconda di come sono stati generati i dati.
+	Il p-value sinistro va usato nel caso in cui l'ipotesi alternativa a
+        quella di indipendenza sia quella dell'associazione negativa (ossia i
+        valori tendono ad accumularsi nelle celle che non appartengono alla
+        diagonale della tabella), mentre il p-value destro va usato nell'ipotesi
+        alternativa di associazione positiva. Il p-value a due code di questo
+        test è calcolato seguendo il metodo (b) descritto in Agresti
+	(1992, capitolo 2.1): esso è la somma delle probabilità di tutte le
+        possibili tabelle che hanno i totali per riga e per colonna pari a
+        quelli della tabella data e che hanno una probabilità minore o uguale a
+        quella della tabella data.
+      </para>
     </description>
 
   </command>
