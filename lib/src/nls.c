@@ -27,6 +27,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "nlspec.h"
+#include "nls_private.h"
 
 #include "../../minpack/minpack.h"  
 
@@ -3131,7 +3132,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
 
-static void reverse_gradient (double *g, int n)
+void reverse_gradient (double *g, int n)
 {
     int i;
 
@@ -3147,9 +3148,9 @@ static void reverse_gradient (double *g, int n)
    maximum number of iterations and the convergence tolerance.
 */
 
-static void BFGS_get_user_values (double *b, int n, int *maxit,
-				  double *reltol, gretlopt opt,
-				  PRN *prn)
+void BFGS_get_user_values (double *b, int n, int *maxit,
+			   double *reltol, gretlopt opt,
+			   PRN *prn)
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
@@ -3443,8 +3444,6 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     return err;
 }
-
-#include "lbfgsb.c"
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 

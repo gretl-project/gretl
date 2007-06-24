@@ -1286,8 +1286,9 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     } 
 
     if (!err) {
-	gretl_matrix_divide_by_scalar(S, s->nobs);
+	double Tfac = sqrt((double) T) / T;
 
+	gretl_matrix_divide_by_scalar(S, T);
 	f = s->oc->sum->val;
 
 	for (i=0; i<m; i++) {
@@ -1295,7 +1296,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	    for (j=0; j<T; j++) {
 		f[i] += gretl_matrix_get(s->oc->tmp, j, i);
 	    }
-	    f[i] *= sqrt((double) T) / T;
+	    f[i] *= Tfac;
 	}
 
 	fdjac2_(gmm_jacobian_calc, &m, &n, s->coeff, f, 

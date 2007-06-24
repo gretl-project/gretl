@@ -126,7 +126,8 @@ PUBLIC_HDRS = \
 	tsls.h \
 	usermat.h \
 	var.h \
-	varprint.h 
+	varprint.h \
+	lbfgsb.c
 
 SRCS = adf_kpss.c \
 	bhhh_max.c \

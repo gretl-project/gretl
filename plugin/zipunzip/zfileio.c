@@ -96,14 +96,8 @@ flist *flist_expel (flist *f, int *fcount)
 flist *flist_entry_new (const char *name, char *iname, char *zname,
 			zfile *zf)
 {
-    flist *f;
+    flist *f = malloc(sizeof *f);
 
-    /* check for overflow */
-    if (zf->fcount + 1 < zf->fcount) {
-	return NULL;
-    }
-
-    f = malloc(sizeof *f);
     if (f == NULL) {
 	return NULL;
     }
