@@ -27,6 +27,8 @@
 
 #define RDEBUG 0
 
+#define EQN_UNSPEC -9
+
 typedef struct restriction_ restriction;
 
 struct restriction_ {
@@ -37,16 +39,9 @@ struct restriction_ {
     double rhs;      /* numerical value on right-hand side */
 };
 
-/* FIXME: "cross" below is a misnomer.  At least for VECM purposes we
-   need to distinguish between multi-equation restrictions (which
-   will be OK before too long) and true cross-equation (which we're
-   not yet ready to handle).  What's designated as "cross" below is
-   mostly just the multi-equation case.
-*/
-
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
-    int cross;                    /* includes cross-equation restrictions? */
+    int multi;                    /* pertains to multi-equation system? */
     gretl_matrix *R;              /* LHS restriction matrix */
     gretl_matrix *q;              /* RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
@@ -144,28 +139,13 @@ static double get_restriction_param (const restriction *r, int k)
     return x;
 }
 
-/* FIXME this can be done more elegantly */
-
-static int multiple_eq (gretl_restriction_set *rset)
-{
-    int i;
-
-    for (i=0; i<rset->k; i++) { 
-	if (rset->restrictions[i]->eq != NULL) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 static int R_n_columns (gretl_restriction_set *rset)
 {
     int i, cols = 0;
 
     if (rset->type == GRETL_OBJ_VAR) {
 	cols = gretl_VECM_n_beta(rset->obj);
-	if (multiple_eq(rset)) {
+	if (rset->multi) {
 	    cols *= gretl_VECM_rank(rset->obj);
 	}
     } else if (rset->type == GRETL_OBJ_SYS) {
@@ -238,6 +218,47 @@ restriction_set_form_full_matrices (gretl_restriction_set *rset)
     return 0;
 }
 
+static int vecm_restriction_check (gretl_restriction_set *rset)
+{
+    restriction *r;
+    int unspec = 0, spec = 0, cross = 0;
+    int i, j, err = 0;
+
+    for (i=0; i<rset->k && !err; i++) {
+	r = rset->restrictions[i];
+	for (j=0; j<r->nterms && !err; j++) {
+	    if (r->eq[j] == EQN_UNSPEC) {
+		unspec = 1;
+	    } else if (r->eq[j] >= 1) {
+		if (!spec) {
+		    spec = r->eq[j];
+		} else if (r->eq[j] != spec) {
+		    cross = 1;
+		}
+	    } 
+	    if ((spec && unspec) || cross) {
+		err = E_PARSE;
+	    }	
+	}
+    }
+
+    if (cross) {
+	strcpy(gretl_errmsg, "cross-restrictions on VECM beta are "
+	       "not handled yet");
+	err = E_NOTIMP;
+    } else if (!err && unspec) {
+	for (i=0; i<rset->k; i++) {
+	    r = rset->restrictions[i];
+	    for (j=0; j<r->nterms; j++) {
+		r->eq[j] = 1;
+	    }
+	}
+	rset->multi = 0;
+    }
+
+    return err;
+}
+
 /* create the matrices needed for testing a set of restrictions */
 
 static int 
@@ -250,6 +271,13 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
     double x;
     int col, i, j;
     int err = 0;
+
+    if (rset->type == GRETL_OBJ_VAR && rset->multi) {
+	err = vecm_restriction_check(rset);
+	if (err) {
+	    return err;
+	}
+    }
 
     R = gretl_zero_matrix_new(rset->k, R_n_columns(rset));
     if (R == NULL) {
@@ -434,7 +462,7 @@ static int pick_apart (gretl_restriction_set *r, const char *s,
 	}
     } else {
 	/* only one field: [bnum] */
-	*eq = 1;
+	*eq = EQN_UNSPEC;
 	if (isdigit(*s1)) {
 	    *bnum = positive_int_from_string(s1);
 	} else if (pdinfo != NULL) {
@@ -470,7 +498,14 @@ static int parse_b_bit (gretl_restriction_set *r, const char *s,
 	*bnum -= 1; /* convert to zero base */
     }
 
-    if (*eq < 1) {
+    if (*eq == EQN_UNSPEC) {
+	/* didn't get an equation number */
+	if (r->type == GRETL_OBJ_EQN) {
+	    *eq = 1;
+	} else if (r->type != GRETL_OBJ_VAR) {
+	    err = E_PARSE;
+	}
+    } else if (*eq < 1) {
 	sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		*eq);
 	err = 1;
@@ -545,7 +580,7 @@ void destroy_restriction_set (gretl_restriction_set *rset)
     free(rset);
 }
 
-static restriction *restriction_new (int n, int cross)
+static restriction *restriction_new (int n, int multi)
 {
     restriction *r;
     int i;
@@ -571,7 +606,7 @@ static restriction *restriction_new (int n, int cross)
 	r->bnum[i] = 0;
     }
 
-    if (cross) {
+    if (multi) {
 	r->eq = malloc(n * sizeof *r->eq);
 	if (r->eq == NULL) {
 	    destroy_restriction(r);
@@ -598,7 +633,7 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
 
     rset->restrictions = rlist;
 
-    rset->restrictions[n] = restriction_new(n_terms, rset->cross);
+    rset->restrictions[n] = restriction_new(n_terms, rset->multi);
     if (rset->restrictions[n] == NULL) {
 	return NULL;
     }
@@ -635,7 +670,7 @@ static void print_restriction (const gretl_restriction_set *rset,
     for (i=0; i<r->nterms; i++) {
 	k = r->bnum[i];
 	print_mult(r->mult[i], i == 0, prn);
-	if (rset->cross) {
+	if (rset->multi) {
 	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, k + 1);
 	} else if (rset->type == GRETL_OBJ_VAR) {
 	    pprintf(prn, "b[%d]", k + 1);
@@ -720,16 +755,16 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->q = NULL;
     rset->mask = NULL;
     rset->restrictions = NULL;
-    rset->cross = 0;
+    rset->multi = 0;
     rset->code = GRETL_STAT_NONE;
 
     if (rset->type == GRETL_OBJ_SYS) {
-	rset->cross = 1;
+	rset->multi = 1;
     } else if (rset->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = ptr;
 
 	if (var != NULL && gretl_VECM_rank(var) > 1) {
-	    rset->cross = 1;
+	    rset->multi = 1;
 	}
     } 
 
@@ -874,11 +909,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     if (!err) {
 	if (!sscanf(p, " = %lf", &r->rhs)) {
 	    err = E_PARSE;
-	} else if (rset->type == GRETL_OBJ_VAR && r->rhs != 0.0) {
-	    strcpy(gretl_errmsg, "VECM restrictions: the equations must "
-		   "be homogeneous");
-	    err = 1;
-	}
+	} 
     }
 
     if (err) {
@@ -939,8 +970,8 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
     return rset;
 }
 
-/* set-up for a set of cross-equation restrictions, for a system of
-   simultaneous equations */
+/* set-up for a set of (possibly) cross-equation restrictions, for a
+   system of simultaneous equations */
 
 gretl_restriction_set *
 cross_restriction_set_start (const char *line, gretl_equation_system *sys)
@@ -1422,7 +1453,6 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
 		       PRN *prn,
 		       int *err)
 {
-    gretl_matrix *D = NULL;
     GRETL_VAR *jvar = NULL;
 
     if (rset == NULL || rset->type != GRETL_OBJ_VAR) {
@@ -1433,18 +1463,12 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
     *err = restriction_set_form_matrices(rset);
 
     if (!*err) {
-	D = gretl_matrix_right_nullspace(rset->R, err);
-    }
-
-    if (!*err) {
 	print_restriction_set(rset, pdinfo, prn);
-	jvar = real_gretl_restricted_vecm(rset->obj, rset->R, D, pZ, pdinfo, 
+	jvar = real_gretl_restricted_vecm(rset->obj, rset, pZ, pdinfo, 
 					  prn, err);
-	rset->R = NULL; /* transfer R to vecm */
     }
 
     destroy_restriction_set(rset);
-    gretl_matrix_free(D);
 
     return jvar;
 }
@@ -1468,16 +1492,10 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
     }
 
     if (rset->type == GRETL_OBJ_VAR) {
-	gretl_matrix *D = NULL;
-
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
-	    D = gretl_matrix_right_nullspace(rset->R, &err);
-	}
-	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
-	    gretl_VECM_test_beta(rset->obj, D, pdinfo, prn);
-	    gretl_matrix_free(D);
+	    gretl_VECM_test_beta(rset->obj, rset, pdinfo, prn);
 	}
 	destroy_restriction_set(rset);
     } else if (rset->type == GRETL_OBJ_SYS) {
@@ -1648,4 +1666,24 @@ void gretl_restriction_get_boot_params (int *pB, gretlopt *popt)
 gretlopt gretl_restriction_get_options (const gretl_restriction_set *rset)
 {
     return (rset != NULL)? rset->opt : OPT_NONE;
+}
+
+const gretl_matrix *
+rset_get_R_matrix (const gretl_restriction_set *rset)
+{
+    if (rset != NULL) {
+	return rset->R;
+    } else {
+	return NULL;
+    }
+}
+
+const gretl_matrix *
+rset_get_q_matrix (const gretl_restriction_set *rset)
+{
+    if (rset != NULL) {
+	return rset->q;
+    } else {
+	return NULL;
+    }
 }

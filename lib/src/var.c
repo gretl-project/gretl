@@ -2075,15 +2075,19 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
-			  const DATAINFO *pdinfo, PRN *prn)
+int gretl_VECM_test_beta (GRETL_VAR *vecm, 
+			  const gretl_restriction_set *rset,
+			  const DATAINFO *pdinfo, 
+			  PRN *prn)
 {
     void *handle = NULL;
-    int (*vecm_beta_test) (GRETL_VAR *, const gretl_matrix *D,
-			   const DATAINFO *, PRN *);
+    int (*vecm_beta_test) (GRETL_VAR *, 
+			   const gretl_restriction_set *,
+			   const DATAINFO *,
+			   PRN *);
     int err = 0;
 
-    if (vecm->jinfo == NULL || D == NULL) {
+    if (vecm->jinfo == NULL || rset == NULL) {
 	return E_DATA;
     }    
 
@@ -2094,7 +2098,7 @@ int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
     if (vecm_beta_test == NULL) {
 	err = 1;
     } else {
-	err = (* vecm_beta_test) (vecm, D, pdinfo, prn);
+	err = (* vecm_beta_test) (vecm, rset, pdinfo, prn);
 	close_plugin(handle);
     }
 
@@ -2124,12 +2128,13 @@ johansen_test_complete (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 }
 
 static int 
-johansen_estimate_complete (GRETL_VAR *jvar, const gretl_matrix *D,
+johansen_estimate_complete (GRETL_VAR *jvar, 
+			    const gretl_restriction_set *rset,
 			    double ***pZ, DATAINFO *pdinfo, 
 			    gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
-    int (*johansen) (GRETL_VAR *, const gretl_matrix *,
+    int (*johansen) (GRETL_VAR *, const gretl_restriction_set *,
 		     double ***, DATAINFO *, gretlopt, PRN *);
     int err = 0;
 
@@ -2140,7 +2145,7 @@ johansen_estimate_complete (GRETL_VAR *jvar, const gretl_matrix *D,
     if (johansen == NULL) {
 	err = 1;
     } else {
-	err = (* johansen) (jvar, D, pZ, pdinfo, opt, prn);
+	err = (* johansen) (jvar, rset, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
     
@@ -2697,7 +2702,8 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 */
 
 static int
-johansen_driver (GRETL_VAR *jvar, const gretl_matrix *D,
+johansen_driver (GRETL_VAR *jvar, 
+		 const gretl_restriction_set *rset,
 		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
@@ -2761,7 +2767,8 @@ johansen_driver (GRETL_VAR *jvar, const gretl_matrix *D,
 	*/
 	if (!jvar->err && !(opt & OPT_B)) {
 	    if (jrank(jvar) > 0) {
-		jvar->err = johansen_estimate_complete(jvar, D, pZ, pdinfo, opt, prn);
+		jvar->err = johansen_estimate_complete(jvar, rset, pZ, pdinfo, 
+						       opt, prn);
 	    } else {
 		jvar->err = johansen_test_complete(jvar, pdinfo, opt, prn);
 	    }
@@ -2773,7 +2780,7 @@ johansen_driver (GRETL_VAR *jvar, const gretl_matrix *D,
 
 static GRETL_VAR *johansen_wrapper (int order, int rank, 
 				    const int *list, const int *exolist, 
-				    const gretl_matrix *D, 
+				    const gretl_restriction_set *rset, 
 				    double ***pZ, DATAINFO *pdinfo, 
 				    gretlopt opt, PRN *prn)
 {
@@ -2785,7 +2792,7 @@ static GRETL_VAR *johansen_wrapper (int order, int rank,
     jvar = johansen_VAR_prepare(order, rank, list, exolist, pZ, pdinfo, opt);
 
     if (jvar != NULL && !jvar->err) {
-	jvar->err = johansen_driver(jvar, D, pZ, pdinfo, opt, prn);
+	jvar->err = johansen_driver(jvar, rset, pZ, pdinfo, opt, prn);
     }
 
     pdinfo->t1 = oldt1;
@@ -2926,31 +2933,27 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 
 /**
  * real_gretl_restricted_vecm:
- * @order: lag order for test.
- * @rank: pre-specified cointegration rank.
- * @list: list of variables to test for cointegration.
- * @R: restriction matrix for beta, user form.
- * @D: restriction matrix for beta, nullspace form.
+ * @orig: orginal VECM model.
+ * @rset: restriction information.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt:
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
  * Returns: pointer to struct containing information on 
- * the VECM system or %NULL on failure.
+ * the newly restricted VECM system or %NULL on failure.
  */
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 
-			    gretl_matrix *R, const gretl_matrix *D,
+			    const gretl_restriction_set *rset,
 			    double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn, int *err)
 {
     GRETL_VAR *jvar = NULL;
     gretlopt opt = OPT_S;
 
-    if (orig->jinfo == NULL || D == NULL) {
+    if (orig->jinfo == NULL || rset == NULL) {
 	*err = E_DATA;
 	return NULL;
     }   
@@ -2965,11 +2968,10 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 			    orig->jinfo->rank, 
 			    orig->jinfo->list,
 			    orig->jinfo->exolist,
-			    D, pZ, pdinfo, 
+			    rset, pZ, pdinfo, 
 			    opt, prn);
 
     if (jvar != NULL) {
-	jvar->jinfo->R = R;
 	jvar->jinfo->ll0 = orig->ll;
 	if (!jvar->err) {
 	    gretl_VAR_print(jvar, pdinfo, opt, prn);

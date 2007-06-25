@@ -55,6 +55,12 @@ void destroy_restriction_set (gretl_restriction_set *rset);
 int gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 		    PRN *prn);
 
+const gretl_matrix *
+rset_get_R_matrix (const gretl_restriction_set *rset);
+
+const gretl_matrix *
+rset_get_q_matrix (const gretl_restriction_set *rset);
+
 int gretl_restriction_set_boot_params (int B, gretlopt opt);
 
 void gretl_restriction_get_boot_params (int *pB, gretlopt *popt);

@@ -6172,7 +6172,13 @@ int gretl_is_identity_matrix (const gretl_matrix *m)
 
 int gretl_is_zero_matrix (const gretl_matrix *m)
 {
-    int i, n = m->rows * m->cols;
+    int i, n;
+
+    if (m == NULL) {
+	return 0;
+    }
+
+    n = m->rows * m->cols;
 
     for (i=0; i<n; i++) {
 	if (m->val[i] != 0.0) return 0;

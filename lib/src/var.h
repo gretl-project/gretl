@@ -22,6 +22,7 @@
 
 #include "gretl_matrix.h"
 #include "johansen.h"
+#include "gretl_restrict.h"
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
@@ -97,12 +98,13 @@ int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 
 int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, const gretl_matrix *D,
+int gretl_VECM_test_beta (GRETL_VAR *vecm, 
+			  const gretl_restriction_set *rset,
 			  const DATAINFO *pdinfo, PRN *prn);
 
 GRETL_VAR *
-real_gretl_restricted_vecm (GRETL_VAR *orig, gretl_matrix *R,
-			    const gretl_matrix *D,
+real_gretl_restricted_vecm (GRETL_VAR *orig, 
+			    const gretl_restriction_set *rset,
 			    double ***pZ, DATAINFO *pdinfo, 
 			    PRN *prn, int *err);
 

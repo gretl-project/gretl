@@ -1179,14 +1179,44 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     return err;
 }
 
-/* Public entry point for VECM estimation (with "Case 1" restriction
-   on beta, if D != NULL) 
+/* test for homogeneous restriction, either for rank 1
+   system or in common across the columns of beta
 */
 
-int johansen_estimate (GRETL_VAR *jvar, const gretl_matrix *D,
+static int 
+simple_beta_restriction (GRETL_VAR *jvar,
+			 const gretl_restriction_set *rset)
+{
+    const gretl_matrix *q = rset_get_q_matrix(rset);
+    int ret = 1;
+
+    if (!gretl_is_zero_matrix(q)) {
+	/* non-homogeneous */
+	ret = 0;
+    } else if (q->rows != gretl_VECM_n_beta(jvar)) {
+	/* not common to all cols */
+	ret = 0;
+    }
+
+    if (ret == 0) {
+	fprintf(stderr, "Got new-style beta restriction\n");
+    }
+
+    return 1;
+}
+
+/* Public entry point for VECM estimation (with "Case 1" restriction
+   on beta, if rset != NULL) 
+*/
+
+int johansen_estimate (GRETL_VAR *jvar, 
+		       const gretl_restriction_set *rset,
 		       double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
+    const gretl_matrix *R = NULL;
+
+    gretl_matrix *D = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *Suu = NULL;
     gretl_matrix *evals = NULL;
@@ -1198,7 +1228,17 @@ int johansen_estimate (GRETL_VAR *jvar, const gretl_matrix *D,
     fprintf(stderr, "\n*** starting johansen_estimate()\n\n");
 #endif
 
-    if (D != NULL) {
+    if (rset != NULL && !simple_beta_restriction(jvar, rset)) {
+	/* FIXME */
+	return E_NOTIMP;
+    }
+
+    if (rset != NULL) {
+	R = rset_get_R_matrix(rset);
+	D = gretl_matrix_right_nullspace(R, &err);
+	if (err) {
+	    return err;
+	}
 	m = gretl_matrix_cols(D);
     } else {
 	m = gretl_matrix_cols(jvar->jinfo->Svv);
@@ -1262,8 +1302,13 @@ int johansen_estimate (GRETL_VAR *jvar, const gretl_matrix *D,
 	}
     } 
 
+    if (!err && R != NULL) {
+	jvar->jinfo->R = gretl_matrix_copy(R);
+    }
+
  bailout:    
 
+    gretl_matrix_free(D);
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);
@@ -1342,19 +1387,38 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
    restricted constant or trend
 */
 
-int vecm_beta_test (GRETL_VAR *jvar, const gretl_matrix *D, const DATAINFO *pdinfo, 
+int vecm_beta_test (GRETL_VAR *jvar, 
+		    const gretl_restriction_set *rset,
+		    const DATAINFO *pdinfo, 
 		    PRN *prn)
 {
+    gretl_matrix *D = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
     gretl_matrix *Suv = NULL;
     gretl_matrix *Suu = NULL;
     gretl_matrix *evals = NULL;
 
-    int n = jvar->neqns;
-    int m = gretl_matrix_cols(D);
+    int m, n = jvar->neqns;
     int rank = jrank(jvar);
     int err = 0;
+
+    if (!simple_beta_restriction(jvar, rset)) {
+	/* FIXME */
+	return E_NOTIMP;
+    }
+
+    if (1) {
+	/* FIXME make this conditional */
+	const gretl_matrix *R = rset_get_R_matrix(rset);
+
+	D = gretl_matrix_right_nullspace(R, &err);
+	if (err) {
+	    return err;
+	}
+    }
+
+    m = gretl_matrix_cols(D);
 
     M = gretl_matrix_alloc(m, m);
     Svv = gretl_matrix_alloc(m, m);
@@ -1392,6 +1456,7 @@ int vecm_beta_test (GRETL_VAR *jvar, const gretl_matrix *D, const DATAINFO *pdin
 
  bailout:    
 
+    gretl_matrix_free(D);
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);
