@@ -10,18 +10,17 @@ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 	    doublereal *epsfcn, doublereal *wa, void *p)
 {
     /* Initialized data */
-
     static doublereal zero = 0.;
 
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, i__1, i__2;
+    integer fjac_dim1, fjac_offset;
 
     /* Builtin functions */
     double sqrt(doublereal);
 
     /* Local variables */
-    static doublereal h__;
-    static integer i__, j;
+    static doublereal h;
+    static integer i, j;
     static doublereal eps, temp, epsmch;
     extern doublereal dpmpar_(integer *);
 
@@ -112,24 +111,22 @@ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 
     /* epsmch is the machine precision */
     epsmch = dpmpar_(&c__1);
-
     eps = sqrt((max(*epsfcn,epsmch)));
-    i__1 = *n;
-    for (j = 1; j <= i__1; ++j) {
+
+    for (j = 1; j <= *n; ++j) {
 	temp = x[j];
-	h__ = eps * abs(temp);
-	if (h__ == zero) {
-	    h__ = eps;
+	h = eps * abs(temp);
+	if (h == zero) {
+	    h = eps;
 	}
-	x[j] = temp + h__;
+	x[j] = temp + h;
 	(*fcn)(m, n, &x[1], &wa[1], iflag, p);
 	if (*iflag < 0) {
 	    goto L30;
 	}
 	x[j] = temp;
-	i__2 = *m;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    fjac[i__ + j * fjac_dim1] = (wa[i__] - fvec[i__]) / h__;
+	for (i = 1; i <= *m; ++i) {
+	    fjac[i + j * fjac_dim1] = (wa[i] - fvec[i]) / h;
 	}
     }
 L30:

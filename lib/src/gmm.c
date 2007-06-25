@@ -1250,7 +1250,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     int T = s->nobs;
 
     doublereal *wa4 = NULL;
-    doublereal epsfcn = 0.0;
+    doublereal epsfcn = 0.0; /* could be > 0.0 */
     integer m, n, ldjac;
     integer iflag = 0;
 
@@ -1303,6 +1303,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 		J->val, &ldjac, &iflag, &epsfcn, wa4, s);
 
 	if (iflag != 0) {
+	    fprintf(stderr, "fdjac2_: iflag = %d\n", (int) iflag);
 	    err = 1;
 	}
     }

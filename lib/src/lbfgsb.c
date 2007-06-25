@@ -18,12 +18,12 @@
 # define max(a,b) ((a) >= (b) ? (a) : (b))
 #endif
 
-#define STPMIN 0.0
+#define STPMIN 1.0e-15
 #define FTOL .001
 #define GTOL .9
 #define XTOL .1
 
-static double ddot_(int n, double *dx, double *dy)
+static double ddot (int n, double *dx, double *dy)
 {
     double dtemp = 0;
     int i;
@@ -35,7 +35,7 @@ static double ddot_(int n, double *dx, double *dy)
     return dtemp;
 }
 
-static void dscal_(int n, double da, double *dx)
+static void dscal (int n, double da, double *dx)
 {
     int i;
 
@@ -44,7 +44,7 @@ static void dscal_(int n, double da, double *dx)
     }    
 } 
 
-static void dpofa_(double *a, int lda, int n, int *info)
+static void dpofa (double *a, int lda, int n, int *info)
 {
     int j, k;
     double s, t;
@@ -58,7 +58,7 @@ static void dpofa_(double *a, int lda, int n, int *info)
 	    goto L20;
 	}
 	for (k = 1; k <= jm1; ++k) {
-	    t = a[k + j * lda] - ddot_(k - 1, &a[k * lda], &a[j * lda]);
+	    t = a[k + j * lda] - ddot(k - 1, &a[k * lda], &a[j * lda]);
 	    t /= a[k + k * lda];
 	    a[k + j * lda] = t;
 	    s += t * t;
@@ -74,7 +74,7 @@ L20:
     *info = 0;
 }
 
-static void dcopy_(int n, double *dx, double *dy)
+static void dcopy (int n, double *dx, double *dy)
 {
     int i;
 
@@ -83,7 +83,7 @@ static void dcopy_(int n, double *dx, double *dy)
     }
 }
 
-static void daxpy_(int n, double da, double *dx, double *dy)
+static void daxpy (int n, double da, double *dx, double *dy)
 {
     int i;
 
@@ -96,7 +96,7 @@ static void daxpy_(int n, double da, double *dx, double *dy)
     }
 } 
 
-static void dtrsl_(double *t, int ldt, int n, 
+static void dtrsl (double *t, int ldt, int n, 
 		   double *b, int job, int *info)
 {
     int j, jj, K = 1;
@@ -121,7 +121,7 @@ static void dtrsl_(double *t, int ldt, int n,
 	b[1] /= t[ldt + 1];
 	for (j = 2; j <= n; ++j) {
 	    temp = -b[j - 1];
-	    daxpy_(n - j + 1, temp, &t[j - 1 + (j - 1) * ldt], &b[j-1]);
+	    daxpy(n - j + 1, temp, &t[j - 1 + (j - 1) * ldt], &b[j-1]);
 	    b[j] /= t[j + j * ldt];
 	}
     } else if (K == 2) {
@@ -129,26 +129,26 @@ static void dtrsl_(double *t, int ldt, int n,
 	for (jj = 2; jj <= n; ++jj) {
 	    j = n - jj + 1;
 	    temp = -b[j + 1];
-	    daxpy_(j, temp, &t[(j + 1) * ldt], b);
+	    daxpy(j, temp, &t[(j + 1) * ldt], b);
 	    b[j] /= t[j + j * ldt];
 	}
     } else if (K == 3) {
 	b[n] /= t[n + n * ldt];
 	for (jj = 2; jj <= n; ++jj) {
 	    j = n - jj + 1;
-	    b[j] -= ddot_(jj - 1, &t[j + j * ldt], &b[j]);
+	    b[j] -= ddot(jj - 1, &t[j + j * ldt], &b[j]);
 	    b[j] /= t[j + j * ldt];
 	}
     } else if (K == 4) {
 	b[1] /= t[ldt + 1];
 	for (j = 2; j <= n; ++j) {
-	    b[j] -= ddot_(j - 1, &t[j * ldt], b);
+	    b[j] -= ddot(j - 1, &t[j * ldt], b);
 	    b[j] /= t[j + j * ldt];
 	}
     }
 } 
 
-static void active_(int n, double *l, double *u, 
+static void active (int n, double *l, double *u, 
 		    int *nbd, double *x, int *iwhere,  
 		    int *prjctd, int *cnstnd, int *boxed)
 {
@@ -194,7 +194,7 @@ static void active_(int n, double *l, double *u,
     }
 }
 
-static void bmv_(int m, double *sy, double *wt, int col, 
+static void bmv (int m, double *sy, double *wt, int col, 
 		 double *v, double *p, int *info)
 {
     int i, k, icol;
@@ -215,7 +215,7 @@ static void bmv_(int m, double *sy, double *wt, int col,
 	p[icol] = v[icol] + sum;
     }
 
-    dtrsl_(wt, m, col, &p[col], 11, info);
+    dtrsl(wt, m, col, &p[col], 11, info);
     if (*info != 0) {
 	return;
     }
@@ -224,7 +224,7 @@ static void bmv_(int m, double *sy, double *wt, int col,
 	p[i] = v[i] / sqrt(sy[i + i * m]);
     }
 
-    dtrsl_(wt, m, col, &p[col], 1, info);
+    dtrsl(wt, m, col, &p[col], 1, info);
     if (*info != 0) {
 	return;
     }
@@ -242,7 +242,7 @@ static void bmv_(int m, double *sy, double *wt, int col,
     }
 }
 
-static void hpsolb_(int n, double *t, int *iorder, int iheap)
+static void hpsolb (int n, double *t, int *iorder, int iheap)
 {
     int i, j, k;
     double out, ddum;
@@ -295,7 +295,7 @@ L30:
 }
 
 static int 
-cauchy_(int n, double *x, double *l, double *u, int *nbd, 
+cauchy (int n, double *x, double *l, double *u, int *nbd, 
 	double *g, int *iorder, int *iwhere, double *t, 
 	double *d, double *xcp, int m, 
 	double *wy, double *ws, double *sy, double *wt, 
@@ -327,7 +327,7 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
     int xlower, xupper;
 
     if (sbgnrm <= 0.) {
-	dcopy_(n, x, xcp);
+	dcopy(n, x, xcp);
 	return 0;
     }
 
@@ -407,10 +407,10 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
     }
 
     if (theta != 1.) {
-	dscal_(col, theta, &p[col]);
+	dscal(col, theta, &p[col]);
     }
 
-    dcopy_(n, x, xcp);
+    dcopy(n, x, xcp);
     if (nbreak == 0 && nfree == n + 1) {
 	return 0;
     }
@@ -422,11 +422,11 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
     f2 = -theta * f1;
     f2_org__ = f2;
     if (col > 0) {
-	bmv_(m, sy, wt, col, p, v, info);
+	bmv(m, sy, wt, col, p, v, info);
 	if (*info != 0) {
 	    return 0;
 	}
-	f2 -= ddot_(col2, v, p);
+	f2 -= ddot(col2, v, p);
     }
     dtm = -f1 / f2;
     tsum = 0.;
@@ -453,7 +453,7 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
 		iorder[ibkmin] = iorder[nbreak];
 	    }
 	}
-	hpsolb_(nleft, t, iorder, iter - 2);
+	hpsolb(nleft, t, iorder, iter - 2);
 	tj = t[nleft];
 	ibp = iorder[nleft];
     }
@@ -490,22 +490,22 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
     f2 -= theta * dibp2;
 
     if (col > 0) {
-	daxpy_(col2, dt, p, c);
+	daxpy(col2, dt, p, c);
 	pointr = head;
 	for (j = 1; j <= col; ++j) {
 	    wbp[j] = wy[ibp + pointr * n];
 	    wbp[col + j] = theta * ws[ibp + pointr * n];
 	    pointr = pointr % m + 1;
 	}
-	bmv_(m, sy, wt, col, wbp, v, info);
+	bmv(m, sy, wt, col, wbp, v, info);
 	if (*info != 0) {
 	    return 0;
 	}
-	wmc = ddot_(col2, c, v);
-	wmp = ddot_(col2, p, v);
-	wmw = ddot_(col2, wbp, v);
+	wmc = ddot(col2, c, v);
+	wmp = ddot(col2, p, v);
+	wmw = ddot(col2, wbp, v);
 	d1 = -dibp;
-	daxpy_(col2, d1, wbp, p);
+	daxpy(col2, d1, wbp, p);
 	f1 += dibp * wmc;
 	f2 = f2 + dibp * 2. * wmp - dibp2 * wmw;
     }
@@ -529,17 +529,17 @@ cauchy_(int n, double *x, double *l, double *u, int *nbd,
     }
     tsum += dtm;
 
-    daxpy_(n, tsum, d, xcp);
+    daxpy(n, tsum, d, xcp);
 
  L999:
     if (col > 0) {
-	daxpy_(col2, dtm, p, c);
+	daxpy(col2, dtm, p, c);
     }
     return 0;
 }
 
 static void 
-cmprlb_(int n, int m, double *x, 
+cmprlb (int n, int m, double *x, 
 	double *g, double *ws, double *wy, double *sy, 
 	double *wt, double *z, double *r, double *wa, 
 	int *index, double theta, int col, int head, 
@@ -558,7 +558,7 @@ cmprlb_(int n, int m, double *x,
 	    k = index[i];
 	    r[i] = -(theta) * (z[k] - x[k]) - g[k];
 	}
-	bmv_(m, sy, wt, col, &wa[(m << 1)], wa, info);
+	bmv(m, sy, wt, col, &wa[(m << 1)], wa, info);
 	if (*info != 0) {
 	    *info = -8;
 	    return;
@@ -577,7 +577,7 @@ cmprlb_(int n, int m, double *x,
     }
 } 
 
-static void errclb_(int n, int m, double factr, 
+static void errclb (int n, int m, double factr, 
 		    double *l, double *u, int *nbd, 
 		    char *task, int *info, int *k)
 {
@@ -609,7 +609,7 @@ static void errclb_(int n, int m, double factr,
 } 
 
 static void 
-formk_(int n, int nsub, int *ind, int nenter, int ileave, 
+formk (int n, int nsub, int *ind, int nenter, int ileave, 
        int *indx2, int iupdat, int updatd, double *wn, double *wn1, 
        int m, double *ws, double *wy, double *sy, double theta, 
        int col, int head, int *info)
@@ -624,11 +624,11 @@ formk_(int n, int nsub, int *ind, int nenter, int ileave,
 	if (iupdat > m) {
 	    for (jy = 1; jy <= m - 1; ++jy) {
 		js = m + jy;
-		dcopy_(m - jy, &wn1[jy + (jy + 1) * m2], 
+		dcopy(m - jy, &wn1[jy + (jy + 1) * m2], 
 		       &wn1[jy + jy * m2 - 1]);
-		dcopy_(m - jy, &wn1[js + (js + 1) * m2], 
+		dcopy(m - jy, &wn1[js + (js + 1) * m2], 
 		       &wn1[js + js * m2 - 1]);
-		dcopy_(m - 1, &wn1[m + 1 + (jy + 1) * m2], 
+		dcopy(m - 1, &wn1[m + 1 + (jy + 1) * m2], 
 		       &wn1[m + jy * m2]);
 	    }
 	}
@@ -753,7 +753,7 @@ formk_(int n, int nsub, int *ind, int nenter, int ileave,
 	wn[iy + iy * m2] += sy[iy + iy * m];
     }
 
-    dpofa_(wn, m2, col, info);
+    dpofa(wn, m2, col, info);
     if (*info != 0) {
 	*info = -1;
 	return;
@@ -762,22 +762,22 @@ formk_(int n, int nsub, int *ind, int nenter, int ileave,
     col2 = col << 1;
 
     for (js = col + 1; js <= col2; ++js) {
-	dtrsl_(wn, m2, col, &wn[js * m2], 11, info);
+	dtrsl(wn, m2, col, &wn[js * m2], 11, info);
     }
 
     for (is = col + 1; is <= col2; ++is) {
 	for (js = is; js <= col2; ++js) {
-	    wn[is + js * m2] += ddot_(col, &wn[is * m2], &wn[js * m2]);
+	    wn[is + js * m2] += ddot(col, &wn[is * m2], &wn[js * m2]);
 	}
     }
 
-    dpofa_(&wn[col + col * m2], m2, col, info);
+    dpofa(&wn[col + col * m2], m2, col, info);
     if (*info != 0) {
 	*info = -2;
     }
 } 
 
-static void formt_(int m, double *wt, double *sy, 
+static void formt (int m, double *wt, double *sy, 
 		   double *ss, int col, double theta, 
 		   int *info)
 {
@@ -799,7 +799,7 @@ static void formt_(int m, double *wt, double *sy,
 	}
     }
 
-    dpofa_(wt, m, col, info);
+    dpofa(wt, m, col, info);
     if (*info != 0) {
 	*info = -3;
     }
@@ -986,7 +986,7 @@ static int dcstep_(double *stx, double *fx, double *dx,
     return 0;
 } 
 
-static int dcsrch_(double f, double g, double *stp, 
+static int dcsrch (double f, double g, double *stp, 
 		   double ftol, double gtol, double xtol, 
 		   double stpmin, double stpmax, 
 		   char *task, int *isave, double *dsave)
@@ -1161,7 +1161,7 @@ L1000:
     return 0;
 } 
 
-static void lnsrlb_(int n, double *l, double *u, 
+static void lnsrlb (int n, double *l, double *u, 
 		    int *nbd, double *x, double f, double *fold, 
 		    double *gd, double *gdold, double *g, double *d, 
 		    double *r, double *t, double *z, double *stp, 
@@ -1177,7 +1177,7 @@ static void lnsrlb_(int n, double *l, double *u,
 	goto L556;
     }
 
-    *dtd = ddot_(n, d, d);
+    *dtd = ddot(n, d, d);
     *dnorm = sqrt(*dtd);
 
     *stpmx = 1.0e10;
@@ -1216,15 +1216,15 @@ static void lnsrlb_(int n, double *l, double *u,
 	*stp = 1.;
     }
 
-    dcopy_(n, x, t);
-    dcopy_(n, g, r);
+    dcopy(n, x, t);
+    dcopy(n, g, r);
     *fold = f;
     *ifun = 0;
     *iback = 0;
     strcpy(csave, "START");
 
 L556:
-    *gd = ddot_(n, g, d);
+    *gd = ddot(n, g, d);
     if (*ifun == 0) {
 	*gdold = *gd;
 	if (*gd >= 0.) {
@@ -1233,8 +1233,8 @@ L556:
 	}
     }
 
-    dcsrch_(f, *gd, stp, FTOL, GTOL, XTOL, STPMIN, *stpmx, csave, 
-	    isave, dsave);
+    dcsrch(f, *gd, stp, FTOL, GTOL, XTOL, STPMIN, *stpmx, csave, 
+	   isave, dsave);
 
     *xstep = *stp * *dnorm;
 
@@ -1244,7 +1244,7 @@ L556:
 	++(*nfgv);
 	*iback = *ifun - 1;
 	if (*stp == 1.) {
-	    dcopy_(n, z, x);
+	    dcopy(n, z, x);
 	} else {
 	    for (i = 1; i <= n; ++i) {
 		x[i] = *stp * d[i] + t[i];
@@ -1272,24 +1272,24 @@ static int matupd_(int n, int m, double *ws,
 	*head = *head % m + 1;
     }
 
-    dcopy_(n, d, &ws[*itail * n]);
-    dcopy_(n, r, &wy[*itail * n]);
+    dcopy(n, d, &ws[*itail * n]);
+    dcopy(n, r, &wy[*itail * n]);
 
     *theta = rr / dr;
 
     if (iupdat > m) {
 	jmax = *col - 1;
 	for (j = 1; j <= jmax; ++j) {
-	    dcopy_(j, &ss[(j + 1) * m + 1], &ss[j * m]);
-	    dcopy_(*col - j, &sy[j + (j + 1) * m], &sy[j + j * m - 1]);
+	    dcopy(j, &ss[(j + 1) * m + 1], &ss[j * m]);
+	    dcopy(*col - j, &sy[j + (j + 1) * m], &sy[j + j * m - 1]);
 	}
     }
 
     pointr = *head;
     jmax = *col - 1;
     for (j = 1; j <= jmax; ++j) {
-	sy[*col + j * m] = ddot_(n, d, &wy[pointr * n]);
-	ss[j + *col * m] = ddot_(n, &ws[pointr * n], d);
+	sy[*col + j * m] = ddot(n, d, &wy[pointr * n]);
+	ss[j + *col * m] = ddot(n, &ws[pointr * n], d);
 	pointr = pointr % m + 1;
     }
     if (*stp == 1.) {
@@ -1335,7 +1335,7 @@ static void projgr_(int n, double *l, double *u,
 } 
 
 static int 
-subsm_(int n, int m, int nsub, int *ind, 
+subsm (int n, int m, int nsub, int *ind, 
        double *l, double *u, int *nbd, double *x, 
        double *d, double *ws, double *wy, double theta, 
        int col, int head, int *iword, double *wv, 
@@ -1367,14 +1367,14 @@ subsm_(int n, int m, int nsub, int *ind,
     m2 = m << 1;
     col2 = col << 1;
 
-    dtrsl_(wn, m2, col2, wv, 11, info);
+    dtrsl(wn, m2, col2, wv, 11, info);
     if (*info != 0) {
 	return 0;
     }
     for (i = 1; i <= col; ++i) {
 	wv[i] = -wv[i];
     }
-    dtrsl_(wn, m2, col2, wv, 1, info);
+    dtrsl(wn, m2, col2, wv, 1, info);
     if (*info != 0) {
 	return 0;
     }
@@ -1535,7 +1535,7 @@ L70:
     return ret_val;
 } 
 
-static int mainlb_(int n, int m, double *x, 
+static int mainlb (int n, int m, double *x, 
 		   double *l, double *u, int *nbd, double *f, double *g,
 		   double reltol, double factr, double pgtol, 
 		   double *ws, double *wy, double *sy, double *ss, 
@@ -1549,7 +1549,7 @@ static int mainlb_(int n, int m, double *x,
     double d1, d2;
     int i, k;
     double gd, dr, rr, dtd;
-    double stp, cpu1, cpu2;
+    double cpu1, cpu2, stp;
     double ddum, dnorm, gdold;
     double time, time1, time2;
     double xstep, stpmx;
@@ -1616,6 +1616,8 @@ static int mainlb_(int n, int m, double *x,
 
 	if (reltol == 0 && na(reltol)) {
 	    reltol = factr * epsmch;
+	} else {
+	    reltol *= 0.01;
 	}
 
 	cachyt = 0.;
@@ -1624,12 +1626,12 @@ static int mainlb_(int n, int m, double *x,
 
 	info = 0;
 
-	errclb_(n, m, factr, l, u, nbd, task, &info, &k);
+	errclb(n, m, factr, l, u, nbd, task, &info, &k);
 	if (!strncmp(task, "ERROR", 5)) {
 	    return E_DATA;
 	}
 
-	active_(n, l, u, nbd, x, iwhere, &prjctd, &cnstnd, &boxed);
+	active(n, l, u, nbd, x, iwhere, &prjctd, &cnstnd, &boxed);
     } else {
 	prjctd = lsave[0];
 	cnstnd = lsave[1];
@@ -1703,7 +1705,7 @@ L222:
     iword = -1;
 
     if (!cnstnd && col > 0) {
-	dcopy_(n, x, z);
+	dcopy(n, x, z);
 	wrk = updatd;
 	nint = 0;
 	goto L333;
@@ -1711,11 +1713,11 @@ L222:
 
     timer_(&cpu1);
 
-    cauchy_(n, x, l, u, nbd, g, indx2, iwhere, 
-	    t, d, z, m, wy, ws, sy, wt,
-	    theta, col, head, wa, 
-	    &wa[(m << 1)], &wa[(m << 2)], &wa[m * 6], &nint, 
-	    sg, yg, sbgnrm, &info, epsmch);
+    cauchy(n, x, l, u, nbd, g, indx2, iwhere, 
+	   t, d, z, m, wy, ws, sy, wt,
+	   theta, col, head, wa, 
+	   &wa[(m << 1)], &wa[(m << 2)], &wa[m * 6], &nint, 
+	   sg, yg, sbgnrm, &info, epsmch);
 
     if (info != 0) {
 	info = 0;
@@ -1745,9 +1747,9 @@ L333:
     timer_(&cpu1);
 
     if (wrk) {
-	formk_(n, nfree, index, nenter, ileave, indx2, iupdat, 
-	       updatd, wn, snd, m, ws, wy, sy, theta, col, 
-	       head, &info);
+	formk(n, nfree, index, nenter, ileave, indx2, iupdat, 
+	      updatd, wn, snd, m, ws, wy, sy, theta, col, 
+	      head, &info);
     }
 
     if (info != 0) {
@@ -1762,15 +1764,15 @@ L333:
 	goto L222;
     }
 
-    cmprlb_(n, m, x, g, ws, wy, sy, wt, z, r, wa, 
-	    index, theta, col, head, nfree, cnstnd, &info);
+    cmprlb(n, m, x, g, ws, wy, sy, wt, z, r, wa, 
+	   index, theta, col, head, nfree, cnstnd, &info);
     if (info != 0) {
 	goto L444;
     }
 
-    subsm_(n, m, nfree, index, l, u, nbd, z, r, 
-	   ws, wy, theta, col, head, &iword, 
-	   wa, wn, &info);
+    subsm(n, m, nfree, index, l, u, nbd, z, r, 
+	  ws, wy, theta, col, head, &iword, 
+	  wa, wn, &info);
 
  L444:
     if (info != 0) {
@@ -1795,15 +1797,15 @@ L555:
     timer_(&cpu1);
 
 L666:
-    lnsrlb_(n, l, u, nbd, x, *f, &fold, &gd, &gdold, g,
-	    d, r, t, z, &stp, &dnorm, &dtd, &xstep, 
-	    &stpmx, iter, &ifun, &iback, &nfgv, &info, 
-	    task, boxed, cnstnd, csave, &isave[20], 
-	    &dsave[15]);
+    lnsrlb(n, l, u, nbd, x, *f, &fold, &gd, &gdold, g,
+	   d, r, t, z, &stp, &dnorm, &dtd, &xstep, 
+	   &stpmx, iter, &ifun, &iback, &nfgv, &info, 
+	   task, boxed, cnstnd, csave, &isave[20], 
+	   &dsave[15]);
 
     if (info != 0 || iback >= 20) {
-	dcopy_(n, t, x);
-	dcopy_(n, r, g);
+	dcopy(n, t, x);
+	dcopy(n, r, g);
 	*f = fold;
 	if (col == 0) {
 	    if (info == 0) {
@@ -1860,14 +1862,14 @@ L777:
     for (i = 1; i <= n; ++i) {
 	r[i] = g[i] - r[i];
     }
-    rr = ddot_(n, r, r);
+    rr = ddot(n, r, r);
 
     if (stp == 1.) {
 	dr = gd - gdold;
 	ddum = -gdold;
     } else {
 	dr = (gd - gdold) * stp;
-	dscal_(n, stp, d);
+	dscal(n, stp, d);
 	ddum = -gdold * stp;
     }
 
@@ -1883,7 +1885,7 @@ L777:
     matupd_(n, m, ws, wy, sy, ss, d, r, &itail, iupdat, &col, 
 	    &head, &theta, rr, dr, &stp, &dtd);
 
-    formt_(m, wt, sy, ss, col, theta, &info);
+    formt(m, wt, sy, ss, col, theta, &info);
     if (info != 0) {
 	info = 0;
 	col = 0;
@@ -1948,8 +1950,8 @@ L1000:
     return 0;
 } 
 
-static int setulb_(int n, int m, double *x, 
-		   double *l, double *u, int *nbd, double *f, double *g,
+static int setulb_(int n, int m, double *x, double *l, double *u, 
+		   int *nbd, double *f, double *g,
 		   double reltol, double factr, double pgtol, 
 		   double *wa, int *iwa,
 		   char *task, char *csave, int *lsave, 
@@ -2001,12 +2003,12 @@ static int setulb_(int n, int m, double *x,
 
     int err;
 
-    err = mainlb_(n, m, x, l, u, nbd, f, g, reltol, factr, pgtol, 
-		  &wa[lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], 
-		  &wa[lwn], &wa[lsnd], &wa[lz], &wa[lr], &wa[ld], &wa[lt], 
-		  &wa[lwa], &wa[lsg], &wa[lsgo], &wa[lyg], &wa[lygo], 
-		  iwa, &iwa[n], &iwa[(n << 1)], task, csave, 
-		  lsave, &isave[21], dsave);
+    err = mainlb(n, m, x, l, u, nbd, f, g, reltol, factr, pgtol, 
+		 &wa[lws], &wa[lwy], &wa[lsy], &wa[lss], &wa[lyy], &wa[lwt], 
+		 &wa[lwn], &wa[lsnd], &wa[lz], &wa[lr], &wa[ld], &wa[lt], 
+		 &wa[lwa], &wa[lsg], &wa[lsgo], &wa[lyg], &wa[lygo], 
+		 iwa, &iwa[n], &iwa[(n << 1)], task, csave, 
+		 lsave, &isave[21], dsave);
 
     return err;
 }
@@ -2076,7 +2078,10 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
     double dsave[29];
     int isave[44];
     int lsave[4];
+    int ibak = -1;
     int err = 0;
+
+    *fncount = *grcount = 0;    
 
     BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
 
@@ -2107,12 +2112,8 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 	gradfunc = BFGS_numeric_gradient;
     }
 
-    /* Convergence criteria: we don't use "reltol" here because I
-       haven't yet figured out exactly how it relates to the stopping
-       criteria used in this implementation. See the long comment
-       above this function.
-    */
-    factr = 1e5;  /* ?? */
+    /* Convergence criteria (not used) */
+    factr = 1.0e5;
     pgtol = 0;
 
     /* Bounds on the parameters: for now we just set them all to be
@@ -2131,12 +2132,15 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 		task, csave, lsave, isave, dsave);
 
 	if (!strncmp(task, "FG", 2)) {
-	    double minusf;
 
 	    /* Compute function value, f */
-	    minusf = cfunc(b, data);
-	    if (!na(minusf)) {
-		f = -minusf;
+	    f = cfunc(b, data);
+	    if (!na(f)) {
+		f = -f;
+	    } else if (*fncount == 0) {
+		fprintf(stderr, "initial value of f is not finite\n");
+		err = E_DATA;
+		break;
 	    }
 	    *fncount += 1;
 
@@ -2144,29 +2148,39 @@ int BFGS_test (double *b, int n, int maxit, double reltol,
 	    gradfunc(b, g, n, cfunc, data);
 	    reverse_gradient(g, n);
 	    *grcount += 1;
-
+	    
 	} else if (!strncmp(task, "NEW_X", 5)) {
 	    /* The optimizer has produced a new set of parameter values */
 	    if (isave[33] >= maxit) {
 		strcpy(task, "STOP: TOTAL NO. of f AND g "
 		       "EVALUATIONS EXCEEDS LIMIT");
 		err = E_NOCONV;
-	    } else if (opt & OPT_V) {
-		reverse_gradient(g, n);
-		print_iter_info(isave[29], -f, crittype, n, b, g, dsave[13], prn);
-		reverse_gradient(g, n);
-	    }
+		break;
+	    } 
 	} else {
-	    /* study up on other possible "task" contents! */
-	    fprintf(stderr, "got task = '%s'\n", task);
+	    fprintf(stderr, "%s\n", task);
 	    break;
 	}
+
+	if (opt & OPT_V) {
+	    if (isave[29] != ibak) {
+		reverse_gradient(g, n);
+		print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
+		reverse_gradient(g, n);
+	    }
+	    ibak = isave[29];
+	}
+    }
+
+    if (!err && crittype == C_GMM) {
+	/* finalize GMM computations */
+	f = cfunc(b, data);
     }
 
     if (opt & OPT_V) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));
-	reverse_gradient(g, n); /* ?? */
-	print_iter_info(isave[29], -f, crittype, n, b, g, dsave[13], prn);
+	reverse_gradient(g, n);
+	print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
 	pputc(prn, '\n');
     }
 
