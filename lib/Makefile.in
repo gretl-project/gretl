@@ -191,8 +191,7 @@ SRCS = adf_kpss.c \
 	tsls.c \
 	usermat.c \
 	var.c \
-	varprint.c \
-	lbfgsb.c
+	varprint.c 
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
@@ -200,7 +199,7 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   stdtr.c unity.c 
 
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c \
-	lmdif.c lmpar.c qrfac.c qrsolv.c dlog10.c
+	lmdif.c lmpar.c qrfac.c qrsolv.c dlog10.c lbfgsb.c
 
 LOBJS = $(SRCS:.c=.lo)
 AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)

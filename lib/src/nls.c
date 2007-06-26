@@ -27,7 +27,6 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "nlspec.h"
-#include "nls_private.h"
 
 #include "../../minpack/minpack.h"  
 
@@ -3132,7 +3131,7 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 
 #define coeff_unchanged(a,b) (reltest + a == reltest + b)
 
-void reverse_gradient (double *g, int n)
+static void reverse_gradient (double *g, int n)
 {
     int i;
 
@@ -3148,9 +3147,9 @@ void reverse_gradient (double *g, int n)
    maximum number of iterations and the convergence tolerance.
 */
 
-void BFGS_get_user_values (double *b, int n, int *maxit,
-			   double *reltol, gretlopt opt,
-			   PRN *prn)
+static void BFGS_get_user_values (double *b, int n, int *maxit,
+				  double *reltol, gretlopt opt,
+				  PRN *prn)
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
@@ -3445,16 +3444,184 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     return err;
 }
 
+int BFGS_alt (double *b, int n, int maxit, double reltol,
+	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+	      gretlopt opt, PRN *prn)
+{
+    double *g = NULL;
+    double *l = NULL;
+    double *u = NULL;
+    double *wa = NULL;
+    int *nbd = NULL;
+    int *iwa = NULL;
+
+    int i, m, wadim;
+    char task[60];
+    char csave[60];
+    double f, factr, pgtol;
+    double dsave[29];
+    int isave[44];
+    int lsave[4];
+    int ibak = -1;
+    int err = 0;
+
+    *fncount = *grcount = 0;    
+
+    BFGS_get_user_values(b, n, &maxit, &reltol, opt, prn);
+
+    /*
+      m: the number of corrections used in the limited memory matrix.
+      It is not altered by the routine.  Values of m < 3 are not
+      recommended, and large values of m can result in excessive
+      computing time. The range 3 <= m <= 20 is recommended.
+    */
+    m = 10; /* was initially set to 5 */
+
+    wadim = (2*m+4)*n + 12*m*m + 12*m;
+
+    g = malloc(n * sizeof *g);
+    l = malloc(n * sizeof *l);
+    u = malloc(n * sizeof *u);
+    wa = malloc(wadim * sizeof *wa);
+    nbd = malloc(n * sizeof *nbd);
+    iwa = malloc(3*n * sizeof *iwa);
+
+    if (g == NULL || l == NULL || u == NULL ||
+	wa == NULL || nbd == NULL || iwa == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (gradfunc == NULL) {
+	gradfunc = BFGS_numeric_gradient;
+    }
+
+    /* Convergence criteria (not used) */
+    factr = 1.0e5;
+    pgtol = 0;
+
+    /* Bounds on the parameters: for now we just set them all to be
+       less than some ridiculously large number */
+    for (i=0; i<n; i++) {
+	nbd[i] = 3; /* case 3: upper bound only */
+	u[i] = NADBL / 100;
+    }	
+
+    /* Start the iteration by initializing 'task' */
+    strcpy(task, "START");
+
+    while (1) {
+	/* Call the L-BFGS-B code */
+	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
+		task, csave, lsave, isave, dsave);
+
+	if (!strncmp(task, "FG", 2)) {
+
+	    /* Compute function value, f */
+	    f = cfunc(b, data);
+	    if (!na(f)) {
+		f = -f;
+	    } else if (*fncount == 0) {
+		fprintf(stderr, "initial value of f is not finite\n");
+		err = E_DATA;
+		break;
+	    }
+	    *fncount += 1;
+
+	    /* Compute gradient, g */
+	    gradfunc(b, g, n, cfunc, data);
+	    reverse_gradient(g, n);
+	    *grcount += 1;
+	    
+	} else if (!strncmp(task, "NEW_X", 5)) {
+	    /* The optimizer has produced a new set of parameter values */
+	    if (isave[33] >= maxit) {
+		strcpy(task, "STOP: TOTAL NO. of f AND g "
+		       "EVALUATIONS EXCEEDS LIMIT");
+		err = E_NOCONV;
+		break;
+	    } 
+	} else {
+	    fprintf(stderr, "%s\n", task);
+	    break;
+	}
+
+	if (opt & OPT_V) {
+	    if (isave[29] != ibak) {
+		reverse_gradient(g, n);
+		print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
+		reverse_gradient(g, n);
+	    }
+	    ibak = isave[29];
+	}
+    }
+
+    if (!err && crittype == C_GMM) {
+	/* finalize GMM computations */
+	f = cfunc(b, data);
+    }
+
+    if (opt & OPT_V) {
+	pputs(prn, _("\n--- FINAL VALUES: \n"));
+	reverse_gradient(g, n);
+	print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
+	pputc(prn, '\n');
+    }
+
+ bailout:
+
+    free(g);
+    free(l);
+    free(u);
+    free(wa);
+    free(nbd);
+    free(iwa);
+
+    return err;
+}
+
+/**
+ * BFGS_max:
+ * @b: array of adjustable coefficients.
+ * @n: number elements in array @b.
+ * @maxit: the maximum number of iterations to allow.
+ * @reltol: relative tolerance for terminating iteration.
+ * @fncount: location to receive count of function evaluations.
+ * @grcount: location to receive count of gradient evaluations.
+ * @cfunc: pointer to function used to calculate maximand.
+ * @crittype: code for type of the maximand/minimand: should
+ * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
+ * iteration info.
+ * @gradfunc: pointer to function used to calculate the 
+ * gradient, or %NULL for default numerical calculation.
+ * @data: pointer that will be passed as the last
+ * parameter to the callback functions @cfunc and @gradfunc.
+ * @opt: may contain %OPT_V for verbose operation.
+ * @prn: printing struct (or %NULL).  Only used if @opt
+ * includes %OPT_V.
+ *
+ * Obtains the set of values for @b which jointly maximize the
+ * criterion value as calculated by @cfunc.  Uses the BFGS
+ * variable-metric method.  Based on Pascal code in J. C. Nash,
+ * "Compact Numerical Methods for Computers," 2nd edition, converted
+ * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
+ * gretl by Allin Cottrell.
+ * 
+ * Returns: 0 on successful completion, non-zero error code
+ * on error.
+ */
+
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
     if (getenv("BFGS_NEW") != NULL) {
-	return BFGS_test(b, n, maxit, reltol,
-			 fncount, grcount, cfunc, 
-			 crittype, gradfunc, data, 
-			 opt, prn);
+	return BFGS_alt(b, n, maxit, reltol,
+			fncount, grcount, cfunc, 
+			crittype, gradfunc, data, 
+			opt, prn);
     } else {
 	return BFGS_orig(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 

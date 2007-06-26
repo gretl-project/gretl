@@ -28,6 +28,11 @@ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 
 doublereal dpmpar_(integer *i__);
 
+int setulb_(int *n, int *m, double *x, 
+	    double *l, double *u, int *nbd, double *f, double *g, 
+	    double *factr, double *pgtol, double *wa, int *iwa, 
+	    char *task, char *csave, int *lsave, 
+	    int *isave, double *dsave);
 
 #endif /* GRETL_MINPACK_H */
 
