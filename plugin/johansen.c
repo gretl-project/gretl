@@ -21,6 +21,7 @@
 #include "pvalues.h"
 #include "gretl_matrix.h"
 #include "var.h"
+#include "jprivate.h"
 
 #define JDEBUG 0
 #define OLDEIG 0
@@ -1179,8 +1180,8 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     return err;
 }
 
-/* test for homogeneous restriction, either for rank 1
-   system or in common across the columns of beta
+/* test for homogeneous restriction, either for a rank-1 system 
+   or in common across the columns of beta
 */
 
 static int 
@@ -1198,11 +1199,7 @@ simple_beta_restriction (GRETL_VAR *jvar,
 	ret = 0;
     }
 
-    if (ret == 0) {
-	fprintf(stderr, "Got new-style beta restriction\n");
-    }
-
-    return 1;
+    return ret;
 }
 
 /* Public entry point for VECM estimation (with "Case 1" restriction
@@ -1404,8 +1401,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     int err = 0;
 
     if (!simple_beta_restriction(jvar, rset)) {
-	/* FIXME */
-	return E_NOTIMP;
+	return full_beta_analysis(jvar, rset, prn);
     }
 
     if (1) {

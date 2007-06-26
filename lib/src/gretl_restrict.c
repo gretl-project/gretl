@@ -933,6 +933,7 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line,
 	nx = system_n_indep_vars(rset->obj);
     } else if (rset->type == GRETL_OBJ_VAR) {
 	nx = gretl_VECM_n_beta(rset->obj);
+	nx *= gretl_VECM_rank(rset->obj);
     }
 
     if (rset->k >= nx) {

@@ -222,7 +222,7 @@ mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)
 
 johansen.la: johansen.lo jrestrict.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 sysest.la: sysest.lo fiml.lo liml.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
