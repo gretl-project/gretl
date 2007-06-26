@@ -792,7 +792,7 @@ full_beta_analysis (GRETL_VAR *jvar,
 	err = set_up_restrictions(J, jvar, rset);
     }
 
-#if 0 /* FIXME */
+#if 0 /* FIXME: not ready yet */
     if (!err) {
 	err = initval(J, Cmat, &b);
 #if JDEBUG
