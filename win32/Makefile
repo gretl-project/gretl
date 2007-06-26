@@ -61,6 +61,7 @@ PLUGINSRC = \
 	stata_import.c \
 	jmulti_import.c \
 	johansen.c \
+	jrestrict.c \
 	kernel.c \
 	lad.c \
 	vif.c \
@@ -247,7 +248,7 @@ PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
-	qrfac.c qrsolv.c
+	qrfac.c qrsolv.c lbfgsb.c
 MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
@@ -363,7 +364,7 @@ plugins/sysest.dll: sysest.o fiml.o liml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/johansen.dll: johansen.o dllinit.o
+plugins/johansen.dll: johansen.o jrestrict.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

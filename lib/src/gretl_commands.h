@@ -21,7 +21,7 @@
 #define COMMANDS_H
 
 typedef enum {
-    SEMIC,    
+    SEMIC = 0,    
     ADD,
     ADDOBS,
     ADDTO,
