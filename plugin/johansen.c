@@ -1191,8 +1191,6 @@ simple_beta_restriction (GRETL_VAR *jvar,
     const gretl_matrix *q = rset_get_q_matrix(rset);
     int ret = 1;
 
-    gretl_matrix_print(q, "q, in simple_beta_restriction");
-
     if (!gretl_is_zero_matrix(q)) {
 	/* non-homogeneous */
 	ret = 0;

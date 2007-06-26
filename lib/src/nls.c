@@ -3276,6 +3276,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	    reverse_gradient(g, n);
 	}
+
 	if (ilast == gcount) {
 	    /* (re-)start: initialize curvature matrix */
 	    for (i=0; i<n; i++) {
@@ -3285,11 +3286,13 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		H[i][i] = 1.0;
 	    }
 	}
+
 	for (i=0; i<n; i++) {
 	    /* copy coefficients to X, gradient to c */
 	    X[i] = b[i];
 	    c[i] = g[i];
 	}
+
 	sumgrad = 0.0;
 	for (i=0; i<n; i++) {
 	    s = 0.0;
@@ -3372,8 +3375,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		    D2 = 1.0 + D2 / D1;
 		    for (i=0; i<n; i++) {
 			for (j=0; j<=i; j++) {
-			    H[i][j] += (D2 * t[i]*t[j]
-					- X[i]*t[j] - t[i]*X[j]) / D1;
+			    H[i][j] += (D2 * t[i]*t[j] - X[i]*t[j] - t[i]*X[j]) / D1;
 			}
 		    }
 		} else {
@@ -3385,7 +3387,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		ilast = gcount;
 	    }
 	} else {
-	    /* downhill search */
+	    /* heading in the wrong direction */
 	    if (ilast == gcount) {
 		/* we just reset: don't reset again; set ndelta = 0 so
 		   that we exit the main loop
@@ -3459,11 +3461,11 @@ int BFGS_alt (double *b, int n, int maxit, double reltol,
     int i, m, wadim;
     char task[60];
     char csave[60];
-    double f, factr, pgtol;
+    double f, pgtol;
     double dsave[29];
     int isave[44];
     int lsave[4];
-    int ibak = -1;
+    int iter, ibak = 0;
     int err = 0;
 
     *fncount = *grcount = 0;    
@@ -3497,8 +3499,7 @@ int BFGS_alt (double *b, int n, int maxit, double reltol,
 	gradfunc = BFGS_numeric_gradient;
     }
 
-    /* Convergence criteria (not used) */
-    factr = 1.0e5;
+    /* Gradient convergence criterion (not used -- we use reltol instead) */
     pgtol = 0;
 
     /* Bounds on the parameters: for now we just set them all to be
@@ -3515,6 +3516,8 @@ int BFGS_alt (double *b, int n, int maxit, double reltol,
 	/* Call the L-BFGS-B code */
 	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
+
+	iter = isave[29] + 1;
 
 	if (!strncmp(task, "FG", 2)) {
 
@@ -3548,12 +3551,12 @@ int BFGS_alt (double *b, int n, int maxit, double reltol,
 	}
 
 	if (opt & OPT_V) {
-	    if (isave[29] != ibak) {
+	    if (iter != ibak) {
 		reverse_gradient(g, n);
-		print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
+		print_iter_info(iter, -f, crittype, n, b, g, dsave[13], prn);
 		reverse_gradient(g, n);
 	    }
-	    ibak = isave[29];
+	    ibak = iter;
 	}
     }
 
@@ -3565,7 +3568,7 @@ int BFGS_alt (double *b, int n, int maxit, double reltol,
     if (opt & OPT_V) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));
 	reverse_gradient(g, n);
-	print_iter_info(isave[29] + 1, -f, crittype, n, b, g, dsave[13], prn);
+	print_iter_info(iter, -f, crittype, n, b, g, dsave[13], prn);
 	pputc(prn, '\n');
     }
 

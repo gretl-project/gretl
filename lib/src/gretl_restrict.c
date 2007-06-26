@@ -561,7 +561,7 @@ static int parse_b_bit (gretl_restriction_set *r, const char *s,
     if (*eq == EQN_UNSPEC) {
 	/* didn't get an equation number */
 	if (r->type == GRETL_OBJ_EQN) {
-	    *eq = 1;
+	    *eq = 0;
 	} else if (r->type != GRETL_OBJ_VAR) {
 	    err = E_PARSE;
 	}

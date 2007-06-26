@@ -901,7 +901,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	int grcount = 0;
 	int nn = b->rows;
 
-	err = BFGS_max(b->val, nn, maxit, reltol, 
+	err = BFGS_alt(b->val, nn, maxit, reltol, 
 		       &fncount, &grcount, Jloglik, C_LOGLIK,
 		       NULL, J, (prn == NULL)? OPT_NONE : OPT_V, 
 		       prn);
