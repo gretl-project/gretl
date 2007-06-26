@@ -65,6 +65,7 @@ SRCS = excel_import.c \
 	jmulti_import.c \
 	import_common.c \
 	johansen.c \
+	jrestrict.c \
 	kernel.c \
 	lad.c \
 	longname.c \
@@ -220,7 +221,7 @@ excel_import.la: excel_import.lo workbook.lo ms-ole.lo
 mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)
 
-johansen.la: johansen.lo 
+johansen.la: johansen.lo jrestrict.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 sysest.la: sysest.lo fiml.lo liml.lo
