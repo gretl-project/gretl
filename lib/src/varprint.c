@@ -598,7 +598,9 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 }
 
 static void 
-print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
+print_VECM_coint_eqns (JohansenInfo *jv, 
+		       const DATAINFO *pdinfo, 
+		       PRN *prn)
 {
     int rtf = rtf_format(prn);
     char s[16];

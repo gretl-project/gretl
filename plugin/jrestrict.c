@@ -815,8 +815,12 @@ static void LR_print (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
     }
 }
 
-static int printres (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
+#define VECM_WIDTH 13
+
+static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
+		     PRN *prn)
 {
+    JohansenInfo *jv = jvar->jinfo;
     const gretl_matrix *b = J->beta;
     const gretl_matrix *V = J->V;
     gretl_matrix *sd = NULL;
@@ -838,17 +842,34 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
     }
 
     pputc(prn, '\n');
-    pputs(prn, _("Restricted beta (standard errors in parentheses)"));
+    pputs(prn, _("Restricted cointegrating vectors"));
+    pprintf(prn, " (%s)", _("standard errors in parentheses"));
     pputs(prn, "\n\n");
 
     for (i=0; i<n; i++) {
-	pputc(prn, '\t');
-	for (j=0; j<r; j++) {
-	    pprintf(prn, " %8.4f   ", gretl_matrix_get(b, i, j));
+	char vname[32];
+	char s[16];
+
+	if (i < jv->list[0]) {
+	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
+	} else if (jv->code == J_REST_CONST) {
+	    strcpy(vname, "const");
+	} else if (jv->code == J_REST_TREND) {
+	    strcpy(vname, "trend");
 	}
-	pputs(prn, "\n\t");
+	pprintf(prn, "%-12s", vname); /* FIXME */
+
+	/* coefficients */
 	for (j=0; j<r; j++) {
-	    pprintf(prn, "(%8.4f)  ", gretl_matrix_get(sd, i, j));
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(b, i, j));
+	}
+	pputc(prn, '\n');
+
+	bufspace(VECM_WIDTH, prn);
+
+	for (j=0; j<r; j++) {
+	    sprintf(s, "(%#.5g)", gretl_matrix_get(sd, i, j));
+	    pprintf(prn, "%12s ", s);
 	}
 	pputc(prn, '\n');
     }
@@ -864,6 +885,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 
 int general_beta_analysis (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,
+			   const DATAINFO *pdinfo,
 			   gretlopt opt,
 			   PRN *prn)
 {
@@ -951,7 +973,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	printres(J, jvar, prn); 
+	printres(J, jvar, pdinfo, prn); 
 
 	if (opt & OPT_F) {
 	    gretl_matrix_free(jvar->jinfo->Beta);

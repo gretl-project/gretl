@@ -520,10 +520,6 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
    coefficients on the lagged differences and the unrestricted
    deterministic vars.  Construct full residuals matrix while
    we're at it.
-
-   FIXME: when seasonals are included, we're not getting the
-   same results as JMulTi for the constant (though the results
-   are the same for the seasonal dummies themselves)?
 */
 
 static int 
@@ -1209,7 +1205,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 {
     int err;
 
-    err = general_beta_analysis(jvar, rset, OPT_F, prn);
+    err = general_beta_analysis(jvar, rset, pdinfo, OPT_F, prn);
 
     if (!err) {
 	err = build_VECM_models(jvar, pZ, pdinfo, 0);
@@ -1422,7 +1418,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     int err = 0;
 
     if (!simple_beta_restriction(jvar, rset)) {
-	return general_beta_analysis(jvar, rset, OPT_NONE, prn);
+	return general_beta_analysis(jvar, rset, pdinfo, OPT_NONE, prn);
     }
 
     R = rset_get_R_matrix(rset);

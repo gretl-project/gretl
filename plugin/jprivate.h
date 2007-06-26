@@ -23,6 +23,7 @@
 int 
 general_beta_analysis (GRETL_VAR *jvar, 
 		       const gretl_restriction_set *rset,
+		       const DATAINFO *pdinfo,
 		       gretlopt opt,
 		       PRN *prn);
 
