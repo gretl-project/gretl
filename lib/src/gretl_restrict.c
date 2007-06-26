@@ -28,11 +28,13 @@
 #define RDEBUG 0
 
 #define EQN_UNSPEC -9
+#define DPOS_NONE 999
 
 typedef struct restriction_ restriction;
 
 struct restriction_ {
     int nterms;      /* number of terms in restriction */
+    int dpos;        /* diagonal position (if applicable) */
     double *mult;    /* array of numerical multipliers on coeffs */
     int *eq;         /* array of equation numbers (for multi-equation case) */
     int *bnum;       /* array of coeff numbers */
@@ -167,7 +169,7 @@ static int R_n_columns (gretl_restriction_set *rset)
     return cols;
 }
 
-/* used when generating restricted estimates (single-equation OLS
+/* Used when generating restricted estimates (single-equation OLS
    only) */
 
 static int 
@@ -218,6 +220,34 @@ restriction_set_form_full_matrices (gretl_restriction_set *rset)
     return 0;
 }
 
+/* Assign the correct diagonal position, for the case of restrictions
+   on VECM beta that do not include cross-equation terms. 
+*/
+
+static void assign_diag_positions (gretl_restriction_set *rset)
+{
+    restriction *r;
+    int common, eq0;
+    int i, j;
+
+    for (i=0; i<rset->k; i++) {
+	r = rset->restrictions[i];
+	eq0 = r->eq[0];
+	common = 1;
+	for (j=1; j<r->nterms; j++) {
+	    if (r->eq[j] != eq0) {
+		common = 0;
+		break;
+	    }
+	}
+	if (common) {
+	    r->dpos = eq0;
+	}
+    }
+}
+
+/* Check the validity of a set of VECM beta restrictions */
+
 static int vecm_restriction_check (gretl_restriction_set *rset)
 {
     restriction *r;
@@ -256,6 +286,10 @@ static int vecm_restriction_check (gretl_restriction_set *rset)
 	rset->multi = 0;
     }
 
+    if (!err) {
+	assign_diag_positions(rset);
+    }
+
     return err;
 }
 
@@ -264,7 +298,6 @@ static int vecm_restriction_check (gretl_restriction_set *rset)
 static int 
 restriction_set_form_matrices (gretl_restriction_set *rset)
 {
-    MODEL *pmod = NULL;
     gretl_matrix *R = NULL;
     gretl_vector *q = NULL;
     restriction *r;
@@ -291,12 +324,10 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
     }
 
     if (rset->type == GRETL_OBJ_EQN) {
-	pmod = rset->obj;
-    }
+	MODEL *pmod = rset->obj;
 
-    for (i=0; i<rset->k; i++) { 
-	r = rset->restrictions[i];
-	if (pmod != NULL) {
+	for (i=0; i<rset->k; i++) { 
+	    r = rset->restrictions[i];
 	    col = 0;
 	    for (j=0; j<pmod->ncoeff; j++) {
 		if (rset->mask[j]) {
@@ -304,14 +335,43 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
 		    gretl_matrix_set(R, i, col++, x);
 		}
 	    }
-	} else {	    
+	    gretl_vector_set(q, i, r->rhs);
+	}
+    } else if (rset->type == GRETL_OBJ_VAR) {
+	/* VECM: write the restrictions in block-diagonal fashion */
+	int d, dmax = 0, row = 0;
+
+	for (i=0; i<rset->k; i++) { 
+	    r = rset->restrictions[i];
+	    if (r->dpos > dmax) {
+		dmax = r->dpos;
+	    }
+	}
+
+	for (d=0; d<=dmax; d++) {
+	    for (i=0; i<rset->k; i++) { 
+		r = rset->restrictions[i];
+		if (r->dpos == d) {
+		    for (j=0; j<r->nterms; j++) {
+			col = get_R_column(rset, i, j);
+			x = r->mult[j];
+			gretl_matrix_set(R, row, col, x);
+		    }
+		    gretl_vector_set(q, row, r->rhs);
+		    row++;
+		}
+	    }
+	}
+    } else {
+	for (i=0; i<rset->k; i++) { 
+	    r = rset->restrictions[i];
 	    for (j=0; j<r->nterms; j++) {
 		col = get_R_column(rset, i, j);
 		x = r->mult[j];
 		gretl_matrix_set(R, i, col, x);
 	    }
+	    gretl_vector_set(q, i, r->rhs);
 	} 
-	gretl_vector_set(q, i, r->rhs);
     }
 
 #if RDEBUG
@@ -615,6 +675,7 @@ static restriction *restriction_new (int n, int multi)
     }
 
     r->nterms = n;
+    r->dpos = DPOS_NONE;
     r->rhs = 0.0;
 
     return r;

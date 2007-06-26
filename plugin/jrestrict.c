@@ -17,8 +17,8 @@
  *
  */
 
-/* General restrictions on beta in context of a VECM.
-   Based on Jack Lucchetti's ox program, June 2007.
+/* General restrictions on beta in context of a VECM.  Based on an ox
+   program by Jack, June 2007.  Rendered into C by Allin.
 */
 
 #include "libgretl.h"
@@ -40,23 +40,28 @@ struct Jwrap_ {
     double ll;      /* log-likelihood */
 
     /* moment matrices and copies */
-    gretl_matrix *S00;
-    gretl_matrix *S01;
-    gretl_matrix *S11;
+    const gretl_matrix *S00;
+    const gretl_matrix *S01;
+    const gretl_matrix *S11;
+
     gretl_matrix *S00i;
     gretl_matrix *S11c;
 
     /* restrictions on beta */
     gretl_matrix *H;
     gretl_matrix *s;
-    gretl_matrix **Hs;
+    gretl_matrix **h;
 
     gretl_matrix *beta;
     gretl_matrix *alpha;
     gretl_matrix *Omega;
     gretl_matrix *V;
 
-    /* temporary storage for likelihood calculation */
+    /* temp storage for beta calculation */
+    gretl_matrix *phivec;
+    gretl_matrix *bcol;
+
+    /* temp storage for likelihood calculation */
     gretl_matrix *A;
     gretl_matrix *qf1;
     gretl_matrix *qf2;
@@ -81,17 +86,21 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
     J->S00 = NULL;
     J->S01 = NULL;
     J->S11 = NULL;
+
     J->S00i = NULL;
     J->S11c = NULL;
 
     J->H = NULL;
     J->s = NULL;
-    J->Hs = NULL;
+    J->h = NULL;
 
     J->beta = NULL;
     J->alpha = NULL;
     J->Omega = NULL;
     J->V = NULL;
+
+    J->phivec = NULL;
+    J->bcol = NULL;
 
     J->A = NULL;
     J->qf1 = NULL;
@@ -102,23 +111,23 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
 
 static void jwrap_destroy (Jwrap *J)
 {
-    gretl_matrix_free(J->S00);
-    gretl_matrix_free(J->S01);
-    gretl_matrix_free(J->S11);
     gretl_matrix_free(J->S00i);
     gretl_matrix_free(J->S11c);
 
     gretl_matrix_free(J->H);
     gretl_matrix_free(J->s);
 
-    if (J->Hs != NULL) {
-	gretl_matrix_array_free(J->Hs, J->nC);
+    if (J->h != NULL) {
+	gretl_matrix_array_free(J->h, J->nC);
     }
 
     gretl_matrix_free(J->beta);
     gretl_matrix_free(J->alpha);
     gretl_matrix_free(J->Omega);
     gretl_matrix_free(J->V);
+
+    gretl_matrix_free(J->phivec);
+    gretl_matrix_free(J->bcol);
 
     gretl_matrix_free(J->A);
     gretl_matrix_free(J->qf1);
@@ -127,27 +136,13 @@ static void jwrap_destroy (Jwrap *J)
     free(J);
 }
 
-static void matrix_fill_from_array (gretl_matrix *m,
-				    const double *X)
-{
-    int i, n = m->rows * m->cols;
-
-    for (i=0; i<n; i++) {
-	m->val[i] = X[i];
-    }
-}
-
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
     int err = 0;
 
-    J->S00 = gretl_matrix_copy(jvar->jinfo->Suu);
-    J->S01 = gretl_matrix_copy(jvar->jinfo->Suv);
-    J->S11 = gretl_matrix_copy(jvar->jinfo->Svv);
-
-    if (J->S00 == NULL || J->S01 == NULL || J->S11 == NULL) {
-	return E_ALLOC;
-    }
+    J->S00 = jvar->jinfo->Suu;
+    J->S01 = jvar->jinfo->Suv;
+    J->S11 = jvar->jinfo->Svv;
 
     J->S11c = gretl_matrix_alloc(J->S11->rows, J->S11->cols);
     if (J->S11c == NULL) {
@@ -171,21 +166,21 @@ static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
     return err;
 }
 
-/* Convert implicit constraint matrices R and q into explicit form.
-   The matrices put in the locations **pH and **ps are newly allocated
+/* Convert the implicit constraint matrices R and q into explicit form.
+   The matrices put in the locations *ph and *ps are newly allocated
    in this function.
 */
 
 static int imp2exp (const gretl_matrix *Ri, const gretl_matrix *qi,
-		    gretl_matrix **pH, gretl_matrix **ps)
+		    gretl_matrix **ph, gretl_matrix **ps)
 {
     gretl_matrix *RRT = NULL;
     gretl_matrix *Tmp = NULL;
-    int n = Ri->cols;
     int m = Ri->rows;
+    int n = Ri->cols;
     int err = 0;
 
-    *pH = NULL;
+    *ph = NULL;
     *ps = NULL;
 
     RRT = gretl_matrix_alloc(m, m);
@@ -201,11 +196,11 @@ static int imp2exp (const gretl_matrix *Ri, const gretl_matrix *qi,
     gretl_matrix_print(qi, "qi");
 #endif    
 
-    *pH = gretl_matrix_right_nullspace(Ri, &err);
+    *ph = gretl_matrix_right_nullspace(Ri, &err);
 
 #if JDEBUG 
     fprintf(stderr, "right_nullspace: err = %d\n", err);
-    gretl_matrix_print(*pH, "*pH");
+    gretl_matrix_print(*ph, "*ph");
 #endif
 
     if (!err) {
@@ -243,8 +238,38 @@ static int imp2exp (const gretl_matrix *Ri, const gretl_matrix *qi,
     return err;
 }
 
+/* Determine the number of rows in a given diagonal block of the "big
+   R" restriction matrix: we count from the given starting row till we
+   hit a row that is all zeros, up to the specified column.
+*/
+
+static int 
+get_Ri_rows (const gretl_matrix *R, int nb, int i, int *start)
+{
+    int stop, nz = nb * (i + 1);
+    int j, r = 0;
+
+    for (i=*start; i<R->rows; i++) {
+	stop = 1;
+	for (j=0; j<nz; j++) {
+	    if (gretl_matrix_get(R, i, j) != 0) {
+		stop = 0;
+		r++;
+		break;
+	    }
+	}
+	if (stop) {
+	    break;
+	}
+    }
+
+    *start += r;
+
+    return r;
+}
+
 /* Here we construct both the big block-diagonal restrictions matrix,
-   J->H, and an array holding the block-diagonal elements, J->Hs,
+   J->H, and an array holding the block-diagonal elements, J->h,
    which will be used later in computing the variance of beta.
 */
 
@@ -260,28 +285,23 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 
     int nb = gretl_VECM_n_beta(jvar);
     int nC, hr = 0, hc = 0, sr = 0;
-    int Rr = 0, Rc = 0;
-    int i, irows, err = 0;
+    int Rr = 0, Rc = 0, irmax = 0;
+    int r0, ir;
+    int i, err = 0;
 
     R = rset_get_R_matrix(rset);
     q = rset_get_q_matrix(rset);
 
     nC = R->cols / nb;
-    irows = R->rows / J->rank;
-
-    /* FIXME the extraction of the Ri matrices is not
-       right in the general case -- right now it works
-       only if all the Ri are the same size.
-    */
 
 #if JDEBUG
     gretl_matrix_print(R, "R, in set_up_restrictions");
     gretl_matrix_print(q, "q, in set_up_restrictions");
-    fprintf(stderr, "nC = %d, irows = %d\n", nC, irows);
+    fprintf(stderr, "nC = %d\n", nC);
 #endif
 
-    J->Hs = gretl_matrix_array_alloc(nC);
-    if (J->Hs == NULL) {
+    J->h = gretl_matrix_array_alloc(nC);
+    if (J->h == NULL) {
 	return E_ALLOC;
     }
 
@@ -290,20 +310,32 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 	return E_ALLOC;
     }
 
-    Ri = gretl_matrix_alloc(irows, nb);
-    qi = gretl_matrix_alloc(irows, 1);
+    /* find max rows per restriction sub-matrix */
+    r0 = 0;
+    for (i=0; i<nC; i++) {
+	ir = get_Ri_rows(R, nb, i, &r0);
+	if (ir > irmax) {
+	    irmax = ir;
+	}
+    }
 
-    J->nC = 0;
+    Ri = gretl_matrix_alloc(irmax, nb);
+    qi = gretl_matrix_alloc(irmax, 1);
+
+    J->nC = r0 = 0;
 
     for (i=0; i<nC && !err; i++) {
+	ir = get_Ri_rows(R, nb, i, &r0);
+	gretl_matrix_reuse(Ri, ir, 0);
+	gretl_matrix_reuse(qi, ir, 0);
 	gretl_matrix_extract_matrix(Ri, R, Rr, Rc, GRETL_MOD_NONE);
 	gretl_matrix_extract_matrix(qi, q, Rr,  0, GRETL_MOD_NONE);
-	err = imp2exp(Ri, qi, &J->Hs[i], &ss[i]);
+	err = imp2exp(Ri, qi, &J->h[i], &ss[i]);
 	if (!err) {
-	    hr += J->Hs[i]->rows;
-	    hc += J->Hs[i]->cols;
+	    hr += J->h[i]->rows;
+	    hc += J->h[i]->cols;
 	    sr += ss[i]->rows;
-	    Rr += irows;
+	    Rr += ir;
 	    Rc += nb;
 	    J->nC += 1;
 	}
@@ -328,13 +360,13 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     }
 
     for (i=0; i<nC && !err; i++) {
-	err = gretl_matrix_inscribe_matrix(J->H, J->Hs[i], hr, hc, GRETL_MOD_NONE);
+	err = gretl_matrix_inscribe_matrix(J->H, J->h[i], hr, hc, GRETL_MOD_NONE);
 	if (!err) {
 	    err = gretl_matrix_inscribe_matrix(J->s, ss[i], sr, 0, GRETL_MOD_NONE);
 	}
 	if (!err) {
-	    hr += J->Hs[i]->rows;
-	    hc += J->Hs[i]->cols;
+	    hr += J->h[i]->rows;
+	    hc += J->h[i]->cols;
 	    sr += ss[i]->rows;
 	}
     }
@@ -518,7 +550,9 @@ static int initval (Jwrap *J, const gretl_restriction_set *rset,
     }
 
     if (!err) {
+#if JDEBUG
 	fprintf(stderr, "*** initval: vecb->rows = %d\n", vecb->rows);
+#endif
 	J->blen = vecb->rows;
 	*pb = vecb;
     } else {
@@ -580,7 +614,7 @@ static int make_beta_variance (Jwrap *J)
     int i, j, err = 0;
 
     for (i=0; i<r; i++) { 
-	npar += J->Hs[i]->cols;
+	npar += J->h[i]->cols;
     }
 
     V = gretl_zero_matrix_new(npar, npar);
@@ -599,18 +633,18 @@ static int make_beta_variance (Jwrap *J)
 
     istart = 0;
     for (i=0; i<r && !err; i++) {
-	gretl_matrix *HiS = gretl_matrix_alloc(J->Hs[i]->cols, J->S11->cols);
+	gretl_matrix *HiS = gretl_matrix_alloc(J->h[i]->cols, J->S11->cols);
 
-	err = gretl_matrix_multiply_mod(J->Hs[i], GRETL_MOD_TRANSPOSE,
+	err = gretl_matrix_multiply_mod(J->h[i], GRETL_MOD_TRANSPOSE,
 					J->S11, GRETL_MOD_NONE,
 					HiS, GRETL_MOD_NONE);
 
 	jstart = 0;
 	for (j=0; j<r && !err; j++) {
-	    gretl_matrix *Vij = gretl_matrix_alloc(HiS->rows, J->Hs[j]->cols);
+	    gretl_matrix *Vij = gretl_matrix_alloc(HiS->rows, J->h[j]->cols);
 	    double rij = gretl_matrix_get(aiom, i, j);
 
-	    gretl_matrix_multiply(HiS, J->Hs[j], Vij);
+	    gretl_matrix_multiply(HiS, J->h[j], Vij);
 	    gretl_matrix_multiply_by_scalar(Vij, rij);
 #if JDEBUG > 1
 	    gretl_matrix_print(Vij, "Vij");
@@ -618,11 +652,11 @@ static int make_beta_variance (Jwrap *J)
 #endif
 	    err = gretl_matrix_inscribe_matrix(V, Vij, istart, jstart, GRETL_MOD_NONE);
 
-	    jstart += J->Hs[j]->cols;
+	    jstart += J->h[j]->cols;
 	    gretl_matrix_free(Vij);
 	}
 
-	istart += J->Hs[i]->cols;
+	istart += J->h[i]->cols;
 	gretl_matrix_free(HiS);
     }
 
@@ -650,8 +684,6 @@ static int make_beta_variance (Jwrap *J)
 
 static int make_beta (Jwrap *J, const double *phi)
 {
-    gretl_matrix *phivec = NULL;
-    gretl_matrix *tmp = NULL;
     int i, nbeta = J->beta->rows * J->beta->cols;
     int err = 0;
 
@@ -660,35 +692,36 @@ static int make_beta (Jwrap *J, const double *phi)
 	return E_DATA;
     }
 
-    phivec = gretl_column_vector_alloc(J->blen);
-    tmp = gretl_column_vector_alloc(nbeta);
-
-    if (phivec == NULL || tmp == NULL) {
-	err = E_ALLOC;
+    if (J->phivec == NULL) {
+	/* temp storage not allocated yet */
+	J->phivec = gretl_column_vector_alloc(J->blen);
+	J->bcol = gretl_column_vector_alloc(nbeta);
+	if (J->phivec == NULL || J->bcol == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     if (!err) {
-	matrix_fill_from_array(phivec, phi);
-	err = gretl_matrix_multiply(J->H, phivec, tmp);
+	for (i=0; i<J->blen; i++) {
+	    J->phivec->val[i] = phi[i];
+	}
+	err = gretl_matrix_multiply(J->H, J->phivec, J->bcol);
     }
 
     if (!err) {
-	gretl_matrix_add_to(tmp, J->s);
+	gretl_matrix_add_to(J->bcol, J->s);
     }
 
     if (!err) {
 	for (i=0; i<nbeta; i++) {
-	    J->beta->val[i] = tmp->val[i];
+	    J->beta->val[i] = J->bcol->val[i];
 	}
     }
 
 #if JDEBUG
-    gretl_matrix_print(phivec, "phi");
+    gretl_matrix_print(J->phivec, "phi");
     gretl_matrix_print(J->beta, "beta");
 #endif
-
-    gretl_matrix_free(phivec);
-    gretl_matrix_free(tmp);
 
     return err;
 }
@@ -707,7 +740,6 @@ static double Jloglik (const double *phi, void *data)
 	J->A = gretl_matrix_alloc(J->S01->cols, J->S01->cols);
 	J->qf1 = gretl_matrix_alloc(bcols, bcols);
 	J->qf2 = gretl_matrix_alloc(bcols, bcols);
-	
 	if (J->A == NULL || J->qf1 == NULL || J->qf2 == NULL) {
 	    err = E_ALLOC;
 	}
@@ -801,6 +833,8 @@ static int printres (const gretl_matrix *b, const gretl_matrix *V,
     return 0;
 }
 
+/* public entry point */
+
 int 
 full_beta_analysis (GRETL_VAR *jvar, 
 		    const gretl_restriction_set *rset,
@@ -893,7 +927,7 @@ full_beta_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	printres(J->beta, J->V, prn); 
-	/* FIXME attach these to jvar and nullify local ptrs */
+	/* FIXME attach these to jvar and nullify local ptrs? */
     } 
 
     jwrap_destroy(J);
