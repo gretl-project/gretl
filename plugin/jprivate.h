@@ -21,9 +21,9 @@
 #define JPRIVATE_H
 
 int 
-full_beta_analysis (GRETL_VAR *jvar, 
-		    const gretl_restriction_set *rset,
-		    PRN *prn);
-
+general_beta_analysis (GRETL_VAR *jvar, 
+		       const gretl_restriction_set *rset,
+		       gretlopt opt,
+		       PRN *prn);
 
 #endif /* JPRIVATE_H */

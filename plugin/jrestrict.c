@@ -27,7 +27,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 2
+#define JDEBUG 0
 
 typedef struct Jwrap_ Jwrap;
 
@@ -37,6 +37,7 @@ struct Jwrap_ {
     int rank;
     int blen;       /* number of unrestricted coefficients in beta */
     int nC;         /* number of restriction matrices */
+    double ldS00;   /* base component of log-likelihood */
     double ll;      /* log-likelihood */
 
     /* moment matrices and copies */
@@ -45,7 +46,7 @@ struct Jwrap_ {
     const gretl_matrix *S11;
 
     gretl_matrix *S00i;
-    gretl_matrix *S11c;
+    gretl_matrix *S11m;
 
     /* restrictions on beta */
     gretl_matrix *H;
@@ -62,7 +63,6 @@ struct Jwrap_ {
     gretl_matrix *bcol;
 
     /* temp storage for likelihood calculation */
-    gretl_matrix *A;
     gretl_matrix *qf1;
     gretl_matrix *qf2;
 };
@@ -88,7 +88,7 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
     J->S11 = NULL;
 
     J->S00i = NULL;
-    J->S11c = NULL;
+    J->S11m = NULL;
 
     J->H = NULL;
     J->s = NULL;
@@ -102,7 +102,6 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
     J->phivec = NULL;
     J->bcol = NULL;
 
-    J->A = NULL;
     J->qf1 = NULL;
     J->qf2 = NULL;
 
@@ -112,7 +111,7 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
 static void jwrap_destroy (Jwrap *J)
 {
     gretl_matrix_free(J->S00i);
-    gretl_matrix_free(J->S11c);
+    gretl_matrix_free(J->S11m);
 
     gretl_matrix_free(J->H);
     gretl_matrix_free(J->s);
@@ -129,7 +128,6 @@ static void jwrap_destroy (Jwrap *J)
     gretl_matrix_free(J->phivec);
     gretl_matrix_free(J->bcol);
 
-    gretl_matrix_free(J->A);
     gretl_matrix_free(J->qf1);
     gretl_matrix_free(J->qf2);
 
@@ -138,30 +136,49 @@ static void jwrap_destroy (Jwrap *J)
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
+    gretl_matrix *Tmp = NULL;
     int err = 0;
 
     J->S00 = jvar->jinfo->Suu;
     J->S01 = jvar->jinfo->Suv;
     J->S11 = jvar->jinfo->Svv;
 
-    J->S11c = gretl_matrix_alloc(J->S11->rows, J->S11->cols);
-    if (J->S11c == NULL) {
-	return E_ALLOC;
-    }
-
     J->S00i = gretl_matrix_copy(J->S00);
-    if (J->S00i == NULL) {
+    J->S11m = gretl_matrix_copy(J->S11);
+    if (J->S00i == NULL || J->S11m == NULL) {
 	return E_ALLOC;
     }
 
-    err = gretl_invert_symmetric_matrix(J->S00i);
+    Tmp = gretl_matrix_alloc(J->S01->cols, J->S01->cols);
+    if (Tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    J->ldS00 = gretl_matrix_log_determinant(J->S00i, &err);
+
+    if (!err) {
+	gretl_matrix_copy_values(J->S00i, J->S00);
+	err = gretl_invert_symmetric_matrix(J->S00i);
+    }
+
+    if (!err) {
+	err = gretl_matrix_qform(J->S01, GRETL_MOD_TRANSPOSE,
+				 J->S00i, Tmp, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_matrix_subtract_from(J->S11m, Tmp);
+    }
 
 #if JDEBUG > 1
     gretl_matrix_print(J->S00, "S00");
     gretl_matrix_print(J->S01, "S01");
     gretl_matrix_print(J->S11, "S11");
     gretl_matrix_print(J->S00i, "S00i");
+    gretl_matrix_print(J->S11m, "S11m");
 #endif    
+
+    gretl_matrix_free(Tmp);
 
     return err;
 }
@@ -475,7 +492,7 @@ static int case0 (Jwrap *J)
 
 #if JDEBUG
     gretl_matrix_print(evals, "case0: evals");
-    gretl_matrix_print(M, "case0: M, again");
+    gretl_matrix_print(M, "case0: M");
     fprintf(stderr, "(err = %d)\n", err);
 #endif
 
@@ -731,16 +748,15 @@ static int make_beta (Jwrap *J, const double *phi)
 static double Jloglik (const double *phi, void *data)
 {
     Jwrap *J = (Jwrap *) data;
-    double ret = NADBL;
+    double ret = J->ldS00;
     int bcols = J->beta->cols;
     int err = 0;
 
-    if (J->A == NULL) {
+    if (J->qf1 == NULL) {
 	/* temp storage not allocated yet */
-	J->A = gretl_matrix_alloc(J->S01->cols, J->S01->cols);
 	J->qf1 = gretl_matrix_alloc(bcols, bcols);
 	J->qf2 = gretl_matrix_alloc(bcols, bcols);
-	if (J->A == NULL || J->qf1 == NULL || J->qf2 == NULL) {
+	if (J->qf1 == NULL || J->qf2 == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -750,21 +766,8 @@ static double Jloglik (const double *phi, void *data)
     }
 
     if (!err) {
-	gretl_matrix_copy_values(J->S11c, J->S11);
-    }
-
-    if (!err) {
-	err = gretl_matrix_qform(J->S01, GRETL_MOD_TRANSPOSE,
-				 J->S00i, J->A, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	err = gretl_matrix_subtract_from(J->S11c, J->A);
-    }
-
-    if (!err) {
 	gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-			   J->S11c, J->qf1, GRETL_MOD_NONE);
+			   J->S11m, J->qf1, GRETL_MOD_NONE);
     }
 
     if (!err) {
@@ -772,9 +775,8 @@ static double Jloglik (const double *phi, void *data)
 				 J->S11, J->qf2, GRETL_MOD_NONE);
     }
 
-
     if (!err) {
-	ret = gretl_matrix_log_determinant(J->qf1, &err);
+	ret += gretl_matrix_log_determinant(J->qf1, &err);
     }
 
     if (!err) {
@@ -784,20 +786,46 @@ static double Jloglik (const double *phi, void *data)
     if (err) {
 	J->ll = ret = NADBL;
     } else {
-	J->ll = ret = -J->T * 0.5 * ret;
+	J->ll = ret = -J->T * 0.5 * (J->neqns * (1.0 + LN_2_PI) + ret);
     }
 
     return ret;
 }
 
-static int printres (const gretl_matrix *b, const gretl_matrix *V,
-		     PRN *prn)
+static void LR_print (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 {
+    double x = 2.0 * (jvar->ll - J->ll);
+    int p = gretl_matrix_rows(jvar->jinfo->Beta);
+    int r = jrank(jvar);
+    int i, si, df = 0;
+
+    /* FIXME df calculation? (Johansen pp. 106-112) */
+
+    for (i=0; i<J->nC; i++) {
+	si = J->h[i]->cols;
+	df += p - r - si; 
+    }
+
+    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
+    pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), J->ll);
+    if (df > 0) {
+	pprintf(prn, "2 * (lu - lr) = %g\n", x);
+	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
+		chisq_cdf_comp(x, df));
+    }
+}
+
+static int printres (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
+{
+    const gretl_matrix *b = J->beta;
+    const gretl_matrix *V = J->V;
     gretl_matrix *sd = NULL;
     double x;
     int n = b->rows;
     int r = b->cols;
     int i, j;
+
+    LR_print(J, jvar, prn);
 
     sd = gretl_matrix_alloc(n, r);
     if (sd == NULL) {
@@ -810,8 +838,8 @@ static int printres (const gretl_matrix *b, const gretl_matrix *V,
     }
 
     pputc(prn, '\n');
-    pputs(prn, "   ====================================");
-    pputc(prn, '\n');
+    pputs(prn, _("Restricted beta (standard errors in parentheses)"));
+    pputs(prn, "\n\n");
 
     for (i=0; i<n; i++) {
 	pputc(prn, '\t');
@@ -825,7 +853,6 @@ static int printres (const gretl_matrix *b, const gretl_matrix *V,
 	pputc(prn, '\n');
     }
 
-    pputs(prn, "   ====================================");
     pputc(prn, '\n');
 
     gretl_matrix_free(sd);
@@ -835,14 +862,13 @@ static int printres (const gretl_matrix *b, const gretl_matrix *V,
 
 /* public entry point */
 
-int 
-full_beta_analysis (GRETL_VAR *jvar, 
-		    const gretl_restriction_set *rset,
-		    PRN *prn)
+int general_beta_analysis (GRETL_VAR *jvar, 
+			   const gretl_restriction_set *rset,
+			   gretlopt opt,
+			   PRN *prn)
 {
     Jwrap *J = NULL;
     gretl_matrix *b = NULL;
-    gretl_matrix *bS11b = NULL;
     gretl_matrix *S01b = NULL;
 
     int n = jvar->neqns;
@@ -883,15 +909,14 @@ full_beta_analysis (GRETL_VAR *jvar,
 
 #if JDEBUG
     if (!err) {
-	printf("after BFGS: loglikelihood = %.8g\n", J->ll);
+	fprintf(stderr, "after BFGS: loglikelihood = %.8g\n", J->ll);
     }
 #endif
 
     if (!err) {
 	S01b = gretl_matrix_alloc(J->S01->rows, J->rank);
-	bS11b = gretl_matrix_alloc(J->rank, J->rank);
 	J->alpha = gretl_matrix_alloc(J->S01->rows, J->rank);
-	if (S01b == NULL || bS11b == NULL || J->alpha == NULL) {
+	if (S01b == NULL || J->alpha == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -902,15 +927,15 @@ full_beta_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-				 J->S11, bS11b, GRETL_MOD_NONE);
+				 J->S11, J->qf1, GRETL_MOD_NONE);
     }
 
     if (!err) {
-	gretl_invert_symmetric_matrix(bS11b);
+	gretl_invert_symmetric_matrix(J->qf1);
     }
 
     if (!err) {
-	err = gretl_matrix_multiply(S01b, bS11b, J->alpha);
+	err = gretl_matrix_multiply(S01b, J->qf1, J->alpha);
     }
 
     if (!err) {
@@ -926,14 +951,26 @@ full_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	printres(J->beta, J->V, prn); 
-	/* FIXME attach these to jvar and nullify local ptrs? */
+	printres(J, jvar, prn); 
+
+	if (opt & OPT_F) {
+	    gretl_matrix_free(jvar->jinfo->Beta);
+	    jvar->jinfo->Beta = J->beta;
+	    J->beta = NULL;
+
+	    gretl_matrix_free(jvar->jinfo->Alpha);
+	    jvar->jinfo->Alpha = J->alpha;
+	    J->alpha = NULL;
+
+	    gretl_matrix_free(jvar->jinfo->Bvar);
+	    jvar->jinfo->Bvar = J->V;
+	    J->V = NULL;
+	}
     } 
 
     jwrap_destroy(J);
 
     gretl_matrix_free(S01b);
-    gretl_matrix_free(bS11b);
     gretl_matrix_free(b);
 
     return err;

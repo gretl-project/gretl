@@ -24,7 +24,6 @@
 #include "jprivate.h"
 
 #define JDEBUG 0
-#define OLDEIG 0
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -908,7 +907,7 @@ static int beta_variance (GRETL_VAR *vecm)
 static int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *eigvals)
 {
     gretl_matrix *Suu;
-    double ldet, T_2 = (double) jvar->T / 2.0;
+    double ldet;
     int n = jvar->neqns;
     int h, i, err = 0;
 
@@ -920,10 +919,11 @@ static int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *eigvals)
 	err = E_ALLOC;
     } else {
 	ldet = gretl_matrix_log_determinant(Suu, &err);
-	jvar->ll = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
+	jvar->ll = n * (1.0 + LN_2_PI) + ldet;
 	for (i=0; i<h; i++) {
-	    jvar->ll -= T_2 * log(1.0 - eigvals->val[i]); 
+	    jvar->ll += log(1.0 - eigvals->val[i]); 
 	}
+	jvar->ll *= -(jvar->T / 2.0);
 	gretl_matrix_free(Suu);
     }
 
@@ -1191,19 +1191,43 @@ simple_beta_restriction (GRETL_VAR *jvar,
     const gretl_matrix *q = rset_get_q_matrix(rset);
     int ret = 1;
 
+    gretl_matrix_print(q, "q, in simple_beta_restriction");
+
     if (!gretl_is_zero_matrix(q)) {
 	/* non-homogeneous */
 	ret = 0;
-    } else if (q->rows != gretl_VECM_n_beta(jvar)) {
-	/* not common to all cols */
+    } else if (q->rows > gretl_VECM_n_beta(jvar)) {
+	/* not common to all cols (FIXME?) */
 	ret = 0;
     }
 
     return ret;
 }
 
-/* Public entry point for VECM estimation (with "Case 1" restriction
-   on beta, if rset != NULL) 
+static int johansen_estimate_general (GRETL_VAR *jvar, 
+				      const gretl_restriction_set *rset,
+				      double ***pZ, DATAINFO *pdinfo, 
+				      gretlopt opt, PRN *prn)
+{
+    int err;
+
+    err = general_beta_analysis(jvar, rset, OPT_F, prn);
+
+    if (!err) {
+	err = build_VECM_models(jvar, pZ, pdinfo, 0);
+    }
+
+    if (!err) {
+	const gretl_matrix *R = rset_get_R_matrix(rset);
+
+	jvar->jinfo->R = gretl_matrix_copy(R);
+    }
+
+    return err;
+}
+
+/* Public entry point for VECM estimation (with restriction on beta,
+   if rset != NULL)
 */
 
 int johansen_estimate (GRETL_VAR *jvar, 
@@ -1226,8 +1250,8 @@ int johansen_estimate (GRETL_VAR *jvar,
 #endif
 
     if (rset != NULL && !simple_beta_restriction(jvar, rset)) {
-	/* FIXME */
-	return E_NOTIMP;
+	/* FIXME this doesn't work yet */
+	return johansen_estimate_general(jvar, rset, pZ, pdinfo, opt, prn);
     }
 
     if (rset != NULL) {
@@ -1378,10 +1402,8 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 }
 
 /* 
-   Test of (homogeneous) linear restrictions on the cointegrating
-   relations in a VECM.  This all needs verification and possibly
-   fixing in the case where the "unrestricted" VECM includes a
-   restricted constant or trend
+   Test of linear restrictions on the cointegrating relations in a
+   VECM.
 */
 
 int vecm_beta_test (GRETL_VAR *jvar, 
@@ -1389,6 +1411,8 @@ int vecm_beta_test (GRETL_VAR *jvar,
 		    const DATAINFO *pdinfo, 
 		    PRN *prn)
 {
+    const gretl_matrix *R;
+
     gretl_matrix *D = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
@@ -1396,24 +1420,22 @@ int vecm_beta_test (GRETL_VAR *jvar,
     gretl_matrix *Suu = NULL;
     gretl_matrix *evals = NULL;
 
-    int m, n = jvar->neqns;
-    int rank = jrank(jvar);
+    int m, n, rank;
     int err = 0;
 
     if (!simple_beta_restriction(jvar, rset)) {
-	return full_beta_analysis(jvar, rset, prn);
+	return general_beta_analysis(jvar, rset, OPT_NONE, prn);
     }
 
-    if (1) {
-	/* FIXME make this conditional */
-	const gretl_matrix *R = rset_get_R_matrix(rset);
+    R = rset_get_R_matrix(rset);
+    D = gretl_matrix_right_nullspace(R, &err);
 
-	D = gretl_matrix_right_nullspace(R, &err);
-	if (err) {
-	    return err;
-	}
+    if (err) {
+	return err;
     }
 
+    n = jvar->neqns;
+    rank = jrank(jvar);
     m = gretl_matrix_cols(D);
 
     M = gretl_matrix_alloc(m, m);
