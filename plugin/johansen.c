@@ -23,7 +23,7 @@
 #include "var.h"
 #include "jprivate.h"
 
-#define JDEBUG 1
+#define JDEBUG 0
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -1206,7 +1206,7 @@ simple_beta_restriction (GRETL_VAR *jvar,
     if (!gretl_is_zero_matrix(q)) {
 	/* non-homogeneous */
 	ret = 0;
-    } else if (R->cols > gretl_VECM_n_beta(jvar)) {
+    } else if (R->cols > jvar->neqns + restricted(jvar)) {
 	/* not common to all cols of beta */
 	ret = 0;
     }
