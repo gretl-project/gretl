@@ -1184,14 +1184,15 @@ static int
 simple_beta_restriction (GRETL_VAR *jvar,
 			 const gretl_restriction_set *rset)
 {
+    const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *q = rset_get_q_matrix(rset);
     int ret = 1;
 
     if (!gretl_is_zero_matrix(q)) {
 	/* non-homogeneous */
 	ret = 0;
-    } else if (q->rows > gretl_VECM_n_beta(jvar)) {
-	/* not common to all cols (FIXME?) */
+    } else if (R->cols > gretl_VECM_n_beta(jvar)) {
+	/* not common to all cols of beta */
 	ret = 0;
     }
 
@@ -1403,6 +1404,7 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 int vecm_beta_test (GRETL_VAR *jvar, 
 		    const gretl_restriction_set *rset,
 		    const DATAINFO *pdinfo, 
+		    gretlopt opt,
 		    PRN *prn)
 {
     const gretl_matrix *R;
@@ -1418,7 +1420,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     int err = 0;
 
     if (!simple_beta_restriction(jvar, rset)) {
-	return general_beta_analysis(jvar, rset, pdinfo, OPT_NONE, prn);
+	return general_beta_analysis(jvar, rset, pdinfo, opt, prn);
     }
 
     R = rset_get_R_matrix(rset);
@@ -1444,25 +1446,33 @@ int vecm_beta_test (GRETL_VAR *jvar,
 
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
-    gretl_matrix_print_to_prn(D, "Restriction matrix, D", prn);
+    if (opt & OPT_V) {
+	gretl_matrix_print_to_prn(D, "Restriction matrix, D", prn);
+    }
 
     /* calculate Svv <- D' Svv D */
     gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
 		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
-    gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
+    if (opt & OPT_V) {
+	gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
+    }
 
     if (!err) {
 	/* Suv <- SuvD */
 	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, Suv);
     }
 
-    gretl_matrix_print_to_prn(Suv, "SuvD", prn);
+    if (opt & OPT_V) {
+	gretl_matrix_print_to_prn(Suv, "SuvD", prn);
+    }
 
     err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
 
     if (!err) {
-	gretl_matrix_print_to_prn(M, "M", prn);
+	if (opt & OPT_V) {
+	    gretl_matrix_print_to_prn(M, "M", prn);
+	}
 	johansen_LR_calc(jvar, evals, D, prn);
     } 
 

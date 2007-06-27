@@ -767,6 +767,7 @@ print_restriction_set (const gretl_restriction_set *rset,
 	}
 	print_restriction(rset, i, pdinfo, prn);
     }
+    pputc(prn, '\n');
 }
 
 static int 
@@ -1545,6 +1546,7 @@ int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, 
 				const double **Z,
 				const DATAINFO *pdinfo,
+				gretlopt opt,
 				PRN *prn)
 {
     int err = 0;
@@ -1553,18 +1555,11 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	return 1;
     }
 
-    if (rset->type == GRETL_OBJ_VAR) {
-	err = restriction_set_form_matrices(rset);
-	if (!err) {
-	    print_restriction_set(rset, pdinfo, prn);
-	    gretl_VECM_test_beta(rset->obj, rset, pdinfo, prn);
-	}
-	destroy_restriction_set(rset);
-    } else if (rset->type == GRETL_OBJ_SYS) {
-	/* simultaneous equations system */
-#if RDEBUG
-	print_restriction_set(rset, pdinfo, prn);
-#endif
+    rset->opt |= opt;
+
+    print_restriction_set(rset, pdinfo, prn);
+    
+    if (rset->type != GRETL_OBJ_EQN) {
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
 	    err = check_R_matrix(rset->R);
@@ -1574,18 +1569,26 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	    } else if (err) {
 		err = E_ALLOC;
 	    }
-	}	
-	if (!err) {
-	    system_set_restriction_matrices(rset->obj, rset->R, rset->q);
-	    rset->R = NULL;
-	    rset->q = NULL;
-	    destroy_restriction_set(rset);
 	}
+    }
+
+    if (err) {
+	destroy_restriction_set(rset);
+	return err;
+    }
+
+    if (rset->type == GRETL_OBJ_VAR) {
+	gretl_VECM_test_beta(rset->obj, rset, pdinfo, rset->opt, prn);
+	destroy_restriction_set(rset);
+    } else if (rset->type == GRETL_OBJ_SYS) {
+	system_set_restriction_matrices(rset->obj, rset->R, rset->q);
+	rset->R = NULL;
+	rset->q = NULL;
+	destroy_restriction_set(rset);
     } else {
 	/* single-equation model */
 	err = restriction_set_make_mask(rset);
 	if (!err) {
-	    print_restriction_set(rset, pdinfo, prn);
 	    err = do_single_equation_test(rset, Z, pdinfo, prn);
 	    if (!(rset->opt & OPT_C)) {
 		destroy_restriction_set(rset);
@@ -1656,7 +1659,8 @@ gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = gretl_restriction_set_finalize(r, NULL, pdinfo, NULL);
+	err = gretl_restriction_set_finalize(r, NULL, pdinfo, 
+					     OPT_NONE, NULL);
     }
 
     if (!err) {

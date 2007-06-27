@@ -2166,7 +2166,7 @@ print_iter_info (int iter, double crit, int type, int k,
     }
 
     if (sl > 0.0) {
-	pprintf(prn, _(" (steplength = %.8g)"), sl);
+	pprintf(prn, _(" (steplength = %g)"), sl);
     }	
 
     pputc(prn, '\n');

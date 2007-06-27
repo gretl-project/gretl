@@ -925,8 +925,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
 
 	err = BFGS_alt(b->val, nn, maxit, reltol, 
 		       &fncount, &grcount, Jloglik, C_LOGLIK,
-		       NULL, J, (prn == NULL)? OPT_NONE : OPT_V, 
-		       prn);
+		       NULL, J, opt, prn);
     }
 
 #if JDEBUG

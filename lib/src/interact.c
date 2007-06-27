@@ -3382,7 +3382,7 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     } else {
 	err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
-					     pdinfo, prn);
+					     pdinfo, cmd->opt, prn);
     }
 
     s->rset = NULL;

@@ -100,7 +100,9 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
 int gretl_VECM_test_beta (GRETL_VAR *vecm, 
 			  const gretl_restriction_set *rset,
-			  const DATAINFO *pdinfo, PRN *prn);
+			  const DATAINFO *pdinfo, 
+			  gretlopt opt,
+			  PRN *prn);
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 

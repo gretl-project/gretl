@@ -2233,7 +2233,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	vnew = gretl_restricted_vecm(my_rset, &Z, datainfo, prn, &err);
     } else {
 	err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
-					     datainfo, prn);
+					     datainfo, OPT_NONE, prn);
     }
 
     if (err) {
