@@ -53,7 +53,8 @@ struct JohansenInfo_ {
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bse;    /* standard errors of EC terms */
     gretl_matrix *Bvar;   /* Covariance matrix of betas after triangular normalisation */
-    gretl_matrix *R;      /* original form of beta-restrictions matrix */
+    gretl_matrix *R;      /* implicit form of beta-restrictions LHS matrix */
+    gretl_matrix *q;      /* beta-restrictions RHS matrix */
     double ll0;           /* unrestricted log-likelihood */
     int bdf;              /* number of restrictions on beta */
 };

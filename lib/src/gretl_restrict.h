@@ -50,6 +50,10 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
 		       PRN *prn,
 		       int *err);
 
+void print_restriction_from_matrices (const gretl_matrix *R,
+				      const gretl_matrix *q,
+				      int npar, PRN *prn);
+
 void destroy_restriction_set (gretl_restriction_set *rset);
 
 int gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,

@@ -37,6 +37,7 @@ struct Jwrap_ {
     int rank;
     int blen;       /* number of unrestricted coefficients in beta */
     int nC;         /* number of restriction matrices */
+    int df;         /* degrees if freedom for LR test */
     double ldS00;   /* base component of log-likelihood */
     double ll;      /* log-likelihood */
 
@@ -82,6 +83,7 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
     J->rank = rank;
     J->blen = 0;
     J->nC = 0;
+    J->df = 0;
 
     J->ll = NADBL;
 
@@ -817,26 +819,18 @@ static double Jloglik (const double *phi, void *data)
     return ret;
 }
 
-static void LR_print (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
+/* See Johansen pp. 106-112 */
+
+static void set_LR_df (Jwrap *J)
 {
-    double x = 2.0 * (jvar->ll - J->ll);
-    int p = gretl_matrix_rows(jvar->jinfo->Beta);
-    int r = jrank(jvar);
-    int i, si, df = 0;
+    int p = gretl_matrix_rows(J->beta);
+    int r = J->rank;
+    int i, si;
 
-    /* FIXME df calculation? (Johansen pp. 106-112) */
-
+    J->df = 0;
     for (i=0; i<J->nC; i++) {
 	si = J->h[i]->cols;
-	df += p - r - si; 
-    }
-
-    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
-    pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), J->ll);
-    if (df > 0) {
-	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
-		chisq_cdf_comp(x, df));
+	J->df += p - r - si; 
     }
 }
 
@@ -853,7 +847,15 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     int r = b->cols;
     int i, j;
 
-    LR_print(J, jvar, prn);
+    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
+    pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), J->ll);
+    if (J->df > 0) {
+	double x = 2.0 * (jvar->ll - J->ll);
+
+	pprintf(prn, "2 * (lu - lr) = %g\n", x);
+	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), J->df, x, 
+		chisq_cdf_comp(x, J->df));
+    }
 
     pputs(prn, "\n\n");
     pputs(prn, _("Restricted cointegrating vectors"));
@@ -979,8 +981,12 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
+	set_LR_df(J);
+
 	if (opt & OPT_F) {
+	    jvar->jinfo->ll0 = jvar->ll;
 	    jvar->ll = J->ll;
+	    jvar->jinfo->bdf = J->df;
 
 	    gretl_matrix_free(jvar->jinfo->Beta);
 	    jvar->jinfo->Beta = J->beta;

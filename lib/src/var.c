@@ -258,9 +258,10 @@ static void johansen_info_free (JohansenInfo *jv)
 
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
-    gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->Bvar);
+    gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->R);
+    gretl_matrix_free(jv->q);
 
     free(jv);
 }
@@ -2487,6 +2488,7 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Bse = NULL;
     jv->Bvar = NULL;
     jv->R = NULL;
+    jv->q = NULL;
     jv->ll0 = NADBL;
     jv->bdf = 0;
 

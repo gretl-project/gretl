@@ -23,7 +23,7 @@
 #include "var.h"
 #include "jprivate.h"
 
-#define JDEBUG 0
+#define JDEBUG 1
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -356,7 +356,7 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
 
 static int 
 add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
-			 int iter)
+			 int iter, int genrest)
 {
     const gretl_matrix *B = vecm->jinfo->Beta;
     int rank = jrank(vecm);
@@ -367,6 +367,9 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
     int vj, err = 0;
 
     if (iter == 0) {
+#if JDEBUG
+	fprintf(stderr, "iter = 0, adding %d series for EC\n", rank);
+#endif
 	err = dataset_add_series(rank, pZ, pdinfo);
     }
 
@@ -385,6 +388,9 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 		make_varname_unique(pdinfo->varname[vj], vj, pdinfo);
 		sprintf(VARLABEL(pdinfo, vj), "error correction term %d from VECM %d", 
 			j + 1, id);
+#if JDEBUG
+		fprintf(stderr, "new var %d: name = '%s'\n", vj, pdinfo->varname[vj]);
+#endif
 	    }
 
 	    for (t=0; t<pdinfo->n; t++) {
@@ -396,13 +402,17 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 		    for (i=0; i<vecm->neqns; i++) {
 			xt = (*pZ)[list[i+1]][t-1];
 			sb = gretl_matrix_get(B, i, j);
-			sb /= gretl_matrix_get(B, j, j);
+			if (!genrest) {
+			    sb /= gretl_matrix_get(B, j, j);
+			}
 			bxt += sb * xt;
 		    }
 		    /* restricted const or trend */
 		    if (restricted(vecm)) {
 			sb = gretl_matrix_get(B, i, j);
-			sb /= gretl_matrix_get(B, j, j);
+			if (!genrest) {
+			    sb /= gretl_matrix_get(B, j, j);
+			}
 			if (jcode(vecm) == J_REST_TREND) {
 			    sb *= t;
 			}
@@ -515,15 +525,15 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
     }
 }
 
-/* Run OLS taking the betas, as calculated via the eigen-analysis,
-   as given.  So obtain estimates and standard errors for the
-   coefficients on the lagged differences and the unrestricted
-   deterministic vars.  Construct full residuals matrix while
-   we're at it.
+/* Run OLS taking the betas as given.  So obtain estimates and
+   standard errors for the coefficients on the lagged differences and
+   the unrestricted deterministic vars.  Construct full residuals
+   matrix while we're at it.
 */
 
 static int 
-build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
+build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter,
+		   int genrest)
 {
     gretl_matrix *Pi = NULL;
     gretl_matrix *A = NULL;
@@ -545,7 +555,7 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
     */
 
 #if JDEBUG
-    fprintf(stderr, "build_VECM_models: vecm->order = %d\n", vecm->order);
+    fprintf(stderr, "build_VECM_models: vecm->order = %d\n", p);
 #endif
 
     if (p < 0) {
@@ -566,7 +576,11 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	    err = E_ALLOC;
 	    goto bailout;
 	}	
-    }    
+    }  
+
+#if JDEBUG
+    gretl_matrix_print(vecm->jinfo->Alpha, "vecm->jinfo->Alpha");
+#endif
 
     if (vecm->jinfo->Alpha == NULL) {
 	vecm->jinfo->Alpha = gretl_matrix_alloc(nv, r);
@@ -582,7 +596,7 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	lsqopt |= OPT_A;
     }
 
-    err = add_EC_terms_to_dataset(vecm, pZ, pdinfo, iter);
+    err = add_EC_terms_to_dataset(vecm, pZ, pdinfo, iter, genrest);
 
     for (i=0; i<nv && !err; i++) {
 	biglist[1] = vecm->jinfo->difflist[i+1];
@@ -595,7 +609,11 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 #endif
 	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt);
 	err = vecm->models[i]->errcode;
-	if (!err) {
+
+	if (err) {
+	    fprintf(stderr, "build_VECM_models: error %d from lsq, eqn %d, iter %d\n",
+		    err, i + 1, iter);
+	} else {	    
 	    vecm->models[i]->ID = i + 1;
 	    vecm->models[i]->aux = AUX_VECM;
 	    vecm->models[i]->adjrsq = NADBL;
@@ -610,10 +628,7 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 	    if (i == 0) {
 		vecm->ncoeff = vecm->models[i]->ncoeff;
 	    }
-	} else {
-	    fprintf(stderr, "build_VECM_models: error %d from lsq, eqn %d, iter %d\n",
-		    err, i + 1, iter);
-	}
+	} 
     }
 
     if (!err) {
@@ -1199,6 +1214,9 @@ simple_beta_restriction (GRETL_VAR *jvar,
     return ret;
 }
 
+/* driver for VECM estimation subject to "general" restrictions
+   on beta */
+
 static int johansen_estimate_general (GRETL_VAR *jvar, 
 				      const gretl_restriction_set *rset,
 				      double ***pZ, DATAINFO *pdinfo, 
@@ -1209,7 +1227,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     err = general_beta_analysis(jvar, rset, pdinfo, OPT_F, prn);
 
     if (!err) {
-	err = build_VECM_models(jvar, pZ, pdinfo, 0);
+	err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
     }
 
     if (!err) {
@@ -1218,15 +1236,20 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 
     if (!err) {
 	const gretl_matrix *R = rset_get_R_matrix(rset);
+	const gretl_matrix *q = rset_get_q_matrix(rset);
 
 	jvar->jinfo->R = gretl_matrix_copy(R);
+	jvar->jinfo->q = gretl_matrix_copy(q);
     }
 
     return err;
 }
 
-/* Public entry point for VECM estimation (with restriction on beta,
-   if rset != NULL)
+/* Public entry point for VECM estimation.  If rset != NULL we're
+   imposing a restriction on the cointegrating vectors; and in
+   that case how we proceed depends on whether the restrictions
+   can or cannot be handled by a simple modification to the
+   eigen-system approach.
 */
 
 int johansen_estimate (GRETL_VAR *jvar, 
@@ -1241,7 +1264,7 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix *Suu = NULL;
     gretl_matrix *evals = NULL;
 
-    int genrest = 0; /* doing general beta restriction */
+    int genrest = 0; /* doing "general" beta restriction? */
     int rank = jrank(jvar);
     int m, err = 0;
 
@@ -1311,7 +1334,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 	    err = phillips_normalize_beta(jvar); 
 	}
 	if (!err) {
-	    err = build_VECM_models(jvar, pZ, pdinfo, 0);
+	    err = build_VECM_models(jvar, pZ, pdinfo, 0, 0);
 	}
 	if (!err) {
 	    err = compute_omega(jvar);
@@ -1339,7 +1362,6 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix_free(evals);
 
     if (!err && genrest) {
-	/* FIXME this is broken at present */
 	err = johansen_estimate_general(jvar, rset, pZ, pdinfo, opt, prn);
     }
 
@@ -1351,6 +1373,8 @@ int johansen_estimate (GRETL_VAR *jvar,
    impulse response functions.  We just have to do enough to
    generate the VAR representation.
 */
+
+/* FIXME case of restricted beta */
 
 int 
 johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
@@ -1395,7 +1419,7 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = phillips_normalize_beta(jvar); 
 	}
 	if (!err) {
-	    err = build_VECM_models(jvar, pZ, pdinfo, iter);
+	    err = build_VECM_models(jvar, pZ, pdinfo, iter, 0);
 	}
 	if (!err) {
 	    err = compute_omega(jvar);
@@ -1410,9 +1434,11 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-/* 
-   Test of linear restrictions on the cointegrating relations in a
-   VECM.
+/* Test of linear restrictions on the cointegrating relations in a
+   VECM.  If the restrictions are "simple" (homogeneous and
+   common to the columns of beta) we do the test using the
+   eigen-system approach.  If they are "general" restrictions
+   we hand off to the specialized machinery in jrestrict.c.
 */
 
 int vecm_beta_test (GRETL_VAR *jvar, 
@@ -1434,6 +1460,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     int err = 0;
 
     if (!simple_beta_restriction(jvar, rset)) {
+	/* "general" restriction set */
 	return general_beta_analysis(jvar, rset, pdinfo, opt, prn);
     }
 

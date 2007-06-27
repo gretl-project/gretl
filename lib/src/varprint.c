@@ -740,17 +740,22 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     /* FIXME TeX (and RTF?) below */
 
     if (vecm->jinfo->R != NULL) {
-#if 0
-	pprintf(prn, "\n\nRestriction on beta: R * beta = 0, where R =\n\n");
-	gretl_matrix_print_to_prn(vecm->jinfo->R, NULL, prn);
-#else
-	pputc(prn, '\n');
-#endif
-
 	if (!na(vecm->jinfo->ll0) && vecm->jinfo->bdf > 0) {
 	    double ll0 = vecm->jinfo->ll0;
 	    double x = 2.0 * (ll0 - vecm->ll);
 	    int df = vecm->jinfo->bdf;
+
+#if 1
+	    /* is this a worthwhile thing to do? */
+	    pputs(prn, "\n\n");
+	    pputs(prn, _("Restrictions on beta:"));
+	    pputc(prn, '\n');
+	    print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
+					    gretl_VECM_n_beta(vecm), prn);
+	    pputc(prn, '\n');
+#else
+	    pputs(prn, "\n\n");
+#endif
 
 	    if (tex_format(prn)) {
 		pprintf(prn, I_("Unrestricted loglikelihood $(l_u) = %g$"), ll0);
@@ -785,6 +790,8 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 	    }
 
 	    *lldone = 1;
+	} else {
+	    pputc(prn, '\n');
 	}
     } else {
 	pputc(prn, '\n');

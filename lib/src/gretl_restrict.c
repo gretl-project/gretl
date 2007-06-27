@@ -74,6 +74,11 @@ static int check_R_matrix (const gretl_matrix *R)
 			      m, GRETL_MOD_NONE);
 
     err = gretl_invert_general_matrix(m);
+
+    if (err == E_SINGULAR) {
+	strcpy(gretl_errmsg, _("Matrix inversion failed: restrictions may be "
+			       "inconsistent or redundant"));
+    }
     
     gretl_matrix_free(m);
 
@@ -769,6 +774,65 @@ print_restriction_set (const gretl_restriction_set *rset,
     }
 }
 
+void print_restriction_from_matrices (const gretl_matrix *R,
+				      const gretl_matrix *q,
+				      int npar, PRN *prn)
+{
+    double x;
+    int eqn, coeff, started;
+    int i, j;
+
+    for (i=0; i<R->rows; i++) {
+	started = 0;
+	coeff = 1;
+	eqn = (R->cols > npar)? 1 : 0;
+	for (j=0; j<R->cols; j++) {
+	    x = gretl_matrix_get(R, i, j);
+	    if (x != 0.0) {
+		if (!started) {
+		    pputs(prn, "  ");
+		}
+		if (x == 1.0) {
+		    if (started) {
+			pputs(prn, " + ");
+		    }
+		} else if (x == -1.0) {
+		    if (started) {
+			pputs(prn, " - ");
+		    } else {
+			pputc(prn, '-');
+		    }
+		} else if (x > 0.0) {
+		    if (started) {
+			pprintf(prn, " + %g*", x);
+		    } else {
+			pprintf(prn, "%g*", x);
+		    }
+		} else if (x < 0.0) {
+		    if (started) {
+			pprintf(prn, " - %g*", -x);
+		    } else {
+			pprintf(prn, "%g*", x);
+		    }
+		}
+		if (eqn > 0) {
+		    pprintf(prn, "b[%d,%d]", eqn, coeff);
+		} else {
+		    pprintf(prn, "b%d", coeff);
+		}
+		started = 1;
+	    }
+	    if ((j + 1) % npar == 0) {
+		eqn++;
+		coeff = 1;
+	    } else {
+		coeff++;
+	    }
+	}
+	pprintf(prn, " = %g\n", (q == NULL)? 0.0 : q->val[i]);
+    }
+}
+
 static int 
 add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
 {
@@ -1333,13 +1397,8 @@ test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     gretl_matrix_print(rset->q, "q vector");
 #endif
 
-    if ((err = check_R_matrix(rset->R))) {
-	if (err == E_SINGULAR) {
-	    pputs(prn, _("Matrix inversion failed:\n"
-			 " restrictions may be inconsistent or redundant\n"));
-	} else {
-	    err = E_ALLOC;
-	}
+    err = check_R_matrix(rset->R);
+    if (err) {
 	goto bailout;
     }
 
@@ -1527,6 +1586,10 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
     *err = restriction_set_form_matrices(rset);
 
     if (!*err) {
+	*err = check_R_matrix(rset->R);
+    }
+
+    if (!*err) {
 	jvar = real_gretl_restricted_vecm(rset->obj, rset, pZ, pdinfo, 
 					  prn, err);
     }
@@ -1563,12 +1626,6 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
 	    err = check_R_matrix(rset->R);
-	    if (err == E_SINGULAR) {
-		pputs(prn, _("Matrix inversion failed:\n"
-			     " restrictions may be inconsistent or redundant\n"));
-	    } else if (err) {
-		err = E_ALLOC;
-	    }
 	}
     }
 
