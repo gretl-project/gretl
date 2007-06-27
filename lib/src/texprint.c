@@ -769,11 +769,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
 	    /* standard errors */
 	    pputs(prn, " & ");
 	    for (j=0; j<jv->rank; j++) {
-		if (i < jv->rank) {
-		    x = 0.0;
-		} else {
-		    x = gretl_matrix_get(jv->Bse, i - jv->rank, j);
-		}
+		x = gretl_matrix_get(jv->Bse, i, j);
 		pputc(prn, '(');
 		tex_print_float(x, prn);
 		pputc(prn, ')');

@@ -767,7 +767,6 @@ print_restriction_set (const gretl_restriction_set *rset,
 	}
 	print_restriction(rset, i, pdinfo, prn);
     }
-    pputc(prn, '\n');
 }
 
 static int 

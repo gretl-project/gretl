@@ -53,10 +53,12 @@ struct Jwrap_ {
     gretl_matrix *s;
     gretl_matrix **h;
 
+    /* coefficients and variances */
     gretl_matrix *beta;
     gretl_matrix *alpha;
     gretl_matrix *Omega;
     gretl_matrix *V;
+    gretl_matrix *se;
 
     /* temp storage for beta calculation */
     gretl_matrix *phivec;
@@ -98,6 +100,7 @@ static Jwrap *jwrap_new (int neqns, int rank, int T)
     J->alpha = NULL;
     J->Omega = NULL;
     J->V = NULL;
+    J->se = NULL;
 
     J->phivec = NULL;
     J->bcol = NULL;
@@ -124,6 +127,7 @@ static void jwrap_destroy (Jwrap *J)
     gretl_matrix_free(J->alpha);
     gretl_matrix_free(J->Omega);
     gretl_matrix_free(J->V);
+    gretl_matrix_free(J->se);
 
     gretl_matrix_free(J->phivec);
     gretl_matrix_free(J->bcol);
@@ -145,11 +149,13 @@ static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 
     J->S00i = gretl_matrix_copy(J->S00);
     J->S11m = gretl_matrix_copy(J->S11);
+
     if (J->S00i == NULL || J->S11m == NULL) {
 	return E_ALLOC;
     }
 
     Tmp = gretl_matrix_alloc(J->S01->cols, J->S01->cols);
+
     if (Tmp == NULL) {
 	return E_ALLOC;
     }
@@ -630,6 +636,7 @@ static int make_beta_variance (Jwrap *J)
     gretl_matrix *aiom = NULL;
 
     int r = b->cols;
+    int n = b->rows;
     int npar = 0;
     int istart, jstart;
     int i, j, err = 0;
@@ -692,6 +699,20 @@ static int make_beta_variance (Jwrap *J)
 	} else {
 	    err = gretl_matrix_qform(J->H, GRETL_MOD_NONE,
 				     V, J->V, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err) {
+	double x;
+
+	J->se = gretl_matrix_alloc(n, r);
+	if (J->se == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<J->V->rows; i++) {
+		x = gretl_matrix_get(J->V, i, i);
+		J->se->val[i] = sqrt(x);
+	    }
 	}
     }
 
@@ -826,34 +847,20 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 {
     JohansenInfo *jv = jvar->jinfo;
     const gretl_matrix *b = J->beta;
-    const gretl_matrix *V = J->V;
-    gretl_matrix *sd = NULL;
-    double x;
+    const gretl_matrix *sd = J->se;
+    char vname[32], s[16];
     int n = b->rows;
     int r = b->cols;
     int i, j;
 
     LR_print(J, jvar, prn);
 
-    sd = gretl_matrix_alloc(n, r);
-    if (sd == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<V->rows; i++) {
-	x = gretl_matrix_get(V, i, i);
-	sd->val[i] = sqrt(x);
-    }
-
-    pputc(prn, '\n');
+    pputs(prn, "\n\n");
     pputs(prn, _("Restricted cointegrating vectors"));
     pprintf(prn, " (%s)", _("standard errors in parentheses"));
     pputs(prn, "\n\n");
 
     for (i=0; i<n; i++) {
-	char vname[32];
-	char s[16];
-
 	if (i < jv->list[0]) {
 	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
@@ -863,7 +870,6 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	}
 	pprintf(prn, "%-12s", vname); /* FIXME */
 
-	/* coefficients */
 	for (j=0; j<r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(b, i, j));
 	}
@@ -879,8 +885,6 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     }
 
     pputc(prn, '\n');
-
-    gretl_matrix_free(sd);
 
     return 0;
 }
@@ -932,12 +936,6 @@ int general_beta_analysis (GRETL_VAR *jvar,
 		       NULL, J, opt, prn);
     }
 
-#if JDEBUG
-    if (!err) {
-	fprintf(stderr, "after BFGS: loglikelihood = %.8g\n", J->ll);
-    }
-#endif
-
     if (!err) {
 	S01b = gretl_matrix_alloc(J->S01->rows, J->rank);
 	J->alpha = gretl_matrix_alloc(J->S01->rows, J->rank);
@@ -981,8 +979,6 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	printres(J, jvar, pdinfo, prn);
-
 	if (opt & OPT_F) {
 	    jvar->ll = J->ll;
 
@@ -997,7 +993,13 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	    gretl_matrix_free(jvar->jinfo->Bvar);
 	    jvar->jinfo->Bvar = J->V;
 	    J->V = NULL;
-	} 
+
+	    gretl_matrix_free(jvar->jinfo->Bse);
+	    jvar->jinfo->Bse = J->se;
+	    J->se = NULL;
+	} else {
+	    printres(J, jvar, pdinfo, prn);
+	}
     } 
 
     jwrap_destroy(J);

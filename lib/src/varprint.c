@@ -653,11 +653,7 @@ print_VECM_coint_eqns (JohansenInfo *jv,
 		bufspace(VECM_WIDTH, prn);
 	    }
 	    for (j=0; j<jv->rank; j++) {
-		if (i < jv->rank) {
-		    x = 0.0;
-		} else {
-		    x = gretl_matrix_get(jv->Bse, i - jv->rank, j);
-		}
+		x = gretl_matrix_get(jv->Bse, i, j);
 		sprintf(s, "(%#.5g)", x);
 		if (rtf) {
 		    pprintf(prn, "\t%s", s);
@@ -744,8 +740,12 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     /* FIXME TeX (and RTF?) below */
 
     if (vecm->jinfo->R != NULL) {
+#if 0
 	pprintf(prn, "\n\nRestriction on beta: R * beta = 0, where R =\n\n");
 	gretl_matrix_print_to_prn(vecm->jinfo->R, NULL, prn);
+#else
+	pputc(prn, '\n');
+#endif
 
 	if (!na(vecm->jinfo->ll0) && vecm->jinfo->bdf > 0) {
 	    double ll0 = vecm->jinfo->ll0;

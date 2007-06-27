@@ -870,7 +870,7 @@ static int beta_variance (GRETL_VAR *vecm)
 
     gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->T);
 
-    vecm->jinfo->Bse = gretl_matrix_alloc(n - r, r);
+    vecm->jinfo->Bse = gretl_zero_matrix_new(n, r);
     if (vecm->jinfo->Bse == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -879,7 +879,7 @@ static int beta_variance (GRETL_VAR *vecm)
     k = 0;
     for (j=0; j<r; j++) {
 	/* cointegrating vector j */
-        for (i=0; i<n-r; i++) {
+        for (i=r; i<n; i++) {
 	    x = gretl_matrix_get(vecm->jinfo->Bvar, k, k);
 	    gretl_matrix_set(vecm->jinfo->Bse, i, j, sqrt(x));
 	    k++;
