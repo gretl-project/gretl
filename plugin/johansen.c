@@ -1213,6 +1213,10 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     }
 
     if (!err) {
+	err = vecm_ll_stats(jvar);
+    }
+
+    if (!err) {
 	const gretl_matrix *R = rset_get_R_matrix(rset);
 
 	jvar->jinfo->R = gretl_matrix_copy(R);
@@ -1237,6 +1241,7 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix *Suu = NULL;
     gretl_matrix *evals = NULL;
 
+    int genrest = 0; /* doing general beta restriction */
     int rank = jrank(jvar);
     int m, err = 0;
 
@@ -1244,12 +1249,11 @@ int johansen_estimate (GRETL_VAR *jvar,
     fprintf(stderr, "\n*** starting johansen_estimate()\n\n");
 #endif
 
-    if (rset != NULL && !simple_beta_restriction(jvar, rset)) {
-	/* FIXME this doesn't work yet */
-	return johansen_estimate_general(jvar, rset, pZ, pdinfo, opt, prn);
+    if (rset != NULL) {
+	genrest = !simple_beta_restriction(jvar, rset);
     }
 
-    if (rset != NULL) {
+    if (rset != NULL && !genrest) {
 	R = rset_get_R_matrix(rset);
 	D = gretl_matrix_right_nullspace(R, &err);
 	if (err) {
@@ -1293,6 +1297,11 @@ int johansen_estimate (GRETL_VAR *jvar,
 	M = NULL;
     }
 
+    if (!err && genrest) {
+	err = johansen_ll_calc(jvar, evals);
+	goto bailout;
+    }
+
     if (!err) {
 	int do_stderrs = rank < jvar->neqns;
 
@@ -1328,6 +1337,11 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);
+
+    if (!err && genrest) {
+	/* FIXME this is broken at present */
+	err = johansen_estimate_general(jvar, rset, pZ, pdinfo, opt, prn);
+    }
 
     return err;
 }

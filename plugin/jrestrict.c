@@ -306,6 +306,10 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     int r0, ir;
     int i, err = 0;
 
+    if (nb <= 0) {
+	return E_DATA;
+    }	
+
     R = rset_get_R_matrix(rset);
     q = rset_get_q_matrix(rset);
 
@@ -963,6 +967,11 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	err = make_omega(J, J->alpha, J->beta);
     }
 
+    if (opt & OPT_F) {
+	gretl_matrix_free(jvar->S);
+	jvar->S = gretl_matrix_copy(J->Omega);
+    }
+
     if (!err) {
 	gretl_invert_symmetric_matrix(J->Omega);
     }
@@ -972,9 +981,11 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	printres(J, jvar, pdinfo, prn); 
+	printres(J, jvar, pdinfo, prn);
 
 	if (opt & OPT_F) {
+	    jvar->ll = J->ll;
+
 	    gretl_matrix_free(jvar->jinfo->Beta);
 	    jvar->jinfo->Beta = J->beta;
 	    J->beta = NULL;
@@ -986,7 +997,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	    gretl_matrix_free(jvar->jinfo->Bvar);
 	    jvar->jinfo->Bvar = J->V;
 	    J->V = NULL;
-	}
+	} 
     } 
 
     jwrap_destroy(J);

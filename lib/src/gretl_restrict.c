@@ -1523,10 +1523,11 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
 	return NULL;
     }
 
+    print_restriction_set(rset, pdinfo, prn);
+
     *err = restriction_set_form_matrices(rset);
 
     if (!*err) {
-	print_restriction_set(rset, pdinfo, prn);
 	jvar = real_gretl_restricted_vecm(rset->obj, rset, pZ, pdinfo, 
 					  prn, err);
     }

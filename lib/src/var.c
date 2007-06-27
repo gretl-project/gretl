@@ -2955,7 +2955,7 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
     GRETL_VAR *jvar = NULL;
     gretlopt opt = OPT_S;
 
-    if (orig->jinfo == NULL || rset == NULL) {
+    if (orig == NULL || orig->jinfo == NULL || rset == NULL) {
 	*err = E_DATA;
 	return NULL;
     }   
