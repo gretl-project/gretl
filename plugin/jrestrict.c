@@ -920,7 +920,7 @@ static int simann (Jwrap *J, gretl_matrix *b)
 
     f0 = fbest = Jloglik(b->val, J);
 
-    for (i=0; i<SAiter && !err; i++) {
+    for (i=0; i<SAiter; i++) {
 	gretl_matrix_random_fill(d, D_NORMAL);
 	gretl_matrix_multiply_by_scalar(d, radius);
 	gretl_matrix_add_to(b1, d);
