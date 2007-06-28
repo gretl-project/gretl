@@ -22,6 +22,7 @@
 */
 
 #include "libgretl.h"
+#include "random.h"
 #include "johansen.h"
 #include "var.h"
 #include "gretl_restrict.h"
@@ -891,6 +892,81 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
+int simann (void *J, gretl_matrix *b)
+{
+    int i, SAiter = 4096;
+    double f0, f1, fbest;
+    double rndu;
+    int jump;
+
+    gretl_matrix *b0 = NULL;
+    gretl_matrix *b1 = NULL;
+    gretl_matrix *bbest = NULL;
+    gretl_matrix *d = NULL;
+
+    double Temp = 1.0;
+    double radius = 1.0;
+    int err = 0;
+
+    b0 = gretl_matrix_copy(b);
+    b1 = gretl_matrix_copy(b);
+    bbest = gretl_matrix_copy(b);
+    d = gretl_column_vector_alloc(b->rows);
+
+    if (b0 == NULL || b1 == NULL || bbest == NULL || d == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    f0 = fbest = Jloglik(b->val, J);
+
+    for (i=0; i<SAiter && !err; i++) {
+	err = gretl_matrix_random_fill(d, D_NORMAL);
+	if (err) {
+	    break;
+	}
+
+	gretl_matrix_multiply_by_scalar(d, radius);
+	gretl_matrix_add_to(b1, d);
+	f1 = Jloglik(b1->val, J);
+
+	if (f1>f0) {
+	    jump = 1;
+	} else {
+	    rndu = ((double) rand()) / RAND_MAX;
+	    jump = (Temp < rndu);
+	}
+
+	if (jump) {
+	    f0 = f1;
+	    err = gretl_matrix_copy_values(b0, b1);
+	    if (!err && f0 > fbest) {
+		fbest = f0;
+		gretl_matrix_copy_values(bbest, b0);
+		fprintf(stderr, "i:%d\tTemp = %#g, radius = %#g, fbest = %#g\n", 
+			i, Temp, radius, fbest);
+	    }
+	} else {
+	    err = gretl_matrix_copy_values(b1, b0);
+	    f1 = f0;
+	}
+
+	Temp *= 0.999;
+	radius *= 0.9999;
+    }
+    
+    err = gretl_matrix_copy_values(b, bbest);
+
+ bailout:
+
+    gretl_matrix_free(b0);
+    gretl_matrix_free(b1);
+    gretl_matrix_free(bbest);
+    gretl_matrix_free(d);
+
+    return err;
+}
+
 /* public entry point */
 
 int general_beta_analysis (GRETL_VAR *jvar, 
@@ -925,6 +1001,10 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	gretl_matrix_print(b, "b, before BFGS");
 #endif
     }
+
+#if 1
+    err = simann(J, b);
+#endif
 
     if (!err) {
 	int maxit = 4000;
