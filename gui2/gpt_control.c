@@ -936,9 +936,9 @@ static int allocate_plotspec_markers (GPT_SPEC *spec)
     return 0;
 }
 
-/* Determine the number of data points in a plot (also the type
-   of plot, and whether there are any data-point markers along with
-   the data).
+/* Determine the number of data points in a plot.  While we're at it,
+   determine the type of plot, and check whether there are any
+   data-point markers along with the data.
 */
 
 static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
@@ -1238,10 +1238,12 @@ static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
 	fseek(fp, offset, SEEK_SET);
     }
 
-    spec->n_lines = 1;
-    spec->lines[0].ncols = 2;
-
-    err = plot_get_data_and_markers(spec, fp, 2, 1);
+    err = plotspec_add_line(spec);
+    
+    if (!err) {
+	spec->lines[0].ncols = 2;
+	err = plot_get_data_and_markers(spec, fp, 2, 1);
+    }
 
     if (!err) {
 	maybe_set_all_markers_ok(spec);
