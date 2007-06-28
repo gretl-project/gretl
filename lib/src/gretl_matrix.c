@@ -815,6 +815,24 @@ int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 }
 
 /**
+ * gretl_matrix_switch_sign:
+ * @m: matrix to operate on.
+ *
+ * Changes the sign of each element of @m.
+ */
+
+void gretl_matrix_switch_sign (gretl_matrix *m)
+{
+    if (m != NULL) {
+	int i, n = m->rows * m->cols;
+
+	for (i=0; i<n; i++) {
+	    m->val[i] = -m->val[i];
+	}
+    }
+}
+
+/**
  * gretl_matrix_raise:
  * @m: matrix to operate on.
  * @x: exponent.

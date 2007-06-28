@@ -222,6 +222,8 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
 
 int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
 
+void gretl_matrix_switch_sign (gretl_matrix *m);
+
 gretl_matrix *
 gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
 		     int op, int *err);

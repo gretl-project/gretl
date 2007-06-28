@@ -114,18 +114,12 @@ static garch_container *
 garch_container_new (double *y, const double **X, 
 		     int t1, int t2, int nobs, int nx,
 		     int p, int q, int init_method, 
-		     double *res, double *h, 
+		     double *e, double *e2, double *h, 
 		     int analytical)
 {
     garch_container *DH = malloc(sizeof *DH);
 
     if (DH == NULL) {
-	return NULL;
-    }
-
-    DH->e2 = malloc(nobs * sizeof *DH->e2);
-    if (DH->e2 == NULL) {
-	free(DH);
 	return NULL;
     }
 
@@ -138,7 +132,8 @@ garch_container_new (double *y, const double **X,
     DH->p = p;
     DH->q = q;
     DH->init = init_method;
-    DH->e = res;
+    DH->e = e;
+    DH->e2 = e2;
     DH->h = h;
     DH->ascore = analytical;
     DH->k = 1 + nx + 1 + p + q;
@@ -150,7 +145,6 @@ garch_container_new (double *y, const double **X,
 
     if (DH->ascore) {
 	if (allocate_eh_derivs(DH)) {
-	    free(DH->e2);
 	    free(DH);
 	    DH = NULL;
 	}
@@ -166,7 +160,6 @@ static void garch_container_destroy (garch_container *DH)
     if (DH->ascore) {
 	free_eh_derivs(DH);
     }
-    free(DH->e2);
     free(DH);
 }
 
@@ -213,15 +206,15 @@ static int check_nonnegative(const double *par, int ncm, int k)
 
     nonzero = (par[ncm+1] >= 0.0);
 
-    for(i=ncm+2; i<k; i++) {
+    for (i=ncm+2; i<k; i++) {
 	nonzero &= (par[i] >= 1.0e-12);
 	sum += par[i];
-	if(!nonzero) {
+	if (!nonzero) {
 	    break;
 	}
     }
 
-    nonzero &= (sum<=1.0);
+    nonzero &= (sum <= 1.0);
 
     return nonzero;
 }
@@ -698,22 +691,13 @@ static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
 
 static int
 garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
-			 double *vcv) 
+			 gretl_matrix *V) 
 {
-    gretl_matrix *V = NULL;
     gretl_matrix *GG = NULL;
     gretl_matrix *iinfo = NULL;
     gretl_matrix *invhess = NULL;
     int npar = DH->k;
     int err = 0;
-
-    if (vopt == VCV_BW || vopt == VCV_QML) {
-	/* need a distinct matrix for workspace */
-	V = gretl_matrix_alloc(npar, npar);
-	if (V == NULL) {
-	    return E_ALLOC;
-	}
-    }
 
     if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
 	/* GG' needed */
@@ -739,16 +723,13 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
 
     switch (vopt) {
     case VCV_HESSIAN:
-	V = invhess;
-	invhess = NULL;
+	gretl_matrix_copy_values(V, invhess);
 	break;
     case VCV_IM:
-	V = iinfo;
-	iinfo = NULL;
+	gretl_matrix_copy_values(V, iinfo);
 	break;
     case VCV_OP:
-	V = GG;
-	GG = NULL;
+	gretl_matrix_copy_values(V, GG);
 	err = gretl_invert_symmetric_matrix(V);
 	break;
     case VCV_BW:
@@ -767,27 +748,11 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
     gretl_matrix_print(V, "Variance-covariance matrix");
 #endif
 
-    if (!err) {
-	double vij;
-	int i, j;
-
-	for (i=0; i<npar; i++) {
-	    for (j=i; j<npar; j++) {
-		vij = gretl_matrix_get(V, i, j);
-		vcv[(i*npar) + j] = vij;
-		if (i != j) {
-		    vcv[(j*npar) + i] = vij;
-		}
-	    }
-	}
-    }
-
  bailout:
 
     gretl_matrix_free(GG);
     gretl_matrix_free(iinfo);
     gretl_matrix_free(invhess);
-    gretl_matrix_free(V);
 
     return err;
 }
@@ -832,9 +797,9 @@ static void test_score (garch_container *DH, double *theta)
           initialised by OLS on input (not needed on output) -- does NOT
 	  include the constant
    nc:    number of elements in coeff
-   vcv:   n^2 vector (0 on input) to store covariance matrix of coeff
-   res2:  vector of 0's on input, squared resids on output (not needed)
+   V:     covariance matrix of coeff (all 0 on input)
    e:     vector of 0's on input, resids on output
+   e2:    storage for squared residuals
    h:     null pointer on input, conditional variances on output
    y:     on input, vector with dep. var., not needed on output
    amax:  vector; element 0 holds the garch intercept; 1 and 2 the
@@ -851,7 +816,7 @@ static void test_score (garch_container *DH, double *theta)
 
 int garch_estimate_mod (int t1, int t2, int nobs, 
 			const double **X, int nx, double *coeff, int nc, 
-			double *vcv, double *res2, double *res, double *h,
+			gretl_matrix *V, double *e, double *e2, double *h,
 			double *y, double *amax, double *b, 
 			double scale, int *fncount, int *grcount,
 			PRN *prn, int vopt)
@@ -869,7 +834,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     double reltol = 1.0e-13;
 
     DH = garch_container_new(y, X, t1, t2, nobs, nx, p, q, 
-			     INIT_VAR_RESID, res, h, 
+			     INIT_VAR_RESID, e, e2, h, 
 			     analytical);
 
     if (DH == NULL) {
@@ -886,6 +851,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     for (i=1; i<=nx; i++) {
 	theta[i] = coeff[i];
     }
+
     theta[nx+1] = amax[0];
     for (i=nx+2, j=3; i<npar; i++) {
 	theta[i] = amax[j++];
@@ -911,20 +877,17 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     test_score(DH, theta);
 #endif
 
-    err = garch_covariance_matrix(vopt, theta, DH, vcv);
+    err = garch_covariance_matrix(vopt, theta, DH, V);
 
     if (!err) {
 	double sderr;
 
 	/* transcribe coefficients and standard errors 
 	   note: slightly different from fcp */
-	for (i=0, j=0; i<npar; i++) {
-	    if (vcv[j] > 0.0) {
-		sderr = sqrt(vcv[j]);
-	    } else {
-		sderr = 0.0;
-	    }
-	    j += npar + 1;
+	for (i=0; i<npar; i++) {
+	    double vii = gretl_matrix_get(V, i, i);
+
+	    sderr = (vii > 0.0)? sqrt(vii) : 0.0;
 	    amax[i+1] = theta[i];
 	    amax[i+1+npar] = sderr;
 	}

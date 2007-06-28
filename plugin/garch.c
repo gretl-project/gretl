@@ -71,20 +71,21 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
+static int make_packed_vcv (MODEL *pmod, const gretl_matrix *V,
 			    int nc, double scale)
 {
-    const int nterms = np * (np + 1) / 2;
-    double sfi, sfj;
-    int i, j, k;
+    int k = V->rows;
+    int n = k * (k + 1) / 2;
+    double vij, sfi, sfj;
+    int i, j, idx;
 
     free(pmod->vcv);
-    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    pmod->vcv = malloc(n * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) {
 	return 1;  
     }
 
-    for (i=0; i<np; i++) {
+    for (i=0; i<k; i++) {
 	if (i < nc) {
 	    sfi = scale;
 	} else if (i == nc) {
@@ -100,8 +101,9 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
 	    } else {
 		sfj = 1.0;
 	    }
-	    k = ijton(i, j, np);
-	    pmod->vcv[k] = vcv[i + np * j] * sfi * sfj;
+	    idx = ijton(i, j, k);
+	    vij = gretl_matrix_get(V, i, j);
+	    pmod->vcv[idx] = vij * sfi * sfj;
 	}
     }
 
@@ -367,9 +369,9 @@ int do_fcp (const int *list, double **Z, double scale,
     double **X = NULL;
     double *h = NULL;
     double *amax = NULL; 
-    double *res = NULL, *res2 = NULL;
+    double *e = NULL, *e2 = NULL;
     double *coeff = NULL, *b = NULL;
-    double *vcv = NULL;
+    gretl_matrix *V = NULL;
     int fnc = 0, grc = 0, iters = 0;
     int nobs, maxlag, bign, pad = 0;
     int i, nx, nparam, vopt;
@@ -391,18 +393,18 @@ int do_fcp (const int *list, double **Z, double scale,
     /* length of series to pass to garch_estimate */
     bign = nobs + pad;
 	
-    res2 = malloc(bign * sizeof *res2);
-    res = malloc(bign * sizeof *res);
+    e = malloc(bign * sizeof *e);
+    e2 = malloc(bign * sizeof *e2);
     h = malloc(bign * sizeof *h);
     amax = malloc(bign * sizeof *amax);
-    if (res2 == NULL || res == NULL || 
+    if (e == NULL || e2 == NULL || 
 	amax == NULL || h == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     for (i=0; i<bign; i++) {
-	res2[i] = res[i] = amax[i] = 0.0;
+	e[i] = e2[i] = amax[i] = 0.0;
     }   
  
     coeff = malloc(ncoeff * sizeof *coeff);
@@ -412,15 +414,11 @@ int do_fcp (const int *list, double **Z, double scale,
 	goto bailout;	
     }
 
-    vcv = malloc((nparam * nparam) * sizeof *vcv);
-    if (vcv == NULL) {
+    V = gretl_zero_matrix_new(nparam, nparam);
+    if (V == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    for (i=0; i<nparam * nparam; i++) {
-	vcv[i] = 0.0;
-    } 
 
     /* create dataset for garch estimation */
     err = make_garch_dataset(list, Z, bign, pad, nx, &y, &X);
@@ -454,18 +452,18 @@ int do_fcp (const int *list, double **Z, double scale,
 #ifdef USE_FCP
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, coeff, ncoeff, 
-			 vcv, res2, res, h, y, amax, b, scale, &iters,
+			 V, e, e2, h, y, amax, b, scale, &iters,
 			 prn, vopt);
 #else
     if (getenv("FCP_GARCH") != NULL) {
 	err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			     (const double **) X, nx, coeff, ncoeff, 
-			     vcv, res2, res, h, y, amax, b, scale, &iters,
+			     V, e, e2, h, y, amax, b, scale, &iters,
 			     prn, vopt);
     } else {
 	err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
 				 (const double **) X, nx, coeff, ncoeff, 
-				 vcv, res2, res, h, y, amax, b, scale, &fnc,
+				 V, e, e2, h, y, amax, b, scale, &fnc,
 				 &grc, prn, vopt);
     }
 #endif
@@ -490,8 +488,8 @@ int do_fcp (const int *list, double **Z, double scale,
 
 	pmod->lnL = amax[0];
 	write_garch_stats(pmod, (const double **) Z, scale, pdinfo, 
-			  list, amax, nparam, pad, res, h);
-	make_packed_vcv(pmod, vcv, nparam, ncoeff, scale);
+			  list, amax, nparam, pad, e, h);
+	make_packed_vcv(pmod, V, ncoeff, scale);
 	if (iters > 0) {
 	    gretl_model_set_int(pmod, "iters", iters);
 	} else if (fnc > 0) {
@@ -503,13 +501,13 @@ int do_fcp (const int *list, double **Z, double scale,
 
  bailout:
 
-    free(res2);
-    free(res);
+    free(e);
+    free(e2);
     free(h);
     free(amax);    
     free(coeff);
     free(b);
-    free(vcv); 
+    gretl_matrix_free(V);
 
     if (pad > 0) {
 	free(y);
