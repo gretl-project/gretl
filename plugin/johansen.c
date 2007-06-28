@@ -402,7 +402,7 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 		    for (i=0; i<vecm->neqns; i++) {
 			xt = (*pZ)[list[i+1]][t-1];
 			sb = gretl_matrix_get(B, i, j);
-			if (!genrest) {
+			if (0 && !genrest) {
 			    sb /= gretl_matrix_get(B, j, j);
 			}
 			bxt += sb * xt;
@@ -410,7 +410,7 @@ add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
 		    /* restricted const or trend */
 		    if (restricted(vecm)) {
 			sb = gretl_matrix_get(B, i, j);
-			if (!genrest) {
+			if (0 && !genrest) {
 			    sb /= gretl_matrix_get(B, j, j);
 			}
 			if (jcode(vecm) == J_REST_TREND) {
@@ -1340,6 +1340,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 	    err = compute_omega(jvar);
 	}
 	if (!err && do_stderrs && D == NULL) {
+	    /* FIXME case where D != NULL */
 	    err = beta_variance(jvar);
 	}
 	if (!err) {
