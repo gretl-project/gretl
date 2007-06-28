@@ -892,7 +892,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-int simann (void *J, gretl_matrix *b)
+static int simann (Jwrap *J, gretl_matrix *b)
 {
     int i, SAiter = 4096;
     double f0, f1, fbest;
@@ -921,16 +921,12 @@ int simann (void *J, gretl_matrix *b)
     f0 = fbest = Jloglik(b->val, J);
 
     for (i=0; i<SAiter && !err; i++) {
-	err = gretl_matrix_random_fill(d, D_NORMAL);
-	if (err) {
-	    break;
-	}
-
+	gretl_matrix_random_fill(d, D_NORMAL);
 	gretl_matrix_multiply_by_scalar(d, radius);
 	gretl_matrix_add_to(b1, d);
 	f1 = Jloglik(b1->val, J);
 
-	if (f1>f0) {
+	if (f1 > f0) {
 	    jump = 1;
 	} else {
 	    rndu = ((double) rand()) / RAND_MAX;
@@ -939,15 +935,15 @@ int simann (void *J, gretl_matrix *b)
 
 	if (jump) {
 	    f0 = f1;
-	    err = gretl_matrix_copy_values(b0, b1);
-	    if (!err && f0 > fbest) {
+	    gretl_matrix_copy_values(b0, b1);
+	    if (f0 > fbest) {
 		fbest = f0;
 		gretl_matrix_copy_values(bbest, b0);
 		fprintf(stderr, "i:%d\tTemp = %#g, radius = %#g, fbest = %#g\n", 
 			i, Temp, radius, fbest);
 	    }
 	} else {
-	    err = gretl_matrix_copy_values(b1, b0);
+	    gretl_matrix_copy_values(b1, b0);
 	    f1 = f0;
 	}
 
@@ -955,7 +951,7 @@ int simann (void *J, gretl_matrix *b)
 	radius *= 0.9999;
     }
     
-    err = gretl_matrix_copy_values(b, bbest);
+    gretl_matrix_copy_values(b, bbest);
 
  bailout:
 
