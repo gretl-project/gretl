@@ -1046,7 +1046,9 @@ garch_full_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	return err;
     }
 
-    err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+    if (count != NULL) {
+	err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+    }
 
     gretl_matrix_switch_sign(V);
 
