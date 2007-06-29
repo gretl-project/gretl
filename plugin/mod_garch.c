@@ -43,7 +43,7 @@ enum {
 typedef struct garch_container_ garch_container;
 
 struct garch_container_ {
-    double *y;           /* dependent variable */
+    const double *y;     /* dependent variable */
     const double **X;    /* regressors (constant excluded) */
     int t1;              /* beginning of sample */
     int t2;              /* end of sample */
@@ -111,8 +111,8 @@ static int allocate_eh_derivs (garch_container *DH)
 }
 
 static garch_container *
-garch_container_new (double *y, const double **X, 
-		     int t1, int t2, int nobs, int nx,
+garch_container_new (const double *y, const double **X, 
+		     int t1, int t2, int nobs, int nc,
 		     int p, int q, int init_method, 
 		     double *e, double *e2, double *h, 
 		     int analytical)
@@ -128,7 +128,7 @@ garch_container_new (double *y, const double **X,
     DH->t1 = t1;
     DH->t2 = t2;
     DH->nobs = nobs;
-    DH->ncm = nx;
+    DH->ncm = nc - 1;
     DH->p = p;
     DH->q = q;
     DH->init = init_method;
@@ -136,7 +136,7 @@ garch_container_new (double *y, const double **X,
     DH->e2 = e2;
     DH->h = h;
     DH->ascore = analytical;
-    DH->k = 1 + nx + 1 + p + q;
+    DH->k = nc + 1 + p + q;
 
     DH->score_e = NULL;
     DH->score_h = NULL;
@@ -258,8 +258,8 @@ static int garch_etht (const double *par, void *ptr)
 	} else {
 	    et = DH->y[t] - par[0];
 	    if (DH->X != NULL) {
-		for (i=0; i<ncm; i++) {
-		    et -= DH->X[i][t]*par[i+1];
+		for (i=1; i<=ncm; i++) {
+		    et -= DH->X[i][t]*par[i];
 		}
 	    }
 	    DH->e[t] = et;
@@ -324,7 +324,7 @@ static int garch_etht (const double *par, void *ptr)
 	    for (i=0; i<ncm; i++) {
 		dh0 = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    dh0 -= DH->e[t] * DH->X[i][t];
+		    dh0 -= DH->e[t] * DH->X[i+1][t];
 		}
 		for (t=t1-maxlag; t<t1; t++) {
 		    dhdq[i+1][t] = dh0  * 2.0 / T;
@@ -391,7 +391,7 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	    /* regressors */
 	    for (i=1; i<=ncm; i++) {
-		dedq[i][t] = -(DH->X[i-1][t]);
+		dedq[i][t] = -(DH->X[i][t]);
 		k = ncm+1;
 		dhdq[i][t] = 0.0;
 		for (j=1; j<=p; j++) {
@@ -558,11 +558,11 @@ static int garch_iinfo (garch_container *DH, gretl_matrix *info)
     for (t=DH->t1; t<=DH->t2; t++) {
 	for (i=0; i<=DH->ncm; i++) {
 	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    tmpx1 = (i==0)? 2.0 : 2.0*(DH->X[i-1][t]);
+	    tmpx1 = (i==0)? 2.0 : 2.0*(DH->X[i][t]);
 	    tmpx1 /= DH->h[t];
 	    for (j=0; j<=i; j++) {
 		tmpj = DH->score_h[j][t] / DH->h[t];
-		tmpx2 = (j==0)? 1.0 : 1.0*(DH->X[j-1][t]);
+		tmpx2 = (j==0)? 1.0 : 1.0*(DH->X[j][t]);
 		x = tmpx1 * tmpx2 + tmpi * tmpj;
 		tmp_info[i][j] += x;
 	    }
@@ -787,53 +787,48 @@ static void test_score (garch_container *DH, double *theta)
 /*
    Parameters to garch_estimate_mod()
 
-   t1:    beginning of sample in auxiliary database
-   t2:    end of sample in auxiliary database
-   nobs:  total number of observations in auxiliary database
-   X:     data matrix for auxiliary database (regressors, not needed on
-          output)
-   nx:    number of columns of X
-   coeff: vector of coefficient for the conditional mean, normally
-          initialised by OLS on input (not needed on output) -- does NOT
-	  include the constant
-   nc:    number of elements in coeff
-   V:     covariance matrix of coeff (all 0 on input)
+   y:     the dependent variable
+   X:     the independent regressors (including the constant)
+   t1:    beginning of sample relative to the arrays y, X
+   t2:    end of sample
+   nobs:  total number of observations in y, X
+   nc:    number of columns in X
+   p:     number of 'beta' variance params
+   q:     number of 'alpha' variance params (excluding the constant)
+   theta: full parameter vector, pre-initialized; on output, the
+          estimates at convergence.
+   V:     covariance matrix of parameters (all 0 on input)
    e:     vector of 0's on input, resids on output
-   e2:    storage for squared residuals
-   h:     null pointer on input, conditional variances on output
-   y:     on input, vector with dep. var., not needed on output
-   amax:  vector; element 0 holds the garch intercept; 1 and 2 the
-          arch & garch orders; from 3 onwards, the arch & garch 
-          parameters
-   b:     0 on input, holds vector of coefficient for the conditional
-          mean on output
-   scale: double used to scale dep. var.
+   e2:    storage for squared residuals on output
+   h:     storage conditional variances on output
+   scale: factor used to scale the dependent variable
+   pll:   location to receive log-likelihood on output
    fncount: 0 on input, holds number of function evaluations on output
    fncount: 0 on input, holds number of gradient evaluations on output
-   prn:   print handle for info on iterations and other diagnostic output
+   vopt:  code indicating which version of the covariance
+          matrix to compute in V
+   prn:   print handle for info on iterations etc.
 
 */
 
-int garch_estimate_mod (int t1, int t2, int nobs, 
-			const double **X, int nx, double *coeff, int nc, 
-			gretl_matrix *V, double *e, double *e2, double *h,
-			double *y, double *amax, double *b, 
-			double scale, int *fncount, int *grcount,
-			PRN *prn, int vopt)
+int garch_estimate_mod (const double *y, const double **X,
+			int t1, int t2, int nobs, int nc,
+			int p, int q, double *theta,  gretl_matrix *V,
+			double *e, double *e2, double *h,
+			double scale, double *pll, 
+			int *fncount, int *grcount,
+			int vopt, PRN *prn)
 {
     garch_container *DH;
-    int p = amax[1];
-    int q = amax[2];
-    int npar = 1 + nx + 1 + p + q;
+    int npar = nc + 1 + p + q; 
     int analytical = 1;
-    double *theta = NULL;
-    int i, j, err = 0;
+    int err = 0;
 
     /* BFGS apparatus */
     int maxit = 10000;
     double reltol = 1.0e-13;
 
-    DH = garch_container_new(y, X, t1, t2, nobs, nx, p, q, 
+    DH = garch_container_new(y, X, t1, t2, nobs, nc, p, q, 
 			     INIT_VAR_RESID, e, e2, h, 
 			     analytical);
 
@@ -841,21 +836,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 	return E_ALLOC;
     }
 
-    theta = malloc(npar * sizeof *theta);
-    if (theta == NULL) {
-	garch_container_destroy(DH);
-	return E_ALLOC;
-    }
-
     theta[0] = gretl_mean(t1, t2, y);
-    for (i=1; i<=nx; i++) {
-	theta[i] = coeff[i];
-    }
-
-    theta[nx+1] = amax[0];
-    for (i=nx+2, j=3; i<npar; i++) {
-	theta[i] = amax[j++];
-    }
 
 #if 0
     if (DH->ascore) {
@@ -871,7 +852,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 		   DH, (prn != NULL)? OPT_V : OPT_NONE, 
 		   prn);
     
-    amax[0] = loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
+    *pll = loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
     
 #if GDEBUG
     test_score(DH, theta);
@@ -879,21 +860,6 @@ int garch_estimate_mod (int t1, int t2, int nobs,
 
     err = garch_covariance_matrix(vopt, theta, DH, V);
 
-    if (!err) {
-	double sderr;
-
-	/* transcribe coefficients and standard errors 
-	   note: slightly different from fcp */
-	for (i=0; i<npar; i++) {
-	    double vii = gretl_matrix_get(V, i, i);
-
-	    sderr = (vii > 0.0)? sqrt(vii) : 0.0;
-	    amax[i+1] = theta[i];
-	    amax[i+1+npar] = sderr;
-	}
-    }
-
-    free(theta);
     garch_container_destroy(DH);
 
     return err;

@@ -744,6 +744,14 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     return err;
 }
 
+static gretlopt plot_opt (gretlopt opt, int batch)
+{
+    if (batch) {
+	opt |= OPT_B;
+    }
+    return opt;
+}
+
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     DATAINFO *pdinfo = *ppdinfo;
@@ -895,11 +903,12 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			     "which is a dummy variable\n(with values 1 or 0)\n"));
 		break;
 	    }
+	    
 	    err = gnuplot(cmd->list, cmd->param, (const double **) *pZ, 
-			  pdinfo, (cmd->opt | OPT_B));
+			  pdinfo, plot_opt(cmd->opt, batch));
 	} else {
 	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
-				 (cmd->opt | OPT_B));
+				 plot_opt(cmd->opt, batch));
 	}
 
 	if (err) {

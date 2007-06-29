@@ -72,79 +72,86 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-static int make_packed_vcv (MODEL *pmod, const gretl_matrix *V,
-			    int nc, double scale)
+static void rescale_results (double *theta, gretl_matrix *V,
+			     double scale, int npar, int nc)
 {
-    int k = V->rows;
-    int n = k * (k + 1) / 2;
-    double vij, sfi, sfj;
-    int i, j, idx;
+    double vij, sfi, sf, sc2 = scale * scale;
+    int i, j;
 
-    free(pmod->vcv);
-    pmod->vcv = malloc(n * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) {
-	return 1;  
+    for (i=0; i<nc; i++) {
+	theta[i] *= scale;
     }
 
-    for (i=0; i<k; i++) {
-	if (i < nc) {
-	    sfi = scale;
-	} else if (i == nc) {
-	    sfi = scale * scale;
-	} else {
-	    sfi = 1.0;
-	}
+    theta[nc] *= sc2;
+
+    for (i=0; i<npar; i++) {
+	sfi = (i < nc)? scale : (i == nc)? sc2 : 1.0;
 	for (j=0; j<=i; j++) {
-	    if (j < nc) {
-		sfj = scale;
-	    } else if (j == nc) {
-		sfj = scale * scale;
-	    } else {
-		sfj = 1.0;
-	    }
-	    idx = ijton(i, j, k);
-	    vij = gretl_matrix_get(V, i, j);
-	    pmod->vcv[idx] = vij * sfi * sfj;
+	    sf = (j < nc)? scale*sfi : (j == nc)? sc2*sfi : sfi;
+	    vij = gretl_matrix_get(V, i, j) * sf;
+	    gretl_matrix_set(V, i, j, vij);
+	    gretl_matrix_set(V, j, i, vij);
 	}
     }
-
-    return 0;
 }
 
-static int write_garch_stats (MODEL *pmod, const double **Z,
-			      double scale, const DATAINFO *pdinfo,
-			      const int *list, const double *theta, 
-			      int nparam, int pad, const double *res,
-			      const double *h)
+static int 
+write_garch_stats (MODEL *pmod, const int *list, 
+		   const double **Z, const DATAINFO *pdinfo,
+		   double *theta, gretl_matrix *V, double scale,
+		   const double *e, const double *h, 
+		   int npar, int nc, int pad, PRN *prn)
 {
     int err = 0;
-    double *coeff, *sderr, *garch_h;
-    double den;
+    double *coeff, *sderr, *vcv, *garch_h;
+    double x, den;
     int ynum = list[4];
     int nvp = list[1] + list[2];
     int xvars = list[0] - 4;
-    int i;
+    int nv = npar * (npar + 1) / 2;
+    int i, j, k;
 
-    coeff = realloc(pmod->coeff, nparam * sizeof *pmod->coeff);
-    sderr = realloc(pmod->sderr, nparam * sizeof *pmod->sderr);
+    coeff = realloc(pmod->coeff, npar * sizeof *pmod->coeff);
+    sderr = realloc(pmod->sderr, npar * sizeof *pmod->sderr);
+    vcv = realloc(pmod->vcv, nv * sizeof *pmod->vcv);
 
-    if (coeff == NULL || sderr == NULL) return 1;
-
-    for (i=0; i<nparam; i++) {
-	coeff[i] = theta[i+1];
-	sderr[i] = theta[i+nparam+1];
+    if (coeff == NULL || sderr == NULL || vcv == NULL) {
+	return E_ALLOC;
     }
-    
+
+    if (scale != 1.0) {
+	rescale_results(theta, V, scale, npar, nc);
+    }
+
+    for (i=0; i<npar; i++) {
+	coeff[i] = theta[i];
+	x = gretl_matrix_get(V, i, i);
+	sderr[i] = (x > 0.0)? sqrt(x) : 0.0;
+	for (j=0; j<=i; j++) {
+	    k = ijton(i, j, npar);
+	    vcv[k] = gretl_matrix_get(V, i, j);
+	}
+    }
+
+    /* verbose? */
+    if (prn != NULL) {
+	for (i=0; i<npar; i++) {
+	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i, theta[i], 
+		    sderr[i]);
+	}
+	pputc(prn, '\n'); 
+    }   
+
     pmod->coeff = coeff;
     pmod->sderr = sderr;
-   
-    pmod->ncoeff = nparam;
+    pmod->vcv = vcv;
+    pmod->ncoeff = npar;
 
     pmod->ess = 0.0;
     for (i=pmod->t1; i<=pmod->t2; i++) {
-	pmod->uhat[i] = res[i + pad] * scale;
+	pmod->uhat[i] = e[i + pad] * scale;
 	pmod->ess += pmod->uhat[i] * pmod->uhat[i];
-	pmod->yhat[i] =  Z[ynum][i] * scale - pmod->uhat[i];
+	pmod->yhat[i] = Z[ynum][i] * scale - pmod->uhat[i];
     }
 
     /* set sigma to its unconditional or steady-state value */
@@ -203,16 +210,15 @@ static int make_garch_dataset (const int *list, double **Z,
 	*py = y;
     } 
 
-    if (nx > 0) {
-	if (pad) {
-	    X = doubles_array_new(nx, bign);
-	} else {
-	    X = malloc(nx * sizeof *X);
-	}
-	if (X == NULL) {
-	    free(y);
-	    return E_ALLOC;
-	}
+    if (pad) {
+	X = doubles_array_new(nx, bign);
+    } else {
+	X = malloc(nx * sizeof *X);
+    }
+
+    if (X == NULL) {
+	free(y);
+	return E_ALLOC;
     }
 
     if (pad > 0) {
@@ -229,9 +235,6 @@ static int make_garch_dataset (const int *list, double **Z,
 		k = 5;
 		for (i=0; i<nx; i++) {
 		    vx = list[k++]; 
-		    if (vx == 0) {
-			vx = list[k++];
-		    }
 		    X[i][t] = Z[vx][s];
 		}
 	    }
@@ -242,9 +245,6 @@ static int make_garch_dataset (const int *list, double **Z,
 	k = 5;
 	for (i=0; i<nx; i++) {
 	    vx = list[k++]; 
-	    if (vx == 0) {
-		vx = list[k++];
-	    }
 	    X[i] = Z[vx];
 	}
     }
@@ -276,11 +276,11 @@ static int get_vopt (int robust)
     return vopt;
 }
 
-static void garch_print_init (const double *coeff, int k,
-			      const double *a, int p, int q,
-			      int manual, PRN *prn)
+static void garch_print_init (const double *theta, int k,
+			      int p, int q, int manual, 
+			      PRN *prn)
 {
-    int i;
+    int i, j = 0;
 
     pputc(prn, '\n');
 
@@ -293,17 +293,17 @@ static void garch_print_init (const double *coeff, int k,
     pputs(prn, "\n\n Regression coefficients:\n");
 
     for (i=0; i<k; i++) {
-	pprintf(prn, "  theta[%d] = %g\n", i, coeff[i]);
+	pprintf(prn, "  theta[%d] = %g\n", i, theta[j++]);
     }
 
     pputs(prn, "\n Variance parameters:\n");
 
-    pprintf(prn, "  alpha[0] = %g\n", a[0]);
+    pprintf(prn, "  alpha[0] = %g\n", theta[j++]);
     for (i=0; i<p; i++) {
-	pprintf(prn, "  alpha[%d] = %g\n", i+1, a[i+3]);
+	pprintf(prn, "  alpha[%d] = %g\n", i+1, theta[j++]);
     }
     for (i=0; i<q; i++) {
-	pprintf(prn, "   beta[%d] = %g\n", i, a[i+3+p]);
+	pprintf(prn, "   beta[%d] = %g\n", i, theta[j++]);
     }
 
     pputc(prn, '\n');
@@ -312,15 +312,14 @@ static void garch_print_init (const double *coeff, int k,
 /* pick up any manually set initial values (if these
    have been set via "set initvals") */
 
-static int garch_manual_init (double *a, int p, int q, 
-			      double *coeff, double *b,
-			      int k, PRN *prn)
+static int garch_manual_init (double *theta, int k, int p, int q, 
+			      PRN *prn)
 {
     int mlen = n_init_vals();
-    int n = p + q + 1 + k;
+    int n = k + p + q + 1;
 #if USE_FCP
     const gretl_matrix *m;
-    int i, j;
+    int i;
 #endif
 
     if (mlen != n) {
@@ -337,20 +336,13 @@ static int garch_manual_init (double *a, int p, int q,
 #if USE_FCP
     m = get_init_vals();
 
-    /* coefficients on regressors */
-    for (i=0; i<k; i++) {
-	coeff[i] = m->val[i];
-	b[i] = 0.0;
+    /* order: coeffs on regressors; variance params */
+
+    for (i=0; i<n; i++) {
+	theta[i] = m->val[i];
     }
 
-
-    /* variance parameters */
-    a[0] = m->val[i++];
-    for (j=0; j<p+q; j++) {
-	a[j+3] = m->val[i++];
-    }
-
-    garch_print_init(coeff, k, a, p, q, 1, prn);
+    garch_print_init(theta, k, p, q, 1, prn);
 
     free_init_vals();
 #endif
@@ -363,26 +355,25 @@ int do_fcp (const int *list, double **Z, double scale,
 	    PRN *prn, gretlopt opt)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
-    int ncoeff = pmod->ncoeff;
+    int nc = pmod->ncoeff;
     int p = list[1];
     int q = list[2];
     double *y = NULL;
     double **X = NULL;
     double *h = NULL;
-    double *amax = NULL; 
     double *e = NULL, *e2 = NULL;
-    double *coeff = NULL, *b = NULL;
+    double *theta = NULL;
+    double ll = NADBL;
     gretl_matrix *V = NULL;
     int fnc = 0, grc = 0, iters = 0;
     int nobs, maxlag, bign, pad = 0;
-    int i, nx, nparam, vopt;
+    int i, npar, vopt;
     int err = 0;
 
     vopt = get_vopt(opt & OPT_R);
 
-    nx = ncoeff - 1;
     maxlag = (p > q)? p : q; 
-    nparam = ncoeff + p + q + 1;
+    npar = nc + p + q + 1;
 
     nobs = t2 + 1; /* number of obs in full dataset */
 
@@ -397,100 +388,76 @@ int do_fcp (const int *list, double **Z, double scale,
     e = malloc(bign * sizeof *e);
     e2 = malloc(bign * sizeof *e2);
     h = malloc(bign * sizeof *h);
-    amax = malloc(bign * sizeof *amax);
-    if (e == NULL || e2 == NULL || 
-	amax == NULL || h == NULL) {
+    if (e == NULL || e2 == NULL || h == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     for (i=0; i<bign; i++) {
-	e[i] = e2[i] = amax[i] = 0.0;
+	e[i] = e2[i] = h[i] = 0.0;
     }   
  
-    coeff = malloc(ncoeff * sizeof *coeff);
-    b = malloc(ncoeff * sizeof *b);
-    if (coeff == NULL || b == NULL) {
+    theta = malloc(npar * sizeof *theta);
+    if (theta == NULL) {
 	err = E_ALLOC;
 	goto bailout;	
     }
 
-    V = gretl_zero_matrix_new(nparam, nparam);
+    V = gretl_zero_matrix_new(npar, npar);
     if (V == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* create dataset for garch estimation */
-    err = make_garch_dataset(list, Z, bign, pad, nx, &y, &X);
+    err = make_garch_dataset(list, Z, bign, pad, nc, &y, &X);
     if (err) {
 	goto bailout;
     }
 
-    /* a bit odd, but for compatibility with FCP... */
-    amax[1] = q;
-    amax[2] = p; 
-
-    if (!garch_manual_init(amax, p, q, coeff, b, ncoeff, prn)) {
+    if (!garch_manual_init(theta, nc, p, q, prn)) {
 
 	/* initial coefficients from OLS */
-	for (i=0; i<ncoeff; i++) {
-	    coeff[i] = pmod->coeff[i];
-	    b[i] = 0.0;
+	for (i=0; i<nc; i++) {
+	    theta[i] = pmod->coeff[i];
 	}
 
 	/* initialize variance parameters */
-	amax[0] = vparm_init[0];
-	for (i=0; i<p+q; i++) {
-	    amax[i+3] = vparm_init[i+1];
+	for (i=0; i<p+q+1; i++) {
+	    theta[i+nc] = vparm_init[i];
 	}
 
 	if (opt & OPT_V) {
-	    garch_print_init(coeff, ncoeff, amax, p, q, 0, prn);
+	    garch_print_init(theta, nc, p, q, 0, prn);
 	}
     }
 
 #if USE_FCP
-    err = garch_estimate(t1 + pad, t2 + pad, bign, 
-			 (const double **) X, nx, coeff, ncoeff, 
-			 V, e, e2, h, y, amax, scale, &iters,
-			 prn, vopt);
+	err = garch_estimate(y, (const double **) X,
+			     t1 + pad, t2 + pad, bign, nc, 
+			     p, q, theta, V, e, e2, h,
+			     scale, &ll, &iters, vopt, prn);
 #else
     if (getenv("FCP_GARCH") != NULL) {
-	err = garch_estimate(t1 + pad, t2 + pad, bign, 
-			     (const double **) X, nx, coeff, ncoeff, 
-			     V, e, e2, h, y, amax, scale, &iters,
-			     prn, vopt);
+	err = garch_estimate(y, (const double **) X,
+			     t1 + pad, t2 + pad, bign, nc,
+			     p, q, theta, V, e, e2, h,  
+			     scale, &ll, &iters, vopt, prn);
     } else {
-	err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
-				 (const double **) X, nx, coeff, ncoeff, 
-				 V, e, e2, h, y, amax, b, scale, &fnc,
-				 &grc, prn, vopt);
+	err = garch_estimate_mod(y, (const double **) X,
+				 t1 + pad, t2 + pad, bign, nc, 
+				 p, q, theta, V, e, e2, h, 
+				 scale, &ll, &fnc, &grc, vopt, prn);
     }
 #endif
 
     if (err != 0) {
 	pmod->errcode = err;
     } else {
-	int nparam = ncoeff + p + q + 1;
-
-	for (i=1; i<=nparam; i++) {
-	    if (i <= ncoeff) {
-		amax[i] *= scale;
-		amax[i + nparam] *= scale;
-	    } else if (i == ncoeff + 1) {
-		amax[i] *= scale * scale;
-		amax[i + nparam] *= scale * scale;
-	    }
-	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i-1, amax[i], 
-		    amax[i + nparam]);
-	}
-	pputc(prn, '\n');
-
-	pmod->lnL = amax[0];
-	write_garch_stats(pmod, (const double **) Z, scale, pdinfo, 
-			  list, amax, nparam, pad, e, h);
-	make_packed_vcv(pmod, V, ncoeff, scale);
+	pmod->lnL = ll;
+	write_garch_stats(pmod, list, (const double **) Z, pdinfo, 
+			  theta, V, scale, e, h, npar, nc, pad,
+			  prn);
 	if (iters > 0) {
 	    gretl_model_set_int(pmod, "iters", iters);
 	} else if (fnc > 0) {
@@ -505,14 +472,12 @@ int do_fcp (const int *list, double **Z, double scale,
     free(e);
     free(e2);
     free(h);
-    free(amax);    
-    free(coeff);
-    free(b);
+    free(theta);
     gretl_matrix_free(V);
 
     if (pad > 0) {
 	free(y);
-	doubles_array_free(X, nx);
+	doubles_array_free(X, nc);
     } else {
 	free(X);
     }

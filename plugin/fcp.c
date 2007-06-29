@@ -3,9 +3,8 @@
     from the Fiorentini, Calzolari and Panattoni GARCH implementation
     (Journal of Applied Econometrics, 1996), the original notice for
     which is reproduced infra.  The relevant code was extracted from
-    its original Monte Carlo context, translated to C using f2c, and
-    then edited extensively to turn it into more idiomatic C, and
-    to convert from fixed-size arrays to dynamic memory allocation.
+    its original Monte Carlo context, translated to C using f2c, 
+    then edited extensively to turn it into more idiomatic C.
 
     I have also modified the comments at certain places in the code,
     where reference is made to the equations in the FCP paper.  The
@@ -14,6 +13,7 @@
     JAE, 1996, pp. 399-417.
 
     Allin Cottrell, Wake Forest University, March 2004.
+    Updated and re-worked, June 2007.
 */
 
 /* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
@@ -42,33 +42,92 @@ struct fcpinfo_ {
     int nc;
     int t1, t2;
     int T;
-    int nx;
     int p, q;
     int npar;
     double scale;
 
+    /* supplied arrays */
     const double *y;
     const double **X;
+    double *theta;
     double *e;
     double *e2;
     double *h;
 
-    double *theta;
+    /* temporary arrays */
     double *grad;
     double *parpre;
+    double *zt;
+    double *asum2;
     double **dhdp;
-    double **g;
+    double ***H;
 
     gretl_matrix *vch;
 };
 
+static void free_H (double ***H, int np)
+{
+    int i, j;
+
+    for (i=0; i<np; i++) {
+	if (H[i] != NULL) {
+	    for (j=0; j<np; j++) {
+		free(H[i][j]);
+	    }
+	    free(H[i]);
+	}
+    }
+    
+    free(H);
+}
+
+static double ***allocate_H (int np, int p, int q)
+{
+    int i, j, lag = (p > q)? p : q;
+    double ***H;
+
+    H = malloc(np * sizeof *H);
+    if (H == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<np; i++) {
+	H[i] = NULL;
+    }
+    
+    for (i=0; i<np; i++) {
+	H[i] = malloc(np * sizeof **H);
+	if (H[i] == NULL) {
+	    goto bailout;
+	}
+	for (j=0; j<np; j++) {
+	    H[i][j] = NULL;
+	}
+	for (j=0; j<np; j++) {
+	    H[i][j] = malloc((lag + 1) * sizeof ***H);
+	    if (H[i][j] == NULL) {
+		goto bailout;
+	    }
+	}
+    }
+
+    return H;
+
+ bailout:
+
+    free_H(H, np);
+    return NULL;
+}
+
 static int fcp_allocate (fcpinfo *f)
 {
-    f->theta = malloc(f->npar * sizeof *f->theta);
     f->grad = malloc(f->npar * sizeof *f->grad);
     f->parpre = malloc(f->npar * sizeof *f->parpre);
+    f->zt = malloc((f->p + f->q + 1) * sizeof *f->zt);
+    f->asum2 = malloc(f->nc * sizeof *f->asum2);
 
-    if (f->theta == NULL || f->grad == NULL || f->parpre == NULL) {
+    if (f->grad == NULL || f->parpre == NULL || 
+	f->zt == NULL || f->asum2 == NULL) {
 	return E_ALLOC;
     }
 
@@ -77,34 +136,36 @@ static int fcp_allocate (fcpinfo *f)
 	return E_ALLOC;
     }
 
-    f->g = doubles_array_new(f->nc, f->T);
-    if (f->g == NULL) {
-	return E_ALLOC;
-    }
-
     f->vch = gretl_zero_matrix_new(f->npar, f->npar);
     if (f->vch == NULL) {
 	return E_ALLOC;
     }  
+
+    f->H = allocate_H(f->npar, f->p, f->q);
+    if (f->H == NULL) {
+	return E_ALLOC;
+    }     
 
     return 0;
 }
 
 static void fcpinfo_destroy (fcpinfo *f)
 {
-    free(f->theta);
     free(f->grad);
     free(f->parpre);
+    free(f->zt);
+    free(f->asum2);
+
     doubles_array_free(f->dhdp, f->npar);
-    doubles_array_free(f->g, f->nc); 
     gretl_matrix_free(f->vch);
+    free_H(f->H, f->npar);
 
     free(f);
 }
 
-static fcpinfo *fcpinfo_new (int nc, int q, int p, int t1, int t2, int T,
-			     const double *y, const double **X, int nx,
-			     double *e, double *e2, double *h,
+static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
+			     const double *y, const double **X, int nc,
+			     double *theta, double *e, double *e2, double *h,
 			     double scale)
 {
     fcpinfo *f = malloc(sizeof *f);
@@ -113,18 +174,19 @@ static fcpinfo *fcpinfo_new (int nc, int q, int p, int t1, int t2, int T,
 	return NULL;
     }
 
-    f->theta = NULL;
+    f->theta = theta;
+
     f->grad = NULL;
     f->parpre = NULL;
+    f->zt = NULL;
+    f->asum2 = NULL;
     f->dhdp = NULL;
-    f->g = NULL;
     f->vch = NULL;
 
     f->nc = nc;
     f->t1 = t1;
     f->t2 = t2;
     f->T = T,
-    f->nx = nx;
     f->p = p;
     f->q = q;
     f->y = y;
@@ -134,7 +196,7 @@ static fcpinfo *fcpinfo_new (int nc, int q, int p, int t1, int t2, int T,
     f->h = h;   
     f->scale = scale;
 
-    f->npar = nc + 1 + q + p;
+    f->npar = f->nc + 1 + q + p;
 
     if (fcp_allocate(f)) {
 	fcpinfo_destroy(f);
@@ -175,46 +237,17 @@ static void garch_iter_info (fcpinfo *f, int iter, double ll,
 static double 
 get_yhat (const double **X, int n, int t, const double *a)
 {
+    double yhat = 0.0;
     int i;
-    double yhat = a[0];
 
     for (i=0; i<n; i++) {
-	yhat += a[i+1] * X[i][t];
+	yhat += a[i] * X[i][t];
     }
 
     return yhat;
-} 
+}
 
-static int make_g_matrix (fcpinfo *f, double *amax)
-{
-    int k, t, nc = f->nc;
-    double deltc, relinc = 0.5;
-    double *c = f->theta;
-    double oldc, yh;
-
-    for (t=f->t1; t<=f->t2; t++) {
-	amax[t] = get_yhat(f->X, f->nx, t, c);
-    }
-
-    for (t=f->t1; t<=f->t2; t++) {
-	for (k=0; k<nc; k++) {
-	    oldc = c[k];
-	    deltc = relinc;
-	    if (oldc != 0.0) {
-		deltc = oldc * relinc;
-	    }
-	    c[k] = oldc + deltc;
-	    yh = get_yhat(f->X, f->nx, t, c);
-	    deltc = c[k] - oldc;
-	    c[k] = oldc;
-	    f->g[k][t] = (yh - amax[t]) / deltc;
-	}
-    }
-
-    return 0;
-} 
-
-/* Compute the GARCH log-likelihood.  Parameters are passed in f->theta;
+/* Compute the GARCH log-likelihood.  Params are passed in f->theta;
    e, e2 and ht are computed here (e2 holds squared residuals).
 */
 
@@ -230,7 +263,7 @@ static double garch_ll (fcpinfo *f)
     double uncvar, ll;
 
     const double *alpha = f->theta + nc + 1;
-    const double *beta = f->theta + nc + q + 1;
+    const double *beta = alpha + q;
 
 #if FDEBUG
     fprintf(stderr, "garch_ll: a0 = %.9g\n", f->theta[nc]);
@@ -247,7 +280,7 @@ static double garch_ll (fcpinfo *f)
     */
     uncvar = 0.0;
     for (t = t1; t <= t2; t++) {
-	f->e[t] = f->y[t] - get_yhat(f->X, f->nx, t, f->theta);
+	f->e[t] = f->y[t] - get_yhat(f->X, f->nc, t, f->theta);
 	f->e2[t] = f->e[t] * f->e[t];
 	uncvar += f->e2[t];
     }
@@ -295,58 +328,13 @@ static double garch_ll (fcpinfo *f)
     return ll;
 } 
 
-/*
-     Check that the values of the parameters of the conditional
-     variance, ht, are in the set of the admissible values.  If a0 is
-     less or equal than zero it is set to SMALL_HT.  If alpha and beta
-     are less than zero they are set to zero; if the sum of alpha
-     and beta is > 1.0, then alpha and beta are normalized (divided by
-     sum).
- */
+/* combined setup for OP matrix, information matrix and Hessian */
 
-static void check_ht (double *b, int n)
-{
-    double sum = 0.0;
-    int i;
-
-    if (b[0] <= 0.0) {
-	b[0] = SMALL_HT;
-    }
-
-    for (i=1; i<n; i++) {
-	if (b[i] < 0.0) {
-	    b[i] = 0.0;
-	}
-	sum += b[i];
-    }
-
-    if (sum > 1.0) {
-	for (i=1; i<n; i++) {
-	    b[i] /= sum;
-	}
-    }
-} 
-
-static void update_theta (fcpinfo *f, const double *gg, 
-			  const double *step, double d)
-{
-    int i;
-
-    for (i=0; i<f->npar; i++) {
-	f->theta[i] = gg[i] + step[i] * d;
-    }
-
-    check_ht(f->theta + f->nc, f->p + f->q + 1);
-}
-
-/* combined setup for OP matrix, Information Matrix and Hessian */
-
-static int vcv_setup (fcpinfo *f, int *count, 
-		      double *zt, double ***H, gretl_matrix *V,
-		      int code)
+static int 
+vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 {
     int i, j, k, t, n, lag, nvpar;
-    double x, *asum2;
+    double x;
 
     int t1 = f->t1;
     int t2 = f->t2;
@@ -356,10 +344,13 @@ static int vcv_setup (fcpinfo *f, int *count,
     int npar = f->npar;
 
     double **dhdp = f->dhdp;
-    double **g = f->g;
+    const double **g = f->X;
+    double ***H = f->H;
     double *e = f->e;
     double *e2 = f->e2;
     double *h = f->h;
+    double *zt = f->zt;
+    double *asum2 = f->asum2;
 
     const double *alpha = f->theta + nc + 1;
     const double *beta = alpha + q;
@@ -384,15 +375,6 @@ static int vcv_setup (fcpinfo *f, int *count,
 	    lag, nc, npar);
 #endif
 
-    asum2 = malloc(nc * sizeof *asum2);
-    if (asum2 == NULL) {
-	return 1;
-    }
-
-    if (count != NULL) {
-	++(*count);
-    }
-
     /* Begin computation of dhtdp wrt the variance parameters; we
        start computing derivatives of starting values; for ht starting
        values are obtained from the unconditional variance of the
@@ -402,7 +384,8 @@ static int vcv_setup (fcpinfo *f, int *count,
     for (k=1; k<=p; k++) {
 	for (i=0; i<nvpar; i++) {
 	    dhdp[nc+i][t1-k] = 0.0;
-	    if (H != NULL) { /* hessian only */
+	    if (H != NULL) { 
+		/* hessian only */
 		for (j=0; j<nvpar; j++) {
 		    H[nc+i][nc+j][k] = 0.0;
 		}
@@ -421,8 +404,7 @@ static int vcv_setup (fcpinfo *f, int *count,
 	}
 
 	/* Fill in dhtdp at time t, part relative to variance parameters
-	   (eq. 7, p. 402) 
-	*/
+	   (eq. 7, p. 402) */
 	for (i=0; i<nvpar; i++) {
 	    dhdp[nc+i][t] = zt[i];
 	    for (j=1; j<=p; j++) {
@@ -558,7 +540,7 @@ static int vcv_setup (fcpinfo *f, int *count,
     }
 
     if (code != VCV_HESSIAN) {
-	free(asum2);
+	/* we're done */
 	return 0;
     }
 
@@ -686,14 +668,6 @@ static int vcv_setup (fcpinfo *f, int *count,
 		for (i=0; i<nvpar; i++) {
 		    for (j=0; j<nvpar; j++) { 
 			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
-#if FDEBUG
-			if ((t==t1 || t==t2)) {
-			    fprintf(stderr, "Set H[%d][%d][0] = %.9g\n",
-				    nc+i, nc+j, H[nc+i][nc+j][0]);
-			    fprintf(stderr, "incr = %.9g * %.9g\n",
-				    H[nc+i][nc+j][k], beta[k-1]);
-			}
-#endif
 		    }
 		}
 	    }
@@ -706,12 +680,6 @@ static int vcv_setup (fcpinfo *f, int *count,
 		    - r2_h3 * dhdp[i][t] * dhdp[j][t] 
 		    + .5 * (r2_h - 1.0) / h[t] * H[i][j][0];
 		gretl_matrix_set(V, i, j, x);
-#if FDEBUG
-		if ((t==t1 || t==t2)) {
-		    fprintf(stderr, "Set V(%d,%d) = %.9g (using Hval %.9g)\n",
-			    i, j, x, H[i][j][0]);
-		}
-#endif
 	    }
 	}
 
@@ -733,23 +701,48 @@ static int vcv_setup (fcpinfo *f, int *count,
 	for (k=0; k<lag; k++) { 
 	    for (i=0; i<npar; i++) {
 		for (j=0; j<npar; j++) {
-#if FDEBUG
-		    if (t < 5) {
-			fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
-				t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
-		    }
-#endif
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
 		}
 	    }
 	}
     }
 
-    free(asum2);
-
     return 0;
 } /* vcv_setup */
 
+/* Update theta using the current step vector.  Check that the
+   values of the parameters of the conditional variance are in
+   the set of the admissible values.
+ */
+
+static void update_theta (fcpinfo *f, const double *gg, 
+			  const double *step, double d)
+{
+    int i, nv = f->p + f->q + 1;
+    double *a = f->theta + f->nc;
+    double sum = 0.0;
+
+    for (i=0; i<f->npar; i++) {
+	f->theta[i] = gg[i] + step[i] * d;
+    }
+
+    if (a[0] <= 0.0) {
+	a[0] = SMALL_HT;
+    }
+
+    for (i=1; i<nv; i++) {
+	if (a[i] < 0.0) {
+	    a[i] = 0.0;
+	}
+	sum += a[i];
+    }
+
+    if (sum > 1.0) {
+	for (i=1; i<nv; i++) {
+	    a[i] /= sum;
+	}
+    }
+}
 
 /* calculate the step for the new coefficients */
 
@@ -788,74 +781,46 @@ static double step_calc (fcpinfo *f, double *gg, double *step,
     return stre;
 }
 
-/* Block-diagonal information matrix */
+/* Common iteration routine called when adjusting the parameters,
+   either using the information matrix or the Hessian.  The flow
+   control here is fairly inscrutable for ordinary mortals, but
+   it is very effective!
+*/
 
-static int 
-garch_info_matrix (fcpinfo *f, double toler, int *count, 
-		   gretl_matrix *V, double *zt)
+static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
+			double *pll1, double *pfs,
+			double toler, int count)
 {
-    static double ll1 = 0.0, fs = 0.0;
-
-    int p = f->p;
-    int q = f->q;
-    int npar = f->npar;
-
-    double d, d0, d1, d2, ll2, d3;
-    double ll3, d12, d31, d23, dd;
-    double di, ff, dm, ds;
-    int nexp, ncall, nvpar;
-    double a1s, a2s, a3s;
-    double d12s, dmin, dmax, d23s, d31s;
-    double s2, stre, bigd;
     double *gg = NULL, *step = NULL;
-    int err;
+    double ll1 = *pll1, fs = *pfs;
+    double d0, d1, d2, d3; 
+    double d12, d31, d23;
+    double d12s, d31s, d23s;
+    double dd, di, ff; 
+    double ll2, ll3; 
+    double a1s, a2s, a3s;
+    double dm, ds, dmin, dmax;
+    double s2, stre, bigd;
+    int nexp, ncall = 0;
 
-#if FDEBUG
-    int i;
-#endif
-
-    nvpar = q + p + 1;
-
-    /* calculate information matrix */
-    vcv_setup(f, count, zt, NULL, V, VCV_IM);
-
-    err = gretl_invert_symmetric_indef_matrix(V);
-    if (err) {
-	fprintf(stderr, "garch_info_matrix: matrix inversion failed\n");
-	return 1;
-    }
-
-    if (count == NULL) {
-	/* just calculating vcv at convergence */
-	goto vcv_exit;
-    }
-
-    gg = malloc(npar * sizeof *gg);
+    gg = malloc(f->npar * sizeof *gg);
     if (gg == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
-    step = malloc(npar * sizeof *step);
+    step = malloc(f->npar * sizeof *step);
     if (step == NULL) {
 	free(gg);
-	return 1;
+	return E_ALLOC;
     } 
 
-    /* here we start iteration */
-
-    /* calculate the step for the new coefficients */
     stre = step_calc(f, gg, step, V, &ds, &s2);
 
-#if FDEBUG
-    fprintf(stderr, "s2 = %.9g\n", s2);
-#endif
-
     if (stre <= toler) {
 	goto L496;
     }
 
-    ncall = 0;
-    nexp = *count / 5;
+    nexp = count / 5;
     if (nexp > 5) {
 	nexp = 5;
     }
@@ -864,342 +829,12 @@ garch_info_matrix (fcpinfo *f, double toler, int *count,
     dmin = d0 * .001;
     dmax = d0 * 4.0;
 
-    if (*count == 1) {
+    if (count == 1) {
 	ll1 = -garch_ll(f);
-#if FDEBUG > 1
-	fprintf(stderr, "count=1, ll1=%.9g\n", ll1);
-#endif
     }
 
     update_theta(f, gg, step, d0);
-
-#if FDEBUG
-    for (i=0; i<f->npar; i++) {
-	fprintf(stderr, "theta[%d] in matinf(1) = %.9g\n", i, f->theta[i]);
-    }
-#endif 
-
     ll2 = -garch_ll(f);
-#if FDEBUG
-    fprintf(stderr, "ll2=%.9g, ll1=%.9g\n", ll2, ll1);
-#endif    
-
-    if (ll2 > ll1) {
-	d1 = -d0;
-	d2 = 0.0;
-	d3 = d0;
-	ll3 = ll2;
-	ll2 = ll1;
-
-	update_theta(f, gg, step, d1);
-
-	ll1 = -garch_ll(f);
-    } else {
-	d1 = 0.0;
-	d2 = d0;
-	d3 = d0 + d0;
-
-	update_theta(f, gg, step, d3);
-
-	ll3 = -garch_ll(f);
-    }
-
- L325:
-    d23 = d2 - d3;
-    d31 = d3 - d1;
-    d12 = d1 - d2;
-    di = d23 * ll1 + d31 * ll2 + d12 * ll3;
-    bigd = di * -2.0 / (d23 * d31 * d12);
-
-    if (bigd > 0.0) {
-	goto L400;
-    }
-
-    if (ll3 <= ll1) {
-	goto L341;
-    }
-
- L329:
-    d3 = d2;
-    ll3 = ll2;
-    d2 = d1;
-    ll2 = ll1;
-    d1 -= dmax;
-
-    update_theta(f, gg, step, d1);
-
-#if FDEBUG
-    for (i=0; i<f->npar; i++) {
-	fprintf(stderr, "theta[%d] in matinf(4) = %.9g\n", i, f->theta[i]);
-    }
-#endif 
-
-    ll1 = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-    goto L325;
-
- L341:
-    d1 = d2;
-    ll1 = ll2;
-    d2 = d3;
-    ll2 = ll3;
-    d3 += dmax;
-
-    update_theta(f, gg, step, d3);
-
-#if FDEBUG
-    for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d] in matinf(5) = %.9g\n", i, f->theta[i]);
-    }
-#endif
-
-    ll3 = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-    goto L325;
-
- L400:
-    d23s = d23 * (d2 + d3);
-    d31s = d31 * (d3 + d1);
-    d12s = d12 * (d1 + d2);
-    ds = (d23s * ll1 + d31s * ll2 + d12s * ll3) * .5 / di;
-
-    update_theta(f, gg, step, ds);
-
-#if FDEBUG
-    for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d] in matinf(6) = %.9g\n", i, f->theta[i]);
-    }
-#endif
-
-    fs = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-
-    a1s = (d = d1 - ds, fabs(d));
-    a2s = (d = d2 - ds, fabs(d));
-    a3s = (d = d3 - ds, fabs(d));
-
-    dm = a1s;
-    if (a3s < dm) {
-	dm = a3s;
-    }
-
-    if (dmax < dm) {
-	if (ds < d1 - dmax) {
-	    goto L329;
-	}
-	if (ds > d3 + dmax) {
-	    goto L341;
-	}
-    }
-
-    if (a1s < dmin || a2s < dmin || a3s < dmin) {
-	goto endloop;
-    }
-
-    if (ll1 < ll2 || ll1 < ll3) {
-	if (ll2 < ll3 || ll2 < ll1) {
-	    d3 = ds;
-	    ll3 = fs;
-	} else {
-	    d2 = ds;
-	    ll2 = fs;
-	}
-    } else {
-	d1 = ds;
-	ll1 = fs;
-    }
-
- L459:
-    if (d2 > d3) {
-	dd = d2;
-	ff = ll2;
-	d2 = d3;
-	ll2 = ll3;
-	d3 = dd;
-	ll3 = ff;
-    }
-
-    if (d1 <= d2) {
-	goto L325;
-    }
-
-    dd = d1;
-    ff = ll1;
-    d1 = d2;
-    ll1 = ll2;
-    d2 = dd;
-    ll2 = ff;
-    goto L459;
-
- endloop:
-
-    if (fs > ll1) {
-	fs = ll1;
-	ds = d1;
-    }
-    if (fs > ll2) {
-	fs = ll2;
-	ds = d2;
-    }
-    if (fs > ll3) {
-	fs = ll3;
-	ds = d3;
-    }
-
- L496:
-    update_theta(f, gg, step, ds);
-
-#if FDEBUG
-    for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d] in matinf(7) = %.9g\n", i, f->theta[i]);
-    }
-#endif
-
-    ll1 = fs;
-    fs = -fs;
-
- vcv_exit:
-
-    gretl_matrix_switch_sign(V);
-
-    free(gg);
-    free(step);
-
-    return 0;
-} /* garch_info_matrix */
-
-static void free_dhdpdp (double ***H, int np)
-{
-    int i, j;
-
-    for (i=0; i<np; i++) {
-	for (j=0; j<np; j++) {
-	    free(H[i][j]);
-	}
-	free(H[i]);
-    }
-    
-    free(H);
-}
-
-static double ***allocate_dhdpdp (int np, int p, int q)
-{
-    double ***H;
-    int i, j, lag = (p > q)? p : q;
-
-    H = malloc(np * sizeof *H);
-    if (H == NULL) {
-	return NULL;
-    }
-    
-    for (i=0; i<np; i++) {
-	H[i] = malloc(np * sizeof **H);
-	if (H[i] == NULL) {
-	    return NULL;
-	}
-	for (j=0; j<np; j++) {
-	    H[i][j] = malloc((lag + 1) * sizeof ***H);
-	    if (H[i][j] == NULL) {
-		return NULL;
-	    }
-	}
-    }
-
-    return H;
-}
-
-static int 
-garch_full_hessian (fcpinfo *f, double toler, int *count, 
-		    double *zt)
-{
-    static double ll1 = 0.0, fs = 0.0;
-
-    int p = f->p;
-    int q = f->q;
-    int npar = f->npar;
-
-    double d, d0, d1, d2, ll2, d3; 
-    double ll3, d12, d31, d23, dd, di, ff; 
-    int ncall, nexp, nvpar, lag;
-    double a1s, a2s, a3s;
-    double dm, ds, dmin, d12s, dmax, d23s, d31s;
-    double s2, stre, bigd;
-    double *gg = NULL, *step = NULL;
-    double ***H = NULL;
-    int err;
-
-    gg = malloc(npar * sizeof *gg);
-    if (gg == NULL) {
-	return E_ALLOC;
-    }
-
-    step = malloc(npar * sizeof *step);
-    if (step == NULL) {
-	free(gg);
-	return E_ALLOC;
-    } 
-
-    /* 3rd dimension of dhdpdp is max(p,q) + 1 */
-    H = allocate_dhdpdp(npar, p, q); 
-    if (H == NULL) {
-	free(gg);
-	free(step);
-	return E_ALLOC;
-    }
-
-    nvpar = q + p + 1;
-    lag = (p > q)? p : q;
-
-    /* calculate the full Hessian */
-    vcv_setup(f, count, zt, H, f->vch, VCV_HESSIAN);
-
-    /* invert the Hessian */
-    err = gretl_invert_symmetric_indef_matrix(f->vch);
-    if (err) {
-	fprintf(stderr, "garch_full_hessian: matrix inversion failed\n");
-    }
-
-    /* Start iteration here */
-
-    /* calculate the step for the new coefficients */
-    stre = step_calc(f, gg, step, f->vch, &ds, &s2);
-
-    if (stre <= toler) {
-	goto L496;
-    }
-
-    ncall = 0;
-    nexp = *count / 5;
-    if (nexp > 5) {
-	nexp = 5;
-    }
-
-    d0 = s2 / pow(2.0, nexp);
-    dmin = d0 * .001;
-    dmax = d0 * 4.0;
-
-    if (*count == 1) {
-	ll1 = -garch_ll(f);
-#if FDEBUG
-	fprintf(stderr, "hess: ll1 = %.9g\n", ll1);
-#endif  
-    }
-
-    update_theta(f, gg, step, d0);
-
-    ll2 = -garch_ll(f);
-#if FDEBUG
-    fprintf(stderr, "hess: ll2 = %.9g\n", ll2);
-#endif   
  
     if (ll2 > ll1) {
 	d1 = -d0;
@@ -1209,38 +844,27 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
 	ll2 = ll1;
 
 	update_theta(f, gg, step, d1);
-
 	ll1 = -garch_ll(f);
-#if FDEBUG
-	fprintf(stderr, "hess: ll1(2) = %.9g\n", ll1);
-#endif    
     } else {
 	d1 = 0.0;
 	d2 = d0;
 	d3 = d0 + d0;
 
 	update_theta(f, gg, step, d3);
-
 	ll3 = -garch_ll(f);
-#if FDEBUG
-	fprintf(stderr, "hess: ll3 = %.9g\n", ll3);
-#endif    
     }
 
- L325:
+ startloop:
+
     d23 = d2 - d3;
     d31 = d3 - d1;
     d12 = d1 - d2;
     di = d23 * ll1 + d31 * ll2 + d12 * ll3;
     bigd = di * -2.0 / (d23 * d31 * d12);
-#if FDEBUG
-    fprintf(stderr, "hess: bigd = %.9g\n", bigd);
-#endif    
 
     if (bigd > 0.0) {
 	goto L400;
     }
-
     if (ll3 <= ll1) {
 	goto L341;
     }
@@ -1253,16 +877,12 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
     d1 -= dmax;
 
     update_theta(f, gg, step, d1);
-
     ll1 = -garch_ll(f);
-#if FDEBUG
-    fprintf(stderr, "hess: ll1(3) = %.9g\n", ll1);
-#endif    
 
     if (++ncall > 100) {
 	goto endloop;
     }
-    goto L325;
+    goto startloop;
 
  L341:
     d1 = d2;
@@ -1272,16 +892,12 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
     d3 += dmax;
 
     update_theta(f, gg, step, d3);
-
     ll3 = -garch_ll(f);
-#if FDEBUG
-    fprintf(stderr, "hess: ll3(2) = %.9g\n", ll3);
-#endif    
 
     if (++ncall > 100) {
 	goto endloop;
     }
-    goto L325;
+    goto startloop;
 
  L400:
     d23s = d23 * (d2 + d3);
@@ -1292,17 +908,14 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
     update_theta(f, gg, step, ds);
 
     fs = -garch_ll(f);
-#if FDEBUG
-    fprintf(stderr, "hess: fs = %.9g, ds = %.9g\n", fs, ds);
-#endif    
 
     if (++ncall > 100) {
 	goto endloop;
     }
 
-    a1s = (d = d1 - ds, fabs(d));
-    a2s = (d = d2 - ds, fabs(d));
-    a3s = (d = d3 - ds, fabs(d));
+    a1s = fabs(d1 - ds);
+    a2s = fabs(d2 - ds);
+    a3s = fabs(d3 - ds);
 
     dm = a1s;
     if (a3s < dm) {
@@ -1346,7 +959,7 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
     }
 
     if (d1 <= d2) {
-	goto L325;
+	goto startloop;
     }
     dd = d1;
     ff = ll1;
@@ -1374,21 +987,74 @@ garch_full_hessian (fcpinfo *f, double toler, int *count,
  L496:
     update_theta(f, gg, step, ds);
 
-    ll1 = fs;
-    fs = -fs;
-
-    gretl_matrix_switch_sign(f->vch);
+    *pll1 = fs;
+    *pfs = -fs;
 
     free(gg);
     free(step);
-    free_dhdpdp(H, npar);
 
     return 0;
-} /* garch_full_hessian */
+}
+
+/* Block-diagonal information matrix */
 
 static int 
-make_garch_vcv (fcpinfo *f, double *zt, 
-		const gretl_matrix *ihess,
+garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler, 
+		   int *count) 
+{
+    static double ll1 = 0.0, fs = 0.0;
+    int err;
+
+    vcv_setup(f, V, VCV_IM);
+
+    if (count != NULL) {
+	*count += 1;
+    }    
+
+    err = gretl_invert_symmetric_indef_matrix(V);
+    if (err) {
+	fprintf(stderr, "garch_info_matrix: matrix inversion failed\n");
+	return err;
+    }
+
+    if (count != NULL) {
+	/* not just calculating vcv at convergence */
+	err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+    }
+
+    gretl_matrix_switch_sign(V);
+
+    return err;
+} 
+
+static int 
+garch_full_hessian (fcpinfo *f, gretl_matrix *V, double toler, 
+		    int *count)
+{
+    static double ll1 = 0.0, fs = 0.0;
+    int err;
+
+    vcv_setup(f, V, VCV_HESSIAN);
+
+    if (count != NULL) {
+	*count += 1;
+    }
+
+    err = gretl_invert_symmetric_indef_matrix(V);
+    if (err) {
+	fprintf(stderr, "garch_full_hessian: matrix inversion failed\n");
+	return err;
+    }
+
+    err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+
+    gretl_matrix_switch_sign(V);
+
+    return err;
+} 
+
+static int 
+make_garch_vcv (fcpinfo *f, const gretl_matrix *ihess,
 		gretl_matrix *V, int vopt)
 {
     gretl_matrix *OP = NULL;
@@ -1404,7 +1070,7 @@ make_garch_vcv (fcpinfo *f, double *zt,
 	    goto bailout;
 	}
 
-	vcv_setup(f, NULL, zt, NULL, OP, VCV_OP);
+	vcv_setup(f, OP, VCV_OP);
 
 	if (vopt == VCV_OP) {
 	    gretl_matrix_copy_values(V, OP);
@@ -1420,7 +1086,7 @@ make_garch_vcv (fcpinfo *f, double *zt,
 	    goto bailout;
 	}
 
-	garch_info_matrix(f, 0.0, NULL, iinfo, zt);
+	garch_info_matrix(f, iinfo, 0.0, NULL);
 
 	if (vopt == VCV_IM) {
 	    gretl_matrix_copy_values(V, iinfo);
@@ -1444,208 +1110,149 @@ make_garch_vcv (fcpinfo *f, double *zt,
     return err;
 }
 
+static int converged (fcpinfo *f, double tol)
+{
+    double s1 = 0.0, s2 = 0.0;
+    double pdiff;
+    int i;
+
+    for (i=0; i<f->npar; i++) {
+	s1 += f->parpre[i] * f->parpre[i];
+	pdiff = f->theta[i] - f->parpre[i];
+	s2 += pdiff * pdiff;
+    }
+
+    if (s1 == 0.0) {
+	s1 = S1MIN;
+    }
+
+    return s2 / s1 <= tol * tol;
+}
+
 /*
    Parameters to garch_estimate()
 
-   t1:    beginning of sample in auxiliary database
-   t2:    end of sample in auxiliary database
-   nobs:  total number of observations in auxiliary database
-   X:     data matrix for auxiliary database (regressors, not needed on
-          output)
-   nx:    number of columns of X
-   coeff: vector of coefficient for the conditional mean, normally
-          initialised by OLS on input (not needed on output)
-   nc:    number of elements in coeff
-   V:     covariance matrix of coeffs (all 0 on input)
+   y:     the dependent variable
+   X:     the independent regressors (including the constant)
+   t1:    beginning of sample relative to the arrays y, X
+   t2:    end of sample
+   nobs:  total number of observations in y, X
+   nc:    number of columns in X
+   p:     number of 'beta' variance params
+   q:     number of 'alpha' variance params (excluding the constant)
+   theta: full parameter vector, pre-initialized; on output, the
+          estimates at convergence.
+   V:     covariance matrix of parameters (all 0 on input)
    e:     vector of 0's on input, resids on output
-   e2:    storage for squared residuals
-   res:   vector of 0's on input, resids on output
-   h:     null pointer on input, conditional variances on output
-   y:     on input, vector with dep. var.; not needed on output
-   amax:  vector; element 0 holds the garch intercept; 1 and 2 the
-          arch & garch orders; from 3 onwards, the arch & garch 
-          parameters
-   scale: double used to scale dependent variable
+   e2:    storage for squared residuals on output
+   h:     storage conditional variances on output
+   scale: factor used to scale the dependent variable
+   pll:   location to receive log-likelihood on output
    iters: int, 0 on input, holds number of iterations on output
-   prn:   print handle for info on iterations and other diagnostic output
+   vopt:  code indicating which version of the covariance
+          matrix to compute in V
+   prn:   print handle for info on iterations etc.
 
 */
 
-int garch_estimate (int t1, int t2, int nobs, 
-		    const double **X, int nx, double *coeff, int nc, 
-		    gretl_matrix *V, double *e, double *e2, double *h,
-		    const double *y, double *amax, double scale, 
-		    int *iters, PRN *prn, int vopt)
+int garch_estimate (const double *y, const double **X, 
+		    int t1, int t2, int nobs, int nc,
+		    int p, int q, double *theta, gretl_matrix *V, 
+		    double *e, double *e2, double *h,
+		    double scale, double *pll, int *iters, 
+		    int vopt, PRN *prn)
 {
     fcpinfo *f;
     int it1, it2, ittot;
-    int count, conv = 0;
-    int i, q, p, npar;
+    int count;
+    int npar = nc + 1 + p + q; 
+    double tol1 = .05;  /* tolerance when using info matrix */
+    double tol2 = 1e-8; /* tolerance when using Hessian */
+    double ll, sumgra; 
+    int i, err = 0;
 
-    double pdiff, tol1, tol2;
-    double sumgra; 
-    double ll, s1, s2;
-    double zt[6];   /* 6 == max value of (1 + q + p) */
-
-    int err = 0;
-
-    q = (int) amax[1];
-    p = (int) amax[2];
-    npar = nc + 1 + q + p;
-
-    f = fcpinfo_new(nc, q, p, t1, t2, nobs, y, X, nx,
-		    e, e2, h, scale);
+    f = fcpinfo_new(q, p, t1, t2, nobs, y, X, nc,
+		    theta, e, e2, h, scale);
     if (f == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<nc; i++) {
-	f->theta[i] = coeff[i];
-    }
-
-    f->theta[nc] = amax[0];
-
-    for (i=0; i<q; i++) {
-	f->theta[nc + i + 1] = amax[3 + i];
-    }
-
-    for (i=0; i<p; i++) {
-	f->theta[nc + q + i + 1] = amax[3 + q + i];
-    }
-
-    tol1 = .05; /* tolerance before switching to Hessian */
-    tol2 = 1e-8;
-
-    make_g_matrix(f, amax);
-
-    /* iterative estimation */
+    /* Iterate to a first approximation using the info matrix */
 
     count = 0;
 
     for (it1=0; it1<100; it1++) {
-
+#if FDEBUG
+	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);	    
+#endif
 	ll = garch_ll(f);
-
 	garch_iter_info(f, it1, ll, 0, prn);
-
-	/* store previous coefficients */
 	for (i=0; i<npar; i++) {
 	    f->parpre[i] = f->theta[i];
 	}
 
-#if FDEBUG
-	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);	    
-#endif
-
-	err = garch_info_matrix(f, tol1, &count, f->vch, zt);
-
+	err = garch_info_matrix(f, f->vch, tol1, &count);
 	if (err) {
-	    return E_NOCONV;
+	    goto garch_exit;
 	}
 
-	s1 = s2 = 0.0;
-	for (i=0; i<npar; i++) {
-	    s1 += f->parpre[i] * f->parpre[i];
-	    pdiff = f->theta[i] - f->parpre[i];
-	    s2 += pdiff * pdiff;
-	}
-
-	if (s1 == 0.0) {
-	    s1 = S1MIN;
-	}
-
-	if (s2 / s1 <= tol1 * tol1) {
+	if (converged(f, tol1)) {
 	    break;
 	}
     }
 
-#if FDEBUG
-    fprintf(stderr, "\n\n*** Now going to Hessian ***\n\n");
-#endif
-
     ittot = it1 + 1;
 
-    for (it2=0; it2<100 && !conv; it2++) {
+    /* Switch to the Hessian for fine-tuning */
 
-	/* compute residuals for covariance matrix */
+    for (it2=0; it2<100; it2++) {
+#if FDEBUG
+	fprintf(stderr, "*** Calling garch_full_hessian, round %d\n", it2);	    
+#endif
 	ll = garch_ll(f);
-
-	/* store previous coefficients */
 	for (i=0; i<npar; i++) {
 	    f->parpre[i] = f->theta[i];
 	}
 
-#if FDEBUG
-	fprintf(stderr, "*** Calling garch_full_hessian, round %d\n", it2);	    
-#endif
-
-	garch_full_hessian(f, tol2, &it2, zt);
+	err = garch_full_hessian(f, f->vch, tol2, &it2);
+	if (err) {
+	    goto garch_exit;
+	}
 
 	garch_iter_info(f, ittot++, ll, 1, prn);
-
-	s1 = s2 = 0.0;
-
-	for (i=0; i<npar; i++) {
-	    s1 += f->parpre[i] * f->parpre[i];
-	    pdiff = f->theta[i] - f->parpre[i];
-	    s2 += pdiff * pdiff;
-	}
-
-	if (s1 == 0.0) {
-	    s1 = S1MIN;
-	}
-
-	if (s2 / s1 > tol2 * tol2) {
-	    /* not converged yet */
-	    continue;
-	}
-
-	sumgra = 0.0;
-	for (i=0; i<npar; i++) {
-	    sumgra += f->grad[i] * f->grad[i];
-	}
-
-        if (sumgra >= SUMGRMAX) {
-	    pprintf(prn, "\nParameters and gradients at iteration %d:\n\n", 
-		    ittot);
-
-	    for (i=0; i<f->npar; i++) {
-		pprintf(prn, "%12.6f (%9.6f)\n", f->theta[i], f->grad[i]);
-	    }
-
-            pprintf(prn, "\nSum of squared gradients = %.9g (should be less " 
-		    "than %g)\n", sumgra, SUMGRMAX);
-            err = E_NOCONV;
-            goto garch_exit;
-	} else {
-	    pprintf(prn, "\nFull Hessian convergence at iteration %d, "
-		"tol = %.9g\n\n", ittot, tol2);
-	    conv = 1;
-	    *iters = ittot;
-	    amax[0] = ll;
+	
+	if (converged(f, tol2)) {
+	    break;
 	}
     }
 
-    if (!conv && !err) {
-	err = E_NOCONV;
+    *iters = ittot;
+
+    sumgra = 0.0;
+    for (i=0; i<npar; i++) {
+	sumgra += f->grad[i] * f->grad[i];
+    }
+
+    if (sumgra >= SUMGRMAX) {
+	pprintf(prn, "\nParameters and gradients at iteration %d:\n\n", 
+		ittot);
+	for (i=0; i<f->npar; i++) {
+	    pprintf(prn, "%12.6f (%9.6f)\n", f->theta[i], f->grad[i]);
+	}
+	pprintf(prn, "\nSum of squared gradients = %.9g (should be less " 
+		"than %g)\n", sumgra, SUMGRMAX);
+	if (!err) {
+	    err = E_NOCONV;
+	}
+    } else {
+	pprintf(prn, "\nFull Hessian convergence at iteration %d, "
+		"tol = %.9g\n\n", ittot, tol2);
+	*pll = ll;
     }
 
     if (!err) {
-	double sderr;
-
 	/* build the desired VCV variant */
-	err = make_garch_vcv(f, zt, f->vch, V, vopt);
-
-	if (!err) {
-	    /* transcribe coefficients and standard errors */
-	    for (i=0; i<npar; i++) {
-		double vii = gretl_matrix_get(V, i, i);
-
-		sderr = (vii > 0.0)? sqrt(vii) : 0.0;
-		amax[i+1] = f->theta[i];
-		amax[i+1+npar] = sderr;
-	    }
-	}
+	err = make_garch_vcv(f, f->vch, V, vopt);
     }
 
  garch_exit:

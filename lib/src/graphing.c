@@ -1210,13 +1210,13 @@ static int get_fitted_line (gnuplot_info *gi,
 				 &y, &X);
 
     if (!err) {
-	b = gretl_vector_alloc(k);
+	b = gretl_column_vector_alloc(k);
 	if (b == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    if (gi->fit == PLOT_FIT_NONE) {
+    if (f == PLOT_FIT_OLS) {
 	V = gretl_matrix_alloc(2, 2);
 	if (V == NULL) {
 	    err = E_ALLOC;
