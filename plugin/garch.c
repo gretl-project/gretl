@@ -28,6 +28,7 @@
 #include "fcp.h"
 #include "mod_garch.h"
 
+#define USE_FCP 1
 #undef VPARM_DEBUG
 
 #define VPARM_MAX 6            /* max number of variance parameters */
@@ -317,7 +318,7 @@ static int garch_manual_init (double *a, int p, int q,
 {
     int mlen = n_init_vals();
     int n = p + q + 1 + k;
-#ifdef USE_FCP
+#if USE_FCP
     const gretl_matrix *m;
     int i, j;
 #endif
@@ -333,7 +334,7 @@ static int garch_manual_init (double *a, int p, int q,
     /* if we're not using FCP, the following is handled 
        within the BFGS routine */
 
-#ifdef USE_FCP
+#if USE_FCP
     m = get_init_vals();
 
     /* coefficients on regressors */
@@ -449,16 +450,16 @@ int do_fcp (const int *list, double **Z, double scale,
 	}
     }
 
-#ifdef USE_FCP
+#if USE_FCP
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, coeff, ncoeff, 
-			 V, e, e2, h, y, amax, b, scale, &iters,
+			 V, e, e2, h, y, amax, scale, &iters,
 			 prn, vopt);
 #else
     if (getenv("FCP_GARCH") != NULL) {
 	err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			     (const double **) X, nx, coeff, ncoeff, 
-			     V, e, e2, h, y, amax, b, scale, &iters,
+			     V, e, e2, h, y, amax, scale, &iters,
 			     prn, vopt);
     } else {
 	err = garch_estimate_mod(t1 + pad, t2 + pad, bign, 
