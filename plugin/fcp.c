@@ -57,6 +57,8 @@ struct fcpinfo_ {
     /* temporary arrays */
     double *grad;
     double *parpre;
+    double *gg;
+    double *step;
     double *zt;
     double *asum2;
     double **dhdp;
@@ -123,11 +125,14 @@ static int fcp_allocate (fcpinfo *f)
 {
     f->grad = malloc(f->npar * sizeof *f->grad);
     f->parpre = malloc(f->npar * sizeof *f->parpre);
+    f->gg = malloc(f->npar * sizeof *f->gg);
+    f->step = malloc(f->npar * sizeof *f->step);
     f->zt = malloc((f->p + f->q + 1) * sizeof *f->zt);
     f->asum2 = malloc(f->nc * sizeof *f->asum2);
 
     if (f->grad == NULL || f->parpre == NULL || 
-	f->zt == NULL || f->asum2 == NULL) {
+	f->zt == NULL || f->asum2 == NULL ||
+	f->gg == NULL || f->step == NULL) {
 	return E_ALLOC;
     }
 
@@ -153,6 +158,8 @@ static void fcpinfo_destroy (fcpinfo *f)
 {
     free(f->grad);
     free(f->parpre);
+    free(f->gg);
+    free(f->step);
     free(f->zt);
     free(f->asum2);
 
@@ -178,6 +185,8 @@ static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
 
     f->grad = NULL;
     f->parpre = NULL;
+    f->gg = NULL;
+    f->step = NULL;
     f->zt = NULL;
     f->asum2 = NULL;
     f->dhdp = NULL;
@@ -715,15 +724,14 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
    the set of the admissible values.
  */
 
-static void update_theta (fcpinfo *f, const double *gg, 
-			  const double *step, double d)
+static void update_theta (fcpinfo *f, double d)
 {
     int i, nv = f->p + f->q + 1;
     double *a = f->theta + f->nc;
     double sum = 0.0;
 
     for (i=0; i<f->npar; i++) {
-	f->theta[i] = gg[i] + step[i] * d;
+	f->theta[i] = f->gg[i] + f->step[i] * d;
     }
 
     if (a[0] <= 0.0) {
@@ -746,8 +754,7 @@ static void update_theta (fcpinfo *f, const double *gg,
 
 /* calculate the step for the new coefficients */
 
-static double step_calc (fcpinfo *f, double *gg, double *step,
-			 const gretl_matrix *V, 
+static double step_calc (fcpinfo *f, const gretl_matrix *V, 
 			 double *ds, double *ps2)
 {
     double s1 = 0.0, s2 = 0.0;
@@ -756,13 +763,13 @@ static double step_calc (fcpinfo *f, double *gg, double *step,
 
     for (i=0; i<f->npar; i++) {
 	s1 += f->theta[i] * f->theta[i];
-	gg[i] = f->theta[i];
-	step[i] = 0.0;
+	f->gg[i] = f->theta[i];
+	f->step[i] = 0.0;
 	for (j=0; j<f->npar; j++) {
 	    vij = gretl_matrix_get(V, i, j);
-	    step[i] -= vij * f->grad[j];
+	    f->step[i] -= vij * f->grad[j];
 	}
-	s2 += step[i] * step[i];
+	s2 += f->step[i] * f->step[i];
     }
 
     if (s1 == 0.0) {
@@ -773,7 +780,7 @@ static double step_calc (fcpinfo *f, double *gg, double *step,
     s2 = sqrt(s2);
 
     for (i=0; i<f->npar; i++) {
-	step[i] /= s2;
+	f->step[i] /= s2;
     }
 
     *ds = *ps2 = s2;
@@ -787,11 +794,10 @@ static double step_calc (fcpinfo *f, double *gg, double *step,
    it is very effective!
 */
 
-static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
-			double *pll1, double *pfs,
-			double toler, int count)
+static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
+			 double *pll1, double *pfs,
+			 double toler, int count)
 {
-    double *gg = NULL, *step = NULL;
     double ll1 = *pll1, fs = *pfs;
     double d0, d1, d2, d3; 
     double d12, d31, d23;
@@ -803,21 +809,13 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
     double s2, stre, bigd;
     int nexp, ncall = 0;
 
-    gg = malloc(f->npar * sizeof *gg);
-    if (gg == NULL) {
-	return E_ALLOC;
-    }
-
-    step = malloc(f->npar * sizeof *step);
-    if (step == NULL) {
-	free(gg);
-	return E_ALLOC;
-    } 
-
-    stre = step_calc(f, gg, step, V, &ds, &s2);
+    stre = step_calc(f, V, &ds, &s2);
 
     if (stre <= toler) {
-	goto L496;
+	update_theta(f, ds);
+	*pll1 = fs;
+	*pfs = -fs;
+	return;
     }
 
     nexp = count / 5;
@@ -833,7 +831,7 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	ll1 = -garch_ll(f);
     }
 
-    update_theta(f, gg, step, d0);
+    update_theta(f, d0);
     ll2 = -garch_ll(f);
  
     if (ll2 > ll1) {
@@ -843,14 +841,14 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	ll3 = ll2;
 	ll2 = ll1;
 
-	update_theta(f, gg, step, d1);
+	update_theta(f, d1);
 	ll1 = -garch_ll(f);
     } else {
 	d1 = 0.0;
 	d2 = d0;
 	d3 = d0 + d0;
 
-	update_theta(f, gg, step, d3);
+	update_theta(f, d3);
 	ll3 = -garch_ll(f);
     }
 
@@ -876,7 +874,7 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
     ll2 = ll1;
     d1 -= dmax;
 
-    update_theta(f, gg, step, d1);
+    update_theta(f, d1);
     ll1 = -garch_ll(f);
 
     if (++ncall > 100) {
@@ -891,7 +889,7 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
     ll2 = ll3;
     d3 += dmax;
 
-    update_theta(f, gg, step, d3);
+    update_theta(f, d3);
     ll3 = -garch_ll(f);
 
     if (++ncall > 100) {
@@ -905,7 +903,7 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
     d12s = d12 * (d1 + d2);
     ds = (d23s * ll1 + d31s * ll2 + d12s * ll3) * .5 / di;
 
-    update_theta(f, gg, step, ds);
+    update_theta(f, ds);
 
     fs = -garch_ll(f);
 
@@ -984,16 +982,10 @@ static int fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	ds = d3;
     }
 
- L496:
-    update_theta(f, gg, step, ds);
+    update_theta(f, ds);
 
     *pll1 = fs;
     *pfs = -fs;
-
-    free(gg);
-    free(step);
-
-    return 0;
 }
 
 /* Block-diagonal information matrix */
@@ -1019,7 +1011,7 @@ garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
 
     if (count != NULL) {
 	/* not just calculating vcv at convergence */
-	err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+	fcp_iterate(f, V, &ll1, &fs, toler, *count);
     }
 
     gretl_matrix_switch_sign(V);
@@ -1047,7 +1039,7 @@ garch_full_hessian (fcpinfo *f, gretl_matrix *V, double toler,
     }
 
     if (count != NULL) {
-	err = fcp_iterate(f, V, &ll1, &fs, toler, *count);
+	fcp_iterate(f, V, &ll1, &fs, toler, *count);
     }
 
     gretl_matrix_switch_sign(V);
