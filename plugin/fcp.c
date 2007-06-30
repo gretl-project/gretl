@@ -729,8 +729,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 } /* vcv_setup */
 
 /* Update theta using the current step vector.  Check that the
-   values of the parameters of the conditional variance are in
-   the set of the admissible values.
+   conditional variance parameters are admissible.
  */
 
 static void update_theta (fcpinfo *f, double d)
