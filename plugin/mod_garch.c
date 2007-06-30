@@ -535,19 +535,24 @@ static int anal_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return err;
 }
 
-static int garch_iinfo (garch_container *DH, gretl_matrix *info)
+static gretl_matrix *garch_iinfo (garch_container *DH, int *err)
 {
+    gretl_matrix *info;
     double **tmp_info;
     double tmpi, tmpj, tmpx1, tmpx2, x;
     int i, j, t;
 
+    info = gretl_matrix_alloc(DH->k, DH->k);
     if (info == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NULL;
     }
 
     tmp_info = doubles_array_new(DH->k, DH->k);
     if (tmp_info == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	gretl_matrix_free(info);
+	return NULL;
     }
 
     for (i=0; i<DH->k; i++) {
@@ -600,22 +605,27 @@ static int garch_iinfo (garch_container *DH, gretl_matrix *info)
     gretl_matrix_print(info, "Information matrix (inverse)");
 #endif
 
-    return 0;
+    return info;
 }
 
-static int garch_opg (garch_container *DH, gretl_matrix *GG)
+static gretl_matrix *garch_opg (garch_container *DH, int *err)
 {
+    gretl_matrix *GG;
     double **tmp_GG;
     double tmpi, x;
     int t, i, j;
 
+    GG = gretl_matrix_alloc(DH->k, DH->k);
     if (GG == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NULL;
     }
 
     tmp_GG = doubles_array_new(DH->k, DH->k);
     if (tmp_GG == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	gretl_matrix_free(GG);
+	return NULL;
     }
 
     for (i=0; i<DH->k; i++) {
@@ -649,7 +659,7 @@ static int garch_opg (garch_container *DH, gretl_matrix *GG)
     gretl_matrix_print(GG, "OPG matrix");
 #endif
 
-    return 0;
+    return GG;
 }
 
 #define ANALYTICAL_HESSIAN 1
@@ -721,19 +731,16 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
     gretl_matrix *GG = NULL;
     gretl_matrix *iinfo = NULL;
     gretl_matrix *invhess = NULL;
-    int npar = DH->k;
     int err = 0;
 
     if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
 	/* GG' needed */
-	GG = gretl_matrix_alloc(npar, npar);
-	err = garch_opg(DH, GG);
+	GG = garch_opg(DH, &err);
     }
 
     if (vopt == VCV_IM || vopt == VCV_BW) { 
 	/* information matrix needed */
-	iinfo = gretl_matrix_alloc(npar, npar);
-	err = garch_iinfo(DH, iinfo);
+	iinfo = garch_iinfo(DH, &err);
     }
 
     if (vopt == VCV_QML || vopt == VCV_HESSIAN) { 
