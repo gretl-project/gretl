@@ -822,13 +822,13 @@ static void test_score (garch_container *DH, double *theta)
    theta: full parameter vector, pre-initialized; on output, the
           estimates at convergence.
    V:     covariance matrix of parameters (all 0 on input)
-   e:     vector of 0's on input, resids on output
+   e:     vector of 0's on input, residuals on output
    e2:    storage for squared residuals on output
-   h:     storage conditional variances on output
+   h:     storage for conditional variances on output
    scale: factor used to scale the dependent variable
    pll:   location to receive log-likelihood on output
-   fncount: 0 on input, holds number of function evaluations on output
-   fncount: 0 on input, holds number of gradient evaluations on output
+   fncount: 0 on input, number of function evaluations on output
+   fncount: 0 on input, number of gradient evaluations on output
    vopt:  code indicating which version of the covariance
           matrix to compute in V
    prn:   print handle for info on iterations etc.
