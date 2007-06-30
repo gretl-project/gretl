@@ -25,10 +25,9 @@
 #include "libset.h"
 #include "var.h"
 
-#include "fcp.h"
-#include "mod_garch.h"
+#include "garch.h"
 
-#define USE_FCP 1
+#define USE_FCP 0
 #undef VPARM_DEBUG
 
 #define VPARM_MAX 6            /* max number of variance parameters */

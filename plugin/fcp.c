@@ -28,13 +28,18 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "fcp.h"
+#include "garch.h"
 
 #define FDEBUG 0
 
 #define SMALL_HT  1.0e-7 
 #define S1MIN     1.0e-10
 #define SUMGRMAX  1.0e-4
+
+enum {
+    FCP_FULL,
+    FCP_HESS
+};
 
 typedef struct fcpinfo_ fcpinfo;
 
@@ -121,19 +126,22 @@ static double ***allocate_H (int np, int p, int q)
     return NULL;
 }
 
-static int fcp_allocate (fcpinfo *f)
+static int fcp_allocate (fcpinfo *f, int code)
 {
-    f->grad = malloc(f->npar * sizeof *f->grad);
-    f->parpre = malloc(f->npar * sizeof *f->parpre);
-    f->gg = malloc(f->npar * sizeof *f->gg);
-    f->step = malloc(f->npar * sizeof *f->step);
     f->zt = malloc((f->p + f->q + 1) * sizeof *f->zt);
     f->asum2 = malloc(f->nc * sizeof *f->asum2);
-
-    if (f->grad == NULL || f->parpre == NULL || 
-	f->zt == NULL || f->asum2 == NULL ||
-	f->gg == NULL || f->step == NULL) {
+    f->grad = malloc(f->npar * sizeof *f->grad);
+    if (f->zt == NULL || f->asum2 == NULL || f->grad == NULL) {
 	return E_ALLOC;
+    }
+
+    if (code == FCP_FULL) {
+	f->parpre = malloc(f->npar * sizeof *f->parpre);
+	f->gg = malloc(f->npar * sizeof *f->gg);
+	f->step = malloc(f->npar * sizeof *f->step);
+	if (f->parpre == NULL || f->gg == NULL || f->step == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     f->dhdp = doubles_array_new(f->npar, f->T);
@@ -173,7 +181,7 @@ static void fcpinfo_destroy (fcpinfo *f)
 static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
 			     const double *y, const double **X, int nc,
 			     double *theta, double *e, double *e2, double *h,
-			     double scale)
+			     double scale, int code)
 {
     fcpinfo *f = malloc(sizeof *f);
 
@@ -207,7 +215,7 @@ static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
 
     f->npar = f->nc + 1 + q + p;
 
-    if (fcp_allocate(f)) {
+    if (fcp_allocate(f, code)) {
 	fcpinfo_destroy(f);
 	f = NULL;
     }
@@ -592,7 +600,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	}
 
 	if (lag <= 0) {
-	    goto L90;
+	    goto lag0;
 	}
 
 	for (k=1; k<=q; k++) {
@@ -636,7 +644,8 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 		}
 	    }
 	}
-    L90:
+
+    lag0:
 
 	/* Part relative to the coefficients (eq. 15, p. 403). 
 	   Since we take the expected value, only the first two terms
@@ -861,13 +870,13 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     bigd = di * -2.0 / (d23 * d31 * d12);
 
     if (bigd > 0.0) {
-	goto L400;
+	goto P3;
     }
     if (ll3 <= ll1) {
-	goto L341;
+	goto P2;
     }
 
- L329:
+ P1:
     d3 = d2;
     ll3 = ll2;
     d2 = d1;
@@ -882,7 +891,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     }
     goto startloop;
 
- L341:
+ P2:
     d1 = d2;
     ll1 = ll2;
     d2 = d3;
@@ -897,7 +906,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     }
     goto startloop;
 
- L400:
+ P3:
     d23s = d23 * (d2 + d3);
     d31s = d31 * (d3 + d1);
     d12s = d12 * (d1 + d2);
@@ -922,10 +931,10 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 
     if (dmax < dm) {
 	if (ds < d1 - dmax) {
-	    goto L329;
+	    goto P1;
 	}
 	if (ds > d3 + dmax) {
-	    goto L341;
+	    goto P2;
 	}
     }
 
@@ -946,7 +955,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	ll1 = fs;
     }
 
- L459:
+ P4:
     if (d2 > d3) {
 	dd = d2;
 	ff = ll2;
@@ -965,7 +974,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     ll1 = ll2;
     d2 = dd;
     ll2 = ff;
-    goto L459;
+    goto P4;
 
  endloop:
 
@@ -1020,8 +1029,8 @@ garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
 } 
 
 static int 
-garch_full_hessian (fcpinfo *f, gretl_matrix *V, double toler, 
-		    int *count)
+garch_hessian (fcpinfo *f, gretl_matrix *V, double toler, 
+	       int *count)
 {
     static double ll1 = 0.0, fs = 0.0;
     int err;
@@ -1034,7 +1043,7 @@ garch_full_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 
     err = gretl_invert_symmetric_indef_matrix(V);
     if (err) {
-	fprintf(stderr, "garch_full_hessian: matrix inversion failed\n");
+	fprintf(stderr, "garch_hessian: matrix inversion failed\n");
 	return err;
     }
 
@@ -1166,7 +1175,7 @@ int garch_estimate (const double *y, const double **X,
     int i, err = 0;
 
     f = fcpinfo_new(q, p, t1, t2, nobs, y, X, nc,
-		    theta, e, e2, h, scale);
+		    theta, e, e2, h, scale, FCP_FULL);
     if (f == NULL) {
 	return E_ALLOC;
     }
@@ -1201,14 +1210,14 @@ int garch_estimate (const double *y, const double **X,
 
     for (it2=0; it2<100; it2++) {
 #if FDEBUG
-	fprintf(stderr, "*** Calling garch_full_hessian, round %d\n", it2);	    
+	fprintf(stderr, "*** Calling garch_hessian, round %d\n", it2);	    
 #endif
 	ll = garch_ll(f);
 	for (i=0; i<npar; i++) {
 	    f->parpre[i] = f->theta[i];
 	}
 
-	err = garch_full_hessian(f, f->vch, tol2, &it2);
+	err = garch_hessian(f, f->vch, tol2, &it2);
 	if (err) {
 	    goto garch_exit;
 	}
@@ -1254,4 +1263,33 @@ int garch_estimate (const double *y, const double **X,
     fcpinfo_destroy(f);
 
     return err;
+}
+
+gretl_matrix *
+garch_analytical_hessian (const double *y, const double **X, 
+			  int t1, int t2, int nobs, int nc,
+			  int p, int q, double *theta, 
+			  double *e, double *e2, double *h,
+			  double scale, int *err)
+{
+    gretl_matrix *H = NULL;
+    fcpinfo *f;
+
+    f = fcpinfo_new(q, p, t1, t2, nobs, y, X, nc,
+		    theta, e, e2, h, scale, FCP_HESS);
+    if (f == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *err = garch_hessian(f, f->vch, 0.0, NULL);
+
+    if (!*err) {
+	H = f->vch;
+	f->vch = NULL;
+    }  
+
+    fcpinfo_destroy(f);
+
+    return H;
 }

@@ -25,7 +25,7 @@
 
 #include "libgretl.h"
 #include "libset.h"    /* unused */
-#include "mod_garch.h"
+#include "garch.h"
 
 #define GDEBUG 0
 
@@ -63,6 +63,7 @@ struct garch_container_ {
     double **blockglue;  /* derivatives of the loglik wrt residuals and variances */
     double **G;          /* score matrix */
     double *tot_score;   /* score vector (sum of G) */
+    double scale;        /* scale factor for dependent var */
     int boundcheck;      /* enable bounds check */
 };
 
@@ -115,7 +116,7 @@ garch_container_new (const double *y, const double **X,
 		     int t1, int t2, int nobs, int nc,
 		     int p, int q, int init_method, 
 		     double *e, double *e2, double *h, 
-		     int analytical)
+		     double scale, int analytical)
 {
     garch_container *DH = malloc(sizeof *DH);
 
@@ -137,6 +138,8 @@ garch_container_new (const double *y, const double **X,
     DH->h = h;
     DH->ascore = analytical;
     DH->k = nc + 1 + p + q;
+    DH->boundcheck = 1;
+    DH->scale = scale;
 
     DH->score_e = NULL;
     DH->score_h = NULL;
@@ -149,8 +152,6 @@ garch_container_new (const double *y, const double **X,
 	    DH = NULL;
 	}
     }
-
-    DH->boundcheck = 1;
 
     return DH;
 }
@@ -198,7 +199,7 @@ static void normal_score (const garch_container *DH)
 
 /* Compute the GARCH quantities */
 
-static int check_nonnegative(const double *par, int ncm, int k)
+static int check_nonnegative (const double *par, int ncm, int k)
 {
     int nonzero = 1;
     int i;
@@ -242,7 +243,7 @@ static int garch_etht (const double *par, void *ptr)
 
     /* check for nonnegative params */
 
-    if(DH->boundcheck) {
+    if (DH->boundcheck) {
 	ret = !check_nonnegative(par, ncm, DH->k);
 	if (ret) {
 	    return E_DATA;
@@ -651,43 +652,67 @@ static int garch_opg (garch_container *DH, gretl_matrix *GG)
     return 0;
 }
 
-static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
+#define ANALYTICAL_HESSIAN 1
+
+#if ANALYTICAL_HESSIAN
+
+static gretl_matrix * 
+garch_ihess (garch_container *DH, double *theta, int *err)
 {
+    gretl_matrix *H;
+
+    H = garch_analytical_hessian(DH->y, DH->X, DH->t1, DH->t2, DH->nobs, 
+				 DH->ncm + 1, DH->p, DH->q, theta, DH->e, 
+				 DH->e2, DH->h, DH->scale, err);
+
+    return H;
+}
+
+#else
+
+static gretl_matrix *
+garch_ihess (garch_container *DH, double *theta, int *err)
+{
+    gretl_matrix *iH;
     double vij, *V;
     int i, j, k, npar = DH->k;
-    int err = 0;
+    int tmp = DH->boundcheck;
 
-    if (invH == NULL) {
-	return E_ALLOC;
+    iH = gretl_matrix_alloc(npar, npar);
+    if (iH == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
 
-    int tmp = DH->boundcheck;
     DH->boundcheck = 0;
-    V = numerical_hessian(theta, npar, loglik, DH, &err);
+    V = numerical_hessian(theta, npar, loglik, DH, err);
     DH->boundcheck = tmp;
-    if (V == NULL) {
-	return err;
+
+    if (*err) {
+	return NULL;
     }
 
     k = 0;
     for (i=0; i<npar; i++) {
 	for (j=i; j<npar; j++) {
 	    vij = V[k++];
-	    gretl_matrix_set(invH, i, j, vij);
+	    gretl_matrix_set(iH, i, j, vij);
 	    if (i != j) {
-		gretl_matrix_set(invH, j, i, vij);
+		gretl_matrix_set(iH, j, i, vij);
 	    }
 	}
     }
 
-#if GDEBUG
-    gretl_matrix_print(invH, "Hessian (inverse)");
-#endif
+# if GDEBUG
+    gretl_matrix_print(iH, "Hessian (inverse)");
+# endif
 
     free(V);
 
-    return 0;
+    return iH;
 }
+
+#endif
 
 static int
 garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
@@ -713,8 +738,7 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
 
     if (vopt == VCV_QML || vopt == VCV_HESSIAN) { 
 	/* Hessian matrix needed */
-	invhess = gretl_matrix_alloc(npar, npar);
-	err = garch_ihess(DH, theta, invhess);
+	invhess = garch_ihess(DH, theta, &err);
     }
 
     if (err) {
@@ -830,7 +854,7 @@ int garch_estimate_mod (const double *y, const double **X,
 
     DH = garch_container_new(y, X, t1, t2, nobs, nc, p, q, 
 			     INIT_VAR_RESID, e, e2, h, 
-			     analytical);
+			     scale, analytical);
 
     if (DH == NULL) {
 	return E_ALLOC;
