@@ -997,8 +997,6 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     *pfs = -fs;
 }
 
-/* Block-diagonal information matrix */
-
 static int 
 garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler, 
 		   int *count) 
