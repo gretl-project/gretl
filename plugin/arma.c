@@ -1131,7 +1131,6 @@ static int kalman_arma (const int *alist, double *coeff,
     int grcount = 0;
 
     double *b;
-    double *hess = NULL;
     int i, T, err = 0;
 
     b = malloc(ainfo->nc * sizeof *b);
@@ -1241,24 +1240,23 @@ static int kalman_arma (const int *alist, double *coeff,
 		       NULL, K, (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
-	} else {
-	    kalman_do_ma_check = 0;
-	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
-	    kalman_do_ma_check = 1;
-	    if (err) {
-		/* fall back to OPG */
-		free(hess);
-		hess = NULL;
-		err = 0;
-	    }
-	}
+	} 
     }
 
     if (err) {
 	pmod->errcode = err;
     } else {
+	double *hess = NULL;
+
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
+	kalman_do_ma_check = 0;
+	hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
+	kalman_do_ma_check = 1;
+	if (err) {
+	    /* fall back to OPG */
+	    err = 0;
+	}
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
 			   K, b, hess, ainfo->nc, T);
     } 
