@@ -1149,7 +1149,6 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals,
 }
 
 static int johansen_prep_restriction (GRETL_VAR *jvar, 
-				      gretl_matrix *Suu,
 				      const gretl_matrix *D)
 {
     gretl_matrix *Svv = NULL;
@@ -1295,7 +1294,7 @@ int johansen_estimate (GRETL_VAR *jvar,
     }
 
     if (!err && D != NULL) {
-	err = johansen_prep_restriction(jvar, Suu, D);
+	err = johansen_prep_restriction(jvar, D);
     }
 
     if (!err) {

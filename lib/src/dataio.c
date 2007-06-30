@@ -2770,7 +2770,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 
     if (maxlen > 0) {
 	/* allow for newline and null terminator */
-	maxlen += 2;
+	maxlen += 3;
     }
 
     return maxlen;
@@ -3013,43 +3013,6 @@ static int process_csv_obs (const char *str, int i, int t,
     return err;
 }
 
-/* pick up any comments following the data block in a CSV file */
-
-static char *get_csv_descrip (FILE *fp)
-{
-    char line[MAXLEN];
-    char *desc = NULL;
-
-    while (fgets(line, MAXLEN, fp)) {
-	tailstrip(line);
-	if (desc == NULL) {
-	    desc = malloc(strlen(line) + 2);
-	    if (desc == NULL) {
-		return NULL;
-	    }
-	    sprintf(desc, "%s\n", line);
-	} else {
-	    char *tmp;
-
-	    tmp = realloc(desc, strlen(desc) + strlen(line) + 2);
-	    if (tmp == NULL) {
-		free(desc);
-		return NULL;
-	    }
-	    desc = tmp;
-	    strcat(desc, line);
-	    strcat(desc, "\n");
-	}
-    }
-
-    if (string_is_blank(desc)) {
-	free(desc);
-	desc = NULL;
-    }
-
-    return desc;
-}
-
 /* wrapper for fgets() that allows for handling a Mac-style
    text file */
 
@@ -3075,6 +3038,42 @@ static char *csv_fgets (char *s, int n, int mac, FILE *fp)
 
 	return s;
     }
+}
+
+/* pick up any comments following the data block in a CSV file */
+
+static char *get_csv_descrip (char *line, int n, int mac, FILE *fp)
+{
+    char *desc = NULL;
+
+    while (csv_fgets(line, n, mac, fp)) {
+	tailstrip(line);
+	if (desc == NULL) {
+	    desc = malloc(strlen(line) + 2);
+	    if (desc == NULL) {
+		return NULL;
+	    }
+	    sprintf(desc, "%s\n", line);
+	} else {
+	    char *tmp;
+
+	    tmp = realloc(desc, strlen(desc) + strlen(line) + 2);
+	    if (tmp == NULL) {
+		free(desc);
+		return NULL;
+	    }
+	    desc = tmp;
+	    strcat(desc, line);
+	    strcat(desc, "\n");
+	}
+    }
+
+    if (desc != NULL && string_is_blank(desc)) {
+	free(desc);
+	desc = NULL;
+    }
+
+    return desc;
 }
 
 static int 
@@ -3206,28 +3205,33 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     chkcols = ncols = nrows = gotdata = 0;
 
     while (csv_fgets(line, maxlen, mactext, fp)) {
+
 	/* skip comment lines */
 	if (*line == '#') {
 	    continue;
 	}
+
 	/* skip blank lines -- but finish if the blank comes after data */
 	if (string_is_blank(line)) {
 	    if (gotdata) {
 		if (*pZ == NULL) {
-		    descrip = get_csv_descrip(fp);
+		    descrip = get_csv_descrip(line, maxlen, mactext, fp);
 		}
 		break;
 	    } else {
 		continue;
 	    }
 	}
+
 	nrows++;
 	compress_csv_line(line, delim, trail);
+
 	if (!gotdata) {
 	    /* scrutinize first "real" line */
 	    check_first_field(line, delim, &blank_1, &obs_1, mprn);
 	    gotdata = 1;
 	} 
+
 	chkcols = count_csv_fields(line, delim);
 	if (ncols == 0) {
 	    ncols = chkcols;

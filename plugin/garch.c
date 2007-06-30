@@ -349,9 +349,10 @@ static int garch_manual_init (double *theta, int k, int p, int q,
     return 1;
 }
 
-int do_fcp (const int *list, double **Z, double scale,
-	    const DATAINFO *pdinfo, MODEL *pmod,
-	    PRN *prn, gretlopt opt)
+static int 
+garch_driver (const int *list, double **Z, double scale,
+	      const DATAINFO *pdinfo, MODEL *pmod,
+	      PRN *prn, gretlopt opt)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int nc = pmod->ncoeff;
@@ -432,10 +433,10 @@ int do_fcp (const int *list, double **Z, double scale,
     }
 
 #if USE_FCP
-	err = garch_estimate(y, (const double **) X,
-			     t1 + pad, t2 + pad, bign, nc, 
-			     p, q, theta, V, e, e2, h,
-			     scale, &ll, &iters, vopt, prn);
+    err = garch_estimate(y, (const double **) X,
+			 t1 + pad, t2 + pad, bign, nc, 
+			 p, q, theta, V, e, e2, h,
+			 scale, &ll, &iters, vopt, prn);
 #else
     if (getenv("FCP_GARCH") != NULL) {
 	err = garch_estimate(y, (const double **) X,
@@ -798,7 +799,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 				      pZ, pdinfo);
     }
 
-    do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 
+    garch_driver(list, *pZ, scale, pdinfo, &model, prn, opt); 
 
     if (scale != 1.0) {
 	/* undo scaling of dependent variable */

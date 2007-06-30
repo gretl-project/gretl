@@ -3034,9 +3034,9 @@ double *numerical_hessian (double *b, int n, BFGS_CRIT_FUNC func, void *data,
 		goto bailout;
 	    }
 	    /* F'(i) */
-	    Dx[k] = (f1 - f2) / (2.0*h[i]); 
+	    Dx[k] = (f1 - f2) / (2.0 * h[i]); 
 	    /* F''(i) */
-	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i]*h[i]);
+	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i] * h[i]);
 	    hess_h_reduce(h, v, n);
 	}
 	p4m = 4;

@@ -792,6 +792,7 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
 
 static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
 {
+    double x;
     int t, i = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -801,7 +802,8 @@ static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
     pmod->vcv = vcv;
 
     for (i=0; i<k; i++) {
-	pmod->sderr[i] = sqrt(vcv[ijton(i, i, k)]);
+	x = vcv[ijton(i, i, k)];
+	pmod->sderr[i] = (na(x))? NADBL : sqrt(x);
     }
 }
 
@@ -1239,10 +1241,16 @@ static int kalman_arma (const int *alist, double *coeff,
 		       NULL, K, (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
-	} else if (1 || getenv("ARMA_HESSIAN")) { /* Hello! Testing */
+	} else {
 	    kalman_do_ma_check = 0;
 	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K, &err);
 	    kalman_do_ma_check = 1;
+	    if (err) {
+		/* fall back to OPG */
+		free(hess);
+		hess = NULL;
+		err = 0;
+	    }
 	}
     }
 

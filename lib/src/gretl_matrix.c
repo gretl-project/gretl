@@ -4233,6 +4233,52 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
     return err;
 }
 
+#if 0
+static int invert_packed_symm_indef_matrix (gretl_matrix *v,
+					    integer n)
+{
+    integer info;
+    integer *ipiv = NULL;
+    double *work = NULL;
+    char uplo = 'L';
+    int err = 0;
+
+    ipiv = malloc(n * sizeof *ipiv);
+    work = malloc(n * sizeof *work);
+
+    if (ipiv == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    dsptrf_(&uplo, &n, v->val, ipiv, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "invert_packed_symm_indef_matrix:\n"
+		" dsptrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	if (info > 0) {
+	    fputs(" matrix is singular\n", stderr);
+	}
+	err = E_SINGULAR;
+	goto bailout;
+    } 
+
+    dsptri_(&uplo, &n, v->val, ipiv, work, &info);
+    if (info != 0) {
+	err = E_SINGULAR;
+	fprintf(stderr, "invert_packed_symm_indef_matrix:\n"
+		" dsptri failed with info = %d\n", (int) info);
+    } 
+
+ bailout:
+
+    free(ipiv);
+    free(work);
+
+    return err;
+}
+#endif
+
 /**
  * gretl_invert_packed_symmetric_matrix:
  * @v: symmetric matrix in vech form (lower triangle packed

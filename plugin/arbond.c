@@ -205,8 +205,7 @@ static int maybe_add_const_to_ilist (arbond *ab)
     return err;
 }
 
-static int arbond_make_lists (arbond *ab, const int *list, int xpos,
-			      const DATAINFO *pdinfo)
+static int arbond_make_lists (arbond *ab, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
     int err = 0;
@@ -360,7 +359,7 @@ arbond_init (arbond *ab, const int *list, const DATAINFO *pdinfo,
     ab->ndum = 0;
 
     if (list[0] >= xpos) {
-	err = arbond_make_lists(ab, list, xpos, pdinfo);
+	err = arbond_make_lists(ab, list, xpos);
 	if (err) {
 	    return err;
 	}
@@ -445,9 +444,7 @@ static int bzcols (arbond *ab, int i)
     return nc;
 }
 
-static int 
-arbond_sample_check (arbond *ab, const int *list, 
-		     const double **Z, const DATAINFO *pdinfo)
+static int arbond_sample_check (arbond *ab, const double **Z)
 {
     const double *y = Z[ab->yno];
     char *mask = NULL;
@@ -2162,7 +2159,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 	return mod;
     }
 
-    mod.errcode = arbond_sample_check(&ab, list, X, pdinfo);
+    mod.errcode = arbond_sample_check(&ab, X);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in arbond_sample_check\n", mod.errcode);
 	goto bailout;

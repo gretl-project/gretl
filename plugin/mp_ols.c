@@ -80,8 +80,7 @@ static void set_gretl_mp_bits (void);
 static void set_gretl_mpfr_bits (void);
 #endif
 static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ);
-static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
-			char *errbuf);
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, char *errbuf);
 static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy);
 static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag);
 static int mp_rearrange (int *list);
@@ -1062,7 +1061,7 @@ int mplsq (const int *list, const int *polylist,
     xpxxpy = mp_xpxxpy_func(mpmod.list, mpmod.nobs, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&mpmod, xpxxpy, mpZ, mpmod.nobs, errbuf);
+    mp_regress(&mpmod, xpxxpy, errbuf);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);
@@ -1180,8 +1179,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
     return xpxxpy; 
 }
 
-static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
-			char *errbuf)
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, char *errbuf)
 {
     int i, v, nobs, nv, yno;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
@@ -1192,7 +1190,8 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     nv = xpxxpy.nv;
     yno = pmod->list[1];
 
-    if ((pmod->sderr = malloc(nv * sizeof *pmod->sderr)) == NULL) {
+    pmod->sderr = malloc(nv * sizeof *pmod->sderr);
+    if (pmod->sderr == NULL) {
         pmod->errcode = E_ALLOC;
         return;
     }

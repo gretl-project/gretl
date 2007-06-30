@@ -248,8 +248,7 @@ static int get_jmulti_var_info (FILE *fp, char *line, int len,
 }
 
 static int read_jmulti_data (FILE *fp, char *line, int len,
-			     double **Z, DATAINFO *pdinfo,
-			     PRN *prn)
+			     double **Z, DATAINFO *pdinfo)
 {
     char *s, numstr[32];
     int i, t, err = 0;
@@ -373,7 +372,7 @@ int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }	
 
-    err = read_jmulti_data(fp, line, maxlen, newZ, newinfo, prn);
+    err = read_jmulti_data(fp, line, maxlen, newZ, newinfo);
     if (err) {
 	destroy_dataset(newZ, newinfo);
     } else {

@@ -69,7 +69,7 @@ struct fcpinfo_ {
     double **dhdp;
     double ***H;
 
-    gretl_matrix *vch;
+    gretl_matrix *V;
 };
 
 static void free_H (double ***H, int np)
@@ -149,8 +149,8 @@ static int fcp_allocate (fcpinfo *f, int code)
 	return E_ALLOC;
     }
 
-    f->vch = gretl_zero_matrix_new(f->npar, f->npar);
-    if (f->vch == NULL) {
+    f->V = gretl_zero_matrix_new(f->npar, f->npar);
+    if (f->V == NULL) {
 	return E_ALLOC;
     }  
 
@@ -172,7 +172,7 @@ static void fcpinfo_destroy (fcpinfo *f)
     free(f->asum2);
 
     doubles_array_free(f->dhdp, f->npar);
-    gretl_matrix_free(f->vch);
+    gretl_matrix_free(f->V);
     free_H(f->H, f->npar);
 
     free(f);
@@ -198,7 +198,7 @@ static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
     f->zt = NULL;
     f->asum2 = NULL;
     f->dhdp = NULL;
-    f->vch = NULL;
+    f->V = NULL;
 
     f->nc = nc;
     f->t1 = t1;
@@ -806,14 +806,12 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 			 double *pll1, double *pfs,
 			 double toler, int count)
 {
-    double ll1 = *pll1, fs = *pfs;
+    double ll2, ll3, ll1 = *pll1, fs = *pfs;
     double d0, d1, d2, d3; 
     double d12, d31, d23;
     double d12s, d31s, d23s;
-    double dd, di, ff; 
-    double ll2, ll3; 
+    double di, dm, ds, dmin, dmax;
     double a1s, a2s, a3s;
-    double dm, ds, dmin, dmax;
     double s2, stre, bigd;
     int nexp, ncall = 0;
 
@@ -848,134 +846,119 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	d3 = d0;
 	ll3 = ll2;
 	ll2 = ll1;
-
 	update_theta(f, d1);
 	ll1 = -garch_ll(f);
     } else {
 	d1 = 0.0;
 	d2 = d0;
 	d3 = d0 + d0;
-
 	update_theta(f, d3);
 	ll3 = -garch_ll(f);
     }
 
- startloop:
+    while (1) {
 
-    d23 = d2 - d3;
-    d31 = d3 - d1;
-    d12 = d1 - d2;
-    di = d23 * ll1 + d31 * ll2 + d12 * ll3;
-    bigd = di * -2.0 / (d23 * d31 * d12);
-
-    if (bigd > 0.0) {
-	goto P3;
-    }
-    if (ll3 <= ll1) {
-	goto P2;
-    }
-
- P1:
-    d3 = d2;
-    ll3 = ll2;
-    d2 = d1;
-    ll2 = ll1;
-    d1 -= dmax;
-
-    update_theta(f, d1);
-    ll1 = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-    goto startloop;
-
- P2:
-    d1 = d2;
-    ll1 = ll2;
-    d2 = d3;
-    ll2 = ll3;
-    d3 += dmax;
-
-    update_theta(f, d3);
-    ll3 = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-    goto startloop;
-
- P3:
-    d23s = d23 * (d2 + d3);
-    d31s = d31 * (d3 + d1);
-    d12s = d12 * (d1 + d2);
-    ds = (d23s * ll1 + d31s * ll2 + d12s * ll3) * .5 / di;
-
-    update_theta(f, ds);
-
-    fs = -garch_ll(f);
-
-    if (++ncall > 100) {
-	goto endloop;
-    }
-
-    a1s = fabs(d1 - ds);
-    a2s = fabs(d2 - ds);
-    a3s = fabs(d3 - ds);
-
-    dm = a1s;
-    if (a3s < dm) {
-	dm = a3s;
-    }
-
-    if (dmax < dm) {
-	if (ds < d1 - dmax) {
-	    goto P1;
+	d23 = d2 - d3;
+	d31 = d3 - d1;
+	d12 = d1 - d2;
+	di = d23 * ll1 + d31 * ll2 + d12 * ll3;
+	bigd = di * -2.0 / (d23 * d31 * d12);
+	if (bigd > 0.0) {
+	    goto LLS;
 	}
-	if (ds > d3 + dmax) {
-	    goto P2;
+	if (ll3 <= ll1) {
+	    goto LL3;
 	}
-    }
 
-    if (a1s < dmin || a2s < dmin || a3s < dmin) {
-	goto endloop;
-    }
-
-    if (ll1 < ll2 || ll1 < ll3) {
-	if (ll2 < ll3 || ll2 < ll1) {
-	    d3 = ds;
-	    ll3 = fs;
-	} else {
-	    d2 = ds;
-	    ll2 = fs;
+    LL1:
+	d3 = d2;
+	d2 = d1;
+	ll3 = ll2;
+	ll2 = ll1;
+	d1 -= dmax;
+	update_theta(f, d1);
+	ll1 = -garch_ll(f);
+	if (++ncall > 100) {
+	    break;
 	}
-    } else {
-	d1 = ds;
-	ll1 = fs;
-    }
+	continue;
 
- P4:
-    if (d2 > d3) {
-	dd = d2;
-	ff = ll2;
+    LL3:
+	d1 = d2;
 	d2 = d3;
+	ll1 = ll2;
 	ll2 = ll3;
-	d3 = dd;
-	ll3 = ff;
-    }
+	d3 += dmax;
+	update_theta(f, d3);
+	ll3 = -garch_ll(f);
+	if (++ncall > 100) {
+	    break;
+	}
+	continue;
 
-    if (d1 <= d2) {
-	goto startloop;
-    }
-    dd = d1;
-    ff = ll1;
-    d1 = d2;
-    ll1 = ll2;
-    d2 = dd;
-    ll2 = ff;
-    goto P4;
+    LLS:
+	d23s = d23 * (d2 + d3);
+	d31s = d31 * (d3 + d1);
+	d12s = d12 * (d1 + d2);
+	ds = (d23s * ll1 + d31s * ll2 + d12s * ll3) * .5 / di;
+	update_theta(f, ds);
+	fs = -garch_ll(f);
+	if (++ncall > 100) {
+	    break;
+	}
 
- endloop:
+	a1s = fabs(d1 - ds);
+	a2s = fabs(d2 - ds);
+	a3s = fabs(d3 - ds);
+
+	dm = (a1s > a3s)? a3s : a1s;
+	if (dm > dmax) {
+	    if (ds < d1 - dmax) {
+		goto LL1;
+	    }
+	    if (ds > d3 + dmax) {
+		goto LL3;
+	    }
+	}
+
+	if (a1s < dmin || a2s < dmin || a3s < dmin) {
+	    break;
+	}
+
+	if (ll1 < ll2 || ll1 < ll3) {
+	    if (ll2 < ll3 || ll2 < ll1) {
+		d3 = ds;
+		ll3 = fs;
+	    } else {
+		d2 = ds;
+		ll2 = fs;
+	    }
+	} else {
+	    d1 = ds;
+	    ll1 = fs;
+	}
+	
+	while (d1 > d2 || d2 > d3) {
+	    double tmp;
+
+	    if (d2 > d3) {
+		tmp = d2;
+		d2 = d3;
+		d3 = tmp;
+		tmp = ll2;
+		ll2 = ll3;
+		ll3 = tmp;
+	    }
+	    if (d1 > d2) {
+		tmp = d1;
+		d1 = d2;
+		d2 = tmp;
+		tmp = ll1;
+		ll1 = ll2;
+		ll2 = tmp;
+	    }
+	}
+    }
 
     if (fs > ll1) {
 	fs = ll1;
@@ -1164,7 +1147,7 @@ int garch_estimate (const double *y, const double **X,
 {
     fcpinfo *f;
     int it1, it2, ittot;
-    int count;
+    int count = 0;
     int npar = nc + 1 + p + q; 
     double tol1 = .05;  /* tolerance when using info matrix */
     double tol2 = 1e-8; /* tolerance when using Hessian */
@@ -1179,8 +1162,6 @@ int garch_estimate (const double *y, const double **X,
 
     /* Iterate to a first approximation using the info matrix */
 
-    count = 0;
-
     for (it1=0; it1<100; it1++) {
 #if FDEBUG
 	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);	    
@@ -1191,7 +1172,7 @@ int garch_estimate (const double *y, const double **X,
 	    f->parpre[i] = f->theta[i];
 	}
 
-	err = garch_info_matrix(f, f->vch, tol1, &count);
+	err = garch_info_matrix(f, f->V, tol1, &count);
 	if (err) {
 	    goto garch_exit;
 	}
@@ -1214,7 +1195,7 @@ int garch_estimate (const double *y, const double **X,
 	    f->parpre[i] = f->theta[i];
 	}
 
-	err = garch_hessian(f, f->vch, tol2, &it2);
+	err = garch_hessian(f, f->V, tol2, &it2);
 	if (err) {
 	    goto garch_exit;
 	}
@@ -1252,7 +1233,7 @@ int garch_estimate (const double *y, const double **X,
 
     if (!err) {
 	/* build the desired VCV variant */
-	err = make_garch_vcv(f, f->vch, V, vopt);
+	err = make_garch_vcv(f, f->V, V, vopt);
     }
 
  garch_exit:
@@ -1279,11 +1260,11 @@ garch_analytical_hessian (const double *y, const double **X,
 	return NULL;
     }
 
-    *err = garch_hessian(f, f->vch, 0.0, NULL);
+    *err = garch_hessian(f, f->V, 0.0, NULL);
 
     if (!*err) {
-	H = f->vch;
-	f->vch = NULL;
+	H = f->V;
+	f->V = NULL;
     }  
 
     fcpinfo_destroy(f);
