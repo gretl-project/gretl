@@ -76,6 +76,7 @@ struct max_opts {
 struct set_vars_ {
     int flags;
     int use_qr;                 /* use QR decomposition by default? */
+    int use_lbfgs;              /* use LBFGS instead of plain BFGS */
     int halt_on_err;            /* halt cli program on script error? */
     unsigned int seed;          /* for PRNG */
     int shell_ok;               /* shell commands permitted? */
@@ -216,6 +217,7 @@ static void state_vars_copy (set_vars *sv)
 #endif
     sv->flags = state->flags;
     sv->use_qr = state->use_qr;
+    sv->use_lbfgs = state->use_lbfgs;
     sv->halt_on_err = state->halt_on_err;
     sv->seed = state->seed;
     sv->shell_ok = state->shell_ok;
@@ -243,6 +245,7 @@ static void state_vars_init (set_vars *sv)
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON;
     sv->use_qr = UNSET_INT; 
+    sv->use_lbfgs = UNSET_INT; 
     sv->seed = 0;
     sv->halt_on_err = UNSET_INT;
     sv->shell_ok = 0;
@@ -1237,6 +1240,9 @@ static int display_settings (PRN *prn)
     ival = get_use_qr(); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
 
+    ival = get_use_lbfgs(); /* checks env */
+    pprintf(prn, " lbfgs = %d\n", state->use_lbfgs);
+
     pprintf(prn, " use_cwd = %d\n", flag_to_bool(state, STATE_USE_CWD));
     pprintf(prn, " force_decpoint = %d\n", flag_to_bool(state, STATE_FORCE_DECPOINT));
 
@@ -1465,6 +1471,15 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		state->use_qr = 0;
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "lbfgs")) {
+	    /* switch LBFGS vs plain BFGS */
+	    if (boolean_on(setarg)) {
+		state->use_lbfgs = 1;
+		err = 0;
+	    } else if (boolean_off(setarg)) {
+		state->use_lbfgs = 0;
+		err = 0;
+	    }
 	} else if (!strcmp(setobj, "use_cwd")) {
 	    if (boolean_on(setarg)) {
 		state->flags |= STATE_USE_CWD;
@@ -1630,6 +1645,36 @@ int get_use_qr (void)
     } 
 
     return state->use_qr;
+}
+
+/* use limited-memory or plain BFGS? */
+
+void set_use_lbfgs (int set)
+{
+    check_for_state();
+
+    if (state != NULL) {
+	state->use_lbfgs = set;
+    }
+}
+
+int get_use_lbfgs (void)
+{
+    if (check_for_state()) {
+	return 0;
+    }
+
+    if (is_unset(state->use_lbfgs)) {
+	char *s = getenv("GRETL_USE_LBFGS");
+
+	if (s != NULL && *s != '\0' && *s != '0') {
+	    state->use_lbfgs = 1;
+	} else {
+	    state->use_lbfgs = 0;
+	}
+    } 
+
+    return state->use_lbfgs;
 }
 
 void set_use_cwd (int set)

@@ -45,6 +45,9 @@ int pop_program_state (void);
 void set_use_qr (int set);
 int get_use_qr (void);
 
+void set_use_lbfgs (int set);
+int get_use_lbfgs (void);
+
 void set_use_cwd (int set);
 int get_use_cwd (void);
 

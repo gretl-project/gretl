@@ -3446,10 +3446,10 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     return err;
 }
 
-int BFGS_alt (double *b, int n, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
-	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
-	      gretlopt opt, PRN *prn)
+int LBFGS_max (double *b, int n, int maxit, double reltol,
+	       int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
+	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
+	       gretlopt opt, PRN *prn)
 {
     double *g = NULL;
     double *l = NULL;
@@ -3620,11 +3620,11 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
-    if (getenv("BFGS_NEW") != NULL) {
-	return BFGS_alt(b, n, maxit, reltol,
-			fncount, grcount, cfunc, 
-			crittype, gradfunc, data, 
-			opt, prn);
+    if (get_use_lbfgs()) {
+	return LBFGS_max(b, n, maxit, reltol,
+			 fncount, grcount, cfunc, 
+			 crittype, gradfunc, data, 
+			 opt, prn);
     } else {
 	return BFGS_orig(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 
