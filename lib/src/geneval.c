@@ -5339,6 +5339,10 @@ static void parser_reinit (parser *p, double ***pZ,
 	p->flags |= P_NATEST;
     }
 
+    if (saveflags & P_AUTOREG) {
+	p->flags |= P_AUTOREG;
+    }
+
     p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
@@ -5491,6 +5495,17 @@ static void maybe_set_return_flags (parser *p)
     }
 }
 
+static int decl_check (parser *p)
+{
+    if (p->flags & P_DECL) {
+	p->err = E_PARSE;
+	sprintf(gretl_errmsg, "Bare declarations are not allowed here:\n> '%s'",
+		p->input);
+    }
+
+    return p->err;
+}
+
 int realgen (const char *s, parser *p, double ***pZ, 
 	     DATAINFO *pdinfo, PRN *prn, int flags)
 {
@@ -5512,7 +5527,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 	}
     }
 
-    if (p->flags & P_DECL) {
+    if ((flags & P_COMPILE) && decl_check(p)) {
 	return p->err;
     }
 

@@ -170,7 +170,9 @@ static int nls_genr_setup (nlspec *s)
 	
 	genrs[i] = genr_compile(formula, s->Z, s->dinfo, &err);
 #if NLS_DEBUG
-	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
+	fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
+		(void *) genrs[i], err);
+	fprintf(stderr, "formula: '%s'\n", formula);
 #endif
 
 	if (!err) {
@@ -187,8 +189,13 @@ static int nls_genr_setup (nlspec *s)
 	    m = genr_get_output_matrix(genrs[i]);
 
 	    if (v == 0 && m == NULL) {
-		err = E_TYPES;
-		break;
+		if (genr_is_print(genrs[i])) {
+		    continue;
+		} else {
+		    fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
+		    err = E_TYPES;
+		    break;
+		}
 	    }
 
 	    if (i == s->naux) {

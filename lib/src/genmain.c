@@ -608,6 +608,10 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
     p->ecount += 1;
 #endif
 
+#if GDEBUG
+    fprintf(stderr, "execute_genr: returning %d\n", p->err);
+#endif
+
     return p->err;
 }
 
@@ -644,6 +648,11 @@ gretl_matrix *genr_get_output_matrix (const parser *p)
     }
 }
 
+int genr_is_print (const parser *p)
+{
+    return (p->flags & P_PRINT);
+}
+
 void genr_set_na_check (parser *p)
 {
     p->flags |= P_NATEST;
@@ -653,5 +662,6 @@ void genr_unset_na_check (parser *p)
 {
     p->flags &= ~P_NATEST;
 }
+
 
 

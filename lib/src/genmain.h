@@ -110,6 +110,8 @@ int gretl_reserved_word (const char *str);
 
 /* following functions used in nls.c */
 
+int genr_is_print (const GENERATOR *p);
+
 void genr_set_na_check (GENERATOR *genr);
 
 void genr_unset_na_check (GENERATOR *genr);
