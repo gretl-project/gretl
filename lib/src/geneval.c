@@ -970,6 +970,8 @@ tmp_matrix_from_series (const double *x, const DATAINFO *pdinfo,
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     int i, t;
 
+    /* FIXME autoregressive case? */
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (xna(x[t])) {
 	    *err = E_MISSDATA;
@@ -1796,10 +1798,13 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_vec_node(p, p->dinfo->n);
-    int t;
+    int t, t1, t2;
 
     if (ret != NULL) {
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	/* AC: changed for autoreg case, 2007/7/1 */
+	t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+	t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+	for (t=t1; t<=t2; t++) {
 	    ret->v.xvec[t] = real_apply_func(n->v.xvec[t], f, p);
 	}
     }
@@ -2218,14 +2223,8 @@ static NODE *series_lag (int v, NODE *n, parser *p)
 	return NULL;
     }
 
-    if (autoreg(p)) {
-	/* generating one observation at a time */
-	t1 = t2 = p->obs;
-    } else {
-	/* doing whole series at once */
-	t1 = p->dinfo->t1;
-	t2 = p->dinfo->t2;
-    }
+    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
 
     k = (int) -n->v.xval;
 
