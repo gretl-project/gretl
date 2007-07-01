@@ -8,6 +8,7 @@
 <!ENTITY varepsilon "$\varepsilon$">
 <!ENTITY sigma "$\sigma$">
 <!ENTITY lgr "$\lambda$">
+<!ENTITY rgr "$\rho$">
 <!ENTITY ne "$\ne$">
 <!ENTITY opto "[ \texttt{-o} ]">
 <!ENTITY mdash "---">

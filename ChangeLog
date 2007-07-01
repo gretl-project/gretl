@@ -19,6 +19,9 @@ version 1.6.6, in progress
   decimal comma
 - Fix for opening cross-sectional gretl data sets in R version 
   2.5.0 or higher
+- Fixes for autoregressive genr formula: speed-up, and fix bug
+  when such formulae are used in an nls/mle block
+- Double maximum length to gretl command line to 8192 bytes
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

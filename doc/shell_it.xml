@@ -11,6 +11,7 @@
 <!ENTITY mu "$\mu$">
 <!ENTITY varepsilon "$\varepsilon$">
 <!ENTITY sigma "$\sigma$">
+<!ENTITY rgr "$\rho$">
 <!ENTITY lgr "$\lambda$">
 <!ENTITY ne "$\ne$">
 <!ENTITY opto "[ \texttt{-o} ]">

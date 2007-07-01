@@ -52,10 +52,25 @@ static void utf_replace (unsigned char *s)
 		s[1] = '.';
 		s[2] = '.';
 	    }
+	} else if (s[0] == 0xce && s[1] == 0xbb) {
+	    /* &lambda; */
+	    memmove(s + 6, s + 2, strlen((char *) s + 2) + 1);
+	    s[0] = 'l';
+	    s[1] = 'a';
+	    s[2] = 'm';
+	    s[3] = 'b';
+	    s[4] = 'd';
+	    s[5] = 'a';
 	} else if (s[0] == 0xce && s[1] == 0xbc) {
 	    /* &mu; */
 	    s[0] = 'm';
 	    s[1] = 'u';
+	} else if (s[0] == 0xcf && s[1] == 0x81) {
+	    /* rho; */
+	    memmove(s + 3, s + 2, strlen((char *) s + 2) + 1);
+	    s[0] = 'r';
+	    s[1] = 'h';
+	    s[2] = 'o';
 	} else if (s[0] == 0xcf && s[1] == 0x83) {
 	    /* &sigma; */
 	    memmove(s + 5, s + 2, strlen((char *) s + 2) + 1);
@@ -64,7 +79,7 @@ static void utf_replace (unsigned char *s)
 	    s[2] = 'g';
 	    s[3] = 'm';
 	    s[4] = 'a';
-	}
+	} 
 	s++;
     }
 }

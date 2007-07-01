@@ -3689,7 +3689,7 @@
       <para>
 	This procedure is designed to correct for serial correlation
 	of the error term.  The error sum of squares of the
-	transformed model is graphed against the value of rho from
+	transformed model is graphed against the value of &rgr; from
 	&minus;0.99 to 0.99.
       </para>
     </description>
