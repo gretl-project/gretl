@@ -5495,9 +5495,9 @@ static void maybe_set_return_flags (parser *p)
     }
 }
 
-static int decl_check (parser *p)
+static int decl_check (parser *p, int flags)
 {
-    if (p->flags & P_DECL) {
+    if (flags & P_COMPILE) {
 	p->err = E_PARSE;
 	sprintf(gretl_errmsg, "Bare declarations are not allowed here:\n> '%s'",
 		p->input);
@@ -5527,7 +5527,8 @@ int realgen (const char *s, parser *p, double ***pZ,
 	}
     }
 
-    if ((flags & P_COMPILE) && decl_check(p)) {
+    if (p->flags & P_DECL) {
+	decl_check(p, flags);
 	return p->err;
     }
 
@@ -5538,7 +5539,8 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     lex(p);
     if (p->err) {
-	fprintf(stderr, "exiting on lex() error\n");
+	fprintf(stderr, "exiting on lex() error (p->err = %d)\n",
+		p->err);
 	return p->err;
     }
 
