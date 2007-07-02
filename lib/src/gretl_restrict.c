@@ -38,12 +38,14 @@ struct restriction_ {
     double *mult;    /* array of numerical multipliers on coeffs */
     int *eq;         /* array of equation numbers (for multi-equation case) */
     int *bnum;       /* array of coeff numbers */
+    char *letter;    /* array of coeff letters */
     double rhs;      /* numerical value on right-hand side */
 };
 
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
     int multi;                    /* pertains to multi-equation system? */
+    int vecm;                     /* pertains to VECM? */
     gretl_matrix *R;              /* LHS restriction matrix */
     gretl_matrix *q;              /* RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
@@ -251,17 +253,19 @@ static void assign_diag_positions (gretl_restriction_set *rset)
     }
 }
 
-/* Check the validity of a set of VECM beta restrictions */
+/* Check the validity of a set of VECM restrictions */
 
 static int vecm_restriction_check (gretl_restriction_set *rset)
 {
     restriction *r;
-    int unspec = 0, spec = 0, cross = 0;
-    int i, j, err = 0;
+    int acount, unspec = 0, spec = 0, cross = 0;
+    int i, j, m, err = 0;
 
     for (i=0; i<rset->k && !err; i++) {
 	r = rset->restrictions[i];
-	for (j=0; j<r->nterms && !err; j++) {
+	m = r->nterms;
+	acount = 0;
+	for (j=0; j<m && !err; j++) {
 	    if (r->eq[j] == EQN_UNSPEC) {
 		unspec = 1;
 	    } else if (r->eq[j] >= 1) {
@@ -273,12 +277,18 @@ static int vecm_restriction_check (gretl_restriction_set *rset)
 	    } 
 	    if ((spec && unspec) || cross) {
 		err = E_PARSE;
-	    }	
+	    } else if (r->letter[j] == 'a') {
+		acount++;
+	    }
+	}
+	if (!err && acount != 0 && acount != m) {
+	    cross = 1;
+	    err = E_PARSE;
 	}
     }
 
     if (cross) {
-	strcpy(gretl_errmsg, "cross-restrictions on VECM beta are "
+	strcpy(gretl_errmsg, "VECM: cross-equation restrictions are "
 	       "not handled yet");
 	err = E_NOTIMP;
     } else if (!err && unspec) {
@@ -581,9 +591,12 @@ static int parse_b_bit (gretl_restriction_set *r, const char *s,
     return err;
 }
 
+#define ok_letter(r, c) (c == 'b' || (r->vecm && c == 'a'))
+
 static int 
 parse_coeff_chunk (gretl_restriction_set *r, const char *s, double *x, 
-		   int *eq, int *bnum, const DATAINFO *pdinfo)
+		   int *eq, int *bnum, char *letter,
+		   const DATAINFO *pdinfo)
 {
     const char *s0 = s;
     int err = E_PARSE;
@@ -592,7 +605,8 @@ parse_coeff_chunk (gretl_restriction_set *r, const char *s, double *x,
 
     while (isspace((unsigned char) *s)) s++;
 
-    if (*s == 'b') {
+    if (ok_letter(r, *s)) {
+	*letter = *s;
 	s++;
 	err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	*x = 1.0;
@@ -600,7 +614,8 @@ parse_coeff_chunk (gretl_restriction_set *r, const char *s, double *x,
 	s += strspn(s, " ");
 	s += strcspn(s, " *");
 	s += strspn(s, " *");
-	if (*s == 'b') {
+	if (ok_letter(r, *s)) {
+	    *letter = *s;
 	    s++;
 	    err = parse_b_bit(r, s, eq, bnum, pdinfo);
 	}
@@ -611,8 +626,8 @@ parse_coeff_chunk (gretl_restriction_set *r, const char *s, double *x,
     } 
 
 #if RDEBUG
-    fprintf(stderr, "parse_coeff_chunk: x=%g, eq=%d, bnum=%d\n", 
-	    *x, *eq, *bnum);
+    fprintf(stderr, "parse_coeff_chunk: x=%g, eq=%d, bnum=%d, letter=%c\n", 
+	    *x, *eq, *bnum, *letter);
 #endif
 
     return err;
@@ -625,6 +640,7 @@ static void destroy_restriction (restriction *r)
     free(r->mult);
     free(r->eq);
     free(r->bnum);
+    free(r->letter);
     free(r);
 }
 
@@ -645,7 +661,7 @@ void destroy_restriction_set (gretl_restriction_set *rset)
     free(rset);
 }
 
-static restriction *restriction_new (int n, int multi)
+static restriction *restriction_new (int n, int multi, int vecm)
 {
     restriction *r;
     int i;
@@ -658,6 +674,7 @@ static restriction *restriction_new (int n, int multi)
     r->mult = NULL;
     r->eq = NULL;
     r->bnum = NULL;
+    r->letter = NULL;
 	
     r->mult = malloc(n * sizeof *r->mult);
     r->bnum = malloc(n * sizeof *r->bnum);
@@ -677,6 +694,14 @@ static restriction *restriction_new (int n, int multi)
 	    destroy_restriction(r);
 	    return NULL;
 	}
+    }
+
+    if (vecm) {
+	r->letter = malloc(n * sizeof *r->letter);
+	if (r->letter == NULL) {
+	    destroy_restriction(r);
+	    return NULL;
+	}	
     }
 
     r->nterms = n;
@@ -699,7 +724,7 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
 
     rset->restrictions = rlist;
 
-    rset->restrictions[n] = restriction_new(n_terms, rset->multi);
+    rset->restrictions[n] = restriction_new(n_terms, rset->multi, rset->vecm);
     if (rset->restrictions[n] == NULL) {
 	return NULL;
     }
@@ -730,16 +755,20 @@ static void print_restriction (const gretl_restriction_set *rset,
 			       PRN *prn)
 {
     const restriction *r = rset->restrictions[j];
+    char letter = 'b';
     char vname[24];
     int i, k;
 
     for (i=0; i<r->nterms; i++) {
+	if (r->letter != NULL) {
+	    letter = r->letter[i];
+	}
 	k = r->bnum[i];
 	print_mult(r->mult[i], i == 0, prn);
 	if (rset->multi) {
-	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, k + 1);
+	    pprintf(prn, "%c[%d,%d]", letter, r->eq[i] + 1, k + 1);
 	} else if (rset->type == GRETL_OBJ_VAR) {
-	    pprintf(prn, "b[%d]", k + 1);
+	    pprintf(prn, "%c[%d]", letter, k + 1);
 	} else {
 	    MODEL *pmod = rset->obj;
 
@@ -834,7 +863,8 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 }
 
 static int 
-add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
+add_term_to_restriction (restriction *r, double mult, int eq, int bnum, 
+			 char letter, int i)
 {
     int j;
 
@@ -852,6 +882,10 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
 
     if (r->eq != NULL) {
 	r->eq[i] = eq;
+    }
+
+    if (r->letter != NULL) {
+	r->letter[i] = letter;
     }
 
     return 0;
@@ -881,6 +915,7 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->mask = NULL;
     rset->restrictions = NULL;
     rset->multi = 0;
+    rset->vecm = 0;
     rset->code = GRETL_STAT_NONE;
 
     if (rset->type == GRETL_OBJ_SYS) {
@@ -891,6 +926,7 @@ real_restriction_set_start (void *ptr, GretlObjType type,
 	if (var != NULL && gretl_VECM_rank(var) > 1) {
 	    rset->multi = 1;
 	}
+	rset->vecm = 1;
     } 
 
     return rset;
@@ -995,6 +1031,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
     for (i=0; i<nt; i++) {
 	char chunk[32];
 	int len, bnum = 1, eq = 1;
+	char letter = 'b';
 	double mult;
 
 	len = strcspn(p, "+-=");
@@ -1011,7 +1048,8 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	fprintf(stderr, " working on chunk %d, '%s'\n", i, chunk);
 #endif
 
-	err = parse_coeff_chunk(rset, chunk, &mult, &eq, &bnum, pdinfo);
+	err = parse_coeff_chunk(rset, chunk, &mult, &eq, &bnum, 
+				&letter, pdinfo);
 	if (err) {
 	    break;
 	} else if (bnum_out_of_bounds(rset, bnum, eq)) {
@@ -1020,7 +1058,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	}
 
 	mult *= sgn;
-	add_term_to_restriction(r, mult, eq, bnum, i);
+	add_term_to_restriction(r, mult, eq, bnum, letter, i);
 
 	if (*p == '+') {
 	    sgn = 1.0;

@@ -3548,21 +3548,13 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 
 static void transpose_matrix_result (NODE *n, parser *p)
 {
-    if (n == NULL) {
-	return;
-    }
+    gretl_matrix *m = n->v.m;
 
-    if (n->t == MAT) {
-	gretl_matrix *m = n->v.m;
-
-	n->v.m = gretl_matrix_copy_transpose(m);
-	if (n->tmp) {
-	    gretl_matrix_free(m);
-	}
-	n->tmp = 1;
-    } else {
-	p->err = E_TYPES;
+    n->v.m = gretl_matrix_copy_transpose(m);
+    if (n->tmp) {
+	gretl_matrix_free(m);
     }
+    n->tmp = 1;
 }
 
 static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
@@ -4120,7 +4112,7 @@ static NODE *eval (NODE *t, parser *p)
 
  bailout:
 
-    if (t->ext == TRANSP) { /* "starting"? */
+    if (t->ext == TRANSP && ret != NULL && ret->t == MAT) {
 	transpose_matrix_result(ret, p);
     }
 
@@ -5506,6 +5498,24 @@ static int decl_check (parser *p, int flags)
     return p->err;
 }
 
+static void autoreg_error (parser *p, int t)
+{
+    fprintf(stderr, "*** autoreg error at obs t = %d (t1 = %d):\n", 
+	    t, p->dinfo->t1);
+
+    if (p->ret != NULL && p->ret->t != VEC) {
+	fprintf(stderr, " ret type != VEC, p->err = %d\n", p->err);
+    } else if (p->ret == NULL) {
+	fprintf(stderr, " ret = NULL, p->err = %d\n", p->err);
+    }
+
+    fprintf(stderr, " input = '%s'\n", p->input);
+    
+    if (!p->err) {
+	p->err = E_DATA;
+    }
+}
+
 int realgen (const char *s, parser *p, double ***pZ, 
 	     DATAINFO *pdinfo, PRN *prn, int flags)
 {
@@ -5572,7 +5582,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     if (p->flags & P_AUTOREG) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
-	for (t=p->dinfo->t1; t<p->dinfo->t2; t++) {
+	for (t=p->dinfo->t1; t<p->dinfo->t2 && !p->err; t++) {
 	    p->aux_i = 0;
 	    p->obs = t;
 #if EDEBUG
@@ -5585,10 +5595,8 @@ int realgen (const char *s, parser *p, double ***pZ,
 			t, p->ret->v.xvec[t], p->lh.v, t);
 #endif
 		(*p->Z)[p->lh.v][t] = p->ret->v.xvec[t];
-	    } else if (p->ret != NULL && p->ret->t != VEC) {
-		fprintf(stderr, "*** autoreg error: ret type != VEC at t = %d\n", t);
-	    } else if (p->ret == NULL) {
-		fprintf(stderr, "*** autoreg error: ret = NULL at t = %d\n", t);
+	    } else if (p->ret == NULL || p->ret->t != VEC) {
+		autoreg_error(p, t);
 	    }
 	    if (t == p->dinfo->t1) {
 		p->flags &= ~P_START;
@@ -5598,7 +5606,9 @@ int realgen (const char *s, parser *p, double ***pZ,
     } 
 
     p->aux_i = 0;
-    p->ret = eval(p->tree, p);
+    if (!p->err) {
+	p->ret = eval(p->tree, p);
+    }
 
 #if EDEBUG > 1
     printnode(p->ret, p);

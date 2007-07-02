@@ -169,63 +169,66 @@ static int nls_genr_setup (nlspec *s)
 	}
 	
 	genrs[i] = genr_compile(formula, s->Z, s->dinfo, &err);
-#if NLS_DEBUG
-	fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
-		(void *) genrs[i], err);
-	fprintf(stderr, "formula: '%s'\n", formula);
-#endif
 
-	if (!err) {
-	    /* see if the formula actually works, and flush out NAs
-	       while we're at it
-	    */
-	    genr_set_na_check(genrs[i]);
-	    err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
-	    genr_unset_na_check(genrs[i]);
+	if (err) {
+	    fprintf(stderr, "genr_compile: genrs[%d] = %p, err = %d\n", i, 
+		    (void *) genrs[i], err);
+	    fprintf(stderr, "formula: '%s'\n", formula);
+	    break;
 	}
 
-	if (!err) {
-	    v = genr_get_output_varnum(genrs[i]);
-	    m = genr_get_output_matrix(genrs[i]);
+	/* see if the formula actually works, and flush out NAs
+	   while we're at it
+	*/
+	genr_set_na_check(genrs[i]);
+	err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
+	genr_unset_na_check(genrs[i]);
 
-	    if (v == 0 && m == NULL) {
-		if (genr_is_print(genrs[i])) {
-		    continue;
-		} else {
-		    fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
-		    err = E_TYPES;
-		    break;
-		}
-	    }
-
-	    if (i == s->naux) {
-		s->lhv = v;
-		s->lvec = m;
-		if (s->lvec != NULL) {
-		    err = check_lhs_vec(s);
-		}
-	    } else if (j > 0) {
-		int k = j - 1;
-
-		s->params[k].dnum = v;
-		s->params[k].dmat = m;
-
-		if (m != NULL || !scalar_param(s, k)) {
-		    err = check_derivative_matrix(k, m, s);
-		} 
-	    }
-#if NLS_DEBUG
-	    fprintf(stderr, " formula '%s'\n", formula);
-	    fprintf(stderr, " v = %d, m = %p\n", v, (void *) m);
-	    if (v > 0) {
-		fprintf(stderr, " first value: Z[%d][%d] = %g\n", 
-			v, s->t1, (*s->Z)[v][s->t1]);
-	    }
-#endif
-	} else {
-	    fprintf(stderr, "execute_genr: formula '%s', error = %d\n", 
-		    formula, err);
+	if (err) {
+	    fprintf(stderr, "execute_genr: genrs[%d] = %p, err = %d\n", i, 
+		    (void *) genrs[i], err);
+	    fprintf(stderr, "formula: '%s'\n", formula);
+	    break;
 	}
+
+	v = genr_get_output_varnum(genrs[i]);
+	m = genr_get_output_matrix(genrs[i]);
+
+	if (v == 0 && m == NULL) {
+	    if (genr_is_print(genrs[i])) {
+		continue;
+	    } else {
+		fprintf(stderr, "nls_genr_setup: bad type: %s\n", formula);
+		err = E_TYPES;
+		break;
+	    }
+	}
+
+	if (i == s->naux) {
+	    s->lhv = v;
+	    s->lvec = m;
+	    if (s->lvec != NULL) {
+		err = check_lhs_vec(s);
+	    }
+	} else if (j > 0) {
+	    int k = j - 1;
+
+	    s->params[k].dnum = v;
+	    s->params[k].dmat = m;
+
+	    if (m != NULL || !scalar_param(s, k)) {
+		err = check_derivative_matrix(k, m, s);
+	    } 
+	}
+
+#if NLS_DEBUG
+	fprintf(stderr, " formula '%s'\n", formula);
+	fprintf(stderr, " v = %d, m = %p\n", v, (void *) m);
+	if (v > 0) {
+	    fprintf(stderr, " first value: Z[%d][%d] = %g\n", 
+		    v, s->t1, (*s->Z)[v][s->t1]);
+	}
+#endif
     }
 
     if (err) {

@@ -1273,7 +1273,6 @@ static int loop_count_too_high (LOOPSET *loop)
     int nt = loop->iter + 1;
 
     if (loop->type == FOR_LOOP) {
-	/* FIXME? */
 	if (nt >= MAX_FOR_TIMES) {
 	    sprintf(gretl_errmsg, _("Reached maximum interations, %d"),
 		    MAX_FOR_TIMES);
