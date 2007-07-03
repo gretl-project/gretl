@@ -63,19 +63,18 @@ static NODE *newempty (int t)
     return n;
 }
 
-static NODE *newref (parser *p)
+static NODE *newref (parser *p, int t)
 {  
     NODE *n = malloc(sizeof *n);
 
 #if MDEBUG
-    fprintf(stderr, "newref: allocated node at %p (type = %d, idnum = %d)\n", 
-	    (void *) n, p->sym, p->idnum);
+    fprintf(stderr, "newref: allocated node at %p (type %d)\n", 
+	    (void *) n, t);
 #endif
 
     if (n != NULL) {
-	n->t = p->sym;
-	if (n->t == UMAT || n->t == UOBJ ||
-	    n->t == LOOPIDX || n->t == LIST) {
+	n->t = t;
+	if (t == UMAT || t == UOBJ || t == LOOPIDX || t == LIST) {
 	    n->v.str = p->idstr;
 	} else {
 	    n->v.idnum = p->idnum;
@@ -329,7 +328,7 @@ static NODE *base (parser *p, NODE *up)
     case OBS:
     case LIST:
     case LOOPIDX:
-	t = newref(p);
+	t = newref(p, p->sym);
 	if (matrix_ref_node(p) && unary_apost(p)) {
 	    t->ext = TRANSP;
 	    parser_getc(p);
@@ -340,7 +339,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->idnum == DUM_NULL) {
 	    t = newempty(EMPTY);
 	} else {
-	    t = newref(p);
+	    t = newref(p, p->sym);
 	}
 	lex(p);
 	break;
@@ -677,17 +676,16 @@ static void get_ovar_ref (NODE *t, parser *p)
 	/* followed by '[' slice mechanism? */
 	t->v.b2.r = powterm(p);
     } else {
-	t->v.b2.r = newref(p);
+	t->v.b2.r = newref(p, p->sym);
 	lex(p);
     }
 }
 
-#define idnum_to_ext(t) (t == LAG || t == OBS || t == MVAR || \
-                         t == DMSL || t == DMSTR)
+#define idnum_to_ext(t) (t == MVAR || t == DMSL || t == DMSTR)
 
 static NODE *powterm (parser *p)
 {  
-    int ext = (idnum_to_ext(p->sym)) ? p->idnum : 0;
+    int ext = (idnum_to_ext(p->sym))? p->idnum : 0;
     int opt = 0;
     NODE *t;
 
@@ -727,11 +725,17 @@ static NODE *powterm (parser *p)
 	    t->v.b1.b = get_string_arg(p);
 	}	
     } else if (func_symb(p->sym)) {
-	/* includes LAG, OBS */
 	t = newb1(p->sym, NULL, ext);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = base(p, t);
+	}
+    } else if (p->sym == LAG || p->sym == OBS) {
+	t = newb2(p->sym, NULL, NULL);
+	if (t != NULL) {
+	   t->v.b2.l = newref(p, UVAR); 
+	   lex(p);
+	   t->v.b2.r = base(p, t);
 	}
     } else if (p->sym == MSL || p->sym == DMSL) {
 	t = newb2(p->sym, NULL, NULL);

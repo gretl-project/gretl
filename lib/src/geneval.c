@@ -2183,27 +2183,29 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *series_obs (int v, NODE *n, parser *p)
+static NODE *series_obs (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
+    
 
     if (ret != NULL) {
+	const double *x = l->v.xvec;
 	char word[16];
 	int t;
 
-	if (n->v.xval < 0 || n->v.xval > (double) INT_MAX) {
+	if (r->v.xval < 0 || r->v.xval > (double) INT_MAX) {
 	    ret->v.xval = NADBL;
 	    return ret;
 	}
 
 	/* convert to 0-based, and allow for dates */
-	t = n->v.xval;
+	t = (int) r->v.xval;
 	sprintf(word, "%d", t);
 	t = get_t_from_obs_string(word, (const double **) *p->Z, 
 				  p->dinfo);
 
 	if (t >= 0 && t < p->dinfo->n) {
-	    ret->v.xval = (*p->Z)[v][t];
+	    ret->v.xval = x[t];
 	} else {
 	    ret->v.xval = NADBL;
 	}
@@ -2212,11 +2214,12 @@ static NODE *series_obs (int v, NODE *n, parser *p)
     return ret;
 }
 
-static NODE *series_lag (int v, NODE *n, parser *p)
+static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
-    const double *x = (*p->Z)[v];
-    int k, t, s, t1, t2;
+    const double *x = l->v.xvec;
+    int k = (int) -r->v.xval;
+    int t, s, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
     if (ret == NULL) {
@@ -2225,8 +2228,6 @@ static NODE *series_lag (int v, NODE *n, parser *p)
 
     t1 = (autoreg(p))? p->obs : p->dinfo->t1;
     t2 = (autoreg(p))? p->obs : p->dinfo->t2;
-
-    k = (int) -n->v.xval;
 
     for (t=t1; t<=t2; t++) {
 	s = t - k;
@@ -3548,13 +3549,21 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 
 static void transpose_matrix_result (NODE *n, parser *p)
 {
-    gretl_matrix *m = n->v.m;
-
-    n->v.m = gretl_matrix_copy_transpose(m);
-    if (n->tmp) {
-	gretl_matrix_free(m);
+    if (n == NULL || p->err) {
+	return;
     }
-    n->tmp = 1;
+
+    if (n->t == MAT) {
+	gretl_matrix *m = n->v.m;
+
+	n->v.m = gretl_matrix_copy_transpose(m);
+	if (n->tmp) {
+	    gretl_matrix_free(m);
+	}
+	n->tmp = 1;
+    } else {
+	p->err = E_TYPES;
+    }
 }
 
 static void node_type_error (int ntype, int goodt, NODE *bad, parser *p)
@@ -3797,15 +3806,15 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LAG:
     case OBS:
-	/* specials, requiring a series argument */
-	if (!var_is_series(p->dinfo, t->ext)) {
-	    node_type_error(t->t, VEC, NULL, p);
-	} else if (l->t != NUM) {
-	    node_type_error(t->t, NUM, l, p);
+	/* specials, requiring series argument plus int */
+	if (l->t != VEC) {
+	    node_type_error(t->t, VEC, l, p);
+	} else if (r->t != NUM) {
+	    node_type_error(t->t, NUM, r, p);
 	} else if (t->t == LAG) {
-	    ret = series_lag(t->ext, l, p); 
+	    ret = series_lag(l, r, p); 
 	} else if (t->t == OBS) {
-	    ret = series_obs(t->ext, l, p); 
+	    ret = series_obs(l, r, p); 
 	}
 	break;
     case MSL:
@@ -4112,7 +4121,7 @@ static NODE *eval (NODE *t, parser *p)
 
  bailout:
 
-    if (t->ext == TRANSP && ret != NULL && ret->t == MAT) {
+    if (t->ext == TRANSP) { /* "starting"? */
 	transpose_matrix_result(ret, p);
     }
 

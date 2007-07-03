@@ -249,8 +249,7 @@ enum {
 
 #define GENSTRLEN 128
 
-#define func_symb(s) ((s > OP_MAX && s < FUNC_MAX) || \
-                       s == LAG || s == OBS)
+#define func_symb(s) (s > OP_MAX && s < FUNC_MAX)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
 #define funcn_symb(s) (s > F2_MAX && s < FN_MAX)
 #define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
@@ -264,7 +263,8 @@ enum {
 #define bool_comp(s) (s >= B_EQ && s <= B_OR)
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
-                   s == MSL2 || s == SUBSL)
+                   s == MSL2 || s == SUBSL || s == LAG || \
+                   s == OBS)
 
 #define b1sym(s) (unary_op(s) || func_symb(s) || funcn_symb(s) || \
                   s == LPR || s == EROOT)
@@ -327,9 +327,9 @@ union val {
 struct node {
     int t;         /* type indentifier */
     int ext;       /* extra information for some cases */
-    int tmp;       /* if non-zero, node holds temporary data which
+    char tmp;      /* if non-zero, node holds temporary data which
 		      should be freed on completion */
-    int aux;       /* non-zero for an auxiliary node */
+    char aux;      /* non-zero for an auxiliary node */
     union val v;   /* value (of whatever type) */
 };
 
