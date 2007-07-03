@@ -1434,6 +1434,35 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int show_beta_alpha_etc (GRETL_VAR *jvar, 
+				gretl_matrix *H,
+				gretl_matrix *M,
+				const DATAINFO *pdinfo,
+				PRN *prn)
+{
+    int n = jvar->neqns;
+    int rank = jrank(jvar);
+    int err = 0;
+
+    gretl_matrix_multiply_mod(H, GRETL_MOD_NONE,
+			      M, GRETL_MOD_NONE,
+			      jvar->jinfo->Beta, GRETL_MOD_NONE);
+
+    err = compute_alpha(jvar->jinfo, n);
+
+    if (!err) {
+	phillips_normalize_beta(jvar); 
+    } 
+    if (!err) {
+	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_BETA, 0);
+	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_ALPHA, 0);
+	pputc(prn, '\n');
+	compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
+    }
+
+    return err;
+}
+
 /* Test of linear restrictions on the cointegrating relations in a
    VECM.  If the restrictions are "simple" (homogeneous and
    common to the columns of beta) we do the test using the
@@ -1449,7 +1478,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
 {
     const gretl_matrix *R;
 
-    gretl_matrix *D = NULL;
+    gretl_matrix *H = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *Svv = NULL;
     gretl_matrix *Suv = NULL;
@@ -1465,7 +1494,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     }
 
     R = rset_get_R_matrix(rset);
-    D = gretl_matrix_right_nullspace(R, &err);
+    H = gretl_matrix_right_nullspace(R, &err);
 
     if (err) {
 	return err;
@@ -1473,7 +1502,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
 
     n = jvar->neqns;
     rank = jrank(jvar);
-    m = gretl_matrix_cols(D);
+    m = gretl_matrix_cols(H);
 
     M = gretl_matrix_alloc(m, m);
     Svv = gretl_matrix_alloc(m, m);
@@ -1488,24 +1517,24 @@ int vecm_beta_test (GRETL_VAR *jvar,
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
     if (opt & OPT_V) {
-	gretl_matrix_print_to_prn(D, "Restriction matrix, D", prn);
+	gretl_matrix_print_to_prn(H, "Restriction matrix, H", prn);
     }
 
-    /* calculate Svv <- D' Svv D */
-    gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
+    /* calculate Svv <- H' S11 H */
+    gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
 		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
 
     if (opt & OPT_V) {
-	gretl_matrix_print_to_prn(Svv, "D'SvvD", prn);
+	gretl_matrix_print_to_prn(Svv, "H'*S11*H", prn);
     }
 
     if (!err) {
-	/* Suv <- SuvD */
-	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, Suv);
+	/* S01 <- S01*H */
+	err = gretl_matrix_multiply(jvar->jinfo->Suv, H, Suv);
     }
 
     if (opt & OPT_V) {
-	gretl_matrix_print_to_prn(Suv, "SuvD", prn);
+	gretl_matrix_print_to_prn(Suv, "S01*H", prn);
     }
 
     err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
@@ -1514,12 +1543,16 @@ int vecm_beta_test (GRETL_VAR *jvar,
 	if (opt & OPT_V) {
 	    gretl_matrix_print_to_prn(M, "M", prn);
 	}
-	johansen_LR_calc(jvar, evals, D, prn);
+	johansen_LR_calc(jvar, evals, H, prn);
     } 
+
+    if (!err && (opt & OPT_V)) {
+	show_beta_alpha_etc(jvar, H, M, pdinfo, prn);
+    }
 
  bailout:    
 
-    gretl_matrix_free(D);
+    gretl_matrix_free(H);
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);

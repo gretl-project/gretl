@@ -29,10 +29,7 @@
 # define MDEBUG 0
 #endif
 
-enum {
-    STR_COPY,
-    STR_STEAL
-};
+#define set_transpose(n) (n->flags |= TRANSP_NODE)
 
 static NODE *powterm (parser *p);
 
@@ -55,9 +52,7 @@ static NODE *newempty (int t)
     if (n != NULL) {
 	n->t = t;
 	n->v.idnum = 0;
-	n->ext = 0;
-	n->aux = 0;
-	n->tmp = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -79,19 +74,17 @@ static NODE *newref (parser *p, int t)
 	} else {
 	    n->v.idnum = p->idnum;
 	}
-	n->ext = 0;
-	n->aux = 0;
-	n->tmp = 0;
+	n->flags = 0;
     }
 
     return n;
 }
 
-static NODE *newstr (char *s, int ext, int flag)
+static NODE *newstr (parser *p)
 {  
     NODE *n;
 
-    if (s == NULL) {
+    if (p->idstr == NULL) {
 	fprintf(stderr, "newstr: input is NULL\n");
 	return NULL;
     }
@@ -100,19 +93,13 @@ static NODE *newstr (char *s, int ext, int flag)
 
 #if MDEBUG
     fprintf(stderr, "newstr: allocated node at %p (s = '%s')\n", 
-	    (void *) n, s);
+	    (void *) n, p->idstr);
 #endif
 
     if (n != NULL) {
 	n->t = STR;
-	if (flag == STR_COPY) {
-	    n->v.str = gretl_strdup(s);
-	} else {
-	    n->v.str = s;
-	}
-	n->tmp = 0;
-	n->ext = ext;
-	n->aux = 0;
+	n->v.str = p->idstr;
+	n->flags = 0;
     }
 
     return n;
@@ -132,9 +119,7 @@ NODE *newdbl (double x)
     if (n != NULL) {
 	n->t = NUM;
 	n->v.xval = x;
-	n->tmp = 0;
-	n->ext = 0;
-	n->aux = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -142,7 +127,7 @@ NODE *newdbl (double x)
 
 /* node for unary operator, or single-argument function */
 
-static NODE *newb1 (int t, NODE *b, int ext)
+static NODE *newb1 (int t, NODE *b)
 {  
     NODE *n = malloc(sizeof *n);
 
@@ -154,9 +139,7 @@ static NODE *newb1 (int t, NODE *b, int ext)
     if (n != NULL) {
 	n->t = t;
 	n->v.b1.b = b;
-	n->tmp = 0;
-	n->ext = ext;
-	n->aux = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -177,14 +160,7 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
 	n->t = t;
 	n->v.b2.l = l;
 	n->v.b2.r = r;
-	n->tmp = 0;
-	n->ext = 0;
-	n->aux = 0;
-
-	if (n->t == AST2) {
-	    n->t = B_POW;
-	    n->ext = 1; /* record possible ambiguity */
-	}
+	n->flags = 0;
     }
 
     return n;
@@ -206,9 +182,7 @@ static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
 	n->v.b3.l = l;
 	n->v.b3.m = m;
 	n->v.b3.r = r;
-	n->tmp = 0;
-	n->ext = 0;
-	n->aux = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -229,9 +203,7 @@ static NODE *newbn (int t)
 	n->t = t;
 	n->v.bn.n_nodes = 0;
 	n->v.bn.n = NULL;
-	n->tmp = 0;
-	n->ext = 0;
-	n->aux = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -330,7 +302,7 @@ static NODE *base (parser *p, NODE *up)
     case LOOPIDX:
 	t = newref(p, p->sym);
 	if (matrix_ref_node(p) && unary_apost(p)) {
-	    t->ext = TRANSP;
+	    set_transpose(t);
 	    parser_getc(p);
 	}
 	lex(p);
@@ -354,7 +326,7 @@ static NODE *base (parser *p, NODE *up)
 	t = expr(p);
 	if (p->sym == RPR) {
 	    if (up != NULL && up->t != LAG && unary_apost(p)) {
-		up->ext = TRANSP; 
+		set_transpose(up);
 		parser_getc(p);
 	    } 
 	    lex(p);
@@ -372,7 +344,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
 		if (p->ch == '\'') {
-		    up->ext = TRANSP;
+		    set_transpose(up);
 		    parser_getc(p);
 		}
 	    }
@@ -434,7 +406,10 @@ static NODE *get_string_arg (parser *p)
     parser_getc(p);
     lex(p);
 
-    return newstr(tailstrip(str), 0, STR_COPY);
+    tailstrip(str);
+    p->idstr = gretl_strdup(str); /* leakage possible? */
+
+    return newstr(p);
 }
 
 enum {
@@ -515,7 +490,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		lex(p);
 	    } else if (p->sym == RCB) {
 		if (p->ch == '\'') {
-		    t->ext = TRANSP;
+		    set_transpose(t);
 		    parser_getc(p);
 		} else if (p->ch == '[') {
 		    parser_ungetc(p);
@@ -585,7 +560,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    }
 	    if (p->sym == RBR) {
 		if (p->ch == '\'') {
-		    t->ext = TRANSP; /* ?? */
+		    set_transpose(t); /* ?? */
 		    parser_getc(p);
 		}
 		lex(p);
@@ -636,7 +611,7 @@ static void get_args (NODE *t, parser *p, int opt)
 	    t->v.b2.r = expr(p);
 	    if (p->sym == RPR) {
 		if (p->ch == '\'') {
-		    t->ext = TRANSP; 
+		    set_transpose(t);
 		    parser_getc(p);
 		}
 		lex(p);
@@ -681,11 +656,8 @@ static void get_ovar_ref (NODE *t, parser *p)
     }
 }
 
-#define idnum_to_ext(t) (t == MVAR || t == DMSL || t == DMSTR)
-
 static NODE *powterm (parser *p)
 {  
-    int ext = (idnum_to_ext(p->sym))? p->idnum : 0;
     int opt = 0;
     NODE *t;
 
@@ -709,7 +681,7 @@ static NODE *powterm (parser *p)
 	    get_args(t, p, opt);
 	}
     } else if (string0_func(p->sym)) {
-	t = newb1(p->sym, NULL, 0);
+	t = newb1(p->sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
@@ -719,13 +691,13 @@ static NODE *powterm (parser *p)
 	    }
 	}	
     } else if (string_arg_func(p->sym)) {
-	t = newb1(p->sym, NULL, ext);
+	t = newb1(p->sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = get_string_arg(p);
 	}	
     } else if (func_symb(p->sym)) {
-	t = newb1(p->sym, NULL, ext);
+	t = newb1(p->sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = base(p, t);
@@ -733,14 +705,18 @@ static NODE *powterm (parser *p)
     } else if (p->sym == LAG || p->sym == OBS) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	   t->v.b2.l = newref(p, UVAR); 
-	   lex(p);
-	   t->v.b2.r = base(p, t);
+	    t->v.b2.l = newref(p, UVAR); 
+	    lex(p);
+	    t->v.b2.r = base(p, t);
 	}
     } else if (p->sym == MSL || p->sym == DMSL) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, ext, STR_STEAL);
+	    if (p->sym == MSL) {
+		t->v.b2.l = newstr(p);
+	    } else {
+		t->v.b2.l = newref(p, MVAR);
+	    }
 	    t->v.b2.r = newb2(MSL2, NULL, NULL);
 	    if (t->v.b2.r != NULL) {
 		lex(p);
@@ -750,20 +726,20 @@ static NODE *powterm (parser *p)
     } else if (p->sym == DMSTR) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, ext, STR_STEAL);
+	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
 	    t->v.b2.r = get_string_arg(p);
 	}
     } else if (p->sym == OVAR) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
+	    t->v.b2.l = newstr(p);
 	    get_ovar_ref(t, p);
 	}
     } else if (p->sym == LPR) {
 	/* dummy root for parenthesized expressions, to facilitate
 	   taking the transpose of matrix stuff, e.g. (A*B)' */
-	t = newb1(EROOT, NULL, 0);
+	t = newb1(EROOT, NULL);
 	if (t != NULL) {
 	    t->v.b1.b = base(p, t);
 	}
@@ -789,7 +765,7 @@ static NODE *powterm (parser *p)
     } else if (p->sym == UFUN) {
 	t = newb2(p->sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
+	    t->v.b2.l = newstr(p);
 	    lex(p);
 	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
@@ -797,7 +773,7 @@ static NODE *powterm (parser *p)
 	    }
 	}
     } else if (funcn_symb(p->sym)) {
-	t = newb1(p->sym, NULL, 0);
+	t = newb1(p->sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
@@ -806,7 +782,7 @@ static NODE *powterm (parser *p)
 	    }
 	}
     } else if (p->sym == STR) {
-	t = newstr(p->idstr, 0, STR_STEAL);
+	t = newstr(p);
 	lex(p);
     } else {
 	t = base(p, NULL);
@@ -832,7 +808,6 @@ if (unary_op(sym)) {
 }
 #endif
 
-
 static NODE *factor (parser *p)
 {  
     int sym = p->sym == B_SUB ? U_NEG : 
@@ -850,7 +825,7 @@ static NODE *factor (parser *p)
 	    context_error(0, p);
 	    return NULL;
 	}
-        t = newb1(sym, NULL, 0);
+        t = newb1(sym, NULL);
         if (t != NULL) {
             lex(p);
             t->v.b1.b = factor(p);
@@ -859,7 +834,6 @@ static NODE *factor (parser *p)
 	t = powterm(p);
 	if (t != NULL) {
 	    while (!p->err && (p->sym == B_POW || 
-			       p->sym == AST2 ||
 			       p->sym == DOTPOW ||
 			       p->sym == B_TRMUL)) {
 		t = newb2(p->sym, t, NULL);

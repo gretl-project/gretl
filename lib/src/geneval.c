@@ -33,6 +33,9 @@
 # define EDEBUG 0
 #endif
 
+#define is_aux_node(t) (t != NULL && (t->flags & AUX_NODE))
+#define is_tmp_node(t) (t != NULL && (t->flags & TMP_NODE))
+
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
@@ -88,11 +91,11 @@ static void free_tree (NODE *t, const char *msg)
     } 
 
 #if EDEBUG
-    fprintf(stderr, "%-8s: freeing node at %p (type %03d, aux = %d, ext = %d)\n", msg, 
-	    (void *) t, t->t, t->aux, t->ext);
+    fprintf(stderr, "%-8s: freeing node at %p (type %03d, flags = %d)\n", msg, 
+	    (void *) t, t->t, t->flags);
 #endif
 
-    if (t->tmp) {
+    if (is_tmp_node(t)) {
 	if (t->t == VEC) {
 	    free(t->v.xvec);
 	} else if (t->t == IVEC) {
@@ -134,8 +137,6 @@ void parser_free_aux_nodes (parser *p)
     }
 }
 
-#define is_aux_node(t) (t != NULL && t->aux)
-
 static NODE *newmdef (int k)
 {  
     NODE *n = malloc(sizeof *n);
@@ -166,8 +167,7 @@ static NODE *newmdef (int k)
     if (n != NULL) {
 	n->t = MDEF;
 	n->v.bn.n_nodes = k;
-	n->tmp = 0;
-	n->ext = 0;
+	n->flags = 0;
     }
 
     return n;
@@ -186,8 +186,7 @@ static NODE *newvec (int n, int tmp)
 
     if (b != NULL) {
 	b->t = VEC;
-	b->tmp = tmp;
-	b->ext = 0;
+	b->flags = (tmp)? TMP_NODE : 0;
 	b->v.xvec = NULL;
 	if (n > 0) {
 	    b->v.xvec = malloc(n * sizeof *b->v.xvec);
@@ -217,8 +216,7 @@ static NODE *newivec (int n)
 
     if (b != NULL) {
 	b->t = IVEC;
-	b->tmp = 1;
-	b->ext = 0;
+	b->flags = TMP_NODE;
 	if (n > 0) {
 	    b->v.ivec = malloc(n * sizeof(int));
 	    if (b->v.ivec == NULL) {
@@ -245,8 +243,7 @@ static NODE *newmat (int tmp)
 
     if (b != NULL) {
 	b->t = MAT;
-	b->tmp = tmp;
-	b->ext = 0;
+	b->flags = (tmp)? TMP_NODE : 0;
 	b->v.m = NULL;
     }
 
@@ -265,8 +262,7 @@ static NODE *newmspec (void)
 
     if (b != NULL) {
 	b->t = MSPEC;
-	b->tmp = 1;
-	b->ext = 0;
+	b->flags = TMP_NODE;
 	b->v.mspec = NULL;
     }
 
@@ -285,7 +281,7 @@ static NODE *newlist (void)
 
     if (b != NULL) {
 	b->t = LIST;
-	b->tmp = 1;
+	b->flags = TMP_NODE;
 	b->v.str = NULL;
     }    
 
@@ -314,7 +310,7 @@ static int add_aux_node (parser *p, NODE *t)
     if (aux == NULL) {
 	p->err = E_ALLOC;
     } else {
-	t->aux = 1;
+	t->flags |= AUX_NODE;
 	aux[p->n_aux] = t;
 	p->aux = aux;
 	p->aux_i = p->n_aux;
@@ -2743,7 +2739,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    } else if (rtype == ARG_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
-		    if (ret->tmp) {
+		    if (is_tmp_node(ret)) {
 			gretl_matrix_free(ret->v.m);
 		    }
 		    ret->v.m = mret;
@@ -2751,7 +2747,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    } else if (rtype == ARG_LIST) {
 		ret = aux_list_node(p);
 		if (ret != NULL) {
-		    if (ret->tmp) {
+		    if (is_tmp_node(ret)) {
 			free(ret->v.str);
 		    }
 		    ret->v.str = sret;
@@ -3301,7 +3297,7 @@ static NODE *ternary_return_node (NODE *n, parser *p)
     } else if (n->t == MAT) {
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
-	    if (ret->tmp) {
+	    if (is_tmp_node(ret)) {
 		gretl_matrix_free(ret->v.m);
 	    }
 	    ret->v.m = gretl_matrix_copy(n->v.m);
@@ -3449,7 +3445,7 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
     }
 
     /* the sort of matrix we want (e.g. $coeff) */
-    idx = t->v.b2.l->ext;
+    idx = t->v.b2.l->v.idnum;
     M = saved_object_get_matrix(oname, idx, &p->err);
 
     if (M != NULL) {
@@ -3534,13 +3530,13 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 	NODE *l = t->v.b2.l;
 	NODE *r = t->v.b2.r;
 
-	ret->v.xval = gretl_model_get_data_element(NULL, l->ext, r->v.str, 
+	ret->v.xval = gretl_model_get_data_element(NULL, l->v.idnum, r->v.str, 
 						   p->dinfo, &p->err);
 
 	if (na(ret->v.xval)) {
 	    p->err = 1;
 	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
-		    r->v.str, l->v.str);
+		    r->v.str, mvarname(l->v.idnum));
 	}
     }
 
@@ -3557,10 +3553,10 @@ static void transpose_matrix_result (NODE *n, parser *p)
 	gretl_matrix *m = n->v.m;
 
 	n->v.m = gretl_matrix_copy_transpose(m);
-	if (n->tmp) {
+	if (is_tmp_node(n)) {
 	    gretl_matrix_free(m);
 	}
-	n->tmp = 1;
+	n->flags |= TMP_NODE;
     } else {
 	p->err = E_TYPES;
     }
@@ -3660,10 +3656,6 @@ static NODE *eval (NODE *t, parser *p)
 	/* arithmetic and logical binary operators: be as
 	   flexible as possible with regard to argument types
 	*/
-	if (t->t == B_POW && t->ext && (l->t == MAT || r->t == MAT)) {
-	    /* user gave "**" with a matrix operand */
-	    t->t = KRON;
-	}
 	if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if ((l->t == VEC && r->t == VEC) ||
@@ -4121,7 +4113,7 @@ static NODE *eval (NODE *t, parser *p)
 
  bailout:
 
-    if (t->ext == TRANSP) { /* "starting"? */
+    if (t->flags & TRANSP_NODE) { /* "starting"? */
 	transpose_matrix_result(ret, p);
     }
 
@@ -4524,7 +4516,7 @@ static NODE *lhs_copy_node (parser *p)
     }
 
     n->t = p->targ;
-    n->ext = n->tmp = 0;
+    n->flags = 0;
 
     if (p->targ == NUM) {
 	n->v.xval = (*p->Z)[p->lh.v][0];
@@ -4709,7 +4701,7 @@ static void pre_process (parser *p, int flags)
 	}
     }
 
-    /* if new variable, check name for legality */
+    /* if new public variable, check name for legality */
     if (newvar && !(flags & P_PRIVATE)) {
 	p->err = check_varname(test);
 	if (p->err) {
@@ -4891,7 +4883,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 		m->val[i] = r->v.xvec[i + p->dinfo->t1];
 	    }
 	}
-    } else if (r->t == MAT && r->tmp) {
+    } else if (r->t == MAT && is_tmp_node(r)) {
 	/* result r->v.m is newly allocated, steal it */
 #if EDEBUG
 	fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
@@ -5412,6 +5404,8 @@ static void parser_init (parser *p, const char *str,
 	p->ch = parser_getc(p);
     }
 }
+
+/* called from genmain.c (only!) */
 
 void gen_save_or_print (parser *p, PRN *prn)
 {

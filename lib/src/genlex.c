@@ -634,7 +634,6 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;
-	    p->idstr = gretl_strdup(s);
 	} else if (!func_symb(p->sym) && !func2_symb(p->sym) &&
 		   !funcn_symb(p->sym) && p->sym != UFUN) {
 	    p->err = 1;
@@ -646,7 +645,6 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == MVAR && could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
-	    p->idstr = gretl_strdup(s);
 	} else if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {
 	    /* observation from series */
 	    p->sym = OBS;
@@ -812,6 +810,7 @@ static double getdbl (parser *p)
     return d;
 }
 
+#if 0 /* later? */
 static void deprecation_note (parser *p)
 {
     if (p->sym == B_AND) {
@@ -822,6 +821,7 @@ static void deprecation_note (parser *p)
 		"OR is '||'\n");
     }
 }
+#endif
 
 #define matrix_gen(p) (p->lh.t == MAT || p->targ == MAT)
 
@@ -848,11 +848,7 @@ void lex (parser *p)
         case '*': 
 	    parser_getc(p);
 	    if (p->ch == '*') {
-		if (matrix_gen(p)) {
-		    p->sym = KRON;
-		} else {
-		    p->sym = AST2;
-		}
+		p->sym = KRON;
 		parser_getc(p);
 	    } else {
 		p->sym = B_MUL;
@@ -901,11 +897,7 @@ void lex (parser *p)
 	    p->sym = (matrix_gen(p))? MRCAT : B_OR;
 	    parser_getc(p);
 	    if (p->ch == '|') {
-		if (p->sym == B_OR) {
-		   deprecation_note(p);
-		} else {
-		    p->sym = B_OR;
-		}
+		p->sym = B_OR;
 		parser_getc(p);
 	    }
 	    return;

@@ -532,7 +532,7 @@ double *generate_series (const char *s, double ***pZ,
 
     if (!*err) {
 	if (p.ret->t == VEC) {
-	    if (p.ret->tmp) {
+	    if (p.ret->flags & TMP_NODE) {
 		/* steal the generated series */
 		x = p.ret->v.xvec;
 		p.ret->v.xvec = NULL;

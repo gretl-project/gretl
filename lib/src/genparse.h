@@ -231,7 +231,6 @@ enum {
   /* 200 */   INC,   
 	      DEC,
 	      QUERY,
-              AST2,   /* prime facie ambiguous case of "**" */
               UNK 
 };
 
@@ -324,12 +323,15 @@ union val {
     matrix_subspec *mspec;
 };
 
+enum {
+    AUX_NODE    = 1 << 0,
+    TMP_NODE    = 1 << 1,
+    TRANSP_NODE = 1 << 2
+};
+
 struct node {
-    int t;         /* type indentifier */
-    int ext;       /* extra information for some cases */
-    char tmp;      /* if non-zero, node holds temporary data which
-		      should be freed on completion */
-    char aux;      /* non-zero for an auxiliary node */
+    short t;       /* type indentifier */
+    char flags;    /* AUX_NODE etc., see above */
     union val v;   /* value (of whatever type) */
 };
 
