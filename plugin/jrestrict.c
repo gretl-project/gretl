@@ -416,16 +416,17 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     }
 
     for (i=0; i<nC && !err; i++) {
-	    err = gretl_matrix_inscribe_matrix(J->s, ss[i], sr, 0, GRETL_MOD_NONE);
+	err = gretl_matrix_inscribe_matrix(J->s, ss[i], sr, 0, 
+					   GRETL_MOD_NONE);
 	if (!err) {
 	    sr += ss[i]->rows;
 	}
-
 	if (!err && (J->h[i] != NULL)) {
-	    err = gretl_matrix_inscribe_matrix(J->H, J->h[i], hr, hc, GRETL_MOD_NONE);
-	if (!err) {
-	    hr += J->h[i]->rows;
-	    hc += J->h[i]->cols;
+	    err = gretl_matrix_inscribe_matrix(J->H, J->h[i], hr, hc, 
+					       GRETL_MOD_NONE);
+	    if (!err) {
+		hr += J->h[i]->rows;
+		hc += J->h[i]->cols;
 	    }
 	}
     }
