@@ -3806,7 +3806,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LAG:
     case OBS:
-	/* specials, requiring series argument plus int */
+	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
 	} else if (r->t != NUM) {
@@ -4270,17 +4270,6 @@ static void printnode (const NODE *t, const parser *p)
 	printsymb(t->t, p);
 	printnode(t->v.b2.r, p);
 	pputc(p->prn, ')');
-    } else if (t->t == LAG) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->ext]);
-	pputc(p->prn, '(');
-	printnode(t->v.b1.b, p);
-	pputc(p->prn, ')');
-    } else if (t->t == OBS) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->ext]);
-	pputc(p->prn, '[');
-	/* should use date string? */
-	printnode(t->v.b1.b, p);
-	pputc(p->prn, ']');
     } else if (t->t == MSL || t->t == DMSL) {
 	printnode(t->v.b2.l, p);
 	pputc(p->prn, '[');
