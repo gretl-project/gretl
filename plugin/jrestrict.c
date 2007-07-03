@@ -822,7 +822,7 @@ static double Jloglik (const double *phi, void *data)
 
 /* See Johansen pp. 106-112 */
 
-static void set_LR_df (Jwrap *J)
+static void set_LR_df (Jwrap *J, GRETL_VAR *jvar)
 {
     int p = gretl_matrix_rows(J->beta);
     int r = J->rank;
@@ -833,6 +833,9 @@ static void set_LR_df (Jwrap *J)
 	si = J->h[i]->cols;
 	J->df += p - r - si; 
     }
+
+    /* system was subject to a prior restriction */
+    J->df -= jvar->jinfo->bdf;
 }
 
 #define VECM_WIDTH 13
@@ -1057,12 +1060,12 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	set_LR_df(J);
+	set_LR_df(J, jvar);
 
 	if (opt & OPT_F) {
 	    jvar->jinfo->ll0 = jvar->ll;
 	    jvar->ll = J->ll;
-	    jvar->jinfo->bdf = J->df;
+	    jvar->jinfo->bdf += J->df; /* ?? */
 
 	    gretl_matrix_free(jvar->jinfo->Beta);
 	    jvar->jinfo->Beta = J->beta;

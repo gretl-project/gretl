@@ -87,6 +87,54 @@ static int check_R_matrix (const gretl_matrix *R)
     return err;
 }
 
+static int add_vecm_restriction (gretl_restriction_set *rset,
+				 GRETL_VAR *vecm)
+{
+    const gretl_matrix *R0 = gretl_VECM_R_matrix(vecm);
+    const gretl_matrix *q0 = gretl_VECM_q_matrix(vecm);
+    gretl_matrix *R2, *q2;
+    int err = 0;
+
+    R2 = gretl_matrix_row_concat(R0, rset->R, &err);
+    if (err) {
+	return err;
+    }
+
+    err = check_R_matrix(R2);
+    if (err) {
+	gretl_matrix_free(R2);
+	return err;
+    }
+
+    if (q0 == NULL) {
+	q2 = gretl_column_vector_alloc(R2->rows);
+	if (q2 == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    int i, n = R0->rows;
+
+	    for (i=0; i<R2->rows; i++) {
+		q2->val[i] = (i < n)? 0.0 : rset->q->val[i-n];
+	    }
+	}
+    } else {
+	q2 = gretl_matrix_row_concat(q0, rset->q, &err);
+    }
+
+    if (err) {
+	gretl_matrix_free(R2);
+	return err;
+    }
+
+    gretl_matrix_free(rset->R);
+    rset->R = R2;
+
+    gretl_matrix_free(rset->q);
+    rset->q = q2;
+
+    return 0;
+}
+
 static int 
 get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
 {
@@ -1215,6 +1263,7 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	goto bailout;
     }
 
+    /* FIXME: the following should be relaxed */
     if (type == GRETL_OBJ_VAR && gretl_is_restricted_VECM(ptr)) {
 	strcpy(gretl_errmsg, _("The model is already restricted"));
 	*err = E_DATA;
@@ -1650,6 +1699,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 				gretlopt opt,
 				PRN *prn)
 {
+    int t = rset->type;
     int err = 0;
 
     if (rset == NULL) {
@@ -1659,8 +1709,13 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
     rset->opt |= opt;
 
     print_restriction_set(rset, pdinfo, prn);
-    
-    if (rset->type != GRETL_OBJ_EQN) {
+
+    if (t == GRETL_OBJ_VAR && gretl_is_restricted_VECM(rset->obj)) {
+	err = restriction_set_form_matrices(rset);
+	if (!err) {
+	    err = add_vecm_restriction(rset, rset->obj);
+	}
+    } else if (t != GRETL_OBJ_EQN) {
 	err = restriction_set_form_matrices(rset);
 	if (!err) {
 	    err = check_R_matrix(rset->R);
@@ -1672,10 +1727,10 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	return err;
     }
 
-    if (rset->type == GRETL_OBJ_VAR) {
+    if (t == GRETL_OBJ_VAR) {
 	gretl_VECM_test_beta(rset->obj, rset, pdinfo, rset->opt, prn);
 	destroy_restriction_set(rset);
-    } else if (rset->type == GRETL_OBJ_SYS) {
+    } else if (t == GRETL_OBJ_SYS) {
 	system_set_restriction_matrices(rset->obj, rset->R, rset->q);
 	rset->R = NULL;
 	rset->q = NULL;

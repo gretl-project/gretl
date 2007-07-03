@@ -3137,13 +3137,30 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm)
 
 int gretl_is_restricted_VECM (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL &&
-	vecm->jinfo->R != NULL) {
+    if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {
 	return 1;
     }
 
     return 0;
 }
+
+const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {
+	return vecm->jinfo->R;
+    }
+
+    return NULL;
+}
+
+const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && vecm->jinfo->q != NULL) {
+	return vecm->jinfo->q;
+    }
+
+    return NULL;
+}   
 
 double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
 			      int idx, const char *key, int *err)

@@ -234,7 +234,10 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
    build_VECM_models() below).
 */
 
-static int compute_alpha (JohansenInfo *jv, int n)
+static int compute_alpha (JohansenInfo *jv, 
+			  const gretl_matrix *Suv,
+			  const gretl_matrix *Svv,
+			  int n)
 {
     gretl_matrix *alpha = NULL;
     gretl_matrix *tmp1 = NULL;
@@ -1077,7 +1080,7 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	compute_coint_test(jvar, evals, prn);
 
 	if (!(opt & OPT_Q)) {
-	    err = compute_alpha(jvar->jinfo, n);
+	    err = compute_alpha(jvar->jinfo, jvar->jinfo->Suv, jvar->jinfo->Svv, n);
 	    if (!err) {
 		print_beta_and_alpha(jvar->jinfo, evals, n, pdinfo, prn);
 		compute_long_run_matrix(jvar->jinfo, n, pdinfo, prn);
@@ -1288,7 +1291,6 @@ int johansen_estimate (GRETL_VAR *jvar,
 
     M = gretl_matrix_alloc(m, m);
     Suu = gretl_matrix_copy(jvar->jinfo->Suu);
-
     if (M == NULL || Suu == NULL) {
 	err = E_ALLOC;
     }
@@ -1435,8 +1437,10 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 }
 
 static int show_beta_alpha_etc (GRETL_VAR *jvar, 
-				gretl_matrix *H,
-				gretl_matrix *M,
+				const gretl_matrix *H,
+				const gretl_matrix *M,
+				const gretl_matrix *Suv,
+				const gretl_matrix *Svv,
 				const DATAINFO *pdinfo,
 				PRN *prn)
 {
@@ -1448,11 +1452,12 @@ static int show_beta_alpha_etc (GRETL_VAR *jvar,
 			      M, GRETL_MOD_NONE,
 			      jvar->jinfo->Beta, GRETL_MOD_NONE);
 
-    err = compute_alpha(jvar->jinfo, n);
+    err = phillips_normalize_beta(jvar);
 
     if (!err) {
-	phillips_normalize_beta(jvar); 
-    } 
+	err = compute_alpha(jvar->jinfo, Suv, Svv, n);
+    }
+
     if (!err) {
 	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_BETA, 0);
 	print_beta_or_alpha(jvar->jinfo, rank, pdinfo, prn, PRINT_ALPHA, 0);
@@ -1468,6 +1473,17 @@ static int show_beta_alpha_etc (GRETL_VAR *jvar,
    common to the columns of beta) we do the test using the
    eigen-system approach.  If they are "general" restrictions
    we hand off to the specialized machinery in jrestrict.c.
+*/
+
+/* FIXME: if vecm is already restricted, we either need copies of the
+   original Svv and Suv (which would have to be stored earlier), or
+   else we must be supplied with just the *additional* restriction
+   matrix, as rset->R -- not the combined one as at present -- and we
+   have to handle the computation using that plus the modified Svv and
+   Suv.  If H0 is the original explicit-form restriction on beta, and
+   H1 is the additional restriction, does it make sense to work with H
+   = H1'*H0?  This seems to give the right likelihood, but then things
+   are non-conformable for computing beta.
 */
 
 int vecm_beta_test (GRETL_VAR *jvar, 
@@ -1521,8 +1537,9 @@ int vecm_beta_test (GRETL_VAR *jvar,
     }
 
     /* calculate Svv <- H' S11 H */
-    gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
-		       jvar->jinfo->Svv, Svv, GRETL_MOD_NONE);
+    err = gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
+			     jvar->jinfo->Svv, Svv, 
+			     GRETL_MOD_NONE);
 
     if (opt & OPT_V) {
 	gretl_matrix_print_to_prn(Svv, "H'*S11*H", prn);
@@ -1537,7 +1554,9 @@ int vecm_beta_test (GRETL_VAR *jvar,
 	gretl_matrix_print_to_prn(Suv, "S01*H", prn);
     }
 
-    err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
+    if (!err) {
+	err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
+    }
 
     if (!err) {
 	if (opt & OPT_V) {
@@ -1547,7 +1566,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     } 
 
     if (!err && (opt & OPT_V)) {
-	show_beta_alpha_etc(jvar, H, M, pdinfo, prn);
+	show_beta_alpha_etc(jvar, H, M, Suv, Svv, pdinfo, prn);
     }
 
  bailout:    

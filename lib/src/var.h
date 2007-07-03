@@ -116,6 +116,10 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm);
 
 int gretl_is_restricted_VECM (const GRETL_VAR *vecm);
 
+const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm);
+
+const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm);
+
 double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
 			      int idx, const char *key, int *err);
 
