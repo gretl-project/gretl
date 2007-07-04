@@ -2147,7 +2147,7 @@ double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_LU_solve (const gretl_matrix *a, gretl_vector *b)
+int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 {
     char trans = 'N';
     integer info;
