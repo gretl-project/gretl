@@ -144,7 +144,7 @@ get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
     int col = r->bnum[j];
     int k;
 
-    if (r->eq != NULL) {
+    if (rset->multi) {
 	for (k=0; k<r->eq[j]; k++) {
 	    col += nb;
 	}
@@ -608,6 +608,9 @@ static int parse_b_bit (gretl_restriction_set *r, const char *s,
 
     if (isdigit((unsigned char) *s)) {
 	sscanf(s, "%d", bnum);
+	if (r->type == GRETL_OBJ_VAR) {
+	    *eq = EQN_UNSPEC;
+	}
 	err = 0;
     } else if (*s == '[') {
 	err = pick_apart(r, s + 1, eq, bnum, pdinfo);
@@ -813,7 +816,7 @@ static void print_restriction (const gretl_restriction_set *rset,
 	}
 	k = r->bnum[i];
 	print_mult(r->mult[i], i == 0, prn);
-	if (rset->multi) {
+	if (rset->multi && r->eq[i] != EQN_UNSPEC) {
 	    pprintf(prn, "%c[%d,%d]", letter, r->eq[i] + 1, k + 1);
 	} else if (rset->type == GRETL_OBJ_VAR) {
 	    pprintf(prn, "%c[%d]", letter, k + 1);
