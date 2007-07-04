@@ -820,10 +820,11 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
     return err;
 }
 
-/* VECM: compute the variance of the estimator of \beta, after doing
-   Phillips normalization */
+/* VECM: compute the variance of the estimator of \beta, either
+   under restriction H or after doing Phillips normalization.
+   FIXME (?) this is not right when H is given */
 
-static int beta_variance (GRETL_VAR *vecm)
+static int beta_variance (GRETL_VAR *vecm, const gretl_matrix *H)
 {
     gretl_matrix *O = NULL;
     gretl_matrix *aOa = NULL;
@@ -832,13 +833,14 @@ static int beta_variance (GRETL_VAR *vecm)
     int r = jrank(vecm);
     int m = gretl_matrix_cols(vecm->jinfo->Alpha);
     int n = gretl_matrix_rows(vecm->jinfo->Beta);
+    int nh = (H != NULL)? H->cols : n - r; /* ?? */
     int i, j, k, err = 0;
 
     double x;
 
     O = gretl_matrix_copy(vecm->S);
     aOa = gretl_matrix_alloc(m, m);
-    HSH = gretl_matrix_alloc(n - r, n - r);
+    HSH = gretl_matrix_alloc(nh, nh);
 
     if (O == NULL || aOa == NULL || HSH == NULL) {
 	err = E_ALLOC;
@@ -862,17 +864,26 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_print(aOa, "aOa = alpha_c' * O * alpha_c");
 #endif
 
-    /* compute H'SH (just keep the south-east corner) */
-    for (i=r; i<n; i++) {
-	for (j=r; j<n; j++) {
-	    x = gretl_matrix_get(vecm->jinfo->Svv, i, j);
-	    gretl_matrix_set(HSH, i - r, j - r, x);
+    /* compute H'*Svv*H */
+
+    if (H != NULL) {
+	gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
+			   vecm->jinfo->Svv, 
+			   HSH, GRETL_MOD_NONE);
+    } else {
+	/* phillips: just keep the south-east corner */
+	for (i=r; i<n; i++) {
+	    for (j=r; j<n; j++) {
+		x = gretl_matrix_get(vecm->jinfo->Svv, i, j);
+		gretl_matrix_set(HSH, i - r, j - r, x);
+	    }
 	}
     }
 
 #if JDEBUG
     gretl_matrix_print(vecm->jinfo->Svv, "full Svv");
-    gretl_matrix_print(HSH, "HSH = subset(Svv)");
+    gretl_matrix_print(H, "H");
+    gretl_matrix_print(HSH, "H'*Svv*H");
 #endif
 
     vecm->jinfo->Bvar = gretl_matrix_kronecker_product_new(aOa, HSH);
@@ -886,12 +897,22 @@ static int beta_variance (GRETL_VAR *vecm)
 	goto bailout;
     }
 
-    gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->T);
-
     vecm->jinfo->Bse = gretl_zero_matrix_new(n, r);
     if (vecm->jinfo->Bse == NULL) {
 	err = E_ALLOC;
 	goto bailout;
+    }
+
+    gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->T);
+
+    if (H != NULL) {
+	gretl_matrix *V = gretl_matrix_alloc(H->rows, H->rows);
+
+	gretl_matrix_qform(H, GRETL_MOD_NONE,
+			   vecm->jinfo->Bvar,
+			   V, GRETL_MOD_NONE);
+	gretl_matrix_free(vecm->jinfo->Bvar);
+	vecm->jinfo->Bvar = V;
     }
 
     k = 0;
@@ -1152,43 +1173,34 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals,
 }
 
 static int johansen_prep_restriction (GRETL_VAR *jvar, 
+				      gretl_matrix **Suv,
+				      gretl_matrix **Svv,
 				      const gretl_matrix *D)
 {
-    gretl_matrix *Svv = NULL;
-    gretl_matrix *Suv = NULL;
     int n = jvar->neqns;
     int m = D->cols;
     int err = 0;
 
-    Svv = gretl_matrix_alloc(m, m);
-    Suv = gretl_matrix_alloc(n, m);
-    jvar->jinfo->Beta = gretl_matrix_alloc(D->rows, jrank(jvar));
-    
-    if (Svv == NULL || Suv == NULL || jvar->jinfo->Beta == NULL) {
-	err = E_ALLOC;
+    *Svv = gretl_matrix_alloc(m, m);
+    *Suv = gretl_matrix_alloc(n, m);
+    if (*Svv == NULL || *Suv == NULL) {
+	return E_ALLOC;
     }
 
-    if (!err) {
-	/* calculate Svv <- D' Svv D */
-	err = gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
-				 jvar->jinfo->Svv, 
-				 Svv, GRETL_MOD_NONE);
+    jvar->jinfo->Beta = gretl_matrix_alloc(D->rows, jrank(jvar));
+    if (jvar->jinfo->Beta == NULL) {
+	return E_ALLOC;
     }
+
+    /* calculate Svv <- D' Svv D */
+    err = gretl_matrix_qform(D, GRETL_MOD_TRANSPOSE,
+			     jvar->jinfo->Svv, 
+			     *Svv, GRETL_MOD_NONE);
 
     if (!err) {
 	/* Suv <- SuvD */
-	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, Suv);
+	err = gretl_matrix_multiply(jvar->jinfo->Suv, D, *Suv);
     } 
-
-    if (!err) {
-	gretl_matrix_free(jvar->jinfo->Svv);
-	jvar->jinfo->Svv = Svv;
-	gretl_matrix_free(jvar->jinfo->Suv);
-	jvar->jinfo->Suv = Suv;
-    } else {
-	gretl_matrix_free(Svv);
-	gretl_matrix_free(Suv);
-    }
 
     return err;
 }
@@ -1264,6 +1276,8 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix *D = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *Suu = NULL;
+    gretl_matrix *Suv = NULL;
+    gretl_matrix *Svv = NULL;
     gretl_matrix *evals = NULL;
 
     int genrest = 0; /* doing "general" beta restriction? */
@@ -1295,13 +1309,18 @@ int johansen_estimate (GRETL_VAR *jvar,
 	err = E_ALLOC;
     }
 
-    if (!err && D != NULL) {
-	err = johansen_prep_restriction(jvar, D);
+    if (!err) {
+	if (D != NULL) {
+	    /* we need D-modified Suv, Svv */
+	    err = johansen_prep_restriction(jvar, &Suv, &Svv, D);
+	} else {
+	    Svv = jvar->jinfo->Svv;
+	    Suv = jvar->jinfo->Suv;
+	}
     }
 
     if (!err) {
-	err = johansen_get_eigenvalues(Suu, jvar->jinfo->Suv, jvar->jinfo->Svv,
-				       M, &evals, rank);
+	err = johansen_get_eigenvalues(Suu, Suv, Svv, M, &evals, rank);
     }
 
     if (err) {
@@ -1342,7 +1361,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 	}
 	if (!err && do_stderrs && D == NULL) {
 	    /* FIXME case where D != NULL */
-	    err = beta_variance(jvar);
+	    err = beta_variance(jvar, D);
 	}
 	if (!err) {
 	    err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
@@ -1362,6 +1381,11 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix_free(M);
     gretl_matrix_free(Suu);
     gretl_matrix_free(evals);
+
+    if (D != NULL) {
+	gretl_matrix_free(Suv);
+	gretl_matrix_free(Svv);
+    }
 
     if (!err && genrest) {
 	err = johansen_estimate_general(jvar, rset, pZ, pdinfo, opt, prn);
@@ -1473,17 +1497,6 @@ static int show_beta_alpha_etc (GRETL_VAR *jvar,
    common to the columns of beta) we do the test using the
    eigen-system approach.  If they are "general" restrictions
    we hand off to the specialized machinery in jrestrict.c.
-*/
-
-/* FIXME: if vecm is already restricted, we either need copies of the
-   original Svv and Suv (which would have to be stored earlier), or
-   else we must be supplied with just the *additional* restriction
-   matrix, as rset->R -- not the combined one as at present -- and we
-   have to handle the computation using that plus the modified Svv and
-   Suv.  If H0 is the original explicit-form restriction on beta, and
-   H1 is the additional restriction, does it make sense to work with H
-   = H1'*H0?  This seems to give the right likelihood, but then things
-   are non-conformable for computing beta.
 */
 
 int vecm_beta_test (GRETL_VAR *jvar, 

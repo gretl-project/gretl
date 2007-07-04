@@ -1263,12 +1263,14 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
 	goto bailout;
     }
 
+#if 0
     /* FIXME: the following should be relaxed */
     if (type == GRETL_OBJ_VAR && gretl_is_restricted_VECM(ptr)) {
 	strcpy(gretl_errmsg, _("The model is already restricted"));
 	*err = E_DATA;
 	goto bailout;
     }
+#endif
 
     rset = real_restriction_set_start(ptr, type, opt);
     if (rset == NULL) {

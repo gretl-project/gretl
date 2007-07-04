@@ -28,7 +28,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 1
+#define JDEBUG 0
 
 typedef struct Jwrap_ Jwrap;
 
@@ -332,13 +332,15 @@ static int solve_for_beta (Jwrap *J,
 	    err = gretl_LU_solve(Rcpy, qcpy);
 	}
 
-	gretl_matrix_free(Rcpy);
-
-	if (err) {
-	    gretl_matrix_free(qcpy);
-	} else {
-	    J->beta = qcpy;
+	if (!err) {
+	    J->beta = gretl_matrix_shape(qcpy, J->S11->rows, J->rank);
+	    if (J->beta == NULL) {
+		err = E_ALLOC;
+	    }
 	}
+
+	gretl_matrix_free(Rcpy);
+	gretl_matrix_free(qcpy);
     }
 
     if (!err) {
@@ -376,7 +378,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     R = rset_get_R_matrix(rset);
     q = rset_get_q_matrix(rset);
 
-    nC = R->cols / nb;
+    nC = J->rank;
 
 #if JDEBUG
     gretl_matrix_print(R, "R, in set_up_restrictions");
@@ -384,7 +386,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     fprintf(stderr, "nC = %d\n", nC);
 #endif
 
-    if (R->rows == nb) {
+    if (R->rows == nb * J->rank) {
 	/* number of restrictions = number of betas */
 	J->nC = nC;
 	return solve_for_beta(J, R, q);
@@ -759,14 +761,20 @@ static int make_beta_variance (Jwrap *J)
     istart = 0;
 
     for (i=0; i<r && !err; i++) {
+	gretl_matrix *HiS;
+
 	if (J->h[i] == NULL) {
 	    continue;
 	}
-	gretl_matrix *HiS = gretl_matrix_alloc(J->h[i]->cols, J->S11->cols);
 
-	err = gretl_matrix_multiply_mod(J->h[i], GRETL_MOD_TRANSPOSE,
-					J->S11, GRETL_MOD_NONE,
-					HiS, GRETL_MOD_NONE);
+	HiS = gretl_matrix_alloc(J->h[i]->cols, J->S11->cols);
+	if (HiS == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_matrix_multiply_mod(J->h[i], GRETL_MOD_TRANSPOSE,
+					    J->S11, GRETL_MOD_NONE,
+					    HiS, GRETL_MOD_NONE);
+	}
 
 	jstart = 0;
 	for (j=0; j<r && !err; j++) {
@@ -969,8 +977,6 @@ static void set_LR_df (Jwrap *J, GRETL_VAR *jvar)
 	}
 	J->df += p - r - si;
     }
-
-    fprintf(stderr, "Got J->df = %d\n", J->df);
 
     /* system was subject to a prior restriction */
     J->df -= jvar->jinfo->bdf;
