@@ -28,7 +28,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 0
+#define JDEBUG 1
 
 typedef struct Jwrap_ Jwrap;
 
@@ -427,7 +427,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 #endif
 	if (!err) {
 	    if (J->h[i] == NULL) {
-		/* may happen if the i-th contegration vector
+		/* may happen if the i-th cointegration vector
 		   is fully restricted */
 		hr += Ri->cols;
 	    } else {
@@ -462,10 +462,8 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     for (i=0; i<nC && !err; i++) {
 	err = gretl_matrix_inscribe_matrix(J->s, ss[i], sr, 0, 
 					   GRETL_MOD_NONE);
-	if (!err) {
-	    sr += ss[i]->rows;
-	}
-	if (!err && (J->h[i] != NULL)) {
+	sr += ss[i]->rows;
+	if (!err && J->h[i] != NULL) {
 	    err = gretl_matrix_inscribe_matrix(J->H, J->h[i], hr, hc, 
 					       GRETL_MOD_NONE);
 	    if (!err) {
@@ -474,6 +472,11 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 	    }
 	}
     }
+
+#if JDEBUG
+    gretl_matrix_print(J->H, "J->H");
+    gretl_matrix_print(J->s, "J->s");
+#endif
 
     gretl_matrix_array_free(ss, nC);
 
@@ -860,7 +863,7 @@ static int make_beta (Jwrap *J, const double *phi)
 	}
     }
 
-#if JDEBUG
+#if JDEBUG > 1
     gretl_matrix_print(J->phivec, "phi");
     gretl_matrix_print(J->beta, "beta");
 #endif
@@ -868,27 +871,13 @@ static int make_beta (Jwrap *J, const double *phi)
     return err;
 }
 
-/* for use when there's no need to invoke BFGS */
-
-static int alt_loglik (Jwrap *J)
+static int real_compute_ll (Jwrap *J)
 {
     double ll0 = J->ldS00;
-    int bcols = J->beta->cols;
     int err = 0;
 
-    if (J->qf1 == NULL) {
-	/* temp storage not allocated yet */
-	J->qf1 = gretl_matrix_alloc(bcols, bcols);
-	J->qf2 = gretl_matrix_alloc(bcols, bcols);
-	if (J->qf1 == NULL || J->qf2 == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-			   J->S11m, J->qf1, GRETL_MOD_NONE);
-    }
+    err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
+			     J->S11m, J->qf1, GRETL_MOD_NONE);
 
     if (!err) {
 	err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
@@ -912,12 +901,34 @@ static int alt_loglik (Jwrap *J)
     return err;
 }
 
+/* for use when there's no need to invoke BFGS */
+
+static int alt_loglik (Jwrap *J)
+{
+    int bcols = J->beta->cols;
+    int err = 0;
+
+    if (J->qf1 == NULL) {
+	/* temp storage not allocated yet */
+	J->qf1 = gretl_matrix_alloc(bcols, bcols);
+	J->qf2 = gretl_matrix_alloc(bcols, bcols);
+	if (J->qf1 == NULL || J->qf2 == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = real_compute_ll(J);
+    }
+
+    return err;
+}
+
 /* BFGS callback function */
 
 static double Jloglik (const double *phi, void *data)
 {
     Jwrap *J = (Jwrap *) data;
-    double ret = J->ldS00;
     int bcols = J->beta->cols;
     int err = 0;
 
@@ -935,30 +946,10 @@ static double Jloglik (const double *phi, void *data)
     }
 
     if (!err) {
-	gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-			   J->S11m, J->qf1, GRETL_MOD_NONE);
+	err = real_compute_ll(J);
     }
 
-    if (!err) {
-	err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-				 J->S11, J->qf2, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	ret += gretl_matrix_log_determinant(J->qf1, &err);
-    }
-
-    if (!err) {
-	ret -= gretl_matrix_log_determinant(J->qf2, &err);
-    }
-
-    if (err) {
-	J->ll = ret = NADBL;
-    } else {
-	J->ll = ret = -J->T * 0.5 * (J->neqns * (1.0 + LN_2_PI) + ret);
-    }
-
-    return ret;
+    return J->ll;
 }
 
 /* See Johansen pp. 106-112 */
@@ -1153,8 +1144,6 @@ int general_beta_analysis (GRETL_VAR *jvar,
 	gretl_matrix_print(b, "b, before BFGS");
 #endif
     }
-
-    gretl_matrix_print(b, "b, before simann");
 
 #if 1
     err = simann(J, b);
