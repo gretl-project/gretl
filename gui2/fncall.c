@@ -960,7 +960,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-#if FCDEBUG
+#if 1 || FCDEBUG
     fprintf(stderr, "fnline: '%s'\n", fnline);
 #endif
 
@@ -975,6 +975,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	if (*msg != 0) {
 	    errbox(msg);
 	} else {
+	    fprintf(stderr, "no funcerr_message available, err = %d\n", err);
 	    gui_errmsg(err);
 	}
     } else {
