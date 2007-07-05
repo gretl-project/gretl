@@ -2155,7 +2155,7 @@ print_iter_info (int iter, double crit, int type, int k,
     const char *cstr = cstrs[type];
     int i;
 
-    if (na(crit)) {
+    if (na(crit) || na(-crit)) {
 	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter, _(cstr));
     } else {
 	if (type == C_GMM) {

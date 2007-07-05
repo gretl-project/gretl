@@ -252,9 +252,9 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->u);
     gretl_matrix_free(jv->v);
 
-    gretl_matrix_free(jv->Suu);
-    gretl_matrix_free(jv->Svv);
-    gretl_matrix_free(jv->Suv);
+    gretl_matrix_free(jv->S00);
+    gretl_matrix_free(jv->S11);
+    gretl_matrix_free(jv->S01);
 
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
@@ -1998,18 +1998,18 @@ static int allocate_johansen_sigmas (JohansenInfo *jv)
 	vk++;
     }    
 
-    jv->Suu = gretl_matrix_alloc(k, k);
-    jv->Svv = gretl_matrix_alloc(vk, vk);
-    jv->Suv = gretl_matrix_alloc(k, vk);
+    jv->S00 = gretl_matrix_alloc(k, k);
+    jv->S11 = gretl_matrix_alloc(vk, vk);
+    jv->S01 = gretl_matrix_alloc(k, vk);
 
-    if (jv->Suu == NULL || jv->Svv == NULL || jv->Suv == NULL) {
-	gretl_matrix_free(jv->Suu);
-	gretl_matrix_free(jv->Svv);
-	gretl_matrix_free(jv->Suv);
+    if (jv->S00 == NULL || jv->S11 == NULL || jv->S01 == NULL) {
+	gretl_matrix_free(jv->S00);
+	gretl_matrix_free(jv->S11);
+	gretl_matrix_free(jv->S01);
 	
-	jv->Suu = NULL;
-	jv->Svv = NULL;
-	jv->Suv = NULL;
+	jv->S00 = NULL;
+	jv->S11 = NULL;
+	jv->S01 = NULL;
 
 	err = E_ALLOC;
     } 
@@ -2025,30 +2025,30 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 
     pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
-    nr = gretl_matrix_rows(jv->Suu);
+    nr = gretl_matrix_rows(jv->S00);
     pprintf(prn, " %s\n\n", _("VAR system in first differences"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Suu, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S00, i, j));
 	}
 	pputc(prn, '\n');
     }
 
-    nr = gretl_matrix_rows(jv->Svv);
+    nr = gretl_matrix_rows(jv->S11);
     pprintf(prn, "\n %s\n\n", _("System with levels as dependent variable"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nr; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Svv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S11, i, j));
 	}
 	pputc(prn, '\n');
     } 
     
-    nr = gretl_matrix_rows(jv->Suv);
-    nc = gretl_matrix_cols(jv->Suv);
+    nr = gretl_matrix_rows(jv->S01);
+    nc = gretl_matrix_cols(jv->S01);
     pprintf(prn, "\n %s\n\n", _("Cross-products"));
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
-	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->Suv, i, j));
+	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S01, i, j));
 	}
 	pputc(prn, '\n');
     }     
@@ -2479,9 +2479,9 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->u = NULL;
     jv->v = NULL;
 
-    jv->Suu = NULL;
-    jv->Svv = NULL;
-    jv->Suv = NULL;
+    jv->S00 = NULL;
+    jv->S11 = NULL;
+    jv->S01 = NULL;
 
     jv->Beta = NULL;
     jv->Alpha = NULL;
@@ -2717,24 +2717,24 @@ johansen_driver (GRETL_VAR *jvar,
        equations in first lag of levels */
     jvar->err = johansen_VAR(jvar, pZ, pdinfo, opt, varprn); 
 
-    if (jvar->jinfo->Suu == NULL && !jvar->err) {
+    if (jvar->jinfo->S00 == NULL && !jvar->err) {
 	jvar->err = allocate_johansen_sigmas(jvar->jinfo);
     }
 
     if (!jvar->err) {
 	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
 				  jvar->jinfo->u, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Suu, GRETL_MOD_NONE);
+				  jvar->jinfo->S00, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(jvar->jinfo->v, GRETL_MOD_NONE,
 				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Svv, GRETL_MOD_NONE);
+				  jvar->jinfo->S11, GRETL_MOD_NONE);
 	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
 				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->Suv, GRETL_MOD_NONE);
+				  jvar->jinfo->S01, GRETL_MOD_NONE);
 
-	gretl_matrix_divide_by_scalar(jvar->jinfo->Suu, jvar->T);
-	gretl_matrix_divide_by_scalar(jvar->jinfo->Svv, jvar->T);
-	gretl_matrix_divide_by_scalar(jvar->jinfo->Suv, jvar->T);
+	gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
+	gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
+	gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
 
 	if (jrank(jvar) == 0) {
 	    char stobs[OBSLEN], endobs[OBSLEN];
@@ -3239,13 +3239,13 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 		src = var->jinfo->Bvar;
 		break;
 	    case M_JS00:
-		src = var->jinfo->Suu;
+		src = var->jinfo->S00;
 		break;
 	    case M_JS11:
-		src = var->jinfo->Svv;
+		src = var->jinfo->S11;
 		break;
 	    case M_JS01:
-		src = var->jinfo->Suv;
+		src = var->jinfo->S01;
 		break;
 	    }
 	}
@@ -3353,9 +3353,9 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "v")) {
 	    jinfo->v = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Suu")) {
-	    jinfo->Suu = gretl_xml_get_matrix(cur, doc, &err);
+	    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Suv")) {
-	    jinfo->Suv = gretl_xml_get_matrix(cur, doc, &err);
+	    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Beta")) {
 	    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Alpha")) {
@@ -3538,8 +3538,8 @@ static void johansen_serialize (JohansenInfo *jinfo, FILE *fp)
 
     gretl_xml_put_matrix(jinfo->u, "u", fp);
     gretl_xml_put_matrix(jinfo->v, "v", fp);
-    gretl_xml_put_matrix(jinfo->Suu, "Suu", fp);
-    gretl_xml_put_matrix(jinfo->Suv, "Suv", fp);
+    gretl_xml_put_matrix(jinfo->S00, "Suu", fp);
+    gretl_xml_put_matrix(jinfo->S01, "Suv", fp);
     gretl_xml_put_matrix(jinfo->Beta, "Beta", fp);
     gretl_xml_put_matrix(jinfo->Alpha, "Alpha", fp);
     gretl_xml_put_matrix(jinfo->Bse, "Bse", fp);

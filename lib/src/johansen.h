@@ -46,9 +46,9 @@ struct JohansenInfo_ {
     int nexo;             /* total deterministic/exogenous variables */
     gretl_matrix *u;      /* resids, VAR in differences */
     gretl_matrix *v;      /* resids, second regressions */
-    gretl_matrix *Suu;    /* matrix of cross-products of residuals */
-    gretl_matrix *Svv;    /* matrix of cross-products of residuals */
-    gretl_matrix *Suv;    /* matrix of cross-products of residuals */
+    gretl_matrix *S00;    /* matrix of cross-products of residuals */
+    gretl_matrix *S11;    /* matrix of cross-products of residuals */
+    gretl_matrix *S01;    /* matrix of cross-products of residuals */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bse;    /* standard errors of EC terms */

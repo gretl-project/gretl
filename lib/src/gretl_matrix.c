@@ -5755,6 +5755,8 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
 	err = E_NONCONF;
     } else if (E != NULL && (E->cols != Y->cols || E->rows != Y->rows)) {
 	err = E_NONCONF;
+    } else if (k > Y->rows) {
+	err = E_DF;
     }
 
     if (!err) {
@@ -6063,8 +6065,9 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     int m = (amod)? A->cols : A->rows;
     int k = (amod)? A->rows : A->cols;
 
-    if (k != gretl_matrix_rows(X)) {
-	fputs("gretl_matrix_qform: matrices not conformable\n", stderr);
+    if (k != X->rows) {
+	fprintf(stderr, "gretl_matrix_qform: %s is (%d x %d) but X is (%d x %d)\n", 
+		(amod)? "A'" : "A", m, k, X->rows, X->cols);
 	return E_NONCONF;
     }
 

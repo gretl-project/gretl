@@ -140,14 +140,10 @@ get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
 {
     const restriction *r = rset->restrictions[i];
     GRETL_VAR *var = rset->obj;
-    int nb = gretl_VECM_n_beta(var);
     int col = r->bnum[j];
-    int k;
 
     if (rset->multi) {
-	for (k=0; k<r->eq[j]; k++) {
-	    col += nb;
-	}
+	col += r->eq[j] * gretl_VECM_n_beta(var);
     }
 
     return col;
@@ -1733,7 +1729,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
     }
 
     if (t == GRETL_OBJ_VAR) {
-	gretl_VECM_test_beta(rset->obj, rset, pdinfo, rset->opt, prn);
+	err = gretl_VECM_test_beta(rset->obj, rset, pdinfo, rset->opt, prn);
 	destroy_restriction_set(rset);
     } else if (t == GRETL_OBJ_SYS) {
 	system_set_restriction_matrices(rset->obj, rset->R, rset->q);
