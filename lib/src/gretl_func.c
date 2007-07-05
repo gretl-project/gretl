@@ -26,7 +26,7 @@
 #include "gretl_xml.h"
 #include "cmd_private.h"
 
-#define FN_DEBUG 1
+#define FN_DEBUG 0
 #define PKG_DEBUG 0
 #define EXEC_DEBUG 0
 #define UDEBUG 0

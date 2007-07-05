@@ -975,7 +975,6 @@ void call_function_package (const char *fname, GtkWidget *w,
 	if (*msg != 0) {
 	    errbox(msg);
 	} else {
-	    fprintf(stderr, "no funcerr_message available, err = %d\n", err);
 	    gui_errmsg(err);
 	}
     } else {
