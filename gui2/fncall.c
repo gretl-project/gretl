@@ -47,6 +47,14 @@ struct call_info_ {
     int ok;
 };
 
+#define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
+#define series_type(t) (t == ARG_SERIES || t == ARG_REF_SERIES)
+#define matrix_type(t) (t == ARG_MATRIX || t == ARG_REF_MATRIX)
+
+#define ref_type(t) (t == ARG_REF_SCALAR || \
+                     t == ARG_REF_SERIES || \
+                     t == ARG_REF_MATRIX)
+
 static call_info *cinfo_new (void)
 {
     call_info *cinfo = mymalloc(sizeof *cinfo);
@@ -104,15 +112,19 @@ static void cinfo_free (call_info *cinfo)
 #define series_type(t) (t == ARG_SERIES || t == ARG_REF_SERIES)
 #define matrix_type(t) (t == ARG_MATRIX || t == ARG_REF_MATRIX)
 
-static const char *arg_type_string (int type)
+static const char *arg_type_string (int t)
 {
-    if (type == ARG_BOOL)   return "boolean";
-    if (type == ARG_INT)    return "int";
-    if (type == ARG_LIST)   return "list";
+    if (t == ARG_BOOL)   return "boolean";
+    if (t == ARG_INT)    return "int";
+    if (t == ARG_LIST)   return "list";
+
+    if (t == ARG_SCALAR) return "scalar";
+    if (t == ARG_SERIES) return "scalar";
+    if (t == ARG_MATRIX) return "scalar";
     
-    if (scalar_type(type)) return "scalar";
-    if (series_type(type)) return "series";
-    if (matrix_type(type)) return "matrix";
+    if (t == ARG_REF_SCALAR) return "scalar *";
+    if (t == ARG_REF_SERIES) return "series *";
+    if (t == ARG_REF_MATRIX) return "matrix *";
 
     return "";
 }
@@ -774,17 +786,16 @@ static int addressify_var (call_info *cinfo, int i)
 	(t == ARG_REF_MATRIX && *s == '{');
 }
 
-static int needs_amp (call_info *cinfo, int i, int *err)
+static int add_amp (call_info *cinfo, int i, PRN *prn, int *err)
 {
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
 
-    if (*s == '&' || !strcmp(s, "null")) {
+    if (!ref_type(t)) {
 	return 0;
     }
 
-    if (t != ARG_REF_SCALAR && t != ARG_REF_SERIES &&
-	t != ARG_REF_MATRIX) {
+    if (*s == '&' || !strcmp(s, "null")) {
 	return 0;
     }
 
@@ -797,6 +808,9 @@ static int needs_amp (call_info *cinfo, int i, int *err)
 		*err = E_ALLOC;
 	    } else {
 		*err = add_or_replace_user_matrix(m, s);
+	    }
+	    if (!*err) {
+		pprintf(prn, "? matrix %s\n", s);
 	    }
 	}
     }
@@ -816,6 +830,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     float minver;
     PRN *prn;
     call_info *cinfo;
+    int orig_v;
     int i, err = 0;
 
     *tmpfile = 0;
@@ -900,7 +915,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     function_call_dialog(cinfo);
 
-    if (!cinfo->ok || check_args(cinfo)) {
+    if (!cinfo->ok || check_args(cinfo) || bufopen(&prn)) {
 	cinfo_free(cinfo);
 	return;
     }
@@ -919,6 +934,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     }    
 
     strcat(fnline, fnname);
+    orig_v = datainfo->v;
 
     if (cinfo->args != NULL) {
 	strcat(fnline, "(");
@@ -932,9 +948,10 @@ void call_function_package (const char *fname, GtkWidget *w,
 		if (!err) {
 		    free(cinfo->args[i]);
 		    cinfo->args[i] = g_strdup(auxname);
-		}
+		    pprintf(prn, "? %s\n", auxline);
+		} 
 	    } 
-	    if (needs_amp(cinfo, i, &err)) {
+	    if (add_amp(cinfo, i, prn, &err)) {
 		strcat(fnline, "&");
 	    }
 	    strcat(fnline, cinfo->args[i]);
@@ -953,31 +970,21 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
 	return;
     }
 
-    if (bufopen(&prn)) {
-	return;
-    }
-
-#if 1 || FCDEBUG
-    fprintf(stderr, "fnline: '%s'\n", fnline);
-#endif
+    pprintf(prn, "? %s\n", fnline);
 
     gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
 			  models, prn);
 
     err = gui_exec_line(&state, &Z, &datainfo);
 
-    if (err) {
-	const char *msg = get_funcerr_message();
+    view_buffer(prn, 80, 400, fnname, SCRIPT_OUT, NULL);
 
-	if (*msg != 0) {
-	    errbox(msg);
-	} else {
-	    gui_errmsg(err);
-	}
-    } else {
-	view_buffer(prn, 80, 400, fnname, PRINT, NULL);
+    if (datainfo->v > orig_v) {
+	mark_dataset_as_modified();
+	populate_varlist();
     }
 }

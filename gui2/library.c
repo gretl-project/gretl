@@ -6702,5 +6702,5 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	s->sys = NULL;
     }
 
-    return (err != 0);
+    return err;
 }
