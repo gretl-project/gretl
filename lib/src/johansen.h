@@ -35,10 +35,10 @@ typedef struct JohansenInfo_ JohansenInfo;
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see enumeration above */
-    int *list;            /* list of endogenous variables */
-    int *difflist;        /* list containing first diffs of endogenous vars */
-    int *biglist;         /* list containing all regressors in each eqn */
-    int *exolist;         /* list containing user-specified exogenous vars */
+    int *list;            /* list:endogenous variables */
+    int *difflist;        /* list: first diffs of endogenous vars */
+    int *biglist;         /* list: all regressors in each eqn */
+    int *exolist;         /* list: user-specified exogenous vars */
     int *levels_list;     /* for use in auxiliary regressions */
     int *varlist;         /* for use in auxiliary regressions */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
@@ -52,8 +52,8 @@ struct JohansenInfo_ {
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bse;    /* standard errors of EC terms */
-    gretl_matrix *Bvar;   /* Covariance matrix of betas after triangular normalisation */
-    gretl_matrix *R;      /* implicit form of beta-restrictions LHS matrix */
+    gretl_matrix *Bvar;   /* variance matrix of beta */
+    gretl_matrix *R;      /* beta-restriction LHS matrix */
     gretl_matrix *q;      /* beta-restrictions RHS matrix */
     double ll0;           /* unrestricted log-likelihood */
     int bdf;              /* number of restrictions on beta */

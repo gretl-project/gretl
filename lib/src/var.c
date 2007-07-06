@@ -3354,16 +3354,22 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	    jinfo->v = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Suu")) {
 	    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Svv")) {
+	    jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Suv")) {
 	    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Beta")) {
 	    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Alpha")) {
 	    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Bvar")) {
+	    jinfo->Bvar = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Bse")) {
 	    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
 	    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
+	    jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
 	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
 	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
@@ -3522,32 +3528,35 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     return var;
 }
 
-static void johansen_serialize (JohansenInfo *jinfo, FILE *fp)
+static void johansen_serialize (JohansenInfo *j, FILE *fp)
 {
     fprintf(fp, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ", 
-	    jinfo->ID, jinfo->code, jinfo->rank);
-    fprintf(fp, "seasonals=\"%d\" nexo=\"%d\">\n", jinfo->seasonals,
-	    jinfo->nexo);
+	    j->ID, j->code, j->rank);
+    fprintf(fp, "seasonals=\"%d\" nexo=\"%d\">\n", j->seasonals,
+	    j->nexo);
 
-    gretl_xml_put_tagged_list("list", jinfo->list, fp);
-    gretl_xml_put_tagged_list("difflist", jinfo->difflist, fp);
-    gretl_xml_put_tagged_list("biglist", jinfo->biglist, fp);
-    gretl_xml_put_tagged_list("exolist", jinfo->exolist, fp);
-    gretl_xml_put_tagged_list("levels_list", jinfo->levels_list, fp);
-    gretl_xml_put_tagged_list("varlist", jinfo->varlist, fp);
+    gretl_xml_put_tagged_list("list", j->list, fp);
+    gretl_xml_put_tagged_list("difflist", j->difflist, fp);
+    gretl_xml_put_tagged_list("biglist", j->biglist, fp);
+    gretl_xml_put_tagged_list("exolist", j->exolist, fp);
+    gretl_xml_put_tagged_list("levels_list", j->levels_list, fp);
+    gretl_xml_put_tagged_list("varlist", j->varlist, fp);
 
-    gretl_xml_put_matrix(jinfo->u, "u", fp);
-    gretl_xml_put_matrix(jinfo->v, "v", fp);
-    gretl_xml_put_matrix(jinfo->S00, "Suu", fp);
-    gretl_xml_put_matrix(jinfo->S01, "Suv", fp);
-    gretl_xml_put_matrix(jinfo->Beta, "Beta", fp);
-    gretl_xml_put_matrix(jinfo->Alpha, "Alpha", fp);
-    gretl_xml_put_matrix(jinfo->Bse, "Bse", fp);
-    gretl_xml_put_matrix(jinfo->R, "R", fp);
+    gretl_xml_put_matrix(j->u, "u", fp);
+    gretl_xml_put_matrix(j->v, "v", fp);
+    gretl_xml_put_matrix(j->S00, "Suu", fp);
+    gretl_xml_put_matrix(j->S11, "Svv", fp);
+    gretl_xml_put_matrix(j->S01, "Suv", fp);
+    gretl_xml_put_matrix(j->Beta, "Beta", fp);
+    gretl_xml_put_matrix(j->Alpha, "Alpha", fp);
+    gretl_xml_put_matrix(j->Bvar, "Bvar", fp);
+    gretl_xml_put_matrix(j->Bse, "Bse", fp);
+    gretl_xml_put_matrix(j->R, "R", fp);
+    gretl_xml_put_matrix(j->q, "q", fp);
 
-    if (!na(jinfo->ll0) && jinfo->bdf > 0) {
-	gretl_xml_put_double("ll0", jinfo->ll0, fp);
-	gretl_xml_put_int("bdf", jinfo->bdf, fp);
+    if (!na(j->ll0) && j->bdf > 0) {
+	gretl_xml_put_double("ll0", j->ll0, fp);
+	gretl_xml_put_int("bdf", j->bdf, fp);
     }
 
     fputs("</gretl-johansen>\n", fp);
