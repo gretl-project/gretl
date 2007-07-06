@@ -108,10 +108,6 @@ static void cinfo_free (call_info *cinfo)
     free(cinfo);
 }
 
-#define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
-#define series_type(t) (t == ARG_SERIES || t == ARG_REF_SERIES)
-#define matrix_type(t) (t == ARG_MATRIX || t == ARG_REF_MATRIX)
-
 static const char *arg_type_string (int t)
 {
     if (t == ARG_BOOL)   return "boolean";
@@ -776,6 +772,10 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
     return err;
 }
 
+/* handle the case where we need a "pointer" variable but
+   have been given a scalar or matrix constant 
+*/
+
 static int addressify_var (call_info *cinfo, int i)
 {
     char *numchars = "0123456789+-.";
@@ -818,13 +818,40 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *err)
     return 1;
 }
 
+static int pre_process_args (call_info *cinfo, PRN *prn)
+{
+    char auxline[MAXLINE];
+    char auxname[VNAMELEN+1];
+    int i, err = 0;
+
+    for (i=0; i<cinfo->n_params && !err; i++) {
+	if (addressify_var(cinfo, i)) {
+	    sprintf(auxname, "FNARG%d", i + 1);
+	    sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
+	    err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
+	    if (!err) {
+		free(cinfo->args[i]);
+		cinfo->args[i] = g_strdup(auxname);
+		pprintf(prn, "? %s\n", auxline);
+	    } 
+	} 
+	if (add_amp(cinfo, i, prn, &err)) {
+	    strcpy(auxname, "&");
+	    strncat(auxname, cinfo->args[i], VNAMELEN);
+	    free(cinfo->args[i]);
+	    cinfo->args[i] = g_strdup(auxname);
+	}
+    }
+
+    return err;
+}
+
 void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
     ExecState state;
     char tmpfile[FILENAME_MAX];
     char fnline[MAXLINE];
-    char auxline[MAXLINE];
     const char *fnname;
     FuncDataReq dreq;
     float minver;
@@ -842,7 +869,6 @@ void call_function_package (const char *fname, GtkWidget *w,
 	if (!function_package_is_loaded(fname)) {
 	    err = load_user_function_file(fname);
 	    if (err) {
-		fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 		errbox(_("Couldn't open %s"), fname);
 		*loaderr = 1;
 	    }
@@ -925,6 +951,16 @@ void call_function_package (const char *fname, GtkWidget *w,
     gtk_widget_destroy(w);
 #endif
 
+    if (cinfo->args != NULL) {
+	err = pre_process_args(cinfo, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    cinfo_free(cinfo);
+	    gretl_print_destroy(prn);
+	    return;
+	}
+    }
+
     fnname = user_function_name_by_index(cinfo->iface);
     *fnline = 0;
 
@@ -936,35 +972,20 @@ void call_function_package (const char *fname, GtkWidget *w,
     strcat(fnline, fnname);
     orig_v = datainfo->v;
 
-    if (cinfo->args != NULL) {
-	strcat(fnline, "(");
-	for (i=0; i<cinfo->n_params && !err; i++) {
-	    char auxname[VNAMELEN];
+    strcat(fnline, "(");
 
-	    if (addressify_var(cinfo, i)) {
-		sprintf(auxname, "FNARG%d", i + 1);
-		sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
-		err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
-		if (!err) {
-		    free(cinfo->args[i]);
-		    cinfo->args[i] = g_strdup(auxname);
-		    pprintf(prn, "? %s\n", auxline);
-		} 
-	    } 
-	    if (add_amp(cinfo, i, prn, &err)) {
-		strcat(fnline, "&");
-	    }
+    if (cinfo->args != NULL) {
+	for (i=0; i<cinfo->n_params; i++) {
 	    strcat(fnline, cinfo->args[i]);
 	    if (i < cinfo->n_params - 1) {
 		strcat(fnline, ", ");
 	    }
 	}
-	strcat(fnline, ")");
-    } else {
-	strcat(fnline, "()");
-    }
+    } 
 
-    /* FIXME destroy any "ARG" vars or matrices that were created? */
+    strcat(fnline, ")");
+
+    /* destroy any "ARG" vars or matrices that were created? */
 
     cinfo_free(cinfo);
 

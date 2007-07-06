@@ -1490,6 +1490,7 @@ static GtkWidget *files_window (windata_t *vwin)
 	types = types_5;
 	hidden_col = TRUE;
 	full_width = 560;
+	file_height = 320;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
