@@ -115,8 +115,8 @@ static const char *arg_type_string (int t)
     if (t == ARG_LIST)   return "list";
 
     if (t == ARG_SCALAR) return "scalar";
-    if (t == ARG_SERIES) return "scalar";
-    if (t == ARG_MATRIX) return "scalar";
+    if (t == ARG_SERIES) return "series";
+    if (t == ARG_MATRIX) return "matrix";
     
     if (t == ARG_REF_SCALAR) return "scalar *";
     if (t == ARG_REF_SERIES) return "series *";
