@@ -356,6 +356,65 @@ static int solve_for_beta (Jwrap *J,
     return err;
 }
 
+/* See Johansen's 1995 article in the Journal of Econometrics */
+
+static int 
+identification_check (Jwrap *J, gretl_matrix **R, int nb)
+{
+    gretl_matrix *RH = NULL;
+    int r, kmax = 0;
+    int i, j;
+    int err = 0;
+
+    for (i=0; i<J->nC; i++) {
+	if (J->h[i] != NULL) {
+	    kmax++;
+	}
+    }
+
+    if (kmax < 2) {
+	/* nothing to check */
+	return 0;
+    }
+
+    RH = gretl_matrix_alloc(nb, nb);
+    if (RH == NULL) {
+	return E_ALLOC;
+    }
+
+    /* FIXME there's a layer of looping -- necessary for systems of
+       rank > 2 -- missing below */
+
+    for (i=0; i<J->nC && !err; i++) {
+	int rmin = 1;
+
+	if (J->h[i] == NULL) {
+	    continue;
+	}
+	for (j=0; j<J->nC; j++) {
+	    if (i == j || J->h[j] == NULL) {
+		continue;
+	    }
+	    gretl_matrix_reuse(RH, R[i]->rows, J->h[j]->cols);  
+	    gretl_matrix_multiply(R[i], J->h[j], RH);
+	    r = gretl_matrix_rank(RH, &err);
+	    if (r < rmin) {
+		fprintf(stderr, "rank(R_%d*H_%d) = %d\n", i, j, r);
+		/* err = E_DATA; */
+	    }
+	}
+    }
+
+    gretl_matrix_free(RH);
+
+    if (err) {
+	strcpy(gretl_errmsg, "The restrictions do not identify "
+	       "the parameters");
+    }
+
+    return err;
+}
+
 /* Here we construct both the big block-diagonal restrictions matrix,
    J->H, and an array holding the block-diagonal elements, J->h,
    which will be used later in computing the variance of beta.
@@ -369,6 +428,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 
     gretl_matrix *Ri;
     gretl_matrix *qi;
+    gretl_matrix **Rarr;
     gretl_matrix **ss;
 
     int nb = gretl_VECM_n_beta(jvar);
@@ -404,7 +464,10 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     }
 
     ss = gretl_matrix_array_alloc(nC);
-    if (ss == NULL) {
+    Rarr = gretl_matrix_array_alloc(nC);
+    if (ss == NULL || Rarr == NULL) {
+	free(ss);
+	free(Rarr);
 	return E_ALLOC;
     }
 
@@ -439,6 +502,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 		   is fully restricted */
 		hr += Ri->cols;
 	    } else {
+		Rarr[i] = gretl_matrix_copy(Ri);
 		hr += J->h[i]->rows;
 		hc += J->h[i]->cols;
 	    }
@@ -455,6 +519,8 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 #if JDEBUG
     fprintf(stderr, "H: hr = %d, hc = %d (sr = %d)\n", hr, hc, sr);
 #endif
+
+    err = identification_check(J, Rarr, nb);
 
     if (!err) {
 	J->H = gretl_zero_matrix_new(hr, hc);
@@ -487,6 +553,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 #endif
 
     gretl_matrix_array_free(ss, nC);
+    gretl_matrix_array_free(Rarr, nC);
 
     return err;
 }
