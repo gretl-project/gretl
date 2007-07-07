@@ -359,7 +359,8 @@ static int solve_for_beta (Jwrap *J,
 /* See Johansen's 1995 article in the Journal of Econometrics */
 
 static int 
-identification_check (Jwrap *J, gretl_matrix **R, int nb)
+identification_check (Jwrap *J, gretl_matrix **R, 
+		      gretl_matrix **ss, int nb)
 {
     gretl_matrix *RH = NULL;
     int r, kmax = 0;
@@ -520,7 +521,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     fprintf(stderr, "H: hr = %d, hc = %d (sr = %d)\n", hr, hc, sr);
 #endif
 
-    err = identification_check(J, Rarr, nb);
+    err = identification_check(J, Rarr, ss, nb);
 
     if (!err) {
 	J->H = gretl_zero_matrix_new(hr, hc);
