@@ -288,6 +288,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
 
+gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a, 
+					 const gretl_matrix *b,
+					 int *err);
+
 int
 gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 				gretl_matrix *K);
@@ -392,6 +396,10 @@ gretl_gensymm_eigenvals (const gretl_matrix *A,
 
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, 
 					    int *err);
+
+gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M,
+					   GretlMatrixMod mod,
+					   int *err);
 
 gretl_matrix *
 gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,

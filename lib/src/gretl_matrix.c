@@ -3282,6 +3282,49 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 }
 
 /**
+ * gretl_matrix_multiply_new:
+ * @a: left-hand matrix.
+ * @b: right-hand matrix.
+ * @err: location for error code.
+ * 
+ * Multiplies @a into @b, with the result written into a newly
+ * allocated matrix.
+ *
+ * Returns: matrix product on success, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a, 
+					 const gretl_matrix *b,
+					 int *err)
+{
+    gretl_matrix *c;
+
+    if (a->cols != b->rows) {
+	fprintf(stderr, "gretl_matrix_multiply_new: requested (%d x %d) * (%d x %d)\n",
+		a->rows, a->cols, b->rows, b->cols);
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(a->rows, b->cols);
+    if (c == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    *err = gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
+				     b, GRETL_MOD_NONE,
+				     c, GRETL_MOD_NONE);
+
+    if (*err) {
+	gretl_matrix_free(c);
+	c = NULL;
+    }
+
+    return c;
+}
+
+/**
  * gretl_symmetric_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.
@@ -5018,6 +5061,48 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     gretl_matrix_free(V);
 
     return R;
+}
+
+/**
+ * gretl_matrix_left_nullspace:
+ * @M: matrix to operate on.
+ * @mod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE
+ * @err: location to receive error code.
+ * 
+ * Given an m x n matrix @M, construct a conformable matrix
+ * L such that LM = 0 (that is, all the columns of @M are
+ * orthogonal to the space spanned by the rows of L).
+ *
+ * Returns: the allocated matrix L, or if @mod is
+ * %GRETL_MOD_TRANSPOSE, L', or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M, 
+					   GretlMatrixMod mod,
+					   int *err)
+{
+    gretl_matrix *Tmp = gretl_matrix_copy_transpose(M);
+    gretl_matrix *L = NULL;
+
+    if (Tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    L = gretl_matrix_right_nullspace(Tmp, err);
+    gretl_matrix_free(Tmp);
+
+    if (!*err && mod == GRETL_MOD_TRANSPOSE) {
+	Tmp = gretl_matrix_copy_transpose(L);
+	if (Tmp == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_free(L);
+	    L = Tmp;
+	}
+    }
+
+    return L;
 }
 
 /**

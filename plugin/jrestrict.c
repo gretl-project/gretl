@@ -260,14 +260,7 @@ static int imp2exp (gretl_matrix *Ri, const gretl_matrix *qi,
     }
 
     if (!err) {
-	*ps = gretl_matrix_alloc(Tmp->rows, qi->cols);
-	if (*ps == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(Tmp, qi, *ps);
+	*ps = gretl_matrix_multiply_new(Tmp, qi, &err);
     }
 
  bailout:
@@ -356,15 +349,33 @@ static int solve_for_beta (Jwrap *J,
     return err;
 }
 
-/* See Johansen's 1995 article in the Journal of Econometrics */
+static gretl_matrix *augmented_R (const gretl_matrix *H,
+				  const gretl_matrix *s,
+				  int *err)
+{
+    gretl_matrix *Hs = gretl_matrix_col_concat(H, s, err);
+    gretl_matrix *R = NULL;
+
+    if (!*err) {
+	R = gretl_matrix_left_nullspace(Hs, GRETL_MOD_TRANSPOSE, err);
+	gretl_matrix_free(Hs);
+    }
+
+    return R;
+}
+
+/* See Johansen, Journal of Econometrics, 1995 */
 
 static int 
 identification_check (Jwrap *J, gretl_matrix **R, 
 		      gretl_matrix **ss, int nb)
 {
+    gretl_matrix *Ri = NULL;
+    gretl_matrix *Hj = NULL;
     gretl_matrix *RH = NULL;
-    int r, kmax = 0;
-    int i, j;
+    
+    int i, j, r, kmax = 0;
+    int noident = 0;
     int err = 0;
 
     for (i=0; i<J->nC; i++) {
@@ -375,40 +386,70 @@ identification_check (Jwrap *J, gretl_matrix **R,
 
     if (kmax < 2) {
 	/* nothing to check */
+	fprintf(stderr, "identification_check: kmax = %d, skipping\n", kmax);
 	return 0;
     }
 
-    RH = gretl_matrix_alloc(nb, nb);
-    if (RH == NULL) {
-	return E_ALLOC;
-    }
-
-    /* FIXME there's a layer of looping -- necessary for systems of
-       rank > 2 -- missing below */
+    /* FIXME there's a level of looping -- necessary for systems of
+       rank > 2 -- still to be added below */
 
     for (i=0; i<J->nC && !err; i++) {
+	int freeR = 0;
 	int rmin = 1;
 
 	if (J->h[i] == NULL) {
 	    continue;
 	}
-	for (j=0; j<J->nC; j++) {
+
+	if (!gretl_is_zero_matrix(ss[i])) {
+	    Ri = augmented_R(J->h[i], ss[i], &err);
+	    freeR = 1;
+	} else {
+	    Ri = R[i];
+	}
+
+	for (j=0; j<J->nC && !err; j++) {
+	    int freeH = 0;
+
 	    if (i == j || J->h[j] == NULL) {
 		continue;
 	    }
-	    gretl_matrix_reuse(RH, R[i]->rows, J->h[j]->cols);  
-	    gretl_matrix_multiply(R[i], J->h[j], RH);
-	    r = gretl_matrix_rank(RH, &err);
-	    if (r < rmin) {
-		fprintf(stderr, "rank(R_%d*H_%d) = %d\n", i, j, r);
-		/* err = E_DATA; */
+
+	    if (!gretl_is_zero_matrix(ss[j])) {
+		Hj = gretl_matrix_col_concat(J->h[j], ss[j], &err);
+		freeH = 1;
+	    } else {
+		Hj = J->h[j];
 	    }
+
+	    if (!err) {
+		RH = gretl_matrix_multiply_new(Ri, Hj, &err);
+		if (!err) {
+		    r = gretl_matrix_rank(RH, &err);
+		    if (r < rmin) {
+			fprintf(stderr, "rank(R_%d*H_%d) = %d\n", i, j, r);
+			err = E_DATA;
+			noident = 1;
+		    }
+		    gretl_matrix_free(RH);
+		} else if (err == E_NONCONF) {
+		    /* FIXME */
+		    fprintf(stderr, "internal messup in identification_check!\n");
+		    err = 0;
+		}
+	    }
+
+	    if (freeH) {
+		gretl_matrix_free(Hj);
+	    }
+	}
+
+	if (freeR) {
+	    gretl_matrix_free(Ri);
 	}
     }
 
-    gretl_matrix_free(RH);
-
-    if (err) {
+    if (noident) {
 	strcpy(gretl_errmsg, "The restrictions do not identify "
 	       "the parameters");
     }
@@ -856,10 +897,10 @@ static int make_beta_variance (Jwrap *J)
 	jstart = 0;
 	for (j=0; j<r && !err; j++) {
 	    if (J->h[j] != NULL) {
-		gretl_matrix *Vij = gretl_matrix_alloc(HiS->rows, J->h[j]->cols);
 		double rij = gretl_matrix_get(aiom, i, j);
+		gretl_matrix *Vij;
 
-		gretl_matrix_multiply(HiS, J->h[j], Vij);
+		Vij = gretl_matrix_multiply_new(HiS, J->h[j], &err);
 		gretl_matrix_multiply_by_scalar(Vij, rij);
 #if JDEBUG > 1
 		gretl_matrix_print(Vij, "Vij");
@@ -1123,13 +1164,13 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 static int simann (Jwrap *J, gretl_matrix *b)
 {
     int i, SAiter = 4096;
-    double f0, f1, fbest;
+    double f0, f1;
+    double fbest, fworst;
     double rndu;
     int jump;
 
     gretl_matrix *b0 = NULL;
     gretl_matrix *b1 = NULL;
-    gretl_matrix *bbest = NULL;
     gretl_matrix *d = NULL;
 
     double Temp = 1.0;
@@ -1138,15 +1179,14 @@ static int simann (Jwrap *J, gretl_matrix *b)
 
     b0 = gretl_matrix_copy(b);
     b1 = gretl_matrix_copy(b);
-    bbest = gretl_matrix_copy(b);
     d = gretl_column_vector_alloc(b->rows);
 
-    if (b0 == NULL || b1 == NULL || bbest == NULL || d == NULL) {
+    if (b0 == NULL || b1 == NULL || d == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    f0 = fbest = Jloglik(b->val, J);
+    f0 = fbest = fworst = Jloglik(b->val, J);
 
     for (i=0; i<SAiter; i++) {
 	gretl_matrix_random_fill(d, D_NORMAL);
@@ -1166,9 +1206,11 @@ static int simann (Jwrap *J, gretl_matrix *b)
 	    gretl_matrix_copy_values(b0, b1);
 	    if (f0 > fbest) {
 		fbest = f0;
-		gretl_matrix_copy_values(bbest, b0);
+		gretl_matrix_copy_values(b, b0);
 		fprintf(stderr, "i:%d\tTemp = %#g, radius = %#g, fbest = %#g\n", 
 			i, Temp, radius, fbest);
+	    } else if (f0 < fworst) {
+		fworst = f0;
 	    }
 	} else {
 	    gretl_matrix_copy_values(b1, b0);
@@ -1179,13 +1221,14 @@ static int simann (Jwrap *J, gretl_matrix *b)
 	radius *= 0.9999;
     }
     
-    gretl_matrix_copy_values(b, bbest);
+    if (fbest - fworst < 1.0e-9) {
+	fprintf(stderr, "WARNING: likelihood seems to be flat\n");
+    }
 
  bailout:
 
     gretl_matrix_free(b0);
     gretl_matrix_free(b1);
-    gretl_matrix_free(bbest);
     gretl_matrix_free(d);
 
     return err;
@@ -1251,15 +1294,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
  skipest:
 
     if (!err) {
-	S01b = gretl_matrix_alloc(J->S01->rows, J->rank);
-	J->alpha = gretl_matrix_alloc(J->S01->rows, J->rank);
-	if (S01b == NULL || J->alpha == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(J->S01, J->beta, S01b);
+	S01b = gretl_matrix_multiply_new(J->S01, J->beta, &err);
     }
 
     if (!err) {
@@ -1272,7 +1307,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = gretl_matrix_multiply(S01b, J->qf1, J->alpha);
+	J->alpha = gretl_matrix_multiply_new(S01b, J->qf1, &err);
     }
 
     if (!err) {
