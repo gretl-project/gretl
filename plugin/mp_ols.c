@@ -1222,7 +1222,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, char *errbuf)
     mpf_set(ysum, xpxxpy.xpy[0]);
     mpf_set(ypy, xpxxpy.xpy[nv + 1]);
     if (mpf_sgn(ypy) == 0) { 
-        pmod->errcode = E_YPY;
+        pmod->errcode = E_ZERO;
         return; 
     }
 

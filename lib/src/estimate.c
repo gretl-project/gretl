@@ -568,16 +568,22 @@ log_depvar_ll (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 
 static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 {
+    const char *wtzero = 
+	N_("Weight variable is all zeros, aborting regression");
+    const char *wtneg = 
+	N_("Weight variable contains negative values");
     int t;
 
     if (gretl_iszero(pmod->t1, pmod->t2, w)) {
-	pmod->errcode = E_WTZERO;
+	strcpy(gretl_errmsg, _(wtzero));
+	pmod->errcode = E_DATA;
 	return 1;
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
-	    pmod->errcode = E_WTNEG;
+	    strcpy(gretl_errmsg, _(wtneg));
+	    pmod->errcode = E_DATA;
 	    return 1;
 	}
     }
@@ -746,7 +752,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* sanity check */
     if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
-        mdl.errcode = E_NODATA;
+        mdl.errcode = E_DATA;
         goto lsq_abort;
     }
 

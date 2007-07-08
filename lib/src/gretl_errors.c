@@ -27,11 +27,9 @@ static const char *gretl_error_messages[] = {
     N_("Data error"),                                            /* E_DATA = 2 */
     N_("Exact or near collinearity encountered"),                /* E_SINGULAR */
     N_("Insufficient degrees of freedom for regression"),        /* E_DF */
-    N_("Y-prime * Y equals zero"),                               /* E_YPY */
     N_("Dependent variable is all zeros, aborting regression"),  /* E_ZERO */
     N_("Total sum of squares was not positive"),                 /* E_TSS */
     N_("Sum of squared residuals negative!"),                    /* E_ESS */
-    N_("Unbalanced parentheses in genr command"),                /* E_UNBAL */
     N_("Sorry, command not available for this estimator"),       /* E_NOTIMP */
     N_("Unspecified error -- FIXME"),                            /* E_UNSPEC */
     N_("Syntax error in genr formula"),                          /* E_SYNTAX */
@@ -40,17 +38,12 @@ static const char *gretl_error_messages[] = {
     N_("Out of memory error"),                                   /* E_ALLOC */
     N_("No formula supplied in genr"),                           /* E_EQN */
     N_("Unknown variable name in command"),                      /* E_UNKVAR */
-    N_("The observations specified for the regression "
-       "exceed those in the data set"),                          /* E_NODATA */
     N_("Command has insufficient arguments"),                    /* E_ARGS */
     N_("This command is implemented only for OLS models"),       /* E_OLSONLY */
     N_("Invalid argument for function"),                         /* E_INVARG */
-    N_("Invalid sample split for Chow test"),                    /* E_SPLIT */
     N_("Syntax error in command line"),                          /* E_PARSE */
     N_("No independent variables left after omissions"),         /* E_NOVARS */
     N_("No independent variables were omitted"),                 /* E_NOOMIT */
-    N_("Can't do this: some vars in original model "
-       "have been redefined"),                                   /* E_VARCHANGE */
     N_("No new independent variables were added"),               /* E_NOADD */
     N_("One or more \"added\" vars were already present"),       /* E_ADDDUP */
     N_("Error generating logarithms"),                           /* E_LOGS */
@@ -58,13 +51,8 @@ static const char *gretl_error_messages[] = {
     N_("Error generating lagged variables"),                     /* E_LAGS */
     N_("Attempting to take square root of negative number"),     /* E_SQRT */
     N_("Excessive exponent in genr formula"),                    /* E_HIGH */
-    N_("Weight variable is all zeros, aborting regression"),     /* E_WTZERO */
-    N_("Weight variable contains negative values"),              /* E_WTNEG */
     N_("Need valid starting and ending observations"),           /* E_OBS */
     N_("You must include a constant in this sort of model"),     /* E_NOCONST */
-    N_("There were missing observations for the added "
-       "variable(s).\nReset the sample and rerun the original "
-       "regression first"),                                      /* E_MISS */
     N_("The statistic you requested is not available"),          /* E_BADSTAT */
     N_("Missing sub-sample information; can't merge data"),      /* E_NOMERGE */
     N_("The convergence criterion was not met"),                 /* E_NOCONV */
@@ -75,6 +63,7 @@ static const char *gretl_error_messages[] = {
     N_("Data types not conformable for operation"),              /* E_TYPES */
     N_("Wrong data type"),                                       /* E_DATATYPE */
     N_("Incompatible options"),                                  /* E_BADOPT */
+    N_("The restrictions do not identify the parameters"),       /* E_NOIDENT */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

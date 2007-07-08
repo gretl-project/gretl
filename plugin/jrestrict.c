@@ -353,12 +353,17 @@ static gretl_matrix *augmented_R (const gretl_matrix *H,
 				  const gretl_matrix *s,
 				  int *err)
 {
-    gretl_matrix *Hs = gretl_matrix_col_concat(H, s, err);
     gretl_matrix *R = NULL;
 
-    if (!*err) {
-	R = gretl_matrix_left_nullspace(Hs, GRETL_MOD_TRANSPOSE, err);
-	gretl_matrix_free(Hs);
+    if (H != NULL) {
+	gretl_matrix *Hs = gretl_matrix_col_concat(H, s, err);
+
+	if (!*err) {
+	    R = gretl_matrix_left_nullspace(Hs, GRETL_MOD_TRANSPOSE, err);
+	    gretl_matrix_free(Hs);
+	}
+    } else {
+	R = gretl_matrix_left_nullspace(s, GRETL_MOD_TRANSPOSE, err);
     }
 
     return R;
@@ -374,19 +379,10 @@ identification_check (Jwrap *J, gretl_matrix **R,
     gretl_matrix *Hj = NULL;
     gretl_matrix *RH = NULL;
     
-    int i, j, r, kmax = 0;
-    int noident = 0;
+    int i, j, r;
     int err = 0;
 
-    for (i=0; i<J->nC; i++) {
-	if (J->h[i] != NULL) {
-	    kmax++;
-	}
-    }
-
-    if (kmax < 2) {
-	/* nothing to check */
-	fprintf(stderr, "identification_check: kmax = %d, skipping\n", kmax);
+    if (J->nC < 2) {
 	return 0;
     }
 
@@ -396,10 +392,6 @@ identification_check (Jwrap *J, gretl_matrix **R,
     for (i=0; i<J->nC && !err; i++) {
 	int freeR = 0;
 	int rmin = 1;
-
-	if (J->h[i] == NULL) {
-	    continue;
-	}
 
 	if (!gretl_is_zero_matrix(ss[i])) {
 	    Ri = augmented_R(J->h[i], ss[i], &err);
@@ -411,16 +403,22 @@ identification_check (Jwrap *J, gretl_matrix **R,
 	for (j=0; j<J->nC && !err; j++) {
 	    int freeH = 0;
 
-	    if (i == j || J->h[j] == NULL) {
+	    if (i == j) {
 		continue;
 	    }
 
-	    if (!gretl_is_zero_matrix(ss[j])) {
+	    if (gretl_is_zero_matrix(ss[j])) {
+		if (J->h[j] == NULL) {
+		    err = E_DATA;
+		} else {
+		    Hj = J->h[j];
+		}
+	    } else if (J->h[j] == NULL) {
+		Hj = ss[j];
+	    } else {
 		Hj = gretl_matrix_col_concat(J->h[j], ss[j], &err);
 		freeH = 1;
-	    } else {
-		Hj = J->h[j];
-	    }
+	    } 
 
 	    if (!err) {
 		RH = gretl_matrix_multiply_new(Ri, Hj, &err);
@@ -428,8 +426,7 @@ identification_check (Jwrap *J, gretl_matrix **R,
 		    r = gretl_matrix_rank(RH, &err);
 		    if (r < rmin) {
 			fprintf(stderr, "rank(R_%d*H_%d) = %d\n", i, j, r);
-			err = E_DATA;
-			noident = 1;
+			err = E_NOIDENT;
 		    }
 		    gretl_matrix_free(RH);
 		} else if (err == E_NONCONF) {
@@ -449,12 +446,22 @@ identification_check (Jwrap *J, gretl_matrix **R,
 	}
     }
 
-    if (noident) {
-	strcpy(gretl_errmsg, "The restrictions do not identify "
-	       "the parameters");
+    return err;
+}
+
+static int count_nC (Jwrap *J, const gretl_matrix *R, int nb)
+{
+    int nC = 0, r0 = 0;
+    int i, ir;
+
+    for (i=0; i<J->rank; i++) {
+	ir = get_Ri_rows(R, nb, i, &r0);
+	if (ir > 0) {
+	    nC++;
+	}
     }
 
-    return err;
+    return nC;
 }
 
 /* Here we construct both the big block-diagonal restrictions matrix,
@@ -485,6 +492,10 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 
     R = rset_get_R_matrix(rset);
     q = rset_get_q_matrix(rset);
+
+    if (count_nC(J, R, nb) < J->rank) {
+	return E_NOIDENT;
+    }
 
     nC = J->rank;
 
@@ -590,8 +601,10 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     }
 
 #if JDEBUG
-    gretl_matrix_print(J->H, "J->H");
-    gretl_matrix_print(J->s, "J->s");
+    if (!err) {
+	gretl_matrix_print(J->H, "J->H");
+	gretl_matrix_print(J->s, "J->s");
+    }
 #endif
 
     gretl_matrix_array_free(ss, nC);

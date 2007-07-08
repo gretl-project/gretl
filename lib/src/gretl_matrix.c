@@ -5035,6 +5035,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 
 	if (k == 0) {
 	    strcpy(gretl_errmsg, _("Nullspace calculation failed"));
+	    gretl_matrix_print(M, "Input to gretl_matrix_right_nullspace");
 	    *err = 1;
 	} else {
 	    R = gretl_matrix_alloc(n, k);

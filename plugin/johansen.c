@@ -877,7 +877,9 @@ static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *R)
 	if (B->cols == 1) {
 	    double den = B->val[0];
 
-	    gretl_matrix_divide_by_scalar(B, den);
+	    if (den != 0.0) {
+		gretl_matrix_divide_by_scalar(B, den);
+	    }
 	}
     } 
 

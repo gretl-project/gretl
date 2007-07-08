@@ -1672,7 +1672,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     } else {
 	split = dateton(chowdate, pdinfo);
 	if (split <= 0 || split >= pdinfo->n) { 
-	    err = E_SPLIT;
+	    strcpy(gretl_errmsg, _("Invalid sample split for Chow test"));
+	    err = E_DATA;
 	}
 	smax = split;
     }

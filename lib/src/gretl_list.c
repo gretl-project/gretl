@@ -1484,6 +1484,8 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			   int ref_id)
 {
+    const char *errmsg = N_("Can't do this: some vars in original "
+			    "model have been redefined");
     const char *label;
     char rword[16];
     int j, mc, repl, err = 0;
@@ -1505,7 +1507,8 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	    repl = 0;
 	    sscanf(label, "%*s %*s %*s %d", &repl);
 	    if (repl >= mc) {
-		err = E_VARCHANGE;
+		strcpy(gretl_errmsg, _(errmsg));
+		err = E_DATA;
 		break;
 	    }
 	}
