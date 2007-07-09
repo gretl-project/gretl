@@ -309,7 +309,7 @@ static int solve_for_beta (Jwrap *J,
 			   const gretl_matrix *R,
 			   const gretl_matrix *q)
 {
-    gretl_matrix *b = NULL;
+    gretl_matrix *b;
     int err = 0;
 
     b = gretl_matrix_copy(q);
@@ -349,102 +349,172 @@ static int solve_for_beta (Jwrap *J,
     return err;
 }
 
-static gretl_matrix *augmented_R (const gretl_matrix *H,
+static gretl_matrix *augmented_H (const gretl_matrix *H,
 				  const gretl_matrix *s,
 				  int *err)
 {
-    gretl_matrix *R = NULL;
+    gretl_matrix *H1;
 
     if (H != NULL) {
-	gretl_matrix *Hs = gretl_matrix_col_concat(H, s, err);
-
-	if (!*err) {
-	    R = gretl_matrix_left_nullspace(Hs, GRETL_MOD_TRANSPOSE, err);
-	    gretl_matrix_free(Hs);
-	}
+	H1 = gretl_matrix_col_concat(H, s, err);
     } else {
-	R = gretl_matrix_left_nullspace(s, GRETL_MOD_TRANSPOSE, err);
+	H1 = gretl_matrix_copy(s);
     }
 
-    return R;
+    return H1;
+}
+
+static void rank_error_message (int i, int j, int *k, int r, int rmin,
+				PRN *prn)
+{
+    i++, j++; /* convert to 1-based */
+
+    if (k == NULL) {
+	pprintf(prn, "Rank of R%d * H%d = %d, should be >= %d\n", 
+		i, j, r, rmin);
+    } else {
+	int p;
+
+	pprintf(prn, "Rank of R%d * (H%d", i, j);
+	for (p=1; p<rmin; p++) {
+	    pprintf(prn, ":H%d", k[p]+1);
+	}
+	pprintf(prn, ") = %d, should be >= %d\n", r, rmin);
+    }
+}
+
+static int rank_check (const gretl_matrix *R, const gretl_matrix *H,
+		       int i, int j, int *k, int rmin, PRN *prn)
+{
+    gretl_matrix *RH;
+    int r, err = 0;
+
+    RH = gretl_matrix_multiply_new(R, H, &err);
+
+    if (!err) {
+	r = gretl_matrix_rank(RH, &err);
+	if (r < rmin) {
+	    rank_error_message(i, j, k, r, rmin, prn);
+	    err = E_NOIDENT;
+	}
+	gretl_matrix_free(RH);
+    } 
+
+    return err;
+}
+
+/* Recursive routine to construct the rank tests for (R_i * H+), where
+   H+ is composed of the columns of 2 or more of the per-restriction
+   H_j matrices -- e.g. R_1 * (H_2 : H3).
+*/
+
+static int extra_check (int i, int j, int *k, int d, int dmax,
+			gretl_matrix **R, gretl_matrix **H,
+			PRN *prn)
+{
+    gretl_matrix *Htmp = NULL;
+    int p, kd0 = k[d-1] + 1;
+    int err = 0;
+
+    for (k[d]=kd0; k[d]<=dmax && !err; k[d] += 1) {
+	if (k[d] == i) continue;
+
+	Htmp = gretl_matrix_copy(H[j]);
+
+	if (Htmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (p=1; p<=d && !err; p++) {
+		err = gretl_matrix_inplace_colcat(Htmp, H[k[p]], NULL);
+	    }	
+	    if (!err) {
+		err = rank_check(R[i], Htmp, i, j, k, d + 1, prn);
+	    }
+	    gretl_matrix_free(Htmp);
+	}
+
+	if (!err && d < dmax - 2) {
+	    err = extra_check(i, j, k, d + 1, dmax, R, H, prn);
+	}
+    }
+
+    return err;
 }
 
 /* See Johansen, Journal of Econometrics, 1995 */
 
 static int 
 identification_check (Jwrap *J, gretl_matrix **R, 
-		      gretl_matrix **ss, int nb)
+		      gretl_matrix **ss, int nb,
+		      PRN *prn)
 {
-    gretl_matrix *Ri = NULL;
-    gretl_matrix *Hj = NULL;
-    gretl_matrix *RH = NULL;
-    
-    int i, j, r;
+    gretl_matrix **Rtmp = NULL;
+    gretl_matrix **Htmp = NULL;
+    int i, j, *k = NULL;
     int err = 0;
 
     if (J->nC < 2) {
 	return 0;
     }
 
-    /* FIXME there's a level of looping -- necessary for systems of
-       rank > 2 -- still to be added below */
+    if (J->nC > 2) {
+	/* extra indices are needed */
+	k = malloc((J->nC - 1) * sizeof *k);
+	if (k == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    /* construct arrays of (possibly modified) R and H matrices for
+       testing */
+    
+    Rtmp = gretl_matrix_array_alloc(J->nC);
+    Htmp = gretl_matrix_array_alloc(J->nC);
+    if (Rtmp == NULL || Htmp == NULL) {
+	err = E_ALLOC;
+    }
 
     for (i=0; i<J->nC && !err; i++) {
-	int freeR = 0;
-	int rmin = 1;
-
-	if (!gretl_is_zero_matrix(ss[i])) {
-	    Ri = augmented_R(J->h[i], ss[i], &err);
-	    freeR = 1;
+	if (gretl_is_zero_matrix(ss[i])) {
+	    /* restriction is homogeneous */
+	    if (J->h[i] == NULL) {
+		err = E_DATA;
+	    } else {
+		Rtmp[i] = gretl_matrix_copy(R[i]);
+		Htmp[i] = gretl_matrix_copy(J->h[i]);
+		if (Htmp[i] == NULL || Rtmp[i] == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
 	} else {
-	    Ri = R[i];
+	    /* non-homogeneous: augment H with s */
+	    Htmp[i] = augmented_H(J->h[i], ss[i], &err);
+	    if (!err) {
+		Rtmp[i] = gretl_matrix_left_nullspace(Htmp[i], 
+						      GRETL_MOD_TRANSPOSE, 
+						      &err);
+	    }
 	}
+    }	
 
+    /* conduct the rank tests on R_i * H_j, etc. */
+
+    for (i=0; i<J->nC && !err; i++) {
 	for (j=0; j<J->nC && !err; j++) {
-	    int freeH = 0;
-
 	    if (i == j) {
 		continue;
 	    }
-
-	    if (gretl_is_zero_matrix(ss[j])) {
-		if (J->h[j] == NULL) {
-		    err = E_DATA;
-		} else {
-		    Hj = J->h[j];
-		}
-	    } else if (J->h[j] == NULL) {
-		Hj = ss[j];
-	    } else {
-		Hj = gretl_matrix_col_concat(J->h[j], ss[j], &err);
-		freeH = 1;
-	    } 
-
-	    if (!err) {
-		RH = gretl_matrix_multiply_new(Ri, Hj, &err);
-		if (!err) {
-		    r = gretl_matrix_rank(RH, &err);
-		    if (r < rmin) {
-			fprintf(stderr, "rank(R_%d*H_%d) = %d\n", i, j, r);
-			err = E_NOIDENT;
-		    }
-		    gretl_matrix_free(RH);
-		} else if (err == E_NONCONF) {
-		    /* FIXME */
-		    fprintf(stderr, "internal messup in identification_check!\n");
-		    err = 0;
-		}
+	    err = rank_check(Rtmp[i], Htmp[j], i, j, NULL, 1, prn);
+	    if (!err && k != NULL) {
+		k[0] = j;
+		err = extra_check(i, j, k, 1, J->nC, Rtmp, Htmp, prn);
 	    }
-
-	    if (freeH) {
-		gretl_matrix_free(Hj);
-	    }
-	}
-
-	if (freeR) {
-	    gretl_matrix_free(Ri);
 	}
     }
+
+    gretl_matrix_array_free(Rtmp, J->nC);
+    gretl_matrix_array_free(Htmp, J->nC);
+    free(k);
 
     return err;
 }
@@ -470,7 +540,8 @@ static int count_nC (Jwrap *J, const gretl_matrix *R, int nb)
 */
 
 static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
-				const gretl_restriction_set *rset)
+				const gretl_restriction_set *rset,
+				PRN *prn)
 {
     const gretl_matrix *R;
     const gretl_matrix *q;
@@ -493,25 +564,25 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     R = rset_get_R_matrix(rset);
     q = rset_get_q_matrix(rset);
 
-    if (count_nC(J, R, nb) < J->rank) {
-	return E_NOIDENT;
-    }
-
-    nC = J->rank;
-
 #if JDEBUG
     gretl_matrix_print(R, "R, in set_up_restrictions");
     gretl_matrix_print(q, "q, in set_up_restrictions");
-    fprintf(stderr, "nC = %d\n", nC);
 #endif
 
     if (R->rows == nb * J->rank) {
 	/* number of restrictions = total betas */
-	J->nC = nC;
+	J->nC = J->rank;
 	return solve_for_beta(J, R, q);
     } else if (R->rows < J->rank * J->rank) {
+	pprintf(prn, "R->rows = %d, should be >= %d\n",
+		R->rows, J->rank * J->rank);
+	return E_NOIDENT;
+    } else if ((nC = count_nC(J, R, nb)) < J->rank) {
+	pprintf(prn, "R blocks = %d, should be %d\n", nC, J->rank);
 	return E_NOIDENT;
     }
+
+    nC = J->rank;
 
     J->h = gretl_matrix_array_alloc(nC);
     if (J->h == NULL) {
@@ -575,7 +646,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     fprintf(stderr, "H: hr = %d, hc = %d (sr = %d)\n", hr, hc, sr);
 #endif
 
-    err = identification_check(J, Rarr, ss, nb);
+    err = identification_check(J, Rarr, ss, nb, prn);
 
     if (!err) {
 	J->H = gretl_zero_matrix_new(hr, hc);
@@ -1176,7 +1247,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-static int simann (Jwrap *J, gretl_matrix *b)
+static int simann (Jwrap *J, gretl_matrix *b, gretlopt opt, PRN *prn)
 {
     int i, SAiter = 4096;
     double f0, f1;
@@ -1190,7 +1261,7 @@ static int simann (Jwrap *J, gretl_matrix *b)
 
     double Temp = 1.0;
     double radius = 1.0;
-    int err = 0;
+    int hdr = 0, err = 0;
 
     b0 = gretl_matrix_copy(b);
     b1 = gretl_matrix_copy(b);
@@ -1222,8 +1293,16 @@ static int simann (Jwrap *J, gretl_matrix *b)
 	    if (f0 > fbest) {
 		fbest = f0;
 		gretl_matrix_copy_values(b, b0);
-		fprintf(stderr, "i:%d\tTemp = %#g, radius = %#g, fbest = %#g\n", 
-			i, Temp, radius, fbest);
+		if (opt & OPT_V) {
+		    if (!hdr) {
+			pputs(prn, "\nSimulated annealing:\n");
+			pprintf(prn, "%6s %12s %12s %12s\n",
+				"iter", "temp", "radius", "fbest");
+			hdr = 1;
+		    }
+		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n", 
+			    i, Temp, radius, fbest);
+		}
 	    } else if (f0 < fworst) {
 		fworst = f0;
 	    }
@@ -1235,9 +1314,13 @@ static int simann (Jwrap *J, gretl_matrix *b)
 	Temp *= 0.999;
 	radius *= 0.9999;
     }
+
+    if ((opt & OPT_V) && hdr) {
+	pputc(prn, '\n');
+    }
     
     if (fbest - fworst < 1.0e-9) {
-	fprintf(stderr, "WARNING: likelihood seems to be flat\n");
+	pprintf(prn, "Warning: likelihood seems to be flat\n");
     }
 
  bailout:
@@ -1273,7 +1356,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
     err = make_S_matrices(J, jvar);
 
     if (!err) {
-	err = set_up_restrictions(J, jvar, rset);
+	err = set_up_restrictions(J, jvar, rset, prn);
     }
 
     if (J->noest) {
@@ -1291,7 +1374,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = simann(J, b);
+	err = simann(J, b, opt, prn);
     }
 
     if (!err) {

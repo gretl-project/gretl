@@ -828,7 +828,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	    if (op == B_ADD) {
 		*err = gretl_matrix_add_to(C, A);
 	    } else {
-		gretl_matrix_multiply_by_scalar(C, -1.0);
+		gretl_matrix_switch_sign(C);
 		*err = gretl_matrix_add_to(C, A);
 	    }
 	} else {
