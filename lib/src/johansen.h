@@ -35,7 +35,7 @@ typedef struct JohansenInfo_ JohansenInfo;
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see enumeration above */
-    int *list;            /* list:endogenous variables */
+    int *list;            /* list: endogenous variables */
     int *difflist;        /* list: first diffs of endogenous vars */
     int *biglist;         /* list: all regressors in each eqn */
     int *exolist;         /* list: user-specified exogenous vars */
@@ -44,8 +44,8 @@ struct JohansenInfo_ {
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     int nexo;             /* total deterministic/exogenous variables */
-    gretl_matrix *u;      /* resids, VAR in differences */
-    gretl_matrix *v;      /* resids, second regressions */
+    gretl_matrix *u;      /* residuals, VAR in differences */
+    gretl_matrix *v;      /* residuals, second regressions */
     gretl_matrix *S00;    /* matrix of cross-products of residuals */
     gretl_matrix *S11;    /* matrix of cross-products of residuals */
     gretl_matrix *S01;    /* matrix of cross-products of residuals */
@@ -55,6 +55,8 @@ struct JohansenInfo_ {
     gretl_matrix *Bvar;   /* variance matrix of beta */
     gretl_matrix *R;      /* beta-restriction LHS matrix */
     gretl_matrix *q;      /* beta-restrictions RHS matrix */
+    gretl_matrix *Ra;     /* alpha-restriction LHS matrix */
+    gretl_matrix *qa;     /* alpha-restrictions RHS matrix */
     double ll0;           /* unrestricted log-likelihood */
     int bdf;              /* number of restrictions on beta */
 };

@@ -1335,22 +1335,27 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
 }
 
 /* test for homogeneous restriction, either for a rank-1 system 
-   or in common across the columns of beta
+   or in common across the columns of beta or alpha
 */
 
 static int 
-simple_beta_restriction (GRETL_VAR *jvar,
-			 const gretl_restriction_set *rset)
+simple_restriction (GRETL_VAR *jvar,
+		    const gretl_restriction_set *rset)
 {
     const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *q = rset_get_q_matrix(rset);
+    int rcols = jvar->neqns;
     int ret = 1;
+
+    if (rset_VECM_type(rset) == VECM_B) {
+	rcols += restricted(jvar);
+    }
 
     if (!gretl_is_zero_matrix(q)) {
 	/* non-homogeneous */
 	ret = 0;
-    } else if (R->cols > jvar->neqns + restricted(jvar)) {
-	/* not common to all cols of beta */
+    } else if (R->cols > rcols) {
+	/* not common to all columns */
 	ret = 0;
     }
 
@@ -1415,7 +1420,7 @@ int johansen_estimate (GRETL_VAR *jvar,
     gretl_matrix *S11 = NULL;
     gretl_matrix *evals = NULL;
 
-    int genrest = 0; /* doing "general" beta restriction? */
+    int genrest = 0; /* doing general restriction? */
     int rank = jrank(jvar);
     int m, err = 0;
 
@@ -1425,7 +1430,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 #endif
 
     if (rset != NULL) {
-	genrest = !simple_beta_restriction(jvar, rset);
+	genrest = !simple_restriction(jvar, rset);
     }
 
     if (rset != NULL && !genrest) {
@@ -1653,7 +1658,15 @@ int vecm_beta_test (GRETL_VAR *jvar,
     int m, n, rank;
     int err = 0;
 
-    if (!simple_beta_restriction(jvar, rset)) {
+    if (rset_VECM_type(rset) == VECM_A) {
+	fprintf(stderr, "Got alpha restriction\n");
+	return E_NOTIMP;
+    } else if (rset_VECM_type(rset) == VECM_AB) {
+	fprintf(stderr, "Got combined beta/alpha restriction\n");
+	return E_NOTIMP;
+    }
+
+    if (!simple_restriction(jvar, rset)) {
 	/* "general" restriction set */
 	return general_beta_analysis(jvar, rset, pdinfo, opt, prn);
     }

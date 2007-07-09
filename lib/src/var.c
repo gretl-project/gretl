@@ -262,6 +262,8 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->R);
     gretl_matrix_free(jv->q);
+    gretl_matrix_free(jv->Ra);
+    gretl_matrix_free(jv->qa);
 
     free(jv);
 }
@@ -2489,6 +2491,9 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Bvar = NULL;
     jv->R = NULL;
     jv->q = NULL;
+    jv->Ra = NULL;
+    jv->qa = NULL;
+
     jv->ll0 = NADBL;
     jv->bdf = 0;
 
@@ -3115,6 +3120,17 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm)
     return nb;
 }
 
+int gretl_VECM_n_alpha (const GRETL_VAR *vecm)
+{
+    int na = 0;
+
+    if (vecm->jinfo != NULL && vecm->jinfo->Alpha != NULL) {
+	na = gretl_matrix_rows(vecm->jinfo->Alpha);
+    }
+
+    return na;
+}
+
 int gretl_VECM_rank (const GRETL_VAR *vecm)
 {
     int r = 0;
@@ -3370,6 +3386,10 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
 	    jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Ra")) {
+	    jinfo->Ra = gretl_xml_get_matrix(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "qa")) {
+	    jinfo->qa = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
 	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
 	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
@@ -3553,6 +3573,8 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_matrix(j->Bse, "Bse", fp);
     gretl_xml_put_matrix(j->R, "R", fp);
     gretl_xml_put_matrix(j->q, "q", fp);
+    gretl_xml_put_matrix(j->R, "Ra", fp);
+    gretl_xml_put_matrix(j->q, "qa", fp);
 
     if (!na(j->ll0) && j->bdf > 0) {
 	gretl_xml_put_double("ll0", j->ll0, fp);

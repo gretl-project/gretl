@@ -28,7 +28,7 @@
 #define RDEBUG 0
 
 #define EQN_UNSPEC -9
-#define DPOS_NONE 999
+#define DPOS_NONE   0
 
 typedef struct restriction_ restriction;
 
@@ -45,7 +45,7 @@ struct restriction_ {
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
     int multi;                    /* pertains to multi-equation system? */
-    int vecm;                     /* pertains to VECM? */
+    int vecm;                     /* pertains to VECM beta or alpha? */
     gretl_matrix *R;              /* LHS restriction matrix */
     gretl_matrix *q;              /* RHS restriction matrix */
     char *mask;                   /* selection mask for coeffs */
@@ -136,14 +136,19 @@ static int add_vecm_restriction (gretl_restriction_set *rset,
 }
 
 static int 
-get_R_vecm_column (const gretl_restriction_set *rset, int i, int j)
+get_R_vecm_column (const gretl_restriction_set *rset, 
+		   int i, int j)
 {
     const restriction *r = rset->restrictions[i];
     GRETL_VAR *var = rset->obj;
     int col = r->bnum[j];
 
     if (rset->multi) {
-	col += r->eq[j] * gretl_VECM_n_beta(var);
+	if (rset->vecm == VECM_B) {
+	    col += r->eq[j] * gretl_VECM_n_beta(var);
+	} else {
+	    col += r->eq[j] * gretl_VECM_n_alpha(var);
+	}
     }
 
     return col;
@@ -166,17 +171,6 @@ get_R_sys_column (const gretl_restriction_set *rset, int i, int j)
     return col;
 }
 
-static int get_R_column (const gretl_restriction_set *rset, int i, int j)
-{
-    if (rset->type == GRETL_OBJ_SYS) {
-	return get_R_sys_column(rset, i, j);
-    } else if (rset->type == GRETL_OBJ_VAR) {
-	return get_R_vecm_column(rset, i, j);
-    } else {
-	return 0;
-    }
-}
-
 static double get_restriction_param (const restriction *r, int k)
 {
     double x = 0.0;
@@ -197,7 +191,14 @@ static int R_n_columns (gretl_restriction_set *rset)
     int i, cols = 0;
 
     if (rset->type == GRETL_OBJ_VAR) {
-	cols = gretl_VECM_n_beta(rset->obj);
+	if (rset->vecm == VECM_A) {
+	    cols = gretl_VECM_n_alpha(rset->obj);
+	} else if (rset->vecm == VECM_AB) {
+	    cols = gretl_VECM_n_beta(rset->obj) +
+		gretl_VECM_n_alpha(rset->obj);
+	} else {
+	    cols = gretl_VECM_n_beta(rset->obj);
+	}
 	if (rset->multi) {
 	    cols *= gretl_VECM_rank(rset->obj);
 	}
@@ -272,7 +273,7 @@ restriction_set_form_full_matrices (gretl_restriction_set *rset)
 }
 
 /* Assign the correct diagonal position, for the case of restrictions
-   on VECM beta that do not include cross-equation terms. 
+   on VECMs that do not include cross-equation terms. 
 */
 
 static void assign_diag_positions (gretl_restriction_set *rset)
@@ -302,30 +303,35 @@ static void assign_diag_positions (gretl_restriction_set *rset)
 static int vecm_restriction_check (gretl_restriction_set *rset)
 {
     restriction *r;
-    int acount, unspec = 0, anyspec = 0, cross = 0;
+    int atotal = 0, btotal = 0;
+    int unspec = 0, anyspec = 0, cross = 0;
     int i, j, m, err = 0;
 
     for (i=0; i<rset->k && !err; i++) {
-	int spec = -1;
+	int spec = -1, acount = 0;
 
 	r = rset->restrictions[i];
 	m = r->nterms;
-	acount = 0;
 	for (j=0; j<m && !err; j++) {
-	    if (r->eq[j] == EQN_UNSPEC) {
-		unspec = 1;
-	    } else if (r->eq[j] >= 0) {
-		anyspec = 1;
-		if (spec < 0) {
-		    spec = r->eq[j];
-		} else if (r->eq[j] != spec) {
-		    cross = 1;
-		}
-	    } 
+	    if (r->eq != NULL) {
+		if (r->eq[j] == EQN_UNSPEC) {
+		    unspec = 1;
+		} else if (r->eq[j] >= 0) {
+		    anyspec = 1;
+		    if (spec < 0) {
+			spec = r->eq[j];
+		    } else if (r->eq[j] != spec) {
+			cross = 1;
+		    }
+		} 
+	    }
 	    if ((anyspec && unspec) || cross) {
 		err = E_PARSE;
 	    } else if (r->letter[j] == 'a') {
 		acount++;
+		atotal++;
+	    } else {
+		btotal++;
 	    }
 	}
 	if (!err && acount != 0 && acount != m) {
@@ -338,17 +344,25 @@ static int vecm_restriction_check (gretl_restriction_set *rset)
 	strcpy(gretl_errmsg, "VECM: cross-equation restrictions are "
 	       "not handled yet");
 	err = E_NOTIMP;
-    } else if (!err && unspec) {
+    } else if (!err && unspec && rset->multi) {
 	for (i=0; i<rset->k; i++) {
 	    r = rset->restrictions[i];
 	    for (j=0; j<r->nterms; j++) {
-		r->eq[j] = 1;
+		r->eq[j] = 0;
 	    }
 	}
 	rset->multi = 0;
     }
 
     if (!err) {
+	if (atotal > 0 && btotal > 0) {
+	    rset->vecm = VECM_AB;
+	} else if (atotal > 0) {
+	    rset->vecm = VECM_A;
+	}
+    }
+
+    if (!err && rset->multi) { 
 	assign_diag_positions(rset);
     }
 
@@ -367,7 +381,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
     int col, i, j;
     int err = 0;
 
-    if (rset->type == GRETL_OBJ_VAR && rset->multi) {
+    if (rset->type == GRETL_OBJ_VAR) {
 	err = vecm_restriction_check(rset);
 	if (err) {
 	    return err;
@@ -415,7 +429,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
 		r = rset->restrictions[i];
 		if (r->dpos == d) {
 		    for (j=0; j<r->nterms; j++) {
-			col = get_R_column(rset, i, j);
+			col = get_R_vecm_column(rset, i, j);
 			x = r->mult[j];
 			gretl_matrix_set(R, row, col, x);
 		    }
@@ -428,7 +442,7 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
 	for (i=0; i<rset->k; i++) { 
 	    r = rset->restrictions[i];
 	    for (j=0; j<r->nterms; j++) {
-		col = get_R_column(rset, i, j);
+		col = get_R_sys_column(rset, i, j);
 		x = r->mult[j];
 		gretl_matrix_set(R, i, col, x);
 	    }
@@ -976,7 +990,7 @@ real_restriction_set_start (void *ptr, GretlObjType type,
 	if (var != NULL && gretl_VECM_rank(var) > 1) {
 	    rset->multi = 1;
 	}
-	rset->vecm = 1;
+	rset->vecm = VECM_B;
     } 
 
     return rset;
@@ -987,7 +1001,7 @@ real_restriction_set_start (void *ptr, GretlObjType type,
    to be restricted */
 
 static int bnum_out_of_bounds (const gretl_restriction_set *rset,
-			       int bnum, int eq)
+			       int i, int eq, char letter)
 {
     int ret = 1;
 
@@ -997,9 +1011,10 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 	if (eq >= gretl_VECM_rank(var)) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		    eq + 1);
-	} else if (bnum >= gretl_VECM_n_beta(var)) {
+	} else if ((letter == 'b' && i >= gretl_VECM_n_beta(var)) ||
+		   (letter == 'a' && i >= gretl_VECM_n_alpha(var))) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    bnum + 1);
+		    i + 1);
 	} else {
 	    ret = 0;
 	}
@@ -1010,9 +1025,9 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 	if (list == NULL) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		    eq + 1);
-	} else if (bnum >= list[0] - 1) {
+	} else if (i >= list[0] - 1) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) out of range "
-				    "for equation %d"), bnum + 1, eq + 1);
+				    "for equation %d"), i + 1, eq + 1);
 	} else {
 	    ret = 0;
 	}
@@ -1022,9 +1037,9 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 	if (eq > 0) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		    eq + 1);
-	} else if (bnum >= pmod->ncoeff || bnum < 0) {
+	} else if (i >= pmod->ncoeff || i < 0) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    bnum + 1);
+		    i + 1);
 	} else {
 	    ret = 0;
 	}
@@ -1102,7 +1117,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 				&letter, pdinfo);
 	if (err) {
 	    break;
-	} else if (bnum_out_of_bounds(rset, bnum, eq)) {
+	} else if (bnum_out_of_bounds(rset, bnum, eq, letter)) {
 	    err = E_DATA;
 	    break;
 	}
@@ -1906,4 +1921,9 @@ rset_get_q_matrix (const gretl_restriction_set *rset)
     } else {
 	return NULL;
     }
+}
+
+int rset_VECM_type (const gretl_restriction_set *rset)
+{
+    return rset->vecm;
 }
