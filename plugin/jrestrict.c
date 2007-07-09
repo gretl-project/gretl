@@ -509,6 +509,8 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 	/* number of restrictions = total betas */
 	J->nC = nC;
 	return solve_for_beta(J, R, q);
+    } else if (R->rows < J->rank * J->rank) {
+	return E_NOIDENT;
     }
 
     J->h = gretl_matrix_array_alloc(nC);
