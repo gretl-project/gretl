@@ -1315,7 +1315,7 @@ static int simann (Jwrap *J, gretl_matrix *b, gretlopt opt, PRN *prn)
 	radius *= 0.9999;
     }
 
-    if ((opt & OPT_V) && hdr) {
+    if (hdr) {
 	pputc(prn, '\n');
     }
     

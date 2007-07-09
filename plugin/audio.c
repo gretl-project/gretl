@@ -721,6 +721,7 @@ static void speak_dataset_comments (const dataset *dset)
                           CLSCTX_ALL, 
                           &IID_ISpVoice, 
                           (void **) &v);
+
     if (SUCCEEDED(hr)) {
 	for (i=0; i<N_COMMENTS; i++) {
 	    if (dset->comments[i] != NULL) {
@@ -732,6 +733,7 @@ static void speak_dataset_comments (const dataset *dset)
 	}
         ISpVoice_Release(v);
     } 
+
     CoUninitialize();
 }
 

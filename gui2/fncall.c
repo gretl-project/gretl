@@ -101,10 +101,18 @@ static int cinfo_args_init (call_info *cinfo)
 
 static void cinfo_free (call_info *cinfo)
 {
-    free_strings_array(cinfo->args, cinfo->n_params);
-    free(cinfo->ret);
-    g_list_free(cinfo->lsels);
-    g_list_free(cinfo->msels);
+    if (cinfo->n_params > 0) {
+	free_strings_array(cinfo->args, cinfo->n_params);
+    }
+    if (cinfo->ret != NULL) {
+	free(cinfo->ret);
+    }
+    if (cinfo->lsels != NULL) {
+	g_list_free(cinfo->lsels);
+    }
+    if (cinfo->msels != NULL) {
+	g_list_free(cinfo->msels);
+    }
     free(cinfo);
 }
 
@@ -786,10 +794,11 @@ static int addressify_var (call_info *cinfo, int i)
 	(t == ARG_REF_MATRIX && *s == '{');
 }
 
-static int add_amp (call_info *cinfo, int i, PRN *prn, int *err)
+static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 {
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
+    int err = 0;
 
     if (!ref_type(t)) {
 	return 0;
@@ -805,24 +814,25 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *err)
 	    gretl_matrix *m = gretl_null_matrix_new();
 
 	    if (m == NULL) {
-		*err = E_ALLOC;
+		err = E_ALLOC;
 	    } else {
-		*err = add_or_replace_user_matrix(m, s);
+		err = add_or_replace_user_matrix(m, s);
 	    }
-	    if (!*err) {
+	    if (!err) {
 		pprintf(prn, "? matrix %s\n", s);
+		*add = 1;
 	    }
 	}
     }
 
-    return 1;
+    return err;
 }
 
 static int pre_process_args (call_info *cinfo, PRN *prn)
 {
     char auxline[MAXLINE];
     char auxname[VNAMELEN+1];
-    int i, err = 0;
+    int i, add = 0, err = 0;
 
     for (i=0; i<cinfo->n_params && !err; i++) {
 	if (addressify_var(cinfo, i)) {
@@ -835,7 +845,8 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 		pprintf(prn, "? %s\n", auxline);
 	    } 
 	} 
-	if (add_amp(cinfo, i, prn, &err)) {
+	err = add_amp(cinfo, i, prn, &add);
+	if (add) {
 	    strcpy(auxname, "&");
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
 	    free(cinfo->args[i]);
@@ -855,8 +866,8 @@ void call_function_package (const char *fname, GtkWidget *w,
     const char *fnname;
     FuncDataReq dreq;
     float minver;
-    PRN *prn;
-    call_info *cinfo;
+    PRN *prn = NULL;
+    call_info *cinfo = NULL;
     int orig_v;
     int i, err = 0;
 
@@ -902,15 +913,13 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     if (cinfo->iface < 0) {
 	errbox(_("Function package is broken"));
-	free(cinfo);
-	return;
+	goto bailout;
     }
 
     err = check_function_needs(datainfo, dreq, minver);
     if (err) {
 	gui_errmsg(err);
-	free(cinfo);
-	return;
+	goto bailout;
     }
 
     cinfo->func = get_user_function_by_index(cinfo->iface);
@@ -919,15 +928,13 @@ void call_function_package (const char *fname, GtkWidget *w,
 	fprintf(stderr, "get_user_function_by_index: got NULL for idx = %d\n", 
 		cinfo->iface);
 	errbox(_("Couldn't get function package information"));
-	free(cinfo);
-	return;
+	goto bailout;
     }
 
     cinfo->n_params = fn_n_params(cinfo->func);
 
     if (function_data_check(cinfo)) {
-	cinfo_free(cinfo);
-	return;
+	goto bailout;
     }
 
     cinfo->rettype = user_func_get_return_type(cinfo->func);
@@ -936,14 +943,13 @@ void call_function_package (const char *fname, GtkWidget *w,
 	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
 		cinfo->iface);
 	errbox(_("Couldn't get function package information"));
-	return;
+	goto bailout;
     }
 
     function_call_dialog(cinfo);
 
     if (!cinfo->ok || check_args(cinfo) || bufopen(&prn)) {
-	cinfo_free(cinfo);
-	return;
+	goto bailout;
     }
 
 #if 0
@@ -955,9 +961,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	err = pre_process_args(cinfo, prn);
 	if (err) {
 	    gui_errmsg(err);
-	    cinfo_free(cinfo);
-	    gretl_print_destroy(prn);
-	    return;
+	    goto bailout;
 	}
     }
 
@@ -983,29 +987,28 @@ void call_function_package (const char *fname, GtkWidget *w,
 	}
     } 
 
-    strcat(fnline, ")");
-
     /* destroy any "ARG" vars or matrices that were created? */
 
-    cinfo_free(cinfo);
-
-    if (err) {
-	gui_errmsg(err);
-	gretl_print_destroy(prn);
-	return;
-    }
-
+    strcat(fnline, ")");
     pprintf(prn, "? %s\n", fnline);
 
     gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
 			  models, prn);
 
     err = gui_exec_line(&state, &Z, &datainfo);
-
     view_buffer(prn, 80, 400, fnname, SCRIPT_OUT, NULL);
 
     if (datainfo->v > orig_v) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }
+
+    cinfo_free(cinfo);
+
+    return;
+
+ bailout:
+
+    cinfo_free(cinfo);
+    gretl_print_destroy(prn);
 }
