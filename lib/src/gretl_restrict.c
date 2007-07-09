@@ -302,24 +302,27 @@ static void assign_diag_positions (gretl_restriction_set *rset)
 static int vecm_restriction_check (gretl_restriction_set *rset)
 {
     restriction *r;
-    int acount, unspec = 0, spec = 0, cross = 0;
+    int acount, unspec = 0, anyspec = 0, cross = 0;
     int i, j, m, err = 0;
 
     for (i=0; i<rset->k && !err; i++) {
+	int spec = -1;
+
 	r = rset->restrictions[i];
 	m = r->nterms;
 	acount = 0;
 	for (j=0; j<m && !err; j++) {
 	    if (r->eq[j] == EQN_UNSPEC) {
 		unspec = 1;
-	    } else if (r->eq[j] >= 1) {
-		if (!spec) {
+	    } else if (r->eq[j] >= 0) {
+		anyspec = 1;
+		if (spec < 0) {
 		    spec = r->eq[j];
 		} else if (r->eq[j] != spec) {
 		    cross = 1;
 		}
 	    } 
-	    if ((spec && unspec) || cross) {
+	    if ((anyspec && unspec) || cross) {
 		err = E_PARSE;
 	    } else if (r->letter[j] == 'a') {
 		acount++;
