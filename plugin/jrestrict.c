@@ -28,7 +28,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 0
+#define JDEBUG 1
 
 typedef struct Jwrap_ Jwrap;
 
@@ -239,8 +239,7 @@ static int imp2exp (gretl_matrix *Ri, const gretl_matrix *qi,
     *ph = gretl_matrix_right_nullspace(Ri, &err);
 
 #if JDEBUG 
-    fprintf(stderr, "right_nullspace: err = %d\n", err);
-    gretl_matrix_print(*ph, "*ph");
+    fprintf(stderr, "right_nullspace: err = %d\n\n", err);
 #endif
 
     if (!err) {
@@ -405,7 +404,7 @@ static int rank_check (const gretl_matrix *R, const gretl_matrix *H,
 
 /* Recursive routine to construct the rank tests for (R_i * H+), where
    H+ is composed of the columns of 2 or more of the per-restriction
-   H_j matrices -- e.g. R_1 * (H_2 : H3).
+   H_j matrices -- e.g. R_1 * (H_2~H_3).
 */
 
 static int extra_check (int i, int j, int *k, int d, int dmax,

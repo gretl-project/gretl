@@ -800,6 +800,8 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
     char *s = cinfo->args[i];
     int err = 0;
 
+    *add = 0;
+
     if (!ref_type(t)) {
 	return 0;
     }
