@@ -1335,7 +1335,7 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
 }
 
 /* test for homogeneous restriction, either for a rank-1 system 
-   or in common across the columns of beta or alpha
+   or in common across the columns of beta (or alpha)
 */
 
 static int 
@@ -1347,7 +1347,7 @@ simple_restriction (GRETL_VAR *jvar,
     int rcols = jvar->neqns;
     int ret = 1;
 
-    if (rset_VECM_type(rset) == VECM_B) {
+    if (rset_VECM_bcols(rset) > 0) {
 	rcols += restricted(jvar);
     }
 
@@ -1647,22 +1647,24 @@ int vecm_beta_test (GRETL_VAR *jvar,
 		    PRN *prn)
 {
     const gretl_matrix *R;
-
     gretl_matrix *H = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *S11 = NULL;
     gretl_matrix *S01 = NULL;
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
-
+    int bcols, acols;
     int m, n, rank;
     int err = 0;
 
-    if (rset_VECM_type(rset) == VECM_A) {
-	fprintf(stderr, "Got alpha restriction\n");
+    bcols = rset_VECM_bcols(rset);
+    acols = rset_VECM_acols(rset);
+ 
+    if (acols > 0 && bcols == 0) {
+	fprintf(stderr, "Got alpha restriction: not handled yet\n");
 	return E_NOTIMP;
-    } else if (rset_VECM_type(rset) == VECM_AB) {
-	fprintf(stderr, "Got combined beta/alpha restriction\n");
+    } else if (acols > 0) {
+	fprintf(stderr, "Got combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;
     }
 

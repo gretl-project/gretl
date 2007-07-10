@@ -3645,6 +3645,8 @@ static int get_R_rank (const gretl_matrix *R)
     double d;
     int i, rank = R->rows;
 
+    gretl_matrix_print(R, "R, in get_R_rank");
+
     for (i=0; i<R->rows; i++) {
 	d = gretl_matrix_get(R, i, i);
 	if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
@@ -3710,19 +3712,7 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
     return rank;
 }
 
-/**
- * gretl_matrix_rank:
- * @a: matrix to examine.
- * @err: location to receive error code on failure.
- * 
- * Computes the rank of @a via its QR decomposition.  If you
- * already have that decomposition, using gretl_check_QR_rank()
- * is more efficient.
- *
- * Returns: the rank of @a, or -1 on failure.
- */
-
-int gretl_matrix_rank (const gretl_matrix *a, int *err)
+static int gretl_matrix_rank_QR (const gretl_matrix *a, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -3752,6 +3742,49 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     gretl_matrix_free(R);
 
     return rank;
+}
+
+static int gretl_matrix_rank_SVD (const gretl_matrix *a, int *err)
+{
+    gretl_matrix *S = NULL;
+    int k = (a->rows < a->cols)? a->rows : a->cols;
+    int i, rank = 0;
+
+    *err = gretl_matrix_SVD(a, NULL, &S, NULL);
+
+    if (!*err) {
+	for (i=0; i<k; i++) {
+	    if (S->val[i] > SVD_SMIN) {
+		rank++;
+	    }
+	}
+    }
+
+    gretl_matrix_free(S);
+
+    return rank;
+}
+
+/**
+ * gretl_matrix_rank:
+ * @a: matrix to examine.
+ * @err: location to receive error code on failure.
+ * 
+ * Computes the rank of @a via either its QR decomposition,
+ * or, if @a is square, its SV decomposition.  If you
+ * already have the QR decomposition of @a, you can use
+ * gretl_check_QR_rank().
+ *
+ * Returns: the rank of @a, or -1 on failure.
+ */
+
+int gretl_matrix_rank (const gretl_matrix *a, int *err)
+{
+    if (a->rows == a->cols) {
+	return gretl_matrix_rank_SVD(a, err);
+    } else {
+	return gretl_matrix_rank_QR(a, err);
+    }
 }
 
 /**
@@ -5034,9 +5067,11 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	}
 
 	if (k == 0) {
+#if 0
 	    strcpy(gretl_errmsg, _("Nullspace calculation failed"));
+#endif
 	    gretl_matrix_print(M, "Input to gretl_matrix_right_nullspace");
-	    *err = 1;
+	    *err = E_DATA;
 	} else {
 	    R = gretl_matrix_alloc(n, k);
 	    if (R == NULL) {

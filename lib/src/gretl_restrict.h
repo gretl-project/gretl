@@ -20,12 +20,6 @@
 #ifndef GRETL_RESTRICT_H
 #define GRETL_RESTRICT_H
 
-enum {
-    VECM_B = 1,
-    VECM_A,
-    VECM_AB
-};
-
 typedef struct restriction_set_ gretl_restriction_set;
 
 gretl_restriction_set *
@@ -77,7 +71,9 @@ void gretl_restriction_get_boot_params (int *pB, gretlopt *popt);
 
 gretlopt gretl_restriction_get_options (const gretl_restriction_set *rset);
 
-int rset_VECM_type (const gretl_restriction_set *rset);
+int rset_VECM_bcols (const gretl_restriction_set *rset);
+
+int rset_VECM_acols (const gretl_restriction_set *rset);
 
 #endif /* GRETL_RESTRICT_H */
 

@@ -28,7 +28,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 1
+#define JDEBUG 0
 
 typedef struct Jwrap_ Jwrap;
 
@@ -492,6 +492,10 @@ identification_check (Jwrap *J, gretl_matrix **R,
 		Rtmp[i] = gretl_matrix_left_nullspace(Htmp[i], 
 						      GRETL_MOD_TRANSPOSE, 
 						      &err);
+		if (err == E_DATA) {
+		    /* augmented H is of full rank */
+		    err = E_NOIDENT;
+		}
 	    }
 	}
     }	
