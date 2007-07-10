@@ -377,7 +377,7 @@ static void rank_error_message (int i, int j, int *k, int r, int rmin,
 
 	pprintf(prn, "Rank of R%d * (H%d", i, j);
 	for (p=1; p<rmin; p++) {
-	    pprintf(prn, ":H%d", k[p]+1);
+	    pprintf(prn, ":H%d", k[p] + 1);
 	}
 	pprintf(prn, ") = %d, should be >= %d\n", r, rmin);
     }
