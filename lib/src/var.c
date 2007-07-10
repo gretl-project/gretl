@@ -249,8 +249,8 @@ static void johansen_info_free (JohansenInfo *jv)
     free(jv->levels_list);
     free(jv->varlist);
 
-    gretl_matrix_free(jv->u);
-    gretl_matrix_free(jv->v);
+    gretl_matrix_free(jv->R0);
+    gretl_matrix_free(jv->R1);
 
     gretl_matrix_free(jv->S00);
     gretl_matrix_free(jv->S11);
@@ -1992,7 +1992,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 
 static int allocate_johansen_sigmas (JohansenInfo *jv)
 {
-    int k = gretl_matrix_rows(jv->u);
+    int k = gretl_matrix_rows(jv->R0);
     int vk = k;
     int err = 0;
 
@@ -2164,9 +2164,9 @@ allocate_johansen_residual_matrices (GRETL_VAR *jvar)
     int vk = jvar->neqns;
     int err = 0;
 
-    if (jvar->jinfo->u == NULL) {
-	jvar->jinfo->u = gretl_matrix_alloc(jvar->neqns, T);
-	if (jvar->jinfo->u == NULL) {
+    if (jvar->jinfo->R0 == NULL) {
+	jvar->jinfo->R0 = gretl_matrix_alloc(jvar->neqns, T);
+	if (jvar->jinfo->R0 == NULL) {
 	    return E_ALLOC;
 	}
     }
@@ -2175,12 +2175,12 @@ allocate_johansen_residual_matrices (GRETL_VAR *jvar)
 	vk++;
     }
 
-    if (gretl_matrix_rows(jvar->jinfo->v) < vk) {
-	gretl_matrix_free(jvar->jinfo->v);
-	jvar->jinfo->v = gretl_matrix_alloc(vk, T);
-	if (jvar->jinfo->v == NULL) {
-	    gretl_matrix_free(jvar->jinfo->u);
-	    jvar->jinfo->u = NULL;
+    if (gretl_matrix_rows(jvar->jinfo->R1) < vk) {
+	gretl_matrix_free(jvar->jinfo->R1);
+	jvar->jinfo->R1 = gretl_matrix_alloc(vk, T);
+	if (jvar->jinfo->R1 == NULL) {
+	    gretl_matrix_free(jvar->jinfo->R0);
+	    jvar->jinfo->R0 = NULL;
 	    err = E_ALLOC;
 	}
     }
@@ -2321,7 +2321,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	if (vl->reglist[0] == 1) {
 	    /* degenerate model (nothing to concentrate out) */
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
-				    jvar->jinfo->u, i, jvar->t1);
+				    jvar->jinfo->R0, i, jvar->t1);
 	} else {
 	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
 	    if ((err = jmod.errcode)) {
@@ -2335,7 +2335,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 		jmod.ID = i + 1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->u, i);
+	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R0, i);
 	    if (i == 0) {
 		jvar->ifc = jmod.ifc;
 	    }
@@ -2347,7 +2347,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	if (vl->reglist[0] == 1) {
 	    /* degenerate */
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
-				    jvar->jinfo->v, i, jvar->t1);
+				    jvar->jinfo->R1, i, jvar->t1);
 	} else {
 	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
 	    if ((err = jmod.errcode)) {
@@ -2360,7 +2360,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 		jmod.ID = -1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->v, i);
+	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R1, i);
 	    clear_model(&jmod);
 	}
     }
@@ -2380,7 +2380,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	if (vl->reglist[0] == 1) {
 	    /* degenerate case */
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
-				    jvar->jinfo->v, i, jvar->t1);
+				    jvar->jinfo->R1, i, jvar->t1);
 	} else {	    
 	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
 	    if ((err = jmod.errcode)) {
@@ -2393,7 +2393,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 		jmod.ID = -1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->v, i);
+	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R1, i);
 	    clear_model(&jmod);
 	}
     }     
@@ -2478,8 +2478,8 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
 
     jv->ID = 0;
 
-    jv->u = NULL;
-    jv->v = NULL;
+    jv->R0 = NULL;
+    jv->R1 = NULL;
 
     jv->S00 = NULL;
     jv->S11 = NULL;
@@ -2727,14 +2727,14 @@ johansen_driver (GRETL_VAR *jvar,
     }
 
     if (!jvar->err) {
-	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
-				  jvar->jinfo->u, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_NONE,
+				  jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
 				  jvar->jinfo->S00, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->v, GRETL_MOD_NONE,
-				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_NONE,
+				  jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
 				  jvar->jinfo->S11, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->u, GRETL_MOD_NONE,
-				  jvar->jinfo->v, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_NONE,
+				  jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
 				  jvar->jinfo->S01, GRETL_MOD_NONE);
 
 	gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
@@ -3365,9 +3365,9 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "varlist")) {
 	    jinfo->varlist = gretl_xml_node_get_list(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "u")) {
-	    jinfo->u = gretl_xml_get_matrix(cur, doc, &err);
+	    jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "v")) {
-	    jinfo->v = gretl_xml_get_matrix(cur, doc, &err);
+	    jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Suu")) {
 	    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Svv")) {
@@ -3562,8 +3562,8 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_tagged_list("levels_list", j->levels_list, fp);
     gretl_xml_put_tagged_list("varlist", j->varlist, fp);
 
-    gretl_xml_put_matrix(j->u, "u", fp);
-    gretl_xml_put_matrix(j->v, "v", fp);
+    gretl_xml_put_matrix(j->R0, "u", fp);
+    gretl_xml_put_matrix(j->R1, "v", fp);
     gretl_xml_put_matrix(j->S00, "Suu", fp);
     gretl_xml_put_matrix(j->S11, "Svv", fp);
     gretl_xml_put_matrix(j->S01, "Suv", fp);

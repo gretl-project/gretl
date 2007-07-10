@@ -44,8 +44,8 @@ struct JohansenInfo_ {
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     int nexo;             /* total deterministic/exogenous variables */
-    gretl_matrix *u;      /* residuals, VAR in differences */
-    gretl_matrix *v;      /* residuals, second regressions */
+    gretl_matrix *R0;     /* residuals, VAR in differences */
+    gretl_matrix *R1;     /* residuals, second regressions */
     gretl_matrix *S00;    /* matrix of cross-products of residuals */
     gretl_matrix *S11;    /* matrix of cross-products of residuals */
     gretl_matrix *S01;    /* matrix of cross-products of residuals */

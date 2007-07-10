@@ -1633,6 +1633,108 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
     return err;
 }
 
+static int vecm_alpha_test (GRETL_VAR *jvar, 
+			    const gretl_restriction_set *rset,
+			    const DATAINFO *pdinfo, 
+			    gretlopt opt,
+			    PRN *prn)
+{
+    const gretl_matrix *R = rset_get_R_matrix(rset);
+    const gretl_matrix *S00 = jvar->jinfo->S00;
+    const gretl_matrix *S01 = jvar->jinfo->S01;
+    const gretl_matrix *S11 = jvar->jinfo->S11;
+    const gretl_matrix *R0 = jvar->jinfo->R0;
+    const gretl_matrix *R1 = jvar->jinfo->R1;
+    gretl_matrix *ASA = NULL;
+    gretl_matrix *AASAA = NULL;
+    gretl_matrix *S10 = NULL;
+    gretl_matrix *S00a = NULL;
+    gretl_matrix *S11a = NULL;
+    gretl_matrix *S01a = NULL;
+    gretl_matrix *S10a = NULL;
+    gretl_matrix *Tmp = NULL;
+    int n = jvar->neqns;
+    int m = R1->rows;
+    int err = 0;
+
+    if (!simple_restriction(jvar, rset)) {
+	err = E_NOTIMP;
+    }
+
+    gretl_matrix_print(R, "R");
+    gretl_matrix_print(S00, "S00");
+
+    ASA = gretl_matrix_alloc(R->rows, R->rows);
+    AASAA = gretl_matrix_alloc(n, n);
+    Tmp = gretl_matrix_alloc(m, n);
+
+    S10 = gretl_matrix_alloc(m, n);
+    S00a = gretl_zero_matrix_new(n, n);
+    S11a = gretl_zero_matrix_new(m, m);
+    S01a = gretl_zero_matrix_new(n, m);
+    S10a = gretl_zero_matrix_new(m, n);
+
+    gretl_matrix_multiply_mod(R1, GRETL_MOD_NONE,
+			      R0, GRETL_MOD_TRANSPOSE,
+			      S10, GRETL_MOD_NONE);
+    gretl_matrix_print(S01, "S01");
+    gretl_matrix_print(S10, "S10");
+
+    gretl_matrix_qform(R, GRETL_MOD_NONE, S00,
+		       ASA, GRETL_MOD_NONE);
+    gretl_matrix_print(ASA, "ASA");
+
+    gretl_invert_symmetric_matrix(ASA);
+    gretl_matrix_print(ASA, "inv(ASA)");
+
+    gretl_matrix_qform(R, GRETL_MOD_TRANSPOSE, ASA,
+		       AASAA, GRETL_MOD_NONE);
+    gretl_matrix_print(AASAA, "AASAA");
+
+    /* Johansen page 124 */
+
+    gretl_matrix_qform(S00, GRETL_MOD_TRANSPOSE, AASAA, 
+		       S00a, GRETL_MOD_NONE);
+    gretl_matrix_subtract_from(S00a, S00);
+    gretl_matrix_switch_sign(S00a);
+
+    gretl_matrix_reuse(Tmp, m, n);
+    gretl_matrix_multiply(S10, AASAA, Tmp);
+    gretl_matrix_multiply(Tmp, S01, S11a);
+    gretl_matrix_subtract_from(S11a, S11);
+    gretl_matrix_switch_sign(S11a);
+
+    gretl_matrix_reuse(Tmp, n, n);
+    gretl_matrix_multiply(S00, AASAA, Tmp);
+    gretl_matrix_multiply(Tmp, S01, S01a);
+    gretl_matrix_subtract_from(S01a, S01);
+    gretl_matrix_switch_sign(S01a);
+
+    gretl_matrix_reuse(Tmp, m, n);
+    gretl_matrix_multiply(S10, AASAA, Tmp);
+    gretl_matrix_multiply(Tmp, S00, S10a);
+    gretl_matrix_subtract_from(S10a, S10);
+    gretl_matrix_switch_sign(S10a);
+
+    gretl_matrix_print(S00a, "S00a");
+    gretl_matrix_print(S11a, "S11a");
+    gretl_matrix_print(S01a, "S01a");
+    gretl_matrix_print(S10a, "S10a");
+
+    /* now do the eigen thing */
+
+    gretl_matrix_free(ASA);
+    gretl_matrix_free(AASAA);
+    gretl_matrix_free(Tmp);
+    gretl_matrix_free(S10);
+    gretl_matrix_free(S00a);
+    gretl_matrix_free(S11a);
+    gretl_matrix_free(S01a);
+    gretl_matrix_free(S10a);
+  
+    return err;
+}
+
 /* Test of linear restrictions on the cointegrating relations in a
    VECM.  If the restrictions are "simple" (homogeneous and
    common to the columns of beta) we do the test using the
@@ -1661,8 +1763,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
     acols = rset_VECM_acols(rset);
  
     if (acols > 0 && bcols == 0) {
-	fprintf(stderr, "Got alpha restriction: not handled yet\n");
-	return E_NOTIMP;
+	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } else if (acols > 0) {
 	fprintf(stderr, "Got combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;

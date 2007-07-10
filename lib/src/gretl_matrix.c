@@ -3780,7 +3780,7 @@ static int gretl_matrix_rank_SVD (const gretl_matrix *a, int *err)
 
 int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
-    if (a->rows == a->cols) {
+    if (1 || (a->rows == a->cols)) {
 	return gretl_matrix_rank_SVD(a, err);
     } else {
 	return gretl_matrix_rank_QR(a, err);
