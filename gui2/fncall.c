@@ -820,9 +820,12 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	    }
 	    if (!err) {
 		pprintf(prn, "? matrix %s\n", s);
-		*add = 1;
 	    }
 	}
+    } 
+
+    if (!err) {
+	*add = 1;
     }
 
     return err;
