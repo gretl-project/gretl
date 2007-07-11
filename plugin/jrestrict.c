@@ -28,7 +28,7 @@
 #include "gretl_restrict.h"
 #include "jprivate.h"
 
-#define JDEBUG 0
+#define JDEBUG 1
 
 typedef struct Jwrap_ Jwrap;
 
@@ -397,7 +397,7 @@ static int rank_check (const gretl_matrix *R, const gretl_matrix *H,
 	    rank_check_message(i, j, k, r, rmin, prn);
 	    err = E_NOIDENT;
 	}
-#if JDEBUG > 1
+#if JDEBUG
 	if (r >= rmin) {
 	    rank_check_message(i, j, k, r, rmin, prn);
 	}
@@ -443,7 +443,7 @@ static int extra_check (int i, int j, int *k, int d, int dmax,
 	    gretl_matrix_free(Htmp);
 	}
 
-	if (!err && d < dmax - 2) {
+	if (!err && d < dmax - 1) {
 	    err = extra_check(i, j, k, d + 1, dmax, R, H, prn);
 	}
     }
