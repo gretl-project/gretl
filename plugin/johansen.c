@@ -171,11 +171,6 @@ static void fix_xstr (char *s, int p)
     }
 }
 
-enum {
-    PRINT_ALPHA,
-    PRINT_BETA
-};
-
 /* for cointegration test: print cointegrating vectors or adjustments,
    either "raw" or re-scaled */
 
@@ -183,18 +178,18 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 				 const DATAINFO *pdinfo, PRN *prn,
 				 int job, int rescale)
 {
-    gretl_matrix *c = (job == PRINT_BETA)? jv->Beta : jv->Alpha;
+    gretl_matrix *c = (job == V_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
     char xstr[32];
     int i, j;
     double x, y;
 
     if (rescale) {
-	pprintf(prn, "\n%s\n", (job == PRINT_BETA)? 
+	pprintf(prn, "\n%s\n", (job == V_BETA)? 
 		_("renormalized beta") :
 		_("renormalized alpha"));
     } else {
-	pprintf(prn, "\n%s\n", (job == PRINT_BETA)? 
+	pprintf(prn, "\n%s\n", (job == V_BETA)? 
 		_("beta (cointegrating vectors)") : 
 		_("alpha (adjustment vectors)"));
     }
@@ -211,7 +206,7 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 	    x = gretl_matrix_get(c, i, j);
 	    if (rescale) {
 		y = gretl_matrix_get(jv->Beta, j, j);
-		if (job == PRINT_BETA) {
+		if (job == V_BETA) {
 		    x /= y;
 		} else {
 		    x *= y;
@@ -784,12 +779,12 @@ print_beta_and_alpha (JohansenInfo *jv, gretl_matrix *evals, int h,
     pputc(prn, '\n');
 
     /* "raw" vectors */
-    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_BETA, 0);
-    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_ALPHA, 0);
+    print_beta_or_alpha(jv, h, pdinfo, prn, V_BETA, 0);
+    print_beta_or_alpha(jv, h, pdinfo, prn, V_ALPHA, 0);
 
     /* re-scaled versions */
-    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_BETA, 1);
-    print_beta_or_alpha(jv, h, pdinfo, prn, PRINT_ALPHA, 1);
+    print_beta_or_alpha(jv, h, pdinfo, prn, V_BETA, 1);
+    print_beta_or_alpha(jv, h, pdinfo, prn, V_ALPHA, 1);
 
     pputc(prn, '\n');
     
@@ -1155,12 +1150,13 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, PRN *prn)
     return 0;
 }
 
-static int johansen_get_eigenvalues (gretl_matrix *S00,
-				     const gretl_matrix *S01,
-				     const gretl_matrix *S11,
-				     gretl_matrix *M,
-				     gretl_matrix **evals,
-				     int rank)
+static
+int johansen_get_eigenvalues (gretl_matrix *S00,
+			      const gretl_matrix *S01,
+			      const gretl_matrix *S11,
+			      gretl_matrix *M,
+			      gretl_matrix **evals,
+			      int rank)
 {
     gretl_matrix *Tmp = NULL;
     int n = S11->cols;
@@ -1243,9 +1239,9 @@ static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *D)
     jvar->jinfo->bdf = h * (nb - gretl_matrix_cols(D));
 }
 
-static int
+int
 johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
-		  const gretl_matrix *D, PRN *prn)
+		  const gretl_matrix *H, int job, PRN *prn)
 {
     gretl_matrix *S00;
     double llr = 0.0;
@@ -1280,13 +1276,21 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals,
     if (!err) {
 	double x = 2.0 * (jvar->ll - llr);
 	int nb = gretl_matrix_rows(jvar->jinfo->Beta);
-	int df = h * (nb - gretl_matrix_cols(D));
+	int df;
+
+	if (job == V_BETA) {
+	    df = h * (nb - H->cols);
+	} else {
+	    df = h * (n - H->cols);
+	}
 
 	pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
 	pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
-		chisq_cdf_comp(x, df));
+	if (df > 0) {
+	    pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
+		    chisq_cdf_comp(x, df));
+	}
     }
 
     return err;
@@ -1338,7 +1342,7 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
    or in common across the columns of beta (or alpha)
 */
 
-static int 
+int 
 simple_restriction (GRETL_VAR *jvar,
 		    const gretl_restriction_set *rset)
 {
@@ -1624,114 +1628,12 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
     }
 
     if (!err) {
-	print_beta_or_alpha(jv, r, pdinfo, prn, PRINT_BETA, 0);
-	print_beta_or_alpha(jv, r, pdinfo, prn, PRINT_ALPHA, 0);
+	print_beta_or_alpha(jv, r, pdinfo, prn, V_BETA, 0);
+	print_beta_or_alpha(jv, r, pdinfo, prn, V_ALPHA, 0);
 	pputc(prn, '\n');
 	print_long_run_matrix(jv, pdinfo, prn);
     }
 
-    return err;
-}
-
-static int vecm_alpha_test (GRETL_VAR *jvar, 
-			    const gretl_restriction_set *rset,
-			    const DATAINFO *pdinfo, 
-			    gretlopt opt,
-			    PRN *prn)
-{
-    const gretl_matrix *R = rset_get_R_matrix(rset);
-    const gretl_matrix *S00 = jvar->jinfo->S00;
-    const gretl_matrix *S01 = jvar->jinfo->S01;
-    const gretl_matrix *S11 = jvar->jinfo->S11;
-    const gretl_matrix *R0 = jvar->jinfo->R0;
-    const gretl_matrix *R1 = jvar->jinfo->R1;
-    gretl_matrix *ASA = NULL;
-    gretl_matrix *AASAA = NULL;
-    gretl_matrix *S10 = NULL;
-    gretl_matrix *S00a = NULL;
-    gretl_matrix *S11a = NULL;
-    gretl_matrix *S01a = NULL;
-    gretl_matrix *S10a = NULL;
-    gretl_matrix *Tmp = NULL;
-    int n = jvar->neqns;
-    int m = R1->rows;
-    int err = 0;
-
-    if (!simple_restriction(jvar, rset)) {
-	err = E_NOTIMP;
-    }
-
-    gretl_matrix_print(R, "R");
-    gretl_matrix_print(S00, "S00");
-
-    ASA = gretl_matrix_alloc(R->rows, R->rows);
-    AASAA = gretl_matrix_alloc(n, n);
-    Tmp = gretl_matrix_alloc(m, n);
-
-    S10 = gretl_matrix_alloc(m, n);
-    S00a = gretl_zero_matrix_new(n, n);
-    S11a = gretl_zero_matrix_new(m, m);
-    S01a = gretl_zero_matrix_new(n, m);
-    S10a = gretl_zero_matrix_new(m, n);
-
-    gretl_matrix_multiply_mod(R1, GRETL_MOD_NONE,
-			      R0, GRETL_MOD_TRANSPOSE,
-			      S10, GRETL_MOD_NONE);
-    gretl_matrix_print(S01, "S01");
-    gretl_matrix_print(S10, "S10");
-
-    gretl_matrix_qform(R, GRETL_MOD_NONE, S00,
-		       ASA, GRETL_MOD_NONE);
-    gretl_matrix_print(ASA, "ASA");
-
-    gretl_invert_symmetric_matrix(ASA);
-    gretl_matrix_print(ASA, "inv(ASA)");
-
-    gretl_matrix_qform(R, GRETL_MOD_TRANSPOSE, ASA,
-		       AASAA, GRETL_MOD_NONE);
-    gretl_matrix_print(AASAA, "AASAA");
-
-    /* Johansen page 124 */
-
-    gretl_matrix_qform(S00, GRETL_MOD_TRANSPOSE, AASAA, 
-		       S00a, GRETL_MOD_NONE);
-    gretl_matrix_subtract_from(S00a, S00);
-    gretl_matrix_switch_sign(S00a);
-
-    gretl_matrix_reuse(Tmp, m, n);
-    gretl_matrix_multiply(S10, AASAA, Tmp);
-    gretl_matrix_multiply(Tmp, S01, S11a);
-    gretl_matrix_subtract_from(S11a, S11);
-    gretl_matrix_switch_sign(S11a);
-
-    gretl_matrix_reuse(Tmp, n, n);
-    gretl_matrix_multiply(S00, AASAA, Tmp);
-    gretl_matrix_multiply(Tmp, S01, S01a);
-    gretl_matrix_subtract_from(S01a, S01);
-    gretl_matrix_switch_sign(S01a);
-
-    gretl_matrix_reuse(Tmp, m, n);
-    gretl_matrix_multiply(S10, AASAA, Tmp);
-    gretl_matrix_multiply(Tmp, S00, S10a);
-    gretl_matrix_subtract_from(S10a, S10);
-    gretl_matrix_switch_sign(S10a);
-
-    gretl_matrix_print(S00a, "S00a");
-    gretl_matrix_print(S11a, "S11a");
-    gretl_matrix_print(S01a, "S01a");
-    gretl_matrix_print(S10a, "S10a");
-
-    /* now do the eigen thing */
-
-    gretl_matrix_free(ASA);
-    gretl_matrix_free(AASAA);
-    gretl_matrix_free(Tmp);
-    gretl_matrix_free(S10);
-    gretl_matrix_free(S00a);
-    gretl_matrix_free(S11a);
-    gretl_matrix_free(S01a);
-    gretl_matrix_free(S10a);
-  
     return err;
 }
 
@@ -1827,7 +1729,7 @@ int vecm_beta_test (GRETL_VAR *jvar,
 	if (opt & OPT_V) {
 	    gretl_matrix_print_to_prn(M, "M", prn);
 	}
-	johansen_LR_calc(jvar, evals, H, prn);
+	johansen_LR_calc(jvar, evals, H, V_BETA, prn);
     } 
 
     if (!err && (opt & OPT_V)) {

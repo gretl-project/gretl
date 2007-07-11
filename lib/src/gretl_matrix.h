@@ -251,6 +251,9 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 int 
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
 
+int 
+gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b);
+
 int gretl_matrix_I_minus (gretl_matrix *m);
 
 int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src);

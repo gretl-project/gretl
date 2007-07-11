@@ -1992,7 +1992,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 
 static int allocate_johansen_sigmas (JohansenInfo *jv)
 {
-    int k = gretl_matrix_rows(jv->R0);
+    int k = jv->R0->cols;
     int vk = k;
     int err = 0;
 
@@ -2057,24 +2057,23 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 }
 
 static void
-transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int row)
+transcribe_uhat_to_matrix (const MODEL *pmod, gretl_matrix *u, int col)
 {
-    int j, cols = gretl_matrix_cols(u);
-    int t = pmod->t1;
+    int s, t = pmod->t1;
 
-    for (j=0; j<cols; j++) {
-	gretl_matrix_set(u, row, j, pmod->uhat[t++]);
+    for (s=0; s<u->rows; s++) {
+	gretl_matrix_set(u, s, col, pmod->uhat[t++]);
     }
 }
 
 static void
 transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u, 
-			 int row, int t)
+			 int col, int t)
 {
-    int j, cols = gretl_matrix_cols(u);
+    int s;
 
-    for (j=0; j<cols; j++) {
-	gretl_matrix_set(u, row, j, Z[v][t++]);
+    for (s=0; s<u->rows; s++) {
+	gretl_matrix_set(u, s, col, Z[v][t++]);
     }
 }
 
@@ -2165,7 +2164,7 @@ allocate_johansen_residual_matrices (GRETL_VAR *jvar)
     int err = 0;
 
     if (jvar->jinfo->R0 == NULL) {
-	jvar->jinfo->R0 = gretl_matrix_alloc(jvar->neqns, T);
+	jvar->jinfo->R0 = gretl_matrix_alloc(T, vk);
 	if (jvar->jinfo->R0 == NULL) {
 	    return E_ALLOC;
 	}
@@ -2175,9 +2174,9 @@ allocate_johansen_residual_matrices (GRETL_VAR *jvar)
 	vk++;
     }
 
-    if (gretl_matrix_rows(jvar->jinfo->R1) < vk) {
+    if (gretl_matrix_cols(jvar->jinfo->R1) < vk) {
 	gretl_matrix_free(jvar->jinfo->R1);
-	jvar->jinfo->R1 = gretl_matrix_alloc(vk, T);
+	jvar->jinfo->R1 = gretl_matrix_alloc(T, vk);
 	if (jvar->jinfo->R1 == NULL) {
 	    gretl_matrix_free(jvar->jinfo->R0);
 	    jvar->jinfo->R0 = NULL;
@@ -2727,15 +2726,27 @@ johansen_driver (GRETL_VAR *jvar,
     }
 
     if (!jvar->err) {
-	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_NONE,
-				  jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
+				  jvar->jinfo->R0, GRETL_MOD_NONE,
 				  jvar->jinfo->S00, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_NONE,
-				  jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
+				  jvar->jinfo->R1, GRETL_MOD_NONE,
 				  jvar->jinfo->S11, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_NONE,
-				  jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
+				  jvar->jinfo->R1, GRETL_MOD_NONE,
 				  jvar->jinfo->S01, GRETL_MOD_NONE);
+
+#if 0
+	gretl_matrix *S10 = 
+	    gretl_matrix_alloc(jvar->jinfo->R1->cols,
+			       jvar->jinfo->R0->cols);
+	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
+				  jvar->jinfo->R0, GRETL_MOD_NONE,
+				  S10, GRETL_MOD_NONE);
+	gretl_matrix_print(jvar->jinfo->S01, "S01");
+	gretl_matrix_print(S10, "S10");
+	gretl_matrix_free(S10);
+#endif
 
 	gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
 	gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);

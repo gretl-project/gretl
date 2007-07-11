@@ -1154,6 +1154,35 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_subtract_reversed:
+ * @a: m x n matrix.
+ * @b: m x n matrix.
+ *
+ * Operates on @b such that b_{ij} = a_{ij} - b_{ij}.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * two matrices are not conformable for the operation.
+ */
+
+int 
+gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
+{
+    int i, n;
+
+    if (a->rows != b->rows || a->cols != b->cols) {
+	return E_NONCONF;
+    }
+
+    n = a->rows * b->cols;
+    
+    for (i=0; i<n; i++) {
+	b->val[i] = a->val[i] - b->val[i];
+    }
+
+    return 0;
+}
+
+/**
  * gretl_matrix_I_minus:
  * @m: original square matrix, n x n.
  *
@@ -1617,6 +1646,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 			  int packed, int errout, PRN *prn)
 {
     char numstr[32];
+    double x;
     int i, j;
 
     if (prn == NULL) {
@@ -1654,7 +1684,11 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
-		sprintf(numstr, "%#.5g", m->val[ijton(i, j, n)]);
+		x = m->val[ijton(i, j, n)];
+		if (x == -0.0) {
+		    x = 0.0;
+		}
+		sprintf(numstr, "%#.5g", x);
 		if (strstr(numstr, ".00000")) {
 		    numstr[strlen(numstr) - 1] = 0;
 		}
@@ -1665,7 +1699,11 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
     } else {
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
-		sprintf(numstr, "%#.5g", gretl_matrix_get(m, i, j));
+		x = gretl_matrix_get(m, i, j);
+		if (x == -0.0) {
+		    x = 0.0;
+		}
+		sprintf(numstr, "%#.5g", x);
 		if (strstr(numstr, ".00000")) {
 		    numstr[strlen(numstr) - 1] = 0;
 		}

@@ -20,11 +20,30 @@
 #ifndef JPRIVATE_H
 #define JPRIVATE_H
 
+enum {
+    V_ALPHA,
+    V_BETA
+};
+
+int 
+simple_restriction (GRETL_VAR *jvar,
+		    const gretl_restriction_set *rset);
+
+int
+johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
+		  const gretl_matrix *H, int job, PRN *prn);
+
 int 
 general_beta_analysis (GRETL_VAR *jvar, 
 		       const gretl_restriction_set *rset,
 		       const DATAINFO *pdinfo,
 		       gretlopt opt,
 		       PRN *prn);
+
+int vecm_alpha_test (GRETL_VAR *jvar, 
+		     const gretl_restriction_set *rset,
+		     const DATAINFO *pdinfo, 
+		     gretlopt opt,
+		     PRN *prn);
 
 #endif /* JPRIVATE_H */

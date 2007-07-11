@@ -62,6 +62,7 @@ PLUGINSRC = \
 	jmulti_import.c \
 	johansen.c \
 	jrestrict.c \
+	jalpha.c \
 	kernel.c \
 	lad.c \
 	vif.c \
@@ -364,7 +365,7 @@ plugins/sysest.dll: sysest.o fiml.o liml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/johansen.dll: johansen.o jrestrict.o dllinit.o
+plugins/johansen.dll: johansen.o jrestrict.o jalpha.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
