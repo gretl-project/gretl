@@ -171,6 +171,8 @@ static void fix_xstr (char *s, int p)
     }
 }
 
+#define ABMIN 1.0e-15
+
 /* for cointegration test: print cointegrating vectors or adjustments,
    either "raw" or re-scaled */
 
@@ -212,7 +214,7 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
 		    x *= y;
 		}
 	    }
-	    if (x == -0.0) {
+	    if (x == -0.0 || fabs(x) < ABMIN) {
 		x = 0.0;
 	    }
 	    sprintf(xstr, "%#.5g", x);
@@ -273,15 +275,12 @@ static int compute_alpha (JohansenInfo *jv)
 
 /* print the long-run matrix, \alpha \beta' */
 
-#define NEWLR 1
-
-#if NEWLR
-
 static int print_long_run_matrix (JohansenInfo *jv, 
 				  const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
     gretl_matrix *Pi;
+    double x;
     int i, j;
 
     Pi = gretl_matrix_alloc(jv->Alpha->rows, jv->Beta->rows);
@@ -311,7 +310,11 @@ static int print_long_run_matrix (JohansenInfo *jv,
     for (i=0; i<Pi->rows; i++) {
 	pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
 	for (j=0; j<Pi->cols; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(Pi, i, j));
+	    x = gretl_matrix_get(Pi, i, j);
+	    if (fabs(x) < 0.5e-14) {
+		x = 0.0;
+	    }
+	    pprintf(prn, "%#12.5g ", x);
 	}
 	pputc(prn, '\n');
     }
@@ -322,75 +325,6 @@ static int print_long_run_matrix (JohansenInfo *jv,
 
     return 0;
 }
-
-#else
-
-static void real_print_lr (JohansenInfo *jv, gretl_matrix *Z,
-			   int neqns, const DATAINFO *pdinfo, PRN *prn)
-{
-    int cols = gretl_matrix_rows(jv->S11);
-    int i, j;
-
-    pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
-
-    pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]); /* N.B. */
-    for (j=2; j<=jv->list[0]; j++) {
-	pprintf(prn, "%13s", pdinfo->varname[jv->list[j]]);
-    }
-
-    if (jv->code == J_REST_CONST) {
-	pprintf(prn, "%13s", "const");
-    } else if (jv->code == J_REST_TREND) {
-	pprintf(prn, "%13s", "trend");
-    }    
-
-    pputc(prn, '\n');
-
-    for (i=0; i<neqns; i++) {
-	pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
-	for (j=0; j<cols; j++) {
-	    pprintf(prn, "%#12.5g ", gretl_matrix_get(Z, i, j));
-	}
-	pputc(prn, '\n');
-    }
-
-    pputc(prn, '\n');
-}
-
-static int 
-print_long_run_matrix (JohansenInfo *jv, const DATAINFO *pdinfo, 
-		       PRN *prn)
-{
-    gretl_matrix *Z = NULL;
-    gretl_matrix *tmp = NULL;
-    int n = jv->Alpha->rows;
-    int nv = gretl_matrix_rows(jv->S11);
-    int err = 0;
-
-    Z = gretl_matrix_alloc(n, nv); 
-    tmp = gretl_matrix_alloc(nv, nv);
-
-    if (Z == NULL || tmp == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_mod(jv->Beta, GRETL_MOD_NONE,
-				  jv->Beta, GRETL_MOD_TRANSPOSE,
-				  tmp, GRETL_MOD_NONE);
-
-	/* Z = S01*A*A' */
-	gretl_matrix_multiply(jv->S01, tmp, Z);
-	real_print_lr(jv, Z, n, pdinfo, prn);
-    }
-
-    gretl_matrix_free(Z);
-    gretl_matrix_free(tmp);
-    
-    return err;
-}
-
-#endif
 
 /* Compute Hamilton's Omega (Johansen 1991 calls it Lambda): the
    cross-equation variance matrix.
@@ -1598,6 +1532,18 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+void print_beta_alpha_Pi (JohansenInfo *jv,
+			  const DATAINFO *pdinfo,
+			  PRN *prn)
+{
+    int r = jv->rank;
+
+    print_beta_or_alpha(jv, r, pdinfo, prn, V_BETA, 0);
+    print_beta_or_alpha(jv, r, pdinfo, prn, V_ALPHA, 0);
+    pputc(prn, '\n');
+    print_long_run_matrix(jv, pdinfo, prn);
+}
+
 /* compute and print beta, alpha and alpha*beta', in the context where
    we've tested a (common, homogeneous) restriction on beta,
    represented by H, and verbose output has been requested.
@@ -1609,18 +1555,19 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
 				const DATAINFO *pdinfo,
 				PRN *prn)
 {
-    int r = jv->rank;
     int err = 0;
 
     gretl_matrix_multiply_mod(H, GRETL_MOD_NONE,
 			      M, GRETL_MOD_NONE,
 			      jv->Beta, GRETL_MOD_NONE);
 
-    if (r == 1) { 
+    if (jv->rank == 1) { 
 	/* and if r > 1? */
 	double den = jv->Beta->val[0];
 
-	gretl_matrix_divide_by_scalar(jv->Beta, den);
+	if (!floateq(den, 0.0)) {
+	    gretl_matrix_divide_by_scalar(jv->Beta, den);
+	}
     }
 
     if (!err) {
@@ -1628,10 +1575,7 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
     }
 
     if (!err) {
-	print_beta_or_alpha(jv, r, pdinfo, prn, V_BETA, 0);
-	print_beta_or_alpha(jv, r, pdinfo, prn, V_ALPHA, 0);
-	pputc(prn, '\n');
-	print_long_run_matrix(jv, pdinfo, prn);
+	print_beta_alpha_Pi(jv, pdinfo, prn);
     }
 
     return err;

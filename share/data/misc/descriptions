@@ -2,6 +2,7 @@
 "abdata","Arellano and Bond (1991) panel data"
 "anscombe","Anscombe's Quartet (artificial data)"
 "arma","Artificial data for ARMA script example"
+"australia","Johansen's Australian macroeconomic data"
 "b-g","Bollerslev and Ghysels exchange rate data"
 "bjg","Box and Jenkins Series G (airline passengers)"
 "denmark","Johansen's Danish macroeconomic data"

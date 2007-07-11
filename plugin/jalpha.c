@@ -177,6 +177,82 @@ int alt_get_eigenvalues (gretl_matrix *AS00,
     return err;
 }
 
+static int alpha_compute_alpha (JohansenInfo *jv,
+				const gretl_matrix *S11a,
+				const gretl_matrix *S01a)
+{
+    const gretl_matrix *B = jv->Beta;
+    gretl_matrix *a = NULL;
+    gretl_matrix *BSB = NULL;
+    gretl_matrix *Tmp = NULL;
+    int err = 0;
+
+    BSB = gretl_matrix_alloc(B->cols, B->cols);
+    Tmp = gretl_matrix_alloc(B->rows, B->cols);
+    a = gretl_matrix_alloc(jv->S01->rows, B->cols);
+
+    if (BSB == NULL || Tmp == NULL || a == NULL) {
+	err = E_ALLOC;
+    } 
+
+    if (!err) {
+	err = gretl_matrix_qform(B, GRETL_MOD_TRANSPOSE, S11a,
+				 BSB, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(BSB);
+    }
+
+    if (!err) {
+	gretl_matrix_multiply(B, BSB, Tmp);
+	gretl_matrix_multiply(S01a, Tmp, a);
+    }
+
+    gretl_matrix_free(BSB);
+    gretl_matrix_free(Tmp);
+
+    if (!err) {
+	jv->Alpha = a;
+    } else {
+	gretl_matrix_free(a);
+    }
+
+    return err;
+}
+
+static int 
+alpha_test_show_beta (JohansenInfo *jv, 
+		      const gretl_matrix *M,
+		      const gretl_matrix *S11a,
+		      const gretl_matrix *S01a,
+		      const DATAINFO *pdinfo,
+		      PRN *prn)
+{
+    int err = 0;
+
+    gretl_matrix_copy_values(jv->Beta, M);
+
+    if (jv->rank) { 
+	/* and if r > 1? */
+	double den = jv->Beta->val[0];
+
+	if (!floateq(den, 0.0)) {
+	    gretl_matrix_divide_by_scalar(jv->Beta, den);
+	}
+    }
+
+    if (!err) {
+	err = alpha_compute_alpha(jv, S11a, S01a);
+    }
+
+    if (!err) {
+	print_beta_alpha_Pi(jv, pdinfo, prn);
+    }
+
+    return err;
+}
+
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,
 		     const DATAINFO *pdinfo, 
@@ -278,7 +354,10 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	    johansen_LR_calc(jvar, evals, A, V_ALPHA, prn);
 	} 
 
-	/* we could compute \beta here */
+	if (!err && (opt & OPT_V)) {
+	    alpha_test_show_beta(jvar->jinfo, M, S11a, S01a,
+				 pdinfo, prn);
+	}
 
 	gretl_matrix_free(evals);
 	gretl_matrix_free(M);
