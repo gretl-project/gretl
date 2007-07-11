@@ -363,14 +363,13 @@ static gretl_matrix *augmented_H (const gretl_matrix *H,
     return H1;
 }
 
-static void rank_error_message (int i, int j, int *k, int r, int rmin,
+static void rank_check_message (int i, int j, int *k, int r, int rmin,
 				PRN *prn)
 {
     i++, j++; /* convert to 1-based */
 
     if (k == NULL) {
-	pprintf(prn, "Rank of R%d * H%d = %d, should be >= %d\n", 
-		i, j, r, rmin);
+	pprintf(prn, "Rank of R%d * H%d = %d", i, j, r);
     } else {
 	int p;
 
@@ -378,8 +377,10 @@ static void rank_error_message (int i, int j, int *k, int r, int rmin,
 	for (p=1; p<rmin; p++) {
 	    pprintf(prn, ":H%d", k[p] + 1);
 	}
-	pprintf(prn, ") = %d, should be >= %d\n", r, rmin);
+	pprintf(prn, ") = %d", r);
     }
+
+    pprintf(prn, ", should be >= %d\n", rmin);
 }
 
 static int rank_check (const gretl_matrix *R, const gretl_matrix *H,
@@ -393,9 +394,14 @@ static int rank_check (const gretl_matrix *R, const gretl_matrix *H,
     if (!err) {
 	r = gretl_matrix_rank(RH, &err);
 	if (r < rmin) {
-	    rank_error_message(i, j, k, r, rmin, prn);
+	    rank_check_message(i, j, k, r, rmin, prn);
 	    err = E_NOIDENT;
 	}
+#if JDEBUG > 1
+	if (r >= rmin) {
+	    rank_check_message(i, j, k, r, rmin, prn);
+	}
+#endif
 	gretl_matrix_free(RH);
     } 
 
@@ -508,10 +514,6 @@ identification_check (Jwrap *J, gretl_matrix **R,
 		}
 	    }
 	}
-#if JDEBUG
-	fprintf(stderr, "i=%d: Rtmp[i] at %p, Htmp[i] at %p\n", i,
-		(void *) Rtmp[i], (void *) Htmp[i]);
-#endif
     }	
 
     /* conduct the rank tests on R_i * H_j, etc. */
@@ -521,13 +523,11 @@ identification_check (Jwrap *J, gretl_matrix **R,
 	    if (i == j) {
 		continue;
 	    }
-#if JDEBUG
-	    fprintf(stderr, "i=%d, j=%d, starting rank_check\n", i, j);
-#endif
 	    err = rank_check(Rtmp[i], Htmp[j], i, j, NULL, 1, prn);
 	    if (!err && k != NULL) {
 		k[0] = j;
-		err = extra_check(i, j, k, 1, J->nC, Rtmp, Htmp, prn);
+		err = extra_check(i, j, k, 1, J->nC - 1, 
+				  Rtmp, Htmp, prn);
 	    }
 	}
     }
