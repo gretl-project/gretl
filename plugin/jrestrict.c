@@ -424,6 +424,11 @@ static int extra_check (int i, int j, int *k, int d, int dmax,
 	    err = E_ALLOC;
 	} else {
 	    for (p=1; p<=d && !err; p++) {
+#if JDEBUG > 1
+		fprintf(stderr, "extra_check: i=%d, j=%d, d=%d, dmax=%d,"
+			" Htmp=%p, p=%d, k[p]=%d\n", i, j, d, dmax,
+			(void *) Htmp, p, k[p]);
+#endif
 		err = gretl_matrix_inplace_colcat(Htmp, H[k[p]], NULL);
 	    }	
 	    if (!err) {
@@ -473,6 +478,11 @@ identification_check (Jwrap *J, gretl_matrix **R,
 	err = E_ALLOC;
     }
 
+#if JDEBUG
+    fprintf(stderr, "identification_check: Rtmp and Htmp: size %d, err = %d\n",
+	    J->nC, err);
+#endif
+
     for (i=0; i<J->nC && !err; i++) {
 	if (gretl_is_zero_matrix(ss[i])) {
 	    /* restriction is homogeneous */
@@ -498,6 +508,10 @@ identification_check (Jwrap *J, gretl_matrix **R,
 		}
 	    }
 	}
+#if JDEBUG
+	fprintf(stderr, "i=%d: Rtmp[i] at %p, Htmp[i] at %p\n", i,
+		(void *) Rtmp[i], (void *) Htmp[i]);
+#endif
     }	
 
     /* conduct the rank tests on R_i * H_j, etc. */
@@ -507,6 +521,9 @@ identification_check (Jwrap *J, gretl_matrix **R,
 	    if (i == j) {
 		continue;
 	    }
+#if JDEBUG
+	    fprintf(stderr, "i=%d, j=%d, starting rank_check\n", i, j);
+#endif
 	    err = rank_check(Rtmp[i], Htmp[j], i, j, NULL, 1, prn);
 	    if (!err && k != NULL) {
 		k[0] = j;
