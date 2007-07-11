@@ -3712,39 +3712,17 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
     return rank;
 }
 
-static int gretl_matrix_rank_QR (const gretl_matrix *a, int *err)
-{
-    gretl_matrix *Q = NULL;
-    gretl_matrix *R = NULL;
-    int r = a->rows;
-    int c = a->cols;
-    int rank = -1;
+/**
+ * gretl_matrix_rank:
+ * @a: matrix to examine.
+ * @err: location to receive error code on failure.
+ * 
+ * Computes the rank of @a via its SV decomposition.
+ *
+ * Returns: the rank of @a, or 0 on failure.
+ */
 
-    if (c > r) {
-	Q = gretl_matrix_copy_transpose(a);
-	R = gretl_matrix_alloc(r, r);
-    } else {
-	Q = gretl_matrix_copy(a);
-	R = gretl_matrix_alloc(c, c);
-    }
-
-    if (Q == NULL || R == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*err = gretl_matrix_QR_decomp(Q, R);
-    }
-
-    if (!*err) {
-	rank = get_R_rank(R);
-    }
-
-    gretl_matrix_free(Q);
-    gretl_matrix_free(R);
-
-    return rank;
-}
-
-static int gretl_matrix_rank_SVD (const gretl_matrix *a, int *err)
+int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
     gretl_matrix *S = NULL;
     int k = (a->rows < a->cols)? a->rows : a->cols;
@@ -3758,33 +3736,11 @@ static int gretl_matrix_rank_SVD (const gretl_matrix *a, int *err)
 		rank++;
 	    }
 	}
-    }
+    } 
 
     gretl_matrix_free(S);
 
     return rank;
-}
-
-/**
- * gretl_matrix_rank:
- * @a: matrix to examine.
- * @err: location to receive error code on failure.
- * 
- * Computes the rank of @a via either its QR decomposition,
- * or, if @a is square, its SV decomposition.  If you
- * already have the QR decomposition of @a, you can use
- * gretl_check_QR_rank().
- *
- * Returns: the rank of @a, or -1 on failure.
- */
-
-int gretl_matrix_rank (const gretl_matrix *a, int *err)
-{
-    if (1 || (a->rows == a->cols)) {
-	return gretl_matrix_rank_SVD(a, err);
-    } else {
-	return gretl_matrix_rank_QR(a, err);
-    }
 }
 
 /**
