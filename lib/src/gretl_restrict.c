@@ -629,7 +629,9 @@ static int test_user_matrices (gretl_restriction_set *rset)
 
     if (R->cols != rset->kmax) {
 	if (rset->vecm) {
-	    if (R->cols == gretl_VECM_n_beta(rset->obj)) {
+	    int nb = gretl_VECM_n_beta(rset->obj);
+
+	    if (R->cols == nb && R->rows <= nb) {
 		rset->bmulti = 0;
 	    } else {
 		return E_NONCONF;
