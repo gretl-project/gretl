@@ -21,6 +21,7 @@
 #include "system.h"
 #include "var.h"
 #include "objstack.h"
+#include "usermat.h"
 #include "matrix_extra.h"
 #include "gretl_restrict.h"
 #include "bootstrap.h"
@@ -50,6 +51,7 @@ struct restriction_ {
 
 struct restriction_set_ {
     int k;                        /* number of restrictions (rows) */
+    int kmax;                     /* max. possible restrictions */
     int bmulti;                   /* pertains to multi-equation system? */
     int amulti;                   /* VECM only */
     int bcols, acols;             /* VECM only */
@@ -598,6 +600,48 @@ static int vecm_form_matrices (gretl_restriction_set *rset)
     return err;
 }
 
+/* we were given R and/or q directly by the user: check them
+   for basic sanity */
+
+static int test_user_matrices (gretl_restriction_set *rset)
+{
+    gretl_matrix *R = rset->R;
+    gretl_matrix *q = rset->q;
+
+    if (R == NULL || q == NULL) {
+	/* we didn't get both parts */
+	return E_DATA;
+    }
+
+    if ((R->rows != q->rows) || q->cols != 1) {
+	/* R and q don't work */
+	return E_NONCONF;
+    }
+
+    if (R->rows > rset->kmax) {
+	/* too many restrictions */
+	return E_NONCONF;
+    }    
+
+    if (rset->vecm) {
+	rset->bcols = R->cols;
+    }
+
+    if (R->cols != rset->kmax) {
+	if (rset->vecm) {
+	    if (R->cols == gretl_VECM_n_beta(rset->obj)) {
+		rset->bmulti = 0;
+	    } else {
+		return E_NONCONF;
+	    }
+	} else {
+	    return E_NONCONF;
+	}
+    }
+
+    return 0;
+}
+
 /* create the matrices needed for testing a set of restrictions */
 
 static int 
@@ -605,7 +649,9 @@ restriction_set_form_matrices (gretl_restriction_set *rset)
 {
     int err = 0;
 
-    if (rset->type == GRETL_OBJ_EQN) {
+    if (rset->R != NULL || rset->q != NULL) {
+	err = test_user_matrices(rset);
+    } else if (rset->type == GRETL_OBJ_EQN) {
 	err = equation_form_matrices(rset);
     } else if (rset->type == GRETL_OBJ_VAR) {
 	err = vecm_form_matrices(rset);
@@ -1008,6 +1054,10 @@ print_restriction_set (const gretl_restriction_set *rset,
 {
     int i;
 
+    if (rset->k == 0) {
+	return;
+    }
+
     if (rset->k > 1) {
 	pputs(prn, _("Restriction set"));
     } else {
@@ -1114,8 +1164,8 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum,
 }
 
 static gretl_restriction_set *
-real_restriction_set_start (void *ptr, GretlObjType type,
-			    gretlopt opt)
+restriction_set_new (void *ptr, GretlObjType type,
+		     gretlopt opt)
 {
     gretl_restriction_set *rset;
 
@@ -1132,6 +1182,7 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->bsd = NADBL;
 
     rset->k = 0;
+    rset->kmax = 0;
     rset->R = NULL;
     rset->q = NULL;
     rset->mask = NULL;
@@ -1144,7 +1195,12 @@ real_restriction_set_start (void *ptr, GretlObjType type,
     rset->vecm = 0;
     rset->code = GRETL_STAT_NONE;
 
-    if (rset->type == GRETL_OBJ_SYS) {
+    if (rset->type == GRETL_OBJ_EQN) {
+	MODEL *pmod = ptr;
+
+	rset->kmax = pmod->ncoeff;
+    } else if (rset->type == GRETL_OBJ_SYS) {
+	rset->kmax = system_n_indep_vars(ptr);
 	rset->bmulti = 1;
     } else if (rset->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = ptr;
@@ -1154,6 +1210,8 @@ real_restriction_set_start (void *ptr, GretlObjType type,
 	    rset->amulti = 1;
 	}
 	rset->vecm = VECM_B;
+	rset->kmax = gretl_VECM_n_beta(var) *
+	    gretl_VECM_rank(var);
     } 
 
     return rset;
@@ -1164,51 +1222,99 @@ real_restriction_set_start (void *ptr, GretlObjType type,
    to be restricted */
 
 static int bnum_out_of_bounds (const gretl_restriction_set *rset,
-			       int i, int eq, char letter)
+			       int i, int j, char letter)
 {
     int ret = 1;
 
     if (rset->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = rset->obj;
 
-	if (eq >= gretl_VECM_rank(var)) {
+	if (i >= gretl_VECM_rank(var)) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		    eq + 1);
-	} else if ((letter == 'b' && i >= gretl_VECM_n_beta(var)) ||
-		   (letter == 'a' && i >= gretl_VECM_n_alpha(var))) {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
 		    i + 1);
+	} else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
+		   (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
+	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		    j + 1);
 	} else {
 	    ret = 0;
 	}
     } else if (rset->type == GRETL_OBJ_SYS) {
 	gretl_equation_system *sys = rset->obj;
-	const int *list = system_get_list(sys, eq);
+	const int *list = system_get_list(sys, i);
 
 	if (list == NULL) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		    eq + 1);
-	} else if (i >= list[0] - 1) {
+		    i + 1);
+	} else if (j >= list[0] - 1) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) out of range "
-				    "for equation %d"), i + 1, eq + 1);
+				    "for equation %d"), j + 1, i + 1);
 	} else {
 	    ret = 0;
 	}
     } else {
 	MODEL *pmod = rset->obj;
 
-	if (eq > 0) {
+	if (i > 0) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
-		    eq + 1);
-	} else if (i >= pmod->ncoeff || i < 0) {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
 		    i + 1);
+	} else if (j >= pmod->ncoeff || j < 0) {
+	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		    j + 1);
 	} else {
 	    ret = 0;
 	}
     }
 
     return ret;
+}
+
+static int 
+read_matrix_line (const char *s, gretl_restriction_set *rset)
+{
+    const gretl_matrix *m;
+    char mname[VNAMELEN];
+    char job = *s;
+    int err = 0;
+
+    if (rset->k > 0) {
+	return E_PARSE;
+    } else if (job == 'R' && rset->R != NULL) {
+	return E_PARSE;
+    } else if (job == 'q' && rset->q != NULL) {
+	return E_PARSE;
+    }
+
+    s++;
+    while (isspace((unsigned char) *s)) s++;
+    if (*s != '=') {
+	return E_PARSE;
+    }
+
+    s++;
+    while (isspace((unsigned char) *s)) s++;
+    if (sscanf(s, "%15s", mname) != 1) {
+	return E_PARSE;
+    }
+
+    m = get_matrix_by_name(mname);
+    if (m == NULL) {
+	return E_UNKVAR;
+    } 
+
+    if (job == 'R') {
+	rset->R = gretl_matrix_copy(m);
+	if (rset->R == NULL) {
+	    err = E_ALLOC;
+	}
+    } else if (job == 'q') {
+	rset->q = gretl_matrix_copy(m);
+	if (rset->q == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
 }
 
 static int 
@@ -1236,6 +1342,14 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 	}
 	p += 8;
 	while (isspace((unsigned char) *p)) p++;
+    }
+
+    if (*p == 'R' || *p == 'q') {
+	err = read_matrix_line(p, rset);
+	if (err) {
+	    destroy_restriction_set(rset);
+	}
+	return err;
     }
 
     if (*p == '+' || *p == '-') {
@@ -1280,7 +1394,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 				&letter, pdinfo);
 	if (err) {
 	    break;
-	} else if (bnum_out_of_bounds(rset, bnum, eq, letter)) {
+	} else if (bnum_out_of_bounds(rset, eq, bnum, letter)) {
 	    err = E_DATA;
 	    break;
 	}
@@ -1314,24 +1428,11 @@ int
 restriction_set_parse_line (gretl_restriction_set *rset, const char *line,
 			    const DATAINFO *pdinfo)
 {
-    int nx = 0;
-
-    if (rset->type == GRETL_OBJ_EQN) {
-	MODEL *pmod = rset->obj;
-
-	nx = pmod->ncoeff;
-    } else if (rset->type == GRETL_OBJ_SYS) {
-	nx = system_n_indep_vars(rset->obj);
-    } else if (rset->type == GRETL_OBJ_VAR) {
-	nx = gretl_VECM_n_beta(rset->obj);
-	nx *= gretl_VECM_rank(rset->obj);
-    }
-
-    if (rset->k >= nx) {
+    if (rset->k > rset->kmax) {
 	sprintf(gretl_errmsg, _("Too many restrictions (maximum is %d)"), 
-		nx - 1);
+		rset->kmax);
 	destroy_restriction_set(rset);
-	return 1;
+	return E_DATA;
     }
 
     return real_restriction_set_parse_line(rset, line, pdinfo, 0);
@@ -1344,7 +1445,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(var, GRETL_OBJ_VAR, OPT_NONE);
+    rset = restriction_set_new(var, GRETL_OBJ_VAR, OPT_NONE);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -1370,7 +1471,7 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(sys, GRETL_OBJ_SYS, OPT_NONE);
+    rset = restriction_set_new(sys, GRETL_OBJ_SYS, OPT_NONE);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -1391,7 +1492,7 @@ eqn_restriction_set_start (const char *line, MODEL *pmod, gretlopt opt)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(pmod, GRETL_OBJ_EQN, opt);
+    rset = restriction_set_new(pmod, GRETL_OBJ_EQN, opt);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -1452,7 +1553,7 @@ restriction_set_start (const char *line, gretlopt opt, int *err)
     }
 #endif
 
-    rset = real_restriction_set_start(ptr, type, opt);
+    rset = restriction_set_new(ptr, type, opt);
     if (rset == NULL) {
 	*err = E_ALLOC;
     }
@@ -1886,7 +1987,15 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 
     rset->opt |= opt;
 
-    print_restriction_set(rset, pdinfo, prn);
+    if (rset->R != NULL && rset->q != NULL) {
+#if 0
+	print_restriction_from_matrices(rset->R, rset->q, 
+					npar, prn);
+#endif
+	;
+    } else {
+	print_restriction_set(rset, pdinfo, prn);
+    }
 
     if (t == GRETL_OBJ_VAR && gretl_is_restricted_VECM(rset->obj)) {
 	err = restriction_set_form_matrices(rset);
@@ -1959,7 +2068,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 	return E_NOTIMP;
     }
 
-    r = real_restriction_set_start(pmod, GRETL_OBJ_EQN, OPT_Q | OPT_C);
+    r = restriction_set_new(pmod, GRETL_OBJ_EQN, OPT_Q | OPT_C);
     if (r == NULL) {
 	return 1;
     }
