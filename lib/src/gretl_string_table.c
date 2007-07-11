@@ -290,7 +290,8 @@ static saved_string built_ins[] = {
     { "x12a",     NULL },
     { "x12adir",  NULL },
     { "tramo",    NULL },
-    { "tramodir", NULL }
+    { "tramodir", NULL },
+    { "seats",    NULL }
 };
 
 #ifdef WIN32

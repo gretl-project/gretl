@@ -761,6 +761,8 @@ static int set_tramo_x12a_dirs (PATHS *ppaths, int baddir)
 
 static void copy_paths_to_internal (PATHS *paths)
 {
+    int n;
+
     strcpy(gretl_paths.userdir,  paths->userdir);
     strcpy(gretl_paths.gnuplot,  paths->gnuplot);
     strcpy(gretl_paths.x12a,     paths->x12a);
@@ -776,6 +778,15 @@ static void copy_paths_to_internal (PATHS *paths)
     gretl_insert_builtin_string("x12adir",   paths->x12adir);
     gretl_insert_builtin_string("tramo",     paths->tramo);
     gretl_insert_builtin_string("tramodir",  paths->tramodir);
+
+    n = strlen(paths->tramo);
+    if (n >= 5) {
+	char seats[MAXLEN] = {0};
+
+	strncat(seats, paths->tramo, n - 5);
+	strcat(seats, "seats");
+	gretl_insert_builtin_string("seats", seats);
+    }
 }
 
 const char *gretl_lib_path (void)
