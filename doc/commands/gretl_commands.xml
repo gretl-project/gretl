@@ -6191,25 +6191,31 @@
 	<example>pvalue F 4 58 fval</example>
 	<example>pvalue G xbar varx x</example>
 	<example>pvalue B bprob 10 6</example>
+	<example>pvalue P lambda x</example>
       </examples>
     </usage>
 
     <description>
       <para>
 	Computes the area to the right of <repl>xval</repl> in the
-	specified distribution (<lit>z</lit> for Gaussian,
-	<lit>t</lit> for Student's <mathvar>t</mathvar>, <lit>X</lit>
-	for chi-square, <lit>F</lit> for <mathvar>F</mathvar>,
-	<lit>G</lit> for gamma, or <lit>B</lit> for binomial).  
+	specified distribution (<lit>z</lit> for Gaussian, <lit>t</lit>
+	for Student's <mathvar>t</mathvar>, <lit>X</lit> for chi-square,
+	<lit>F</lit> for <mathvar>F</mathvar>, <lit>G</lit> for gamma,
+	<lit>B</lit> for binomial, or <lit>P</lit> for Poisson).  
       </para>
       <para>
-	For the <mathvar>t</mathvar> and chi-square distributions the
-	degrees of freedom must be given; for <mathvar>F</mathvar>
-	numerator and denominator degrees of freedom are required; for
-	gamma the mean and variance are needed; and for the binomial
-	distribution the <quote>success</quote> probability and the
-	number of trials must be given.  In each case, these extra
-	values are provided before the <repl>xval</repl>.
+	Depending on the distribution, the following information must be
+	given, before the <repl>xval</repl>: for the <mathvar>t</mathvar>
+	and chi-square distributions, the degrees of freedom; for
+	<mathvar>F</mathvar>, the numerator and denominator degrees of
+	freedom; for gamma, the mean and variance; for the binomial
+	distribution, the <quote>success</quote> probability and the
+	number of trials; and for the Poisson distribution, the parameter
+	&lgr; (which is both the mean and the variance).  Note: the
+	parameters for the gamma distribution are sometimes given as shape
+	and scale rather than mean and variance.  The mean is the product
+	of the shape and the scale; the variance is the product of the
+	shape and the square of the scale.  
       </para>
       <para>
 	As shown in the examples above, the numerical parameters

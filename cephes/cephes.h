@@ -20,8 +20,8 @@ double incbi (double, double, double);   /* incbi.c */
 double lgam (double);                    /* gamma.c */
 double cephes_log (double);              /* unity.c */
 double ndtri (double);                   /* ndtri.c */
-double p1evl (double, double *, int);      /* polevl.c */
-double polevl (double, double *, int);     /* polevl.c */
+double p1evl (double, double *, int);    /* polevl.c */
+double polevl (double, double *, int);   /* polevl.c */
 
 #ifndef INFINITY
 extern double INFINITY;

@@ -634,9 +634,25 @@ double bvnorm_cdf (double a, double b, double rho)
 static double poisson_pmf (double lambda, int k)
 {
     double den = x_factorial((double) k);
-    double l1 = exp(-lambda);
+    double l0 = exp(-lambda);
+    double p;
 
-    return l1 * pow(lambda, (double) k) / den;
+    if (na(den) || isinf(den) || isnan(den)) {
+	p = NADBL;
+    } else {
+	p = l0 * pow(lambda, (double) k) / den;
+    }
+
+    if (na(p) || isinf(p) || isnan(p)) {
+	int i;
+
+	p = l0;
+	for (i=1; i<=k; i++) {
+	    p *= lambda / i;
+	}
+    } 
+
+    return p;
 }
 
 /**
@@ -650,16 +666,26 @@ static double poisson_pmf (double lambda, int k)
 
 static double poisson_cdf (double lambda, int k)
 {
-    double l1, l2, den, x = 0.0;
+    double x, l0 = exp(-lambda);
     int i;
 
-    l1 = exp(-lambda);
-    l2 = 1.0;
+    if (k > 133) {
+	double p;
 
-    for (i=0; i<=k; i++) {
-	den = x_factorial((double) i);
-	x += l1 * l2 / den;
-	l2 *= lambda;
+	x = p = l0;
+	for (i=1; i<=k; i++) {
+	    p *= lambda / i;
+	    x += p;
+	}	    
+    } else {
+	double den, l1 = 1.0;
+
+	x = 0.0;
+	for (i=0; i<=k; i++) {
+	    den = x_factorial((double) i);
+	    x += l0 * l1 / den;
+	    l1 *= lambda;
+	}
     }
 
     return x;
