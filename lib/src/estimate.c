@@ -2015,7 +2015,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		goto bailout;
 	    }
 
-	    diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
+	    diff = (rho > rho0)? rho - rho0 : rho0 - rho;
 	    rho0 = rho;
 	    if (iter == 30) break;
 	}
