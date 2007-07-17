@@ -691,6 +691,56 @@ static double poisson_cdf (double lambda, int k)
     return x;
 }
 
+#if 0 /* not ready */
+
+static double bincoeff (int n, int r)
+{
+    double c;
+    int i, j;
+
+    if (r > n) {
+	return 0;
+    } else if (r == n) {
+	return 1;
+    }
+
+    c = (n - r > r)? n - r : r;
+    if (c < n) c += 1;
+
+    for (i=c+1, j=2; i<=n; i+=1, j++) {
+	c *= i;
+	c /= j;
+    }
+
+    return c;
+}
+
+static double hypergeom_pmf (int k, int N, int m, int n)
+{
+    double c1, c2, c3;
+
+    c1 = (n + m - N > 0)? n + m - N : 0;
+    c2 = (m < n)? m : n;
+
+    if (c1 > c2) {
+	c3 = c1;
+	c1 = c2;
+	c2 = c3;
+    }
+
+    if (k < c1 || k > c2) {
+	return 0;
+    }
+
+    c1 = bincoeff(m, k);
+    c2 = bincoeff(N - m, n - k);
+    c3 = bincoeff(N, n);
+
+    return c1 * c2 / c3;
+}
+
+#endif
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
