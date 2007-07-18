@@ -3647,7 +3647,7 @@
         Questa procedura è progettata per correggere l'effetto
         della correlazione seriale nel termine di errore. Viene mostrato
         un grafico della somma dei quadrati degli errori per il modello
-        trasformato rispetto ai valori di rho da &minus;0.99 a 0.99.
+        trasformato rispetto ai valori di &rgr; da &minus;0.99 a 0.99.
       </para>
     </description>
 
@@ -6095,6 +6095,7 @@
 	<example>pvalue F 4 58 fval</example>
 	<example>pvalue G xbar varx x</example>
         <example>pvalue B bprob 10 6</example>
+	<example>pvalue P lambda x</example>
       </examples>
     </usage>
 
@@ -6104,15 +6105,22 @@
         distribuzione indicata (<lit>z</lit> per la Gaussiana,
 	<lit>t</lit> per la <mathvar>t</mathvar> di Student, <lit>X</lit>
 	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar>,
-	<lit>G</lit> per la gamma e <lit>B</lit> per la binomiale).
+	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale e
+        <lit>P</lit> per la Poisson).
       </para>
       <para>
-        Per le distribuzioni <mathvar>t</mathvar> e chi-quadro vanno indicati i
-        gradi di libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
-        libertà al numeratore e al denominatore; per la gamma sono richieste la
-        media e la varianza; per la binomiale sono richieste la probabilità di
-        <quote>successo</quote> e il numero di prove. In ogni caso questi
-        argomenti aggiuntivi vanno specificati prima del <repl>valore-x</repl>.
+	A seconda della distribuzione, occorre fornire le seguenti informazioni,
+        prima del <repl>valore-x</repl>: per le distribuzioni <mathvar>t</mathvar>
+        e chi-quadro occorre indicare i gradi di libertà; per la
+        <mathvar>F</mathvar> sono richiesti i gradi di libertà al numeratore e
+        al denominatore; per la gamma sono richieste la media e la varianza; per
+        la binomiale sono richieste la probabilità di <quote>successo</quote> e
+        il numero di prove; per la distribuzione di Poisson va indicato il
+        parametro &lgr; (che rappresenta sia la media che la varianza).
+        Si noti che talvolta la distribuzione gamma viene caratterizzata dai
+        parametri di forma e scala, invece che da media e varianza: la media è
+        il prodotto di forma e scala, mentre la varianza è il prodotto tra la
+        forma e il quadrato della scala.
       </para>
       <para>
         Come si nota dagli esempi, gli argomenti numerici possono essere
