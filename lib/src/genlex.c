@@ -437,8 +437,7 @@ void context_error (int c, parser *p)
 {
     parser_print_input(p);
     if (c != 0) {
-	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), 
-		p->ch);
+	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
     } else {
 	pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
 		getsymb(p->sym, p));
@@ -773,6 +772,7 @@ static int ok_dbl_char (int ch, char *s, int i)
 
 static double getdbl (parser *p)
 {
+    const char *followers = "+-*/%^&|=<>?,;:)]} \t\n";
     char xstr[NUMLEN] = {0};
     double d = NADBL;
     int i = 0;
@@ -806,6 +806,12 @@ static double getdbl (parser *p)
     } else {
 	d = dot_atof(xstr);
     }
+    
+    /* a number must be followed by an operator, "punctuation", 
+       white space, or nothing */
+    if (p->ch != '\0' && !strchr(followers, p->ch)) {
+	context_error(p->ch, p);
+    }    
 
     return d;
 }
@@ -829,6 +835,10 @@ static void deprecation_note (parser *p)
 
 void lex (parser *p)
 {
+#if LDEBUG
+    fprintf(stderr, "lex: p->ch = '%c'\n", p->ch);
+#endif
+
     while (p->ch != 0) {
 	switch (p->ch) {
 	case ' ':

@@ -4140,6 +4140,10 @@ int parser_getc (parser *p)
 	p->point += 1;
     }
 
+#if EDEBUG > 1
+    fprintf(stderr, "parser_getc: returning '%c'\n", p->ch);
+#endif    
+
     return p->ch;
 }
 
@@ -5554,10 +5558,12 @@ int realgen (const char *s, parser *p, double ***pZ,
 
 #if EDEBUG
     fprintf(stderr, "after expr, p->tree->type = %d\n", p->tree->t);
-    if (p->ch != 0) {
-	fprintf(stderr, " p->ch = %c\n", p->ch);
-    }
 #endif
+
+    if (p->ch != 0) {
+	context_error(p->ch, p);
+	return p->err;
+    }    
 
     if (flags & P_COMPILE) {
 	return p->err;

@@ -2077,11 +2077,11 @@ transcribe_data_as_uhat (int v, const double **Z, gretl_matrix *u,
     }
 }
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, 
-			  const gretl_restriction_set *rset,
-			  const DATAINFO *pdinfo, 
-			  gretlopt opt,
-			  PRN *prn)
+int gretl_VECM_test (GRETL_VAR *vecm, 
+		     const gretl_restriction_set *rset,
+		     const DATAINFO *pdinfo, 
+		     gretlopt opt,
+		     PRN *prn)
 {
     void *handle = NULL;
     int (*vecm_beta_test) (GRETL_VAR *, 
@@ -3162,9 +3162,18 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm)
     return NULL;
 }
 
-int gretl_is_restricted_VECM (const GRETL_VAR *vecm)
+int beta_restricted_VECM (const GRETL_VAR *vecm)
 {
     if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {
+	return 1;
+    }
+
+    return 0;
+}
+
+int alpha_restricted_VECM (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && vecm->jinfo->Ra != NULL) {
 	return 1;
     }
 
@@ -3184,6 +3193,24 @@ const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm)
 {
     if (vecm->jinfo != NULL && vecm->jinfo->q != NULL) {
 	return vecm->jinfo->q;
+    }
+
+    return NULL;
+}   
+
+const gretl_matrix *gretl_VECM_Ra_matrix (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && vecm->jinfo->Ra != NULL) {
+	return vecm->jinfo->Ra;
+    }
+
+    return NULL;
+}
+
+const gretl_matrix *gretl_VECM_qa_matrix (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && vecm->jinfo->qa != NULL) {
+	return vecm->jinfo->qa;
     }
 
     return NULL;

@@ -100,11 +100,11 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
 int gretl_VECM_n_alpha (const GRETL_VAR *vecm);
 
-int gretl_VECM_test_beta (GRETL_VAR *vecm, 
-			  const gretl_restriction_set *rset,
-			  const DATAINFO *pdinfo, 
-			  gretlopt opt,
-			  PRN *prn);
+int gretl_VECM_test (GRETL_VAR *vecm, 
+		     const gretl_restriction_set *rset,
+		     const DATAINFO *pdinfo, 
+		     gretlopt opt,
+		     PRN *prn);
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 
@@ -116,11 +116,17 @@ int gretl_VECM_rank (const GRETL_VAR *vecm);
 
 const int *gretl_VECM_list (const GRETL_VAR *vecm);
 
-int gretl_is_restricted_VECM (const GRETL_VAR *vecm);
+int beta_restricted_VECM (const GRETL_VAR *vecm);
+
+int alpha_restricted_VECM (const GRETL_VAR *vecm);
 
 const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm);
 
 const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm);
+
+const gretl_matrix *gretl_VECM_Ra_matrix (const GRETL_VAR *vecm);
+
+const gretl_matrix *gretl_VECM_qa_matrix (const GRETL_VAR *vecm);
 
 double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
 			      int idx, const char *key, int *err);
