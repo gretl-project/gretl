@@ -772,7 +772,6 @@ static int ok_dbl_char (int ch, char *s, int i)
 
 static double getdbl (parser *p)
 {
-    const char *followers = "+-*/%^&|=<>?,;:)]} \t\n";
     char xstr[NUMLEN] = {0};
     double d = NADBL;
     int i = 0;
@@ -807,12 +806,6 @@ static double getdbl (parser *p)
 	d = dot_atof(xstr);
     }
     
-    /* a number must be followed by an operator, "punctuation", 
-       white space, or nothing */
-    if (p->ch != '\0' && !strchr(followers, p->ch)) {
-	context_error(p->ch, p);
-    }    
-
     return d;
 }
 

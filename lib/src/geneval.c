@@ -5561,6 +5561,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 #endif
 
     if (p->ch != 0) {
+	parser_ungetc(p);
 	context_error(p->ch, p);
 	return p->err;
     }    
