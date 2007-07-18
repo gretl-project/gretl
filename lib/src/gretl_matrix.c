@@ -3683,7 +3683,9 @@ static int get_R_rank (const gretl_matrix *R)
     double d;
     int i, rank = R->rows;
 
+#if 0
     gretl_matrix_print(R, "R, in get_R_rank");
+#endif
 
     for (i=0; i<R->rows; i++) {
 	d = gretl_matrix_get(R, i, i);

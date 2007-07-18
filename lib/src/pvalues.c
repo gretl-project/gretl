@@ -790,7 +790,7 @@ double gretl_get_cdf (char st, double *p)
     } else if (st == 'F') {
 	x = f_cdf(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'G') {
-	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 2);
+	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
 	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
     } else if (st == 'D') {
@@ -815,7 +815,7 @@ double gretl_get_pvalue (char st, const double *p)
     } else if (st == 'F') {
 	x = f_cdf_comp(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'G') {
-	x = gamma_cdf_comp(p[0], p[1], p[2], 2);
+	x = gamma_cdf_comp(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
 	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
@@ -903,9 +903,9 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'G':
     case 'g':
     case '5':
-	pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
+	pprintf(prn, _("\nGamma (shape %g, scale %g, mean %g, variance %g):"
 		       "\n area to the right of %g = %g\n"), 
-		p[0], p[1], p[0] * p[0] / p[1], p[1] / p[0],
+		p[0], p[1], p[0] * p[1], p[0] * p[1] * p[1],
 		p[2], 1 - pv);
 	break;
 

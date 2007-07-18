@@ -22,6 +22,7 @@ version 1.6.6, in progress
 - Fixes for autoregressive genr formula: speed-up, and fix bug
   when such formulae are used in an nls/mle block
 - Double maximum length to gretl command line to 8192 bytes
+- Gamma p-values: switch to shape/scale parameterization
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

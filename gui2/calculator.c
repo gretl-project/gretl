@@ -1218,8 +1218,8 @@ static void make_dist_tab (CalcChild *child, int d)
 	break;
 
     case GAMMA_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("mean"), child, d);
-	add_lookup_entry(tbl, &tbl_len, N_("variance"), child, d);
+	add_lookup_entry(tbl, &tbl_len, N_("shape"), child, d);
+	add_lookup_entry(tbl, &tbl_len, N_("scale"), child, d);
 	add_lookup_entry(tbl, &tbl_len, N_("x-value"), child, d);
 	break;
 

@@ -6208,14 +6208,14 @@
 	given, before the <repl>xval</repl>: for the <mathvar>t</mathvar>
 	and chi-square distributions, the degrees of freedom; for
 	<mathvar>F</mathvar>, the numerator and denominator degrees of
-	freedom; for gamma, the mean and variance; for the binomial
-	distribution, the <quote>success</quote> probability and the
-	number of trials; and for the Poisson distribution, the parameter
-	&lgr; (which is both the mean and the variance).  Note: the
-	parameters for the gamma distribution are sometimes given as shape
-	and scale rather than mean and variance.  The mean is the product
-	of the shape and the scale; the variance is the product of the
-	shape and the square of the scale.  
+	freedom; for gamma, the shape and scale parameters; for the
+	binomial distribution, the <quote>success</quote> probability and
+	the number of trials; and for the Poisson distribution, the
+	parameter &lgr; (which is both the mean and the variance).  Note:
+	the parameters for the gamma distribution are sometimes given as
+	mean and variance rather than shape and scale.  The mean is the
+	product of the shape and the scale; the variance is the product of
+	the shape and the square of the scale.  
       </para>
       <para>
 	As shown in the examples above, the numerical parameters
