@@ -2084,11 +2084,11 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 		     PRN *prn)
 {
     void *handle = NULL;
-    int (*vecm_beta_test) (GRETL_VAR *, 
-			   const gretl_restriction_set *,
-			   const DATAINFO *,
-			   gretlopt opt,
-			   PRN *);
+    int (*vecm_test_restriction) (GRETL_VAR *, 
+				  const gretl_restriction_set *,
+				  const DATAINFO *,
+				  gretlopt opt,
+				  PRN *);
     int err = 0;
 
     if (vecm->jinfo == NULL || rset == NULL) {
@@ -2097,12 +2097,14 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 
     gretl_error_clear();
 
-    vecm_beta_test = get_plugin_function("vecm_beta_test", &handle);
+    vecm_test_restriction = 
+	get_plugin_function("vecm_test_restriction", &handle);
     
-    if (vecm_beta_test == NULL) {
+    if (vecm_test_restriction == NULL) {
 	err = 1;
     } else {
-	err = (* vecm_beta_test) (vecm, rset, pdinfo, opt, prn);
+	err = (* vecm_test_restriction) (vecm, rset, pdinfo, 
+					 opt, prn);
 	close_plugin(handle);
     }
 

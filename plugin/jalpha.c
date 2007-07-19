@@ -231,10 +231,12 @@ alpha_test_show_beta (JohansenInfo *jv,
 {
     int err = 0;
 
-    gretl_matrix_copy_values(jv->Beta, M);
+    if (M != NULL) {
+	gretl_matrix_copy_values(jv->Beta, M);
+    }
 
-    if (jv->rank) { 
-	/* and if r > 1? */
+    if (jv->rank == 1) { 
+	/* and if rank > 1? */
 	double den = jv->Beta->val[0];
 
 	if (!floateq(den, 0.0)) {
@@ -253,6 +255,60 @@ alpha_test_show_beta (JohansenInfo *jv,
     return err;
 }
 
+static int pre_impose_beta (GRETL_VAR *jvar, 
+			    gretl_matrix **pS11,
+			    gretl_matrix **pS01)
+{
+    const gretl_matrix *R;
+    gretl_matrix *H = NULL;
+    gretl_matrix *S11 = NULL;
+    gretl_matrix *S01 = NULL;
+    int n, m;
+    int err = 0;
+
+    R = jvar->jinfo->R;
+    H = gretl_matrix_right_nullspace(R, &err);
+
+    if (err) {
+	return err;
+    }
+
+    n = jvar->neqns;
+    m = gretl_matrix_cols(H);
+
+    S11 = gretl_matrix_alloc(m, m);
+    S01 = gretl_matrix_alloc(n, m);
+
+    if (S11 == NULL || S01 == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* calculate S11 <- H' S11 H */
+    err = gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
+			     jvar->jinfo->S11, S11, 
+			     GRETL_MOD_NONE);
+
+    if (!err) {
+	/* S01 <- S01*H */
+	err = gretl_matrix_multiply(jvar->jinfo->S01, H, S01);
+    }
+
+ bailout:    
+
+    gretl_matrix_free(H);
+
+    if (err) {
+	gretl_matrix_free(S11);
+	gretl_matrix_free(S01);
+    } else {
+	*pS11 = S11;
+	*pS01 = S01;
+    }
+
+    return err;
+}
+
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,
 		     const DATAINFO *pdinfo, 
@@ -261,8 +317,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 {
     const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *S00 = jvar->jinfo->S00;
-    const gretl_matrix *S01 = jvar->jinfo->S01;
-    const gretl_matrix *S11 = jvar->jinfo->S11;
+    gretl_matrix *S01 = jvar->jinfo->S01;
+    gretl_matrix *S11 = jvar->jinfo->S11;
 
     gretl_matrix *ASA = NULL;
     gretl_matrix *C = NULL;
@@ -271,14 +327,31 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix *S11a = NULL;
     gretl_matrix *S01a = NULL;
 
+    int prebeta = beta_restricted_VECM(jvar);
     int rank = jvar->jinfo->rank;
     int n = jvar->neqns;
     int m = S11->rows;
     int err = 0;
 
     if (!simple_restriction(jvar, rset)) {
-	err = E_NOTIMP;
+	return E_NOTIMP;
     }
+
+#if 1
+    if (prebeta) {
+	pprintf(prn, "Alpha restriction for a beta-restricted "
+		"VECM: not handled yet\n");
+	return E_NOTIMP;
+    }
+#else
+    /* doesn't work yet */
+    if (prebeta) {
+	err = pre_impose_beta(jvar, &S11, &S01);
+	if (err) {
+	    return err;
+	}
+    }
+#endif    
 
     ASA = gretl_matrix_alloc(R->rows, R->rows);
     C = gretl_matrix_alloc(n, n);
@@ -326,7 +399,10 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix_print(S01a, "S01a");
 #endif
 
-    if (!err) {
+    if (!err && prebeta) {
+	alpha_test_show_beta(jvar->jinfo, NULL, S11a, S01a,
+			     pdinfo, prn);
+    } else if (!err) {
 	/* do the eigenvalue thingy */
 	gretl_matrix *A = NULL;
 	gretl_matrix *AS00 = NULL;

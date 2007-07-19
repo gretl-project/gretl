@@ -2211,10 +2211,18 @@ rset_get_q_matrix (const gretl_restriction_set *rset)
 
 int rset_VECM_bcols (const gretl_restriction_set *rset)
 {
-    return rset->bcols;
+    if (rset != NULL) {
+	return rset->bcols;
+    } else {
+	return 0;
+    }
 }
 
 int rset_VECM_acols (const gretl_restriction_set *rset)
 {
-    return rset->acols;
+    if (rset != NULL) {
+	return rset->acols;
+    } else {
+	return 0;
+    }
 }

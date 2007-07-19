@@ -1339,9 +1339,9 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 }
 
 /* Public entry point for VECM estimation.  If rset != NULL we're
-   imposing a restriction on the cointegrating vectors; and in that
-   case how we proceed depends on whether the restrictions can be
-   handled by the modified eigen-system approach.
+   imposing a restriction on the cointegrating vectors (or possibly
+   alpha); and in that case how we proceed depends on whether the
+   restrictions can be handled by the modified eigen-system approach.
 */
 
 int johansen_estimate (GRETL_VAR *jvar, 
@@ -1369,6 +1369,13 @@ int johansen_estimate (GRETL_VAR *jvar,
 
     if (rset != NULL) {
 	genrest = !simple_restriction(jvar, rset);
+	
+    }
+
+    if (rset_VECM_acols(rset) > 0) {
+	pprintf(prn, "\"full\" restriction on VECM via alpha: "
+		"not handled yet\n");
+	return E_NOTIMP;
     }
 
     if (rset != NULL && !genrest) {
@@ -1582,17 +1589,17 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
 }
 
 /* Test of linear restrictions on the cointegrating relations in a
-   VECM.  If the restrictions are "simple" (homogeneous and
-   common to the columns of beta) we do the test using the
-   eigen-system approach.  If they are "general" restrictions
-   we hand off to the specialized machinery in jrestrict.c.
+   VECM.  If the restrictions are "simple" (homogeneous and in common)
+   we do the test using the eigen-system approach.  If they are
+   "general" restrictions we hand off to the specialized machinery in
+   jrestrict.c.
 */
 
-int vecm_beta_test (GRETL_VAR *jvar, 
-		    const gretl_restriction_set *rset,
-		    const DATAINFO *pdinfo, 
-		    gretlopt opt,
-		    PRN *prn)
+int vecm_test_restriction (GRETL_VAR *jvar, 
+			   const gretl_restriction_set *rset,
+			   const DATAINFO *pdinfo, 
+			   gretlopt opt,
+			   PRN *prn)
 {
     const gretl_matrix *R;
     gretl_matrix *H = NULL;
@@ -1611,9 +1618,15 @@ int vecm_beta_test (GRETL_VAR *jvar,
     if (acols > 0 && bcols == 0) {
 	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } else if (acols > 0) {
-	fprintf(stderr, "Got combined beta/alpha restriction: not handled yet\n");
+	pprintf(prn, "Combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;
-    }
+    } 
+
+    if (alpha_restricted_VECM(jvar)) {
+	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
+		"not handled yet\n");
+	return E_NOTIMP;
+    }	
 
     if (!simple_restriction(jvar, rset)) {
 	/* "general" restriction set */
