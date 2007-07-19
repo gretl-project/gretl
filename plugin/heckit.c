@@ -272,7 +272,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 			     DATAINFO *pdinfo, MODEL *probmod, 
 			     MODEL *olsmod)
 {
-    gretl_vector *gama = NULL;
     gretl_vector *tmp = NULL;
     double bmills, s2, mdelta;
     int tmplist[2];
@@ -289,11 +288,11 @@ static int h_container_fill (h_container *HC, const int *Xl,
     /* X does NOT include the Mills ratios: hence the "-2" */
     HC->depvar = depvar = Xl[1];
     HC->selvar = selvar = Zl[1];
-    HC->kmain = Xl[0] - 2;
-    HC->ksel = Zl[0] - 1;
+    HC->kmain = olsmod->ncoeff - 1;
+    HC->ksel = probmod->ncoeff;
 
-    HC->beta = gretl_vector_alloc(HC->kmain);
-    HC->gama = gretl_vector_alloc(HC->ksel);
+    HC->beta = gretl_column_vector_alloc(HC->kmain);
+    HC->gama = gretl_coeff_vector_from_model(probmod, NULL);
     if (HC->beta == NULL || HC->gama == NULL) {
 	return E_ALLOC;
     }
@@ -301,12 +300,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
     for (i=0; i<HC->kmain; i++) {
 	gretl_vector_set(HC->beta, i, olsmod->coeff[i]);
     }
-
     HC->lambda = olsmod->coeff[HC->kmain];
-
-    for (i=0; i<HC->ksel; i++) {
-	gretl_vector_set(HC->gama, i, probmod->coeff[i]);
-    }
 
     /*
       we'll be working with 2 masks: fullmask just masks unusable
@@ -376,37 +370,39 @@ static int h_container_fill (h_container *HC, const int *Xl,
     HC->selreg = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, HC->fullmask);
     HC->selreg_u = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, HC->uncmask);
 
-    gama = gretl_coeff_vector_from_model(probmod, NULL);
+    if (HC->reg == NULL || HC->selreg == NULL || HC->selreg_u == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }    
 
-    HC->delta = gretl_column_vector_alloc(HC->nunc);
-    err = gretl_matrix_multiply(HC->selreg_u, gama, HC->delta);
-    gretl_matrix_add_to(HC->delta, HC->mills);
-    
-    tmp = gretl_matrix_dot_op(HC->delta, HC->mills, '*', &err);
-    gretl_matrix_free(HC->delta);
-    HC->delta = tmp;
+    tmp = gretl_matrix_multiply_new(HC->selreg_u, HC->gama, &err);
+    gretl_matrix_add_to(tmp, HC->mills);
+    HC->delta = gretl_matrix_dot_op(tmp, HC->mills, '*', &err);
+    gretl_matrix_free(tmp);
 
     bmills = olsmod->coeff[olsmod->ncoeff-1];
     mdelta  = gretl_vector_mean(HC->delta);
     s2 = olsmod->ess / olsmod->nobs + mdelta * bmills * bmills;
     HC->sigma = sqrt(s2);
     HC->rho = bmills / HC->sigma;
+
     if (fabs(HC->rho) > 1.0) {
 	HC->rho = (HC->rho < 0)? -1 : 1;
+	/* ensure consistency */
+	HC->sigma = HC->lambda / HC->rho;
     }
-
-    /* ensure consistency */
-    HC->sigma = HC->lambda / HC->rho;
 
     HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
     HC->u = gretl_matrix_alloc(HC->nunc, 1);
     HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
-
     HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
 
- bailout:
+    if (HC->fitted == NULL || HC->u == NULL || 
+	HC->ndx == NULL || HC->VProbit) {
+	err = E_ALLOC;
+    }
 
-    gretl_vector_free(gama);
+ bailout:
 
     return err;
 }
@@ -446,9 +442,7 @@ static double h_loglik (const double *param, void *ptr)
 	isqrtrhoc = 1 / sqrt(1 - HC->rho * HC->rho);
     }
 
-    err = gretl_matrix_multiply_mod(HC->reg, GRETL_MOD_NONE,
-				    HC->beta, GRETL_MOD_TRANSPOSE,
-				    HC->fitted, GRETL_MOD_NONE);
+    err = gretl_matrix_multiply(HC->reg, HC->beta, HC->fitted);
     
     if (!err) {
 	gretl_matrix_copy_values(HC->u, HC->y);
@@ -460,9 +454,7 @@ static double h_loglik (const double *param, void *ptr)
     }
 
     if (!err) {
-	err = gretl_matrix_multiply_mod(HC->selreg, GRETL_MOD_NONE,
-					HC->gama, GRETL_MOD_TRANSPOSE,
-					HC->ndx, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply(HC->selreg, HC->gama, HC->ndx);
     }
 
     if (!err) {
@@ -531,7 +523,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 		xb = NADBL;
 		break;
 	    } else {
-		xb += x * gretl_vector_get(HC->beta,i);
+		xb += x * gretl_vector_get(HC->beta, i);
 	    }
 	}
 
@@ -549,7 +541,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 		    zg = NADBL;
 		    break;
 		} else {
-		    zg += x * gretl_vector_get(HC->gama,i);
+		    zg += x * gretl_vector_get(HC->gama, i);
 		}
 	    }
 
