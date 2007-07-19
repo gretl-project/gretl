@@ -1427,9 +1427,13 @@ int johansen_estimate (GRETL_VAR *jvar,
     if (!err) {
 	int do_stderrs = rank < jvar->neqns;
 
+	if (opt & OPT_P) {
+	    do_stderrs = 0;
+	}
+
 	err = johansen_ll_calc(jvar, evals);
 
-	if (!err) {
+	if (!err && !(opt & OPT_P)) {
 	    err = normalize_beta(jvar, R); 
 	}
 	if (!err) {
