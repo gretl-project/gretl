@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "gretl_matrix.h"
 #include "var.h"
 #include "jprivate.h"
@@ -229,18 +230,31 @@ alpha_test_show_beta (JohansenInfo *jv,
 		      const DATAINFO *pdinfo,
 		      PRN *prn)
 {
+    gretl_matrix *B = jv->Beta;
     int err = 0;
 
     if (M != NULL) {
-	gretl_matrix_copy_values(jv->Beta, M);
+	gretl_matrix_copy_values(B, M);
     }
 
-    if (jv->rank == 1) { 
-	/* and if rank > 1? */
-	double den = jv->Beta->val[0];
+    if (get_vecm_norm() == NORM_DIAG) {
+	double x, den;
+	int i, j;
+
+	for (j=0; j<B->cols; j++) {
+	    den = gretl_matrix_get(B, j, j);
+	    if (den != 0.0) {
+		for (i=0; i<B->rows; i++) {
+		    x = gretl_matrix_get(B, i, j);
+		    gretl_matrix_set(B, i, j, x / den);
+		}
+	    }
+	}
+    } else if (jv->rank == 1) { 
+	double den = B->val[0];
 
 	if (!floateq(den, 0.0)) {
-	    gretl_matrix_divide_by_scalar(jv->Beta, den);
+	    gretl_matrix_divide_by_scalar(B, den);
 	}
     }
 
