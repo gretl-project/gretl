@@ -355,6 +355,7 @@ int ok_in_loop (int c)
 	c == STORE ||
 	c == PRINT ||
 	c == PRINTF ||
+        c == SPRINTF ||
 	c == PVALUE ||
 	c == SMPL ||
 	c == IF ||
