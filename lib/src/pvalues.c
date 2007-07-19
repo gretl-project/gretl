@@ -1142,17 +1142,3 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
 
     return xx;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

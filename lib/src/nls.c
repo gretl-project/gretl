@@ -3150,6 +3150,19 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
+static int broken_gradient (double *g, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (isnan(g[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* 
    If "set inivals" has been used, supersede whatever initial
    values were there by those given by the user (the customer is
@@ -3403,6 +3416,9 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 		   that we exit the main loop
 		*/
 		ndelta = 0;
+		if (gcount == 1) {
+		    err = (broken_gradient(g, n))? E_NAN : E_DATA;
+		}
 	    } else {
 		/* reset for another attempt */
 		ilast = gcount;

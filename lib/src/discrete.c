@@ -70,6 +70,9 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     double Lr, chisq;
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
 	if (Z[pmod->list[1]][t] == 1.0) {
 	    ones++;
 	} 
@@ -397,34 +400,45 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
 
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
-static int do_BRMR (const int *list, int *dmodlist, 
-		    MODEL *dmod, int ci, double *beta,
-		    double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn)
+static int do_BRMR (const int *list, MODEL *dmod, int ci,
+		    double *beta, const double **Z, 
+		    const DATAINFO *pdinfo, PRN *prn)
 {
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *b = NULL;
+    const double *yvar = Z[list[1]];
     double lldiff, llbak = -1.0e9;
-    double xx, fx, Fx;
+    double wt, yt, fx, Fx;
     double tol = 1.0e-9;
     int itermax = 250;
-    int v = dmodlist[1];
-    int depvar = list[1];
-    int i, t, iter;
+    int nc = dmod->ncoeff;
+    int i, s, t, iter;
+    int err = 0;
+
+    X = gretl_matrix_alloc(dmod->nobs, nc);
+    y = gretl_column_vector_alloc(dmod->nobs);
+    b = gretl_column_vector_alloc(nc);
+
+    if (X == NULL || y == NULL || b == NULL) {
+	gretl_matrix_free(X);
+	gretl_matrix_free(y);
+	gretl_matrix_free(b);
+	return E_ALLOC;
+    }
 
     for (iter=0; iter<itermax; iter++) {
-	double wt;
-
 	/* construct BRMR dataset */
+	s = 0;
 	for (t=dmod->t1; t<=dmod->t2; t++) {
-	    xx = dmod->yhat[t];
-	    if (na(xx)) {
-		(*pZ)[v][t] = NADBL;
-	    } else {
+	    yt = dmod->yhat[t];
+	    if (!na(yt)) {
 		if (ci == LOGIT) {
-		    fx = logit_pdf(xx);
-		    Fx = logit(xx);
+		    fx = logit_pdf(yt);
+		    Fx = logit(yt);
 		} else {
-		    fx = normal_pdf(xx);
-		    Fx = normal_cdf(xx);
+		    fx = normal_pdf(yt);
+		    Fx = normal_cdf(yt);
 		}
 
 		if (Fx < 1.0) {
@@ -433,15 +447,22 @@ static int do_BRMR (const int *list, int *dmodlist,
 		    wt = 0.0;
 		}
 
-		(*pZ)[v][t] = wt * ((*pZ)[depvar][t] - Fx);
+		gretl_vector_set(y, s, wt * (yvar[t] - Fx));
 		wt *= fx;
-		for (i=2; i<=dmodlist[0]; i++) {
-		    (*pZ)[dmodlist[i]][t] = wt * (*pZ)[list[i]][t];
+		for (i=0; i<nc; i++) {
+		    gretl_matrix_set(X, s, i, wt * Z[list[i+2]][t]);
 		}
+		s++;
 	    }
 	}
 
-	dmod->lnL = logit_probit_llhood((*pZ)[depvar], dmod, ci);
+	if (s != dmod->nobs) {
+	    fprintf(stderr, "logit_probit: data error\n");
+	    err = E_DATA;
+	    break;
+	}
+
+	dmod->lnL = logit_probit_llhood(yvar, dmod, ci);
 
 	lldiff = fabs(dmod->lnL - llbak);
 	if (lldiff < tol) {
@@ -456,64 +477,56 @@ static int do_BRMR (const int *list, int *dmodlist,
 	pputc(prn, '\n');
 
 	llbak = dmod->lnL;
-	clear_model(dmod);
-	*dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A);
-	if (dmod->errcode) {
-	    fprintf(stderr, "logit_probit: dmod errcode = %d\n", dmod->errcode);
+
+	err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+	if (err) {
+	    fprintf(stderr, "logit_probit: err = %d\n", err);
 	    if (iter > 0) {
-		dmod->errcode = E_NOCONV;
+		err = E_NOCONV;
 	    }
 	    break;
 	}
 
 	/* update coefficient estimates */
-	for (i=0; i<dmod->ncoeff; i++) {
-	    if (isnan(dmod->coeff[i])) {
-		fprintf(stderr, "BRMR produced NaN coeff\n");
-		dmod->errcode = E_NOCONV;
-		break;
-	    }
-	    beta[i] += dmod->coeff[i];
-	}
-
-	if (dmod->errcode) {
-	    break;
+	for (i=0; i<nc; i++) {
+	    beta[i] += b->val[i];
 	}
 
 	/* calculate yhat */
 	for (t=dmod->t1; t<=dmod->t2; t++) {
-	    if (na(dmod->yhat[t])) {
-		continue;
-	    }
-	    dmod->yhat[t] = 0.0;
-	    for (i=0; i<dmod->ncoeff; i++) {
-		dmod->yhat[t] += beta[i] * (*pZ)[list[i+2]][t];
+	    if (!na(dmod->yhat[t])) {
+		dmod->yhat[t] = 0.0;
+		for (i=0; i<nc; i++) {
+		    dmod->yhat[t] += beta[i] * Z[list[i+2]][t];
+		}
 	    }
 	}
     }
 
-    if (lldiff > tol) {
-	dmod->errcode = E_NOCONV;
+    if (!err && lldiff > tol) {
+	err = E_NOCONV;
     }
 
-    if (!dmod->errcode) {
+    if (!err) {
 	gretl_model_set_int(dmod, "iters", iter);
 	pputc(prn, '\n');
     }
 
-    return dmod->errcode;
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(b);
+
+    return err;
 }
 
 static MODEL 
 binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		     int ci, gretlopt opt, PRN *prn)
 {
-    int i, t, v, depvar = list[1];
+    int i, t, depvar = list[1];
     int nx = list[0] - 1;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
-    int oldv = pdinfo->v;
-    int *dmodlist = NULL;
     int *act_pred = NULL;
     MODEL dmod;
     double xx, fbx, f, F;
@@ -522,12 +535,6 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&dmod);
     
-    dmodlist = gretl_list_new(list[0]);
-    if (dmodlist == NULL) {
-	dmod.errcode = E_ALLOC;
-	return dmod;
-    } 
-
     /* allocate space for means of indep vars, coeffs */
     xbar = malloc(nx * sizeof *xbar);
     beta = malloc(nx * sizeof *beta);
@@ -544,46 +551,33 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    /* make room for full set of transformed vars */
-    if (dataset_add_series(list[0], pZ, pdinfo)) {
-	dmod.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    v = oldv; /* the first newly created variable */
-
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ);
 
     dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
-    if (dmod.list[0] != list[0]) {
+    if (dmod.errcode == 0 && dmod.ncoeff != nx) {
 	dmod.errcode = E_DATA;
-	goto bailout;
     }
 
-    for (i=2; i<=list[0]; i++) {
-	dmodlist[i] = v + i - 1;
-	beta[i-2] = dmod.coeff[i-2];
-	xbar[i-2] = 0.0;
-	for (t=dmod.t1; t<=dmod.t2; t++) {
-	    if (!model_missing(&dmod, t)) {
-		xbar[i-2] += (*pZ)[list[i]][t];
-	    }
-	}
-	xbar[i-2] /= dmod.nobs;
-    }
-
-    dmodlist[0] = list[0];
-    dmodlist[1] = v; /* dep var is the newly created one */
-
-    do_BRMR(list, dmodlist, &dmod, ci, beta, pZ, pdinfo, prn);
     if (dmod.errcode) {
 	goto bailout;
     }
 
-    /* re-establish original list in model */
-    for (i=1; i<=list[0]; i++) {
-	dmod.list[i] = list[i];
+    for (i=0; i<dmod.ncoeff; i++) {
+	beta[i] = dmod.coeff[i];
+	xbar[i] = 0.0;
+	for (t=dmod.t1; t<=dmod.t2; t++) {
+	    if (!model_missing(&dmod, t)) {
+		xbar[i] += (*pZ)[list[i+2]][t];
+	    }
+	}
+	xbar[i] /= dmod.nobs;
+    }
+
+    dmod.errcode = do_BRMR(list, &dmod, ci, beta, (const double **) *pZ, 
+			   pdinfo, prn);
+    if (dmod.errcode) {
+	goto bailout;
     }
 
     /* transcribe coefficients */
@@ -673,13 +667,10 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
  bailout:
 
     free(xbar);
-    free(dmodlist);
     free(beta);
 
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
-
-    dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
 
     return dmod;
 }

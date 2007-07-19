@@ -23,7 +23,7 @@
 #include "missing_private.h"
 
 #define HDEBUG 0
-#define HTOL 1.0E-09
+#define HTOL 1.0e-09
 
 typedef struct h_container_ h_container;
 
@@ -58,6 +58,7 @@ struct h_container_ {
     gretl_matrix *vcv;		/* Variance-covariance matrix */
     gretl_matrix *VProbit;	/* 1st stage probit covariance matrix */
 
+    char *probmask;		/* mask NAs for initial probit */
     char *fullmask;		/* mask NAs */
     char *uncmask;		/* mask NAs and (d==0) */
 
@@ -89,6 +90,7 @@ static void h_container_destroy (h_container *HC)
     gretl_matrix_free(HC->vcv);
     gretl_matrix_free(HC->VProbit);
 
+    free(HC->probmask);
     free(HC->fullmask);
     free(HC->uncmask);
 
@@ -128,55 +130,109 @@ static h_container *h_container_new (void)
     HC->vcv = NULL;
     HC->VProbit = NULL;
 
+    HC->probmask = NULL;
     HC->fullmask = NULL;
     HC->uncmask = NULL;
 
     return HC;
 }
 
-static char *heckit_suppress_mask (int sel, const int *list, const double **Z,
-				   const DATAINFO *pdinfo, int *err)
+/* The following is complicated: for the purposes of the Heckit model
+   as such, we need to mask out any observations that (a) are
+   "selected" and (b) have missing values for any variables in Xlist.
+   With regard to the initial probit, we have to mask in addition any
+   observations that have missing values for any of the variables in
+   Zlist.
+*/
+
+static int make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
+				const double **Z, const DATAINFO *pdinfo)
 {
+    int sel = Zlist[1];
     int T = pdinfo->t2 - pdinfo->t1 + 1;
-    char *mask = NULL;
-    int i, t, s = 0;
+    int i, t, s = 0, m = 0;
+    int err = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (Z[sel][t]) {
-	    for (i=1; i<=list[0]; i++) {
-		if (na(Z[list[i]][t])) {
+	int miss = 0;
+
+	if (Z[sel][t] == 1.0) {
+	    /* screen the X variables */
+	    for (i=1; i<=Xlist[0] && !miss; i++) {
+		if (na(Z[Xlist[i]][t])) {
+		    miss = 1;
+		    m++;
 		    s++;
+		}
+	    }
+	}
+	if (!miss) {
+	    /* screen the Z variables */
+	    for (i=1; i<=Zlist[0]; i++) {
+		if (na(Z[Zlist[i]][t])) {
+		    m++;
 		    break;
 		}
 	    }
 	}
     }
 
-    if (s == T) {
-	*err = E_DATA;
-	return NULL;
-    } else if (s > 0) {
-	mask = calloc(T, 1);
-	if (mask == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
+    if (m == T || s == T) {
+	return E_MISSDATA;
+    }
 
+    if (m > 0) {
+	HC->probmask = malloc(pdinfo->n + 1);
+	if (HC->probmask == NULL) {
+	    return E_ALLOC;
+	}
+	memset(HC->probmask, '0', pdinfo->n);
+	HC->probmask[pdinfo->n] = 0;
+    }
+
+    if (s > 0) {
+	HC->fullmask = calloc(T, 1);
+	if (HC->fullmask == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (m > 0 || s > 0) {
 	s = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (Z[sel][t]) {
-		for (i=1; i<=list[0]; i++) {
-		    if (na(Z[list[i]][t])) {
-			mask[s] = 1;
-			break;
+	    int miss = 0;
+
+	    if (HC->fullmask != NULL && Z[sel][t] == 1.0) {
+		for (i=1; i<=Xlist[0] && !miss; i++) {
+		    if (na(Z[Xlist[i]][t])) {
+			miss = 1;
+			HC->fullmask[s] = 1;
+			if (HC->probmask != NULL) {
+			    HC->probmask[t] = '1';
+			}
 		    }
 		}
 	    }
+	    if (HC->probmask != NULL) {
+		for (i=1; i<=Zlist[0] && !miss; i++) {
+		    if (na(Z[Zlist[i]][t])) {
+			miss = 1;
+			HC->probmask[t] = '1';
+		    }
+		}
+	    }		
 	    s++;
 	}
     }
 
-    return mask;
+    if (HC->probmask != NULL) {
+#if HDEBUG
+	fprintf(stderr, "Doing copy_to_reference_missmask\n");
+#endif
+	err = copy_to_reference_missmask(HC->probmask);
+    }
+
+    return err;
 }
 
 static int make_uncens_mask (h_container *HC, const int *Xl, 
@@ -238,6 +294,9 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
     HC->beta = gretl_vector_alloc(HC->kmain);
     HC->gama = gretl_vector_alloc(HC->ksel);
+    if (HC->beta == NULL || HC->gama == NULL) {
+	return E_ALLOC;
+    }
 
     for (i=0; i<HC->kmain; i++) {
 	gretl_vector_set(HC->beta, i, olsmod->coeff[i]);
@@ -285,8 +344,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
 #endif
 
     tmplist[0] = 1;
-    tmplist[1] = depvar;
 
+    tmplist[1] = depvar;
     HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
     HC->nunc = gretl_matrix_rows(HC->y);
 
@@ -332,10 +391,16 @@ static int h_container_fill (h_container *HC, const int *Xl,
     s2 = olsmod->ess / olsmod->nobs + mdelta * bmills * bmills;
     HC->sigma = sqrt(s2);
     HC->rho = bmills / HC->sigma;
+    if (fabs(HC->rho) > 1.0) {
+	HC->rho = (HC->rho < 0)? -1 : 1;
+    }
 
-    HC->fitted = gretl_matrix_alloc(HC->nunc,1);
-    HC->u = gretl_matrix_alloc(HC->nunc,1);
-    HC->ndx = gretl_matrix_alloc(HC->ntot,1);
+    /* ensure consistency */
+    HC->sigma = HC->lambda / HC->rho;
+
+    HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
+    HC->u = gretl_matrix_alloc(HC->nunc, 1);
+    HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
 
     HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
 
@@ -376,7 +441,7 @@ static double h_loglik (const double *param, void *ptr)
 #endif
 
     if (HC->sigma <= 0 || fabs(HC->rho) >= 1) {
-	return ll;
+	return NADBL;
     } else {
 	isqrtrhoc = 1 / sqrt(1 - HC->rho * HC->rho);
     }
@@ -533,7 +598,6 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 	for (i=0; i<ko; i++) {
 	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
-    
 	}
 	
 	strcpy(hm->params[ko], "lambda");
@@ -748,7 +812,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
     double hij, rho;
     double *hess = NULL;
     double *theta = NULL;
-    int i, j, k, np = HC->kmain+HC->ksel+2;
+    int i, j, k, np = HC->kmain + HC->ksel + 2;
     int err = 0;
 
     theta = malloc(np * sizeof *theta);
@@ -757,12 +821,12 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
     }
 
     for (i=0; i<HC->kmain; i++) {
-	theta[i] = gretl_vector_get(HC->beta,i);
+	theta[i] = gretl_vector_get(HC->beta, i);
     }
 
     j = 0;
     for (i=HC->kmain; i<np-2; i++) {
-	theta[i] = gretl_vector_get(HC->gama,j++);
+	theta[i] = gretl_vector_get(HC->gama, j++);
     }
 
     theta[np-2] = HC->sigma;
@@ -782,7 +846,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 	HC->ll = hm->lnL = h_loglik(theta, HC);
 	gretl_model_set_int(hm, "fncount", fncount);	
 	gretl_model_set_int(hm, "grcount", grcount);	
-	HC->lambda = HC->sigma*HC->rho;
+	HC->lambda = HC->sigma * HC->rho;
 	hess = numerical_hessian(theta, np, h_loglik, HC, &err);
     }
 
@@ -860,36 +924,6 @@ static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
     return 0;
 }
 
-static int translate_to_reference_missmask (const char *shortmask,
-					    const DATAINFO *pdinfo)
-{
-    char *longmask = malloc(pdinfo->n + 1);
-    int t, s, err = 0;
-
-    if (longmask == NULL) {
-	return E_ALLOC;
-    }
-
-    memset(longmask, '0', pdinfo->n);
-    longmask[pdinfo->n] = 0;
-
-    s = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (shortmask[s++]) {
-	    longmask[t] = '1';
-	}
-    }
-
-#if HDEBUG
-    fprintf(stderr, "Doing copy_to_reference_missmask\n");
-#endif
-
-    err = copy_to_reference_missmask(longmask);
-    free(longmask);
-
-    return err;
-}
-
 static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 			  h_container *HC) 
 {
@@ -913,11 +947,11 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    HC->fullmask = heckit_suppress_mask(Zlist[1], Xlist, (const double **) *pZ, 
-					pdinfo, &err);
-
-    if (HC->fullmask != NULL) {
-	translate_to_reference_missmask(HC->fullmask, pdinfo);
+    err = make_heckit_NA_mask(HC, Xlist, Zlist, (const double **) *pZ, 
+			      pdinfo);
+    if (err) {
+	hm.errcode = err;
+	goto bailout;
     }
 
     /* run initial auxiliary probit */
@@ -941,7 +975,11 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	sel = ((*pZ)[Zlist[1]][t] == 1.0);
-	(*pZ)[v][t] = (sel)? probmod.uhat[t] : NADBL;
+	if (sel) {
+	    (*pZ)[v][t] = probmod.uhat[t];
+	} else {
+	    (*pZ)[v][t] = NADBL;
+	}
     }
 
     strcpy(pdinfo->varname[v], "lambda");

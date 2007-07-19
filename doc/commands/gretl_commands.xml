@@ -6211,15 +6211,17 @@
 	freedom; for gamma, the shape and scale parameters; for the
 	binomial distribution, the <quote>success</quote> probability and
 	the number of trials; and for the Poisson distribution, the
-	parameter &lgr; (which is both the mean and the variance).  Note:
-	the parameters for the gamma distribution are sometimes given as
-	mean and variance rather than shape and scale.  The mean is the
-	product of the shape and the scale; the variance is the product of
-	the shape and the square of the scale.  
+	parameter &lgr; (which is both the mean and the variance). As
+	shown in the examples above, the numerical parameters may be given
+	in numeric form or as the names of variables.
       </para>
       <para>
-	As shown in the examples above, the numerical parameters
-	may be given in numeric form or as the names of variables.
+	The parameters for the gamma distribution are sometimes given as
+	mean and variance rather than shape and scale. The mean is the
+	product of the shape and the scale; the variance is the product of
+	the shape and the square of the scale.  So the scale may be found
+	as the variance divided by the mean, and the shape as the mean
+	divided by the scale.  
       </para>
     </description>
 
