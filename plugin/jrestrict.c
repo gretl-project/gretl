@@ -514,7 +514,7 @@ identification_check (Jwrap *J, gretl_matrix **R,
 
 		    fprintf(stderr, "rank = %d\n", 
 			    gretl_matrix_rank(Htmp[i], &myerr));
-		    err = E_NOIDENT;
+		    err = E_NOIDENT; /* FIXME: this is not always right */
 		}
 	    }
 	}
@@ -524,7 +524,7 @@ identification_check (Jwrap *J, gretl_matrix **R,
 
     for (i=0; i<J->nC && !err; i++) {
 	for (j=0; j<J->nC && !err; j++) {
-	    if (i == j) {
+	    if (i == j || Rtmp[i] == NULL || Htmp[j] == NULL) {
 		continue;
 	    }
 	    err = rank_check(Rtmp[i], Htmp[j], i, j, NULL, 1, prn);
@@ -754,6 +754,7 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset,
     err = gretl_matrix_multi_ols(d, X, tmp, NULL);
     if (err) {
 	fprintf(stderr, "beta initialization: gretl_matrix_multi_ols failed\n");
+	err = 0;
 	goto bailout;
     }
 
