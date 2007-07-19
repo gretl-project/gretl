@@ -35,6 +35,11 @@ typedef enum {
     KERNEL_QS
 } HACKernel;
 
+typedef enum {
+    NORM_PHILLIPS,
+    NORM_DIAG
+} VECMnorm;
+
 int libset_init (void);
 void libset_cleanup (void);
 int libset_restore_state_zero (DATAINFO *pdinfo);
@@ -135,6 +140,8 @@ int get_long_digits (void);
 
 int set_max_verbose (int n);
 int get_max_verbose (void);
+
+int get_vecm_norm (void);
 
 void shelldir_init (void);
 char *get_shelldir (void);

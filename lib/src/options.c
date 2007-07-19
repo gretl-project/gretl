@@ -271,7 +271,6 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_F, "variance-decomp" },
     { VECM,     OPT_I, "impulse-responses" },
     { VECM,     OPT_N, "nc" },
-    { VECM,     OPT_P, "no-phillips" },
     { VECM,     OPT_Q, "quiet" },
     { VECM,     OPT_R, "rc" },
     { VECM,     OPT_T, "ct" },

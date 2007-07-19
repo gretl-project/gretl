@@ -21,6 +21,7 @@
 #include "pvalues.h"
 #include "gretl_matrix.h"
 #include "var.h"
+#include "libset.h"
 #include "jprivate.h"
 
 #define JDEBUG 0
@@ -816,10 +817,13 @@ static int col_normalize_beta (GRETL_VAR *vecm)
 }
 
 static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *R,
-			   gretlopt opt)
+			   int *do_stderrs)
 {
     if (R == NULL) {
-	if (opt & OPT_P) {
+	if (get_vecm_norm() == NORM_DIAG) {
+	    if (do_stderrs != NULL) {
+		*do_stderrs = 0;
+	    }
 	    return col_normalize_beta(vecm);
 	} else {
 	    return phillips_normalize_beta(vecm);
@@ -1451,14 +1455,10 @@ int johansen_estimate (GRETL_VAR *jvar,
     if (!err) {
 	int do_stderrs = rank < jvar->neqns;
 
-	if (opt & OPT_P) {
-	    do_stderrs = 0;
-	}
-
 	err = johansen_ll_calc(jvar, evals);
 
 	if (!err) {
-	    err = normalize_beta(jvar, R, opt); 
+	    err = normalize_beta(jvar, R, &do_stderrs); 
 	}
 	if (!err) {
 	    err = build_VECM_models(jvar, pZ, pdinfo, 0, 0);
@@ -1549,7 +1549,7 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	}
 	if (!err) {
-	    err = normalize_beta(jvar, NULL, OPT_NONE); 
+	    err = normalize_beta(jvar, NULL, NULL); 
 	}
 	if (!err) {
 	    err = build_VECM_models(jvar, pZ, pdinfo, iter, 0);

@@ -87,6 +87,7 @@ struct set_vars_ {
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
     int max_verbose;            /* verbose output from maximizer? */
+    int vecm_norm;              /* VECM beta normalization */
     gretl_matrix *initvals;     /* for parameter initialization */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
@@ -228,6 +229,7 @@ static void state_vars_copy (set_vars *sv)
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
     sv->max_verbose = state->max_verbose;
+    sv->vecm_norm = state->vecm_norm;
     sv->initvals = gretl_matrix_copy(state->initvals);
     strcpy(sv->shelldir, state->shelldir);
 
@@ -256,6 +258,7 @@ static void state_vars_init (set_vars *sv)
     sv->delim = UNSET_INT;
     sv->longdigits = 10;
     sv->max_verbose = 0;
+    sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
     *sv->shelldir = '\0';
 
@@ -726,6 +729,12 @@ int get_max_verbose (void)
 {
     check_for_state();
     return state->max_verbose;
+}
+
+int get_vecm_norm (void)
+{
+    check_for_state();
+    return state->vecm_norm;
 }
 
 const gretl_matrix *get_init_vals (void)
@@ -1316,6 +1325,13 @@ static int display_settings (PRN *prn)
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
     pprintf(prn, " longdigits = %d\n", state->longdigits);
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
+
+    if (state->vecm_norm == NORM_DIAG) {
+	pputs(prn, " vecm_norm = diag\n");
+    } else {
+	pputs(prn, " vecm_norm = phillips\n");
+    }
+    
     print_initvals(state->initvals, prn);
 
     if (*state->shelldir) {
@@ -1444,6 +1460,14 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    } else if (boolean_off(setarg)) { 
 		set_hac_prewhiten(0);
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "vecm_norm")) {
+	    if (!strcmp(setarg, "phillips")) {
+		state->vecm_norm = NORM_PHILLIPS;
+		err = 0;
+	    } else if (!strcmp(setarg, "diag")) {
+		state->vecm_norm = NORM_DIAG;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "pcse")) {
