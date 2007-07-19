@@ -509,7 +509,11 @@ identification_check (Jwrap *J, gretl_matrix **R,
 						      GRETL_MOD_TRANSPOSE, 
 						      &err);
 		if (err == E_DATA) {
-		    /* augmented H is of full rank */
+		    /* augmented H is of full rank? */
+		    int myerr = 0;
+
+		    fprintf(stderr, "rank = %d\n", 
+			    gretl_matrix_rank(Htmp[i], &myerr));
 		    err = E_NOIDENT;
 		}
 	    }
