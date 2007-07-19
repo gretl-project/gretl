@@ -796,10 +796,34 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
     return err;
 }
 
-static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *R)
+static int col_normalize_beta (GRETL_VAR *vecm)
+{
+    gretl_matrix *B = vecm->jinfo->Beta;
+    double x, den;
+    int i, j;
+
+    for (j=0; j<B->cols; j++) {
+	den = gretl_matrix_get(B, j, j);
+	if (den != 0.0) {
+	    for (i=0; i<B->rows; i++) {
+		x = gretl_matrix_get(B, i, j);
+		gretl_matrix_set(B, i, j, x / den);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *R,
+			   gretlopt opt)
 {
     if (R == NULL) {
-	return phillips_normalize_beta(vecm);
+	if (opt & OPT_P) {
+	    return col_normalize_beta(vecm);
+	} else {
+	    return phillips_normalize_beta(vecm);
+	}
     } else {
 	gretl_matrix *B = vecm->jinfo->Beta;
 
@@ -1433,8 +1457,8 @@ int johansen_estimate (GRETL_VAR *jvar,
 
 	err = johansen_ll_calc(jvar, evals);
 
-	if (!err && !(opt & OPT_P)) {
-	    err = normalize_beta(jvar, R); 
+	if (!err) {
+	    err = normalize_beta(jvar, R, opt); 
 	}
 	if (!err) {
 	    err = build_VECM_models(jvar, pZ, pdinfo, 0, 0);
@@ -1525,7 +1549,7 @@ johansen_boots_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	}
 	if (!err) {
-	    err = normalize_beta(jvar, NULL); 
+	    err = normalize_beta(jvar, NULL, OPT_NONE); 
 	}
 	if (!err) {
 	    err = build_VECM_models(jvar, pZ, pdinfo, iter, 0);
