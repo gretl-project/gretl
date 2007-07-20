@@ -2564,7 +2564,8 @@
 	<li><para><cmd>X</cmd>: chi-square;</para></li>
 	<li><para><cmd>F</cmd>: Snedecor;</para></li>
 	<li><para><cmd>G</cmd>: Gamma (only <cmd>pvalue</cmd> and <cmd>cdf</cmd>);</para></li>
-	<li><para><cmd>B</cmd>: Binomial (only <cmd>pvalue</cmd> and <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>B</cmd>: Binomial;</para></li>
+	<li><para><cmd>P</cmd>: Poisson;</para></li>
 	<li><para><cmd>D</cmd>: Bivariate normal (only <cmd>cdf</cmd>).</para></li>
       </ilist>
 
@@ -2590,22 +2591,20 @@
       </para>
 
       <para>
-	The <func>critical</func> function returns the critical value
-	for a specified probability distribution and a specified
-	proportion in the right-hand tail (with specified degrees of
-	freedom where applicable). 
-	The last parameter is the right-hand tail
-	proportion.  If the first parameter is <cmd>t</cmd> or
-	<cmd>X</cmd>, a second parameter must give the degrees of
-	freedom.  For the <emphasis>F</emphasis> distribution, the
-	second and third parameters must give the numerator and
-	denominator degrees of freedom.  
+	The <func>critical</func> function returns the critical value for
+	a specified probability distribution and a specified proportion in
+	the right-hand tail, preceded by additional parameters where
+	required. If the first parameter is <cmd>t</cmd> or <cmd>X</cmd>,
+	a second parameter must give the degrees of freedom.  For the
+	<emphasis>F</emphasis> distribution, the second and third
+	parameters must give the numerator and denominator degrees of
+	freedom.  
       </para>
 
       <para>
-	Here are some examples of use of the <func>pvalue</func> and
-	<func>critical</func> functions (spaces between the arguments
-	are optional):
+	Here are some examples of use of the <func>pvalue</func>,
+	<func>cdf</func> and <func>critical</func> functions (spaces
+	between the arguments are optional):
       </para>
       <code>
 	genr p1 = pvalue(z, 2.2)

@@ -77,6 +77,31 @@ double binomial_cdf_comp (int k, int n, double p)
 }
 
 /**
+ * inverse_binomial:
+ * @k: maximum number of successes.
+ * @n: number of trials.
+ * @y: cumulative probability.
+ *
+ * Returns: the per-trial probability such that the sum of
+ * the binomial density for 0 to @k successes in @n trials
+ * equals @y, or #NADBL on failure.
+ */
+
+double inverse_binomial (int k, int n, double y)
+{
+    double p = NADBL;
+
+    if (y >= 0 && n >= 0 && k >= 0) {
+	p = bdtri(k, n, y);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+/**
  * x_factorial:
  * @x: input value.
  * 
@@ -631,6 +656,46 @@ double bvnorm_cdf (double a, double b, double rho)
     return ret;
 }
 
+double gamma_cdf (double s1, double s2, double x, int control)
+{
+    double shape, scale, p;
+
+    if (control == 1) {
+	shape = s1; 
+	scale = s2; 
+    } else {
+	scale = s2 / s1; 
+	shape = s1 / scale; 
+    }	
+
+    p = gdtr(s2, s1, x);
+    if (get_cephes_errno()) {
+	p = NADBL;
+    }
+
+    return p;
+}
+
+double gamma_cdf_comp (double s1, double s2, double x, int control)
+{
+    double shape, scale, p;
+
+    if (control == 1) {
+	shape = s1; 
+	scale = s2; 
+    } else {
+	scale = s2 / s1; 
+	shape = s1 / scale; 
+    }	
+
+    p = gdtrc(s2, s1, x);
+    if (get_cephes_errno()) {
+	p = NADBL;
+    }
+
+    return p;
+}
+
 static double poisson_pmf (double lambda, int k)
 {
     double den = x_factorial((double) k);
@@ -666,80 +731,64 @@ static double poisson_pmf (double lambda, int k)
 
 static double poisson_cdf (double lambda, int k)
 {
-    double x, l0 = exp(-lambda);
-    int i;
+    double x = NADBL;
 
-    if (k > 133) {
-	double p;
-
-	x = p = l0;
-	for (i=1; i<=k; i++) {
-	    p *= lambda / i;
-	    x += p;
-	}	    
-    } else {
-	double den, l1 = 1.0;
-
-	x = 0.0;
-	for (i=0; i<=k; i++) {
-	    den = x_factorial((double) i);
-	    x += l0 * l1 / den;
-	    l1 *= lambda;
+    if (lambda >= 0 && k >= 0) {
+	x = pdtr(k, lambda);
+	if (get_cephes_errno()) {
+	    x = NADBL;
 	}
     }
 
     return x;
 }
 
-#if 0 /* not ready */
+/**
+ * poisson_cdf_comp:
+ * @lambda: mean (also variance).
+ * @k: test value.
+ *
+ * Returns: the probability of X > @k, for X an r.v. that follows
+ * the Poisson distribution with parameter @lambda.
+ */
 
-static double bincoeff (int n, int r)
+static double poisson_cdf_comp (double lambda, int k)
 {
-    double c;
-    int i, j;
+    double x = NADBL;
 
-    if (r > n) {
-	return 0;
-    } else if (r == n) {
-	return 1;
+    if (lambda >= 0 && k >= 0) {
+	x = pdtrc(k, lambda);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
     }
 
-    c = (n - r > r)? n - r : r;
-    if (c < n) c += 1;
-
-    for (i=c+1, j=2; i<=n; i+=1, j++) {
-	c *= i;
-	c /= j;
-    }
-
-    return c;
+    return x;
 }
 
-static double hypergeom_pmf (int k, int N, int m, int n)
+/**
+ * poisson_cdf_inverse:
+ * @k: test value.
+ * @lambda: cumulative probability.
+ *
+ * Returns: the Poisson variable x such that the integral
+ * from 0 to x of the Poisson density is equal to the
+ * given probability y.
+ */
+
+static double poisson_cdf_inverse (int k, double p)
 {
-    double c1, c2, c3;
+    double x = NADBL;
 
-    c1 = (n + m - N > 0)? n + m - N : 0;
-    c2 = (m < n)? m : n;
-
-    if (c1 > c2) {
-	c3 = c1;
-	c1 = c2;
-	c2 = c3;
+    if (k >= 0 && p >= 0 && p <= 1) {
+	x = pdtri(k, p);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
     }
 
-    if (k < c1 || k > c2) {
-	return 0;
-    }
-
-    c1 = bincoeff(m, k);
-    c2 = bincoeff(N - m, n - k);
-    c3 = bincoeff(N, n);
-
-    return c1 * c2 / c3;
+    return x;
 }
-
-#endif
 
 static double dparm[3];
 
@@ -762,16 +811,26 @@ double gretl_get_critval (char st, double *p)
 	} else {
 	    x = -ndtri(p[0]);
 	}
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}	
     } else if (st == 't') {
 	if (p[1] > 0.5) {
 	    x = stdtri((int) p[0], 1 - p[1]);
 	} else {
 	    x = -stdtri((int) p[0], p[1]);
 	}
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
     } else if (st == 'X') {	
 	x = chisq_critval(p[1], (int) p[0]);
     } else if (st == 'F') {
 	x = f_critval(p[2], (int) p[0], (int) p[1]);
+    } else if (st == 'B') {
+	x = inverse_binomial((int) p[2], (int) p[1], p[0]);
+    } else if (st == 'P') {
+	x = poisson_cdf_inverse(p[0], (int) p[1]);
     }
 
     return x;
@@ -790,7 +849,7 @@ double gretl_get_cdf (char st, double *p)
     } else if (st == 'F') {
 	x = f_cdf(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'G') {
-	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 1);
+	x = gamma_cdf(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
 	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
     } else if (st == 'D') {
@@ -819,7 +878,7 @@ double gretl_get_pvalue (char st, const double *p)
     } else if (st == 'B') {
 	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
-	x = 1.0 - poisson_cdf(p[0], (int) p[1]);
+	x = poisson_cdf_comp(p[0], (int) p[1]);
     }
 
     if (!na(x)) {
@@ -906,7 +965,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, _("\nGamma (shape %g, scale %g, mean %g, variance %g):"
 		       "\n area to the right of %g = %g\n"), 
 		p[0], p[1], p[0] * p[1], p[0] * p[1] * p[1],
-		p[2], 1 - pv);
+		p[2], pv);
 	break;
 
     case 'B':
@@ -928,6 +987,10 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '8':
 	pprintf(prn, _("\nPoisson (mean = %g): "), p[0]);
 	print_pv_string(p[1], pv, prn);
+#if 0
+	pc = poisson_cdf(p[0], (int) p[1]);
+	pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[1], pc);
+#endif
 	pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
 		poisson_pmf(p[0], (int) p[1]));
 	break;	
@@ -1005,140 +1068,3 @@ int batch_pvalue (const char *str,
     return err;
 }
 
-/* Functions relating to the gamma distribution.
-   Allin Cottrell (cottrell@wfu.edu), October 2000.
-   Draws upon the pascal code specialf.pas by Bent Nielsen.
-*/
-
-static const double gamma_tol = 1e-7;
-
-/* Gamma distribution function.
-   See Johnson, Kotz and Balakrishnan: 
-   Continuous Univariate Distributions
-   vol 1, 2nd ed, Wiley 1994
-*/
-
-static double gammadist_wilson_hilferty (double shape, double scale, double x)
-{
-    double df = 2 * shape;
-    double xscaled = x * 2 / scale;
-    double xx;
-
-    xx = exp(log(xscaled/df)/3) - 1 + (double)(2) / 9 / df;
-    xx *= sqrt(9 * df / 2);
-
-    return normal_cdf(xx);
-} 
-
-/* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
-   Abramowitz and Stegun p. 262
-   Note that the series is alternating.
-*/
-
-static double gamma_integral_expansion (double lambda, double x)
-{
-    double g, x1 = 1;
-    double x2, x3 = 1 / lambda;
-    int i = 0;
-
-    do {
-	i++;
-	x1 *= (-x)/i;
-	x2 = x1 / (lambda + i);
-	x3 += x2;
-    } while (fabs(x2) >= gamma_tol && i <= 100);
-
-    if (i == 100) {
-	g = NADBL;
-    } else {
-	g = x3 * exp(lambda * log(x));
-    }
-
-    return g;
-}
-
-/* Continued Fraction Expansion for Gamma Integral
-   int_0^x t^lambda-1 exp(-t) dx
-   Abramowitz and Stegun p. 263
-   Implemented in Fortran by
-   B. L. Shea (1988): Chi-squared and incomplete gamma integral,
-   Applied Statistics, vol 37, pp. 466-473.
-   See also Schwartz p. 120.      
-*/
-
-static double gamma_integral_fraction (double lambda, double x)
-{
-    double a = 1 - lambda;
-    double b = a + x + 1;
-    double p1 = 1, p2 = 1 + x;
-    double q1 = x, q2 = b * x;
-    double r2 = p2 / q2;
-    double d, p0, q0, r1, xx;
-    int c = 0;
-
-    do {
-	p0 = p1; p1 = p2; q0 = q1; q1 = q2; r1 = r2;
-	a = a + 1; b = b + 2; c = c + 1; d = a * c;
-	p2 = b * p1 - d * p0;
-	q2 = b * q1 - d * q0;
-	if (fabs(q2) > 0) {
-	    r2 = p2 / q2;
-	}
-	xx = fabs(r2 - r1);
-    } while (!((xx < gamma_tol ) || (xx < gamma_tol * r2) || (c == 100)));
-
-    if (c == 100) {
-	xx = NADBL;
-    } else {
-	xx = cephes_gamma(lambda);
-	xx -= exp(-x + lambda * log(x)) * r2;
-    }
-
-    return xx;
-}
-
-static double gamma_integral (double lambda, double x)
-{
-    double g;
-
-    if (x < 0)  { 
-	g = NADBL;
-    } else if (x < gamma_tol) {
-	g = 0;
-    } else if (x <= 1 || x < 0.9 * lambda) {
-	g = gamma_integral_expansion(lambda, x);
-    } else {
-	g = gamma_integral_fraction(lambda, x);
-    }
-
-    return g;
-}
-
-/* Control 1 : s1, s2 = shape, scale
-           2 : s1, s2 = expectation, variance
-   Returns NADBL on error 
-*/
-
-double gamma_cdf_comp (double s1, double s2, double x, int control)
-{
-    double shape, scale, xx;
-
-    if (control == 1) {
-	shape = s1; 
-	scale = s2; 
-    } else {
-	scale = s2 / s1; 
-	shape = s1 / scale; 
-    }	
-
-    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1)) {
-	xx = gammadist_wilson_hilferty(shape, scale, x);
-    } else {
-	xx = gamma_integral(shape, x / scale);
-	if (!na(xx)) {
-	    xx /= cephes_gamma(shape);
-	}
-    }
-
-    return xx;
-}

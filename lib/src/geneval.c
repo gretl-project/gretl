@@ -538,7 +538,7 @@ static int dist_argc (char *s, int f)
     case 'b':
     case 'B':
 	s[0] = 'B';
-	return (f == CRIT)? 0 : 3;
+	return 3;
     case '7':
     case 'D':
 	s[0] = 'D';
