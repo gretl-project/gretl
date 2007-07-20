@@ -533,7 +533,7 @@ static int dist_argc (char *s, int f)
     case 'g':
     case 'G':
 	s[0] = 'G';
-	return (f == CRIT)? 0 : 3;
+	return (f == CRIT || f == INVCDF)? 0 : 3;
     case '6':
     case 'b':
     case 'B':
@@ -542,7 +542,7 @@ static int dist_argc (char *s, int f)
     case '7':
     case 'D':
 	s[0] = 'D';
-	return 3;
+	return (f == CDF)? 3 : 0;
     case '8':
     case 'p':
     case 'P':
@@ -654,6 +654,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    break;
 	case CDF:
 	    ret->v.xval = gretl_get_cdf(d[0], parm);
+	    break;
+	case INVCDF:
+	    ret->v.xval = gretl_get_cdf_inverse(d[0], parm);
 	    break;
 	case CRIT:
 	    ret->v.xval = gretl_get_critval(d[0], parm);
@@ -4083,6 +4086,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case CDF:
+    case INVCDF:
     case CRIT:
     case PVAL:
 	if (t->v.b1.b->t == FARGS) {

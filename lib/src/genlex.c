@@ -226,6 +226,7 @@ struct str_table funcs[] = {
     { ISNULL,   "isnull" },
     { LISTLEN,  "nelem" },
     { CDF,      "cdf" },
+    { INVCDF,   "invcdf" },
     { PVAL,     "pvalue" },
     { CRIT,     "critical" },
     { MAKEMASK, "makemask" },

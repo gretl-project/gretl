@@ -76,23 +76,26 @@ double binomial_cdf_comp (int k, int n, double p)
     return x;
 }
 
-/**
- * inverse_binomial:
- * @k: maximum number of successes.
- * @n: number of trials.
- * @y: cumulative probability.
- *
- * Returns: the per-trial probability such that the sum of
- * the binomial density for 0 to @k successes in @n trials
- * equals @y, or #NADBL on failure.
- */
-
-double inverse_binomial (int k, int n, double y)
+static double binomial_cdf_inverse (int k, int n, double y)
 {
     double p = NADBL;
 
     if (y >= 0 && n >= 0 && k >= 0) {
 	p = bdtri(k, n, y);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+static double binomial_critval (int k, int n, double y)
+{
+    double p = NADBL;
+
+    if (y >= 0 && n >= 0 && k >= 0) {
+	p = bdtri(k, n, 1 - y);
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	}
@@ -352,6 +355,17 @@ double t_critval (double a, int df)
     return x;
 }
 
+static double t_cdf_inverse (double a, int df)
+{
+    double x = stdtri(df, a);
+
+    if (get_cephes_errno()) {
+	x = NADBL;
+    } 
+
+    return x;
+}
+
 /**
  * chisq_cdf:
  * @x: the cutoff point in the distribution.
@@ -416,6 +430,20 @@ double chisq_critval (double a, int df)
 
     if (df > 0 && a >= 0) {
 	x = chdtri(df, a);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
+static double chisq_cdf_inverse (double a, int df)
+{
+    double x = NADBL;
+
+    if (df > 0 && a >= 0) {
+	x = chdtri(df, 1 - a);
 	if (get_cephes_errno()) {
 	    x = NADBL;
 	}
@@ -490,6 +518,20 @@ double f_critval (double a, int dfn, int dfd)
 
     if (dfn > 0 && dfd > 0 && a >= 0) {
 	x = fdtri(dfn, dfd, a);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
+static double f_cdf_inverse (double a, int dfn, int dfd)
+{
+    double x = NADBL;
+
+    if (dfn > 0 && dfd > 0 && a >= 0) {
+	x = fdtri(dfn, dfd, 1 - a);
 	if (get_cephes_errno()) {
 	    x = NADBL;
 	}
@@ -766,6 +808,20 @@ static double poisson_cdf_inverse (int k, double p)
     return x;
 }
 
+static double poisson_critval (int k, double p)
+{
+    double x = NADBL;
+
+    if (k >= 0 && p >= 0 && p <= 1) {
+	x = pdtri(k, 1 - p);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	} 
+    }
+
+    return x;
+}
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
@@ -804,9 +860,9 @@ double gretl_get_critval (char st, double *p)
     } else if (st == 'F') {
 	x = f_critval(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'B') {
-	x = inverse_binomial((int) p[2], (int) p[1], p[0]);
+	x = binomial_critval((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
-	x = poisson_cdf_inverse((int) p[0], p[1]);
+	x = poisson_critval((int) p[0], p[1]);
     }
 
     return x;
@@ -832,6 +888,27 @@ double gretl_get_cdf (char st, double *p)
 	x = bvnorm_cdf(p[0], p[1], p[2]);
     } else if (st == 'P') {
 	x = poisson_cdf(p[0], (int) p[1]);
+    }
+
+    return x;
+}
+
+double gretl_get_cdf_inverse (char st, double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	x = normal_cdf_inverse(p[0]);
+    } else if (st == 't') {
+	x = t_cdf_inverse(p[1], (int) p[0]);
+    } else if (st == 'X') {
+	x = chisq_cdf_inverse(p[1], (int) p[0]);
+    } else if (st == 'F') {
+	x = f_cdf_inverse(p[2], (int) p[0], (int) p[1]);
+    } else if (st == 'B') {
+	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
+    } else if (st == 'P') {
+	x = poisson_cdf_inverse((int) p[0], p[1]);
     }
 
     return x;

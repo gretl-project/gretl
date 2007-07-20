@@ -24,8 +24,6 @@ double binomial_cdf (int k, int n, double p);
 
 double binomial_cdf_comp (int k, int n, double p);
 
-double inverse_binomial (int k, int n, double y);
-
 double x_factorial (double x);
 
 double log_x_factorial (double x);
@@ -79,6 +77,8 @@ double cephes_lgamma (double x);
 double gretl_get_pvalue (char st, const double *p);
 
 double gretl_get_cdf (char st, double *p);
+
+double gretl_get_cdf_inverse (char st, double *p);
 
 double gretl_get_critval (char st, double *p);
 
