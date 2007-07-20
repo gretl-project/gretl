@@ -1020,6 +1020,35 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     return 0;
 }
 
+/**
+ * gretl_matrix_copy_values_shaped:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * Copies the elements of @src into @targ, column
+ * by column.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if 
+ * the two matrices do not contain the same number of
+ * elements.
+ */
+
+int gretl_matrix_copy_values_shaped (gretl_matrix *targ, 
+				     const gretl_matrix *src)
+{
+    int n = targ->rows * targ->cols;
+
+    if (src->rows * src->cols != n) {
+	fprintf(stderr, "gretl_matrix_copy_values_shaped: targ is %d x %d but src is %d x %d\n",
+		targ->rows, targ->cols, src->rows, src->cols);
+	return E_NONCONF;
+    }
+
+    memcpy(targ->val, src->val, n * sizeof *targ->val);
+
+    return 0;
+}
+
 static int add_scalar_to_matrix (gretl_matrix *targ, double x)
 {
     int i, n = targ->rows * targ->cols;
