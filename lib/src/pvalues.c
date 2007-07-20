@@ -696,30 +696,6 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     return p;
 }
 
-static double poisson_pmf (double lambda, int k)
-{
-    double den = x_factorial((double) k);
-    double l0 = exp(-lambda);
-    double p;
-
-    if (na(den) || isinf(den) || isnan(den)) {
-	p = NADBL;
-    } else {
-	p = l0 * pow(lambda, (double) k) / den;
-    }
-
-    if (na(p) || isinf(p) || isnan(p)) {
-	int i;
-
-	p = l0;
-	for (i=1; i<=k; i++) {
-	    p *= lambda / i;
-	}
-    } 
-
-    return p;
-}
-
 /**
  * poisson_cdf:
  * @lambda: mean (also variance).
@@ -769,11 +745,11 @@ static double poisson_cdf_comp (double lambda, int k)
 /**
  * poisson_cdf_inverse:
  * @k: test value.
- * @lambda: cumulative probability.
+ * @p: cumulative probability.
  *
- * Returns: the Poisson variable x such that the integral
- * from 0 to x of the Poisson density is equal to the
- * given probability y.
+ * Returns: the Poisson parameter such that the integral
+ * from 0 to @k of the Poisson density is equal to the
+ * given probability @p.
  */
 
 static double poisson_cdf_inverse (int k, double p)
@@ -830,7 +806,7 @@ double gretl_get_critval (char st, double *p)
     } else if (st == 'B') {
 	x = inverse_binomial((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
-	x = poisson_cdf_inverse(p[0], (int) p[1]);
+	x = poisson_cdf_inverse((int) p[0], p[1]);
     }
 
     return x;
@@ -975,11 +951,13 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 		       "\n Prob(x > %d) = %g\n"), 
 		p[0], (int) p[1], (int) p[2], pv);
 	pc = binomial_cdf(p[2], p[1], p[0]);
-	pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
 	if (p[2] > 0) {
+	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2],
 		    pc - binomial_cdf(p[2] - 1, p[1], p[0]));
-	}		
+	} else {
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2], pc);
+	}
 	break;
 
     case 'p':
@@ -987,12 +965,14 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '8':
 	pprintf(prn, _("\nPoisson (mean = %g): "), p[0]);
 	print_pv_string(p[1], pv, prn);
-#if 0
 	pc = poisson_cdf(p[0], (int) p[1]);
-	pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[1], pc);
-#endif
-	pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
-		poisson_pmf(p[0], (int) p[1]));
+	if (p[1] > 0) {
+	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[1], pc);
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
+		    pc - poisson_cdf(p[0], (int) p[1] - 1));
+	} else {
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1], pc);
+	}
 	break;	
 
     default:
