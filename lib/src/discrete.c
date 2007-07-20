@@ -398,6 +398,125 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
     return err;
 }
 
+#if 0 /* not yet */
+
+static double 
+matrix_probit_llhood (const gretl_matrix *y,
+		      const gretl_matrix *yhat)
+{
+    double q, ll = 0.0;
+    int t;
+
+    for (t=0; t<y->rows; t++) {
+	q = 2.0 * y->val[t] - 1.0;
+	ll += log(normal_cdf(q * yhat->val[t]));
+    }
+
+    return ll;
+}
+
+int gretl_matrix_probit (const gretl_matrix *X,
+			 const gretl_matrix *y,
+			 gretl_matrix **pb)
+{
+    gretl_matrix *bX = NULL;
+    gretl_matrix *by = NULL;
+    gretl_matrix *bi = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *yhat = NULL;
+    double ll, lldiff, llbak = -1.0e9;
+    double wt, xti, yt, fx, Fx;
+    double tol = 1.0e-9;
+    int nobs = X->rows;
+    int nc = X->cols;
+    int itermax = 250;
+    int i, t, iter;
+    int err = 0;
+
+    bX = gretl_matrix_alloc(nobs, nc);
+    by = gretl_column_vector_alloc(nobs);
+    bi = gretl_column_vector_alloc(nc);
+    yhat = gretl_column_vector_alloc(nobs);
+    b = gretl_column_vector_alloc(nc);
+
+    if (bX == NULL || by == NULL || bi == NULL || b == NULL) {
+	gretl_matrix_free(bX);
+	gretl_matrix_free(by);
+	gretl_matrix_free(bi);
+	gretl_matrix_free(b);
+	return E_ALLOC;
+    }
+
+    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+
+    gretl_matrix_multiply(X, b, yhat);
+
+    for (iter=0; iter<itermax; iter++) {
+	/* construct BRMR dataset */
+	for (t=0; t<nobs; t++) {
+	    yt = yhat->val[t];
+	    fx = normal_pdf(yt);
+	    Fx = normal_cdf(yt);
+
+	    if (Fx < 1.0) {
+		wt = 1.0 / sqrt(Fx * (1.0 - Fx));
+	    } else {
+		wt = 0.0;
+	    }
+
+	    by->val[t] = wt * (y->val[t] - Fx);
+	    wt *= fx;
+	    for (i=0; i<nc; i++) {
+		xti = gretl_matrix_get(X, t, i);
+		gretl_matrix_set(bX, t, i, wt * xti);
+	    }
+	}
+
+	ll = matrix_probit_llhood(y, yhat);
+
+	lldiff = fabs(ll - llbak);
+	if (lldiff < tol) {
+	    break; 
+	}
+
+	llbak = ll;
+
+	err = gretl_matrix_ols(by, bX, bi, NULL, NULL, NULL);
+	if (err) {
+	    fprintf(stderr, "logit_probit: err = %d\n", err);
+	    if (iter > 0) {
+		err = E_NOCONV;
+	    }
+	    break;
+	}
+
+	/* update coefficient estimates */
+	gretl_matrix_add_to(b, bi);
+
+	/* calculate yhat */
+	gretl_matrix_multiply(X, b, yhat);
+    }
+
+    if (!err && lldiff > tol) {
+	err = E_NOCONV;
+    }
+
+    gretl_matrix_free(bX);
+    gretl_matrix_free(by);
+    gretl_matrix_free(bi);
+    gretl_matrix_free(yhat);
+
+    if (!err) {
+	*pb = b;
+    } else {
+	gretl_matrix_free(b);
+    }
+
+    return err;
+}
+
+#endif
+
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
 
 static int do_BRMR (const int *list, MODEL *dmod, int ci,
@@ -472,7 +591,8 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 	if (na(dmod->lnL)) {
 	    pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
 	} else {
-	    pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, dmod->lnL);
+	    pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), 
+		    iter, dmod->lnL);
 	}
 	pputc(prn, '\n');
 

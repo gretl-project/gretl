@@ -143,6 +143,107 @@ static void jwrap_destroy (Jwrap *J)
     free(J);
 }
 
+#if 0 /* not yet */
+
+/* G'[\Omega^{-1} \otimes \beta'S_{11}\beta]^{-1} 
+   \times G'(\Omega^{-1) \otimes \beta'S_{11}vec(Pi_{LS})
+*/
+
+static int Phifun (gretl_matrix *Phi, const gretl_matrix *Psi,
+		   const gretl_matrix *Omega)
+{
+    gretl_matrix *BSB = NULL;
+    gretl_matrix *OKBSB = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *BS11 = NULL;
+    gretl_matrix *YY = NULL;
+    gretl_matrix *ZZ = NULL;
+    gretl_matrix *AA = NULL;
+    int err = 0;
+
+    if (Phi == NULL) {
+	gretl_matrix_free(BSB);
+	gretl_matrix_free(OKBSB);
+	gretl_matrix_free(XX);
+	gretl_matrix_free(BS11);
+	gretl_matrix_free(YY);
+	gretl_matrix_free(ZZ);
+	gretl_matrix_free(AA);
+	return 0;
+    }
+
+    if (BSB == NULL) {
+	BSB = gretl_matrix_alloc(beta->cols, S11->cols);
+	OKBSB = gretl_matrix_alloc(Omega->rows * beta->cols,
+				   Omega->rows * beta->cols);
+	XX = gretl_matrix_alloc(G->cols, OKBSB->cols);
+	BS11 = gretl_matrix_alloc();
+	YY = gretl_matrix_alloc();
+	ZZ = gretl_matrix_alloc();
+	AA = gretl_matrix_alloc();
+    }
+
+    gretl_matrix_invert(Omega);
+
+    gretl_matrix_qform(beta, GRETL_MOD_TRANSPOSE, S11,
+		       BSB, GRETL_MOD_NONE);
+
+    gretl_matrix_kronecker_product(Omega, BSB, OKBSB);
+    gretl_matrix_invert(OKBSB);
+
+    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+			      OKBSB, GRETL_MOD_NONE,
+			      XX, GRETL_MOD_NONE);
+
+    gretl_matrix_multiply_mod(beta, GRETL_MOD_TRANSPOSE, S11,
+			      BS11, GRETL_MOD_NONE);
+
+    gretl_matrix_multiply(BS11, VecPi, YY);
+    gretl_matrix_kronecker_product(Omega, YY, ZZ);
+    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+			      ZZ, GRETL_MOD_NONE,
+			      AA, GRETL_MOD_NONE);
+    
+    gretl_matrix_multiply(XX, AA, Phi);
+
+    return err;
+}
+
+static int Psifun (gretl_matrix *Psi, const gretl_matrix *Phi,
+		   const gretl_matrix *Omega)
+{
+    int err = 0;
+
+    return err;
+}
+
+static int Omegafun Jwrap *J()
+{
+    int err = 0;
+
+    return err;
+}
+
+static int switchit (Jwrap *J)
+{
+    int j, jmax = 1000;
+    int err = 0;
+
+    for (j=0; j<jmax && !err; j++) {
+	err = Phifun(Phi, Psi, Omega);
+	if (!err) {
+	    Psifun(Psi, Phi, Omega);
+	}
+	if (!err) {
+	    Omega = Omegafun(Omega, J);
+	}
+    }
+
+    return 0;
+}
+
+#endif /* 0 == not yet */
+
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
     gretl_matrix *Tmp = NULL;
