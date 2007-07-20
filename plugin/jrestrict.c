@@ -72,6 +72,8 @@ struct Jwrap_ {
     gretl_matrix *qf2;
 };
 
+static int compute_alpha (Jwrap *J);
+
 static Jwrap *jwrap_new (int neqns, int rank, int T)
 {
     Jwrap *J = malloc(sizeof *J);
@@ -240,6 +242,78 @@ static int switchit (Jwrap *J)
     }
 
     return 0;
+}
+
+/* 
+   J(\theta) = [(I_p \otimes \beta) : (\alpha \otimes I_{p1})H]
+
+   Boswijk and Doornik, equation (40), except that here we're only
+   considering \beta restrictions so their G is an identity 
+   matrix.
+
+   This is all horribly broken at present.
+*/
+
+static int beta_jacobian_rank (Jwrap *J)
+{
+    gretl_matrix *phi = NULL;
+    gretl_matrix *Ip = NULL;
+    gretl_matrix *Ip1 = NULL;
+    gretl_matrix *A = NULL;
+    gretl_matrix *B = NULL;
+    gretl_matrix *BH = NULL;
+    gretl_matrix *Jac = NULL;
+    int p = J->S11->rows;
+    int p1 = J->S01->rows;
+    int rank = 0;
+    int err = 0;
+
+    /* form beta = H \phi + s, for randomized \phi,
+       then form \alpha as a function of \beta
+    */
+
+    J->beta = gretl_matrix_alloc(J->S11->rows * J->rank, 1);
+    phi = gretl_matrix_alloc(J->H->cols, 1);
+    gretl_matrix_random_fill(phi, D_NORMAL);
+
+    gretl_matrix_multiply(J->H, phi, J->beta);
+    gretl_matrix_add_to(J->beta, J->s);
+    gretl_matrix_reuse(J->beta, J->S11->rows, J->rank);
+
+    gretl_matrix_print(phi, "phi");
+    gretl_matrix_print(J->beta, "beta");
+
+    compute_alpha(J);
+
+    gretl_matrix_print(J->alpha, "alpha");
+
+    Ip = gretl_identity_matrix_new(p);
+    Ip1 = gretl_identity_matrix_new(p1);
+
+    A = gretl_matrix_kronecker_product_new(Ip, J->beta);
+    B = gretl_matrix_kronecker_product_new(J->alpha, Ip1);
+
+    gretl_matrix_print(A, "A");
+    gretl_matrix_print(A, "B");
+    gretl_matrix_print(J->H, "H");
+
+    BH = gretl_matrix_multiply_new(B, J->H, &err);
+
+    Jac = gretl_matrix_col_concat(A, BH, &err);
+
+    rank = gretl_matrix_rank(Jac, &err);
+
+    fprintf(stderr, "rank of Jacobian = %d\n", rank);
+
+    gretl_matrix_free(phi);
+    gretl_matrix_free(Ip);
+    gretl_matrix_free(Ip1);
+    gretl_matrix_free(A);
+    gretl_matrix_free(B);
+    gretl_matrix_free(BH);
+    gretl_matrix_free(Jac);
+
+    return rank;
 }
 
 #endif /* 0 == not yet */
@@ -641,6 +715,10 @@ identification_check (Jwrap *J, gretl_matrix **R,
     gretl_matrix_array_free(Htmp, J->nC);
     free(k);
 
+#if 0
+    beta_jacobian_rank(J);
+#endif
+
     return err;
 }
 
@@ -771,7 +849,9 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
     fprintf(stderr, "H: hr = %d, hc = %d (sr = %d)\n", hr, hc, sr);
 #endif
 
-    err = identification_check(J, Rarr, ss, nb, prn);
+    if (!err) {
+	err = identification_check(J, Rarr, ss, nb, prn);
+    }
 
     if (!err) {
 	J->H = gretl_zero_matrix_new(hr, hc);
@@ -783,7 +863,7 @@ static int set_up_restrictions (Jwrap *J, GRETL_VAR *jvar,
 	    hr = hc = sr = 0;
 	}
     }
-
+    
     for (i=0; i<nC && !err; i++) {
 	err = gretl_matrix_inscribe_matrix(J->s, ss[i], sr, 0, 
 					   GRETL_MOD_NONE);
@@ -1239,20 +1319,29 @@ static int real_compute_ll (Jwrap *J)
     return err;
 }
 
+static int J_alloc_qfs (Jwrap *J)
+{
+    /* temp storage not allocated yet */
+    int r = J->rank;
+
+    J->qf1 = gretl_matrix_alloc(r, r);
+    J->qf2 = gretl_matrix_alloc(r, r);
+
+    if (J->qf1 == NULL || J->qf2 == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}    
+
 /* for use when there's no need to invoke BFGS */
 
 static int alt_loglik (Jwrap *J)
 {
-    int bcols = J->beta->cols;
     int err = 0;
 
     if (J->qf1 == NULL) {
-	/* temp storage not allocated yet */
-	J->qf1 = gretl_matrix_alloc(bcols, bcols);
-	J->qf2 = gretl_matrix_alloc(bcols, bcols);
-	if (J->qf1 == NULL || J->qf2 == NULL) {
-	    return E_ALLOC;
-	}
+	err = J_alloc_qfs(J);
     }
 
     if (!err) {
@@ -1267,16 +1356,10 @@ static int alt_loglik (Jwrap *J)
 static double Jloglik (const double *phi, void *data)
 {
     Jwrap *J = (Jwrap *) data;
-    int bcols = J->beta->cols;
     int err = 0;
 
     if (J->qf1 == NULL) {
-	/* temp storage not allocated yet */
-	J->qf1 = gretl_matrix_alloc(bcols, bcols);
-	J->qf2 = gretl_matrix_alloc(bcols, bcols);
-	if (J->qf1 == NULL || J->qf2 == NULL) {
-	    err = E_ALLOC;
-	}
+	err = J_alloc_qfs(J);
     }
 
     if (!err) {
@@ -1458,6 +1541,37 @@ static int simann (Jwrap *J, gretl_matrix *b, gretlopt opt, PRN *prn)
     return err;
 }
 
+static int compute_alpha (Jwrap *J)
+{
+    gretl_matrix *S01b = NULL;
+    int err = 0;
+
+    if (J->qf1 == NULL) {
+	err = J_alloc_qfs(J);
+    }
+
+    if (!err) {
+	S01b = gretl_matrix_multiply_new(J->S01, J->beta, &err);
+    }
+
+    if (!err) {
+	err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
+				 J->S11, J->qf1, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	gretl_invert_symmetric_matrix(J->qf1);
+    }
+
+    if (!err) {
+	J->alpha = gretl_matrix_multiply_new(S01b, J->qf1, &err);
+    }
+
+    gretl_matrix_free(S01b);
+
+    return err;
+}
+
 /* public entry point */
 
 int general_beta_analysis (GRETL_VAR *jvar, 
@@ -1468,7 +1582,6 @@ int general_beta_analysis (GRETL_VAR *jvar,
 {
     Jwrap *J = NULL;
     gretl_matrix *b = NULL;
-    gretl_matrix *S01b = NULL;
 
     int n = jvar->neqns;
     int rank = jrank(jvar);
@@ -1518,20 +1631,7 @@ int general_beta_analysis (GRETL_VAR *jvar,
  skipest:
 
     if (!err) {
-	S01b = gretl_matrix_multiply_new(J->S01, J->beta, &err);
-    }
-
-    if (!err) {
-	err = gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE,
-				 J->S11, J->qf1, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	gretl_invert_symmetric_matrix(J->qf1);
-    }
-
-    if (!err) {
-	J->alpha = gretl_matrix_multiply_new(S01b, J->qf1, &err);
+	err = compute_alpha(J);
     }
 
     if (!err) {
@@ -1584,8 +1684,6 @@ int general_beta_analysis (GRETL_VAR *jvar,
     } 
 
     jwrap_destroy(J);
-
-    gretl_matrix_free(S01b);
     gretl_matrix_free(b);
 
     return err;
