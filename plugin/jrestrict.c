@@ -236,7 +236,7 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, int *err)
     return J;
 }
 
-#if 1 /* not yet (but getting closer) */
+#if 0 /* not yet (but getting closer) */
 
 typedef struct switcher_ switcher;
 
