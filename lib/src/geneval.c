@@ -940,10 +940,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	break;
     case KRON:
 	/* Kronecker product */
-	C = gretl_matrix_kronecker_product_new(A, B);
-	if (C == NULL) {
-	    *err = E_ALLOC;
-	}
+	C = gretl_matrix_kronecker_product_new(A, B, err);
 	break;
     case CMULT:
 	C = gretl_matrix_complex_multiply(A, B, err);

@@ -2557,6 +2557,166 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 }
 
 /**
+ * gretl_matrix_I_kronecker:
+ * @p: dimension of left-hand identity matrix.
+ * @B: right-hand matrix, r x s.
+ * @K: target matrix, (p * r) x (p * s).
+ *
+ * Writes the Kronecker product of the identity matrix 
+ * of order @r and @B into @K.
+ *
+ * Returns: 0 on success, %E_NONCONF if matrix @K is
+ * not correctly dimensioned for the operation.
+ */
+
+int
+gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
+			  gretl_matrix *K)
+{
+    double x, aij, bkl;
+    int r = B->rows;
+    int s = B->cols;
+    int i, j, k, l;
+    int ioff, joff;
+    int Ki, Kj;
+
+    if (K->rows != p * r || K->cols != p * s) {
+	return E_NONCONF;
+    }
+    
+    for (i=0; i<p; i++) {
+	ioff = i * r;
+	for (j=0; j<p; j++) {
+	    /* block ij is an r * s matrix, I_{ij} * B */
+	    aij = (i == j)? 1 : 0;
+	    joff = j * s;
+	    for (k=0; k<r; k++) {
+		Ki = ioff + k;
+		for (l=0; l<r; l++) {
+		    bkl = gretl_matrix_get(B, k, l);
+		    Kj = joff + l;
+		    x = aij * bkl;
+		    if (x == -0.0) {
+			x = 0.0;
+		    }
+		    gretl_matrix_set(K, Ki, Kj, x);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_I_kronecker_new:
+ * @p: dimension of left-hand identity matrix.
+ * @B: right-hand matrix, r x s.
+ * @err: location to receive error code.
+ *
+ * Writes the Kronecker product of the identity matrix 
+ * of order @r and @B into a newly allocated matrix.
+ *
+ * Returns: the new matrix, or %NULL on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_I_kronecker_new (int p, const gretl_matrix *B, int *err)
+{
+    gretl_matrix *K;
+
+    K = gretl_matrix_alloc(p * B->rows, p * B->cols);
+
+    if (K == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_I_kronecker(p, B, K);
+    }
+
+    return K;
+}
+
+/**
+ * gretl_matrix_kronecker_I:
+ * @A: left-hand matrix, p x q.
+ * @r: dimension of right-hand identity matrix.
+ * @K: target matrix, (p * r) x (q * r).
+ *
+ * Writes the Kronecker product of @A and the identity
+ * matrix of order @r into @K.
+ *
+ * Returns: 0 on success, %E_NONCONF if matrix @K is
+ * not correctly dimensioned for the operation.
+ */
+
+int
+gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
+			  gretl_matrix *K)
+{
+    double x, aij, bkl;
+    int p = A->rows;
+    int q = A->cols;
+    int i, j, k, l;
+    int ioff, joff;
+    int Ki, Kj;
+
+    if (K->rows != p * r || K->cols != q * r) {
+	return E_NONCONF;
+    }
+    
+    for (i=0; i<p; i++) {
+	ioff = i * r;
+	for (j=0; j<q; j++) {
+	    /* block ij is an r * r matrix, a_{ij} * I_r */
+	    aij = gretl_matrix_get(A, i, j);
+	    joff = j * r;
+	    for (k=0; k<r; k++) {
+		Ki = ioff + k;
+		for (l=0; l<r; l++) {
+		    bkl = (k == l)? 1 : 0;
+		    Kj = joff + l;
+		    x = aij * bkl;
+		    if (x == -0.0) {
+			x = 0.0;
+		    }
+		    gretl_matrix_set(K, Ki, Kj, x);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_kronecker_I_new:
+ * @A: left-hand matrix, p x q.
+ * @r: dimension of right-hand identity matrix.
+ * @err: location to receive error code.
+ *
+ * Writes into a newl allocated matrix the Kronecker 
+ * product of @A and the identity matrix of order @r.
+ *
+ * Returns: the new matrix, or %NULL on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_kronecker_I_new (const gretl_matrix *A, int r, int *err)
+{
+    gretl_matrix *K;
+
+    K = gretl_matrix_alloc(A->rows * r, A->cols * r);
+
+    if (K == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_kronecker_I(A, r, K);
+    }
+
+    return K;
+}
+
+/**
  * gretl_matrix_kronecker_product:
  * @A: left-hand matrix, p x q.
  * @B: right-hand matrix, r x s.
@@ -2613,6 +2773,7 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
  * gretl_matrix_kronecker_product_new:
  * @A: left-hand matrix, p x q.
  * @B: right-hand matrix, r x s.
+ * @err: location to receive error code.
  * 
  * Returns: A newly allocated (p * r) x (q * s) matrix which 
  * is the Kronecker product of matrices @A and @B, or %NULL 
@@ -2621,7 +2782,8 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
 
 gretl_matrix *
 gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
-				    const gretl_matrix *B)
+				    const gretl_matrix *B,
+				    int *err)
 {
     gretl_matrix *K;
     int p = A->rows;
@@ -2631,7 +2793,9 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     
     K = gretl_matrix_alloc(p * r, q * s);
 
-    if (K != NULL) {
+    if (K == NULL) {
+	*err = E_ALLOC;
+    } else {
 	gretl_matrix_kronecker_product(A, B, K);
     }
 

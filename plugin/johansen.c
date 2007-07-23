@@ -108,7 +108,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     
     double mt, vt, ml, vl;
     const double *tracem, *tracev, *lmaxm, *lmaxv;
-    double g, x[7];
+    double x[7];
     int i;
 
     tracem = s_mTrace_m_coef[det];
@@ -129,31 +129,14 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
 	vt += x[i] * tracev[i];
-	if (i) {
+	if (i > 0) {
 	    ml += x[i] * lmaxm[i-1];
 	    vl += x[i] * lmaxv[i-1];
 	}
     }
 
-    g = gamma_cdf_comp(mt, vt, tracetest, 2);
-    if (na(g)) {
-	pval[0] = NADBL;
-    } else {
-	pval[0] = 1.0 - g;
-	if (pval[0] < 0.0) {
-	    pval[0] = 0.0;
-	}
-    }
-
-    g = gamma_cdf_comp(ml, vl, lmaxtest, 2);
-    if (na(g)) {
-	pval[1] = NADBL;
-    } else {
-	pval[1] = 1.0 - g;
-	if (pval[1] < 0.0) {
-	    pval[1] = 0.0;
-	}
-    }
+    pval[0] = gamma_cdf_comp(mt, vt, tracetest, 2);
+    pval[1] = gamma_cdf_comp(ml, vl, lmaxtest, 2);
 
     return 0;
 }
@@ -833,9 +816,14 @@ static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *R,
 
 	if (B->cols == 1) {
 	    double den = B->val[0];
+	    int i;
 
 	    if (den != 0.0) {
-		gretl_matrix_divide_by_scalar(B, den);
+		for (i=0; i<B->rows; i++) {
+		    if (B->val[i] != 0) {
+			B->val[i] /= den;
+		    }
+		}
 	    }
 	}
     } 
@@ -954,9 +942,8 @@ static int beta_variance (GRETL_VAR *vecm, const gretl_matrix *R)
     gretl_matrix_print(HSH, "H'*S11*H");
 #endif
 
-    vecm->jinfo->Bvar = gretl_matrix_kronecker_product_new(aOa, HSH);
-    if (vecm->jinfo->Bvar == NULL) {
-	err = E_ALLOC;
+    vecm->jinfo->Bvar = gretl_matrix_kronecker_product_new(aOa, HSH, &err);
+    if (err) {
 	goto bailout;
     }
 
@@ -1308,13 +1295,23 @@ int
 simple_restriction (GRETL_VAR *jvar,
 		    const gretl_restriction_set *rset)
 {
-    const gretl_matrix *R = rset_get_R_matrix(rset);
-    const gretl_matrix *q = rset_get_q_matrix(rset);
+    const gretl_matrix *R, *q;
+    int acols = rset_VECM_acols(rset);
+    int bcols = rset_VECM_bcols(rset);
     int rcols = jvar->neqns;
     int ret = 1;
 
-    if (rset_VECM_bcols(rset) > 0) {
+    if (acols > 0 && bcols > 0) {
+	return 0;
+    }
+
+    if (bcols > 0) {
 	rcols += restricted(jvar);
+	R = rset_get_R_matrix(rset);
+	q = rset_get_q_matrix(rset);
+    } else {
+	R = rset_get_Ra_matrix(rset);
+	q = rset_get_qa_matrix(rset);
     }
 
     if (!gretl_is_zero_matrix(q)) {
@@ -1329,13 +1326,14 @@ simple_restriction (GRETL_VAR *jvar,
 }
 
 /* driver for VECM estimation subject to "general" restrictions
-   on beta */
+   on beta and/or alpha */
 
 static int johansen_estimate_general (GRETL_VAR *jvar, 
 				      const gretl_restriction_set *rset,
 				      double ***pZ, DATAINFO *pdinfo, 
 				      gretlopt opt, PRN *prn)
 {
+    const gretl_matrix *R, *q;
     int err;
 
     err = general_beta_analysis(jvar, rset, pdinfo, OPT_F, prn);
@@ -1348,9 +1346,9 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 	err = vecm_ll_stats(jvar);
     }
 
-    if (!err) {
-	const gretl_matrix *R = rset_get_R_matrix(rset);
-	const gretl_matrix *q = rset_get_q_matrix(rset);
+    if (!err && rset_VECM_bcols(rset) > 0) {
+	R = rset_get_R_matrix(rset);
+	q = rset_get_q_matrix(rset);
 
 	gretl_matrix_free(jvar->jinfo->R);
 	gretl_matrix_free(jvar->jinfo->q);
@@ -1359,6 +1357,21 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 	jvar->jinfo->q = gretl_matrix_copy(q);
 
 	if (jvar->jinfo->R == NULL || jvar->jinfo->q == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && rset_VECM_acols(rset) > 0) {
+	R = rset_get_Ra_matrix(rset);
+        q = rset_get_qa_matrix(rset);
+
+	gretl_matrix_free(jvar->jinfo->Ra);
+	gretl_matrix_free(jvar->jinfo->qa);
+
+	jvar->jinfo->Ra = gretl_matrix_copy(R);
+	jvar->jinfo->qa = gretl_matrix_copy(q);
+
+	if (jvar->jinfo->Ra == NULL || jvar->jinfo->qa == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -1397,7 +1410,6 @@ int johansen_estimate (GRETL_VAR *jvar,
 
     if (rset != NULL) {
 	genrest = !simple_restriction(jvar, rset);
-	
     }
 
     if (rset_VECM_acols(rset) > 0) {

@@ -718,6 +718,11 @@ double gamma_cdf (double s1, double s2, double x, int control)
     return p;
 }
 
+/* Control 1 : s1, s2 = shape, scale
+           2 : s1, s2 = mean, variance
+   Returns NADBL on error.
+*/
+
 double gamma_cdf_comp (double s1, double s2, double x, int control)
 {
     double shape, scale, p;
@@ -726,11 +731,11 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
 	shape = s1; 
 	scale = s2; 
     } else {
-	scale = s2 / s1; 
-	shape = s1 / scale; 
-    }	
+	scale = s2 / s1;    /* variance / mean */
+	shape = s1 / scale; /* mean / scale */
+    }
 
-    p = gdtrc(s2, s1, x);
+    p = gdtrc(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
 	p = NADBL;
     }

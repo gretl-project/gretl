@@ -329,7 +329,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 		     gretlopt opt,
 		     PRN *prn)
 {
-    const gretl_matrix *R = rset_get_R_matrix(rset);
+    const gretl_matrix *R = rset_get_Ra_matrix(rset);
     const gretl_matrix *S00 = jvar->jinfo->S00;
     gretl_matrix *S01 = jvar->jinfo->S01;
     gretl_matrix *S11 = jvar->jinfo->S11;
