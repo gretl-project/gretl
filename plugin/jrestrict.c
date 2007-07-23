@@ -378,6 +378,8 @@ static int Psifun (Jwrap *J, switcher *s)
     /* combine */
     gretl_matrix_multiply(s->TmpL, s->TmpR, J->psivec);
 
+    /* now update alpha from psivec */
+
     return err;
 }
 
@@ -432,6 +434,18 @@ static int Phifun (Jwrap *J, switcher *s)
 
     /* combine */
     gretl_matrix_multiply(s->TmpL, s->TmpR, J->phivec);
+
+    /* now update beta from phivec */
+    if (J->H != NULL) {
+	gretl_matrix_reuse(J->beta, J->p1 * J->rank, 1);
+	gretl_matrix_multiply(H, J->phivec, J->beta);
+	if (!gretl_is_zero_matrix(J->s)) {
+	    gretl_matrix_add_to(J->beta, J->s);
+	}
+	gretl_matrix_reuse(J->beta, J->p1, J->rank);
+    } else {
+	gretl_matrix_copy_values_shaped(J->beta, J->phivec);
+    }
 
     return err;
 }
