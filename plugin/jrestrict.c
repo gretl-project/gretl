@@ -29,7 +29,7 @@
 #include "jprivate.h"
 
 #define JDEBUG 1
-#define SWITCHER 0
+#define SWITCHER 0 /* experimental */
 
 typedef struct Jwrap_ Jwrap;
 
@@ -375,15 +375,15 @@ static int switcher_init (switcher *s, Jwrap *J)
 
 /* The following functions represent an attempt at implementing the
    switching algorithm as set out in Boswijk and Doornik, 2004,
-   p. 455.  This does not appear to be right yet, but I think it's not
-   very far from being right.
+   p. 455.  This does not appear to be quite right yet, but I think
+   it's not very far from being right.
 */
 
 /* 
    Update \Psi using:
 
    [ G'(\Omega^{-1} \otimes \beta'S_{11}\beta)G ]^{-1} 
-   \times G'(\Omega^{-1} \otimes \beta'S_{11}) vec(Pi_{LS})
+   \times G'(\Omega^{-1} \otimes \beta'S_{11}) vec(Pi'_{LS})
 */
 
 static int Psifun (Jwrap *J, switcher *s)
@@ -454,7 +454,7 @@ static int Psifun (Jwrap *J, switcher *s)
 
     [H'(\alpha'\Omega^{-1}\alpha \otimes S_{11})H]^{-1} \times
        H'(\alpha'\Omega^{-1} \otimes S_{11}) \times
-         [vec(Pi_{LS}) - (\alpha \otimes I_{p1})h_0]
+         [vec(Pi'_{LS}) - (\alpha \otimes I_{p1})h_0]
  */
 
 static int Phifun (Jwrap *J, switcher *s)
@@ -580,7 +580,7 @@ static int switchit (Jwrap *J)
 {
     switcher s;
     double lldiff, llbak = -1.0e+200;
-    double tol = 0.5e-8;
+    double tol = 4.0e-9;
     int j, jmax = 10000;
     int conv = 0;
     int err;
@@ -637,7 +637,7 @@ static int switchit (Jwrap *J)
     return err;
 }
 
-#endif /* 0 */
+#endif /* SWITCHER */
 
 /* 
    J = [(I_p \otimes \beta)G : (\alpha \otimes I_{p1})H]
@@ -1964,8 +1964,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 #else
     if (!err) {
 	err = simann(J, b, opt, prn);
-    }
-
+    }    
     if (!err) {
 	int maxit = 4000;
 	double reltol = 1.0e-11;
@@ -1981,6 +1980,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
  skipest:
 
+#if !SWITCHER
     if (!err) {
 	err = compute_alpha(J);
     }
@@ -1988,6 +1988,9 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     if (!err) {
 	err = make_omega(J, J->alpha, J->beta);
     }
+#endif
+
+    /* FIXME: below here, when SWITCHER is non-zero */
 
     if (opt & OPT_F) {
 	gretl_matrix_free(jvar->S);
