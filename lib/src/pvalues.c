@@ -234,7 +234,13 @@ double normal_pvalue_2 (double x)
 {
     double p = (x < 0)? ndtr(x) : ndtr(-x);
 
-    return 2 * p;
+    if (get_cephes_errno()) {
+	p = NADBL;
+    } else {
+	p *= 2;
+    }
+
+    return p;
 }
 
 /**
@@ -251,7 +257,15 @@ double normal_pvalue_2 (double x)
 
 double normal_pvalue_1 (double x)
 {
-    return 1 - ndtr(x);
+    double p = ndtr(x);
+
+    if (get_cephes_errno()) {
+	p = NADBL;
+    } else {
+	p = 1 - p;
+    }
+
+    return p;
 }
 
 /**
@@ -334,6 +348,8 @@ double t_pvalue_2 (double x, int df)
     return p;
 }
 
+#define df_ok(d) (floor(d) == d && d < (double) INT_MAX)
+
 /**
  * t_critval:
  * @a: right-tail probability.
@@ -344,9 +360,27 @@ double t_pvalue_2 (double x, int df)
  * probability @a, or #NADBL on failure.
  */
 
-double t_critval (double a, int df)
+double t_critval (double a, double df)
 {
-    double x = stdtri(df, 1 - a);
+    double x;
+
+    if (df < 1) {
+	return NADBL;
+    }    
+
+    if (df_ok(df)) {
+	if (a > .10) {
+	    x = stdtri((int) df, 1 - a);
+	} else {
+	    x = -stdtri((int) df, a);
+	}
+    } else {
+	if (a > .10) {
+	    x = ndtri(1 - a);
+	} else {
+	    x = -ndtri(a);
+	}
+    }
 
     if (get_cephes_errno()) {
 	x = NADBL;
@@ -355,9 +389,19 @@ double t_critval (double a, int df)
     return x;
 }
 
-static double t_cdf_inverse (double a, int df)
+static double t_cdf_inverse (double a, double df)
 {
-    double x = stdtri(df, a);
+    double x;
+
+    if (df < 1) {
+	return NADBL;
+    }
+
+    if (df_ok(df)) {
+	x = stdtri((int) df, a);
+    } else {
+	x = ndtri(a);
+    }    
 
     if (get_cephes_errno()) {
 	x = NADBL;
@@ -603,7 +647,13 @@ double normal_pdf (double x)
 
 double normal_critval (double a)
 {
-    double z = ndtri(1.0 - a);
+    double z;
+
+    if (a > 0.10) {
+	z = ndtri(1.0 - a);
+    } else {
+	z = -ndtri(a);
+    }
 
     if (get_cephes_errno()) {
 	z = NADBL;
@@ -827,6 +877,35 @@ static double poisson_critval (int k, double p)
     return x;
 }
 
+static double poisson_pmf (double lambda, int k)
+{
+    double den, l0, p;
+
+    if (lambda <= 0 || k < 0) {
+	return NADBL;
+    }
+
+    den = x_factorial((double) k);
+    l0 = exp(-lambda);
+
+    if (na(den) || isinf(den) || isnan(den)) {
+	p = NADBL;
+    } else {
+	p = l0 * pow(lambda, (double) k) / den;
+    }
+
+    if (na(p) || isinf(p) || isnan(p)) {
+	int i;
+
+	p = l0;
+	for (i=1; i<=k; i++) {
+	    p *= lambda / i;
+	}
+    } 
+
+    return p;
+}
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
@@ -843,23 +922,9 @@ double gretl_get_critval (char st, double *p)
     double x = NADBL;
 
     if (st == 'z') {
-	if (p[0] > 0.5) {
-	    x = ndtri(1.0 - p[0]);
-	} else {
-	    x = -ndtri(p[0]);
-	}
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}	
+	x = normal_critval(p[0]);
     } else if (st == 't') {
-	if (p[1] > 0.5) {
-	    x = stdtri((int) p[0], 1 - p[1]);
-	} else {
-	    x = -stdtri((int) p[0], p[1]);
-	}
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	}
+	x = t_critval(p[1], p[0]);
     } else if (st == 'X') {	
 	x = chisq_critval(p[1], (int) p[0]);
     } else if (st == 'F') {
@@ -905,7 +970,7 @@ double gretl_get_cdf_inverse (char st, double *p)
     if (st == 'z') {
 	x = normal_cdf_inverse(p[0]);
     } else if (st == 't') {
-	x = t_cdf_inverse(p[1], (int) p[0]);
+	x = t_cdf_inverse(p[1], p[0]);
     } else if (st == 'X') {
 	x = chisq_cdf_inverse(p[1], (int) p[0]);
     } else if (st == 'F') {
@@ -939,17 +1004,20 @@ double gretl_get_pvalue (char st, const double *p)
 	x = poisson_cdf_comp(p[0], (int) p[1]);
     }
 
-    if (!na(x)) {
-	dparm_set(p);
-    }
+    dparm_set(p);
 
     return x;
 }
 
-static void 
+static int 
 print_pv_string (double x, double p, PRN *prn)
 {
     char numstr[32];
+
+    if (na(p)) {
+	pprintf(prn, _("area to the right of %g: NA\n"), x);
+	return 1;
+    }
 
     sprintf(numstr, "%g", p);
 
@@ -958,11 +1026,14 @@ print_pv_string (double x, double p, PRN *prn)
     } else {
 	pprintf(prn, _("area to the right of %g = %g\n"), x, p);
     }
+
+    return 0;
 }
 
 void print_pvalue (char st, double *p, double pv, PRN *prn)
 {
     double pc;
+    int err;
 
     switch (st) {
 
@@ -971,7 +1042,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'N':
     case '1':
 	pprintf(prn, "\n%s: ", _("Standard normal"));
-	print_pv_string(p[0], pv, prn);
+	err = print_pv_string(p[0], pv, prn);
+	if (err) return;
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
@@ -986,7 +1058,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 't':
     case '2':
 	pprintf(prn, "\nt(%d): ", (int) p[0]);
-	print_pv_string(p[1], pv, prn);
+	err = print_pv_string(p[1], pv, prn);
+	if (err) return;
 	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
@@ -1003,7 +1076,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'c':
     case '3':
 	pprintf(prn, "\n%s(%d): ", _("Chi-square"), (int) p[0]);
-	print_pv_string(p[1], pv, prn);
+	err = print_pv_string(p[1], pv, prn);
+	if (err) return;
 	pc = chisq_cdf(p[1], p[0]);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
@@ -1012,7 +1086,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'f':
     case '4':
 	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
-	print_pv_string(p[2], pv, prn);
+	err = print_pv_string(p[2], pv, prn);
+	if (err) return;
 	pc = f_cdf(p[2], (int) p[0], (int) p[1]);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
@@ -1046,12 +1121,13 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'P':
     case '8':
 	pprintf(prn, _("\nPoisson (mean = %g): "), p[0]);
-	print_pv_string(p[1], pv, prn);
+	err = print_pv_string(p[1], pv, prn);
+	if (err) return;
 	pc = poisson_cdf(p[0], (int) p[1]);
 	if (p[1] > 0) {
 	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[1], pc);
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1],
-		    pc - poisson_cdf(p[0], (int) p[1] - 1));
+		    poisson_pmf(p[0], p[1]));
 	} else {
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[1], pc);
 	}

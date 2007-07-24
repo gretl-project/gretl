@@ -38,7 +38,7 @@ double t_cdf_comp (double x, int df);
 
 double t_pvalue_2 (double x, int df);
 
-double t_critval (double a, int df);
+double t_critval (double a, double df);
 
 double chisq_cdf (double x, int df);
 

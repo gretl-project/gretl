@@ -148,7 +148,7 @@ Copyright 1984, 1987, 1988, 1992, 2000 by Stephen L. Moshier
 /* Define this macro to suppress error propagation in exp(x^2)
    by using the expx2 function.  The tradeoff is that doing so
    generates two calls to the exponential function instead of one.  */
-#define USE_EXPXSQ 1
+#define USE_EXPXSQ 0
 
 static double P[] = {
     2.46196981473530512524E-10,
@@ -209,7 +209,9 @@ static double U[] = {
 
 static double cephes_erfc (double a);
 static double cephes_erf (double x);
+#if USE_EXPXSQ
 static double erfce (double a);
+#endif
 
 double ndtr (double a)
 {
@@ -221,9 +223,8 @@ double ndtr (double a)
     /* if (z < SQRTH) */
     if (z < 1.0) {
 	y = 0.5 + 0.5 * cephes_erf(x);
-
     } else {
-#ifdef USE_EXPXSQ
+#if USE_EXPXSQ
 	/* See below for erfce */
 	y = 0.5 * erfce(z);
 	/* Multiply by exp(-x^2 / 2) */
@@ -273,7 +274,7 @@ static double cephes_erfc (double a)
     z = exp(z);
 #endif
 
-    if( x < 8.0 ) {
+    if (x < 8.0) {
 	p = polevl(x, P, 8);
 	q = p1evl(x, Q, 8);
     } else {
@@ -294,7 +295,7 @@ static double cephes_erfc (double a)
     return y;
 }
 
-
+#if USE_EXPXSQ
 /* Exponentially scaled erfc function
    exp(x^2) erfc(x)
    valid for x > 1.
@@ -314,6 +315,7 @@ static double erfce (double x)
 
     return p/q;
 }
+#endif
 
 static double cephes_erf (double x)
 {
@@ -327,5 +329,4 @@ static double cephes_erf (double x)
     y = x * polevl(z, T, 4) / p1evl(z, U, 5);
 
     return y;
-
 }
