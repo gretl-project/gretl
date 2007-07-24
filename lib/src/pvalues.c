@@ -227,20 +227,14 @@ double rhocrit95 (int n)
  * standard normal distribution.
  *
  * Returns: 2 times (1 minus the value of the standard normal
- * CDF evaluated at abs(@x)).
+ * CDF evaluated at abs(@x)), or 0 on underflow.
  */
 
 double normal_pvalue_2 (double x)
 {
     double p = (x < 0)? ndtr(x) : ndtr(-x);
 
-    if (get_cephes_errno()) {
-	p = NADBL;
-    } else {
-	p *= 2;
-    }
-
-    return p;
+    return 2 * p;
 }
 
 /**
@@ -307,13 +301,41 @@ double t_cdf_comp (double x, int df)
     double p = NADBL;
 
     if (df > 0) {
-	p = stdtr(df, x);
+	if (x > 0) {
+	    p = stdtr(df, -x);
+	    if (get_cephes_errno()) {
+		p = NADBL;
+	    }
+	} else {
+	    p = stdtr(df, x);
+	    if (get_cephes_errno()) {
+		p = NADBL;
+	    } else {
+		p = 1 - p;
+	    }
+	}
+    }
+
+    return p;
+}
+
+static double normal_cdf_comp (double x)
+{
+    double p;
+
+    if (x > 0) {
+	p = ndtr(-x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}	
+    } else {
+	p = ndtr(x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
 	} else {
 	    p = 1 - p;
 	}
-    }
+    } 
 
     return p;
 }
@@ -989,7 +1011,7 @@ double gretl_get_pvalue (char st, const double *p)
     double x = NADBL;
 
     if (st == 'z') {
-	x = 1.0 - normal_cdf(p[0]);
+	x = normal_cdf_comp(p[0]);
     } else if (st == 't') {
 	x = t_cdf_comp(p[1], (int) p[0]);
     } else if (st == 'X') {
@@ -1021,7 +1043,7 @@ print_pv_string (double x, double p, PRN *prn)
 
     sprintf(numstr, "%g", p);
 
-    if (!strcmp(numstr, "1")) {
+    if (!strcmp(numstr, "1") || !strcmp(numstr, "0")) {
 	pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
     } else {
 	pprintf(prn, _("area to the right of %g = %g\n"), x, p);

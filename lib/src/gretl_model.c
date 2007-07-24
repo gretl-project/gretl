@@ -3920,13 +3920,17 @@ int mle_criteria (MODEL *pmod, int addk)
 
 double coeff_pval (int ci, double x, int df)
 {
-    if (xna(x)) {
-	return NADBL;
-    } else if (ASYMPTOTIC_MODEL(ci)) {
-        return normal_pvalue_2(x);
-    } else {
-        return t_pvalue_2(x, df);
+    double p = NADBL;
+
+    if (!xna(x)) {
+	if (ASYMPTOTIC_MODEL(ci)) {
+	    p = normal_pvalue_2(x);
+	} else {
+	    p = t_pvalue_2(x, df);
+	}
     }
+
+    return p;
 }
 
 /**
