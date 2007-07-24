@@ -20,6 +20,8 @@
 #ifndef JPRIVATE_H
 #define JPRIVATE_H
 
+#define SWITCHER 0
+
 enum {
     V_ALPHA,
     V_BETA

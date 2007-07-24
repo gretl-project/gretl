@@ -29,7 +29,6 @@
 #include "jprivate.h"
 
 #define JDEBUG 1
-#define SWITCHER 0 /* experimental */
 
 typedef struct Jwrap_ Jwrap;
 
@@ -977,6 +976,27 @@ static int extra_check (int i, int j, int *k, int d, int dmax,
     return err;
 }
 
+#if SWITCHER
+
+/* Doornik's approach */
+
+static int 
+identification_check (Jwrap *J, gretl_matrix **R, 
+		      gretl_matrix **ss, PRN *prn)
+{
+    int npar = J->H->cols + J->alen;
+    int err;
+
+    err = check_jacobian(J);
+    if (!err && J->jr < npar) {
+	fprintf(stderr, "Rank(Jacobian) = %d < %d\n", J->jr, npar);
+    }
+
+    return err;
+}
+
+#else
+
 /* See Johansen, Journal of Econometrics, 1995 */
 
 static int 
@@ -986,7 +1006,6 @@ identification_check (Jwrap *J, gretl_matrix **R,
     gretl_matrix **Rtmp = NULL;
     gretl_matrix **Htmp = NULL;
     int i, j, *k = NULL;
-    int fullrankH = 0;
     int err = 0;
 
     if (J->nC < 2) {
@@ -1036,15 +1055,14 @@ identification_check (Jwrap *J, gretl_matrix **R,
 						      &err);
 		if (err == E_DATA) {
 		    /* augmented H is of full rank: give up */
-		    fullrankH = 1;
-		    err = 0;
+		    err = E_NOIDENT;
 		    break;
 		}
 	    }
 	}
     }	
 
-    if (!fullrankH) {
+    if (!err) {
 	/* conduct the Johansen rank tests on R_i * H_j, etc. */
 	for (i=0; i<J->nC && !err; i++) {
 	    for (j=0; j<J->nC && !err; j++) {
@@ -1059,16 +1077,7 @@ identification_check (Jwrap *J, gretl_matrix **R,
 		}
 	    }
 	}
-    } else if (!err) {
-	/* take Doornik's approach instead */
-	int npar = J->H->cols + J->alen;
-
-	err = check_jacobian(J);
-	if (!err && J->jr < npar) {
-	    fprintf(stderr, "Rank(Jacobian) = %d < %d\n", J->jr, npar);
-	    /* err = E_NOIDENT; */
-	}
-    }
+    } 
 
     gretl_matrix_array_free(Rtmp, J->nC);
     gretl_matrix_array_free(Htmp, J->nC);
@@ -1076,6 +1085,8 @@ identification_check (Jwrap *J, gretl_matrix **R,
 
     return err;
 }
+
+#endif
 
 static int count_nC (Jwrap *J, const gretl_matrix *R, int nb)
 {
@@ -1470,6 +1481,8 @@ static int initval (Jwrap *J, const gretl_restriction_set *rset,
     return err;
 }
 
+#if !SWITCHER
+
 static int make_omega (Jwrap *J,
 		       const gretl_matrix *alpha, 
 		       const gretl_matrix *beta)
@@ -1500,6 +1513,8 @@ static int make_omega (Jwrap *J,
 
     return err;
 }
+
+#endif
 
 static int make_zero_variance (Jwrap *J)
 {
@@ -1990,12 +2005,12 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 #endif
 
-    /* FIXME: below here, when SWITCHER is non-zero */
-
     if (opt & OPT_F) {
 	gretl_matrix_free(jvar->S);
 	jvar->S = gretl_matrix_copy(J->Omega);
     }
+
+    /* FIXME: below here, when SWITCHER is non-zero */
 
     if (!err) {
 	gretl_invert_symmetric_matrix(J->Omega);

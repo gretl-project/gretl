@@ -1657,10 +1657,14 @@ int vecm_test_restriction (GRETL_VAR *jvar,
  
     if (acols > 0 && bcols == 0) {
 	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
-    } else if (acols > 0) {
+    } 
+
+#if !SWITCHER
+    if (acols > 0) {
 	pprintf(prn, "Combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;
     } 
+#endif
 
     if (alpha_restricted_VECM(jvar)) {
 	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
