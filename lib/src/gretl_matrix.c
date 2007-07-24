@@ -2592,7 +2592,7 @@ gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
 	    joff = j * s;
 	    for (k=0; k<r; k++) {
 		Ki = ioff + k;
-		for (l=0; l<r; l++) {
+		for (l=0; l<s; l++) {
 		    bkl = gretl_matrix_get(B, k, l);
 		    Kj = joff + l;
 		    x = aij * bkl;

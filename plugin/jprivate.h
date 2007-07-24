@@ -38,7 +38,7 @@ void print_beta_alpha_Pi (JohansenInfo *jv,
 			  PRN *prn);
 
 int 
-general_beta_analysis (GRETL_VAR *jvar, 
+general_vecm_analysis (GRETL_VAR *jvar, 
 		       const gretl_restriction_set *rset,
 		       const DATAINFO *pdinfo,
 		       gretlopt opt,

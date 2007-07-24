@@ -406,6 +406,7 @@ static int vecm_x_check (gretl_restriction_set *rset, char letter)
 
 static int vecm_restriction_check (gretl_restriction_set *rset)
 {
+    int r = gretl_VECM_rank(rset->obj);
     int err;
 
     err = vecm_ab_check(rset);
@@ -418,11 +419,27 @@ static int vecm_restriction_check (gretl_restriction_set *rset)
 	err = vecm_x_check(rset, 'a');
     }   
 
+    if (!err && (rset->vecm & VECM_B)) {
+	rset->bcols = gretl_VECM_n_beta(rset->obj);
+	if (rset->bmulti) {
+	    rset->bcols *= r;
+	}
+    }
+
+    if (!err && (rset->vecm & VECM_A)) {
+	rset->acols = gretl_VECM_n_alpha(rset->obj);
+	if (rset->amulti) {
+	    rset->acols *= r;
+	}
+    }    
+
     if (!err) {
 	if (rset->kb > rset->bcols) {
 	    strcpy(gretl_errmsg, "Too many restrictions");
 	    err = E_NONCONF;
 	} else if (rset->ka > rset->acols) {
+	    fprintf(stderr, "rset->ka = %d, rset->acols = %d\n",
+		    rset->ka, rset->acols);
 	    strcpy(gretl_errmsg, "Too many restrictions");
 	    err = E_NONCONF;
 	}
@@ -488,6 +505,7 @@ static int sys_form_matrices (gretl_restriction_set *rset)
     restriction *r;
     double x;
     int nc, col, i, j;
+    int err = 0;
 
     nc = system_n_indep_vars(rset->obj);
 
@@ -505,26 +523,14 @@ static int sys_form_matrices (gretl_restriction_set *rset)
 	gretl_vector_set(rset->q, i, r->rhs);
     } 
 
-    return 0;
+    err = check_R_matrix(rset->R);
+
+    return err;
 }
 
 static int vecm_form_matrices (gretl_restriction_set *rset)
 {
     int i, j, m, err;
-
-    if (rset->vecm & VECM_B) {
-	rset->bcols = gretl_VECM_n_beta(rset->obj);
-	if (rset->bmulti) {
-	    rset->bcols *= gretl_VECM_rank(rset->obj);
-	}
-    }
-
-    if (rset->vecm & VECM_A) {
-	rset->acols = gretl_VECM_n_alpha(rset->obj);
-	if (rset->amulti) {
-	    rset->acols *= gretl_VECM_rank(rset->obj);
-	}
-    }    
 
     err = vecm_restriction_check(rset);
     if (err) {
@@ -535,8 +541,7 @@ static int vecm_form_matrices (gretl_restriction_set *rset)
 	rset->R = gretl_zero_matrix_new(rset->kb, rset->bcols);
 	rset->q = gretl_zero_matrix_new(rset->kb, 1);
 	if (rset->R == NULL || rset->q == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
+	    return E_ALLOC;
 	}
     }
 
@@ -544,11 +549,10 @@ static int vecm_form_matrices (gretl_restriction_set *rset)
 	rset->Ra = gretl_zero_matrix_new(rset->ka, rset->acols);
 	rset->qa = gretl_zero_matrix_new(rset->ka, 1);
 	if (rset->Ra == NULL || rset->qa == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
+	    return E_ALLOC;
 	}
     }
-    
+
     /* write the restrictions in block-diagonal fashion,
        beta first then alpha (if both are given) */
 
@@ -601,8 +605,6 @@ static int vecm_form_matrices (gretl_restriction_set *rset)
     if (!err && rset->Ra != NULL) {
 	err = check_R_matrix(rset->Ra);
     }
-
- bailout:
 
     return err;
 }
@@ -1985,7 +1987,6 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 				PRN *prn)
 {
     int t = rset->type;
-    int formR = (t != GRETL_OBJ_EQN);
     int err = 0;
 
     if (rset == NULL) {
@@ -2013,15 +2014,11 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	    if (!err) {
 		err = add_vecm_restriction(rset, c, rset->obj);
 	    }
-	    formR = 0;
-	} 
-    }
-
-    if (formR) {
-	err = restriction_set_form_matrices(rset);
-	if (!err) {
-	    err = check_R_matrix(rset->R);
+	} else {
+	    err = restriction_set_form_matrices(rset);
 	}
+    } else if (t != GRETL_OBJ_EQN) {
+	err = restriction_set_form_matrices(rset);
     }
 
     if (err) {

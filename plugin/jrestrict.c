@@ -614,25 +614,35 @@ static int check_jacobian (Jwrap *J)
     gretl_matrix *B = NULL;
     int err = 0;
 
+    fprintf(stderr, "check_jacobian: starting\n");
+
     /* form both beta = H \phi + s, and alpha, for randomized 
        \theta
     */
 
+    /* FIXME phi/psi vs J->phivec, J->psivec */
+
     if (J->H != NULL) {
-	gretl_matrix_random_fill(J->phivec, D_NORMAL);
+	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
+
+	gretl_matrix_random_fill(phi, D_NORMAL);
 	gretl_matrix_reuse(J->beta, J->p1 * J->rank, 1);
-	gretl_matrix_multiply(J->H, J->phivec, J->beta);
+	gretl_matrix_multiply(J->H, phi, J->beta);
 	gretl_matrix_add_to(J->beta, J->s);
 	gretl_matrix_reuse(J->beta, J->p1, J->rank);
+	gretl_matrix_free(phi);
     } else {
 	gretl_matrix_random_fill(J->beta, D_NORMAL);
     }
 
     if (J->G != NULL) {
-	gretl_matrix_random_fill(J->psivec, D_NORMAL);
+	gretl_matrix *psi = gretl_column_vector_alloc(J->G->cols);
+
+	gretl_matrix_random_fill(psi, D_NORMAL);
 	gretl_matrix_reuse(J->alpha, J->p * J->rank, 1);
-	gretl_matrix_multiply(J->G, J->psivec, J->alpha);
+	gretl_matrix_multiply(J->G, psi, J->alpha);
 	gretl_matrix_reuse(J->alpha, J->p, J->rank);
+	gretl_matrix_free(psi);
     } else {	
 	compute_alpha(J);
     }
@@ -679,6 +689,8 @@ static int check_jacobian (Jwrap *J)
 
     gretl_matrix_free(A);
     gretl_matrix_free(B);
+
+    fprintf(stderr, "check_jacobian: ending\n");
 
     return err;
 }
@@ -1876,7 +1888,7 @@ static int allocate_psivec (Jwrap *J)
 
 /* public entry point */
 
-int general_beta_analysis (GRETL_VAR *jvar, 
+int general_vecm_analysis (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,
 			   const DATAINFO *pdinfo,
 			   gretlopt opt,

@@ -1336,7 +1336,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     const gretl_matrix *R, *q;
     int err;
 
-    err = general_beta_analysis(jvar, rset, pdinfo, OPT_F, prn);
+    err = general_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
 
     if (!err) {
 	err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
@@ -1670,7 +1670,7 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 
     if (!simple_restriction(jvar, rset)) {
 	/* "general" restriction set */
-	return general_beta_analysis(jvar, rset, pdinfo, opt, prn);
+	return general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
     }
 
     R = rset_get_R_matrix(rset);
