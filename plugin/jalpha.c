@@ -24,14 +24,14 @@
 #include "jprivate.h"
 
 /* Computations concerned with testing restrictions on the alpha
-   (adjustments) matrix in a VECM.  At present only homogeneous,
-   common restrictions are handled.  Notation based on S. Johansen,
-   "Likelihood-Based Inference in Cointegrated Vector Autoregressive
-   Models" (Oxford, 1995).  See section 8.2.1, "The same restriction
-   on all \alpha", p. 124ff.
+   (adjustments) matrix in a VECM.  Handles only homogeneous, common
+   restrictions.  Notation based on S. Johansen, "Likelihood-Based
+   Inference in Cointegrated Vector Autoregressive Models" (Oxford,
+   1995).  See section 8.2.1, "The same restriction on all \alpha",
+   p. 124ff.
 */
 
-#define ADEBUG 1
+#define ADEBUG 0
 
 /* \bar{A} = A(A'A)^{-1}, where A is the orthogonal complement of the
    restriction R imposed on \alpha in the form R\alpha = 0
@@ -269,64 +269,6 @@ alpha_test_show_beta (JohansenInfo *jv,
     return err;
 }
 
-#if 0
-
-static int pre_impose_beta (GRETL_VAR *jvar, 
-			    gretl_matrix **pS11,
-			    gretl_matrix **pS01)
-{
-    const gretl_matrix *R;
-    gretl_matrix *H = NULL;
-    gretl_matrix *S11 = NULL;
-    gretl_matrix *S01 = NULL;
-    int n, m;
-    int err = 0;
-
-    R = jvar->jinfo->R;
-    H = gretl_matrix_right_nullspace(R, &err);
-
-    if (err) {
-	return err;
-    }
-
-    n = jvar->neqns;
-    m = gretl_matrix_cols(H);
-
-    S11 = gretl_matrix_alloc(m, m);
-    S01 = gretl_matrix_alloc(n, m);
-
-    if (S11 == NULL || S01 == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* calculate S11 <- H' S11 H */
-    err = gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
-			     jvar->jinfo->S11, S11, 
-			     GRETL_MOD_NONE);
-
-    if (!err) {
-	/* S01 <- S01*H */
-	err = gretl_matrix_multiply(jvar->jinfo->S01, H, S01);
-    }
-
- bailout:    
-
-    gretl_matrix_free(H);
-
-    if (err) {
-	gretl_matrix_free(S11);
-	gretl_matrix_free(S01);
-    } else {
-	*pS11 = S11;
-	*pS01 = S01;
-    }
-
-    return err;
-}
-
-#endif
-
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,
 		     const DATAINFO *pdinfo, 
@@ -355,21 +297,11 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	return E_NOTIMP;
     }
 
-#if 1
     if (prebeta) {
 	pprintf(prn, "Alpha restriction for a beta-restricted "
 		"VECM: not handled yet\n");
 	return E_NOTIMP;
     }
-#else
-    /* doesn't work yet */
-    if (prebeta) {
-	err = pre_impose_beta(jvar, &S11, &S01);
-	if (err) {
-	    return err;
-	}
-    }
-#endif    
 
     ASA = gretl_matrix_alloc(R->rows, R->rows);
     C = gretl_matrix_alloc(n, n);
