@@ -1287,6 +1287,11 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     return err;
 }
 
+static int use_switcher (void)
+{
+    return (getenv("GRETL_SWITCHER") != NULL);
+}
+
 /* test for homogeneous restriction, either for a rank-1 system 
    or in common across the columns of beta (or alpha)
 */
@@ -1336,10 +1341,13 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     const gretl_matrix *R, *q;
     int err;
 
-    err = general_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
-
-    if (!err) {
-	err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
+    if (use_switcher()) {
+	err = switchit_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
+    } else {
+	err = general_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
+	if (!err) {
+	    err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
+	}
     }
 
     if (!err) {
@@ -1659,12 +1667,10 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } 
 
-#if !SWITCHER
-    if (acols > 0) {
+    if (acols > 0 && !use_switcher()) {
 	pprintf(prn, "Combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;
     } 
-#endif
 
     if (alpha_restricted_VECM(jvar)) {
 	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
@@ -1674,7 +1680,11 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 
     if (!simple_restriction(jvar, rset)) {
 	/* "general" restriction set */
-	return general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+	if (use_switcher()) {
+	    return switchit_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+	} else {
+	    return general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+	}
     }
 
     R = rset_get_R_matrix(rset);

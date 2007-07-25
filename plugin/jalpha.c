@@ -269,6 +269,8 @@ alpha_test_show_beta (JohansenInfo *jv,
     return err;
 }
 
+#if 0
+
 static int pre_impose_beta (GRETL_VAR *jvar, 
 			    gretl_matrix **pS11,
 			    gretl_matrix **pS01)
@@ -322,6 +324,8 @@ static int pre_impose_beta (GRETL_VAR *jvar,
 
     return err;
 }
+
+#endif
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,

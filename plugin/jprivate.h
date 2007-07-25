@@ -20,8 +20,6 @@
 #ifndef JPRIVATE_H
 #define JPRIVATE_H
 
-#define SWITCHER 0
-
 enum {
     V_ALPHA,
     V_BETA
@@ -45,6 +43,12 @@ general_vecm_analysis (GRETL_VAR *jvar,
 		       const DATAINFO *pdinfo,
 		       gretlopt opt,
 		       PRN *prn);
+
+int switchit_vecm_analysis (GRETL_VAR *jvar, 
+			    const gretl_restriction_set *rset,
+			    const DATAINFO *pdinfo,
+			    gretlopt opt,
+			    PRN *prn);
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,
