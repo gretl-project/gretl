@@ -2465,9 +2465,12 @@
 
 	<li>
 	  <para>
-	    Statistical functions taking two series as arguments and yielding a
-	    scalar result: <func>cov</func> (covariance), <func>corr</func>
-	    (correlation coefficient).
+	    Statistical functions taking two series as arguments:
+	    <func>cov</func> (covariance), <func>corr</func> (correlation
+	    coefficient).  These functions return a scalar result.  The
+	    function <func>sortby</func> returns a series, namely the values
+	    of the second argument sorted by increasing value of the
+	    first argument.
 	  </para>
 	</li>
 	
