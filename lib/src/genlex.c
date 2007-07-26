@@ -126,6 +126,7 @@ struct str_table funcs[] = {
     { CEIL,     "ceil" },
     { SORT,     "sort" }, 
     { DSORT,    "dsort" }, 
+    { SORTBY,   "sortby" }, 
     { ODEV,     "orthdev" },
     { NOBS,     "nobs" },
     { T1,       "firstobs" },

@@ -127,6 +127,51 @@ int sort_series (const double *x, double *y, int f,
     return 0;
 }
 
+struct pair_sorter {
+    double x;
+    double y;
+};
+
+/* sort the series y by the values of x, putting the result
+   into z */
+
+int gretl_sort_by (const double *x, const double *y, 
+		   double *z, const DATAINFO *pdinfo)
+{
+    struct pair_sorter *xy;
+    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, t;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(x[t])) {
+	    return E_MISSDATA;
+	}
+    }
+
+    xy = malloc(n * sizeof *xy);
+    if (xy == NULL) {
+	return E_ALLOC;
+    }
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xy[i].x = x[t];
+	xy[i].y = y[t];
+	i++;
+    }
+
+    qsort(xy, n, sizeof *xy, gretl_compare_doubles);
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	z[t] = xy[i++].y;
+    }
+
+    free(xy);
+
+    return 0;
+}
+
 /**
  * diff_series:
  * @x: array of original data.

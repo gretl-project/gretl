@@ -29,7 +29,7 @@ enum {
 
 /* alpha = .001, .01, .025, .05, .1 */
 
-static double spearman_critical[18][5] = {      /* n = */
+static double rhocrit[18][5] = {                /* n = */
     { 0.9643, 0.8571, 0.7450, 0.6786, 0.5357 }, /*  7 */
     { 0.9286, 0.8095, 0.7143, 0.6190, 0.5000 }, /*  8 */
     { 0.9000, 0.7667, 0.6833, 0.5833, 0.4667 }, /*  9 */
@@ -50,28 +50,32 @@ static double spearman_critical[18][5] = {      /* n = */
     { 0.6070, 0.4748, 0.4061, 0.3435, 0.2704 }  /* 24 */
 };
 
+/* the upper-tail values above are from Daniel and Terrell,
+   Business Statistics, 4e (Houghton Mifflin, 1986)
+*/
+
 static double spearman_signif (double rho, int n)
 {
-    const double *vals;
+    const double *x;
 
-    if (n > 24) {
-	n = 24;
-    }
+    if (n < 7) {
+	return 1.0;
+    } 
+    
+    x = rhocrit[n - 7];
 
-    vals = spearman_critical[n - 7];
-
-    if (rho > vals[0]) return .001;
-    else if (rho > vals[1]) return .01;
-    else if (rho > vals[2]) return .025;
-    else if (rho > vals[3]) return .05;
-    else if (rho > vals[4]) return .1;
-    else return 1.0;
+    if (rho > x[0]) return .001;
+    if (rho > x[1]) return .01;
+    if (rho > x[2]) return .025;
+    if (rho > x[3]) return .05;
+    if (rho > x[4]) return .1;
+    return 1.0;
 }
 
 static int spearman_rho (const double *x, const double *y, int n, 
-			 double *rho, double *sd, double *pval,
-			 double **rxout, double **ryout, int *m,
-			 int code)
+			 double *rho, double *zval,
+			 double **rxout, double **ryout, 
+			 int *m, int code)
 {
     static double *sx = NULL;
     static double *sy = NULL;
@@ -80,7 +84,7 @@ static int spearman_rho (const double *x, const double *y, int n,
     int ties = 0;
     static int nn;
 
-    double xx, yy, r;
+    double sd, sr, r;
     int i, j, t;
 
     if (code == RUN_CLEANUP) {
@@ -92,11 +96,10 @@ static int spearman_rho (const double *x, const double *y, int n,
 	return 0;
     }
 
-    *rho = NADBL;
-    *sd = NADBL;
-    if (pval != NULL) {
-	*pval = NADBL;
+    if (rho != NULL) {
+	*rho = NADBL;
     }
+    *zval = NADBL;
 
     if (code == RUN_FIRST) {
 	sx = malloc(n * sizeof *sx);
@@ -195,29 +198,27 @@ static int spearman_rho (const double *x, const double *y, int n,
     }
 
     if (ties == 0) {
-	/* calculate rho and standard error, no ties */
-	xx = 0.0;
+	/* calculate rho and z-score, no ties */
+	sd = 0.0;
 	for (i=0; i<nn; i++) { 
-	    xx += (rx[i] - ry[i]) * (rx[i] - ry[i]);
+	    sd += (rx[i] - ry[i]) * (rx[i] - ry[i]);
 	}
-	yy = 1.0 - 6.0 * xx / (nn * (nn * nn - 1));
-	xx = sqrt(1.0 / (nn - 1.0));
+	sr = 1.0 - 6.0 * sd / (nn * (nn * nn - 1));
+	sd = sqrt(1.0 / (nn - 1.0));
 
-	*rho = yy;
-	*sd = xx;
-    
-	if (nn >= 20 && pval != NULL) {
-	    *pval = normal_pvalue_1(fabs(*rho / *sd)); 
+	if (rho != NULL) {
+	    *rho = sr;
 	}
+	*zval = sr / sd;
     } else {
 	/* use Pearson in case of ties */
-	*rho = gretl_corr(0, nn - 1, rx, ry, NULL);
-	if (pval != NULL) {
-	    double z;
-
-	    z = log(fabs((*rho + 1)/(*rho - 1))) / 2.0;
-	    *pval = normal_pvalue_1(z);
-	    *sd = *rho / z;
+	sr = gretl_corr(0, nn - 1, rx, ry, NULL);
+	if (rho != NULL) {
+	    /* doing Spearman per se */
+	    *rho = sr;
+	} else {
+	    /* doing Locke's test */
+	    *zval = 0.5 * log(fabs((sr + 1)/(sr - 1)));
 	}
     }
 
@@ -235,6 +236,9 @@ static int spearman_rho (const double *x, const double *y, int n,
 
     return 0;
 }
+
+static int kendall_tau (const double *x, const double *y, int n,
+			PRN *prn);
 
 /**
  * spearman:
@@ -254,7 +258,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)
 {
     double *rx = NULL, *ry = NULL;
-    double rho, sd, pval;
+    double rho, zval;
     int vx, vy, t, m;
 
     if (list[0] != 2) {
@@ -268,7 +272,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (spearman_rho(Z[vx] + pdinfo->t1, 
 		     Z[vy] + pdinfo->t1, 
 		     pdinfo->t2 - pdinfo->t1 + 1, 
-		     &rho, &sd, &pval,
+		     &rho, &zval,
 		     (opt & OPT_V)? &rx : NULL,
 		     (opt & OPT_V)? &ry : NULL,
 		     &m, RUN_FIRST)) {
@@ -279,15 +283,25 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    pdinfo->varname[vy]);
     pprintf(prn, _("Spearman's rank correlation coefficient (rho) = %f\n"), rho);
 
-    if (!na(pval)) {
-	pprintf(prn, _("Under the null hypothesis of no correlation, rho "
-		       "follows N(0, %f)\n"), sd);
-	pprintf(prn, _("z-score = %f, with one-tailed p-value %f\n"), rho / sd,
-		pval);
+    if (rho == 0.0) {
+	goto skipit;
+    }
+
+    if (!na(zval)) {
+	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
+	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), zval,
+		normal_pvalue_2(zval));
+    } else if (m > 24) {
+	double tval = rho / sqrt((1 - rho) * (1 - rho) / (m - 2));
+
+	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
+	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
+		tval, t_pvalue_2(tval, m - 2));
     } else if (m >= 7) {
-	pval = spearman_signif(fabs(rho), m);
+	double pval = spearman_signif(fabs(rho), m);
+
 	if (pval < 1.0) {
-	    pprintf(prn, _("significant at the %g%% level (one-tailed)\n"), 
+	    pprintf(prn, _("significant at the %g%% level (two-tailed)\n"), 
 		    100.0 * pval);
 	} else {
 	    /* xgettext:no-c-format */
@@ -297,6 +311,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Sample is too small to calculate a p-value based on "
 		     "the normal distribution\n"));
     }
+
+ skipit:
 
     if (opt & OPT_V) { 
 	/* print raw and ranked data */
@@ -321,7 +337,158 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     spearman_rho(NULL, NULL, 0, NULL, NULL, NULL, 
-		 NULL, NULL, NULL, RUN_CLEANUP);
+		 NULL, NULL, RUN_CLEANUP);
+
+#if 0
+    kendall_tau(Z[vx] + pdinfo->t1,
+		Z[vy] + pdinfo->t1,
+		pdinfo->t2 - pdinfo->t1 + 1,
+		prn);
+#endif
+
+    return 0;
+}
+
+struct xy_pair {
+    double x;
+    double y;
+};
+
+static int compare_pairs_x (const void *a, const void *b)
+{
+    const struct xy_pair *pa = a;
+    const struct xy_pair *pb = b;
+    int ret;
+
+    ret = (pa->x > pb->x) - (pa->x < pb->x);
+    if (ret == 0) {
+	ret = (pa->y > pb->y) - (pa->y < pb->y);
+    }
+     
+    return ret;
+}
+
+static int compare_pairs_y (const void *a, const void *b)
+{
+    const struct xy_pair *pa = a;
+    const struct xy_pair *pb = b;
+
+    return (pa->y > pb->y) - (pa->y < pb->y);
+}
+
+static int kendall_tau (const double *x, const double *y, int n,
+			PRN *prn)
+{
+    struct xy_pair *xy = NULL;
+    double tau, nn1, s2, z;
+    int nn = 0;
+    int tx = 0, ty = 0;
+    int Tx = 0, Ty = 0;
+    int Tx2 = 0, Ty2 = 0;
+    int Tx25 = 0, Ty25 = 0;
+    int N0, N1, S;
+    int i, j;
+
+    /* count valid pairs */
+    for (i=0; i<n; i++) {
+	if (!na(x[i]) && !na(y[i])) {
+	    nn++;
+	}
+    } 
+
+    if (nn < 2) {
+	return E_MISSDATA;
+    }
+
+    /* allocate */
+    xy = malloc(nn * sizeof *xy);
+    if (xy == NULL) {
+	return E_ALLOC;
+    }
+
+    /* populate sorter */
+    j = 0;
+    for (i=0; i<n; i++) {
+	if (!na(x[i]) && !na(y[i])) {
+	    xy[j].x = x[i];
+	    xy[j].y = y[i];
+	    j++;
+	}
+    }
+
+    /* sort pairs by x */
+    qsort(xy, nn, sizeof *xy, compare_pairs_x);
+
+    /* make order counts */
+    N0 = N1 = 0;
+    for (i=0; i<nn; i++) {
+	for (j=i+1; j<nn; j++) {
+	    if (xy[j].y > xy[i].y) {
+		if (xy[j].x != xy[i].x) {
+		    N0++;
+		}
+	    } else if (xy[j].y < xy[i].y) {
+		if (xy[j].x != xy[i].x) {
+		    N1++;
+		}
+	    } else {
+		Ty++;
+	    }
+	}
+	if (i > 0) {
+	    if (xy[i].x == xy[i-1].x) {
+		tx++;
+	    } else if (tx > 0) {
+		tx++;
+		Tx += tx * (tx - 1);
+		Tx2 += tx * (tx - 1) * (tx - 2);
+		Tx25 += tx * (tx - 1) * (2 * tx + 5);
+		tx = 0;
+	    }
+	}
+    }
+
+    /* account for any ties in y */
+    if (Ty > 0) {
+	Ty = 0;
+	qsort(xy, nn, sizeof *xy, compare_pairs_y);
+	for (i=1; i<nn; i++) {
+	    if (xy[i].y == xy[i-1].y) {
+		ty++;
+	    } else if (ty > 0) {
+		ty++;
+		Ty += ty * (ty - 1);
+		Ty2 += ty * (ty - 1) * (ty - 2);
+		Ty25 += ty * (ty - 1) * (2 * ty + 5);
+		ty = 0;	
+	    }	
+	}
+    }
+
+    S = N0 - N1;
+#if 0
+    fprintf(stderr, "N0 = %d, N1 = %d, S = %d\n", N0, N1, S);
+    fprintf(stderr, "Tx = %d, Ty = %d\n", Tx, Ty);
+#endif
+
+    nn1 = nn * (nn - 1.0);
+
+    if (Tx == 0 && Ty == 0) {
+	tau = 2.0 * S / nn1;
+	s2 = (1.0/18.0) * nn1 * (2.0 * nn + 5);
+    } else {
+	double den = (nn1 - Tx) * (nn1 - Ty);
+
+	tau = 2.0 * S / sqrt(den);
+	s2 = (1.0/18.0) * (nn1 * (2 * nn + 5) - Tx25 - Ty25);
+	s2 += (1.0/(9*nn*(nn-1)*(nn-2))) * Tx2 * Ty2;
+	s2 += (1.0/(2*nn*(nn-1))) * Tx * Ty;   
+    }
+
+    z = (S - 1) / sqrt(s2);
+    fprintf(stderr, "Kendall's tau = %g (z = %g)\n", tau, z);
+
+    free(xy);
 
     return 0;
 }
@@ -406,7 +573,7 @@ static double *locke_shuffle (const double *x, int *n, int code)
 
 double lockes_test (const double *x, int t1, int t2)
 {
-    double rho, sd, z;
+    double zj, z;
     double *sx, *u = NULL, *v = NULL;
     int i, j, t, m = t2 - t1 + 1;
 
@@ -444,11 +611,11 @@ double lockes_test (const double *x, int t1, int t2)
 	    }
 	    t += 2;
 	}
-	spearman_rho(u, v, m, &rho, &sd, NULL, NULL, NULL, NULL,
+	spearman_rho(u, v, m, NULL, &zj, NULL, NULL, NULL,
 		     (j == 0)? RUN_FIRST : RUN_REPEAT);
-	z += rho / sd;
+	z += zj;
 #if LOCKE_DEBUG
-	printf("z[%d] = %g/%g = %g\n", j, rho, sd, rho / sd);
+	printf("z[%d] = %g\n", j, zj);
 #endif
 	locke_shuffle(NULL, NULL, RUN_REPEAT);
     }   
@@ -463,7 +630,7 @@ double lockes_test (const double *x, int t1, int t2)
 #endif 
 
     locke_shuffle(NULL, NULL, RUN_CLEANUP);
-    spearman_rho(NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+    spearman_rho(NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL,
 		 RUN_CLEANUP);
 
     return z;

@@ -2248,6 +2248,27 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	if (l->t == VEC && r->t == VEC) {
+	    p->err = gretl_sort_by(l->v.xvec, r->v.xvec, ret->v.xvec, 
+				   p->dinfo); 
+	} else {
+	    p->err = E_TYPES;
+	}
+
+	if (p->err) {
+	    free(ret);
+	    ret = NULL;
+	}
+    } 
+
+    return ret;
+}
+
 static NODE *vector_sort (NODE *l, int f, parser *p)
 {
     NODE *ret = (l->t == VEC)? aux_vec_node(p, p->dinfo->n) :
@@ -3938,6 +3959,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 
 	break;
+    case SORTBY:
+	/* takes two series as args, returns series */
+	if (l->t == VEC && r->t == VEC) {
+	    ret = series_sort_by(l, r, p);
+	} else {
+	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
+	} 
+	break;	
     case IMAT:
     case ZEROS:
     case ONES:
