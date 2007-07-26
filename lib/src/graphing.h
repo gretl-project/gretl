@@ -118,6 +118,8 @@ const char *gp_justification_string (int j);
 
 const char *gnuplot_label_front_string (void);
 
+void gnuplot_missval_string (FILE *fp);
+
 int gnuplot_init (PlotType ptype, FILE **fpp);
 
 int write_plot_type_string (PlotType ptype, FILE *fp);

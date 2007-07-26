@@ -381,7 +381,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	fputs("set xzeroaxis\n", fp);
     }
 
-    fputs("set missing \"?\"\n", fp);
+    gnuplot_missval_string(fp);
 
     if (strcmp(spec->keyspec, "none") == 0) {
 	fputs("set nokey\n", fp);

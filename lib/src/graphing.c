@@ -374,6 +374,12 @@ int gnuplot_has_style_fill (void)
     return 1;
 }
 
+static int gnuplot_uses_datafile_missing (void)
+{
+    /* yup */
+    return 1;
+}
+
 static int gnuplot_has_specified_emf_colors (void)
 {
     /* ... and we know it does specified emf colors */
@@ -449,6 +455,17 @@ int gnuplot_has_style_fill (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set style fill solid");
+    }
+
+    return !err;
+}
+
+static int gnuplot_uses_datafile_missing (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set datafile missing \"?\"");
     }
 
     return !err;
@@ -1683,6 +1700,15 @@ static int maybe_add_plotx (gnuplot_info *gi,
     return 0;
 }
 
+void gnuplot_missval_string (FILE *fp)
+{
+    if (gnuplot_uses_datafile_missing()) {
+	fputs("set datafile missing \"?\"\n", fp);
+    } else {
+	fputs("set missing \"?\"\n", fp);
+    }
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -1832,7 +1858,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     print_axis_label('x', xlabel, fp);
     fputs("set xzeroaxis\n", fp); 
-    fputs("set missing \"?\"\n", fp);
+    gnuplot_missval_string(fp);
 
     if (list[0] == 2) {
 	/* only two variables */
@@ -2261,7 +2287,7 @@ int gnuplot_3d (int *list, const char *literal,
     print_axis_label('y', var_get_graph_name(pdinfo, list[1]), fq);
     print_axis_label('z', var_get_graph_name(pdinfo, list[3]), fq);
 
-    fputs("set missing \"?\"\n", fq);
+    gnuplot_missval_string(fq);
 
     if (literal != NULL && *literal != 0) {
 	print_gnuplot_literal_lines(literal, fq);
@@ -2617,7 +2643,7 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 
     gretl_pop_c_numeric_locale();
 
-    fputs("set missing \"?\"\n", fp);
+    gnuplot_missval_string(fp);
 
     if (time_series) {
 	fprintf(fp, "# timeseries %d\n", time_series);
