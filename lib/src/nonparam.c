@@ -52,7 +52,13 @@ static double spearman_critical[18][5] = {      /* n = */
 
 static double spearman_signif (double rho, int n)
 {
-    const double *vals = spearman_critical[n - 7];
+    const double *vals;
+
+    if (n > 24) {
+	n = 24;
+    }
+
+    vals = spearman_critical[n - 7];
 
     if (rho > vals[0]) return .001;
     else if (rho > vals[1]) return .01;
@@ -71,6 +77,7 @@ static int spearman_rho (const double *x, const double *y, int n,
     static double *sy = NULL;
     static double *rx = NULL;
     static double *ry = NULL;
+    int ties = 0;
     static int nn;
 
     double xx, yy, r;
@@ -151,6 +158,7 @@ static int spearman_rho (const double *x, const double *y, int n,
 		    rx[t] = avg;
 		}
 	    }
+	    ties = 1;
 	} 
 	r += cases;
     }
@@ -184,22 +192,34 @@ static int spearman_rho (const double *x, const double *y, int n,
 	    }
 	} 
 	r += cases;
-    }	    
-	    
-    /* calculate rho and standard error */
-    xx = 0.0;
-    for (i=0; i<nn; i++) { 
-	xx += (rx[i] - ry[i]) * (rx[i] - ry[i]);
     }
-    yy = 1.0 - 6.0 * xx / (nn * (nn * nn - 1));
-    xx = sqrt(1.0 / (nn - 1.0));
 
-    *rho = yy;
-    *sd = xx;
+    if (ties == 0) {
+	/* calculate rho and standard error, no ties */
+	xx = 0.0;
+	for (i=0; i<nn; i++) { 
+	    xx += (rx[i] - ry[i]) * (rx[i] - ry[i]);
+	}
+	yy = 1.0 - 6.0 * xx / (nn * (nn * nn - 1));
+	xx = sqrt(1.0 / (nn - 1.0));
 
-    if (nn >= 20 && pval != NULL) {
-	*pval = normal_pvalue_1(fabs(yy / xx)); 
-    } 
+	*rho = yy;
+	*sd = xx;
+    
+	if (nn >= 20 && pval != NULL) {
+	    *pval = normal_pvalue_1(fabs(*rho / *sd)); 
+	}
+    } else {
+	/* use Pearson in case of ties */
+	*rho = gretl_corr(0, nn - 1, rx, ry, NULL);
+	if (pval != NULL) {
+	    double z;
+
+	    z = log(fabs((*rho + 1)/(*rho - 1))) / 2.0;
+	    *pval = normal_pvalue_1(z);
+	    *sd = *rho / z;
+	}
+    }
 
     /* save the ranks, if wanted */
     if (rxout != NULL) {
@@ -265,7 +285,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, _("z-score = %f, with one-tailed p-value %f\n"), rho / sd,
 		pval);
     } else if (m >= 7) {
-	pval = spearman_signif(m, fabs(rho));
+	pval = spearman_signif(fabs(rho), m);
 	if (pval < 1.0) {
 	    pprintf(prn, _("significant at the %g%% level (one-tailed)\n"), 
 		    100.0 * pval);
@@ -275,7 +295,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	}
     } else {
 	pputs(prn, _("Sample is too small to calculate a p-value based on "
-		"the normal distribution\n"));
+		     "the normal distribution\n"));
     }
 
     if (opt & OPT_V) { 
