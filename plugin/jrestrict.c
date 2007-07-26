@@ -1372,22 +1372,25 @@ static int make_beta_se (Jwrap *J)
 static int make_beta_variance (Jwrap *J)
 {
     gretl_matrix *K = NULL;
-    gretl_matrix *Q = NULL;
     gretl_matrix *Vphi = NULL;
     int r = J->rank;
-    int err = 0;
+    int err;
+
+    err = gretl_invert_symmetric_matrix(J->Omega);
+    if (err) {
+	return err;
+    }
 
     K = gretl_matrix_alloc(r * J->p1, r * J->p1);
-    Q = gretl_matrix_alloc(r, r);
     Vphi = gretl_matrix_alloc(J->blen, J->blen);
-    if (K == NULL || Q == NULL || Vphi == NULL) {
+    if (K == NULL || Vphi == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     gretl_matrix_qform(J->alpha, GRETL_MOD_TRANSPOSE, J->Omega,
-		       Q, GRETL_MOD_NONE);
-    gretl_matrix_kronecker_product(Q, J->S11, K);
+		       J->qf1, GRETL_MOD_NONE);
+    gretl_matrix_kronecker_product(J->qf1, J->S11, K);
     if (J->H != NULL) {
 	gretl_matrix_qform(J->H, GRETL_MOD_TRANSPOSE, K,
 			   Vphi, GRETL_MOD_NONE);
@@ -1422,7 +1425,6 @@ static int make_beta_variance (Jwrap *J)
  bailout:
 
     gretl_matrix_free(K);
-    gretl_matrix_free(Q);
     gretl_matrix_free(Vphi);
 
     return err;
@@ -1524,7 +1526,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     }
 
     pputs(prn, "\n\n");
-    pputs(prn, _("Restricted cointegrating vectors"));
+    pputs(prn, _("beta (cointegrating vectors)"));
     if (sd != NULL) {
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
     }
@@ -1556,11 +1558,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     }
 
     pputc(prn, '\n');
-    if (J->G != NULL) {
-	pputs(prn, _("Restricted alpha"));
-    } else {
-	pputs(prn, _("alpha"));
-    }
+    pputs(prn, _("alpha (adjustment vectors)"));
     pputs(prn, "\n\n");
 
     for (i=0; i<J->p; i++) {
@@ -1736,7 +1734,7 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
     J->se = NULL;
 }
 
-/* public entry point */
+/* public entry point (OPT_W == use switching algorithm) */
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,
@@ -1760,7 +1758,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = allocate_phivec(J);
     }
 
-    if (rset_VECM_acols(rset) > 0) {
+    if (!err && rset_VECM_acols(rset) > 0) {
 	err = set_up_G(J, jvar, rset, prn);
     }
 
@@ -1769,15 +1767,17 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }    
 
     if (!err && J->bnoest) {
-	/* nothing to be estimated */
+	/* nothing to be estimated (FIXME alpha) */
 	err = real_compute_ll(J);
 	goto skipest;
     }
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
-	if (!err && J->jr < J->alen + J->blen) {
-	    err = E_NOIDENT;
+	if (!(opt & OPT_W)) {
+	    if (!err && J->jr < J->alen + J->blen) {
+		err = E_NOIDENT;
+	    }
 	}
     }
 
@@ -1785,49 +1785,47 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = initval(J, rset);
 #if JDEBUG
 	fprintf(stderr, "after initval: err = %d\n", err);
-	gretl_matrix_print(J->phivec, "phivec, before BFGS");
 #endif
     }
 
-    if (!err) {
-	err = simann(J, opt, prn);
-    }    
+    if (opt & OPT_W) {
+	if (!err) {
+	    err = switchit(J, prn);
+	}
+    } else {	
+	if (!err) {
+	    err = simann(J, opt, prn);
+	}    
+	if (!err) {
+	    int maxit = 4000;
+	    double reltol = 1.0e-11;
+	    int fncount = 0;
+	    int grcount = 0;
+	    int nn = J->theta->rows;
 
-    if (!err) {
-	int maxit = 4000;
-	double reltol = 1.0e-11;
-	int fncount = 0;
-	int grcount = 0;
-	int nn = J->theta->rows;
-
-	err = LBFGS_max(J->theta->val, nn, maxit, reltol, 
-			&fncount, &grcount, Jloglik, C_LOGLIK,
-			NULL, J, opt, prn);
+	    err = LBFGS_max(J->theta->val, nn, maxit, reltol, 
+			    &fncount, &grcount, Jloglik, C_LOGLIK,
+			    NULL, J, opt, prn);
+	}
     }
 
  skipest:
 
-    if (!err) {
+    if (!err && !(opt & OPT_W)) {
 	err = compute_alpha(J);
+	if (!err) {
+	    err = make_omega(J);
+	}
     }
 
     if (!err) {
-	err = make_omega(J);
-    }
-
-    if (opt & OPT_F) {
-	gretl_matrix_free(jvar->S);
-	jvar->S = gretl_matrix_copy(J->Omega);
-    }
-
-    if (!err) {
-	gretl_invert_symmetric_matrix(J->Omega);
-    }
-
-    if (!err) {
+	if (opt & OPT_F) {
+	    gretl_matrix_free(jvar->S);
+	    jvar->S = gretl_matrix_copy(J->Omega);
+	}
 	if (J->bnoest) {
 	    err = make_zero_variance(J);
-	} else {
+	} else if (!(opt & OPT_W)) {
 	    err = make_beta_variance(J);
 	}
     }
@@ -1845,84 +1843,3 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     return err;
 }
 
-int switchit_vecm_analysis (GRETL_VAR *jvar, 
-			    const gretl_restriction_set *rset,
-			    const DATAINFO *pdinfo,
-			    gretlopt opt,
-			    PRN *prn)
-{
-    Jwrap *J = NULL;
-    int err = 0;
-
-    J = jwrap_new(jvar, &err);
-    if (err) {
-	return err;
-    }
-
-    if (rset_VECM_bcols(rset) > 0) {
-	err = set_up_H_h0(J, jvar, rset, prn);
-    }
-
-    if (!err) {
-	err = allocate_phivec(J);
-    }
-
-    if (rset_VECM_acols(rset) > 0) {
-	err = set_up_G(J, jvar, rset, prn);
-    }
-
-    if (!err) {
-	err = allocate_psivec(J);
-    }    
-
-    if (!err && J->bnoest) {
-	/* nothing to be estimated (FIXME) */
-	err = real_compute_ll(J);
-	goto skipest;
-    }
-
-    if (!err) {
-	err = vecm_id_check(J, jvar, prn);
-    }
-
-    if (!err) {
-	err = initval(J, rset);
-#if JDEBUG
-	fprintf(stderr, "after initval: err = %d\n", err);
-#endif
-    }
-
-#if 0
-    if (!err) {
-	err = simann(J, opt, prn);
-    } 
-#endif   
-
-    if (!err) {
-	err = switchit(J, prn);
-    }
-
- skipest:
-
-    if (!err) {
-	if (opt & OPT_F) {
-	    gretl_matrix_free(jvar->S);
-	    jvar->S = gretl_matrix_copy(J->Omega);
-	}
-	if (J->bnoest) {
-	    err = make_zero_variance(J);
-	} 
-    }
-
-    if (!err) {
-	if (opt & OPT_F) {
-	    transcribe_to_jvar(J, jvar);
-	} else {
-	    printres(J, jvar, pdinfo, prn);
-	}
-    } 
-
-    jwrap_destroy(J);
-
-    return err;
-}

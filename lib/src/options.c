@@ -225,6 +225,7 @@ struct gretl_option gretl_opts[] = {
     { RESTRICT, OPT_F, "full" },
     { RESTRICT, OPT_Q, "quiet" },
     { RESTRICT, OPT_V, "verbose" },
+    { RESTRICT, OPT_W, "switch" },
     { SCATTERS, OPT_L, "with-lines" },
     { SETINFO,  OPT_C, "continuous" },
     { SETINFO,  OPT_D, "discrete" },

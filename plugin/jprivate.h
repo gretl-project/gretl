@@ -44,12 +44,6 @@ general_vecm_analysis (GRETL_VAR *jvar,
 		       gretlopt opt,
 		       PRN *prn);
 
-int switchit_vecm_analysis (GRETL_VAR *jvar, 
-			    const gretl_restriction_set *rset,
-			    const DATAINFO *pdinfo,
-			    gretlopt opt,
-			    PRN *prn);
-
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     const gretl_restriction_set *rset,
 		     const DATAINFO *pdinfo, 

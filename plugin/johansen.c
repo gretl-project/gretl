@@ -1339,15 +1339,17 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 				      gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R, *q;
+    gretlopt vopt = OPT_F;
     int err;
 
     if (use_switcher()) {
-	err = switchit_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
-    } else {
-	err = general_vecm_analysis(jvar, rset, pdinfo, OPT_F, prn);
-	if (!err) {
-	    err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
-	}
+	vopt |= OPT_W;
+    }
+
+    err = general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
+
+    if (!err && !(vopt & OPT_W)) {
+	err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
     }
 
     if (!err) {
@@ -1680,11 +1682,12 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 
     if (!simple_restriction(jvar, rset)) {
 	/* "general" restriction set */
+	gretlopt vopt = opt;
+
 	if (use_switcher()) {
-	    return switchit_vecm_analysis(jvar, rset, pdinfo, opt, prn);
-	} else {
-	    return general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+	    vopt |= OPT_W;
 	}
+	return general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
     }
 
     R = rset_get_R_matrix(rset);
