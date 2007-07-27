@@ -5894,14 +5894,19 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     gretl_matrix *vt = NULL;
 
     double x;
-    int n = a->rows;
+    int m = a->rows;
+    int n = a->cols;
+    int maxdim = (m > n)? m : n;
+    int mindim = (m < n)? m : n;
     int i, j, k;
     int err = 0;
 
+#if 1 /* FIXME */
     if (a->rows != a->cols) {
 	err = E_NONCONF;
 	goto bailout;
-    }	
+    }
+#endif
 
     /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
 
@@ -5909,17 +5914,17 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     if (!err) {
 	k = 0;
-	for (i=0; i<n; i++) {
+	for (i=0; i<mindim; i++) {
 	    if (s->val[i] < SVD_SMIN) {
 		break;
 	    }
 	    k++;
 	}
-	if (k < n) {
+	if (k < mindim || a->rows != a->cols) {
 	    gretl_matrix *vt2;
 
-	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n", 
-		    k, (int) n);
+	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d x %d)\n", 
+		    k, m, n);
 	    fputs("Warning: computing Moore-Penrose generalized inverse\n", stderr);
 
 	    vt2 = gretl_matrix_alloc(k, n);
