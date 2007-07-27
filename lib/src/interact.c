@@ -3459,8 +3459,20 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case CORR:
-	err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
+	err = incompatible_options(cmd->opt, OPT_U | OPT_S | OPT_K);
+	if (err) {
+	    break;
+	}
+	if (cmd->opt & OPT_K) {
+	    err = kendall(cmd->list, (const double **) *pZ, pdinfo,
+			  cmd->opt, prn);
+	} else if (cmd->opt & OPT_S) {
+	    err = spearman(cmd->list, (const double **) *pZ, pdinfo,
 			   cmd->opt, prn);
+	} else {
+	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
+			       cmd->opt, prn);
+	}
 	break;
 
     case CORRGM:

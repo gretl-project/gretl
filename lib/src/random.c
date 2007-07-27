@@ -376,6 +376,110 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
     return 0;
 }
 
+/**
+ * gretl_gamma_dist:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @shape: shape parameter.
+ * @scale: scale parameter.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the specified gamma distribution.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_gamma_dist (double *a, int t1, int t2, 
+		      double shape, double scale) 
+{
+    double *U = NULL;
+    double e = 2.718281828459045235;
+    double delta, dinv = 0, d1 = 0;
+    double u, v, x, y, u0 = 0;
+    int k, i, t;
+
+    if (shape <= 0 || scale <= 0) {
+	return E_DATA;
+    }
+
+    k = shape;
+    if (k > 0) {
+	U = malloc(k * sizeof *U);
+	if (U == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    delta = shape - k;
+
+    if (delta > 0) {
+	d1 = delta - 1;
+	dinv = 1 / delta;
+	u0 = e / (e + delta);
+    }
+
+    /* 
+       Case of shape < 1 from Kundu and Gupta, "A convenient way of
+       generating gamma random variables using generalized exponential
+       distribution", Computational Statistics and Data Analysis, 51
+       (2007).  Case of shape >= 1 taken from the Wikipedia entry on
+       the gamma distribution.
+    */
+
+    for (t=t1; t<=t2; t++) {
+	a[t] = 0.0;
+	if (shape < 1) {
+	    double ex2;
+
+	    while (1) {
+		u = gretl_one_uniform();
+		v = gretl_one_uniform();
+		x = -2 * log(1 - pow(u, dinv));
+		ex2 = exp(-x/2);
+		u0 = pow(x, d1) * ex2;
+		u0 /= pow(2.0, d1) * pow((1-ex2), d1);
+		if (v <= u0) {
+		    a[t] = x;
+		    break;
+		}
+	    }
+	} else {
+	    for (i=0; i<k; i++) {
+		U[i] = gretl_one_uniform();
+		while (U[i] == 0.0) {
+		    U[i] = gretl_one_uniform();
+		}
+	    }
+	    if (delta > 0) {
+		while (1) {
+		    u = gretl_one_uniform();
+		    v = gretl_one_uniform();
+		    if (u <= u0) {
+			x = pow(u, dinv);
+			y = v * pow(x, d1);
+		    } else {
+			x = 1 - log(u);
+			y = v * exp(-x);
+		    }
+		    if (y <= pow(x, d1) * exp(-x)) {
+			a[t] = x;
+			break;
+		    }
+		}
+	    } 
+	    for (i=0; i<k; i++) {
+		a[t] -= log(U[i]);
+	    }
+	}
+	a[t] *= scale;	
+    }
+
+    free(U);
+	
+    return 0;
+}
+
 /* Poisson rv with mean m */
 
 static double genpois (double m)

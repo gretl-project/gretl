@@ -43,6 +43,9 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p);
 void gretl_poisson_dist (double *a, int t1, int t2, double *m,
 			 int vec);
 
+int gretl_gamma_dist (double *a, int t1, int t2,  
+		      double shape, double scale);
+
 unsigned int gretl_rand_int_max (unsigned int max);
 
 unsigned int gretl_rand_int (void);

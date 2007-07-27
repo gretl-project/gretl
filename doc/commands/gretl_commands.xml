@@ -1199,16 +1199,35 @@
       <arguments>
         <argument optional="true">varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--spearman</flag>
+	  <effect>Spearman's rho</effect>
+	</option>
+	<option>
+	  <flag>--kendall</flag>
+	  <effect>Kendall's tau</effect>
+	</option>
+      </options>
       <examples>
         <example>corr y x1 x2 x3</example>
+	<example>corr x y --spearman</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Prints the pairwise correlation coefficients for the variables
-	in <repl>varlist</repl>, or for all variables in the data set
-	if <repl>varlist</repl> is not given.
+	By default, prints the pairwise correlation coefficients
+	(Pearson's product-moment correlation) for the variables in
+	<repl>varlist</repl>, or for all variables in the data set if
+	<repl>varlist</repl> is not given.
+      </para>
+      <para>
+	The (mutually exclusive) options <lit>--spearman</lit> and
+	<lit>--kendall</lit> produce, respectively, Spearman's rank
+	correlation rho and Kendall's rank correlation tau in place of the
+	default Pearson coefficient.  When either of these options is
+	given, <repl>varlist</repl> should contain just two variables.
       </para>
     </description>
 

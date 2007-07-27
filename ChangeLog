@@ -25,6 +25,12 @@ version 1.6.6, in progress
 - Gamma p-values: switch to shape/scale parameterization
 - Spearman's rho: fix for case with ties
 - Allow for syntax change re. missing values in gnuplot 4.3
+- "corr" command: add --spearman and --kendall options
+- Rank correlation in GUI: add Kendall's tau option
+- Fix a few issues with extreme values in cdf, pvalue code
+- add gamma() function in genr to generate gamma random
+  variable
+- Modify Locke's test to use Kendall's tau
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

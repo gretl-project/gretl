@@ -137,6 +137,7 @@ struct str_table funcs[] = {
     { STUDENT,  "student" },
     { BINOMIAL, "binomial" },
     { GENPOIS,  "poisson" },
+    { GENGAMMA, "gamma" },
     { CUM,      "cum" }, 
     { MISSING,  "missing" },
     { OK,       "ok" },        /* opposite of missing */

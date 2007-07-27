@@ -917,22 +917,33 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
     }    
 }
 
-int do_spearman (selector *sr)
+int do_rankcorr (selector *sr)
 {
     const char *buf = selector_list(sr);
+    gretlopt opt = selector_get_opts(sr);
     PRN *prn;
     char title[64];
     gint err;
 
-    if (buf == NULL) return 1;
-    
-    gretl_command_sprintf("spearman%s --verbose", buf);
+    if (buf == NULL) {
+	return 1;
+    }
+
+    if (opt & OPT_K) {
+	gretl_command_sprintf("corr%s --kendall", buf);
+    } else {
+	gretl_command_sprintf("spearman%s --verbose", buf);
+    }
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return 1;
     }
 
-    err = spearman(libcmd.list, (const double **) Z, datainfo, OPT_V, prn);
+    if (opt & OPT_K) {
+	err = kendall(libcmd.list, (const double **) Z, datainfo, OPT_V, prn);
+    } else {
+	err = spearman(libcmd.list, (const double **) Z, datainfo, OPT_V, prn);
+    }
 
     if (err) {
         gui_errmsg(err);
@@ -943,7 +954,8 @@ int do_spearman (selector *sr)
     strcpy(title, "gretl: ");
     strcat(title, _("rank correlation"));
 
-    view_buffer(prn, 78, 400, title, SPEARMAN, NULL); 
+    view_buffer(prn, 78, 400, title, (opt & OPT_K)? PRINT : SPEARMAN, 
+		NULL); 
 
     return 0;
 }

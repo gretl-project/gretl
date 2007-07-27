@@ -385,7 +385,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	simple_selection(_("gretl: define graph"), do_scatters, action, vwin);
     } else if (action == SPEARMAN) {
 	strcat(title, _("rank correlation"));
-	simple_selection(title, do_spearman, action, vwin);
+	simple_selection(title, do_rankcorr, action, vwin);
     } else {
 	errbox("selector_callback: code was not recognized");
     }

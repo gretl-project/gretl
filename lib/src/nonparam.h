@@ -24,6 +24,10 @@ int spearman (const int *list,
 	      const double **Z, const DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
+int kendall (const int *list, 
+	     const double **Z, const DATAINFO *pdinfo,
+	     gretlopt opt, PRN *prn);
+
 double lockes_test (const double *x, int t1, int t2);
 
 int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 

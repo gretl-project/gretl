@@ -174,11 +174,12 @@ enum {
               UNIFORM,
               NORMAL,
               BINOMIAL,
+	      GENGAMMA,
               FRACDIF,
               ZEROS,
               ONES,
-              SEQ,
-  /* 150 */   MUNIF,
+  /* 150 */   SEQ,
+              MUNIF,
               MNORM,
               QFORM,
               MLAG,
@@ -187,8 +188,8 @@ enum {
               EIGGEN,
               FDJAC,
               BFGSMAX,
-              LRVAR,
-  /* 160 */   PRINCOMP,
+  /* 160 */   LRVAR,
+              PRINCOMP,
               QUANTILE,
               CMULT,    /* complex multiplication */
               MXTAB,
@@ -197,8 +198,8 @@ enum {
               SVD,
               MOLS,
               FN_MAX,   /* separator: end of n-arg functions */
-              COM,      /* comma */
-  /* 170 */   DOT,      /* period */
+  /* 170 */   COM,      /* comma */
+              DOT,      /* period */
               SEMI,     /* semi-colon */
               COL,      /* colon */
               CON,      /* named constant */
@@ -207,8 +208,8 @@ enum {
               UMAT,     /* user-defined matrix */
               UOBJ,     /* user-defined object (e.g. model) */
               NUM,      /* scalar, evaluated */
-              VEC,      /* series, evaluated */
-  /* 180 */   IVEC,     /* vector of integers, evaluated */
+  /* 180 */   VEC,      /* series, evaluated */
+              IVEC,     /* vector of integers, evaluated */
               MAT,      /* matrix, evaluated */
               OBS,      /* observation from a series */
               MSL,      /* matrix plus subspec */
@@ -217,8 +218,8 @@ enum {
               MSL2,     /* unevaluated matrix subspec */
               MSPEC,    /* evaluated matrix subspec */
               SUBSL,    /* row or column component of MSPEC */
-              MDEF,     /* explicit matrix definition {...} */
-  /* 190 */   LAG,      
+  /* 190 */   MDEF,     /* explicit matrix definition {...} */
+              LAG,      
               DVAR,     /* $ dataset variable (scalar or series) */
               MVAR,     /* $ model var (scalar, series, or matrix) */
               OVAR,     /* object variable: variable "under" an object */
@@ -227,8 +228,8 @@ enum {
               STR,      /* string */
               EROOT,    /* dummy root for (...) expression */
               UFUN,     /* user-defined function */
-              FARGS,    /* set of n function arguments */
-  /* 200 */   EMPTY,
+  /* 200 */   FARGS,    /* set of n function arguments */
+              EMPTY,
               ABSENT,
               INC,   
 	      DEC,

@@ -157,7 +157,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 
-int do_spearman (selector *sr);
+int do_rankcorr (selector *sr);
 
 int out_of_sample_info (int add_ok, int *t2);
 

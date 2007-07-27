@@ -3832,10 +3832,19 @@ static void printcorr (const VMatrix *v, PRN *prn)
     if (na(r)) {
 	pprintf(prn, ": %s\n\n", _("undefined"));
     } else {
-	pprintf(prn, " = %f\n\n", r);
+	int n2 = v->n - 2;
+	double tval = r * sqrt(n2 / (1 - r*r)); 
+
+	pprintf(prn, " = %.8f\n", r);
+	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
+	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), n2,
+		tval, t_pvalue_2(tval, n2));
+	pputc(prn, '\n');
+#if 0
 	pprintf(prn, _("5%% critical value (two-tailed) = "
 		       "%.4f for n = %d"), rhocrit95(v->n), v->n);
 	pputs(prn, "\n\n");
+#endif
     }
 }
 

@@ -1876,6 +1876,9 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	if (f == BINOMIAL) {
 	    v = l->v.xval;
 	    y = r->v.xval;
+	} else if (f == GENGAMMA) {
+	    x = l->v.xval;
+	    y = r->v.xval;
 	} else if (f == GENPOIS) {
 	    if (l->t == VEC) {
 		vx = l->v.xvec;
@@ -1914,6 +1917,10 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	case BINOMIAL:
 	    p->err = gretl_binomial_dist(ret->v.xvec, p->dinfo->t1, 
 					 p->dinfo->t2, v, y);
+	    break;
+	case GENGAMMA:
+	    p->err = gretl_gamma_dist(ret->v.xvec, p->dinfo->t1, 
+				      p->dinfo->t2, x, y);
 	    break;
 	case GENPOIS:
 	    gretl_poisson_dist(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
@@ -3918,6 +3925,7 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case BINOMIAL:
+    case GENGAMMA:
 	/* requires two scalars */
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);

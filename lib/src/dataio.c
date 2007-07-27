@@ -1088,7 +1088,8 @@ int get_precision (const double *x, int n, int placemax)
 }
 
 static GretlDataFormat 
-format_from_opt_or_name (gretlopt opt, const char *fname)
+format_from_opt_or_name (gretlopt opt, const char *fname,
+			 char *delim)
 {
     GretlDataFormat fmt = 0;
     
@@ -1117,7 +1118,11 @@ format_from_opt_or_name (gretlopt opt, const char *fname)
 	    fmt = GRETL_DATA_CSV;
 	} else if (has_suffix(fname, ".m")) {
 	    fmt = GRETL_DATA_OCTAVE;
-	}
+	} else if (has_suffix(fname, ".txt") ||
+		   has_suffix(fname, ".asc")) {
+	    fmt = GRETL_DATA_CSV;
+	    *delim = ' ';
+	} 
     }
 
     return fmt;
@@ -1166,6 +1171,7 @@ int write_data (const char *fname, const int *list,
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int n = pdinfo->n;
+    char delim = 0;
     FILE *fp = NULL;
     int *pmax = NULL;
     double xx;
@@ -1178,7 +1184,7 @@ int write_data (const char *fname, const int *list,
 
     l0 = list[0];
 
-    fmt = format_from_opt_or_name(opt, fname);
+    fmt = format_from_opt_or_name(opt, fname, &delim);
 
     gretl_maybe_switch_dir(fname);
 
@@ -1278,14 +1284,15 @@ int write_data (const char *fname, const int *list,
     } else if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	int print_obs = 0;
-	char delim;
 
 	if (fmt == GRETL_DATA_CSV) {
 	    if ((pdinfo->structure == TIME_SERIES || pdinfo->S != NULL)
 		&& !(opt & OPT_X)) {
 		print_obs = 1;
 	    }
-	    delim = get_csv_delim(pdinfo);
+	    if (!delim) {
+		delim = get_csv_delim(pdinfo);
+	    }
 	} else {
 	    print_obs = (pdinfo->S != NULL);
 	    delim = ' ';

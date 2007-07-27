@@ -185,7 +185,7 @@ static int want_radios (selector *sr)
     if (c == COINT2 || c == VECM || c == ARMA || c == PANEL || 
 	c == SCATTERS || c == COINT || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
-	c == XTAB) {
+	c == XTAB || c == SPEARMAN) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -2946,6 +2946,22 @@ static void test_boot_switch (selector *sr)
 
 #endif 
 
+static void build_rankcorr_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Spearman's rho"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Kendall's tau"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_K, 0);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_pvalues_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
@@ -3174,6 +3190,8 @@ static void build_selector_radios (selector *sr)
 	build_heckit_radios(sr);
     } else if (sr->code == XTAB) {
 	build_xtab_radios(sr);
+    } else if (sr->code == SPEARMAN) {
+	build_rankcorr_radios(sr);
     } else {
 	build_vec_radios(sr);
     }
