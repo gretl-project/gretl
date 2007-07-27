@@ -1473,7 +1473,7 @@ static double Jloglik (const double *theta, void *data)
 	}
     }
 
-    if (J->H != NULL) {
+    if (!J->bnoest) {
 	beta_from_phivec(J);
     }
 
