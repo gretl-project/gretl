@@ -1670,6 +1670,37 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
     return vals;
 }
 
+static void make_numstr (char *s, double x)
+{
+    if (x == -0.0) {
+	x = 0.0;
+    }   
+ 
+    sprintf(s, "%#.5g", x);
+
+    /* remove surplus, or add deficient, zeros */
+
+    if (strstr(s, ".00000")) {
+	s[strlen(s) - 1] = 0;
+    } else {
+	char *p = s;
+	int n = 0;
+
+	while (*p) {
+	    if (isdigit(*p)) {
+		n++;
+	    } else if (isalpha(*p)) {
+		n = 0;
+		break;
+	    }
+	    p++;
+	}
+	if (n > 0 && n < 5) {
+	    strncat(s, "0", 1);
+	}
+    }
+}
+
 static void 
 real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
 			  int packed, int errout, PRN *prn)
@@ -1714,13 +1745,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
 		x = m->val[ijton(i, j, n)];
-		if (x == -0.0) {
-		    x = 0.0;
-		}
-		sprintf(numstr, "%#.5g", x);
-		if (strstr(numstr, ".00000")) {
-		    numstr[strlen(numstr) - 1] = 0;
-		}
+		make_numstr(numstr, x);
 		pprintf(prn, "%12s ", numstr);
 	    }
 	    pputc(prn, '\n');
@@ -1729,13 +1754,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
-		if (x == -0.0) {
-		    x = 0.0;
-		}
-		sprintf(numstr, "%#.5g", x);
-		if (strstr(numstr, ".00000")) {
-		    numstr[strlen(numstr) - 1] = 0;
-		}
+		make_numstr(numstr, x);
 		pprintf(prn, "%12s ", numstr);
 	    }
 	    pputc(prn, '\n');

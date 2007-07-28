@@ -172,6 +172,96 @@ int gretl_sort_by (const double *x, const double *y,
     return 0;
 }
 
+static void genrank (const double *sz, int m,
+		     const double *z, int n,
+		     double *rz)
+{
+    int cases, k, i, j;
+    double avg, r = 1;
+
+    for (i=0; i<m; i++) {
+	/* scan sorted z */
+	cases = k = 0;
+
+	if (i > 0 && sz[i] == sz[i-1]) {
+	    continue;
+	}
+
+	for (j=0; j<n; j++) {
+	    /* scan raw z for matches */
+	    if (!na(z[j])) {
+		if (z[j] == sz[i]) {
+		    rz[k] = r;
+		    cases++;
+		}
+		k++;
+	    }
+	}
+
+	if (cases > 1) {
+	    avg = (r + r + cases - 1.0) / 2.0;
+	    for (j=0; j<m; j++) {
+		if (rz[j] == r) {
+		    rz[j] = avg;
+		}
+	    }
+	} 
+
+	r += cases;
+    }
+}
+
+int rank_series (const double *x, double *y, int f, 
+		 const DATAINFO *pdinfo)
+{
+    double *sx = NULL;
+    double *rx = NULL;
+    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int m = n;
+    int i, t;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(x[t])) m--;
+    }
+
+    sx = malloc(m * sizeof *sx);
+    rx = malloc(m * sizeof *rx);
+    if (sx == NULL || rx == NULL) {
+	free(sx);
+	free(rx);
+	return E_ALLOC;
+    }
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t])) {
+	    sx[i] = x[t];
+	    rx[i] = 0.0;
+	    i++;
+	}
+    }
+    
+    if (f == DSORT) {
+	qsort(sx, m, sizeof *sx, gretl_inverse_compare_doubles);
+    } else {
+	qsort(sx, m, sizeof *sx, gretl_compare_doubles);
+    }
+
+    genrank(sx, m, x + pdinfo->t1, n, rx);
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t])) {
+	    y[t] = rx[i++];
+	}
+    }    
+
+    free(sx);
+    free(rx);
+
+    return 0;
+}
+
 /**
  * diff_series:
  * @x: array of original data.

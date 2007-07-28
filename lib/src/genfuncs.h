@@ -26,6 +26,9 @@ int sort_series (const double *x, double *y, int f,
 int gretl_sort_by (const double *x, const double *y, 
 		   double *z, const DATAINFO *pdinfo);
 
+int rank_series (const double *x, double *y, int f, 
+		 const DATAINFO *pdinfo);
+
 int diff_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo);
 

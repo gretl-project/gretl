@@ -64,6 +64,59 @@ static double spearman_signif (double rho, int n)
     return 1.0;
 }
 
+enum {
+    RANK_X,
+    RANK_Y
+};
+
+/* m = number of sorted values (sz); n = number of raw values (either
+   x or y); in case of missing values in x and/or y we may have m < n.
+*/
+
+static void make_ranking (const double *sz, int m,
+			  const double *x, const double *y, 
+			  int n, double *rz, int *ties, 
+			  int which)
+{
+    const double *z;
+    int cases, k, i, j;
+    double avg, r = 1;
+
+    z = (which == RANK_X)? x : y;
+
+    for (i=0; i<m; i++) {
+	/* scan sorted z */
+	cases = k = 0;
+
+	if (i > 0 && sz[i] == sz[i-1]) {
+	    continue;
+	}
+
+	for (j=0; j<n; j++) {
+	    /* scan raw z for matches */
+	    if (!na(x[j]) && !na(y[j])) {
+		if (z[j] == sz[i]) {
+		    rz[k] = r;
+		    cases++;
+		}
+		k++;
+	    }
+	}
+
+	if (cases > 1) {
+	    avg = (r + r + cases - 1.0) / 2.0;
+	    for (j=0; j<m; j++) {
+		if (rz[j] == r) {
+		    rz[j] = avg;
+		}
+	    }
+	    *ties = 1;
+	} 
+
+	r += cases;
+    }
+}
+
 static int real_spearman_rho (const double *x, const double *y, int n, 
 			      double *rho, double *zval,
 			      double **rxout, double **ryout, 
@@ -71,16 +124,15 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 {
     double *sx = NULL, *sy = NULL;
     double *rx = NULL, *ry = NULL;
-    int m, ties = 0;
-    double sd, sr, r;
-    int i, j, t;
+    double sd, sr;
+    int i, m, ties = 0;
 
     *rho = *zval = NADBL;
 
     /* count non-missing pairs */
     m = 0;
-    for (t=0; t<n; t++) {
-	if (!na(x[t]) && !na(y[t])) {
+    for (i=0; i<n; i++) {
+	if (!na(x[i]) && !na(y[i])) {
 	    m++;
 	}
     }    
@@ -105,10 +157,10 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 
     /* copy non-missing x and y into sx, sy */
     m = 0;
-    for (t=0; t<n; t++) {
-	if (!na(x[t]) && !na(y[t])) {
-	    sx[m] = x[t];
-	    sy[m] = y[t];
+    for (i=0; i<n; i++) {
+	if (!na(x[i]) && !na(y[i])) {
+	    sx[m] = x[i];
+	    sy[m] = y[i];
 	    m++;
 	}
     }
@@ -117,74 +169,13 @@ static int real_spearman_rho (const double *x, const double *y, int n,
     qsort(sx, m, sizeof *sx, gretl_inverse_compare_doubles);
     qsort(sy, m, sizeof *sy, gretl_inverse_compare_doubles);
 
-    for (t=0; t<m; t++) {
-	rx[t] = ry[t] = 0.0;
+    for (i=0; i<m; i++) {
+	rx[i] = ry[i] = 0.0;
     }
 
     /* make rankings by comparing "raw" x, y with sorted */
-
-    r = 1.0;
-    for (i=0; i<m; i++) {
-	/* scan sorted x */
-	int cases = 0, k = 0;
-
-	if (i > 0 && sx[i] == sx[i-1]) {
-	    continue;
-	}
-
-	for (j=0; j<n; j++) {
-	    /* scan raw x for matches */
-	    if (!na(x[j]) && !na(y[j])) {
-		if (x[j] == sx[i]) {
-		    rx[k] = r;
-		    cases++;
-		}
-		k++;
-	    }
-	}
-	if (cases > 1) {
-	    double avg = (r + r + cases - 1.0) / 2.0;
-
-	    for (t=0; t<m; t++) {
-		if (rx[t] == r) {
-		    rx[t] = avg;
-		}
-	    }
-	    ties = 1;
-	} 
-	r += cases;
-    }
-		
-    r = 1.0;
-    for (i=0; i<m; i++) {
-	/* scan sorted y */
-	int cases = 0, k = 0;
-
-	if (i > 0 && sy[i] == sy[i-1]) {
-	    continue;
-	}
-
-	for (j=0; j<n; j++) {
-	    /* scan raw y for matches */
-	    if (!na(x[j]) && !na(y[j])) {
-		if (y[j] == sy[i]) {
-		    ry[k] = r;
-		    cases++;
-		}
-		k++;
-	    }
-	}
-	if (cases > 1) {
-	    double avg = (r + r + cases - 1.0) / 2.0;
-
-	    for (t=0; t<m; t++) {
-		if (ry[t] == r) {
-		    ry[t] = avg;
-		}
-	    }
-	} 
-	r += cases;
-    }
+    make_ranking(sx, m, x, y, n, rx, &ties, RANK_X);
+    make_ranking(sy, m, x, y, n, ry, &ties, RANK_Y);
 
     if (ties == 0) {
 	/* calculate rho and z-score, no ties */
@@ -325,6 +316,8 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	free(rx);
 	free(ry);
     }
+
+    pputc(prn, '\n');
 
     return 0;
 }
@@ -522,6 +515,7 @@ int kendall (const int *list, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z,
 		normal_pvalue_2(z));
+	pputc(prn, '\n');
     }
 
     /* clean up */

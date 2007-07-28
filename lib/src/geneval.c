@@ -2286,7 +2286,6 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC) {
-	    /* FIXME sample range? */
 	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
 	} else {
 	    int n = gretl_vector_get_length(l->v.m);

@@ -865,7 +865,7 @@ static gretl_matrix *make_H (const gretl_matrix *R, int *err)
 
 /* VECM: compute the variance of the estimator of \beta, either
    under restriction R or after doing Phillips normalization.
-   FIXME this is not right yet when R is given 
+   FIXME this is not right yet when R is given. 
 */
 
 static int beta_variance (GRETL_VAR *vecm, const gretl_matrix *R)
@@ -918,7 +918,6 @@ static int beta_variance (GRETL_VAR *vecm, const gretl_matrix *R)
     gretl_matrix_print(vecm->jinfo->Alpha, "alpha_c");
     gretl_matrix_print(aOa, "aOa = alpha_c' * O * alpha_c");
 #endif
-
 
     /* compute H'*S11*H */
 
@@ -1287,8 +1286,9 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     return err;
 }
 
-static int use_switcher (void)
+static int use_switcher (gretlopt opt)
 {
+    if (opt & OPT_W) return 1;
     return (getenv("GRETL_SWITCHER") != NULL);
 }
 
@@ -1342,7 +1342,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     gretlopt vopt = OPT_F;
     int err;
 
-    if (use_switcher()) {
+    if (use_switcher(opt)) {
 	vopt |= OPT_W;
     }
 
@@ -1669,10 +1669,12 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } 
 
-    if (acols > 0 && !use_switcher()) {
+#if 0
+    if (acols > 0 && !use_switcher(opt)) {
 	pprintf(prn, "Combined beta/alpha restriction: not handled yet\n");
 	return E_NOTIMP;
     } 
+#endif
 
     if (alpha_restricted_VECM(jvar)) {
 	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
@@ -1684,7 +1686,7 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 	/* "general" restriction set */
 	gretlopt vopt = opt;
 
-	if (use_switcher()) {
+	if (use_switcher(opt)) {
 	    vopt |= OPT_W;
 	}
 	return general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
