@@ -5873,12 +5873,65 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
+#if 0
+
+/**
+ * gretl_matrix_moore_penrose:
+ * @a: m x n matrix.
+ * 
+ * Computes the generalized inverse of matrix @a via its SVD
+ * factorization, with the help of the lapack function 
+ * %dgesvd.  On exit the original matrix is overwritten by 
+ * the inverse.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_moore_penrose (gretl_matrix *A)
+{
+    gretl_matrix *U = NULL;
+    gretl_matrix *S = NULL;
+    gretl_matrix *Vt = NULL;
+    double x;
+    int m = A->rows;
+    int n = A->cols
+    int i, j, k;
+    int err = 0;
+
+    /* if A = USV', then A^{+} = VS^{-1}U'  */
+
+    err = gretl_matrix_SVD(A, &U, &S, &Vt);
+
+    if (!err) {
+	/* invert singular values and multiply into U' */
+	for (j=0; j<k; j++) {
+	    for (i=0; i<n; i++) {
+		x = gretl_matrix_get(U, i, j);
+		gretl_matrix_set(U, i, j, x / S->val[j]);
+	    }
+	}
+	err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_TRANSPOSE,
+					U, GRETL_MOD_TRANSPOSE,
+					A, GRETL_MOD_NONE);
+    }
+
+ bailout:
+    
+    gretl_matrix_free(U);
+    gretl_matrix_free(S);
+    gretl_matrix_free(Vt);
+
+    return err;
+}
+
+#endif
+
 /**
  * gretl_SVD_invert_matrix:
- * @a: matrix to invert.
+ * @a: n x n matrix to invert.
  * 
- * Computes the inverse (or generalized inverse) of a general matrix 
- * using SVD factorization, with the help of the lapack function 
+ * Computes the inverse (or generalized inverse) of a general square 
+ * matrix using SVD factorization, with the help of the lapack function 
  * %dgesvd.  If any of the singular values of @a are less than 1.0e-9
  * the Moore-Penrose generalized inverse is computed instead of the
  * standard inverse.  On exit the original matrix is overwritten by 
@@ -5894,19 +5947,14 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     gretl_matrix *vt = NULL;
 
     double x;
-    int m = a->rows;
-    int n = a->cols;
-    int maxdim = (m > n)? m : n;
-    int mindim = (m < n)? m : n;
+    int n = a->rows;
     int i, j, k;
     int err = 0;
 
-#if 1 /* FIXME */
     if (a->rows != a->cols) {
 	err = E_NONCONF;
 	goto bailout;
-    }
-#endif
+    }	
 
     /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
 
@@ -5914,17 +5962,17 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     if (!err) {
 	k = 0;
-	for (i=0; i<mindim; i++) {
+	for (i=0; i<n; i++) {
 	    if (s->val[i] < SVD_SMIN) {
 		break;
 	    }
 	    k++;
 	}
-	if (k < mindim || a->rows != a->cols) {
+	if (k < n) {
 	    gretl_matrix *vt2;
 
-	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d x %d)\n", 
-		    k, m, n);
+	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n", 
+		    k, (int) n);
 	    fputs("Warning: computing Moore-Penrose generalized inverse\n", stderr);
 
 	    vt2 = gretl_matrix_alloc(k, n);
