@@ -958,14 +958,22 @@ double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
     return real_user_matrix_get_determinant(m, 1, err);
 }
 
-gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
+static gretl_matrix *
+real_user_matrix_get_inverse (const gretl_matrix *m,
+			      int moore)
 {
     gretl_matrix *R = NULL;
+    int err = 0;
 
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
 	if (R != NULL) {
-	    if (gretl_invert_matrix(R)) {
+	    if (moore) {
+		err = gretl_matrix_moore_penrose(R);
+	    } else {
+		err = gretl_invert_matrix(R);
+	    } 
+	    if (err) {
 		gretl_matrix_free(R);
 		R = NULL;
 	    }
@@ -977,6 +985,16 @@ gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
     }
    
     return R;
+}
+
+gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
+{
+    return real_user_matrix_get_inverse(m, 0);
+}
+
+gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m)
+{
+    return real_user_matrix_get_inverse(m, 1);
 }
 
 static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)

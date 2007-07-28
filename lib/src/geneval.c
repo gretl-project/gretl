@@ -1365,6 +1365,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case INV:
 	    ret->v.m = user_matrix_get_inverse(m);
 	    break;
+	case GINV:
+	    ret->v.m = user_matrix_moore_penrose(m);
+	    break;
 	case DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
 	    break;
@@ -3997,6 +4000,7 @@ static NODE *eval (NODE *t, parser *p)
     case CDEMEAN:
     case CHOL:
     case INV:
+    case GINV:
     case DIAG:
     case TRANSP:
     case TVEC:

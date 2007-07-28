@@ -194,6 +194,7 @@ struct str_table funcs[] = {
     { CDEMEAN,  "cdemean" },
     { CHOL,     "cholesky" },
     { INV,      "inv" },
+    { GINV,     "ginv" },
     { DIAG,     "diag" },
     { TRANSP,   "transp" },
     { TVEC,     "vec" },

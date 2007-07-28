@@ -386,6 +386,8 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a);
 
 int gretl_invert_matrix (gretl_matrix *a);
 
+int gretl_matrix_moore_penrose (gretl_matrix *A);
+
 int gretl_SVD_invert_matrix (gretl_matrix *a);
 
 int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 

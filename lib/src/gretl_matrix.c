@@ -4190,8 +4190,10 @@ int gretl_invert_matrix (gretl_matrix *a)
 	err = gretl_invert_triangular_matrix(a, 'L');
     } else if (s == GRETL_MATRIX_UPPER_TRIANGULAR) {
 	err = gretl_invert_triangular_matrix(a, 'U');
-    } else {
+    } else if (s >= GRETL_MATRIX_SQUARE) {
 	err = gretl_invert_general_matrix(a);
+    } else {
+	err = E_NONCONF;
     }
 
     return err;
@@ -5873,8 +5875,6 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     return err;
 }
 
-#if 0
-
 /**
  * gretl_matrix_moore_penrose:
  * @a: m x n matrix.
@@ -5892,26 +5892,37 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     gretl_matrix *U = NULL;
     gretl_matrix *S = NULL;
     gretl_matrix *Vt = NULL;
+    gretl_matrix *SUt = NULL;
     double x;
     int m = A->rows;
-    int n = A->cols
-    int i, j, k;
+    int n = A->cols;
+    int i, j;
     int err = 0;
-
-    /* if A = USV', then A^{+} = VS^{-1}U'  */
 
     err = gretl_matrix_SVD(A, &U, &S, &Vt);
 
     if (!err) {
+	SUt = gretl_zero_matrix_new(n, m);
+	if (SUt == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+
 	/* invert singular values and multiply into U' */
-	for (j=0; j<k; j++) {
-	    for (i=0; i<n; i++) {
-		x = gretl_matrix_get(U, i, j);
-		gretl_matrix_set(U, i, j, x / S->val[j]);
+	for (i=0; i<n; i++) {
+	    if (S->val[i] > SVD_SMIN) {
+		for (j=0; j<m; j++) {
+		    x = gretl_matrix_get(U, j, i);
+		    gretl_matrix_set(SUt, i, j, x / S->val[i]);
+		}
 	    }
 	}
+
+	/* A^{+} = VS^{-1}U' */
+	A->rows = n;
+	A->cols = m;
 	err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_TRANSPOSE,
-					U, GRETL_MOD_TRANSPOSE,
+					SUt, GRETL_MOD_NONE,
 					A, GRETL_MOD_NONE);
     }
 
@@ -5920,11 +5931,10 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     gretl_matrix_free(U);
     gretl_matrix_free(S);
     gretl_matrix_free(Vt);
+    gretl_matrix_free(SUt);
 
     return err;
 }
-
-#endif
 
 /**
  * gretl_SVD_invert_matrix:

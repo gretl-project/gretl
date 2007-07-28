@@ -405,16 +405,17 @@ context it is reserved for the Kronecker product.)
 \texttt{ffti}      \\
 \texttt{infnorm}   &
 \texttt{inv}       &
+\texttt{ginv}      &
 \texttt{ldet}      &
 \texttt{mexp}      &
-\texttt{nullspace} &
-\texttt{onenorm}   \\
+\texttt{nullspace} \\
+\texttt{onenorm}   &
 \texttt{qform}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
-\texttt{svd}       &
-\texttt{tr}        \\
+\texttt{svd}       \\
+\texttt{tr}        &
 \texttt{cmult}      
 \end{tabular}      
 
@@ -536,34 +537,35 @@ matrix are:
 
 \begin{center}
 \begin{tabular}{llcll}
-\texttt{sumc}    & sum by column & &
-\texttt{sumr}    & sum by row \\
-\texttt{meanc}   & mean by column & &
-\texttt{meanr}   & mean by row \\
-\texttt{mcov}    & covariance matrix & &
-\texttt{mcorr}   & correlation matrix \\
-\texttt{mexp}    & matrix exponential & &
-\texttt{inv}     & inverse \\
+\texttt{sumc}     & sum by column & &
+\texttt{sumr}     & sum by row \\
+\texttt{meanc}    & mean by column & &
+\texttt{meanr}    & mean by row \\
+\texttt{mcov}     & covariance matrix & &
+\texttt{mcorr}    & correlation matrix \\
 \texttt{cholesky} & Cholesky decomposition & &
-\texttt{diag}    & extract principal diagonal \\
-\texttt{transp}  & transpose & &
-\texttt{cdemean} & subtract column means \\ 
-\texttt{vec}     & elements as column vector & &
-\texttt{vech}    & vectorize lower triangle \\
-\texttt{unvech}  & undo \texttt{vech} & &
-\texttt{mlag}    & matrix lag or lead \\
-\texttt{nullspace} & right nullspace & &
+\texttt{mexp}     & matrix exponential \\
+\texttt{inv}      & inverse & &
+\texttt{ginv}     & generalized (Moore-Penrose) inverse \\
+\texttt{diag}     & extract principal diagonal  & &
+\texttt{transp}   & transpose \\
+\texttt{cdemean}  & subtract column means & &
+\texttt{vec}      & elements as column vector \\
+\texttt{vech}     & vectorize lower triangle & &
+\texttt{unvech}   & undo \texttt{vech} \\
+\texttt{mlag}     & matrix lag or lead & &
+\texttt{nullspace} & right nullspace \\
 \texttt{princomp} & principal components \\
-\texttt{maxc}      & column maxima (values) & &
-\texttt{maxr}      & row maxima (values) \\
-\texttt{imaxc}     & column maxima (indices) & &
-\texttt{imaxr}     & row maxima (indices) \\
-\texttt{minc}      & column minima (values) & &
-\texttt{minr}      & row minima (values) \\
-\texttt{iminc}     & column minima (indices) & &
-\texttt{iminr}     & row minima (indices) \\
-\texttt{fft}       & discrete Fourier transform & &
-\texttt{ffti}      & discrete inverse Fourier transform 
+\texttt{maxc}     & column maxima (values) & &
+\texttt{maxr}     & row maxima (values) \\
+\texttt{imaxc}    & column maxima (indices) & &
+\texttt{imaxr}    & row maxima (indices) \\
+\texttt{minc}     & column minima (values) & &
+\texttt{minr}     & row minima (values) \\
+\texttt{iminc}    & column minima (indices) & &
+\texttt{iminr}    & row minima (indices) \\
+\texttt{fft}      & discrete Fourier transform & &
+\texttt{ffti}     & discrete inverse Fourier transform 
 \end{tabular}
 \end{center}
 
@@ -1199,54 +1201,55 @@ ols price const sqft --vcv
 \texttt{fft}       &
 \texttt{ffti}      &
 \texttt{gamma}     \\
+\texttt{ginv}      &
 \texttt{I}         &
 \texttt{imaxc}     &
 \texttt{imaxr}     &
 \texttt{iminc}     &
-\texttt{iminr}     &
-\texttt{infnorm}   \\
+\texttt{iminr}     \\
+\texttt{infnorm}   &
 \texttt{int}       &
 \texttt{inv}       &
 \texttt{ldet}      &
 \texttt{lngamma}   &
-\texttt{log}       &
-\texttt{mcorr}     \\
+\texttt{log}       \\
+\texttt{mcorr}     &
 \texttt{mcov}      &
 \texttt{maxc}      &   
 \texttt{maxr}      &
 \texttt{meanc}     &
-\texttt{meanr}     &
-\texttt{mexp}      \\
+\texttt{meanr}     \\
+\texttt{mexp}      &
 \texttt{minc}      &  
 \texttt{minr}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
-\texttt{mshape}    &
-\texttt{muniform}  \\
+\texttt{mshape}    \\
+\texttt{muniform}  &
 \texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
 \texttt{princomp}  &
-\texttt{qform}     &
-\texttt{qnorm}     \\
+\texttt{qform}     \\
+\texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{rows}      &
-\texttt{seq}       &
-\texttt{sin}       \\
+\texttt{seq}       \\
+\texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{svd}       &
-\texttt{tan}       \\
+\texttt{svd}       \\
+\texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
-\texttt{vec}       &
-\texttt{vech}      \\
+\texttt{vec}       \\
+\texttt{vech}      &
 \texttt{zeros}     
 \end{tabular}      
 \caption{Alphabetical listing of matrix functions}

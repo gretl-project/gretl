@@ -31,6 +31,7 @@ version 1.6.6, in progress
 - add gamma() function in genr to generate gamma random
   variable
 - Modify Locke's test to use Kendall's tau
+- Add ginv() (Moore-Penrose inverse) matrix function
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
