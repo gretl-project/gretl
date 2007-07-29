@@ -68,7 +68,7 @@ struct Jwrap_ {
     gretl_matrix *V;
     gretl_matrix *se;
 
-    /* free parameter vector */
+    /* free parameter vector (BFGS only) */
     gretl_matrix *theta;
 
     /* temp storage for beta calculation */
@@ -391,9 +391,8 @@ static int switcher_init (switcher *s, Jwrap *J)
     return err;
 }
 
-/* The following functions provide an implementation of the 
-   switching algorithm as set out in Boswijk and Doornik, 2004, 
-   p. 455.  This could do with optimizing.
+/* The following functions implement the switching algorithm 
+   as set out in Boswijk and Doornik, 2004, p. 455.
 */
 
 static void alpha_from_psivec (Jwrap *J)
@@ -476,7 +475,7 @@ static int update_Psi (Jwrap *J, switcher *s)
     return err;
 }
 
-/* update beta based on \Phi vector */
+/* update \beta based on \Phi vector */
 
 static void beta_from_phivec (Jwrap *J)
 {
@@ -757,6 +756,8 @@ static int info_matrix (Jwrap *J, switcher *s)
 
 #endif /* info matrix variants */
 
+/* driver function for switching algorithm */
+
 static int switchit (Jwrap *J, PRN *prn)
 {
     switcher s;
@@ -769,25 +770,22 @@ static int switchit (Jwrap *J, PRN *prn)
 
     err = switcher_init(&s, J);
 
-#if 0
-    if (!err && J->H != NULL && J->theta != NULL) {
-	/* initialize beta: not sure about this */
-	for (j=0; j<J->blen; j++) {
-	    J->phivec->val[j] = J->theta->val[j];
-	}
+    if (!err && J->H != NULL) {
 	beta_from_phivec(J);
     }
-#endif
 
     if (!err && J->G != NULL) {
-	/* FIXME move this into alpha_init() */
 	alpha_from_psivec(J);
     }
 
 #if JDEBUG
-    gretl_matrix_print(J->phivec, "switchit: initial Phi");
+    if (J->H != NULL) {
+	gretl_matrix_print(J->phivec, "switchit: initial Phi");
+    }
     gretl_matrix_print(J->beta, "switchit: initial beta"); 
-    gretl_matrix_print(J->psivec, "switchit: initial Psi");
+    if (J->G != NULL) {
+	gretl_matrix_print(J->psivec, "switchit: initial Psi");
+    }
     gretl_matrix_print(J->alpha, "switchit: initial alpha");
 #endif
 
@@ -797,9 +795,6 @@ static int switchit (Jwrap *J, PRN *prn)
     }
 
     for (j=0; j<jmax && !err; j++) {
-#if SDEBUG
-	fprintf(stderr, "switcher: j = %d\n", j);
-#endif
 	err = update_Phi(J, &s);
 	if (!err) {
 	    err = update_Psi(J, &s);
@@ -809,9 +804,6 @@ static int switchit (Jwrap *J, PRN *prn)
 	}
 	if (!err) {
 	    err = switcher_ll(J);
-#if SDEBUG
-	    fprintf(stderr, " -(T/2)log|Omega| = %.8g\n", J->ll);
-#endif
 	}
 	if (!err && j > 1) {
 	    lldiff = (J->ll - llbak) / fabs(llbak);
@@ -860,7 +852,7 @@ static int check_jacobian (Jwrap *J)
        \theta
     */
 
-    /* FIXME phi/psi vs J->phivec, J->psivec */
+    /* FIXME phi/psi vs J->phivec, J->psivec ? */
 
     if (J->H != NULL) {
 	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
@@ -895,11 +887,6 @@ static int check_jacobian (Jwrap *J)
 	B = gretl_matrix_kronecker_I_new(J->alpha, J->p1, &err);
     }
 
-#if JDEBUG > 1
-    gretl_matrix_print(A, "I_p \\otimes \\beta");
-    gretl_matrix_print(B, "\\alpha \\otimes I_{p1}");
-#endif
-
     if (!err && J->G != NULL) {
 	/* alpha is restricted */
 	gretl_matrix *AG = gretl_matrix_multiply_new(A, J->G, &err);
@@ -908,9 +895,6 @@ static int check_jacobian (Jwrap *J)
 	    gretl_matrix_free(A);
 	    A = AG;
 	}
-#if JDEBUG > 1
-	gretl_matrix_print(A, "A*G");
-#endif
     }
 
     if (!err && J->H != NULL) {
@@ -921,9 +905,6 @@ static int check_jacobian (Jwrap *J)
 	    gretl_matrix_free(B);
 	    B = BH;
 	}
-#if JDEBUG > 1
-	gretl_matrix_print(B, "B*H");
-#endif
     }
 
     if (!err) {
@@ -977,7 +958,7 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
     return err;
 }
 
-/* set up restriction matrices for alpha */
+/* set up restriction matrix, G, for alpha */
 
 static int set_up_G (Jwrap *J, GRETL_VAR *jvar,
 		     const gretl_restriction_set *rset,
@@ -1051,7 +1032,7 @@ static int set_up_G (Jwrap *J, GRETL_VAR *jvar,
     return err;
 }
 
-/* set up restriction matrices for beta */
+/* set up restriction matrices, H and h_0, for beta */
 
 static int set_up_H_h0 (Jwrap *J, GRETL_VAR *jvar,
 			const gretl_restriction_set *rset,
@@ -1128,12 +1109,10 @@ static int set_up_H_h0 (Jwrap *J, GRETL_VAR *jvar,
     return err;
 }
 
-#define BOSWIJK_INIT 1
-
-#if BOSWIJK_INIT
-
 /* See H. Peter Boswijk, "Identifiability of Cointegrated Systems",
    http://www.ase.uva.nl/pp/bin/258fulltext.pdf
+   We're assuming here that vec(\beta) = H\psi + h_0, for
+   non-zero h_0.
 */
 
 static int boswijk_init (Jwrap *J)
@@ -1143,11 +1122,14 @@ static int boswijk_init (Jwrap *J)
     gretl_matrix *IBP = NULL;
     gretl_matrix *IBPH = NULL;
     gretl_matrix *IBPh = NULL;
-    gretl_matrix *E;
+    gretl_matrix *E = NULL;
     int ocols = J->p1 - J->rank;
     int err = 0;
 
-    if (J->h0 == NULL || gretl_is_zero_matrix(J->h0)) {
+    if (J->h0 == NULL || 
+	gretl_is_zero_matrix(J->h0) ||
+	ocols == 0) {
+	/* shouldn't be here! */
 	return 0;
     }
 
@@ -1190,31 +1172,18 @@ static int boswijk_init (Jwrap *J)
     }
 
     if (!err) {
-	if (IBPH->rows == IBPH->cols) {
-	    err = gretl_invert_matrix(IBPH);
+	err = gretl_matrix_moore_penrose(IBPH);
 #if JDEBUG
-	    fprintf(stderr, "invert IBPH, err = %d\n", err);
-	    gretl_matrix_print(IBPH, "IBPH inverse");
+	fprintf(stderr, "moore-penrose on IBPH, err = %d\n", err);
+	gretl_matrix_print(IBPH, "IBPH (pseudo)inverse");
 #endif
-	} else {
-	    err = gretl_matrix_moore_penrose(IBPH);
-#if JDEBUG
-	    fprintf(stderr, "moore-penrose on IBPH, err = %d\n", err);
-	    gretl_matrix_print(IBPH, "IBPH pseudoinverse");
-#endif
-	}
     }
     
     if (!err) {
-	int i;
-
 	gretl_matrix_multiply(IBPH, IBPh, J->phivec);
 	gretl_matrix_switch_sign(J->phivec);
-	for (i=0; i<J->blen; i++) {
-	    J->theta->val[i] = J->phivec->val[i];
-	} 
 #if JDEBUG
-	gretl_matrix_print(J->phivec, "initval: final vec(phi)");
+	gretl_matrix_print(J->phivec, "beta_init: final vec(phi)");
 #endif
     }
 
@@ -1225,11 +1194,10 @@ static int boswijk_init (Jwrap *J)
     gretl_matrix_free(IBP);
     gretl_matrix_free(IBPH);
     gretl_matrix_free(IBPh);
+    gretl_matrix_free(E);
 
     return err;
 }
-
-#endif
 
 static int 
 normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
@@ -1251,7 +1219,8 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
     int err = 0;
 
     if (bc2 > d->rows) {
-	fprintf(stderr, "*** normalize_initial_beta: df = %d\n", d->rows - bc2);
+	fprintf(stderr, "*** normalize_initial_beta: df = %d\n", 
+		d->rows - bc2);
 	return 0;
     }
 
@@ -1346,61 +1315,16 @@ static int case0 (Jwrap *J)
     return err;
 }
 
-/* 
-   Initialize theta, the array of free parameters that will be passed
-   to BFGS (if we're not using the switching algorithm.  FIXME: this
-   does not yet handle initialization of the psi component of theta,
-   in the case where alpha is restricted. 
-*/
+/* initialization of \phi in case the restriction on beta
+   is homogeneous */
 
-static int initval (Jwrap *J, const gretl_restriction_set *rset)
+static int alt_init (Jwrap *J) 
 {
     gretl_matrix *HHi = NULL;
     gretl_matrix *tmp = NULL;
     gretl_matrix *b = NULL;
     int nbeta = J->p1 * J->rank;
-    int ntheta = J->blen;
-    int i, err;
-
-    err = case0(J);
-    if (err) {
-	return err;
-    }
-
-    if (J->G != NULL) {
-	ntheta += J->alen;
-    }
-
-    J->theta = gretl_unit_matrix_new(ntheta, 1);
-    if (J->theta == NULL) {
-	return E_ALLOC;
-    }
-
-    if (rset_get_R_matrix(rset) != NULL && J->rank > 1) {
-	/* FIXME? */
-	err = normalize_initial_beta(J, rset);
-	if (err) {
-	    return err;
-	}
-#if JDEBUG
-	gretl_matrix_print(J->beta, "initval: 'normalized' beta");
-#endif
-    }
-
-    if (J->H == NULL) {
-	/* vectorize unrestricted beta into theta */
-	for (i=0; i<nbeta; i++) {
-	    J->theta->val[i] = J->phivec->val[i] = J->beta->val[i];
-	}
-	/* FIXME append psi if needed */
-	return 0;
-    }
-
-#if BOSWIJK_INIT
-    if (J->h0 != NULL && !gretl_is_zero_matrix(J->h0)) {
-	return boswijk_init(J);
-    }
-#endif
+    int i, err = 0;
 
     b = gretl_matrix_copy(J->beta);
     HHi = gretl_matrix_alloc(J->blen, J->blen);
@@ -1438,26 +1362,62 @@ static int initval (Jwrap *J, const gretl_restriction_set *rset)
     }
 
 #if JDEBUG
-    gretl_matrix_print(b, "initval: final vec(b)");
+    gretl_matrix_print(b, "beta_init: final vec(b)");
 #endif
 
-    if (J->theta != NULL) {
-	for (i=0; i<b->rows; i++) {
-	    J->theta->val[i] = b->val[i];
-	} 
-    }
-
-    /* FIXME append psi if needed */
+    for (i=0; i<b->rows; i++) {
+	J->phivec->val[i] = b->val[i];
+    } 
 
     gretl_matrix_free(HHi);
     gretl_matrix_free(tmp);
     gretl_matrix_free(b);
+
+    return err;
+}
+
+/* 
+   Initialize beta, or the free parameters associated with
+   beta in case beta is restricted. 
+*/
+
+static int beta_init (Jwrap *J, const gretl_restriction_set *rset)
+{
+    int nbeta = J->p1 * J->rank;
+    int i, err;
+
+    err = case0(J);
+    if (err) {
+	return err;
+    }
+
+    if (J->H == NULL) {
+	/* just vectorize unrestricted beta into phi */
+	for (i=0; i<nbeta; i++) {
+	    J->phivec->val[i] = J->beta->val[i];
+	}
+	return 0;
+    }
+
+    if (J->rank > 1) {
+	err = normalize_initial_beta(J, rset);
+	if (err) {
+	    return err;
+	}
+    }
+
+    if (!gretl_is_zero_matrix(J->h0)) {
+	/* solve for \phi a la Boswijk */
+	err = boswijk_init(J);
+    } else {
+	err = alt_init(J);
+    }
     
     return err;
 }
 
-/* do initial computation of alpha based on beta; then,
-   if wanted, impose alpha restriction and make phi
+/* do initial computation of alpha based on beta; then, 
+   if relevant, impose alpha restriction and make phi
 */
 
 static int alpha_init (Jwrap *J)
@@ -1469,7 +1429,7 @@ static int alpha_init (Jwrap *J)
 
     err = compute_alpha(J);
 #if JDEBUG
-    gretl_matrix_print(J->alpha, "alpha from compute_alpha in alpha_init");
+    gretl_matrix_print(J->alpha, "alpha (from compute_alpha) in alpha_init");
 #endif
     if (err || J->G == NULL) {
 	return err;
@@ -1509,19 +1469,14 @@ static int alpha_init (Jwrap *J)
     gretl_matrix_print(J->psivec, "Psi, in alpha_init");
 #endif
 
-    if (J->theta != NULL) {
-	int i, j = 0;
-
-	for (i=J->blen; i<J->theta->rows; i++) {
-	    J->theta->val[i] = J->psivec->val[j++];
-	}
-    }
-
     gretl_matrix_free(GG);
     gretl_matrix_free(GGG);
 
     return err;
 }
+
+/* create null variance matrix in case beta is fully
+   constrained and no estimation is done */
 
 static int make_zero_variance (Jwrap *J)
 {
@@ -1618,9 +1573,11 @@ static int make_beta_variance (Jwrap *J)
     return err;
 }
 
+/* called by BFGS/simann callback (only) */
+
 static int real_compute_ll (Jwrap *J)
 {
-    int err;
+    int err = 0;
 
     if (J->G == NULL) {
 	err = compute_alpha(J);
@@ -1645,7 +1602,7 @@ static int real_compute_ll (Jwrap *J)
     return err;
 }
 
-/* BFGS callback function */
+/* BFGS (and simann) callback function */
 
 static double Jloglik (const double *theta, void *data)
 {
@@ -1749,6 +1706,13 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
+#if 0
+
+/* I _think_ this is made redundant by the use of Boswijk's
+   initialization for beta, but I'm willing to be proved
+   wrong!
+*/
+
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 {
     gretl_matrix *b = J->theta;
@@ -1840,7 +1804,9 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     return err;
 }
 
-/* solve for alpha when only beta is restricted */
+#endif
+
+/* solve for unrestricted alpha conditional on beta */
 
 static int compute_alpha (Jwrap *J)
 {
@@ -1885,6 +1851,47 @@ static int allocate_psivec (Jwrap *J)
     return (J->psivec == NULL)? E_ALLOC : 0;
 }
 
+/* below: needed only when using BFGS: concatenate phivec 
+   and psivec to form the full vector of free parameters
+*/
+
+static int make_theta (Jwrap *J)
+{
+    int i = 0, j, nt = 0;
+
+    if (J->H != NULL) {
+	nt += J->blen;
+    }
+
+    if (J->G != NULL) {
+	nt += J->alen;
+    }
+
+    if (nt == 0) {
+	/* can't happen */
+	return 0;
+    }
+
+    J->theta = gretl_column_vector_alloc(nt);
+    if (J->theta == NULL) {
+	return E_ALLOC;
+    }
+
+    if (J->H != NULL) {
+	for (i=0; i<J->blen; i++) {
+	    J->theta->val[i] = J->phivec->val[i];
+	}
+    }
+
+    if (J->G != NULL) {
+	for (j=0; j<J->alen; j++) {
+	    J->theta->val[i++] = J->psivec->val[j];
+	}
+    }    
+
+    return 0;
+}
+
 /* write info from the temporary Jwrap structure into
    the "permanent" GRETL_VAR structure */
 
@@ -1911,7 +1918,7 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
     J->se = NULL;
 }
 
-/* public entry point (OPT_W == use switching algorithm) */
+/* public entry point (OPT_W -> use switching algorithm) */
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,
@@ -1959,9 +1966,9 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = initval(J, rset);
+	err = beta_init(J, rset);
 #if JDEBUG
-	fprintf(stderr, "after initval: err = %d\n", err);
+	fprintf(stderr, "after beta_init: err = %d\n", err);
 #endif
     }
 
@@ -1977,9 +1984,15 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	    err = switchit(J, prn);
 	}
     } else {	
-	if (0 && !err) {
+	if (!err) {
+	    err = make_theta(J);
+	}
+#if 0
+	/* see above */
+	if (!err) {
 	    err = simann(J, opt, prn);
-	}    
+	}
+#endif  
 	if (!err) {
 	    int maxit = 4000;
 	    double reltol = 1.0e-11;
