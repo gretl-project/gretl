@@ -1349,6 +1349,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     err = general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
 
     if (!err && !(vopt & OPT_W)) {
+	/* FIXME restricted alpha */
 	err = build_VECM_models(jvar, pZ, pdinfo, 0, 1);
     }
 
@@ -1469,15 +1470,12 @@ int johansen_estimate (GRETL_VAR *jvar,
 	M = NULL;
     }
 
-    if (!err && genrest) {
+    if (!err) {
 	err = johansen_ll_calc(jvar, evals);
-	goto bailout;
     }
 
-    if (!err) {
+    if (!genrest) {
 	int do_stderrs = rank < jvar->neqns;
-
-	err = johansen_ll_calc(jvar, evals);
 
 	if (!err) {
 	    err = normalize_beta(jvar, R, &do_stderrs); 
@@ -1498,10 +1496,9 @@ int johansen_estimate (GRETL_VAR *jvar,
 	if (!err) {
 	    err = vecm_ll_stats(jvar);
 	}
-    } 
-
-    if (!err && R != NULL) {
-	jvar->jinfo->R = gretl_matrix_copy(R);
+	if (!err && R != NULL) {
+	    jvar->jinfo->R = gretl_matrix_copy(R);
+	}
     }
 
  bailout:    
@@ -1638,14 +1635,9 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
     return err;
 }
 
-/* Test of linear restrictions on the cointegrating relations in a
-   VECM.  If the restrictions are "simple" (homogeneous and in common)
-   we do the test using the eigen-system approach.  If they are
-   "general" restrictions we hand off to the specialized machinery in
-   jrestrict.c.
-*/
+/* test for a common, homogeneous restriction on beta (only) */
 
-int vecm_test_restriction (GRETL_VAR *jvar, 
+static int vecm_beta_test (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,
 			   const DATAINFO *pdinfo, 
 			   gretlopt opt,
@@ -1658,39 +1650,8 @@ int vecm_test_restriction (GRETL_VAR *jvar,
     gretl_matrix *S01 = NULL;
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
-    int bcols, acols;
     int m, n, rank;
     int err = 0;
-
-    bcols = rset_VECM_bcols(rset);
-    acols = rset_VECM_acols(rset);
- 
-    if (acols > 0 && bcols == 0) {
-	return vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
-    } 
-
-#if 0
-    if (acols > 0 && !use_switcher(opt)) {
-	pprintf(prn, "Combined beta/alpha restriction: not handled yet\n");
-	return E_NOTIMP;
-    } 
-#endif
-
-    if (alpha_restricted_VECM(jvar)) {
-	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
-		"not handled yet\n");
-	return E_NOTIMP;
-    }	
-
-    if (!simple_restriction(jvar, rset)) {
-	/* "general" restriction set */
-	gretlopt vopt = opt;
-
-	if (use_switcher(opt)) {
-	    vopt |= OPT_W;
-	}
-	return general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
-    }
 
     R = rset_get_R_matrix(rset);
     H = gretl_matrix_right_nullspace(R, &err);
@@ -1760,6 +1721,54 @@ int vecm_test_restriction (GRETL_VAR *jvar,
     gretl_matrix_free(S00);
     gretl_matrix_free(S11);
     gretl_matrix_free(S01);
+
+    return err;
+}
+
+/* Test of linear restrictions on the cointegrating relations in a
+   VECM.  If the restrictions are "simple" (homogeneous and in common)
+   we do the test using the eigen-system approach.  If they are
+   "general" restrictions we hand off to the specialized machinery in
+   jrestrict.c.
+*/
+
+int vecm_test_restriction (GRETL_VAR *jvar, 
+			   const gretl_restriction_set *rset,
+			   const DATAINFO *pdinfo, 
+			   gretlopt opt,
+			   PRN *prn)
+{
+    int acols = rset_VECM_acols(rset);
+    int err = 0;
+
+#if 0
+    if (acols > 0 && !use_switcher(opt)) {
+	pprintf(prn, "alpha restriction: not handled yet\n");
+	return E_NOTIMP;
+    } 
+#endif
+
+#if 0
+    if (alpha_restricted_VECM(jvar) && bcols > 0) {
+	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
+		"not handled yet\n");
+	return E_NOTIMP;
+    }
+#endif	
+
+    if (simple_restriction(jvar, rset)) {
+	if (acols > 0) {
+	    err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
+	} else {
+	    err = vecm_beta_test(jvar, rset, pdinfo, opt, prn);
+	}
+    } else {
+	/* "general" restriction */
+	if (use_switcher(opt)) {
+	    opt |= OPT_W;
+	}
+	err = general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+    }
 
     return err;
 }

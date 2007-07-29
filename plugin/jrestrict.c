@@ -1199,6 +1199,66 @@ static int init_phi_nonhomog (Jwrap *J)
     return err;
 }
 
+/* initialization of \phi in case the restriction on beta
+   is homogeneous */
+
+static int init_phi_homog (Jwrap *J) 
+{
+    gretl_matrix *HH = NULL;
+    gretl_matrix *Hb = NULL;
+    gretl_matrix *b = NULL;
+    int nbeta = J->p1 * J->rank;
+    int i, err = 0;
+
+    b = gretl_matrix_copy(J->beta);
+    HH = gretl_matrix_alloc(J->blen, J->blen);
+    Hb = gretl_column_vector_alloc(J->blen);
+
+    if (b == NULL || HH == NULL || Hb == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    gretl_matrix_reuse(b, nbeta, 1);
+
+    err = gretl_matrix_multiply_mod(J->H, GRETL_MOD_TRANSPOSE,
+				    J->H, GRETL_MOD_NONE,
+				    HH, GRETL_MOD_NONE);
+    
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(HH);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(J->H, GRETL_MOD_TRANSPOSE,
+					b, GRETL_MOD_NONE,
+					Hb, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	gretl_matrix_reuse(b, Hb->rows, 1);
+	err = gretl_matrix_multiply(HH, Hb, b);
+    }
+
+#if JDEBUG
+    gretl_matrix_print(b, "beta_init: final vec(phi)");
+#endif
+
+    if (!err) {
+	for (i=0; i<b->rows; i++) {
+	    J->phivec->val[i] = b->val[i];
+	}
+    } 
+
+ bailout:
+
+    gretl_matrix_free(HH);
+    gretl_matrix_free(Hb);
+    gretl_matrix_free(b);
+
+    return err;
+}
+
 static int 
 normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
 {
@@ -1315,66 +1375,6 @@ static int case0 (Jwrap *J)
     return err;
 }
 
-/* initialization of \phi in case the restriction on beta
-   is homogeneous */
-
-static int init_phi_homog (Jwrap *J) 
-{
-    gretl_matrix *HH = NULL;
-    gretl_matrix *Hb = NULL;
-    gretl_matrix *b = NULL;
-    int nbeta = J->p1 * J->rank;
-    int i, err = 0;
-
-    b = gretl_matrix_copy(J->beta);
-    HH = gretl_matrix_alloc(J->blen, J->blen);
-    Hb = gretl_column_vector_alloc(J->blen);
-
-    if (b == NULL || HH == NULL || Hb == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    gretl_matrix_reuse(b, nbeta, 1);
-
-    err = gretl_matrix_multiply_mod(J->H, GRETL_MOD_TRANSPOSE,
-				    J->H, GRETL_MOD_NONE,
-				    HH, GRETL_MOD_NONE);
-    
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(HH);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(J->H, GRETL_MOD_TRANSPOSE,
-					b, GRETL_MOD_NONE,
-					Hb, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	gretl_matrix_reuse(b, Hb->rows, 1);
-	err = gretl_matrix_multiply(HH, Hb, b);
-    }
-
-#if JDEBUG
-    gretl_matrix_print(b, "beta_init: final vec(phi)");
-#endif
-
-    if (!err) {
-	for (i=0; i<b->rows; i++) {
-	    J->phivec->val[i] = b->val[i];
-	}
-    } 
-
- bailout:
-
-    gretl_matrix_free(HH);
-    gretl_matrix_free(Hb);
-    gretl_matrix_free(b);
-
-    return err;
-}
-
 /* 
    Initialize beta, or the free parameters associated with
    beta in case beta is restricted. 
@@ -1398,12 +1398,14 @@ static int beta_init (Jwrap *J, const gretl_restriction_set *rset)
 	return 0;
     }
 
+#if 1
     if (J->rank > 1) {
 	err = normalize_initial_beta(J, rset);
 	if (err) {
 	    return err;
 	}
     }
+#endif
 
     if (!gretl_is_zero_matrix(J->h0)) {
 	/* solve for \phi a la Boswijk */
