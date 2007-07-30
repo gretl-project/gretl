@@ -681,53 +681,6 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter,
     return err;
 }
 
-static void vecm_dw_rho (MODEL *pmod)
-{
-    double ut, u1;
-    double xx = 0;
-    double ut1 = 0, u11 = 0;
-    int t, s;
-
-    for (t=pmod->t1; t<=pmod->t2; t++)  {
-	s = t - 1;
-	if (s >= 0 && !na(pmod->uhat[s])) {
-	    ut = pmod->uhat[t];
-	    u1 = pmod->uhat[s];
-	    xx += (ut - u1) * (ut - u1);
-	    ut1 += ut * u1;
-	    u11 += u1 * u1;
-	}
-    }
-
-    pmod->dw = xx / pmod->ess;
-    pmod->rho = ut1 / u11;
-}
-
-static void 
-vecm_model_stats (MODEL *pmod, const gretl_matrix *E,
-		  const double *y, int i)
-{
-    double x, SSR = 0, TSS = 0;
-    int t, s = 0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	x = gretl_matrix_get(E, s++, i);
-	SSR += x * x;
-	TSS += y[t] * y[t];
-	pmod->uhat[t] = x;
-	pmod->yhat[t] = y[t] - x;
-    }
-
-    pmod->ess = SSR;
-    pmod->sigma = sqrt(SSR / pmod->nobs);
-    pmod->tss = TSS;
-    pmod->rsq = 1 - SSR / TSS;
-    vecm_dw_rho(pmod);
-
-    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
-}
-
 /* below: this is designed for the case where alpha is restricted, 
    so we can't just run OLS conditional on beta.
 
@@ -853,7 +806,9 @@ alt_build_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
 	    pmod->list = gretl_list_copy(xlist);
 	    pmod->list[1] = yno;
 
-	    vecm_model_stats(pmod, vecm->E, y, i);
+	    pmod->dfd = T;
+	    set_VAR_model_stats(pmod, vecm->E, y, i);
+	    pmod->dfd = T - pmod->ncoeff;
 
 	    for (j=0; j<nx; j++) {
 		pmod->coeff[j] = gretl_matrix_get(B, j, i);

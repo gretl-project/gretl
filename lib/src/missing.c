@@ -544,7 +544,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 /* drop first/last observations from sample if missing obs 
    encountered -- also check for missing vals within the
    remaining sample: return non-zero if there are such.
-   Adjust the t1 andt2 members of pdinfo if need be.
+   Adjust the t1 and t2 members of pdinfo if need be.
 */
 
 int list_adjust_t1t2 (const int *list, const double **Z, DATAINFO *pdinfo)

@@ -652,6 +652,60 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
+static void VAR_dw_rho (MODEL *pmod)
+{
+    double ut, u1;
+    double xx = 0;
+    double ut1 = 0, u11 = 0;
+    int t, s;
+
+    for (t=pmod->t1; t<=pmod->t2; t++)  {
+	s = t - 1;
+	if (s >= 0 && !na(pmod->uhat[s])) {
+	    ut = pmod->uhat[t];
+	    u1 = pmod->uhat[s];
+	    xx += (ut - u1) * (ut - u1);
+	    ut1 += ut * u1;
+	    u11 += u1 * u1;
+	}
+    }
+
+    pmod->dw = xx / pmod->ess;
+    pmod->rho = ut1 / u11;
+}
+
+/* set basic model statistics when estimation has been
+   done by matrix methods */
+
+void set_VAR_model_stats (MODEL *pmod, const gretl_matrix *E,
+			  const double *y, int i)
+{
+    double u, x, SSR = 0, TSS = 0;
+    int t, s = 0;
+
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	u = gretl_matrix_get(E, s++, i);
+	SSR += u * u;
+	x = y[t] - pmod->ybar;
+	TSS += x * x;
+	pmod->uhat[t] = u;
+	pmod->yhat[t] = y[t] - u;
+    }
+
+    pmod->ess = SSR;
+    pmod->sigma = sqrt(SSR / pmod->dfd);
+    pmod->tss = TSS;
+    pmod->rsq = 1 - SSR / TSS;
+    pmod->fstt = ((TSS - SSR) / pmod->dfn) / (SSR / pmod->dfd);
+
+    pmod->adjrsq = pmod->lnL = NADBL;
+
+    VAR_dw_rho(pmod);
+}
+
 int gretl_VAR_do_error_decomp (const gretl_matrix *S,
 			       gretl_matrix *C)
 {
@@ -1924,6 +1978,12 @@ static void var_lists_null (struct var_lists *vl)
     vl->lagvlist = NULL;
 }
 
+#if 0
+
+#include "newvar.c"
+
+#endif
+
 /**
  * gretl_VAR:
  * @order: lag order for the VAR
@@ -1955,6 +2015,10 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     int *vlist = NULL;
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
+
+#if 0
+    return alt_VAR(order, list, pZ, pdinfo, opt, prn, err);
+#endif
 
     var_lists_null(&vl);
 

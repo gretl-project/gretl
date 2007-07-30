@@ -675,12 +675,18 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT ||
 		    pmod->ci == HECKIT) && pmod->params != NULL) {
 	    k = i;
+	} else if (pmod->list == NULL || j > pmod->list[0]) {
+	    k = i;
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	}
 
-	if (k >= 0 && pmod->params != NULL) {
-	    strcpy(targ, pmod->params[k]);
+	if (k >= 0) {
+	    if (pmod->params != NULL) {
+		strcpy(targ, pmod->params[k]);
+	    } else {
+		strcpy(targ, "unknown");
+	    }
 	}
 
     }
