@@ -678,7 +678,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     /* Transcribe vcv into triangular representation */
     err = qr_make_vcv(pmod, vcv, VCV_ROBUST);
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(X);
     gretl_matrix_free(diag);
