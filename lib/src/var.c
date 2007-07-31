@@ -1978,7 +1978,7 @@ static void var_lists_null (struct var_lists *vl)
     vl->lagvlist = NULL;
 }
 
-#if 1
+#if 0
 
 #include "newvar.c"
 
@@ -2016,7 +2016,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
 
-#if 1
+#if 0
     return alt_VAR(order, list, pZ, pdinfo, opt, prn, err);
 #endif
 
