@@ -6127,6 +6127,8 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * @B: k x g matrix to hold coefficient estimates.
  * @E: T x g matrix to hold the regression residuals, or %NULL if these are 
  * not needed.
+ * @XTXi: location to receive (X'X)^{-1} on output, or %NULL if this is not
+ * needed.
  *
  * Computes OLS estimates using Cholesky decomposition, and puts the
  * coefficient estimates in @B.  Optionally, calculates the
@@ -6136,20 +6138,24 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  */
 
 int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
-			    gretl_matrix *B, gretl_matrix *E)
+			    gretl_matrix *B, gretl_matrix *E,
+			    gretl_matrix **XTXi)
 {
     gretl_matrix *XTX = NULL;
-    int ny = Y->cols;
+    int g = Y->cols;
+    int T = X->rows;
     int k = X->cols;
     int err = 0;
 
-    if (B->rows != k || B->cols != ny) {
+    if (B->rows != k || B->cols != g) {
 	err = E_NONCONF;
-    } else if (E != NULL && (E->cols != Y->cols || E->rows != Y->rows)) {
+    } else if (Y->rows != T) {
 	err = E_NONCONF;
-    } else if (k > Y->rows) {
+    } else if (E != NULL && (E->cols != g || E->rows != T)) {
+	err = E_NONCONF;
+    } else if (k > T) {
 	err = E_DF;
-    }
+    } 
 
     if (!err) {
 	XTX = gretl_matrix_alloc(k, k);
@@ -6175,15 +6181,19 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
     }
 
     if (!err && E != NULL) {
-	int i, imax = E->rows * E->cols;
-
 	gretl_matrix_multiply(X, B, E);
-	for (i=0; i<imax; i++) {
-	    E->val[i] = Y->val[i] - E->val[i];
-	}
+	gretl_matrix_switch_sign(E);
+	gretl_matrix_add_to(E, Y);
     }
 
-    if (XTX != NULL) {
+    if (!err && XTXi != NULL) {
+	integer info = 0, ik = k;
+	char uplo = 'L';
+
+	dpotri_(&uplo, &ik, XTX->val, &ik, &info);
+	gretl_symmetric_matrix_expand(XTX, uplo);
+	*XTXi = XTX;
+    } else {
 	gretl_matrix_free(XTX);
     }
 
@@ -6336,6 +6346,140 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     if (W != NULL) gretl_matrix_free(W);
 
     return err;
+}
+
+static int QR_OLS_work (gretl_matrix *Q, gretl_matrix *R)
+{
+    integer k = gretl_matrix_rows(R);
+    int r, err;
+
+    /* basic decomposition */
+    err = gretl_matrix_QR_decomp(Q, R);
+    if (err) {
+	return err;
+    }
+
+    /* check rank of QR */
+    r = gretl_check_QR_rank(R, &err);
+    if (err) {
+	return err;
+    }
+
+    if (r < k) {
+	err = E_SINGULAR;
+    } else {
+	/* invert R */
+	char uplo = 'U';
+	char diag = 'N';
+	integer info = 0;
+
+	dtrtri_(&uplo, &diag, &k, R->val, &k, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_matrix_QR_ols:
+ * @y: T x g matrix of dependent variables.
+ * @X: T x k matrix of independent variables.
+ * @B: k x g matrix to hold coefficient estimates.
+ * @E: T x g matrix to hold the regression residuals, or %NULL if these are 
+ * not needed.
+ * @XTXi: matrix to hold (X'X)^{-1}, or %NULL if this is not needed.
+ * @Qout: location to receive Q on output, or %NULL.
+ *
+ * Computes OLS estimates using QR decomposition, and puts the
+ * coefficient estimates in @B.  Optionally, calculates the
+ * residuals in @E, (X'X)^{-1} in @XTXi, and/or the matrix Q
+ * in @Qout.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_matrix_QR_ols (const gretl_matrix *Y,
+			 const gretl_matrix *X,
+			 gretl_matrix *B,
+			 gretl_matrix *E,
+			 gretl_matrix *XTXi,
+			 gretl_matrix **Qout)
+{
+    int g = Y->cols;
+    int k = X->cols;
+    int T = X->rows;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    gretl_matrix *G = NULL;
+    int err = 0;
+
+    if (B->rows != k || B->cols != g) {
+	err = E_NONCONF;
+    } else if (Y->rows != T) {
+	err = E_NONCONF;
+    } else if (E != NULL && (E->cols != g || E->rows != T)) {
+	err = E_NONCONF;
+    } else if (XTXi != NULL && (XTXi->rows != k || XTXi->cols != k)) {
+	err = E_NONCONF;
+    } else if (k > T) {
+	err = E_DF;
+    }
+
+    if (!err) {
+	Q = gretl_matrix_copy(X);
+	R = gretl_matrix_alloc(k, k);
+	G = gretl_matrix_alloc(k, g);
+	if (Q == NULL || R == NULL || G == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = QR_OLS_work(Q, R);
+    }
+
+    if (!err) {
+	/* make "G" into gamma-hat */    
+	gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
+				  Y, GRETL_MOD_NONE, 
+				  G, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	/* OLS coefficients */
+	gretl_matrix_multiply(R, G, B);
+    }
+
+    if (!err && E != NULL) {
+	/* compute residuals */
+	int i, imax = E->rows * E->cols;
+
+	gretl_matrix_multiply(X, B, E);
+	for (i=0; i<imax; i++) {
+	    E->val[i] = Y->val[i] - E->val[i];
+	}
+    }
+
+    /* create (X'X)^{-1} = RR' */
+    if (!err && XTXi != NULL) {
+	gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+				  R, GRETL_MOD_TRANSPOSE,
+				  XTXi, GRETL_MOD_NONE);
+    }
+
+    if (!err && Qout != NULL) {
+	*Qout = Q;
+    } else {
+	gretl_matrix_free(Q);
+    }
+
+    gretl_matrix_free(R);
+    gretl_matrix_free(G);
+
+    return err;    
 }
 
 /**

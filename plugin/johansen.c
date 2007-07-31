@@ -718,10 +718,8 @@ alt_build_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     X = gretl_matrix_alloc(T, nx);
     Pi = gretl_matrix_alloc(vecm->neqns, p1);
     B = gretl_matrix_alloc(nx, vecm->neqns);
-    XTX = gretl_matrix_alloc(nx, nx);
 
-    if (Y == NULL || X == NULL || Pi == NULL || 
-	B == NULL || XTX == NULL) {
+    if (Y == NULL || X == NULL || Pi == NULL || B == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -766,15 +764,7 @@ alt_build_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* run the regressions */
-    err = gretl_matrix_multi_ols(Y, X, B, vecm->E);
-
-    if (!err) {
-	/* prepare to compute standard errors */
-	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-				  X, GRETL_MOD_NONE,
-				  XTX, GRETL_MOD_NONE);
-	gretl_invert_symmetric_matrix(XTX);
-    }
+    err = gretl_matrix_multi_ols(Y, X, B, vecm->E, &XTX);
 
     if (!err) {
 	MODEL *pmod;

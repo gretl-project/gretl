@@ -1300,7 +1300,7 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
     gretl_matrix_multiply(R, tmp, X);
     gretl_matrix_reuse(tmp, bc2, 1);
 
-    err = gretl_matrix_multi_ols(d, X, tmp, NULL);
+    err = gretl_matrix_multi_ols(d, X, tmp, NULL, NULL);
     if (err) {
 	fprintf(stderr, "beta initialization: gretl_matrix_multi_ols failed\n");
 	err = 0;

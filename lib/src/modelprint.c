@@ -24,7 +24,8 @@
 #include "system.h"
 #include "texprint.h"
 
-#define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
+#define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || \
+                       a == AUX_AR || a == AUX_VAR)
 
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
@@ -334,7 +335,8 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    if (na(crit[C_AIC]) || na(crit[C_BIC]) || na(crit[C_HQC])) {
+    if (na(crit[C_AIC]) || na(crit[C_BIC]) || na(crit[C_HQC]) ||
+	pmod->aux == AUX_VAR) {
 	return;
     }
 
@@ -2289,9 +2291,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == PANEL 
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
-	if (pmod->ci != VAR) {
-	    depvarstats(pmod, prn);
-	}
+	depvarstats(pmod, prn);
 	if (essline(pmod, prn)) {
 	    print_middle_table_end(prn);
 	    goto close_format;

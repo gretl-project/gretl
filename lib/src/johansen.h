@@ -73,6 +73,9 @@ struct GRETL_VAR_ {
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
     int ecm;             /* 0 for an ordinary VAR, 1 for VECM */
+    int *ylist;          /* list of stochastic vars */
+    int *xlist;          /* list of exogenous variables */
+    int detflags;        /* record of automatic deterministic vars added */
     gretl_matrix *A;       /* augmented coefficient matrix (companion form) */
     gretl_matrix *lambda;  /* inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */

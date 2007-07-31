@@ -1349,7 +1349,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     }
 
     if (!*err) {
-	*err = gretl_matrix_multi_ols(Y, X, B, U);
+	*err = gretl_matrix_multi_ols(Y, X, B, U, NULL);
     }
 
     if (*err) {

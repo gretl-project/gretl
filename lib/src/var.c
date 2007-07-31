@@ -164,6 +164,10 @@ static void gretl_VAR_zero (GRETL_VAR *var)
     var->ifc = 0;
     var->ncoeff = 0;
     var->t1 = var->t2 = var->T = 0;
+
+    var->ylist = NULL;
+    var->xlist = NULL;
+    var->detflags = 0;
     
     var->A = NULL;
     var->lambda = NULL;
@@ -281,6 +285,9 @@ void gretl_VAR_free (GRETL_VAR *var)
     if (var->refcount > 0) {
 	return;
     }
+
+    free(var->ylist);
+    free(var->xlist);
 
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->lambda);
@@ -1492,6 +1499,8 @@ static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
     }
 }
 
+/* apparatus for selecting the optimal lag length for a VAR */
+
 static int 
 gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
@@ -1760,6 +1769,13 @@ static int VAR_add_stats (GRETL_VAR *var)
     return err;
 }
 
+static void VAR_model_y_data (MODEL *pmod, double **Z)
+{
+    double *y = Z[pmod->list[1]];
+
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+}
 
 /* construct the respective VAR lists by adding the appropriate
    number of lags ("order") to the variables in list 
@@ -1849,6 +1865,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	} else {
 	    pmod->aux = AUX_VAR;
 	    pmod->ID = i + 1;
+	    VAR_model_y_data(pmod, *pZ);
 	}
 
 	if (!*err) {
@@ -1978,10 +1995,10 @@ static void var_lists_null (struct var_lists *vl)
     vl->lagvlist = NULL;
 }
 
-#if 0
+#define NEW_VAR_TEST 1
 
-#include "newvar.c"
-
+#if NEW_VAR_TEST
+# include "newvar.c"
 #endif
 
 /**
@@ -2016,8 +2033,10 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
 
-#if 0
-    return alt_VAR(order, list, pZ, pdinfo, opt, prn, err);
+#if NEW_VAR_TEST
+    if (getenv("GRETL_NEWVAR") != NULL) {
+	return alt_VAR(order, list, pZ, pdinfo, opt, prn, err);
+    }
 #endif
 
     var_lists_null(&vl);
@@ -3562,6 +3581,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	goto bailout;
     } 
 
+    gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
+
     var->models = malloc(var->neqns * sizeof *var->models);
     if (var->models == NULL) {
 	*err = E_ALLOC;
@@ -3577,7 +3598,11 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !*err) {
-	if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
+	if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
+	    var->ylist = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
+	    var->xlist = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
 	    var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
 	    var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
@@ -3597,11 +3622,18 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 
     pmod = var->models[0];
 
+    /* Note: get "global" info from the first model (equation) */
     var->ncoeff = pmod->ncoeff;
     var->ifc = pmod->ifc;
     var->t1 = pmod->t1;
     var->t2 = pmod->t2;
     var->T = var->t2 - var->t1 + 1;
+
+    /* FIXME what if we don't get ylist, xlist or detflags (i.e. from
+       a VAR stored in an old session: need to add "remedial"
+       functionality: reconstitute on basis of first model plus
+       other info.  See gretl_VAR_get_exo_list() for a hint.
+    */
 
     start = pmod->ifc;
     rowmax = var->neqns * var->order + start;
@@ -3698,8 +3730,11 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", 
 	    (var->name == NULL)? "none" : var->name, (int) flags);
 
-    fprintf(fp, "ci=\"%d\" neqns=\"%d\" order=\"%d\" ecm=\"%d\">\n",
-	    var->ci, var->neqns, var->order, var->ecm);
+    fprintf(fp, "ci=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ecm=\"%d\">\n",
+	    var->ci, var->neqns, var->order, var->detflags, var->ecm);
+
+    gretl_xml_put_tagged_list("ylist", var->ylist, fp);
+    gretl_xml_put_tagged_list("xlist", var->xlist, fp);
 
     gretl_push_c_numeric_locale();
 
@@ -3729,5 +3764,10 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
-#include "irfboot.c"
-#include "varomit.c"
+#if 0
+# include "irfboot_new.c"
+# include "varomit_new.c"
+#else
+# include "irfboot.c"
+# include "varomit.c"
+#endif

@@ -1,6 +1,5 @@
 #define VO_DEBUG 0
 
-
 /* Based on the specification stored in the VAR struct, constitute a
    list of the exogenous variables in the system.  
 */
@@ -10,6 +9,14 @@ int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
     int *vlist, *elist;
     int nendo, nexo;
     int i, j;
+
+    if (var->xlist != NULL) {
+	elist = gretl_list_copy(var->xlist);
+	if (elist == NULL) {
+	    *err = E_ALLOC;
+	}
+	return elist;
+    }
 
     if (var->models == NULL) {
 	*err = E_DATA;

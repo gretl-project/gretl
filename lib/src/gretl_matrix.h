@@ -455,8 +455,18 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);
 
-int gretl_matrix_multi_ols (const gretl_matrix *Y, const gretl_matrix *X,
-			    gretl_matrix *B, gretl_matrix *E);
+int gretl_matrix_multi_ols (const gretl_matrix *Y, 
+			    const gretl_matrix *X,
+			    gretl_matrix *B, 
+			    gretl_matrix *E,
+			    gretl_matrix **XTXi);
+
+int gretl_matrix_QR_ols (const gretl_matrix *Y,
+			 const gretl_matrix *X,
+			 gretl_matrix *B,
+			 gretl_matrix *E,
+			 gretl_matrix *XTXi,
+			 gretl_matrix **Qout);
 
 double gretl_matrix_r_squared (const gretl_matrix *y,
 			       const gretl_matrix *X,

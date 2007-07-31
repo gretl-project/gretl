@@ -1,5 +1,149 @@
 #define VDEBUG 0
 
+enum Detflags {
+    DET_CONST = 1 << 0,
+    DET_TREND = 1 << 1,
+    DET_SEAS  = 1 << 2
+};
+
+typedef struct VARspec_ VARspec;
+
+struct VARspec_ {
+    int n;       /* number of equations */
+    int g;       /* total coefficients per equation */
+    int t1;      /* starting obs */
+    int t2;      /* ending obs */
+    int T;       /* total observations */
+    int p;       /* lag order */
+    int robust;  /* robust std errors? */
+    int qr;      /* use QR decomp for OLS? */
+    int *ylist;
+    int *xlist;
+    int detflags;
+    gretl_matrix *Y;
+    gretl_matrix *X;
+    gretl_matrix *B;
+    gretl_matrix *E;
+    gretl_matrix *XTX;
+};
+
+static void fill_VAR_X (VARspec *v, int p, const double **Z, 
+			const DATAINFO *pdinfo);
+
+/* apparatus for selecting the optimal lag length for a VAR */
+
+static int 
+alt_VAR_do_lagsel (GRETL_VAR *var, VARspec *vspec, 
+		   const double **Z, const DATAINFO *pdinfo, 
+		   PRN *prn)
+{
+    gretl_matrix *crittab = NULL;
+    gretl_matrix *lltab = NULL;
+
+    int p = vspec->p;
+    int r = p - 1;
+    int T = vspec->T;
+    int n = vspec->n;
+
+    /* initialize the "best" at the longest lag */
+    double best[N_IVALS] = { var->AIC, var->BIC, var->HQC };
+    int best_row[N_IVALS] = { r, r, r };
+    double crit[N_IVALS];
+    double LRtest;
+    double ldet = NADBL;
+    int cols0;
+    int j, m = 0;
+    int err = 0;
+
+    if (p < 2) {
+	return 0;
+    }
+
+    if (var->F != NULL) {
+	gretl_matrix_free(var->F);
+    }
+
+    var->F = gretl_matrix_alloc(T, n);
+    if (var->F == NULL) {
+	return E_ALLOC;
+    }
+
+    crittab = gretl_matrix_alloc(p, N_IVALS);
+    lltab = gretl_matrix_alloc(p, 2);
+    if (crittab == NULL || lltab == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* # of cols in X that are not Y lags */
+    cols0 = vspec->g - p * n; 
+
+    for (j=1; j<p && !err; j++) {
+	int jxcols = cols0 + j * n;
+
+	fill_VAR_X(vspec, j, Z, pdinfo);
+
+	gretl_matrix_reuse(vspec->X, T, jxcols);
+	gretl_matrix_reuse(vspec->B, jxcols, n);
+
+	err = gretl_matrix_multi_ols(vspec->Y, vspec->X, vspec->B, 
+				     var->F, NULL);
+
+	if (!err) {
+	    ldet = gretl_VAR_ldet(var, &err);
+	}
+
+	if (!err) {
+	    double ll;
+	    int q = vspec->g - (n * (p - j));
+	    int c, k = n * q;
+
+	    ll = -(n * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
+	    crit[0] = (-2.0 * ll + 2.0 * k) / T;               /* AIC */
+	    crit[1] = (-2.0 * ll + k * log(T)) / T;            /* BIC */
+	    crit[2] = (-2.0 * ll + 2.0 * k * log(log(T))) / T; /* HQC */
+
+	    gretl_matrix_set(lltab, m, 0, ll);
+	    if (j == 1) {
+		gretl_matrix_set(lltab, m, 1, 0);
+	    } else {
+		LRtest = 2.0 * (ll - gretl_matrix_get(lltab, m-1, 0));
+		gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, n * n));
+	    }	
+	    
+	    for (c=0; c<N_IVALS; c++) {
+		gretl_matrix_set(crittab, m, c, crit[c]);
+		if (crit[c] < best[c]) {
+		    best[c] = crit[c];
+		    best_row[c] = m;
+		}
+	    }
+	
+	    m++;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix_set(lltab, m, 0, var->ll);
+	LRtest = 2.0 * (var->ll - gretl_matrix_get(lltab, m - 1, 0));
+	gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, n * n));
+	gretl_matrix_set(crittab, m, 0, var->AIC);
+	gretl_matrix_set(crittab, m, 1, var->BIC);
+	gretl_matrix_set(crittab, m, 2, var->HQC);
+	gretl_VAR_print_lagsel(lltab, crittab, best_row, prn);
+    }
+
+    bailout:
+
+    gretl_matrix_free(crittab);
+    gretl_matrix_free(lltab);
+
+    gretl_matrix_free(var->F);
+    var->F = NULL;
+
+    return err;
+}
+
 static int 
 gretl_matrix_delete_columns (gretl_matrix *X, int *list)
 {
@@ -32,33 +176,12 @@ gretl_matrix_delete_columns (gretl_matrix *X, int *list)
     return 0;
 }
 
-enum Detflags {
-    DET_CONST = 1 << 0,
-    DET_TREND = 1 << 1,
-    DET_SEAS  = 1 << 2
-};
-
-typedef struct VARspec_ VARspec;
-
-struct VARspec_ {
-    int n;       /* number of equations */
-    int g;       /* total coefficients per equation */
-    int t1;      /* starting obs */
-    int t2;      /* ending obs */
-    int T;       /* total observations */
-    int p;       /* lag order */
-    int *ylist;
-    int *xlist;
-    int detflags;
-    gretl_matrix *Y;
-    gretl_matrix *X;
-    gretl_matrix *B;
-    gretl_matrix *E;
-    gretl_matrix *XTX;
-};
-
 static void varspec_free (VARspec *v)
 {
+    if (v == NULL) {
+	return;
+    }
+
     free(v->ylist);
     free(v->xlist);
 
@@ -91,6 +214,9 @@ static VARspec *varspec_new (const int *list, int order,
     v->XTX = NULL;
     v->g = 0;
     v->detflags = 0;
+
+    v->robust = (opt & OPT_R)? 1 : 0;
+    v->qr = get_use_qr();
 
     if (gretl_list_has_separator(list)) {
 	*err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
@@ -246,37 +372,11 @@ static int startp (int t, const DATAINFO *pdinfo)
     return pp;
 }
 
-static int 
-make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
+static void fill_VAR_X (VARspec *v, int p, const double **Z, 
+			const DATAINFO *pdinfo)
 {
-    int i, j, k, s, t, vi;
-
-    v->Y = gretl_matrix_alloc(v->T, v->n);
-    v->X = gretl_matrix_alloc(v->T, v->g);
-    v->B = gretl_matrix_alloc(v->g, v->n);
-    v->E = gretl_matrix_alloc(v->T, v->n);
-    v->XTX = gretl_matrix_alloc(v->g, v->g);
-
-    if (v->Y == NULL || v->X == NULL || v->B == NULL || 
-	v->E == NULL || v->XTX == NULL) {
-	return E_ALLOC;
-    }
-
-    /* construct the Y matrix */
-
-    for (i=0; i<v->n; i++) {
-	vi = v->ylist[i+1];
-	s = 0;
-	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
-	}
-    }
-
-#if VDEBUG
-    gretl_matrix_print(v->Y, "Y");
-#endif
-
-    k = 0; /* X column */
+    int i, j, s, t, vi;
+    int k = 0; /* X column */
 
     /* construct the X matrix: const first */
 
@@ -292,7 +392,7 @@ make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
 
     for (i=0; i<v->n; i++) {
 	vi = v->ylist[i+1];
-	for (j=1; j<=v->p; j++) {
+	for (j=1; j<=p; j++) {
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
 		gretl_matrix_set(v->X, s++, k, Z[vi][t-j]);
@@ -345,6 +445,45 @@ make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
 #if VDEBUG
     gretl_matrix_print(v->X, "X");
 #endif
+}
+
+static int 
+make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
+{
+    int i, s, t, vi;
+
+    v->Y = gretl_matrix_alloc(v->T, v->n);
+    v->X = gretl_matrix_alloc(v->T, v->g);
+    v->B = gretl_matrix_alloc(v->g, v->n);
+    v->E = gretl_matrix_alloc(v->T, v->n);
+
+    if (v->Y == NULL || v->X == NULL || v->B == NULL || 
+	v->E == NULL) {
+	return E_ALLOC;
+    }    
+
+    if (v->qr) {
+	v->XTX = gretl_matrix_alloc(v->g, v->g);
+	if (v->XTX == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    /* construct the Y matrix */
+
+    for (i=0; i<v->n; i++) {
+	vi = v->ylist[i+1];
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
+	}
+    }
+
+#if VDEBUG
+    gretl_matrix_print(v->Y, "Y");
+#endif
+
+    fill_VAR_X(v, v->p, Z, pdinfo);
 
     return 0;
 }
@@ -387,35 +526,112 @@ set_VAR_param_names (VARspec *v, char **params, const DATAINFO *pdinfo)
     }
 }
 
+/* (X'X)^{-1} * X'\Omega X * (X'X)^{-1} : right now
+   we're supporting only HC0 and HC1 */
+
+static int VAR_robust_vcv (gretl_matrix *V, VARspec *vspec, 
+			   MODEL *pmod, int hcv, int k)
+{
+    gretl_matrix *XOX = NULL;
+    double xij, xti, xtj, utk;
+    int T = vspec->T;
+    int g = vspec->g;
+    int i, j, t;
+
+    XOX = gretl_matrix_alloc(g, g);
+    if (XOX == NULL) {
+	return E_ALLOC;
+    }
+
+    /* form X' \Omega X */
+    for (i=0; i<g; i++) {
+	for (j=i; j<g; j++) {
+	    xij = 0.0;
+	    for (t=0; t<vspec->T; t++) {
+		xti = gretl_matrix_get(vspec->X, t, i);
+		xtj = gretl_matrix_get(vspec->X, t, j);
+		utk = gretl_matrix_get(vspec->E, t, k);
+		xij += utk * utk * xti * xtj;
+	    }
+	    if (hcv > 0) {
+		/* cheating here, for now */
+		xij *= (double) T / (T - g);
+	    }
+	    gretl_matrix_set(XOX, i, j, xij);
+	    if (i != j) {
+		gretl_matrix_set(XOX, j, i, xij);
+	    }
+	}
+    }
+
+    gretl_matrix_qform(vspec->XTX, GRETL_MOD_TRANSPOSE, XOX,
+		       V, GRETL_MOD_NONE);
+
+    gretl_model_set_int(pmod, "hc", 1);
+    if (hcv > 0) {
+	gretl_model_set_int(pmod, "hc_version", 1);
+    }
+
+    gretl_matrix_free(XOX);
+
+    return 0;
+}
+
 /* Run the various per-equation omit tests (all lags of each var in
-   turn, last lag of all vars) using the Wald method.
+   turn, last lag of all vars) using the Wald method.  We also
+   add the standard errors to the models here, since we have the
+   covariance matrix to hand.
 */
 
-static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
-				int ifc)
+static int VAR_wald_omit_tests (GRETL_VAR *var, VARspec *vspec, int ifc)
 {
+    gretl_matrix *V = NULL;
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
-    int p = var->order;
-    int n = var->neqns;
+    int hcv = get_hc_version();
+    int p = vspec->p;
+    int n = vspec->n;
+    int g = vspec->g;
     int dim = (p > n)? p : n;
     int i, j, k, m = 0;
     int err = 0;
 
+    if (ifc && vspec->robust && g - 1 > dim) {
+	/* need bigger arrays for robust overall F-test */
+	dim = g - 1;
+    }
+
+    V = gretl_matrix_alloc(g, g);
     C = gretl_matrix_alloc(dim, dim);
     b = gretl_column_vector_alloc(dim);
 
-    if (C == NULL || b == NULL) {
+    if (V == NULL || C == NULL || b == NULL) {
 	return E_ALLOC;
     }     
 
     for (i=0; i<n && !err; i++) {
 	MODEL *pmod = var->models[i];
 	int ii, jj, jpos, ipos = ifc;
-	double s2 = pmod->sigma * pmod->sigma;
 	double w, vij;
 
-	/* each var, all lags */
+	gretl_matrix_reuse(V, g, g);
+
+	if (vspec->robust) {
+	    err = VAR_robust_vcv(V, vspec, pmod, hcv, i);
+	} else {
+	    gretl_matrix_copy_values(V, vspec->XTX);
+	    gretl_matrix_multiply_by_scalar(V, pmod->sigma * pmod->sigma);
+	}
+	
+	if (!err) {
+	    /* set (possibly robust) standard errors */
+	    for (j=0; j<g; j++) {
+		vij = gretl_matrix_get(V, j, j);
+		pmod->sderr[j] = sqrt(vij);
+	    }
+	}
+
+	/* exclusion of each var, all lags */
 
 	gretl_matrix_reuse(C, p, p);
 	gretl_matrix_reuse(b, p, 1);
@@ -423,9 +639,7 @@ static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
 	for (j=0; j<n && !err; j++) {
 	    double w = NADBL;
 
-	    gretl_matrix_extract_matrix(C, XTX, ipos, ipos, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_by_scalar(C, s2);
-
+	    gretl_matrix_extract_matrix(C, V, ipos, ipos, GRETL_MOD_NONE);
 	    for (k=0; k<p; k++) {
 		b->val[k] = pmod->coeff[k + ipos];
 	    }
@@ -440,36 +654,54 @@ static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
 	    ipos += p;
 	}
 
-	/* last lag, all vars? */
+	/* exclusion of last lag, all vars? */
 
-	if (p <= 1) {
-	    continue;
-	}
-	
-	gretl_matrix_reuse(C, n, n);
-	gretl_matrix_reuse(b, n, 1);
+	if (p > 1) {
+	    gretl_matrix_reuse(C, n, n);
+	    gretl_matrix_reuse(b, n, 1);
 
-	ipos = ifc + p - 1;
-	for (ii=0; ii<n; ii++) {
-	    jpos = ifc + p - 1;
-	    for (jj=0; jj<n; jj++) {
-		vij = gretl_matrix_get(XTX, ipos, jpos);
-		gretl_matrix_set(C, ii, jj, s2 * vij);
-		jpos += p;
+	    ipos = ifc + p - 1;
+	    for (ii=0; ii<n; ii++) {
+		jpos = ifc + p - 1;
+		for (jj=0; jj<n; jj++) {
+		    vij = gretl_matrix_get(V, ipos, jpos);
+		    gretl_matrix_set(C, ii, jj, vij);
+		    jpos += p;
+		}
+		b->val[ii] = pmod->coeff[ipos];
+		ipos += p;
 	    }
-	    b->val[ii] = pmod->coeff[ipos];
-	    ipos += p;
+
+	    err = gretl_invert_symmetric_matrix(C);
+	    if (!err) {
+		w = gretl_scalar_qform(b, C, &err);
+	    }
+	    if (!err) {
+		var->Fvals[m++] = w / n;
+	    }
 	}
 
-	err = gretl_invert_symmetric_matrix(C);
-	if (!err) {
-	    w = gretl_scalar_qform(b, C, &err);
-	}
-	if (!err) {
-	    var->Fvals[m++] = w / n;
+	/* exclusion of all but const? */
+
+	if (ifc && vspec->robust) {
+	    gretl_matrix_reuse(C, g-1, g-1);
+	    gretl_matrix_reuse(b, g-1, 1);
+
+	    gretl_matrix_extract_matrix(C, V, 1, 1, GRETL_MOD_NONE);
+	    for (k=0; k<g-1; k++) {
+		b->val[k] = pmod->coeff[k+1];
+	    }
+	    err = gretl_invert_symmetric_matrix(C);
+	    if (!err) {
+		w = gretl_scalar_qform(b, C, &err);
+	    }
+	    if (!err) {
+		pmod->fstt = w / (g-1);
+	    }
 	}
     }
 
+    gretl_matrix_free(V);
     gretl_matrix_free(C);
     gretl_matrix_free(b);
 
@@ -505,7 +737,8 @@ last_lag_LR_prep (GRETL_VAR *var, VARspec *vspec, int ifc)
     gretl_matrix_delete_columns(vspec->X, collist);
     gretl_matrix_reuse(vspec->B, g, vspec->n);
     err = gretl_matrix_multi_ols(vspec->Y, vspec->X, 
-				 vspec->B, var->F);
+				 vspec->B, var->F,
+				 NULL);
 
     free(collist);
 
@@ -535,7 +768,8 @@ static int make_A_matrix (GRETL_VAR *var, VARspec *vspec, int ifc)
     return 0;
 }
 
-static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec)
+static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec,
+				      int lagsel)
 {
     int ifc = 0;
     int err = 0;
@@ -544,25 +778,99 @@ static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec)
     var->t1 = vspec->t1;
     var->t2 = vspec->t2;
     var->T = var->t2 - var->t1 + 1;
+    var->detflags = vspec->detflags;
+    var->ylist = vspec->ylist;
+    var->xlist = vspec->xlist;
     var->E = vspec->E;
-    vspec->E = NULL;
 
     if (vspec->detflags & DET_CONST) {
 	ifc = 1;
     }
 
-    err = make_A_matrix(var, vspec, ifc);
+    if (!lagsel) {
+	/* not needed if we're just doing lag selection */
 
-    if (!err) {
-	err = VAR_wald_omit_tests(var, vspec->XTX, ifc);
-    }
+	err = make_A_matrix(var, vspec, ifc);
 
-    if (!err && vspec->p > 1) {
-	err = last_lag_LR_prep(var, vspec, ifc);
+	if (!err) {
+	    err = VAR_wald_omit_tests(var, vspec, ifc);
+	}
+
+	if (!err && vspec->p > 1) {
+	    err = last_lag_LR_prep(var, vspec, ifc);
+	}
     }
 
     if (!err) {
 	err = VAR_add_stats(var);
+    }
+
+    if (!err && !lagsel) {
+	err = gretl_VAR_do_error_decomp(var->S, var->C);
+    }
+
+    /* relinquish some pointers to var struct */
+    vspec->E = NULL;
+    vspec->ylist = NULL;
+    vspec->xlist = NULL;
+
+    return err;
+}
+
+static int set_up_VAR_models (GRETL_VAR *var, VARspec *vspec,
+			      const double **Z,
+			      const DATAINFO *pdinfo)
+{
+    MODEL *pmod;
+    char **params = NULL;
+    int yno, N = pdinfo->n;
+    const double *y;
+    int i, j;
+    int err = 0;
+
+    params = strings_array_new_with_length(vspec->g, VNAMELEN);
+    if (params == NULL) {
+	return E_ALLOC;
+    }
+
+    set_VAR_param_names(vspec, params, pdinfo);
+
+    for (i=0; i<vspec->n && !err; i++) {
+	yno = vspec->ylist[i+1];
+	y = Z[yno];
+
+	pmod = var->models[i];
+	pmod->ID = i + 1;
+	pmod->ci = VAR;
+	pmod->aux = AUX_VAR;
+
+	pmod->full_n = N;
+	pmod->nobs = vspec->T;
+	pmod->t1 = vspec->t1;
+	pmod->t2 = vspec->t2;
+	pmod->ncoeff = vspec->g;
+	pmod->dfd = pmod->nobs - pmod->ncoeff;
+	pmod->ifc = (vspec->detflags & DET_CONST)? 1 : 0;
+	pmod->dfn = vspec->g - pmod->ifc;
+
+	err = gretl_model_allocate_storage(pmod);
+	pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
+
+	if (i == 0) {
+	    pmod->params = params;
+	} else {
+	    pmod->params = strings_array_dup(params, vspec->g);
+	}
+	pmod->nparams = vspec->g;
+
+	pmod->list = gretl_list_new(1);
+	pmod->list[1] = yno;
+
+	set_VAR_model_stats(pmod, vspec->E, y, i);
+
+	for (j=0; j<vspec->g; j++) {
+	    pmod->coeff[j] = gretl_matrix_get(vspec->B, j, i);
+	}
     }
 
     return err;
@@ -575,117 +883,63 @@ static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec)
 */
 
 GRETL_VAR *alt_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
-		    gretlopt opt, PRN *prn, int *err)
+		    gretlopt opt, PRN *prn, int *errp)
 {
+    const double **Z = (const double **) *pZ;
     GRETL_VAR *var = NULL;
     VARspec *vspec = NULL;
-    char **params = NULL;
-    double **Z = *pZ;
-    int i, j;
+    int lagsel = (opt & OPT_L)? 1 : 0;
+    int err = 0;
 
-    vspec = varspec_new(list, order, (const double **) *pZ, pdinfo, 
-			opt, err);
+    vspec = varspec_new(list, order, Z, pdinfo, opt, &err);
 
-    if (!*err) {
-	*err = make_VAR_matrices(vspec, (const double **) *pZ, pdinfo);
+    if (!err) {
+	err = make_VAR_matrices(vspec, Z, pdinfo);
     }
 
-    /* run the regressions */
-    *err = gretl_matrix_multi_ols(vspec->Y, vspec->X, 
-				  vspec->B, vspec->E);
-
-    if (!*err) {
-	/* prepare to compute standard errors */
-	gretl_matrix_multiply_mod(vspec->X, GRETL_MOD_TRANSPOSE,
-				  vspec->X, GRETL_MOD_NONE,
-				  vspec->XTX, GRETL_MOD_NONE);
-	gretl_invert_symmetric_matrix(vspec->XTX);
+    /* run the regressions: use QR or Cholesky */
+    if (vspec->qr) {
+	err = gretl_matrix_QR_ols(vspec->Y, vspec->X, 
+				  vspec->B, vspec->E,
+				  vspec->XTX, NULL);
+    } else {
+	err = gretl_matrix_multi_ols(vspec->Y, vspec->X, 
+				     vspec->B, vspec->E,
+				     &vspec->XTX);
     }
 
-    if (!*err) {
+    if (!err) {
 	var = gretl_VAR_new(VAR, vspec->n, vspec->p);
 	if (var == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	}
     }
 
-    if (!*err) {
-	params = strings_array_new_with_length(vspec->g, VNAMELEN);
-	if (params == NULL) {
-	    *err = E_ALLOC;
+    if (!err) {
+	if (lagsel) {
+	    err = transcribe_var_from_vspec(var, vspec, 1);
+	    if (!err) {
+		err = alt_VAR_do_lagsel(var, vspec, Z, pdinfo, prn);
+	    }
 	} else {
-	    set_VAR_param_names(vspec, params, pdinfo);
-	}
-    }    
-
-    if (!*err) {
-	MODEL *pmod;
-	int yno, N = pdinfo->n;
-	double x, *y;
-
-	for (i=0; i<vspec->n; i++) {
-	    yno = vspec->ylist[i+1];
-	    y = Z[yno];
-
-	    pmod = var->models[i];
-	    pmod->ID = i + 1;
-	    pmod->ci = OLS;
-	    pmod->aux = AUX_VAR;
-
-	    pmod->full_n = N;
-	    pmod->nobs = vspec->T;
-	    pmod->t1 = vspec->t1;
-	    pmod->t2 = vspec->t2;
-	    pmod->ncoeff = vspec->g;
-	    pmod->dfd = pmod->nobs - pmod->ncoeff;
-	    pmod->ifc = (vspec->detflags & DET_CONST)? 1 : 0;
-	    pmod->dfn = vspec->g - pmod->ifc;
-
-	    gretl_model_allocate_storage(pmod);
-	    pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
-
-	    if (i == 0) {
-		pmod->params = params;
-	    } else {
-		pmod->params = strings_array_dup(params, vspec->g);
+	    err = set_up_VAR_models(var, vspec, Z, pdinfo);
+	    if (!err) {
+		err = transcribe_var_from_vspec(var, vspec, 0);
 	    }
-	    pmod->nparams = vspec->g;
-
-	    pmod->list = gretl_list_new(1);
-	    pmod->list[1] = yno;
-
-	    set_VAR_model_stats(pmod, vspec->E, y, i);
-
-	    for (j=0; j<vspec->g; j++) {
-		pmod->coeff[j] = gretl_matrix_get(vspec->B, j, i);
-		x = gretl_matrix_get(vspec->XTX, j, j);
-		pmod->sderr[j] = pmod->sigma * sqrt(x);
+	    if (!err) {
+		gretl_VAR_print(var, pdinfo, opt, prn);
 	    }
 	}
     }
 
-    if (!*err) {
-	*err = transcribe_var_from_vspec(var, vspec);
-    }
-
-    if (*err && var != NULL) {
+    if (lagsel || (err && var != NULL)) {
 	gretl_VAR_free(var);
 	var = NULL;
     }
 
     varspec_free(vspec);
 
-    if (var != NULL) {
-	if (opt & OPT_L) {
-#if 0 /* FIXME */
-	    gretl_VAR_do_lagsel(var, &vl, pZ, pdinfo, prn);
-#endif
-	    gretl_VAR_free(var);
-	    var = NULL;
-	} else {
-	    gretl_VAR_print(var, pdinfo, opt, prn);
-	}
-    }
+    *errp = err;
 
     return var;
 }
