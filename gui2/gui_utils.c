@@ -3472,10 +3472,10 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	g_free(varitem.path);
     } else {
 	/* regular VAR: omit exogenous variables test */
-	int err, *exolist;
+	const int *xlist;
 
-	exolist = gretl_VAR_get_exo_list(var, &err);
-	if (exolist != NULL) {
+	xlist = gretl_VAR_get_exo_list(var);
+	if (xlist != NULL) {
 	    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
 				       _("Omit exogenous variables..."));
 	    varitem.callback = selector_callback;
@@ -3483,7 +3483,6 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
-	    free(exolist);
 	}	    
     }
 

@@ -59,7 +59,7 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 void set_VAR_model_stats (MODEL *pmod, const gretl_matrix *E,
 			  const double *y, int i);
 
-int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err);
+const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 
 GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
 				double ***pZ, DATAINFO *pdinfo, 

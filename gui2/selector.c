@@ -3590,7 +3590,6 @@ static int add_omit_list (gpointer p, selector *sr)
     MODEL *pmod = NULL;
     GtkListStore *store;
     GtkTreeIter iter;
-    int *xlist = NULL;
     int i, nvars = 0;
 
     if (sr->code == VAROMIT) {
@@ -3623,7 +3622,7 @@ static int add_omit_list (gpointer p, selector *sr)
 	g_object_set_data(G_OBJECT(sr->lvars), "keep_names", 
 			  GINT_TO_POINTER(1));
     } else if (sr->code == OMIT || sr->code == ADD || sr->code == COEFFSUM) {
-	xlist = gretl_model_get_x_list(pmod);
+	int *xlist = gretl_model_get_x_list(pmod);
 
 	if (xlist == NULL) {
 	    return 0;
@@ -3653,10 +3652,11 @@ static int add_omit_list (gpointer p, selector *sr)
 		nvars++;
 	    }
 	} 
+	free(xlist);
     } else if (sr->code == VAROMIT) {
-	int err;
+	const int *xlist;
 
-	xlist = gretl_VAR_get_exo_list(var, &err);
+	xlist = gretl_VAR_get_exo_list(var);
 	if (xlist != NULL) {
 	    for (i=1; i<=xlist[0]; i++) {
 		gtk_list_store_append(store, &iter);
@@ -3668,8 +3668,6 @@ static int add_omit_list (gpointer p, selector *sr)
 	    }	    
 	}
     } 
-
-    free(xlist);
 
     return nvars;
 }

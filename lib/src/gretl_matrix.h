@@ -465,7 +465,7 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
 			 const gretl_matrix *X,
 			 gretl_matrix *B,
 			 gretl_matrix *E,
-			 gretl_matrix *XTXi,
+			 gretl_matrix **XTXi,
 			 gretl_matrix **Qout);
 
 double gretl_matrix_r_squared (const gretl_matrix *y,

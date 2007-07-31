@@ -6390,7 +6390,7 @@ static int QR_OLS_work (gretl_matrix *Q, gretl_matrix *R)
  * @B: k x g matrix to hold coefficient estimates.
  * @E: T x g matrix to hold the regression residuals, or %NULL if these are 
  * not needed.
- * @XTXi: matrix to hold (X'X)^{-1}, or %NULL if this is not needed.
+ * @XTXi: location to receive (X'X)^{-1}, or %NULL if this is not needed.
  * @Qout: location to receive Q on output, or %NULL.
  *
  * Computes OLS estimates using QR decomposition, and puts the
@@ -6405,7 +6405,7 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
 			 const gretl_matrix *X,
 			 gretl_matrix *B,
 			 gretl_matrix *E,
-			 gretl_matrix *XTXi,
+			 gretl_matrix **XTXi,
 			 gretl_matrix **Qout)
 {
     int g = Y->cols;
@@ -6421,8 +6421,6 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
     } else if (Y->rows != T) {
 	err = E_NONCONF;
     } else if (E != NULL && (E->cols != g || E->rows != T)) {
-	err = E_NONCONF;
-    } else if (XTXi != NULL && (XTXi->rows != k || XTXi->cols != k)) {
 	err = E_NONCONF;
     } else if (k > T) {
 	err = E_DF;
@@ -6465,9 +6463,15 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
 
     /* create (X'X)^{-1} = RR' */
     if (!err && XTXi != NULL) {
-	gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-				  R, GRETL_MOD_TRANSPOSE,
-				  XTXi, GRETL_MOD_NONE);
+	*XTXi = gretl_matrix_alloc(k, k);
+
+	if (*XTXi == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+				      R, GRETL_MOD_TRANSPOSE,
+				      *XTXi, GRETL_MOD_NONE);
+	}
     }
 
     if (!err && Qout != NULL) {

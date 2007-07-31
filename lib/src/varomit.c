@@ -1,59 +1,8 @@
 #define VO_DEBUG 0
 
-/* Based on the specification stored in the VAR struct, constitute a
-   list of the exogenous variables in the system.  
-*/
-
-int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
+const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
 {
-    int *vlist, *elist;
-    int nendo, nexo;
-    int i, j;
-
-    if (var->xlist != NULL) {
-	elist = gretl_list_copy(var->xlist);
-	if (elist == NULL) {
-	    *err = E_ALLOC;
-	}
-	return elist;
-    }
-
-    if (var->models == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    vlist = var->models[0]->list;
-
-    /* the _endogenous_ vars start in position 2 or 3 (3 if a constant
-       is included), and there are (order * neqns) such terms */
-
-    nendo = var->order * var->neqns;
-    nexo = vlist[0] - 1 - nendo;
-    if (nexo == 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    elist = gretl_list_new(nexo);
-    if (elist == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (vlist[2] == 0) {
-	/* got const at position 2 */
-	elist[1] = 0;
-	j = 2;
-    } else {
-	j = 1;
-    }
-
-    for (i=nendo+j+1; i<=vlist[0]; i++) {
-	elist[j++] = vlist[i];
-    }
-
-    return elist;
+    return var->xlist;
 }
 
 /* Based on the specification stored in the VAR struct, reconstitute
@@ -154,7 +103,7 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     gretlopt opt = OPT_NONE;
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
-    int *exolist = NULL;
+    const int *exolist = NULL;
     int *tmplist = NULL;
     int *varlist = NULL;
     int c0, c1;
@@ -172,8 +121,9 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     }
 
     /* recreate the exog vars list for original VAR */
-    exolist = gretl_VAR_get_exo_list(orig, err);
+    exolist = gretl_VAR_get_exo_list(orig);
     if (exolist == NULL) {
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -237,7 +187,6 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 
  bailout:
 
-    free(exolist);
     free(tmplist);
     free(varlist);
 

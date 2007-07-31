@@ -462,13 +462,6 @@ make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }    
 
-    if (v->qr) {
-	v->XTX = gretl_matrix_alloc(v->g, v->g);
-	if (v->XTX == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
     /* construct the Y matrix */
 
     for (i=0; i<v->n; i++) {
@@ -901,7 +894,7 @@ GRETL_VAR *alt_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     if (vspec->qr) {
 	err = gretl_matrix_QR_ols(vspec->Y, vspec->X, 
 				  vspec->B, vspec->E,
-				  vspec->XTX, NULL);
+				  &vspec->XTX, NULL);
     } else {
 	err = gretl_matrix_multi_ols(vspec->Y, vspec->X, 
 				     vspec->B, vspec->E,

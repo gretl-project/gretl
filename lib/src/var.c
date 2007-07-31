@@ -38,6 +38,8 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 
 static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
 
+static int make_VAR_global_lists (GRETL_VAR *var);
+
 static gretlopt opt_from_jcode (JohansenCode jc);
 
 struct var_lists {
@@ -1888,6 +1890,10 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     }
 
     if (!*err && !lagtest) {
+	*err = make_VAR_global_lists(var);
+    }
+
+    if (!*err && !lagtest) {
 	*err = gretl_VAR_do_error_decomp(var->S, var->C);
     }
 
@@ -3556,12 +3562,61 @@ static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
+/* for backward compatibility */
+
+static int make_VAR_global_lists (GRETL_VAR *var)
+{
+    MODEL *pmod = var->models[0];
+    int *list = pmod->list;
+    int p = var->order;
+    int n = var->neqns;
+    int nx, np = n * p;
+    int i, j, ifc;
+
+    if (list == NULL || list[0] < 3) {
+	return E_DATA;
+    }
+
+    /* the _endogenous_ vars start in position 2 or 3 (3 if a constant
+       is included), and there are (order * neqns) such terms */
+
+    ifc = (list[2] == 0);
+    nx = list[0] - 1 - ifc - np;
+
+    var->ylist = gretl_list_new(n);
+    if (var->ylist == NULL) {
+	return E_ALLOC;
+    }
+
+    if (nx > 0) {
+	var->xlist = gretl_list_new(nx);
+	if (var->xlist == NULL) {
+	    free(var->ylist);
+	    var->ylist = NULL;
+	    return E_ALLOC;
+	}
+    }
+
+    j = 2 + ifc;
+    for (i=0; i<n; i++) {
+	var->ylist[i+1] = list[j];
+	j += p;
+    }
+
+    j = 2 + ifc + np;
+    for (i=0; i<nx; i++) {
+	var->xlist[i+1] = list[j++];
+    }
+
+    return 0;    
+}
+
 GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     GRETL_VAR *var;
     MODEL *pmod;
     xmlNodePtr cur;
-    int start, rowmax;
+    int start = 0, rowmax = 0;
     int i, j, k;
     int n, got = 0;
 
@@ -3629,17 +3684,17 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     var->t2 = pmod->t2;
     var->T = var->t2 - var->t1 + 1;
 
-    /* FIXME what if we don't get ylist, xlist or detflags (i.e. from
-       a VAR stored in an old session: need to add "remedial"
-       functionality: reconstitute on basis of first model plus
-       other info.  See gretl_VAR_get_exo_list() for a hint.
-    */
+    if (var->ylist == NULL) {
+	*err = make_VAR_global_lists(var);
+    }
 
-    start = pmod->ifc;
-    rowmax = var->neqns * var->order + start;
+    if (!*err) {
+	start = pmod->ifc;
+	rowmax = var->neqns * var->order + start;
 
-    /* set up storage for residuals */
-    *err = VAR_add_residuals_matrix(var);
+	/* set up storage for residuals */
+	*err = VAR_add_residuals_matrix(var);
+    }
 
     /* set up storage for coefficients */
     if (!*err) {
