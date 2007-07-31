@@ -1,3 +1,37 @@
+#define VDEBUG 0
+
+static int 
+gretl_matrix_delete_columns (gretl_matrix *X, int *list)
+{
+    size_t csz = X->rows * sizeof *X->val;
+    void *dest, *src;
+    int i, j, n, col;
+
+    for (i=1; i<=list[0]; i++) {
+	col = list[i];
+	if (col < 0 || col >= X->cols) {
+	    return E_NONCONF;
+	}
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	col = list[i];
+	dest = X->val + col * X->rows;
+	src = X->val + (col + 1) * X->rows;
+	n = X->cols - col - 1;
+	if (n > 0) {
+	    memmove(dest, src, n * csz);
+	}
+	for (j=i+1; j<=list[0]; j++) {
+	    list[j] -= 1;
+	}
+    }
+
+    X->cols -= list[0];
+
+    return 0;
+}
+
 enum Detflags {
     DET_CONST = 1 << 0,
     DET_TREND = 1 << 1,
@@ -151,6 +185,9 @@ static VARspec *varspec_new (const int *list, int order,
 	}
     }
 
+    /* account for deterministic terms and check for
+       non-negative degrees of freedom */
+
     if (!*err) {
 	v->T = v->t2 - v->t1 + 1;
 	v->g = v->p * v->n;
@@ -171,7 +208,6 @@ static VARspec *varspec_new (const int *list, int order,
 	    v->detflags |= DET_SEAS;
 	    v->g += pdinfo->pd - 1;
 	}
-
 	if (v->T < v->g) {
 	    *err = E_DF;
 	}
@@ -184,6 +220,10 @@ static VARspec *varspec_new (const int *list, int order,
 
     return v;
 }
+
+/* get the starting sub-period for a given t, so as to construct
+   correctly aligned seasonal dummies
+*/
 
 static int startp (int t, const DATAINFO *pdinfo)
 {
@@ -275,26 +315,27 @@ make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
     }
 
     /* add other deterministics */
-    
+
     if (v->detflags & DET_TREND) {
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(v->X, s++, k, t);
+	    gretl_matrix_set(v->X, s++, k, (double) (t + 1));
 	}
 	k++;
     }
 
     if (v->detflags & DET_SEAS) {
-	int per = startp(v->t1, pdinfo);
+	int per, per0 = startp(v->t1, pdinfo);
 
 	for (i=0; i<pdinfo->pd-1; i++) {
+	    per = per0;
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(v->X, s++, k, (per == i));
-		if (per == pdinfo->pd - 2) {
-		    per = 0;
-		} else {
+		gretl_matrix_set(v->X, s++, k, (per == i+1));
+		if (per < pdinfo->pd) {
 		    per++;
+		} else {
+		    per = 1;
 		}
 	    }
 	    k++;
@@ -336,7 +377,7 @@ set_VAR_param_names (VARspec *v, char **params, const DATAINFO *pdinfo)
     }
 
     if (v->detflags & DET_TREND) {
-	strcpy(params[k++], "trend");
+	strcpy(params[k++], "time");
     }
 
     if (v->detflags & DET_SEAS) {
@@ -345,6 +386,10 @@ set_VAR_param_names (VARspec *v, char **params, const DATAINFO *pdinfo)
 	}	
     }
 }
+
+/* Run the various per-equation omit tests (all lags of each var in
+   turn, last lag of all vars) using the Wald method.
+*/
 
 static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
 				int ifc)
@@ -395,7 +440,11 @@ static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
 	    ipos += p;
 	}
 
-	/* last lag, all vars */
+	/* last lag, all vars? */
+
+	if (p <= 1) {
+	    continue;
+	}
 	
 	gretl_matrix_reuse(C, n, n);
 	gretl_matrix_reuse(b, n, 1);
@@ -418,11 +467,47 @@ static int VAR_wald_omit_tests (GRETL_VAR *var, const gretl_matrix *XTX,
 	}
 	if (!err) {
 	    var->Fvals[m++] = w / n;
-	}	
+	}
     }
 
     gretl_matrix_free(C);
     gretl_matrix_free(b);
+
+    return err;
+}
+
+/* make and record residuals for LR test, etc. */
+
+static int 
+last_lag_LR_prep (GRETL_VAR *var, VARspec *vspec, int ifc)
+{
+    int *collist = NULL;
+    int g = vspec->g - vspec->n;
+    int i, err = 0;
+
+    if (var->F == NULL) {
+	var->F = gretl_matrix_alloc(var->T, vspec->n);
+	if (var->F == NULL) {
+	    return E_ALLOC;
+	}
+    }   
+
+    collist = gretl_list_new(vspec->n);
+    if (collist == NULL) {
+	return E_ALLOC;
+    }
+
+    collist[1] = ifc + vspec->p - 1;
+    for (i=2; i<=collist[0]; i++) {
+	collist[i] = collist[i-1] + vspec->p;
+    }
+
+    gretl_matrix_delete_columns(vspec->X, collist);
+    gretl_matrix_reuse(vspec->B, g, vspec->n);
+    err = gretl_matrix_multi_ols(vspec->Y, vspec->X, 
+				 vspec->B, var->F);
+
+    free(collist);
 
     return err;
 }
@@ -469,22 +554,32 @@ static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec)
     err = make_A_matrix(var, vspec, ifc);
 
     if (!err) {
-	err = VAR_add_stats(var);
+	err = VAR_wald_omit_tests(var, vspec->XTX, ifc);
+    }
+
+    if (!err && vspec->p > 1) {
+	err = last_lag_LR_prep(var, vspec, ifc);
     }
 
     if (!err) {
-	err = VAR_wald_omit_tests(var, vspec->XTX, ifc);
+	err = VAR_add_stats(var);
     }
 
     return err;
 }
+
+/* Alternative mechanism for creating a GRETL_VAR using matrix OLS
+   with multiple LHSs for a given RHS matrix.  As of now this almost
+   duplicates the functionality of the old, clunky VAR apparatus.  The
+   one thing not handled yet is production of robust standard errors.
+*/
 
 GRETL_VAR *alt_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 		    gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     VARspec *vspec = NULL;
-    char **params;
+    char **params = NULL;
     double **Z = *pZ;
     int i, j;
 
@@ -549,11 +644,12 @@ GRETL_VAR *alt_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	    gretl_model_allocate_storage(pmod);
 	    pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
 
-	    pmod->params = params;
 	    if (i == 0) {
-		/* the first model "owns" the param strings */
-		pmod->nparams = vspec->g;
+		pmod->params = params;
+	    } else {
+		pmod->params = strings_array_dup(params, vspec->g);
 	    }
+	    pmod->nparams = vspec->g;
 
 	    pmod->list = gretl_list_new(1);
 	    pmod->list[1] = yno;
@@ -581,7 +677,7 @@ GRETL_VAR *alt_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (var != NULL) {
 	if (opt & OPT_L) {
-#if 0
+#if 0 /* FIXME */
 	    gretl_VAR_do_lagsel(var, &vl, pZ, pdinfo, prn);
 #endif
 	    gretl_VAR_free(var);

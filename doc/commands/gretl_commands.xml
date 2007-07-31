@@ -8058,6 +8058,10 @@
 	  <effect>do not include a constant</effect>
         </option>
         <option>
+	  <flag>--trend</flag>
+	  <effect>include a linear trend</effect>
+        </option>
+        <option>
 	  <flag>--seasonals</flag>
 	  <effect>include seasonal dummy variables</effect>
         </option>
