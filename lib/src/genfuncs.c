@@ -945,7 +945,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 {
     char vname[VNAMELEN];
     char vlabel[MAXLABEL];
-    int vi, t, yy, pp, mm;
+    int vi, t, pp;
     int ndums = pdinfo->pd, nnew = 0;
     int di, di0 = pdinfo->v;
     double xx, dx;
@@ -982,26 +982,38 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	return 0;
     }
 
-    pp = pdinfo->pd;
-    mm = 10;
-    while ((pp = pp / 10)) {
-	mm *= 10;
-    }
-
     for (vi=1, di = di0; vi<=ndums; vi++, di++) {
 	make_dummy_name_and_label(vi, pdinfo, center, vname, vlabel);
 	strcpy(pdinfo->varname[di], vname);
 	strcpy(VARLABEL(pdinfo, di), vlabel);
+    }
+
+    if (dataset_is_daily(pdinfo)) {
+	int yy, mm = 10;
+
+	pp = pdinfo->pd;
+	while ((pp = pp / 10)) {
+	    mm *= 10;
+	}
+
+	for (vi=1, di = di0; vi<=ndums; vi++, di++) {
+	    for (t=0; t<pdinfo->n; t++) {
+		xx = date(t, pdinfo->pd, pdinfo->sd0) + .1;
+		yy = (int) xx;
+		pp = (int) (mm * (xx - yy) + 0.5);
+		dx = (pp == vi)? 1.0 : 0.0;
+		(*pZ)[di][t] = dx;
+	    }
+	}
+    } else {
+	int p0 = get_subperiod(0, pdinfo, NULL);
 
 	for (t=0; t<pdinfo->n; t++) {
-	    xx = date(t, pdinfo->pd, pdinfo->sd0);
-	    if (dataset_is_daily(pdinfo)) { /* FIXME weekly? */
-		xx += .1;
+	    pp = (t + p0) % pdinfo->pd;
+	    for (vi=0, di = di0; vi<ndums; vi++, di++) {
+		dx = (pp == vi)? 1 : 0;
+		(*pZ)[di][t] = dx;
 	    }
-	    yy = (int) xx;
-	    pp = (int) (mm * (xx - yy) + 0.5);
-	    dx = (pp == vi)? 1.0 : 0.0;
-	    (*pZ)[di][t] = dx;
 	}
     }
 

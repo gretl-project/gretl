@@ -880,6 +880,64 @@ char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo)
     return real_ntodate(datestr, t, pdinfo, 1);
 }
 
+/* for "seasonal" time series data (broad sense): given
+   the 0-based observation number, t, determine the
+   sub-period at that obs. The "sub-period" might
+   be the quarter, month, hour or whatever.  The value
+   returned is zero-based (e.g. first quarter = 0).
+*/
+
+int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
+{
+    int ret = 0;
+
+    if (!dataset_is_seasonal(pdinfo)) {
+	if (err != NULL) {
+	    *err = E_PDWRONG;
+	}
+	return 0;
+    }
+
+    if (dataset_is_weekly(pdinfo)) {
+	/* bodge -- what else to do? */
+	ret = t % pdinfo->pd;
+    } else if (calendar_data(pdinfo)) {
+	/* dated daily data */
+	char datestr[12];
+
+	calendar_date_string(datestr, t, pdinfo);
+	ret = get_day_of_week(datestr); 
+    } else if (dataset_is_daily(pdinfo)) {
+	/* bodge, again */
+	ret = t % pdinfo->pd;
+    } else {
+	/* quarterly, monthly, hourly... */
+	double x = date(t, pdinfo->pd, pdinfo->sd0);
+	char *p, s[32];
+	int i, n;
+	
+	sprintf(s, "%f", x);
+	n = strlen(s);
+	for (i=n-1; i>0; i--) {
+	    if (s[i] == '0') {
+		s[i] = '\0';
+	    } else {
+		break;
+	    }
+	}
+	p = strchr(s, '.');
+	if (p == NULL) {
+	    p = strchr(s, ',');
+	}
+	if (p != NULL) {
+	    sscanf(p + 1, "%d", &ret);
+	    ret -= 1;
+	}
+    }
+    
+    return ret;    
+}
+
 /* .......................................................... */
 
 static int blank_check (FILE *fp)
