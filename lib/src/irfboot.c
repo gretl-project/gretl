@@ -436,7 +436,6 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 				      const double **Z,
 				      const DATAINFO *pdinfo)
 {
-    const MODEL *pmod;
     double **bZ = NULL;
     DATAINFO *binfo = NULL;
     int ns, nd, nv;
@@ -502,10 +501,8 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 	int dv = lv + ns;
 
 	for (i=0; i<var->neqns; i++) {
-
 	    /* copy stochastic vars into positions 1 to var->neqns */
-	    pmod = var->models[i];
-	    v = pmod->list[1];
+	    v = var->ylist[i+1];
 	    for (t=0; t<pdinfo->n; t++) {
 		bZ[i+1][t] = Z[v][t];
 	    }
@@ -517,18 +514,36 @@ static int make_bs_dataset_and_lists (irfboot *boot,
 		}
 		lv++;
 	    }
+	}
 
-	    /* deterministic vars: copy once */
-	    if (i == 0) {
-		for (j=ns+2+pmod->ifc; j<=pmod->list[0]; j++) {
-		    v = pmod->list[j];
-		    for (t=0; t<pdinfo->n; t++) {
-			bZ[dv][t] = Z[v][t];
-		    }
-		    dv++;
+	/* exogenous vars */
+	if (var->xlist != NULL) {
+	    for (j=1; j<=var->xlist[0]; j++) {
+		v = var->xlist[j];
+		for (t=0; t<pdinfo->n; t++) {
+		    bZ[dv][t] = Z[v][t];
 		}
+		dv++;
 	    }
 	}
+
+	/* seasonals? */
+	if (var->detflags & DET_SEAS) {
+	    for (t=0; t<pdinfo->n; t++) {
+		for (j=0; j<pdinfo->pd - 1; j++) {
+		    /* FIXME */
+		    bZ[dv+j][t] = (1)? 1 : 0;
+		}
+	    }
+	    dv += pdinfo->pd - 1;
+	}
+
+	/* trend? */
+	if (var->detflags & DET_TREND) {
+	    for (t=0; t<pdinfo->n; t++) {
+		bZ[dv][t] = (double) (t + 1);
+	    }
+	}		
 
 	/* compose lists */
 	for (i=0; i<var->neqns; i++) {

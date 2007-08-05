@@ -2691,7 +2691,7 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
     }    
 
     if (order <= 0 || list[0] < 2) {
-	strcpy(gretl_errmsg, "coint2: needs a positive lag order "
+	strcpy(gretl_errmsg, "Johansen VAR: needs a positive lag order "
 	       "and at least two variables");
 	jvar->err = 1;
 	return jvar;
