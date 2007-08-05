@@ -31,6 +31,12 @@
 
 #define N_IVALS 3
 
+enum Detflags {
+    DET_CONST = 1 << 0,
+    DET_TREND = 1 << 1,
+    DET_SEAS  = 1 << 2
+};
+
 static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
 				    int targ, int shock, int periods,
 				    const double **Z, 
@@ -352,6 +358,129 @@ static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
     return err;
 }
 
+#if 1
+
+static int
+gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
+			const double **Z, const DATAINFO *pdinfo, 
+			gretlopt opt)
+{
+    const MODEL *pmod;
+    gretl_matrix *F;
+    double fti, xti;
+    int nf = t2 - t0 + 1;
+    int staticfc = (opt & OPT_S);
+    int i, j, k, s, t;
+    int lag, vj, m = 0;
+    int fcols;
+
+    fcols = (staticfc)? var->neqns : 2 * var->neqns;
+
+    /* rows = number of forecast periods; cols = 1 to hold forecast
+       for each variable, plus 1 to hold variance for each variable
+       if forecast is dynamic.
+    */
+
+    F = gretl_zero_matrix_new(nf, fcols);
+    if (F == NULL) {
+	return E_ALLOC;
+    }
+
+    if (var->detflags & DET_SEAS) {
+	m = get_subperiod(t0, pdinfo, NULL);
+    }
+
+    for (t=t0, s=0; t<=t2; t++, s++) {
+	int miss = 0;
+
+	for (i=0; i<var->neqns; i++) {
+	    pmod = var->models[i];
+	    fti = 0.0;
+	    k = 0;
+
+	    /* constant, if present */
+	    if (pmod->ifc) {
+		fti += pmod->coeff[k++];
+	    }
+
+	    /* lags of stochastic vars */
+	    for (j=0; j<var->neqns; j++) {
+		vj = var->ylist[j+1];
+		for (lag=1; lag<=var->order; lag++) {
+		    if (t < t1 || staticfc || s - lag < 0) {
+			/* pre-forecast value */
+			if (t - lag < 0) {
+			    xti = NADBL;
+			} else {
+			    xti = Z[vj][t-lag];
+			}
+		    } else {
+			/* prior forecast value */
+			xti = gretl_matrix_get(F, s - lag, j); /* ?? */
+		    }
+		    if (na(xti)) {
+			miss = 1;
+		    } else {
+			fti += pmod->coeff[k] * xti;
+		    }
+		    k++;
+		}
+	    }
+
+	    /* exogenous vars, if any */
+	    if (!miss && var->xlist != NULL) {
+		for (j=1; j<=var->xlist[0]; j++) {
+		    vj = var->xlist[j];
+		    xti = Z[vj][t];
+		    if (na(xti)) {
+			miss = 1;
+		    } else {
+			fti += pmod->coeff[k] * xti;
+		    }
+		    k++;
+		}
+	    }
+	    
+	    /* other deterministics, if present */
+	    if (!miss) {
+		if (var->detflags & DET_TREND) {
+		    fti += pmod->coeff[k++] * t;
+		}
+		if (var->detflags & DET_SEAS) {
+		    /* ?? check this */
+		    if (m < pdinfo->pd - 1) {
+			fti += pmod->coeff[k + m++];
+		    } else {
+			m = 0;
+		    }
+		}
+	    }
+
+	    if (miss) {
+		fti = NADBL;
+	    }
+
+	    gretl_matrix_set(F, s, i, fti);
+	}
+    }
+
+    /* now get variances, if not static */
+    if (!staticfc) {
+	add_VAR_fcast_variance(var, F, nf, t1 - t0);
+    }
+
+    gretl_matrix_set_t1(F, t0);
+    var->F = F;
+
+#if 0
+    gretl_matrix_print(F, "var->F");
+#endif
+
+    return 0;
+}
+
+#else
+
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			const double **Z, const DATAINFO *pdinfo, 
@@ -372,12 +501,11 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
        for each variable, plus 1 to hold variance for each variable
        if forecast is dynamic.
     */
-    F = gretl_matrix_alloc(nf, fcols);
+
+    F = gretl_zero_matrix_new(nf, fcols);
     if (F == NULL) {
 	return E_ALLOC;
     }
-
-    gretl_matrix_zero(F);
 
     ns = var->order * var->neqns;
 
@@ -446,6 +574,8 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     return 0;
 }
 
+#endif
+
 static int
 gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			 const double **Z, DATAINFO *pdinfo, 
@@ -455,7 +585,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     gretl_matrix *B;
 
     int order = var->order + 1;
-    int nexo = (var->jinfo->exolist != NULL)? var->jinfo->exolist[0] : 0;
+    int nexo = (var->jinfo->exolist != NULL)? 
+	var->jinfo->exolist[0] : 0;
     int nseas = var->jinfo->seasonals;
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
@@ -471,7 +602,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     }
 
     fcols = (staticfc)? var->neqns : 2 * var->neqns;
-    F = gretl_matrix_alloc(nf, fcols);
+
+    F = gretl_zero_matrix_new(nf, fcols);
     if (F == NULL) {
 	return E_ALLOC;
     }
@@ -481,8 +613,6 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	gretl_matrix_free(F);
 	return E_ALLOC;
     }
-
-    gretl_matrix_zero(F);
 
     for (t=t0, s=0; t<=t2; t++, s++) {
 

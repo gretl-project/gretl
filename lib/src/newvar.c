@@ -1,11 +1,5 @@
 #define VDEBUG 0
 
-enum Detflags {
-    DET_CONST = 1 << 0,
-    DET_TREND = 1 << 1,
-    DET_SEAS  = 1 << 2
-};
-
 typedef struct VARspec_ VARspec;
 
 struct VARspec_ {
