@@ -1173,7 +1173,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 
 	if (ci == RESTRICT && r > 0) {
 	    err = 0;
-	} else if (ci == TESTUHAT) {
+	} else if (ci == TESTUHAT || ci == FCASTERR) {
 	    err = 0;
 	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {
 	    err = 0;

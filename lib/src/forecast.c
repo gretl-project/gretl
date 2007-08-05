@@ -2133,30 +2133,9 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     return err;
 }
 
-/**
- * display_forecast:
- * @str: string giving starting and ending observations, separated
- * by a space.
- * @pmod: the model from which forecasts are wanted.
- * @pZ: pointer to data array using which @pmod was estimated.
- * @pdinfo: dataset information.
- * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
- * a static forecast.  By default, the forecast is static within
- * the data range over which the model was estimated, and dynamic
- * out of sample (in cases where this distinction is meaningful).
- * @prn: printing structure.
- *
- * Computes forecasts based on @pmod, over the range of observations
- * given in @str.  Forecast standard errors are also computed
- * if possible.  The results are printed to @prn, and are also
- * plotted if %OPT_P is given.
- *
- * Returns: 0 on success, non-zero error code on error.
- */
-
-int display_forecast (const char *str, MODEL *pmod, 
-		      double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
+static int model_display_forecast (const char *str, MODEL *pmod, 
+				   double ***pZ, DATAINFO *pdinfo, 
+				   gretlopt opt, PRN *prn)
 {
     FITRESID *fr;
     int t1, t2;
@@ -2185,6 +2164,94 @@ int display_forecast (const char *str, MODEL *pmod,
 
     free_fit_resid(fr);
     
+    return err;
+}
+
+static int VAR_display_forecast (const char *str, GRETL_VAR *var, 
+				 double ***pZ, DATAINFO *pdinfo, 
+				 gretlopt opt, PRN *prn)
+{
+    FITRESID *fr;
+    const MODEL *pmod;
+    int t1, t2;
+    int i, n, err;
+
+    pmod = gretl_VAR_get_model(var, 0);
+
+    err = parse_forecast_string(str, pmod, pdinfo, &t1, &t2);
+    if (err) {
+	return err;
+    }
+
+    n = gretl_VAR_get_n_equations(var);
+
+    for (i=0; i<n && !err; i++) {
+
+	if (i > 0) {
+	    opt |= OPT_Q;
+	}
+
+	fr = get_VAR_forecast(var, i, t1, t1, t2, (const double **) *pZ, 
+			      pdinfo, opt);
+
+	if (fr == NULL) {
+	    return E_ALLOC;
+	}
+
+	err = fr->err;
+
+	if (!err) {
+	    err = text_print_forecast(fr, pZ, pdinfo, opt, prn);
+	}
+
+	free_fit_resid(fr);
+    }
+
+    return err;
+}
+
+/**
+ * display_forecast:
+ * @str: string giving starting and ending observations, separated
+ * by a space.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if OPT_D, force a dynamic forecast; if OPT_S, force
+ * a static forecast.  By default, the forecast is static within
+ * the data range over which the model was estimated, and dynamic
+ * out of sample (in cases where this distinction is meaningful).
+ * @prn: printing structure.
+ *
+ * Computes forecasts based on the last model estimated, over the 
+ * range of observations given in @str.  Forecast standard errors 
+ * are also computed if possible.  The results are printed to @prn, 
+ * and are also plotted if %OPT_P is given.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
+int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    GretlObjType type;
+    void *ptr;
+    int err;
+
+    ptr = get_last_model(&type);  
+    if (ptr == NULL) {
+	return E_DATA;
+    }
+
+    if (type == GRETL_OBJ_EQN) {
+	err = model_display_forecast(str, ptr, pZ, pdinfo, opt, prn);
+    } else if (type == GRETL_OBJ_SYS) {
+	err = E_NOTIMP;
+    } else if (type == GRETL_OBJ_VAR) {
+	err = VAR_display_forecast(str, ptr, pZ, pdinfo, opt, prn);
+    } else {
+	err = E_DATA;
+    }
+
     return err;
 }
 

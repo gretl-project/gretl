@@ -59,8 +59,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo,
 			    gretlopt opt);
 
-int display_forecast (const char *str, MODEL *pmod, 
-		      double ***pZ, DATAINFO *pdinfo, 
+int display_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn);
 
 int add_forecast (const char *str, MODEL *pmod, 

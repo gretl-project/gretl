@@ -358,8 +358,6 @@ static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
     return err;
 }
 
-#if 1
-
 static int
 gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			const double **Z, const DATAINFO *pdinfo, 
@@ -443,17 +441,15 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	    
 	    /* other deterministics, if present */
 	    if (!miss) {
-		if (var->detflags & DET_TREND) {
-		    fti += pmod->coeff[k++] * t;
-		}
 		if (var->detflags & DET_SEAS) {
-		    /* ?? check this */
 		    if (m < pdinfo->pd - 1) {
-			fti += pmod->coeff[k + m++];
-		    } else {
-			m = 0;
-		    }
+			fti += pmod->coeff[k+m];
+		    } 
 		}
+		if (var->detflags & DET_TREND) {
+		    k = pmod->ncoeff - 1;
+		    fti += pmod->coeff[k] * (t + 1);
+		}		
 	    }
 
 	    if (miss) {
@@ -462,100 +458,9 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    gretl_matrix_set(F, s, i, fti);
 	}
-    }
 
-    /* now get variances, if not static */
-    if (!staticfc) {
-	add_VAR_fcast_variance(var, F, nf, t1 - t0);
-    }
-
-    gretl_matrix_set_t1(F, t0);
-    var->F = F;
-
-#if 0
-    gretl_matrix_print(F, "var->F");
-#endif
-
-    return 0;
-}
-
-#else
-
-static int
-gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
-			const double **Z, const DATAINFO *pdinfo, 
-			gretlopt opt)
-{
-    const MODEL *pmod;
-    gretl_matrix *F;
-    double fti, xti;
-    int nf = t2 - t0 + 1;
-    int staticfc = (opt & OPT_S);
-    int i, j, k, s, t;
-    int ns, lag, vj, m;
-    int fcols;
-
-    fcols = (staticfc)? var->neqns : 2 * var->neqns;
-
-    /* rows = number of forecast periods; cols = 1 to hold forecast
-       for each variable, plus 1 to hold variance for each variable
-       if forecast is dynamic.
-    */
-
-    F = gretl_zero_matrix_new(nf, fcols);
-    if (F == NULL) {
-	return E_ALLOC;
-    }
-
-    ns = var->order * var->neqns;
-
-    for (t=t0, s=0; t<=t2; t++, s++) {
-	int miss = 0;
-
-	for (i=0; i<var->neqns; i++) {
-	    pmod = var->models[i];
-	    fti = 0.0;
-	    lag = 1;
-	    k = 0;
-	    for (j=0; j<pmod->ncoeff; j++) {
-		vj = pmod->list[j + 2];
-		if (j < ns + pmod->ifc && vj > 0) {
-		    /* stochastic var */
-		    if (t < t1 || staticfc || s - lag < 0) {
-			/* pre-forecast value */
-			m = (j - pmod->ifc) / var->order;
-			vj = var->models[m]->list[1];
-			if (t - lag < 0) {
-			    xti = NADBL;
-			} else {
-			    xti = Z[vj][t-lag];
-			}
-			if (na(xti)) {
-			    miss = 1;
-			}
-		    } else {
-			/* prior forecast value */
-			xti = gretl_matrix_get(F, s - lag, k);
-		    }
-		    lag++;
-		    if (lag > var->order) {
-			lag = 1;
-			k++;
-		    }
-		} else {
-		    /* deterministic var: value from dataset */
-		    xti = Z[vj][t];
-		    if (na(xti)) {
-			miss = 1;
-		    }
-		}
-		if (miss) {
-		    fti = NADBL;
-		} else {
-		    fti += pmod->coeff[j] * xti;
-		}
-	    }
-	    gretl_matrix_set(F, s, i, fti);
+	if (var->detflags & DET_SEAS) {
+	    m = (m < pdinfo->pd - 1)? m + 1 : 0;
 	}
     }
 
@@ -565,16 +470,16 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     }
 
     gretl_matrix_set_t1(F, t0);
+    gretl_matrix_set_t2(F, t2);
+
     var->F = F;
 
-#if 0
+#if 1
     gretl_matrix_print(F, "var->F");
 #endif
 
     return 0;
 }
-
-#endif
 
 static int
 gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
@@ -702,6 +607,8 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     }
 
     gretl_matrix_set_t1(F, t0);
+    gretl_matrix_set_t2(F, t2);
+
     var->F = F;
 
 #if 0
@@ -3727,10 +3634,9 @@ static int make_VAR_global_lists (GRETL_VAR *var)
 	}
     }
 
-    j = 2 + ifc;
     for (i=0; i<n; i++) {
-	var->ylist[i+1] = list[j];
-	j += p;
+	pmod = var->models[i];
+	var->ylist[i+1] = pmod->list[1];
     }
 
     j = 2 + ifc + np;
@@ -3949,10 +3855,5 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
-#if 0
-# include "irfboot_new.c"
-# include "varomit_new.c"
-#else
-# include "irfboot.c"
-# include "varomit.c"
-#endif
+#include "irfboot.c"
+#include "varomit.c"

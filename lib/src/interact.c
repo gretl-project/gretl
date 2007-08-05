@@ -4069,8 +4069,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case FCASTERR:
-	err = display_forecast(line, models[0], pZ, pdinfo, 
-			       cmd->opt, prn);
+	err = display_forecast(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case RESTRICT:

@@ -10,20 +10,20 @@ const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
    set up the system.
 */
 
-static int *rebuild_VAR_list (const GRETL_VAR *orig, int *exolist, int *err)
+static int *rebuild_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
 {
     int *list = NULL;
     int lsep = (exolist[0] > 0);
     int i, j = 1;
 
-    list = gretl_list_new(orig->neqns + exolist[0] + lsep);
+    list = gretl_list_new(var->neqns + exolist[0] + lsep);
     if (list == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (i=0; i<orig->neqns; i++) {
-	list[j++] = orig->models[i]->list[1];
+    for (i=0; i<var->neqns; i++) {
+	list[j++] = var->ylist[i+1];
     }
 
     if (lsep) {
@@ -38,9 +38,7 @@ static int *rebuild_VAR_list (const GRETL_VAR *orig, int *exolist, int *err)
 }
 
 static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
-				     const int *exolist0,
 				     const GRETL_VAR *new,
-				     const int *exolist1,
 				     const DATAINFO *pdinfo,
 				     PRN *prn)
 {
@@ -50,11 +48,16 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 
 #if VO_DEBUG
     fprintf(stderr, "gretl_VAR_real_omit_test: about to diff lists\n");
-    printlist(exolist0, "exolist0");
-    printlist(exolist1, "exolist1");
+    printlist(orig->xlist, "orig xlist");
+    printlist(new->xlist, "new xlist");
 #endif
 
-    omitlist = gretl_list_diff_new(exolist0, exolist1, 1);
+    if (new->xlist == NULL) {
+	omitlist = gretl_list_copy(orig->xlist);
+    } else {
+	omitlist = gretl_list_diff_new(orig->xlist, new->xlist, 1);
+    }
+
     if (omitlist == NULL) {
 	return E_ALLOC;
     }
@@ -103,14 +106,13 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     gretlopt opt = OPT_NONE;
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
-    const int *exolist = NULL;
     int *tmplist = NULL;
     int *varlist = NULL;
-    int c0, c1;
+    int c1 = 0;
 
     *err = 0;
 
-    if (orig == NULL) {
+    if (orig == NULL || orig->xlist == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -120,32 +122,22 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 	return NULL;
     }
 
-    /* recreate the exog vars list for original VAR */
-    exolist = gretl_VAR_get_exo_list(orig);
-    if (exolist == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
-
 #if VO_DEBUG
-    printlist(exolist, "original exolist");
+    printlist(orig->xlist, "original xlist");
 #endif
 
-    c0 = gretl_list_const_pos(exolist, 1, (const double **) *pZ, pdinfo);
-    if (c0 > 0) {
+    if (orig->ifc) {
 	c1 = !gretl_list_const_pos(omitvars, 1, (const double **) *pZ, pdinfo);
-    } else {
-	c1 = 0;
-    }
+    } 
 
-    /* create exogenous vars list for test VAR */
-    tmplist = gretl_list_omit(exolist, omitvars, 1, err);
+    /* create reduced exogenous vars list for test VAR */
+    tmplist = gretl_list_omit(orig->xlist, omitvars, 1, err);
     if (tmplist == NULL) {
 	goto bailout;
     }
 
 #if VO_DEBUG
-    fprintf(stderr, "co = %d, c1 = %d\n", c0, c1);
+    fprintf(stderr, "c1 = %d\n", c1);
     printlist(tmplist, "exog vars list for test VAR");
 #endif
 
@@ -159,17 +151,25 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     printlist(varlist, "full list for test VAR");
 #endif
 
+    if (orig->detflags & DET_SEAS) {
+	opt |= OPT_D;
+    }
+
+    if (orig->detflags & DET_TREND) {
+	opt |= OPT_T;
+    }
+
     /* If the original VAR did not include a constant, we need to
-       pass OPT_N to the test VAR to prevent the addition of a
-       constant.  We also need to pass OPT_N in case the constant was
+       pass OPT_N to the test VAR to suppress the constant.
+       We also need to pass OPT_N in case the constant was
        present originally but is now to be omitted.
     */
-    if (c0 == 0 || c1 == 0) {
-	opt = OPT_N;
+    if (orig->ifc == 0 || c1 == 0) {
+	opt |= OPT_N;
     }
 
     /* impose as sample range the estimation range of the 
-       original model */
+       original VAR */
     pdinfo->t1 = orig->t1;
     pdinfo->t2 = orig->t2;
 
@@ -177,8 +177,7 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 
     /* now, if var is non-NULL, do the actual test(s) */
     if (var != NULL) {
-	*err = gretl_VAR_real_omit_test(orig, exolist, var, tmplist,
-					pdinfo, prn);
+	*err = gretl_VAR_real_omit_test(orig, var, pdinfo, prn);
     }
 
     /* put back into pdinfo what was there on input */

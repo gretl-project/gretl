@@ -320,13 +320,13 @@ static VARspec *varspec_new (const int *list, int order,
 	    v->detflags |= DET_CONST;
 	    v->g += 1;
 	}
-	if (opt & OPT_T) {
-	    v->detflags |= DET_TREND;
-	    v->g += 1;
-	}	
 	if ((opt & OPT_D) && pdinfo->pd != 1) {
 	    v->detflags |= DET_SEAS;
 	    v->g += pdinfo->pd - 1;
+	}
+	if (opt & OPT_T) {
+	    v->detflags |= DET_TREND;
+	    v->g += 1;
 	}
 	if (v->T < v->g) {
 	    *err = E_DF;
@@ -410,14 +410,6 @@ static void fill_VAR_X (VARspec *v, int p, const double **Z,
 
     /* add other deterministics */
 
-    if (v->detflags & DET_TREND) {
-	s = 0;
-	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(v->X, s++, k, (double) (t + 1));
-	}
-	k++;
-    }
-
     if (v->detflags & DET_SEAS) {
 	int per, per0 = startp(v->t1, pdinfo);
 
@@ -434,6 +426,14 @@ static void fill_VAR_X (VARspec *v, int p, const double **Z,
 	    }
 	    k++;
 	}	
+    }
+
+    if (v->detflags & DET_TREND) {
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    gretl_matrix_set(v->X, s++, k, (double) (t + 1));
+	}
+	k++;
     }
 
 #if VDEBUG
@@ -502,14 +502,14 @@ set_VAR_param_names (VARspec *v, char **params, const DATAINFO *pdinfo)
 	}
     }
 
-    if (v->detflags & DET_TREND) {
-	strcpy(params[k++], "time");
-    }
-
     if (v->detflags & DET_SEAS) {
 	for (i=1; i<pdinfo->pd; i++) {
 	    sprintf(params[k++], "S%d", i);
 	}	
+    }
+
+    if (v->detflags & DET_TREND) {
+	strcpy(params[k++], "time");
     }
 }
 
@@ -758,7 +758,6 @@ static int make_A_matrix (GRETL_VAR *var, VARspec *vspec, int ifc)
 static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec,
 				      int lagsel)
 {
-    int ifc = 0;
     int err = 0;
 
     var->ncoeff = vspec->g;
@@ -771,20 +770,20 @@ static int transcribe_var_from_vspec (GRETL_VAR *var, VARspec *vspec,
     var->E = vspec->E;
 
     if (vspec->detflags & DET_CONST) {
-	ifc = 1;
+	var->ifc = 1;
     }
 
     if (!lagsel) {
 	/* not needed if we're just doing lag selection */
 
-	err = make_A_matrix(var, vspec, ifc);
+	err = make_A_matrix(var, vspec, var->ifc);
 
 	if (!err) {
-	    err = VAR_wald_omit_tests(var, vspec, ifc);
+	    err = VAR_wald_omit_tests(var, vspec, var->ifc);
 	}
 
 	if (!err && vspec->p > 1) {
-	    err = last_lag_LR_prep(var, vspec, ifc);
+	    err = last_lag_LR_prep(var, vspec, var->ifc);
 	}
     }
 
