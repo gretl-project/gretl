@@ -21,7 +21,7 @@ struct VARspec_ {
     gretl_matrix *XTX;
 };
 
-static void fill_VAR_X (VARspec *v, int p, const double **Z, 
+static void fill_VAR_X (VARspec *v, int p, int diff, const double **Z, 
 			const DATAINFO *pdinfo);
 
 /* apparatus for selecting the optimal lag length for a VAR */
@@ -75,7 +75,7 @@ alt_VAR_do_lagsel (GRETL_VAR *var, VARspec *vspec,
     for (j=1; j<p && !err; j++) {
 	int jxcols = cols0 + j * n;
 
-	fill_VAR_X(vspec, j, Z, pdinfo);
+	fill_VAR_X(vspec, j, 0, Z, pdinfo);
 
 	gretl_matrix_reuse(vspec->X, T, jxcols);
 	gretl_matrix_reuse(vspec->B, jxcols, n);
@@ -188,61 +188,15 @@ static void varspec_free (VARspec *v)
     free(v);
 }
 
-static VARspec *varspec_new (const int *list, int order, 
-			     const double **Z, DATAINFO *pdinfo,
-			     gretlopt opt, int *err)
+static int varspec_set_sample (VARspec *v, int diff, const double **Z, 
+			       const DATAINFO *pdinfo)
 {
-    VARspec *v = malloc(sizeof *v);
-    int i, t, vi;
-
-    if (v == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    v->p = order;
-
-    v->ylist = v->xlist = NULL;
-    v->Y = v->X = NULL;
-    v->B = v->E = NULL;
-    v->XTX = NULL;
-    v->g = 0;
-    v->detflags = 0;
-
-    v->robust = (opt & OPT_R)? 1 : 0;
-    v->qr = get_use_qr();
-
-    if (gretl_list_has_separator(list)) {
-	*err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
-    } else {
-	v->ylist = gretl_list_copy(list);
-	if (v->ylist == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err) {
-	gretl_list_purge_const(v->ylist, Z, pdinfo);
-	if (v->xlist != NULL) {
-	    gretl_list_purge_const(v->xlist, Z, pdinfo);
-	}
-    }
-
-#if VDEBUG
-    printlist(v->ylist, "v->ylist");
-    printlist(v->xlist, "v->xlist");
-#endif
-
-    if (!*err) {
-	v->n = v->ylist[0];
-	v->t1 = pdinfo->t1;
-	v->t2 = pdinfo->t2;
-    }
+    int i, vi, t, err = 0;
 
     /* advance t1 if needed */
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	int miss = 0, s = t - v->p;
+	int miss = 0, s = t - (v->p + diff);
 
 	for (i=1; i<=v->ylist[0] && !miss; i++) {
 	    vi = v->ylist[i];
@@ -290,19 +244,76 @@ static VARspec *varspec_new (const int *list, int order,
 
     /* reject sample in case of internal missing values */
 
-    for (t=v->t1; t<=v->t2 && !*err; t++) {
+    for (t=v->t1; t<=v->t2 && !err; t++) {
 	for (i=1; i<=v->ylist[0] && !err; i++) {
 	    if (na(Z[v->ylist[i]][t])) {
-		*err = E_MISSDATA;
+		err = E_MISSDATA;
 	    }
 	}
-	if (v->xlist != NULL && !*err) {
+	if (v->xlist != NULL && !err) {
 	    for (i=1; i<=v->xlist[0] && !err; i++) {
 		if (na(Z[v->xlist[i]][t])) {
-		    *err = E_MISSDATA;
+		    err = E_MISSDATA;
 		}
 	    }
 	}
+    }
+
+    return err;
+}
+
+static VARspec *varspec_new (const int *list, int order, 
+			     const double **Z, DATAINFO *pdinfo,
+			     gretlopt opt, int *err)
+{
+    VARspec *v = malloc(sizeof *v);
+
+    if (v == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    v->p = order;
+
+    v->ylist = v->xlist = NULL;
+    v->Y = v->X = NULL;
+    v->B = v->E = NULL;
+    v->XTX = NULL;
+    v->g = 0;
+    v->detflags = 0;
+
+    v->robust = (opt & OPT_R)? 1 : 0;
+    v->qr = get_use_qr();
+
+    if (gretl_list_has_separator(list)) {
+	*err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
+    } else {
+	v->ylist = gretl_list_copy(list);
+	if (v->ylist == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	gretl_list_purge_const(v->ylist, Z, pdinfo);
+	if (v->xlist != NULL) {
+	    gretl_list_purge_const(v->xlist, Z, pdinfo);
+	}
+    }
+
+#if VDEBUG
+    printlist(v->ylist, "v->ylist");
+    printlist(v->xlist, "v->xlist");
+#endif
+
+    if (!*err) {
+	v->n = v->ylist[0];
+	v->t1 = pdinfo->t1;
+	v->t2 = pdinfo->t2;
+    }
+
+    if (!*err) {
+	*err = varspec_set_sample(v, 0, Z, pdinfo);
     }
 
     /* account for deterministic terms and check for
@@ -366,7 +377,7 @@ static int startp (int t, const DATAINFO *pdinfo)
     return pp;
 }
 
-static void fill_VAR_X (VARspec *v, int p, const double **Z, 
+static void fill_VAR_X (VARspec *v, int p, int diff, const double **Z, 
 			const DATAINFO *pdinfo)
 {
     int i, j, s, t, vi;
@@ -389,7 +400,11 @@ static void fill_VAR_X (VARspec *v, int p, const double **Z,
 	for (j=1; j<=p; j++) {
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(v->X, s++, k, Z[vi][t-j]);
+		if (diff) {
+		    gretl_matrix_set(v->X, s++, k, Z[vi][t-j] - Z[vi][t-j-1]);
+		} else {
+		    gretl_matrix_set(v->X, s++, k, Z[vi][t-j]);
+		}
 	    }
 	    k++;
 	}
@@ -441,11 +456,31 @@ static void fill_VAR_X (VARspec *v, int p, const double **Z,
 #endif
 }
 
+static void fill_VAR_Y (VARspec *v, int diff, const double **Z, 
+			const DATAINFO *pdinfo)
+{
+    int i, vi, s, t;
+
+    for (i=0; i<v->n; i++) {
+	vi = v->ylist[i+1];
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    if (diff) {
+		gretl_matrix_set(v->Y, s++, i, Z[vi][t] - Z[vi][t-1]);
+	    } else {
+		gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
+	    }
+	}
+    }
+
+#if VDEBUG
+    gretl_matrix_print(v->Y, "Y");
+#endif
+}
+
 static int 
 make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
 {
-    int i, s, t, vi;
-
     v->Y = gretl_matrix_alloc(v->T, v->n);
     v->X = gretl_matrix_alloc(v->T, v->g);
     v->B = gretl_matrix_alloc(v->g, v->n);
@@ -454,23 +489,10 @@ make_VAR_matrices (VARspec *v, const double **Z, const DATAINFO *pdinfo)
     if (v->Y == NULL || v->X == NULL || v->B == NULL || 
 	v->E == NULL) {
 	return E_ALLOC;
-    }    
+    }  
 
-    /* construct the Y matrix */
-
-    for (i=0; i<v->n; i++) {
-	vi = v->ylist[i+1];
-	s = 0;
-	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
-	}
-    }
-
-#if VDEBUG
-    gretl_matrix_print(v->Y, "Y");
-#endif
-
-    fill_VAR_X(v, v->p, Z, pdinfo);
+    fill_VAR_Y(v, 0, Z, pdinfo);
+    fill_VAR_X(v, v->p, 0, Z, pdinfo);
 
     return 0;
 }
@@ -840,6 +862,7 @@ static int set_up_VAR_models (GRETL_VAR *var, VARspec *vspec,
 	pmod->dfn = vspec->g - pmod->ifc;
 
 	err = gretl_model_allocate_storage(pmod);
+
 	pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
 
 	if (i == 0) {

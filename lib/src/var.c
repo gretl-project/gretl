@@ -3228,10 +3228,36 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
 				    const DATAINFO *pdinfo)
 {
-    int vmax = 0;
+    int i, vi, vmax = 0;
 
-    if (var->models != NULL && var->neqns >= 1) {
-	vmax = highest_numbered_var_in_model(var->models[0], pdinfo);
+    if (var->ylist != NULL) {
+	for (i=1; i<=var->ylist[0]; i++) {
+	    vi = var->ylist[i];
+	    if (vi > vmax) {
+		vmax = vi;
+	    }
+	}
+    }
+
+    if (var->xlist != NULL) {
+	for (i=1; i<=var->xlist[0]; i++) {
+	    vi = var->xlist[i];
+	    if (vi > vmax) {
+		vmax = vi;
+	    }
+	}
+    }    
+
+    if (var->models != NULL && 
+	var->models[0] != NULL &&
+	var->models[0]->list != NULL &&
+	var->models[0]->list[0] > 2) {
+	for (i=0; i<var->neqns; i++) {
+	    vi = highest_numbered_var_in_model(var->models[i], pdinfo);
+	    if (vi > vmax) {
+		vmax = vi;
+	    }
+	}
     }
 
     return vmax;
