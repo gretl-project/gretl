@@ -474,7 +474,7 @@ enum {
 static int 
 transcribe_VECM_models (GRETL_VAR *vecm, 
 			const double **Z, const DATAINFO *pdinfo,
-			gretl_matrix *XTX, int flag)
+			const gretl_matrix *XTX, int flag)
 {
     MODEL *pmod;
     char **params = NULL;
@@ -534,7 +534,7 @@ transcribe_VECM_models (GRETL_VAR *vecm,
 	pmod->list[1] = yno;
 
 	pmod->dfd = vecm->T;
-	set_VAR_model_stats(pmod, vecm->E, y, i);
+	set_VAR_model_stats(vecm, i);
 	pmod->dfd = vecm->T - pmod->ncoeff;
 
 	for (j=0; j<jmax; j++) {
@@ -739,9 +739,8 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!err && nc > 0) {
-	XTX = gretl_matrix_alloc(nc, nc);
 	Ai = gretl_matrix_alloc(n, n);
-	if (XTX == NULL || Ai == NULL) {
+	if (Ai == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -1185,7 +1184,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix *S;
     int T = vecm->T;
     int g = vecm->neqns;
-    int k = g * (vecm->order + 1) + vecm->ifc;
+    int k = g * (vecm->order + 1);
 
     S = gretl_matrix_copy(vecm->S);
     if (S == NULL) {
@@ -1195,17 +1194,24 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     vecm->ldet = gretl_vcv_log_determinant(S);
     gretl_matrix_free(S);
 
-    if (vecm->xlist != NULL) {
-	k += vecm->xlist[0];
-    }
-
-    /* FIXME: is k right (in all cases)? */
-    
     k += vecm->jinfo->seasonals;
+    if (jcode(vecm) >= J_UNREST_CONST) {
+	k++;
+    }
     if (jcode(vecm) == J_UNREST_TREND) {
 	k++;
     }
+    if (vecm->xlist != NULL) {
+	k += vecm->xlist[0];
+    }    
 
+#if 0
+    /* This replicates what we had before: can it be right? */
+    k = vecm->ncoeff + 3;
+#endif
+
+    /* FIXME: is k right (in all cases)? */
+    
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * g) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * g) / T;
     vecm->HQC = (-2.0 * vecm->ll + 2.0 * log(log(T)) * k * g) / T;

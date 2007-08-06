@@ -56,8 +56,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
-void set_VAR_model_stats (MODEL *pmod, const gretl_matrix *E,
-			  const double *y, int i);
+int set_VAR_model_stats (GRETL_VAR *var, int i);
 
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 

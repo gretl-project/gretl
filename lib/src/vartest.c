@@ -479,12 +479,11 @@ const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
     return var->xlist;
 }
 
-/* Based on the specification stored in the VAR struct, reconstitute
-   the list that was intially passed to the gretl_VAR() function to
-   set up the system.
+/* Based on the specification stored in the original VAR struct, 
+   plus a new exogenous list, constitute a full VAR list.
 */
 
-static int *rebuild_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
+static int *build_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
 {
     int *list = NULL;
     int lsep = (exolist[0] > 0);
@@ -615,8 +614,8 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     printlist(tmplist, "exog vars list for test VAR");
 #endif
 
-    /* recreate full input VAR list for test VAR */
-    varlist = rebuild_VAR_list(orig, tmplist, err);
+    /* create full input VAR list for test VAR */
+    varlist = build_VAR_list(orig, tmplist, err);
     if (varlist == NULL) {
 	goto bailout;
     }

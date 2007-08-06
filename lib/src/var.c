@@ -289,10 +289,12 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 	if (!(opt & OPT_N) && !(opt & OPT_R)) {
 	    v->detflags |= DET_CONST;
 	    v->ncoeff += 1;
+	    v->ifc = 1;
 	}	    
     } else if (!(opt & OPT_N)) {
 	v->detflags |= DET_CONST;
 	v->ncoeff += 1;
+	v->ifc = 1;
     }
 
     if ((opt & OPT_D) && pdinfo->pd != 1) {
@@ -312,19 +314,18 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
     return err;
 }
 
+/* Note: if "v" is a VECM, we make the Y and B matrices big,
+   in the case where there's a restricted const or trend.
+*/
+
 static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
 {
     int n = v->neqns;
 
     if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
-	/* allow for restricted trend or const */
+	/* allow for restricted term */
 	n++;
     }
-
-#if 1
-    fprintf(stderr, "VAR_add_basic_matrices: neqns = %d, n = %d, opt=%d\n",
-	    v->neqns, n, (int) opt);
-#endif
 
     v->Y = gretl_matrix_alloc(v->T, n);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
@@ -877,33 +878,49 @@ static void VAR_dw_rho (MODEL *pmod)
 /* set basic model statistics when estimation has been
    done by matrix methods */
 
-void set_VAR_model_stats (MODEL *pmod, const gretl_matrix *E,
-			  const double *y, int i)
+int set_VAR_model_stats (GRETL_VAR *var, int i)
 {
+    MODEL *pmod = var->models[i];
+    double *y = NULL;
     double u, x, SSR = 0, TSS = 0;
-    int t, s = 0;
+    int t;
 
-    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+    y = malloc(var->T * sizeof *y);
+    if (y == NULL) {
+	pmod->ybar = pmod->sdy = NADBL;
+	pmod->rsq = NADBL;
+	return E_ALLOC;
+    }
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	u = gretl_matrix_get(E, s++, i);
+    for (t=0; t<var->T; t++) {
+	y[t] = gretl_matrix_get(var->Y, t, i);
+    }
+
+    pmod->ybar = gretl_mean(0, var->T - 1, y);
+    pmod->sdy = gretl_stddev(0, var->T - 1, y);
+
+    for (t=0; t<var->T; t++) {
+	u = gretl_matrix_get(var->E, t, i);
 	SSR += u * u;
 	x = y[t] - pmod->ybar;
 	TSS += x * x;
-	pmod->uhat[t] = u;
-	pmod->yhat[t] = y[t] - u;
+	pmod->uhat[t + pmod->t1] = u;
+	pmod->yhat[t + pmod->t1] = y[t] - u;
     }
 
     pmod->ess = SSR;
     pmod->sigma = sqrt(SSR / pmod->dfd);
     pmod->tss = TSS;
-    pmod->rsq = 1 - SSR / TSS;
+    pmod->rsq = 1.0 - SSR / TSS;
     pmod->fstt = ((TSS - SSR) / pmod->dfn) / (SSR / pmod->dfd);
 
     pmod->adjrsq = pmod->lnL = NADBL;
 
     VAR_dw_rho(pmod);
+
+    free(y);
+
+    return 0;
 }
 
 int gretl_VAR_do_error_decomp (const gretl_matrix *S,
@@ -1391,6 +1408,10 @@ static int VAR_add_stats (GRETL_VAR *var)
     return err;
 }
 
+/* Construct the common X matrix (composed of lags of the core
+   variables plus other terms if applicable)
+*/
+
 void fill_VAR_X (GRETL_VAR *v, int p, const double **Z, 
 		 const DATAINFO *pdinfo)
 {
@@ -1398,7 +1419,7 @@ void fill_VAR_X (GRETL_VAR *v, int p, const double **Z,
     int i, j, s, t, vi;
     int k = 0; /* X column */
 
-    /* construct the X matrix: const first */
+    /* const first */
 
     if (v->detflags & DET_CONST) {
 	s = 0;
@@ -1469,6 +1490,9 @@ void fill_VAR_X (GRETL_VAR *v, int p, const double **Z,
     gretl_matrix_print(v->X, "X");
 #endif
 }
+
+/* construct the matrix of dependent variables for VAR or
+   VECM estimation */
 
 static void fill_VAR_Y (GRETL_VAR *v, int mod, const double **Z)
 {
@@ -1608,6 +1632,9 @@ static int VAR_finalize (GRETL_VAR *var, int lagsel)
     return err;
 }
 
+/* transcribe the per-equation output from a VAR into
+   MODEL structs, if wanted */
+
 static int set_up_VAR_models (GRETL_VAR *var, 
 			      const double **Z,
 			      const DATAINFO *pdinfo)
@@ -1658,7 +1685,7 @@ static int set_up_VAR_models (GRETL_VAR *var,
 	pmod->list = gretl_list_new(1);
 	pmod->list[1] = yno;
 
-	set_VAR_model_stats(pmod, var->E, y, i);
+	set_VAR_model_stats(var, i);
 
 	for (j=0; j<var->ncoeff; j++) {
 	    pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
@@ -2112,7 +2139,7 @@ johansen_VAR_new (int rank, int order, const int *list,
 	return NULL;
     }
 
-    if (rank <= 0 || rank > var->ylist[0]) {
+    if (rank > var->ylist[0]) {
 	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
 	*err = E_DATA;
 	gretl_VAR_free(var);
@@ -2129,8 +2156,7 @@ johansen_VAR_new (int rank, int order, const int *list,
 }
 
 /* Driver function for Johansen analysis.  An appropriately
-   initialized "jvar" must have been set up already, as in
-   prepare_johansen_VAR().
+   initialized "jvar" must have been set up already.
 */
 
 static int
@@ -2346,6 +2372,38 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     return jvar;
 }
 
+static int *rebuild_full_VAR_list (const GRETL_VAR *var, int *err)
+{
+    int *list = NULL;
+
+    if (var->xlist == NULL) {
+	list = gretl_list_copy(var->ylist);
+    } else {
+	int i, j, lsep = var->xlist[0] > 0;
+
+	list = gretl_list_new(var->neqns + var->xlist[0] + lsep);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+
+	j = 1;
+	for (i=0; i<var->neqns; i++) {
+	    list[j++] = var->ylist[i+1];
+	}
+
+	if (lsep) {
+	    list[j++] = LISTSEP;
+	}
+
+	for (i=1; i<=var->xlist[0]; i++) {
+	    list[j++] = var->xlist[i];
+	}   
+    } 
+
+    return list;
+}
+
 /**
  * real_gretl_restricted_vecm:
  * @orig: orginal VECM model.
@@ -2367,20 +2425,23 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 {
     GRETL_VAR *jvar = NULL;
     gretlopt opt = OPT_S;
-    int *list = NULL; /* FIXME */
+    int *list = NULL;
 
     if (orig == NULL || orig->jinfo == NULL || rset == NULL) {
 	*err = E_DATA;
 	return NULL;
     }   
 
+    list = rebuild_full_VAR_list(orig, err);
+    if (*err) {
+	return NULL;
+    }
+
     opt |= opt_from_jcode(orig->jinfo->code);
 
     if (orig->jinfo->seasonals > 0) {
 	opt |= OPT_D;
     }
-
-    /* FIXME build full list to pass as param 3 */
 
     jvar = johansen_wrapper(orig->order + 1, 
 			    orig->jinfo->rank, list,
@@ -2397,6 +2458,8 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
     } else {
 	*err = 1;
     }
+
+    free(list);
     
     return jvar;    
 }
