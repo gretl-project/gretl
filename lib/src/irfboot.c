@@ -401,10 +401,10 @@ static int allocate_bootstrap_lists (irfboot *boot, const GRETL_VAR *var)
 	printlist(var->jinfo->exolist, "var->jinfo->exolist");
 #endif
 	/* these lists will be adjusted shortly */
-	boot->lists[0] = gretl_list_copy(var->jinfo->list);
-	boot->lists[1] = gretl_list_copy(var->jinfo->exolist);
+	boot->lists[0] = gretl_list_copy(var->ylist);
+	boot->lists[1] = gretl_list_copy(var->xlist);
 	if (boot->lists[0] == NULL || 
-	    (var->jinfo->exolist != NULL && boot->lists[1] == NULL)) {
+	    (var->xlist != NULL && boot->lists[1] == NULL)) {
 	    err = 1;
 	}
     } else {
@@ -641,7 +641,7 @@ static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     gretl_matrix *C0 = NULL;
     gretl_matrix *rbeta = NULL;
     int order = var->order + 1;
-    int nexo = (var->jinfo->exolist != NULL)? var->jinfo->exolist[0] : 0;
+    int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int ndelta = var->order * var->neqns;
     int nseas = var->jinfo->seasonals;
     int ncoeff;

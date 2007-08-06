@@ -160,10 +160,11 @@ static void fix_xstr (char *s, int p)
 /* for cointegration test: print cointegrating vectors or adjustments,
    either "raw" or re-scaled */
 
-static void print_beta_or_alpha (JohansenInfo *jv, int k,
+static void print_beta_or_alpha (GRETL_VAR *jvar, int k,
 				 const DATAINFO *pdinfo, PRN *prn,
 				 int job, int rescale)
 {
+    JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *c = (job == V_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
     char xstr[32];
@@ -181,8 +182,8 @@ static void print_beta_or_alpha (JohansenInfo *jv, int k,
     }
 
     for (i=0; i<rows; i++) {
-	if (i < jv->list[0]) {
-	    pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
+	if (i < jvar->ylist[0]) {
+	    pprintf(prn, "%-10s", pdinfo->varname[jvar->ylist[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
 	    pprintf(prn, "%-10s", "const");
 	} else if (jv->code == J_REST_TREND) {
@@ -259,10 +260,11 @@ static int compute_alpha (JohansenInfo *jv)
 
 /* print the long-run matrix, \alpha \beta' */
 
-static int print_long_run_matrix (JohansenInfo *jv, 
+static int print_long_run_matrix (GRETL_VAR *jvar, 
 				  const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
+    JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *Pi;
     double x;
     int i, j;
@@ -278,9 +280,9 @@ static int print_long_run_matrix (JohansenInfo *jv,
 
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
 
-    pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]); /* N.B. */
-    for (j=2; j<=jv->list[0]; j++) {
-	pprintf(prn, "%13s", pdinfo->varname[jv->list[j]]);
+    pprintf(prn, "%22s", pdinfo->varname[jvar->ylist[1]]); /* N.B. */
+    for (j=2; j<=jvar->ylist[0]; j++) {
+	pprintf(prn, "%13s", pdinfo->varname[jvar->ylist[j]]);
     }
 
     if (jv->code == J_REST_CONST) {
@@ -292,7 +294,7 @@ static int print_long_run_matrix (JohansenInfo *jv,
     pputc(prn, '\n');
 
     for (i=0; i<Pi->rows; i++) {
-	pprintf(prn, "%-10s", pdinfo->varname[jv->list[i+1]]);
+	pprintf(prn, "%-10s", pdinfo->varname[jvar->ylist[i+1]]);
 	for (j=0; j<Pi->cols; j++) {
 	    x = gretl_matrix_get(Pi, i, j);
 	    if (fabs(x) < 0.5e-14) {
@@ -343,150 +345,49 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
     }
 }
 
-/* compute the EC terms and add them to the dataset, Z, so we
-   can estimate the VECM by OLS (conditional on \beta) */
-
-static int 
-add_EC_terms_to_dataset (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo,
-			 int iter, int genrest)
-{
-    const gretl_matrix *B = vecm->jinfo->Beta;
-    int rank = jrank(vecm);
-    int *list = vecm->jinfo->list;
-    double xt, bxt, sb;
-    int i, j, t, v = pdinfo->v;
-    int id = gretl_VECM_id(vecm);
-    int vj, err = 0;
-
-    if (iter == 0) {
-#if JDEBUG
-	fprintf(stderr, "iter = 0, adding %d series for EC\n", rank);
-#endif
-	err = dataset_add_series(rank, pZ, pdinfo);
-    }
-
-    if (!err) {
-	char vname[VNAMELEN];
-
-	for (j=0; j<rank; j++) {
-	    sprintf(vname, "EC%d", j + 1);
-
-	    if (iter > 0) {
-		/* series already allocated */
-		vj = varindex(pdinfo, vname);
-	    } else {
-		vj = v + j;
-		strcpy(pdinfo->varname[vj], vname);
-		make_varname_unique(pdinfo->varname[vj], vj, pdinfo);
-		sprintf(VARLABEL(pdinfo, vj), "error correction term %d from VECM %d", 
-			j + 1, id);
-#if JDEBUG
-		fprintf(stderr, "new var %d: name = '%s'\n", vj, pdinfo->varname[vj]);
-#endif
-	    }
-
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t < vecm->t1 || t > vecm->t2) {
-		    (*pZ)[vj][t] = NADBL;
-		} else { 
-		    bxt = 0.0;
-		    /* beta * X(t-1) */
-		    for (i=0; i<vecm->neqns; i++) {
-			xt = (*pZ)[list[i+1]][t-1];
-			sb = gretl_matrix_get(B, i, j);
-			if (0 && !genrest) {
-			    sb /= gretl_matrix_get(B, j, j);
-			}
-			bxt += sb * xt;
-		    }
-		    /* restricted const or trend */
-		    if (restricted(vecm)) {
-			sb = gretl_matrix_get(B, i, j);
-			if (0 && !genrest) {
-			    sb /= gretl_matrix_get(B, j, j);
-			}
-			if (jcode(vecm) == J_REST_TREND) {
-			    sb *= t;
-			}
-			bxt += sb;
-		    }
-		    (*pZ)[vj][t] = bxt;
-		}
-	    }
-	}
-    }
-	
-    return err;
-}
-
 /* After doing OLS estimation of the VECM conditional on \beta: copy
    the coefficients on the lagged differences (i.e. form the \Gamma
    matrices) so we can compute the VAR representation */
 
 static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
 {
-    int maxlag = vecm->order;
     int i, j, k, h;
     double x;
 
     for (i=0; i<vecm->neqns; i++) {
-	for (k=0; k<maxlag; k++) {
+	for (k=0; k<vecm->order; k++) {
 	    h = k + vecm->ifc;
 	    /* successive lags (distinct \Gamma_i matrices) */
 	    for (j=0; j<vecm->neqns; j++) {
 		/* successive \Delta x_j */
 		x = gretl_matrix_get(vecm->B, h, i);
 		gretl_matrix_set(G[k], i, j, x);
-		h += maxlag;
+		h += vecm->order;
 	    }
 	}
     }
 }
 
-/* Again, after doing OLS estimation of the VECM conditional on \beta:
-   copy the coefficients on the EC terms (\beta' X) into the \alpha
-   matrix. */
+/* \Pi, as will be used in forming the VAR representation */
 
-static void copy_coeffs_to_Alpha (GRETL_VAR *vecm)
+static int form_Pi (GRETL_VAR *v, gretl_matrix *Pi)
 {
-    int maxlag = vecm->order;
-    double x;
-    int base, i, j, h;
-
-    /* FIXME pos. in coeff array of first \alpha term */
-    base = vecm->jinfo->nexo;
-    base += gretl_matrix_rows(vecm->jinfo->Alpha) * maxlag;
-
-    for (i=0; i<vecm->neqns; i++) {
-	for (j=0; j<vecm->jinfo->rank; j++) {
-	    h = base + j;
-	    x = gretl_matrix_get(vecm->B, h, i);
-	    gretl_matrix_set(vecm->jinfo->Alpha, i, j, x);
-	}
-    }
-}
-
-/* Form the matrix \Pi = \alpha \beta': since \beta is augmented
-   in the case of restricted constant or restricted trend, we
-   may have to make a reduced copy */
-
-static int form_Pi (GRETL_VAR *vecm, gretl_matrix *Pi)
-{
-    const gretl_matrix *alpha = vecm->jinfo->Alpha;
-    gretl_matrix *beta = vecm->jinfo->Beta;
+    const gretl_matrix *alpha = v->jinfo->Alpha;
+    gretl_matrix *beta = v->jinfo->Beta;
+    int rank = jrank(v);
     int err = 0, freeit = 0;
 
-    if (gretl_matrix_rows(beta) > vecm->neqns) {
-	beta = gretl_matrix_alloc(vecm->neqns, vecm->jinfo->rank);
+    if (gretl_matrix_rows(beta) > v->neqns) {
+	beta = gretl_matrix_alloc(v->neqns, rank);
 	if (beta == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    double x;
 	    int i, j;
 
-	    for (i=0; i<vecm->neqns; i++) {
-		for (j=0; j<vecm->jinfo->rank; j++) {
-		    x = gretl_matrix_get(vecm->jinfo->Beta, i, j);
+	    for (i=0; i<v->neqns; i++) {
+		for (j=0; j<rank; j++) {
+		    x = gretl_matrix_get(v->jinfo->Beta, i, j);
 		    gretl_matrix_set(beta, i, j, x);
 		}
 	    }
@@ -507,8 +408,45 @@ static int form_Pi (GRETL_VAR *vecm, gretl_matrix *Pi)
     return err;
 }
 
+/* After doing OLS estimation of the VECM conditional on \beta:
+   copy the coefficients on the EC terms (\beta' X) into the \alpha
+   matrix, and form the matrix \Pi = \alpha \beta'.
+*/
+
+static int make_alpha_and_Pi (GRETL_VAR *v, gretl_matrix **Pi)
+{
+    int rank = v->jinfo->rank;
+    int pos = v->ncoeff - rank;
+    double x;
+    int i, j;
+
+    if (v->jinfo->Alpha == NULL) {
+	v->jinfo->Alpha = gretl_matrix_alloc(v->neqns, rank);
+	if (v->jinfo->Alpha == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (*Pi == NULL) {
+	*Pi = gretl_matrix_alloc(v->neqns, v->neqns);
+	if (*Pi == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=0; i<v->neqns; i++) {
+	for (j=0; j<rank; j++) {
+	    x = gretl_matrix_get(v->B, pos + j, i);
+	    gretl_matrix_set(v->jinfo->Alpha, i, j, x);
+	}
+    }
+
+    return form_Pi(v, *Pi);
+}
+
 /* VAR representation: transcribe the coefficient matrix A_i (for lag
-   i) into its place in the full VAR coefficient matrix, A */
+   i) into its place in the full VAR coefficient matrix, A 
+*/
 
 static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
 {
@@ -523,180 +461,15 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
     }
 }
 
-#if 0
-
-/* Run OLS taking the betas as given.  So obtain estimates and
-   standard errors for the coefficients on the lagged differences and
-   the unrestricted deterministic vars.  Construct full residuals
-   matrix while we're at it.
-*/
-
-static int 
-build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter,
-		   int genrest)
-{
-    gretl_matrix *Pi = NULL;
-    gretl_matrix *A = NULL;
-    gretl_matrix **G = NULL;
-
-    int rv0 = pdinfo->v;
-    int mt, t, r = vecm->jinfo->rank;
-    int p = vecm->order;
-    int nv = vecm->neqns;
-    int *biglist = vecm->jinfo->biglist;
-    gretlopt lsqopt = OPT_N | OPT_Z;
-    int i, j, k;
-    int err = 0;
-
-    /* Note: "vecm->order" is actually the order of the VAR system,
-       which corresponds to the number of lagged differences on the
-       RHS of the VAR system.  We need that number of G matrices to
-       hold the coefficients on those lagged differences.
-    */
-
-#if JDEBUG
-    fprintf(stderr, "build_VECM_models: vecm->order = %d\n", p);
-#endif
-
-    if (p < 0) {
-	return E_DATA;
-    }
-
-    /* for computing VAR representation */
-    Pi = gretl_matrix_alloc(nv, nv);
-    A = gretl_matrix_alloc(nv, nv);
-    if (Pi == NULL || A == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (p > 0) {
-	G = gretl_matrix_array_alloc_with_size(p, nv, nv);
-	if (G == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}	
-    }  
-
-#if JDEBUG
-    gretl_matrix_print(vecm->jinfo->Alpha, "vecm->jinfo->Alpha");
-#endif
-
-    if (vecm->jinfo->Alpha == NULL) {
-	vecm->jinfo->Alpha = gretl_matrix_alloc(nv, r);
-	if (vecm->jinfo->Alpha == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-    }
-
-    if (iter > 0) {
-	/* bootstrapping: EC terms already in dataset */
-	rv0 -= r;
-	lsqopt |= OPT_A;
-    }
-
-    err = add_EC_terms_to_dataset(vecm, pZ, pdinfo, iter, genrest);
-
-    for (i=0; i<nv && !err; i++) {
-	biglist[1] = vecm->jinfo->difflist[i+1];
-	k = biglist[0] - r + 1;
-	for (j=0; j<r; j++) {
-	    biglist[k++] = rv0 + j;
-	}
-
-#if JDEBUG
-	printlist(biglist, "build_VECM_models: biglist");
-#endif
-
-	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt);
-	err = vecm->models[i]->errcode;
-
-	if (err) {
-	    fprintf(stderr, "build_VECM_models: error %d from lsq, eqn %d, iter %d\n",
-		    err, i + 1, iter);
-	} else {	    
-	    vecm->models[i]->ID = i + 1;
-	    vecm->models[i]->aux = AUX_VECM;
-	    vecm->models[i]->adjrsq = NADBL;
-	    if (p > 0) {
-		copy_coeffs_to_Gamma(vecm->models[i], i, G, p, nv);
-	    }
-	    copy_coeffs_to_Alpha(vecm, i, vecm->jinfo->Alpha, p);
-	    for (t=0; t<vecm->T; t++) {
-		mt = t + vecm->t1;
-		gretl_matrix_set(vecm->E, t, i, vecm->models[i]->uhat[mt]);
-	    }
-	    if (i == 0) {
-		vecm->ncoeff = vecm->models[i]->ncoeff;
-	    }
-	} 
-    }
-
-    if (!err) {
-	/* \Pi = \alpha \beta' */
-	err = form_Pi(vecm, Pi);
-    }
-
-    if (err) {
-	goto bailout;
-    }
-
-#if JDEBUG
-    gretl_matrix_print(vecm->jinfo->Alpha, "Alpha from models");
-    gretl_matrix_print(Pi, "Pi");
-    for (i=0; i<p; i++) {
-	fprintf(stderr, "Gamma matrix, lag %d\n\n", i+1);
-	gretl_matrix_print(G[i], NULL);
-    } 
-#endif
-
-    if (p == 0) {
-	gretl_matrix_I(A, nv);
-	gretl_matrix_add_to(A, Pi);
-	add_Ai_to_VAR_A(A, vecm, 0);
-    } else {
-	for (i=0; i<=p; i++) {
-	    if (i == 0) {
-		gretl_matrix_I(A, nv);
-		gretl_matrix_add_to(A, Pi);
-		gretl_matrix_add_to(A, G[0]);
-	    } else if (i == p) {
-		gretl_matrix_zero(A);
-		gretl_matrix_subtract_from(A, G[i-1]);
-	    } else {
-		gretl_matrix_copy_values(A, G[i]);
-		gretl_matrix_subtract_from(A, G[i-1]);
-	    }
-#if JDEBUG
-	    fprintf(stderr, "A matrix, lag %d\n\n", i+1);
-	    gretl_matrix_print(A, NULL);
-#endif
-	    add_Ai_to_VAR_A(A, vecm, i);
-	}
-    }
-
-#if JDEBUG
-    gretl_matrix_print(vecm->A, "vecm->A");
-#endif
-
- bailout:
-
-    gretl_matrix_free(Pi);
-    gretl_matrix_array_free(G, p);
-    gretl_matrix_free(A);
-
-    return err;
-}
-
-#endif
-
 enum {
     ESTIMATE_ALPHA = 0,
     NET_OUT_ALPHA
 };
 
-/* FIXME vecm->ncoeff */
+/* For the case where we want to show complete output: transcribe
+   the matrix multi-OLS results into MODEL structs for printing
+   and saving.
+*/
 
 static int 
 transcribe_VECM_models (GRETL_VAR *vecm, 
@@ -704,18 +477,29 @@ transcribe_VECM_models (GRETL_VAR *vecm,
 			gretl_matrix *XTX, int flag)
 {
     MODEL *pmod;
+    char **params = NULL;
+    const char *dvname;
     const double *y;
     double x;
     int r = jrank(vecm);
     int yno, N = pdinfo->n;
     int i, j, jmax;
+    int err = 0;
 
     jmax = (flag == ESTIMATE_ALPHA)? vecm->ncoeff :
 	vecm->ncoeff - r;
 
+    params = strings_array_new_with_length(vecm->ncoeff, VNAMELEN);
+    if (params == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_VAR_param_names(vecm, params, pdinfo);
+
     for (i=0; i<vecm->neqns; i++) {
 	yno = vecm->ylist[i+1];
 	y = Z[yno];
+	dvname = pdinfo->varname[yno];
 
 	pmod = vecm->models[i];
 	pmod->ID = i + 1;
@@ -731,11 +515,22 @@ transcribe_VECM_models (GRETL_VAR *vecm,
 	pmod->ifc = vecm->ifc;
 	pmod->dfn = pmod->ncoeff - pmod->ifc;
 
-	gretl_model_allocate_storage(pmod);
-	pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
-	pmod->params = strings_array_new_with_length(pmod->ncoeff, 
-						     VNAMELEN);
-	pmod->list = gretl_list_new(2);
+	err = gretl_model_allocate_storage(pmod);
+
+	pmod->depvar = malloc(VNAMELEN);
+	if (pmod->depvar != NULL) {
+	    strcpy(pmod->depvar, "d_");
+	    strncat(pmod->depvar, dvname, VNAMELEN - 3);
+	}
+
+	if (i == 0) {
+	    pmod->params = params;
+	} else {
+	    pmod->params = strings_array_dup(params, vecm->ncoeff);
+	}
+	pmod->nparams = vecm->ncoeff;
+
+	pmod->list = gretl_list_new(1);
 	pmod->list[1] = yno;
 
 	pmod->dfd = vecm->T;
@@ -746,110 +541,150 @@ transcribe_VECM_models (GRETL_VAR *vecm,
 	    pmod->coeff[j] = gretl_matrix_get(vecm->B, j, i);
 	    x = gretl_matrix_get(XTX, j, j);
 	    pmod->sderr[j] = pmod->sigma * sqrt(x);
-	    strcpy(pmod->params[j], "foo"); /* FIXME */
 	}
 
 	for (j=jmax; j<pmod->ncoeff; j++) {
 	    pmod->coeff[j] = gretl_matrix_get(vecm->jinfo->Alpha, i, j-jmax);
 	    pmod->sderr[j] = NADBL;
-	    sprintf(pmod->params[j], "EC%d", j-jmax+1);
 	}
+    }
+
+    return err;
+}
+
+/* The X (data) and B (coefficient) matrices may need expanding
+   to take account of the EC terms */
+
+static int vecm_check_size (GRETL_VAR *v, int flag)
+{
+    int err = 0;
+
+    if (flag == ESTIMATE_ALPHA) {
+	v->ncoeff += jrank(v);
+    } else if (v->ncoeff == 0) {
+	return 0;
+    }
+
+    if (v->X == NULL) {
+	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
+	if (v->X == NULL) {
+	    err = E_ALLOC;
+	}
+    } else if (v->X->cols < v->ncoeff) {
+	err = gretl_matrix_realloc(v->X, v->T, v->ncoeff);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (v->B == NULL) {
+	v->B = gretl_matrix_alloc(v->ncoeff, v->neqns);
+	if (v->B == NULL) {
+	    err = E_ALLOC;
+	}	
+    } else if (v->B->rows < v->ncoeff) {
+	err = gretl_matrix_realloc(v->B, v->ncoeff, v->neqns);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (v->Y->cols > v->neqns) {
+	gretl_matrix_reuse(v->Y, -1, v->neqns);
     }
 
     return 0;
 }
 
-/* below: this is designed to accommodate the case where alpha is
-   restricted, so we can't just run OLS conditional on beta.
+/* For estimating both alpha and Gamma: add the EC terms into
+   the X data matrix */
 
-   DY_t = \Pi Y*_{t-1} + \sum_{i=1}^{k-1}\Gamma_i DY_{t-1} + ...
-
-   Subtract \Pi Y*_t from both sides, call DY_t - \Pi Y*_t "Yt",
-   and call the lagged DYs "X".  Regress "Y" on "X" to find
-   estimates of the \Gammas, etc.  
-
-*/
-
-static int 
-build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
-		   int flag, int iter)
+static int add_EC_terms_to_X (GRETL_VAR *v, const double **Z)
 {
-    gretl_matrix *Pi = NULL;
-    gretl_matrix *XTX = NULL;
-    gretl_matrix **G = NULL;
-    gretl_matrix *A = NULL;
-
-    gretl_matrix *alpha, *beta = v->jinfo->Beta;
-
-    double yti, xti;
-    int *ylist = v->ylist;
-    int *xlist = v->xlist;
-    /* int r = jrank(v); */
-    int p1 = beta->rows;
-    int order = v->order;
-    int nv = v->neqns;
-    int nc = v->ncoeff; /* FIXME flag value */
-    int i, j, s, vi, vj, t;
+    const gretl_matrix *B = v->jinfo->Beta;
+    int rank = jrank(v);
+    int col = v->ncoeff - rank;
+    double xt, bxt, bij;
+    int i, j, s, t;
     int err = 0;
 
-    if (nc > v->X->cols) {
-	err = gretl_matrix_realloc(v->X, v->T, nc);
-    }
+    for (j=0; j<rank; j++) {
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    bxt = 0.0;
 
-    if (!err && (nc > v->B->rows || nv > v->B->cols)) {
-	err = gretl_matrix_realloc(v->B, nc, nv);
-    }
+	    /* beta * X(t-1) */
+	    for (i=0; i<v->neqns; i++) {
+		xt = Z[v->ylist[i+1]][t-1];
+		bij = gretl_matrix_get(B, i, j);
+		bxt += bij * xt;
+	    }
 
-    if (!err && flag == NET_OUT_ALPHA) {
-	Pi = gretl_matrix_alloc(nv, p1);
-	if (Pi == NULL) {
-	    err = E_ALLOC;
+	    /* restricted const or trend */
+	    if (restricted(v)) {
+		bij = gretl_matrix_get(B, i, j);
+		if (jcode(v) == J_REST_TREND) {
+		    bij *= t;
+		}
+		bxt += bij;
+	    }
+
+	    gretl_matrix_set(v->X, s++, col, bxt);
 	}
+	col++;
     }
+	
+    return err;
+}
 
-    if (!err) {
-	XTX = gretl_matrix_alloc(nc, nc);
-	A = gretl_matrix_alloc(nv, nv);
-	if (XTX == NULL || A == NULL) {
-	    err = E_ALLOC;
+/* preparing for OLS conditional on beta: construct the
+   appropriate dependent variable matrix */
+
+static int make_vecm_models_Y (GRETL_VAR *v, const double **Z, 
+			       gretl_matrix *Pi, int flag)
+{
+    int i, s, t, vi, vj;
+    double yti, xti;
+    int err = 0;
+
+    if (flag == ESTIMATE_ALPHA) {
+	/* "Y" is composed of plain DYt */
+	for (i=0; i<v->neqns; i++) {
+	    vi = v->ylist[i+1];
+	    s = 0;
+	    for (t=v->t1; t<=v->t2; t++) {
+		yti = Z[vi][t] - Z[vi][t-1];
+		gretl_matrix_set(v->Y, s++, i, yti);
+	    }
 	}
-    }
+    } else {
+	int j, p1 = v->jinfo->Beta->rows;
 
-    if (err) {
-	goto bailout;
-    }
-
-    if (order > 0) {
-	G = gretl_matrix_array_alloc_with_size(order, nv, nv);
-	if (G == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}	
-    }  
-
-    if (flag == NET_OUT_ALPHA) {
 	err = compute_alpha(v->jinfo);
 	if (err) {
-	    goto bailout;
+	    return err;
 	} 
 
-	alpha = v->jinfo->Alpha;
-	gretl_matrix_multiply_mod(alpha, GRETL_MOD_NONE,
-				  beta, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_multiply_mod(v->jinfo->Alpha, GRETL_MOD_NONE,
+				  v->jinfo->Beta, GRETL_MOD_TRANSPOSE,
 				  Pi, GRETL_MOD_NONE);
 
 	/* form "Y" = DY_t - \Pi Y*_t */
-	for (i=0; i<nv; i++) {
-	    vi = ylist[i+1];
+	for (i=0; i<v->neqns; i++) {
+	    vi = v->ylist[i+1];
 	    s = 0;
 	    for (t=v->t1; t<=v->t2; t++) {
-		yti = Z[vi][t];
+		/* first difference */
+		yti = Z[vi][t] - Z[vi][t-1];
 		for (j=0; j<p1; j++) {
-		    if (j < nv) {
-			vj = v->jinfo->list[j+1];
+		    if (j < v->neqns) {
+			/* lagged level */
+			vj = v->ylist[j+1];
 			xti = Z[vj][t-1];
 		    } else {
-			xti = (jcode(v) == J_REST_TREND)? t : 1; /* t+1? */
+			xti = (jcode(v) == J_REST_TREND)? t : 1;
 		    } 
 		    yti -= gretl_matrix_get(Pi, i, j) * xti;
 		}
@@ -858,49 +693,121 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 	}
     } 
 
-    /* transcribe "X" (FIXME) */
-    for (i=0; i<nc; i++) {
-	vi = xlist[i+2];
-	s = 0;
-	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(v->X, s++, i, Z[vi][t]);
+    return err;
+}
+
+/* The following is designed to accommodate the case where alpha is
+   restricted, so we can't just run OLS conditional on beta.
+
+   DY_t = \Pi Y*_{t-1} + \sum_{i=1}^{k-1}\Gamma_i DY_{t-1} + ...
+
+   Subtract \Pi Y*_t from both sides, call DY_t - \Pi Y*_t "Yt",
+   and call the lagged DYs "X".  Regress "Y" on "X" to find
+   estimates of the \Gammas, etc.  
+
+   But the function also handles the case where \alpha will
+   be estimated along with \Gamma.
+*/
+
+static int 
+build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
+		   int flag, int iter)
+{
+    gretl_matrix *Pi = NULL;
+    gretl_matrix *XTX = NULL;
+    gretl_matrix *Ai = NULL;
+    gretl_matrix **G = NULL;
+
+    gretl_matrix *beta = v->jinfo->Beta;
+
+    int order = v->order;
+    int nc, n = v->neqns;
+    int i, err;
+
+    err = vecm_check_size(v, flag);
+    if (err) {
+	return err;
+    }
+
+    nc = v->ncoeff;
+
+    if (!err && flag == NET_OUT_ALPHA) {
+	Pi = gretl_matrix_alloc(n, beta->rows);
+	if (Pi == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
-    /* run the regressions */
-    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, &XTX);
+    if (!err && nc > 0) {
+	XTX = gretl_matrix_alloc(nc, nc);
+	Ai = gretl_matrix_alloc(n, n);
+	if (XTX == NULL || Ai == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && order > 0) {
+	G = gretl_matrix_array_alloc_with_size(order, n, n);
+	if (G == NULL) {
+	    err = E_ALLOC;
+	}	
+    }  
+
+    /* FIXME bootstrapping !! */
+
+    if (!err) {
+	err = make_vecm_models_Y(v, Z, Pi, flag);
+    }
+
+    if (!err && flag == ESTIMATE_ALPHA) {
+	err = add_EC_terms_to_X(v, Z);
+    }
+
+    if (!err) {
+	if (nc > 0) {
+	    /* run the regressions */
+	    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, &XTX);
+	} else {
+	    /* nothing to estimate, with alpha in hand */
+	    gretl_matrix_copy_values(v->E, v->Y);
+	    v->ncoeff = jrank(v);
+	}
+    }
 
     if (!err && order > 0) {
 	copy_coeffs_to_Gamma(v, G);
     }
 
     if (!err && flag == ESTIMATE_ALPHA) {
-	copy_coeffs_to_Alpha(v);
-	err = form_Pi(v, Pi);
+	err = make_alpha_and_Pi(v, &Pi);
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     if (order == 0) {
-	gretl_matrix_I(A, nv);
-	gretl_matrix_add_to(A, Pi);
-	add_Ai_to_VAR_A(A, v, 0);
+	gretl_matrix_I(Ai, n);
+	gretl_matrix_add_to(Ai, Pi);
+	add_Ai_to_VAR_A(Ai, v, 0);
     } else {
 	for (i=0; i<=order; i++) {
 	    if (i == 0) {
-		gretl_matrix_I(A, nv);
-		gretl_matrix_add_to(A, Pi);
-		gretl_matrix_add_to(A, G[0]);
+		gretl_matrix_I(Ai, n);
+		gretl_matrix_add_to(Ai, Pi);
+		gretl_matrix_add_to(Ai, G[0]);
 	    } else if (i == order) {
-		gretl_matrix_zero(A);
-		gretl_matrix_subtract_from(A, G[i-1]);
+		gretl_matrix_zero(Ai);
+		gretl_matrix_subtract_from(Ai, G[i-1]);
 	    } else {
-		gretl_matrix_copy_values(A, G[i]);
-		gretl_matrix_subtract_from(A, G[i-1]);
+		gretl_matrix_copy_values(Ai, G[i]);
+		gretl_matrix_subtract_from(Ai, G[i-1]);
 	    }
 #if JDEBUG
-	    fprintf(stderr, "A matrix, lag %d\n\n", i+1);
-	    gretl_matrix_print(A, NULL);
+	    fprintf(stderr, "Ai matrix, lag %d\n\n", i+1);
+	    gretl_matrix_print(Ai, NULL);
 #endif
-	    add_Ai_to_VAR_A(A, v, i);
+	    add_Ai_to_VAR_A(Ai, v, i);
 	}
     }
 
@@ -909,7 +816,7 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 #endif
 
     if (!err) {
-	/* conditionality here?? */
+	/* FIXME conditionality here? */
 	transcribe_VECM_models(v, Z, pdinfo, XTX, flag);
     }
 
@@ -917,8 +824,8 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     
     gretl_matrix_free(Pi);
     gretl_matrix_free(XTX);
+    gretl_matrix_free(Ai);
     gretl_matrix_array_free(G, order);
-    gretl_matrix_free(A);
 
     return err;
 }
@@ -929,7 +836,7 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 */
 
 static int
-print_beta_and_alpha (JohansenInfo *jv, gretl_matrix *evals, int h,
+print_beta_and_alpha (GRETL_VAR *jvar, gretl_matrix *evals, int h,
 		      const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
@@ -941,12 +848,12 @@ print_beta_and_alpha (JohansenInfo *jv, gretl_matrix *evals, int h,
     pputc(prn, '\n');
 
     /* "raw" vectors */
-    print_beta_or_alpha(jv, h, pdinfo, prn, V_BETA, 0);
-    print_beta_or_alpha(jv, h, pdinfo, prn, V_ALPHA, 0);
+    print_beta_or_alpha(jvar, h, pdinfo, prn, V_BETA, 0);
+    print_beta_or_alpha(jvar, h, pdinfo, prn, V_ALPHA, 0);
 
     /* re-scaled versions */
-    print_beta_or_alpha(jv, h, pdinfo, prn, V_BETA, 1);
-    print_beta_or_alpha(jv, h, pdinfo, prn, V_ALPHA, 1);
+    print_beta_or_alpha(jvar, h, pdinfo, prn, V_BETA, 1);
+    print_beta_or_alpha(jvar, h, pdinfo, prn, V_ALPHA, 1);
 
     pputc(prn, '\n');
     
@@ -1278,7 +1185,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix *S;
     int T = vecm->T;
     int g = vecm->neqns;
-    int k = g * (vecm->order + 1);
+    int k = g * (vecm->order + 1) + vecm->ifc;
 
     S = gretl_matrix_copy(vecm->S);
     if (S == NULL) {
@@ -1288,8 +1195,16 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     vecm->ldet = gretl_vcv_log_determinant(S);
     gretl_matrix_free(S);
 
+    if (vecm->xlist != NULL) {
+	k += vecm->xlist[0];
+    }
+
     /* FIXME: is k right (in all cases)? */
-    k += vecm->jinfo->nexo;
+    
+    k += vecm->jinfo->seasonals;
+    if (jcode(vecm) == J_UNREST_TREND) {
+	k++;
+    }
 
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * g) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * g) / T;
@@ -1412,8 +1327,8 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	if (!(opt & OPT_Q)) {
 	    err = compute_alpha(jvar->jinfo);
 	    if (!err) {
-		print_beta_and_alpha(jvar->jinfo, evals, n, pdinfo, prn);
-		print_long_run_matrix(jvar->jinfo, pdinfo, prn);
+		print_beta_and_alpha(jvar, evals, n, pdinfo, prn);
+		print_long_run_matrix(jvar, pdinfo, prn);
 	    }
 	}
     }
@@ -1836,16 +1751,16 @@ johansen_boots_round (GRETL_VAR *jvar, const double **Z,
     return err;
 }
 
-void print_beta_alpha_Pi (JohansenInfo *jv,
+void print_beta_alpha_Pi (GRETL_VAR *jvar,
 			  const DATAINFO *pdinfo,
 			  PRN *prn)
 {
-    int r = jv->rank;
+    int r = jrank(jvar);
 
-    print_beta_or_alpha(jv, r, pdinfo, prn, V_BETA, 0);
-    print_beta_or_alpha(jv, r, pdinfo, prn, V_ALPHA, 0);
+    print_beta_or_alpha(jvar, r, pdinfo, prn, V_BETA, 0);
+    print_beta_or_alpha(jvar, r, pdinfo, prn, V_ALPHA, 0);
     pputc(prn, '\n');
-    print_long_run_matrix(jv, pdinfo, prn);
+    print_long_run_matrix(jvar, pdinfo, prn);
 }
 
 /* compute and print beta, alpha and alpha*beta', in the context where
@@ -1853,12 +1768,13 @@ void print_beta_alpha_Pi (JohansenInfo *jv,
    represented by H, and verbose output has been requested.
 */
 
-static int show_beta_alpha_etc (JohansenInfo *jv, 
+static int show_beta_alpha_etc (GRETL_VAR *jvar,
 				const gretl_matrix *H,
 				const gretl_matrix *M,
 				const DATAINFO *pdinfo,
 				PRN *prn)
 {
+    JohansenInfo *jv = jvar->jinfo;
     int err = 0;
 
     gretl_matrix_multiply_mod(H, GRETL_MOD_NONE,
@@ -1879,7 +1795,7 @@ static int show_beta_alpha_etc (JohansenInfo *jv,
     }
 
     if (!err) {
-	print_beta_alpha_Pi(jv, pdinfo, prn);
+	print_beta_alpha_Pi(jvar, pdinfo, prn);
     }
 
     return err;
@@ -1960,7 +1876,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     } 
 
     if (!err && (opt & OPT_V)) {
-	show_beta_alpha_etc(jvar->jinfo, H, M, pdinfo, prn);
+	show_beta_alpha_etc(jvar, H, M, pdinfo, prn);
     }
 
  bailout:    

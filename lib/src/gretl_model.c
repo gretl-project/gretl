@@ -602,18 +602,6 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *pp
     return 1;
 }
 
-static void adjust_vecm_name (const char *orig, char *cname)
-{
-    int cnum;
-    char cc;
-
-    if (sscanf(orig, "EC%d%c", &cnum, &cc) == 2) {
-	sprintf(cname, "EC%d", cnum);
-    } else {
-	strcpy(cname, orig);
-    }
-}
-
 static void make_cname (const char *orig, char *cname)
 {
     char *p;
@@ -668,8 +656,6 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == GARCH) {
 	    k = i;
-	} else if (pmod->aux == AUX_VECM) {
-	    adjust_vecm_name(pdinfo->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    k = i;
 	} else if ((pmod->ci == PROBIT || pmod->ci == LOGIT ||
@@ -1289,6 +1275,42 @@ int gretl_model_get_depvar (const MODEL *pmod)
     }
 
     return dv;
+}
+
+/**
+ * gretl_model_get_depvar_name:
+ * @pmod: pointer to gretl model.
+ * @pdinfo: dataset information.
+ *
+ * Returns: the name of the dependent variable in @pmod.
+ */
+
+const char *gretl_model_get_depvar_name (const MODEL *pmod,
+					 const DATAINFO *pdinfo)
+{
+    int dv;
+
+    if (pmod->depvar != NULL) {
+	return pmod->depvar;
+    }
+
+    dv = gretl_model_get_int(pmod, "yno");
+
+    if (dv == 0) {
+	if (pmod != NULL && pmod->list != NULL) {
+	    if (pmod->ci == GARCH) {
+		dv = pmod->list[4];
+	    } else if (pmod->ci == ARMA) {
+		dv = pmod->list[arma_depvar_pos(pmod)];
+	    } else if (pmod->ci == ARBOND) {
+		dv = arbond_get_depvar(pmod);
+	    } else {
+		dv = pmod->list[1];
+	    }
+	}
+    }
+
+    return pdinfo->varname[dv];
 }
 
 /**

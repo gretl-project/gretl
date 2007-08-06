@@ -1665,8 +1665,8 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     pputs(prn, "\n\n");
 
     for (i=0; i<n; i++) {
-	if (i < jv->list[0]) {
-	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
+	if (i < jvar->ylist[0]) {
+	    sprintf(vname, "%s(-1)", pdinfo->varname[jvar->ylist[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
 	    strcpy(vname, "const");
 	} else if (jv->code == J_REST_TREND) {
@@ -1694,7 +1694,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     pputs(prn, "\n\n");
 
     for (i=0; i<J->p; i++) {
-	sprintf(vname, "%s", pdinfo->varname[jv->list[i+1]]);
+	sprintf(vname, "%s", pdinfo->varname[jvar->ylist[i+1]]);
 	pprintf(prn, "%-12s", vname);
 	for (j=0; j<r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(a, i, j));

@@ -152,6 +152,12 @@ static void gretl_VAR_zero (GRETL_VAR *var)
     var->LR = NADBL;
 }
 
+/* split the user-supplied list, if need be, and construct
+   the lists of endogenous and (possibly) exogenous vars.
+   Deterministic terms are handled separately, via option
+   flags.
+*/
+
 static int VAR_make_lists (GRETL_VAR *v, const int *list,
 			   const double **Z,
 			   const DATAINFO *pdinfo)
@@ -182,10 +188,15 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
     return err;
 }
 
+/* Starting from the given sample range, construct the feasible
+   estimation range for a VAR or VECM.  Flag an error if there
+   are missing values within the sample period.
+*/
+
 static int VAR_set_sample (GRETL_VAR *v, const double **Z, 
 			   const DATAINFO *pdinfo)
 {
-    int diff = (v->ecm)? 1 : 0;
+    int diff = (v->ci == VECM)? 1 : 0;
     int i, vi, t, err = 0;
 
     /* advance t1 if needed */
@@ -257,8 +268,9 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
     return err;
 }
 
-/* account for deterministic terms and check for
-   non-negative degrees of freedom */
+/* Account for deterministic terms and check for
+   non-negative degrees of freedom. 
+*/
 
 static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 			     gretlopt opt)
@@ -269,10 +281,16 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
     v->ncoeff = v->order * v->neqns;
 
     if (v->xlist != NULL) {
+	/* user-specified exogenous vars */
 	v->ncoeff += v->xlist[0];
     }
 
-    if (!(opt & OPT_N)) {
+    if (v->ci == VECM) {
+	if (!(opt & OPT_N) && !(opt & OPT_R)) {
+	    v->detflags |= DET_CONST;
+	    v->ncoeff += 1;
+	}	    
+    } else if (!(opt & OPT_N)) {
 	v->detflags |= DET_CONST;
 	v->ncoeff += 1;
     }
@@ -293,6 +311,41 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 
     return err;
 }
+
+static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
+{
+    int n = v->neqns;
+
+    if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
+	/* allow for restricted trend or const */
+	n++;
+    }
+
+#if 1
+    fprintf(stderr, "VAR_add_basic_matrices: neqns = %d, n = %d, opt=%d\n",
+	    v->neqns, n, (int) opt);
+#endif
+
+    v->Y = gretl_matrix_alloc(v->T, n);
+    v->E = gretl_matrix_alloc(v->T, v->neqns);
+    if (v->Y == NULL || v->E == NULL) {
+	return E_ALLOC;
+    }  
+
+    if (v->ncoeff > 0) {
+	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
+	v->B = gretl_matrix_alloc(v->ncoeff, n);
+	if (v->X == NULL || v->B == NULL) { 
+	    return E_ALLOC;
+	}  
+    }
+
+    return 0;
+}
+
+/* main function for constructing a new VAR struct, which
+   may be used for estimating a VAR, a VECM, or various
+   auxiliary tasks */
 
 static GRETL_VAR *gretl_VAR_new (int ci, int order, 
 				 const int *list,
@@ -320,12 +373,16 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
 
     var->neqns = 0;
     var->order = order;
-    var->qr = get_use_qr();
-    var->robust = (opt & OPT_R)? 1 : 0;
+    var->robust = 0;
 
     var->ecm = (ci == VECM);
     gretl_VAR_zero(var);
     var->jinfo = NULL;
+
+    var->qr = get_use_qr();
+    if (ci == VAR && (opt & OPT_R)) {
+	var->robust = 1;
+    }
 
     err = VAR_make_lists(var, list, Z, pdinfo);
 
@@ -352,10 +409,14 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
     }
 
     if (!err) {
+	err = VAR_add_basic_matrices(var, opt);
+    }
+
+    if (!err && var->ci == VAR) {
 	err = VAR_add_companion_matrix(var);
     }
 
-    if (!err) {
+    if (!err && var->ci == VAR) {
 	err = VAR_add_cholesky_matrix(var);
     }
 
@@ -363,7 +424,7 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
 	err = gretl_VAR_add_models(var);
     }
 
-    if (!err) {
+    if (!err && var->ci == VAR) {
 	int m = var->neqns * var->neqns + var->neqns;
 	
 	var->Fvals = malloc(m * sizeof *var->Fvals);
@@ -372,7 +433,7 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
 	}
     }
 
-    if (!err) {
+    if (!err && var->ci == VAR) {
 	var->Ivals = malloc(N_IVALS * sizeof *var->Ivals);
 	if (var->Ivals == NULL) {
 	    err = 1;
@@ -391,13 +452,6 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
 
 static void johansen_info_free (JohansenInfo *jv)
 {
-    free(jv->list);
-    free(jv->exolist);
-    free(jv->difflist);
-    free(jv->biglist);
-    free(jv->levels_list);
-    free(jv->varlist);
-
     gretl_matrix_free(jv->R0);
     gretl_matrix_free(jv->R1);
 
@@ -466,7 +520,7 @@ void gretl_VAR_free (GRETL_VAR *var)
 #endif
 }
 
-static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
+static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 				   int nf, int pre_obs)
 {
     double vti;
@@ -501,9 +555,9 @@ static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 }
 
 static int
-gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
-			const double **Z, const DATAINFO *pdinfo, 
-			gretlopt opt)
+VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
+		  const double **Z, const DATAINFO *pdinfo, 
+		  gretlopt opt)
 {
     const MODEL *pmod;
     gretl_matrix *F;
@@ -608,7 +662,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
     /* now get variances, if not static */
     if (!staticfc) {
-	add_VAR_fcast_variance(var, F, nf, t1 - t0);
+	VAR_add_fcast_variance(var, F, nf, t1 - t0);
     }
 
     gretl_matrix_set_t1(F, t0);
@@ -623,17 +677,18 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     return 0;
 }
 
+/* FIXME for new-style VECM apparatus!! */
+
 static int
-gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
-			 const double **Z, DATAINFO *pdinfo, 
-			 gretlopt opt)
+VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
+		   const double **Z, DATAINFO *pdinfo, 
+		   gretlopt opt)
 {
     gretl_matrix *F;
     gretl_matrix *B;
 
     int order = var->order + 1;
-    int nexo = (var->jinfo->exolist != NULL)? 
-	var->jinfo->exolist[0] : 0;
+    int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int nseas = var->jinfo->seasonals;
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
@@ -675,7 +730,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    /* lags of endogenous vars */
 	    for (j=0; j<var->neqns; j++) {
-		vj = var->jinfo->list[j+1];
+		vj = var->ylist[j+1];
 		for (k=0; k<order; k++) {
 		    if (t - k - 1 < 0) {
 			fti = NADBL;
@@ -705,7 +760,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    /* exogenous vars, if present */
 	    for (j=0; j<nexo; j++) {
-		vj = var->jinfo->exolist[j+1];
+		vj = var->xlist[j+1];
 		bij = gretl_matrix_get(B, i, col++);
 		if (na(Z[vj][t])) {
 		    fti = NADBL;
@@ -745,7 +800,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
     /* now get variances, if not static */
     if (!staticfc) {
-	add_VAR_fcast_variance(var, F, nf, t1 - t0);
+	VAR_add_fcast_variance(var, F, nf, t1 - t0);
     }
 
     gretl_matrix_set_t1(F, t0);
@@ -782,9 +837,9 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
 
     if (var->F == NULL) {
 	if (var->ecm) {
-	    gretl_VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
+	    VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
 	} else {
-	    gretl_VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
+	    VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
 	}
     }
 
@@ -896,10 +951,10 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
 
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
-    if (var->ci == VECM) {
-	return var->jinfo->list[k + 1];
+    if (var->models != NULL && k >= 0 && k < var->neqns) {
+	return var->models[k]->list[1];
     } else {
-	return (var->models[k])->list[1];
+	return 0;
     }
 }
 
@@ -1336,31 +1391,6 @@ static int VAR_add_stats (GRETL_VAR *var)
     return err;
 }
 
-/* get the starting sub-period for a given t, so as to construct
-   correctly aligned seasonal dummies
-*/
-
-static int startp (int t, const DATAINFO *pdinfo)
-{
-    int yy, pp = pdinfo->pd;
-    int mm = 10;
-    double xx;
-
-    while ((pp = pp / 10)) {
-	mm *= 10;
-    }
-
-    xx = date(t, pdinfo->pd, pdinfo->sd0);
-    if (dataset_is_daily(pdinfo)) {
-	xx += .1;
-    }
-
-    yy = (int) xx;
-    pp = (int) (mm * (xx - yy) + 0.5);
-
-    return pp;
-}
-
 void fill_VAR_X (GRETL_VAR *v, int p, const double **Z, 
 		 const DATAINFO *pdinfo)
 {
@@ -1411,21 +1441,20 @@ void fill_VAR_X (GRETL_VAR *v, int p, const double **Z,
     /* add other deterministics */
 
     if (v->detflags & DET_SEAS) {
-	int per, per0 = startp(v->t1, pdinfo);
+	int per = get_subperiod(v->t1, pdinfo, NULL);
+	int pd1 = pdinfo->pd - 1;
+	double s0, s1;
 
-	for (i=0; i<pdinfo->pd-1; i++) {
-	    per = per0;
-	    s = 0;
-	    for (t=v->t1; t<=v->t2; t++) {
-		gretl_matrix_set(v->X, s++, k, (per == i+1));
-		if (per < pdinfo->pd) {
-		    per++;
-		} else {
-		    per = 1;
-		}
+	s1 = (v->ci == VECM)? 1.0 - 1.0 / pdinfo->pd : 1.0;
+	s0 = (v->ci == VECM)? s1 - 1.0 : 0.0;
+	
+	for (t=0; t<v->T; t++) {
+	    for (i=0; i<pd1; i++) {
+		gretl_matrix_set(v->X, t, k+i, (per == i)? s1 : s0);
 	    }
-	    k++;
-	}	
+	    per = (per < pd1)? per + 1 : 0;
+	}
+	k += pd1;
     }
 
     if (v->detflags & DET_TREND) {
@@ -1441,21 +1470,30 @@ void fill_VAR_X (GRETL_VAR *v, int p, const double **Z,
 #endif
 }
 
-static void fill_VAR_Y (GRETL_VAR *v, const double **Z, 
-			const DATAINFO *pdinfo)
+static void fill_VAR_Y (GRETL_VAR *v, int mod, const double **Z)
 {
-    int diff = (v->ci == VECM);
     int i, vi, s, t;
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    if (diff) {
+	    if (mod == DIFF) {
 		gretl_matrix_set(v->Y, s++, i, Z[vi][t] - Z[vi][t-1]);
+	    } else if (mod == LAGS) {
+		gretl_matrix_set(v->Y, s++, i, Z[vi][t-1]);
 	    } else {
 		gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
 	    }
+	}
+    }
+
+    if (mod == LAGS && restricted(v)) {
+	int trend = (v->jinfo->code == J_REST_TREND);
+	int col = v->neqns;
+
+	for (t=0; t<v->T; t++) {
+	    gretl_matrix_set(v->Y, t, col, (trend)? v->t1 + t : 1);
 	}
     }
 
@@ -1464,29 +1502,8 @@ static void fill_VAR_Y (GRETL_VAR *v, const double **Z,
 #endif
 }
 
-static int 
-make_data_matrices (GRETL_VAR *v, const double **Z, 
-		    const DATAINFO *pdinfo)
-{
-    v->Y = gretl_matrix_alloc(v->T, v->neqns);
-    v->X = gretl_matrix_alloc(v->T, v->ncoeff);
-    v->B = gretl_matrix_alloc(v->ncoeff, v->neqns);
-    v->E = gretl_matrix_alloc(v->T, v->neqns);
-
-    if (v->Y == NULL || v->X == NULL || v->B == NULL || 
-	v->E == NULL) {
-	return E_ALLOC;
-    }  
-
-    fill_VAR_Y(v, Z, pdinfo);
-    fill_VAR_X(v, v->order, Z, pdinfo);
-
-    return 0;
-}
-
-static void 
-set_VAR_param_names (GRETL_VAR *v, char **params, 
-		     const DATAINFO *pdinfo)
+void gretl_VAR_param_names (GRETL_VAR *v, char **params, 
+			    const DATAINFO *pdinfo)
 {
     char lagstr[8];
     int i, j, n, k = 0;
@@ -1499,6 +1516,10 @@ set_VAR_param_names (GRETL_VAR *v, char **params,
 	for (j=1; j<=v->order; j++) {
 	    sprintf(lagstr, "_%d", j);
 	    n = strlen(lagstr);
+	    if (v->ci == VECM) {
+		strcpy(params[k], "d_");
+		n += 2;
+	    }
 	    strncat(params[k], pdinfo->varname[v->ylist[i]],
 		    VNAMELEN - n - 1);
 	    strncat(params[k], lagstr, n);
@@ -1520,6 +1541,14 @@ set_VAR_param_names (GRETL_VAR *v, char **params,
 
     if (v->detflags & DET_TREND) {
 	strcpy(params[k++], "time");
+    }
+
+    if (v->ci == VECM) {
+	int rank = jrank(v);
+
+	for (i=0; i<rank; i++) {
+	    sprintf(params[k++], "EC%d", i+1);
+	}
     }
 }
 
@@ -1595,7 +1624,7 @@ static int set_up_VAR_models (GRETL_VAR *var,
 	return E_ALLOC;
     }
 
-    set_VAR_param_names(var, params, pdinfo);
+    gretl_VAR_param_names(var, params, pdinfo);
 
     for (i=0; i<var->neqns && !err; i++) {
 	yno = var->ylist[i+1];
@@ -1678,7 +1707,8 @@ GRETL_VAR *gretl_VAR (int order, int *list,
     }
 
     if (!err) {
-	err = make_data_matrices(var, Z, pdinfo);
+	fill_VAR_Y(var, 0, Z);
+	fill_VAR_X(var, var->order, Z, pdinfo);
     }
 
     /* run the regressions: use QR or Cholesky */
@@ -1870,24 +1900,23 @@ johansen_estimate_complete (GRETL_VAR *jvar,
 static int 
 allocate_johansen_residual_matrices (GRETL_VAR *jvar)
 {
-    int T = jvar->t2 - jvar->t1 + 1;
-    int vk = jvar->neqns;
+    int n = jvar->neqns;
     int err = 0;
 
     if (jvar->jinfo->R0 == NULL) {
-	jvar->jinfo->R0 = gretl_matrix_alloc(T, vk);
+	jvar->jinfo->R0 = gretl_matrix_alloc(jvar->T, n);
 	if (jvar->jinfo->R0 == NULL) {
 	    return E_ALLOC;
 	}
     }
 
     if (restricted(jvar)) {
-	vk++;
+	n++;
     }
 
-    if (gretl_matrix_cols(jvar->jinfo->R1) < vk) {
+    if (gretl_matrix_cols(jvar->jinfo->R1) < n) {
 	gretl_matrix_free(jvar->jinfo->R1);
-	jvar->jinfo->R1 = gretl_matrix_alloc(T, vk);
+	jvar->jinfo->R1 = gretl_matrix_alloc(jvar->T, n);
 	if (jvar->jinfo->R1 == NULL) {
 	    gretl_matrix_free(jvar->jinfo->R0);
 	    jvar->jinfo->R0 = NULL;
@@ -1898,138 +1927,98 @@ allocate_johansen_residual_matrices (GRETL_VAR *jvar)
     return err;
 }
 
+static void johansen_degenerate_stage_1 (GRETL_VAR *v, 
+					 const double **Z)
+{
+    gretl_matrix *R0 = v->jinfo->R0;
+    gretl_matrix *R1 = v->jinfo->R1;
+    int i, vi, s, t;
+
+    for (i=0; i<v->neqns; i++) {
+	vi = v->ylist[i+1];
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    gretl_matrix_set(R0, s++, i, Z[vi][t] - Z[vi][t-1]);
+	    gretl_matrix_set(R1, s++, i, Z[vi][t-1]);
+	}
+    }
+
+    if (restricted(v)) {
+	int trend = (jcode(v) == J_REST_TREND);
+
+	for (t=0; t<v->T; t++) {
+	    gretl_matrix_set(R1, t, v->neqns, (trend)? v->t1 + t : 1);
+	}
+    }	
+}
 
 /* For Johansen analysis: estimate VAR in differences along with the
    other auxiliary regressions required to compute the relevant
-   matrices of residuals, for concentration of the log-likelihood
+   matrices of residuals, for concentration of the log-likelihood.
 */
 
 static int johansen_VAR (GRETL_VAR *jvar, 
 			 const double **Z, const DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
+    int restr = restricted(jvar);
     int err;
-
-    err = make_data_matrices(jvar, Z, pdinfo); /* placement? */
-    if (err) {
-	goto var_bailout;
-    }    
-
-    /* FIXME put data into relevant matrices and run the
-       multiple OLSes 
-    */
 
     err = allocate_johansen_residual_matrices(jvar); 
     if (err) {
-	goto var_bailout;
+	return err;
     }
 
-#if 0
-
-    if (opt & OPT_V) {
-	pprintf(prn, _("\nVAR system, lag order %d\n\n"), jvar->order);
+    if (jvar->ncoeff == 0) {
+	/* nothing to concentrate out */
+	johansen_degenerate_stage_1(jvar, Z);
+	return 0;
     }
 
-    for (i=0; i<jvar->neqns; i++) {
-
-	/* insert the appropriate dependent variable */
-	vl->reglist[1] = vl->stochvars[i + 1];
-
-	if (jrank(jvar) > 0) {
-	    /* VECM: record ID number of first difference.  Note:
-	       we'll need this information in johansen.c, for building
-	       the final VECM models, even if the order of the present
-	       VAR is zero.
-	    */
-	    jvar->jinfo->difflist[i+1] = vl->reglist[1];
-	}
-
-	/* VAR in differences */
-	if (vl->reglist[0] == 1) {
-	    /* degenerate model (nothing to concentrate out) */
-	    transcribe_data_as_uhat(vl->reglist[1], Z,
-				    jvar->jinfo->R0, i, jvar->t1);
-	} else {
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
-	    if ((err = jmod.errcode)) {
-		fprintf(stderr, "*** johansen_VAR: VAR in differences, eqn %d, "
-			"lsq err %d\n", i+1, err);
-		printlist(vl->reglist, "list for this model");
-		goto var_bailout;
-	    }
-	    if (opt & OPT_V) {
-		jmod.aux = AUX_VAR;
-		jmod.ID = i + 1;
-		printmodel(&jmod, pdinfo, OPT_NONE, prn);
-	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R0, i);
-	    if (i == 0) {
-		jvar->ifc = jmod.ifc;
-	    }
-	    clear_model(&jmod);
-	}
-
-	/* y_{t-1} regressions */
-	vl->reglist[1] = jvar->jinfo->levels_list[i + 1];
-	if (vl->reglist[0] == 1) {
-	    /* degenerate */
-	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
-				    jvar->jinfo->R1, i, jvar->t1);
-	} else {
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
-	    if ((err = jmod.errcode)) {
-		fprintf(stderr, "johansen_VAR: y_{t-1} regression, eqn %d, lsq err %d\n",
-			i+1, err);
-		goto var_bailout;
-	    }	
-	    if (opt & OPT_V) {
-		jmod.aux = AUX_JOHANSEN;
-		jmod.ID = -1;
-		printmodel(&jmod, pdinfo, OPT_NONE, prn);
-	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R1, i);
-	    clear_model(&jmod);
-	}
+    if (restr) {
+	/* shrink by one column */
+	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
+	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
     }
 
-    /* supplementary regressions for restricted cases */
-    if (restricted(jvar)) {
-	if (jcode(jvar) == J_REST_CONST) {
-	    vl->reglist[1] = 0;
-	} else {
-	    vl->reglist[1] = gettrend(pZ, pdinfo, 0);
-	    if (vl->reglist[1] == 0) {
-		err = E_ALLOC;
-		goto var_bailout;
-	    }
-	}
+    fill_VAR_Y(jvar, DIFF, Z);
+    fill_VAR_X(jvar, jvar->order, Z, pdinfo);
 
-	if (vl->reglist[0] == 1) {
-	    /* degenerate case */
-	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
-				    jvar->jinfo->R1, i, jvar->t1);
-	} else {	    
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
-	    if ((err = jmod.errcode)) {
-		fprintf(stderr, "johansen_VAR: restriction regression, "
-			"eqn %d, lsq err %d\n", i+1, err);
-		goto var_bailout;
-	    }
-	    if (opt & OPT_V) {
-		jmod.aux = AUX_JOHANSEN;
-		jmod.ID = -1;
-		printmodel(&jmod, pdinfo, OPT_NONE, prn);
-	    }
-	    transcribe_uhat_to_matrix(&jmod, jvar->jinfo->R1, i);
-	    clear_model(&jmod);
-	}
-    }     
+    /* (1) VAR in first differences */
 
-    pputc(prn, '\n');
+    if (jvar->qr) {
+	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
+				  jvar->jinfo->R0, NULL, NULL);
+    } else {
+	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
+				     jvar->jinfo->R0, NULL);
+    }
 
-#endif
+    if (restr) {
+	/* re-expand to full size */
+	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + 1);
+	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + 1);
+    }
 
- var_bailout:
+    /* (2) System with lagged levels on LHS (may include
+       restricted const or trend in last column)
+    */
+
+    fill_VAR_Y(jvar, LAGS, Z);
+
+    if (jvar->qr) {
+	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
+				  jvar->jinfo->R1, NULL, NULL);
+    } else {
+	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
+				     jvar->jinfo->R1, NULL);
+    }  
+
+    if (restr) {
+	/* shrink to "final" size */
+	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
+	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
+    }
 
 #if VAR_DEBUG
     fprintf(stderr, "johansen_VAR: returning err = %d\n", err);
@@ -2081,30 +2070,6 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 	return NULL;
     }
 
-    jv->list = NULL;
-    jv->difflist = NULL;
-    jv->biglist = NULL;
-    jv->exolist = NULL;
-    jv->levels_list = NULL;
-    jv->varlist = NULL;
-
-    /* FIXME redundancy in lists */
-
-    jv->list = gretl_list_copy(var->ylist);
-    if (jv->list == NULL) {
-	free(jv);
-	return NULL;
-    }
-
-    if (var->xlist != NULL) {
-	jv->exolist = gretl_list_copy(var->xlist);
-	if (jv->exolist == NULL) {
-	    free(jv->list);
-	    free(jv);
-	    return NULL;
-	}
-    } 
-
     jv->code = jcode_from_opt(opt);
 
     jv->ID = 0;
@@ -2128,13 +2093,8 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->ll0 = NADBL;
     jv->bdf = 0;
 
-    jv->difflist = NULL;
-    jv->biglist = NULL;
-
     jv->rank = rank;
-
     jv->seasonals = 0;
-    jv->nexo = 0;
 
     return jv;
 }
@@ -2167,37 +2127,6 @@ johansen_VAR_new (int rank, int order, const int *list,
 
     return var;
 }
-
-#if 0
-
-static GRETL_VAR *
-johansen_VAR_prepare (int order, int rank, const int *list, 
-		      const double **Z, DATAINFO *pdinfo, 
-		      gretlopt opt, int *err)
-{
-    /* after adding seasonals */
-
-    if (jcode(jvar) == J_UNREST_TREND) {
-	/* add trend to VAR list */
-	int vt = gettrend(pZ, pdinfo, 0);
-
-	if (vt == 0) {
-	    jvar->err = E_ALLOC;
-	    goto bailout;
-	} else {
-	    jvar->jinfo->varlist[k++] = vt;
-	}
-    }	
-
-    if (jcode(jvar) >= J_UNREST_CONST) {
-	/* add the constant to the VAR list */
-	jvar->jinfo->varlist[k++] = 0;
-    }
-
-    return jvar;
-}
-
-#endif
 
 /* Driver function for Johansen analysis.  An appropriately
    initialized "jvar" must have been set up already, as in
@@ -2636,11 +2565,7 @@ int gretl_VECM_rank (const GRETL_VAR *vecm)
 
 const int *gretl_VECM_list (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL) {
-	return vecm->jinfo->list;
-    }
-
-    return NULL;
+    return vecm->ylist;
 }
 
 int beta_restricted_VECM (const GRETL_VAR *vecm)
@@ -2826,7 +2751,7 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     JohansenInfo *jinfo;
     int *list = NULL;
     int ID, code, rank;
-    int seas, nexo;
+    int seas;
     int got = 0;
     int err = 0;
 
@@ -2834,9 +2759,8 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     got += gretl_xml_get_prop_as_int(node, "code", &code);
     got += gretl_xml_get_prop_as_int(node, "rank", &rank);
     got += gretl_xml_get_prop_as_int(node, "seasonals", &seas);
-    got += gretl_xml_get_prop_as_int(node, "nexo", &nexo);
 
-    if (got != 5) {
+    if (got != 4) {
 	return E_DATA;
     }
 
@@ -2868,22 +2792,11 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     jinfo->code = code;
     jinfo->rank = rank;
     jinfo->seasonals = seas;
-    jinfo->nexo = nexo;
 
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "difflist")) {
-	    jinfo->difflist = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "exolist")) {
-	    jinfo->exolist = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "biglist")) {
-	    jinfo->biglist = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "levels_list")) {
-	    jinfo->levels_list = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "varlist")) {
-	    jinfo->varlist = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "u")) {
+	if (!xmlStrcmp(cur->name, (XUC) "u")) {
 	    jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "v")) {
 	    jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
@@ -3132,15 +3045,7 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
 {
     fprintf(fp, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ", 
 	    j->ID, j->code, j->rank);
-    fprintf(fp, "seasonals=\"%d\" nexo=\"%d\">\n", j->seasonals,
-	    j->nexo);
-
-    gretl_xml_put_tagged_list("list", j->list, fp);
-    gretl_xml_put_tagged_list("difflist", j->difflist, fp);
-    gretl_xml_put_tagged_list("biglist", j->biglist, fp);
-    gretl_xml_put_tagged_list("exolist", j->exolist, fp);
-    gretl_xml_put_tagged_list("levels_list", j->levels_list, fp);
-    gretl_xml_put_tagged_list("varlist", j->varlist, fp);
+    fprintf(fp, "seasonals=\"%d\">\n", j->seasonals);
 
     gretl_xml_put_matrix(j->R0, "u", fp);
     gretl_xml_put_matrix(j->R1, "v", fp);

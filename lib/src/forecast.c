@@ -2347,11 +2347,9 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
 	return NULL;
     }
 
-    if (!var->ecm) {
-	pmod = gretl_VAR_get_model(var, i);
-	if (pmod == NULL) {
-	    return NULL;
-	}
+    pmod = gretl_VAR_get_model(var, i);
+    if (pmod == NULL) {
+	return NULL;
     }
 
     F = gretl_VAR_get_forecast_matrix(var, t0, t1, t2, Z, pdinfo, opt);
@@ -2378,20 +2376,20 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
     fr->t1 = t1;
     fr->t2 = t2;
 
-    if (var->ecm) {
-	yno = var->jinfo->list[i+1];
-    } else {
-	yno = pmod->list[1];
-    }
+    yno = pmod->list[1];
 
-    strcpy(fr->depvar, pdinfo->varname[yno]);
+    strcpy(fr->depvar, gretl_model_get_depvar_name(pmod, pdinfo));
 
     m = var->neqns;
 
     nf = 0;
 
     for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
-	fr->actual[t] = Z[yno][t];
+	if (var->ci == VECM) {
+	    fr->actual[t] = Z[yno][t] - Z[yno][t-1];
+	} else {
+	    fr->actual[t] = Z[yno][t];
+	}
 	fr->fitted[t] = gretl_matrix_get(F, s, i);
 	if (!na(fr->fitted[t])) {
 	    nf++;

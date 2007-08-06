@@ -35,15 +35,8 @@ typedef struct JohansenInfo_ JohansenInfo;
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see enumeration above */
-    int *list;            /* list: endogenous variables */
-    int *difflist;        /* list: first diffs of endogenous vars */
-    int *biglist;         /* list: all regressors in each eqn */
-    int *exolist;         /* list: user-specified exogenous vars */
-    int *levels_list;     /* for use in auxiliary regressions */
-    int *varlist;         /* for use in auxiliary regressions */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
-    int nexo;             /* total deterministic/exogenous variables */
     gretl_matrix *R0;     /* residuals, VAR in differences */
     gretl_matrix *R1;     /* residuals, second regressions */
     gretl_matrix *S00;    /* matrix of cross-products of residuals */
@@ -101,8 +94,9 @@ struct GRETL_VAR_ {
     char *name;          /* for use in session management */
 };
     
-#define restricted(v) (v->jinfo->code == J_REST_CONST || \
-                       v->jinfo->code == J_REST_TREND)
+#define restricted(v) (v->jinfo != NULL && \
+                       (v->jinfo->code == J_REST_CONST || \
+                        v->jinfo->code == J_REST_TREND))
 
 #define jcode(v) (v->jinfo->code)
 #define jrank(v) (v->jinfo->rank)

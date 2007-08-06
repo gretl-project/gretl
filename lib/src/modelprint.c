@@ -1655,24 +1655,25 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->ci == ARMA) {
 	print_arma_depvar(pmod, pdinfo, prn);
     } else { 
-	int v = gretl_model_get_depvar(pmod);
+	const char *dvname = 
+	    gretl_model_get_depvar_name(pmod, pdinfo);
 
 	if (tex) {
 	    if (pmod->aux == AUX_VECM) {
-		tex_vecm_depvar_name(vname, pdinfo->varname[v]);
+		tex_vecm_depvar_name(vname, dvname);
 	    } else if (pmod->ci == ARBOND) {
-		tex_arbond_depvar_name(vname, pdinfo->varname[v]);
+		tex_arbond_depvar_name(vname, dvname);
 	    } else {
-		tex_escape(vname, pdinfo->varname[v]);
+		tex_escape(vname, dvname);
 	    }
 	}
 
 	if (pmod->aux == AUX_VAR || pmod->aux == AUX_VECM) {
-	    pputs(prn, (tex)? vname : pdinfo->varname[v]);
+	    pputs(prn, (tex)? vname : dvname);
 	} else {
 	    pprintf(prn, "%s: %s", 
 		    (utf)? _("Dependent variable") : I_("Dependent variable"),
-		    (tex)? vname : pdinfo->varname[v]);
+		    (tex)? vname : dvname);
 	}
     }
 

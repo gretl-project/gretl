@@ -275,7 +275,8 @@ static int session_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
 	return err;
     }
 
-    var = gretl_VAR_omit_test(mycmd.list, orig, &Z, datainfo, prn, &err);
+    var = gretl_VAR_omit_test(mycmd.list, orig, (const double **) Z, 
+			      datainfo, prn, &err);
     gretl_VAR_free(var);
 
     if (err) {

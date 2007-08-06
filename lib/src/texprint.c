@@ -670,7 +670,7 @@ void tex_coeff_table_end (PRN *prn)
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
     char vname[48];
-    const int *list = vecm->jinfo->list;
+    const int *list = vecm->ylist;
     double x;
     int i, j;
 
@@ -742,8 +742,8 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     pputs(prn, "}\n");
 
     for (i=0; i<rows; i++) {
-	if (i < jv->list[0]) {
-	    tex_escape(s, pdinfo->varname[jv->list[i+1]]);
+	if (i < vecm->ylist[0]) {
+	    tex_escape(s, pdinfo->varname[vecm->ylist[i+1]]);
 	    pprintf(prn, "%s$_{t-1}$ & ", s);
 	} else if (jv->code == J_REST_CONST) {
 	    pputs(prn, "const & ");

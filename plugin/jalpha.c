@@ -223,13 +223,14 @@ static int alpha_compute_alpha (JohansenInfo *jv,
 }
 
 static int 
-alpha_test_show_beta (JohansenInfo *jv, 
+alpha_test_show_beta (GRETL_VAR *jvar,
 		      const gretl_matrix *M,
 		      const gretl_matrix *S11a,
 		      const gretl_matrix *S01a,
 		      const DATAINFO *pdinfo,
 		      PRN *prn)
 {
+    JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *B = jv->Beta;
     int err = 0;
 
@@ -263,7 +264,7 @@ alpha_test_show_beta (JohansenInfo *jv,
     }
 
     if (!err) {
-	print_beta_alpha_Pi(jv, pdinfo, prn);
+	print_beta_alpha_Pi(jvar, pdinfo, prn);
     }
 
     return err;
@@ -350,8 +351,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 #endif
 
     if (!err && prebeta) {
-	alpha_test_show_beta(jvar->jinfo, NULL, S11a, S01a,
-			     pdinfo, prn);
+	alpha_test_show_beta(jvar, NULL, S11a, S01a, pdinfo, prn);
     } else if (!err) {
 	/* do the eigenvalue thingy */
 	gretl_matrix *A = NULL;
@@ -381,7 +381,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	} 
 
 	if (!err && (opt & OPT_V)) {
-	    alpha_test_show_beta(jvar->jinfo, M, S11a, S01a,
+	    alpha_test_show_beta(jvar, M, S11a, S01a,
 				 pdinfo, prn);
 	}
 

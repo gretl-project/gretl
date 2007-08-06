@@ -137,6 +137,9 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err);
 
+void gretl_VAR_param_names (GRETL_VAR *v, char **params, 
+			    const DATAINFO *pdinfo);
+
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 			 FILE *fp);
 

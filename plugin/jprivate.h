@@ -33,7 +33,7 @@ int
 johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
 		  const gretl_matrix *H, int job, PRN *prn);
 
-void print_beta_alpha_Pi (JohansenInfo *jv,
+void print_beta_alpha_Pi (GRETL_VAR *jvar,
 			  const DATAINFO *pdinfo,
 			  PRN *prn);
 

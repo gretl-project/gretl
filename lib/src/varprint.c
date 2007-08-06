@@ -226,11 +226,7 @@ static int varprint_namelen (const GRETL_VAR *var, const DATAINFO *pdinfo,
 	if (k >= var->neqns) {
 	    break;
 	}
-	if (var->ci == VECM) {
-	    v = var->jinfo->list[k + 1];
-	} else {
-	    v = (var->models[k])->list[1];
-	}
+	v = var->ylist[k+1];
 	len = strlen(pdinfo->varname[v]);
 	if (len > maxlen) {
 	    maxlen = len;
@@ -293,11 +289,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	return E_ALLOC;
     }
 
-    if (var->ci == VECM) {
-	vsrc = var->jinfo->list[shock + 1];
-    } else {
-	vsrc = (var->models[shock])->list[1];
-    }
+    vsrc = var->ylist[shock + 1];
 
     blockmax = var->neqns / IRF_ROW_MAX;
     if (var->neqns % IRF_ROW_MAX) {
@@ -319,11 +311,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	    if (k >= var->neqns) {
 		break;
 	    }
-	    if (var->ci == VECM) {
-		vtarg = var->jinfo->list[k + 1];
-	    } else {
-		vtarg = (var->models[k])->list[1];
-	    }
+	    vtarg = var->ylist[k+1];
 	    endrow = !(i < IRF_ROW_MAX - 1 && k < var->neqns - 1);
 	    VAR_info_print_vname(i, vtarg, endrow, width, pdinfo, prn);
 	}
@@ -451,11 +439,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	return E_ALLOC;
     }
 
-    if (var->ci == VECM) {
-	vtarg = var->jinfo->list[targ + 1];
-    } else {
-	vtarg = (var->models[targ])->list[1];
-    }
+    vtarg = var->ylist[targ + 1];
 
     blockmax = (var->neqns + 1) / VDC_ROW_MAX;
     if ((var->neqns + 1) % VDC_ROW_MAX) {
@@ -487,11 +471,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    if (k >= var->neqns) {
 		break;
 	    }
-	    if (var->ci == VECM) {
-		vsrc = var->jinfo->list[k + 1];
-	    } else {
-		vsrc = (var->models[k])->list[1];
-	    }
+	    vsrc = var->ylist[k+1];
 	    endrow = !(i < VDC_ROW_MAX - 1 && k < var->neqns - 1);
 	    VAR_info_print_vname(i, vsrc, endrow, width, pdinfo, prn);
 	}
@@ -598,10 +578,11 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 }
 
 static void 
-print_VECM_coint_eqns (JohansenInfo *jv, 
+print_VECM_coint_eqns (GRETL_VAR *jvar, 
 		       const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
+    JohansenInfo *jv = jvar->jinfo;
     int rtf = rtf_format(prn);
     char s[16];
     int rows = gretl_matrix_rows(jv->Beta);
@@ -618,8 +599,8 @@ print_VECM_coint_eqns (JohansenInfo *jv,
     for (i=0; i<rows; i++) {
 	char vname[32];
 
-	if (i < jv->list[0]) {
-	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
+	if (i < jvar->ylist[0]) {
+	    sprintf(vname, "%s(-1)", pdinfo->varname[jvar->ylist[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
 	    strcpy(vname, "const");
 	} else if (jv->code == J_REST_TREND) {
@@ -671,7 +652,7 @@ print_VECM_coint_eqns (JohansenInfo *jv,
 static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
     int rtf = rtf_format(prn);
-    int *list = jvar->jinfo->list;
+    int *list = jvar->ylist;
     char s[32];
     int i, j;
 
@@ -885,7 +866,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (tex_format(prn)) {
 	    tex_print_VECM_coint_eqns(var, pdinfo, prn);
 	} else {
-	    print_VECM_coint_eqns(var->jinfo, pdinfo, prn);
+	    print_VECM_coint_eqns(var, pdinfo, prn);
 	}
     }
 

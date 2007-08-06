@@ -219,6 +219,9 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 
 int gretl_model_get_depvar (const MODEL *pmod);
 
+const char *gretl_model_get_depvar_name (const MODEL *pmod,
+					 const DATAINFO *pdinfo);
+
 int *gretl_model_get_x_list (const MODEL *pmod);
 
 int arma_model_nonseasonal_AR_order (const MODEL *pmod);
