@@ -1947,8 +1947,8 @@ static int do_single_equation_test (gretl_restriction_set *rset,
 
 GRETL_VAR *
 gretl_restricted_vecm (gretl_restriction_set *rset, 
-		       double ***pZ,
-		       DATAINFO *pdinfo,
+		       const double **Z,
+		       const DATAINFO *pdinfo,
 		       PRN *prn,
 		       int *err)
 {
@@ -1964,7 +1964,7 @@ gretl_restricted_vecm (gretl_restriction_set *rset,
     *err = restriction_set_form_matrices(rset);
 
     if (!*err) {
-	jvar = real_gretl_restricted_vecm(rset->obj, rset, pZ, pdinfo, 
+	jvar = real_gretl_restricted_vecm(rset->obj, rset, Z, pdinfo, 
 					  prn, err);
     }
 

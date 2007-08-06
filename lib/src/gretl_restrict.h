@@ -45,8 +45,8 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 
 GRETL_VAR *
 gretl_restricted_vecm (gretl_restriction_set *rset, 
-		       double ***pZ,
-		       DATAINFO *pdinfo,
+		       const double **Z,
+		       const DATAINFO *pdinfo,
 		       PRN *prn,
 		       int *err);
 

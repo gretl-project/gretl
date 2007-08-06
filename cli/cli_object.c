@@ -136,7 +136,8 @@ static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr,
 	return err;
     }
 
-    var = gretl_VAR_omit_test(mycmd.list, orig, pZ, pdinfo, prn, &err);
+    var = gretl_VAR_omit_test(mycmd.list, orig, (const double **) *pZ, 
+			      pdinfo, prn, &err);
     gretl_VAR_free(var);
 
     if (err) {

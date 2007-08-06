@@ -27,11 +27,11 @@
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
 GRETL_VAR *gretl_VAR (int order, int *list, 
-		      double ***pZ, DATAINFO *pdinfo,
+		      const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, int *err);
 
 GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
-		       double ***pZ, DATAINFO *pdinfo,
+		       const double **Z, const DATAINFO *pdinfo,
 		       gretlopt opt, PRN *prn, int *err);
 
 const gretl_matrix *
@@ -62,7 +62,7 @@ void set_VAR_model_stats (MODEL *pmod, const gretl_matrix *E,
 const int *gretl_VAR_get_exo_list (const GRETL_VAR *var);
 
 GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
-				double ***pZ, DATAINFO *pdinfo, 
+				const double **Z, DATAINFO *pdinfo, 
 				PRN *prn, int *err);
 
 void gretl_VAR_free (GRETL_VAR *var);
@@ -112,7 +112,7 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 
 			    const gretl_restriction_set *rset,
-			    double ***pZ, DATAINFO *pdinfo, 
+			    const double **Z, const DATAINFO *pdinfo, 
 			    PRN *prn, int *err);
 
 int gretl_VECM_rank (const GRETL_VAR *vecm);

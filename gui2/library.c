@@ -757,7 +757,8 @@ int do_coint (selector *sr)
 	}
 	err = coint(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     } else {
-	jvar = johansen_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	jvar = johansen_test(order, libcmd.list, (const double **) Z, 
+			     datainfo, libcmd.opt, prn);
 	if ((err = jvar->err)) {
 	    gretl_VAR_free(jvar);
 	}
@@ -1510,7 +1511,8 @@ int do_VAR_omit (selector *sr)
     if (omitlist == NULL) {
 	err = E_ALLOC;
     } else {
-	var = gretl_VAR_omit_test(omitlist, orig, &Z, datainfo, prn, &err);
+	var = gretl_VAR_omit_test(omitlist, orig, (const double **) Z, 
+				  datainfo, prn, &err);
     }
 
     if (err) {
@@ -2242,7 +2244,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     if (bufopen(&prn)) return; 
 
     if (opt & OPT_F) {
-	vnew = gretl_restricted_vecm(my_rset, &Z, datainfo, prn, &err);
+	vnew = gretl_restricted_vecm(my_rset, (const double **) Z, 
+				     datainfo, prn, &err);
     } else {
 	err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
 					     datainfo, OPT_NONE, prn);
@@ -2917,22 +2920,24 @@ int do_vector_model (selector *sr)
 
     if (action == VAR && !(libcmd.opt & OPT_L)) {
 	/* regular VAR, not VAR lag selection */
-	var = gretl_VAR(order, libcmd.list, &Z, datainfo, libcmd.opt, prn, &err);
+	var = gretl_VAR(order, libcmd.list, (const double **) Z, 
+			datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
 	}
     } else if (action == VAR) {
 	/* VAR lag selection */
-	gretl_VAR(order, libcmd.list, &Z, datainfo, libcmd.opt, prn, &err);
+	gretl_VAR(order, libcmd.list, (const double **) Z, 
+		  datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 
 			PRINT, NULL);
 	}	
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	var = gretl_VECM(order, libcmd.aux, libcmd.list, &Z, datainfo, 
-			 libcmd.opt, prn, &err);
+	var = gretl_VECM(order, libcmd.aux, libcmd.list, (const double **) Z, 
+			 datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}

@@ -298,7 +298,7 @@ static int
 re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock, 
 		  int iter, int scount)
 {
-    static int (*jbr) (GRETL_VAR *, double ***, DATAINFO *, int) = NULL;
+    static int (*jbr) (GRETL_VAR *, double **, DATAINFO *, int) = NULL;
     static void *handle = NULL;
     int err = 0;
 
@@ -314,12 +314,13 @@ re_estimate_VECM (irfboot *boot, GRETL_VAR *jvar, int targ, int shock,
 
     if (!err) {
 	/* FIXME restricted vecm */
-	err = johansen_driver(jvar, NULL, &boot->Z, boot->dinfo, boot->opt, NULL);
+	err = johansen_driver(jvar, NULL, (const double **) boot->Z, 
+			      boot->dinfo, boot->opt, NULL);
     }
 
     if (!err) {
 	/* call the plugin function */
-	err = jbr(jvar, &boot->Z, boot->dinfo, iter);
+	err = jbr(jvar, (const double **) boot->Z, boot->dinfo, iter);
     }
 
     if (!err) {   
@@ -966,6 +967,7 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 {
     GRETL_VAR *jvar = NULL;
     gretl_matrix *R;
+    int *list = NULL; /* FIXME */
     irfboot boot;
     int scount = 0;
     int iter, err = 0;
@@ -992,12 +994,10 @@ static gretl_matrix *irf_bootstrap (const GRETL_VAR *var,
 	    err = E_ALLOC;
 	}
 	if (!err) {
-	    jvar = johansen_VAR_prepare(boot.order + 1, boot.rank, 
-					boot.lists[0], boot.lists[1],
-					&boot.Z, boot.dinfo, boot.opt);
-	    if (jvar == NULL) {
-		err = E_ALLOC;
-	    } else {
+	    jvar = johansen_VAR_new(boot.rank, boot.order + 1, list, 
+				    (const double **) boot.Z, 
+				    boot.dinfo, boot.opt, &err);
+	    if (jvar != NULL) {
 		err = jvar->err;
 	    }
 	}

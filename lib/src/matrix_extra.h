@@ -61,4 +61,6 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 			    const double **Z, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX);
 
+int gretl_matrix_delete_columns (gretl_matrix *X, int *list);
+
 #endif /* MATRIX_EXTRA_H */

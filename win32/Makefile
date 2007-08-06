@@ -190,7 +190,8 @@ LIBSRC = adf_kpss.c \
 	tsls.c \
         usermat.c \
 	var.c \
-	varprint.c 
+	varprint.c \
+	vartest.c 
 
 LIBOBJ = $(LIBSRC:.c=.o)
 

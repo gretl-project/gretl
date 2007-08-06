@@ -3372,7 +3372,8 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
 	/* FIXME non-vecm case */
-	s->var = gretl_restricted_vecm(s->rset, pZ, pdinfo, prn, &err);
+	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
+				       pdinfo, prn, &err);
 	if (s->var != NULL) {
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
@@ -3454,8 +3455,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case COINT2:
-	err = johansen_test_simple(cmd->order, cmd->list, pZ, pdinfo, 
-				   cmd->opt, prn);
+	err = johansen_test_simple(cmd->order, cmd->list, (const double **) *pZ, 
+				   pdinfo, cmd->opt, prn);
 	break;
 
     case CORR:
@@ -4143,11 +4144,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case VAR:
     case VECM:
 	if (cmd->ci == VAR) {
-	    s->var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
-			       prn, &err);
+	    s->var = gretl_VAR(cmd->order, cmd->list, (const double **) *pZ, 
+			       pdinfo, cmd->opt, prn, &err);
 	} else {
-	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, pZ, pdinfo, 
-				cmd->opt, prn, &err);
+	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, (const double **) *pZ,
+				pdinfo, cmd->opt, prn, &err);
 	}
 	if (s->var != NULL) {
 	    if (s->callback != NULL) {

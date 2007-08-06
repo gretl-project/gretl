@@ -668,3 +668,36 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 
     return err;
 }
+
+/* delete the columns of X specified in @list */
+
+int gretl_matrix_delete_columns (gretl_matrix *X, int *list)
+{
+    size_t csz = X->rows * sizeof *X->val;
+    void *dest, *src;
+    int i, j, n, col;
+
+    for (i=1; i<=list[0]; i++) {
+	col = list[i];
+	if (col < 0 || col >= X->cols) {
+	    return E_NONCONF;
+	}
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	col = list[i];
+	dest = X->val + col * X->rows;
+	src = X->val + (col + 1) * X->rows;
+	n = X->cols - col - 1;
+	if (n > 0) {
+	    memmove(dest, src, n * csz);
+	}
+	for (j=i+1; j<=list[0]; j++) {
+	    list[j] -= 1;
+	}
+    }
+
+    X->cols -= list[0];
+
+    return 0;
+}

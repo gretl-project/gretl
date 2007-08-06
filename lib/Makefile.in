@@ -191,7 +191,8 @@ SRCS = adf_kpss.c \
 	tsls.c \
 	usermat.c \
 	var.c \
-	varprint.c 
+	varprint.c \
+	vartest.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \

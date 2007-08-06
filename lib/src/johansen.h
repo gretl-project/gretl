@@ -76,6 +76,12 @@ struct GRETL_VAR_ {
     int *ylist;          /* list of stochastic vars */
     int *xlist;          /* list of exogenous variables */
     int detflags;        /* record of automatic deterministic vars added */
+    int robust;          /* computing robust std errors? */
+    int qr;              /* using QR decomposition? */
+    gretl_matrix *Y;     /* matrix of dependent variables */
+    gretl_matrix *X;     /* matrix of independent variables */
+    gretl_matrix *B;     /* basic coefficient matrix */
+    gretl_matrix *XTX;   /* X'X */
     gretl_matrix *A;       /* augmented coefficient matrix (companion form) */
     gretl_matrix *lambda;  /* inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
@@ -101,10 +107,12 @@ struct GRETL_VAR_ {
 #define jcode(v) (v->jinfo->code)
 #define jrank(v) (v->jinfo->rank)
 
-GRETL_VAR *johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+GRETL_VAR *johansen_test (int order, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn);
 
-int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
+int johansen_test_simple (int order, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn);
 
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
