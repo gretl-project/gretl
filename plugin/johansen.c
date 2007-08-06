@@ -142,8 +142,8 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 }
 
 /* Remove a possible excess zero from the end of a floating point
-   number printed to the given precision p: are we working around
-   a bug in the C library?
+   number printed to the given precision p (working around a bug 
+   in the C library).
 */
 
 static void fix_xstr (char *s, int p)
@@ -370,50 +370,19 @@ static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
 
 /* \Pi, as will be used in forming the VAR representation */
 
-static int form_Pi (GRETL_VAR *v, gretl_matrix *Pi)
+static void form_Pi (GRETL_VAR *v, gretl_matrix *Pi)
 {
-    const gretl_matrix *alpha = v->jinfo->Alpha;
-    gretl_matrix *beta = v->jinfo->Beta;
-    int rank = jrank(v);
-    int err = 0, freeit = 0;
-
-    if (gretl_matrix_rows(beta) > v->neqns) {
-	beta = gretl_matrix_alloc(v->neqns, rank);
-	if (beta == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    double x;
-	    int i, j;
-
-	    for (i=0; i<v->neqns; i++) {
-		for (j=0; j<rank; j++) {
-		    x = gretl_matrix_get(v->jinfo->Beta, i, j);
-		    gretl_matrix_set(beta, i, j, x);
-		}
-	    }
-	    freeit = 1;
-	}
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_mod(alpha, GRETL_MOD_NONE,
-				  beta, GRETL_MOD_TRANSPOSE,
-				  Pi, GRETL_MOD_NONE);
-    }
-
-    if (freeit) {
-	gretl_matrix_free(beta);
-    }
-
-    return err;
+    gretl_matrix_multiply_mod(v->jinfo->Alpha, GRETL_MOD_NONE,
+			      v->jinfo->Beta, GRETL_MOD_TRANSPOSE,
+			      Pi, GRETL_MOD_NONE);
 }
 
 /* After doing OLS estimation of the VECM conditional on \beta:
    copy the coefficients on the EC terms (\beta' X) into the \alpha
-   matrix, and form the matrix \Pi = \alpha \beta'.
+   matrix.
 */
 
-static int make_alpha_and_Pi (GRETL_VAR *v, gretl_matrix **Pi)
+static int copy_to_alpha (GRETL_VAR *v)
 {
     int rank = v->jinfo->rank;
     int pos = v->ncoeff - rank;
@@ -427,13 +396,6 @@ static int make_alpha_and_Pi (GRETL_VAR *v, gretl_matrix **Pi)
 	}
     }
 
-    if (*Pi == NULL) {
-	*Pi = gretl_matrix_alloc(v->neqns, v->neqns);
-	if (*Pi == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
     for (i=0; i<v->neqns; i++) {
 	for (j=0; j<rank; j++) {
 	    x = gretl_matrix_get(v->B, pos + j, i);
@@ -441,7 +403,7 @@ static int make_alpha_and_Pi (GRETL_VAR *v, gretl_matrix **Pi)
 	}
     }
 
-    return form_Pi(v, *Pi);
+    return 0;
 }
 
 /* VAR representation: transcribe the coefficient matrix A_i (for lag
@@ -665,11 +627,9 @@ static int make_vecm_models_Y (GRETL_VAR *v, const double **Z,
 	err = compute_alpha(v->jinfo);
 	if (err) {
 	    return err;
-	} 
+	}
 
-	gretl_matrix_multiply_mod(v->jinfo->Alpha, GRETL_MOD_NONE,
-				  v->jinfo->Beta, GRETL_MOD_TRANSPOSE,
-				  Pi, GRETL_MOD_NONE);
+	form_Pi(v, Pi);
 
 	/* form "Y" = DY_t - \Pi Y*_t */
 	for (i=0; i<v->neqns; i++) {
@@ -731,11 +691,9 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 
     nc = v->ncoeff;
 
-    if (!err && flag == NET_OUT_ALPHA) {
-	Pi = gretl_matrix_alloc(n, beta->rows);
-	if (Pi == NULL) {
-	    err = E_ALLOC;
-	}
+    Pi = gretl_matrix_alloc(n, beta->rows);
+    if (Pi == NULL) {
+	err = E_ALLOC;
     }
 
     if (!err && nc > 0) {
@@ -778,11 +736,18 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!err && flag == ESTIMATE_ALPHA) {
-	err = make_alpha_and_Pi(v, &Pi);
+	err = copy_to_alpha(v);
+	if (!err) {
+	    form_Pi(v, Pi);
+	}
     }
 
     if (err) {
 	goto bailout;
+    }
+
+    if (Pi->cols > n) {
+	gretl_matrix_reuse(Pi, -1, n);
     }
 
     if (order == 0) {
