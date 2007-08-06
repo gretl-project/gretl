@@ -1910,7 +1910,7 @@ static int johansen_VAR (GRETL_VAR *jvar,
 {
     int err;
 
-    err = make_data_matrices(jvar, Z, pdinfo);
+    err = make_data_matrices(jvar, Z, pdinfo); /* placement? */
     if (err) {
 	goto var_bailout;
     }    
@@ -2230,18 +2230,6 @@ johansen_driver (GRETL_VAR *jvar,
 	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
 				  jvar->jinfo->R1, GRETL_MOD_NONE,
 				  jvar->jinfo->S01, GRETL_MOD_NONE);
-
-#if 0
-	gretl_matrix *S10 = 
-	    gretl_matrix_alloc(jvar->jinfo->R1->cols,
-			       jvar->jinfo->R0->cols);
-	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->R0, GRETL_MOD_NONE,
-				  S10, GRETL_MOD_NONE);
-	gretl_matrix_print(jvar->jinfo->S01, "S01");
-	gretl_matrix_print(S10, "S10");
-	gretl_matrix_free(S10);
-#endif
 
 	gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
 	gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
