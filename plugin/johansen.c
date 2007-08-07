@@ -522,6 +522,8 @@ static int vecm_check_size (GRETL_VAR *v, int flag)
     int err = 0;
 
     if (flag == ESTIMATE_ALPHA) {
+	fprintf(stderr, "vecm_check_size: ncoeff: %d -> %d\n",
+		v->ncoeff, v->ncoeff + jrank(v));
 	v->ncoeff += jrank(v);
     } else if (v->ncoeff == 0) {
 	return 0;
@@ -1168,11 +1170,18 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     }
     if (vecm->xlist != NULL) {
 	k += vecm->xlist[0];
-    }    
+    } 
+
+    /* FIXME */
 
 #if 0
-    /* This replicates what we had before: can it be right? */
-    k = vecm->ncoeff + 3;
+    fprintf(stderr, "k=%d; vecm->ncoeff=%d\n", k, vecm->ncoeff);
+#endif
+
+#if 1
+    /* This doesn't agree with what we had before: 
+       but what's wrong with it? */
+    k = vecm->ncoeff;
 #endif
 
     /* FIXME: is k right (in all cases)? */
