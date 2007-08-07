@@ -166,6 +166,10 @@ struct _gretl_matrix {
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
 
+int get_gretl_matrix_err (void);
+
+void clear_gretl_matrix_err (void);
+
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 
 int gretl_matrix_is_idempotent (const gretl_matrix *m);

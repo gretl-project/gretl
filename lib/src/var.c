@@ -27,21 +27,13 @@
 #include "transforms.h"
 #include "gretl_xml.h"
 
-#define VAR_DEBUG 0
-#define BDEBUG    0  /* for debugging bootstrap IRFs */
-
-static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
-				    int targ, int shock, int periods,
-				    const double **Z, 
-				    const DATAINFO *pdinfo);
-
-static gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
+#define VDEBUG 0
 
 static int make_VAR_global_lists (GRETL_VAR *var);
 
 static gretlopt opt_from_jcode (JohansenCode jc);
 
-static int gretl_VAR_add_models (GRETL_VAR *var)
+static int VAR_add_models (GRETL_VAR *var)
 {
     int n = var->neqns;
     int i, err = 0;
@@ -119,22 +111,24 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
     return err;
 }
 
-static void gretl_VAR_zero (GRETL_VAR *var)
+void gretl_VAR_clear (GRETL_VAR *var)
 {
+    var->ci = 0;
+    var->refcount = 0;
     var->err = 0;
-    var->ifc = 0;
-    var->ncoeff = 0;
+    var->neqns = var->order = 0;
     var->t1 = var->t2 = var->T = 0;
+    var->ifc = var->ncoeff = 0;
+    var->ecm = var->detflags = 0;
+    var->robust = var->qr = 0;
 
     var->ylist = NULL;
     var->xlist = NULL;
-    var->detflags = 0;
 
     var->Y = NULL;
     var->X = NULL;
     var->B = NULL;
     var->XTX = NULL;
-    
     var->A = NULL;
     var->lambda = NULL;
     var->E = NULL;
@@ -145,11 +139,12 @@ static void gretl_VAR_zero (GRETL_VAR *var)
     var->models = NULL;
     var->Fvals = NULL;
     var->Ivals = NULL;
-    var->name = NULL;
 
-    var->ll = var->ldet = NADBL;
+    var->ll = var->ldet = var->LR = NADBL;
     var->AIC = var->BIC = var->HQC = NADBL;
-    var->LR = NADBL;
+
+    var->jinfo = NULL;
+    var->name = NULL;
 }
 
 /* split the user-supplied list, if need be, and construct
@@ -369,16 +364,11 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
 	return NULL;
     }
 
+    gretl_VAR_clear(var);
+
     var->ci = ci;
-    var->refcount = 0;
-
-    var->neqns = 0;
     var->order = order;
-    var->robust = 0;
-
     var->ecm = (ci == VECM);
-    gretl_VAR_zero(var);
-    var->jinfo = NULL;
 
     var->qr = get_use_qr();
     if (ci == VAR && (opt & OPT_R)) {
@@ -422,7 +412,7 @@ static GRETL_VAR *gretl_VAR_new (int ci, int order,
     }
 
     if (!err) {
-	err = gretl_VAR_add_models(var);
+	err = VAR_add_models(var);
     }
 
     if (!err && var->ci == VAR) {
@@ -902,7 +892,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     for (t=0; t<var->T; t++) {
 	u = gretl_matrix_get(var->E, t, i);
 	SSR += u * u;
-	x = y[t] - pmod->ybar;
+	x = (var->ifc)? y[t] - pmod->ybar : y[t];
 	TSS += x * x;
 	pmod->uhat[t + pmod->t1] = u;
 	pmod->yhat[t + pmod->t1] = y[t] - u;
@@ -1776,35 +1766,6 @@ GRETL_VAR *gretl_VAR (int order, int *list,
     return var;
 }
 
-static int allocate_johansen_sigmas (JohansenInfo *jv)
-{
-    int k = jv->R0->cols;
-    int vk = k;
-    int err = 0;
-
-    if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
-	vk++;
-    }    
-
-    jv->S00 = gretl_matrix_alloc(k, k);
-    jv->S11 = gretl_matrix_alloc(vk, vk);
-    jv->S01 = gretl_matrix_alloc(k, vk);
-
-    if (jv->S00 == NULL || jv->S11 == NULL || jv->S01 == NULL) {
-	gretl_matrix_free(jv->S00);
-	gretl_matrix_free(jv->S11);
-	gretl_matrix_free(jv->S01);
-	
-	jv->S00 = NULL;
-	jv->S11 = NULL;
-	jv->S01 = NULL;
-
-	err = E_ALLOC;
-    } 
-
-    return err;
-}
-
 static void 
 print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 {
@@ -1925,33 +1886,27 @@ johansen_estimate_complete (GRETL_VAR *jvar,
 }
 
 static int 
-allocate_johansen_residual_matrices (GRETL_VAR *jvar)
+allocate_johansen_residual_matrices (GRETL_VAR *v)
 {
-    int n = jvar->neqns;
-    int err = 0;
+    int p = v->neqns;
+    int p1 = p + restricted(v);
 
-    if (jvar->jinfo->R0 == NULL) {
-	jvar->jinfo->R0 = gretl_matrix_alloc(jvar->T, n);
-	if (jvar->jinfo->R0 == NULL) {
-	    return E_ALLOC;
-	}
+    clear_gretl_matrix_err();
+
+    /* N.B. allow for the possibility that this has already been done */
+
+    if (v->jinfo->R0 == NULL) {
+	v->jinfo->R0 = gretl_matrix_alloc(v->T, p);
+	v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
     }
 
-    if (restricted(jvar)) {
-	n++;
+    if (v->jinfo->S00 == NULL) {
+	v->jinfo->S00 = gretl_matrix_alloc(p, p);
+	v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
+	v->jinfo->S01 = gretl_matrix_alloc(p, p1);
     }
 
-    if (gretl_matrix_cols(jvar->jinfo->R1) < n) {
-	gretl_matrix_free(jvar->jinfo->R1);
-	jvar->jinfo->R1 = gretl_matrix_alloc(jvar->T, n);
-	if (jvar->jinfo->R1 == NULL) {
-	    gretl_matrix_free(jvar->jinfo->R0);
-	    jvar->jinfo->R0 = NULL;
-	    err = E_ALLOC;
-	}
-    }
-
-    return err;
+    return get_gretl_matrix_err();
 }
 
 static void johansen_degenerate_stage_1 (GRETL_VAR *v, 
@@ -1982,11 +1937,12 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 /* For Johansen analysis: estimate VAR in differences along with the
    other auxiliary regressions required to compute the relevant
    matrices of residuals, for concentration of the log-likelihood.
+   Then compute S00, S11, S01.
 */
 
-static int johansen_VAR (GRETL_VAR *jvar, 
-			 const double **Z, const DATAINFO *pdinfo,
-			 gretlopt opt, PRN *prn)
+int johansen_stage_1 (GRETL_VAR *jvar, 
+		      const double **Z, const DATAINFO *pdinfo,
+		      gretlopt opt, PRN *prn)
 {
     int restr = restricted(jvar);
     int err;
@@ -1999,7 +1955,7 @@ static int johansen_VAR (GRETL_VAR *jvar,
     if (jvar->ncoeff == 0) {
 	/* nothing to concentrate out */
 	johansen_degenerate_stage_1(jvar, Z);
-	return 0;
+	goto finish;
     }
 
     if (restr) {
@@ -2047,8 +2003,24 @@ static int johansen_VAR (GRETL_VAR *jvar,
 	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
     }
 
-#if VAR_DEBUG
-    fprintf(stderr, "johansen_VAR: returning err = %d\n", err);
+ finish:
+
+    gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      jvar->jinfo->R0, GRETL_MOD_NONE,
+			      jvar->jinfo->S00, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
+			      jvar->jinfo->R1, GRETL_MOD_NONE,
+			      jvar->jinfo->S11, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      jvar->jinfo->R1, GRETL_MOD_NONE,
+			      jvar->jinfo->S01, GRETL_MOD_NONE);
+
+    gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
+    gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
+    gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
+
+#if VDEBUG
+    fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);
 #endif    
 
     return err;
@@ -2097,17 +2069,16 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 	return NULL;
     }
 
-    jv->code = jcode_from_opt(opt);
-
     jv->ID = 0;
+    jv->code = jcode_from_opt(opt);
+    jv->rank = rank;
+    jv->seasonals = 0;
 
     jv->R0 = NULL;
     jv->R1 = NULL;
-
     jv->S00 = NULL;
     jv->S11 = NULL;
     jv->S01 = NULL;
-
     jv->Beta = NULL;
     jv->Alpha = NULL;
     jv->Bse = NULL;
@@ -2119,9 +2090,6 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 
     jv->ll0 = NADBL;
     jv->bdf = 0;
-
-    jv->rank = rank;
-    jv->seasonals = 0;
 
     return jv;
 }
@@ -2152,6 +2120,10 @@ johansen_VAR_new (int rank, int order, const int *list,
 	return NULL;
     }
 
+    if (var->detflags & DET_SEAS) {
+	var->jinfo->seasonals = pdinfo->pd - 1;
+    }
+
     return var;
 }
 
@@ -2167,71 +2139,49 @@ johansen_driver (GRETL_VAR *jvar,
 {
     PRN *varprn = (opt & OPT_V)? prn : NULL;
     
-    /* estimate the equations in first differences, plus the
-       equations in first lag of levels */
-    jvar->err = johansen_VAR(jvar, Z, pdinfo, opt, varprn); 
-
-    if (jvar->jinfo->S00 == NULL && !jvar->err) {
-	jvar->err = allocate_johansen_sigmas(jvar->jinfo);
+    jvar->err = johansen_stage_1(jvar, Z, pdinfo, opt, varprn); 
+    if (jvar->err) {
+	return jvar->err;
     }
 
+    if (jrank(jvar) == 0) {
+	char stobs[OBSLEN], endobs[OBSLEN];
+
+	pprintf(prn, "%s:\n", _("Johansen test"));
+	pprintf(prn, "%s = %d\n", _("Number of equations"), jvar->neqns);
+	pprintf(prn, "%s = %d\n", _("Lag order"), jvar->order + 1);
+	pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
+		ntodate(stobs, jvar->t1, pdinfo), 
+		ntodate(endobs, jvar->t2, pdinfo), jvar->T);
+    }
+
+    if (opt & OPT_V) {
+	print_johansen_sigmas(jvar->jinfo, prn);
+    }
+
+    if (jrank(jvar) > 0) {
+	/* estimating VECM, not just doing cointegration test */
+	jvar->err = VAR_add_models(jvar);
+	if (!jvar->err) {
+	    jvar->err = VAR_add_companion_matrix(jvar);
+	}
+	if (!jvar->err) {
+	    jvar->err = VAR_add_cholesky_matrix(jvar);
+	}
+	if (!jvar->err) {
+	    jvar->err = VAR_add_residuals_matrix(jvar);
+	}	    
+    }
+
+    /* Now get the johansen plugin to finish the job */
     if (!jvar->err) {
-	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->R0, GRETL_MOD_NONE,
-				  jvar->jinfo->S00, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->R1, GRETL_MOD_NONE,
-				  jvar->jinfo->S11, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
-				  jvar->jinfo->R1, GRETL_MOD_NONE,
-				  jvar->jinfo->S01, GRETL_MOD_NONE);
-
-	gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
-	gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
-	gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
-
-	if (jrank(jvar) == 0) {
-	    char stobs[OBSLEN], endobs[OBSLEN];
-
-	    pprintf(prn, "%s:\n", _("Johansen test"));
-	    pprintf(prn, "%s = %d\n", _("Number of equations"), jvar->neqns);
-	    pprintf(prn, "%s = %d\n", _("Lag order"), jvar->order + 1);
-	    pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
-		    ntodate(stobs, jvar->t1, pdinfo), 
-		    ntodate(endobs, jvar->t2, pdinfo), jvar->T);
-	}
-
-	if (opt & OPT_V) {
-	    print_johansen_sigmas(jvar->jinfo, prn);
-	}
-
 	if (jrank(jvar) > 0) {
-	    /* estimating VECM, not just doing cointegration test */
-	    jvar->err = gretl_VAR_add_models(jvar);
-	    if (!jvar->err) {
-		jvar->err = VAR_add_companion_matrix(jvar);
-	    }
-	    if (!jvar->err) {
-		jvar->err = VAR_add_cholesky_matrix(jvar);
-	    }
-	    if (!jvar->err) {
-		jvar->err = VAR_add_residuals_matrix(jvar);
-	    }	    
+	    jvar->err = johansen_estimate_complete(jvar, rset, Z, pdinfo, 
+						   opt, prn);
+	} else {
+	    jvar->err = johansen_test_complete(jvar, pdinfo, opt, prn);
 	}
-
-	/* Now get the johansen plugin to finish the job, unless we're
-	   bootstrapping IRFs (OPT_B), in which case that is handled
-	   by the special code in irfboot.c
-	*/
-	if (!jvar->err && !(opt & OPT_B)) {
-	    if (jrank(jvar) > 0) {
-		jvar->err = johansen_estimate_complete(jvar, rset, Z, pdinfo, 
-						       opt, prn);
-	    } else {
-		jvar->err = johansen_test_complete(jvar, pdinfo, opt, prn);
-	    }
-	}
-    } 
+    }
 
     return jvar->err;
 }
@@ -2794,15 +2744,7 @@ static GRETL_VAR *gretl_VAR_rebuilder_new (void)
 	return NULL;
     }
 
-    var->ci = 0;
-    var->refcount = 0;
-    var->neqns = 0;
-    var->order = 0;
-    var->ecm = 0;
-
-    gretl_VAR_zero(var);
-
-    var->jinfo = NULL;
+    gretl_VAR_clear(var);
 
     return var;
 }
@@ -2812,7 +2754,6 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 {
     xmlNodePtr cur = node->xmlChildrenNode;
     JohansenInfo *jinfo;
-    int *list = NULL;
     int ID, code, rank;
     int seas;
     int got = 0;
@@ -2825,25 +2766,6 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 
     if (got != 4) {
 	return E_DATA;
-    }
-
-    got = 0;
-
-    while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "list")) {
-	    list = gretl_xml_node_get_list(cur, doc, &err);
-	    got = 1;
-	    break;
-	} 
-	cur = cur->next;
-    }
-
-    if (!err && !got) {
-	err = E_DATA;
-    }
-
-    if (err) {
-	return err;
     }
 
     jinfo = johansen_info_new(var, rank, OPT_NONE);
@@ -3176,4 +3098,3 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
-#include "irfboot.c"

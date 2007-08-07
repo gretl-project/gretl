@@ -191,7 +191,8 @@ LIBSRC = adf_kpss.c \
         usermat.c \
 	var.c \
 	varprint.c \
-	vartest.c 
+	vartest.c \
+	irfboot.c
 
 LIBOBJ = $(LIBSRC:.c=.o)
 

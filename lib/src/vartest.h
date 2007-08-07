@@ -28,8 +28,14 @@ enum Detflags {
     DET_SEAS  = 1 << 2
 };
 
+void gretl_VAR_clear (GRETL_VAR *var);
+
 void fill_VAR_X (GRETL_VAR *v, int p, const double **Z, 
 		 const DATAINFO *pdinfo);
+
+int johansen_stage_1 (GRETL_VAR *jvar, 
+		      const double **Z, const DATAINFO *pdinfo,
+		      gretlopt opt, PRN *prn);
 
 double gretl_VAR_ldet (GRETL_VAR *var, int *err);
 
@@ -41,5 +47,12 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
 		   const DATAINFO *pdinfo, PRN *prn);
 
 int VAR_wald_omit_tests (GRETL_VAR *var, int ifc);
+
+gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var);
+
+gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
+			     int targ, int shock, int periods,
+			     const double **Z, 
+			     const DATAINFO *pdinfo);
 
 #endif /* VARTEST_H_ */

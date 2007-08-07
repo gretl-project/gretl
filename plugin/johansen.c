@@ -86,7 +86,6 @@ const double s_mMaxev_v_coef[5][5] = {
   {2.0899,     -5.3303,     -7.1523,    -0.25260,      12.393}
 }; 
 
-
 static int
 gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det, 
 		 int N, double *pval)
@@ -604,7 +603,7 @@ static int add_EC_terms_to_X (GRETL_VAR *v, const double **Z)
 }
 
 /* preparing for OLS conditional on beta: construct the
-   appropriate dependent variable matrix */
+   appropriate dependent variable matrix, Y */
 
 static int make_vecm_models_Y (GRETL_VAR *v, const double **Z, 
 			       gretl_matrix *Pi, int flag)
@@ -624,6 +623,7 @@ static int make_vecm_models_Y (GRETL_VAR *v, const double **Z,
 	    }
 	}
     } else {
+	/* netting out \alpha: "Y" = DY_t - \Pi Y*_t */
 	int j, p1 = v->jinfo->Beta->rows;
 
 	err = compute_alpha(v->jinfo);
@@ -633,7 +633,6 @@ static int make_vecm_models_Y (GRETL_VAR *v, const double **Z,
 
 	form_Pi(v, Pi);
 
-	/* form "Y" = DY_t - \Pi Y*_t */
 	for (i=0; i<v->neqns; i++) {
 	    vi = v->ylist[i+1];
 	    s = 0;
@@ -1162,6 +1161,9 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     gretl_matrix_free(S);
 
     k += vecm->jinfo->seasonals;
+
+    /* FIXME: is the following right for k? */
+
     if (jcode(vecm) >= J_UNREST_CONST) {
 	k++;
     }
@@ -1172,23 +1174,11 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
 	k += vecm->xlist[0];
     } 
 
-    /* FIXME */
-
-#if 0
-    fprintf(stderr, "k=%d; vecm->ncoeff=%d\n", k, vecm->ncoeff);
-#endif
-
-#if 1
-    /* This doesn't agree with what we had before: 
-       but what's wrong with it? */
-    k = vecm->ncoeff;
-#endif
-
-    /* FIXME: is k right (in all cases)? */
+    k *= g;
     
-    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * g) / T;
-    vecm->BIC = (-2.0 * vecm->ll + log(T) * k * g) / T;
-    vecm->HQC = (-2.0 * vecm->ll + 2.0 * log(log(T)) * k * g) / T;
+    vecm->AIC = (-2.0 * vecm->ll + 2.0 * k) / T;
+    vecm->BIC = (-2.0 * vecm->ll + log(T) * k) / T;
+    vecm->HQC = (-2.0 * vecm->ll + 2.0 * log(log(T)) * k) / T;
 
     return 0;
 }
@@ -1669,7 +1659,7 @@ int johansen_estimate (GRETL_VAR *jvar,
    generate the VAR representation.
 */
 
-/* FIXME case of restricted beta */
+/* FIXME case of restricted beta and/or alpha */
 
 int 
 johansen_boots_round (GRETL_VAR *jvar, const double **Z, 

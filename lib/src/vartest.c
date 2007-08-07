@@ -66,6 +66,56 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
+/* make and record residuals for LR test on last lag */
+
+int last_lag_LR_prep (GRETL_VAR *var, int ifc)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *B = NULL;
+    double x;
+    int g = var->ncoeff - var->neqns;
+    int lag, lmax;
+    int i, t, k, err = 0;
+
+    if (var->F == NULL) {
+	var->F = gretl_matrix_alloc(var->T, var->neqns);
+	if (var->F == NULL) {
+	    return E_ALLOC;
+	}
+    }   
+
+    X = gretl_matrix_alloc(var->T, g);
+    B = gretl_matrix_alloc(g, var->neqns);
+    if (X == NULL || B == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    lag = (ifc)? 0 : 1;
+    lmax = ifc + var->neqns * var->order;
+    k = 0;
+
+    for (i=0; i<var->ncoeff; i++) {
+	if (lag != var->order) {
+	    for (t=0; t<var->T; t++) {
+		x = gretl_matrix_get(var->X, t, i);
+		gretl_matrix_set(X, t, k, x);
+	    }
+	    k++;
+	}
+	lag = (i >= lmax)? 0 : (lag < var->order)? lag + 1 : 1;
+    }
+
+    err = gretl_matrix_multi_ols(var->Y, X, B, var->F, NULL);
+
+ bailout:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(B);
+
+    return err;
+}
+
 int VAR_LR_lag_test (GRETL_VAR *var)
 {
     double ldet;
@@ -94,42 +144,6 @@ int VAR_LR_lag_test (GRETL_VAR *var)
     /* we're done with this set of residuals */
     gretl_matrix_free(var->F);
     var->F = NULL;
-
-    return err;
-}
-
-/* make and record residuals for LR test, etc. */
-
-int last_lag_LR_prep (GRETL_VAR *var, int ifc)
-{
-    int *collist = NULL;
-    int g = var->ncoeff - var->neqns;
-    int i, err = 0;
-
-    if (var->F == NULL) {
-	var->F = gretl_matrix_alloc(var->T, var->neqns);
-	if (var->F == NULL) {
-	    return E_ALLOC;
-	}
-    }   
-
-    collist = gretl_list_new(var->neqns);
-    if (collist == NULL) {
-	return E_ALLOC;
-    }
-
-    collist[1] = ifc + var->order - 1;
-    for (i=2; i<=collist[0]; i++) {
-	collist[i] = collist[i-1] + var->order;
-    }
-
-    gretl_matrix_delete_columns(var->X, collist);
-    gretl_matrix_reuse(var->B, g, var->neqns);
-    err = gretl_matrix_multi_ols(var->Y, var->X, 
-				 var->B, var->F,
-				 NULL);
-
-    free(collist);
 
     return err;
 }

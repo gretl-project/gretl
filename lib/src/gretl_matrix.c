@@ -40,6 +40,31 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 #define SVD_SMIN 1.0e-9
 
+/* Central accounting for error in matrix allocation */
+
+static int gretl_matrix_err;
+
+/* get, and clear, the matrix error code */
+
+int get_gretl_matrix_err (void)
+{
+    int ret = gretl_matrix_err;
+    gretl_matrix_err = 0;
+    return ret;
+}
+
+void clear_gretl_matrix_err (void)
+{
+    gretl_matrix_err = 0;
+}
+
+static void set_gretl_matrix_err (int err)
+{
+    if (gretl_matrix_err == 0) {
+	gretl_matrix_err = err;
+    }
+}
+
 /* An efficient means of allocating temporary storage for lapack
    operations: this should be used _only_ for temporary allocations
    that would ordinarily be freed before returning from the function
@@ -105,6 +130,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 
     m = malloc(sizeof *m);
     if (m == NULL) {
+	set_gretl_matrix_err(E_ALLOC);
 	return m;
     }
 

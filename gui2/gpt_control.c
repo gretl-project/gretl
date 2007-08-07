@@ -838,6 +838,8 @@ static void catch_value (char *targ, const char *src, int maxlen)
 	}
     }    
 
+    /* valgrind finds uninitialised value in some cases here */
+
     if (targ[i] == '\'' || targ[i] == '"') {
 	targ[i] = '\0';
     }

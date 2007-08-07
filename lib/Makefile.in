@@ -100,6 +100,7 @@ PUBLIC_HDRS = \
 	gretl_www.h \
 	gretl_xml.h \
 	interact.h \
+	johansen.h \
 	kalman.h \
 	libgretl.h \
 	libset.h \
@@ -126,7 +127,8 @@ PUBLIC_HDRS = \
 	tsls.h \
 	usermat.h \
 	var.h \
-	varprint.h 
+	varprint.h \
+	vartest.h
 
 SRCS = adf_kpss.c \
 	bhhh_max.c \
@@ -192,7 +194,8 @@ SRCS = adf_kpss.c \
 	usermat.c \
 	var.c \
 	varprint.c \
-	vartest.c
+	vartest.c \
+	irfboot.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
