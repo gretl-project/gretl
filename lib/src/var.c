@@ -684,15 +684,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, vj, s, t;
-    int fcols, d0 = 0;
-
-    if (nseas > 0) {
-	/* find out where the seasonal dummies are */
-	d0 = dummy(NULL, pdinfo, 1);
-	if (d0 < 0) {
-	    return E_DATA;
-	}
-    }
+    int fcols;
 
     fcols = (staticfc)? var->neqns : 2 * var->neqns;
 
@@ -722,18 +714,18 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	    /* lags of endogenous vars */
 	    for (j=0; j<var->neqns; j++) {
 		vj = var->ylist[j+1];
-		for (k=0; k<order; k++) {
-		    if (t - k - 1 < 0) {
+		for (k=1; k<=order; k++) {
+		    if (t - k < 0) {
 			fti = NADBL;
 			break;
 		    }			
 		    bij = gretl_matrix_get(B, i, col++);
-		    ft = s - k - 1;
+		    ft = s - k;
 		    if (t >= t1 && ft >= 0 && !staticfc) {
 			/* use prior forecast if available */
 			y = gretl_matrix_get(F, ft, j);
 		    } else {
-			y = Z[vj][t-k-1];
+			y = Z[vj][t-k];
 		    }
 		    if (na(y)) {
 			fti = NADBL;
@@ -764,8 +756,11 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
+		/* FIXME: compute, don't read from Z */
 		bij = gretl_matrix_get(B, i, col++);
+#if 0
 		fti += bij * Z[d0+j][t];
+#endif
 	    }
 
 	    if (jcode(var) == J_UNREST_TREND) {
@@ -778,7 +773,7 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	    } else if (jcode(var) == J_REST_TREND) {
 		/* restricted trend */
 		bij = gretl_matrix_get(B, i, col);
-		fti += bij * t;
+		fti += bij * t; /* ?? */
 	    }
 	    
 	set_fcast:

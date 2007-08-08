@@ -49,6 +49,7 @@ struct irfboot_ {
     gretl_matrix *ctmp; /* temporary storage */
     gretl_matrix *resp; /* impulse response matrix */
     gretl_matrix *C0;   /* initial coefficient estimates (VECM only) */
+    gretl_matrix *Y;    /* levels of dependent vars (VECM only) */
     int *sample;        /* resampling array */
 };
 
@@ -69,6 +70,7 @@ static void irf_boot_free (irfboot *b)
     gretl_matrix_free(b->ctmp);
     gretl_matrix_free(b->resp);
     gretl_matrix_free(b->C0);
+    gretl_matrix_free(b->Y);
 
     free(b->sample);
     free(b);
@@ -509,6 +511,31 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 
 #if 0
 
+/* VECM: copy levels of Y vars from external dataset into
+   b->Y matrix
+*/
+
+static int init_VECM_dataset (irfboot *b, const GRETL_VAR *var,
+			      const double **Z)
+{
+    int i, vi, s, t;
+
+    b->Y = gretl_matrix_alloc(var->T, var->neqns);
+    if (b->Y == NULL) {
+	return E_ALLOC;
+    }
+    
+    for (i=0; i<var->neqns; i++) {
+	vi = var->ylist[i+1];
+	s = 0;
+	for (t=var->t1; t<=var->t2; t++) {
+	    gretl_matrix_set(b->Y, s++, i, Z[vi][t];
+	}
+    }
+
+    return 0;
+}
+
 /* broken for now (and in fact, was broken before now?).  
    has to be reworked.  notice we're using the VAR
    representation of the vecm here!
@@ -529,7 +556,8 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
 
     for (t=0; t<var->T; t++) {
 	for (i=0; i<var->neqns; i++) {
-	    double cij, eti, bti = 0.0;
+	    double xti, cij, eti, bti = 0.0;
+	    int xcol = var->ifc + var->neqns * var->order;
 	    int col = 0;
 
 	    /* unrestricted constant, if present */
@@ -540,25 +568,25 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
 
 	    /* lags of endogenous vars */
 	    for (j=0; j<boot->neqns; j++) {
-		vj = boot->lists[0][j+1];
-		for (k=0; k<order; k++) {
+		vj = var->ylist[j+1];
+		for (k=1; k<=order; k++) {
 		    cij = gretl_matrix_get(boot->C0, i, col++);
-		    bti += cij * boot->Z[vj][t-k-1];
+		    bti += cij * Z[vj][t-k]; /* wrong: use b->Y */
 		}
 	    }
 
 	    /* exogenous vars, if present */
 	    for (j=0; j<nexo; j++) {
-		vj = boot->lists[1][j+1];
 		cij = gretl_matrix_get(boot->C0, i, col++);
-		bti += cij * boot->Z[vj][t];
+		xti = gretl_matrix_get(var->X, t, xcol++);
+		bti += cij * xti;
 	    }
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
-		vj = boot->neqns + nexo + 1 + j;
 		cij = gretl_matrix_get(boot->C0, i, col++);
-		bti += cij * boot->Z[vj][t];
+		xti = gretl_matrix_get(var->X, t, xcol++);
+		bti += cij * xti;
 	    }
 
 	    if (jcode(var) == J_UNREST_TREND) {
@@ -576,7 +604,7 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
 
 	    /* set value of dependent var to fitted + re-sampled error */
 	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
-	    boot->Z[i+1][t] = bti + eti;
+	    gretl_matrix_set(b->Y, t, i, bti + ati);
 	}
     }
 
@@ -596,7 +624,7 @@ compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
     }
 
 #if BDEBUG > 1
-    print_boot_dataset(boot);
+    gretl_matrix_print(b->Y, "b->Y (vecm, levels)");
 #endif
 }
 
