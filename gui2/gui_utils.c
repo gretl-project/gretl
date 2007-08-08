@@ -3241,7 +3241,7 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	}
 	dyn_ok = 1;
     } else {
-	t1 = var->order + var->ecm;
+	t1 = effective_order(var);
 	pre_n = 0;
 	dyn_ok = 0;
     }

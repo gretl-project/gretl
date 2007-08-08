@@ -75,7 +75,7 @@ static void irf_boot_free (irfboot *b)
 
 static int boot_allocate (irfboot *b, const GRETL_VAR *v)
 {
-    int n = v->neqns * (v->order + v->ecm);
+    int n = v->neqns * effective_order(v);
 
     b->rtmp = gretl_matrix_alloc(n, v->neqns);
     b->ctmp = gretl_matrix_alloc(n, v->neqns);
@@ -173,32 +173,6 @@ recalculate_impulse_responses (irfboot *b, const gretl_matrix *A,
 	rt = gretl_matrix_get(b->rtmp, targ, shock);
 	gretl_matrix_set(b->resp, t, iter, rt);
     }
-}
-
-/* transcribe coefficients from re-estimated VAR model to the 
-   A matrix */
-
-static int rewrite_A_matrix (GRETL_VAR *var)
-{
-    int i, j, v, lag;
-    int dim = var->neqns * var->order;
-    double bij;
-
-    for (j=0; j<var->neqns; j++) {
-	v = lag = 0;
-	for (i=0; i<dim; i++) {
-	    bij = gretl_matrix_get(var->B, i+var->ifc, j);
-	    gretl_matrix_set(var->A, j, var->neqns * lag + v, bij);
-	    if (lag < var->order - 1) {
-		lag++;
-	    } else {
-		lag = 0;
-		v++;
-	    }
-	}
-    }
-
-    return 0;
 }
 
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
@@ -303,7 +277,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
     }
 
     if (!err) {
-	rewrite_A_matrix(v);
+	VAR_write_A_matrix(v);
     }
     
     if (!err) {    
@@ -813,6 +787,12 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     int scount = 0;
     int iter, err = 0;
 
+    if (var->jinfo != NULL && var->jinfo->bdf > 0) {
+	/* FIXME add support for restricted vecms */
+	strcpy(gretl_errmsg, "IRF bootstrap not yet available");
+	return NULL;
+    }
+
 #if BDEBUG
     fprintf(stderr, "\n*** irf_bootstrap() called\n");
 #endif
@@ -834,7 +814,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	goto bailout;
     }
 
-    if (var->ecm) {
+    if (var->ci == VECM) {
 	boot->C0 = VAR_coeff_matrix_from_VECM(var);
 	if (boot->C0 == NULL) {
 	    err = E_ALLOC;
@@ -848,7 +828,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	fprintf(stderr, "starting iteration %d\n", iter);
 #endif
 	resample_resids(boot, vbak);
-	if (var->ecm) {
+	if (var->ci == VECM) {
 	    compute_VECM_dataset(boot, var, iter);
 	    err = re_estimate_VECM(boot, var, targ, shock, iter, scount);
 	} else {

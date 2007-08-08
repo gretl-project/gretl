@@ -2402,7 +2402,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
     if (nf == 0) {
 	fr->err = E_MISSDATA;
     } else {
-	if (var->ecm) {
+	if (var->ci == VECM) {
 	    fr->df = var->T;
 	    /* asymptotic normal */
 	    fr->tval = 1.96;

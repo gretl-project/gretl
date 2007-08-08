@@ -39,9 +39,9 @@ struct JohansenInfo_ {
     int seasonals;        /* number of seasonal dummies included */
     gretl_matrix *R0;     /* residuals, VAR in differences */
     gretl_matrix *R1;     /* residuals, second regressions */
-    gretl_matrix *S00;    /* matrix of cross-products of residuals */
-    gretl_matrix *S11;    /* matrix of cross-products of residuals */
-    gretl_matrix *S01;    /* matrix of cross-products of residuals */
+    gretl_matrix *S00;    /* cross-products of residuals */
+    gretl_matrix *S11;    /* cross-products of residuals */
+    gretl_matrix *S01;    /* cross-products of residuals */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bse;    /* standard errors of EC terms */
@@ -55,7 +55,7 @@ struct JohansenInfo_ {
 };
 
 struct GRETL_VAR_ {
-    int ci;              /* command index */
+    int ci;              /* command index (VAR or VECM) */
     int refcount;        /* for saving/deleting */
     int err;             /* error code */
     int neqns;           /* number of equations in system */
@@ -65,7 +65,6 @@ struct GRETL_VAR_ {
     int T;               /* number of observations */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
-    int ecm;             /* 0 for an ordinary VAR, 1 for VECM */
     int *ylist;          /* list of stochastic vars */
     int *xlist;          /* list of exogenous variables */
     int detflags;        /* record of automatic deterministic vars added */
@@ -100,6 +99,8 @@ struct GRETL_VAR_ {
 
 #define jcode(v) (v->jinfo->code)
 #define jrank(v) (v->jinfo->rank)
+
+#define effective_order(v) (v->order+(v->ci==VECM))
 
 GRETL_VAR *johansen_test (int order, const int *list, 
 			  const double **Z, const DATAINFO *pdinfo,

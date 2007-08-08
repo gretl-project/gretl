@@ -260,14 +260,13 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
 				  int pause, PRN *prn)
 {
-    int i, t;
-    int vsrc;
-    int rows = var->neqns * (var->order + var->ecm);
     gretl_matrix *rtmp, *ctmp;
+    int rows = var->neqns * effective_order(var);
     int block, blockmax;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    int err = 0;
+    int vsrc;
+    int i, t, err = 0;
 
     if (prn == NULL) {
 	return 0;
@@ -903,7 +902,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (!quiet) {
 	    printmodel(var->models[i], pdinfo, OPT_NONE, prn);
 	} else {
-	    if (!var->ecm) {
+	    if (var->ci != VECM) {
 	        v = var->models[i]->list[1];
 		if (tex) {
 		    pputs(prn, "\n\\begin{center}\n");
