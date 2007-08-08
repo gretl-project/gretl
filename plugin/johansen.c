@@ -1260,7 +1260,7 @@ static
 int johansen_get_eigenvalues (gretl_matrix *S00,
 			      const gretl_matrix *S01,
 			      const gretl_matrix *S11,
-			      gretl_matrix *M,
+			      gretl_matrix **M,
 			      gretl_matrix **evals,
 			      int rank)
 {
@@ -1274,17 +1274,21 @@ int johansen_get_eigenvalues (gretl_matrix *S00,
     }
 
     Tmp = gretl_matrix_alloc(n, n);
-    if (Tmp == NULL) {
+    *M = gretl_matrix_alloc(n, n);
+
+    if (Tmp == NULL || *M == NULL) {
+	gretl_matrix_free(Tmp);
+	gretl_matrix_free(*M);
 	return E_ALLOC;
     }
 
     gretl_matrix_qform(S01, GRETL_MOD_TRANSPOSE, 
 		       S00, Tmp, GRETL_MOD_NONE);
 
-    *evals = gretl_gensymm_eigenvals(Tmp, S11, M, &err);
+    *evals = gretl_gensymm_eigenvals(Tmp, S11, *M, &err);
 
     if (!err) {
-	err = gretl_symmetric_eigen_sort(*evals, M, rank);
+	err = gretl_symmetric_eigen_sort(*evals, *M, rank);
     }
 
     gretl_matrix_free(Tmp);
@@ -1299,21 +1303,17 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
-
     int n = jvar->neqns;
-    int m = gretl_matrix_cols(jvar->jinfo->S11);
     int err = 0;
 
-    jvar->jinfo->Beta = gretl_matrix_alloc(m, m);
     S00 = gretl_matrix_copy(jvar->jinfo->S00);
-
-    if (jvar->jinfo->Beta == NULL || S00 == NULL) {
+    if (S00 == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
 	err = johansen_get_eigenvalues(S00, jvar->jinfo->S01, jvar->jinfo->S11,
-				       jvar->jinfo->Beta, &evals, 0);
+				       &jvar->jinfo->Beta, &evals, 0);
     }
 
     if (err) {
@@ -1412,6 +1412,10 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     int m, n = jvar->neqns;
     int err = 0;
 
+    if (R == NULL) {
+	return E_DATA;
+    }
+
     H = gretl_matrix_right_nullspace(R, &err);
     if (err) {
 	return err;
@@ -1491,10 +1495,10 @@ simple_restriction (GRETL_VAR *jvar,
 /* driver for VECM estimation subject to "general" restrictions
    on beta and/or alpha */
 
-static int johansen_estimate_general (GRETL_VAR *jvar, 
-				      const gretl_restriction_set *rset,
-				      const double **Z, const DATAINFO *pdinfo, 
-				      gretlopt opt, PRN *prn)
+static int j_general_restrict (GRETL_VAR *jvar, 
+			       const gretl_restriction_set *rset,
+			       const double **Z, const DATAINFO *pdinfo, 
+			       gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R, *q;
     gretlopt vopt = OPT_F;
@@ -1551,134 +1555,228 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
     return err;
 }
 
-/* Public entry point for VECM estimation.  If rset != NULL we're
-   imposing a restriction on the cointegrating vectors (or possibly
-   alpha); and in that case how we proceed depends on whether the
-   restrictions can be handled by the modified eigen-system approach.
+/* common finalization for estimation subject to simple
+   beta restriction or no restriction (R == NULL)
 */
 
-int johansen_estimate (GRETL_VAR *jvar, 
-		       const gretl_restriction_set *rset,
-		       const double **Z, const DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
+static int vecm_finalize (GRETL_VAR *jvar, const gretl_matrix *R,
+			  const double **Z, const DATAINFO *pdinfo)
 {
-    const gretl_matrix *R = NULL;
+    int do_stderrs = jrank(jvar) < jvar->neqns;
+    int err;
 
+    err = normalize_beta(jvar, R, &do_stderrs); 
+
+    if (!err) {
+	err = VECM_estimate_full(jvar, Z, pdinfo, ESTIMATE_ALPHA);
+    }
+
+    if (!err) {
+	err = compute_omega(jvar);
+    }
+
+    if (!err && do_stderrs) {
+	/* FIXME R != NULL */
+	err = beta_variance(jvar, R);
+    }
+
+    if (!err) {
+	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+    }
+
+    if (!err) {
+	err = vecm_ll_stats(jvar);
+    }
+
+    if (!err && R != NULL) {
+	jvar->jinfo->R = gretl_matrix_copy(R);
+    }
+
+    return err;
+}
+
+/* estimation subject to "simple" restriction on beta */
+
+static int 
+j_estimate_simple_restr (GRETL_VAR *jvar, 
+			 const gretl_restriction_set *rset,
+			 const double **Z, const DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
+{
+    const gretl_matrix *R;
     gretl_matrix *H = NULL;
     gretl_matrix *M = NULL;
     gretl_matrix *S00 = NULL;
     gretl_matrix *S01 = NULL;
     gretl_matrix *S11 = NULL;
     gretl_matrix *evals = NULL;
-
-    int genrest = 0; /* doing general restriction? */
-    int rank = jrank(jvar);
-    int m, err = 0;
+    int r = jrank(jvar);
+    int err = 0;
 
 #if JDEBUG
-    fprintf(stderr, "\n*** starting johansen_estimate(), rset = %p\n\n",
-	    rset);
+    fprintf(stderr, "\n*** starting j_estimate_simple_restr\n\n");
 #endif
 
-    if (rset != NULL) {
-	genrest = !simple_restriction(jvar, rset);
-    }
-
-    if (rset_VECM_acols(rset) > 0) {
-	pprintf(prn, "\"full\" restriction on VECM via alpha: "
-		"not handled yet\n");
-	return E_NOTIMP;
-    }
-
-    if (rset != NULL && !genrest) {
-	R = rset_get_R_matrix(rset);
-	err = johansen_prep_restriction(jvar, R, &S01, &S11, &H);
-	if (err) {
-	    goto bailout;
-	} 
-	m = gretl_matrix_cols(H);
-    } else {
-	S11 = jvar->jinfo->S11;
-	S01 = jvar->jinfo->S01;
-	m = gretl_matrix_cols(S11);
-    }
-
-    M = gretl_matrix_alloc(m, m);
-    S00 = gretl_matrix_copy(jvar->jinfo->S00);
-
-    if (M == NULL || S00 == NULL) {
-	err = E_ALLOC;
+    R = rset_get_R_matrix(rset);
+    err = johansen_prep_restriction(jvar, R, &S01, &S11, &H);
+    
+    if (!err) {
+	S00 = gretl_matrix_copy(jvar->jinfo->S00);
+	if (S00 == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
     if (!err) {
-	err = johansen_get_eigenvalues(S00, S01, S11, M, &evals, rank);
+	err = johansen_get_eigenvalues(S00, S01, S11, &M, &evals, r);
     }
-
-    if (err) {
-	pputs(prn, _("Failed to find eigenvalues\n"));
-	goto bailout;
-    } 
 
 #if JDEBUG
     gretl_matrix_print(M, "raw eigenvector(s)");
 #endif
 
-    if (H != NULL) {
+    if (!err) {
 	err = gretl_matrix_multiply(H, M, jvar->jinfo->Beta);
 	set_beta_test_df(jvar, H);
-    } else {
-	jvar->jinfo->Beta = M;
-	M = NULL;
-    }
+    } 
 
     if (!err) {
 	err = johansen_ll_calc(jvar, evals);
     }
 
-    if (!genrest) {
-	int do_stderrs = rank < jvar->neqns;
-
-	if (!err) {
-	    err = normalize_beta(jvar, R, &do_stderrs); 
-	}
-	if (!err) {
-	    err = VECM_estimate_full(jvar, Z, pdinfo, ESTIMATE_ALPHA);
-	}
-	if (!err) {
-	    err = compute_omega(jvar);
-	}
-	if (!err && do_stderrs) {
-	    /* FIXME case where R != NULL */
-	    err = beta_variance(jvar, R);
-	}
-	if (!err) {
-	    err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
-	}
-	if (!err) {
-	    err = vecm_ll_stats(jvar);
-	}
-	if (!err && R != NULL) {
-	    jvar->jinfo->R = gretl_matrix_copy(R);
-	}
+    if (!err) {
+	err = vecm_finalize(jvar, R, Z, pdinfo);
     }
-
- bailout:    
 
     gretl_matrix_free(H);
     gretl_matrix_free(M);
+    gretl_matrix_free(evals);
+    gretl_matrix_free(S00);
+    gretl_matrix_free(S01);
+    gretl_matrix_free(S11);
+
+    return err;
+}
+
+/* "unrestricted" VECM estimation */
+
+static int 
+j_estimate_unrestr (GRETL_VAR *jvar, 
+		    const double **Z, const DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
+{
+    gretl_matrix *S00 = NULL;
+    gretl_matrix *evals = NULL;
+    int r = jrank(jvar);
+    int err = 0;
+
+#if JDEBUG
+    fprintf(stderr, "\n*** starting j_estimate_unrestr\n\n");
+#endif
+
+    S00 = gretl_matrix_copy(jvar->jinfo->S00);
+    if (S00 == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	err = johansen_get_eigenvalues(S00, 
+				       jvar->jinfo->S01, 
+				       jvar->jinfo->S11, 
+				       &jvar->jinfo->Beta, 
+				       &evals, r);
+    }
+
+#if JDEBUG
+    gretl_matrix_print(jvar->jinfo->Beta, "raw eigenvector(s)");
+#endif
+
+    if (!err) {
+	err = johansen_ll_calc(jvar, evals);
+    }
+
+    if (!err) {
+	err = vecm_finalize(jvar, NULL, Z, pdinfo);
+    }
+
     gretl_matrix_free(S00);
     gretl_matrix_free(evals);
 
-    if (H != NULL) {
-	gretl_matrix_free(S01);
-	gretl_matrix_free(S11);
+    return err;
+}
+
+/* Here we prep the system with the intial eigen-analysis, then
+   basically hand over to jrestrict.c */
+
+static int j_estimate_general (GRETL_VAR *jvar, 
+			       const gretl_restriction_set *rset,
+			       const double **Z, const DATAINFO *pdinfo, 
+			       gretlopt opt, PRN *prn)
+{
+    gretl_matrix *S00 = NULL;
+    gretl_matrix *evals = NULL;
+    int r = jrank(jvar);
+    int err = 0;
+
+#if JDEBUG
+    fprintf(stderr, "\n*** starting j_estimate_general\n\n");
+#endif
+
+    S00 = gretl_matrix_copy(jvar->jinfo->S00);
+    if (S00 == NULL) {
+	err = E_ALLOC;
     }
 
-    if (!err && genrest) {
-	err = johansen_estimate_general(jvar, rset, Z, pdinfo, opt, prn);
+    if (!err) {
+	err = johansen_get_eigenvalues(S00, 
+				       jvar->jinfo->S01, 
+				       jvar->jinfo->S11, 
+				       &jvar->jinfo->Beta, 
+				       &evals, r);
+    }
+
+#if JDEBUG
+    gretl_matrix_print(M, "raw eigenvector(s)");
+#endif
+
+    if (!err) {
+	err = johansen_ll_calc(jvar, evals);
+    }
+
+    gretl_matrix_free(S00);
+    gretl_matrix_free(evals);
+
+    if (!err) {
+	err = j_general_restrict(jvar, rset, Z, pdinfo, opt, prn);
     }
 
     return err;
+}
+
+/* Public entry point for VECM estimation, restricted or not */
+
+int johansen_estimate (GRETL_VAR *jvar, 
+		       const gretl_restriction_set *rset,
+		       const double **Z, const DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
+{
+    int ret = 0;
+
+    if (rset == NULL) {
+	ret = j_estimate_unrestr(jvar, Z, pdinfo, opt, prn);
+    } else if (rset_VECM_acols(rset) > 0) {
+	pprintf(prn, "\"full\" restriction on VECM via alpha: "
+		"not handled yet\n");
+	ret = E_NOTIMP;
+    } else if (simple_restriction(jvar, rset)) {
+	ret = j_estimate_simple_restr(jvar, rset, Z, pdinfo,
+				      opt, prn);
+    } else {
+	ret = j_estimate_general(jvar, rset, Z, pdinfo,
+				 opt, prn);
+    }
+
+    return ret;
 }
 
 /* Simplified version of the Johansen procedure, to be called in
@@ -1695,42 +1793,23 @@ johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 {
     gretl_matrix *M = NULL;
     gretl_matrix *evals = NULL;
-    int m = gretl_matrix_cols(jvar->jinfo->S11);
     int err = 0;
 
 #if JDEBUG
     fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
 #endif
 
-    M = gretl_matrix_alloc(m, m);
-    if (M == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     err = johansen_get_eigenvalues(jvar->jinfo->S00, jvar->jinfo->S01, 
-				   jvar->jinfo->S11, M, &evals, 
+				   jvar->jinfo->S11, &M, &evals, 
 				   jrank(jvar));
-    if (err) {
-	goto bailout;
-    }
 
 #if JDEBUG
     gretl_matrix_print(M, "raw eigenvector(s)");
 #endif
 
     if (!err) {
-	if (jvar->jinfo->Beta == NULL) {
-	    jvar->jinfo->Beta = gretl_matrix_copy(M);
-	} else {
-	    gretl_matrix_copy_values(jvar->jinfo->Beta, M);
-	}
-	if (jvar->jinfo->Beta == NULL) {
-	    err = E_ALLOC;
-	}
-	if (!err) {
-	    err = normalize_beta(jvar, NULL, NULL); 
-	}
+	gretl_matrix_copy_values(jvar->jinfo->Beta, M);
+	err = normalize_beta(jvar, NULL, NULL); 
 	if (!err) {
 	    err = VECM_estimate_full(jvar, Z, pdinfo, 
 				     ESTIMATE_ALPHA | BOOTSTRAPPING);
@@ -1739,8 +1818,6 @@ johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 	    err = compute_omega(jvar);
 	}
     } 
-
- bailout:    
 
     gretl_matrix_free(M);
     gretl_matrix_free(evals);
@@ -1827,12 +1904,11 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     rank = jrank(jvar);
     m = gretl_matrix_cols(H);
 
-    M = gretl_matrix_alloc(m, m);
     S11 = gretl_matrix_alloc(m, m);
     S01 = gretl_matrix_alloc(n, m);
     S00 = gretl_matrix_copy(jvar->jinfo->S00);
 
-    if (M == NULL || S11 == NULL || S01 == NULL || S00 == NULL) {
+    if (S11 == NULL || S01 == NULL || S00 == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1862,7 +1938,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = johansen_get_eigenvalues(S00, S01, S11, M, &evals, rank);
+	err = johansen_get_eigenvalues(S00, S01, S11, &M, &evals, rank);
     }
 
     if (!err) {
