@@ -68,7 +68,7 @@ static int VAR_add_companion_matrix (GRETL_VAR *var)
     } else {
 	for (i=var->neqns; i<n; i++) {
 	    for (j=0; j<n; j++) {
-		gretl_matrix_set(var->A, i, j, (j == i - var->neqns)? 1.0 : 0.0);
+		gretl_matrix_set(var->A, i, j, (j == i - var->neqns)? 1 : 0);
 	    }
 	}
     }
@@ -309,8 +309,9 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
     return err;
 }
 
-/* Note: if "v" is a VECM, we make the Y and B matrices big,
-   in the case where there's a restricted const or trend.
+/* Note: if "v" is a VECM, and it includes a restricted const
+   or trend, we make the Y and B matrices big enough to
+   accommodate the additional restricted term.
 */
 
 static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
@@ -678,13 +679,14 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     gretl_matrix *F;
     gretl_matrix *B;
 
+    double s0 = 0, s1 = 1;
     int order = var->order + 1;
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int nseas = var->jinfo->seasonals;
     int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, vj, s, t;
-    int fcols;
+    int fcols, m = 0;
 
     fcols = (staticfc)? var->neqns : 2 * var->neqns;
 
@@ -697,6 +699,12 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
     if (B == NULL) {
 	gretl_matrix_free(F);
 	return E_ALLOC;
+    }
+
+    if (nseas > 0) {
+	m = get_subperiod(t0, pdinfo, NULL);
+	s1 -= 1.0 / pdinfo->pd;
+	s0 = s1 - 1;
     }
 
     for (t=t0, s=0; t<=t2; t++, s++) {
@@ -754,13 +762,12 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    if (na(fti)) goto set_fcast;
 
-	    /* seasonals, if present */
-	    for (j=0; j<nseas; j++) {
-		/* FIXME: compute, don't read from Z */
-		bij = gretl_matrix_get(B, i, col++);
-#if 0
-		fti += bij * Z[d0+j][t];
-#endif
+	    /* seasonal, if present */
+	    if (nseas) {
+		if (m < pdinfo->pd - 1) {
+		    fti += gretl_matrix_get(B, i, col + m);
+		} 
+		col += nseas;
 	    }
 
 	    if (jcode(var) == J_UNREST_TREND) {
@@ -779,6 +786,10 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 	set_fcast:
 
 	    gretl_matrix_set(F, s, i, fti);
+	}
+
+	if (nseas > 0) {
+	    m = (m < pdinfo->pd - 1)? m + 1 : 0;
 	}
     }
 
