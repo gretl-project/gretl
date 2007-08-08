@@ -30,12 +30,12 @@ enum Detflags {
 
 void gretl_VAR_clear (GRETL_VAR *var);
 
-void fill_VAR_X (GRETL_VAR *v, int p, const double **Z, 
+void VAR_fill_X (GRETL_VAR *v, int p, const double **Z, 
 		 const DATAINFO *pdinfo);
 
 int johansen_stage_1 (GRETL_VAR *jvar, 
 		      const double **Z, const DATAINFO *pdinfo,
-		      gretlopt opt, PRN *prn);
+		      PRN *prn);
 
 double gretl_VAR_ldet (GRETL_VAR *var, int *err);
 

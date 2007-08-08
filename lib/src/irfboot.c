@@ -27,7 +27,7 @@
 #define BDEBUG 0
 
 #if BDEBUG
-# define BOOT_ITERS 5
+# define BOOT_ITERS 4
 #else
 # define BOOT_ITERS 999
 #endif
@@ -35,12 +35,8 @@
 typedef struct irfboot_ irfboot;
 
 struct irfboot_ {
-    gretlopt opt;       /* VECM options flags */
     int ncoeff;         /* number of coefficients per equation */
     int horizon;        /* horizon for impulse responses */
-    gretl_matrix *A;    /* augmented coefficient matrix */
-    gretl_matrix *C;    /* error covariance matrix */
-    gretl_matrix *S;    /* covariance matrix of residuals */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
     gretl_matrix *Xt;   /* row t of X matrix */
     gretl_matrix *Yt;   /* yhat at t */
@@ -49,8 +45,9 @@ struct irfboot_ {
     gretl_matrix *ctmp; /* temporary storage */
     gretl_matrix *resp; /* impulse response matrix */
     gretl_matrix *C0;   /* initial coefficient estimates (VECM only) */
-    gretl_matrix *Y;    /* levels of dependent vars (VECM only) */
     int *sample;        /* resampling array */
+    double **Z;         /* dummy dataset for levels (VECM only) */
+    DATAINFO *dinfo;    /* ditto */
 };
 
 static void irf_boot_free (irfboot *b)
@@ -59,9 +56,6 @@ static void irf_boot_free (irfboot *b)
 	return;
     }
 
-    gretl_matrix_free(b->A);
-    gretl_matrix_free(b->C);
-    gretl_matrix_free(b->S);
     gretl_matrix_free(b->rE);
     gretl_matrix_free(b->Xt);
     gretl_matrix_free(b->Yt);
@@ -70,85 +64,43 @@ static void irf_boot_free (irfboot *b)
     gretl_matrix_free(b->ctmp);
     gretl_matrix_free(b->resp);
     gretl_matrix_free(b->C0);
-    gretl_matrix_free(b->Y);
+
+    if (b->Z != NULL) {
+	destroy_dataset(b->Z, b->dinfo);
+    }
 
     free(b->sample);
     free(b);
 }
 
-/* Is this redundant? */
-
-static int boot_A_C_init (irfboot *b, const GRETL_VAR *v)
-{
-    int n = v->neqns * v->order;
-    int i, j, err = 0;
-    
-    b->A = gretl_matrix_alloc(n, n);
-
-    if (b->A == NULL) {
-	err = E_ALLOC;
-    } else {
-	for (i=v->neqns; i<n; i++) {
-	    for (j=0; j<n; j++) {
-		gretl_matrix_set(b->A, i, j, (j == i - v->neqns)? 1.0 : 0.0);
-	    }
-	}
-    }
-
-    if (!err) {
-	b->C = gretl_zero_matrix_new(n, v->neqns);
-	if (b->C == NULL) {
-	    err = E_ALLOC;
-	    gretl_matrix_free(b->A);
-	    b->A = NULL;
-	} 
-    }
-
-    return err;
-}
-
-static int boot_tmp_init (irfboot *b, const GRETL_VAR *v)
+static int boot_allocate (irfboot *b, const GRETL_VAR *v)
 {
     int n = v->neqns * (v->order + v->ecm);
 
     b->rtmp = gretl_matrix_alloc(n, v->neqns);
     b->ctmp = gretl_matrix_alloc(n, v->neqns);
+    b->rE = gretl_matrix_alloc(v->T, v->neqns);
+    b->resp = gretl_matrix_alloc(b->horizon, BOOT_ITERS);
+    b->sample = malloc(v->T * sizeof *b->sample);
 
-    if (b->rtmp == NULL || b->ctmp == NULL) {
+    if (b->rtmp == NULL || b->ctmp == NULL ||
+	b->rE == NULL || b->resp == NULL ||
+	b->sample == NULL) {
 	return E_ALLOC;
     }
 
-    return 0;
-}
-
-static gretlopt boot_get_opt (const GRETL_VAR *v)
-{
-    gretlopt opt = OPT_NONE;
-
-    if (v->jinfo != NULL) {
-	if (v->jinfo->code == J_NO_CONST) {
-	    opt = OPT_N;
-	} else if (v->jinfo->code == J_REST_CONST) {
-	    opt = OPT_R;
-	} else if (v->jinfo->code == J_REST_TREND) {
-	    opt = OPT_A;
-	} else if (v->jinfo->code == J_UNREST_TREND) {
-	    opt = OPT_T;
+    if (v->ci == VAR) {
+	/* not needed for VECM */
+	b->Xt = gretl_matrix_alloc(1, v->X->cols);
+	b->Yt = gretl_matrix_alloc(1, v->neqns);
+	b->Et = gretl_matrix_alloc(1, v->neqns);
+	
+	if (b->Xt == NULL || b->Yt == NULL || b->Et == NULL) {
+	    return E_ALLOC;
 	}
-
-	if (v->jinfo->seasonals) {
-	    opt |= OPT_D;
-	}
-
-	/* OPT_S: save (don't delete) the variables added
-	   to the dataset in the Johansen process.
-	   OPT_B: flags the fact that we're doing impulse
-	   response bootstrap.
-	*/
-	opt |= (OPT_S | OPT_B);
     }
 
-    return opt;
+    return 0;
 }
 
 static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
@@ -161,9 +113,6 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 	return NULL;
     }
 
-    b->C = NULL;
-    b->A = NULL;
-    b->S = NULL;
     b->rE = NULL;
     b->Xt = NULL;
     b->Yt = NULL;
@@ -174,6 +123,9 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     b->C0 = NULL;
 
     b->sample = NULL;
+    b->Z = NULL;
+    b->dinfo = NULL;
+
     b->horizon = periods;
 
     if (var->jinfo != NULL) {
@@ -183,8 +135,6 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 	b->ncoeff = var->ncoeff;
     }
 
-    b->opt = boot_get_opt(var);
-
 #if BDEBUG
     fprintf(stderr, "boot: t1=%d, t2=%d, ncoeff=%d, horizon=%d\n",
 	    var->t1, var->t2, b->ncoeff, b->horizon);
@@ -192,32 +142,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 	    var->T, var->neqns, var->order, var->ecm, var->ifc);
 #endif
 
-    err = boot_tmp_init(b, var);
-
-    if (!err && !var->ecm) {
-	/* we don't need these matrices for VECMs */
-	err = boot_A_C_init(b, var);
-	if (!err) {
-	    b->S = gretl_matrix_alloc(var->neqns, var->neqns);
-	    if (b->S == NULL) {
-		err = E_ALLOC;
-	    }
-	}	    
-    }
-
-    if (!err) {
-	b->rE = gretl_matrix_alloc(var->T, var->neqns);
-	b->resp = gretl_matrix_alloc(b->horizon, BOOT_ITERS);
-	b->Xt = gretl_matrix_alloc(1, var->X->cols);
-	b->Yt = gretl_matrix_alloc(1, var->neqns);
-	b->Et = gretl_matrix_alloc(1, var->neqns);
-	b->sample = malloc(var->T * sizeof *b->sample);
-
-	if (b->rE == NULL || b->resp == NULL || b->Xt == NULL ||
-	    b->Yt == NULL || b->Et == NULL || b->sample == NULL) {
-	    err = E_ALLOC;
-	}
-    }
+    err = boot_allocate(b, var);
 
     if (err) {
 	irf_boot_free(b);
@@ -251,9 +176,9 @@ recalculate_impulse_responses (irfboot *b, const gretl_matrix *A,
 }
 
 /* transcribe coefficients from re-estimated VAR model to the 
-   boot->A matrix */
+   A matrix */
 
-static int write_boot_A_matrix (irfboot *b, GRETL_VAR *var)
+static int rewrite_A_matrix (GRETL_VAR *var)
 {
     int i, j, v, lag;
     int dim = var->neqns * var->order;
@@ -263,7 +188,7 @@ static int write_boot_A_matrix (irfboot *b, GRETL_VAR *var)
 	v = lag = 0;
 	for (i=0; i<dim; i++) {
 	    bij = gretl_matrix_get(var->B, i+var->ifc, j);
-	    gretl_matrix_set(b->A, j, var->neqns * lag + v, bij);
+	    gretl_matrix_set(var->A, j, var->neqns * lag + v, bij);
 	    if (lag < var->order - 1) {
 		lag++;
 	    } else {
@@ -276,6 +201,31 @@ static int write_boot_A_matrix (irfboot *b, GRETL_VAR *var)
     return 0;
 }
 
+static void maybe_resize_vecm_matrices (GRETL_VAR *v)
+{
+    int nc0 = v->ifc + v->order * v->neqns + v->jinfo->seasonals;
+
+    if (v->xlist != NULL) {
+	nc0 += v->xlist[0];
+    }
+
+    if (v->detflags & DET_TREND) {
+	nc0++;
+    }
+
+    if (v->X->cols > nc0) {
+	/* skip the EC term columns in X */
+	gretl_matrix_reuse(v->X, -1, nc0);
+	gretl_matrix_reuse(v->B, nc0, -1);
+    }
+
+    if (restricted(v)) {
+	/* add back extra column for const/trend */
+	gretl_matrix_reuse(v->Y, -1, v->neqns + 1);
+	gretl_matrix_reuse(v->B, -1, v->neqns + 1);
+    }    
+}
+
 /* In re-estimation of VAR or VECM we'll tolerate at most 4 cases of
    near-perfect collinearity (which can arise by chance): maybe this
    should be more flexible? 
@@ -284,15 +234,12 @@ static int write_boot_A_matrix (irfboot *b, GRETL_VAR *var)
 #define MAXSING 5
 #define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
 
-#if 0
-
-/* FIXME !! */
-
 static int 
-re_estimate_VECM (irfboot *b, GRETL_VAR *jvar, int targ, int shock, 
+re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock, 
 		  int iter, int scount)
 {
-    static int (*jbr) (GRETL_VAR *, double **, DATAINFO *, int) = NULL;
+    static int (*jbr) (GRETL_VAR *, const double **, 
+		       const DATAINFO *) = NULL;
     static void *handle = NULL;
     int err = 0;
 
@@ -302,28 +249,33 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *jvar, int targ, int shock,
 	/* first round: open the Johansen plugin */
 	jbr = get_plugin_function("johansen_boot_round", &handle);
 	if (jbr == NULL) {
-	    err = 1;
+	    return E_FOPEN;
 	}
     }
 
-    if (!err) {
-	err = johansen_stage_1(jvar, Z, pdinfo, b->opt, NULL);
-    }
+    /* The various VECM matrices may need to be re-set to the sizes
+       expected by johansen_stage_1() */
+    maybe_resize_vecm_matrices(v);
+
+    err = johansen_stage_1(v, (const double **) b->Z, b->dinfo, NULL);
 
     if (!err) {
 	/* call the plugin function */
-	err = jbr(jvar, (const double **) b->Z, boot->dinfo, iter);
+	err = jbr(v, (const double **) b->Z, b->dinfo);
     }
 
-    if (!err) {   
 #if BDEBUG
-	gretl_matrix_print(jvar->S, "jvar->S (Omega)");
+    gretl_matrix_print(v->jinfo->Beta, "var->jinfo->Beta");
+    gretl_matrix_print(v->S, "var->S (Omega)");
 #endif
-	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+
+
+    if (!err) {   
+	err = gretl_VAR_do_error_decomp(v->S, v->C);
     }
 
     if (!err) {
-	recalculate_impulse_responses(b, jvar->A, jvar->C, targ, shock, iter);
+	recalculate_impulse_responses(b, v->A, v->C, targ, shock, iter);
     }
 
     if (iter == BOOT_ITERS - 1 || VAR_FATAL(err, iter, scount)) {
@@ -336,8 +288,6 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *jvar, int targ, int shock,
 
     return err;
 }
-
-#endif
 
 static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock, 
 			    int iter)
@@ -353,19 +303,19 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
     }
 
     if (!err) {
-	write_boot_A_matrix(b, v);
+	rewrite_A_matrix(v);
     }
     
     if (!err) {    
 	gretl_matrix_multiply_mod(v->E, GRETL_MOD_TRANSPOSE,
 				  v->E, GRETL_MOD_NONE,
-				  b->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(b->S, v->T);
-	err = gretl_VAR_do_error_decomp(b->S, b->C);
+				  v->S, GRETL_MOD_NONE);
+	gretl_matrix_divide_by_scalar(v->S, v->T);
+	err = gretl_VAR_do_error_decomp(v->S, v->C);
     }
 
     if (!err) {
-	recalculate_impulse_responses(b, b->A, b->C, targ, shock, iter);
+	recalculate_impulse_responses(b, v->A, v->C, targ, shock, iter);
     }
 
     return err;
@@ -509,126 +459,133 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     return C0;
 }
 
-#if 0
-
-/* VECM: copy levels of Y vars from external dataset into
-   b->Y matrix
+/* VECM: copy levels of Y vars from main Z into temporary dataset (for
+   passing to Johansen stage 1)
 */
 
-static int init_VECM_dataset (irfboot *b, const GRETL_VAR *var,
-			      const double **Z)
+static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
+			      const double **Z, const DATAINFO *pdinfo)
 {
-    int i, vi, s, t;
+    int i, j, vi, t;
 
-    b->Y = gretl_matrix_alloc(var->T, var->neqns);
-    if (b->Y == NULL) {
+    b->dinfo = create_new_dataset(&b->Z, var->neqns + 1, pdinfo->n, 0);
+    if (b->dinfo == NULL) {
 	return E_ALLOC;
-    }
-    
-    for (i=0; i<var->neqns; i++) {
+    }   
+
+    copy_dataset_obs_info(b->dinfo, pdinfo);
+    b->dinfo->t1 = pdinfo->t1;
+    b->dinfo->t2 = pdinfo->t2;
+
+    /* copy levels of Y into boot->Z and adjust ylist */
+    for (i=0, j=1; i<var->neqns; i++, j++) {
 	vi = var->ylist[i+1];
-	s = 0;
-	for (t=var->t1; t<=var->t2; t++) {
-	    gretl_matrix_set(b->Y, s++, i, Z[vi][t];
+	for (t=0; t<pdinfo->n; t++) {
+	    b->Z[j][t] = Z[vi][t];
 	}
+	var->ylist[j] = j;
     }
 
     return 0;
 }
 
-/* broken for now (and in fact, was broken before now?).  
-   has to be reworked.  notice we're using the VAR
-   representation of the vecm here!
-*/
+/* Compute VECM Y (in levels) using the VAR representation. */
 
 static void 
-compute_VECM_dataset (irfboot *boot, const GRETL_VAR *var, int iter)
+compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 {
     int order = var->order + 1;
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int nseas = var->jinfo->seasonals;
-    int i, j, k, vj, t;
+    double cij, eti, xti;
+    int i, j, k, s, t;
 
 #if BDEBUG
     fprintf(stderr, "compute_VECM_dataset: order=%d, nexo=%d, nseas=%d, t1=%d\n",
 	    order, nexo, nseas, var->t1);
+    gretl_matrix_print(var->X, "var->X, before resampling");
 #endif
 
-    for (t=0; t<var->T; t++) {
+    for (t=var->t1, s=0; t<=var->t2; t++, s++) {
 	for (i=0; i<var->neqns; i++) {
-	    double xti, cij, eti, bti = 0.0;
+	    double bti = 0.0;
 	    int xcol = var->ifc + var->neqns * var->order;
 	    int col = 0;
 
 	    /* unrestricted constant, if present */
 	    if (var->ifc) {
-		cij = gretl_matrix_get(boot->C0, i, col++);
+		cij = gretl_matrix_get(b->C0, i, col++);
 		bti += cij;
 	    }
 
 	    /* lags of endogenous vars */
-	    for (j=0; j<boot->neqns; j++) {
-		vj = var->ylist[j+1];
+	    for (j=1; j<=var->neqns; j++) {
 		for (k=1; k<=order; k++) {
-		    cij = gretl_matrix_get(boot->C0, i, col++);
-		    bti += cij * Z[vj][t-k]; /* wrong: use b->Y */
+		    cij = gretl_matrix_get(b->C0, i, col++);
+		    bti += cij * b->Z[j][t-k];
 		}
 	    }
 
 	    /* exogenous vars, if present */
 	    for (j=0; j<nexo; j++) {
-		cij = gretl_matrix_get(boot->C0, i, col++);
-		xti = gretl_matrix_get(var->X, t, xcol++);
+		cij = gretl_matrix_get(b->C0, i, col++);
+		xti = gretl_matrix_get(var->X, s, xcol++);
 		bti += cij * xti;
 	    }
 
 	    /* seasonals, if present */
 	    for (j=0; j<nseas; j++) {
-		cij = gretl_matrix_get(boot->C0, i, col++);
-		xti = gretl_matrix_get(var->X, t, xcol++);
+		cij = gretl_matrix_get(b->C0, i, col++);
+		xti = gretl_matrix_get(var->X, s, xcol++);
 		bti += cij * xti;
 	    }
 
 	    if (jcode(var) == J_UNREST_TREND) {
 		/* unrestricted trend */
-		cij = gretl_matrix_get(boot->C0, i, col);
-		bti += cij * (t + var->t1 + 1);
+		cij = gretl_matrix_get(b->C0, i, col);
+		bti += cij * (t + 1);
 	    } else if (jcode(var) == J_REST_CONST) {
 		/* restricted constant */
-		bti += gretl_matrix_get(boot->C0, i, col);
+		bti += gretl_matrix_get(b->C0, i, col);
 	    } else if (jcode(var) == J_REST_TREND) {
 		/* restricted trend */
-		cij = gretl_matrix_get(boot->C0, i, col);
-		bti += cij * (t + var->t1);
+		cij = gretl_matrix_get(b->C0, i, col);
+		bti += cij * t; /* t + 1? */
 	    }
 
-	    /* set value of dependent var to fitted + re-sampled error */
-	    eti = gretl_matrix_get(boot->rE, t - boot->t1, i);
-	    gretl_matrix_set(b->Y, t, i, bti + ati);
-	}
-    }
-
-    if (iter > 0) {
-	int vl = 1 + var->neqns + nexo + nseas;
-	int vd = vl + var->neqns;
-
-	/* recompute first lags and first differences */
-	for (i=0; i<boot->neqns; i++) {
-	    for (t=1; t<boot->dinfo->n; t++) {
-		boot->Z[vl][t] = boot->Z[i+1][t-1];
-		boot->Z[vd][t] = boot->Z[i+1][t] - boot->Z[i+1][t-1];
-	    }
-	    vl++;
-	    vd++;
+	    /* set level of Y(t, i) to fitted + re-sampled error */
+	    eti = gretl_matrix_get(b->rE, s, i);
+	    b->Z[i+1][t] = bti + eti;
 	}
     }
 
 #if BDEBUG > 1
-    gretl_matrix_print(b->Y, "b->Y (vecm, levels)");
+    fprintf(stderr, "VECM: recomputed levels\n\n");
+    for (t=0; t<b->dinfo->n; t++) {
+	for (i=1; i<=var->neqns; i++) {
+	    fprintf(stderr, "%12.5g", b->Z[i][t]);
+	}
+	fputc('\n', stderr);
+    }
+#endif
+
+    /* now rewrite lagged differences into X matrix */
+    k = var->ifc;
+    for (i=1; i<=var->neqns; i++) {
+	for (j=1; j<=var->order; j++) {
+	    s = 0;
+	    for (t=var->t1; t<=var->t2; t++) {
+		xti = b->Z[i][t-j] - b->Z[i][t-j-1];
+		gretl_matrix_set(var->X, s++, k, xti);
+	    }
+	    k++;
+	}
+    }
+
+#if BDEBUG > 1
+    gretl_matrix_print(var->X, "var->X (vecm, resampled)");
 #endif
 }
-
-#endif
 
 /* (Re-)fill the bootstrap dataset with artificial data, based on the
    re-sampled residuals from the original VAR (simple VAR, not VECM).
@@ -696,7 +653,7 @@ static void resample_resids (irfboot *b, const GRETL_VAR *vbak)
 #endif
     }
 
-    /* draw sample from the original residuals */
+    /* draw from the original residuals */
     for (t=0; t<vbak->T; t++) {
 	for (i=0; i<vbak->neqns; i++) {
 	    eti = gretl_matrix_get(vbak->E, b->sample[t], i);
@@ -768,6 +725,11 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 	vbak->jinfo = malloc(sizeof *vbak->jinfo);
 	if (vbak->jinfo == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    vbak->ylist = gretl_list_copy(v->ylist);
+	    if (vbak->ylist == NULL) {
+		err = E_ALLOC;
+	    }
 	}
     }
 
@@ -829,13 +791,16 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 	v->jinfo->Beta = vbak->jinfo->Beta;
 	v->jinfo->Alpha = vbak->jinfo->Alpha;
 
+	free(v->ylist);
+	v->ylist = vbak->ylist;
+
 	free(vbak->jinfo);
     }
 
     free(vbak);
 }
 
-/* "locally public" function, called from var.c */
+/* public bootstrapping function, called from var.c */
 
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock, int periods,
@@ -873,6 +838,8 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	boot->C0 = VAR_coeff_matrix_from_VECM(var);
 	if (boot->C0 == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    err = init_VECM_dataset(boot, var, Z, pdinfo);
 	}
     }
 
@@ -882,11 +849,8 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 #endif
 	resample_resids(boot, vbak);
 	if (var->ecm) {
-#if 0
-	    /* broken :-( */
 	    compute_VECM_dataset(boot, var, iter);
 	    err = re_estimate_VECM(boot, var, targ, shock, iter, scount);
-#endif
 	} else {
 	    compute_VAR_dataset(boot, var, vbak);
 	    err = re_estimate_VAR(boot, var, targ, shock, iter);

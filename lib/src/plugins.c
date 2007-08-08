@@ -117,9 +117,9 @@ struct plugin_function plugin_functions[] = {
     { "jmulti_get_data",  P_JMULTI_IMPORT },
 
     /* Johansen cointegration test and VECM */
-    { "johansen_coint_test", P_JOHANSEN },
-    { "johansen_estimate",   P_JOHANSEN },
-    { "johansen_boot_round", P_JOHANSEN },
+    { "johansen_coint_test",   P_JOHANSEN },
+    { "johansen_estimate",     P_JOHANSEN },
+    { "johansen_boot_round",   P_JOHANSEN },
     { "vecm_test_restriction", P_JOHANSEN },
 
     /* least absolute deviations */

@@ -240,7 +240,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
     for (j=1; j<p && !err; j++) {
 	int jxcols = cols0 + j * n;
 
-	fill_VAR_X(var, j, Z, pdinfo);
+	VAR_fill_X(var, j, Z, pdinfo);
 
 	gretl_matrix_reuse(var->X, T, jxcols);
 	gretl_matrix_reuse(var->B, jxcols, n);

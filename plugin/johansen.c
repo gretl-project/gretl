@@ -212,7 +212,7 @@ static void print_beta_or_alpha (GRETL_VAR *jvar, int k,
 /* Calculate \alpha (adjustments) matrix as per Johansen, 1991, eqn
    2.8, p. 1554.  Required for the cointegration test, but not
    needed when doing a VECM (in which case we get \alpha via
-   build_VECM_models() below).
+   VECM_estimate_full() below).
 */
 
 static int compute_alpha (JohansenInfo *jv)
@@ -365,6 +365,14 @@ static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
 	    }
 	}
     }
+
+#if JDEBUG > 1
+    for (k=0; k<vecm->order; k++) {
+	char msg[32];
+	sprintf(msg, "Gamma matrix, lag %d", k+1);
+	gretl_matrix_print(G[k], msg);
+    }
+#endif
 }
 
 /* \Pi, as will be used in forming the VAR representation */
@@ -422,9 +430,12 @@ static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
     }
 }
 
+/* flags for controlling "full" estimation of VECM */
+
 enum {
-    ESTIMATE_ALPHA = 0,
-    NET_OUT_ALPHA
+    NET_OUT_ALPHA  = 0,
+    ESTIMATE_ALPHA = 1 << 0,
+    BOOTSTRAPPING  = 1 << 1
 };
 
 /* For the case where we want to show complete output: transcribe
@@ -435,7 +446,7 @@ enum {
 static int 
 transcribe_VECM_models (GRETL_VAR *vecm, 
 			const double **Z, const DATAINFO *pdinfo,
-			const gretl_matrix *XTX, int flag)
+			const gretl_matrix *XTX, int flags)
 {
     MODEL *pmod;
     char **params = NULL;
@@ -447,7 +458,7 @@ transcribe_VECM_models (GRETL_VAR *vecm,
     int i, j, jmax;
     int err = 0;
 
-    jmax = (flag == ESTIMATE_ALPHA)? vecm->ncoeff :
+    jmax = (flags & ESTIMATE_ALPHA)? vecm->ncoeff :
 	vecm->ncoeff - r;
 
     params = strings_array_new_with_length(vecm->ncoeff, VNAMELEN);
@@ -516,13 +527,23 @@ transcribe_VECM_models (GRETL_VAR *vecm,
 /* The X (data) and B (coefficient) matrices may need expanding
    to take account of the EC terms */
 
-static int vecm_check_size (GRETL_VAR *v, int flag)
+static int vecm_check_size (GRETL_VAR *v, int flags)
 {
     int err = 0;
 
-    if (flag == ESTIMATE_ALPHA) {
+    if (flags & BOOTSTRAPPING) {
+	/* in this case the matrices will already
+	   be fully allocated */
+	v->X->cols = v->ncoeff;
+	v->B->rows = v->ncoeff;
+	return 0;
+    }
+
+    if (flags & ESTIMATE_ALPHA) {
+#if JDEBUG
 	fprintf(stderr, "vecm_check_size: ncoeff: %d -> %d\n",
 		v->ncoeff, v->ncoeff + jrank(v));
+#endif
 	v->ncoeff += jrank(v);
     } else if (v->ncoeff == 0) {
 	return 0;
@@ -547,7 +568,13 @@ static int vecm_check_size (GRETL_VAR *v, int flag)
 	    err = E_ALLOC;
 	}	
     } else if (v->B->rows < v->ncoeff) {
-	err = gretl_matrix_realloc(v->B, v->ncoeff, v->neqns);
+	/* B may have extra col for restricted const/trend */
+	int n = v->neqns + restricted(v);
+
+	err = gretl_matrix_realloc(v->B, v->ncoeff, n);
+	if (!err && restricted(v)) {
+	    v->B->cols = v->neqns;
+	}
     }
 
     if (err) {
@@ -605,14 +632,14 @@ static int add_EC_terms_to_X (GRETL_VAR *v, const double **Z)
 /* preparing for OLS conditional on beta: construct the
    appropriate dependent variable matrix, Y */
 
-static int make_vecm_models_Y (GRETL_VAR *v, const double **Z, 
-			       gretl_matrix *Pi, int flag)
+static int make_vecm_Y (GRETL_VAR *v, const double **Z, 
+			gretl_matrix *Pi, int flags)
 {
     int i, s, t, vi, vj;
     double yti, xti;
     int err = 0;
 
-    if (flag == ESTIMATE_ALPHA) {
+    if (flags & ESTIMATE_ALPHA) {
 	/* "Y" is composed of plain DYt */
 	for (i=0; i<v->neqns; i++) {
 	    vi = v->ylist[i+1];
@@ -671,8 +698,8 @@ static int make_vecm_models_Y (GRETL_VAR *v, const double **Z,
 */
 
 static int 
-build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
-		   int flag, int iter)
+VECM_estimate_full (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
+		    int flags)
 {
     gretl_matrix *Pi = NULL;
     gretl_matrix *XTX = NULL;
@@ -685,7 +712,7 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     int nc, n = v->neqns;
     int i, err;
 
-    err = vecm_check_size(v, flag);
+    err = vecm_check_size(v, flags);
     if (err) {
 	return err;
     }
@@ -711,20 +738,22 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 	}	
     }  
 
-    /* FIXME bootstrapping !! */
-
     if (!err) {
-	err = make_vecm_models_Y(v, Z, Pi, flag);
+	err = make_vecm_Y(v, Z, Pi, flags);
     }
 
-    if (!err && flag == ESTIMATE_ALPHA) {
+    if (!err && (flags & ESTIMATE_ALPHA)) {
 	err = add_EC_terms_to_X(v, Z);
     }
 
     if (!err) {
 	if (nc > 0) {
 	    /* run the regressions */
-	    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, &XTX);
+	    if (flags & BOOTSTRAPPING) {
+		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
+	    } else {
+		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, &XTX);
+	    }
 	} else {
 	    /* nothing to estimate, with alpha in hand */
 	    gretl_matrix_copy_values(v->E, v->Y);
@@ -736,7 +765,7 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 	copy_coeffs_to_Gamma(v, G);
     }
 
-    if (!err && flag == ESTIMATE_ALPHA) {
+    if (!err && (flags & ESTIMATE_ALPHA)) {
 	err = copy_to_alpha(v);
 	if (!err) {
 	    form_Pi(v, Pi);
@@ -780,9 +809,8 @@ build_VECM_models (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     gretl_matrix_print(v->A, "vecm->A");
 #endif
 
-    if (!err) {
-	/* FIXME conditionality here? */
-	transcribe_VECM_models(v, Z, pdinfo, XTX, flag);
+    if (!err && !(flags & BOOTSTRAPPING)) {
+	transcribe_VECM_models(v, Z, pdinfo, XTX, flags);
     }
 
  bailout:
@@ -1483,7 +1511,7 @@ static int johansen_estimate_general (GRETL_VAR *jvar,
 
 	vflag = (rset_VECM_acols(rset) > 0)? 
 	    NET_OUT_ALPHA : ESTIMATE_ALPHA;
-	err = build_VECM_models(jvar, Z, pdinfo, vflag, 0);
+	err = VECM_estimate_full(jvar, Z, pdinfo, vflag);
     }
 
     if (!err) {
@@ -1614,7 +1642,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 	    err = normalize_beta(jvar, R, &do_stderrs); 
 	}
 	if (!err) {
-	    err = build_VECM_models(jvar, Z, pdinfo, ESTIMATE_ALPHA, 0);
+	    err = VECM_estimate_full(jvar, Z, pdinfo, ESTIMATE_ALPHA);
 	}
 	if (!err) {
 	    err = compute_omega(jvar);
@@ -1662,9 +1690,8 @@ int johansen_estimate (GRETL_VAR *jvar,
 /* FIXME case of restricted beta and/or alpha */
 
 int 
-johansen_boots_round (GRETL_VAR *jvar, const double **Z, 
-		      const DATAINFO *pdinfo,
-		      int iter)
+johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
+		     const DATAINFO *pdinfo)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *evals = NULL;
@@ -1705,8 +1732,8 @@ johansen_boots_round (GRETL_VAR *jvar, const double **Z,
 	    err = normalize_beta(jvar, NULL, NULL); 
 	}
 	if (!err) {
-	    err = build_VECM_models(jvar, Z, pdinfo, ESTIMATE_ALPHA, 
-				    iter);
+	    err = VECM_estimate_full(jvar, Z, pdinfo, 
+				     ESTIMATE_ALPHA | BOOTSTRAPPING);
 	}
 	if (!err) {
 	    err = compute_omega(jvar);
