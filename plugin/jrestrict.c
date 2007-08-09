@@ -199,10 +199,10 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
 	return NULL;
     }
 
-    if (opt & OPT_W) {
-	J->switcher = 1;
-    } else {
+    if (opt & OPT_L) {
 	J->switcher = 0;
+    } else {
+	J->switcher = 1;
     }
 
     J->T = jvar->T;
@@ -1919,7 +1919,12 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
     J->se = NULL;
 }
 
-/* public entry point (OPT_W -> use switching algorithm) */
+/* 
+   public entry point
+   OPT_L: use LBFGS approach instead of switching algorithm.
+   OPT_F: doing full estimation, not just testing the
+          restriction.
+*/
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
 			   const gretl_restriction_set *rset,

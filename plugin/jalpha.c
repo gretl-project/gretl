@@ -294,10 +294,6 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     int m = S11->rows;
     int err = 0;
 
-    if (!simple_restriction(jvar, rset)) {
-	return E_NOTIMP;
-    }
-
     if (prebeta) {
 	pprintf(prn, "Alpha restriction for a beta-restricted "
 		"VECM: not handled yet\n");

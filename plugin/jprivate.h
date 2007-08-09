@@ -25,10 +25,6 @@ enum {
     V_BETA
 };
 
-int 
-simple_restriction (GRETL_VAR *jvar,
-		    const gretl_restriction_set *rset);
-
 int
 johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
 		  const gretl_matrix *H, int job, PRN *prn);

@@ -1640,18 +1640,38 @@ static int VAR_finalize (GRETL_VAR *var)
     return err;
 }
 
-/* transcribe the per-equation output from a VAR into
+static int VAR_depvar_name (GRETL_VAR *var, int i, const char *yname)
+{
+    MODEL *pmod = var->models[i];
+
+    if (var->ci == VAR) {
+	pmod->depvar = gretl_strdup(yname);
+    } else {
+	pmod->depvar = malloc(VNAMELEN);
+	if (pmod->depvar != NULL) {
+	    strcpy(pmod->depvar, "d_");
+	    strncat(pmod->depvar, yname, VNAMELEN - 3);
+	}
+    }
+
+    return (pmod->depvar == NULL)? E_ALLOC: 0;
+}
+
+/* transcribe the per-equation output from a VAR or VECM into
    MODEL structs, if wanted */
 
-static int set_up_VAR_models (GRETL_VAR *var, 
-			      const double **Z,
-			      const DATAINFO *pdinfo)
+int transcribe_VAR_models (GRETL_VAR *var, 
+			   const double **Z,
+			   const DATAINFO *pdinfo,
+			   const gretl_matrix *XTX)
 {
     MODEL *pmod;
     char **params = NULL;
     int yno, N = pdinfo->n;
+    int ecm = (var->ci == VECM);
     const double *y;
-    int i, j;
+    double x;
+    int i, j, jmax = var->B->rows;
     int err = 0;
 
     params = strings_array_new_with_length(var->ncoeff, VNAMELEN);
@@ -1667,8 +1687,8 @@ static int set_up_VAR_models (GRETL_VAR *var,
 
 	pmod = var->models[i];
 	pmod->ID = i + 1;
-	pmod->ci = VAR;
-	pmod->aux = AUX_VAR;
+	pmod->ci = (ecm)? OLS : VAR;
+	pmod->aux = (ecm)? AUX_VECM: AUX_VAR;
 
 	pmod->full_n = N;
 	pmod->nobs = var->T;
@@ -1676,12 +1696,12 @@ static int set_up_VAR_models (GRETL_VAR *var,
 	pmod->t2 = var->t2;
 	pmod->ncoeff = var->ncoeff;
 	pmod->dfd = pmod->nobs - pmod->ncoeff;
-	pmod->ifc = (var->detflags & DET_CONST)? 1 : 0;
+	pmod->ifc = var->ifc;
 	pmod->dfn = var->ncoeff - pmod->ifc;
 
 	err = gretl_model_allocate_storage(pmod);
 
-	pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
+	VAR_depvar_name(var, i, pdinfo->varname[yno]);
 
 	if (i == 0) {
 	    pmod->params = params;
@@ -1693,10 +1713,20 @@ static int set_up_VAR_models (GRETL_VAR *var,
 	pmod->list = gretl_list_new(1);
 	pmod->list[1] = yno;
 
+	if (ecm) {
+	    pmod->dfd = var->T;
+	}
 	set_VAR_model_stats(var, i);
+	if (ecm) {
+	    pmod->dfd = var->T - pmod->ncoeff;
+	}	
 
-	for (j=0; j<var->ncoeff; j++) {
+	for (j=0; j<jmax; j++) {
 	    pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
+	    if (XTX != NULL) {
+		x = gretl_matrix_get(XTX, j, j);
+		pmod->sderr[j] = pmod->sigma * sqrt(x);
+	    }
 	}
     }
 
@@ -1759,7 +1789,7 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 		err = VAR_do_lagsel(var, Z, pdinfo, prn);
 	    }
 	} else {
-	    err = set_up_VAR_models(var, Z, pdinfo);
+	    err = transcribe_VAR_models(var, Z, pdinfo, NULL);
 	    if (!err) {
 		err = VAR_finalize(var);
 	    }

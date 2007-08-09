@@ -438,90 +438,21 @@ enum {
     BOOTSTRAPPING  = 1 << 1
 };
 
-/* For the case where we want to show complete output: transcribe
-   the matrix multi-OLS results into MODEL structs for printing
-   and saving.
-*/
+/* write pre-computed ML alpha into model structs */
 
-static int 
-transcribe_VECM_models (GRETL_VAR *vecm, 
-			const double **Z, const DATAINFO *pdinfo,
-			const gretl_matrix *XTX, int flags)
+static void transcribe_alpha (GRETL_VAR *v)
 {
     MODEL *pmod;
-    char **params = NULL;
-    const char *dvname;
-    const double *y;
-    double x;
-    int r = jrank(vecm);
-    int yno, N = pdinfo->n;
-    int i, j, jmax;
-    int err = 0;
+    int r = jrank(v);
+    int i, j, k = v->B->rows;
 
-    jmax = (flags & ESTIMATE_ALPHA)? vecm->ncoeff :
-	vecm->ncoeff - r;
-
-    params = strings_array_new_with_length(vecm->ncoeff, VNAMELEN);
-    if (params == NULL) {
-	return E_ALLOC;
-    }
-
-    gretl_VAR_param_names(vecm, params, pdinfo);
-
-    for (i=0; i<vecm->neqns; i++) {
-	yno = vecm->ylist[i+1];
-	y = Z[yno];
-	dvname = pdinfo->varname[yno];
-
-	pmod = vecm->models[i];
-	pmod->ID = i + 1;
-	pmod->ci = OLS;
-	pmod->aux = AUX_VECM;
-
-	pmod->full_n = N;
-	pmod->nobs = vecm->T;
-	pmod->t1 = vecm->t1;
-	pmod->t2 = vecm->t2;
-	pmod->ncoeff = vecm->ncoeff;
-	pmod->dfd = pmod->nobs - pmod->ncoeff;
-	pmod->ifc = vecm->ifc;
-	pmod->dfn = pmod->ncoeff - pmod->ifc;
-
-	err = gretl_model_allocate_storage(pmod);
-
-	pmod->depvar = malloc(VNAMELEN);
-	if (pmod->depvar != NULL) {
-	    strcpy(pmod->depvar, "d_");
-	    strncat(pmod->depvar, dvname, VNAMELEN - 3);
-	}
-
-	if (i == 0) {
-	    pmod->params = params;
-	} else {
-	    pmod->params = strings_array_dup(params, vecm->ncoeff);
-	}
-	pmod->nparams = vecm->ncoeff;
-
-	pmod->list = gretl_list_new(1);
-	pmod->list[1] = yno;
-
-	pmod->dfd = vecm->T;
-	set_VAR_model_stats(vecm, i);
-	pmod->dfd = vecm->T - pmod->ncoeff;
-
-	for (j=0; j<jmax; j++) {
-	    pmod->coeff[j] = gretl_matrix_get(vecm->B, j, i);
-	    x = gretl_matrix_get(XTX, j, j);
-	    pmod->sderr[j] = pmod->sigma * sqrt(x);
-	}
-
-	for (j=jmax; j<pmod->ncoeff; j++) {
-	    pmod->coeff[j] = gretl_matrix_get(vecm->jinfo->Alpha, i, j-jmax);
-	    pmod->sderr[j] = NADBL;
+    for (i=0; i<v->neqns; i++) {
+	pmod = v->models[i];
+	for (j=0; j<r; j++) {
+	    pmod->coeff[k+j] = gretl_matrix_get(v->jinfo->Alpha, i, j);
+	    pmod->sderr[k+j] = NADBL; /* FIXME */
 	}
     }
-
-    return err;
 }
 
 /* The X (data) and B (coefficient) matrices may need expanding
@@ -810,7 +741,10 @@ VECM_estimate_full (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
 #endif
 
     if (!err && !(flags & BOOTSTRAPPING)) {
-	transcribe_VECM_models(v, Z, pdinfo, XTX, flags);
+	transcribe_VAR_models(v, Z, pdinfo, XTX);
+	if (flags == NET_OUT_ALPHA) {
+	    transcribe_alpha(v);
+	}
     }
 
  bailout:
@@ -1448,31 +1382,25 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
     return err;
 }
 
-static int use_switcher (gretlopt opt)
+static int use_lbfgs (gretlopt opt)
 {
-    if (opt & OPT_W) return 1;
-    return (getenv("GRETL_SWITCHER") != NULL);
+    if (opt & OPT_L) return 1;
+    return (getenv("GRETL_VECM_LBFGS") != NULL);
 }
 
 /* test for homogeneous restriction, either for a rank-1 system 
    or in common across the columns of beta (or alpha)
 */
 
-int 
+static int 
 simple_restriction (GRETL_VAR *jvar,
 		    const gretl_restriction_set *rset)
 {
     const gretl_matrix *R, *q;
-    int acols = rset_VECM_acols(rset);
-    int bcols = rset_VECM_bcols(rset);
     int rcols = jvar->neqns;
     int ret = 1;
 
-    if (acols > 0 && bcols > 0) {
-	return 0;
-    }
-
-    if (bcols > 0) {
+    if (rset_VECM_bcols(rset) > 0) {
 	rcols += restricted(jvar);
 	R = rset_get_R_matrix(rset);
 	q = rset_get_q_matrix(rset);
@@ -1492,6 +1420,26 @@ simple_restriction (GRETL_VAR *jvar,
     return ret;
 }
 
+static int simple_beta_restriction (GRETL_VAR *jvar,
+				    const gretl_restriction_set *rset)
+{
+    if (rset_VECM_acols(rset) > 0) {
+	return 0;
+    } else {
+	return simple_restriction(jvar, rset);
+    }
+}
+
+static int simple_alpha_restriction (GRETL_VAR *jvar,
+				     const gretl_restriction_set *rset)
+{
+    if (rset_VECM_bcols(rset) > 0) {
+	return 0;
+    } else {
+	return simple_restriction(jvar, rset);
+    }
+}
+
 /* driver for VECM estimation subject to "general" restrictions
    on beta and/or alpha */
 
@@ -1501,28 +1449,29 @@ static int j_general_restrict (GRETL_VAR *jvar,
 			       gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R, *q;
-    gretlopt vopt = OPT_F;
+    int acols = rset_VECM_acols(rset);
+    int bcols = rset_VECM_bcols(rset);
+    gretlopt vopt = OPT_F; /* full estimation */
     int err;
 
-    if (use_switcher(opt)) {
-	vopt |= OPT_W;
+    if (use_lbfgs(opt)) {
+	vopt |= OPT_L;
     }
 
     err = general_vecm_analysis(jvar, rset, pdinfo, vopt, prn);
 
-    if (!err && !(vopt & OPT_W)) {
-	int vflag;
+    if (!err) {
+	int flag = (acols > 0)? NET_OUT_ALPHA : ESTIMATE_ALPHA;
 
-	vflag = (rset_VECM_acols(rset) > 0)? 
-	    NET_OUT_ALPHA : ESTIMATE_ALPHA;
-	err = VECM_estimate_full(jvar, Z, pdinfo, vflag);
+	err = VECM_estimate_full(jvar, Z, pdinfo, flag);
     }
 
     if (!err) {
+	/* FIXME 'k' for AIC etc. */
 	err = vecm_ll_stats(jvar);
     }
 
-    if (!err && rset_VECM_bcols(rset) > 0) {
+    if (!err && bcols > 0) {
 	R = rset_get_R_matrix(rset);
 	q = rset_get_q_matrix(rset);
 
@@ -1537,7 +1486,7 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	}
     }
 
-    if (!err && rset_VECM_acols(rset) > 0) {
+    if (!err && acols > 0) {
 	R = rset_get_Ra_matrix(rset);
         q = rset_get_qa_matrix(rset);
 
@@ -1595,13 +1544,34 @@ static int vecm_finalize (GRETL_VAR *jvar, const gretl_matrix *R,
     return err;
 }
 
+/* estimation subject to "simple" restriction on alpha */
+
+static int 
+est_simple_alpha_restr (GRETL_VAR *jvar, 
+			const gretl_restriction_set *rset,
+			const double **Z, const DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn)
+{
+    /* FIXME this is just a placeholder! */
+    int err;
+
+    opt |= OPT_V; /* ensure verbose output */
+
+    err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
+
+    /* FIXME record test info on jvar, do full
+       estimation of Gamma, etc. */
+
+    return err;
+}
+
 /* estimation subject to "simple" restriction on beta */
 
 static int 
-j_estimate_simple_restr (GRETL_VAR *jvar, 
-			 const gretl_restriction_set *rset,
-			 const double **Z, const DATAINFO *pdinfo, 
-			 gretlopt opt, PRN *prn)
+est_simple_beta_restr (GRETL_VAR *jvar, 
+		       const gretl_restriction_set *rset,
+		       const double **Z, const DATAINFO *pdinfo, 
+		       gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R;
     gretl_matrix *H = NULL;
@@ -1762,15 +1732,22 @@ int johansen_estimate (GRETL_VAR *jvar,
 {
     int ret = 0;
 
-    if (rset == NULL) {
-	ret = j_estimate_unrestr(jvar, Z, pdinfo, opt, prn);
-    } else if (rset_VECM_acols(rset) > 0) {
+#if 0 /* ?? */
+    if (rset_VECM_acols(rset) > 0) {
 	pprintf(prn, "\"full\" restriction on VECM via alpha: "
 		"not handled yet\n");
-	ret = E_NOTIMP;
-    } else if (simple_restriction(jvar, rset)) {
-	ret = j_estimate_simple_restr(jvar, rset, Z, pdinfo,
-				      opt, prn);
+	return E_NOTIMP;
+    }	
+#endif
+
+    if (rset == NULL) {
+	ret = j_estimate_unrestr(jvar, Z, pdinfo, opt, prn);
+    } else if (simple_beta_restriction(jvar, rset)) {
+	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo,
+				    opt, prn);
+    } else if (simple_alpha_restriction(jvar, rset)) {
+	ret = est_simple_alpha_restr(jvar, rset, Z, pdinfo,
+				     opt, prn);
     } else {
 	ret = j_estimate_general(jvar, rset, Z, pdinfo,
 				 opt, prn);
@@ -1977,34 +1954,24 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 			   gretlopt opt,
 			   PRN *prn)
 {
-    int acols = rset_VECM_acols(rset);
     int err = 0;
 
 #if 0
-    if (acols > 0 && !use_switcher(opt)) {
-	pprintf(prn, "alpha restriction: not handled yet\n");
-	return E_NOTIMP;
-    } 
-#endif
-
-#if 0
-    if (alpha_restricted_VECM(jvar) && bcols > 0) {
+    if (alpha_restricted_VECM(jvar) && rset_VECM_bcols(rset) > 0) {
 	pprintf(prn, "Beta restriction for an alpha-restricted VECM: "
 		"not handled yet\n");
 	return E_NOTIMP;
     }
 #endif	
 
-    if (simple_restriction(jvar, rset)) {
-	if (acols > 0) {
-	    err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
-	} else {
-	    err = vecm_beta_test(jvar, rset, pdinfo, opt, prn);
-	}
+    if (simple_beta_restriction(jvar, rset)) {
+	err = vecm_beta_test(jvar, rset, pdinfo, opt, prn);
+    } else if (simple_alpha_restriction(jvar, rset)) {
+	err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } else {
 	/* "general" restriction */
-	if (use_switcher(opt)) {
-	    opt |= OPT_W;
+	if (use_lbfgs(opt)) {
+	    opt |= OPT_L;
 	}
 	err = general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
     }

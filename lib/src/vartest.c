@@ -354,7 +354,6 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     return 0;
 }
 
-
 /* Run the various per-equation omit tests (all lags of each var in
    turn, last lag of all vars) using the Wald method.  We also
    add the standard errors to the models here, since we have the

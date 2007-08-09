@@ -142,6 +142,11 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 			 FILE *fp);
 
+int transcribe_VAR_models (GRETL_VAR *var, 
+			   const double **Z,
+			   const DATAINFO *pdinfo,
+			   const gretl_matrix *XTX);
+
 #ifndef GRETLCLI
 
 GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
