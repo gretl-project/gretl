@@ -602,6 +602,7 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Bvar);
     gretl_matrix_free(jv->Bse);
+    gretl_matrix_free(jv->Ase);
     gretl_matrix_free(jv->R);
     gretl_matrix_free(jv->q);
     gretl_matrix_free(jv->Ra);
@@ -2119,6 +2120,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->Beta = NULL;
     jv->Alpha = NULL;
     jv->Bse = NULL;
+    jv->Ase = NULL;
     jv->Bvar = NULL;
     jv->R = NULL;
     jv->q = NULL;
@@ -2126,7 +2128,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->qa = NULL;
 
     jv->ll0 = NADBL;
-    jv->bdf = 0;
+    jv->lrdf = 0;
 
     return jv;
 }
@@ -2739,6 +2741,64 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     return M;
 }
 
+/* retrieve EC (j >= 1 && j <= rank) as a full-length series */
+
+double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z, 
+			   const DATAINFO *pdinfo, int *err)
+{
+    const gretl_matrix *B = vecm->jinfo->Beta;
+    int r = jrank(vecm);
+    double *x = NULL;
+    double xti;
+    int i, t, vi;
+
+    if (j < 1 || j > r) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    for (i=1; i<=vecm->ylist[0]; i++) {
+	if (vecm->ylist[i] >= pdinfo->v) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < pdinfo->t1 || t > pdinfo->t2) {
+	    x[t] = NADBL;
+	    continue;
+	}
+	x[t] = 0.0;
+	/* beta * X(t-1) */
+	for (i=0; i<vecm->neqns; i++) {
+	    vi = vecm->ylist[i+1];
+	    xti = Z[vi][t-1];
+	    if (na(xti)) {
+		x[t] = NADBL;
+		break;
+	    }
+	    x[t] += xti * gretl_matrix_get(B, i, j);
+	}
+	/* restricted const or trend */
+	if (restricted(vecm) && !na(x[t])) {
+	    xti = gretl_matrix_get(B, i, j);
+	    if (jcode(vecm) == J_REST_TREND) {
+		xti *= t;
+	    }
+	    x[t] += xti;
+	}
+    }
+	
+    return x;
+}
+
 static GRETL_VAR *gretl_VAR_rebuilder_new (void)
 {
     GRETL_VAR *var = malloc(sizeof *var);
@@ -2813,7 +2873,7 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
 	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
 	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
-	    gretl_xml_node_get_int(cur, doc, &jinfo->bdf);
+	    gretl_xml_node_get_int(cur, doc, &jinfo->lrdf);
 	}
 	cur = cur->next;
     }
@@ -3050,9 +3110,9 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_matrix(j->R, "Ra", fp);
     gretl_xml_put_matrix(j->q, "qa", fp);
 
-    if (!na(j->ll0) && j->bdf > 0) {
+    if (!na(j->ll0) && j->lrdf > 0) {
 	gretl_xml_put_double("ll0", j->ll0, fp);
-	gretl_xml_put_int("bdf", j->bdf, fp);
+	gretl_xml_put_int("bdf", j->lrdf, fp);
     }
 
     fputs("</gretl-johansen>\n", fp);
@@ -3101,4 +3161,6 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     return err;
 }
+
+
 

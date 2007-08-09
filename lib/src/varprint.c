@@ -719,20 +719,32 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 
     /* FIXME TeX (and RTF?) below */
 
-    if (vecm->jinfo->R != NULL) {
-	if (!na(vecm->jinfo->ll0) && vecm->jinfo->bdf > 0) {
+    if (vecm->jinfo->R != NULL || vecm->jinfo->Ra != NULL) {
+	if (!na(vecm->jinfo->ll0) && vecm->jinfo->lrdf > 0) {
 	    double ll0 = vecm->jinfo->ll0;
 	    double x = 2.0 * (ll0 - vecm->ll);
-	    int df = vecm->jinfo->bdf;
+	    int df = vecm->jinfo->lrdf;
 
 #if 1
 	    /* is this a worthwhile thing to do? */
-	    pputs(prn, "\n\n");
-	    pputs(prn, _("Restrictions on beta:"));
-	    pputc(prn, '\n');
-	    print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
-					    gretl_VECM_n_beta(vecm), prn);
-	    pputc(prn, '\n');
+	    if (vecm->jinfo->R != NULL) {
+		pputs(prn, "\n\n");
+		pputs(prn, _("Restrictions on beta:"));
+		pputc(prn, '\n');
+		print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
+						gretl_VECM_n_beta(vecm), prn);
+		pputc(prn, '\n');
+	    }
+	    if (vecm->jinfo->Ra != NULL) {
+		if (vecm->jinfo->R == NULL) {
+		    pputs(prn, "\n\n");
+		}
+		pputs(prn, _("Restrictions on alpha:"));
+		pputc(prn, '\n');
+		print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa, 
+						gretl_VECM_n_alpha(vecm), prn);
+		pputc(prn, '\n');
+	    }	    
 #else
 	    pputs(prn, "\n\n");
 #endif

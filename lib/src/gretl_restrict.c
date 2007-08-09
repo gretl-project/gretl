@@ -2223,18 +2223,18 @@ rset_get_qa_matrix (const gretl_restriction_set *rset)
 
 int rset_VECM_bcols (const gretl_restriction_set *rset)
 {
-    if (rset != NULL) {
-	return rset->bcols;
-    } else {
+    if (rset == NULL || rset->R == NULL) {
 	return 0;
+    } else {
+	return rset->R->cols;
     }
 }
 
 int rset_VECM_acols (const gretl_restriction_set *rset)
 {
-    if (rset != NULL) {
-	return rset->acols;
-    } else {
+    if (rset == NULL || rset->Ra == NULL) {
 	return 0;
+    } else {
+	return rset->Ra->cols;
     }
 }

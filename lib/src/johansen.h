@@ -44,14 +44,15 @@ struct JohansenInfo_ {
     gretl_matrix *S01;    /* cross-products of residuals */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
-    gretl_matrix *Bse;    /* standard errors of EC terms */
     gretl_matrix *Bvar;   /* variance matrix of beta */
+    gretl_matrix *Bse;    /* standard errors of beta */
+    gretl_matrix *Ase;    /* standard errors of alpha */
     gretl_matrix *R;      /* beta-restriction LHS matrix */
     gretl_matrix *q;      /* beta-restrictions RHS matrix */
     gretl_matrix *Ra;     /* alpha-restriction LHS matrix */
     gretl_matrix *qa;     /* alpha-restrictions RHS matrix */
     double ll0;           /* unrestricted log-likelihood */
-    int bdf;              /* number of restrictions on beta */
+    int lrdf;             /* df for likelihood ratio test */
 };
 
 struct GRETL_VAR_ {

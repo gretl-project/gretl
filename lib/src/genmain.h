@@ -62,7 +62,7 @@ typedef enum {
     M_OLDMAT_MAX, /* -- separator -- */
     M_JALPHA,     /* Johansen's alpha */
     M_JBETA,      /* Johansen's beta */
-    M_JVBETA,     /* Covariance matrix for Johansen's normalised beta */
+    M_JVBETA,     /* Covariance matrix for Johansen's normalized beta */
     M_JS00,       /* VECM residual covariance matrix (1st differences) */
     M_JS11,       /* VECM residual covariance matrix (levels) */
     M_JS01,       /* VECM residual cross-product matrix */

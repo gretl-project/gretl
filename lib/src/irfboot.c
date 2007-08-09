@@ -787,7 +787,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     int scount = 0;
     int iter, err = 0;
 
-    if (var->jinfo != NULL && var->jinfo->bdf > 0) {
+    if (var->jinfo != NULL && var->jinfo->lrdf > 0) {
 	/* FIXME add support for restricted vecms */
 	strcpy(gretl_errmsg, "IRF bootstrap not yet available");
 	return NULL;
