@@ -35,13 +35,12 @@ void print_beta_alpha_Pi (GRETL_VAR *jvar,
 
 int 
 general_vecm_analysis (GRETL_VAR *jvar, 
-		       const gretl_restriction_set *rset,
+		       const gretl_restriction *rset,
 		       const DATAINFO *pdinfo,
-		       gretlopt opt,
 		       PRN *prn);
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
-		     const gretl_restriction_set *rset,
+		     const gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn);

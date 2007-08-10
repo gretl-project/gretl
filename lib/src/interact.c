@@ -3373,7 +3373,7 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
 	/* FIXME non-vecm case */
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
-				       pdinfo, prn, &err);
+				       pdinfo, cmd->opt, prn, &err);
 	if (s->var != NULL) {
 	    if (s->callback != NULL) {
 		s->callback(s, pZ, pdinfo);
@@ -3382,8 +3382,8 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    set_as_last_model(s->var, GRETL_OBJ_VAR);
 	} 
     } else {
-	err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
-					     pdinfo, cmd->opt, prn);
+	err = gretl_restriction_finalize(s->rset, (const double **) *pZ, 
+					 pdinfo, cmd->opt, prn);
     }
 
     s->rset = NULL;

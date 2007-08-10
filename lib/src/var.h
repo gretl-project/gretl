@@ -103,14 +103,14 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 int gretl_VECM_n_alpha (const GRETL_VAR *vecm);
 
 int gretl_VECM_test (GRETL_VAR *vecm, 
-		     const gretl_restriction_set *rset,
+		     const gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn);
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 
-			    const gretl_restriction_set *rset,
+			    const gretl_restriction *rset,
 			    const double **Z, const DATAINFO *pdinfo, 
 			    PRN *prn, int *err);
 

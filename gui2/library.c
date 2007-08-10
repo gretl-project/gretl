@@ -2161,7 +2161,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     char title[64], bufline[MAXLINE];
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
     gretlopt opt = edit_dialog_get_opt(dlg);
-    gretl_restriction_set *my_rset = NULL;
+    gretl_restriction *my_rset = NULL;
     int got_start_line = 0, got_end_line = 0;
     int height = 300;
     int err = 0;
@@ -2245,10 +2245,10 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
     if (opt & OPT_F) {
 	vnew = gretl_restricted_vecm(my_rset, (const double **) Z, 
-				     datainfo, prn, &err);
+				     datainfo, opt, prn, &err);
     } else {
-	err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
-					     datainfo, OPT_NONE, prn);
+	err = gretl_restriction_finalize(my_rset, (const double **) Z, 
+					 datainfo, OPT_NONE, prn);
     }
 
     if (err) {

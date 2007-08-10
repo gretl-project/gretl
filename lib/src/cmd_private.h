@@ -42,7 +42,7 @@ struct ExecState_ {
     char runfile[MAXLEN];
     MODEL **models;
     gretl_equation_system *sys;
-    gretl_restriction_set *rset;
+    gretl_restriction *rset;
     GRETL_VAR *var;
     DATAINFO *subinfo; /* record of incoming sub-sample for functions */
     int alt_model;

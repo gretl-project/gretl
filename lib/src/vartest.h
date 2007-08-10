@@ -35,9 +35,8 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 
 void VAR_write_A_matrix (GRETL_VAR *v);
 
-int johansen_stage_1 (GRETL_VAR *jvar, 
-		      const double **Z, const DATAINFO *pdinfo,
-		      PRN *prn);
+int johansen_stage_1 (GRETL_VAR *jvar, const double **Z, 
+		      const DATAINFO *pdinfo);
 
 double gretl_VAR_ldet (GRETL_VAR *var, int *err);
 

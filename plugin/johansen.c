@@ -1421,7 +1421,7 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
 
 static int 
 simple_restriction (GRETL_VAR *jvar,
-		    const gretl_restriction_set *rset)
+		    const gretl_restriction *rset)
 {
     const gretl_matrix *R, *q;
     int rcols = jvar->neqns;
@@ -1448,7 +1448,7 @@ simple_restriction (GRETL_VAR *jvar,
 }
 
 static int simple_beta_restriction (GRETL_VAR *jvar,
-				    const gretl_restriction_set *rset)
+				    const gretl_restriction *rset)
 {
     if (rset_VECM_acols(rset) > 0) {
 	return 0;
@@ -1458,7 +1458,7 @@ static int simple_beta_restriction (GRETL_VAR *jvar,
 }
 
 static int simple_alpha_restriction (GRETL_VAR *jvar,
-				     const gretl_restriction_set *rset)
+				     const gretl_restriction *rset)
 {
     if (rset_VECM_bcols(rset) > 0) {
 	return 0;
@@ -1471,16 +1471,16 @@ static int simple_alpha_restriction (GRETL_VAR *jvar,
    on beta and/or alpha */
 
 static int j_general_restrict (GRETL_VAR *jvar, 
-			       const gretl_restriction_set *rset,
+			       const gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       gretlopt opt, PRN *prn)
+			       PRN *prn)
 {
     const gretl_matrix *R, *q;
     int acols = rset_VECM_acols(rset);
     int bcols = rset_VECM_bcols(rset);
     int err;
 
-    err = general_vecm_analysis(jvar, rset, pdinfo, opt | OPT_F, prn);
+    err = general_vecm_analysis(jvar, rset, pdinfo, prn);
 
     if (!err) {
 	int flag = (acols > 0)? NET_OUT_ALPHA : ESTIMATE_ALPHA;
@@ -1569,9 +1569,8 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 
 static int 
 est_simple_beta_restr (GRETL_VAR *jvar, 
-		       const gretl_restriction_set *rset,
-		       const double **Z, const DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
+		       const gretl_restriction *rset,
+		       const double **Z, const DATAINFO *pdinfo)
 {
     const gretl_matrix *R;
     gretl_matrix *H = NULL;
@@ -1636,8 +1635,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
 
 static int 
 j_estimate_unrestr (GRETL_VAR *jvar, 
-		    const double **Z, const DATAINFO *pdinfo, 
-		    gretlopt opt, PRN *prn)
+		    const double **Z, const DATAINFO *pdinfo)
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
@@ -1683,9 +1681,9 @@ j_estimate_unrestr (GRETL_VAR *jvar,
    basically hand over to jrestrict.c */
 
 static int j_estimate_general (GRETL_VAR *jvar, 
-			       const gretl_restriction_set *rset,
+			       const gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       gretlopt opt, PRN *prn)
+			       PRN *prn)
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
@@ -1721,7 +1719,7 @@ static int j_estimate_general (GRETL_VAR *jvar,
     gretl_matrix_free(evals);
 
     if (!err) {
-	err = j_general_restrict(jvar, rset, Z, pdinfo, opt, prn);
+	err = j_general_restrict(jvar, rset, Z, pdinfo, prn);
     }
 
     return err;
@@ -1730,20 +1728,18 @@ static int j_estimate_general (GRETL_VAR *jvar,
 /* Public entry point for VECM estimation, restricted or not */
 
 int johansen_estimate (GRETL_VAR *jvar, 
-		       const gretl_restriction_set *rset,
+		       const gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
+		       PRN *prn)
 {
     int ret = 0;
 
     if (rset == NULL) {
-	ret = j_estimate_unrestr(jvar, Z, pdinfo, opt, prn);
+	ret = j_estimate_unrestr(jvar, Z, pdinfo);
     } else if (simple_beta_restriction(jvar, rset)) {
-	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo,
-				    opt, prn);
+	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo);
     } else {
-	ret = j_estimate_general(jvar, rset, Z, pdinfo,
-				 opt, prn);
+	ret = j_estimate_general(jvar, rset, Z, pdinfo, prn);
     }
 
     return ret;
@@ -1848,7 +1844,7 @@ static int show_beta_alpha_etc (GRETL_VAR *jvar,
 /* test for a common, homogeneous restriction on beta (only) */
 
 static int vecm_beta_test (GRETL_VAR *jvar, 
-			   const gretl_restriction_set *rset,
+			   const gretl_restriction *rset,
 			   const DATAINFO *pdinfo, 
 			   gretlopt opt,
 			   PRN *prn)
@@ -1860,6 +1856,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     gretl_matrix *S01 = NULL;
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
+    int verbose = (opt & OPT_V);
     int m, n, rank;
     int err = 0;
 
@@ -1885,7 +1882,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 
     pputs(prn, "\nTest of restrictions on cointegrating relations\n\n");
 
-    if (opt & OPT_V) {
+    if (verbose) {
 	gretl_matrix_print_to_prn(H, "Restriction matrix, H", prn);
     }
 
@@ -1894,7 +1891,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 			     jvar->jinfo->S11, S11, 
 			     GRETL_MOD_NONE);
 
-    if (opt & OPT_V) {
+    if (verbose) {
 	gretl_matrix_print_to_prn(S11, "H'*S11*H", prn);
     }
 
@@ -1903,7 +1900,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 	err = gretl_matrix_multiply(jvar->jinfo->S01, H, S01);
     }
 
-    if (opt & OPT_V) {
+    if (verbose) {
 	gretl_matrix_print_to_prn(S01, "S01*H", prn);
     }
 
@@ -1912,13 +1909,13 @@ static int vecm_beta_test (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	if (opt & OPT_V) {
+	if (verbose) {
 	    gretl_matrix_print_to_prn(M, "M", prn);
 	}
 	johansen_LR_calc(jvar, evals, H, V_BETA, prn);
     } 
 
-    if (!err && (opt & OPT_V)) {
+    if (!err && verbose) {
 	show_beta_alpha_etc(jvar, H, M, pdinfo, prn);
     }
 
@@ -1942,7 +1939,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 */
 
 int vecm_test_restriction (GRETL_VAR *jvar, 
-			   const gretl_restriction_set *rset,
+			   const gretl_restriction *rset,
 			   const DATAINFO *pdinfo, 
 			   gretlopt opt,
 			   PRN *prn)
@@ -1954,7 +1951,7 @@ int vecm_test_restriction (GRETL_VAR *jvar,
     } else if (simple_alpha_restriction(jvar, rset)) {
 	err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } else {
-	err = general_vecm_analysis(jvar, rset, pdinfo, opt, prn);
+	err = general_vecm_analysis(jvar, rset, pdinfo, prn);
     }
 
     return err;

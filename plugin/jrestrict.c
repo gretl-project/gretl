@@ -34,7 +34,7 @@
 typedef struct Jwrap_ Jwrap;
 
 struct Jwrap_ {
-    int switcher;   /* use switching algorithm */    
+    int bfgs;       /* use LBFGS */    
     int T;          /* length of time series used */
     int p;          /* number of equations */
     int p1;         /* number of rows in beta (>= p) */
@@ -91,7 +91,7 @@ static int compute_alpha (Jwrap *J);
 static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
 static int phi_from_beta (Jwrap *J,
-			  const gretl_restriction_set *rset);
+			  const gretl_restriction *rset);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
@@ -213,11 +213,7 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
 	return NULL;
     }
 
-    if (use_lbfgs(opt)) {
-	J->switcher = 0;
-    } else {
-	J->switcher = 1;
-    }
+    J->bfgs = use_lbfgs(opt);
 
     J->T = jvar->T;
     J->p = jvar->neqns;
@@ -1097,6 +1093,9 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 		"parameters = %d\n", J->jr, npar);
 	if (J->jr < npar) {
 	    pputs(prn, "Model is not fully identified\n");
+	    if (J->bfgs) {
+		err = E_NOIDENT;
+	    }
 	} else {
 	    pputs(prn, "Model is fully identified\n");
 	}
@@ -1117,8 +1116,7 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 
 /* set up restriction matrix, G, for alpha */
 
-static int set_up_G (Jwrap *J, GRETL_VAR *jvar,
-		     const gretl_restriction_set *rset,
+static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 		     PRN *prn)
 {
     const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
@@ -1191,9 +1189,7 @@ static int set_up_G (Jwrap *J, GRETL_VAR *jvar,
 
 /* set up restriction matrices, H and h_0, for beta */
 
-static int set_up_H_h0 (Jwrap *J, GRETL_VAR *jvar,
-			const gretl_restriction_set *rset,
-			PRN *prn)
+static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 {
     const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *q = rset_get_q_matrix(rset);
@@ -1410,7 +1406,7 @@ static int phi_init_homog (Jwrap *J)
 }
 
 static int 
-normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
+normalize_initial_beta (Jwrap *J, const gretl_restriction *rset)
 {
     const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *d = rset_get_q_matrix(rset);
@@ -1479,7 +1475,7 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
 }
 
 static int phi_from_beta (Jwrap *J,
-			  const gretl_restriction_set *rset)
+			  const gretl_restriction *rset)
 {
     int i, err = 0;
 
@@ -1559,7 +1555,7 @@ static int case0 (Jwrap *J)
    beta in case beta is restricted. 
 */
 
-static int beta_init (Jwrap *J, const gretl_restriction_set *rset)
+static int beta_init (Jwrap *J, const gretl_restriction *rset)
 {
     int err;
 
@@ -1755,19 +1751,17 @@ static int real_compute_ll (Jwrap *J)
 static double Jloglik (const double *theta, void *data)
 {
     Jwrap *J = (Jwrap *) data;
-    int i = 0;
+    int i, k = 0;
 
     if (J->H != NULL) {
 	for (i=0; i<J->blen; i++) {
-	    J->phi->val[i] = theta[i];
+	    J->phi->val[i] = theta[k++];
 	}
     } 
 
     if (J->G != NULL) {
-	int j = i;
-
 	for (i=0; i<J->alen; i++) {
-	    J->psi->val[i] = theta[j++];
+	    J->psi->val[i] = theta[k++];
 	}
     }
 
@@ -1866,10 +1860,8 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* I _think_ this is made redundant by the use of Boswijk's
-   initialization for beta, but I'm willing to be proved
-   wrong!
-*/
+/* simulated annealing: useful in case the standard initialization
+   leads to a local maximum trap */
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 {
@@ -1887,7 +1879,8 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 
     double Temp = 1.0;
     double radius = 1.0;
-    int hdr = 0, err = 0;
+    int improved = 0;
+    int err = 0;
 
     b0 = gretl_matrix_copy(b);
     b1 = gretl_matrix_copy(b);
@@ -1900,6 +1893,11 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     }
 
     f0 = fbest = fworst = Jloglik(b0->val, J);
+
+    if (opt & OPT_V) {
+	pprintf(prn, "\nSimulated annealing: initial function value = %.8g\n",
+		f0);
+    }    
 
     for (i=0; i<SAiter; i++) {
 	gretl_matrix_random_fill(d, D_NORMAL);
@@ -1921,11 +1919,10 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 		fbest = f0;
 		gretl_matrix_copy_values(bstar, b0);
 		if (opt & OPT_V) {
-		    if (!hdr) {
-			pputs(prn, "\nSimulated annealing:\n");
-			pprintf(prn, "%6s %12s %12s %12s\n",
+		    if (!improved) {
+			pprintf(prn, "\n%6s %12s %12s %12s\n",
 				"iter", "temp", "radius", "fbest");
-			hdr = 1;
+			improved = 1;
 		    }
 		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n", 
 			    i, Temp, radius, fbest);
@@ -1944,8 +1941,10 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 
     gretl_matrix_copy_values(b, bstar);
 
-    if (hdr) {
+    if (improved) {
 	pputc(prn, '\n');
+    } else if (opt & OPT_V) {
+	pprintf(prn, "No improvement found in %d iterations\n\n", SAiter);
     }
     
     if (fbest - fworst < 1.0e-9) {
@@ -2007,13 +2006,15 @@ static int allocate_psi (Jwrap *J)
     return (J->psi == NULL)? E_ALLOC : 0;
 }
 
-/* below: needed only when using BFGS: concatenate phi 
-   and psi to form the full vector of free parameters
+/* Needed only when using BFGS: concatenate phi and psi to form the
+   full vector of free parameters, theta.  Note, though: if alpha is
+   unrestricted, we just compute alpha conditional on beta (phi);
+   we don't append phi to the free params in theta.
 */
 
 static int make_theta (Jwrap *J)
 {
-    int i = 0, j, nt = 0;
+    int i, k, nt = 0;
 
     if (J->H != NULL) {
 	nt += J->blen;
@@ -2033,15 +2034,17 @@ static int make_theta (Jwrap *J)
 	return E_ALLOC;
     }
 
+    k = 0;
+
     if (J->H != NULL) {
 	for (i=0; i<J->blen; i++) {
-	    J->theta->val[i] = J->phi->val[i];
+	    J->theta->val[k++] = J->phi->val[i];
 	}
     }
 
     if (J->G != NULL) {
-	for (j=0; j<J->alen; j++) {
-	    J->theta->val[i++] = J->psi->val[j];
+	for (i=0; i<J->alen; i++) {
+	    J->theta->val[k++] = J->psi->val[i];
 	}
     }    
 
@@ -2083,24 +2086,46 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
    OPT_L: use LBFGS approach instead of switching algorithm.
    OPT_F: doing full estimation, not just testing the
           restriction.
+   OPT_A: use simulated annealing in initialization.
+*/
+
+/* 2007-08-10: mystery: for some problems, calling simann
+   leads to much better results, even when it doesn't actually
+   find any improvement in the loglik!  It must be that some
+   piece of code called in association with simann is doing
+   something unexpectedly useful.  Investigate!!
 */
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
-			   const gretl_restriction_set *rset,
+			   const gretl_restriction *rset,
 			   const DATAINFO *pdinfo,
-			   gretlopt opt,
 			   PRN *prn)
 {
     Jwrap *J = NULL;
+    gretlopt opt = gretl_restriction_get_options(rset);
+    int full = (opt & OPT_F);
+    int do_simann = (opt & OPT_A);
     int err = 0;
 
+#if 1
+    fprintf(stderr, "general_vecm_analysis: rset options:\n"
+	    "OPT_F: %s\n"
+	    "OPT_L: %s\n"
+	    "OPT_A: %s\n"
+	    "OPT_V: %s\n",
+	    (opt & OPT_F)? "yes" : "no",
+	    (opt & OPT_L)? "yes" : "no",
+	    (opt & OPT_A)? "yes" : "no",
+	    (opt & OPT_V)? "yes" : "no");
+#endif
+    
     J = jwrap_new(jvar, opt, &err);
     if (err) {
 	return err;
     }
 
     if (rset_VECM_bcols(rset) > 0) {
-	err = set_up_H_h0(J, jvar, rset, prn);
+	err = set_up_H_h0(J, rset);
     }
 
     if (!err) {
@@ -2108,7 +2133,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err && rset_VECM_acols(rset) > 0) {
-	err = set_up_G(J, jvar, rset, prn);
+	err = set_up_G(J, rset, prn);
     }
 
     if (!err) {
@@ -2123,34 +2148,26 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
-	if (!J->switcher) {
-	    if (!err && J->jr < J->alen + J->blen) {
-		err = E_NOIDENT;
-	    }
-	}
     }
 
     if (!err) {
 	err = beta_init(J, rset);
     }
 
-    if (!err && (J->switcher || J->G != NULL)) {
+    if (!err && (!J->bfgs || J->G != NULL)) {
 	err = alpha_init(J);
-	fprintf(stderr, "after alpha_init, err = %d\n", err); 
     }
 
-    if (J->switcher) {
-	if (!err) {
-	    err = switchit(J, prn);
-	}
-    } else {	
-	if (!err) {
-	    err = make_theta(J);
-	}
-	if (!err) {
-	    err = simann(J, opt, prn);
-	}
-	if (!err) {
+    if (!err && (J->bfgs || do_simann)) {
+	err = make_theta(J);
+    }
+
+    if (!err && do_simann) {
+	err = simann(J, opt, prn);
+    } 
+
+    if (!err) {
+	if (J->bfgs) {
 	    int maxit = 4000;
 	    double reltol = 1.0e-11;
 	    int fncount = 0;
@@ -2160,25 +2177,27 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	    err = LBFGS_max(J->theta->val, nn, maxit, reltol, 
 			    &fncount, &grcount, Jloglik, C_LOGLIK,
 			    NULL, J, opt, prn);
+	} else {
+	    err = switchit(J, prn);
 	}
     }
 
  skipest:
 
     if (!err) {
-	if (opt & OPT_F) {
+	if (full) {
 	    gretl_matrix_free(jvar->S);
 	    jvar->S = gretl_matrix_copy(J->Omega);
 	}
 	if (J->bnoest) {
 	    err = make_zero_beta_variance(J);
-	} else if (!J->switcher) {
+	} else if (J->bfgs) {
 	    err = make_beta_variance(J);
 	}
     }
 
     if (!err) {
-	if (opt & OPT_F) {
+	if (full) {
 	    transcribe_to_jvar(J, jvar);
 	} else {
 	    printres(J, jvar, pdinfo, prn);
