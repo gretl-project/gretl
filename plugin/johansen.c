@@ -591,11 +591,6 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 	/* netting out \alpha: "Y" = DY_t - \Pi Y*_t */
 	int j, p1 = v->jinfo->Beta->rows;
 
-	err = compute_alpha(v->jinfo);
-	if (err) {
-	    return err;
-	}
-
 	form_Pi(v, Pi);
 
 	for (i=0; i<v->neqns; i++) {
@@ -649,6 +644,11 @@ VECM_estimate_full (GRETL_VAR *v, const double **Z, const DATAINFO *pdinfo,
     int order = v->order;
     int xc, n = v->neqns;
     int i, err;
+
+    if (!(flags & ESTIMATE_ALPHA) && v->jinfo->Alpha == NULL) {
+	/* alpha must be pre-computed */
+	return E_DATA;
+    }
 
     err = vecm_check_size(v, flags);
     if (err) {

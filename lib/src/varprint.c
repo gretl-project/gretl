@@ -583,7 +583,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     int rtf = rtf_format(prn);
-    char s[16];
+    char s[16], vname[32];
     int rows = gretl_matrix_rows(jv->Beta);
     int i, j;
     double x;
@@ -596,8 +596,6 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
-	char vname[32];
-
 	if (i < jvar->ylist[0]) {
 	    sprintf(vname, "%s(-1)", pdinfo->varname[jvar->ylist[i+1]]);
 	} else if (jv->code == J_REST_CONST) {
@@ -608,13 +606,13 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
-	    pprintf(prn, "%-12s", vname); /* FIXME */
+	    pprintf(prn, "%-12s", vname);
 	}
 
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
 	    x = gretl_matrix_get(jv->Beta, i, j);
-	    if (jv->Bse == NULL) {
+	    if (0 && jv->Bse == NULL) { /* HA! */
 		x /= gretl_matrix_get(jv->Beta, j, j);
 	    }
 	    if (rtf) {
@@ -634,6 +632,54 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 	    }
 	    for (j=0; j<jv->rank; j++) {
 		x = gretl_matrix_get(jv->Bse, i, j);
+		sprintf(s, "(%#.5g)", x);
+		if (rtf) {
+		    pprintf(prn, "\t%s", s);
+		} else {
+		    pprintf(prn, "%12s ", s);
+		}
+	    }
+	    gretl_prn_newline(prn);
+	}
+    }
+
+    gretl_prn_newline(prn);
+
+    rows = gretl_matrix_rows(jv->Alpha);
+
+    pputs(prn, _("Adjustment vectors, alpha"));
+    if (jv->Ase != NULL) {
+	pprintf(prn, " (%s)", _("standard errors in parentheses"));
+    } 
+    gretl_prn_newline(prn);
+    gretl_prn_newline(prn);
+
+    for (i=0; i<rows; i++) {
+	sprintf(vname, "%s", pdinfo->varname[jvar->ylist[i+1]]);
+	if (rtf) {
+	    pputs(prn, vname);
+	} else {
+	    pprintf(prn, "%-12s", vname);
+	}
+
+	for (j=0; j<jv->rank; j++) {
+	    x = gretl_matrix_get(jv->Alpha, i, j);
+	    if (rtf) {
+		pprintf(prn, "\t%#.5g ", x);
+	    } else {
+		pprintf(prn, "%#12.5g ", x);
+	    }
+	}
+	gretl_prn_newline(prn);
+
+	if (jv->Ase != NULL) {
+	    if (rtf) {
+		pputs(prn, "\t");
+	    } else {
+		bufspace(VECM_WIDTH, prn);
+	    }
+	    for (j=0; j<jv->rank; j++) {
+		x = gretl_matrix_get(jv->Ase, i, j);
 		sprintf(s, "(%#.5g)", x);
 		if (rtf) {
 		    pprintf(prn, "\t%s", s);

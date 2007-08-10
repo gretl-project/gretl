@@ -26,6 +26,7 @@
 #include "johansen.h"
 #include "var.h"
 #include "gretl_restrict.h"
+#include "libset.h"
 #include "jprivate.h"
 
 #define JDEBUG 1
@@ -74,10 +75,10 @@ struct Jwrap_ {
     gretl_matrix *theta;
 
     /* temp storage for beta calculation */
-    gretl_matrix *phivec;
+    gretl_matrix *phi;
 
     /* alpha calculation */
-    gretl_matrix *psivec;
+    gretl_matrix *psi;
 
     /* temporary storage */
     gretl_matrix *qf1;
@@ -89,6 +90,8 @@ struct Jwrap_ {
 static int compute_alpha (Jwrap *J);
 static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
+static int phi_from_beta (Jwrap *J,
+			  const gretl_restriction_set *rset);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
@@ -184,8 +187,8 @@ static void jwrap_destroy (Jwrap *J)
     gretl_matrix_free(J->bse);
     gretl_matrix_free(J->ase);
 
-    gretl_matrix_free(J->phivec);
-    gretl_matrix_free(J->psivec);
+    gretl_matrix_free(J->phi);
+    gretl_matrix_free(J->psi);
     gretl_matrix_free(J->theta);
 
     gretl_matrix_free(J->qf1);
@@ -247,8 +250,8 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->bse = NULL;
     J->ase = NULL;
 
-    J->phivec = NULL;
-    J->psivec = NULL;
+    J->phi = NULL;
+    J->psi = NULL;
     J->theta = NULL;
 
     J->qf1 = NULL;
@@ -310,6 +313,67 @@ static int solve_for_beta (Jwrap *J,
     return err;
 }
 
+static int psi_from_alpha (Jwrap *J)
+{
+    gretl_matrix *GG = NULL;
+    gretl_matrix *GGG = NULL;
+    int i, j, k;
+    int err = 0;
+
+    if (J->G == NULL) {
+	/* just vectorize alpha' into psi */
+	k = 0;
+	for (i=0; i<J->p; i++) {
+	    for (j=0; j<J->rank; j++) {
+		J->psi->val[k++] = gretl_matrix_get(J->alpha, i, j);
+	    }
+	}
+	return 0;
+    }	
+
+    GG = gretl_matrix_alloc(J->G->cols, J->G->cols);
+    GGG = gretl_matrix_alloc(J->G->cols, J->G->rows);
+
+    if (GG == NULL || GGG == NULL) {
+	gretl_matrix_free(GG);
+	gretl_matrix_free(GGG);
+	return E_ALLOC;
+    }
+
+    gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
+			      J->G, GRETL_MOD_NONE,
+			      GG, GRETL_MOD_NONE);
+
+    err = gretl_invert_symmetric_matrix(GG);
+    if (err) {
+	goto bailout;
+    }
+
+    gretl_matrix_multiply_mod(GG, GRETL_MOD_NONE,
+			      J->G, GRETL_MOD_TRANSPOSE,
+			      GGG, GRETL_MOD_NONE);
+
+    gretl_matrix_reuse(J->Tmprp, J->rank * J->p, 1);
+
+    /* vectorize alpha' into Tmprp */
+    k = 0;
+    for (i=0; i<J->p; i++) {
+	for (j=0; j<J->rank; j++) {
+	    J->Tmprp->val[k++] = gretl_matrix_get(J->alpha, i, j);
+	}
+    }
+
+    gretl_matrix_multiply(GGG, J->Tmprp, J->psi);
+    gretl_matrix_reuse(J->Tmprp, J->rank, J->p);
+
+ bailout:
+
+    gretl_matrix_free(GG);
+    gretl_matrix_free(GGG);
+
+    return err;
+}
+
 typedef struct switcher_ switcher;
 
 struct switcher_ {
@@ -318,11 +382,11 @@ struct switcher_ {
     gretl_matrix *K2;     /* holds kronecker product */
     gretl_matrix *I00;    /* chunk 0,0 of information matrix */
     gretl_matrix *I11;    /* chunk 1,1 of information matrix */
-    gretl_matrix *TmpL;   /* used only in \Phi calculation */
+    gretl_matrix *TmpL;   /* used only in \phi calculation */
     gretl_matrix *TmpR;   /* shared temp */
     gretl_matrix *TmpR1;  /* used when \alpha is restricted */
     gretl_matrix *Tmprp1; /* r x p1 temp */
-    gretl_matrix *HK2;    /* used in \Phi calculation */
+    gretl_matrix *HK2;    /* used in \phi calculation */
     gretl_matrix *lsPi;   /* vec of unrestricted \Pi */
     gretl_matrix *iOmega; /* Omega-inverse */
 };
@@ -407,14 +471,14 @@ static int switcher_init (switcher *s, Jwrap *J)
    as set out in Boswijk and Doornik, 2004, p. 455.
 */
 
-static void alpha_from_psivec (Jwrap *J)
+static void alpha_from_psi (Jwrap *J)
 {
     int r = J->rank;
     int i, j, k = 0;
 
     if (J->G != NULL) {
 	gretl_matrix_reuse(J->Tmprp, J->p * r, 1);
-	gretl_matrix_multiply(J->G, J->psivec, J->Tmprp);
+	gretl_matrix_multiply(J->G, J->psi, J->Tmprp);
 	for (i=0; i<J->p; i++) {
 	    for (j=0; j<r; j++) {
 		gretl_matrix_set(J->alpha, i, j, J->Tmprp->val[k++]);
@@ -424,20 +488,20 @@ static void alpha_from_psivec (Jwrap *J)
     } else {
 	for (i=0; i<J->p; i++) {
 	    for (j=0; j<r; j++) {
-		gretl_matrix_set(J->alpha, i, j, J->psivec->val[k++]);
+		gretl_matrix_set(J->alpha, i, j, J->psi->val[k++]);
 	    }
 	}
     }
 }
 
 /* 
-   Update \Psi using:
+   Update \psi using:
 
    [ G'(\Omega^{-1} \otimes \beta'S_{11}\beta)G ]^{-1} 
    \times G'(\Omega^{-1} \otimes \beta'S_{11}) vec(Pi'_{LS})
 */
 
-static int update_Psi (Jwrap *J, switcher *s)
+static int update_psi (Jwrap *J, switcher *s)
 {
     int r = J->rank;
     int err = 0;
@@ -479,41 +543,41 @@ static int update_Psi (Jwrap *J, switcher *s)
     }
 
     /* combine */
-    gretl_matrix_multiply(s->I00, s->TmpR, J->psivec);
+    gretl_matrix_multiply(s->I00, s->TmpR, J->psi);
 
     /* update alpha */
-    alpha_from_psivec(J);
+    alpha_from_psi(J);
 
     return err;
 }
 
-/* update \beta based on \Phi vector */
+/* update \beta based on \phi vector */
 
-static void beta_from_phivec (Jwrap *J)
+static void beta_from_phi (Jwrap *J)
 {
     int r = J->rank;
 
     if (J->H != NULL) {
 	gretl_matrix_reuse(J->beta, J->p1 * r, 1);
-	gretl_matrix_multiply(J->H, J->phivec, J->beta);
+	gretl_matrix_multiply(J->H, J->phi, J->beta);
 	if (!gretl_is_zero_matrix(J->h0)) {
 	    gretl_matrix_add_to(J->beta, J->h0);
 	}
 	gretl_matrix_reuse(J->beta, J->p1, r);
     } else {
-	gretl_matrix_copy_values_shaped(J->beta, J->phivec);
+	gretl_matrix_copy_values_shaped(J->beta, J->phi);
     }
 }
 
 /*
-    Update \Phi using:
+    Update \phi using:
 
     [H'(\alpha'\Omega^{-1}\alpha \otimes S_{11})H]^{-1} \times
        H'(\alpha'\Omega^{-1} \otimes S_{11}) \times
          [vec(Pi'_{LS}) - (\alpha \otimes I_{p1})h_0]
  */
 
-static int update_Phi (Jwrap *J, switcher *s)
+static int update_phi (Jwrap *J, switcher *s)
 {
     int r = J->rank;
     int err = 0;
@@ -571,10 +635,10 @@ static int update_Phi (Jwrap *J, switcher *s)
     }
 
     /* combine */
-    gretl_matrix_multiply(s->TmpL, s->TmpR, J->phivec);
+    gretl_matrix_multiply(s->TmpL, s->TmpR, J->phi);
 
     /* update beta */
-    beta_from_phivec(J);
+    beta_from_phi(J);
 
     return err;
 }
@@ -720,10 +784,10 @@ static int info_matrix (Jwrap *J, switcher *s)
     s->finalize = 1;
 
     /* re-create block 0,0 */
-    update_Psi(J, s);
+    update_psi(J, s);
 
     /* re-create block 1,1 */
-    update_Phi(J, s);
+    update_phi(J, s);
 
     M = gretl_zero_matrix_new(npar, npar);
     gretl_matrix_inscribe_matrix(M, s->I00, 0, 0, GRETL_MOD_NONE);
@@ -802,6 +866,49 @@ static int info_matrix (Jwrap *J, switcher *s)
 
 #endif /* info matrix variants */
 
+static int user_switch_init (Jwrap *J, int *uinit)
+{
+    const gretl_matrix *U;
+    int np, ulen, i;
+    int err = 0;
+
+    U = get_init_vals();
+    if (U == NULL) {
+	return 0;
+    }
+
+    np = J->blen + J->alen;
+    ulen = gretl_vector_get_length(U);
+
+    if (ulen == np) {
+	/* U is an (blen + alen)-vector */
+	int k = 0;
+
+	for (i=0; i<J->blen; i++) {
+	    J->phi->val[i] = U->val[k++];
+	}
+	for (i=0; i<J->alen; i++) {
+	    J->psi->val[i] = U->val[k++];
+	}
+    } else if (U->rows == J->p1 + J->p && U->cols == J->rank) {
+	/* U is (beta', alpha')' */
+	gretl_matrix_extract_matrix(J->beta, U, 0, 0, 
+				    GRETL_MOD_NONE);
+	gretl_matrix_extract_matrix(J->alpha, U, J->p1, 0,
+				    GRETL_MOD_NONE);
+	err = phi_from_beta(J, NULL);
+	if (!err) {
+	    err = psi_from_alpha(J);
+	}
+    } else {
+	gretl_errmsg_set("Invalid initialization given");
+    } 
+
+    *uinit = 1;
+
+    return err;
+}
+
 /* driver function for switching algorithm */
 
 static int switchit (Jwrap *J, PRN *prn)
@@ -811,17 +918,23 @@ static int switchit (Jwrap *J, PRN *prn)
     double llbak = -1.0e+200;
     double tol = 4.0e-11;
     int j, jmax = 100000;
+    int uinit = 0;
     int conv = 0;
     int err;
+
+    err = user_switch_init(J, &uinit);
+    if (err) {
+	return err;
+    }
 
     err = switcher_init(&s, J);
 
     if (!err && J->H != NULL) {
-	beta_from_phivec(J);
+	beta_from_phi(J);
     }
 
     if (!err && J->G != NULL) {
-	alpha_from_psivec(J);
+	alpha_from_psi(J);
     }
 
 #if JDEBUG
@@ -835,9 +948,9 @@ static int switchit (Jwrap *J, PRN *prn)
     }
 
     for (j=0; j<jmax && !err; j++) {
-	err = update_Phi(J, &s);
+	err = update_phi(J, &s);
 	if (!err) {
-	    err = update_Psi(J, &s);
+	    err = update_psi(J, &s);
 	}
 	if (!err) {
 	    err = make_Omega(J, &s);
@@ -855,7 +968,11 @@ static int switchit (Jwrap *J, PRN *prn)
 	llbak = J->ll;
     }
 
-    pprintf(prn, "Switching algorithm: %d iterations\n", j);
+    pprintf(prn, "Switching algorithm: %d iterations", j);
+    if (uinit) {
+	pputs(prn, " (user-supplied initial values)");
+    }
+    pputc(prn, '\n');
     pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n", J->ll, lldiff);
 
     if (!err && !conv) {
@@ -892,7 +1009,7 @@ static int check_jacobian (Jwrap *J)
        \theta
     */
 
-    /* FIXME phi/psi vs J->phivec, J->psivec ? */
+    /* FIXME phi/psi vs J->phi, J->psi ? */
 
     if (J->H != NULL) {
 	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
@@ -1024,7 +1141,7 @@ static int set_up_G (Jwrap *J, GRETL_VAR *jvar,
 	return E_ALLOC;
     }
 
-    /* remap R, for conformity with vec(\alpha') = G\Psi */
+    /* remap R, for conformity with vec(\alpha') = G\psi */
     if (J->rank > 1 && R->cols > J->p) {
 	double x;
 	int c0, c1 = 0;
@@ -1155,7 +1272,7 @@ static int set_up_H_h0 (Jwrap *J, GRETL_VAR *jvar,
    non-zero h_0.
 */
 
-static int init_phi_nonhomog (Jwrap *J)
+static int phi_init_nonhomog (Jwrap *J)
 {
     gretl_matrix *BB = NULL;
     gretl_matrix *BP = NULL;
@@ -1220,8 +1337,8 @@ static int init_phi_nonhomog (Jwrap *J)
     }
     
     if (!err) {
-	gretl_matrix_multiply(IBPH, IBPh, J->phivec);
-	gretl_matrix_switch_sign(J->phivec);
+	gretl_matrix_multiply(IBPH, IBPh, J->phi);
+	gretl_matrix_switch_sign(J->phi);
     }
 
  bailout:
@@ -1239,7 +1356,7 @@ static int init_phi_nonhomog (Jwrap *J)
 /* initialization of \phi in case the restriction on beta
    is homogeneous */
 
-static int init_phi_homog (Jwrap *J) 
+static int phi_init_homog (Jwrap *J) 
 {
     gretl_matrix *HH = NULL;
     gretl_matrix *Hb = NULL;
@@ -1279,7 +1396,7 @@ static int init_phi_homog (Jwrap *J)
 
     if (!err) {
 	for (i=0; i<b->rows; i++) {
-	    J->phivec->val[i] = b->val[i];
+	    J->phi->val[i] = b->val[i];
 	}
     } 
 
@@ -1361,6 +1478,36 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction_set *rset)
     return err;
 }
 
+static int phi_from_beta (Jwrap *J,
+			  const gretl_restriction_set *rset)
+{
+    int i, err = 0;
+
+    if (J->H == NULL) {
+	/* just vectorize beta into phi */
+	int nb = J->p1 * J->rank;
+
+	for (i=0; i<nb; i++) {
+	    J->phi->val[i] = J->beta->val[i];
+	}
+    } else {
+	if (J->rank > 1 && rset != NULL) {
+	    err = normalize_initial_beta(J, rset);
+	    if (err) {
+		return err;
+	    }
+	}
+	if (gretl_is_zero_matrix(J->h0)) {
+	    err = phi_init_homog(J);
+	} else {
+	    /* solve for \phi a la Boswijk */
+	    err = phi_init_nonhomog(J);
+	}
+    }
+
+    return err;
+}
+
 /* solution to unrestricted eigenvalue problem */
 
 static int case0 (Jwrap *J)
@@ -1392,8 +1539,7 @@ static int case0 (Jwrap *J)
     }
 
 #if JDEBUG
-    gretl_matrix_print(evals, "case0: evals");
-    gretl_matrix_print(M, "case0: M");
+    gretl_matrix_print(M, "case0: raw beta");
     fprintf(stderr, "(err = %d)\n", err);
 #endif
 
@@ -1415,44 +1561,20 @@ static int case0 (Jwrap *J)
 
 static int beta_init (Jwrap *J, const gretl_restriction_set *rset)
 {
-    int nbeta = J->p1 * J->rank;
-    int i, err;
+    int err;
 
     err = case0(J);
-    if (err) {
-	return err;
-    }
-
-    if (J->H == NULL) {
-	/* just vectorize unrestricted beta into phi */
-	for (i=0; i<nbeta; i++) {
-	    J->phivec->val[i] = J->beta->val[i];
-	}
-	return 0;
-    }
-
-#if 1
-    if (J->rank > 1) {
-	err = normalize_initial_beta(J, rset);
-	if (err) {
-	    return err;
-	}
-    }
-#endif
-
-    if (!gretl_is_zero_matrix(J->h0)) {
-	/* solve for \phi a la Boswijk */
-	err = init_phi_nonhomog(J);
-    } else {
-	err = init_phi_homog(J);
-    }
 
     if (!err) {
-	beta_from_phivec(J);
+	err = phi_from_beta(J, rset);
+    }
+
+    if (!err && J->H != NULL) {
+	beta_from_phi(J);
     }
 
 #if JDEBUG
-    gretl_matrix_print(J->phivec, "beta_init: final phi vector");
+    gretl_matrix_print(J->phi, "beta_init: final phi vector");
 #endif
     
     return err;
@@ -1464,55 +1586,21 @@ static int beta_init (Jwrap *J, const gretl_restriction_set *rset)
 
 static int alpha_init (Jwrap *J)
 {
-    gretl_matrix *GG = NULL;
-    gretl_matrix *GGG = NULL;
-    int i, j, k;
     int err = 0;
 
     err = compute_alpha(J);
+
 #if JDEBUG
     gretl_matrix_print(J->alpha, "alpha_init: result from compute_alpha");
 #endif
-    if (err || J->G == NULL) {
-	return err;
+
+    if (!err) {
+	err = psi_from_alpha(J);
     }
-
-    GG = gretl_matrix_alloc(J->G->cols, J->G->cols);
-    GGG = gretl_matrix_alloc(J->G->cols, J->G->rows);
-    if (GG == NULL || GGG == NULL) {
-	gretl_matrix_free(GG);
-	gretl_matrix_free(GGG);
-	return E_ALLOC;
-    }
-
-    gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
-			      J->G, GRETL_MOD_NONE,
-			      GG, GRETL_MOD_NONE);
-
-    gretl_invert_symmetric_matrix(GG);
-    gretl_matrix_multiply_mod(GG, GRETL_MOD_NONE,
-			      J->G, GRETL_MOD_TRANSPOSE,
-			      GGG, GRETL_MOD_NONE);
-
-    gretl_matrix_reuse(J->Tmprp, J->rank * J->p, 1);
-
-    /* vectorize alpha' into Tmprp */
-    k = 0;
-    for (i=0; i<J->p; i++) {
-	for (j=0; j<J->rank; j++) {
-	    J->Tmprp->val[k++] = gretl_matrix_get(J->alpha, i, j);
-	}
-    }
-
-    gretl_matrix_multiply(GGG, J->Tmprp, J->psivec);
-    gretl_matrix_reuse(J->Tmprp, J->rank, J->p);
 
 #if JDEBUG
-    gretl_matrix_print(J->psivec, "alpha_init: final psi vector");
+    gretl_matrix_print(J->psi, "alpha_init: final psi");
 #endif
-
-    gretl_matrix_free(GG);
-    gretl_matrix_free(GGG);
 
     return err;
 }
@@ -1642,7 +1730,7 @@ static int real_compute_ll (Jwrap *J)
     if (J->G == NULL) {
 	err = compute_alpha(J);
     } else {
-	alpha_from_psivec(J);
+	alpha_from_psi(J);
     }
 
     if (!err) {
@@ -1671,7 +1759,7 @@ static double Jloglik (const double *theta, void *data)
 
     if (J->H != NULL) {
 	for (i=0; i<J->blen; i++) {
-	    J->phivec->val[i] = theta[i];
+	    J->phi->val[i] = theta[i];
 	}
     } 
 
@@ -1679,12 +1767,12 @@ static double Jloglik (const double *theta, void *data)
 	int j = i;
 
 	for (i=0; i<J->alen; i++) {
-	    J->psivec->val[i] = theta[j++];
+	    J->psi->val[i] = theta[j++];
 	}
     }
 
     if (!J->bnoest) {
-	beta_from_phivec(J);
+	beta_from_phi(J);
     }
 
     real_compute_ll(J);
@@ -1714,7 +1802,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     }
 
     pputs(prn, "\n\n");
-    pputs(prn, _("beta (cointegrating vectors)"));
+    pputs(prn, _("Cointegrating vectors"));
     if (sd != NULL) {
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
     }
@@ -1905,26 +1993,26 @@ static int compute_alpha (Jwrap *J)
     return err;
 }
 
-static int allocate_phivec (Jwrap *J)
+static int allocate_phi (Jwrap *J)
 {
     int n = (J->H != NULL)? J->H->cols : J->p1 * J->rank;
 
-    J->phivec = gretl_zero_matrix_new(n, 1);
+    J->phi = gretl_zero_matrix_new(n, 1);
 
-    return (J->phivec == NULL)? E_ALLOC : 0;
+    return (J->phi == NULL)? E_ALLOC : 0;
 }
 
-static int allocate_psivec (Jwrap *J)
+static int allocate_psi (Jwrap *J)
 {
     int n = (J->G != NULL)? J->G->cols : J->p * J->rank;
 
-    J->psivec = gretl_zero_matrix_new(n, 1);
+    J->psi = gretl_zero_matrix_new(n, 1);
 
-    return (J->psivec == NULL)? E_ALLOC : 0;
+    return (J->psi == NULL)? E_ALLOC : 0;
 }
 
-/* below: needed only when using BFGS: concatenate phivec 
-   and psivec to form the full vector of free parameters
+/* below: needed only when using BFGS: concatenate phi 
+   and psi to form the full vector of free parameters
 */
 
 static int make_theta (Jwrap *J)
@@ -1951,13 +2039,13 @@ static int make_theta (Jwrap *J)
 
     if (J->H != NULL) {
 	for (i=0; i<J->blen; i++) {
-	    J->theta->val[i] = J->phivec->val[i];
+	    J->theta->val[i] = J->phi->val[i];
 	}
     }
 
     if (J->G != NULL) {
 	for (j=0; j<J->alen; j++) {
-	    J->theta->val[i++] = J->psivec->val[j];
+	    J->theta->val[i++] = J->psi->val[j];
 	}
     }    
 
@@ -2020,7 +2108,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = allocate_phivec(J);
+	err = allocate_phi(J);
     }
 
     if (!err && rset_VECM_acols(rset) > 0) {
@@ -2028,7 +2116,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = allocate_psivec(J);
+	err = allocate_psi(J);
     }    
 
     if (!err && J->bnoest && J->G == NULL) {
@@ -2048,17 +2136,12 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	err = beta_init(J, rset);
-#if JDEBUG
-	fprintf(stderr, "after beta_init: err = %d\n", err);
-#endif
     }
 
-#if 1
     if (!err && (J->switcher || J->G != NULL)) {
 	err = alpha_init(J);
 	fprintf(stderr, "after alpha_init, err = %d\n", err); 
     }
-#endif
 
     if (J->switcher) {
 	if (!err) {
@@ -2113,4 +2196,3 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     return err;
 }
-
