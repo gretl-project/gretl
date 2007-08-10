@@ -1866,8 +1866,6 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-#if 0
-
 /* I _think_ this is made redundant by the use of Boswijk's
    initialization for beta, but I'm willing to be proved
    wrong!
@@ -1963,8 +1961,6 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 
     return err;
 }
-
-#endif
 
 /* solve for unrestricted alpha conditional on beta */
 
@@ -2151,12 +2147,9 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	if (!err) {
 	    err = make_theta(J);
 	}
-#if 0
-	/* see above */
 	if (!err) {
 	    err = simann(J, opt, prn);
 	}
-#endif  
 	if (!err) {
 	    int maxit = 4000;
 	    double reltol = 1.0e-11;
