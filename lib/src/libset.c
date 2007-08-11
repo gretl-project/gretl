@@ -881,7 +881,8 @@ static const char *get_hac_lag_string (void)
     }
 }
 
-int libset_numeric_string (const char *s, int *pi, double *px)
+static int 
+libset_numeric_string (const char *s, int *pi, double *px, int *err)
 {
     char *test;
     int ret = 1;
@@ -897,14 +898,20 @@ int libset_numeric_string (const char *s, int *pi, double *px)
 
     if (px != NULL) {
 	*px = strtod(s, &test);
-	if (*test != '\0' || errno == ERANGE) {
+	if (*test != '\0') {
 	    ret = 0;
+	} else if (errno == ERANGE) {
+	    gretl_errmsg_set(strerror(errno));
+	    *err = 1;
 	}
     } else {
 	long li = strtol(s, &test, 10);
 
-	if (*test != '\0' || errno == ERANGE) {
+	if (*test != '\0') {
 	    ret = 0;
+	} else if (errno == ERANGE) {
+	    gretl_errmsg_set(strerror(errno));
+	    *err = 1;
 	} else {
 	    *pi = (int) li;
 	}
@@ -924,8 +931,10 @@ static int libset_get_scalar (const char *s, double **Z,
     double x = NADBL;
     int v, err = 0;
 
-    if (libset_numeric_string(s, pi, px)) {
-	if (pi != NULL && *pi < 0) {
+    if (libset_numeric_string(s, pi, px, &err)) {
+	if (err) {
+	    err = E_DATA;
+	} else if (pi != NULL && *pi < 0) {
 	    err = E_DATA;
 	} else if (px != NULL && *px < 0.0) {
 	    err = E_DATA;
