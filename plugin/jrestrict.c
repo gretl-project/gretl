@@ -677,6 +677,11 @@ static int update_phi (Jwrap *J, switcher *s)
     return err;
 }
 
+enum {
+    OMEGA_ONLY,
+    OMEGA_PLUS
+};
+
 /* 
     Update Omega using:
 
@@ -686,7 +691,7 @@ static int update_phi (Jwrap *J, switcher *s)
     then invert into iOmega.
  */
 
-static int make_Omega (Jwrap *J, switcher *s)
+static int make_Omega (Jwrap *J, int code)
 {
     int err = 0;
 
@@ -706,7 +711,7 @@ static int make_Omega (Jwrap *J, switcher *s)
     gretl_matrix_qform(J->Pi, GRETL_MOD_NONE, J->S11,
 		       J->Omega, GRETL_MOD_CUMULATE);
 
-    if (s != NULL) {
+    if (code == OMEGA_PLUS) {
 	gretl_matrix_copy_values(J->iOmega, J->Omega);
 	err = gretl_invert_symmetric_matrix(J->iOmega);
     }
@@ -1004,7 +1009,7 @@ static int switchit (Jwrap *J, PRN *prn)
 
     if (!err) {
 	/* initialize Omega */
-	err = make_Omega(J, &s);
+	err = make_Omega(J, OMEGA_PLUS);
     }
 
     for (j=0; j<jmax && !err; j++) {
@@ -1013,7 +1018,7 @@ static int switchit (Jwrap *J, PRN *prn)
 	    err = update_psi(J, &s);
 	}
 	if (!err) {
-	    err = make_Omega(J, &s);
+	    err = make_Omega(J, OMEGA_PLUS);
 	}
 	if (!err) {
 	    err = switcher_ll(J);
@@ -1723,7 +1728,7 @@ static int real_compute_ll (Jwrap *J)
     }
 
     if (!err) {
-	err = make_Omega(J, NULL);
+	err = make_Omega(J, OMEGA_ONLY);
     }
 
     if (!err) {
@@ -1860,8 +1865,9 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* simulated annealing: useful in case the standard initialization
-   leads to a local maximum trap */
+/* simulated annealing: may be helpful in case the standard
+   deterministic initialization leads to a local maximum trap 
+*/
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 {
@@ -1940,6 +1946,7 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     }
 
     gretl_matrix_copy_values(b, bstar);
+
 #if 0 /* ?? */
     sync_with_theta(J, bstar->val);
 #endif
