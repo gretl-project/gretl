@@ -66,6 +66,97 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
+#if 0 /* not yet */
+
+static void 
+form_C0j (GRETL_VAR *var, gretl_matrix *C0j, 
+	  gretl_matrix *et, gretl_matrix *ej,
+	  int j)
+{
+    int i, t;
+
+    gretl_matrix_zero(C0j);
+
+    for (t=j; t<var->T; t++) {
+	/* load et and ej */
+	for (i=0; i<var->neqns; i++) {
+	    et->val[i] = gretl_matrix_get(var->E, t, i);
+	    ej->val[i] = gretl_matrix_get(var->E, t-j, i);
+	}
+	/* add e_t * e'_{t-j} */
+	gretl_matrix_multiply_mod(et, GRETL_MOD_NONE,
+				  ej, GRETL_MOD_TRANSPOSE,
+				  C0j, GRETL_MOD_CUMULATE);
+    }
+
+    gretl_matrix_divide_by_scalar(C0j, var->T);
+}
+
+/* See Johansen (1995 book) pp. 21-22 */
+
+int VAR_portmanteau_test (GRETL_VAR *var)
+{
+    gretl_matrix *C00 = NULL;
+    gretl_matrix *C0j = NULL;
+    gretl_matrix *et = NULL;
+    gretl_matrix *ej = NULL;
+    gretl_matrix *L = NULL;
+    gretl_matrix *Tmp = NULL;
+    int k = var->neqns;
+    double trj, LB = NADBL;
+    int s, j, err = 0;
+
+    s = 2 * var->order;
+    if (s < 4) s = 4;
+
+    C00 = gretl_matrix_alloc(k, k);
+    C0j = gretl_matrix_alloc(k, k);
+    et = gretl_matrix_alloc(k, 1);
+    ej = gretl_matrix_alloc(k, 1);
+    C0j = gretl_matrix_alloc(k, k);
+    L = gretl_matrix_alloc(k, k);
+    Tmp = gretl_matrix_alloc(k, k);
+
+    if (C00 == NULL || C0j == NULL ||
+	L == NULL || Tmp == NULL) {
+	err = E_ALLOC;
+    }
+
+    form_C0j(var, C00, et, ej,0);
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(C00);
+    }
+
+    for (j=1; j<=s && !err; j++) {
+	form_C0j(var, C0j, et, ej, j);
+	gretl_matrix_multiply(C0j, C00, L);
+	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
+				  L, GRETL_MOD_TRANSPOSE,
+				  Tmp, GRETL_MOD_NONE);
+	trj = gretl_matrix_trace(Tmp, &err);
+	LB += (1.0 / (var->T - j)) * trj;
+    }
+
+    if (!err) {
+	LB *= var->T * (var->T - 2);
+	var->Pmt = LB;
+    } else {
+	var->Pmt = NADBL;
+    }
+
+    gretl_matrix_free(C00);
+    gretl_matrix_free(C0j);
+    gretl_matrix_free(et);
+    gretl_matrix_free(ej);
+    gretl_matrix_free(L);
+    gretl_matrix_free(Tmp);
+
+    return err;
+}
+
+#endif
+
 /* make and record residuals for LR test on last lag */
 
 int last_lag_LR_prep (GRETL_VAR *var, int ifc)
