@@ -812,7 +812,9 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
     } else if (type == GRETL_OBJ_SYS) {
 	gretl_equation_system *sys = (gretl_equation_system *) p;
 
-	if (idx == M_LNL) {
+	if (idx == M_T) {
+	    x = sys->n_obs;
+	} else if (idx == M_LNL) {
 	    x = sys->ll;
 	} else if (idx == M_ESS) {
 	    x = sys->ess;
@@ -820,7 +822,9 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) p;
 
-	if (idx == M_LNL) {
+	if (idx == M_T) {
+	    x = var->T;
+	} else if (idx == M_LNL) {
 	    x = var->ll;
 	} else if (idx == M_AIC) {
 	    x = var->AIC;

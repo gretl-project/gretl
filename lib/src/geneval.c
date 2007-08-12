@@ -1350,6 +1350,9 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case MEANR:
 	    ret->v.m = gretl_matrix_row_mean(m);
 	    break;
+	case SD:
+	    ret->v.m = gretl_matrix_column_sd(m);
+	    break;
 	case MCOV:
 	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
 	    break;
@@ -2067,12 +2070,18 @@ static int series_get_end (int n, const double *x)
     return t + 1;
 }
 
+#define series_cast_optional(f) (f == SD) 
+
 static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
 {
     gretl_matrix *m = n->v.m;
 
     if (gretl_vector_get_length(m) != p->dinfo->n) {
-	node_type_error(f, VEC, n, p);
+	if (series_cast_optional(f)) {
+	    p->err = 1;
+	} else {
+	    node_type_error(f, VEC, n, p);
+	}
     } else {
 	*tmp = m;
 	n->v.xvec = m->val;
@@ -2093,7 +2102,13 @@ series_scalar_func (NODE *n, int f, parser *p)
 	if (n->t == MAT) {
 	    cast_to_series(n, f, &tmp, p);
 	    if (p->err) {
-		return NULL;
+		if (f == SD) {
+		    /* offer column s.d. instead */
+		    p->err = 0;
+		    return matrix_to_matrix_func(n, f, p);
+		} else {
+		    return NULL;
+		}
 	    }
 	}
 
@@ -4844,7 +4859,8 @@ static int series_compatible (const gretl_matrix *m,
     int n = gretl_vector_get_length(m);
     int T = pdinfo->t2 - pdinfo->t1 + 1;
 
-    return n == T || n == pdinfo->n || n == 1;
+    return n == T || n == pdinfo->n || n == 1 || 
+	(m->t1 > 0 && m->t1 + n <= pdinfo->n);
 }
 
 static int has_missvals (const double *x, const DATAINFO *pdinfo)
@@ -5308,13 +5324,30 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
-	    int k = gretl_vector_get_length(m);
-	    double y;
-	    
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-		y = (k == 1)? m->val[0] : (k == p->dinfo->n)? m->val[t] : 
-		    m->val[t - p->dinfo->t1]; 
-		Z[v][t] = xy_calc(Z[v][t], y, p->op, p);
+	    int s, k = gretl_vector_get_length(m);
+
+	    if (k == 1) {
+		/* result is effectively a scalar */
+		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, p);
+		}
+	    } else if (k == p->dinfo->n) {
+		/* treat result as full-length series */
+		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, p);
+		}
+	    } else if (k == p->dinfo->t2 - p->dinfo->t1 + 1 && m->t1 == 0) {
+		/* treat as series of current sample length */
+		for (t=p->dinfo->t1, s=0; t<=p->dinfo->t2; t++, s++) {
+		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, p);
+		}
+	    } else {
+		/* align using m->t1 */
+		for (t=m->t1; t<m->t1 + k && t<=p->dinfo->t2; t++) {
+		    if (t >= p->dinfo->t1) {
+			Z[v][t] = xy_calc(Z[v][t], m->val[t - m->t1], p->op, p);
+		    }
+		}
 	    }
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);

@@ -3395,6 +3395,47 @@ gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_column_sd:
+ * @m: source matrix.
+ *
+ * Returns: a row vector containing the standard deviations of
+ * the columns of @m (without a degrees of freedom correction), 
+ * or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m)
+{
+    gretl_matrix *s;
+    int i, j;
+
+    s = gretl_matrix_alloc(1, m->cols);
+    if (s == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<m->cols; j++) {
+	double dev, v = 0.0, xbar = 0.0;
+
+	for (i=0; i<m->rows; i++) {
+	    xbar += gretl_matrix_get(m, i, j);
+	}
+
+	xbar /= m->rows;
+
+	for (i=0; i<m->rows; i++) {
+	    dev = gretl_matrix_get(m, i, j) - xbar;
+	    v += dev * dev;
+	}
+
+	v /= m->rows;
+
+	s->val[j] = sqrt(v);
+    }
+
+    return s;
+}
+
+/**
  * gretl_matrix_row_i_mean:
  * @m: source matrix.
  * @row: zero-based index of row.

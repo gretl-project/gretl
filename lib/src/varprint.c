@@ -588,10 +588,13 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     int i, j;
     double x;
 
-    pputs(prn, _("Cointegrating vectors"));
+    pprintf(prn, "beta (%s", _("cointegrating vectors"));
     if (jv->Bse != NULL) {
-	pprintf(prn, " (%s)", _("standard errors in parentheses"));
-    } 
+	pprintf(prn, ", %s)", _("standard errors in parentheses"));
+    } else {
+	pputc(prn, ')');
+    }
+
     gretl_prn_newline(prn);
     gretl_prn_newline(prn);
 
@@ -647,10 +650,13 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 
     rows = gretl_matrix_rows(jv->Alpha);
 
-    pputs(prn, _("Adjustment vectors, alpha"));
+    pprintf(prn, "alpha (%s", _("adjustment vectors"));
     if (jv->Ase != NULL) {
-	pprintf(prn, " (%s)", _("standard errors in parentheses"));
-    } 
+	pprintf(prn, ", %s)", _("standard errors in parentheses"));
+    } else {
+	pputc(prn, ')');
+    }
+
     gretl_prn_newline(prn);
     gretl_prn_newline(prn);
 
@@ -836,6 +842,27 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     }
 }
 
+static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
+{
+    int k = var->order + (var->ci == VECM);
+    int df = var->neqns * var->neqns * (var->LBs - k);
+    double pv = chisq_cdf_comp(var->LB, df);
+
+    if (tex_format(prn)) {
+	pprintf(prn, "\\noindent\n%s: LB(%d) = %g (%s = %d, %s %f)\\par\n",
+		I_("Portmanteau test"), var->LBs, var->LB,
+		I_("df"), df, I_("p-value"), pv);	    
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "%s: LB(%d) = %g (%s = %d, %s %f)\\par\n",
+		I_("Portmanteau test"), var->LBs, var->LB,
+		I_("df"), df, I_("p-value"), pv);
+    } else {
+	pprintf(prn, "%s: LB(%d) = %g (%s = %d, %s %f)\n",
+		_("Portmanteau test"), var->LBs, var->LB,
+		_("df"), df, _("p-value"), pv);
+    }
+}
+
 /**
  * gretl_VAR_print:
  * @var: pointer to VAR struct.
@@ -946,6 +973,10 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
 	pprintf(prn, "%s = %.4f\n", _("HQC"), var->HQC);
+    }
+
+    if (var->LBs > 0 && !na(var->LB)) {
+	VAR_print_LB_stat(var, prn);
     }
 
     if (vecm) {

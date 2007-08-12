@@ -343,6 +343,8 @@ gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m);
 
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m);
+
 double gretl_matrix_row_i_mean (const gretl_matrix *m, int row);
 
 double gretl_matrix_column_j_mean (const gretl_matrix *m, int col);

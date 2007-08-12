@@ -439,7 +439,8 @@ context it is reserved for the Kronecker product.)
 \texttt{princomp}  &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{values}    &
+\texttt{sd}        &
+\texttt{values}   
 \end{tabular}      
 \caption{Table of matrix functions by category}
 \label{tab:matrix_funcs_cat}
@@ -541,12 +542,13 @@ matrix are:
 \texttt{sumr}     & sum by row \\
 \texttt{meanc}    & mean by column & &
 \texttt{meanr}    & mean by row \\
+\texttt{sd}       & standard deviation by column \\
 \texttt{mcov}     & covariance matrix & &
 \texttt{mcorr}    & correlation matrix \\
 \texttt{cholesky} & Cholesky decomposition & &
 \texttt{mexp}     & matrix exponential \\
 \texttt{inv}      & inverse & &
-\texttt{ginv}     & generalized (Moore-Penrose) inverse \\
+\texttt{ginv}     & generalized inverse \\
 \texttt{diag}     & extract principal diagonal  & &
 \texttt{transp}   & transpose \\
 \texttt{cdemean}  & subtract column means & &
@@ -577,7 +579,9 @@ For an $m \times n$ matrix $A$, \texttt{sumc(A)} returns a row vector
 holding the $n$ column sums, and \texttt{sumr(A)} returns a column
 vector with the $m$ row sums.  \texttt{meanc(A)} returns a row vector
 with the $n$ column means, and \texttt{meanr(A)} a column vector with
-the $m$ row means.
+the $m$ row means.  \texttt{sd(A)} returns a row vector containing
+the $n$ column standard deviations (without a degrees of freedom
+correction).
 
 Also for an $m \times n$ matrix $A$, the \texttt{max} and \texttt{min}
 family of functions return either an $m \times 1$ matrix (the
@@ -646,6 +650,17 @@ to generate leads instead of lags.
 The \texttt{nullspace} function yields $X$, the right null space of a
 matrix $A$ (it is assumed that A has full row rank): $X$ satisfies $A
 \cdot X = 0$.
+
+The \texttt{ginv} function gives the generalized inverse or
+pseudoinverse (also sometimes called the Moore--Penrose inverse) of a
+rectangular matrix $A$.  The generalized inverse, $A^+$, satisfies the
+following equations:
+\begin{eqnarray*}
+AA^+A &=& A \\
+A^+AA^+	&=& A^+	 \\
+(AA^+)' &=& AA^+ \\	
+(A^+A)' &=& A^+A
+\end{eqnarray*}
 
 The function \texttt{princomp} requires two arguments, a $T \times k$
 matrix $X$ and a scalar $p$, $0 < p \leq k$.  It is assumed that $X$

@@ -90,6 +90,8 @@ struct GRETL_VAR_ {
     double BIC;          /* Bayesian criterion */
     double HQC;          /* Hannan-Quinn criterion */
     double LR;           /* for likelihood-ratio testing */
+    double LB;           /* Ljung-Box (Portmanteau) test statistic */
+    int LBs;             /* order for for Portmanteau test */
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
 };

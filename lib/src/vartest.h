@@ -44,6 +44,8 @@ int VAR_LR_lag_test (GRETL_VAR *var);
 
 int last_lag_LR_prep (GRETL_VAR *var, int ifc);
 
+int VAR_portmanteau_test (GRETL_VAR *var);
+
 int VAR_do_lagsel (GRETL_VAR *var, const double **Z, 
 		   const DATAINFO *pdinfo, PRN *prn);
 

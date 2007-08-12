@@ -1700,16 +1700,20 @@ static int make_beta_se (Jwrap *J)
 static int make_alpha_se (Jwrap *J)
 {
     double x;
-    int i;
+    int i, j, k;
 
     J->ase = gretl_matrix_alloc(J->p, J->rank);
     if (J->ase == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<J->Va->rows; i++) {
-	x = gretl_matrix_get(J->Va, i, i);
-	J->ase->val[i] = sqrt(x);
+    k = 0;
+    for (i=0; i<J->ase->rows; i++) {
+	for (j=0; j<J->ase->cols; j++) {
+	    x = gretl_matrix_get(J->Va, k, k);
+	    gretl_matrix_set(J->ase, i, j, sqrt(x));
+	    k++;
+	}
     }
 
     return 0;

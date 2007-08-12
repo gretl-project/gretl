@@ -127,6 +127,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->ifc = var->ncoeff = 0;
     var->detflags = 0;
     var->robust = var->qr = 0;
+    var->LBs = 0;
 
     var->ylist = NULL;
     var->xlist = NULL;
@@ -148,6 +149,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
 
     var->ll = var->ldet = var->LR = NADBL;
     var->AIC = var->BIC = var->HQC = NADBL;
+    var->LB = NADBL;
 
     var->jinfo = NULL;
     var->name = NULL;
@@ -1546,6 +1548,10 @@ static int VAR_add_stats (GRETL_VAR *var)
 	VAR_LR_lag_test(var);
     }
 
+    if (!err) {
+	VAR_portmanteau_test(var);
+    }
+
     return err;
 }
 
@@ -2746,6 +2752,8 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	M = gretl_matrix_copy(src);
 	if (M == NULL) {
 	    *err = E_ALLOC;
+	} else if (idx == M_UHAT) {
+	    M->t1 = var->t1;
 	}
     }
 
@@ -2998,7 +3006,10 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 
     var->ci = (var->ci == 0)? VAR : VECM;
 
+    /* these are not show-stoppers */
     gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
+    gretl_xml_get_prop_as_int(node, "LBs", &var->LBs);
+    gretl_xml_get_prop_as_double(node, "LB", &var->LB);
 
     var->models = malloc(var->neqns * sizeof *var->models);
     if (var->models == NULL) {
@@ -3105,7 +3116,14 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
 {
     fprintf(fp, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ", 
 	    j->ID, j->code, j->rank);
-    fprintf(fp, "seasonals=\"%d\">\n", j->seasonals);
+    fprintf(fp, "seasonals=\"%d\" ", j->seasonals);
+
+    if (j->lrdf > 0 && !na(j->ll0)) {
+	gretl_xml_put_double("ll0", j->ll0, fp);
+	gretl_xml_put_int("bdf", j->lrdf, fp);
+    }
+
+    fputs(">\n", fp);
 
     gretl_xml_put_matrix(j->R0, "u", fp);
     gretl_xml_put_matrix(j->R1, "v", fp);
@@ -3121,11 +3139,6 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_matrix(j->R, "Ra", fp);
     gretl_xml_put_matrix(j->q, "qa", fp);
 
-    if (!na(j->ll0) && j->lrdf > 0) {
-	gretl_xml_put_double("ll0", j->ll0, fp);
-	gretl_xml_put_int("bdf", j->lrdf, fp);
-    }
-
     fputs("</gretl-johansen>\n", fp);
 }
 
@@ -3139,8 +3152,16 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", 
 	    (var->name == NULL)? "none" : var->name, (int) flags);
 
-    fprintf(fp, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\">\n",
+    fprintf(fp, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
 	    (var->ci == VECM), var->neqns, var->order, var->detflags);
+
+    if (var->LBs > 0 && !na(var->LB)) {
+	/* Portmanteau test */
+	gretl_xml_put_double("LB", var->LB, fp);
+	gretl_xml_put_int("LBs", var->LBs, fp);
+    }   
+
+    fputs(">\n", fp);
 
     gretl_xml_put_tagged_list("ylist", var->ylist, fp);
     gretl_xml_put_tagged_list("xlist", var->xlist, fp);
@@ -3150,6 +3171,7 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     if (var->Fvals != NULL) {
 	gretl_xml_put_double_array("Fvals", var->Fvals, m, fp);
     }
+
     if (var->Ivals != NULL) {
 	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, fp);
     }

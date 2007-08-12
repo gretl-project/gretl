@@ -21,6 +21,7 @@
 #include "pvalues.h"
 #include "gretl_matrix.h"
 #include "var.h"
+#include "vartest.h"
 #include "libset.h"
 #include "jprivate.h"
 
@@ -1174,6 +1175,8 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k) / T;
     vecm->HQC = (-2.0 * vecm->ll + 2.0 * log(log(T)) * k) / T;
+
+    VAR_portmanteau_test(vecm);
 
     return 0;
 }
