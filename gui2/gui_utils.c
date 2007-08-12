@@ -3391,6 +3391,11 @@ static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
+static void VECM_EC_call (gpointer p, guint i, GtkWidget *w)
+{
+    errbox("Sorry, not ready yet!");
+}
+
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
     GtkItemFactoryEntry varitem;
@@ -3602,6 +3607,19 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	    g_free(varitem.path);
 	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
 	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
+	}
+    }
+
+    if (var->ci == VECM) {
+	/* save ECs items */
+	for (i=0; i<jrank(var); i++) {
+	    varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
+					   _("EC term"), i + 1);
+	    varitem.callback = VECM_EC_call;
+	    varitem.callback_action = i;
+	    varitem.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
 	}
     }
 

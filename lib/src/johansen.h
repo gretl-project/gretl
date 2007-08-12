@@ -100,8 +100,9 @@ struct GRETL_VAR_ {
                        (v->jinfo->code == J_REST_CONST || \
                         v->jinfo->code == J_REST_TREND))
 
-#define jcode(v) (v->jinfo->code)
-#define jrank(v) (v->jinfo->rank)
+#define jcode(v) ((v->jinfo == NULL)? 0 : v->jinfo->code)
+
+#define jrank(v) ((v->jinfo == NULL)? 0 : v->jinfo->rank)
 
 #define effective_order(v) (v->order+(v->ci==VECM))
 
