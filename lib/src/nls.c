@@ -3578,8 +3578,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
 	if (opt & OPT_V) {
 	    if (iter != ibak) {
+		double steplen = (iter == 1)? NADBL : dsave[13];
+
 		reverse_gradient(g, n);
-		print_iter_info(iter, -f, crittype, n, b, g, dsave[13], prn);
+		print_iter_info(iter, -f, crittype, n, b, g, steplen, prn);
 		reverse_gradient(g, n);
 	    }
 	    ibak = iter;

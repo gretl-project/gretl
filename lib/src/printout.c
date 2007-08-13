@@ -2167,7 +2167,7 @@ print_iter_info (int iter, double crit, int type, int k,
 		_(cstr), crit);
     }
 
-    if (sl > 0.0) {
+    if (sl > 0.0 && !na(sl)) {
 	pprintf(prn, _(" (steplength = %g)"), sl);
     }	
 
