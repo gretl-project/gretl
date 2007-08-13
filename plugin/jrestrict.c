@@ -249,7 +249,7 @@ static int use_lbfgs (gretlopt opt)
 {
     int ret = 0;
 
-    /* could substitute BFGS_NUMERIC */
+    /* could use BFGS_NUMERIC instead */
 
     if (opt & OPT_L) {
 	ret = BFGS_ANALYTIC;

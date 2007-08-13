@@ -2185,11 +2185,11 @@ void show_spreadsheet (SheetCmd c)
 {
     static Spreadsheet *sheet;    
 
-#ifdef G_OS_WIN32
+#ifdef OLD_WINDOWS
     if (datainfo->t2 - datainfo->t1 > 1600) {
 	errbox(_("Sorry, can't edit more than 1600 rows"));
 	return;
-    }    
+    }
 #endif
 
     if (datainfo->v == 1) {

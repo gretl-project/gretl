@@ -32,16 +32,12 @@ print "AppName=gretl\n";
 print "AppVerName=gretl version $verstr\n";
 print "AppPublisherURL=http://gretl.sourceforge.net/\n";
 print "AppSupportURL=http://gretl.sourceforge.net/\n";
-print "AppCopyright=Copyright C 1999-2006 Allin Cottrell\n";
+print "AppCopyright=Copyright C 1999-2007 Allin Cottrell and Riccardo Lucchetti\n";
 print "DefaultDirName={pf}\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
 print "DirExistsWarning=no\n";
-
-print "\n[INI]\n";
-print "Filename: \"{win}\\WGNUPLOT.INI\"; Section: \"WGNUPLOT\"; Flags: createkeyifdoesntexist\n";
-print "Filename: \"{win}\\WGNUPLOT.INI\"; Section: \"WGNUPLOT\"; Key: \"TextFont\"; String: \"Courier New, 9\"\n";
 
 print "\n[InstallDelete]\n";
 print "Type: files; Name: \"{app}\\*.dll\"\n";
@@ -61,9 +57,7 @@ while ($line = <STDIN>) {
     chomp($line);
     @pathbits = split(/\\/, $line);
     print "Source: \"$line\"; "; 
-    if ($line =~ /\.ini$/) {
-	print "Destdir: \"{win}";
-    } elsif ($line =~ /README/) {
+    if ($line =~ /README/) {
         print "Destdir: \"{code:GetDataDir}";
     } else {
 	print "Destdir: \"{app}";
