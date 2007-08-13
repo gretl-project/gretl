@@ -490,6 +490,57 @@ void add_pca_data (windata_t *vwin)
     }
 }
 
+void VECM_add_EC_data (gpointer p, int j, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    double *x = NULL;
+    char vname[VNAMELEN];
+    int id = gretl_VECM_id(var);
+    int v, t, err = 0;
+
+    x = gretl_VECM_get_EC(var, j, (const double **) Z, 
+			  datainfo, &err);
+
+    if (x == NULL) {
+	errbox(_("Error adding variables"));
+	return;
+    }
+
+    if (dataset_add_series(1, &Z, datainfo)) {
+	nomem();
+	free(x);
+	return;
+    }
+
+    v = datainfo->v - 1;
+
+    sprintf(vname, "EC%d", j + 1);
+    strcpy(datainfo->varname[v], vname);
+    make_varname_unique(datainfo->varname[v], v, datainfo);
+    sprintf(VARLABEL(datainfo, v), "error correction term %d from VECM %d", 
+	    j + 1, id);
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(v, 0);
+
+    if (*datainfo->varname[v] == '\0') {
+	/* the user canceled */
+	dataset_drop_last_variables(1, &Z, datainfo);
+	free(x);
+	return;
+    }
+
+    for (t=0; t<datainfo->n; t++) {
+	Z[v][t] = x[t];
+    }
+
+    populate_varlist();
+    mark_dataset_as_modified();
+
+    free(x);
+}
+
 static void make_fcast_save_name (char *vname, const char *s)
 {
     strcpy(vname, s); 

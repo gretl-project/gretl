@@ -3391,11 +3391,6 @@ static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
-static void VECM_EC_call (gpointer p, guint i, GtkWidget *w)
-{
-    errbox("Sorry, not ready yet!");
-}
-
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
     GtkItemFactoryEntry varitem;
@@ -3406,7 +3401,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     const gchar *fpath = N_("/Analysis/Forecasts");
     const gchar *dpath = N_("/Save");
 
-    GRETL_VAR *var = NULL;
+    GRETL_VAR *var;
     int neqns, vtarg, vshock;
     char tmp[VNAMELEN2];
     int i, j;
@@ -3614,8 +3609,8 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	/* save ECs items */
 	for (i=0; i<jrank(var); i++) {
 	    varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
-					   _("EC term"), i + 1);
-	    varitem.callback = VECM_EC_call;
+					   _("EC term"), i+1);
+	    varitem.callback = VECM_add_EC_data;
 	    varitem.callback_action = i;
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);

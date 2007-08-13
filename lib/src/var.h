@@ -64,6 +64,9 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 				const double **Z, DATAINFO *pdinfo, 
 				PRN *prn, int *err);
 
+double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z, 
+			   const DATAINFO *pdinfo, int *err);
+
 void gretl_VAR_free (GRETL_VAR *var);
 
 int default_VAR_horizon (const DATAINFO *pdinfo);

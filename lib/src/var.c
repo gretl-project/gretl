@@ -2760,7 +2760,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     return M;
 }
 
-/* retrieve EC (j >= 1 && j <= rank) as a full-length series */
+/* retrieve EC (j >= 0 && j < rank) as a full-length series */
 
 double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z, 
 			   const DATAINFO *pdinfo, int *err)
@@ -2769,9 +2769,9 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
     int r = jrank(vecm);
     double *x = NULL;
     double xti;
-    int i, t, vi;
+    int i, t, t0;
 
-    if (j < 1 || j > r) {
+    if (j < 0 || j >= r) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -2789,16 +2789,17 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 	return NULL;
     }
 
+    t0 = (pdinfo->t1 >= 1)? pdinfo->t1 : 1;
+
     for (t=0; t<pdinfo->n; t++) {
-	if (t < pdinfo->t1 || t > pdinfo->t2) {
+	if (t < t0 || t > pdinfo->t2) {
 	    x[t] = NADBL;
 	    continue;
 	}
 	x[t] = 0.0;
 	/* beta * X(t-1) */
 	for (i=0; i<vecm->neqns; i++) {
-	    vi = vecm->ylist[i+1];
-	    xti = Z[vi][t-1];
+	    xti = Z[vecm->ylist[i+1]][t-1];
 	    if (na(xti)) {
 		x[t] = NADBL;
 		break;
@@ -3194,6 +3195,3 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     return err;
 }
-
-
-
