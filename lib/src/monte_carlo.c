@@ -421,8 +421,9 @@ int ok_in_loop (int c)
 	return 1;
     }
 
-    /* basic model tests */
-    if (c == ADD || c == OMIT || c == TESTUHAT) {
+    /* some model tests */
+    if (c == ADD || c == OMIT || c == TESTUHAT || 
+	c == RESTRICT) {
 	return 1;
     }
 

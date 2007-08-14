@@ -180,7 +180,7 @@ static int allocate_info_blocks_etc (Jwrap *J)
 {
     int err = 0;
 
-    if (J->alen > 0) {
+    if (J->G != NULL) {
 	J->I00 = gretl_matrix_alloc(J->alen, J->alen);
 	if (J->I00 == NULL) {
 	    err = E_ALLOC;
@@ -574,11 +574,20 @@ static void alpha_from_psi (Jwrap *J)
 
    [ G'(\Omega^{-1} \otimes \beta'S_{11}\beta)G ]^{-1} 
    \times G'(\Omega^{-1} \otimes \beta'S_{11}) vec(Pi'_{LS})
+
+   or, in case \alpha is not restricted, just compute the
+   ML alpha conditional on \beta in the usual Johansen
+   manner.
 */
 
 static int update_psi (Jwrap *J, switcher *s)
 {
     int err = 0;
+
+    if (J->G == NULL) {
+	J_compute_alpha(J);
+	return 0;
+    }
 
     gretl_matrix_reuse(s->K1, J->p * J->r, J->p * J->r);
     gretl_matrix_reuse(s->K2, J->p * J->r, J->p * J->p1);
@@ -588,12 +597,8 @@ static int update_psi (Jwrap *J, switcher *s)
     gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE, J->S11,
 		       J->qf1, GRETL_MOD_NONE);
     gretl_matrix_kronecker_product(J->iOmega, J->qf1, s->K1);
-    if (J->G != NULL) {
-	gretl_matrix_qform(J->G, GRETL_MOD_TRANSPOSE, s->K1,
-			   J->I00, GRETL_MOD_NONE);
-    } else {
-	gretl_matrix_copy_values(J->I00, s->K1);
-    }
+    gretl_matrix_qform(J->G, GRETL_MOD_TRANSPOSE, s->K1,
+		       J->I00, GRETL_MOD_NONE);
 
     err = gretl_invert_symmetric_matrix(J->I00);
     if (err) {
@@ -605,14 +610,10 @@ static int update_psi (Jwrap *J, switcher *s)
 			      J->S11, GRETL_MOD_NONE,
 			      s->Tmprp1, GRETL_MOD_NONE);
     gretl_matrix_kronecker_product(J->iOmega, s->Tmprp1, s->K2);
-    if (J->G != NULL) {
-	gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
-				  s->K2, GRETL_MOD_NONE,
-				  s->TmpR1, GRETL_MOD_NONE);
-	gretl_matrix_multiply(s->TmpR1, J->lsPi, s->TmpR);
-    } else {
-	gretl_matrix_multiply(s->K2, J->lsPi, s->TmpR);
-    }
+    gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
+			      s->K2, GRETL_MOD_NONE,
+			      s->TmpR1, GRETL_MOD_NONE);
+    gretl_matrix_multiply(s->TmpR1, J->lsPi, s->TmpR);
 
     /* combine */
     gretl_matrix_multiply(J->I00, s->TmpR, J->psi);
@@ -2159,13 +2160,15 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 	radius *= 0.9999;
     }
 
-    gretl_matrix_copy_values(b, bstar);
-
-#if 0 /* ??? */
     if (improved) {
-	sync_with_theta(J, bstar->val);
+	gretl_matrix_copy_values(b, bstar);
+    } else {
+	gretl_matrix_copy_values(b, b1); /* "jitter" */
     }
-#endif
+
+    if (improved) {
+	sync_with_theta(J, bstar->val); /* "jitter" */
+    }
 
     if (improved) {
 	pputc(prn, '\n');
