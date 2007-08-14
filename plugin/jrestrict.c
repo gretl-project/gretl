@@ -2080,8 +2080,15 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* simulated annealing: may be helpful in case the standard
-   deterministic initialization leads to a local maximum trap 
+/* simulated annealing: can help when the standard deterministic
+   initialization (theta_0) leads to a local maximum
+*/
+
+/* simann variants:
+
+   1. Use ll-best point from annealing (including theta_0 in the
+      evaluation)
+   2. Use the last value from annealing, regardless.
 */
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
@@ -2101,6 +2108,7 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     double Temp = 1.0;
     double radius = 1.0;
     int improved = 0;
+    int method = 1;
     int err = 0;
 
     b0 = gretl_matrix_copy(b);
@@ -2143,11 +2151,11 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 		    if (!improved) {
 			pprintf(prn, "\n%6s %12s %12s %12s\n",
 				"iter", "temp", "radius", "fbest");
-			improved = 1;
 		    }
 		    pprintf(prn, "%6d %#12.6g %#12.6g %#12.6g\n", 
 			    i, Temp, radius, fbest);
 		}
+		improved = 1;
 	    } else if (f0 < fworst) {
 		fworst = f0;
 	    }
@@ -2160,19 +2168,19 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 	radius *= 0.9999;
     }
 
-    if (improved) {
+    if (method == 1) {
+	/* force to "all-time best" */
 	gretl_matrix_copy_values(b, bstar);
-    } else {
-	gretl_matrix_copy_values(b, b1); /* "jitter" */
-    }
-
-    if (improved) {
-	sync_with_theta(J, bstar->val); /* "jitter" */
+	sync_with_theta(J, b->val);
+    } else if (method == 2) {
+	/* take last value from annealing */
+	gretl_matrix_copy_values(b, b0);
+	sync_with_theta(J, b->val);
     }
 
     if (improved) {
 	pputc(prn, '\n');
-    } else if (opt & OPT_V) {
+    } else if (1 || (opt & OPT_V)) {
 	pprintf(prn, "No improvement found in %d iterations\n\n", SAiter);
     }
     
