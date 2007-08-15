@@ -2084,11 +2084,13 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
    initialization (theta_0) leads to a local maximum
 */
 
-/* simann variants:
+/* simann method variants --
 
-   1. Use ll-best point from annealing (including theta_0 in the
+   1: Use ll-best point from annealing (including theta_0 in the
       evaluation)
-   2. Use the last value from annealing, regardless.
+   2: Use the last value from annealing, regardless.
+   3: hybrid: use ll-best point in case of improvement, else
+      last value.
 */
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
@@ -2108,7 +2110,7 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     double Temp = 1.0;
     double radius = 1.0;
     int improved = 0;
-    int method = 1;
+    int method = 3; /* hybrid */
     int err = 0;
 
     b0 = gretl_matrix_copy(b);
@@ -2170,17 +2172,24 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 
     if (method == 1) {
 	/* force to "all-time best" */
-	gretl_matrix_copy_values(b, bstar);
-	sync_with_theta(J, b->val);
+	gretl_matrix_copy_values(J->theta, bstar);
     } else if (method == 2) {
 	/* take last value from annealing */
-	gretl_matrix_copy_values(b, b0);
-	sync_with_theta(J, b->val);
+	gretl_matrix_copy_values(J->theta, b0);
+    } else {
+	/* hybrid method */
+	if (improved) {
+	    gretl_matrix_copy_values(J->theta, bstar);
+	} else {
+	    gretl_matrix_copy_values(J->theta, b0);
+	}
     }
 
+    sync_with_theta(J, b->val);
+
     if (improved) {
-	pputc(prn, '\n');
-    } else if (1 || (opt & OPT_V)) {
+	if (opt & OPT_V) pputc(prn, '\n');
+    } else {
 	pprintf(prn, "No improvement found in %d iterations\n\n", SAiter);
     }
     
