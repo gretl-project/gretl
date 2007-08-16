@@ -42,7 +42,6 @@ struct Jwrap_ {
     int r;          /* cointegrating rank of VECM */
     int blen;       /* number of unrestricted coefficients in beta */
     int alen;       /* number of unrestricted coefficients in alpha */
-    int bnoest;     /* fully constrained beta: no estimation required */
     int df;         /* degrees if freedom for LR test */
     int jr;         /* rank of Jacobian */
     double llk;     /* constant in log-likelihood */
@@ -275,7 +274,6 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->r = jrank(jvar);
     J->blen = 0;
     J->alen = 0;
-    J->bnoest = 0;
     J->df = 0;
     J->jr = 0;
 
@@ -389,7 +387,7 @@ static int solve_for_beta (Jwrap *J,
     }
 
     if (!err) {
-	J->bnoest = 1;
+	J->blen = 0;
     }
 
     gretl_matrix_free(b);
@@ -517,10 +515,13 @@ static int switcher_init (switcher *s, Jwrap *J)
 
     s->K1 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->r);
     s->K2 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->p1);
-    s->TmpL = gretl_matrix_alloc(J->blen, J->p * J->p1);
     s->TmpR = gretl_matrix_alloc(J->p1 * J->p1, 1);
     s->Tmprp1 = gretl_matrix_alloc(J->r, J->p1);
-    s->HK2 = gretl_matrix_alloc(J->blen, J->p * J->p1);
+
+    if (J->blen > 0) {
+	s->TmpL = gretl_matrix_alloc(J->blen, J->p * J->p1);
+	s->HK2 = gretl_matrix_alloc(J->blen, J->p * J->p1);
+    }
 
     err = get_gretl_matrix_err();
     if (err) {
@@ -628,6 +629,10 @@ static int update_psi (Jwrap *J, switcher *s)
 
 static void beta_from_phi (Jwrap *J)
 {
+    if (J->blen == 0) {
+	return;
+    }
+
     if (J->H != NULL) {
 	gretl_matrix_reuse(J->beta, J->p1 * J->r, 1);
 	gretl_matrix_multiply(J->H, J->phi, J->beta);
@@ -652,7 +657,7 @@ static int update_phi (Jwrap *J, switcher *s)
 {
     int err = 0;
 
-    if (J->bnoest) {
+    if (J->blen == 0) {
 	return 0;
     }
 
@@ -807,7 +812,7 @@ static int form_I11 (Jwrap *J)
     gretl_matrix *K = NULL;
     int err = 0;
 
-    if (J->bnoest) {
+    if (J->blen == 0) {
 	return 0;
     }
 
@@ -876,7 +881,7 @@ static int variance_from_info_matrix (Jwrap *J)
 
     /* variance of beta */
 
-    if (J->bnoest) {
+    if (J->blen == 0) {
 	int nb = J->p1 * J->r;
 
 	J->Vb = gretl_zero_matrix_new(nb, nb);
@@ -960,6 +965,7 @@ static int variance_from_info_matrix (Jwrap *J)
 static int user_switch_init (Jwrap *J, int *uinit)
 {
     const gretl_matrix *U;
+    int psilen;
     int ulen, i, k;
     int err = 0;
 
@@ -968,10 +974,26 @@ static int user_switch_init (Jwrap *J, int *uinit)
 	return 0;
     }
 
+    psilen = (J->G == NULL)? 0 : J->alen;
+
     ulen = gretl_vector_get_length(U);
 
-    if (ulen == J->blen + J->alen) {
+    if (ulen == J->blen + psilen) {
 	/* we're given phi and psi? */
+	k = 0;
+	for (i=0; i<J->blen; i++) {
+	    J->phi->val[i] = U->val[k++];
+	}
+	if (psilen == 0) {
+	    beta_from_phi(J);
+	    J_compute_alpha(J);
+	} else {
+	    for (i=0; i<psilen; i++) {
+		J->psi->val[i] = U->val[k++];
+	    }
+	}
+    } else if (ulen == J->blen + J->alen) {
+	/* we're given phi and (redundant) psi? */
 	k = 0;
 	for (i=0; i<J->blen; i++) {
 	    J->phi->val[i] = U->val[k++];
@@ -979,6 +1001,7 @@ static int user_switch_init (Jwrap *J, int *uinit)
 	for (i=0; i<J->alen; i++) {
 	    J->psi->val[i] = U->val[k++];
 	}
+	alpha_from_psi(J);
     } else if (ulen == (J->p1 + J->p) * J->r) {
 	/* we're given vec(beta), vec(alpha)? */
 	int n = J->p1 * J->r;
@@ -1396,7 +1419,7 @@ static int phi_init_nonhomog (Jwrap *J)
 
     if (J->h0 == NULL || 
 	gretl_is_zero_matrix(J->h0) ||
-	ocols == 0) {
+	ocols == 0 || J->blen == 0) {
 	/* shouldn't be here! */
 	return 0;
     }
@@ -1598,12 +1621,14 @@ static int phi_from_beta (Jwrap *J,
 	/* just vectorize beta into phi */
 	vec_simple(J->phi, J->beta);
     } else {
+#if 0
 	if (J->r > 1 && rset != NULL) {
 	    err = normalize_initial_beta(J, rset);
 	    if (err) {
 		return err;
 	    }
 	}
+#endif
 	if (gretl_is_zero_matrix(J->h0)) {
 	    err = phi_init_homog(J);
 	} else {
@@ -1807,7 +1832,7 @@ static double Jloglik (const double *theta, void *data)
 
     sync_with_theta(J, theta);
 
-    if (!J->bnoest) {
+    if (J->blen > 0) {
 	beta_from_phi(J);
     }
 
@@ -1872,7 +1897,7 @@ static int add_gradhelper (Jwrap *J)
     g->psigrad = NULL;
     g->phigrad = NULL;
 
-    if (J->bnoest) {
+    if (J->blen == 0) {
 	LKr = J->alen;
     } else if (J->G == NULL) {
 	LKr = J->blen;
@@ -1894,7 +1919,7 @@ static int add_gradhelper (Jwrap *J)
 	g->psigrad = gretl_matrix_alloc(J->alen, 1);
     }
 
-    if (!J->bnoest) {
+    if (J->blen > 0) {
 	g->phigrad = gretl_matrix_alloc(J->blen, 1);
     }    
 
@@ -1919,7 +1944,7 @@ static int Jgradient (double *theta, double *gr, int n,
 
     sync_with_theta(J, theta);
 
-    if (!J->bnoest) {
+    if (J->blen > 0) {
 	beta_from_phi(J);
     }
 
@@ -1958,7 +1983,7 @@ static int Jgradient (double *theta, double *gr, int n,
 
     /* form phi component, unless beta is fixed */
 
-    if (!J->bnoest) {
+    if (J->blen > 0) {
 	gretl_matrix_multiply_mod(J->alpha, GRETL_MOD_TRANSPOSE,
 				  J->iOmega, GRETL_MOD_NONE,
 				  J->Tmprp, GRETL_MOD_NONE);
@@ -1980,10 +2005,8 @@ static int Jgradient (double *theta, double *gr, int n,
 
     /* transcribe results to the gr array */
     k = 0;
-    if (!J->bnoest) {
-	for (i=0; i<J->blen; i++) {
-	    gr[k++] = g->phigrad->val[i];
-	}
+    for (i=0; i<J->blen; i++) {
+	gr[k++] = g->phigrad->val[i];
     }
     if (J->G != NULL) {
 	for (i=0; i<J->alen; i++) {
@@ -2264,7 +2287,7 @@ static int make_theta (Jwrap *J)
 {
     int i, k = 0;
 
-    if (J->H != NULL && !J->bnoest) {
+    if (J->H != NULL) {
 	k += J->blen;
     }
 
@@ -2284,7 +2307,7 @@ static int make_theta (Jwrap *J)
 
     k = 0;
 
-    if (J->H != NULL && !J->bnoest) {
+    if (J->H != NULL) {
 	for (i=0; i<J->blen; i++) {
 	    J->theta->val[k++] = J->phi->val[i];
 	}
@@ -2398,7 +2421,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = allocate_psi(J);
     }   
 
-    if (!err && J->bnoest && J->G == NULL) {
+    if (!err && J->blen == 0 && J->G == NULL) {
 	/* beta doesn't need to be estimated */
 	err = real_compute_ll(J);
 	goto skipest;
