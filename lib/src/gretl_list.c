@@ -1686,7 +1686,9 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     int start = 2;
     int i, ret = -1;
 
-    if (ci == ARCH) {
+    if (COINT) {
+	start = 1;
+    } else if (ci == ARCH) {
 	start = 3;
     } else if (ci == ARMA) {
 	for (i=list[0]-1; i>2; i--) {
@@ -1715,6 +1717,18 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	ret = real_list_dup(list, start, list[0]);
 	if (ret == -1) {
 	    ret = real_list_dup(list, 2, start - 2);
+	}
+    } else if (ci == VAR || ci == VECM || ci == COINT2) {
+	multi = 1;
+	for (i=1; i<list[0]; i++) {
+	    if (list[i] == LISTSEP) {
+		start = i+1;
+		break;
+	    }
+	}
+	ret = real_list_dup(list, start, list[0]);
+	if (ret == -1) {
+	    ret = real_list_dup(list, 1, start - 2);
 	}
     } else if (ci == ARBOND) {
 	int stop = 0;

@@ -301,7 +301,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	}
     }
 
-#if VDEBUG
+#if 1 || VDEBUG
     printlist(v->ylist, "v->ylist");
     printlist(v->xlist, "v->xlist");
 #endif
