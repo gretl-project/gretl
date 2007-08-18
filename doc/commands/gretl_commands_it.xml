@@ -1201,17 +1201,37 @@
       <arguments>
         <argument optional="true">lista-variabili</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--spearman</flag>
+	  <effect>Rho di Spearman</effect>
+	</option>
+	<option>
+	  <flag>--kendall</flag>
+	  <effect>Tau di Kendall</effect>
+	</option>
+      </options>
       <examples>
         <example>corr y x1 x2 x3</example>
+	<example>corr x y --spearman</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Mostra le coppie di coefficienti di correlazione per la variabili date
-	nella <repl>lista-variabili</repl>, o per tutte le variabili del dataset
-	se non viene specificata alcuna <repl>lista-variabili</repl>.
+        Per impostazione predefinita, mostra le coppie di coefficienti di
+        correlazione (la correlazione del prodotto dei momenti di Pearson)
+        per le variabili date nella <repl>lista-variabili</repl>, o
+        per tutte le variabili del dataset se non viene specificata alcuna
+        <repl>lista-variabili</repl>.
       </para>
+      <para>
+	Le opzioni (mutualmente esclusive) <lit>--spearman</lit> e
+	<lit>--kendall</lit> producono rispettivamente, la correlazione di rango
+        di Spearman (rho) e la correlazione di rango di Kendall (tau), invece
+        del solito coefficiente di Pearson. Quando si usa una di queste opzioni,
+        la <repl>lista-variabili</repl> deve contenere solo due variabili.
+       </para>
     </description>
 
     <gui-access>
@@ -2442,9 +2462,12 @@
           </para>
         </li>
 	<li>
-          <para>Funzioni statistiche che accettano due serie come argomenti e
-          producono uno scalare: <func>cov</func> (covarianza), <func>corr</func>
-          (coefficiente di correlazione).
+          <para>Funzioni statistiche che accettano due serie come argomenti:
+          <func>cov</func> (covarianza), <func>corr</func> (coefficiente di
+          correlazione). Queste funzioni producono un risultato scalare. La
+          funzione <func>sortby</func> produce una serie, ossia i valori del
+          secondo argomento ordinati secondo i valori crescenti del primo
+          argomento.
           </para>
         </li>
         <li>
@@ -2534,7 +2557,8 @@
 	<li><para><cmd>X</cmd>: chi-quadro;</para></li>
 	<li><para><cmd>F</cmd>: Snedecor;</para></li>
 	<li><para><cmd>G</cmd>: Gamma (solo per <cmd>pvalue</cmd> e <cmd>cdf</cmd>);</para></li>
-	<li><para><cmd>B</cmd>: Binomiale (solo per <cmd>pvalue</cmd> e <cmd>cdf</cmd>);</para></li>
+	<li><para><cmd>B</cmd>: Binomiale;</para></li>
+	<li><para><cmd>P</cmd>: Poisson;</para></li>
 	<li><para><cmd>D</cmd>: Normale bivariata (solo per <cmd>cdf</cmd>).</para></li>
       </ilist>
       
@@ -2561,18 +2585,18 @@
       <para>
 	La funzione <func>critical</func> produce il valore critico per una
         certa distribuzione di probabilità, data la proporzione sulla coda di
-        destra (e dati i gradi di libertà, in alcuni casi).  L'ultimo argomento
-        è la proporzione sulla coda di destra.  Se il primo argomento è
-        <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare un secondo argomento
-        per i gradi di libertà, mentre per la distribuzione
-        <emphasis>F</emphasis>, occorre indicare i gradi di libertà del
-        numeratore e quelli del denominatore, rispettivamente come secondo e
-        terzo argomento.
+        destra, preceduta da eventuali parametri aggiuntivi richiesti.
+        Se il primo argomento è <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare
+        un secondo argomento per i gradi di libertà.
+        Per la distribuzione <emphasis>F</emphasis>, occorre indicare i gradi di
+        libertà del numeratore e quelli del denominatore, rispettivamente come
+        secondo e terzo argomento.
       </para>
 
       <para>
-	Ecco alcuni esempi di uso delle funzioni <func>pvalue</func> e
-	<func>critical</func> (gli spazi tra gli argomenti sono opzionali):
+	Ecco alcuni esempi di uso delle funzioni <func>pvalue</func>,
+        <func>cdf</func> e <func>critical</func> (gli spazi tra gli argomenti
+        sono opzionali):
       </para>
       <code>
 	genr p1 = pvalue(z, 2.2)
@@ -6113,18 +6137,21 @@
         prima del <repl>valore-x</repl>: per le distribuzioni <mathvar>t</mathvar>
         e chi-quadro occorre indicare i gradi di libertà; per la
         <mathvar>F</mathvar> sono richiesti i gradi di libertà al numeratore e
-        al denominatore; per la gamma sono richieste la media e la varianza; per
-        la binomiale sono richieste la probabilità di <quote>successo</quote> e
-        il numero di prove; per la distribuzione di Poisson va indicato il
-        parametro &lgr; (che rappresenta sia la media che la varianza).
-        Si noti che talvolta la distribuzione gamma viene caratterizzata dai
-        parametri di forma e scala, invece che da media e varianza: la media è
-        il prodotto di forma e scala, mentre la varianza è il prodotto tra la
-        forma e il quadrato della scala.
+        al denominatore; per la gamma sono richiesti il parametro di forma e
+        quello di scala; per la binomiale sono richieste la probabilità di
+        <quote>successo</quote> e il numero di prove; per la distribuzione di
+        Poisson va indicato il parametro &lgr; (che rappresenta sia la media che
+        la varianza). Come si vede dagli esempi precedenti, gli argomenti
+        numerici possono essere indicati sotto forma di numero o come nomi di
+        variabili.
       </para>
       <para>
-        Come si nota dagli esempi, gli argomenti numerici possono essere
-        indicati sotto forma di numero o come nomi di variabili.
+        Si noti che talvolta la distribuzione gamma viene caratterizzata dai
+        parametri di media e varianza, invece che da quelli di forma e scala.
+        La media è il prodotto di forma e scala, mentre la varianza è il
+        prodotto tra la forma e il quadrato della scala. Quindi la scala si può
+        ottenere come la varianza divisa per la media, mentre la forma come la
+        media divisa per la scala.
       </para>
     </description>
 
@@ -7915,6 +7942,10 @@
 	  <flag>--nc</flag>
 	  <effect>non include una costante</effect>
         </option>
+	<option>
+	  <flag>--trend</flag>
+	  <effect>include un trend</effect>
+	</option>
         <option>
 	  <flag>--seasonals</flag>
 	  <effect>include variabili dummy stagionali</effect>
