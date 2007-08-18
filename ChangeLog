@@ -11,7 +11,7 @@ version 1.6.6, in progress
   for logit, probit models
 - Add options to GUI for xtab command (cross-tabulation);
   also add Fisher's Exact Test for 2 x 2 tables
-- Fix for graphing the time trend, and fpr graphs displaying
+- Fix for graphing the time trend, and for graphs displaying
   more than 8 series
 - Fix for length of correlogram on weekly data
 - Fix for null matrix arguments to user functions in GUI
@@ -32,6 +32,9 @@ version 1.6.6, in progress
   variable
 - Modify Locke's test to use Kendall's tau
 - Add ginv() (Moore-Penrose inverse) matrix function
+- Add multivariate Portmanteau test for autocorrelation in
+  VARs (Ljung-Box)
+
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

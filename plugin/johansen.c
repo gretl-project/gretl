@@ -631,18 +631,19 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 
 #if 1
 
-static int eqn_is_unrestricted (const gretl_matrix *R, int j)
+static int eqn_is_unrestricted (const gretl_matrix *R, int j0, int r)
 {
-    int i, rest = 0;
+    int i, j;
 
-    for (i=0; i<R->rows; i++) {
-	if (gretl_matrix_get(R, i, j) != 0.0) {
-	    rest = 1;
-	    break;
+    for (j=j0; j<R->cols; j+=r) {
+	for (i=0; i<R->rows; i++) {
+	    if (gretl_matrix_get(R, i, j) != 0.0) {
+		return 0;
+	    }
 	}
     }
 
-    return !rest;
+    return 1;
 }
 
 /* (Experimental) apparatus for getting correct (?) standard errors
@@ -667,6 +668,7 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
     gretl_matrix *XTX = NULL;
     double x;
     int xc1, nse;
+    int r = jrank(v);
     int i, j, err = 0;
 
     R = rset_get_Ra_matrix(rset);
@@ -706,7 +708,7 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
     for (i=0; i<v->neqns && !err; i++) {
 	MODEL *pmod = v->models[i];
 	
-	if (eqn_is_unrestricted(R, i)) {
+	if (eqn_is_unrestricted(R, i, r)) {
 	    for (j=0; j<nse; j++) {
 		x = gretl_matrix_get(XTX, j, j);
 		x = sqrt(x);
@@ -756,6 +758,10 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     int order = v->order;
     int xc, n = v->neqns;
     int i, err;
+
+    fprintf(stderr, "VECM_estimate_full: %s\n", 
+	    (flags & ESTIMATE_ALPHA)? "including alpha in estimation" :
+	    "netting out the EC terms");
 
     if (!(flags & ESTIMATE_ALPHA) && v->jinfo->Alpha == NULL) {
 	/* alpha must be pre-computed */

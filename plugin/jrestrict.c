@@ -954,8 +954,8 @@ static int variance_from_info_matrix (Jwrap *J)
 	err = make_alpha_se(J);
     }  
 
-#if JDEBUG > 1
-    gretl_matrix_print(J->Va, "J->Va");
+#if JDEBUG 
+    gretl_matrix_print(J->bse, "J->bse");
     gretl_matrix_print(J->ase, "J->ase");
 #endif
 
@@ -1303,6 +1303,14 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 	return E_NOTIMP;
     }
 
+#if 1
+    if (J->r > 1 && Ra->cols == J->p) {
+	/* got a common alpha restriction */
+	err = G_from_expanded_R(J, Ra);
+    } else {
+	J->G = gretl_matrix_right_nullspace(Ra, &err);
+    }
+#else
     if (J->r > 1) {
 	if (Ra->cols == J->p) {
 	    /* got a common alpha restriction */
@@ -1313,6 +1321,7 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
     } else {
 	J->G = gretl_matrix_right_nullspace(Ra, &err);
     }
+#endif
 
     if (!err) {
 	J->alen = J->G->cols;

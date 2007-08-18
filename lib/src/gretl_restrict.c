@@ -166,19 +166,44 @@ static int add_vecm_restriction (gretl_restriction *rset,
     return 0;
 }
 
+/* We set things up here such that the restrictions are
+   R_b * vec(beta) = q; R_a * vec(alpha') = 0.
+*/
+
 static int 
 get_R_vecm_column (const gretl_restriction *rset, 
 		   int i, int j, char letter)
 {
     const rrow *r = rset->rows[i];
     GRETL_VAR *var = rset->obj;
-    int col = r->bnum[j];
+    int col = 0;
 
-    if (letter == 'b' && rset->bmulti) {
-	col += r->eq[j] * gretl_VECM_n_beta(var);
-    } else if (letter == 'a' && rset->amulti) {
-	col += r->eq[j] * gretl_VECM_n_alpha(var);
+#if 1
+    if (letter == 'b') {
+	col = r->bnum[j];
+	if (rset->bmulti) {
+	    col += r->eq[j] * gretl_VECM_n_beta(var);
+	}
+    } else if (letter == 'a') {
+	if (rset->amulti) {
+	    col = r->eq[j] + r->bnum[j] * jrank(var);
+	} else {
+	    col = r->bnum[j];
+	}
     }
+#else
+    if (letter == 'b') {
+	col = r->bnum[j];
+	if (rset->bmulti) {
+	    col += r->eq[j] * gretl_VECM_n_beta(var);
+	}
+    } else if (letter == 'a') {
+	col = r->bnum[j];
+	if (rset->amulti) {
+	    col += r->eq[j] * gretl_VECM_n_alpha(var);
+	}
+    }
+#endif
 
     return col;
 }
@@ -507,7 +532,7 @@ static int vecm_form_matrices (gretl_restriction *rset)
 	}
     }
 
-    /* write out the restrictions, beta first then alpha 
+    /* construct the restriction matrices, beta first then alpha 
        (if both are given) */
 
     for (m=0; m<2; m++) {

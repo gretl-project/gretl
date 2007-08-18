@@ -1021,7 +1021,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     MODEL *pmod = var->models[i];
     double *y = NULL;
     double u, x, SSR = 0, TSS = 0;
-    int t;
+    int dfd, t;
 
     y = malloc(var->T * sizeof *y);
     if (y == NULL) {
@@ -1037,6 +1037,8 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     pmod->ybar = gretl_mean(0, var->T - 1, y);
     pmod->sdy = gretl_stddev(0, var->T - 1, y);
 
+    dfd = (var->ci == VECM)? pmod->nobs : pmod->dfd;
+
     for (t=0; t<var->T; t++) {
 	u = gretl_matrix_get(var->E, t, i);
 	SSR += u * u;
@@ -1047,7 +1049,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     }
 
     pmod->ess = SSR;
-    pmod->sigma = sqrt(SSR / pmod->dfd);
+    pmod->sigma = sqrt(SSR / dfd);
     pmod->tss = TSS;
     pmod->rsq = 1.0 - SSR / TSS;
     pmod->fstt = ((TSS - SSR) / pmod->dfn) / (SSR / pmod->dfd);
@@ -1720,13 +1722,7 @@ int transcribe_VAR_models (GRETL_VAR *var,
 	pmod->list = gretl_list_new(1);
 	pmod->list[1] = yno;
 
-	if (ecm) {
-	    pmod->dfd = var->T;
-	}
 	set_VAR_model_stats(var, i);
-	if (ecm) {
-	    pmod->dfd = var->T - pmod->ncoeff;
-	}	
 
 	for (j=0; j<jmax; j++) {
 	    pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
