@@ -402,16 +402,17 @@ di Kronecker.
 \texttt{ffti}      \\
 \texttt{infnorm}   &
 \texttt{inv}       &
+\texttt{ginv}      &
 \texttt{ldet}      &
 \texttt{mexp}      &
-\texttt{nullspace} &
-\texttt{onenorm}   \\
+\texttt{nullspace} \\
+\texttt{onenorm}   &
 \texttt{qform}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
-\texttt{svd}       &
-\texttt{tr}        \\
+\texttt{svd}       \\
+\texttt{tr}        &
 \texttt{cmult}      
 \end{tabular}      
 
@@ -435,7 +436,8 @@ di Kronecker.
 \texttt{princomp}  &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{values}    &
+\texttt{sd}        &
+\texttt{values}   
 \end{tabular}      
 \caption{Funzioni matriciali suddivise per categoria}
 \label{tab:matrix_funcs_cat}
@@ -529,24 +531,26 @@ matrice sono:
 \begin{center}
 {\small
 \begin{tabular}{lp{.32\textwidth}clp{.32\textwidth}}
-\texttt{sumc} & somma per colonna & &
-\texttt{sumr} & somma per riga \\
-\texttt{meanc} & media per colonna & &
-\texttt{meanr} & media per riga \\
-\texttt{mcov} & matrice di covarianza per colonne & &
-\texttt{mcorr} & matrice di correlazione per colonne \\
-\texttt{mexp}    & esponenziale matriciale & &
-\texttt{inv} & inversa \\
-\texttt{cholesky} & scomposizione di Cholesky & &
-\texttt{diag} & diagonale principale \\
-\texttt{transp} & trasposta & &
-\texttt{cdemean} & sottrazione della media delle colonne \\
-\texttt{vec} & elementi come vettore colonna & &
-\texttt{vech} & elementi del triangolo inferiore come vettore colonna \\
-\texttt{unvech} & annulla l'operazione \texttt{vech} & &
-\texttt{mlag} & ritardo o anticipo per le matrici \\
-\texttt{nullspace} & spazio nullo destro & &
-\texttt{princomp} & componenti principali \\
+\texttt{sumc}      & somma per colonna & &
+\texttt{sumr}      & somma per riga \\
+\texttt{meanc}     & media per colonna & &
+\texttt{meanr}     & media per riga \\
+\texttt{sd}        & scarto quadratico medio per colonna \\
+\texttt{mcov}      & matrice di covarianza & &
+\texttt{mcorr}     & matrice di correlazione \\
+\texttt{cholesky}  & scomposizione di Cholesky & &
+\texttt{mexp}      & esponenziale matriciale \\
+\texttt{inv}       & inversa & &
+\texttt{ginv}      & inversa generalizzata \\
+\texttt{diag}      & diagonale principale & &
+\texttt{transp}    & trasposta \\
+\texttt{cdemean}   & sottrazione della media delle colonne & &
+\texttt{vec}       & elementi come vettore colonna \\
+\texttt{vech}      & elementi del triangolo inferiore come vettore colonna & &
+\texttt{unvech}    & annulla l'operazione \texttt{vech} \\
+\texttt{mlag}      & ritardo o anticipo per le matrici & &
+\texttt{nullspace} & spazio nullo destro \\
+\texttt{princomp}  & componenti principali \\
 \texttt{maxc}      & massimi delle colonne (valori) & &
 \texttt{maxr}      & massimi delle righe (valori) \\
 \texttt{imaxc}     & massimi delle colonne (indici) & &
@@ -568,7 +572,8 @@ Per una matrice $A$ $m \times n$, \texttt{sumc(A)} produce un vettore riga con
 le $n$ somme per colonna, mentre \texttt{sumr(A)} produce un vettore colonna con
 le $m$ somme per riga. \texttt{meanc(A)} produce un vettore riga con le $n$
 medie per colonna e \texttt{meanr(A)} un vettore colonna con le $m$ medie per
-riga.
+riga. \texttt{sd(A)} produce un vettore riga che contiene gli scarti quadratici
+medi delle $n$ colonne (senza la correzione per i gradi di libertà).
 
 Inoltre, per una matrice $A$ $m \times n$, la famiglia di funzioni
 \texttt{max} e \texttt{min} può produrre una matrice $m \times 1$ (le varianti
@@ -636,6 +641,16 @@ in questo caso invece di ritardi verranno generati anticipi delle variabili.
 La funzione \texttt{nullspace} produce $X$, lo spazio nullo destro di una
 matrice $A$ (che si assume avere rango pieno): $X$ soddisfa la condizione
 $A \cdot X = 0$.
+
+La funzione \texttt{ginv} produce l'inversa generalizzata, o pseudoinversa
+(chiamata anche inversa di Moore--Penrose) di una matrice rettangolare $A$.
+Essa soddisfa le seguenti equazioni:
+\begin{eqnarray*}
+AA^+A &=& A \\
+A^+AA^+	&=& A^+	 \\
+(AA^+)' &=& AA^+ \\	
+(A^+A)' &=& A^+A
+\end{eqnarray*}
 
 La funzione \texttt{princomp} richiede due argomenti: una matrice $X$ $T \times
 k$ e uno scalare $p$, tale che $0 < p \leq k$.  Si assume che $X$ contenga $T$
@@ -1176,54 +1191,55 @@ ols price const sqft --vcv
 \texttt{fft}       &
 \texttt{ffti}      &
 \texttt{gamma}     \\
+\texttt{ginv}      &
 \texttt{I}         &
 \texttt{imaxc}     &
 \texttt{imaxr}     &
 \texttt{iminc}     &
-\texttt{iminr}     &
-\texttt{infnorm}   \\
+\texttt{iminr}     \\
+\texttt{infnorm}   &
 \texttt{int}       &
 \texttt{inv}       &
 \texttt{ldet}      &
 \texttt{lngamma}   &
-\texttt{log}       &
-\texttt{mcorr}     \\
+\texttt{log}       \\
+\texttt{mcorr}     &
 \texttt{mcov}      &
 \texttt{maxc}      &   
 \texttt{maxr}      &
 \texttt{meanc}     &
-\texttt{meanr}     &
-\texttt{mexp}      \\
+\texttt{meanr}     \\
+\texttt{mexp}      &
 \texttt{minc}      &  
 \texttt{minr}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
-\texttt{mshape}    &
-\texttt{muniform}  \\
+\texttt{mshape}    \\
+\texttt{muniform}  &
 \texttt{nullspace} &
 \texttt{onenorm}   &
 \texttt{ones}      &
 \texttt{princomp}  &
-\texttt{qform}     &
-\texttt{qnorm}     \\
+\texttt{qform}     \\
+\texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
 \texttt{rcond}     &
 \texttt{rows}      &
-\texttt{seq}       &
-\texttt{sin}       \\
+\texttt{seq}       \\
+\texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
 \texttt{sumc}      &
 \texttt{sumr}      &
-\texttt{svd}       &
-\texttt{tan}       \\
+\texttt{svd}       \\
+\texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
 \texttt{unvech}    &
 \texttt{values}    &
-\texttt{vec}       &
-\texttt{vech}      \\
+\texttt{vec}       \\
+\texttt{vech}      &
 \texttt{zeros}     
 \end{tabular}      
 \caption{Elenco alfabetico delle funzioni matriciali}
