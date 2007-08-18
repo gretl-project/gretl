@@ -1250,40 +1250,6 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
-/* user-supplied R needs to be remapped for conformity with 
-   vec(\alpha') = G\psi */
-
-static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
-{
-    gretl_matrix *Rtmp = NULL;
-    double x;
-    int c0, c1 = 0;
-    int i, j, k;
-    int err = 0;
-
-    Rtmp = gretl_matrix_copy(R);
-    if (Rtmp == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<J->p; i++) {
-	for (j=0; j<J->r; j++) {
-	    /* write col of orig R into col of remapped R */
-	    c0 = i + j * J->p;
-	    for (k=0; k<R->rows; k++) {
-		x = gretl_matrix_get(R, k, c0);
-		gretl_matrix_set(Rtmp, k, c1, x);
-	    }
-	    c1++;
-	}
-    }
-
-    J->G = gretl_matrix_right_nullspace(Rtmp, &err);
-    gretl_matrix_free(Rtmp);
-
-    return err;
-}
-
 /* set up restriction matrix, G, for alpha */
 
 static int set_up_G (Jwrap *J, const gretl_restriction *rset,
@@ -1303,25 +1269,12 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 	return E_NOTIMP;
     }
 
-#if 1
     if (J->r > 1 && Ra->cols == J->p) {
 	/* got a common alpha restriction */
 	err = G_from_expanded_R(J, Ra);
     } else {
 	J->G = gretl_matrix_right_nullspace(Ra, &err);
     }
-#else
-    if (J->r > 1) {
-	if (Ra->cols == J->p) {
-	    /* got a common alpha restriction */
-	    err = G_from_expanded_R(J, Ra);
-	} else if (Ra->cols > J->p) {
-	    err = G_from_remapped_R(J, Ra);
-	}
-    } else {
-	J->G = gretl_matrix_right_nullspace(Ra, &err);
-    }
-#endif
 
     if (!err) {
 	J->alen = J->G->cols;
@@ -1552,6 +1505,8 @@ static int phi_init_homog (Jwrap *J)
     return err;
 }
 
+#if 0
+
 static int 
 normalize_initial_beta (Jwrap *J, const gretl_restriction *rset)
 {
@@ -1620,6 +1575,8 @@ normalize_initial_beta (Jwrap *J, const gretl_restriction *rset)
 
     return err;
 }
+
+#endif
 
 static int phi_from_beta (Jwrap *J,
 			  const gretl_restriction *rset)

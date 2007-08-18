@@ -178,7 +178,6 @@ get_R_vecm_column (const gretl_restriction *rset,
     GRETL_VAR *var = rset->obj;
     int col = 0;
 
-#if 1
     if (letter == 'b') {
 	col = r->bnum[j];
 	if (rset->bmulti) {
@@ -191,19 +190,6 @@ get_R_vecm_column (const gretl_restriction *rset,
 	    col = r->bnum[j];
 	}
     }
-#else
-    if (letter == 'b') {
-	col = r->bnum[j];
-	if (rset->bmulti) {
-	    col += r->eq[j] * gretl_VECM_n_beta(var);
-	}
-    } else if (letter == 'a') {
-	col = r->bnum[j];
-	if (rset->amulti) {
-	    col += r->eq[j] * gretl_VECM_n_alpha(var);
-	}
-    }
-#endif
 
     return col;
 }
