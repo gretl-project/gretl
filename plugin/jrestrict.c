@@ -99,8 +99,7 @@ struct Jwrap_ {
 static int J_compute_alpha (Jwrap *J);
 static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
-static int phi_from_beta (Jwrap *J,
-			  const gretl_restriction *rset);
+static int phi_from_beta (Jwrap *J);
 static void gradhelper_free (gradhelper *g);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
@@ -1016,7 +1015,7 @@ static int user_switch_init (Jwrap *J, int *uinit)
 	    J->alpha->val[i] = U->val[k++];
 	}
 	
-	err = phi_from_beta(J, NULL);
+	err = phi_from_beta(J);
 	if (!err) {
 	    err = psi_from_alpha(J);
 	}
@@ -1505,102 +1504,18 @@ static int phi_init_homog (Jwrap *J)
     return err;
 }
 
-#if 0
-
-static int 
-normalize_initial_beta (Jwrap *J, const gretl_restriction *rset)
-{
-    const gretl_matrix *R = rset_get_R_matrix(rset);
-    const gretl_matrix *d = rset_get_q_matrix(rset);
-    
-    gretl_matrix *b = J->beta;
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *tmp_sq = NULL;
-    gretl_matrix *tmp_b = NULL;
-    gretl_matrix *X = NULL;
-
-    double x;
-    int i, j, ii;
-    int br = b->rows;
-    int bc = J->r;
-    int bc2 = bc * bc;
-    int err = 0;
-
-    if (bc2 > d->rows) {
-	fprintf(stderr, "*** normalize_initial_beta: df = %d\n", 
-		d->rows - bc2);
-	return 0;
-    }
-
-    tmp_b = gretl_matrix_alloc(br, bc);
-    tmp_sq = gretl_matrix_alloc(bc, bc);
-    X = gretl_matrix_alloc(R->rows, bc2);
-    if (tmp_b == NULL || tmp_sq == NULL || X == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    tmp = gretl_matrix_I_kronecker_new(bc, b, &err);
-    if (err) {
-	goto bailout;
-    }
-
-    gretl_matrix_multiply(R, tmp, X);
-    gretl_matrix_reuse(tmp, bc2, 1);
-
-    err = gretl_matrix_multi_ols(d, X, tmp, NULL, NULL);
-    if (err) {
-	fprintf(stderr, "beta initialization: gretl_matrix_multi_ols failed\n");
-	err = 0;
-	goto bailout;
-    }
-
-    ii = 0;
-    for (i=0; i<bc; i++) {
-	for (j=0; j<bc; j++) {
-	    x = gretl_matrix_get(tmp, ii++, 0);
-	    gretl_matrix_set(tmp_sq, j, i, x);
-	}
-    }
-	    
-    gretl_matrix_copy_values(tmp_b, b);
-    gretl_matrix_multiply(tmp_b, tmp_sq, b);
-
- bailout:
-
-    gretl_matrix_free(tmp);
-    gretl_matrix_free(tmp_sq);
-    gretl_matrix_free(tmp_b);
-    gretl_matrix_free(X);
-
-    return err;
-}
-
-#endif
-
-static int phi_from_beta (Jwrap *J,
-			  const gretl_restriction *rset)
+static int phi_from_beta (Jwrap *J)
 {
     int err = 0;
 
     if (J->H == NULL) {
 	/* just vectorize beta into phi */
 	vec_simple(J->phi, J->beta);
+    } else if (gretl_is_zero_matrix(J->h0)) {
+	err = phi_init_homog(J);
     } else {
-#if 0
-	if (J->r > 1 && rset != NULL) {
-	    err = normalize_initial_beta(J, rset);
-	    if (err) {
-		return err;
-	    }
-	}
-#endif
-	if (gretl_is_zero_matrix(J->h0)) {
-	    err = phi_init_homog(J);
-	} else {
-	    /* solve for \phi a la Boswijk */
-	    err = phi_init_nonhomog(J);
-	}
+	/* solve for \phi a la Boswijk */
+	err = phi_init_nonhomog(J);
     }
 
     return err;
@@ -1656,14 +1571,14 @@ static int case0 (Jwrap *J)
    beta in case beta is restricted. 
 */
 
-static int beta_init (Jwrap *J, const gretl_restriction *rset)
+static int beta_init (Jwrap *J)
 {
     int err;
 
     err = case0(J);
 
     if (!err) {
-	err = phi_from_beta(J, rset);
+	err = phi_from_beta(J);
     }
 
     if (!err && J->H != NULL) {
@@ -2398,7 +2313,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = beta_init(J, rset);
+	err = beta_init(J);
     }
 
     if (!err && (!J->bfgs || J->G != NULL)) {
