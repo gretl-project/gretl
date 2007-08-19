@@ -231,13 +231,20 @@ alpha_test_show_beta (GRETL_VAR *jvar,
 		      PRN *prn)
 {
     JohansenInfo *jv = jvar->jinfo;
-    gretl_matrix *B = jv->Beta;
+    gretl_matrix *B = NULL;
     int vnorm = get_vecm_norm();
     int err = 0;
 
-    if (M != NULL) {
-	gretl_matrix_copy_values(B, M);
+    if (jv->Beta == NULL) {
+	jv->Beta = gretl_matrix_copy(M);
+	if (jv->Beta == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	gretl_matrix_copy_values(jv->Beta, M);
     }
+
+    B = jv->Beta;
 
     if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	double x, den;
@@ -290,17 +297,10 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix *S11a = NULL;
     gretl_matrix *S01a = NULL;
 
-    int prebeta = beta_restricted_VECM(jvar);
     int rank = jvar->jinfo->rank;
     int n = jvar->neqns;
     int m = S11->rows;
     int err = 0;
-
-    if (prebeta) {
-	pprintf(prn, "Alpha restriction for a beta-restricted "
-		"VECM: not handled yet\n");
-	return E_NOTIMP;
-    }
 
     ASA = gretl_matrix_alloc(R->rows, R->rows);
     C = gretl_matrix_alloc(n, n);
@@ -348,10 +348,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix_print(S01a, "S01a");
 #endif
 
-    if (!err && prebeta) {
-	alpha_test_show_beta(jvar, NULL, S11a, S01a, pdinfo, prn);
-    } else if (!err) {
-	/* do the eigenvalue thingy */
+    if (!err) {
+	/* do the eigenvalues thing */
 	gretl_matrix *A = NULL;
 	gretl_matrix *AS00 = NULL;
 	gretl_matrix *M = NULL;

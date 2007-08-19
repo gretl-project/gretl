@@ -1659,12 +1659,13 @@ static int j_general_restrict (GRETL_VAR *jvar,
     return err;
 }
 
-/* common finalization for estimation subject to simple
-   beta restriction or no restriction (H == NULL)
+/* common finalization for estimation subject to simple beta
+   restriction, simple alpha restriction, or no restriction.
 */
 
 static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
-			  const double **Z, const DATAINFO *pdinfo)
+			  const double **Z, const DATAINFO *pdinfo,
+			  int flags)
 {
     int do_stderrs = jrank(jvar) < jvar->neqns;
     int err;
@@ -1672,7 +1673,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     err = normalize_beta(jvar, H, &do_stderrs); 
 
     if (!err) {
-	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, ESTIMATE_ALPHA);
+	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, flags);
     }
 
     if (!err) {
@@ -1698,6 +1699,39 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     return err;
 }
 
+/* estimation subject to "simple" restriction on alpha */
+
+static int 
+est_simple_alpha_restr (GRETL_VAR *jvar, 
+			const gretl_restriction *rset,
+			const double **Z, const DATAINFO *pdinfo,
+			PRN *prn)
+{
+    gretlopt opt = OPT_F | OPT_V;
+    int err;
+
+#if JDEBUG
+    fprintf(stderr, "\n*** starting est_simple_alpha_restr\n\n");
+#endif    
+
+    err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
+
+    if (!err) {
+	err = vecm_finalize(jvar, NULL, Z, pdinfo, NET_OUT_ALPHA);
+    }
+
+    if (!err) {
+	const gretl_matrix *R = rset_get_Ra_matrix(rset);
+
+	jvar->jinfo->Ra = gretl_matrix_copy(R);
+	if (jvar->jinfo->Ra == NULL) {
+	    err = E_ALLOC;
+	}
+    }	
+
+    return err;
+}
+
 /* estimation subject to "simple" restriction on beta */
 
 static int 
@@ -1716,7 +1750,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     int err = 0;
 
 #if JDEBUG
-    fprintf(stderr, "\n*** starting j_estimate_simple_restr\n\n");
+    fprintf(stderr, "\n*** starting est_simple_beta_restr\n\n");
 #endif
 
     R = rset_get_R_matrix(rset);
@@ -1747,7 +1781,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, H, Z, pdinfo);
+	err = vecm_finalize(jvar, H, Z, pdinfo, ESTIMATE_ALPHA);
     }
 
     if (!err) {
@@ -1801,7 +1835,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, Z, pdinfo);
+	err = vecm_finalize(jvar, NULL, Z, pdinfo, ESTIMATE_ALPHA);
     }
 
     gretl_matrix_free(S00);
@@ -1871,6 +1905,9 @@ int johansen_estimate (GRETL_VAR *jvar,
 	ret = j_estimate_unrestr(jvar, Z, pdinfo);
     } else if (simple_beta_restriction(jvar, rset)) {
 	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo);
+    } else if (0 && simple_alpha_restriction(jvar, rset)) {
+	/* not ready! */
+	ret = est_simple_alpha_restr(jvar, rset, Z, pdinfo, prn);
     } else {
 	ret = j_estimate_general(jvar, rset, Z, pdinfo, prn);
     }
