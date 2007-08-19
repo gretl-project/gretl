@@ -232,18 +232,20 @@ alpha_test_show_beta (GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *B = jv->Beta;
+    int vnorm = get_vecm_norm();
     int err = 0;
 
     if (M != NULL) {
 	gretl_matrix_copy_values(B, M);
     }
 
-    if (get_vecm_norm() == NORM_DIAG) {
+    if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	double x, den;
-	int i, j;
+	int i, j, row;
 
 	for (j=0; j<B->cols; j++) {
-	    den = gretl_matrix_get(B, j, j);
+	    row = (vnorm == NORM_DIAG)? j : 0;
+	    den = gretl_matrix_get(B, row, j);
 	    if (den != 0.0) {
 		for (i=0; i<B->rows; i++) {
 		    x = gretl_matrix_get(B, i, j);

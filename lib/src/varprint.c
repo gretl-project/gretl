@@ -784,7 +784,8 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 		pputs(prn, _("Restrictions on beta:"));
 		pputc(prn, '\n');
 		print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
-						gretl_VECM_n_beta(vecm), prn);
+						'b', gretl_VECM_n_beta(vecm), 
+						prn);
 		pputc(prn, '\n');
 	    }
 	    if (vecm->jinfo->Ra != NULL) {
@@ -794,7 +795,8 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 		pputs(prn, _("Restrictions on alpha:"));
 		pputc(prn, '\n');
 		print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa, 
-						gretl_VECM_n_alpha(vecm), prn);
+						'a', gretl_VECM_n_alpha(vecm), 
+						prn);
 		pputc(prn, '\n');
 	    }	    
 #else

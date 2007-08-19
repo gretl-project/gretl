@@ -228,11 +228,10 @@ get_R_vecm_column (const gretl_restriction *rset,
 	    col += r->eq[j] * gretl_VECM_n_beta(var);
 	}
     } else if (letter == 'a') {
+	col = r->bnum[j];
 	if (rset->amulti) {
-	    col = r->eq[j] + r->bnum[j] * jrank(var);
-	} else {
-	    col = r->bnum[j];
-	}
+	    col += r->eq[j] * gretl_VECM_n_alpha(var);
+	} 
     }
 
     return col;
@@ -1102,7 +1101,8 @@ print_restriction_set (const gretl_restriction *rset,
 
 void print_restriction_from_matrices (const gretl_matrix *R,
 				      const gretl_matrix *q,
-				      int npar, PRN *prn)
+				      char letter, int npar, 
+				      PRN *prn)
 {
     double x;
     int eqn, coeff, started;
@@ -1142,9 +1142,9 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 		    }
 		}
 		if (eqn > 0) {
-		    pprintf(prn, "b[%d,%d]", eqn, coeff);
+		    pprintf(prn, "%c[%d,%d]", letter, eqn, coeff);
 		} else {
-		    pprintf(prn, "b%d", coeff);
+		    pprintf(prn, "%c%d", letter, coeff);
 		}
 		started = 1;
 	    }

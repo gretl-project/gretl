@@ -1337,6 +1337,8 @@ static int display_settings (PRN *prn)
 
     if (state->vecm_norm == NORM_DIAG) {
 	pputs(prn, " vecm_norm = diag\n");
+    } else if (state->vecm_norm == NORM_FIRST) {
+	pputs(prn, " vecm_norm = first\n");
     } else {
 	pputs(prn, " vecm_norm = phillips\n");
     }
@@ -1477,6 +1479,9 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    } else if (!strcmp(setarg, "diag")) {
 		state->vecm_norm = NORM_DIAG;
+		err = 0;
+	    } else if (!strcmp(setarg, "first")) {
+		state->vecm_norm = NORM_FIRST;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "pcse")) {

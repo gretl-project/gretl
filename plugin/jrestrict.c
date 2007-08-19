@@ -1121,7 +1121,7 @@ static int check_jacobian (Jwrap *J)
     gretl_matrix *Jac = NULL;
     int err = 0;
 
-    /* form both beta = H \phi + s, and alpha, for randomized 
+    /* form both beta = H \phi + h_0, and alpha, for randomized 
        \theta
     */
 
@@ -1131,7 +1131,9 @@ static int check_jacobian (Jwrap *J)
 	gretl_matrix_random_fill(phi, D_NORMAL);
 	gretl_matrix_reuse(J->beta, J->p1 * J->r, 1);
 	gretl_matrix_multiply(J->H, phi, J->beta);
-	gretl_matrix_add_to(J->beta, J->h0);
+	if (J->h0 != NULL) {
+	    gretl_matrix_add_to(J->beta, J->h0);
+	}
 	gretl_matrix_reuse(J->beta, J->p1, J->r);
 	gretl_matrix_free(phi);
     } else {
@@ -1237,14 +1239,88 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
 {
     gretl_matrix *Rtmp = NULL;
+    gretl_matrix *Rcpy = NULL;
+    double x;
+    int c0, c1 = 0;
+    int i, j, k;
     int err = 0;
 
     Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
 
     if (!err) {
-	J->G = gretl_matrix_right_nullspace(Rtmp, &err);
-	gretl_matrix_free(Rtmp);
+	Rcpy = gretl_matrix_copy(Rtmp);
+	if (Rcpy == NULL) {
+	    err = E_ALLOC;
+	}
     }
+
+#if JDEBUG
+    gretl_matrix_print(Rtmp, "expanded R");
+#endif
+
+
+    for (i=0; i<J->p; i++) {
+	for (j=0; j<J->r; j++) {
+	    /* write col of orig R into col of remapped R */
+	    c0 = i + j * J->p;
+	    for (k=0; k<Rcpy->rows; k++) {
+		x = gretl_matrix_get(Rcpy, k, c0);
+		gretl_matrix_set(Rtmp, k, c1, x);
+	    }
+	    c1++;
+	}
+    }
+
+
+#if JDEBUG
+    gretl_matrix_print(Rtmp, "remapped expanded R");
+#endif
+
+    if (!err) {
+	J->G = gretl_matrix_right_nullspace(Rtmp, &err);
+    }
+
+
+    gretl_matrix_free(Rtmp);
+    gretl_matrix_free(Rcpy);
+
+    return err;
+}
+
+/* user-supplied R needs to be remapped for conformity with 
+   vec(\alpha') = G\psi */
+
+static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
+{
+    gretl_matrix *Rtmp = NULL;
+    double x;
+    int c0, c1 = 0;
+    int i, j, k;
+    int err = 0;
+
+    Rtmp = gretl_matrix_copy(R);
+    if (Rtmp == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<J->p; i++) {
+	for (j=0; j<J->r; j++) {
+	    /* write col of orig R into col of remapped R */
+	    c0 = i + j * J->p;
+	    for (k=0; k<R->rows; k++) {
+		x = gretl_matrix_get(R, k, c0);
+		gretl_matrix_set(Rtmp, k, c1, x);
+	    }
+	    c1++;
+	}
+    }
+
+#if JDEBUG
+    gretl_matrix_print(Rtmp, "remapped R");
+#endif
+
+    J->G = gretl_matrix_right_nullspace(Rtmp, &err);
+    gretl_matrix_free(Rtmp);
 
     return err;
 }
@@ -1268,9 +1344,13 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 	return E_NOTIMP;
     }
 
-    if (J->r > 1 && Ra->cols == J->p) {
-	/* got a common alpha restriction */
-	err = G_from_expanded_R(J, Ra);
+    if (J->r > 1) {
+	if (Ra->cols == J->p) {
+	    /* got a common alpha restriction */
+	    err = G_from_expanded_R(J, Ra);
+	} else if (Ra->cols > J->p) {
+	    err = G_from_remapped_R(J, Ra);
+	}
     } else {
 	J->G = gretl_matrix_right_nullspace(Ra, &err);
     }

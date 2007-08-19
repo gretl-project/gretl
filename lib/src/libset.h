@@ -37,7 +37,8 @@ typedef enum {
 
 typedef enum {
     NORM_PHILLIPS,
-    NORM_DIAG
+    NORM_DIAG,
+    NORM_FIRST
 } VECMnorm;
 
 int libset_init (void);

@@ -53,7 +53,8 @@ gretl_restricted_vecm (gretl_restriction *rset,
 
 void print_restriction_from_matrices (const gretl_matrix *R,
 				      const gretl_matrix *q,
-				      int npar, PRN *prn);
+				      char letter, int npar, 
+				      PRN *prn);
 
 void destroy_restriction_set (gretl_restriction *rset);
 

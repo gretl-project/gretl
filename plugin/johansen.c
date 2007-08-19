@@ -983,14 +983,16 @@ static int phillips_normalize_beta (GRETL_VAR *vecm)
     return err;
 }
 
-static int col_normalize_beta (GRETL_VAR *vecm)
+static int 
+col_normalize_beta (GRETL_VAR *vecm, int vnorm)
 {
     gretl_matrix *B = vecm->jinfo->Beta;
     double x, den;
-    int i, j;
+    int i, j, row;
 
     for (j=0; j<B->cols; j++) {
-	den = gretl_matrix_get(B, j, j);
+	row = (vnorm == NORM_DIAG)? j : 0;
+	den = gretl_matrix_get(B, row, j);
 	if (den != 0.0) {
 	    for (i=0; i<B->rows; i++) {
 		x = gretl_matrix_get(B, i, j);
@@ -1006,11 +1008,13 @@ static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *H,
 			   int *do_stderrs)
 {
     if (H == NULL) {
-	if (get_vecm_norm() == NORM_DIAG) {
+	int vnorm = get_vecm_norm();
+
+	if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	    if (do_stderrs != NULL) {
 		*do_stderrs = 0;
 	    }
-	    return col_normalize_beta(vecm);
+	    return col_normalize_beta(vecm, vnorm);
 	} else {
 	    return phillips_normalize_beta(vecm);
 	}
