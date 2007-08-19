@@ -1318,17 +1318,25 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 	J->H = gretl_matrix_right_nullspace(R, &err);
     }
 
-    if (!err) {
-	J->blen = J->H->cols;
+    if (err) {
+	return err;
     }
+
+    J->blen = J->H->cols;
+
+    if (q == NULL || gretl_is_zero_matrix(q)) {
+	/* implicitly or explicitly zero */
+	J->h0 = gretl_zero_matrix_new(R->cols, 1);
+	return (J->h0 == NULL)? E_ALLOC : 0; 
+    }
+
+    /* now for h_0, for non-zero q */
 
     RRT = gretl_matrix_alloc(R->rows, R->rows);
     Tmp = gretl_matrix_alloc(R->cols, R->rows);
     if (RRT == NULL || Tmp == NULL) {
 	err = E_ALLOC;
     }
-
-    /* now for h_0 */
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,

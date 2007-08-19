@@ -105,9 +105,11 @@ static int check_R_matrix (const gretl_matrix *R)
 /* adding to an existing restriction on a VECM, either in
    respect of beta or in respect of alpha */
 
-static int add_vecm_restriction (gretl_restriction *rset,
-				 char letter, GRETL_VAR *vecm)
+static int 
+augment_vecm_restriction (gretl_restriction *rset,
+			  char letter)
 {
+    GRETL_VAR *vecm = rset->obj;
     const gretl_matrix *R0, *q0;
     gretl_matrix *R2, *q2;
     int err = 0;
@@ -164,6 +166,48 @@ static int add_vecm_restriction (gretl_restriction *rset,
     }	
 
     return 0;
+}
+
+/* adding an existing restriction on a VECM, in respect of beta or
+   alpha, to a new restriction in respect of the other matrix.
+*/
+
+static int 
+add_old_vecm_restriction (gretl_restriction *rset,
+			  char letter)
+{
+    GRETL_VAR *vecm = rset->obj; 
+    const gretl_matrix *R;
+    const gretl_matrix *q;
+    int err = 0;
+
+    if (letter == 'b') {
+	R = gretl_VECM_R_matrix(vecm);
+	q = gretl_VECM_q_matrix(vecm);
+	rset->R = gretl_matrix_copy(R);
+	if (rset->R == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    rset->q = gretl_matrix_copy(q);
+	    if (q != NULL && rset->q == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    } else {
+	R = gretl_VECM_Ra_matrix(vecm);
+	q = gretl_VECM_qa_matrix(vecm);
+	rset->Ra = gretl_matrix_copy(R);
+	if (rset->Ra == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    rset->qa = gretl_matrix_copy(q);
+	    if (q != NULL && rset->qa == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    return err;
 }
 
 /* We set things up here such that the restrictions are
@@ -549,7 +593,25 @@ static int vecm_form_matrices (gretl_restriction *rset)
 	}
     }
 
-    if (rset->R != NULL) {
+    /* cumulate prior restrictions if needed */
+
+    if (!err && beta_restricted_VECM(rset->obj)) {
+	if (rset->vecm & VECM_B) {
+	    err = augment_vecm_restriction(rset, 'b');
+	} else {
+	    err = add_old_vecm_restriction(rset, 'b');
+	}
+    }
+
+    if (!err && alpha_restricted_VECM(rset->obj)) {
+	if (rset->vecm & VECM_A) {
+	    err = augment_vecm_restriction(rset, 'a');
+	} else {
+	    err = add_old_vecm_restriction(rset, 'a');
+	}
+    }    
+
+    if (!err && rset->R != NULL) {
 	err = check_R_matrix(rset->R);
     }
 
@@ -1908,6 +1970,10 @@ gretl_restricted_vecm (gretl_restriction *rset,
 {
     GRETL_VAR *jvar = NULL;
 
+#if RDEBUG
+    fprintf(stderr, "gretl_restricted_vecm()\n");
+#endif
+
     if (rset == NULL || rset->type != GRETL_OBJ_VAR) {
 	*err = E_DATA;
 	return NULL;
@@ -1915,9 +1981,9 @@ gretl_restricted_vecm (gretl_restriction *rset,
 
     rset->opt |= opt;
 
-    print_restriction_set(rset, pdinfo, prn);
-
     *err = restriction_set_form_matrices(rset);
+
+    print_restriction_set(rset, pdinfo, prn);
 
     if (!*err) {
 	jvar = real_gretl_restricted_vecm(rset->obj, rset, Z, pdinfo, 
@@ -1945,40 +2011,23 @@ gretl_restriction_finalize (gretl_restriction *rset,
     int t = rset->type;
     int err = 0;
 
+#if RDEBUG
+    fprintf(stderr, "gretl_restriction_finalize()\n");
+#endif
+
     if (rset == NULL) {
 	return 1;
     }
 
     rset->opt |= opt;
 
-    if (rset->R != NULL && rset->q != NULL) {
-#if 0
-	print_restriction_from_matrices(rset->R, rset->q, 
-					npar, prn);
-#endif
-	;
-    } else {
-	print_restriction_set(rset, pdinfo, prn);
-    }
-
-    if (t == GRETL_OBJ_VAR) {
-	err = restriction_set_form_matrices(rset);
-	if (!err && (rset->vecm & VECM_B) && 
-	    beta_restricted_VECM(rset->obj)) {
-	    err = add_vecm_restriction(rset, 'b', rset->obj);
-	}
-	if (!err && (rset->vecm & VECM_A) && 
-	    alpha_restricted_VECM(rset->obj)) {
-	    err = add_vecm_restriction(rset, 'a', rset->obj);
-	}
-    } else if (t != GRETL_OBJ_EQN) {
-	err = restriction_set_form_matrices(rset);
-    }
-
+    err = restriction_set_form_matrices(rset);
     if (err) {
 	destroy_restriction_set(rset);
 	return err;
     }
+    
+    print_restriction_set(rset, pdinfo, prn);
 
     if (t == GRETL_OBJ_VAR) {
 	err = gretl_VECM_test(rset->obj, rset, pdinfo, rset->opt, prn);
@@ -2063,7 +2112,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 
     if (!err) {
 	err = gretl_restriction_finalize(r, NULL, pdinfo, 
-					     OPT_NONE, NULL);
+					 OPT_NONE, NULL);
     }
 
     if (!err) {

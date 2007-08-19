@@ -1630,7 +1630,8 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	jvar->jinfo->R = gretl_matrix_copy(R);
 	jvar->jinfo->q = gretl_matrix_copy(q);
 
-	if (jvar->jinfo->R == NULL || jvar->jinfo->q == NULL) {
+	if (jvar->jinfo->R == NULL || 
+	    (q != NULL && jvar->jinfo->q == NULL)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1645,7 +1646,8 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	jvar->jinfo->Ra = gretl_matrix_copy(R);
 	jvar->jinfo->qa = gretl_matrix_copy(q);
 
-	if (jvar->jinfo->Ra == NULL || jvar->jinfo->qa == NULL) {
+	if (jvar->jinfo->Ra == NULL || 
+	    (q != NULL && jvar->jinfo->qa == NULL)) {
 	    err = E_ALLOC;
 	}
     }
