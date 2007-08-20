@@ -301,7 +301,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	}
     }
 
-#if 1 || VDEBUG
+#if VDEBUG
     printlist(v->ylist, "v->ylist");
     printlist(v->xlist, "v->xlist");
 #endif
@@ -2123,8 +2123,8 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->Ra = NULL;
     jv->qa = NULL;
 
-    jv->ll0 = NADBL;
-    jv->lrdf = 0;
+    jv->ll0 = jv->prior_ll = NADBL;
+    jv->lrdf = jv->prior_df = 0;
 
     n1 = n;
     if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
@@ -2431,17 +2431,24 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 			    rset, Z, pdinfo, 
 			    jopt, prn);
 
-    if (jvar != NULL) {
-	jvar->jinfo->ll0 = orig->ll;
-	if (!jvar->err) {
-	    /* FIXME options here */
-	    gretl_VAR_print(jvar, pdinfo, OPT_NONE, prn);
-	} else {
-	    *err = jvar->err;
-	}
-    } else {
+    if (jvar == NULL) {
 	*err = 1;
-    }
+    } else if (jvar->err) {
+	*err = jvar->err;
+    } else {
+	gretlopt ropt, prnopt = OPT_NONE;
+
+	ropt = gretl_restriction_get_options(rset);
+	if (ropt & OPT_Q) {
+	    prnopt = OPT_Q;
+	}
+
+	jvar->jinfo->prior_ll = orig->ll;
+	jvar->jinfo->prior_df = orig->jinfo->lrdf;
+
+	/* FIXME OPT_I, OPT_F, impulses and decomp */
+	gretl_VAR_print(jvar, pdinfo, prnopt, prn);
+    } 
 
     free(list);
     
@@ -2906,6 +2913,10 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
 	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
 	    gretl_xml_node_get_int(cur, doc, &jinfo->lrdf);
+	} else if (!xmlStrcmp(cur->name, (XUC) "oldll")) {
+	    gretl_xml_node_get_double(cur, doc, &jinfo->prior_ll);
+	} else if (!xmlStrcmp(cur->name, (XUC) "olddf")) {
+	    gretl_xml_node_get_int(cur, doc, &jinfo->prior_df);
 	}
 	cur = cur->next;
     }
@@ -3134,6 +3145,11 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     if (j->lrdf > 0 && !na(j->ll0)) {
 	gretl_xml_put_double("ll0", j->ll0, fp);
 	gretl_xml_put_int("bdf", j->lrdf, fp);
+    }
+
+    if (j->prior_df > 0 && !na(j->prior_ll)) {
+	gretl_xml_put_double("oldll", j->prior_ll, fp);
+	gretl_xml_put_int("olddf", j->prior_df, fp);
     }
 
     fputs(">\n", fp);

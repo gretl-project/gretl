@@ -1357,11 +1357,13 @@ int johansen_get_eigenvalues (gretl_matrix *S00,
     }
 
     Tmp = gretl_matrix_alloc(n, n);
-    *M = gretl_matrix_alloc(n, n);
+    if (Tmp == NULL) {
+	return E_ALLOC;
+    }
 
-    if (Tmp == NULL || *M == NULL) {
+    *M = gretl_matrix_alloc(n, n);
+    if (*M == NULL) {
 	gretl_matrix_free(Tmp);
-	gretl_matrix_free(*M);
 	return E_ALLOC;
     }
 
@@ -1476,11 +1478,17 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	    df = h * (n - H->cols);
 	}
 
-	pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
-	pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), llr);
+	/* allow for possible prior restriction */
+	df -= jvar->jinfo->lrdf;
+
+	pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g\n"), jvar->ll);
+	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
 	if (df > 0) {
-	    pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), df, x, 
+	    if (jvar->jinfo->lrdf > 0) {
+		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), df);
+	    }
+	    pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), df, x, 
 		    chisq_cdf_comp(x, df));
 	}
     }
@@ -1642,6 +1650,68 @@ static int j_general_restrict (GRETL_VAR *jvar,
     return err;
 }
 
+/* Obtain the unrestricted log-likelihood for running the LR test.  We
+   need do this (only) in the context where we're doing full
+   estimation of a restricted system.  The prior system, relative to
+   which the (new) restriction is defined, may have been restricted
+   already, in which case the unrestricted ll is not available for
+   comparison.
+
+   This function is low-budget in that we don't bother with the
+   eigenvectors, just the eigenvalues.
+*/
+
+static int get_unrestricted_ll (GRETL_VAR *jvar)
+{
+    gretl_matrix *S00 = NULL;
+    gretl_matrix *Tmp = NULL;
+    gretl_matrix *e = NULL;
+    double ldet;
+    int n1 = jvar->jinfo->S11->cols;
+    int n = jvar->neqns;
+    int r = jrank(jvar);
+    int i, err = 0;
+
+    S00 = gretl_matrix_copy(jvar->jinfo->S00);
+    if (S00 == NULL) {
+	return E_ALLOC;
+    }
+
+    Tmp = gretl_matrix_alloc(n1, n1);
+    if (Tmp == NULL) {
+	gretl_matrix_free(S00);
+	return E_ALLOC;
+    }    
+
+    err = gretl_invert_symmetric_matrix(S00);
+
+    if (!err) {
+	gretl_matrix_qform(jvar->jinfo->S01, GRETL_MOD_TRANSPOSE, 
+			   S00, Tmp, GRETL_MOD_NONE);
+	e = gretl_gensymm_eigenvals(Tmp, jvar->jinfo->S11, NULL, &err);
+    }
+
+    if (!err) {
+	gretl_matrix_copy_values(S00, jvar->jinfo->S00);
+	ldet = gretl_matrix_log_determinant(S00, &err);
+    }
+
+    if (!err) {
+	qsort(e->val, n1, sizeof *e->val, gretl_inverse_compare_doubles);
+	jvar->jinfo->ll0 = n * (1.0 + LN_2_PI) + ldet;
+	for (i=0; i<r; i++) {
+	    jvar->jinfo->ll0 += log(1.0 - e->val[i]); 
+	}
+	jvar->jinfo->ll0 *= -(jvar->T / 2.0);
+    }
+
+    gretl_matrix_free(S00);
+    gretl_matrix_free(Tmp);
+    gretl_matrix_free(e);
+
+    return err;
+}
+
 /* common finalization for estimation subject to simple beta
    restriction, simple alpha restriction, or no restriction.
 */
@@ -1700,17 +1770,18 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
     fprintf(stderr, "\n*** starting est_simple_alpha_restr\n\n");
 #endif    
 
-    err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
+    err = get_unrestricted_ll(jvar);
+    
+    if (!err) {
+	err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
+    }
 
     if (!err) {
 	err = vecm_finalize(jvar, NULL, Z, pdinfo, NET_OUT_ALPHA);
     }
 
-    fprintf(stderr, "after vecm_finalize, err = %d\n", err);
-
     if (!err) {
 	jvar->jinfo->Ra = gretl_matrix_copy(R);
-	fprintf(stderr, "jvar->jinfo->Ra = %p\n", (void *) jvar->jinfo->Ra);
 	if (jvar->jinfo->Ra == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1740,8 +1811,12 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     fprintf(stderr, "\n*** starting est_simple_beta_restr\n\n");
 #endif
 
-    R = rset_get_R_matrix(rset);
-    err = johansen_prep_restriction(jvar, R, &S01, &S11, &H);
+    err = get_unrestricted_ll(jvar);
+    
+    if (!err) {
+	R = rset_get_R_matrix(rset);
+	err = johansen_prep_restriction(jvar, R, &S01, &S11, &H);
+    }
     
     if (!err) {
 	S00 = gretl_matrix_copy(jvar->jinfo->S00);
@@ -1892,8 +1967,7 @@ int johansen_estimate (GRETL_VAR *jvar,
 	ret = j_estimate_unrestr(jvar, Z, pdinfo);
     } else if (simple_beta_restriction(jvar, rset)) {
 	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo);
-    } else if (0 && simple_alpha_restriction(jvar, rset)) {
-	/* not ready! */
+    } else if (simple_alpha_restriction(jvar, rset)) {
 	ret = est_simple_alpha_restr(jvar, rset, Z, pdinfo, prn);
     } else {
 	ret = j_estimate_general(jvar, rset, Z, pdinfo, prn);

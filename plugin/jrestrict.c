@@ -354,6 +354,20 @@ vec_transpose (gretl_matrix *targ, const gretl_matrix *src)
     }
 }
 
+/* unvectorize src into targ, transposing */
+
+static void 
+unvec_transpose (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, j, k = 0;
+
+    for (i=0; i<targ->rows; i++) {
+	for (j=0; j<targ->cols; j++) {
+	    gretl_matrix_set(targ, i, j, src->val[k++]);
+	}
+    }
+}
+
 /* produce the \beta matrix in the case where it is fully
    constrained (and therefore no estimation is needed)
 */
@@ -1121,9 +1135,7 @@ static int check_jacobian (Jwrap *J)
     gretl_matrix *Jac = NULL;
     int err = 0;
 
-    /* form both beta = H \phi + h_0, and alpha, for randomized 
-       \theta
-    */
+    /* form beta and alpha, based on randomized theta */
 
     if (J->H != NULL) {
 	gretl_matrix *phi = gretl_column_vector_alloc(J->H->cols);
@@ -1142,12 +1154,13 @@ static int check_jacobian (Jwrap *J)
 
     if (J->G != NULL) {
 	gretl_matrix *psi = gretl_column_vector_alloc(J->G->cols);
+	gretl_matrix *avec = gretl_column_vector_alloc(J->p * J->r);
 
 	gretl_matrix_random_fill(psi, D_NORMAL);
-	gretl_matrix_reuse(J->alpha, J->p * J->r, 1);
-	gretl_matrix_multiply(J->G, psi, J->alpha);
-	gretl_matrix_reuse(J->alpha, J->p, J->r);
+	gretl_matrix_multiply(J->G, psi, avec);
+	unvec_transpose(J->alpha, avec);
 	gretl_matrix_free(psi);
+	gretl_matrix_free(avec);
     } else {	
 	J_compute_alpha(J);
     }
@@ -1203,30 +1216,30 @@ static int check_jacobian (Jwrap *J)
 static int 
 vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 {
-    int npar = J->blen + J->alen;
-    int err;
+    int npar = J->alen + J->blen;
+    int err = 0;
 
     err = check_jacobian(J);
 
     if (!err) {
-	pprintf(prn, "Rank of Jacobian = %d, number of free "
-		"parameters = %d\n", J->jr, npar);
+	pprintf(prn, _("Rank of Jacobian = %d, number of free "
+		"parameters = %d\n"), J->jr, npar);
 	if (J->jr < npar) {
-	    pputs(prn, "Model is not fully identified\n");
+	    pputs(prn, _("Model is not fully identified\n"));
 	    if (J->bfgs) {
 		err = E_NOIDENT;
 	    }
 	} else {
-	    pputs(prn, "Model is fully identified\n");
+	    pputs(prn, _("Model is fully identified\n"));
 	}
 
 	J->df = (J->p + J->p1 - J->r) * J->r - J->jr;
-	pprintf(prn, "Based on Jacobian, df = %d\n", J->df);
+	pprintf(prn, _("Based on Jacobian, df = %d\n"), J->df);
 
 	/* system was subject to a prior restriction? */
 	if (jvar->jinfo->lrdf > 0) {
 	    J->df -= jvar->jinfo->lrdf;
-	    pprintf(prn, "Allowing for prior restriction, df = %d\n", 
+	    pprintf(prn, _("Allowing for prior restriction, df = %d\n"), 
 		    J->df);
 	}
     }
@@ -1258,7 +1271,6 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
     gretl_matrix_print(Rtmp, "expanded R");
 #endif
 
-
     for (i=0; i<J->p; i++) {
 	for (j=0; j<J->r; j++) {
 	    /* write col of orig R into col of remapped R */
@@ -1271,7 +1283,6 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
 	}
     }
 
-
 #if JDEBUG
     gretl_matrix_print(Rtmp, "remapped expanded R");
 #endif
@@ -1280,12 +1291,40 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
 	J->G = gretl_matrix_right_nullspace(Rtmp, &err);
     }
 
-
     gretl_matrix_free(Rtmp);
     gretl_matrix_free(Rcpy);
 
     return err;
 }
+
+#if 1
+
+static void nullspace_normalize (gretl_matrix *A)
+{
+    int i, j, nz, nm1, pos;
+    double aij;
+
+    for (i=0; i<A->rows; i++) {
+	nz = nm1 = pos = 0;
+	for (j=0; j<A->cols; j++) {
+	    aij = gretl_matrix_get(A, i, j);
+	    if (aij == 0.0) {
+		nz++;
+	    } else if (aij == -1.0) {
+		nm1++;
+		pos = j;
+	    } else {
+		break;
+	    }
+	}
+	if (nz == A->cols - 1 && nm1 == 1) {
+	    /* got a solitary -1 on row i */
+	    gretl_matrix_set(A, i, pos, 1.0);
+	}
+    }
+}
+
+#endif
 
 /* user-supplied R needs to be remapped for conformity with 
    vec(\alpha') = G\psi */
@@ -1358,6 +1397,12 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
     if (!err) {
 	J->alen = J->G->cols;
     }
+
+#if 1
+    if (!err) {
+	nullspace_normalize(J->G);
+    }
+#endif
 
 #if JDEBUG
     gretl_matrix_print(J->G, "G, in set_up_G");

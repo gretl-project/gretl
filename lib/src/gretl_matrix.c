@@ -4044,14 +4044,17 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err)
 int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
     gretl_matrix *S = NULL;
+    double smin = SVD_SMIN;
+    double macheps = 2.0e-16;
     int k = (a->rows < a->cols)? a->rows : a->cols;
     int i, rank = 0;
 
     *err = gretl_matrix_SVD(a, NULL, &S, NULL);
 
     if (!*err) {
+	smin = 1.0e4 * macheps * gretl_matrix_infinity_norm(a);
 	for (i=0; i<k; i++) {
-	    if (S->val[i] > SVD_SMIN) {
+	    if (S->val[i] > smin) {
 		rank++;
 	    }
 	}
@@ -5035,7 +5038,8 @@ static int gensymm_conformable (const gretl_matrix *A,
  * gretl_gensymm_eigenvals:
  * @A: symmetric matrix.
  * @B: symmetric positive definite matrix.
- * @V: matrix to hold the generalized eigenvectors.
+ * @V: matrix to hold the generalized eigenvectors, or %NULL if
+ * these are not required.
  * @err: location to receive error code.
  * 
  * Solves the generalized eigenvalue problem
@@ -5101,12 +5105,14 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
 	goto bailout;
     }
 
-    *err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE, 
-				     tmp, GRETL_MOD_NONE, 
-				     V, GRETL_MOD_NONE);
+    if (V != NULL) {
+	*err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE, 
+					 tmp, GRETL_MOD_NONE, 
+					 V, GRETL_MOD_NONE);
 #if GSDEBUG
-    gretl_matrix_print(V, "V");
+	gretl_matrix_print(V, "V");
 #endif
+    }
 
  bailout:
 

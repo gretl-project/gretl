@@ -754,9 +754,104 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
     gretl_prn_newline(prn);
 }
 
+/* FIXME TeX and RTF */
+
+static void vecm_print_restrictions (GRETL_VAR *vecm, PRN *prn)
+{
+    if (vecm->jinfo->R != NULL) {
+	pputs(prn, "\n\n");
+	pputs(prn, _("Restrictions on beta:"));
+	pputc(prn, '\n');
+	print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
+					'b', gretl_VECM_n_beta(vecm), 
+					prn);
+	pputc(prn, '\n');
+    }
+
+    if (vecm->jinfo->Ra != NULL) {
+	if (vecm->jinfo->R == NULL) {
+	    pputs(prn, "\n\n");
+	}
+	pputs(prn, _("Restrictions on alpha:"));
+	pputc(prn, '\n');
+	print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa, 
+					'a', gretl_VECM_n_alpha(vecm), 
+					prn);
+	pputc(prn, '\n');
+    }	  
+}
+
+static void print_LR_stat (double x, int df, PRN *prn)
+{
+    double pv = chisq_cdf_comp(x, df);
+
+    if (tex_format(prn)) {
+	pprintf(prn, "$2 (l_u - l_r) = %g$", x);
+	gretl_prn_newline(prn);
+	pprintf(prn, "$P(\\chi^2_{%d} > %g = %g$", df, x, pv);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "2 * (lu - lr) = %g", x);
+	gretl_prn_newline(prn);
+	pprintf(prn, I_("P(Chi-Square(%d) > %g = %g"), df, x, pv);
+    } else {
+	pprintf(prn, "2 * (lu - lr) = %g", x);
+	gretl_prn_newline(prn);
+	pprintf(prn, _("P(Chi-Square(%d) > %g) = %g"), df, x, pv);
+    }
+}
+
+enum {
+    LR_TOTAL,
+    LR_RELATIVE
+};
+
+static void 
+vecm_print_LR_test (GRETL_VAR *vecm, PRN *prn, int code)
+{
+    double ll0, x;
+    int df;
+
+    if (code == LR_RELATIVE) {
+	ll0 = vecm->jinfo->prior_ll;
+	df = vecm->jinfo->lrdf - vecm->jinfo->prior_df;
+	gretl_prn_newline(prn);
+	if (tex_format(prn) || rtf_format(prn)) {
+	    pputs(prn, I_("Relative to prior restriction"));
+	} else {
+	    pputs(prn, _("Relative to prior restriction"));
+	} 
+	pputc(prn, ':');
+	gretl_prn_newline(prn);
+    } else {
+	ll0 = vecm->jinfo->ll0;
+	df = vecm->jinfo->lrdf;
+    }
+
+    x = 2.0 * (ll0 - vecm->ll);
+
+    if (tex_format(prn)) {
+	pprintf(prn, I_("Unrestricted loglikelihood $(l_u) = %.8g$"), ll0);
+	gretl_prn_newline(prn);
+	pprintf(prn, I_("Restricted loglikelihood $(l_r) = %.8g$"), vecm->ll);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, I_("Unrestricted loglikelihood (lu) = %.8g"), ll0);
+	gretl_prn_newline(prn);
+	pprintf(prn, I_("Restricted loglikelihood (lr) = %.8g"), vecm->ll);
+    } else {
+	pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g"), ll0);
+	gretl_prn_newline(prn);
+	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g"), vecm->ll);
+    }
+
+    gretl_prn_newline(prn);
+    print_LR_stat(x, df, prn);
+    gretl_prn_newline(prn);
+}
+
 static void 
 print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 {
+    JohansenInfo *J = vecm->jinfo;
     gretl_prn_newline(prn);
 
     if (vecm->jinfo == NULL) {
@@ -769,74 +864,17 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     gretl_prn_newline(prn);
     print_Johansen_test_case(jcode(vecm), prn); 
 
-    /* FIXME TeX (and RTF?) below */
-
-    if (vecm->jinfo->R != NULL || vecm->jinfo->Ra != NULL) {
-	if (!na(vecm->jinfo->ll0) && vecm->jinfo->lrdf > 0) {
-	    double ll0 = vecm->jinfo->ll0;
-	    double x = 2.0 * (ll0 - vecm->ll);
-	    int df = vecm->jinfo->lrdf;
-
-#if 1
-	    /* is this a worthwhile thing to do? */
-	    if (vecm->jinfo->R != NULL) {
-		pputs(prn, "\n\n");
-		pputs(prn, _("Restrictions on beta:"));
-		pputc(prn, '\n');
-		print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
-						'b', gretl_VECM_n_beta(vecm), 
-						prn);
-		pputc(prn, '\n');
-	    }
-	    if (vecm->jinfo->Ra != NULL) {
-		if (vecm->jinfo->R == NULL) {
-		    pputs(prn, "\n\n");
-		}
-		pputs(prn, _("Restrictions on alpha:"));
-		pputc(prn, '\n');
-		print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa, 
-						'a', gretl_VECM_n_alpha(vecm), 
-						prn);
-		pputc(prn, '\n');
-	    }	    
-#else
-	    pputs(prn, "\n\n");
-#endif
-
-	    if (tex_format(prn)) {
-		pprintf(prn, I_("Unrestricted loglikelihood $(l_u) = %g$"), ll0);
-		gretl_prn_newline(prn);
-		pprintf(prn, I_("Restricted loglikelihood $(l_r) = %g$"), vecm->ll);
-		gretl_prn_newline(prn);
-		pprintf(prn, "$2 (l_u - l_r) = %g$", x);
-		gretl_prn_newline(prn);
-		pprintf(prn, "$P(\\chi^2_{%d} > %g = %g$", df, x, 
-			chisq_cdf_comp(x, df));
-		gretl_prn_newline(prn);		
-	    } else if (rtf_format(prn)) {
-		pprintf(prn, I_("Unrestricted loglikelihood (lu) = %g"), ll0);
-		gretl_prn_newline(prn);
-		pprintf(prn, I_("Restricted loglikelihood (lr) = %g"), vecm->ll);
-		gretl_prn_newline(prn);
-		pprintf(prn, "2 * (lu - lr) = %g", x);
-		gretl_prn_newline(prn);
-		pprintf(prn, I_("P(Chi-Square(%d) > %g = %g"), df, x, 
-			chisq_cdf_comp(x, df));
-		gretl_prn_newline(prn);
-	    } else {
-		pprintf(prn, _("Unrestricted loglikelihood (lu) = %g"), ll0);
-		gretl_prn_newline(prn);
-		pprintf(prn, _("Restricted loglikelihood (lr) = %g"), vecm->ll);
-		gretl_prn_newline(prn);
-		pprintf(prn, "2 * (lu - lr) = %g", x);
-		gretl_prn_newline(prn);
-		pprintf(prn, _("P(Chi-Square(%d) > %g = %g"), df, x, 
-			chisq_cdf_comp(x, df));
-		gretl_prn_newline(prn);
-	    }
-
+    if (J->R != NULL || J->Ra != NULL) {
+	vecm_print_restrictions(vecm, prn);
+	if (!na(J->ll0) && J->lrdf > 0) {
+	    vecm_print_LR_test(vecm, prn, LR_TOTAL);
 	    *lldone = 1;
-	} else {
+	} 
+	if (!na(J->prior_ll) && J->prior_df > 0) {
+	    vecm_print_LR_test(vecm, prn, LR_RELATIVE);
+	    *lldone = 1;
+	} 	
+	if (!*lldone) {
 	    pputc(prn, '\n');
 	}
     } else {
@@ -960,18 +998,18 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	tex_print_VAR_ll_stats(var, prn);
     } else if (rtf) {
 	if (!lldone) {
-	    pprintf(prn, "%s = %#g\\par\n", I_("Log-likelihood"), var->ll);
+	    pprintf(prn, "%s = %.8g\\par\n", I_("Log-likelihood"), var->ll);
 	}
-	pprintf(prn, "%s = %#g\\par\n", I_("Determinant of covariance matrix"), 
+	pprintf(prn, "%s = %.8g\\par\n", I_("Determinant of covariance matrix"), 
 		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("HQC"), var->HQC);
     } else {
 	if (!lldone) {
-	    pprintf(prn, "%s = %#g\n", _("Log-likelihood"), var->ll);
+	    pprintf(prn, "%s = %.8g\n", _("Log-likelihood"), var->ll);
 	}
-	pprintf(prn, "%s = %#g\n", _("Determinant of covariance matrix"), exp(var->ldet));
+	pprintf(prn, "%s = %.8g\n", _("Determinant of covariance matrix"), exp(var->ldet));
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
 	pprintf(prn, "%s = %.4f\n", _("HQC"), var->HQC);
