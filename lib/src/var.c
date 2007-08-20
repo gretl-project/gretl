@@ -2097,6 +2097,7 @@ static JohansenInfo *
 johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 {
     JohansenInfo *jv = malloc(sizeof *jv);
+    int n1, n = var->neqns;
 
     if (jv == NULL) {
 	return NULL;
@@ -2124,6 +2125,21 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 
     jv->ll0 = NADBL;
     jv->lrdf = 0;
+
+    n1 = n;
+    if (jv->code == J_REST_CONST || jv->code == J_REST_TREND) {
+	n1++;
+    }
+
+    jv->Beta = gretl_matrix_alloc(n1, rank);
+    jv->Alpha = gretl_matrix_alloc(n, rank);
+
+    if (jv->Beta == NULL || jv->Alpha == NULL) {
+	gretl_matrix_free(jv->Beta);
+	gretl_matrix_free(jv->Alpha);
+	free(jv);
+	jv = NULL;
+    }
 
     return jv;
 }

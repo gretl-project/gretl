@@ -160,7 +160,7 @@ static void fix_xstr (char *s, int p)
 /* for cointegration test: print cointegrating vectors or adjustments,
    either "raw" or re-scaled */
 
-static void print_beta_or_alpha (GRETL_VAR *jvar, int k,
+static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
 				 const DATAINFO *pdinfo, PRN *prn,
 				 int job, int rescale)
 {
@@ -219,16 +219,14 @@ static void print_beta_or_alpha (GRETL_VAR *jvar, int k,
 static int compute_alpha (JohansenInfo *jv)
 {
     const gretl_matrix *B = jv->Beta;
-    gretl_matrix *alpha = NULL;
     gretl_matrix *BSB = NULL;
     gretl_matrix *Tmp = NULL;
     int err = 0;
 
     BSB = gretl_matrix_alloc(B->cols, B->cols);
     Tmp = gretl_matrix_alloc(B->rows, B->cols);
-    alpha = gretl_matrix_alloc(jv->S01->rows, B->cols);
 
-    if (BSB == NULL || Tmp == NULL || alpha == NULL) {
+    if (BSB == NULL || Tmp == NULL) {
 	err = E_ALLOC;
     } 
 
@@ -243,24 +241,18 @@ static int compute_alpha (JohansenInfo *jv)
 
     if (!err) {
 	gretl_matrix_multiply(B, BSB, Tmp);
-	gretl_matrix_multiply(jv->S01, Tmp, alpha);
+	gretl_matrix_multiply(jv->S01, Tmp, jv->Alpha);
     }
 
     gretl_matrix_free(BSB);
     gretl_matrix_free(Tmp);
-
-    if (!err) {
-	jv->Alpha = alpha;
-    } else {
-	gretl_matrix_free(alpha);
-    }
 
     return err;
 }
 
 /* print the long-run matrix, \alpha \beta' */
 
-static int print_long_run_matrix (GRETL_VAR *jvar, 
+static int print_long_run_matrix (const GRETL_VAR *jvar, 
 				  const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
@@ -396,13 +388,6 @@ static int copy_to_alpha (GRETL_VAR *v)
     int pos = v->ncoeff - rank;
     double x;
     int i, j;
-
-    if (v->jinfo->Alpha == NULL) {
-	v->jinfo->Alpha = gretl_matrix_alloc(v->neqns, rank);
-	if (v->jinfo->Alpha == NULL) {
-	    return E_ALLOC;
-	}
-    }
 
     for (i=0; i<v->neqns; i++) {
 	for (j=0; j<rank; j++) {
@@ -888,7 +873,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 */
 
 static int
-print_beta_and_alpha (GRETL_VAR *jvar, gretl_matrix *evals, int h,
+print_beta_and_alpha (const GRETL_VAR *jvar, gretl_matrix *evals, int h,
 		      const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
@@ -1243,7 +1228,7 @@ static int beta_variance (GRETL_VAR *vecm)
     return err;
 }
 
-static int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *eigvals)
+int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *evals)
 {
     gretl_matrix *S00;
     int n = jvar->neqns;
@@ -1260,7 +1245,7 @@ static int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *eigvals)
 
 	jvar->ll = n * (1.0 + LN_2_PI) + ldet;
 	for (i=0; i<h; i++) {
-	    jvar->ll += log(1.0 - eigvals->val[i]); 
+	    jvar->ll += log(1.0 - evals->val[i]); 
 	}
 	jvar->ll *= -(jvar->T / 2.0);
 	gretl_matrix_free(S00);
@@ -1443,8 +1428,11 @@ static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *H)
     jvar->jinfo->lrdf = r * (nb - H->cols);
 }
 
+/* Likelihood ratio test calculation, for restriction on
+   an existing VECM -- which is not modified */
+
 int
-johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
+johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals, 
 		  const gretl_matrix *H, int job, PRN *prn)
 {
     gretl_matrix *S00;
@@ -1500,7 +1488,7 @@ johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals,
     return err;
 }
 
-static int johansen_prep_restriction (GRETL_VAR *jvar, 
+static int johansen_prep_restriction (const GRETL_VAR *jvar, 
 				      const gretl_matrix *R,
 				      gretl_matrix **S01,
 				      gretl_matrix **S11,
@@ -1528,11 +1516,6 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
 	return E_ALLOC;
     }
 
-    jvar->jinfo->Beta = gretl_matrix_alloc(H->rows, jrank(jvar));
-    if (jvar->jinfo->Beta == NULL) {
-	return E_ALLOC;
-    }
-
     /* calculate S11 <- H' S11 H */
     err = gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE,
 			     jvar->jinfo->S11, 
@@ -1551,7 +1534,7 @@ static int johansen_prep_restriction (GRETL_VAR *jvar,
 */
 
 static int 
-simple_restriction (GRETL_VAR *jvar,
+simple_restriction (const GRETL_VAR *jvar,
 		    const gretl_restriction *rset)
 {
     const gretl_matrix *R, *q;
@@ -1578,7 +1561,7 @@ simple_restriction (GRETL_VAR *jvar,
     return ret;
 }
 
-static int simple_beta_restriction (GRETL_VAR *jvar,
+static int simple_beta_restriction (const GRETL_VAR *jvar,
 				    const gretl_restriction *rset)
 {
     if (rset_VECM_acols(rset) > 0) {
@@ -1588,7 +1571,7 @@ static int simple_beta_restriction (GRETL_VAR *jvar,
     }
 }
 
-static int simple_alpha_restriction (GRETL_VAR *jvar,
+static int simple_alpha_restriction (const GRETL_VAR *jvar,
 				     const gretl_restriction *rset)
 {
     if (rset_VECM_bcols(rset) > 0) {
@@ -1668,9 +1651,11 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 			  int flags)
 {
     int do_stderrs = jrank(jvar) < jvar->neqns;
-    int err;
+    int err = 0;
 
-    err = normalize_beta(jvar, H, &do_stderrs); 
+    if (flags & ESTIMATE_ALPHA) {
+	err = normalize_beta(jvar, H, &do_stderrs);
+    }
 
     if (!err) {
 	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, flags);
@@ -1707,7 +1692,8 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
 			const double **Z, const DATAINFO *pdinfo,
 			PRN *prn)
 {
-    gretlopt opt = OPT_F | OPT_V;
+    const gretl_matrix *R = rset_get_Ra_matrix(rset);
+    gretlopt opt = OPT_F;
     int err;
 
 #if JDEBUG
@@ -1720,10 +1706,11 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
 	err = vecm_finalize(jvar, NULL, Z, pdinfo, NET_OUT_ALPHA);
     }
 
-    if (!err) {
-	const gretl_matrix *R = rset_get_Ra_matrix(rset);
+    fprintf(stderr, "after vecm_finalize, err = %d\n", err);
 
+    if (!err) {
 	jvar->jinfo->Ra = gretl_matrix_copy(R);
+	fprintf(stderr, "jvar->jinfo->Ra = %p\n", (void *) jvar->jinfo->Ra);
 	if (jvar->jinfo->Ra == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1961,7 +1948,7 @@ johansen_boot_round (GRETL_VAR *jvar, const double **Z,
     return err;
 }
 
-void print_beta_alpha_Pi (GRETL_VAR *jvar,
+void print_beta_alpha_Pi (const GRETL_VAR *jvar,
 			  const DATAINFO *pdinfo,
 			  PRN *prn)
 {
@@ -1978,7 +1965,7 @@ void print_beta_alpha_Pi (GRETL_VAR *jvar,
    represented by H, and verbose output has been requested.
 */
 
-static int show_beta_alpha_etc (GRETL_VAR *jvar,
+static int show_beta_alpha_etc (const GRETL_VAR *jvar,
 				const gretl_matrix *H,
 				const gretl_matrix *M,
 				const DATAINFO *pdinfo,
@@ -2114,7 +2101,15 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 			   gretlopt opt,
 			   PRN *prn)
 {
+    gretl_matrix *B0 = NULL;
+    gretl_matrix *A0 = NULL;
     int err = 0;
+
+    B0 = gretl_matrix_copy(jvar->jinfo->Beta);
+    A0 = gretl_matrix_copy(jvar->jinfo->Alpha);
+    if (B0 == NULL || A0 == NULL) {
+	return E_ALLOC;
+    }
 
     if (simple_beta_restriction(jvar, rset)) {
 	err = vecm_beta_test(jvar, rset, pdinfo, opt, prn);
@@ -2123,6 +2118,14 @@ int vecm_test_restriction (GRETL_VAR *jvar,
     } else {
 	err = general_vecm_analysis(jvar, rset, pdinfo, prn);
     }
+
+    /* restore orginal Beta, Alpha on exit */
+
+    gretl_matrix_free(jvar->jinfo->Beta);
+    jvar->jinfo->Beta = B0;
+
+    gretl_matrix_free(jvar->jinfo->Alpha);
+    jvar->jinfo->Alpha = A0;
 
     return err;
 }

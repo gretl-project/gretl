@@ -25,11 +25,13 @@ enum {
     V_BETA
 };
 
+int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *evals);
+
 int
-johansen_LR_calc (GRETL_VAR *jvar, const gretl_matrix *evals, 
+johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals, 
 		  const gretl_matrix *H, int job, PRN *prn);
 
-void print_beta_alpha_Pi (GRETL_VAR *jvar,
+void print_beta_alpha_Pi (const GRETL_VAR *jvar,
 			  const DATAINFO *pdinfo,
 			  PRN *prn);
 

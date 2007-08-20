@@ -885,7 +885,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 {
     char startdate[OBSLEN], enddate[OBSLEN];
     char Vstr[72];
-    int vecm = var->ci == VECM;
+    int vecm = (var->ci == VECM);
     int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);

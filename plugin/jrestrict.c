@@ -2215,7 +2215,7 @@ static int J_compute_alpha (Jwrap *J)
     }
 
     if (!err) {
-	gretl_invert_symmetric_matrix(J->qf1);
+	err = gretl_invert_symmetric_matrix(J->qf1);
     }
 
     if (!err) {

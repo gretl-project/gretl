@@ -31,7 +31,7 @@
    p. 124ff.
 */
 
-#define ADEBUG 0
+#define ADEBUG 1
 
 /* \bar{A} = A(A'A)^{-1}, where A is the orthogonal complement of the
    restriction R imposed on \alpha in the form R\alpha = 0
@@ -183,16 +183,14 @@ static int alpha_compute_alpha (JohansenInfo *jv,
 				const gretl_matrix *S01a)
 {
     const gretl_matrix *B = jv->Beta;
-    gretl_matrix *a = NULL;
     gretl_matrix *BSB = NULL;
     gretl_matrix *Tmp = NULL;
     int err = 0;
 
     BSB = gretl_matrix_alloc(B->cols, B->cols);
     Tmp = gretl_matrix_alloc(B->rows, B->cols);
-    a = gretl_matrix_alloc(jv->S01->rows, B->cols);
 
-    if (BSB == NULL || Tmp == NULL || a == NULL) {
+    if (BSB == NULL || Tmp == NULL) {
 	err = E_ALLOC;
     } 
 
@@ -207,45 +205,31 @@ static int alpha_compute_alpha (JohansenInfo *jv,
 
     if (!err) {
 	gretl_matrix_multiply(B, BSB, Tmp);
-	gretl_matrix_multiply(S01a, Tmp, a);
+	gretl_matrix_multiply(S01a, Tmp, jv->Alpha);
     }
 
     gretl_matrix_free(BSB);
     gretl_matrix_free(Tmp);
 
-    if (!err) {
-	jv->Alpha = a;
-    } else {
-	gretl_matrix_free(a);
-    }
-
     return err;
 }
 
 static int 
-alpha_test_show_beta (GRETL_VAR *jvar,
-		      const gretl_matrix *M,
-		      const gretl_matrix *S11a,
-		      const gretl_matrix *S01a,
-		      const DATAINFO *pdinfo,
-		      PRN *prn)
+alpha_calc_full (GRETL_VAR *jvar,
+		 const gretl_matrix *M,
+		 const gretl_matrix *S11a,
+		 const gretl_matrix *S01a)
 {
     JohansenInfo *jv = jvar->jinfo;
-    gretl_matrix *B = NULL;
+    gretl_matrix *B = jv->Beta;
     int vnorm = get_vecm_norm();
-    int err = 0;
 
-    if (jv->Beta == NULL) {
-	jv->Beta = gretl_matrix_copy(M);
-	if (jv->Beta == NULL) {
-	    return E_ALLOC;
-	}
-    } else {
-	gretl_matrix_copy_values(jv->Beta, M);
-    }
+    gretl_matrix_copy_values(B, M);
 
-    B = jv->Beta;
+    /* if we're going to normalize beta (?) then do it
+       before computing alpha */
 
+#if 0
     if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	double x, den;
 	int i, j, row;
@@ -267,16 +251,20 @@ alpha_test_show_beta (GRETL_VAR *jvar,
 	    gretl_matrix_divide_by_scalar(B, den);
 	}
     }
+#endif
 
-    if (!err) {
-	err = alpha_compute_alpha(jv, S11a, S01a);
+    return alpha_compute_alpha(jv, S11a, S01a);
+}
+
+static void set_true_zeros (gretl_matrix *m)
+{
+    int i, n = m->rows * m->cols;
+
+    for (i=0; i<n; i++) {
+	if (fabs(m->val[i]) < 3.0e-19) {
+	    m->val[i] = 0;
+	}
     }
-
-    if (!err) {
-	print_beta_alpha_Pi(jvar, pdinfo, prn);
-    }
-
-    return err;
 }
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
@@ -302,6 +290,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     int m = S11->rows;
     int err = 0;
 
+    clear_gretl_matrix_err();
+
     ASA = gretl_matrix_alloc(R->rows, R->rows);
     C = gretl_matrix_alloc(n, n);
     Tmp = gretl_matrix_alloc(m, m);
@@ -309,9 +299,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     S11a = gretl_zero_matrix_new(m, m);
     S01a = gretl_zero_matrix_new(n, m);
 
-    if (ASA == NULL || C == NULL || Tmp == NULL || 
-	S00a == NULL || S11a == NULL || S01a == NULL) {
-	err = E_ALLOC;
+    err = get_gretl_matrix_err();
+    if (err) {
 	goto bailout;
     }
 
@@ -342,6 +331,9 @@ int vecm_alpha_test (GRETL_VAR *jvar,
     gretl_matrix_multiply(Tmp, S01, S01a);
     gretl_matrix_subtract_reversed(S01, S01a);
 
+    set_true_zeros(S00a);
+    set_true_zeros(S01a);
+
 #if ADEBUG
     gretl_matrix_print(S00a, "S00a");
     gretl_matrix_print(S11a, "S11a");
@@ -370,15 +362,22 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 				      M, &evals, Tmp, 
 				      rank);
 	}
-    
+
 	if (!err) {
-	    /* is the df right, in general? */
-	    johansen_LR_calc(jvar, evals, A, V_ALPHA, prn);
+	    if (opt & OPT_F) {
+		johansen_ll_calc(jvar, evals);
+		jvar->jinfo->lrdf = rank * (n - A->cols);
+	    } else {
+		err = johansen_LR_calc(jvar, evals, A, V_ALPHA, prn);
+	    }
 	} 
 
+	if (!err && (opt & (OPT_V | OPT_F))) {
+	    err = alpha_calc_full(jvar, M, S11a, S01a);
+	}
+
 	if (!err && (opt & OPT_V)) {
-	    alpha_test_show_beta(jvar, M, S11a, S01a,
-				 pdinfo, prn);
+	    print_beta_alpha_Pi(jvar, pdinfo, prn);
 	}
 
 	gretl_matrix_free(evals);
