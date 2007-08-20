@@ -31,7 +31,7 @@
    p. 124ff.
 */
 
-#define ADEBUG 1
+#define ADEBUG 0
 
 /* \bar{A} = A(A'A)^{-1}, where A is the orthogonal complement of the
    restriction R imposed on \alpha in the form R\alpha = 0
