@@ -787,7 +787,7 @@ static int switcher_ll (Jwrap *J)
     return err;
 }
 
-static int form_I00 (Jwrap *J)
+static int form_I00 (Jwrap *J, int invert)
 {
     gretl_matrix *K = NULL;
     int err = 0;
@@ -811,7 +811,7 @@ static int form_I00 (Jwrap *J)
 	}
     }
 
-    if (!err) {
+    if (!err && invert) {
 	err = gretl_invert_symmetric_matrix(J->I00);
     }
 
@@ -820,7 +820,7 @@ static int form_I00 (Jwrap *J)
     return err;
 }
 
-static int form_I11 (Jwrap *J)
+static int form_I11 (Jwrap *J, int invert)
 {
     gretl_matrix *K = NULL;
     int err = 0;
@@ -848,7 +848,7 @@ static int form_I11 (Jwrap *J)
 	}
     }
 
-    if (!err) {
+    if (!err && invert) {
 	err = gretl_invert_symmetric_matrix(J->I11);
     }
 
@@ -875,6 +875,208 @@ static int add_Omega_inverse (Jwrap *J)
 /* Use the information matrix to compute standard errors for
    beta and alpha.
 */
+
+#if 0
+
+static int form_I01 (Jwrap *J, gretl_matrix **pI01)
+{
+    gretl_matrix *K = NULL;
+    gretl_matrix *I01 = NULL;
+    gretl_matrix *BS = NULL;
+    gretl_matrix *GK = NULL;
+    int err = 0;
+
+    if (J->blen == 0) {
+	return 0;
+    }
+
+    I01 = gretl_matrix_alloc(J->alen, J->blen);
+    BS = gretl_matrix_alloc(J->r, J->p1);
+    if (I01 == NULL || BS == NULL) {
+	return E_ALLOC;
+    } 
+
+    gretl_matrix_reuse(J->Tmprp, J->p, J->r);
+    gretl_matrix_multiply(J->iOmega, J->alpha, J->Tmprp);
+
+    gretl_matrix_multiply_mod(J->beta, GRETL_MOD_TRANSPOSE,
+			      J->S11,  GRETL_MOD_NONE,
+			      BS, GRETL_MOD_NONE);
+
+    K = gretl_matrix_kronecker_product_new(J->Tmprp, BS, &err);
+    gretl_matrix_reuse(J->Tmprp, J->r, J->p);
+
+    if (J->G != NULL) {
+	GK = gretl_matrix_alloc(J->alen, K->cols);
+	gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
+				  K,  GRETL_MOD_NONE,
+				  GK, GRETL_MOD_NONE);
+    } else {
+	GK = K;
+    }
+
+    if (!err) {
+	if (J->H != NULL) {
+	    gretl_matrix_multiply(GK, J->H, I01);
+	} else {
+	    gretl_matrix_copy_values(I01, GK);
+	}
+    }
+
+    if (!err) {
+	*pI01 = I01;
+    } else {
+	gretl_matrix_free(I01);
+    }
+
+    gretl_matrix_free(BS);
+    gretl_matrix_free(K);
+    if (GK != K) {
+	gretl_matrix_free(GK);
+    }
+
+    return err;
+}
+
+static int variance_from_info_matrix (Jwrap *J)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *I01 = NULL;
+    int npar = J->alen + J->blen;
+    int err = 0;
+
+    if (J->jr < npar) {
+	/* model is not fully identified */
+	return 0;
+    }
+
+    M = gretl_zero_matrix_new(npar, npar);
+
+    /* preliminary */
+
+    if (J->iOmega == NULL) {
+	err = add_Omega_inverse(J);
+    }
+
+    /* 0,0 block */
+    
+    if (!err) {
+	if (J->I00 == NULL) {
+	    err = form_I00(J, 0);
+	} else {
+	    err = gretl_invert_symmetric_matrix(J->I00);
+	}  
+    }
+
+    /* 1,1 block */
+
+    if (!err) {
+	if (J->I11 == NULL) {
+	    err = form_I11(J, 0);
+	} else {
+	    err = gretl_invert_symmetric_matrix(J->I11);
+	}
+    }
+
+    /* off-diagonal */
+
+    if (!err) {
+	err = form_I01(J, &I01);
+    }
+
+    /* construct M */
+
+    if (!err) {
+	gretl_matrix_inscribe_matrix(M, J->I00, 0, 0, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(M, I01, 0, J->alen, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(M, I01, J->alen, 0, GRETL_MOD_TRANSPOSE);
+	gretl_matrix_inscribe_matrix(M, J->I11, J->alen, J->alen, GRETL_MOD_NONE);
+	gretl_matrix_multiply_by_scalar(M, J->T);
+	gretl_matrix_print(M, "M, before inversion");
+    }
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(M);
+	gretl_matrix_print(M, "M-inverse");
+    }
+
+    if (!err) {
+	gretl_matrix_extract_matrix(J->I00, M, 0, 0, GRETL_MOD_NONE);
+	gretl_matrix_extract_matrix(J->I11, M, J->alen, J->alen, GRETL_MOD_NONE);
+	gretl_matrix_print(J->I00, "var(psi)");
+	gretl_matrix_print(J->I11, "var(phi)");
+    }
+
+    /* variance of beta */
+
+    if (J->blen == 0) {
+	int nb = J->p1 * J->r;
+
+	J->Vb = gretl_zero_matrix_new(nb, nb);
+	J->bse = gretl_zero_matrix_new(J->p1, J->r);
+
+	if (J->Vb == NULL || J->bse == NULL) {
+	    err = E_ALLOC;
+	}
+
+	goto beta_done;
+    }	
+
+    if (J->H != NULL) {
+	int nb = J->r * J->p1;
+
+	J->Vb = gretl_matrix_alloc(nb, nb);
+	if (J->Vb == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_matrix_qform(J->H, GRETL_MOD_NONE, J->I11,
+			       J->Vb, GRETL_MOD_NONE);
+	}
+    } else {
+	J->Vb = J->I11;
+	J->I11 = NULL;
+    }
+
+    if (!err) {
+	err = make_beta_se(J);
+    }
+
+ beta_done:
+
+    if (err) {
+	return err;
+    }
+
+    /* variance of alpha */
+
+    if (J->G != NULL) {
+	int na = J->r * J->p;
+
+	J->Va = gretl_matrix_alloc(na, na);
+	if (J->Va == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_matrix_qform(J->G, GRETL_MOD_NONE, J->I00,
+			       J->Va, GRETL_MOD_NONE);
+	}
+    } else {
+	J->Va = J->I00;
+	J->I00 = NULL;
+    }
+
+    if (!err) {
+	err = make_alpha_se(J);
+    }  
+
+#if JDEBUG 
+    gretl_matrix_print(J->bse, "J->bse");
+    gretl_matrix_print(J->ase, "J->ase");
+#endif
+
+    return err;
+}
+
+#else
 
 static int variance_from_info_matrix (Jwrap *J)
 {
@@ -908,7 +1110,7 @@ static int variance_from_info_matrix (Jwrap *J)
     }	
 
     if (J->I11 == NULL) {
-	err = form_I11(J);
+	err = form_I11(J, 1);
 	if (err) return err;
     }
 
@@ -942,7 +1144,7 @@ static int variance_from_info_matrix (Jwrap *J)
     /* variance of alpha */
 
     if (J->I00 == NULL) {
-	err = form_I00(J);
+	err = form_I00(J, 1);
 	if (err) return err;
     }    
 
@@ -974,6 +1176,8 @@ static int variance_from_info_matrix (Jwrap *J)
 
     return err;
 }
+
+#endif
 
 static int user_switch_init (Jwrap *J, int *uinit)
 {
@@ -2042,8 +2246,8 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     char vname[32], s[16];
     int i, j;
 
-    pprintf(prn, _("Unrestricted loglikelihood (lu) = %g\n"), jvar->ll);
-    pprintf(prn, _("Restricted loglikelihood (lr) = %g\n"), J->ll);
+    pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g\n"), jvar->ll);
+    pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), J->ll);
     if (J->df > 0) {
 	double x = 2.0 * (jvar->ll - J->ll);
 
