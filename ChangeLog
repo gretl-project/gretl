@@ -34,7 +34,10 @@ version 1.6.6, in progress
 - Add ginv() (Moore-Penrose inverse) matrix function
 - Add multivariate Portmanteau test for autocorrelation in
   VARs (Ljung-Box)
-
+- Allow concatenation of multiple short-form options, as
+  in "-rdq"
+- Modify retrieval of info from VARs: $coeff gets the matrix
+  of coefficients, $compan gets the companion matrix
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

@@ -2719,6 +2719,29 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
     return x;    
 }
 
+static gretl_matrix *VAR_get_coeff_matrix (const GRETL_VAR *var,
+					   int *err)
+{
+    gretl_matrix *B = NULL;
+    const MODEL *pmod;
+    int i, j;
+
+    B = gretl_matrix_alloc(var->models[0]->ncoeff, var->neqns);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (j=0; j<var->neqns; j++) {
+	pmod = var->models[j];
+	for (i=0; i<pmod->ncoeff; i++) {
+	    gretl_matrix_set(B, i, j, pmod->coeff[i]);
+	}
+    }
+
+    return B;
+}
+
 #define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
                         i == M_JVBETA || i == M_JS00 || \
                         i == M_JS11 || i == M_JS01)
@@ -2728,6 +2751,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 {
     const gretl_matrix *src = NULL;
     gretl_matrix *M = NULL;
+    int copy = 1;
 
     if (var == NULL) {
 	*err = E_BADSTAT;
@@ -2736,8 +2760,11 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 
     if (idx == M_UHAT) {
 	src = var->E;
-    } else if (idx == M_COEFF) {
+    } else if (idx == M_COMPAN) {
 	src = var->A;
+    } else if (idx == M_COEFF) {
+	M = VAR_get_coeff_matrix(var, err);
+	copy = 0;
     } else if (idx == M_VCV) {
 	src = var->S;
     } else if (vecm_matrix(idx)) {
@@ -2765,15 +2792,19 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	}
     }
 
-    if (src == NULL) {
-	*err = E_BADSTAT;
-    } else {
-	M = gretl_matrix_copy(src);
-	if (M == NULL) {
-	    *err = E_ALLOC;
-	} else if (idx == M_UHAT) {
-	    M->t1 = var->t1;
+    if (copy) {
+	if (src == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(src);
+	    if (M == NULL) {
+		*err = E_ALLOC;
+	    }
 	}
+    }	    
+
+    if (M != NULL && idx == M_UHAT) {
+	M->t1 = var->t1;
     }
 
     return M;

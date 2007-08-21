@@ -994,11 +994,12 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
 If the ``model'' in question is actually a system (a VAR or VECM, or
-system of simultaneous equations), \verb|$uhat| retrieves the
-matrix of residuals (one column per equation) and \verb|$vcv| gets
-the cross-equation covariance matrix; in the special case of a VAR or
-a VECM, \verb|$coeff| returns the companion matrix. At present the
-other accessors are not available for equation systems.
+system of simultaneous equations), \verb|$uhat| retrieves the matrix
+of residuals (one column per equation) and \verb|$vcv| gets the
+cross-equation covariance matrix; in the special case of a VAR or a
+VECM, \verb|$coeff| returns the matrix of coefficients (one column per
+equation) and \verb|$compan| returns the companion matrix.  At present
+the other accessors are not available for equation systems.
 
 After a vector error correction model is estimated via Johansen's
 procedure, the matrices \verb|$jalpha| and \verb|$jbeta| are
