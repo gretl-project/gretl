@@ -2021,10 +2021,12 @@ gretl_restriction_finalize (gretl_restriction *rset,
 
     rset->opt |= opt;
 
-    err = restriction_set_form_matrices(rset);
-    if (err) {
-	destroy_restriction_set(rset);
-	return err;
+    if (t != GRETL_OBJ_EQN) {
+	err = restriction_set_form_matrices(rset);
+	if (err) {
+	    destroy_restriction_set(rset);
+	    return err;
+	}
     }
     
     print_restriction_set(rset, pdinfo, prn);
