@@ -221,15 +221,24 @@ alpha_calc_full (GRETL_VAR *jvar,
 		 const gretl_matrix *S01a)
 {
     JohansenInfo *jv = jvar->jinfo;
-    gretl_matrix *B = jv->Beta;
+    gretl_matrix *B = NULL;
     int vnorm = get_vecm_norm();
 
-    gretl_matrix_copy_values(B, M);
+    if (jv->Beta == NULL) {
+	jv->Beta = gretl_matrix_copy(M);
+    } else {
+	gretl_matrix_copy_values(jv->Beta, M);
+    }
+
+    B = jv->Beta;
+    if (B == NULL) {
+	return E_ALLOC;
+    }
 
     /* if we're going to normalize beta (?) then do it
        before computing alpha */
 
-#if 0
+#if 1
     if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	double x, den;
 	int i, j, row;
@@ -244,13 +253,7 @@ alpha_calc_full (GRETL_VAR *jvar,
 		}
 	    }
 	}
-    } else if (jv->rank == 1) { 
-	double den = B->val[0];
-
-	if (!floateq(den, 0.0)) {
-	    gretl_matrix_divide_by_scalar(B, den);
-	}
-    }
+    } 
 #endif
 
     return alpha_compute_alpha(jv, S11a, S01a);

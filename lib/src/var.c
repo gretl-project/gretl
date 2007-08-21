@@ -2131,12 +2131,12 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 	n1++;
     }
 
-    jv->Beta = gretl_matrix_alloc(n1, rank);
-    jv->Alpha = gretl_matrix_alloc(n, rank);
+    if (rank == 0) {
+	rank = n1;
+    }
 
-    if (jv->Beta == NULL || jv->Alpha == NULL) {
-	gretl_matrix_free(jv->Beta);
-	gretl_matrix_free(jv->Alpha);
+    jv->Alpha = gretl_zero_matrix_new(n, rank);
+    if (jv->Alpha == NULL) {
 	free(jv);
 	jv = NULL;
     }

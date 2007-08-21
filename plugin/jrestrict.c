@@ -1582,7 +1582,7 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
     gretl_matrix_print(qa, "qa, in set_up_G");
 #endif
 
-    if (!gretl_is_zero_matrix(qa)) {
+    if (qa != NULL && !gretl_is_zero_matrix(qa)) {
 	pprintf(prn, "alpha restriction is not homogeneous: not supported\n");
 	return E_NOTIMP;
     }
