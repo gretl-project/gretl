@@ -17,7 +17,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef WIN32
+#ifdef WIN32
+# include "winconfig.h"
+#else
 # include "config.h"
 #endif
 

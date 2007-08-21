@@ -110,7 +110,7 @@ process_gtk
 
 # auxiliary dlls
 for f in \
-    libgmp-3.dll libxml2.dll readline.dll zlib1.dll \
+    libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
     iconv.dll intl.dll libpdf.dll libfftw3-3.dll
 do

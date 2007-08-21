@@ -24,7 +24,7 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 # libraries
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
-CLI_LIBS = -lreadline.dll
+CLI_LIBS = -lreadline.dll -lhistory.dll
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports) -lgtkextra-lite
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
