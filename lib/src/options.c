@@ -408,7 +408,7 @@ struct flag_match flag_matches[] = {
 
 static const char *ok_flags = "abcdefghijklmnopqrstuvwxz";
 
-#define isflag(c) (strchr(ok_flags, c) != NULL)
+#define isflag(c) (c && (strchr(ok_flags, c) != NULL))
 
 static gretlopt opt_from_flag (unsigned char c)
 {
@@ -442,33 +442,37 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-static gretlopt get_short_opts (char *line, int ci, int *err)
+static gretlopt get_short_opts (char *s, int ci, int *err)
 {
-    char *p = strchr(line, '-');
     gretlopt opt, ret = 0L;
 
-    while (p != NULL) {
-	unsigned char c, prev;
-	int match = 0;
-	size_t n = strlen(p);
+    while ((s = strchr(s, '-')) != NULL) {
+	char *p = s + 1;
+	int i, n = 0;
 
-	c = *(p + 1);
-	prev = *(p - 1);
-	
-	if (isspace(prev) && isflag(c) && (n == 2 || isspace(*(p + 2)))) {
-	    opt = opt_from_flag(c);
-	    if (!opt_is_valid(opt, ci, c)) {
-		*err = 1;
-		return 0L;
+	if (isspace(*(s-1))) {
+	    n = strspn(p, ok_flags);
+	    if (n > 0) {
+		if (isspace(p[n]) || p[n] == '\0') {
+		    for (i=0; i<n; i++) {
+			opt = opt_from_flag(p[i]);
+			if (!opt_is_valid(opt, ci, p[i])) {
+			    *err = 1;
+			    return 0L;
+			}
+			ret |= opt;
+		    }
+		} else {
+		    n = 0;
+		}
 	    }
-	    ret |= opt;
-	    gretl_delete(p, 0, 2);
-	    match = 1;
 	}
-	if (!match) {
-	    p++;
+
+	if (n > 0) {
+	    gretl_delete(s, 0, n + 1);
+	} else {
+	    s++;
 	}
-	p = strchr(p, '-');
     }
 
     return ret;
