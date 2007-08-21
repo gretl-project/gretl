@@ -1686,7 +1686,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     int start = 2;
     int i, ret = -1;
 
-    if (COINT) {
+    if (ci == COINT) {
 	start = 1;
     } else if (ci == ARCH) {
 	start = 3;
