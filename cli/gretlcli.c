@@ -338,6 +338,18 @@ static void set_errfatal (int code)
     }
 }
 
+static int xout;
+
+#ifdef HAVE_READLINE
+static int ctrl_x (int count, int key)
+{
+    xout = 1;
+    rl_done = 1;
+    puts("exit");
+    return 0;
+}
+#endif
+
 int main (int argc, char *argv[])
 {
     double **Z = NULL;
@@ -354,6 +366,10 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
     nls_init();
+#endif
+
+#ifdef HAVE_READLINE
+    rl_bind_key(0x18, ctrl_x);
 #endif
 
     datainfo = datainfo_new();
@@ -555,7 +571,7 @@ int main (int argc, char *argv[])
     set_errfatal(ERRFATAL_AUTO);
 
     /* main command loop */
-    while (strcmp(cmd.word, "quit") && fb != NULL) {
+    while (strcmp(cmd.word, "quit") && fb != NULL && !xout) {
 	char linecopy[MAXLINE];
 	int overflow;
 

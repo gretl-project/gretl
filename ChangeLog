@@ -38,6 +38,7 @@ version 1.6.6, in progress
   in "-rdq"
 - Modify retrieval of info from VARs: $coeff gets the matrix
   of coefficients, $compan gets the companion matrix
+- gretlcli: Ctrl-X exits without prompting for save
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
