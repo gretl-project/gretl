@@ -21,7 +21,7 @@
 #include "gretl_matrix.h"
 #include "system.h"
 
-#define SDEBUG 0
+#define SDEBUG 1
 
 /* fiml.c */
 extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 
@@ -276,10 +276,10 @@ calc_system_sigma (const gretl_equation_system *sys)
    TSLS, WLS) */
 
 static int 
-calculate_sys_coefficients (gretl_equation_system *sys,
-			    const double **Z,
-			    gretl_matrix *X, gretl_matrix *y, 
-			    int mk, int do_iteration)
+calculate_sys_coeffs (gretl_equation_system *sys,
+		      const double **Z,
+		      gretl_matrix *X, gretl_matrix *y, 
+		      int mk, int do_iteration)
 {
     int do_bdiff = ((sys->method == SYS_3SLS) && do_iteration);
     double bij, oldb, bnum = 0.0, bden = 0.0;
@@ -297,7 +297,7 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 	return err;
     }
 
-#if SDEBUG
+#if SDEBUG > 1
     gretl_matrix_print(y, "in calc_coeffs, betahat");
 #endif
 
@@ -307,11 +307,16 @@ calculate_sys_coefficients (gretl_equation_system *sys,
     /* very memory-intensive for big matrices */
     err = gretl_SVD_invert_matrix(vcv);
 #endif
+
+#if SDEBUG
+    fprintf(stderr, "calculate_sys_coeffs: invert, err=%d\n", err);
+#endif
+
     if (err) {
 	return err;
     }
 
-#if SDEBUG
+#if SDEBUG > 1
     gretl_matrix_print(vcv, "in calc_coeffs, vcv");
 #endif
 
@@ -539,6 +544,9 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     }
 
     err = gretl_invert_symmetric_matrix(WTW);
+#if SDEBUG
+    fprintf(stderr, "hansen_sargan: on invert, err=%d\n", err);
+#endif
     if (err) {
 	sys->X2 = NADBL;
 	goto bailout;
@@ -1075,7 +1083,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     gls_sigma_from_uhat(sys, sys->sigma);
 
-#if SDEBUG
+#if SDEBUG > 1
     gretl_matrix_print(sys->sigma, "gls_sigma_from_uhat");
 #endif
 
@@ -1094,6 +1102,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     } else {
 	err = gretl_invert_symmetric_matrix(sys->sigma);    
     }
+
+#if SDEBUG
+    fprintf(stderr, "system_estimate: on invert, err=%d\n", err);
+#endif
 
     if (err) goto cleanup;
 
@@ -1233,7 +1245,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
-#if SDEBUG
+#if SDEBUG > 1
     gretl_matrix_print(X, "sys X");
     gretl_matrix_print(y, "sys y");
 #endif    
@@ -1242,8 +1254,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        depending on how the data matrices above were constructed --
        unless we're just doing restricted OLS, WLS or TSLS estimates
     */
-    calculate_sys_coefficients(sys, (const double **) *pZ, X, 
-			       y, mk, do_iteration);
+    calculate_sys_coeffs(sys, (const double **) *pZ, X, 
+			 y, mk, do_iteration);
 
     if (rtsls) {
 	rtsls = 0;
