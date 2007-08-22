@@ -126,7 +126,9 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
 	row = tree_path_get_row_number(path);
 
 	select = gtk_tree_view_get_selection(view);
-	if (select == NULL) return FALSE;
+	if (select == NULL) {
+	    return FALSE;
+	}
 	anchor_id = g_strdup_printf("%d", anchor);
 	anchor_path = gtk_tree_path_new_from_string(anchor_id);
 	g_free(anchor_id);

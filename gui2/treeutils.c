@@ -83,6 +83,51 @@ static gboolean no_select_row_zero (GtkTreeSelection *selection,
     return TRUE;
 }
 
+static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
+				 GtkTreeIter *iter, int *v)
+{
+    gchar *id;
+
+    gtk_tree_model_get(model, iter, 0, &id, -1);  
+    *v = atoi(id);
+    g_free(id);
+}
+
+static void count_selections (GtkTreeModel *model, GtkTreePath *path,
+			      GtkTreeIter *iter, int *selcount)
+{
+    *selcount += 1;
+}
+
+int tree_selection_count (GtkTreeSelection *select, int *vnum)
+{
+    int selcount = 0;
+
+    if (select != NULL) {
+	gtk_tree_selection_selected_foreach(select, 
+					    (GtkTreeSelectionForeachFunc) 
+					    count_selections,
+					    &selcount);
+    }
+    
+    if (vnum != NULL && selcount == 1) {
+	gtk_tree_selection_selected_foreach(select, 
+					    (GtkTreeSelectionForeachFunc) 
+					    get_selected_varnum,
+					    vnum);	
+    }
+
+    return selcount;
+}
+
+int vwin_selection_count (windata_t *vwin, int *row)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
+
+    return tree_selection_count(sel, row);
+}
+
 static void my_gtk_entry_append_text (GtkEntry *entry, gchar *add)
 {
     const gchar *old = gtk_entry_get_text(entry);
@@ -273,6 +318,61 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
+static void check_series_pd (GtkTreeModel *model, GtkTreePath *path,
+			     GtkTreeIter *iter, windata_t *vwin)
+{
+    static int pd0;
+    gchar *tmp = NULL;
+
+    if (model == NULL) {
+	/* reset */
+	pd0 = 0;
+	return;
+    }
+
+    gtk_tree_model_get(model, iter, 2, &tmp, -1);
+    if (tmp != NULL) {
+	if (pd0 == 0) {
+	    pd0 = *tmp;
+	} else if (*tmp != pd0) {
+	    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+	    GtkTreeSelection *sel;
+
+	    sel = gtk_tree_view_get_selection(view);
+	    gtk_tree_selection_unselect_iter(sel, iter);
+	}
+	g_free(tmp);
+    }
+}
+
+static void set_active_row (GtkTreeModel *model, GtkTreePath *path,
+			    GtkTreeIter *iter, windata_t *vwin)
+{
+    vwin->active_var = tree_path_get_row_number(path);
+}
+
+static void check_db_series_selection (GtkTreeSelection *sel, 
+				       windata_t *vwin)
+{
+    int nsel = gtk_tree_selection_count_selected_rows(sel);
+
+    if (nsel == 1) {
+	gtk_tree_selection_selected_foreach(sel, 
+					    (GtkTreeSelectionForeachFunc) 
+					    set_active_row, vwin);
+    } else {
+	check_series_pd(NULL, NULL, NULL, NULL);
+	gtk_tree_selection_selected_foreach(sel, 
+					    (GtkTreeSelectionForeachFunc) 
+					    check_series_pd, vwin);
+    }  
+}
+
+#define db_series_window(v) (v->role == NATIVE_SERIES || \
+                             v->role == RATS_SERIES || \
+                             v->role == PCGIVE_SERIES || \
+                             v->role == REMOTE_SERIES)
+
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
 			int ncols, gboolean hidden_col,
 			GType *types, const char **titles,
@@ -348,18 +448,21 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 
     if (vwin == mdata) { 
 	/* gretl main window */
-	gtk_tree_selection_set_mode(select, GTK_SELECTION_EXTENDED);
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
 	gtk_tree_selection_set_select_function(select, 
 					       (GtkTreeSelectionFunc)
 					       no_select_row_zero,
 					       NULL, NULL);
-
 	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK 
 			      | GDK_POINTER_MOTION_HINT_MASK);
-
         g_signal_connect(G_OBJECT(view), "motion_notify_event",
 			 G_CALLBACK(listbox_drag), NULL);
-
+    } else if (0 && db_series_window(vwin)) {
+	/* not ready yet */
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
+	g_signal_connect(G_OBJECT(select), "changed",
+			 G_CALLBACK(check_db_series_selection),
+			 vwin);
     } else {
 	gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
 	g_signal_connect(G_OBJECT(select), "changed",

@@ -1,6 +1,10 @@
 #ifndef TREEUTILS_H
 #define TREEUTILS_H
 
+int tree_selection_count (GtkTreeSelection *select, int *vnum);
+
+int vwin_selection_count (windata_t *vwin, int *row);
+
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
 			int ncols, gboolean hidden_col,
 			GType *types, const char **titles,

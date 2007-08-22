@@ -59,7 +59,6 @@ static GtkWidget *make_main_window (void);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
-static int selection_count (GtkTreeSelection *select, int *vnum);
 static void set_up_main_menu (void);
 static void startRcallback (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
@@ -1060,7 +1059,7 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
 	int vnum = 0;
-	int sc = selection_count(select, &vnum);
+	int sc = tree_selection_count(select, &vnum);
 
 	if (sc == 1 && vnum > 0) {
 	    mdata->active_var = vnum;
@@ -1114,9 +1113,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	) {
 	int selcount, vnum = 0;
 
-	selcount = 
-	    selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
-			    &vnum);
+	selcount = vwin_selection_count(mdata, &vnum);
 
 	if (selcount == 1 && vnum != 0) {
 	    mdata->active_var = vnum;
@@ -1753,56 +1750,16 @@ static void auto_store (void)
     }	
 }
 
-static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
-				 GtkTreeIter *iter, int *v)
-{
-    gchar *id;
-
-    gtk_tree_model_get(model, iter, 0, &id, -1);  
-    *v = atoi(id);
-    g_free(id);
-}
-
-static void count_selections (GtkTreeModel *model, GtkTreePath *path,
-			      GtkTreeIter *iter, int *selcount)
-{
-    *selcount += 1;
-}
-
-static int selection_count (GtkTreeSelection *select, int *vnum)
-{
-    int selcount = 0;
-
-    if (select != NULL) {
-	gtk_tree_selection_selected_foreach(select, 
-					    (GtkTreeSelectionForeachFunc) 
-					    count_selections,
-					    &selcount);
-    }
-    
-    if (vnum != NULL && selcount == 1) {
-	gtk_tree_selection_selected_foreach(select, 
-					    (GtkTreeSelectionForeachFunc) 
-					    get_selected_varnum,
-					    vnum);	
-    }
-
-    return selcount;
-}
-
 int mdata_selection_count (void)
 {
-    return selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
-			   NULL);
+    return vwin_selection_count(mdata, NULL);
 }
 
 int mdata_active_var (void)
 {
     int selcount, v = 0;
 
-    selcount = 
-	selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
-			&v);
+    selcount = vwin_selection_count(mdata, &v);
 
     if (selcount == 1 && v != 0) {
 	mdata->active_var = v;
@@ -1820,7 +1777,7 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 
     if (mods & GDK_BUTTON3_MASK) {
 	/* ignore all but right-clicks */
-	int selcount = mdata_selection_count();
+	int selcount = vwin_selection_count(mdata, NULL);
 
 	if (mdata->popup) {
 	    gtk_widget_destroy(mdata->popup);

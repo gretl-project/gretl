@@ -1680,8 +1680,3 @@ static int populate_notebook_filelists (windata_t *vwin,
 
     return 0;
 } 
-
-
-
-
-

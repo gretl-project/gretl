@@ -42,13 +42,20 @@
 # include "gretlwin32.h"
 #endif
 
+typedef struct series_wrap_t_ series_wrap_t;
+
+struct series_wrap_t_ {
+    int ns;
+    SERIESINFO **sinfo;
+};
+
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
-static int make_local_db_series_list (windata_t *vwin);
-static int make_remote_db_series_list (windata_t *vwin, char *buf);
-static int make_rats_db_series_list (windata_t *vwin);
-static int make_pcgive_db_series_list (windata_t *vwin);
-static SERIESINFO *get_series_info (windata_t *vwin, int action);
+static int add_local_db_series_list (windata_t *vwin);
+static int add_remote_db_series_list (windata_t *vwin, char *buf);
+static int add_rats_db_series_list (windata_t *vwin);
+static int add_pcgive_db_series_list (windata_t *vwin);
+static series_wrap_t *get_series_info (windata_t *vwin, int action);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -396,69 +403,242 @@ void import_db_series (windata_t *vwin)
     gui_get_db_series(vwin, DB_IMPORT, NULL);
 }
 
+static void swrap_destroy (series_wrap_t *sw)
+{
+    int i;
+
+    if (sw != NULL) {
+	for (i=0; i<sw->ns; i++) {
+	    free(sw->sinfo[i]);
+	}
+	free(sw->sinfo);
+	free(sw);
+    }
+}
+
+static series_wrap_t *swrap_new (int n)
+{
+    series_wrap_t *sw;
+    int i;
+
+    sw = mymalloc(sizeof *sw);
+    if (sw == NULL) {
+	return NULL;
+    }
+
+    sw->sinfo = mymalloc(n * sizeof *sw->sinfo);
+    if (sw->sinfo == NULL) {
+	free(sw);
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	sw->sinfo[i] = NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	sw->sinfo[i] = mymalloc(sizeof **sw->sinfo);
+	if (sw->sinfo[i] == NULL) {
+	    swrap_destroy(sw);
+	    sw = NULL;
+	    break;
+	}
+    } 
+
+    if (sw != NULL) {
+	sw->ns = n;
+    }
+
+    return sw;
+}
+
+static int diffdate (double d1, double d0, int pd)
+{
+    double x;
+
+    if (pd == 4 || pd == 12) {
+	char s[16];
+	int maj, min;
+	int dmaj, dmin;
+
+	gretl_push_c_numeric_locale();
+
+	sprintf(s, "%g", d1);
+	sscanf(s, "%d.%d", &dmaj, &dmin);
+
+	sprintf(s, "%g", d0);
+	sscanf(s, "%d.%d", &maj, &min);
+
+	gretl_pop_c_numeric_locale();
+
+	dmaj -= maj;
+	dmin -= min; 
+
+	x = dmaj * pd + dmin;
+    } else {
+	x = d1 - d0;
+    }
+
+    return x;
+}
+
+static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
+					 double ***pZ)
+{
+    DATAINFO *dinfo = NULL;
+    SERIESINFO *sinfo;
+    char stobs[OBSLEN], endobs[OBSLEN];
+    double xd, xdmax = 0, xdmin = NADBL;
+    int n0 = 0, nmax = 0;
+    int i;
+
+    for (i=0; i<sw->ns; i++) {
+	sinfo = sw->sinfo[i];
+	xd = get_date_x(sinfo->pd, sinfo->stobs);
+	fprintf(stderr, "var %d: nobs=%d, pd=%d, stobs='%s', sd0=%g\n",
+		i, sinfo->nobs, sinfo->pd, sinfo->stobs, xd);
+	if (xd < xdmin) {
+	    strcpy(stobs, sinfo->stobs);
+	    xdmin = xd;
+	    if (sinfo->nobs > n0) {
+		n0 = sinfo->nobs;
+	    }
+	}
+	if (xd > xdmax) {
+	    strcpy(endobs, sinfo->stobs);
+	    xdmax = xd;
+	}
+	if (sinfo->nobs > nmax) {
+	    nmax = sinfo->nobs;
+	}
+    }
+
+    if (xdmax > xdmin) {
+	int ni;
+
+	for (i=0; i<sw->ns; i++) {
+	    sinfo = sw->sinfo[i];
+	    ni = sinfo->nobs;
+	    xd = get_date_x(sinfo->pd, sinfo->stobs);
+	    if (xd > xdmin) {
+		ni += diffdate(xd, xdmin, sinfo->pd);
+	    }
+	    if (ni > nmax) {
+		nmax = ni;
+	    }
+	}
+    } 
+
+    fprintf(stderr, "min(sd0) = %g, stobs='%s', n = %d\n", xdmin, 
+	    stobs, nmax);
+
+    dinfo = create_new_dataset(pZ, sw->ns + 1, nmax, 0);
+    
+    if (dinfo != NULL) {
+	dinfo->pd = sw->sinfo[0]->pd;
+
+	strcpy(dinfo->stobs, stobs);
+	strcpy(dinfo->endobs, endobs);
+
+	colonize_obs(dinfo->stobs);
+	colonize_obs(dinfo->endobs);
+
+	dinfo->sd0 = xdmin;
+	set_time_series(dinfo);
+    }
+
+    return dinfo;
+}
+
+static DATAINFO *new_dataset_from_sinfo (SERIESINFO *sinfo,
+					 double ***pZ)
+{
+    DATAINFO *dinfo;
+
+    dinfo = create_new_dataset(pZ, 2, sinfo->nobs, 0);
+    if (dinfo == NULL) {
+	return NULL;
+    }
+
+    dinfo->pd = sinfo->pd;
+
+    strcpy(dinfo->stobs, sinfo->stobs);
+    strcpy(dinfo->endobs, sinfo->endobs);
+
+    colonize_obs(dinfo->stobs);
+    colonize_obs(dinfo->endobs);
+
+    dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
+    set_time_series(dinfo);
+
+    return dinfo;
+}
+
 void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
-    int err = 0, dbcode = vwin->role;
-    DATAINFO *dbinfo;
-    SERIESINFO *sinfo;
+    int dbcode = vwin->role;
+    DATAINFO *dbinfo = NULL;
     double **dbZ = NULL;
+    series_wrap_t *sw;
+    int i, err = 0;
 
-    sinfo = get_series_info(vwin, dbcode);
-    if (sinfo == NULL) {
+    sw = get_series_info(vwin, dbcode);
+    if (sw == NULL) {
 	return;
     }
 
-    dbinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
+    if (sw->ns == 1) {
+	dbinfo = new_dataset_from_sinfo(sw->sinfo[0], &dbZ);
+    } else {
+	dbinfo = new_dataset_from_swrap(sw, &dbZ);
+    }
+
     if (dbinfo == NULL) {
+	swrap_destroy(sw);
 	nomem();
 	return;
+    }    
+
+    for (i=0; i<sw->ns; i++) {
+	SERIESINFO *sinfo = sw->sinfo[i];
+
+	if (dbcode == NATIVE_SERIES) { 
+	    err = get_native_db_data(vwin->fname, sinfo, dbZ);
+	} else if (dbcode == REMOTE_SERIES) {
+	    err = gui_get_remote_db_data(vwin, sinfo, dbZ);
+	} else if (dbcode == RATS_SERIES) {
+	    err = get_rats_db_data(vwin->fname, sinfo, dbZ);
+	} else if (dbcode == PCGIVE_SERIES) {
+	    err = get_pcgive_db_data(vwin->fname, sinfo, dbZ);
+	}
+
+	if (action == DB_IMPORT && err == DB_MISSING_DATA) {
+	    errbox(_("Warning: series has missing observations"));
+	}
+
+	if (err && err != DB_MISSING_DATA && dbcode != REMOTE_SERIES) {
+	    errbox(_("Couldn't access binary datafile"));
+	    goto bailout;
+	} 
+
+	strcpy(dbinfo->varname[i+1], sinfo->varname);
+	strcpy(VARLABEL(dbinfo, i+1), sinfo->descrip);
     }
-
-    dbinfo->pd = sinfo->pd;
-
-    strcpy(dbinfo->stobs, sinfo->stobs);
-    strcpy(dbinfo->endobs, sinfo->endobs);
-
-    colonize_obs(dbinfo->stobs);
-    colonize_obs(dbinfo->endobs);
-
-    dbinfo->sd0 = get_date_x(dbinfo->pd, dbinfo->stobs);
-    set_time_series(dbinfo);
-
-    if (dbcode == NATIVE_SERIES) { 
-	err = get_native_db_data(vwin->fname, sinfo, dbZ);
-    } else if (dbcode == REMOTE_SERIES) {
-	err = gui_get_remote_db_data(vwin, sinfo, dbZ);
-    } else if (dbcode == RATS_SERIES) {
-	err = get_rats_db_data(vwin->fname, sinfo, dbZ);
-    } else if (dbcode == PCGIVE_SERIES) {
-	err = get_pcgive_db_data(vwin->fname, sinfo, dbZ);
-    }
-
-    if (action == DB_IMPORT && err == DB_MISSING_DATA) {
-	errbox(_("Warning: series has missing observations"));
-    }
-
-    if (err && err != DB_MISSING_DATA && dbcode != REMOTE_SERIES) {
-	errbox(_("Couldn't access binary datafile"));
-	return;
-    } 
-
-    strcpy(dbinfo->varname[1], sinfo->varname);
-    strcpy(VARLABEL(dbinfo, 1), sinfo->descrip);
 
     if (action == DB_DISPLAY) {
 	display_dbdata((const double **) dbZ, dbinfo);
     } else if (action == DB_GRAPH) {
 	graph_dbdata(&dbZ, dbinfo);
     } else if (action == DB_IMPORT) { 
-	add_dbdata(vwin, dbZ, sinfo);
+	add_dbdata(vwin, dbZ, sw->sinfo[0]); /* FIXME */
     }
+
+ bailout:
 
     free_Z(dbZ, dbinfo);
     free_datainfo(dbinfo);
-    free(sinfo);
+    swrap_destroy(sw);
 } 
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
@@ -642,13 +822,13 @@ static int make_db_series_list (int action, char *fname, char *buf)
 		      G_CALLBACK(delete_widget), vwin->w);
 
     if (action == NATIVE_SERIES) { 
-	err = make_local_db_series_list(vwin);
+	err = add_local_db_series_list(vwin);
     } else if (action == REMOTE_SERIES) { 
-	err = make_remote_db_series_list(vwin, buf);
+	err = add_remote_db_series_list(vwin, buf);
     } else if (action == RATS_SERIES) {
-	err = make_rats_db_series_list(vwin);
+	err = add_rats_db_series_list(vwin);
     } else if (action == PCGIVE_SERIES) {
-	err = make_pcgive_db_series_list(vwin);
+	err = add_pcgive_db_series_list(vwin);
     }
 
     if (err) {
@@ -734,7 +914,7 @@ static void db_drag_connect (windata_t *vwin)
 		     vwin);
 }
 
-static int make_local_db_series_list (windata_t *vwin)
+static int add_local_db_series_list (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter; 
@@ -811,7 +991,7 @@ static int make_local_db_series_list (windata_t *vwin)
     return 0;
 }
 
-static int make_remote_db_series_list (windata_t *vwin, char *buf)
+static int add_remote_db_series_list (windata_t *vwin, char *buf)
 {
     GtkListStore *store;
     GtkTreeIter iter;  
@@ -962,7 +1142,7 @@ static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
     free(tbl);
 }
 
-static int make_rats_db_series_list (windata_t *vwin)
+static int add_rats_db_series_list (windata_t *vwin)
 {
     FILE *fp;
     db_table *tbl;
@@ -990,7 +1170,7 @@ static int make_rats_db_series_list (windata_t *vwin)
     return 0;
 }
 
-static int make_pcgive_db_series_list (windata_t *vwin)
+static int add_pcgive_db_series_list (windata_t *vwin)
 {
     char in7name[FILENAME_MAX];
     FILE *fp;
@@ -1047,88 +1227,151 @@ static GtkWidget *database_window (windata_t *vwin)
     return box;
 }
 
-static SERIESINFO *get_series_info (windata_t *vwin, int action)
+static void process_db_series (GtkTreeModel *model, GtkTreePath *path,
+			       GtkTreeIter *iter, int *list)
 {
-    char pdc;
-    gchar *temp;
-    SERIESINFO *sinfo;
-    char stobs[OBSLEN], endobs[OBSLEN];
+    int row = tree_path_get_row_number(path);
 
-    sinfo = mymalloc(sizeof *sinfo);
-
-    if (sinfo == NULL) {
-	return NULL;
-    }
-
-    tree_view_get_int(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-		      3, &sinfo->offset);
-
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 0, &temp);
-
-    *sinfo->varname = 0;
-    strncat(sinfo->varname, temp, VNAMELEN - 1);
-    g_free(temp);
-
-    temp = NULL;
-    *sinfo->descrip = 0;
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 1, &temp);
-    if (temp != NULL) {
-	strncat(sinfo->descrip, temp, MAXLABEL - 1);
-	g_free(temp);
-    }
-
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 2, &temp);
-    if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
-	       &pdc, stobs, endobs, &sinfo->nobs) != 4) {
-	errbox(_("Failed to parse series information"));
-	free(sinfo);
-	g_free(temp);
-	return NULL;
-    }
-
-    g_free(temp);
-
-    sinfo->pd = 1;
-    sinfo->undated = 0;
-
-    if (pdc == 'M') {
-	sinfo->pd = 12;
-    } else if (pdc == 'Q') {
-	sinfo->pd = 4;
-    } else if (pdc == 'B') {
-	sinfo->pd = 5;
-    } else if (pdc == 'S') {
-	sinfo->pd = 6;
-    } else if (pdc == 'D') {
-	sinfo->pd = 7;
-    } else if (pdc == 'W') {
-	sinfo->pd = 52;
-    } else if (pdc == 'U') {
-	sinfo->undated = 1;
-    }
-
-    if (strchr(stobs, '/')) { /* daily data */
-	char *q = stobs;
-	char *p = strchr(stobs, '/');
-
-	if (p - q == 4) strcpy(sinfo->stobs, q + 2);
-	q = endobs;
-	p = strchr(endobs, '/');
-	if (p && p - q == 4) {
-	    strcpy(sinfo->endobs, q + 2);
-	}
-    } else {
-	sinfo->stobs[0] = 0;
-	sinfo->endobs[0] = 0;
-	strncat(sinfo->stobs, stobs, OBSLEN - 1);
-	strncat(sinfo->endobs, endobs, OBSLEN - 1);
-    }
-
-    return sinfo;
+    list[0] += 1;
+    list[list[0]] = row;
 }
+
+static void db_multisel (windata_t *vwin, int *list)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeSelection *sel;
+
+    sel = gtk_tree_view_get_selection(view);
+    gtk_tree_selection_selected_foreach(sel, 
+					(GtkTreeSelectionForeachFunc) 
+					process_db_series, list);
+}
+
+static series_wrap_t *get_series_info (windata_t *vwin, int action)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    int *rowlist = NULL;
+    int i, sc, row = 0;
+    char stobs[OBSLEN], endobs[OBSLEN];
+    char pdc;
+    series_wrap_t *swrap;
+    int err = 0;
+
+    sc = vwin_selection_count(vwin, NULL);
+    if (sc == 0) {
+	return NULL;
+    }
+
+    rowlist = gretl_list_new(sc);
+    if (rowlist == NULL) {
+	nomem();
+	return NULL;
+    }
+
+    if (sc == 1) {
+	rowlist[1] = vwin->active_var;
+    } else {
+	rowlist[0] = 0;
+	db_multisel(vwin, rowlist);
+    } 
+
+    swrap = swrap_new(sc);
+    if (swrap == NULL) {
+	free(rowlist);
+	return NULL;
+    }
+
+    for (i=0; i<rowlist[0]; i++) {
+	SERIESINFO *sinfo = swrap->sinfo[i];
+	gchar *tmp = NULL;
+
+	row = rowlist[i+1];
+	tree_view_get_int(view, row, 3, &sinfo->offset);
+
+	*sinfo->varname = 0;
+	tree_view_get_string(view, row, 0, &tmp);
+	strncat(sinfo->varname, tmp, VNAMELEN - 1);
+	g_free(tmp);
+
+	tmp = NULL;
+	*sinfo->descrip = 0;
+	tree_view_get_string(view, row, 1, &tmp);
+	if (tmp != NULL) {
+	    strncat(sinfo->descrip, tmp, MAXLABEL - 1);
+	    g_free(tmp);
+	}
+
+	tmp = NULL;
+	tree_view_get_string(view, row, 2, &tmp);
+	if (sscanf(tmp, "%c %10s %*s %10s %*s %*s %d", 
+		   &pdc, stobs, endobs, &sinfo->nobs) != 4) {
+	    errbox(_("Failed to parse series information"));
+	    err = 1;
+	    goto bailout;
+	}
+	g_free(tmp);
+
+	sinfo->pd = 1;
+	sinfo->undated = 0;
+
+	if (pdc == 'M') {
+	    sinfo->pd = 12;
+	} else if (pdc == 'Q') {
+	    sinfo->pd = 4;
+	} else if (pdc == 'B') {
+	    sinfo->pd = 5;
+	} else if (pdc == 'S') {
+	    sinfo->pd = 6;
+	} else if (pdc == 'D') {
+	    sinfo->pd = 7;
+	} else if (pdc == 'W') {
+	    sinfo->pd = 52;
+	} else if (pdc == 'U') {
+	    sinfo->undated = 1;
+	}
+
+	if (i > 0 && sinfo->pd != swrap->sinfo[0]->pd) {
+	    /* this shouldn't happen */
+	    errbox("Can't operate on series with different frequencies");
+	    err = 1;
+	    goto bailout;
+	}
+
+	if (strchr(stobs, '/')) { 
+	    /* daily data */
+	    char *q = stobs;
+	    char *p = strchr(stobs, '/');
+
+	    if (p - q == 4) {
+		strcpy(sinfo->stobs, q + 2);
+	    }
+	    q = endobs;
+	    p = strchr(endobs, '/');
+	    if (p && p - q == 4) {
+		strcpy(sinfo->endobs, q + 2);
+	    }
+	} else {
+	    sinfo->stobs[0] = 0;
+	    sinfo->endobs[0] = 0;
+	    strncat(sinfo->stobs, stobs, OBSLEN - 1);
+	    strncat(sinfo->endobs, endobs, OBSLEN - 1);
+	}
+    }
+
+ bailout:
+
+    if (err) {
+	swrap_destroy(swrap);
+	swrap = NULL;
+    }
+
+    free(rowlist);
+
+    return swrap;
+}
+
+/* the following two functions are used when a database has been
+   specified on the gretl command line */
 
 void open_named_db_index (char *dbname)
 {
@@ -1156,6 +1399,25 @@ void open_named_db_index (char *dbname)
 	fclose(fp);
 	make_db_series_list(action, dbname, NULL);
     } 
+}
+
+void open_named_remote_db_index (char *dbname)
+{
+    char *getbuf = NULL;
+    int err;
+
+    err = retrieve_remote_db_index(dbname, &getbuf);
+
+    if (err) {
+	show_network_error(NULL);
+    } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
+	errbox(getbuf);
+    } else {
+	make_db_series_list(REMOTE_SERIES, dbname, getbuf);
+	/* check for error */
+    }
+
+    free(getbuf);
 }
 
 #define KEEP_BROWSER_OPEN 1
@@ -1189,25 +1451,6 @@ void open_db_index (GtkWidget *w, gpointer data)
 	gtk_widget_destroy(GTK_WIDGET(vwin->w));
     }
 #endif
-}
-
-void open_named_remote_db_index (char *dbname)
-{
-    char *getbuf = NULL;
-    int err;
-
-    err = retrieve_remote_db_index(dbname, &getbuf);
-
-    if (err) {
-	show_network_error(NULL);
-    } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
-	errbox(getbuf);
-    } else {
-	make_db_series_list(REMOTE_SERIES, dbname, getbuf);
-	/* check for error */
-    }
-
-    free(getbuf);
 }
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
