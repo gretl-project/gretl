@@ -1,19 +1,19 @@
-/*
- *   Copyright (c) by Allin Cottrell
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+/* 
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -41,7 +41,6 @@
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
 #endif
-
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -142,12 +141,10 @@ void show_network_error (windata_t *vwin)
 	    errbox(buf);
 	}
 	free(buf);
+    } else if (vwin != NULL) {
+	update_statusline(vwin, _("Error retrieving data from server"));
     } else {
-	if (vwin != NULL) {
-	    update_statusline(vwin, _("Error retrieving data from server"));
-	} else {
-	    errbox(_("Error retrieving data from server"));
-	}
+	errbox(_("Error retrieving data from server"));
     }
 }
 
@@ -194,18 +191,17 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	if (err) {
 	    errbox(_("boxplot command failed"));
 	}
-	return;
+    } else {
+	err = gnuplot(list, NULL, (const double **) *dbZ, dbdinfo,
+		      OPT_G | OPT_O | OPT_T);
+	if (err) {
+	    errbox(_("gnuplot command failed"));
+	}
     }
 
-    err = gnuplot(list, NULL, (const double **) *dbZ, dbdinfo,
-		  OPT_G | OPT_O | OPT_T);
-
-    if (err) {
-	errbox(_("gnuplot command failed"));
-	return;
+    if (!err) {
+	register_graph();
     }
-
-    register_graph();
 }
 
 static gchar *expand_warning (int mult)
@@ -757,7 +753,6 @@ static int make_local_db_series_list (windata_t *vwin)
 
     strcpy(dbidx, vwin->fname);
     strcat(dbidx, ".idx");
-
     fp = gretl_fopen(dbidx, "r");
 
     if (fp == NULL) {
@@ -811,7 +806,6 @@ static int make_local_db_series_list (windata_t *vwin)
     }
 
     fclose(fp);
-
     db_drag_connect(vwin);
 
     return 0;
@@ -872,7 +866,6 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     }
 
     bufgets_finalize(buf);
-
     db_drag_connect(vwin);
 
     return 0;
@@ -2102,14 +2095,13 @@ gint populate_dbfilelist (windata_t *vwin)
 	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
 	closedir(dir);
     }
-#endif /* !G_OS_WIN32 */ 
+#endif
 
     if (ndb == 0) {
 	errbox(_("No database files found"));
-	return 1;
     }
 
-    return 0;
+    return (ndb == 0);
 }
 
 static void set_compact_info_from_default (int method)
