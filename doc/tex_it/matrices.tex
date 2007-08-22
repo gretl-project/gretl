@@ -976,8 +976,9 @@ Se il ``modello'' in questione è in realtà un sistema (un VAR, un VECM, o un
 sistema di equazioni simultanee), \verb|$uhat| produce la matrice dei
 residui (una colonna per equazione) e \verb|\$vcv| produce la matrice di
 covarianza tra le equazioni. Nel caso speciale di un VAR o un VECM,
-\verb|$coeff| produce la matrice associata. Al momento non sono disponibili 
-altri accessori per i sistemi di equazioni.
+\verb|$coeff| produce la matrice dei coefficienti (una colonna per
+equazione) e \verb|$compan| la matrice associata. Al momento gli altri
+accessori non sono disponibili per i sistemi di equazioni.
 
 Dopo aver stimato un modello vettoriale a correzione d'errore con la procedura
 di Johansen, sono disponibili anche le matrici \verb|jalpha| e \verb|$jbeta|.
