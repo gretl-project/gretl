@@ -144,21 +144,24 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     char numstr[32];
     FILE *fp;
     dbnumber x;
-    int t, err = 0;
+    int v = sinfo->v;
+    int t, t2, err = 0;
 
     fp = open_binfile(dbbase, GRETL_NATIVE_DB, sinfo->offset, &err);
     if (err) {
 	return err;
     }
 
-    for (t=0; t<sinfo->nobs && !err; t++) {
+    t2 = (sinfo->t2 > 0)? sinfo->t2 : sinfo->nobs - 1;
+
+    for (t=sinfo->t1; t<=t2 && !err; t++) {
 	if (fread(&x, sizeof x, 1, fp) != 1) {
 	    err = DB_PARSE_ERROR;
 	} else {
 	    sprintf(numstr, "%.7g", (double) x); /* N.B. converting a float */
-	    Z[1][t] = atof(numstr);
-	    if (Z[1][t] == DBNA) {
-		Z[1][t] = NADBL;
+	    Z[v][t] = atof(numstr);
+	    if (Z[v][t] == DBNA) {
+		Z[v][t] = NADBL;
 	    }
 	}
     }
@@ -168,10 +171,12 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     return err;
 }
 
-int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, double **Z)
+int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z)
 {
     char *getbuf = NULL;
-    int t, err, n = sinfo->nobs;
+    int t, t2, err;
+    int v = sinfo->v;
     dbnumber x;
     size_t offset;
 #if WORDS_BIGENDIAN
@@ -191,8 +196,10 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, double **Z)
 	return E_FOPEN;
     } 
 
+    t2 = (sinfo->t2 > 0)? sinfo->t2 : sinfo->nobs - 1;
+
     offset = 0L;
-    for (t=0; t<n; t++) {
+    for (t=sinfo->t1; t<=t2; t++) {
 #if WORDS_BIGENDIAN
 	/* go via network byte order */
 	memcpy(&(nf.frac), getbuf + offset, sizeof nf.frac);
@@ -205,11 +212,7 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, double **Z)
 	memcpy(&x, getbuf + offset, sizeof x);
 	offset += sizeof x;
 #endif
-	if (x == -999.0) {
-	    Z[1][t] = NADBL;
-	} else {
-	    Z[1][t] = x;
-	}
+	Z[v][t] = (x == DBNA)? NADBL : x;
     }
 
     free(getbuf);
@@ -222,14 +225,17 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 {
     FILE *fp;
     double x;
-    int t, err = 0;
+    int v = sinfo->v;
+    int t, t2, err = 0;
 
     fp = open_binfile(dbbase, GRETL_PCGIVE_DB, sinfo->offset, &err);
     if (err) {
 	return err;
     }
 
-    for (t=0; t<sinfo->nobs; t++) {
+    t2 = (sinfo->t2 > 0)? sinfo->t2 : sinfo->nobs - 1;
+
+    for (t=sinfo->t1; t<=t2; t++) {
 	if (fread(&x, sizeof x, 1, fp) != 1) {
 	    err = E_DATA;
 	    break;
@@ -238,10 +244,10 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 	reverse_double(x);
 #endif
 	if (x == -9999.99 || isnan(x)) {
-	    Z[1][t] = NADBL;
+	    Z[v][t] = NADBL;
 	    err = DB_MISSING_DATA;
 	} else {
-	    Z[1][t] = x;
+	    Z[v][t] = x;
 	}
     }
 
@@ -356,6 +362,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 		get_native_series_pd(sinfo, pdc);
 		get_native_series_obs(sinfo, stobs, endobs);
 		sinfo->offset = offset;
+		sinfo->t2 = sinfo->nobs - 1;
 	    }
 	} else {
 	    if (sscanf(line2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
@@ -425,6 +432,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 	    strcpy(gretl_errmsg, _("Failed to parse series information"));
 	    err = DB_PARSE_ERROR;
 	} else {
+	    sinfo->t2 = sinfo->nobs - 1;
 	    get_native_series_pd(sinfo, pdc);
 	    get_native_series_obs(sinfo, stobs, endobs);
 	}
@@ -505,6 +513,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 		}
 		/* transcribe info */
 		sinfo->nobs = in7_nobs(y0, p0, y1, p1, sinfo->pd);
+		sinfo->t2 = sinfo->nobs - 1;
 		if (sinfo->pd == 1) {
 		    sprintf(sinfo->stobs, "%d", y0);
 		    sprintf(sinfo->endobs, "%d", y1);
@@ -631,6 +640,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 
     sinfo->pd = dinfo->info;
     sinfo->nobs = n;
+    sinfo->t2 = n - 1;
 
     *sinfo->varname = 0;
     strncat(sinfo->varname, varname, VNAMELEN - 1);
@@ -676,6 +686,8 @@ static int in7_to_sinfo (const char *varname, const char *comment,
 	sinfo->nobs = in7_nobs(y0, p0, y1, p1, pd);
 	if (sinfo->nobs <= 0) {
 	    err = 1;
+	} else {
+	    sinfo->t2 = sinfo->nobs - 1;
 	}
     }
 
@@ -776,6 +788,8 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 
 static void series_info_init (SERIESINFO *sinfo)
 {
+    sinfo->t1 = sinfo->t2 = 0;
+    sinfo->v = 1;
     *sinfo->varname = 0;
     *sinfo->descrip = 0;
     sinfo->nobs = 0;
@@ -1063,18 +1077,27 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 			    double **Z)
 {
     RATSData rdata;
-    int miss = 0, i, t = 0;
     double x;
-
+    int miss = 0;
+    int v = sinfo->v;
+    int i, t, T;
+ 
     fprintf(stderr, "get_rats_series: starting from offset %d\n", offset);
+
+    if (sinfo->t2 > 0) {
+	T = sinfo->t2 + 1;
+    } else {
+	T = sinfo->nobs;
+    }
     
     rdata.forward_point = offset;
+    t = sinfo->t1;
 
     while (rdata.forward_point) {
 	fseek(fp, (rdata.forward_point - 1) * 256L, SEEK_SET);
 	/* the RATSData struct is actually 256 bytes.  Yay! */
 	fread(&rdata, sizeof rdata, 1, fp);
-	for (i=0; i<31 && t<sinfo->nobs; i++) {
+	for (i=0; i<31 && t<T; i++) {
 	    x = rdata.data[i];
 #if WORDS_BIGENDIAN
 	    reverse_double(x);
@@ -1083,7 +1106,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 		x = NADBL;
 		miss = 1;
 	    }
-	    Z[1][t++] = x;
+	    Z[v][t++] = x;
 	}
     }
 
@@ -1501,6 +1524,7 @@ get_compact_method_and_advance (const char *s, CompactMethod *method)
 static double **new_dbZ (int n)
 {
     double **Z;
+    int t;
 
     Z = malloc(2 * sizeof *Z);
     if (Z == NULL) return NULL;
@@ -1511,6 +1535,10 @@ static double **new_dbZ (int n)
     if (Z[1] == NULL) {
 	free(Z);
 	return NULL;
+    }
+
+    for (t=0; t<n; t++) {
+	Z[1][t] = NADBL;
     }
 
     return Z;

@@ -175,7 +175,7 @@ static int gui_get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
     return err;
 }
 
-static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
+static void display_dbdata (const double **dbZ, DATAINFO *dbinfo)
 {
     PRN *prn;
 
@@ -183,23 +183,29 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    printdata(NULL, NULL, dbZ, dbdinfo, OPT_O, prn);
+    printdata(NULL, NULL, dbZ, dbinfo, OPT_O, prn);
     view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
 		NULL); 
 }
 
-static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
+static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
 {
-    int list[2] = {1, 1};
+    int *list;
     int err;
 
-    if (dbdinfo->structure == CROSS_SECTION) {
-	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
+    list = gretl_consecutive_list_new(1, dbinfo->v - 1);
+    if (list == NULL) {
+	nomem();
+	return;
+    }
+
+    if (dbinfo->structure == CROSS_SECTION) {
+	err = boxplots(list, NULL, dbZ, dbinfo, 0);
 	if (err) {
 	    errbox(_("boxplot command failed"));
 	}
     } else {
-	err = gnuplot(list, NULL, (const double **) *dbZ, dbdinfo,
+	err = gnuplot(list, NULL, (const double **) *dbZ, dbinfo,
 		      OPT_G | OPT_O | OPT_T);
 	if (err) {
 	    errbox(_("gnuplot command failed"));
@@ -209,6 +215,8 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     if (!err) {
 	register_graph();
     }
+
+    free(list);
 }
 
 static gchar *expand_warning (int mult)
@@ -221,166 +229,190 @@ static gchar *expand_warning (int mult)
 			   mult);
 }
 
-static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
+static int 
+add_db_series_to_dataset (windata_t *vwin, double **dbZ, 
+			  SERIESINFO *sinfo)
 {
     double *xvec = NULL;
-    int n, t, start, stop, pad1 = 0, pad2 = 0;
+    int start, stop;
+    int pad1 = 0, pad2 = 0;
     CompactMethod method = COMPACT_AVG;
-    int resp, overwrite = 0;
+    int dbv, resp, overwrite = 0;
+    int n, t, s;
 
-    if (data_status) { 
-	/* we already have data in gretl's workspace */
-	int dbv;
+    if (check_db_import(sinfo, datainfo)) {
+	gui_errmsg(1);
+	return 1;
+    }
 
-	if (check_db_import(sinfo, datainfo)) {
-	    gui_errmsg(1);
-	    return;
+    if (sinfo->pd < datainfo->pd) {
+	gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
+
+	resp = yes_no_dialog("gretl", msg, 0);
+	g_free(msg);
+	if (resp != GRETL_YES) {
+	    return 0;
 	}
+    }
 
-	if (sinfo->pd < datainfo->pd) {
-	    gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
-
-	    resp = yes_no_dialog("gretl", msg, 0);
-	    g_free(msg);
-	    if (resp != GRETL_YES) {
-		return;
+    /* is there already a var of this name? */
+    dbv = varindex(datainfo, sinfo->varname);
+    if (dbv < datainfo->v) {
+	resp = yes_no_dialog ("gretl",                      
+			      _("There is already a variable of this name\n"
+				"in the dataset.  OK to overwrite it?"), 0);
+	if (resp == GRETL_YES) {
+	    overwrite = 1;
+	    /* pick up on pre-registered compaction method? */
+	    if (COMPACT_METHOD(datainfo, dbv) != COMPACT_NONE) {
+		method = COMPACT_METHOD(datainfo, dbv);
 	    }
+	} else {
+	    return 0;
 	}
+    }
 
-	/* is there already a var of this name? */
-	dbv = varindex(datainfo, sinfo->varname);
-	if (dbv < datainfo->v) {
-	    resp = yes_no_dialog ("gretl",                      
-				  _("There is already a variable of this name\n"
-				    "in the dataset.  OK to overwrite it?"), 0);
-	    if (resp == GRETL_YES) {
-		overwrite = 1;
-		/* pick up on pre-registered compaction method? */
-		if (COMPACT_METHOD(datainfo, dbv) != COMPACT_NONE) {
-		    method = COMPACT_METHOD(datainfo, dbv);
-		}
-	    } else {
-		return;
-	    }
-	}
-
-	if (!overwrite && dataset_add_series(1, &Z, datainfo)) {
+    if (!overwrite) {
+	if (dataset_add_series(1, &Z, datainfo)) {
 	    nomem();
-	    return;
+	    return 1;
 	}
+    }
 
-	n = datainfo->n;
+    n = datainfo->n;
 
-	if (sinfo->pd < datainfo->pd) {
-	    /* the frequency of the new var is lower: we can handle
-	       annual to quarterly or monthly, and quarterly to
-	       monthly
-	    */
-	    if (sinfo->pd != 1 && sinfo->pd != 4 && 
-		datainfo->pd != 4 && datainfo->pd != 12) {
-		errbox(_("Sorry, can't handle this conversion yet!"));
-		if (!overwrite) {
-		    dataset_drop_last_variables(1, &Z, datainfo);
-		}
-		return;
-	    }
-	    xvec = expand_db_series(dbZ[1], sinfo, datainfo->pd);
-	} else if (sinfo->pd > datainfo->pd) {
-	    /* the frequency of the new var is higher */
-	    if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
-		errbox(_("Sorry, can't handle this conversion yet!"));
-		if (!overwrite) {
-		    dataset_drop_last_variables(1, &Z, datainfo);
-		}
-		return;
-	    }
-
-	    data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
-				&method, NULL);
-
-	    if (method == COMPACT_NONE) {
-		if (!overwrite) {
-		    dataset_drop_last_variables(1, &Z, datainfo);
-		}
-		return;
-	    }
-	    xvec = compact_db_series(dbZ[1], sinfo, datainfo->pd, 
-				     method);
-	} else {  
-	    /* series does not need compacting */
-	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
-	    if (xvec != NULL) {
-		for (t=0; t<sinfo->nobs; t++) {
-		    xvec[t] = dbZ[1][t];
-		}
-	    }
-	}
-
-	if (xvec == NULL) {
-	    nomem();
+    if (sinfo->pd < datainfo->pd) {
+	/* the frequency of the new var is lower: we can handle
+	   annual to quarterly or monthly, and quarterly to
+	   monthly
+	*/
+	if (sinfo->pd != 1 && sinfo->pd != 4 && 
+	    datainfo->pd != 4 && datainfo->pd != 12) {
+	    errbox(_("Sorry, can't handle this conversion yet!"));
 	    if (!overwrite) {
 		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
-	    return;
+	    return 1;
 	}
-
-	/* common stuff for adding a var */
-	strcpy(datainfo->varname[dbv], sinfo->varname);
-	strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
-	get_db_padding(sinfo, datainfo, &pad1, &pad2);
-
-	if (pad1 > 0) {
-	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
-	    for (t=0; t<pad1; t++) {
-		Z[dbv][t] = NADBL;
+	xvec = expand_db_series(dbZ[1], sinfo, datainfo->pd);
+    } else if (sinfo->pd > datainfo->pd) {
+	/* the frequency of the new data is higher */
+	if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
+	    errbox(_("Sorry, can't handle this conversion yet!"));
+	    if (!overwrite) {
+		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
-	    start = pad1;
-	} else {
-	    start = 0;
+	    return 1;
 	}
 
-	if (pad2 > 0) {
-	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
-	    for (t=n-1; t>=n-1-pad2; t--) {
-		Z[dbv][t] = NADBL;
-	    }
-	    stop = n - pad2;
-	} else {
-	    stop = n;
-	}
+	data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
+			    &method, NULL);
 
-	/* fill in actual data values */
-	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
-	for (t=start; t<stop; t++) {
-	    if (xvec[t - pad1] == -999.0) {
-		Z[dbv][t] = NADBL;
-	    } else {
-		Z[dbv][t] = xvec[t - pad1];
+	if (method == COMPACT_NONE) {
+	    if (!overwrite) {
+		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
+	    return 0;
 	}
-	free(xvec);
+	xvec = compact_db_series(dbZ[1], sinfo, datainfo->pd, 
+				 method);
     } else {  
-	/* no data open: start new data set with this db series */
-	init_datainfo_from_sinfo(datainfo, sinfo);
-
-	/* time series data? */
-	set_time_series(datainfo);
-
-	if (start_new_Z(&Z, datainfo, 0)) {
-	    nomem();
-	    return;
+	/* series does not need compacting */
+	xvec = mymalloc(sinfo->nobs * sizeof *xvec);
+	if (xvec != NULL) {
+	    for (t=0; t<sinfo->nobs; t++) {
+		xvec[t] = dbZ[1][t];
+	    }
 	}
+    }
 
-	for (t=0; t<datainfo->n; t++) {
-	    Z[1][t] = dbZ[1][t];
+    if (xvec == NULL) {
+	nomem();
+	if (!overwrite) {
+	    dataset_drop_last_variables(1, &Z, datainfo);
 	}
+	return 1;
+    }
+
+    /* common stuff for adding a var */
+    strcpy(datainfo->varname[dbv], sinfo->varname);
+    strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
+    get_db_padding(sinfo, datainfo, &pad1, &pad2);
+
+    if (pad1 > 0) {
+	fprintf(stderr, "Padding at start, %d obs\n", pad1);
+	for (t=0; t<pad1; t++) {
+	    Z[dbv][t] = NADBL;
+	}
+	start = pad1;
+    } else {
+	start = 0;
+    }
+
+    if (pad2 > 0) {
+	fprintf(stderr, "Padding at end, %d obs\n", pad2);
+	for (t=n-1; t>=n-1-pad2; t--) {
+	    Z[dbv][t] = NADBL;
+	}
+	stop = n - pad2;
+    } else {
+	stop = n;
+    }
+
+    /* fill in actual data values */
+    fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
+    for (t=start; t<stop; t++) {
+	s = t - pad1;
+	if (xvec[s] == DBNA) {
+	    Z[dbv][t] = NADBL;
+	} else {
+	    Z[dbv][t] = xvec[s];
+	}
+    }
+
+    free(xvec);
+
+    return 0;
+}
+
+static void 
+add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
+	    series_wrap_t *sw, int *freeit)
+{
+    SERIESINFO *sinfo;
+    int i, t, err = 0;
+
+    if (data_status) { 
+	/* we already have data in gretl's workspace */
+	for (i=0; i<sw->ns && !err; i++) {
+	    sinfo = sw->sinfo[i];
+	    err = add_db_series_to_dataset(vwin, dbZ, sinfo);
+	}
+    } else {  
+	/* no data open: start new data set from db */
+	destroy_dataset(Z, datainfo);
+
+	Z = dbZ;
+	datainfo = dbinfo;
+	*freeit = 0;
+
+	for (i=1; i<=sw->ns && !err; i++) {
+	    sinfo = sw->sinfo[i-1];
+
+	    for (t=0; t<datainfo->n; t++) {
+		Z[i][t] = dbZ[i][t];
+	    }
 	    
-	strcpy(datainfo->varname[1], sinfo->varname);
-	strcpy(VARLABEL(datainfo, 1), sinfo->descrip);	
+	    strcpy(datainfo->varname[i], sinfo->varname);
+	    strcpy(VARLABEL(datainfo, i), sinfo->descrip);
+	}
+	
 	data_status |= (GUI_DATA | MODIFIED_DATA);
     }
 
-    register_data(NULL, NULL, 0);
+    if (!err) {
+	register_data(NULL, NULL, 0);
+    }
 }
 
 static void gui_display_series (GtkWidget *w, windata_t *vwin)
@@ -511,17 +543,23 @@ static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
 	if (sinfo->nobs > nmax) {
 	    nmax = sinfo->nobs;
 	}
+	sinfo->v = i + 1;
+	sinfo->t1 = 0;
+	sinfo->t2 = sinfo->nobs - 1;
     }
 
     if (xdmax > xdmin) {
-	int ni;
+	int ni, dd;
 
 	for (i=0; i<sw->ns; i++) {
 	    sinfo = sw->sinfo[i];
 	    ni = sinfo->nobs;
 	    xd = get_date_x(sinfo->pd, sinfo->stobs);
 	    if (xd > xdmin) {
-		ni += diffdate(xd, xdmin, sinfo->pd);
+		dd = diffdate(xd, xdmin, sinfo->pd);
+		ni += dd;
+		sinfo->t1 = dd;
+		sinfo->t2 += dd;
 	    }
 	    if (ni > nmax) {
 		nmax = ni;
@@ -560,7 +598,13 @@ static DATAINFO *new_dataset_from_sinfo (SERIESINFO *sinfo,
 	return NULL;
     }
 
+    sinfo->t1 = 0;
+    sinfo->t2 = sinfo->nobs - 1;
+    sinfo->v = 1;
+
     dinfo->pd = sinfo->pd;
+    dinfo->t1 = sinfo->t1;
+    dinfo->t2 = sinfo->t2;
 
     strcpy(dinfo->stobs, sinfo->stobs);
     strcpy(dinfo->endobs, sinfo->endobs);
@@ -581,6 +625,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     DATAINFO *dbinfo = NULL;
     double **dbZ = NULL;
     series_wrap_t *sw;
+    int freeit = 1;
     int i, err = 0;
 
     sw = get_series_info(vwin, dbcode);
@@ -631,13 +676,16 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     } else if (action == DB_GRAPH) {
 	graph_dbdata(&dbZ, dbinfo);
     } else if (action == DB_IMPORT) { 
-	add_dbdata(vwin, dbZ, sw->sinfo[0]); /* FIXME */
+	add_dbdata(vwin, dbZ, dbinfo, sw, &freeit);
     }
 
  bailout:
 
-    free_Z(dbZ, dbinfo);
-    free_datainfo(dbinfo);
+    if (freeit) {
+	free_Z(dbZ, dbinfo);
+	free_datainfo(dbinfo);
+    }
+
     swrap_destroy(sw);
 } 
 

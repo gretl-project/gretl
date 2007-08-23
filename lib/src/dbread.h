@@ -45,6 +45,7 @@ typedef struct _db_table db_table;
 typedef struct _SERIESINFO SERIESINFO;
 
 struct _SERIESINFO {
+    int t1, t2, v;
     char varname[VNAMELEN];
     char descrip[MAXLABEL];
     int nobs;
