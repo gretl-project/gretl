@@ -884,6 +884,13 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     switch (cmd->ci) {
 
     case DELEET:
+	if (cmd->opt & OPT_D) {
+	    err = db_delete_series(line);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
 	if (get_matrix_by_name(cmd->param)) {
 	    err = user_matrix_destroy_by_name(cmd->param, prn);
 	    if (err) {

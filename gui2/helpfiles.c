@@ -120,6 +120,7 @@ static struct gui_help_item gui_help_items[] = {
     { PANEL_WLS,      "panel-wls" },
     { PANEL_B,        "panel-between" },
     { BOOTSTRAP,      "bootstrap" },
+    { TRANSPOS,       "transpos" },
     { -1,          NULL },
 };
 

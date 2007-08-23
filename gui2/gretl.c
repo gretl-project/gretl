@@ -71,14 +71,14 @@ GtkTargetEntry gretl_drag_targets[] = {
 };
 
 static void  
-drag_data_received  (GtkWidget          *widget,
-		     GdkDragContext     *dc,
-		     gint                x,
-		     gint                y,
-		     GtkSelectionData   *data,
-		     guint               info,
-		     guint               time,
-		     gpointer            p);
+mdata_handle_drag  (GtkWidget          *widget,
+		    GdkDragContext     *dc,
+		    gint                x,
+		    gint                y,
+		    GtkSelectionData   *data,
+		    guint               info,
+		    guint               time,
+		    gpointer            p);
 
 #ifdef USE_GNOME
 static char *optrun, *optdb;
@@ -1536,7 +1536,7 @@ static GtkWidget *make_main_window (void)
 		      GDK_ACTION_COPY);
 
     g_signal_connect(G_OBJECT(mdata->listbox), "drag_data_received",
-		     G_CALLBACK(drag_data_received),
+		     G_CALLBACK(mdata_handle_drag),
 		     NULL);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
@@ -1670,14 +1670,14 @@ void set_wm_icon (GtkWidget *w, gpointer data)
 /* Drag 'n' drop */
 
 static void  
-drag_data_received  (GtkWidget *widget,
-		     GdkDragContext *context,
-		     gint x,
-		     gint y,
-		     GtkSelectionData *data,
-		     guint info,
-		     guint time,
-		     gpointer p)
+mdata_handle_drag  (GtkWidget *widget,
+		    GdkDragContext *context,
+		    gint x,
+		    gint y,
+		    GtkSelectionData *data,
+		    guint info,
+		    guint time,
+		    gpointer p)
 {
     gchar *dfname;
     char tmp[MAXLEN];

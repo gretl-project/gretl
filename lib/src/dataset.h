@@ -349,4 +349,7 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
 
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
 
+int modify_dataset (const char *s, double ***pZ, 
+		    DATAINFO *pdinfo, PRN *prn);
+
 #endif /* DATASET_H */

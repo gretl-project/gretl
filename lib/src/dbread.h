@@ -39,9 +39,7 @@ typedef enum {
 } CompactMethod; 
 
 typedef float dbnumber;
-
-typedef struct _db_table db_table;
-
+typedef struct dbwrapper_ dbwrapper;
 typedef struct _SERIESINFO SERIESINFO;
 
 struct _SERIESINFO {
@@ -57,8 +55,8 @@ struct _SERIESINFO {
     int undated;
 };
 
-struct _db_table {
-    int nvars;
+struct dbwrapper_ {
+    int nv;
     int nalloc;
     SERIESINFO *sinfo;
 };
@@ -73,17 +71,19 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 
 int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z);
 
-db_table *read_rats_db (FILE *fp);
+dbwrapper *read_rats_db (FILE *fp);
 
-db_table *read_pcgive_db (FILE *fp);
+dbwrapper *read_pcgive_db (FILE *fp);
+
+dbwrapper *dbwrapper_new (int n);
+
+void dbwrapper_destroy (dbwrapper *dw);
 
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
 			   int target_pd, CompactMethod method);
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
 			  int target_pd);
-
-void init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo);
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);
@@ -92,6 +92,8 @@ int db_set_sample (const char *line, DATAINFO *pdinfo);
 
 int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
 		   PRN *prn);
+
+int db_delete_series (const char *line);
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 		     int *pad1, int *pad2);

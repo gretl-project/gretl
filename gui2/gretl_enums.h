@@ -92,6 +92,7 @@ enum extra_cmds {
     PANEL_B,
     IMPORT,
     BOOTSTRAP,
+    TRANSPOS,
     GUI_CMD_MAX
 };
 

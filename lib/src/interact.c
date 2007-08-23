@@ -227,6 +227,10 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "elif")) {
 	cmd->ci = ELSE;
 	cmd->opt = OPT_I;
+    } else if (!strcmp(s, "addobs")) {
+	cmd->ci = DATAMOD;
+    } else if (!strcmp(s, "transpos")) {
+	cmd->ci = DATAMOD;
     }
 
     return cmd->ci;
@@ -243,7 +247,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == SETMISS)
 
 #define REQUIRES_ORDER(c) (c == ADF || \
-                           c == ADDOBS || \
                            c == ARCH || \
                            c == COINT || \
                            c == COINT2 || \
@@ -251,13 +254,13 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == VAR || \
                            c == VECM)
 
-#define NO_VARLIST(c) (c == ADDOBS || \
-                       c == APPEND || \
+#define NO_VARLIST(c) (c == APPEND || \
                        c == BREAK || \
                        c == CHOW || \
 	               c == CRITERIA || \
 	               c == CUSUM || \
                        c == DATA || \
+                       c == DATAMOD || \
                        c == END || \
 	               c == ENDLOOP || \
                        c == ESTIMATE || \
@@ -300,7 +303,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == TESTUHAT || \
-                       c == TRANSPOSE || \
                        c == VARLIST || \
                        c == VIF)
 
@@ -1887,6 +1889,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
+    /* delete, for database variables */
+    if (cmd->ci == DELEET && cmd->opt == OPT_D) {
+	return cmd->err;
+    }
+
     /* TeX printing commands can take a filename parameter, and
        possibly a format string -- but that's all
     */
@@ -1986,10 +1993,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "nf=%d, remainder='%s'\n", nf, rem);
 #endif
 
-    if (cmd->ci == DELEET && nf == 1 && get_matrix_by_name(rem)) {
-	/* special for deleting a named matrix */
-	cmd_param_grab_string(cmd, rem);
-	goto cmd_exit;
+    if (cmd->ci == DELEET) {
+	if (nf == 1 && get_matrix_by_name(rem)) {
+	    /* special for deleting a named matrix */
+	    cmd_param_grab_string(cmd, rem);
+	    goto cmd_exit;
+	}
     }
 
     /* specials where there's something that goes into "param",
@@ -3228,26 +3237,6 @@ int call_pca_plugin (VMatrix *corrmat, double ***pZ,
     return err;
 }
 
-static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
-{
-    int err = 0;
-
-    if (complex_subsampled()) {
-	pprintf(prn, _("The data set is currently sub-sampled.\n"));
-	err = E_DATA;
-    } else if (n <= 0) {
-	err = E_PARSE;
-    } else {
-	err = dataset_add_observations(n, pZ, pdinfo, OPT_A);
-	if (!err) {
-	    pprintf(prn, _("Dataset extended by %d observations"), n);
-	    pputc(prn, '\n');
-	}
-    }
-
-    return err;
-}
-
 static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
     if (pdinfo->descrip != NULL) {
@@ -3433,10 +3422,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     switch (cmd->ci) {
 
-    case ADDOBS:
-	err = add_obs(cmd->order, pZ, pdinfo, prn);
-	break;
-
     case APPEND:
 	err = append_data(line, pZ, ppdinfo, prn);
 	pdinfo = *ppdinfo;
@@ -3571,6 +3556,16 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DATA:
 	err = db_get_series(line, pZ, pdinfo, prn);
+	break;
+
+    case DATAMOD:
+	err = modify_dataset(line, pZ, pdinfo, prn);
+	if (!err) { 
+	    print_smpl(pdinfo, get_full_length_n(), prn);
+	    if (s->callback != NULL) {
+		s->callback(s, pZ, pdinfo);
+	    }
+	}
 	break;
 
     case DIFF:
@@ -3790,9 +3785,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	} else { 
 	    err = set_sample(line, (const double **) *pZ, pdinfo);
 	}
-	if (err) {
-	    errmsg(err, prn);
-	} else {
+	if (!err) {
 	    print_smpl(pdinfo, get_full_length_n(), prn);
 	}	
 	break;
@@ -3831,10 +3824,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	} else if (cmd->opt & OPT_L) {
 	    err = remember_list(cmd->list, cmd->param, prn);
 	} 
-	break;
-
-    case TRANSPOSE:
-	err = transpose_data(pZ, pdinfo);
 	break;
 
     case SHELL:
@@ -3998,7 +3987,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 				pZ, pdinfo, cmd->opt, prn);
 	    }
 	    if (err) {
-		errmsg(err, prn);
 		clear_model(models[1]);
 		break;
 	    } else {

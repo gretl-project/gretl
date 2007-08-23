@@ -6350,6 +6350,9 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	set_sample_label(pdinfo);
     } else if (ci == VAR || ci == VECM) {
 	maybe_save_var(s->cmd, &s->var, s->prn);
+    } else if (ci == DATAMOD) {
+	mark_dataset_as_modified();
+	populate_varlist();
     }
 }
 
@@ -6580,6 +6583,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case DELEET:
+	if (cmd->opt & OPT_D) {
+	    err = db_delete_series(line);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
 	if (get_matrix_by_name(cmd->param)) {
 	    err = session_matrix_destroy_by_name(cmd->param, prn);
 	    if (err) {

@@ -33,7 +33,6 @@ struct gretl_cmd {
 static struct gretl_cmd gretl_cmds[] = {
     { SEMIC,    ";" },     
     { ADD,      "add" },
-    { ADDOBS,   "addobs" },
     { ADDTO,    "addto" },
     { ADF,      "adf" }, 
     { APPEND,   "append" },
@@ -53,6 +52,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { CRITERIA, "criteria" },
     { CUSUM,    "cusum" },
     { DATA,     "data" },
+    { DATAMOD,  "dataset" },
     { DELEET,   "delete" },
     { DIFF,     "diff" },
     { DIFFTEST, "difftest" },
@@ -148,7 +148,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { TABPRINT, "tabprint" },
     { TESTUHAT, "testuhat" },
     { TOBIT,    "tobit" },
-    { TRANSPOSE, "transpos" },
     { TSLS,     "tsls" },    
     { VAR,      "var" },
     { VARLIST,  "varlist" },

@@ -104,7 +104,7 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
     GtkTreePath *path;
 
     if (event->is_hint) {
-        gdk_window_get_pointer (event->window, &x, &y, &state);
+        gdk_window_get_pointer(event->window, &x, &y, &state);
     } else {
         x = event->x;
         y = event->y;

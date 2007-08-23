@@ -87,38 +87,6 @@
 
   </command>
 
-  <command name="addobs" section="Dataset" 
-    label="Add observations" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>nobs</argument>
-      </arguments>
-      <examples>
-        <example>addobs 10</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Adds the specified number of extra observations to the end of the
-	working dataset.  This is primarily intended for forecasting purposes.
-	The values of most variables over the additional range will be set to
-	missing, but certain deterministic variables are recognized and
-	extended, namely, a simple linear trend and periodic dummy variables.
-      </para>
-      <para>
-	This command is not available if the dataset is currently subsampled by
-	selection of cases on some Boolean criterion.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Data/Add observations</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>
@@ -1435,6 +1403,82 @@
 
     <gui-access>
       <menu-path>/File/Databases</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="dataset" section="Dataset" 
+    label="Manipulate the dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>keyword</argument>
+	<argument>parameters</argument>
+      </arguments>
+      <examples>
+        <example>dataset addobs 24</example>
+        <example>dataset compact 1</example>
+        <example>dataset compact 4 last</example>
+        <example>dataset expand 12</example>
+        <example>dataset tranpose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Performs various operations on the data set as a whole, depending
+	on the given <repl>keyword</repl>, which must be
+	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit> or
+	<lit>transpose</lit>.  Note: these actions are not available when
+	the dataset is currently subsampled by selection of cases on some
+	Boolean criterion.
+      </para>
+      <para>
+	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
+	the specified number of extra observations to the end of the
+	working dataset.  This is primarily intended for forecasting
+	purposes.  The values of most variables over the additional range
+	will be set to missing, but certain deterministic variables are
+	recognized and extended, namely, a simple linear trend and
+	periodic dummy variables. 
+      </para>
+      <para>
+	<lit>compact</lit>: Must be followed by a positive integer
+	representing a new data frequency, which should be lower than the
+	current frequency (for example, a value of 4 when the current
+	frequency is 12 indicates compaction from monthly to quarterly).
+	This command is available for time series data only; it compacts
+	all the series in the data set to the new frequency.  A second
+	parameter may be given, namely one of <lit>sum</lit>,
+	<lit>first</lit> or <lit>last</lit>, to specify, respectively,
+	compaction using the sum of the higher-frequency values,
+	start-of-period values or end-of-period values.  The default
+	is to compact by averaging.
+      </para>
+      <para>
+	<lit>expand</lit>: Must be followed by a positive integer
+	representing a new data frequency, which should be higher than the
+	current frequency.  This command is only available for annual or
+	quarterly time series data.  Annual data can be expanded to
+	quarterly or monthly; quarterly data can be expanded to monthly.
+	All the series in the data set are padded out to the new
+	frequency by repeating the existing values.
+      </para>
+      <para>
+	<lit>transpose</lit>: No additional parameter required.
+	Transposes the current data set.  That is, each observation (row)
+	in the current data set will be treated as a variable (column),
+	and each variable as an observation.  This command may be useful
+	if data have been read from some external source in which the rows
+	of the data table represent variables.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Add observations</menu-path>
+      <menu-path>/Data/Compact data</menu-path>
+      <menu-path>/Data/Expand data</menu-path>
+      <menu-path>/Data/Transpose</menu-path>
     </gui-access>
 
   </command>
@@ -7945,7 +7989,8 @@
 
   </command>
 
-  <command name="transpos" section="Dataset" label="Transpose data">
+  <command name="transpos" section="Dataset" label="Transpose data"
+    context="gui">
 
     <description>
       <para>
@@ -7954,6 +7999,9 @@
 	(column), and each variable as an observation.  This command
 	may be useful if data have been read from some external source 
 	in which the rows of the data table represent variables.
+      </para>
+      <para>
+	See also <cmdref targ="dataset"/>.
       </para>
     </description>
 

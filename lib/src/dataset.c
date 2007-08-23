@@ -2473,4 +2473,138 @@ const char *var_get_graph_name (const DATAINFO *pdinfo, int i)
     return ret;
 }
 
+static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    int err = 0;
+
+    if (complex_subsampled()) {
+	pprintf(prn, _("The data set is currently sub-sampled.\n"));
+	err = E_DATA;
+    } else if (n <= 0) {
+	err = E_PARSE;
+    } else {
+	err = dataset_add_observations(n, pZ, pdinfo, OPT_A);
+	if (!err) {
+	    pprintf(prn, _("Dataset extended by %d observations"), n);
+	    pputc(prn, '\n');
+	}
+    }
+
+    return err;
+}
+
+enum {
+    DS_ADDOBS,
+    DS_COMPACT,
+    DS_EXPAND,
+    DS_TRANSPOSE
+};
+
+static int get_dataset_param (const char *s, int code, 
+			      DATAINFO *pdinfo, int *err)
+{
+    int k = 0;
+
+    if ((code == DS_COMPACT || code == DS_EXPAND) &&
+	!dataset_is_time_series(pdinfo)) {
+	*err = E_PDWRONG;
+	return 0;
+    }
+
+    if (sscanf(s, "%d", &k) != 1) {
+	*err = E_PARSE;
+    } else if (k <= 0) {
+	*err = E_DATA;
+    } else if (code == DS_COMPACT) {
+	int ok = 0;
+
+	if (pdinfo->pd == 12 && (k == 4 || k == 1)) {
+	    ok = 1;
+	} else if (pdinfo->pd == 4 && k == 1) {
+	    ok = 1;
+	} else if (pdinfo->pd == 52 && k == 12) {
+	    ok = 1;
+	} else if (dated_daily_data(pdinfo) && (k == 52 || k == 12)) {
+	    ok = 1;
+	}
+
+	if (!ok) {
+	    *err = E_PDWRONG;
+	    strcpy(gretl_errmsg, "This conversion is not supported");
+	}
+    } else if (code == DS_EXPAND) {
+	int ok = 0;
+
+	if (pdinfo->pd == 1 && (k == 4 || k == 12)) {
+	    ok = 1;
+	} else if (pdinfo->pd == 4 && k == 12) {
+	    ok = 1;
+	} 
+
+	if (!ok) {
+	    *err = E_PDWRONG;
+	    strcpy(gretl_errmsg, "This conversion is not supported");
+	}
+    }
+
+    return k;
+}
+
+static int compact_data_set_wrapper (const char *s, double ***pZ, 
+				     DATAINFO *pdinfo, int k)
+{
+    CompactMethod method = COMPACT_AVG;
+
+    if (strstr(s, "sum")) {
+	method = COMPACT_SUM;
+    } else if (strstr(s, "first")) {
+	method = COMPACT_SOP;
+    } else if (strstr(s, "last")) {
+	method = COMPACT_EOP;
+    }
+
+    return compact_data_set(pZ, pdinfo, k, method, 0, 0);
+}
+
+int modify_dataset (const char *s, double ***pZ, 
+		    DATAINFO *pdinfo, PRN *prn)
+{
+    int k, err = 0;
+
+    if (complex_subsampled()) {
+	strcpy(gretl_errmsg, _("The data set is currently sub-sampled"));
+	return 1;
+    }
+
+    if (!strncmp(s, "dataset ", 8)) {
+	/* skip initial word */
+	s += 8;
+    }
+
+    s += strspn(s, " \t");
+
+    if (!strncmp(s, "addobs", 6)) {
+	k = get_dataset_param(s + 7, DS_ADDOBS, pdinfo, &err);
+	if (!err) {
+	    err = add_obs(k, pZ, pdinfo, prn);
+	}
+    } else if (!strncmp(s, "compact", 7)) {
+	k = get_dataset_param(s + 8, DS_COMPACT, pdinfo, &err);
+	if (!err) {
+	    err = compact_data_set_wrapper(s + 8, pZ, pdinfo, k);
+	}
+    } else if (!strncmp(s, "expand", 6)) {
+	k = get_dataset_param(s + 7, DS_EXPAND, pdinfo, &err);
+	if (!err) {
+	    err = expand_data_set(pZ, pdinfo, k);
+	}
+    } else if (!strncmp(s, "transpos", 8)) {
+	err = transpose_data(pZ, pdinfo);
+    } else {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 

@@ -23,6 +23,8 @@
 #include "swap_bytes.h"
 #include "gretl_www.h"
 
+#include <glib.h>
+
 #if WORDS_BIGENDIAN
 # include <netinet/in.h>
 #endif
@@ -286,7 +288,8 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 				  const char *stobs,
 				  const char *endobs)
 {
-    if (strchr(stobs, '/')) { /* calendar data */
+    if (strchr(stobs, '/')) { 
+	/* calendar data */
 	const char *q = stobs;
 	const char *p = strchr(stobs, '/');
 
@@ -309,39 +312,107 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 }
 
 static int 
+open_native_db_files (FILE **f1, char *name1, FILE **f2, char *name2)
+{
+    FILE *fidx = NULL, *fbin = NULL;
+    char fname[MAXLEN];
+    char *p;
+    int err = 0;
+
+    if (f1 != NULL) {
+	strcpy(fname, db_name);
+	p = strstr(fname, ".bin");
+	if (p != NULL) {
+	    strcpy(p, ".idx");
+	} else {
+	    strcat(fname, ".idx");
+	}
+
+	if (name1 != NULL) {
+	    /* test for write access FIXME win32 */
+	    err = g_access(fname, W_OK);
+	    if (err) {
+		sprintf(gretl_errmsg, "Can't write to %s", fname);
+	    } else {
+		strcpy(name1, fname);
+	    }
+	}
+
+	if (!err) {
+	    fidx = gretl_fopen(fname, "r");
+	    if (fidx == NULL) {
+		strcpy(gretl_errmsg, _("Couldn't open database index file"));
+		err = E_FOPEN;
+	    } 
+	}
+    }
+
+    if (f2 != NULL && !err) {
+	strcpy(fname, db_name);
+	p = strstr(fname, ".bin");
+	if (p == NULL) {
+	    strcat(fname, ".bin");
+	}
+
+	if (name2 != NULL) {
+	    /* test for write access FIXME win32 */
+	    err = g_access(fname, W_OK); 
+	    if (err) {
+		sprintf(gretl_errmsg, "Can't write to %s", fname);
+	    } else {
+		strcpy(name2, fname);
+	    }
+	}
+
+	if (!err) {
+	    fbin = gretl_fopen(fname, "rb");
+	    if (fbin == NULL) {
+		strcpy(gretl_errmsg, _("Couldn't open database binary file"));
+		err = E_FOPEN;
+	    } 
+	}
+    }
+
+    if (err) {
+	if (fidx != NULL) {
+	    fclose(fidx);
+	}
+    } else {
+	if (f1 != NULL) {
+	    *f1 = fidx;
+	}
+	if (f2 != NULL) {
+	    *f2 = fbin;
+	}
+    }
+
+    return err;
+}
+
+static int 
 get_native_series_info (const char *series, SERIESINFO *sinfo)
 {
-    FILE *fp;
-    char dbidx[MAXLEN];
+    FILE *fp = NULL;
     char sername[VNAMELEN];
-    char line1[256], line2[72];
+    char s1[256], s2[72];
     char stobs[11], endobs[11];
-    char *p, pdc;
+    char pdc;
     int offset = 0;
     int gotit = 0, err = 0;
     int n;
 
-    strcpy(dbidx, db_name);
-    p = strstr(dbidx, ".bin");
-    if (p != NULL) {
-	strcpy(p, ".idx");
-    } else {
-	strcat(dbidx, ".idx");
+    err = open_native_db_files(&fp, NULL, NULL, NULL);
+    if (err) {
+	return err;
     }
 
-    fp = gretl_fopen(dbidx, "r");
-    if (fp == NULL) {
-	strcpy(gretl_errmsg, _("Couldn't open database index file"));
-	return E_FOPEN;
-    }
+    while (fgets(s1, sizeof s1, fp) && !gotit) {
 
-    while (fgets(line1, sizeof line1, fp) && !gotit) {
-
-	if (*line1 == '#') {
+	if (*s1 == '#') {
 	    continue;
 	}
 
-	if (sscanf(line1, "%15s", sername) != 1) {
+	if (sscanf(s1, "%15s", sername) != 1) {
 	    break;
 	}
 
@@ -350,12 +421,12 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    strcpy(sinfo->varname, sername);
 	}
 
-	fgets(line2, sizeof line2, fp);
+	fgets(s2, sizeof s2, fp);
 
 	if (gotit) {
-	    get_native_series_comment(sinfo, line1);
-	    if (sscanf(line2, "%c %10s %*s %10s %*s %*s %d", 
-		       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+	    get_native_series_comment(sinfo, s1);
+	    if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
+		       &pdc, stobs, endobs, &sinfo->nobs) != 4) {
 		strcpy(gretl_errmsg, _("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
@@ -365,7 +436,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 		sinfo->t2 = sinfo->nobs - 1;
 	    }
 	} else {
-	    if (sscanf(line2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
+	    if (sscanf(s2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
 		strcpy(gretl_errmsg, _("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
@@ -389,7 +460,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 {
     char *buf = NULL;
     char sername[VNAMELEN];
-    char line1[256], line2[72];
+    char s1[256], s2[72];
     char stobs[11], endobs[11];
     char pdc;
     int gotit = 0;
@@ -404,12 +475,12 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 
     bufgets_init(buf);
 
-    while (bufgets(line1, sizeof line1, buf) && !gotit) {
-	if (*line1 == '#') {
+    while (bufgets(s1, sizeof s1, buf) && !gotit) {
+	if (*s1 == '#') {
 	    continue;
 	}
 
-	if (sscanf(line1, "%15s", sername) != 1) {
+	if (sscanf(s1, "%15s", sername) != 1) {
 	    break;
 	}
 
@@ -419,22 +490,22 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
 
 	gotit = 1;
 
-	if (bufgets(line2, sizeof line2, buf) == NULL) {
+	if (bufgets(s2, sizeof s2, buf) == NULL) {
 	    err = DB_PARSE_ERROR;
 	    break;
 	} 
 
 	strcpy(sinfo->varname, sername);
-	get_native_series_comment(sinfo, line1);
+	get_native_series_comment(sinfo, s1);
 
-	if (sscanf(line2, "%c %10s %*s %10s %*s %*s %d", 
-		   &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+	if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d", 
+		   &pdc, stobs, endobs, &sinfo->nobs) != 4) {
 	    strcpy(gretl_errmsg, _("Failed to parse series information"));
 	    err = DB_PARSE_ERROR;
 	} else {
-	    sinfo->t2 = sinfo->nobs - 1;
 	    get_native_series_pd(sinfo, pdc);
 	    get_native_series_obs(sinfo, stobs, endobs);
+	    sinfo->t2 = sinfo->nobs - 1;
 	}
     }
 
@@ -450,9 +521,46 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
     return err;
 }
 
-static int in7_nobs (int y0, int p0, int y1, int p1, int pd)
+static int in7_get_obs (int y0, int p0, int y1, int p1, 
+			SERIESINFO *sinfo)
 {
-    return  (y1 - y0 + 1) * pd - (p0 - 1) - (pd - p1);
+    int pd = sinfo->pd;
+    int n = (y1 - y0 + 1) * pd - (p0 - 1) - (pd - p1);
+    int err = 0;
+
+    if (n <= 0) {
+	err = 1;
+    } else {
+	sinfo->nobs = n;
+	sinfo->t2 = n - 1;
+    }
+
+    return err;
+}
+
+static int 
+pcgive_set_stobs_endobs (int y0, int p0, int y1, int p1, 
+			 SERIESINFO *sinfo)
+{
+    int err = 0;
+
+    if (sinfo->pd == 1) {
+	sprintf(sinfo->stobs, "%d", y0);
+	sprintf(sinfo->endobs, "%d", y1);
+	if (y0 == 1) {
+	    sinfo->undated = 1;
+	}
+    } else if (sinfo->pd == 4) {
+	sprintf(sinfo->stobs, "%d:%d", y0, p0);
+	sprintf(sinfo->endobs, "%d:%d", y1, p1);
+    } else if (sinfo->pd == 12 || sinfo->pd == 52) {
+	sprintf(sinfo->stobs, "%d:%02d", y0, p0);
+	sprintf(sinfo->endobs, "%d:%02d", y1, p1);
+    } else {
+	err = E_DATA; /* FIXME? */
+    }
+    
+    return err;
 }
 
 static int 
@@ -512,22 +620,9 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 		    }
 		}
 		/* transcribe info */
-		sinfo->nobs = in7_nobs(y0, p0, y1, p1, sinfo->pd);
-		sinfo->t2 = sinfo->nobs - 1;
-		if (sinfo->pd == 1) {
-		    sprintf(sinfo->stobs, "%d", y0);
-		    sprintf(sinfo->endobs, "%d", y1);
-		    if (y0 == 1) {
-			sinfo->undated = 1;
-		    }
-		} else if (sinfo->pd == 4) {
-		    sprintf(sinfo->stobs, "%d:%d", y0, p0);
-		    sprintf(sinfo->endobs, "%d:%d", y1, p1);
-		} else if (sinfo->pd == 12 || sinfo->pd == 52) {
-		    sprintf(sinfo->stobs, "%d:%02d", y0, p0);
-		    sprintf(sinfo->endobs, "%d:%02d", y1, p1);
-		} else {
-		    err = E_DATA; /* FIXME? */
+		err = in7_get_obs(y0, p0, y1, p1, sinfo);
+		if (!err) {
+		    err = pcgive_set_stobs_endobs(y0, p0, y1, p1, sinfo);
 		}
 	    } else {
 		err = E_DATA;
@@ -641,14 +736,10 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     sinfo->pd = dinfo->info;
     sinfo->nobs = n;
     sinfo->t2 = n - 1;
-
-    *sinfo->varname = 0;
-    strncat(sinfo->varname, varname, VNAMELEN - 1);
-
-    *sinfo->descrip = 0;
-    strncat(sinfo->descrip, comment, MAXLABEL - 1);
-
     sinfo->offset = offset;
+
+    strncat(sinfo->varname, varname, VNAMELEN - 1);
+    strncat(sinfo->descrip, comment, MAXLABEL - 1);
 
 #if DB_DEBUG
     fprintf(stderr, "dinfo_to_sinfo: '%s': set sinfo->offset = %d\n", varname, 
@@ -683,12 +774,8 @@ static int in7_to_sinfo (const char *varname, const char *comment,
     }
 
     if (!err) {
-	sinfo->nobs = in7_nobs(y0, p0, y1, p1, pd);
-	if (sinfo->nobs <= 0) {
-	    err = 1;
-	} else {
-	    sinfo->t2 = sinfo->nobs - 1;
-	}
+	sinfo->pd = pd;
+	err = in7_get_obs(y0, p0, y1, p1, sinfo);
     }
 
     if (!err) {
@@ -789,82 +876,86 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 static void series_info_init (SERIESINFO *sinfo)
 {
     sinfo->t1 = sinfo->t2 = 0;
-    sinfo->v = 1;
-    *sinfo->varname = 0;
-    *sinfo->descrip = 0;
     sinfo->nobs = 0;
-    *sinfo->stobs = 0;
-    *sinfo->endobs = 0;
+    sinfo->v = 1;
     sinfo->pd = 1;
     sinfo->offset = -1;
     sinfo->err = 0;
     sinfo->undated = 0;
+
+    *sinfo->varname = '\0';
+    *sinfo->descrip = '\0';
+    *sinfo->stobs = '\0';
+    *sinfo->endobs = '\0';
 }
 
 #define DB_INIT_ROWS 32
 
-static db_table *db_table_new (int nr)
+void dbwrapper_destroy (dbwrapper *dw)
 {
-    db_table *tbl;
+    if (dw != NULL) {
+	free(dw->sinfo);
+	free(dw);
+    }
+}
+
+dbwrapper *dbwrapper_new (int n)
+{
+    dbwrapper *dw;
     int i;
 
-    if (nr == 0) {
-	nr = DB_INIT_ROWS;
+    if (n == 0) {
+	n = DB_INIT_ROWS;
     }
 
-    tbl = malloc(sizeof *tbl);
-    if (tbl == NULL) return NULL;
-
-    tbl->sinfo = malloc(nr * sizeof *tbl->sinfo);
-
-    if (tbl->sinfo == NULL) {
-	free(tbl);
+    dw = malloc(sizeof *dw);
+    if (dw == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<nr; i++) {
-	series_info_init(&tbl->sinfo[i]);
+    dw->sinfo = malloc(n * sizeof *dw->sinfo);
+    if (dw->sinfo == NULL) {
+	free(dw);
+	return NULL;
     }
 
-    tbl->nvars = 0;
-    tbl->nalloc = nr;
+    for (i=0; i<n; i++) {
+	series_info_init(&dw->sinfo[i]);
+    }
 
-    return tbl;
+    dw->nv = 0;
+    dw->nalloc = n;
+
+    return dw;
 }
 
-static int db_table_expand (db_table *tbl)
+static int dbwrapper_expand (dbwrapper *dw)
 {
     SERIESINFO *sinfo;
     int i, newsz;
 
-    newsz = (tbl->nvars / DB_INIT_ROWS) + 1;
+    newsz = (dw->nv / DB_INIT_ROWS) + 1;
     newsz *= DB_INIT_ROWS;
 
-    sinfo = realloc(tbl->sinfo, newsz * sizeof *sinfo);
+    sinfo = realloc(dw->sinfo, newsz * sizeof *sinfo);
     if (sinfo == NULL) {
-	free(tbl->sinfo);
-	tbl->sinfo = NULL;
+	free(dw->sinfo);
+	dw->sinfo = NULL;
 	return 1;
     }
 
-    tbl->sinfo = sinfo;
+    dw->sinfo = sinfo;
 
-    for (i=tbl->nalloc; i<newsz; i++) {
-	series_info_init(&tbl->sinfo[i]);
+    for (i=dw->nalloc; i<newsz; i++) {
+	series_info_init(&dw->sinfo[i]);
     }
 
-    tbl->nalloc = newsz;
+    dw->nalloc = newsz;
 
     return 0;
 }
 
-static void db_table_free (db_table *tbl)
-{
-    free(tbl->sinfo);
-    free(tbl);
-}
-
-static int read_in7_series_info (FILE *fp, db_table *tbl)
+static int read_in7_series_info (FILE *fp, dbwrapper *dw)
 {
     char line[1024];
     char sname[VNAMELEN];
@@ -901,9 +992,9 @@ static int read_in7_series_info (FILE *fp, db_table *tbl)
 		}
 		/* record info */
 		err = in7_to_sinfo(sname, desc, y0, p0, y1, p1,
-				   pd, offset, &tbl->sinfo[i++]);
+				   pd, offset, &dw->sinfo[i++]);
 		if (!err) {
-		    tbl->nvars += 1;
+		    dw->nv += 1;
 		}
 	    }
 	}
@@ -948,13 +1039,13 @@ static int count_in7_series (FILE *fp, int *err)
  *
  * Read the series info from a PcGive database, .in7 file
  * 
- * Returns: pointer to a #db_table containing the series info,
+ * Returns: pointer to a #dbwrapper containing the series info,
  * or NULL in case of failure.
  */
 
-db_table *read_pcgive_db (FILE *fp) 
+dbwrapper *read_pcgive_db (FILE *fp) 
 {
-    db_table *tbl;
+    dbwrapper *dw;
     int ns, err = 0;
 
     gretl_error_clear();
@@ -972,8 +1063,8 @@ db_table *read_pcgive_db (FILE *fp)
 #endif
     
     /* allocate table for series rows */
-    tbl = db_table_new(ns);
-    if (tbl == NULL) {
+    dw = dbwrapper_new(ns);
+    if (dw == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
     }
@@ -981,14 +1072,14 @@ db_table *read_pcgive_db (FILE *fp)
     rewind(fp);
     
     /* Go find the series info */
-    err = read_in7_series_info(fp, tbl);
+    err = read_in7_series_info(fp, dw);
 
     if (err) {
-	db_table_free(tbl);
-	return NULL;
+	dbwrapper_destroy(dw);
+	dw = NULL;
     }
 
-    return tbl;
+    return dw;
 }
 
 /**
@@ -997,15 +1088,15 @@ db_table *read_pcgive_db (FILE *fp)
  *
  * Read the series info from a RATS 4.0 database: read the base 
  * block at offset 0 in the data file, and recurse through the 
- * directory entries
+ * directory entries.
  * 
- * Returns: pointer to a #db_table containing the series info,
+ * Returns: pointer to a #dbwrapper containing the series info,
  * or NULL in case of failure.
  */
 
-db_table *read_rats_db (FILE *fp) 
+dbwrapper *read_rats_db (FILE *fp) 
 {
-    db_table *tbl;
+    dbwrapper *dw;
     long forward;
     int i, err = 0;
 
@@ -1024,8 +1115,8 @@ db_table *read_rats_db (FILE *fp)
     }
 
     /* allocate table for series rows */
-    tbl = db_table_new(0);
-    if (tbl == NULL) {
+    dw = dbwrapper_new(0);
+    if (dw == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
     }
@@ -1033,13 +1124,13 @@ db_table *read_rats_db (FILE *fp)
     /* Go find the series */
     i = 0;
     while (forward && !err) {
-	tbl->nvars += 1;
+	dw->nv += 1;
 #if DB_DEBUG
-	fprintf(stderr, "read_rats_db: forward = %d, nvars = %d\n",
-		(int) forward, tbl->nvars);
+	fprintf(stderr, "read_rats_db: forward = %d, nv = %d\n",
+		(int) forward, dw->nv);
 #endif    
-	if (tbl->nvars > 0 && tbl->nvars % DB_INIT_ROWS == 0) {
-	    err = db_table_expand(tbl);
+	if (dw->nv > 0 && dw->nv % DB_INIT_ROWS == 0) {
+	    err = dbwrapper_expand(dw);
 	    if (err) {
 		strcpy(gretl_errmsg, _("Out of memory!"));
 	    }
@@ -1047,7 +1138,7 @@ db_table *read_rats_db (FILE *fp)
 	if (!err) {
 	    err = fseek(fp, (forward - 1) * 256L, SEEK_SET);
 	    if (!err) {
-		forward = read_rats_directory(fp, NULL, &tbl->sinfo[i++]);
+		forward = read_rats_directory(fp, NULL, &dw->sinfo[i++]);
 		if (forward == RATS_PARSE_ERROR) {
 		    err = 1;
 		}
@@ -1059,16 +1150,16 @@ db_table *read_rats_db (FILE *fp)
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "read_rats_db: err = %d, tbl = %p\n",
-	    err, (void *) tbl);
+    fprintf(stderr, "read_rats_db: err = %d, dw = %p\n",
+	    err, (void *) dw);
 #endif    
 
     if (err) {
-	db_table_free(tbl);
+	dbwrapper_destroy(dw);
 	return NULL;
     }
 
-    return tbl;
+    return dw;
 }
 
 /* retrieve the actual data values from the data blocks */
@@ -1544,6 +1635,14 @@ static double **new_dbZ (int n)
     return Z;
 }
 
+static void free_dbZ (double **dbZ)
+{
+    if (dbZ != NULL) {
+	free(dbZ[1]);
+	free(dbZ);
+    }
+}
+
 /* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
@@ -1644,8 +1743,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	/* free up temp stuff */
-	free(dbZ[1]);
-	free(dbZ);
+	free_dbZ(dbZ);
 
 	if (!err) {
 	    pprintf(prn, _("Series imported OK"));
@@ -1656,6 +1754,175 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
     }
     
+    return err;
+}
+
+static FILE *tempfile_open (char *fname, int *err)
+{
+    FILE *fp = NULL;
+    int fd;
+
+    strcat(fname, ".XXXXXX");
+    fd = g_mkstemp(fname);
+
+    if (fd < 0) {
+	*err = E_FOPEN;
+    } else {
+	fp = fdopen(fd, "w+");
+	if (fp == NULL) {
+	    *err = E_FOPEN;
+	    sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
+	    close(fd);
+	    remove(fname);
+	}
+    } 
+
+    if (fp != NULL) {
+	fprintf(stderr, "tempfile_open: %s\n", fname);
+    }
+
+    return fp;
+}
+
+static void maybe_fclose (FILE *fp)
+{
+    if (fp != NULL) {
+	fclose(fp);
+    }
+}
+
+#define DBUFLEN 2048
+
+int db_delete_series (const char *line)
+{
+    dbnumber buf[DBUFLEN];
+    char src1[FILENAME_MAX];
+    char src2[FILENAME_MAX];
+    char tmp1[FILENAME_MAX];
+    char tmp2[FILENAME_MAX];
+    char series[VNAMELEN];
+    char *p, s[512];
+    char **snames = NULL;
+    FILE *fidx = NULL, *fbin = NULL;
+    FILE *f1 = NULL, *f2 = NULL;
+    int i, j, del, skip, n, ns;
+    int err = 0;
+
+    if (*db_name == '\0') {
+	strcpy(gretl_errmsg, _("No database has been opened"));
+	return 1;
+    }   
+
+    if (db_type != GRETL_NATIVE_DB) {
+	strcpy(gretl_errmsg, "This only works for gretl databases");
+	return 1;
+    }	
+
+    err = open_native_db_files(&fidx, src1, &fbin, src2);
+    if (err) {
+	return E_FOPEN;
+    }
+
+    strcpy(tmp1, gretl_user_dir());
+    strcat(tmp1, "tmpidx");
+    f1 = tempfile_open(tmp1, &err);
+    if (err) {
+	goto bailout;
+    }
+
+    strcpy(tmp2, gretl_user_dir());
+    strcat(tmp2, "tmpbin");
+    f2 = tempfile_open(tmp2, &err);
+    if (err) {
+	goto bailout;
+    }    
+
+    if (!strncmp(line, "delete ", 7)) {
+	line += 7;
+    }
+
+    /* extract the variable names given on the line */
+    ns = 0;
+    while ((line = get_word_and_advance(line, series, VNAMELEN - 1)) && !err) {
+	fprintf(stderr, "db_delete_series: got '%s'\n", series);
+	err = strings_array_add(&snames, &ns, series);
+    }
+
+    if (!err && ns == 0) {
+	fprintf(stderr, "Found no series names\n");
+	err = E_PARSE;
+    }
+
+    i = del = 0;
+    while (fgets(s, sizeof s, fidx) && !err) {
+	if (i % 2 != 0) {
+	    /* odd lines contain varnames */
+	    sscanf(s, "%s", series);
+	    fprintf(stderr, "found '%s' at pos %d, ", series, i);
+	    for (j=0; j<ns; j++) {
+		if (!strcmp(series, snames[j])) {
+		    del = 1;
+		    break;
+		}
+	    }
+	} else if (i > 0) {
+	    /* even lines contain obs info */
+	    p = strstr(s, "n = ");
+	    if (p != NULL) {
+		sscanf(p + 4, "%d", &n);
+		fprintf(stderr, "n = %d (%s)\n", n, (del)? "skip" : "keep");
+	    } else {
+		err = E_DATA;
+		fprintf(stderr, "couldn't find obs for series\n");
+	    }
+	    if (del) {
+		skip = 1;
+		del = 0;
+	    } 
+	}
+
+	if (skip) {
+	    fseek(fbin, n * sizeof(dbnumber), SEEK_CUR);
+	    skip = 0;
+	} else {
+	    fputs(s, f1);
+	    if (i > 0 && i % 2 == 0) {
+		int get, got, rem = n;
+
+		fprintf(stderr, "copying %d obs:\n", rem);
+
+		while (rem > 0 && !err) {
+		    get = (rem > DBUFLEN)? DBUFLEN : rem;
+		    fprintf(stderr, " items to get = %d, ", get);
+		    got = fread(buf, sizeof(dbnumber), get, fbin);
+		    fprintf(stderr, "items got = %d\n", got);
+		    if (got != get) {
+			fprintf(stderr, "error reading binary data\n");
+			err = E_DATA;
+		    } else {
+			fwrite(buf, sizeof(dbnumber), got, f2);
+			rem -= got;
+		    }
+		}
+	    }	    
+	}
+	i++;
+    }
+
+    free_strings_array(snames, ns);
+
+ bailout:
+
+    maybe_fclose(fidx);
+    maybe_fclose(fbin);
+    maybe_fclose(f1);
+    maybe_fclose(f2);
+
+    if (!err) {
+	rename(tmp1, src1);
+	rename(tmp2, src2);
+    }
+
     return err;
 }
 
@@ -1705,7 +1972,8 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     return err;
 }
 
-void init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
+static void 
+init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
 {
     pdinfo->pd = sinfo->pd;
 

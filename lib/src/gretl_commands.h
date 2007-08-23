@@ -23,7 +23,6 @@
 typedef enum {
     SEMIC = 0,    
     ADD,
-    ADDOBS,
     ADDTO,
     ADF,
     APPEND,
@@ -43,6 +42,7 @@ typedef enum {
     CRITERIA,
     CUSUM,
     DATA,
+    DATAMOD,
     DELEET,
     DIFF,
     DIFFTEST,
@@ -138,7 +138,6 @@ typedef enum {
     TABPRINT,
     TESTUHAT,
     TOBIT,
-    TRANSPOSE,
     TSLS,    
     VAR,
     VARLIST,

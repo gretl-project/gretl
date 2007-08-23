@@ -104,6 +104,7 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_S, "spearman" },
     { CORR,     OPT_U, "uniform" },
     { CUSUM,    OPT_R, "squares" },
+    { DELEET,   OPT_D, "db" },
     { DIFFTEST, OPT_G, "sign" },
     { DIFFTEST, OPT_R, "rank-sum" },
     { DIFFTEST, OPT_I, "signed-rank" },

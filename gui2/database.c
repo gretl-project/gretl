@@ -42,20 +42,13 @@
 # include "gretlwin32.h"
 #endif
 
-typedef struct series_wrap_t_ series_wrap_t;
-
-struct series_wrap_t_ {
-    int ns;
-    SERIESINFO **sinfo;
-};
-
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
 static int add_local_db_series_list (windata_t *vwin);
 static int add_remote_db_series_list (windata_t *vwin, char *buf);
 static int add_rats_db_series_list (windata_t *vwin);
 static int add_pcgive_db_series_list (windata_t *vwin);
-static series_wrap_t *get_series_info (windata_t *vwin, int action);
+static dbwrapper *get_series_info (windata_t *vwin, int action);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -178,13 +171,18 @@ static int gui_get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
 static void display_dbdata (const double **dbZ, DATAINFO *dbinfo)
 {
     PRN *prn;
+    int width = 36;
 
     if (bufopen(&prn)) {
 	return;
     }
 
+    if (dbinfo->v > 1) {
+	width = 72;
+    }
+
     printdata(NULL, NULL, dbZ, dbinfo, OPT_O, prn);
-    view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
+    view_buffer(prn, width, 350, _("gretl: display database series"), PRINT,
 		NULL); 
 }
 
@@ -233,12 +231,12 @@ static int
 add_db_series_to_dataset (windata_t *vwin, double **dbZ, 
 			  SERIESINFO *sinfo)
 {
-    double *xvec = NULL;
+    double x, *xvec = NULL;
     int start, stop;
     int pad1 = 0, pad2 = 0;
     CompactMethod method = COMPACT_AVG;
     int dbv, resp, overwrite = 0;
-    int n, t, s;
+    int n, t;
 
     if (check_db_import(sinfo, datainfo)) {
 	gui_errmsg(1);
@@ -362,12 +360,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ,
     /* fill in actual data values */
     fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
     for (t=start; t<stop; t++) {
-	s = t - pad1;
-	if (xvec[s] == DBNA) {
-	    Z[dbv][t] = NADBL;
-	} else {
-	    Z[dbv][t] = xvec[s];
-	}
+	x = xvec[t - pad1];
+	Z[dbv][t] = (x == DBNA)? NADBL : x;
     }
 
     free(xvec);
@@ -377,15 +371,15 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ,
 
 static void 
 add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
-	    series_wrap_t *sw, int *freeit)
+	    dbwrapper *dw, int *freeit)
 {
     SERIESINFO *sinfo;
     int i, t, err = 0;
 
     if (data_status) { 
 	/* we already have data in gretl's workspace */
-	for (i=0; i<sw->ns && !err; i++) {
-	    sinfo = sw->sinfo[i];
+	for (i=0; i<dw->nv && !err; i++) {
+	    sinfo = &dw->sinfo[i];
 	    err = add_db_series_to_dataset(vwin, dbZ, sinfo);
 	}
     } else {  
@@ -396,8 +390,8 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
 	datainfo = dbinfo;
 	*freeit = 0;
 
-	for (i=1; i<=sw->ns && !err; i++) {
-	    sinfo = sw->sinfo[i-1];
+	for (i=1; i<=dw->nv && !err; i++) {
+	    sinfo = &dw->sinfo[i-1];
 
 	    for (t=0; t<datainfo->n; t++) {
 		Z[i][t] = dbZ[i][t];
@@ -435,55 +429,6 @@ void import_db_series (windata_t *vwin)
     gui_get_db_series(vwin, DB_IMPORT, NULL);
 }
 
-static void swrap_destroy (series_wrap_t *sw)
-{
-    int i;
-
-    if (sw != NULL) {
-	for (i=0; i<sw->ns; i++) {
-	    free(sw->sinfo[i]);
-	}
-	free(sw->sinfo);
-	free(sw);
-    }
-}
-
-static series_wrap_t *swrap_new (int n)
-{
-    series_wrap_t *sw;
-    int i;
-
-    sw = mymalloc(sizeof *sw);
-    if (sw == NULL) {
-	return NULL;
-    }
-
-    sw->sinfo = mymalloc(n * sizeof *sw->sinfo);
-    if (sw->sinfo == NULL) {
-	free(sw);
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	sw->sinfo[i] = NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	sw->sinfo[i] = mymalloc(sizeof **sw->sinfo);
-	if (sw->sinfo[i] == NULL) {
-	    swrap_destroy(sw);
-	    sw = NULL;
-	    break;
-	}
-    } 
-
-    if (sw != NULL) {
-	sw->ns = n;
-    }
-
-    return sw;
-}
-
 static int diffdate (double d1, double d0, int pd)
 {
     double x;
@@ -514,8 +459,8 @@ static int diffdate (double d1, double d0, int pd)
     return x;
 }
 
-static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
-					 double ***pZ)
+static DATAINFO *new_dataset_from_dbwrapper (dbwrapper *dw,
+					     double ***pZ)
 {
     DATAINFO *dinfo = NULL;
     SERIESINFO *sinfo;
@@ -524,8 +469,8 @@ static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
     int n0 = 0, nmax = 0;
     int i;
 
-    for (i=0; i<sw->ns; i++) {
-	sinfo = sw->sinfo[i];
+    for (i=0; i<dw->nv; i++) {
+	sinfo = &dw->sinfo[i];
 	xd = get_date_x(sinfo->pd, sinfo->stobs);
 	fprintf(stderr, "var %d: nobs=%d, pd=%d, stobs='%s', sd0=%g\n",
 		i, sinfo->nobs, sinfo->pd, sinfo->stobs, xd);
@@ -544,15 +489,14 @@ static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
 	    nmax = sinfo->nobs;
 	}
 	sinfo->v = i + 1;
-	sinfo->t1 = 0;
 	sinfo->t2 = sinfo->nobs - 1;
     }
 
     if (xdmax > xdmin) {
 	int ni, dd;
 
-	for (i=0; i<sw->ns; i++) {
-	    sinfo = sw->sinfo[i];
+	for (i=0; i<dw->nv; i++) {
+	    sinfo = &dw->sinfo[i];
 	    ni = sinfo->nobs;
 	    xd = get_date_x(sinfo->pd, sinfo->stobs);
 	    if (xd > xdmin) {
@@ -570,10 +514,10 @@ static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
     fprintf(stderr, "min(sd0) = %g, stobs='%s', n = %d\n", xdmin, 
 	    stobs, nmax);
 
-    dinfo = create_new_dataset(pZ, sw->ns + 1, nmax, 0);
+    dinfo = create_new_dataset(pZ, dw->nv + 1, nmax, 0);
     
     if (dinfo != NULL) {
-	dinfo->pd = sw->sinfo[0]->pd;
+	dinfo->pd = dw->sinfo[0].pd;
 
 	strcpy(dinfo->stobs, stobs);
 	strcpy(dinfo->endobs, endobs);
@@ -588,65 +532,30 @@ static DATAINFO *new_dataset_from_swrap (series_wrap_t *sw,
     return dinfo;
 }
 
-static DATAINFO *new_dataset_from_sinfo (SERIESINFO *sinfo,
-					 double ***pZ)
-{
-    DATAINFO *dinfo;
-
-    dinfo = create_new_dataset(pZ, 2, sinfo->nobs, 0);
-    if (dinfo == NULL) {
-	return NULL;
-    }
-
-    sinfo->t1 = 0;
-    sinfo->t2 = sinfo->nobs - 1;
-    sinfo->v = 1;
-
-    dinfo->pd = sinfo->pd;
-    dinfo->t1 = sinfo->t1;
-    dinfo->t2 = sinfo->t2;
-
-    strcpy(dinfo->stobs, sinfo->stobs);
-    strcpy(dinfo->endobs, sinfo->endobs);
-
-    colonize_obs(dinfo->stobs);
-    colonize_obs(dinfo->endobs);
-
-    dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
-    set_time_series(dinfo);
-
-    return dinfo;
-}
-
 void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     int dbcode = vwin->role;
     DATAINFO *dbinfo = NULL;
     double **dbZ = NULL;
-    series_wrap_t *sw;
+    dbwrapper *dw;
     int freeit = 1;
     int i, err = 0;
 
-    sw = get_series_info(vwin, dbcode);
-    if (sw == NULL) {
+    dw = get_series_info(vwin, dbcode);
+    if (dw == NULL) {
 	return;
     }
 
-    if (sw->ns == 1) {
-	dbinfo = new_dataset_from_sinfo(sw->sinfo[0], &dbZ);
-    } else {
-	dbinfo = new_dataset_from_swrap(sw, &dbZ);
-    }
-
+    dbinfo = new_dataset_from_dbwrapper(dw, &dbZ);
     if (dbinfo == NULL) {
-	swrap_destroy(sw);
+	dbwrapper_destroy(dw);
 	nomem();
 	return;
     }    
 
-    for (i=0; i<sw->ns; i++) {
-	SERIESINFO *sinfo = sw->sinfo[i];
+    for (i=0; i<dw->nv; i++) {
+	SERIESINFO *sinfo = &dw->sinfo[i];
 
 	if (dbcode == NATIVE_SERIES) { 
 	    err = get_native_db_data(vwin->fname, sinfo, dbZ);
@@ -676,7 +585,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     } else if (action == DB_GRAPH) {
 	graph_dbdata(&dbZ, dbinfo);
     } else if (action == DB_IMPORT) { 
-	add_dbdata(vwin, dbZ, dbinfo, sw, &freeit);
+	add_dbdata(vwin, dbZ, dbinfo, dw, &freeit);
     }
 
  bailout:
@@ -686,7 +595,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 	free_datainfo(dbinfo);
     }
 
-    swrap_destroy(sw);
+    dbwrapper_destroy(dw);
 } 
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
@@ -1149,7 +1058,7 @@ static gchar *format_obs_info (SERIESINFO *sinfo)
 			   sinfo->nobs);
 }
 
-static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
+static void insert_and_free_dbwrapper (dbwrapper *dw, GtkWidget *w)
 {
     GtkTreeView *view = GTK_TREE_VIEW(w);
     GtkListStore *store;
@@ -1160,14 +1069,14 @@ static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=0; i<tbl->nvars; i++) {    
+    for (i=0; i<dw->nv; i++) {    
 	gchar *obsinfo, *comment = NULL;
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, tbl->sinfo[i].varname, -1);
+	gtk_list_store_set(store, &iter, 0, dw->sinfo[i].varname, -1);
 
-	if (*tbl->sinfo[i].descrip != 0) {
-	    comment = iso_comment_to_utf8(tbl->sinfo[i].descrip, perr);
+	if (*dw->sinfo[i].descrip != 0) {
+	    comment = iso_comment_to_utf8(dw->sinfo[i].descrip, perr);
 	    if (perr != NULL && *perr) {
 		/* don't keep displaying error messages */
 		perr = NULL;
@@ -1179,21 +1088,20 @@ static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
 	    g_free(comment);
 	}
 
-	obsinfo = format_obs_info(&tbl->sinfo[i]);
+	obsinfo = format_obs_info(&dw->sinfo[i]);
 	gtk_list_store_set(store, &iter, 2, obsinfo, -1);
 	g_free(obsinfo);
 
-	gtk_list_store_set(store, &iter, 3, tbl->sinfo[i].offset, -1);
+	gtk_list_store_set(store, &iter, 3, dw->sinfo[i].offset, -1);
     }
 
-    free(tbl->sinfo);
-    free(tbl);
+    dbwrapper_destroy(dw);
 }
 
 static int add_rats_db_series_list (windata_t *vwin)
 {
     FILE *fp;
-    db_table *tbl;
+    dbwrapper *dw;
 
     fp = gretl_fopen(vwin->fname, "rb");
 
@@ -1203,15 +1111,15 @@ static int add_rats_db_series_list (windata_t *vwin)
     }
 
     /* extract catalog from RATS file */
-    tbl = read_rats_db(fp);
+    dw = read_rats_db(fp);
     fclose(fp);
 
-    if (tbl == NULL) {
+    if (dw == NULL) {
 	gui_errmsg(1);
 	return 1;
     }
 
-    insert_and_free_db_table(tbl, vwin->listbox);
+    insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
     db_drag_connect(vwin);
 
@@ -1222,7 +1130,7 @@ static int add_pcgive_db_series_list (windata_t *vwin)
 {
     char in7name[FILENAME_MAX];
     FILE *fp;
-    db_table *tbl;
+    dbwrapper *dw;
 
     *in7name = 0;
     strncat(in7name, vwin->fname, FILENAME_MAX - 5);
@@ -1235,15 +1143,15 @@ static int add_pcgive_db_series_list (windata_t *vwin)
     }
 
     /* extract catalog from PcGive file */
-    tbl = read_pcgive_db(fp);
+    dw = read_pcgive_db(fp);
     fclose(fp);
 
-    if (tbl == NULL) {
+    if (dw == NULL) {
 	gui_errmsg(1);
 	return 1;
     }
 
-    insert_and_free_db_table(tbl, vwin->listbox);
+    insert_and_free_dbwrapper(dw, vwin->listbox);
     vwin->active_var = 0;
     db_drag_connect(vwin);
 
@@ -1295,14 +1203,14 @@ static void db_multisel (windata_t *vwin, int *list)
 					process_db_series, list);
 }
 
-static series_wrap_t *get_series_info (windata_t *vwin, int action)
+static dbwrapper *get_series_info (windata_t *vwin, int action)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
     int *rowlist = NULL;
     int i, sc, row = 0;
     char stobs[OBSLEN], endobs[OBSLEN];
     char pdc;
-    series_wrap_t *swrap;
+    dbwrapper *dw;
     int err = 0;
 
     sc = vwin_selection_count(vwin, NULL);
@@ -1323,14 +1231,16 @@ static series_wrap_t *get_series_info (windata_t *vwin, int action)
 	db_multisel(vwin, rowlist);
     } 
 
-    swrap = swrap_new(sc);
-    if (swrap == NULL) {
+    dw = dbwrapper_new(sc);
+    if (dw == NULL) {
 	free(rowlist);
 	return NULL;
     }
 
+    dw->nv = sc;
+
     for (i=0; i<rowlist[0]; i++) {
-	SERIESINFO *sinfo = swrap->sinfo[i];
+	SERIESINFO *sinfo = &dw->sinfo[i];
 	gchar *tmp = NULL;
 
 	row = rowlist[i+1];
@@ -1378,7 +1288,7 @@ static series_wrap_t *get_series_info (windata_t *vwin, int action)
 	    sinfo->undated = 1;
 	}
 
-	if (i > 0 && sinfo->pd != swrap->sinfo[0]->pd) {
+	if (i > 0 && sinfo->pd != dw->sinfo[0].pd) {
 	    /* this shouldn't happen */
 	    errbox("Can't operate on series with different frequencies");
 	    err = 1;
@@ -1409,13 +1319,13 @@ static series_wrap_t *get_series_info (windata_t *vwin, int action)
  bailout:
 
     if (err) {
-	swrap_destroy(swrap);
-	swrap = NULL;
+	dbwrapper_destroy(dw);
+	dw = NULL;
     }
 
     free(rowlist);
 
-    return swrap;
+    return dw;
 }
 
 /* the following two functions are used when a database has been
@@ -2434,11 +2344,7 @@ void do_compact_data_set (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	data_status |= MODIFIED_DATA;
-	set_sample_label(datainfo);
-	if (datainfo->pd == 1 || datainfo->pd == 52) {
-	    flip(mdata->ifac, "/Data/Compact data...", FALSE);
-	}
+	mark_dataset_as_modified();
 	set_compact_info_from_default(method);
     }
 }
@@ -2461,11 +2367,7 @@ void do_expand_data_set (void)
     if (err) {
 	gui_errmsg(err);
     } else {
-	data_status |= MODIFIED_DATA;
-	set_sample_label(datainfo);
-	if (datainfo->pd == 12) {
-	    flip(mdata->ifac, "/Data/Expand data...", FALSE);
-	}
+	mark_dataset_as_modified();
     }
 }
 

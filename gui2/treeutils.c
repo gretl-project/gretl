@@ -457,8 +457,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			      | GDK_POINTER_MOTION_HINT_MASK);
         g_signal_connect(G_OBJECT(view), "motion_notify_event",
 			 G_CALLBACK(listbox_drag), NULL);
-    } else if (0 && db_series_window(vwin)) {
-	/* not ready yet */
+    } else if (db_series_window(vwin)) {
 	gtk_tree_selection_set_mode(select, GTK_SELECTION_MULTIPLE);
 	g_signal_connect(G_OBJECT(select), "changed",
 			 G_CALLBACK(check_db_series_selection),
