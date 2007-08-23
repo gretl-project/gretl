@@ -24,6 +24,7 @@
 #include "gretl_www.h"
 
 #include <glib.h>
+#include <unistd.h>
 
 #if WORDS_BIGENDIAN
 # include <netinet/in.h>
@@ -330,7 +331,7 @@ open_native_db_files (FILE **f1, char *name1, FILE **f2, char *name2)
 
 	if (name1 != NULL) {
 	    /* test for write access FIXME win32 */
-	    err = g_access(fname, W_OK);
+	    err = access(fname, W_OK);
 	    if (err) {
 		sprintf(gretl_errmsg, "Can't write to %s", fname);
 	    } else {
@@ -356,7 +357,7 @@ open_native_db_files (FILE **f1, char *name1, FILE **f2, char *name2)
 
 	if (name2 != NULL) {
 	    /* test for write access FIXME win32 */
-	    err = g_access(fname, W_OK); 
+	    err = access(fname, W_OK); 
 	    if (err) {
 		sprintf(gretl_errmsg, "Can't write to %s", fname);
 	    } else {
@@ -1820,7 +1821,7 @@ int db_delete_series (const char *line)
 
     err = open_native_db_files(&fidx, src1, &fbin, src2);
     if (err) {
-	return E_FOPEN;
+	return err;
     }
 
     strcpy(tmp1, gretl_user_dir());
