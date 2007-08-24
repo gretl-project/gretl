@@ -388,3 +388,69 @@ int gretl_shell (const char *arg)
 
     return err;
 }
+
+int win32_write_access (char *path)
+{
+    SID *sid = NULL;
+    ACL *dacl = NULL;
+    SECURITY_DESCRIPTOR *sd = NULL;
+    TRUSTEE t;
+    const char *username;
+    int sidsize = 0, stype = 0;
+    int dlen = 0;
+    int amask, ret;
+    int ret, err = 0;
+    int ok = 0;
+
+    username = g_get_user_name();
+
+    /* get the size of the SID */
+    LookupAccountName(NULL, username, NULL, &sidsize, 
+		      NULL, &dlen, &stype);
+
+    sid = LocalAlloc(0, sidsize);
+    if (sid == NULL) {
+	err = 1;
+    }
+
+    if (!err) {
+	/* call the function for real */
+	if (!LookupAccountName(NULL, username, sid, &sidsize, 
+			       NULL, &dlen, &stype)) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	/* build a trustee and get the file's DACL */
+	BuildTrusteeWithSid(&t, sid);
+	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
+				   DACL_SECURITY_INFORMATION, 
+				   NULL, NULL, &dacl, NULL, &sd);
+	if (ret != 0) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	/* get the access mask for this trustee */
+	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
+	if (ret != 0) {
+	    err = 1;
+	}
+    }
+
+    if (!err && (amask & GENERIC_WRITE)) {
+	ok = 1;
+    }
+
+    LocalFree(dacl);
+    LocalFree(sd);
+
+    if (err) {
+	win_show_last_error();
+    }
+
+    return ok;
+}
+

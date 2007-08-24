@@ -1880,7 +1880,7 @@ static int db_delete_series (const char *line, const int *list)
 		    }
 		}
 	    } else {
-		if (list[k] == j) {
+		if (k <= list[0] && list[k] == j) {
 		    k++;
 		    print = 0;
 		}

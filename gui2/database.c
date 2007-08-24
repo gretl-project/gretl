@@ -49,6 +49,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf);
 static int add_rats_db_series_list (windata_t *vwin);
 static int add_pcgive_db_series_list (windata_t *vwin);
 static dbwrapper *get_series_info (windata_t *vwin, int action);
+static int *db_get_selection_list (windata_t *vwin);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -424,6 +425,21 @@ static void gui_import_series (GtkWidget *w, windata_t *vwin)
     gui_get_db_series(vwin, DB_IMPORT, NULL);
 }
 
+static void gui_delete_series (GtkWidget *w, windata_t *vwin)
+{
+    int *list = db_get_selection_list(vwin);
+    int err = 0;
+
+    if (list != NULL) {
+	err = db_delete_series_by_number(list);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	/* FIXME else */
+    }
+}
+
 void import_db_series (windata_t *vwin)
 {
     gui_get_db_series(vwin, DB_IMPORT, NULL);
@@ -619,7 +635,7 @@ static void db_menu_find (GtkWidget *w, windata_t *vwin)
     menu_find(vwin, 1, NULL);
 }
 
-static void build_db_popup (windata_t *vwin, int cb)
+static void build_db_popup (windata_t *vwin, int cb, int del)
 {
     if (vwin->popup != NULL) {
 	return;
@@ -636,6 +652,11 @@ static void build_db_popup (windata_t *vwin, int cb)
     add_popup_item(_("Import"), vwin->popup, 
 		   G_CALLBACK(gui_import_series), 
 		   vwin);
+    if (del) {
+	add_popup_item(_("Delete"), vwin->popup, 
+		       G_CALLBACK(gui_delete_series), 
+		       vwin);
+    }	
     add_popup_item(_("Find..."), vwin->popup, 
 		   G_CALLBACK(db_menu_find), 
 		   vwin);
@@ -646,12 +667,19 @@ static void build_db_popup (windata_t *vwin, int cb)
     }
 }
 
-static void set_up_db_menu (windata_t *vwin, int cb)
+static void 
+delete_series_callback (gpointer p, guint u, GtkWidget *w)
+{
+    gui_delete_series(NULL, p);
+}
+
+static void set_up_db_menu (windata_t *vwin, int cb, int del)
 {
     GtkItemFactoryEntry db_items[] = {
 	{ N_("/_Series/_Display"), NULL, gui_get_db_series, DB_DISPLAY, NULL, GNULL },
 	{ N_("/_Series/_Graph"), NULL, gui_get_db_series, DB_GRAPH, NULL, GNULL },
 	{ N_("/_Series/_Import"), NULL, gui_get_db_series, DB_IMPORT, NULL, GNULL },
+	{ N_("/_Series/_Delete"), NULL, delete_series_callback, 0, NULL, GNULL },
 	{ N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
 	{ N_("/Find/_Find in window"), NULL, menu_find, 1, "<StockItem>", GTK_STOCK_FIND },
 	{ N_("/_Codebook"), NULL, NULL, 0, "<Branch>", GNULL },    
@@ -670,6 +698,10 @@ static void set_up_db_menu (windata_t *vwin, int cb)
 #endif
     gtk_item_factory_create_items(vwin->ifac, n_items, db_items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
+
+    if (!del) {
+	flip(vwin->ifac, "/Series/Delete", FALSE);
+    }
 }
 
 static void destroy_db_win (GtkWidget *w, gpointer data)
@@ -710,7 +742,7 @@ static int make_db_series_list (int action, char *fname, char *buf)
     char *titlestr;
     windata_t *vwin;
     int db_width = 700, db_height = 420;
-    int cb = 0;
+    int cb = 0, del = 0; /* FIXME */
     int err = 0;
 
     if (action == REMOTE_SERIES && buf == NULL) {
@@ -754,8 +786,8 @@ static int make_db_series_list (int action, char *fname, char *buf)
     gtk_container_add(GTK_CONTAINER(vwin->w), main_vbox);
 
     test_db_book(fname, &cb);
-    set_up_db_menu(vwin, cb);
-    build_db_popup(vwin, cb);
+    set_up_db_menu(vwin, cb, del);
+    build_db_popup(vwin, cb, del);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
@@ -1183,8 +1215,9 @@ static GtkWidget *database_window (windata_t *vwin)
     return box;
 }
 
-static void process_db_series (GtkTreeModel *model, GtkTreePath *path,
-			       GtkTreeIter *iter, int *list)
+static void 
+add_series_to_list (GtkTreeModel *model, GtkTreePath *path,
+		    GtkTreeIter *iter, int *list)
 {
     int row = tree_path_get_row_number(path);
 
@@ -1192,7 +1225,7 @@ static void process_db_series (GtkTreeModel *model, GtkTreePath *path,
     list[list[0]] = row;
 }
 
-static void db_multisel (windata_t *vwin, int *list)
+static void db_fill_selection_list (windata_t *vwin, int *list)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
     GtkTreeSelection *sel;
@@ -1200,7 +1233,32 @@ static void db_multisel (windata_t *vwin, int *list)
     sel = gtk_tree_view_get_selection(view);
     gtk_tree_selection_selected_foreach(sel, 
 					(GtkTreeSelectionForeachFunc) 
-					process_db_series, list);
+					add_series_to_list, list);
+}
+
+static int *db_get_selection_list (windata_t *vwin)
+{
+    int n = vwin_selection_count(vwin, NULL);
+    int *list = NULL;
+
+    if (n == 0) {
+	return NULL;
+    }
+
+    list = gretl_list_new(n);
+    if (list == NULL) {
+	nomem();
+	return NULL;
+    }
+
+    if (n == 1) {
+	list[1] = vwin->active_var;
+    } else {
+	list[0] = 0;
+	db_fill_selection_list(vwin, list);
+    } 
+
+    return list;
 }
 
 static dbwrapper *get_series_info (windata_t *vwin, int action)
@@ -1213,23 +1271,12 @@ static dbwrapper *get_series_info (windata_t *vwin, int action)
     dbwrapper *dw;
     int err = 0;
 
-    sc = vwin_selection_count(vwin, NULL);
-    if (sc == 0) {
-	return NULL;
-    }
-
-    rowlist = gretl_list_new(sc);
+    rowlist = db_get_selection_list(vwin);
     if (rowlist == NULL) {
-	nomem();
 	return NULL;
     }
 
-    if (sc == 1) {
-	rowlist[1] = vwin->active_var;
-    } else {
-	rowlist[0] = 0;
-	db_multisel(vwin, rowlist);
-    } 
+    sc = rowlist[0];
 
     dw = dbwrapper_new(sc);
     if (dw == NULL) {
