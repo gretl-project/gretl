@@ -1792,9 +1792,9 @@ static void maybe_fclose (FILE *fp)
     }
 }
 
-#define DBUFLEN 2048
+#define DBUFLEN 1024
 
-int db_delete_series (const char *line)
+static int db_delete_series (const char *line, const int *list)
 {
     dbnumber buf[DBUFLEN];
     char src1[FILENAME_MAX];
@@ -1806,7 +1806,7 @@ int db_delete_series (const char *line)
     char **snames = NULL;
     FILE *fidx = NULL, *fbin = NULL;
     FILE *f1 = NULL, *f2 = NULL;
-    int i, j, del, skip, n, ns;
+    int i, j, k, print, n, ns;
     int err = 0;
 
     if (*db_name == '\0') {
@@ -1838,65 +1838,77 @@ int db_delete_series (const char *line)
 	goto bailout;
     }    
 
-    if (!strncmp(line, "delete ", 7)) {
-	line += 7;
+    if (line != NULL) {
+	/* extract the variable names given on the line */
+	if (!strncmp(line, "delete ", 7)) {
+	    line += 7;
+	}
+
+	ns = 0;
+
+	while ((line = get_word_and_advance(line, series, VNAMELEN-1)) 
+	       && !err) {
+	    err = strings_array_add(&snames, &ns, series);
+	}
+
+	if (!err && ns == 0) {
+	    fprintf(stderr, "Found no series names\n");
+	    err = E_PARSE;
+	}
     }
 
-    /* extract the variable names given on the line */
-    ns = 0;
-    while ((line = get_word_and_advance(line, series, VNAMELEN - 1)) && !err) {
-	fprintf(stderr, "db_delete_series: got '%s'\n", series);
-	err = strings_array_add(&snames, &ns, series);
-    }
+    print = k = 1;
+    i = j = 0;
 
-    if (!err && ns == 0) {
-	fprintf(stderr, "Found no series names\n");
-	err = E_PARSE;
-    }
-
-    i = del = 0;
     while (fgets(s, sizeof s, fidx) && !err) {
+	if (i == 0) {
+	    /* always reprint the header */
+	    fputs(s, f1);
+	    i++;
+	    continue;
+	}
+
 	if (i % 2 != 0) {
 	    /* odd lines contain varnames */
-	    sscanf(s, "%s", series);
-	    fprintf(stderr, "found '%s' at pos %d, ", series, i);
-	    for (j=0; j<ns; j++) {
-		if (!strcmp(series, snames[j])) {
-		    del = 1;
-		    break;
+	    print = 1;
+	    if (snames != NULL) {
+		sscanf(s, "%s", series);
+		for (j=0; j<ns; j++) {
+		    if (!strcmp(series, snames[j])) {
+			print = 0;
+			break;
+		    }
 		}
+	    } else {
+		if (list[k] == j) {
+		    k++;
+		    print = 0;
+		}
+		j++;
 	    }
-	} else if (i > 0) {
-	    /* even lines contain obs info */
+	    if (print) {
+		fputs(s, f1);
+	    }
+	} else {
+	    /* even lines have obs information */
 	    p = strstr(s, "n = ");
 	    if (p != NULL) {
 		sscanf(p + 4, "%d", &n);
-		fprintf(stderr, "n = %d (%s)\n", n, (del)? "skip" : "keep");
 	    } else {
 		err = E_DATA;
 		fprintf(stderr, "couldn't find obs for series\n");
 	    }
-	    if (del) {
-		skip = 1;
-		del = 0;
-	    } 
-	}
 
-	if (skip) {
-	    fseek(fbin, n * sizeof(dbnumber), SEEK_CUR);
-	    skip = 0;
-	} else {
-	    fputs(s, f1);
-	    if (i > 0 && i % 2 == 0) {
+	    if (!print) {
+		fseek(fbin, n * sizeof(dbnumber), SEEK_CUR);
+	    } else {
 		int get, got, rem = n;
 
-		fprintf(stderr, "copying %d obs:\n", rem);
+		fputs(s, f1);
 
 		while (rem > 0 && !err) {
 		    get = (rem > DBUFLEN)? DBUFLEN : rem;
-		    fprintf(stderr, " items to get = %d, ", get);
 		    got = fread(buf, sizeof(dbnumber), get, fbin);
-		    fprintf(stderr, "items got = %d\n", got);
 		    if (got != get) {
 			fprintf(stderr, "error reading binary data\n");
 			err = E_DATA;
@@ -1910,7 +1922,9 @@ int db_delete_series (const char *line)
 	i++;
     }
 
-    free_strings_array(snames, ns);
+    if (snames != NULL) {
+	free_strings_array(snames, ns);
+    }
 
  bailout:
 
@@ -1920,11 +1934,29 @@ int db_delete_series (const char *line)
     maybe_fclose(f2);
 
     if (!err) {
+#if 1
+	rename(tmp1, "dbdel.idx");
+	rename(tmp2, "dbdel.bin");
+#else
 	rename(tmp1, src1);
 	rename(tmp2, src2);
+#endif
+    } else {
+	remove(tmp1);
+	remove(tmp2);
     }
 
     return err;
+}
+
+int db_delete_series_by_name (const char *line)
+{
+    return db_delete_series(line, NULL);
+}
+
+int db_delete_series_by_number (const int *list)
+{
+    return db_delete_series(NULL, list);
 }
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 

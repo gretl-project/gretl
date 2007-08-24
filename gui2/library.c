@@ -6584,7 +6584,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DELEET:
 	if (cmd->opt & OPT_D) {
-	    err = db_delete_series(line);
+	    err = db_delete_series_by_name(line);
 	    if (err) {
 		errmsg(err, prn);
 	    } 

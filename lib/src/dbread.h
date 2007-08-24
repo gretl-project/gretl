@@ -93,7 +93,9 @@ int db_set_sample (const char *line, DATAINFO *pdinfo);
 int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
 		   PRN *prn);
 
-int db_delete_series (const char *line);
+int db_delete_series_by_name (const char *line);
+
+int db_delete_series_by_number (const int *list);
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 		     int *pad1, int *pad2);
