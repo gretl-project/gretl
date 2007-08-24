@@ -334,7 +334,9 @@ void mkfilelist (int filetype, char *fname_in)
     cut_multiple_slashes(fname_in);
 
     strcpy(trfname, fname_in);
+#ifdef ENABLE_NLS
     my_filename_to_utf8(trfname);
+#endif
     fname = trfname;
 
     filep = get_file_list(filetype);
@@ -460,7 +462,7 @@ static void copy_sys_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
     /* check this: very confusing! */
-#if !defined(G_OS_WIN32)
+#if !defined(G_OS_WIN32) && defined(ENABLE_NLS)
     my_filename_from_utf8(targ);
 #endif
 }    

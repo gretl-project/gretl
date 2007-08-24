@@ -536,10 +536,12 @@ enum winstack_codes {
     STACK_REMOVE,
     STACK_DESTROY,
     STACK_QUERY,
+    STACK_MATCH_FNAME,
     STACK_MAXVAR
 };
 
-static int winstack (int code, GtkWidget *w, gpointer ptest, GtkWidget **pw)
+static int 
+winstack (int code, GtkWidget *w, gconstpointer ptest, GtkWidget **pw)
 {
     static int n_windows;
     static GtkWidget **wstack;
@@ -569,10 +571,13 @@ static int winstack (int code, GtkWidget *w, gpointer ptest, GtkWidget **pw)
 	    }
 	}
 	if (i == n_windows) {
-	    n_windows++;
-	    wstack = myrealloc(wstack, n_windows * sizeof *wstack);
-	    if (wstack != NULL) { 
-		wstack[n_windows-1] = w;
+	    GtkWidget **newstack;
+
+	    newstack = myrealloc(wstack, (n_windows + 1) * sizeof *wstack);
+	    if (newstack != NULL) { 
+		wstack = newstack;
+		wstack[n_windows] = w;
+		n_windows++;
 	    }
 	}
 	break;
@@ -590,12 +595,34 @@ static int winstack (int code, GtkWidget *w, gpointer ptest, GtkWidget **pw)
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
 		gpointer p = g_object_get_data(G_OBJECT(wstack[i]), "object");
+
 		if (p == ptest) {
 		    if (pw != NULL) {
 			*pw = wstack[i];
 		    }
 		    ret = 1;
 		    break;
+		}
+	    }
+	}
+	break;
+
+    case STACK_MATCH_FNAME:
+	if (wstack != NULL) {
+	    const char *ctest = (const char *) ptest;
+
+	    for (i=0; i<n_windows; i++) {
+		if (wstack[i] != NULL) {
+		    windata_t *vwin = 
+			g_object_get_data(G_OBJECT(wstack[i]), "object");
+
+		    if (vwin != NULL && strstr(ctest, vwin->fname)) {
+			if (pw != NULL) {
+			    *pw = wstack[i];
+			}
+			ret = 1;
+			break;
+		    }
 		}
 	    }
 	}
@@ -622,16 +649,24 @@ void winstack_destroy (void)
     winstack(STACK_DESTROY, NULL, NULL, NULL);
 }
 
-int winstack_match_data (gpointer p)
+int winstack_match_data (const gpointer p)
 {
     return winstack(STACK_QUERY, NULL, p, NULL);
 }
 
-GtkWidget *match_window_by_data (gpointer p)
+GtkWidget *match_window_by_data (const gpointer p)
 {
     GtkWidget *w = NULL;
 
     winstack(STACK_QUERY, NULL, p, &w);
+    return w;
+}
+
+GtkWidget *match_window_by_filename (const char *fname)
+{
+    GtkWidget *w = NULL;
+
+    winstack(STACK_MATCH_FNAME, NULL, fname, &w);
     return w;
 }
 
@@ -922,7 +957,7 @@ void *mymalloc (size_t size)
 void *myrealloc (void *ptr, size_t size) 
 {
     void *mem;
-   
+
     if ((mem = realloc(ptr, size)) == NULL) {
 	nomem();
     }
@@ -1503,7 +1538,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    remove(vwin->fname);
 	}
 
-	if (vwin->dialog) {
+	if (vwin->role == NATIVE_SERIES) {
+	    winstack_remove(vwin->w);
+	} else if (vwin->dialog != NULL) {
 	    winstack_remove(vwin->dialog);
 	}
 

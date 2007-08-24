@@ -292,6 +292,7 @@ static void console_exec (void)
     gtk_text_buffer_get_end_iter(buf, &start);
     gtk_text_buffer_insert(buf, &start, "\n", 1);
 
+#ifdef ENABLE_NLS
     if (!redirected) {
 	const char *cbuf = gretl_print_get_buffer(console_prn);
 
@@ -312,6 +313,18 @@ static void console_exec (void)
     } else {
 	gretl_print_reset_buffer(console_prn);
     }
+#else
+    if (!redirected) {
+	const char *cbuf = gretl_print_get_buffer(console_prn);
+
+        /* put results into console window */
+	gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
+	gretl_print_destroy(console_prn);
+	console_prn = NULL;
+    } else {
+	gretl_print_reset_buffer(console_prn);
+    }
+#endif
 
     coding = gretl_compiling_loop() || gretl_compiling_function();
 

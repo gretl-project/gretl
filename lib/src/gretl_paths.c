@@ -148,6 +148,25 @@ int gretl_mkdir (const char *path)
 
 #endif
 
+/* like access(), returns 0 on success */
+
+int gretl_write_access (char *fname)
+{
+    int err = 0;
+
+#ifdef WIN32
+    err = !win32_write_access(fname);
+#else
+    err = access(fname, W_OK);
+#endif
+
+    if (err) {
+	sprintf(gretl_errmsg, "Can't write to %s", fname);
+    }
+
+    return err;
+}
+
 int gretl_is_xml_file (const char *fname)
 {
     gzFile fz;

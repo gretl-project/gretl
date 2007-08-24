@@ -409,7 +409,11 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 
 static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)
 {
+#ifdef ENABLE_NLS
     gchar *outbuf = my_locale_from_utf8(inbuf);
+#else
+    gchar *outbuf = g_strdup(inbuf);
+#endif
 
     free(inbuf);
     inbuf = outbuf;

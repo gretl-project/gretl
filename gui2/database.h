@@ -37,4 +37,6 @@ void open_rats_window (char *fname);
 
 void open_bn7_window (char *fname);
 
+void sync_db_windows (void);
+
 #endif

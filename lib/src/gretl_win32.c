@@ -392,6 +392,8 @@ int gretl_shell (const char *arg)
     return err;
 }
 
+/* unlike access(), returns 1 on success */
+
 int win32_write_access (char *path)
 {
     SID *sid = NULL;
@@ -402,8 +404,7 @@ int win32_write_access (char *path)
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
     ACCESS_MASK amask;
-    int ret, err = 0;
-    int ok = 0;
+    int ret, ok = 0, err = 0;
 
     username = g_get_user_name();
 
@@ -418,10 +419,9 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
-	if (!LookupAccountName(NULL, username, sid, &sidsize, 
-			       NULL, &dlen, &stype)) {
-	    err = 1;
-	}
+	ret = LookupAccountName(NULL, username, sid, &sidsize, 
+				NULL, &dlen, &stype);
+	err = (ret != 0);
     }
 
     if (!err) {
@@ -430,17 +430,13 @@ int win32_write_access (char *path)
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, &sd);
-	if (ret != 0) {
-	    err = 1;
-	}
+	err = (ret != 0);
     }
 
     if (!err) {
 	/* get the access mask for this trustee */
 	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
-	if (ret != 0) {
-	    err = 1;
-	}
+	err = (ret != 0);
     }
 
     if (!err && (amask & GENERIC_WRITE)) {

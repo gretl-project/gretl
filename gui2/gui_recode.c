@@ -19,6 +19,8 @@
 
 #include "gretl.h"
 
+#ifdef ENABLE_NLS
+
 static int seven_bit_string (const unsigned char *s)
 {
     while (*s) {
@@ -232,7 +234,7 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
 static const char *gp_cset (void)
 {
     if (iso_latin_version() == 2) {
-#ifdef GO_OS_WIN32
+#ifdef G_OS_WIN32
 	return "CP1250";
 #else
 	return "ISO-8859-2";
@@ -330,13 +332,13 @@ gchar *latin2_to_utf8 (const gchar *src)
 {
     gsize read, wrote;
 
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     return g_convert(src, -1, "UTF-8", "CP1250",
 		     &read, &wrote, NULL);
-#else
+# else
     return g_convert(src, -1, "UTF-8", "ISO-8859-2",
 		     &read, &wrote, NULL);
-#endif
+# endif
 }
 
 int html_encoded (const char *s)
@@ -350,5 +352,7 @@ int html_encoded (const char *s)
 
     return 0;
 }
+
+#endif /* ENABLE_NLS */
 
 

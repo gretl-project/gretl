@@ -324,6 +324,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->sumVt = NADBL;
     K->loglik = NADBL;
 
+    clear_gretl_matrix_err();
+
     K->S0 = gretl_matrix_copy(S);
     K->S1 = gretl_matrix_copy(S);
 
@@ -372,15 +374,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Tmprr_2a = gretl_matrix_alloc(K->r, K->r);
     K->Tmprr_2b = gretl_matrix_alloc(K->r, K->r);
 
-    if (K->S0 == NULL || K->S1 == NULL || K->P0 == NULL || K->P1 == NULL ||
-	K->e == NULL || K->F == NULL || K->A == NULL ||
-	K->H == NULL || K->Q == NULL || 
-	K->PH == NULL || K->HPH == NULL ||
-	K->FPH == NULL || K->V == NULL || K->VE == NULL ||
-	K->PHV == NULL || K->Ax == NULL ||
-	K->Tmpnn == NULL || K->Tmprr == NULL || 
-	K->Tmprr_2a == NULL || K->Tmprr_2b == NULL) {
-	*err = E_ALLOC;
+    *err = get_gretl_matrix_err();
+    if (*err) {
 	kalman_free(K);
 	K = NULL;
     } else {

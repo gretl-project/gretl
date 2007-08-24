@@ -73,9 +73,11 @@ void winstack_add (GtkWidget *w);
 
 void winstack_remove (GtkWidget *w);
 
-int winstack_match_data (gpointer p);
+int winstack_match_data (const gpointer p);
 
-GtkWidget *match_window_by_data (gpointer p);
+GtkWidget *match_window_by_data (const gpointer p);
+
+GtkWidget *match_window_by_filename (const char *fname);
 
 void mark_content_saved (windata_t *vwin);
 

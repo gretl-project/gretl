@@ -47,6 +47,7 @@
 #include "texprint.h"
 #include "bootstrap.h"
 #include "fileselect.h"
+#include "database.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -6584,10 +6585,12 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case DELEET:
 	if (cmd->opt & OPT_D) {
-	    err = db_delete_series_by_name(line);
+	    err = db_delete_series_by_name(cmd->param, prn);
 	    if (err) {
 		errmsg(err, prn);
-	    } 
+	    } else {
+		sync_db_windows();
+	    }
 	    break;
 	}
 	if (get_matrix_by_name(cmd->param)) {

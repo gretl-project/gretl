@@ -217,7 +217,9 @@ static int source_buffer_load_file (GtkSourceBuffer *sbuf,
 {
     char readbuf[MAXSTR], *chunk = NULL;
     GtkTextIter iter;
+#ifdef ENABLE_NLS
     int i = 0;
+#endif
 
     gtk_source_buffer_begin_not_undoable_action(sbuf);
 
@@ -410,6 +412,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     g_object_unref(cmap);
 }
 
+#ifdef ENABLE_NLS
+
 static gchar *my_utf_string (char *t)
 {
     static gchar *s = NULL;
@@ -475,6 +479,8 @@ static gchar *my_utf_string (char *t)
 
     return s;
 }
+
+#endif /* ENABLE_NLS */
 
 static GtkTextTagTable *gretl_tags_new (void)
 {

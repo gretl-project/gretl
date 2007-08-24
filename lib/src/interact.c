@@ -1431,7 +1431,7 @@ static int capture_param (const char *s, CMD *cmd,
 		    cmd->word);
 	}
     } else {
-	if (cmd->ci == PRINT || cmd->ci == FUNCERR) {
+	if (cmd->ci == PRINT || cmd->ci == FUNCERR || cmd->ci == DELEET) {
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
 	} else {
@@ -1889,11 +1889,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /* delete, for database variables */
-    if (cmd->ci == DELEET && cmd->opt == OPT_D) {
-	return cmd->err;
-    }
-
     /* TeX printing commands can take a filename parameter, and
        possibly a format string -- but that's all
     */
@@ -1914,7 +1909,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }  
 
     /* commands that never take a list of variables */
-    if (NO_VARLIST(cmd->ci)) { 
+    if (NO_VARLIST(cmd->ci) || 
+	(cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
 	cmd_set_nolist(cmd);
 	capture_param(line, cmd, NULL, (const double **) *pZ, pdinfo);
 	return cmd->err;
@@ -2454,11 +2450,14 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 #ifdef ENABLE_NLS
 	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
 	    *force_lang = ENGLISH;
+	    continue;
 	} else if (!strcmp(s, "-q") || !strncmp(s, "--basque", 8)) { 
 	    *force_lang = BASQUE;
+	    continue;
 	}
 #endif
-	else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) { 
+
+	if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) { 
 	    opt = OPT_BATCH;
 	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 
 	    opt = OPT_HELP;

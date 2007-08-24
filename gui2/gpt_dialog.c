@@ -135,6 +135,7 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     g_return_if_fail(GTK_IS_ENTRY(w));
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
 
+#ifdef ENABLE_NLS
     if (wstr != NULL && *wstr != '\0') {
 	gchar *trstr = gp_locale_from_utf8(wstr);
 
@@ -145,6 +146,11 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 	    strncat(targ, wstr, n-1);
 	}
     }
+#else
+    if (wstr != NULL && *wstr != '\0') {
+	strncat(targ, wstr, n-1);
+    }
+#endif
 }
 
 static FitType fit_type_from_string (const char *s)
@@ -279,8 +285,6 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
 #ifdef ENABLE_NLS
     int lv = iso_latin_version();
-#else
-    int lv = 0;
 #endif
     gchar *trstr = NULL;
 
@@ -289,6 +293,8 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 	return;
     }
 
+
+#ifdef ENABLE_NLS
     if (lv == 2) {
 	char lstr[MAXTITLE];
 	
@@ -299,6 +305,9 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
     } else {
 	trstr = g_strdup(str);
     }
+#else
+    trstr = g_strdup(str);
+#endif
 
     if (trstr != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(w), trstr);

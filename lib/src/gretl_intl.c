@@ -111,7 +111,9 @@ int doing_nls (void)
 #endif
 }
 
+#ifdef ENABLE_NLS
 static int decpoint;
+#endif
 
 /**
  * reset_local_decpoint:
@@ -618,6 +620,27 @@ char *iso_to_ascii (char *s)
     return real_iso_to_ascii(s, 1);
 }
 
+char *get_month_name (char *mname, int m)
+{
+    struct tm mt;
+
+    mt.tm_sec = 0;
+    mt.tm_min = 0;
+    mt.tm_hour = 0;
+    mt.tm_mday = 1;
+    mt.tm_mon = m - 1;
+    mt.tm_year = 100;
+
+    strftime(mname, 7, "%b", &mt);
+    *mname = tolower(*mname);
+
+#ifdef ENABLE_NLS
+    real_iso_to_ascii(mname, gretl_cset_min);
+#endif
+
+    return mname;
+}
+
 #ifdef ENABLE_NLS
 
 struct l2sym {
@@ -1002,25 +1025,6 @@ int gretl_is_ascii (const char *buf)
     return 1;
 }
 
-char *get_month_name (char *mname, int m)
-{
-    struct tm mt;
-
-    mt.tm_sec = 0;
-    mt.tm_min = 0;
-    mt.tm_hour = 0;
-    mt.tm_mday = 1;
-    mt.tm_mon = m - 1;
-    mt.tm_year = 100;
-
-    strftime(mname, 7, "%b", &mt);
-    *mname = tolower(*mname);
-
-    real_iso_to_ascii(mname, gretl_cset_min);
-
-    return mname;
-}
-
 int get_utf_width (const char *str, int width)
 {
     width += strlen(str) - g_utf8_strlen(str, -1);
@@ -1050,12 +1054,9 @@ char *maybe_iso_gettext (const char *msgid)
 
 void check_for_console (PRN *prn)
 {
-    if (prn == NULL) return;
-
-    if (printing_to_standard_stream(prn)) {
-	printing_to_console = 1;
-    } else {
-	printing_to_console = 0;
+    if (prn != NULL) {
+	printing_to_console = 
+	    printing_to_standard_stream(prn);
     }
 }
 
@@ -1064,4 +1065,11 @@ void console_off (void)
     printing_to_console = 0;
 }
 
-#endif /* ENABLE_NLS */
+#else
+
+int gretl_is_ascii (const char *buf)
+{
+    return 1;
+}
+
+#endif /* !ENABLE_NLS */

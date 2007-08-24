@@ -55,7 +55,7 @@ static void save_data_callback (void)
     /* FIXME: need to do more here? */
 }
 
-gint yes_no_dialog (char *title, char *msg, int cancel)
+gint yes_no_dialog (const char *title, const char *msg, int cancel)
 {
     GtkWidget *dialog, *label, *hbox;
     int ret = GTK_RESPONSE_HELP;
@@ -127,7 +127,7 @@ gboolean exit_check (void)
 	    code = SAVE_RENAME;
 	}
 
-	resp = yes_no_dialog ("gretl", _(msg), 1);
+	resp = yes_no_dialog("gretl", _(msg), 1);
 
 	if (resp == GRETL_YES) {
 	    save_session_callback(NULL, code, NULL);

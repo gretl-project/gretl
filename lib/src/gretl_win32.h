@@ -55,6 +55,8 @@ char *mydocs_path (void);
 
 int gretl_shell (const char *arg);
 
+int win32_write_access (char *path);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

@@ -41,7 +41,7 @@ static int n_full = sizeof full_targets / sizeof full_targets[0];
 
 static void gretl_clipboard_set (int copycode);
 
-#undef CLIPDEBUG
+#define CLIPDEBUG 0
 
 static void gretl_clipboard_free (void)
 {
@@ -76,7 +76,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     gchar *str;
     gint length;
 
-#ifdef CLIPDEBUG
+#if CLIPDEBUG
     fprintf(stderr, "info = %d\n", (int) info);
     if (info == TARGET_STRING) {
 	fprintf(stderr, " = TARGET_STRING\n");
@@ -162,6 +162,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     gretl_clipboard_free();
 
+#ifdef ENABLE_NLS
     if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) { 
 	/* need to convert from utf8 */
 	gchar *trbuf = my_locale_from_utf8(buf);
@@ -187,6 +188,15 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	clipboard_buf = gretl_strdup(buf);
 	err = (clipboard_buf == NULL);
     }
+#else
+    if (fmt == GRETL_FORMAT_RTF_TXT) { 
+	clipboard_buf = dosify_buffer(buf, fmt);
+	err = (clipboard_buf == NULL);
+    } else { 
+	clipboard_buf = gretl_strdup(buf);
+	err = (clipboard_buf == NULL);
+    }
+#endif
 
     if (!err) {
 	gretl_clipboard_set(fmt);

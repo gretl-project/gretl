@@ -3202,9 +3202,11 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	delim = (*ppdinfo)->delim;
     }
 
+#ifdef ENABLE_NLS
     if (prn != NULL) {
 	check_for_console(prn);
     }
+#endif
 
     if (gretl_messages_on()) {
 	mprn = prn;
@@ -3548,7 +3550,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     fclose(fp); 
     free(line);
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return 0;
 
@@ -3570,7 +3574,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	gretl_string_table_destroy(st);
     }
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return 1;
 }
@@ -3695,9 +3701,11 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     int i, t;
 
+#ifdef ENABLE_NLS
     if (prn != NULL) {
 	check_for_console(prn);
     }
+#endif
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -3868,7 +3876,9 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
     fclose(fp); 
     free(line);
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return 0;
 
@@ -3886,7 +3896,9 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 	clear_datainfo(octinfo, CLEAR_FULL);
     }
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return 1;
 }
@@ -3933,7 +3945,9 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
     double **boxZ = NULL;
     int err = 0;
 
+#ifdef ENABLE_NLS
     check_for_console(prn);
+#endif
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -4136,7 +4150,9 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
  box_bailout:
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return err;
 }
@@ -4162,13 +4178,17 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
     int err = 0;
 
+#ifdef ENABLE_NLS
     check_for_console(prn);
+#endif
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
-	return E_FOPEN;
+	err = E_FOPEN;
+	goto bailout;
     }
+
     fclose(fp);
 
     if (ftype == GRETL_GNUMERIC) {
@@ -4188,11 +4208,17 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (sheet_get_data == NULL) {
-        return 1;
+        err = 1;
+    } else {
+	err = (*sheet_get_data)(fname, pZ, *ppdinfo, prn);
+	close_plugin(handle);
     }
 
-    err = (*sheet_get_data)(fname, pZ, *ppdinfo, prn);
-    close_plugin(handle);
+ bailout:
+
+#ifdef ENABLE_NLS
+    console_off();
+#endif
 
     return err;
 }

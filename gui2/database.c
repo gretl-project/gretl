@@ -425,18 +425,45 @@ static void gui_import_series (GtkWidget *w, windata_t *vwin)
     gui_get_db_series(vwin, DB_IMPORT, NULL);
 }
 
+void sync_db_windows (void)
+{
+    const char *dname = get_db_name();
+
+    if (*dname != '\0') {
+	GtkWidget *w = match_window_by_filename(dname);
+	windata_t *vwin = NULL;
+
+	if (w != NULL) {
+	    vwin = g_object_get_data(G_OBJECT(w), "object");
+	}
+
+	if (vwin != NULL) {
+	    add_local_db_series_list(vwin);
+	}
+    }
+}
+
 static void gui_delete_series (GtkWidget *w, windata_t *vwin)
 {
     int *list = db_get_selection_list(vwin);
-    int err = 0;
+    int resp, err = 0;
 
-    if (list != NULL) {
-	err = db_delete_series_by_number(list);
+    if (list == NULL) {
+	return;
     }
 
-    if (err) {
-	gui_errmsg(err);
-	/* FIXME else */
+    resp = yes_no_dialog ("gretl", 
+			  _("Really delete the selected series?"),
+			  0);
+
+    if (resp == GRETL_YES) { 	
+	err = db_delete_series_by_number(list, vwin->fname);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    /* revise window contents */
+	    add_local_db_series_list(vwin);
+	}
     }
 }
 
@@ -704,46 +731,69 @@ static void set_up_db_menu (windata_t *vwin, int cb, int del)
     }
 }
 
-static void destroy_db_win (GtkWidget *w, gpointer data)
+static void destroy_db_win (GtkWidget *w, windata_t *vwin)
 {
-    windata_t *vwin = (windata_t *) data;
-
     if (vwin != NULL) {
 	if (vwin->popup != NULL) {
 	    gtk_widget_destroy(vwin->popup);
 	}
 	free(vwin);
-	vwin = NULL;
     }
 }
 
-static void test_db_book (const char *fname, int *cb)
+static int db_has_codebook (const char *fname)
 {
     char testname[MAXLEN];
     FILE *fp;
+    int ret = 0;
 
     strcpy(testname, fname);
     strcat(testname, ".cb");
 
     fp = gretl_fopen(testname, "r");
-
-    if (fp == NULL) {
-	*cb = 0;
-    } else {
-	*cb = 1;
+    if (fp != NULL) {
+	ret = 1;
 	fclose(fp);
     }
+
+    return ret;
 }
 
-static int make_db_series_list (int action, char *fname, char *buf)
+static int db_is_writable (int action, const char *fname)
+{
+    int ret = 0;
+
+    if (action == NATIVE_SERIES) {
+	char testname[MAXLEN];
+	int err;
+
+	strcpy(testname, fname);
+	strcat(testname, ".bin");
+	err = gretl_write_access(testname);
+	if (!err) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static int 
+make_db_series_window (int action, char *fname, char *buf)
 {
     GtkWidget *listbox, *closebutton;
-    GtkWidget *main_vbox;
+    GtkWidget *w, *main_vbox;
     char *titlestr;
     windata_t *vwin;
     int db_width = 700, db_height = 420;
-    int cb = 0, del = 0; /* FIXME */
+    int cb = 0, del = 0;
     int err = 0;
+
+    w = match_window_by_filename(fname);
+    if (w != NULL) {
+	gtk_window_present(GTK_WINDOW(w));
+	return 0;
+    }
 
     if (action == REMOTE_SERIES && buf == NULL) {
 	return 1;
@@ -759,9 +809,6 @@ static int make_db_series_list (int action, char *fname, char *buf)
 
     vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-    g_signal_connect(G_OBJECT(vwin->w), "destroy", 
-		     G_CALLBACK(destroy_db_win), vwin);
-
     db_width *= gui_scale;
     db_height *= gui_scale;
     gtk_window_set_default_size(GTK_WINDOW(vwin->w), db_width, db_height);
@@ -774,6 +821,18 @@ static int make_db_series_list (int action, char *fname, char *buf)
 
     gtk_window_set_title(GTK_WINDOW(vwin->w), titlestr);
 
+    if (action == NATIVE_SERIES) {
+	g_object_set_data(G_OBJECT(vwin->w), "object", vwin);
+	g_object_set_data(G_OBJECT(vwin->w), "role", 
+			  GINT_TO_POINTER(vwin->role));
+	winstack_add(vwin->w);
+	g_signal_connect(G_OBJECT(vwin->w), "destroy",
+			 G_CALLBACK(free_windata), vwin);	
+    } else {
+	g_signal_connect(G_OBJECT(vwin->w), "destroy", 
+			 G_CALLBACK(destroy_db_win), vwin);
+    }
+
     if (action == NATIVE_SERIES || action == PCGIVE_SERIES) {
 	strip_extension(fname);
     }
@@ -785,7 +844,9 @@ static int make_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 10);
     gtk_container_add(GTK_CONTAINER(vwin->w), main_vbox);
 
-    test_db_book(fname, &cb);
+    cb = db_has_codebook(fname);
+    del = db_is_writable(action, fname);
+
     set_up_db_menu(vwin, cb, del);
     build_db_popup(vwin, cb, del);
 
@@ -831,12 +892,12 @@ static int make_db_series_list (int action, char *fname, char *buf)
 
 void open_rats_window (char *fname)
 {
-    make_db_series_list(RATS_SERIES, fname, NULL);
+    make_db_series_window(RATS_SERIES, fname, NULL);
 }
 
 void open_bn7_window (char *fname)
 {
-    make_db_series_list(PCGIVE_SERIES, fname, NULL);
+    make_db_series_window(PCGIVE_SERIES, fname, NULL);
 }
 
 static int check_serinfo (char *str, char *sername, int *nobs)
@@ -1402,7 +1463,7 @@ void open_named_db_index (char *dbname)
 	errbox(_("Couldn't open database"));
     } else {
 	fclose(fp);
-	make_db_series_list(action, dbname, NULL);
+	make_db_series_window(action, dbname, NULL);
     } 
 }
 
@@ -1418,7 +1479,7 @@ void open_named_remote_db_index (char *dbname)
     } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
-	make_db_series_list(REMOTE_SERIES, dbname, getbuf);
+	make_db_series_window(REMOTE_SERIES, dbname, getbuf);
 	/* check for error */
     }
 
@@ -1449,7 +1510,7 @@ void open_db_index (GtkWidget *w, gpointer data)
     g_free(fname);
     g_free(dbdir);
 
-    make_db_series_list(action, dbfile, NULL); 
+    make_db_series_window(action, dbfile, NULL); 
 
 #ifndef KEEP_BROWSER_OPEN
     if (vwin != NULL && vwin->w != NULL && GTK_IS_WIDGET(vwin->w)) {
@@ -1486,7 +1547,7 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 	show_network_error(vwin);
     } else {
 	update_statusline(vwin, "OK");
-	make_db_series_list(REMOTE_SERIES, fname, getbuf);
+	make_db_series_window(REMOTE_SERIES, fname, getbuf);
     }
 
     g_free(fname);

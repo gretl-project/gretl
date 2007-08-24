@@ -88,14 +88,16 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);
 
+const char *get_db_name (void);
+
 int db_set_sample (const char *line, DATAINFO *pdinfo);
 
 int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
 		   PRN *prn);
 
-int db_delete_series_by_name (const char *line);
+int db_delete_series_by_name (const char *line, PRN *prn);
 
-int db_delete_series_by_number (const int *list);
+int db_delete_series_by_number (const int *list, const char *fname);
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 		     int *pad1, int *pad2);

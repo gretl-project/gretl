@@ -459,6 +459,18 @@ static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
     return cmds;
 }
 
+#ifndef ENABLE_NLS /* bodge */
+static void pprint_as_latin (PRN *prn, const char *s, int emf)
+{
+    pputs(prn, s);
+}
+
+static int html_encoded (const char *s)
+{
+    return 0;
+}
+#endif
+
 void save_graph_to_file (gpointer data, const char *fname)
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;

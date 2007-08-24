@@ -39,7 +39,7 @@ void errbox (const char *template, ...);
 
 void infobox (const char *template, ...);
 
-gint yes_no_dialog (char *title, char *msg, int cancel);
+gint yes_no_dialog (const char *title, const char *msg, int cancel);
 
 int make_default_storelist (void);
 

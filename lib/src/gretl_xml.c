@@ -2074,7 +2074,9 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     gretl_error_clear();
 
+#ifdef ENABLE_NLS
     check_for_console(prn);
+#endif
 
     tmpdinfo = datainfo_new();
     if (tmpdinfo == NULL) {
@@ -2240,7 +2242,9 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	free(tmpdinfo);
     }
 
+#ifdef ENABLE_NLS
     console_off();
+#endif
 
     return err;
 }

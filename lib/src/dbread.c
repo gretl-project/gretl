@@ -25,6 +25,7 @@
 
 #include <glib.h>
 #include <unistd.h>
+#include <errno.h>
 
 #if WORDS_BIGENDIAN
 # include <netinet/in.h>
@@ -313,28 +314,31 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 }
 
 static int 
-open_native_db_files (FILE **f1, char *name1, FILE **f2, char *name2)
+open_native_db_files (const char *dname, FILE **f1, char *name1, 
+		      FILE **f2, char *name2)
 {
+    char dbbase[FILENAME_MAX];
+    char fname[FILENAME_MAX];
     FILE *fidx = NULL, *fbin = NULL;
-    char fname[MAXLEN];
-    char *p;
     int err = 0;
 
+    if (dname != NULL) {
+	strcpy(dbbase, dname);
+    } else {
+	strcpy(dbbase, db_name);
+    }
+
+    if (has_suffix(dbbase, ".bin")) {
+	dbbase[strlen(dbbase) - 4] = '\0';
+    }
+
     if (f1 != NULL) {
-	strcpy(fname, db_name);
-	p = strstr(fname, ".bin");
-	if (p != NULL) {
-	    strcpy(p, ".idx");
-	} else {
-	    strcat(fname, ".idx");
-	}
+	strcpy(fname, dbbase);
+	strcat(fname, ".idx");
 
 	if (name1 != NULL) {
-	    /* test for write access FIXME win32 */
-	    err = access(fname, W_OK);
-	    if (err) {
-		sprintf(gretl_errmsg, "Can't write to %s", fname);
-	    } else {
+	    err = gretl_write_access(fname);
+	    if (!err) {
 		strcpy(name1, fname);
 	    }
 	}
@@ -349,18 +353,12 @@ open_native_db_files (FILE **f1, char *name1, FILE **f2, char *name2)
     }
 
     if (f2 != NULL && !err) {
-	strcpy(fname, db_name);
-	p = strstr(fname, ".bin");
-	if (p == NULL) {
-	    strcat(fname, ".bin");
-	}
+	strcpy(fname, dbbase);
+	strcat(fname, ".bin");
 
 	if (name2 != NULL) {
-	    /* test for write access FIXME win32 */
-	    err = access(fname, W_OK); 
-	    if (err) {
-		sprintf(gretl_errmsg, "Can't write to %s", fname);
-	    } else {
+	    err = gretl_write_access(fname);
+	    if (!err) {
 		strcpy(name2, fname);
 	    }
 	}
@@ -402,7 +400,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     int gotit = 0, err = 0;
     int n;
 
-    err = open_native_db_files(&fp, NULL, NULL, NULL);
+    err = open_native_db_files(db_name, &fp, NULL, NULL, NULL);
     if (err) {
 	return err;
     }
@@ -1509,6 +1507,11 @@ set_db_name (const char *fname, int filetype, const PATHS *ppaths, PRN *prn)
     return err;
 }
 
+const char *get_db_name (void)
+{
+    return db_name;
+}
+
 int db_set_sample (const char *line, DATAINFO *pdinfo)
 {
     char cmd[5], start[OBSLEN], stop[OBSLEN];
@@ -1778,10 +1781,6 @@ static FILE *tempfile_open (char *fname, int *err)
 	}
     } 
 
-    if (fp != NULL) {
-	fprintf(stderr, "tempfile_open: %s\n", fname);
-    }
-
     return fp;
 }
 
@@ -1794,7 +1793,8 @@ static void maybe_fclose (FILE *fp)
 
 #define DBUFLEN 1024
 
-static int db_delete_series (const char *line, const int *list)
+static int db_delete_series (const char *line, const int *list,
+			     const char *fname, PRN *prn)
 {
     dbnumber buf[DBUFLEN];
     char src1[FILENAME_MAX];
@@ -1807,19 +1807,23 @@ static int db_delete_series (const char *line, const int *list)
     FILE *fidx = NULL, *fbin = NULL;
     FILE *f1 = NULL, *f2 = NULL;
     int i, j, k, print, n, ns;
+    int ndel = 0;
     int err = 0;
 
-    if (*db_name == '\0') {
-	strcpy(gretl_errmsg, _("No database has been opened"));
-	return 1;
-    }   
+    if (fname == NULL) {
+	if (*db_name == '\0') {
+	    strcpy(gretl_errmsg, _("No database has been opened"));
+	    err = 1;
+	} else if (db_type != GRETL_NATIVE_DB) {
+	    strcpy(gretl_errmsg, "This only works for gretl databases");
+	    err = 1;
+	} else {
+	    err = open_native_db_files(db_name, &fidx, src1, &fbin, src2);
+	}
+    } else {
+	err = open_native_db_files(fname, &fidx, src1, &fbin, src2);
+    }
 
-    if (db_type != GRETL_NATIVE_DB) {
-	strcpy(gretl_errmsg, "This only works for gretl databases");
-	return 1;
-    }	
-
-    err = open_native_db_files(&fidx, src1, &fbin, src2);
     if (err) {
 	return err;
     }
@@ -1840,17 +1844,11 @@ static int db_delete_series (const char *line, const int *list)
 
     if (line != NULL) {
 	/* extract the variable names given on the line */
-	if (!strncmp(line, "delete ", 7)) {
-	    line += 7;
-	}
-
 	ns = 0;
-
 	while ((line = get_word_and_advance(line, series, VNAMELEN-1)) 
 	       && !err) {
 	    err = strings_array_add(&snames, &ns, series);
 	}
-
 	if (!err && ns == 0) {
 	    fprintf(stderr, "Found no series names\n");
 	    err = E_PARSE;
@@ -1876,6 +1874,7 @@ static int db_delete_series (const char *line, const int *list)
 		for (j=0; j<ns; j++) {
 		    if (!strcmp(series, snames[j])) {
 			print = 0;
+			ndel++;
 			break;
 		    }
 		}
@@ -1883,6 +1882,7 @@ static int db_delete_series (const char *line, const int *list)
 		if (k <= list[0] && list[k] == j) {
 		    k++;
 		    print = 0;
+		    ndel++;
 		}
 		j++;
 	    }
@@ -1933,30 +1933,34 @@ static int db_delete_series (const char *line, const int *list)
     maybe_fclose(f1);
     maybe_fclose(f2);
 
-    if (!err) {
-#if 1
-	rename(tmp1, "dbdel.idx");
-	rename(tmp2, "dbdel.bin");
-#else
-	rename(tmp1, src1);
-	rename(tmp2, src2);
-#endif
+    if (!err && ndel > 0) {
+	err = rename(tmp1, src1);
+	if (!err) {
+	    err = rename(tmp2, src2);
+	}
+	if (err) {
+	    strcpy(gretl_errmsg, strerror(errno));
+	}
     } else {
 	remove(tmp1);
 	remove(tmp2);
     }
 
+    if (!err && prn != NULL) {
+	pprintf(prn, "Deleted %d series from %s\n", ndel, src2);
+    }
+
     return err;
 }
 
-int db_delete_series_by_name (const char *line)
+int db_delete_series_by_name (const char *line, PRN *prn)
 {
-    return db_delete_series(line, NULL);
+    return db_delete_series(line, NULL, NULL, prn);
 }
 
-int db_delete_series_by_number (const int *list)
+int db_delete_series_by_number (const int *list, const char *fname)
 {
-    return db_delete_series(NULL, list);
+    return db_delete_series(NULL, list, fname, NULL);
 }
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
