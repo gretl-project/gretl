@@ -23,8 +23,11 @@
 #include "libset.h"
 #include "gretl_www.h"
 
+#include <glib.h>
+
 #include <windows.h>
 #include <shlobj.h>
+#include <aclapi.h>
 
 int read_reg_val (HKEY tree, const char *base, 
 		  char *keyname, char *keyval)
@@ -396,9 +399,9 @@ int win32_write_access (char *path)
     SECURITY_DESCRIPTOR *sd = NULL;
     TRUSTEE t;
     const char *username;
-    int sidsize = 0, stype = 0;
-    int dlen = 0;
-    int amask, ret;
+    DWORD sidsize = 0, dlen = 0;
+    SID_NAME_USE stype;
+    ACCESS_MASK amask;
     int ret, err = 0;
     int ok = 0;
 
@@ -453,4 +456,3 @@ int win32_write_access (char *path)
 
     return ok;
 }
-
