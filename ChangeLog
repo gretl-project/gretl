@@ -39,6 +39,12 @@ version 1.6.6, in progress
 - Modify retrieval of info from VARs: $coeff gets the matrix
   of coefficients, $compan gets the companion matrix
 - gretlcli: Ctrl-X exits without prompting for save
+- Databases: allow selection of more than one series for
+  display, graphing, importing
+- Databases: allowing deletion of series from native gretl
+  databases (if the user has write access)
+- New command, "dataset": subsumes the old "addobs" and
+  "transpos", while adding new options
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
