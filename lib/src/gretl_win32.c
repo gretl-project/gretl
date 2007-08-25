@@ -398,95 +398,70 @@ int win32_write_access (char *path)
 {
     SID *sid = NULL;
     ACL *dacl = NULL;
+    LPTSTR domain = NULL;
     SECURITY_DESCRIPTOR *sd = NULL;
     TRUSTEE t;
-    const char *username;
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
     ACCESS_MASK amask;
-    LPTSTR domain;
+    const char *username;
     int ret, ok = 0, err = 0;
 
+    /* screen for the read-only attribute first */
+    if (g_access(path, W_OK) != 0) {
+	return 0;
+    }
+
     username = g_get_user_name();
-    fprintf(stderr, "Got username = '%s'\n", username);
 
     /* get the size of the SID and domain */
     LookupAccountName(NULL, username, NULL, &sidsize, 
 		      NULL, &dlen, &stype);
 
-    fprintf(stderr, "LookupAccountName: sidsize=%d, dlen=%d\n", 
-            (int) sidsize, (int) dlen);
-
     sid = LocalAlloc(0, sidsize);
     domain = LocalAlloc(0, dlen * sizeof *domain);
     if (sid == NULL || domain == NULL) {
-	fprintf(stderr, "LocalAlloc failed\n");
 	err = 1;
-    } else {
-	fprintf(stderr, "LocalAlloc: sid = %p\n", (void *) sid);
-    }
+    } 
 
     if (!err) {
 	/* call the function for real */
-        fprintf(stderr, "calling LookupAccountName\n");
 	ret = LookupAccountName(NULL, username, sid, &sidsize, 
 				domain, &dlen, &stype);
 	err = (ret == 0);
-	fprintf(stderr, "LookupAccountName: ret = %d\n", ret);
-        fprintf(stderr, "domain = '%s'\n", domain);
     }
 
     if (!err) {
 	/* build a trustee and get the file's DACL */
-	fprintf(stderr, "calling BuildTrusteeWithSid\n");
 	BuildTrusteeWithSid(&t, sid);
-	fprintf(stderr, "calling GetNamedSecurityInfo\n");
 	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT, 
 				   DACL_SECURITY_INFORMATION, 
 				   NULL, NULL, &dacl, NULL, &sd);
 	err = (ret != ERROR_SUCCESS);
-	fprintf(stderr, "GetNamedSecurityInfo: ret = %d\n", ret);
     }
 
     if (!err) {
 	/* get the access mask for this trustee */
-	fprintf(stderr, "calling GetEffectiveRightsFromAcl\n");
 	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
 	err = (ret != ERROR_SUCCESS);
-	fprintf(stderr, "GetEffectiveRightsFromAcl: ret = %d\n", ret);
-    }
-
-    if (!err) {
-        fprintf(stderr, "amask = %d\n", (int) amask);
-	if (amask & STANDARD_RIGHTS_ALL) {
-	    fprintf(stderr, "STANDARD_RIGHTS_ALL: yes\n");
-	} else {
-	    fprintf(stderr, "STANDARD_RIGHTS_ALL: no\n");
-	}
-	if (amask & STANDARD_RIGHTS_EXECUTE) {
-	    fprintf(stderr, "STANDARD_RIGHTS_EXECUTE: yes\n");
-	} else {
-	    fprintf(stderr, "STANDARD_RIGHTS_EXECUTE: no\n");
-	}
-	if (amask & STANDARD_RIGHTS_WRITE) {
-	    fprintf(stderr, "STANDARD_RIGHTS_WRITE: yes\n");
-	} else {
-	    fprintf(stderr, "STANDARD_RIGHTS_WRITE: no\n");
-	}
-	if (amask & STANDARD_RIGHTS_READ) {
-	    fprintf(stderr, "STANDARD_RIGHTS_READ: yes\n");
-	} else {
-	    fprintf(stderr, "STANDARD_RIGHTS_READ: no\n");
-	}
     }
 
     if (!err && (amask & STANDARD_RIGHTS_WRITE)) {
 	ok = 1;
     }
 
-    LocalFree(dacl);
-    LocalFree(sd);
-    LocalFree(domain);
+    if (dacl != NULL) {
+	LocalFree(dacl);
+    }
+    if (sid != NULL) {
+	LocalFree(sid);
+    }    
+    if (sd != NULL) {
+	LocalFree(sd);
+    }
+    if (domain != NULL) {
+	LocalFree(domain);
+    }
 
     if (err) {
 	win_show_last_error();
