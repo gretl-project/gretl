@@ -408,7 +408,7 @@ int win32_write_access (char *path)
     int ret, ok = 0, err = 0;
 
     /* screen for the read-only attribute first */
-    if (g_access(path, W_OK) != 0) {
+    if (access(path, W_OK) != 0) {
 	return 0;
     }
 

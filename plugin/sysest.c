@@ -21,7 +21,7 @@
 #include "gretl_matrix.h"
 #include "system.h"
 
-#define SDEBUG 1
+#define SDEBUG 0
 
 /* fiml.c */
 extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 
@@ -1180,7 +1180,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (nr > 0) {
-	/* there are cross-equation restrictions to be imposed */
+	/* there are restrictions to be imposed */
 	augment_X_with_restrictions(X, mk, sys);
     }
 
@@ -1241,7 +1241,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (nr > 0) {
-	/* there are cross-equation restrictions */
+	/* there are restrictions */
 	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
