@@ -528,43 +528,37 @@ enum {
     FUNCS_CODE
 };
 
-static const char *arg_type_string (int type)
+static const char *arg_type_string (int t)
 {
-    if (type == ARG_BOOL) {
-	return "bool";
-    } else if (type == ARG_INT) {
-	return "int";
-    } else if (type == ARG_SCALAR) {
-	return "scalar";
-    } else if (type == ARG_SERIES) {
-	return "series";
-    } else if (type == ARG_LIST) {
-	return "list";
-    } else if (type == ARG_MATRIX) {
-	return "matrix";
-    } else if (type == ARG_REF_SCALAR) {
-	return "scalar *";
-    } else if (type == ARG_REF_SERIES) {
-	return "series *";
-    } else if (type == ARG_REF_MATRIX) {
-	return "matrix *";
+    switch (t) {
+    case ARG_BOOL:       return "bool";
+    case ARG_INT:        return "int";
+    case ARG_SCALAR:     return "scalar";
+    case ARG_SERIES:     return "series";
+    case ARG_LIST:       return "list";
+    case ARG_MATRIX:     return "matrix";
+    case ARG_REF_SCALAR: return "scalar *";
+    case ARG_REF_SERIES: return "series *";
+    case ARG_REF_MATRIX: return "matrix *";
+    }
+
+    return "unknown";
+}
+
+static const char *arg_type_xml_string (int t)
+{
+    if (t == ARG_REF_SCALAR) {
+	return "scalarref";
+    } else if (t == ARG_REF_SERIES) {
+	return "seriesref";
+    } else if (t == ARG_REF_MATRIX) {
+	return "matrixref";
     } else {
-	return "unknown";
+	return arg_type_string(t);
     }
 }
 
-static const char *arg_type_xml_string (int type)
-{
-    if (type == ARG_REF_SCALAR) {
-	return "scalarref";
-    } else if (type == ARG_REF_SERIES) {
-	return "seriesref";
-    } else if (type == ARG_REF_MATRIX) {
-	return "matrixref";
-    } else {
-	return arg_type_string(type);
-    }
-}
+/* FIXME updating and placement of these function */
 
 static int arg_type_from_string (const char *s)
 {
@@ -586,6 +580,27 @@ static int arg_type_from_string (const char *s)
     return 0;
 }
 
+/* backward compatibility for nasty old numeric type references */
+
+static int arg_type_from_int (const char *s)
+{
+    int i = atoi(s);
+
+    switch (i) {
+    case 1: return ARG_SCALAR;
+    case 2: return ARG_SERIES;
+    case 3: return ARG_LIST;
+    case 4: return ARG_MATRIX;
+    case 5: return ARG_BOOL;
+    case 6: return ARG_INT;
+    case 7: return ARG_REF_SCALAR;
+    case 8: return ARG_REF_SERIES;
+    case 9: return ARG_REF_MATRIX;
+    }
+
+    return ARG_NONE;
+}
+
 static int field_to_type (const char *s)
 {
 #if FN_DEBUG
@@ -593,7 +608,7 @@ static int field_to_type (const char *s)
 #endif
 
     if (isdigit(*s)) {
-	return atoi(s);
+	return arg_type_from_int(s);
     } else {
 	return arg_type_from_string(s);
     }
