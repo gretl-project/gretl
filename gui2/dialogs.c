@@ -1491,7 +1491,7 @@ static void set_rand_seed (GtkWidget *w, guint32 *s)
 
 void rand_seed_dialog (void)
 {
-    guint32 dseed = get_gretl_random_seed();
+    guint32 dseed = gretl_rand_get_seed();
     GtkWidget *dlg;
     GtkWidget *tmp, *hbox;
     GtkObject *adj;

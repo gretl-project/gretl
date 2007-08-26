@@ -276,7 +276,7 @@ static void make_normal_y (boot *bs)
     int i, t;
 
     /* generate scaled normal errors */
-    gretl_normal_dist(bs->y->val, 0, bs->T - 1);
+    gretl_rand_normal(bs->y->val, 0, bs->T - 1);
     for (t=0; t<bs->T; t++) {
 	bs->y->val[t] *= bs->SE;
     }
@@ -301,7 +301,7 @@ resample_vector (const gretl_matrix *u0, gretl_matrix *u,
     int i, t;
 
     /* generate uniform random series */
-    gretl_uniform_dist(z, 0, T - 1);
+    gretl_rand_uniform(z, 0, T - 1);
 
     /* sample from source vector based on indices */
     for (t=0; t<T; t++) {

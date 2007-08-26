@@ -455,7 +455,7 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
     }
 
     /* generate uniform random series */
-    gretl_uniform_dist(z, 0, n - 1);
+    gretl_rand_uniform(z, 0, n - 1);
 
     /* sample from source series based on indices */
     for (t=t1; t<=t2; t++) {

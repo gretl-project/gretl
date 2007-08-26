@@ -29,7 +29,7 @@ static unsigned int useed;
 
 #undef OLD_NORMAL
 
-unsigned int get_gretl_random_seed (void)
+unsigned int gretl_rand_get_seed (void)
 {
     return useed;
 }
@@ -129,7 +129,7 @@ void gretl_two_snormals (double *z1, double *z2)
 }
 
 /**
- * gretl_uniform_dist_minmax:
+ * gretl_rand_uniform_minmax:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -143,7 +143,7 @@ void gretl_two_snormals (double *z1, double *z2)
  * Returns: 0 on success, 1 on invalid input.
  */
 
-int gretl_uniform_dist_minmax (double *a, int t1, int t2,
+int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 			       double min, double max) 
 {
     int t;
@@ -163,7 +163,7 @@ int gretl_uniform_dist_minmax (double *a, int t1, int t2,
 }
 
 /**
- * gretl_uniform_dist:
+ * gretl_rand_uniform:
  * @a: target array
  * @t1: start of the fill range
  * @t2: end of the fill range
@@ -173,7 +173,7 @@ int gretl_uniform_dist_minmax (double *a, int t1, int t2,
  * Twister.
  */
 
-void gretl_uniform_dist (double *a, int t1, int t2) 
+void gretl_rand_uniform (double *a, int t1, int t2) 
 {
     int t;
 
@@ -183,7 +183,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 }
 
 /**
- * gretl_normal_dist:
+ * gretl_rand_normal:
  * @a: target array
  * @t1: start of the fill range
  * @t2: end of the fill range
@@ -194,7 +194,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
  * normal distribution.
  */
 
-void gretl_normal_dist (double *a, int t1, int t2) 
+void gretl_rand_normal (double *a, int t1, int t2) 
 {
 #ifndef OLD_NORMAL
     double z1, z2;
@@ -217,7 +217,7 @@ void gretl_normal_dist (double *a, int t1, int t2)
 }
 
 /**
- * gretl_normal_dist_with_params:
+ * gretl_rand_normal_full:
  * @a: target array
  * @t1: start of the fill range
  * @t2: end of the fill range
@@ -233,8 +233,8 @@ void gretl_normal_dist (double *a, int t1, int t2)
  */
 
 int
-gretl_normal_dist_with_params (double *a, int t1, int t2,
-			       double mean, double sd) 
+gretl_rand_normal_full (double *a, int t1, int t2,
+			double mean, double sd) 
 {
     int t;
 
@@ -245,7 +245,7 @@ gretl_normal_dist_with_params (double *a, int t1, int t2,
 	return E_INVARG;
     }
 
-    gretl_normal_dist(a, t1, t2);
+    gretl_rand_normal(a, t1, t2);
 
     if (mean != 0.0 || sd != 1.0) {
 	for (t=t1; t<=t2; t++) {
@@ -257,7 +257,7 @@ gretl_normal_dist_with_params (double *a, int t1, int t2,
 }
 
 /**
- * gretl_chisq_dist:
+ * gretl_rand_chisq:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -271,7 +271,7 @@ gretl_normal_dist_with_params (double *a, int t1, int t2,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_chisq_dist (double *a, int t1, int t2, int v) 
+int gretl_rand_chisq (double *a, int t1, int t2, int v) 
 {
     double z;
     int i, t;
@@ -292,7 +292,7 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v)
 }
 
 /**
- * gretl_t_dist:
+ * gretl_rand_student:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -306,7 +306,7 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_t_dist (double *a, int t1, int t2, int v) 
+int gretl_rand_student (double *a, int t1, int t2, int v) 
 {
     double *X2 = NULL;
     int T = t2 - t1 + 1;
@@ -321,8 +321,8 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
 	return E_ALLOC;
     }
 
-    gretl_normal_dist(a, t1, t2);
-    gretl_chisq_dist(X2, 0, T-1, v);
+    gretl_rand_normal(a, t1, t2);
+    gretl_rand_chisq(X2, 0, T-1, v);
 
     for (t=0; t<T; t++) {
 	a[t + t1] /= sqrt(X2[t] / v);
@@ -334,7 +334,51 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
 }
 
 /**
- * gretl_binomial_dist:
+ * gretl_rand_F:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @v1: numerator degrees of freedom.
+ * @v2: denominator degrees of freedom.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the F distribution with @v1 and @v2 degrees of freedom, 
+ * using the Mersenne Twister for uniform input and the Box-Muller 
+ * method for converting to the normal distribution.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_rand_F (double *a, int t1, int t2, int v1, int v2) 
+{
+    double *b = NULL;
+    int T = t2 - t1 + 1;
+    int s, t;
+
+    if (v1 < 1 || v2 < 1) {
+	return E_INVARG;
+    }
+
+    b = malloc(T * sizeof *b);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_rand_chisq(a, t1, t2, v1);
+    gretl_rand_chisq(b, 0, T-1, v2);
+
+    for (t=0; t<T; t++) {
+	s = t + t1;
+	a[s] = (a[s]/v1) / (b[t]/v2);
+    }
+
+    free(b);
+
+    return 0;
+}
+
+/**
+ * gretl_rand_binomial:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -347,7 +391,7 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_binomial_dist (double *a, int t1, int t2, int n, double p) 
+int gretl_rand_binomial (double *a, int t1, int t2, int n, double p) 
 {
     double *b;
     int i, t;
@@ -363,7 +407,7 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
 
     for (t=t1; t<=t2; t++) {
 	a[t] = 0.0;
-	gretl_uniform_dist(b, 0, n - 1);
+	gretl_rand_uniform(b, 0, n - 1);
 	for (i=0; i<n; i++) {
 	    if (b[i] <= p) {
 		a[t] += 1;
@@ -377,7 +421,7 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
 }
 
 /**
- * gretl_gamma_dist:
+ * gretl_rand_gamma:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -390,7 +434,7 @@ int gretl_binomial_dist (double *a, int t1, int t2, int n, double p)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_gamma_dist (double *a, int t1, int t2, 
+int gretl_rand_gamma (double *a, int t1, int t2, 
 		      double shape, double scale) 
 {
     double *U = NULL;
@@ -504,7 +548,7 @@ static double genpois (double m)
 }
 
 /**
- * gretl_poisson_dist:
+ * gretl_rand_poisson:
  * @a: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
@@ -517,7 +561,7 @@ static double genpois (double m)
  * of length greater than or equal to @t2 + 1.  
  */
 
-void gretl_poisson_dist (double *a, int t1, int t2, double *m,
+void gretl_rand_poisson (double *a, int t1, int t2, double *m,
 			 int vec) 
 {
     int t;

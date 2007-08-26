@@ -24,26 +24,28 @@ void gretl_rand_set_seed (unsigned int seed);
 
 double gretl_one_snormal (void);
 
-void gretl_uniform_dist (double *a, int t1, int t2);
+void gretl_rand_uniform (double *a, int t1, int t2);
 
-int gretl_uniform_dist_minmax (double *a, int t1, int t2,
+int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 			       double min, double max);
 
-void gretl_normal_dist (double *a, int t1, int t2);
+void gretl_rand_normal (double *a, int t1, int t2);
 
-int gretl_normal_dist_with_params (double *a, int t1, int t2,
-				   double mean, double sd);
+int gretl_rand_normal_full (double *a, int t1, int t2,
+			    double mean, double sd);
 
-int gretl_chisq_dist (double *a, int t1, int t2, int v);
+int gretl_rand_chisq (double *a, int t1, int t2, int v);
 
-int gretl_t_dist (double *a, int t1, int t2, int v);
+int gretl_rand_student (double *a, int t1, int t2, int v);
 
-int gretl_binomial_dist (double *a, int t1, int t2, int n, double p);
+int gretl_rand_F (double *a, int t1, int t2, int v1, int v2);
 
-void gretl_poisson_dist (double *a, int t1, int t2, double *m,
+int gretl_rand_binomial (double *a, int t1, int t2, int n, double p);
+
+void gretl_rand_poisson (double *a, int t1, int t2, double *m,
 			 int vec);
 
-int gretl_gamma_dist (double *a, int t1, int t2,  
+int gretl_rand_gamma (double *a, int t1, int t2,  
 		      double shape, double scale);
 
 unsigned int gretl_rand_int_max (unsigned int max);
@@ -54,7 +56,7 @@ void gretl_rand_init (void);
 
 void gretl_rand_free (void);
 
-unsigned int get_gretl_random_seed (void);
+unsigned int gretl_rand_get_seed (void);
 
 #endif /* RANDOM_H */
 

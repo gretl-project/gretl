@@ -1901,35 +1901,35 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case UNIFORM:
-	    p->err = gretl_uniform_dist_minmax(ret->v.xvec, 
+	    p->err = gretl_rand_uniform_minmax(ret->v.xvec, 
 					       p->dinfo->t1, 
 					       p->dinfo->t2,
 					       x, y);
 	    break;
 	case NORMAL:
-	    p->err = gretl_normal_dist_with_params(ret->v.xvec, 
-						   p->dinfo->t1, 
-						   p->dinfo->t2,
-						   x, y);
+	    p->err = gretl_rand_normal_full(ret->v.xvec, 
+					    p->dinfo->t1, 
+					    p->dinfo->t2,
+					    x, y);
 	    break;
 	case CHISQ:
-	    p->err = gretl_chisq_dist(ret->v.xvec, p->dinfo->t1, 
+	    p->err = gretl_rand_chisq(ret->v.xvec, p->dinfo->t1, 
 				      p->dinfo->t2, v);
 	    break;
 	case STUDENT:
-	    p->err = gretl_t_dist(ret->v.xvec, p->dinfo->t1, 
-				  p->dinfo->t2, v);
+	    p->err = gretl_rand_student(ret->v.xvec, p->dinfo->t1, 
+					p->dinfo->t2, v);
 	    break;
 	case BINOMIAL:
-	    p->err = gretl_binomial_dist(ret->v.xvec, p->dinfo->t1, 
+	    p->err = gretl_rand_binomial(ret->v.xvec, p->dinfo->t1, 
 					 p->dinfo->t2, v, y);
 	    break;
 	case GENGAMMA:
-	    p->err = gretl_gamma_dist(ret->v.xvec, p->dinfo->t1, 
+	    p->err = gretl_rand_gamma(ret->v.xvec, p->dinfo->t1, 
 				      p->dinfo->t2, x, y);
 	    break;
 	case GENPOIS:
-	    gretl_poisson_dist(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
+	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
 			       (v)? vx : &x, v);
 	    break;
 	default:

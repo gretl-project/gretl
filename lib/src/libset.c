@@ -1264,7 +1264,7 @@ static int display_settings (PRN *prn)
     pprintf(prn, " use_cwd = %d\n", flag_to_bool(state, STATE_USE_CWD));
     pprintf(prn, " force_decpoint = %d\n", flag_to_bool(state, STATE_FORCE_DECPOINT));
 
-    uval = get_gretl_random_seed();
+    uval = gretl_rand_get_seed();
     pprintf(prn, " seed = %u\n", uval);
 
     pprintf(prn, " hac_lag = %s\n", get_hac_lag_string());

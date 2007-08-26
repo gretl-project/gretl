@@ -633,9 +633,9 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
     n = m->rows * m->cols;
 
     if (dist == D_NORMAL) {
-	gretl_normal_dist(m->val, 0, n - 1);
+	gretl_rand_normal(m->val, 0, n - 1);
     } else if (dist == D_UNIFORM) {
-	gretl_uniform_dist(m->val, 0, n - 1);
+	gretl_rand_uniform(m->val, 0, n - 1);
     }
 
     return 0;
@@ -668,9 +668,9 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
     }
 
     if (dist == D_NORMAL) {
-	gretl_normal_dist(m->val, 0, r * c - 1);
+	gretl_rand_normal(m->val, 0, r * c - 1);
     } else if (dist == D_UNIFORM) {
-	gretl_uniform_dist(m->val, 0, r * c - 1);
+	gretl_rand_uniform(m->val, 0, r * c - 1);
     }
 
     return m;
