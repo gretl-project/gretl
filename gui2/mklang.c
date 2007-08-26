@@ -14,6 +14,7 @@ const char *special_keyword[] = {
     "3sls",
     "liml",
     "fiml",
+    "sur",
     NULL
 };
 
