@@ -516,7 +516,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	break;
 
     case RAND_GAMMA:
-	gretl_command_sprintf("genr %s = gamma(%g,%g)", vname, 
+	gretl_command_sprintf("genr %s = rgamma(%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
 
