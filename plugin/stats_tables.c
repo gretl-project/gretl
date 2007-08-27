@@ -158,9 +158,8 @@ static const int rank_sum_upper[39][3] = {
 
 static void other_tables (PRN *prn)
 {
-    pputs(prn, _("\nFor more comprehensive statistical tables, please consult "
-		 "a statistics or\neconometrics text, e.g. Ramanathan's "
-		 "Introductory Econometrics.\n"));
+    pputs(prn, _("\nFor more comprehensive statistical tables, please consult\n"
+		 "http://www.stanford.edu/~clint/bench/dwcrit.htm"));
 }
 
 void dw_lookup (int n, PRN *prn)
