@@ -474,7 +474,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     vname = gtk_entry_get_text(GTK_ENTRY(tab->entry[j]));
     if (vname == NULL || *vname == '\0') {
-	errbox(_("You musy give a name for the variable"));
+	errbox(_("You must give a name for the variable"));
 	return;
     } else if (validate_varname(vname)) {
 	return;
@@ -522,7 +522,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     case RAND_BINOMIAL: 
 	gretl_command_sprintf("genr %s = binomial(%g,%g)", vname, 
-			      x[0], x[1]);
+			      x[1], x[0]);
 	break;
     }
 
