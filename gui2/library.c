@@ -1619,7 +1619,7 @@ int do_confidence_region (selector *sr)
     b[1] = pmod->coeff[v[1]];
 
     t = tcrit95(pmod->dfd);
-    kF = 2.0 * f_critval(.05, 2, pmod->dfd);
+    kF = 2.0 * snedecor_critval(.05, 2, pmod->dfd);
 
     gretl_model_get_param_name(pmod, datainfo, v[0], iname);
     gretl_model_get_param_name(pmod, datainfo, v[1], jname);

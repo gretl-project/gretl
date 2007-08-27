@@ -304,7 +304,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 
     if (!na(cmp->F)) {
-	pval = f_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
+	pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
 	if (verbosity > 0) {
 	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		    (cmp->robust)? _("Robust F") : "F",
@@ -1240,7 +1240,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	aux.aux = AUX_RESET;
 	printmodel(&aux, pdinfo, OPT_NONE, prn);
 	RF = ((pmod->ess - aux.ess) / 2) / (aux.ess / aux.dfd);
-	pval = f_cdf_comp(RF, 2, aux.dfd);
+	pval = snedecor_cdf_comp(RF, 2, aux.dfd);
 
 	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
@@ -1386,7 +1386,7 @@ int autocorr_test (MODEL *pmod, int order,
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 
-	pval = f_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
+	pval = snedecor_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
 
 	if (pmod->aux != AUX_VAR) {
 	    if (opt & OPT_Q) {
@@ -1750,7 +1750,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
 	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
 		(chow_mod.ess * dfn);
-	    pval = f_cdf_comp(F, dfn, chow_mod.dfd);
+	    pval = snedecor_cdf_comp(F, dfn, chow_mod.dfd);
 	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
 		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
 		    dfn, chow_mod.dfd, F, pval);
@@ -1920,7 +1920,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
     double hct, pval;
 
     hct = (sqrt((double) m) * wbar) / sigma;
-    pval = t_pvalue_2(hct, m - 1);
+    pval = student_pvalue_2(hct, m - 1);
     pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
 	    m - 1, hct, pval);
 

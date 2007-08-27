@@ -647,7 +647,7 @@ static void print_panel_coeff (const MODEL *pmod,
     mc.b = pmod->coeff[i];
     mc.se = pmod->sderr[i];
     mc.tval = mc.b / mc.se;
-    mc.pval = t_pvalue_2(mc.tval, pmod->dfd);
+    mc.pval = student_pvalue_2(mc.tval, pmod->dfd);
     strcpy(mc.name, vname);
     print_coeff(&mc, prn);
 }
@@ -663,7 +663,7 @@ static void print_panel_coeff (const MODEL *pmod,
     char pvstr[18];
  
     sprintf(errstr, "(%.5g)", pmod->sderr[i]);
-    sprintf(pvstr, "[%.5f]", t_pvalue_2(tstat, pmod->dfd));
+    sprintf(pvstr, "[%.5f]", student_pvalue_2(tstat, pmod->dfd));
     pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN, vname,
  	    pmod->coeff[i], errstr, pvstr);
 }
@@ -1237,7 +1237,7 @@ static int print_fe_results (panelmod_t *pan,
 
     pprintf(prn, _("Joint significance of differing group means:\n"));
     pprintf(prn, " F(%d, %d) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->F, 
-	    _("with p-value"), f_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
+	    _("with p-value"), snedecor_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
 
     pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		 "the pooled OLS model\nis adequate, in favor of the fixed "
@@ -1330,7 +1330,7 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 	model_test_set_dfn(test, pan->Fdfn);
 	model_test_set_dfd(test, pan->Fdfd);
 	model_test_set_value(test, pan->F);
-	model_test_set_pvalue(test, f_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
+	model_test_set_pvalue(test, snedecor_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
 	maybe_add_test_to_model(wmod, test);
     }	    
 }
@@ -3287,7 +3287,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 	printmodel(&aux, tmpinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
-	pval = f_cdf_comp(LMF, order, dfd);
+	pval = snedecor_cdf_comp(LMF, order, dfd);
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 

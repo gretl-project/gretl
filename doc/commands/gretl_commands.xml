@@ -3010,41 +3010,47 @@
 
     <description>
       <para>
-	The first piece of input required here is the name you want to
-	give the generated variable.  The additional information
-	depends on the distribution of the pseudo-random variable, as
-	follows.
+	In this dialog you must give a name for the variable to be
+	created, plus some additional information depending on the
+	distribution.
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    Uniform: you must give a lower and an upper bound for the
-	    distribution.
+	    Uniform: the lower and upper bounds for the distribution.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Normal: supply the mean and standard deviation.  The
-	    latter must be positive.
+	    Normal: the mean and (positive) standard deviation.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Chi-square and Student's t: give the degrees of freedom,
-	    which must be positive.
+	    Chi-square and Student's t: the degrees of freedom, which must
+	    be positive.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Binomial: give the number of trials (a positive integer)
-	    and the <quote>success</quote> probability.
+	    F: both numerator and denominator degrees of freedom.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Poisson: give the mean, either as a numerical value or as the
-	    name of a scalar or series.
+	    gamma: shape and scale parameters (both positive).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Binomial: the <quote>success</quote> probability and the
+	    integer number of trials.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Poisson: the positive mean (which also equals the variance).
 	  </para>
 	</li>
       </ilist>

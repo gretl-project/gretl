@@ -659,7 +659,7 @@ system_print_F_test (const gretl_equation_system *sys,
 
     pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
     pprintf(prn, "  F(%d,%d) = %g %s %g\n", dfn, dfu, F,
-	    _("with p-value"), f_cdf_comp(F, dfn, dfu));
+	    _("with p-value"), snedecor_cdf_comp(F, dfn, dfu));
     pputc(prn, '\n');    
 
  bailout:

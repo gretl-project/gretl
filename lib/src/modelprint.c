@@ -654,7 +654,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
 	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
-	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (tex_format(prn)) {
 	if (na(pmod->fstt)) {
@@ -665,7 +665,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 	    tex_dcolumn_double(pmod->fstt, x1str);
 	    pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
-	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (rtf_format(prn)) {
 	char tmp[32];
@@ -675,7 +675,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, RTFTAB "%s %s\n", tmp, I_("undefined"));
 	} else {
 	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
-	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s (%d, %d)\"%c", I_("F-statistic"), pmod->dfn, pmod->dfd,
@@ -684,7 +684,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"\n", I_("undefined"));
 	} else {
 	    pprintf(prn, "%.15g%c", pmod->fstt, prn_delim(prn));
-	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(snedecor_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     }	
 }
@@ -2731,7 +2731,7 @@ void print_arch_coeffs (const double *a, const double *se,
 	mc.b = a[i];
 	mc.se = se[i];
 	mc.tval = a[i] / se[i];
-	mc.pval = t_pvalue_2(mc.tval, T - (order + 1));
+	mc.pval = student_pvalue_2(mc.tval, T - (order + 1));
 
 	if (tex_format(prn)) {
 	    sprintf(mc.name, "$\\alpha_%d$", i);
@@ -2822,7 +2822,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 	gretl_print_value (arinfo->rho[c], prn);
 	bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
-	pval = t_pvalue_2(xx, dfd);
+	pval = student_pvalue_2(xx, dfd);
 	pprintf(prn, " %7.3f ", xx, pval);
 	print_pval_str(pval, pvalstr);
 	pprintf(prn, "%*s\n", UTF_WIDTH(pvalstr, 12), pvalstr);
@@ -2843,7 +2843,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 		coeff,
 		sderr,
 		arinfo->rho[c] / arinfo->sderr[c],
-		t_pvalue_2(xx, dfd));
+		student_pvalue_2(xx, dfd));
     } else if (rtf_format(prn)) {
 	char pvalstr[16];
 	double pval;
@@ -2853,7 +2853,7 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 	rtf_print_double(arinfo->rho[c], prn);
 	rtf_print_double(arinfo->sderr[c], prn);
 	pprintf(prn, " \\qc %.4f\\cell", xx);
-	pval = t_pvalue_2(xx, dfd);
+	pval = student_pvalue_2(xx, dfd);
 	print_pval_str(pval, pvalstr);
 	pprintf(prn, " \\qc %s\\cell", pvalstr);
 	if (pval < 0.01) {

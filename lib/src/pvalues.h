@@ -32,13 +32,13 @@ double normal_pvalue_2 (double x);
 
 double normal_pvalue_1 (double x);
 
-double t_cdf (double x, int df);
+double student_cdf (double x, int df);
 
-double t_cdf_comp (double x, int df);
+double student_cdf_comp (double x, int df);
 
-double t_pvalue_2 (double x, int df);
+double student_pvalue_2 (double x, int df);
 
-double t_critval (double a, double df);
+double student_critval (double a, double df);
 
 double chisq_cdf (double x, int df);
 
@@ -46,11 +46,11 @@ double chisq_cdf_comp (double x, int df);
 
 double chisq_critval (double a, int df);
 
-double f_cdf (double x, int dfn, int dfd);
+double snedecor_cdf (double x, int dfn, int dfd);
 
-double f_cdf_comp (double x, int dfn, int dfd);
+double snedecor_cdf_comp (double x, int dfn, int dfd);
 
-double f_critval (double a, int dfn, int dfd);
+double snedecor_critval (double a, int dfn, int dfd);
 
 double normal_cdf (double x);
 
@@ -87,6 +87,8 @@ int batch_pvalue (const char *str,
 		  PRN *prn);
 
 void print_pvalue (char st, double *p, double pv, PRN *prn);
+
+void print_critval (char st, double *x, PRN *prn);
 
 #endif /* PVALUES_H */
 

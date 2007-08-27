@@ -76,6 +76,12 @@ double binomial_cdf_comp (int k, int n, double p)
     return x;
 }
 
+/*  
+    gives the event probability p such that the sum of the terms 0
+    through k of the Binomial probability density, for n trials, is
+    equal to the given cumulative probability y.
+*/
+
 static double binomial_cdf_inverse (int k, int n, double y)
 {
     double p = NADBL;
@@ -90,18 +96,25 @@ static double binomial_cdf_inverse (int k, int n, double y)
     return p;
 }
 
-static double binomial_critval (int k, int n, double y)
-{
-    double p = NADBL;
+/* The following is probably horribly inefficient */
 
-    if (y >= 0 && n >= 0 && k >= 0) {
-	p = bdtri(k, n, 1 - y);
-	if (get_cephes_errno()) {
-	    p = NADBL;
+static double binomial_critval (double a, double p, int n)
+{
+    double pk, ac = 1 - a;
+    int k;
+
+    if (n <= 0 || p <= 0 || p >= 1 || a <= 0 || a >= 1) {
+	return NADBL;
+    }
+
+    for (k=n; k>0; k--) {
+	pk = binomial_cdf(k, n, p);
+	if (pk < ac) {
+	    break;
 	}
     }
 
-    return p;
+    return (double) (k + 1);
 }
 
 /**
@@ -263,16 +276,16 @@ double normal_pvalue_1 (double x)
 }
 
 /**
- * t_cdf:
+ * student_cdf:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
  * Returns: the integral from minus infinity to @x of
- * the t distribution with @df degrees of freedom, or
+ * the Student's t distribution with @df degrees of freedom, or
  * #NADBL on failure.
  */
 
-double t_cdf (double x, int df)
+double student_cdf (double x, int df)
 {
     double p = NADBL;
 
@@ -287,7 +300,7 @@ double t_cdf (double x, int df)
 }
 
 /**
- * t_cdf_comp:
+ * student_cdf_comp:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
@@ -296,7 +309,7 @@ double t_cdf (double x, int df)
  * #NADBL on failure.
  */
 
-double t_cdf_comp (double x, int df)
+double student_cdf_comp (double x, int df)
 {
     double p = NADBL;
 
@@ -341,7 +354,7 @@ static double normal_cdf_comp (double x)
 }
 
 /**
- * t_pvalue_2:
+ * student_pvalue_2:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
@@ -350,7 +363,7 @@ static double normal_cdf_comp (double x)
  * #NADBL on failure.
  */
 
-double t_pvalue_2 (double x, int df)
+double student_pvalue_2 (double x, int df)
 {
     double p = NADBL;
 
@@ -373,7 +386,7 @@ double t_pvalue_2 (double x, int df)
 #define df_ok(d) (floor(d) == d && d < (double) INT_MAX)
 
 /**
- * t_critval:
+ * student_critval:
  * @a: right-tail probability.
  * @df: degrees of freedom.
  *
@@ -382,7 +395,7 @@ double t_pvalue_2 (double x, int df)
  * probability @a, or #NADBL on failure.
  */
 
-double t_critval (double a, double df)
+double student_critval (double a, double df)
 {
     double x;
 
@@ -411,7 +424,7 @@ double t_critval (double a, double df)
     return x;
 }
 
-static double t_cdf_inverse (double a, double df)
+static double student_cdf_inverse (double a, double df)
 {
     double x;
 
@@ -519,7 +532,7 @@ static double chisq_cdf_inverse (double a, int df)
 }
 
 /**
- * f_cdf:
+ * snedecor_cdf:
  * @x: the cutoff point in the distribution.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
@@ -528,7 +541,7 @@ static double chisq_cdf_inverse (double a, int df)
  * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
 
-double f_cdf (double x, int dfn, int dfd)
+double snedecor_cdf (double x, int dfn, int dfd)
 {
     double p = NADBL;
 
@@ -543,7 +556,7 @@ double f_cdf (double x, int dfn, int dfd)
 }
 
 /**
- * f_cdf_comp:
+ * snedecor_cdf_comp:
  * @x: the cutoff point in the distribution.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
@@ -553,7 +566,7 @@ double f_cdf (double x, int dfn, int dfd)
  * on failure.
  */
 
-double f_cdf_comp (double x, int dfn, int dfd)
+double snedecor_cdf_comp (double x, int dfn, int dfd)
 {
     double p = NADBL;
 
@@ -568,7 +581,7 @@ double f_cdf_comp (double x, int dfn, int dfd)
 }
 
 /**
- * f_critval:
+ * snedecor_critval:
  * @a: right-tail probability.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
@@ -578,7 +591,7 @@ double f_cdf_comp (double x, int dfn, int dfd)
  * to the given probability @a, or #NADBL on failure.
  */
 
-double f_critval (double a, int dfn, int dfd)
+double snedecor_critval (double a, int dfn, int dfd)
 {
     double x = NADBL;
 
@@ -592,7 +605,7 @@ double f_critval (double a, int dfn, int dfd)
     return x;
 }
 
-static double f_cdf_inverse (double a, int dfn, int dfd)
+static double snedecor_cdf_inverse (double a, int dfn, int dfd)
 {
     double x = NADBL;
 
@@ -885,20 +898,6 @@ static double poisson_cdf_inverse (int k, double p)
     return x;
 }
 
-static double poisson_critval (int k, double p)
-{
-    double x = NADBL;
-
-    if (k >= 0 && p >= 0 && p <= 1) {
-	x = pdtri(k, 1 - p);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	} 
-    }
-
-    return x;
-}
-
 static double poisson_pmf (double lambda, int k)
 {
     double den, l0, p;
@@ -928,6 +927,85 @@ static double poisson_pmf (double lambda, int k)
     return p;
 }
 
+/* The following is probably horribly inefficient */
+
+static double poisson_critval (double a, double lambda)
+{
+    double x, pk = 0.0;
+    double ac = 1 - a;
+    int k, kmin = 1;
+
+    if (lambda <= 0 || a <= 0 || a >= 1) {
+	return NADBL;
+    }
+
+    if (lambda >= 10 && a < 0.5) {
+	kmin = lambda - 1;
+	pk = poisson_cdf(lambda, kmin);
+    }
+
+    for (k=kmin; ; k++) {
+	if (pk >= ac) {
+	    break;
+	}	
+	x = poisson_pmf(lambda, k);
+	if (!na(x)) {
+	    pk += x;
+	}
+    }
+
+    return (double) k;
+}
+
+/* order in x: [params], alpha, critval */
+
+void print_critval (char st, double *x, PRN *prn)
+{
+    int apos = 0;
+    double a, c;
+
+    switch (st) {
+    case 'z':
+	pprintf(prn, "%s", _("Standard normal distribution"));
+	break;
+    case 't':
+	pprintf(prn, "t(%g)", x[0]);
+	apos = 1;
+	break;
+    case 'X':
+	pprintf(prn, _("Chi-square(%g)"), x[0]);
+	apos = 1;
+	break;
+    case 'F':
+	pprintf(prn, "F(%g, %g)", x[0], x[1]);
+	apos = 2;
+	break;
+    case 'B':
+	pprintf(prn, "Binomial (P = %g, %g trials)", x[0], x[1]);
+	apos = 2;
+	break;
+    case 'P':
+	pprintf(prn, "Poisson (mean = %g)", x[0]);
+	apos = 1;
+	break;
+    }
+
+    a = x[apos];
+    c = x[apos + 1];
+
+    pputs(prn, "\n ");
+    pprintf(prn, _("right-tail probability = %g"), a);
+    pputs(prn, "\n ");
+    pprintf(prn, _("complementary probability = %g"), 1.0 - a);
+    if (a < 0.5 && (st == 'z' || st == 't')) {
+	pputs(prn, "\n ");
+	pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
+    }
+    pputs(prn, "\n\n ");
+    pprintf(prn, _("Critical value = %g"), c);
+    pputc(prn, '\n');    
+}
+
 static double dparm[3];
 
 static void dparm_set (const double *p)
@@ -946,15 +1024,15 @@ double gretl_get_critval (char st, double *p)
     if (st == 'z') {
 	x = normal_critval(p[0]);
     } else if (st == 't') {
-	x = t_critval(p[1], p[0]);
+	x = student_critval(p[1], p[0]);
     } else if (st == 'X') {	
 	x = chisq_critval(p[1], (int) p[0]);
     } else if (st == 'F') {
-	x = f_critval(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_critval(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'B') {
-	x = binomial_critval((int) p[2], (int) p[1], p[0]);
+	x = binomial_critval(p[2], p[0], (int) p[1]);
     } else if (st == 'P') {
-	x = poisson_critval((int) p[0], p[1]);
+	x = poisson_critval(p[1], p[0]);
     }
 
     return x;
@@ -967,11 +1045,11 @@ double gretl_get_cdf (char st, double *p)
     if (st == 'z') {
 	x = normal_cdf(p[0]);
     } else if (st == 't') {
-	x = t_cdf(p[1], (int) p[0]);
+	x = student_cdf(p[1], (int) p[0]);
     } else if (st == 'X') {
 	x = chisq_cdf(p[1], (int) p[0]);
     } else if (st == 'F') {
-	x = f_cdf(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'G') {
 	x = gamma_cdf(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
@@ -992,11 +1070,11 @@ double gretl_get_cdf_inverse (char st, double *p)
     if (st == 'z') {
 	x = normal_cdf_inverse(p[0]);
     } else if (st == 't') {
-	x = t_cdf_inverse(p[1], p[0]);
+	x = student_cdf_inverse(p[1], p[0]);
     } else if (st == 'X') {
 	x = chisq_cdf_inverse(p[1], (int) p[0]);
     } else if (st == 'F') {
-	x = f_cdf_inverse(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf_inverse(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'B') {
 	x = binomial_cdf_inverse((int) p[2], (int) p[1], p[0]);
     } else if (st == 'P') {
@@ -1013,11 +1091,11 @@ double gretl_get_pvalue (char st, const double *p)
     if (st == 'z') {
 	x = normal_cdf_comp(p[0]);
     } else if (st == 't') {
-	x = t_cdf_comp(p[1], (int) p[0]);
+	x = student_cdf_comp(p[1], (int) p[0]);
     } else if (st == 'X') {
 	x = chisq_cdf_comp(p[1], (int) p[0]);
     } else if (st == 'F') {
-	x = f_cdf_comp(p[2], (int) p[0], (int) p[1]);
+	x = snedecor_cdf_comp(p[2], (int) p[0], (int) p[1]);
     } else if (st == 'G') {
 	x = gamma_cdf_comp(p[0], p[1], p[2], 1);
     } else if (st == 'B') {
@@ -1086,7 +1164,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
 	} else {
-	    pc = t_cdf(p[1], (int) p[0]);
+	    pc = student_cdf(p[1], (int) p[0]);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pc, 1 - 2 * pc);
@@ -1110,7 +1188,7 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
 	err = print_pv_string(p[2], pv, prn);
 	if (err) return;
-	pc = f_cdf(p[2], (int) p[0], (int) p[1]);
+	pc = snedecor_cdf(p[2], (int) p[0], (int) p[1]);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 

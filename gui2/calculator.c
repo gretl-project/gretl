@@ -22,7 +22,7 @@
 #define NTESTS 6
 #define NPTESTS 2
 #define NPVAL 7
-#define NLOOKUPS 5
+#define NLOOKUPS 7
 #define NGRAPHS 4
 #define NRAND 8
 #define NTESTENTRY 7
@@ -104,7 +104,22 @@ enum {
     C_POS_DBL
 };
 
-/* below: allow use of varnames? */
+/* getval: get a numerical value from a text entry box
+
+   t == C_DBL: parse the entry as a double
+   t == C_POS_DBL: parse as a positive double
+   t == C_INT: parse as positive int
+
+   (In this context, when an int is wanted, it's always a 
+   positive int: df, sample size, number of trials.)
+
+   If t is C_DBL or C_POS_DBL and something is wrong with the
+   input, we flag this by returning NADBL.  In the case of
+   C_INT, we flag an error by returning -1.
+
+   Possible refinement: should we accept names of variables
+   in these entry fields?
+*/
 
 static double getval (GtkWidget *w, int t)
 {
@@ -148,148 +163,116 @@ static int check_prob (double p)
     if (na(p)) {
 	err = 1;
     } else if (p >= 1.0) {
-	errbox(_("Invalid success probability"));
+	errbox(_("Invalid probability"));
 	err = 1;
     }
 
     return err;
 }
 
-static void dw_lookup (int n, PRN *prn)
+/* call plugin function to look up part of the table of
+   critical values for the Durbin-Watson statistic
+*/
+
+static void dw_lookup (lookup_t *tab)
 {
     void *handle = NULL;
     void (*dw)(int, PRN *) = NULL;
+    PRN *prn;
+    int n;
+
+    n = getval(tab->entry[0], C_INT);
+    if (n < 0) {
+	return;
+    }
 
     dw = gui_get_plugin_function("dw_lookup", &handle);
-
-    if (dw != NULL) {
-	(*dw)(n, prn);
-	close_plugin(handle);
+    if (dw == NULL) {
+	return;
     }
-}
 
-/* FIXME get_critical needs updating */
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }  
+
+    (*dw)(n, prn);
+    close_plugin(handle);
+
+    view_buffer(prn, 77, 300, _("gretl: critical values"), 
+		STAT_TABLE, NULL);
+}
 
 static void get_critical (GtkWidget *w, CalcChild *child)
 {
     lookup_t *tab, **tabs = child->calcp;
-    int d, n = -1, df = -1, err = 0;
-    int winwidth = 60;
-    int winheight = 200;
-    double x = NADBL, a = 0.0;
+    double c = NADBL;
+    double x[4];
+    char st = 0;
+    int d, j = 0;
     PRN *prn;
 
     d = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     tab = tabs[d];
-
-    if (d != DW_DIST) {
-	a = getval(tab->entry[0], C_POS_DBL);
-	if (na(a)) return;
-    }	
+    
+    if (d == DW_DIST) {
+	/* special: just a table look-up */
+	dw_lookup(tab);
+	return;
+    }
 
     switch (d) {
+    case NORMAL_DIST:
+	st = 'z';
+	break;
     case T_DIST:
     case CHISQ_DIST:
-	df = getval(tab->entry[1], C_INT);
+	st = (d == T_DIST)? 't' : 'X';
+	x[j] = getval(tab->entry[j], C_INT); /* df */
+	if (x[j++] < 0) return;
 	break;
     case F_DIST:
-	df = getval(tab->entry[1], C_INT);
-	n = getval(tab->entry[2], C_INT);
+	st = 'F';
+	x[j] = getval(tab->entry[j], C_INT); /* dfn */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_INT); /* dfd */
+	if (x[j++] < 0) return;
 	break;
-    case DW_DIST:
-	n = getval(tab->entry[0], C_INT);
+    case BINOMIAL_DIST:
+	st = 'B';
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
+	if (check_prob(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* n */
+	if (x[j++] < 0) return;
+	break;
+    case POISSON_DIST:
+	st = 'P';
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
+	if (na(x[j++])) return;
 	break;
     default:
 	break;
     }
 
-    /* sanity checks */
-    if ((0 < d && d < 4 && df <= 0) || (d == F_DIST && n <= 0)) {
-	errbox(_("Invalid degrees of freedom"));
-	err = 1;
-    } else if (d != DW_DIST && (a <= 0.0 || a > 1.0)) {
-	errbox(_("Invalid right-tail probability"));
-	err = 1;
-    } else if (d == DW_DIST && n <= 0) {
-	errbox(_("Invalid sample size"));
-	err = 1;
-    }
+    /* right-tail probability */
+    x[j] = getval(tab->entry[j], C_POS_DBL);
+    if (check_prob(x[j++])) return;
 
-    if (err) {
+    c = gretl_get_critval(st, x);
+    if (na(c)) {
+	errbox(_("Failed to compute critical value"));
 	return;
     }
 
     if (bufopen(&prn)) {
 	return;
-    }
+    }   
 
-    /* get the values */
-    if (!err) {
-	switch (d) {
-	case NORMAL_DIST:
-	    x = normal_critval(a);
-	    break;
-	case T_DIST:
-	    x = t_critval(a, df);
-	    break;
-	case CHISQ_DIST:
-	    x = chisq_critval(a, df);
-	    break;
-	case F_DIST:
-	    x = f_critval(a, df, n);
-	    break;
-	case DW_DIST:
-	    dw_lookup(n, prn);
-	    break;
-	default:
-	    break;
-	}
-    }
+    x[j] = c;
 
-    if (d != DW_DIST) {
-	if (na(x)) {
-	    errbox(_("Failed to compute critical value"));
-	    err = 1;
-	} else {
-	    switch (d) {
-	    case NORMAL_DIST:
-		pprintf(prn, "%s", _("Standard normal distribution"));
-		break;
-	    case T_DIST:
-		pprintf(prn, "t(%d)", df);
-		break;
-	    case CHISQ_DIST:
-		pprintf(prn, _("Chi-square(%d)"), df);
-		break;
-	    case F_DIST:
-		pprintf(prn, "F(%d, %d)", df, n);
-		break;
-	    }
-
-	    pputs(prn, "\n ");
-	    pprintf(prn, _("right-tail probability = %g"), a);
-	    pputs(prn, "\n ");
-	    pprintf(prn, _("complementary probability = %g"), 1.0 - a);
-	    if (a < 0.5 && (d == NORMAL_DIST || d == T_DIST)) {
-		pputs(prn, "\n ");
-		pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
-	    }
-	    pputs(prn, "\n\n ");
-	    pprintf(prn, _("Critical value = %g"), x);
-	    pputc(prn, '\n');
-	}
-    } else {
-	winwidth = 77;
-	winheight = 300;
-    }
-
-	
-    if (err) {
-	gretl_print_destroy(prn);
-    } else {
-	view_buffer(prn, winwidth, winheight, _("gretl: critical values"), 
-		    STAT_TABLE, NULL);
-    }
+    print_critval(st, x, prn);
+    view_buffer(prn, 60, 200, _("gretl: critical values"), 
+		STAT_TABLE, NULL);
 }
 
 static void get_pvalue (GtkWidget *w, CalcChild *child)
@@ -297,7 +280,7 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     lookup_t *tab, **tabs = child->calcp;
     double pv, x[3];
     char st = 0;
-    int i, j;
+    int i, j = 0;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
@@ -307,47 +290,47 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 
     case CALC_NORMAL:
 	st = 'z';
-	x[0] = getval(tab->entry[0], C_DBL); /* mean */
-	if (na(x[0])) return;
-	x[1] = getval(tab->entry[1], C_POS_DBL); /* s.d. */
-	if (na(x[1])) return;
-	x[2] = getval(tab->entry[2], C_DBL); /* val */
-	if (na(x[2])) return;
+	x[j] = getval(tab->entry[j], C_DBL); /* mean */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_DBL); /* val */
+	if (na(x[j])) return;
 	x[0] = (x[2] - x[0]) / x[1]; /* z-score */
 	break;
 
     case CALC_STUDENT: 
 	st = 't';
-	x[0] = getval(tab->entry[0], C_INT); /* df */
-	if (x[0] < 0) return;
-	x[1] = getval(tab->entry[1], C_DBL); /* val */
-	if (na(x[1])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* df */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_DBL); /* val */
+	if (na(x[j])) return;
 	break;
 
     case CALC_CHISQ:
 	st = 'X';
-	x[0] = getval(tab->entry[0], C_INT); /* df */
-	if (x[0] < 0) return;
-	x[1] = getval(tab->entry[1], C_POS_DBL); /* val */
-	if (na(x[1])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* df */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* val */
+	if (na(x[j])) return;
 	break;
 
     case CALC_POISSON: 
 	st = 'P';
-	x[0] = getval(tab->entry[0], C_POS_DBL); /* mean */
-	if (na(x[0])) return;
-	x[1] = getval(tab->entry[1], C_INT); /* val */
-	if (x[1] < 0) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* val */
+	if (x[j] < 0) return;
 	break;
 
     case CALC_SNEDECOR:
 	st = 'F';
-	x[0] = getval(tab->entry[0], C_INT); /* dfn */
-	if (x[0] < 0) return;
-	x[1] = getval(tab->entry[1], C_INT); /* dfd */
-	if (x[1] < 0) return;
-	x[2] = getval(tab->entry[2], C_POS_DBL); /* val */
-	if (na(x[2])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* dfn */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_INT); /* dfd */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* val */
+	if (na(x[j])) return;
 	break;
 
     case CALC_GAMMA: 
@@ -360,12 +343,12 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 
     case CALC_BINOMIAL: 
 	st = 'B';
-	x[0] = getval(tab->entry[0], C_POS_DBL); /* prob */
-	if (check_prob(x[0])) return;
-	x[1] = getval(tab->entry[1], C_INT); /* trials */
-	if (x[1] < 0) return;
-	x[2] = getval(tab->entry[2], C_INT); /* val */
-	if (x[1] < 0) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
+	if (check_prob(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* trials */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_INT); /* val */
+	if (x[j] < 0) return;
 	break;
 
     default:
@@ -612,7 +595,7 @@ double dist_xmax (int d, int df1, int df2)
     }
 
     return (d == CHISQ_DIST)? chisq_critval(a, df1) : 
-		f_critval(a, df1, df2);
+		snedecor_critval(a, df1, df2);
 }
 
 static void htest_graph (int d, double x, int df1, int df2)
@@ -733,6 +716,8 @@ static void htest_graph (int d, double x, int df1, int df2)
     }
 }
 
+/* non-parametric test */
+
 static void np_test (GtkWidget *w, test_t *test)
 {
     gretlopt opt = OPT_NONE;
@@ -797,14 +782,10 @@ static void np_test (GtkWidget *w, test_t *test)
     }
 }
 
-/* FIXME : should we record a relevant command when a test is done
-   using dataset variables? (Two means, or two variances)
-*/
-
-static void h_test (GtkWidget *w, test_t *test)
+static void do_h_test (test_t *test, double *x, int n1, int n2)
 {
-    int j, n1, n2, grf;
-    double x[5], se, ts, pv, z;
+    double se, ts, pv, z;
+    int j, grf;
     PRN *prn;
 
     if (bufopen(&prn)) {
@@ -813,22 +794,11 @@ static void h_test (GtkWidget *w, test_t *test)
 
     grf = GTK_TOGGLE_BUTTON(test->extra)->active;
 
-    x[4] = 0.0;
-
     switch (test->code) {
 
     case ONE_MEAN:
-	x[0] = getval(test->entry[0], C_DBL); /* mean */
-	if (na(x[0])) goto bailout;
-	x[1] = getval(test->entry[1], C_POS_DBL); /* s.d. */
-	if (na(x[0])) goto bailout;
-	n1 = getval(test->entry[2], C_INT); /* sample */
-	if (n1 < 0) goto bailout;
-	x[2] = getval(test->entry[3], C_DBL); /* val */
-	if (na(x[2])) goto bailout;
-
 	se = x[1] / sqrt((double) n1);
-	ts = (x[0] - x[2])/se;
+	ts = (x[0] - x[2]) / se;
 
 	pprintf(prn, _("Null hypothesis: population mean = %g\n"), x[2]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
@@ -846,7 +816,7 @@ static void h_test (GtkWidget *w, test_t *test)
 	} else {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
 		    x[0], x[2], se, ts);
-	    pv = t_pvalue_2(ts, n1 - 1);
+	    pv = student_pvalue_2(ts, n1 - 1);
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) {
 		htest_graph(1, ts, n1-1, 0);
@@ -855,13 +825,6 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case ONE_VARIANCE:
-	x[0] = getval(test->entry[0], C_POS_DBL);
-	if (na(x[0])) goto bailout;
-	n1 = getval(test->entry[1], C_INT);
-	if (n1 < 0) goto bailout;
-	x[1] = getval(test->entry[2], C_POS_DBL);
-	if (na(x[1])) goto bailout;
-
 	ts = (n1 - 1) * x[0] / x[1];
 
 	pprintf(prn, _("Null hypothesis: population variance = %g\n"), x[1]);
@@ -882,20 +845,6 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case ONE_PROPN:
-	x[0] = getval(test->entry[0], C_POS_DBL); /* propn */
-	if (na(x[0])) goto bailout;
-	n1 = getval(test->entry[1], C_INT);
-	if (n1 < 0) goto bailout;
-	x[1] = getval(test->entry[2], C_POS_DBL);
-	if (na(x[1])) goto bailout;
-
-	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
-	    infobox(_("The assumption of a normal sampling distribution\n"
-		      "is not justified here.  Abandoning the test."));
-	    gretl_print_destroy(prn);
-	    goto bailout;
-	}
-
 	se = sqrt(x[1] * (1.0 - x[1]) / n1);
 	ts = (x[0] - x[1]) / se;
 
@@ -913,23 +862,6 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_MEANS:
-	x[0] = getval(test->entry[0], C_DBL); /* mean1 */
-	if (na(x[0])) goto bailout;
-	x[1] = getval(test->entry[1], C_POS_DBL); /* sd1 */
-	if (na(x[1])) goto bailout;
-	n1 = getval(test->entry[2], C_INT);
-	if (n1 < 0) goto bailout; 
-
-	x[2] = getval(test->entry[3], C_DBL); /* mean2 */
-	if (na(x[2])) goto bailout;
-	x[3] = getval(test->entry[4], C_POS_DBL); /* sd2 */
-	if (na(x[3])) goto bailout;
-	n2 = getval(test->entry[5], C_INT);
-	if (n2 < 0) goto bailout; 
-
-	x[4] = getval(test->entry[6], C_DBL);
-	if (na(x[4])) goto bailout;
-
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
 	pputc(prn, '\n');
 
@@ -981,9 +913,9 @@ static void h_test (GtkWidget *w, test_t *test)
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1 + n2 - 2, x[0], x[2], se, ts);
 	    if (ts > 0) {
-		pv = t_pvalue_2(ts, n1 + n2 - 2);
+		pv = student_pvalue_2(ts, n1 + n2 - 2);
 	    } else {
-		pv = t_pvalue_2(-ts, n1 + n2 - 2);
+		pv = student_pvalue_2(-ts, n1 + n2 - 2);
 	    }
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) {
@@ -1016,16 +948,6 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_VARIANCES:
-	x[0] = getval(test->entry[0], C_POS_DBL);
-	if (na(x[0])) goto bailout;
-	n1 = getval(test->entry[1], C_INT);
-	if (n1 < 0) goto bailout;
-
-	x[1] = getval(test->entry[2], C_POS_DBL);
-	if (na(x[1])) goto bailout;
-	n2 = getval(test->entry[3], C_INT);
-	if (n2 < 0) goto bailout;
-
 	pprintf(prn, _("Null hypothesis: The population variances are "
 		       "equal\n"));
 	pprintf(prn, _("Sample 1:\n n = %d, variance = %g\n"), n1, x[0]);
@@ -1035,12 +957,12 @@ static void h_test (GtkWidget *w, test_t *test)
 	    ts = x[0] / x[1];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n1 - 1, n2 - 1, ts);
-	    pv = f_cdf_comp(ts, n1 - 1, n2 - 1);
+	    pv = snedecor_cdf_comp(ts, n1 - 1, n2 - 1);
 	} else {
 	    ts = x[1] / x[0];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n2 - 1, n1 - 1, ts);
-	    pv = f_cdf_comp(ts, n2 - 1, n1 - 1);
+	    pv = snedecor_cdf_comp(ts, n2 - 1, n1 - 1);
 	}
 
 	print_pv(prn, 2.0 * pv, pv);
@@ -1050,16 +972,6 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_PROPNS:
-	x[0] = getval(test->entry[0], C_POS_DBL);
-	if (na(x[0])) goto bailout;
-	n1 = getval(test->entry[1], C_INT);
-	if (n1 < 0) goto bailout;
-
-	x[1] = getval(test->entry[2], C_POS_DBL);
-	if (na(x[1])) goto bailout;
-	n2 = getval(test->entry[3], C_INT);
-	if (n2 < 0) goto bailout;
-
 	pprintf(prn, _("Null hypothesis: the population proportions are "
 		       "equal\n"));
 	pputc(prn, '\n');
@@ -1088,11 +1000,104 @@ static void h_test (GtkWidget *w, test_t *test)
 
     view_buffer(prn, 78, 340, _("gretl: hypothesis test"), H_TEST,
                 NULL);
-    return;
+}
 
- bailout:
+/* FIXME : should we record a relevant command when a test is done
+   using dataset variables? (Two means, or two variances)
+*/
 
-    gretl_print_destroy(prn);
+static void h_test (GtkWidget *w, test_t *test)
+{
+    int j, k, n1 = 0, n2 = 0;
+    double x[5] = {0};
+
+    j = k = 0;
+
+    switch (test->code) {
+
+    case ONE_MEAN:
+	x[j] = getval(test->entry[k++], C_DBL); /* mean */
+	if (na(x[j++])) return;
+	x[j] = getval(test->entry[k++], C_POS_DBL); /* s.d. */
+	if (na(x[1])) return;
+	n1 = getval(test->entry[k++], C_INT); /* sample */
+	if (n1 < 0) return;
+	x[j++] = getval(test->entry[k], C_DBL); /* val */
+	if (na(x[j])) return;
+	break;
+
+    case ONE_VARIANCE:
+	x[j] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_INT);
+	if (n1 < 0) return;
+	x[j] = getval(test->entry[k], C_POS_DBL);
+	if (na(x[j])) return;
+	break;
+
+    case ONE_PROPN:
+	x[j] = getval(test->entry[k++], C_POS_DBL); /* propn */
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_INT);
+	if (n1 < 0) return;
+	x[j] = getval(test->entry[k], C_POS_DBL);
+	if (na(x[j])) return;
+
+	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
+	    infobox(_("The assumption of a normal sampling distribution\n"
+		      "is not justified here.  Abandoning the test."));
+	    return;
+	}
+	break;
+
+    case TWO_MEANS:
+	x[j] = getval(test->entry[k++], C_DBL); /* mean1 */
+	if (na(x[j++])) return;
+	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd1 */
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_INT);
+	if (n1 < 0) return; 
+
+	x[j] = getval(test->entry[k++], C_DBL); /* mean2 */
+	if (na(x[j++])) return;
+	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd2 */
+	if (na(x[j++])) return;
+	n2 = getval(test->entry[k++], C_INT);
+	if (n2 < 0) return; 
+
+	x[j] = getval(test->entry[k], C_DBL);
+	if (na(x[j])) return;
+	break;
+
+    case TWO_VARIANCES:
+	x[j] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_INT);
+	if (n1 < 0) return;
+
+	x[1] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[1])) return;
+	n2 = getval(test->entry[k], C_INT);
+	if (n2 < 0) return;
+	break;
+
+    case TWO_PROPNS:
+	x[j] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_INT);
+	if (n1 < 0) return;
+
+	x[j] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[j])) return;
+	n2 = getval(test->entry[k], C_INT);
+	if (n2 < 0) return;
+	break;
+
+    default:
+	break;
+    }
+
+    do_h_test(test, x, n1, n2);
 }
 
 static void h_test_global (GtkWidget *w, CalcChild *child)
@@ -1187,7 +1192,9 @@ static void make_lookup_tab (CalcChild *child, int d)
 	N_(" t "), 
 	N_("chi-square"), 
 	N_(" F "), 
-	N_(" DW ")
+	N_("binomial"),
+	N_("poisson"),
+	N_(" DW "),
     };
    
     box = gtk_vbox_new(FALSE, 0);
@@ -1205,10 +1212,6 @@ static void make_lookup_tab (CalcChild *child, int d)
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
 
-    if (child->code == CALC_DIST && d != DW_DIST) {
-	add_calc_entry(tbl, &rows, N_("right-tail probability"), child, d);
-    }
-   
     switch (d) {
     case NORMAL_DIST:
 	break;
@@ -1222,13 +1225,26 @@ static void make_lookup_tab (CalcChild *child, int d)
 	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
 	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
 	break;	
+    case BINOMIAL_DIST:
+	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
+	add_calc_entry(tbl, &rows, N_("trials"), child, d);
+	break;
+    case POISSON_DIST:
+	add_calc_entry(tbl, &rows, N_("mean"), child, d);
+	break;
     case DW_DIST:
 	add_calc_entry(tbl, &rows, N_("n"), child, d);
 	break;
     default:
 	break;
     } 
+
+    if (child->code == CALC_DIST && d != DW_DIST) {
+	add_calc_entry(tbl, &rows, N_("right-tail probability"), child, d);
+    }
 }
+
+/* make a tab (notebook) page, for p-value lookup */
 
 static void make_pval_tab (CalcChild *child, int d) 
 {
@@ -1307,6 +1323,8 @@ static void make_pval_tab (CalcChild *child, int d)
 	break;
     } 
 }
+
+/* make a tab (notebook) page, for r.v. generation */
 
 static void make_rand_tab (CalcChild *child, int d) 
 {
@@ -1931,6 +1949,8 @@ static void make_nptest_tab (CalcChild *child, int idx)
     test->extra = tmp; 
 }
 
+/* make tab (notebook page) for hypothesis test */
+
 static void make_test_tab (CalcChild *child, int idx) 
 {
     test_t **tests = child->calcp;
@@ -2261,7 +2281,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     CalcChild *child;
     const char *calc_titles[] = {
 	N_("gretl: p-value finder"),
-	N_("gretl: statistical tables"),
+	N_("gretl: critical values"),
 	N_("gretl: test calculator"),
 	N_("gretl: nonparametric tests"),
 	N_("gretl: distribution graphs"),

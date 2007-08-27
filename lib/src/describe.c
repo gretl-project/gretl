@@ -2681,7 +2681,7 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
 		_("GPH test for fractional integration"), m,
 		_("Estimated degree of integration"), -mod.coeff[1], mod.sderr[1],
 		_("test statistic"), mod.dfd, tval, 
-		_("with p-value"), t_pvalue_2(tval, mod.dfd));
+		_("with p-value"), student_pvalue_2(tval, mod.dfd));
     } else {
 	err = mod.errcode;
     }
@@ -3838,7 +3838,7 @@ static void printcorr (const VMatrix *v, PRN *prn)
 	pprintf(prn, " = %.8f\n", r);
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), n2,
-		tval, t_pvalue_2(tval, n2));
+		tval, student_pvalue_2(tval, n2));
 	pputc(prn, '\n');
 #if 0
 	pprintf(prn, _("5%% critical value (two-tailed) = "
@@ -3993,7 +3993,7 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     t = mdiff / se;
-    pval = t_pvalue_2(t, df);
+    pval = student_pvalue_2(t, df);
 
     pprintf(prn, _("\nEquality of means test "
 	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
@@ -4074,7 +4074,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	dfd = n1 - 1;
     }
 
-    pval = f_cdf_comp(F, dfn, dfd);
+    pval = snedecor_cdf_comp(F, dfn, dfd);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
     pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
@@ -4086,7 +4086,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (f_cdf_comp(F, dfn, dfd) > .10)
+    if (snedecor_cdf_comp(F, dfn, dfd) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
     record_test_result(F, pval, _("difference of variances"));

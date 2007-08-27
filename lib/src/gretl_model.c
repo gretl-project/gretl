@@ -4024,7 +4024,7 @@ double coeff_pval (int ci, double x, int df)
 	if (ASYMPTOTIC_MODEL(ci)) {
 	    p = normal_pvalue_2(x);
 	} else {
-	    p = t_pvalue_2(x, df);
+	    p = student_pvalue_2(x, df);
 	}
     }
 

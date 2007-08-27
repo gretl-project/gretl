@@ -1747,7 +1747,7 @@ restriction_set_print_result (gretl_restriction *rset,
     } else {
 	rset->code = GRETL_STAT_F;
 	rset->test /= rset->k;
-	rset->pval = f_cdf_comp(rset->test, rset->k, pmod->dfd);
+	rset->pval = snedecor_cdf_comp(rset->test, rset->k, pmod->dfd);
 	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust F"): "F",
 		rset->k, pmod->dfd, rset->test);

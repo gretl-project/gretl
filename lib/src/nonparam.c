@@ -274,7 +274,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("t(%d) = %g, with two-tailed p-value %.4f\n"), m - 2,
-		tval, t_pvalue_2(tval, m - 2));
+		tval, student_pvalue_2(tval, m - 2));
     } else if (m >= 7) {
 	double pval = spearman_signif(fabs(rho), m);
 

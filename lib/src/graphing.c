@@ -1250,7 +1250,7 @@ static int get_fitted_line (gnuplot_info *gi,
 	if (gi->fit == PLOT_FIT_NONE) {
 	    double v = gretl_matrix_get(V, 1, 1);
 	    int T = gretl_vector_get_length(y);
-	    double pv = t_pvalue_2(c[1] / sqrt(v), T - k);
+	    double pv = student_pvalue_2(c[1] / sqrt(v), T - k);
 
 	    if (pv < .10) {
 		sprintf(title, "Y = %#.3g %c %#.3gX", b->val[0],
@@ -2219,7 +2219,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
     smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
-	(f_cdf_comp(smod.fstt, smod.dfn, smod.dfd) < .10 || (opt & OPT_F))) {
+	(snedecor_cdf_comp(smod.fstt, smod.dfn, smod.dfd) < .10 || (opt & OPT_F))) {
 	double uadj = (umax - umin) * 0.02;
 	double vadj = (vmax - vmin) * 0.02;
 

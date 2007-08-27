@@ -247,9 +247,9 @@ enum pdists {
     T_DIST,
     CHISQ_DIST,
     F_DIST,
-    DW_DIST,
     BINOMIAL_DIST,
-    POISSON_DIST
+    POISSON_DIST,
+    DW_DIST
 };    
 
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
