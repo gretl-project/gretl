@@ -89,8 +89,8 @@ enum {
               NOBS,
               T1,
   /* 60 */    T2,   
-              CHISQ,
-              STUDENT,
+              RCHISQ,
+              RSTUDENT,
               CUM,
               MISSING,
               OK,
@@ -151,7 +151,7 @@ enum {
   /* 120 */   CDF,
               INVCDF,
               CRIT,  
-              GENPOIS,
+              RPOISSON,
               MAKEMASK,
               VALUES,
               NULLSPC,
@@ -172,13 +172,14 @@ enum {
               COR,
               COV,
 	      SORTBY,
-              UNIFORM,
-              NORMAL,
-              BINOMIAL,
-	      GENGAMMA,
+	      RUNIFORM,
+	      RNORMAL,
+	      RBINOMIAL,
+	      RGAMMA,
+	      RSNEDECOR,
               FRACDIF,
-              ZEROS,
-  /* 150 */   ONES,
+  /* 150 */   ZEROS,
+              ONES,
               SEQ,
               MUNIF,
               MNORM,
@@ -187,8 +188,8 @@ enum {
               QR,
               EIGSYM,  
               EIGGEN,
-              FDJAC,
-  /* 160 */   BFGSMAX,
+  /* 160 */   FDJAC,
+              BFGSMAX,
               LRVAR,
               PRINCOMP,
               QUANTILE,
@@ -197,8 +198,8 @@ enum {
               F2_MAX,   /* separator: end of two-arg functions */
               MSHAPE,
               SVD,
-              MOLS,
-  /* 170 */   FN_MAX,   /* separator: end of n-arg functions */
+  /* 170 */   MOLS,
+              FN_MAX,   /* separator: end of n-arg functions */
               COM,      /* comma */
               DOT,      /* period */
               SEMI,     /* semi-colon */
@@ -207,8 +208,8 @@ enum {
               DUM,      /* dummy variable */
               UVAR,     /* user variable (scalar or series) */
               UMAT,     /* user-defined matrix */
-              UOBJ,     /* user-defined object (e.g. model) */
-  /* 180 */   NUM,      /* scalar, evaluated */
+  /* 180 */   UOBJ,     /* user-defined object (e.g. model) */
+              NUM,      /* scalar, evaluated */
               VEC,      /* series, evaluated */
               IVEC,     /* vector of integers, evaluated */
               MAT,      /* matrix, evaluated */
@@ -217,8 +218,8 @@ enum {
               DMSL,     /* "dollar" matrix plus subspec */
               DMSTR,    /* "dollar" matrix plus old-style string subspec */
               MSL2,     /* unevaluated matrix subspec */
-              MSPEC,    /* evaluated matrix subspec */
-  /* 190 */   SUBSL,    /* row or column component of MSPEC */
+  /* 190 */   MSPEC,    /* evaluated matrix subspec */
+              SUBSL,    /* row or column component of MSPEC */
               MDEF,     /* explicit matrix definition {...} */
               LAG,      
               DVAR,     /* $ dataset variable (scalar or series) */
@@ -227,8 +228,8 @@ enum {
               LOOPIDX,  /* loop index variable */
               LIST,     /* reference to named list */
               STR,      /* string */
-              EROOT,    /* dummy root for (...) expression */
-  /* 200 */   UFUN,     /* user-defined function */
+  /* 200 */   EROOT,    /* dummy root for (...) expression */
+              UFUN,     /* user-defined function */
               FARGS,    /* set of n function arguments */
               EMPTY,
               ABSENT,

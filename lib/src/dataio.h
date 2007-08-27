@@ -144,6 +144,8 @@ int check_varname (const char *varname);
 
 int check_atof (const char *numstr);
 
+int check_atoi (const char *numstr);
+
 int transpose_data (double ***pZ, DATAINFO *pdinfo);
 
 #endif /* DATAIO_H */

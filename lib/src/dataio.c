@@ -4398,6 +4398,8 @@ int check_atof (const char *numstr)
     /* accept blank entries */
     if (*numstr == '\0') return 0;
 
+    errno = 0;
+
     strtod(numstr, &test);
 
     if (*test == '\0' && errno != ERANGE) return 0;
@@ -4417,6 +4419,49 @@ int check_atof (const char *numstr)
     }
 
     if (errno == ERANGE) {
+	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
+    }
+
+    return 1;
+}
+
+/**
+ * check_atoi:
+ * @numstr: string to check.
+ *
+ * Returns: 0 if @numstr is blank, or is a valid string representation
+ * of an int, else 1.
+ */
+
+int check_atoi (const char *numstr)
+{
+    long int val;
+    char *test;
+
+    /* accept blank entries */
+    if (*numstr == '\0') return 0;
+
+    errno = 0;
+
+    val = strtol(numstr, &test, 10);
+
+    if (*test == '\0' && errno != ERANGE) return 0;
+
+    if (!strcmp(numstr, test)) {
+	sprintf(gretl_errmsg, M_("'%s' -- no numeric conversion performed!"), numstr);
+	return 1;
+    }
+
+    if (*test != '\0') {
+	if (isprint(*test)) {
+	    sprintf(gretl_errmsg, M_("Extraneous character '%c' in data"), *test);
+	} else {
+	    sprintf(gretl_errmsg, M_("Extraneous character (0x%x) in data"), *test);
+	}
+	return 1;
+    }
+
+    if (errno == ERANGE || val <= INT_MIN || val >= INT_MAX) {
 	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
     }
 

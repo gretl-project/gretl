@@ -169,8 +169,6 @@ void do_genr (GtkWidget *w, dialog_t *dlg);
 
 void do_model_genr (GtkWidget *w, dialog_t *dlg);
 
-void add_rand_series (GtkWidget *w, dialog_t *dlg);
-
 void do_global_setmiss (GtkWidget *w, dialog_t *dlg);
 
 void do_variable_setmiss (GtkWidget *w, dialog_t *dlg);

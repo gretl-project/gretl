@@ -1877,22 +1877,25 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	double *vx = NULL;
 	double x = 0.0;
 	double y = 0.0;
-	int v = 0;
+	int v = 0, u = 0;
 
-	if (f == BINOMIAL) {
+	if (f == RBINOMIAL) {
 	    v = l->v.xval;
 	    y = r->v.xval;
-	} else if (f == GENGAMMA) {
+	} else if (f == RGAMMA) {
 	    x = l->v.xval;
 	    y = r->v.xval;
-	} else if (f == GENPOIS) {
+	} else if (f == RSNEDECOR) {
+	    v = l->v.xval;
+	    u = r->v.xval;
+	} else if (f == RPOISSON) {
 	    if (l->t == VEC) {
 		vx = l->v.xvec;
 		v = 1;
 	    } else {
 		x = l->v.xval;
 	    }
-	} else if (f == UNIFORM || f == NORMAL) {
+	} else if (f == RUNIFORM || f == RNORMAL) {
 	    x = (l->t == EMPTY)? NADBL : l->v.xval;
 	    y = (r->t == EMPTY)? NADBL : r->v.xval;
 	} else {
@@ -1900,35 +1903,39 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	switch (f) {
-	case UNIFORM:
+	case RUNIFORM:
 	    p->err = gretl_rand_uniform_minmax(ret->v.xvec, 
 					       p->dinfo->t1, 
 					       p->dinfo->t2,
 					       x, y);
 	    break;
-	case NORMAL:
+	case RNORMAL:
 	    p->err = gretl_rand_normal_full(ret->v.xvec, 
 					    p->dinfo->t1, 
 					    p->dinfo->t2,
 					    x, y);
 	    break;
-	case CHISQ:
+	case RCHISQ:
 	    p->err = gretl_rand_chisq(ret->v.xvec, p->dinfo->t1, 
 				      p->dinfo->t2, v);
 	    break;
-	case STUDENT:
+	case RSNEDECOR:
+	    p->err = gretl_rand_F(ret->v.xvec, p->dinfo->t1, 
+				  p->dinfo->t2, v, u);
+	    break;
+	case RSTUDENT:
 	    p->err = gretl_rand_student(ret->v.xvec, p->dinfo->t1, 
 					p->dinfo->t2, v);
 	    break;
-	case BINOMIAL:
+	case RBINOMIAL:
 	    p->err = gretl_rand_binomial(ret->v.xvec, p->dinfo->t1, 
 					 p->dinfo->t2, v, y);
 	    break;
-	case GENGAMMA:
+	case RGAMMA:
 	    p->err = gretl_rand_gamma(ret->v.xvec, p->dinfo->t1, 
 				      p->dinfo->t2, x, y);
 	    break;
-	case GENPOIS:
+	case RPOISSON:
 	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
 			       (v)? vx : &x, v);
 	    break;
@@ -3930,8 +3937,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	}
 	break;	
-    case UNIFORM:
-    case NORMAL:
+    case RUNIFORM:
+    case RNORMAL:
 	/* functions taking zero or two scalars as args */
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);
@@ -3941,8 +3948,9 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
 	} 
 	break;
-    case BINOMIAL:
-    case GENGAMMA:
+    case RBINOMIAL:
+    case RGAMMA:
+    case RSNEDECOR:
 	/* requires two scalars */
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);
@@ -3950,7 +3958,7 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
 	} 
 	break;
-    case GENPOIS:
+    case RPOISSON:
 	/* one arg: scalar or series */
 	if (l->t == NUM || l->t == VEC) {
 	    ret = series_fill_func(l, NULL, t->t, p);
@@ -3958,8 +3966,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, VEC, l, p);
 	} 
 	break;
-    case CHISQ:
-    case STUDENT:
+    case RCHISQ:
+    case RSTUDENT:
 	/* one scalar argument, series result */
 	if (l->t == NUM) {
 	    ret = series_fill_func(l, NULL, t->t, p);

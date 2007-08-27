@@ -242,15 +242,6 @@ enum dynamic_forecast_status {
     DYNAMIC_FORCED
 };
 
-enum random_types {
-    RANDOM_UNIFORM,
-    RANDOM_NORMAL,
-    RANDOM_CHISQ,
-    RANDOM_ST,
-    RANDOM_BIN,
-    RANDOM_POIS
-};
-
 enum pdists {
     NORMAL_DIST,
     T_DIST,

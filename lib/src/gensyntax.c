@@ -670,7 +670,7 @@ static NODE *powterm (parser *p)
 	    p->sym, p->ch? p->ch : '0');
 #endif
 
-    if (p->sym == UNIFORM || p->sym == NORMAL) {
+    if (p->sym == RUNIFORM || p->sym == RNORMAL) {
 	opt = BOTH_OPT;
     }
 

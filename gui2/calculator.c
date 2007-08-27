@@ -24,7 +24,7 @@
 #define NPVAL 7
 #define NLOOKUPS 5
 #define NGRAPHS 4
-#define NRANDS 8
+#define NRAND 8
 #define NTESTENTRY 7
 #define NLOOKUPENTRY 4
 
@@ -32,6 +32,8 @@
 #include "calculator.h"
 #include "dlgutils.h"
 #include "gpt_control.h"
+#include "lib_private.h"
+#include "cmdstack.h"
 
 typedef struct CalcChild_ CalcChild;
 typedef struct test_t_ test_t;
@@ -68,8 +70,18 @@ enum {
     CALC_SNEDECOR,
     CALC_GAMMA,
     CALC_BINOMIAL,
-    CALC_POISSON,
-    CALC_UNIFORM
+    CALC_POISSON
+};
+
+enum {
+    RAND_UNIFORM,
+    RAND_NORMAL,
+    RAND_STUDENT,
+    RAND_CHISQ,
+    RAND_SNEDECOR,
+    RAND_GAMMA,
+    RAND_BINOMIAL,
+    RAND_POISSON
 };
 
 enum {
@@ -86,88 +98,81 @@ enum {
     NP_RUNS
 };
 
-/* if pos != 0, value must be positive or it is invalid */ 
+enum {
+    C_INT,
+    C_DBL,
+    C_POS_DBL
+};
 
-static double entry_get_double (GtkWidget *w, PRN *prn, int pos)
+/* below: allow use of varnames? */
+
+static double getval (GtkWidget *w, int t)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     double x = NADBL;
+    int k;
 
     if (s == NULL || *s == '\0') {
 	errbox(_("Incomplete entry"));
+    } else if (t == C_INT) {
+	if (check_atoi(s)) {
+	    errbox(gretl_errmsg_get());
+	} else {
+	    k = atoi(s);
+	    if (k <= 0) {
+		errbox(_("Invalid entry"));
+		x = -1;
+	    } else {
+		x = k;
+	    }
+	}
     } else {
 	if (check_atof(s)) {
 	    errbox(gretl_errmsg_get());
 	} else {
 	    x = atof(s);
+	    if (t == C_POS_DBL && !na(x) && x <= 0.0) {
+		errbox(_("Invalid entry"));
+		x = NADBL;
+	    }
 	}
-
-	if (pos && !na(x) && x <= 0.0) {
-	    errbox(_("Invalid entry"));
-	    x = NADBL;
-	} 
-    }
-
-    if (x == NADBL && prn != NULL) {
-	gretl_print_destroy(prn);
     }
 
     return x;
 }
 
-/* if pos != 0, value must be positive or it is invalid */ 
-
-static double getval (const char *s, PRN *prn, int pos)
+static int check_prob (double p)
 {
-    double x = NADBL;
+    int err = 0;
 
-    if (s == NULL || *s == '\0') {
-	errbox(_("Incomplete entry"));
-    } else {
-	if (check_atof(s)) {
-	    errbox(gretl_errmsg_get());
-	} else {
-	    x = atof(s);
-	}
-
-	if (pos && !na(x) && x <= 0.0) {
-	    errbox(_("Invalid entry"));
-	    x = NADBL;
-	} 
+    if (na(p)) {
+	err = 1;
+    } else if (p >= 1.0) {
+	errbox(_("Invalid success probability"));
+	err = 1;
     }
 
-    if (x == NADBL && prn != NULL) {
-	gretl_print_destroy(prn);
-    }
-
-    return x;
+    return err;
 }
 
-static int getint (const char *s, PRN *prn) 
+static void dw_lookup (int n, PRN *prn)
 {
-    int n;
+    void *handle = NULL;
+    void (*dw)(int, PRN *) = NULL;
 
-    if (s == NULL || *s == '\0') {
-	errbox(_("Incomplete entry for hypothesis test"));
-	gretl_print_destroy(prn);
-	return -1;
-    }
+    dw = gui_get_plugin_function("dw_lookup", &handle);
 
-    n = atoi(s);
-
-    if (n <= 0) {
-	errbox(_("Invalid entry for hypothesis test"));
-	return -1;
-    } else {
-	return n;
+    if (dw != NULL) {
+	(*dw)(n, prn);
+	close_plugin(handle);
     }
 }
+
+/* FIXME get_critical needs updating */
 
 static void get_critical (GtkWidget *w, CalcChild *child)
 {
-    lookup_t **look = child->calcp;
-    void *handle = NULL;
-    void (*dw)(int, PRN *) = NULL;
+    lookup_t *tab, **tabs = child->calcp;
     int d, n = -1, df = -1, err = 0;
     int winwidth = 60;
     int winheight = 200;
@@ -175,29 +180,24 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     PRN *prn;
 
     d = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-
-    if (bufopen(&prn)) {
-	return;
-    }	
+    tab = tabs[d];
 
     if (d != DW_DIST) {
-	a = atof(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
-    }
+	a = getval(tab->entry[0], C_POS_DBL);
+	if (na(a)) return;
+    }	
 
     switch (d) {
     case T_DIST:
     case CHISQ_DIST:
-	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[1])));
+	df = getval(tab->entry[1], C_INT);
 	break;
     case F_DIST:
-	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[1])));
-	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[2])));
+	df = getval(tab->entry[1], C_INT);
+	n = getval(tab->entry[2], C_INT);
 	break;
     case DW_DIST:
-	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
-	dw = gui_get_plugin_function("dw_lookup", &handle);
-	winwidth = 77;
-	winheight = 300;
+	n = getval(tab->entry[0], C_INT);
 	break;
     default:
 	break;
@@ -213,8 +213,14 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     } else if (d == DW_DIST && n <= 0) {
 	errbox(_("Invalid sample size"));
 	err = 1;
-    } else if (d == DW_DIST && dw == NULL)  {
-	err = 1;
+    }
+
+    if (err) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
     }
 
     /* get the values */
@@ -233,7 +239,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 	    x = f_critval(a, df, n);
 	    break;
 	case DW_DIST:
-	    (*dw)(n, prn);
+	    dw_lookup(n, prn);
 	    break;
 	default:
 	    break;
@@ -272,12 +278,12 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 	    pprintf(prn, _("Critical value = %g"), x);
 	    pputc(prn, '\n');
 	}
-    }	
-	
-    if (handle != NULL) {
-	close_plugin(handle);
+    } else {
+	winwidth = 77;
+	winheight = 300;
     }
 
+	
     if (err) {
 	gretl_print_destroy(prn);
     } else {
@@ -288,108 +294,78 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 
 static void get_pvalue (GtkWidget *w, CalcChild *child)
 {
-    lookup_t **pval = child->calcp;
-    double pv, parm[3];
+    lookup_t *tab, **tabs = child->calcp;
+    double pv, x[3];
     char st = 0;
-    int i, j, df;
-    double val, xx, zz;
-    const gchar *tmp;
+    int i, j;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
+    tab = tabs[i];
 
     switch (i) {
 
     case CALC_NORMAL:
 	st = 'z';
-	/* value */
-	xx = entry_get_double(pval[i]->entry[0], NULL, 0);
-	if (na(xx)) return;
-	/* mean */
-	zz = entry_get_double(pval[i]->entry[1], NULL, 0);
-	if (na(zz)) return;
-	xx -= zz;
-	/* std. deviation */
-	val = entry_get_double(pval[i]->entry[2], NULL, 1);
-	if (na(val)) return;
-	parm[0] = xx / val;
+	x[0] = getval(tab->entry[0], C_DBL); /* mean */
+	if (na(x[0])) return;
+	x[1] = getval(tab->entry[1], C_POS_DBL); /* s.d. */
+	if (na(x[1])) return;
+	x[2] = getval(tab->entry[2], C_DBL); /* val */
+	if (na(x[2])) return;
+	x[0] = (x[2] - x[0]) / x[1]; /* z-score */
 	break;
 
     case CALC_STUDENT: 
 	st = 't';
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	df = atoi(tmp);   /* df */
-	if (df <= 0) {
-	    errbox(_("Invalid degrees of freedom"));
-	    return;
-	}
-
-	xx = entry_get_double(pval[i]->entry[1], NULL, 0); /* value */
-	if (na(xx)) return;
-
-	parm[0] = df;
-	parm[1] = xx;
+	x[0] = getval(tab->entry[0], C_INT); /* df */
+	if (x[0] < 0) return;
+	x[1] = getval(tab->entry[1], C_DBL); /* val */
+	if (na(x[1])) return;
 	break;
 
     case CALC_CHISQ:
 	st = 'X';
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	df = atoi(tmp);   /* df */
-	if (df <= 0) {
-	    errbox(_("Invalid degrees of freedom"));
-	    return;
-	}
-	xx = entry_get_double(pval[i]->entry[1], NULL, 1); /* value */
-	if (na(xx)) return;
-	parm[0] = df;
-	parm[1] = xx;
+	x[0] = getval(tab->entry[0], C_INT); /* df */
+	if (x[0] < 0) return;
+	x[1] = getval(tab->entry[1], C_POS_DBL); /* val */
+	if (na(x[1])) return;
 	break;
 
     case CALC_POISSON: 
 	st = 'P';
-	zz = entry_get_double(pval[i]->entry[0], NULL, 1); /* mean */
-	if (na(zz)) return;
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
-	df = atoi(tmp); /* value, actually */
-	parm[0] = zz;
-	parm[1] = df;
+	x[0] = getval(tab->entry[0], C_POS_DBL); /* mean */
+	if (na(x[0])) return;
+	x[1] = getval(tab->entry[1], C_INT); /* val */
+	if (x[1] < 0) return;
 	break;
 
     case CALC_SNEDECOR:
 	st = 'F';
-	for (j=0; j<2; j++) {
-	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
-	    df = atoi(tmp);
-	    if (df <= 0) {
-		errbox(_("Invalid degrees of freedom"));
-		return;
-	    }
-	    parm[j] = df;
-	}
-	/* value */
-	xx = entry_get_double(pval[i]->entry[2], NULL, 1);
-	if (na(xx)) return;
-	parm[2] = xx;
+	x[0] = getval(tab->entry[0], C_INT); /* dfn */
+	if (x[0] < 0) return;
+	x[1] = getval(tab->entry[1], C_INT); /* dfd */
+	if (x[1] < 0) return;
+	x[2] = getval(tab->entry[2], C_POS_DBL); /* val */
+	if (na(x[2])) return;
 	break;
 
     case CALC_GAMMA: 
 	st = 'G';
 	for (j=0; j<3; j++) {
-	    xx = entry_get_double(pval[i]->entry[j], NULL, 1); /* check! */
-	    if (na(xx)) return;
-	    parm[j] = xx;
+	    x[j] = getval(tab->entry[j], C_POS_DBL);
+	    if (na(x[j])) return;
 	}
 	break;
 
     case CALC_BINOMIAL: 
 	st = 'B';
-	for (j=0; j<3; j++) {
-	    /* FIXME */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
-	    xx = getval(tmp, NULL, 0);
-	    if (na(xx)) return;
-	    parm[j] = xx;
-	}
+	x[0] = getval(tab->entry[0], C_POS_DBL); /* prob */
+	if (check_prob(x[0])) return;
+	x[1] = getval(tab->entry[1], C_INT); /* trials */
+	if (x[1] < 0) return;
+	x[2] = getval(tab->entry[2], C_INT); /* val */
+	if (x[1] < 0) return;
 	break;
 
     default:
@@ -399,88 +375,162 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 
     if (bufopen(&prn)) return;
 
-    pv = gretl_get_pvalue(st, parm);
+    pv = gretl_get_pvalue(st, x);
 
     if (na(pv)) {
 	errbox(_("Failed to compute p-value"));
     } else {
-	print_pvalue(st, parm, pv, prn);
+	print_pvalue(st, x, pv, prn);
 	view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
     }
 }
 
+static int calc_finish_genr (void)
+{
+    char *cmdline = get_lib_cmdline();
+    PRN *prn;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    err = generate(cmdline, &Z, datainfo, OPT_NONE, prn); 
+
+    if (err) {
+	errbox(gretl_print_get_buffer(prn));
+	delete_last_command();
+    } else {
+	populate_varlist();
+	mark_dataset_as_modified();
+    }
+
+    gretl_print_destroy(prn);
+
+    return err;
+}
+
 static void get_random (GtkWidget *w, CalcChild *child)
 {
-    lookup_t **pval = child->calcp;
-    double parm[2];
-    int i, j, k;
-    double x;
-    const gchar *tmp;
+    lookup_t *tab, **tabs = child->calcp;
+    const char *vname;
+    double x[2] = {0};
+    int i, j = 0;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
+    tab = tabs[i];
 
     switch (i) {
 
-    case CALC_NORMAL:
-    case CALC_GAMMA:
-	for (j=0; j<2; j++) {
-	    x = entry_get_double(pval[i]->entry[j], NULL, 0); /* FIXME > 0 */
-	    if (na(x)) return;
-	    parm[j] = x;
-	}
+    case RAND_UNIFORM:
+	x[j] = getval(tab->entry[j], C_DBL); /* min */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_DBL); /* max */
+	if (na(x[j++])) return;
 	break;
 
-    case CALC_STUDENT: 
-    case CALC_CHISQ:
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	k = atoi(tmp); 
-	if (k <= 0) {
-	    errbox(_("Invalid degrees of freedom"));
-	    return;
-	}
-	parm[0] = k;
+    case RAND_NORMAL:
+	x[j] = getval(tab->entry[j], C_DBL); /* mean */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
+	if (na(x[j++])) return;
 	break;
 
-    case CALC_POISSON: 
-	x = entry_get_double(pval[i]->entry[0], NULL, 1);
-	if (na(x)) return;
-	parm[0] = x;
+    case RAND_GAMMA:
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* shape */
+	if (na(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* scale */
+	if (na(x[j++])) return;
 	break;
 
-    case CALC_SNEDECOR:
-	for (j=0; j<2; j++) {
-	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
-	    k = atoi(tmp);
-	    if (k <= 0) {
-		errbox(_("Invalid degrees of freedom"));
-		return;
-	    }
-	    parm[j] = k;
-	}
+    case RAND_STUDENT: 
+    case RAND_CHISQ:
+	x[j] = getval(tab->entry[j], C_INT); /* df */
+	if (x[j++] < 0) return;
 	break;
 
-    case CALC_BINOMIAL: 
-	x = entry_get_double(pval[i]->entry[0], NULL, 1);
-	if (na(x)) return;
-	if (x <= 0.0 || x > 1.0) {
-	    errbox(_("Invalid success probability"));
-	    return;
-	}
-	parm[0] = x;
-	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
-	k = atoi(tmp);
-	if (k <= 0) {
-	    errbox(_("Invalid number of trials"));
-	    return;
-	}
-	parm[1] = k;
+    case RAND_POISSON: 
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
+	if (na(x[j++])) return;
+	break;
+
+    case RAND_SNEDECOR:
+	x[j] = getval(tab->entry[j], C_INT); /* dfn */
+	if (x[j++] < 0) return;
+	x[j] = getval(tab->entry[j], C_INT); /* dfd */
+	if (x[j++] < 0) return;
+	break;
+
+    case RAND_BINOMIAL: 
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
+	if (check_prob(x[j++])) return;
+	x[j] = getval(tab->entry[j], C_INT); /* trials */
+	if (x[j++] < 0) return;
 	break;
 
     default:
 	return;
     }
 
-    /* now actually generate the random var */
+    vname = gtk_entry_get_text(GTK_ENTRY(tab->entry[j]));
+    if (vname == NULL || *vname == '\0') {
+	errbox(_("You musy give a name for the variable"));
+	return;
+    } else if (validate_varname(vname)) {
+	return;
+    }
+
+    if (i == RAND_UNIFORM && x[0] >= x[1]) {
+	errbox(_("Range is non-positive!"));
+	return;
+    }
+
+    switch (i) {
+
+    case RAND_UNIFORM:
+	gretl_command_sprintf("genr %s = uniform(%g,%g)", vname,
+			      x[0], x[1]);
+	break;
+
+    case RAND_NORMAL:
+	gretl_command_sprintf("genr %s = normal(%g,%g)", vname,
+			      x[0], x[1]);
+	break;
+
+    case RAND_STUDENT: 
+	gretl_command_sprintf("genr %s = student(%g)", vname, x[0]);
+	break;
+
+    case RAND_CHISQ:
+	gretl_command_sprintf("genr %s = chisq(%g)", vname, x[0]);
+	break;
+
+    case RAND_POISSON: 
+	/* FIXME allow variable as param? */
+	gretl_command_sprintf("genr %s = poisson(%g)", vname, x[0]);
+	break;
+
+    case RAND_SNEDECOR:
+	gretl_command_sprintf("genr %s = randF(%g,%g)", vname, 
+			      x[0], x[1]);
+	break;
+
+    case RAND_GAMMA:
+	gretl_command_sprintf("genr %s = gamma(%g,%g)", vname, 
+			      x[0], x[1]);
+	break;
+
+    case RAND_BINOMIAL: 
+	gretl_command_sprintf("genr %s = binomial(%g,%g)", vname, 
+			      x[0], x[1]);
+	break;
+    }
+
+    if (check_and_record_command()) {
+	return;
+    }
+
+    calc_finish_genr();
 }
 
 static void print_pv (PRN *prn, double p1, double p2)
@@ -754,8 +804,7 @@ static void np_test (GtkWidget *w, test_t *test)
 static void h_test (GtkWidget *w, test_t *test)
 {
     int j, n1, n2, grf;
-    double x[5], sderr, ts, pv, z;
-    const gchar *tmp;
+    double x[5], se, ts, pv, z;
     PRN *prn;
 
     if (bufopen(&prn)) {
@@ -769,28 +818,17 @@ static void h_test (GtkWidget *w, test_t *test)
     switch (test->code) {
 
     case ONE_MEAN:
-	for (j=0; j<2; j++) {
-	    /* get sample mean and std dev */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
-	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
-	    if (na(x[j])) {
-		return;
-	    }
-	}
+	x[0] = getval(test->entry[0], C_DBL); /* mean */
+	if (na(x[0])) goto bailout;
+	x[1] = getval(test->entry[1], C_POS_DBL); /* s.d. */
+	if (na(x[0])) goto bailout;
+	n1 = getval(test->entry[2], C_INT); /* sample */
+	if (n1 < 0) goto bailout;
+	x[2] = getval(test->entry[3], C_DBL); /* val */
+	if (na(x[2])) goto bailout;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
-	x[2] = getval(tmp, prn, 0);
-	if (na(x[2])) {
-	    return;
-	}
-
-	sderr = x[1] / sqrt((double) n1);
-	ts = (x[0] - x[2])/sderr;
+	se = x[1] / sqrt((double) n1);
+	ts = (x[0] - x[2])/se;
 
 	pprintf(prn, _("Null hypothesis: population mean = %g\n"), x[2]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
@@ -799,7 +837,7 @@ static void h_test (GtkWidget *w, test_t *test)
 
 	if (GTK_TOGGLE_BUTTON(test->check)->active) {
 	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
-		    x[0], x[2], sderr, ts);
+		    x[0], x[2], se, ts);
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
 	    if (grf) {
@@ -807,7 +845,7 @@ static void h_test (GtkWidget *w, test_t *test)
 	    }
 	} else {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
-		    x[0], x[2], sderr, ts);
+		    x[0], x[2], se, ts);
 	    pv = t_pvalue_2(ts, n1 - 1);
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) {
@@ -817,22 +855,12 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case ONE_VARIANCE:
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) {
-	    return;
-	}
+	x[0] = getval(test->entry[0], C_POS_DBL);
+	if (na(x[0])) goto bailout;
+	n1 = getval(test->entry[1], C_INT);
+	if (n1 < 0) goto bailout;
+	x[1] = getval(test->entry[2], C_POS_DBL);
+	if (na(x[1])) goto bailout;
 
 	ts = (n1 - 1) * x[0] / x[1];
 
@@ -853,39 +881,29 @@ static void h_test (GtkWidget *w, test_t *test)
 	}
 	break;
 
-    case ONE_PROPN: /* proportion */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) {
-	    return;
-	}
+    case ONE_PROPN:
+	x[0] = getval(test->entry[0], C_POS_DBL); /* propn */
+	if (na(x[0])) goto bailout;
+	n1 = getval(test->entry[1], C_INT);
+	if (n1 < 0) goto bailout;
+	x[1] = getval(test->entry[2], C_POS_DBL);
+	if (na(x[1])) goto bailout;
 
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
 	    infobox(_("The assumption of a normal sampling distribution\n"
 		      "is not justified here.  Abandoning the test."));
 	    gretl_print_destroy(prn);
-	    return;
+	    goto bailout;
 	}
 
-	sderr = sqrt(x[1] * (1.0 - x[1]) / n1);
-	ts = (x[0] - x[1]) / sderr;
+	se = sqrt(x[1] * (1.0 - x[1]) / n1);
+	ts = (x[0] - x[1]) / se;
 
 	pprintf(prn, _("Null hypothesis: population proportion = %g\n"), x[1]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
 	pprintf(prn, _("Sample proportion = %g\n"), x[0]);
 	pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
-		x[0], x[1], sderr, ts);
+		x[0], x[1], se, ts);
 
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
@@ -895,39 +913,22 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_MEANS:
-	for (j=0; j<2; j++) {
-	    /* mean and std dev, sample 1 */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
-	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
-	    if (na(x[j])) {
-		return;
-	    }
-	}
+	x[0] = getval(test->entry[0], C_DBL); /* mean1 */
+	if (na(x[0])) goto bailout;
+	x[1] = getval(test->entry[1], C_POS_DBL); /* sd1 */
+	if (na(x[1])) goto bailout;
+	n1 = getval(test->entry[2], C_INT);
+	if (n1 < 0) goto bailout; 
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
+	x[2] = getval(test->entry[3], C_DBL); /* mean2 */
+	if (na(x[2])) goto bailout;
+	x[3] = getval(test->entry[4], C_POS_DBL); /* sd2 */
+	if (na(x[3])) goto bailout;
+	n2 = getval(test->entry[5], C_INT);
+	if (n2 < 0) goto bailout; 
 
-	for (j=2; j<4; j++) {
-	    /* mean and std dev, sample 2 */
-	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j+1]));
-	    x[j] = getval(tmp, prn, (j==3)? 1 : 0);
-	    if (na(x[j])) {
-		return;
-	    }
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[5]));
-	if ((n2 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[6]));
-	x[4] = getval(tmp, prn, 0);
-	if (na(x[4])) {
-	    return;
-	}
+	x[4] = getval(test->entry[6], C_DBL);
+	if (na(x[4])) goto bailout;
 
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
 	pputc(prn, '\n');
@@ -966,19 +967,19 @@ static void h_test (GtkWidget *w, test_t *test)
 
 	if (j == 1) {
 	    ts = ((n1-1) * x[1] * x[1] + (n2-1) * x[3] * x[3]) / (n1 + n2 - 2);
-	    sderr = sqrt(ts / n1 + ts / n2);
+	    se = sqrt(ts / n1 + ts / n2);
 	} else {
 	    double v1 = x[1] * x[1] / n1;
 	    double v2 = x[3] * x[3] / n2;
 
-	    sderr = sqrt(v1 + v2);
+	    se = sqrt(v1 + v2);
 	}
 
-	ts = (x[0] - x[2] - x[4]) / sderr;
+	ts = (x[0] - x[2] - x[4]) / se;
 
 	if (j == 1) {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
-		    n1 + n2 - 2, x[0], x[2], sderr, ts);
+		    n1 + n2 - 2, x[0], x[2], se, ts);
 	    if (ts > 0) {
 		pv = t_pvalue_2(ts, n1 + n2 - 2);
 	    } else {
@@ -991,13 +992,13 @@ static void h_test (GtkWidget *w, test_t *test)
 	} else {
 	    if (x[4] > 0.0) {
 		pprintf(prn, _("Test statistic: z = (%g - %g - %g)/%g = %g\n"),
-			x[0], x[2], x[4], sderr, ts);
+			x[0], x[2], x[4], se, ts);
 	    } else if (x[4] < 0.0) {
 		pprintf(prn, _("Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"),
-			x[0], x[2], x[4], sderr, ts);
+			x[0], x[2], x[4], se, ts);
 	    } else {
 		pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
-			x[0], x[2], sderr, ts);
+			x[0], x[2], se, ts);
 	    }
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
@@ -1015,27 +1016,15 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_VARIANCES:
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) {
-	    return;
-	}
+	x[0] = getval(test->entry[0], C_POS_DBL);
+	if (na(x[0])) goto bailout;
+	n1 = getval(test->entry[1], C_INT);
+	if (n1 < 0) goto bailout;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
-	if ((n2 = getint(tmp, prn)) == -1) {
-	    return;
-	}
+	x[1] = getval(test->entry[2], C_POS_DBL);
+	if (na(x[1])) goto bailout;
+	n2 = getval(test->entry[3], C_INT);
+	if (n2 < 0) goto bailout;
 
 	pprintf(prn, _("Null hypothesis: The population variances are "
 		       "equal\n"));
@@ -1060,28 +1049,16 @@ static void h_test (GtkWidget *w, test_t *test)
 	}
 	break;
 
-    case TWO_PROPNS: /* two proportions */
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) {
-	    return;
-	}
+    case TWO_PROPNS:
+	x[0] = getval(test->entry[0], C_POS_DBL);
+	if (na(x[0])) goto bailout;
+	n1 = getval(test->entry[1], C_INT);
+	if (n1 < 0) goto bailout;
 
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) {
-	    return;
-	}
-
-	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
-	if ((n2 = getint(tmp, prn)) == -1) {
-	    return;
-	}
+	x[1] = getval(test->entry[2], C_POS_DBL);
+	if (na(x[1])) goto bailout;
+	n2 = getval(test->entry[3], C_INT);
+	if (n2 < 0) goto bailout;
 
 	pprintf(prn, _("Null hypothesis: the population proportions are "
 		       "equal\n"));
@@ -1092,11 +1069,11 @@ static void h_test (GtkWidget *w, test_t *test)
 	pputc(prn, '\n');
 
 	x[2] = (n1*x[0] + n2*x[1]) / (n1 + n2);
-	sderr = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
-	ts = (x[0] - x[1]) / sderr;
+	se = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
+	ts = (x[0] - x[1]) / se;
 
 	pprintf(prn, _("Test statistic: z = (%g - %g) / %g = %g\n"),
-		x[0], x[1], sderr, ts);
+		x[0], x[1], se, ts);
 
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
@@ -1111,6 +1088,11 @@ static void h_test (GtkWidget *w, test_t *test)
 
     view_buffer(prn, 78, 340, _("gretl: hypothesis test"), H_TEST,
                 NULL);
+    return;
+
+ bailout:
+
+    gretl_print_destroy(prn);
 }
 
 static void h_test_global (GtkWidget *w, CalcChild *child)
@@ -1133,34 +1115,26 @@ static void np_test_global (GtkWidget *w, CalcChild *child)
 
 static void dist_graph (GtkWidget *w, CalcChild *child)
 {
-    lookup_t **look = child->calcp;
+    lookup_t *look, **looks = child->calcp;
     int m = 0, n = 0;
-    int d, err = 0;
+    int d;
 
     d = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
+    look = looks[d];
 
     switch (d) {
     case NORMAL_DIST:
 	break;
     case T_DIST:
     case CHISQ_DIST:
-	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
-	if (m <= 0) {
-	    err = 1;
-	}
+	m = getval(look->entry[0], C_INT);
+	if (m < 0) return;
 	break;
     case F_DIST:
-	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
-	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[1])));
-	if (m <= 0 || n <= 0) {
-	    err = 1;
-	}
+	m = getval(look->entry[0], C_INT);
+	n = getval(look->entry[1], C_INT);
+	if (m < 0 || n < 0) return;
 	break;
-    }
-
-    if (err) {
-	errbox(_("Invalid degrees of freedom"));
-	return;
     }
 
     if (child->plot != NULL) {
@@ -1170,33 +1144,34 @@ static void dist_graph (GtkWidget *w, CalcChild *child)
     } 
 }
 
-static void add_calc_entry (GtkWidget *tbl, gint *tbl_len, 
+static void add_calc_entry (GtkWidget *tbl, gint *rows, 
 			    const gchar *label, CalcChild *child,
-			    int dist)
+			    int i)
 {
     lookup_t **look = child->calcp;
     int c = child->code;
     GtkWidget *tmp;
 
-    *tbl_len += 1;
+    *rows += 1;
 
     /* label */
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     tmp = gtk_label_new(_(label));
     gtk_misc_set_alignment(GTK_MISC(tmp), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 1, *tbl_len - 1, *tbl_len);
+			      tmp, 0, 1, *rows - 1, *rows);
     gtk_widget_show(tmp);
 
-    /* numeric entry */
+    /* entry box */
     tmp = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
-    look[dist]->entry[*tbl_len - 2] = tmp;
+    look[i]->entry[*rows-2] = tmp;
 
     g_signal_connect(G_OBJECT(tmp), "activate", 
 		     (c == CALC_PVAL)? G_CALLBACK(get_pvalue) : 
+		     (c == CALC_RAND)? G_CALLBACK(get_random) :
 		     (c == CALC_GRAPH || c == CALC_GRAPH_ADD)? 
 		     G_CALLBACK(dist_graph) :
 		     G_CALLBACK(get_critical),
@@ -1206,7 +1181,7 @@ static void add_calc_entry (GtkWidget *tbl, gint *tbl_len,
 static void make_lookup_tab (CalcChild *child, int d)
 {
     GtkWidget *tmp, *box, *tbl;
-    gint tbl_len;
+    gint rows;
     const gchar *titles[] = {
 	N_("normal"), 
 	N_(" t "), 
@@ -1223,32 +1198,32 @@ static void make_lookup_tab (CalcChild *child, int d)
     gtk_widget_show(tmp);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tmp);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    rows = 1;
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE (tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE (tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
 
     if (child->code == CALC_DIST && d != DW_DIST) {
-	add_calc_entry(tbl, &tbl_len, N_("right-tail probability"), child, d);
+	add_calc_entry(tbl, &rows, N_("right-tail probability"), child, d);
     }
    
     switch (d) {
     case NORMAL_DIST:
 	break;
     case T_DIST:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
 	break;
     case CHISQ_DIST:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
 	break;
     case F_DIST:
-	add_calc_entry(tbl, &tbl_len, N_("dfn"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("dfd"), child, d);
+	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
+	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
 	break;	
     case DW_DIST:
-	add_calc_entry(tbl, &tbl_len, N_("n"), child, d);
+	add_calc_entry(tbl, &rows, N_("n"), child, d);
 	break;
     default:
 	break;
@@ -1257,9 +1232,9 @@ static void make_lookup_tab (CalcChild *child, int d)
 
 static void make_pval_tab (CalcChild *child, int d) 
 {
-    lookup_t **pval = child->calcp;
+    lookup_t **tab = child->calcp;
     GtkWidget *tempwid, *box, *tbl;
-    gint tbl_len;
+    gint rows;
     const gchar *titles[] = {
 	N_("normal"), 
 	N_(" t "), 
@@ -1278,8 +1253,8 @@ static void make_pval_tab (CalcChild *child, int d)
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tempwid);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    rows = 1;
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
@@ -1288,44 +1263,44 @@ static void make_pval_tab (CalcChild *child, int d)
     switch (d) {
 
     case CALC_NORMAL: 
-	add_calc_entry(tbl, &tbl_len, N_("value"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("mean"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_calc_entry(tbl, &tbl_len, N_("std. deviation"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
+	add_calc_entry(tbl, &rows, N_("mean"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
+	add_calc_entry(tbl, &rows, N_("std. deviation"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_STUDENT:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("value"), child, d);
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_CHISQ:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("x-value"), child, d);
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_SNEDECOR:
-	add_calc_entry(tbl, &tbl_len, N_("dfn"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("dfd"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("F-value"), child, d);
+	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
+	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_GAMMA:
-	add_calc_entry(tbl, &tbl_len, N_("shape"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("scale"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("x-value"), child, d);
+	add_calc_entry(tbl, &rows, N_("shape"), child, d);
+	add_calc_entry(tbl, &rows, N_("scale"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_BINOMIAL:
-	add_calc_entry(tbl, &tbl_len, N_("Prob"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("trials"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("x-value"), child, d);
+	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
+	add_calc_entry(tbl, &rows, N_("trials"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     case CALC_POISSON:
-	add_calc_entry(tbl, &tbl_len, N_("mean"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("x-value"), child, d);
+	add_calc_entry(tbl, &rows, N_("mean"), child, d);
+	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
     default:
@@ -1335,18 +1310,18 @@ static void make_pval_tab (CalcChild *child, int d)
 
 static void make_rand_tab (CalcChild *child, int d) 
 {
-    lookup_t **pval = child->calcp;
+    lookup_t **tab = child->calcp;
     GtkWidget *tempwid, *box, *tbl;
-    gint tbl_len;
+    gint rows;
     const gchar *titles[] = {
+	N_("uniform"),
 	N_("normal"), 
 	N_(" t "), 
 	N_("chi-square"), 
 	N_(" F "), 
 	N_("gamma"),
 	N_("binomial"),
-	N_("poisson"),
-	N_("uniform"), 
+	N_("poisson")
     };
    
     box = gtk_vbox_new(FALSE, 0);
@@ -1357,59 +1332,61 @@ static void make_rand_tab (CalcChild *child, int d)
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tempwid);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    rows = 1;
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
-   
+
     switch (d) {
 
-    case CALC_UNIFORM:
-	add_calc_entry(tbl, &tbl_len, N_("minimum"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_calc_entry(tbl, &tbl_len, N_("maximum"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
+    case RAND_UNIFORM:
+	add_calc_entry(tbl, &rows, N_("minimum"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
+	add_calc_entry(tbl, &rows, N_("maximum"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
 	break;
 
-    case CALC_NORMAL: 
-	add_calc_entry(tbl, &tbl_len, N_("mean"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_calc_entry(tbl, &tbl_len, N_("std. deviation"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
+    case RAND_NORMAL: 
+	add_calc_entry(tbl, &rows, N_("mean"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
+	add_calc_entry(tbl, &rows, N_("std. deviation"), child, d);
+	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
 	break;
 
-    case CALC_STUDENT:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
+    case RAND_STUDENT:
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
 	break;
 
-    case CALC_CHISQ:
-	add_calc_entry(tbl, &tbl_len, N_("df"), child, d);
+    case RAND_CHISQ:
+	add_calc_entry(tbl, &rows, N_("df"), child, d);
 	break;
 
-    case CALC_SNEDECOR:
-	add_calc_entry(tbl, &tbl_len, N_("dfn"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("dfd"), child, d);
+    case RAND_SNEDECOR:
+	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
+	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
 	break;
 
-    case CALC_GAMMA:
-	add_calc_entry(tbl, &tbl_len, N_("shape"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("scale"), child, d);
+    case RAND_GAMMA:
+	add_calc_entry(tbl, &rows, N_("shape"), child, d);
+	add_calc_entry(tbl, &rows, N_("scale"), child, d);
 	break;
 
-    case CALC_BINOMIAL:
-	add_calc_entry(tbl, &tbl_len, N_("Prob"), child, d);
-	add_calc_entry(tbl, &tbl_len, N_("trials"), child, d);
+    case RAND_BINOMIAL:
+	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
+	add_calc_entry(tbl, &rows, N_("trials"), child, d);
 	break;
 
-    case CALC_POISSON:
-	add_calc_entry(tbl, &tbl_len, N_("mean"), child, d);
+    case RAND_POISSON:
+	add_calc_entry(tbl, &rows, N_("mean"), child, d);
 	break;
 
     default:
 	break;
     } 
+
+    add_calc_entry(tbl, &rows, N_("name"), child, d);
 }
 
 static int get_restriction_vxy (const char *s, int *vx, int *vy, 
@@ -1678,15 +1655,15 @@ static void select_child_callback (GtkList *l, GtkWidget *w, gpointer p)
     populate_stats(NULL, p);
 }
 
-static void add_test_var_selector (GtkWidget *tbl, gint *tbl_len, 
+static void add_test_var_selector (GtkWidget *tbl, gint *rows, 
 				   test_t *test, int pos,
 				   int labelit)
 {
     GtkWidget *label, *tmp;
     gchar **pbuf;
 
-    *tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     if (labelit) {
 	gchar *tmp = g_strdup_printf(_("Variable %d"), pos + 1);
 	label = gtk_label_new(tmp);
@@ -1695,12 +1672,12 @@ static void add_test_var_selector (GtkWidget *tbl, gint *tbl_len,
 	label = gtk_label_new(_("Variable"));
     }
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 0, 1, *tbl_len - 1, *tbl_len);
+			      label, 0, 1, *rows - 1, *rows);
     gtk_widget_show(label);
 
     tmp = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
     g_object_set_data(G_OBJECT(tmp), "test", test);
     g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
@@ -1722,22 +1699,22 @@ static void add_test_var_selector (GtkWidget *tbl, gint *tbl_len,
     add_vars_to_combo(tmp, test->code, pos);
 }
 
-static void add_test_combo (GtkWidget *tbl, gint *tbl_len, 
+static void add_test_combo (GtkWidget *tbl, gint *rows, 
 			    test_t *test, int pos)
 {
     GtkWidget *button, *tmp;
     gchar **pbuf;
 
-    *tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     button = gtk_check_button_new_with_label(_("Use variable from dataset"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      button, 0, 1, *tbl_len - 1, *tbl_len);
+			      button, 0, 1, *rows - 1, *rows);
     gtk_widget_show(button);
 
     tmp = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
     g_object_set_data(G_OBJECT(tmp), "test", test);
     g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
@@ -1767,22 +1744,22 @@ static void add_test_combo (GtkWidget *tbl, gint *tbl_len,
 		     G_CALLBACK(toggle_combo_ok), tmp);
 }
 
-static void add_test_entry (GtkWidget *tbl, gint *tbl_len, 
+static void add_test_entry (GtkWidget *tbl, gint *rows, 
 			    const gchar *label, test_t *test, 
 			    int i)
 {
     GtkWidget *tmp;
 
-    *tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     tmp = gtk_label_new(label);
     gtk_misc_set_alignment(GTK_MISC(tmp), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 1, *tbl_len - 1, *tbl_len);
+			      tmp, 0, 1, *rows - 1, *rows);
     gtk_widget_show(tmp);
     tmp = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
     test->entry[i] = tmp;
 
@@ -1790,32 +1767,32 @@ static void add_test_entry (GtkWidget *tbl, gint *tbl_len,
 		     G_CALLBACK(h_test), test);
 }
 
-static void add_test_label (GtkWidget *tbl, gint *tbl_len, 
+static void add_test_label (GtkWidget *tbl, gint *rows, 
 			    const gchar *label)
 {
     GtkWidget *tmp;
 
-    *tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     tmp = gtk_label_new(label);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 0, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
 }
 
-static void add_test_check (GtkWidget *tbl, gint *tbl_len, 
+static void add_test_check (GtkWidget *tbl, gint *rows, 
 			    const gchar *label, test_t *test,
 			    gboolean val)
 {
     GtkWidget *tmp;
 
-    *tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
+    *rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
     tmp = gtk_check_button_new_with_label(label);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), val);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 2, *tbl_len - 1, *tbl_len);
+			      tmp, 0, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);
     test->check = tmp;
 }
@@ -1869,7 +1846,7 @@ static void make_nptest_tab (CalcChild *child, int idx)
     test_t *test = tests[idx];
     GtkWidget *tmp, *box, *tbl;
     GSList *group;
-    gint i, tbl_len;
+    gint i, rows;
     const gchar *titles[] = {
 	N_("Difference test"),
 	N_("Runs test")
@@ -1883,8 +1860,8 @@ static void make_nptest_tab (CalcChild *child, int idx)
     gtk_widget_show(tmp);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tmp);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    rows = 1;
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
@@ -1898,33 +1875,33 @@ static void make_nptest_tab (CalcChild *child, int idx)
     switch (idx) {
 
     case NP_DIFF: 
-	add_test_var_selector(tbl, &tbl_len, test, 0, 1);
-	add_test_var_selector(tbl, &tbl_len, test, 1, 1);
+	add_test_var_selector(tbl, &rows, test, 0, 1);
+	add_test_var_selector(tbl, &rows, test, 1, 1);
 
 	/* option radios */
-	tbl_len += 3;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+	rows += 3;
+	gtk_table_resize(GTK_TABLE(tbl), rows, 2);
 
 	test->radio[0] = gtk_radio_button_new_with_label(NULL, _("Sign test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[0], 0, 2, 
-				  tbl_len - 3, tbl_len - 2);
+				  rows - 3, rows - 2);
 	gtk_widget_show(test->radio[0]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[0]));
 	test->radio[1] = gtk_radio_button_new_with_label(group, _("Wilcoxon rank sum test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[1], 0, 2, 
-				  tbl_len - 2, tbl_len - 1);
+				  rows - 2, rows - 1);
 	gtk_widget_show(test->radio[1]);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(test->radio[1]));
 	test->radio[2] = gtk_radio_button_new_with_label(group, _("Wilcoxon signed rank test"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), test->radio[2], 0, 2, 
-				  tbl_len - 1, tbl_len);
+				  rows - 1, rows);
 	gtk_widget_show(test->radio[2]);
 	break;
 
     case NP_RUNS: 
-	add_test_var_selector(tbl, &tbl_len, test, 0, 0);
+	add_test_var_selector(tbl, &rows, test, 0, 0);
 	break;
 
     default:
@@ -1932,15 +1909,15 @@ static void make_nptest_tab (CalcChild *child, int idx)
     } 
 
     /* check box for extra option */
-    tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+    rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), rows, 2);
     if (idx == NP_DIFF) {
 	tmp = gtk_check_button_new_with_label(_("Show details"));
     } else {
 	tmp = gtk_check_button_new_with_label(_("Use first difference"));
     }
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, 
-			      tbl_len - 1, tbl_len);
+			      rows - 1, rows);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     if (idx == NP_DIFF) {
@@ -1960,7 +1937,7 @@ static void make_test_tab (CalcChild *child, int idx)
     test_t *test = tests[idx];
     GtkWidget *tempwid, *box, *tbl;
     int nv = 0;
-    gint i, tbl_len;
+    gint i, rows;
     const gchar *titles[] = {
 	N_("mean"), 
 	N_("variance"), 
@@ -1978,8 +1955,8 @@ static void make_test_tab (CalcChild *child, int idx)
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tempwid);   
 
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    rows = 1;
+    tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
@@ -2002,68 +1979,68 @@ static void make_test_tab (CalcChild *child, int idx)
     }
 
     if (nv > 0) {
-	add_test_combo(tbl, &tbl_len, test, 0);
+	add_test_combo(tbl, &rows, test, 0);
     }
    
     switch (idx) {
 
     case ONE_MEAN: 
-	add_test_entry(tbl, &tbl_len, _("sample mean"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("std. deviation"), test, 1);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, 2);
-	add_test_entry(tbl, &tbl_len, _("H0: mean ="), test, 3);
-	add_test_check(tbl, &tbl_len, _("Assume standard deviation is "
+	add_test_entry(tbl, &rows, _("sample mean"), test, 0);
+	add_test_entry(tbl, &rows, _("std. deviation"), test, 1);
+	add_test_entry(tbl, &rows, _("sample size"), test, 2);
+	add_test_entry(tbl, &rows, _("H0: mean ="), test, 3);
+	add_test_check(tbl, &rows, _("Assume standard deviation is "
 		       "population value"), test, FALSE);
 	break;
 
     case ONE_VARIANCE: 
-	add_test_entry(tbl, &tbl_len, _("sample variance"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, 1);
-	add_test_entry(tbl, &tbl_len, _("H0: variance ="), test, 2);
+	add_test_entry(tbl, &rows, _("sample variance"), test, 0);
+	add_test_entry(tbl, &rows, _("sample size"), test, 1);
+	add_test_entry(tbl, &rows, _("H0: variance ="), test, 2);
 	break;
 
     case ONE_PROPN: /* proportion */
-	add_test_entry(tbl, &tbl_len, _("sample proportion"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("sample size"), test, 1);
-	add_test_entry(tbl, &tbl_len, _("H0: proportion ="), test, 2);
+	add_test_entry(tbl, &rows, _("sample proportion"), test, 0);
+	add_test_entry(tbl, &rows, _("sample size"), test, 1);
+	add_test_entry(tbl, &rows, _("H0: proportion ="), test, 2);
 	break;
 
     case TWO_MEANS:
-	add_test_entry(tbl, &tbl_len, _("mean of sample 1"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 1"), test, 1);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 2);
+	add_test_entry(tbl, &rows, _("mean of sample 1"), test, 0);
+	add_test_entry(tbl, &rows, _("std. deviation, sample 1"), test, 1);
+	add_test_entry(tbl, &rows, _("size of sample 1"), test, 2);
 	if (nv > 0) {
-	    add_test_combo(tbl, &tbl_len, test, 3);
+	    add_test_combo(tbl, &rows, test, 3);
 	}
-	add_test_entry(tbl, &tbl_len, _("mean of sample 2"), test, 3);
-	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 2"), test, 4);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 5);
-	add_test_entry(tbl, &tbl_len, _("H0: Difference of means ="), test, 6);
+	add_test_entry(tbl, &rows, _("mean of sample 2"), test, 3);
+	add_test_entry(tbl, &rows, _("std. deviation, sample 2"), test, 4);
+	add_test_entry(tbl, &rows, _("size of sample 2"), test, 5);
+	add_test_entry(tbl, &rows, _("H0: Difference of means ="), test, 6);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[6]), "0");
-	add_test_check(tbl, &tbl_len, _("Assume common population standard "
+	add_test_check(tbl, &rows, _("Assume common population standard "
 		       "deviation"), test, TRUE);
 	break;
 
     case TWO_VARIANCES:
-	add_test_entry(tbl, &tbl_len, _("variance of sample 1"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
+	add_test_entry(tbl, &rows, _("variance of sample 1"), test, 0);
+	add_test_entry(tbl, &rows, _("size of sample 1"), test, 1);
 	if (nv > 0) {
-	    add_test_combo(tbl, &tbl_len, test, 2);
+	    add_test_combo(tbl, &rows, test, 2);
 	}	
-	add_test_entry(tbl, &tbl_len, _("variance of sample 2"), test, 2);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 3);
-	add_test_label(tbl, &tbl_len, _("H0: Ratio of variances = 1"));
+	add_test_entry(tbl, &rows, _("variance of sample 2"), test, 2);
+	add_test_entry(tbl, &rows, _("size of sample 2"), test, 3);
+	add_test_label(tbl, &rows, _("H0: Ratio of variances = 1"));
 	break;
 
     case TWO_PROPNS:
-	add_test_entry(tbl, &tbl_len, _("proportion, sample 1"), test, 0);
-	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, 1);
+	add_test_entry(tbl, &rows, _("proportion, sample 1"), test, 0);
+	add_test_entry(tbl, &rows, _("size of sample 1"), test, 1);
 	if (nv > 0) {
-	    add_test_combo(tbl, &tbl_len, test, 2);
+	    add_test_combo(tbl, &rows, test, 2);
 	}	
-	add_test_entry(tbl, &tbl_len, _("proportion, sample 2"), test, 2);
-	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, 3);
-	add_test_label(tbl, &tbl_len, _("H0: Difference of proportions = 0"));
+	add_test_entry(tbl, &rows, _("proportion, sample 2"), test, 2);
+	add_test_entry(tbl, &rows, _("size of sample 2"), test, 3);
+	add_test_label(tbl, &rows, _("H0: Difference of proportions = 0"));
 	break;
 
     default:
@@ -2071,12 +2048,12 @@ static void make_test_tab (CalcChild *child, int idx)
     } 
 
     /* add check box for showing graph of sampling dist. */
-    tbl_len += 1;
-    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+    rows += 1;
+    gtk_table_resize(GTK_TABLE(tbl), rows, 2);
     tempwid = gtk_check_button_new_with_label(_("Show graph of sampling "
 						"distribution"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), tempwid, 0, 2, 
-			      tbl_len - 1, tbl_len);
+			      rows - 1, rows);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tempwid), TRUE);
     gtk_widget_show(tempwid);
 
@@ -2109,7 +2086,9 @@ static void gretl_child_destroy (GtkWidget *w, CalcChild *child)
 	lookup_t **look = child->calcp;
 
 	n = (c == CALC_DIST)? NLOOKUPS :
-	    (c == CALC_PVAL)? NPVAL : NGRAPHS;
+	    (c == CALC_PVAL)? NPVAL : 
+	    (c == CALC_PVAL)? NRAND : 
+	    NGRAPHS;
 
 	for (i=0; i<n; i++) {
 	    free(look[i]);
@@ -2158,6 +2137,7 @@ static int child_allocate_calcp (CalcChild *child)
     } else {
 	n = (c == CALC_PVAL)? NPVAL : 
 	    (c == CALC_DIST)? NLOOKUPS :
+	    (c == CALC_RAND)? NRAND :
 	    NGRAPHS;
 	look = mymalloc(n * sizeof *look);
 	if (look != NULL) {
@@ -2258,10 +2238,25 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
     }
 }
 
+static int calc_help_code (int c)
+{
+    int hc = 0;
+
+    if (c == CALC_TEST) {
+	hc = HTEST;
+    } else if (c == CALC_NPTEST) {
+	hc = HTESTNP;
+    } else if (c == CALC_RAND) {
+	hc = GENR_RANDOM;
+    }
+
+    return hc;
+}
+
 void stats_calculator (gpointer data, guint code, GtkWidget *widget) 
 {
     GtkWidget *tmp = NULL;
-    static GtkWidget *winptr[5];
+    static GtkWidget *winptr[6];
     GtkWidget *oldwin;
     CalcChild *child;
     const char *calc_titles[] = {
@@ -2273,7 +2268,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	N_("gretl: add distribution graph"),
 	N_("gretl: add random variable")
     };
-    int i, nv = 0;
+    int i, hcode, nv = 0;
 
     g_return_if_fail(code == CALC_PVAL || 
 		     code == CALC_DIST || 
@@ -2333,8 +2328,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    make_lookup_tab(child, i);
 	}
     } else if (code == CALC_RAND) {
-	make_rand_tab(child, NRANDS - 1);
-	for (i=0; i<NRANDS-1; i++) {
+	for (i=0; i<NRAND; i++) {
 	    make_rand_tab(child, i);
 	}	
     } else {
@@ -2380,9 +2374,8 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_widget_show(tmp);
 
     /* Help button? */
-    if (code == CALC_TEST || code == CALC_NPTEST) { 
-	int hcode = (code == CALC_TEST)? HTEST : HTESTNP;
-
+    hcode = calc_help_code(code);
+    if (hcode) { 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
