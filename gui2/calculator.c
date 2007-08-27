@@ -256,7 +256,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 
     /* right-tail probability */
     x[j] = getval(tab->entry[j], C_POS_DBL);
-    if (check_prob(x[j++])) return;
+    if (check_prob(x[j])) return;
 
     c = gretl_get_critval(st, x);
     if (na(c)) {
@@ -268,9 +268,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 	return;
     }   
 
-    x[j] = c;
-
-    print_critval(st, x, prn);
+    print_critval(st, x, c, prn);
     view_buffer(prn, 60, 200, _("gretl: critical values"), 
 		STAT_TABLE, NULL);
 }

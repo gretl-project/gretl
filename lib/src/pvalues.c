@@ -96,7 +96,7 @@ static double binomial_cdf_inverse (int k, int n, double y)
     return p;
 }
 
-/* The following is probably horribly inefficient */
+/* The following is no doubt horribly inefficient */
 
 static double binomial_critval (double a, double p, int n)
 {
@@ -959,10 +959,10 @@ static double poisson_critval (double a, double lambda)
 
 /* order in x: [params], alpha, critval */
 
-void print_critval (char st, double *x, PRN *prn)
+void print_critval (char st, double *x, double c, PRN *prn)
 {
     int apos = 0;
-    double a, c;
+    double a;
 
     switch (st) {
     case 'z':
@@ -991,7 +991,6 @@ void print_critval (char st, double *x, PRN *prn)
     }
 
     a = x[apos];
-    c = x[apos + 1];
 
     pputs(prn, "\n ");
     pprintf(prn, _("right-tail probability = %g"), a);

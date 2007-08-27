@@ -88,7 +88,7 @@ int batch_pvalue (const char *str,
 
 void print_pvalue (char st, double *p, double pv, PRN *prn);
 
-void print_critval (char st, double *x, PRN *prn);
+void print_critval (char st, double *x, double c, PRN *prn);
 
 #endif /* PVALUES_H */
 
