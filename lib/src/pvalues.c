@@ -929,26 +929,40 @@ static double poisson_pmf (double lambda, int k)
 
 /* The following is probably horribly inefficient */
 
-static double poisson_critval (double a, double lambda)
+static double poisson_critval (double a, double mu)
 {
     double x, pk = 0.0;
     double ac = 1 - a;
-    int k, kmin = 1;
+    int k, k0 = 1;
 
-    if (lambda <= 0 || a <= 0 || a >= 1) {
+    if (mu <= 0 || a <= 0 || a >= 1) {
 	return NADBL;
     }
 
-    if (lambda >= 10 && a < 0.5) {
-	kmin = lambda - 1;
-	pk = poisson_cdf(lambda, kmin);
+#if 1
+    if (1) {
+	/* Chebyshev, anyone? */
+	double s = sqrt(mu);
+	double ck = (a < .5)? ceil(sqrt(1/a)) : 
+				   ceil(sqrt(1/(1-a)));
+	double cmax = ceil(mu + ck * s);
+	double cmin = floor(mu - ck * s);
+
+	if (cmin < 0) cmin = 0;
+	fprintf(stderr, "cmin = %g, cmax = %g\n", cmin, cmax);
+    }
+#endif
+
+    if (mu >= 10 && a < 0.5) {
+	k0 = mu - 1;
+	pk = poisson_cdf(mu, k0);
     }
 
-    for (k=kmin; ; k++) {
+    for (k=k0; ; k++) {
 	if (pk >= ac) {
 	    break;
 	}	
-	x = poisson_pmf(lambda, k);
+	x = poisson_pmf(mu, k);
 	if (!na(x)) {
 	    pk += x;
 	}
