@@ -228,144 +228,175 @@ static gchar *expand_warning (int mult)
 			   mult);
 }
 
-static int 
-add_db_series_to_dataset (windata_t *vwin, double **dbZ, 
-			  SERIESINFO *sinfo)
+static int obs_overlap_check (SERIESINFO *sinfo)
 {
-    double x, *xvec = NULL;
-    int start, stop;
-    int pad1 = 0, pad2 = 0;
-    CompactMethod method = COMPACT_AVG;
-    int dbv, resp, overwrite = 0;
-    int n, t;
+    double sd0, sdn_new, sdn_old;
+    int err = 0;
 
-    if (check_db_import(sinfo, datainfo)) {
-	gui_errmsg(1);
-	return 1;
+    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
+    sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
+    sdn_old = get_date_x(datainfo->pd, datainfo->endobs);
+
+    if (sd0 > sdn_old || sdn_new < datainfo->sd0) {
+	errbox(_("%s: observation range does not overlap\n"
+		 "with the working data set"), sinfo->varname);
+	err = 1;
     }
 
-    if (sinfo->pd < datainfo->pd) {
-	gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
+    return err;
+}
 
-	resp = yes_no_dialog("gretl", msg, 0);
-	g_free(msg);
-	if (resp != GRETL_YES) {
-	    return 0;
+static int pd_convert_check (SERIESINFO *sinfo)
+{ 
+    int err = 0;
+
+    if (sinfo->pd < datainfo->pd) {
+	if (sinfo->pd != 1 && sinfo->pd != 4 && 
+	    datainfo->pd != 4 && datainfo->pd != 12) {
+	    err = 1;
+	} 
+    } else if (sinfo->pd > datainfo->pd) {
+	if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
+	    err = 1;
 	}
     }
 
-    /* is there already a var of this name? */
-    dbv = varindex(datainfo, sinfo->varname);
-    if (dbv < datainfo->v) {
-	resp = yes_no_dialog ("gretl",                      
-			      _("There is already a variable of this name\n"
-				"in the dataset.  OK to overwrite it?"), 0);
-	if (resp == GRETL_YES) {
+    if (err) {
+	errbox(_("Sorry, can't handle this frequency conversion"));
+    }
+
+    return err;
+}
+
+static int 
+add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw) 
+{
+    SERIESINFO *sinfo;
+    CompactMethod method = COMPACT_AVG;
+    int resp, warned = 0, chosen = 0;
+    int i, t, err = 0;
+
+    if (pd_convert_check(&dw->sinfo[0])) {
+	return 1;
+    }
+
+    for (i=0; i<dw->nv && !err; i++) {
+	int overwrite = 0;
+	double x, *xvec = NULL;
+	int v, dbv, start, stop;
+	int pad1 = 0, pad2 = 0;	
+
+	sinfo = &dw->sinfo[i];
+	v = sinfo->v;
+
+	if (obs_overlap_check(sinfo)) {
+	    continue;
+	}
+
+	if (sinfo->pd < datainfo->pd && !warned) {
+	    gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
+
+	    resp = yes_no_dialog("gretl", msg, 0);
+	    g_free(msg);
+	    if (resp != GRETL_YES) {
+		return 0;
+	    }
+	    warned = 1;
+	}
+
+	/* is there already a var of this name? */
+	dbv = varindex(datainfo, sinfo->varname);
+	if (dbv < datainfo->v) {
+	    if (dw->nv == 1) {
+		resp = yes_no_dialog ("gretl",                      
+				      _("There is already a variable of this name\n"
+					"in the dataset.  OK to overwrite it?"), 0);
+		if (resp != GRETL_YES) {
+		    return 0;
+		}
+	    }
 	    overwrite = 1;
 	    /* pick up on pre-registered compaction method? */
 	    if (COMPACT_METHOD(datainfo, dbv) != COMPACT_NONE) {
 		method = COMPACT_METHOD(datainfo, dbv);
 	    }
-	} else {
-	    return 0;
 	}
-    }
 
-    if (!overwrite) {
-	if (dataset_add_series(1, &Z, datainfo)) {
+	if (!overwrite && dataset_add_series(1, &Z, datainfo)) {
 	    nomem();
 	    return 1;
 	}
-    }
 
-    n = datainfo->n;
+	if (sinfo->pd < datainfo->pd) {
+	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd);
+	} else if (sinfo->pd > datainfo->pd) {
+	    if (!chosen) {
+		data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
+				    &method, NULL);
+		if (method == COMPACT_NONE) {
+		    if (!overwrite) {
+			dataset_drop_last_variables(1, &Z, datainfo);
+		    }
+		    return 0;
+		}
+		chosen = 1;
+	    }
+	    xvec = compact_db_series(dbZ[v], sinfo, datainfo->pd, 
+				     method);
+	} else {  
+	    /* series does not need compacting */
+	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
+	    if (xvec != NULL) {
+		for (t=0; t<sinfo->nobs; t++) {
+		    xvec[t] = dbZ[v][t];
+		}
+	    }
+	}
 
-    if (sinfo->pd < datainfo->pd) {
-	/* the frequency of the new var is lower: we can handle
-	   annual to quarterly or monthly, and quarterly to
-	   monthly
-	*/
-	if (sinfo->pd != 1 && sinfo->pd != 4 && 
-	    datainfo->pd != 4 && datainfo->pd != 12) {
-	    errbox(_("Sorry, can't handle this conversion yet!"));
+	if (xvec == NULL) {
+	    nomem();
 	    if (!overwrite) {
 		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
 	    return 1;
 	}
-	xvec = expand_db_series(dbZ[1], sinfo, datainfo->pd);
-    } else if (sinfo->pd > datainfo->pd) {
-	/* the frequency of the new data is higher */
-	if (datainfo->pd != 1 && datainfo->pd != 4 && sinfo->pd != 12) {
-	    errbox(_("Sorry, can't handle this conversion yet!"));
-	    if (!overwrite) {
-		dataset_drop_last_variables(1, &Z, datainfo);
+
+	/* common stuff for adding a var */
+	strcpy(datainfo->varname[dbv], sinfo->varname);
+	strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
+	get_db_padding(sinfo, datainfo, &pad1, &pad2);
+
+	if (pad1 > 0) {
+	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
+	    for (t=0; t<pad1; t++) {
+		Z[dbv][t] = NADBL;
 	    }
-	    return 1;
+	    start = pad1;
+	} else {
+	    start = 0;
 	}
 
-	data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
-			    &method, NULL);
+	if (pad2 > 0) {
+	    int n = datainfo->n;
 
-	if (method == COMPACT_NONE) {
-	    if (!overwrite) {
-		dataset_drop_last_variables(1, &Z, datainfo);
+	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
+	    for (t=n-1; t>=n-1-pad2; t--) {
+		Z[dbv][t] = NADBL;
 	    }
-	    return 0;
+	    stop = n - pad2;
+	} else {
+	    stop = datainfo->n;
 	}
-	xvec = compact_db_series(dbZ[1], sinfo, datainfo->pd, 
-				 method);
-    } else {  
-	/* series does not need compacting */
-	xvec = mymalloc(sinfo->nobs * sizeof *xvec);
-	if (xvec != NULL) {
-	    for (t=0; t<sinfo->nobs; t++) {
-		xvec[t] = dbZ[1][t];
-	    }
+
+	/* fill in actual data values */
+	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
+	for (t=start; t<stop; t++) {
+	    x = xvec[t - pad1];
+	    Z[dbv][t] = (x == DBNA)? NADBL : x;
 	}
+
+	free(xvec);
     }
-
-    if (xvec == NULL) {
-	nomem();
-	if (!overwrite) {
-	    dataset_drop_last_variables(1, &Z, datainfo);
-	}
-	return 1;
-    }
-
-    /* common stuff for adding a var */
-    strcpy(datainfo->varname[dbv], sinfo->varname);
-    strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
-    get_db_padding(sinfo, datainfo, &pad1, &pad2);
-
-    if (pad1 > 0) {
-	fprintf(stderr, "Padding at start, %d obs\n", pad1);
-	for (t=0; t<pad1; t++) {
-	    Z[dbv][t] = NADBL;
-	}
-	start = pad1;
-    } else {
-	start = 0;
-    }
-
-    if (pad2 > 0) {
-	fprintf(stderr, "Padding at end, %d obs\n", pad2);
-	for (t=n-1; t>=n-1-pad2; t--) {
-	    Z[dbv][t] = NADBL;
-	}
-	stop = n - pad2;
-    } else {
-	stop = n;
-    }
-
-    /* fill in actual data values */
-    fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
-    for (t=start; t<stop; t++) {
-	x = xvec[t - pad1];
-	Z[dbv][t] = (x == DBNA)? NADBL : x;
-    }
-
-    free(xvec);
 
     return 0;
 }
@@ -379,10 +410,7 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
 
     if (data_status) { 
 	/* we already have data in gretl's workspace */
-	for (i=0; i<dw->nv && !err; i++) {
-	    sinfo = &dw->sinfo[i];
-	    err = add_db_series_to_dataset(vwin, dbZ, sinfo);
-	}
+	add_db_series_to_dataset(vwin, dbZ, dw);
     } else {  
 	/* no data open: start new data set from db */
 	destroy_dataset(Z, datainfo);
@@ -778,6 +806,148 @@ static int db_is_writable (int action, const char *fname)
     return ret;
 }
 
+static void colorize_tip (GtkWidget *w)
+{
+    static GdkColor *yellow = NULL;
+
+    if (yellow == NULL) {
+	GdkColormap *cmap;
+
+	yellow = mymalloc(sizeof *yellow);
+	if (yellow == NULL) return;
+
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("light goldenrod", yellow);
+	gdk_colormap_alloc_color(cmap, yellow, FALSE, TRUE);
+    }
+
+    gtk_widget_modify_bg(w, GTK_STATE_NORMAL, yellow);
+}
+
+struct db_tip {
+    GtkWidget *w;
+    GtkWidget *label;
+    gint oldrow;
+};
+
+static void make_tip_window (struct db_tip *tip, GtkWidget *w,
+			     const char *desc)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(w);
+
+    tip->w = gtk_window_new(GTK_WINDOW_POPUP);
+    gtk_window_set_transient_for(GTK_WINDOW(tip->w),
+				 GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(tip->w), TRUE);
+    tip->label = gtk_label_new(desc);
+    gtk_container_add(GTK_CONTAINER(tip->w), tip->label);
+    gtk_widget_show_all(tip->w);
+    colorize_tip(tip->w);
+}
+
+static gboolean 
+db_tip_callback (GtkWidget *w, GdkEventMotion *event, struct db_tip *tip)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(w);
+    GtkTreePath *path;
+    GtkTreeViewColumn *col;
+
+    if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
+				      &col, NULL, NULL)) {
+	gint row = tree_path_get_row_number(path);
+	const gchar *title;
+	gchar *desc = NULL;
+
+	title = gtk_tree_view_column_get_title(col);
+	if (strcmp(title, _("Description"))) {
+	    gtk_tree_path_free(path);
+	    if (tip->w != NULL) {
+		gtk_widget_hide(tip->w);
+	    }	    
+	    return 0;
+	}
+
+	if (row == tip->oldrow) {
+	    /* leave the old tip showing */
+	    gtk_tree_path_free(path);
+	    return 0;
+	}
+
+	tip->oldrow = row;
+	if (tip->w != NULL) {
+	    gtk_widget_hide(tip->w);
+	}	
+
+	tree_view_get_string(view, row, 1, &desc);
+	if (desc != NULL) {
+	    if (strlen(desc) > 70) {
+		gint wx, wy, tx, ty;
+
+		if (tip->w == NULL) {
+		    make_tip_window(tip, w, desc);
+		} else {
+		    gtk_label_set_text(GTK_LABEL(tip->label), desc);
+		    gtk_widget_show_all(tip->w);
+		}
+		gdk_window_get_origin(w->window, &wx, &wy);
+		gdk_window_get_origin(tip->w->window, &tx, &ty);
+		wx += 90;
+		wy += event->y + 10;
+		gtk_window_move(GTK_WINDOW(tip->w), wx, wy);
+	    }
+	    g_free(desc);
+	}
+	gtk_tree_path_free(path);
+    } 
+
+    return 0;
+}
+
+static gboolean db_tip_quit (GtkWidget *w, GdkEventCrossing *e,
+			     struct db_tip *tip)
+{
+    if (tip->w != NULL) {
+	gtk_widget_hide(tip->w);
+    }
+
+    tip->oldrow = -1;
+
+    return FALSE;
+}
+
+static void db_tip_free (GtkWidget *w, struct db_tip *tip)
+{
+    free(tip);
+}
+
+static void 
+maybe_adjust_descrip_column (windata_t *vwin)
+{
+    GtkTreeViewColumn *col;
+    gint w;
+
+    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 1);
+    w = gtk_tree_view_column_get_width(col);
+
+    if (w > 450) {
+	struct db_tip *tip = mymalloc(sizeof *tip);
+
+	if (tip == NULL) {
+	    return;
+	}
+	gtk_tree_view_column_set_max_width(col, 450);
+	tip->w = NULL;
+	tip->label = NULL;
+	tip->oldrow = -1;
+	g_signal_connect(vwin->listbox, "motion-notify-event",
+			 G_CALLBACK(db_tip_callback), tip);
+	g_signal_connect(vwin->listbox, "leave-notify-event",
+			 G_CALLBACK(db_tip_quit), tip);
+	g_signal_connect(vwin->listbox, "destroy",
+			 G_CALLBACK(db_tip_free), tip);
+    }
+}
+
 static int 
 make_db_series_window (int action, char *fname, char *buf)
 {
@@ -885,6 +1055,9 @@ make_db_series_window (int action, char *fname, char *buf)
 	gtk_widget_destroy(vwin->w);
     } else {
 	gtk_widget_show_all(vwin->w); 
+#if 1
+	maybe_adjust_descrip_column(vwin);
+#endif
     }
 
     return err;
@@ -1265,6 +1438,9 @@ static GtkWidget *database_window (windata_t *vwin)
 	G_TYPE_INT
     };
     GtkWidget *box;
+
+    /* FIXME column widths: we should ensure we show at
+       least part of the observation-info column */
 
     box = gtk_vbox_new(FALSE, 0);
     vwin_add_list_box(vwin, GTK_BOX(box), 4, TRUE, types, titles, 0);

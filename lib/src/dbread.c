@@ -1982,7 +1982,8 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     if (sinfo->pd < pdinfo->pd) {
 	if (sinfo->pd != 1 && sinfo->pd != 4 && 
 	    pdinfo->pd != 4 && pdinfo->pd != 12) {
-	    strcpy(gretl_errmsg, _("Sorry, can't handle this conversion yet!"));
+	    sprintf(gretl_errmsg, _("%s: can't handle conversion"),
+		    sinfo->varname);
 	    err = 1;
 	} 
     }
@@ -1992,8 +1993,9 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 	sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
 	sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
 	if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	    strcpy(gretl_errmsg, _("Observation range does not overlap\n"
-				   "with the working data set"));
+	    sprintf(gretl_errmsg, _("%s: observation range does not overlap\n"
+				    "with the working data set"),
+		    sinfo->varname);
 	    err = 1;
 	}
     }
