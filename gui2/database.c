@@ -806,145 +806,40 @@ static int db_is_writable (int action, const char *fname)
     return ret;
 }
 
-static void colorize_tip (GtkWidget *w)
-{
-    static GdkColor *yellow = NULL;
-
-    if (yellow == NULL) {
-	GdkColormap *cmap;
-
-	yellow = mymalloc(sizeof *yellow);
-	if (yellow == NULL) return;
-
-	cmap = gdk_colormap_get_system();
-	gdk_color_parse("light goldenrod", yellow);
-	gdk_colormap_alloc_color(cmap, yellow, FALSE, TRUE);
-    }
-
-    gtk_widget_modify_bg(w, GTK_STATE_NORMAL, yellow);
-}
-
-struct db_tip {
-    GtkWidget *w;
-    GtkWidget *label;
-    gint oldrow;
-};
-
-static void make_tip_window (struct db_tip *tip, GtkWidget *w,
-			     const char *desc)
-{
-    GtkWidget *top = gtk_widget_get_toplevel(w);
-
-    tip->w = gtk_window_new(GTK_WINDOW_POPUP);
-    gtk_window_set_transient_for(GTK_WINDOW(tip->w),
-				 GTK_WINDOW(top));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(tip->w), TRUE);
-    tip->label = gtk_label_new(desc);
-    gtk_container_add(GTK_CONTAINER(tip->w), tip->label);
-    gtk_widget_show_all(tip->w);
-    colorize_tip(tip->w);
-}
-
 static gboolean 
-db_tip_callback (GtkWidget *w, GdkEventMotion *event, struct db_tip *tip)
+db_col_callback (GtkWidget *w, GdkEventMotion *event, gpointer p)
 {
-    GtkTreeView *view = GTK_TREE_VIEW(w);
-    GtkTreePath *path;
     GtkTreeViewColumn *col;
 
-    if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
-				      &col, NULL, NULL)) {
-	gint row = tree_path_get_row_number(path);
-	const gchar *title;
-	gchar *desc = NULL;
-
-	title = gtk_tree_view_column_get_title(col);
-	if (strcmp(title, _("Description"))) {
-	    gtk_tree_path_free(path);
-	    if (tip->w != NULL) {
-		gtk_widget_hide(tip->w);
-	    }	    
-	    return 0;
-	}
-
-	if (row == tip->oldrow) {
-	    /* leave the old tip showing */
-	    gtk_tree_path_free(path);
-	    return 0;
-	}
-
-	tip->oldrow = row;
-	if (tip->w != NULL) {
-	    gtk_widget_hide(tip->w);
-	}	
-
-	tree_view_get_string(view, row, 1, &desc);
-	if (desc != NULL) {
-	    if (strlen(desc) > 70) {
-		gint wx, wy, tx, ty;
-
-		if (tip->w == NULL) {
-		    make_tip_window(tip, w, desc);
-		} else {
-		    gtk_label_set_text(GTK_LABEL(tip->label), desc);
-		    gtk_widget_show_all(tip->w);
-		}
-		gdk_window_get_origin(w->window, &wx, &wy);
-		gdk_window_get_origin(tip->w->window, &tx, &ty);
-		wx += 90;
-		wy += event->y + 10;
-		gtk_window_move(GTK_WINDOW(tip->w), wx, wy);
-	    }
-	    g_free(desc);
-	}
-	gtk_tree_path_free(path);
-    } 
-
-    return 0;
-}
-
-static gboolean db_tip_quit (GtkWidget *w, GdkEventCrossing *e,
-			     struct db_tip *tip)
-{
-    if (tip->w != NULL) {
-	gtk_widget_hide(tip->w);
+    col = gtk_tree_view_get_column(GTK_TREE_VIEW(w), 1);
+    if (gtk_tree_view_column_get_max_width(col) > 0) {
+	/* remove the width constraint */
+	gtk_tree_view_column_set_max_width(col, -1);
     }
 
-    tip->oldrow = -1;
-
-    return FALSE;
-}
-
-static void db_tip_free (GtkWidget *w, struct db_tip *tip)
-{
-    free(tip);
+    return 0;
 }
 
 static void 
 maybe_adjust_descrip_column (windata_t *vwin)
 {
     GtkTreeViewColumn *col;
-    gint w;
+    gint w0, w1, lw, w1max;
+
+    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 0);
+    w0 = gtk_tree_view_column_get_width(col);
 
     col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 1);
-    w = gtk_tree_view_column_get_width(col);
+    w1 = gtk_tree_view_column_get_width(col);
 
-    if (w > 450) {
-	struct db_tip *tip = mymalloc(sizeof *tip);
+    gdk_drawable_get_size(vwin->listbox->window, &lw, NULL);
 
-	if (tip == NULL) {
-	    return;
-	}
-	gtk_tree_view_column_set_max_width(col, 450);
-	tip->w = NULL;
-	tip->label = NULL;
-	tip->oldrow = -1;
+    w1max = lw - w0 - 140;
+
+    if (w1 > w1max) {
+	gtk_tree_view_column_set_max_width(col, w1max);
 	g_signal_connect(vwin->listbox, "motion-notify-event",
-			 G_CALLBACK(db_tip_callback), tip);
-	g_signal_connect(vwin->listbox, "leave-notify-event",
-			 G_CALLBACK(db_tip_quit), tip);
-	g_signal_connect(vwin->listbox, "destroy",
-			 G_CALLBACK(db_tip_free), tip);
+			 G_CALLBACK(db_col_callback), NULL);
     }
 }
 
@@ -1055,9 +950,7 @@ make_db_series_window (int action, char *fname, char *buf)
 	gtk_widget_destroy(vwin->w);
     } else {
 	gtk_widget_show_all(vwin->w); 
-#if 1
 	maybe_adjust_descrip_column(vwin);
-#endif
     }
 
     return err;
