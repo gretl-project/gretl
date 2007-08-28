@@ -809,9 +809,9 @@ static int db_is_writable (int action, const char *fname)
 static gboolean 
 db_col_callback (GtkWidget *w, GdkEventMotion *event, gpointer p)
 {
-    GtkTreeViewColumn *col;
+    GtkTreeViewColumn *col = 
+	gtk_tree_view_get_column(GTK_TREE_VIEW(w), 1);
 
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(w), 1);
     if (gtk_tree_view_column_get_max_width(col) > 0) {
 	/* remove the width constraint */
 	gtk_tree_view_column_set_max_width(col, -1);
@@ -841,6 +841,19 @@ maybe_adjust_descrip_column (windata_t *vwin)
 	g_signal_connect(vwin->listbox, "motion-notify-event",
 			 G_CALLBACK(db_col_callback), NULL);
     }
+}
+
+static void db_select_first_series (windata_t *vwin)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeSelection *selection;
+    GtkTreeIter iter;
+    GtkListStore *store;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    selection = gtk_tree_view_get_selection(view);
+    gtk_tree_selection_select_iter(selection, &iter);
 }
 
 static int 
@@ -951,6 +964,7 @@ make_db_series_window (int action, char *fname, char *buf)
     } else {
 	gtk_widget_show_all(vwin->w); 
 	maybe_adjust_descrip_column(vwin);
+	db_select_first_series(vwin);
     }
 
     return err;
