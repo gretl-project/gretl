@@ -952,6 +952,7 @@ int main (int argc, char *argv[])
     if (make_main_window() == NULL) 
 	noalloc(_("main window"));
     if (have_data()) {
+	/* redundant? */
 	set_sample_label(datainfo);
     }
 
@@ -965,6 +966,8 @@ int main (int argc, char *argv[])
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
+
+    /* run init script, if found? */
 
     if (have_data()) {
 	register_data(paths.datfile, tryfile, 1);
