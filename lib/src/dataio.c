@@ -2781,22 +2781,24 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
     }
 
     while ((c = fgetc(fp)) != EOF) {
-	if (c == '\r') {
+	if (c == 0x0d) {
+	    /* CR */
 	    c1 = fgetc(fp);
 	    if (c1 == EOF) {
 		break;
-	    } else if (c1 == '\n') {
+	    } else if (c1 == 0x0a) {
+		/* CR + LF -> LF */
 		c = c1;
 	    } else {
-		/* Mac-type file */
+		/* Mac-type file: CR not followed by LF */
 		if (mac != NULL) {
 		    *mac = 1;
 		}
-		c = '\n';
+		c = 0x0a;
 		ungetc(c1, fp);
 	    }
 	}
-	if (c == '\n') {
+	if (c == 0x0a) {
 	    if (cc > maxlen) {
 		maxlen = cc;
 	    }
@@ -3092,8 +3094,8 @@ static char *csv_fgets (char *s, int n, int mac, FILE *fp)
 	    c = fgetc(fp);
 	    if (c == EOF) {
 		break;
-	    } else if (c == '\r') {
-		s[i++] = '\n';
+	    } else if (c == 0x0d) {
+		s[i++] = 0x0a;
 		break;
 	    }
 	    s[i] = c;
