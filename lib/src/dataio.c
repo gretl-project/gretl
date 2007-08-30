@@ -2761,23 +2761,17 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
    a comment line is one that starts with '#').  
 
    Optionally, we check whether the file has a trailing comma on every
-   line, and check for Mac-style '\r' line termination.  The heuristic
-   for the latter is that we find '\r' not followed by '\n'.
+   line.
 */
 
 static int get_max_line_length (FILE *fp, char delim, int *gotdelim, 
-				int *gottab, int *trail, int *mac,
-				PRN *prn)
+				int *gottab, int *trail, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
 
     if (trail != NULL) {
 	*trail = 1;
-    }
-
-    if (mac != NULL) {
-	*mac = 0;
     }
 
     while ((c = fgetc(fp)) != EOF) {
@@ -2790,10 +2784,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 		/* CR + LF -> LF */
 		c = c1;
 	    } else {
-		/* Mac-type file: CR not followed by LF */
-		if (mac != NULL) {
-		    *mac = 1;
-		}
+		/* Mac-style: CR not followed by LF */
 		c = 0x0a;
 		ungetc(c1, fp);
 	    }
@@ -3080,40 +3071,47 @@ static int process_csv_obs (const char *str, int i, int t,
     return err;
 }
 
-/* wrapper for fgets() that allows for handling a Mac-style
-   text file */
+/* wrapper for fgets(), designed to handle any sort of line
+   termination (unix, DOS, Mac or an unholy mixture)
+*/
 
-static char *csv_fgets (char *s, int n, int mac, FILE *fp)
+static char *csv_fgets (char *s, int n, FILE *fp)
 {
-    if (!mac) {
-	return fgets(s, n, fp);
-    } else {
-	int c, i = 0;
+    int i, c1, c = 0;
 
-	for (i=0; i<n-1; i++) {
-	    c = fgetc(fp);
-	    if (c == EOF) {
-		break;
-	    } else if (c == 0x0d) {
-		s[i++] = 0x0a;
+    for (i=0; i<n-1 && c!=0x0a; i++) {
+	c = fgetc(fp);
+	if (c == EOF) {
+	    if (i == 0) {
+		/* signal end of read */
+		return NULL;
+	    } else {
 		break;
 	    }
-	    s[i] = c;
+	} else if (c == 0x0d) {
+	    /* CR: convert to LF and peek at next char: if it's
+	       LF swallow it, otherwise put it back */
+	    c = 0x0a;
+	    c1 = fgetc(fp);
+	    if (c1 != 0x0a) {
+		ungetc(c1, fp);
+	    }
 	}
-
-	s[i] = '\0';
-
-	return s;
+	s[i] = c;
     }
+
+    s[i] = '\0';
+
+    return s;
 }
 
 /* pick up any comments following the data block in a CSV file */
 
-static char *get_csv_descrip (char *line, int n, int mac, FILE *fp)
+static char *get_csv_descrip (char *line, int n, FILE *fp)
 {
     char *desc = NULL;
 
-    while (csv_fgets(line, n, mac, fp)) {
+    while (csv_fgets(line, n, fp)) {
 	tailstrip(line);
 	if (desc == NULL) {
 	    desc = malloc(strlen(line) + 2);
@@ -3197,7 +3195,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     char delim = '\t';
     int numcount, auto_name_vars = 0;
-    int mactext = 0;
     gretl_string_table *st = NULL;
 
     if (*ppdinfo != NULL) {
@@ -3240,7 +3237,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     /* get line length, also check for binary data, etc. */
     maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, 
-				 &mactext, prn);    
+				 prn);    
     if (maxlen <= 0) {
 	goto csv_bailout;
     } 
@@ -3273,7 +3270,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     chkcols = ncols = nrows = gotdata = 0;
 
-    while (csv_fgets(line, maxlen, mactext, fp)) {
+    while (csv_fgets(line, maxlen, fp)) {
 
 	/* skip comment lines */
 	if (*line == '#') {
@@ -3284,7 +3281,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (string_is_blank(line)) {
 	    if (gotdata) {
 		if (*pZ == NULL) {
-		    descrip = get_csv_descrip(line, maxlen, mactext, fp);
+		    descrip = get_csv_descrip(line, maxlen, fp);
 		}
 		break;
 	    } else {
@@ -3349,7 +3346,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     /* parse the line containing variable names */
     pputs(mprn, M_("scanning for variable names...\n"));
 
-    while (csv_fgets(line, maxlen, mactext, fp)) {
+    while (csv_fgets(line, maxlen, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	} else {
@@ -3440,7 +3437,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     pputs(mprn, M_("scanning for row labels and data...\n"));
 
     t = 0;
-    while (csv_fgets(line, maxlen, mactext, fp)) {
+    while (csv_fgets(line, maxlen, fp)) {
 	int nv;
 
 	if (*line == '#' || string_is_blank(line)) {
@@ -3716,7 +3713,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
 
-    maxlen = get_max_line_length(fp, 0, NULL, NULL, NULL, NULL, prn);
+    maxlen = get_max_line_length(fp, 0, NULL, NULL, NULL, prn);
     if (maxlen <= 0) {
 	goto oct_bailout;
     }

@@ -38,9 +38,9 @@ enum {
     WEIRD_FONT = 1 << 2
 };
 
-/* We can test for a font for "latin text" compatibility, via the heuristic
+/* We test a font for "latin text" compatibility, via the heuristic
    of seeing if it contains the letters 'i' and 'W' in English.  Given the
-   latin text characteristic, we can then see if the font is monospaced
+   latin text characteristic, we then see if the font is monospaced
    by checking whether or not the letters 'i' and 'W' come out the
    same width. */
 
