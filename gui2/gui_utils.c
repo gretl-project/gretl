@@ -234,9 +234,9 @@ static GtkItemFactoryEntry model_items[] = {
       GRETL_OBJ_EQN, NULL, GNULL },
     { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_EQN, NULL, GNULL },
-# if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef NATIVE_PRINTING
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
-# endif
+#endif
     { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
@@ -325,9 +325,9 @@ static GtkItemFactoryEntry VAR_items[] = {
       GRETL_OBJ_VAR, NULL, GNULL },
     { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_VAR, NULL, GNULL },
-# if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef NATIVE_PRINTING
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
-# endif
+#endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
@@ -339,9 +339,9 @@ static GtkItemFactoryEntry SYS_items[] = {
       GRETL_OBJ_SYS, NULL, GNULL },
     { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_SYS, NULL, GNULL },
-# if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef NATIVE_PRINTING
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
-# endif
+#endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
@@ -1773,9 +1773,9 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Save"), GTK_STOCK_SAVE, view_window_save, SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, file_save_callback, SAVE_AS_ITEM },
     { N_("Send to gnuplot"), GTK_STOCK_EXECUTE, gp_send_callback, GP_ITEM },
-# if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef NATIVE_PRINTING
     { N_("Print..."), GTK_STOCK_PRINT, window_print_callback, 0 },
-# endif
+#endif
     { N_("Run"), GTK_STOCK_EXECUTE, do_run_script, RUN_ITEM },
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },

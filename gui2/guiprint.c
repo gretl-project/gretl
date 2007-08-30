@@ -31,9 +31,11 @@
 # include <windows.h>
 #endif
 
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
-#define NATIVE_PRINTING
-#endif
+#if !defined(G_OS_WIN32) && (GTK_MINOR_VERSION >= 10)
+# define PRINT_VIA_GTK
+#elif defined(USE_GNOME)
+# define USE_GNOMEPRINT
+#endif 
 
 #ifdef NATIVE_PRINTING
 
@@ -329,7 +331,7 @@ int winprint_graph (char *emfname)
     return !printok;
 }
 
-#elif defined(USE_GNOME)
+#elif defined(USE_GNOMEPRINT)
 
 #include <libgnomeprint/gnome-print.h>
 #include <libgnomeprint/gnome-print-job.h>
@@ -451,8 +453,8 @@ void winprint (char *fullbuf, char *selbuf)
     gnome_print_setfont(gpc, font);
     /* gnome_print_setrgbcolor(gpc, 0, 0, 0); */
 
-    if (selbuf != NULL) p = selbuf;
-    else p = fullbuf;
+    p = (selbuf != NULL)? selbuf : fullbuf;
+
     page = 1;
     x = 72;
     hdrstart = header_string();
@@ -610,9 +612,9 @@ void gnome_print_graph (const char *fname)
     gtk_widget_destroy(dialog);
 }
 
-#endif /* G_OS_WIN32, USE_GNOME */
+#endif /* G_OS_WIN32, USE_GNOMEPRINT */
 
-#ifdef USE_GNOME
+#ifdef USE_GNOMEPRINT
 
 static GdkPixbuf *png_mono_pixbuf (const char *fname)
 {
@@ -664,7 +666,254 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     return pbuf;
 }
 
-#endif /* USE_GNOME */
+#endif /* USE_GNOMEPRINT */
+
+#ifdef PRINT_VIA_GTK
+
+#define HEADER_HEIGHT 72
+
+struct print_info {
+    int n_pages;
+    int pagelines;
+    gdouble x, y;
+    const char *buf;
+    const char *p;
+    char *hdr;
+    cairo_t *cr;
+    PangoLayout *layout;
+};
+
+static void begin_text_print (GtkPrintOperation *op,
+			      GtkPrintContext *context,
+			      struct print_info *pinfo)
+{
+    PangoFontDescription *desc;
+    GtkPageSetup *setup;
+    gdouble x, y;
+    int lines = 0;
+    const char *p;
+
+    pinfo->pagelines = 54; /* FIXME? */
+ 
+    setup = gtk_print_context_get_page_setup(context);
+
+    x = gtk_page_setup_get_left_margin(setup, GTK_UNIT_POINTS);
+    pinfo->x = 72 - x; /* pad left to 72 points */
+    if (pinfo->x < 0) {
+	pinfo->x = 0;
+    }
+
+    y = gtk_page_setup_get_top_margin(setup, GTK_UNIT_POINTS);
+    pinfo->y = 26 - y; /* pad top to 26 points */
+    if (pinfo->y < 0) {
+	pinfo->y = 0;
+    }
+
+#if 0  
+    /* redundant? */
+    gtk_page_setup_set_top_margin(setup, 72, GTK_UNIT_POINTS);
+    gtk_page_setup_set_bottom_margin(setup, 72, GTK_UNIT_POINTS);
+    gtk_page_setup_set_left_margin(setup, 72, GTK_UNIT_POINTS);
+    gtk_page_setup_set_right_margin(setup, 72, GTK_UNIT_POINTS);
+
+    gdouble x = gtk_print_context_get_width(context);
+    fprintf(stderr, "context width = %g\n", x);
+    x = gtk_print_context_get_height(context);
+    fprintf(stderr, "context height = %g\n", x);
+#endif
+
+    pinfo->cr = gtk_print_context_get_cairo_context(context);
+    cairo_set_source_rgb(pinfo->cr, 0, 0, 0);
+
+    pinfo->layout = gtk_print_context_create_pango_layout(context);
+
+    /* FIXME let the user choose a font? */
+    desc = pango_font_description_from_string("mono 10");
+    pango_layout_set_font_description(pinfo->layout, desc);
+    pango_font_description_free(desc);
+    pango_layout_set_width(pinfo->layout, -1);
+    pango_layout_set_alignment(pinfo->layout, PANGO_ALIGN_LEFT);
+
+    p = pinfo->buf;
+    while (*p) {
+	if (*p == '\n') {
+	    lines++;
+	}
+	p++;
+    }
+
+    pinfo->n_pages = lines / pinfo->pagelines + (lines % pinfo->pagelines != 0);
+    gtk_print_operation_set_n_pages(op, pinfo->n_pages);
+}
+
+static void
+draw_text_page (GtkPrintOperation *op, GtkPrintContext *context,
+		gint pagenum, struct print_info *pinfo)
+{
+    gchar *hdr;
+    gdouble y = pinfo->y;
+    gint lheight;
+
+    hdr = g_strdup_printf(_("%s page %d of %d"), pinfo->hdr,
+			  pagenum + 1, pinfo->n_pages);
+    pango_layout_set_text(pinfo->layout, hdr, -1);
+    g_free(hdr);
+
+    cairo_move_to(pinfo->cr, pinfo->x, y);
+    pango_cairo_show_layout(pinfo->cr, pinfo->layout);
+
+    pango_layout_get_size(pinfo->layout, NULL, &lheight);
+    y += 8 + (gdouble) lheight / PANGO_SCALE;
+
+    if (pinfo->n_pages - pagenum > 1) {
+	/* carve out the current page */
+	const char *p = pinfo->p;
+	int nc = 0, nl = 0;
+
+	while (*p && nl <= pinfo->pagelines) {
+	    if (*p == '\n') {
+		nl++;
+	    }
+	    nc++;
+	    p++;
+	}
+	pango_layout_set_text(pinfo->layout, pinfo->p, nc);
+	pinfo->p += nc;
+    } else {
+	/* print all that's left */
+	pango_layout_set_text(pinfo->layout, pinfo->p, -1);
+    }
+
+    cairo_move_to(pinfo->cr, pinfo->x, y);
+    pango_cairo_show_layout(pinfo->cr, pinfo->layout);
+}
+
+static GtkPrintSettings *settings = NULL;
+
+void winprint (char *fullbuf, char *selbuf)
+{
+    GtkPrintOperation *op;
+    GtkPrintOperationResult res;
+    GError *err = NULL;
+    struct print_info pinfo;
+
+    op = gtk_print_operation_new();
+
+    if (settings != NULL) {
+	gtk_print_operation_set_print_settings(op, settings);
+    }
+
+    gtk_print_operation_set_use_full_page(op, FALSE);
+    gtk_print_operation_set_unit(op, GTK_UNIT_POINTS);
+
+    pinfo.buf = (selbuf != NULL)? selbuf : fullbuf;
+    pinfo.p = pinfo.buf;
+    pinfo.hdr = header_string();
+    pinfo.layout = NULL;
+
+    g_signal_connect(op, "begin_print", G_CALLBACK(begin_text_print), &pinfo);
+    g_signal_connect(op, "draw_page", G_CALLBACK(draw_text_page), &pinfo);
+
+    res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+				  GTK_WINDOW(mdata->w), &err);
+
+    if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
+	errbox("Error printing:\n%s", err->message);
+	g_error_free(err);
+    } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+	if (settings != NULL) {
+	    g_object_unref(settings);
+	}
+	settings = g_object_ref(gtk_print_operation_get_print_settings(op));
+    }
+
+    free(pinfo.hdr);
+    g_object_unref(pinfo.layout);
+    g_object_unref(op);
+}
+
+static void begin_image_print (GtkPrintOperation *op,
+			       GtkPrintContext *context,
+			       char *pngname)
+{
+    GtkPageSetup *setup;
+    cairo_surface_t *cs;
+    cairo_t *cr;
+    gdouble x, y;
+
+    setup = gtk_print_context_get_page_setup(context);
+
+    x = gtk_page_setup_get_left_margin(setup, GTK_UNIT_POINTS);
+    x = 72 - x; /* pad left to 72 points */
+    if (x < 0) {
+	x = 0;
+    }
+
+    y = gtk_page_setup_get_top_margin(setup, GTK_UNIT_POINTS);
+    y = 72 - y; /* pad top to 72 points */
+    if (y < 0) {
+	y = 0;
+    }
+
+    cs = cairo_image_surface_create_from_png(pngname);
+    fprintf(stderr, "%s: surface = %p, status = %d\n", pngname, 
+	    (void *) cs, cairo_surface_status(cs));
+    fprintf(stderr, "width = %d\n", cairo_image_surface_get_width(cs));
+    fprintf(stderr, "height = %d\n", cairo_image_surface_get_height(cs));
+    fprintf(stderr, "format = %d\n", cairo_image_surface_get_format(cs));
+
+    cr = cairo_create(cs);
+    fprintf(stderr, "cairo_t status = %d\n", cairo_status(cr));
+
+    cairo_move_to(cr, x, y); /* ?? */
+    gtk_print_context_set_cairo_context(context, cr, 72, 72);
+
+    gtk_print_operation_set_n_pages(op, 1);
+}
+
+static void
+draw_image (GtkPrintOperation *op, GtkPrintContext *context,
+	    gint page, gpointer p)
+{
+    fprintf(stderr, "Got draw image page\n");
+}
+
+void gnome_print_graph (const char *fname)
+{
+    char *pngname = "test.png";
+    GtkPrintOperation *op;
+    GtkPrintOperationResult res;
+    GError *err = NULL;
+
+    op = gtk_print_operation_new();
+
+    if (settings != NULL) {
+	gtk_print_operation_set_print_settings(op, settings);
+    }
+
+    gtk_print_operation_set_use_full_page(op, TRUE);
+    gtk_print_operation_set_unit(op, GTK_UNIT_POINTS);
+
+    g_signal_connect(op, "begin_print", G_CALLBACK(begin_image_print), pngname);
+    g_signal_connect(op, "draw_page", G_CALLBACK(draw_image), NULL);
+
+    res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+				  GTK_WINDOW(mdata->w), &err);
+
+    if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
+	errbox("Error printing:\n%s", err->message);
+	g_error_free(err);
+    } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+	if (settings != NULL) {
+	    g_object_unref(settings);
+	}
+	settings = g_object_ref(gtk_print_operation_get_print_settings(op));
+    }
+
+    g_object_unref(op);
+}
+
+#endif /* PRINT_VIA_GTK */
 
 void rtf_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 {

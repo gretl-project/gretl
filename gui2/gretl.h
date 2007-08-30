@@ -39,6 +39,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+#if defined(G_OS_WIN32) || defined(USE_GNOME) || (GTK_MINOR_VERSION >= 10)
+# define NATIVE_PRINTING
+#endif
+
 #define GNULL (gconstpointer) NULL
 
 #include <gtksourceview/gtksourceview.h>
