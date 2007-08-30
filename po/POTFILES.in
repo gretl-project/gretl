@@ -64,8 +64,8 @@ lib/src/transforms.c
 lib/src/tsls.c
 lib/src/usermat.c
 lib/src/var.c
-lib/src/varomit.c
 lib/src/varprint.c
+lib/src/vartest.c
 cli/cli_object.c
 cli/complete.c
 cli/gretlcli.c
@@ -128,9 +128,13 @@ plugin/fractals.c
 plugin/garch.c
 plugin/gnumeric_import.c
 plugin/gretlzip.c
+plugin/heckit.c
 plugin/import_common.c
+plugin/infomat.c
+plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
+plugin/jrestrict.c
 plugin/kernel.c
 plugin/lad.c
 plugin/leverage.c
