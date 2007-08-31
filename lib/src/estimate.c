@@ -3230,10 +3230,10 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 	if (!amod.errcode) {
 	    gretl_model_set_int(&amod, "arch_order", order);
 	    gretl_model_set_data(&amod, "arch_coeff", a,
-				 MODEL_DATA_DOUBLE_ARRAY,
+				 GRETL_TYPE_DOUBLE_ARRAY,
 				 (order + 1) * sizeof *a);
 	    gretl_model_set_data(&amod, "arch_sderr", se,
-				 MODEL_DATA_DOUBLE_ARRAY,
+				 GRETL_TYPE_DOUBLE_ARRAY,
 				 (order + 1) * sizeof *se);
 	}
     }

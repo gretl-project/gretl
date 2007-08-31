@@ -1738,9 +1738,9 @@ int push_fn_arg (fnargs *args, int type, void *p)
     types[n-1] = type;
     args->types = types;
 
-    if (type == ARG_NONE) {
+    if (type == GRETL_TYPE_NONE) {
 	args->nnull += 1;
-    } else if (type == ARG_SCALAR) {
+    } else if (type == GRETL_TYPE_DOUBLE) {
 	double *x;
 
 	n = args->nx + 1;
@@ -1752,7 +1752,7 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->x = x;
 	    args->nx = n;
 	}
-    } else if (type == ARG_SERIES) {
+    } else if (type == GRETL_TYPE_SERIES) {
 	double **X;
 
 	n = args->nX + 1;
@@ -1764,7 +1764,7 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->X = X;
 	    args->nX = n;
 	}
-    } else if (type == ARG_MATRIX) {
+    } else if (type == GRETL_TYPE_MATRIX) {
 	gretl_matrix **M;
 
 	n = args->nM + 1;
@@ -1776,7 +1776,7 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->M = M;
 	    args->nM = n;
 	}
-    } else if (type == ARG_LIST) {
+    } else if (type == GRETL_TYPE_LIST) {
 	char **lists;
 
 	n = args->nl + 1;
@@ -1788,8 +1788,8 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->lists = lists;
 	    args->nl = n;
 	}
-    } else if (type == ARG_REF_SCALAR ||
-	       type == ARG_REF_SERIES) {
+    } else if (type == GRETL_TYPE_SCALAR_REF ||
+	       type == GRETL_TYPE_SERIES_REF) {
 	int *refv;
 
 	n = args->nrefv + 1;
@@ -1801,7 +1801,7 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->refv = refv;
 	    args->nrefv = n;
 	}
-    } else if (type == ARG_REF_MATRIX) {
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
 	user_matrix **M;
 
 	n = args->nrefm + 1;

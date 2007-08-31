@@ -47,13 +47,13 @@ struct call_info_ {
     int ok;
 };
 
-#define scalar_type(t) (t == ARG_SCALAR || t == ARG_REF_SCALAR)
-#define series_type(t) (t == ARG_SERIES || t == ARG_REF_SERIES)
-#define matrix_type(t) (t == ARG_MATRIX || t == ARG_REF_MATRIX)
+#define scalar_type(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
+#define series_type(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
+#define matrix_type(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 
-#define ref_type(t) (t == ARG_REF_SCALAR || \
-                     t == ARG_REF_SERIES || \
-                     t == ARG_REF_MATRIX)
+#define ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
+                     t == GRETL_TYPE_SERIES_REF || \
+                     t == GRETL_TYPE_MATRIX_REF)
 
 static call_info *cinfo_new (void)
 {
@@ -71,7 +71,7 @@ static call_info *cinfo_new (void)
     cinfo->func = NULL;
     cinfo->n_params = 0;
 
-    cinfo->rettype = ARG_NONE;
+    cinfo->rettype = GRETL_TYPE_NONE;
 
     cinfo->args = NULL;
     cinfo->ret = NULL;
@@ -118,17 +118,17 @@ static void cinfo_free (call_info *cinfo)
 
 static const char *arg_type_string (int t)
 {
-    if (t == ARG_BOOL)   return "boolean";
-    if (t == ARG_INT)    return "int";
-    if (t == ARG_LIST)   return "list";
+    if (t == GRETL_TYPE_BOOL)   return "boolean";
+    if (t == GRETL_TYPE_INT)    return "int";
+    if (t == GRETL_TYPE_LIST)   return "list";
 
-    if (t == ARG_SCALAR) return "scalar";
-    if (t == ARG_SERIES) return "series";
-    if (t == ARG_MATRIX) return "matrix";
+    if (t == GRETL_TYPE_DOUBLE) return "scalar";
+    if (t == GRETL_TYPE_SERIES) return "series";
+    if (t == GRETL_TYPE_MATRIX) return "matrix";
     
-    if (t == ARG_REF_SCALAR) return "scalar *";
-    if (t == ARG_REF_SERIES) return "series *";
-    if (t == ARG_REF_MATRIX) return "matrix *";
+    if (t == GRETL_TYPE_SCALAR_REF) return "scalar *";
+    if (t == GRETL_TYPE_SERIES_REF) return "series *";
+    if (t == GRETL_TYPE_MATRIX_REF) return "matrix *";
 
     return "";
 }
@@ -221,7 +221,7 @@ static gboolean update_arg (GtkEditable *entry,
     free(cinfo->args[i]);
     s = cinfo->args[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
 
-    if (s != NULL && fn_param_type(cinfo->func, i) == ARG_SCALAR) {
+    if (s != NULL && fn_param_type(cinfo->func, i) == GRETL_TYPE_DOUBLE) {
 	if (isdigit(*s) || *s == '-' || *s == '+' || *s == ',') {
 	    charsub(s, ',', '.');
 	}
@@ -266,10 +266,10 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
 	}
-	if (type == ARG_SERIES) {
+	if (type == GRETL_TYPE_SERIES) {
 	    list = g_list_append(list, (gpointer) datainfo->varname[0]);
 	}
-    } else if (type == ARG_LIST) {
+    } else if (type == GRETL_TYPE_LIST) {
 	int nl = n_saved_lists();
 
 	if (optional) {
@@ -289,7 +289,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	}	
     }
 
-    if (optional && type != ARG_LIST) {
+    if (optional && type != GRETL_TYPE_LIST) {
 	list = g_list_append(list, "null");
     }
 
@@ -527,7 +527,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 
     /* FIXME bool etc */
 
-    if (ptype == ARG_INT || ptype == ARG_SCALAR) {
+    if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_DOUBLE) {
 	double x = fn_param_default(cinfo->func, i);
 
 	if (!na(x)) {
@@ -605,9 +605,9 @@ static void function_call_dialog (call_info *cinfo)
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
-	    if (ptype == ARG_BOOL) {
+	    if (ptype == GRETL_TYPE_BOOL) {
 		sel = bool_arg_selector(cinfo, i);
-	    } else if (ptype == ARG_INT && spinner_arg(cinfo, i)) {
+	    } else if (ptype == GRETL_TYPE_INT && spinner_arg(cinfo, i)) {
 		sel = spin_arg_selector(cinfo, i);
 	    } else {
 		sel = combo_arg_selector(cinfo, ptype, i);
@@ -617,7 +617,7 @@ static void function_call_dialog (call_info *cinfo)
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
 
-	    if (ptype == ARG_LIST) {
+	    if (ptype == GRETL_TYPE_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
 		button = gtk_button_new_with_label(_("More..."));
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
@@ -626,7 +626,7 @@ static void function_call_dialog (call_info *cinfo)
 				 G_CALLBACK(launch_list_maker), 
 				 GTK_COMBO(sel)->entry);
 		gtk_widget_show(button);
-	    } else if (ptype == ARG_MATRIX) {
+	    } else if (ptype == GRETL_TYPE_MATRIX) {
 		cinfo->msels = g_list_append(cinfo->msels, sel);
 		button = gtk_button_new_with_label(_("New..."));
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
@@ -641,7 +641,7 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
-    if (cinfo->n_params > 0 && cinfo->rettype != ARG_NONE) {
+    if (cinfo->n_params > 0 && cinfo->rettype != GRETL_TYPE_NONE) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
@@ -651,7 +651,7 @@ static void function_call_dialog (call_info *cinfo)
 
     /* function return(s) assignment */
 
-    if (cinfo->rettype != ARG_NONE) {
+    if (cinfo->rettype != GRETL_TYPE_NONE) {
 	GList *list = NULL;
 
 	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, 
@@ -708,7 +708,7 @@ static void function_call_dialog (call_info *cinfo)
     gtk_widget_show(button);
 
     /* Help button? */
-    if (cinfo->n_params > 0 || cinfo->rettype != ARG_NONE) {
+    if (cinfo->n_params > 0 || cinfo->rettype != GRETL_TYPE_NONE) {
 	button = context_help_button(GTK_DIALOG(cinfo->dlg)->action_area, -1);
 	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(fncall_help), cinfo);
@@ -733,17 +733,17 @@ static int function_data_check (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	int type = fn_param_type(cinfo->func, i);
 
-	if (type == ARG_SERIES || type == ARG_LIST ||
-	    type == ARG_REF_SERIES) {
+	if (type == GRETL_TYPE_SERIES || type == GRETL_TYPE_LIST ||
+	    type == GRETL_TYPE_SERIES_REF) {
 	    if (datainfo == NULL || datainfo->v == 0) {
 		errbox(_("Please open a data file first"));
 		err = 1;
 		break;
 	    }
 	}
-	if (type == ARG_LIST) {
+	if (type == GRETL_TYPE_LIST) {
 	    cinfo->extracol = 1;
-	} else if (type == ARG_MATRIX || type == ARG_REF_MATRIX) {
+	} else if (type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_MATRIX_REF) {
 	    cinfo->extracol = 1;
 	}
     }
@@ -790,8 +790,8 @@ static int addressify_var (call_info *cinfo, int i)
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
 
-    return (t == ARG_REF_SCALAR && strchr(numchars, *s)) ||
-	(t == ARG_REF_MATRIX && *s == '{');
+    return (t == GRETL_TYPE_SCALAR_REF && strchr(numchars, *s)) ||
+	(t == GRETL_TYPE_MATRIX_REF && *s == '{');
 }
 
 static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
@@ -810,7 +810,7 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	return 0;
     }
 
-    if (t == ARG_REF_MATRIX) {
+    if (t == GRETL_TYPE_MATRIX_REF) {
 	/* handle case where indirect return matrix does not yet exist */
 	if (get_matrix_by_name(s) == NULL) {
 	    gretl_matrix *m = gretl_null_matrix_new();

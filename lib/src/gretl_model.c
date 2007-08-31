@@ -142,7 +142,7 @@ static void free_model_data_item (model_data_item *item)
 }
 
 static model_data_item *create_data_item (const char *key, void *ptr, 
-					  ModelDataType type, size_t size,
+					  GretlType type, size_t size,
 					  void (*destructor) (void *))
 {
     model_data_item *item = malloc(sizeof *item);
@@ -223,7 +223,7 @@ replicate_data_item (const model_data_item *orig)
  */
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  ModelDataType type, size_t size, 
+					  GretlType type, size_t size, 
 					  void (*destructor) (void *))
 {
     model_data_item **items;
@@ -294,7 +294,7 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  */
 
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
-			  ModelDataType type, size_t size)
+			  GretlType type, size_t size)
 {
     return gretl_model_set_data_with_destructor(pmod, key, ptr, type, 
 						size, NULL);
@@ -317,7 +317,7 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
     size_t size = (list[0] + 1) * sizeof *list;
 
     return gretl_model_set_data_with_destructor(pmod, key, (void *) list, 
-						MODEL_DATA_LIST, size, 
+						GRETL_TYPE_LIST, size, 
 						NULL);
 }
 
@@ -338,7 +338,7 @@ int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
     size_t size = strlen(str) + 1;
 
     return gretl_model_set_data_with_destructor(pmod, key, (void *) str, 
-						MODEL_DATA_STRING, size, 
+						GRETL_TYPE_STRING, size, 
 						NULL);
 }
 
@@ -371,7 +371,7 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 
     *valp = val;
 
-    err = gretl_model_set_data(pmod, key, valp, MODEL_DATA_INT, 
+    err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT, 
 			       sizeof(int));
     if (err) free(valp);
 
@@ -408,7 +408,7 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 
     *valp = val;
 
-    err = gretl_model_set_data(pmod, key, valp, MODEL_DATA_DOUBLE,
+    err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_DOUBLE,
 			       sizeof(double));
     if (err) free(valp);
 
@@ -468,7 +468,7 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
     int i;
 
     for (i=0; i<pmod->n_data_items; i++) {
-	if (pmod->data_items[i]->type != MODEL_DATA_INT) {
+	if (pmod->data_items[i]->type != GRETL_TYPE_INT) {
 	    continue;
 	}
 	if (!strcmp(key, pmod->data_items[i]->key)) {
@@ -495,7 +495,7 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     int i;
 
     for (i=0; i<pmod->n_data_items; i++) {
-	if (pmod->data_items[i]->type != MODEL_DATA_DOUBLE) {
+	if (pmod->data_items[i]->type != GRETL_TYPE_DOUBLE) {
 	    continue;
 	}
 	if (!strcmp(key, pmod->data_items[i]->key)) {
@@ -522,7 +522,7 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key)
     int i;
 
     for (i=0; i<pmod->n_data_items; i++) {
-	if (pmod->data_items[i]->type != MODEL_DATA_LIST) {
+	if (pmod->data_items[i]->type != GRETL_TYPE_LIST) {
 	    continue;
 	}
 	if (!strcmp(key, pmod->data_items[i]->key)) {
@@ -564,7 +564,7 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
     }
     cs->pos = pos;
 
-    err = gretl_model_set_data(pmod, "coeffsep", cs, MODEL_DATA_STRUCT, 
+    err = gretl_model_set_data(pmod, "coeffsep", cs, GRETL_TYPE_STRUCT, 
 			       sizeof *cs);
     if (err) {
 	free(cs);
@@ -2930,16 +2930,16 @@ struct type_mapper {
 };
 
 static struct type_mapper mapper[] = {
-    { MODEL_DATA_INT,          "int",         "1" },
-    { MODEL_DATA_LIST,         "list",        "2" },
-    { MODEL_DATA_DOUBLE,       "double",      "3" },
-    { MODEL_DATA_INT_ARRAY,    "intarray",    "4" },
-    { MODEL_DATA_DOUBLE_ARRAY, "doublearray", "5" },
-    { MODEL_DATA_STRING,       "string",      "6" },
-    { MODEL_DATA_CHAR_ARRAY,   "chararray",   "7" },
-    { MODEL_DATA_CMPLX_ARRAY,  "cmplxarray",  "8" },
-    { MODEL_DATA_STRUCT,       "struct" ,     "9" },
-    { MODEL_DATA_NONE,         "none",        "0" },
+    { GRETL_TYPE_INT,          "int",         "1" },
+    { GRETL_TYPE_LIST,         "list",        "2" },
+    { GRETL_TYPE_DOUBLE,       "double",      "3" },
+    { GRETL_TYPE_INT_ARRAY,    "intarray",    "4" },
+    { GRETL_TYPE_DOUBLE_ARRAY, "doublearray", "5" },
+    { GRETL_TYPE_STRING,       "string",      "6" },
+    { GRETL_TYPE_CHAR_ARRAY,   "chararray",   "7" },
+    { GRETL_TYPE_CMPLX_ARRAY,  "cmplxarray",  "8" },
+    { GRETL_TYPE_STRUCT,       "struct" ,     "9" },
+    { GRETL_TYPE_NONE,         "none",        "0" },
 };
 
 static int type_from_type_string (const char *s)
@@ -2948,27 +2948,27 @@ static int type_from_type_string (const char *s)
 
     if (isdigit(*s)) {
 	/* backward compatibility */
-	for (i=0; mapper[i].type != MODEL_DATA_NONE; i++) {
+	for (i=0; mapper[i].type != GRETL_TYPE_NONE; i++) {
 	    if (*s == mapper[i].compat[0]) {
 		return mapper[i].type;
 	    }
 	}
     } else {
-	for (i=0; mapper[i].type != MODEL_DATA_NONE; i++) {
+	for (i=0; mapper[i].type != GRETL_TYPE_NONE; i++) {
 	    if (!strcmp(s, mapper[i].name)) {
 		return mapper[i].type;
 	    }
 	}
     }
 
-    return MODEL_DATA_NONE;
+    return GRETL_TYPE_NONE;
 }
 
 static const char *gretl_type_name (int t)
 {
     int i;
 
-    for (i=0; mapper[i].type != MODEL_DATA_NONE; i++) {
+    for (i=0; mapper[i].type != GRETL_TYPE_NONE; i++) {
 	if (t == mapper[i].type) {
 	    return mapper[i].name;
 	}
@@ -2996,11 +2996,11 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    continue;
 	}
 
-	if (item->type == MODEL_DATA_INT_ARRAY) {
+	if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    nelem = item->size / sizeof(int);
-	} else if (item->type == MODEL_DATA_DOUBLE_ARRAY) {
+	} else if (item->type == GRETL_TYPE_DOUBLE_ARRAY) {
 	    nelem = item->size / sizeof(double);
-	} else if (item->type == MODEL_DATA_CMPLX_ARRAY) {
+	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    nelem = item->size / sizeof(cmplx);
 	}
 
@@ -3010,35 +3010,35 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    fputs(">\n", fp);
 	}
 
-	if (item->type == MODEL_DATA_INT) {
+	if (item->type == GRETL_TYPE_INT) {
 	    fprintf(fp, "%d", *(int *) item->ptr);
-	} else if (item->type == MODEL_DATA_DOUBLE) {
+	} else if (item->type == GRETL_TYPE_DOUBLE) {
 	    fprintf(fp, "%.15g", *(double *) item->ptr);
-	} else if (item->type == MODEL_DATA_INT_ARRAY) {
+	} else if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    int *vals = (int *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
 		fprintf(fp, "%d ", vals[i]);
 	    }
-	} else if (item->type == MODEL_DATA_DOUBLE_ARRAY) {
+	} else if (item->type == GRETL_TYPE_DOUBLE_ARRAY) {
 	    double *vals = (double *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
 		fprintf(fp, "%.15g ", vals[i]);
 	    }	    
-	} else if (item->type == MODEL_DATA_CMPLX_ARRAY) {
+	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    cmplx *vals = (cmplx *) item->ptr;
 	    
 	    for (j=0; j<nelem; j++) {
 		fprintf(fp, "%.15g %.15g ", vals[j].r, vals[j].i);
 	    }	    
-	} else if (item->type == MODEL_DATA_LIST) {
+	} else if (item->type == GRETL_TYPE_LIST) {
 	    int *list = (int *) item->ptr;
 
 	    for (j=0; j<=list[0]; j++) {
 		fprintf(fp, "%d ", list[j]);
 	    }
-	} else if (item->type == MODEL_DATA_STRING) {
+	} else if (item->type == GRETL_TYPE_STRING) {
 	    fprintf(fp, "%s", (char *) item->ptr);
 	} else {
 	    ; /* no-op: not handled */
@@ -3357,7 +3357,7 @@ retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
 	    free(tmp);
 	}
 	err = gretl_model_set_data(pmod, "coeffsep", cs, 
-				   MODEL_DATA_STRUCT, 
+				   GRETL_TYPE_STRUCT, 
 				   sizeof *cs);
     }
 
@@ -3393,7 +3393,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	if (!strcmp(key, "coeffsep") || !strcmp(key, "10")) {
 	    /* special, with backward compatibility */
 	    err = retrieve_model_coeff_separator(cur, pmod);
-	} else if (t == MODEL_DATA_INT) {
+	} else if (t == GRETL_TYPE_INT) {
 	    int ival;
 
 	    if (!gretl_xml_node_get_int(cur, doc, &ival)) {
@@ -3401,7 +3401,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    } else {
 		err = gretl_model_set_int(pmod, key, ival);
 	    }
-	} else if (t == MODEL_DATA_DOUBLE) {
+	} else if (t == GRETL_TYPE_DOUBLE) {
 	    double xval;
 
 	    if (!gretl_xml_node_get_double(cur, doc, &xval)) {
@@ -3409,7 +3409,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    } else {
 		err = gretl_model_set_double(pmod, key, xval);
 	    }
-	} else if (t == MODEL_DATA_LIST) {
+	} else if (t == GRETL_TYPE_LIST) {
 	    if (!strcmp(key, "xlist")) {
 		/* ad hoc (for forecasting): will be recreated if need be */
 		;
@@ -3420,7 +3420,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		    err = gretl_model_set_list_as_data(pmod, key, list);
 		} 
 	    }
-	} else if (t == MODEL_DATA_STRING) {
+	} else if (t == GRETL_TYPE_STRING) {
 	    char *s;
 
 	    if (!gretl_xml_node_get_string(cur, doc, &s)) {
@@ -3428,21 +3428,21 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    } else {
 		err = gretl_model_set_string_as_data(pmod, key, s);
 	    }
-	} else if (t == MODEL_DATA_INT_ARRAY) {
+	} else if (t == GRETL_TYPE_INT_ARRAY) {
 	    int *ivals = gretl_xml_get_int_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {
 		err = gretl_model_set_data(pmod, key, ivals, t,
 					   nelem * sizeof *ivals);
 	    }
-	} else if (t == MODEL_DATA_DOUBLE_ARRAY) {
+	} else if (t == GRETL_TYPE_DOUBLE_ARRAY) {
 	    double *xvals = gretl_xml_get_double_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {
 		err = gretl_model_set_data(pmod, key, xvals, t,
 					   nelem * sizeof *xvals);
 	    }
-	} else if (t == MODEL_DATA_CMPLX_ARRAY) {
+	} else if (t == GRETL_TYPE_CMPLX_ARRAY) {
 	    cmplx *cvals = gretl_xml_get_cmplx_array(cur, doc, &nelem, &err);
 
 	    if (nelem > 0) {

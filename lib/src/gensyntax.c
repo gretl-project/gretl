@@ -522,7 +522,9 @@ static void get_slice_parts (NODE *t, parser *p)
 
 #if SDEBUG
     fprintf(stderr, "get_slice_parts, p->sym = %d\n", p->sym);
-#endif    
+#endif  
+
+    set_matrix_slice_on();
 
     if (p->sym == LBR) {
 	lex(p);
@@ -542,6 +544,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    /* co comma, no second arg string: may be OK */
 	    t->v.b2.r = newempty(ABSENT);
 	    lex(p);
+	    set_matrix_slice_off();
 	    return;
 	}
 	if (p->sym == COM) {
@@ -577,6 +580,8 @@ static void get_slice_parts (NODE *t, parser *p)
     if (cexp && p->err == 0) {
 	expected_symbol_error(cexp, p);
     }
+
+    set_matrix_slice_off();
 }
 
 /* get up to two comma-separated arguments 

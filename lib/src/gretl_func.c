@@ -77,9 +77,9 @@ enum {
     ARG_CONST    = 1 << 1
 };
 
-#define ref_type(t) (t == ARG_REF_SCALAR || \
-		     t == ARG_REF_SERIES || \
-		     t == ARG_REF_MATRIX)
+#define ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
+		     t == GRETL_TYPE_SERIES_REF || \
+		     t == GRETL_TYPE_MATRIX_REF)
 
 static int n_ufuns;
 static ufunc **ufuns;
@@ -251,14 +251,14 @@ int fn_param_optional (const ufunc *fun, int i)
 
     t = fun->params[i].type;
 
-    return ((ref_type(t) || t == ARG_LIST) && 
+    return ((ref_type(t) || t == GRETL_TYPE_LIST) && 
 	    (fun->params[i].flags & ARG_OPTIONAL));
 }
 
 int user_func_get_return_type (const ufunc *fun)
 {
     if (fun == NULL) {
-	return ARG_NONE;
+	return GRETL_TYPE_NONE;
     } else {
 	return fun->rettype;
     }
@@ -419,7 +419,7 @@ static ufunc *ufunc_new (void)
     fun->n_params = 0;
     fun->params = NULL;
 
-    fun->rettype = ARG_NONE;
+    fun->rettype = GRETL_TYPE_NONE;
     fun->retname = NULL;
 
     fun->in_use = NULL;
@@ -453,7 +453,7 @@ static void clear_ufunc_data (ufunc *fun)
     fun->n_lines = 0;
     fun->n_params = 0;
 
-    fun->rettype = ARG_NONE;
+    fun->rettype = GRETL_TYPE_NONE;
     fun->retname = NULL;
     
     fun->in_use = NULL;
@@ -531,15 +531,15 @@ enum {
 static const char *arg_type_string (int t)
 {
     switch (t) {
-    case ARG_BOOL:       return "bool";
-    case ARG_INT:        return "int";
-    case ARG_SCALAR:     return "scalar";
-    case ARG_SERIES:     return "series";
-    case ARG_LIST:       return "list";
-    case ARG_MATRIX:     return "matrix";
-    case ARG_REF_SCALAR: return "scalar *";
-    case ARG_REF_SERIES: return "series *";
-    case ARG_REF_MATRIX: return "matrix *";
+    case GRETL_TYPE_BOOL:       return "bool";
+    case GRETL_TYPE_INT:        return "int";
+    case GRETL_TYPE_DOUBLE:     return "scalar";
+    case GRETL_TYPE_SERIES:     return "series";
+    case GRETL_TYPE_LIST:       return "list";
+    case GRETL_TYPE_MATRIX:     return "matrix";
+    case GRETL_TYPE_SCALAR_REF: return "scalar *";
+    case GRETL_TYPE_SERIES_REF: return "series *";
+    case GRETL_TYPE_MATRIX_REF: return "matrix *";
     }
 
     return "unknown";
@@ -547,11 +547,11 @@ static const char *arg_type_string (int t)
 
 static const char *arg_type_xml_string (int t)
 {
-    if (t == ARG_REF_SCALAR) {
+    if (t == GRETL_TYPE_SCALAR_REF) {
 	return "scalarref";
-    } else if (t == ARG_REF_SERIES) {
+    } else if (t == GRETL_TYPE_SERIES_REF) {
 	return "seriesref";
-    } else if (t == ARG_REF_MATRIX) {
+    } else if (t == GRETL_TYPE_MATRIX_REF) {
 	return "matrixref";
     } else {
 	return arg_type_string(t);
@@ -562,20 +562,20 @@ static const char *arg_type_xml_string (int t)
 
 static int arg_type_from_string (const char *s)
 {
-    if (!strncmp(s, "bool", 4)) return ARG_BOOL;
-    if (!strcmp(s, "int"))      return ARG_INT;
-    if (!strcmp(s, "scalar"))   return ARG_SCALAR;
-    if (!strcmp(s, "series"))   return ARG_SERIES;
-    if (!strcmp(s, "list"))     return ARG_LIST;
-    if (!strcmp(s, "matrix"))   return ARG_MATRIX;
+    if (!strncmp(s, "bool", 4)) return GRETL_TYPE_BOOL;
+    if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
+    if (!strcmp(s, "scalar"))   return GRETL_TYPE_DOUBLE;
+    if (!strcmp(s, "series"))   return GRETL_TYPE_SERIES;
+    if (!strcmp(s, "list"))     return GRETL_TYPE_LIST;
+    if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
 
-    if (!strcmp(s, "scalar *"))  return ARG_REF_SCALAR;
-    if (!strcmp(s, "series *"))  return ARG_REF_SERIES;
-    if (!strcmp(s, "matrix *"))  return ARG_REF_MATRIX;
+    if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
+    if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
+    if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
 
-    if (!strcmp(s, "scalarref"))  return ARG_REF_SCALAR;
-    if (!strcmp(s, "seriesref"))  return ARG_REF_SERIES;
-    if (!strcmp(s, "matrixref"))  return ARG_REF_MATRIX;
+    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
+    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
+    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
 
     return 0;
 }
@@ -587,18 +587,18 @@ static int arg_type_from_int (const char *s)
     int i = atoi(s);
 
     switch (i) {
-    case 1: return ARG_SCALAR;
-    case 2: return ARG_SERIES;
-    case 3: return ARG_LIST;
-    case 4: return ARG_MATRIX;
-    case 5: return ARG_BOOL;
-    case 6: return ARG_INT;
-    case 7: return ARG_REF_SCALAR;
-    case 8: return ARG_REF_SERIES;
-    case 9: return ARG_REF_MATRIX;
+    case 1: return GRETL_TYPE_DOUBLE;
+    case 2: return GRETL_TYPE_SERIES;
+    case 3: return GRETL_TYPE_LIST;
+    case 4: return GRETL_TYPE_MATRIX;
+    case 5: return GRETL_TYPE_BOOL;
+    case 6: return GRETL_TYPE_INT;
+    case 7: return GRETL_TYPE_SCALAR_REF;
+    case 8: return GRETL_TYPE_SERIES_REF;
+    case 9: return GRETL_TYPE_MATRIX_REF;
     }
 
-    return ARG_NONE;
+    return GRETL_TYPE_NONE;
 }
 
 static int field_to_type (const char *s)
@@ -614,7 +614,8 @@ static int field_to_type (const char *s)
     }
 }    
 
-#define scalar_arg(t) (t == ARG_BOOL || t == ARG_INT || t == ARG_SCALAR)
+#define scalar_arg(a) (a == GRETL_TYPE_BOOL || a == GRETL_TYPE_INT || \
+                       a == GRETL_TYPE_DOUBLE)
 
 static int func_read_params (xmlNodePtr node, ufunc *fun)
 {
@@ -656,7 +657,7 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 		    gretl_xml_get_prop_as_double(cur, "default", 
 						 &fun->params[n].deflt);
 		}
-		if (fun->params[n].type == ARG_INT) {
+		if (fun->params[n].type == GRETL_TYPE_INT) {
 		    gretl_xml_get_prop_as_double(cur, "min", 
 						 &fun->params[n].min);
 		    gretl_xml_get_prop_as_double(cur, "max", 
@@ -795,14 +796,14 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	} else {
 	    pprintf(prn, "%s %s", s, fun->params[i].name);
 	}
-	if (fun->params[i].type == ARG_BOOL) {
+	if (fun->params[i].type == GRETL_TYPE_BOOL) {
 	    if (!na(fun->params[i].deflt)) {
 		pprintf(prn, "[%g]", fun->params[i].deflt);
 	    }
 	} else if (scalar_arg(fun->params[i].type)) {
 	    print_deflt_min_max(&fun->params[i], prn);
 	} else if (ref_type(fun->params[i].type) || 
-		   fun->params[i].type == ARG_LIST) {
+		   fun->params[i].type == GRETL_TYPE_LIST) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
 	if (i == fun->n_params - 1) {
@@ -820,7 +821,7 @@ static void print_function_end (ufunc *fun, PRN *prn)
 {
     const char *typestr;
 
-    if (fun->rettype != ARG_NONE) {
+    if (fun->rettype != GRETL_TYPE_NONE) {
 	typestr = arg_type_string(fun->rettype);
 	pprintf(prn, "  return %s %s\n", typestr, fun->retname);
     }
@@ -1022,7 +1023,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	gretl_pop_c_numeric_locale();
     }
 
-    if (fun->rettype != ARG_NONE) {
+    if (fun->rettype != GRETL_TYPE_NONE) {
 	fprintf(fp, " <return name=\"%s\" type=\"%s\"/>\n", fun->retname, 
 		arg_type_string(fun->rettype));
     }
@@ -2329,7 +2330,7 @@ static int read_deflt_min_max (char *s, fn_param *param,
     if (p != NULL) {
 	double x, y, z;
 
-	if (param->type == ARG_BOOL) {
+	if (param->type == GRETL_TYPE_BOOL) {
 	    if (sscanf(p, "[%lf]", &x) == 1) {
 		param->deflt = x;
 	    } else {
@@ -2427,7 +2428,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	err = read_deflt_min_max(s, param, &len);
     }
 
-    if (ref_type(type) || type == ARG_LIST) {
+    if (ref_type(type) || type == GRETL_TYPE_LIST) {
 	param->type = type;
 	err = read_param_option(s, param, &len);
     }    
@@ -2619,7 +2620,7 @@ static int add_function_return (ufunc *fun, const char *line)
     int type;
     int err = 0;
 
-    if (fun->rettype != ARG_NONE) {
+    if (fun->rettype != GRETL_TYPE_NONE) {
 	sprintf(gretl_errmsg, "Function %s: return value is already defined",
 		fun->name);
 	return 1;
@@ -2894,7 +2895,7 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
 	return E_DATA;
     }
 
-    if (param->type == ARG_BOOL || param->type == ARG_INT) {
+    if (param->type == GRETL_TYPE_BOOL || param->type == GRETL_TYPE_INT) {
 	x = floor(param->deflt);
     } else {
 	x = param->deflt;
@@ -2917,19 +2918,19 @@ static int allocate_function_args (ufunc *fun,
     for (i=0; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
 	if (scalar_arg(fp->type)) {
-	    if (i >= argc || args->types[i] == ARG_NONE) {
+	    if (i >= argc || args->types[i] == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp, pZ, pdinfo);
 	    } else {
 		err = dataset_add_scalar_as(args->x[xi++], fp->name, 
 					    pZ, pdinfo);
 	    } 
-	} else if (fp->type == ARG_SERIES) {
+	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    err = dataset_add_series_as(args->X[Xi++], fp->name, 
 					pZ, pdinfo);
-	} else if (fp->type == ARG_MATRIX) {
+	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    err = copy_matrix_as(args->M[Mi++], fp->name);
-	} else if (fp->type == ARG_LIST) {
-	    if (i >= argc || args->types[i] == ARG_NONE) {
+	} else if (fp->type == GRETL_TYPE_LIST) {
+	    if (i >= argc || args->types[i] == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
 	    } else {
 		err = localize_list(args->lists[li++], fp, pdinfo);
@@ -2946,8 +2947,8 @@ static int allocate_function_args (ufunc *fun,
     for (i=0; i<argc && !err; i++) {
 	fp = &fun->params[i];
 	if (ref_type(fp->type)) {
-	    if (args->types[i] == ARG_REF_SCALAR ||
-		args->types[i] == ARG_REF_SERIES) {
+	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
+		args->types[i] == GRETL_TYPE_SERIES_REF) {
 		err = strings_array_add(&args->upnames, &args->nnames, 
 					pdinfo->varname[args->refv[xi]]);
 		if (!err) {
@@ -2955,7 +2956,7 @@ static int allocate_function_args (ufunc *fun,
 		    strcpy(pdinfo->varname[args->refv[xi]], fp->name);
 		    xi++;
 		}
-	    } else if (args->types[i] == ARG_REF_MATRIX) {
+	    } else if (args->types[i] == GRETL_TYPE_MATRIX_REF) {
 		err = strings_array_add(&args->upnames, &args->nnames, 
 					user_matrix_get_name(args->refm[Mi]));
 		if (!err) {
@@ -3141,7 +3142,7 @@ static void
 maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo, 
 			      char **descrip)
 {
-    if (rtype == ARG_SCALAR || rtype == ARG_SERIES) {
+    if (rtype == GRETL_TYPE_DOUBLE || rtype == GRETL_TYPE_SERIES) {
 	int v = varindex(pdinfo, u->retname);
 
 	if (v < pdinfo->v) {
@@ -3162,13 +3163,13 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 
     if (*perr == 0) {
 	/* direct return value */
-	if (rtype == ARG_SCALAR) {
+	if (rtype == GRETL_TYPE_DOUBLE) {
 	    *(double *) ret = get_scalar_return(u->retname, Z, pdinfo, &err);
-	} else if (rtype == ARG_SERIES) {
+	} else if (rtype == GRETL_TYPE_SERIES) {
 	    *(double **) ret = get_series_return(u->retname, Z, pdinfo, GET_COPY, &err);
-	} else if (rtype == ARG_MATRIX) {
+	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    *(gretl_matrix **) ret = get_matrix_return(u->retname, GET_COPY, &err);
-	} else if (rtype == ARG_LIST) {
+	} else if (rtype == GRETL_TYPE_LIST) {
 	    *(char **) ret = get_list_return(u->retname, pdinfo, &err);
 	}
 
@@ -3192,17 +3193,17 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
     for (i=0; i<argc; i++) {
 	fp = &u->params[i];
 	if (ref_type(fp->type)) {
-	    if (args->types[i] == ARG_REF_SCALAR ||
-		args->types[i] == ARG_REF_SERIES) {
+	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
+		args->types[i] == GRETL_TYPE_SERIES_REF) {
 		STACK_LEVEL(pdinfo, args->refv[vi]) -= 1;
 		strcpy(pdinfo->varname[args->refv[vi]], args->upnames[j++]);
 		vi++;
-	    } else if (args->types[i] == ARG_REF_MATRIX) {
+	    } else if (args->types[i] == GRETL_TYPE_MATRIX_REF) {
 		user_matrix_adjust_level(args->refm[mi], -1);
 		user_matrix_set_name(args->refm[mi], args->upnames[j++]);
 		mi++;
 	    }
-	} else if (fp->type == ARG_LIST) {
+	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, pdinfo);
 	}
     }
@@ -3275,7 +3276,7 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 
 	for (i=0; i<u->n_params && !err; i++) {
 	    fp = &u->params[i];
-	    if (scalar_arg(fp->type) || fp->type == ARG_SERIES) {
+	    if (scalar_arg(fp->type) || fp->type == GRETL_TYPE_SERIES) {
 		v = varindex(pdinfo, fp->name);
 		if (STACK_LEVEL(pdinfo, v) == d) {
 		    anyerr = dataset_drop_variable(v, pZ, pdinfo);
@@ -3366,16 +3367,16 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     j = 0;
     for (i=0; i<argc && !err; i++) {
 	fp = &u->params[i];
-	if ((fp->flags & ARG_OPTIONAL) && args->types[i] == ARG_NONE) {
+	if ((fp->flags & ARG_OPTIONAL) && args->types[i] == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
-	} else if (scalar_arg(fp->type) && args->types[i] == ARG_SCALAR) {
+	} else if (scalar_arg(fp->type) && args->types[i] == GRETL_TYPE_DOUBLE) {
 	    ; /* this is OK too */
 	} else if (fp->type != args->types[i]) {
 	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
 		    i, arg_type_string(args->types[i]), 
 		    arg_type_string(fp->type));
 	    err = E_TYPES;
-	} else if (fp->type == ARG_SCALAR) {
+	} else if (fp->type == GRETL_TYPE_DOUBLE) {
 	    if ((!na(fp->min) && args->x[j] < fp->min) ||
 		(!na(fp->max) && args->x[j] > fp->max)) {
 		pprintf(prn, "argv[%d]: scalar value %g out of bounds\n", 
@@ -3524,7 +3525,7 @@ static void real_user_function_help (ufunc *fun, int ci, PRN *prn)
 	pputs(prn, "Parameters: none\n\n");
     }
 
-    if (fun->rettype != ARG_NONE) {
+    if (fun->rettype != GRETL_TYPE_NONE) {
 	pprintf(prn, "Return value: %s (%s)\n\n", 
 		fun->retname, arg_type_string(fun->rettype));
     } else {

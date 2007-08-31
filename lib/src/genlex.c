@@ -98,7 +98,6 @@ struct str_table mvars[] = {
     { M_SE,      "$stderr" },
     { M_VCV,     "$vcv" },
     { M_RHO,     "$rho" },
-    { M_MSIGMA,  "$Sigma" }, /* FIXME naming? */
     { M_COMPAN,  "$compan" },
     { M_JALPHA,  "$jalpha" }, 
     { M_JBETA,   "$jbeta" },
@@ -726,11 +725,31 @@ static void getword (parser *p)
 #endif
 }
 
+static int doing_matrix_slice;
+
+void set_matrix_slice_on (void)
+{
+    doing_matrix_slice = 1;
+}
+
+void set_matrix_slice_off (void)
+{
+    doing_matrix_slice = 0;
+}
+
 static int colon_ok (char *s, int n)
 {
     int i;
 
-    if (n != 3) {
+    if (doing_matrix_slice) {
+	/* colon is a separator in this context */
+#if LDEBUG
+	fprintf(stderr, "colon_ok: doing matrix slice\n");
+#endif
+	return 0;
+    }
+
+    if (n != 1 && n != 3) {
 	return 0;
     }
 
@@ -769,7 +788,7 @@ static int ok_dbl_char (int ch, char *s, int i)
 	return !strchr(s, 'e') && !strchr(s, 'E') && 
 	    !strchr(s, ':');
     case ':':
-	/* allowing for obs numbers in the form, e.g., "1995:10" */
+	/* allow for obs numbers in the form, e.g., "1995:10" */
 	return colon_ok(s, i);
     default:
 	break;

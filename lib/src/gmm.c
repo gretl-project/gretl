@@ -135,15 +135,15 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
     if (v >= 0 && v < pdinfo->v) {
 	if (var_is_scalar(pdinfo, v)) {
 	    *err = E_TYPES;
-	    return ARG_NONE;
+	    return GRETL_TYPE_NONE;
 	} else {
-	    return ARG_SERIES;
+	    return GRETL_TYPE_SERIES;
 	}
     }
 
     /* then a matrix */
     if (get_matrix_by_name(name) != NULL) {
-	return ARG_MATRIX;
+	return GRETL_TYPE_MATRIX;
     }
 
     /* failing that, a list */
@@ -154,18 +154,18 @@ static int oc_get_type (const char *name, const DATAINFO *pdinfo,
 	for (j=1; j<=list[0]; j++) {
 	    if (list[j] < 0 || list[j] >= pdinfo->v) {
 		*err = E_DATA;
-		return ARG_NONE;
+		return GRETL_TYPE_NONE;
 	    } else if (var_is_scalar(pdinfo, list[j])) {
 		*err = E_TYPES;
-		return ARG_NONE;
+		return GRETL_TYPE_NONE;
 	    }
 	}
-	return ARG_LIST;
+	return GRETL_TYPE_LIST;
     }
 
     *err = gmm_unkvar(name);
 
-    return ARG_NONE;
+    return GRETL_TYPE_NONE;
 }
 
 /* See if column j in matrix b is present anywhere in matrix a.  If
@@ -417,10 +417,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     fprintf(stderr, "oc_add_matrices: lname = '%s'\n", lname);
 #endif
 
-    if (ltype == ARG_MATRIX) {
+    if (ltype == GRETL_TYPE_MATRIX) {
 	e = get_matrix_by_name(lname);
 	err = push_column_source(s, 0, lname);
-    } else if (ltype == ARG_LIST) {
+    } else if (ltype == GRETL_TYPE_LIST) {
 	int *list = get_list_by_name(lname);
 
 	k = list[0];
@@ -440,7 +440,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    }
 	    free_e = s->oc->free_e = 1;
 	}	
-    } else if (ltype == ARG_SERIES) {
+    } else if (ltype == GRETL_TYPE_SERIES) {
 	v = varindex(pdinfo, lname);
 	e = gretl_column_vector_alloc(s->nobs);
 	if (e == NULL) {
@@ -473,10 +473,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     fprintf(stderr, "oc_add_matrices: rname = '%s'\n", rname);
 #endif
 
-    if (rtype == ARG_MATRIX) {
+    if (rtype == GRETL_TYPE_MATRIX) {
 	M = get_matrix_by_name(rname);
 	k = gretl_matrix_cols(M);
-    } else if (rtype == ARG_LIST) {
+    } else if (rtype == GRETL_TYPE_LIST) {
 	int *list = get_list_by_name(rname);
 
 	k = list[0];
@@ -591,7 +591,7 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 {
     char lname[VNAMELEN];
     char rname[VNAMELEN];
-    int ltype = ARG_NONE, rtype = ARG_NONE;
+    int ltype = GRETL_TYPE_NONE, rtype = GRETL_TYPE_NONE;
     int err = 0;
 
     if (s->ci != GMM) {

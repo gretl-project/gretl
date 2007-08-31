@@ -23,19 +23,6 @@
 #include "objstack.h"
 
 typedef enum {
-    MODEL_DATA_NONE,
-    MODEL_DATA_INT,
-    MODEL_DATA_LIST,
-    MODEL_DATA_DOUBLE,
-    MODEL_DATA_INT_ARRAY,
-    MODEL_DATA_DOUBLE_ARRAY,
-    MODEL_DATA_STRING,
-    MODEL_DATA_CHAR_ARRAY,
-    MODEL_DATA_CMPLX_ARRAY,
-    MODEL_DATA_STRUCT
-} ModelDataType;
-
-typedef enum {
     ARMA_SEAS  = 1 << 0, /* includes seasonal component */
     ARMA_DSPEC = 1 << 1, /* input list includes differences */
     ARMA_X12A  = 1 << 2, /* using X-12-ARIMA to generate estimates */
@@ -174,11 +161,11 @@ void gretl_model_free (MODEL *pmod);
 void gretl_model_free_on_exit (MODEL *pmod);
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  ModelDataType type, size_t size, 
+					  GretlType type, size_t size, 
 					  void (*destructor) (void *));
 
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
-			  ModelDataType type, size_t size);
+			  GretlType type, size_t size);
 
 int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list);
 

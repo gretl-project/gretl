@@ -769,7 +769,7 @@ static const char *skip_to_next (const char *s)
 }
 
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
-				  ModelDataType type,
+				  GretlType type,
 				  int *nelem, int *err)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
@@ -784,13 +784,13 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 	n = atoi((const char *) tmp);
 	free(tmp);
 	if (n > 0) {
-	    if (type == MODEL_DATA_INT_ARRAY) {
+	    if (type == GRETL_TYPE_INT_ARRAY) {
 		ivals = malloc(n * sizeof *ivals);
 		ptr = ivals;
-	    } else if (type == MODEL_DATA_DOUBLE_ARRAY) {
+	    } else if (type == GRETL_TYPE_DOUBLE_ARRAY) {
 		xvals = malloc(n * sizeof *xvals);
 		ptr = xvals;
-	    } else if (type == MODEL_DATA_CMPLX_ARRAY) {
+	    } else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 		cvals = malloc(n * sizeof *cvals);
 		ptr = cvals;
 	    }
@@ -804,17 +804,17 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		    p = (const char *) tmp;
 		    p += strspn(p, " \r\n");
 		    for (i=0; i<n && !*err; i++) {
-			if (type == MODEL_DATA_INT_ARRAY) {
+			if (type == GRETL_TYPE_INT_ARRAY) {
 			    if (sscanf(p, "%d", &ivals[i]) != 1) {
 				*err = E_DATA;
 			    }
-			} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
+			} else if (type == GRETL_TYPE_DOUBLE_ARRAY) {
 			    if (!strncmp(p, "NA", 2)) {
 				xvals[i] = NADBL;
 			    } else if (sscanf(p, "%lf", &xvals[i]) != 1) {
 				*err = E_DATA;
 			    }
-			} else if (type == MODEL_DATA_CMPLX_ARRAY) {
+			} else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 			    if (sscanf(p, "%lf %lf", &cvals[i].r, &cvals[i].i) != 2) {
 				*err = E_DATA;
 			    } 
@@ -854,7 +854,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
 			      int *nelem, int *err)
 {
-    return gretl_xml_get_array(node, doc, MODEL_DATA_INT_ARRAY,
+    return gretl_xml_get_array(node, doc, GRETL_TYPE_INT_ARRAY,
 			       nelem, err);
 }
 
@@ -872,7 +872,7 @@ int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
 double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
 				    int *nelem, int *err)
 {
-    return gretl_xml_get_array(node, doc, MODEL_DATA_DOUBLE_ARRAY,
+    return gretl_xml_get_array(node, doc, GRETL_TYPE_DOUBLE_ARRAY,
 			       nelem, err);
 }
 
@@ -890,7 +890,7 @@ double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
 cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 				  int *nelem, int *err)
 {
-    return gretl_xml_get_array(node, doc, MODEL_DATA_CMPLX_ARRAY,
+    return gretl_xml_get_array(node, doc, GRETL_TYPE_CMPLX_ARRAY,
 			       nelem, err);
 }
 

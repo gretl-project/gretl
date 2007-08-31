@@ -130,11 +130,11 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 
     /* now attach X and endog to the model */
     if (!recycle_X) {
-	gretl_model_set_data(pmod, "tslsX", X, MODEL_DATA_DOUBLE_ARRAY,
+	gretl_model_set_data(pmod, "tslsX", X, GRETL_TYPE_DOUBLE_ARRAY,
 			     Xsize);
     }
     if (!recycle_e) {
-	gretl_model_set_data(pmod, "endog", endog, MODEL_DATA_CHAR_ARRAY,
+	gretl_model_set_data(pmod, "endog", endog, GRETL_TYPE_CHAR_ARRAY,
 			     esize);
     }
 

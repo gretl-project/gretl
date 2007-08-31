@@ -427,6 +427,9 @@ void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
 void parser_free_aux_nodes (parser *p);
 
+void set_matrix_slice_on (void);
+void set_matrix_slice_off (void);
+
 /* name lookup functions */
 const char *constname (int c);
 const char *dvarname (int t);

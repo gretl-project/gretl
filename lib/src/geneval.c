@@ -2648,7 +2648,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     NODE *r = t->v.b2.r;
     NODE *n, *ret = NULL;
     int i, m = r->v.bn.n_nodes;
-    int rtype = ARG_NONE;
+    int rtype = GRETL_TYPE_NONE;
 
     fn_args_init(&args);
 
@@ -2662,8 +2662,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* check that the function returns something suitable, if required */
     if (!simple_ufun_call(p)) {
 	rtype = user_func_get_return_type(uf);
-	if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
-	    rtype != ARG_MATRIX && rtype != ARG_LIST) {
+	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
+	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST) {
 	    p->err = E_TYPES;
 	    return NULL;
 	}
@@ -2704,34 +2704,34 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	    if (u->t == UVAR) {
 		if (var_is_scalar(p->dinfo, u->v.idnum)) {
-		    p->err = push_fn_arg(&args, ARG_REF_SCALAR, &u->v.idnum);
+		    p->err = push_fn_arg(&args, GRETL_TYPE_SCALAR_REF, &u->v.idnum);
 		} else {
-		    p->err = push_fn_arg(&args, ARG_REF_SERIES, &u->v.idnum);
+		    p->err = push_fn_arg(&args, GRETL_TYPE_SERIES_REF, &u->v.idnum);
 		}
 	    } else if (u->t == UMAT) {
 		user_matrix *m = get_user_matrix_by_name(u->v.str);
 
-		p->err = push_fn_arg(&args, ARG_REF_MATRIX, m);
+		p->err = push_fn_arg(&args, GRETL_TYPE_MATRIX_REF, m);
 	    } else {
 		pputs(p->prn, "Wrong type of operand for unary '&'\n");
 		p->err = 1;
 	    }
 	} else if (n->t == DUM) {
 	    if (n->v.idnum == DUM_NULL) {
-		p->err = push_fn_arg(&args, ARG_NONE, NULL);
+		p->err = push_fn_arg(&args, GRETL_TYPE_NONE, NULL);
 	    } else {
 		p->err = E_TYPES;
 	    }
 	} else if (n->t == EMPTY) {
-	    p->err = push_fn_arg(&args, ARG_NONE, NULL);
+	    p->err = push_fn_arg(&args, GRETL_TYPE_NONE, NULL);
 	} else if (n->t == NUM) {
-	    p->err = push_fn_arg(&args, ARG_SCALAR, &n->v.xval);
+	    p->err = push_fn_arg(&args, GRETL_TYPE_DOUBLE, &n->v.xval);
 	} else if (n->t == VEC) {
-	    p->err = push_fn_arg(&args, ARG_SERIES, n->v.xvec);
+	    p->err = push_fn_arg(&args, GRETL_TYPE_SERIES, n->v.xvec);
 	} else if (n->t == MAT) {
-	    p->err = push_fn_arg(&args, ARG_MATRIX, n->v.m);
+	    p->err = push_fn_arg(&args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
-	    p->err = push_fn_arg(&args, ARG_LIST, n->v.str);
+	    p->err = push_fn_arg(&args, GRETL_TYPE_LIST, n->v.str);
 	}
 
 	if (p->err) {
@@ -2756,17 +2756,18 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	char *sret = NULL;
 	void *retp = NULL;
 
-	if (rtype == ARG_SCALAR) {
+	if (rtype == GRETL_TYPE_DOUBLE) {
 	    retp = &xret;
-	} else if (rtype == ARG_SERIES) {
+	} else if (rtype == GRETL_TYPE_SERIES) {
 	    retp = &Xret;
-	} else if (rtype == ARG_MATRIX) {
+	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    retp = &mret;
-	} else if (rtype == ARG_LIST) {
+	} else if (rtype == GRETL_TYPE_LIST) {
 	    retp = &sret;
 	}
 
-	if ((p->flags & P_UFRET) && (rtype == ARG_SCALAR || rtype == ARG_SERIES)) {
+	if ((p->flags & P_UFRET) && 
+	    (rtype == GRETL_TYPE_DOUBLE || rtype == GRETL_TYPE_SERIES)) {
 	    /* pick up description of generated var, if any */
 	    pdescrip = &descrip;
 	}
@@ -2775,12 +2776,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 				     retp, pdescrip, p->prn);
 
 	if (!p->err) {
-	    if (rtype == ARG_SCALAR) {
+	    if (rtype == GRETL_TYPE_DOUBLE) {
 		ret = aux_scalar_node(p);
 		if (ret != NULL) {
 		    ret->v.xval = xret;
 		}
-	    } else if (rtype == ARG_SERIES) {
+	    } else if (rtype == GRETL_TYPE_SERIES) {
 		ret = aux_vec_node(p, 0);
 		if (ret != NULL) {
 		    if (ret->v.xvec != NULL) {
@@ -2788,7 +2789,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->v.xvec = Xret;
 		}
-	    } else if (rtype == ARG_MATRIX) {
+	    } else if (rtype == GRETL_TYPE_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
@@ -2796,7 +2797,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    }
 		    ret->v.m = mret;
 		}
-	    } else if (rtype == ARG_LIST) {
+	    } else if (rtype == GRETL_TYPE_LIST) {
 		ret = aux_list_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
@@ -3508,62 +3509,70 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
     return S;
 }
 
+static GretlType object_var_type (int idx, const char *oname)
+{
+    GretlType vtype = GRETL_TYPE_NONE;
+    
+    if (model_data_scalar(idx)) {
+	vtype = GRETL_TYPE_DOUBLE;
+    } else if (model_data_series(idx)) {
+	vtype = GRETL_TYPE_SERIES;
+    } else if (model_data_matrix(idx)) {
+	vtype = GRETL_TYPE_MATRIX;
+    }
+    
+    if (idx == M_UHAT || idx == M_YHAT || idx == M_SIGMA) {
+	/* could be a matrix */
+	GretlObjType otype = gretl_model_get_type(oname);
+
+	if (otype != GRETL_OBJ_EQN) {
+	    vtype = GRETL_TYPE_MATRIX;
+	}
+    }
+
+    return vtype;
+}
+
+/* the left-hand subnode holds the name of the object in
+   question; on the right is a specification of what we
+   want from that object 
+*/
+
 static NODE *object_var_node (NODE *t, parser *p)
 {
     NODE *r = (t->t == MVAR || t->t == DMSL)? t : t->v.b2.r;
-    int scalar = model_data_scalar(r->v.idnum);
-    int series = model_data_series(r->v.idnum);
-    int matrix = model_data_matrix(r->v.idnum);
+    const char *oname = (t->t == MVAR || t->t == DMSL)?
+	NULL : t->v.b2.l->v.str;
     int mslice = r->t == DMSL;
+    GretlType vtype;
     NODE *ret = NULL;
 
-    /* the left-hand subnode holds the name of the object in
-       question; on the right is a specification of what we
-       want from that object */
+    vtype = object_var_type(r->v.idnum, oname);
 
 #if EDEBUG
     fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
 	    t->t, getsymb(t->t, NULL), r->t, getsymb(r->t, NULL));
-    fprintf(stderr, "scalar=%d, series=%d, matrix=%d, mslice=%d\n",
-	    scalar, series, matrix, mslice);
+    fprintf(stderr, "vtype = %d, mslice = %d\n", vtype, mslice);
 #endif
 
-    if (scalar) {
+    if (vtype == GRETL_TYPE_DOUBLE) {
 	ret = aux_scalar_node(p);
-    } else if (series) {
+    } else if (vtype == GRETL_TYPE_SERIES) {
 	ret = aux_vec_node(p, 0);
-    } else if (matrix || mslice) {
+    } else {
 	ret = aux_matrix_node(p);
     }
 
-    if (ret != NULL && starting(p)) {
-	const char *oname = (t->t == MVAR || t->t == DMSL)?
-	    NULL : t->v.b2.l->v.str;
-
-#if EDEBUG
-	fprintf(stderr, "object_var_node: oname = '%s'\n", oname);
-#endif
-
-	if (r->v.idnum == M_UHAT || r->v.idnum == M_YHAT) {
-	    /* could be series or matrix */
-	    GretlObjType type = gretl_model_get_type(oname);
-
-	    if (type != GRETL_OBJ_EQN) {
-		series = 0;
-		matrix = 1;
-		ret->t = MAT;
-	    }
-	}	
-
-	if (scalar) {
+    if (starting(p)) {
+	if (vtype == GRETL_TYPE_DOUBLE) {
 	    ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);
-	} else if (series) {
+	} else if (vtype == GRETL_TYPE_SERIES) {
 	    ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
 						  &p->err);
 	} else if (mslice) {
-	    /* the right subnode needs more work */
+	    /* the right-hand subnode needs more work */
 	    ret->v.m = object_var_get_submatrix(oname, r, p);
-	} else if (matrix) {
+	} else if (vtype == GRETL_TYPE_MATRIX) {
 	    ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
 	} 
     } 

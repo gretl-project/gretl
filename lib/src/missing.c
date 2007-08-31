@@ -285,7 +285,7 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
 	mobs->missvec = missvec;
 	mobs->misscount = misscount;
 	err = gretl_model_set_data(pmod, "missobs", mobs, 
-				   MODEL_DATA_STRUCT,
+				   GRETL_TYPE_STRUCT,
 				   sizeof *mobs);
     }
 

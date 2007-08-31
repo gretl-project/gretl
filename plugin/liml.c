@@ -206,7 +206,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 
     if (!err) {
 	err = gretl_model_set_data(pmod, "liml_y", ymod, 
-				   MODEL_DATA_DOUBLE_ARRAY,
+				   GRETL_TYPE_DOUBLE_ARRAY,
 				   n * sizeof *ymod);
     }
 

@@ -59,7 +59,6 @@ typedef enum {
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
     M_RHO,        /* autoregressive coefficients */
-    M_MSIGMA,     /* cross-equation covariance matrix, eqn systems */
     M_COMPAN,     /* VAR companion matrix */
     M_JALPHA,     /* Johansen's alpha */
     M_JBETA,      /* Johansen's beta */

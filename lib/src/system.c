@@ -1889,7 +1889,7 @@ gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx,
 	    M = gretl_matrix_copy(sys->vcv);
 	}
 	break;
-    case M_MSIGMA:
+    case M_SIGMA:
 	M = gretl_matrix_copy(sys->sigma);
 	break;
     default:

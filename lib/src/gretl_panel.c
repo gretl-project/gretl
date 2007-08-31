@@ -1476,7 +1476,7 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
     }
 
     err = gretl_model_set_data(pmod, "ahat", ahat, 
-			       MODEL_DATA_DOUBLE_ARRAY, 
+			       GRETL_TYPE_DOUBLE_ARRAY, 
 			       pdinfo->n * sizeof *ahat);
 
     return err;

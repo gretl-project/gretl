@@ -181,7 +181,7 @@ write_garch_stats (MODEL *pmod, const int *list,
 	    }
 	}
 	gretl_model_set_data(pmod, "garch_h", garch_h, 
-			     MODEL_DATA_DOUBLE_ARRAY,
+			     GRETL_TYPE_DOUBLE_ARRAY,
 			     pdinfo->n * sizeof *garch_h);
     }
 

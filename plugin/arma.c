@@ -495,7 +495,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
     free(temp);
     free(temp2);
 
-    gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
+    gretl_model_set_data(pmod, "roots", roots, GRETL_TYPE_CMPLX_ARRAY,
 			 nr * sizeof *roots);
 
     return 0;
