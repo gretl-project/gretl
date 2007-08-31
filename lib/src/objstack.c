@@ -858,6 +858,10 @@ real_get_obj_series (void *p, GretlObjType type, int idx,
     return x;
 }
 
+/* find out what sort of object we're dealing with, and call
+   the appropriate function to get the requested matrix 
+*/
+
 static gretl_matrix *
 real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
 {
@@ -986,6 +990,12 @@ double *saved_object_get_series (const char *oname, int idx,
 
     return x;
 }
+
+/* starting point for getting a matrix from a saved model
+   of one kind or another.  We start by looking for the right
+   model: this is either a match for @oname, or if @oname
+   is NULL or blank, the last model estimated.
+*/
 
 gretl_matrix *
 saved_object_get_matrix (const char *oname, int idx, int *err)

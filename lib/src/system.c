@@ -1857,6 +1857,9 @@ gretl_equation_system_get_series (const gretl_equation_system *sys,
     return x;
 }
 
+/* retrieve a copy of a specified matrix from an equation
+   system */
+
 gretl_matrix *
 gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
 				  int *err)
