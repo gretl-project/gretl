@@ -730,7 +730,7 @@ static int colon_ok (char *s, int n)
 {
     int i;
 
-    if (n != 1 && n != 3) {
+    if (n != 3) {
 	return 0;
     }
 
@@ -769,6 +769,7 @@ static int ok_dbl_char (int ch, char *s, int i)
 	return !strchr(s, 'e') && !strchr(s, 'E') && 
 	    !strchr(s, ':');
     case ':':
+	/* allowing for obs numbers in the form, e.g., "1995:10" */
 	return colon_ok(s, i);
     default:
 	break;
