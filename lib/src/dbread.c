@@ -1671,15 +1671,15 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }   
 
-    series_info_init(&sinfo);
-
     line = get_compact_method_and_advance(line, &method);
 
     /* now loop over variable names given on the line */
 
-    while ((line = get_word_and_advance(line, series, VNAMELEN - 1)) && !err) {
+    while ((line = get_word_and_advance(line, series, VNAMELEN-1)) && !err) {
 	int v, this_var_method = method; 
 	int newdata = 0;
+
+	series_info_init(&sinfo);
 
 	/* see if the series is already in the dataset */
 	v = varindex(pdinfo, series);
