@@ -1869,10 +1869,24 @@ gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx,
     }
 
     switch (idx) {  
+    case M_COEFF:
+	if (sys->b == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(sys->b);
+	}
+	break;
     case M_UHAT:
 	M = gretl_matrix_copy(sys->uhat);
 	break;
     case M_VCV:
+	if (sys->vcv == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(sys->vcv);
+	}
+	break;
+    case M_MSIGMA:
 	M = gretl_matrix_copy(sys->sigma);
 	break;
     default:

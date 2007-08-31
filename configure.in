@@ -39,6 +39,7 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 have_gtk="no"
+have_gtkprint="no"
 have_gtksourceview="no"
 have_gnome="no"
 have_gmp="no"
@@ -418,6 +419,16 @@ if test "$build_gui" = "yes" ; then
     )
 fi
 
+dnl
+dnl Check for GTK 2.10 or higher
+dnl
+if test "$have_gtk" = "2.0" ; then
+    PKG_CHECK_MODULES(GTKPRINT, gtk+-2.0 >= 2.10.0,
+      have_gtkprint="yes",
+      have_gtkprint="no"      
+    )
+fi
+
 dnl ...and try for gtksourceview flags, unless prohibited
 if test "$have_gtk" = "2.0" && test "$try_installed_sourceview" = "yes" ; then
    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
@@ -684,6 +695,7 @@ Configuration:
   Build with GTK version:                 ${have_gtk}
   Script syntax highlighting:             ${use_gtksourceview}
   Use installed gtksourceview:            ${have_gtksourceview}
+  Use GTK printing apparatus:             ${have_gtkprint}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
   Build message catalogs:                 ${build_po}

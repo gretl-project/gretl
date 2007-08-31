@@ -26,8 +26,11 @@
 int winprint_graph (char *emfname);
 #endif
 
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
+#ifdef NATIVE_PRINTING
 void winprint (char *fullbuf, char *selbuf);
+# ifndef G_OS_WIN32
+void gtk_print_graph (const char *fname);
+# endif
 #endif
 
 void special_print_summary (const Summary *summ,

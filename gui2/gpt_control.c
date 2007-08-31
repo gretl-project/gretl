@@ -26,6 +26,7 @@
 #include "gpt_dialog.h"
 #include "fileselect.h"
 #include "calculator.h"
+#include "guiprint.h"
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
@@ -1509,10 +1510,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     return err;
 }
 
-#ifdef USE_GNOME
-extern void gnome_print_graph (const char *fname);
-#endif
-
 static int get_data_xy (png_plot *plot, int x, int y, 
 			double *data_x, double *data_y)
 {
@@ -2088,9 +2085,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     } else if (!strcmp(item, _("Restore full view"))) { 
 	zoom_unzoom_png(plot, PNG_UNZOOM);
     }
-#ifdef USE_GNOME 
+#if defined(USE_GNOME) || defined(GTK_PRINTING)
     else if (!strcmp(item, _("Print..."))) { 
-	gnome_print_graph(plot->spec->fname);
+	gtk_print_graph(plot->spec->fname);
     }
 #endif 
     else if (!strcmp(item, _("OLS estimates"))) { 

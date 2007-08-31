@@ -43,6 +43,10 @@
 # define NATIVE_PRINTING
 #endif
 
+#if GTK_MINOR_VERSION >= 10
+# define GTK_PRINTING
+#endif
+
 #define GNULL (gconstpointer) NULL
 
 #include <gtksourceview/gtksourceview.h>

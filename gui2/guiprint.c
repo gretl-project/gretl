@@ -31,11 +31,11 @@
 # include <windows.h>
 #endif
 
-#if !defined(G_OS_WIN32) && (GTK_MINOR_VERSION >= 10)
-# define PRINT_VIA_GTK
-#elif defined(USE_GNOME)
-# define USE_GNOMEPRINT
-#endif 
+#ifndef GTK_PRINTING
+# ifdef USE_GNOME
+#  define USE_GNOMEPRINT
+# endif
+#endif
 
 #ifdef NATIVE_PRINTING
 
@@ -344,6 +344,7 @@ int winprint_graph (char *emfname)
 
 #define GRETL_PRINT_CONFIG_FILE "gretl-print-config"
 #define GRETL_PBM_TMP           "gretltmp.pbm"
+#define GRETL_PNG_TMP "gretltmp.png"
 
 static GdkPixbuf *png_mono_pixbuf (const char *fname);
 
@@ -530,7 +531,7 @@ print_image_from_pixbuf (GnomePrintContext *gpc, GdkPixbuf *pixbuf)
     }
 }
 
-void gnome_print_graph (const char *fname)
+void gtk_print_graph (const char *fname)
 {
     GnomePrintJob *job;
     GnomePrintConfig *config;
@@ -668,9 +669,9 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
 
 #endif /* USE_GNOMEPRINT */
 
-#ifdef PRINT_VIA_GTK
+#ifdef GTK_PRINTING
 
-#define HEADER_HEIGHT 72
+#define GRETL_PNG_TMP "gretltmp.png"
 
 struct print_info {
     int n_pages;
@@ -742,7 +743,8 @@ static void begin_text_print (GtkPrintOperation *op,
 	p++;
     }
 
-    pinfo->n_pages = lines / pinfo->pagelines + (lines % pinfo->pagelines != 0);
+    pinfo->n_pages = lines / pinfo->pagelines + 
+	(lines % pinfo->pagelines != 0);
     gtk_print_operation_set_n_pages(op, pinfo->n_pages);
 }
 
@@ -832,6 +834,55 @@ void winprint (char *fullbuf, char *selbuf)
     g_object_unref(op);
 }
 
+/* FIXME we'd be better off using EPS or PDF here,
+   if possible (but cairo can't _read_ PDF?)
+*/
+
+static int make_png_file (const char *fname,
+			  char *pngname)
+{
+    FILE *fsrc, *ftmp;
+    char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+
+    sprintf(temp, "%sgpttmp", paths.userdir);
+
+    ftmp = gretl_tempfile_open(temp);
+    if (ftmp == NULL) {
+	return 1;
+    }
+
+    fsrc = gretl_fopen(fname, "r");
+    if (fsrc == NULL) {
+	fclose(ftmp);
+	remove(temp);
+	return 1;
+    }
+
+    build_path(pngname, paths.userdir, GRETL_PNG_TMP, NULL);
+
+    while (fgets(fline, MAXLEN-1, fsrc)) {
+	if (!strncmp(fline, "set output", 10)) {
+	    fprintf(ftmp, "set output '%s'\n", pngname);
+	} else {
+	    fputs(fline, ftmp);
+	}
+    }
+
+    fclose(fsrc);
+    fclose(ftmp);
+
+    /* run gnuplot on the temp plotfile */
+    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    if (system(cmd)) {
+	remove(temp);
+	return 1;
+    }
+
+    remove(temp);
+
+    return 0;
+}
+
 static void begin_image_print (GtkPrintOperation *op,
 			       GtkPrintContext *context,
 			       char *pngname)
@@ -843,30 +894,39 @@ static void begin_image_print (GtkPrintOperation *op,
 
     setup = gtk_print_context_get_page_setup(context);
 
-    x = gtk_page_setup_get_left_margin(setup, GTK_UNIT_POINTS);
-    x = 72 - x; /* pad left to 72 points */
-    if (x < 0) {
-	x = 0;
-    }
+    x = gtk_print_context_get_width(context);
+    y = gtk_print_context_get_height(context);
 
-    y = gtk_page_setup_get_top_margin(setup, GTK_UNIT_POINTS);
-    y = 72 - y; /* pad top to 72 points */
-    if (y < 0) {
-	y = 0;
-    }
+#if 0
+    fprintf(stderr, "context width = %g\n", x);
+    fprintf(stderr, "context height = %g\n", y);
+#endif
 
     cs = cairo_image_surface_create_from_png(pngname);
-    fprintf(stderr, "%s: surface = %p, status = %d\n", pngname, 
-	    (void *) cs, cairo_surface_status(cs));
-    fprintf(stderr, "width = %d\n", cairo_image_surface_get_width(cs));
-    fprintf(stderr, "height = %d\n", cairo_image_surface_get_height(cs));
-    fprintf(stderr, "format = %d\n", cairo_image_surface_get_format(cs));
+    if (cairo_surface_status(cs) != CAIRO_STATUS_SUCCESS) {
+	errbox("Error reading image");
+	return;
+    }
 
-    cr = cairo_create(cs);
-    fprintf(stderr, "cairo_t status = %d\n", cairo_status(cr));
+    x = cairo_image_surface_get_width(cs);
+    y = cairo_image_surface_get_height(cs);
 
-    cairo_move_to(cr, x, y); /* ?? */
-    gtk_print_context_set_cairo_context(context, cr, 72, 72);
+#if 0
+    fprintf(stderr, "surface: width=%g, height=%g\n", x, y);
+#endif
+
+    /* FIXME get this aligned properly!! */
+
+    cr = gtk_print_context_get_cairo_context(context);
+#if 1
+    cairo_translate(cr, x/2 - 20, y/2 + 200);
+    cairo_rotate(cr, -M_PI / 2);
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
+    cairo_set_source_surface(cr, cs, -x/2, -y/2);
+#else
+    cairo_scale(cr, 0.75, 0.75);
+    cairo_set_source_surface(cr, cs, 72, 72);
+#endif
 
     gtk_print_operation_set_n_pages(op, 1);
 }
@@ -875,15 +935,23 @@ static void
 draw_image (GtkPrintOperation *op, GtkPrintContext *context,
 	    gint page, gpointer p)
 {
-    fprintf(stderr, "Got draw image page\n");
+    cairo_t *cr;
+
+    cr = gtk_print_context_get_cairo_context(context);
+    cairo_paint(cr);
 }
 
-void gnome_print_graph (const char *fname)
+void gtk_print_graph (const char *fname)
 {
-    char *pngname = "test.png";
+    char pngname[FILENAME_MAX];
     GtkPrintOperation *op;
     GtkPrintOperationResult res;
     GError *err = NULL;
+
+    if (make_png_file(fname, pngname)) {
+	errbox("Error creating graph file");
+	return;
+    }
 
     op = gtk_print_operation_new();
 
@@ -913,7 +981,7 @@ void gnome_print_graph (const char *fname)
     g_object_unref(op);
 }
 
-#endif /* PRINT_VIA_GTK */
+#endif /* GTK_PRINTING */
 
 void rtf_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 {
@@ -2083,5 +2151,3 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 
     return err;
 }
-
-

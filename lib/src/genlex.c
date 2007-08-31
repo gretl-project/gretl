@@ -98,6 +98,7 @@ struct str_table mvars[] = {
     { M_SE,      "$stderr" },
     { M_VCV,     "$vcv" },
     { M_RHO,     "$rho" },
+    { M_MSIGMA,  "$Sigma" }, /* FIXME naming? */
     { M_COMPAN,  "$compan" },
     { M_JALPHA,  "$jalpha" }, 
     { M_JBETA,   "$jbeta" },

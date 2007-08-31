@@ -283,7 +283,8 @@ calculate_sys_coeffs (gretl_equation_system *sys,
 {
     int do_bdiff = ((sys->method == SYS_3SLS) && do_iteration);
     double bij, oldb, bnum = 0.0, bden = 0.0;
-    gretl_matrix *vcv;
+    gretl_matrix *vcv = NULL;
+    gretl_matrix *b = NULL;
     int i, j, k, j0;
     int err = 0;
 
@@ -363,16 +364,10 @@ calculate_sys_coeffs (gretl_equation_system *sys,
 	j0 += sys->models[i]->ncoeff;
     }
 
-    /* are we saving the coefficient vector and covariance matrix
-       (e.g. as the basis for testing restrictions)? */
-    if (system_save_vcv(sys)) {
-	gretl_matrix *b = gretl_matrix_copy(y);
-
-	system_attach_coeffs(sys, b);
-	system_attach_vcv(sys, vcv);
-    } else {
-	gretl_matrix_free(vcv);
-    }
+    /* save the coefficient vector and covariance matrix */
+    b = gretl_matrix_copy(y);
+    system_attach_coeffs(sys, b);
+    system_attach_vcv(sys, vcv);
 
     return err;
 }
