@@ -97,6 +97,7 @@
 
 typedef enum {
     GRETL_TYPE_NONE,
+    GRETL_TYPE_BOOL,
     GRETL_TYPE_INT,
     GRETL_TYPE_LIST,
     GRETL_TYPE_DOUBLE,
@@ -105,14 +106,21 @@ typedef enum {
     GRETL_TYPE_STRING,
     GRETL_TYPE_CHAR_ARRAY,
     GRETL_TYPE_CMPLX_ARRAY,
-    GRETL_TYPE_STRUCT,
-    GRETL_TYPE_BOOL,
     GRETL_TYPE_SERIES,
     GRETL_TYPE_MATRIX,
+    GRETL_TYPE_STRUCT,
     GRETL_TYPE_SCALAR_REF,
     GRETL_TYPE_SERIES_REF,
     GRETL_TYPE_MATRIX_REF
 } GretlType;
+
+#define gretl_scalar_type(t) (t == GRETL_TYPE_BOOL || \
+                              t == GRETL_TYPE_INT || \
+			      t == GRETL_TYPE_DOUBLE)
+
+#define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
+			   t == GRETL_TYPE_SERIES_REF || \
+			   t == GRETL_TYPE_MATRIX_REF)
 
 enum ts_codes {
     CROSS_SECTION,

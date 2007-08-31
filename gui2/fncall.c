@@ -47,13 +47,9 @@ struct call_info_ {
     int ok;
 };
 
-#define scalar_type(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
-#define series_type(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
-#define matrix_type(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
-
-#define ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
-                     t == GRETL_TYPE_SERIES_REF || \
-                     t == GRETL_TYPE_MATRIX_REF)
+#define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
+#define series_arg(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
+#define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 
 static call_info *cinfo_new (void)
 {
@@ -256,13 +252,13 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	list = g_list_append(list, "");
     }
 
-    if (series_type(type) || scalar_type(type)) {
+    if (series_arg(type) || scalar_arg(type)) {
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_hidden(datainfo, i)) {
 		continue;
 	    }
-	    if ((series_type(type) && var_is_series(datainfo, i)) ||
-		(scalar_type(type) && var_is_scalar(datainfo, i))) {
+	    if ((series_arg(type) && var_is_series(datainfo, i)) ||
+		(scalar_arg(type) && var_is_scalar(datainfo, i))) {
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
 	}
@@ -280,7 +276,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	    name = get_list_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}
-    } else if (matrix_type(type)) {
+    } else if (matrix_arg(type)) {
 	int nm = n_user_matrices();
 
 	for (i=0; i<nm; i++) {
@@ -802,7 +798,7 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 
     *add = 0;
 
-    if (!ref_type(t)) {
+    if (!gretl_ref_type(t)) {
 	return 0;
     }
 

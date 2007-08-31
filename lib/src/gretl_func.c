@@ -77,10 +77,6 @@ enum {
     ARG_CONST    = 1 << 1
 };
 
-#define ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
-		     t == GRETL_TYPE_SERIES_REF || \
-		     t == GRETL_TYPE_MATRIX_REF)
-
 static int n_ufuns;
 static ufunc **ufuns;
 static ufunc *current_ufun;
@@ -251,7 +247,7 @@ int fn_param_optional (const ufunc *fun, int i)
 
     t = fun->params[i].type;
 
-    return ((ref_type(t) || t == GRETL_TYPE_LIST) && 
+    return ((gretl_ref_type(t) || t == GRETL_TYPE_LIST) && 
 	    (fun->params[i].flags & ARG_OPTIONAL));
 }
 
@@ -614,9 +610,6 @@ static int field_to_type (const char *s)
     }
 }    
 
-#define scalar_arg(a) (a == GRETL_TYPE_BOOL || a == GRETL_TYPE_INT || \
-                       a == GRETL_TYPE_DOUBLE)
-
 static int func_read_params (xmlNodePtr node, ufunc *fun)
 {
     xmlNodePtr cur;
@@ -653,7 +646,7 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
 		fun->params[n].type = field_to_type(field);
 		free(field);
-		if (scalar_arg(fun->params[n].type)) {
+		if (gretl_scalar_type(fun->params[n].type)) {
 		    gretl_xml_get_prop_as_double(cur, "default", 
 						 &fun->params[n].deflt);
 		}
@@ -800,9 +793,9 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	    if (!na(fun->params[i].deflt)) {
 		pprintf(prn, "[%g]", fun->params[i].deflt);
 	    }
-	} else if (scalar_arg(fun->params[i].type)) {
+	} else if (gretl_scalar_type(fun->params[i].type)) {
 	    print_deflt_min_max(&fun->params[i], prn);
-	} else if (ref_type(fun->params[i].type) || 
+	} else if (gretl_ref_type(fun->params[i].type) || 
 		   fun->params[i].type == GRETL_TYPE_LIST) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
@@ -2423,12 +2416,12 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	return err;
     }    
 
-    if (scalar_arg(type)) {
+    if (gretl_scalar_type(type)) {
 	param->type = type;
 	err = read_deflt_min_max(s, param, &len);
     }
 
-    if (ref_type(type) || type == GRETL_TYPE_LIST) {
+    if (gretl_ref_type(type) || type == GRETL_TYPE_LIST) {
 	param->type = type;
 	err = read_param_option(s, param, &len);
     }    
@@ -2917,7 +2910,7 @@ static int allocate_function_args (ufunc *fun,
     
     for (i=0; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
-	if (scalar_arg(fp->type)) {
+	if (gretl_scalar_type(fp->type)) {
 	    if (i >= argc || args->types[i] == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp, pZ, pdinfo);
 	    } else {
@@ -2946,7 +2939,7 @@ static int allocate_function_args (ufunc *fun,
 
     for (i=0; i<argc && !err; i++) {
 	fp = &fun->params[i];
-	if (ref_type(fp->type)) {
+	if (gretl_ref_type(fp->type)) {
 	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
 		args->types[i] == GRETL_TYPE_SERIES_REF) {
 		err = strings_array_add(&args->upnames, &args->nnames, 
@@ -3192,7 +3185,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
     j = 0;
     for (i=0; i<argc; i++) {
 	fp = &u->params[i];
-	if (ref_type(fp->type)) {
+	if (gretl_ref_type(fp->type)) {
 	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
 		args->types[i] == GRETL_TYPE_SERIES_REF) {
 		STACK_LEVEL(pdinfo, args->refv[vi]) -= 1;
@@ -3276,7 +3269,7 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 
 	for (i=0; i<u->n_params && !err; i++) {
 	    fp = &u->params[i];
-	    if (scalar_arg(fp->type) || fp->type == GRETL_TYPE_SERIES) {
+	    if (gretl_scalar_type(fp->type) || fp->type == GRETL_TYPE_SERIES) {
 		v = varindex(pdinfo, fp->name);
 		if (STACK_LEVEL(pdinfo, v) == d) {
 		    anyerr = dataset_drop_variable(v, pZ, pdinfo);
@@ -3369,7 +3362,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	fp = &u->params[i];
 	if ((fp->flags & ARG_OPTIONAL) && args->types[i] == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
-	} else if (scalar_arg(fp->type) && args->types[i] == GRETL_TYPE_DOUBLE) {
+	} else if (gretl_scalar_type(fp->type) && 
+		   args->types[i] == GRETL_TYPE_DOUBLE) {
 	    ; /* this is OK too */
 	} else if (fp->type != args->types[i]) {
 	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
