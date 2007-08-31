@@ -2158,7 +2158,7 @@ static void build_plot_menu (png_plot *plot)
 	N_("Freeze data labels"),
 	N_("Clear data labels"),
 	N_("Zoom..."),
-#ifdef USE_GNOME
+#if defined(USE_GNOME) || defined(GTK_PRINTING)
 	N_("Print..."),
 #endif
 #ifdef G_OS_WIN32

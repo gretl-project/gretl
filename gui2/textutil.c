@@ -487,7 +487,7 @@ void window_save (windata_t *vwin, guint fmt)
 
 /* native printing from gretl windows */
 
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
+#ifdef NATIVE_PRINTING
 
 void window_print (windata_t *vwin, guint u, GtkWidget *w) 
 {

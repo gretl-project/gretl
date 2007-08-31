@@ -1607,7 +1607,7 @@ void gretl_stock_icons_init (void)
     }
 }
 
-#if defined(G_OS_WIN32) || defined(USE_GNOME) 
+#ifdef NATIVE_PRINTING
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     window_print(vwin, 0, w);
