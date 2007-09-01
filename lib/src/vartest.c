@@ -30,7 +30,7 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
     if (var->E == NULL || var->S == NULL) {
 	err = 1;
     } else {
-	err = gretl_system_normality_test(var->E, var->S, prn);
+	err = multivariate_normality_test(var->E, var->S, prn);
     }
 
     return err;

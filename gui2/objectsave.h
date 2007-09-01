@@ -24,7 +24,7 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn);
 
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn);
 
-int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn);
+int maybe_save_system (const CMD *cmd, equation_system *sys, PRN *prn);
 
 int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type, 
 		      PRN *prn);

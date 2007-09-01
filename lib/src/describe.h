@@ -204,7 +204,7 @@ double dh_b2_to_z2 (double b1, double b2, double n);
 
 double doornik_chisq (double skew, double xkurt, int n);
 
-int gretl_system_normality_test (const gretl_matrix *E, 
+int multivariate_normality_test (const gretl_matrix *E, 
 				 const gretl_matrix *Sigma, 
 				 PRN *prn);
 

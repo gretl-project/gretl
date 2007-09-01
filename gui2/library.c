@@ -2204,7 +2204,7 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 void do_restrict (GtkWidget *w, dialog_t *dlg)
 {
     MODEL *pmod = NULL;
-    gretl_equation_system *sys = NULL;
+    equation_system *sys = NULL;
     GRETL_VAR *vecm = NULL;
     GRETL_VAR *vnew = NULL;
 
@@ -2223,7 +2223,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     } else if (vwin->role == VECM) {
 	vecm = (GRETL_VAR *) vwin->data;
     } else if (vwin->role == SYSTEM) {
-	sys = (gretl_equation_system *) vwin->data;
+	sys = (equation_system *) vwin->data;
     }
 
     if (pmod == NULL && vecm == NULL && sys == NULL) {
@@ -2311,7 +2311,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	    record_model_commands_from_buf(buf, pmod, got_start_line,
 					   got_end_line);
 	} else if (sys != NULL) {
-	    gretl_equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
+	    equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
 	    height = 450;
 	} else if (vecm != NULL) {
 	    height = 450;
@@ -2373,7 +2373,7 @@ static void maybe_grab_system_name (const char *s, char *name)
 
 void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
-    gretl_equation_system *my_sys = NULL;
+    equation_system *my_sys = NULL;
     gchar *buf;
     PRN *prn;
     char sysname[32] = {0};
@@ -2413,7 +2413,8 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	if (my_sys == NULL) {
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
-	    my_sys = system_start(startline, OPT_NONE); /* FIXME opt? */
+	    /* FIXME opt? */
+	    my_sys = equation_system_start(startline, OPT_NONE);
 	    if (my_sys == NULL) {
 		fprintf(stderr, "do_eqn_system: sys is NULL\n");
  		err = 1;
@@ -2432,7 +2433,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		   case? */
 		err = 1;
 	    } else {
-		err = gretl_equation_system_append(my_sys, slist);
+		err = equation_system_append(my_sys, slist);
 		free(slist);
 		if (err) {
 		    /* note: sys is destroyed on error */
@@ -2462,7 +2463,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return; 
     }
 
-    err = gretl_equation_system_finalize(my_sys, &Z, datainfo, prn);
+    err = equation_system_finalize(my_sys, &Z, datainfo, prn);
     if (err) {
 	errmsg(err, prn);
     } else {
@@ -2483,11 +2484,11 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 
 void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
-    gretl_equation_system *my_sys;
+    equation_system *my_sys;
     PRN *prn;
     int err = 0;
 
-    my_sys = (gretl_equation_system *) edit_dialog_get_data(dlg);
+    my_sys = (equation_system *) edit_dialog_get_data(dlg);
     if (my_sys == NULL) {
 	return;
     }
@@ -2500,8 +2501,8 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return; 
     }
 
-    err = gretl_equation_system_estimate(my_sys, &Z, datainfo,
-					 OPT_NONE, prn);
+    err = equation_system_estimate(my_sys, &Z, datainfo,
+				   OPT_NONE, prn);
     if (err) {
 	errmsg(err, prn);
     } 
@@ -4211,10 +4212,10 @@ int add_system_resid (gpointer p, int eqnum, int ci)
 	err = gretl_VAR_add_resids_to_dataset(var, eqnum,
 					      &Z, datainfo);
     } else {
-	gretl_equation_system *sys = vwin->data;
+	equation_system *sys = vwin->data;
 
-	err = gretl_system_add_resids_to_dataset(sys, eqnum,
-						 &Z, datainfo);
+	err = system_add_resids_to_dataset(sys, eqnum,
+					   &Z, datainfo);
     }	
 
     if (err) {
@@ -6426,7 +6427,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	cmd->ci != SYSTEM) {
 	pprintf(prn, _("Command '%s' ignored; not valid within "
 		       "equation system\n"), line);
-	gretl_equation_system_destroy(s->sys);
+	equation_system_destroy(s->sys);
 	s->sys = NULL;
 	return 1;
     }
@@ -6682,9 +6683,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	maybe_save_model(cmd, models[0], prn);
     }
 
-    if (gretl_system_save_flag_set(s->sys)) {
+    if (system_save_flag_is_set(s->sys)) {
 	maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS);
-	gretl_system_unset_save_flag(s->sys);
+	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }
 

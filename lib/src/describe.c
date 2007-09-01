@@ -1097,7 +1097,8 @@ get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
 }
 
 int 
-gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma, 
+multivariate_normality_test (const gretl_matrix *E, 
+			     const gretl_matrix *Sigma, 
 			     PRN *prn)
 {
     gretl_matrix *S = NULL;

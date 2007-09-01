@@ -497,7 +497,7 @@ static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
     return tview;
 }
 
-static void dlg_text_set_from_sys (gretl_equation_system *sys,
+static void dlg_text_set_from_sys (equation_system *sys,
 				   dialog_t *d)
 {
     const char *buf;
@@ -675,7 +675,7 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
 
 static void free_sys_strings (GtkWidget *w, char **strs)
 {
-    free_strings_array(strs,  SYS_MAX - 1); 
+    free_strings_array(strs,  SYS_METHOD_MAX - 1); 
 }
 
 static void set_sys_method (GtkEditable *entry, dialog_t *d)
@@ -688,7 +688,7 @@ static void set_sys_method (GtkEditable *entry, dialog_t *d)
 	s = strrchr(s, '(');
 	if (s != NULL) {
 	    sscanf(s + 1, "%7[^)]", mstr);
-	    d->opt = gretl_system_method_from_string(mstr);
+	    d->opt = system_method_from_string(mstr);
 	}
     } 
 }
@@ -821,7 +821,7 @@ static void build_gmm_radios (GtkWidget *vbox, dialog_t *d)
 
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
 {
-    gretl_equation_system *sys = NULL;
+    equation_system *sys = NULL;
     GList *items = NULL;
     GtkWidget *w, *hbox;
     gchar **strs;
@@ -829,12 +829,12 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
     int i;
 
     if (d->data != NULL) {
-	sys = (gretl_equation_system *) d->data;
+	sys = (equation_system *) d->data;
     }
 
-    strs = strings_array_new(SYS_MAX);
+    strs = strings_array_new(SYS_METHOD_MAX);
 
-    for (i=SYS_SUR; i<SYS_MAX; i++) {
+    for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
 	strs[i] = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
 				  system_method_short_string(i));
 	items = g_list_append(items, strs[i]);
@@ -868,7 +868,7 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
 
 static void dlg_display_sys (dialog_t *d)
 {
-    gretl_equation_system *sys = d->data;
+    equation_system *sys = d->data;
     GtkWidget *w;
     int hsize = 62;
 

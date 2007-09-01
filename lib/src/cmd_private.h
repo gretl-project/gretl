@@ -41,7 +41,7 @@ struct ExecState_ {
     char *line;
     char runfile[MAXLEN];
     MODEL **models;
-    gretl_equation_system *sys;
+    equation_system *sys;
     gretl_restriction *rset;
     GRETL_VAR *var;
     DATAINFO *subinfo; /* record of incoming sub-sample for functions */

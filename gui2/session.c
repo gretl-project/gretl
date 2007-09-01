@@ -1179,7 +1179,7 @@ int highest_numbered_variable_in_session (void)
 {
     MODEL *pmod;
     GRETL_VAR *var;
-    gretl_equation_system *sys;
+    equation_system *sys;
     int i, mvm, vmax = 0;
 
     if (session.models) {
@@ -1590,7 +1590,7 @@ static int display_session_model (SESSION_MODEL *sm)
 	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
 	view_buffer(prn, 78, 450, sm->name, var->ci, var);
     } else if (sm->type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) sm->ptr;
+	equation_system *sys = (equation_system *) sm->ptr;
 
 	edit_dialog(sm->name, NULL, NULL, do_saved_eqn_system, sys, 
 		    SYSTEM, VARCLICK_NONE, NULL); 

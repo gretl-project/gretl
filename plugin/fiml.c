@@ -20,40 +20,41 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "system.h"
+#include "sysml.h"
 
 #define FDEBUG 0
 
 typedef struct fiml_system_ fiml_system;
 
 struct fiml_system_ {
-    int n;                  /* number of observations per equation */
-    int g;                  /* number of (stochastic) equations */
-    int gn;                 /* convenience: g * n = number of obs in stacked vectors */
-    int totk;               /* total right-hand side vars */
-    int nendo;              /* total number of endogenous vars */
-    int nexo;               /* total number of exogenous vars */
+    int n;                /* number of observations per equation */
+    int g;                /* number of (stochastic) equations */
+    int gn;               /* g * n = number of obs in stacked vectors */
+    int totk;             /* total right-hand side vars */
+    int nendo;            /* total number of endogenous vars */
+    int nexo;             /* total number of exogenous vars */
 
-    double ll;              /* log-likelihood */
-    double llu;             /* unrestricted log-likelihood */
+    double ll;            /* log-likelihood */
+    double llu;           /* unrestricted log-likelihood */
 
-    gretl_matrix *uhat;     /* structural-form residuals, all equations */
-    gretl_matrix *sigma;    /* cross-equation covariance matrix */
-    gretl_matrix *psi;      /* Cholesky decomp of sigma-inverse */
-    gretl_matrix *Stmp;     /* workspace */
+    gretl_matrix *uhat;   /* structural-form residuals, all equations */
+    gretl_matrix *sigma;  /* cross-equation covariance matrix */
+    gretl_matrix *psi;    /* Cholesky decomp of sigma-inverse */
+    gretl_matrix *Stmp;   /* workspace */
 
-    gretl_matrix *G;        /* Gamma matrix: coeffs for endogenous vars */
-    gretl_matrix *B;        /* coeffs for exogenous and predetermined vars */
-    gretl_matrix *Gtmp;     /* workspace */
+    gretl_matrix *G;      /* Gamma matrix: coeffs for endogenous vars */
+    gretl_matrix *B;      /* coeffs for exogenous and predetermined vars */
+    gretl_matrix *Gtmp;   /* workspace */
 
-    gretl_vector *arty;     /* stacked gn-vector: LHS of artificial regression */
-    gretl_matrix *artx;     /* stacked matrix of transformed indep vars: RHS */
-    gretl_matrix *artb;     /* coefficient vector from artificial regression */
-    gretl_matrix *btmp;     /* workspace */
+    gretl_vector *arty;   /* stacked gn-vector: LHS of artificial regression */
+    gretl_matrix *artx;   /* stacked matrix of transformed indep vars: RHS */
+    gretl_matrix *artb;   /* coefficient vector from artificial regression */
+    gretl_matrix *btmp;   /* workspace */
 
-    gretl_matrix *WB1;      /* exog vars times coeffs */
-    gretl_matrix *WB2;      /* exog vars times coeffs, times Gamma-inverse */
+    gretl_matrix *WB1;    /* exog vars times coeffs */
+    gretl_matrix *WB2;    /* exog vars times coeffs, times Gamma-inverse */
 
-    gretl_equation_system *sys; /* pointer to "parent" equation system */
+    equation_system *sys; /* pointer to "parent" equation system */
 };
 
 static void fiml_system_destroy (fiml_system *fsys)
@@ -78,7 +79,7 @@ static void fiml_system_destroy (fiml_system *fsys)
     free(fsys);
 }
 
-static fiml_system *fiml_system_new (gretl_equation_system *sys)
+static fiml_system *fiml_system_new (equation_system *sys)
 {
     fiml_system *fsys;
     int *endog_vars;
@@ -120,6 +121,8 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     fsys->WB1 = NULL;
     fsys->WB2 = NULL;
 
+    clear_gretl_matrix_err();
+
     fsys->uhat = gretl_matrix_alloc(fsys->n, fsys->g);
     fsys->sigma = gretl_matrix_alloc(fsys->g, fsys->g);
     fsys->psi = gretl_matrix_alloc(fsys->g, fsys->g);
@@ -137,11 +140,7 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     fsys->WB1 = gretl_matrix_alloc(fsys->n, fsys->nendo);
     fsys->WB2 = gretl_matrix_alloc(fsys->n, fsys->nendo);
 
-    if (fsys->uhat == NULL || fsys->sigma == NULL || fsys->psi == NULL ||
-	fsys->Stmp == NULL || fsys->G == NULL || fsys->B == NULL ||
-	fsys->arty == NULL || fsys->artx == NULL || fsys->artb == NULL ||
-	fsys->WB1 == NULL || fsys->WB2 == NULL || fsys->Gtmp == NULL ||
-	fsys->btmp == NULL) {
+    if (get_gretl_matrix_err()) {
 	fiml_system_destroy(fsys);
 	fsys = NULL;
     }	
@@ -154,7 +153,7 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
 */
 
 static int 
-over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
+fiml_overid_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -322,11 +321,12 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     MODEL *pmod;
     const double *y;
     double u;
-    int i, t;
+    int i, j, k, t;
 
-    /* correct uhat and yhat; also correct ESS/SSR and standard error,
-       per equation */
+    /* correct uhat and yhat; correct ESS/SSR and standard error,
+       per equation; update vectorized coeffs, b */
 
+    k = 0;
     for (i=0; i<fsys->g; i++) {
 	pmod = system_get_model(fsys->sys, i);
 	y = Z[pmod->list[1]];
@@ -338,6 +338,9 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
 	    pmod->ess += u * u;
 	}
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+	for (j=0; j<pmod->ncoeff; j++) {
+	    fsys->sys->b->val[k++] = pmod->coeff[j];
+	}
     }
 
     /* not using df correction for pmod->sigma or sigma matrix */
@@ -363,8 +366,10 @@ static void fiml_form_depvar (fiml_system *fsys)
     int i, j, k, t;
 
     k = 0;
-    for (i=0; i<fsys->g; i++) { /* loop across equations */
-	for (t=0; t<fsys->n; t++) { /* loop across obs */
+    for (i=0; i<fsys->g; i++) { 
+	/* loop across equations */
+	for (t=0; t<fsys->n; t++) { 
+	    /* loop across observations */
 	    x = 0.0;
 	    for (j=0; j<fsys->g; j++) {
 		p = gretl_matrix_get(fsys->psi, i, j);
@@ -410,15 +415,17 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
     int i, j, k, t;
-    int bigrow, bigcol = 0;
+    int xrow, xcol = 0;
     double p, xjt;
 
     gretl_matrix_zero(fsys->artx);
 
-    for (i=0; i<fsys->g; i++) { /* loop across equations */
+    for (i=0; i<fsys->g; i++) { 
+	/* loop across equations */
 	const int *list = system_get_list(fsys->sys, i);
 
-	for (j=2; j<=list[0]; j++) { /* loop across RHS vars */
+	for (j=2; j<=list[0]; j++) { 
+	    /* loop across RHS vars */
 	    const double *xj = NULL;
 	    int vj = 0;
 
@@ -430,9 +437,11 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 		vj = endo_var_number(enlist, list[j]);
 	    }
 
-	    for (t=0; t<fsys->n; t++) { /* loop across obs */
-		for (k=0; k<fsys->g; k++) { /* loop across vertical blocks */
-		    bigrow = k * fsys->n + t;
+	    for (t=0; t<fsys->n; t++) { 
+		/* loop across obs */
+		for (k=0; k<fsys->g; k++) { 
+		    /* loop across vertical blocks */
+		    xrow = k * fsys->n + t;
 		    p = gretl_matrix_get(fsys->psi, k, i);
 		    if (p != 0.0) {
 			if (xj != NULL) {
@@ -440,11 +449,11 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 			} else {
 			    xjt = gretl_matrix_get(fsys->WB2, t, vj);
 			}
-			gretl_matrix_set(fsys->artx, bigrow, bigcol, xjt * p);
+			gretl_matrix_set(fsys->artx, xrow, xcol, xjt * p);
 		    }
 		}
 	    }
-	    bigcol++;
+	    xcol++;
 	}
     }
 
@@ -493,7 +502,8 @@ rhs_var_in_eqn (const int *list, int v)
 
 /* initialize Gamma matrix based on 3SLS estimates plus identities */
 
-static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
+static void 
+fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *slist; 
@@ -502,9 +512,7 @@ static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
     int i, j, vi;
 
     for (j=0; j<fsys->nendo; j++) {
-
 	/* outer loop across columns (equations) */
-
 	if (j < fsys->g) {
 	    slist = system_get_list(fsys->sys, j);
 	} else {
@@ -514,7 +522,6 @@ static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 	lv = enlist[j + 1];
 
 	/* inner loop across variables in equation */
-
 	for (i=0; i<fsys->nendo; i++) {
 	    rv = enlist[i + 1];
 
@@ -675,8 +682,8 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 	return err;
     }
 
-    /* note: make copies because the determinant calculations destroy 
-       the original matrix */
+    /* note: make copies because the determinant calculations 
+       destroy the original matrix */
 
     gretl_matrix_copy_values(fsys->Gtmp, fsys->G);
     ldetG = gretl_matrix_log_abs_determinant(fsys->Gtmp, &err);
@@ -822,7 +829,8 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
    matrix of the artificial OLS regression
 */
 
-static int fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
+static int 
+fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
 {
     gretl_matrix *vcv;
     int ldv = fsys->totk;
@@ -861,8 +869,12 @@ static int fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
 	}
     }
 
-    /* fixme: further use for vcv? */
-    gretl_matrix_free(vcv);
+    if (!err) {
+	gretl_matrix_free(fsys->sys->vcv);
+	fsys->sys->vcv = vcv;
+    } else {
+	gretl_matrix_free(vcv);
+    }
 
     return err;
 }
@@ -888,7 +900,7 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 
 #define FIML_ITER_MAX 250
 
-int fiml_driver (gretl_equation_system *sys, double ***pZ, 
+int fiml_driver (equation_system *sys, double ***pZ, 
 		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R = NULL;
@@ -930,7 +942,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	}
     } 
 
-    if ((sys->flags & GRETL_SYS_RESTRICT) && sys->R != NULL) {
+    if ((sys->flags & SYSTEM_RESTRICT) && sys->R != NULL) {
 	R = sys->R;
     }
 
@@ -952,15 +964,16 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 
 	/* run artificial regression (ETM, equation 12.86) */
 	if (R != NULL) {
-	    err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
-					      fsys->artb, NULL, NULL, NULL);
+	    err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, 
+					      R, NULL, fsys->artb, 
+					      NULL, NULL, NULL);
 	} else {
 #if 0
-	    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
-				       NULL, NULL, NULL);
+	    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, 
+				       fsys->artb, NULL, NULL, NULL);
 #else
-	    err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
-				   NULL, NULL, NULL);
+	    err = gretl_matrix_ols(fsys->arty, fsys->artx, 
+				   fsys->artb, NULL, NULL, NULL);
 #endif
 	}
 
@@ -970,14 +983,15 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	}
 
 	/* adjust param estimates based on gradients in fsys->artb */
-	err = fiml_adjust_estimates(fsys, (const double **) *pZ, t1, &step);
+	err = fiml_adjust_estimates(fsys, (const double **) *pZ, 
+				    t1, &step);
 	if (err) {
 	    break;
 	}
 
 	if (verbose) {
-	    pprintf(prn, "*** iteration %3d: step = %g, ll = %.8g\n", iters + 1, 
-		    step, fsys->ll);
+	    pprintf(prn, "*** iteration %3d: step = %g, ll = %.8g\n", 
+		    iters + 1, step, fsys->ll);
 	}
 
 	crit = fsys->ll - llbak;
@@ -1006,7 +1020,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
     }
 
     if (R != NULL && verbose) {
-	over_identification_test(fsys, pZ, pdinfo);
+	fiml_overid_test(fsys, pZ, pdinfo);
     }
 
     /* write the results into the parent system */

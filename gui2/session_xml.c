@@ -162,7 +162,7 @@ static gpointer rebuild_session_model (const char *fname,
     } else if (type == GRETL_OBJ_VAR) {
 	ptr = gretl_VAR_from_XML(node, doc, err);
     } else {
-	ptr = gretl_system_from_XML(node, doc, err);
+	ptr = equation_system_from_XML(node, doc, err);
     }
 
     xmlFreeDoc(doc);
@@ -535,7 +535,7 @@ static int write_session_xml (void)
 	    } else if (type == GRETL_OBJ_VAR) {
 		gretl_VAR_serialize(ptr, sflags, fq);
 	    } else if (type == GRETL_OBJ_SYS) {
-		gretl_system_serialize(ptr, sflags, fq);
+		equation_system_serialize(ptr, sflags, fq);
 	    }
 	    fclose(fq);
 	}

@@ -83,7 +83,7 @@ void gretl_object_ref (void *ptr, GretlObjType type)
 	    var->refcount += 1;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) ptr;
+	equation_system *sys = (equation_system *) ptr;
 
 	if (sys != NULL) {
 	    sys->refcount += 1;
@@ -132,7 +132,7 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
     } else if (type == GRETL_OBJ_VAR) {
 	gretl_VAR_free(ptr);
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system_destroy(ptr);
+	equation_system_destroy(ptr);
     }
 }
 
@@ -154,7 +154,7 @@ static int gretl_object_get_refcount (void *ptr, GretlObjType type)
 	    rc = var->refcount;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) ptr;
+	equation_system *sys = (equation_system *) ptr;
 
 	if (sys != NULL) {
 	    rc = sys->refcount;
@@ -293,7 +293,7 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 	    rc = var->refcount;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) ptr;
+	equation_system *sys = (equation_system *) ptr;
 
 	if (sys != NULL) {
 	    sys->refcount -= 1;
@@ -379,7 +379,7 @@ const char *gretl_object_get_name (void *p, GretlObjType type)
 
 	return var->name;
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = p;
+	equation_system *sys = p;
 
 	return sys->name;
     }
@@ -532,7 +532,7 @@ GRETL_VAR *get_VECM_by_name (const char *vname)
     }
 }
 
-gretl_equation_system *get_equation_system_by_name (const char *sname)
+equation_system *get_equation_system_by_name (const char *sname)
 {
     return get_object_by_name(sname, GRETL_OBJ_SYS, NULL);
 }
@@ -557,10 +557,10 @@ int gretl_object_compose_name (void *p, GretlObjType type)
 	}
 	gretl_VAR_set_name(var, name);
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) p;
+	equation_system *sys = (equation_system *) p;
 
 	sprintf(name, "%s %d", _("System"), ++n_sys);
-	gretl_system_set_name(sys, name);
+	equation_system_set_name(sys, name);
     } else {
 	err = 1;
     }
@@ -577,7 +577,7 @@ int gretl_object_rename (void *p, GretlObjType type, const char *oname)
     } else if (type == GRETL_OBJ_VAR) {
 	gretl_VAR_set_name((GRETL_VAR *) p, oname);
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_system_set_name((gretl_equation_system *) p, oname);
+	equation_system_set_name((equation_system *) p, oname);
     } else {
 	err = 1;
     }
@@ -810,7 +810,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
 	    x = INVALID_STAT;
 	}
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) p;
+	equation_system *sys = (equation_system *) p;
 
 	if (idx == M_T) {
 	    x = sys->n_obs;
@@ -877,9 +877,9 @@ real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
 
 	M = gretl_model_get_matrix(pmod, idx, err);
     } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) p;
+	equation_system *sys = (equation_system *) p;
 
-	M = gretl_equation_system_get_matrix(sys, idx, err);
+	M = equation_system_get_matrix(sys, idx, err);
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) p;
 
@@ -1147,7 +1147,7 @@ static void saved_object_free (stacker *s)
     } else if (s->type == GRETL_OBJ_VAR) {
 	gretl_VAR_free(s->ptr);
     } else if (s->type == GRETL_OBJ_SYS) {
-	gretl_equation_system_destroy(s->ptr);
+	equation_system_destroy(s->ptr);
     }
 }
 

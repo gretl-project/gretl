@@ -187,8 +187,8 @@ static int saved_object_action (const char *line,
 	} else if (type == GRETL_OBJ_VAR) {
 	    gretl_VAR_print((GRETL_VAR *) ptr, pdinfo, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_SYS) {
-	    err = gretl_equation_system_estimate((gretl_equation_system *) ptr, 
-						 pZ, pdinfo, OPT_NONE, prn);
+	    err = equation_system_estimate((equation_system *) ptr, 
+					   pZ, pdinfo, OPT_NONE, prn);
 	} 
     } else if (action == OBJ_ACTION_SHOW_STAT) {
 	err = print_object_var(objname, param, pZ, pdinfo, prn);

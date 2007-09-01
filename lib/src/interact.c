@@ -4083,7 +4083,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     case SYSTEM:
 	/* system of equations */
 	if (s->sys == NULL) {
-	    s->sys = system_start(line, cmd->opt);
+	    s->sys = equation_system_start(line, cmd->opt);
 	    if (s->sys == NULL) {
 		err = 1;
 	    } else {
@@ -4098,7 +4098,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case EQUATION:
-	err = gretl_equation_system_append(s->sys, cmd->list);
+	err = equation_system_append(s->sys, cmd->list);
 	if (err) {
 	    s->sys = NULL;
 	}
@@ -4106,11 +4106,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case END:
 	if (!strcmp(cmd->param, "system")) {
-	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, prn);
+	    err = equation_system_finalize(s->sys, pZ, pdinfo, prn);
 	    if (err || s->sys->name == NULL) {
 		s->sys = NULL;
 	    } else {
-		gretl_system_set_save_flag(s->sys);
+		system_set_save_flag(s->sys);
 	    }
 	} else if (!strcmp(cmd->param, "mle") || 
 		   !strcmp(cmd->param, "nls") ||
@@ -4251,9 +4251,9 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
 	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
     }
 
-    if (gretl_system_save_flag_set(s->sys)) {
+    if (system_save_flag_is_set(s->sys)) {
 	/* only warrants action in GUI program */
-	gretl_system_unset_save_flag(s->sys);
+	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }
 

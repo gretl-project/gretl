@@ -136,7 +136,7 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     return err;
 }
 
-int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
+int maybe_save_system (const CMD *cmd, equation_system *sys, PRN *prn)
 {
     char name[MAXSAVENAME];
     int err = 0;

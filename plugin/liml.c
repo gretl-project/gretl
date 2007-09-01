@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "system.h"
+#include "sysml.h"
 
 #define LDEBUG 0
 
@@ -120,7 +121,7 @@ static double lambda_min (const gretl_matrix *lambda, int k)
    needed as a basis for LIML */
 
 static int *
-liml_make_reglist (const gretl_equation_system *sys, const int *list, 
+liml_make_reglist (const equation_system *sys, const int *list, 
 		   int *k)
 {
     const int *exlist = system_get_instr_vars(sys);
@@ -217,7 +218,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     return err;
 }
 
-static int liml_do_equation (gretl_equation_system *sys, int eq, 
+static int liml_do_equation (equation_system *sys, int eq, 
 			     double ***pZ, DATAINFO *pdinfo, 
 			     PRN *prn)
 {
@@ -273,15 +274,16 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     printf("number of endogenous vars in equation: k = %d\n", k);
 #endif
 
-    /* allocate matrices */
+    clear_gretl_matrix_err();
+
     E = gretl_matrix_alloc(T, k);
     W0 = gretl_matrix_alloc(k, k);
     W1 = gretl_matrix_alloc(k, k);    
     W2 = gretl_matrix_alloc(k, k);
     Inv = gretl_matrix_alloc(k, k);
 
-    if (E == NULL || W0 == NULL || W1 == NULL || W2 == NULL ||
-	Inv == NULL) {
+    err = get_gretl_matrix_err();
+    if (err) {
 	goto bailout;
     }
 
@@ -374,7 +376,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
    models
 */
 
-int liml_driver (gretl_equation_system *sys, double ***pZ, 
+int liml_driver (equation_system *sys, double ***pZ, 
 		 DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;

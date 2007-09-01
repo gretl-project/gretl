@@ -3673,12 +3673,12 @@ enum {
 static void SYS_test_call (gpointer p, guint code, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
-    gretl_equation_system *sys;
+    equation_system *sys;
     char title[72];
     PRN *prn;
     int err;
 
-    sys = (gretl_equation_system *) vwin->data;
+    sys = (equation_system *) vwin->data;
     if (sys == NULL) {
 	/* error message? */
 	return;
@@ -3708,10 +3708,10 @@ static void add_SYS_menu_items (windata_t *vwin)
     GtkItemFactoryEntry sysitem;
     const gchar *tpath = N_("/Tests");
     const gchar *dpath = N_("/Save");
-    gretl_equation_system *sys;
+    equation_system *sys;
     int i, neqns;
 
-    sys = (gretl_equation_system *) vwin->data;
+    sys = (equation_system *) vwin->data;
     if (sys == NULL) {
 	return;
     }

@@ -241,7 +241,7 @@ static int
 get_R_sys_column (const gretl_restriction *rset, int i, int j)
 {
     const rrow *r = rset->rows[i];
-    gretl_equation_system *sys = rset->obj;
+    equation_system *sys = rset->obj;
     const int *list;
     int col = r->bnum[j];
     int k;
@@ -1272,7 +1272,7 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	    ret = 0;
 	}
     } else if (rset->type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = rset->obj;
+	equation_system *sys = rset->obj;
 	const int *list = system_get_list(sys, i);
 
 	if (list == NULL) {
@@ -1499,7 +1499,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
    system of simultaneous equations */
 
 gretl_restriction *
-cross_restriction_set_start (const char *line, gretl_equation_system *sys)
+cross_restriction_set_start (const char *line, equation_system *sys)
 {
     gretl_restriction *rset;
 

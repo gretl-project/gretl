@@ -17,35 +17,34 @@
  * 
  */
 
-#ifndef GRETL_EQUATION_SYSTEM_H
-#define GRETL_EQUATION_SYSTEM_H
+#ifndef EQUATION_SYSTEM_H
+#define EQUATION_SYSTEM_H
 
 typedef enum {
-    SYS_SUR = 0,
-    SYS_3SLS,
-    SYS_FIML,
-    SYS_LIML,
-    SYS_OLS,
-    SYS_TSLS,
-    SYS_WLS,
-    SYS_MAX
-} gretl_system_methods;
+    SYS_METHOD_SUR = 0,
+    SYS_METHOD_3SLS,
+    SYS_METHOD_FIML,
+    SYS_METHOD_LIML,
+    SYS_METHOD_OLS,
+    SYS_METHOD_TSLS,
+    SYS_METHOD_WLS,
+    SYS_METHOD_MAX
+} GretlSystemMethods;
 
 enum {
-    GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
-    GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
-    GRETL_SYSTEM_DFCORR    = 1 << 2,
-    GRETL_SYS_VCV_GEOMEAN  = 1 << 3,
-    GRETL_SYS_SAVE_VCV     = 1 << 4,
-    GRETL_SYS_RESTRICT     = 1 << 5,
-    GRETL_SYS_ITERATE      = 1 << 6,
-    GRETL_SYS_SAVEIT       = 1 << 7
-};
+    SYSTEM_SAVE_UHAT   = 1 << 0,
+    SYSTEM_SAVE_YHAT   = 1 << 1,
+    SYSTEM_DFCORR      = 1 << 2,
+    SYSTEM_VCV_GEOMEAN = 1 << 3,
+    SYSTEM_RESTRICT    = 1 << 4,
+    SYSTEM_ITERATE     = 1 << 5,
+    SYSTEM_SAVEIT      = 1 << 6
+} GretlSystemFlags;
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
 
-struct gretl_equation_system_ {
+struct equation_system_ {
     char *name;                 /* user-specified name for system, or NULL */
     int refcount;               /* for saving/deleting */
     int t1;                     /* starting observation number */
@@ -78,129 +77,126 @@ struct gretl_equation_system_ {
 				*/
 };
 
-void make_system_data_info (gretl_equation_system *sys, int eqn, 
-			    DATAINFO *pdinfo, int v, int code);
-
-gretl_equation_system *system_start (const char *line, gretlopt opt);
+equation_system *equation_system_start (const char *line, 
+					gretlopt opt);
 
 char *get_system_name_from_line (const char *s);
 
-int gretl_equation_system_append (gretl_equation_system *sys, 
-				  const int *list);
+int equation_system_append (equation_system *sys, 
+			    const int *list);
 
-int system_parse_line (gretl_equation_system *sys,
+int system_parse_line (equation_system *sys,
 		       const char *line, 
 		       const DATAINFO *pdinfo);
 
-int gretl_equation_system_finalize (gretl_equation_system *sys, 
-				    double ***pZ, DATAINFO *pdinfo,
-				    PRN *prn);
+int equation_system_finalize (equation_system *sys, 
+			      double ***pZ, DATAINFO *pdinfo,
+			      PRN *prn);
 
 int 
-gretl_equation_system_estimate (gretl_equation_system *sys, 
-				double ***pZ, DATAINFO *pdinfo, 
-				gretlopt opt, PRN *prn);
+equation_system_estimate (equation_system *sys, 
+			  double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn);
 
 int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn);
 
-void gretl_equation_system_destroy (gretl_equation_system *sys);
+void equation_system_destroy (equation_system *sys);
 
-const char *system_get_full_string (const gretl_equation_system *sys);
+const char *system_get_full_string (const equation_system *sys);
 
-int system_save_uhat (const gretl_equation_system *sys);
-int system_save_yhat (const gretl_equation_system *sys);
+int system_want_df_corr (const equation_system *sys);
 
-int system_save_vcv (const gretl_equation_system *sys);
+int system_n_restrictions (const equation_system *sys);
 
-int system_want_df_corr (const gretl_equation_system *sys);
+int system_max_indep_vars (const equation_system *sys);
+int system_n_indep_vars (const equation_system *sys);
 
-int system_n_restrictions (const gretl_equation_system *sys);
-
-int system_max_indep_vars (const gretl_equation_system *sys);
-int system_n_indep_vars (const gretl_equation_system *sys);
-
-int system_adjust_t1t2 (gretl_equation_system *sys,
+int system_adjust_t1t2 (equation_system *sys,
 			int *t1, int *t2, const double **Z);
 
-int *system_get_list (const gretl_equation_system *sys, int i);
+int *system_get_list (const equation_system *sys, int i);
 
-int *compose_tsls_list (gretl_equation_system *sys, int i);
+int *compose_tsls_list (equation_system *sys, int i);
 
-int system_get_depvar (const gretl_equation_system *sys, int i);
+int system_get_depvar (const equation_system *sys, int i);
 
-const char *gretl_system_short_string (const MODEL *pmod);
+const char *system_short_string (const MODEL *pmod);
 
-void gretl_system_set_name (gretl_equation_system *sys, const char *name);
+void equation_system_set_name (equation_system *sys, const char *name);
 
-int gretl_system_method_from_string (const char *s);
+int system_method_from_string (const char *s);
 const char *system_method_full_string (int method);
 const char *system_method_short_string (int method);
 
-int *system_get_endog_vars (const gretl_equation_system *sys);
-int *system_get_instr_vars (const gretl_equation_system *sys);
+int *system_get_endog_vars (const equation_system *sys);
+int *system_get_instr_vars (const equation_system *sys);
 
-void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *uhat);
+void system_attach_uhat (equation_system *sys, gretl_matrix *uhat);
 
-void system_attach_sigma (gretl_equation_system *sys, gretl_matrix *sigma);
+void system_attach_sigma (equation_system *sys, gretl_matrix *sigma);
 
-void system_attach_coeffs (gretl_equation_system *sys, gretl_matrix *b);
-void system_attach_vcv (gretl_equation_system *sys, gretl_matrix *vcv);
+void system_attach_coeffs (equation_system *sys, gretl_matrix *b);
+void system_attach_vcv (equation_system *sys, gretl_matrix *vcv);
 
-MODEL *system_get_model (const gretl_equation_system *sys, int i);
+MODEL *system_get_model (const equation_system *sys, int i);
 
-int system_get_overid_df (const gretl_equation_system *sys);
+int system_get_overid_df (const equation_system *sys);
 
-int system_vcv_geomean (const gretl_equation_system *sys);
-double system_vcv_denom (const gretl_equation_system *sys, 
+int system_vcv_geomean (const equation_system *sys);
+double system_vcv_denom (const equation_system *sys, 
 			 int i, int j);
 
-int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
+int rhs_var_in_identity (const equation_system *sys, int lhsvar,
 			 int rhsvar);
 
 void 
-print_equation_system_info (const gretl_equation_system *sys, 
+print_equation_system_info (const equation_system *sys, 
 			    const DATAINFO *pdinfo, 
 			    gretlopt opt, PRN *prn);
 
 void 
-system_set_restriction_matrices (gretl_equation_system *sys,
+system_set_restriction_matrices (equation_system *sys,
 				 gretl_matrix *R, gretl_matrix *q);
 
 int 
-system_normality_test (const gretl_equation_system *sys, PRN *prn);
+system_normality_test (const equation_system *sys, PRN *prn);
 
-int gretl_system_add_resids_to_dataset (gretl_equation_system *sys, int eqnum,
-					double ***pZ, DATAINFO *pdinfo);
+int system_add_resids_to_dataset (equation_system *sys, int eqnum,
+				  double ***pZ, DATAINFO *pdinfo);
 
 double *
-gretl_equation_system_get_series (const gretl_equation_system *sys, 
-				  const DATAINFO *pdinfo,
-				  int idx, const char *key, int *err);
+equation_system_get_series (const equation_system *sys, 
+			    const DATAINFO *pdinfo,
+			    int idx, const char *key, int *err);
 
 gretl_matrix *
-gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
-				  int *err);
+equation_system_get_matrix (const equation_system *sys, int idx, 
+			    int *err);
 
-int highest_numbered_var_in_system (const gretl_equation_system *sys, 
+int highest_numbered_var_in_system (const equation_system *sys, 
 				    const DATAINFO *pdinfo);
 
-int gretl_system_serialize (gretl_equation_system *sys, 
-			    SavedObjectFlags flags,
-			    FILE *fp);
+int equation_system_serialize (equation_system *sys, 
+			       SavedObjectFlags flags,
+			       FILE *fp);
 
-void gretl_system_set_save_flag (gretl_equation_system *sys);
+void system_set_save_flag (equation_system *sys);
 
-void gretl_system_unset_save_flag (gretl_equation_system *sys);
+void system_unset_save_flag (equation_system *sys);
 
-int gretl_system_save_flag_set (gretl_equation_system *sys);
+int system_save_flag_is_set (equation_system *sys);
 
 #ifndef GRETLCLI
 
-gretl_equation_system *
-gretl_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+equation_system *
+equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
 
 #endif
 
+int 
+system_save_and_print_results (equation_system *sys,
+			       double ***pZ, DATAINFO *pdinfo,
+			       gretlopt opt, PRN *prn);
 
-#endif /* GRETL_EQUATION_SYSTEM_H */
+#endif /* EQUATION_SYSTEM_H */

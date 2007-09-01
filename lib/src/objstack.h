@@ -77,7 +77,7 @@ GRETL_VAR *get_VAR_by_name (const char *vname);
 
 GRETL_VAR *get_VECM_by_name (const char *vname);
 
-gretl_equation_system *get_equation_system_by_name (const char *sname);
+equation_system *get_equation_system_by_name (const char *sname);
 
 void *gretl_get_object_by_name (const char *name);
 

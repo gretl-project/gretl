@@ -26,7 +26,7 @@ gretl_restriction *
 restriction_set_start (const char *line, gretlopt opt, int *err);
 
 gretl_restriction *
-cross_restriction_set_start (const char *line, gretl_equation_system *sys);
+cross_restriction_set_start (const char *line, equation_system *sys);
 
 gretl_restriction *
 var_restriction_set_start (const char *line, GRETL_VAR *var);

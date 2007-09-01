@@ -246,7 +246,7 @@ typedef struct GRETL_VAR_ GRETL_VAR;
 
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
-typedef struct gretl_equation_system_ gretl_equation_system;
+typedef struct equation_system_ equation_system;
 
 /* information on individual variable */
 struct VARINFO_ {

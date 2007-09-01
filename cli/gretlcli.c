@@ -839,7 +839,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	cmd->ci != SYSTEM) {
 	printf(_("Command '%s' ignored; not valid within equation system\n"), 
 	       line);
-	gretl_equation_system_destroy(s->sys);
+	equation_system_destroy(s->sys);
 	s->sys = NULL;
 	return 1;
     }
@@ -1071,9 +1071,9 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	maybe_stack_model(models[0], cmd, prn);
     }
 
-    if (gretl_system_save_flag_set(s->sys)) {
+    if (system_save_flag_is_set(s->sys)) {
 	/* only warrants action in GUI program */
-	gretl_system_unset_save_flag(s->sys);
+	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }
 

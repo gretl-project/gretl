@@ -1554,7 +1554,7 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, (utf)?
 		_("%s estimates using the %d observations %s%s%s") :
 		I_("%s estimates using the %d observations %s%s%s"),
-		_(gretl_system_short_string(pmod)),
+		_(system_short_string(pmod)),
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else if (!dataset_is_panel(pdinfo)) {
 	if (pmod->missmask != NULL) {
@@ -1689,7 +1689,7 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->ci == TSLS) {
 	int method = gretl_model_get_int(pmod, "method");
 
-	if (method != SYS_FIML && method != SYS_LIML) {
+	if (method != SYS_METHOD_FIML && method != SYS_METHOD_LIML) {
 	    print_tsls_instruments(pmod->list, pdinfo, prn);
 	}
     }
@@ -2234,7 +2234,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	essline(pmod, prn);
-	if (gretl_model_get_int(pmod, "method") == SYS_LIML) {
+	if (gretl_model_get_int(pmod, "method") == SYS_METHOD_LIML) {
 	    print_liml_equation_data(pmod, prn);
 	}
 	print_middle_table_end(prn);
