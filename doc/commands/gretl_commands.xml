@@ -3803,7 +3803,7 @@
 	<equation status="inline"
 	  tex="$1/\sqrt{e^{y^*}}$"
 	  ascii="1/sqrt(exp(y*))"
-	  graphic="hsk"/>, where <mathvar>y<super>*</super></mathvar>
+	  graphic="hsk"/>, where <mathvar>y</mathvar><super>*</super>
 	denotes the fitted values from the auxiliary
 	regression.</para>
     </description>
@@ -4392,10 +4392,10 @@
 
       <para context="cli">The dependent variable must be strictly
 	positive.  If it is a decimal fraction, between 0 and 1, the
-	default is to use a <mathvar>y<super>*</super></mathvar> value
+	default is to use a <mathvar>y</mathvar><super>*</super> value
 	(the asymptotic maximum of the dependent variable) of 1. If
 	the dependent variable is a percentage, between 0 and 100, the
-	default <mathvar>y<super>*</super></mathvar> is 100.
+	default <mathvar>y</mathvar><super>*</super> is 100.
       </para>
 
       <para context="cli">
@@ -4408,7 +4408,7 @@
       <para context="gui">
 	You are presented with a dialog box that allows you to specify a
 	different maximum if you wish.  The supplied
-	<mathvar>y<super>*</super></mathvar> value must be greater than all of
+	<mathvar>y</mathvar><super>*</super> value must be greater than all of
 	the observed values of the dependent variable.
       </para>
 

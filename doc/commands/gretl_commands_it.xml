@@ -3712,7 +3712,7 @@
 	<equation status="inline"
 	  tex="$1/\sqrt{e^{y^*}}$"
 	  ascii="1/sqrt(exp(y*))"
-	  graphic="hsk"/>, dove <mathvar>y<super>*</super></mathvar>
+	  graphic="hsk"/>, dove <mathvar>y</mathvar><super>*</super>
 	denota i valori stimati dalla regressione ausiliaria.</para>
     </description>
 
@@ -4289,10 +4289,10 @@
 
       <para context="cli">La variabile dipendente dev'essere
         strettamente positiva. Se è una frazione decimale, compresa tra
-        0 e 1, il valore predefinito per <mathvar>y<super>*</super></mathvar>
+        0 e 1, il valore predefinito per <mathvar>y</mathvar><super>*</super>
         (il massimo asintotico della variabile dipendente) è 1.
         Se la variabile dipendente è una percentuale, compresa tra 0 e
-        100, il valore predefinito di <mathvar>y<super>*</super></mathvar>
+        100, il valore predefinito di <mathvar>y</mathvar><super>*</super>
         è 100.
       </para>
         
@@ -4306,7 +4306,7 @@
       <para context="gui">
         Nella finestra di dialogo del comando, è possibile specificare
         un valore diverso per il massimo. Il valore fornito
-        <mathvar>y<super>*</super></mathvar> deve essere
+        <mathvar>y</mathvar><super>*</super> deve essere
         maggiore di tutti i valori osservati della variabile dipendente.
       </para>
 
