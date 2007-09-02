@@ -2090,7 +2090,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	gtk_print_graph(plot->spec->fname);
     }
 #endif 
-    else if (!strcmp(item, _("OLS estimates"))) { 
+    else if (!strcmp(item, _("Display PDF"))) { 
+	graph_display_pdf(plot->spec->fname);
+    } else if (!strcmp(item, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
 	    do_graph_model(plot->spec->reglist, plot->spec->fit);
 	}
@@ -2164,6 +2166,7 @@ static void build_plot_menu (png_plot *plot)
 #ifdef G_OS_WIN32
 	N_("Print"),
 #endif
+	N_("Display PDF"),
 	N_("OLS estimates"),
 	N_("Numerical values"),
 	N_("Edit"),
@@ -2219,7 +2222,14 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (!pdf_ok && !strcmp(plot_items[i], "Save as PDF...")) {
+	if (!pdf_ok && (!strcmp(plot_items[i], "Save as PDF...") ||
+			!strcmp(plot_items[i], "Display PDF"))) {
+	    i++;
+	    continue;
+	}
+	if (pdf_ok && !strcmp(plot_items[i], "Print...")) {
+	    /* Print... is currently very funky for graphs.  If
+	       we're able to display PDF, bypass this option */
 	    i++;
 	    continue;
 	}	    

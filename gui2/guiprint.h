@@ -33,6 +33,8 @@ void gtk_print_graph (const char *fname);
 # endif
 #endif
 
+void graph_display_pdf (const char *fname);
+
 void special_print_summary (const Summary *summ,
 			    const DATAINFO *pdinfo,
 			    PRN *prn);

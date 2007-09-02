@@ -834,8 +834,8 @@ void winprint (char *fullbuf, char *selbuf)
     g_object_unref(op);
 }
 
-/* FIXME we'd be better off using EPS or PDF here,
-   if possible (but cairo can't _read_ PDF?)
+/* 
+   we're better off using PDF here, if possible
 */
 
 static int make_png_file (const char *fname,
@@ -918,15 +918,10 @@ static void begin_image_print (GtkPrintOperation *op,
     /* FIXME get this aligned properly!! */
 
     cr = gtk_print_context_get_cairo_context(context);
-#if 1
     cairo_translate(cr, x/2 - 20, y/2 + 200);
     cairo_rotate(cr, -M_PI / 2);
-    cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
     cairo_set_source_surface(cr, cs, -x/2, -y/2);
-#else
-    cairo_scale(cr, 0.75, 0.75);
-    cairo_set_source_surface(cr, cs, 72, 72);
-#endif
+    cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
     gtk_print_operation_set_n_pages(op, 1);
 }
@@ -982,6 +977,73 @@ void gtk_print_graph (const char *fname)
 }
 
 #endif /* GTK_PRINTING */
+
+#define GRETL_PDF_TMP "gretltmp.pdf"
+
+static int make_pdf_file (const char *fname,
+			  char *pdfname)
+{
+    FILE *fsrc, *ftmp;
+    char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+
+    sprintf(temp, "%sgpttmp", paths.userdir);
+
+    ftmp = gretl_tempfile_open(temp);
+    if (ftmp == NULL) {
+	return 1;
+    }
+
+    fsrc = gretl_fopen(fname, "r");
+    if (fsrc == NULL) {
+	fclose(ftmp);
+	remove(temp);
+	return 1;
+    }
+
+    build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
+
+    while (fgets(fline, MAXLEN-1, fsrc)) {
+	if (!strncmp(fline, "set term", 8)) {
+	    fputs("set term cairopdf\n", ftmp);
+	} else if (!strncmp(fline, "set output", 10)) {
+	    fprintf(ftmp, "set output '%s'\n", pdfname);
+	} else {
+	    fputs(fline, ftmp);
+	}
+    }
+
+    fclose(fsrc);
+    fclose(ftmp);
+
+    /* run gnuplot on the temp plotfile */
+    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    if (system(cmd)) {
+	remove(temp);
+	return 1;
+    }
+
+    remove(temp);
+
+    return 0;
+}
+
+void graph_display_pdf (const char *fname)
+{
+    char pdfname[FILENAME_MAX];
+
+    if (make_pdf_file(fname, pdfname)) {
+	errbox("Error creating graph file");
+	return;
+    }
+
+#if defined(G_OS_WIN32)
+    win32_open_file(pdfname);
+#elif defined(OSX_BUILD)
+    osx_open_file(pdfname);
+#else
+    gretl_fork(viewpdf, pdfname);
+#endif
+}
 
 void rtf_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 {

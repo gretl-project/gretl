@@ -431,6 +431,9 @@ int gnuplot_has_pdf (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set term pdf");
+	if (err) {
+	    err = gnuplot_test_command("set term cairopdf");
+	}
     }
 
     return !err;
