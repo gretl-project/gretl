@@ -39,7 +39,7 @@ enum {
     SYSTEM_RESTRICT    = 1 << 4,
     SYSTEM_ITERATE     = 1 << 5,
     SYSTEM_SAVEIT      = 1 << 6
-} GretlSystemFlags;
+};
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
