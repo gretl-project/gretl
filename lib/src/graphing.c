@@ -362,6 +362,12 @@ int gnuplot_has_pdf (void)
     return 1;
 }
 
+int gnuplot_has_cairo (void)
+{
+    /* ... but does not support cairo */
+    return 0;
+}
+
 int gnuplot_has_specified_colors (void)
 {
     /* ... and we know it does specified colors */
@@ -434,6 +440,17 @@ int gnuplot_has_pdf (void)
 	if (err) {
 	    err = gnuplot_test_command("set term cairopdf");
 	}
+    }
+
+    return !err;
+}
+
+int gnuplot_has_cairo (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term cairopdf");
     }
 
     return !err;

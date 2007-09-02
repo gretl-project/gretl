@@ -986,6 +986,11 @@ static int make_pdf_file (const char *fname,
 {
     FILE *fsrc, *ftmp;
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+    static int use_cairo = -1;
+
+    if (use_cairo < 0) {
+	use_cairo = gnuplot_has_cairo();
+    }
 
     sprintf(temp, "%sgpttmp", paths.userdir);
 
@@ -1005,7 +1010,11 @@ static int make_pdf_file (const char *fname,
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (!strncmp(fline, "set term", 8)) {
-	    fputs("set term cairopdf\n", ftmp);
+	    if (use_cairo) {
+		fputs("set term cairopdf\n", ftmp);
+	    } else {
+		fputs("set term pdf\n", ftmp);
+	    }
 	} else if (!strncmp(fline, "set output", 10)) {
 	    fprintf(ftmp, "set output '%s'\n", pdfname);
 	} else {
