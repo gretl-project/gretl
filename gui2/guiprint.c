@@ -29,6 +29,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+# include "gretlwin32.h"
 #endif
 
 #ifndef GTK_PRINTING
