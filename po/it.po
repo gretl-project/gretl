@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-08-30 10:25-0400\n"
-"PO-Revision-Date: 2007-05-27 22:48+0200\n"
+"PO-Revision-Date: 2007-09-04 01:04+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1248,18 +1248,16 @@ msgid "Dataset extended by %d observations"
 msgstr "Il dataset è stato esteso di %d osservazioni"
 
 #: lib/src/dataset.c:2575
-#, fuzzy
 msgid "The data set is currently sub-sampled"
-msgstr "Al momento sul dataset è definito un sotto-campione.\n"
+msgstr "Al momento sul dataset è definito un sotto-campione"
 
 #: lib/src/dbread.c:349 lib/src/dbread.c:590 gui2/database.c:1069
 msgid "Couldn't open database index file"
 msgstr "Impossibile aprire il file indice del database"
 
 #: lib/src/dbread.c:369
-#, fuzzy
 msgid "Couldn't open database binary file"
-msgstr "Impossibile aprire il file indice del database"
+msgstr "Impossibile aprire il file binario del database"
 
 #: lib/src/dbread.c:429 lib/src/dbread.c:439 lib/src/dbread.c:502
 #: gui2/database.c:1457
@@ -1328,17 +1326,17 @@ msgid "Couldn't open %s"
 msgstr "Impossibile aprire %s"
 
 #: lib/src/dbread.c:1985
-#, fuzzy, c-format
+#, c-format
 msgid "%s: can't handle conversion"
-msgstr "Non è ancora possibile eseguire questa conversione!"
+msgstr "%s: impossibile gestire la conversione"
 
 #: lib/src/dbread.c:1996 gui2/database.c:241
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: observation range does not overlap\n"
 "with the working data set"
 msgstr ""
-"L'intervallo delle osservazioni non si sovrappone\n"
+"%s: l'intervallo delle osservazioni non si sovrappone\n"
 "al dataset in uso"
 
 #: lib/src/dbread.c:2061 lib/src/dbread.c:2065 lib/src/dbread.c:2093
@@ -1688,16 +1686,17 @@ msgstr "non definito"
 
 #: lib/src/describe.c:3839 lib/src/nonparam.c:269 lib/src/nonparam.c:275
 #: lib/src/nonparam.c:515
-#, fuzzy
 msgid ""
 "Under the null hypothesis of no correlation:\n"
 " "
-msgstr "Sotto l'ipotesi nulla di non correlazione, rho segue N(0, %f)\n"
+msgstr ""
+"Sotto l'ipotesi nulla di non correlazione:\n"
+" "
 
 #: lib/src/describe.c:3840 lib/src/nonparam.c:276
-#, fuzzy, c-format
+#, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
-msgstr "Valore z = %g, con p-value a due code %g\n"
+msgstr "t(%d) = %g, con p-value a due code %.4f\n"
 
 #: lib/src/describe.c:3844 lib/src/describe.c:3882 gui2/guiprint.c:967
 #, c-format
@@ -1880,7 +1879,7 @@ msgstr "Valore invalido per il massimo della variabile dipendente"
 
 #: lib/src/discrete.c:1235
 msgid "Fisher's Exact Test"
-msgstr ""
+msgstr "Test esatto di Fisher"
 
 #: lib/src/estimate.c:138 plugin/mp_ols.c:1051
 #, c-format
@@ -2589,7 +2588,7 @@ msgstr "Opzioni incompatibili"
 
 #: lib/src/gretl_errors.c:66
 msgid "The restrictions do not identify the parameters"
-msgstr ""
+msgstr "Le restrizioni non identificano i parametri"
 
 #: lib/src/gretl_func.c:2140
 msgid "No description available"
@@ -3038,11 +3037,8 @@ msgid "gretl_prn_new: Must supply a filename\n"
 msgstr "gretl_prn_new: Occorre fornire un nome di file\n"
 
 #: lib/src/gretl_restrict.c:96
-#, fuzzy
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
-msgstr ""
-"Inversione della matrice fallita:\n"
-" è possibile che i vincoli siano incoerenti o ridondanti\n"
+msgstr "Inversione della matrice fallita: è possibile che i vincoli siano incoerenti o ridondanti"
 
 #: lib/src/gretl_restrict.c:862 lib/src/gretl_restrict.c:1269
 #: lib/src/gretl_restrict.c:1294
@@ -4077,7 +4073,7 @@ msgstr "Tobit"
 
 #: lib/src/modelprint.c:860 gui2/selector.c:1913
 msgid "Heckit"
-msgstr ""
+msgstr "Heckit"
 
 #: lib/src/modelprint.c:861 gui2/selector.c:1917
 msgid "Poisson"
@@ -4202,7 +4198,7 @@ msgstr "Stima a due passi"
 
 #: lib/src/modelprint.c:943
 msgid "ML Heckit"
-msgstr ""
+msgstr "ML Heckit"
 
 #: lib/src/modelprint.c:980 lib/src/modelprint.c:989
 msgid "First-stage F-statistic"
@@ -4611,7 +4607,7 @@ msgstr "Nessuna osservazione trovata\n"
 
 #: lib/src/modelprint.c:3107 lib/src/modelprint.c:3112
 msgid "rho"
-msgstr ""
+msgstr "rho"
 
 #: lib/src/modelprint.c:3157 lib/src/modelprint.c:3162
 #: lib/src/modelprint.c:3168
@@ -4925,6 +4921,9 @@ msgid ""
 "\n"
 "*** User-specified starting values:\n"
 msgstr ""
+"\n"
+"\n"
+"*** Valori iniziali specificati dall'utente:\n"
 
 #: lib/src/nls.c:3446
 #, c-format
@@ -10740,7 +10739,7 @@ msgstr "a %s"
 
 #: gui2/gui_utils.c:3649
 msgid "EC term"
-msgstr ""
+msgstr "Termine EC"
 
 #: gui2/gui_utils.c:3830
 #, c-format
@@ -11857,7 +11856,7 @@ msgstr "Occorre specificare un insieme di variabili strumentali"
 
 #: gui2/selector.c:1816
 msgid "You must specify regressors for the selection equation"
-msgstr ""
+msgstr "Occorre specificare i regressori per l'equazione di selezione"
 
 #: gui2/selector.c:1897
 msgid "HCCM"
@@ -12067,7 +12066,7 @@ msgstr "Includi dummy temporali"
 
 #: gui2/selector.c:2873
 msgid "Show zeros explicitly"
-msgstr ""
+msgstr "Mostra esplicitamente i valori zero"
 
 #: gui2/selector.c:2879
 msgid "Use X-12-ARIMA"
@@ -12079,20 +12078,19 @@ msgstr "Mostra variabili ritardate"
 
 #: gui2/selector.c:2954
 msgid "Spearman's rho"
-msgstr ""
+msgstr "Rho di Spearman"
 
 #: gui2/selector.c:2958
 msgid "Kendall's tau"
-msgstr ""
+msgstr "Tau di Kendall"
 
 #: gui2/selector.c:2970
 msgid "Show slopes at mean"
-msgstr ""
+msgstr "Mostra le pendenze alla media"
 
 #: gui2/selector.c:2974
-#, fuzzy
 msgid "Show p-values"
-msgstr "con p-value"
+msgstr "Mostra i p-value"
 
 #: gui2/selector.c:2986
 msgid "Use points"
@@ -12146,11 +12144,11 @@ msgstr "Valori numerici"
 
 #: gui2/selector.c:3095
 msgid "Show row percentages"
-msgstr ""
+msgstr "Mostra le percentuali di riga"
 
 #: gui2/selector.c:3099
 msgid "Show column percentages"
-msgstr ""
+msgstr "Mostra le percentuali di colonna"
 
 #: gui2/selector.c:3144
 msgid "No constant"
@@ -13408,7 +13406,7 @@ msgstr "Log-verosimiglianza vincolata"
 #: plugin/johansen.c:1503 plugin/jrestrict.c:1446
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr ""
+msgstr "Permetti restrizione a priori, df = %d\n"
 
 #: plugin/johansen.c:1505
 #, fuzzy, c-format
@@ -13420,28 +13418,25 @@ msgstr ""
 #: plugin/jrestrict.c:1429
 #, c-format
 msgid "Rank of Jacobian = %d, number of free parameters = %d\n"
-msgstr ""
+msgstr "Rango del Jacobiano = %d, numero di parametri liberi = %d\n"
 
 #: plugin/jrestrict.c:1432
 msgid "Model is not fully identified\n"
-msgstr ""
+msgstr "Il modello non è pienamente identificato\n"
 
 #: plugin/jrestrict.c:1437
-#, fuzzy
 msgid "Model is fully identified\n"
-msgstr "L'equazione è esattamente identificata"
+msgstr "Il modello è pienamente identificato\n"
 
 #: plugin/jrestrict.c:1441
 #, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr ""
+msgstr "Basato sul Jacobiano, df = %d\n"
 
 #: plugin/jrestrict.c:2255
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g = %g\n"
-msgstr ""
-"con p-value = prob(Chi-quadro(%d) > %g) = %g\n"
-"\n"
+msgstr "P(Chi-quadro(%d) > %g = %g\n"
 
 #: plugin/kernel.c:132
 #, c-format
@@ -13661,15 +13656,14 @@ msgid "This file does not seem to be a valid Stata data file"
 msgstr "Il file non sembra essere un file dati di Stata"
 
 #: plugin/stats_tables.c:161
-#, fuzzy
 msgid ""
 "\n"
 "For more comprehensive statistical tables, please consult\n"
 "http://www.stanford.edu/~clint/bench/dwcrit.htm"
 msgstr ""
 "\n"
-"Per tavole statistiche più complete, si consulti un testo di statistica o\n"
-"di econometria, ad esempio \"Introductory Econometrics\" di Ramanathan.\n"
+"Per tavole statistiche più complete, si consulti\n"
+"http://www.stanford.edu/~clint/bench/dwcrit.htm"
 
 #: plugin/stats_tables.c:193
 #, no-c-format
