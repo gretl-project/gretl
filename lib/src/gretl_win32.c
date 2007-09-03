@@ -469,3 +469,19 @@ int win32_write_access (char *path)
 
     return ok;
 }
+
+int win32_rename (const char *oldpath, const char *newpath)
+{
+    int err = 0;
+
+    if (strcmp(oldpath, newpath)) {
+	if (CopyFile(oldpath, newpath, FALSE) == 0) {
+	    err = 1;
+	    win_show_last_error();
+	} else {
+	    DeleteFile(oldpath);
+	}
+    }
+
+    return err;
+}

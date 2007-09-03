@@ -1934,6 +1934,12 @@ static int db_delete_series (const char *line, const int *list,
     maybe_fclose(f2);
 
     if (!err && ndel > 0) {
+#ifdef G_OS_WIN32
+	err = win32_rename(tmp1, src1);
+	if (!err) {
+	    err = win32_rename(tmp2, src2);
+	}
+#else
 	err = rename(tmp1, src1);
 	if (!err) {
 	    err = rename(tmp2, src2);
@@ -1941,6 +1947,7 @@ static int db_delete_series (const char *line, const int *list,
 	if (err) {
 	    strcpy(gretl_errmsg, strerror(errno));
 	}
+#endif
     } else {
 	remove(tmp1);
 	remove(tmp2);
