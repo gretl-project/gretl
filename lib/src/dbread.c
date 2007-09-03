@@ -3201,16 +3201,19 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 {
     char stobs[12];
     int oldn = pdinfo->n;
-    int mult, newn, addobs;
+    int oldpd = pdinfo->pd;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int mult, newn, nadd;
     double *x = NULL;
     int i, j, s, t;
     int err = 0;
 
-    if (pdinfo->pd != 1 && pdinfo->pd != 4) {
+    if (oldpd != 1 && oldpd != 4) {
 	return E_PDWRONG;
-    } else if (pdinfo->pd == 1 && newpd != 4 && newpd != 12) {
+    } else if (oldpd == 1 && newpd != 4 && newpd != 12) {
 	return E_DATA;
-    } else if (pdinfo->pd == 4 && newpd != 12) {
+    } else if (oldpd == 4 && newpd != 12) {
 	return E_DATA;
     }
 
@@ -3219,11 +3222,11 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 	return E_ALLOC;
     }
 
-    mult = newpd / pdinfo->pd;
+    mult = newpd / oldpd;
     newn = mult * pdinfo->n;
-    addobs = newn - oldn;
+    nadd = newn - oldn;
 
-    err = dataset_add_observations(addobs, pZ, pdinfo, OPT_NONE);
+    err = dataset_add_observations(nadd, pZ, pdinfo, OPT_NONE);
     if (err) {
 	goto bailout;
     }
@@ -3243,7 +3246,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 	}
     }
 
-     if (pdinfo->pd == 1) {
+    if (pdinfo->pd == 1) {
 	strcpy(stobs, pdinfo->stobs);
 	if (newpd == 4) {
 	    strcat(stobs, ":1");
@@ -3258,9 +3261,18 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 	sprintf(stobs, "%d:%02d", yr, mo);
     }
 
+    if (pdinfo->t1 > 0) {
+	pdinfo->t1 *= mult;
+    }
+
+    if (pdinfo->t2 < oldn - 1) {
+	pdinfo->t2 = pdinfo->t1 + (t2 - t1 + 1) * mult - 1;
+    }    
+
     strcpy(pdinfo->stobs, stobs);
     pdinfo->pd = newpd;
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
     if (pdinfo->markers) {
 	dataset_destroy_obs_markers(pdinfo);
