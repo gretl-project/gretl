@@ -65,9 +65,8 @@ GPT_SPEC *plotspec_new (void)
     spec->mxtics[0] = 0;
     spec->fname[0] = 0;
     strcpy(spec->keyspec, "left top");
-    spec->xzeroaxis = 0;
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<4; i++) {
 	spec->range[i][0] = NADBL;
 	spec->range[i][1] = NADBL;
     }
@@ -90,6 +89,7 @@ GPT_SPEC *plotspec_new (void)
     spec->nobs = 0;
     spec->okobs = 0;
     spec->boxwidth = 0;
+    spec->samples = 0;
 
     spec->termtype[0] = 0;
 
@@ -336,6 +336,40 @@ void print_auto_fit_string (FitType fit, FILE *fp)
     }
 }
 
+void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
+{
+    const char *rstrs[] = {
+	"x", "y", "y2", "t"
+    };
+    int i;
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<4; i++) {
+	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
+	    spec->range[i][0] == spec->range[i][1]) {
+	    continue;
+	}
+	if ((i == 2 && !(spec->flags & GPT_Y2AXIS)) ||
+	    (i == 3 && !(spec->flags & GPT_PARAMETRIC))) {
+	    continue;
+	}
+	fprintf(fp, "set %srange [%.7g:%.7g]\n", rstrs[i], 
+		spec->range[i][0], spec->range[i][1]);
+	if (i == 4 && spec->code == PLOT_PROB_DIST && spec->samples == 0) {
+	    int ns = spec->range[i][1] - spec->range[i][0] + 1;
+
+	    fprintf(fp, "set samples %d\n", ns);
+	}
+    }
+
+    if (spec->boxwidth > 0 && spec->boxwidth < 1) {
+	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -377,8 +411,19 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	}
     }
 
-    if (spec->xzeroaxis) {
+    if (spec->flags & GPT_XZEROAXIS) {
 	fputs("set xzeroaxis\n", fp);
+    }
+
+    if (spec->flags & GPT_YZEROAXIS) {
+	fputs("set yzeroaxis\n", fp);
+    }    
+
+    if (spec->flags & GPT_PARAMETRIC) {
+	fputs("set parametric\n", fp);
+	if (spec->samples > 0) {
+	    fprintf(fp, "set samples %d\n", spec->samples);
+	}
     }
 
     gnuplot_missval_string(fp);
@@ -389,25 +434,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set key %s\n", spec->keyspec);
     }
 
-    k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<k; i++) {
-	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
-	    spec->range[i][0] == spec->range[i][1]) {
-	    continue;
-	}
-	fprintf(fp, "set %srange [%.7g:%.7g]\n",
-		(i == 0)? "x" : (i == 1)? "y" : "y2",
-		spec->range[i][0], spec->range[i][1]);
-    }
-
-    if (spec->boxwidth > 0 && spec->boxwidth < 1) {
-	fprintf(fp, "set boxwidth %.3f\n", (double) spec->boxwidth);
-    }
-
-    gretl_pop_c_numeric_locale();
+    print_plot_ranges_etc(spec, fp);
 
     /* customized xtics? */
     if (!string_is_blank(spec->xtics)) {

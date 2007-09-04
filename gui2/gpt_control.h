@@ -20,6 +20,8 @@
 #ifndef GPT_CONTROL_H
 #define GPT_CONTROL_H
 
+#include "plotspec.h"
+
 typedef struct png_plot_t png_plot;
 
 int remove_png_term_from_plotfile_by_name (const char *fname);
@@ -30,7 +32,7 @@ void gnuplot_show_png_by_name (const char *fname);
 
 void plot_label_position_click (GtkWidget *w, png_plot *plot);
 
-int redisplay_edited_png (png_plot *plot);
+int redisplay_edited_plot (png_plot *plot);
 
 void plot_remove_controller (png_plot *plot);
 
@@ -39,6 +41,8 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s);
 int plot_is_mouseable (const png_plot *plot);
 
 GtkWidget *plot_get_shell (png_plot *plot);
+
+GPT_SPEC *plot_get_spec (png_plot *plot);
 
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
 

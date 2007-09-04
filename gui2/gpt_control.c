@@ -190,6 +190,11 @@ GtkWidget *plot_get_shell (png_plot *plot)
     return plot->shell;
 }
 
+GPT_SPEC *plot_get_spec (png_plot *plot) 
+{
+    return plot->spec;
+}
+
 int plot_is_mouseable (const png_plot *plot)
 {
     return !(plot->status & PLOT_DONT_MOUSE);
@@ -807,6 +812,8 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 	i = 1;
     } else if (!strcmp(obj, "y2range")) {
 	i = 2;
+    } else if (!strcmp(obj, "trange")) {
+	i = 3;
     } else {
 	err = 1;
     }
@@ -874,13 +881,22 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	return 1;
     }
 
-    if (strcmp(variable, "y2tics") == 0) {
+    if (!strcmp(variable, "y2tics")) {
 	spec->flags |= GPT_Y2AXIS;
 	return 0;
-    } else if (strcmp(variable, "border 3") == 0) {
+    } else if (!strcmp(variable, "border 3")) {
 	spec->flags |= GPT_MINIMAL_BORDER;
 	return 0;
-    }    
+    } else if (!strcmp(variable, "parametric")) {
+	spec->flags |= GPT_PARAMETRIC;
+	return 0;
+    } else if (!strcmp(variable, "xzeroaxis")) {
+	spec->flags |= GPT_XZEROAXIS;
+	return 0;
+    } else if (!strcmp(variable, "yzeroaxis")) {
+	spec->flags |= GPT_YZEROAXIS;
+	return 0;
+    }
 
     catch_value(value, s + 4 + strlen(variable), MAXLEN);
 
@@ -910,10 +926,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	safecpy(spec->xtics, value, 15);
     } else if (!strcmp(variable, "mxtics")) { 
 	safecpy(spec->mxtics, value, 3);
-    } else if (!strcmp(variable, "xzeroaxis")) {
-	spec->xzeroaxis = 1;
     } else if (!strcmp(variable, "boxwidth")) {
 	spec->boxwidth = (float) atof(value);
+    } else if (!strcmp(variable, "samples")) {
+	spec->samples = atoi(value);
     } else if (!strcmp(variable, "label")) {
 	parse_label_line(spec, s, *labelno);
 	*labelno += 1;
@@ -2069,7 +2085,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	context_help(NULL, GINT_TO_POINTER(HURST));
     } else if (!strcmp(item, _("Freeze data labels"))) {
 	plot->spec->flags |= GPT_ALL_MARKERS;
-	redisplay_edited_png(plot);
+	redisplay_edited_plot(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
 	zoom_unzoom_png(plot, PNG_REDISPLAY);
     } else if (!strcmp(item, _("Zoom..."))) { 
@@ -2276,14 +2292,14 @@ static void build_plot_menu (png_plot *plot)
 		     &plot->popup);
 }
 
-int redisplay_edited_png (png_plot *plot)
+int redisplay_edited_plot (png_plot *plot)
 {
     gchar *plotcmd;
     FILE *fp;
     int err = 0;
 
 #if GPDEBUG
-    fprintf(stderr, "redisplay_edited_png: plot = %p\n", (void *) plot);
+    fprintf(stderr, "redisplay_edited_plot: plot = %p\n", (void *) plot);
 #endif
 
     /* open file in which to dump plot specification */
@@ -3318,157 +3334,3 @@ static int get_png_bounds_info (png_bounds *bounds)
 
 #endif /* PNG_COMMENTS */
 
-/* for graphs in the stats calculator */
-
-static int get_dist_and_df (const char *s, int *d, int *m, int *n)
-{
-    int ret = 1;
-
-    if (!strncmp(s, "# standard", 10)) {
-	*d = NORMAL_DIST;
-    } else if (sscanf(s, "# t(%d)", m) == 1) {
-	*d = T_DIST;
-    } else if (sscanf(s, "# chi-square(%d)", m) == 1) {
-	*d = CHISQ_DIST;
-    } else if (sscanf(s, "# F(%d,%d)", m, n) == 2) {
-	*d = F_DIST;
-    } else {
-	ret = 0;
-    }
-
-    return ret;
-}
-
-void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2)
-{
-    GPT_SPEC *spec = plot->spec;
-    gchar *title = NULL;
-    const char *s;
-    char dfstr[16];
-    int got[5] = {0};
-    int bigchi = 0;
-    int m, n, prevd, dfmax = 0;
-    int i, err = 0;
-
-    for (i=0; i<spec->n_literal; i++) {
-	int dfid;
-
-	s = spec->literal[i];
-	m = n = 0;
-	prevd = -1;
-	if (*s == '#') {
-	    if (get_dist_and_df(s, &prevd, &m, &n)) {
-		if (prevd == d && m == df1 && n == df2) {
-		    /* line is already present */
-		    return;
-		}
-		if (prevd == CHISQ_DIST && m > 69) {
-		    got[4] += 1;
-		} else {
-		    got[prevd] += 1;
-		}
-	    }
-	} else if (sscanf(s, "df%d=", &dfid) == 1) {
-	    if (dfid > dfmax) {
-		dfmax = dfid;
-	    }
-	}
-    }
-
-    /* adjust x-range if needed */
-    if (d == CHISQ_DIST || d == F_DIST) {
-	double x = dist_xmax(d, df1, df2);
-
-	if (x > spec->range[0][1]) {
-	    spec->range[0][1] = x;
-	}
-    }
-
-    /* add comment for current plot */
-    title = dist_marker_line(d, df1, df2);
-    err = strings_array_add(&spec->literal, &spec->n_literal, title);
-    g_free(title);
-
-    if (!err) {
-	/* add df line(s) if needed */
-	m = dfmax + 1;
-	if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
-	    sprintf(dfstr, "df%d=%.1f", m, (double) df1);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
-	}
-	if (d == F_DIST && !err) {
-	    sprintf(dfstr, "df%d=%.1f", m + 1, (double) df2);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
-	}
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }  
-
-    if (d == CHISQ_DIST && df1 > 69) {
-	bigchi = 1;
-    }
-
-    /* add any required formula lines */
-
-    if (d == T_DIST) {
-	if (!got[T_DIST] && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    dist_formula(F_BINV));
-	}
-    } else if (d == CHISQ_DIST) {
-	if (bigchi && !got[4]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    dist_formula(F_LOG2));
-	    if (!err) {
-		err = strings_array_add(&spec->literal, &spec->n_literal, 
-					dist_formula(F_BIGCHI));
-	    }
-	} else if (!bigchi && !got[CHISQ_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    dist_formula(F_CHI));
-	}
-    } else if (d == F_DIST) {
-	if (!got[F_DIST] && !got[T_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    dist_formula(F_BINV));
-	} 
-	if (!err && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, 
-				    dist_formula(F_F));
-	}
-    }
-
-    if (!err) {
-	/* add new plot line */
-	err = plotspec_add_line(spec);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
-    n = spec->n_lines - 1;
-
-    strcpy(spec->lines[n].scale, "NA");
-    strcpy(spec->lines[n].style, "lines");
-    title = dist_graph_title(d, NADBL, df1, df2);
-    strcpy(spec->lines[n].title, title);
-    g_free(title);
-
-    if (d == NORMAL_DIST) {
-	strcpy(spec->lines[n].formula, "(1/(sqrt(2*pi))*exp(-(x)**2/2))");
-    } else if (d == T_DIST) {
-	sprintf(spec->lines[n].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
-		"**(-0.5*(df%d+1.0))", m, m, m, m);
-    } else if (d == CHISQ_DIST) {
-	sprintf(spec->lines[n].formula, "%s(x,df%d)", (bigchi)? "bigchi" : "chi", m);
-    } else if (d == F_DIST) {
-	sprintf(spec->lines[n].formula, "f(x,df%d,df%d)", m, m + 1);
-    }
-
-    redisplay_edited_png(plot);
-}

@@ -20,22 +20,6 @@
 #ifndef CALCULATOR_H
 #define CALCULATOR_H
 
-typedef enum {
-    F_BINV,
-    F_CHI,
-    F_LOG2,
-    F_BIGCHI,
-    F_F
-} FormulaCode;
-
 void stats_calculator (gpointer p, guint code, GtkWidget *w);
-
-double dist_xmax (int d, int df1, int df2);
-
-gchar *dist_marker_line (int dist, int df1, int df2);
-
-const char *dist_formula (FormulaCode c);
-
-gchar *dist_graph_title (int dist, double x, int df1, int df2);
 
 #endif /* CALCULATOR_H */

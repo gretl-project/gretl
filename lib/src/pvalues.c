@@ -927,46 +927,32 @@ static double poisson_pmf (double lambda, int k)
     return p;
 }
 
-/* The following is probably horribly inefficient */
+/* The following is probably horribly inefficient --
+   investigate the possibility of using Chebyshev,
+   or perhaps binary search.
+*/
 
 static double poisson_critval (double a, double mu)
 {
-    double x, pk = 0.0;
+    double pk = 0.0;
     double ac = 1 - a;
-    int k, k0 = 1;
+    int k, k0 = 0;
 
     if (mu <= 0 || a <= 0 || a >= 1) {
 	return NADBL;
     }
 
-#if 1
-    if (1) {
-	/* Chebyshev, anyone? */
-	double s = sqrt(mu);
-	double ck = (a < .5)? ceil(sqrt(1/a)) : 
-				   ceil(sqrt(1/(1-a)));
-	double cmax = ceil(mu + ck * s);
-	double cmin = floor(mu - ck * s);
-
-	if (cmin < 0) cmin = 0;
-	fprintf(stderr, "cmin = %g, cmax = %g\n", cmin, cmax);
-    }
-#endif
-
     if (mu >= 10 && a < 0.5) {
 	k0 = mu - 1;
-	pk = poisson_cdf(mu, k0);
-    }
+	pk = poisson_cdf(mu, k0++);
+    }     
 
     for (k=k0; ; k++) {
+	pk = poisson_cdf(mu, k);
 	if (pk >= ac) {
 	    break;
-	}	
-	x = poisson_pmf(mu, k);
-	if (!na(x)) {
-	    pk += x;
 	}
-    }
+    }  
 
     return (double) k;
 }

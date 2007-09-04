@@ -57,13 +57,13 @@ typedef struct {
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    double range[3][2];        /* axis range specifiers */
+    double range[4][2];        /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
     int n_lines;               /* number of lines */
-    int xzeroaxis;             /* show x == 0 (1) or not (0) */
+    int samples;               /* number of samples for parametric plots */
     float boxwidth;            /* when using box style for frequency plots */
     GPT_LINE *lines;           /* details on individual lines */
     char **literal;            /* additional commands */
