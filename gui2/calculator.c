@@ -532,7 +532,7 @@ dist_graph_title (int dist, double x, double *parms)
 
     if (na(x)) {
 	if (dist == NORMAL_DIST) {
-	    s = g_strdup(I_("Standard normal distribution"));
+	    s = g_strdup_printf(I_("N(%g, %g)"), parms[0], parms[1] * parms[1]);
 	} else if (dist == T_DIST) {
 	    s = g_strdup_printf(I_("t(%d)"), (int) parms[0]);
 	} else if (dist == CHISQ_DIST) {
@@ -565,7 +565,7 @@ static gchar *dist_marker_line (int dist, double *parms)
     gchar *s = NULL;
 
     if (dist == NORMAL_DIST) {
-	s = g_strdup("# standard normal");
+	s = g_strdup_printf("# N(%g,%g)", parms[0], parms[1]);
     } else if (dist == T_DIST) {
 	s = g_strdup_printf("# t(%d)", (int) parms[0]);
     } else if (dist == CHISQ_DIST) {
@@ -581,6 +581,8 @@ static gchar *dist_marker_line (int dist, double *parms)
     return s;
 }
 
+
+#define F_NORM   "normal(x,mu,s) = 1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 #define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
 #define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
 #define F_LOG2   "log2=log(2.0)"
@@ -631,7 +633,7 @@ static int graph_literal_lines (int d, int bigchi)
 
     switch (d) {
     case NORMAL_DIST:
-	n = 1;
+	n = 4;
 	break;
     case T_DIST:
     case POISSON_DIST:
@@ -647,6 +649,11 @@ static int graph_literal_lines (int d, int bigchi)
     }
 
     return n;
+}
+
+static double normal_pdf_height (double s)
+{
+    return 1 / (s * sqrt(M_2PI));
 }
 
 static void calc_graph (int d, double x, double *parms)
@@ -676,7 +683,12 @@ static void calc_graph (int d, double x, double *parms)
 
     if (na(x)) {
 	/* no test statistic to be shown */
-	if (d == NORMAL_DIST || d == T_DIST) {
+	if (d == NORMAL_DIST) {
+	    fprintf(fp, "set xrange [%g:%g]\n", parms[0] - 5 * parms[1],
+		    parms[0] + 5 * parms[1]);
+	    x1 = normal_pdf_height(parms[1]);
+	    fprintf(fp, "set yrange [0:%g]\n", x1 * 1.1);
+	} else if (d == T_DIST) {
 	    fputs("set xrange [-5:5]\n", fp);
 	    fputs("set yrange [0:.50]\n", fp);
 	} else if (d == CHISQ_DIST || d == F_DIST) {
@@ -713,7 +725,11 @@ static void calc_graph (int d, double x, double *parms)
     fprintf(fp, "%s\n", title);
 
     /* required variables and formulae */
-    if (d == T_DIST) {
+    if (d == NORMAL_DIST) {   
+	fprintf(fp, "mu1=%g\n", parms[0]);
+	fprintf(fp, "s1=%g\n", parms[1]);
+	fprintf(fp, "%s\n", F_NORM);
+    } else if (d == T_DIST) {
 	fprintf(fp, "df1=%.1f\n", parms[0]);
 	fprintf(fp, "%s\n", F_BINV);
     } else if (d == CHISQ_DIST) {
@@ -746,8 +762,7 @@ static void calc_graph (int d, double x, double *parms)
     title = dist_graph_title(d, x, parms);
 
     if (d == NORMAL_DIST) {
-	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
-		"title '%s' w lines", title);
+	fprintf(fp, "normal(x,mu1,s1) title '%s' w lines", title);
     } else if (d == T_DIST) {
 	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
 		"**(-0.5*(df1+1.0)) "
@@ -880,6 +895,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
 	    if (grf) {
+		gparm[1] = 1;
 		calc_graph(NORMAL_DIST, ts, gparm);
 	    }
 	} else {
@@ -928,6 +944,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
 	if (grf) {
+	    gparm[1] = 1;
 	    calc_graph(NORMAL_DIST, ts, gparm);
 	}
 	break;
@@ -1007,6 +1024,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
 	    if (grf) {
+		gparm[1] = 1;
 		calc_graph(NORMAL_DIST, ts, gparm);
 	    }
 	}
@@ -1064,6 +1082,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
 	if (grf) {
+	    gparm[1] = 1;
 	    calc_graph(NORMAL_DIST, ts, gparm);
 	}
 	break;
@@ -1198,6 +1217,10 @@ static int get_dist_and_params (const char *s, int *d, double *x)
 
     if (!strncmp(s, "# standard", 10)) {
 	*d = NORMAL_DIST;
+	x[0] = 0;
+	x[1] = 1;
+    } else if (sscanf(s, "# N(%lf,%lf)", &x[0], &x[1]) == 2) {
+	*d = NORMAL_DIST;
     } else if (sscanf(s, "# t(%lf)", &x[0]) == 1) {
 	*d = T_DIST;
     } else if (sscanf(s, "# chi-square(%lf)", &x[0]) == 1) {
@@ -1225,6 +1248,8 @@ static int current_graph_dist (png_plot *plot)
 	s = spec->literal[i];
 	if (!strncmp(s, "# standard", 10)) {
 	    d = NORMAL_DIST;
+	} else if (!strncmp(s, "# N(", 4)) {
+	    d = NORMAL_DIST;
 	} else if (!strncmp(s, "# t(", 4)) {
 	    d = T_DIST;
 	} else if (!strncmp(s, "# chi-square(", 13)) {
@@ -1246,7 +1271,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     GPT_SPEC *spec = plot_get_spec(plot);
     gchar *title = NULL;
     int got[NGRAPHS+1] = {0};
-    int ids[4] = {0};
+    int ids[6] = {0};
     double x[2] = {0};
     int i, k, bigchi = 0;
     int err = 0;
@@ -1283,7 +1308,15 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	    if (id > ids[3]) {
 		ids[3] = id;
 	    }
-	} 
+	} else if (sscanf(s, "mu%d=", &id) == 1) {
+	    if (id > ids[4]) {
+		ids[4] = id;
+	    }
+	} else if (sscanf(s, "s%d=", &id) == 1) {
+	    if (id > ids[5]) {
+		ids[5] = id;
+	    }
+	}	    
     }
 
     /* adjust x-range if needed */
@@ -1315,7 +1348,16 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	/* add parameter line(s) if needed */
 	char varstr[32];
 
-	if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
+	if (d == NORMAL_DIST) {
+	    k = ids[4] + 1;
+	    sprintf(varstr, "mu%d=%g", k, parms[0]);
+	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
+	    if (!err) {
+		k = ids[5] + 1;
+		sprintf(varstr, "s%d=%g", k, parms[1]);
+		err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
+	    }
+	} else if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
 	    k = ids[0] + 1;
 	    sprintf(varstr, "df%d=%.1f", k, parms[0]);
 	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
@@ -1350,7 +1392,11 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
     /* add any required formula lines */
 
-    if (d == T_DIST) {
+    if (d == NORMAL_DIST) {
+	if (!got[NORMAL_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, F_NORM);
+	}	
+    } else if (d == T_DIST) {
 	if (!got[T_DIST] && !got[F_DIST]) {
 	    err = strings_array_add(&spec->literal, &spec->n_literal, F_BINV);
 	}
@@ -1409,7 +1455,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     g_free(title);
 
     if (d == NORMAL_DIST) {
-	strcpy(spec->lines[i].formula, "(1/(sqrt(2*pi))*exp(-(x)**2/2))");
+	sprintf(spec->lines[i].formula, "normal(x,mu%d,s%d)", ids[4] + 1, ids[5] + 1);
     } else if (d == T_DIST) {
 	k = ids[0] + 1;
 	sprintf(spec->lines[i].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
@@ -1429,35 +1475,39 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
 static void dist_graph (GtkWidget *w, CalcChild *child)
 {
-    dist_t *dist, **dists = child->calcp;
+    dist_t *tab, **tabs = child->calcp;
     double x[2] = {0};
     int i;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-    dist = dists[i];
+    tab = tabs[i];
 
     switch (i) {
     case NORMAL_DIST:
+	x[0] = getval(tab->entry[0], C_DBL); /* mean */
+	if (na(x[0])) return;
+	x[1] = getval(tab->entry[1], C_POS_DBL); /* s.d. */
+	if (na(x[1])) return;
 	break;
     case T_DIST:
     case CHISQ_DIST:
-	x[0] = getval(dist->entry[0], C_INT);
+	x[0] = getval(tab->entry[0], C_INT);
 	if (x[0] < 0) return;
 	break;
     case F_DIST:
-	x[0] = getval(dist->entry[0], C_INT);
+	x[0] = getval(tab->entry[0], C_INT);
 	if (x[0] < 0) return;
-	x[1] = getval(dist->entry[1], C_INT);
+	x[1] = getval(tab->entry[1], C_INT);
 	if (x[1] < 0) return;
 	break;
     case BINOMIAL_DIST:
-	x[0] = getval(dist->entry[0], C_POS_DBL); /* prob */
+	x[0] = getval(tab->entry[0], C_POS_DBL); /* prob */
 	if (check_prob(x[0])) return;
-	x[1] = getval(dist->entry[1], C_INT); /* n */
+	x[1] = getval(tab->entry[1], C_INT); /* n */
 	if (x[1] < 0) return;
 	break;
     case POISSON_DIST:
-	x[0] = getval(dist->entry[0], C_POS_DBL); /* mean */
+	x[0] = getval(tab->entry[0], C_POS_DBL); /* mean */
 	if (na(x[0])) return;
 	break;
     }
@@ -1469,9 +1519,10 @@ static void dist_graph (GtkWidget *w, CalcChild *child)
     } 
 }
 
-static void add_calc_entry (GtkWidget *tbl, gint *rows, 
-			    const gchar *label, CalcChild *child,
-			    int i)
+static void 
+add_calc_entry_with_default (GtkWidget *tbl, gint *rows, 
+			     const gchar *label, CalcChild *child,
+			     int i, const char *deflt)
 {
     dist_t **dist = child->calcp;
     GtkWidget *tmp;
@@ -1493,8 +1544,20 @@ static void add_calc_entry (GtkWidget *tbl, gint *rows,
     gtk_widget_show(tmp);
     dist[i]->entry[*rows-2] = tmp;
 
+    /* default text */
+    if (deflt != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(tmp), deflt);
+    }
+
     g_signal_connect(G_OBJECT(tmp), "activate", child->callback,
 		     child);
+}
+
+static void add_calc_entry (GtkWidget *tbl, gint *rows, 
+			    const gchar *label, CalcChild *child,
+			    int i)
+{
+    add_calc_entry_with_default(tbl, rows, label, child, i, NULL);
 }
 
 static void make_dist_tab (CalcChild *child, int d)
@@ -1521,13 +1584,16 @@ static void make_dist_tab (CalcChild *child, int d)
 
     rows = 1;
     tbl = gtk_table_new(rows, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE (tbl), 5);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
 
     switch (d) {
     case NORMAL_DIST:
+	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
+	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
+				    child, d, "1");
 	break;
     case T_DIST:
 	add_calc_entry(tbl, &rows, N_("df"), child, d);
@@ -1562,7 +1628,6 @@ static void make_dist_tab (CalcChild *child, int d)
 
 static void make_pval_tab (CalcChild *child, int d) 
 {
-    dist_t **tab = child->calcp;
     GtkWidget *tempwid, *box, *tbl;
     gint rows;
     const gchar *titles[] = {
@@ -1593,10 +1658,9 @@ static void make_pval_tab (CalcChild *child, int d)
     switch (d) {
 
     case CALC_NORMAL: 
-	add_calc_entry(tbl, &rows, N_("mean"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
-	add_calc_entry(tbl, &rows, N_("std. deviation"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
+	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
+	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
+				    child, d, "1");
 	add_calc_entry(tbl, &rows, N_("value"), child, d);
 	break;
 
@@ -1642,7 +1706,6 @@ static void make_pval_tab (CalcChild *child, int d)
 
 static void make_rand_tab (CalcChild *child, int d) 
 {
-    dist_t **tab = child->calcp;
     GtkWidget *tempwid, *box, *tbl;
     gint rows;
     const gchar *titles[] = {
@@ -1674,17 +1737,14 @@ static void make_rand_tab (CalcChild *child, int d)
     switch (d) {
 
     case RAND_UNIFORM:
-	add_calc_entry(tbl, &rows, N_("minimum"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
-	add_calc_entry(tbl, &rows, N_("maximum"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
+	add_calc_entry_with_default(tbl, &rows, N_("minimum"), child, d, "0");
+	add_calc_entry_with_default(tbl, &rows, N_("maximum"), child, d, "1");
 	break;
 
     case RAND_NORMAL: 
-	add_calc_entry(tbl, &rows, N_("mean"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[0]), "0");
-	add_calc_entry(tbl, &rows, N_("std. deviation"), child, d);
-	gtk_entry_set_text(GTK_ENTRY(tab[d]->entry[1]), "1");
+	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
+	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
+				    child, d, "1");
 	break;
 
     case RAND_STUDENT:
@@ -2577,10 +2637,6 @@ configure_graph_add_tabs (CalcChild *child, png_plot *plot)
 	calc_hide_page_range(child, BINOMIAL_DIST, POISSON_DIST);
     }
 
-    if (i == NORMAL_DIST) {
-	i = T_DIST;
-    }
-
     gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), i);
 }
 
@@ -2601,10 +2657,6 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
     make_graph_window_transient(win, plot);
 
     d = gtk_notebook_get_current_page(book);
-
-    if (d == NORMAL_DIST) {
-	gtk_notebook_set_current_page(book, T_DIST);
-    }
 
     if (d == POISSON_DIST || d == BINOMIAL_DIST) {
 	calc_hide_page_range(child, NORMAL_DIST, F_DIST);
@@ -2708,9 +2760,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	}
     }
 
-    if (code == CALC_GRAPH) {
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), T_DIST);
-    } else if (code == CALC_GRAPH_ADD) {
+    if (code == CALC_GRAPH_ADD) {
 	configure_graph_add_tabs(child, data);
     }
 
