@@ -242,16 +242,6 @@ enum dynamic_forecast_status {
     DYNAMIC_FORCED
 };
 
-enum pdists {
-    NORMAL_DIST,
-    T_DIST,
-    CHISQ_DIST,
-    F_DIST,
-    BINOMIAL_DIST,
-    POISSON_DIST,
-    DW_DIST
-};    
-
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
                                  c == ALL_SUMMARY || \
 	                         c == CORR || c == ALL_CORR || c == FCASTERR || \

@@ -66,25 +66,16 @@ struct dist_t_ {
 };
 
 enum {
-    CALC_NORMAL,
-    CALC_STUDENT,
-    CALC_CHISQ,
-    CALC_SNEDECOR,
-    CALC_GAMMA,
-    CALC_BINOMIAL,
-    CALC_POISSON
-};
-
-enum {
-    RAND_UNIFORM,
-    RAND_NORMAL,
-    RAND_STUDENT,
-    RAND_CHISQ,
-    RAND_SNEDECOR,
-    RAND_GAMMA,
-    RAND_BINOMIAL,
-    RAND_POISSON
-};
+    UNIFORM_DIST,
+    NORMAL_DIST,
+    T_DIST,
+    CHISQ_DIST,
+    F_DIST,
+    GAMMA_DIST,
+    BINOMIAL_DIST,
+    POISSON_DIST,
+    DW_DIST
+};  
 
 enum {
     ONE_MEAN,
@@ -114,7 +105,7 @@ enum {
 
    (In this context, when an int is wanted, it's always a 
    positive int: df, sample size, number of trials.)
-
+   
    If t is C_DBL or C_POS_DBL and something is wrong with the
    input, we flag this by returning NADBL.  In the case of
    C_INT, we flag an error by returning -1.
@@ -208,60 +199,151 @@ static void dw_lookup (dist_t *tab)
 		STAT_TABLE, NULL);
 }
 
-static void get_critical (GtkWidget *w, CalcChild *child)
+static int page_from_dist (int code, int dist)
 {
-    dist_t *tab, **tabs = child->calcp;
-    double c = NADBL;
-    double x[4];
-    char st = 0;
-    int d, j = 0;
-    PRN *prn;
-
-    d = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-    tab = tabs[d];
-    
-    if (d == DW_DIST) {
-	/* special: just a table look-up */
-	dw_lookup(tab);
-	return;
+    if (code == CALC_RAND) {
+	return dist;
+    } else if (code == CALC_PVAL) {
+	return dist - 1;
+    } else {
+	switch (dist) {
+	case NORMAL_DIST:
+	    return 0;
+	case T_DIST:
+	    return 1;
+	case CHISQ_DIST:
+	    return 2;
+	case F_DIST:
+	    return 3;
+	case BINOMIAL_DIST:
+	    return 4;
+	case POISSON_DIST:
+	    return 5;
+	case DW_DIST:
+	    return 6;
+	}
     }
 
+    return 0;
+}
+
+static int dist_from_page (int code, int page)
+{
+    if (code == CALC_RAND) {
+	return page;
+    } else if (code == CALC_PVAL) {
+	return page + 1;
+    } else {
+	switch (page) {
+	case 0:
+	    return NORMAL_DIST;
+	case 1:
+	    return T_DIST;
+	case 2:
+	    return CHISQ_DIST;
+	case 3:
+	    return F_DIST;
+	case 4:
+	    return BINOMIAL_DIST;
+	case 5:
+	    return POISSON_DIST;
+	case 6:
+	    return DW_DIST;
+	}
+    }
+
+    return 0;
+}
+
+static char dist_to_char (int d)
+{
+    const char *dchars = "uztXFGBP";
+
+    return (d >= 0 && d < 7)? dchars[d] : 0;
+}
+
+static int 
+get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
+		       int *pj)
+{
+    int j = 0;
+
     switch (d) {
+    case UNIFORM_DIST:
+	x[j] = getval(tab->entry[j], C_DBL); /* min */
+	if (na(x[j++])) return 1;
+	x[j] = getval(tab->entry[j], C_DBL); /* max */
+	if (na(x[j++])) return 1;
+	break;
     case NORMAL_DIST:
-	st = 'z';
+	x[j] = getval(tab->entry[j], C_DBL); /* mean */
+	if (na(x[j++])) return 1;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
+	if (na(x[j++])) return 1;
 	break;
     case T_DIST:
     case CHISQ_DIST:
-	st = (d == T_DIST)? 't' : 'X';
 	x[j] = getval(tab->entry[j], C_INT); /* df */
-	if (x[j++] < 0) return;
+	if (x[j++] < 0) return 1;
 	break;
     case F_DIST:
-	st = 'F';
 	x[j] = getval(tab->entry[j], C_INT); /* dfn */
-	if (x[j++] < 0) return;
+	if (x[j++] < 0) return 1;
 	x[j] = getval(tab->entry[j], C_INT); /* dfd */
-	if (x[j++] < 0) return;
+	if (x[j++] < 0) return 1;
+	break;
+    case GAMMA_DIST: 
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* shape */
+	if (na(x[j++])) return 1;
+	x[j] = getval(tab->entry[j], C_POS_DBL); /* scale */
+	if (na(x[j++])) return 1;
 	break;
     case BINOMIAL_DIST:
-	st = 'B';
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
-	if (check_prob(x[j++])) return;
+	if (check_prob(x[j++])) return 1;
 	x[j] = getval(tab->entry[j], C_INT); /* n */
-	if (x[j++] < 0) return;
+	if (x[j++] < 0) return 1;
 	break;
     case POISSON_DIST:
-	st = 'P';
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
-	if (na(x[j++])) return;
-	break;
-    default:
+	if (na(x[j++])) return 1;
 	break;
     }
 
+    if (pj != NULL) {
+	*pj = j;
+    }
+
+    return 0;
+}
+
+static void get_critical (GtkWidget *w, CalcChild *child)
+{
+    dist_t **tabs = child->calcp;
+    double c = NADBL;
+    double x[4];
+    char st = 0;
+    int i, d, j = 0;
+    PRN *prn;
+
+    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
+    d = dist_from_page(child->code, i);
+    
+    if (d == DW_DIST) {
+	/* special: just a table look-up */
+	dw_lookup(tabs[i]);
+	return;
+    }
+
+    if (get_dist_entry_vector(child->code, tabs[i], d, x, &j)) {
+	return;
+    }
+
     /* right-tail probability */
-    x[j] = getval(tab->entry[j], C_POS_DBL);
+    x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
     if (check_prob(x[j])) return;
+
+    st = dist_to_char(d);
 
     c = gretl_get_critval(st, x);
     if (na(c)) {
@@ -280,83 +362,44 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 
 static void get_pvalue (GtkWidget *w, CalcChild *child)
 {
-    dist_t *tab, **tabs = child->calcp;
+    dist_t **tabs = child->calcp;
     double pv, x[3];
     char st = 0;
-    int i, j = 0;
+    int i, d, j = 0;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-    tab = tabs[i];
+    d = dist_from_page(child->code, i);
 
-    switch (i) {
-
-    case CALC_NORMAL:
-	st = 'z';
-	x[j] = getval(tab->entry[j], C_DBL); /* mean */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_DBL); /* val */
-	if (na(x[j])) return;
-	x[0] = (x[2] - x[0]) / x[1]; /* z-score */
-	break;
-
-    case CALC_STUDENT: 
-	st = 't';
-	x[j] = getval(tab->entry[j], C_INT); /* df */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_DBL); /* val */
-	if (na(x[j])) return;
-	break;
-
-    case CALC_CHISQ:
-	st = 'X';
-	x[j] = getval(tab->entry[j], C_INT); /* df */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* val */
-	if (na(x[j])) return;
-	break;
-
-    case CALC_POISSON: 
-	st = 'P';
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_INT); /* val */
-	if (x[j] < 0) return;
-	break;
-
-    case CALC_SNEDECOR:
-	st = 'F';
-	x[j] = getval(tab->entry[j], C_INT); /* dfn */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_INT); /* dfd */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* val */
-	if (na(x[j])) return;
-	break;
-
-    case CALC_GAMMA: 
-	st = 'G';
-	for (j=0; j<3; j++) {
-	    x[j] = getval(tab->entry[j], C_POS_DBL);
-	    if (na(x[j])) return;
-	}
-	break;
-
-    case CALC_BINOMIAL: 
-	st = 'B';
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
-	if (check_prob(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_INT); /* trials */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_INT); /* val */
-	if (x[j] < 0) return;
-	break;
-
-    default:
-	errbox(_("Failed to compute p-value"));
+    if (get_dist_entry_vector(child->code, tabs[i], d, x, &j)) {
 	return;
+    }
+
+    /* value for which to get p-value */
+
+    switch (d) {
+    case NORMAL_DIST:
+    case T_DIST:
+	x[j] = getval(tabs[i]->entry[j], C_DBL); /* val */
+	if (na(x[j])) return;
+	break;
+    case CHISQ_DIST:
+    case F_DIST:
+    case GAMMA_DIST:
+	x[j] = getval(tabs[i]->entry[j], C_POS_DBL); /* val */
+	if (na(x[j])) return;
+	break;
+    case BINOMIAL_DIST:
+    case POISSON_DIST:
+	x[j] = getval(tabs[i]->entry[j], C_INT); /* val */
+	if (x[j] < 0) return;
+	break;
+    };
+
+    st = dist_to_char(d);
+
+    if (d == NORMAL_DIST) {
+	x[0] = (x[2] - x[0]) / x[1]; /* z-score */
     }
 
     if (bufopen(&prn)) return;
@@ -398,67 +441,19 @@ static int calc_finish_genr (void)
 
 static void get_random (GtkWidget *w, CalcChild *child)
 {
-    dist_t *tab, **tabs = child->calcp;
+    dist_t **tabs = child->calcp;
     const char *vname;
     double x[2] = {0};
-    int i, j = 0;
+    int i, d, j = 0;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-    tab = tabs[i];
+    d = dist_from_page(child->code, i);
 
-    switch (i) {
-
-    case RAND_UNIFORM:
-	x[j] = getval(tab->entry[j], C_DBL); /* min */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_DBL); /* max */
-	if (na(x[j++])) return;
-	break;
-
-    case RAND_NORMAL:
-	x[j] = getval(tab->entry[j], C_DBL); /* mean */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
-	if (na(x[j++])) return;
-	break;
-
-    case RAND_GAMMA:
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* shape */
-	if (na(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* scale */
-	if (na(x[j++])) return;
-	break;
-
-    case RAND_STUDENT: 
-    case RAND_CHISQ:
-	x[j] = getval(tab->entry[j], C_INT); /* df */
-	if (x[j++] < 0) return;
-	break;
-
-    case RAND_POISSON: 
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
-	if (na(x[j++])) return;
-	break;
-
-    case RAND_SNEDECOR:
-	x[j] = getval(tab->entry[j], C_INT); /* dfn */
-	if (x[j++] < 0) return;
-	x[j] = getval(tab->entry[j], C_INT); /* dfd */
-	if (x[j++] < 0) return;
-	break;
-
-    case RAND_BINOMIAL: 
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
-	if (check_prob(x[j++])) return;
-	x[j] = getval(tab->entry[j], C_INT); /* trials */
-	if (x[j++] < 0) return;
-	break;
-
-    default:
+    if (get_dist_entry_vector(child->code, tabs[i], d, x, &j)) {
 	return;
     }
 
-    vname = gtk_entry_get_text(GTK_ENTRY(tab->entry[j]));
+    vname = gtk_entry_get_text(GTK_ENTRY(tabs[i]->entry[j]));
     if (vname == NULL || *vname == '\0') {
 	errbox(_("You must give a name for the variable"));
 	return;
@@ -466,49 +461,41 @@ static void get_random (GtkWidget *w, CalcChild *child)
 	return;
     }
 
-    if (i == RAND_UNIFORM && x[0] >= x[1]) {
+    if (d == UNIFORM_DIST && x[0] >= x[1]) {
 	errbox(_("Range is non-positive!"));
 	return;
     }
 
-    switch (i) {
-
-    case RAND_UNIFORM:
+    switch (d) {
+    case UNIFORM_DIST:
 	gretl_command_sprintf("genr %s = uniform(%g,%g)", vname,
 			      x[0], x[1]);
 	break;
-
-    case RAND_NORMAL:
+    case NORMAL_DIST:
 	gretl_command_sprintf("genr %s = normal(%g,%g)", vname,
 			      x[0], x[1]);
 	break;
-
-    case RAND_STUDENT: 
+    case T_DIST: 
 	gretl_command_sprintf("genr %s = student(%g)", vname, x[0]);
 	break;
-
-    case RAND_CHISQ:
+    case CHISQ_DIST:
 	gretl_command_sprintf("genr %s = chisq(%g)", vname, x[0]);
 	break;
-
-    case RAND_POISSON: 
-	/* FIXME allow variable as param? */
-	gretl_command_sprintf("genr %s = poisson(%g)", vname, x[0]);
-	break;
-
-    case RAND_SNEDECOR:
+    case F_DIST:
 	gretl_command_sprintf("genr %s = randF(%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
-
-    case RAND_GAMMA:
+    case GAMMA_DIST:
 	gretl_command_sprintf("genr %s = rgamma(%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
-
-    case RAND_BINOMIAL: 
+    case BINOMIAL_DIST: 
 	gretl_command_sprintf("genr %s = binomial(%g,%g)", vname, 
 			      x[1], x[0]);
+	break;
+    case POISSON_DIST: 
+	/* FIXME allow variable as param? */
+	gretl_command_sprintf("genr %s = poisson(%g)", vname, x[0]);
 	break;
     }
 
@@ -550,10 +537,11 @@ dist_graph_title (int dist, double x, double *parms)
 	} else if (dist == T_DIST) {
 	    s = g_strdup_printf(I_("t(%d) sampling distribution"), (int) parms[0]);
 	} else if (dist == CHISQ_DIST) {
-	    s = g_strdup_printf(I_("Chi-square(%d) sampling distribution"), (int) parms[0]);
+	    s = g_strdup_printf(I_("Chi-square(%d) sampling distribution"), 
+				(int) parms[0]);
 	} else if (dist == F_DIST) {
-	    s = g_strdup_printf(I_("F(%d, %d) sampling distribution"), (int) parms[0],
-				(int) parms[1]);
+	    s = g_strdup_printf(I_("F(%d, %d) sampling distribution"), 
+				(int) parms[0], (int) parms[1]);
 	}
     }
 
@@ -585,9 +573,9 @@ static gchar *dist_marker_line (int dist, double *parms)
 #define F_NORM   "normal(x,mu,s) = 1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 #define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
 #define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
-#define F_LOG2   "log2=log(2.0)"
-#define F_BIGCHI "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log2)"
-#define F_F      "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
+#define F_BIGCHI "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
+#define F_F      "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
+                 "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
 #define F_COMB   "comb(n,k) = n!/(k!*(n-k)!)"
 #define F_BINOM  "binom(k,n,p) = comb(int(n),int(k))*p**k*(1-p)**(n-k)"
 #define F_POIS   "poisson(z,k) = exp(-z)*(z**k)/(int(k))!"
@@ -627,7 +615,7 @@ static double dist_xmax (int d, double *parms)
     return gretl_get_critval(st, x);
 }
 
-static int graph_literal_lines (int d, int bigchi)
+static int graph_literal_lines (int d)
 {
     int n = 0;
 
@@ -636,11 +624,9 @@ static int graph_literal_lines (int d, int bigchi)
 	n = 4;
 	break;
     case T_DIST:
+    case CHISQ_DIST:	
     case POISSON_DIST:
 	n = 3;
-	break;
-    case CHISQ_DIST:
-	n = (bigchi)? 4 : 3;
 	break;
     case F_DIST:
     case BINOMIAL_DIST:
@@ -720,7 +706,7 @@ static void calc_graph (int d, double x, double *parms)
     }
 
     /* header */
-    fprintf(fp, "# literal lines = %d\n", graph_literal_lines(d, bigchi));
+    fprintf(fp, "# literal lines = %d\n", graph_literal_lines(d));
     title = dist_marker_line(d, parms);
     fprintf(fp, "%s\n", title);
 
@@ -735,7 +721,6 @@ static void calc_graph (int d, double x, double *parms)
     } else if (d == CHISQ_DIST) {
 	fprintf(fp, "df1=%.1f\n", parms[0]);
 	if (bigchi) {
-	    fprintf(fp, "%s\n", F_LOG2);
 	    fprintf(fp, "%s\n", F_BIGCHI);
 	} else {
 	    fprintf(fp, "%s\n", F_CHI);
@@ -1402,11 +1387,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 	}
     } else if (d == CHISQ_DIST) {
 	if (bigchi && !got[NGRAPHS]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_LOG2);
-	    if (!err) {
-		err = strings_array_add(&spec->literal, &spec->n_literal, 
-					F_BIGCHI);
-	    }
+	    err = strings_array_add(&spec->literal, &spec->n_literal, F_BIGCHI);
 	} else if (!bigchi && !got[CHISQ_DIST]) {
 	    err = strings_array_add(&spec->literal, &spec->n_literal, F_CHI);
 	}
@@ -1475,54 +1456,28 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
 static void dist_graph (GtkWidget *w, CalcChild *child)
 {
-    dist_t *tab, **tabs = child->calcp;
+    dist_t **tabs = child->calcp;
     double x[2] = {0};
-    int i;
+    int i, d;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
-    tab = tabs[i];
+    d = dist_from_page(child->code, i);
 
-    switch (i) {
-    case NORMAL_DIST:
-	x[0] = getval(tab->entry[0], C_DBL); /* mean */
-	if (na(x[0])) return;
-	x[1] = getval(tab->entry[1], C_POS_DBL); /* s.d. */
-	if (na(x[1])) return;
-	break;
-    case T_DIST:
-    case CHISQ_DIST:
-	x[0] = getval(tab->entry[0], C_INT);
-	if (x[0] < 0) return;
-	break;
-    case F_DIST:
-	x[0] = getval(tab->entry[0], C_INT);
-	if (x[0] < 0) return;
-	x[1] = getval(tab->entry[1], C_INT);
-	if (x[1] < 0) return;
-	break;
-    case BINOMIAL_DIST:
-	x[0] = getval(tab->entry[0], C_POS_DBL); /* prob */
-	if (check_prob(x[0])) return;
-	x[1] = getval(tab->entry[1], C_INT); /* n */
-	if (x[1] < 0) return;
-	break;
-    case POISSON_DIST:
-	x[0] = getval(tab->entry[0], C_POS_DBL); /* mean */
-	if (na(x[0])) return;
-	break;
+    if (get_dist_entry_vector(child->code, tabs[i], d, x, NULL)) {
+	return;
     }
 
     if (child->plot != NULL) {
-	revise_distribution_plot(child->plot, i, x);
+	revise_distribution_plot(child->plot, d, x);
     } else {
-	calc_graph(i, NADBL, x);
+	calc_graph(d, NADBL, x);
     } 
 }
 
 static void 
-add_calc_entry_with_default (GtkWidget *tbl, gint *rows, 
-			     const gchar *label, CalcChild *child,
-			     int i, const char *deflt)
+calc_entry_with_default (GtkWidget *tbl, gint *rows, 
+			 const gchar *label, CalcChild *child,
+			 int i, const char *deflt)
 {
     dist_t **dist = child->calcp;
     GtkWidget *tmp;
@@ -1553,26 +1508,31 @@ add_calc_entry_with_default (GtkWidget *tbl, gint *rows,
 		     child);
 }
 
-static void add_calc_entry (GtkWidget *tbl, gint *rows, 
-			    const gchar *label, CalcChild *child,
-			    int i)
+static void calc_entry (GtkWidget *tbl, gint *rows, 
+			const gchar *label, CalcChild *child,
+			int i)
 {
-    add_calc_entry_with_default(tbl, rows, label, child, i, NULL);
+    calc_entry_with_default(tbl, rows, label, child, i, NULL);
 }
 
-static void make_dist_tab (CalcChild *child, int d)
+/* make a tab (notebook page) for a given distribution */
+
+static void make_dist_tab (CalcChild *child, int i)
 {
     GtkWidget *tmp, *box, *tbl;
-    gint rows;
+    gint rows = 1;
     const gchar *titles[] = {
+	N_("uniform"),
 	N_("normal"), 
 	N_(" t "), 
 	N_("chi-square"), 
 	N_(" F "), 
+	N_("gamma"),	    
 	N_("binomial"),
 	N_("poisson"),
 	N_(" DW "),
     };
+    int d = dist_from_page(child->code, i);
    
     box = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
@@ -1582,7 +1542,6 @@ static void make_dist_tab (CalcChild *child, int d)
     gtk_widget_show(tmp);
     gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tmp);   
 
-    rows = 1;
     tbl = gtk_table_new(rows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -1590,195 +1549,55 @@ static void make_dist_tab (CalcChild *child, int d)
     gtk_widget_show(tbl);
 
     switch (d) {
+    case UNIFORM_DIST:
+	calc_entry_with_default(tbl, &rows, N_("minimum"), 
+				child, i, "0");
+	calc_entry_with_default(tbl, &rows, N_("maximum"), 
+				child, i, "1");
+	break;
     case NORMAL_DIST:
-	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
-	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
-				    child, d, "1");
+	calc_entry_with_default(tbl, &rows, N_("mean"), 
+				child, i, "0");
+	calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
+				child, i, "1");
 	break;
     case T_DIST:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
+	calc_entry(tbl, &rows, N_("df"), child, i);
 	break;
     case CHISQ_DIST:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
+	calc_entry(tbl, &rows, N_("df"), child, i);
 	break;
     case F_DIST:
-	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
-	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
-	break;	
+	calc_entry(tbl, &rows, N_("dfn"), child, i);
+	calc_entry(tbl, &rows, N_("dfd"), child, i);
+	break;
+    case GAMMA_DIST:
+	calc_entry(tbl, &rows, N_("shape"), child, i);
+	calc_entry(tbl, &rows, N_("scale"), child, i);
+	break;
     case BINOMIAL_DIST:
-	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
-	add_calc_entry(tbl, &rows, N_("trials"), child, d);
+	calc_entry(tbl, &rows, N_("Prob"), child, i);
+	calc_entry(tbl, &rows, N_("trials"), child, i);
 	break;
     case POISSON_DIST:
-	add_calc_entry(tbl, &rows, N_("mean"), child, d);
+	calc_entry(tbl, &rows, N_("mean"), child, i);
 	break;
     case DW_DIST:
-	add_calc_entry(tbl, &rows, N_("n"), child, d);
+	calc_entry(tbl, &rows, N_("n"), child, i);
 	break;
     default:
 	break;
     } 
 
-    if (child->code == CALC_DIST && d != DW_DIST) {
-	add_calc_entry(tbl, &rows, N_("right-tail probability"), child, d);
+    if (child->code == CALC_DIST) {
+	if (d != DW_DIST) {
+	    calc_entry(tbl, &rows, N_("right-tail probability"), child, i);
+	}
+    } else if (child->code == CALC_PVAL) {
+	calc_entry(tbl, &rows, N_("value"), child, i);
+    } else if (child->code == CALC_RAND) {
+	calc_entry(tbl, &rows, N_("name"), child, i);
     }
-}
-
-/* make a tab (notebook page) for p-values */
-
-static void make_pval_tab (CalcChild *child, int d) 
-{
-    GtkWidget *tempwid, *box, *tbl;
-    gint rows;
-    const gchar *titles[] = {
-	N_("normal"), 
-	N_(" t "), 
-	N_("chi-square"), 
-	N_(" F "), 
-	N_("gamma"),
-	N_("binomial"),
-	N_("poisson")
-    };
-   
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show(box);
-
-    tempwid = gtk_label_new(_(titles[d]));
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tempwid);   
-
-    rows = 1;
-    tbl = gtk_table_new(rows, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show(tbl);
-   
-    switch (d) {
-
-    case CALC_NORMAL: 
-	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
-	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
-				    child, d, "1");
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_STUDENT:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_CHISQ:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_SNEDECOR:
-	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
-	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_GAMMA:
-	add_calc_entry(tbl, &rows, N_("shape"), child, d);
-	add_calc_entry(tbl, &rows, N_("scale"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_BINOMIAL:
-	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
-	add_calc_entry(tbl, &rows, N_("trials"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    case CALC_POISSON:
-	add_calc_entry(tbl, &rows, N_("mean"), child, d);
-	add_calc_entry(tbl, &rows, N_("value"), child, d);
-	break;
-
-    default:
-	break;
-    } 
-}
-
-/* make a tab (notebook page) for r.v. generation */
-
-static void make_rand_tab (CalcChild *child, int d) 
-{
-    GtkWidget *tempwid, *box, *tbl;
-    gint rows;
-    const gchar *titles[] = {
-	N_("uniform"),
-	N_("normal"), 
-	N_(" t "), 
-	N_("chi-square"), 
-	N_(" F "), 
-	N_("gamma"),
-	N_("binomial"),
-	N_("poisson")
-    };
-   
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show(box);
-
-    tempwid = gtk_label_new(_(titles[d]));
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(child->book), box, tempwid);   
-
-    rows = 1;
-    tbl = gtk_table_new(rows, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show(tbl);
-
-    switch (d) {
-
-    case RAND_UNIFORM:
-	add_calc_entry_with_default(tbl, &rows, N_("minimum"), child, d, "0");
-	add_calc_entry_with_default(tbl, &rows, N_("maximum"), child, d, "1");
-	break;
-
-    case RAND_NORMAL: 
-	add_calc_entry_with_default(tbl, &rows, N_("mean"), child, d, "0");
-	add_calc_entry_with_default(tbl, &rows, N_("std. deviation"), 
-				    child, d, "1");
-	break;
-
-    case RAND_STUDENT:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
-	break;
-
-    case RAND_CHISQ:
-	add_calc_entry(tbl, &rows, N_("df"), child, d);
-	break;
-
-    case RAND_SNEDECOR:
-	add_calc_entry(tbl, &rows, N_("dfn"), child, d);
-	add_calc_entry(tbl, &rows, N_("dfd"), child, d);
-	break;
-
-    case RAND_GAMMA:
-	add_calc_entry(tbl, &rows, N_("shape"), child, d);
-	add_calc_entry(tbl, &rows, N_("scale"), child, d);
-	break;
-
-    case RAND_BINOMIAL:
-	add_calc_entry(tbl, &rows, N_("Prob"), child, d);
-	add_calc_entry(tbl, &rows, N_("trials"), child, d);
-	break;
-
-    case RAND_POISSON:
-	add_calc_entry(tbl, &rows, N_("mean"), child, d);
-	break;
-
-    default:
-	break;
-    } 
-
-    add_calc_entry(tbl, &rows, N_("name"), child, d);
 }
 
 static int get_restriction_vxy (const char *s, int *vx, int *vy, 
@@ -2136,9 +1955,9 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 		     G_CALLBACK(toggle_combo_ok), tmp);
 }
 
-static void add_test_entry (GtkWidget *tbl, gint *rows, 
-			    const gchar *label, test_t *test, 
-			    int i)
+static void test_entry (GtkWidget *tbl, gint *rows, 
+			const gchar *label, test_t *test, 
+			int i)
 {
     GtkWidget *tmp;
 
@@ -2379,61 +2198,61 @@ static void make_test_tab (CalcChild *child, int idx)
     switch (idx) {
 
     case ONE_MEAN: 
-	add_test_entry(tbl, &rows, _("sample mean"), test, 0);
-	add_test_entry(tbl, &rows, _("std. deviation"), test, 1);
-	add_test_entry(tbl, &rows, _("sample size"), test, 2);
-	add_test_entry(tbl, &rows, _("H0: mean ="), test, 3);
+	test_entry(tbl, &rows, _("sample mean"), test, 0);
+	test_entry(tbl, &rows, _("std. deviation"), test, 1);
+	test_entry(tbl, &rows, _("sample size"), test, 2);
+	test_entry(tbl, &rows, _("H0: mean ="), test, 3);
 	add_test_check(tbl, &rows, _("Assume standard deviation is "
-		       "population value"), test, FALSE);
+				     "population value"), test, FALSE);
 	break;
 
     case ONE_VARIANCE: 
-	add_test_entry(tbl, &rows, _("sample variance"), test, 0);
-	add_test_entry(tbl, &rows, _("sample size"), test, 1);
-	add_test_entry(tbl, &rows, _("H0: variance ="), test, 2);
+	test_entry(tbl, &rows, _("sample variance"), test, 0);
+	test_entry(tbl, &rows, _("sample size"), test, 1);
+	test_entry(tbl, &rows, _("H0: variance ="), test, 2);
 	break;
 
     case ONE_PROPN: /* proportion */
-	add_test_entry(tbl, &rows, _("sample proportion"), test, 0);
-	add_test_entry(tbl, &rows, _("sample size"), test, 1);
-	add_test_entry(tbl, &rows, _("H0: proportion ="), test, 2);
+	test_entry(tbl, &rows, _("sample proportion"), test, 0);
+	test_entry(tbl, &rows, _("sample size"), test, 1);
+	test_entry(tbl, &rows, _("H0: proportion ="), test, 2);
 	break;
 
     case TWO_MEANS:
-	add_test_entry(tbl, &rows, _("mean of sample 1"), test, 0);
-	add_test_entry(tbl, &rows, _("std. deviation, sample 1"), test, 1);
-	add_test_entry(tbl, &rows, _("size of sample 1"), test, 2);
+	test_entry(tbl, &rows, _("mean of sample 1"), test, 0);
+	test_entry(tbl, &rows, _("std. deviation, sample 1"), test, 1);
+	test_entry(tbl, &rows, _("size of sample 1"), test, 2);
 	if (nv > 0) {
 	    add_test_combo(tbl, &rows, test, 3);
 	}
-	add_test_entry(tbl, &rows, _("mean of sample 2"), test, 3);
-	add_test_entry(tbl, &rows, _("std. deviation, sample 2"), test, 4);
-	add_test_entry(tbl, &rows, _("size of sample 2"), test, 5);
-	add_test_entry(tbl, &rows, _("H0: Difference of means ="), test, 6);
+	test_entry(tbl, &rows, _("mean of sample 2"), test, 3);
+	test_entry(tbl, &rows, _("std. deviation, sample 2"), test, 4);
+	test_entry(tbl, &rows, _("size of sample 2"), test, 5);
+	test_entry(tbl, &rows, _("H0: Difference of means ="), test, 6);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[6]), "0");
 	add_test_check(tbl, &rows, _("Assume common population standard "
-		       "deviation"), test, TRUE);
+				     "deviation"), test, TRUE);
 	break;
 
     case TWO_VARIANCES:
-	add_test_entry(tbl, &rows, _("variance of sample 1"), test, 0);
-	add_test_entry(tbl, &rows, _("size of sample 1"), test, 1);
+	test_entry(tbl, &rows, _("variance of sample 1"), test, 0);
+	test_entry(tbl, &rows, _("size of sample 1"), test, 1);
 	if (nv > 0) {
 	    add_test_combo(tbl, &rows, test, 2);
 	}	
-	add_test_entry(tbl, &rows, _("variance of sample 2"), test, 2);
-	add_test_entry(tbl, &rows, _("size of sample 2"), test, 3);
+	test_entry(tbl, &rows, _("variance of sample 2"), test, 2);
+	test_entry(tbl, &rows, _("size of sample 2"), test, 3);
 	add_test_label(tbl, &rows, _("H0: Ratio of variances = 1"));
 	break;
 
     case TWO_PROPNS:
-	add_test_entry(tbl, &rows, _("proportion, sample 1"), test, 0);
-	add_test_entry(tbl, &rows, _("size of sample 1"), test, 1);
+	test_entry(tbl, &rows, _("proportion, sample 1"), test, 0);
+	test_entry(tbl, &rows, _("size of sample 1"), test, 1);
 	if (nv > 0) {
 	    add_test_combo(tbl, &rows, test, 2);
 	}	
-	add_test_entry(tbl, &rows, _("proportion, sample 2"), test, 2);
-	add_test_entry(tbl, &rows, _("size of sample 2"), test, 3);
+	test_entry(tbl, &rows, _("proportion, sample 2"), test, 2);
+	test_entry(tbl, &rows, _("size of sample 2"), test, 3);
 	add_test_label(tbl, &rows, _("H0: Difference of proportions = 0"));
 	break;
 
@@ -2615,12 +2434,13 @@ static void calc_disable_page (CalcChild *child, int i)
     gtk_widget_set_sensitive(p, FALSE);
 }
 
-static void calc_hide_page_range (CalcChild *child, int i0, int i1)
+static void calc_hide_page_range (CalcChild *child, int d0, int d1)
 {
     GtkWidget *p;
-    int i;
+    int d, i;
 
-    for (i=i0; i<=i1; i++) {
+    for (d=d0; d<=d1; d++) {
+	i = page_from_dist(child->code, d);
 	p = gtk_notebook_get_nth_page(GTK_NOTEBOOK(child->book), i);
 	gtk_widget_hide(p);
     }
@@ -2644,7 +2464,7 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
 {
     CalcChild *child;
     GtkNotebook *book;
-    int d;
+    int i, d;
 
     child = g_object_get_data(G_OBJECT(win), "gchild");
     book = GTK_NOTEBOOK(child->book);
@@ -2656,7 +2476,8 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
 
     make_graph_window_transient(win, plot);
 
-    d = gtk_notebook_get_current_page(book);
+    i = gtk_notebook_get_current_page(book);
+    d = dist_from_page(child->code, i);
 
     if (d == POISSON_DIST || d == BINOMIAL_DIST) {
 	calc_hide_page_range(child, NORMAL_DIST, F_DIST);
@@ -2751,10 +2572,6 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    make_test_tab(child, i);
 	} else if (code == CALC_NPTEST) {
 	    make_nptest_tab(child, i);
-	} else if (code == CALC_PVAL) {
-	    make_pval_tab(child, i);
-	} else if (code == CALC_RAND) {
-	    make_rand_tab(child, i);
 	} else {
 	    make_dist_tab(child, i);
 	}
