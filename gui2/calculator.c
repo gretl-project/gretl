@@ -93,6 +93,7 @@ enum {
 
 enum {
     C_INT,
+    C_POS_INT,
     C_DBL,
     C_POS_DBL
 };
@@ -772,14 +773,15 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
    t == C_DBL: parse the entry as a double
    t == C_POS_DBL: parse as a positive double
-   t == C_INT: parse as positive int
+   t == C_INT: parse as non-negative int
+   t == C_POS_INT: parse as positive int
 
-   (In this context, when an int is wanted, it's always a 
-   positive int: df, sample size, number of trials.)
+   (In this context, when an int is wanted, it's always non-negative
+   and usually positive: df, sample size, number of trials.)
    
    If t is C_DBL or C_POS_DBL and something is wrong with the
    input, we flag this by returning NADBL.  In the case of
-   C_INT, we flag an error by returning -1.
+   C_INT and C_POS_INT, we flag an error by returning -1.
 
    Possible refinement: should we accept names of variables
    in these entry fields?
@@ -793,15 +795,16 @@ static double getval (GtkWidget *w, int t)
 
     if (s == NULL || *s == '\0') {
 	errbox(_("Incomplete entry"));
-	return (t == C_INT)? -1 : NADBL;
+	return (t == C_INT || t == C_POS_INT)? -1 : NADBL;
     }
 
-    if (t == C_INT) {
+    if (t == C_INT || t == C_POS_INT) {
 	if (check_atoi(s)) {
 	    errbox(gretl_errmsg_get());
 	} else {
 	    k = atoi(s);
-	    if (k <= 0) {
+	    if ((t == C_INT && k < 0) || 
+		(t == C_POS_INT && k <= 0)) {
 		errbox(_("Invalid entry"));
 		x = -1;
 	    } else {
@@ -848,7 +851,7 @@ static void dw_lookup (dist_t *tab)
     PRN *prn;
     int n;
 
-    n = getval(tab->entry[0], C_INT);
+    n = getval(tab->entry[0], C_POS_INT);
     if (n < 0) {
 	return;
     }
@@ -930,7 +933,7 @@ static char dist_to_char (int d)
 {
     const char *dchars = "uztXFGBP";
 
-    return (d >= 0 && d < 7)? dchars[d] : 0;
+    return (d >= 0 && d < 8)? dchars[d] : 0;
 }
 
 static int 
@@ -954,13 +957,13 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
 	break;
     case T_DIST:
     case CHISQ_DIST:
-	x[j] = getval(tab->entry[j], C_INT); /* df */
+	x[j] = getval(tab->entry[j], C_POS_INT); /* df */
 	if (x[j++] < 0) return 1;
 	break;
     case F_DIST:
-	x[j] = getval(tab->entry[j], C_INT); /* dfn */
+	x[j] = getval(tab->entry[j], C_POS_INT); /* dfn */
 	if (x[j++] < 0) return 1;
-	x[j] = getval(tab->entry[j], C_INT); /* dfd */
+	x[j] = getval(tab->entry[j], C_POS_INT); /* dfd */
 	if (x[j++] < 0) return 1;
 	break;
     case GAMMA_DIST: 
@@ -972,7 +975,7 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
     case BINOMIAL_DIST:
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
 	if (check_prob(x[j++])) return 1;
-	x[j] = getval(tab->entry[j], C_INT); /* n */
+	x[j] = getval(tab->entry[j], C_POS_INT); /* n */
 	if (x[j++] < 0) return 1;
 	break;
     case POISSON_DIST:
@@ -1087,18 +1090,18 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
     switch (d) {
     case NORMAL_DIST:
     case T_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_DBL); /* val */
+	x[j] = getval(tabs[i]->entry[j], C_DBL);
 	if (na(x[j])) return;
 	break;
     case CHISQ_DIST:
     case F_DIST:
     case GAMMA_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_POS_DBL); /* val */
+	x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
 	if (na(x[j])) return;
 	break;
     case BINOMIAL_DIST:
     case POISSON_DIST:
-	x[j] = getval(tabs[i]->entry[j], C_INT); /* val */
+	x[j] = getval(tabs[i]->entry[j], C_INT);
 	if (x[j] < 0) return;
 	break;
     };
@@ -1533,7 +1536,7 @@ static void h_test (GtkWidget *w, test_t *test)
 	if (na(x[j++])) return;
 	x[j] = getval(test->entry[k++], C_POS_DBL); /* s.d. */
 	if (na(x[1])) return;
-	n1 = getval(test->entry[k++], C_INT); /* sample */
+	n1 = getval(test->entry[k++], C_POS_INT); /* sample */
 	if (n1 < 0) return;
 	x[j++] = getval(test->entry[k], C_DBL); /* val */
 	if (na(x[j])) return;
@@ -1542,7 +1545,7 @@ static void h_test (GtkWidget *w, test_t *test)
     case ONE_VARIANCE:
 	x[j] = getval(test->entry[k++], C_POS_DBL);
 	if (na(x[j++])) return;
-	n1 = getval(test->entry[k++], C_INT);
+	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 	x[j] = getval(test->entry[k], C_POS_DBL);
 	if (na(x[j])) return;
@@ -1551,7 +1554,7 @@ static void h_test (GtkWidget *w, test_t *test)
     case ONE_PROPN:
 	x[j] = getval(test->entry[k++], C_POS_DBL); /* propn */
 	if (na(x[j++])) return;
-	n1 = getval(test->entry[k++], C_INT);
+	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 	x[j] = getval(test->entry[k], C_POS_DBL);
 	if (na(x[j])) return;
@@ -1568,14 +1571,14 @@ static void h_test (GtkWidget *w, test_t *test)
 	if (na(x[j++])) return;
 	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd1 */
 	if (na(x[j++])) return;
-	n1 = getval(test->entry[k++], C_INT);
+	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return; 
 
 	x[j] = getval(test->entry[k++], C_DBL); /* mean2 */
 	if (na(x[j++])) return;
 	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd2 */
 	if (na(x[j++])) return;
-	n2 = getval(test->entry[k++], C_INT);
+	n2 = getval(test->entry[k++], C_POS_INT);
 	if (n2 < 0) return; 
 
 	x[j] = getval(test->entry[k], C_DBL);
@@ -1585,24 +1588,24 @@ static void h_test (GtkWidget *w, test_t *test)
     case TWO_VARIANCES:
 	x[j] = getval(test->entry[k++], C_POS_DBL);
 	if (na(x[j++])) return;
-	n1 = getval(test->entry[k++], C_INT);
+	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
 	x[1] = getval(test->entry[k++], C_POS_DBL);
 	if (na(x[1])) return;
-	n2 = getval(test->entry[k], C_INT);
+	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
 	break;
 
     case TWO_PROPNS:
 	x[j] = getval(test->entry[k++], C_POS_DBL);
 	if (na(x[j++])) return;
-	n1 = getval(test->entry[k++], C_INT);
+	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
 	x[j] = getval(test->entry[k++], C_POS_DBL);
 	if (na(x[j])) return;
-	n2 = getval(test->entry[k], C_INT);
+	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
 	break;
 
@@ -1857,6 +1860,22 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     return err;
 }
 
+static void entry_set_float (test_t *test, int i, double x)
+{
+    char numstr[32];
+
+    sprintf(numstr, "%.10g", x);
+    gtk_entry_set_text(GTK_ENTRY(test->entry[i]), numstr);
+}
+
+static void entry_set_int (test_t *test, int i, int k)
+{
+    char numstr[16];
+
+    sprintf(numstr, "%d", k);
+    gtk_entry_set_text(GTK_ENTRY(test->entry[i]), numstr);
+}
+
 /* fill out the sample statistics boxes based on the user's
    choice of variable (or variable plus restriction) */
 
@@ -1869,7 +1888,6 @@ static void populate_stats (GtkWidget *w, gpointer p)
     int vx = -1, vy = -1;
     GretlOp yop = 0;
     const gchar *buf;
-    char numstr[16];
     double x1, x2, yval;
 
     g_return_if_fail(GTK_IS_COMBO(p));
@@ -1934,12 +1952,9 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	    x2 = gretl_restricted_stddev(datainfo->t1, datainfo->t2, 
 					 Z[vx], Z[vy], yop, yval);
 	}
-	sprintf(numstr, "%.10g", x1);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
-	sprintf(numstr, "%.10g", x2);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
-	sprintf(numstr, "%d", n);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 2]), numstr);
+	entry_set_float(test, pos, x1);
+	entry_set_float(test, pos + 1, x2);
+	entry_set_int(test, pos + 2, n);
     } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
 	if (vy < 0) {
 	    x1 = gretl_variance(datainfo->t1, datainfo->t2, Z[vx]);
@@ -1947,10 +1962,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	    x1 = gretl_restricted_variance(datainfo->t1, datainfo->t2, 
 					   Z[vx], Z[vy], yop, yval);
 	}
-	sprintf(numstr, "%.10g", x1);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
-	sprintf(numstr, "%d", n);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
+	entry_set_float(test, pos, x1);
+	entry_set_int(test, pos + 1, n);
     } else if (test->code == ONE_PROPN || test->code == TWO_PROPNS) {
 	if (vy < 0) {
 	    x1 = gretl_mean(datainfo->t1, datainfo->t2, Z[vx]);
@@ -1958,10 +1971,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
 				      Z[vx], Z[vy], yop, yval);
 	}
-	sprintf(numstr, "%.10g", x1);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos]), numstr);
-	sprintf(numstr, "%d", n);
-	gtk_entry_set_text(GTK_ENTRY(test->entry[pos + 1]), numstr);
+	entry_set_float(test, pos, x1);
+	entry_set_int(test, pos + 1, n);
     }	
 }
 
@@ -2043,33 +2054,33 @@ static void select_child_callback (GtkList *l, GtkWidget *w, gpointer p)
     populate_stats(NULL, p);
 }
 
-static void add_test_var_selector (GtkWidget *tbl, gint *rows, 
-				   test_t *test, int pos,
+static void add_test_var_selector (GtkWidget *tbl, gint *row, 
+				   test_t *test, int i,
 				   int labelit)
 {
     GtkWidget *label, *tmp;
     gchar **pbuf;
 
-    *rows += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
+    *row += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *row, 2);
     if (labelit) {
-	gchar *tmp = g_strdup_printf(_("Variable %d"), pos + 1);
+	gchar *tmp = g_strdup_printf(_("Variable %d"), i + 1);
 	label = gtk_label_new(tmp);
 	g_free(tmp);
     } else {
 	label = gtk_label_new(_("Variable"));
     }
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      label, 0, 1, *rows - 1, *rows);
+			      label, 0, 1, *row - 1, *row);
     gtk_widget_show(label);
 
     tmp = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *rows - 1, *rows);
+			      tmp, 1, 2, *row - 1, *row);
     gtk_widget_show(tmp);
     g_object_set_data(G_OBJECT(tmp), "test", test);
-    g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(pos));
-    test->entry[pos] = GTK_COMBO(tmp)->entry;
+    g_object_set_data(G_OBJECT(tmp), "pos", GINT_TO_POINTER(i));
+    test->entry[i] = GTK_COMBO(tmp)->entry;
 
     pbuf = malloc(sizeof *pbuf);
     if (pbuf != NULL) {
@@ -2078,13 +2089,13 @@ static void add_test_var_selector (GtkWidget *tbl, gint *rows,
 	g_signal_connect(G_OBJECT(tmp), "destroy", G_CALLBACK(free_pbuf), NULL);
     }
 
-    if (pos > 0) {
+    if (i > 0) {
 	test->combo[1] = tmp;
     } else {
 	test->combo[0] = tmp;
     }
 
-    add_vars_to_combo(tmp, test->code, pos);
+    add_vars_to_combo(tmp, test->code, i);
 }
 
 static void add_test_combo (GtkWidget *tbl, gint *rows, 
@@ -2132,22 +2143,22 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 		     G_CALLBACK(toggle_combo_ok), tmp);
 }
 
-static void test_entry (GtkWidget *tbl, gint *rows, 
+static void test_entry (GtkWidget *tbl, gint *row, 
 			const gchar *label, test_t *test, 
 			int i)
 {
     GtkWidget *tmp;
 
-    *rows += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
+    *row += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *row, 2);
     tmp = gtk_label_new(label);
     gtk_misc_set_alignment(GTK_MISC(tmp), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 1, *rows - 1, *rows);
+			      tmp, 0, 1, *row - 1, *row);
     gtk_widget_show(tmp);
     tmp = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 1, 2, *rows - 1, *rows);
+			      tmp, 1, 2, *row - 1, *row);
     gtk_widget_show(tmp);
     test->entry[i] = tmp;
 
@@ -2155,32 +2166,32 @@ static void test_entry (GtkWidget *tbl, gint *rows,
 		     G_CALLBACK(h_test), test);
 }
 
-static void add_test_label (GtkWidget *tbl, gint *rows, 
+static void add_test_label (GtkWidget *tbl, gint *row, 
 			    const gchar *label)
 {
     GtkWidget *tmp;
 
-    *rows += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
+    *row += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *row, 2);
     tmp = gtk_label_new(label);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 2, *rows - 1, *rows);
+			      tmp, 0, 2, *row - 1, *row);
     gtk_widget_show(tmp);
 }
 
-static void add_test_check (GtkWidget *tbl, gint *rows, 
+static void add_test_check (GtkWidget *tbl, gint *row, 
 			    const gchar *label, test_t *test,
 			    gboolean val)
 {
     GtkWidget *tmp;
 
-    *rows += 1;
-    gtk_table_resize(GTK_TABLE(tbl), *rows, 2);
+    *row += 1;
+    gtk_table_resize(GTK_TABLE(tbl), *row, 2);
     tmp = gtk_check_button_new_with_label(label);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), val);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tmp, 0, 2, *rows - 1, *rows);
+			      tmp, 0, 2, *row - 1, *row);
     gtk_widget_show(tmp);
     test->check = tmp;
 }
