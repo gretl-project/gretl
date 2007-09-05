@@ -2703,11 +2703,7 @@ static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
     int i, err = 0;
 
     p = gretl_column_vector_alloc(m);
-    f = gretl_matrix_alloc(T, 2);
-
-    if (p == NULL || f == NULL) {
-	gretl_matrix_free(p);
-	gretl_matrix_free(f);
+    if (p == NULL) {
 	return NULL;
     }
     
@@ -2724,7 +2720,7 @@ static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
 	p->val[i] = (re*re + im*im) / scale;
     }
 
-    gretl_vector_free(f);
+    gretl_matrix_free(f);
 
     return p;
 }

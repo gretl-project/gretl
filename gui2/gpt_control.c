@@ -836,33 +836,34 @@ read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
     return err;
 }
 
-static void catch_value (char *targ, const char *src, int maxlen)
+static int catch_value (char *targ, const char *src, int maxlen)
 {
     int i, n;
 
     src += strspn(src, " \t\r\n");
-
     if (*src == '\'' || *src == '"') {
 	src++;
     }
 
     *targ = '\0';
-    strncat(targ, src, maxlen - 1);
-    n = strlen(targ);
-    
-    for (i=n-1; i>=0; i--) {
-	if (isspace((unsigned char) targ[i])) {
+
+    if (*src != '\0') {
+	strncat(targ, src, maxlen - 1);
+	n = strlen(targ);
+
+	for (i=n-1; i>=0; i--) {
+	    if (isspace((unsigned char) targ[i])) {
+		targ[i] = '\0';
+	    } else {
+		break;
+	    }
+	}  
+	if (targ[i] == '\'' || targ[i] == '"') {
 	    targ[i] = '\0';
-	} else {
-	    break;
 	}
-    }    
-
-    /* valgrind finds uninitialised value in some cases here */
-
-    if (targ[i] == '\'' || targ[i] == '"') {
-	targ[i] = '\0';
     }
+
+    return (*targ != '\0');
 }
 
 static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
@@ -896,9 +897,18 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
     } else if (!strcmp(variable, "yzeroaxis")) {
 	spec->flags |= GPT_YZEROAXIS;
 	return 0;
+    } else if (!strcmp(variable, "nokey")) {
+	strcpy(spec->keyspec, "none");
+	return 0;
+    } else if (!strcmp(variable, "label")) {
+	parse_label_line(spec, s, *labelno);
+	*labelno += 1;
+	return 0;
     }
 
-    catch_value(value, s + 4 + strlen(variable), MAXLEN);
+    if (!catch_value(value, s + 4 + strlen(variable), MAXLEN)) {
+	return 0;
+    }
 
     if (strstr(variable, "range")) {
 	if (read_plotspec_range(variable, value, spec)) {
@@ -920,8 +930,6 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	strcpy(spec->titles[3], value);
     } else if (!strcmp(variable, "key")) {
 	strcpy(spec->keyspec, value);
-    } else if (!strcmp(variable, "nokey")) {
-	strcpy(spec->keyspec, "none");
     } else if (!strcmp(variable, "xtics")) { 
 	safecpy(spec->xtics, value, 15);
     } else if (!strcmp(variable, "mxtics")) { 
@@ -930,10 +938,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 	spec->boxwidth = (float) atof(value);
     } else if (!strcmp(variable, "samples")) {
 	spec->samples = atoi(value);
-    } else if (!strcmp(variable, "label")) {
-	parse_label_line(spec, s, *labelno);
-	*labelno += 1;
-    }
+    } 
 
     return 0;
 }
