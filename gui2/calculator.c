@@ -97,6 +97,677 @@ enum {
     C_POS_DBL
 };
 
+/* functions relating to distribution graphics */
+
+static int get_dist_and_params (const char *s, int *d, double *x)
+{
+    int ret = 1;
+
+    if (!strncmp(s, "# standard", 10)) {
+	*d = NORMAL_DIST;
+	x[0] = 0;
+	x[1] = 1;
+    } else if (sscanf(s, "# N(%lf,%lf)", &x[0], &x[1]) == 2) {
+	*d = NORMAL_DIST;
+    } else if (sscanf(s, "# t(%lf)", &x[0]) == 1) {
+	*d = T_DIST;
+    } else if (sscanf(s, "# chi-square(%lf)", &x[0]) == 1) {
+	*d = CHISQ_DIST;
+    } else if (sscanf(s, "# F(%lf,%lf)", &x[0], &x[1]) == 2) {
+	*d = F_DIST;
+    } else if (sscanf(s, "# Binomial(%lf,%lf)", &x[1], &x[0]) == 2) {
+	*d = BINOMIAL_DIST;
+    } else if (sscanf(s, "# Poisson(%lf)", &x[0]) == 1) {
+	*d = POISSON_DIST;
+    } else {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+static int current_graph_dist (png_plot *plot)
+{
+    GPT_SPEC *spec = plot_get_spec(plot);
+    const char *s;
+    int i, d = -1;
+
+    for (i=0; i<spec->n_literal && d<0; i++) {
+	s = spec->literal[i];
+	if (!strncmp(s, "# standard", 10)) {
+	    d = NORMAL_DIST;
+	} else if (!strncmp(s, "# N(", 4)) {
+	    d = NORMAL_DIST;
+	} else if (!strncmp(s, "# t(", 4)) {
+	    d = T_DIST;
+	} else if (!strncmp(s, "# chi-square(", 13)) {
+	    d = CHISQ_DIST;
+	} else if (!strncmp(s, "# F(", 4)) {
+	    d = F_DIST;
+	} else if (!strncmp(s, "# Binomial(", 11)) {
+	    d = BINOMIAL_DIST;
+	} else if (!strncmp(s, "# Poisson(", 10)) {
+	    d = POISSON_DIST;
+	} 
+    }
+
+    return d;
+}    
+
+static gchar *
+dist_graph_title (int dist, double x, double *parms)
+{
+    gchar *s = NULL;
+
+    if (na(x)) {
+	if (dist == NORMAL_DIST) {
+	    s = g_strdup_printf(I_("N(%g, %g)"), parms[0], parms[1] * parms[1]);
+	} else if (dist == T_DIST) {
+	    s = g_strdup_printf(I_("t(%d)"), (int) parms[0]);
+	} else if (dist == CHISQ_DIST) {
+	    s = g_strdup_printf(I_("Chi-square(%d)"), (int) parms[0]);
+	} else if (dist == F_DIST) {
+	    s = g_strdup_printf(I_("F(%d, %d)"), (int) parms[0], (int) parms[1]);
+	} else if (dist == BINOMIAL_DIST) {
+	    s = g_strdup_printf(I_("Binomial(%d, %g)"), (int) parms[1], parms[0]);
+	} else if (dist == POISSON_DIST) {
+	    s = g_strdup_printf(I_("Poisson(%g)"), parms[0]);
+	}
+    } else {
+	if (dist == NORMAL_DIST) {
+	    s = g_strdup(I_("Gaussian sampling distribution"));
+	} else if (dist == T_DIST) {
+	    s = g_strdup_printf(I_("t(%d) sampling distribution"), (int) parms[0]);
+	} else if (dist == CHISQ_DIST) {
+	    s = g_strdup_printf(I_("Chi-square(%d) sampling distribution"), 
+				(int) parms[0]);
+	} else if (dist == F_DIST) {
+	    s = g_strdup_printf(I_("F(%d, %d) sampling distribution"), 
+				(int) parms[0], (int) parms[1]);
+	}
+    }
+
+    return s;
+}
+
+static gchar *dist_comment_line (int dist, double *parms)
+{
+    gchar *s = NULL;
+
+    if (dist == NORMAL_DIST) {
+	s = g_strdup_printf("# N(%g,%g)", parms[0], parms[1]);
+    } else if (dist == T_DIST) {
+	s = g_strdup_printf("# t(%d)", (int) parms[0]);
+    } else if (dist == CHISQ_DIST) {
+	s = g_strdup_printf("# chi-square(%d)", (int) parms[0]);
+    } else if (dist == F_DIST) {
+	s = g_strdup_printf("# F(%d,%d)", (int) parms[0], (int) parms[1]);
+    } else if (dist == BINOMIAL_DIST) {
+	s = g_strdup_printf("# Binomial(%d,%g)", (int) parms[1], parms[0]);
+    } else if (dist == POISSON_DIST) {
+	s = g_strdup_printf("# Poisson(%g)", parms[0]);
+    }
+
+    return s;
+}
+
+enum {
+    ID_D,
+    ID_N,
+    ID_P,
+    ID_L,
+    ID_M,
+    ID_S,
+    ID_MAX
+};
+
+#define F_NORM   "normal(x,mu,s) = 1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
+#define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
+#define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
+#define F_ALTCHI "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
+#define F_F      "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
+                 "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
+#define F_COMB   "comb(n,k) = n!/(k!*(n-k)!)"
+#define F_BINOM  "binom(k,n,p) = comb(int(n),int(k))*p**k*(1-p)**(n-k)"
+#define F_POIS   "poisson(z,k) = exp(-z)*(z**k)/(int(k))!"
+
+static double dist_xmax (int d, double *parms)
+{
+    double x[3] = {0};
+    char st = 0;
+
+    x[0] = parms[0];
+
+    switch (d) {
+    case CHISQ_DIST:
+	st = 'X';
+	x[1] = 0.005;
+	break;
+    case F_DIST:
+	st = 'F';
+	x[1] = parms[1];
+	if (parms[0] + parms[1] < 16) {
+	    x[2] = 0.009;
+	} else {
+	    x[2] = 0.005;
+	}
+	break;
+    case BINOMIAL_DIST:
+	st = 'B';
+	x[1] = parms[1];
+	x[2] = 0.001;
+	break;
+    case POISSON_DIST:
+	st = 'P';
+	x[1] = 0.0015;
+	break;
+    }
+
+    return gretl_get_critval(st, x);
+}
+
+static int n_literal_lines (int d, int alt)
+{
+    int n = 0;
+
+    switch (d) {
+    case NORMAL_DIST:
+	n = 4;
+	break;
+    case T_DIST:
+    case CHISQ_DIST:	
+    case POISSON_DIST:
+	n = 3;
+	break;
+    case F_DIST:
+	n = 5;
+	break;
+    case BINOMIAL_DIST:
+	n = (alt)? 4 : 5;
+	break;
+    }
+
+    return n;
+}
+
+static double normal_pdf_height (double s)
+{
+    return 1 / (s * sqrt(M_2PI));
+}
+
+static int tic_step (int t)
+{
+    return 1 + t / 20;
+}
+
+static void 
+binom_approx_range (const double *parms, double *x0, double *x1)
+{
+    double m = parms[1] * parms[0];
+    double s = sqrt(m * (1 - parms[0]));
+    
+    *x1 = m + 3.5 * s;
+    *x0 = m - 3.5 * s;
+    if (*x0 < 0) {
+	*x0 = 0;
+    }
+}
+
+static void 
+range_from_test_stat (int d, double x, double *parms, double *spike,
+		      FILE *fp)
+{
+    double xx, x1;
+
+    if (d == NORMAL_DIST || d == T_DIST) {
+	xx = fabs(x);
+	x1 = ((xx > 3.5)? xx + .5 : 3.5);
+	*spike = .25;
+	fprintf(fp, "set xrange [%.3f:%.3f]\n", -x1, x1);
+	fprintf(fp, "set yrange [0:.50]\n");
+	fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
+    } else if (d == CHISQ_DIST || d == F_DIST) {
+	x1 = dist_xmax(d, parms);
+	if (x > x1) {
+	    x1 = 1.1 * x;
+	}
+	*spike = 1.0 / x1;
+	fprintf(fp, "set xrange [0:%.3f]\n", x1);
+    } 
+}
+
+static void
+range_from_dist (int d, double *parms, int alt, FILE *fp)
+{
+    double x;
+
+    if (d == NORMAL_DIST) {
+	fprintf(fp, "set xrange [%g:%g]\n", parms[0] - 5 * parms[1],
+		parms[0] + 5 * parms[1]);
+	x = normal_pdf_height(parms[1]);
+	fprintf(fp, "set yrange [0:%g]\n", x * 1.1);
+    } else if (d == T_DIST) {
+	fputs("set xrange [-5:5]\n", fp);
+	fputs("set yrange [0:.50]\n", fp);
+    } else if (d == CHISQ_DIST || d == F_DIST) {
+	x = dist_xmax(d, parms);
+	fprintf(fp, "set xrange [0:%.3f]\n", x);
+    } else if (d == BINOMIAL_DIST && alt) {
+	double t0, t1;
+
+	binom_approx_range(parms, &t0, &t1);
+	fprintf(fp, "set trange [%g:%g]\n", t0, t1);
+	fprintf(fp, "set samples %d\n", (int) (t1 - t0 + 1));
+	fprintf(fp, "set xtics %d\n", tic_step(t1 - t0));	    
+    } else if (d == BINOMIAL_DIST || d == POISSON_DIST) {  
+	int t1 = dist_xmax(d, parms);
+
+	fprintf(fp, "set trange [0:%d]\n", t1);
+	fprintf(fp, "set samples %d\n", t1 + 1);
+	fprintf(fp, "set xtics %d\n", tic_step(t1));
+    }	
+}
+
+static void
+spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
+{
+    if (d == CHISQ_DIST || d == F_DIST) {
+	double x = dist_xmax(d, parms);
+
+	if (x > spec->range[0][1]) {
+	    spec->range[0][1] = x;
+	}
+    } else if (d == BINOMIAL_DIST && alt) {
+	double t0, t1;
+
+	binom_approx_range(parms, &t0, &t1);
+
+	if (t0 < spec->range[3][0]) {
+	    spec->range[3][0] = t0;
+	    spec->samples = t1 + 1;
+	} else {
+	    t0 = spec->range[3][0];
+	}
+
+	if (t1 > spec->range[3][1]) {
+	    spec->range[3][1] = t1;
+	    spec->samples = t1 + 1;
+	} else {
+	    t1 = spec->range[3][1];
+	}
+
+	spec->samples = (int) (t1 - t0 + 1);
+	sprintf(spec->xtics, "%d", tic_step(t1 - t0));
+    } else if (d == BINOMIAL_DIST || d == POISSON_DIST) {
+	int t1 = dist_xmax(d, parms);
+
+	if (t1 > spec->range[3][1]) {
+	    spec->range[3][1] = t1;
+	    spec->samples = t1 + 1;
+	}
+    }
+}
+
+static void 
+make_plot_line (char *targ, int d, int alt, const int *ids)
+{
+    int k, j;
+
+    switch (d) {
+    case NORMAL_DIST:
+	k = (ids != NULL)? ids[ID_M] + 1 : 1;
+	j = (ids != NULL)? ids[ID_S] + 1 : 1;
+	sprintf(targ, "normal(x,mu%d,s%d)", k, j);
+	break;
+    case T_DIST:
+	k = (ids != NULL)? ids[ID_D] + 1 : 1;
+	sprintf(targ, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
+		"**(-0.5*(df%d+1.0))", k, k, k, k);
+	break;
+    case CHISQ_DIST:
+	k = (ids != NULL)? ids[ID_D] + 1 : 1;
+	sprintf(targ, "%s(x,df%d)", (alt)? "bigchi" : "chi", k);
+	break;
+    case F_DIST:
+	k = (ids != NULL)? ids[ID_D] + 1 : 1;
+	sprintf(targ, "f(x,df%d,df%d)", k, k + 1);
+	break;
+    case BINOMIAL_DIST:
+	k = (ids != NULL)? ids[ID_N] + 1 : 1;
+	j = (ids != NULL)? ids[ID_P] + 1 : 1;
+	if (alt) {
+	    sprintf(targ, "int(t),normal(t+.5,n%d*p%d,sqrt(n%d*p%d*(1-p%d)))", 
+		    k, j, k, j, j);
+	} else {
+	    sprintf(targ, "int(t),binom(t,n%d,p%d)", k, j);
+	}
+	break;
+    case POISSON_DIST:
+	k = (ids != NULL)? ids[ID_L] + 1 : 1;
+	sprintf(targ, "int(t),poisson(lambda%d,t)", k);
+	break;
+    } 
+}
+
+static void calc_graph (int d, double x, double *parms)
+{
+    PlotType pt = (na(x))? PLOT_PROB_DIST : PLOT_H_TEST;
+    double spike = 0.0;
+    int alt = 0;
+    char pline[128];
+    gchar *title = NULL;
+    FILE *fp = NULL;
+
+    if (gnuplot_init(pt, &fp)) {
+	return;
+    }
+
+    if (d == CHISQ_DIST && parms[0] > 69) {
+	alt = 1;
+    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
+	alt = 1;
+    }
+
+    fputs("set key right top\n", fp);
+    
+    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
+	fputs("set parametric\n", fp);
+    }
+
+    gretl_push_c_numeric_locale();
+
+    if (na(x)) {
+	/* no test statistic to be shown */
+	range_from_dist(d, parms, alt, fp);
+    } else {
+	range_from_test_stat(d, x, parms, &spike, fp);
+    }
+
+    /* header */
+    fprintf(fp, "# literal lines = %d\n", n_literal_lines(d, alt));
+    title = dist_comment_line(d, parms);
+    fprintf(fp, "%s\n", title);
+    g_free(title);
+
+    /* required variables and formulae */
+    switch (d) {
+    case NORMAL_DIST:
+	fprintf(fp, "mu1=%g\n", parms[0]);
+	fprintf(fp, "s1=%g\n", parms[1]);
+	fprintf(fp, "%s\n", F_NORM);
+	break;
+    case T_DIST:
+	fprintf(fp, "df1=%.1f\n", parms[0]);
+	fprintf(fp, "%s\n", F_BINV);
+	break;
+    case CHISQ_DIST:
+	fprintf(fp, "df1=%.1f\n", parms[0]);
+	fprintf(fp, "%s\n", (alt)? F_ALTCHI : F_CHI);
+	break;
+    case F_DIST:
+	fprintf(fp, "df1=%.1f\n", parms[0]);
+	fprintf(fp, "df2=%.1f\n", parms[1]);
+	fprintf(fp, "%s\n", F_BINV);
+	fprintf(fp, "%s\n", F_F);
+	break;
+    case BINOMIAL_DIST:
+	fprintf(fp, "n1=%d\n", (int) parms[1]);
+	fprintf(fp, "p1=%g\n", parms[0]);
+	if (alt) {
+	    fprintf(fp, "%s\n", F_NORM);
+	} else {
+	    fprintf(fp, "%s\n", F_COMB);
+	    fprintf(fp, "%s\n", F_BINOM);
+	}
+	break;
+    case POISSON_DIST:
+	fprintf(fp, "lambda1=%g\n", parms[0]);
+	fprintf(fp, "%s\n", F_POIS);
+	break;
+    }
+
+    fprintf(fp, "plot \\\n");
+
+    title = dist_graph_title(d, x, parms);
+    make_plot_line(pline, d, alt, NULL);
+
+    switch (d) {
+    case NORMAL_DIST:
+    case T_DIST:
+    case CHISQ_DIST:
+    case F_DIST:
+	fprintf(fp, "%s title '%s' w lines", pline, title);
+	break;
+    case BINOMIAL_DIST:
+    case POISSON_DIST:
+	fprintf(fp, "%s title '%s' w linespoints", pline, title);
+	break;
+    }
+
+    g_free(title);
+
+    if (!na(x)) {
+	fputs(" , \\\n", fp);
+	fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
+		I_("test statistic"));
+	fprintf(fp, "%g %g\n", x, spike);
+	fputs("e\n", fp);
+    } else {
+	fputc('\n', fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    if (gnuplot_make_graph()) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
+}
+
+#define ALT_CHI NGRAPHS
+
+static void revise_distribution_plot (png_plot *plot, int d, double *parms)
+{
+    GPT_SPEC *spec = plot_get_spec(plot);
+    char *title = NULL;
+    const char *f1 = NULL, *f2 = NULL;
+    char v1[32] = {0};
+    char v2[32] = {0};
+    char got[NGRAPHS+1] = {0};
+    int ids[ID_MAX] = {0};
+    double x[2] = {0};
+    int i, k, alt = 0;
+    int err = 0;
+
+    /* check what we already have in the plot spec */
+
+    for (i=0; i<spec->n_literal; i++) {
+	const char *s = spec->literal[i];
+	int id, prevd;
+
+	if (*s == '#') {
+	    if (get_dist_and_params(s, &prevd, x)) {
+		if (prevd == d && x[0] == parms[0] && x[1] == parms[1]) {
+		    /* no-op: line is already present */
+		    return;
+		}
+		if (prevd == CHISQ_DIST && x[0] > 69) {
+		    got[ALT_CHI] = 1;
+		} else if (prevd == BINOMIAL_DIST && x[0] > 150) { /* ?? */
+		    got[NORMAL_DIST] = 1;
+		} else {
+		    got[prevd] = 1;
+		}
+	    }
+	} else if (sscanf(s, "df%d=", &id) == 1) {
+	    if (id > ids[ID_D]) {
+		ids[ID_D] = id;
+	    }
+	} else if (sscanf(s, "n%d=", &id) == 1) {
+	    if (id > ids[ID_N]) {
+		ids[ID_N] = id;
+	    }
+	} else if (sscanf(s, "p%d=", &id) == 1) {
+	    if (id > ids[ID_P]) {
+		ids[ID_P] = id;
+	    }
+	} else if (sscanf(s, "lambda%d=", &id) == 1) {
+	    if (id > ids[ID_L]) {
+		ids[ID_L] = id;
+	    }
+	} else if (sscanf(s, "mu%d=", &id) == 1) {
+	    if (id > ids[ID_M]) {
+		ids[ID_M] = id;
+	    }
+	} else if (sscanf(s, "s%d=", &id) == 1) {
+	    if (id > ids[ID_S]) {
+		ids[ID_S] = id;
+	    }
+	}	    
+    }
+
+    /* alternate forms for some plots */
+    if (d == CHISQ_DIST && parms[0] > 69) {
+	alt = 1;
+    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
+	alt = 1;
+    }
+
+    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
+	spec->flags |= GPT_PARAMETRIC;
+    }
+
+    /* maybe adjust x-range or t-range */
+    spec_range_from_dist(d, parms, alt, spec);
+
+    /* add a comment line for the new plot */
+    title = dist_comment_line(d, parms);
+    err = strings_array_add(&spec->literal, &spec->n_literal, title);
+    g_free(title);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    } 
+
+    /* add parameter line(s) if needed */
+
+    switch (d) {
+    case NORMAL_DIST:
+	k = ids[ID_M] + 1;
+	sprintf(v1, "mu%d=%g", k, parms[0]);
+	k = ids[ID_S] + 1;
+	sprintf(v2, "s%d=%g", k, parms[1]);
+	break;
+    case T_DIST:
+    case CHISQ_DIST:
+    case F_DIST:
+	k = ids[ID_D] + 1;
+	sprintf(v1, "df%d=%.1f", k, parms[0]);
+	if (d == F_DIST) {
+	    sprintf(v2, "df%d=%.1f", k + 1, parms[1]);
+	}
+	break;
+    case BINOMIAL_DIST:
+	k = ids[ID_N] + 1;
+	sprintf(v1, "n%d=%d", k, (int) parms[1]);
+	k = ids[ID_P] + 1;
+	sprintf(v2, "p%d=%g", k, parms[0]);
+	break;
+    case POISSON_DIST:
+	k = ids[ID_L] + 1;
+	sprintf(v1, "lambda%d=%g", k, parms[0]);
+	break;
+    }  
+
+    if (*v1) {
+	err = strings_array_add(&spec->literal, &spec->n_literal, v1);
+    } 
+    if (!err && *v2) {
+	err = strings_array_add(&spec->literal, &spec->n_literal, v2);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }  
+
+    /* add any required formula lines */
+
+    switch (d) {
+    case NORMAL_DIST:
+	if (!got[NORMAL_DIST]) f1 = F_NORM;
+	break;
+    case T_DIST:
+	if (!got[T_DIST] && !got[F_DIST]) f1 = F_BINV;
+	break;
+    case CHISQ_DIST:
+	if (alt && !got[ALT_CHI]) {
+	    f1 = F_ALTCHI;
+	} else if (!alt && !got[CHISQ_DIST]) {
+	    f1 = F_CHI;
+	}
+	break;
+    case F_DIST:
+	if (!got[F_DIST] && !got[T_DIST]) {
+	    f1 = F_BINV;
+	} 
+	if (!got[F_DIST]) f2 = F_F;
+	break;
+    case BINOMIAL_DIST:
+	if (alt && !got[NORMAL_DIST]) {
+	    f1 = F_NORM;
+	} else if (!alt && !got[BINOMIAL_DIST]) {
+	    f1 = F_COMB;
+	    f2 =  F_BINOM;
+	}
+	break;
+    case POISSON_DIST:
+	if (!got[POISSON_DIST]) f1 = F_POIS;
+	break;
+    }
+
+    if (f1 != NULL) {
+	err = strings_array_add(&spec->literal, &spec->n_literal, f1);
+    }
+    if (!err && f2 != NULL) {
+	err = strings_array_add(&spec->literal, &spec->n_literal, f2);
+    }
+
+    if (!err) {
+	/* add new plot line */
+	err = plotspec_add_line(spec);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    i = spec->n_lines - 1;
+
+    strcpy(spec->lines[i].scale, "NA");
+
+    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
+	strcpy(spec->lines[i].style, "linespoints");
+    } else {
+	strcpy(spec->lines[i].style, "lines");
+    }
+
+    title = dist_graph_title(d, NADBL, parms);
+    strcpy(spec->lines[i].title, title);
+    g_free(title);
+
+    make_plot_line(spec->lines[i].formula, d, alt, ids);
+
+    redisplay_edited_plot(plot);
+}
+
+/* end of graphics functions */
+
 /* getval: get a numerical value from a text entry box
 
    t == C_DBL: parse the entry as a double
@@ -317,6 +988,30 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
     return 0;
 }
 
+static void print_normal_critval (double *x, double c, PRN *prn)
+{
+    double a = x[2];
+
+    if (x[0] == 0 && x[1] == 1) {
+	pprintf(prn, "%s", _("Standard normal distribution"));
+    } else {
+	pprintf(prn, "N(%g, %g)", x[0], x[1] * x[1]);
+	c = c * x[1] + x[0];
+    }
+    
+    pputs(prn, "\n ");
+    pprintf(prn, _("right-tail probability = %g"), a);
+    pputs(prn, "\n ");
+    pprintf(prn, _("complementary probability = %g"), 1.0 - a);
+    if (a < 0.5) {
+	pputs(prn, "\n ");
+	pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
+    }
+    pputs(prn, "\n\n ");
+    pprintf(prn, _("Critical value = %g"), c);
+    pputc(prn, '\n');    
+}
+
 static void get_critical (GtkWidget *w, CalcChild *child)
 {
     dist_t **tabs = child->calcp;
@@ -343,6 +1038,11 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
     if (check_prob(x[j])) return;
 
+    if (d == NORMAL_DIST) {
+	x[3] = x[0];
+	x[0] = x[2];
+    }
+
     st = dist_to_char(d);
 
     c = gretl_get_critval(st, x);
@@ -353,9 +1053,16 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 
     if (bufopen(&prn)) {
 	return;
-    }   
+    }  
 
-    print_critval(st, x, c, prn);
+    if (d == NORMAL_DIST) {
+	x[2] = x[0]; /* put alpha back */
+	x[0] = x[3]; /* put the mean back */
+	print_normal_critval(x, c, prn);
+    } else {
+	print_critval(st, x, c, prn);
+    }
+
     view_buffer(prn, 60, 200, _("gretl: critical values"), 
 		STAT_TABLE, NULL);
 }
@@ -510,302 +1217,6 @@ static void print_pv (PRN *prn, double p1, double p2)
 {
     pprintf(prn, _("Two-tailed p-value = %.4g\n(one-tailed = %.4g)\n"),
 	    p1, p2);
-}
-
-static gchar *
-dist_graph_title (int dist, double x, double *parms)
-{
-    gchar *s = NULL;
-
-    if (na(x)) {
-	if (dist == NORMAL_DIST) {
-	    s = g_strdup_printf(I_("N(%g, %g)"), parms[0], parms[1] * parms[1]);
-	} else if (dist == T_DIST) {
-	    s = g_strdup_printf(I_("t(%d)"), (int) parms[0]);
-	} else if (dist == CHISQ_DIST) {
-	    s = g_strdup_printf(I_("Chi-square(%d)"), (int) parms[0]);
-	} else if (dist == F_DIST) {
-	    s = g_strdup_printf(I_("F(%d, %d)"), (int) parms[0], (int) parms[1]);
-	} else if (dist == BINOMIAL_DIST) {
-	    s = g_strdup_printf(I_("Binomial(%d, %g)"), (int) parms[1], parms[0]);
-	} else if (dist == POISSON_DIST) {
-	    s = g_strdup_printf(I_("Poisson(%g)"), parms[0]);
-	}
-    } else {
-	if (dist == NORMAL_DIST) {
-	    s = g_strdup(I_("Gaussian sampling distribution"));
-	} else if (dist == T_DIST) {
-	    s = g_strdup_printf(I_("t(%d) sampling distribution"), (int) parms[0]);
-	} else if (dist == CHISQ_DIST) {
-	    s = g_strdup_printf(I_("Chi-square(%d) sampling distribution"), 
-				(int) parms[0]);
-	} else if (dist == F_DIST) {
-	    s = g_strdup_printf(I_("F(%d, %d) sampling distribution"), 
-				(int) parms[0], (int) parms[1]);
-	}
-    }
-
-    return s;
-}
-
-static gchar *dist_marker_line (int dist, double *parms)
-{
-    gchar *s = NULL;
-
-    if (dist == NORMAL_DIST) {
-	s = g_strdup_printf("# N(%g,%g)", parms[0], parms[1]);
-    } else if (dist == T_DIST) {
-	s = g_strdup_printf("# t(%d)", (int) parms[0]);
-    } else if (dist == CHISQ_DIST) {
-	s = g_strdup_printf("# chi-square(%d)", (int) parms[0]);
-    } else if (dist == F_DIST) {
-	s = g_strdup_printf("# F(%d,%d)", (int) parms[0], (int) parms[1]);
-    } else if (dist == BINOMIAL_DIST) {
-	s = g_strdup_printf("# Binomial(%d,%g)", (int) parms[1], parms[0]);
-    } else if (dist == POISSON_DIST) {
-	s = g_strdup_printf("# Poisson(%g)", parms[0]);
-    }
-
-    return s;
-}
-
-
-#define F_NORM   "normal(x,mu,s) = 1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
-#define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
-#define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
-#define F_ALTCHI "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
-#define F_F      "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
-                 "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
-#define F_COMB   "comb(n,k) = n!/(k!*(n-k)!)"
-#define F_BINOM  "binom(k,n,p) = comb(int(n),int(k))*p**k*(1-p)**(n-k)"
-#define F_POIS   "poisson(z,k) = exp(-z)*(z**k)/(int(k))!"
-
-static double dist_xmax (int d, double *parms)
-{
-    double x[3] = {0};
-    char st = 0;
-
-    x[0] = parms[0];
-
-    switch (d) {
-    case CHISQ_DIST:
-	st = 'X';
-	x[1] = 0.005;
-	break;
-    case F_DIST:
-	st = 'F';
-	x[1] = parms[1];
-	if (parms[0] + parms[1] < 16) {
-	    x[2] = 0.009;
-	} else {
-	    x[2] = 0.005;
-	}
-	break;
-    case BINOMIAL_DIST:
-	st = 'B';
-	x[1] = parms[1];
-	x[2] = 0.001;
-	break;
-    case POISSON_DIST:
-	st = 'P';
-	x[1] = 0.0015;
-	break;
-    }
-
-    return gretl_get_critval(st, x);
-}
-
-static int graph_literal_lines (int d, int alt)
-{
-    int n = 0;
-
-    switch (d) {
-    case NORMAL_DIST:
-	n = 4;
-	break;
-    case T_DIST:
-    case CHISQ_DIST:	
-    case POISSON_DIST:
-	n = 3;
-	break;
-    case F_DIST:
-	n = 5;
-	break;
-    case BINOMIAL_DIST:
-	n = (alt)? 4 : 5;
-	break;
-    }
-
-    return n;
-}
-
-static double normal_pdf_height (double s)
-{
-    return 1 / (s * sqrt(M_2PI));
-}
-
-static int tic_step (int t)
-{
-    return 1 + t / 25;
-}
-
-static void calc_graph (int d, double x, double *parms)
-{
-    PlotType pt = (na(x))? PLOT_PROB_DIST : PLOT_H_TEST;
-    double xx, x1, spike = 0.0;
-    int alt = 0;
-    gchar *title = NULL;
-    FILE *fp = NULL;
-
-    if (gnuplot_init(pt, &fp)) {
-	return;
-    }
-
-    if (d == CHISQ_DIST && parms[0] > 69) {
-	alt = 1;
-    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
-	alt = 1;
-    }
-
-    fputs("set key right top\n", fp);
-    
-    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	fputs("set parametric\n", fp);
-    }
-
-    gretl_push_c_numeric_locale();
-
-    if (na(x)) {
-	/* no test statistic to be shown */
-	if (d == NORMAL_DIST) {
-	    fprintf(fp, "set xrange [%g:%g]\n", parms[0] - 5 * parms[1],
-		    parms[0] + 5 * parms[1]);
-	    x1 = normal_pdf_height(parms[1]);
-	    fprintf(fp, "set yrange [0:%g]\n", x1 * 1.1);
-	} else if (d == T_DIST) {
-	    fputs("set xrange [-5:5]\n", fp);
-	    fputs("set yrange [0:.50]\n", fp);
-	} else if (d == CHISQ_DIST || d == F_DIST) {
-	    x1 = dist_xmax(d, parms);
-	    fprintf(fp, "set xrange [0:%.3f]\n", x1);
-	} else if (d == BINOMIAL_DIST && alt) {
-	    double m = parms[1] * parms[0];
-	    double s = sqrt(m * (1 - parms[0]));
-
-	    /* FIXME */
-
-	    x1 = m + 3.5 * s;
-	    fprintf(fp, "set trange [0:%g]\n", x1);
-	    fprintf(fp, "set samples %d\n", (int) x1 + 1);
-	    fprintf(fp, "set xtics %d\n", tic_step(x1));	    
-	} else if (d == BINOMIAL_DIST || d == POISSON_DIST) {  
-	    int t1 = dist_xmax(d, parms);
-
-	    fprintf(fp, "set trange [0:%d]\n", t1);
-	    fprintf(fp, "set samples %d\n", t1 + 1);
-	    fprintf(fp, "set xtics %d\n", tic_step(t1));
-	}	    
-    } else {
-	/* set range based on test stat */
-	if (d == NORMAL_DIST || d == T_DIST) {
-	    xx = fabs(x);
-	    x1 = ((xx > 3.5)? xx + .5 : 3.5);
-	    spike = .25;
-	    fprintf(fp, "set xrange [%.3f:%.3f]\n", -x1, x1);
-	    fprintf(fp, "set yrange [0:.50]\n");
-	    fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
-	} else if (d == CHISQ_DIST || d == F_DIST) {
-	    x1 = dist_xmax(d, parms);
-	    if (x > x1) {
-		x1 = 1.1 * x;
-	    }
-	    spike = 1.0 / x1;
-	    fprintf(fp, "set xrange [0:%.3f]\n", x1);
-	} 
-    }
-
-    /* header */
-    fprintf(fp, "# literal lines = %d\n", graph_literal_lines(d, alt));
-    title = dist_marker_line(d, parms);
-    fprintf(fp, "%s\n", title);
-
-    /* required variables and formulae */
-    if (d == NORMAL_DIST) {   
-	fprintf(fp, "mu1=%g\n", parms[0]);
-	fprintf(fp, "s1=%g\n", parms[1]);
-	fprintf(fp, "%s\n", F_NORM);
-    } else if (d == T_DIST) {
-	fprintf(fp, "df1=%.1f\n", parms[0]);
-	fprintf(fp, "%s\n", F_BINV);
-    } else if (d == CHISQ_DIST) {
-	fprintf(fp, "df1=%.1f\n", parms[0]);
-	fprintf(fp, "%s\n", (alt)? F_ALTCHI : F_CHI);
-    } else if (d == F_DIST) {
-	fprintf(fp, "df1=%.1f\n", parms[0]);
-	fprintf(fp, "df2=%.1f\n", parms[1]);
-	fprintf(fp, "%s\n", F_BINV);
-	fprintf(fp, "%s\n", F_F);
-    } else if (d == BINOMIAL_DIST) {
-	fprintf(fp, "n1=%d\n", (int) parms[1]);
-	fprintf(fp, "p1=%g\n", parms[0]);
-	if (alt) {
-	    fprintf(fp, "%s\n", F_NORM);
-	} else {
-	    fprintf(fp, "%s\n", F_COMB);
-	    fprintf(fp, "%s\n", F_BINOM);
-	}
-    } else if (d == POISSON_DIST) {
-	fprintf(fp, "lambda1=%g\n", parms[0]);
-	fprintf(fp, "%s\n", F_POIS);
-    }
-
-    g_free(title);
-
-    fprintf(fp, "plot \\\n");
-
-    title = dist_graph_title(d, x, parms);
-
-    if (d == NORMAL_DIST) {
-	fprintf(fp, "normal(x,mu1,s1) title '%s' w lines", title);
-    } else if (d == T_DIST) {
-	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
-		"**(-0.5*(df1+1.0)) "
-		"title '%s' w lines", title);
-    } else if (d == CHISQ_DIST) {
-	fprintf(fp, "%s(x,df1) title '%s' w lines", (alt)? "bigchi" : "chi",
-		title);
-    } else if (d == F_DIST) {
-	fprintf(fp, "f(x,df1,df2) title '%s' w lines", title);
-    } else if (d == BINOMIAL_DIST) {
-	if (alt) {
-	    fprintf(fp, "int(t),normal(t,n1*p1,sqrt(n1*p1*(1-p1))) title '%s' w linespoints", 
-		    title);
-	} else {
-	    fprintf(fp, "int(t),binom(t,n1,p1) title '%s' w linespoints", title);
-	}
-    } else if (d == POISSON_DIST) {
-	fprintf(fp, "int(t),poisson(lambda1,t) title '%s' w linespoints", title);
-    }
-
-    if (!na(x)) {
-	fputs(" , \\\n", fp);
-	fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
-		I_("test statistic"));
-	fprintf(fp, "%g %g\n", x, spike);
-	fputs("e\n", fp);
-    } else {
-	fputc('\n', fp);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fp);
-
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph();
-    }
 }
 
 /* non-parametric test */
@@ -1218,293 +1629,6 @@ static void np_test_global (GtkWidget *w, CalcChild *child)
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     np_test(NULL, test[i]);
-}
-
-static int get_dist_and_params (const char *s, int *d, double *x)
-{
-    int ret = 1;
-
-    if (!strncmp(s, "# standard", 10)) {
-	*d = NORMAL_DIST;
-	x[0] = 0;
-	x[1] = 1;
-    } else if (sscanf(s, "# N(%lf,%lf)", &x[0], &x[1]) == 2) {
-	*d = NORMAL_DIST;
-    } else if (sscanf(s, "# t(%lf)", &x[0]) == 1) {
-	*d = T_DIST;
-    } else if (sscanf(s, "# chi-square(%lf)", &x[0]) == 1) {
-	*d = CHISQ_DIST;
-    } else if (sscanf(s, "# F(%lf,%lf)", &x[0], &x[1]) == 2) {
-	*d = F_DIST;
-    } else if (sscanf(s, "# Binomial(%lf,%lf)", &x[1], &x[0]) == 2) {
-	*d = BINOMIAL_DIST;
-    } else if (sscanf(s, "# Poisson(%lf)", &x[0]) == 1) {
-	*d = POISSON_DIST;
-    } else {
-	ret = 0;
-    }
-
-    return ret;
-}
-
-static int current_graph_dist (png_plot *plot)
-{
-    GPT_SPEC *spec = plot_get_spec(plot);
-    const char *s;
-    int i, d = -1;
-
-    for (i=0; i<spec->n_literal && d<0; i++) {
-	s = spec->literal[i];
-	if (!strncmp(s, "# standard", 10)) {
-	    d = NORMAL_DIST;
-	} else if (!strncmp(s, "# N(", 4)) {
-	    d = NORMAL_DIST;
-	} else if (!strncmp(s, "# t(", 4)) {
-	    d = T_DIST;
-	} else if (!strncmp(s, "# chi-square(", 13)) {
-	    d = CHISQ_DIST;
-	} else if (!strncmp(s, "# F(", 4)) {
-	    d = F_DIST;
-	} else if (!strncmp(s, "# Binomial(", 11)) {
-	    d = BINOMIAL_DIST;
-	} else if (!strncmp(s, "# Poisson(", 10)) {
-	    d = POISSON_DIST;
-	} 
-    }
-
-    return d;
-}    
-
-enum {
-    ID_D,
-    ID_N,
-    ID_P,
-    ID_L,
-    ID_M,
-    ID_S,
-    ID_MAX
-};
-
-#define ALT_CHI NGRAPHS
-
-static void revise_distribution_plot (png_plot *plot, int d, double *parms)
-{
-    GPT_SPEC *spec = plot_get_spec(plot);
-    gchar *title = NULL;
-    int got[NGRAPHS+2] = {0};
-    int ids[ID_MAX] = {0};
-    double x[2] = {0};
-    int i, k, alt = 0;
-    int err = 0;
-
-    for (i=0; i<spec->n_literal; i++) {
-	const char *s = spec->literal[i];
-	int id, prevd;
-
-	if (*s == '#') {
-	    if (get_dist_and_params(s, &prevd, x)) {
-		if (prevd == d && x[0] == parms[0] && x[1] == parms[1]) {
-		    /* line is already present */
-		    return;
-		}
-		if (prevd == CHISQ_DIST && x[0] > 69) {
-		    got[ALT_CHI] += 1;
-		} else {
-		    got[prevd] += 1;
-		}
-	    }
-	} else if (sscanf(s, "df%d=", &id) == 1) {
-	    if (id > ids[ID_D]) {
-		ids[ID_D] = id;
-	    }
-	} else if (sscanf(s, "n%d=", &id) == 1) {
-	    if (id > ids[ID_N]) {
-		ids[ID_N] = id;
-	    }
-	} else if (sscanf(s, "p%d=", &id) == 1) {
-	    if (id > ids[ID_P]) {
-		ids[ID_P] = id;
-	    }
-	} else if (sscanf(s, "lambda%d=", &id) == 1) {
-	    if (id > ids[ID_L]) {
-		ids[ID_L] = id;
-	    }
-	} else if (sscanf(s, "mu%d=", &id) == 1) {
-	    if (id > ids[ID_M]) {
-		ids[ID_M] = id;
-	    }
-	} else if (sscanf(s, "s%d=", &id) == 1) {
-	    if (id > ids[ID_S]) {
-		ids[ID_S] = id;
-	    }
-	}	    
-    }
-
-    /* adjust x-range if needed */
-    if (d == CHISQ_DIST || d == F_DIST) {
-	double x1 = dist_xmax(d, parms);
-
-	if (x1 > spec->range[0][1]) {
-	    spec->range[0][1] = x1;
-	}
-    }
-
-    /* or t-range for parametric plots */
-    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	int t1 = dist_xmax(d, parms);
-
-	if (t1 > spec->range[3][1]) {
-	    spec->range[3][1] = t1;
-	    spec->samples = t1 + 1;
-	}
-	spec->flags |= GPT_PARAMETRIC;
-    }	
-
-    /* add comment for current plot */
-    title = dist_marker_line(d, parms);
-    err = strings_array_add(&spec->literal, &spec->n_literal, title);
-    g_free(title);
-
-    if (!err) {
-	/* add parameter line(s) if needed */
-	char varstr[32];
-
-	if (d == NORMAL_DIST) {
-	    k = ids[ID_M] + 1;
-	    sprintf(varstr, "mu%d=%g", k, parms[0]);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    if (!err) {
-		k = ids[ID_S] + 1;
-		sprintf(varstr, "s%d=%g", k, parms[1]);
-		err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    }
-	} else if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
-	    k = ids[ID_D] + 1;
-	    sprintf(varstr, "df%d=%.1f", k, parms[0]);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    if (d == F_DIST && !err) {
-		sprintf(varstr, "df%d=%.1f", k + 1, parms[1]);
-		err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    }
-	} else if (d == BINOMIAL_DIST && !err) {
-	    k = ids[ID_N] + 1;
-	    sprintf(varstr, "n%d=%d", k, (int) parms[1]);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    if (!err) {
-		k = ids[ID_P] + 1;
-		sprintf(varstr, "p%d=%g", k, parms[0]);
-		err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	    }
-	} else if (d == POISSON_DIST && !err) {
-	    k = ids[ID_L] + 1;
-	    sprintf(varstr, "lambda%d=%g", k, parms[0]);
-	    err = strings_array_add(&spec->literal, &spec->n_literal, varstr);
-	}    
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }  
-
-    if (d == CHISQ_DIST && parms[0] > 69) {
-	alt = 1;
-    } else if (d == BINOMIAL_DIST && parms[1] > 150) {
-	alt = 1;
-    }
-
-    /* add any required formula lines */
-
-    if (d == NORMAL_DIST) {
-	if (!got[NORMAL_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_NORM);
-	}	
-    } else if (d == T_DIST) {
-	if (!got[T_DIST] && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_BINV);
-	}
-    } else if (d == CHISQ_DIST) {
-	if (alt && !got[ALT_CHI]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_ALTCHI);
-	} else if (!alt && !got[CHISQ_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_CHI);
-	}
-    } else if (d == F_DIST) {
-	if (!got[F_DIST] && !got[T_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_BINV);
-	} 
-	if (!err && !got[F_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_F);
-	}
-    } else if (d == BINOMIAL_DIST) {
-	if (alt && !got[NORMAL_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_NORM);
-	} else if (!alt && !got[BINOMIAL_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_COMB);
-	    if (!err) {
-		err = strings_array_add(&spec->literal, &spec->n_literal, F_BINOM);
-	    }
-	}
-    } else if (d == POISSON_DIST) {
-	if (!got[POISSON_DIST]) {
-	    err = strings_array_add(&spec->literal, &spec->n_literal, F_POIS);
-	}	
-    }
-
-    if (!err) {
-	/* add new plot line */
-	err = plotspec_add_line(spec);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return;
-    }
-
-    i = spec->n_lines - 1;
-
-    strcpy(spec->lines[i].scale, "NA");
-
-    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
-	strcpy(spec->lines[i].style, "linespoints");
-    } else {
-	strcpy(spec->lines[i].style, "lines");
-    }
-
-    title = dist_graph_title(d, NADBL, parms);
-    strcpy(spec->lines[i].title, title);
-    g_free(title);
-
-    if (d == NORMAL_DIST) {
-	sprintf(spec->lines[i].formula, "normal(x,mu%d,s%d)", 
-		ids[ID_M] + 1, ids[ID_S] + 1);
-    } else if (d == T_DIST) {
-	k = ids[ID_D] + 1;
-	sprintf(spec->lines[i].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
-		"**(-0.5*(df%d+1.0))", k, k, k, k);
-    } else if (d == CHISQ_DIST) {
-	k = ids[ID_D] + 1;
-	sprintf(spec->lines[i].formula, "%s(x,df%d)", (alt)? "bigchi" : "chi", k);
-    } else if (d == F_DIST) {
-	k = ids[ID_D] + 1;
-	sprintf(spec->lines[i].formula, "f(x,df%d,df%d)", k, k + 1);
-    } else if (d == BINOMIAL_DIST) {
-	int kn = ids[ID_N] + 1;
-	int kp = ids[ID_P] + 1;
-
-	if (alt) {
-	    sprintf(spec->lines[i].formula, "int(t),normal(t,n%d*p%d,sqrt(n%d*p%d*(1-p%d)))", 
-		    kn, kp, kn, kp, kp);
-	} else {
-	    sprintf(spec->lines[i].formula, "int(t),binom(t,n%d,p%d)", 
-		    kn, kp);
-	}
-    } else if (d == POISSON_DIST) {
-	k = ids[ID_L] + 1;
-	sprintf(spec->lines[i].formula, "int(t),poisson(lambda%d,t)", k);
-    }
-
-    redisplay_edited_plot(plot);
 }
 
 static void dist_graph (GtkWidget *w, CalcChild *child)
