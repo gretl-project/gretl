@@ -91,6 +91,7 @@ do {						\
     swap_bytes_32(__from.u32[0], __to.u32[1]);	\
     (to) = __to.d;				\
 } while (0)
+
 #endif  /* HAVE_GLIBC_BSWAP */
 
 #define swap_bytes_ushort(from, to) swap_bytes_16(from, to)
