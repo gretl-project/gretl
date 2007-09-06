@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-08-30 10:25-0400\n"
-"PO-Revision-Date: 2007-09-04 01:04+0200\n"
+"PO-Revision-Date: 2007-09-06 10:35+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2588,7 +2588,7 @@ msgstr "Opzioni incompatibili"
 
 #: lib/src/gretl_errors.c:66
 msgid "The restrictions do not identify the parameters"
-msgstr "Le restrizioni non identificano i parametri"
+msgstr "I vincoli non identificano i parametri"
 
 #: lib/src/gretl_func.c:2140
 msgid "No description available"
@@ -3244,9 +3244,8 @@ msgid "Couldn't open registry\n"
 msgstr "Imposibile aprire il registro\n"
 
 #: lib/src/gretl_win32.c:363 lib/src/interact.c:2498
-#, fuzzy
 msgid "The shell command is not activated."
-msgstr "Questo comando richiede una variabile.\n"
+msgstr "Il comando della shell non è attivato."
 
 #: lib/src/gretl_www.c:700
 msgid "Host not found"
@@ -4192,9 +4191,8 @@ msgid "Ordered Probit"
 msgstr "Probit ordinato"
 
 #: lib/src/modelprint.c:941
-#, fuzzy
 msgid "Two-step Heckit"
-msgstr "Stima a due passi"
+msgstr "Heckit a due passi"
 
 #: lib/src/modelprint.c:943
 msgid "ML Heckit"
@@ -4601,9 +4599,8 @@ msgstr "sigma"
 
 #: lib/src/modelprint.c:3104 lib/src/modelprint.c:3109
 #: lib/src/modelprint.c:3117
-#, fuzzy
 msgid "Total observations"
-msgstr "Nessuna osservazione trovata\n"
+msgstr "Totale osservazioni"
 
 #: lib/src/modelprint.c:3107 lib/src/modelprint.c:3112
 msgid "rho"
@@ -4952,19 +4949,19 @@ msgstr ""
 "Per le variabili '%s' e '%s'\n"
 
 #: lib/src/nonparam.c:262
-#, fuzzy, c-format
+#, c-format
 msgid "Spearman's rank correlation coefficient (rho) = %.8f\n"
-msgstr "Coefficiente di correlazione di rango di Spearman (rho) = %f\n"
+msgstr "Coefficiente di correlazione di rango di Spearman (rho) = %.8f\n"
 
 #: lib/src/nonparam.c:270 lib/src/nonparam.c:516
-#, fuzzy, c-format
+#, c-format
 msgid "z-score = %g, with two-tailed p-value %.4f\n"
-msgstr "Valore z = %g, con p-value a due code %g\n"
+msgstr "Valore z = %g, con p-value a due code %.4f\n"
 
 #: lib/src/nonparam.c:282
-#, fuzzy, c-format
+#, c-format
 msgid "significant at the %g%% level (two-tailed)\n"
-msgstr "significativo al livello del %g%% (una coda)\n"
+msgstr "significativo al livello del %g%% (due code)\n"
 
 #: lib/src/nonparam.c:286
 #, no-c-format
@@ -5384,9 +5381,9 @@ msgid "Iteration"
 msgstr "Iterazione"
 
 #: lib/src/printout.c:2171
-#, fuzzy, c-format
+#, c-format
 msgid " (steplength = %g)"
-msgstr " (lunghezza del passo = %.8g)"
+msgstr " (lunghezza del passo = %g)"
 
 #: lib/src/printout.c:2176
 msgid "Parameters: "
@@ -5401,9 +5398,9 @@ msgid "Standard normal distribution"
 msgstr "Distribuzione normale standard"
 
 #: lib/src/pvalues.c:990
-#, fuzzy, c-format
+#, c-format
 msgid "Chi-square(%g)"
-msgstr "Chi-quadro(%d)"
+msgstr "Chi-quadro(%g)"
 
 #: lib/src/pvalues.c:1010
 #, c-format
@@ -5426,9 +5423,9 @@ msgid "Critical value = %g"
 msgstr "Valore critico = %g"
 
 #: lib/src/pvalues.c:1131
-#, fuzzy, c-format
+#, c-format
 msgid "area to the right of %g: NA\n"
-msgstr "area alla destra di %g = %g\n"
+msgstr "area alla destra di %g: NA\n"
 
 #: lib/src/pvalues.c:1138
 #, c-format
@@ -5457,14 +5454,14 @@ msgid "(to the left: %g)\n"
 msgstr "(a sinistra: %g)\n"
 
 #: lib/src/pvalues.c:1211
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
 " area to the right of %g = %g\n"
 msgstr ""
 "\n"
-"Gamma (media %g, varianza %g, forma %g, scala %g):\n"
+"Gamma (forma %g, scala %g, media %g, varianza %g):\n"
 " area a destra di %g = %g\n"
 
 #: lib/src/pvalues.c:1220
@@ -5879,72 +5876,62 @@ msgid "Case 5: Unrestricted trend and constant"
 msgstr "Caso 5: trend e costante non vincolati"
 
 #: lib/src/varprint.c:591
-#, fuzzy
 msgid "cointegrating vectors"
-msgstr "Vettori di cointegrazione"
+msgstr "vettori di cointegrazione"
 
 #: lib/src/varprint.c:653
-#, fuzzy
 msgid "adjustment vectors"
-msgstr "Vettore di aggiustamento"
+msgstr "vettori di aggiustamento"
 
 #: lib/src/varprint.c:763
-#, fuzzy
 msgid "Restrictions on beta:"
-msgstr "Insieme di vincoli"
+msgstr "Vincoli su beta:"
 
 #: lib/src/varprint.c:775
-#, fuzzy
 msgid "Restrictions on alpha:"
-msgstr "Vincolo"
+msgstr "Vincoli su alfa:"
 
 #: lib/src/varprint.c:795
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g = %g"
-msgstr ""
-"con p-value = prob(Chi-quadro(%d) > %g) = %g\n"
-"\n"
+msgstr "P(Chi-quadro(%d) > %g = %g"
 
 #: lib/src/varprint.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g) = %g"
-msgstr ""
-"con p-value = prob(Chi-quadro(%d) > %g) = %g\n"
-"\n"
+msgstr "P(Chi-quadro(%d) > %g) = %g"
 
 #: lib/src/varprint.c:819 lib/src/varprint.c:821
-#, fuzzy
 msgid "Relative to prior restriction"
-msgstr "Aggiungi al vincolo attuale"
+msgstr "Relativo al vincolo a priori"
 
 #: lib/src/varprint.c:833
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
-msgstr "Log-verosimiglianza non vincolata"
+msgstr "Log-verosimiglianza non vincolata $(l_u) = %.8g$"
 
 #: lib/src/varprint.c:835
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
-msgstr "Log-verosimiglianza vincolata"
+msgstr "Log-verosimiglianza vincolata $(l_r) = %.8g$"
 
 #: lib/src/varprint.c:837 lib/src/varprint.c:841
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
-msgstr "Log-verosimiglianza non vincolata"
+msgstr "Log-verosimiglianza non vincolata (lu) = %.8g"
 
 #: lib/src/varprint.c:839 lib/src/varprint.c:843
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
-msgstr "Log-verosimiglianza vincolata"
+msgstr "Log-verosimiglianza vincolata (lr) = %.8g"
 
 #: lib/src/varprint.c:862
 msgid "Cointegration rank"
 msgstr "Rango di cointegrazione"
 
 #: lib/src/varprint.c:893 lib/src/varprint.c:897 lib/src/varprint.c:901
-#, fuzzy
 msgid "Portmanteau test"
-msgstr "Test di Johansen"
+msgstr "Test portmanteau"
 
 #: lib/src/varprint.c:948 lib/src/varprint.c:950
 #, c-format
@@ -6378,9 +6365,8 @@ msgid "Invalid entry"
 msgstr "Valore non valido"
 
 #: gui2/calculator.c:166
-#, fuzzy
 msgid "Invalid probability"
-msgstr "Probabilità non valida sulla coda destra"
+msgstr "Probabilità non valida"
 
 #: gui2/calculator.c:202 gui2/calculator.c:272 gui2/calculator.c:2282
 msgid "gretl: critical values"
@@ -6399,9 +6385,8 @@ msgid "gretl: p-value"
 msgstr "gretl: p-value"
 
 #: gui2/calculator.c:458
-#, fuzzy
 msgid "You must give a name for the variable"
-msgstr "Occorre scegliere una variabile fattore"
+msgstr "Occorre dare un nome alla variabile"
 
 #: gui2/calculator.c:465
 msgid "Range is non-positive!"
@@ -6693,18 +6678,16 @@ msgid "value"
 msgstr "Valore"
 
 #: gui2/calculator.c:1304 gui2/calculator.c:1388
-#, fuzzy
 msgid "shape"
-msgstr "Scala"
+msgstr "Forma"
 
 #: gui2/calculator.c:1305 gui2/calculator.c:1389 gui2/gpt_dialog.c:1179
 msgid "scale"
 msgstr "Scala"
 
 #: gui2/calculator.c:1333
-#, fuzzy
 msgid "uniform"
-msgstr "Normale"
+msgstr "Uniforme"
 
 #: gui2/calculator.c:1361 gui2/gpt_dialog.c:1480
 msgid "minimum"
@@ -6895,9 +6878,8 @@ msgid "gretl: distribution graphs"
 msgstr "gretl: grafici distribuzione"
 
 #: gui2/calculator.c:2287
-#, fuzzy
 msgid "gretl: add random variable"
-msgstr "gretl: variabile normale"
+msgstr "gretl: aggiungi variabile casuale"
 
 #: gui2/calculator.c:2317
 msgid "No suitable data are available"
@@ -7189,9 +7171,8 @@ msgstr ""
 "procedura non è consigliabile."
 
 #: gui2/database.c:265
-#, fuzzy
 msgid "Sorry, can't handle this frequency conversion"
-msgstr "Non è ancora possibile eseguire questa conversione!"
+msgstr "Questa conversione di frequenza non è supportata"
 
 #: gui2/database.c:312
 msgid ""
@@ -7202,9 +7183,8 @@ msgstr ""
 "nel dataset.  OK per sovrascriverla?"
 
 #: gui2/database.c:484
-#, fuzzy
 msgid "Really delete the selected series?"
-msgstr "Cancellare davvero le ultime %d osservazioni?"
+msgstr "Eliminare davvero le serie selezionate?"
 
 #: gui2/database.c:642
 msgid "Warning: series has missing observations"
@@ -7257,9 +7237,8 @@ msgid "/_Series/_Import"
 msgstr "/_Serie/_Importa"
 
 #: gui2/database.c:737
-#, fuzzy
 msgid "/_Series/_Delete"
-msgstr "/_Serie/_Mostra"
+msgstr "/_Serie/_Elimina"
 
 #: gui2/database.c:738 gui2/helpfiles.c:73
 msgid "/_Find"
@@ -8198,9 +8177,8 @@ msgid "Use bootstrap"
 msgstr "Usa bootstrap"
 
 #: gui2/dlgutils.c:758
-#, fuzzy
 msgid "Show full restricted estimates"
-msgstr "Stime vincolate"
+msgstr "Mostra stime vincolate"
 
 #: gui2/dlgutils.c:800
 msgid "One-step estimation"
@@ -9471,9 +9449,8 @@ msgid "/Add/_Time trend"
 msgstr "/Aggiungi/_Trend temporale"
 
 #: gui2/gretl.c:391
-#, fuzzy
 msgid "/Add/_Random variable..."
-msgstr "/Aggiungi/Variabile _casuale"
+msgstr "/Aggiungi/Variabile _casuale..."
 
 #: gui2/gretl.c:395
 msgid "/Add/_Periodic dummies"
@@ -9710,9 +9687,8 @@ msgid "/Model/Nonlinear models/To_bit..."
 msgstr "/Modello/Modelli non lineari/_Tobit..."
 
 #: gui2/gretl.c:491
-#, fuzzy
 msgid "/Model/Nonlinear models/_Heckit..."
-msgstr "/Modello/Modelli non lineari/_Logit..."
+msgstr "/Modello/Modelli non lineari/_Heckit..."
 
 #: gui2/gretl.c:492
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -10362,9 +10338,9 @@ msgid "Enter a name"
 msgstr "Inserire un nome"
 
 #: gui2/gui_utils.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Saved matrix as %s"
-msgstr "Dati salvati con il nome %s"
+msgstr "Matrice salvata con il nome %s"
 
 #: gui2/gui_utils.c:1739
 msgid "Nothing to send"
@@ -10436,9 +10412,8 @@ msgid "Add to dataset..."
 msgstr "Aggiungi al dataset..."
 
 #: gui2/gui_utils.c:1794
-#, fuzzy
 msgid "Add as matrix..."
-msgstr "/Aggiungi/Definisci _matrice"
+msgstr "Aggiungi come matrice..."
 
 #: gui2/gui_utils.c:2015
 msgid "gretl: help"
@@ -11332,11 +11307,11 @@ msgstr "Impossibile cancellare %s; la variabile è in uso"
 
 #: gui2/library.c:4722
 msgid "Cannot delete the specified variables"
-msgstr "Impossibile cancellare le variabili specificate"
+msgstr "Impossibile eliminare le variabili specificate"
 
 #: gui2/library.c:4725
 msgid "Cannot delete all of the specified variables"
-msgstr "Impossibile cancellare tutte le variabili specificate"
+msgstr "Impossibile eliminare tutte le variabili specificate"
 
 #: gui2/library.c:4897
 msgid ""
@@ -11805,9 +11780,9 @@ msgid "Reads the current value, or sets a new value"
 msgstr "Legge il valore attuale, o imposta un nuovo valore"
 
 #: gui2/selector.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "The variable '%s' is not a 0/1 variable."
-msgstr "La variabile dipendente '%s' non è una variabile 0/1.\n"
+msgstr "La variabile '%s' non è una variabile 0/1."
 
 #: gui2/selector.c:1249
 msgid "You must select an X-axis variable"
@@ -11834,9 +11809,8 @@ msgid "You must specify a list of lags"
 msgstr "Occorre specificare una lista di ritardi"
 
 #: gui2/selector.c:1613
-#, fuzzy
 msgid "You must specify a selection variable"
-msgstr "Occorre specificare un insieme di variabili strumentali"
+msgstr "Occorre specificare una variabile di selezione"
 
 #: gui2/selector.c:1704
 msgid "You must select a Z-axis variable"
@@ -11915,9 +11889,8 @@ msgid "Offset variable"
 msgstr "Variabile offset"
 
 #: gui2/selector.c:1966
-#, fuzzy
 msgid "Selection variable"
-msgstr "scelta variabile"
+msgstr "Variabile di selezione"
 
 #: gui2/selector.c:1968
 msgid "List of AR lags"
@@ -11980,9 +11953,8 @@ msgid "Exogenous variables"
 msgstr "Variabili esogene"
 
 #: gui2/selector.c:2302
-#, fuzzy
 msgid "Selection equation regressors"
-msgstr "gretl: autoregressione vettoriale"
+msgstr "Regressori dell'equazione di selezione"
 
 #: gui2/selector.c:2313 gui2/selector.c:3360
 msgid "Add ->"
@@ -12133,12 +12105,10 @@ msgid "2-step estimation"
 msgstr "Stima a due passi"
 
 #: gui2/selector.c:3075
-#, fuzzy
 msgid "Maximum likelihood estimation"
-msgstr "Massima verosimiglianza"
+msgstr "Stima di massima verosimiglianza"
 
 #: gui2/selector.c:3091
-#, fuzzy
 msgid "Plain numerical values"
 msgstr "Valori numerici"
 
@@ -13307,9 +13277,8 @@ msgid "error in wsheet_setup()"
 msgstr "errore in wsheet_setup()"
 
 #: plugin/heckit.c:613
-#, fuzzy
 msgid "Selection equation"
-msgstr "Valutazioni della funzione: %d\n"
+msgstr "Equazione di selezione"
 
 #: plugin/import_common.c:38
 msgid ""
@@ -13389,19 +13358,19 @@ msgid "Failed to find eigenvalues\n"
 msgstr "Impossibile trovare gli autovalori\n"
 
 #: plugin/johansen.c:1474
-#, fuzzy, c-format
+#, c-format
 msgid "eigenvalue %d = %g\n"
-msgstr "Autovalore"
+msgstr "autovalore %d = %g\n"
 
 #: plugin/johansen.c:1498 plugin/jrestrict.c:2249
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g\n"
-msgstr "Log-verosimiglianza non vincolata"
+msgstr "Log-verosimiglianza non vincolata (lu) = %.8g\n"
 
 #: plugin/johansen.c:1499 plugin/jrestrict.c:2250
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood (lr) = %.8g\n"
-msgstr "Log-verosimiglianza vincolata"
+msgstr "Log-verosimiglianza vincolata (lr) = %.8g\n"
 
 #: plugin/johansen.c:1503 plugin/jrestrict.c:1446
 #, c-format
@@ -13409,11 +13378,9 @@ msgid "Allowing for prior restriction, df = %d\n"
 msgstr "Permetti restrizione a priori, df = %d\n"
 
 #: plugin/johansen.c:1505
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g) = %g\n"
-msgstr ""
-"con p-value = prob(Chi-quadro(%d) > %g) = %g\n"
-"\n"
+msgstr "P(Chi-quadro(%d) > %g) = %g\n"
 
 #: plugin/jrestrict.c:1429
 #, c-format
