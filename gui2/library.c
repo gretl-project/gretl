@@ -1063,7 +1063,8 @@ int do_xcorrgm (selector *sr)
 	return 1;
     }
 
-    err = xcorrgram(libcmd.list, order, &Z, datainfo, prn, OPT_NONE);
+    err = xcorrgram(libcmd.list, order, (const double **) Z, 
+		    datainfo, prn, OPT_NONE);
 
     if (err) {
         gui_errmsg(err);
@@ -3732,9 +3733,11 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = corrgram(libcmd.list[1], order, 0, pZ, pdinfo, prn, OPT_NONE);
+	err = corrgram(libcmd.list[1], order, 0, (const double **) Z, 
+		       pdinfo, prn, OPT_NONE);
     } else {
-	err = corrgram(pdinfo->v - 1, order, 0, pZ, pdinfo, prn, OPT_R);
+	err = corrgram(pdinfo->v - 1, order, 0, (const double **) Z, 
+		       pdinfo, prn, OPT_R);
     }
 
     if (err) {
@@ -3782,7 +3785,7 @@ void residual_correlogram (gpointer p, guint u, GtkWidget *w)
 }
 
 static void 
-real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
+real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 {
     PRN *prn;
     char title[64];
@@ -3819,10 +3822,12 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = periodogram(libcmd.list[1], width, pZ, pdinfo, libcmd.opt, prn);
+	err = periodogram(libcmd.list[1], width, (const double **) Z, 
+			  pdinfo, libcmd.opt, prn);
     } else {
 	opt |= OPT_R;
-	err = periodogram(pdinfo->v - 1, width, pZ, pdinfo, opt, prn);
+	err = periodogram(pdinfo->v - 1, width, (const double **) Z, 
+			  pdinfo, opt, prn);
     }
 
     if (err) {
@@ -3839,7 +3844,7 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 
 void do_pergm (gpointer p, guint u, GtkWidget *w)
 {
-    real_do_pergm(u, &Z, datainfo, SELECTED_VAR);
+    real_do_pergm(u, Z, datainfo, SELECTED_VAR);
 }
 
 void residual_periodogram (gpointer p, guint u, GtkWidget *w)
@@ -3865,7 +3870,7 @@ void residual_periodogram (gpointer p, guint u, GtkWidget *w)
 	ginfo = datainfo;
     }    
 
-    real_do_pergm(1, gZ, ginfo, MODEL_VAR);
+    real_do_pergm(1, *gZ, ginfo, MODEL_VAR);
 
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }

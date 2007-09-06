@@ -3462,7 +3462,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case CORRGM:
 	order = atoi(cmd->param);
-	err = corrgram(cmd->list[1], order, 0, pZ, pdinfo, prn, OPT_A);
+	err = corrgram(cmd->list[1], order, 0, (const double **) *pZ, pdinfo, 
+		       prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -3470,7 +3471,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case XCORRGM:
 	order = atoi(cmd->param);
-	err = xcorrgram(cmd->list, order, pZ, pdinfo, prn, OPT_A);
+	err = xcorrgram(cmd->list, order, (const double **) *pZ, pdinfo, 
+			prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -3478,7 +3480,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     case PERGM:
 	order = atoi(cmd->param);
-	err = periodogram(cmd->list[1], order, pZ, pdinfo, cmd->opt | OPT_N, prn);
+	err = periodogram(cmd->list[1], order, (const double **) *pZ, pdinfo, 
+			  cmd->opt | OPT_N, prn);
 	if (err) {
 	    pputs(prn, _("Failed to generate periodogram\n"));
 	}

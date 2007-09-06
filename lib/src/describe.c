@@ -37,12 +37,10 @@
 # include <glib.h>
 #endif
 
-static char gretl_tmp_str[MAXLEN];
-
 /* return 1 if series x has any missing observations, 0 if it does
    not */
 
-static int missvals (double *x, int n)
+static int missvals (const double *x, int n)
 {
     int t, ret = 0;
     
@@ -106,13 +104,12 @@ int gretl_minmax (int t1, int t2, const double *x,
         return 1;
     }
 
-    *min = x[t1];
-    *max = x[t1];
+    *min = *max = x[t1];
 
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) {
-	    *max = x[t] > *max ? x[t] : *max;
-	    *min = x[t] < *min ? x[t] : *min;
+	    *max = (x[t] > *max)? x[t] : *max;
+	    *min = (x[t] < *min)? x[t] : *min;
 	}
     }
 
@@ -333,14 +330,13 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
     double q;
     
     /* sanity check */
-    q = (p > 1)? 1 : (p < 0)? 0: p;
+    q = (p > 1)? 1 : (p < 0)? 0 : p;
 
-    cpd = q * (m-1);
+    cpd = q * (m - 1);
     cpi = (int) floor(cpd);
     cpd -= cpi;
 
     sx = malloc(m * sizeof *sx);
-
     if (sx == NULL) {
 	return NADBL;
     }
@@ -616,7 +612,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
     xbar = gretl_mean(t1, t2, x);
 
     if (m<0) {
-	order = (int) exp(log(n)/3.0);
+	order = (int) exp(log(n) / 3.0);
     } else {
 	order = m;
     }
@@ -666,8 +662,8 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 
 double gretl_covar (int t1, int t2, const double *x, const double *y)
 {
-    int t, nn, n = t2 - t1 + 1;
     double sx, sy, sxy, xt, yt, xbar, ybar;
+    int t, nn, n = t2 - t1 + 1;
 
     if (n == 0) {
 	return NADBL;
@@ -687,7 +683,7 @@ double gretl_covar (int t1, int t2, const double *x, const double *y)
         sy += yt;
     }
 
-    if (nn == 0) {
+    if (nn < 2) {
 	return NADBL;
     }
 
@@ -698,12 +694,11 @@ double gretl_covar (int t1, int t2, const double *x, const double *y)
     for (t=t1; t<=t2; t++) {
         xt = x[t];
         yt = y[t];
-        if (na(xt) || na(yt)) {
-	    continue;
+        if (!na(xt) && !na(yt)) {
+	    sx = xt - xbar;
+	    sy = yt - ybar;
+	    sxy = sxy + (sx * sy);
 	}
-        sx = xt - xbar;
-        sy = yt - ybar;
-        sxy = sxy + (sx * sy);
     }
 
     return sxy / (nn - 1);
@@ -740,16 +735,17 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
 
     nn = n;
     sx = sy = 0.0;
+
     for (t=t1; t<=t2; t++) {
         if (na(x[t]) || na(y[t])) {
             nn--;
-            continue;
-        }
-        sx += x[t];
-        sy += y[t];
+        } else {
+	    sx += x[t];
+	    sy += y[t];
+	}
     }
 
-    if (nn == 0) {
+    if (nn < 2) {
 	return NADBL;
     }
 
@@ -758,14 +754,13 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
     sxx = syy = sxy = 0.0;
 
     for (t=t1; t<=t2; t++) {
-        if (na(x[t]) || na(y[t])) {
-	    continue;
+        if (!na(x[t]) && !na(y[t])) {
+	    sx = x[t] - xbar;
+	    sy = y[t] - ybar;
+	    sxx += sx * sx;
+	    syy += sy * sy;
+	    sxy += sx * sy;
 	}
-        sx = x[t] - xbar;
-        sy = y[t] - ybar;
-	sxx += sx * sx;
-	syy += sy * sy;
-	sxy += sx * sy;
     }
 
     if (sxy != 0.0) {
@@ -801,11 +796,7 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 {
     double r = gretl_corr(t1, t2, x, y, NULL);
 
-    if (na(r)) {
-	return NADBL;
-    } else {
-	return r * r;
-    }
+    return (na(r))? r : r * r;
 }
 
 /* we're supposing a variance smaller than this is just noise */
@@ -1128,6 +1119,8 @@ multivariate_normality_test (const gretl_matrix *E,
     p = gretl_matrix_cols(E);
     n = gretl_matrix_rows(E);
 
+    clear_gretl_matrix_err();
+
     S = gretl_matrix_copy(Sigma);
     V = gretl_vector_alloc(p);
     C = gretl_matrix_alloc(p, p);
@@ -1135,9 +1128,8 @@ multivariate_normality_test (const gretl_matrix *E,
     R = gretl_matrix_alloc(p, n);
     tmp = gretl_matrix_alloc(p, p);
 
-    if (S == NULL || V == NULL || C == NULL || X == NULL || 
-	R == NULL || tmp == NULL) {
-	err = 1;
+    err = get_gretl_matrix_err();
+    if (err) {
 	goto bailout;
     }
 
@@ -2071,12 +2063,12 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
 static int get_pacf (double *pacf, const double *acf, int m)
 {
-    int i, j;
     gretl_matrix *phi;
     double x, num, den;
+    int i, j;
 
     phi = gretl_matrix_alloc(m, m);
-    if (phi == NULL) return 1;
+    if (phi == NULL) return E_ALLOC;
 
     pacf[0] = acf[0];
     gretl_matrix_set(phi, 0, 0, acf[0]);
@@ -2104,29 +2096,29 @@ static int get_pacf (double *pacf, const double *acf, int m)
     return 0;
 }
 
-int auto_acf_order (int pd, int nobs)
+int auto_acf_order (int pd, int n)
 {
     int m;
 
     switch (pd) {
     case 4: 
-	m = (nobs <= 20)? nobs - 5 : 14; 
+	m = (n <= 20)? n - 5 : 14; 
 	break;
     case 12: 
     case 52: 
-	m = (nobs <= 40)? nobs - 13 : 28;
+	m = (n <= 40)? n - 13 : 28;
 	break;
     case 24: 
-	m = (nobs <= 100)? nobs - 25 : 96;
+	m = (n <= 100)? n - 25 : 96;
 	break;
     default:  
-	m = (nobs <= 18)? nobs - 5 : 14;
+	m = (n <= 18)? n - 5 : 14;
 	break;
     }
 
-    if (m > nobs / 5) {
+    if (m > n / 5) {
 	/* restrict to 20 percent of data (Tadeusz) */
-	m = nobs / 5;
+	m = n / 5;
     }
 
     return m;
@@ -2226,6 +2218,105 @@ double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
     return num / sqrt(den1 * den2);
 }
 
+static int corrgram_graph (const char *vname, double *acf, int acf_m,
+			   double *pacf, int pacf_m, double *pm,
+			   gretlopt opt)
+{
+    char crit_string[16];
+    FILE *fp = NULL;
+    int k, err;
+
+    err = gnuplot_init(PLOT_CORRELOGRAM, &fp);
+    if (err) {
+	return err;
+    }
+
+    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+
+    gretl_push_c_numeric_locale();
+
+    /* create two separate plots, if both are OK */
+    if (pacf != NULL) {
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
+    }
+    fputs("set xzeroaxis\n", fp);
+    fputs("set key top right\n", fp); 
+    fprintf(fp, "set xlabel '%s'\n", G_("lag"));
+    fputs("set yrange [-1.1:1.1]\n", fp);
+
+    /* upper plot: Autocorrelation Function or ACF */
+    if (pacf != NULL) {
+	fputs("set origin 0.0,0.50\n", fp);
+    }
+    if (opt & OPT_R) {
+	fprintf(fp, "set title '%s'\n", G_("Residual ACF"));
+    } else {
+	fprintf(fp, "set title '%s %s'\n", G_("ACF for"), vname);
+    }
+    fprintf(fp, "set xrange [0:%d]\n", acf_m + 1);
+    fprintf(fp, "plot \\\n"
+	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
+	    "%g title '+- %s' lt 2, \\\n"
+	    "%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
+    for (k=0; k<acf_m; k++) {
+	fprintf(fp, "%d %g\n", k + 1, acf[k]);
+    }
+    fputs("e\n", fp);
+
+    if (pacf != NULL) {
+	/* lower plot: Partial Autocorrelation Function or PACF */
+	fputs("set origin 0.0,0.0\n", fp);
+	if (opt & OPT_R) {
+	    fprintf(fp, "set title '%s'\n", G_("Residual PACF"));
+	} else {
+	    fprintf(fp, "set title '%s %s'\n", G_("PACF for"), vname);
+	}
+	fprintf(fp, "set xrange [0:%d]\n", pacf_m + 1);
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
+	for (k=0; k<pacf_m; k++) {
+	    fprintf(fp, "%d %g\n", k + 1, pacf[k]);
+	}
+	fputs("e\n", fp);
+    }
+
+    if (pacf != NULL) {
+	fputs("set nomultiplot\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+static int corrgm_ascii_plot (const char *vname,
+			      const double *acf, int acf_m,
+			      PRN *prn)
+{
+    double *xk = malloc(acf_m * sizeof *xk);
+    int k;
+
+    if (xk == NULL) {
+	return E_ALLOC;
+    }
+
+    for (k=0; k<acf_m; k++) {
+	xk[k] = k + 1.0;
+    }
+
+    pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
+    graphyzx(NULL, acf, NULL, xk, acf_m, vname, 
+	     _("lag"), NULL, 0, prn);
+
+    free(xk);
+
+    return 0;
+}
+
 /**
  * corrgram:
  * @varno: ID number of variable to process.
@@ -2233,7 +2324,7 @@ double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
  * @nparam: number of estimated parameters (e.g. for the
  * case of ARMA), used to correct the degrees of freedom 
  * for Q test.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  * @opt: if includes %OPT_A, use ASCII graphics; if includes
@@ -2246,109 +2337,93 @@ double gretl_xcf (int k, int t1, int t2, const double *x, const double *y)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int corrgram (int varno, int order, int nparam, double ***pZ, 
+int corrgram (int varno, int order, int nparam, const double **Z, 
 	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
-    char crit_string[16];
-    double box, pm90, pm95, pm99;
+    double box, pm[3];
     double *acf = NULL;
     double *pacf = NULL;
-    const char *vname = NULL;
+    const char *vname;
     int k, acf_m, pacf_m; 
-    int nobs, dfQ;
+    int T, dfQ;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int list[2] = {1, varno };
-    FILE *fq = NULL;
+    int list[2] = { 1, varno };
     int err = 0, pacf_err = 0;
 
     gretl_error_clear();
 
-    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
-    nobs = t2 - t1 + 1;
+    varlist_adjust_sample(list, &t1, &t2, Z);
+    T = t2 - t1 + 1;
 
-    if (missvals(&(*pZ)[varno][t1], nobs)) {
+    if (missvals(Z[varno] + t1, T)) {
 	strcpy(gretl_errmsg, 
 		_("Missing values within sample -- can't do correlogram"));
 	return E_MISSDATA;
     }
 
-    if (nobs < 4) {
+    if (T < 4) {
 	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
 	return E_DATA;
     }
 
-    if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
+    if (gretl_isconst(t1, t2, Z[varno])) {
 	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[varno]);
 	return E_DATA;
     }
 
     vname = var_get_graph_name(pdinfo, varno);
 
+    /* lag order for acf */
     acf_m = order;
     if (acf_m == 0) {
-	acf_m = auto_acf_order(pdinfo->pd, nobs);
-    } else if (acf_m > nobs - pdinfo->pd) {
-	int nmax = nobs - 1; 
+	acf_m = auto_acf_order(pdinfo->pd, T);
+    } else if (acf_m > T - pdinfo->pd) {
+	int nmax = T - 1; 
 
 	if (nmax < acf_m) {
 	    acf_m = nmax; /* ?? */
 	}
     }
 
+    /* lag order for pacf (may have to be shorter than acf) */
+    if (acf_m > T / 2 - 1) {
+	pacf_m = T / 2 - 1;
+    } else {
+	pacf_m = acf_m;
+    }
+
     acf = malloc(acf_m * sizeof *acf);
-    if (acf == NULL) {
-	return E_ALLOC;    
+    pacf = malloc(pacf_m * sizeof *pacf); 
+    if (acf == NULL || pacf == NULL) {
+	err = E_ALLOC;   
+	goto bailout;
     }
 
     /* calculate acf up to order m */
     for (k=1; k<=acf_m; k++) {
-	acf[k-1] = gretl_acf(k, t1, t2, (*pZ)[varno]);
+	acf[k-1] = gretl_acf(k, t1, t2, Z[varno]);
     }
 
     if (opt & OPT_A) { 
 	/* use ASCII graphics, not gnuplot */
-	double *xk = malloc(acf_m * sizeof *xk);
-
-	if (xk == NULL) {
-	    err = E_ALLOC;
-	    goto acf_getout;
-	}
-	for (k=0; k<acf_m; k++) {
-	    xk[k] = k + 1.0;
-	}
-        pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-	graphyzx(NULL, acf, NULL, xk, acf_m, vname, 
-		 _("lag"), NULL, 0, prn);
-	free(xk);
+	corrgm_ascii_plot(vname, acf, acf_m, prn);
     } 
 
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
     } else {
-	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), vname);
-	pprintf(prn, "\n%s\n\n", gretl_tmp_str);
-    }
-
-    /* determine lag order for pacf (may have to be shorter than acf_m) */
-    if (acf_m > nobs / 2 - 1) {
-	pacf_m = nobs / 2 - 1;
-    } else {
-	pacf_m = acf_m;
-    }
-
-    /* generate (and if not in batch mode) plot partial 
-       autocorrelation function */
-
-    pacf = malloc(pacf_m * sizeof *pacf); 
-    if (pacf == NULL) {
-	err = E_ALLOC;
-	goto acf_getout;
+	pputc(prn, '\n');
+	pprintf(prn, _("Autocorrelation function for %s"), vname);
+	pputs(prn, "\n\n");
     }
 
     /* for confidence bands */
-    pm90 = 1.65 / sqrt((double) nobs);
-    pm95 = 1.96 / sqrt((double) nobs);
-    pm99 = 2.58 / sqrt((double) nobs);
+    pm[0] = 1.65 / sqrt((double) T);
+    pm[1] = 1.96 / sqrt((double) T);
+    pm[2] = 2.58 / sqrt((double) T);
+
+    /* generate (and if not in batch mode) plot partial 
+       autocorrelation function */
 
     err = pacf_err = get_pacf(pacf, acf, pacf_m);
 
@@ -2360,11 +2435,11 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 
     for (k=0; k<acf_m; k++) {
 	pprintf(prn, "%5d%9.4f ", k + 1, acf[k]);
-	if (fabs(acf[k]) > pm99) {
+	if (fabs(acf[k]) > pm[2]) {
 	    pputs(prn, " ***");
-	} else if (fabs(acf[k]) > pm95) {
+	} else if (fabs(acf[k]) > pm[1]) {
 	    pputs(prn, " ** ");
-	} else if (fabs(acf[k]) > pm90) {
+	} else if (fabs(acf[k]) > pm[0]) {
 	    pputs(prn, " *  ");
 	} else {
 	    pputs(prn, "    ");
@@ -2372,18 +2447,18 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 
 	if (k < pacf_m) {
 	    pprintf(prn, "%9.4f", pacf[k]);
-	    if (fabs(pacf[k]) > pm99) {
+	    if (fabs(pacf[k]) > pm[2]) {
 		pputs(prn, " ***");
-	    } else if (fabs(pacf[k]) > pm95) {
+	    } else if (fabs(pacf[k]) > pm[1]) {
 		pputs(prn, " ** ");
-	    } else if (fabs(pacf[k]) > pm90) {
+	    } else if (fabs(pacf[k]) > pm[0]) {
 		pputs(prn, " *  ");
 	    } else {
 		pputs(prn, "    ");
 	    }
 	}
 
-	box += (nobs * (nobs + 2.0)) * acf[k] * acf[k] / (nobs - (k + 1));
+	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
 	pprintf(prn, "%12.4f", box);
 	if (k >= nparam) {
 	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(box, dfQ++));
@@ -2391,75 +2466,13 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	pputc(prn, '\n');
     }
 
-    if (opt & OPT_A) {
-	goto acf_getout;
-    } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
-	err = E_FOPEN;
-	goto acf_getout;
+    if (!(opt & OPT_A)) {
+	err = corrgram_graph(vname, acf, acf_m, 
+			     (pacf_err)? NULL : pacf, 
+			     pacf_m, pm, opt);
     }
 
-    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
-
-    gretl_push_c_numeric_locale();
-
-    /* create two separate plots, if both are OK */
-    if (!pacf_err) {
-	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fq);
-    }
-    fputs("set xzeroaxis\n", fq);
-    fputs("set key top right\n", fq); 
-    fprintf(fq, "set xlabel '%s'\n", G_("lag"));
-    fputs("set yrange [-1.1:1.1]\n", fq);
-
-    /* upper plot: Autocorrelation Function or ACF */
-    if (!pacf_err) {
-	fputs("set origin 0.0,0.50\n", fq);
-    }
-    if (opt & OPT_R) {
-	fprintf(fq, "set title '%s'\n", G_("Residual ACF"));
-    } else {
-	fprintf(fq, "set title '%s %s'\n", G_("ACF for"), vname);
-    }
-    fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
-    fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
-	    "%g title '+- %s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm95, crit_string, -pm95);
-    for (k=0; k<acf_m; k++) {
-	fprintf(fq, "%d %g\n", k + 1, acf[k]);
-    }
-    fputs("e\n", fq);
-
-    if (!pacf_err) {
-	/* lower plot: Partial Autocorrelation Function or PACF */
-	fputs("set origin 0.0,0.0\n", fq);
-	if (opt & OPT_R) {
-	    fprintf(fq, "set title '%s'\n", G_("Residual PACF"));
-	} else {
-	    fprintf(fq, "set title '%s %s'\n", G_("PACF for"), vname);
-	}
-	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
-	fprintf(fq, "plot \\\n"
-		"'-' using 1:2 notitle w impulses lw 5, \\\n"
-		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm95, crit_string, -pm95);
-	for (k=0; k<pacf_m; k++) {
-	    fprintf(fq, "%d %g\n", k + 1, pacf[k]);
-	}
-	fputs("e\n", fq);
-    }
-
-    if (!pacf_err) {
-	fputs("set nomultiplot\n", fq);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fq);
-
-    err = gnuplot_make_graph();
-
- acf_getout:
+ bailout:
 
     free(acf);
     free(pacf);
@@ -2467,11 +2480,87 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     return err;
 }
 
+static int xcorrgm_graph (const char *xname, const char *yname,
+			  double *xcf, int xcf_m, double *pm,
+			  int allpos)
+{
+    char crit_string[16];
+    char title[128]; 
+    FILE *fp = NULL;
+    int k, err;
+
+    err = gnuplot_init(PLOT_CORRELOGRAM, &fp);
+    if (err) {
+	return err;
+    }
+
+    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
+
+    gretl_push_c_numeric_locale();
+
+    fputs("set xzeroaxis\n", fp);
+    fputs("set yzeroaxis\n", fp);
+    fputs("set key top right\n", fp); 
+    fprintf(fp, "set xlabel '%s'\n", G_("lag"));
+    if (allpos) {
+	fputs("set yrange [-0.1:1.1]\n", fp);
+    } else {
+	fputs("set yrange [-1.1:1.1]\n", fp);
+    } 
+    sprintf(title, G_("Correlations of %s and lagged %s"),
+	    xname, yname);
+    fprintf(fp, "set title '%s'\n", title);
+    fprintf(fp, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
+    if (allpos) {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '%s' lt 2\n", pm[1], crit_string);
+    } else {
+	fprintf(fp, "plot \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
+		"%g title '+- %s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm[1], crit_string, -pm[1]);
+    }	
+
+    for (k=-xcf_m; k<=xcf_m; k++) {
+	fprintf(fp, "%d %g\n", k, xcf[k+xcf_m]);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+static int xcorrgm_ascii_plot (double *xcf, int xcf_m, PRN *prn)
+{
+    double *xk = malloc((xcf_m * 2 + 1) * sizeof *xk);
+    int k;
+
+    if (xk == NULL) {
+	return E_ALLOC;
+    }
+
+    for (k=-xcf_m; k<=xcf_m; k++) {
+	xk[k+xcf_m] = k;
+    }
+
+    pprintf(prn, "\n\n%s\n\n", _("Cross-correlogram"));
+    graphyzx(NULL, xcf, NULL, xk, 2 * xcf_m + 1, "", _("lag"), NULL, 
+	     0, prn);
+
+    free(xk);
+
+    return 0;
+}
+
 /**
  * xcorrgram:
  * @list: should contain ID numbers of two variables.
  * @order: integer order for autocorrelation function.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  * @opt: if includes %OPT_A, use ASCII graphics.
@@ -2482,19 +2571,17 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int xcorrgram (const int *list, int order, double ***pZ, 
+int xcorrgram (const int *list, int order, const double **Z, 
 	       DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
-    char crit_string[16];
-    char titlestr[128];
     double *xcf = NULL;
-    double pm90, pm95, pm99;
+    double pm[3];
+    const char *xname, *yname;
     int allpos = 1;
     int k, xcf_m;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    FILE *fq = NULL;
     int xno, yno;
-    int nobs, err = 0;
+    int T, err = 0;
 
     gretl_error_clear();
 
@@ -2504,35 +2591,38 @@ int xcorrgram (const int *list, int order, double ***pZ,
 
     xno = list[1];
     yno = list[2];
+    
+    varlist_adjust_sample(list, &t1, &t2, Z);
+    T = t2 - t1 + 1;
 
-    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
-    nobs = t2 - t1 + 1;
-
-    if (missvals(&(*pZ)[xno][t1], nobs) ||
-	missvals(&(*pZ)[yno][t1], nobs)) {
+    if (missvals(Z[xno] + t1, T) ||
+	missvals(Z[yno] + t1, T)) {
 	strcpy(gretl_errmsg, 
 		_("Missing values within sample -- can't do correlogram"));
 	return E_MISSDATA;
     }
 
-    if (nobs < 5) {
+    if (T < 5) {
 	strcpy(gretl_errmsg, _("Insufficient observations for correlogram"));
 	return 1;
     }
 
-    if (gretl_isconst(t1, t2, &(*pZ)[xno][0])) {
-	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[xno]);
+    xname = pdinfo->varname[xno];
+    yname = pdinfo->varname[yno];
+
+    if (gretl_isconst(t1, t2, Z[xno])) {
+	sprintf(gretl_errmsg, _("%s is a constant"), xname);
 	return E_DATA;
-    } else if (gretl_isconst(t1, t2, &(*pZ)[yno][0])) {
-	sprintf(gretl_errmsg, _("%s is a constant"), pdinfo->varname[yno]);
+    } else if (gretl_isconst(t1, t2, Z[yno])) {
+	sprintf(gretl_errmsg, _("%s is a constant"), yname);
 	return E_DATA;
     }	
 
     xcf_m = order;
     if (xcf_m == 0) {
-	xcf_m = auto_acf_order(pdinfo->pd, nobs) / 2;
-    } else if (2 * xcf_m > nobs - pdinfo->pd) {
-	xcf_m = (nobs - 1) / 2; /* ?? */
+	xcf_m = auto_acf_order(pdinfo->pd, T) / 2;
+    } else if (2 * xcf_m > T - pdinfo->pd) {
+	xcf_m = (T - 1) / 2; /* ?? */
     }
 
     xcf = malloc((xcf_m * 2 + 1) * sizeof *xcf);
@@ -2542,7 +2632,7 @@ int xcorrgram (const int *list, int order, double ***pZ,
 
     /* calculate xcf up to order m */
     for (k=-xcf_m; k<=xcf_m; k++) {
-	xcf[k+xcf_m] = gretl_xcf(k, t1, t2, (*pZ)[xno], (*pZ)[yno]);
+	xcf[k+xcf_m] = gretl_xcf(k, t1, t2, Z[xno], Z[yno]);
 	if (xcf[k+xcf_m] < 0) {
 	    allpos = 0;
 	}
@@ -2550,30 +2640,18 @@ int xcorrgram (const int *list, int order, double ***pZ,
 
     if (opt & OPT_A) { 
 	/* use ASCII graphics, not gnuplot */
-	double *xk = malloc((xcf_m * 2 + 1) * sizeof *xk);
-
-	if (xk == NULL) {
-	    err = E_ALLOC;
-	    goto xcf_getout;
-	}
-	for (k=-xcf_m; k<=xcf_m; k++) {
-	    xk[k+xcf_m] = k;
-	}
-        pprintf(prn, "\n\n%s\n\n", _("Cross-correlogram"));
-	graphyzx(NULL, xcf, NULL, xk, 2 * xcf_m + 1, "", _("lag"), NULL, 
-		 0, prn);
-	free(xk);
+	xcorrgm_ascii_plot(xcf, xcf_m, prn);
     } 
 
     /* for confidence bands */
-    pm90 = 1.65 / sqrt((double) nobs);
-    pm95 = 1.96 / sqrt((double) nobs);
-    pm99 = 2.58 / sqrt((double) nobs);
+    pm[0] = 1.65 / sqrt((double) T);
+    pm[1] = 1.96 / sqrt((double) T);
+    pm[2] = 2.58 / sqrt((double) T);
 
-    sprintf(gretl_tmp_str, _("Cross-correlation function for %s and %s"), 
-	    pdinfo->varname[xno], pdinfo->varname[yno]);
-    pprintf(prn, "\n%s\n\n", gretl_tmp_str);
-
+    pputc(prn, '\n');
+    pprintf(prn, _("Cross-correlation function for %s and %s"), 
+	    xname, yname);
+    pputs(prn, "\n\n");
     pputs(prn, _("  LAG      XCF"));
     pputs(prn, "\n\n");
 
@@ -2581,63 +2659,19 @@ int xcorrgram (const int *list, int order, double ***pZ,
 	double x = xcf[k + xcf_m];
 
 	pprintf(prn, "%5d%9.4f", k, x);
-	if (fabs(x) > pm99) {
+	if (fabs(x) > pm[2]) {
 	    pputs(prn, " ***");
-	} else if (fabs(x) > pm95) {
+	} else if (fabs(x) > pm[1]) {
 	    pputs(prn, " **");
-	} else if (fabs(x) > pm90) {
+	} else if (fabs(x) > pm[0]) {
 	    pputs(prn, " *");
 	} 
 	pputc(prn, '\n');
     }
 
-    if (opt & OPT_A) {
-	goto xcf_getout;
-    } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
-	err = E_FOPEN;
-	goto xcf_getout;
+    if (!(opt & OPT_A)) {
+	err = xcorrgm_graph(xname, yname, xcf, xcf_m, pm, allpos);
     }
-
-    sprintf(crit_string, "%.2f/T^%.1f", 1.96, 0.5);
-
-    gretl_push_c_numeric_locale();
-
-    fputs("set xzeroaxis\n", fq);
-    fputs("set yzeroaxis\n", fq);
-    fputs("set key top right\n", fq); 
-    fprintf(fq, "set xlabel '%s'\n", G_("lag"));
-    if (allpos) {
-	fputs("set yrange [-0.1:1.1]\n", fq);
-    } else {
-	fputs("set yrange [-1.1:1.1]\n", fq);
-    } 
-    sprintf(titlestr, G_("Correlations of %s and lagged %s"),
-	    pdinfo->varname[xno], pdinfo->varname[yno]);
-    fprintf(fq, "set title '%s'\n", titlestr);
-    fprintf(fq, "set xrange [%d:%d]\n", -(xcf_m + 1), xcf_m + 1);
-    if (allpos) {
-	fprintf(fq, "plot \\\n"
-		"'-' using 1:2 notitle w impulses lw 5, \\\n"
-		"%g title '%s' lt 2\n", pm95, crit_string);
-    } else {
-	fprintf(fq, "plot \\\n"
-		"'-' using 1:2 notitle w impulses lw 5, \\\n"
-		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm95, crit_string, -pm95);
-    }	
-
-    for (k=-xcf_m; k<=xcf_m; k++) {
-	fprintf(fq, "%d %g\n", k, xcf[k+xcf_m]);
-    }
-    fputs("e\n", fq);
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fq);
-
-    err = gnuplot_make_graph();
-
- xcf_getout:
 
     free(xcf);
 
@@ -2651,50 +2685,60 @@ static int roundup_mod (int i, double x)
 
 static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
 {
-    double x, **Z = NULL;
-    DATAINFO *dinfo;
-    MODEL mod;
-    int list[4] = { 3, 1, 0, 2 };
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *V = NULL;
+    double x;
     int t, err = 0;
 
-    dinfo = create_new_dataset(&Z, 3, m, 0);
-    if (dinfo == NULL) {
-	return 1;
+    y = gretl_column_vector_alloc(m);
+    X = gretl_unit_matrix_new(m, 2);
+    b = gretl_column_vector_alloc(2);
+    V = gretl_matrix_alloc(2, 2);
+
+    if (y == NULL || X == NULL || b == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
     /* Test from Geweke and Porter-Hudak, as set out in
        Greene, Econometric Analysis 4e, p. 787 */
-    
+
     for (t=0; t<m; t++) {
-	Z[1][t] = log(hhat[t]);
+	y->val[t] = log(hhat[t]);
 	x = sin(omega[t] / 2);
-	Z[2][t] = log(4 * x * x);
-    }
+	gretl_matrix_set(X, t, 1, log(4 * x * x));
+    }    
 
-    mod = lsq(list, &Z, dinfo, OLS, OPT_A);
+    err = gretl_matrix_ols(y, X, b, V, NULL, &x);
 
-    if (!mod.errcode) {
-	double tval = -mod.coeff[1] / mod.sderr[1];
+    if (!err) {
+	double bi = -b->val[1];
+	double se = sqrt(gretl_matrix_get(V, 1, 1));
+	double tval = bi / se;
+	int df = m - 2;
 
 	pprintf(prn, "%s (m = %d)\n"
 		"  %s = %g (%g)\n"
 		"  %s: t(%d) = %g, %s %.4f\n",
 		_("GPH test for fractional integration"), m,
-		_("Estimated degree of integration"), -mod.coeff[1], mod.sderr[1],
-		_("test statistic"), mod.dfd, tval, 
-		_("with p-value"), student_pvalue_2(tval, mod.dfd));
-    } else {
-	err = mod.errcode;
-    }
+		_("Estimated degree of integration"), bi, se,
+		_("test statistic"), df, tval, 
+		_("with p-value"), student_pvalue_2(tval, df));
+    } 
 
-    clear_model(&mod);
+ bailout:
 
-    destroy_dataset(Z, dinfo);
+    gretl_matrix_free(y);
+    gretl_matrix_free(X);
+    gretl_matrix_free(b);
+    gretl_matrix_free(V);
 
     return err;
 }
 
-static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
+static gretl_matrix *gretl_matrix_pergm (const gretl_matrix *x, int m)
 {
     gretl_matrix *p = NULL;
     gretl_matrix *f = NULL;
@@ -2710,7 +2754,6 @@ static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
     f = gretl_matrix_fft(x, &err);
     if (err) {
 	gretl_matrix_free(p);
-	gretl_matrix_free(f);
 	return NULL;
     }
 
@@ -2725,91 +2768,107 @@ static gretl_matrix *gretl_matrix_fft_pergm (const gretl_matrix *x, int m)
     return p;
 }
 
-static gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
-{
-    int m = gretl_vector_get_length(I);
+struct LWE_helper {
     gretl_matrix *lambda;
+    gretl_matrix *lpow;
+    gretl_matrix *I;
+    gretl_matrix *I2;
+    double lcm;
+};
+
+static void LWE_free (struct LWE_helper *L)
+{
+    gretl_matrix_free(L->lambda);
+    gretl_matrix_free(L->lpow);
+    gretl_matrix_free(L->I);
+    gretl_matrix_free(L->I2);
+}
+
+static double LWE_obj_func (struct LWE_helper *L, double d)
+{
+    double dd = 2.0 * d;
     int i;
+
+    gretl_matrix_copy_values(L->lpow, L->lambda);
+    gretl_matrix_raise(L->lpow, dd);
+
+    for (i=0; i<L->I->rows; i++) {
+	L->I2->val[i] = L->I->val[i] * L->lpow->val[i];
+    }
+
+    return -(log(gretl_vector_mean(L->I2)) - dd * L->lcm);
+}
+
+static gretl_matrix *LWE_lambda (const gretl_matrix *I, int n)
+{
+    gretl_matrix *lambda;
+    int i, m = gretl_vector_get_length(I);
 
     lambda = gretl_column_vector_alloc(m);
 
-    for (i=0; i<m; i++) {
-	gretl_vector_set(lambda, i, (M_2PI / n) * (i + 1));
-#if LWE_DEBUG
-	fprintf(stderr, "LWE_obj_func: lambda[%d] = %g\n",
-		i, lambda->val[i]);
-#endif
+    if (lambda != NULL) {
+	for (i=0; i<m; i++) {
+	    gretl_vector_set(lambda, i, (M_2PI / n) * (i + 1));
+	}
     }
-
-    *lcm = 0.0;
-    for (i=0; i<m; i++) {
-	*lcm += log(lambda->val[i]);
-    }
-    *lcm /= m;
-
-#if LWE_DEBUG
-    fprintf(stderr, "LWE_lambda: col mean of log lambda = %g\n", *lcm);
-#endif
 
     return lambda;
 }
 
-static double LWE_obj_func (const gretl_matrix *I, double d,
-			    const gretl_matrix *lambda, double lcm)
+static int 
+LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
 {
-    gretl_matrix *lambda2, *Itmp;
-    double dd = 2.0 * d;
-    double ret;
-    int err = 0;
+    int i, err = 0;
 
-    lambda2 = gretl_matrix_copy(lambda);
-    if (lambda2 == NULL) {
-	return NADBL;
+    L->I2 = L->lpow = NULL;
+
+    L->I = gretl_matrix_pergm(X, m);
+    if (L->I == NULL) {
+	return E_ALLOC;
+    } 
+
+    L->lambda = LWE_lambda(L->I, X->rows);
+    if (L->lambda == NULL) {
+	gretl_matrix_free(L->I);
+	return E_ALLOC;
     }
 
-    gretl_matrix_raise(lambda2, dd);
+    L->lpow = gretl_matrix_copy(L->lambda);
+    L->I2 = gretl_matrix_copy(L->I);
+    if (L->lpow == NULL || L->I2 == NULL) {
+	err = E_ALLOC;
+	LWE_free(L);
+    } else {
+	L->lcm = 0.0;
+	for (i=0; i<m; i++) {
+	    L->lcm += log(L->lambda->val[i]);
+	}
+	L->lcm /= m;
+    }   
 
-    Itmp = gretl_matrix_dot_op(I, lambda2, '*', &err);
-    if (Itmp == NULL) {
-	gretl_matrix_free(lambda2);
-	return NADBL;
-    }
-
-    ret = -(log(gretl_vector_mean(Itmp)) - dd * lcm);
-    
-    gretl_matrix_free(lambda2);
-    gretl_matrix_free(Itmp);
-
-    return ret;
+    return err;
 }
 
 static double LWE (const gretl_matrix *X, int m)
 {
-    gretl_matrix *I;
-    gretl_matrix *lambda;
-    int n = gretl_matrix_rows(X);
-    double d = 0, ret;
-    double lcm;
-
-    double dd = 1.0, f, incr, incl, deriv, h, eps = 1.0e-05;
+    struct LWE_helper L;
+    double d = 0, dd = 1.0;
+    double eps = 1.0e-05;
+    double f, incr, incl, deriv, h;
     int iter = 0;
     const int MAX_ITER = 100;
-      
-    I = gretl_matrix_fft_pergm(X, m);
-    if (I == NULL) {
+    int err;
+
+    err = LWE_init(&L, X, m);
+    if (err) {
 	return NADBL;
     }
 
-    lambda = LWE_lambda(I, n, &lcm);
-    if (lambda == NULL) {
-	gretl_matrix_free(I);
-	return NADBL;
-    }    
-
     while (fabs(dd) > 1.0e-06 && iter < MAX_ITER) {
-	f = LWE_obj_func(I, d, lambda, lcm);
-	incr = LWE_obj_func(I, d + eps, lambda, lcm) / eps;
-	incl = LWE_obj_func(I, d - eps, lambda, lcm) / eps;
+	f = LWE_obj_func(&L, d);
+	incr = LWE_obj_func(&L, d + eps) / eps;
+	incl = LWE_obj_func(&L, d - eps) / eps;
+
 	deriv = (incr - incl) / 2.0;
 	h = (0.5 * (incr + incl) - f / eps) / eps;
 
@@ -2823,25 +2882,20 @@ static double LWE (const gretl_matrix *X, int m)
 	    dd = (dd > 0) ? 1 : -1;
 	}
 	
-#if LWE_DEBUG
-	fprintf(stderr, "d = %g, f(d) = %g, deriv = %g, h = %g, dd = %g\n",
-		d, f, deriv, h, dd);
-#endif
 	d += 0.5 * dd;
 	iter++;
     }
 
-    if (iter == MAX_ITER) {
+    if (err) {
+	d = NADBL;
+    } else if (iter == MAX_ITER) {
 	fprintf(stderr, "Maximum number of iterations reached\n");
-	ret = NADBL;
-    } else {
-        ret = d;
-    }
+	d = NADBL;
+    } 
 
-    gretl_matrix_free(I);
-    gretl_matrix_free(lambda);
+    LWE_free(&L);
 
-    return ret;
+    return d;
 }
 
 int auto_spectrum_order (int T, gretlopt opt)
@@ -2877,12 +2931,10 @@ static int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
 
     T = gretl_vector_get_length(X);
 
-    if (m > 0) {
-	if (m > T / 2.0) {
-	    m = T / 2.0;
-	}
-    } else {
+    if (m <= 0) {
 	m = auto_spectrum_order(T, OPT_NONE);
+    } else if (m > T / 2.0) {
+	m = T / 2.0;
     }
 
     d = LWE(X, m);
@@ -2907,11 +2959,105 @@ static int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
     return 0;
 }
 
+static int pergm_graph (const char *vname,
+			const DATAINFO *pdinfo, 
+			int T, int L, const double *x,
+			gretlopt opt)
+{
+    FILE *fp = NULL;
+    char s[80];
+    double xt;
+    int k, t, err;
+
+    err = gnuplot_init(PLOT_PERIODOGRAM, &fp);
+    if (err) {
+	return err;
+    }
+
+    fputs("# literal lines = 4\n", fp);
+    fputs("set xtics nomirror\n", fp); 
+
+    if (pdinfo->pd == 4) {
+	fprintf(fp, "set x2label '%s'\n", G_("quarters"));
+    } else if (pdinfo->pd == 12) {
+	fprintf(fp, "set x2label '%s'\n", G_("months"));
+    } else if (pdinfo->pd == 1 && pdinfo->structure == TIME_SERIES) {
+	fprintf(fp, "set x2label '%s'\n", G_("years"));
+    } else {
+	fprintf(fp, "set x2label '%s'\n", G_("periods"));
+    }
+
+    fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
+    fputs("set x2tics(", fp);
+    k = (T / 2) / 6;
+    for (t = 1; t <= T/2; t += k) {
+	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
+    }
+    fprintf(fp, "\"\" %d)\n", 2 * T);
+    fprintf(fp, "set xlabel '%s'\n", G_("scaled frequency"));
+    fputs("set xzeroaxis\n", fp);
+    fputs("set nokey\n", fp);
+
+    if (opt & OPT_R) {
+	strcpy(s, G_("Residual spectrum"));
+    } else {
+	sprintf(s, G_("Spectrum of %s"), vname);
+    }
+
+    fprintf(fp, "set title '%s", s);
+
+    if (opt & OPT_O) {
+	sprintf(s, G_("Bartlett window, length %d"), L);
+	fprintf(fp, " (%s)", s);
+    } 
+
+    if (opt & OPT_L) {
+	fputs(" (log scale)", fp);
+    }
+
+    fputs("'\n", fp);
+
+    fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
+    fputs("plot '-' using 1:2 w lines\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    for (t=1; t<=T/2; t++) {
+	xt = (opt & OPT_L)? log(x[t]) : x[t];
+	fprintf(fp, "%d %g\n", t, xt);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("e\n", fp);
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+static void 
+pergm_print_header (const char *vname, int T, int L,
+		    gretlopt opt, PRN *prn)
+{
+    if (opt & OPT_R) {
+	pprintf(prn, "\n%s\n", _("Residual periodogram"));
+    } else {
+	pprintf(prn, _("\nPeriodogram for %s\n"), vname);
+    }
+
+    pprintf(prn, _("Number of observations = %d\n"), T);
+    if (opt & OPT_O) {
+	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
+    } else {
+	pputc(prn, '\n');
+    }
+}
+
 /**
  * periodogram:
  * @varno: ID number of variable to process.
  * @width: width of window.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
  * if includes %OPT_N, don't display gnuplot graph; if includes
@@ -2925,224 +3071,115 @@ static int fract_int_LWE (const double **Z, int varno, int m, int t1, int t2,
  *
  */
 
-int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo, 
+int periodogram (int varno, int width, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    double *autocov = NULL;
+    double *acov = NULL;
     double *omega = NULL;
     double *hhat = NULL;
-    double *savexx = NULL;
-    double *stdy = NULL;
-    const char *vname = NULL;
-    double xx, yy, varx, stdx, w;
-    int k, xmax, L, m, nobs; 
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int list[2];
-    int do_graph = !(opt & OPT_N);
+    double *sdy = NULL;
+    double *xvec = NULL;
+    const char *vname;
+    double xx, yy, varx, sdx, w;
+    int k, L, m, T, t; 
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int list[2] = { 1, varno };
     int window = (opt & OPT_O);
-    FILE *fq = NULL;
     int err = 0;
 
     gretl_error_clear();
 
-    list[0] = 1;
-    list[1] = varno;
-    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
-    nobs = t2 - t1 + 1;
+    varlist_adjust_sample(list, &t1, &t2, Z);
+    T = t2 - t1 + 1;
 
-    if (missvals(&(*pZ)[varno][t1], nobs)) {
+    if (missvals(Z[varno] + t1, T)) {
 	strcpy(gretl_errmsg, 
 	       _("Missing values within sample -- can't do periodogram"));
 	return 1;
     }    
 
-    if (nobs < 12) {
+    if (T < 12) {
 	strcpy(gretl_errmsg,
 	       _("Insufficient observations for periodogram"));
 	return 1;
     }
 
-    if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
-	sprintf(gretl_tmp_str, _("'%s' is a constant"), pdinfo->varname[varno]);
-	pprintf(prn, "\n%s\n", gretl_tmp_str);
+    if (gretl_isconst(t1, t2, Z[varno])) {
+	sprintf(gretl_errmsg, _("'%s' is a constant"), pdinfo->varname[varno]);
 	return 1;
     }
 
-    vname = var_get_graph_name(pdinfo, varno);
-
     /* Chatfield (1996); Greene 4ed, p. 772 */
     if (window) {
-	if (width > 0) {
-	    L = width;
-	    if (L > nobs / 2) {
-		L = nobs / 2;
-	    }
+	if (width <= 0) {
+	    L = auto_spectrum_order(T, opt);
 	} else {
-	    L = auto_spectrum_order(nobs, opt);
-	}
+	    L = (width > T / 2)? T / 2 : width;
+	} 
     } else {
-	L = nobs - 1; 
+	L = T - 1; 
     }
 
     /* prepare for fractional integration test */
-    if (width > 0) {
-	m = width;
-	if (m > nobs / 2) {
-	    m = nobs / 2;
-	}
+    if (width <= 0) {
+	m = auto_spectrum_order(T, OPT_NONE);
     } else {
-	m = auto_spectrum_order(nobs, OPT_NONE);
-    }
+	m = (width > T / 2)? T / 2 : width;
+    } 
     
-    autocov = malloc((L + 1) * sizeof *autocov);
+    acov = malloc((L + 1) * sizeof *acov);
     omega = malloc(m * sizeof *omega);
     hhat = malloc(m * sizeof *hhat);
-    stdy = malloc(nobs * sizeof *stdy);
+    sdy = malloc(T * sizeof *sdy);
+    xvec = malloc((1 + T/2) * sizeof *xvec);
 
-    if (autocov == NULL || omega == NULL || hhat == NULL || stdy == NULL) {
-	free(autocov);
-	free(omega);
-	free(hhat);
-	free(stdy);
-	return E_ALLOC;
+    if (acov == NULL || omega == NULL || hhat == NULL || 
+	sdy == NULL || xvec == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    xx = gretl_mean(t1, t2, (*pZ)[varno]);
-    varx = gretl_variance(t1, t2, &(*pZ)[varno][0]);
-    varx *= (double) (nobs - 1) / nobs;
-    stdx = sqrt(varx);
+    xx = gretl_mean(t1, t2, Z[varno]);
+    varx = gretl_variance(t1, t2, Z[varno]);
+    varx *= (double) (T - 1) / T;
+    sdx = sqrt(varx);
+
     for (t=t1; t<=t2; t++) {
-	stdy[t-t1] = ((*pZ)[varno][t] - xx) / stdx;
+	sdy[t-t1] = (Z[varno][t] - xx) / sdx;
     }
 
     /* find autocovariances */
     for (k=1; k<=L; k++) {
-	autocov[k] = 0.0;
-	for (t=k; t<nobs; t++) {
-	    autocov[k] += stdy[t] * stdy[t-k];
+	acov[k] = 0.0;
+	for (t=k; t<T; t++) {
+	    acov[k] += sdy[t] * sdy[t-k];
 	}
-	autocov[k] /= nobs;
+	acov[k] /= T;
     }
 
-    xmax = roundup_mod(nobs, 2.0);
-
-    if (do_graph && gnuplot_init(PLOT_PERIODOGRAM, &fq) == 0) {
-	char titlestr[80];
-
-	fputs("# literal lines = 4\n", fq);
-	fputs("set xtics nomirror\n", fq); 
-
-	if (pdinfo->pd == 4) {
-	    fprintf(fq, "set x2label '%s'\n", G_("quarters"));
-	} else if (pdinfo->pd == 12) {
-	    fprintf(fq, "set x2label '%s'\n", G_("months"));
-	} else if (pdinfo->pd == 1 && pdinfo->structure == TIME_SERIES) {
-	    fprintf(fq, "set x2label '%s'\n", G_("years"));
-	} else {
-	    fprintf(fq, "set x2label '%s'\n", G_("periods"));
-	}
-
-	fprintf(fq, "set x2range [0:%d]\n", xmax);
-	fputs("set x2tics(", fq);
-	k = (nobs / 2) / 6;
-	for (t = 1; t <= nobs/2; t += k) {
-	    fprintf(fq, "\"%.1f\" %d, ", (double) nobs / t, 4 * t);
-	}
-	fprintf(fq, "\"\" %d)\n", 2 * nobs);
-	fprintf(fq, "set xlabel '%s'\n", G_("scaled frequency"));
-	fputs("set xzeroaxis\n", fq);
-	fputs("set nokey\n", fq);
-
-	if (opt & OPT_R) {
-	    strcpy(titlestr, G_("Residual spectrum"));
-	} else {
-	    sprintf(titlestr, G_("Spectrum of %s"), vname);
-	}
-
-	fprintf(fq, "set title '%s", titlestr);
-
-	if (window) {
-	    sprintf(titlestr, G_("Bartlett window, length %d"), L);
-	    fprintf(fq, " (%s)", titlestr);
-	} 
-
-	if (opt & OPT_L) {
-	    fputs(" (log scale)", fq);
-	}
-
-	fputs("'\n", fq);
-
-	fprintf(fq, "set xrange [0:%d]\n", roundup_mod(nobs, 0.5));
-	fputs("plot '-' using 1:2 w lines\n", fq);
-    }
-
-    if (do_graph && fq == NULL) {
-	do_graph = 0;
-	err = 1;
-    }
-
-    if (opt & OPT_R) {
-	pprintf(prn, "\n%s\n", _("Residual periodogram"));
-    } else {
-	pprintf(prn, _("\nPeriodogram for %s\n"), vname);
-    }
-
-    pprintf(prn, _("Number of observations = %d\n"), nobs);
-    if (window) {
-	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
-    } else {
-	pputc(prn, '\n');
-    }
-
-    savexx = malloc((1 + nobs/2) * sizeof *savexx);
-    if (savexx == NULL) {
-	err = 1;
-	fclose(fq);
-	do_graph = 0;
-    }
-
-    for (t=1; t<=nobs/2; t++) {
-	yy = M_2PI * t / (double) nobs;
+    for (t=1; t<=T/2; t++) {
+	yy = M_2PI * t / (double) T;
 	xx = 1.0; 
 	for (k=1; k<=L; k++) {
-	    if (window) {
-		w = 1 - (double) k/(L + 1);
-	    } else {
-		w = 1.0;
-	    }
-	    xx += 2.0 * w * autocov[k] * cos(yy * k);
+	    w = (window)? 1 - (double) k/(L + 1) : 1;
+	    xx += 2.0 * w * acov[k] * cos(yy * k);
 	}
-	xx *= varx /(M_2PI);
-	if (savexx != NULL) {
-	    savexx[t] = xx;
-	}
+	xx *= varx / M_2PI;
+	xvec[t] = xx;
 	if (t <= m) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;
 	}
     }
 
-    if (do_graph) {
-	gretl_push_c_numeric_locale();
-
-	for (t=1; t<=nobs/2; t++) {
-	    xx = (opt & OPT_L)? log(savexx[t]) : savexx[t];
-	    fprintf(fq, "%d %g\n", t, xx);
-	}
-
-	gretl_pop_c_numeric_locale();
-
-	fputs("e\n", fq);
-
-	fclose(fq);
-	err = gnuplot_make_graph();
-    }
+    vname = var_get_graph_name(pdinfo, varno);
+    pergm_print_header(vname, T, L, opt, prn);
 
     if (!window) {
 	if (fract_int_GPH(m, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
-	fract_int_LWE((const double **) *pZ, varno, width, t1, t2, prn);
+	fract_int_LWE(Z, varno, width, t1, t2, prn);
     }
 
     if (opt & OPT_L) {
@@ -3151,20 +3188,25 @@ int periodogram (int varno, int width, double ***pZ, const DATAINFO *pdinfo,
 	pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
     }
 
-    for (t=1; t<=nobs/2; t++) {
-	yy = M_2PI * t / (double) nobs;
-	xx = (opt & OPT_L)? log(savexx[t]) : savexx[t];
-	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
-		(double) nobs / t, xx);
+    for (t=1; t<=T/2; t++) {
+	yy = M_2PI * t / (double) T;
+	xx = (opt & OPT_L)? log(xvec[t]) : xvec[t];
+	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, (double) T / t, xx);
     }
 
     pputc(prn, '\n');
 
-    free(savexx);
-    free(autocov);
+    if (!(opt & OPT_N)) {
+	pergm_graph(vname, pdinfo, T, L, xvec, opt);
+    }
+
+ bailout:
+
+    free(acov);
     free(omega);
     free(hhat);
-    free(stdy);
+    free(sdy);
+    free(xvec);
 
     return err;
 }
@@ -4502,4 +4544,3 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
 
     return err;
 }
-

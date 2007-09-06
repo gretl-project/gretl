@@ -158,15 +158,15 @@ int auto_acf_order (int pd, int nobs);
 int auto_spectrum_order (int T, gretlopt opt);
 
 int corrgram (int varno, int order, int nparam,
-	      double ***pZ, DATAINFO *pdinfo, 
+	      const double **Z, DATAINFO *pdinfo, 
 	      PRN *prn, gretlopt opt);
 
 int xcorrgram (const int *list, int order, 
-	      double ***pZ, DATAINFO *pdinfo, 
-	      PRN *prn, gretlopt opt);
+	       const double **Z, DATAINFO *pdinfo, 
+	       PRN *prn, gretlopt opt);
 
 int periodogram (int varno, int width, 
-		 double ***pZ, const DATAINFO *pdinfo, 
+		 const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
 Summary *summary (const int *list, const double **Z, 

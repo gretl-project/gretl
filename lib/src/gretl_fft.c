@@ -21,6 +21,30 @@
 #include "gretl_fft.h"
 #include <fftw3.h>
 
+static int fft_allocate (double **px, gretl_matrix **pm,
+			 fftw_complex **pc, int r, int c)
+{
+    *px = malloc(r * sizeof **px);
+    if (*px == NULL) {
+	return E_ALLOC;
+    }
+
+    *pm = gretl_matrix_alloc(r, c);
+    if (*pm == NULL) {
+	free(*px);
+	return E_ALLOC;
+    }
+
+    *pc = fftw_malloc(r * sizeof **pc);
+    if (*pc == NULL) {
+	free(*px);
+	gretl_matrix_free(*pm);
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
 /**
  * gretl_matrix_fft:
  * @y: input matrix.
@@ -37,30 +61,18 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
     fftw_plan p = NULL;
     double *tmp = NULL;
     fftw_complex *out;
-    int i, j;
-
     int r = gretl_matrix_rows(y);
     int c = gretl_matrix_cols(y);
-    int is_odd = (r % 2);
-    int m = r/2;
+    int m = r / 2;
+    int odd = r % 2;
     int cr = 0;
     int ci = 1;
+    int i, j;
 
-    *err = 0;
-
-    tmp = malloc(r * sizeof *tmp);
-    ft = gretl_matrix_alloc(r, 2 * c);
-    out = fftw_malloc(r * sizeof *out);
-
-    if (tmp == NULL || ft == NULL || out == NULL) {
-	free(tmp);
-	gretl_matrix_free(ft);
-	fftw_free(out);
-	*err = E_ALLOC;
+    *err = fft_allocate(&tmp, &ft, &out, r, 2 * c);
+    if (*err) {
 	return NULL;
     }
-    
-    /* now do the FFT proper */
 
     for (j=0; j<c; j++) {
 
@@ -75,7 +87,7 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 
 	fftw_execute(p);
 
-	for (i=0; i<m+1+is_odd; i++) {
+	for (i=0; i<=m+odd; i++) {
 	    gretl_matrix_set(ft, i, cr, out[i][0]);
 	    gretl_matrix_set(ft, i, ci, out[i][1]);
 	}
@@ -85,8 +97,8 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 	    gretl_matrix_set(ft, r-i, ci, -out[i][1]);
 	}
 
-	cr +=2;
-	ci +=2;
+	cr += 2;
+	ci += 2;
     }
 
     fftw_destroy_plan(p);
@@ -112,34 +124,22 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     fftw_plan p = NULL;
     double *tmp = NULL;
     fftw_complex *in;
-    int i, j;
-
     int r = gretl_matrix_rows(y);
     int c = gretl_matrix_cols(y) / 2;
-    int is_odd = (r % 2);
-    int m = r/2;
+    int m = r / 2;
+    int odd = r % 2;
     int cr = 0;
     int ci = 1;
+    int i, j;
 
-    *err = 0;
-
-    tmp = malloc(r * sizeof *tmp);
-    ft = gretl_matrix_alloc(r, c);
-    in = fftw_malloc(r * sizeof *in);
-
-    if (tmp == NULL || ft == NULL || in == NULL) {
-	free(tmp);
-	gretl_matrix_free(ft);
-	fftw_free(in);
-	*err = E_ALLOC;
+    *err = fft_allocate(&tmp, &ft, &in, r, c);
+    if (*err) {
 	return NULL;
     }
     
-    /* now do the inverse FFT proper */
-
     for (j=0; j<c; j++) {
 
-	for (i=0; i<m+1+is_odd; i++) {
+	for (i=0; i<=m+odd; i++) {
 	    in[i][0] = gretl_matrix_get(y, i, cr);
 	    in[i][1] = gretl_matrix_get(y, i, ci);
 	}
@@ -152,7 +152,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 	fftw_execute(p);
 
 	for (i=0; i<r; i++) {
-	    gretl_matrix_set(ft, i, j, tmp[i]/r);
+	    gretl_matrix_set(ft, i, j, tmp[i] / r);
 	}
 
 	cr += 2;
