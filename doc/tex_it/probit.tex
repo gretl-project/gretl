@@ -150,10 +150,10 @@ disturbi latenti $\varepsilon_t$. Questi sono definiti come
   \label{eq:QR-genres}
   u_i = \left\{
     \begin{array}{ll}
-      y_i - \hat{P}_i & \textrm{for the logit model} \\
+      y_i - \hat{P}_i & \textrm{per il modello logit} \\
       y_i\cdot \frac{\phi(\hat{z}_i)}{\Phi(\hat{z}_i)} - 
       ( 1 - y_i ) \cdot \frac{\phi(\hat{z}_i)}{1 - \Phi(\hat{z}_i)}
-      & \textrm{for the probit model} \\
+      & \textrm{per il modello probit} \\
     \end{array}
     \right.
 \end{equation}
@@ -194,9 +194,9 @@ nella $j$-esima categoria è dato da
   \label{eq:QR-ordered}
   P(y_i = j | x_i) = \left\{
     \begin{array}{ll}
-      F(z_i + \mu_0) & \textrm{for } j = 0 \\
-      F(z_i + \mu_j) -  F(z_i + \mu_{j-1}) & \textrm{for } 0 < j < p \\
-      1 -  F(z_i + \mu_{p-1}) & \textrm{for } j = p 
+      F(z_i + \mu_0) & \textrm{per } j = 0 \\
+      F(z_i + \mu_j) -  F(z_i + \mu_{j-1}) & \textrm{per } 0 < j < p \\
+      1 -  F(z_i + \mu_{p-1}) & \textrm{per } j = p 
     \end{array}
     \right.
 \end{equation}
