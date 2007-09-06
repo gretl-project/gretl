@@ -2965,8 +2965,8 @@ static int pergm_graph (const char *vname,
 			gretlopt opt)
 {
     FILE *fp = NULL;
+    const char *pstr;
     char s[80];
-    double xt;
     int k, t, err;
 
     err = gnuplot_init(PLOT_PERIODOGRAM, &fp);
@@ -2978,41 +2978,48 @@ static int pergm_graph (const char *vname,
     fputs("set xtics nomirror\n", fp); 
 
     if (pdinfo->pd == 4) {
-	fprintf(fp, "set x2label '%s'\n", G_("quarters"));
+	pstr = N_("quarters");
     } else if (pdinfo->pd == 12) {
-	fprintf(fp, "set x2label '%s'\n", G_("months"));
+	pstr = N_("months");
     } else if (pdinfo->pd == 1 && pdinfo->structure == TIME_SERIES) {
-	fprintf(fp, "set x2label '%s'\n", G_("years"));
+	pstr = N_("years");
     } else {
-	fprintf(fp, "set x2label '%s'\n", G_("periods"));
+	pstr = N_("periods");
     }
 
+    fprintf(fp, "set x2label '%s'\n", G_(pstr));
     fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
+
     fputs("set x2tics(", fp);
     k = (T / 2) / 6;
     for (t = 1; t <= T/2; t += k) {
 	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
     }
     fprintf(fp, "\"\" %d)\n", 2 * T);
+
     fprintf(fp, "set xlabel '%s'\n", G_("scaled frequency"));
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp);
 
+    fputs("set title '", fp);
+
     if (opt & OPT_R) {
-	strcpy(s, G_("Residual spectrum"));
+	fputs(G_("Residual spectrum"), fp);
     } else {
 	sprintf(s, G_("Spectrum of %s"), vname);
+	fputs(s, fp);
     }
 
-    fprintf(fp, "set title '%s", s);
-
     if (opt & OPT_O) {
-	sprintf(s, G_("Bartlett window, length %d"), L);
-	fprintf(fp, " (%s)", s);
+	fputs(" (", fp);
+	fprintf(fp, G_("Bartlett window, length %d"), L);
+	fputc(')', fp);
     } 
 
     if (opt & OPT_L) {
-	fputs(" (log scale)", fp);
+	fputs(" (", fp);
+	fputs(G_("log scale"), fp);
+	fputc(')', fp);
     }
 
     fputs("'\n", fp);
@@ -3023,8 +3030,7 @@ static int pergm_graph (const char *vname,
     gretl_push_c_numeric_locale();
 
     for (t=1; t<=T/2; t++) {
-	xt = (opt & OPT_L)? log(x[t]) : x[t];
-	fprintf(fp, "%d %g\n", t, xt);
+	fprintf(fp, "%d %g\n", t, (opt & OPT_L)? log(x[t]) : x[t]);
     }
 
     gretl_pop_c_numeric_locale();
