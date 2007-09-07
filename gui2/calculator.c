@@ -240,6 +240,60 @@ enum {
 #define F_BINOM  "binom(k,n,p)=comb(int(n),int(k))*p**k*(1-p)**(n-k)"
 #define F_POIS   "poisson(z,k)=exp(-z)*(z**k)/(int(k))!"
 
+static void 
+dist_xmin_xmax (int d, int alt, double *parms, double *xmin, double *xmax)
+{
+    double x[3] = {0};
+    char st = 0;
+
+    x[0] = parms[0];
+
+    if (d == NORMAL_DIST) {
+	*xmin = parms[0] - 4.5 * parms[1];
+	*xmax = parms[0] + 4.5 * parms[1];
+    } else if (d == T_DIST) {
+	*xmin = -4.5;
+	*xmax = 4.5;
+    } else if (d == CHISQ_DIST) {
+	st = 'X';
+	*xmin = 0;
+	x[1] = 0.005;
+    } else if (d == F_DIST) {
+	st = 'F';
+	*xmin = 0;
+	x[1] = parms[1];
+	if (parms[0] + parms[1] < 16) {
+	    x[2] = 0.009;
+	} else {
+	    x[2] = 0.005;
+	}
+    } else if (d == BINOMIAL_DIST) {
+	if (alt) {
+	    double m = parms[1] * parms[0];
+	    double s = sqrt(m * (1 - parms[0]));
+    
+	    *xmin = m + 3.5 * s;
+	    *xmax = m - 3.5 * s;
+	    if (*xmin < 0) {
+		*xmin = 0;
+	    }
+	} else {
+	    st = 'B';
+	    *xmin = 0;
+	    x[1] = parms[1];
+	    x[2] = 0.001;
+	}
+    } else if (d == POISSON_DIST) {
+	st = 'P';
+	*xmin = 0;
+	x[1] = 0.0015;
+    }
+
+    if (st) {
+	*xmax = gretl_get_critval(st, x);
+    }
+}
+
 static double dist_xmax (int d, double *parms)
 {
     double x[3] = {0};
@@ -312,19 +366,6 @@ static int tic_step (int t)
 }
 
 static void 
-binom_approx_range (const double *parms, double *x0, double *x1)
-{
-    double m = parms[1] * parms[0];
-    double s = sqrt(m * (1 - parms[0]));
-    
-    *x1 = m + 3.5 * s;
-    *x0 = m - 3.5 * s;
-    if (*x0 < 0) {
-	*x0 = 0;
-    }
-}
-
-static void 
 range_from_test_stat (int d, double x, double *parms, double *spike,
 		      FILE *fp)
 {
@@ -350,30 +391,19 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 static void
 range_from_dist (int d, double *parms, int alt, FILE *fp)
 {
-    double x;
+    double x, tmin, tmax;
+
+    dist_xmin_xmax(d, alt, parms, &tmin, &tmax);
+
+    fprintf(fp, "set trange [%g:%g]\n", tmin, tmax);
 
     if (d == NORMAL_DIST) {
-	fprintf(fp, "set trange [%g:%g]\n", parms[0] - 5 * parms[1],
-		parms[0] + 5 * parms[1]);
 	x = normal_pdf_height(parms[1]);
 	fprintf(fp, "set yrange [0:%g]\n", x * 1.1);
     } else if (d == T_DIST) {
-	fputs("set trange [-5:5]\n", fp);
 	fputs("set yrange [0:.50]\n", fp);
-    } else if (d == CHISQ_DIST || d == F_DIST) {
-	x = dist_xmax(d, parms);
-	fprintf(fp, "set trange [0:%.3f]\n", x);
-    } else if (d == BINOMIAL_DIST && alt) {
-	double t0, t1;
-
-	binom_approx_range(parms, &t0, &t1);
-	fprintf(fp, "set trange [%g:%g]\n", t0, t1);
-	fprintf(fp, "set xtics %d\n", tic_step(t1 - t0));	    
     } else if (d == BINOMIAL_DIST || d == POISSON_DIST) {  
-	int t1 = dist_xmax(d, parms);
-
-	fprintf(fp, "set trange [0:%d]\n", t1);
-	fprintf(fp, "set xtics %d\n", tic_step(t1));
+	fprintf(fp, "set xtics %d\n", tic_step(tmax - tmin));
     }	
 }
 
@@ -383,21 +413,14 @@ spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
     double *t_range = spec->range[3];
     double tmin, tmax;
 
-    if (d == NORMAL_DIST) {
-	tmin = parms[0] - 4.5 * parms[1];
-	tmax = parms[0] + 4.5 * parms[1];
-    } else if (d == T_DIST) {
-	tmin = -4.5;
-	tmax = 4.5;
-    } else if (d == BINOMIAL_DIST && alt) {
-	binom_approx_range(parms, &tmin, &tmax);
-    } else {
-	tmax = dist_xmax(d, parms);
-    }
+    dist_xmin_xmax(d, alt, parms, &tmin, &tmax);
 
-    if (tmin < t_range[0]) {
+    if (t_range[0] == 0 && tmin < 0) {
+	; /* don't adjust? */
+    } else if (tmin < t_range[0]) {
 	t_range[0] = tmin;
     }
+
     if (tmax > t_range[1]) {
 	t_range[1] = tmax;
     }   
@@ -1565,8 +1588,8 @@ static void h_test (GtkWidget *w, test_t *test)
 	x[j] = getval(test->entry[k++], C_DBL); /* mean */
 	if (na(x[j++])) return;
 	x[j] = getval(test->entry[k++], C_POS_DBL); /* s.d. */
-	if (na(x[1])) return;
-	n1 = getval(test->entry[k++], C_POS_INT); /* sample */
+	if (na(x[j++])) return;
+	n1 = getval(test->entry[k++], C_POS_INT); /* n */
 	if (n1 < 0) return;
 	x[j++] = getval(test->entry[k], C_DBL); /* val */
 	if (na(x[j])) return;
@@ -1621,8 +1644,8 @@ static void h_test (GtkWidget *w, test_t *test)
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
-	x[1] = getval(test->entry[k++], C_POS_DBL);
-	if (na(x[1])) return;
+	x[j] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[j])) return;
 	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
 	break;
