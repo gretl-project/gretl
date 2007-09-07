@@ -24,18 +24,18 @@
 static int fft_allocate (double **px, gretl_matrix **pm,
 			 fftw_complex **pc, int r, int c)
 {
-    *px = malloc(r * sizeof **px);
-    if (*px == NULL) {
-	return E_ALLOC;
-    }
-
     *pm = gretl_matrix_alloc(r, c);
     if (*pm == NULL) {
 	free(*px);
 	return E_ALLOC;
     }
 
-    *pc = fftw_malloc(r * sizeof **pc);
+    *px = fftw_malloc(r * sizeof **px);
+    if (*px == NULL) {
+	return E_ALLOC;
+    }
+
+    *pc = fftw_malloc((r/2 + 1) * sizeof **pc);
     if (*pc == NULL) {
 	free(*px);
 	gretl_matrix_free(*pm);
@@ -103,7 +103,7 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 
     fftw_destroy_plan(p);
     fftw_free(out);
-    free(tmp);
+    fftw_free(tmp);
 
     return ft;
 }
@@ -131,6 +131,11 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     int cr = 0;
     int ci = 1;
     int i, j;
+
+    if (c == 0) {
+	*err = E_NONCONF;
+	return NULL;
+    }
 
     *err = fft_allocate(&tmp, &ft, &in, r, c);
     if (*err) {
@@ -161,7 +166,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 
     fftw_destroy_plan(p);
     fftw_free(in);
-    free(tmp);
+    fftw_free(tmp);
 
     return ft;
 }
