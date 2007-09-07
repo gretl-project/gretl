@@ -241,7 +241,7 @@ enum {
 #define F_POIS   "poisson(z,k)=exp(-z)*(z**k)/(int(k))!"
 
 static void 
-dist_xmin_xmax (int d, int alt, double *parms, double *xmin, double *xmax)
+dist_xmin_xmax (int d, double *parms, double *xmin, double *xmax)
 {
     double x[3] = {0};
     char st = 0;
@@ -268,12 +268,16 @@ dist_xmin_xmax (int d, int alt, double *parms, double *xmin, double *xmax)
 	    x[2] = 0.005;
 	}
     } else if (d == BINOMIAL_DIST) {
-	if (alt) {
-	    double m = parms[1] * parms[0];
-	    double s = sqrt(m * (1 - parms[0]));
+	int n = parms[1];
+	double p = parms[0];
+
+	if (n*p > 5 && n*(1-p) > 5) {
+	    /* use normal approx */
+	    double m = n * p;
+	    double s = sqrt(m * (1 - p));
     
-	    *xmin = m + 3.5 * s;
-	    *xmax = m - 3.5 * s;
+	    *xmin = m - 4 * s;
+	    *xmax = m + 4 * s;
 	    if (*xmin < 0) {
 		*xmin = 0;
 	    }
@@ -389,11 +393,11 @@ range_from_test_stat (int d, double x, double *parms, double *spike,
 }
 
 static void
-range_from_dist (int d, double *parms, int alt, FILE *fp)
+range_from_dist (int d, double *parms, FILE *fp)
 {
     double x, tmin, tmax;
 
-    dist_xmin_xmax(d, alt, parms, &tmin, &tmax);
+    dist_xmin_xmax(d, parms, &tmin, &tmax);
 
     fprintf(fp, "set trange [%g:%g]\n", tmin, tmax);
 
@@ -403,6 +407,7 @@ range_from_dist (int d, double *parms, int alt, FILE *fp)
     } else if (d == T_DIST) {
 	fputs("set yrange [0:.50]\n", fp);
     } else if (d == BINOMIAL_DIST || d == POISSON_DIST) {  
+	fprintf(fp, "set samples %d\n", (int) (tmax - tmin + 1));
 	fprintf(fp, "set xtics %d\n", tic_step(tmax - tmin));
     }	
 }
@@ -413,7 +418,7 @@ spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
     double *t_range = spec->range[3];
     double tmin, tmax;
 
-    dist_xmin_xmax(d, alt, parms, &tmin, &tmax);
+    dist_xmin_xmax(d, parms, &tmin, &tmax);
 
     if (t_range[0] == 0 && tmin < 0) {
 	; /* don't adjust? */
@@ -427,6 +432,16 @@ spec_range_from_dist (int d, double *parms, int alt, GPT_SPEC *spec)
 
     if (d == BINOMIAL_DIST && alt) { 
 	sprintf(spec->xtics, "%d", tic_step(t_range[1] - t_range[0]));
+    }
+
+    if (d == BINOMIAL_DIST || d == POISSON_DIST) {
+	int ns = t_range[1] - t_range[0] + 1;
+
+	if (ns > spec->samples) {
+	    spec->samples = ns;
+	}
+    } else if (spec->samples != 0) {
+	spec->samples = 100;
     }
 }
 
@@ -579,7 +594,7 @@ static void dist_graph (int d, double *parms)
 
     gretl_push_c_numeric_locale();
 
-    range_from_dist(d, parms, alt, fp);
+    range_from_dist(d, parms, fp);
 
     /* header */
     fprintf(fp, "# literal lines = %d\n", 
