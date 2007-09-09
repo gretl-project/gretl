@@ -83,37 +83,6 @@
     </gui-access>
 
   </command>
-  
-  <command name="addobs" section="Dataset" label="Aggiunge osservazioni" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>numero_osservazioni</argument>
-      </arguments>
-      <examples>
-        <example>addobs 10</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-       Aggiunge il numero indicato di osservazioni alla fine del dataset,
-       principalmente a scopo di previsione. I valori della maggior parte delle
-       variabili saranno impostati a "mancante", ma alcune variabili
-       deterministiche verranno riconosciute ed estese; ad esempio, un semplice
-       trend lineare o delle dummy periodiche.
-       </para>
-       <para>
-       Il comando non è disponibile se sul dataset è impostato un sotto-campione
-       ottenuto con una condizione Booleana.
-      </para>
-    </description>
-    
-    <gui-access>
-     <menu-path>/Dati/Aggiungi osservazioni</menu-path>
-    </gui-access>
-
-  </command>
 
   <command name="adf" section="Tests" label="Test Dickey-Fuller aumentato">
 
@@ -1439,6 +1408,81 @@
 
     <gui-access>
       <menu-path>/File/Database</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="dataset" section="Dataset" 
+    label="Manipola il dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>parola-chiave</argument>
+	<argument>parametri</argument>
+      </arguments>
+      <examples>
+        <example>dataset addobs 24</example>
+        <example>dataset compact 1</example>
+        <example>dataset compact 4 last</example>
+        <example>dataset expand 12</example>
+        <example>dataset tranpose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Esegue varie operazioni sull'intero dataset, a seconda della
+        <repl>parola-chiave</repl> usata, che può essere
+	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit> o
+	<lit>transpose</lit>.  Nota: questi comandi non sono disponibili quando
+        sul dataset è definito un sotto-campione ottenuto selezionando le
+        osservazioni con un criterio Booleano.
+      </para>
+      <para>
+	<lit>addobs</lit>: deve essere seguito da un intero positivo. Aggiunge
+        il numero specificato di osservazioni alla fine del dataset, tipicamente
+        a scopo di ottenere delle previsioni. I valori della maggior parte delle
+        variabili nell'intervallo aggiunto sono impostati come valori mancanti,
+        ma alcune variabili deterministiche, ad esempio le tendenze lineari e le
+        variabili dummy periodiche, sono riconosciute ed estese.
+      </para>
+      <para>
+	<lit>compact</lit>: deve essere seguito da un intero positivo che
+        rappresenta la nuova frequenza dei dati, che dovrebbe essere minore di
+        quella attuale (ad esempio un valore 4 quando la frequenza attuale è 12
+        significa che si compatterà un dataset mensile in uno trimestrale).
+        Questo comando è disponibile solo se il dataset contiene serie storiche:
+        compatta tutte le serie del dataset alla nuova frequenza. È possibile
+        dare un secondo parametro, tra <lit>sum</lit>,
+	<lit>first</lit> o <lit>last</lit>, per specificare, rispettivamente, di
+        compattare usando la somma dei valori alla frequenza maggior, i valori
+        di inizio periodo, o di fine periodo. Il comportamento predefinito
+        consiste nel prendere la media dei valori sul periodo.
+      </para>
+      <para>
+	<lit>expand</lit>: deve essere seguito da un intero positivo che
+        rappresenta la nuova frequenza dei dati, che dovrebbe essere maggiore di
+        quella attuale. Questo comando è disponibile solo per serie storiche
+        annuali o trimestrali. I dati annuali possono essere espansi a
+        trimestrali o mensili; quelli trimestrali possono essere espansi a
+        mensili. Tutte le serie nel dataset verranno espanse assegnando alle
+        nuove osservazioni i valori del periodo corrispondente nel vecchio
+        dataset.
+      </para>
+      <para>
+	<lit>transpose</lit>: non richiede parametri aggiuntivi. Traspone il
+        dataset attuale: ogni osservazione (riga) del dataset attuale diventerà
+        una variabile (colonna), e ogni variabile un'osservazione. Questo
+        comando è utile quando si importano da fonti esterne dei dati
+        organizzati con le variabili disposte per riga.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Dati/Aggiungi osservazioni</menu-path>
+      <menu-path>/Dati/Compatta dati</menu-path>
+      <menu-path>/Dati/Espandi dati</menu-path>
+      <menu-path>/Dati/Trasponi</menu-path>
     </gui-access>
 
   </command>
@@ -2928,40 +2972,46 @@
 
     <description>
       <para>
-        La prima informazione che occorre specificare è il nome da dare alla
-        variabile da generare. Le informazioni aggiuntive dipendono dal tipo
-        di distribuzione della variabile pseudo-casuale.
+        In questa finestra occorre specificare il nome da dare alla
+        variabile da generare, seguito da alcune informazioni aggiuntive
+        che dipendono dal tipo di distribuzione.
       </para>
 
       <ilist>
 	<li>
 	  <para>
-	    Uniforme: occorre fornire un limite superiore e uno inferiore per la
-            distribuzione.
+	    Uniforme: limite superiore e inferiore per la distribuzione.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Normale: occorre fornire la media e l'errore standard (quest'ultimo
-            deve essere positivo).
+	    Normale: la media e lo scarto quadratico medio (deve essere positivo).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Chi-quadro e t di Student: occorre fornire i gradi di libertà, che
-            devono essere positivi.
+	    Chi-quadro e t di Student: i gradi di libertà (devono essere positivi).
 	  </para>
 	</li>
         <li>
           <para>
-            Binomiale: occorre fornire il numero di prove (un intero positivo)
+	    F: gradi di libertà al numeratore e denominatore.
+          </para>
+        </li>
+        <li>
+          <para>
+            Gamma: parametri di forma e scala (entrambi positivi).
+          </para>
+        </li>
+        <li>
+          <para>
+            Binomiale: numero di prove (un intero positivo)
             e la probabilità di <quote>successo</quote>.
           </para>
         </li>
         <li>
           <para>
-            Poisson: occorre fornire la media, come valore numerico, o come nome
-            di uno scalare o di una serie.
+            Poisson: la media (che è pari anche alla varianza).
           </para>
         </li>
 
@@ -7832,7 +7882,8 @@
 
   </command>
 
-  <command name="transpos" section="Dataset" label="Trasposizione dei dati">
+  <command name="transpos" section="Dataset" label="Trasposizione dei dati"
+  context="gui">
 
     <description>
       <para>
@@ -7841,6 +7892,9 @@
         ogni variabile come un'osservazione. Questo comando è utile se
         sono stati importati da una fonte esterna dati in cui le righe
         rappresentano variabili e le colonne osservazioni.
+      </para>
+      <para>
+	Si veda anche <cmdref targ="dataset"/>.
       </para>
     </description>
 
