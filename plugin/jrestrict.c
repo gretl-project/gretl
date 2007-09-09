@@ -1326,6 +1326,34 @@ static int switchit (Jwrap *J, PRN *prn)
     return err;
 }
 
+static int check_for_normalizations (const gretl_matrix *R,
+				     const gretl_matrix *q)
+{
+    int i, j, c, nc, n = 0;
+
+    for (i=0; i<R->rows; i++) {
+	c = nc = 0;
+	for (j=0; j<R->cols; j++) {
+	    if (gretl_matrix_get(R, i, j) == 1) {
+		c++;
+		if (c > 1) {
+		    break;
+		} else if (q != NULL && q->val[j] == 1) {
+		    nc = j;
+		}
+	    }
+	}
+	if (c == 1) {
+	    fprintf(stderr, "Got a normalization: vecbeta[%d] = 1\n", nc);
+	    n++;
+	}
+    }
+
+    fprintf(stderr, "Unit-normalizations in (R, q): %d\n", n);
+
+    return n;
+}
+
 /* 
    J = [(I_p \otimes \beta)G : (\alpha \otimes I_{p1})H]
 
@@ -1690,6 +1718,13 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 #if JDEBUG
     gretl_matrix_print(J->H, "H, in set_up_H_h0");
     gretl_matrix_print(J->h0, "h_0, in set_up_H_h0");
+#endif
+
+#if 1
+    if (!(J->r > 1 && R->cols == J->p1)) {
+	/* not an expanded common beta restriction */
+	check_for_normalizations(R, q);
+    }
 #endif
 
     gretl_matrix_free(RRT);
