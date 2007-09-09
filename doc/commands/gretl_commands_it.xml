@@ -4440,7 +4440,7 @@
 	Se la variabile dipendente non è binaria, ma è discreta e ha un valore
         minimo di 0, si ottengono stime Logit ordinate. Se la variabile
         scelta come dipendente non è discreta, o non ha un valore minimo pari a
-        superiore o pari a zero, viene emesso un messaggio di errore.
+        zero, viene emesso un messaggio di errore.
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
