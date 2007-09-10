@@ -1981,9 +1981,25 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 	    pdinfo->n, sinfo->nobs, *pad1, *pad2);
 } 
 
+int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo)
+{
+    double sdn_orig = get_date_x(pdinfo->pd, pdinfo->endobs);
+    double sd0 = get_date_x(sinfo->pd, sinfo->stobs);
+    double sdn = get_date_x(sinfo->pd, sinfo->endobs);
+    int err = 0;
+
+    if (sd0 > sdn_orig || sdn < pdinfo->sd0) {
+	sprintf(gretl_errmsg, _("%s: observation range does not overlap\n"
+				"with the working data set"),
+		sinfo->varname);
+	err = 1;
+    }
+
+    return err;
+}
+
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 {
-    double sd0, sdn_new, sdn_old;
     int err = 0;
 
     if (sinfo->pd < pdinfo->pd) {
@@ -1996,15 +2012,7 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     }
 
     if (!err) {
-	sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-	sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
-	sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
-	if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	    sprintf(gretl_errmsg, _("%s: observation range does not overlap\n"
-				    "with the working data set"),
-		    sinfo->varname);
-	    err = 1;
-	}
+	err = db_range_check(sinfo, pdinfo);
     }
 
 #if DB_DEBUG

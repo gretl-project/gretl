@@ -478,40 +478,40 @@ void clear_sample_label (void)
 void set_sample_label (DATAINFO *pdinfo)
 {
     GtkWidget *dlabel = g_object_get_data(G_OBJECT(mdata->w), "dlabel");
-    char pdstr[16];
     char stobs[OBSLEN], endobs[OBSLEN];
-    char labeltxt[80];
+    char labeltxt[128];
+    const char *pdstr;
 
     ntodate(stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
 
     if (custom_time_series(pdinfo)) {
-	strcpy(pdstr, _("Time series"));
+	pdstr = N_("Time series");
     } else if (dataset_is_time_series(pdinfo)) {
 	switch (pdinfo->pd) {
 	case 1:
-	    strcpy(pdstr, _("Annual")); break;
+	    pdstr = N_("Annual"); break;
 	case 4:
-	    strcpy(pdstr, _("Quarterly")); break;
+	    pdstr = N_("Quarterly"); break;
 	case 12:
-	    strcpy(pdstr, _("Monthly")); break;
+	    pdstr = N_("Monthly"); break;
 	case 24:
-	    strcpy(pdstr, _("Hourly")); break;
+	    pdstr = N_("Hourly"); break;
 	case 52:
-	    strcpy(pdstr, _("Weekly")); break;
+	    pdstr = N_("Weekly"); break;
 	case 5:
 	case 6:
 	case 7:
-	    strcpy(pdstr, _("Daily")); break;
+	    pdstr = N_("Daily"); break;
 	case 10:
-	    strcpy(pdstr, _("Decennial")); break;
+	    pdstr = N_("Decennial"); break;
 	default:
-	    strcpy(pdstr, _("Unknown")); break;
+	    pdstr = N_("Unknown"); break;
 	}
     } else if (dataset_is_panel(pdinfo)) {
-	strcpy(pdstr, _("Panel"));
+	pdstr = N_("Panel");
     } else {
-	strcpy(pdstr, _("Undated"));
+	pdstr = N_("Undated");
     }
 
     time_series_menu_state(dataset_is_time_series(pdinfo));
@@ -529,12 +529,12 @@ void set_sample_label (DATAINFO *pdinfo)
 			    " n = %d"), get_full_length_n(), datainfo->n);
     } else {
 	sprintf(labeltxt, _("%s: Full range %s - %s"), 
-		pdstr, stobs, endobs);
+		_(pdstr), stobs, endobs);
     }
 
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
 	char t1str[OBSLEN], t2str[OBSLEN];
-	char biglabel[128];
+	char biglabel[160];
 
 	ntodate(t1str, pdinfo->t1, pdinfo);
 	ntodate(t2str, pdinfo->t2, pdinfo);

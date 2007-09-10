@@ -94,6 +94,10 @@ struct Jwrap_ {
 
     /* for analytical derivatives in LBFGS */
     gradhelper *ghelper;
+
+    /* for keeping track of normalizations */
+    int *normrow;
+    int *normcol;
 };
 
 static int J_compute_alpha (Jwrap *J);
@@ -101,6 +105,7 @@ static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
 static int phi_from_beta (Jwrap *J);
 static void gradhelper_free (gradhelper *g);
+static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
@@ -235,6 +240,9 @@ static void jwrap_destroy (Jwrap *J)
 
     gradhelper_free(J->ghelper);
 
+    free(J->normrow);
+    free(J->normcol);
+
     free(J);
 }
 
@@ -313,6 +321,9 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->Tmprp = NULL;
 
     J->ghelper = NULL;
+
+    J->normrow = NULL;
+    J->normcol = NULL;
 
     *err = make_S_matrices(J, jvar);
 
@@ -1326,10 +1337,59 @@ static int switchit (Jwrap *J, PRN *prn)
     return err;
 }
 
-static int check_for_normalizations (const gretl_matrix *R,
+static int remove_normalizations (Jwrap *J,
+				  const gretl_restriction *rset)
+{
+    const gretl_matrix *R = rset_get_R_matrix(rset);
+    const gretl_matrix *q = rset_get_q_matrix(rset);
+    gretl_matrix *Rr = NULL;
+    gretl_matrix *qr = NULL;
+    double x;
+    int rr = R->rows - J->normrow[0];
+    int i, j, k = 0;
+    int err = 0;
+
+    Rr = gretl_matrix_alloc(rr, R->cols);
+    qr = gretl_column_vector_alloc(rr);
+
+    if (Rr == NULL || qr == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<R->rows; i++) {
+	if (!in_gretl_list(J->normrow, i)) {
+	    for (j=0; j<R->cols; j++) {
+		x = gretl_matrix_get(R, i, j);
+		gretl_matrix_set(Rr, k, j, x);
+		x = gretl_vector_get(q, i);
+		gretl_vector_set(qr, k, x);
+	    }
+	    k++;
+	}
+    }
+
+    gretl_matrix_print(Rr, "Rr");
+    gretl_matrix_print(qr, "qr");
+
+    err = set_up_H_h0(J, rset);
+
+ bailout:
+
+    gretl_matrix_free(Rr);
+    gretl_matrix_free(qr);
+
+    return err;
+}
+
+static int check_for_normalizations (Jwrap *J,
+				     const gretl_matrix *R,
 				     const gretl_matrix *q)
 {
-    int i, j, c, nc, n = 0;
+    int done = 0, n = 0;
+    int i, j, c, nc;
+
+ start_again:
 
     for (i=0; i<R->rows; i++) {
 	c = nc = 0;
@@ -1344,12 +1404,33 @@ static int check_for_normalizations (const gretl_matrix *R,
 	    }
 	}
 	if (c == 1) {
-	    fprintf(stderr, "Got a normalization: vecbeta[%d] = 1\n", nc);
+	    if (J->normrow != NULL && J->normcol != NULL) {
+		J->normrow[n] = i;
+		J->normcol[n] = nc;
+	    }
 	    n++;
 	}
     }
 
-    fprintf(stderr, "Unit-normalizations in (R, q): %d\n", n);
+    if (n > 0 && !done) {
+	J->normrow = gretl_list_new(n);
+	J->normcol = gretl_list_new(n);
+	if (J->normrow != NULL && J->normcol != NULL) {
+	    n = 1;
+	    done = 1;
+	    goto start_again;
+	} else {
+	    free(J->normrow);
+	    free(J->normcol);
+	    J->normrow = NULL;
+	    J->normcol = NULL;
+	}
+    }
+
+    if (n > 0 && done) {
+	printlist(J->normrow, "norm rows");
+	printlist(J->normrow, "norm cols");
+    }
 
     return n;
 }
@@ -1663,6 +1744,14 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 	return solve_for_beta(J, R, q);
     }
 
+    /* in case this is a second pass */
+    if (J->H != NULL) {
+	gretl_matrix_free(J->H);
+    }
+    if (J->h0 != NULL) {
+	gretl_matrix_free(J->h0);
+    }    
+
     if (J->r > 1 && R->cols == J->p1) {
 	/* common beta restriction */
 	gretl_matrix *Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
@@ -1723,7 +1812,7 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 #if 1
     if (!(J->r > 1 && R->cols == J->p1)) {
 	/* not an expanded common beta restriction */
-	check_for_normalizations(R, q);
+	check_for_normalizations(J, R, q);
     }
 #endif
 
@@ -2682,6 +2771,10 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
+    }
+
+    if (!err && J->normrow != NULL) {
+	err = remove_normalizations(J, rset);
     }
 
     if (!err) {

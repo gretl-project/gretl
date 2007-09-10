@@ -102,6 +102,8 @@ int db_delete_series_by_number (const int *list, const char *fname);
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 		     int *pad1, int *pad2);
 
+int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo);
+
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 
 int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,

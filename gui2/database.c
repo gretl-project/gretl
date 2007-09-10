@@ -230,17 +230,10 @@ static gchar *expand_warning (int mult)
 
 static int obs_overlap_check (SERIESINFO *sinfo)
 {
-    double sd0, sdn_new, sdn_old;
-    int err = 0;
+    int err = db_range_check(sinfo, datainfo);
 
-    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-    sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
-    sdn_old = get_date_x(datainfo->pd, datainfo->endobs);
-
-    if (sd0 > sdn_old || sdn_new < datainfo->sd0) {
-	errbox(_("%s: observation range does not overlap\n"
-		 "with the working data set"), sinfo->varname);
-	err = 1;
+    if (err) {
+	gui_errmsg(err);
     }
 
     return err;
@@ -553,7 +546,7 @@ static DATAINFO *new_dataset_from_dbwrapper (dbwrapper *dw,
 	    }
 	}
 	if (xd > xdmax) {
-	    strcpy(endobs, sinfo->stobs);
+	    strcpy(endobs, sinfo->endobs);
 	    xdmax = xd;
 	}
 	if (sinfo->nobs > nmax) {
