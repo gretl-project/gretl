@@ -105,7 +105,6 @@ static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
 static int phi_from_beta (Jwrap *J);
 static void gradhelper_free (gradhelper *g);
-static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
@@ -1337,11 +1336,98 @@ static int switchit (Jwrap *J, PRN *prn)
     return err;
 }
 
+/* not ready! */
+
+static int replace_normalizations (Jwrap *J)
+{
+    int i, k;
+    int err = 0;
+
+    fprintf(stderr, "replace_normalizations\n");
+    gretl_matrix_print(J->beta, "J->beta");
+    gretl_matrix_print(J->alpha, "J->alpha");
+
+    for (i=1; i<=J->normrow[0]; i++) {
+	k = J->normrow[i];
+    }
+
+    return err;
+}
+
+static int reset_H_h0 (Jwrap *J, const gretl_matrix *R,
+		       const gretl_matrix *q)
+{
+    gretl_matrix *RRT = NULL;
+    gretl_matrix *Tmp = NULL;
+    int err = 0;
+
+#if JDEBUG
+    gretl_matrix_print(R, "R, in reset_H_h0");
+    gretl_matrix_print(q, "q, in reset_H_h0");
+#endif
+
+    gretl_matrix_free(J->H);
+    gretl_matrix_free(J->h0);
+
+    J->H = gretl_matrix_right_nullspace(R, &err);
+    if (err) {
+	return err;
+    }
+
+    J->blen = J->H->cols;
+
+    RRT = gretl_matrix_alloc(R->rows, R->rows);
+    Tmp = gretl_matrix_alloc(R->cols, R->rows);
+    if (RRT == NULL || Tmp == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+					R, GRETL_MOD_TRANSPOSE,
+					RRT, GRETL_MOD_NONE);
+    }
+    
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(RRT);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(R, GRETL_MOD_TRANSPOSE,
+					RRT, GRETL_MOD_NONE,
+					Tmp, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	J->h0 = gretl_matrix_multiply_new(Tmp, q, &err);
+    }
+
+#if JDEBUG
+    gretl_matrix_print(J->H, "H, in reset_H_h0");
+    gretl_matrix_print(J->h0, "h_0, in reset_H_h0");
+#endif
+
+    if (!err) {
+	gretl_matrix_free(J->phi);
+	J->phi = gretl_zero_matrix_new(J->H->cols, 1);
+	if (J->phi == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    gretl_matrix_free(RRT);
+    gretl_matrix_free(Tmp);
+
+    return err;
+}
+
 static int remove_normalizations (Jwrap *J,
 				  const gretl_restriction *rset)
 {
     const gretl_matrix *R = rset_get_R_matrix(rset);
     const gretl_matrix *q = rset_get_q_matrix(rset);
+    const gretl_matrix *R0;
+    gretl_matrix *Rtmp = NULL;
     gretl_matrix *Rr = NULL;
     gretl_matrix *qr = NULL;
     double x;
@@ -1349,7 +1435,18 @@ static int remove_normalizations (Jwrap *J,
     int i, j, k = 0;
     int err = 0;
 
-    Rr = gretl_matrix_alloc(rr, R->cols);
+    if (J->r > 1 && R->cols == J->p1) {
+	/* common beta restriction */
+	Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
+	if (err) {
+	    return err;
+	} 
+	R0 = Rtmp;
+    } else {
+	R0 = R;
+    }
+
+    Rr = gretl_matrix_alloc(rr, R0->cols);
     qr = gretl_column_vector_alloc(rr);
 
     if (Rr == NULL || qr == NULL) {
@@ -1357,10 +1454,10 @@ static int remove_normalizations (Jwrap *J,
 	goto bailout;
     }
 
-    for (i=0; i<R->rows; i++) {
+    for (i=0; i<R0->rows; i++) {
 	if (!in_gretl_list(J->normrow, i)) {
-	    for (j=0; j<R->cols; j++) {
-		x = gretl_matrix_get(R, i, j);
+	    for (j=0; j<R0->cols; j++) {
+		x = gretl_matrix_get(R0, i, j);
 		gretl_matrix_set(Rr, k, j, x);
 		x = gretl_vector_get(q, i);
 		gretl_vector_set(qr, k, x);
@@ -1372,12 +1469,13 @@ static int remove_normalizations (Jwrap *J,
     gretl_matrix_print(Rr, "Rr");
     gretl_matrix_print(qr, "qr");
 
-    err = set_up_H_h0(J, rset);
+    err = reset_H_h0(J, Rr, qr);
 
  bailout:
 
     gretl_matrix_free(Rr);
     gretl_matrix_free(qr);
+    gretl_matrix_free(Rtmp);
 
     return err;
 }
@@ -1731,7 +1829,6 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
     const gretl_matrix *q = rset_get_q_matrix(rset);
     gretl_matrix *RRT = NULL;
     gretl_matrix *Tmp = NULL;
-    int pass = 1;
     int err = 0;
 
 #if JDEBUG
@@ -1744,23 +1841,21 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 	return solve_for_beta(J, R, q);
     }
 
-    /* in case this is a second pass */
-    if (J->H != NULL) {
-	pass = 2;
-	fprintf(stderr, "set_up_H_h0: pass 2\n");
-	gretl_matrix_free(J->H);
-    }
-    if (J->h0 != NULL) {
-	gretl_matrix_free(J->h0);
-    }    
-
     if (J->r > 1 && R->cols == J->p1) {
 	/* common beta restriction */
-	gretl_matrix *Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
+	if (q != NULL && !gretl_is_zero_matrix(q)) {
+	    /* is this always right? */
+	    err = E_SINGULAR;
+	} else {
+	    gretl_matrix *Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
 
-	if (!err) {
-	    J->H = gretl_matrix_right_nullspace(Rtmp, &err);
-	    gretl_matrix_free(Rtmp);
+	    if (!err) {
+#if JDEBUG
+		gretl_matrix_print(Rtmp, "augmented R matrix");
+#endif
+		J->H = gretl_matrix_right_nullspace(Rtmp, &err);
+		gretl_matrix_free(Rtmp);
+	    }
 	}
     } else {
 	J->H = gretl_matrix_right_nullspace(R, &err);
@@ -1811,11 +1906,8 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
     gretl_matrix_print(J->h0, "h_0, in set_up_H_h0");
 #endif
 
-#if 1
-    if (pass == 1 && !(J->r > 1 && R->cols == J->p1)) {
-	/* not an expanded common beta restriction */
-	check_for_normalizations(J, R, q);
-    }
+#if 0
+    check_for_normalizations(J, R, q);
 #endif
 
     gretl_matrix_free(RRT);
@@ -2591,6 +2683,9 @@ static int J_compute_alpha (Jwrap *J)
 
     if (!err) {
 	err = gretl_invert_symmetric_matrix(J->qf1);
+	if (err) {
+	    gretl_matrix_print(J->qf1, "J->qf1");
+	}
     }
 
     if (!err) {
@@ -2801,6 +2896,10 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	} else {
 	    err = switchit(J, prn);
 	}
+    }
+
+    if (!err && J->normrow != NULL) {
+	err = replace_normalizations(J);
     }
 
  skipest:
