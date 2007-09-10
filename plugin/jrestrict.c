@@ -1340,16 +1340,28 @@ static int switchit (Jwrap *J, PRN *prn)
 
 static int replace_normalizations (Jwrap *J)
 {
-    int i, k;
+    double x, x0;
+    int i, j, k, ii;
     int err = 0;
 
     fprintf(stderr, "replace_normalizations\n");
+
     gretl_matrix_print(J->beta, "J->beta");
     gretl_matrix_print(J->alpha, "J->alpha");
 
-    for (i=1; i<=J->normrow[0]; i++) {
-	k = J->normrow[i];
+    for (i=1; i<=J->normcol[0]; i++) {
+	k = J->normcol[i];
+	j = k / J->r;
+	x0 = gretl_matrix_get(J->beta, k % J->r, j);
+	for (ii=0; ii<J->p1; ii++) {
+	    x = gretl_matrix_get(J->beta, ii, j);
+	    gretl_matrix_set(J->beta, ii, j, x / x0);
+	}
+	/* fix alpha too */
     }
+
+    gretl_matrix_print(J->beta, "J->beta");
+    gretl_matrix_print(J->alpha, "J->alpha");
 
     return err;
 }
