@@ -1416,8 +1416,7 @@ static int check_for_normalizations (Jwrap *J,
 	J->normrow = gretl_list_new(n);
 	J->normcol = gretl_list_new(n);
 	if (J->normrow != NULL && J->normcol != NULL) {
-	    n = 1;
-	    done = 1;
+	    n = done = 1;
 	    goto start_again;
 	} else {
 	    free(J->normrow);
@@ -1732,6 +1731,7 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
     const gretl_matrix *q = rset_get_q_matrix(rset);
     gretl_matrix *RRT = NULL;
     gretl_matrix *Tmp = NULL;
+    int pass = 1;
     int err = 0;
 
 #if JDEBUG
@@ -1746,6 +1746,8 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 
     /* in case this is a second pass */
     if (J->H != NULL) {
+	pass = 2;
+	fprintf(stderr, "set_up_H_h0: pass 2\n");
 	gretl_matrix_free(J->H);
     }
     if (J->h0 != NULL) {
@@ -1810,7 +1812,7 @@ static int set_up_H_h0 (Jwrap *J, const gretl_restriction *rset)
 #endif
 
 #if 1
-    if (!(J->r > 1 && R->cols == J->p1)) {
+    if (pass == 1 && !(J->r > 1 && R->cols == J->p1)) {
 	/* not an expanded common beta restriction */
 	check_for_normalizations(J, R, q);
     }
