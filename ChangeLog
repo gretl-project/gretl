@@ -45,6 +45,10 @@ version 1.6.6, in progress
   databases (if the user has write access)
 - New command, "dataset": subsumes the old "addobs" and
   "transpos", while adding new options
+- fftw DLL for Windows: fix a problem experienced on some 
+  Windows systems 
+- Generation of random variables in GUI: use an interface
+  consistent with that for p-values, critical values, etc.
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
