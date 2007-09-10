@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-06 10:35+0200\n"
+"PO-Revision-Date: 2007-09-10 15:27+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -6247,8 +6247,9 @@ msgstr ""
 #: gui2/about.c:57 gui2/about.c:177 gui2/about.c:178
 msgid "translator_credits"
 msgstr ""
-"Localizzazione italiana: Cristian Rigamonti <cri@linux.it>,\n"
-"grazie a Daniele \"Madrid\" Medri per gli utili suggerimenti."
+"Localizzazione italiana: Cristian Rigamonti <cri@linux.it>;\n"
+"grazie a Daniele \"Madrid\" Medri, Riccardo \"Jack\" Lucchetti\n"
+"e Stefano Fachin per gli utili suggerimenti."
 
 #: gui2/about.c:103
 #, c-format
@@ -6405,9 +6406,9 @@ msgid "F(%d, %d) sampling distribution"
 msgstr "Distribuzione campionaria F(%d, %d)"
 
 #: gui2/calculator.c:184
-#, fuzzy, c-format
+#, c-format
 msgid "N(%g, %g)"
-msgstr "F(%d, %d)"
+msgstr "N(%g, %g)"
 
 #: gui2/calculator.c:186
 #, c-format
@@ -6427,12 +6428,12 @@ msgstr "F(%d, %d)"
 #: gui2/calculator.c:192
 #, c-format
 msgid "Binomial(%d, %g)"
-msgstr ""
+msgstr "Binomiale(%d, %g)"
 
 #: gui2/calculator.c:194
-#, fuzzy, c-format
+#, c-format
 msgid "Poisson(%g)"
-msgstr "Poisson"
+msgstr "Poisson(%g)"
 
 #: gui2/calculator.c:384
 msgid "Standard errors"
@@ -8790,9 +8791,8 @@ msgid "Print..."
 msgstr "Stampa..."
 
 #: gui2/gpt_control.c:2114 gui2/gpt_control.c:2190
-#, fuzzy
 msgid "Display PDF"
-msgstr "Mostra"
+msgstr "Mostra PDF"
 
 #: gui2/gpt_control.c:2116 gui2/gpt_control.c:2191
 msgid "OLS estimates"
@@ -9244,9 +9244,8 @@ msgid "/Tools/_P-value finder"
 msgstr "/Strumenti/Calcola _p-value"
 
 #: gui2/gretl.c:283
-#, fuzzy
 msgid "/Tools/_Distribution graphs"
-msgstr "gretl: grafici distribuzione"
+msgstr "/Strumenti/_Grafici distribuzione"
 
 #: gui2/gretl.c:285
 msgid "/Tools/_Test statistic calculator"
@@ -9996,9 +9995,9 @@ msgid "Failed to generate graph"
 msgstr "Impossibile generare il grafico"
 
 #: gui2/guiprint.c:760
-#, fuzzy, c-format
+#, c-format
 msgid "%s page %d of %d"
-msgstr "%s, pagina %d"
+msgstr "%s pagina %d di %d"
 
 #: gui2/guiprint.c:1116
 #, c-format
