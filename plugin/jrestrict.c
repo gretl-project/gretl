@@ -61,6 +61,10 @@ struct Jwrap_ {
     /* restrictions on beta, incl. normalizations */
     gretl_matrix *H0;
 
+    /* augmented beta restriction matrices, if needed */
+    gretl_matrix *bigR;
+    gretl_matrix *bigq;
+
     /* homogeneous restrictions on alpha */
     gretl_matrix *G;
 
@@ -98,16 +102,21 @@ struct Jwrap_ {
     /* for analytical derivatives in LBFGS */
     gradhelper *ghelper;
 
-    /* for keeping track of normalizations */
+    /* for keeping track of column scaling */
     int *normrow;
     int *normcol;
+    double *normval;
 };
+
+#define do_scaling(J) (J->normrow != NULL)
 
 static int J_compute_alpha (Jwrap *J);
 static int make_beta_se (Jwrap *J);
 static int make_alpha_se (Jwrap *J);
 static int phi_from_beta (Jwrap *J);
 static void gradhelper_free (gradhelper *g);
+static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
+			  const gretl_matrix *q);
 
 static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
@@ -223,6 +232,9 @@ static void jwrap_destroy (Jwrap *J)
     gretl_matrix_free(J->h);
     gretl_matrix_free(J->H0);
 
+    gretl_matrix_free(J->bigR);
+    gretl_matrix_free(J->bigq);
+
     gretl_matrix_free(J->beta);
     gretl_matrix_free(J->alpha);
     gretl_matrix_free(J->Pi);
@@ -250,6 +262,7 @@ static void jwrap_destroy (Jwrap *J)
 
     free(J->normrow);
     free(J->normcol);
+    free(J->normval);
 
     free(J);
 }
@@ -305,6 +318,9 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->h = NULL;
     J->H0 = NULL;
 
+    J->bigR = NULL;
+    J->bigq = NULL;
+
     J->G = NULL;
 
     J->beta = NULL;
@@ -334,6 +350,7 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
 
     J->normrow = NULL;
     J->normcol = NULL;
+    J->normval = NULL;
 
     *err = make_S_matrices(J, jvar);
 
@@ -1135,7 +1152,7 @@ static int variance_from_info_matrix (Jwrap *J)
 	goto beta_done;
     }	
 
-    if (J->normrow != NULL) {
+    if (do_scaling(J)) {
 	gretl_matrix_free(J->I11);
 	J->I11 = NULL;
     }
@@ -1174,7 +1191,7 @@ static int variance_from_info_matrix (Jwrap *J)
 
     /* variance of alpha */
 
-    if (J->normrow != NULL) {
+    if (do_scaling(J)) {
 	gretl_matrix_free(J->I00);
 	J->I00 = NULL;
     }
@@ -1214,6 +1231,32 @@ static int variance_from_info_matrix (Jwrap *J)
 }
 
 #endif
+
+/* preliminary test for whether we're using manual
+   initialization with the switching algorithm: if so,
+   we won't try to extract column scale factors
+*/
+
+static int doing_manual_init (Jwrap *J)
+{
+    const gretl_matrix *U = get_init_vals();
+    int ret = 0;
+
+    if (U != NULL) {
+	int psilen = (J->G == NULL)? 0 : J->alen;
+	int ulen = gretl_vector_get_length(U);
+
+	if (ulen == J->blen + psilen) {
+	    ret = 1;
+	} else if (ulen == J->blen + J->alen) {
+	    ret = 1;
+	} else if (ulen == (J->p1 + J->p) * J->r) {
+	    ret = 1;
+	} 
+    }
+
+    return ret;
+}
 
 static int user_switch_init (Jwrap *J, int *uinit)
 {
@@ -1362,7 +1405,9 @@ static int switchit (Jwrap *J, PRN *prn)
     return err;
 }
 
-/* not ready! */
+/* re-scale the columns of beta based on the saved scaling
+   information
+*/
 
 static int replace_col_scaling (Jwrap *J)
 {
@@ -1370,17 +1415,22 @@ static int replace_col_scaling (Jwrap *J)
     int i, j, k, ii;
     int err = 0;
 
-    for (i=1; i<=J->normcol[0]; i++) {
-	k = J->normcol[i];
-	j = k / J->r;
-	x0 = gretl_matrix_get(J->beta, k % J->r, j);
+    for (i=0; i<J->normcol[0]; i++) {
+	k = J->normcol[i+1];
+	j = k / J->p1;
+	x0 = gretl_matrix_get(J->beta, k % J->p1, j) / J->normval[i];
 	for (ii=0; ii<J->p1; ii++) {
 	    x = gretl_matrix_get(J->beta, ii, j);
-	    gretl_matrix_set(J->beta, ii, j, x / x0);
+	    if (x != 0) {
+		gretl_matrix_set(J->beta, ii, j, x / x0);
+	    }
 	}
 	for (ii=0; ii<J->p; ii++) {
 	    x = gretl_matrix_get(J->alpha, ii, j);
 	    gretl_matrix_set(J->alpha, ii, j, x * x0);
+	    if (x != 0) {
+		gretl_matrix_set(J->alpha, ii, j, x * x0);
+	    }
 	}	
     }
 
@@ -1389,99 +1439,86 @@ static int replace_col_scaling (Jwrap *J)
     return err;
 }
 
+static int reset_null_H (Jwrap *J)
+{
+    J->H0 = J->H;
+    gretl_matrix_free(J->h);
+    J->H = J->h = NULL;
+    
+    J->blen = J->r * J->p1;
+
+    gretl_matrix_free(J->phi);
+    J->phi = gretl_zero_matrix_new(J->blen, 1);
+    if (J->phi == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+/* recalculate the H matrix after removing column
+   scalings */
+
 static int reset_H (Jwrap *J, const gretl_matrix *R,
 		    const gretl_matrix *q)
 {
-    gretl_matrix *RRT = NULL;
-    gretl_matrix *Tmp = NULL;
-    int err = 0;
-
-#if JDEBUG
-    gretl_matrix_print(R, "R, in reset_H");
-    gretl_matrix_print(q, "q, in reset_H");
-#endif
+    int err;
 
     J->H0 = J->H;
     gretl_matrix_free(J->h);
+    J->h = NULL;
 
-    J->H = gretl_matrix_right_nullspace(R, &err);
-    if (err) {
-	return err;
-    }
-
-    J->blen = J->H->cols;
-
-    RRT = gretl_matrix_alloc(R->rows, R->rows);
-    Tmp = gretl_matrix_alloc(R->cols, R->rows);
-    if (RRT == NULL || Tmp == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-					R, GRETL_MOD_TRANSPOSE,
-					RRT, GRETL_MOD_NONE);
-    }
-    
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(RRT);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply_mod(R, GRETL_MOD_TRANSPOSE,
-					RRT, GRETL_MOD_NONE,
-					Tmp, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	J->h = gretl_matrix_multiply_new(Tmp, q, &err);
-    }
-
-#if JDEBUG
-    gretl_matrix_print(J->H, "H, in reset_H");
-    gretl_matrix_print(J->h, "h_0, in reset_H");
-#endif
+    err = real_set_up_H(J, R, q);
 
     if (!err) {
 	gretl_matrix_free(J->phi);
-	J->phi = gretl_zero_matrix_new(J->H->cols, 1);
+	J->phi = gretl_zero_matrix_new(J->blen, 1);
 	if (J->phi == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    gretl_matrix_free(RRT);
-    gretl_matrix_free(Tmp);
-
     return err;
+}
+
+static const gretl_matrix *
+J_get_R_matrix (Jwrap *J, const gretl_restriction *rset)
+{
+    if (J->bigR != NULL) {
+	return J->bigR;
+    } else {
+	return rset_get_R_matrix(rset);
+    }
+}
+
+static const gretl_matrix *
+J_get_q_matrix (Jwrap *J, const gretl_restriction *rset)
+{
+    if (J->bigq != NULL) {
+	return J->bigq;
+    } else {
+	return rset_get_q_matrix(rset);
+    }
 }
 
 static int remove_col_scaling (Jwrap *J,
 			       const gretl_restriction *rset)
 {
-    const gretl_matrix *R = rset_get_R_matrix(rset);
-    const gretl_matrix *q = rset_get_q_matrix(rset);
-    const gretl_matrix *R0;
-    gretl_matrix *Rtmp = NULL;
+    const gretl_matrix *R = J_get_R_matrix(J, rset);
+    const gretl_matrix *q = J_get_q_matrix(J, rset);
     gretl_matrix *Rr = NULL;
     gretl_matrix *qr = NULL;
-    double x;
     int rr = R->rows - J->normrow[0];
-    int i, j, k = 0;
+    double x;
+    int i, j, k;
     int err = 0;
 
-    if (J->r > 1 && R->cols == J->p1) {
-	/* common beta restriction */
-	Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
-	if (err) {
-	    return err;
-	} 
-	R0 = Rtmp;
-    } else {
-	R0 = R;
+    if (rr == 0) {
+	/* all restrictions were column scalings */
+	return reset_null_H(J);
     }
 
-    Rr = gretl_matrix_alloc(rr, R0->cols);
+    Rr = gretl_matrix_alloc(rr, R->cols);
     qr = gretl_column_vector_alloc(rr);
 
     if (Rr == NULL || qr == NULL) {
@@ -1489,10 +1526,11 @@ static int remove_col_scaling (Jwrap *J,
 	goto bailout;
     }
 
-    for (i=0; i<R0->rows; i++) {
+    k = 0;
+    for (i=0; i<R->rows; i++) {
 	if (!in_gretl_list(J->normrow, i)) {
-	    for (j=0; j<R0->cols; j++) {
-		x = gretl_matrix_get(R0, i, j);
+	    for (j=0; j<R->cols; j++) {
+		x = gretl_matrix_get(R, i, j);
 		gretl_matrix_set(Rr, k, j, x);
 		x = gretl_vector_get(q, i);
 		gretl_vector_set(qr, k, x);
@@ -1510,74 +1548,136 @@ static int remove_col_scaling (Jwrap *J,
 
     gretl_matrix_free(Rr);
     gretl_matrix_free(qr);
-    gretl_matrix_free(Rtmp);
 
     return err;
 }
 
-/* check for restrictions (rows of R) which are 
-   just scalings of a given column of beta */
+static void norm_destroy (Jwrap *J)
+{
+    free(J->normrow);
+    free(J->normcol);
+    free(J->normval);
+
+    J->normrow = NULL;
+    J->normcol = NULL;
+    J->normval = NULL;
+}
+
+static int norm_allocate (Jwrap *J)
+{
+    int err = 0;
+
+    J->normrow = gretl_list_new(J->r);
+    if (J->normrow == NULL) err = E_ALLOC;
+
+    if (!err) {
+	J->normcol = gretl_list_new(J->r);
+	if (J->normcol == NULL) err = E_ALLOC;
+    }
+
+    if (!err) {
+	J->normval = malloc(J->r * sizeof *J->normval);
+	if (J->normval == NULL) err = E_ALLOC;
+    }
+
+    if (err) {
+	norm_destroy(J);
+    } else {
+	J->normrow[0] = 0;
+	J->normcol[0] = 0;
+    }  
+
+    return err;
+}
+
+static void list_push (int *list, int k)
+{
+    list[0] += 1;
+    list[list[0]] = k;
+}
+
+static int scale_row (const gretl_matrix *R, 
+		      const gretl_matrix *q,
+		      int i, int *col,
+		      double *sval)
+{
+    int j, c = 0;
+    double rij;
+
+    for (j=0; j<R->cols; j++) {
+	rij = gretl_matrix_get(R, i, j);
+	if (rij != 0 && q->val[i] != 0) {
+	    c++;
+	    if (c > 1) {
+		break;
+	    } else {
+		*sval = q->val[i] / rij;
+		*col = j;
+	    }
+	} 
+    }
+
+    return c == 1;
+}
+
+/* Check for restrictions (rows of R) which are just scalings of a
+   given column of beta.  There can only be one such scaling per
+   beta column.
+*/
 
 static int check_for_scaling (Jwrap *J,
 			      const gretl_matrix *R,
 			      const gretl_matrix *q)
 {
     char *sc = NULL;
-    int done = 0, n = 0;
-    int i, j, k, c, nc;
+    double sval;
+    int i, k, rcol;
 
     sc = calloc(J->r, 1);
 
- start_again:
+    if (sc == NULL || norm_allocate(J)) {
+	return E_ALLOC;
+    }
 
     for (i=0; i<R->rows; i++) {
-	c = nc = 0;
-	for (j=0; j<R->cols; j++) {
-	    if (gretl_matrix_get(R, i, j) == 1) {
-		c++;
-		if (c > 1) {
-		    break;
-		} else if (q != NULL && q->val[j] == 1) {
-		    nc = j;
-		}
-	    }
-	}
-	if (c == 1) {
-	    k = nc / J->p1;
-	    if (!sc[k]) {
-		if (J->normrow != NULL && J->normcol != NULL) {
-		    J->normrow[n] = i;
-		    J->normcol[n] = nc;
-		}
-		n++;
-		sc[k] = 1; /* mark column as already scaled */
-	    }
+	if (scale_row(R, q, i, &rcol, &sval)) {
+	    k = rcol / J->p1;
+	    sc[k] += 1;
 	}
     }
 
-    if (n > 0 && !done) {
-	J->normrow = gretl_list_new(n);
-	J->normcol = gretl_list_new(n);
-	if (J->normrow != NULL && J->normcol != NULL) {
-	    memset(sc, 0, J->r);
-	    n = done = 1;
-	    goto start_again;
-	} else {
-	    free(J->normrow);
-	    free(J->normcol);
-	    J->normrow = NULL;
-	    J->normcol = NULL;
+    for (i=0; i<J->r; i++) {
+	if (sc[i] > 1) {
+	    sc[i] = 0;
 	}
     }
 
-    if (n > 0 && done) {
+    for (i=0; i<R->rows; i++) {
+	if (scale_row(R, q, i, &rcol, &sval)) {
+	    k = rcol / J->p1;
+	    if (sc[k]) {
+		/* column is scaleable */
+		J->normval[J->normrow[0]] = sval;
+		list_push(J->normrow, i);
+		list_push(J->normcol, rcol);
+	    }
+	}
+	if (J->normrow[0] == J->r) {
+	    /* got them all */
+	    break;
+	}
+    }
+
+    if (J->normrow[0] == 0) {
+	norm_destroy(J);
+    } else {
 	printlist(J->normrow, "norm rows");
-	printlist(J->normrow, "norm cols");
+	printlist(J->normcol, "norm cols");
     }
 
     free(sc);
 
-    return n;
+    return 0;
 }
 
 /* 
@@ -1755,8 +1855,6 @@ static int G_from_expanded_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
-#if 1
-
 static void nullspace_normalize (gretl_matrix *A)
 {
     int i, j, nz, nm1, pos;
@@ -1781,8 +1879,6 @@ static void nullspace_normalize (gretl_matrix *A)
 	}
     }
 }
-
-#endif
 
 /* user-supplied R needs to be remapped for conformity with 
    vec(\alpha') = G\psi */
@@ -1856,11 +1952,9 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 	J->alen = J->G->cols;
     }
 
-#if 1
     if (!err) {
 	nullspace_normalize(J->G);
     }
-#endif
 
 #if JDEBUG
     gretl_matrix_print(J->G, "G, in set_up_G");
@@ -1869,51 +1963,24 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
     return err;
 }
 
-/* set up restriction matrices, H and h_0, for beta */
-
-static int set_up_H (Jwrap *J, const gretl_restriction *rset)
+static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
+			  const gretl_matrix *q)
 {
-    const gretl_matrix *R = rset_get_R_matrix(rset);
-    const gretl_matrix *q = rset_get_q_matrix(rset);
     gretl_matrix *RRT = NULL;
     gretl_matrix *Tmp = NULL;
     int err = 0;
 
 #if JDEBUG
-    gretl_matrix_print(R, "R, in set_up_H");
-    gretl_matrix_print(q, "q, in set_up_H");
+    gretl_matrix_print(R, "R, in real_set_up_H");
+    gretl_matrix_print(q, "q, in real_set_up_H");
 #endif
 
-    if (R->rows == J->p1 * J->r) {
-	/* number of restrictions = total betas */
-	return solve_for_beta(J, R, q);
-    }
-
-    if (J->r > 1 && R->cols == J->p1) {
-	/* common beta restriction */
-	if (q != NULL && !gretl_is_zero_matrix(q)) {
-	    /* FIXME: is this always/ever right? */
-	    err = E_SINGULAR;
-	} else {
-	    gretl_matrix *Rtmp = gretl_matrix_I_kronecker_new(J->r, R, &err);
-
-	    if (!err) {
-#if JDEBUG
-		gretl_matrix_print(Rtmp, "augmented R matrix");
-#endif
-		J->H = gretl_matrix_right_nullspace(Rtmp, &err);
-		gretl_matrix_free(Rtmp);
-	    }
-	}
-    } else {
-	J->H = gretl_matrix_right_nullspace(R, &err);
-    }
+    J->H = gretl_matrix_right_nullspace(R, &err);
 
     if (err) {
 	return err;
     }
 
-    J->H0 = J->H;
     J->blen = J->H->cols;
 
     if (q == NULL || gretl_is_zero_matrix(q)) {
@@ -1922,7 +1989,7 @@ static int set_up_H (Jwrap *J, const gretl_restriction *rset)
 	return (J->h == NULL)? E_ALLOC : 0; 
     }
 
-    /* now for h_0, for non-zero q */
+    /* now for h, for non-zero q */
 
     RRT = gretl_matrix_alloc(R->rows, R->rows);
     Tmp = gretl_matrix_alloc(R->cols, R->rows);
@@ -1951,16 +2018,86 @@ static int set_up_H (Jwrap *J, const gretl_restriction *rset)
     }
 
 #if JDEBUG
-    gretl_matrix_print(J->H, "H, in set_up_H");
-    gretl_matrix_print(J->h, "h_0, in set_up_H");
-#endif
-
-#if 1
-    check_for_scaling(J, R, q);
+    gretl_matrix_print(J->H, "H, in real_set_up_H");
+    gretl_matrix_print(J->h, "h, in real_set_up_H");
 #endif
 
     gretl_matrix_free(RRT);
     gretl_matrix_free(Tmp);
+
+    return err;
+}
+
+static gretl_matrix *replicate_q (int r, const gretl_matrix *q0,
+				  int *err)
+{
+    gretl_matrix *q;
+    int k = q0->rows * r;
+    int i, j;
+
+    q = gretl_column_vector_alloc(k);
+
+    if (q == NULL) {
+	*err = E_ALLOC;
+    } else {
+	k = 0;
+	for (j=0; j<r; j++) {
+	    for (i=0; i<q0->rows; i++) {
+		q->val[k++] = q0->val[i];
+	    }
+	}
+    }
+
+    return q;
+}
+
+/* set up restriction matrices, H and h, for beta */
+
+static int set_up_H (Jwrap *J, const gretl_restriction *rset)
+{
+    const gretl_matrix *R0 = rset_get_R_matrix(rset);
+    const gretl_matrix *q0 = rset_get_q_matrix(rset);
+    const gretl_matrix *R = R0;
+    const gretl_matrix *q = q0;
+    int qzero, err = 0;
+
+#if JDEBUG
+    gretl_matrix_print(R, "R, in set_up_H");
+    gretl_matrix_print(q, "q, in set_up_H");
+#endif
+
+    if (R->rows == J->p1 * J->r) {
+	/* number of restrictions = total betas */
+	return solve_for_beta(J, R, q);
+    }
+
+    qzero = (q == NULL || gretl_is_zero_matrix(q));
+
+    if (J->r > 1 && R->cols == J->p1) {
+	/* common beta restriction */
+	J->bigR = gretl_matrix_I_kronecker_new(J->r, R, &err);
+	if (!err) {
+	    R = J->bigR;
+	    if (!qzero) {
+		J->bigq = replicate_q(J->r, q, &err);
+		if (!err) {
+		    q = J->bigq;
+		}
+	    }
+	}
+    } 
+
+    if (!err) {
+	err = real_set_up_H(J, R, q);
+    }
+
+    if (!err) {
+	J->H0 = J->H;
+    }
+
+    if (!err && !qzero && !doing_manual_init(J)) {
+	err = check_for_scaling(J, R, q);
+    }
 
     return err;
 }
@@ -2037,7 +2174,12 @@ static int phi_init_nonhomog (Jwrap *J)
     
     if (!err) {
 	gretl_matrix_multiply(IBPH, IBPh, J->phi);
-	gretl_matrix_switch_sign(J->phi);
+	if (gretl_is_zero_matrix(J->phi)) {
+	    fprintf(stderr, "Got a zero vector for phi\n");
+	    gretl_matrix_print(IBPh, "IBPh");
+	} else {
+	    gretl_matrix_switch_sign(J->phi);
+	}
     }
 
  bailout:
@@ -2202,9 +2344,12 @@ static int beta_init (Jwrap *J)
 
 static int alpha_init (Jwrap *J)
 {
-    int err = 0;
+    int err;
 
     err = J_compute_alpha(J);
+    if (err) {
+	return err;
+    }
 
 #if JDEBUG
     gretl_matrix_print(J->alpha, "alpha_init: result from compute_alpha");
@@ -2589,16 +2734,9 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 }
 
 /* simulated annealing: can help when the standard deterministic
-   initialization (theta_0) leads to a local maximum
-*/
-
-/* simann method variants --
-
-   1: Use ll-best point from annealing (including theta_0 in the
-      evaluation)
-   2: Use the last value from annealing, regardless.
-   3: hybrid: use ll-best point in case of improvement, else
-      last value.
+   initialization (theta_0) leads to a local maximum.
+   We use ll-best point in case of improvement, else the 
+   last value.
 */
 
 static int simann (Jwrap *J, gretlopt opt, PRN *prn)
@@ -2618,7 +2756,6 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     double Temp = 1.0;
     double radius = 1.0;
     int improved = 0;
-    int method = 3; /* hybrid */
     int err = 0;
 
     b0 = gretl_matrix_copy(b);
@@ -2678,19 +2815,10 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
 	radius *= 0.9999;
     }
 
-    if (method == 1) {
-	/* force to "all-time best" */
+    if (improved) {
 	gretl_matrix_copy_values(J->theta, bstar);
-    } else if (method == 2) {
-	/* take last value from annealing */
-	gretl_matrix_copy_values(J->theta, b0);
     } else {
-	/* hybrid method */
-	if (improved) {
-	    gretl_matrix_copy_values(J->theta, bstar);
-	} else {
-	    gretl_matrix_copy_values(J->theta, b0);
-	}
+	gretl_matrix_copy_values(J->theta, b0);
     }
 
     sync_with_theta(J, b->val);
@@ -2733,7 +2861,7 @@ static int J_compute_alpha (Jwrap *J)
     if (!err) {
 	err = gretl_invert_symmetric_matrix(J->qf1);
 	if (err) {
-	    gretl_matrix_print(J->qf1, "J->qf1");
+	    gretl_matrix_print(J->qf1, "J->qf1: couldn't invert");
 	}
     }
 
@@ -2919,7 +3047,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = vecm_id_check(J, jvar, prn);
     }
 
-    if (!err && J->normrow != NULL) {
+    if (!err && do_scaling(J)) {
 	err = remove_col_scaling(J, rset);
     }
 
@@ -2947,7 +3075,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	}
     }
 
-    if (!err && J->normrow != NULL) {
+    if (!err && do_scaling(J)) {
 	err = replace_col_scaling(J);
     }     
 
