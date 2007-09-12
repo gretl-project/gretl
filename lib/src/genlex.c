@@ -234,6 +234,7 @@ struct str_table funcs[] = {
     { INVCDF,   "invcdf" },
     { PVAL,     "pvalue" },
     { CRIT,     "critical" },
+    { RANDGEN,  "randgen" },
     { MAKEMASK, "makemask" },
     { VALUES,   "values" },
     { MSHAPE,   "mshape" },

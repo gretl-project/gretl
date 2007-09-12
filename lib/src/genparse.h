@@ -151,14 +151,15 @@ enum {
   /* 120 */   CDF,
               INVCDF,
               CRIT,  
+	      RANDGEN,
               RPOISSON,
               MAKEMASK,
               VALUES,
               NULLSPC,
               MEXP,
               MINC,
-              MAXC,
-  /* 130 */   MINR,
+  /* 130 */   MAXC,
+              MINR,
               MAXR,
               IMINC, 
               IMAXC,
@@ -167,8 +168,8 @@ enum {
               FFT,
               FFTI,
 	      UPPER,
-	      LOWER,
-  /* 140 */   FUNC_MAX,   /* separator: end of single-arg functions */
+  /* 140 */   LOWER,
+              FUNC_MAX,   /* separator: end of single-arg functions */
               COR,
               COV,
 	      SORTBY,
@@ -177,8 +178,8 @@ enum {
 	      RBINOMIAL,
 	      RGAMMA,
 	      RSNEDECOR,
-              FRACDIF,
-  /* 150 */   ZEROS,
+  /* 150 */   FRACDIF,
+              ZEROS,
               ONES,
               SEQ,
               MUNIF,
@@ -187,8 +188,8 @@ enum {
               MLAG,
               QR,
               EIGSYM,  
-              EIGGEN,
-  /* 160 */   FDJAC,
+  /* 160 */   EIGGEN,
+              FDJAC,
               BFGSMAX,
               LRVAR,
               PRINCOMP,
@@ -197,8 +198,8 @@ enum {
               MXTAB,
               F2_MAX,   /* separator: end of two-arg functions */
               MSHAPE,
-              SVD,
-  /* 170 */   MOLS,
+  /* 170 */   SVD,
+              MOLS,
               FN_MAX,   /* separator: end of n-arg functions */
               COM,      /* comma */
               DOT,      /* period */
@@ -207,8 +208,8 @@ enum {
               CON,      /* named constant */
               DUM,      /* dummy variable */
               UVAR,     /* user variable (scalar or series) */
-              UMAT,     /* user-defined matrix */
-  /* 180 */   UOBJ,     /* user-defined object (e.g. model) */
+  /* 180 */   UMAT,     /* user-defined matrix */
+              UOBJ,     /* user-defined object (e.g. model) */
               NUM,      /* scalar, evaluated */
               VEC,      /* series, evaluated */
               IVEC,     /* vector of integers, evaluated */
@@ -217,8 +218,8 @@ enum {
               MSL,      /* matrix plus subspec */
               DMSL,     /* "dollar" matrix plus subspec */
               DMSTR,    /* "dollar" matrix plus old-style string subspec */
-              MSL2,     /* unevaluated matrix subspec */
-  /* 190 */   MSPEC,    /* evaluated matrix subspec */
+  /* 190 */   MSL2,     /* unevaluated matrix subspec */
+              MSPEC,    /* evaluated matrix subspec */
               SUBSL,    /* row or column component of MSPEC */
               MDEF,     /* explicit matrix definition {...} */
               LAG,      
@@ -227,8 +228,8 @@ enum {
               OVAR,     /* object variable: variable "under" an object */
               LOOPIDX,  /* loop index variable */
               LIST,     /* reference to named list */
-              STR,      /* string */
-  /* 200 */   EROOT,    /* dummy root for (...) expression */
+  /* 200 */   STR,      /* string */
+              EROOT,    /* dummy root for (...) expression */
               UFUN,     /* user-defined function */
               FARGS,    /* set of n function arguments */
               EMPTY,
@@ -260,7 +261,8 @@ enum {
                             s == ISLIST || s == LISTLEN || s == ISSTRING || \
                             s == OBSNUM)
 
-#define string0_func(s) (s == PVAL || s == CDF || s == INVCDF || s == CRIT)
+#define string0_func(s) (s == PVAL || s == CDF || s == INVCDF || \
+                         s == CRIT || s == RANDGEN)
 
 #define unary_op(s) (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

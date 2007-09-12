@@ -508,37 +508,42 @@ static int dist_argc (char *s, int f)
     }
 
     switch (s[0]) {
+    case 'u':
+    case 'U':
+	s[0] = 'u';
+	return (f == RANDGEN)? 2 : 0;
     case '1':
     case 'z':
     case 'n':
     case 'N':
 	s[0] = 'z';
-	return 1;
+	return (f == RANDGEN)? 2 : 1;
     case '2':
     case 't':
 	s[0] = 't';
-	return 2;
+	return (f == RANDGEN)? 1 : 2;
     case '3':
     case 'c':
     case 'x':
     case 'X':
 	s[0] = 'X';
-	return 2;
+	return (f == RANDGEN)? 1 : 2;
     case '4':
     case 'f':
     case 'F':
 	s[0] = 'F';
-	return 3;
+	return (f == RANDGEN)? 2 : 3;
     case '5':
     case 'g':
     case 'G':
 	s[0] = 'G';
-	return (f == CRIT || f == INVCDF)? 0 : 3;
+	return (f == CRIT || f == INVCDF)? 0 : 
+	    (f == RANDGEN)? 2 : 3;
     case '6':
     case 'b':
     case 'B':
 	s[0] = 'B';
-	return 3;
+	return (f == RANDGEN)? 2 : 3;
     case '7':
     case 'D':
 	s[0] = 'D';
@@ -547,7 +552,7 @@ static int dist_argc (char *s, int f)
     case 'p':
     case 'P':
 	s[0] = 'P';
-	return 2;
+	return (f == RANDGEN)? 1 : 2;
     }
 
     return 0;
@@ -600,7 +605,9 @@ static NODE *make_series_mask (NODE *n, parser *p)
 
 static NODE *eval_pdist (NODE *n, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret;
+
+    ret = (n->t == RANDGEN)? aux_vec_node(p, 0) : aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	NODE *e, *s, *r = n->v.b1.b;
@@ -609,7 +616,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	char *d, code[2];
 
 	if (m < 2 || m > 4) {
-	    p->err = 1;
+	    p->err = E_INVARG;
 	    goto disterr;
 	}
 
@@ -620,14 +627,14 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    sprintf(code, "%d", (int) s->v.xval);
 	    d = code;
 	} else {
-	    p->err = 1;
+	    p->err = E_INVARG;
 	    goto disterr;
 	}
 
 	argc = dist_argc(d, n->t);
 
 	if (argc != m - 1) {
-	    p->err = 1;
+	    p->err = E_INVARG;
 	    goto disterr;
 	}
 
@@ -642,7 +649,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		    free_tree(s, "Pdist");
 		    r->v.bn.n[i+1] = NULL;
 		} else {
-		    p->err = 1;
+		    p->err = E_INVARG;
 		    goto disterr;
 		}
 	    }
@@ -661,16 +668,17 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	case CRIT:
 	    ret->v.xval = gretl_get_critval(d[0], parm);
 	    break;
+	case RANDGEN:
+	    ret->v.xvec = gretl_get_random_series(d[0], parm, p->dinfo,
+						  &p->err);
+	    break;
 	default: 
 	    p->err = 1;
 	    break;
 	}
-
-    disterr:
-	if (p->err) {
-	    sprintf(gretl_errmsg, "Error in arguments to %s\n", "pvalue");
-	}
     }
+
+  disterr:  
 
     return ret;
 }
@@ -4158,6 +4166,7 @@ static NODE *eval (NODE *t, parser *p)
     case INVCDF:
     case CRIT:
     case PVAL:
+    case RANDGEN:
 	if (t->v.b1.b->t == FARGS) {
 	    ret = eval_pdist(t, p);
 	} else {

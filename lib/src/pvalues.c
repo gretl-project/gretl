@@ -1108,6 +1108,60 @@ double gretl_get_pvalue (char st, const double *p)
     return x;
 }
 
+double *gretl_get_random_series (char st, const double *p,
+				 const DATAINFO *pdinfo,
+				 int *err)
+{
+    double *x = malloc(pdinfo->n * sizeof *x);
+    int t;
+
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	x[t] = NADBL;
+    }
+
+    if (st == 'u') {
+	double min = p[0], max = p[1];
+
+	*err = gretl_rand_uniform_minmax(x, pdinfo->t1, pdinfo->t2, min, max);
+    } else if (st == 'z') {
+	double mu = p[0], sd = p[1];
+
+	*err = gretl_rand_normal_full(x, pdinfo->t1, pdinfo->t2, mu, sd);
+    } else if (st == 't') {
+	int v = p[0];
+
+	*err = gretl_rand_student(x, pdinfo->t1, pdinfo->t2, v);
+    } else if (st == 'X') {
+	int v = p[0];
+
+	*err = gretl_rand_chisq(x, pdinfo->t1, pdinfo->t2, v);
+    } else if (st == 'F') {
+	int v1 = p[0], v2 = p[1];
+
+	*err = gretl_rand_F(x, pdinfo->t1, pdinfo->t2, v1, v2);
+    } else if (st == 'G') {
+	double shape = p[0], scale = p[1];
+
+	*err = gretl_rand_gamma(x, pdinfo->t1, pdinfo->t2, shape, scale);
+    } else if (st == 'B') {
+	int n = p[0];
+	double pr = p[1];
+
+	*err = gretl_rand_binomial(x, pdinfo->t1, pdinfo->t2, n, pr);
+    } else if (st == 'P') {
+	double m = p[0]; /* FIXME? */
+
+	gretl_rand_poisson(x, pdinfo->t1, pdinfo->t2, &m, 0);
+    }
+
+    return x;
+}
+
 static int 
 print_pv_string (double x, double p, PRN *prn)
 {

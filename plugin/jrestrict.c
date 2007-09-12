@@ -1529,8 +1529,8 @@ static int get_master_col (Jwrap *J, int pos, int *mpos)
 
 static int homogenize_R_line (gretl_matrix *R,
 			      gretl_matrix *q,
-			      Jwrap *J, int i,
-			      int pos, int *k)
+			      Jwrap *J, int pos, 
+			      int k)
 {
     int j, j0, j1, mpos;
     double x;
@@ -1545,17 +1545,15 @@ static int homogenize_R_line (gretl_matrix *R,
 
     for (j=0; j<R->cols; j++) {
 	if (j == j0) {
-	    gretl_matrix_set(R, *k, j, 1);
+	    gretl_matrix_set(R, k, j, 1);
 	} else if (j == j1) {
-	    gretl_matrix_set(R, *k, j, x);
+	    gretl_matrix_set(R, k, j, x);
 	} else {
-	    gretl_matrix_set(R, *k, j, 0);
+	    gretl_matrix_set(R, k, j, 0);
 	}
     }
 
-    gretl_vector_set(q, *k, 0);
-
-    *k += 1;
+    gretl_vector_set(q, k, 0);
 
     return 0;
 }
@@ -1596,7 +1594,8 @@ static int remove_col_scaling (Jwrap *J,
 	pos = in_gretl_list(J->normrow, i);
 	if (pos > 0 && J->normcol[pos] < 0) {
 	    /* convert to homogeneous restriction */
-	    homogenize_R_line(Rr, qr, J, i, pos, &k);
+	    homogenize_R_line(Rr, qr, J, pos, k);
+	    k++;
 	} else if (pos == 0) {
 	    /* pass the row through unmodified */
 	    for (j=0; j<R->cols; j++) {
@@ -1721,11 +1720,11 @@ static int check_for_scaling (Jwrap *J,
 	    J->normval[J->normrow[0]] = sval;
 	    list_push(J->normrow, i);
 	    if (sc[k] == 0) {
-		/* beta column is not yet scaled */
+		/* beta column k is not yet scaled */
 		list_push(J->normcol, rcol);
 		fprintf(stderr, "added scaling for beta col %d\n", k);
 	    } else {
-		/* negative col entry indicates a "follower" */
+		/* negative rcol entry indicates a "follower" */
 		list_push(J->normcol, -rcol);
 		fprintf(stderr, "added scaling-follower for beta col %d\n", k);
 	    }
@@ -1734,6 +1733,7 @@ static int check_for_scaling (Jwrap *J,
     }
 
     if (J->normrow[0] == 0) {
+	/* no scalings found */
 	norm_destroy(J);
     } else {
 	printlist(J->normrow, "norm rows");
