@@ -1417,6 +1417,9 @@ static int replace_col_scaling (Jwrap *J)
 
     for (i=0; i<J->normcol[0]; i++) {
 	k = J->normcol[i+1];
+	if (k < 0) {
+	    continue;
+	}
 	j = k / J->p1;
 	x0 = gretl_matrix_get(J->beta, k % J->p1, j) / J->normval[i];
 	for (ii=0; ii<J->p1; ii++) {
@@ -1431,10 +1434,9 @@ static int replace_col_scaling (Jwrap *J)
 	    if (x != 0) {
 		gretl_matrix_set(J->alpha, ii, j, x * x0);
 	    }
-	}	
+	}
+	J->blen -= 1;
     }
-
-    J->blen -= J->normcol[0];
 
     return err;
 }
@@ -1501,6 +1503,64 @@ J_get_q_matrix (Jwrap *J, const gretl_restriction *rset)
     }
 }
 
+static int get_master_col (Jwrap *J, int pos, int *mpos)
+{
+    int i, k = -J->normcol[pos];
+    int ci, bcol = k / J->p1;
+
+    for (i=0; i<J->normcol[0]; i++) {
+	ci = J->normcol[i+1];
+	if (ci >= 0 && ci / J->p1 == bcol) {
+	    *mpos = i + 1;
+	    return ci;
+	}
+    }
+
+    return -1;
+}
+
+/* Take a row from the original R matrix and re-write it as a
+   homogenous restriction referencing the "master" value which 
+   was used as a basis for scaling the relevant column of beta. 
+   For example, if we found the scaling b[2,1] = 1, and then the 
+   following restriction b[2,2] = -1, we remove the first 
+   restriction (temporarily), and we replace the second with 
+   b[1,1] + b[2,1] = 0.
+*/
+
+static int homogenize_R_line (gretl_matrix *R,
+			      gretl_matrix *q,
+			      Jwrap *J, int i,
+			      int pos, int *k)
+{
+    int j, col0, col1, mpos;
+    double x;
+
+    col0 = get_master_col(J, pos, &mpos);
+    if (col0 < 0) {
+	return E_DATA;
+    }
+
+    col1 = -J->normcol[pos];
+    x = -J->normval[mpos-1] / J->normval[pos-1];
+
+    for (j=0; j<R->cols; j++) {
+	if (j == col0) {
+	    gretl_matrix_set(R, *k, j, 1);
+	} else if (j == col1) {
+	    gretl_matrix_set(R, *k, j, x);
+	} else {
+	    gretl_matrix_set(R, *k, j, 0);
+	}
+    }
+
+    gretl_vector_set(q, *k, 0);
+
+    *k += 1;
+
+    return 0;
+}
+
 static int remove_col_scaling (Jwrap *J,
 			       const gretl_restriction *rset)
 {
@@ -1508,10 +1568,16 @@ static int remove_col_scaling (Jwrap *J,
     const gretl_matrix *q = J_get_q_matrix(J, rset);
     gretl_matrix *Rr = NULL;
     gretl_matrix *qr = NULL;
-    int rr = R->rows - J->normrow[0];
+    int rr = R->rows;
     double x;
-    int i, j, k;
+    int i, j, k, pos;
     int err = 0;
+
+    for (i=0; i<J->normcol[0]; i++) {
+	if (J->normcol[i+1] >= 0) {
+	    rr--;
+	}
+    }
 
     if (rr == 0) {
 	/* all restrictions were column scalings */
@@ -1528,7 +1594,12 @@ static int remove_col_scaling (Jwrap *J,
 
     k = 0;
     for (i=0; i<R->rows; i++) {
-	if (!in_gretl_list(J->normrow, i)) {
+	pos = in_gretl_list(J->normrow, i);
+	if (pos > 0 && J->normcol[pos] < 0) {
+	    /* convert to homogeneous restriction */
+	    homogenize_R_line(Rr, qr, J, i, pos, &k);
+	} else if (pos == 0) {
+	    /* pass the row through unmodified */
 	    for (j=0; j<R->cols; j++) {
 		x = gretl_matrix_get(R, i, j);
 		gretl_matrix_set(Rr, k, j, x);
@@ -1536,7 +1607,7 @@ static int remove_col_scaling (Jwrap *J,
 		gretl_vector_set(qr, k, x);
 	    }
 	    k++;
-	}
+	} 
     }
 
     gretl_matrix_print(Rr, "Rr");
@@ -1565,18 +1636,19 @@ static void norm_destroy (Jwrap *J)
 
 static int norm_allocate (Jwrap *J)
 {
+    int n = J->r * J->p1;
     int err = 0;
 
-    J->normrow = gretl_list_new(J->r);
+    J->normrow = gretl_list_new(n);
     if (J->normrow == NULL) err = E_ALLOC;
 
     if (!err) {
-	J->normcol = gretl_list_new(J->r);
+	J->normcol = gretl_list_new(n);
 	if (J->normcol == NULL) err = E_ALLOC;
     }
 
     if (!err) {
-	J->normval = malloc(J->r * sizeof *J->normval);
+	J->normval = malloc(n * sizeof *J->normval);
 	if (J->normval == NULL) err = E_ALLOC;
     }
 
@@ -1596,10 +1668,15 @@ static void list_push (int *list, int k)
     list[list[0]] = k;
 }
 
-static int scale_row (const gretl_matrix *R, 
-		      const gretl_matrix *q,
-		      int i, int *col,
-		      double *sval)
+/* test whether or not a row of the R matrix (taking
+   into account the corresponding q value) represents
+   a scaling of a column of beta
+*/
+
+static int is_scaling_row (const gretl_matrix *R, 
+			   const gretl_matrix *q,
+			   int i, int *col,
+			   double *sval)
 {
     int j, c = 0;
     double rij;
@@ -1630,8 +1707,8 @@ static int check_for_scaling (Jwrap *J,
 			      const gretl_matrix *q)
 {
     char *sc = NULL;
-    double sval;
-    int i, k, rcol;
+    double sval = 0;
+    int i, k, rcol = 0;
 
     sc = calloc(J->r, 1);
 
@@ -1640,31 +1717,20 @@ static int check_for_scaling (Jwrap *J,
     }
 
     for (i=0; i<R->rows; i++) {
-	if (scale_row(R, q, i, &rcol, &sval)) {
+	if (is_scaling_row(R, q, i, &rcol, &sval)) {
 	    k = rcol / J->p1;
-	    sc[k] += 1;
-	}
-    }
-
-    for (i=0; i<J->r; i++) {
-	if (sc[i] > 1) {
-	    sc[i] = 0;
-	}
-    }
-
-    for (i=0; i<R->rows; i++) {
-	if (scale_row(R, q, i, &rcol, &sval)) {
-	    k = rcol / J->p1;
-	    if (sc[k]) {
-		/* column is scaleable */
-		J->normval[J->normrow[0]] = sval;
-		list_push(J->normrow, i);
+	    J->normval[J->normrow[0]] = sval;
+	    list_push(J->normrow, i);
+	    if (sc[k] == 0) {
+		/* beta column is not yet scaled */
 		list_push(J->normcol, rcol);
+		fprintf(stderr, "added scaling for beta col %d\n", k);
+	    } else {
+		/* negative col entry indicates follower */
+		list_push(J->normcol, -rcol);
+		fprintf(stderr, "added scaling-follower for beta col %d\n", k);
 	    }
-	}
-	if (J->normrow[0] == J->r) {
-	    /* got them all */
-	    break;
+	    sc[k] += 1;
 	}
     }
 
@@ -1673,6 +1739,9 @@ static int check_for_scaling (Jwrap *J,
     } else {
 	printlist(J->normrow, "norm rows");
 	printlist(J->normcol, "norm cols");
+	for (i=0; i<J->normrow[0]; i++) {
+	    fprintf(stderr, "normval[%d] = %g\n", i, J->normval[i]);
+	}
     }
 
     free(sc);
@@ -2095,7 +2164,7 @@ static int set_up_H (Jwrap *J, const gretl_restriction *rset)
 	J->H0 = J->H;
     }
 
-    if (!err && !qzero && !doing_manual_init(J)) {
+    if (!err && !qzero && !J->bfgs && !doing_manual_init(J)) {
 	err = check_for_scaling(J, R, q);
     }
 
