@@ -1885,17 +1885,11 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	double *vx = NULL;
 	double x = 0.0;
 	double y = 0.0;
-	int v = 0, u = 0;
+	int v = 0;
 
 	if (f == RBINOMIAL) {
 	    v = l->v.xval;
 	    y = r->v.xval;
-	} else if (f == RGAMMA) {
-	    x = l->v.xval;
-	    y = r->v.xval;
-	} else if (f == RSNEDECOR) {
-	    v = l->v.xval;
-	    u = r->v.xval;
 	} else if (f == RPOISSON) {
 	    if (l->t == VEC) {
 		vx = l->v.xvec;
@@ -1927,10 +1921,6 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = gretl_rand_chisq(ret->v.xvec, p->dinfo->t1, 
 				      p->dinfo->t2, v);
 	    break;
-	case RSNEDECOR:
-	    p->err = gretl_rand_F(ret->v.xvec, p->dinfo->t1, 
-				  p->dinfo->t2, v, u);
-	    break;
 	case RSTUDENT:
 	    p->err = gretl_rand_student(ret->v.xvec, p->dinfo->t1, 
 					p->dinfo->t2, v);
@@ -1938,10 +1928,6 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	case RBINOMIAL:
 	    p->err = gretl_rand_binomial(ret->v.xvec, p->dinfo->t1, 
 					 p->dinfo->t2, v, y);
-	    break;
-	case RGAMMA:
-	    p->err = gretl_rand_gamma(ret->v.xvec, p->dinfo->t1, 
-				      p->dinfo->t2, x, y);
 	    break;
 	case RPOISSON:
 	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
@@ -3966,8 +3952,6 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case RBINOMIAL:
-    case RGAMMA:
-    case RSNEDECOR:
 	/* requires two scalars */
 	if (l->t == NUM && r->t == NUM) {
 	    ret = series_fill_func(l, r, t->t, p);

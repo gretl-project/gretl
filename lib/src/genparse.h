@@ -176,11 +176,9 @@ enum {
 	      RUNIFORM,
 	      RNORMAL,
 	      RBINOMIAL,
-	      RGAMMA,
-	      RSNEDECOR,
-  /* 150 */   FRACDIF,
+              FRACDIF,
               ZEROS,
-              ONES,
+  /* 150 */   ONES,
               SEQ,
               MUNIF,
               MNORM,
@@ -188,9 +186,9 @@ enum {
               MLAG,
               QR,
               EIGSYM,  
-  /* 160 */   EIGGEN,
+              EIGGEN,
               FDJAC,
-              BFGSMAX,
+  /* 160 */   BFGSMAX,
               LRVAR,
               PRINCOMP,
               QUANTILE,
@@ -198,9 +196,9 @@ enum {
               MXTAB,
               F2_MAX,   /* separator: end of two-arg functions */
               MSHAPE,
-  /* 170 */   SVD,
+              SVD,
               MOLS,
-              FN_MAX,   /* separator: end of n-arg functions */
+  /* 170 */   FN_MAX,   /* separator: end of n-arg functions */
               COM,      /* comma */
               DOT,      /* period */
               SEMI,     /* semi-colon */
@@ -208,9 +206,9 @@ enum {
               CON,      /* named constant */
               DUM,      /* dummy variable */
               UVAR,     /* user variable (scalar or series) */
-  /* 180 */   UMAT,     /* user-defined matrix */
+              UMAT,     /* user-defined matrix */
               UOBJ,     /* user-defined object (e.g. model) */
-              NUM,      /* scalar, evaluated */
+  /* 180 */   NUM,      /* scalar, evaluated */
               VEC,      /* series, evaluated */
               IVEC,     /* vector of integers, evaluated */
               MAT,      /* matrix, evaluated */
@@ -218,9 +216,9 @@ enum {
               MSL,      /* matrix plus subspec */
               DMSL,     /* "dollar" matrix plus subspec */
               DMSTR,    /* "dollar" matrix plus old-style string subspec */
-  /* 190 */   MSL2,     /* unevaluated matrix subspec */
+              MSL2,     /* unevaluated matrix subspec */
               MSPEC,    /* evaluated matrix subspec */
-              SUBSL,    /* row or column component of MSPEC */
+  /* 190 */   SUBSL,    /* row or column component of MSPEC */
               MDEF,     /* explicit matrix definition {...} */
               LAG,      
               DVAR,     /* $ dataset variable (scalar or series) */
@@ -228,9 +226,9 @@ enum {
               OVAR,     /* object variable: variable "under" an object */
               LOOPIDX,  /* loop index variable */
               LIST,     /* reference to named list */
-  /* 200 */   STR,      /* string */
+              STR,      /* string */
               EROOT,    /* dummy root for (...) expression */
-              UFUN,     /* user-defined function */
+  /* 200 */   UFUN,     /* user-defined function */
               FARGS,    /* set of n function arguments */
               EMPTY,
               ABSENT,
