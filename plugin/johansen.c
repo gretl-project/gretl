@@ -506,10 +506,10 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	}	
     } else if (v->B->rows < xc) {
 	/* B may have extra col for restricted const/trend */
-	int n = v->neqns + restricted(v);
+	int n = v->neqns + nrestr(v);
 
 	err = gretl_matrix_realloc(v->B, xc, n);
-	if (!err && restricted(v)) {
+	if (!err && nrestr(v)) {
 	    v->B->cols = v->neqns;
 	}
     }
@@ -550,7 +550,7 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
 	    }
 
 	    /* restricted const or trend */
-	    if (restricted(v)) {
+	    if (nrestr(v)) {
 		bij = gretl_matrix_get(B, i, j);
 		if (jcode(v) == J_REST_TREND) {
 		    bij *= t;
@@ -1113,7 +1113,7 @@ static int restricted_beta_variance (GRETL_VAR *vecm,
     gretl_matrix *Vphi = NULL;
     int r = jrank(vecm);
     int p = vecm->neqns;
-    int p1 = p + restricted(vecm);
+    int p1 = p + nrestr(vecm);
     int nb = r * p1;
     int freeH = 0;
     int err = 0;
@@ -1615,7 +1615,7 @@ simple_restriction (const GRETL_VAR *jvar,
     int ret = 1;
 
     if (rset_VECM_bcols(rset) > 0) {
-	rcols += restricted(jvar);
+	rcols += nrestr(jvar);
 	R = rset_get_R_matrix(rset);
 	q = rset_get_q_matrix(rset);
     } else {

@@ -259,7 +259,7 @@ static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
 	}
     }
 
-    if (mod == LAGS && restricted(v)) {
+    if (mod == LAGS && nrestr(v)) {
 	int trend = (v->jinfo->code == J_REST_TREND);
 	int col = v->neqns;
 
@@ -1924,7 +1924,7 @@ static int
 allocate_johansen_residual_matrices (GRETL_VAR *v)
 {
     int p = v->neqns;
-    int p1 = p + restricted(v);
+    int p1 = p + nrestr(v);
 
     clear_gretl_matrix_err();
 
@@ -1960,7 +1960,7 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 	}
     }
 
-    if (restricted(v)) {
+    if (nrestr(v)) {
 	int trend = (jcode(v) == J_REST_TREND);
 
 	for (t=0; t<v->T; t++) {
@@ -1978,7 +1978,7 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 int johansen_stage_1 (GRETL_VAR *jvar, const double **Z, 
 		      const DATAINFO *pdinfo)
 {
-    int restr = restricted(jvar);
+    int restr = nrestr(jvar);
     int err;
 
     err = allocate_johansen_residual_matrices(jvar); 
@@ -1993,7 +1993,7 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
     }
 
     if (restr) {
-	/* shrink by one column */
+	/* shrink to size */
 	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
 	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
     }
@@ -2012,8 +2012,8 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 
     if (restr) {
 	/* re-expand to full size */
-	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + 1);
-	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + 1);
+	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + restr);
+	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + restr);
     }
 
     /* (2) System with lagged levels on LHS (may include
@@ -2839,6 +2839,7 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 	    continue;
 	}
 	x[t] = 0.0;
+
 	/* beta * X(t-1) */
 	for (i=0; i<vecm->neqns; i++) {
 	    xti = Z[vecm->ylist[i+1]][t-1];
@@ -2848,8 +2849,9 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 	    }
 	    x[t] += xti * gretl_matrix_get(B, i, j);
 	}
+
 	/* restricted const or trend */
-	if (restricted(vecm) && !na(x[t])) {
+	if (nrestr(vecm) && !na(x[t])) {
 	    xti = gretl_matrix_get(B, i, j);
 	    if (jcode(vecm) == J_REST_TREND) {
 		xti *= t;

@@ -98,10 +98,11 @@ struct GRETL_VAR_ {
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
 };
-    
-#define restricted(v) (v->jinfo != NULL && \
-                       (v->jinfo->code == J_REST_CONST || \
-                        v->jinfo->code == J_REST_TREND))
+
+/* number of extra terms confined to the cointegrating space */
+#define nrestr(v) (v->jinfo != NULL && \
+                   (v->jinfo->code == J_REST_CONST || \
+                    v->jinfo->code == J_REST_TREND))
 
 #define jcode(v) ((v->jinfo == NULL)? 0 : v->jinfo->code)
 

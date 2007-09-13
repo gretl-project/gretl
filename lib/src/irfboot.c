@@ -130,7 +130,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 
     if (var->jinfo != NULL) {
 	b->ncoeff = var->ncoeff + (var->neqns - jrank(var)) + 
-	    restricted(var); /* FIXME? */
+	    nrestr(var); /* FIXME? */
     } else {
 	b->ncoeff = var->ncoeff;
     }
@@ -178,6 +178,7 @@ recalculate_impulse_responses (irfboot *b, const gretl_matrix *A,
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 {
     int nc0 = v->ifc + v->order * v->neqns + v->jinfo->seasonals;
+    int nr = nrestr(v);
 
     if (v->xlist != NULL) {
 	nc0 += v->xlist[0];
@@ -193,10 +194,10 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 	gretl_matrix_reuse(v->B, nc0, -1);
     }
 
-    if (restricted(v)) {
+    if (nr > 0) {
 	/* add back extra column for const/trend */
-	gretl_matrix_reuse(v->Y, -1, v->neqns + 1);
-	gretl_matrix_reuse(v->B, -1, v->neqns + 1);
+	gretl_matrix_reuse(v->Y, -1, v->neqns + nr);
+	gretl_matrix_reuse(v->B, -1, v->neqns + nr);
     }    
 }
 
@@ -360,9 +361,9 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 
     /* total coeffs in VAR representation */
     ncoeff = var->ncoeff + (var->neqns - var->jinfo->rank) + 
-	restricted(var);
+	nrestr(var);
 
-    if (restricted(var)) {
+    if (nrestr(var)) {
 	rbeta = make_restricted_coeff_vector(var);
 	if (rbeta == NULL) {
 	    return NULL;
