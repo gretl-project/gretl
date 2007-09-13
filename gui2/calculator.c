@@ -1246,34 +1246,34 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     switch (d) {
     case UNIFORM_DIST:
-	gretl_command_sprintf("genr %s = randgen(u, %g,%g)", vname,
+	gretl_command_sprintf("genr %s = randgen(u,%g,%g)", vname,
 			      x[0], x[1]);
 	break;
     case NORMAL_DIST:
-	gretl_command_sprintf("genr %s = randgen(N, %g,%g)", vname,
+	gretl_command_sprintf("genr %s = randgen(N,%g,%g)", vname,
 			      x[0], x[1]);
 	break;
     case T_DIST: 
-	gretl_command_sprintf("genr %s = randgen(t, %g)", vname, x[0]);
+	gretl_command_sprintf("genr %s = randgen(t,%g)", vname, x[0]);
 	break;
     case CHISQ_DIST:
-	gretl_command_sprintf("genr %s = randgen(X, %g)", vname, x[0]);
+	gretl_command_sprintf("genr %s = randgen(X,%g)", vname, x[0]);
 	break;
     case F_DIST:
-	gretl_command_sprintf("genr %s = randgen(F, %g,%g)", vname, 
+	gretl_command_sprintf("genr %s = randgen(F,%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
     case GAMMA_DIST:
-	gretl_command_sprintf("genr %s = randgen(G, %g,%g)", vname, 
+	gretl_command_sprintf("genr %s = randgen(G,%g,%g)", vname, 
 			      x[0], x[1]);
 	break;
     case BINOMIAL_DIST: 
-	gretl_command_sprintf("genr %s = randgen(B, %g,%g)", vname, 
+	gretl_command_sprintf("genr %s = randgen(B,%g,%g)", vname, 
 			      x[1], x[0]);
 	break;
     case POISSON_DIST: 
 	/* FIXME allow variable as param? */
-	gretl_command_sprintf("genr %s = randgen(P, %g)", vname, x[0]);
+	gretl_command_sprintf("genr %s = randgen(P,%g)", vname, x[0]);
 	break;
     }
 
