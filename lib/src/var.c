@@ -123,7 +123,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->refcount = 0;
     var->err = 0;
     var->neqns = var->order = 0;
-    var->t1 = var->t2 = var->T = 0;
+    var->t1 = var->t2 = var->T = var->df = 0;
     var->ifc = var->ncoeff = 0;
     var->detflags = 0;
     var->robust = var->qr = 0;
@@ -428,7 +428,9 @@ static int VAR_check_df_etc (GRETL_VAR *v, const DATAINFO *pdinfo,
 	v->ncoeff += 1;
     }
 
-    if (v->T < v->ncoeff) {
+    v->df = v->T - v->ncoeff;
+
+    if (v->df < 0) {
 	err = E_DF;
     }
 
@@ -1021,7 +1023,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     MODEL *pmod = var->models[i];
     double *y = NULL;
     double u, x, SSR = 0, TSS = 0;
-    int dfd, t;
+    int t;
 
     y = malloc(var->T * sizeof *y);
     if (y == NULL) {
@@ -1037,8 +1039,6 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     pmod->ybar = gretl_mean(0, var->T - 1, y);
     pmod->sdy = gretl_stddev(0, var->T - 1, y);
 
-    dfd = (var->ci == VECM)? pmod->nobs : pmod->dfd;
-
     for (t=0; t<var->T; t++) {
 	u = gretl_matrix_get(var->E, t, i);
 	SSR += u * u;
@@ -1049,7 +1049,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     }
 
     pmod->ess = SSR;
-    pmod->sigma = sqrt(SSR / dfd);
+    pmod->sigma = sqrt(SSR / pmod->dfd);
     pmod->tss = TSS;
     pmod->rsq = 1.0 - SSR / TSS;
     pmod->fstt = ((TSS - SSR) / pmod->dfn) / (SSR / pmod->dfd);
@@ -1704,9 +1704,9 @@ int transcribe_VAR_models (GRETL_VAR *var,
 	pmod->t1 = var->t1;
 	pmod->t2 = var->t2;
 	pmod->ncoeff = var->ncoeff;
-	pmod->dfd = pmod->nobs - pmod->ncoeff;
 	pmod->ifc = var->ifc;
 	pmod->dfn = var->ncoeff - pmod->ifc;
+	pmod->dfd = (ecm)? var->df : pmod->nobs - pmod->ncoeff;
 
 	err = gretl_model_allocate_storage(pmod);
 
@@ -3103,6 +3103,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     var->t1 = pmod->t1;
     var->t2 = pmod->t2;
     var->T = var->t2 - var->t1 + 1;
+    var->df = var->T - var->ncoeff;
 
     if (var->ylist == NULL) {
 	*err = make_VAR_global_lists(var);

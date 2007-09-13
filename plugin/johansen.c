@@ -726,6 +726,57 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
 
 #endif
 
+/* As in PcGive: df = T - c, where c is the "average number of
+   estimated parameters per equation, rounded towards zero".
+*/
+
+static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
+			 const gretl_matrix *R)
+{
+    int p = v->neqns;
+    int r = v->jinfo->rank;
+    int p1 = v->jinfo->Beta->rows;
+    int K = 0;
+    double c;
+
+    /* lagged differences */
+    K += v->order * p;
+
+    /* deterministic stuff */
+    K += v->jinfo->seasonals + v->ifc;
+    if (jcode(v) == J_UNREST_TREND) {
+	K++;
+    }
+
+    /* exogenous vars? */
+    if (v->xlist != NULL) {
+	K += v->xlist[0];
+    }
+
+    K *= p;
+
+    /* free beta terms */
+    if (H == NULL) {
+	K += r * (p1 - r);
+    } else {
+	K += H->cols * r;
+    }
+
+    /* free alpha terms */
+    if (R == NULL) {
+	K += r * p; 
+    } else {
+	K += r * (p - R->rows);
+    }
+
+    c = floor(K / p);
+    v->df = v->T - c;
+
+#if JDEBUG
+    fprintf(stderr, "vecm_set_df: global K = %d, c = %g\n", K, c);
+#endif
+}
+
 /* The following is designed to accommodate the case where alpha is
    restricted, so we can't just run OLS conditional on beta.
 
@@ -1110,7 +1161,7 @@ static int restricted_beta_variance (GRETL_VAR *vecm,
     }
 
     if (!err) {
-	gretl_matrix_divide_by_scalar(Vphi, vecm->T);
+	gretl_matrix_divide_by_scalar(Vphi, vecm->df);
     }
 
     if (!err) {
@@ -1213,7 +1264,7 @@ static int beta_variance (GRETL_VAR *vecm)
 	goto bailout;
     }
 
-    gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->T);
+    gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->df);
 
     k = 0;
     for (j=0; j<r; j++) {
@@ -1730,7 +1781,8 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
    restriction, simple alpha restriction, or no restriction.
 */
 
-static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
+static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H, 
+			  const gretl_matrix *Ra,
 			  const double **Z, const DATAINFO *pdinfo,
 			  int flags)
 {
@@ -1744,6 +1796,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     }
 
     if (!err) {
+	vecm_set_df(jvar, H, Ra);
 	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, flags);
     }
 
@@ -1793,7 +1846,7 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, Z, pdinfo, NET_OUT_ALPHA);
+	err = vecm_finalize(jvar, NULL, R, Z, pdinfo, NET_OUT_ALPHA);
     }
 
     if (!err) {
@@ -1861,7 +1914,7 @@ est_simple_beta_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, H, Z, pdinfo, ESTIMATE_ALPHA);
+	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, ESTIMATE_ALPHA);
     }
 
     if (!err) {
@@ -1915,7 +1968,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, Z, pdinfo, ESTIMATE_ALPHA);
+	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, ESTIMATE_ALPHA);
     }
 
     gretl_matrix_free(S00);

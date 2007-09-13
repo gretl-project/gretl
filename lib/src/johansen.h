@@ -66,6 +66,7 @@ struct GRETL_VAR_ {
     int t1;              /* starting observation */
     int t2;              /* ending observation */
     int T;               /* number of observations */
+    int df;              /* T - average coeffs per equation */
     int ifc;             /* equations include a constant (1) or not (0) */
     int ncoeff;          /* total coefficients per equation */
     int *ylist;          /* list of stochastic vars */
