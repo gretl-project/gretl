@@ -132,12 +132,9 @@ struct str_table funcs[] = {
     { NOBS,     "nobs" },
     { T1,       "firstobs" },
     { T2,       "lastobs" },
-    { RUNIFORM,  "uniform" }, 
-    { RNORMAL,   "normal" }, 
-    { RCHISQ,    "chisq" }, 
-    { RSTUDENT,  "student" },
-    { RBINOMIAL, "binomial" },
-    { RPOISSON,  "poisson" },
+    { RUNIFORM, "uniform" }, 
+    { RNORMAL,  "normal" }, 
+    { RPOISSON, "poisson" },
     { CUM,      "cum" }, 
     { MISSING,  "missing" },
     { OK,       "ok" },        /* opposite of missing */
@@ -157,7 +154,7 @@ struct str_table funcs[] = {
     { CNORM,    "cnorm" },
     { DNORM,    "dnorm" },
     { QNORM,    "qnorm" },
-    { GAMMA,    "gamma" },
+    { GAMMA,    "gammafunc" },
     { LNGAMMA,  "lngamma" },
     { RESAMPLE, "resample" },
     { PMEAN,    "pmean" },     /* panel mean */
@@ -241,6 +238,11 @@ struct str_table funcs[] = {
     { 0,        NULL }
 };
 
+struct str_table func_alias[] = {
+    { GAMMA,    "gamma" },
+    { 0,        NULL }
+};
+
 int const_lookup (const char *s)
 {
     int i;
@@ -267,7 +269,12 @@ const char *constname (int c)
     return "unknown";
 }
 
-int function_lookup (const char *s)
+enum {
+    NO_ALIAS,
+    ALLOW_ALIAS
+};
+
+static int real_function_lookup (const char *s, int a)
 {
     int i;
 
@@ -277,7 +284,25 @@ int function_lookup (const char *s)
 	}
     }
 
+    if (a == ALLOW_ALIAS) {
+	for (i=0; func_alias[i].id != 0; i++) {
+	    if (!strcmp(s, func_alias[i].str)) {
+		return func_alias[i].id;
+	    }
+	} 
+    }   
+
     return 0;
+}
+
+int function_lookup (const char *s)
+{
+    return real_function_lookup(s, NO_ALIAS);
+}
+
+static int function_lookup_with_alias (const char *s)
+{
+    return real_function_lookup(s, ALLOW_ALIAS);
 }
 
 static const char *funname (int t)
@@ -578,7 +603,7 @@ static void look_up_word (const char *s, parser *p)
 {
     int fsym, err = 0;
 
-    fsym = p->sym = function_lookup(s);
+    fsym = p->sym = function_lookup_with_alias(s);
 
     if (p->sym == 0 || p->ch != '(') {
 	p->idnum = const_lookup(s);

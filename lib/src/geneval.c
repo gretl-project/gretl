@@ -1887,10 +1887,7 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	double y = 0.0;
 	int v = 0;
 
-	if (f == RBINOMIAL) {
-	    v = l->v.xval;
-	    y = r->v.xval;
-	} else if (f == RPOISSON) {
+	if (f == RPOISSON) {
 	    if (l->t == VEC) {
 		vx = l->v.xvec;
 		v = 1;
@@ -1916,18 +1913,6 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 					    p->dinfo->t1, 
 					    p->dinfo->t2,
 					    x, y);
-	    break;
-	case RCHISQ:
-	    p->err = gretl_rand_chisq(ret->v.xvec, p->dinfo->t1, 
-				      p->dinfo->t2, v);
-	    break;
-	case RSTUDENT:
-	    p->err = gretl_rand_student(ret->v.xvec, p->dinfo->t1, 
-					p->dinfo->t2, v);
-	    break;
-	case RBINOMIAL:
-	    p->err = gretl_rand_binomial(ret->v.xvec, p->dinfo->t1, 
-					 p->dinfo->t2, v, y);
 	    break;
 	case RPOISSON:
 	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
@@ -3951,14 +3936,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
 	} 
 	break;
-    case RBINOMIAL:
-	/* requires two scalars */
-	if (l->t == NUM && r->t == NUM) {
-	    ret = series_fill_func(l, r, t->t, p);
-	} else {
-	    node_type_error(t->t, NUM, (l->t == NUM)? r : l, p);
-	} 
-	break;
     case RPOISSON:
 	/* one arg: scalar or series */
 	if (l->t == NUM || l->t == VEC) {
@@ -3966,15 +3943,6 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, VEC, l, p);
 	} 
-	break;
-    case RCHISQ:
-    case RSTUDENT:
-	/* one scalar argument, series result */
-	if (l->t == NUM) {
-	    ret = series_fill_func(l, NULL, t->t, p);
-	} else {
-	    node_type_error(t->t, NUM, l, p);
-	}
 	break;
     case COR:
     case COV:

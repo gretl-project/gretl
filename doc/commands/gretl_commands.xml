@@ -2585,28 +2585,23 @@
 
 	<li><para>
 	    Pseudo-random numbers: <func>uniform</func>,
-	    <func>normal</func>, <func>chisq</func>, <func>student</func>,
-	    <func>binomial</func> and <func>poisson</func>. The first two
-	    functions do not take an argument and should be written with
-	    empty parentheses: <lit>uniform()</lit>, <lit>normal()</lit>.
-	    They create pseudo-random series drawn from the uniform
-	    (0&ndash;1) and standard normal distributions respectively.
-	    The next two take a single argument, namely the (integer)
-	    degrees of freedom; they generate drawings from the Chi-square
-	    and Student's t distributions respectively.  The
-	    <func>binomial</func> function takes two parameters: an
-	    integer number of trials and a <quote>success</quote>
-	    probability.  The <func>poisson</func> function takes a single
+	    <func>normal</func>, <func>poisson</func> and also the
+	    general-purpose function <func>randgen</func> (see below). The
+	    first two functions do not take an argument and should be
+	    written with empty parentheses: <lit>uniform()</lit>,
+	    <lit>normal()</lit>. They create pseudo-random series drawn
+	    from the uniform (0&ndash;1) and standard normal distributions
+	    respectively. The <func>poisson</func> function takes a single
 	    argument, the mean, which may be either a scalar or a series.
 	    Uniform series, which form the basis for the more complex
 	    distributions, are generated using the Mersenne
 	    Twister;<footnote><para>See Matsumoto and Nishimura (1998).
 		The implementation is provided by
 		<program>glib-2.0</program>.
-		</para></footnote> for normal series the method
-	    of Box and Muller (1958) is used, taking input from the
-	    Mersenne Twister. See also the <cmdref
-	      targ="set"/> command, <lit>seed</lit> option.
+	      </para></footnote> for normal series the method of Box and
+	    Muller (1958) is used, taking input from the Mersenne Twister.
+	    See also the <cmdref targ="set"/> command, <lit>seed</lit>
+	    option.
 	  </para>
 	</li>
       </ilist> 
@@ -2619,8 +2614,8 @@
       </para>
 
       <para>
-	The <func>pvalue</func>, <func>critical</func> and
-	<func>cdf</func> functions take, as their first parameter, a
+	The functions <func>pvalue</func>, <func>critical</func>,
+	<func>cdf</func> and <func>randgen</func> take, as their first parameter, a
 	one-character code for the distribution of interest:
       </para>
       
@@ -2629,10 +2624,15 @@
 	<li><para><cmd>t</cmd>: Student's <emphasis>t</emphasis>;</para></li>
 	<li><para><cmd>X</cmd>: chi-square;</para></li>
 	<li><para><cmd>F</cmd>: Snedecor;</para></li>
-	<li><para><cmd>G</cmd>: Gamma (only <cmd>pvalue</cmd> and <cmd>cdf</cmd>);</para></li>
+	<li>
+	  <para>
+	    <cmd>G</cmd>: Gamma (<cmd>pvalue</cmd>, <cmd>cdf</cmd> and
+	    <cmd>randgen</cmd>);
+	  </para>
+	</li>
 	<li><para><cmd>B</cmd>: Binomial;</para></li>
 	<li><para><cmd>P</cmd>: Poisson;</para></li>
-	<li><para><cmd>D</cmd>: Bivariate normal (only <cmd>cdf</cmd>).</para></li>
+	<li><para><cmd>D</cmd>: Bivariate normal (<cmd>cdf</cmd> only).</para></li>
       </ilist>
 
       <para>
@@ -2644,16 +2644,15 @@
       </para>
 
       <para>
-        The <func>cdf</func> function also takes the same arguments as
-	the <cmdref targ="pvalue"/> command, but it returns the
-	complementary value, that is, the integral of the relevant
-	density function from its lower limit (either minus infinity
-	or zero) to the specified value.  For the bivariate normal
-	distribution, three arguments must be given:
-	<emphasis>x</emphasis>, <emphasis>y</emphasis> and the
-	correlation coefficient <emphasis>rho</emphasis>, in this order.
-	For additional discussion of these functions see
-	<guideref targ="chap-genr"/>.
+        The <func>cdf</func> function takes the same arguments as
+	<func>pvalue</func>, but it returns the complementary value, that
+	is, the integral of the relevant density function from its lower
+	limit (either minus infinity or zero) to the specified value.  For
+	the bivariate normal distribution, three arguments must be given:
+	<emphasis>x</emphasis>, <emphasis>y</emphasis> and the correlation
+	coefficient <emphasis>rho</emphasis>, in this order.  For
+	additional discussion of these functions see <guideref
+	targ="chap-genr"/>.
       </para>
 
       <para>
@@ -2668,8 +2667,16 @@
       </para>
 
       <para>
-	Here are some examples of use of the <func>pvalue</func>,
-	<func>cdf</func> and <func>critical</func> functions (spaces
+	The <func>randgen</func> function returns a series containing
+	pseudo-random drawings from the specified distribution.  The
+	parameter specification is as for <func>pvalue</func> and
+	<func>cdf</func>, except that for the normal distribution
+	(code <cmd>z</cmd> or <cmd>N</cmd>) the mean and standard
+	deviation should be given.
+      </para>
+
+      <para>
+	Here are some examples of use of the above-mentioned (spaces
 	between the arguments are optional):
       </para>
       <code>
@@ -2678,6 +2685,8 @@
 	genr p3 = cdf(D, -1, 1, 0.25)
 	genr c1 = critical(t, 20, 0.025)
 	genr c2 = critical(F, 4, 48, 0.05)
+	genr rf = randgen(F, 4, 48)
+	genr rb = randgen(B, 100, 0.5)
       </code>
 
       <para>

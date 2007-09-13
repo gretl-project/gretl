@@ -231,13 +231,9 @@ int gretl_reserved_word (const char *str)
 	}
     }
 
-#if 0
-    if (!ret) {
-	if (function_from_string(str)) {
-	    ret = 3;
-	}
+    if (!ret && function_from_string(str)) {
+	ret = 3;
     }
-#endif
 
     if (ret > 0) {
 	sprintf(gretl_errmsg, _("'%s' refers to %s and may not be used as a "

@@ -89,8 +89,6 @@ enum {
               NOBS,
               T1,
   /* 60 */    T2,   
-              RCHISQ,
-              RSTUDENT,
               CUM,
               MISSING,
               OK,
@@ -98,9 +96,9 @@ enum {
               ZEROMISS,
               MEDIAN,
               GINI,
-  /* 70 */    SUM,   
+              SUM,   
               MEAN,
-              MIN,
+  /* 70 */    MIN,
               MAX,
               SD,
               VCE,      /* variance */
@@ -108,9 +106,9 @@ enum {
               CNORM,
               DNORM,
               QNORM,
-  /* 80 */    GAMMA,  
+              GAMMA,  
               LNGAMMA,
-              HPFILT,
+  /* 80 */    HPFILT,
               BKFILT,
               RESAMPLE,
               PMEAN,
@@ -118,19 +116,19 @@ enum {
               IMAT,
               SUMR,
               SUMC,
-  /* 90 */    MEANR,   
+              MEANR,   
               MEANC,
-              MCOV,
+  /* 90 */    MCOV,
               MCORR,
               CDEMEAN,
               CHOL,
               INV,
 	      GINV,
               DIAG,
-  /* 100 */   TRANSP,
+              TRANSP,
               TVEC,
               VECH,   
-              UNVECH,
+  /* 100 */   UNVECH,
               ROWS,
               COLS,
               DET,
@@ -138,9 +136,9 @@ enum {
               TRACE,
               NORM1,
               INFNORM,
-  /* 110 */   RCOND,
+              RCOND,
               RANK, 
-              VARNUM,
+  /* 110 */   VARNUM,
               OBSNUM,
               ISSERIES,
               ISLIST,  
@@ -148,9 +146,9 @@ enum {
               ISNULL,
               LISTLEN,
               PVAL,
-  /* 120 */   CDF,
+	      CDF,
               INVCDF,
-              CRIT,  
+  /* 120 */   CRIT,  
 	      RANDGEN,
               RPOISSON,
               MAKEMASK,
@@ -158,9 +156,9 @@ enum {
               NULLSPC,
               MEXP,
               MINC,
-  /* 130 */   MAXC,
+	      MAXC,
               MINR,
-              MAXR,
+  /* 130 */   MAXR,
               IMINC, 
               IMAXC,
               IMINR,
@@ -168,70 +166,69 @@ enum {
               FFT,
               FFTI,
 	      UPPER,
-  /* 140 */   LOWER,
+	      LOWER,
               FUNC_MAX,   /* separator: end of single-arg functions */
-              COR,
+  /* 140 */   COR,
               COV,
 	      SORTBY,
 	      RUNIFORM,
 	      RNORMAL,
-	      RBINOMIAL,
               FRACDIF,
               ZEROS,
-  /* 150 */   ONES,
+	      ONES,
               SEQ,
               MUNIF,
-              MNORM,
+  /* 150 */   MNORM,
               QFORM,
               MLAG,
               QR,
               EIGSYM,  
               EIGGEN,
               FDJAC,
-  /* 160 */   BFGSMAX,
+	      BFGSMAX,
               LRVAR,
               PRINCOMP,
-              QUANTILE,
+  /* 160 */   QUANTILE,
               CMULT,    /* complex multiplication */
               MXTAB,
               F2_MAX,   /* separator: end of two-arg functions */
               MSHAPE,
               SVD,
               MOLS,
-  /* 170 */   FN_MAX,   /* separator: end of n-arg functions */
+	      FN_MAX,   /* separator: end of n-arg functions */
               COM,      /* comma */
               DOT,      /* period */
-              SEMI,     /* semi-colon */
+  /* 170 */   SEMI,     /* semi-colon */
               COL,      /* colon */
               CON,      /* named constant */
               DUM,      /* dummy variable */
               UVAR,     /* user variable (scalar or series) */
               UMAT,     /* user-defined matrix */
               UOBJ,     /* user-defined object (e.g. model) */
-  /* 180 */   NUM,      /* scalar, evaluated */
+	      NUM,      /* scalar, evaluated */
               VEC,      /* series, evaluated */
               IVEC,     /* vector of integers, evaluated */
-              MAT,      /* matrix, evaluated */
+  /* 180 */   MAT,      /* matrix, evaluated */
               OBS,      /* observation from a series */
               MSL,      /* matrix plus subspec */
               DMSL,     /* "dollar" matrix plus subspec */
               DMSTR,    /* "dollar" matrix plus old-style string subspec */
               MSL2,     /* unevaluated matrix subspec */
               MSPEC,    /* evaluated matrix subspec */
-  /* 190 */   SUBSL,    /* row or column component of MSPEC */
+	      SUBSL,    /* row or column component of MSPEC */
               MDEF,     /* explicit matrix definition {...} */
               LAG,      
-              DVAR,     /* $ dataset variable (scalar or series) */
+  /* 190 */   DVAR,     /* $ dataset variable (scalar or series) */
               MVAR,     /* $ model var (scalar, series, or matrix) */
               OVAR,     /* object variable: variable "under" an object */
               LOOPIDX,  /* loop index variable */
               LIST,     /* reference to named list */
               STR,      /* string */
               EROOT,    /* dummy root for (...) expression */
-  /* 200 */   UFUN,     /* user-defined function */
+	      UFUN,     /* user-defined function */
               FARGS,    /* set of n function arguments */
               EMPTY,
-              ABSENT,
+  /* 200 */   ABSENT,
               INC,   
 	      DEC,
 	      QUERY,
