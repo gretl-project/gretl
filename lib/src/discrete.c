@@ -1161,19 +1161,31 @@ MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return lmod;
 }
 
-static double table_prob (double a, double b, double c, double d,
-			  double num, double nf)
+static double choose (double n, double k)
 {
-    double den, P;
+    double c = 1.0;
+    int i;
 
-    den = nf * x_factorial(a) * x_factorial(b) * 
-	x_factorial(c) * x_factorial(d);
-    P = num / den;
+    for (i=0; i<k; i++) {
+	c *= (n - i) / (k - i);
+    }
+
+    return c;
+}
+
+static double table_prob (double a, double b, double c, double d,
+			  double n)
+{
+    double p1 = choose(a+b, a);
+    double p2 = choose(c+d, c);
+    double p3 = choose(n, a+c);
+    double P = p1 * p2 / p3;
 
 #if 0
-    fprintf(stderr, "\n%6g %6g\n", a, b);
-    fprintf(stderr, "%6g %6g\n", c, d);
-    fprintf(stderr, " Pi = %g\n", P);
+    fprintf(stderr, "\ntable_prob: a=%g, b=%g, c=%g, d=%g, n=%g\n", 
+	    a, b, c, d, n);
+    fprintf(stderr, " p1=%g, p2=%g, p3=%g; P = %g\n", 
+	    p1, p2, p3, P);
 #endif
 
     return P;
@@ -1185,28 +1197,24 @@ static double table_prob (double a, double b, double c, double d,
 
 int fishers_exact_test (const Xtab *tab, PRN *prn)
 {
-    double a, b, c, d, E0;
+    double a, b, c, d, n, E0;
     double P0, Pi, PL, PR, P2;
-    double num, nf;
 
     a = tab->f[0][0];
     b = tab->f[0][1];
     c = tab->f[1][0];
     d = tab->f[1][1];
+    n = tab->n;
 
-    E0 = (tab->rtotal[0] * tab->ctotal[0]) / (double) tab->n;
+    E0 = (tab->rtotal[0] * tab->ctotal[0]) / n;
 
-    num = x_factorial(a + b) * x_factorial(c + d) * x_factorial(a + c) * 
-	x_factorial(b + d);
-    nf = x_factorial(tab->n);
-    
     /* Probability of the observed table */
-    PL = PR = P2 = P0 = table_prob(a, b, c, d, num, nf);
+    PL = PR = P2 = P0 = table_prob(a, b, c, d, n);
 
     while (a > 0 && d > 0) {
 	a -= 1; d -= 1;
 	c += 1; b += 1;
-	Pi = table_prob(a, b, c, d, num, nf);
+	Pi = table_prob(a, b, c, d, n);
 	if (Pi <= P0 || tab->f[0][0] > E0) {
 	    PL += Pi;
 	}
@@ -1223,7 +1231,7 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
     while (c > 0 && b > 0) {
 	c -= 1; b -= 1;
 	a += 1; d += 1;
-	Pi = table_prob(a, b, c, d, num, nf);
+	Pi = table_prob(a, b, c, d, n);
 	if (Pi <= P0 || tab->f[0][0] < E0) {
 	    PR += Pi;
 	}
