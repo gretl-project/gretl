@@ -595,29 +595,7 @@ const int *gretl_VAR_get_exo_list (const GRETL_VAR *var)
 
 static int *build_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
 {
-    int *list = NULL;
-    int lsep = (exolist[0] > 0);
-    int i, j = 1;
-
-    list = gretl_list_new(var->neqns + exolist[0] + lsep);
-    if (list == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=0; i<var->neqns; i++) {
-	list[j++] = var->ylist[i+1];
-    }
-
-    if (lsep) {
-	list[j++] = LISTSEP;
-    }
-
-    for (i=1; i<=exolist[0]; i++) {
-	list[j++] = exolist[i];
-    }    
-
-    return list;
+    return list_composite(var->ylist, exolist, var->rlist);
 }
 
 static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,

@@ -195,7 +195,7 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
     }
 
     if (nr > 0) {
-	/* add back extra column for const/trend */
+	/* add back column(s) for extra restricted terms */
 	gretl_matrix_reuse(v->Y, -1, v->neqns + nr);
 	gretl_matrix_reuse(v->B, -1, v->neqns + nr);
     }    
@@ -298,6 +298,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 
 /* VECM: make a vector, rbeta, containing the coefficients on the
    "restricted" constant or trend, if this is required.
+   FIXME: what about restricted exog vars? 
 */
 
 static gretl_matrix *make_restricted_coeff_vector (const GRETL_VAR *v)
@@ -354,16 +355,18 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int ndelta = var->order * var->neqns;
     int nseas = var->jinfo->seasonals;
+    int nr = nrestr(var);
     int ncoeff;
     int X0, S0, T0;
     double aij;
     int i, j, k;
 
-    /* total coeffs in VAR representation */
-    ncoeff = var->ncoeff + (var->neqns - var->jinfo->rank) + 
-	nrestr(var);
+    /* FIXME restricted exog vars */
 
-    if (nrestr(var)) {
+    /* total coeffs in VAR representation */
+    ncoeff = var->ncoeff + (var->neqns - var->jinfo->rank) + nr;
+
+    if (nr > 0) {
 	rbeta = make_restricted_coeff_vector(var);
 	if (rbeta == NULL) {
 	    return NULL;
@@ -525,7 +528,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 	    } else if (jcode(var) == J_REST_TREND) {
 		/* restricted trend */
 		cij = gretl_matrix_get(b->C0, i, col);
-		bti += cij * t; /* t + 1? */
+		bti += cij * t;
 	    }
 
 	    /* set level of Y(t, i) to fitted + re-sampled error */

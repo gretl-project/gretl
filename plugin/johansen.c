@@ -155,6 +155,25 @@ static void fix_xstr (char *s, int p)
     }
 }
 
+static const char *beta_vname (const GRETL_VAR *v,
+			       const DATAINFO *pdinfo,
+			       int i)
+{
+    if (i < v->neqns) {
+	return pdinfo->varname[v->ylist[i+1]];
+    } else if (auto_restr(v) && i == v->neqns) {
+	return (jcode(v) == J_REST_CONST)? "const" : "trend";
+    } else if (v->rlist != NULL) {
+	int k = i - v->ylist[0] - auto_restr(v) + 1;
+
+	fprintf(stderr, "beta_vname: i=%d, k=%d\n", i, k);
+
+	return pdinfo->varname[v->rlist[k]];
+    } 
+
+    return "";
+}
+
 #define ABMIN 1.0e-15
 
 /* for cointegration test: print cointegrating vectors or adjustments,
@@ -183,13 +202,7 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     }
 
     for (i=0; i<rows; i++) {
-	if (i < jvar->ylist[0]) {
-	    pprintf(prn, "%-10s", pdinfo->varname[jvar->ylist[i+1]]);
-	} else if (jv->code == J_REST_CONST) {
-	    pprintf(prn, "%-10s", "const");
-	} else if (jv->code == J_REST_TREND) {
-	    pprintf(prn, "%-10s", "trend");
-	}
+	pprintf(prn, "%-10s", beta_vname(jvar, pdinfo, i));
 	for (j=0; j<k; j++) {
 	    x = gretl_matrix_get(c, i, j);
 	    if (rescale) {
@@ -284,15 +297,10 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
 
     pprintf(prn, "%22s", pdinfo->varname[jvar->ylist[1]]); /* N.B. */
-    for (j=2; j<=jvar->ylist[0]; j++) {
-	pprintf(prn, "%13s", pdinfo->varname[jvar->ylist[j]]);
-    }
 
-    if (jv->code == J_REST_CONST) {
-	pprintf(prn, "%13s", "const");
-    } else if (jv->code == J_REST_TREND) {
-	pprintf(prn, "%13s", "trend");
-    }    
+    for (j=1; j<jvar->ylist[0]; j++) {
+	pprintf(prn, "%13s", beta_vname(jvar, pdinfo, j));
+    }
 
     pputc(prn, '\n');
 
@@ -506,10 +514,11 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	}	
     } else if (v->B->rows < xc) {
 	/* B may have extra col for restricted const/trend */
-	int n = v->neqns + nrestr(v);
+	int nr = nrestr(v);
+	int n = v->neqns + nr;
 
 	err = gretl_matrix_realloc(v->B, xc, n);
-	if (!err && nrestr(v)) {
+	if (!err && nr > 0) {
 	    v->B->cols = v->neqns;
 	}
     }
@@ -535,28 +544,38 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
     int rank = jrank(v);
     int k, k0 = v->ncoeff - rank;
     double xt, bxt, bij;
-    int i, j, s, t;
+    int i, ii, j, s, t;
     int err = 0;
 
     for (j=0, k=k0; j<rank; j++, k++) {
 	for (t=v->t1, s=0; t<=v->t2; t++, s++) {
 	    bxt = 0.0;
+	    ii = 0;
 
 	    /* beta * X(t-1) */
 	    for (i=0; i<v->neqns; i++) {
 		xt = Z[v->ylist[i+1]][t-1];
-		bij = gretl_matrix_get(B, i, j);
+		bij = gretl_matrix_get(B, ii++, j);
 		bxt += bij * xt;
 	    }
 
 	    /* restricted const or trend */
-	    if (nrestr(v)) {
-		bij = gretl_matrix_get(B, i, j);
+	    if (auto_restr(v)) {
+		bij = gretl_matrix_get(B, ii++, j);
 		if (jcode(v) == J_REST_TREND) {
 		    bij *= t;
 		}
 		bxt += bij;
 	    }
+
+	    /* restricted exog vars */
+	    if (v->rlist != NULL) {
+		for (i=0; i<v->rlist[0]; i++) {
+		    xt = Z[v->ylist[i+1]][t-1];
+		    bij = gretl_matrix_get(B, ii++, j);
+		    bxt += bij * xt;
+		}
+	    }		
 
 	    gretl_matrix_set(X, s, k, bxt);
 	}

@@ -509,7 +509,7 @@ static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
 
 		var = g_object_get_data(G_OBJECT(wstack[i]), "object");
 		if (var != NULL) {
-		    mvm = gretl_VAR_get_highest_variable(var, datainfo);
+		    mvm = gretl_VAR_get_highest_variable(var);
 		    if (mvm > vmax) {
 			vmax = mvm;
 		    }		    

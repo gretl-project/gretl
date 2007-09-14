@@ -117,6 +117,23 @@ static int VAR_add_residuals_matrix (GRETL_VAR *var)
     return err;
 }
 
+int nrestr (const GRETL_VAR *v) 
+{
+    int n = 0;
+
+    if (v->jinfo != NULL && 
+	(v->jinfo->code == J_REST_CONST ||
+	 v->jinfo->code == J_REST_TREND)) {
+	n++;
+    }
+
+    if (v->rlist != NULL) {
+	n += v->rlist[0];
+    }
+
+    return n;
+}
+
 void gretl_VAR_clear (GRETL_VAR *var)
 {
     var->ci = 0;
@@ -131,6 +148,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
 
     var->ylist = NULL;
     var->xlist = NULL;
+    var->rlist = NULL;
 
     var->Y = NULL;
     var->X = NULL;
@@ -244,29 +262,42 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 static void VAR_fill_Y (GRETL_VAR *v, int mod, const double **Z)
 {
     int i, vi, s, t;
+    int k = 0;
 
     for (i=0; i<v->neqns; i++) {
 	vi = v->ylist[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
 	    if (mod == DIFF) {
-		gretl_matrix_set(v->Y, s++, i, Z[vi][t] - Z[vi][t-1]);
+		gretl_matrix_set(v->Y, s++, k, Z[vi][t] - Z[vi][t-1]);
 	    } else if (mod == LAGS) {
-		gretl_matrix_set(v->Y, s++, i, Z[vi][t-1]);
+		gretl_matrix_set(v->Y, s++, k, Z[vi][t-1]);
 	    } else {
-		gretl_matrix_set(v->Y, s++, i, Z[vi][t]);
+		gretl_matrix_set(v->Y, s++, k, Z[vi][t]);
 	    }
 	}
+	k++;
     }
 
-    if (mod == LAGS && nrestr(v)) {
+    if (mod == LAGS && auto_restr(v)) {
 	int trend = (v->jinfo->code == J_REST_TREND);
-	int col = v->neqns;
 
 	for (t=0; t<v->T; t++) {
-	    gretl_matrix_set(v->Y, t, col, (trend)? v->t1 + t : 1);
+	    gretl_matrix_set(v->Y, t, k, (trend)? v->t1 + t : 1);
 	}
+	k++;
     }
+
+    if (mod == LAGS && v->rlist != NULL) {
+	for (i=0; i<v->rlist[0]; i++) {
+	    vi = v->rlist[i+1];
+	    s = 0;
+	    for (t=v->t1; t<=v->t2; t++) {
+		gretl_matrix_set(v->Y, s++, k, Z[vi][t-1]);
+	    }
+	    k++;
+	}
+    }    
 
 #if VDEBUG
     gretl_matrix_print(v->Y, "Y");
@@ -294,16 +325,32 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 	}
     }
 
+    if (!err && v->ci == VECM) {
+	if (v->xlist != NULL && gretl_list_has_separator(v->xlist)) {
+	    int *tmp = NULL;
+
+	    err = gretl_list_split_on_separator(v->xlist, &tmp, &v->rlist);
+	    if (!err) {
+		free(v->xlist);
+		v->xlist = tmp;
+	    }
+	} 
+    }
+
     if (!err) {
 	gretl_list_purge_const(v->ylist, Z, pdinfo);
 	if (v->xlist != NULL) {
 	    gretl_list_purge_const(v->xlist, Z, pdinfo);
 	}
+	if (v->rlist != NULL) {
+	    gretl_list_purge_const(v->rlist, Z, pdinfo);
+	}	
     }
 
 #if VDEBUG
     printlist(v->ylist, "v->ylist");
     printlist(v->xlist, "v->xlist");
+    printlist(v->rlist, "v->rlist");
 #endif
 
     return err;
@@ -340,6 +387,14 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 		}
 	    }
 	}
+	if (v->rlist != NULL && !miss) {
+	    for (i=1; i<=v->rlist[0] && !miss; i++) {
+		if (na(Z[v->rlist[i]][t])) {
+		    v->t1 += 1;
+		    miss = 1;
+		}
+	    }
+	}
 	if (!miss) {
 	    break;
 	}
@@ -364,6 +419,14 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 		}
 	    }
 	}
+	if (v->rlist != NULL && !miss) {
+	    for (i=1; i<=v->rlist[0] && !miss; i++) {
+		if (na(Z[v->rlist[i]][t])) {
+		    v->t2 -= 1;
+		    miss = 1;
+		}
+	    }
+	}
 	if (!miss) {
 	    break;
 	}
@@ -380,6 +443,13 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 	if (v->xlist != NULL && !err) {
 	    for (i=1; i<=v->xlist[0] && !err; i++) {
 		if (na(Z[v->xlist[i]][t])) {
+		    err = E_MISSDATA;
+		}
+	    }
+	}
+	if (v->rlist != NULL && !err) {
+	    for (i=1; i<=v->rlist[0] && !err; i++) {
+		if (na(Z[v->rlist[i]][t])) {
 		    err = E_MISSDATA;
 		}
 	    }
@@ -447,9 +517,14 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
     int n = v->neqns;
 
     if (v->ci == VECM && (opt & (OPT_A | OPT_R))) {
-	/* allow for restricted term */
+	/* allow for restricted const/trend */
 	n++;
     }
+
+    /* restricted exog vars? */
+    if (v->rlist != NULL) {
+	n += v->rlist[0];
+    }    
 
     v->Y = gretl_matrix_alloc(v->T, n);
     v->E = gretl_matrix_alloc(v->T, v->neqns);
@@ -631,6 +706,7 @@ void gretl_VAR_free (GRETL_VAR *var)
 
     free(var->ylist);
     free(var->xlist);
+    free(var->rlist);
 
     gretl_matrix_free(var->Y);
     gretl_matrix_free(var->X);
@@ -922,15 +998,29 @@ VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 
 	    if (jcode(var) == J_UNREST_TREND) {
 		/* unrestricted trend */
-		bij = gretl_matrix_get(B, i, col);
+		bij = gretl_matrix_get(B, i, col++);
 		fti += bij * (t + 1);
 	    } else if (jcode(var) == J_REST_CONST) {
 		/* restricted constant */
-		fti += gretl_matrix_get(B, i, col);
+		fti += gretl_matrix_get(B, i, col++);
 	    } else if (jcode(var) == J_REST_TREND) {
 		/* restricted trend */
-		bij = gretl_matrix_get(B, i, col);
-		fti += bij * t; /* ?? */
+		bij = gretl_matrix_get(B, i, col++);
+		fti += bij * t;
+	    }
+
+	    /* restricted exog vars */
+	    if (var->rlist != NULL) {
+		for (j=0; j<var->rlist[0]; j++) {
+		    vj = var->rlist[j+1];
+		    xtj = Z[vj][t-1]; /* ?? */
+		    if (na(xtj)) {
+			fti = NADBL;
+		    } else {
+			bij = gretl_matrix_get(B, i, col++);
+			fti += bij * xtj;
+		    }
+		}
 	    }
 	    
 	set_fcast:
@@ -1960,13 +2050,23 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 	}
     }
 
-    if (nrestr(v)) {
+    if (auto_restr(v)) {
 	int trend = (jcode(v) == J_REST_TREND);
 
 	for (t=0; t<v->T; t++) {
 	    gretl_matrix_set(R1, t, v->neqns, (trend)? v->t1 + t : 1);
 	}
-    }	
+    }
+
+    if (v->rlist != NULL) {
+	for (i=0; i<v->rlist[0]; i++) {
+	    vi = v->rlist[i+1];
+	    s = 0;
+	    for (t=v->t1; t<=v->t2; t++) {
+		gretl_matrix_set(R1, s++, i, Z[vi][t-1]);
+	    }
+	}
+    }    
 }
 
 /* For Johansen analysis: estimate VAR in differences along with the
@@ -1978,7 +2078,7 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 int johansen_stage_1 (GRETL_VAR *jvar, const double **Z, 
 		      const DATAINFO *pdinfo)
 {
-    int restr = nrestr(jvar);
+    int nr = nrestr(jvar);
     int err;
 
     err = allocate_johansen_residual_matrices(jvar); 
@@ -1992,7 +2092,7 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 	goto finish;
     }
 
-    if (restr) {
+    if (nr > 0) {
 	/* shrink to size */
 	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
 	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
@@ -2010,10 +2110,10 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 				     jvar->jinfo->R0, NULL);
     }
 
-    if (restr) {
+    if (nr > 0) {
 	/* re-expand to full size */
-	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + restr);
-	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + restr);
+	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + nr);
+	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + nr);
     }
 
     /* (2) System with lagged levels on LHS (may include
@@ -2030,7 +2130,7 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 				     jvar->jinfo->R1, NULL);
     }  
 
-    if (restr) {
+    if (nr > 0) {
 	/* shrink to "final" size */
 	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
 	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
@@ -2347,33 +2447,51 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     return jvar;
 }
 
+int *list_composite (const int *list1, const int *list2,
+		     const int *list3)
+{
+    int *big = NULL;
+    int i, k, n = list1[0];
+
+    if (list2 != NULL && list2[0] > 0) n += list2[0] + 1;
+    if (list3 != NULL && list3[0] > 0) n += list3[0] + 1;
+
+    big = gretl_list_new(n);
+    if (big == NULL) {
+	return NULL;
+    }
+
+    k = 1;
+
+    for (i=1; i<=list1[0]; i++) {
+	big[k++] = list1[i];
+    }
+
+    if (list2 != NULL && list2[0] > 0) {
+	big[k++] = LISTSEP;
+	for (i=1; i<=list2[0]; i++) {
+	    big[k++] = list2[i];
+	}
+    }
+
+    if (list3 != NULL && list3[0] > 0) {
+	big[k++] = LISTSEP;
+	for (i=1; i<=list3[0]; i++) {
+	    big[k++] = list3[i];
+	}
+    }
+
+    return big;
+}
+
 static int *rebuild_full_VAR_list (const GRETL_VAR *var, int *err)
 {
-    int *list = NULL;
+    int *list;
 
-    if (var->xlist == NULL) {
+    if (var->xlist == NULL && var->rlist == NULL) {
 	list = gretl_list_copy(var->ylist);
     } else {
-	int i, j, lsep = var->xlist[0] > 0;
-
-	list = gretl_list_new(var->neqns + var->xlist[0] + lsep);
-	if (list == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
-
-	j = 1;
-	for (i=0; i<var->neqns; i++) {
-	    list[j++] = var->ylist[i+1];
-	}
-
-	if (lsep) {
-	    list[j++] = LISTSEP;
-	}
-
-	for (i=1; i<=var->xlist[0]; i++) {
-	    list[j++] = var->xlist[i];
-	}   
+	list = list_composite(var->ylist, var->xlist, var->rlist);
     } 
 
     return list;
@@ -2539,8 +2657,7 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
     return err;
 }
 
-int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
-				    const DATAINFO *pdinfo)
+int gretl_VAR_get_highest_variable (const GRETL_VAR *var)
 {
     int i, vi, vmax = 0;
 
@@ -2556,6 +2673,15 @@ int gretl_VAR_get_highest_variable (const GRETL_VAR *var,
     if (var->xlist != NULL) {
 	for (i=1; i<=var->xlist[0]; i++) {
 	    vi = var->xlist[i];
+	    if (vi > vmax) {
+		vmax = vi;
+	    }
+	}
+    }   
+
+    if (var->rlist != NULL) {
+	for (i=1; i<=var->rlist[0]; i++) {
+	    vi = var->rlist[i];
 	    if (vi > vmax) {
 		vmax = vi;
 	    }
@@ -2811,7 +2937,7 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
     int r = jrank(vecm);
     double *x = NULL;
     double xti;
-    int i, t, t0;
+    int i, k, t, t0;
 
     if (j < 0 || j >= r) {
 	*err = E_DATA;
@@ -2840,6 +2966,8 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 	}
 	x[t] = 0.0;
 
+	k = 0;
+
 	/* beta * X(t-1) */
 	for (i=0; i<vecm->neqns; i++) {
 	    xti = Z[vecm->ylist[i+1]][t-1];
@@ -2847,16 +2975,28 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 		x[t] = NADBL;
 		break;
 	    }
-	    x[t] += xti * gretl_matrix_get(B, i, j);
+	    x[t] += xti * gretl_matrix_get(B, k++, j);
 	}
 
 	/* restricted const or trend */
-	if (nrestr(vecm) && !na(x[t])) {
-	    xti = gretl_matrix_get(B, i, j);
+	if (auto_restr(vecm) && !na(x[t])) {
+	    xti = gretl_matrix_get(B, k++, j);
 	    if (jcode(vecm) == J_REST_TREND) {
 		xti *= t;
 	    }
 	    x[t] += xti;
+	}
+
+	/* restricted exog vars */
+	if (vecm->rlist != NULL) {
+	    for (i=0; i<vecm->rlist[0]; i++) {
+		xti = Z[vecm->rlist[i+1]][t-1];
+		if (na(xti)) {
+		    x[t] = NADBL;
+		    break;
+		}
+		x[t] += xti * gretl_matrix_get(B, k++, j);
+	    }	    
 	}
     }
 	
@@ -3079,6 +3219,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    var->ylist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
 	    var->xlist = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "rlist")) {
+	    var->rlist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
 	    var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
@@ -3220,6 +3362,7 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     gretl_xml_put_tagged_list("ylist", var->ylist, fp);
     gretl_xml_put_tagged_list("xlist", var->xlist, fp);
+    gretl_xml_put_tagged_list("rlist", var->rlist, fp);
 
     gretl_push_c_numeric_locale();
 

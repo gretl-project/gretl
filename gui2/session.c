@@ -1195,7 +1195,7 @@ int highest_numbered_variable_in_session (void)
 	    } else if (session.models[i]->type == GRETL_OBJ_VAR) {
 		var = session.models[i]->ptr;
 		if (var != NULL) {
-		    mvm = gretl_VAR_get_highest_variable(var, datainfo);
+		    mvm = gretl_VAR_get_highest_variable(var);
 		    if (mvm > vmax) {
 			vmax = mvm;
 		    }

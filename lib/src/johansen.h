@@ -71,6 +71,7 @@ struct GRETL_VAR_ {
     int ncoeff;          /* total coefficients per equation */
     int *ylist;          /* list of stochastic vars */
     int *xlist;          /* list of exogenous variables */
+    int *rlist;          /* restricted exogenous variables (VECM only) */
     int detflags;        /* record of automatic deterministic vars added */
     int robust;          /* computing robust std errors? */
     int qr;              /* using QR decomposition? */
@@ -99,16 +100,19 @@ struct GRETL_VAR_ {
     char *name;          /* for use in session management */
 };
 
-/* number of extra terms confined to the cointegrating space */
-#define nrestr(v) (v->jinfo != NULL && \
-                   (v->jinfo->code == J_REST_CONST || \
-                    v->jinfo->code == J_REST_TREND))
-
 #define jcode(v) ((v->jinfo == NULL)? 0 : v->jinfo->code)
 
 #define jrank(v) ((v->jinfo == NULL)? 0 : v->jinfo->rank)
 
 #define effective_order(v) (v->order+(v->ci==VECM))
+
+/* vecm contains an "automatic" restricted term */
+#define auto_restr(v) (v->jinfo != NULL && \
+                       (v->jinfo->code == J_REST_CONST || \
+                        v->jinfo->code == J_REST_TREND))
+
+/* number of extra terms confined to the cointegrating space */
+int nrestr (const GRETL_VAR *v);
 
 GRETL_VAR *johansen_test (int order, const int *list, 
 			  const double **Z, const DATAINFO *pdinfo,
@@ -125,6 +129,8 @@ int gretl_VECM_id (GRETL_VAR *vecm);
 int 
 gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);
 
+int *list_composite (const int *list1, const int *list2,
+		     const int *list3);
 
 #endif /* JOHANSEN_H_ */
 

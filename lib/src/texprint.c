@@ -718,6 +718,24 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "\\\\\n");
 }
 
+static void tex_beta_vname (char *s,
+			    const GRETL_VAR *v,
+			    const DATAINFO *pdinfo,
+			    int i, PRN *prn)
+{
+    if (i < v->neqns) {
+	tex_escape(s, pdinfo->varname[v->ylist[i+1]]);
+	pprintf(prn, "%s$_{t-1}$ & ", s);
+    } else if (auto_restr(v) && i == v->neqns) {
+	pprintf(prn, "%s & ", (jcode(v) == J_REST_CONST)? "const" : "trend");
+    } else if (v->rlist != NULL) {
+	int k = i - v->ylist[0] - auto_restr(v) + 1;
+
+	tex_escape(s, pdinfo->varname[v->rlist[k]]);
+	pprintf(prn, "%s$_{t-1}$ & ", s);
+    } 
+}
+
 void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
     char s[32];
@@ -742,14 +760,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     pputs(prn, "}\n");
 
     for (i=0; i<rows; i++) {
-	if (i < vecm->ylist[0]) {
-	    tex_escape(s, pdinfo->varname[vecm->ylist[i+1]]);
-	    pprintf(prn, "%s$_{t-1}$ & ", s);
-	} else if (jv->code == J_REST_CONST) {
-	    pputs(prn, "const & ");
-	} else if (jv->code == J_REST_TREND) {
-	    pputs(prn, "trend & ");
-	}
+	tex_beta_vname(s, vecm, pdinfo, i, prn);
 
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {

@@ -576,6 +576,26 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
     }
 }
 
+static char *make_beta_vname (char *vname,
+			      const GRETL_VAR *v,
+			      const DATAINFO *pdinfo,
+			      int i)
+{
+    if (i < v->neqns) {
+	strcpy(vname, pdinfo->varname[v->ylist[i+1]]);
+	strcat(vname, "(-1)");
+    } else if (auto_restr(v) && i == v->neqns) {
+	strcpy(vname, (jcode(v) == J_REST_CONST)? "const" : "trend");
+    } else if (v->rlist != NULL) {
+	int k = i - v->ylist[0] - auto_restr(v) + 1;
+
+	strcpy(vname, pdinfo->varname[v->rlist[k]]);
+	strcat(vname, "(-1)");
+    } 
+
+    return vname;
+}
+
 static void 
 print_VECM_coint_eqns (GRETL_VAR *jvar, 
 		       const DATAINFO *pdinfo, 
@@ -599,13 +619,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
-	if (i < jvar->ylist[0]) {
-	    sprintf(vname, "%s(-1)", pdinfo->varname[jvar->ylist[i+1]]);
-	} else if (jv->code == J_REST_CONST) {
-	    strcpy(vname, "const");
-	} else if (jv->code == J_REST_TREND) {
-	    strcpy(vname, "trend");
-	}
+	make_beta_vname(vname, jvar, pdinfo, i);
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
