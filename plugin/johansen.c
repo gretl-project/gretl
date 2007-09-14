@@ -155,9 +155,9 @@ static void fix_xstr (char *s, int p)
     }
 }
 
-static const char *beta_vname (const GRETL_VAR *v,
-			       const DATAINFO *pdinfo,
-			       int i)
+const char *beta_vname (const GRETL_VAR *v,
+			const DATAINFO *pdinfo,
+			int i)
 {
     if (i < v->neqns) {
 	return pdinfo->varname[v->ylist[i+1]];
@@ -298,7 +298,7 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 
     pprintf(prn, "%22s", pdinfo->varname[jvar->ylist[1]]); /* N.B. */
 
-    for (j=1; j<jvar->ylist[0]; j++) {
+    for (j=1; j<=jvar->ylist[0]; j++) {
 	pprintf(prn, "%13s", beta_vname(jvar, pdinfo, j));
     }
 

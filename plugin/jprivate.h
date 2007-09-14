@@ -47,4 +47,8 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 		     gretlopt opt,
 		     PRN *prn);
 
+const char *beta_vname (const GRETL_VAR *v,
+			const DATAINFO *pdinfo,
+			int i);
+
 #endif /* JPRIVATE_H */

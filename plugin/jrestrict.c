@@ -2549,7 +2549,6 @@ static int Jgradient (double *theta, double *gr, int n,
 static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 		     PRN *prn)
 {
-    JohansenInfo *jv = jvar->jinfo;
     const gretl_matrix *c = J->beta;
     const gretl_matrix *sd = J->bse;
     char vname[32], s[16];
@@ -2573,14 +2572,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     pputs(prn, "\n\n");
 
     for (i=0; i<J->p1; i++) {
-	if (i < jvar->ylist[0]) {
-	    sprintf(vname, "%s(-1)", pdinfo->varname[jvar->ylist[i+1]]);
-	} else if (jv->code == J_REST_CONST) {
-	    strcpy(vname, "const");
-	} else if (jv->code == J_REST_TREND) {
-	    strcpy(vname, "trend");
-	}
-	pprintf(prn, "%-12s", vname);
+	pprintf(prn, "%-12s", beta_vname(jvar, pdinfo, i));
 
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
