@@ -513,7 +513,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	    err = E_ALLOC;
 	}	
     } else if (v->B->rows < xc) {
-	/* B may have extra col for restricted const/trend */
+	/* B may have extra cols for restricted terms */
 	int nr = nrestr(v);
 	int n = v->neqns + nr;
 
@@ -571,7 +571,7 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
 	    /* restricted exog vars */
 	    if (v->rlist != NULL) {
 		for (i=0; i<v->rlist[0]; i++) {
-		    xt = Z[v->ylist[i+1]][t-1];
+		    xt = Z[v->rlist[i+1]][t-1];
 		    bij = gretl_matrix_get(B, ii++, j);
 		    bxt += bij * xt;
 		}
@@ -622,12 +622,17 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 		    pij = gretl_matrix_get(Pi, i, j);
 		    if (pij != 0.0) {
 			if (j < v->neqns) {
-			    /* lagged level */
+			    /* lagged Y level */
 			    wexo = 0;
 			    vj = v->ylist[j+1];
 			    xti = Z[vj][t-1];
-			} else {
+			} else if (j == v->neqns && auto_restr(v)) {
 			    xti = (jcode(v) == J_REST_TREND)? t : 1;
+			} else {
+			    int k = j - v->ylist[0] - auto_restr(v) + 1;
+
+			    vj = v->rlist[k];
+			    xti = Z[vj][t-1];
 			} 
 			yti -= pij * xti;
 		    }
