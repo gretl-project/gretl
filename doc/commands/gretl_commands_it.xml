@@ -2554,17 +2554,12 @@
  	</li>
         
 	<li><para>
-	    Numeri pseudo-casuali: <func>uniform</func>,
-            <func>normal</func>, <func>chisq</func>, <func>student</func>,
-            <func>binomial</func> e <func>poisson</func>. Le prime due funzioni non accettano
-            argomenti e vanno scritte con parentesi vuote:
-	    <lit>uniform()</lit>, <lit>normal()</lit>. Esse
-            creano serie pseudo-casuali estraendo i valori dalle distribuzioni
-            uniforme (0&ndash;1) e normale standard. Le due successive accettano
-            un singolo argomento intero, ossia i gradi di libertà, generando
-            delle estrazioni dalle distribuzioni Chi-quadro e t di Student. La
-            funzione <func>binomial</func> accetta due parametri: un numero
-            intero di tentativi una probabilità di <quote>successo</quote>. 
+            Numeri pseudo-casuali: <func>uniform</func>, <func>normal</func>,
+            <func>poisson</func> e la funzione generica <func>randgen</func>
+            (si veda oltre). Le prime due funzioni non accettano argomenti e
+            vanno scritte con parentesi vuote: <lit>uniform()</lit>,
+            <lit>normal()</lit>. Esse creano serie pseudo-casuali estraendo i
+            valori dalle distribuzioni uniforme (0&ndash;1) e normale standard.
             La funzione <func>poisson</func> accetta un singolo argomento: la
             media, che può essere sia uno scalare che una serie.
             Le serie dalla distribuzione uniforme, che sono usate come base per
@@ -2590,9 +2585,10 @@
         che si risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
       </para>
        <para>
-	Le funzioni <func>pvalue</func>, <func>critical</func> e
-	<func>cdf</func> richiedono, come primo argomento, un codice formato
-        da un carattere, che indica la distribuzione di riferimento:
+	Le funzioni <func>pvalue</func>, <func>critical</func>,
+        <func>cdf</func> e <func>randgen</func> richiedono, come primo
+        argomento, un codice formato da un carattere, che indica la
+        distribuzione di riferimento:
       </para>
       
       <ilist>
@@ -2600,8 +2596,13 @@
 	<li><para><cmd>t</cmd>: <emphasis>t</emphasis> di Student;</para></li>
 	<li><para><cmd>X</cmd>: chi-quadro;</para></li>
 	<li><para><cmd>F</cmd>: Snedecor;</para></li>
-	<li><para><cmd>G</cmd>: Gamma (solo per <cmd>pvalue</cmd> e <cmd>cdf</cmd>);</para></li>
-	<li><para><cmd>B</cmd>: Binomiale;</para></li>
+	<li>
+	  <para>
+	    <cmd>G</cmd>: Gamma (<cmd>pvalue</cmd>, <cmd>cdf</cmd> e
+	    <cmd>randgen</cmd>);
+	  </para>
+	</li>
+        <li><para><cmd>B</cmd>: Binomiale;</para></li>
 	<li><para><cmd>P</cmd>: Poisson;</para></li>
 	<li><para><cmd>D</cmd>: Normale bivariata (solo per <cmd>cdf</cmd>).</para></li>
       </ilist>
@@ -2615,8 +2616,8 @@
       </para>
       
       <para>
-        Anche la funzione <func>cdf</func> accetta gli stessi argomenti del comando
-	<cmdref targ="pvalue"/>, ma produce il valore complementare, ossia,
+        Anche la funzione <func>cdf</func> accetta gli stessi argomenti di
+	<func>pvalue</func>, ma produce il valore complementare, ossia,
         l'integrale della relativa funzione di densità valutato dal suo limite
         inferiore (meno infinito o zero) al valore specificato. Per la
         distribuzione normale bivariata, occorre indicare tre argomenti:
@@ -2636,11 +2637,19 @@
         libertà del numeratore e quelli del denominatore, rispettivamente come
         secondo e terzo argomento.
       </para>
+      
+      <para>
+	La funzione <func>randgen</func> produce una serie che contiene
+        estrazioni pseudo-casuali dalla distribuzione specificata. I parametri
+        accettati sono gli stessi delle funzioni <func>pvalue</func> e
+        <func>cdf</func>, tranne che per la distribuzione normale (parametro
+        <cmd>z</cmd> o <cmd>N</cmd>) occorre indicare la media e lo scarto
+        quadratico medio.
+      </para>
 
       <para>
-	Ecco alcuni esempi di uso delle funzioni <func>pvalue</func>,
-        <func>cdf</func> e <func>critical</func> (gli spazi tra gli argomenti
-        sono opzionali):
+        Ecco alcuni esempi di uso delle funzioni viste finora (gli spazi tra gli
+        argomenti sono opzionali):
       </para>
       <code>
 	genr p1 = pvalue(z, 2.2)
@@ -2648,6 +2657,8 @@
 	genr p3 = cdf(D, -1, 1, 0.25)
 	genr c1 = critical(t, 20, 0.025)
 	genr c2 = critical(F, 4, 48, 0.05)
+	genr rf = randgen(F, 4, 48)
+	genr rb = randgen(B, 100, 0.5)
       </code>
 
       <para>
