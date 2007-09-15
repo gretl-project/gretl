@@ -1565,14 +1565,14 @@ int gretl_list_const_pos (const int *list, int minpos, const double **Z,
  *
  * Returns: if @list contains the separator for compound
  * lists, #LISTSEP, the position in @list at which this is found,
- * else 0.  The search begins at position 2.
+ * else 0.  The search begins at position 1.
  */
 
 int gretl_list_separator_position (const int *list)
 {
     int i;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=1; i<=list[0]; i++) {
         if (list[i] == LISTSEP) {
 	    return i;
 	}
@@ -1587,7 +1587,7 @@ int gretl_list_separator_position (const int *list)
  * of which holds a count of the number of elements following.
  *
  * Returns: 1 if @list contains the separator for compound
- * lists, #LISTSEP, else 0.  The search begins at position 2.
+ * lists, #LISTSEP, else 0.  The search begins at position 1.
  */
 
 int gretl_list_has_separator (const int *list)
@@ -1626,13 +1626,14 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
 	return E_PARSE;
     }
 
-    list1 = gretl_list_new(n - 1);
-    if (list1 == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<n; i++) {
-	list1[i] = list[i];
+    if (n > 1) {
+	list1 = gretl_list_new(n - 1);
+	if (list1 == NULL) {
+	    return E_ALLOC;
+	}
+	for (i=1; i<n; i++) {
+	    list1[i] = list[i];
+	}
     }
 
     list2 = gretl_list_new(list[0] - n);
@@ -1763,6 +1764,32 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     }
 
     return ret;
+}
+
+/**
+ * gretl_lists_share_members:
+ * @list1: 
+ * @list2: 
+ *
+ * Returns: 1 if there are any elements in common between @list1
+ * and @list2, otherwise 0.
+ */
+
+int gretl_lists_share_members (const int *list1, const int *list2)
+{
+    int i;
+
+    if (list1 == NULL || list2 == NULL) {
+	return 0;
+    }
+
+    for (i=1; i<=list1[0]; i++) {
+	if (in_gretl_list(list2, list1[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 /**

@@ -86,6 +86,8 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2);
 
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
+int gretl_lists_share_members (const int *list1, const int *list2);
+
 int *full_var_list (const DATAINFO *pdinfo, int *nvars);
 
 int n_saved_lists (void);

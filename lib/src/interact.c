@@ -321,6 +321,10 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == VECM || \
                          c == XTAB)
 
+#define DOUBLE_SEP_OK(c) (c == ARBOND || \
+                          c == ARMA || \
+			  c == VECM) 
+
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARBOND || \
                           c == ARMA || \
@@ -1770,6 +1774,23 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     return ok;
 }
 
+int sepcount_error (int ci, int nsep)
+{
+    int err = 0;
+
+    if (NEEDS_LISTSEP(ci) && nsep == 0) {
+	err = E_ARGS;
+    } else if (!USES_LISTSEP(ci) && nsep > 0) {
+	err = E_PARSE;
+    } else if (!DOUBLE_SEP_OK(ci) && nsep == 2) {
+	err = E_PARSE;
+    } else if (nsep > 2) {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -2093,10 +2114,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* get a count of ';' separators in line */
     sepcount = get_sepcount(line);
-
-    if (NEEDS_LISTSEP(cmd->ci) && sepcount == 0) {
-	/* missing field in command */
-	cmd->err = E_ARGS;
+    cmd->err = sepcount_error(cmd->ci, sepcount);
+    if (cmd->err) {
 	goto cmd_exit;
     }
 

@@ -296,35 +296,38 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
     return err;
 }
 
-/* VECM: make a vector, rbeta, containing the coefficients on the
-   "restricted" constant or trend, if this is required.
-   FIXME: what about restricted exog vars? 
+/* VECM: make a matrix, rbeta, containing the coefficients on the
+   "restricted" constant or trend and/or restricted exogenous
+   variables, if this is required.
 */
 
-static gretl_matrix *make_restricted_coeff_vector (const GRETL_VAR *v)
+static gretl_matrix *make_restricted_coeff_matrix (const GRETL_VAR *v)
 {
     gretl_matrix *b = NULL;
     gretl_matrix *rbeta = NULL;
     int rank = v->jinfo->rank;
+    int nr = nrestr(v);
     double x;
-    int j, err = 0;
+    int j, k, err = 0;
 
-    b = gretl_column_vector_alloc(rank);
+    b = gretl_matrix_alloc(rank, nr);
     if (b == NULL) {
 	return NULL;
     }
 
     for (j=0; j<rank; j++) {
-	/* extract the last row of \beta, transposed */
-	x = gretl_matrix_get(v->jinfo->Beta, v->neqns, j);
-	gretl_vector_set(b, j, x);
+	/* extract the last row(s) of \beta, transposed */
+	for (k=0; k<nr; k++) {
+	    x = gretl_matrix_get(v->jinfo->Beta, v->neqns + k, j);
+	    gretl_matrix_set(b, j, k, x);
+	}
     }
 
     rbeta = gretl_matrix_multiply_new(v->jinfo->Alpha, b, &err);
 
 #if BDEBUG > 1
-    gretl_matrix_print(b, "restricted var row of beta'");
-    gretl_matrix_print(rbeta, "coeffs for restricted term");
+    gretl_matrix_print(b, "restricted var row(s) of beta'");
+    gretl_matrix_print(rbeta, "coeffs for restricted term(s)");
 #endif
 
     gretl_matrix_free(b);
@@ -361,13 +364,11 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     double aij;
     int i, j, k;
 
-    /* FIXME restricted exog vars */
-
     /* total coeffs in VAR representation */
     ncoeff = var->ncoeff + (var->neqns - var->jinfo->rank) + nr;
 
     if (nr > 0) {
-	rbeta = make_restricted_coeff_vector(var);
+	rbeta = make_restricted_coeff_matrix(var);
 	if (rbeta == NULL) {
 	    return NULL;
 	}
@@ -418,10 +419,12 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 	    gretl_matrix_set(C0, i, col++, pmod->coeff[T0]);
 	}
 
-	/* restricted term (const or trend), if present */
+	/* additional restricted term(s), if present */
 	if (rbeta != NULL) {
-	    aij = gretl_vector_get(rbeta, i);
-	    gretl_matrix_set(C0, i, col, aij);
+	    for (j=0; j<nr; j++) {
+		aij = gretl_matrix_get(rbeta, i, j);
+		gretl_matrix_set(C0, i, col++, aij);
+	    }
 	} 	
     }
 
@@ -438,15 +441,21 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 }
 
 /* VECM: copy levels of Y vars from main Z into temporary dataset (for
-   passing to Johansen stage 1)
+   passing to Johansen stage 1).  If there are restricted exogenous
+   vars they must be included in the temp dataset too.
 */
 
 static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 			      const double **Z, const DATAINFO *pdinfo)
 {
+    int nv = var->neqns + 1;
     int i, j, vi, t;
 
-    b->dinfo = create_new_dataset(&b->Z, var->neqns + 1, pdinfo->n, 0);
+    if (var->rlist != NULL) {
+	nv += var->rlist[0];
+    }
+
+    b->dinfo = create_new_dataset(&b->Z, nv, pdinfo->n, 0);
     if (b->dinfo == NULL) {
 	return E_ALLOC;
     }   
@@ -462,6 +471,17 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 	    b->Z[j][t] = Z[vi][t];
 	}
 	var->ylist[j] = j;
+    }
+
+    if (var->rlist != NULL) {
+	/* copy restricted X into boot->Z and adjust rlist */
+	for (i=1; i<=var->rlist[0]; i++, j++) {
+	    vi = var->rlist[i];
+	    for (t=0; t<pdinfo->n; t++) {
+		b->Z[j][t] = Z[vi][t];
+	    }
+	    var->rlist[i] = j;
+	}
     }
 
     return 0;
@@ -520,15 +540,23 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 
 	    if (jcode(var) == J_UNREST_TREND) {
 		/* unrestricted trend */
-		cij = gretl_matrix_get(b->C0, i, col);
+		cij = gretl_matrix_get(b->C0, i, col++);
 		bti += cij * (t + 1);
 	    } else if (jcode(var) == J_REST_CONST) {
 		/* restricted constant */
-		bti += gretl_matrix_get(b->C0, i, col);
+		bti += gretl_matrix_get(b->C0, i, col++);
 	    } else if (jcode(var) == J_REST_TREND) {
 		/* restricted trend */
-		cij = gretl_matrix_get(b->C0, i, col);
+		cij = gretl_matrix_get(b->C0, i, col++);
 		bti += cij * t;
+	    }
+
+	    /* restricted exogenous vars, if present */
+	    if (var->rlist != NULL) {
+		for (j=1; j<=var->rlist[0]; j++) {
+		    cij = gretl_matrix_get(b->C0, i, col++);
+		    bti += cij * b->Z[j+var->neqns][t-1];
+		}
 	    }
 
 	    /* set level of Y(t, i) to fitted + re-sampled error */
@@ -711,6 +739,13 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 	}
     }
 
+    if (!err && v->rlist != NULL) {
+	vbak->rlist = gretl_list_copy(v->rlist);
+	if (vbak->rlist == NULL) {
+	    err = E_ALLOC;
+	}
+    }	
+
     if (!err && vbak->jinfo != NULL) {
 	vbak->jinfo->R0 = gretl_matrix_copy(v->jinfo->R0);
 	vbak->jinfo->R1 = gretl_matrix_copy(v->jinfo->R1);
@@ -771,6 +806,11 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 
 	free(v->ylist);
 	v->ylist = vbak->ylist;
+
+	if (v->rlist != NULL) {
+	    free(v->rlist);
+	    v->rlist = vbak->rlist;
+	}
 
 	free(vbak->jinfo);
     }
