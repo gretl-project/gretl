@@ -1204,16 +1204,22 @@ static int switchit (Jwrap *J, PRN *prn)
 	llbak = J->ll;
     }
 
-    pprintf(prn, "Switching algorithm: %d iterations", j);
+    pprintf(prn, _("Switching algorithm: %d iterations"), j);
     if (uinit) {
-	pputs(prn, " (user-supplied initial values)");
+	pprintf(prn, " (%s)", _("user-supplied initial values"));
     }
     pputc(prn, '\n');
-    pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n\n", J->ll, lldiff);
+    pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n", J->ll, lldiff);
 
     if (!err && !conv) {
 	err = E_NOCONV;
+    } else if (j > 1500) {
+	pputs(prn, "*** warning: large number of iterations may "
+	      "indicate a problem");
+	pputc(prn, '\n');
     }
+
+    pputc(prn, '\n');
 
     if (!err) {
 	J->ll -= J->llk;
@@ -2827,7 +2833,7 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     }
     
     if (fbest - fworst < 1.0e-9) {
-	pprintf(prn, "Warning: likelihood seems to be flat\n");
+	pprintf(prn, "*** warning: likelihood seems to be flat\n");
     }
 
  bailout:
