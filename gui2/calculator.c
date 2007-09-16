@@ -969,6 +969,34 @@ static void dw_lookup (dist_t *tab)
 		STAT_TABLE, NULL);
 }
 
+static int page_from_dist (int code, int dist)
+{
+    if (code == CALC_RAND) {
+	return dist;
+    } else if (code == CALC_PVAL) {
+	return dist - 1;
+    } else {
+	switch (dist) {
+	case NORMAL_DIST:
+	    return 0;
+	case T_DIST:
+	    return 1;
+	case CHISQ_DIST:
+	    return 2;
+	case F_DIST:
+	    return 3;
+	case BINOMIAL_DIST:
+	    return 4;
+	case POISSON_DIST:
+	    return 5;
+	case DW_DIST:
+	    return 6;
+	}
+    }
+
+    return 0;
+}
+
 static int dist_from_page (int code, int page)
 {
     if (code == CALC_RAND) {
@@ -2719,8 +2747,9 @@ static void switch_child_role (GtkWidget *win, png_plot *plot)
 
     if (d == T_DIST || d == CHISQ_DIST || d == POISSON_DIST) {
 	dist_t *dist, **dists = child->calcp;
+	int p = page_from_dist(CALC_GRAPH_ADD, d);
 
-	dist = dists[d];
+	dist = dists[p];
 	gtk_editable_select_region(GTK_EDITABLE(dist->entry[0]), 0, -1);
 	gtk_widget_grab_focus(dist->entry[0]);
     }
