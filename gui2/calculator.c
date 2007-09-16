@@ -479,7 +479,7 @@ make_plot_line (char *targ, int d, int alt, const int *ids)
 	}
 	break;
     case POISSON_DIST:
-	k = ids[ID_L];
+	k = ids[ID_L] + 1;
 	sprintf(targ, "int(t),poisson(lambda%d,t)", k);
 	break;
     } 
