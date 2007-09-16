@@ -2650,8 +2650,20 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     char vname[32], s[16];
     int i, j;
 
-    pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g\n"), jvar->ll);
-    pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), J->ll);
+    if (J->df > 0) {
+	pprintf(prn, _("Unrestricted loglikelihood (lu) = %.8g\n"), jvar->ll);
+	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), J->ll);
+    } else {
+	char ll0[32], ll1[32];
+
+	pprintf(prn, "%s = %.8g\n", _("loglikelihood"), J->ll);
+	sprintf(ll0, "%.8g", jvar->ll);
+	sprintf(ll1, "%.8g", J->ll);
+	if (strcmp(ll0, ll1)) {
+	    pprintf(prn, "*** warning: should equal %.8g\n", jvar->ll);
+	}
+    }
+
     if (J->df > 0) {
 	double x = 2.0 * (jvar->ll - J->ll);
 
