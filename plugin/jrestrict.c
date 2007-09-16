@@ -995,7 +995,7 @@ static int variance_from_info_matrix (Jwrap *J, GRETL_VAR *v)
 
     gretl_matrix_divide_by_scalar(J->I11, v->df);
 
-    if (J->H != NULL) {
+    if (J->H0 != NULL) {
 	int nb = J->r * J->p1;
 
 	J->Vb = gretl_matrix_alloc(nb, nb);
@@ -1271,6 +1271,8 @@ static int replace_col_scaling (Jwrap *J)
 
 static int reset_null_H (Jwrap *J)
 {
+    fprintf(stderr, "** Doing reset_null_H\n");
+
     J->H0 = J->H;
     gretl_matrix_free(J->h);
     J->H = J->h = NULL;
@@ -1524,6 +1526,60 @@ static int is_scaling_row (const gretl_matrix *R,
     return c == 1;
 }
 
+/* FIXME below: alpha cross-restrictions also rule out
+   scale removal for the associated beta columns? */ 
+
+/* Check for restrictions which make scale removal impossible,
+   for each column of beta.  Record a -1 in the appropriate
+   place in the @sc array if scaling won't work for that column.
+
+   We consider scale removal infeasible for a given beta column
+   if (a) we find a non-homogeneous restriction involving two
+   or more beta elements (e.g. b[1,1] - b[1,3] = 2), or (b) we
+   find any cross-column restrictions.
+
+   Return 1 if there are no scaleable columns on this test, else 0.
+*/
+
+static int screen_beta_cols (Jwrap *J,
+			     const gretl_matrix *R,
+			     const gretl_matrix *q,
+			     char *sc)
+{
+    double x;
+    int ns = 0;
+    int i, j, k, m, c;
+
+    for (i=0; i<R->rows; i++) {
+        k = -1;
+	c = 0;
+	for (j=0; j<R->cols; j++) {
+	    x = gretl_matrix_get(R, i, j);
+	    if (x != 0) {
+		c++;
+		if (k < 0) {
+		    k = j / J->p1;
+		} else {
+		    m = j / J->p1;
+		    if (m != k) {
+			/* cross-column restriction */
+			sc[k] = sc[m] = -1;
+		    }
+		}
+	    }
+	}
+	if (c > 1 && q->val[i] != 0) {
+	    sc[k] = -1;
+	}
+    }
+
+    for (i=0; i<J->r; i++) {
+	if (sc[i] == 0) ns++;
+    }
+
+    return (ns == 0);
+}
+
 /* Check for restrictions (rows of R) which are just scalings of a
    given column of beta.  There can only be one such scaling per
    beta column.
@@ -1533,36 +1589,48 @@ static int check_for_scaling (Jwrap *J,
 			      const gretl_matrix *R,
 			      const gretl_matrix *q)
 {
-    char *sc = NULL;
+    char *sc = calloc(J->r, 1);
     double sval = 0;
     int i, k, rcol = 0;
 
-    sc = calloc(J->r, 1);
+    if (sc == NULL) {
+	return E_ALLOC;
+    }
 
-    if (sc == NULL || norm_allocate(J, R)) {
+    /* first pass: screen for conditions which make
+       scale-removal impossible */
+    if (screen_beta_cols(J, R, q, sc)) {
+	free(sc);
+	return 0;
+    }
+
+    if (norm_allocate(J, R)) {
 	return E_ALLOC;
     }
 
     for (i=0; i<R->rows; i++) {
 	if (is_scaling_row(R, q, i, &rcol, &sval)) {
 	    k = rcol / J->p1;
-	    J->normval[J->normrow[0]] = sval;
-	    list_push(J->normrow, i);
-	    if (sc[k] == 0) {
-		/* beta column k is not yet scaled */
-		list_push(J->normcol, rcol);
-		fprintf(stderr, "added scaling for beta col %d\n", k);
-	    } else {
-		/* negative rcol entry indicates a "follower" */
-		list_push(J->normcol, -rcol);
-		fprintf(stderr, "added scaling-follower for beta col %d\n", k);
+	    if (sc[k] >= 0) {
+		/* column is scaleable */
+		J->normval[J->normrow[0]] = sval;
+		list_push(J->normrow, i);
+		if (sc[k] == 0) {
+		    /* beta column k is not yet scaled */
+		    list_push(J->normcol, rcol);
+		    fprintf(stderr, "added scaling for beta col %d\n", k);
+		} else {
+		    /* negative rcol entry indicates a "follower" */
+		    list_push(J->normcol, -rcol);
+		    fprintf(stderr, "added scaling-follower for beta col %d\n", k);
+		}
+		sc[k] += 1;
 	    }
-	    sc[k] += 1;
 	}
     }
 
     if (J->normrow[0] == 0) {
-	/* no scalings found */
+	/* no (practicable) scalings found */
 	norm_destroy(J);
     } else {
 	printlist(J->normrow, "norm rows");
