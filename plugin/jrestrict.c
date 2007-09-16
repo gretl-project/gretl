@@ -34,8 +34,13 @@
 typedef struct gradhelper_ gradhelper;
 typedef struct Jwrap_ Jwrap;
 
+enum {
+    J_USE_LBFGS   = 1 << 0,
+    J_CROSS_ALPHA = 1 << 1
+};
+
 struct Jwrap_ {
-    int bfgs;       /* use LBFGS */    
+    char flags;     /* status bitflags */ 
     int T;          /* length of time series used */
     int p;          /* number of equations */
     int p1;         /* number of rows in beta (>= p) */
@@ -109,6 +114,8 @@ struct Jwrap_ {
 };
 
 #define do_scaling(J) (J->normrow != NULL)
+#define using_bfgs(J) (J->flags & J_USE_LBFGS)
+#define cross_alpha(J) (J->flags & J_CROSS_ALPHA)
 
 static int J_compute_alpha (Jwrap *J);
 static int make_beta_se (Jwrap *J);
@@ -267,26 +274,6 @@ static void jwrap_destroy (Jwrap *J)
     free(J);
 }
 
-enum {
-    BFGS_NUMERIC = 1,
-    BFGS_ANALYTIC 
-};
-
-static int use_lbfgs (gretlopt opt)
-{
-    int ret = 0;
-
-    /* could use BFGS_NUMERIC instead */
-
-    if (opt & OPT_L) {
-	ret = BFGS_ANALYTIC;
-    } else if (getenv("GRETL_VECM_LBFGS") != NULL) {
-	ret = BFGS_ANALYTIC;
-    }
-
-    return ret;
-}
-
 static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
 {
     Jwrap *J = malloc(sizeof *J);
@@ -295,7 +282,10 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
 	return NULL;
     }
 
-    J->bfgs = use_lbfgs(opt);
+    J->flags = 0;
+    if (opt & OPT_L) {
+	J->flags |= J_USE_LBFGS;
+    }
 
     J->T = jvar->T;
     J->p = jvar->neqns;
@@ -1389,69 +1379,6 @@ static int homogenize_R_line (gretl_matrix *R,
     return 0;
 }
 
-static int remove_col_scaling (Jwrap *J,
-			       const gretl_restriction *rset)
-{
-    const gretl_matrix *R = J_get_R_matrix(J, rset);
-    const gretl_matrix *q = J_get_q_matrix(J, rset);
-    gretl_matrix *Rr = NULL;
-    gretl_matrix *qr = NULL;
-    int rr = R->rows;
-    double x;
-    int i, j, k, pos;
-    int err = 0;
-
-    for (i=0; i<J->normcol[0]; i++) {
-	if (J->normcol[i+1] >= 0) {
-	    rr--;
-	}
-    }
-
-    if (rr == 0) {
-	/* all the restrictions were column scalings */
-	return reset_null_H(J);
-    }
-
-    Rr = gretl_matrix_alloc(rr, R->cols);
-    qr = gretl_column_vector_alloc(rr);
-
-    if (Rr == NULL || qr == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    k = 0;
-    for (i=0; i<R->rows; i++) {
-	pos = in_gretl_list(J->normrow, i);
-	if (pos > 0 && J->normcol[pos] < 0) {
-	    /* convert to homogeneous restriction */
-	    homogenize_R_line(Rr, qr, J, pos, k);
-	    k++;
-	} else if (pos == 0) {
-	    /* pass the row through unmodified */
-	    for (j=0; j<R->cols; j++) {
-		x = gretl_matrix_get(R, i, j);
-		gretl_matrix_set(Rr, k, j, x);
-		x = gretl_vector_get(q, i);
-		gretl_vector_set(qr, k, x);
-	    }
-	    k++;
-	} 
-    }
-
-    gretl_matrix_print(Rr, "Rr");
-    gretl_matrix_print(qr, "qr");
-
-    err = reset_H(J, Rr, qr);
-
- bailout:
-
-    gretl_matrix_free(Rr);
-    gretl_matrix_free(qr);
-
-    return err;
-}
-
 static void norm_destroy (Jwrap *J)
 {
     free(J->normrow);
@@ -1525,9 +1452,6 @@ static int is_scaling_row (const gretl_matrix *R,
 
     return c == 1;
 }
-
-/* FIXME below: alpha cross-restrictions also rule out
-   scale removal for the associated beta columns? */ 
 
 /* Check for restrictions which make scale removal impossible,
    for each column of beta.  Record a -1 in the appropriate
@@ -1645,6 +1569,83 @@ static int check_for_scaling (Jwrap *J,
     return 0;
 }
 
+static int 
+maybe_remove_col_scaling (Jwrap *J,
+			  const gretl_restriction *rset)
+{
+    const gretl_matrix *R = J_get_R_matrix(J, rset);
+    const gretl_matrix *q = J_get_q_matrix(J, rset);
+    gretl_matrix *Rr = NULL;
+    gretl_matrix *qr = NULL;
+    double x;
+    int i, j, k, rr, pos;
+    int err = 0;
+
+    if (R == NULL || q == NULL || gretl_is_zero_matrix(q)) {
+	return 0;
+    }
+
+    if (using_bfgs(J) || cross_alpha(J) || doing_manual_init(J)) {
+	return 0;
+    }
+
+    err = check_for_scaling(J, R, q);
+    if (err || !do_scaling(J)) {
+	return err;
+    } 
+    
+    rr = R->rows;
+    for (i=0; i<J->normcol[0]; i++) {
+	if (J->normcol[i+1] >= 0) {
+	    rr--;
+	}
+    }
+
+    if (rr == 0) {
+	/* all the restrictions were column scalings */
+	return reset_null_H(J);
+    }
+
+    Rr = gretl_matrix_alloc(rr, R->cols);
+    qr = gretl_column_vector_alloc(rr);
+
+    if (Rr == NULL || qr == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    k = 0;
+    for (i=0; i<R->rows; i++) {
+	pos = in_gretl_list(J->normrow, i);
+	if (pos > 0 && J->normcol[pos] < 0) {
+	    /* convert to homogeneous restriction */
+	    homogenize_R_line(Rr, qr, J, pos, k);
+	    k++;
+	} else if (pos == 0) {
+	    /* pass the row through unmodified */
+	    for (j=0; j<R->cols; j++) {
+		x = gretl_matrix_get(R, i, j);
+		gretl_matrix_set(Rr, k, j, x);
+		x = gretl_vector_get(q, i);
+		gretl_vector_set(qr, k, x);
+	    }
+	    k++;
+	} 
+    }
+
+    gretl_matrix_print(Rr, "Rr");
+    gretl_matrix_print(qr, "qr");
+
+    err = reset_H(J, Rr, qr);
+
+ bailout:
+
+    gretl_matrix_free(Rr);
+    gretl_matrix_free(qr);
+
+    return err;
+}
+
 /* 
    J = [(I_p \otimes \beta)G : (\alpha \otimes I_{p1})H]
 
@@ -1749,7 +1750,7 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 		"parameters = %d\n"), J->jr, npar);
 	if (J->jr < npar) {
 	    pputs(prn, _("Model is not fully identified\n"));
-	    if (J->bfgs) {
+	    if (using_bfgs(J)) {
 		err = E_NOIDENT;
 	    }
 	} else {
@@ -1883,10 +1884,36 @@ static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
+/* detect the presence of a cross-equation alpha
+   restriction */
+
+static int 
+cross_alpha_check (Jwrap *J, const gretl_matrix *R)
+{
+    double x;
+    int i, j, k = -1;
+
+    for (i=0; i<R->rows; i++) {
+	for (j=0; j<R->cols; j++) {
+	    x = gretl_matrix_get(R, i, j);
+	    if (x != 0) {
+		if (k < 0) {
+		    k = j / J->p;
+		} else if (j / J->p != k) {
+		    fprintf(stderr, "Got a cross-alpha restriction\n");
+		    J->flags |= J_CROSS_ALPHA;
+		    return 1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* set up restriction matrix, G, for alpha */
 
-static int set_up_G (Jwrap *J, const gretl_restriction *rset,
-		     PRN *prn)
+static int set_up_G (Jwrap *J, const gretl_restriction *rset)
 {
     const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
     const gretl_matrix *qa = rset_get_qa_matrix(rset);
@@ -1898,7 +1925,8 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 #endif
 
     if (qa != NULL && !gretl_is_zero_matrix(qa)) {
-	pprintf(prn, "alpha restriction is not homogeneous: not supported\n");
+	gretl_errmsg_set("alpha restriction is not homogeneous: "
+			 "not supported");
 	return E_NOTIMP;
     }
 
@@ -1919,6 +1947,10 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset,
 
     if (!err) {
 	nullspace_normalize(J->G);
+    }
+
+    if (!err) {
+	cross_alpha_check(J, Ra);
     }
 
 #if JDEBUG
@@ -2058,10 +2090,6 @@ static int set_up_H (Jwrap *J, const gretl_restriction *rset)
 
     if (!err) {
 	J->H0 = J->H;
-    }
-
-    if (!err && !qzero && !J->bfgs && !doing_manual_init(J)) {
-	err = check_for_scaling(J, R, q);
     }
 
     return err;
@@ -2938,18 +2966,13 @@ static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
     int nn = J->theta->rows;
     int err = 0;
 
-    if (J->bfgs == BFGS_ANALYTIC) {
-	pputs(prn, "LBFGS: using analytical derivatives\n\n");
-	err = add_gradhelper(J);
-    } else {
-	pputs(prn, "LBFGS: using numerical derivatives\n\n");
-    }
+    pputs(prn, "LBFGS: using analytical derivatives\n\n");
+    err = add_gradhelper(J);
 
     if (!err) {
 	err = LBFGS_max(J->theta->val, nn, maxit, reltol, 
 			&fncount, &grcount, Jloglik, C_LOGLIK,
-			(J->bfgs == BFGS_ANALYTIC)? Jgradient : NULL,
-			J, opt, prn);
+			Jgradient, J, opt, prn);
     }
 
     return err;
@@ -2987,7 +3010,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err && rset_VECM_acols(rset) > 0) {
-	err = set_up_G(J, rset, prn);
+	err = set_up_G(J, rset);
     }
 
     if (!err) {
@@ -3004,19 +3027,19 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = vecm_id_check(J, jvar, prn);
     }
 
-    if (!err && do_scaling(J)) {
-	err = remove_col_scaling(J, rset);
+    if (!err) {
+	err = maybe_remove_col_scaling(J, rset);
     }
 
     if (!err) {
 	err = beta_init(J);
     }
 
-    if (!err && (!J->bfgs || J->G != NULL)) {
+    if (!err && (!using_bfgs(J) || J->G != NULL)) {
 	err = alpha_init(J);
     }
 
-    if (!err && (J->bfgs || do_simann)) {
+    if (!err && (using_bfgs(J) || do_simann)) {
 	err = make_theta(J);
     }
 
@@ -3025,7 +3048,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	if (J->bfgs) {
+	if (using_bfgs(J)) {
 	    err = do_bfgs(J, opt, prn);
 	} else {
 	    err = switchit(J, prn);
