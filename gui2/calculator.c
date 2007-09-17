@@ -228,7 +228,7 @@ enum {
     ID_MAX
 };
 
-#define F_STDN   "normal(x)=1/(sqrt(2*pi))*exp(-(x-mu)**2/2)"
+#define F_STDN   "normal(x)=1/(sqrt(2*pi))*exp(-(x)**2/2)"
 #define F_NORM   "normal(x,mu,s)=1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 #define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
 #define F_CHI    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
@@ -516,7 +516,7 @@ static void htest_graph (int d, double x, double *parms)
     /* required variables and formulae */
     switch (d) {
     case NORMAL_DIST:
-	fprintf(fp, "%s\n", F_NORM);
+	fprintf(fp, "%s\n", F_STDN);
 	break;
     case T_DIST:
 	fprintf(fp, "df=%.1f\n", parms[0]);

@@ -1595,7 +1595,7 @@ maybe_remove_col_scaling (Jwrap *J,
 	return 0;
     }
 
-#if 1
+#if 1 /* ?? */
     if (J->df == 0) {
 	return 0;
     }
@@ -3078,7 +3078,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = vecm_id_check(J, jvar, prn);
     }
 
-    if (!err) {
+    if (!err && !(opt & OPT_N)) {
 	err = maybe_remove_col_scaling(J, rset);
     }
 
