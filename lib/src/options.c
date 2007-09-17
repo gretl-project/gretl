@@ -443,15 +443,39 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-static gretlopt get_short_opts (char *s, int ci, int *err)
+/* See if at point "s" in "line" we might be at the start of an option
+   flag: the previous character must be a space, and we must not be
+   inside a quoted string.
+*/
+
+static int maybe_opt_start (char *line, char *s)
 {
+    int i, n = s - line;
+    int quoted = 0;
+
+    if (n > 0 && !isspace(*(s-1))) {
+	return 0;
+    }
+
+    for (i=0; i<n; i++) {
+	if (line[i] == '"' && (i == 0 || s[i-1] != '\\')) {
+	    quoted = !quoted;
+	}
+    }
+
+    return !quoted;
+}
+
+static gretlopt get_short_opts (char *line, int ci, int *err)
+{
+    char *s = line;
     gretlopt opt, ret = 0L;
 
     while ((s = strchr(s, '-')) != NULL) {
 	char *p = s + 1;
 	int i, n = 0;
 
-	if (isspace(*(s-1))) {
+	if (maybe_opt_start(line, s)) {
 	    n = strspn(p, ok_flags);
 	    if (n > 0) {
 		if (isspace(p[n]) || p[n] == '\0') {
@@ -532,28 +556,33 @@ static int valid_long_opt (int ci, const char *lopt)
   
 static gretlopt get_long_opts (char *line, int ci, int *err)
 {
-    char *p = strstr(line, "--");
+    char *s = line;
+    char longopt[32];
     gretlopt match, ret = 0L;
 
-    while (p != NULL) {
-	char longopt[32];
-
-	sscanf(p + 2, "%31s", longopt);
-	match = valid_long_opt(ci, longopt);
+    while ((s = strstr(s, "--")) != NULL) {
+	match = 0;
+	*longopt = '\0';
+	if (maybe_opt_start(line, s)) {
+	    sscanf(s + 2, "%31s", longopt);
+	    match = valid_long_opt(ci, longopt);
+	    if (match > 0) {
+		/* recognized an acceptable option flag */
+		ret |= match;
+	    } else if (is_long_opt(longopt)) {
+		/* recognized option, but not valid for the command */
+		sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);
+		fprintf(stderr, " line='%s', ci = %d\n", line, ci);
+		*err = 1;
+		return 0L;
+	    } 
+	}
 
 	if (match > 0) {
-	    ret |= match;
-	    gretl_delete(p, 0, 2 + strlen(longopt));
-	} else if (is_long_opt(longopt)) {
-	    /* recognized option, but not valid for the command */
-	    sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);
-	    fprintf(stderr, " line='%s', ci = %d\n", line, ci);
-	    *err = 1;
-	    return 0L;
+	    gretl_delete(s, 0, 2 + strlen(longopt));
 	} else {
-	    p += 2;
+	    s += 2;
 	}
-	p = strstr(p, "--");
     }
 
     return ret;
