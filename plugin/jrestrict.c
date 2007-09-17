@@ -2704,7 +2704,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	double x = 2.0 * (jvar->ll - J->ll);
 
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, _("P(Chi-Square(%d) > %g = %g\n"), J->df, x, 
+	pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), J->df, x, 
 		chisq_cdf_comp(x, J->df));
     }
 
