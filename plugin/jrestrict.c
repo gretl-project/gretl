@@ -1152,7 +1152,7 @@ static int switchit (Jwrap *J, PRN *prn)
     switcher s;
     double lldiff = NADBL;
     double llbak = -1.0e+200;
-    double tol = 4.0e-11;
+    double tol = 2.0e-11;
     int j, jmax = 50000;
     int uinit = 0;
     int conv = 0;
@@ -1595,6 +1595,12 @@ maybe_remove_col_scaling (Jwrap *J,
 	return 0;
     }
 
+#if 1
+    if (J->df == 0) {
+	return 0;
+    }
+#endif
+
     err = check_for_scaling(J, R, q);
     if (err || !do_scaling(J)) {
 	return err;
@@ -1989,6 +1995,10 @@ static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
     if (q == NULL || gretl_is_zero_matrix(q)) {
 	/* implicitly or explicitly zero */
 	J->h = gretl_zero_matrix_new(R->cols, 1);
+#if JDEBUG
+	gretl_matrix_print(J->H, "H, in real_set_up_H");
+	gretl_matrix_print(J->h, "h, in real_set_up_H");
+#endif
 	return (J->h == NULL)? E_ALLOC : 0; 
     }
 
@@ -2646,6 +2656,24 @@ static int Jgradient (double *theta, double *gr, int n,
     return err;
 }
 
+static int max_beta_vname (GRETL_VAR *v, 
+			   const DATAINFO *pdinfo)
+{
+    int r = gretl_matrix_rows(v->jinfo->Beta);
+    const char *s;
+    int i, ni, n = 0;
+
+    for (i=0; i<r; i++) {    
+	s = beta_vname(v, pdinfo, i);
+	ni = strlen(s);
+	if (ni > n) {
+	    n = ni;
+	}
+    }
+
+    return n;
+}
+
 #define VECM_WIDTH 13
 
 static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
@@ -2654,6 +2682,8 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     const gretl_matrix *c = J->beta;
     const gretl_matrix *sd = J->bse;
     char vname[32], s[16];
+    char namefmt[8];
+    int nwid;
     int i, j;
 
     if (J->df > 0) {
@@ -2685,8 +2715,11 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     }
     pputs(prn, "\n\n");
 
+    nwid = max_beta_vname(jvar, pdinfo) + 1;
+    sprintf(namefmt, "%%-%ds", nwid);
+
     for (i=0; i<J->p1; i++) {
-	pprintf(prn, "%-12s", beta_vname(jvar, pdinfo, i));
+	pprintf(prn, namefmt, beta_vname(jvar, pdinfo, i));
 
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
@@ -2694,7 +2727,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	pputc(prn, '\n');
 
 	if (sd != NULL) {
-	    bufspace(VECM_WIDTH, prn);
+	    bufspace(nwid + 1, prn);
 	    for (j=0; j<J->r; j++) {
 		sprintf(s, "(%#.5g)", gretl_matrix_get(sd, i, j));
 		pprintf(prn, "%12s ", s);
@@ -2715,14 +2748,14 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
     for (i=0; i<J->p; i++) {
 	sprintf(vname, "%s", pdinfo->varname[jvar->ylist[i+1]]);
-	pprintf(prn, "%-12s", vname);
+	pprintf(prn, namefmt, vname);
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
 	}
 	pputc(prn, '\n');
 
 	if (sd != NULL) {
-	    bufspace(VECM_WIDTH, prn);
+	    bufspace(nwid + 1, prn);
 	    for (j=0; j<J->r; j++) {
 		sprintf(s, "(%#.5g)", gretl_matrix_get(sd, i, j));
 		pprintf(prn, "%12s ", s);

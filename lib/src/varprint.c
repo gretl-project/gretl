@@ -583,17 +583,33 @@ static char *make_beta_vname (char *vname,
 {
     if (i < v->neqns) {
 	strcpy(vname, pdinfo->varname[v->ylist[i+1]]);
-	strcat(vname, "(-1)");
     } else if (auto_restr(v) && i == v->neqns) {
 	strcpy(vname, (jcode(v) == J_REST_CONST)? "const" : "trend");
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
 	strcpy(vname, pdinfo->varname[v->rlist[k]]);
-	strcat(vname, "(-1)");
     } 
 
     return vname;
+}
+
+static int max_beta_namelen (GRETL_VAR *v, 
+			     const DATAINFO *pdinfo)
+{
+    int r = gretl_matrix_rows(v->jinfo->Beta);
+    char s[32];
+    int i, ni, n = 0;
+
+    for (i=0; i<r; i++) {    
+	make_beta_vname(s, v, pdinfo, i);
+	ni = strlen(s);
+	if (ni > n) {
+	    n = ni;
+	}
+    }
+
+    return n;
 }
 
 static void 
@@ -603,8 +619,10 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     int rtf = rtf_format(prn);
+    char namefmt[8];
     char s[16], vname[32];
     int rows = gretl_matrix_rows(jv->Beta);
+    int nwid;
     int i, j;
     double x;
 
@@ -618,20 +636,20 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
     gretl_prn_newline(prn);
 
+    nwid = max_beta_namelen(jvar, pdinfo) + 1;
+    sprintf(namefmt, "%%-%ds", nwid);
+
     for (i=0; i<rows; i++) {
 	make_beta_vname(vname, jvar, pdinfo, i);
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
-	    pprintf(prn, "%-12s", vname);
+	    pprintf(prn, namefmt, vname);
 	}
 
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
 	    x = gretl_matrix_get(jv->Beta, i, j);
-	    if (0 && jv->Bse == NULL) { /* HA! */
-		x /= gretl_matrix_get(jv->Beta, j, j);
-	    }
 	    if (rtf) {
 		pprintf(prn, "\t%#.5g ", x);
 	    } else {
@@ -645,7 +663,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 	    if (rtf) {
 		pputs(prn, "\t");
 	    } else {
-		bufspace(VECM_WIDTH, prn);
+		bufspace(nwid + 1, prn);
 	    }
 	    for (j=0; j<jv->rank; j++) {
 		x = gretl_matrix_get(jv->Bse, i, j);
@@ -679,7 +697,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
-	    pprintf(prn, "%-12s", vname);
+	    pprintf(prn, namefmt, vname);
 	}
 
 	for (j=0; j<jv->rank; j++) {
@@ -696,7 +714,7 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
 	    if (rtf) {
 		pputs(prn, "\t");
 	    } else {
-		bufspace(VECM_WIDTH, prn);
+		bufspace(nwid + 1, prn);
 	    }
 	    for (j=0; j<jv->rank; j++) {
 		x = gretl_matrix_get(jv->Ase, i, j);
