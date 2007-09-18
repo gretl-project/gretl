@@ -1723,7 +1723,7 @@ static int check_jacobian (Jwrap *J)
 	}
 	gretl_matrix_reuse(J->beta, J->p1, J->r);
 	gretl_matrix_free(phi);
-    } else {
+    } else if (J->blen > 0) {
 	gretl_matrix_random_fill(J->beta, D_NORMAL);
     }
 
@@ -2726,7 +2726,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     const gretl_matrix *sd = J->bse;
     char vname[32], s[16];
     char namefmt[8];
-    int nwid;
+    int nwid, sdshow;
     int i, j;
 
     if (J->df > 0) {
@@ -2751,9 +2751,11 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 		chisq_cdf_comp(x, J->df));
     }
 
+    sdshow = (sd != NULL && !gretl_is_zero_matrix(sd));
+
     pputs(prn, "\n\n");
     pputs(prn, _("Cointegrating vectors"));
-    if (sd != NULL) {
+    if (sdshow) {
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
     }
     pputs(prn, "\n\n");
@@ -2769,7 +2771,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	}
 	pputc(prn, '\n');
 
-	if (sd != NULL) {
+	if (sdshow) {
 	    bufspace(nwid + 1, prn);
 	    for (j=0; j<J->r; j++) {
 		sprintf(s, "(%#.5g)", gretl_matrix_get(sd, i, j));
@@ -2782,9 +2784,11 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
     c = J->alpha;
     sd = J->ase;
 
+    sdshow = (sd != NULL && !gretl_is_zero_matrix(sd));
+
     pputc(prn, '\n');
     pputs(prn, _("alpha (adjustment vectors)"));
-    if (sd != NULL) {
+    if (sdshow) {
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
     }
     pputs(prn, "\n\n");
@@ -2797,7 +2801,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	}
 	pputc(prn, '\n');
 
-	if (sd != NULL) {
+	if (sdshow) {
 	    bufspace(nwid + 1, prn);
 	    for (j=0; j<J->r; j++) {
 		sprintf(s, "(%#.5g)", gretl_matrix_get(sd, i, j));
@@ -3111,14 +3115,24 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	err = allocate_psi(J);
     }   
 
+#if 0
     if (!err && J->blen == 0 && J->G == NULL) {
 	/* beta doesn't need to be estimated */
+	J->df = (J->p1 - J->r) * J->r;
 	err = real_compute_ll(J);
 	goto skipest;
     }
+#endif
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
+    }
+
+    if (!err && J->blen == 0 && J->G == NULL) {
+	/* beta doesn't need to be estimated */
+	J->df = (J->p1 - J->r) * J->r;
+	err = real_compute_ll(J);
+	goto skipest;
     }
 
     if (!err && !(opt & OPT_N)) {
