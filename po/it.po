@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-17 08:24-0400\n"
-"PO-Revision-Date: 2007-09-10 15:27+0200\n"
+"PO-Revision-Date: 2007-09-18 11:34+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -13425,12 +13425,11 @@ msgstr "P(Chi-quadro(%d) > %g) = %g\n"
 #: plugin/jrestrict.c:1207
 #, c-format
 msgid "Switching algorithm: %d iterations"
-msgstr ""
+msgstr "Algoritmo di switching: %d iterazioni"
 
 #: plugin/jrestrict.c:1209
-#, fuzzy
 msgid "user-supplied initial values"
-msgstr "Valori critici"
+msgstr "valori iniziali forniti dall'utente"
 
 #: plugin/jrestrict.c:1761
 #, c-format
@@ -13451,7 +13450,6 @@ msgid "Based on Jacobian, df = %d\n"
 msgstr "Basato sul Jacobiano, df = %d\n"
 
 #: plugin/jrestrict.c:2695
-#, fuzzy
 msgid "loglikelihood"
 msgstr "Log-verosimiglianza"
 
