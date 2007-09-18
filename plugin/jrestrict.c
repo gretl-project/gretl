@@ -1612,6 +1612,13 @@ static int check_for_scaling (Jwrap *J,
     return 0;
 }
 
+static int just_identified (Jwrap *J)
+{
+    int npar = J->alen + J->blen;
+
+    return (J->jr >= npar && J->df == 0);
+}
+
 static int 
 maybe_remove_col_scaling (Jwrap *J,
 			  const gretl_restriction *rset)
@@ -1634,8 +1641,8 @@ maybe_remove_col_scaling (Jwrap *J,
 	return 0;
     }
 
-#if 0 /* ?? */
-    if (J->df == 0) {
+#if 1 /* ?? */
+    if (just_identified(J)) {
 	return 0;
     }
 #endif
@@ -2753,7 +2760,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
     sdshow = (sd != NULL && !gretl_is_zero_matrix(sd));
 
-    pputs(prn, "\n\n");
+    pputc(prn, '\n');
     pputs(prn, _("Cointegrating vectors"));
     if (sdshow) {
 	pprintf(prn, " (%s)", _("standard errors in parentheses"));
@@ -3114,15 +3121,6 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     if (!err) {
 	err = allocate_psi(J);
     }   
-
-#if 0
-    if (!err && J->blen == 0 && J->G == NULL) {
-	/* beta doesn't need to be estimated */
-	J->df = (J->p1 - J->r) * J->r;
-	err = real_compute_ll(J);
-	goto skipest;
-    }
-#endif
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
