@@ -2125,17 +2125,6 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     }
 }
 
-static void viewer_add_close_button (windata_t *vwin)
-{
-    GtkWidget *button;
-
-    button = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), button, FALSE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_file_viewer), vwin);
-    gtk_widget_show(button);
-}
-
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
 			gpointer data) 
@@ -2195,9 +2184,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     /* arrange for clean-up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-
-    /* "Close" button */
-    viewer_add_close_button(vwin);
 
     /* insert and then free the text buffer */
     view_buffer_insert_text(vwin, prn);
@@ -2285,9 +2271,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 			 G_CALLBACK(edit_script_help), vwin);
     } 
 
-    /* "Close" button */
-    viewer_add_close_button(vwin);
-
     if (view_file_use_sourceview(role)) {
 	sourceview_insert_file(vwin, filename);
     } else {
@@ -2359,9 +2342,6 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
-
-    /* "Close" button */
-    viewer_add_close_button(vwin);
 
     /* grab content of the appropriate help file into a buffer
        and stick it onto vwin as data */
@@ -2466,9 +2446,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
 
-    /* "Close" button */
-    viewer_add_close_button(vwin);
-
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
 
@@ -2531,9 +2508,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     create_text(vwin, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
-
-    /* "Close" button */
-    viewer_add_close_button(vwin);
 
     /* insert and then free the model results buffer */
     buf = gretl_print_get_buffer(prn);

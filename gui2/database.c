@@ -721,9 +721,17 @@ delete_series_callback (gpointer p, guint u, GtkWidget *w)
     gui_delete_series(NULL, p);
 }
 
+static void 
+close_db_callback (windata_t *vwin, guint u, GtkWidget *w)
+{
+    gtk_widget_destroy(vwin->w);
+}
+
 static void set_up_db_menu (windata_t *vwin, int cb, int del)
 {
     GtkItemFactoryEntry db_items[] = {
+	{ N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
+	{ N_("/File/_Close"), NULL, close_db_callback, 0, "<StockItem>", GTK_STOCK_CLOSE },
 	{ N_("/_Series/_Display"), NULL, gui_get_db_series, DB_DISPLAY, NULL, GNULL },
 	{ N_("/_Series/_Graph"), NULL, gui_get_db_series, DB_GRAPH, NULL, GNULL },
 	{ N_("/_Series/_Import"), NULL, gui_get_db_series, DB_IMPORT, NULL, GNULL },
@@ -852,7 +860,7 @@ static void db_select_first_series (windata_t *vwin)
 static int 
 make_db_series_window (int action, char *fname, char *buf)
 {
-    GtkWidget *listbox, *closebutton;
+    GtkWidget *listbox;
     GtkWidget *w, *main_vbox;
     char *titlestr;
     windata_t *vwin;
@@ -936,11 +944,6 @@ make_db_series_window (int action, char *fname, char *buf)
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     }
-
-    closebutton = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
-    g_signal_connect (G_OBJECT(closebutton), "clicked", 
-		      G_CALLBACK(delete_widget), vwin->w);
 
     if (action == NATIVE_SERIES) { 
 	err = add_local_db_series_list(vwin);

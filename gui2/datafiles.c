@@ -1085,8 +1085,7 @@ static void make_filesbar (windata_t *vwin)
 
 void display_files (gpointer p, guint code, GtkWidget *w)
 {
-    GtkWidget *filebox, *button;
-    GtkWidget *button_box;
+    GtkWidget *filebox;
     windata_t *vwin;
     int col1w = 0;
     int err = 0;
@@ -1185,15 +1184,6 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     } 
-
-    button_box = gtk_hbox_new(FALSE, 5);
-    gtk_box_set_homogeneous(GTK_BOX(button_box), TRUE);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), button_box, FALSE, FALSE, 0);
-
-    button = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(delete_widget), vwin->w);
 
     /* put stuff into list box(es) */
     if (code == TEXTBOOK_DATA || code == PS_FILES) {

@@ -95,7 +95,8 @@ enum {
     C_INT,
     C_POS_INT,
     C_DBL,
-    C_POS_DBL
+    C_POS_DBL,
+    C_FRAC
 };
 
 /* functions relating to distribution graphics */
@@ -871,12 +872,13 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
    t == C_POS_DBL: parse as a positive double
    t == C_INT: parse as non-negative int
    t == C_POS_INT: parse as positive int
+   t == C_FRAC: parse as 0 < p < 1
 
    (In this context, when an int is wanted, it's always non-negative
    and usually positive: df, sample size, number of trials.)
    
-   If t is C_DBL or C_POS_DBL and something is wrong with the
-   input, we flag this by returning NADBL.  In the case of
+   If t is C_DBL, C_POS_DBL or C_FRAC and something is wrong with
+   the input, we flag this by returning NADBL.  In the case of
    C_INT and C_POS_INT, we flag an error by returning -1.
 
    Possible refinement: should we accept names of variables
@@ -887,7 +889,7 @@ static double getval (GtkWidget *w, int t)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     double x = NADBL;
-    int k;
+    int k, bad = 0;
 
     if (s == NULL || *s == '\0') {
 	errbox(_("Incomplete entry"));
@@ -901,7 +903,7 @@ static double getval (GtkWidget *w, int t)
 	    k = atoi(s);
 	    if ((t == C_INT && k < 0) || 
 		(t == C_POS_INT && k <= 0)) {
-		errbox(_("Invalid entry"));
+		bad = 1;
 		x = -1;
 	    } else {
 		x = k;
@@ -912,28 +914,27 @@ static double getval (GtkWidget *w, int t)
 	    errbox(gretl_errmsg_get());
 	} else {
 	    x = atof(s);
-	    if (t == C_POS_DBL && !na(x) && x <= 0.0) {
-		errbox(_("Invalid entry"));
-		x = NADBL;
-	    }
+	    if (t == C_POS_DBL) {
+		if (!na(x) && x <= 0.0) {
+		    bad = 1;
+		    x = NADBL;
+		}
+	    } else if (t == C_FRAC) {
+		if (!na(x) && (x <= 0.0 || x >= 1.0)) {
+		    bad = 1;
+		    x = NADBL;
+		}
+	    }		
 	}
     }
 
-    return x;
-}
-
-static int check_prob (double p)
-{
-    int err = 0;
-
-    if (na(p)) {
-	err = 1;
-    } else if (p >= 1.0) {
-	errbox(_("Invalid probability"));
-	err = 1;
+    if (bad) {
+	errbox(_("Invalid entry"));
+	gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
+	gtk_widget_grab_focus(w);
     }
 
-    return err;
+    return x;
 }
 
 /* call plugin function to look up part of the table of
@@ -1069,8 +1070,8 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
 	if (na(x[j++])) return 1;
 	break;
     case BINOMIAL_DIST:
-	x[j] = getval(tab->entry[j], C_POS_DBL); /* prob */
-	if (check_prob(x[j++])) return 1;
+	x[j] = getval(tab->entry[j], C_FRAC); /* prob */
+	if (na(x[j++])) return 1;
 	x[j] = getval(tab->entry[j], C_POS_INT); /* n */
 	if (x[j++] < 0) return 1;
 	break;
@@ -1134,8 +1135,8 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     }
 
     /* right-tail probability */
-    x[j] = getval(tabs[i]->entry[j], C_POS_DBL);
-    if (check_prob(x[j])) return;
+    x[j] = getval(tabs[i]->entry[j], C_FRAC);
+    if (na(x[j])) return;
 
     if (d == NORMAL_DIST) {
 	x[3] = x[0];
@@ -1592,7 +1593,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	pputc(prn, '\n');
 
 	x[2] = (n1*x[0] + n2*x[1]) / (n1 + n2);
-	se = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
+	se = sqrt((x[2] * (1 - x[2])) * (1.0/n1 + 1.0/n2));
 	ts = (x[0] - x[1]) / se;
 
 	pprintf(prn, _("Test statistic: z = (%g - %g) / %g = %g\n"),
@@ -1648,11 +1649,11 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case ONE_PROPN:
-	x[j] = getval(test->entry[k++], C_POS_DBL); /* propn */
+	x[j] = getval(test->entry[k++], C_FRAC); /* propn */
 	if (na(x[j++])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
-	x[j] = getval(test->entry[k], C_POS_DBL);
+	x[j] = getval(test->entry[k], C_FRAC); /* H0 propn */
 	if (na(x[j])) return;
 
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
@@ -1694,12 +1695,12 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_PROPNS:
-	x[j] = getval(test->entry[k++], C_POS_DBL);
+	x[j] = getval(test->entry[k++], C_FRAC);
 	if (na(x[j++])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
-	x[j] = getval(test->entry[k++], C_POS_DBL);
+	x[j] = getval(test->entry[k++], C_FRAC);
 	if (na(x[j])) return;
 	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
