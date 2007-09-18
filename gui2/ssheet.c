@@ -1859,23 +1859,27 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
 
 static void empty_dataset_guard (void)
 {
-    int t, empty = 0;
+    int t, empty = 0, miss = 0;
 
     if (datainfo->v == 2) {
 	empty = 1;
 	for (t=0; t<datainfo->n; t++) {
-	    if (!na(Z[1][t])) {
+	    if (na(Z[1][t])) {
+		miss = 1;
+	    } else {
 		empty = 0;
-		break;
 	    }
 	}
     }
 
     if (empty) {
-	data_status |= (GUI_DATA | MODIFIED_DATA);
-	register_data(NULL, NULL, 0);
+	infobox(_("Warning: series %s is empty"), datainfo->varname[1]);
+    } else if (miss) {
 	infobox(_("Warning: there were missing observations"));
     }
+
+    data_status |= (GUI_DATA | MODIFIED_DATA);
+    register_data(NULL, NULL, 0);
 }
 
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
