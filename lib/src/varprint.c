@@ -732,49 +732,77 @@ print_VECM_coint_eqns (GRETL_VAR *jvar,
     gretl_prn_newline(prn);
 }
 
+static int max_vlen (const int *list, const DATAINFO *pdinfo)
+{
+    int i, ni, n = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	ni = strlen(pdinfo->varname[list[i]]);
+	if (ni > n) {
+	    n = ni;
+	}
+    }
+
+    return n;
+}
+
 static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 {
     int rtf = rtf_format(prn);
     int *list = jvar->ylist;
     char s[32];
+    int w0, wi = 12;
     int i, j;
 
     pprintf(prn, "%s\n", _("Cross-equation covariance matrix"));
     gretl_prn_newline(prn);
 
+    w0 = max_vlen(list, pdinfo) + 1;
+
+    /* top row: names of Y variables */
+
     for (i=0; i<jvar->neqns; i++) {
-	sprintf(s, "d_%s", pdinfo->varname[list[i+1]]);
+	sprintf(s, "%s", pdinfo->varname[list[i+1]]);
 	if (i == 0) {
 	    if (rtf) {
 		pprintf(prn, "\t\t%s", s);
 	    } else {
-		pprintf(prn, "%25s", s);
+		wi = strlen(s);
+		if (wi < VECM_WIDTH) wi = VECM_WIDTH;
+		pprintf(prn, "%*s", w0 + wi, s);
 	    }
 	} else {
 	    if (rtf) {
 		pprintf(prn, "\t%s", s);
 	    } else {
-		pprintf(prn, "%*s", VECM_WIDTH, s);
+		wi = strlen(s) + 1;
+		if (wi < VECM_WIDTH) wi = VECM_WIDTH;
+		pprintf(prn, "%*s", wi, s);
 	    }
 	}
     }
+
     gretl_prn_newline(prn);
 
+    /* subsequent rows: Y name plus values */
+
     for (i=0; i<jvar->neqns; i++) {
-	sprintf(s, "d_%s", pdinfo->varname[list[i+1]]);
+	sprintf(s, "%s", pdinfo->varname[list[i+1]]);
 	if (rtf) {
 	    pputs(prn, s);
 	    if (strlen(s) < 8) {
 		pputc(prn, '\t');
 	    }	    
 	} else {
-	    pprintf(prn, "%-*s", VECM_WIDTH, s);
+	    pprintf(prn, "%-*s ", w0, s);
 	}
 	for (j=0; j<jvar->neqns; j++) {
 	    if (rtf) {
 		pprintf(prn, "\t%#.5g", gretl_matrix_get(jvar->S, i, j));
 	    } else {
-		pprintf(prn, "%#12.5g ", gretl_matrix_get(jvar->S, i, j));
+		wi = strlen(pdinfo->varname[list[j+1]]);
+		if (wi < VECM_WIDTH - 1) wi = VECM_WIDTH - 1;
+		pprintf(prn, "%#*.5g ", wi, gretl_matrix_get(jvar->S, i, j));
 	    }
 	}
 	gretl_prn_newline(prn);
@@ -1051,7 +1079,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	VAR_print_LB_stat(var, prn);
     }
 
-    if (vecm) {
+    if (vecm && !quiet) {
 	pputc(prn, '\n');
     }
 

@@ -29,7 +29,7 @@
 #include "libset.h"
 #include "jprivate.h"
 
-#define JDEBUG 1
+#define JDEBUG 2
 
 typedef struct gradhelper_ gradhelper;
 typedef struct Jwrap_ Jwrap;
@@ -1145,6 +1145,17 @@ static int user_switch_init (Jwrap *J, int *uinit)
     return err;
 }
 
+#if JDEBUG > 1
+
+static void print_switch_iter (Jwrap *J, int i)
+{
+    fprintf(stderr, "Switcher, iteration %d\n", i);
+    gretl_matrix_print(J->beta, "J->beta"); 
+    gretl_matrix_print(J->alpha, "J->alpha");
+}
+
+#endif
+
 /* driver function for switching algorithm */
 
 static int switchit (Jwrap *J, PRN *prn)
@@ -1152,11 +1163,17 @@ static int switchit (Jwrap *J, PRN *prn)
     switcher s;
     double lldiff = NADBL;
     double llbak = -1.0e+200;
-    double tol = 2.0e-11;
+    double eps1 = 0.00001;
+    double eps2 = 0.0005;
+    double stol = 0.001 * eps1;
+    double wtol = 0.001 * eps2;
     int j, jmax = 50000;
+    int wcount = 0;
     int uinit = 0;
     int conv = 0;
     int err;
+
+    /* old: tol = 2.0e-11 */
 
     err = user_switch_init(J, &uinit);
     if (err) {
@@ -1194,11 +1211,23 @@ static int switchit (Jwrap *J, PRN *prn)
 	if (!err) {
 	    err = switcher_ll(J);
 	}
+
+#if JDEBUG > 1
+	print_switch_iter(J, j);
+#endif
+
 	if (!err && j > 1) {
 	    lldiff = (J->ll - llbak) / fabs(llbak);
-	    if (lldiff < tol) {
+	    if (lldiff < stol) {
 		conv = 1;
 		break;
+	    } else if (lldiff < wtol) {
+		if (++wcount == 5) {
+		    conv = 2;
+		    break;
+		}
+	    } else {
+		wcount = 0;
 	    }
 	}
 	llbak = J->ll;
@@ -1210,6 +1239,14 @@ static int switchit (Jwrap *J, PRN *prn)
     }
     pputc(prn, '\n');
     pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n", J->ll, lldiff);
+
+    if (!err) {
+	if (conv == 1) {
+	    pputs(prn, "Strong convergence\n"); 
+	} else if (conv == 2) {
+	    pputs(prn, "Weak convergence\n"); 
+	}
+    }
 
     if (!err && !conv) {
 	err = E_NOCONV;
@@ -1587,6 +1624,8 @@ maybe_remove_col_scaling (Jwrap *J,
     int i, j, k, rr, pos;
     int err = 0;
 
+    fprintf(stderr, "maybe_remove_col_scaling...\n");
+
     if (R == NULL || q == NULL || gretl_is_zero_matrix(q)) {
 	return 0;
     }
@@ -1595,7 +1634,7 @@ maybe_remove_col_scaling (Jwrap *J,
 	return 0;
     }
 
-#if 1 /* ?? */
+#if 0 /* ?? */
     if (J->df == 0) {
 	return 0;
     }
@@ -1771,6 +1810,10 @@ vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 
 	J->df = (J->p + J->p1 - J->r) * J->r - J->jr;
 	pprintf(prn, _("Based on Jacobian, df = %d\n"), J->df);
+
+#if JDEBUG
+	pprintf(prn, "Jacobian: got df = %d\n", J->df);
+#endif
 
 	/* system was subject to a prior restriction? */
 	if (jvar->jinfo->lrdf > 0) {

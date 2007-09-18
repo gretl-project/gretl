@@ -1701,7 +1701,7 @@ static void make_numstr (char *s, double x)
     if (x == -0.0) {
 	x = 0.0;
     }   
- 
+
     sprintf(s, "%#.5g", x);
 
     /* remove surplus, or add deficient, zeros */
@@ -1725,6 +1725,23 @@ static void make_numstr (char *s, double x)
 	    strncat(s, "0", 1);
 	}
     }
+}
+
+static int max_numchars (const gretl_matrix *m)
+{
+    char s[24];
+    int i, n = m->rows * m->cols;
+    int c, cmax = 0;
+
+    for (i=0; i<n; i++) {
+	sprintf(s, "%g", m->val[i]);
+	c = strlen(s);
+	if (c > cmax) {
+	    cmax = c;
+	}
+    }
+
+    return cmax;
 }
 
 static void 
@@ -1777,11 +1794,22 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	    pputc(prn, '\n');
 	}
     } else {
+	int cmax = max_numchars(m);
+
+	if (cmax > 5) {
+	    cmax = 0;
+	} 
+
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
-		make_numstr(numstr, x);
-		pprintf(prn, "%12s ", numstr);
+		if (cmax) {
+		    sprintf(numstr, "%g", x);
+		    pprintf(prn, "%*s ", cmax + 2, numstr);
+		} else {
+		    make_numstr(numstr, x);
+		    pprintf(prn, "%12s ", numstr);
+		}
 	    }
 	    pputc(prn, '\n');
 	}
