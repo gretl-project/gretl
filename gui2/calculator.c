@@ -896,6 +896,8 @@ static double getval (GtkWidget *w, int t)
     int sub = 0;
     int k, bad = 0;
 
+    gretl_error_clear();
+
     if (text == NULL || *text == '\0') {
 	errbox(_("Incomplete entry"));
 	return (t == C_INT || t == C_POS_INT)? -1 : NADBL;
@@ -912,45 +914,47 @@ static double getval (GtkWidget *w, int t)
 
     if (t == C_INT || t == C_POS_INT) {
 	if (check_atoi(s)) {
-	    errbox(gretl_errmsg_get());
+	    bad = 1;
 	} else {
 	    k = atoi(s);
 	    if ((t == C_INT && k < 0) || 
 		(t == C_POS_INT && k <= 0)) {
 		bad = 1;
-		x = -1;
 	    } else {
 		x = k;
 	    }
 	}
     } else {
 	if (check_atof(s)) {
-	    errbox(gretl_errmsg_get());
+	    bad = 1;
 	} else {
 	    x = atof(s);
 	    if (t == C_POS_DBL) {
 		if (!na(x) && x <= 0.0) {
 		    bad = 1;
-		    x = NADBL;
 		}
 	    } else if (t == C_FRAC) {
 		if (!na(x) && (x <= 0.0 || x >= 1.0)) {
 		    bad = 1;
-		    x = NADBL;
 		}
 	    }		
 	}
     }
 
     if (bad) {
-	errbox(_("Invalid entry"));
+	const char *msg = gretl_errmsg_get();
+
+	errbox((*msg != '\0')? msg : _("Invalid entry"));
 	gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
 	gtk_widget_grab_focus(w);
+	x = (t == C_INT || t == C_POS_INT)? -1 : NADBL;
     }
 
     if (sub) {
 	gretl_pop_c_numeric_locale();
     }
+
+    gretl_error_clear();
 
     return x;
 }

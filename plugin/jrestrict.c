@@ -1149,7 +1149,7 @@ static int user_switch_init (Jwrap *J, int *uinit)
 
 static void print_switch_iter (Jwrap *J, int i)
 {
-    fprintf(stderr, "Switcher, iteration %d\n", i);
+    fprintf(stderr, "Switcher, iteration %d, ll = %.10g\n", i, J->ll);
     gretl_matrix_print(J->beta, "J->beta"); 
     gretl_matrix_print(J->alpha, "J->alpha");
 }
@@ -1321,6 +1321,8 @@ static int reset_null_H (Jwrap *J)
 
     return 0;
 }
+
+
 
 /* recalculate the H matrix after removing column
    scalings */
@@ -1575,6 +1577,8 @@ static int check_for_scaling (Jwrap *J,
     if (norm_allocate(J, R)) {
 	return E_ALLOC;
     }
+
+    /* sc[2] = -1; */
 
     for (i=0; i<R->rows; i++) {
 	if (is_scaling_row(R, q, i, &rcol, &sval)) {
@@ -2023,6 +2027,34 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset)
     return err;
 }
 
+static gretl_matrix *testH (void)
+{
+    gretl_matrix *H;
+
+    H = gretl_zero_matrix_new(28, 14);
+
+    gretl_matrix_set(H,0,0,1);
+    gretl_matrix_set(H,1,1,1);
+    gretl_matrix_set(H,2,2,1);
+    gretl_matrix_set(H,6,3,1);
+    gretl_matrix_set(H,8,4,1);
+    gretl_matrix_set(H,11,5,1);
+    gretl_matrix_set(H,12,5,-1);
+    gretl_matrix_set(H,14,6,1);
+    gretl_matrix_set(H,17,7,1);
+    gretl_matrix_set(H,18,7,-1);
+    gretl_matrix_set(H,19,8,1);
+    gretl_matrix_set(H,20,9,1);
+    gretl_matrix_set(H,21,10,1);
+    gretl_matrix_set(H,23,11,1);
+    gretl_matrix_set(H,24,12,1);
+    gretl_matrix_set(H,27,13,1);    
+
+    return H;
+}
+
+#define TEST_H 0
+
 static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
 			  const gretl_matrix *q)
 {
@@ -2040,6 +2072,13 @@ static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
     if (err) {
 	return err;
     }
+
+#if TEST_H
+    if (J->H->rows == 28 && J->H->cols == 14) {
+	gretl_matrix_free(J->H);
+	J->H = testH();
+    }
+#endif
 
     J->blen = J->H->cols;
 
@@ -2389,7 +2428,7 @@ static int beta_init (Jwrap *J)
 
     if (!err && J->H != NULL) {
 	beta_from_phi(J);
-    }
+    }  
 
 #if JDEBUG
     gretl_matrix_print(J->phi, "beta_init: final phi vector");

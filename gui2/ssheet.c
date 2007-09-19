@@ -32,13 +32,15 @@
 #include <float.h>
 
 #define SSDEBUG 0
-#undef CELLDEBUG
+#define CELLDEBUG 0
+#define AUTOEDIT 0
 
 typedef enum {
     SHEET_SUBSAMPLED    = 1 << 0,
     SHEET_SHORT_VARLIST = 1 << 1,
     SHEET_INSERT_OBS_OK = 1 << 2,
-    SHEET_ADD_OBS_OK    = 1 << 3
+    SHEET_ADD_OBS_OK    = 1 << 3,
+    SHEET_USE_COMMA     = 1 << 4
 } SheetFlags;
 
 enum {
@@ -271,7 +273,7 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 	    gtk_tree_path_free(newpath);
 	}
     } else {
-	/* ...or try the next column */
+	/* ... or try the next column */
 	gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
 
 	if (p != NULL && (colnum = GPOINTER_TO_INT(p)) < sheet->datacols) {
@@ -354,7 +356,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *user_text,
 			       Spreadsheet *sheet)
 {
-    const gchar *new_text = NULL;
+    gchar *new_text = NULL;
     int err = 0;
 
     if (sheet->matrix == NULL && 
@@ -362,12 +364,15 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	/* allow conversion to "missing" */
 	new_text = "";
     } else {
-	err = check_atof(user_text);
+	new_text = g_strdup(user_text);
+	if (sheet->flags & SHEET_USE_COMMA) {
+	    /* accept point also */
+	    charsub(new_text, '.', ',');
+	}
+	err = check_atof(new_text);
 	if (err) {
 	    errbox(gretl_errmsg_get());
-	} else {
-	    new_text = user_text;
-	}
+	} 
     }
 
     if (!err && new_text != NULL) {
@@ -396,6 +401,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	move_to_next_cell(sheet, path, column);
 	gtk_tree_path_free(path);
 	g_free(old_text);
+	g_free(new_text);
     }
 
     return FALSE;
@@ -887,7 +893,7 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
     GtkTreeViewColumn *column;
     static gint oldrow, oldcol;
 
-#if CELLDEBUG
+#if CELLDEBUG > 1
     fprintf(stderr, "** update_cell_position()\n");
 #endif
 
@@ -905,16 +911,15 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 	}
 
 	if (newrow != oldrow || newcol != oldcol) {
-#if CELLDEBUG
+#if CELLDEBUG > 1
 	    fprintf(stderr, " activating cell(%d, %d)\n", newrow, newcol);
 #endif
 	    set_locator_label(sheet, path, column);
 	    oldrow = newrow;
 	    oldcol = newcol;
-	    gtk_tree_view_set_cursor(view, path, column, 
-				     FALSE); /* start editing? */
+	    gtk_tree_view_set_cursor(view, path, column, AUTOEDIT);
 	} else {
-#if CELLDEBUG
+#if CELLDEBUG > 1
 	   fprintf(stderr, " still in cell(%d, %d)\n", oldrow, oldcol); 
 #endif
 	}
@@ -1451,8 +1456,8 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     g_object_set(r, "ypad", 1, 
 		 "xalign", 1.0, 
 		 "editable", TRUE, NULL);
-    g_signal_connect (G_OBJECT (r), "edited",
-		      G_CALLBACK(sheet_cell_edited), sheet);
+    g_signal_connect(G_OBJECT(r), "edited",
+		     G_CALLBACK(sheet_cell_edited), sheet);
     sheet->datacell = r;
 }
 
@@ -1491,9 +1496,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	;
     }
 
-    /* prevent cursor movement outside of the data area */
-
-    if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
+    if (key->keyval == GDK_Left) {
 	GtkTreeViewColumn *column;
 	gpointer p;
 
@@ -1504,24 +1507,20 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 
 	    if (key->keyval == GDK_Left && colnum == 1) {
 		return TRUE;
-	    }
+	    } 
 	}
-    } 
-
-    else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+    } else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *column;
 	int i;
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
 	i = (gtk_tree_path_get_indices(path))[0];
-	
 
 	if (key->keyval == GDK_Down && i < sheet->datarows - 1) {
 	    gtk_tree_path_next(path);
 	} else if (key->keyval == GDK_Up && i > 0) {
 	    gtk_tree_path_prev(path);
-	    
 	}
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, 
 				 FALSE);
@@ -1529,10 +1528,12 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	return TRUE;
     } 
 
+#if !AUTOEDIT
     /* numeric key: start editing */
 
     else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||
-	key->keyval == GDK_minus || key->keyval == GDK_period) {
+	     key->keyval == GDK_minus || key->keyval == GDK_period ||
+	     ((sheet->flags & SHEET_USE_COMMA) && key->keyval == GDK_comma)) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *column;
 
@@ -1545,11 +1546,10 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	    manufacture_keystroke(view, key->keyval);
 	}
     }
+#endif
 
     return FALSE;
 }
-
-/* requires gtk 2.2 or higher */
 
 static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				     Spreadsheet *sheet)
@@ -1557,9 +1557,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     GdkModifierType mods; 
     gint ret = FALSE;
 
-# if CELLDEBUG
+#if CELLDEBUG
     fprintf(stderr, "** catch_spreadsheet_click()\n");
-# endif
+#endif
 
     if (event->type != GDK_BUTTON_PRESS) {
 	return FALSE;
@@ -1581,12 +1581,12 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	
     if (mods & GDK_BUTTON1_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
-	GtkTreePath *path;
-	GtkTreeViewColumn *column;
+	GtkTreePath *path = NULL;
+	GtkTreeViewColumn *column = NULL;
 
-# if CELLDEBUG
+#if CELLDEBUG
 	fprintf(stderr, "Got button 1 click\n");
-# endif
+#endif
 
 	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
 				      (gint) bevent->x, 
@@ -1597,9 +1597,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
 	    gint colnum = GPOINTER_TO_INT(p);
 
-# if CELLDEBUG
+#if CELLDEBUG
 	    fprintf(stderr, "Clicked column: colnum = %d\n", colnum);
-# endif
+#endif
 
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
@@ -1607,16 +1607,16 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    } else {
 		/* otherwise start editing on clicked cell */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
-					 path, column, TRUE);
-		ret = TRUE;
+					 path, column, TRUE); /* ?? */
+		ret = TRUE; /* ?? */
 	    }
 	}
 	gtk_tree_path_free(path);
     }
 
-# if CELLDEBUG
+#if CELLDEBUG
     fprintf(stderr, "catch_spreadsheet_click returning %d\n", ret);
-# endif
+#endif
 
     return ret;
 }
@@ -1644,6 +1644,10 @@ static int build_sheet_view (Spreadsheet *sheet)
 	if (sheet->varlist[0] < datainfo->v - 1) {
 	    sheet->flags |= SHEET_SHORT_VARLIST;
 	}
+    }
+
+    if (get_local_decpoint() == ',') {
+	sheet->flags |= SHEET_USE_COMMA;
     }
 
     store = make_sheet_liststore(sheet);
