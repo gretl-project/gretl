@@ -681,6 +681,8 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     int i, k, alt = 0;
     int err = 0;
 
+    gretl_push_c_numeric_locale();
+
     /* check what we already have in the plot spec */
 
     for (i=0; i<spec->n_literal; i++) {
@@ -745,7 +747,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
     if (err) {
 	gui_errmsg(err);
-	return;
+	goto bailout;
     } 
 
     /* add parameter line(s) if needed */
@@ -842,7 +844,7 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
 
     if (err) {
 	gui_errmsg(err);
-	return;
+	goto bailout;
     }
 
     i = spec->n_lines - 1;
@@ -862,6 +864,10 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
     make_plot_line(spec->lines[i].formula, d, alt, ids);
 
     redisplay_edited_plot(plot);
+
+ bailout:
+
+    gretl_pop_c_numeric_locale();
 }
 
 /* end of graphics functions */
