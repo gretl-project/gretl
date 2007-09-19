@@ -886,20 +886,28 @@ static void revise_distribution_plot (png_plot *plot, int d, double *parms)
    If t is C_DBL, C_POS_DBL or C_FRAC and something is wrong with
    the input, we flag this by returning NADBL.  In the case of
    C_INT and C_POS_INT, we flag an error by returning -1.
-
-   Possible refinement: should we accept names of variables
-   in these entry fields?
 */
 
 static double getval (GtkWidget *w, int t)
 {
-    const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+    const gchar *text = gtk_entry_get_text(GTK_ENTRY(w));
+    char s[32];
     double x = NADBL;
+    int sub = 0;
     int k, bad = 0;
 
-    if (s == NULL || *s == '\0') {
+    if (text == NULL || *text == '\0') {
 	errbox(_("Incomplete entry"));
 	return (t == C_INT || t == C_POS_INT)? -1 : NADBL;
+    }
+
+    *s = '\0';
+    strncat(s, text, 31);
+
+    if (get_local_decpoint() != '.') {
+	gretl_push_c_numeric_locale();
+	charsub(s, ',', '.');
+	sub = 1;
     }
 
     if (t == C_INT || t == C_POS_INT) {
@@ -938,6 +946,10 @@ static double getval (GtkWidget *w, int t)
 	errbox(_("Invalid entry"));
 	gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
 	gtk_widget_grab_focus(w);
+    }
+
+    if (sub) {
+	gretl_pop_c_numeric_locale();
     }
 
     return x;

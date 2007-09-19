@@ -1163,10 +1163,10 @@ static int switchit (Jwrap *J, PRN *prn)
     switcher s;
     double lldiff = NADBL;
     double llbak = -1.0e+200;
-    double eps1 = 0.00001;
-    double eps2 = 0.0005;
-    double stol = 0.001 * eps1;
-    double wtol = 0.001 * eps2;
+    double eps1 = 0.0001;
+    double eps2 = 0.005;
+    double stol = 0.0001 * eps1;
+    double wtol = 0.0001 * eps2;
     int j, jmax = 50000;
     int wcount = 0;
     int uinit = 0;
@@ -1230,6 +1230,7 @@ static int switchit (Jwrap *J, PRN *prn)
 		wcount = 0;
 	    }
 	}
+
 	llbak = J->ll;
     }
 
