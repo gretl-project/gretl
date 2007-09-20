@@ -2027,34 +2027,6 @@ static int set_up_G (Jwrap *J, const gretl_restriction *rset)
     return err;
 }
 
-static gretl_matrix *testH (void)
-{
-    gretl_matrix *H;
-
-    H = gretl_zero_matrix_new(28, 14);
-
-    gretl_matrix_set(H,0,0,1);
-    gretl_matrix_set(H,1,1,1);
-    gretl_matrix_set(H,2,2,1);
-    gretl_matrix_set(H,6,3,1);
-    gretl_matrix_set(H,8,4,1);
-    gretl_matrix_set(H,11,5,1);
-    gretl_matrix_set(H,12,5,-1);
-    gretl_matrix_set(H,14,6,1);
-    gretl_matrix_set(H,17,7,1);
-    gretl_matrix_set(H,18,7,-1);
-    gretl_matrix_set(H,19,8,1);
-    gretl_matrix_set(H,20,9,1);
-    gretl_matrix_set(H,21,10,1);
-    gretl_matrix_set(H,23,11,1);
-    gretl_matrix_set(H,24,12,1);
-    gretl_matrix_set(H,27,13,1);    
-
-    return H;
-}
-
-#define TEST_H 0
-
 static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
 			  const gretl_matrix *q)
 {
@@ -2072,13 +2044,6 @@ static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
     if (err) {
 	return err;
     }
-
-#if TEST_H
-    if (J->H->rows == 28 && J->H->cols == 14) {
-	gretl_matrix_free(J->H);
-	J->H = testH();
-    }
-#endif
 
     J->blen = J->H->cols;
 
