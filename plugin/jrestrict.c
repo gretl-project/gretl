@@ -1534,11 +1534,11 @@ static int screen_beta_cols (Jwrap *J,
 		    if (m != k) {
 			/* cross-column restriction */
 			sc[k] = sc[m] = -1;
-		    }
+		    } 
 		}
 	    }
 	}
-	if (c > 1 && q->val[i] != 0) {
+	if (c > 1 && q->val[i] != 0) { 
 	    sc[k] = -1;
 	}
     }
@@ -1577,8 +1577,6 @@ static int check_for_scaling (Jwrap *J,
     if (norm_allocate(J, R)) {
 	return E_ALLOC;
     }
-
-    /* sc[2] = -1; */
 
     for (i=0; i<R->rows; i++) {
 	if (is_scaling_row(R, q, i, &rcol, &sval)) {
