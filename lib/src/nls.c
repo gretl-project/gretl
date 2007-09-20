@@ -2752,6 +2752,7 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_nlspec(spec);
+    genr_err = 0;
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 

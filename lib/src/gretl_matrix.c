@@ -5155,6 +5155,11 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     return evals;
 }
 
+enum {
+    SVD_THIN,
+    SVD_FULL
+};
+
 /**
  * gretl_matrix_SVD:
  * @a: matrix to decompose.
@@ -5168,8 +5173,10 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
-		      gretl_vector **ps, gretl_matrix **pvt)
+static int 
+real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+		       gretl_vector **ps, gretl_matrix **pvt,
+		       int smod)
 {
     integer m = a->rows;
     integer n = a->cols;
@@ -5196,6 +5203,12 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	return 0;
     }
 
+    if (smod == SVD_THIN && m < n) {
+	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
+		a->rows, a->cols);
+	return E_NONCONF;
+    }
+
     b = gretl_matrix_copy(a);
     if (b == NULL) {
 	return E_ALLOC;
@@ -5210,14 +5223,18 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
     if (pu != NULL) {
-	u = gretl_matrix_alloc(m, m);
+	if (smod == SVD_FULL) {
+	    u = gretl_matrix_alloc(m, m);
+	} else {
+	    u = gretl_matrix_alloc(m, n);
+	}
 	if (u == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
 	    ldu = m;
 	    uval = u->val;
-	    jobu = 'A';
+	    jobu = (smod == SVD_FULL)? 'A' : 'S';
 	}
     } 
 
@@ -5288,6 +5305,172 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     gretl_matrix_free(s);
     gretl_matrix_free(u);
     gretl_matrix_free(vt);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_SVD:
+ * @a: matrix to decompose.
+ * @pu: location for matrix U, or %NULL if not wanted.
+ * @ps: location for vector of singular values, or %NULL if not wanted.
+ * @pvt: location for matrix V (transposed), or %NULL if not wanted.
+ * 
+ * Computes SVD factorization of a general matrix using the lapack
+ * function %dgesvd. A = u * diag(s) * vt.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+		      gretl_vector **ps, gretl_matrix **pvt)
+{
+    return real_gretl_matrix_SVD(a, pu, ps, pvt, SVD_FULL);
+}
+
+/**
+ * gretl_matrix_SVD_johansen_solve:
+ * @R0: T x p matrix of residuals.
+ * @R1: T x p1 matrix of residuals.
+ * @evals: vector to receive eigenvals, or %NULL if not wanted.
+ * @B: matrix to hold \beta, or %NULL if not wanted.
+ * @A: matrix to hold \alpha, or %NULL if not wanted.
+ * @jrank: cointegration rank, <= p.
+ * 
+ * Solves the Johnsen generalized eigenvalue problem via
+ * SVD decomposition.  See J. A. Doornik and R. J. O'Brien, 
+ * "Numerically stable cointegration analysis", Computational 
+ * Statistics and Data Analysis, 41 (2002), pp. 185-193, 
+ * Algorithm 4.
+ *
+ * If @B is non-null it should be p1 x p on input; it will
+ * be trimmed to p1 x @jrank on output if @jrank < p.
+ * If @A is non-null it should be p x p on input; it will
+ * be trimmed to p x @jrank on output if @jrank < p.
+ * @evals should be a vector of length @jrank.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
+				     const gretl_matrix *R1,
+				     gretl_matrix *evals,
+				     gretl_matrix *B,
+				     gretl_matrix *A,
+				     int jrank)
+{
+    gretl_matrix *U0 = NULL;
+    gretl_matrix *U1 = NULL;
+    gretl_matrix *Uz = NULL;
+    gretl_matrix *S1 = NULL;
+    gretl_matrix *Sz = NULL;
+    gretl_matrix *V1 = NULL;
+    gretl_matrix *Z = NULL;
+    int T = R0->rows;
+    int p = R0->cols;
+    int p1 = R1->cols;
+    int r, err;
+
+    if (evals == NULL && B == NULL && A == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    r = (jrank == 0)? p : jrank;
+
+    if (r < 1 || r > p) {
+	return E_NONCONF;
+    }
+
+    if (evals != NULL && gretl_vector_get_length(evals) != r) {
+	return E_NONCONF;
+    }    
+
+    if (B != NULL && (B->rows != p1 || B->cols != p)) {
+	return E_NONCONF;
+    }
+
+    if (A != NULL && (A->rows != p || A->cols != p)) {
+	return E_NONCONF;
+    }    
+
+    err = real_gretl_matrix_SVD(R0, &U0, NULL, NULL, SVD_THIN);
+
+    if (!err) {
+	err = real_gretl_matrix_SVD(R1, &U1, &S1, &V1, SVD_THIN);
+    }
+
+    if (!err) {
+	Z = gretl_matrix_alloc(p1, p);
+	if (Z == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_matrix_multiply_mod(U1, GRETL_MOD_TRANSPOSE,
+					    U0, GRETL_MOD_NONE,
+					    Z, GRETL_MOD_NONE);
+	}
+    }
+
+    if (!err) {
+	err = real_gretl_matrix_SVD(Z, &Uz, &Sz, NULL, SVD_THIN);
+    }
+
+    if (!err) {
+	double x, si;
+	int i, j;
+	
+	if (evals != NULL) {
+	    for (i=0; i<r; i++) {
+		evals->val[i] = Sz->val[i] * Sz->val[i];
+	    }
+	}
+
+	if (B != NULL) {
+	    /* \hat{\beta} = T^{1/2} V_1 {\Sigma_1}^{-1} U_z */
+	    
+	    for (i=0; i<p1; i++) {
+		si = S1->val[i];
+		for (j=0; j<p1; j++) {
+		    if (si > SVD_SMIN) {
+			x = gretl_matrix_get(V1, i, j);
+			gretl_matrix_set(V1, i, j, x / si);
+		    } else {
+			gretl_matrix_set(V1, i, j, 0);
+		    }
+		}
+	    }
+
+	    gretl_matrix_multiply_mod(V1, GRETL_MOD_TRANSPOSE,
+				      Uz, GRETL_MOD_NONE,
+				      B, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_by_scalar(B, sqrt((double) T));
+	    if (r < p) {
+		gretl_matrix_reuse(B, -1, r);
+	    }
+	}
+
+	if (A != NULL) {
+	    /* \hat{\alpha} = T^{-1/2} R_0' U_1 U_z */
+
+	    gretl_matrix_reuse(Z, p, p1);
+	    gretl_matrix_multiply_mod(R0, GRETL_MOD_TRANSPOSE,
+				      U1, GRETL_MOD_NONE,
+				      Z, GRETL_MOD_NONE);
+	    gretl_matrix_multiply(Z, Uz, A);
+	    gretl_matrix_divide_by_scalar(A, sqrt((double) T));
+	    if (r < p) {
+		gretl_matrix_reuse(A, -1, r);
+	    }
+	}
+    }
+
+    gretl_matrix_free(U0);
+    gretl_matrix_free(U1);
+    gretl_matrix_free(Uz);
+    gretl_matrix_free(S1);
+    gretl_matrix_free(Sz); 
+    gretl_matrix_free(V1);
+    gretl_matrix_free(Z); 
 
     return err;
 }
@@ -5763,7 +5946,7 @@ int gretl_matrix_get_t2 (const gretl_matrix *m)
 
 static int
 get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
-		 const double *s, gretl_matrix *vcv, double *s2)
+		 const double *s, gretl_matrix *V, double *s2)
 {
     double aik, ajk, vij;
     int m = A->cols;
@@ -5784,9 +5967,9 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 		    vij += aik * ajk / (s[k] * s[k]);
 		}
 	    }
-	    gretl_matrix_set(vcv, i, j, vij);
+	    gretl_matrix_set(V, i, j, vij);
 	    if (j != i) {
-		gretl_matrix_set(vcv, j, i, vij);
+		gretl_matrix_set(V, j, i, vij);
 	    }
 	}
     }
@@ -5799,7 +5982,7 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 	    sigma2 += B->val[i] * B->val[i];
 	}
 	sigma2 /= T - m;
-	gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+	gretl_matrix_multiply_by_scalar(V, sigma2);  
 	*s2 = sigma2;
     }
 
@@ -5830,16 +6013,16 @@ get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
 
 static int
 get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
-	     const gretl_vector *b, gretl_matrix *vcv,
+	     const gretl_vector *b, gretl_matrix *V,
 	     double *s2)
 {
-    if (gretl_invert_general_matrix(vcv)) {
-	gretl_matrix_print(vcv, "get_ols_vcv: inversion failed");
+    if (gretl_invert_general_matrix(V)) {
+	gretl_matrix_print(V, "get_ols_vcv: inversion failed");
 	return 1;
     }
 
     if (s2 != NULL) {
-	gretl_matrix_multiply_by_scalar(vcv, *s2);
+	gretl_matrix_multiply_by_scalar(V, *s2);
     }
 
     return 0;
@@ -5989,6 +6172,161 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 
     gretl_matrix_free(A);
     gretl_matrix_free(B);
+    lapack_free(work);
+    free(s);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_multi_SVD_ols:
+ * @y: T x g matrix of dependent variables.
+ * @X: T x k matrix of independent variables.
+ * @B: k x g matrix to hold coefficient estimates.
+ * @E: T x g matrix to hold the regression residuals, or %NULL if these are 
+ * not needed.
+ * @XTXi: location to receive (X'X)^{-1}, or %NULL if this is not needed.
+ *
+ * Computes OLS estimates using SVD decomposition, and puts the
+ * coefficient estimates in @B.  Optionally, calculates the
+ * residuals in @E, (X'X)^{-1} in @XTXi.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y, 
+				const gretl_matrix *X,
+				gretl_matrix *B, 
+				gretl_matrix *E,
+				gretl_matrix **XTXi)
+{
+    int g = Y->cols;
+    int k = X->cols;
+    int T = X->rows;
+
+    gretl_matrix *A = NULL;
+    gretl_matrix *C = NULL;
+
+    integer m = T;
+    integer n = k;
+    integer nrhs = g;
+    integer lda = T;
+    integer ldb = T;
+    integer lwork = -1;
+    integer rank;
+    integer info;
+
+    double rcond = -1.0;
+    double *work = NULL;
+    double *work2 = NULL;
+    double *s = NULL;
+
+    int err = 0;
+
+    if (B->rows != k || B->cols != g) {
+	err = E_NONCONF;
+    } else if (Y->rows != T) {
+	err = E_NONCONF;
+    } else if (E != NULL && (E->cols != g || E->rows != T)) {
+	err = E_NONCONF;
+    } else if (k > T) {
+	err = E_DF;
+    }
+
+    A = gretl_matrix_copy(X);
+    if (A == NULL) {
+	return E_ALLOC;
+    }
+
+    C = gretl_matrix_copy(Y);
+    if (C == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* for singular values of A */
+    s = malloc(k * sizeof *s);
+    if (s == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    }
+
+    work = lapack_malloc(sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    } 
+
+    /* workspace query */
+    dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	goto bailout;
+    }	
+
+    lwork = (integer) work[0];
+
+    work2 = lapack_realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = E_ALLOC; 
+	goto bailout;
+    } 
+
+    work = work2;
+
+    /* get actual solution */
+    dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &info);
+
+    if (info != 0) {
+	err = 1;
+    }
+
+    if (rank < k) {
+	fprintf(stderr, "gretl_matrix_svd_ols:\n"
+		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
+		(int) rank, T, k);
+    }
+
+    if (!err) {
+	/* coeffs: extract the first k rows from C */
+	double bij;
+	int i, j;
+
+	for (i=0; i<k; i++) {
+	    for (j=0; j<g; j++) {
+		bij = gretl_matrix_get(C, i, j);
+		gretl_matrix_set(B, i, j, bij);
+	    }
+	}
+    }
+
+    if (!err && E != NULL) {
+	/* compute residuals, if wanted */
+	int i, imax = E->rows * E->cols;
+
+	gretl_matrix_multiply(X, B, E);
+	for (i=0; i<imax; i++) {
+	    E->val[i] = Y->val[i] - E->val[i];
+	}
+    }
+
+    if (!err && XTXi != NULL) {
+	/* build (X'X)^{-1}, if wanted */
+	*XTXi = gretl_matrix_alloc(k, k);
+	if (*XTXi == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = get_svd_ols_vcv(A, C, s, *XTXi, NULL);
+	}
+    }
+
+    bailout:
+
+    gretl_matrix_free(A);
+    gretl_matrix_free(C);
     lapack_free(work);
     free(s);
 

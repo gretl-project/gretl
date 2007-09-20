@@ -2069,6 +2069,8 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
     }    
 }
 
+#define JVAR_USE_SVD 1
+
 /* For Johansen analysis: estimate VAR in differences along with the
    other auxiliary regressions required to compute the relevant
    matrices of residuals, for concentration of the log-likelihood.
@@ -2102,6 +2104,10 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 
     /* (1) VAR in first differences */
 
+#if JVAR_USE_SVD
+    err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
+				     jvar->jinfo->R0, NULL);
+#else
     if (jvar->qr) {
 	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
 				  jvar->jinfo->R0, NULL, NULL);
@@ -2109,6 +2115,7 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
 				     jvar->jinfo->R0, NULL);
     }
+#endif
 
     if (nr > 0) {
 	/* re-expand to full size */
@@ -2122,13 +2129,18 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
 
     VAR_fill_Y(jvar, LAGS, Z);
 
+#if JVAR_USE_SVD
+    err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
+				     jvar->jinfo->R1, NULL);
+#else
     if (jvar->qr) {
 	err = gretl_matrix_QR_ols(jvar->Y, jvar->X, jvar->B, 
 				  jvar->jinfo->R1, NULL, NULL);
     } else {
 	err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
 				     jvar->jinfo->R1, NULL);
-    }  
+    } 
+#endif 
 
     if (nr > 0) {
 	/* shrink to "final" size */
@@ -2151,6 +2163,11 @@ int johansen_stage_1 (GRETL_VAR *jvar, const double **Z,
     gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
     gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
     gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
+
+#if 0
+    gretl_matrix_SVD_johansen_solve(jvar->jinfo->R0, jvar->jinfo->R1,
+				    XX, XX, XX);
+#endif
 
 #if VDEBUG
     fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);

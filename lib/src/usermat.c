@@ -336,6 +336,34 @@ gretl_matrix *get_matrix_by_name (const char *name)
 }
 
 /**
+ * get_matrix_copy_by_name:
+ * @name: name of the matrix.
+ * @err: location to receive error code;
+ *
+ * Looks up a user-defined matrix by name.
+ *
+ * Returns: a copy of the named matrix, or %NULL if not found.
+ */
+
+gretl_matrix *get_matrix_copy_by_name (const char *name, int *err)
+{
+    gretl_matrix *m;
+
+    m = real_get_matrix_by_name(name, LEVEL_AUTO);
+
+    if (m == NULL) {
+	*err = E_UNKVAR;
+    } else {
+	m = gretl_matrix_copy(m);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return m;
+}
+
+/**
  * get_matrix_by_name_at_level:
  * @name: name of the matrix.
  * @level: level of function execution at which to search.

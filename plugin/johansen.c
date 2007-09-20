@@ -873,7 +873,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    if (flags & BOOTSTRAPPING) {
 		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, NULL);
 	    } else {
-		err = gretl_matrix_multi_ols(v->Y, v->X, v->B, v->E, &XTX);
+		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &XTX);
 	    }
 	} else {
 	    /* nothing to estimate, with alpha in hand */

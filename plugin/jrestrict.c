@@ -53,6 +53,8 @@ struct Jwrap_ {
     double ll;      /* log-likelihood */
 
     /* moment matrices and copies */
+    const gretl_matrix *R0;
+    const gretl_matrix *R1;
     const gretl_matrix *S00;
     const gretl_matrix *S01;
     const gretl_matrix *S11;
@@ -125,10 +127,13 @@ static void gradhelper_free (gradhelper *g);
 static int real_set_up_H (Jwrap *J, const gretl_matrix *R,
 			  const gretl_matrix *q);
 
-static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
+static int make_moment_matrices (Jwrap *J, const GRETL_VAR *jvar)
 {
     gretl_matrix *Tmp = NULL;
     int err = 0;
+
+    J->R0 = jvar->jinfo->R0;
+    J->R1 = jvar->jinfo->R1;
 
     J->S00 = jvar->jinfo->S00;
     J->S01 = jvar->jinfo->S01;
@@ -160,8 +165,8 @@ static int make_S_matrices (Jwrap *J, const GRETL_VAR *jvar)
 
     if (!err) {
 	/* allocate beta, alpha, etc. while we're at it */
-	J->beta = gretl_matrix_alloc(J->p1, J->r);
-	J->alpha = gretl_matrix_alloc(J->p, J->r);
+	J->beta = gretl_zero_matrix_new(J->p1, J->r);
+	J->alpha = gretl_zero_matrix_new(J->p, J->r);
 	J->Pi = gretl_matrix_alloc(J->p, J->p1);
 	J->Omega = gretl_matrix_alloc(J->p, J->p);
 	if (J->beta == NULL || J->alpha == NULL || 
@@ -298,6 +303,8 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->llk = J->T * 0.5 * (J->p * (1.0 + LN_2_PI));
     J->ll = NADBL;
 
+    J->R0 = J->R1 = NULL;
+    
     J->S00 = NULL;
     J->S01 = NULL;
     J->S11 = NULL;
@@ -342,7 +349,7 @@ static Jwrap *jwrap_new (const GRETL_VAR *jvar, gretlopt opt, int *err)
     J->normcol = NULL;
     J->normval = NULL;
 
-    *err = make_S_matrices(J, jvar);
+    *err = make_moment_matrices(J, jvar);
 
     if (!*err) {
 	*err = J_alloc_aux(J);
@@ -2329,47 +2336,33 @@ static int phi_from_beta (Jwrap *J)
     return err;
 }
 
-/* solution to unrestricted eigenvalue problem */
+/* solve the unrestricted eigenvalue problem for \beta */
 
 static int case0 (Jwrap *J)
 {
-    gretl_matrix *M = NULL;
-    gretl_matrix *Tmp = NULL;
-    gretl_matrix *evals = NULL;
-    int n = J->S11->cols;
+    gretl_matrix *B = NULL;
     int err = 0;
 
-    Tmp = gretl_matrix_alloc(n, n);
-    M = gretl_matrix_alloc(n, n);
-
-    if (Tmp == NULL || M == NULL) {
+    B = gretl_matrix_alloc(J->p1, J->p);
+    if (B == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	err = gretl_matrix_qform(J->S01, GRETL_MOD_TRANSPOSE, 
-				 J->S00i, Tmp, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
-	evals = gretl_gensymm_eigenvals(Tmp, J->S11, M, &err);
-    }
-
-    if (!err) {
-	err = gretl_symmetric_eigen_sort(evals, M, J->r);
+	err = gretl_matrix_SVD_johansen_solve(J->R0, J->R1,
+					      NULL, B, NULL,
+					      J->r);
     }
 
 #if JDEBUG
-    gretl_matrix_print(M, "case0: raw beta");
+    gretl_matrix_print(B, "case0: raw beta");
 #endif
 
     if (!err) {
-	gretl_matrix_copy_values(J->beta, M);
+	gretl_matrix_copy_values(J->beta, B);
     }
 
-    gretl_matrix_free(Tmp);
-    gretl_matrix_free(M);
-    gretl_matrix_free(evals);
+    gretl_matrix_free(B);
 
     return err;
 }
@@ -2400,13 +2393,14 @@ static int beta_init (Jwrap *J)
     return err;
 }
 
-/* do initial computation of alpha based on beta; then, 
-   if relevant, impose alpha restriction and make phi
+/* do initial computation of alpha based on beta (unless this is
+   already done); then, if relevant, impose alpha restriction and make
+   psi.
 */
 
 static int alpha_init (Jwrap *J)
 {
-    int err;
+    int err = 0;
 
     err = J_compute_alpha(J);
     if (err) {

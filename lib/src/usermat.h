@@ -48,6 +48,8 @@ const char *get_matrix_name_by_index (int idx);
 
 gretl_matrix *get_matrix_by_name (const char *name);
 
+gretl_matrix *get_matrix_copy_by_name (const char *name, int *err);
+
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
 
 gretl_matrix *user_matrix_get_matrix (user_matrix *u);

@@ -467,6 +467,12 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 			    gretl_matrix *E,
 			    gretl_matrix **XTXi);
 
+int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y, 
+				const gretl_matrix *X,
+				gretl_matrix *B, 
+				gretl_matrix *E,
+				gretl_matrix **XTXi);
+
 int gretl_matrix_QR_ols (const gretl_matrix *Y,
 			 const gretl_matrix *X,
 			 gretl_matrix *B,
@@ -478,6 +484,13 @@ double gretl_matrix_r_squared (const gretl_matrix *y,
 			       const gretl_matrix *X,
 			       const gretl_matrix *b,
 			       int *err);
+
+int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
+				     const gretl_matrix *R1,
+				     gretl_matrix *evals,
+				     gretl_matrix *B,
+				     gretl_matrix *A,
+				     int jrank);
 
 int 
 gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,

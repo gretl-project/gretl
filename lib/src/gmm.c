@@ -53,8 +53,6 @@ struct ocset_ {
     colsrc *ecols;       /* info on provenance of columns of 'e' */
     int noc;             /* total number of orthogonality conds. */
     int step;            /* number of estimation steps */
-    int free_e;          /* indicator: should 'e' be freed? */
-    int free_Z;          /* indicator: should 'Z' be freed? */
     hac_info hinfo;      /* HAC characteristics */
 };
 
@@ -66,14 +64,8 @@ void oc_set_destroy (ocset *oc)
 	return;
     }
 
-    if (oc->free_e) {
-	gretl_matrix_free(oc->e);
-    }
-
-    if (oc->free_Z) {
-	gretl_matrix_free(oc->Z);
-    }
-
+    gretl_matrix_free(oc->e);
+    gretl_matrix_free(oc->Z);
     gretl_matrix_free(oc->tmp);
     gretl_matrix_free(oc->sum);
     gretl_matrix_free(oc->S);
@@ -99,9 +91,6 @@ static ocset *oc_set_new (void)
 	oc->ecols = NULL;
 	oc->noc = 0;
 	oc->step = 0;
-
-	oc->free_e = 0;
-	oc->free_Z = 0;
     }
 
     return oc;
@@ -400,8 +389,6 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
     gretl_matrix *M = NULL;
     int oldecols = 0;
     int i, k, t, v;
-    int free_e = 0;
-    int free_M = 0;
     double x;
     int err = 0;
 
@@ -418,8 +405,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 
     if (ltype == GRETL_TYPE_MATRIX) {
-	e = get_matrix_by_name(lname);
-	err = push_column_source(s, 0, lname);
+	e = get_matrix_copy_by_name(lname, &err);
+	if (!err) {
+	    err = push_column_source(s, 0, lname);
+	}
     } else if (ltype == GRETL_TYPE_LIST) {
 	int *list = get_list_by_name(lname);
 
@@ -438,7 +427,6 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		}
 		err = push_column_source(s, v, NULL);
 	    }
-	    free_e = s->oc->free_e = 1;
 	}	
     } else if (ltype == GRETL_TYPE_SERIES) {
 	v = varindex(pdinfo, lname);
@@ -452,7 +440,6 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		x = Z[v][t + s->t1];
 		gretl_vector_set(e, t, x);
 	    }
-	    free_e = s->oc->free_e = 1;
 	    err = push_column_source(s, v, NULL);
 	}
     } else {
@@ -474,8 +461,10 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 
     if (rtype == GRETL_TYPE_MATRIX) {
-	M = get_matrix_by_name(rname);
-	k = gretl_matrix_cols(M);
+	M = get_matrix_copy_by_name(rname, &err);
+	if (!err) {
+	    k = gretl_matrix_cols(M);
+	}
     } else if (rtype == GRETL_TYPE_LIST) {
 	int *list = get_list_by_name(rname);
 
@@ -493,7 +482,6 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		    gretl_matrix_set(M, t, i, x);
 		}
 	    }
-	    free_M = s->oc->free_Z = 1;
 	}
     } else {
 	/* name of single series */
@@ -509,7 +497,6 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 		x = Z[v][t + s->t1];
 		gretl_vector_set(M, t, x);
 	    }
-	    free_M = s->oc->free_Z = 1;
 	}
     } 
 
@@ -525,50 +512,22 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 #endif
 	} else {
 	    /* it's an additional set of O.C.s */
-	    if (!s->oc->free_e) {
-		/* current 'e' is pointer to external matrix: this
-		   must now be changed */
-		s->oc->e = gretl_matrix_copy(s->oc->e);
-		if (s->oc->e == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
+	    err = gretl_matrix_inplace_colcat(s->oc->e, e, NULL);
+#if GMM_DEBUG > 1
+	    fprintf(stderr, "oc_add_matrices: expanded e\n");
+	    gretl_matrix_print(s->oc->e, "e");
+#endif
+	    /* don't leak temporary matrix */
+	    gretl_matrix_free(e);
 
 	    if (!err) {
-		err = gretl_matrix_inplace_colcat(s->oc->e, e, NULL);
+		err = add_new_cols_to_Z(s, M, oldecols);
 #if GMM_DEBUG > 1
-		fprintf(stderr, "oc_add_matrices: expanded e\n");
-		gretl_matrix_print(s->oc->e, "e");
+		fprintf(stderr, "oc_add_matrices: expanded Z\n");
+		gretl_matrix_print(s->oc->Z, "Z");
 #endif
 	    }
-
-	    if (free_e) {
-		/* don't leak temporary matrix */
-		gretl_matrix_free(e);
-	    }
-
-	    if (!err) {
-		if (!s->oc->free_Z) {
-		    /* current 'Z' is pointer to external matrix */
-		    s->oc->Z = gretl_matrix_copy(s->oc->Z);
-		    if (s->oc->Z == NULL) {
-			err = E_ALLOC;
-		    }
-		}
-		if (!err) {
-		    err = add_new_cols_to_Z(s, M, oldecols);
-#if GMM_DEBUG > 1
-		    fprintf(stderr, "oc_add_matrices: expanded Z\n");
-		    gretl_matrix_print(s->oc->Z, "Z");
-#endif
-		}
-	    }
-
-	    if (free_M) {
-		gretl_matrix_free(M);
-	    }
-
-	    s->oc->free_e = s->oc->free_Z = 1;
+	    gretl_matrix_free(M);
 	}
     }
 
