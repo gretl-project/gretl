@@ -6975,14 +6975,14 @@
 	    working directory for shell commands.
          </para>
 	</li>
-      <li>
+	<li>
 	<para>
 	  <lit>nls_toler</lit>: a floating-point value (the default is the
 	  machine precision to the power 3/4).  Sets the tolerance used in
 	  judging whether or not convergence has occurred in nonlinear least
 	  squares estimation using the <cmdref targ="nls"/> command.
 	</para>
-      </li>
+	</li>
 	<li>
 	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
 	    default). Use QR rather than Cholesky decomposition in calculating
@@ -7089,21 +7089,23 @@
 	</li>
 	<li>
 	  <para><lit>bkbp_limits</lit>: two integers, the second greater
-	    than the first (the defaults are 8 and 32).  Sets the frequency
-	    bounds for the Baxter&ndash;King bandpass filter (see the
-	    <lit>bkfilt</lit> function under the <lit>genr</lit> command).
+	    than the first (the defaults are 8 and 32).  Sets the
+	    frequency bounds for the Baxter&ndash;King bandpass filter
+	    (see the <lit>bkfilt</lit> function under the <lit>genr</lit>
+	    command).
 	  </para>
 	</li>
 	<li>
 	  <para><lit>bkbp_k</lit>: one integer (the default is 8).  Sets
-	    the approximation order for the Baxter&ndash;King bandpass filter.
+	    the approximation order for the Baxter&ndash;King bandpass
+	    filter.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>horizon</lit>: one integer (the default is based on
-	    the frequency of the data).  Sets the horizon for impulse responses
-	    and forecast variance decompositions in the context of vector
-	    autoregressions.
+	    the frequency of the data).  Sets the horizon for impulse
+	    responses and forecast variance decompositions in the context
+	    of vector autoregressions.
 	  </para>
 	</li>
 	<li>
@@ -7113,21 +7115,42 @@
 	  </para>
 	</li>
 	<li>	
-	<para><lit>bhhh_maxiter</lit>: one integer, maximum number of iterations
-	    for gretl's internal BHHH routine, which is used in the
-	    <cmd>arma</cmd> command for conditional ML estimation. If convergence 
-	    is not achieved after <lit>bhhh_maxiter</lit>, the program returns an
-	    error. The default is set at 500.
+	  <para><lit>bhhh_maxiter</lit>: one integer, maximum number of
+	    iterations for gretl's internal BHHH routine, which is used in
+	    the <cmd>arma</cmd> command for conditional ML estimation. If
+	    convergence is not achieved after <lit>bhhh_maxiter</lit>, the
+	    program returns an error. The default is set at 500.
 	  </para>
-	  </li>	  
+	</li>	  
 	<li>	  
-	  <para><lit>bhhh_toler</lit>: one floating point value, or the string
-	    <lit>default</lit>.  This is used in gretl's internal BHHH routine
-	    to check if convergence has occurred. The algorithm stops iterating
-	    as soon as the increment in the log-likelihood between iterations is
-	    smaller than <lit>bhhh_toler</lit>.  The default value is
-	    1.0E&minus;06; this value may be re-established by typing
-	    <lit>default</lit> in place of a numeric value.
+	  <para><lit>bhhh_toler</lit>: one floating point value, or the
+	    string <lit>default</lit>.  This is used in gretl's internal
+	    BHHH routine to check if convergence has occurred. The
+	    algorithm stops iterating as soon as the increment in the
+	    log-likelihood between iterations is smaller than
+	    <lit>bhhh_toler</lit>.  The default value is 1.0E&minus;06;
+	    this value may be re-established by typing <lit>default</lit>
+	    in place of a numeric value.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bfgs_maxiter</lit>: one integer, maximum number of
+	    iterations for gretl's BFGS routine, which is used for
+	    <cmd>mle</cmd>, <cmd>gmm</cmd> and several specific
+	    estimators. If convergence is not achieved in the specified
+	    number of iterations, the program returns an error. The
+	    default is 500.
+	  </para>
+	</li>	  
+	<li>	  
+	  <para><lit>bfgs_toler</lit>: one floating point value, or the
+	    string <lit>default</lit>.  This is used in gretl's BFGS
+	    routine to check if convergence has occurred. The algorithm
+	    stops as soon as the relative improvement in the objective
+	    function between iterations is smaller than
+	    <lit>bfgs_toler</lit>.  The default value is the machine
+	    precision to the power 3/4; this value may be re-established
+	    by typing <lit>default</lit> in place of a numeric value.
 	  </para>
 	</li>
 	<li>	  

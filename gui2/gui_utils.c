@@ -2169,7 +2169,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	create_source(vwin, hsize, vsize, TRUE);
     } else {
 	create_text(vwin, hsize, vsize, FALSE);
-	if (role == PRINT || role == VIEW_MODELTABLE) {
+	if (role == PRINT || role == SCRIPT_OUT ||
+	    role == VIEW_MODELTABLE) {
 	    text_set_word_wrap(vwin->w, 0);
 	}
     }

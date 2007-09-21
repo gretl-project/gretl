@@ -58,7 +58,6 @@ struct parm_ {
 
 static nlspec private_spec;
 static integer one = 1;
-static int genr_err;
 
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
@@ -257,23 +256,23 @@ static int nls_auto_genr (nlspec *s, int i)
 #endif
 
     if (s->genrs == NULL) {
-	genr_err = nls_genr_setup(s);
-	if (genr_err) {
+	s->generr = nls_genr_setup(s);
+	if (s->generr) {
 	    fprintf(stderr, " nls_genr_setup failed\n");
 	}
-	return genr_err;
+	return s->generr;
     }
 
     for (j=0; j<s->naux; j++) {
 #if NLS_DEBUG
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
-	genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
+	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
     }
 
     if (i == 0 && s->nlfunc == NULL) {
 	/* we're done */
-	return genr_err;
+	return s->generr;
     }
 
     j = s->naux + i;
@@ -281,25 +280,25 @@ static int nls_auto_genr (nlspec *s, int i)
     fprintf(stderr, " j = naux + i = %d+%d = %d: executing genr[%d]\n", 
 	    s->naux, i, j, j);
 #endif
-    genr_err = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
+    s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
 
     /* make sure we have a correct pointer to matrix deriv */
-    if (!genr_err && i > 0 && matrix_deriv(s, i-1)) {
+    if (!s->generr && i > 0 && matrix_deriv(s, i-1)) {
 	gretl_matrix *m = genr_get_output_matrix(s->genrs[j]);
 
-	genr_err = check_derivative_matrix(i-1, m, s);
+	s->generr = check_derivative_matrix(i-1, m, s);
     }
 
 #if NLS_DEBUG
-    if (genr_err) {
+    if (s->generr) {
 	int v = genr_get_output_varnum(s->genrs[j]);
 
-	fprintf(stderr, " varnum = %d, err = %d\n", v, genr_err);
-	errmsg(genr_err, s->prn);
+	fprintf(stderr, " varnum = %d, err = %d\n", v, s->generr);
+	errmsg(s->generr, s->prn);
     } 
 #endif
 
-    return genr_err;    
+    return s->generr;    
 }
 
 /* wrappers for the above to enhance comprehensibility below */
@@ -1843,6 +1842,7 @@ static void clear_nlspec (nlspec *spec)
 	spec->genrs = NULL;
     }
     spec->ngenrs = 0;
+    spec->generr = 0;
 
     free(spec->nlfunc);
     spec->nlfunc = NULL;
@@ -2619,7 +2619,6 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "real_nls: starting\n");
 #endif
 
-    genr_err = 0;
     gretl_model_init(&nlsmod);
     gretl_model_smpl_init(&nlsmod, pdinfo);
 
@@ -2734,8 +2733,8 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	}
     } else {
 	if (nlsmod.errcode == 0) { 
-	    if (genr_err != 0) {
-		nlsmod.errcode = genr_err;
+	    if (spec->generr != 0) {
+		nlsmod.errcode = spec->generr;
 	    } else {
 		nlsmod.errcode = E_NOCONV;
 	    }
@@ -2752,7 +2751,6 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_nlspec(spec);
-    genr_err = 0;
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
@@ -2841,6 +2839,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     
     spec->genrs = NULL;
     spec->ngenrs = 0;
+    spec->generr = 0;
     
     spec->coeff = NULL;
     spec->ncoeff = 0;
