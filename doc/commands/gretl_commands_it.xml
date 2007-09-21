@@ -7046,6 +7046,26 @@
             usando la stringa <lit>default</lit> invece di un valore numerico.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>bfgs_maxiter</lit>: un valore intero. Rappresenta il
+            massimo numero di iterazioni per la routine BFGS di gretl,
+            usata da <cmd>mle</cmd>, <cmd>gmm</cmd> e altri stimatori.
+            Se non si raggiunge la convergenza nel numero specificato di
+            iterazioni, il programma produce un messaggio di errore. Il valore
+            predefinito è 500.
+	  </para>
+	</li>	  
+	<li>	  
+	  <para><lit>bfgs_toler</lit>: un valore in virgola mobile, o la stringa
+	    <lit>default</lit>. Viene usato nella routine BFGS di gretl per
+            controllare se si è raggiunta la convergenza. L'algoritmo si ferma
+            appena l'incremento relativo nella funzione obiettivo tra
+            un'iterazione e l'altra è minore di
+	    <lit>bfgs_toler</lit>.  Il valore predefinito è pari alla precisione
+            della macchina elevata alla potenza 3/4; questo valore può essere
+            re-impostato usando la stringa <lit>default</lit> invece di un valore numerico.
+ 	  </para>
+	</li>	  
 	<li>	  
 	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
             uguale a 20. Determina il numero di cifre usate per mostrare i
