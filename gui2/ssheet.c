@@ -31,8 +31,8 @@
 #include <ctype.h>
 #include <float.h>
 
-#define SSDEBUG 2
-#define CELLDEBUG 1
+#define SSDEBUG 0
+#define CELLDEBUG 0
 #define AUTOEDIT 0
 
 typedef enum {
@@ -40,7 +40,8 @@ typedef enum {
     SHEET_SHORT_VARLIST = 1 << 1,
     SHEET_INSERT_OBS_OK = 1 << 2,
     SHEET_ADD_OBS_OK    = 1 << 3,
-    SHEET_USE_COMMA     = 1 << 4
+    SHEET_USE_COMMA     = 1 << 4,
+    SHEET_MOVE_UP       = 1 << 5
 } SheetFlags;
 
 enum {
@@ -199,27 +200,6 @@ static char *single_underscores (char *targ, const char *src)
     return targ;
 }
 
-#if 0 /* complicated, not ready yet */
-
-static void 
-set_matrix_value_label (Spreadsheet *sheet, GtkTreePath *path,
-			GtkTreeViewColumn *column)
-{
-    char valstr[48];
-    int i, j;
-    gint *idx;
-
-    idx = gtk_tree_path_get_indices(path);
-    i = idx[0];
-    j = atoi(gtk_tree_view_column_get_title(column)) - 1;
-
-    sprintf(valstr, "%.*g", DBL_DIG, 
-	    gretl_matrix_get(sheet->matrix, i, j));
-    gtk_entry_set_text(GTK_ENTRY(sheet->entry), valstr);
-}
-
-#endif
-
 static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
@@ -228,12 +208,6 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
     gchar *rstr;
     const gchar *cstr;
     char tmp[VNAMELEN];
-
-#if 0
-    if (sheet->matrix != NULL) {
-	set_matrix_value_label(sheet, path, column);
-    }
-#endif
 
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, 0, &rstr, -1);
@@ -256,10 +230,14 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     gint nextrow, colnum;
 
-    nextrow = gtk_tree_path_get_indices(path)[0] + 1;
+    if (sheet->flags & SHEET_MOVE_UP) {
+	nextrow = gtk_tree_path_get_indices(path)[0] - 1;
+    } else {
+	nextrow = gtk_tree_path_get_indices(path)[0] + 1;
+    }
 
-    /* go to next row, if possible... */
-    if (nextrow < sheet->datarows) {
+    /* go to "next" row, if possible... */
+    if (nextrow >= 0 && nextrow < sheet->datarows) {
 	GtkTreePath *newpath;
 	gchar pstr[8];
 
@@ -412,8 +390,6 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	maybe_update_store(sheet, new_text, path_string);
 	g_free(new_text);
     }
-
-    sheet->entry = NULL;
 
     return FALSE;
 }
@@ -1452,10 +1428,22 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_expand(column, expand);
 }
 
+static gint 
+nullify_sheet_entry (GtkWidget *w, Spreadsheet *sheet)
+{
+    sheet->entry = NULL;
+    return 0;
+}
+
 static gint catch_edit_key (GtkWidget *view, GdkEventKey *key, 
 			    Spreadsheet *sheet)
 {
-    fprintf(stderr, "key = %d\n", (int) key->keyval);
+    if (key->keyval == GDK_Up) {
+	sheet->flags |= SHEET_MOVE_UP;
+    } else {
+	sheet->flags &= ~SHEET_MOVE_UP;
+    }
+
     return 0;
 }
 
@@ -1466,6 +1454,8 @@ void cell_edit_start (GtkCellRenderer *r,
 {
     if (GTK_IS_ENTRY(ed)) {
 	sheet->entry = GTK_WIDGET(ed);
+	g_signal_connect(G_OBJECT(ed), "destroy",
+			 G_CALLBACK(nullify_sheet_entry), sheet);
 	g_signal_connect(G_OBJECT(ed), "key_press_event",
 			 G_CALLBACK(catch_edit_key), sheet);
     }    
@@ -1483,7 +1473,6 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     sheet->dumbcell = r;
 
     r = gtk_cell_renderer_text_new();
-    fprintf(stderr, "r is at %p\n", (void *) r);
     g_object_set(r, "ypad", 1, 
 		 "xalign", 1.0, 
 		 "editable", TRUE, 
@@ -1634,9 +1623,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
 		gchar *pathstr = gtk_tree_path_to_string(oldpath);
 
-#if 0 /* not right yet */
 		sheet_cell_edited(NULL, pathstr, txt, sheet);
-#endif
 		g_free(pathstr);
 	    }
 	    gtk_tree_path_free(oldpath);
@@ -2122,14 +2109,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 					      "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
     gtk_widget_show(sheet->locator);
-
-#if 0 /* not ready */
-    if (sheet->matrix != NULL) {  
-	sheet->entry = gtk_entry_new(); 
-	gtk_box_pack_start(GTK_BOX(status_box), sheet->entry, FALSE, FALSE, 0);
-	gtk_widget_show(sheet->entry);
-    }
-#endif
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
