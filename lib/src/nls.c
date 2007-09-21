@@ -2568,6 +2568,11 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	err = nlspec_add_aux(s, line);
     }
 
+    if (err) {
+	/* remember to clean up! */
+	clear_nlspec(s);
+    }
+
     return err;
 }
 
