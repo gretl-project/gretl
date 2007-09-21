@@ -309,6 +309,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define USES_LISTSEP(c) (c == AR || \
                          c == ARBOND || \
                          c == ARMA || \
+                         c == COINT2 || \
                          c == EQUATION || \
                          c == HECKIT || \
                          c == GARCH || \

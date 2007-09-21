@@ -1472,22 +1472,26 @@ int johansen_get_eigenvalues (gretl_matrix *S00,
 int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
-    gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
-    int n = jvar->neqns;
+    int p1 = jvar->jinfo->R1->cols;
+    int p = jvar->neqns;
     int err = 0;
 
-    S00 = gretl_matrix_copy(jvar->jinfo->S00);
-    if (S00 == NULL) {
+    jvar->jinfo->Beta = gretl_matrix_alloc(p1, p);
+    jvar->jinfo->Alpha = gretl_matrix_alloc(p, p);
+    evals = gretl_vector_alloc(p);
+
+    if (jvar->jinfo->Beta == NULL ||
+	jvar->jinfo->Alpha == NULL ||
+	evals == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	err = johansen_get_eigenvalues(S00, 
-				       jvar->jinfo->S01, 
-				       jvar->jinfo->S11,
-				       &jvar->jinfo->Beta,
-				       &evals, 0);
+	err = gretl_matrix_SVD_johansen_solve(jvar->jinfo->R0, 
+					      jvar->jinfo->R1,
+					      evals, jvar->jinfo->Beta, 
+					      jvar->jinfo->Alpha, 0);
     }
 
     if (err) {
@@ -1497,15 +1501,11 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	compute_coint_test(jvar, evals, prn);
 
 	if (!(opt & OPT_Q)) {
-	    err = compute_alpha(jvar->jinfo);
-	    if (!err) {
-		print_beta_and_alpha(jvar, evals, n, pdinfo, prn);
-		print_long_run_matrix(jvar, pdinfo, prn);
-	    }
+	    print_beta_and_alpha(jvar, evals, p, pdinfo, prn);
+	    print_long_run_matrix(jvar, pdinfo, prn);
 	}
     }
 
-    gretl_matrix_free(S00);
     gretl_matrix_free(evals);
 
     return err;

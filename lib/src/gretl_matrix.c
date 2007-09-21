@@ -5379,18 +5379,22 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     r = (jrank == 0)? p : jrank;
 
     if (r < 1 || r > p) {
+	fprintf(stderr, "Johansen SVD: r is wrong (%d)\n", r);
 	return E_NONCONF;
     }
 
-    if (evals != NULL && gretl_vector_get_length(evals) != r) {
+    if (evals != NULL && gretl_vector_get_length(evals) < r) {
+	fprintf(stderr, "Johansen SVD: evals is too short\n");
 	return E_NONCONF;
-    }    
+    } 
 
     if (B != NULL && (B->rows != p1 || B->cols != p)) {
+	fprintf(stderr, "Johansen SVD: B is wrong size\n");
 	return E_NONCONF;
     }
 
     if (A != NULL && (A->rows != p || A->cols != p)) {
+	fprintf(stderr, "Johansen SVD: A is wrong size\n");
 	return E_NONCONF;
     }    
 
