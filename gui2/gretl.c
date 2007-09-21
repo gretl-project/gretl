@@ -1293,6 +1293,28 @@ void populate_varlist (void)
     variable_menu_state(TRUE);
 }
 
+void mdata_select_last_var (void)
+{
+    GtkTreeIter iter, last;
+    GtkTreeStore *store;
+    GtkTreeSelection *select;
+
+    store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    while (1) {
+	last = iter;
+	if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+	    iter = last;
+	    break;
+	}
+    }
+
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    gtk_tree_selection_unselect_all(select);
+    gtk_tree_selection_select_iter(select, &iter);
+}
+
 static gint 
 compare_var_ids (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
 		 gpointer p)

@@ -108,6 +108,8 @@ int print_object_var (const char *oname, const char *param,
 
 int gretl_reserved_word (const char *str);
 
+int genr_special_word (const char *s);
+
 /* following functions used in nls.c */
 
 int genr_is_print (const GENERATOR *p);

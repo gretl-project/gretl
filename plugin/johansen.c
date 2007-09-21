@@ -2001,7 +2001,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     return err;
 }
 
-/* Here we prep the system with the intial eigen-analysis, then
+/* Here we prep the system with the initial eigen-analysis, then
    basically hand over to jrestrict.c */
 
 static int j_estimate_general (GRETL_VAR *jvar, 

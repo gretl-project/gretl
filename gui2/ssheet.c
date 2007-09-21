@@ -31,8 +31,8 @@
 #include <ctype.h>
 #include <float.h>
 
-#define SSDEBUG 0
-#define CELLDEBUG 0
+#define SSDEBUG 2
+#define CELLDEBUG 1
 #define AUTOEDIT 0
 
 typedef enum {
@@ -52,9 +52,7 @@ typedef struct {
     GtkWidget *view;
     GtkWidget *win;
     GtkWidget *locator;
-#if 0
     GtkWidget *entry;
-#endif
     GtkWidget *popup;
     GtkWidget *save;
     GtkItemFactory *ifac;
@@ -351,6 +349,37 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
     gretl_matrix_set(sheet->matrix, i, j, atof(new_text));
 }
 
+static void 
+maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
+		    const gchar *path_string)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeModel *model = gtk_tree_view_get_model(view);
+    GtkTreeViewColumn *column;
+    GtkTreePath *path;
+    GtkTreeIter iter;
+    gchar *old_text;
+    gint colnum;
+
+    gtk_tree_view_get_cursor(view, NULL, &column);
+    colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+    path = gtk_tree_path_new_from_string(path_string);
+    gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
+
+    if (old_text != NULL && strcmp(old_text, new_text)) {
+	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+			   colnum, new_text, -1);
+	if (sheet->matrix != NULL) {
+	    update_sheet_matrix_element(sheet, new_text, path_string, colnum);
+	}
+	sheet_set_modified(sheet, TRUE);
+    }
+    move_to_next_cell(sheet, path, column);
+    gtk_tree_path_free(path);
+    g_free(old_text);
+}
+
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *user_text,
@@ -358,6 +387,10 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 {
     gchar *new_text = NULL;
     int err = 0;
+
+#if CELLDEBUG
+    fprintf(stderr, "sheet_cell_edited\n");
+#endif
 
     if (sheet->matrix == NULL && 
 	(!strcmp(user_text, "na") || !strcmp(user_text, "NA"))) {
@@ -376,33 +409,11 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
     }
 
     if (!err && new_text != NULL) {
-	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-	GtkTreeModel *model = gtk_tree_view_get_model(view);
-	GtkTreeViewColumn *column;
-	GtkTreePath *path;
-	GtkTreeIter iter;
-	gchar *old_text;
-	gint colnum;
-
-	gtk_tree_view_get_cursor(view, NULL, &column);
-	colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
-	path = gtk_tree_path_new_from_string(path_string);
-	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
-
-	if (old_text != NULL && strcmp(old_text, new_text)) {
-	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			       colnum, new_text, -1);
-	    if (sheet->matrix != NULL) {
-		update_sheet_matrix_element(sheet, new_text, path_string, colnum);
-	    }
-	    sheet_set_modified(sheet, TRUE);
-	}
-	move_to_next_cell(sheet, path, column);
-	gtk_tree_path_free(path);
-	g_free(old_text);
+	maybe_update_store(sheet, new_text, path_string);
 	g_free(new_text);
     }
+
+    sheet->entry = NULL;
 
     return FALSE;
 }
@@ -1441,6 +1452,25 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_expand(column, expand);
 }
 
+static gint catch_edit_key (GtkWidget *view, GdkEventKey *key, 
+			    Spreadsheet *sheet)
+{
+    fprintf(stderr, "key = %d\n", (int) key->keyval);
+    return 0;
+}
+
+void cell_edit_start (GtkCellRenderer *r,
+		      GtkCellEditable *ed,
+		      gchar *path,
+		      Spreadsheet *sheet)
+{
+    if (GTK_IS_ENTRY(ed)) {
+	sheet->entry = GTK_WIDGET(ed);
+	g_signal_connect(G_OBJECT(ed), "key_press_event",
+			 G_CALLBACK(catch_edit_key), sheet);
+    }    
+}
+
 static void create_sheet_cell_renderers (Spreadsheet *sheet)
 {
     GtkCellRenderer *r;
@@ -1453,10 +1483,15 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
     sheet->dumbcell = r;
 
     r = gtk_cell_renderer_text_new();
+    fprintf(stderr, "r is at %p\n", (void *) r);
     g_object_set(r, "ypad", 1, 
 		 "xalign", 1.0, 
-		 "editable", TRUE, NULL);
-    g_signal_connect(G_OBJECT(r), "edited",
+		 "editable", TRUE, 
+		 "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
+		 NULL);
+    g_signal_connect(r, "editing-started",
+		     G_CALLBACK(cell_edit_start), sheet);
+    g_signal_connect(r, "edited",
 		     G_CALLBACK(sheet_cell_edited), sheet);
     sheet->datacell = r;
 }
@@ -1582,11 +1617,30 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     if (mods & GDK_BUTTON1_MASK) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
 	GtkTreePath *path = NULL;
+	GtkTreePath *oldpath = NULL;
 	GtkTreeViewColumn *column = NULL;
+	GtkTreeViewColumn *oldcol = NULL;
 
 #if CELLDEBUG
 	fprintf(stderr, "Got button 1 click\n");
 #endif
+
+	/* where's the cursor at present? */
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view),
+				 &oldpath, &oldcol);
+
+	if (oldpath != NULL) {
+	    if (oldcol != NULL && sheet->entry != NULL) {
+		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
+		gchar *pathstr = gtk_tree_path_to_string(oldpath);
+
+#if 0 /* not right yet */
+		sheet_cell_edited(NULL, pathstr, txt, sheet);
+#endif
+		g_free(pathstr);
+	    }
+	    gtk_tree_path_free(oldpath);
+	}
 
 	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
 				      (gint) bevent->x, 
@@ -1607,8 +1661,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    } else {
 		/* otherwise start editing on clicked cell */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
-					 path, column, TRUE); /* ?? */
-		ret = TRUE; /* ?? */
+					 path, column, TRUE); 
+		gtk_widget_grab_focus(sheet->view);
+		ret = TRUE;
 	    }
 	}
 	gtk_tree_path_free(path);
@@ -1805,9 +1860,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->view = NULL;
     sheet->win = NULL;
     sheet->locator = NULL;
-#if 0
     sheet->entry = NULL;
-#endif
     sheet->popup = NULL;
     sheet->ifac = NULL;
     sheet->save = NULL;
@@ -1888,13 +1941,9 @@ static void empty_dataset_guard (void)
 
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
-    int resp;
-
     if (sheet->modified) {
-	resp = yes_no_dialog ("gretl", 
-			      (sheet->matrix != NULL)? _("Save changes?") :
-			      _("Do you want to save changes you have\n"
-				"made to the current data set?"), 1);
+	int resp = yes_no_dialog ("gretl", _("Save changes?"), 1);
+
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet(NULL, sheet);
 	} else if (resp == GRETL_CANCEL || resp == -1) {

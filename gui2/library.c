@@ -3162,27 +3162,48 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     }
 }
 
+static int starts_with_type_word (const char *s)
+{
+    int n = strlen(s);
+
+    if (n > 7 && (!strncmp(s, "series ", 7) ||
+		  !strncmp(s, "scalar ", 7) ||
+		  !strncmp(s, "matrix ", 7))) {
+	return 1;
+    }
+
+    return 0;
+}
+
 void do_genr (GtkWidget *w, dialog_t *dlg) 
 {
-    const gchar *buf = edit_dialog_get_text(dlg);
-    char test[8];
+    const gchar *s = edit_dialog_get_text(dlg);
+    int err, edit = 0;
 
-    if (buf == NULL) return;
+    if (s == NULL) return;
 
-    while (isspace((unsigned char) *buf)) buf++;
-    sscanf(buf, "%7s", test);
+    while (isspace((unsigned char) *s)) s++;
 
-    if (!strcmp(test, "series")) {
-	gretl_command_sprintf("%s", buf);
+    if (starts_with_type_word(s)) {
+	gretl_command_strcpy(s);
+    } else if (strchr(s, '=') == NULL && !genr_special_word(s)) {
+	/* bare varname? */
+	gretl_command_sprintf("series %s = NA", s);
+	edit = 1;
     } else {
-	gretl_command_sprintf("genr %s", buf);
+	gretl_command_sprintf("genr %s", s);
     }
 
     if (check_and_record_command()) {
 	return;
     }
 
-    finish_genr(NULL, dlg);
+    err = finish_genr(NULL, dlg);
+
+    if (edit && !err) {
+	mdata_select_last_var();
+	show_spreadsheet(SHEET_EDIT_VARLIST);
+    }
 }
 
 void do_model_genr (GtkWidget *w, dialog_t *dlg) 

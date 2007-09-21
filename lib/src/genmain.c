@@ -95,7 +95,7 @@ static void gen_write_warning (const parser *p, PRN *prn)
 static void gen_write_label (parser *p, int oldv)
 {
     char tmp[MAXLABEL];
-    const char *src;
+    const char *src = "";
     size_t len = 0;
 
     if (p->targ != NUM && p->targ != VEC) {
@@ -124,7 +124,7 @@ static void gen_write_label (parser *p, int oldv)
 	src = p->lh.label;
     } else if (*p->lh.label != '\0' && dollar_node(p->tree)) {
 	src = p->lh.label;
-    } else {
+    } else if (p->rhs != NULL && strcmp(p->rhs, "NA")) {
 	src = p->rhs;
     }
 
@@ -302,6 +302,21 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return ret;
 }
 
+int genr_special_word (const char *s)
+{
+    if (!strcmp(s, "dummy") ||
+	!strcmp(s, "timedum") ||
+	!strcmp(s, "unitdum") ||
+	!strcmp(s, "time") ||
+	!strcmp(s, "index") ||
+	!strcmp(s, "unit") ||
+	!strcmp(s, "weekday")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int gen_special (const char *s, const char *line,
 			double ***pZ, DATAINFO *pdinfo, 
 			PRN *prn, parser *p)
@@ -407,13 +422,7 @@ static int is_gen_special (const char *s, char *spec, const char **rem)
     s += 5;
     while (*s == ' ') s++;
 
-    if (!strcmp(s, "dummy") || 
-	!strcmp(s, "timedum") || 
-	!strcmp(s, "unitdum") || 
-	!strcmp(s, "time") || 
-	!strcmp(s, "index") || 
-	!strcmp(s, "unit") || 
-	!strcmp(s, "weekday")) {
+    if (genr_special_word(s)) {
 	strcpy(spec, s);
 	*rem = s;
 	return 1;

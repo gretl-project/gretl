@@ -3354,6 +3354,10 @@ void print_summary (const Summary *summ,
     int len, maxlen = 0;
     int i, vi, lineno;
 
+    if (summ->list == NULL || summ->list[0] == 0) {
+	return;
+    }
+
     if (summ->list[0] == 1) {
 	print_summary_single(summ, 0, pdinfo, prn);
 	return;
@@ -3509,42 +3513,35 @@ Summary *summary (const int *list, const double **Z,
 		  const DATAINFO *pdinfo, PRN *prn) 
 {
     Summary *s;
-    int i, vi, sn, gn;
+    int i, vi, ni, nmax;
 
     s = summary_new(list);
     if (s == NULL) {
 	return NULL;
     }
 
+    nmax = pdinfo->t2 - pdinfo->t1 + 1;
+
     for (i=0; i<s->list[0]; i++)  {
 	double x0;
 
 	vi = s->list[i + 1];
+	ni = good_obs(Z[vi] + pdinfo->t1, nmax, &x0);
 
-	sn = pdinfo->t2 - pdinfo->t1 + 1;
-	gn = good_obs(Z[vi] + pdinfo->t1, sn, &x0);
-
-	if (gn < sn) {
+	if (ni < nmax) {
 	    s->missing = 1;
 	}
 
-	if (gn > s->n) {
-	    s->n = gn;
+	if (ni > s->n) {
+	    s->n = ni;
 	}
 
-	if (sn < 2) { 
-	    /* zero or one observations */
-	    if (s->n == 0) {
-		pprintf(prn, _("Dropping %s: sample range contains no valid "
-			"observations\n"), pdinfo->varname[vi]);
-	    } else {
-		pprintf(prn, _("Dropping %s: sample range has only one "
-			"obs, namely %g\n"), pdinfo->varname[vi], x0);
-	    }
+	if (ni == 0) { 
+	    pprintf(prn, _("Dropping %s: sample range contains no valid "
+			   "observations\n"), pdinfo->varname[vi]);
 	    gretl_list_delete_at_pos(s->list, i + 1);
 	    if (s->list[0] == 0) {
-		free_summary(s);
-		return NULL;
+		return s;
 	    } else {
 		i--;
 		continue;
