@@ -3169,7 +3169,7 @@ static void vecm_opt_changed (GtkWidget *w, selector *sr)
     }
 }
 
-static void build_vec_radios (selector *sr)
+static void build_vec_options (selector *sr)
 {
     GtkWidget *hbox, *combo;
     GList *optlist = NULL;
@@ -3221,7 +3221,7 @@ static void build_selector_radios (selector *sr)
     } else if (sr->code == SPEARMAN) {
 	build_rankcorr_radios(sr);
     } else {
-	build_vec_radios(sr);
+	build_vec_options(sr);
     }
 }
 
