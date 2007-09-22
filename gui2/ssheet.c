@@ -41,12 +41,20 @@ typedef enum {
     SHEET_INSERT_OBS_OK = 1 << 2,
     SHEET_ADD_OBS_OK    = 1 << 3,
     SHEET_USE_COMMA     = 1 << 4,
-    SHEET_MOVE_UP       = 1 << 5
+    SHEET_MOVE_UP       = 1 << 5,
+    SHEET_EDITING       = 1 << 6
 } SheetFlags;
 
 enum {
     SHEET_AT_END,
     SHEET_AT_POINT
+};
+
+struct edit_state {
+    int row;
+    int col;
+    int pos;
+    char *s;
 };
 
 typedef struct {
@@ -74,9 +82,10 @@ typedef struct {
     SheetFlags flags;
     guint cid;
     guint point;
+    struct edit_state e_state;
 } Spreadsheet;
 
-#define MATRIX_DIGITS DBL_DIG /* or 6? */
+#define MATRIX_DIGITS DBL_DIG
 
 static void sheet_add_var_callback (gpointer data, guint code, GtkWidget *w);
 static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w);
@@ -144,6 +153,27 @@ static GtkItemFactoryEntry matrix_items[] = {
     { N_("/Transform/_Divide by scalar"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_DIVIDE, NULL, GNULL },
 };
+
+static void edit_state_clear (Spreadsheet *sheet)
+{
+    sheet->e_state.row = -1;
+    sheet->e_state.col = -1;
+    sheet->e_state.pos = -1;
+    g_free(sheet->e_state.s);
+    sheet->e_state.s = NULL;
+    sheet->flags &= ~SHEET_EDITING;
+}
+
+static void edit_state_set (Spreadsheet *sheet,
+			    int i, int j, int p,
+			    const char *s)
+{
+    sheet->e_state.row = i;
+    sheet->e_state.col = j;
+    sheet->e_state.pos = p;
+    sheet->e_state.s = g_strdup(s);
+    sheet->flags |= SHEET_EDITING;
+}
 
 static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 {
@@ -1663,6 +1693,75 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     return ret;
 }
 
+static void edit_state_rebuild (Spreadsheet *sheet)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeViewColumn *col;
+    GtkTreePath *path;
+    gchar pstr[8];
+
+    sprintf(pstr, "%d", sheet->e_state.row);
+    path = gtk_tree_path_new_from_string(pstr);
+    col = gtk_tree_view_get_column(view, sheet->e_state.col);
+
+    gtk_tree_view_set_cursor(view, path, col, TRUE);
+
+    if (sheet->entry != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(sheet->entry),
+			   sheet->e_state.s);
+	gtk_editable_set_position(GTK_EDITABLE(sheet->entry),
+				  sheet->e_state.pos);
+    }
+
+    gtk_tree_path_free(path);
+}
+
+static gboolean enter_sheet (GtkWidget *w, GdkEventCrossing *e,
+			     Spreadsheet *sheet)
+{
+    if (sheet->flags & SHEET_EDITING) {
+	if (sheet->entry == NULL) {
+	    edit_state_rebuild(sheet);
+	}
+	edit_state_clear(sheet);
+    }
+
+    return FALSE;
+}
+
+static gboolean leave_sheet (GtkWidget *w, GdkEventCrossing *e,
+			     Spreadsheet *sheet)
+{
+    if (sheet->entry != NULL) {
+	const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
+	int pos = gtk_editable_get_position(GTK_EDITABLE(sheet->entry));
+	GtkTreePath *path = NULL;
+	GtkTreeViewColumn *col = NULL;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view),
+				 &path, &col);
+
+	if (path != NULL) {
+	    gchar *pathstr = gtk_tree_path_to_string(path);
+	    int i = atoi(pathstr);
+
+	    if (col != NULL) {
+		gpointer p = g_object_get_data(G_OBJECT(col), "colnum");
+		int j;
+
+		if (p != NULL) {
+		    j = GPOINTER_TO_INT(p);
+		    edit_state_set(sheet, i, j, pos, txt);
+		}
+	    }
+	    g_free(pathstr);
+	}
+	gtk_tree_path_free(path);
+    }
+
+    return FALSE;
+}
+
 static int build_sheet_view (Spreadsheet *sheet)
 {
     GtkListStore *store; 
@@ -1758,6 +1857,10 @@ static int build_sheet_view (Spreadsheet *sheet)
 		     G_CALLBACK(update_cell_position), sheet);
     g_signal_connect(G_OBJECT(view), "key_press_event",
 		     G_CALLBACK(catch_spreadsheet_key), sheet);
+    g_signal_connect(G_OBJECT(view), "leave-notify-event",
+		     G_CALLBACK(leave_sheet), sheet);
+    g_signal_connect(G_OBJECT(view), "enter-notify-event",
+		     G_CALLBACK(enter_sheet), sheet);
 
     /* attach to sheet struct */
     sheet->view = view;
@@ -1783,6 +1886,8 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 	/* delete the copied matrix */
 	gretl_matrix_free(sheet->matrix);
     }
+
+    g_free(sheet->e_state.s);
 
     free(sheet);
     *psheet = NULL;
@@ -1837,6 +1942,13 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
+static void edit_state_init (struct edit_state *e)
+{
+    e->row = -1;
+    e->col = -1;
+    e->s = NULL;
+}
+
 static Spreadsheet *spreadsheet_new (SheetCmd c)
 {
     Spreadsheet *sheet;
@@ -1865,6 +1977,8 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->oldmat = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
+
+    edit_state_init(&sheet->e_state);
 
     sheet->mname[0] = '\0';
 
