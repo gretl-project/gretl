@@ -3136,38 +3136,66 @@ static void build_coint_radios (selector *sr)
     }
 }
 
+static const char *vecm_opt_strings[] = {
+    N_("No constant"),
+    N_("Restricted constant"),
+    N_("Unrestricted constant"),
+    N_("Restricted trend"),
+    N_("Unrestricted trend"),
+    NULL
+};
+
+static gretlopt vecm_opts[] = { 
+    OPT_N, 
+    OPT_R, 
+    OPT_NONE, 
+    OPT_A, 
+    OPT_T 
+};
+
+static void vecm_opt_changed (GtkWidget *w, selector *sr)
+{
+    const char *s = gtk_entry_get_text(GTK_ENTRY(w));
+    int i;
+
+    if (s != NULL && *s != '\0') {
+        for (i=0; vecm_opt_strings[i] != NULL; i++) {
+            if (!strcmp(s, _(vecm_opt_strings[i]))) {
+                sr->opts |= vecm_opts[i];
+            } else {
+		sr->opts &= ~vecm_opts[i];
+	    }
+        }
+    }
+}
+
 static void build_vec_radios (selector *sr)
 {
-    GtkWidget *button = NULL;
-    GSList *group = NULL;
-    const char *opt_strs[] = {
-	N_("No constant"),
-	N_("Restricted constant"),
-	N_("Unrestricted constant"),
-	N_("Restricted trend"),
-	N_("Unrestricted trend"),
-	NULL
-    };
-    gretlopt opts[] = { 
-	OPT_N, 
-	OPT_R, 
-	OPT_NONE, 
-	OPT_A, 
-	OPT_T 
-    };
-    int i, deflt = 0;
+    GtkWidget *hbox, *combo;
+    GList *optlist = NULL;
+    int i;
 
-    vbox_add_hsep(sr->vbox);
-
-    for (i=0; opt_strs[i] != NULL; i++) {
-	if (button != NULL) {
-	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	} else {
-	    group = NULL;
-	}
-	button = gtk_radio_button_new_with_label(group, _(opt_strs[i]));
-	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i], 0);
+    for (i=0; vecm_opt_strings[i] != NULL; i++) {
+	optlist = g_list_append(optlist, _(vecm_opt_strings[i]));
     }
+
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), optlist); 
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
+		       _(vecm_opt_strings[2]));
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), 
+			      FALSE);
+    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
+		     G_CALLBACK(vecm_opt_changed), sr);
+    gtk_widget_show(combo);
+    g_list_free(optlist);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+    gtk_widget_show(combo);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
 }
 
 static void build_selector_radios (selector *sr)
