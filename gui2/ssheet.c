@@ -963,11 +963,12 @@ static void build_sheet_popup (Spreadsheet *sheet)
 
 /* the following is connected to the "cursor-changed" signal */
 
-static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
+static void update_cell_position (GtkTreeView *view, 
+				  Spreadsheet *sheet)
 {
     GtkTreePath *path = NULL;
     GtkTreeViewColumn *column;
-    static gint oldrow, oldcol;
+    static int i0, j0;
 
 #if CELLDEBUG > 1
     fprintf(stderr, "** update_cell_position()\n");
@@ -976,27 +977,27 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
     gtk_tree_view_get_cursor(view, &path, &column);
 
     if (path != NULL && column != NULL) {
-	gint newrow = gtk_tree_path_get_indices(path)[0];
-	gint newcol = 
+	int i = gtk_tree_path_get_indices(path)[0];
+	int j = 
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
 
-	if (newcol == 0) {
+	if (j == 0) {
 	    /* not a data column */
 	    gtk_tree_path_free(path);
-	    return TRUE;
+	    return;
 	}
 
-	if (newrow != oldrow || newcol != oldcol) {
+	if (i != i0 || j != j0) {
 #if CELLDEBUG > 1
-	    fprintf(stderr, " activating cell(%d, %d)\n", newrow, newcol);
+	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
 #endif
 	    set_locator_label(sheet, path, column);
-	    oldrow = newrow;
-	    oldcol = newcol;
-	    gtk_tree_view_set_cursor(view, path, column, FALSE);
+	    i0 = i;
+	    j0 = j;
+	    /* gtk_tree_view_set_cursor(view, path, column, FALSE); */
 	} else {
 #if CELLDEBUG > 1
-	   fprintf(stderr, " still in cell(%d, %d)\n", oldrow, oldcol); 
+	   fprintf(stderr, " still in cell(%d, %d)\n", i0, j0); 
 #endif
 	}
     }
@@ -1004,8 +1005,6 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
     if (path != NULL) {
 	gtk_tree_path_free(path);
     }
-
-    return FALSE; /* is this right? (was TRUE) */
 }
 
 /* put modified values from the spreadsheet into the attached
@@ -1605,8 +1604,10 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 		 "editable", TRUE, 
 		 "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 NULL);
+#if 0
     g_signal_connect(r, "editing-started",
 		     G_CALLBACK(cell_edit_start), sheet);
+#endif
     g_signal_connect(r, "edited",
 		     G_CALLBACK(sheet_cell_edited), sheet);
     sheet->datacell = r;
@@ -1664,8 +1665,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 		return TRUE;
 	    } 
 	}
-    } else if (key->keyval == GDK_Up || key->keyval == GDK_Return ||
-	       key->keyval == GDK_Down) {
+    } else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *column;
 	int i;
@@ -1673,8 +1673,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
 	i = (gtk_tree_path_get_indices(path))[0];
 
-	if ((key->keyval == GDK_Down || key->keyval == GDK_Return) && 
-	    i < sheet->datarows - 1) {
+	if (key->keyval == GDK_Down && i < sheet->datarows - 1) {
 	    gtk_tree_path_next(path);
 	} else if (key->keyval == GDK_Up && i > 0) {
 	    gtk_tree_path_prev(path);
@@ -1777,10 +1776,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 		/* don't respond to a click in a non-data column */
 		ret = TRUE;
 	    } else {
-		/* start editing (?) on clicked cell */
+		/* activate clicked cell */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
-					 path, column, FALSE); /* was TRUE */
-		gtk_widget_grab_focus(sheet->view);
+					 path, column, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1991,6 +1989,7 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     g_free(sheet->e_state.s);
 
     free(sheet);
+
     *psheet = NULL;
 }
 
