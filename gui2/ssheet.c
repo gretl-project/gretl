@@ -412,14 +412,18 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeModel *model = gtk_tree_view_get_model(view);
-    GtkTreeViewColumn *column;
+    GtkTreeViewColumn *col = NULL;
     GtkTreePath *path;
     GtkTreeIter iter;
     gchar *old_text;
     gint colnum;
 
-    gtk_tree_view_get_cursor(view, NULL, &column);
-    colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+    gtk_tree_view_get_cursor(view, NULL, &col);
+    if (col == NULL) {
+	return;
+    }
+
+    colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(col), "colnum"));
     path = gtk_tree_path_new_from_string(path_string);
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
@@ -438,7 +442,7 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
 	sheet_set_modified(sheet, TRUE);
     }
 
-    move_to_next_cell(sheet, path, column);
+    move_to_next_cell(sheet, path, col);
     gtk_tree_path_free(path);
     g_free(old_text);
 }
@@ -594,10 +598,12 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 	GtkTreePath *path;
 
 	gtk_tree_view_get_cursor(view, &path, NULL);
-	rownum = gtk_tree_path_get_indices(path)[0];
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
-	gtk_list_store_insert(store, &iter, rownum);
-	gtk_tree_path_free(path);
+	if (path != NULL) {
+	    rownum = gtk_tree_path_get_indices(path)[0];
+	    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+	    gtk_list_store_insert(store, &iter, rownum);
+	    gtk_tree_path_free(path);
+	}
     } else {
 	return;
     }
@@ -963,7 +969,7 @@ static void update_cell_position (GtkTreeView *view,
 				  Spreadsheet *sheet)
 {
     GtkTreePath *path = NULL;
-    GtkTreeViewColumn *col;
+    GtkTreeViewColumn *col = NULL;
     static int i0, j0;
 
 #if CELLDEBUG > 1
@@ -1512,6 +1518,10 @@ static void commit_and_move_right (Spreadsheet *sheet,
     gchar *pathstr;
 
     gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view), &path, NULL);
+    if (path == NULL) {
+	return;
+    }
+
     pathstr = gtk_tree_path_to_string(path);
 
 #if CELLDEBUG
@@ -1533,7 +1543,7 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
 	fprintf(stderr, "catch_edit_key: GDK_Up\n");
 #endif
 	sheet->next = NEXT_UP;
-    } else if (key->keyval == GDK_Right) {
+    } else if (key->keyval == GDK_Right && sheet->entry != NULL) {
 	int n, pos = gtk_editable_get_position(GTK_EDITABLE(sheet->entry));
 	const char *s = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
 
@@ -1556,8 +1566,11 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
     return FALSE;
 }
 
-static void nullify_sheet_entry (GtkWidget *w, Spreadsheet *sheet)
+static void nullify_sheet_entry (GtkObject *o, Spreadsheet *sheet)
 {
+#if CELLDEBUG
+    fprintf(stderr, "editing entry destroyed\n");
+#endif
     sheet->entry = NULL;
 }
 
@@ -1570,10 +1583,12 @@ static void cell_edit_start (GtkCellRenderer *r,
     fprintf(stderr, "*** editing-started\n");
 #endif
     if (GTK_IS_ENTRY(ed)) {
+#if 0
 	sheet->entry = GTK_WIDGET(ed);
+#endif
 	g_signal_connect(G_OBJECT(ed), "key_press_event",
 			 G_CALLBACK(catch_sheet_edit_key), sheet);
-	g_signal_connect(G_OBJECT(ed), "destroy",
+	g_signal_connect(GTK_OBJECT(ed), "destroy",
 			 G_CALLBACK(nullify_sheet_entry), sheet);
     }
 }
@@ -1595,7 +1610,7 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 		 "editable", TRUE, 
 		 "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 NULL);
-#if 0
+#if 1
     g_signal_connect(r, "editing-started",
 		     G_CALLBACK(cell_edit_start), sheet);
 #endif
@@ -1644,24 +1659,22 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
     }
 
     if (key->keyval == GDK_Left) {
-	GtkTreeViewColumn *column;
+	GtkTreeViewColumn *col = NULL;
 	gpointer p;
 
-	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), NULL, &column);
-	p = g_object_get_data(G_OBJECT(column), "colnum");
-	if (p != NULL) {
-	    int colnum = GPOINTER_TO_INT(p);
-
-	    if (key->keyval == GDK_Left && colnum == 1) {
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), NULL, &col);
+	if (col != NULL) {
+	    p = g_object_get_data(G_OBJECT(col), "colnum");
+	    if (p != NULL && GPOINTER_TO_INT(p) == 1) {
 		return TRUE;
 	    } 
 	}
     } else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
 	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *column;
+	GtkTreeViewColumn *col = NULL;
 	int i;
 
-	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
 	i = (gtk_tree_path_get_indices(path))[0];
 
 	if (key->keyval == GDK_Down && i < sheet->datarows - 1) {
@@ -1669,7 +1682,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	} else if (key->keyval == GDK_Up && i > 0) {
 	    gtk_tree_path_prev(path);
 	}
-	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, 
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 				 FALSE);
 	gtk_tree_path_free(path);
 	return TRUE;
@@ -1677,16 +1690,15 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	       key->keyval == GDK_minus || key->keyval == GDK_period ||
 	       ((sheet->flags & SHEET_USE_COMMA) && key->keyval == GDK_comma)) {
 	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *column;
+	GtkTreeViewColumn *col = NULL;
 
 #if CELLDEBUG
 	fprintf(stderr, "numeric key: start editing, k = %d\n", key->keyval);
 #endif
 
-	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
-
-	if (path != NULL && column != NULL) {
-	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, 
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
+	if (path != NULL && col != NULL) {
+	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 				     TRUE);
 	    gtk_tree_path_free(path);
 	    manufacture_keystroke(view, key->keyval);
