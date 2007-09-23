@@ -1583,7 +1583,7 @@ static void cell_edit_start (GtkCellRenderer *r,
     fprintf(stderr, "*** editing-started\n");
 #endif
     if (GTK_IS_ENTRY(ed)) {
-#if 0
+#if 0 /* produces "random" broken behaviour */
 	sheet->entry = GTK_WIDGET(ed);
 #endif
 	g_signal_connect(G_OBJECT(ed), "key_press_event",
