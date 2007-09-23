@@ -793,7 +793,8 @@ static void win_ctrl_c (windata_t *vwin)
 
 #endif
 
-static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gboolean
+catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
 
