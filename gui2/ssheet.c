@@ -1776,7 +1776,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 		/* don't respond to a click in a non-data column */
 		ret = TRUE;
 	    } else {
-		/* activate clicked cell */
+		/* activate clicked cell for editing */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
 					 path, column, TRUE);
 		ret = TRUE;
