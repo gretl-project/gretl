@@ -1585,6 +1585,10 @@ static int check_for_scaling (Jwrap *J,
 	return E_ALLOC;
     }
 
+#if 0 /* Sven's Problem #1 */
+    sc[2] = -1;
+#endif
+
     for (i=0; i<R->rows; i++) {
 	if (is_scaling_row(R, q, i, &rcol, &sval)) {
 	    k = rcol / J->p1;

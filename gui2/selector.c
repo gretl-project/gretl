@@ -178,11 +178,16 @@ static int spinner_get_int (GtkWidget *w);
 static int functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 
+static int want_combo (selector *sr)
+{
+    return sr->code == VECM;
+}
+
 static int want_radios (selector *sr)
 {
     int c = sr->code;
 
-    if (c == COINT2 || c == VECM || c == ARMA || c == PANEL || 
+    if (c == COINT2 || c == ARMA || c == PANEL || 
 	c == SCATTERS || c == COINT || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN) {
@@ -2460,6 +2465,10 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgy += 60;
     }
 
+    if (want_combo(sr)) {
+	dlgy += 20;
+    }    
+
     if (code == ARMA && datainfo->pd > 1) {
 	/* seasonal spinners */
 	dlgy += 60;
@@ -3169,7 +3178,7 @@ static void vecm_opt_changed (GtkWidget *w, selector *sr)
     }
 }
 
-static void build_vec_options (selector *sr)
+static void build_vec_combo (selector *sr)
 {
     GtkWidget *hbox, *combo;
     GList *optlist = NULL;
@@ -3220,8 +3229,13 @@ static void build_selector_radios (selector *sr)
 	build_xtab_radios(sr);
     } else if (sr->code == SPEARMAN) {
 	build_rankcorr_radios(sr);
-    } else {
-	build_vec_options(sr);
+    } 
+}
+
+static void build_selector_combo (selector *sr)
+{
+    if (sr->code == VECM) {
+	build_vec_combo(sr);
     }
 }
 
@@ -3543,10 +3557,15 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	build_selector_switches(sr);
     }
 
-    /* and radio buttons for some */
+    /* radio buttons for some */
     if (want_radios(sr)) {
 	build_selector_radios(sr);
     }
+
+    /* drop-down selector for some */
+    if (want_combo(sr)) {
+	build_selector_combo(sr);
+    }    
 
     /* plus lag selection stuff, if relevant */
     if (dataset_lags_ok(datainfo)) {
