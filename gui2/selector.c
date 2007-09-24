@@ -120,13 +120,15 @@ struct _selector {
                          c == WLS || \
                          c == XTAB)
 
-#define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
+#define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM || \
+                         c == COINT2)
 
 #define AUX_LAST(c) (c == TSLS || \
                      c == HECKIT || \
                      c == VAR || \
                      c == VLAGSEL || \
-                     c == VECM)
+                     c == VECM || \
+                     c == COINT2)
 
 #define USE_ZLIST(c) (c == TSLS || c == HECKIT)
 
@@ -135,7 +137,8 @@ struct _selector {
                             (d)->structure == STACKED_TIME_SERIES)
 
 #define select_lags_primary(c) (MODEL_CODE(c))
-#define select_lags_aux(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS || c == HECKIT)
+#define select_lags_aux(c) (c == VAR || c == VECM || c == VLAGSEL || \
+                            c == TSLS || c == HECKIT)
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
 
 static int default_var = -1;
@@ -180,14 +183,16 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 
 static int want_combo (selector *sr)
 {
-    return (sr->code == VECM || sr->code == COINT);
+    return (sr->code == VECM || 
+	    sr->code == COINT ||
+	    sr->code == COINT2);
 }
 
 static int want_radios (selector *sr)
 {
     int c = sr->code;
 
-    if (c == COINT2 || c == ARMA || c == PANEL || 
+    if (c == ARMA || c == PANEL || 
 	c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN) {
@@ -2299,7 +2304,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (sr->code == VAR || sr->code == VLAGSEL) {
 	tmp = gtk_label_new(_("Exogenous variables"));
-    } else if (sr->code == VECM) {
+    } else if (sr->code == VECM || sr->code == COINT2) {
 	tmp = gtk_label_new(_("Exogenous variables"));
     } else if (sr->code == TSLS) {
 	tmp = gtk_label_new(_("Instruments"));
@@ -2400,6 +2405,10 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->code == VECM) {
 	lag_order_spin(sr, right_vbox, LAG_AND_RANK);
+	vbox_add_hsep(right_vbox);
+	primary_rhs_varlist(sr, right_vbox);
+    } else if (sr->code == COINT2) {
+	lag_order_spin(sr, right_vbox, LAG_ONLY);
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->code)) {
@@ -3208,7 +3217,7 @@ static void build_selector_combo (selector *sr)
 {
     if (sr->code == COINT) {
 	build_coint_combo(sr);
-    } else if (sr->code == VECM) {
+    } else if (sr->code == VECM || sr->code == COINT2) {
 	build_vecm_combo(sr);
     }
 }
