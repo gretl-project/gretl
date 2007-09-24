@@ -770,53 +770,81 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     gtk_widget_show(hbox);
 }
 
-static void gmm_option_callback (GtkWidget *w, dialog_t *d)
+static void combo_opt_changed (GtkWidget *w, combo_opts *opts)
 {
-    gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "i"));
+    const char *s = gtk_entry_get_text(GTK_ENTRY(w));
+    int i;
 
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	switch (i) {
-	case 0:
-	    d->opt &= ~OPT_T;
-	    d->opt &= ~OPT_I;
-	    break;
-	case 1:
-	    d->opt |= OPT_T;
-	    d->opt &= ~OPT_I;
-	    break;
-	case 2:
-	    d->opt &= ~OPT_T;
-	    d->opt |= OPT_I;
-	    break;
-	}
+    if (s != NULL && *s != '\0') {
+        for (i=0; opts->strs[i] != NULL; i++) {
+            if (!strcmp(s, _(opts->strs[i]))) {
+                *opts->optp |= opts->vals[i];
+            } else {
+		*opts->optp &= ~opts->vals[i];
+	    }
+        }
     }
 }
 
-static void build_gmm_radios (GtkWidget *vbox, dialog_t *d)
+GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt)
 {
-    GtkWidget *b, *hbox;
-    GSList *group = NULL;
-    const char *strs[] = {
+    GtkWidget *combo;
+    GList *optlist = NULL;
+    int i, ni, n = 0;
+
+    for (i=0; opts->strs[i] != NULL; i++) {
+	optlist = g_list_append(optlist, _(opts->strs[i]));
+	ni = strlen(_(opts->strs[i]));
+	if (ni > n) {
+	    n = ni;
+	}
+    } 
+
+    *opts->optp |= opts->vals[deflt];
+
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), optlist); 
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
+		       _(opts->strs[deflt]));
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), n);
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), 
+			      FALSE);
+    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
+		     G_CALLBACK(combo_opt_changed), opts);
+    g_list_free(optlist);
+
+    return combo;
+}
+
+static void build_gmm_combo (GtkWidget *vbox, dialog_t *d)
+{
+    GtkWidget *combo, *hbox;
+    static const char *strs[] = {
 	N_("One-step estimation"),
 	N_("Two-step estimation"),
-	N_("Iterated estimation")
+	N_("Iterated estimation"),
+	NULL
     };
-    int i;
+    static gretlopt opts[] = {
+	OPT_NONE,
+	OPT_T,
+	OPT_I
+    };
+    static combo_opts gmm_opts;
+    int deflt = 0;
 
-    for (i=0; i<3; i++) {
-	b = gtk_radio_button_new_with_label(group, _(strs[i]));
-	g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(gmm_option_callback), d);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
-	hbox = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-	gtk_widget_show_all(hbox);
-	if (i == 0) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
-	}
-    }
+    gmm_opts.strs = strs;
+    gmm_opts.vals = opts;
+    gmm_opts.optp = &d->opt;
+
+    combo = gretl_opts_combo(&gmm_opts, deflt);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0); /* 5 ? */
+    gtk_widget_show(combo);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);      
 }
 
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
@@ -1044,7 +1072,7 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dialog_option_switch(top_vbox, d, OPT_R);
     } else if (cmdcode == GMM) {
 	dialog_option_switch(top_vbox, d, OPT_V);
-	build_gmm_radios(top_vbox, d);
+	build_gmm_combo(top_vbox, d);
     } else if (cmdcode == RESTRICT && ols_model_window(okptr)) {
 	dialog_option_switch(top_vbox, d, OPT_B);
     } else if (cmdcode == RESTRICT && vecm_model_window(okptr)) {

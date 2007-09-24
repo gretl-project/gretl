@@ -1329,6 +1329,12 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	if (s->oc->step > 1) {
 	    gretl_model_set_int(pmod, "step", s->oc->step);
 	}
+
+	if (s->opt & OPT_T) {
+	    gretl_model_set_int(pmod, "two-step", 1);
+	} else if (s->opt & OPT_I) {
+	    gretl_model_set_int(pmod, "iterated", 1);
+	}
     }
 
  bailout:

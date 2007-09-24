@@ -26,6 +26,14 @@ enum {
     GRETL_DLG_RESIZE = 1 << 2
 };
 
+struct combo_opts_ {
+    gretlopt *optp;
+    gretlopt *vals;
+    const char **strs;
+};
+
+typedef struct combo_opts_ combo_opts;
+
 GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags);
 
@@ -69,5 +77,7 @@ gpointer edit_dialog_get_data (dialog_t *dlg);
 void close_dialog (dialog_t *dlg);
 
 char *entry_box_get_trimmed_text (GtkWidget *w);
+
+GtkWidget *gretl_opts_combo (combo_opts *opts, int deflt);
 
 #endif /* DLGUTILS_H */

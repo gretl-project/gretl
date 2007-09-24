@@ -180,7 +180,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 
 static int want_combo (selector *sr)
 {
-    return sr->code == VECM;
+    return (sr->code == VECM || sr->code == COINT);
 }
 
 static int want_radios (selector *sr)
@@ -188,7 +188,7 @@ static int want_radios (selector *sr)
     int c = sr->code;
 
     if (c == COINT2 || c == ARMA || c == PANEL || 
-	c == SCATTERS || c == COINT || c == ARBOND || 
+	c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN) {
 	return 1;
@@ -3113,91 +3113,65 @@ static void build_xtab_radios (selector *sr)
     sr->radios[2] = b3;
 }
 
-static void build_coint_radios (selector *sr)
+static void build_coint_combo (selector *sr)
 {
-    GtkWidget *button = NULL;
-    GSList *group = NULL;
-    const char *opt_strs[] = {
+    GtkWidget *hbox, *combo;
+    static const char *opt_strs[] = {
         N_("test without constant"),
         N_("test with constant"),
         N_("with constant and trend"),
         N_("with constant and quadratic trend"),
 	NULL
     };
-    gretlopt opts[] = { 
+    static gretlopt opts[] = { 
 	OPT_N, 
 	OPT_NONE, 
 	OPT_T, 
 	OPT_R, 
     };
-    int i, deflt = 0;
+    static combo_opts coint_opts;
+    int deflt = 0;
 
-    vbox_add_hsep(sr->vbox);
+    coint_opts.strs = opt_strs;
+    coint_opts.vals = opts;
+    coint_opts.optp = &sr->opts;
 
-    for (i=0; opt_strs[i] != NULL; i++) {
-	if (button != NULL) {
-	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	} else {
-	    group = NULL;
-	}
-	button = gtk_radio_button_new_with_label(group, _(opt_strs[i]));
-	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i], 0);
-    }
+    combo = gretl_opts_combo(&coint_opts, deflt);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+    gtk_widget_show(combo);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);    
 }
 
-static const char *vecm_opt_strings[] = {
-    N_("No constant"),
-    N_("Restricted constant"),
-    N_("Unrestricted constant"),
-    N_("Restricted trend"),
-    N_("Unrestricted trend"),
-    NULL
-};
-
-static gretlopt vecm_opts[] = { 
-    OPT_N, 
-    OPT_R, 
-    OPT_NONE, 
-    OPT_A, 
-    OPT_T 
-};
-
-static void vecm_opt_changed (GtkWidget *w, selector *sr)
-{
-    const char *s = gtk_entry_get_text(GTK_ENTRY(w));
-    int i;
-
-    if (s != NULL && *s != '\0') {
-        for (i=0; vecm_opt_strings[i] != NULL; i++) {
-            if (!strcmp(s, _(vecm_opt_strings[i]))) {
-                sr->opts |= vecm_opts[i];
-            } else {
-		sr->opts &= ~vecm_opts[i];
-	    }
-        }
-    }
-}
-
-static void build_vec_combo (selector *sr)
+static void build_vecm_combo (selector *sr)
 {
     GtkWidget *hbox, *combo;
-    GList *optlist = NULL;
-    int i;
+    static const char *opt_strs[] = {
+	N_("No constant"),
+	N_("Restricted constant"),
+	N_("Unrestricted constant"),
+	N_("Restricted trend"),
+	N_("Unrestricted trend"),
+	NULL
+    };
+    static gretlopt opts[] = {
+	OPT_N, 
+	OPT_R, 
+	OPT_NONE, 
+	OPT_A, 
+	OPT_T
+    };    
+    static combo_opts vecm_opts;
+    int deflt = 2;
 
-    for (i=0; vecm_opt_strings[i] != NULL; i++) {
-	optlist = g_list_append(optlist, _(vecm_opt_strings[i]));
-    }
+    vecm_opts.strs = opt_strs;
+    vecm_opts.vals = opts;
+    vecm_opts.optp = &sr->opts;
 
-    combo = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(combo), optlist); 
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
-		       _(vecm_opt_strings[2]));
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), 
-			      FALSE);
-    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
-		     G_CALLBACK(vecm_opt_changed), sr);
-    gtk_widget_show(combo);
-    g_list_free(optlist);
+    combo = gretl_opts_combo(&vecm_opts, deflt);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
@@ -3217,8 +3191,6 @@ static void build_selector_radios (selector *sr)
 	build_arbond_radios(sr);
     } else if (sr->code == SCATTERS) {
 	build_scatters_radios(sr);
-    } else if (sr->code == COINT) {
-	build_coint_radios(sr);
     } else if (sr->code == OMIT) {
 	build_omit_test_radios(sr);
     } else if (sr->code == LOGIT || sr->code == PROBIT) {
@@ -3234,8 +3206,10 @@ static void build_selector_radios (selector *sr)
 
 static void build_selector_combo (selector *sr)
 {
-    if (sr->code == VECM) {
-	build_vec_combo(sr);
+    if (sr->code == COINT) {
+	build_coint_combo(sr);
+    } else if (sr->code == VECM) {
+	build_vecm_combo(sr);
     }
 }
 

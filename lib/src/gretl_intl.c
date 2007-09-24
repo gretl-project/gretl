@@ -248,6 +248,7 @@ static const char *gnuplot_encoding_string (void)
     if (gretl_cset_maj == 8859 && 
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
+	 gretl_cset_min == 9 ||
 	 gretl_cset_min == 15)) {
 	sprintf(gp_enc, "iso_%d_%d", gretl_cset_maj, gretl_cset_min);
 	return gp_enc;
@@ -285,6 +286,7 @@ int iso_latin_version (void)
     if (gretl_cset_maj == 8859 &&
 	(gretl_cset_min == 1 || 
 	 gretl_cset_min == 2 ||
+	 gretl_cset_min == 9 ||
 	 gretl_cset_min == 15)) {
 	return gretl_cset_min;
     }

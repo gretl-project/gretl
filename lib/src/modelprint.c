@@ -915,12 +915,14 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("1-step Arellano-Bond");
 	}
     } else if (pmod->ci == GMM) {
-	int s = gretl_model_get_int(pmod, "step");
-
-	if (s > 2) {
-	    return N_("Iterated GMM");
-	} else if (s == 2) {
+	if (gretl_model_get_int(pmod, "two-step")) {
 	    return N_("2-step GMM");
+	} else if (gretl_model_get_int(pmod, "iterated")) {
+	    return N_("Iterated GMM");
+	} else if (gretl_model_get_int(pmod, "step") == 2) {
+	    return N_("2-step GMM");
+	} else if (gretl_model_get_int(pmod, "step") > 2) {
+	    return N_("Iterated GMM");
 	} else {
 	    return N_("1-step GMM");
 	}	
