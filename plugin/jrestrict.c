@@ -1137,9 +1137,26 @@ static int user_switch_init (Jwrap *J, int *uinit)
 
 static void print_switch_iter (Jwrap *J, int i)
 {
+    double wi, wmin = NADBL, wmax = 0;
+
     fprintf(stderr, "Switcher, iteration %d, ll = %.10g\n", i, J->ll);
+    gretl_matrix_print(J->Omega, "J->Omega");
+    gretl_matrix_print(J->iOmega, "J->iOmega");
     gretl_matrix_print(J->beta, "J->beta"); 
     gretl_matrix_print(J->alpha, "J->alpha");
+
+    for (i=0; i<J->p; i++) {
+	wi = fabs(gretl_matrix_get(J->Omega, i, i));
+	if (wi > wmax) {
+	    wmax = wi;
+	}
+	if (wi < wmin) {
+	    wmin = wi;
+	}
+    }
+
+    fprintf(stderr, "Largest/smallest diagonal elements of Omega = "
+	    " %g / %g = %g\n", wmax, wmin, wmax / wmin);
 }
 
 #endif
