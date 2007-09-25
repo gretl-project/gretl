@@ -5,14 +5,16 @@ struct arma_info {
     int yno;         /* ID of dependent variable */
     ArmaFlags flags; /* specification flags */
     int ifc;         /* specification includes a constant? */
-    int p;           /* non-seasonal AR order */
+    int p;           /* max non-seasonal AR order */
     int d;           /* non-seasonal difference */
-    int q;           /* non-seasonal MA order */
+    int q;           /* max non-seasonal MA order */
     int P;           /* seasonal AR order */
     int D;           /* seasonal difference */
     int Q;           /* seasonal MA order */
     char *armask;    /* specific AR lags included */
     char *mamask;    /* specific MA lags included */
+    int np;          /* total non-seasonal AR lags */
+    int nq;          /* total non-seasonal MA lags */
     int maxlag;      /* longest lag in model */
     int nexo;        /* number of other regressors (ARMAX) */
     int nc;          /* total number of coefficients */
@@ -49,6 +51,9 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
 
     ainfo->armask = NULL;
     ainfo->mamask = NULL;
+    
+    ainfo->np = 0;
+    ainfo->nq = 0;
 
     ainfo->maxlag = 0;
     ainfo->ifc = 0;
@@ -70,29 +75,47 @@ static void arma_info_cleanup (struct arma_info *ainfo)
     free(ainfo->dy);
 }
 
-static char *mask_from_vec (const gretl_vector *v, 
-			    int *n, int *err)
-{
-    int mlen = gretl_vector_get_length(v);
-    char *mask;
-    int i, k, ok = 0;
+enum {
+    AR_MASK,
+    MA_MASK
+};
 
-    mask = calloc(*n, 1);
+static char *mask_from_vec (const gretl_vector *v, 
+			    struct arma_info *ainfo,
+			    int m, int *err)
+{
+    int vlen = gretl_vector_get_length(v);
+    int mlen = (m == AR_MASK)? ainfo->p : ainfo->q;
+    int nv = 0, nmax = 0;
+    char *mask;
+    int i, k;
+
+    mask = calloc(mlen, 1);
     if (mask == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (i=0; i<mlen; i++) {
-	k = v->val[i];
-	if (k >= 0 && k <*n) {
+    for (i=0; i<vlen; i++) {
+	k = v->val[i] - 1; /* convert to zero-based */
+	if (k >= 0 && k < mlen) {
 	    mask[k] = 1; 
-	    ok++;
+	    nv++;
+	    if (k + 1 > nmax) {
+		nmax = k + 1;
+	    }
 	}
     }
 
-    if (ok == 0) {
-	*n = 0;
+    if (m == AR_MASK) {
+	ainfo->p = nmax;
+	ainfo->np = nv;
+    } else {
+	ainfo->q = nmax;
+	ainfo->nq = nv;
+    }
+
+    if (nv == 0) {
 	free(mask);
 	mask = NULL;
     }
@@ -100,22 +123,31 @@ static char *mask_from_vec (const gretl_vector *v,
     return mask;
 }
 
-static int arma_make_masks (struct arma_info *ainfo)
+static int arma_make_masks (struct arma_info *ainfo,
+			    int *list)
 {
     const gretl_matrix *m;
     int err = 0;
 
     if (ainfo->p > 0) {
+	ainfo->np = ainfo->p;
 	m = get_arma_ar_vec();
 	if (m != NULL) {
-	    ainfo->armask = mask_from_vec(m, &ainfo->p, &err);
+	    ainfo->armask = mask_from_vec(m, ainfo, AR_MASK, &err);
+	}
+	if (ainfo->p < list[1]) {
+	    list[1] = ainfo->p;
 	}
     }
 
     if (ainfo->q > 0 && !err) {
+	ainfo->nq = ainfo->q;
 	m = get_arma_ma_vec();
 	if (m != NULL) {
-	    ainfo->mamask = mask_from_vec(m, &ainfo->q, &err);
+	    ainfo->mamask = mask_from_vec(m, ainfo, MA_MASK, &err);
+	}
+	if (ainfo->q < list[1]) {
+	    list[2] = ainfo->q;
 	}
     }
 
@@ -571,6 +603,12 @@ static int check_arma_list (int *list, gretlopt opt,
 	ainfo->Q = list[5];
     }
 
+    /* now that we have p and q we can check for masked lags */
+
+    if (!err) {
+	err = arma_make_masks(ainfo, list);
+    }
+
     /* If there's an explicit constant in the list here, we'll remove
        it, since it is added implicitly later.  But if we're supplied
        with OPT_N (meaning: no intercept) we'll flag this by
@@ -650,6 +688,12 @@ static int check_arima_list (int *list, gretlopt opt,
 	ainfo->P = list[5];
 	ainfo->D = list[6];
 	ainfo->Q = list[7];
+    }
+
+    /* now that we have p and q we can check for masked lags */
+
+    if (!err) {
+	err = arma_make_masks(ainfo, list);
     }
 
     /* If there's an explicit constant in the list here, we'll remove

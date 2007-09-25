@@ -157,29 +157,38 @@ static void bounds_checker_cleanup (void)
     ma_out_of_bounds(NULL, NULL, NULL);
 }
 
+#define AR_included(a,i) (a->armask == NULL || a->armask[i])
+#define MA_included(a,i) (a->mamask == NULL || a->mamask[i])
+
 static void do_MA_partials (double *drv,
 			    struct arma_info *ainfo,
 			    const double *theta,
 			    const double *Theta,
 			    int t)
 {
-    int i, j, s, p;
+    int i, j, k, s, p;
 
+    k = 0;
     for (i=0; i<ainfo->q; i++) {
-	s = t - (i + 1);
-	if (s >= 0) {
-	    drv[t] -= theta[i] * drv[s];
+	if (MA_included(ainfo, i)) {
+	    s = t - (i + 1);
+	    if (s >= 0) {
+		drv[t] -= theta[k++] * drv[s];
+	    }
 	}
     }
 
-    for (i=0; i<ainfo->Q; i++) {
-	s = t - ainfo->pd * (i + 1);
+    for (j=0; j<ainfo->Q; j++) {
+	s = t - ainfo->pd * (j + 1);
 	if (s >= 0) {
-	    drv[t] -= Theta[i] * drv[s];
-	    for (j=0; j<ainfo->q; j++) {
-		p = s - (j + 1);
-		if (p >= 0) {
-		    drv[t] -= Theta[i] * theta[j] * drv[p];
+	    drv[t] -= Theta[j] * drv[s];
+	    k = 0;
+	    for (i=0; i<ainfo->q; i++) {
+		if (MA_included(ainfo, i)) {
+		    p = s - (i + 1);
+		    if (p >= 0) {
+			drv[t] -= Theta[j] * theta[k++] * drv[p];
+		    }
 		}
 	    }
 	}
@@ -194,7 +203,7 @@ static int arma_ll (double *coeff,
 		    model_info *arma,
 		    int do_score)
 {
-    int i, j, s, t;
+    int i, j, k, s, t;
     int t1 = model_info_get_t1(arma);
     int t2 = model_info_get_t2(arma);
     int n = t2 - t1 + 1;
@@ -219,16 +228,16 @@ static int arma_ll (double *coeff,
 
     /* pointers to blocks of coefficients */
     phi = coeff + ainfo->ifc;
-    Phi = phi + ainfo->p;
+    Phi = phi + ainfo->np;
     theta = Phi + ainfo->P;
-    Theta = theta + ainfo->q;
+    Theta = theta + ainfo->nq;
     beta = Theta + ainfo->Q;
 
     /* pointers to blocks of derivatives */
     de_a = de + ainfo->ifc;
-    de_sa = de_a + ainfo->p;
+    de_sa = de_a + ainfo->np;
     de_m = de_sa + ainfo->P;
-    de_sm = de_m + ainfo->q;
+    de_sm = de_m + ainfo->nq;
     de_r = de_sm + ainfo->Q;
 
 #if ARMA_DEBUG
@@ -255,38 +264,52 @@ static int arma_ll (double *coeff,
 	} 
 
 	/* non-seasonal AR component */
+	k = 0;
 	for (i=0; i<ainfo->p; i++) {
-	    s = t - (i + 1);
-	    e[t] -= phi[i] * y[s];
+	    if (AR_included(ainfo, i)) {
+		s = t - (i + 1);
+		e[t] -= phi[k++] * y[s];
+	    }
 	}
 
 	/* seasonal AR component plus interactions */
-	for (i=0; i<ainfo->P; i++) {
-	    s = t - ainfo->pd * (i + 1);
-	    e[t] -= Phi[i] * y[s];
-	    for (j=0; j<ainfo->p; j++) {
-		p = s - (j + 1);
-		e[t] += Phi[i] * phi[j] * y[p];
+	for (j=0; j<ainfo->P; j++) {
+	    s = t - ainfo->pd * (j + 1);
+	    e[t] -= Phi[j] * y[s];
+	    k = 0;
+	    for (i=0; i<ainfo->p; i++) {
+		if (AR_included(ainfo, i)) {
+		    p = s - (i + 1);
+		    e[t] += Phi[j] * phi[k++] * y[p];
+		}
 	    }
 	}
 
 	/* non-seasonal MA component */
+	k = 0;
 	for (i=0; i<ainfo->q; i++) {
-	    s = t - (i + 1);
-	    if (s >= t1) {
-		e[t] -= theta[i] * e[s];
+	    if (MA_included(ainfo, i)) {
+		s = t - (i + 1);
+		if (s >= t1) {
+		    e[t] -= theta[k] * e[s];
+		}
+		k++;
 	    }
 	}
 
 	/* seasonal MA component plus interactions */
-	for (i=0; i<ainfo->Q; i++) {
-	    s = t - ainfo->pd * (i + 1);
+	for (j=0; j<ainfo->Q; j++) {
+	    s = t - ainfo->pd * (j + 1);
 	    if (s >= t1) {
-		e[t] -= Theta[i] * e[s];
-		for (j=0; j<ainfo->q; j++) {
-		    p = s - (j + 1);
-		    if (p >= t1) {
-			e[t] -= Theta[i] * theta[j] * e[p];
+		e[t] -= Theta[j] * e[s];
+		k = 0;
+		for (i=0; i<ainfo->q; i++) {
+		    if (MA_included(ainfo, i)) {
+			p = s - (i + 1);
+			if (p >= t1) {
+			    e[t] -= Theta[j] * theta[k] * e[p];
+			}
+			k++;
 		    }
 		}
 	    }
@@ -320,19 +343,24 @@ static int arma_ll (double *coeff,
 	    }
 
 	    /* non-seasonal AR terms (de_a) */
-	    for (j=0; j<ainfo->p; j++) {
-		lag = j + 1;
+	    k = 0;
+	    for (i=0; i<ainfo->p; i++) {
+		if (!AR_included(ainfo, i)) {
+		    continue;
+		}
+		lag = i + 1;
 		if (t >= lag) {
-		    de_a[j][t] = -y[t-lag];
+		    de_a[k][t] = -y[t-lag];
 		    /* cross-partial with seasonal AR */
-		    for (i=0; i<ainfo->P; i++) {
-			xlag = lag + ainfo->pd * (i + 1);
+		    for (j=0; j<ainfo->P; j++) {
+			xlag = lag + ainfo->pd * (j + 1);
 			if (t >= xlag) {
-			    de_a[j][t] += Phi[i] * y[t-xlag];
+			    de_a[k][t] += Phi[j] * y[t-xlag];
 			}
 		    }
-		    do_MA_partials(de_a[j], ainfo, theta, Theta, t);
+		    do_MA_partials(de_a[k], ainfo, theta, Theta, t);
 		}
+		k++;
 	    }
 
 	    /* seasonal AR terms (de_sa) */
@@ -341,10 +369,14 @@ static int arma_ll (double *coeff,
 		if (t >= lag) {
 		    de_sa[j][t] = -y[t-lag];
 		    /* cross-partial with non-seasonal AR */
+		    k = 0;
 		    for (i=0; i<ainfo->p; i++) {
-			xlag = lag + (i + 1);
-			if (t >= xlag) {
-			    de_sa[j][t] += phi[i] * y[t-xlag];
+			if (AR_included(ainfo, i)) {
+			    xlag = lag + (i + 1);
+			    if (t >= xlag) {
+				de_sa[j][t] += phi[k] * y[t-xlag];
+			    }
+			    k++;
 			}
 		    }
 		    do_MA_partials(de_sa[j], ainfo, theta, Theta, t);
@@ -352,19 +384,24 @@ static int arma_ll (double *coeff,
 	    }
 
 	    /* non-seasonal MA terms (de_m) */
-	    for (j=0; j<ainfo->q; j++) {
-		lag = j + 1;
+	    k = 0;
+	    for (i=0; i<ainfo->q; i++) {
+		if (!MA_included(ainfo, i)) {
+		    continue;
+		}
+		lag = i + 1;
 		if (t >= lag) {
-		    de_m[j][t] = -e[t-lag];
+		    de_m[k][t] = -e[t-lag];
 		    /* cross-partial with seasonal MA */
-		    for (i=0; i<ainfo->Q; i++) {
-			xlag = lag + ainfo->pd * (i + 1);
+		    for (j=0; j<ainfo->Q; j++) {
+			xlag = lag + ainfo->pd * (j + 1);
 			if (t >= xlag) {
-			    de_m[j][t] -= Theta[i] * e[t-xlag];
+			    de_m[k][t] -= Theta[j] * e[t-xlag];
 			}
 		    }
-		    do_MA_partials(de_m[j], ainfo, theta, Theta, t);
+		    do_MA_partials(de_m[k], ainfo, theta, Theta, t);
 		}
+		k++;
 	    }
 
 	    /* seasonal MA terms (de_sm) */
@@ -373,10 +410,14 @@ static int arma_ll (double *coeff,
 		if (t >= lag) {
 		    de_sm[j][t] = -e[t-lag];
 		    /* cross-partial with non-seasonal MA */
+		    k = 0;
 		    for (i=0; i<ainfo->q; i++) {
-			xlag = lag + (i + 1);
-			if (t >= xlag) {
-			    de_sm[j][t] -= theta[i] * e[t-xlag];
+			if (MA_included(ainfo, i)) {
+			    xlag = lag + (i + 1);
+			    if (t >= xlag) {
+				de_sm[j][t] -= theta[k] * e[t-xlag];
+			    }
+			    k++;
 			}
 		    }
 		    do_MA_partials(de_sm[j], ainfo, theta, Theta, t);
@@ -425,15 +466,15 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 				 const double *coeff)
 {
     const double *phi = coeff + ainfo->ifc;
-    const double *Phi = phi + ainfo->p;
+    const double *Phi = phi + ainfo->np;
     const double *theta = Phi + ainfo->P;
-    const double *Theta = theta + ainfo->q;
+    const double *Theta = theta + ainfo->nq;
 
-    int nr = ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
+    int nr = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
     int pmax, qmax, lmax;
     double *temp = NULL, *temp2 = NULL;
     cmplx *rptr, *roots = NULL;
-    int i;
+    int i, k;
 
     pmax = (ainfo->p > ainfo->P)? ainfo->p : ainfo->P;
     qmax = (ainfo->q > ainfo->Q)? ainfo->q : ainfo->Q;
@@ -459,10 +500,14 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 
     if (ainfo->p > 0) {
 	/* A(L), non-seasonal */
+	k = 0;
 	for (i=0; i<ainfo->p; i++) {
-	    temp[i+1] = -phi[i];
+	    if (AR_included(ainfo, i)) {
+		temp[k+1] = -phi[k];
+		k++;
+	    }
 	}
-	polrt(temp, temp2, ainfo->p, rptr);
+	polrt(temp, temp2, ainfo->np, rptr);
 	rptr += ainfo->p;
     }
 
@@ -477,10 +522,14 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 
     if (ainfo->q > 0) {
 	/* C(L), non-seasonal */
+	k = 0;
 	for (i=0; i<ainfo->q; i++) {
-	    temp[i+1] = theta[i];
+	    if (MA_included(ainfo, i)) {
+		temp[k+1] = theta[k];
+		k++;
+	    }
 	}  
-	polrt(temp, temp2, ainfo->q, rptr);
+	polrt(temp, temp2, ainfo->nq, rptr);
 	rptr += ainfo->q;
     }
 
@@ -1099,10 +1148,12 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     const double *Phi = phi + ainfo->p;
     double narfac = 1.0;
     double sarfac = 1.0;
-    int i;
+    int i, k = 0;
 
     for (i=0; i<ainfo->p; i++) {
-	narfac -= phi[i];
+	if (AR_included(ainfo, i)) {
+	    narfac -= phi[k++];
+	}
     }
 
     for (i=0; i<ainfo->P; i++) {
@@ -2285,10 +2336,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (alist == NULL) {
 	err = E_ALLOC;
     } 
-
-    if (!err) {
-	err = arma_make_masks(&ainfo);
-    }
 
     if (!err) {
 	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);

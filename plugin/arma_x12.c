@@ -784,10 +784,6 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = arma_make_masks(&ainfo);
-    }
-
-    if (!err) {
 	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
     }
 
