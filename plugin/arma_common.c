@@ -509,7 +509,7 @@ static int count_arma_coeffs (struct arma_info *ainfo)
     n = ainfo->P + ainfo->Q + ainfo->nexo + ainfo->ifc;
 
     if (ainfo->armask == NULL) {
-	ainfo->nc += ainfo->p;
+	n += ainfo->p;
     } else {
 	for (i=0; i<ainfo->p; i++) {
 	    if (ainfo->armask[i]) {
@@ -519,7 +519,7 @@ static int count_arma_coeffs (struct arma_info *ainfo)
     }
 
     if (ainfo->mamask == NULL) {
-	ainfo->nc += ainfo->q;
+	n += ainfo->q;
     } else {
 	for (i=0; i<ainfo->q; i++) {
 	    if (ainfo->mamask[i]) {
