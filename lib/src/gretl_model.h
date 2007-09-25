@@ -308,7 +308,9 @@ double coeff_pval (int ci, double x, int df);
 int gretl_model_allocate_params (MODEL *pmod, int k);
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
-				   int yno, int p, int q, int P, int Q, 
+				   int yno, int p, int q, 
+				   const char *pmask, const char *qmask,
+				   int P, int Q, 
 				   int r);
 
 int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,

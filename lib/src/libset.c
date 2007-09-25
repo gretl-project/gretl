@@ -89,6 +89,8 @@ struct set_vars_ {
     int max_verbose;            /* verbose output from maximizer? */
     int vecm_norm;              /* VECM beta normalization */
     gretl_matrix *initvals;     /* for parameter initialization */
+    gretl_matrix *ar_vec;       /* AR lag spec, for ARIMA */
+    gretl_matrix *ma_vec;       /* MA lag spec, for ARIMA */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
@@ -191,6 +193,24 @@ static void print_initvals (const gretl_matrix *ivals, PRN *prn)
     }
 }
 
+static void print_ar_lags (const gretl_matrix *v, PRN *prn)
+{
+    if (v == NULL) {
+	pputs(prn, " ar_lags = auto\n");
+    } else {
+	gretl_matrix_print_to_prn(v, " ar_lags =", prn);
+    }
+}
+
+static void print_ma_lags (const gretl_matrix *v, PRN *prn)
+{
+    if (v == NULL) {
+	pputs(prn, " ma_lags = auto\n");
+    } else {
+	gretl_matrix_print_to_prn(v, " ma_lags =", prn);
+    }
+}
+
 /* check_for_state() returns non-zero if the program options
    state is not readable */
 
@@ -231,6 +251,8 @@ static void state_vars_copy (set_vars *sv)
     sv->max_verbose = state->max_verbose;
     sv->vecm_norm = state->vecm_norm;
     sv->initvals = gretl_matrix_copy(state->initvals);
+    sv->ar_vec = gretl_matrix_copy(state->ar_vec);
+    sv->ma_vec = gretl_matrix_copy(state->ma_vec);
     strcpy(sv->shelldir, state->shelldir);
 
     robust_opts_copy(&sv->ropts);
@@ -260,6 +282,9 @@ static void state_vars_init (set_vars *sv)
     sv->max_verbose = 0;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
+    sv->ar_vec = NULL;
+    sv->ma_vec = NULL;
+
     *sv->shelldir = '\0';
 
     robust_opts_init(&sv->ropts);
@@ -520,6 +545,22 @@ int set_max_verbose (int n)
 	state->max_verbose = n;
 	return 0;
     }
+}
+
+const gretl_matrix *get_arma_ar_vec (void)
+{
+    if (check_for_state()) {
+	return NULL;
+    }
+    return state->ar_vec;
+}
+
+const gretl_matrix *get_arma_ma_vec (void)
+{
+    if (check_for_state()) {
+	return NULL;
+    }
+    return state->ma_vec;
 }
 
 int get_VAR_horizon (void)
@@ -1146,6 +1187,53 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+enum {
+    AR_LAGS,
+    MA_LAGS
+};
+
+static int set_arma_lags (const char *s, const DATAINFO *pdinfo, 
+			  int which, PRN *prn)
+{
+    gretl_matrix *m;
+    char mname[VNAMELEN];
+    int err = 0;
+
+    /* skip past "set arma_{ar|ma}_lags" */
+    s += 16;
+
+    if (sscanf(s, "%15s", mname) != 1 || !strcmp(mname, "auto")) {
+	if (which == AR_LAGS) {
+	    gretl_matrix_free(state->ar_vec);
+	    state->ar_vec = NULL;
+	} else {
+	    gretl_matrix_free(state->ma_vec);
+	    state->ma_vec = NULL;
+	}	    
+    } else {
+	m = get_matrix_by_name(mname);
+	if (m == NULL) {
+	    pprintf(prn, _("'%s': no such matrix\n"), mname);
+	    err = E_DATA;
+	} else if (gretl_vector_get_length(m) == 0) {
+	    pprintf(prn, _("'%s': should be a vector\n"), mname);
+	    err = E_DATA;
+	} else if (which == AR_LAGS) {
+	    state->ar_vec = gretl_matrix_copy(m);
+	    if (state->ar_vec == NULL) {
+		err = E_ALLOC;
+	    }
+	} else {
+	    state->ma_vec = gretl_matrix_copy(m);
+	    if (state->ma_vec == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    return err;
+}
+
 void shelldir_init (void)
 {
     char *test = getcwd(state->shelldir, MAXLEN);
@@ -1344,6 +1432,9 @@ static int display_settings (PRN *prn)
     }
     
     print_initvals(state->initvals, prn);
+    print_ar_lags(state->ar_vec, prn);
+    print_ma_lags(state->ma_vec, prn);
+
 
     if (*state->shelldir) {
 	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
@@ -1363,7 +1454,7 @@ static int display_settings (PRN *prn)
 int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
 		      PRN *prn)
 {
-    char setobj[16], setarg[16], setarg2[16];
+    char setobj[32], setarg[16], setarg2[16];
     int k, nw, err = E_PARSE;
     double x;
 
@@ -1385,6 +1476,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    return set_initvals(line, pdinfo, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
+	} else if (!strcmp(setobj, "arma_ar_lags")) {
+	    return set_arma_lags(line, pdinfo, AR_LAGS, prn);
+	} else if (!strcmp(setobj, "arma_ma_lags")) {
+	    return set_arma_lags(line, pdinfo, MA_LAGS, prn);
 	}
     }
 
@@ -1857,6 +1952,12 @@ static void free_state (set_vars *sv)
 {
     if (sv->initvals != NULL) {
 	gretl_matrix_free(sv->initvals);
+    }
+    if (sv->ar_vec != NULL) {
+	gretl_matrix_free(sv->ar_vec);
+    }
+    if (sv->ma_vec != NULL) {
+	gretl_matrix_free(sv->ma_vec);
     }
 
     free(sv);

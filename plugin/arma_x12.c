@@ -780,15 +780,21 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     alist = gretl_list_copy(list);
     if (alist == NULL) {
-	armod.errcode = E_ALLOC;
-	goto bailout;
+	err = E_ALLOC;
     }
 
-    err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+    if (!err) {
+	err = arma_make_masks(&ainfo);
+    }
+
+    if (!err) {
+	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+    }
+
     if (err) {
 	armod.errcode = err;
 	goto bailout;
-    }
+    }     
 
     /* calculate maximum lag */
     calc_max_lag(&ainfo);
@@ -851,7 +857,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
  bailout:
 
     free(alist);
-    free(ainfo.dy);
+    arma_info_cleanup(&ainfo);
 
     return armod;
 }

@@ -11,6 +11,8 @@ struct arma_info {
     int P;           /* seasonal AR order */
     int D;           /* seasonal difference */
     int Q;           /* seasonal MA order */
+    char *armask;    /* specific AR lags included */
+    char *mamask;    /* specific MA lags included */
     int maxlag;      /* longest lag in model */
     int nexo;        /* number of other regressors (ARMAX) */
     int nc;          /* total number of coefficients */
@@ -45,6 +47,9 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->D = 0;
     ainfo->Q = 0; 
 
+    ainfo->armask = NULL;
+    ainfo->mamask = NULL;
+
     ainfo->maxlag = 0;
     ainfo->ifc = 0;
     ainfo->nexo = 0;
@@ -56,6 +61,65 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->T = pdinfo->n;
 
     ainfo->dy = NULL;
+}
+
+static void arma_info_cleanup (struct arma_info *ainfo)
+{
+    free(ainfo->armask);
+    free(ainfo->mamask);
+    free(ainfo->dy);
+}
+
+static char *mask_from_vec (const gretl_vector *v, 
+			    int *n, int *err)
+{
+    int mlen = gretl_vector_get_length(v);
+    char *mask;
+    int i, k, ok = 0;
+
+    mask = calloc(*n, 1);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<mlen; i++) {
+	k = v->val[i];
+	if (k >= 0 && k <*n) {
+	    mask[k] = 1; 
+	    ok++;
+	}
+    }
+
+    if (ok == 0) {
+	*n = 0;
+	free(mask);
+	mask = NULL;
+    }
+
+    return mask;
+}
+
+static int arma_make_masks (struct arma_info *ainfo)
+{
+    const gretl_matrix *m;
+    int err = 0;
+
+    if (ainfo->p > 0) {
+	m = get_arma_ar_vec();
+	if (m != NULL) {
+	    ainfo->armask = mask_from_vec(m, &ainfo->p, &err);
+	}
+    }
+
+    if (ainfo->q > 0 && !err) {
+	m = get_arma_ma_vec();
+	if (m != NULL) {
+	    ainfo->mamask = mask_from_vec(m, &ainfo->q, &err);
+	}
+    }
+
+    return err;
 }
 
 static int arma_list_y_position (struct arma_info *ainfo)
@@ -233,6 +297,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 
     gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
 				  ainfo->p, ainfo->q, 
+				  ainfo->armask, ainfo->mamask,
 				  ainfo->P, ainfo->Q,
 				  ainfo->nexo);
 }
@@ -437,6 +502,35 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
     return err;
 }
 
+static int count_arma_coeffs (struct arma_info *ainfo)
+{
+    int i, n;
+
+    n = ainfo->P + ainfo->Q + ainfo->nexo + ainfo->ifc;
+
+    if (ainfo->armask == NULL) {
+	ainfo->nc += ainfo->p;
+    } else {
+	for (i=0; i<ainfo->p; i++) {
+	    if (ainfo->armask[i]) {
+		n++;
+	    }
+	}
+    }
+
+    if (ainfo->mamask == NULL) {
+	ainfo->nc += ainfo->q;
+    } else {
+	for (i=0; i<ainfo->q; i++) {
+	    if (ainfo->mamask[i]) {
+		n++;
+	    }
+	}
+    } 
+
+    return n;
+}
+
 static int check_arma_list (int *list, gretlopt opt, 
 			    const double **Z, const DATAINFO *pdinfo,
 			    struct arma_info *ainfo)
@@ -501,8 +595,7 @@ static int check_arma_list (int *list, gretlopt opt,
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
 	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 7 : 4);
-	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
-	    + ainfo->nexo + ainfo->ifc;
+	ainfo->nc = count_arma_coeffs(ainfo);
 	ainfo->yno = (arma_has_seasonal(ainfo))? list[7] : list[4];
     }
 
@@ -583,8 +676,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
 	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 9 : 5);
-	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
-	    + ainfo->nexo + ainfo->ifc;
+	ainfo->nc = count_arma_coeffs(ainfo);
 	ainfo->yno = (arma_has_seasonal(ainfo))? list[9] : list[5];
     }
 

@@ -4057,13 +4057,38 @@ int gretl_model_allocate_params (MODEL *pmod, int k)
     return pmod->errcode;
 }
 
+#define arma_included(m,i) (m == NULL || m[i])
+
+static int count_coeffs (int p, const char *pmask,
+			 int q, const char *qmask,
+			 int P, int Q, int r, int ifc)
+{
+    int i, n = P + Q + r + ifc;
+
+    for (i=0; i<p; i++) {
+	if (arma_included(pmask, i)) {
+	    n++;
+	}
+    }
+
+    for (i=0; i<q; i++) {
+	if (arma_included(qmask, i)) {
+	    n++;
+	}
+    }    
+
+    return n;
+}
+
 /**
  * gretl_model_add_arma_varnames:
  * @pmod: pointer to target model.
  * @pdinfo: dataset information.
  * @yno: ID number of dependent variable.
- * @p: non-seasonal AR order.
- * @q: non-seasonal MA order.
+ * @p: non-seasonal (max) AR order.
+ * @q: non-seasonal (max) MA order.
+ * @pmask: for masking out specific AR lags.
+ * @qmask: for masking out specific MA lags.
  * @P: seasonal AR order.
  * @Q: seasonal MA order.
  * @r: number of exogenous regressors (excluding the constant).
@@ -4075,12 +4100,15 @@ int gretl_model_allocate_params (MODEL *pmod, int k)
  */
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
-				   int yno, int p, int q, int P, int Q, 
+				   int yno, int p, int q, 
+				   const char *pmask, const char *qmask,
+				   int P, int Q, 
 				   int r)
 {
-    int np = p + P + q + Q + r + pmod->ifc;
-    int xstart;
+    int np, xstart;
     int i, j;
+
+    np = count_coeffs(p, pmask, q, qmask, P, Q, r, pmod->ifc);
 
     pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
     if (pmod->depvar == NULL) {
@@ -4106,7 +4134,9 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     for (i=0; i<p; i++) {
-	sprintf(pmod->params[j++], "phi_%d", i + 1);
+	if (arma_included(pmask, i)) {
+	    sprintf(pmod->params[j++], "phi_%d", i + 1);
+	}
     }
 
     for (i=0; i<P; i++) {
@@ -4114,7 +4144,9 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }   
 
     for (i=0; i<q; i++) {
-	sprintf(pmod->params[j++], "theta_%d", i + 1);
+	if (arma_included(qmask, i)) {
+	    sprintf(pmod->params[j++], "theta_%d", i + 1);
+	}
     }
 
     for (i=0; i<Q; i++) {

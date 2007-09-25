@@ -113,6 +113,9 @@ const gretl_matrix *get_init_vals (void);
 int n_init_vals (void);
 void free_init_vals (void);
 
+const gretl_matrix *get_arma_ar_vec (void);
+const gretl_matrix *get_arma_ma_vec (void);
+
 int get_VAR_horizon (void);
 
 int get_bootstrap_replications (void);

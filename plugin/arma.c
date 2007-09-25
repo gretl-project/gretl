@@ -2283,11 +2283,17 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     alist = gretl_list_copy(list);
     if (alist == NULL) {
-	armod.errcode = E_ALLOC;
-	goto bailout;
+	err = E_ALLOC;
+    } 
+
+    if (!err) {
+	err = arma_make_masks(&ainfo);
     }
 
-    err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+    if (!err) {
+	err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
+    }
+
     if (err) {
 	armod.errcode = err;
 	goto bailout;
@@ -2359,7 +2365,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     free(alist);
     free(coeff);
-    free(ainfo.dy);
+    arma_info_cleanup(&ainfo);
 
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
