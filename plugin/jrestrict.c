@@ -499,10 +499,9 @@ struct switcher_ {
     gretl_matrix *K1;     /* holds kronecker product */
     gretl_matrix *K2;     /* holds kronecker product */
     gretl_matrix *TmpL;   /* used only in \phi calculation */
-    gretl_matrix *TmpR;   /* shared temp */
+    gretl_matrix *TmpR;   /* used only in \phi calculation */
     gretl_matrix *TmpR1;  /* used when \alpha is restricted */
     gretl_matrix *Tmprp1; /* r x p1 temp */
-    gretl_matrix *HK2;    /* used in \phi calculation */
 };
 
 static void switcher_free (switcher *s)
@@ -513,7 +512,6 @@ static void switcher_free (switcher *s)
     gretl_matrix_free(s->TmpR);
     gretl_matrix_free(s->TmpR1);
     gretl_matrix_free(s->Tmprp1);
-    gretl_matrix_free(s->HK2);
 }
 
 static int make_lsPi (Jwrap *J)
@@ -557,18 +555,16 @@ static int switcher_init (switcher *s, Jwrap *J)
     s->TmpR = NULL;
     s->TmpR1 = NULL;
     s->Tmprp1 = NULL;
-    s->HK2 = NULL;
 
     clear_gretl_matrix_err();
 
     s->K1 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->r);
     s->K2 = gretl_matrix_alloc(J->p1 * J->r, J->p1 * J->p1);
-    s->TmpR = gretl_matrix_alloc(J->p1 * J->p1, 1);
+    s->TmpR = gretl_matrix_alloc(J->p * J->p1, 1);
     s->Tmprp1 = gretl_matrix_alloc(J->r, J->p1);
 
     if (J->blen > 0) {
 	s->TmpL = gretl_matrix_alloc(J->blen, J->p * J->p1);
-	s->HK2 = gretl_matrix_alloc(J->blen, J->p * J->p1);
     }
 
     err = get_gretl_matrix_err();
@@ -640,7 +636,6 @@ static int update_psi (Jwrap *J, switcher *s)
 
     gretl_matrix_reuse(s->K1, J->p * J->r, J->p * J->r);
     gretl_matrix_reuse(s->K2, J->p * J->r, J->p * J->p1);
-    gretl_matrix_reuse(s->TmpR, J->alen, 1);
 
     /* left-hand chunk */
     gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE, J->S11,
@@ -648,11 +643,6 @@ static int update_psi (Jwrap *J, switcher *s)
     gretl_matrix_kronecker_product(J->iOmega, J->qf1, s->K1);
     gretl_matrix_qform(J->G, GRETL_MOD_TRANSPOSE, s->K1,
 		       J->I00, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(J->I00);
-    if (err) {
-	return err;
-    }
 
     /* right-hand chunk */
     gretl_matrix_multiply_mod(J->beta, GRETL_MOD_TRANSPOSE, 
@@ -662,10 +652,10 @@ static int update_psi (Jwrap *J, switcher *s)
     gretl_matrix_multiply_mod(J->G, GRETL_MOD_TRANSPOSE,
 			      s->K2, GRETL_MOD_NONE,
 			      s->TmpR1, GRETL_MOD_NONE);
-    gretl_matrix_multiply(s->TmpR1, J->lsPi, s->TmpR);
+    gretl_matrix_multiply(s->TmpR1, J->lsPi, J->psi);
 
     /* combine */
-    gretl_matrix_multiply(J->I00, s->TmpR, J->psi);
+    gretl_cholesky_decomp_solve(J->I00, J->psi);
 
     /* update alpha */
     alpha_from_psi(J);
@@ -711,7 +701,6 @@ static int update_phi (Jwrap *J, switcher *s)
 
     gretl_matrix_reuse(s->K1, J->r * J->p1, J->r * J->p1);
     gretl_matrix_reuse(s->K2, J->r * J->p1, J->p * J->p1);
-    gretl_matrix_reuse(s->TmpR, J->p * J->p1, 1);
 
     /* first big inverse */
     gretl_matrix_qform(J->alpha, GRETL_MOD_TRANSPOSE, J->iOmega,
@@ -724,11 +713,6 @@ static int update_phi (Jwrap *J, switcher *s)
 	gretl_matrix_copy_values(J->I11, s->K1);
     }
 
-    err = gretl_invert_symmetric_matrix(J->I11);
-    if (err) {
-	return err;
-    }
-
     /* second chunk */
     gretl_matrix_multiply_mod(J->alpha, GRETL_MOD_TRANSPOSE,
 			      J->iOmega, GRETL_MOD_NONE,
@@ -737,13 +721,13 @@ static int update_phi (Jwrap *J, switcher *s)
     if (J->H != NULL) {
 	gretl_matrix_multiply_mod(J->H, GRETL_MOD_TRANSPOSE,
 				  s->K2, GRETL_MOD_NONE,
-				  s->HK2, GRETL_MOD_NONE);
+				  s->TmpL, GRETL_MOD_NONE);
     } else {
-	gretl_matrix_copy_values(s->HK2, s->K2);
+	gretl_matrix_copy_values(s->TmpL, s->K2);
     }
 
     /* combine first and second chunks */
-    gretl_matrix_multiply(J->I11, s->HK2, s->TmpL);
+    gretl_cholesky_decomp_solve(J->I11, s->TmpL);
 
     /* right-hand chunk */
     gretl_matrix_copy_values(s->TmpR, J->lsPi);
@@ -822,14 +806,16 @@ static int switcher_ll (Jwrap *J)
     return err;
 }
 
-static int form_I00 (Jwrap *J, int invert)
+static int form_I00_inverse (Jwrap *J)
 {
     gretl_matrix *K = NULL;
     int err = 0;
 
-    J->I00 = gretl_matrix_alloc(J->alen, J->alen);
     if (J->I00 == NULL) {
-	return E_ALLOC;
+	J->I00 = gretl_matrix_alloc(J->alen, J->alen);
+	if (J->I00 == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     gretl_matrix_qform(J->beta, GRETL_MOD_TRANSPOSE, J->S11,
@@ -846,7 +832,7 @@ static int form_I00 (Jwrap *J, int invert)
 	}
     }
 
-    if (!err && invert) {
+    if (!err) {
 	err = gretl_invert_symmetric_matrix(J->I00);
     }
 
@@ -855,7 +841,7 @@ static int form_I00 (Jwrap *J, int invert)
     return err;
 }
 
-static int form_I11 (Jwrap *J, int invert)
+static int form_I11_inverse (Jwrap *J)
 {
     gretl_matrix *K = NULL;
     int err = 0;
@@ -864,10 +850,12 @@ static int form_I11 (Jwrap *J, int invert)
 	return 0;
     }
 
-    J->I11 = gretl_matrix_alloc(J->blen, J->blen);
     if (J->I11 == NULL) {
-	return E_ALLOC;
-    }    
+	J->I11 = gretl_matrix_alloc(J->blen, J->blen);
+	if (J->I11 == NULL) {
+	    return E_ALLOC;
+	} 
+    }   
 
     gretl_matrix_qform(J->alpha, GRETL_MOD_TRANSPOSE, J->iOmega,
 		       J->qf1, GRETL_MOD_NONE);
@@ -875,15 +863,17 @@ static int form_I11 (Jwrap *J, int invert)
     K = gretl_matrix_kronecker_product_new(J->qf1, J->S11, &err);
 
     if (!err) {
-	if (J->H0 != NULL) {
-	    gretl_matrix_qform(J->H0, GRETL_MOD_TRANSPOSE, K,
+	const gretl_matrix *H = (do_scaling(J))? J->H0 : J->H;
+
+	if (H != NULL) {
+	    gretl_matrix_qform(H, GRETL_MOD_TRANSPOSE, K,
 			       J->I11, GRETL_MOD_NONE);
 	} else {
 	    gretl_matrix_copy_values(J->I11, K);
 	}
     }
 
-    if (!err && invert) {
+    if (!err) {
 	err = gretl_invert_symmetric_matrix(J->I11);
     }
 
@@ -985,10 +975,8 @@ static int variance_from_info_matrix (Jwrap *J, GRETL_VAR *v)
 	J->I11 = NULL;
     }
 
-    if (J->I11 == NULL) {
-	err = form_I11(J, 1);
-	if (err) return err;
-    }
+    err = form_I11_inverse(J);
+    if (err) return err;
 
     gretl_matrix_divide_by_scalar(J->I11, v->df);
 
@@ -1019,15 +1007,8 @@ static int variance_from_info_matrix (Jwrap *J, GRETL_VAR *v)
 
     /* variance of alpha */
 
-    if (do_scaling(J)) {
-	gretl_matrix_free(J->I00);
-	J->I00 = NULL;
-    }
-
-    if (J->I00 == NULL) {
-	err = form_I00(J, 1);
-	if (err) return err;
-    }    
+    err = form_I00_inverse(J);
+    if (err) return err;
 
     gretl_matrix_divide_by_scalar(J->I00, v->df);
 

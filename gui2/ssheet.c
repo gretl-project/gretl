@@ -40,8 +40,7 @@ typedef enum {
     SHEET_INSERT_OBS_OK = 1 << 2,
     SHEET_ADD_OBS_OK    = 1 << 3,
     SHEET_USE_COMMA     = 1 << 4,
-    SHEET_EDITING       = 1 << 5,
-    SHEET_MODIFIED      = 1 << 6
+    SHEET_MODIFIED      = 1 << 5
 } SheetFlags;
 
 enum {
@@ -53,14 +52,8 @@ enum {
     NEXT_DOWN,
     NEXT_RIGHT,
     NEXT_UP,
-    NEXT_LEFT
-};
-
-struct edit_state {
-    int row;
-    int col;
-    int pos;
-    char *s;
+    NEXT_LEFT,
+    NEXT_SAME
 };
 
 typedef struct {
@@ -88,7 +81,6 @@ typedef struct {
     SheetFlags flags;
     guint cid;
     guint point;
-    struct edit_state e_state;
 } Spreadsheet;
 
 #define MATRIX_DIGITS DBL_DIG
@@ -159,27 +151,6 @@ static GtkItemFactoryEntry matrix_items[] = {
     { N_("/Transform/_Divide by scalar"), NULL, matrix_edit_callback, 
       MATRIX_EDIT_DIVIDE, NULL, GNULL },
 };
-
-static void edit_state_clear (Spreadsheet *sheet)
-{
-    sheet->e_state.row = -1;
-    sheet->e_state.col = -1;
-    sheet->e_state.pos = -1;
-    g_free(sheet->e_state.s);
-    sheet->e_state.s = NULL;
-    sheet->flags &= ~SHEET_EDITING;
-}
-
-static void edit_state_set (Spreadsheet *sheet,
-			    int i, int j, int p,
-			    const char *s)
-{
-    sheet->e_state.row = i;
-    sheet->e_state.col = j;
-    sheet->e_state.pos = p;
-    sheet->e_state.s = g_strdup(s);
-    sheet->flags |= SHEET_EDITING;
-}
 
 #define sheet_is_modified(s) (s->flags & SHEET_MODIFIED)
 
@@ -307,6 +278,11 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     gint newrow;
+
+    if (sheet->next == NEXT_SAME) {
+	sheet->next = NEXT_DOWN;
+	return;
+    }
 
     if (sheet->next == NEXT_RIGHT) {
 #if CELLDEBUG
@@ -1583,7 +1559,7 @@ static void cell_edit_start (GtkCellRenderer *r,
     fprintf(stderr, "*** editing-started\n");
 #endif
     if (GTK_IS_ENTRY(ed)) {
-#if 0 /* produces "random" broken behaviour */
+#if 1 /* produces "random" broken behaviour */
 	sheet->entry = GTK_WIDGET(ed);
 #endif
 	g_signal_connect(G_OBJECT(ed), "key_press_event",
@@ -1798,75 +1774,6 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     return ret;
 }
 
-static void edit_state_rebuild (Spreadsheet *sheet)
-{
-    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreeViewColumn *col;
-    GtkTreePath *path;
-    gchar pstr[8];
-
-    sprintf(pstr, "%d", sheet->e_state.row);
-    path = gtk_tree_path_new_from_string(pstr);
-    col = gtk_tree_view_get_column(view, sheet->e_state.col);
-
-    gtk_tree_view_set_cursor(view, path, col, TRUE);
-
-    if (sheet->entry != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(sheet->entry),
-			   sheet->e_state.s);
-	gtk_editable_set_position(GTK_EDITABLE(sheet->entry),
-				  sheet->e_state.pos);
-    }
-
-    gtk_tree_path_free(path);
-}
-
-static gboolean enter_sheet (GtkWidget *w, GdkEventCrossing *e,
-			     Spreadsheet *sheet)
-{
-    if (sheet->flags & SHEET_EDITING) {
-	if (sheet->entry == NULL) {
-	    edit_state_rebuild(sheet);
-	}
-	edit_state_clear(sheet);
-    }
-
-    return FALSE;
-}
-
-static gboolean leave_sheet (GtkWidget *w, GdkEventCrossing *e,
-			     Spreadsheet *sheet)
-{
-    if (sheet->entry != NULL) {
-	const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
-	int pos = gtk_editable_get_position(GTK_EDITABLE(sheet->entry));
-	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *col = NULL;
-
-	gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view),
-				 &path, &col);
-
-	if (path != NULL) {
-	    gchar *pathstr = gtk_tree_path_to_string(path);
-	    int i = atoi(pathstr);
-
-	    if (col != NULL) {
-		gpointer p = g_object_get_data(G_OBJECT(col), "colnum");
-		int j;
-
-		if (p != NULL) {
-		    j = GPOINTER_TO_INT(p);
-		    edit_state_set(sheet, i, j, pos, txt);
-		}
-	    }
-	    g_free(pathstr);
-	}
-	gtk_tree_path_free(path);
-    }
-
-    return FALSE;
-}
-
 static int build_sheet_view (Spreadsheet *sheet)
 {
     GtkListStore *store; 
@@ -1960,12 +1867,8 @@ static int build_sheet_view (Spreadsheet *sheet)
 
     g_signal_connect(G_OBJECT(view), "cursor-changed",
 		     G_CALLBACK(update_cell_position), sheet);
-    g_signal_connect(G_OBJECT(view), "key_press_event",
+    g_signal_connect(G_OBJECT(view), "key-press-event",
 		     G_CALLBACK(catch_spreadsheet_key), sheet);
-    g_signal_connect(G_OBJECT(view), "leave-notify-event",
-		     G_CALLBACK(leave_sheet), sheet);
-    g_signal_connect(G_OBJECT(view), "enter-notify-event",
-		     G_CALLBACK(enter_sheet), sheet);
 
     /* attach to sheet struct */
     sheet->view = view;
@@ -1991,8 +1894,6 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
 	/* delete the copied matrix */
 	gretl_matrix_free(sheet->matrix);
     }
-
-    g_free(sheet->e_state.s);
 
     free(sheet);
 
@@ -2048,13 +1949,6 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
-static void edit_state_init (struct edit_state *e)
-{
-    e->row = -1;
-    e->col = -1;
-    e->s = NULL;
-}
-
 static Spreadsheet *spreadsheet_new (SheetCmd c)
 {
     Spreadsheet *sheet;
@@ -2083,8 +1977,6 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
     sheet->oldmat = NULL;
     sheet->cmd = c;
     sheet->flags = 0;
-
-    edit_state_init(&sheet->e_state);
 
     sheet->mname[0] = '\0';
 
@@ -2252,6 +2144,31 @@ static void size_data_window (Spreadsheet *sheet)
     gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
 }
 
+/* hack to avoid losing a not-yet-committed edit to a cell
+   in the sheet, on choosing Save, Apply, OK, etc */
+
+gboolean 
+button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
+{
+    if (sheet->entry != NULL) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
+	GtkTreePath *path;
+	gchar *pathstr;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view), &path, NULL);
+
+	if (path != NULL) {
+	    pathstr = gtk_tree_path_to_string(path);
+	    sheet->next = NEXT_SAME;
+	    sheet_cell_edited(NULL, pathstr, s, sheet);
+	    g_free(pathstr);
+	    gtk_tree_path_free(path);
+	}
+    }
+
+    return FALSE;
+}
+
 static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 				   int block) 
 {
@@ -2367,6 +2284,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     if (sheet->matrix != NULL && sheet->oldmat == NULL) {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(get_data_from_sheet), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
@@ -2375,12 +2294,16 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     } else if (sheet->matrix != NULL) {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(matrix_save_as), sheet);
 	gtk_widget_show(tmp);
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(get_data_from_sheet), sheet);
 	gtk_widget_show(tmp);
@@ -2389,18 +2312,24 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(maybe_exit_sheet), sheet);
 	gtk_widget_show(tmp);
     } else {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(get_data_from_sheet), sheet);
 	gtk_widget_show(tmp);
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(button_entered), sheet);
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(maybe_exit_sheet), sheet);
 	gtk_widget_show(tmp);
