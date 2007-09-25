@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-14 18:00+0100\n"
+"PO-Revision-Date: 2007-09-25 21:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1850,7 +1850,7 @@ msgstr "B³êdna maksymalna warto¶æ (asymptota) dla zmiennej zale¿nej"
 
 #: lib/src/discrete.c:1235
 msgid "Fisher's Exact Test"
-msgstr ""
+msgstr "Test Fisher's Exact"
 
 #: lib/src/estimate.c:138 plugin/mp_ols.c:1051
 #, c-format
@@ -2554,7 +2554,7 @@ msgstr "Sprzeczne opcje"
 
 #: lib/src/gretl_errors.c:66
 msgid "The restrictions do not identify the parameters"
-msgstr ""
+msgstr "The restrictions do not identify the parameters"
 
 #: lib/src/gretl_func.c:2134
 msgid "No description available"
@@ -2562,7 +2562,7 @@ msgstr "Niedostêpny opis"
 
 #: lib/src/gretl_func.c:2789
 msgid "You can't change the name of a function here"
-msgstr ""
+msgstr "Niemo¿liwa zmiana nazwy funkcji teraz"
 
 #: lib/src/gretl_func.c:2796 lib/src/gretl_func.c:2802
 msgid "Error compiling function"
@@ -4817,7 +4817,7 @@ msgstr "NLS: brak zbie¿no¶ci po %d iteracjach"
 
 #: lib/src/nls.c:2295
 msgid "Analytical derivatives cannot be used with GMM"
-msgstr ""
+msgstr "Analtyczne pochodne niemo¿liwe do u¿ycia w GMM"
 
 #: lib/src/nls.c:2542
 msgid "No regression function has been specified"
@@ -5215,7 +5215,7 @@ msgstr ""
 
 #: lib/src/printout.c:889
 msgid "Recursive one-step ahead forecasts"
-msgstr ""
+msgstr "Rekursywne jednookresowe prognozy"
 
 #: lib/src/printout.c:891
 #, c-format
@@ -5224,12 +5224,17 @@ msgid ""
 "estimating the model over the sample %s to t-1, and (b) the\n"
 "regressors evaluated at time t."
 msgstr ""
+"Prognoza dla okresu n+1 bazuje na wspó³czynnikach modelu \n"
+"estymowanych dla próby od %s do n \n"
+"i regresorach dla okresu n+1."
 
 #: lib/src/printout.c:895
 msgid ""
 "This is truly a forecast only if all the stochastic regressors\n"
 "are in fact lagged values."
 msgstr ""
+"To jest prawdziwa prognoza tylko wtedy, je¿eli wszystkie regresory\n"
+"zmiennych opó¼nionych s± wed³ug danych faktycznych."
 
 #: lib/src/printout.c:901
 #, c-format
@@ -5243,7 +5248,7 @@ msgstr "B³±d standardowy reszt = %g\n"
 
 #: lib/src/printout.c:914
 msgid "error"
-msgstr "B³±d w danych"
+msgstr "B³±d"
 
 #: lib/src/printout.c:1369
 #, c-format
@@ -7699,7 +7704,7 @@ msgstr "Liczba obserwacji do dodania:"
 
 #: gui2/dialogs.c:2251
 msgid "select variable"
-msgstr "wybór zmiennej"
+msgstr "wybrana zmienna"
 
 #: gui2/dialogs.c:2381 gui2/dialogs.c:2734 gui2/dialogs.c:3727
 #: gui2/dialogs.c:3883 gui2/menustate.c:495
@@ -8486,7 +8491,7 @@ msgstr "Przypisanie warto¶ci (opcjonalnie):"
 
 #: gui2/fncall.c:666
 msgid "selection (or new variable)"
-msgstr "wybór zmiennej (lub nowa zmienna)"
+msgstr "wybrana zmienna (lub nowa zmienna)"
 
 #: gui2/fncall.c:916
 msgid "Function package is broken"
@@ -9150,11 +9155,11 @@ msgstr "/Narzêdzia/Wyznaczanie warto¶ci _p"
 
 #: gui2/gretl.c:283
 msgid "/Tools/_Distribution graphs"
-msgstr ""
+msgstr "/Narzêdzia/_Wykresy rozk³adów"
 
 #: gui2/gretl.c:285
 msgid "/Tools/_Test statistic calculator"
-msgstr "/Narzêdzia/Kalkulator te_stów"
+msgstr "/Narzêdzia/Testy _parametryczne"
 
 #: gui2/gretl.c:287
 msgid "/Tools/_Nonparametric tests"
@@ -9610,7 +9615,7 @@ msgstr "/Model/Inne _liniowe modele/MNK _wysokiej precyzji..."
 
 #: gui2/gretl.c:485
 msgid "/Model/_Time series"
-msgstr "/Model/_Szeregi czasowe"
+msgstr "/Model/Modele _szeregów czasowych"
 
 #: gui2/gretl.c:486
 msgid "/Model/_Panel"
@@ -9666,7 +9671,7 @@ msgstr "/Model/Metoda najwiêkszej wiarygodno¶ci..."
 
 #: gui2/gretl.c:502
 msgid "/Model/_GMM..."
-msgstr "?Model/Metod momentów GMM..."
+msgstr "/Model/Metoda momentów GMM..."
 
 #: gui2/gretl.c:503
 msgid "/Model/_Simultaneous equations..."
@@ -11400,55 +11405,55 @@ msgstr "B³±d flip dla \"%s\"\n"
 
 #: gui2/menustate.c:128
 msgid "/Model/Time series/_Cochrane-Orcutt..."
-msgstr "/Model/Szeregi czasowe/_Cochrane-Orcutt (UMNK)..."
+msgstr "/Model/Modele szeregów czasowych/_Cochrane-Orcutt (UMNK)..."
 
 #: gui2/menustate.c:129
 msgid "/Model/Time series/_Hildreth-Lu..."
-msgstr "/Model/Szeregi czasowe/_Hildreth-Lu (UMNK)..."
+msgstr "/Model/Modele szeregów czasowych/_Hildreth-Lu (UMNK)..."
 
 #: gui2/menustate.c:130
 msgid "/Model/Time series/_Prais-Winsten..."
-msgstr "/Model/Szeregi czasowe/_Prais-Winsten (UMNK)..."
+msgstr "/Model/Modele szeregów czasowych/_Prais-Winsten (UMNK)..."
 
 #: gui2/menustate.c:131
 msgid "/Model/Time series/_Autoregressive estimation..."
-msgstr "/Model/Szeregi czasowe/_Uogólniony Cochrane-Orcutt (UMNK)..."
+msgstr "/Model/Modele szeregów czasowych/_Uogólniony Cochrane-Orcutt (UMNK)..."
 
 #: gui2/menustate.c:132
 msgid "/Model/Time series/ARI_MA..."
-msgstr "/Model/Szeregi czasowe/model ARI_MA..."
+msgstr "/Model/Modele szeregów czasowych/model ARI_MA..."
 
 #: gui2/menustate.c:133
 msgid "/Model/Time series/_ARCH..."
-msgstr "/Model/Szeregi czasowe/model _ARCH..."
+msgstr "/Model/Modele szeregów czasowych/model _ARCH..."
 
 #: gui2/menustate.c:134
 msgid "/Model/Time series/_GARCH..."
-msgstr "/Model/Szeregi czasowe/model _GARCH..."
+msgstr "/Model/Modele szeregów czasowych/model _GARCH..."
 
 #: gui2/menustate.c:135
 msgid "/Model/Time series/_Vector Autoregression..."
-msgstr "/Model/Szeregi czasowe/model _wektorowej autoregresji (VAR)..."
+msgstr "/Model/Modele szeregów czasowych/model _wektorowej autoregresji (VAR)..."
 
 #: gui2/menustate.c:136
 msgid "/Model/Time series/VAR _lag selection..."
-msgstr "/Model/Szeregi czasowe/wybór rzêdu opó¼nienia dla modelu VAR..."
+msgstr "/Model/Modele szeregów czasowych/wybór rzêdu opó¼nienia dla modelu VAR..."
 
 #: gui2/menustate.c:137
 msgid "/Model/Time series/V_ECM..."
-msgstr "/Model/Szeregi czasowe/wektorowy model _korekty b³êdem (VECM)..."
+msgstr "/Model/Modele szeregów czasowych/wektorowy model _korekty b³êdem (VECM)..."
 
 #: gui2/menustate.c:138
 msgid "/Model/Time series/_Cointegration test"
-msgstr "/Model/Szeregi czasowe/testy kointegracji"
+msgstr "/Model/Modele szeregów czasowych/testy kointegracji"
 
 #: gui2/menustate.c:139
 msgid "/Model/Time series/Cointegration test/_Engle-Granger..."
-msgstr "/Model/Szeregi czasowe/testy kointegracji/test Engle'a-Grangera..."
+msgstr "/Model/Modele szeregów czasowych/testy kointegracji/test Engle'a-Grangera..."
 
 #: gui2/menustate.c:141
 msgid "/Model/Time series/Cointegration test/_Johansen..."
-msgstr "/Model/Szeregi czasowe/testy kointegracji/test Johansena..."
+msgstr "/Model/Modele szeregów czasowych/testy kointegracji/test Johansena..."
 
 #: gui2/menustate.c:146
 msgid "/Model/Panel/_Fixed or random effects..."

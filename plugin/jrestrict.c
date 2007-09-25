@@ -1170,8 +1170,8 @@ static int switchit (Jwrap *J, PRN *prn)
     double llbak = -1.0e+200;
     double eps1 = 0.0001;
     double eps2 = 0.005;
-    double stol = 0.0001 * eps1;
-    double wtol = 0.0001 * eps2;
+    double stol = 0.01 * eps1;
+    double wtol = 0.01 * eps2;
     int j, jmax = 50000;
     int wcount = 0;
     int uinit = 0;
@@ -1222,12 +1222,12 @@ static int switchit (Jwrap *J, PRN *prn)
 #endif
 
 	if (!err && j > 1) {
-	    lldiff = (J->ll - llbak) / fabs(llbak);
+	    lldiff = J->ll - llbak;
 	    if (lldiff < stol) {
 		conv = 1;
 		break;
 	    } else if (lldiff < wtol) {
-		if (++wcount == 5) {
+		if (++wcount == 4) {
 		    conv = 2;
 		    break;
 		}
