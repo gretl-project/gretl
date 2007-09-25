@@ -54,7 +54,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     static int qmax;
 
     double re, im, rt;
-    int i, j, k, qtot;
+    int i, j, k, m, si, qtot;
     int tzero = 1, Tzero = 1;
     int err = 0, cerr = 0;
 
@@ -70,10 +70,13 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	return 0;
     }
 
+    k = 0;
     for (i=0; i<ainfo->q && tzero; i++) {
-	if (theta[i] != 0.0) {
-	    tzero = 0;
-	}    
+	if (MA_included(ainfo, i)) {
+	    if (theta[k++] != 0.0) {
+		tzero = 0;
+	    }
+	}
     }  
 
     for (i=0; i<ainfo->Q && Tzero; i++) {
@@ -108,9 +111,10 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     temp[0] = 1.0;
 
     /* initialize to non-seasonal MA or zero */
+    k = 0;
     for (i=0; i<qmax; i++) {
-        if (i < ainfo->q) {
-            temp[i+1] = theta[i];
+        if (i < ainfo->q && MA_included(ainfo, i)) {
+	    temp[i+1] = theta[k++];
         } else {
             temp[i+1] = 0.0;
         }
@@ -122,12 +126,14 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     } else {
 	qtot = qmax;
 	for (i=0; i<ainfo->Q; i++) {
-	    k = (i + 1) * ainfo->pd;
-	    temp[k] += Theta[i];
+	    si = (i + 1) * ainfo->pd;
+	    temp[si] += Theta[i];
+	    k = 0;
 	    for (j=0; j<ainfo->q; j++) {
-		int m = k + j + 1;
-
-		temp[m] += Theta[i] * theta[j];
+		if (MA_included(ainfo, j)) {
+		    m = si + j + 1;
+		    temp[m] += Theta[i] * theta[k++];
+		} 
 	    }
 	}
     }
@@ -157,9 +163,6 @@ static void bounds_checker_cleanup (void)
     ma_out_of_bounds(NULL, NULL, NULL);
 }
 
-#define AR_included(a,i) (a->armask == NULL || a->armask[i])
-#define MA_included(a,i) (a->mamask == NULL || a->mamask[i])
-
 static void do_MA_partials (double *drv,
 			    struct arma_info *ainfo,
 			    const double *theta,
@@ -173,8 +176,9 @@ static void do_MA_partials (double *drv,
 	if (MA_included(ainfo, i)) {
 	    s = t - (i + 1);
 	    if (s >= 0) {
-		drv[t] -= theta[k++] * drv[s];
+		drv[t] -= theta[k] * drv[s];
 	    }
+	    k++;
 	}
     }
 
@@ -187,8 +191,9 @@ static void do_MA_partials (double *drv,
 		if (MA_included(ainfo, i)) {
 		    p = s - (i + 1);
 		    if (p >= 0) {
-			drv[t] -= Theta[j] * theta[k++] * drv[p];
+			drv[t] -= Theta[j] * theta[k] * drv[p];
 		    }
+		    k++;
 		}
 	    }
 	}
@@ -470,7 +475,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
     const double *theta = Phi + ainfo->P;
     const double *Theta = theta + ainfo->nq;
 
-    int nr = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
+    int nr = ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
     int pmax, qmax, lmax;
     double *temp = NULL, *temp2 = NULL;
     cmplx *rptr, *roots = NULL;
@@ -503,11 +508,12 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 	k = 0;
 	for (i=0; i<ainfo->p; i++) {
 	    if (AR_included(ainfo, i)) {
-		temp[k+1] = -phi[k];
-		k++;
+		temp[i+1] = -phi[k++];
+	    } else {
+		temp[i+1] = 0;
 	    }
 	}
-	polrt(temp, temp2, ainfo->np, rptr);
+	polrt(temp, temp2, ainfo->p, rptr);
 	rptr += ainfo->p;
     }
 
@@ -525,11 +531,12 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 	k = 0;
 	for (i=0; i<ainfo->q; i++) {
 	    if (MA_included(ainfo, i)) {
-		temp[k+1] = theta[k];
-		k++;
+		temp[i+1] = theta[k++];
+	    } else {
+		temp[i+1] = 0;
 	    }
 	}  
-	polrt(temp, temp2, ainfo->nq, rptr);
+	polrt(temp, temp2, ainfo->q, rptr);
 	rptr += ainfo->q;
     }
 
@@ -613,7 +620,7 @@ static void write_big_phi (const double *phi,
 {
     int pmax = ainfo->p + ainfo->pd * ainfo->P;
     double x, y;
-    int i, j, k;
+    int i, j, k, ii;
 
     for (i=0; i<=pmax; i++) {
 	ac[i] = 0.0;
@@ -621,10 +628,17 @@ static void write_big_phi (const double *phi,
 
     for (i=0; i<=ainfo->P; i++) {
 	x = (i == 0)? -1 : Phi[i-1];
+	k = 0;
 	for (j=0; j<=ainfo->p; j++) {
-	    y = (j == 0)? -1 : phi[j-1];
-	    k = j + ainfo->pd * i;
-	    ac[k] -= x * y;
+	    if (j == 0) {
+		y = -1;
+	    } else if (AR_included(ainfo, j-1)) {
+		y = phi[k++];
+	    } else {
+		y = 0;
+	    }
+	    ii = j + ainfo->pd * i;
+	    ac[ii] -= x * y;
 	}
     }
 
@@ -640,7 +654,7 @@ static void write_big_theta (const double *theta,
 {
     int qmax = ainfo->q + ainfo->pd * ainfo->Q;
     double x, y;
-    int i, j, k;
+    int i, j, k, ii;
 
     for (i=0; i<=qmax; i++) {
 	mc[i] = 0.0;
@@ -648,10 +662,17 @@ static void write_big_theta (const double *theta,
 
     for (i=0; i<=ainfo->Q; i++) {
 	x = (i == 0)? 1 : Theta[i-1];
+	k = 0;
         for (j=0; j<=ainfo->q; j++) {
-	    y = (j == 0)? 1 : theta[j-1];
-            k = j + ainfo->pd * i;
-	    mc[k] = x * y;
+	    if (j == 0) {
+		y = 1;
+	    } else if (MA_included(ainfo, j-1)) {
+		y = theta[k++];
+	    } else {
+		y = 0;
+	    }
+            ii = j + ainfo->pd * i;
+	    mc[ii] = x * y;
         }
     }
 
@@ -721,12 +742,12 @@ static void kalman_matrices_init (struct arma_info *ainfo)
 static int write_kalman_matrices (const double *b, int idx)
 {
     const double *phi = b + kainfo->ifc;
-    const double *Phi = phi + kainfo->p;
+    const double *Phi = phi + kainfo->np;
     const double *theta = Phi + kainfo->P;
-    const double *Theta = theta + kainfo->q;
+    const double *Theta = theta + kainfo->nq;
     const double *beta = Theta + kainfo->Q;
     double mu = (kainfo->ifc)? b[0] : 0.0;
-    int i, err = 0;
+    int i, k, err = 0;
 
     int rewrite_A = 0;
     int rewrite_F = 0;
@@ -737,8 +758,8 @@ static int write_kalman_matrices (const double *b, int idx)
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
     } else {
-	int pmax = kainfo->ifc + kainfo->p + kainfo->P;
-	int tmax = pmax + kainfo->q + kainfo->Q;
+	int pmax = kainfo->ifc + kainfo->p + kainfo->P; /* ?gappy? */
+	int tmax = pmax + kainfo->q + kainfo->Q; /* ?gappy? */
 
 	if (kainfo->ifc && idx == 0) {
 	    rewrite_A = 1;
@@ -774,8 +795,13 @@ static int write_kalman_matrices (const double *b, int idx)
 	if (kainfo->Q > 0) {
 	    write_big_theta(theta, Theta, kainfo, H);
 	} else {
+	    k = 0;
 	    for (i=0; i<kainfo->q; i++) {
-		gretl_vector_set(H, i + 1, theta[i]);
+		if (MA_included(kainfo, i)) {
+		    gretl_vector_set(H, i + 1, theta[k++]);
+		} else {
+		    gretl_vector_set(H, i + 1, 0.0);
+		}
 	    }
 	}
     }
@@ -786,8 +812,13 @@ static int write_kalman_matrices (const double *b, int idx)
 	if (kainfo->P > 0) {
 	    write_big_phi(phi, Phi, kainfo, F);
 	} else {
+	    k = 0;
 	    for (i=0; i<kainfo->p; i++) {
-		gretl_matrix_set(F, 0, i, phi[i]);
+		if (AR_included(kainfo, i)) {
+		    gretl_matrix_set(F, 0, i, phi[k++]);
+		} else {
+		    gretl_matrix_set(F, 0, i, 0.0);
+		}
 	    }
 	} 
 
@@ -1563,7 +1594,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 {
     int * alist = gretl_list_new(av);
-    int i, offset;
+    int i, k, vi;
 
     if (alist == NULL) {
 	return NULL;
@@ -1573,24 +1604,25 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 
     if (ainfo->ifc) {
 	alist[2] = 0;
-	offset = 2;
+	k = 3;
     } else {
 	alist[0] -= 1;
-	offset = 1;
+	k = 2;
+    }
+    
+    vi = 2;
+    for (i=0; i<ainfo->p; i++) {
+	if (AR_included(ainfo, i)) {
+	    alist[k++] = vi++;
+	}
     }
 
-    for (i=1; i<=ainfo->p; i++) {
-	alist[offset + i] = 1 + i;
+    for (i=0; i<ainfo->P; i++) {
+	alist[k++] = vi++;
     }
-
-    for (i=1; i<=ainfo->P; i++) {
-	alist[offset + ainfo->p + i] = ainfo->p + 1 + i;
-    }
-
-    offset += ptotal;  
 
     for (i=1; i<=ainfo->nexo; i++) {
-	alist[offset + i] = ptotal + 1 + i;
+	alist[k++] = ptotal + 1 + i;
     }
 
     return alist;
@@ -1610,9 +1642,8 @@ static int ar_arma_init (const int *list, double *coeff,
 			 struct arma_info *ainfo, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
-    int np = ainfo->p, nq = ainfo->q;
-    int nmixed = ainfo->p * ainfo->P;
-    int ptotal = ainfo->p + ainfo->P + nmixed;
+    int nmixed = ainfo->np * ainfo->P;
+    int ptotal = ainfo->np + ainfo->P + nmixed;
     int av = ptotal + ainfo->nexo + 2;
     const double *y;
     double **aZ = NULL;
@@ -1641,7 +1672,7 @@ static int ar_arma_init (const int *list, double *coeff,
 
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
-	for (i=0; i<nq; i++) {
+	for (i=0; i<ainfo->nq; i++) {
 	    coeff[i] = 0.0; 
 	} 
 	return 0;
@@ -1683,14 +1714,17 @@ static int ar_arma_init (const int *list, double *coeff,
 
     axi = ptotal + ainfo->nexo + 2;
 
+    k = 2;
     for (i=1; i<=ainfo->p; i++) {
-	sprintf(adinfo->varname[i+1], "y_%d", i);
-	for (j=1; j<=narmax; j++) {
-	    sprintf(adinfo->varname[axi++], "x%d_%d", j, i);
+	if (AR_included(ainfo, i-1)) {
+	    sprintf(adinfo->varname[k++], "y_%d", i);
+	    for (j=1; j<=narmax; j++) {
+		sprintf(adinfo->varname[axi++], "x%d_%d", j, i);
+	    }
 	}
     }
 
-    ayi = ainfo->p + ainfo->P + 2;
+    ayi = ainfo->np + ainfo->P + 2;
 
     for (i=1; i<=ainfo->P; i++) {
 	k = ainfo->p + 1 + i;
@@ -1699,9 +1733,11 @@ static int ar_arma_init (const int *list, double *coeff,
 	    sprintf(adinfo->varname[axi++], "x%d_%d", j, ainfo->pd * i);
 	}
 	for (j=1; j<=ainfo->p; j++) {
-	    sprintf(adinfo->varname[ayi++], "y_%d", ainfo->pd * i + j);
-	    for (k=1; k<=narmax; k++) {
-		sprintf(adinfo->varname[axi++], "x%d_%d", k, ainfo->pd * i + j);
+	    if (AR_included(ainfo, j-1)) {
+		sprintf(adinfo->varname[ayi++], "y_%d", ainfo->pd * i + j);
+		for (k=1; k<=narmax; k++) {
+		    sprintf(adinfo->varname[axi++], "x%d_%d", k, ainfo->pd * i + j);
+		}
 	    }
 	}
     }
@@ -1728,17 +1764,21 @@ static int ar_arma_init (const int *list, double *coeff,
 
 	axi = ptotal + ainfo->nexo + 2;
 
+	k = 2;
 	for (i=1; i<=ainfo->p; i++) {
+	    if (!AR_included(ainfo, i-1)) {
+		continue;
+	    }
 	    s = realt - i;
 	    if (s < 0) miss = 1;
-	    aZ[i+1][t] = (s >= 0)? y[s] : NADBL;
+	    aZ[k++][t] = (s >= 0)? y[s] : NADBL;
 	    for (j=1; j<=narmax; j++) {
 		m = list[xstart + j - 1];
 		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
 	    }
 	}
 
-	ayi = ainfo->p + ainfo->P + 2;
+	ayi = ainfo->np + ainfo->P + 2;
 
 	for (i=1; i<=ainfo->P; i++) {
 	    lag = ainfo->pd * i;
@@ -1751,6 +1791,9 @@ static int ar_arma_init (const int *list, double *coeff,
 		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
 	    }
 	    for (j=1; j<=ainfo->p; j++) {
+		if (!AR_included(ainfo, j-1)) {
+		    continue;
+		}
 		lag = ainfo->pd * i + j;
 		s = realt - lag;
 		if (s < 0) miss = 1;
@@ -1772,11 +1815,6 @@ static int ar_arma_init (const int *list, double *coeff,
 	if (miss) {
 	    adinfo->t1 = t + 1;
 	}	
-    }
-
-    if (arma_has_seasonal(ainfo)) {
-	np += ainfo->P;
-	nq += ainfo->Q;
     }
 
 #if ARMA_DEBUG
@@ -1803,14 +1841,14 @@ static int ar_arma_init (const int *list, double *coeff,
     if (!err) {
 	j = 0;
 	for (i=0; i<armod.ncoeff; i++) {
-	    if (i == np + ainfo->ifc) {
-		j += nq; /* reserve space for MA coeffs */
+	    if (i == ainfo->np + ainfo->ifc) {
+		j += ainfo->nq; /* reserve space for MA coeffs */
 	    }
 	    coeff[j++] = armod.coeff[i];
 	}
-	for (i=0; i<nq; i++) {
+	for (i=0; i<ainfo->nq; i++) {
 	    /* insert near-zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0001;
+	    coeff[i + ainfo->np + ainfo->ifc] = 0.0001;
 	} 
     }
 
@@ -1887,6 +1925,8 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
    ARMA model by OLS, substituting innovations and corresponding lags
    with the first-pass residuals.
 */
+
+/* FIXME gappy lag structure */
 
 static int hr_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,

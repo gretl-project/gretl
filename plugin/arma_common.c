@@ -11,8 +11,8 @@ struct arma_info {
     int P;           /* seasonal AR order */
     int D;           /* seasonal difference */
     int Q;           /* seasonal MA order */
-    char *armask;    /* specific AR lags included */
-    char *mamask;    /* specific MA lags included */
+    char *pmask;     /* specific AR lags included */
+    char *qmask;     /* specific MA lags included */
     int np;          /* total non-seasonal AR lags */
     int nq;          /* total non-seasonal MA lags */
     int maxlag;      /* longest lag in model */
@@ -36,6 +36,9 @@ struct arma_info {
 #define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
 #define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
 
+#define AR_included(a,i) (a->pmask == NULL || a->pmask[i])
+#define MA_included(a,i) (a->qmask == NULL || a->qmask[i])
+
 static void 
 arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
 {
@@ -49,8 +52,8 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->D = 0;
     ainfo->Q = 0; 
 
-    ainfo->armask = NULL;
-    ainfo->mamask = NULL;
+    ainfo->pmask = NULL;
+    ainfo->qmask = NULL;
     
     ainfo->np = 0;
     ainfo->nq = 0;
@@ -70,8 +73,8 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
 
 static void arma_info_cleanup (struct arma_info *ainfo)
 {
-    free(ainfo->armask);
-    free(ainfo->mamask);
+    free(ainfo->pmask);
+    free(ainfo->qmask);
     free(ainfo->dy);
 }
 
@@ -79,6 +82,8 @@ enum {
     AR_MASK,
     MA_MASK
 };
+
+/* mask for skipping certain intermediate lags, AR or MA */
 
 static char *mask_from_vec (const gretl_vector *v, 
 			    struct arma_info *ainfo,
@@ -133,7 +138,7 @@ static int arma_make_masks (struct arma_info *ainfo,
 	ainfo->np = ainfo->p;
 	m = get_arma_ar_vec();
 	if (m != NULL) {
-	    ainfo->armask = mask_from_vec(m, ainfo, AR_MASK, &err);
+	    ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
 	}
 	if (ainfo->p < list[1]) {
 	    list[1] = ainfo->p;
@@ -144,7 +149,7 @@ static int arma_make_masks (struct arma_info *ainfo,
 	ainfo->nq = ainfo->q;
 	m = get_arma_ma_vec();
 	if (m != NULL) {
-	    ainfo->mamask = mask_from_vec(m, ainfo, MA_MASK, &err);
+	    ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);
 	}
 	if (ainfo->q < list[1]) {
 	    list[2] = ainfo->q;
@@ -329,7 +334,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 
     gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
 				  ainfo->p, ainfo->q, 
-				  ainfo->armask, ainfo->mamask,
+				  ainfo->pmask, ainfo->qmask,
 				  ainfo->P, ainfo->Q,
 				  ainfo->nexo);
 }
@@ -540,21 +545,21 @@ static int count_arma_coeffs (struct arma_info *ainfo)
 
     n = ainfo->P + ainfo->Q + ainfo->nexo + ainfo->ifc;
 
-    if (ainfo->armask == NULL) {
+    if (ainfo->pmask == NULL) {
 	n += ainfo->p;
     } else {
 	for (i=0; i<ainfo->p; i++) {
-	    if (ainfo->armask[i]) {
+	    if (ainfo->pmask[i]) {
 		n++;
 	    }
 	}
     }
 
-    if (ainfo->mamask == NULL) {
+    if (ainfo->qmask == NULL) {
 	n += ainfo->q;
     } else {
 	for (i=0; i<ainfo->q; i++) {
-	    if (ainfo->mamask[i]) {
+	    if (ainfo->qmask[i]) {
 		n++;
 	    }
 	}

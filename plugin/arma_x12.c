@@ -352,12 +352,12 @@ static int
 get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 {
     double *ar_coeff = pmod->coeff + ainfo->ifc;
-    double *ma_coeff = ar_coeff + ainfo->p + ainfo->P;
-    double *x_coeff = ma_coeff + ainfo->q + ainfo->Q;
+    double *ma_coeff = ar_coeff + ainfo->np + ainfo->P;
+    double *x_coeff = ma_coeff + ainfo->nq + ainfo->Q;
 
     double *ar_sderr = pmod->sderr + ainfo->ifc;
-    double *ma_sderr = ar_sderr + ainfo->p + ainfo->P;
-    double *x_sderr = ma_sderr + ainfo->q + ainfo->Q;
+    double *ma_sderr = ar_sderr + ainfo->np + ainfo->P;
+    double *x_sderr = ma_sderr + ainfo->nq + ainfo->Q;
 
     FILE *fp;
     char line[128], word[16];
@@ -601,6 +601,49 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     }    
 }
 
+static void x12_pdq_string (struct arma_info *ainfo, FILE *fp)
+{
+    fputc('(', fp);
+    
+    if (ainfo->pmask == NULL) {
+	fprintf(fp, "%d", ainfo->p);
+    } else {
+	int i;
+
+	fputc('[', fp);
+	for (i=0; i<ainfo->p; i++) {
+	    if (AR_included(ainfo, i)) {
+		fprintf(fp, "%d", i+1);
+		if (i < ainfo->p - 1) {
+		    fputc(' ', fp);
+		}
+	    }
+	}
+	fputc(']', fp);
+    }
+
+    fprintf(fp, " %d ", ainfo->d);
+
+    if (ainfo->qmask == NULL) {
+	fprintf(fp, "%d", ainfo->q);
+    } else {
+	int i;
+
+	fputc('[', fp);
+	for (i=0; i<ainfo->q; i++) {
+	    if (MA_included(ainfo, i)) {
+		fprintf(fp, "%d", i+1);
+		if (i < ainfo->q - 1) {
+		    fputc(' ', fp);
+		}
+	    }
+	}
+	fputc(']', fp);
+    }
+
+    fputc(')', fp);
+}
+
 #define MAXOBS 720
 #define MAXFCAST 60
 
@@ -695,13 +738,12 @@ static int write_spc_file (const char *fname,
     fputs("}\n", fp);
 
     /* arima specification */
+    fputs("arima {\n model = ", fp);
+    x12_pdq_string(ainfo, fp);
     if (ainfo->P > 0 || ainfo->Q > 0) {
-	fprintf(fp, "arima {\n model = (%d %d %d)(%d %d %d)\n}\n", 
-		ainfo->p, ainfo->d, ainfo->q, 
-		ainfo->P, ainfo->D, ainfo->Q);
+	fprintf(fp, "(%d %d %d)\n}\n", ainfo->P, ainfo->D, ainfo->Q);
     } else {
-	fprintf(fp, "arima {\n model = (%d %d %d)\n}\n", 
-		ainfo->p, ainfo->d, ainfo->q); 
+	fputs("\n}\n", fp);
     }
 
     fputs("estimate {\n", fp);
