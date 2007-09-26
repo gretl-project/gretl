@@ -1327,8 +1327,6 @@ static int reset_null_H (Jwrap *J)
     return 0;
 }
 
-
-
 /* recalculate the H matrix after removing column
    scalings */
 
