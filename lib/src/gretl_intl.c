@@ -243,16 +243,32 @@ static const char *get_gretl_charset (void)
 
 static const char *gnuplot_encoding_string (void)
 {
-    static char gp_enc[12];
+    static char gp_enc[12] = {0};
 
-    if (gretl_cset_maj == 8859 && 
-	(gretl_cset_min == 1 || 
-	 gretl_cset_min == 2 ||
-	 gretl_cset_min == 9 ||
-	 gretl_cset_min == 15)) {
-	sprintf(gp_enc, "iso_%d_%d", gretl_cset_maj, gretl_cset_min);
+    if (gretl_cset_maj != 8859) {
+	return NULL;
+    }
+
+    if (*gp_enc != '\0') {
 	return gp_enc;
-    } 
+    }
+
+    if (gretl_cset_min == 1 || 
+	gretl_cset_min == 2 ||
+	gretl_cset_min == 15) {
+	sprintf(gp_enc, "iso_8859_%d", gretl_cset_min);
+	return gp_enc;
+    } else if (gretl_cset_min == 9) {
+	static int l9 = -1;
+
+	if (l9 < 0) {
+	    l9 = gnuplot_has_latin9();
+	}
+	if (l9) {
+	    strcpy(gp_enc, "iso_8859_9");
+	    return gp_enc;
+	}
+    }
 
     return NULL;
 }
@@ -299,14 +315,20 @@ int iso_latin_version (void)
     }
 # endif
 
-    /* handle Polish UTF-8 locale? */
+    /* Polish, Turkish: UTF-8 locale? */
     lang = getenv("LANG");
-    if (lang != NULL && !strncmp(lang, "pl", 2)) {
-	return 2;
+    if (lang != NULL) {
+	if (!strncmp(lang, "pl", 2)) {
+	    return 2;
+	} else if (!strncmp(lang, "tr", 2)) {
+	    return 9;
+	}
     } 
 
     return 1;
 }
+
+/* we'll need to fix this for Turkish eventually */
 
 static const char *get_gp_charset (void)
 {

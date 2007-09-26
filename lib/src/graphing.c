@@ -398,6 +398,12 @@ const char *gnuplot_label_front_string (void)
     return " front";
 }
 
+int gnuplot_has_latin9 (void)
+{
+    /* ... and that it supports ISO8859-9 */
+    return 1;
+}
+
 #else
 
 int gnuplot_has_ttf (int reset)
@@ -426,6 +432,17 @@ static int gnuplot_has_size (void)
     
     if (err == -1) {
 	err = gnuplot_test_command("set term png size 640,480");
+    }
+
+    return !err;
+}
+
+int gnuplot_has_latin9 (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set encoding iso_8859_9");
     }
 
     return !err;

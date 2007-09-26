@@ -194,6 +194,8 @@ int gnuplot_has_specified_colors (void);
 
 int gnuplot_has_style_fill (void);
 
+int gnuplot_has_latin9 (void);
+
 void set_graph_palette (int i, const char *colstr);
 
 void graph_palette_reset (int i);
