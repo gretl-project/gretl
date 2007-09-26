@@ -141,19 +141,20 @@ confidence interval for the median if the ``notched'' option was
 chosen.  
 
 Some details of gretl's boxplots can be controlled via a (plain text)
-file named \verb+.boxplotrc+ which is looked for, in turn, in the
-current working directory, the user's home directory (corresponding to
-the environment variable HOME) and the gretl user directory (which is
-displayed and may be changed under the ``Tools, Preferences, General''
-menu).  Options that can be set in this way are the font to use when
-producing postscript output (must be a valid generic postscript font
-name; the default is Helvetica), the size of the font in points (also
-for postscript output; default is 12), the minimum and maximum for the
-y-axis range, the width and height of the plot in pixels (default, 560
-x 448), whether numerical values should be printed for the quartiles
-and median (default, don't print them), and whether outliers (points
-lying beyond 1.5 times the interquartile range from the central box)
-should be indicated separately (default, no).  Here is an example:
+file named \verb+.boxplotrc+ (or alternatively \verb+plotconfig.txt+)
+which is looked for, in turn, in the current working directory, the
+user's home directory (corresponding to the environment variable HOME)
+and the gretl user directory (which is displayed and may be changed
+under the ``Tools, Preferences, General'' menu).  Options that can be
+set in this way are the font to use when producing postscript output
+(must be a valid generic postscript font name; the default is
+Helvetica), the size of the font in points (also for postscript
+output; default is 12), the minimum and maximum for the y-axis range,
+the width and height of the plot in pixels (default, 560 $\times$ 448),
+whether numerical values should be printed for the quartiles and
+median (default, don't print them), and whether outliers (points lying
+beyond 1.5 times the interquartile range from the central box) should
+be indicated separately (default, no).  Here is an example:
 
 \begin{code}
 font = Times-Roman
