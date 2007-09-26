@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-25 21:00+0100\n"
+"PO-Revision-Date: 2007-09-25 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2946,9 +2946,9 @@ msgid "Couldn't create directory '%s'"
 msgstr "Niemo¿liwe utworzenie katalogu '%s'"
 
 #: lib/src/gretl_paths.c:881
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr "Couldn't write to '%s': gretl will not work properly!"
+msgstr "Niemo¿liwy zapis do '%s': gretl will not work properly!"
 
 #: lib/src/gretl_paths.c:991
 #, c-format
@@ -4991,9 +4991,9 @@ msgid "Sign Test"
 msgstr "Test znaków"
 
 #: lib/src/nonparam.c:1067
-#, fuzzy, c-format
+#, c-format
 msgid "Number of differences: n = %d\n"
-msgstr "Number of differences: n = %d\n"
+msgstr "Liczba ró¿nic: n = %d\n"
 
 #: lib/src/nonparam.c:1069
 #, c-format
@@ -5715,9 +5715,8 @@ msgid "dummy for %s = %g"
 msgstr "sztuczna zm. %s = %g"
 
 #: lib/src/transforms.c:1125
-#, fuzzy
 msgid "dummify: no suitable variables were found"
-msgstr "dummify: no suitable variables were found"
+msgstr "Nie znaleziono w³a¶ciwej zmiennej"
 
 #: lib/src/transforms.c:1195
 msgid "squared time trend variable"
@@ -5858,9 +5857,8 @@ msgid "P(Chi-Square(%d) > %g) = %g"
 msgstr "warto¶æ p = prob(Chi-kwadrat(%d) > %g) = %g"
 
 #: lib/src/varprint.c:819 lib/src/varprint.c:821
-#, fuzzy
 msgid "Relative to prior restriction"
-msgstr "Relative to prior restriction"
+msgstr " Relative to prior restriction "
 
 #: lib/src/varprint.c:833
 #, c-format
@@ -6632,7 +6630,6 @@ msgid "dfd"
 msgstr "stopnie swobody mianownika"
 
 #: gui2/calculator.c:1823
-#, fuzzy
 msgid "shape"
 msgstr "shape"
 
@@ -6641,7 +6638,6 @@ msgid "scale"
 msgstr "mno¿nik skali"
 
 #: gui2/calculator.c:1828
-#, fuzzy
 msgid "trials"
 msgstr "próby"
 
@@ -11345,13 +11341,12 @@ msgid "gretl: revised data set"
 msgstr "gretl: przegl±danie zbioru danych"
 
 #: gui2/library.c:5597
-#, fuzzy
 msgid ""
 "You have saved a reduced version of the current data set.\n"
 "Do you want to switch to the reduced version now?"
 msgstr ""
-"You have saved a reduced version of the current data set.\n"
-"Do you want to switch to the reduced version now?"
+"Zapisano zredukowan± wersjê bie¿±cego zbioru danych.\n"
+"Czy chcesz zamieniæ zredukowan± wersjê teraz?"
 
 #: gui2/library.c:5665
 msgid ""
@@ -12209,26 +12204,24 @@ msgid "Save octave data file"
 msgstr "Zapisywanie pliku danych Octave"
 
 #: gui2/selector.c:4082
-#, fuzzy
 msgid ""
 "No user-defined functions are currently loaded.\n"
 "Please load or define some functions first."
 msgstr ""
-"No user-defined functions are currently loaded.\n"
-"Please load or define some functions first."
+"Aktualnie brak dostêpu do pakietu funkcji.\n"
+"Proszê otworzyæ pakiet funkcji lub zdefiniuj w³asn±."
 
 #: gui2/selector.c:4085
-#, fuzzy
 msgid ""
 "No user-defined functions are currently available\n"
 "for packaging.\n"
 "\n"
 "Please load or define some functions first."
 msgstr ""
-"No user-defined functions are currently available\n"
-"for packaging.\n"
+"Nie dostêpne s± funkcje pakietu lub funkcje\n"
+"zdefiniowane przez u¿ytkowanika.\n"
 "\n"
-"Please load or define some functions first."
+"Proszê otworzyæ pakiet funkcji lub zdefiniuj w³asne."
 
 #: gui2/selector.c:4092
 msgid "Save functions"
@@ -13313,9 +13306,9 @@ msgid "Restricted loglikelihood (lr) = %.8g\n"
 msgstr "Logarytm wiarygodno¶ci z restrykcjami (lr) = %.8g\n"
 
 #: plugin/johansen.c:1503 plugin/jrestrict.c:1474
-#, fuzzy, c-format
+#, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Allowing for prior restriction, df = %d\n"
+msgstr "Dozwolony dla prior restriction, df = %d\n"
 
 #: plugin/johansen.c:1505
 #, c-format
@@ -13323,9 +13316,9 @@ msgid "P(Chi-Square(%d) > %g) = %g\n"
 msgstr "z warto¶ci± p = P(Chi-kwadrat(%d) > %g) = %g\n"
 
 #: plugin/jrestrict.c:1457
-#, fuzzy, c-format
+#, c-format
 msgid "Rank of Jacobian = %d, number of free parameters = %d\n"
-msgstr "Rank of Jacobian = %d, number of free parameters = %d\n"
+msgstr "Rank of Jacobian = %d, liczba free parameters = %d\n"
 
 #: plugin/jrestrict.c:1460
 msgid "Model is not fully identified\n"
@@ -13336,9 +13329,9 @@ msgid "Model is fully identified\n"
 msgstr "Model jest ca³kowicie identyfikowalny\n"
 
 #: plugin/jrestrict.c:1469
-#, fuzzy, c-format
+#, c-format
 msgid "Based on Jacobian, df = %d\n"
-msgstr "Based on Jacobian, df = %d\n"
+msgstr "Based on Jacobian, stopnie swobody = %d\n"
 
 #: plugin/jrestrict.c:2290
 #, c-format
@@ -13547,7 +13540,6 @@ msgid "unknown data type"
 msgstr "Nierozpoznany typ danych"
 
 #: plugin/stata_import.c:509
-#, fuzzy
 msgid ""
 "something strange in the file\n"
 "(Type 0 characteristic of nonzero length)"

@@ -1271,19 +1271,37 @@ int plot_to_xpm (const char *fname, gpointer data)
 
 #endif 
 
+static FILE *get_custom_file (void)
+{
+    char boxrc[FILENAME_MAX];
+    FILE *fp;
+    
+    fp = fopen(".boxplotrc", "r");
+
+    if (fp == NULL) {
+	sprintf(boxrc, "%s.boxplotrc", paths.userdir);
+	fp = gretl_fopen(boxrc, "r");
+    }
+
+    if (fp == NULL) {
+	fp = fopen("plotconfig.txt", "r");
+    }
+
+    if (fp == NULL) {
+	sprintf(boxrc, "%splotconfig.txt", paths.userdir);
+	fp = gretl_fopen(boxrc, "r");
+    }    
+
+    return fp;
+}
+
 static void read_boxrc (PLOTGROUP *grp)
 {
     FILE *fp;
 
     grp->gmax = grp->gmin = NADBL;
 
-    fp = fopen(".boxplotrc", "r");
-    if (fp == NULL) {
-	char boxrc[MAXLEN];
-
-	sprintf(boxrc, "%s.boxplotrc", paths.userdir);
-	fp = gretl_fopen(boxrc, "r");
-    }
+    fp = get_custom_file();
 
     if (fp != NULL) {
 	char line[80], key[18], val[32];
