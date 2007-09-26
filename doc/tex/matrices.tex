@@ -436,11 +436,13 @@ context it is reserved for the Kronecker product.)
 \texttt{meanr}     &
 \texttt{minc}      \\   
 \texttt{minr}      &
+\texttt{mols}      &
+\texttt{mxtab}     &
 \texttt{princomp}  &
 \texttt{sumc}      &
-\texttt{sumr}      &
+\texttt{sumr}      \\
 \texttt{sd}        &
-\texttt{values}   
+\texttt{values}  
 \end{tabular}      
 \caption{Table of matrix functions by category}
 \label{tab:matrix_funcs_cat}
@@ -801,54 +803,29 @@ one or more matrices are:
 \texttt{qrdecomp} & QR decomposition \\
 \texttt{eigensym} & Eigen-analysis of symmetric matrix \\
 \texttt{eigengen} & Eigen-analysis of general matrix \\
+\texttt{mols}     & Matrix OLS \\
 \texttt{svd}      & Singular value decomposition (SVD) 
 \end{tabular}
 \end{center}
 
-The syntax for all but the last of these functions is of the form
+The syntax for \texttt{qrdecomp}, \texttt{eigensym} and
+\texttt{eigengen} is of the form
 %
 \begin{code}
 matrix B = func(A, &C)
 \end{code}
 %
-while for \texttt{svd} it is
-%
-\begin{code}
-matrix B = func(A, &C, &D)
-\end{code}
-%
 The first argument, \texttt{A}, represents the input data, that is,
-the matrix whose decomposition or analysis is required.
-
-The second argument (and in the case of \texttt{svd}, the third) must
-be either the name of an existing matrix preceded by \verb+&+ (to
-indicate the ``address'' of the matrix in question), in which case an
-auxiliary result is written to that matrix, or the keyword
-\texttt{null}, in which case the auxiliary result is not produced, or
-is discarded.
+the matrix whose decomposition or analysis is required.  The second
+argument must be either the name of an existing matrix preceded by
+\verb+&+ (to indicate the ``address'' of the matrix in question), in
+which case an auxiliary result is written to that matrix, or the
+keyword \texttt{null}, in which case the auxiliary result is not
+produced, or is discarded.
 
 In case a non-null second argument is given, the specified matrix will
 be over-written with the auxiliary result.  (It is not required that
 the existing matrix be of the right dimensions to receive the result.)
-
-The \texttt{qrdecomp} function computes the QR decomposition of an $m
-\times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
-orthogonal matrix and $R$ is an $n \times n$ upper triangular matrix.
-The matrix $Q$ is returned directly, while $R$ can be retrieved via
-the second argument.  Here are two examples:
-%
-\begin{code}
-matrix R
-matrix Q = qrdecomp(M, &R)
-matrix Q = qrdecomp(M, null)
-\end{code}
-%
-In the first example, the triangular $R$ is saved as \texttt{R}; in
-the second, $R$ is discarded.  The first line above shows an example
-of a ``simple declaration'' of a matrix: \texttt{R} is
-declared to be a matrix variable but is not given any explicit value.
-In this case the variable is initialized as a $1\times 1$ matrix whose
-single element equals zero.
 
 The function \texttt{eigensym} computes the eigenvalues, and
 optionally the right eigenvectors, of a symmetric $n \times n$ matrix.
@@ -921,6 +898,31 @@ print c
 \end{scode}
 \end{script}
 
+The \texttt{qrdecomp} function computes the QR decomposition of an $m
+\times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
+orthogonal matrix and $R$ is an $n \times n$ upper triangular matrix.
+The matrix $Q$ is returned directly, while $R$ can be retrieved via
+the second argument.  Here are two examples:
+%
+\begin{code}
+matrix R
+matrix Q = qrdecomp(M, &R)
+matrix Q = qrdecomp(M, null)
+\end{code}
+%
+In the first example, the triangular $R$ is saved as \texttt{R}; in
+the second, $R$ is discarded.  The first line above shows an example
+of a ``simple declaration'' of a matrix: \texttt{R} is
+declared to be a matrix variable but is not given any explicit value.
+In this case the variable is initialized as a $1\times 1$ matrix whose
+single element equals zero.
+
+The syntax for \texttt{svd} is
+%
+\begin{code}
+matrix B = func(A, &C, &D)
+\end{code}
+%
 The function \texttt{svd} computes all or part of the singular value
 decomposition of the real $m \times n$ matrix $A$.  The decomposition
 is
@@ -952,6 +954,16 @@ the right singular vectors are obtained but $U$ is not computed.
 \emph{Please note}: when the third argument is non-null, it is
 actually $V'$ that is provided.
 
+Finally, the syntax for \texttt{mols} is
+%
+\begin{code}
+matrix b = func(y, X, &u)
+\end{code}
+%
+This function returns the OLS statistic obtained by regressing the $T
+\times n$ matrix on the $T \times k$ matrix, that is, a $k \times n$
+matrix holding $(X'X)^{-1} X'Y$. The Cholesky decomposition is
+used. The matrix u, if not null, is used to store the residuals.
 
 \section{Matrix accessors}
 \label{matrix-accessors}
@@ -987,7 +999,7 @@ matrix u = $uhat
 matrix b = m1.$coeff
 matrix v2 = m1.$vcv[1:2,1:2]
 \end{code}
-%
+%$
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of sub-matrix selection described above)
@@ -1240,33 +1252,35 @@ ols price const sqft --vcv
 \texttt{minr}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
-\texttt{mshape}    \\
+\texttt{mols}      \\
+\texttt{mshape}    &
 \texttt{muniform}  &
+\texttt{mxtab}     &
 \texttt{nullspace} &
 \texttt{onenorm}   &
-\texttt{ones}      &
+\texttt{ones}      \\
 \texttt{princomp}  &
-\texttt{qform}     \\
+\texttt{qform}     &
 \texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     &
+\texttt{rcond}     \\
 \texttt{rows}      &
-\texttt{seq}       \\
+\texttt{seq}       &
 \texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
-\texttt{sumc}      &
+\texttt{sumc}      \\
 \texttt{sumr}      &
-\texttt{svd}       \\
+\texttt{svd}       &
 \texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
-\texttt{unvech}    &
+\texttt{unvech}    \\
 \texttt{values}    &
-\texttt{vec}       \\
+\texttt{vec}       &
 \texttt{vech}      &
-\texttt{zeros}     
+\texttt{zeros}    
 \end{tabular}      
 \caption{Alphabetical listing of matrix functions}
 \label{tab:matrix_funcs}
