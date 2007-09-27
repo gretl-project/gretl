@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-27 20:00+0100\n"
+"PO-Revision-Date: 2007-09-27 22:30+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1412,7 +1412,7 @@ msgstr "Opó¼nienia  ACF         PACF      Ljung-Box Q [warto¶æ p]"
 #: lib/src/describe.c:2510
 #, c-format
 msgid "Correlations of %s and lagged %s"
-msgstr "Korelogram pomiêdzy %s i opó¼nieniami %s"
+msgstr "Korelogram pomiêdzy zm. %s i opó¼nieniami zm. %s"
 
 #: lib/src/describe.c:2550 gui2/menustate.c:414 gui2/menustate.c:438
 msgid "Cross-correlogram"
@@ -3084,7 +3084,7 @@ msgstr "suma"
 #: lib/src/gretl_string_table.c:173
 #, c-format
 msgid "variable %d: translating from strings to code numbers\n"
-msgstr "zmienna %d: transponowana z ³añcucha na kod numeryczny\n"
+msgstr "zmienna %d: przeniesienie z ³añcucha na wartoœci numeryczne\n"
 
 #: lib/src/gretl_string_table.c:239
 msgid ""
@@ -3797,19 +3797,19 @@ msgstr "McFaddena pseudo-$R^2$"
 
 #: lib/src/modelprint.c:320
 msgid "Akaike information criterion"
-msgstr "Kryterium informacyjne Akaike'a "
+msgstr "Kryterium informacyjne Akaike'a"
 
 #: lib/src/modelprint.c:321
 msgid "Schwarz Bayesian criterion"
-msgstr "Kryterium bayesowskie Schwarza"
+msgstr "Kryterium bayesowskie Schwarza "
 
 #: lib/src/modelprint.c:322
 msgid "Hannan-Quinn criterion"
-msgstr "Kryterium infor.Hannana-Quinna"
+msgstr "Kryterium infor. Hannana-Quinna"
 
 #: lib/src/modelprint.c:323
 msgid "Hannan--Quinn criterion"
-msgstr "Kryterium Hannana-Quinna"
+msgstr "Kryterium Hannana--Quinna"
 
 #: lib/src/modelprint.c:325 lib/src/texprint.c:798 lib/src/varprint.c:1005
 #: lib/src/varprint.c:1013
@@ -4622,7 +4622,7 @@ msgstr "¶rednia kwadratów"
 
 #: lib/src/modelprint.c:3338
 msgid "Regression"
-msgstr "Równanie regresji testu KPSS (Kwiatkowski, Phillips, Schmidt i Shin)"
+msgstr "Równanie regresji"
 
 #: lib/src/modelprint.c:3341
 msgid "Residual"
@@ -5138,15 +5138,15 @@ msgstr "Brakujace obserwacje"
 #: lib/src/printout.c:379
 #, c-format
 msgid "Cross-tabulation of %s (rows) against %s (columns)"
-msgstr "Tablica krzy¿owa dla %s (wierszy) wzglêdem %s (kolumn)"
+msgstr "Tablica krzy¿owa dla zm. %s (wiersze) wzglêdem zm. %s (kolumny)"
 
 #: lib/src/printout.c:387
 msgid "TOT."
-msgstr "TOT."
+msgstr "RAZEM"
 
 #: lib/src/printout.c:434
 msgid "TOTAL  "
-msgstr "OGÓ£EM"
+msgstr "RAZEM"
 
 #: lib/src/printout.c:449
 #, c-format
@@ -9635,7 +9635,7 @@ msgstr "/Model/_Nieliniowe modele/Modele _Tobitowe..."
 
 #: gui2/gretl.c:491
 msgid "/Model/Nonlinear models/_Heckit..."
-msgstr "/Model/_Nieliniowe modele/Modele selekcji próby (_heckit)..."
+msgstr "/Model/_Nieliniowe modele/Modele z selekcj± próby (_heckit)..."
 
 #: gui2/gretl.c:492
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -10434,7 +10434,7 @@ msgstr "/Zapisz/R-_kwadrat"
 
 #: gui2/gui_utils.c:2760
 msgid "/Save/_T*R-squared"
-msgstr "/Zapisz/_T*R-kwadrat"
+msgstr "/Zapisz/T*R-kwadra_t"
 
 #: gui2/gui_utils.c:2765
 msgid "/Save/_Log likelihood"
@@ -10856,7 +10856,7 @@ msgstr "gretl: test ADF"
 
 #: gui2/library.c:872
 msgid "gretl: KPSS test"
-msgstr "gretl: test KPSS"
+msgstr "gretl: test KPSS (Kwiatkowski, Phillips, Schmidt i Shin)"
 
 #: gui2/library.c:873
 msgid "Lag order for ADF test:"
@@ -13211,7 +13211,7 @@ msgstr "b³±d w poleceniu wsheet_setup()"
 
 #: plugin/heckit.c:613
 msgid "Selection equation"
-msgstr "Równanie selekcji"
+msgstr "Równanie selekcji próby"
 
 #: plugin/import_common.c:38
 msgid ""
