@@ -1263,7 +1263,7 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (fmt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
+    if (fmt == GRETL_DATA_R && dataset_is_time_series(pdinfo)) {
 	fmt = GRETL_DATA_R_TS;
     }
 
