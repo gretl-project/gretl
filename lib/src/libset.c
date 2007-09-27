@@ -1994,4 +1994,22 @@ int gretl_in_gui_mode (void)
     return gui_mode;
 }
 
+static ITER_PRINT_FUNC ifunc;
 
+void set_iter_print_func (ITER_PRINT_FUNC func)
+{
+    ifunc = func;
+}
+
+int iter_print_callback (PRN *prn)
+{
+    int ret = 0;
+
+#if 0 /* not ready */
+    if (ifunc != NULL) {
+	ret = (*ifunc)(prn);
+    }
+#endif 
+
+    return ret;
+}

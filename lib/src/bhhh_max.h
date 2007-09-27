@@ -68,4 +68,5 @@ int bhhh_max (LL_FUNC loglik,
 	      const double **X, 
 	      const double *init_coeff,
 	      model_info *minfo, 
+	      gretlopt opt, 
 	      PRN *prn);

@@ -2184,6 +2184,10 @@ print_iter_info (int iter, double crit, int type, int k,
 	print_iter_val(g[i], i, prn);
     }
     pputs(prn, "\n\n");
+
+    if (iter % 20 == 0) {
+	iter_print_callback(prn);
+    }
 }
 
 /* apparatus for user-defined printf statements */

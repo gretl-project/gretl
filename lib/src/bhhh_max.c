@@ -471,6 +471,7 @@ static int expand_model_series (MODEL *pmod, model_info *minfo)
  * on for use by @loglik).
  * @init_coeff: starting values for coefficients.
  * @minfo: model info struct; see below.
+ * @opt: can include %OPT_V for verbose output.
  * @prn: printing struct for iteration info (or %NULL).
  *
  * Maximize likelihood using the BHHH conditional ML method,
@@ -503,6 +504,7 @@ int bhhh_max (LL_FUNC loglik,
 	      const double **X, 
 	      const double *init_coeff,
 	      model_info *minfo, 
+	      gretlopt opt,
 	      PRN *prn)
 {
     /* OPG model */
@@ -643,8 +645,10 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 	/* print interation info, if wanted */
-	print_iter_info(iters, minfo->ll, C_LOGLIK, k, minfo->theta, delta, 
-			stepsize, prn);
+	if (opt & OPT_V) {
+	    print_iter_info(iters, minfo->ll, C_LOGLIK, k, minfo->theta, delta, 
+			    stepsize, prn);
+	}
 
 	crit = minfo->ll2 - minfo->ll;  
     }

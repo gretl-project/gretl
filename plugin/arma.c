@@ -1197,7 +1197,7 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
 static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo, MODEL *pmod,
-			PRN *prn)
+			gretlopt opt, PRN *prn)
 {
     kalman *K = NULL;
     gretl_matrix *y = NULL;
@@ -1306,7 +1306,8 @@ static int kalman_arma (const int *alist, double *coeff,
     /* publish ainfo */
     kainfo = ainfo;
 
-    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, E, ainfo->nc, ainfo->ifc, &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, E, ainfo->nc, 
+		   ainfo->ifc, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
@@ -1319,7 +1320,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	kalman_use_ARMA_ll(K);
 	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-		       NULL, K, (prn != NULL)? OPT_V : OPT_NONE, prn);
+		       NULL, K, opt, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} 
@@ -2275,7 +2276,7 @@ conditional_arma_model_prep (MODEL *pmod, model_info *minfo,
 static int bhhh_arma (const int *alist, double *coeff, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      struct arma_info *ainfo, MODEL *pmod,
-		      PRN *prn)
+		      gretlopt opt, PRN *prn)
 {
     model_info *minfo = NULL;
     const double **X = NULL;
@@ -2297,7 +2298,7 @@ static int bhhh_arma (const int *alist, double *coeff,
     }
 
     /* call BHHH conditional ML function (OPG regression) */
-    err = bhhh_max(arma_ll, X, coeff, minfo, prn);
+    err = bhhh_max(arma_ll, X, coeff, minfo, opt, prn);
     
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
@@ -2351,7 +2352,6 @@ MODEL arma_model (const int *list, const char *pqspec,
 {
     double *coeff = NULL;
     int *alist = NULL;
-    PRN *aprn = NULL;
     MODEL armod;
     struct arma_info ainfo;
     int init_done = 0;
@@ -2363,7 +2363,6 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (opt & OPT_V) {
-	aprn = prn;
 	errprn = prn;
     } else {
 	errprn = NULL;
@@ -2444,9 +2443,9 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, aprn);
+	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, prn);
     } else {
-	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, aprn);
+	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, prn);
     }
 
  bailout:

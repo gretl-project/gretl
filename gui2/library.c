@@ -111,8 +111,15 @@ int get_original_n (void)
     return original_n;
 } 
 
+static int gui_iter_print (PRN *prn)
+{
+    fprintf(stderr, "gui_iter_print called\n");
+    return 0;
+}
+
 void library_command_init (void)
 {
+    set_iter_print_func(gui_iter_print);
     gretl_cmd_init(&libcmd);
 }
 

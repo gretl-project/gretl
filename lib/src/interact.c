@@ -50,6 +50,7 @@
 #endif
 
 #define CMD_DEBUG 0
+#define ARMA_DBG 0
 
 #include "laginfo.c"
 
@@ -567,11 +568,25 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     }
 }
 
-/* check that list separator and '[xxx]' fields are in 
-   appropriate positions in arma command string
+static int arma_special_field (const char *s)
+{
+    int ret = 0;
+
+    if (*s == '{') {
+	ret = 1;
+    } else if (isalpha(*s) && get_matrix_by_name(s)) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/* Check that list separator and any "{xxx}" or matrix fields 
+   are in appropriate positions; also see if there _are_ any
+   of the latter.
  */
 
-static int arma_basic_check (char **S, int n)
+static int arma_basic_check (char **S, int n, int *specials)
 {
     int i, spos = 0;
 
@@ -587,10 +602,14 @@ static int arma_basic_check (char **S, int n)
     }
 
     for (i=0; i<n; i++) {
-	if (S[i][0] == '[') {
+	if (arma_special_field(S[i])) {
 	    if (i != 0 && i != spos - 1) {
 		return E_PARSE;
-	    } 
+	    } else if (i == 0) {
+		specials[0] = 1;
+	    } else {
+		specials[1] = i;
+	    }
 	}
     }
 
@@ -619,11 +638,15 @@ static int push_field (char ***pS, const char *s, int len, int *nf)
     return err;
 }
 
+#define no_specials(s) (s[0] == 0 && s[1] == 0)
+
 /* split fields in ar(i)ma command, allowing for specific
-   non-seasonal AR and/or MA lags given within '[' and ']'.
+   non-seasonal AR and/or MA lags given within '{' and '}',
+   or specified via a named matrix.
 */
 
-static char **arma_split_fields (const char *s, int *nf, int *err)
+static char **arma_split_fields (const char *s, int *nf, 
+				 int *specials, int *err)
 {
     const char *q, *p = s;
     char **F = NULL;
@@ -631,19 +654,19 @@ static char **arma_split_fields (const char *s, int *nf, int *err)
 
     while (*p && !*err) {
 	while (*p == ' ') p++;
-	if (*p == '[') {
-	    q = strchr(p, ']');
+	if (*p == '{') {
+	    q = strchr(p, '}');
 	    if (q == NULL) {
 		*err = E_PARSE;
 	    } else {
-		n = strcspn(p, "]");
+		n = strcspn(p, "}");
 		*err = push_field(&F, p, n + 1, nf);
 		p = q;
 	    }
 	} else if (*p == ';') {
 	    *err = push_field(&F, p, 1, nf);
 	} else {
-	    n = strcspn(p, " [];");
+	    n = strcspn(p, " {};");
 	    *err = push_field(&F, p, n, nf);
 	    p += n - 1;
 	}
@@ -651,10 +674,10 @@ static char **arma_split_fields (const char *s, int *nf, int *err)
     }
 
     if (!*err) {
-	*err = arma_basic_check(F, *nf);
+	*err = arma_basic_check(F, *nf, specials);
     }
 
-    if (*err) {
+    if (*err || no_specials(specials)) {
 	free_strings_array(F, *nf);
 	F = NULL;
     }
@@ -669,18 +692,14 @@ static int max_lag_from_matrix (char *s, int *err)
     const gretl_matrix *m;
     int k, kmax = 0, kmin = 99999;
     int i, n = 0;
-    char *name;
 
-    name = gretl_strndup(s, gretl_varchar_spn(s));
-    m = get_matrix_by_name(name);
+    m = get_matrix_by_name(s);
 
     if (m == NULL) {
 	*err = E_UNKVAR;
     } else if ((n = gretl_vector_get_length(m)) == 0) {
 	*err = E_NONCONF;
     }
-
-    free(name);
 
     for (i=0; i<n && !*err; i++) {
 	k = (int) m->val[i];
@@ -700,7 +719,7 @@ static int max_lag_from_numerics (char *s, int *err)
     int k, kmax = 0, kmin = 99999;
     char *rem;
 
-    while (*s != '\0' && *s != ']') {
+    while (*s != '\0' && *s != '}') {
 	k = (int) strtol(s, &rem, 10);
 	if (k > kmax) kmax = k;
 	if (k < kmin) kmin = k;
@@ -714,33 +733,37 @@ static int max_lag_from_numerics (char *s, int *err)
     return kmax;
 }
 
-/* e.g. "[1 4]" or "[matrix]" */
+/* e.g. "matrix" or "{1 4}" */
 
 static int max_lag_from_field (char *s, int *err)
 {
-    int kmax = 0;
+    int mat = 1, kmax = 0;
 
-    while (*s == ' ') s++;
+    if (*s == '{') {
+	mat = 0;
+	s++;
+    }
 
-    if (isdigit(*s)) {
-	kmax = max_lag_from_numerics(s, err);
-    } else if (isalpha(*s)) {
+    if (mat) {
 	kmax = max_lag_from_matrix(s, err);
     } else {
-	*err = E_PARSE;
-    }
+	kmax = max_lag_from_numerics(s, err);
+    } 
 
     return kmax;
 }
 
-static int arma_rewrite (char *s, CMD *cmd)
+static int arma_maybe_rewrite (char *s, CMD *cmd)
 {
     char **S = NULL;
+    char *orig = s;
     char chunk[16];
+    int pq[2] = {0};
     int i, k, n = 0;
 
-    /* preserve original command line for echo */
-    cmd->extra = gretl_strdup(s);
+#if ARMA_DBG
+    fprintf(stderr, "arma_rewrite: s = '%s'\n", s);
+#endif
 
     if (!strncmp(s, "arma ", 5)) {
 	s += 5;
@@ -748,20 +771,21 @@ static int arma_rewrite (char *s, CMD *cmd)
 	s += 6;
     }
 
-    S = arma_split_fields(s, &n, &cmd->err);
-    if (cmd->err) {
+    S = arma_split_fields(s, &n, pq, &cmd->err);
+    if (S == NULL) {
 	return cmd->err;
     }
 
-#if 0
-    fprintf(stderr, "arma_rewrite: s = '%s'\n", s);
+#if ARMA_DBG
     for (i=0; i<n; i++) {
 	fprintf(stderr, "S[%d] = '%s'\n", i, S[i]);
     }
 #endif
 
-    cmd->param = malloc(strlen(s) + 1);
+    /* preserve original command line for echo */
+    cmd->extra = gretl_strdup(orig);
 
+    cmd->param = malloc(strlen(s) + 1);
     if (cmd->param == NULL) {
 	cmd->err = E_ALLOC;
     } else {
@@ -769,8 +793,9 @@ static int arma_rewrite (char *s, CMD *cmd)
     }
 
     for (i=0; i<n && !cmd->err; i++) {
-	if (S[i][0] == '[') {
-	    k = max_lag_from_field(S[i] + 1, &cmd->err);
+	if ((i == 0 && pq[0]) || (i > 0 && i == pq[1])) {
+	    fprintf(stderr, "i=%d, S[i]='%s': special, getting maxlag\n", i, S[i]);
+	    k = max_lag_from_field(S[i], &cmd->err);
 	    if (!cmd->err) {
 		sprintf(chunk, "%d", k);
 		strcat(s, chunk);
@@ -792,6 +817,10 @@ static int arma_rewrite (char *s, CMD *cmd)
 	    strcat(s, " ");
 	}
     } 
+
+#if ARMA_DBG
+    fprintf(stderr, "new s = '%s'\n", s);
+#endif
 
     free_strings_array(S, n);
 
@@ -2209,9 +2238,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } else if (cmd->ci == LOGISTIC) {
 	/* we may have a "ymax" parameter */
 	parse_logistic_ymax(line, cmd);
-    } else if (cmd->ci == ARMA && strchr(line, '[')) {
-	/* specific lags block in '[' and ']' */
-	arma_rewrite(line, cmd);
+    } else if (cmd->ci == ARMA) {
+	/* allow for specific "gappy" lags */
+	arma_maybe_rewrite(line, cmd);
     }
 
     /* fix lines that contain a semicolon right after a var */

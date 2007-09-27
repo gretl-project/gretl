@@ -2642,7 +2642,7 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
 
 static void arma_x12_menu_mod (windata_t *vwin)
 {
-    flip(vwin->ifac, "/Analysis/coefficient covariance matrix", FALSE);
+    flip(vwin->ifac, "/Analysis/Coefficient covariance matrix", FALSE);
     add_x12_output_menu_item(vwin);
 }
 

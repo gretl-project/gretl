@@ -41,6 +41,8 @@ typedef enum {
     NORM_FIRST
 } VECMnorm;
 
+typedef int (*ITER_PRINT_FUNC) (PRN *);
+
 int libset_init (void);
 void libset_cleanup (void);
 int libset_restore_state_zero (DATAINFO *pdinfo);
@@ -151,6 +153,9 @@ char get_csv_delim (const DATAINFO *pdinfo);
 
 int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
 		      PRN *prn);
+
+void set_iter_print_func (ITER_PRINT_FUNC func);
+int iter_print_callback (PRN *prn);
 
 #endif /* LIBSET_H */
 

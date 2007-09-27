@@ -143,7 +143,7 @@ matrix_from_spec (const char *s, int *tmp, int *err)
     char *rem;
     int i, k, n = 0;
 
-    while (*s != '\0' && *s != ']') {
+    while (*s != '\0' && *s != '}') {
 	strtol(s, &rem, 10);
 	n++;
 	s = rem;
@@ -157,7 +157,7 @@ matrix_from_spec (const char *s, int *tmp, int *err)
 
     s = p;
     i = 0;
-    while (*s != '\0' && *s != ']') {
+    while (*s != '\0' && *s != '}') {
 	k = (int) strtol(s, &rem, 10);
 	m->val[i++] = k;
 	s = rem;
@@ -178,28 +178,15 @@ static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
     *tmp = 0;
 
     if (s != NULL) {
-	int n;
-
 	s += 2;
-	if (*s != '[') {
-	    *err = E_PARSE;
+	if (*s == '{') {
+	    m = matrix_from_spec(s, tmp, err);
 	} else {
-	    s++;
-	    while (*s == ' ') s++;
-	    n = gretl_varchar_spn(s);
-	    if (n > 0) {
-		/* get vec from named matrix */
-		char *name = gretl_strndup(s, n);
-
-		m = get_matrix_by_name(name);
-		if (m == NULL) {
-		    *err = E_UNKVAR;
-		}
-		free(name);
-	    } else {
-		m = matrix_from_spec(s, tmp, err);
+	    m = get_matrix_by_name(s);
+	    if (m == NULL) {
+		*err = E_UNKVAR;
 	    }
-	}
+	} 
     }
 
     return m;

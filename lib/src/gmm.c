@@ -1445,6 +1445,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     double itol = 1.0e-12, icrit = 1;
     double *oldcoeff = NULL;
     int maxit = get_bfgs_maxiter();
+    gretlopt iopt = s->opt;
     int outer_iters = 0;
     int outer_max = 1;
     int converged = 0;
@@ -1475,7 +1476,10 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_gmm_crit, C_GMM, NULL, s,
-		       s->opt, s->prn);
+		       iopt, s->prn);
+
+	/* don't keep displaying certain things */
+	iopt |= OPT_Q;
 
 	full_fncount += s->fncount;
 	full_grcount += s->grcount;

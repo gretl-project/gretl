@@ -3219,7 +3219,9 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
     if (utol != get_default_nls_toler()) {
 	/* it has actually been set */
 	*reltol = utol;
-	fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);
+	if (!(opt & OPT_Q)) {
+	    fprintf(stderr, "user-specified BFGS tolerance = %g\n", utol);
+	}
     }	
 }
 
@@ -3261,6 +3263,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
 {
     int crit_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
+    int verbose = (opt & OPT_V);
     int ndelta, fcount, gcount;
     double d, fmax, f, f0, sumgrad;
     int i, j, ilast, iter;
@@ -3299,7 +3302,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     reverse_gradient(g, n);
 
     do {
-	if (opt & OPT_V) {
+	if (verbose) {
 	    reverse_gradient(g, n);
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
 	    reverse_gradient(g, n);
@@ -3459,7 +3462,7 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     *fncount = fcount;
     *grcount = gcount;
 
-    if (opt & OPT_V) {
+    if (verbose) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));
 	reverse_gradient(g, n);
 	print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
