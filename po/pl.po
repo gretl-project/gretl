@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-25 23:00+0100\n"
+"PO-Revision-Date: 2007-09-27 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2534,7 +2534,7 @@ msgstr "Napotka³ brakuj±ce dane"
 
 #: lib/src/gretl_errors.c:61
 msgid "Not a Number in calculation"
-msgstr "Numer nie jest kalkulowany"
+msgstr "Not a Number in calculation"
 
 #: lib/src/gretl_errors.c:62
 msgid "Matrices not conformable for operation"
@@ -9635,7 +9635,7 @@ msgstr "/Model/_Nieliniowe modele/Modele _Tobitowe..."
 
 #: gui2/gretl.c:491
 msgid "/Model/Nonlinear models/_Heckit..."
-msgstr "/Model/_Nieliniowe modele/Modele _Heckitowe..."
+msgstr "/Model/_Nieliniowe modele/Modele selekcji próby (_heckit)..."
 
 #: gui2/gretl.c:492
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -11180,7 +11180,7 @@ msgstr "gretl: tworzenie zmiennych 0-1"
 
 #: gui2/library.c:4056
 msgid "Encoding variables as dummies"
-msgstr "Kodowanie zmiennych dyskretnych jako zm. 0-1"
+msgstr "Kodowanie zmiennych dyskretnych jako zmienne 0-1"
 
 #: gui2/library.c:4079
 msgid "gretl: generate lags"
@@ -11825,7 +11825,7 @@ msgstr "Zmiena - Offset"
 
 #: gui2/selector.c:1966
 msgid "Selection variable"
-msgstr "Wybór zmiennej"
+msgstr "Zmienna selekcji"
 
 #: gui2/selector.c:1968
 msgid "List of AR lags"
@@ -11889,7 +11889,7 @@ msgstr "Zmienne egzogeniczne"
 
 #: gui2/selector.c:2302
 msgid "Selection equation regressors"
-msgstr "Wybrane regresory równania"
+msgstr "Regresory równania selekcji"
 
 #: gui2/selector.c:2313 gui2/selector.c:3360
 msgid "Add ->"
@@ -13211,7 +13211,7 @@ msgstr "b³±d w poleceniu wsheet_setup()"
 
 #: plugin/heckit.c:613
 msgid "Selection equation"
-msgstr "Wybrane równanie"
+msgstr "Równanie selekcji"
 
 #: plugin/import_common.c:38
 msgid ""
