@@ -433,11 +433,13 @@ di Kronecker.
 \texttt{meanr}     &
 \texttt{minc}      \\   
 \texttt{minr}      &
+\texttt{mols}      &
+\texttt{mxtab}     &
 \texttt{princomp}  &
 \texttt{sumc}      &
-\texttt{sumr}      &
+\texttt{sumr}      \\
 \texttt{sd}        &
-\texttt{values}   
+\texttt{values}
 \end{tabular}      
 \caption{Funzioni matriciali suddivise per categoria}
 \label{tab:matrix_funcs_cat}
@@ -787,54 +789,29 @@ o più matrici sono:
 \texttt{qrdecomp} & scomposizione QR \\
 \texttt{eigensym} & auto-analisi di una matrice simmetrica \\
 \texttt{eigengen} & auto-analisi di una matrice generica \\
+\texttt{mols}     & OLS matriciale \\
 \texttt{svd}      & decomposizione in valori singolari (SVD) 
 \end{tabular}
 \end{center}
 
-La sintassi per tutte queste funzioni, tranne l'ultima, segue la forma
+La sintassi per le funzioni \texttt{qrdecomp}, \texttt{eigensym} e
+\texttt{eigengen} segue la forma
 %
 \begin{code}
 matrix B = func(A, &C)
 \end{code}
 %
-mentre per \texttt{svd} è
-%
-\begin{code}
-matrix B = func(A, &C, &D)
-\end{code}
-%
 Il primo argomento, \texttt{A}, rappresenta i dati in ingresso, ossia la matrice
-di cui è richiesta la scomposizione o l'analisi.
-
-Il secondo argomento (il terzo nel caso di \texttt{svd}) deve essere il nome di
-una matrice esistente, preceduto da \verb+&+ (per indicare l'``indirizzo'' della
-matrice in questione), nel qual caso un risultato ausiliario viene scritto in
-quella matrice, oppure la parola chiave \texttt{null}, nel qual caso il
-risultato non è mostrato o è scartato.
+di cui è richiesta la scomposizione o l'analisi.  Il secondo argomento deve
+essere il nome di una matrice esistente, preceduto da \verb+&+ (per indicare
+l'``indirizzo'' della matrice in questione), nel qual caso un risultato
+ausiliario viene scritto in quella matrice, oppure la parola chiave
+\texttt{null}, nel qual caso il risultato non è mostrato o è scartato.
 
 Nel caso in cui il secondo argomento venga indicato, la matrice specificata sarà
 sovrascritta con il risultato della funzione (non è richiesto che la matrice
 preesistente abbia le dimensioni corrette per ricevere il risultato della
 funzione).
-
-La funzione \texttt{qrdecomp} calcola la scomposizione QR di una matrice $m
-\times n$ $A$: $A = QR$, dove $Q$ è una matrice ortogonale $m \times n$
-e $R$ è una matrice $n \times n$ triangolare superiore.
-La matrice $Q$ è prodotta direttamente, mentre $R$ può essere recuperata
-attraverso il secondo argomento. Ecco due esempi:
-%
-\begin{code}
-matrix R
-matrix Q = qrdecomp(M, &R)
-matrix Q = qrdecomp(M, null)
-\end{code}
-%
-Nel primo esempio, la matrice triangolare $R$ è salvata come \texttt{R};
-nel secondo, $R$ è scartata. La prima delle righe nell'esempio precedente
-mostra una ``dichiarazione semplice'' di una matrice: \texttt{R} viene
-dichiarata come matrice, ma non gli viene assegnato alcun valore esplicito. In
-questo caso, la variabile è inizializzata a una matrice $1\times 1$ il cui
-unico elemento vale zero.
 
 La funzione \texttt{eigensym} calcola gli autovalori, e opzionalmente gli
 autovettori destri, di una matrice simmetrica $n \times n$.
@@ -904,6 +881,32 @@ print c
 \end{scode}
 \end{script}
  
+La funzione \texttt{qrdecomp} calcola la scomposizione QR di una matrice $m
+\times n$ $A$: $A = QR$, dove $Q$ è una matrice ortogonale $m \times n$
+e $R$ è una matrice $n \times n$ triangolare superiore.
+La matrice $Q$ è prodotta direttamente, mentre $R$ può essere recuperata
+attraverso il secondo argomento. Ecco due esempi:
+%
+\begin{code}
+matrix R
+matrix Q = qrdecomp(M, &R)
+matrix Q = qrdecomp(M, null)
+\end{code}
+%
+Nel primo esempio, la matrice triangolare $R$ è salvata come \texttt{R};
+nel secondo, $R$ è scartata. La prima delle righe nell'esempio precedente
+mostra una ``dichiarazione semplice'' di una matrice: \texttt{R} viene
+dichiarata come matrice, ma non gli viene assegnato alcun valore esplicito. In
+questo caso, la variabile è inizializzata a una matrice $1\times 1$ il cui
+unico elemento vale zero.
+
+La sintassi per \texttt{svd} è
+%
+\begin{code}
+matrix B = func(A, &C, &D)
+\end{code}
+%
+
 La funzione \texttt{svd} calcola la decomposizione in valori singolari (totale o
 parziale) della matrice reale $A$ $m \times n$. La decomposizione è
 \[
@@ -931,6 +934,17 @@ secondo caso si otterranno solo i valori singolari, nel terzo si ottengono i
 vettori singolari destri ma non viene calcolata $U$.
 \emph{Nota bene}: quando il terzo argomento è non nullo, in realtà viene
 prodotto $V'$.
+ 
+Infine, la sintassi per \texttt{mols} è
+%
+\begin{code}
+matrix b = func(y, X, &u)
+\end{code}
+%
+La funzione produce la statistica OLS ottenuta regredendo la matrice $T
+\times n$ sulla matrice $T \times k$, ossia una matrice $k \times n$
+che contiene $(X'X)^{-1} X'Y$. Viene usata la decomposizione di Cholesky.
+La matrice u, se non nulla, è usata per salvare i residui.
 
 \section{Matrici accessorie}
 \label{matrix-accessors}
@@ -965,7 +979,7 @@ matrix u = $uhat
 matrix b = m1.$coeff
 matrix v2 = m1.$vcv[1:2,1:2]
 \end{code}
-%
+%$
 Il primo comando produce i residui dell'ultimo modello; il secondo produce il
 vettore dei coefficienti del modello \texttt{m1}, mentre il terzo (che usa il
 meccanismo della selezione di sotto-matrici descritto in precedenza)
@@ -1215,33 +1229,35 @@ ols price const sqft --vcv
 \texttt{minr}      &
 \texttt{mlag}      &
 \texttt{mnormal}   &
-\texttt{mshape}    \\
+\texttt{mols}      \\
+\texttt{mshape}    &
 \texttt{muniform}  &
+\texttt{mxtab}     &
 \texttt{nullspace} &
 \texttt{onenorm}   &
-\texttt{ones}      &
+\texttt{ones}      \\
 \texttt{princomp}  &
-\texttt{qform}     \\
+\texttt{qform}     &
 \texttt{qnorm}     &
 \texttt{qrdecomp}  &
 \texttt{rank}      &
-\texttt{rcond}     &
+\texttt{rcond}     \\
 \texttt{rows}      &
-\texttt{seq}       \\
+\texttt{seq}       &
 \texttt{sin}       &
 \texttt{sort}      &
 \texttt{sqrt}      &
-\texttt{sumc}      &
+\texttt{sumc}      \\
 \texttt{sumr}      &
-\texttt{svd}       \\
+\texttt{svd}       &
 \texttt{tan}       &
 \texttt{tr}        &
 \texttt{transp}    &
-\texttt{unvech}    &
+\texttt{unvech}    \\
 \texttt{values}    &
-\texttt{vec}       \\
+\texttt{vec}       &
 \texttt{vech}      &
-\texttt{zeros}     
+\texttt{zeros}
 \end{tabular}      
 \caption{Elenco alfabetico delle funzioni matriciali}
 \label{tab:matrix_funcs}
