@@ -567,6 +567,237 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
     }
 }
 
+/* check that list separator and '[xxx]' fields are in 
+   appropriate positions in arma command string
+ */
+
+static int arma_basic_check (char **S, int n)
+{
+    int i, spos = 0;
+
+    for (i=0; i<n; i++) {
+	if (S[i][0] == ';') {
+	    spos = i;
+	    break;
+	}
+    }
+
+    if (spos != 2 && spos != 3) {
+	return E_PARSE;
+    }
+
+    for (i=0; i<n; i++) {
+	if (S[i][0] == '[') {
+	    if (i != 0 && i != spos - 1) {
+		return E_PARSE;
+	    } 
+	}
+    }
+
+    return 0;
+}
+
+/* push onto array *pS a string of length len starting at s */
+
+static int push_field (char ***pS, const char *s, int len, int *nf)
+{
+    char *chunk;
+    int err = 0;
+
+    if (len == 0) {
+	return 0;
+    }
+
+    chunk = gretl_strndup(s, len);
+    if (chunk == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = strings_array_add(pS, nf, chunk);
+	free(chunk);
+    }
+
+    return err;
+}
+
+/* split fields in ar(i)ma command, allowing for specific
+   non-seasonal AR and/or MA lags given within '[' and ']'.
+*/
+
+static char **arma_split_fields (const char *s, int *nf, int *err)
+{
+    const char *q, *p = s;
+    char **F = NULL;
+    int n;
+
+    while (*p && !*err) {
+	while (*p == ' ') p++;
+	if (*p == '[') {
+	    q = strchr(p, ']');
+	    if (q == NULL) {
+		*err = E_PARSE;
+	    } else {
+		n = strcspn(p, "]");
+		*err = push_field(&F, p, n + 1, nf);
+		p = q;
+	    }
+	} else if (*p == ';') {
+	    *err = push_field(&F, p, 1, nf);
+	} else {
+	    n = strcspn(p, " [];");
+	    *err = push_field(&F, p, n, nf);
+	    p += n - 1;
+	}
+	p++;
+    }
+
+    if (!*err) {
+	*err = arma_basic_check(F, *nf);
+    }
+
+    if (*err) {
+	free_strings_array(F, *nf);
+	F = NULL;
+    }
+
+    return F;
+}
+
+/* matrix must be vector of integers */
+
+static int max_lag_from_matrix (char *s, int *err)
+{
+    const gretl_matrix *m;
+    int k, kmax = 0, kmin = 99999;
+    int i, n = 0;
+    char *name;
+
+    name = gretl_strndup(s, gretl_varchar_spn(s));
+    m = get_matrix_by_name(name);
+
+    if (m == NULL) {
+	*err = E_UNKVAR;
+    } else if ((n = gretl_vector_get_length(m)) == 0) {
+	*err = E_NONCONF;
+    }
+
+    free(name);
+
+    for (i=0; i<n && !*err; i++) {
+	k = (int) m->val[i];
+	if (k > kmax) kmax = k;
+	if (k < kmin) kmin = k;
+    }
+
+    if (!*err && kmin < 1) {
+	*err = E_DATA;
+    }
+
+    return kmax;
+}
+
+static int max_lag_from_numerics (char *s, int *err)
+{
+    int k, kmax = 0, kmin = 99999;
+    char *rem;
+
+    while (*s != '\0' && *s != ']') {
+	k = (int) strtol(s, &rem, 10);
+	if (k > kmax) kmax = k;
+	if (k < kmin) kmin = k;
+	s = rem;
+    }
+
+    if (kmin < 1) {
+	*err = E_DATA;
+    }
+
+    return kmax;
+}
+
+/* e.g. "[1 4]" or "[matrix]" */
+
+static int max_lag_from_field (char *s, int *err)
+{
+    int kmax = 0;
+
+    while (*s == ' ') s++;
+
+    if (isdigit(*s)) {
+	kmax = max_lag_from_numerics(s, err);
+    } else if (isalpha(*s)) {
+	kmax = max_lag_from_matrix(s, err);
+    } else {
+	*err = E_PARSE;
+    }
+
+    return kmax;
+}
+
+static int arma_rewrite (char *s, CMD *cmd)
+{
+    char **S = NULL;
+    char chunk[16];
+    int i, k, n = 0;
+
+    /* preserve original command line for echo */
+    cmd->extra = gretl_strdup(s);
+
+    if (!strncmp(s, "arma ", 5)) {
+	s += 5;
+    } else if (!strncmp(s, "arima ", 6)) {
+	s += 6;
+    }
+
+    S = arma_split_fields(s, &n, &cmd->err);
+    if (cmd->err) {
+	return cmd->err;
+    }
+
+#if 0
+    fprintf(stderr, "arma_rewrite: s = '%s'\n", s);
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "S[%d] = '%s'\n", i, S[i]);
+    }
+#endif
+
+    cmd->param = malloc(strlen(s) + 1);
+
+    if (cmd->param == NULL) {
+	cmd->err = E_ALLOC;
+    } else {
+	*s = *cmd->param = '\0';
+    }
+
+    for (i=0; i<n && !cmd->err; i++) {
+	if (S[i][0] == '[') {
+	    k = max_lag_from_field(S[i] + 1, &cmd->err);
+	    if (!cmd->err) {
+		sprintf(chunk, "%d", k);
+		strcat(s, chunk);
+		if (i == 0) {
+		    strcat(cmd->param, "p=");
+		    strcat(cmd->param, S[i]);
+		} else {
+		    if (*cmd->param) {
+			strcat(cmd->param, ",");
+		    }
+		    strcat(cmd->param, "q=");
+		    strcat(cmd->param, S[i]);
+		}		    
+	    }
+	} else {
+	    strcat(s, S[i]);
+	}
+	if (i < n - 1) {
+	    strcat(s, " ");
+	}
+    } 
+
+    free_strings_array(S, n);
+
+    return cmd->err;
+}
+
 /* pluck the specification for "block-diagonal" instruments out of an
    arbond command line, and put it in the command's "param" field for
    subsequent special processing in arbond.c */
@@ -1971,16 +2202,17 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /** OK, now we're definitely doing a list-oriented command,
 	We begin by taking care of a few specials **/
 
-    /* GNUPLOT can have a block of stuff to pass literally
-       to gnuplot */
     if (cmd->ci == GNUPLOT) {
+	/* we may have a block of stuff to pass literally
+	   to gnuplot */
 	grab_gnuplot_literal_block(line, cmd);
-    }
-
-    /* "logistic" can have a "ymax" parameter */
-    else if (cmd->ci == LOGISTIC) {
+    } else if (cmd->ci == LOGISTIC) {
+	/* we may have a "ymax" parameter */
 	parse_logistic_ymax(line, cmd);
-    } 
+    } else if (cmd->ci == ARMA && strchr(line, '[')) {
+	/* specific lags block in '[' and ']' */
+	arma_rewrite(line, cmd);
+    }
 
     /* fix lines that contain a semicolon right after a var */
     linelen = fix_semicolon_after_var(line);
@@ -2935,14 +3167,21 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
     }
 
-    if (!dont_print_list(cmd)) {
+    if (dont_print_list(cmd)) {
+	const char *s = line;
+	
+	if (cmd->ci == ARMA && cmd->extra != NULL) {
+	    s = cmd->extra;
+	}
+	if (strlen(s) > SAFELEN - 2) {
+	    safe_print_line(s, &llen, prn);
+	} else {
+	    llen += pputs(prn, s);
+	}
+    } else {
 	llen += pprintf(prn, "%s", cmd->word);
 	cmd_print_list(cmd, pdinfo, &llen, prn);
-    } else if (strlen(line) > SAFELEN - 2) {
-	safe_print_line(line, &llen, prn);
-    } else if (strcmp(cmd->word, "quit")) {
-	llen += pputs(prn, line);
-    }
+    } 
 
     /* print parameter after list, if wanted */
     if ((cmd->ci == LOGISTIC || cmd->ci == ARBOND) && *cmd->param != '\0') {
@@ -3875,8 +4114,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (cmd->ci == AR) {
 	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo,
-			      cmd->opt, prn);
+	    *models[0] = arma(cmd->list, cmd->param, (const double **) *pZ, 
+			      pdinfo, cmd->opt, prn);
 	} else {
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);

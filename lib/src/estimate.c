@@ -3296,6 +3296,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * arma:
  * @list: dependent variable, AR and MA orders, and any exogenous
  * regressors.
+ * @pqspec: string giving specific non-seasonal AR/MA lags (or %NULL).
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
@@ -3309,12 +3310,14 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo, 
+MODEL arma (const int *list, const char *pqspec, 
+	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_func) (const int *, const double **, const DATAINFO *, 
+    MODEL (*arma_func) (const int *, const char *,
+			const double **, const DATAINFO *, 
 			gretlopt, PRN *);
 
     gretl_error_clear();
@@ -3339,7 +3342,7 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return armod;
     }
 
-    armod = (*arma_func) (list, Z, pdinfo, opt, prn);
+    armod = (*arma_func) (list, pqspec, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
     set_model_id(&armod);

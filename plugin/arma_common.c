@@ -1,3 +1,5 @@
+#include "usermat.h"
+
 #define MAX_ARMA_ORDER 6
 #define MAX_ARIMA_DIFF 2
 
@@ -23,6 +25,7 @@ struct arma_info {
     int pd;          /* periodicity of data */
     int T;           /* full length of data series */
     double *dy;      /* differenced dependent variable */
+    const char *pqspec; /* input string with specific AR, MA lags */
 };
 
 #define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
@@ -40,7 +43,8 @@ struct arma_info {
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i])
 
 static void 
-arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
+arma_info_init (struct arma_info *ainfo, char flags, 
+		const char *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
     ainfo->flags = flags;
@@ -69,6 +73,7 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->T = pdinfo->n;
 
     ainfo->dy = NULL;
+    ainfo->pqspec = pqspec;
 }
 
 static void arma_info_cleanup (struct arma_info *ainfo)
@@ -128,31 +133,113 @@ static char *mask_from_vec (const gretl_vector *v,
     return mask;
 }
 
-static int arma_make_masks (struct arma_info *ainfo,
-			    int *list)
+/* construct vector of specific lags from string spec */
+
+static gretl_matrix *
+matrix_from_spec (const char *s, int *tmp, int *err)
 {
-    const gretl_matrix *m;
-    int err = 0;
+    gretl_matrix *m = NULL;
+    const char *p = s;
+    char *rem;
+    int i, k, n = 0;
+
+    while (*s != '\0' && *s != ']') {
+	strtol(s, &rem, 10);
+	n++;
+	s = rem;
+    }
+
+    m = gretl_vector_alloc(n);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    s = p;
+    i = 0;
+    while (*s != '\0' && *s != ']') {
+	k = (int) strtol(s, &rem, 10);
+	m->val[i++] = k;
+	s = rem;
+    }
+
+    *tmp = 1;
+
+    return m;
+}
+
+static gretl_matrix *get_arma_pq_vec (struct arma_info *ainfo,
+				      int t, int *tmp, int *err)
+{
+    gretl_matrix *m = NULL;
+    const char *test = (t == AR_MASK)? "p=" : "q=";
+    const char *s = strstr(ainfo->pqspec, test);
+
+    *tmp = 0;
+
+    if (s != NULL) {
+	int n;
+
+	s += 2;
+	if (*s != '[') {
+	    *err = E_PARSE;
+	} else {
+	    s++;
+	    while (*s == ' ') s++;
+	    n = gretl_varchar_spn(s);
+	    if (n > 0) {
+		/* get vec from named matrix */
+		char *name = gretl_strndup(s, n);
+
+		m = get_matrix_by_name(name);
+		if (m == NULL) {
+		    *err = E_UNKVAR;
+		}
+		free(name);
+	    } else {
+		m = matrix_from_spec(s, tmp, err);
+	    }
+	}
+    }
+
+    return m;
+}
+
+static int 
+arma_make_masks (struct arma_info *ainfo, int *list)
+{
+    gretl_matrix *m;
+    int tmp, err = 0;
 
     if (ainfo->p > 0) {
 	ainfo->np = ainfo->p;
-	m = get_arma_ar_vec();
-	if (m != NULL) {
-	    ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
-	}
-	if (ainfo->p < list[1]) {
-	    list[1] = ainfo->p;
+	if (ainfo->pqspec != NULL) {
+	    m = get_arma_pq_vec(ainfo, AR_MASK, &tmp, &err);
+	    if (m != NULL) {
+		ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
+		if (tmp) {
+		    gretl_matrix_free(m);
+		}
+	    }
+	    if (ainfo->p < list[1]) {
+		list[1] = ainfo->p;
+	    }
 	}
     }
 
     if (ainfo->q > 0 && !err) {
 	ainfo->nq = ainfo->q;
-	m = get_arma_ma_vec();
-	if (m != NULL) {
-	    ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);
-	}
-	if (ainfo->q < list[1]) {
-	    list[2] = ainfo->q;
+	if (ainfo->pqspec != NULL) {
+	    m = get_arma_pq_vec(ainfo, MA_MASK, &tmp, &err);
+	    if (m != NULL) {
+		ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);
+		if (tmp) {
+		    gretl_matrix_free(m);
+		}
+	    }
+	    if (ainfo->q < list[1]) {
+		list[2] = ainfo->q;
+	    }
 	}
     }
 

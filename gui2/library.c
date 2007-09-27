@@ -2818,7 +2818,8 @@ static int real_do_model (int action)
 	break;
 
     case ARMA:
-	*pmod = arma(libcmd.list, (const double **) Z, datainfo,
+	*pmod = arma(libcmd.list, libcmd.param,
+		     (const double **) Z, datainfo,
 		     libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;

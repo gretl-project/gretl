@@ -2759,7 +2759,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		} else if (cmd->ci == HSK) {
 		    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
 		} else if (cmd->ci == ARMA) {
-		    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo, 
+		    *models[0] = arma(cmd->list, cmd->param,
+				      (const double **) *pZ, pdinfo, 
 				      cmd->opt, prn);
 		} else if (cmd->ci == TOBIT) {
 		    *models[0] = tobit_model(cmd->list, pZ, pdinfo,

@@ -2345,7 +2345,8 @@ static int prefer_hr_init (struct arma_info *ainfo)
     return ret;
 }
 
-MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
+MODEL arma_model (const int *list, const char *pqspec,
+		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
     double *coeff = NULL;
@@ -2368,7 +2369,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	errprn = NULL;
     }
 
-    arma_info_init(&ainfo, flags, pdinfo);
+    arma_info_init(&ainfo, flags, pqspec, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 

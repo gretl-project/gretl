@@ -791,7 +791,8 @@ static void delete_old_files (const char *path)
     }
 }
 
-MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
+MODEL arma_x12_model (const int *list, const char *pqspec,
+		      const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn)
 {
     int verbose = (opt & OPT_V);
@@ -816,7 +817,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	opt |= OPT_F;
     }
 
-    arma_info_init(&ainfo, ARMA_X12A, pdinfo);
+    arma_info_init(&ainfo, ARMA_X12A, pqspec, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
