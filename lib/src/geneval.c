@@ -5156,6 +5156,19 @@ static void matrix_edit (parser *p)
     }
 }
 
+static int matrix_missvals (const gretl_matrix *m)
+{
+    int i, n = m->rows * m->cols;
+
+    for (i=0; i<n; i++) {
+	if (na(m->val[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #define scalar_matrix(n) (n->t == MAT && n->v.m->rows == 1 && \
 			  n->v.m->cols == 1)
 
@@ -5193,6 +5206,8 @@ static int gen_check_return_type (parser *p)
 	} else if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
 	    p->err = E_MISSDATA;
 	} else if (r->t == NUM && xna(r->v.xval)) {
+	    p->err = E_MISSDATA;
+	} else if (r->t == MAT && matrix_missvals(r->v.m)) {
 	    p->err = E_MISSDATA;
 	}
     } else if (p->targ == LIST) {
