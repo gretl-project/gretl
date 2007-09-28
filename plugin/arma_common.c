@@ -208,9 +208,6 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 		    gretl_matrix_free(m);
 		}
 	    }
-	    if (ainfo->p < list[1]) {
-		list[1] = ainfo->p;
-	    }
 	}
     }
 
@@ -223,9 +220,6 @@ arma_make_masks (struct arma_info *ainfo, int *list)
 		if (tmp) {
 		    gretl_matrix_free(m);
 		}
-	    }
-	    if (ainfo->q < list[1]) {
-		list[2] = ainfo->q;
 	    }
 	}
     }

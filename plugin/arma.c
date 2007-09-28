@@ -121,6 +121,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     }  
     
     if (tzero && Tzero) {
+	/* nothing to be done */
 	return 0;
     }
 
@@ -1055,19 +1056,24 @@ static int kalman_do_ma_check = 1;
 
 static double kalman_arma_ll (const double *b, void *p)
 {
-    int offset = kainfo->ifc + kainfo->p + kainfo->P;
+    int offset = kainfo->ifc + kainfo->np + kainfo->P; /* gappy? */
     const double *theta = b + offset;
-    const double *Theta = theta + kainfo->q;
+    const double *Theta = theta + kainfo->nq; /* gappy? */
     double ll = NADBL;
     kalman *K;
     int err = 0;
 
 #if ARMA_DEBUG
-    int i;
+    int i, k = 0;
+
     fprintf(stderr, "kalman_arma_ll():\n");
+
     for (i=0; i<kainfo->q; i++) {
-	fprintf(stderr, "theta[%d] = %#.12g\n", i, theta[i]);
+	if (MA_included(kainfo, i)) {
+	    fprintf(stderr, "theta[%d] = %#.12g\n", i+1, theta[k++]);
+	}
     }
+
     for (i=0; i<kainfo->Q; i++) {
 	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
     }    
@@ -1467,11 +1473,11 @@ static void y_Xb_at_lag (char *spec, struct arma_info *ainfo,
 	strcat(spec, "b0");
     }
 
-    for (i=1; i<=narmax; i++) {
-	if (ainfo->ifc || i > 1) {
+    for (i=0; i<narmax; i++) {
+	if (ainfo->ifc || i > 0) {
 	    strcat(spec, "+");
 	} 
-	sprintf(term, "b%d*x%d_%d", i, i, lag);
+	sprintf(term, "b%d*x%d_%d", i+1, i+1, lag);
 	strcat(spec, term);
     }
 
@@ -1498,7 +1504,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     int *plist = NULL;
     int v, oldv = pdinfo->v;
     int nparam;
-    int i, j, k, err = 0;
+    int i, j, k, kp, err = 0;
 
     spec = nlspec_new(NLS, pdinfo);
     if (spec == NULL) {
@@ -1531,12 +1537,15 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcpy(pdinfo->varname[v], "b0");
 	plist[k++] = v++;
     }
+    kp = 0;
     for (i=0; i<ainfo->np; i++) {
-	if (i == 0) {
-	    (*pZ)[v][0] = 0.1; /* ? */
+	if (AR_included(ainfo, i)) {
+	    if (kp == 0) {
+		(*pZ)[v][0] = 0.1; /* FIXME? */
+	    }
+	    sprintf(pdinfo->varname[v], "phi%d", ++kp);
+	    plist[k++] = v++;
 	}
-	sprintf(pdinfo->varname[v], "phi%d", i+1);
-	plist[k++] = v++;
     }
     for (i=0; i<ainfo->P; i++) {
 	sprintf(pdinfo->varname[v], "Phi%d", i+1);
@@ -1557,7 +1566,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcat(fnstr, "0");
     } 
 
+    /* FIXME gappiness in next chunk */
+
     for (i=0; i<=ainfo->p; i++) {
+	/* WRONG */
 	if (i > 0) {
 	    sprintf(term, "+phi%d*", i);
 	    strcat(fnstr, term);
@@ -1577,8 +1589,8 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	}
     } 
 
-    for (i=1; i<=ainfo->nexo; i++) {
-	sprintf(term, "+b%d*x%d", i, i);
+    for (i=0; i<ainfo->nexo; i++) {
+	sprintf(term, "+b%d*x%d", i+1, i+1);
 	strcat(fnstr, term);
     }	
 
@@ -1616,7 +1628,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
    ARMA via OLS (not NLS)
 */
 
-static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
+static int *make_ar_ols_list (struct arma_info *ainfo, int av)
 {
     int * alist = gretl_list_new(av);
     int i, k, vi;
@@ -1634,7 +1646,8 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 	alist[0] -= 1;
 	k = 2;
     }
-    
+
+    /* allow for const and y */
     vi = 2;
 
     for (i=0; i<ainfo->p; i++) {
@@ -1647,8 +1660,8 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 	alist[k++] = vi++;
     }
 
-    for (i=1; i<=ainfo->nexo; i++) {
-	alist[k++] = ptotal + 1 + i;
+    for (i=0; i<ainfo->nexo; i++) {
+	alist[k++] = vi++;
     }
 
     return alist;
@@ -1727,7 +1740,7 @@ static int ar_arma_init (const int *list, double *coeff,
 	nonlin = 1;
     } else {
 	/* OLS: need regression list */
-	alist = make_ar_ols_list(ainfo, av, ptotal);
+	alist = make_ar_ols_list(ainfo, av);
     }
 
     /* starting position for reading exogeneous vars */
