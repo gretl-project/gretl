@@ -1503,7 +1503,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     nlspec *spec;
     int *plist = NULL;
     int v, oldv = pdinfo->v;
-    int nparam;
+    int nparam, lag;
     int i, j, k, kp, err = 0;
 
     spec = nlspec_new(NLS, pdinfo);
@@ -1566,28 +1566,29 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcat(fnstr, "0");
     } 
 
-    /* FIXME gappiness in next chunk */
-
-    for (i=0; i<=ainfo->p; i++) {
-	/* WRONG */
-	if (i > 0) {
-	    sprintf(term, "+phi%d*", i);
+    for (i=0; i<ainfo->p; i++) {
+	if (AR_included(ainfo, i)) {
+	    lag = i + 1;
+	    sprintf(term, "+phi%d*", lag);
 	    strcat(fnstr, term);
-	    y_Xb_at_lag(fnstr, ainfo, narmax, i);
+	    y_Xb_at_lag(fnstr, ainfo, narmax, lag);
 	}
-	for (j=0; j<=ainfo->P; j++) {
-	    if (i == 0 && j > 0) {
-		sprintf(term, "+Phi%d*", j);
+    }
+
+    for (j=0; j<ainfo->P; j++) {
+	sprintf(term, "+Phi%d*", j + 1);
+	strcat(fnstr, term);
+	lag = (j + 1) * ainfo->pd;
+	y_Xb_at_lag(fnstr, ainfo, narmax, lag);
+	for (i=0; i<ainfo->p; i++) {
+	    if (AR_included(ainfo, i)) {
+		sprintf(term, "-phi%d*Phi%d*", i+1, j+1);
 		strcat(fnstr, term);
-		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd);
-	    }
-	    if (i > 0 && j > 0) {
-		sprintf(term, "-phi%d*Phi%d*", i, j);
-		strcat(fnstr, term);
-		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd + i);
+		lag = (j+1) * ainfo->pd + (i+1);
+		y_Xb_at_lag(fnstr, ainfo, narmax, lag);
 	    }
 	}
-    } 
+    }
 
     for (i=0; i<ainfo->nexo; i++) {
 	sprintf(term, "+b%d*x%d", i+1, i+1);
@@ -1758,8 +1759,8 @@ static int ar_arma_init (const int *list, double *coeff,
 
     k = 2;
     for (i=0; i<ainfo->p; i++) {
-	lag = i + 1;
 	if (AR_included(ainfo, i)) {
+	    lag = i + 1;
 	    sprintf(adinfo->varname[k++], "y_%d", lag);
 	    for (j=0; j<narmax; j++) {
 		sprintf(adinfo->varname[axi++], "x%d_%d", j+1, lag);
