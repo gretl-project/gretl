@@ -41,6 +41,50 @@
 
 static PRN *errprn;
 
+struct bchecker {
+    int qmax;
+    double *temp;
+    double *tmp2;
+    cmplx *roots;
+};
+
+static void bchecker_free (struct bchecker *b)
+{
+    if (b != NULL) {
+	free(b->temp);
+	free(b->tmp2);
+	free(b->roots);
+	free(b);
+    }
+}
+
+static struct bchecker *bchecker_allocate (struct arma_info *ainfo)
+{
+    struct bchecker *b;
+
+    b = malloc(sizeof *b);
+    if (b == NULL) {
+	return NULL;
+    }
+
+    b->temp = NULL;
+    b->tmp2 = NULL;
+    b->roots = NULL;
+
+    b->qmax = ainfo->q + ainfo->Q * ainfo->pd;
+
+    b->temp  = malloc((b->qmax + 1) * sizeof *b->temp);
+    b->tmp2  = malloc((b->qmax + 1) * sizeof *b->tmp2);
+    b->roots = malloc(b->qmax * sizeof *b->roots);
+
+    if (b->temp == NULL || b->tmp2 == NULL || b->roots == NULL) {
+	bchecker_free(b);
+	b = NULL;
+    } 
+
+    return b;
+}
+
 /* check whether the MA estimates have gone out of bounds in the
    course of iteration */
 
@@ -48,11 +92,7 @@ static int
 ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 		  const double *Theta)
 {
-    static double *temp;
-    static double *tmp2;
-    static cmplx *roots;
-    static int qmax;
-
+    static struct bchecker *b = NULL;
     double re, im, rt;
     int i, j, k, m, si, qtot;
     int tzero = 1, Tzero = 1;
@@ -60,13 +100,8 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 
     if (ainfo == NULL) {
 	/* signal for cleanup */
-	free(temp);
-	temp = NULL;
-	free(tmp2);
-	tmp2 = NULL;
-	free(roots);
-	roots = NULL;
-	qmax = 0;
+	bchecker_free(b);
+	b = NULL;
 	return 0;
     }
 
@@ -89,34 +124,22 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	return 0;
     }
 
-    if (temp == NULL) {
-	/* not allocated yet */
-	qmax = ainfo->q + ainfo->Q * ainfo->pd;
-
-	temp  = malloc((qmax + 1) * sizeof *temp);
-	tmp2  = malloc((qmax + 1) * sizeof *tmp2);
-	roots = malloc(qmax * sizeof *roots);
-
-	if (temp == NULL || tmp2 == NULL || roots == NULL) {
-	    free(temp);
-	    temp = NULL;
-	    free(tmp2);
-	    tmp2 = NULL;
-	    free(roots);
-	    roots = NULL;
+    if (b == NULL) {
+	b = bchecker_allocate(ainfo);
+	if (b == NULL) {
 	    return 1;
 	}
     }
 
-    temp[0] = 1.0;
+    b->temp[0] = 1.0;
 
     /* initialize to non-seasonal MA or zero */
     k = 0;
-    for (i=0; i<qmax; i++) {
+    for (i=0; i<b->qmax; i++) {
         if (i < ainfo->q && MA_included(ainfo, i)) {
-	    temp[i+1] = theta[k++];
+	    b->temp[i+1] = theta[k++];
         } else {
-            temp[i+1] = 0.0;
+            b->temp[i+1] = 0.0;
         }
     }
 
@@ -124,29 +147,29 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     if (Tzero) {
 	qtot = ainfo->q;
     } else {
-	qtot = qmax;
+	qtot = b->qmax;
 	for (i=0; i<ainfo->Q; i++) {
 	    si = (i + 1) * ainfo->pd;
-	    temp[si] += Theta[i];
+	    b->temp[si] += Theta[i];
 	    k = 0;
 	    for (j=0; j<ainfo->q; j++) {
 		if (MA_included(ainfo, j)) {
 		    m = si + j + 1;
-		    temp[m] += Theta[i] * theta[k++];
+		    b->temp[m] += Theta[i] * theta[k++];
 		} 
 	    }
 	}
     }
 
-    cerr = polrt(temp, tmp2, qtot, roots);
+    cerr = polrt(b->temp, b->tmp2, qtot, b->roots);
     if (cerr) {
 	fprintf(stderr, "ma_out_of_bounds: polrt returned %d\n", cerr);
 	return 0; /* ?? */
     }
 
     for (i=0; i<qtot; i++) {
-	re = roots[i].r;
-	im = roots[i].i;
+	re = b->roots[i].r;
+	im = b->roots[i].i;
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
 	    pprintf(errprn, "MA root %d = %g\n", i, rt);
@@ -1508,19 +1531,19 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcpy(pdinfo->varname[v], "b0");
 	plist[k++] = v++;
     }
-    for (i=1; i<=ainfo->np; i++) {
-	if (i == 1) {
+    for (i=0; i<ainfo->np; i++) {
+	if (i == 0) {
 	    (*pZ)[v][0] = 0.1; /* ? */
 	}
-	sprintf(pdinfo->varname[v], "phi%d", i);
+	sprintf(pdinfo->varname[v], "phi%d", i+1);
 	plist[k++] = v++;
     }
-    for (i=1; i<=ainfo->P; i++) {
-	sprintf(pdinfo->varname[v], "Phi%d", i);
+    for (i=0; i<ainfo->P; i++) {
+	sprintf(pdinfo->varname[v], "Phi%d", i+1);
 	plist[k++] = v++;
     }
-    for (i=1; i<=ainfo->nexo; i++) {
-	sprintf(pdinfo->varname[v], "b%d", i);
+    for (i=0; i<ainfo->nexo; i++) {
+	sprintf(pdinfo->varname[v], "b%d", i+1);
 	plist[k++] = v++;
     }
 
@@ -1676,7 +1699,9 @@ static int ar_arma_init (const int *list, double *coeff,
 
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
-	for (i=0; i<ainfo->nq; i++) {
+	int nq = ainfo->nq + ainfo->Q;
+
+	for (i=0; i<nq; i++) {
 	    coeff[i] = 0.0; 
 	} 
 	return 0;
@@ -1720,8 +1745,7 @@ static int ar_arma_init (const int *list, double *coeff,
 
     k = 2;
     for (i=0; i<ainfo->p; i++) {
-	int lag = i + 1;
-
+	lag = i + 1;
 	if (AR_included(ainfo, i)) {
 	    sprintf(adinfo->varname[k++], "y_%d", lag);
 	    for (j=0; j<narmax; j++) {
@@ -1733,18 +1757,17 @@ static int ar_arma_init (const int *list, double *coeff,
     ayi = ainfo->np + ainfo->P + 2;
 
     for (i=0; i<ainfo->P; i++) {
-	int Slag = ainfo->pd * (i + 1);
-
+	lag = ainfo->pd * (i + 1);
 	k = ainfo->np + 2 + i; /* FIXME? */
-	sprintf(adinfo->varname[k], "y_%d", Slag);
+	sprintf(adinfo->varname[k], "y_%d", lag);
 	for (j=0; j<narmax; j++) {
-	    sprintf(adinfo->varname[axi++], "x%d_%d", j+1, Slag);
+	    sprintf(adinfo->varname[axi++], "x%d_%d", j+1, lag);
 	}
 	for (j=0; j<ainfo->p; j++) {
 	    if (AR_included(ainfo, j)) {
-		sprintf(adinfo->varname[ayi++], "y_%d", Slag + j + 1);
+		sprintf(adinfo->varname[ayi++], "y_%d", lag + j + 1);
 		for (k=0; k<narmax; k++) {
-		    sprintf(adinfo->varname[axi++], "x%d_%d", k+1, Slag + j + 1);
+		    sprintf(adinfo->varname[axi++], "x%d_%d", k+1, lag + j + 1);
 		}
 	    }
 	}
@@ -1869,7 +1892,8 @@ static int ar_arma_init (const int *list, double *coeff,
 	    if (i == q0) {
 		/* reserve space for nonseasonal MA */
 		j += ainfo->nq;
-	    } else if (i == Q0) {
+	    } 
+	    if (i == Q0) {
 		/* and for seasonal MA */
 		j += ainfo->Q;
 	    }
@@ -1877,15 +1901,13 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
 
 	/* insert near-zeros for nonseasonal MA */
-	j = q0;
 	for (i=0; i<ainfo->nq; i++) {
-	    coeff[j++] = 0.0001;
+	    coeff[q0 + i] = 0.0001;
 	} 
 
 	/* and also seasonal MA */
-	j = Q0;
 	for (i=0; i<ainfo->Q; i++) {
-	    coeff[j++] = 0.0001;
+	    coeff[Q0 + i] = 0.0001;
 	}	
     }
 
@@ -2367,6 +2389,13 @@ static int prefer_hr_init (struct arma_info *ainfo)
 {
     int ret = 0;
 
+#if 0
+    /* don't use for gappy arma (yet?) */
+    if (ainfo->pqspec != NULL) {
+	return 0;
+    }
+#endif
+
     /* unlikely to work well with small sample */
     if (ainfo->t2 - ainfo->t1 < 100) {
 	return 0;
@@ -2456,7 +2485,6 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
-#if 0 /* for the moment we'll skip this */
     /* second pass: try Hannan-Rissanen? */
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
@@ -2474,7 +2502,6 @@ MODEL arma_model (const int *list, const char *pqspec,
 	    init_done = 1;
 	}
     }
-#endif /* 0 */
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
