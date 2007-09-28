@@ -3094,6 +3094,10 @@ static int command_is_silent (const CMD *cmd, const char *line)
     return 0;
 }
 
+#define rewritten_arma(c) (c->ci == ARMA && \
+                           c->extra != NULL && \
+			   *c->extra != '\0')
+
 /* these commands have sub-lists that may contain either
    numerical values or the names of scalar variables:
    this can't be handled properly by the list-printing
@@ -3199,7 +3203,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (dont_print_list(cmd)) {
 	const char *s = line;
 	
-	if (cmd->ci == ARMA && cmd->extra != NULL) {
+	if (rewritten_arma(cmd)) {
 	    s = cmd->extra;
 	}
 	if (strlen(s) > SAFELEN - 2) {

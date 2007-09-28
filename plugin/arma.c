@@ -1170,13 +1170,14 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 }
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
-   wanted for initializing the Kalman filter
+   wanted for initializing the Kalman filter.  Note: the 'b' array
+   goes: const, phi, theta, Phi, Theta;
 */
 
 static void transform_arma_const (double *b, struct arma_info *ainfo)
 {
     const double *phi = b + 1;
-    const double *Phi = phi + ainfo->p;
+    const double *Phi = phi + ainfo->np + ainfo->nq;
     double narfac = 1.0;
     double sarfac = 1.0;
     int i, k = 0;
@@ -1483,7 +1484,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
 
-    nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->nexo;
+    nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
 
     plist = gretl_list_new(nparam);
     if (plist == NULL) {
@@ -1507,7 +1508,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcpy(pdinfo->varname[v], "b0");
 	plist[k++] = v++;
     }
-    for (i=1; i<=ainfo->p; i++) {
+    for (i=1; i<=ainfo->np; i++) {
 	if (i == 1) {
 	    (*pZ)[v][0] = 0.1; /* ? */
 	}
@@ -1612,6 +1613,7 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
     }
     
     vi = 2;
+
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
 	    alist[k++] = vi++;
@@ -1662,6 +1664,7 @@ static int ar_arma_init (const int *list, double *coeff,
     fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
 	    "ainfo->t1=%d, ainfo->t2=%d\n",
 	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
+    fprintf(stderr, " nmixed = %d, ptotal = %d\n", nmixed, ptotal);
 #endif
 
     /* dependent variable */
@@ -1716,28 +1719,32 @@ static int ar_arma_init (const int *list, double *coeff,
     axi = ptotal + ainfo->nexo + 2;
 
     k = 2;
-    for (i=1; i<=ainfo->p; i++) {
-	if (AR_included(ainfo, i-1)) {
-	    sprintf(adinfo->varname[k++], "y_%d", i);
-	    for (j=1; j<=narmax; j++) {
-		sprintf(adinfo->varname[axi++], "x%d_%d", j, i);
+    for (i=0; i<ainfo->p; i++) {
+	int lag = i + 1;
+
+	if (AR_included(ainfo, i)) {
+	    sprintf(adinfo->varname[k++], "y_%d", lag);
+	    for (j=0; j<narmax; j++) {
+		sprintf(adinfo->varname[axi++], "x%d_%d", j+1, lag);
 	    }
 	}
     }
 
     ayi = ainfo->np + ainfo->P + 2;
 
-    for (i=1; i<=ainfo->P; i++) {
-	k = ainfo->p + 1 + i;
-	sprintf(adinfo->varname[k], "y_%d", ainfo->pd * i);
-	for (j=1; j<=narmax; j++) {
-	    sprintf(adinfo->varname[axi++], "x%d_%d", j, ainfo->pd * i);
+    for (i=0; i<ainfo->P; i++) {
+	int Slag = ainfo->pd * (i + 1);
+
+	k = ainfo->np + 2 + i; /* FIXME? */
+	sprintf(adinfo->varname[k], "y_%d", Slag);
+	for (j=0; j<narmax; j++) {
+	    sprintf(adinfo->varname[axi++], "x%d_%d", j+1, Slag);
 	}
-	for (j=1; j<=ainfo->p; j++) {
-	    if (AR_included(ainfo, j-1)) {
-		sprintf(adinfo->varname[ayi++], "y_%d", ainfo->pd * i + j);
-		for (k=1; k<=narmax; k++) {
-		    sprintf(adinfo->varname[axi++], "x%d_%d", k, ainfo->pd * i + j);
+	for (j=0; j<ainfo->p; j++) {
+	    if (AR_included(ainfo, j)) {
+		sprintf(adinfo->varname[ayi++], "y_%d", Slag + j + 1);
+		for (k=0; k<narmax; k++) {
+		    sprintf(adinfo->varname[axi++], "x%d_%d", k+1, Slag + j + 1);
 		}
 	    }
 	}
@@ -1745,8 +1752,8 @@ static int ar_arma_init (const int *list, double *coeff,
 
     axi = ptotal + 2;
 
-    for (i=1; i<=ainfo->nexo; i++) {
-	sprintf(adinfo->varname[axi++], "x%d", i);
+    for (i=0; i<ainfo->nexo; i++) {
+	sprintf(adinfo->varname[axi++], "x%d", i+1);
     }
 
     /* Build temporary dataset including lagged vars: if we're doing
@@ -1766,16 +1773,23 @@ static int ar_arma_init (const int *list, double *coeff,
 	axi = ptotal + ainfo->nexo + 2;
 
 	k = 2;
-	for (i=1; i<=ainfo->p; i++) {
-	    if (!AR_included(ainfo, i-1)) {
+	for (i=0; i<ainfo->p; i++) {
+	    if (!AR_included(ainfo, i)) {
 		continue;
 	    }
-	    s = realt - i;
-	    if (s < 0) miss = 1;
-	    aZ[k++][t] = (s >= 0)? y[s] : NADBL;
-	    for (j=1; j<=narmax; j++) {
-		m = list[xstart + j - 1];
-		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
+	    s = realt - (i+1);
+	    if (s < 0) {
+		miss = 1;
+		aZ[k++][t] = NADBL;
+		for (j=0; j<narmax; j++) {
+		    aZ[axi++][t] = NADBL;
+		}
+	    } else {
+		aZ[k++][t] = y[s];
+		for (j=0; j<narmax; j++) {
+		    m = list[xstart + j];
+		    aZ[axi++][t] = Z[m][s];
+		}
 	    }
 	}
 
@@ -1787,29 +1801,36 @@ static int ar_arma_init (const int *list, double *coeff,
 	    if (s < 0) miss = 1;
 	    k = ainfo->p + 1 + i;
 	    aZ[k][t] = (s >= 0)? y[s] : NADBL;
-	    for (k=1; k<=narmax; k++) {
-		m = list[xstart + k - 1];
+	    for (k=0; k<narmax; k++) {
+		m = list[xstart + k];
 		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
 	    }
-	    for (j=1; j<=ainfo->p; j++) {
-		if (!AR_included(ainfo, j-1)) {
+	    for (j=0; j<ainfo->p; j++) {
+		if (!AR_included(ainfo, j)) {
 		    continue;
 		}
-		lag = ainfo->pd * i + j;
+		lag = ainfo->pd * i + (j+1);
 		s = realt - lag;
-		if (s < 0) miss = 1;
-		aZ[ayi++][t] = (s >= 0)? y[s] : NADBL;
-		for (k=1; k<=narmax; k++) {
-		    m = list[xstart + k - 1];
-		    aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
+		if (s < 0) {
+		    miss = 1;
+		    aZ[ayi++][t] = NADBL;
+		    for (k=0; k<narmax; k++) {
+			aZ[axi++][t] = NADBL;
+		    }
+		} else {
+		    aZ[ayi++][t] = y[s];
+		    for (k=0; k<narmax; k++) {
+			m = list[xstart + k];
+			aZ[axi++][t] = Z[m][s];
+		    }
 		}
 	    }
 	}
 
 	axi = ptotal + 2;
 
-	for (i=1; i<=ainfo->nexo; i++) {
-	    m = list[xstart + i - 1];
+	for (i=0; i<ainfo->nexo; i++) {
+	    m = list[xstart + i];
 	    aZ[axi++][t] = Z[m][realt];
 	}
 
@@ -1840,17 +1861,32 @@ static int ar_arma_init (const int *list, double *coeff,
     }
 
     if (!err) {
+	int q0 = ainfo->ifc + ainfo->np;
+	int Q0 = q0 + ainfo->nq + ainfo->P;
+
 	j = 0;
 	for (i=0; i<armod.ncoeff; i++) {
-	    if (i == ainfo->np + ainfo->ifc) {
-		j += ainfo->nq; /* reserve space for MA coeffs */
+	    if (i == q0) {
+		/* reserve space for nonseasonal MA */
+		j += ainfo->nq;
+	    } else if (i == Q0) {
+		/* and for seasonal MA */
+		j += ainfo->Q;
 	    }
 	    coeff[j++] = armod.coeff[i];
 	}
+
+	/* insert near-zeros for nonseasonal MA */
+	j = q0;
 	for (i=0; i<ainfo->nq; i++) {
-	    /* insert near-zeros for MA coeffs */
-	    coeff[i + ainfo->np + ainfo->ifc] = 0.0001;
+	    coeff[j++] = 0.0001;
 	} 
+
+	/* and also seasonal MA */
+	j = Q0;
+	for (i=0; i<ainfo->Q; i++) {
+	    coeff[j++] = 0.0001;
+	}	
     }
 
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
@@ -1927,8 +1963,6 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
    with the first-pass residuals.
 */
 
-/* FIXME gappy lag structure */
-
 static int hr_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
 			 struct arma_info *ainfo, PRN *prn)
@@ -1956,7 +1990,7 @@ static int hr_arma_init (const int *list, double *coeff,
     int i, j, t;
     int err = 0;
 
-    pass1lags = (nQ + nP) * pdinfo->pd;
+    pass1lags = (ainfo->Q + ainfo->P) * pdinfo->pd;
     if (pass1lags < MINLAGS) {
 	pass1lags = MINLAGS;
     }
@@ -2053,7 +2087,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	    for (i=0, pos=0; i<nq; i++) {
 		malags[pos++] = i+1;
 	    }
-	    for (i=0; i<nQ; i++) {
+	    for (i=0; i<ainfo->Q; i++) {
 		for (j=0; j<=nq; j++) {
 		    malags[pos++] = (i+1) * pdinfo->pd + j;
 		}
@@ -2069,7 +2103,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	    for (i=0, pos=0; i<np; i++) {
 		arlags[pos++] = i+1;
 	    }
-	    for (i=0; i<nP; i++) {
+	    for (i=0; i<ainfo->P; i++) {
 		for (j=0; j<=np; j++) {
 		    arlags[pos++] = (i+1) * pdinfo->pd + j;
 		}
@@ -2105,9 +2139,11 @@ static int hr_arma_init (const int *list, double *coeff,
 	pass2list[pos++] = pass1list[i];
     }
     for (i=0; i<ptotal; i++) {
+	/* FIXME */
 	pass2list[pos++] = arlags[i] + nexo + 1;
     }
     for (i=0; i<qtotal; i++) {
+	/* FIXME */
 	pass2list[pos++] = pass1v + i;
     }
     
@@ -2134,11 +2170,13 @@ static int hr_arma_init (const int *list, double *coeff,
 	gretl_print_destroy(prn);
 #endif
 
-	for (i=0; i<np; i++) { /* phi */
+	for (i=0; i<ainfo->np; i++) { /* phi */
+	    if (AR_included(ainfo, i)) {
 #if ARMA_DEBUG
-	    fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+		fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
 #endif
-	    coeff[pos++] = armod.coeff[pos2++];
+		coeff[pos++] = armod.coeff[pos2++];
+	    }
 	}
 	for (i=0; i<nP; i++) { /* Phi */
 #if ARMA_DEBUG
@@ -2147,14 +2185,16 @@ static int hr_arma_init (const int *list, double *coeff,
 	    coeff[pos++] = armod.coeff[pos2];
 	    pos2 += np + 1;
 	}
-	for (i=0; i<nq; i++) { /* theta */
+	for (i=0; i<ainfo->nq; i++) { /* theta */
+	    if (MA_included(ainfo, i)) {
 #if ARMA_DEBUG
-	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+		fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
 #endif
-	    if (i == 0) {
-		theta = armod.coeff + pos2;
+		if (i == 0) {
+		    theta = armod.coeff + pos2;
+		}
+		coeff[pos++] = armod.coeff[pos2++];
 	    }
-	    coeff[pos++] = armod.coeff[pos2++];
 	}
 	for (i=0; i<nQ; i++) { /* Theta */
 #if ARMA_DEBUG
@@ -2416,6 +2456,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
+#if 0 /* for the moment we'll skip this */
     /* second pass: try Hannan-Rissanen? */
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
@@ -2423,7 +2464,9 @@ MODEL arma_model (const int *list, const char *pqspec,
 	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
 #if ARMA_DEBUG
 	    if (err) {
-		fputs("hr_arma_init failed, will try ar_arma_init\n", stderr);
+		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
+	    } else {
+		fputs("*** hr_arma_init OK\n", stderr);
 	    }
 #endif
 	}
@@ -2431,6 +2474,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	    init_done = 1;
 	}
     }
+#endif /* 0 */
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
