@@ -477,77 +477,117 @@ static int html_encoded (const char *s)
 }
 #endif
 
-void save_graph_to_file (gpointer data, const char *fname)
+static void print_line_with_color (PRN *prn, char *s, int lnum)
 {
-    GPT_SPEC *spec = (GPT_SPEC *) data;
-    char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
+    const char *cstr = graph_color_string(lnum - 1);
+    char *p;
+    int cont = 1;
+
+    if (cstr == NULL) {
+	return;
+    }
+
+    p = strstr(s, " , \\");
+    if (p == NULL) {
+	cont = 0;
+	p = s + strlen(s) - 1;
+    }
+
+    *p = '\0';
+    sprintf(p, " lt rgb \"#%s\"", cstr + 1);
+
+    if (cont) {
+	pprintf(prn, "%s , \\\n", s);
+    } else {
+	pprintf(prn, "%s\n", s);
+    }
+}
+
+static void filter_plot_file (GPT_SPEC *spec, const char *term,
+			      const char *fname)
+{
+    char pline[MAXLEN];
+    char plottmp[MAXLEN];
     gchar *plotcmd = NULL;
-    FILE *fq;
-    PRN *prn;
+    FILE *fp = NULL;
+    PRN *prn = NULL;
     int mono = 0, png = 0, emf = 0;
-    int cmds, err;
+    int lnum = -1, add_colors = 0;
+    int contd = 0, err = 0;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
 	return;
     }
 
-    fq = gretl_fopen(spec->fname, "r");
-    if (fq == NULL) {
+    fp = gretl_fopen(spec->fname, "r");
+    if (fp == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
 	return;
     }
  
-    cmds = get_full_term_string(spec, termstr);
-
-    if (strstr(termstr, " mono")) {
+    if (strstr(term, " mono")) {
 	mono = 1;
     }
 
-    if (!strncmp(termstr, "png", 3)) {
+    if (!strncmp(term, "png", 3)) {
 	png = 1;
-    } else if (!strncmp(termstr, "emf", 3)) {
+    } else if (!strncmp(term, "emf", 3)) {
 	emf = 1;
     }
 
-    if (cmds) {
-	if (copyfile(spec->fname, fname)) { 
-	    errbox(_("Failed to copy graph file"));
-	}
-	return;
-    } else {
+    if (!mono && !png && !emf) {
+	add_colors = 1;
+    }
+
 #ifdef ENABLE_NLS
-	pprint_gnuplot_encoding(termstr, prn);
+    pprint_gnuplot_encoding(term, prn);
 #endif
-	pprintf(prn, "set term %s\n", termstr);
-	pprintf(prn, "set output '%s'\n", fname);
-	while (fgets(plotline, MAXLEN-1, fq)) {
-	    if (!strncmp(plotline, "set term", 8) ||
-		!strncmp(plotline, "set output", 10)) {
-		continue;
-	    }
-	    if (mono && strstr(plotline, "set style fill solid")) {
-		pputs(prn, "set style fill solid 0.3\n");
-	    } else if (!png && html_encoded(plotline)) {
-		pprint_as_latin(prn, plotline, emf);
-	    } else {
-		pputs(prn, plotline);
-	    }
-#if 0
-	    if (!gretl_is_ascii(plotline)) {
-		fprintf(stderr, "non-ascii line: '%s'\n", plotline);
-		if (g_utf8_validate(plotline, -1, NULL)) {
-		    fprintf(stderr, " valid UTF-8\n");
-		} else {
-		    fprintf(stderr, " not valid UTF-8\n");
-		}
-	    }
-#endif
+    pprintf(prn, "set term %s\n", term);
+    pprintf(prn, "set output '%s'\n", fname);
+
+    while (fgets(pline, sizeof pline, fp)) {
+	if (!strncmp(pline, "set term", 8) ||
+	    !strncmp(pline, "set output", 10)) {
+	    continue;
 	}
+
+	contd = (strstr(pline, ", \\") != NULL);
+
+	if (!strncmp(pline, "plot ", 5)) {
+	    lnum = 0;
+	} else if (lnum >= 0) {
+	    lnum++;
+	}
+
+	if (mono && strstr(pline, "set style fill solid")) {
+	    pputs(prn, "set style fill solid 0.3\n");
+	} else if (!png && html_encoded(pline)) {
+	    pprint_as_latin(prn, pline, emf);
+	} else if (add_colors && lnum > 0) {
+	    print_line_with_color(prn, pline, lnum);
+	} else {
+	    pputs(prn, pline);
+	}
+
+	if (lnum > 0 && !contd) {
+	    lnum = 0;
+	}
+
+#if 0
+	if (!gretl_is_ascii(pline)) {
+	    fprintf(stderr, "non-ascii line: '%s'\n", pline);
+	    if (g_utf8_validate(pline, -1, NULL)) {
+		fprintf(stderr, " valid UTF-8\n");
+	    } else {
+		fprintf(stderr, " not valid UTF-8\n");
+	    }
+	}
+#endif
     }
 
     gretl_print_destroy(prn);
-    fclose(fq);
+    fclose(fp);
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
@@ -559,6 +599,23 @@ void save_graph_to_file (gpointer data, const char *fname)
     if (err) {
 	errbox(_("Gnuplot error creating graph"));
     } 
+}
+
+void save_graph_to_file (gpointer data, const char *fname)
+{
+    GPT_SPEC *spec = (GPT_SPEC *) data;
+    char term[MAXLEN];
+    int cmds;
+
+    cmds = get_full_term_string(spec, term);
+
+    if (cmds) {
+	if (copyfile(spec->fname, fname)) { 
+	    errbox(_("Failed to copy graph file"));
+	}
+    } else {
+	filter_plot_file(spec, term, fname);
+    }
 }
 
 /* chop trailing comma, if present; return 1 if comma chopped,

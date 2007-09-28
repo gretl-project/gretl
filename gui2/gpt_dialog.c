@@ -990,7 +990,6 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
 	NULL
     }; 
     int pdf_ok = gnuplot_has_pdf();
-    
 
     for (i=0; termtypes[i] != NULL; i++) {
 	if (!pdf_ok && !strcmp(termtypes[i], "PDF")) {

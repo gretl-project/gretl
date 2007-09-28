@@ -2037,12 +2037,9 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    char title[40];
     int err = 0;
 
     if (bufopen(&prn)) return;
-
-    strcpy(title, _("gretl: RESET test"));
 
     err = reset_test(pmod, &Z, datainfo, OPT_S, prn);
 
@@ -2053,7 +2050,7 @@ void do_reset (gpointer p, guint u, GtkWidget *w)
 	update_model_tests(vwin);
 	gretl_command_strcpy("reset");
 	model_command_init(pmod->ID);
-	view_buffer(prn, 78, 400, title, RESET, NULL); 
+	view_buffer(prn, 78, 400, _("gretl: RESET test"), RESET, NULL); 
     }
 }
 

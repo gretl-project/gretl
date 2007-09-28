@@ -1008,7 +1008,7 @@ static int make_pdf_file (const char *fname,
 
     build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
 
-    while (fgets(fline, MAXLEN-1, fsrc)) {
+    while (fgets(fline, sizeof fline, fsrc)) {
 	if (!strncmp(fline, "set term", 8)) {
 	    if (use_cairo) {
 		fputs("set term cairopdf\n", ftmp);
@@ -1024,6 +1024,8 @@ static int make_pdf_file (const char *fname,
 
     fclose(fsrc);
     fclose(ftmp);
+
+    /* FIXME don't use "system" */
 
     /* run gnuplot on the temp plotfile */
     sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
