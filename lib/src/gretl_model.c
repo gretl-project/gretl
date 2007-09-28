@@ -2780,8 +2780,8 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
-    char buf[128];
     const char *tstat;
+    char buf[512];
 
     if (test->teststat == GRETL_STAT_WALD_CHISQ) {
 	tstat = N_("Asymptotic test statistic");

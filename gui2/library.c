@@ -2891,7 +2891,10 @@ static int real_do_model (int action)
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
 
+#if 0 /* 2007-09-28: this is wrong (will leak), because the viewer 
+	 window will take out a ref to the model? */
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
+#endif
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 

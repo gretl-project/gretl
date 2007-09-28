@@ -1920,6 +1920,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     } else {
 	*vx = varindex(datainfo, test);
 	if (*vx >= datainfo->v) {
+	    gui_errmsg(E_UNKVAR);
 	    err = 1;
 	}
     }
@@ -1962,7 +1963,8 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	    err = 1;
 	} else {
 	    *vy = varindex(datainfo, test);
-	    if (*vx >= datainfo->v) {
+	    if (*vy >= datainfo->v) {
+		gui_errmsg(E_UNKVAR);
 		err = 1;
 	    }
 	}
@@ -1995,6 +1997,11 @@ static void entry_set_int (test_t *test, int i, int k)
     gtk_entry_set_text(GTK_ENTRY(test->entry[i]), numstr);
 }
 
+static void entry_set_blank (test_t *test, int i)
+{
+    gtk_entry_set_text(GTK_ENTRY(test->entry[i]), "");
+}
+
 /* fill out the sample statistics boxes based on the user's
    choice of variable (or variable plus restriction) */
 
@@ -2008,6 +2015,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     GretlOp yop = 0;
     const gchar *buf;
     double x1, x2, yval;
+    int err = 0;
 
     g_return_if_fail(GTK_IS_COMBO(p));
     if (!GTK_WIDGET_SENSITIVE(p)) {
@@ -2034,19 +2042,31 @@ static void populate_stats (GtkWidget *w, gpointer p)
 
     if (strchr(buf, '(') != NULL) {
 	/* e.g. "cholest (gender = 1)" */
-	if (get_restriction_vxy(buf, &vx, &vy, &yop, &yval)) {
-	    return;
-	}
+	err = get_restriction_vxy(buf, &vx, &vy, &yop, &yval);
     } else {
 	vx = varindex(datainfo, buf);
 	if (vx >= datainfo->v) {
-	    return;
+	    err = 1;
 	}
     }
 
-    /* scalars are not valid input in this context */
-    if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
-	errbox(_("Invalid entry"));
+    if (!err) {
+	/* scalars are not valid input in this context */
+	if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
+	    errbox(_("Invalid entry"));
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	/* scrub any existing stats entries */
+	entry_set_blank(test, pos);
+	entry_set_blank(test, pos + 1);
+	if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
+	    entry_set_blank(test, pos + 2);
+	} 
+	/* highlight error region */
+	gtk_editable_select_region(GTK_EDITABLE(GTK_COMBO(p)->entry), 0, -1);
 	return;
     }
 
