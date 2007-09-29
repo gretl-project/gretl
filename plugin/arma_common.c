@@ -88,7 +88,11 @@ enum {
     MA_MASK
 };
 
-/* mask for skipping certain intermediate lags, AR or MA */
+/* Create a mask for skipping certain intermediate lags, 
+   AR or MA.  This function also sets ainfo->np and ainfo->nq,
+   which record the actual number of non-seasonal AR and MA
+   lags used.
+*/
 
 static char *mask_from_vec (const gretl_vector *v, 
 			    struct arma_info *ainfo,
@@ -410,7 +414,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 static void calc_max_lag (struct arma_info *ainfo)
 {
     int pmax = ainfo->p;
-    int dmax = ainfo->d;
+    int dmax = ainfo->d; /* FIXME what about seasonal D? */
 
     if (arma_has_seasonal(ainfo)) {
 	pmax += ainfo->P * ainfo->pd;
@@ -607,34 +611,7 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
     return err;
 }
 
-static int count_arma_coeffs (struct arma_info *ainfo)
-{
-    int i, n;
-
-    n = ainfo->P + ainfo->Q + ainfo->nexo + ainfo->ifc;
-
-    if (ainfo->pmask == NULL) {
-	n += ainfo->p;
-    } else {
-	for (i=0; i<ainfo->p; i++) {
-	    if (ainfo->pmask[i]) {
-		n++;
-	    }
-	}
-    }
-
-    if (ainfo->qmask == NULL) {
-	n += ainfo->q;
-    } else {
-	for (i=0; i<ainfo->q; i++) {
-	    if (ainfo->qmask[i]) {
-		n++;
-	    }
-	}
-    } 
-
-    return n;
-}
+#define count_arma_coeffs(a) (a->ifc + a->np + a->nq + a->P + a->Q + a->nexo)
 
 static int check_arma_list (int *list, gretlopt opt, 
 			    const double **Z, const DATAINFO *pdinfo,

@@ -149,14 +149,14 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	qtot = ainfo->q;
     } else {
 	qtot = b->qmax;
-	for (i=0; i<ainfo->Q; i++) {
-	    si = (i + 1) * ainfo->pd;
-	    b->temp[si] += Theta[i];
+	for (j=0; j<ainfo->Q; j++) {
+	    si = (j + 1) * ainfo->pd;
+	    b->temp[si] += Theta[j];
 	    k = 0;
-	    for (j=0; j<ainfo->q; j++) {
-		if (MA_included(ainfo, j)) {
-		    m = si + j + 1;
-		    b->temp[m] += Theta[i] * theta[k++];
+	    for (i=0; i<ainfo->q; i++) {
+		if (MA_included(ainfo, i)) {
+		    m = si + i + 1;
+		    b->temp[m] += Theta[j] * theta[k++];
 		} 
 	    }
 	}
@@ -207,7 +207,7 @@ static void do_MA_partials (double *drv,
     }
 
     for (j=0; j<ainfo->Q; j++) {
-	s = t - ainfo->pd * (j + 1);
+	s = t - (j + 1) * ainfo->pd;
 	if (s >= 0) {
 	    drv[t] -= Theta[j] * drv[s];
 	    k = 0;
@@ -303,7 +303,7 @@ static int arma_ll (double *coeff,
 
 	/* seasonal AR component plus interactions */
 	for (j=0; j<ainfo->P; j++) {
-	    s = t - ainfo->pd * (j + 1);
+	    s = t - (j + 1) * ainfo->pd;
 	    e[t] -= Phi[j] * y[s];
 	    k = 0;
 	    for (i=0; i<ainfo->p; i++) {
@@ -328,7 +328,7 @@ static int arma_ll (double *coeff,
 
 	/* seasonal MA component plus interactions */
 	for (j=0; j<ainfo->Q; j++) {
-	    s = t - ainfo->pd * (j + 1);
+	    s = t - (j + 1) * ainfo->pd;
 	    if (s >= t1) {
 		e[t] -= Theta[j] * e[s];
 		k = 0;
@@ -382,7 +382,7 @@ static int arma_ll (double *coeff,
 		    de_a[k][t] = -y[t-lag];
 		    /* cross-partial with seasonal AR */
 		    for (j=0; j<ainfo->P; j++) {
-			xlag = lag + ainfo->pd * (j + 1);
+			xlag = lag + (j + 1) * ainfo->pd;
 			if (t >= xlag) {
 			    de_a[k][t] += Phi[j] * y[t-xlag];
 			}
@@ -394,7 +394,7 @@ static int arma_ll (double *coeff,
 
 	    /* seasonal AR terms (de_sa) */
 	    for (j=0; j<ainfo->P; j++) {
-		lag = ainfo->pd * (j + 1);
+		lag = (j + 1) * ainfo->pd;
 		if (t >= lag) {
 		    de_sa[j][t] = -y[t-lag];
 		    /* cross-partial with non-seasonal AR */
@@ -423,7 +423,7 @@ static int arma_ll (double *coeff,
 		    de_m[k][t] = -e[t-lag];
 		    /* cross-partial with seasonal MA */
 		    for (j=0; j<ainfo->Q; j++) {
-			xlag = lag + ainfo->pd * (j + 1);
+			xlag = lag + (j + 1) * ainfo->pd;
 			if (t >= xlag) {
 			    de_m[k][t] -= Theta[j] * e[t-xlag];
 			}
@@ -435,7 +435,7 @@ static int arma_ll (double *coeff,
 
 	    /* seasonal MA terms (de_sm) */
 	    for (j=0; j<ainfo->Q; j++) {
-		lag = ainfo->pd * (j + 1);
+		lag = (j + 1) * ainfo->pd;
 		if (t >= lag) {
 		    de_sm[j][t] = -e[t-lag];
 		    /* cross-partial with non-seasonal MA */
@@ -501,7 +501,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 
     int nr = ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
     int pmax, qmax, lmax;
-    double *temp = NULL, *temp2 = NULL;
+    double *temp = NULL, *tmp2 = NULL;
     cmplx *rptr, *roots = NULL;
     int i, k;
 
@@ -513,13 +513,13 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 	return 0;
     }
 
-    temp  = malloc((lmax + 1) * sizeof *temp);
-    temp2 = malloc((lmax + 1) * sizeof *temp2);
+    temp = malloc((lmax + 1) * sizeof *temp);
+    tmp2 = malloc((lmax + 1) * sizeof *tmp2);
     roots = malloc(nr * sizeof *roots);
 
-    if (temp == NULL || temp2 == NULL || roots == NULL) {
+    if (temp == NULL || tmp2 == NULL || roots == NULL) {
 	free(temp);
-	free(temp2);
+	free(tmp2);
 	free(roots);
 	return E_ALLOC;
     }
@@ -537,7 +537,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 		temp[i+1] = 0;
 	    }
 	}
-	polrt(temp, temp2, ainfo->p, rptr);
+	polrt(temp, tmp2, ainfo->p, rptr);
 	rptr += ainfo->p;
     }
 
@@ -546,7 +546,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 	for (i=0; i<ainfo->P; i++) {
 	    temp[i+1] = -Phi[i];
 	}    
-	polrt(temp, temp2, ainfo->P, rptr);
+	polrt(temp, tmp2, ainfo->P, rptr);
 	rptr += ainfo->P;
     }
 
@@ -560,7 +560,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 		temp[i+1] = 0;
 	    }
 	}  
-	polrt(temp, temp2, ainfo->q, rptr);
+	polrt(temp, tmp2, ainfo->q, rptr);
 	rptr += ainfo->q;
     }
 
@@ -569,11 +569,11 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
 	for (i=0; i<ainfo->Q; i++) {
 	    temp[i+1] = Theta[i];
 	}  
-	polrt(temp, temp2, ainfo->Q, rptr);
+	polrt(temp, tmp2, ainfo->Q, rptr);
     }
     
     free(temp);
-    free(temp2);
+    free(tmp2);
 
     gretl_model_set_data(pmod, "roots", roots, GRETL_TYPE_CMPLX_ARRAY,
 			 nr * sizeof *roots);
@@ -650,18 +650,18 @@ static void write_big_phi (const double *phi,
 	ac[i] = 0.0;
     }
 
-    for (i=0; i<=ainfo->P; i++) {
-	x = (i == 0)? -1 : Phi[i-1];
-	k = 0;
-	for (j=0; j<=ainfo->p; j++) {
-	    if (j == 0) {
+    for (j=-1; j<ainfo->P; j++) {
+	x = (j < 0)? -1 : Phi[j];
+	k = 0.0;
+	for (i=-1; i<ainfo->p; i++) {
+	    if (i < 0) {
 		y = -1;
-	    } else if (AR_included(ainfo, j-1)) {
+	    } else if (AR_included(ainfo, i)) {
 		y = phi[k++];
 	    } else {
-		y = 0;
+		y = 0.0;
 	    }
-	    ii = j + ainfo->pd * i;
+	    ii = (j+1) * ainfo->pd + (i+1);
 	    ac[ii] -= x * y;
 	}
     }
@@ -684,18 +684,18 @@ static void write_big_theta (const double *theta,
 	mc[i] = 0.0;
     }
 
-    for (i=0; i<=ainfo->Q; i++) {
-	x = (i == 0)? 1 : Theta[i-1];
+    for (j=-1; j<ainfo->Q; j++) {
+	x = (j < 0)? 1 : Theta[j];
 	k = 0;
-        for (j=0; j<=ainfo->q; j++) {
-	    if (j == 0) {
+        for (i=-1; i<ainfo->q; i++) {
+	    if (i < 0) {
 		y = 1;
-	    } else if (MA_included(ainfo, j-1)) {
+	    } else if (MA_included(ainfo, i)) {
 		y = theta[k++];
 	    } else {
 		y = 0;
 	    }
-            ii = j + ainfo->pd * i;
+            ii = (j+1) * ainfo->pd + (i+1);
 	    mc[ii] = x * y;
         }
     }
@@ -782,8 +782,8 @@ static int write_kalman_matrices (const double *b, int idx)
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
     } else {
-	int pmax = kainfo->ifc + kainfo->p + kainfo->P; /* ?gappy? */
-	int tmax = pmax + kainfo->q + kainfo->Q; /* ?gappy? */
+	int pmax = kainfo->ifc + kainfo->p + kainfo->P; /* FIXME gappy? */
+	int tmax = pmax + kainfo->q + kainfo->Q; /* FIXME gappy? */
 
 	if (kainfo->ifc && idx == 0) {
 	    rewrite_A = 1;
@@ -822,16 +822,15 @@ static int write_kalman_matrices (const double *b, int idx)
 	    k = 0;
 	    for (i=0; i<kainfo->q; i++) {
 		if (MA_included(kainfo, i)) {
-		    gretl_vector_set(H, i + 1, theta[k++]);
+		    gretl_vector_set(H, i+1, theta[k++]);
 		} else {
-		    gretl_vector_set(H, i + 1, 0.0);
+		    gretl_vector_set(H, i+1, 0.0);
 		}
 	    }
 	}
     }
 
     if (rewrite_F) {
-
 	/* form the F matrix using phi and/or Phi */
 	if (kainfo->P > 0) {
 	    write_big_phi(phi, Phi, kainfo, F);
@@ -1052,18 +1051,11 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     return pmod->errcode;
 }
 
-static int kalman_do_ma_check = 1;
-
-static double kalman_arma_ll (const double *b, void *p)
-{
-    int offset = kainfo->ifc + kainfo->np + kainfo->P; /* gappy? */
-    const double *theta = b + offset;
-    const double *Theta = theta + kainfo->nq; /* gappy? */
-    double ll = NADBL;
-    kalman *K;
-    int err = 0;
-
 #if ARMA_DEBUG
+
+static void debug_print_theta (const double *theta,
+			       const double *Theta)
+{
     int i, k = 0;
 
     fprintf(stderr, "kalman_arma_ll():\n");
@@ -1076,7 +1068,24 @@ static double kalman_arma_ll (const double *b, void *p)
 
     for (i=0; i<kainfo->Q; i++) {
 	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
-    }    
+    }   
+}
+
+#endif
+
+static int kalman_do_ma_check = 1;
+
+static double kalman_arma_ll (const double *b, void *p)
+{
+    int offset = kainfo->ifc + kainfo->np + kainfo->P;
+    const double *theta = b + offset;
+    const double *Theta = theta + kainfo->nq;
+    double ll = NADBL;
+    kalman *K;
+    int err = 0;
+
+#if ARMA_DEBUG
+    debug_print_theta(theta, Theta);
 #endif
 
     if (kalman_do_ma_check && ma_out_of_bounds(kainfo, theta, Theta)) {
@@ -1200,13 +1209,13 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
    wanted for initializing the Kalman filter.  Note: the 'b' array
-   goes: const, phi, theta, Phi, Theta;
+   goes: const, phi, Phi, theta, Theta, beta.
 */
 
 static void transform_arma_const (double *b, struct arma_info *ainfo)
 {
     const double *phi = b + 1;
-    const double *Phi = phi + ainfo->np + ainfo->nq;
+    const double *Phi = phi + ainfo->np;
     double narfac = 1.0;
     double sarfac = 1.0;
     int i, k = 0;
@@ -1293,6 +1302,8 @@ static int kalman_arma (const int *alist, double *coeff,
 	set_arma_use_vech(ainfo);
     }
 
+    clear_gretl_matrix_err();
+
     S = gretl_column_vector_alloc(r);
     P = gretl_matrix_alloc(r, r);
     F = gretl_matrix_alloc(r, r);
@@ -1306,16 +1317,12 @@ static int kalman_arma (const int *alist, double *coeff,
     if (arma_using_vech(ainfo)) {
 	vQ = gretl_column_vector_alloc(m);
 	Svar2 = gretl_matrix_alloc(m, m);
-	if (Svar2 == NULL) {
-	    err = E_ALLOC;
-	}
     } else {
 	vQ = gretl_column_vector_alloc(r * r);
     }
 
-    if (err || S == NULL || P == NULL || F == NULL || A == NULL ||
-	H == NULL || E == NULL || Q == NULL || Svar == NULL || 
-	vQ == NULL) {
+    err = get_gretl_matrix_err();
+    if (err) {
 	free(b);
 	gretl_matrix_free(y);
 	gretl_matrix_free(x);
@@ -1527,7 +1534,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     /* construct names for the parameters, and param list;
-       also do some initialization -- but FIXME in that regard
+       also do some initialization -- but FIXME in that regard?
     */
 
     v = oldv;
@@ -1668,80 +1675,80 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av)
     return alist;
 }
 
-/* Run a least squares model to get initial values for the AR
-   coefficients, either OLS or NLS.  We use NLS if there is
-   nonlinearity due to either (a) the presence of both a seasonal and
-   a non-seasonal AR component or (b) the presence of exogenous
-   variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.  In this initialization any MA coefficients
-   are simply set to zero.
+/* compose variable names for temporary dataset */
+
+static void arma_init_add_varnames (struct arma_info *ainfo, 
+				    int ptotal, int narmax, 
+				    DATAINFO *adinfo)
+{
+    int i, j, k, kx, ky;
+    int lag, k0 = 2;
+
+    strcpy(adinfo->varname[1], "y");
+
+    k = k0;
+    kx = ptotal + ainfo->nexo + k0;
+
+    for (i=0; i<ainfo->p; i++) {
+	if (AR_included(ainfo, i)) {
+	    lag = i + 1;
+	    sprintf(adinfo->varname[k++], "y_%d", lag);
+	    for (j=0; j<narmax; j++) {
+		sprintf(adinfo->varname[kx++], "x%d_%d", j+1, lag);
+	    }
+	}
+    }
+
+    ky = ainfo->np + ainfo->P + k0;
+
+    for (j=0; j<ainfo->P; j++) {
+	lag = (j + 1) * ainfo->pd;
+	k = k0 + ainfo->np + j;
+	sprintf(adinfo->varname[k], "y_%d", lag);
+	for (i=0; i<narmax; i++) {
+	    sprintf(adinfo->varname[kx++], "x%d_%d", i+1, lag);
+	}
+	for (i=0; i<ainfo->p; i++) {
+	    if (AR_included(ainfo, i)) {
+		lag = (j + 1) * ainfo->pd + (i + 1);
+		sprintf(adinfo->varname[ky++], "y_%d", lag);
+		for (k=0; k<narmax; k++) {
+		    sprintf(adinfo->varname[kx++], "x%d_%d", k+1, lag);
+		}
+	    }
+	}
+    }
+
+    kx = ptotal + k0;
+
+    for (i=0; i<ainfo->nexo; i++) {
+	sprintf(adinfo->varname[kx++], "x%d", i+1);
+    }
+}
+
+/* Build temporary dataset including lagged vars: if we're doing exact
+   ML on an ARMAX model we need lags of the exogenous variables as
+   well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
+   at an offset of ainfo->t1 into the "real", external dataset.
 */
 
-static int ar_arma_init (const int *list, double *coeff, 
-			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo, PRN *prn)
+static void arma_init_build_dataset (struct arma_info *ainfo, 
+				     int ptotal, int narmax, 
+				     const int *list,
+				     const double **Z,
+				     double **aZ, 
+				     DATAINFO *adinfo)
 {
-    int an = pdinfo->t2 - ainfo->t1 + 1;
-    int nmixed = ainfo->np * ainfo->P;
-    int ptotal = ainfo->np + ainfo->P + nmixed;
-    int av = ptotal + ainfo->nexo + 2;
     const double *y;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
-    int *alist = NULL;
-    MODEL armod;
-    int nonlin = 0;
-    int narmax = 0;
-    int xstart, lag;
-    int axi = 0, ayi = 0;
-    int i, j, k, t;
-    int err = 0;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
-	    "ainfo->t1=%d, ainfo->t2=%d\n",
-	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
-    fprintf(stderr, " nmixed = %d, ptotal = %d\n", nmixed, ptotal);
-#endif
+    int i, j, k, kx, ky;
+    int t, s, m, k0 = 2;
+    int lag, xstart;
 
     /* dependent variable */
     if (ainfo->dy != NULL) {
 	y = ainfo->dy;
     } else {
 	y = Z[ainfo->yno];
-    }
-
-    if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
-	/* special case of pure MA model */
-	int nq = ainfo->nq + ainfo->Q;
-
-	for (i=0; i<nq; i++) {
-	    coeff[i] = 0.0; 
-	} 
-	return 0;
-    }
-
-    if (arma_exact_ml(ainfo)) {
-	narmax = ainfo->nexo;
-	if (narmax > 0) {
-	    /* ARMAX-induced lags of exog vars */
-	    av += ainfo->nexo * ptotal;
-	}
-    }
-
-    gretl_model_init(&armod); 
-
-    adinfo = create_new_dataset(&aZ, av, an, 0);
-    if (adinfo == NULL) {
-	return E_ALLOC;
-    }
-
-    if (ptotal > 0 && (narmax > 0 || nmixed > 0)) {
-	/* have to use NLS */
-	nonlin = 1;
-    } else {
-	/* OLS: need regression list */
-	alist = make_ar_ols_list(ainfo, av);
     }
 
     /* starting position for reading exogeneous vars */
@@ -1751,124 +1758,82 @@ static int ar_arma_init (const int *list, double *coeff,
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
 
-    /* construct the variable names */
-
-    strcpy(adinfo->varname[1], "y");
-
-    axi = ptotal + ainfo->nexo + 2;
-
-    k = 2;
-    for (i=0; i<ainfo->p; i++) {
-	if (AR_included(ainfo, i)) {
-	    lag = i + 1;
-	    sprintf(adinfo->varname[k++], "y_%d", lag);
-	    for (j=0; j<narmax; j++) {
-		sprintf(adinfo->varname[axi++], "x%d_%d", j+1, lag);
-	    }
-	}
-    }
-
-    ayi = ainfo->np + ainfo->P + 2;
-
-    for (i=0; i<ainfo->P; i++) {
-	lag = ainfo->pd * (i + 1);
-	k = ainfo->np + 2 + i; /* FIXME? */
-	sprintf(adinfo->varname[k], "y_%d", lag);
-	for (j=0; j<narmax; j++) {
-	    sprintf(adinfo->varname[axi++], "x%d_%d", j+1, lag);
-	}
-	for (j=0; j<ainfo->p; j++) {
-	    if (AR_included(ainfo, j)) {
-		sprintf(adinfo->varname[ayi++], "y_%d", lag + j + 1);
-		for (k=0; k<narmax; k++) {
-		    sprintf(adinfo->varname[axi++], "x%d_%d", k+1, lag + j + 1);
-		}
-	    }
-	}
-    }
-
-    axi = ptotal + 2;
-
-    for (i=0; i<ainfo->nexo; i++) {
-	sprintf(adinfo->varname[axi++], "x%d", i+1);
-    }
-
-    /* Build temporary dataset including lagged vars: if we're doing
-       exact ML on an ARMAX model we need lags of the exogenous
-       variables as well as lags of y_t.  Note that the auxiliary
-       dataset has "t = 0" at an offset of ainfo->t1 into the "real",
-       external dataset.
-    */
-
-    for (t=0; t<an; t++) {
+    for (t=0; t<adinfo->n; t++) {
 	int realt = t + ainfo->t1;
 	int miss = 0;
-	int s, m;
 
 	aZ[1][t] = y[realt];
 
-	axi = ptotal + ainfo->nexo + 2;
+	k = k0;
+	kx = ptotal + ainfo->nexo + k0;
 
-	k = 2;
 	for (i=0; i<ainfo->p; i++) {
 	    if (!AR_included(ainfo, i)) {
 		continue;
 	    }
-	    s = realt - (i+1);
+	    lag = i + 1;
+	    s = realt - lag;
 	    if (s < 0) {
 		miss = 1;
 		aZ[k++][t] = NADBL;
 		for (j=0; j<narmax; j++) {
-		    aZ[axi++][t] = NADBL;
+		    aZ[kx++][t] = NADBL;
 		}
 	    } else {
 		aZ[k++][t] = y[s];
 		for (j=0; j<narmax; j++) {
 		    m = list[xstart + j];
-		    aZ[axi++][t] = Z[m][s];
+		    aZ[kx++][t] = Z[m][s];
 		}
 	    }
 	}
 
-	ayi = ainfo->np + ainfo->P + 2;
+	ky = ainfo->np + ainfo->P + k0;
 
-	for (i=1; i<=ainfo->P; i++) {
-	    lag = ainfo->pd * i;
+	for (j=0; j<ainfo->P; j++) {
+	    lag = (j + 1) * ainfo->pd;
 	    s = realt - lag;
-	    if (s < 0) miss = 1;
-	    k = ainfo->p + 1 + i;
-	    aZ[k][t] = (s >= 0)? y[s] : NADBL;
-	    for (k=0; k<narmax; k++) {
-		m = list[xstart + k];
-		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
+	    k = ainfo->np + k0 + j;
+	    if (s < 0) {
+		miss = 1;
+		aZ[k][t] = NADBL;
+		for (k=0; k<narmax; k++) {
+		    aZ[kx++][t] = NADBL;
+		}
+	    } else {
+		aZ[k][t] = y[s];
+		for (k=0; k<narmax; k++) {
+		    m = list[xstart + k];
+		    aZ[kx++][t] = Z[m][s];
+		}
 	    }
-	    for (j=0; j<ainfo->p; j++) {
-		if (!AR_included(ainfo, j)) {
+	    for (i=0; i<ainfo->p; i++) {
+		if (!AR_included(ainfo, i)) {
 		    continue;
 		}
-		lag = ainfo->pd * i + (j+1);
+		lag = (j + 1) * ainfo->pd + (i + 1);
 		s = realt - lag;
 		if (s < 0) {
 		    miss = 1;
-		    aZ[ayi++][t] = NADBL;
+		    aZ[ky++][t] = NADBL;
 		    for (k=0; k<narmax; k++) {
-			aZ[axi++][t] = NADBL;
+			aZ[kx++][t] = NADBL;
 		    }
 		} else {
-		    aZ[ayi++][t] = y[s];
+		    aZ[ky++][t] = y[s];
 		    for (k=0; k<narmax; k++) {
 			m = list[xstart + k];
-			aZ[axi++][t] = Z[m][s];
+			aZ[kx++][t] = Z[m][s];
 		    }
 		}
 	    }
 	}
 
-	axi = ptotal + 2;
+	kx = ptotal + k0;
 
 	for (i=0; i<ainfo->nexo; i++) {
 	    m = list[xstart + i];
-	    aZ[axi++][t] = Z[m][realt];
+	    aZ[kx++][t] = Z[m][realt];
 	}
 
 	if (miss) {
@@ -1883,6 +1848,110 @@ static int ar_arma_init (const int *list, double *coeff,
 		aZ[i][0]);
     }
 #endif
+}
+
+/* transcribe coeffs from the OLS or NLS model used for initializing,
+   into the array that will be passed to the maximizer.
+*/
+
+static void arma_init_transcribe_coeffs (struct arma_info *ainfo,
+					 MODEL *pmod, double *b)
+{
+    int q0 = ainfo->ifc + ainfo->np + ainfo->P;
+    int Q0 = q0 + ainfo->nq;
+    int i, j = 0;
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	if (i == q0) {
+	    /* reserve space for nonseasonal MA */
+	    j += ainfo->nq;
+	} 
+	if (i == Q0) {
+	    /* and for seasonal MA */
+	    j += ainfo->Q;
+	}
+	b[j++] = pmod->coeff[i];
+    }
+
+    /* insert near-zeros for nonseasonal MA */
+    for (i=0; i<ainfo->nq; i++) {
+	b[q0 + i] = 0.0001;
+    } 
+
+    /* and also seasonal MA */
+    for (i=0; i<ainfo->Q; i++) {
+	b[Q0 + i] = 0.0001;
+    }	
+}
+
+/* Run a least squares model to get initial values for the AR
+   coefficients, either OLS or NLS.  We use NLS if there is
+   nonlinearity due to either (a) the presence of both a seasonal and
+   a non-seasonal AR component or (b) the presence of exogenous
+   variables in the context of a non-zero AR order, where estimation
+   will be via exact ML.  In this initialization any MA coefficients
+   are simply set to near-zero.
+*/
+
+static int ar_arma_init (const int *list, double *coeff, 
+			 const double **Z, const DATAINFO *pdinfo,
+			 struct arma_info *ainfo, PRN *prn)
+{
+    int an = pdinfo->t2 - ainfo->t1 + 1;
+    int nmixed = ainfo->np * ainfo->P;
+    int ptotal = ainfo->np + ainfo->P + nmixed;
+    int av = ptotal + ainfo->nexo + 2;
+    double **aZ = NULL;
+    DATAINFO *adinfo = NULL;
+    int *alist = NULL;
+    MODEL armod;
+    int narmax, nonlin = 0;
+    int i, err = 0;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
+	    "ainfo->t1=%d, ainfo->t2=%d\n",
+	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
+    fprintf(stderr, " nmixed = %d, ptotal = %d\n", nmixed, ptotal);
+#endif
+
+    if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
+	/* special case of pure MA model */
+	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
+	    coeff[i] = 0.0; 
+	} 
+	return 0;
+    }
+
+    gretl_model_init(&armod); 
+
+    narmax = (arma_exact_ml(ainfo))? ainfo->nexo : 0;
+    if (narmax > 0) {
+	/* ARMAX-induced lags of exog vars */
+	av += ainfo->nexo * ptotal;
+    }    
+
+    adinfo = create_new_dataset(&aZ, av, an, 0);
+    if (adinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    if (ptotal > 0 && (narmax > 0 || nmixed > 0)) {
+	/* we'll have to use NLS */
+	nonlin = 1;
+    } else {
+	/* OLS: need regression list */
+	alist = make_ar_ols_list(ainfo, av);
+    }
+
+    /* add variable names to auxiliary dataset: this is required for 
+       NLS, and useful for debugging when using OLS 
+    */
+    arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
+
+    /* build temporary dataset */
+    arma_init_build_dataset(ainfo, ptotal, narmax, list,
+			    Z, aZ, adinfo);
 
     if (nonlin) {
 #if ARMA_DEBUG
@@ -1898,31 +1967,7 @@ static int ar_arma_init (const int *list, double *coeff,
     }
 
     if (!err) {
-	int q0 = ainfo->ifc + ainfo->np;
-	int Q0 = q0 + ainfo->nq + ainfo->P;
-
-	j = 0;
-	for (i=0; i<armod.ncoeff; i++) {
-	    if (i == q0) {
-		/* reserve space for nonseasonal MA */
-		j += ainfo->nq;
-	    } 
-	    if (i == Q0) {
-		/* and for seasonal MA */
-		j += ainfo->Q;
-	    }
-	    coeff[j++] = armod.coeff[i];
-	}
-
-	/* insert near-zeros for nonseasonal MA */
-	for (i=0; i<ainfo->nq; i++) {
-	    coeff[q0 + i] = 0.0001;
-	} 
-
-	/* and also seasonal MA */
-	for (i=0; i<ainfo->Q; i++) {
-	    coeff[Q0 + i] = 0.0001;
-	}	
+	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
     }
 
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
@@ -1992,6 +2037,76 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
     return err;
 }
 
+static int hr_transcribe_coeffs (struct arma_info *ainfo,
+				 MODEL *pmod, double *b)
+{
+    const double *theta = NULL;
+    const double *Theta = NULL;
+    int j = ainfo->nexo + ainfo->ifc;
+    int i, k = 0;
+    int err = 0;
+
+    if (ainfo->ifc) {
+	b[0] = pmod->coeff[0];
+	k = 1;
+    } 
+
+    for (i=0; i<ainfo->np; i++) {
+	if (AR_included(ainfo, i)) {
+#if ARMA_DEBUG
+	    fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
+#endif
+	    b[k++] = pmod->coeff[j++];
+	}
+    }
+
+    for (i=0; i<ainfo->P; i++) { 
+#if ARMA_DEBUG
+	fprintf(stderr, "Phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
+#endif
+	b[k++] = pmod->coeff[j];
+	j += ainfo->np + 1;
+    }
+
+    theta = pmod->coeff + j;
+
+    for (i=0; i<ainfo->nq; i++) {
+	if (MA_included(ainfo, i)) {
+#if ARMA_DEBUG
+	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
+#endif
+	    b[k++] = pmod->coeff[j++];
+	}
+    }
+
+    Theta = pmod->coeff + j;
+
+    for (i=0; i<ainfo->Q; i++) {
+#if ARMA_DEBUG
+	fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
+#endif
+	b[k++] = pmod->coeff[j];
+	j += ainfo->nq + 1;
+    }
+
+    j = ainfo->ifc;
+
+    for (i=0; i<ainfo->nexo; i++) {
+#if ARMA_DEBUG
+	fprintf(stderr, "beta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
+#endif
+	b[k++] = pmod->coeff[j++];
+    }
+
+    /* check MA values? */
+    if (ainfo->q > 0 || ainfo->Q > 0) {
+	err = ma_out_of_bounds(ainfo, theta, Theta);
+	bounds_checker_cleanup();
+    }
+
+    return err;
+}
+
 /* Hannan-Rissanen ARMA initialization via two OLS passes. In the
    first pass we run an OLS regression of y on the exogenous vars plus
    a certain (biggish) number of lags. In the second we estimate the
@@ -2018,8 +2133,6 @@ static int hr_arma_init (const int *list, double *coeff,
     int *pass2list = NULL;
     int *arlags = NULL;
     int *malags = NULL;
-    double *theta = NULL;
-    double *Theta = NULL;
     MODEL armod;
     int xstart;
     int m, pos, s;
@@ -2175,11 +2288,11 @@ static int hr_arma_init (const int *list, double *coeff,
 	pass2list[pos++] = pass1list[i];
     }
     for (i=0; i<ptotal; i++) {
-	/* FIXME */
+	/* FIXME? */
 	pass2list[pos++] = arlags[i] + nexo + 1;
     }
     for (i=0; i<qtotal; i++) {
-	/* FIXME */
+	/* FIXME? */
 	pass2list[pos++] = pass1v + i;
     }
     
@@ -2190,67 +2303,16 @@ static int hr_arma_init (const int *list, double *coeff,
     if (armod.errcode) {
 	err = armod.errcode;
     } else {
-	/* rearrange coefficients */
-	int pos2 = nexo + ainfo->ifc;
+#if ARMA_DEBUG
+	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
-	if (ainfo->ifc) {
-	    coeff[0] = armod.coeff[0];
-	    pos = 1;
-	} else {
-	    pos = 0;
-	}
-
-#if ARMA_DEBUG
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
-	printmodel(&armod, adinfo, OPT_S, prn);
-	gretl_print_destroy(prn);
+	printmodel(&armod, adinfo, OPT_S, errprn);
+	gretl_print_destroy(errprn);
 #endif
-
-	for (i=0; i<ainfo->np; i++) { /* phi */
-	    if (AR_included(ainfo, i)) {
-#if ARMA_DEBUG
-		fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
-#endif
-		coeff[pos++] = armod.coeff[pos2++];
-	    }
-	}
-	for (i=0; i<nP; i++) { /* Phi */
-#if ARMA_DEBUG
-	    fprintf(stderr, "Phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
-#endif
-	    coeff[pos++] = armod.coeff[pos2];
-	    pos2 += np + 1;
-	}
-	for (i=0; i<ainfo->nq; i++) { /* theta */
-	    if (MA_included(ainfo, i)) {
-#if ARMA_DEBUG
-		fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
-#endif
-		if (i == 0) {
-		    theta = armod.coeff + pos2;
-		}
-		coeff[pos++] = armod.coeff[pos2++];
-	    }
-	}
-	for (i=0; i<nQ; i++) { /* Theta */
-#if ARMA_DEBUG
-	    fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
-#endif
-	    if (i == 0) {
-		Theta = armod.coeff + pos2;
-	    }
-	    coeff[pos++] = armod.coeff[pos2];
-	    pos2 += nq + 1;
-	}
-	for (i=0; i<nexo; i++) { /* exog */
-#if ARMA_DEBUG
-	    fprintf(stderr, "beta[%d] = coeff[%d] = %g\n", i+1, i+1, armod.coeff[i+1]);
-#endif
-	    coeff[pos++] = armod.coeff[i+1];
-	}
+	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
     }
 
-    bailout:
+ bailout:
 
     free(pass1list);
     free(pass2list);
@@ -2258,12 +2320,6 @@ static int hr_arma_init (const int *list, double *coeff,
     free(malags);
     destroy_dataset(aZ, adinfo);
     clear_model(&armod);
-
-    /* check MA values? */
-    if (!err && (ainfo->q > 0 || ainfo->Q > 0)) {
-	err = ma_out_of_bounds(ainfo, theta, Theta);
-	bounds_checker_cleanup();
-    }
 
     if (!err && prn != NULL) {
 	pputs(prn, "\narma initialization: using Hannan-Rissanen method\n\n");
