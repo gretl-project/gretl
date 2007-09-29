@@ -847,7 +847,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
 	err = arima_difference(Z[ainfo.yno], &ainfo);
-    }    
+    }  
 
     sprintf(yname, pdinfo->varname[ainfo.yno]);
 

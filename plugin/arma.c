@@ -2314,11 +2314,15 @@ static int hr_arma_init (const int *list, double *coeff,
     }
     for (i=0; i<ptotal; i++) {
 	/* FIXME? */
-	pass2list[pos++] = arlags[i] + nexo + 1;
+	if (AR_included(ainfo,i)) {
+	    pass2list[pos++] = arlags[i] + nexo + 1;
+	}
     }
     for (i=0; i<qtotal; i++) {
 	/* FIXME? */
-	pass2list[pos++] = pass1v + i;
+	if (MA_included(ainfo,i)) {
+	    pass2list[pos++] = pass1v + i;
+	}
     }
     
     /* now do pass2 */
@@ -2487,7 +2491,7 @@ static int prefer_hr_init (struct arma_info *ainfo)
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
 
-#if 0
+#if 1
 	/* don't use for gappy arma (yet?) */
 	if (ainfo->pqspec != NULL) {
 	    ret = 0;
