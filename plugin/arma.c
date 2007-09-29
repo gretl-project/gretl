@@ -31,6 +31,7 @@
 #include "matrix_extra.h"
 
 #define ARMA_DEBUG 0
+#define AINIT_DEBUG 0
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -1263,7 +1264,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	b[i] = coeff[i];
     }
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fputs("initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
 	fprintf(stderr, " b[%d] = %g\n", i, b[i]);
@@ -1498,7 +1499,7 @@ static void y_Xb_at_lag (char *spec, struct arma_info *ainfo,
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 			       int narmax, double ***pZ, DATAINFO *pdinfo) 
 {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
     gretlopt nlsopt = OPT_A | OPT_V;
 #else
@@ -1602,7 +1603,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcat(fnstr, term);
     }	
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
 #endif
 
@@ -1616,7 +1617,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     if (!err) {
 	*amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
 	err = amod->errcode;
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	if (!err) {
 	    printmodel(amod, pdinfo, OPT_NONE, prn);
 	}
@@ -1841,7 +1842,7 @@ static void arma_init_build_dataset (struct arma_info *ainfo,
 	}	
     }
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "arma init dataset:\n");
     for (i=0; i<adinfo->v; i++) {
 	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, adinfo->varname[i], 
@@ -1908,7 +1909,7 @@ static int ar_arma_init (const int *list, double *coeff,
     int narmax, nonlin = 0;
     int i, err = 0;
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
 	    "ainfo->t1=%d, ainfo->t2=%d\n",
 	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
@@ -1954,12 +1955,12 @@ static int ar_arma_init (const int *list, double *coeff,
 			    Z, aZ, adinfo);
 
     if (nonlin) {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
 #endif
 	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	printlist(alist, "'alist' in ar_arma_init (OLS)");
 #endif
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
@@ -1980,7 +1981,7 @@ static int ar_arma_init (const int *list, double *coeff,
 	}
     }
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     if (!err) {
 	fprintf(stderr, "LS init: ncoeff = %d, nobs = %d\n", 
 		armod.ncoeff, armod.nobs);
@@ -2029,12 +2030,36 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
 	err = E_DF;
     }
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "hr_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
 	    ncoeff, nobs, df);
 #endif
 
     return err;
+}
+
+static int lags_overlap (struct arma_info *ainfo, int k,
+			 int t)
+{
+    int i, ret = 0;
+    
+    k = (k + 1) * ainfo->pd;
+
+    if (t == AR_MASK) {
+	for (i=0; i<ainfo->p; i++) {
+	    if (AR_included(ainfo, i) && i+1 == k) {
+		ret++;
+	    }
+	}
+    } else {
+	for (i=0; i<ainfo->q; i++) {
+	    if (MA_included(ainfo, i) && i+1 == k) {
+		ret++;
+	    }
+	}
+    }
+
+    return ret;
 }
 
 static int hr_transcribe_coeffs (struct arma_info *ainfo,
@@ -2053,7 +2078,7 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
 
     for (i=0; i<ainfo->np; i++) {
 	if (AR_included(ainfo, i)) {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	    fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
 #endif
 	    b[k++] = pmod->coeff[j++];
@@ -2061,18 +2086,18 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
     }
 
     for (i=0; i<ainfo->P; i++) { 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	fprintf(stderr, "Phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
 #endif
 	b[k++] = pmod->coeff[j];
-	j += ainfo->np + 1;
+	j += ainfo->np + 1 - lags_overlap(ainfo, i, AR_MASK);
     }
 
     theta = pmod->coeff + j;
 
     for (i=0; i<ainfo->nq; i++) {
 	if (MA_included(ainfo, i)) {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
 #endif
 	    b[k++] = pmod->coeff[j++];
@@ -2082,17 +2107,17 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
     Theta = pmod->coeff + j;
 
     for (i=0; i<ainfo->Q; i++) {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
 #endif
 	b[k++] = pmod->coeff[j];
-	j += ainfo->nq + 1;
+	j += ainfo->nq + 1 - lags_overlap(ainfo, i, MA_MASK);
     }
 
     j = ainfo->ifc;
 
     for (i=0; i<ainfo->nexo; i++) {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	fprintf(stderr, "beta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
 #endif
 	b[k++] = pmod->coeff[j++];
@@ -2157,7 +2182,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	return E_ALLOC;
     }
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n", 
 	    pass1v + qtotal, an);
 #endif
@@ -2221,7 +2246,7 @@ static int hr_arma_init (const int *list, double *coeff,
 	goto bailout;
     } 
 
-#if ARMA_DEBUG
+#if AINIT_DEBUG
     fprintf(stderr, "pass1 model: t1=%d, t2=%d, nobs=%d, ncoeff=%d, dfd = %d\n", 
 	    armod.t1, armod.t2, armod.nobs, armod.ncoeff, armod.dfd);
 #endif
@@ -2303,7 +2328,7 @@ static int hr_arma_init (const int *list, double *coeff,
     if (armod.errcode) {
 	err = armod.errcode;
     } else {
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
 	printmodel(&armod, adinfo, OPT_S, errprn);
@@ -2459,21 +2484,28 @@ static int prefer_hr_init (struct arma_info *ainfo)
 {
     int ret = 0;
 
-#if 0
-    /* don't use for gappy arma (yet?) */
-    if (ainfo->pqspec != NULL) {
-	return 0;
-    }
-#endif
-
-    /* unlikely to work well with small sample */
-    if (ainfo->t2 - ainfo->t1 < 100) {
-	return 0;
-    }
-
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
-	if (arma_exact_ml(ainfo)) {
+
+#if 0
+	/* don't use for gappy arma (yet?) */
+	if (ainfo->pqspec != NULL) {
+	    ret = 0;
+	}
+#endif
+
+	/* unlikely to work well with small sample */
+	if (ainfo->t2 - ainfo->t1 < 100) {
+	    ret = 0;
+	}
+
+	/* interactions screw things up? */
+	if (ainfo->p > 0 && ainfo->P > 0) {
+	    ret = 0;
+	}
+	    
+	if (ret && arma_exact_ml(ainfo)) {
+	    /* screen for cases where we'll use NLS */
 	    if (ainfo->P > 0) {
 		ret = 0;
 	    } else if (ainfo->p + ainfo->P > 0 && ainfo->nexo > 0) {
@@ -2481,6 +2513,10 @@ static int prefer_hr_init (struct arma_info *ainfo)
 	    }
 	}
     }
+
+#if AINIT_DEBUG
+    fprintf(stderr, "prefer_hr_init? %s\n", ret? "yes" : "no");
+#endif
 
     return ret;
 }
@@ -2560,7 +2596,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
 	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
-#if ARMA_DEBUG
+#if AINIT_DEBUG
 	    if (err) {
 		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
 	    } else {
