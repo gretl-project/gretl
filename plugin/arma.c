@@ -163,6 +163,15 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	}
     }
 
+    if (b->temp[qtot] == 0.0) {
+	fprintf(stderr, "b->temp[%d] = 0; polrt won't work\n", qtot);
+	fprintf(stderr, "q = %d, Q = %d, b->qmax = %d\n", 
+		ainfo->q, ainfo->Q, b->qmax);
+	for (i=0; i<=qtot; i++) {
+	    fprintf(stderr, "b->temp[%d] = %g\n", i, b->temp[i]);
+	}
+    }
+
     cerr = polrt(b->temp, b->tmp2, qtot, b->roots);
     if (cerr) {
 	fprintf(stderr, "ma_out_of_bounds: polrt returned %d\n", cerr);
@@ -1919,7 +1928,7 @@ static int ar_arma_init (const int *list, double *coeff,
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = 0.0; 
+	    coeff[i] = 0.0001; 
 	} 
 	return 0;
     }
@@ -2038,30 +2047,6 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
     return err;
 }
 
-static int lags_overlap (struct arma_info *ainfo, int k,
-			 int t)
-{
-    int i, ret = 0;
-    
-    k = (k + 1) * ainfo->pd;
-
-    if (t == AR_MASK) {
-	for (i=0; i<ainfo->p; i++) {
-	    if (AR_included(ainfo, i) && i+1 == k) {
-		ret++;
-	    }
-	}
-    } else {
-	for (i=0; i<ainfo->q; i++) {
-	    if (MA_included(ainfo, i) && i+1 == k) {
-		ret++;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 static int hr_transcribe_coeffs (struct arma_info *ainfo,
 				 MODEL *pmod, double *b)
 {
@@ -2076,30 +2061,21 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
 	k = 1;
     } 
 
-    for (i=0; i<ainfo->np; i++) {
+    for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
-#if AINIT_DEBUG
-	    fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
-#endif
 	    b[k++] = pmod->coeff[j++];
 	}
     }
 
     for (i=0; i<ainfo->P; i++) { 
-#if AINIT_DEBUG
-	fprintf(stderr, "Phi[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
-#endif
 	b[k++] = pmod->coeff[j];
-	j += ainfo->np + 1 - lags_overlap(ainfo, i, AR_MASK);
+	j += ainfo->np + 1; /* note: assumes p < pd */
     }
 
     theta = pmod->coeff + j;
 
-    for (i=0; i<ainfo->nq; i++) {
+    for (i=0; i<ainfo->q; i++) {
 	if (MA_included(ainfo, i)) {
-#if AINIT_DEBUG
-	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
-#endif
 	    b[k++] = pmod->coeff[j++];
 	}
     }
@@ -2107,19 +2083,13 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
     Theta = pmod->coeff + j;
 
     for (i=0; i<ainfo->Q; i++) {
-#if AINIT_DEBUG
-	fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
-#endif
 	b[k++] = pmod->coeff[j];
-	j += ainfo->nq + 1 - lags_overlap(ainfo, i, MA_MASK);
+	j += ainfo->nq + 1;
     }
 
     j = ainfo->ifc;
 
     for (i=0; i<ainfo->nexo; i++) {
-#if AINIT_DEBUG
-	fprintf(stderr, "beta[%d] = coeff[%d] = %g\n", i+1, j, pmod->coeff[j]);
-#endif
 	b[k++] = pmod->coeff[j++];
     }
 
@@ -2493,7 +2463,7 @@ static int prefer_hr_init (struct arma_info *ainfo)
 
 #if 1
 	/* don't use for gappy arma (yet?) */
-	if (ainfo->pqspec != NULL) {
+	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    ret = 0;
 	}
 #endif
@@ -2504,7 +2474,7 @@ static int prefer_hr_init (struct arma_info *ainfo)
 	}
 
 	/* interactions screw things up? */
-	if (ainfo->p > 0 && ainfo->P > 0) {
+	if (ainfo->P > 0 && ainfo->p >= ainfo->pd) {
 	    ret = 0;
 	}
 	    
