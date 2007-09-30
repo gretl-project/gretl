@@ -1585,7 +1585,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     v = oldv;
     k = 1;
     if (ainfo->ifc) {
-	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]); /* ? */
+	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 	strcpy(pdinfo->varname[v], "b0");
 	b0 = v;
 	plist[k++] = v++;
@@ -1595,7 +1595,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	if (AR_included(ainfo, i)) {
 	    if (by1 == 0) {
 		by1 = v;
-		(*pZ)[v][0] = 0.1; /* FIXME? */
+		(*pZ)[v][0] = 0.1;
 	    }
 	    sprintf(pdinfo->varname[v], "phi%d", ++kp);
 	    plist[k++] = v++;
@@ -1604,6 +1604,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     for (i=0; i<ainfo->P; i++) {
 	if (by1 == 0) {
 	    by1 = v;
+	    (*pZ)[v][0] = 0.1;
 	}
 	sprintf(pdinfo->varname[v], "Phi%d", i+1);
 	plist[k++] = v++;
