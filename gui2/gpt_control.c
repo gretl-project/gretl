@@ -135,6 +135,7 @@ static void render_pngfile (png_plot *plot, int view);
 static int zoom_unzoom_png (png_plot *plot, int view);
 static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
+static void graph_display_pdf (GPT_SPEC *spec);
 
 #ifdef PNG_COMMENTS
 
@@ -503,38 +504,33 @@ static void print_line_with_color (PRN *prn, char *s, int lnum)
     }
 }
 
-static void filter_plot_file (GPT_SPEC *spec, const char *term,
-			      const char *fname)
+static int filter_plot_file (const char *inname, 
+			     const char *term,
+			     const char *fname)
 {
     char pline[MAXLEN];
     char plottmp[MAXLEN];
     gchar *plotcmd = NULL;
     FILE *fp = NULL;
     PRN *prn = NULL;
-    int mono = 0, png = 0, emf = 0;
+    int emf = 0, png = 0, mono = 0;
     int lnum = -1, add_colors = 0;
     int contd = 0, err = 0;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
-	return;
+	return 1;
     }
 
-    fp = gretl_fopen(spec->fname, "r");
+    fp = gretl_fopen(inname, "r");
     if (fp == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
-	return;
-    }
- 
-    if (strstr(term, " mono")) {
-	mono = 1;
+	return 1;
     }
 
-    if (!strncmp(term, "png", 3)) {
-	png = 1;
-    } else if (!strncmp(term, "emf", 3)) {
-	emf = 1;
-    }
+    if (!strncmp(term, "png", 3)) png = 1;
+    if (!strncmp(term, "emf", 3)) emf = 1;
+    if (strstr(term, " mono ")) mono = 1;
 
     if (!mono && !png && !emf) {
 	add_colors = 1;
@@ -599,6 +595,8 @@ static void filter_plot_file (GPT_SPEC *spec, const char *term,
     if (err) {
 	errbox(_("Gnuplot error creating graph"));
     } 
+
+    return err;
 }
 
 void save_graph_to_file (gpointer data, const char *fname)
@@ -614,8 +612,38 @@ void save_graph_to_file (gpointer data, const char *fname)
 	    errbox(_("Failed to copy graph file"));
 	}
     } else {
-	filter_plot_file(spec, term, fname);
+	filter_plot_file(spec->fname, term, fname);
     }
+}
+
+#define GRETL_PDF_TMP "gretltmp.pdf"
+
+static void graph_display_pdf (GPT_SPEC *spec)
+{
+    char pdfname[FILENAME_MAX];
+    const char *term;
+    static int use_cairo = -1;
+
+    build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
+
+    if (use_cairo < 0) {
+	use_cairo = gnuplot_has_cairo();
+    }
+
+    term = (use_cairo)? "cairopdf" : "pdf";
+
+    if (filter_plot_file(spec->fname, term, pdfname)) {
+	errbox("Error creating graph file");
+	return;
+    }
+
+#if defined(G_OS_WIN32)
+    win32_open_file(pdfname);
+#elif defined(OSX_BUILD)
+    osx_open_file(pdfname);
+#else
+    gretl_fork(viewpdf, pdfname);
+#endif
 }
 
 /* chop trailing comma, if present; return 1 if comma chopped,
@@ -2169,7 +2197,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif 
     else if (!strcmp(item, _("Display PDF"))) { 
-	graph_display_pdf(plot->spec->fname);
+	graph_display_pdf(plot->spec);
     } else if (!strcmp(item, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
 	    do_graph_model(plot->spec->reglist, plot->spec->fit);
