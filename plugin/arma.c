@@ -2473,11 +2473,12 @@ static int prefer_hr_init (struct arma_info *ainfo)
 	    ret = 0;
 	}
 
-	/* interactions screw things up? */
-	if (ainfo->P > 0 && ainfo->p >= ainfo->pd) {
+	/* overlapping orders screw things up */
+	if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
+	    (ainfo->Q > 0 && ainfo->q >= ainfo->pd)) {
 	    ret = 0;
 	}
-	    
+
 	if (ret && arma_exact_ml(ainfo)) {
 	    /* screen for cases where we'll use NLS */
 	    if (ainfo->P > 0) {
