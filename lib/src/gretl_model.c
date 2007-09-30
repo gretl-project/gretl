@@ -4411,8 +4411,14 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	return x;
     }
 
+    if (idx == M_GMMCRIT && pmod->ci != GMM) {
+	*err = E_BADSTAT;
+	return x;
+    }	
+
     switch (idx) {  
     case M_ESS:
+    case M_GMMCRIT:
 	x = pmod->ess;
 	break;
     case M_RSQ:

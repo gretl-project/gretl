@@ -38,6 +38,8 @@ version 1.6.6, in progress
   in "-rdq"
 - Modify retrieval of info from VARs: $coeff gets the matrix
   of coefficients, $compan gets the companion matrix
+- New accessor: $gmmcrit gets the GMM criterion for a model
+  estimated via GMM
 - gretlcli: Ctrl-X exits without prompting for save
 - Databases: allow selection of more than one series for
   display, graphing, importing

@@ -2801,6 +2801,11 @@
 	</li>
 	<li>
 	  <para>
+	   <lit>$gmmcrit</lit>: GMM criterion (GMM models only)
+	  </para>
+	</li>
+	<li>
+	  <para>
 	    <lit>$coeff</lit>(<repl>var</repl>): estimated coefficient for
 	    variable <repl>var</repl>
 	  </para>

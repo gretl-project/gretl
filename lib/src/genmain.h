@@ -45,6 +45,7 @@ typedef enum {
     M_DF,         /* degrees of freedom */
     M_NCOEFF,     /* total number of estimated coefficients */
     M_LNL,        /* log-likelihood */
+    M_GMMCRIT,    /* GMM criterion */
     M_AIC,        /* Akaike info criterion */
     M_BIC,        /* Bayesian info criterion */
     M_HQC,        /* Hannan-Quinn criterion */

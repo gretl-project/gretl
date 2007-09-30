@@ -86,6 +86,7 @@ struct str_table mvars[] = {
     { M_DF,      "$df" },
     { M_NCOEFF,  "$ncoeff" },
     { M_LNL,     "$lnl" },
+    { M_GMMCRIT, "$gmmcrit" },
     { M_AIC,     "$aic" },
     { M_BIC,     "$bic" },
     { M_HQC,     "$hqc" },
