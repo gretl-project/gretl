@@ -6192,6 +6192,7 @@ static int execute_script (const char *runfile, const char *buf,
     *libcmd.word = '\0';
 
     gretl_exec_state_init(&state, 0, line, &libcmd, models, prn);
+    set_iter_print_func(NULL);
 
     while (strcmp(libcmd.word, "quit")) {
 	if (gretl_execute_loop()) { 
@@ -6272,6 +6273,7 @@ static int execute_script (const char *runfile, const char *buf,
     }
 
     refresh_data();
+    set_iter_print_func(gui_iter_print);
 
     return exec_err;
 }

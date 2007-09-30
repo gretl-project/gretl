@@ -1508,6 +1508,37 @@ static void y_Xb_at_lag (char *spec, struct arma_info *ainfo,
     }
 }
 
+static void nls_kickstart (int b0, int by1, 
+			   MODEL *pmod, double ***pZ, 
+			   DATAINFO *pdinfo)
+{
+    int list[4];
+
+    if (b0 != 0) {
+	list[0] = 3;
+	list[1] = 1;
+	list[2] = 0;
+	list[3] = 2;
+    } else {
+	list[0] = 2;
+	list[1] = 1;
+	list[2] = 2;
+    }
+
+    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
+
+    if (!pmod->errcode) {
+	if (b0 != 0) {
+	    (*pZ)[b0][0] = pmod->coeff[0];
+	    (*pZ)[by1][0] = pmod->coeff[1];
+	} else {
+	    (*pZ)[by1][0] = pmod->coeff[0];
+	}
+    }
+
+    clear_model(pmod);
+}
+
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 			       int narmax, double ***pZ, DATAINFO *pdinfo) 
 {
@@ -1523,6 +1554,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     nlspec *spec;
     int *plist = NULL;
     int v, oldv = pdinfo->v;
+    int b0 = 0, by1 = 0;
     int nparam, lag;
     int i, j, k, kp, err = 0;
 
@@ -1555,12 +1587,14 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     if (ainfo->ifc) {
 	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]); /* ? */
 	strcpy(pdinfo->varname[v], "b0");
+	b0 = v;
 	plist[k++] = v++;
     }
     kp = 0;
     for (i=0; i<ainfo->np; i++) {
 	if (AR_included(ainfo, i)) {
-	    if (kp == 0) {
+	    if (by1 == 0) {
+		by1 = v;
 		(*pZ)[v][0] = 0.1; /* FIXME? */
 	    }
 	    sprintf(pdinfo->varname[v], "phi%d", ++kp);
@@ -1568,6 +1602,9 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	}
     }
     for (i=0; i<ainfo->P; i++) {
+	if (by1 == 0) {
+	    by1 = v;
+	}
 	sprintf(pdinfo->varname[v], "Phi%d", i+1);
 	plist[k++] = v++;
     }
@@ -1613,10 +1650,16 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     for (i=0; i<ainfo->nexo; i++) {
 	sprintf(term, "+b%d*x%d", i+1, i+1);
 	strcat(fnstr, term);
-    }	
+    }
+
+    nls_kickstart(b0, by1, amod, pZ, pdinfo);
 
 #if AINIT_DEBUG
     fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
+    for (i=0; i<plist[0]; i++) {
+	fprintf(stderr, "intial NLS b[%d] = %g\n",
+		i, (*pZ)[oldv+i][0]);
+    }
 #endif
 
     err = nlspec_set_regression_function(spec, fnstr, pdinfo);
@@ -2516,18 +2559,12 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (opt & OPT_V) {
-#if 1
-	if (gretl_in_gui_mode()) {
+	if (iter_print_func_installed()) {
 	    vprn = gretl_print_new_with_tempfile();
 	} else {
 	    vprn = prn;
 	}
-#else
-	vprn = prn;
-#endif
-    } else {
-	vprn = NULL;
-    }
+    } 
 
     arma_info_init(&ainfo, flags, pqspec, pdinfo);
     gretl_model_init(&armod); 

@@ -2001,6 +2001,11 @@ void set_iter_print_func (ITER_PRINT_FUNC func)
     ifunc = func;
 }
 
+int iter_print_func_installed (void)
+{
+    return ifunc != NULL;
+}
+
 int iter_print_callback (int i, PRN *prn)
 {
     int ret = 0;

@@ -156,6 +156,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
+int iter_print_func_installed (void);
 
 #endif /* LIBSET_H */
 

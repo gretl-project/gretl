@@ -809,15 +809,11 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     int err = 0;
 
     if (verbose) {
-#if 1
-	if (gretl_in_gui_mode()) {
+	if (iter_print_func_installed()) {
 	    vprn = gretl_print_new_with_tempfile();
 	} else {
 	    vprn = prn;
 	}
-#else
-	vprn = prn;
-#endif
     } 
 
     if (pdinfo->t2 < pdinfo->n - 1) {
