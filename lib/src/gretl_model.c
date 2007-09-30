@@ -840,6 +840,8 @@ int gretl_is_arima_model (const MODEL *pmod)
     return (d > 0 || D > 0);
 }
 
+#define arma_included(m,i) (m == NULL || m[i] == '1')
+
 /**
  * arma_model_nonseasonal_AR_order:
  * @pmod: pointer to gretl model.
@@ -999,6 +1001,36 @@ static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
     return 0;
 }
 
+static int arma_included_lags (int k, const char *mask)
+{
+    int i, nk = k;
+
+    if (mask != NULL) {
+	nk = 0;
+	for (i=0; i<k; i++) {
+	    if (mask[i] == '1') nk++;
+	}
+    }
+
+    return nk;
+}
+
+static int arma_AR_lags (const MODEL *pmod)
+{
+    const char *pmask = gretl_model_get_data(pmod, "pmask");
+    int p = arma_model_nonseasonal_AR_order(pmod);
+
+    return arma_included_lags(p, pmask);
+}
+
+static int arma_MA_lags (const MODEL *pmod)
+{
+    const char *qmask = gretl_model_get_data(pmod, "qmask");
+    int q = arma_model_nonseasonal_MA_order(pmod);
+
+    return arma_included_lags(q, qmask);
+}
+
 /**
  * arma_model_integrated_AR_MA_coeffs:
  * @pmod: pointer to gretl model.
@@ -1033,17 +1065,22 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
     } else {
 	const double *phi = NULL, *Phi = NULL;
 	const double *theta = NULL, *Theta = NULL;
+	const char *pmask = gretl_model_get_data(pmod, "pmask");
+	const char *qmask = gretl_model_get_data(pmod, "qmask");
+
 	double x, y;
 
 	int p = arma_model_nonseasonal_AR_order(pmod);
 	int q = arma_model_nonseasonal_MA_order(pmod);
+	int np = arma_included_lags(p, pmask);
+	int nq = arma_included_lags(q, qmask);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int d = gretl_model_get_int(pmod, "arima_d");
 	int D = gretl_model_get_int(pmod, "arima_D");
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int pmax, pstar, qmax;
-	int i, j, k;
+	int i, j, k, ii;
 
 	pmax = p + s * P;
 	pstar = pmax + d + s * D;
@@ -1067,21 +1104,23 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 
 	if (!err) {
 	    phi = pmod->coeff + pmod->ifc; /* non-seasonal AR coeffs */
-	    Phi = phi + p;                 /* seasonal AR coeffs */
+	    Phi = phi + np;                /* seasonal AR coeffs */
 	    theta = Phi + P;               /* non-seasonal MA coeffs */
-	    Theta = theta + q;             /* seasonal MA coeffs */
+	    Theta = theta + nq;            /* seasonal MA coeffs */
 	}
 
 	if (ac != NULL) {
 	    for (i=0; i<=pstar; i++) {
 		ac[i] = 0.0;
 	    }
-	    for (i=0; i<=P; i++) {
-		x = (i == 0)? -1 : Phi[i-1];
-		for (j=0; j<=p; j++) {
-		    y = (j == 0)? -1 : phi[j-1];
-		    k = j + s * i;
-		    ac[k] -= x * y;
+	    for (j=0; j<=P; j++) {
+		x = (j == 0)? -1 : Phi[j-1];
+		k = 0;
+		for (i=0; i<=p; i++) {
+		    y = (i == 0)? -1 : 
+			(arma_included(pmask, i-1))? phi[k++] : 0;
+		    ii = i + s * j;
+		    ac[ii] -= x * y;
 		}
 	    }
 	    if (D > 0 || d > 0) {
@@ -1093,12 +1132,14 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	    for (i=0; i<=qmax; i++) {
 		mc[i] = 0.0;
 	    }
-	    for (i=0; i<=Q; i++) {
-		x = (i == 0)? -1 : Theta[i-1];
-		for (j=0; j<=q; j++) {
-		    y = (j == 0)? -1 : theta[j-1];
-		    k = j + s * i;
-		    mc[k] -= x * y;
+	    for (j=0; j<=Q; j++) {
+		x = (j == 0)? -1 : Theta[j-1];
+		k = 0;
+		for (i=0; i<=q; i++) {
+		    y = (i == 0)? -1 : 
+			(arma_included(qmask, i-1))? theta[k++] : 0;
+		    ii = i + s * j;
+		    mc[ii] -= x * y;
 		}
 	    }
 	}
@@ -1131,13 +1172,15 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 			     double **phi0,
 			     int *pp)
 {
+    const char *pmask = gretl_model_get_data(pmod, "pmask");
     int p = arma_model_nonseasonal_AR_order(pmod);
+    int np = arma_included_lags(p, pmask);
     int P = gretl_model_get_int(pmod, "arma_P");
     int s = gretl_model_get_int(pmod, "arma_pd");
     const double *phi = NULL, *Phi = NULL;
     double *ac = NULL;
     double x, y;
-    int i, j, k, pmax;
+    int i, j, k, ii, pmax;
     int err = 0;
 
     pmax = p + s * P;
@@ -1153,18 +1196,20 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
     }
 
     phi = pmod->coeff + pmod->ifc;
-    Phi = phi + p;
+    Phi = phi + np;
 
     for (i=0; i<=pmax; i++) {
 	ac[i] = 0.0;
     }
 
-    for (i=0; i<=P; i++) {
-	x = (i == 0)? -1 : Phi[i-1];
-	for (j=0; j<=p; j++) {
-	    y = (j == 0)? -1 : phi[j-1];
-	    k = j + s * i;
-	    ac[k] -= x * y;
+    for (j=0; j<=P; j++) {
+	x = (j == 0)? -1 : Phi[j-1];
+	k = 0;
+	for (i=0; i<=p; i++) {
+	    y = (i == 0)? -1 : 
+		(arma_included(pmask, i-1))? phi[k++] : 0;
+	    ii = i + s * j;
+	    ac[ii] -= x * y;
 	}
     }
 
@@ -1190,8 +1235,8 @@ const double *arma_model_get_x_coeffs (const MODEL *pmod)
     if (pmod->ci == ARMA && gretl_model_get_int(pmod, "armax")) {
 	xc = pmod->coeff;
 	xc += pmod->ifc;
-	xc += arma_model_nonseasonal_AR_order(pmod);
-	xc += arma_model_nonseasonal_MA_order(pmod);
+	xc += arma_AR_lags(pmod);
+	xc += arma_MA_lags(pmod);
 	xc += gretl_model_get_int(pmod, "arma_P");
 	xc += gretl_model_get_int(pmod, "arma_Q");
     }
@@ -4057,8 +4102,6 @@ int gretl_model_allocate_params (MODEL *pmod, int k)
     return pmod->errcode;
 }
 
-#define arma_included(m,i) (m == NULL || m[i])
-
 static int count_coeffs (int p, const char *pmask,
 			 int q, const char *qmask,
 			 int P, int Q, int r, int ifc)
@@ -4105,10 +4148,10 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int P, int Q, 
 				   int r)
 {
-    int np, xstart;
+    int nc, xstart;
     int i, j;
 
-    np = count_coeffs(p, pmask, q, qmask, P, Q, r, pmod->ifc);
+    nc = count_coeffs(p, pmask, q, qmask, P, Q, r, pmod->ifc);
 
     pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
     if (pmod->depvar == NULL) {
@@ -4116,7 +4159,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	return 1;
     }	
 
-    pmod->params = strings_array_new_with_length(np, VNAMELEN);
+    pmod->params = strings_array_new_with_length(nc, VNAMELEN);
     if (pmod->params == NULL) {
 	free(pmod->depvar);
 	pmod->depvar = NULL;
@@ -4124,7 +4167,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    pmod->nparams = np;
+    pmod->nparams = nc;
 
     if (pmod->ifc) {
 	strcpy(pmod->params[0], pdinfo->varname[0]);

@@ -39,8 +39,8 @@ struct arma_info {
 #define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
 #define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
 
-#define AR_included(a,i) (a->pmask == NULL || a->pmask[i])
-#define MA_included(a,i) (a->qmask == NULL || a->qmask[i])
+#define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
+#define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
 
 static void 
 arma_info_init (struct arma_info *ainfo, char flags, 
@@ -104,16 +104,21 @@ static char *mask_from_vec (const gretl_vector *v,
     char *mask;
     int i, k;
 
-    mask = calloc(mlen, 1);
+    mask = malloc(mlen + 1);
     if (mask == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
+    for (i=0; i<mlen; i++) {
+	mask[i] = '0';
+    }
+    mask[mlen] = '\0';
+
     for (i=0; i<vlen; i++) {
 	k = v->val[i] - 1; /* convert to zero-based */
 	if (k >= 0 && k < mlen) {
-	    mask[k] = 1; 
+	    mask[k] = '1'; 
 	    nv++;
 	    if (k + 1 > nmax) {
 		nmax = k + 1;
@@ -343,6 +348,16 @@ static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
 
     if (ainfo->nexo > 0) {
 	gretl_model_set_int(pmod, "armax", 1);
+    }
+
+    if (ainfo->pmask != NULL) {
+	gretl_model_set_string_as_data(pmod, "pmask", 
+				       gretl_strdup(ainfo->pmask));
+    }
+
+    if (ainfo->qmask != NULL) {
+	gretl_model_set_string_as_data(pmod, "qmask", 
+				       gretl_strdup(ainfo->qmask));
     }
 }
 

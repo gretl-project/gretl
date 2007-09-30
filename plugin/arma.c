@@ -156,13 +156,14 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	    k = 0;
 	    for (i=0; i<ainfo->q; i++) {
 		if (MA_included(ainfo, i)) {
-		    m = si + i + 1;
+		    m = si + (i + 1);
 		    b->temp[m] += Theta[j] * theta[k++];
 		} 
 	    }
 	}
     }
 
+#if ARMA_DEBUG
     if (b->temp[qtot] == 0.0) {
 	fprintf(stderr, "b->temp[%d] = 0; polrt won't work\n", qtot);
 	fprintf(stderr, "q = %d, Q = %d, b->qmax = %d\n", 
@@ -171,6 +172,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	    fprintf(stderr, "b->temp[%d] = %g\n", i, b->temp[i]);
 	}
     }
+#endif
 
     cerr = polrt(b->temp, b->tmp2, qtot, b->roots);
     if (cerr) {
@@ -235,7 +237,7 @@ static void do_MA_partials (double *drv,
 }
 
 /* Calculate ARMA log-likelihood.  This function is passed to the
-   bhhh_max() routine as a "callback". */
+   bhhh_max() routine as a callback. */
 
 static int arma_ll (double *coeff, 
 		    const double **bhX, double **Z, 
@@ -792,8 +794,9 @@ static int write_kalman_matrices (const double *b, int idx)
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
     } else {
-	int pmax = kainfo->ifc + kainfo->p + kainfo->P; /* FIXME gappy? */
-	int tmax = pmax + kainfo->q + kainfo->Q; /* FIXME gappy? */
+	/* called in context of calculating score */
+	int pmax = kainfo->ifc + kainfo->np + kainfo->P;
+	int tmax = pmax + kainfo->nq + kainfo->Q;
 
 	if (kainfo->ifc && idx == 0) {
 	    rewrite_A = 1;
