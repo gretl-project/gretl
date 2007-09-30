@@ -111,9 +111,29 @@ int get_original_n (void)
     return original_n;
 } 
 
-static int gui_iter_print (PRN *prn)
+static int gui_iter_print (int i, PRN *prn)
 {
-    fprintf(stderr, "gui_iter_print called\n");
+    static windata_t *iwin;
+
+    if (i < 0) {
+	/* finish signal */
+	iwin = NULL;
+	return 0;
+    }
+
+    if (!gretl_print_has_tempfile(prn)) {
+	return 0;
+    }
+
+    if (iwin == NULL) {
+	iwin = view_buffer(NULL, 80, 350, _("gretl: iteration info"), 
+			   PRINT, NULL);
+    }
+
+    if (iwin != NULL) {
+	textview_insert_from_tempfile(iwin, prn);
+    }
+
     return 0;
 }
 

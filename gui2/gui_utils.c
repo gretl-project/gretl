@@ -2112,7 +2112,13 @@ static void viewer_box_config (windata_t *vwin)
 
 static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
-    const char *buf = gretl_print_get_buffer(prn);
+    const char *buf;
+
+    if (prn == NULL) {
+	return;
+    }
+
+    buf = gretl_print_get_buffer(prn);
 
     if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
 	sourceview_insert_buffer(vwin, buf);

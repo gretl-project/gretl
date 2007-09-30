@@ -800,7 +800,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     const char *workdir = gretl_x12_arima_dir();
     char yname[VNAMELEN], path[MAXLEN];
     int *alist = NULL;
-    PRN *aprn = NULL;
+    PRN *vprn = NULL;
     MODEL armod;
     struct arma_info ainfo;
 #ifdef WIN32
@@ -809,7 +809,15 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     int err = 0;
 
     if (verbose) {
-	aprn = prn;
+#if 1
+	if (gretl_in_gui_mode()) {
+	    vprn = gretl_print_new_with_tempfile();
+	} else {
+	    vprn = prn;
+	}
+#else
+	vprn = prn;
+#endif
     } 
 
     if (pdinfo->t2 < pdinfo->n - 1) {
@@ -875,7 +883,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	armod.nobs = armod.t2 - armod.t1 + 1;
 	populate_arma_model(&armod, alist, path, Z, pdinfo, &ainfo);
 	if (verbose && !armod.errcode) {
-	    print_iterations(path, aprn);
+	    print_iterations(path, vprn);
 	}
 	if (!armod.errcode) {
 	    int acode = ARMA_X12A;
@@ -891,6 +899,12 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     } else {
 	armod.errcode = E_UNSPEC;
 	gretl_errmsg_set(_("Failed to execute x12arima"));
+    }
+
+    if (vprn != NULL && vprn != prn) {
+	iter_print_callback(0, vprn);
+	iter_print_callback(-1, NULL);
+	gretl_print_destroy(vprn);
     }
 
  bailout:

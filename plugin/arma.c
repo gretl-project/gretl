@@ -40,7 +40,7 @@
 
 #include "arma_common.c"
 
-static PRN *errprn;
+static PRN *vprn;
 
 struct bchecker {
     int qmax;
@@ -185,7 +185,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	im = b->roots[i].i;
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
-	    pprintf(errprn, "MA root %d = %g\n", i, rt);
+	    pprintf(vprn, "MA root %d = %g\n", i, rt);
 	    err = 1;
 	    break;
 	}
@@ -287,7 +287,7 @@ static int arma_ll (double *coeff,
 #endif
 
     if (ma_out_of_bounds(ainfo, theta, Theta)) {
-	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
+	pputs(vprn, "arma: MA estimate(s) out of bounds\n");
 	fputs("arma: MA estimate(s) out of bounds\n", stderr);
 	return 1;
     }
@@ -1102,7 +1102,7 @@ static double kalman_arma_ll (const double *b, void *p)
 #endif
 
     if (kalman_do_ma_check && ma_out_of_bounds(kainfo, theta, Theta)) {
-	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
+	pputs(vprn, "arma: MA estimate(s) out of bounds\n");
 	return NADBL;
     }
 
@@ -2306,10 +2306,10 @@ static int hr_arma_init (const int *list, double *coeff,
 	err = armod.errcode;
     } else {
 #if AINIT_DEBUG
-	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
+	PRN *modprn = gretl_print_new(GRETL_PRINT_STDERR);
 
-	printmodel(&armod, adinfo, OPT_S, errprn);
-	gretl_print_destroy(errprn);
+	printmodel(&armod, adinfo, OPT_S, modprn);
+	gretl_print_destroy(modprn);
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
     }
@@ -2516,9 +2516,17 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (opt & OPT_V) {
-	errprn = prn;
+#if 1
+	if (gretl_in_gui_mode()) {
+	    vprn = gretl_print_new_with_tempfile();
+	} else {
+	    vprn = prn;
+	}
+#else
+	vprn = prn;
+#endif
     } else {
-	errprn = NULL;
+	vprn = NULL;
     }
 
     arma_info_init(&ainfo, flags, pqspec, pdinfo);
@@ -2563,7 +2571,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, flags, &init_done, errprn);
+    err = user_arma_init(coeff, &ainfo, flags, &init_done, vprn);
     if (err) {
 	armod.errcode = err;
 	goto bailout;
@@ -2573,7 +2581,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
-	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
+	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
 #if AINIT_DEBUG
 	    if (err) {
 		fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
@@ -2589,7 +2597,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
-	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
+	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, vprn);
     }
 
     if (err) {
@@ -2598,9 +2606,9 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, prn);
+	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     } else {
-	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, prn);
+	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     }
 
  bailout:
@@ -2612,7 +2620,12 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
 
-    errprn = NULL;
+    if (vprn != NULL && vprn != prn) {
+	iter_print_callback(-1, NULL);
+	gretl_print_destroy(vprn);
+    }
+
+    vprn = NULL;
 
     return armod;
 }

@@ -54,6 +54,8 @@ void textview_append_text_colorized (GtkWidget *view, const char *buf);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
+void textview_insert_from_tempfile (windata_t *vwin, PRN *prn);
+
 void create_text (windata_t *vwin, int hsize, int vsize, 
 		  gboolean editable);
 

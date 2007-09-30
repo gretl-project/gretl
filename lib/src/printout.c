@@ -2117,14 +2117,14 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
     return 0;
 }
 
-static void print_iter_val (double x, int i, PRN *prn)
+static void print_iter_val (double x, int i, int k, PRN *prn)
 {
     if (na(x)) {
 	pprintf(prn, "%-12s", "NA");
     } else {
 	pprintf(prn, "%#12.5g", x);
     }
-    if (i && i % 6 == 5) {
+    if (i && i % 6 == 5 && i < k-1) {
 	pprintf(prn, "\n%12s", " ");
     }
 }
@@ -2157,7 +2157,14 @@ print_iter_info (int iter, double crit, int type, int k,
     const char *cstr = cstrs[type];
     int i;
 
-    if (na(crit) || na(-crit)) {
+    if (iter < 0) {
+	pputs(prn, _("\n--- FINAL VALUES: \n"));
+	if (na(crit) || na(-crit)) {
+	    pprintf(prn, "%s = NA", _(cstr));
+	} else {
+	    pprintf(prn, "%s = %#.12g", _(cstr), crit);
+	}
+    } else if (na(crit) || na(-crit)) {
 	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter, _(cstr));
     } else {
 	if (type == C_GMM) {
@@ -2175,18 +2182,19 @@ print_iter_info (int iter, double crit, int type, int k,
 	
     pputs(prn, _("Parameters: "));
     for (i=0; i<k; i++) {
-	print_iter_val(b[i], i, prn);
+	print_iter_val(b[i], i, k, prn);
     }
     pputc(prn, '\n');
 
     pputs(prn, _("Gradients:  "));
     for (i=0; i<k; i++) {
-	print_iter_val(g[i], i, prn);
+	print_iter_val(g[i], i, k, prn);
     }
     pputs(prn, "\n\n");
 
-    if (iter % 20 == 0) {
-	iter_print_callback(prn);
+    if (iter < 0 || (iter % 20 == 0)) {
+	/* experimental */
+	iter_print_callback((iter < 0)? 0 : iter, prn);
     }
 }
 

@@ -24,7 +24,8 @@ typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
     GRETL_PRINT_FILE,
-    GRETL_PRINT_BUFFER
+    GRETL_PRINT_BUFFER,
+    GRETL_PRINT_TEMPFILE
 } PrnType;
 
 typedef enum {
@@ -49,11 +50,19 @@ PRN *gretl_print_new (PrnType ptype);
 
 PRN *gretl_print_new_with_filename (const char *fname);
 
+PRN *gretl_print_new_with_tempfile (void);
+
+int gretl_print_has_tempfile (PRN *prn);
+
 PRN *gretl_print_new_with_buffer (char *buf);
 
 int gretl_print_reset_buffer (PRN *prn);
 
 const char *gretl_print_get_buffer (PRN *prn);
+
+FILE *gretl_print_read_tempfile (PRN *prn);
+
+int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp);
 
 int gretl_print_set_save_position (PRN *prn);
 

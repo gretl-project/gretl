@@ -653,6 +653,11 @@ int bhhh_max (LL_FUNC loglik,
 	crit = minfo->ll2 - minfo->ll;  
     }
 
+    if (opt & OPT_V) {
+	print_iter_info(-1, minfo->ll, C_LOGLIK, k, minfo->theta, delta, 
+			stepsize, prn);
+    }
+
     if (crit > minfo->tol || err != 0) {
 	fprintf(stderr, "bhhh_max: iters = %d, crit = %g, tol = %g, err = %d\n",
 		iters, crit, minfo->tol, err);

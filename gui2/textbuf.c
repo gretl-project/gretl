@@ -685,6 +685,33 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     fclose(fp);
 }
 
+void textview_insert_from_tempfile (windata_t *vwin, PRN *prn)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;    
+    char readbuf[MAXSTR];
+    FILE *fp;
+
+    fp = gretl_print_read_tempfile(prn);
+    if (fp == NULL) return;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, -1);
+    memset(readbuf, 0, sizeof readbuf);
+
+    while (fgets(readbuf, sizeof readbuf, fp)) {
+	gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
+	memset(readbuf, 0, sizeof readbuf);
+    }
+
+    gretl_print_stop_tempfile_read(prn, fp);
+
+    while (gtk_events_pending()) {
+        gtk_main_iteration();
+    }
+}
+
 static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
 			 const char *text, gint page, 
 			 const char *indent)

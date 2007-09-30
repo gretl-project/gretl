@@ -3463,9 +3463,8 @@ int BFGS_orig (double *b, int n, int maxit, double reltol,
     *grcount = gcount;
 
     if (verbose) {
-	pputs(prn, _("\n--- FINAL VALUES: \n"));
 	reverse_gradient(g, n);
-	print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
+	print_iter_info(-1, f, crittype, n, b, g, steplen, prn);
 	pputc(prn, '\n');
     }
 
@@ -3602,9 +3601,8 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     }
 
     if (opt & OPT_V) {
-	pputs(prn, _("\n--- FINAL VALUES: \n"));
 	reverse_gradient(g, n);
-	print_iter_info(iter, -f, crittype, n, b, g, dsave[13], prn);
+	print_iter_info(-1, -f, crittype, n, b, g, dsave[13], prn);
 	pputc(prn, '\n');
     }
 

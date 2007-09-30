@@ -2001,15 +2001,13 @@ void set_iter_print_func (ITER_PRINT_FUNC func)
     ifunc = func;
 }
 
-int iter_print_callback (PRN *prn)
+int iter_print_callback (int i, PRN *prn)
 {
     int ret = 0;
 
-#if 0 /* not ready */
     if (ifunc != NULL) {
-	ret = (*ifunc)(prn);
+	ret = (*ifunc)(i, prn);
     }
-#endif 
 
     return ret;
 }

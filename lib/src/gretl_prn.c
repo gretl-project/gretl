@@ -29,6 +29,7 @@ struct PRN_ {
     PrnFormat format;
     int fixed;
     char delim;
+    char *fname;
 };
 
 #undef PRN_DEBUG
@@ -54,6 +55,11 @@ void gretl_print_destroy (PRN *prn)
 	fclose(prn->fp);
     }
 
+    if (prn->fname != NULL) {
+	remove(prn->fname);
+	free(prn->fname);
+    }
+
     if (!fpdup && prn->fpaux != NULL && 
 	prn->fpaux != stdout && prn->fpaux != stderr) {
 	fclose(prn->fpaux);
@@ -68,6 +74,28 @@ void gretl_print_destroy (PRN *prn)
     }
 
     free(prn);
+}
+
+static int prn_add_tempfile (PRN *prn)
+{
+    char fname[MAXLEN];
+    int fd;
+
+    sprintf(fname, "%sprntmp.XXXXXX", gretl_user_dir());
+
+#ifdef WIN32
+    fd = g_mkstemp(fname);
+#else
+    fd = mkstemp(fname);
+#endif
+    if (fd == -1) {
+	return E_FOPEN;
+    } else {
+	prn->fname = gretl_strdup(fname);
+	prn->fp = fdopen(fd, "w");
+    }
+
+    return 0;
 }
 
 static PRN *real_gretl_print_new (PrnType ptype, 
@@ -94,6 +122,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
     prn->delim = ',';
+    prn->fname = NULL;
 
     if (ptype == GRETL_PRINT_FILE) {
 	prn->fp = gretl_fopen(fname, "w");
@@ -101,6 +130,14 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    fprintf(stderr, _("gretl_prn_new: couldn't open %s\n"), fname);
 	    free(prn);
 	    prn = NULL;
+	} 
+    } else if (ptype == GRETL_PRINT_TEMPFILE) {
+	if (prn_add_tempfile(prn)) {
+	    fprintf(stderr, "gretl_prn_new: couldn't open tempfile\n");
+	    free(prn);
+	    prn = NULL;
+	} else {
+	    prn->savepos = 0;
 	}
     } else if (ptype == GRETL_PRINT_STDOUT) {
 	prn->fp = stdout;
@@ -183,6 +220,33 @@ PRN *gretl_print_new_with_filename (const char *fname)
 }
 
 /**
+ * gretl_print_new_with_tempfile:
+ * 
+ * Create and initialize a gretl printing struct, with
+ * output directed to a temporary file, which is deleted
+ * when the printing struct is destroyed.
+ *
+ * Returns: pointer to newly created struct, or %NULL on failure.
+ */
+
+PRN *gretl_print_new_with_tempfile (void)
+{
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL);
+}
+
+/**
+ * gretl_print_has_tempfile:
+ * @prn: printing struct to test.
+ * 
+ * Returns: 1 if @prn has a tempfile attached, else 0.
+ */
+
+int gretl_print_has_tempfile (PRN *prn)
+{
+    return (prn != NULL && prn->fname != NULL && prn->fp != NULL);
+}
+
+/**
  * gretl_print_new_with_buffer:
  * @buf: pre-allocated text buffer.
  * 
@@ -243,6 +307,60 @@ int gretl_print_reset_buffer (PRN *prn)
 const char *gretl_print_get_buffer (PRN *prn)
 {
     return (prn != NULL)? prn->buf : NULL;
+}
+
+/**
+ * gretl_print_read_tempfile:
+ * @prn: printing struct.
+ * 
+ * Obtain a read handle to the tempfile associated with
+ * @prn, if any.  This should be fclosed once you're
+ * finished with it.
+ *
+ * Returns: %FILE pointer, or %NULL on failure.
+ */
+
+FILE *gretl_print_read_tempfile (PRN *prn)
+{
+    FILE *fp = NULL;
+
+    if (prn->fp != NULL) {
+	fflush(prn->fp);
+    }
+
+    if (prn->fname != NULL) {
+	fp = gretl_fopen(prn->fname, "r");
+	if (fp != NULL && prn->savepos > 0) {
+	    fseek(fp, (long) prn->savepos, SEEK_SET);
+	}
+    }
+
+    return fp;
+}
+
+/**
+ * gretl_print_stop_tempfile_read:
+ * @prn: printing struct.
+ * 
+ * For @prn with tempfile attached, stops reading
+ * of the tempfile and closes @fp (recording the
+ * position at which reading stopped).
+ *
+ * Returns: 0 on success, error code if @prn is not
+ * connected to a tempfile.
+ */
+
+int gretl_print_stop_tempfile_read (PRN *prn, FILE *fp)
+{
+    if (prn == NULL || prn->fp == NULL || 
+	prn->fname == NULL || fp == NULL) {
+	return E_DATA;
+    }
+
+    prn->savepos = ftell(fp);
+    fclose(fp);
+
+    return 0;
 }
 
 /**
