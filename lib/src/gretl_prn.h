@@ -112,4 +112,8 @@ int prn_format (PRN *prn);
 
 char prn_delim (PRN *prn);
 
+PRN *set_up_verbose_printer (gretlopt opt, PRN *prn);
+
+void close_down_verbose_printer (PRN *vprn);
+
 #endif /* GRETL_PRN_H */

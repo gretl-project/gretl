@@ -2559,13 +2559,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	flags = ARMA_EXACT;
     }
 
-    if (opt & OPT_V) {
-	if (iter_print_func_installed()) {
-	    vprn = gretl_print_new_with_tempfile();
-	} else {
-	    vprn = prn;
-	}
-    } 
+    vprn = set_up_verbose_printer(opt, prn);
 
     arma_info_init(&ainfo, flags, pqspec, pdinfo);
     gretl_model_init(&armod); 
@@ -2658,11 +2652,9 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
 
-    if (vprn != NULL && vprn != prn) {
-	iter_print_callback(-1, NULL);
-	gretl_print_destroy(vprn);
+    if (vprn != prn) {
+	close_down_verbose_printer(vprn);
     }
-
     vprn = NULL;
 
     return armod;

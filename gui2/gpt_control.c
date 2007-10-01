@@ -478,13 +478,33 @@ static int html_encoded (const char *s)
 }
 #endif
 
+static void set_gp_color_styles (PRN *prn)
+{
+    const char *cstr;
+    int i;
+
+    for (i=0; i<3; i++) {
+	cstr = graph_color_string(i);
+	if (cstr != NULL) {
+	    pprintf(prn, "set style line %d lt rgb \"#%s\"\n", i + 1, cstr + 1);
+	}
+    }
+}
+
 static void print_line_with_color (PRN *prn, char *s, int lnum)
 {
     const char *cstr = graph_color_string(lnum - 1);
     char *p;
     int cont = 1;
 
-    if (cstr == NULL || strstr(s, " lt ")) {
+    if (cstr == NULL) {
+	pputs(prn, s);
+	return;
+    }
+
+    if ((p = strstr(s, " lt "))) {
+	/* convert 'type' to 'style' */
+	*(p + 2) = 's';
 	pputs(prn, s);
 	return;
     }
@@ -509,6 +529,28 @@ static void print_line_with_color (PRN *prn, char *s, int lnum)
     }
 }
 
+static int plot_specifies_linetypes (char *s, int len, FILE *fp)
+{
+    int inplot = 0, ret = 0;
+
+    while (fgets(s, len, fp)) {
+	if (!strncmp(s, "plot ", 5)) {
+	    inplot = 1;
+	} else if (inplot) {
+	    if (strstr(s, " lt ")) {
+		ret = 1;
+		break;
+	    } else if (isdigit(*s)) {
+		break;
+	    }
+	}
+    }
+
+    rewind(fp);
+
+    return ret;
+}
+
 static int filter_plot_file (const char *inname, 
 			     const char *term,
 			     const char *fname)
@@ -518,8 +560,8 @@ static int filter_plot_file (const char *inname,
     gchar *plotcmd = NULL;
     FILE *fp = NULL;
     PRN *prn = NULL;
-    int emf = 0, png = 0, mono = 0;
-    int lnum = -1, add_colors = 0;
+    int ttype = 0, mono = 0;
+    int lnum = -1, colorize = 0;
     int contd = 0, err = 0;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
@@ -533,19 +575,31 @@ static int filter_plot_file (const char *inname,
 	return 1;
     }
 
-    if (!strncmp(term, "png", 3)) png = 1;
-    if (!strncmp(term, "emf", 3)) emf = 1;
-    if (strstr(term, " mono ")) mono = 1;
-
-    if (!mono && !png && !emf) {
-	add_colors = 1;
+    if (!strncmp(term, "emf", 3)) {
+	ttype = GP_TERM_EMF;
+    } else if (!strncmp(term, "png", 3)) {
+	ttype = GP_TERM_PNG;
+    } else if (!strncmp(term, "post", 4)) {
+	ttype = GP_TERM_EPS;
+    } else if (!strncmp(term, "pdf", 3) ||
+	       !strncmp(term, "cairopdf", 8)) {
+	ttype = GP_TERM_PDF;
     }
+
+    if (strstr(term, " mono ")) mono = 1;
 
 #ifdef ENABLE_NLS
     pprint_gnuplot_encoding(term, prn);
 #endif
     pprintf(prn, "set term %s\n", term);
     pprintf(prn, "set output '%s'\n", fname);
+
+    if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)) {
+	if (plot_specifies_linetypes(pline, sizeof pline, fp)) {
+	    set_gp_color_styles(prn);
+	} 
+	colorize = 1;
+    }
 
     while (fgets(pline, sizeof pline, fp)) {
 	if (!strncmp(pline, "set term", 8) ||
@@ -563,9 +617,9 @@ static int filter_plot_file (const char *inname,
 
 	if (mono && strstr(pline, "set style fill solid")) {
 	    pputs(prn, "set style fill solid 0.3\n");
-	} else if (!png && html_encoded(pline)) {
-	    pprint_as_latin(prn, pline, emf);
-	} else if (add_colors && lnum > 0) {
+	} else if (ttype != GP_TERM_PNG && html_encoded(pline)) {
+	    pprint_as_latin(prn, pline, ttype == GP_TERM_EMF);
+	} else if (colorize && lnum > 0) {
 	    print_line_with_color(prn, pline, lnum);
 	} else {
 	    pputs(prn, pline);

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include <stdarg.h>
 
 struct PRN_ {
@@ -909,3 +910,35 @@ char prn_delim (PRN *prn)
 {
     return (prn != NULL)? prn->delim : ',';
 }
+
+/**
+ * set_up_verbose_printer.
+ * @opt: %OPT_V for verbosity.
+ * @prn: currently active printing struct
+ *
+ * Returns: printing struct for verbose output.
+ */
+
+PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
+{
+    PRN *vprn = NULL;
+
+    if (opt & OPT_V) {
+	if (iter_print_func_installed()) {
+	    vprn = gretl_print_new_with_tempfile();
+	} else {
+	    vprn = prn;
+	}
+    } 
+
+    return vprn;
+}
+
+void close_down_verbose_printer (PRN *vprn)
+{
+    if (vprn != NULL) {
+	iter_print_callback(-1, NULL);
+	gretl_print_destroy(vprn);
+    }
+}
+ 

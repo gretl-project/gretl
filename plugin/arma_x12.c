@@ -808,13 +808,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 #endif
     int err = 0;
 
-    if (verbose) {
-	if (iter_print_func_installed()) {
-	    vprn = gretl_print_new_with_tempfile();
-	} else {
-	    vprn = prn;
-	}
-    } 
+    vprn = set_up_verbose_printer(opt, prn);
 
     if (pdinfo->t2 < pdinfo->n - 1) {
 	/* FIXME this is temporary (OPT_F -> generate forecast) */
@@ -899,8 +893,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     if (vprn != NULL && vprn != prn) {
 	iter_print_callback(0, vprn);
-	iter_print_callback(-1, NULL);
-	gretl_print_destroy(vprn);
+	close_down_verbose_printer(vprn);
     }
 
  bailout:

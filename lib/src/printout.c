@@ -2157,21 +2157,20 @@ print_iter_info (int iter, double crit, int type, int k,
     const char *cstr = cstrs[type];
     int i;
 
+    if (type == C_GMM) {
+	crit = -crit;
+    }
+
     if (iter < 0) {
 	pputs(prn, _("\n--- FINAL VALUES: \n"));
-	if (na(crit) || na(-crit)) {
-	    pprintf(prn, "%s = NA", _(cstr));
-	} else {
-	    pprintf(prn, "%s = %#.12g", _(cstr), crit);
-	}
-    } else if (na(crit) || na(-crit)) {
-	pprintf(prn, "%s %d: %s = NA", _("Iteration"), iter, _(cstr));
     } else {
-	if (type == C_GMM) {
-	    crit = -crit;
-	}
-	pprintf(prn, "%s %d: %s = %#.12g", _("Iteration"), iter, 
-		_(cstr), crit);
+	pprintf(prn, "%s %d: ", _("Iteration"), iter);
+    }
+
+    if (na(crit) || na(-crit)) {
+	pprintf(prn, "%s = NA", _(cstr));
+    } else {
+	pprintf(prn, "%s = %#.12g", _(cstr), crit);
     }
 
     if (sl > 0.0 && !na(sl)) {
