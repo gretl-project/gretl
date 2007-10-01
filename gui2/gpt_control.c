@@ -484,14 +484,19 @@ static void print_line_with_color (PRN *prn, char *s, int lnum)
     char *p;
     int cont = 1;
 
-    if (cstr == NULL) {
+    if (cstr == NULL || strstr(s, " lt ")) {
+	pputs(prn, s);
 	return;
     }
 
-    p = strstr(s, " , \\");
+    p = strstr(s, ", \\");
     if (p == NULL) {
 	cont = 0;
 	p = s + strlen(s) - 1;
+    }
+
+    if (p - s > 0 && *(p-1) == ' ') {
+	p--;
     }
 
     *p = '\0';

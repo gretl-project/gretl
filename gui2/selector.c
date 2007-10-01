@@ -42,7 +42,7 @@ enum {
     SR_RVARS2
 };
 
-#define N_EXTRA  6
+#define N_EXTRA  8
 #define N_RADIOS 3
 
 struct _selector {
@@ -1320,51 +1320,79 @@ static int add_to_cmdlist (selector *sr, const char *add)
     return err;
 }
 
-static void add_pdq_vals_to_cmdlist (selector *sr)
+static char *arma_lag_string (char *targ, const char *s)
 {
+    while (*s == ' ') s++;
+
+    if (*s == '\0') {
+	strcpy(targ, "0 ");
+    } else if (isalpha(*s)) {
+	sprintf(targ, "%s ", s);
+    } else {
+	sprintf(targ, "{%s} ", s);
+    } 
+
+    return targ;
+}
+
+static void arma_spec_to_cmdlist (selector *sr)
+{
+    const char *txt;
     char s[32];
 
-    if (sr->code == GARCH) {
-	garch_p = spinner_get_int(sr->extra[0]);
-	garch_q = spinner_get_int(sr->extra[1]);
-	sprintf(s, "%d %d ; ", garch_p, garch_q);
+    if (GTK_WIDGET_SENSITIVE(sr->extra[0])) {
+	arma_p = spinner_get_int(sr->extra[0]);
+	sprintf(s, "%d ", arma_p);
 	add_to_cmdlist(sr, s);
-	return;
+    } else {
+	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[1]));
+	add_to_cmdlist(sr, arma_lag_string(s, txt)); 
     }
 
-    if (sr->code == ARBOND) {
-	int p = spinner_get_int(sr->extra[0]);
-
-	sprintf(s, "%d ; ", p);
-	add_to_cmdlist(sr, s);
-	return;
-    }  
-
-    if (sr->code == ARCH) {
-	int p = spinner_get_int(sr->extra[0]);
-
-	sprintf(s, "%d ", p);
-	add_to_cmdlist(sr, s);
-	return;
-    }      
-
-    arma_p = spinner_get_int(sr->extra[0]);
-    arima_d = spinner_get_int(sr->extra[1]);
-    arma_q = spinner_get_int(sr->extra[2]);
-
-    sprintf(s, "%d %d %d ; ", arma_p, arima_d, arma_q);
+    arima_d = spinner_get_int(sr->extra[2]);
+    sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
-    if (sr->extra[3] != NULL) {
-	arma_P = spinner_get_int(sr->extra[3]);
-	arima_D = spinner_get_int(sr->extra[4]);
-	arma_Q = spinner_get_int(sr->extra[5]);
+    if (GTK_WIDGET_SENSITIVE(sr->extra[3])) {
+	arma_q = spinner_get_int(sr->extra[3]);
+	sprintf(s, "%d ; ", arma_q);
+	add_to_cmdlist(sr, s);
+    } else {
+	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[4]));
+	add_to_cmdlist(sr, arma_lag_string(s, txt));
+    }
+
+    if (sr->extra[5] != NULL) {
+	arma_P = spinner_get_int(sr->extra[5]);
+	arima_D = spinner_get_int(sr->extra[6]);
+	arma_Q = spinner_get_int(sr->extra[7]);
 
 	if (arma_P > 0 || arima_D > 0 || arma_Q > 0) {
 	    sprintf(s, "%d %d %d ; ", arma_P, arima_D, arma_Q);
 	    add_to_cmdlist(sr, s);
 	}
     }
+}
+
+static void add_pdq_vals_to_cmdlist (selector *sr)
+{
+    char s[32] = {0};
+
+    if (sr->code == GARCH) {
+	garch_p = spinner_get_int(sr->extra[0]);
+	garch_q = spinner_get_int(sr->extra[1]);
+	sprintf(s, "%d %d ; ", garch_p, garch_q);
+    } else if (sr->code == ARBOND) {
+	int p = spinner_get_int(sr->extra[0]);
+
+	sprintf(s, "%d ; ", p);
+    } else if (sr->code == ARCH) {
+	int p = spinner_get_int(sr->extra[0]);
+
+	sprintf(s, "%d ", p);
+    } 
+
+    add_to_cmdlist(sr, s);
 }
 
 /* Take the stored preferred laglist for a variable (if any) and
@@ -1745,8 +1773,11 @@ static void construct_cmdlist (selector *sr)
     *sr->cmdlist = '\0';
 
     /* deal with content of "extra" widgets */
-    if (sr->code == ARMA || sr->code == ARCH || 
-	sr->code == GARCH || sr->code == ARBOND) {
+    if (sr->code == ARMA) {
+	arma_spec_to_cmdlist(sr);
+    } else if (sr->code == ARCH || 
+	       sr->code == GARCH || 
+	       sr->code == ARBOND) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->code)) {
 	vec_get_spinner_data(sr, &order);
@@ -2446,12 +2477,12 @@ static void selector_init (selector *sr, guint code, const char *title,
     if (MODEL_CODE(code)) {
 	if (datainfo->v > 9) {
 	    dlgy += 80;
-	} else if (code == ARMA) {
-	    dlgy += 40;
-	}
+	} 
     } 
 
-    if (code == WLS || code == POISSON || code == AR) {
+    if (code == ARMA) {
+	dlgy += 80;
+    } else if (code == WLS || code == POISSON || code == AR) {
 	dlgy += 30;
     } else if (code == HECKIT) {
 	dlgy += 80;
@@ -2598,104 +2629,147 @@ static void robust_config_button (GtkWidget *w, GtkWidget *b)
     }
 }
 
-static GtkWidget *spinner_aux_label (int i)
-{
-    GtkWidget *hbox;
-    GtkWidget *lbl;
-
-    hbox = gtk_hbox_new(FALSE, 5);
-
-    if (i == 0) {
-	lbl = gtk_label_new(_("Non-seasonal"));
-    } else {
-	lbl = gtk_label_new(_("Seasonal"));
-    }
-
-    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-    gtk_widget_show(lbl);
-
-    return hbox;
-}
-
-static GtkWidget *spinner_label (int i, int code)
-{
-    const char *arma_strs[] = {
-	N_("AR order:"),
-	N_("Difference:"),
-	N_("MA order:")
-    };
-    const char *arch_strs[] = {
-	N_("ARCH p:"),
-	N_("ARCH q:")
-    };
-    GtkWidget *lbl = NULL;
-
-    if (code == ARMA) { 
-	lbl = gtk_label_new(_(arma_strs[i % 3]));
-    } else {
-	lbl = gtk_label_new(_(arch_strs[i]));
-    }
-
-    return lbl;
-}
-
-static void build_pdq_spinners (selector *sr)
+static void build_garch_spinners (selector *sr)
 {
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
-    gdouble vmax, val;
+    gdouble val;
+    const char *strs[] = {
+	N_("ARCH p:"),
+	N_("ARCH q:")
+    };    
     int i;
-
-    if (sr->code == GARCH) {
-	hbox = gtk_hbox_new(FALSE, 5);
-	for (i=0; i<2; i++) {
-	    tmp = spinner_label(i, GARCH);
-	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	    val = (i==0)? garch_p : garch_q;
-	    adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
-	    sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
-	}
-	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show_all(hbox);
-	return;
-    }
-
-    if (datainfo->pd > 1) {
-	tmp = spinner_aux_label(0);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
-    }
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    for (i=0; i<3; i++) {
-	tmp = spinner_label(i, ARMA);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
-	val = (i==0)? arma_p : (i==1)? arima_d : arma_q;
-	vmax = (i == 1)? 2 : 4;
-	adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 1);
+    for (i=0; i<2; i++) {
+	tmp = gtk_label_new(_(strs[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	val = (i==0)? garch_p : garch_q;
+	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
+}
+
+static GtkWidget *arma_aux_label (int i)
+{
+    GtkWidget *hbox;
+    GtkWidget *lbl;
+    const char *strs[] = {
+	N_("Non-seasonal"),
+	N_("Seasonal")
+    };
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    lbl = gtk_label_new(_(strs[i]));
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_widget_show(lbl);
+
+    return hbox;
+}
+
+static void toggle_p (GtkWidget *w, selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	gtk_widget_set_sensitive(sr->extra[0], FALSE);
+	gtk_widget_set_sensitive(sr->extra[1], TRUE);
+    } else {
+	gtk_widget_set_sensitive(sr->extra[0], TRUE);
+	gtk_widget_set_sensitive(sr->extra[1], FALSE);
+    }	
+}
+
+static void toggle_q (GtkWidget *w, selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	gtk_widget_set_sensitive(sr->extra[3], FALSE);
+	gtk_widget_set_sensitive(sr->extra[4], TRUE);
+    } else {
+	gtk_widget_set_sensitive(sr->extra[3], TRUE);
+	gtk_widget_set_sensitive(sr->extra[4], FALSE);
+    }	
+}
+
+static void build_arma_spinners (selector *sr)
+{
+    GtkWidget *lbl, *chk, *tab;
+    GtkWidget *hbox;
+    GtkObject *adj;
+    gdouble vmax, val;
+    const char *strs[] = {
+	N_("AR order:"),
+	N_("Difference:"),
+	N_("MA order:")
+    };
+    int i, j;
 
     if (datainfo->pd > 1) {
-	tmp = spinner_aux_label(1);
-	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	lbl = arma_aux_label(0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
+	gtk_widget_show(lbl);
+    }
+
+    tab = gtk_table_new(3, 4, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tab), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tab), 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), tab, FALSE, FALSE, 0);
+
+    lbl = gtk_label_new(_(strs[0]));
+    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
+    adj = gtk_adjustment_new(arma_p, 0, 4, 1, 1, 1);
+    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[0], 1, 2, 0, 1);
+    chk = gtk_check_button_new_with_label(_("or specific lags"));
+    g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
+    gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 0, 1);
+    sr->extra[1] = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(sr->extra[1]), 16);
+    gtk_widget_set_sensitive(sr->extra[1], FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[1], 3, 4, 0, 1);
+
+    lbl = gtk_label_new(_(strs[1]));
+    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
+    adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 1);
+    sr->extra[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
+
+    lbl = gtk_label_new(_(strs[2]));
+    gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
+    adj = gtk_adjustment_new(arma_q, 0, 4, 1, 1, 1);
+    sr->extra[3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[3], 1, 2, 2, 3);
+    chk = gtk_check_button_new_with_label(_("or specific lags"));
+    g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
+    gtk_table_attach_defaults(GTK_TABLE(tab), chk, 2, 3, 2, 3);
+    sr->extra[4] = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
+    gtk_widget_set_sensitive(sr->extra[4], FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[4], 3, 4, 2, 3);
+
+    gtk_widget_show_all(tab);
+
+    j = 5;
+
+    if (datainfo->pd > 1) {
+	vbox_add_hsep(sr->vbox);
+
+	lbl = arma_aux_label(1);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
+	gtk_widget_show(lbl);
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	for (i=0; i<3; i++) {
-	    tmp = spinner_label(i, ARMA);
-	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	    lbl = gtk_label_new(_(strs[i]));
+	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
 	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
 	    vmax = (i == 1)? 2 : 4;
 	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 1);
-	    sr->extra[i+3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i+3], FALSE, FALSE, 5);
+	    sr->extra[j] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[j++], FALSE, FALSE, 5);
 	}
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
@@ -3541,9 +3615,12 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR, D, MA spinners for ARIMA; P and Q for GARCH */
-    if (ci == ARMA || ci == GARCH) {
-	build_pdq_spinners(sr);
+    if (ci == ARMA) {
+	/* AR, D, MA for ARIMA */
+	build_arma_spinners(sr);
+    } else if (ci == GARCH) { 
+	/* P and Q for GARCH */
+	build_garch_spinners(sr);
     }
 
     /* toggle switches for some cases */
