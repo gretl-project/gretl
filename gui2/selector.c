@@ -1904,6 +1904,8 @@ static void construct_cmdlist (selector *sr)
 	    } 
 	    if (sr->opts & OPT_X) {
 		arma_x12 = 1;
+	    } else {
+		arma_x12 = 0;
 	    }
 	}
     }
