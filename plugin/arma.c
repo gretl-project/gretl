@@ -2116,7 +2116,7 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
 
     for (i=0; i<ainfo->P; i++) { 
 	b[k++] = pmod->coeff[j];
-	j += ainfo->np + 1; /* note: assumes p < pd */
+	j += ainfo->np + 1; /* assumes ainfo->p < pd */
     }
 
     theta = pmod->coeff + j;
@@ -2131,7 +2131,7 @@ static int hr_transcribe_coeffs (struct arma_info *ainfo,
 
     for (i=0; i<ainfo->Q; i++) {
 	b[k++] = pmod->coeff[j];
-	j += ainfo->nq + 1;
+	j += ainfo->nq + 1; /* assumes ainfo->q < pd */
     }
 
     j = ainfo->ifc;
