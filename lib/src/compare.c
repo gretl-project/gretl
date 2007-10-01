@@ -147,63 +147,69 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
     return mask;
 }
 
-/* Wald (chi-square or F) test for a set of zero restrictions on the
-   parameters of a given model, based on the covariance matrix of the
-   unrestricted model. Suitable for use where the original model is
-   estimated by FGLS or IV.  Note that if list is NULL, we do an
+/* Wald (chi-square and/or F) test for a set of zero restrictions on
+   the parameters of a given model, based on the covariance matrix of
+   the unrestricted model. Suitable for use where the original model
+   is estimated by FGLS or IV.  Note that if list is NULL, we do an
    automatic test, for the significance of all vars but the constant.
 */
 
-static double wald_test (const int *list, MODEL *pmod, int form,
-			 int *err)
+static int 
+wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 {
     char *mask = NULL;
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
-    double w = NADBL;
+    double wX = NADBL;
+    double wF = NADBL;
+    int err = 0;
 
-    mask = mask_from_test_list(list, pmod, err);
+    mask = mask_from_test_list(list, pmod, &err);
 
-    if (!*err) {
+    if (!err) {
 	C = gretl_vcv_matrix_from_model(pmod, mask);
 	if (C == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	} 
     }
 
-    if (!*err) {
+    if (!err) {
 	b = gretl_coeff_vector_from_model(pmod, mask);
 	if (b == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	} 
     }  
 
-    if (!*err) {
+    if (!err) {
 #if WDEBUG
 	gretl_matrix_print(C, "Wald VCV matrix");
 	gretl_matrix_print(b, "Wald coeff vector");
 #endif
-	*err = gretl_invert_symmetric_matrix(C);
+	err = gretl_invert_symmetric_matrix(C);
     }
 
-    if (!*err) {
-	w = gretl_scalar_qform(b, C, err);
+    if (!err) {
+	wX = gretl_scalar_qform(b, C, &err);
     }
 
-    if (!*err && form == F_FORM) {
-	w /= gretl_vector_get_length(b);
+    if (!err) {
+	wF = wX / gretl_vector_get_length(b);
+    }
+
+    if (!err) {
+	if (chisq != NULL) *chisq = wX;
+	if (F != NULL) *F = wF;
     }
 
 #if WDEBUG
-    fprintf(stderr, "Wald test: %s = %g\n", 
-	    (form == F_FORM)? "F" : "Chi^2", w);
+    fprintf(stderr, "Wald test: F = %g, Chi^2 = %g\n", wF, wX);
 #endif
 
     free(mask);
     gretl_matrix_free(C);
     gretl_matrix_free(b);
 
-    return w;
+    return err;
 }
 
 /**
@@ -222,9 +228,10 @@ static double wald_test (const int *list, MODEL *pmod, int form,
 
 double robust_omit_F (const int *list, MODEL *pmod)
 {
-    int err = 0;
+    double F = NADBL;
 
-    return wald_test(list, pmod, F_FORM, &err);
+    wald_test(list, pmod, NULL, &F);
+    return F;
 }
 
 /* ----------------------------------------------------- */
@@ -303,24 +310,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	}
     }
 
-    if (!na(cmp->F)) {
-	pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
-	if (verbosity > 0) {
-	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		    (cmp->robust)? _("Robust F") : "F",
-		    cmp->dfn, cmp->dfd, cmp->F);
-	    pprintf(prn, _("with p-value = %g\n"), pval);
-	}
-	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
-
-	if (test != NULL) {
-	    model_test_set_teststat(test, GRETL_STAT_F);
-	    model_test_set_dfn(test, cmp->dfn);
-	    model_test_set_dfd(test, cmp->dfd);
-	    model_test_set_value(test, cmp->F);
-	    model_test_set_pvalue(test, pval);
-	}
-    } else if (!na(cmp->chisq)) {
+    if (!na(cmp->chisq)) {
 	pval = chisq_cdf_comp(cmp->chisq, cmp->dfn);
 	if (verbosity > 0) {
 	    pprintf(prn, "\n  %s:%s%s(%d) = %g, ",  
@@ -330,6 +320,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    _("Chi-square"), cmp->dfn, cmp->chisq);
 	    pprintf(prn, _("with p-value = %g\n\n"), pval);
 	}
+
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
 
 	if (test != NULL) {
@@ -339,7 +330,30 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	    model_test_set_value(test, cmp->chisq);
 	    model_test_set_pvalue(test, pval);
 	}
-    } 	
+
+	if (verbosity > 0 && !na(cmp->F)) {
+	    pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
+
+	}	    
+    } else if (!na(cmp->F)) {
+	pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
+	if (verbosity > 0) {
+	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (cmp->robust)? _("Robust F") : "F",
+		    cmp->dfn, cmp->dfd, cmp->F);
+	    pprintf(prn, _("with p-value = %g\n"), pval);
+	}
+
+	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_F);
+	    model_test_set_dfn(test, cmp->dfn);
+	    model_test_set_dfd(test, cmp->dfd);
+	    model_test_set_value(test, cmp->F);
+	    model_test_set_pvalue(test, pval);
+	}
+    }
 
     if (test != NULL) {
 	add_diffvars_to_test(test, diffvars, pdinfo);
@@ -399,7 +413,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     /* FIXME TSLS (use F or chi-square?) */
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
-	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
+	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
     } else if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);
 	cmp.robust = 1;
@@ -408,7 +422,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     } else if (cmp.dfn > 1) {
-	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
+	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
     }
 
     if (pmodB != NULL && flag != ADD_WALD) {
