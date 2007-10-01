@@ -332,8 +332,11 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	}
 
 	if (verbosity > 0 && !na(cmp->F)) {
+	    /* alternate form */
 	    pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
-
+	    pprintf(prn, "  %s: F(%d, %d) = %g, ", _("F-form"), 
+		    cmp->dfn, cmp->dfd, cmp->F);
+	    pprintf(prn, _("with p-value = %g\n"), pval);
 	}	    
     } else if (!na(cmp->F)) {
 	pval = snedecor_cdf_comp(cmp->F, cmp->dfn, cmp->dfd);
@@ -413,7 +416,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
     /* FIXME TSLS (use F or chi-square?) */
 
     if (flag == OMIT_WALD || flag == ADD_WALD) {
-	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
+	cmp.err = wald_test(testvars, umod, &cmp.chisq, &cmp.F);
     } else if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);
 	cmp.robust = 1;
