@@ -198,7 +198,7 @@
       <xsl:when test="contains(.,'_') or contains(.,'\') or 
                       contains(.,'$') or contains(.,'^') or
                       contains(.,'%') or contains(.,'&amp;') or
-                      contains(.,'#')">
+                      contains(.,'#') or contains(.,'{')">
         <xsl:text>yes</xsl:text>
       </xsl:when>    
       <xsl:otherwise>

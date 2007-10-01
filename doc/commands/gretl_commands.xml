@@ -522,7 +522,7 @@
       <para context="cli">
 	If no <repl>indepvars</repl> list is given, estimates a univariate
 	ARIMA (Autoregressive, Integrated, Moving Average) model.  The
-	integer values <repl>p</repl>, <repl>d</repl> and <repl>q</repl>
+	values <repl>p</repl>, <repl>d</repl> and <repl>q</repl>
 	represent the autoregressive (AR) order, the differencing order,
 	and the moving average (MA) order respectively.  These values may be
 	given in numerical form, or as the names of pre-existing scalar
@@ -532,12 +532,21 @@
       </para>
 
       <para context="cli">
+	If you wish to include only specific AR or MA lags in the model
+	(as opposed to all lags up to a given order) you can substitute
+	for <repl>p</repl> and/or <repl>q</repl> either (a) the name of a
+	pre-defined matrix containing a set of integer values or (b) an
+	expression such as <lit>{1 4}</lit>; that is, a set of lags
+	separated by spaces and enclosed in braces.
+      </para>
+
+      <para context="cli">
 	The optional integer values <repl>P</repl>, <repl>D</repl> and
 	<repl>Q</repl> represent the seasonal AR, order for seasonal
 	differencing and seasonal MA order respectively.  These are
 	applicable only if the data have a frequency greater than 1 (for
-	example, quarterly or monthly data).  Again these orders can be
-	given in numerical form or as variables.
+	example, quarterly or monthly data).  These orders must be
+	given in numerical form or as scalar variables.
       </para>
 
       <para context="cli">
@@ -569,15 +578,22 @@
 	including a seasonal component is presented.
       </para>
 
+      <para context="gui">
+	If you wish to include only specified AR or MA lags in the model
+	(as opposed to all lags up to a given order) check the box to the
+	right of the spinner and type a list of lags, separated by
+	spaces, into the entry field.  Alternatively, if you have defined
+	a matrix containing the desired set of lags you can type its name
+	into the entry field.
+      </para>
+
       <para>
 	The default is to use the <quote>native</quote> gretl ARMA
-	functionality, with estimation by exact ML (using the Kalman
-	filter).  Other options are: native code, conditional ML; 
-	<program>X-12-ARIMA</program>, exact ML; and 
-	<program>X-12-ARIMA</program>, conditional ML.  (The latter
-	two options are available only if
-	<program>X-12-ARIMA</program> is installed.)  For details
-	regarding these options, please see <guideref
+	functionality, with estimation by exact ML using the Kalman
+	filter; estimation via conditional ML is available as an option.
+	(If <program>X-12-ARIMA</program> is installed you have the option
+	of using it instead of native code.)  For details regarding these
+	options, please see <guideref
 	targ="arma-estimation"/>.
       </para>
 
@@ -933,8 +949,10 @@
     <usage>
       <arguments>
         <argument>order</argument>
-        <argument>depvar</argument>
-	<argument>indepvars</argument>
+        <argument>ylist</argument>
+	<argblock optional="true" separated="true">
+	  <argument>xlist</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -974,42 +992,66 @@
     </usage>
 
     <description>
-      <para>
-	Carries out the Johansen test for cointegration among the listed
-	variables for the given lag order. Critical values are computed via J.
-	Doornik's gamma approximation (Doornik, 1998). For details of this test
-	see Hamilton, <book>Time Series Analysis</book> (1994), Chapter 20.
-      </para>
       <para context="cli">
-	The inclusion of deterministic terms in the model is controlled
-	by the option flags.  The default if no option is specified is to
-	include an <quote>unrestricted constant</quote>, which allows for the
-	presence of a non-zero intercept in the cointegrating relations as well
-	as a trend in the levels of the endogenous variables.  In the literature
-	stemming from the work of Johansen (see for example his 1995 book) this
-	is often referred to as <quote>case 3</quote>.  The first four options
-	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
-	respectively.  The meaning of these cases and the criteria for selecting
-	a case are explained in <guideref targ="vecm-explanation"/>.
+	Carries out the Johansen test for cointegration among the
+	variables in <repl>ylist</repl> for the given lag order. Critical
+	values are computed via J. Doornik's gamma approximation (Doornik,
+	1998). For details of this test see Hamilton, <book>Time Series
+	  Analysis</book> (1994), Chapter 20.
       </para>
+
       <para context="gui">
-	The inclusion of deterministic terms in the model is controlled by the
-	option buttons.  The default is to include an <quote>unrestricted
-	  constant</quote>, which allows for the presence of a non-zero
-	intercept in the cointegrating relations as well as a trend in the
-	levels of the endogenous variables.  In the literature stemming from the
-	work of Johansen (see for example his 1995 book) this is often referred
-	to as <quote>case 3</quote>.  The other four <quote>radio</quote>
-	buttons produce cases 1, 2, 4 and 5 respectively. The meaning of these
-	cases and the criteria for selecting a case are explained in <guideref
-	  targ="vecm-explanation"/>.
+	Carries out the Johansen test for cointegration among the listed
+	variables for the selected lag order. Critical values are computed
+	via J. Doornik's gamma approximation (Doornik, 1998). For details
+	of this test see Hamilton, <book>Time Series Analysis</book>
+	(1994), Chapter 20.
       </para>
+
+      <para context="cli">
+	The inclusion of deterministic terms in the model is controlled by
+	the option flags.  The default if no option is specified is to
+	include an <quote>unrestricted constant</quote>, which allows for
+	the presence of a non-zero intercept in the cointegrating
+	relations as well as a trend in the levels of the endogenous
+	variables.  In the literature stemming from the work of Johansen
+	(see for example his 1995 book) this is often referred to as
+	<quote>case 3</quote>.  The first four options given above, which
+	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
+	The meaning of these cases and the criteria for selecting a case
+	are explained in <guideref targ="vecm-explanation"/>.
+      </para>
+
+      <para context="gui">
+	The inclusion of deterministic terms in the model is controlled by
+	the drop-down option list.  The default is to include an
+	<quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as
+	well as a trend in the levels of the endogenous variables.  In the
+	literature stemming from the work of Johansen (see for example his
+	1995 book) this is often referred to as <quote>case 3</quote>. The
+	other four options produce cases 1, 2, 4 and 5 respectively. The
+	meaning of these cases and the criteria for selecting a case are
+	explained in <guideref targ="vecm-explanation"/>.
+      </para>
+
+      <para context="cli">
+	The optional <repl>xlist</repl> allows you to control for
+	specified exogenous variables.
+      </para>
+
+      <para context="gui">
+	You may control for exogenous variables by adding them to the
+	lower list box.
+      </para>
+
       <para context="cli">
 	The <lit>--seasonals</lit> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
+
       <para context="gui">
 	If the data are quarterly or monthly, a check box is shown that allows
 	you to include a set of centered seasonal dummy variables.  In all
@@ -1017,6 +1059,7 @@
 	for the printing of the auxiliary regressions that form the starting
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
+
       <para>
 	The following table is offered as a guide to the
 	interpretation of the results shown for the test, for the
@@ -8354,7 +8397,13 @@
       <arguments>
         <argument>order</argument>
 	<argument>rank</argument>
-        <argument>varlist</argument>
+        <argument>ylist</argument>
+	<argblock optional="true" separated="true">
+	  <argument>xlist</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>rxlist</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -8389,6 +8438,7 @@
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
         <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+	<example>vecm 3 2 Y1 Y2 Y3 ; X1 --rc</example>
 	<demos>
 	  <demo>denmark.inp</demo>
 	  <demo>hamilton.inp</demo>
@@ -8405,31 +8455,36 @@
 	related to the Johansen test for cointegration (see <cmdref
 	  targ="coint2"/>).
       </para>
+
       <para context="cli">
 	The <repl>order</repl> parameter to this command represents the lag
 	order of the VAR system.  The number of lags in the VECM itself (where
 	the dependent variable is given as a first difference) is one less than
 	<repl>order</repl>.
       </para>
+
       <para context="gui">
 	The lag order selected in the VECM dialog box is that of the VAR system.
 	The number of lags in the VECM itself (where the dependent variable is
 	given as a first difference) is one less than this number.
       </para>
+
       <para context="cli">
 	The <repl>rank</repl> parameter represents the cointegration rank, or in
 	other words the number of cointegrating vectors.  This must be greater
 	than zero and less than or equal to (generally, less than) the number of
-	endogenous variables given in <repl>varlist</repl>.
+	endogenous variables given in <repl>ylist</repl>.
       </para>
+
       <para context="gui">
 	The <quote>cointegration rank</quote> represents the number of
 	cointegrating vectors.  This must be greater than zero and less than or
 	equal to (generally, less than) the number of endogenous variables 
 	selected.
       </para>
+
       <para context="cli">
-	<repl>varlist</repl> supplies the list of endogenous variables, in
+	<repl>ylist</repl> supplies the list of endogenous variables, in
 	levels. The inclusion of deterministic terms in the model is controlled
 	by the option flags.  The default if no option is specified is to
 	include an <quote>unrestricted constant</quote>, which allows for the
@@ -8441,6 +8496,16 @@
 	respectively.  The meaning of these cases and the criteria for selecting
 	a case are explained in <guideref targ="vecm-explanation"/>.
       </para>
+
+      <para context="cli">
+	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
+	allow you to specify sets of exogenous variables which enter the
+	model either unrestrictedly (<repl>xlist</repl>) or restricted to
+	the cointegration space (<repl>rxlist</repl>). These lists are
+	separated from <repl>ylist</repl> and from each other by
+	semicolons.
+      </para>
+
       <para context="gui">
 	In the <quote>Endogenous variables</quote> box you select the vector of
 	endogenous variables, in levels. The inclusion of deterministic terms in
@@ -8454,12 +8519,14 @@
 	The meaning of these cases and the criteria for selecting a case are
 	explained in <guideref targ="vecm-explanation"/>.
       </para>
+
       <para context="cli">
 	The <lit>--seasonals</lit> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
+
       <para context="gui">
 	If the data are quarterly or monthly, a check box is shown that allows
 	you to include a set of centered seasonal dummy variables.  In all
