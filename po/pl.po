@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-27 22:30+0100\n"
+"PO-Revision-Date: 2007-10-01 10:30+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1429,7 +1429,7 @@ msgstr "Opó¼nienia  XCF"
 
 #: lib/src/describe.c:2725
 msgid "GPH test for fractional integration"
-msgstr "Test GPH (Geweke'a, Portera-Hudaka)na u³amkowy rz±d integracji"
+msgstr "Test GPH (Geweke'a, Portera-Hudaka) na u³amkowy rz±d integracji"
 
 #: lib/src/describe.c:2726 lib/src/describe.c:2953
 msgid "Estimated degree of integration"
@@ -1489,7 +1489,7 @@ msgid ""
 "Periodogram for %s\n"
 msgstr ""
 "\n"
-"Periodogram dla zmiennej %s\n"
+"Periodogram dla zmiennej: %s\n"
 
 #: lib/src/describe.c:3054 lib/src/describe.c:4046 lib/src/describe.c:4048
 #: lib/src/describe.c:4126 lib/src/describe.c:4128 lib/src/describe.c:4535
@@ -4622,7 +4622,7 @@ msgstr "¶rednia kwadratów"
 
 #: lib/src/modelprint.c:3338
 msgid "Regression"
-msgstr "Równanie regresji"
+msgstr "Regresja"
 
 #: lib/src/modelprint.c:3341
 msgid "Residual"
@@ -5146,7 +5146,7 @@ msgstr "RAZEM"
 
 #: lib/src/printout.c:434
 msgid "TOTAL  "
-msgstr "RAZEM"
+msgstr " RAZEM "
 
 #: lib/src/printout.c:449
 #, c-format
@@ -6975,7 +6975,7 @@ msgstr "gretl: restrykcje dla podpróby"
 
 #: gui2/callbacks.c:407
 msgid "Enter boolean condition for selecting cases:"
-msgstr "Wprowad¼ wyra¿enie typu boolean dla wyselekcjonowania obserwacji"
+msgstr "Wprowad¼ wyra¿enie typu logicznego dla wyselekcjonowania obserwacji"
 
 #: gui2/callbacks.c:418 gui2/callbacks.c:423
 msgid "gretl: missing code"
@@ -6991,7 +6991,7 @@ msgstr "Wyspecyfikuj zmienne do wykresu:"
 
 #: gui2/callbacks.c:436
 msgid "gretl: GMM"
-msgstr "gretl: GMM"
+msgstr "gretl: uogólniona metoda momentów GMM (Generalized Method of Moments)"
 
 #: gui2/callbacks.c:437
 msgid "GMM: Specify function and orthogonality conditions:"
@@ -9391,7 +9391,7 @@ msgstr "/Dodawanie zmiennych/_sezonowe ró¿nice dla wybranych zmiennych"
 
 #: gui2/gretl.c:388
 msgid "/Add/_Index variable"
-msgstr "/Dodawanie zmiennych/_indeks zmiennej"
+msgstr "/Dodawanie zmiennych/_indeks obserwacji"
 
 #: gui2/gretl.c:389
 msgid "/Add/_Time trend"
@@ -11180,7 +11180,7 @@ msgstr "gretl: tworzenie zmiennych 0-1"
 
 #: gui2/library.c:4056
 msgid "Encoding variables as dummies"
-msgstr "Kodowanie zmiennych dyskretnych jako zmienne 0-1"
+msgstr "Kodowanie zmiennych dyskretnych jako zbiór zmiennych 0-1"
 
 #: gui2/library.c:4079
 msgid "gretl: generate lags"
