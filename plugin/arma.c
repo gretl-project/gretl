@@ -2498,6 +2498,52 @@ static int bhhh_arma (const int *alist, double *coeff,
     return pmod->errcode;
 }
 
+#if 0 /* not yet */
+
+static int bhhh_arma_init (const int *alist, double *coeff, 
+			   const double **Z, const DATAINFO *pdinfo,
+			   struct arma_info *ainfo)
+{
+    model_info *minfo = NULL;
+    const double **X = NULL;
+    int err = 0;
+
+    /* construct virtual dataset for dep var, real regressors */
+    X = make_armax_X(alist, ainfo, Z);
+    if (X == NULL) {
+	return E_ALLOC;
+    }
+
+    /* create model_info struct to feed to bhhh_max() */
+    minfo = set_up_arma_model_info(ainfo);
+    if (minfo == NULL) {
+	free(X);
+	return E_ALLOC;
+    }
+
+    /* call BHHH conditional ML function (OPG regression) */
+    err = bhhh_max(arma_ll, X, coeff, minfo, OPT_NONE, NULL);
+    
+    if (err) {
+	fprintf(stderr, "bhhh_arma_init: bhhh_max returned %d\n", err);
+	err = E_NOCONV;
+    } else {
+	double *theta = model_info_get_theta(minfo);
+	int i;
+	
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = theta[i];
+	}
+    }
+
+    free(X);
+    model_info_free(minfo);
+
+    return err;
+}
+
+#endif /* not yet */
+
 /* Should we try Hannan-Rissanen initialization of ARMA
    coefficients? */
 
@@ -2638,6 +2684,9 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (flags & ARMA_EXACT) {
+#if 0 /* not yet */
+	bhhh_arma_init(alist, coeff, Z, pdinfo, &ainfo);
+#endif
 	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);
     } else {
 	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, opt, vprn);

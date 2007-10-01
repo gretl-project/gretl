@@ -794,7 +794,6 @@ static int arma_maybe_rewrite (char *s, CMD *cmd)
 
     for (i=0; i<n && !cmd->err; i++) {
 	if ((i == 0 && pq[0]) || (i > 0 && i == pq[1])) {
-	    fprintf(stderr, "i=%d, S[i]='%s': special, getting maxlag\n", i, S[i]);
 	    k = max_lag_from_field(S[i], &cmd->err);
 	    if (!cmd->err) {
 		sprintf(chunk, "%d", k);
