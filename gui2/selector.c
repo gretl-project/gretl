@@ -183,7 +183,8 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 
 static int want_combo (selector *sr)
 {
-    return (sr->code == VECM || 
+    return (sr->code == ARMA ||
+	    sr->code == VECM || 
 	    sr->code == COINT ||
 	    sr->code == COINT2);
 }
@@ -192,8 +193,7 @@ static int want_radios (selector *sr)
 {
     int c = sr->code;
 
-    if (c == ARMA || c == PANEL || 
-	c == SCATTERS || c == ARBOND || 
+    if (c == PANEL || c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN) {
 	return 1;
@@ -2853,7 +2853,7 @@ static void build_selector_switches (selector *sr)
 	gtk_widget_show_all(hbox);
 #else
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_V, 0);
+	pack_switch(tmp, sr, TRUE, FALSE, OPT_V, 0);
 #endif
     } else if (sr->code == COINT2 || sr->code == VECM || 
 	       sr->code == VAR || sr->code == VLAGSEL) {
@@ -3030,24 +3030,6 @@ static void build_omit_test_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
-static void build_arma_radios (selector *sr)
-{
-    GtkWidget *b1, *b2;
-    GSList *group;
-
-    vbox_add_hsep(sr->vbox);
-
-    b1 = gtk_radio_button_new_with_label(NULL, _("Exact Maximum Likelihood"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-    b2 = gtk_radio_button_new_with_label(group, _("Conditional Maximum Likelihood"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_C, 0);
-
-    sr->radios[0] = b1;
-    sr->radios[1] = b2;
-}
-
 static void build_panel_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
@@ -3122,6 +3104,35 @@ static void build_xtab_radios (selector *sr)
     sr->radios[2] = b3;
 }
 
+static void build_arma_combo (selector *sr)
+{
+    GtkWidget *hbox, *combo;
+    static const char *opt_strs[] = {
+        N_("Exact Maximum Likelihood"),
+        N_("Conditional Maximum Likelihood"),
+	NULL
+    };
+    static gretlopt opts[] = { 
+	OPT_NONE, 
+	OPT_C, 
+    };
+    static combo_opts arma_opts;
+    int deflt = 0;
+
+    arma_opts.strs = opt_strs;
+    arma_opts.vals = opts;
+    arma_opts.optp = &sr->opts;
+
+    combo = gretl_opts_combo(&arma_opts, deflt);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+    gtk_widget_show(combo);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
+}
+
 static void build_coint_combo (selector *sr)
 {
     GtkWidget *hbox, *combo;
@@ -3192,9 +3203,7 @@ static void build_vecm_combo (selector *sr)
 
 static void build_selector_radios (selector *sr)
 {
-    if (sr->code == ARMA) {
-	build_arma_radios(sr);
-    } else if (sr->code == PANEL) {
+    if (sr->code == PANEL) {
 	build_panel_radios(sr);
     } else if (sr->code == ARBOND) {
 	build_arbond_radios(sr);
@@ -3215,7 +3224,9 @@ static void build_selector_radios (selector *sr)
 
 static void build_selector_combo (selector *sr)
 {
-    if (sr->code == COINT) {
+    if (sr->code == ARMA) {
+	build_arma_combo(sr);
+    } else if (sr->code == COINT) {
 	build_coint_combo(sr);
     } else if (sr->code == VECM || sr->code == COINT2) {
 	build_vecm_combo(sr);
