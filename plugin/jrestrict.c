@@ -2426,7 +2426,7 @@ static int alpha_init (Jwrap *J)
 static int make_beta_se (Jwrap *J)
 {
     double x;
-    int i;
+    int i, j;
 
     J->bse = gretl_matrix_alloc(J->p1, J->r);
     if (J->bse == NULL) {
@@ -2434,8 +2434,16 @@ static int make_beta_se (Jwrap *J)
     }
 
     for (i=0; i<J->Vb->rows; i++) {
-	x = gretl_matrix_get(J->Vb, i, i);
-	J->bse->val[i] = sqrt(x);
+	for (j=0; j<J->Vb->cols; j++) {
+	    x = gretl_matrix_get(J->Vb, i, j);
+	    if (fabs(x) < 1.0e-20) {
+		gretl_matrix_set(J->Vb, i, j, 0);
+		x = 0;
+	    }
+	    if (j == i) {
+		J->bse->val[i] = sqrt(x);
+	    }
+	}
     }
 
     return 0;
