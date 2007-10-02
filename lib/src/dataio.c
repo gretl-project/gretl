@@ -3572,6 +3572,29 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     return 1;
 }
 
+static int check_marker (char *src, int i)
+{
+    int err = 0;
+
+    if (!g_utf8_validate(src, -1, NULL)) {
+	gchar *trstr = NULL;
+	gsize bytes;
+
+	trstr = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+
+	if (trstr == NULL) {
+	    sprintf(gretl_errmsg, "Invalid characters in marker, line %d", i);
+	    err = E_DATA;
+	} else {
+	    *src = '\0';
+	    strncat(src, trstr, OBSLEN - 1);
+	    g_free(trstr);
+	}
+    }
+
+    return err;
+}
+
 /**
  * add_obs_markers_from_file:
  * @pdinfo: data information struct.
@@ -3588,10 +3611,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 {
-    char **Sbak = NULL;
+    char **S = NULL;
     FILE *fp;
-    char line[128];
-    char marker[OBSLEN], sformat[10];
+    char line[128], marker[32];
     int t, err = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -3599,41 +3621,34 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	return E_FOPEN;
     }
 
-    if (pdinfo->S != NULL) {
-	/* keep backup copy of existing markers */
-	Sbak = pdinfo->S;
-	pdinfo->S = NULL;
-    }
-
-    if (dataset_allocate_obs_markers(pdinfo)) {
-	err = E_ALLOC;
-	goto bailout;
+    S = strings_array_new_with_length(pdinfo->n, OBSLEN);
+    if (S == NULL) {
+	fclose(fp);
+	return E_ALLOC;
     }
     
-    sprintf(sformat, "%%%d[^\n]", OBSLEN - 1);
-
     for (t=0; t<pdinfo->n && !err; t++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
+	    sprintf(gretl_errmsg, "Expected %d markers; only got %d\n", 
+		    pdinfo->n, t);
 	    err = E_DATA;
-	} else if (sscanf(line, sformat, marker) != 1) {
+	} else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
+	    sprintf(gretl_errmsg, "Couldn't find marker on line %d", t+1);
 	    err = E_DATA;
 	} else {
-	    strcat(pdinfo->S[t], marker);
+	    strncat(S[t], marker, OBSLEN - 1);
+	    err = check_marker(S[t], t+1);
 	}
     }
 
- bailout:
-
-    fclose(fp);
-
-    if (Sbak != NULL) {
-	if (err) {
-	    /* restore old markers */
-	    pdinfo->S = Sbak;
-	} else {
-	    /* destroy them */
-	    free_strings_array(Sbak, pdinfo->n);
-	}
+    if (err) {
+	free_strings_array(S, pdinfo->n);
+    } else {
+	if (pdinfo->S != NULL) {
+	    free_strings_array(pdinfo->S, pdinfo->n);
+	} 
+	pdinfo->markers = REGULAR_MARKERS;
+	pdinfo->S = S;
     }
 
     return err;

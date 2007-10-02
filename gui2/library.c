@@ -1244,8 +1244,12 @@ void count_missing (void)
 
 void do_add_markers (const char *fname) 
 {
-    if (add_obs_markers_from_file(datainfo, fname)) { 
-	errbox(_("Failed to add case markers"));
+    int err;
+
+    err = add_obs_markers_from_file(datainfo, fname);
+
+    if (err) {
+	gui_errmsg(err);
     } else {
 	mark_dataset_as_modified();
 	add_remove_markers_state(TRUE);
