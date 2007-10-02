@@ -16,6 +16,7 @@
 "leverage","Influential observations","artificial data"
 "longley","Multicollinearity","US employment"
 "mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
+"ooballot","Ordered probit","corruption and ISO voting"
 "oprobit","Ordered probit and logit","happiness and age"
 "penngrow","Nerlove dynamic panel model","cross-country"
 "perron97","Unit-root testing with breaks","Nelson-Plosser data"
