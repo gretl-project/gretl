@@ -997,7 +997,7 @@ static int fix_varname (char *vname)
 }   
 
 static int 
-check_all_varnames (wbook *book, int *ncols, const char *blank_col)
+check_all_varnames (wbook *book, int totcols, const char *blank_col)
 {
     int j, i = book->row_offset;
     int startcol = book->col_offset;
@@ -1019,7 +1019,7 @@ check_all_varnames (wbook *book, int *ncols, const char *blank_col)
 	}
     }
 
-    for (j=startcol; j<*ncols; j++) { 
+    for (j=startcol; j<totcols; j++) { 
 	if (blank_col[j]) {
 	    gotcols++;
 	    continue;
@@ -1060,10 +1060,7 @@ check_all_varnames (wbook *book, int *ncols, const char *blank_col)
 	realcols++;
     }
 
-    fprintf(stderr, "realcols = %d, vnames = %d\n", realcols, vnames);
-
     if (vnames == realcols) {
-	*ncols = gotcols;
 	ret = VARNAMES_OK;
     } else if (vnames > 0) {
 	ret = VARNAMES_NOTSTR;
@@ -1102,7 +1099,7 @@ struct string_err {
 /* check for invalid data in the selected data block */
 
 static int 
-check_data_block (wbook *book, int ncols, const char *blank_col,
+check_data_block (wbook *book, int totcols, const char *blank_col,
 		  struct string_err *err)
 {
     int startcol = book->col_offset;
@@ -1117,7 +1114,7 @@ check_data_block (wbook *book, int ncols, const char *blank_col,
     err->column = 0;
     err->str = NULL;
 
-    for (j=startcol; j<ncols; j++) {
+    for (j=startcol; j<totcols; j++) {
 	if (blank_col[j]) {
 	    continue;
 	}
@@ -1185,9 +1182,9 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 
     if (book_time_series(book) || book_obs_labels(book)) {
 	startcol++;
-    }    
+    } 
 
-    for (i=startcol; i<totcols; i++) {
+    for (i=startcol; i<=totcols; i++) {
 	int ts, missing = 0;
 
 	if (blank_col[i]) {
@@ -1406,16 +1403,16 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto getout;
     }
 
-    /* locate any blank columns */
+    /* get sizes and locate any blank columns */
     err = get_sheet_dimensions(&totcols, &datacols, &blank_col, prn);
 
     if (err) goto getout;
 
     /* check feasibility of offsets */
-    if (book->row_offset > nrows) {
+    if (book->row_offset >= nrows) {
 	pputs(prn, _("Starting row is out of bounds.\n"));
 	err = 1;
-    } else if (book->col_offset > totcols) {
+    } else if (book->col_offset >= totcols) {
 	pputs(prn, _("Starting column is out of bounds.\n"));
 	err = 1;
     }
@@ -1429,7 +1426,7 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* any bad or missing variable names? */
-    err = check_all_varnames(book, &totcols, blank_col);
+    err = check_all_varnames(book, totcols, blank_col);
 
     if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	pputs(prn, _("One or more variable names are missing.\n"));
