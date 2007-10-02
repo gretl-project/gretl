@@ -880,7 +880,7 @@ char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo)
     return real_ntodate(datestr, t, pdinfo, 1);
 }
 
-#define xround(x) (((x - floor(x))>.5)? ceil(x) : floor(x))
+#define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
 
 /* for "seasonal" time series data (broad sense): given
    the 0-based observation number, t, determine the
