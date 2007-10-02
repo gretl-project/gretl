@@ -1198,6 +1198,8 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	pdinfo->varname[j][0] = 0;
 	if (book_auto_varnames(book)) {
 	    sprintf(pdinfo->varname[j], "v%d", j);
+	} else if (rows[roff].cells[i] == NULL) {
+	    sprintf(pdinfo->varname[j], "v%d", j);
 	} else {
 	    strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
 		    VNAMELEN - 1);
