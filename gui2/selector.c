@@ -141,7 +141,7 @@ struct _selector {
                             c == TSLS || c == HECKIT)
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
 
-static int default_var = -1;
+static int default_y = -1;
 static int want_seasonals;
 static int default_order;
 static int vartrend;
@@ -270,7 +270,7 @@ static int lags_button_relevant (selector *sr, int locus)
 
 void clear_selector (void)
 {
-    default_var = -1;
+    default_y = -1;
     default_order = 0;
     selvar = 0;
     vartrend = 0;
@@ -1178,7 +1178,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
 				     FALSE);
-	default_var = -1;
+	default_y = -1;
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) {
@@ -1727,7 +1727,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	}
 	if (sr->default_check != NULL && 
 	    GTK_TOGGLE_BUTTON(sr->default_check)->active) {
-	    default_var = ynum;
+	    default_y = ynum;
 	}
     }
 }
@@ -2132,7 +2132,13 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 				 int preselect)
 {
     GtkWidget *tmp, *depvar_hbox;
-    int yvar = (preselect)? preselect : default_var;
+    int yvar;
+
+    if (default_y >= datainfo->v) {
+	default_y = -1;
+    }
+
+    yvar = (preselect)? preselect : default_y;
 
     tmp = gtk_label_new(_("Dependent variable"));
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
