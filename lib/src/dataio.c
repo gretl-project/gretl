@@ -880,6 +880,8 @@ char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo)
     return real_ntodate(datestr, t, pdinfo, 1);
 }
 
+#define xround(x) (((x - floor(x))>.5)? ceil(x) : floor(x))
+
 /* for "seasonal" time series data (broad sense): given
    the 0-based observation number, t, determine the
    sub-period at that obs. The "sub-period" might
@@ -913,18 +915,13 @@ int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
     } else {
 	/* quarterly, monthly, hourly... */
 	double x = date(t, pdinfo->pd, pdinfo->sd0);
-	int d = ceil(log10(pdinfo->pd));
-	char *p, s[32];
+	int i, d = ceil(log10(pdinfo->pd));
 
-	sprintf(s, "%.*f", d, x);
-	p = strchr(s, '.');
-	if (p == NULL) {
-	    p = strchr(s, ',');
+	x -= floor(x);
+	for (i=0; i<d; i++) {
+	    x *= 10;
 	}
-	if (p != NULL) {
-	    sscanf(p + 1, "%d", &ret);
-	    ret -= 1;
-	}
+	ret = xround(x) - 1;
     }
     
     return ret;    
