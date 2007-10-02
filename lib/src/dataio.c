@@ -3626,11 +3626,11 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
     
     for (t=0; t<pdinfo->n && !err; t++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
-	    sprintf(gretl_errmsg, "Expected %d markers; only got %d\n", 
+	    sprintf(gretl_errmsg, "Expected %d markers; found %d\n", 
 		    pdinfo->n, t);
 	    err = E_DATA;
 	} else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
-	    sprintf(gretl_errmsg, "Couldn't find marker on line %d", t+1);
+	    sprintf(gretl_errmsg, "Couldn't read marker on line %d", t+1);
 	    err = E_DATA;
 	} else {
 	    strncat(S[t], marker, OBSLEN - 1);
