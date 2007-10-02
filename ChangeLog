@@ -51,6 +51,14 @@ version 1.6.6, in progress
   Windows systems 
 - Generation of random variables in GUI: use an interface
   consistent with that for p-values, critical values, etc.
+- Fix for XLS importer with non-zero column offset
+- Improve error detection and recovery for adding case 
+  markers from file
+- Graphs: try to respect line color choices when exporting
+  to postscript and PDF
+- Small improvements to built-in data editor
+- ARMA: allow specification of particular AR and/or MA
+  lags (int the non-seasonal component only)
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
