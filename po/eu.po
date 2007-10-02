@@ -5,10 +5,10 @@
 # Susan Orbe <susan.orbe@ehu.es>, 2007.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.6.5\n"
+"Project-Id-Version: gretl 1.6.6.pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-09-10 08:57-0400\n"
-"PO-Revision-Date: 2007-09-21 11:38+0100\n"
+"PO-Revision-Date: 2007-09-28 16:05+0100\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>\n"
 "Language-Team: Basque <translation-team-eu@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1221,18 +1221,16 @@ msgid "Dataset extended by %d observations"
 msgstr ""
 
 #: lib/src/dataset.c:2575
-#, fuzzy
 msgid "The data set is currently sub-sampled"
-msgstr "Unean aukeratutako GdkFont."
+msgstr "Une honetan datu-multzoa azpilagindurik dago"
 
 #: lib/src/dbread.c:349 lib/src/dbread.c:590 gui2/database.c:1069
 msgid "Couldn't open database index file"
 msgstr "Ezin ireki  datu-basearen indize fitxategia"
 
 #: lib/src/dbread.c:369
-#, fuzzy
 msgid "Couldn't open database binary file"
-msgstr "Ezin ireki  datu-basearen indize fitxategia"
+msgstr "Ezin ireki  bitarren datu-basearen fitxategia"
 
 #: lib/src/dbread.c:429 lib/src/dbread.c:439 lib/src/dbread.c:502
 #: gui2/database.c:1457
@@ -1301,9 +1299,9 @@ msgid "Couldn't open %s"
 msgstr " %s ezin ireki"
 
 #: lib/src/dbread.c:1992
-#, fuzzy, c-format
+#, c-format
 msgid "%s: can't handle conversion"
-msgstr "Barkatu, oraindik ezin da bihurketa hau egin!"
+msgstr "%s: ezin da bihurketa hau egin"
 
 #: lib/src/dbread.c:2003 gui2/database.c:241
 #, c-format
@@ -1654,12 +1652,12 @@ msgstr "definitu gabe"
 msgid ""
 "Under the null hypothesis of no correlation:\n"
 " "
-msgstr "Korrelazio ezaren hipotesi hutsaren menpean, rho N(0, %f) jarraitzen du\n"
+msgstr "Korrelazio ezaren hipotesi hutsaren menpean:\n"
 
 #: lib/src/describe.c:3885 lib/src/nonparam.c:276
-#, fuzzy, c-format
+#, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
-msgstr "z-balioa = %f, alde bateko p-balioarekin %f\n"
+msgstr "t(%d) = %g, alde biko p-balioarekin %.4f\n"
 
 #: lib/src/describe.c:3889 lib/src/describe.c:3927 gui2/guiprint.c:1356
 #, c-format
@@ -1803,7 +1801,7 @@ msgstr "Lorenz kurba"
 
 #: lib/src/describe.c:4538 plugin/excel_import.c:1459
 msgid "Warning: there were missing values\n"
-msgstr "Oharra: faltako balioak daude\n"
+msgstr "Kontuz: faltako balioak daude\n"
 
 #: lib/src/describe.c:4543
 msgid "Sample Gini coefficient"
@@ -3158,9 +3156,8 @@ msgid "Couldn't open registry\n"
 msgstr "Ezin da erregistroa ireki\n"
 
 #: lib/src/gretl_win32.c:363 lib/src/interact.c:2498
-#, fuzzy
 msgid "The shell command is not activated."
-msgstr "Komando honek aldagai bat behar du.\n"
+msgstr "Shell komando ez dago aktibatuta"
 
 #: lib/src/gretl_www.c:700
 msgid "Host not found"
@@ -3817,7 +3814,7 @@ msgid ""
 "Warning: solution is probably not unique\n"
 msgstr ""
 "\n"
-"Oharra: baliteke soluzioa bakarra ez izatea\n"
+"Kontuz: baliteke soluzioa bakarra ez izatea\n"
 
 #: lib/src/modelprint.c:581
 msgid "p-value for"
@@ -4100,9 +4097,8 @@ msgid "Ordered Probit"
 msgstr "Ordenatutako Probita"
 
 #: lib/src/modelprint.c:941
-#, fuzzy
 msgid "Two-step Heckit"
-msgstr "Bi-urratseko estimazioak"
+msgstr "Bi-urratseko Heckit"
 
 #: lib/src/modelprint.c:943
 msgid "ML Heckit"
@@ -4506,9 +4502,8 @@ msgstr "sigma"
 
 #: lib/src/modelprint.c:3104 lib/src/modelprint.c:3109
 #: lib/src/modelprint.c:3117
-#, fuzzy
 msgid "Total observations"
-msgstr "Behaketik ez\n"
+msgstr "Behaketa guztiak"
 
 #: lib/src/modelprint.c:3107 lib/src/modelprint.c:3112
 msgid "rho"
@@ -4839,19 +4834,19 @@ msgstr ""
 "'%s' eta '%s' aldagaientzat\n"
 
 #: lib/src/nonparam.c:262
-#, fuzzy, c-format
+#, c-format
 msgid "Spearman's rank correlation coefficient (rho) = %.8f\n"
-msgstr "Spearmanen heina korrelazio koefizientea (rho) = %f\n"
+msgstr "Spearmanen heina korrelazio koefizientea (rho) = %.8f\n"
 
 #: lib/src/nonparam.c:270 lib/src/nonparam.c:516
-#, fuzzy, c-format
+#, c-format
 msgid "z-score = %g, with two-tailed p-value %.4f\n"
-msgstr "z-balioa = %f, alde bateko p-balioarekin %f\n"
+msgstr "z-puntuazioa = %f, alde bateko p-balioarekin %f\n"
 
 #: lib/src/nonparam.c:282
-#, fuzzy, c-format
+#, c-format
 msgid "significant at the %g%% level (two-tailed)\n"
-msgstr "nabaria %g%% esangurarekin (alde batekoa)\n"
+msgstr "nabaria %%%g esangurarekin (alde bikoa)\n"
 
 #: lib/src/nonparam.c:286
 #, no-c-format
@@ -4896,14 +4891,14 @@ msgid ""
 msgstr ""
 
 #: lib/src/nonparam.c:739
-#, fuzzy, c-format
+#, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%g, %g)\n"
-msgstr "Korrelazio ezaren hipotesi hutsaren menpean, rho N(0, %f) jarraitzen du\n"
+msgstr "Aleotorioa ez delaren hipotesi hutsaren menpean, R  N(%g, %g) bat jarraitzen du\n"
 
 #: lib/src/nonparam.c:741
-#, fuzzy, c-format
+#, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "z-balioa = %f, alde bateko p-balioarekin %f\n"
+msgstr "z-puntuazioa = %g, alde biko p-balioarekin %g\n"
 
 #: lib/src/nonparam.c:771
 #, c-format
@@ -5250,9 +5245,9 @@ msgid "Iteration"
 msgstr "Iterazio"
 
 #: lib/src/printout.c:2171
-#, fuzzy, c-format
+#, c-format
 msgid " (steplength = %g)"
-msgstr " (urrats luzaera = %.8g)"
+msgstr " (urrats luzaera = %g)"
 
 #: lib/src/printout.c:2176
 msgid "Parameters: "
@@ -5267,9 +5262,9 @@ msgid "Standard normal distribution"
 msgstr "Banaketa normal bakuna"
 
 #: lib/src/pvalues.c:976
-#, fuzzy, c-format
+#, c-format
 msgid "Chi-square(%g)"
-msgstr "Chi-karratua(%d)"
+msgstr "Chi-karratua(%g)"
 
 #: lib/src/pvalues.c:996 gui2/calculator.c:1074
 #, c-format
@@ -5292,9 +5287,9 @@ msgid "Critical value = %g"
 msgstr "Balio kritikoa = %g"
 
 #: lib/src/pvalues.c:1117
-#, fuzzy, c-format
+#, c-format
 msgid "area to the right of %g: NA\n"
-msgstr " %g = %g eskuineko  eskualdea\n"
+msgstr "%g: NA eskuineko  eskualdea\n"
 
 #: lib/src/pvalues.c:1124
 #, c-format
@@ -5323,15 +5318,15 @@ msgid "(to the left: %g)\n"
 msgstr "(ezkerrera: %g)\n"
 
 #: lib/src/pvalues.c:1197
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
 " area to the right of %g = %g\n"
 msgstr ""
 "\n"
-"Gamma (%g batezbestekoa, %g bariantza, %g forma, %g eskala):\n"
-" %g = %g -ren eskubiko azalera\n"
+"Gamma  (forma %g, eskala %g, batezbestekoa %g, bariantza %g):\n"
+"%g = %g -ren eskuineko azalera\n"
 
 #: lib/src/pvalues.c:1206
 #, c-format
@@ -5762,72 +5757,62 @@ msgid "Case 5: Unrestricted trend and constant"
 msgstr "5 kasua: murriztu gabeko konstantea eta joera"
 
 #: lib/src/varprint.c:591
-#, fuzzy
 msgid "cointegrating vectors"
 msgstr "Kointegrazio bektoreak"
 
 #: lib/src/varprint.c:653
-#, fuzzy
 msgid "adjustment vectors"
-msgstr "alpha (doikuntza bektoreak)"
+msgstr "Ddoikuntza bektoreak"
 
 #: lib/src/varprint.c:763
-#, fuzzy
 msgid "Restrictions on beta:"
-msgstr "Murrizketa multzoa"
+msgstr "beta-ren gaineko murrizketak:"
 
 #: lib/src/varprint.c:775
-#, fuzzy
 msgid "Restrictions on alpha:"
-msgstr "Murrizketa"
+msgstr "alpha-ren gaineko murrizketak:"
 
 #: lib/src/varprint.c:795
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g = %g"
-msgstr ""
-" p-balioa = prob(Chi-karratu(%d) > %g) = %g izanez\n"
-"\n"
+msgstr "P(Chi-Karratua(%d) > %g = %g"
 
 #: lib/src/varprint.c:799
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g) = %g"
-msgstr ""
-" p-balioa = prob(Chi-karratu(%d) > %g) = %g izanez\n"
-"\n"
+msgstr "P(Chi-Karratua(%d) > %g) = %g"
 
 #: lib/src/varprint.c:819 lib/src/varprint.c:821
-#, fuzzy
 msgid "Relative to prior restriction"
-msgstr "oraingo murrizketari gehitu"
+msgstr ""
 
 #: lib/src/varprint.c:833
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
-msgstr "Murriztu gabeko egiantza handiena"
+msgstr "Murriztu gabeko egiantza $(l_u) = %.8g$"
 
 #: lib/src/varprint.c:835
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
-msgstr "Murriztutako egiantza handiena"
+msgstr "Murriztutako egiantza $(l_r) = %.8g$"
 
 #: lib/src/varprint.c:837 lib/src/varprint.c:841
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
-msgstr "Murriztu gabeko egiantza handiena"
+msgstr "Murriztu gabeko egiantza (lu) = %.8g"
 
 #: lib/src/varprint.c:839 lib/src/varprint.c:843
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
-msgstr "Murriztutako egiantza handiena"
+msgstr "Murriztutako egiantza (lr) = %.8g"
 
 #: lib/src/varprint.c:862
 msgid "Cointegration rank"
 msgstr "Kointegrazio heina"
 
 #: lib/src/varprint.c:893 lib/src/varprint.c:897 lib/src/varprint.c:901
-#, fuzzy
 msgid "Portmanteau test"
-msgstr "Johansen kontrastea"
+msgstr "Portmanteau kontrastea"
 
 #: lib/src/varprint.c:948 lib/src/varprint.c:950
 #, c-format
@@ -6243,9 +6228,9 @@ msgid "F(%d, %d) sampling distribution"
 msgstr "F(%d,%d) lagin banakta"
 
 #: gui2/calculator.c:184
-#, fuzzy, c-format
+#, c-format
 msgid "N(%g, %g)"
-msgstr "F(%d, %d)"
+msgstr "N(%g, %g)"
 
 #: gui2/calculator.c:186
 #, c-format
@@ -6268,9 +6253,9 @@ msgid "Binomial(%d, %g)"
 msgstr ""
 
 #: gui2/calculator.c:194
-#, fuzzy, c-format
+#, c-format
 msgid "Poisson(%g)"
-msgstr "Poisson"
+msgstr "Poisson(%g)"
 
 #: gui2/calculator.c:384
 msgid "Standard errors"
@@ -6296,9 +6281,8 @@ msgid "Invalid entry"
 msgstr "Baliogabeko sarrera"
 
 #: gui2/calculator.c:932
-#, fuzzy
 msgid "Invalid probability"
-msgstr "Baliogabeko probabilitatea eskubiko kolarentzat"
+msgstr "Baliogabeko probabilitatea"
 
 #: gui2/calculator.c:968 gui2/calculator.c:1137 gui2/calculator.c:2752
 msgid "gretl: critical values"
@@ -6317,9 +6301,8 @@ msgid "gretl: p-value"
 msgstr "gretl: p-balioa"
 
 #: gui2/calculator.c:1236
-#, fuzzy
 msgid "You must give a name for the variable"
-msgstr "Bereizle-aldagaia aukeratu behar duzu"
+msgstr "Izen bat eman behar diozu aldagaiari"
 
 #: gui2/calculator.c:1243
 msgid "Range is non-positive!"
@@ -6498,9 +6481,8 @@ msgstr ""
 "ez da arrazoizkoa. Kontrastetik irteten."
 
 #: gui2/calculator.c:1773
-#, fuzzy
 msgid "uniform"
-msgstr "normala"
+msgstr "uniformea"
 
 #: gui2/calculator.c:1774
 msgid "normal"
@@ -6555,9 +6537,8 @@ msgid "dfd"
 msgstr "izendatzailearen askatasun graduak"
 
 #: gui2/calculator.c:1823
-#, fuzzy
 msgid "shape"
-msgstr "zuriune"
+msgstr "forma"
 
 #: gui2/calculator.c:1824 gui2/gpt_dialog.c:1179
 msgid "scale"
@@ -6615,7 +6596,6 @@ msgid "Wilcoxon rank sum test"
 msgstr "Wilcoxon hein baturen kontrastea"
 
 #: gui2/calculator.c:2364
-#, fuzzy
 msgid "Wilcoxon signed rank test"
 msgstr "Wilcoxon Zeinu-Heinaren kontrastea"
 
@@ -6760,9 +6740,8 @@ msgid "gretl: distribution graphs"
 msgstr "gretl: banaketa grafikoak"
 
 #: gui2/calculator.c:2757
-#, fuzzy
 msgid "gretl: add random variable"
-msgstr "gretl: aldagai normala"
+msgstr "gretl: gehitu aldagai aleatorioa"
 
 #: gui2/calculator.c:2787
 msgid "No suitable data are available"
@@ -7052,9 +7031,8 @@ msgstr ""
 " ez da baliogarria. "
 
 #: gui2/database.c:265
-#, fuzzy
 msgid "Sorry, can't handle this frequency conversion"
-msgstr "Barkatu, oraindik ezin da bihurketa hau egin!"
+msgstr "Barkatu, oraindik ezin da maiztasun bihurketa hau egin"
 
 #: gui2/database.c:312
 msgid ""
@@ -7065,9 +7043,8 @@ msgstr ""
 "Gainidatzi?"
 
 #: gui2/database.c:484
-#, fuzzy
 msgid "Really delete the selected series?"
-msgstr "Benetan ezabatu azken %d behaketak?"
+msgstr "Benetan aukeratutako segida ezabatu?"
 
 #: gui2/database.c:642
 msgid "Warning: series has missing observations"
@@ -7120,9 +7097,8 @@ msgid "/_Series/_Import"
 msgstr "/_Segidak/_Inportatu"
 
 #: gui2/database.c:737
-#, fuzzy
 msgid "/_Series/_Delete"
-msgstr "/_Segidak/_Bistaratu"
+msgstr "/_Segidak/_Ezabatu"
 
 #: gui2/database.c:738 gui2/helpfiles.c:73
 msgid "/_Find"
@@ -7840,6 +7816,8 @@ msgid ""
 "Do you want to start entering data values\n"
 "using gretl's spreadsheet?"
 msgstr ""
+"Gretl kalkulu-orria erabiliz datuak sartzen\n"
+"hasi nahi?"
 
 #: gui2/dialogs.c:3542 gui2/ssheet.c:622
 msgid "gretl: name variable"
@@ -8059,9 +8037,8 @@ msgid "Use bootstrap"
 msgstr "Erabili bootstrap"
 
 #: gui2/dlgutils.c:758
-#, fuzzy
 msgid "Show full restricted estimates"
-msgstr "Murriztutako estimazioa"
+msgstr "Erakutsi guztiz murriztutako estimazioak"
 
 #: gui2/dlgutils.c:800
 msgid "One-step estimation"
@@ -8626,9 +8603,8 @@ msgid "Print..."
 msgstr "Inprimatu..."
 
 #: gui2/gpt_control.c:2114 gui2/gpt_control.c:2190
-#, fuzzy
 msgid "Display PDF"
-msgstr "Biztaratu"
+msgstr "Biztaratu PDF"
 
 #: gui2/gpt_control.c:2116 gui2/gpt_control.c:2191
 msgid "OLS estimates"
@@ -9079,9 +9055,8 @@ msgid "/Tools/_P-value finder"
 msgstr "/Tresnak/_P-balioaren aurkitzailea"
 
 #: gui2/gretl.c:283
-#, fuzzy
 msgid "/Tools/_Distribution graphs"
-msgstr "gretl: banaketa grafikoak"
+msgstr "/Tresnak/_Banaketazko grafikoak"
 
 #: gui2/gretl.c:285
 msgid "/Tools/_Test statistic calculator"
@@ -9328,9 +9303,8 @@ msgid "/Add/_Time trend"
 msgstr "/Gehitu/_Denborazko joera"
 
 #: gui2/gretl.c:391
-#, fuzzy
 msgid "/Add/_Random variable..."
-msgstr "/Gehitu/_Aldagai aleatoria"
+msgstr "/Gehitu/_Aldagai aleatoria..."
 
 #: gui2/gretl.c:395
 msgid "/Add/_Periodic dummies"
@@ -9565,9 +9539,8 @@ msgid "/Model/Nonlinear models/To_bit..."
 msgstr "/Eredua/Eredu ez linealak/To_bit..."
 
 #: gui2/gretl.c:491
-#, fuzzy
 msgid "/Model/Nonlinear models/_Heckit..."
-msgstr "/Eredua/Eredu ez linealak/_Logit..."
+msgstr "/Eredua/Eredu ez linealak/_Heckit..."
 
 #: gui2/gretl.c:492
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -9819,9 +9792,9 @@ msgid "Failed to generate graph"
 msgstr "Grafikoa sortzean huts egin du"
 
 #: gui2/guiprint.c:760
-#, fuzzy, c-format
+#, c-format
 msgid "%s page %d of %d"
-msgstr "%s, %d orria"
+msgstr "%s orria %d of %d"
 
 #: gui2/guiprint.c:1116
 #, c-format
@@ -10203,9 +10176,9 @@ msgid "Enter a name"
 msgstr "Sartu izen bat"
 
 #: gui2/gui_utils.c:1729
-#, fuzzy, c-format
+#, c-format
 msgid "Saved matrix as %s"
-msgstr "Dtuak %s bezala gordeta"
+msgstr "Matrizea %s bezala gordeta"
 
 #: gui2/gui_utils.c:1739
 msgid "Nothing to send"
@@ -10277,9 +10250,8 @@ msgid "Add to dataset..."
 msgstr "Gehitu datu-multzora"
 
 #: gui2/gui_utils.c:1794
-#, fuzzy
 msgid "Add as matrix..."
-msgstr "/Gehitu/_Definitu matrizea..."
+msgstr "Gehitu matrize bezala..."
 
 #: gui2/gui_utils.c:2015
 msgid "gretl: help"
@@ -10726,7 +10698,7 @@ msgstr "estatistikoen laburpena"
 
 #: gui2/library.c:658
 msgid "summary stats: "
-msgstr "estatistikoen laburpena:"
+msgstr "estatistikoen laburpena: "
 
 #: gui2/library.c:721
 msgid "Failed to generate summary statistics"
@@ -11444,7 +11416,7 @@ msgstr "Koerlazio matrizea"
 
 #: gui2/menustate.c:418 gui2/menustate.c:440 gui2/selector.c:3309
 msgid "XY scatterplot"
-msgstr "XY scatterplot"
+msgstr "XY grafikoa"
 
 #: gui2/menustate.c:509
 msgid "Unknown"
@@ -11623,9 +11595,9 @@ msgid "Reads the current value, or sets a new value"
 msgstr "Irakurri oraingo balioa, edo ezarri balio berria"
 
 #: gui2/selector.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "The variable '%s' is not a 0/1 variable."
-msgstr "Aldagai azalduaren '%s'  ez da 0/1 aldagaia.\n"
+msgstr "'%s' aldagaia ez da 0/1 aldagaia."
 
 #: gui2/selector.c:1249
 msgid "You must select an X-axis variable"
@@ -11652,9 +11624,8 @@ msgid "You must specify a list of lags"
 msgstr "Atzerapenen zerrenda aukeratu behar duzu"
 
 #: gui2/selector.c:1613
-#, fuzzy
 msgid "You must specify a selection variable"
-msgstr "Ordezko aldagaien multzoa zehaztu behar duzu"
+msgstr "Aukeratzeko aldagaia zehaztu behar duzu"
 
 #: gui2/selector.c:1704
 msgid "You must select a Z-axis variable"
@@ -11733,9 +11704,8 @@ msgid "Offset variable"
 msgstr ""
 
 #: gui2/selector.c:1966
-#, fuzzy
 msgid "Selection variable"
-msgstr "aukeratu aldagaia"
+msgstr "Aldagaia aukeratzeko"
 
 #: gui2/selector.c:1968
 msgid "List of AR lags"
@@ -11798,9 +11768,8 @@ msgid "Exogenous variables"
 msgstr "Aldagai azaltzaileak"
 
 #: gui2/selector.c:2302
-#, fuzzy
 msgid "Selection equation regressors"
-msgstr "gretl: autorregresio bektorea"
+msgstr "Ekuazioen erregresoreak aukeratzeko"
 
 #: gui2/selector.c:2313 gui2/selector.c:3360
 msgid "Add ->"
@@ -11907,9 +11876,8 @@ msgid "Show slopes at mean"
 msgstr ""
 
 #: gui2/selector.c:2974
-#, fuzzy
 msgid "Show p-values"
-msgstr "p-balioarekin"
+msgstr "Erakutsi p-balioarekin"
 
 #: gui2/selector.c:2986
 msgid "Use points"
@@ -11952,14 +11920,12 @@ msgid "2-step estimation"
 msgstr "2-urratseko estimazioak"
 
 #: gui2/selector.c:3075
-#, fuzzy
 msgid "Maximum likelihood estimation"
-msgstr "Egiantz Handia"
+msgstr "Egiantz Handieneko estimazioa"
 
 #: gui2/selector.c:3091
-#, fuzzy
 msgid "Plain numerical values"
-msgstr "Balio numerikoak"
+msgstr "Balio numeriko leunak"
 
 #: gui2/selector.c:3095
 msgid "Show row percentages"
@@ -11999,7 +11965,7 @@ msgstr "3D grafikoa"
 
 #: gui2/selector.c:3315
 msgid "multiple scatterplots"
-msgstr "Scatterplot anizkoitzak"
+msgstr "Garfiko anizkoitzak"
 
 #: gui2/selector.c:3317
 msgid "factorized plot"
@@ -13122,9 +13088,8 @@ msgid "error in wsheet_setup()"
 msgstr "errorea  wsheet_setup() barnean"
 
 #: plugin/heckit.c:613
-#, fuzzy
 msgid "Selection equation"
-msgstr "Funtzioen ebaluazioa: %d\n"
+msgstr "Ekuazioa eukeratzeko"
 
 #: plugin/import_common.c:38
 msgid ""
@@ -13161,7 +13126,7 @@ msgstr "errenkada:"
 
 #: plugin/import_common.c:639
 msgid "Produce debugging output"
-msgstr ""
+msgstr "Arazketa produzitzen"
 
 #: plugin/johansen.c:177
 msgid "renormalized beta"
@@ -13204,19 +13169,19 @@ msgid "Failed to find eigenvalues\n"
 msgstr "Balio propioak bilatzean huts egin du\n"
 
 #: plugin/johansen.c:1474
-#, fuzzy, c-format
+#, c-format
 msgid "eigenvalue %d = %g\n"
-msgstr "balio propioa"
+msgstr "balio propioa %d = %g\n"
 
 #: plugin/johansen.c:1498 plugin/jrestrict.c:2284
-#, fuzzy, c-format
+#, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g\n"
-msgstr "Murriztu gabeko egiantza handiena"
+msgstr "Murriztugabeko egiantza (lu) = %.8g\n"
 
 #: plugin/johansen.c:1499 plugin/jrestrict.c:2285
-#, fuzzy, c-format
+#, c-format
 msgid "Restricted loglikelihood (lr) = %.8g\n"
-msgstr "Murriztutako egiantza handiena"
+msgstr "Murriztutako egiantza (lr) = %.8g\n"
 
 #: plugin/johansen.c:1503 plugin/jrestrict.c:1474
 #, c-format
@@ -13224,11 +13189,9 @@ msgid "Allowing for prior restriction, df = %d\n"
 msgstr ""
 
 #: plugin/johansen.c:1505
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g) = %g\n"
-msgstr ""
-" p-balioa = prob(Chi-karratu(%d) > %g) = %g izanez\n"
-"\n"
+msgstr "P(Chi-Karratu(%d) > %g) = %g\n"
 
 #: plugin/jrestrict.c:1457
 #, c-format
@@ -13240,9 +13203,8 @@ msgid "Model is not fully identified\n"
 msgstr ""
 
 #: plugin/jrestrict.c:1465
-#, fuzzy
 msgid "Model is fully identified\n"
-msgstr "Ekuazioa  identifikatuta"
+msgstr "Eredua guztiz identifikaturik dago\n"
 
 #: plugin/jrestrict.c:1469
 #, c-format
@@ -13250,11 +13212,9 @@ msgid "Based on Jacobian, df = %d\n"
 msgstr ""
 
 #: plugin/jrestrict.c:2290
-#, fuzzy, c-format
+#, c-format
 msgid "P(Chi-Square(%d) > %g = %g\n"
-msgstr ""
-" p-balioa = prob(Chi-karratu(%d) > %g) = %g izanez\n"
-"\n"
+msgstr "P(Chi-Karratu(%d) > %g = %g\n"
 
 #: plugin/kernel.c:132
 #, c-format
@@ -13474,15 +13434,14 @@ msgid "This file does not seem to be a valid Stata data file"
 msgstr "Datu-fitxategi hau ez dirudi Stata-rentzat baliagarria"
 
 #: plugin/stats_tables.c:161
-#, fuzzy
 msgid ""
 "\n"
 "For more comprehensive statistical tables, please consult\n"
 "http://www.stanford.edu/~clint/bench/dwcrit.htm"
 msgstr ""
 "\n"
-"Estatistika taula ulergarriagoa izateko, mesedez kontsultatu adituren bat edo\n"
-"adibidez Ramanathan's Introductory Econometrics liburua.\n"
+"Estatistika taula ulergarriagoa izateko, mesedez kontsultatu\n"
+"http://www.stanford.edu/~clint/bench/dwcrit.htm"
 
 #: plugin/stats_tables.c:193
 #, no-c-format

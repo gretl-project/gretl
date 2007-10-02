@@ -913,18 +913,10 @@ int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
     } else {
 	/* quarterly, monthly, hourly... */
 	double x = date(t, pdinfo->pd, pdinfo->sd0);
+	int d = ceil(log10(pdinfo->pd));
 	char *p, s[32];
-	int i, n;
-	
-	sprintf(s, "%f", x);
-	n = strlen(s);
-	for (i=n-1; i>0; i--) {
-	    if (s[i] == '0') {
-		s[i] = '\0';
-	    } else {
-		break;
-	    }
-	}
+
+	sprintf(s, "%.*f", d, x);
 	p = strchr(s, '.');
 	if (p == NULL) {
 	    p = strchr(s, ',');
