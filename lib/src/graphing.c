@@ -1621,10 +1621,10 @@ static void set_lwstr (const DATAINFO *pdinfo, int v, char *s)
 {
     int w = var_get_linewidth(pdinfo, v);
 
-    if (w > 0) {
+    if (w > 1) {
 	sprintf(s, " lw %d", w);
     } else {
-	strcpy(s, " lw 1");
+	*s = '\0';
     }
 }
 

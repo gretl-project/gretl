@@ -516,6 +516,32 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     pputc(prn, '\n');
 }
 
+static void print_var_smpl (int v, const double **Z, 
+			    const DATAINFO *pdinfo, 
+			    PRN *prn)
+{
+    int t, n = 0;
+
+    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
+	char d1[OBSLEN], d2[OBSLEN];
+	ntodate_full(d1, pdinfo->t1, pdinfo);
+	ntodate_full(d2, pdinfo->t2, pdinfo);
+
+	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
+    } else {
+	pprintf(prn, "%s: %s - %s", _("Full data range"), 
+		pdinfo->stobs, pdinfo->endobs);
+    }
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(Z[v][t])) {
+	    n++;
+	}
+    }
+
+    pprintf(prn, " (n = %d)\n", n);
+}
+
 /**
  * gretl_fix_exponent:
  * @s: string representation of floating-point number.
@@ -1653,7 +1679,7 @@ int printdata (const int *list, const char *mstr,
 	    if (plist[0] > 1) {
 		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
 	    }
-	    print_smpl(pdinfo, 0, prn);
+	    print_var_smpl(plist[j], Z, pdinfo, prn);
 	    pputc(prn, '\n');
 	    printz(Z[plist[j]], pdinfo, prn, opt);
 	    pputc(prn, '\n');

@@ -749,7 +749,7 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 
 static void print_z_prob (double z, PRN *prn)
 {
-    double p;
+    double p = NADBL;
 
     if (z > 0) {
 	p = normal_pvalue_1(z);
@@ -761,6 +761,10 @@ static void print_z_prob (double z, PRN *prn)
 	if (!na(p)) {
 	    pprintf(prn, "  Prob(Z < %g) = %g\n", z, p);
 	}
+    }
+
+    if (!na(p) && p > 0) {
+	pprintf(prn, "  Two-tailed p-value = %g\n", 2 * p);
     }
 }
 
@@ -1013,7 +1017,7 @@ static int rank_sum_test (const double *x, const double *y,
     }
 
     pprintf(prn, "  n1 = %d, n2 = %d\n", na, nb);
-    pprintf(prn, "  w = %g\n", wa);
+    pprintf(prn, "  w (%s) = %g\n", _("sum of ranks, sample 1"), wa);
 
     if (na >= 10 && nb >= 10) {
 	double m, s, z;

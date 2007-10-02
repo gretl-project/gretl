@@ -536,6 +536,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	}
 
 	fprintf(fp, "w %s", spec->lines[i].style);
+
 	if (spec->lines[i].type != 0) {
 	    fprintf(fp, " lt %d", spec->lines[i].type);
 	}

@@ -10,7 +10,7 @@ genr hicorr = CPI<3.95
 genr approv = (Vote=0)? 0 : ((Vote>1)? 1 : NA)
 
 # mark the two new variables as discrete
-discrete approv hicorr
+discrete hicorr approv
 # and cross-tabulate
 xtab hicorr approv
 
@@ -21,4 +21,11 @@ ols Vote 0 CPI
 # But of course plain OLS is suspect because "Vote" is not 
 # on an interval scale: so try ordered probit
 probit Vote 0 CPI
+
+# Compare the rank-sum test given on effi.org, using
+# all non-abstaining countries for which CPI is available
+smpl --full
+genr capp = (Vote > 1)? CPI : NA
+genr cdis = (Vote = 0)? CPI : NA
+difftest capp cdis --rank-sum
 

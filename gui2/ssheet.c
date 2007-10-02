@@ -32,7 +32,7 @@
 #include <float.h>
 
 #define SSDEBUG 0
-#define CELLDEBUG 2
+#define CELLDEBUG 0
 
 typedef enum {
     SHEET_SUBSAMPLED    = 1 << 0,
