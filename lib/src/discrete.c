@@ -798,7 +798,8 @@ binary_logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 static int 
 ordered_model_ok (double **Z, const DATAINFO *pdinfo, int v)
 {
-    if (!var_is_discrete(pdinfo, v)) {
+    if (!var_is_discrete(pdinfo, v) && 
+	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
 	sprintf(gretl_errmsg, "The variable '%s' is not discrete",
 		pdinfo->varname[v]);
 	return 0;
@@ -853,8 +854,6 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	gretl_model_init(&dmod);
 	dmod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
-				"variable.\n"), pdinfo->varname[yv]);
 	return dmod;
     }
 }

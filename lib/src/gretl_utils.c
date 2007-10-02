@@ -351,6 +351,43 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     return d;
 }
 
+ /**
+ * gretl_is_oprobit_ok:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ *
+ * Checks the variable @x over the range @t1 to @t2 for its
+ * suitability as the dependent variable in an ordered probit
+ * analysis.  The criterion used is that the variable has a
+ * minimum value of zero and has only non-negative integer 
+ * values.
+ * 
+ * Returns: 1 if the test succeeds, otherwise 0.
+ */
+
+int gretl_is_oprobit_ok (int t1, int t2, const double *x)
+{
+    int t, n = 0, d = 1;
+    double xmin = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
+	n++;
+	if (x[t] != floor(x[t]) || x[t] < 0) {
+	    d = 0;
+	    break;
+	}
+	if (x[t] < xmin) {
+	    xmin = x[t];
+	}
+    }
+
+    return (d && xmin == 0 && n > 0);
+}
+
 /**
  * true_const:
  * @v: index number of variable to test.
