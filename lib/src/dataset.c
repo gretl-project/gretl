@@ -1976,7 +1976,7 @@ static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
 	return E_UNKVAR;
     }
 
-    if (v < 1 || v >= pdinfo->v || var_is_scalar(pdinfo, v)) {
+    if (v < 1 || var_is_scalar(pdinfo, v)) {
 	return E_DATA;
     }
     
@@ -2714,27 +2714,27 @@ int modify_dataset (const char *s, double ***pZ,
 
     s += strspn(s, " \t");
 
-    if (!strncmp(s, "addobs", 6)) {
-	k = get_dataset_param(s + 6, DS_ADDOBS, pdinfo, &err);
+    if (!strncmp(s, "addobs ", 7)) {
+	k = get_dataset_param(s + 7, DS_ADDOBS, pdinfo, &err);
 	if (!err) {
 	    err = add_obs(k, pZ, pdinfo, prn);
 	}
-    } else if (!strncmp(s, "compact", 7)) {
-	k = get_dataset_param(s + 7, DS_COMPACT, pdinfo, &err);
+    } else if (!strncmp(s, "compact ", 8)) {
+	k = get_dataset_param(s + 8, DS_COMPACT, pdinfo, &err);
 	if (!err) {
 	    err = compact_data_set_wrapper(s + 8, pZ, pdinfo, k);
 	}
-    } else if (!strncmp(s, "expand", 6)) {
-	k = get_dataset_param(s + 6, DS_EXPAND, pdinfo, &err);
+    } else if (!strncmp(s, "expand ", 7)) {
+	k = get_dataset_param(s + 7, DS_EXPAND, pdinfo, &err);
 	if (!err) {
 	    err = expand_data_set(pZ, pdinfo, k);
 	}
     } else if (!strncmp(s, "transpos", 8)) {
 	err = transpose_data(pZ, pdinfo);
-    } else if (!strncmp(s, "sortby", 6)) {
-	err = dataset_sort(s + 6, *pZ, pdinfo, OPT_NONE);
-    } else if (!strncmp(s, "dsortby", 7)) {
-	err = dataset_sort(s + 7, *pZ, pdinfo, OPT_D);
+    } else if (!strncmp(s, "sortby ", 7)) {
+	err = dataset_sort(s + 7, *pZ, pdinfo, OPT_NONE);
+    } else if (!strncmp(s, "dsortby ", 8)) {
+	err = dataset_sort(s + 8, *pZ, pdinfo, OPT_D);
     } else {
 	err = E_PARSE;
     }

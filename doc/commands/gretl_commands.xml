@@ -1534,7 +1534,7 @@
       <menu-path>/Data/Compact data</menu-path>
       <menu-path>/Data/Expand data</menu-path>
       <menu-path>/Data/Transpose</menu-path>
-      <menu-path>/Data/Sort</menu-path>
+      <menu-path>/Data/Sort data</menu-path>
     </gui-access>
 
   </command>
