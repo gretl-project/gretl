@@ -1360,6 +1360,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     } else {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[4]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt));
+	add_to_cmdlist(sr, "; ");
     }
 
     if (sr->extra[5] != NULL) {
@@ -1882,6 +1883,10 @@ static void construct_cmdlist (selector *sr)
 	    reverse_list(sr->cmdlist);
 	}
     }
+
+#if 0
+    fprintf(stderr, "sr->cmdlist:\n'%s'\n", sr->cmdlist);
+#endif
 
     if (!sr->error) {
 	/* record some choices as defaults */
