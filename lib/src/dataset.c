@@ -1854,6 +1854,130 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+/* apparatus for sorting entire dataset */
+
+typedef struct spoint_t_ spoint_t;
+
+struct spoint_t_ {
+    int obsnum;
+    double val;
+};
+
+static int compare_vals_up (const void *a, const void *b)
+{
+    const spoint_t *pa = (const spoint_t *) a;
+    const spoint_t *pb = (const spoint_t *) b;
+     
+    return (pa->val > pb->val) - (pa->val < pb->val);
+}
+
+static int compare_vals_down (const void *a, const void *b)
+{
+    const spoint_t *pa = (const spoint_t *) a;
+    const spoint_t *pb = (const spoint_t *) b;
+     
+    return (pa->val < pb->val) - (pa->val > pb->val);
+}
+
+int dataset_sort_by (int v, int d, double **Z, DATAINFO *pdinfo)
+{
+    spoint_t *sv = NULL;
+    double *x = NULL;
+    char **S = NULL;
+    int i, t;
+    int err = 0;
+
+    sv = malloc(pdinfo->n * sizeof *sv);
+    if (sv == NULL) {
+	return E_ALLOC;
+    }
+
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	free(sv);
+	return E_ALLOC;
+    }    
+
+    if (pdinfo->S != NULL) {
+	S = strings_array_new_with_length(pdinfo->n, OBSLEN);
+	if (S == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	sv[t].obsnum = t;
+	sv[t].val = Z[v][t];
+    }
+
+    if (d) {
+	/* descending */
+	qsort(sv, pdinfo->n, sizeof *sv, compare_vals_down);
+    } else {
+	qsort(sv, pdinfo->n, sizeof *sv, compare_vals_up);
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (var_is_scalar(pdinfo, i)) {
+	    continue;
+	}
+	for (t=0; t<pdinfo->n; t++) {
+	    x[t] = Z[i][sv[t].obsnum];
+	}
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[i][t] = x[t];
+	}
+    }
+
+    if (S != NULL) {
+	for (t=0; t<pdinfo->n; t++) {
+	    strcpy(S[t], pdinfo->S[sv[t].obsnum]);
+	}
+	free_strings_array(pdinfo->S, pdinfo->n);
+	pdinfo->S = S;
+    }
+
+ bailout:
+
+    free(sv);
+    free(x);
+
+    return err;
+}
+
+static int dataset_sort (const char *s, int d, double **Z, DATAINFO *pdinfo)
+{
+    char fmt[10];
+    char vname[VNAMELEN];
+    int v;
+
+    if (dataset_is_time_series(pdinfo) ||
+	dataset_is_panel(pdinfo)) {
+	strcpy(gretl_errmsg, "You can only do this with undated data");
+	return E_DATA;
+    }
+
+    s += strspn(s, " \t");
+
+    sprintf(fmt, "%%%ds", VNAMELEN - 1);
+
+    if (sscanf(s, fmt, vname) != 1) {
+	return E_DATA;
+    }
+
+    v = varindex(pdinfo, vname);
+    if (v == pdinfo->v) {
+	return E_UNKVAR;
+    }
+
+    if (v < 1 || v >= pdinfo->v || var_is_scalar(pdinfo, v)) {
+	return E_DATA;
+    }
+    
+    return dataset_sort_by(v, d, Z, pdinfo);
+}
+
 /**
  * dataset_drop_last_variables:
  * @delvars: number of variables to be dropped.
@@ -2511,6 +2635,8 @@ static int get_dataset_param (const char *s, int code,
 	return 0;
     }
 
+    s += strspn(s, " \t");
+
     if (sscanf(s, "%d", &k) != 1) {
 	*err = E_PARSE;
     } else if (k <= 0) {
@@ -2584,22 +2710,26 @@ int modify_dataset (const char *s, double ***pZ,
     s += strspn(s, " \t");
 
     if (!strncmp(s, "addobs", 6)) {
-	k = get_dataset_param(s + 7, DS_ADDOBS, pdinfo, &err);
+	k = get_dataset_param(s + 6, DS_ADDOBS, pdinfo, &err);
 	if (!err) {
 	    err = add_obs(k, pZ, pdinfo, prn);
 	}
     } else if (!strncmp(s, "compact", 7)) {
-	k = get_dataset_param(s + 8, DS_COMPACT, pdinfo, &err);
+	k = get_dataset_param(s + 7, DS_COMPACT, pdinfo, &err);
 	if (!err) {
 	    err = compact_data_set_wrapper(s + 8, pZ, pdinfo, k);
 	}
     } else if (!strncmp(s, "expand", 6)) {
-	k = get_dataset_param(s + 7, DS_EXPAND, pdinfo, &err);
+	k = get_dataset_param(s + 6, DS_EXPAND, pdinfo, &err);
 	if (!err) {
 	    err = expand_data_set(pZ, pdinfo, k);
 	}
     } else if (!strncmp(s, "transpos", 8)) {
 	err = transpose_data(pZ, pdinfo);
+    } else if (!strncmp(s, "sortby", 6)) {
+	err = dataset_sort(s + 6, 0, *pZ, pdinfo);
+    } else if (!strncmp(s, "dsortby", 7)) {
+	err = dataset_sort(s + 7, 1, *pZ, pdinfo);
     } else {
 	err = E_PARSE;
     }
