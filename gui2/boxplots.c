@@ -652,22 +652,12 @@ make_area (PLOTGROUP *grp)
     return grp->window;
 }
 
-static int 
-compare_doubles (const void *a, const void *b)
-{
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-     
-    return (*da > *db) - (*da < *db);
-}
-
-static double 
-median (double *x, const int n)
+static double median (double *x, const int n)
 {
     int n2;
     double xx;
 
-    qsort(x, n, sizeof *x, compare_doubles);
+    qsort(x, n, sizeof *x, gretl_compare_doubles);
 
     n2 = n/2;
     xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
@@ -769,7 +759,7 @@ median_interval (double *x, int n, double *low, double *high)
     }
 
     /* sort the sample medians */
-    qsort(medians, ITERS, sizeof *medians, compare_doubles);
+    qsort(medians, ITERS, sizeof *medians, gretl_compare_doubles);
     
     /* return the right values */
     j = 100 / ((100 - CONFIDENCE) / 2);
@@ -1004,7 +994,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
 	plotgrp->plots[i].outliers = NULL;
 	plotgrp->plots[i].mean = gretl_mean(0, n, x);
-	qsort(x, n, sizeof *x, compare_doubles);
+	qsort(x, n, sizeof *x, gretl_compare_doubles);
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
@@ -1041,7 +1031,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     if (plotgrp->show_outliers) {
 	for (i=0; i<plotgrp->nplots; i++) {
 	    n = ztox(list[i+1], x, (const double **) *pZ, pdinfo);
-	    qsort(x, n, sizeof *x, compare_doubles);
+	    qsort(x, n, sizeof *x, gretl_compare_doubles);
 	    add_outliers(x, n, &plotgrp->plots[i]);
 	}
     }

@@ -55,6 +55,11 @@ void rand_seed_dialog (void);
 
 void database_description_dialog (const char *binname);
 
+int select_var_from_list_with_opt (const int *list, 
+				   const char *query,
+				   dialog_opts *opts,
+				   int hcode);
+
 int select_var_from_list (const int *list, const char *query);
 
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w);

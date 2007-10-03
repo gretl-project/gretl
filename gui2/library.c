@@ -5529,6 +5529,52 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
     }
 }
 
+void gui_sort_data (gpointer p, guint u, GtkWidget *w)
+{
+    int *list = NULL;
+    int nv = 0;
+
+    list = full_var_list(datainfo, &nv);
+
+    if (nv == 0) {
+	errbox("No suitable variables");
+    } else if (list == NULL) {
+	nomem();
+    } else {
+	dialog_opts *opts;
+	const char *strs[] = {
+	    N_("Ascending"),
+	    N_("Descending")
+	};
+	gretlopt vals[] = {
+	    OPT_NONE,
+	    OPT_D
+	};
+	gretlopt opt = vals[0];
+	int v, err = 0;
+
+	opts = dialog_opts_new(2, OPT_TYPE_RADIO,
+			       &opt, vals, strs);
+	if (opts == NULL) {
+	    free(list);
+	    return;
+	}
+
+	v = select_var_from_list_with_opt(list, "Select sort key",
+					  opts, DATASORT);
+	if (v > 1) {
+	    err = dataset_sort_by(v, Z, datainfo, opt);
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		mark_dataset_as_modified();
+	    }
+	}
+	dialog_opts_free(opts);
+	free(list);
+    }
+}
+
 static int db_write_response (const char *savename, const int *list)
 {
     gchar *msg;

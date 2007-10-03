@@ -3562,8 +3562,8 @@ static int compose_panel_indices (DATAINFO *pdinfo, int T,
     return err;
 }
 
-static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
-			    int uv, int tv)
+static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
+			       int uv, int tv)
 {
     int n = pdinfo->n;
     char **S = NULL;
@@ -3901,7 +3901,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 #endif
 
     /* sort full dataset by unit and period */
-    err = dataset_sort_by(Z, pdinfo, uv, tv);
+    err = panel_data_sort_by(Z, pdinfo, uv, tv);
 
 #if PDEBUG
     print_unit_var(uv, Z, n, 1);

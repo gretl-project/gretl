@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include <stdarg.h>
+#include <glib.h>
 
 struct PRN_ {
     FILE *fp;

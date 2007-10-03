@@ -93,6 +93,7 @@ enum extra_cmds {
     IMPORT,
     BOOTSTRAP,
     TRANSPOS,
+    DATASORT,
     GUI_CMD_MAX
 };
 

@@ -26,6 +26,33 @@
 
 #include "system.h"
 
+dialog_opts *dialog_opts_new (int n, int type, 
+			      gretlopt *optp,
+			      const gretlopt *vals,
+			      const char **strs)
+{
+    dialog_opts *opts;
+
+    opts = malloc(sizeof *opts);
+    if (opts == NULL) {
+	nomem();
+	return NULL;
+    }
+
+    opts->n = n;
+    opts->type = type;
+    opts->optp = optp;
+    opts->vals = vals;
+    opts->strs = strs;
+    
+    return opts;
+}
+
+void dialog_opts_free (dialog_opts *opts)
+{
+    free(opts);
+}
+
 void vbox_add_hsep (GtkWidget *vbox)
 {
     GtkWidget *h = gtk_hseparator_new();

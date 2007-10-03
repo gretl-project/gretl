@@ -252,6 +252,8 @@ void ts_or_panel_menu_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
+    flip(mdata->ifac, "/Data/Sort data...", !s);
+
     flip(mdata->ifac, "/Add/Time trend", s);
     flip(mdata->ifac, "/Add/Lags of selected variables", s);
     flip(mdata->ifac, "/Add/First differences of selected variables", s);

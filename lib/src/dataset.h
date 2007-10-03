@@ -332,6 +332,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 			     double ***pZ, DATAINFO *pdinfo, 
 			     PRN *prn);
 
+int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt);
+
 int is_log_variable (int i, const DATAINFO *pdinfo, char *parent);
 
 void set_var_discrete (DATAINFO *pdinfo, int i, int s);

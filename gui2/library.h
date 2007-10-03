@@ -91,6 +91,8 @@ int maybe_restore_full_data (int action);
 
 void gui_transpose_data (gpointer p, guint u, GtkWidget *w);
 
+void gui_sort_data (gpointer p, guint u, GtkWidget *w);
+
 int dataset_is_subsampled (void);
 
 void set_original_n (int n);

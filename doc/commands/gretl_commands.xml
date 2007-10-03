@@ -1463,7 +1463,8 @@
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
         <example>dataset expand 12</example>
-        <example>dataset tranpose</example>
+        <example>dataset transpose</example>
+	<example>dataset sortby x1</example>
       </examples>
     </usage>
 
@@ -1471,10 +1472,11 @@
       <para>
 	Performs various operations on the data set as a whole, depending
 	on the given <repl>keyword</repl>, which must be
-	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit> or
-	<lit>transpose</lit>.  Note: these actions are not available when
-	the dataset is currently subsampled by selection of cases on some
-	Boolean criterion.
+	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit>,
+	<lit>transpose</lit>, <lit>sortby</lit> or <lit>dsortby</lit>.
+	Note: these actions are not available when the dataset is
+	currently subsampled by selection of cases on some Boolean
+	criterion.
       </para>
       <para>
 	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
@@ -1515,6 +1517,16 @@
 	if data have been read from some external source in which the rows
 	of the data table represent variables.
       </para>
+      <para>
+	<lit>sortby</lit>: One variable name is required; this variable is
+	used as a sort key.  The observations on all variables in the
+	dataset are re-ordered by increasing value of the key variable.
+	This command is available only for undated data.
+      </para>
+      <para>
+	<lit>dsortby</lit>: Works as <lit>sortby</lit> except that
+	the re-ordering is by decreasing value of the key variable.
+      </para>
     </description>
 
     <gui-access>
@@ -1522,8 +1534,23 @@
       <menu-path>/Data/Compact data</menu-path>
       <menu-path>/Data/Expand data</menu-path>
       <menu-path>/Data/Transpose</menu-path>
+      <menu-path>/Data/Sort</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="datasort" section="Dataset" context="gui"
+    label="Sorting data">
+
+    <description>
+      <para>
+	The selected variable is used as a sort key for the entire
+	data set.  The observations on all variables are
+	re-ordered by increasing value of the key variable, or by
+	decreasing value if you select the <quote>Descending</quote>
+	option.
+      </para>
+    </description>
   </command>
 
   <command name="delete" section="Dataset" 

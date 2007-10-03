@@ -332,6 +332,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Compact data..."), NULL, do_compact_data_set, 0, NULL, GNULL },
     { N_("/Data/_Expand data..."), NULL, do_expand_data_set, 0, NULL, GNULL },
     { N_("/Data/_Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
+    { N_("/Data/_Sort data..."), NULL, gui_sort_data, 0, NULL, GNULL },
     { "/Data/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Data/_Refresh window"), NULL, refresh_data, 0, NULL, GNULL },
 

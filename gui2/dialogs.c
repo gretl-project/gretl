@@ -2240,8 +2240,57 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     *selvar = varindex(datainfo, vname);
 }
 
-int select_var_from_list (const int *list, const char *query)
+static void 
+dialog_option_callback (GtkWidget *w, dialog_opts *opts)
 {
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "i"));
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	*opts->optp |= opts->vals[i];
+    } else {
+	*opts->optp &= ~(opts->vals[i]);
+    }
+}
+
+static void dialog_add_opts (dialog_opts *opts, 
+			     GtkWidget *vbox)
+{
+    if (opts->type == OPT_TYPE_RADIO) {
+	GSList *group = NULL;
+	GtkWidget *b, *v2, *hbox;
+	int i;
+
+	v2 = gtk_vbox_new(FALSE, 0);
+
+	for (i=0; i<opts->n; i++) {
+	    b = gtk_radio_button_new_with_label(group, _(opts->strs[i]));
+	    gtk_box_pack_start(GTK_BOX(v2), b, TRUE, TRUE, 0);
+	    /* gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE); */
+	    g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
+	    g_signal_connect(G_OBJECT(b), "clicked",
+			     G_CALLBACK(dialog_option_callback), opts);
+	    gtk_widget_show(b);
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+	}
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), v2, TRUE, TRUE, 10);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	gtk_widget_show(hbox);
+	gtk_widget_show(v2);
+
+    } else {
+	/* handle combo eventually? */
+	dummy_call();
+    }
+}
+
+int select_var_from_list_with_opt (const int *list, 
+				   const char *query,
+				   dialog_opts *opts,
+				   int hcode)
+{
+    unsigned char flags;
     GtkWidget *tempwid, *hbox;
     GtkWidget *dlg, *combo;
     GList *varlist;
@@ -2249,7 +2298,9 @@ int select_var_from_list (const int *list, const char *query)
     int selvar = -1;
 
     title = g_strdup_printf("gretl: %s", _("select variable"));
-    dlg = gretl_dialog_new(title, NULL, GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
+
+    flags = (hcode)? GRETL_DLG_BLOCK : (GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new(title, NULL, flags);
     g_free(title);
 
     tempwid = gtk_label_new(query);
@@ -2280,6 +2331,10 @@ int select_var_from_list (const int *list, const char *query)
     g_object_set_data(G_OBJECT(dlg), "combo", combo);
     g_object_set_data(G_OBJECT(dlg), "selvar", &selvar);
 
+    if (opts != NULL) {
+	dialog_add_opts(opts, GTK_DIALOG(dlg)->vbox);
+    }
+
     /* Cancel button */
     cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
 
@@ -2291,9 +2346,19 @@ int select_var_from_list (const int *list, const char *query)
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tempwid);
 
+    /* Create a "Help" button? */
+    if (hcode) {
+	context_help_button(GTK_DIALOG(dlg)->action_area, hcode);
+    }
+
     gtk_widget_show_all(dlg);
 
     return selvar;
+}
+
+int select_var_from_list (const int *list, const char *query)
+{
+    return select_var_from_list_with_opt(list, query, NULL, 0);
 }
 
 /* material relating to the data compaction dialog */
@@ -2860,34 +2925,25 @@ int real_radio_dialog (const char *title, const char *label,
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   hbox, TRUE, TRUE, 5);
 	gtk_widget_show(hbox);
-
 	tmp = gtk_label_new(label);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	gtk_widget_show(tmp);
     }
 
     for (i=0; i<nopts; i++) {
-
-	if (button != NULL) {
-	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	} else {
-	    group = NULL;
-	}
-
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
-	gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   button, TRUE, TRUE, 0);
-
-	if (deflt == i) {
+	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
 	    ret = i;
 	}
-
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), &ret);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
 	gtk_widget_show(button);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
     /* create spinner if wanted */
@@ -2904,8 +2960,7 @@ int real_radio_dialog (const char *title, const char *label,
     /* "OK" button */
     tmp = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     dialog);
+		     G_CALLBACK(delete_widget), dialog);
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 
@@ -2959,9 +3014,9 @@ int density_dialog (int vnum, double *bw)
     /* kernel option buttons */
 
     button = gtk_radio_button_new_with_label(NULL, _("Gaussian kernel"));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG(dialog)->vbox), 
-			button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_radio_opt), &ret);
@@ -2969,10 +3024,10 @@ int density_dialog (int vnum, double *bw)
 		      GINT_TO_POINTER(0));
     gtk_widget_show(button);
 
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Epanechnikov kernel"));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_radio_opt), &ret);
     g_object_set_data(G_OBJECT(button), "action", 

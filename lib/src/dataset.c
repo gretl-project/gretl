@@ -1879,13 +1879,17 @@ static int compare_vals_down (const void *a, const void *b)
     return (pa->val < pb->val) - (pa->val > pb->val);
 }
 
-int dataset_sort_by (int v, int d, double **Z, DATAINFO *pdinfo)
+int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
 {
     spoint_t *sv = NULL;
     double *x = NULL;
     char **S = NULL;
     int i, t;
     int err = 0;
+
+    if (v < 1 || v >= pdinfo->v || var_is_scalar(pdinfo, v)) {
+	return E_DATA;
+    }
 
     sv = malloc(pdinfo->n * sizeof *sv);
     if (sv == NULL) {
@@ -1911,7 +1915,7 @@ int dataset_sort_by (int v, int d, double **Z, DATAINFO *pdinfo)
 	sv[t].val = Z[v][t];
     }
 
-    if (d) {
+    if (opt & OPT_D) {
 	/* descending */
 	qsort(sv, pdinfo->n, sizeof *sv, compare_vals_down);
     } else {
@@ -1946,7 +1950,8 @@ int dataset_sort_by (int v, int d, double **Z, DATAINFO *pdinfo)
     return err;
 }
 
-static int dataset_sort (const char *s, int d, double **Z, DATAINFO *pdinfo)
+static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
+			 gretlopt opt)
 {
     char fmt[10];
     char vname[VNAMELEN];
@@ -1975,7 +1980,7 @@ static int dataset_sort (const char *s, int d, double **Z, DATAINFO *pdinfo)
 	return E_DATA;
     }
     
-    return dataset_sort_by(v, d, Z, pdinfo);
+    return dataset_sort_by(v, Z, pdinfo, opt);
 }
 
 /**
@@ -2727,9 +2732,9 @@ int modify_dataset (const char *s, double ***pZ,
     } else if (!strncmp(s, "transpos", 8)) {
 	err = transpose_data(pZ, pdinfo);
     } else if (!strncmp(s, "sortby", 6)) {
-	err = dataset_sort(s + 6, 0, *pZ, pdinfo);
+	err = dataset_sort(s + 6, *pZ, pdinfo, OPT_NONE);
     } else if (!strncmp(s, "dsortby", 7)) {
-	err = dataset_sort(s + 7, 1, *pZ, pdinfo);
+	err = dataset_sort(s + 7, *pZ, pdinfo, OPT_D);
     } else {
 	err = E_PARSE;
     }

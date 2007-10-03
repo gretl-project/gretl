@@ -60,6 +60,16 @@ struct _windata_t {
     GtkSourceBuffer *sbuf;
 };
 
+typedef struct dialog_opts_ dialog_opts;
+
+struct dialog_opts_ {
+    int n;
+    int type;
+    gretlopt *optp;
+    const gretlopt *vals;
+    const char **strs;
+};
+
 #define window_is_busy(w)    (w->flags & VWIN_BUSY)
 #define set_window_busy(w)   (w->flags |= VWIN_BUSY)
 #define unset_window_busy(w) (w->flags &= ~VWIN_BUSY)
