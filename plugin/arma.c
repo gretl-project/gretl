@@ -1571,9 +1571,6 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
 
-    fprintf(stderr, "nparam = %d + %d + %d + %d = %d\n",
-	    ainfo->ifc, ainfo->np, ainfo->P, ainfo->nexo, nparam);
-
     plist = gretl_list_new(nparam);
     if (plist == NULL) {
 	err = E_ALLOC;
