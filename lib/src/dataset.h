@@ -34,6 +34,18 @@ typedef enum {
     VAR_SETCONST   = 1 << 4
 } VarinfoFlags;
 
+typedef enum {
+    DS_NONE,
+    DS_ADDOBS,
+    DS_COMPACT,
+    DS_EXPAND,
+    DS_TRANSPOSE,
+    DS_DELETE,
+    DS_KEEP,
+    DS_SORTBY,
+    DS_DSORTBY
+} DatasetOp;
+
 /**
  * dataset_is_time_series:
  * @p: pointer to data information struct.
@@ -351,7 +363,10 @@ int var_set_display_name (DATAINFO *pdinfo, int i,
 
 const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
 
-int modify_dataset (const char *s, double ***pZ, 
-		    DATAINFO *pdinfo, PRN *prn);
+int dataset_op_from_string (const char *s);
+
+int modify_dataset (int op, const int *list, const char *s, 
+		    double ***pZ, DATAINFO *pdinfo, 
+		    PRN *prn);
 
 #endif /* DATASET_H */

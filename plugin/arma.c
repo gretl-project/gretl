@@ -1233,6 +1233,10 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     double sarfac = 1.0;
     int i, k = 0;
 
+#if AINIT_DEBUG
+    fprintf(stderr, "transform_arma_const\n");
+#endif
+
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
 	    narfac -= phi[k++];
@@ -2027,14 +2031,13 @@ static int ar_arma_init (const int *list, double *coeff,
 	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
     }
 
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
-	if (!nonlin || ainfo->nexo == 0) {
-	    /* handle the case where we need to translate from an
-	       estimate of the regression constant to the
-	       unconditional mean of y_t
-	    */
-	    transform_arma_const(coeff, ainfo);
-	}
+    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
+	(!nonlin || ainfo->nexo == 0)) {
+	/* handle the case where we need to translate from an
+	   estimate of the regression constant to the
+	   unconditional mean of y_t
+	*/
+	transform_arma_const(coeff, ainfo);
     }
 
 #if AINIT_DEBUG
@@ -2356,7 +2359,21 @@ static int hr_arma_init (const int *list, double *coeff,
 	gretl_print_destroy(modprn);
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
+
+	if (!err && arma_exact_ml(ainfo) && 
+	    ainfo->ifc && ainfo->nexo == 0) {
+	    transform_arma_const(coeff, ainfo);
+	}
     }
+
+#if AINIT_DEBUG
+    if (!err) {
+	fprintf(stderr, "HR init:\n");
+	for (i=0; i<ainfo->nc; i++) {
+	    fprintf(stderr, "coeff[%d] = %g\n", i, coeff[i]);
+	}
+    }
+#endif
 
  bailout:
 
@@ -2554,17 +2571,24 @@ static int prefer_hr_init (struct arma_info *ainfo)
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
 
-#if 1
 	/* don't use for gappy arma (yet?) */
 	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    ret = 0;
 	}
-#endif
 
 	/* unlikely to work well with small sample */
 	if (ainfo->t2 - ainfo->t1 < 100) {
 	    ret = 0;
 	}
+
+#if 1 
+	/* not sure about this: HR catches the MA terms, but NLS
+	   handles better the AR interactions
+	*/
+	if (ainfo->p > 0 && ainfo->P > 0) {
+	    ret = 0;
+	}
+#endif
 
 	/* overlapping orders screw things up */
 	if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||

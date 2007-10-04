@@ -2622,16 +2622,36 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-enum {
-    DS_ADDOBS,
-    DS_COMPACT,
-    DS_EXPAND,
-    DS_TRANSPOSE
-};
-
-static int get_dataset_param (const char *s, int code, 
-			      DATAINFO *pdinfo, int *err)
+int dataset_op_from_string (const char *s)
 {
+    int op = DS_NONE;
+
+    if (!strcmp(s, "addobs")) {
+	op = DS_ADDOBS;
+    } else if (!strcmp(s, "compact")) {
+	op = DS_COMPACT;
+    } else if (!strcmp(s, "expand")) {
+	op = DS_EXPAND;
+    } else if (!strcmp(s, "transpose")) {
+	op = DS_TRANSPOSE;
+    } else if (!strcmp(s, "delete")) {
+	op = DS_DELETE;
+    } else if (!strcmp(s, "keep")) {
+	op = DS_KEEP;
+    } else if (!strcmp(s, "sortby")) {
+	op = DS_SORTBY;
+    } else if (!strcmp(s, "dsortby")) {
+	op = DS_DSORTBY;
+    }
+
+    return op;
+}
+
+static int dataset_int_param (const char *s, int code, 
+			      double **Z, DATAINFO *pdinfo, 
+			      int *err)
+{
+    char test[32];
     int k = 0;
 
     if ((code == DS_COMPACT || code == DS_EXPAND) &&
@@ -2640,11 +2660,15 @@ static int get_dataset_param (const char *s, int code,
 	return 0;
     }
 
-    s += strspn(s, " \t");
+    *test = '\0';
+    sscanf(s, "%31s", test);
 
-    if (sscanf(s, "%d", &k) != 1) {
-	*err = E_PARSE;
-    } else if (k <= 0) {
+    k = gretl_int_from_string(test, (const double **) Z, pdinfo, err);
+    if (*err) {
+	return 0;
+    }
+
+    if (k <= 0) {
 	*err = E_DATA;
     } else if (code == DS_COMPACT) {
 	int ok = 0;
@@ -2697,44 +2721,40 @@ static int compact_data_set_wrapper (const char *s, double ***pZ,
     return compact_data_set(pZ, pdinfo, k, method, 0, 0);
 }
 
-int modify_dataset (const char *s, double ***pZ, 
-		    DATAINFO *pdinfo, PRN *prn)
+int modify_dataset (int op, const int *list, const char *s, 
+		    double ***pZ, DATAINFO *pdinfo, 
+		    PRN *prn)
 {
-    int k, err = 0;
+    int k = 0, err = 0;
 
     if (complex_subsampled()) {
 	strcpy(gretl_errmsg, _("The data set is currently sub-sampled"));
 	return 1;
     }
 
-    if (!strncmp(s, "dataset ", 8)) {
-	/* skip initial word */
-	s += 8;
+    if (op == DS_ADDOBS || op == DS_COMPACT || op == DS_EXPAND) {
+	k = dataset_int_param(s, op, *pZ, pdinfo, &err);
+	if (err) {
+	    return err;
+	}
     }
 
-    s += strspn(s, " \t");
-
-    if (!strncmp(s, "addobs ", 7)) {
-	k = get_dataset_param(s + 7, DS_ADDOBS, pdinfo, &err);
-	if (!err) {
-	    err = add_obs(k, pZ, pdinfo, prn);
-	}
-    } else if (!strncmp(s, "compact ", 8)) {
-	k = get_dataset_param(s + 8, DS_COMPACT, pdinfo, &err);
-	if (!err) {
-	    err = compact_data_set_wrapper(s + 8, pZ, pdinfo, k);
-	}
-    } else if (!strncmp(s, "expand ", 7)) {
-	k = get_dataset_param(s + 7, DS_EXPAND, pdinfo, &err);
-	if (!err) {
-	    err = expand_data_set(pZ, pdinfo, k);
-	}
-    } else if (!strncmp(s, "transpos", 8)) {
+    if (op == DS_ADDOBS) {
+	err = add_obs(k, pZ, pdinfo, prn);
+    } else if (op == DS_COMPACT) {
+	err = compact_data_set_wrapper(s, pZ, pdinfo, k);
+    } else if (op == DS_EXPAND) {
+	err = expand_data_set(pZ, pdinfo, k);
+    } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(pZ, pdinfo);
-    } else if (!strncmp(s, "sortby ", 7)) {
-	err = dataset_sort(s + 7, *pZ, pdinfo, OPT_NONE);
-    } else if (!strncmp(s, "dsortby ", 8)) {
-	err = dataset_sort(s + 8, *pZ, pdinfo, OPT_D);
+    } else if (op == DS_SORTBY) {
+	err = dataset_sort(s, *pZ, pdinfo, OPT_NONE);
+    } else if (op == DS_DSORTBY) {
+	err = dataset_sort(s, *pZ, pdinfo, OPT_D);
+    } else if (op == DS_DELETE) {
+	pprintf(prn, "dataset delete: not ready yet\n");
+    } else if (op == DS_KEEP) {
+	pprintf(prn, "dataset keep: not ready yet\n");
     } else {
 	err = E_PARSE;
     }

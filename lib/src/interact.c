@@ -179,6 +179,15 @@ static int list_genr_command (char *line)
     return 0;
 }
 
+static void cmd_set_param_direct (CMD *cmd, const char *s)
+{
+    free(cmd->param);
+    cmd->param = gretl_strdup(s);
+    if (cmd->param == NULL) {
+	cmd->err = E_ALLOC;
+    }
+}
+
 /* catch aliased command words and assign ci; return
    ci if alias caught, else 0. */
 
@@ -230,14 +239,17 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->opt = OPT_I;
     } else if (!strcmp(s, "addobs")) {
 	cmd->ci = DATAMOD;
+	cmd_set_param_direct(cmd, "addobs");
     } else if (!strcmp(s, "transpos")) {
 	cmd->ci = DATAMOD;
+	cmd_set_param_direct(cmd, "transpose");
     }
 
     return cmd->ci;
 }
 
 #define REQUIRES_PARAM(c) (c == ADDTO || \
+                           c == DATAMOD || \
                            c == FCAST || \
                            c == FUNC || \
                            c == LOOP ||  \
@@ -261,7 +273,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == CRITERIA || \
 	               c == CUSUM || \
                        c == DATA || \
-                       c == DATAMOD || \
                        c == END || \
 	               c == ENDLOOP || \
                        c == ESTIMATE || \
@@ -1614,6 +1625,31 @@ static int fix_semicolon_after_var (char *s)
     return len;
 }
 
+static int check_datamod_command (CMD *cmd, const char *s)
+{
+    cmd->aux = dataset_op_from_string(cmd->param);
+
+    if (cmd->aux == DS_NONE) {
+	cmd->err = E_PARSE;
+    } else {
+	/* skip param word and space */
+	s += strcspn(s, " ");
+	s += strspn(s, " ");
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
+	if (cmd->param == NULL) {
+	    cmd->err = E_ALLOC;
+	} 
+    }
+
+#if CMD_DEBUG
+    fprintf(stderr, "check_datamod_command: param='%s', aux = %d\n", 
+	    cmd->param, cmd->aux);
+#endif
+
+    return cmd->err;
+}
+
 /* apparatus for checking that the "end" command is valid */
 
 #define COMMAND_CAN_END(c) (c == FUNC || \
@@ -1681,6 +1717,9 @@ static int capture_param (const char *s, CMD *cmd,
     /* if param has already been written by some special
        routine, don't overwrite it */
     if (*cmd->param != '\0') {
+	if (cmd->ci == DATAMOD) {
+	    check_datamod_command(cmd, s);
+	}
 	return cmd->err;
     }
 
@@ -1713,8 +1752,9 @@ static int capture_param (const char *s, CMD *cmd,
 	}
     }
 
-    if (cmd->ci == END) {
-	/* test that param is present and valid */
+    if (cmd->ci == DATAMOD) {
+	check_datamod_command(cmd, s);
+    } else if (cmd->ci == END) {
 	check_end_command(cmd);
     }
 
@@ -2197,7 +2237,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }
 
-    /** now for a few command which may or may not take a list **/
+    /** now for a few commands which may or may not take a list **/
 
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
@@ -2223,6 +2263,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* OMIT typically takes a list, but can be given without args
        to omit the last variable */
     if (cmd->ci == OMIT && string_is_blank(line + 4)) {
+	cmd_set_nolist(cmd);
+	return cmd->err;
+    }
+
+    /* dataset-modifying commands */
+    if (cmd->ci == DATAMOD) {
+	capture_param(line, cmd, NULL, NULL, NULL);
 	cmd_set_nolist(cmd);
 	return cmd->err;
     }
@@ -3852,7 +3899,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case DATAMOD:
-	err = modify_dataset(line, pZ, pdinfo, prn);
+	err = modify_dataset(cmd->aux, cmd->list, cmd->param, pZ, 
+			     pdinfo, prn);
 	if (!err) { 
 	    print_smpl(pdinfo, get_full_length_n(), prn);
 	    if (s->callback != NULL) {
