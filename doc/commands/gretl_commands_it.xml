@@ -516,7 +516,7 @@
       <para context="cli">
 	Se non viene fornita una lista di <repl>variabili-indipendenti</repl>,
         stima un modello autoregressivo integrato a media mobile (ARIMA: Autoregressive,
-        Integrated, Moving Average) univariato.  I valori interi <repl>p</repl>,
+        Integrated, Moving Average) univariato.  I valori <repl>p</repl>,
         <repl>d</repl> e <repl>q</repl> rappresentano rispettivamente gli ordini
         dei termini autoregressivi (AR), l'ordine di differenziazione, e quello dei termini
         a media mobile (MA).  Questi valori possono essere indicati in forma
@@ -525,15 +525,24 @@
         parametri ARMA occorre prendere la differenza della variabile
         dipendente.
       </para>
+
+      <para context="cli">
+        Se si vuole includere solo alcuni specifici ritardi AR o MA (invece che
+        tutti i ritardi fino all'ordine specificato) è possibile sostituire
+        <repl>p</repl> e/o <repl>q</repl> in due modi: col nome di una matrice
+        predefinita che contiene un insieme di valori interi, oppure con
+        un'espressione come <lit>{1 4}</lit>, osia un insieme di ritardi
+        separati da spazi e racchiusi tra parentesi graffe.
+      </para>
         
       <para context="cli">
         I valori interi opzionali <repl>P</repl>, <repl>D</repl> e
         <repl>Q</repl> rappresentano rispettivamente, l'ordine dei termini AR
         stagionali, l'ordine di differenziazione stagionale e l'ordine dei
         termini MA stagionali. Essi sono rilevanti solo la frequenza dei dati è
-        superiore a 1 (ad esempio, dati trimestrali o mensili). Anche questi
-        valori possono essere indicati in forma numerica o con i nomi di
-        variabili scalari preesistenti.
+        superiore a 1 (ad esempio, dati trimestrali o mensili). Questi
+        valori devono essere indicati in forma numerica o come variabili
+        scalari.
       </para>
       
       <para context="cli">
@@ -565,14 +574,22 @@
         includere termini stagionali.
       </para>
 
+      <para context="gui">
+        Se si vuole includere solo alcuni specifici ritardi AR o MA (invece che
+        tutti i ritardi fino all'ordine specificato) è possibile marcare la
+        casella a destra del selettore e scrivere nel campo disponibile
+        un elenco di ritardi, separati da spazi. In alternativa, se è stata
+        definita una matrice che contiene l'insieme dei ritardi desiderati, è
+        possibile scrivere il suo nome nel campo.
+      </para>
+
       <para>Il funzionamento predefinito utilizza la funzionalità ARMA 
         <quote>interna</quote> di gretl, che usa la stima di massima
-        verosimiglianza esatta (usando il filtro di Kalman). In alternativa,
-        è possibile usare la stima di massima verosimiglianza condizionale,
-        oppure usare <program>X-12-ARIMA</program>, con massima verosimiglianza
-        esatta o condizionale (le ultime due opzioni sono disponibili se è stato
-        installato il programma	<program>X-12-ARIMA</program>). Per i dettagli,
-        si veda la <guideref targ="arma-estimation"/>.
+        verosimiglianza esatta usando il filtro di Kalman; come opzione è
+        possibile usare la stima di massima verosimiglianza condizionale.
+        Se è stato installato il programma <program>X-12-ARIMA</program> è
+        possibile usare questo al posto del codice interno di gretl.
+        Per i dettagli su queste opzioni si veda la <guideref targ="arma-estimation"/>.
       </para>
 
       <para>L'algoritmo interno di gretl per ARMA utilizza una procedura di
@@ -933,8 +950,10 @@
     <usage>
       <arguments>
         <argument>ordine</argument>
-        <argument>variabile-dipendente</argument>
-	<argument>variabili-indipendenti</argument>
+        <argument>lista-y</argument>
+	<argblock optional="true" separated="true">
+	  <argument>lista-x</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -974,12 +993,19 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
+        Esegue il test di Johansen per la cointegrazione tra le variabili della
+        <repl>lista-y</repl> per l'ordine specificato di ritardi.I valori critici
+        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
+        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
+        Series Analysis</book> (1994), Cap. 20.
+      </para>
+      <para context="gui">
         Esegue il test di Johansen per la cointegrazione tra le variabili
-        elencate per l'ordine specificato.  I valori critici sono calcolati con
-        l'approssimazione gamma di J. Doornik (Doornik, 1998). Per i dettagli su
-        questo test, si veda Hamilton, <book>Time Series Analysis</book> (1994),
-        Cap. 20.
+        elencate per l'ordine specificato di ritardi.I valori critici
+        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
+        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
+        Series Analysis</book> (1994), Cap. 20.
       </para>
       <para context="cli">
 	L'inclusione di trend deterministici nel modello è controllata dalle
@@ -1006,6 +1032,14 @@
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
         casi e i criteri per scegliere tra di essi sono spiegati nella
 	<guideref targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
+	La <repl>lista-x</repl> opzionale permette di indicare le variabili
+        esogene per cui si intende controllare.
+      </para>
+      <para context="gui">
+	È possibile controllare per le variabili esogene aggiungendole nel campo
+        inferiore.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
@@ -1425,7 +1459,8 @@
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
         <example>dataset expand 12</example>
-        <example>dataset tranpose</example>
+        <example>dataset transpose</example>
+        <example>dataset sortby x1</example>
       </examples>
     </usage>
 
@@ -1433,8 +1468,9 @@
       <para>
 	Esegue varie operazioni sull'intero dataset, a seconda della
         <repl>parola-chiave</repl> usata, che può essere
-	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit> o
-	<lit>transpose</lit>.  Nota: questi comandi non sono disponibili quando
+	<lit>addobs</lit>, <lit>compact</lit>, <lit>expand</lit>,
+	<lit>transpose</lit>, <lit>sortby</lit> o <lit>dsortby</lit>.
+        Nota: questi comandi non sono disponibili quando
         sul dataset è definito un sotto-campione ottenuto selezionando le
         osservazioni con un criterio Booleano.
       </para>
@@ -1476,6 +1512,17 @@
         comando è utile quando si importano da fonti esterne dei dati
         organizzati con le variabili disposte per riga.
       </para>
+      <para>
+        <lit>sortby</lit>: richiede il nome di una variabile, che viene usata
+        come criterio di ordinamento. Le osservazioni di tutte le altre
+        variabili del dataset sono riordinate secondo valori crescenti della
+        variabile indicata. Questo comando è disponibile solo per dati non
+        datati.
+      </para>
+      <para>
+       <lit>dsortby</lit>: funziona come <lit>sortby</lit> ma riordina le
+       osservazioni secondo i valori decrescenti della variabile specificata.
+      </para>
     </description>
 
     <gui-access>
@@ -1483,8 +1530,22 @@
       <menu-path>/Dati/Compatta dati</menu-path>
       <menu-path>/Dati/Espandi dati</menu-path>
       <menu-path>/Dati/Trasponi</menu-path>
+      <menu-path>/Dati/Ordina dati</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="datasort" section="Dataset" context="gui"
+    label="Ordina i dati">
+  
+    <description>
+      <para>
+        La variabile selezionata viene usata come chiave di ordinamento per
+        l'intero dataset. Le osservazioni di tutte le variabili sono riordinate
+        secondo valori crescenti della variabile indicata, o secondo valori
+        decrescenti, se si usa l'opzione <quote>Decrescente</quote>.
+      </para>
+    </description>
   </command>
 
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
@@ -2762,6 +2823,11 @@
 	   <lit>$lnl</lit>: log-verosimiglianza (dove è applicabile)
 	  </para>
 	</li>
+        <li>
+          <para>
+          <lit>$gmmcrit</lit>: criterio GMM (solo per modelli GMM)
+          </para>
+        </li>
 	<li>
 	  <para>
 	    <lit>$coeff</lit>(<repl>variabile</repl>): coefficiente stimato per
@@ -8232,7 +8298,13 @@
       <arguments>
         <argument>ordine</argument>
 	<argument>rango</argument>
-        <argument>lista-variabili</argument>
+        <argument>lista-y</argument>
+	<argblock optional="true" separated="true">
+	  <argument>lista-x</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>lista-rx</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -8267,6 +8339,7 @@
       <examples>
         <example>vecm 4 1 Y1 Y2 Y3</example>
         <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+	<example>vecm 3 2 Y1 Y2 Y3 ; X1 --rc</example>
 	<demos>
 	  <demo>denmark.inp</demo>
 	  <demo>hamilton.inp</demo>
@@ -8298,7 +8371,7 @@
         Il parametro <repl>rango</repl> rappresenta il rango di cointegrazione,
         o in altre parole il numero di vettori di cointegrazione. Questo deve
         essere maggiore di zero e minore o uguale (in genere minore) al numero
-        di variabili endogene contenute nella <repl>lista variabili</repl>.
+        di variabili endogene contenute nella <repl>lista-y</repl>.
       </para>
       <para context="gui">
 	Il <quote>rango di cointegrazione</quote> rappresenta il numero di
@@ -8306,7 +8379,7 @@
         o uguale (in genere minore) al numero di variabili endogene selezionate.
       </para>
       <para context="cli">
-        La <repl>lista-variabili</repl> rappresenta l'elenco delle variabili
+        La <repl>lista-y</repl> rappresenta l'elenco delle variabili
         endogene, nei livelli. L'inclusione di trend deterministici nel modello
         è controllata dalle opzioni del comando. Se non si indica alcuna
         opzione, viene inclusa una <quote>costante non vincolata</quote>, che
@@ -8332,6 +8405,14 @@
         che sono mutualmente esclusive, producono rispettivamente i casi 1, 2, 4
         e 5. Il significato di questi casi e i criteri per scegliere tra di essi
         sono spiegati nella <guideref targ="vecm-explanation"/>.
+      </para>
+      <para context="cli">
+	Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl>
+        permettono di specificare insiemi di variabili esogene che entrano nel
+        modello in modo non vincolato (<repl>lista-x</repl>) o in modo vincolato
+        allo spazio di cointegrazione (<repl>lista-rx</repl>). Queste liste
+        vanno separate dalla <repl>lista-y</repl> (e tra di loro) da caratteri
+        punto e virgola.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
