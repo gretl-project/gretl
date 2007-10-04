@@ -2605,7 +2605,7 @@ static struct test_strings tstrings[] = {
 static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 {
     const char *descrip = NULL;
-    char *param = NULL;
+    const char *param = NULL;
     char ordstr[16];
     int i;
 
@@ -2825,20 +2825,12 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
-    const char *tstat;
+    const char *tstr;
     char buf[512];
-
-    if (test->teststat == GRETL_STAT_WALD_CHISQ) {
-	tstat = N_("Asymptotic test statistic");
-    } else {
-	tstat = N_("Test statistic");
-    }
 
     if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
     }
-
-    get_test_stat_string(test, buf, prn);
 
     if (heading) {
 	gretl_test_print_heading(test, prn);
@@ -2846,12 +2838,17 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
     gretl_test_print_h_0(test, heading, prn);
 
+    tstr = (test->teststat == GRETL_STAT_WALD_CHISQ)?
+	N_("Asymptotic test statistic") : N_("Test statistic");
+
+    get_test_stat_string(test, buf, prn);
+
     if (plain_format(prn)) {
-	pprintf(prn, "\n  %s: %s\n", _(tstat), buf);
+	pprintf(prn, "\n  %s: %s\n", _(tstr), buf);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstat), buf);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstr), buf);
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstat), buf);
+	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstr), buf);
     }
 
     get_test_pval_string(test, buf, prn);
@@ -2884,7 +2881,7 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 {
     const ModelTest *test;
 
-    if (i < pmod->ntests) {
+    if (i >= 0 && i < pmod->ntests) {
 	test = &pmod->tests[i];
 	gretl_model_test_print_direct(test, 1, prn);
     }

@@ -1560,7 +1560,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     int v, oldv = pdinfo->v;
     int b0 = 0, by1 = 0;
     int nparam, lag;
-    int i, j, k, kp, err = 0;
+    int i, j, k, err = 0;
 
     spec = nlspec_new(NLS, pdinfo);
     if (spec == NULL) {
@@ -1570,6 +1570,9 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
+
+    fprintf(stderr, "nparam = %d + %d + %d + %d = %d\n",
+	    ainfo->ifc, ainfo->np, ainfo->P, ainfo->nexo, nparam);
 
     plist = gretl_list_new(nparam);
     if (plist == NULL) {
@@ -1582,29 +1585,30 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	goto bailout;
     }
 
-    /* construct names for the parameters, and param list;
-       also do some initialization -- but FIXME in that regard?
-    */
+    /* make names for the parameters; construct the param list;
+       and do some rudimentary fall-back initialization */
 
     v = oldv;
     k = 1;
+
     if (ainfo->ifc) {
 	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 	strcpy(pdinfo->varname[v], "b0");
 	b0 = v;
 	plist[k++] = v++;
     }
-    kp = 0;
-    for (i=0; i<ainfo->np; i++) {
+
+    for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
 	    if (by1 == 0) {
 		by1 = v;
 		(*pZ)[v][0] = 0.1;
 	    }
-	    sprintf(pdinfo->varname[v], "phi%d", ++kp);
+	    sprintf(pdinfo->varname[v], "phi%d", i+1);
 	    plist[k++] = v++;
 	}
     }
+
     for (i=0; i<ainfo->P; i++) {
 	if (by1 == 0) {
 	    by1 = v;
@@ -1613,6 +1617,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	sprintf(pdinfo->varname[v], "Phi%d", i+1);
 	plist[k++] = v++;
     }
+
     for (i=0; i<ainfo->nexo; i++) {
 	sprintf(pdinfo->varname[v], "b%d", i+1);
 	plist[k++] = v++;
@@ -1662,12 +1667,14 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 #if AINIT_DEBUG
     fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
     for (i=0; i<plist[0]; i++) {
-	fprintf(stderr, "intial NLS b[%d] = %g\n",
+	fprintf(stderr, "initial NLS b[%d] = %g\n",
 		i, (*pZ)[oldv+i][0]);
     }
+    printlist(plist, "NLS param list");
 #endif
 
     err = nlspec_set_regression_function(spec, fnstr, pdinfo);
+    
 
     if (!err) {
 	err = nlspec_add_param_list(spec, plist, (const double **) *pZ,
