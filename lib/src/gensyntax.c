@@ -1014,10 +1014,10 @@ NODE *expr (parser *p)
 	t = newb3(p->sym, t, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b3.m = expr0(p);
+	    t->v.b3.m = expr(p);
 	    if (p->sym == COL) {
 		lex(p);
-		t->v.b3.r = expr0(p);
+		t->v.b3.r = expr(p);
 	    } else {
 		expected_symbol_error(':', p);
 	    }

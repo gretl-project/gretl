@@ -651,7 +651,8 @@ static void look_up_word (const char *s, parser *p)
 static void word_check_next_char (const char *s, parser *p)
 {
 #if LDEBUG
-    fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
+    if (p->ch) fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
+    else fprintf(stderr, "word_check_next_char: ch = NUL\n");
 #endif
 
     if (p->ch == '(') {
@@ -881,7 +882,8 @@ static void deprecation_note (parser *p)
 void lex (parser *p)
 {
 #if LDEBUG
-    fprintf(stderr, "lex: p->ch = '%c'\n", p->ch);
+    if (p->ch) fprintf(stderr, "lex: p->ch = '%c'\n", p->ch);
+    else fprintf(stderr, "lex: p->ch = NUL\n");
 #endif
 
     while (p->ch != 0) {

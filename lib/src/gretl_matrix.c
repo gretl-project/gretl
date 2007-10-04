@@ -1733,7 +1733,7 @@ static int max_numchars (const gretl_matrix *m)
     int i, n = m->rows * m->cols;
     int c, cmax = 0;
 
-    for (i = 0; i < n && cmax < 5; i++) {
+    for (i = 0; i < n && cmax < 6; i++) {
 	sprintf(s, "%g", m->val[i]);
 	c = strlen(s);
 	if (c > cmax) {
