@@ -2469,8 +2469,11 @@ static void plain_print_pval (double pval, PRN *prn)
 
 static void plain_print_tval (double tval, PRN *prn)
 {
-    if (fabs(tval) >= 1000) { 
-	/* || t < .001 ? */
+    double abst = fabs(tval);
+
+    if (abst >= 1000 && abst < 100000) {
+	pprintf(prn, " %7.0f", tval);
+    } else if (abst >= 1000) { 
 	char numstr[9];
 
 	sprintf(numstr, "%#8.2G", tval);

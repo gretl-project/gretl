@@ -2555,9 +2555,10 @@
 	    <func>exp</func>, <func>int</func> (integer part),
 	    <func>ln</func> (natural logarithm: <func>log</func> is a
 	    synonym), <func>log10</func> (log to the base 10),
-	    <func>log2</func> (log to the base 2), <func>sqrt</func>.  All
-	    of these take a single argument, which may be either a series
-	    or a scalar.
+	    <func>log2</func> (log to the base 2), <func>sqrt</func>
+	    (square root), <func>ceil</func> (ceiling: round up to nearest
+	    integer).  All of these take a single argument, which may be
+	    either a series or a scalar.
 	  </para>
 	</li>
 
