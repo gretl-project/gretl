@@ -2530,13 +2530,15 @@
       </para>
 
       <ilist>
-	<li><para>Funzioni matematiche standard: <func>abs</func>,
+	<li>
+          <para>Funzioni matematiche standard: <func>abs</func>,
 	    <func>exp</func>, <func>int</func> (parte intera),
 	    <func>ln</func> (logaritmo naturale: <func>log</func> è un
             sinonimo), <func>log10</func> (logaritmo in base 10),
-            <func>log2</func> (logaritmo in base 2), <func>sqrt</func>.
-            Tutte queste funzioni accettano un singolo argomento, che può essere
-            una serie o uno scalare.
+            <func>log2</func> (logaritmo in base 2), <func>sqrt</func>
+            (radice quadrata), <func>ceil</func> (ceiling: arrotonda per
+            eccesso all'intero superiore).  Tutte queste funzioni accettano un
+            singolo argomento, che può essere una serie o uno scalare.
 	  </para>
 	</li>
 	<li>
