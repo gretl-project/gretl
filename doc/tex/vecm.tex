@@ -1,0 +1,318 @@
+\chapter{Cointegration and Vector Error Correction Models}
+\label{chap:vecm}
+
+\section{Introduction}
+\label{sec:VECM-intro}
+
+The twin concepts of cointegration and error correction have drawn a
+good deal of attention in macroeconometrics over recent years.
+The attraction of the Vector Error Correction Model (VECM) is that
+it allows the researcher to embed a representation of economic
+equilibrium relationships within a relatively rich time-series
+specification.  
+
+\section{Vector Error Correction Models as representation of a
+  cointegrated system}
+\label{sec:VECM-rep}
+
+Consider a VAR of order $p$ with a deterministic part given by $\mu_t$
+(typically, a polynomial in time). One can write the $n$-variate
+process $y_t$ as
+\begin{equation}
+  \label{eq:VECM-VAR}
+  y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
+  \epsilon_t 
+\end{equation}
+But since $y_t \equiv y_{t-1} - \Delta y_t$ and $y_{t-i} \equiv
+y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
+y_{t-i+1})$, we can re-write the above as
+\begin{equation}
+  \label{eq:VECM}
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
+  y_{t-i} + \epsilon_t ,
+\end{equation}
+where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
+This is the VECM representation of (\ref{eq:VECM-VAR}).
+
+The interpretation of (\ref{eq:VECM}) depends crucially on the rank of
+the matrix $\Pi$.
+\begin{itemize}
+\item If the rank of $\Pi$ is 0, the processes are all I(1).
+\item If $\Pi$ is of full rank, the processes are all I(0).
+\item In between, $\Pi$ can be written as $\alpha \beta'$ and you have
+  cointegration.
+\end{itemize}
+
+The rank of $\Pi$ is investigated by computing the eigenvalues of a
+closely related matrix (call it $M$) whose rank is the same as $\Pi$:
+however, $M$ is by construction symmetric and positive semidefinite.
+As a consequence, all its eigenvalues are real and non-negative; tests
+on the rank of $\Pi$ can therefore be carried out by testing how many
+eigenvalues of $M$ are 0.
+
+If all the eigenvalues are significantly different from 0, then all the
+processes are stationary. If, on the contrary, there is at least one
+zero eigenvalue, then the $y_t$ process is integrated, although some
+linear combination $\beta'y_t$ might be stationary. On the other
+extreme, if no eigenvalues are significantly different from 0, then not
+only the process $y_t$ is non-stationary, but the same holds for any
+linear combination $\beta'y_t$; in other words, no cointegration
+occurs.
+
+The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
+on individual eigenvalues, and the ``trace'' test, for joint
+hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
+tests.  
+
+As in the ADF test, the asymptotic distribution of the tests varies
+with the deterministic kernel $\mu_t$ one includes in the VAR.
+\app{gretl} provides the following options (for a short discussion of
+the meaning of the five options, see section \ref{sec:johansen-test} below):
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
+    $\mu_0$ &  default \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    \hline
+  \end{tabular}
+\end{center}
+Note that for this command the above options are mutually exclusive.
+In addition, you have the option of using the \verb|--seasonal|
+options, for augmenting $\mu_t$ with centered seasonal dummies.  In
+each case, p-values are computed via the approximations by Doornik
+(1998).
+
+The following code uses the \cmd{denmark} database, supplied with
+\app{gretl}, to replicate Johansen's example found in his 1995 book.
+%
+\begin{code}
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+%
+In this case, the vector $y_t$ in equation (\ref{eq:VECM})
+comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
+\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:VECM}) plus
+one. Part of the output is reported below:
+
+\begin{center}
+\begin{code}
+Johansen test:
+Number of equations = 4
+Lag order = 2
+Estimation period: 1974:3 - 1987:3 (T = 53)
+
+Case 2: Restricted constant
+Rank Eigenvalue Trace test p-value   Lmax test  p-value
+   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
+   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
+   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
+   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+\end{code}
+\end{center}
+
+Since both the trace and $\lambda$-max accept the null hypothesis that
+the smallest eigenvalue is in fact 0, we may conclude that the series
+are in fact non-stationary. However, some linear combination may be
+$I(0)$, as indicated by the rejection of the $\lambda$-max of the
+hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
+clear-cut evidence for this).
+
+\section{The Johansen cointegration test}
+\label{sec:johansen-test}
+
+The Johansen test for cointegration is used to establish the rank of
+$\beta$; in other words, how many cointegration vectors the system
+has.  This test has to take into account what hypotheses one is
+willing to make on the deterministic terms, which leads to the famous
+``five cases.'' A full and general illustration of the five cases
+requires a fair amount of matrix algebra, but an intuitive
+understanding of the issue can be gained by means of a simple example.
+    
+Consider a series $x_t$ which behaves as follows
+%      
+\[ x_t = m + x_{t-1} + \varepsilon_t \] 
+%
+where $m$ is a real number and $\varepsilon_t$ is a white noise
+process. As is easy to show, $x_t$ is a random walk which fluctuates
+around a deterministic trend with slope $m$. In the special case $m$ =
+0, the deterministic trend disappears and $x_t$ is a pure random walk.
+    
+Consider now another process $y_t$, defined by
+%      
+\[ y_t = k + x_t + u_t \] 
+%
+where, again, $k$ is a real number and $u_t$ is a white noise process.
+Since $u_t$ is stationary by definition, $x_t$ and $y_t$ cointegrate:
+that is, their difference
+%      
+\[ z_t = y_t - x_t = k + u_t \]
+%	
+is a stationary process. For $k$ = 0, $z_t$ is simple zero-mean white
+noise, whereas for $k$ $\ne$ 0 the process $z_t$ is white noise with a
+non-zero mean.
+  
+After some simple substitutions, the two equations above can be
+represented jointly as a VAR(1) system
+%      
+\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
+  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+\right] \]
+%	
+or in VECM form
+%      
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+  \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+%	
+where $\beta$ is the cointegration vector and $\alpha$ is the
+``loadings'' or ``adjustments'' vector.
+     
+We are now in a position to consider three possible cases:
+    
+\begin{enumerate}
+\item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
+  follows that $y_t$ also follows a linear trend because on average it
+  keeps at a distance $k$ from $x_t$. The vector
+  $\mu_0$ is unrestricted.  This case is the default
+  for gretl's \cmd{vecm} command.
+	
+\item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
+  as a consequence neither is $y_t$. However, the mean distance
+  between $y_t$ and $x_t$ is non-zero. The vector
+  $\mu_0$ is given by
+%	  
+  \[
+  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
+  \]
+%	    
+  which is not null and therefore the VECM shown above does have a
+  constant term. The constant, however, is subject to the restriction
+  that its second element must be 0. More generally,
+  $\mu_0$ is a multiple of the vector $\alpha$. Note
+  that the VECM could also be written as
+%	  
+  \[
+  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
+  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
+    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
+    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
+  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
+    \end{array} \right]
+  \]
+%	   
+  which incorporates the intercept into the cointegration vector. This
+  is known as the ``restricted constant'' case; it may be specified in
+  gretl's \cmd{vecm} command using the option flag \verb+--rc+.
+	
+\item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
+  neither $x_t$ nor $y_t$ are trended, and the mean distance between
+  them is zero. The vector $\mu_0$ is also 0, which
+  explains why this case is referred to as ``no constant.''  This case
+  is specified using the option flag \verb+--nc+ with \cmd{vecm}.
+	
+\end{enumerate}
+
+In most cases, the choice between the three possibilities is based on
+a mix of empirical observation and economic reasoning. If the
+variables under consideration seem to follow a linear trend then we
+should not place any restriction on the intercept. Otherwise, the
+question arises of whether it makes sense to specify a cointegration
+relationship which includes a non-zero intercept. One example where
+this is appropriate is the relationship between two interest rates:
+generally these are not trended, but the VAR might still have an
+intercept because the difference between the two (the ``interest rate
+spread'') might be stationary around a non-zero mean (for example,
+because of a risk or liquidity premium).
+    
+The previous example can be generalized in three directions:
+    
+\begin{enumerate}
+\item If a VAR of order greater than 1 is considered, the algebra gets
+  more convoluted but the conclusions are identical.
+\item If the VAR includes more than two endogenous variables the
+  cointegration rank $r$ can be greater than 1. In this case, $\alpha$
+  is a matrix with $r$ columns, and the case with restricted constant
+  entails the restriction that $\mu_0$ should be some
+  linear combination of the columns of $\alpha$.
+\item If a linear trend is included in the model, the deterministic
+  part of the VAR becomes $\mu_0 + \mu_1 t$. The reasoning is
+  practically the same as above except that the focus now centers on
+  $\mu_1$ rather than $\mu_0$.  The counterpart to the ``restricted
+  constant'' case discussed above is a ``restricted trend'' case, such
+  that the cointegration relationships include a trend but the first
+  differences of the variables in question do not.  In the case of an
+  unrestricted trend, the trend appears in both the cointegration
+  relationships and the first differences, which corresponds to the
+  presence of a quadratic trend in the variables themselves (in
+  levels).  These two cases are specified by the option flags
+  \verb+--crt+ and \verb+--ct+, respectively, with the \cmd{vecm}
+  command.
+\end{enumerate}
+
+\section{Identification of the cointegration vectors}
+\label{sec:johansen-ident}
+
+\textbf{FIXME: this is but a stub}
+
+Maximum likelihood estimation of $\beta$ can be shown to be equivalent
+to solving an eigenvector problem. In practice, if the cointegration
+rank is known to be $r$, the $n \times r$ matrix $\beta$ is estimated
+as the solution to the following matrix equation:
+\[
+  M \beta = \beta \langle \lambda \rangle
+\]
+where $\langle \lambda \rangle$ is a diagonal matrix containing the
+eigenvalues. Notice, however, that if all columns of $\beta$ are
+cointegration vectors, then any arbitrary linear combinations of those
+is a cointegration vector too. This means that the matrix $\beta$ is
+under-identified. As a consequence, its elements do not have a proper
+covariance matrix, but this difficulty can be circumvented by imposing
+an appropriate number of restrictions. The method \app{gretl} uses is
+known as the ``Phillips normalization''. The starting point is writing
+$\beta$ in partitioned form as in
+\[
+  \beta = \left[
+    \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
+    \right] ,
+\]
+where $\beta_1$ is an $r \times r$ matrix and  $\beta_2$ is $(n-r)
+\times r$. Assuming that $\beta_1$ has full rank, $\beta$ can be
+post-multiplied by $\beta_1^{-1}$, giving
+\[
+  \hat{\beta} = \left[
+    \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
+    \right] =
+    \left[
+    \begin{array}{c} I \\ \hat{\beta_2} \end{array}
+  \right]  ,
+\]
+
+The coefficients that \app{gretl} produces are $\hat{\beta}$, with
+$\hat{\beta_2}$ known as the matrix of unrestricted coefficients.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

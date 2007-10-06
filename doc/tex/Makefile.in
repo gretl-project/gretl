@@ -29,6 +29,7 @@ TEXSRC = cli.tex \
 	probit.tex \
 	nls.tex \
 	timeseries.tex \
+	vecm.tex \
 	functions.tex \
 	gretltex.tex \
 	cheatsheet.tex \
