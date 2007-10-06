@@ -908,7 +908,6 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
 
     int difference = 0;
     int v = mdata_active_var();
-
     int okT, omax, err;
 
     if (order < 0) {
@@ -984,9 +983,9 @@ void unit_root_test (gpointer p, guint action, GtkWidget *w)
     }
 
     if (action == ADF) {
-	err = adf_test(order, libcmd.list[1], &Z, datainfo, libcmd.opt, prn);
+	err = adf_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     } else {
-	err = kpss_test(order, libcmd.list[1], &Z, datainfo, libcmd.opt, prn);
+	err = kpss_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
     }
 
     if (err) {

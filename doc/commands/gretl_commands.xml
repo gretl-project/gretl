@@ -92,7 +92,7 @@
     <usage>
       <arguments>
         <argument>order</argument>
-        <argument>varname</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
 	<option>
@@ -143,17 +143,23 @@
     </usage>
 
     <description>
-      <para context="gui">This command needs an integer lag order; if
-	the order is zero a standard (not augmented)
-	Dickey&ndash;Fuller test is run.</para>
+      <para context="gui">
+	This command needs an integer lag order; if the order is zero a
+	standard (not augmented) Dickey&ndash;Fuller test is run. Computes
+	a set of Dickey&ndash;Fuller tests on the selected variable, the
+	null hypothesis being that the variable has a unit root.  (But if
+	the differencing option is selected, the first difference of the
+	variable is taken prior to testing, and the discussion below must
+	be taken as referring to the transformed variable.)	
+      </para>
 
-      <para>
-	Computes statistics for a set of Dickey&ndash;Fuller tests on the
-	specified variable, the null hypothesis being that the variable
-	has a unit root.  (But if the differencing option is selected, the
-	first difference of the variable is taken prior to testing, and
-	the discussion below must be taken as referring to the transformed
-	variable.)
+      <para context="cli">
+	Computes a set of Dickey&ndash;Fuller tests on each of the the
+	listed variables, the null hypothesis being that the variable in
+	question has a unit root.  (But if the <lit>--difference</lit>
+	flag is given, the first difference of the variable is taken prior
+	to testing, and the discussion below must be taken as referring to
+	the transformed variable.)
       </para>
 
       <para>By default, three variants of the test are shown: one
@@ -4051,7 +4057,7 @@
     <usage>
       <arguments>
         <argument>order</argument>
-        <argument>varname</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
 	<option>
@@ -4090,9 +4096,9 @@
 
       <para context="cli">
 	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
-	1992) for stationarity of the specified variable (or its first
-	difference, if the <lit>--difference</lit> option is selected).
-	The null hypothesis is that the variable in question is
+	1992) for stationarity, for each of the specified variables (or
+	their first difference, if the <lit>--difference</lit> option is
+	selected). The null hypothesis is that the variable in question is
 	stationary, either around a level or, if the <lit>--trend</lit>
 	option is given, around a deterministic linear trend.  
       </para>

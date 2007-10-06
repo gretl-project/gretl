@@ -28,10 +28,10 @@ typedef enum {
     UR_MAX
 } AdfCode;
 
-int adf_test (int order, int varno, double ***pZ,
+int adf_test (int order, const int *list, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-int kpss_test (int order, int varno, double ***pZ,
+int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 int coint (int order, const int *list, double ***pZ, 

@@ -3765,11 +3765,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     case ADF:
-	err = adf_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
+	err = adf_test(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case KPSS:
-	err = kpss_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
+	err = kpss_test(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case COINT:
@@ -4275,9 +4275,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 			     pdinfo, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
-	} else {
-	    gretl_cmd_destroy_context(cmd);
-	}
+	} 
 	break;
 
     case ADD:
@@ -4525,6 +4523,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     if (err) {
+	gretl_cmd_destroy_context(cmd);
 	errmsg(err, prn);
     }
 

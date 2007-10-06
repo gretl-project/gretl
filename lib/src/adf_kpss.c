@@ -537,7 +537,7 @@ static int real_adf_test (int varno, int order, int niv,
 /**
  * adf_test:
  * @order: lag order for the test.
- * @varno: ID number of the variable to test.
+ * @list: list of variables to test.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @opt: option flag.
@@ -549,30 +549,22 @@ static int real_adf_test (int varno, int order, int niv,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int adf_test (int order, int varno, double ***pZ,
+int adf_test (int order, const int *list, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    return real_adf_test(varno, order, 1, pZ, pdinfo, opt, 
-			 ADF_PRINT_ACK, prn);
+    int i, err = 0;
+
+    for (i=1; i<=list[0] && !err; i++) {
+	err = real_adf_test(list[i], order, 1, pZ, pdinfo, opt, 
+			    ADF_PRINT_ACK, prn);
+    }
+
+    return err;
 }
 
-/**
- * kpss_test:
- * @order: window size for Bartlett smoothing.
- * @varno: ID number of the variable to test.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @opt: option flag.
- * @prn: gretl printing struct.
- *
- * Carries out and prints the results of the KPSS test for 
- * stationarity.
- *
- * Returns: 0 on successful completion, non-zero on error.
- */
-
-int kpss_test (int order, int varno, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+static int 
+real_kpss_test (int order, int varno, double ***pZ,
+		DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     MODEL KPSSmod;
     int list[4];
@@ -697,6 +689,34 @@ int kpss_test (int order, int varno, double ***pZ,
     free(autocov);
 
     return 0;
+}
+
+/**
+ * kpss_test:
+ * @order: window size for Bartlett smoothing.
+ * @list: list of variables to test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: option flag.
+ * @prn: gretl printing struct.
+ *
+ * Carries out and prints the results of the KPSS test for 
+ * stationarity.
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int kpss_test (int order, const int *list, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+{
+    int i, err = 0;
+
+    for (i=1; i<=list[0] && !err; i++) {
+	err = real_kpss_test(order, list[i], pZ, pdinfo,
+			     opt, prn);
+    }
+
+    return err;
 }
 
 static int *make_coint_list (const int *list, int detcode, int *nv, 
