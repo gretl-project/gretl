@@ -1640,7 +1640,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     for (j=0; j<ainfo->P; j++) {
-	sprintf(term, "+Phi%d*", j + 1);
+	sprintf(term, "+Phi%d*", j+1);
 	strcat(fnstr, term);
 	lag = (j + 1) * ainfo->pd;
 	y_Xb_at_lag(fnstr, ainfo, narmax, lag);
