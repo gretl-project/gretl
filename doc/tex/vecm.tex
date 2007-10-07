@@ -24,7 +24,7 @@ variables are individually integrated of order 1, or I(1).  That is,
 while they are non-stationary in their levels, their first differences
 are stationary.  Given the statistical problems associated with the
 analysis of non-stationary data (for example, the threat of spurious
-regression), the traditional apporach in this case was to take first
+regression), the traditional approach in this case was to take first
 differences of all the variables before proceeding with the analysis.
 
 But this can result in the loss of important information.  It may be
@@ -217,13 +217,13 @@ take the form
 \]
 In order to have the model mimic as closely as possible the features
 of the observed data, there is one preliminary question to settle. Do
-the data follow what appears to be a deterministic trend? And if so,
-is it linear or quadratic?
+the data appear to follow a deterministic trend? And if so, is it
+linear or quadratic?
 
 Once this is established, one should impose restrictions on $\mu_0$
 and $\mu_1$ that are consistent with this choice. For example, suppose
-that the data do not fluctuate around a discernible trend. This means
-that $\Delta y_t$ is on average zero, so it is reasonable to expect
+that the data do not exhibit a discernible trend. This means
+that $\Delta y_t$ is on average zero, so it is reasonable to assume
 that its expected value is also zero. Write equation (\ref{eq:VECM})
 as
 
@@ -238,13 +238,13 @@ to possess finite moments. Taking unconditional expectations, we get
   0 = \mu_0 + \mu_1 \cdot t + \alpha m_z .
 \]
 Since the left-hand side does not depend on $t$, the restriction
-$\mu_1 = 0$ is a safe bet. As for $\mu_0$, there are only two
-possible ways that make the above expression true: either $\mu_0 = 0$ or, less
-restrictively, $\mu_0$ happens to be exactly equal to $-\alpha
-m_z$. This possibility is less restrictive in that the vector $\mu_0$ may be
-non-zero, but it is constrained to be a linear combination cof the
+$\mu_1 = 0$ is a safe bet. As for $\mu_0$, there are just two ways to
+make the above expression true: either $\mu_0 = 0$ or, less
+restrictively, $\mu_0$ happens to be exactly equal to $-\alpha m_z$.
+This possibility is less restrictive in that the vector $\mu_0$ may be
+non-zero, but it is constrained to be a linear combination of the
 columns of $\alpha$. But if this is the case, $\mu_0$ can be written
-as $\alpha \cdot c$, and on may write (\ref{eq:VECM-poly}) as
+as $\alpha \cdot c$, and one may write (\ref{eq:VECM-poly}) as
 \[
   \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
   \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
@@ -308,14 +308,14 @@ or in VECM form
 where $\beta$ is the cointegration vector and $\alpha$ is the
 ``loadings'' or ``adjustments'' vector.
      
-We are now in a position to consider three possible cases:
+We are now ready to consider three possible cases:
     
 \begin{enumerate}
 \item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
   follows that $y_t$ also follows a linear trend because on average it
-  keeps at a distance $k$ from $x_t$. The vector
-  $\mu_0$ is unrestricted.  This case is the default
-  for gretl's \cmd{vecm} command.
+  keeps at a distance $k$ from $x_t$. The vector $\mu_0$ is
+  unrestricted.  This case is the default for gretl's \cmd{vecm}
+  command.
 	
 \item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
   as a consequence neither is $y_t$. However, the mean distance
@@ -347,9 +347,9 @@ We are now in a position to consider three possible cases:
 	
 \item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
   neither $x_t$ nor $y_t$ are trended, and the mean distance between
-  them is zero. The vector $\mu_0$ is also 0, which
-  explains why this case is referred to as ``no constant.''  This case
-  is specified using the option flag \verb+--nc+ with \cmd{vecm}.
+  them is zero. The vector $\mu_0$ is also 0, which explains why this
+  case is referred to as ``no constant.''  This case is specified
+  using the option flag \verb+--nc+ with \cmd{vecm}.
 	
 \end{enumerate}
 
@@ -373,8 +373,8 @@ The previous example can be generalized in three directions:
 \item If the VAR includes more than two endogenous variables the
   cointegration rank $r$ can be greater than 1. In this case, $\alpha$
   is a matrix with $r$ columns, and the case with restricted constant
-  entails the restriction that $\mu_0$ should be some
-  linear combination of the columns of $\alpha$.
+  entails the restriction that $\mu_0$ should be some linear
+  combination of the columns of $\alpha$.
 \item If a linear trend is included in the model, the deterministic
   part of the VAR becomes $\mu_0 + \mu_1 t$. The reasoning is
   practically the same as above except that the focus now centers on
