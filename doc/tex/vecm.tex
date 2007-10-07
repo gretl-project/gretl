@@ -100,13 +100,22 @@ y_{t-i+1})$, we can re-write the above as
 where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
 This is the VECM representation of (\ref{eq:VECM-VAR}).
 
-The interpretation of (\ref{eq:VECM}) depends crucially on the rank of
+The interpretation of (\ref{eq:VECM}) depends crucially on $r$, the rank of
 the matrix $\Pi$.
 \begin{itemize}
-\item If the rank of $\Pi$ is 0, the processes are all I(1).
-\item If $\Pi$ is of full rank, the processes are all I(0).
+\item If $r = 0$, the processes are all I(1).
+\item If $r = n$, then $\Pi$ is invertible and the processes are all I(0).
 \item In between, $\Pi$ can be written as $\alpha \beta'$ and you have
-  cointegration.
+  cointegration. In this case, $y_t$ is I(1), but the combination $z_t
+  = \beta'y_t$ is I(0). If, for example, $r=1$ and the first element of
+  $\beta$ was $-1$, then one could write $z_t = -y_{1,t} + \beta_2
+  y_{2,t} + \cdots + \beta_n y_{n,t}$, which is equivalent to saying
+  that
+  \[
+    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} 
+  \]
+  is a long-run equilibrium relationship: the deviations $z_t$
+  may not be 0 but they are stationary.
 \end{itemize}
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
@@ -125,6 +134,9 @@ only the process $y_t$ is non-stationary, but the same holds for any
 linear combination $\beta'y_t$; in other words, no cointegration
 occurs.
 
+\section{The Johansen cointegration test}
+\label{sec:johansen-test}
+
 The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
 on individual eigenvalues, and the ``trace'' test, for joint
 hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
@@ -133,7 +145,7 @@ tests.
 As in the ADF test, the asymptotic distribution of the tests varies
 with the deterministic kernel $\mu_t$ one includes in the VAR.
 \app{gretl} provides the following options (for a short discussion of
-the meaning of the five options, see section \ref{sec:johansen-test} below):
+the meaning of the five options, see section \ref{sec:coint-5cases} below):
 \begin{center}
   \begin{tabular}{cc}
     \hline
@@ -189,18 +201,59 @@ $I(0)$, as indicated by the rejection of the $\lambda$-max of the
 hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
 clear-cut evidence for this).
 
-\section{The Johansen cointegration test}
-\label{sec:johansen-test}
+\section{Interpretation of the deterministic kernel}
+\label{sec:coint-5cases}
 
 The Johansen test for cointegration is used to establish the rank of
 $\beta$; in other words, how many cointegration vectors the system
 has.  This test has to take into account what hypotheses one is
 willing to make on the deterministic terms, which leads to the famous
-``five cases.'' A full and general illustration of the five cases
-requires a fair amount of matrix algebra, but an intuitive
-understanding of the issue can be gained by means of a simple example.
+``five cases.'' 
+
+In equation (\ref{eq:VECM}), the term $\mu_t$ is usually understood to
+take the form
+\[
+  \mu_t = \mu_0 + \mu_1 \cdot t .
+\]
+In order to have the model mimic as closely as possible the features
+of the observed data, there is one preliminary question to settle. Do
+the data follow what appears to be a deterministic trend? And if so,
+is it linear or quadratic?
+
+Once this is established, one should impose restrictions on $\mu_0$
+and $\mu_1$ that are consistent with this choice. For example, suppose
+that the data do not fluctuate around a discernible trend. This means
+that $\Delta y_t$ is on average zero, so it is reasonable to expect
+that its expected value is also zero. Write equation (\ref{eq:VECM})
+as
+
+\begin{equation}
+  \label{eq:VECM-poly}
+  \Gamma(L) \Delta y_t = \mu_0 + \mu_1 \cdot t + \alpha z_{t-1} +
+  \epsilon_t ,
+\end{equation}
+where $z_{t} = \beta' y_{t}$ is assumed to be stationary and therefore
+to possess finite moments. Taking unconditional expectations, we get
+\[ 
+  0 = \mu_0 + \mu_1 \cdot t + \alpha m_z .
+\]
+Since the left-hand side does not depend on $t$, the restriction
+$\mu_1 = 0$ is a safe bet. As for $\mu_0$, there are only two
+possible ways that make the above expression true: either $\mu_0 = 0$ or, less
+restrictively, $\mu_0$ happens to be exactly equal to $-\alpha
+m_z$. This possibility is less restrictive in that the vector $\mu_0$ may be
+non-zero, but it is constrained to be a linear combination cof the
+columns of $\alpha$. But if this is the case, $\mu_0$ can be written
+as $\alpha \cdot c$, and on may write (\ref{eq:VECM-poly}) as
+\[
+  \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
+  \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
+  + \epsilon_t ,
+\]
+and the long-run relationship contains an intercept.
     
-Consider a series $x_t$ which behaves as follows
+An intuitive understanding of the issue can be gained by means of a
+simple example. Consider a series $x_t$ which behaves as follows
 %      
 \[ x_t = m + x_{t-1} + \varepsilon_t \] 
 %
