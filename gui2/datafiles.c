@@ -19,7 +19,7 @@
 
 /* datafiles.c : for gretl */
 
-#undef COLL_DEBUG 
+#define COLL_DEBUG 0
 
 #include "gretl.h"
 #include "datafiles.h"
@@ -103,7 +103,7 @@ static char *full_path (char *s1, const char *s2)
 	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
     }
 
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
     fprintf(stderr, "full_path: got '%s' from '%s' + '%s'\n",
 	    fpath, s1, s2);
 #endif
@@ -403,7 +403,7 @@ static int get_file_collections_from_dir (const char *dname, DIR *dir)
 
     while (!err && (dirent = readdir(dir))) { 
 	if (strstr(dirent->d_name, "descriptions")) {
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
 	    fprintf(stderr, "   %s: looking at '%s'\n", dname, dirent->d_name);
 #endif
 	    n = strlen(dirent->d_name);
@@ -444,7 +444,7 @@ static int seek_file_collections (const char *topdir)
 	return 1;
     }
 
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
     fprintf(stderr, "seeking file collections in '%s'\n", topdir);
 #endif
 
@@ -457,11 +457,11 @@ static int seek_file_collections (const char *topdir)
 	    }
 	    try = opendir(subdir);
 	    if (try != NULL) {
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
 		fprintf(stderr, " trying in subdir '%s'\n", subdir);
 #endif
 		err = get_file_collections_from_dir(subdir, try);
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
 		fprintf(stderr, " result: err = %d\n", err);
 #endif
 		closedir(try);
@@ -476,7 +476,7 @@ static int seek_file_collections (const char *topdir)
     return err;
 }
 
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
 static void print_collection (const file_collection *coll)
 {
     printf("path = '%s'\n", coll->path);
@@ -530,7 +530,7 @@ static int build_file_collections (void)
 	built = 1;
     }
 
-#ifdef COLL_DEBUG
+#if COLL_DEBUG
     print_data_collections();
     print_script_collections();
 #endif
@@ -1567,7 +1567,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
 	g_object_set_data(G_OBJECT(coll->page), "coll", coll);
 	j++;
     }
-    
+
     if (code == TEXTBOOK_DATA) {
 	reset_data_stack();
     } else {
@@ -1595,6 +1595,7 @@ static int populate_notebook_filelists (windata_t *vwin,
 {
     file_collection *coll;
     const char *title;
+    int gotpref = 0;
     int gotcol = 0;
     int j;
 
@@ -1623,35 +1624,43 @@ static int populate_notebook_filelists (windata_t *vwin,
 	return 1;
     }
 
-    if (code == TEXTBOOK_DATA) {
-	reset_data_stack();
-    } else {
-	reset_ps_stack();
-    }
-
     j = 0;
 
     if (code == TEXTBOOK_DATA) {
+	reset_data_stack();
 	title = get_datapage();
 	if (*title != '\0') {
 	    while ((coll = pop_data_collection())) {
 		if (!strcmp(coll->title, title)) {
+		    gotpref = 1;
 		    break;
 		}
 		j++;
+	    }
+	    if (!gotpref) {
+		reset_data_stack();
+		coll = pop_data_collection();
+		j = 0;
 	    }
 	} else {
 	    coll = pop_data_collection();
 	}
     } else {
+	reset_ps_stack();
 	title = get_scriptpage();
 	if (*title != '\0') {
 	    while ((coll = pop_ps_collection())) {
 		if (!strcmp(coll->title, title)) {
+		    gotpref = 1;
 		    break;
 		}
 		j++;
 	    }
+	    if (!gotpref) {
+		reset_ps_stack();
+		coll = pop_ps_collection();
+		j = 0;
+	    }	    
 	} else {
 	    coll = pop_ps_collection();
 	}

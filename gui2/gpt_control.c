@@ -491,27 +491,11 @@ static void set_gp_color_styles (PRN *prn)
     }
 }
 
-static void print_line_with_color (PRN *prn, char *s, int lnum)
+static char *get_insert_point (char *s)
 {
-    const char *cstr = graph_color_string(lnum - 1);
-    char *p;
-    int cont = 1;
+    char *p = strstr(s, ", \\");
 
-    if (cstr == NULL) {
-	pputs(prn, s);
-	return;
-    }
-
-    if ((p = strstr(s, " lt "))) {
-	/* convert 'type' to 'style' */
-	*(p + 2) = 's';
-	pputs(prn, s);
-	return;
-    }
-
-    p = strstr(s, ", \\");
     if (p == NULL) {
-	cont = 0;
 	p = s + strlen(s) - 1;
     }
 
@@ -519,10 +503,55 @@ static void print_line_with_color (PRN *prn, char *s, int lnum)
 	p--;
     }
 
-    *p = '\0';
-    sprintf(p, " lt rgb \"#%s\"", cstr + 1);
+    return p;
+}
 
-    if (cont) {
+static void 
+print_line_with_color (PRN *prn, char *s, int lnum, int rgb,
+		       int *contd)
+{
+    const char *cstr = graph_color_string(lnum - 1);
+    char *p;
+
+    if (strstr(s, ", \\") == NULL) {
+	*contd = 0;
+    }
+
+#if GPDEBUG
+    fprintf(stderr, "lnum=%d, cstr='%s', rgb=%d\n", lnum, cstr, rgb);
+    fprintf(stderr, "s='%s'\n", s);
+#endif
+    
+    if (cstr == NULL) {
+	pputs(prn, s);
+	return;
+    }
+
+    if (!rgb) {
+	/* old gnuplot: can't do "rgb" line spec */
+	if (lnum == 2 && strcmp(cstr, "x00ff00") &&
+	    strstr(s, " lt ") == NULL) {
+	    p = get_insert_point(s);
+	    *p = '\0';
+	    strcpy(p, " lt 3");
+	} else {
+	    pputs(prn, s);
+	    return;
+	}
+    } else {
+	if ((p = strstr(s, " lt "))) {
+	    /* convert 'type' to 'style' */
+	    *(p + 2) = 's';
+	    pputs(prn, s);
+	    return;
+	} else {
+	    p = get_insert_point(s);
+	    *p = '\0';
+	    sprintf(p, " lt rgb \"#%s\"", cstr + 1);
+	}
+    }
+
+    if (*contd) {
 	pprintf(prn, "%s , \\\n", s);
     } else {
 	pprintf(prn, "%s\n", s);
@@ -560,9 +589,9 @@ static int filter_plot_file (const char *inname,
     gchar *plotcmd = NULL;
     FILE *fp = NULL;
     PRN *prn = NULL;
-    int ttype = 0, mono = 0;
+    int rgb = 0, ttype = 0, mono = 0;
     int lnum = -1, colorize = 0;
-    int contd = 0, err = 0;
+    int contd = 1, err = 0;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
 	return 1;
@@ -595,7 +624,8 @@ static int filter_plot_file (const char *inname,
     pprintf(prn, "set output '%s'\n", fname);
 
     if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)) {
-	if (plot_specifies_linetypes(pline, sizeof pline, fp)) {
+	rgb = gnuplot_has_rgb();
+	if (plot_specifies_linetypes(pline, sizeof pline, fp) && rgb) {
 	    set_gp_color_styles(prn);
 	} 
 	colorize = 1;
@@ -607,8 +637,6 @@ static int filter_plot_file (const char *inname,
 	    continue;
 	}
 
-	contd = (strstr(pline, ", \\") != NULL);
-
 	if (!strncmp(pline, "plot ", 5)) {
 	    lnum = 0;
 	} else if (lnum >= 0) {
@@ -619,14 +647,10 @@ static int filter_plot_file (const char *inname,
 	    pputs(prn, "set style fill solid 0.3\n");
 	} else if (ttype != GP_TERM_PNG && html_encoded(pline)) {
 	    pprint_as_latin(prn, pline, ttype == GP_TERM_EMF);
-	} else if (colorize && lnum > 0) {
-	    print_line_with_color(prn, pline, lnum);
+	} else if (colorize && lnum > 0 && contd) {
+	    print_line_with_color(prn, pline, lnum, rgb, &contd);
 	} else {
 	    pputs(prn, pline);
-	}
-
-	if (lnum > 0 && !contd) {
-	    lnum = 0;
 	}
 
 #if 0

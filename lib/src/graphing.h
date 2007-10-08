@@ -192,6 +192,8 @@ int gnuplot_has_cairo (void);
 
 int gnuplot_has_specified_colors (void);
 
+int gnuplot_has_rgb (void);
+
 int gnuplot_has_style_fill (void);
 
 int gnuplot_has_latin9 (void);

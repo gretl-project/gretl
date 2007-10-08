@@ -25,8 +25,7 @@
 
 enum {
     ADF_EG_TEST   = 1 << 0,
-    ADF_PRINT_ACK = 1 << 1,
-    ADF_EG_RESIDS = 1 << 2
+    ADF_EG_RESIDS = 1 << 1
 } adf_flags;
 
 static int *
@@ -516,9 +515,6 @@ static int real_adf_test (int varno, int order, int niv,
 	if (!(flags & ADF_EG_TEST) || (flags & ADF_EG_RESIDS)) {
 	    record_test_result(DFt, pv, "Dickey-Fuller");
 	}
-	if ((flags & ADF_PRINT_ACK) && !(opt & OPT_Q)) {
-	    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
-	}	
     }
 
  bailout:
@@ -556,7 +552,7 @@ int adf_test (int order, const int *list, double ***pZ,
 
     for (i=1; i<=list[0] && !err; i++) {
 	err = real_adf_test(list[i], order, 1, pZ, pdinfo, opt, 
-			    ADF_PRINT_ACK, prn);
+			    0, prn);
     }
 
     return err;
@@ -879,8 +875,7 @@ int coint (int order, const int *list, double ***pZ,
 
     /* Run (A)DF test on the residuals */
     real_adf_test(k, order, nv, pZ, pdinfo, adf_opt, 
-		  ADF_EG_TEST | ADF_EG_RESIDS | ADF_PRINT_ACK, 
-		  prn);
+		  ADF_EG_TEST | ADF_EG_RESIDS, prn); 
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 		 "(a) The unit-root hypothesis is not rejected for the individual"
