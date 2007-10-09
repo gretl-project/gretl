@@ -327,7 +327,8 @@ void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;
 
-    edit_dialog(_("gretl: add var"), _("Enter formula for new variable:"),
+    edit_dialog(_("gretl: add var"), 
+		_("Enter formula for new variable:"),
 		"", do_model_genr, mydata, 
 		MODEL_GENR, VARCLICK_INSERT_NAME, NULL);   
 }
@@ -410,7 +411,8 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	break;
     case GENR:
 	title = N_("gretl: add var");
-	query = N_("Enter formula for new variable:");
+	query = N_("Enter formula for new variable\n"
+		   "(or just a name, to enter data manually)");
 	okfunc = do_genr;
 	varclick = VARCLICK_INSERT_NAME;
 	break;

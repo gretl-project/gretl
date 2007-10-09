@@ -647,7 +647,7 @@ static int real_helpfile_init (int gui, int en)
     err = get_helpfile_structure(&heads, gui, helpfile);
 
     if (err) {
-	errbox(_("help file %s is not up to date\n"), helpfile);
+	warnbox(_("help file %s is not up to date\n"), helpfile);
     } else {
 	if (gui) {
 	    if (en) {

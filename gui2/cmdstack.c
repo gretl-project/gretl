@@ -494,7 +494,7 @@ void view_command_log (void)
     char logfile[MAXLEN];
 
     if (n_cmds == 0) {
-	errbox(_("The command log is empty"));
+	warnbox(_("The command log is empty"));
 	return;
     }
 

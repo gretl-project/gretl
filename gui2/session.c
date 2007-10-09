@@ -2199,7 +2199,7 @@ static void display_model_table_wrapper (void)
 static void graph_page_save_wrapper (void)
 {
     if (graph_page_get_n_graphs() == 0) {
-	errbox(_("The graph page is empty"));
+	warnbox(_("The graph page is empty"));
     } else {
 	file_selector(_("Save LaTeX file"), SAVE_TEX, FSEL_DATA_NONE, NULL);
     }

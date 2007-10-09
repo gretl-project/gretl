@@ -152,7 +152,7 @@ void startR (char *Rcommand)
     int err = 0;
 
     if (!data_status) {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
 	return;
     }
 

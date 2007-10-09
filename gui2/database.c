@@ -255,7 +255,7 @@ static int pd_convert_check (SERIESINFO *sinfo)
     }
 
     if (err) {
-	errbox(_("Sorry, can't handle this frequency conversion"));
+	warnbox(_("Sorry, can't handle this frequency conversion"));
     }
 
     return err;
@@ -632,7 +632,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 	}
 
 	if (action == DB_IMPORT && err == DB_MISSING_DATA) {
-	    errbox(_("Warning: series has missing observations"));
+	    warnbox(_("Warning: series has missing observations"));
 	}
 
 	if (err && err != DB_MISSING_DATA && dbcode != REMOTE_SERIES) {
@@ -2436,7 +2436,7 @@ gint populate_remote_func_list (windata_t *vwin)
     free(getbuf);
 
     if (n == 0) {
-	errbox(_("No function packages found"));
+	warnbox(_("No function packages found"));
 	err = 1;
     }
 

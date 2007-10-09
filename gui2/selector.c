@@ -1256,16 +1256,16 @@ static void topslot_empty (int code)
     case GR_XY:
     case GR_3D:
     case GR_IMP:
-	errbox(_("You must select an X-axis variable"));
+	warnbox(_("You must select an X-axis variable"));
 	break;
     case SCATTERS:
-	errbox(_("You must select a Y-axis variable"));
+	warnbox(_("You must select a Y-axis variable"));
 	break;
     case SAVE_FUNCTIONS:
-	errbox(_("You must specify a public interface"));
+	warnbox(_("You must specify a public interface"));
 	break;
     default:
-	errbox(_("You must select a dependent variable"));
+	warnbox(_("You must select a dependent variable"));
     }
 }
 
@@ -1643,16 +1643,16 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
 	    if (sr->code == WLS) {
-		errbox(_("You must select a weight variable"));
+		warnbox(_("You must select a weight variable"));
 		sr->error = 1;
 	    } else if (sr->code == AR) {
-		errbox(_("You must specify a list of lags"));
+		warnbox(_("You must specify a list of lags"));
 		sr->error = 1;
 	    } else if (sr->code == HECKIT) {
-		errbox(_("You must specify a selection variable"));
+		warnbox(_("You must specify a selection variable"));
 		sr->error = 1;
 	    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
-		errbox(("You must select a Y-axis variable"));
+		warnbox(("You must select a Y-axis variable"));
 		sr->error = 1;
 	    }
 	}
@@ -1740,9 +1740,9 @@ static void parse_special_graph_data (selector *sr)
 
     if (txt == NULL || !*txt) {
 	if (sr->code == GR_3D) {
-	    errbox(_("You must select a Z-axis variable"));
+	    warnbox(_("You must select a Z-axis variable"));
 	} else {
-	    errbox(_("You must select a factor variable"));
+	    warnbox(_("You must select a factor variable"));
 	}
 	sr->error = 1;
     } else {
@@ -1814,7 +1814,7 @@ static void construct_cmdlist (selector *sr)
     }    
 
     if (VEC_CODE(sr->code) && rows < 2) {
-	errbox(_("You must select two or more endogenous variables"));
+	warnbox(_("You must select two or more endogenous variables"));
 	sr->error = 1;
 	return;
     }
@@ -1852,10 +1852,10 @@ static void construct_cmdlist (selector *sr)
 
 	    sr->error = get_rvars2_data(sr, rows, context);
 	} else if (sr->code == TSLS) {
-	    errbox(_("You must specify a set of instrumental variables"));
+	    warnbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
 	} else if (sr->code == HECKIT) {
-	    errbox(_("You must specify regressors for the selection equation"));
+	    warnbox(_("You must specify regressors for the selection equation"));
 	    sr->error = 1;
 	}
     }
@@ -4209,15 +4209,9 @@ void data_save_selection_wrapper (int file_code, gpointer p)
 {
     if (file_code == SAVE_FUNCTIONS) {
 	if (n_free_functions() == 0) {
-#if 0
-	    errbox(_("No user-defined functions are currently loaded.\n"
-		     "Please load or define some functions first."));
-#else
 	    errbox(_("No user-defined functions are currently available\n"
 		     "for packaging.\n\nPlease load or define some "
 		     "functions first."));
-#endif
-
 	    return;
 	}
 	selection_dialog(_("Save functions"), 

@@ -899,7 +899,7 @@ static double getval (GtkWidget *w, int t)
     gretl_error_clear();
 
     if (text == NULL || *text == '\0') {
-	errbox(_("Incomplete entry"));
+	warnbox(_("Incomplete entry"));
 	return (t == C_INT || t == C_POS_INT)? -1 : NADBL;
     }
 
@@ -944,7 +944,7 @@ static double getval (GtkWidget *w, int t)
     if (bad) {
 	const char *msg = gretl_errmsg_get();
 
-	errbox((*msg != '\0')? msg : _("Invalid entry"));
+	warnbox((*msg != '\0')? msg : _("Invalid entry"));
 	gtk_editable_select_region(GTK_EDITABLE(w), 0, -1);
 	gtk_widget_grab_focus(w);
 	x = (t == C_INT || t == C_POS_INT)? -1 : NADBL;
@@ -1284,14 +1284,14 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     vname = gtk_entry_get_text(GTK_ENTRY(tabs[i]->entry[j]));
     if (vname == NULL || *vname == '\0') {
-	errbox(_("You must give a name for the variable"));
+	warnbox(_("You must give a name for the variable"));
 	return;
     } else if (validate_varname(vname)) {
 	return;
     }
 
     if (d == UNIFORM_DIST && x[0] >= x[1]) {
-	errbox(_("Range is non-positive!"));
+	warnbox(_("Range is non-positive!"));
 	return;
     }
 
@@ -2053,7 +2053,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     if (!err) {
 	/* scalars are not valid input in this context */
 	if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
-	    errbox(_("Invalid entry"));
+	    warnbox(_("Invalid entry"));
 	    err = 1;
 	}
     }
@@ -2856,7 +2856,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     if (code == CALC_NPTEST) {
 	nv = n_ok_series();
 	if (nv == 0) {
-	    errbox(_("No suitable data are available"));
+	    warnbox(_("No suitable data are available"));
 	    return;
 	}
     }

@@ -722,7 +722,7 @@ static int function_data_check (call_info *cinfo)
        it doesn't need data loaded? */
 
     if (datainfo == NULL || datainfo->v == 0) {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
 	return 1;
     }
 
@@ -732,7 +732,7 @@ static int function_data_check (call_info *cinfo)
 	if (type == GRETL_TYPE_SERIES || type == GRETL_TYPE_LIST ||
 	    type == GRETL_TYPE_SERIES_REF) {
 	    if (datainfo == NULL || datainfo->v == 0) {
-		errbox(_("Please open a data file first"));
+		warnbox(_("Please open a data file first"));
 		err = 1;
 		break;
 	    }

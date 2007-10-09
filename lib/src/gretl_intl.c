@@ -380,11 +380,7 @@ char *iso_gettext (const char *msgid)
 	/* not yet determined */
 	cset = get_gretl_charset();
 	fprintf(stderr, "get_gretl_charset gave %s\n", cset);
-	if (cset == NULL) {
-	    iso_ok = 0;
-	} else {
-	    iso_ok = 1;
-	}
+	iso_ok = (cset != NULL);
     }
 
     if (iso_ok) {

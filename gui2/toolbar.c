@@ -86,7 +86,7 @@ static void xy_graph (void)
 	    selector_callback(NULL, GR_XY, NULL);
 	}
     } else {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
     }
 }
 
@@ -95,7 +95,7 @@ static void ols_model (void)
     if (data_status) {
 	model_callback(NULL, OLS, NULL);
     } else {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
     }
 }
 
@@ -104,7 +104,7 @@ static void go_session (void)
     if (data_status) {
 	view_session();
     } else {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
     }
 }
 

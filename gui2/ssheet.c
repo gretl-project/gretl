@@ -2378,7 +2378,7 @@ void show_spreadsheet (SheetCmd c)
 #endif
 
     if (datainfo->v == 1) {
-	errbox(_("Please add a variable to the dataset first"));
+	warnbox(_("Please add a variable to the dataset first"));
 	return;
     }
 

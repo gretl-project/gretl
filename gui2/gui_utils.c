@@ -3930,7 +3930,7 @@ void startR (const char *Rcommand)
     pid_t pid;
 
     if (!data_status) {
-	errbox(_("Please open a data file first"));
+	warnbox(_("Please open a data file first"));
 	return;
     }
 

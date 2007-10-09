@@ -1716,8 +1716,10 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	    /* xgettext:no-c-format */
 	    I_("95\\% confidence interval"));
 
-    pputs(prn, "& & & & \\multicolumn{1}{c}{low} & "
-	  "\\multicolumn{1}{c}{high} \\\\\n");
+    pprintf(prn, "& & & & \\multicolumn{1}{c}{%s} & "
+	    "\\multicolumn{1}{c}{%s} \\\\\n", 
+	    I_("low"), I_("high"));
+
 
     if (pmax < 4) {
 	errpmax = pmax + 1;

@@ -39,6 +39,8 @@ void errbox (const char *template, ...);
 
 void infobox (const char *template, ...);
 
+void warnbox (const char *template, ...);
+
 gint yes_no_dialog (const char *title, const char *msg, int cancel);
 
 int make_default_storelist (void);

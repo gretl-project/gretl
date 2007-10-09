@@ -725,7 +725,7 @@ static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
     errno = 0;
     u = strtoul(s, &test, 10);
     if (*test != '\0' || errno || (int) u <= 0) {
-	errbox(_("Invalid entry"));
+	warnbox(_("Invalid entry"));
     } else {
 	*rs->B = (int) u;
 	gtk_widget_destroy(rs->dlg);
@@ -1066,8 +1066,8 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	newstr = trim_text(edttext);
 	if (newstr != NULL && strcmp(DISPLAYNAME(datainfo, v), newstr)) {
 	    if (strchr(newstr, '"')) {
-		errbox(_("The display name for a variable cannot "
-			 "contain double quotes"));
+		warnbox(_("The display name for a variable cannot "
+			  "contain double quotes"));
 		free(newstr);
 		return;
 	    } else {
@@ -1840,9 +1840,9 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	dumlist = get_dummy_list(&thisdum);
 	if (dumlist == NULL) {
 	    if (dataset_is_restricted()) {
-		errbox(_("There are no dummy variables in the current sample"));
+		warnbox(_("There are no dummy variables in the current sample"));
 	    } else {
-		errbox(_("There are no dummy variables in the dataset"));
+		warnbox(_("There are no dummy variables in the dataset"));
 	    }
 	    return;
 	}
@@ -3423,10 +3423,11 @@ int freq_dialog (const char *title, const char *blurb,
 
 #if defined(G_OS_WIN32)
 
-static void msgbox (const char *msg, int err)
+static void msgbox (const char *msg, int msgtype)
 {
     gchar *trmsg = NULL;
     int nls_on = doing_nls();
+    int utype;
 
     if (nls_on) {
 	trmsg = my_locale_from_utf8(msg);
@@ -3435,8 +3436,19 @@ static void msgbox (const char *msg, int err)
 	}
     } 
 
+    switch (msgtype) {
+    case GTK_MESSAGE_WARNING:
+	utype = MB_ICONWARNING;
+	break;
+    case GTK_MESSAGE_ERROR:
+	utype = MB_ICONERROR;
+	break;
+    default:
+	utype = MB_ICONINFORMATION;
+    }
+
     MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
-	       MB_OK | ((err)? MB_ICONERROR : MB_ICONINFORMATION));
+	       MB_OK | utype);
 
     if (trmsg != NULL) {
 	g_free(trmsg);
@@ -3445,13 +3457,13 @@ static void msgbox (const char *msg, int err)
 
 #else /* gtk 2 native */
 
-static void msgbox (const char *msg, int err)
+static void msgbox (const char *msg, int msgtype)
 {
     GtkWidget *dialog;
 
     dialog = gtk_message_dialog_new (NULL, /* GTK_WINDOW(mdata->w), */
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
+				     msgtype,
 				     GTK_BUTTONS_CLOSE,
 				     msg);
     gtk_dialog_run (GTK_DIALOG (dialog));
@@ -3474,7 +3486,7 @@ void errbox (const char *template, ...)
     vsprintf(msg, template, args);
     va_end(args);
 
-    msgbox(msg, 1);
+    msgbox(msg, GTK_MESSAGE_ERROR);
 }
 
 void infobox (const char *template, ...)
@@ -3486,7 +3498,19 @@ void infobox (const char *template, ...)
     vsprintf(msg, template, args);
     va_end(args);
 
-    msgbox(msg, 0);
+    msgbox(msg, GTK_MESSAGE_INFO);
+}
+
+void warnbox (const char *template, ...)
+{
+    char msg[MAXLEN];
+    va_list args;
+
+    va_start(args, template);
+    vsprintf(msg, template, args);
+    va_end(args);
+
+    msgbox(msg, GTK_MESSAGE_WARNING);
 }
 
 /* --------------  Dataset structure "wizard" ---------------- */

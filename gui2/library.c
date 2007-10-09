@@ -5178,6 +5178,20 @@ void plot_from_selection (gpointer p, guint a, GtkWidget *w)
     gui_graph_handler(err);
 }
 
+static int all_missing (int v)
+{
+    int t;
+    
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	if (!na(Z[v][t])) {
+	    return 0;
+	} 
+    }
+
+    warnbox("%s: no valid values", datainfo->varname[v]);
+    return 1;
+}
+
 void display_var (void)
 {
     int list[2];
@@ -5193,6 +5207,8 @@ void display_var (void)
     if (var_is_scalar(datainfo, list[1])) {
 	vec = 0;
 	height = 140;
+    } else if (all_missing(list[1])) {
+	return;
     }
 
     if (n > MAXDISPLAY) { 
@@ -5273,7 +5289,7 @@ void do_run_script (GtkWidget *w, gpointer p)
     }
 
     if (buf == NULL || *buf == '\0') {
-	errbox("No commands to execute");
+	warnbox("No commands to execute");
 	if (buf != NULL) {
 	    g_free(buf);
 	}
@@ -6163,7 +6179,7 @@ static int ok_script_file (const char *runfile)
     fclose(fp);
 
     if (!content) {
-	errbox(_("No commands to execute"));
+	warnbox(_("No commands to execute"));
 	return 0;
     }
 
