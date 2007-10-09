@@ -74,7 +74,7 @@ There are typically three steps in this sort of analysis:
 
 The following sections expand on each of these points, giving further
 econometric details and explaining how to implement the analysis using
-\app{gretl}.  FIXME they don't in fact do that yet!
+\app{gretl}.
 
 
 \section{Vector Error Correction Models as representation of a
@@ -115,7 +115,14 @@ the matrix $\Pi$.
     y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} 
   \]
   is a long-run equilibrium relationship: the deviations $z_t$
-  may not be 0 but they are stationary.
+  may not be 0 but they are stationary. In this case, (\ref{eq:VECM})
+  can be written as 
+  \begin{equation}
+    \label{eq:VECMab}
+    \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^p \Gamma_i 
+    \Delta y_{t-i} + \epsilon_t ,
+  \end{equation}
+  and estimation is carried out on all parameters simultaneously.
 \end{itemize}
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
@@ -134,81 +141,41 @@ only the process $y_t$ is non-stationary, but the same holds for any
 linear combination $\beta'y_t$; in other words, no cointegration
 occurs.
 
-\section{The Johansen cointegration test}
-\label{sec:johansen-test}
+Estimation typically proceeds in two stages: first, a sequence of
+tests is run to determine $r$, the cointegration rank. Then, for a
+given rank the parameters in equation (\ref{eq:VECMab}) are estimated.
+The two commands that \app{gretl} offers for estimating these systems
+are \texttt{coint2} and \texttt{vecm}, respectively. 
 
-The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
-on individual eigenvalues, and the ``trace'' test, for joint
-hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
-tests.  
-
-As in the ADF test, the asymptotic distribution of the tests varies
-with the deterministic kernel $\mu_t$ one includes in the VAR.
-\app{gretl} provides the following options (for a short discussion of
-the meaning of the five options, see section \ref{sec:coint-5cases} below):
-\begin{center}
-  \begin{tabular}{cc}
-    \hline
-    $\mu_t$ & command option \\
-    \hline
-    0 & \verb|--nc| \\
-    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
-    $\mu_0$ &  default \\
-    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    \hline
-  \end{tabular}
-\end{center}
-Note that for this command the above options are mutually exclusive.
-In addition, you have the option of using the \verb|--seasonal|
-options, for augmenting $\mu_t$ with centered seasonal dummies.  In
-each case, p-values are computed via the approximations by Doornik
-(1998).
-
-The following code uses the \cmd{denmark} database, supplied with
-\app{gretl}, to replicate Johansen's example found in his 1995 book.
-%
+The syntax for \texttt{coint2} is 
 \begin{code}
-open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonal
+  coint2 p ylist [ ; xlist ]
 \end{code}
-%
-In this case, the vector $y_t$ in equation (\ref{eq:VECM})
-comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
-\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:VECM}) plus
-one. Part of the output is reported below:
+where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
+\texttt{ylist} is a list containing the $y_t$ variables and
+\texttt{xlist} is an optional list of exogenous variables.
 
-\begin{center}
+The syntax for \texttt{vecm} is 
 \begin{code}
-Johansen test:
-Number of equations = 4
-Lag order = 2
-Estimation period: 1974:3 - 1987:3 (T = 53)
-
-Case 2: Restricted constant
-Rank Eigenvalue Trace test p-value   Lmax test  p-value
-   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
-   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
-   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
-   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+  vecm p r ylist [ ; xlist [; zlist] ]
 \end{code}
-\end{center}
+where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
+\texttt{r} is the cointegration rank, \texttt{ylist} is a list
+containing the $y_t$ variables, \texttt{xlist} is an optional list of
+exogenous variables and \texttt{zlist} is an optional list of
+exogenous variables which are assumed to enter the cointegration
+relationships.
 
-Since both the trace and $\lambda$-max accept the null hypothesis that
-the smallest eigenvalue is in fact 0, we may conclude that the series
-are in fact non-stationary. However, some linear combination may be
-$I(0)$, as indicated by the rejection of the $\lambda$-max of the
-hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
-clear-cut evidence for this).
+Both commands can be given specific options to handle the treatment of
+the deterministic kernel $\mu_t$. These are illustrated in the
+following section.
 
 \section{Interpretation of the deterministic kernel}
 \label{sec:coint-5cases}
 
-The Johansen test for cointegration is used to establish the rank of
-$\beta$; in other words, how many cointegration vectors the system
-has.  This test has to take into account what hypotheses one is
-willing to make on the deterministic terms, which leads to the famous
-``five cases.'' 
+Several important inferential aspect of cointegrated systems depend on
+what hypotheses one is willing to make on the deterministic terms,
+which leads to the famous ``five cases.''
 
 In equation (\ref{eq:VECM}), the term $\mu_t$ is usually understood to
 take the form
@@ -250,8 +217,13 @@ as $\alpha \cdot c$, and one may write (\ref{eq:VECM-poly}) as
   \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
   + \epsilon_t ,
 \]
-and the long-run relationship contains an intercept.
-    
+and the long-run relationship contains an intercept. This type of
+restriction is usually written
+\[
+  \alpha'_{\perp} \mu_0 = 0 ,
+\]
+where $\alpha_{\perp}$ is the left null space of the matrix $\alpha$.
+
 An intuitive understanding of the issue can be gained by means of a
 simple example. Consider a series $x_t$ which behaves as follows
 %      
@@ -342,14 +314,12 @@ We are now ready to consider three possible cases:
   \]
 %	   
   which incorporates the intercept into the cointegration vector. This
-  is known as the ``restricted constant'' case; it may be specified in
-  gretl's \cmd{vecm} command using the option flag \verb+--rc+.
+  is known as the ``restricted constant'' case.
 	
 \item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
   neither $x_t$ nor $y_t$ are trended, and the mean distance between
   them is zero. The vector $\mu_0$ is also 0, which explains why this
-  case is referred to as ``no constant.''  This case is specified
-  using the option flag \verb+--nc+ with \cmd{vecm}.
+  case is referred to as ``no constant.''
 	
 \end{enumerate}
 
@@ -385,32 +355,99 @@ The previous example can be generalized in three directions:
   unrestricted trend, the trend appears in both the cointegration
   relationships and the first differences, which corresponds to the
   presence of a quadratic trend in the variables themselves (in
-  levels).  These two cases are specified by the option flags
-  \verb+--crt+ and \verb+--ct+, respectively, with the \cmd{vecm}
-  command.
+  levels).
 \end{enumerate}
+
+In order to accommodate the five cases, \app{gretl} provides the
+following options to the \texttt{coint2} and \texttt{vecm} commands:
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
+    $\mu_0$ &  default \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    \hline
+  \end{tabular}
+\end{center}
+Note that for this command the above options are mutually exclusive.
+In addition, you have the option of using the \verb|--seasonal|
+options, for augmenting $\mu_t$ with centered seasonal dummies.  In
+each case, p-values are computed via the approximations by Doornik
+(1998).
+
+\section{The Johansen cointegration test}
+\label{sec:johansen-test}
+
+The two Johansen tests for cointegration are used to establish the rank of
+$\beta$; in other words, how many cointegration vectors the system
+has.  These are the ``$\lambda$-max'' test, for hypotheses
+on individual eigenvalues, and the ``trace'' test, for joint
+hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
+tests.  
+
+As in the ADF test, the asymptotic distribution of the tests varies
+with the deterministic kernel $\mu_t$ one includes in the VAR (see
+section \ref{sec:coint-5cases} above). The following code uses the
+\cmd{denmark} database, supplied with \app{gretl}, to replicate
+Johansen's example found in his 1995 book.
+%
+\begin{code}
+open denmark
+coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+%
+In this case, the vector $y_t$ in equation (\ref{eq:VECM})
+comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
+\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:VECM}) plus
+one. Part of the output is reported below:
+
+\begin{center}
+\begin{code}
+Johansen test:
+Number of equations = 4
+Lag order = 2
+Estimation period: 1974:3 - 1987:3 (T = 53)
+
+Case 2: Restricted constant
+Rank Eigenvalue Trace test p-value   Lmax test  p-value
+   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
+   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
+   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
+   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+\end{code}
+\end{center}
+
+Since both the trace and $\lambda$-max accept the null hypothesis that
+the smallest eigenvalue is in fact 0, we may conclude that the series
+are in fact non-stationary. However, some linear combination may be
+$I(0)$, as indicated by the rejection of the $\lambda$-max of the
+hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
+clear-cut evidence for this).
 
 \section{Identification of the cointegration vectors}
 \label{sec:johansen-ident}
 
-\textbf{FIXME: this is but a stub}
+The core problem in the estimation of equation (\ref{eq:VECM}) is to
+find an estimate of $\Pi$ that has by construction rank $r$, so it can
+be written as $\Pi = \alpha \beta'$, where $\beta$ is the matrix
+containing the cointegration vectors.
 
-Maximum likelihood estimation of $\beta$ can be shown to be equivalent
-to solving an eigenvector problem. In practice, if the cointegration
-rank is known to be $r$, the $n \times r$ matrix $\beta$ is estimated
-as the solution to the following matrix equation:
-\[
-  M \beta = \beta \langle \lambda \rangle
-\]
-where $\langle \lambda \rangle$ is a diagonal matrix containing the
-eigenvalues. Notice, however, that if all columns of $\beta$ are
-cointegration vectors, then any arbitrary linear combinations of those
-is a cointegration vector too. This means that the matrix $\beta$ is
-under-identified. As a consequence, its elements do not have a proper
-covariance matrix, but this difficulty can be circumvented by imposing
-an appropriate number of restrictions. The method \app{gretl} uses is
-known as the ``Phillips normalization''. The starting point is writing
-$\beta$ in partitioned form as in
+Without further indications, the problem has multiple solutions (in
+fact, infinitely many). The parameters $\alpha$ and $\beta$ are
+under-identified: if all columns of $\beta$ are cointegration vectors,
+then any arbitrary linear combinations of those columns is a
+cointegration vector too. In order to find a unique solution, it is
+necessary to impose some restrictions on $\alpha$ and/or $\beta$. It
+can be shown that the minimum number of restrictions that is necessary
+to guarantee identification is $r^2$.
+
+The method default method that \app{gretl} uses is known as the
+``Phillips normalization''. The starting point is writing $\beta$ in
+partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
@@ -429,7 +466,155 @@ post-multiplied by $\beta_1^{-1}$, giving
 \]
 
 The coefficients that \app{gretl} produces are $\hat{\beta}$, with
-$\hat{\beta_2}$ known as the matrix of unrestricted coefficients.
+$\hat{\beta_2}$ known as the matrix of unrestricted coefficients. In
+terms of the underlying equilibrium relationship, the Phillips
+normalisation expresses the system of $r$ equilibrium relations as
+\begin{eqnarray*}
+  y_{1,t} & = & \beta_{1,r+1} y_{r+1,t} + \ldots + \beta_{1,n} y_{n,t} \\
+  y_{2,t} & = & \beta_{2,r+1} y_{r+1,t} + \ldots + \beta_{2,n} y_{n,t} \\
+  & \vdots & \\
+  y_{r,t} & = & \beta_{r,r+1} y_{r+1,t} + \ldots + \beta_{r,n} y_{r,t} 
+\end{eqnarray*}
+wher the first $r$ variables are expressed as functions of the
+remaining $n-r$.
+
+Although this representation ensures that the statistical problem of
+estimating $\beta$ is solved, the resulting equilibrium relationships
+may be difficult to interpret. In this case, the user may want to
+achieve identification by specifying manually the system of $r^2$
+constraints that \app{gretl} uses to produce an estimate of $\beta$.
+
+As an example, consider the money demand system presented in section
+9.6 of Verbeek (2004). The estimation of the matrix $\beta$ can be performed via
+the commands
+\begin{code}
+  open money.gdt 
+  smpl 1954:1 1994:4 
+  vecm 6 2 m infl cpr y tbr --rc
+\end{code}
+and the relevant portion of the output reads
+\begin{code}
+Maximum likelihood estimates, observations 1954:1-1994:4 (T = 164)
+Cointegration rank = 2
+Case 2: Restricted constant
+
+beta (cointegrating vectors, standard errors in parentheses)
+
+m           1.0000       0.0000 
+           (0.0000)     (0.0000) 
+infl        0.0000       1.0000 
+           (0.0000)     (0.0000) 
+cpr        0.56108      -24.367 
+          (0.10638)     (4.2113) 
+y         -0.40446     -0.91166 
+          (0.10277)     (4.0683) 
+tbr       -0.54293       24.786 
+          (0.10962)     (4.3394) 
+const      -3.7483       16.751 
+          (0.78082)     (30.909) 
+\end{code}
+Interpretation of the coefficients of the cointegration matrix $\beta$
+would be easier if a meaning could be attached to each of its
+columns. This is possible by hypothesizing the existence of two
+long-run relationships: a money demand equation
+\begin{equation}
+  \label{eq:verbeek-mondem}
+  m = \beta_1 \pi + \beta_2 y + \beta_3 tbr
+\end{equation}
+and a risk premium equation
+\begin{equation}
+  \label{eq:verbeek-mondem}
+  cpr = \beta_4 \pi + \beta_5 y + \beta_6 tbr ,
+\end{equation}
+which imply that the cointegration matrix can be normalized as
+\[
+  \beta = \left[
+    \begin{array}{rr}
+      -1 & 0 \\ \beta_1 & \beta_4 \\ 0 & -1 \\ \beta_2 & \beta_4
+      \\ \beta_3 & \beta_6
+    \end{array}
+    \right]
+\]
+
+This renormalization can be accomplished by means of the
+\texttt{restrict} command, to be given after the \texttt{vecm} command
+or, in the graphical interface, by selecting the ``Test, Linear
+Restrictions'' menu entry. The syntax for entering the restrictions
+should be fairly obvious:
+\begin{code}
+restrict
+  b[1,1] = -1
+  b[1,3] = 0
+  b[2,1] = 0
+  b[2,3] = -1
+end restrict
+\end{code}
+which produces
+
+\begin{code}
+Cointegrating vectors (standard errors in parentheses)
+
+m          -1.0000       0.0000 
+           (0.0000)     (0.0000) 
+infl     -0.023026     0.041039 
+        (0.0054666)   (0.027790) 
+cpr         0.0000      -1.0000 
+           (0.0000)     (0.0000) 
+y          0.42545    -0.037414 
+         (0.033718)    (0.17140) 
+tbr      -0.027790       1.0172 
+        (0.0045445)   (0.023102) 
+const       3.3625      0.68744 
+          (0.25318)     (1.2870) 
+\end{code}
+
+
+\section{Over-identifying restrictions on the cointegration vectors}
+\label{sec:johansen-overid}
+
+\textbf{To be written yet}
+
+Example \ref{brand-cassola-script} replicates Table 4 in Brand and
+Cassola (2004).
+
+\begin{script}[htbp]
+  \caption{Estimation a Money demand System}
+  \label{brand-cassola-script}
+\begin{scode}
+open brand_cassola.gdt
+
+# perform a few transformations
+
+m_p = m_p*100
+y = y*100
+infl = infl/4
+rs = rs/4
+rl = rl/4
+
+# replicate table 4, page 824
+
+vecm 2 3 m_p infl rl rs y -q
+
+restrict --full
+  b[1,1] = 1
+  b[1,2] = 0
+  b[1,4] = 0
+
+  b[2,1] = 0
+  b[2,2] = 1
+  b[2,4] = 0
+  b[2,5] = 0
+
+  b[3,1] = 0
+  b[3,2] = 0
+  b[3,3] = 1
+  b[3,4] = -1
+  b[3,5] = 0
+end restrict
+\end{scode}
+%$
+\end{script}
+
 
 %%% Local Variables: 
 %%% mode: latex
