@@ -391,29 +391,18 @@ static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
     }
 }
 
-static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
+static void tex_vecm_varname (char *s, const MODEL *pmod,
+			      const DATAINFO *pdinfo, int v)
 {
-    const char *lbl = VARLABEL(pdinfo, v);
-    int cvnum;
-    int gotit = 0;
+    char tmp[32], base[12];
+    int lag;
 
-    if (sscanf(pdinfo->varname[v], "EC%d", &cvnum)) {
-	sprintf(s, "EC%d$_{t-1}$", cvnum);
-	gotit = 1;
-    } else if (strlen(lbl) > 2) {
-	char myvar[32], tmp[VNAMELEN];
-	int lag;
+    gretl_model_get_param_name(pmod, pdinfo, v, tmp);
 
-	lbl += 2;
-	if (sscanf(lbl, "d_%15[^(](t - %d)", tmp, &lag) == 2) {
-	    tex_escape(myvar, tmp);
-	    sprintf(s, "$\\Delta$%s$_{t-%d}$", myvar, lag);
-	    gotit = 1;
-	}
-    }
-
-    if (!gotit) {
-	tex_escape(s, pdinfo->varname[v]); 
+    if (sscanf(tmp, "d_%11[^_]_%d", base, &lag) == 2) {
+	sprintf(s, "$\\Delta$%s$_{t-%d}$", base, lag);
+    } else {
+	tex_escape(s, tmp);
     }
 }
 
@@ -491,7 +480,7 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     int j = i + 2;
 
     if (pmod->aux == AUX_ARCH) {
-	tex_make_cname(name, pdinfo->varname[pmod->list[i+2]]);
+	tex_make_cname(name, pdinfo->varname[pmod->list[j]]);
     } else if (pmod->ci == NLS) {
 	if (!tex_greek_param(name, pmod->params[i])) {
 	    tex_escape(name, pmod->params[i]);
@@ -503,7 +492,7 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     } else if (pmod->ci == VAR) {
 	tex_lagname(name, pdinfo, pmod->list[j]);
     } else if (pmod->aux == AUX_VECM) {
-	tex_vecm_varname(name, pdinfo, pmod->list[j]);
+	tex_vecm_varname(name, pmod, pdinfo, i);
     } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	tex_mp_coeff_name(name, pmod->params[i], 0);
     } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT || pmod->ci == HECKIT) &&
