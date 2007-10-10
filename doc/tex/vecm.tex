@@ -449,8 +449,16 @@ can be shown that the minimum number of restrictions that is necessary
 to guarantee identification is $r^2$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
-normalization'', or ``triangular representation''. The starting point
-is writing $\beta$ in partitioned form as in
+normalization'', or ``triangular representation''\footnote{For
+  comparison with other studies, you may wish to normalize $\beta$
+  differently.  Using the \texttt{set} command you can do 
+  \verb|set vecm_norm diag| to select a normalization that simply scales the
+  columns of the original $\beta$ such that $\beta_{ij} = 1$ for $i=j$
+  and $i \leq r$, as used in the empirical section of Boswijk and
+  Doornik (2004).  Another alternative is \verb+set vecm_norm first+,
+  which scales $\beta$ such that the elements on the first row equal
+  1.  (To return to the default: \texttt{set vecm\_norm phillips}.)
+}. The starting point is writing $\beta$ in partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
@@ -472,16 +480,18 @@ The coefficients that \app{gretl} produces are $\hat{\beta}$, with
 $\hat{\beta_2}$ known as the matrix of unrestricted coefficients. In
 terms of the underlying equilibrium relationship, the Phillips
 normalization expresses the system of $r$ equilibrium relations as
-\begin{eqnarray*}
-  y_{1,t} & = & \beta_{1,r+1} y_{r+1,t} + \ldots + \beta_{1,n} y_{n,t} \\
-  y_{2,t} & = & \beta_{2,r+1} y_{r+1,t} + \ldots + \beta_{2,n} y_{n,t} \\
-  & \vdots & \\
-  y_{r,t} & = & \beta_{r,r+1} y_{r+1,t} + \ldots + \beta_{r,n} y_{r,t} 
-\end{eqnarray*}
+
+  \begin{eqnarray}
+    y_{1,t} & = & \beta_{1,r+1} y_{r+1,t} + \ldots + \beta_{1,n} y_{n,t} \\
+    y_{2,t} & = & \beta_{2,r+1} y_{r+1,t} + \ldots + \beta_{2,n} y_{n,t} \\
+    & \vdots & \\
+    y_{r,t} & = & \beta_{r,r+1} y_{r+1,t} + \ldots + \beta_{r,n} y_{r,t} 
+  \end{eqnarray}
+
 wher the first $r$ variables are expressed as functions of the
 remaining $n-r$.
 
-Although this representation ensures that the statistical problem of
+Although the triangular representation ensures that the statistical problem of
 estimating $\beta$ is solved, the resulting equilibrium relationships
 may be difficult to interpret. In this case, the user may want to
 achieve identification by specifying manually the system of $r^2$
@@ -544,7 +554,13 @@ This renormalization can be accomplished by means of the
 \texttt{restrict} command, to be given after the \texttt{vecm} command
 or, in the graphical interface, by selecting the ``Test, Linear
 Restrictions'' menu entry. The syntax for entering the restrictions
-should be fairly obvious:
+should be fairly obvious\footnote{Note that in this context we are
+  bending the usual matrix indexation convention, using the leading
+  index to refer to the \textit{column} of $\beta$ (the particular
+  cointegrating vector).  This is standard practice in the literature,
+  and defensible insofar as it is the columns of $\beta$ (the
+  cointegrating relations or equilibrium errors) that are of primary
+  interest.}:
 \begin{code}
 restrict
   b[1,1] = -1
@@ -584,29 +600,158 @@ in the data. These extra restrictions are usually imposed to test
 constraints stemming from the economic theory underlying the
 equilibrium relationships.
 
-(\ldots constraints on $\alpha$ could go here? later?\ldots)
+\app{Gretl} is capable of testing general linear restrictions of the
+form 
+\begin{equation}
+\label{eq:Rb}
+R_b \vec{\beta} = q
+\end{equation}
+and/or
+\begin{equation}
+\label{eq:Ra}
+R_a \vec{\alpha} = 0
+\end{equation}
+%
+Note that the $\beta$ restriction may be non-homogeneous ($q \neq 0$)
+but the $\alpha$ restriction must be homogeneous.  Nonlinear
+restrictions are not supported, and neither are restrictions that
+cross between $\beta$ and $\alpha$.  In the case where $r > 1$ such
+restrictions may be in common across all the columns of $\beta$ (or
+$\alpha$) or may be specific to certain columns of these matrices.
+This is the case discussed in Boswijk (1995) and Boswijk and Doornik
+(2004, section 4.4).
+
+The restrictions (\ref{eq:Rb}) and (\ref{eq:Ra}) may be written in
+explicit form as
+\begin{equation}
+\label{eq:vecbeta}
+\vec{\beta} = H\phi + h_0
+\end{equation}
+and
+\begin{equation}
+\label{eq:vecalpha}
+\vec{\alpha'} = G\psi
+\end{equation}
+respectively, where $\phi$ and $\psi$ are the free parameter vectors
+associated with $\beta$ and $\alpha$ respectively.  We may refer
+to the free parameters collectively as $\theta$ (the column vector
+formed by concatenating $\phi$ and $\psi$).  \app{Gretl} uses this
+representation internally when testing the restrictions.
 
 If the list of restrictions that is passed to the \texttt{restrict}
 command contains more constraints than necessary to achieve
 identification, then an LR test is performed; moreover, the
-\texttt{restrict} command can be given the \texttt{--full} switch, in
-which case a new model is created, in which the matrix $\beta$ is
-constrained accordingly.
+\texttt{restrict} command can be given the \verb|--full| switch, in
+which case full estimates for the restricted system are printed
+(including the $\Gamma_i$ terms), and the system thus restricted
+becomes the ``current model'' for the purposes of further tests.  Thus
+you are able to carry out cumulative tests, as in Chapter 7 of
+Johansen (1995).
 
-Apart from a few special cases, the resulting estimator has no closed
-form solution; hence, the maximum must be found via numerical
-methods. Two such methods are available in \app{gretl}. 
+\subsection{Syntax}
+\label{sec:vecm-restr-syntax}
 
-(\ldots discuss switching algorithm and LBFGS + sim. ann.\ldots)
+The full syntax for specifying the restriction is an extension of the
+one exemplified in the previous section. Inside a
+\texttt{restrict}\ldots\texttt{end restrict} block, valid statements
+are of the form
+\begin{center}
+  \texttt{\emph{parameter linear combination}} = \emph{\texttt{scalar}}
+\end{center}
+where a parameter linear combination involves a weighted sum of
+individual elements of $\beta$ and $\alpha$ (but not both in the same
+combination);, the scalar on the right-hand side must be 0 for
+combinations involving $\alpha$, but can be any real number for
+combinations involving $\beta$. Below, we give a few examples of valid
+restrictions:
+\begin{code}
+  b[1,1] = 1.618
+  b[1,4] + 2*b[2,5] = 0
+  a[1,3] = 0
+  a[1,1] - a[1,2] = 0
+\end{code}
+
+A special syntax is reserved for the case when a certain constraint
+must be applied to all columns of $\beta$: in this case, one index is
+given for each \texttt{b} term, and the square brackets are dropped.
+Hence, the following syntax
+\begin{code}
+restrict
+  b1 + b2 = 0
+end restrict
+\end{code}
+corresponds to
+\[
+\beta = \left[
+\begin{array}{rr}
+\beta_{11} & \beta_{21} \\
+-\beta_{11} & -\beta_{21} \\
+\beta_{13} & \beta_{23} \\
+\beta_{14} & \beta_{24}
+\end{array}
+\right]
+\]
+A similar convention is used for $\alpha$: when only one index is given for
+each \texttt{a} term, the restriction is presumed to apply to all $r$
+columns of $\alpha$, or in other words the given variables are weakly
+exogenous. For instance, the formulation
+%
+\begin{code}
+restrict
+  a3 = 0
+  a4 = 0
+end restrict
+\end{code}
+%
+specifies that variables 3 and 4 do not respond to the deviation from
+equilibrium in the previous period.  
+
+Finally, a short-cut is available for setting up complex restrictions (but
+currently only in relation to $\beta$): you can specify $R$ and $q$,
+as in $R \vec{\beta} = q$, by giving the names of previously
+defined matrices.  For example,
+%
+\begin{code}
+matrix I4 = I(4)
+matrix vR = I4**(I4~zeros(4,1))
+matrix vq = mshape(I4,16,1)
+restrict
+  R = vR
+  q = vq
+end restrict
+\end{code}
+%
+which imposes Phillips normalization on the $\beta$ estimates for
+a system with cointegrating rank 4.
+ 
+\subsection{An example}
+\label{sec:vecm-overid-ex}
+
+Brand and Cassola (2004) propose a money demand system for the Euro
+area, in which they find three long-run equilibrium relationships:
+
+\begin{tabular}{rl}
+  money demand & $m = \beta_l l + \beta_y y$ \\
+  Fisher equation & $\pi = \phi l$ \\
+  Expectation theory of interest rates & $l = s$
+\end{tabular}
+
+where $m$ is real money demand, $l$ and $r$ are long- and short-term
+interest rates, $y$ is output and $\pi$ is inflation\footnote{Note
+  that a traditional formulation of the Fisher equation should reverse
+  the roles of the variables; clearly this detail is immaterial in the
+  prresent context}. Since the contegration rank is 3 and the number
+of variables is 5, 9 restrictions are required for identification and
+a just-identified system should have 6 unrestricted parameters ($6 =
+6 \times 3 - 3 \times 3$).
 
 \begin{script}[htbp]
-  \caption{Estimation a Money demand System}
+  \caption{Estimation of a money demand system with constraints on $\beta$}
   \label{brand-cassola-script}
 \begin{scode}
 open brand_cassola.gdt
 
 # perform a few transformations
-
 m_p = m_p*100
 y = y*100
 infl = infl/4
@@ -614,31 +759,36 @@ rs = rs/4
 rl = rl/4
 
 # replicate table 4, page 824
-
 vecm 2 3 m_p infl rl rs y -q
+genr ll0 = $lnl
 
 restrict --full
   b[1,1] = 1
   b[1,2] = 0
   b[1,4] = 0
-
   b[2,1] = 0
   b[2,2] = 1
   b[2,4] = 0
   b[2,5] = 0
-
   b[3,1] = 0
   b[3,2] = 0
   b[3,3] = 1
   b[3,4] = -1
   b[3,5] = 0
 end restrict
+genr ll1 = $rlnl
 \end{scode}
 %$
 \end{script}
 
-Example \ref{brand-cassola-script} replicates Table 4 in Brand and
-Cassola (2004). Part of the output is
+In this case, the long-run relationships feature only 3 unrestricted
+parameters, so the over-identification rank is 3. Example
+\ref{brand-cassola-script} replicates Table 4 on page
+824\footnote{There appear to be a few typos in the article.}. Nothe
+that we use the \verb|$lnl| accessor after the \texttt{vecm} command
+to store the unrestricted log-likelihood and the \verb|$rlnl| accessor
+after \texttt{restrict} for its restricted counterpart. Part of the
+output is
 \begin{code}
 Unrestricted loglikelihood (lu) = 116.60268
 Restricted loglikelihood (lr) = 115.86451
@@ -658,6 +808,94 @@ rs         0.0000       0.0000      -1.0000
 y         -1.3304       0.0000       0.0000 
         (0.030533)     (0.0000)     (0.0000) 
 \end{code}
+
+Further testing is then performed to check whether (a) the income
+elasticity in the money demand equation is 1 ($\beta_y = 1$) and (b)
+the Fisher relation is homogeneous ($\phi = 1$). Since the
+\verb|--full| switch was given to the \texttt{restrict} command,
+further restrictions can be applied without having to repeat the
+previous ones. To perform these two tests, one may append the
+following (which contains a few \texttt{printf} commands, which are
+not strictly necessary, to format the output nicely) to the script
+\ref{brand-cassola-script}
+\begin{code}
+restrict
+  b[1,5] = -1
+end restrict
+genr ll_uie = $rlnl
+
+restrict
+  b[2,3] = -1
+end restrict
+genr ll_hfh = $rlnl
+
+# replicate table 5, page 824
+printf "Testing zero restrictions in cointegration space:\n"
+printf "  LR-test, rank = 3: chi^2(3) = %6.4f [%6.4f]\n", 2*(ll0-ll1), \
+	pvalue(X, 3, 2*(ll0-ll1))
+
+printf "Unit income elasticity: LR-test, rank = 3:\n"
+printf "  chi^2(4) = %g [%6.4f]\n", 2*(ll0-ll_uie), \
+	pvalue(X, 4, 2*(ll0-ll_uie))
+
+printf "Homogeneity in the Fisher hypothesis:\n"
+printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
+	pvalue(X, 4, 2*(ll0-ll_hfh))
+\end{code}
+which produces
+\begin{code}
+Testing zero restrictions in cointegration space:
+  LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
+Unit income elasticity: LR-test, rank = 3:
+  chi^2(4) = 17.2071 [0.0018]
+Homogeneity in the Fisher hypothesis:
+  LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
+\end{code}
+
+\subsection{Numerical methods}
+\label{sec:vecm-opt}
+
+Apart from a few special cases\footnote{Let us define a ``simple''
+  restriction as one that (a) is homogeneous, (b) is common to all
+  $\beta$ or all $\alpha$ (in case $r>1$) and (c) involves either
+  $\beta$ only or $\alpha$ only.  Simple restrictions are handled via
+  the modified eigenvalues method set out by Johansen (1995).  We
+  solve directly for the ML estimator, without any need for iterative
+  methods.}, the resulting estimator has no closed form solution;
+hence, the maximum must be found via numerical methods.
+
+Two such methods are available in \app{gretl}. The default is the
+switching algorithm set out in Boswijk and Doornik (2004).  The
+alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
+using analytical derivatives.  This is invoked using the
+\verb+--lbfgs+ flag with the \texttt{restrict} command.
+
+The switching algorithm works by explicitly maximizing the likelihood
+at each iteration, with respect to $\hat{\phi}$, $\hat{\psi}$ and
+$\hat{\Omega}$ (the covariance matrix of the residuals) in turn.  This
+method shares a feature with the basic Johansen eigenvalues procedure,
+namely, it can handle a set of restrictions that does not fully
+identify the parameters.
+
+LBFGS, on the other hand, requires that the model be fully identified.
+When using LBFGS, therefore, you may have to supplement the
+restrictions of interest with normalizations that serve to identify
+the parameters.  For example, one might use all or part of the
+Phillips normalization, $\beta' = [I_r : -B]$: the upper part of
+$\beta$ is an identity matrix of order $r$, while $B$ is an $r \times
+(p_1 - r)$ matrix representing the long-run effect of the last $(p_1 -
+r)$ elements of $X^*_t$ on the first $r$ elements.
+
+Neither the switching algorithm nor LBFGS is guaranteed to find the
+global ML solution.  The optimizer may end up at a local maximum (or,
+in the case of the switching algorithm, at a saddle point).  The
+solution may therefore be sensitive to the initial value selected for
+$\theta$.  By default, gretl selects a starting point using a
+deterministic method based on Boswijk (1995).  There are two further
+options: the initialization may be adjusted using simulated annealing
+(with the \verb+--jitter+ flag), or the user may supply an explicit
+initial value for $\theta$.  We expand on these options in the
+following section.
 
 %%% Local Variables: 
 %%% mode: latex
