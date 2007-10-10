@@ -94,7 +94,7 @@ y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
 y_{t-i+1})$, we can re-write the above as
 \begin{equation}
   \label{eq:VECM}
-  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta
   y_{t-i} + \epsilon_t ,
 \end{equation}
 where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
@@ -105,14 +105,14 @@ the matrix $\Pi$.
 \begin{itemize}
 \item If $r = 0$, the processes are all I(1).
 \item If $r = n$, then $\Pi$ is invertible and the processes are all I(0).
-\item In between, $\Pi$ can be written as $\alpha \beta'$ and you have
-  cointegration. In this case, $y_t$ is I(1), but the combination $z_t
-  = \beta'y_t$ is I(0). If, for example, $r=1$ and the first element of
-  $\beta$ was $-1$, then one could write $z_t = -y_{1,t} + \beta_2
-  y_{2,t} + \cdots + \beta_n y_{n,t}$, which is equivalent to saying
-  that
+\item Cointegration occurs in between, when $0 < r < n$ and $\Pi$ can
+  be written as $\alpha \beta'$. In this case, $y_t$ is I(1), but the
+  combination $z_t = \beta'y_t$ is I(0). If, for example, $r=1$ and
+  the first element of $\beta$ was $-1$, then one could write $z_t =
+  -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$, which is
+  equivalent to saying that
   \[
-    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} 
+    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} + z_t
   \]
   is a long-run equilibrium relationship: the deviations $z_t$
   may not be 0 but they are stationary. In this case, (\ref{eq:VECM})
@@ -122,23 +122,27 @@ the matrix $\Pi$.
     \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^p \Gamma_i 
     \Delta y_{t-i} + \epsilon_t ,
   \end{equation}
-  and estimation is carried out on all parameters simultaneously.
+  and estimation is carried out on all parameters
+  simultaneously. However, it is worth noting that if $\beta$ were
+  known $z_t$ would be observable and all the remaining parameters
+  could be estimated via OLS. In practice, the procedure estimates
+  $\beta$ first and then the rest.
 \end{itemize}
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
-closely related matrix (call it $M$) whose rank is the same as $\Pi$:
-however, $M$ is by construction symmetric and positive semidefinite.
-As a consequence, all its eigenvalues are real and non-negative; tests
+closely related matrix whose rank is the same as $\Pi$: however, this
+matrix is by construction symmetric and positive semidefinite.  As a
+consequence, all its eigenvalues are real and non-negative, and tests
 on the rank of $\Pi$ can therefore be carried out by testing how many
-eigenvalues of $M$ are 0.
+eigenvalues are 0.
 
-If all the eigenvalues are significantly different from 0, then all the
-processes are stationary. If, on the contrary, there is at least one
-zero eigenvalue, then the $y_t$ process is integrated, although some
-linear combination $\beta'y_t$ might be stationary. On the other
-extreme, if no eigenvalues are significantly different from 0, then not
-only the process $y_t$ is non-stationary, but the same holds for any
-linear combination $\beta'y_t$; in other words, no cointegration
+If all the eigenvalues are significantly different from 0, then all
+the processes are stationary. If, on the contrary, there is at least
+one zero eigenvalue, then the $y_t$ process is integrated, although
+some linear combination $\beta'y_t$ might be stationary. On the other
+extreme, if no eigenvalues are significantly different from 0, then
+not only the process $y_t$ is non-stationary, but the same holds for
+any linear combination $\beta'y_t$; in other words, no cointegration
 occurs.
 
 Estimation typically proceeds in two stages: first, a sequence of
@@ -157,12 +161,12 @@ where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
 
 The syntax for \texttt{vecm} is 
 \begin{code}
-  vecm p r ylist [ ; xlist [; zlist] ]
+  vecm p r ylist [ ; xlist [ ; zlist] ]
 \end{code}
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
 \texttt{r} is the cointegration rank, \texttt{ylist} is a list
 containing the $y_t$ variables, \texttt{xlist} is an optional list of
-exogenous variables and \texttt{zlist} is an optional list of
+exogenous variables and \texttt{zlist} is another optional list of
 exogenous variables which are assumed to enter the cointegration
 relationships.
 
@@ -193,7 +197,6 @@ that the data do not exhibit a discernible trend. This means
 that $\Delta y_t$ is on average zero, so it is reasonable to assume
 that its expected value is also zero. Write equation (\ref{eq:VECM})
 as
-
 \begin{equation}
   \label{eq:VECM-poly}
   \Gamma(L) \Delta y_t = \mu_0 + \mu_1 \cdot t + \alpha z_{t-1} +
@@ -285,9 +288,8 @@ We are now ready to consider three possible cases:
 \begin{enumerate}
 \item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
   follows that $y_t$ also follows a linear trend because on average it
-  keeps at a distance $k$ from $x_t$. The vector $\mu_0$ is
-  unrestricted.  This case is the default for gretl's \cmd{vecm}
-  command.
+  keeps at a fixed distance $k$ from $x_t$. The vector $\mu_0$ is
+  unrestricted.
 	
 \item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
   as a consequence neither is $y_t$. However, the mean distance
@@ -387,7 +389,8 @@ $\beta$; in other words, how many cointegration vectors the system
 has.  These are the ``$\lambda$-max'' test, for hypotheses
 on individual eigenvalues, and the ``trace'' test, for joint
 hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
-tests.  
+tests. The corresponding menu entry in the GUI is ``Model, Time
+Series, Cointegration Test, Johansen''.
 
 As in the ADF test, the asymptotic distribution of the tests varies
 with the deterministic kernel $\mu_t$ one includes in the VAR (see
@@ -422,11 +425,11 @@ Rank Eigenvalue Trace test p-value   Lmax test  p-value
 \end{center}
 
 Since both the trace and $\lambda$-max accept the null hypothesis that
-the smallest eigenvalue is in fact 0, we may conclude that the series
-are in fact non-stationary. However, some linear combination may be
-$I(0)$, as indicated by the rejection of the $\lambda$-max of the
-hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
-clear-cut evidence for this).
+the smallest eigenvalue is 0, we may conclude that the series are in
+fact non-stationary. However, some linear combination may be $I(0)$,
+as indicated by the rejection of the $\lambda$-max of the hypothesis
+that the rank of $\Pi$ is 0 (the trace test gives less clear-cut
+evidence for this).
 
 \section{Identification of the cointegration vectors}
 \label{sec:johansen-ident}
@@ -445,9 +448,9 @@ necessary to impose some restrictions on $\alpha$ and/or $\beta$. It
 can be shown that the minimum number of restrictions that is necessary
 to guarantee identification is $r^2$.
 
-The method default method that \app{gretl} uses is known as the
-``Phillips normalization''. The starting point is writing $\beta$ in
-partitioned form as in
+The method that \app{gretl} uses by default is known as the ``Phillips
+normalization'', or ``triangular representation''. The starting point
+is writing $\beta$ in partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
@@ -468,7 +471,7 @@ post-multiplied by $\beta_1^{-1}$, giving
 The coefficients that \app{gretl} produces are $\hat{\beta}$, with
 $\hat{\beta_2}$ known as the matrix of unrestricted coefficients. In
 terms of the underlying equilibrium relationship, the Phillips
-normalisation expresses the system of $r$ equilibrium relations as
+normalization expresses the system of $r$ equilibrium relations as
 \begin{eqnarray*}
   y_{1,t} & = & \beta_{1,r+1} y_{r+1,t} + \ldots + \beta_{1,n} y_{n,t} \\
   y_{2,t} & = & \beta_{2,r+1} y_{r+1,t} + \ldots + \beta_{2,n} y_{n,t} \\
@@ -482,7 +485,8 @@ Although this representation ensures that the statistical problem of
 estimating $\beta$ is solved, the resulting equilibrium relationships
 may be difficult to interpret. In this case, the user may want to
 achieve identification by specifying manually the system of $r^2$
-constraints that \app{gretl} uses to produce an estimate of $\beta$.
+constraints that \app{gretl} will use to produce an estimate of
+$\beta$.
 
 As an example, consider the money demand system presented in section
 9.6 of Verbeek (2004). The estimation of the matrix $\beta$ can be performed via
@@ -519,19 +523,19 @@ columns. This is possible by hypothesizing the existence of two
 long-run relationships: a money demand equation
 \begin{equation}
   \label{eq:verbeek-mondem}
-  m = \beta_1 \pi + \beta_2 y + \beta_3 tbr
+  m = c_1 + \beta_1 \pi + \beta_2 y + \beta_3 tbr
 \end{equation}
 and a risk premium equation
 \begin{equation}
   \label{eq:verbeek-premium}
-  cpr = \beta_4 \pi + \beta_5 y + \beta_6 tbr ,
+  cpr = c_2 + \beta_4 \pi + \beta_5 y + \beta_6 tbr ,
 \end{equation}
 which imply that the cointegration matrix can be normalized as
 \[
   \beta = \left[
     \begin{array}{rr}
-      -1 & 0 \\ \beta_1 & \beta_4 \\ 0 & -1 \\ \beta_2 & \beta_4
-      \\ \beta_3 & \beta_6
+      -1 & 0 \\ \beta_1 & \beta_4 \\ 0 & -1 \\ \beta_2 & \beta_5
+      \\ \beta_3 & \beta_6 \\ c_1 & c_2
     \end{array}
     \right]
 \]
@@ -568,14 +572,32 @@ const       3.3625      0.68744
           (0.25318)     (1.2870) 
 \end{code}
 
-
-\section{Over-identifying restrictions on the cointegration vectors}
+\section{Over-identifying restrictions}
 \label{sec:johansen-overid}
 
-\textbf{To be written yet}
+\textbf{FIXME: INCOMPLETE}
 
-Example \ref{brand-cassola-script} replicates Table 4 in Brand and
-Cassola (2004).
+Although $r^2$ restrictions need to be imposed on a VECM system to
+ensure identification of $\beta$, extra restrictions can be specified
+in order to check via a likelihood-ratio statistic whether they hold
+in the data. These extra restrictions are usually imposed to test
+constraints stemming from the economic theory underlying the
+equilibrium relationships.
+
+(\ldots constraints on $\alpha$ could go here? later?\ldots)
+
+If the list of restrictions that is passed to the \texttt{restrict}
+command contains more constraints than necessary to achieve
+identification, then an LR test is performed; moreover, the
+\texttt{restrict} command can be given the \texttt{--full} switch, in
+which case a new model is created, in which the matrix $\beta$ is
+constrained accordingly.
+
+Apart from a few special cases, the resulting estimator has no closed
+form solution; hence, the maximum must be found via numerical
+methods. Two such methods are available in \app{gretl}. 
+
+(\ldots discuss switching algorithm and LBFGS + sim. ann.\ldots)
 
 \begin{script}[htbp]
   \caption{Estimation a Money demand System}
@@ -615,6 +637,27 @@ end restrict
 %$
 \end{script}
 
+Example \ref{brand-cassola-script} replicates Table 4 in Brand and
+Cassola (2004). Part of the output is
+\begin{code}
+Unrestricted loglikelihood (lu) = 116.60268
+Restricted loglikelihood (lr) = 115.86451
+2 * (lu - lr) = 1.47635
+P(Chi-Square(3) > 1.47635) = 0.68774
+
+beta (cointegrating vectors, standard errors in parentheses)
+
+m_p        1.0000       0.0000       0.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+infl       0.0000       1.0000       0.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+rl         1.6108     -0.67100       1.0000 
+         (0.62752)   (0.049482)     (0.0000) 
+rs         0.0000       0.0000      -1.0000 
+          (0.0000)     (0.0000)     (0.0000) 
+y         -1.3304       0.0000       0.0000 
+        (0.030533)     (0.0000)     (0.0000) 
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
