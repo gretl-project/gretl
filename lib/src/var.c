@@ -1935,13 +1935,13 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 }
 
 int gretl_VECM_test (GRETL_VAR *vecm, 
-		     const gretl_restriction *rset,
+		     gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn)
 {
     void *handle = NULL;
-    int (*jfun) (GRETL_VAR *, const gretl_restriction *,
+    int (*jfun) (GRETL_VAR *, gretl_restriction *,
 		 const DATAINFO *, gretlopt opt, PRN *);
     int err = 0;
 
@@ -1987,12 +1987,12 @@ johansen_test_complete (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
 static int 
 johansen_estimate_complete (GRETL_VAR *jvar, 
-			    const gretl_restriction *rset,
+			    gretl_restriction *rset,
 			    const double **Z, const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     void *handle = NULL;
-    int (*jfun) (GRETL_VAR *, const gretl_restriction *,
+    int (*jfun) (GRETL_VAR *, gretl_restriction *,
 		 const double **, const DATAINFO *, PRN *);
     int err = 0;
 
@@ -2291,7 +2291,7 @@ static int jvar_check_allocation (GRETL_VAR *v)
 
 static int
 johansen_driver (GRETL_VAR *jvar, 
-		 const gretl_restriction *rset,
+		 gretl_restriction *rset,
 		 const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
@@ -2332,7 +2332,7 @@ johansen_driver (GRETL_VAR *jvar,
 static GRETL_VAR *
 johansen_wrapper (int code, int order, int rank, 
 		  const int *list, 
-		  const gretl_restriction *rset, 
+		  gretl_restriction *rset, 
 		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
@@ -2529,7 +2529,7 @@ static int *rebuild_full_VAR_list (const GRETL_VAR *var, int *err)
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig, 
-			    const gretl_restriction *rset,
+			    gretl_restriction *rset,
 			    const double **Z, const DATAINFO *pdinfo, 
 			    PRN *prn, int *err)
 {
@@ -2564,14 +2564,25 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 	*err = jvar->err;
     } else {
 	gretlopt ropt, prnopt = OPT_NONE;
+	int df;
 
-	ropt = gretl_restriction_get_options(rset);
-	if (ropt & OPT_Q) {
-	    prnopt = OPT_Q;
+	df = jvar->jinfo->lrdf - orig->jinfo->lrdf;
+
+	if (df > 0) {
+	    double x = 2 * (orig->ll - jvar->ll);
+	    double pv = chisq_cdf_comp(x, df);
+
+	    rset_add_results(rset, x, pv, jvar->ll);
+	    rset_record_LR_result(rset);
 	}
 
 	jvar->jinfo->prior_ll = orig->ll;
 	jvar->jinfo->prior_df = orig->jinfo->lrdf;
+
+	ropt = gretl_restriction_get_options(rset);
+	if (ropt & OPT_Q) {
+	    prnopt = OPT_Q;
+	}	
 
 	/* FIXME OPT_I, OPT_F, impulses and decomp */
 	gretl_VAR_print(jvar, pdinfo, prnopt, prn);

@@ -83,6 +83,12 @@ int rset_VECM_bcols (const gretl_restriction *rset);
 
 int rset_VECM_acols (const gretl_restriction *rset);
 
+void rset_add_results (gretl_restriction *rset,
+		       double test, double pval,
+		       double lnl);
+
+void rset_record_LR_result (gretl_restriction *rset);
+
 #endif /* GRETL_RESTRICT_H */
 
 

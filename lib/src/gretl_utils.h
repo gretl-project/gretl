@@ -129,9 +129,14 @@ int ls_criteria (MODEL *pmod);
 
 void record_test_result (double teststat, double pval, char *blurb);
 
+void record_LR_test_result (double teststat, double pval, double lnl,
+			    char *blurb);
+
 double get_last_test_statistic (char *blurb);
 
 double get_last_pvalue (char *blurb);
+
+double get_last_lnl (char *blurb);
 
 /* timer */
 

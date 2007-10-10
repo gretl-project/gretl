@@ -667,6 +667,8 @@ static void cli_exec_callback (ExecState *s, double ***pZ,
 	cli_do_autofit_plot(s->models[0], pZ, pdinfo, s->prn);
     } else if (ci == VAR || ci == VECM) {
 	maybe_stack_var(s->var, s->cmd);
+    } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
+	maybe_stack_var(s->var, s->cmd);
     }
 }
 

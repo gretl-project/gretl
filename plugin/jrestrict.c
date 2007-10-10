@@ -2731,7 +2731,9 @@ static int max_beta_vname (GRETL_VAR *v,
 
 #define VECM_WIDTH 13
 
-static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
+static int printres (Jwrap *J, GRETL_VAR *jvar, 
+		     gretl_restriction *rset,
+		     const DATAINFO *pdinfo,
 		     PRN *prn)
 {
     const gretl_matrix *c = J->beta;
@@ -2757,10 +2759,12 @@ static int printres (Jwrap *J, GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
     if (J->df > 0) {
 	double x = 2.0 * (jvar->ll - J->ll);
+	double pv = chisq_cdf_comp(x, J->df);
+	
 
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), J->df, x, 
-		chisq_cdf_comp(x, J->df));
+	pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), J->df, x, pv);
+	rset_add_results(rset, x, pv, J->ll);
     }
 
     sdshow = (sd != NULL && !gretl_is_zero_matrix(sd));
@@ -3096,7 +3100,7 @@ static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
 */
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
-			   const gretl_restriction *rset,
+			   gretl_restriction *rset,
 			   const DATAINFO *pdinfo,
 			   PRN *prn)
 {
@@ -3180,7 +3184,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	if (full) {
 	    transcribe_to_jvar(J, jvar);
 	} else {
-	    printres(J, jvar, pdinfo, prn);
+	    printres(J, jvar, rset, pdinfo, prn);
 	}
     } 
 

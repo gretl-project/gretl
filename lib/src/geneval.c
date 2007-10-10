@@ -3413,6 +3413,8 @@ static double dvar_get_value (int i, parser *p)
 	return get_last_pvalue(p->lh.label);
     case R_TEST_STAT:
 	return get_last_test_statistic(p->lh.label);
+    case R_TEST_LNL:
+	return get_last_lnl(p->lh.label);
     case R_STOPWATCH:
 	return gretl_stopwatch();
     default:

@@ -1524,36 +1524,49 @@ void libgretl_cleanup (void)
 enum {
     SET_TEST_STAT,
     GET_TEST_STAT,
-    GET_TEST_PVAL
+    GET_TEST_PVAL,
+    GET_TEST_LNL
 };
 
+#define getcode(c) (c == GET_TEST_STAT || c == GET_TEST_PVAL || \
+                    c == GET_TEST_LNL)
+
 static double
-record_or_get_test_result (double teststat, double pval, char *instr,
-			   int code)
+record_or_get_test_result (double teststat, double pval, double lnl,
+			   char *instr, int code)
 {
     static char savestr[MAXLABEL] = {0};
     static double val = NADBL;
     static double pv = NADBL;
+    static double ll = NADBL;
 
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
 	val = teststat;
 	pv = pval;
+	ll = lnl;
 	*savestr = '\0';
 	if (instr != NULL) {
 	    strncat(savestr, instr, MAXLABEL - 1);
 	} 
-    } else if (code == GET_TEST_STAT || code == GET_TEST_PVAL) {
+    } else if (getcode(code)) {
 	if (instr != NULL) {
 	    if (code == GET_TEST_STAT) {
 		sprintf(instr, _("%s test"), savestr);
-	    } else {
-		/* GET_TEST_PVAL */
+	    } else if (code == GET_TEST_PVAL) {
 		sprintf(instr, _("p-value for %s test"), savestr);
+	    } else if (code == GET_TEST_LNL) {
+		sprintf(instr, _("log-likelihood for %s test"), savestr);
 	    }
 	}
-	ret = (code == GET_TEST_STAT)? val : pv;
+	if (code == GET_TEST_STAT) {
+	    ret = val;
+	} else if (code == GET_TEST_PVAL) {
+	    ret = pv;
+	} else if (code == GET_TEST_LNL) {
+	    ret = ll;
+	}
     } 
 	
     return ret;
@@ -1561,16 +1574,27 @@ record_or_get_test_result (double teststat, double pval, char *instr,
 
 void record_test_result (double teststat, double pval, char *blurb)
 {
-    record_or_get_test_result(teststat, pval, blurb, SET_TEST_STAT);
+    record_or_get_test_result(teststat, pval, NADBL, blurb, SET_TEST_STAT);
+}
+
+void record_LR_test_result (double teststat, double pval, double lnl,
+			    char *blurb)
+{
+    record_or_get_test_result(teststat, pval, lnl, blurb, SET_TEST_STAT);
 }
 
 double get_last_test_statistic (char *blurb)
 {
-    return record_or_get_test_result(0, 0, blurb, GET_TEST_STAT);
+    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_STAT);
 }
 
 double get_last_pvalue (char *blurb)
 {
-    return record_or_get_test_result(0, 0, blurb, GET_TEST_PVAL);
+    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_PVAL);
+}
+
+double get_last_lnl (char *blurb)
+{
+    return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_LNL);
 }
 

@@ -29,7 +29,8 @@ int johansen_ll_calc (GRETL_VAR *jvar, const gretl_matrix *evals);
 
 int
 johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals, 
-		  const gretl_matrix *H, int job, PRN *prn);
+		  const gretl_matrix *H, gretl_restriction *rset,
+		  int job, PRN *prn);
 
 void print_beta_alpha_Pi (const GRETL_VAR *jvar,
 			  const DATAINFO *pdinfo,
@@ -37,12 +38,12 @@ void print_beta_alpha_Pi (const GRETL_VAR *jvar,
 
 int 
 general_vecm_analysis (GRETL_VAR *jvar, 
-		       const gretl_restriction *rset,
+		       gretl_restriction *rset,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
-		     const gretl_restriction *rset,
+		     gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn);

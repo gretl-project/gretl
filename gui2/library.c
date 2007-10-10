@@ -6378,6 +6378,9 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	set_sample_label(pdinfo);
     } else if (ci == VAR || ci == VECM) {
 	maybe_save_var(s->cmd, &s->var, s->prn);
+    } else if (s->var != NULL && ci == END && 
+	       !strcmp(s->cmd->param, "restrict")) {
+	maybe_save_var(s->cmd, &s->var, s->prn);
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
 	populate_varlist();

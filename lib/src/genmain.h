@@ -31,6 +31,7 @@ typedef enum {
     R_DSET_MAX,   /* separator */
     R_TEST_STAT,  /* test statistic from last explicit test performed */
     R_TEST_PVAL,  /* p-value from last explicit test performed */
+    R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_STOPWATCH,  /* stopwatch */ 
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */

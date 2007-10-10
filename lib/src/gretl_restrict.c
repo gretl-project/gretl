@@ -66,6 +66,7 @@ struct gretl_restriction_ {
     gretlopt opt;
     double test;
     double pval;
+    double lnl;
     double bsum;
     double bsd;
     int code;
@@ -1206,6 +1207,7 @@ restriction_set_new (void *ptr, GretlObjType type,
 
     rset->test = NADBL;
     rset->pval = NADBL;
+    rset->lnl = NADBL;
     rset->bsum = NADBL;
     rset->bsd = NADBL;
 
@@ -2244,5 +2246,20 @@ int rset_VECM_acols (const gretl_restriction *rset)
     } else {
 	return rset->Ra->cols;
     }
+}
+
+void rset_add_results (gretl_restriction *rset,
+		       double test, double pval,
+		       double lnl)
+{
+    rset->test = test;
+    rset->pval = pval;
+    rset->lnl = lnl;
+}
+
+void rset_record_LR_result (gretl_restriction *rset)
+{
+    record_LR_test_result(rset->test, rset->pval, rset->lnl,
+			  "LR");
 }
 

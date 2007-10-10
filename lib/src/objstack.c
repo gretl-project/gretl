@@ -713,6 +713,10 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
     char vname[MAXSAVENAME];
     int ret = 0;
 
+    if (var == NULL) {
+	return 0;
+    }
+
     gretl_cmd_get_savename(vname);
 
 #if ODEBUG

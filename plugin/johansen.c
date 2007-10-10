@@ -1524,7 +1524,8 @@ static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *H)
 
 int
 johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals, 
-		  const gretl_matrix *H, int job, PRN *prn)
+		  const gretl_matrix *H, gretl_restriction *rset,
+		  int job, PRN *prn)
 {
     gretl_matrix *S00;
     double llr = 0.0;
@@ -1574,11 +1575,13 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	pprintf(prn, _("Restricted loglikelihood (lr) = %.8g\n"), llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
 	if (df > 0) {
+	    double pv = chisq_cdf_comp(x, df);
+
 	    if (jvar->jinfo->lrdf > 0) {
 		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), df);
 	    }
-	    pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), df, x, 
-		    chisq_cdf_comp(x, df));
+	    pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), df, x, pv);
+	    rset_add_results(rset, x, pv, llr);
 	}
     }
 
@@ -1682,7 +1685,7 @@ static int simple_alpha_restriction (const GRETL_VAR *jvar,
    on beta and/or alpha */
 
 static int j_general_restrict (GRETL_VAR *jvar, 
-			       const gretl_restriction *rset,
+			       gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
@@ -1851,7 +1854,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 
 static int 
 est_simple_alpha_restr (GRETL_VAR *jvar, 
-			const gretl_restriction *rset,
+			gretl_restriction *rset,
 			const double **Z, const DATAINFO *pdinfo,
 			PRN *prn)
 {
@@ -1929,7 +1932,6 @@ est_simple_beta_restr (GRETL_VAR *jvar,
 
     if (!err) {
 	jvar->jinfo->Beta = gretl_matrix_multiply_new(H, M, &err);
-	set_beta_test_df(jvar, H);
     } 
 
     if (!err) {
@@ -2005,7 +2007,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
    basically hand over to jrestrict.c */
 
 static int j_estimate_general (GRETL_VAR *jvar, 
-			       const gretl_restriction *rset,
+			       gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
@@ -2052,7 +2054,7 @@ static int j_estimate_general (GRETL_VAR *jvar,
 /* Public entry point for VECM estimation, restricted or not */
 
 int johansen_estimate (GRETL_VAR *jvar, 
-		       const gretl_restriction *rset,
+		       gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
@@ -2172,7 +2174,7 @@ static int show_beta_alpha_etc (const GRETL_VAR *jvar,
 /* test for a common, homogeneous restriction on beta (only) */
 
 static int vecm_beta_test (GRETL_VAR *jvar, 
-			   const gretl_restriction *rset,
+			   gretl_restriction *rset,
 			   const DATAINFO *pdinfo, 
 			   gretlopt opt,
 			   PRN *prn)
@@ -2241,7 +2243,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 	if (verbose) {
 	    gretl_matrix_print_to_prn(M, "M", prn);
 	}
-	johansen_LR_calc(jvar, evals, H, V_BETA, prn);
+	johansen_LR_calc(jvar, evals, H, rset, V_BETA, prn);
     } 
 
     if (!err && verbose) {
@@ -2268,7 +2270,7 @@ static int vecm_beta_test (GRETL_VAR *jvar,
 */
 
 int vecm_test_restriction (GRETL_VAR *jvar, 
-			   const gretl_restriction *rset,
+			   gretl_restriction *rset,
 			   const DATAINFO *pdinfo, 
 			   gretlopt opt,
 			   PRN *prn)
@@ -2289,6 +2291,10 @@ int vecm_test_restriction (GRETL_VAR *jvar,
 	err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     } else {
 	err = general_vecm_analysis(jvar, rset, pdinfo, prn);
+    }
+
+    if (!err) {
+	rset_record_LR_result(rset);
     }
 
     /* restore orginal Beta, Alpha on exit */

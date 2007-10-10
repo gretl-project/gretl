@@ -70,6 +70,7 @@ struct str_table dvars[] = {
     { R_PD,        "$pd" },
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
+    { R_TEST_LNL,  "$rlnl" },
     { R_INDEX,     "t" },
     { R_INDEX,     "obs" },
     { R_T1,        "$t1" },

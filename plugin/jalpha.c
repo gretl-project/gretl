@@ -271,7 +271,7 @@ static void set_true_zeros (gretl_matrix *m)
 }
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
-		     const gretl_restriction *rset,
+		     gretl_restriction *rset,
 		     const DATAINFO *pdinfo, 
 		     gretlopt opt,
 		     PRN *prn)
@@ -371,7 +371,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 		johansen_ll_calc(jvar, evals);
 		jvar->jinfo->lrdf = rank * (n - A->cols);
 	    } else {
-		err = johansen_LR_calc(jvar, evals, A, V_ALPHA, prn);
+		err = johansen_LR_calc(jvar, evals, A, rset, V_ALPHA, prn);
 	    }
 	} 
 
