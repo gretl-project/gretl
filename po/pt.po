@@ -3,16 +3,17 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
+# Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-09-16 17:13+0100\n"
+"PO-Revision-Date: 2007-10-10 22:22+0100\n"
 "Last-Translator: Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
 
@@ -44,7 +45,7 @@ msgstr "com constante e tendência quadrática"
 #: lib/src/varprint.c:1225 gui2/dialogs.c:4956 plugin/johansen.c:1412
 #: plugin/johansen.c:1413
 msgid "p-value"
-msgstr "p-value"
+msgstr "valor p"
 
 #: lib/src/adf_kpss.c:136 lib/src/dataio.c:1571 lib/src/modelprint.c:2624
 #: lib/src/modelprint.c:2683
@@ -53,12 +54,12 @@ msgstr "desconhecido"
 
 #: lib/src/adf_kpss.c:139
 msgid "asymptotic p-value"
-msgstr "p-value assimptótico"
+msgstr "valor p assimptótico"
 
 #: lib/src/adf_kpss.c:146
 #, c-format
 msgid "lag order %d\n"
-msgstr "ordem de \"lag\" %d\n"
+msgstr "ordem de desfasamento %d\n"
 
 #: lib/src/adf_kpss.c:149
 #, c-format
@@ -115,7 +116,7 @@ msgstr "modelo"
 
 #: lib/src/adf_kpss.c:180 gui2/selector.c:2231
 msgid "lag order:"
-msgstr "ordem de \"lag\":"
+msgstr "ordem de desfasamento:"
 
 #: lib/src/adf_kpss.c:183
 msgid "1st-order autocorrelation coeff. for e"
@@ -237,7 +238,7 @@ msgstr "com erros normais simulados"
 
 #: lib/src/bootstrap.c:455
 msgid "recognized lagged dependent variable"
-msgstr "identificada variável dependente dos \"lags\""
+msgstr "identificada variável dependente dos desfasamentos"
 
 #: lib/src/bootstrap.c:471
 msgid "bootstrap F-test"
@@ -289,7 +290,7 @@ msgid ""
 "with p-value = %g\n"
 "\n"
 msgstr ""
-"com p-value = %g\n"
+"com valor p = %g\n"
 "\n"
 
 #: lib/src/compare.c:324 lib/src/compare.c:350
@@ -301,15 +302,14 @@ msgid "add"
 msgstr "adicionar"
 
 #: lib/src/compare.c:337
-#, fuzzy
 msgid "F-form"
-msgstr "norma-1"
+msgstr "forma-F"
 
 #: lib/src/compare.c:339 lib/src/compare.c:347 lib/src/gretl_restrict.c:1756
 #: lib/src/gretl_restrict.c:2138 lib/src/gretl_restrict.c:2148
 #, c-format
 msgid "with p-value = %g\n"
-msgstr "com p-value = %g\n"
+msgstr "com valor p = %g\n"
 
 #: lib/src/compare.c:345 lib/src/gretl_restrict.c:1752
 msgid "Robust F"
@@ -346,7 +346,7 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
-"com p-value = prob(Qui-quadrado(%d) > %g) = %g\n"
+"com valor p = prob(Qui-quadrado(%d) > %g) = %g\n"
 "\n"
 
 #: lib/src/compare.c:770
@@ -364,7 +364,7 @@ msgstr "não-linearidade"
 #: lib/src/system.c:663 lib/src/system.c:691 lib/src/system.c:2188
 #: lib/src/system.c:2201 lib/src/system.c:2223 lib/src/system.c:2232
 msgid "with p-value"
-msgstr "com p-value"
+msgstr "com valor p"
 
 #: lib/src/compare.c:1291 lib/src/modelprint.c:1496 lib/src/modelprint.c:1498
 msgid "Breusch-Godfrey test for"
@@ -466,7 +466,7 @@ msgid ""
 msgstr ""
 "\n"
 "Teste Chow para quebra estrutural na observação %s:\n"
-"  F(%d ; %d) = %f com p-value %f\n"
+"  F(%d ; %d) = %f com valor p %f\n"
 "\n"
 
 #: lib/src/compare.c:1894
@@ -491,7 +491,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Harvey-Collier t(%d) = %g com p-value %.4g\n"
+"Harvey-Collier t(%d) = %g com valor p %.4g\n"
 "\n"
 
 #: lib/src/compare.c:2023
@@ -604,8 +604,7 @@ msgstr "Atenção: erro na leitura dos dados binários na variável %d"
 #: lib/src/dataio.c:191 lib/src/dataio.c:231 lib/src/dataio.c:325
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
-"Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
+msgstr "Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
 
 #: lib/src/dataio.c:297
 #, c-format
@@ -961,8 +960,7 @@ msgstr "   parece ser etiqueta de observação\n"
 
 #: lib/src/dataio.c:2943
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
 "   a célula da variável %d, observação %d está vazia: tratando como valor "
 "omisso\n"
@@ -1360,8 +1358,7 @@ msgstr "Não se conseguiu abrir %s para escrita"
 #: lib/src/dbwrite.c:585
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
+msgstr "Das variáveis a serem guardadas, %d já estavam presentes na base de dados."
 
 #: lib/src/describe.c:1290 lib/src/describe.c:1394
 #, c-format
@@ -1384,7 +1381,7 @@ msgstr "o comando gnuplot falhou\n"
 #: lib/src/describe.c:2244 lib/src/describe.c:2313 lib/src/describe.c:2504
 #: lib/src/describe.c:2551
 msgid "lag"
-msgstr "\"lag\""
+msgstr "desfasamento"
 
 #: lib/src/describe.c:2252
 msgid "Residual ACF"
@@ -1425,7 +1422,7 @@ msgstr "Função de autocorrelação para %s"
 
 #: lib/src/describe.c:2430
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr " \"LAG\"   ACF          PACF         Q-stat. [p-value]"
+msgstr " \"LAG\"   ACF          PACF         Q-stat. [valor p]"
 
 #: lib/src/describe.c:2510
 #, c-format
@@ -1521,7 +1518,7 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
-"Usando a janela de Bartlett dos \"lags\", comprimento %d\n"
+"Usando a janela de Bartlett dos desfasamentos, comprimento %d\n"
 "\n"
 
 #: lib/src/describe.c:3103
@@ -1680,7 +1677,7 @@ msgstr ""
 #: lib/src/describe.c:3882 lib/src/nonparam.c:276
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
-msgstr "t(%d) = %g, com p-value bilateral %.4f\n"
+msgstr "t(%d) = %g, com valor p bilateral %.4f\n"
 
 #: lib/src/describe.c:3886 lib/src/describe.c:3924 gui2/guiprint.c:1280
 #, c-format
@@ -1743,7 +1740,7 @@ msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr ""
-"   p-value (bilateral) = %g\n"
+"   valor p (bilateral) = %g\n"
 "\n"
 
 #: lib/src/describe.c:4053 lib/src/describe.c:4132
@@ -1953,7 +1950,7 @@ msgstr "ITER             ESS           % ALTERADA"
 #: lib/src/estimate.c:3036 lib/src/estimate.c:3140
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr "Ordem de \"lag\" inválida para arch (%d)"
+msgstr "Ordem de desfasamento inválida para arch (%d)"
 
 #: lib/src/estimate.c:3282 lib/src/estimate.c:3339
 msgid "Couldn't load plugin function\n"
@@ -2341,7 +2338,7 @@ msgstr "Estatística de teste para normalidade"
 #: lib/src/graphing.c:2541
 #, c-format
 msgid "Chi-squared(2) = %.3f pvalue = %.5f"
-msgstr "Qui-quadrado(2) = %.3f p-value = %.5f"
+msgstr "Qui-quadrado(2) = %.3f valor p = %.5f"
 
 #: lib/src/graphing.c:2562
 msgid "Test statistic for gamma"
@@ -2350,7 +2347,7 @@ msgstr "Estatística de teste para Gamma"
 #: lib/src/graphing.c:2564
 #, c-format
 msgid "z = %.3f pvalue = %.5f"
-msgstr "z = %.3f p-value = %.5f"
+msgstr "z = %.3f valor p = %.5f"
 
 #: lib/src/graphing.c:2593
 msgid "Density"
@@ -2494,7 +2491,7 @@ msgstr "Uma ou mais variáveis \"added\" já existiam"
 
 #: lib/src/gretl_errors.c:49
 msgid "Error generating logarithms"
-msgstr "Erro ao gerar logarítmos"
+msgstr "Erro ao gerar logaritmos"
 
 #: lib/src/gretl_errors.c:50
 msgid "Error generating squares"
@@ -2677,7 +2674,7 @@ msgstr "as unidades têm a mesma variância de erro"
 
 #: lib/src/gretl_model.c:2567
 msgid "Non-linearity test (logs)"
-msgstr "Teste de não-linearidade (\"lags\")"
+msgstr "Teste de não-linearidade (desfasamentos)"
 
 #: lib/src/gretl_model.c:2568 lib/src/gretl_model.c:2580
 msgid "relationship is linear"
@@ -2749,8 +2746,7 @@ msgstr "Variância do erro de unidade-específica = 0"
 
 #: lib/src/gretl_model.c:2600
 msgid "Wald test for joint significance of time dummies"
-msgstr ""
-"Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
+msgstr "Teste de Wald para a significância conjunta das variáveis tempo auxiliares"
 
 #: lib/src/gretl_model.c:2868 lib/src/gretl_model.c:2871
 #: lib/src/gretl_model.c:2874
@@ -2791,7 +2787,7 @@ msgid ""
 msgstr ""
 "                         Estimador de efeitos aleatórios\n"
 "           permite para uma unidade-específica no termo do erro\n"
-"           (erros padrão em parentísis, p-values em chavetas)\n"
+"           (erros padrão em parentísis, valores p em chavetas)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1218
@@ -2802,7 +2798,7 @@ msgid ""
 msgstr ""
 "Estimador de efeitos fixos\n"
 "permite diferenciar intercepções no eixo x=0 por unidade de secção-cruzada\n"
-"erros padrão dos declives em parentísis, p-values em chavetas\n"
+"erros padrão dos declives em parentísis, valores p em chavetas\n"
 
 #: lib/src/gretl_panel.c:1231
 #, c-format
@@ -2828,7 +2824,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Um p-value baixo contraria a hipótese nula de que o modelo OLS agrupado "
+"(Um valor p baixo contraria a hipótese nula de que o modelo OLS agrupado "
 "(pooled)\n"
 "é adequado, validando a hipótese alternativa da existência de efeitos "
 "fixos.)\n"
@@ -2864,14 +2860,14 @@ msgid ""
 msgstr ""
 "\n"
 "Estatística de teste de Hausman:\n"
-" H = %g com p-value = prob(qui-quadrado(%d) > %g) = %g\n"
+" H = %g com valor p = prob(qui-quadrado(%d) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:1914
 msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
-"(Um p-value baixo contraria a hipótese nula de que o modelo de efeitos "
+"(Um valor p baixo contraria a hipótese nula de que o modelo de efeitos "
 "aleatórios\n"
 "é consistente, validando a hipótese alternativa da existência do modelo de "
 "efeitos fixos.)\n"
@@ -2905,7 +2901,7 @@ msgid ""
 msgstr ""
 "\n"
 "Estatística de teste Breusch-Pagan:\n"
-" LM = %g com p-value = prob(qui-quadrado(1) > %g) = %g\n"
+" LM = %g com valor p = prob(qui-quadrado(1) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2132
 msgid ""
@@ -2913,7 +2909,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Um p-value baixo contraria a hipótese nula de que o modelo OLS agrupado "
+"(Um valor p baixo contraria a hipótese nula de que o modelo OLS agrupado "
 "(pooled)\n"
 "é adequado, validando a hipótese alternativa da existência de efeitos "
 "aleatórios.)\n"
@@ -3190,8 +3186,7 @@ msgstr "unidades"
 
 #: lib/src/gretl_utils.c:849
 msgid "Failed to parse line as frequency, startobs"
-msgstr ""
-"Falha no processamento de linha como sendo frequência, observação inicial"
+msgstr "Falha no processamento de linha como sendo frequência, observação inicial"
 
 #: lib/src/gretl_utils.c:882 lib/src/gretl_utils.c:891
 #: lib/src/gretl_utils.c:901 lib/src/gretl_utils.c:911
@@ -3219,7 +3214,7 @@ msgstr "teste %s"
 #: lib/src/gretl_utils.c:1553
 #, c-format
 msgid "p-value for %s test"
-msgstr "p-value para o teste %s"
+msgstr "valor p para o teste %s"
 
 #: lib/src/gretl_win32.c:49
 #, c-format
@@ -3329,8 +3324,7 @@ msgstr "Falha no processamento do número de observações"
 #: lib/src/gretl_xml.c:1772
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr ""
-"etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
+msgstr "etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
 
 #: lib/src/gretl_xml.c:1820
 #, c-format
@@ -3417,7 +3411,7 @@ msgstr "Falou a reserva de memória para a lista de comandos"
 #: lib/src/interact.c:1156
 #, c-format
 msgid "generation of lag variable failed"
-msgstr "falhou gerar a variável de \"lag\""
+msgstr "falhou gerar a variável de desfasamento"
 
 #: lib/src/interact.c:1414
 msgid "requires a variable number and a new name"
@@ -3595,7 +3589,7 @@ msgstr "Erro ao determinar o critério de selecção de modelo.\n"
 
 #: lib/src/interact.c:3918
 msgid "Error adding log differences of variables.\n"
-msgstr "Erro ao acrescentar logarítmos das diferenças das variáveis.\n"
+msgstr "Erro ao acrescentar logaritmos das diferenças das variáveis.\n"
 
 #: lib/src/interact.c:3920
 msgid "Error adding first differences of variables.\n"
@@ -3603,11 +3597,11 @@ msgstr "Erro ao acrescentar as primeiras diferenças das variáveis.\n"
 
 #: lib/src/interact.c:3938
 msgid "Error adding lags of variables.\n"
-msgstr "Erro ao acrescentar os \"lags\" das variáveis.\n"
+msgstr "Erro ao acrescentar os desfasamentos das variáveis.\n"
 
 #: lib/src/interact.c:3947
 msgid "Error adding logs of variables.\n"
-msgstr "Erro ao acrescentar os logarítmos das variáveis.\n"
+msgstr "Erro ao acrescentar os logaritmos das variáveis.\n"
 
 #: lib/src/interact.c:3956
 msgid "Failed to generate squares\n"
@@ -3899,7 +3893,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:581
 msgid "p-value for"
-msgstr "p-value para"
+msgstr "valor p para"
 
 #: lib/src/modelprint.c:599 lib/src/modelprint.c:616 lib/src/modelprint.c:624
 msgid "'Within' variance"
@@ -3956,22 +3950,20 @@ msgstr "h de Durbin"
 #: lib/src/modelprint.c:805
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Excluindo a constante, o p-value foi o maior para a variável %d (%s)"
+msgstr "Excluindo a constante, o valor p foi o maior para a variável %d (%s)"
 
 #: lib/src/modelprint.c:808
 #, c-format
 msgid "P-value was highest for variable %d (%s)"
-msgstr "O p-value foi o maior para a variável %d (%s)"
+msgstr "O valor p foi o maior para a variável %d (%s)"
 
 #: lib/src/modelprint.c:818
 msgid "Auxiliary regression for non-linearity test (squared terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (termos ao quadrado)"
 
 #: lib/src/modelprint.c:821
 msgid "Auxiliary regression for non-linearity test (log terms)"
-msgstr ""
-"Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
+msgstr "Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
 
 #: lib/src/modelprint.c:826
 msgid "Augmented regression for Chow test"
@@ -4394,7 +4386,7 @@ msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      VARIÁVEL       COEFICIENTE        ERRO PADRÃO      ESTAT. T   P-VALUE\n"
+"      VARIÁVEL       COEFICIENTE        ERRO PADRÃO      ESTAT. T   VALOR P\n"
 "\n"
 
 #: lib/src/modelprint.c:1826 lib/src/modelprint.c:2728
@@ -4411,11 +4403,8 @@ msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
 msgstr "      VARIÁVEL            COEFICIENTE                  ERRO PADRÃO\n"
 
 #: lib/src/modelprint.c:1842
-msgid ""
-"      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-msgstr ""
-"      VARIÁVEL       COEFICIENTE        ERRO PADRÃO      ESTAT. T       "
-"DECLIVE\n"
+msgid "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
+msgstr "      VARIÁVEL       COEFICIENTE        ERRO PADRÃO      ESTAT. T       DECLIVE\n"
 
 #: lib/src/modelprint.c:1845
 msgid "(at mean)"
@@ -4455,7 +4444,7 @@ msgstr "ESTIMATIVA"
 
 #: lib/src/modelprint.c:1863 lib/src/modelprint.c:1867
 msgid "P-VALUE"
-msgstr "P-VALUE"
+msgstr "VALOR P"
 
 #: lib/src/modelprint.c:1873
 msgid "Parameter"
@@ -4512,12 +4501,12 @@ msgstr "Estatísticas baseadas nos dados diferenciados-rho"
 #: lib/src/system.c:2280 lib/src/texprint.c:801 lib/src/varprint.c:1061
 #: lib/src/varprint.c:1070
 msgid "Log-likelihood"
-msgstr "Verosimilhança-Logarítmica "
+msgstr "Logaritmo da verosimilhança"
 
 #: lib/src/modelprint.c:2064
 #, c-format
 msgid "Log-likelihood for %s"
-msgstr "Verosimilhança-Logarítmica para %s"
+msgstr "Logaritmo da verosimilhança para %s"
 
 #: lib/src/modelprint.c:2136 lib/src/nls.c:2121 lib/src/nls.c:2218
 #: lib/src/system.c:2277
@@ -4724,8 +4713,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:730
 msgid "Ending value for loop index must be greater than starting value."
-msgstr ""
-"O valor final numa variável índice tem que ser superior ao valor inicial."
+msgstr "O valor final numa variável índice tem que ser superior ao valor inicial."
 
 #: lib/src/monte_carlo.c:776
 msgid "Loop count must be positive."
@@ -4931,12 +4919,12 @@ msgstr ""
 #: lib/src/nonparam.c:262
 #, c-format
 msgid "Spearman's rank correlation coefficient (rho) = %.8f\n"
-msgstr "Coeficiente de correlação de ordem de Spearman (rho) = %.8f\n"
+msgstr "Coeficiente de correlação de posto de Spearman (rho) = %.8f\n"
 
 #: lib/src/nonparam.c:270 lib/src/nonparam.c:516
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %.4f\n"
-msgstr "z-score = %g, com p-value bilateral %.4f\n"
+msgstr "z-score = %g, com valor p bilateral %.4f\n"
 
 #: lib/src/nonparam.c:282
 #, c-format
@@ -4949,10 +4937,9 @@ msgid "not significant at the 10% level\n"
 msgstr "não significativo com um nível de 10%\n"
 
 #: lib/src/nonparam.c:289
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
-"A amostra é demasiado pequena para calcular um p-value baseado na "
+"A amostra é demasiado pequena para calcular um valor p baseado na "
 "distribuição normal\n"
 
 #: lib/src/nonparam.c:300 lib/src/printout.c:935 gui2/guiprint.c:1661
@@ -4963,7 +4950,7 @@ msgstr "Observações"
 
 #: lib/src/nonparam.c:301 lib/src/nonparam.c:302
 msgid "rank"
-msgstr "ordem"
+msgstr "posto"
 
 #: lib/src/nonparam.c:715
 msgid ""
@@ -4993,13 +4980,12 @@ msgstr ""
 #: lib/src/nonparam.c:739
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%g, %g)\n"
-msgstr ""
-"De acordo com a hipótese nula de aleatoriedade, R segue uma N(%g ; %g)\n"
+msgstr "De acordo com a hipótese nula de aleatoriedade, R segue uma N(%g ; %g)\n"
 
 #: lib/src/nonparam.c:741
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "z-score = %g, com p-value (bilateral) %g\n"
+msgstr "z-score = %g, com valor p (bilateral) %g\n"
 
 #: lib/src/nonparam.c:775
 #, c-format
@@ -5031,9 +5017,8 @@ msgid "the two medians are equal"
 msgstr "as duas medianas são iguais"
 
 #: lib/src/nonparam.c:1020
-#, fuzzy
 msgid "sum of ranks, sample 1"
-msgstr "média da amostra 1"
+msgstr "soma de postos, amostra 1"
 
 #: lib/src/nonparam.c:1070
 msgid "Sign Test"
@@ -5052,8 +5037,7 @@ msgstr "Número de casos com %s > %s: w = %d (%.2f%%)\n"
 #: lib/src/nonparam.c:1078
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
-msgstr ""
-"De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
+msgstr "De acordo com a hipótese nula de não diferença, W segue uma B(%d, %.1f)\n"
 
 #: lib/src/nonparam.c:1080 lib/src/nonparam.c:1087 gui2/calculator.c:1878
 msgid "Prob"
@@ -5110,10 +5094,8 @@ msgid "gretl version %s\n"
 msgstr "gretl versão %s\n"
 
 #: lib/src/printout.c:97
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell e Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:98
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5218,7 +5200,7 @@ msgstr ""
 #: lib/src/printout.c:462
 #, c-format
 msgid "Pearson chi-square test = %g (%d df, p-value = %g)"
-msgstr "Teste do qui-quadrado de Pearson = %g (%d gl, p-value = %g)"
+msgstr "Teste do qui-quadrado de Pearson = %g (%d gl, valor p = %g)"
 
 #: lib/src/printout.c:492 lib/src/printout.c:500
 #, c-format
@@ -5553,10 +5535,8 @@ msgstr ""
 
 #: lib/src/subsample.c:1507
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
-msgstr ""
-"Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgstr "Número total de valores omissos = %d (%.2f%% do total de valores de dados)\n"
 
 #: lib/src/system.c:67
 msgid "SUR"
@@ -5816,7 +5796,7 @@ msgstr "Falhou a decomposição de matriz"
 #: lib/src/var.c:591 lib/src/var.c:2446
 #, c-format
 msgid "vecm: rank %d is out of bounds"
-msgstr "vecm: ordem %d está fora do limite"
+msgstr "vecm: posto %d está fora do limite"
 
 #: lib/src/var.c:1910
 msgid "Sample variance-covariance matrices for residuals"
@@ -5844,7 +5824,7 @@ msgstr "Número de equações"
 
 #: lib/src/var.c:2264
 msgid "Lag order"
-msgstr "Ordem de \"lag\""
+msgstr "Ordem de desfasamento"
 
 #: lib/src/var.c:2265
 msgid "Estimation period"
@@ -5955,12 +5935,12 @@ msgstr "Teste de Portmanteau"
 #: lib/src/varprint.c:1008 lib/src/varprint.c:1010
 #, c-format
 msgid "VECM system, lag order %d"
-msgstr "Sistema VECM, grau de \"lag\" %d"
+msgstr "Sistema VECM, grau de desfasamento %d"
 
 #: lib/src/varprint.c:1014 lib/src/varprint.c:1016
 #, c-format
 msgid "VAR system, lag order %d"
-msgstr "Sistema VAR, grau de \"lag\" %d"
+msgstr "Sistema VAR, grau de desfasamento %d"
 
 #: lib/src/varprint.c:1023
 #, c-format
@@ -5987,18 +5967,18 @@ msgstr "Testes-F com zero restrições"
 #: lib/src/varprint.c:1132 lib/src/varprint.c:1138 lib/src/varprint.c:1144
 #, c-format
 msgid "All lags of %-15s "
-msgstr "Todos os \"lags\" de %-15s "
+msgstr "Todos os desfasamentos de %-15s "
 
 #: lib/src/varprint.c:1155 lib/src/varprint.c:1161 lib/src/varprint.c:1167
 #, c-format
 msgid "All vars, lag %-13d "
-msgstr "Todas as variáveis, \"lag\" %-13d "
+msgstr "Todas as variáveis, desfasamento %-13d "
 
 #: lib/src/varprint.c:1196 lib/src/varprint.c:1197 lib/src/varprint.c:1199
 #: lib/src/varprint.c:1200
 #, c-format
 msgid "the longest lag is %d"
-msgstr "o maior \"lag\" é %d"
+msgstr "o maior desfasamento é %d"
 
 #: lib/src/varprint.c:1204 lib/src/varprint.c:1211 lib/src/varprint.c:1220
 msgid "For the system as a whole"
@@ -6015,12 +5995,12 @@ msgstr "Comparação dos critérios de informação"
 #: lib/src/varprint.c:1229 lib/src/varprint.c:1233
 #, c-format
 msgid "Lag order %*d"
-msgstr "Ordem de \"lag\" %*d"
+msgstr "Ordem de desfasamento %*d"
 
 #: lib/src/vartest.c:257
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "Sistema VAR, máximo grau de \"lag\" %d"
+msgstr "Sistema VAR, máximo grau de desfasamento %d"
 
 #: lib/src/vartest.c:260
 msgid ""
@@ -6035,7 +6015,7 @@ msgstr ""
 #: lib/src/vartest.c:265
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr ""
-"\"lags\"     verosimilhança-logarítmica    p(LR)       AIC          "
+"desfasamentos     log. da verosimilhança    p(LR)       AIC          "
 "BIC          HQC"
 
 #: cli/cli_object.c:51 gui2/objectsave.c:60
@@ -6211,8 +6191,7 @@ msgstr "comandos gravados como %s\n"
 #: cli/gretlcli.c:995
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr ""
-"escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
+msgstr "escreva um nome de ficheiro onde guardar resultados (\"Enter\" para sair): "
 
 #: cli/gretlcli.c:1003
 #, c-format
@@ -6241,12 +6220,11 @@ msgstr ""
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio.guilherme@bluebottle.com>\n"
-"Tradução de 16 de Setembro de 2007."
+"Tradução de 10 de Outubro de 2007."
 
 #: gui2/about.c:103
 #, c-format
-msgid ""
-"Cannot find the license agreement file COPYING. Please make sure it's in %s"
+msgid "Cannot find the license agreement file COPYING. Please make sure it's in %s"
 msgstr ""
 "Não se encontrou o ficheiro de licenciamento COPYING. Por favor assegurar "
 "que esteja em %s"
@@ -6317,8 +6295,7 @@ msgstr "mediana"
 
 #: gui2/boxplots.c:927
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
+msgstr "Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
 
 #: gui2/boxplots.c:933
 #, no-c-format
@@ -6397,10 +6374,14 @@ msgstr "Distribuição de amostragem Chi-square(%d)"
 msgid "F(%d, %d) sampling distribution"
 msgstr "Distribuição de amostragem F(%d ; %d)"
 
+#<<<<<<< pt.po
+##: gui2/calculator.c:184
+#=======
 #: gui2/calculator.c:185
 #, c-format
+#>>>>>>> 1.29
 msgid "N(%g, %g)"
-msgstr "N(%g, %g)"
+msgstr "N(%g %g)"
 
 #: gui2/calculator.c:187
 #, c-format
@@ -6459,11 +6440,11 @@ msgstr "Falha no cálculo do valor crítico"
 
 #: gui2/calculator.c:1239
 msgid "Failed to compute p-value"
-msgstr "Falhou o cálculo do p-value"
+msgstr "Falhou o cálculo do valor p"
 
 #: gui2/calculator.c:1242
 msgid "gretl: p-value"
-msgstr "gretl: p-value"
+msgstr "gretl: valor p"
 
 #: gui2/calculator.c:1287
 msgid "You must give a name for the variable"
@@ -6479,7 +6460,7 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
-"p-value bilateral = %.4g\n"
+"valor p bilateral = %.4g\n"
 "(unilateral = %.4g)\n"
 
 #: gui2/calculator.c:1429
@@ -6577,8 +6558,7 @@ msgstr "Estatística de teste: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:1576
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
-msgstr ""
-"Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
+msgstr "Atenão: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
 
 #: gui2/calculator.c:1583
 msgid "Null hypothesis: The population variances are equal\n"
@@ -6891,7 +6871,7 @@ msgstr "gretl: acrescentar gráfico da distribuição"
 
 #: gui2/calculator.c:2823
 msgid "gretl: p-value finder"
-msgstr "gretl: localizador de p-value"
+msgstr "gretl: localizador de valor p"
 
 #: gui2/calculator.c:2825
 msgid "gretl: test calculator"
@@ -7027,7 +7007,7 @@ msgstr "gretl: VECM"
 
 #: gui2/callbacks.c:354 gui2/library.c:3019
 msgid "gretl: VAR lag selection"
-msgstr "gretl: selecção de \"lag\" VAR"
+msgstr "gretl: selecção de desfasamento VAR"
 
 #: gui2/callbacks.c:376 gui2/callbacks.c:386 gui2/callbacks.c:388
 msgid "gretl: define graph"
@@ -7040,7 +7020,7 @@ msgstr "gretl: testes de modelos"
 
 #: gui2/callbacks.c:390 gui2/library.c:1034
 msgid "rank correlation"
-msgstr "correlação de ordem"
+msgstr "correlação de posto"
 
 #: gui2/callbacks.c:407
 msgid "gretl: restrict sample"
@@ -7055,6 +7035,8 @@ msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
 msgstr ""
+"Introduza a fórmula para a nova variável\n"
+"(ou apenas um nome, para entrar dados manualmente)"
 
 #: gui2/callbacks.c:420 gui2/callbacks.c:425
 msgid "gretl: missing code"
@@ -7610,7 +7592,7 @@ msgstr "Intervalo de confiança de Student (\"Studentized\")"
 
 #: gui2/dialogs.c:831
 msgid "P-value"
-msgstr "P-value"
+msgstr "Valor p"
 
 #: gui2/dialogs.c:845
 msgid "Resample residuals"
@@ -8114,8 +8096,7 @@ msgstr "As variáveis índice de unidade e de tempo têm que ser distintas"
 
 #: gui2/dialogs.c:4220
 msgid "The selected index variables do not represent a panel structure"
-msgstr ""
-"As variáveis índice seleccionadas não representam uma estrutura de painel"
+msgstr "As variáveis índice seleccionadas não representam uma estrutura de painel"
 
 #: gui2/dialogs.c:4340
 msgid "Unit or group index variable:"
@@ -8592,8 +8573,7 @@ msgstr "Falta alguma informação obrigatória"
 
 #: gui2/fnsave.c:253
 msgid "Invalid version string: use numbers and '.' only"
-msgstr ""
-"Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
+msgstr "Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
 
 #: gui2/fnsave.c:268
 msgid "Save function package"
@@ -9232,7 +9212,7 @@ msgstr "/Ferramentas/_Tabelas Estatísticas"
 
 #: gui2/gretl.c:282
 msgid "/Tools/_P-value finder"
-msgstr "/Ferramentas/Localizador de _p-value"
+msgstr "/Ferramentas/Localizador de valor _p"
 
 #: gui2/gretl.c:283
 msgid "/Tools/_Distribution graphs"
@@ -9367,9 +9347,8 @@ msgid "/Data/_Transpose data..."
 msgstr "/Dados/_Transpor Dados..."
 
 #: gui2/gretl.c:335
-#, fuzzy
 msgid "/Data/_Sort data..."
-msgstr "/Dados/_Compactar Dados..."
+msgstr "/Dados/_Ordenar Dados..."
 
 #: gui2/gretl.c:337
 msgid "/Data/_Refresh window"
@@ -9465,7 +9444,7 @@ msgstr "/Acrescentar/_Quadrados das variáveis seleccionadas"
 
 #: gui2/gretl.c:379
 msgid "/Add/_Lags of selected variables"
-msgstr "/Acrescentar/\"_Lags\" das variáveis seleccionadas"
+msgstr "/Acrescentar/_Desfasamentos das variáveis seleccionadas"
 
 #: gui2/gretl.c:381
 msgid "/Add/_First differences of selected variables"
@@ -9505,8 +9484,7 @@ msgstr "/Acrescentar/Variáveis auxiliares _temporais"
 
 #: gui2/gretl.c:399
 msgid "/Add/Dummies for selected _discrete variables"
-msgstr ""
-"/Acrescentar/Variáveis auxiliares para as variáveis discretas seleccionadas"
+msgstr "/Acrescentar/Variáveis auxiliares para as variáveis discretas seleccionadas"
 
 #: gui2/gretl.c:403
 msgid "/Add/Define _new variable..."
@@ -9618,7 +9596,7 @@ msgstr "Variável/Espectro/_Periodograma Amostral"
 
 #: gui2/gretl.c:446
 msgid "/Variable/Spectrum/_Bartlett lag window"
-msgstr "Variável/Espectro/Janela de \"lags\" de _Bartlett"
+msgstr "Variável/Espectro/Janela de desfasamentos de _Bartlett"
 
 #: gui2/gretl.c:447
 msgid "/Variable/_Augmented Dickey-Fuller test"
@@ -10162,7 +10140,7 @@ msgstr "/Testes/Não-linearidade (_quadrados)"
 
 #: gui2/gui_utils.c:250
 msgid "/Tests/Non-linearity (_logs)"
-msgstr "/Testes/Não-linearidade (_logarítmos)"
+msgstr "/Testes/Não-linearidade (_logaritmos)"
 
 #: gui2/gui_utils.c:251
 msgid "/Tests/_Ramsey's RESET"
@@ -10527,7 +10505,7 @@ msgstr "/Gravar/_T*R-Quadrado"
 
 #: gui2/gui_utils.c:2747
 msgid "/Save/_Log likelihood"
-msgstr "/Gravar/Verosimilhança _Logarítmica"
+msgstr "/Gravar/_Log. da verosimilhança"
 
 #: gui2/gui_utils.c:2752
 msgid "/Save/_Akaike Information Criterion"
@@ -10665,7 +10643,7 @@ msgstr "gretl: teste ARCH"
 
 #: gui2/gui_utils.c:3336 gui2/library.c:2092
 msgid "Lag order for test:"
-msgstr "Ordem de \"lag\" para o teste:"
+msgstr "Ordem de desfasamento para o teste:"
 
 #: gui2/gui_utils.c:3346 gui2/library.c:2104
 msgid "gretl: LM test (autocorrelation)"
@@ -10862,9 +10840,8 @@ msgid "Failed to download file"
 msgstr "Falhou download do ficheiro"
 
 #: gui2/library.c:129
-#, fuzzy
 msgid "gretl: iteration info"
-msgstr "gretl: editar a informação dos dados"
+msgstr "gretl: informação das iteradas"
 
 #: gui2/library.c:166 gui2/library.c:4595 gui2/library.c:5090
 msgid "No data were available to graph"
@@ -10930,7 +10907,7 @@ msgstr "mostrar resultados da regressão"
 
 #: gui2/library.c:887
 msgid "test down from maximum lag order"
-msgstr "testar para baixo a partir da ordem máxima de \"lag\""
+msgstr "testar para baixo a partir da ordem máxima de desfasamento"
 
 #: gui2/library.c:888 gui2/library.c:894
 msgid "use level of variable"
@@ -10954,15 +10931,15 @@ msgstr "gretl: teste KPSS"
 
 #: gui2/library.c:900
 msgid "Lag order for ADF test:"
-msgstr "Ordem de \"lag\" para o teste ADF:"
+msgstr "Ordem de desfasamento para o teste ADF:"
 
 #: gui2/library.c:901
 msgid "Lag order for KPSS test:"
-msgstr "Ordem de \"lag\" para o teste KPSS:"
+msgstr "Ordem de desfasamento para o teste KPSS:"
 
 #: gui2/library.c:1073
 msgid "Lag order:"
-msgstr "Ordem de \"lag\":"
+msgstr "Ordem de desfasamento:"
 
 #: gui2/library.c:1109
 msgid "gretl: add info"
@@ -11102,7 +11079,7 @@ msgstr "gretl: saída do teste RESET"
 
 #: gui2/library.c:2135
 msgid "Lag order for ARCH test:"
-msgstr "Ordem de \"lag\" para o teste ARCH:"
+msgstr "Ordem de desfasamento para o teste ARCH:"
 
 #: gui2/library.c:2355
 msgid "linear restrictions"
@@ -11270,11 +11247,11 @@ msgstr "Codificando as variáveis como sendo auxiliares"
 
 #: gui2/library.c:4131
 msgid "gretl: generate lags"
-msgstr "gretl: gerar \"lags\""
+msgstr "gretl: gerar desfasamentos"
 
 #: gui2/library.c:4132
 msgid "Number of lags to create:"
-msgstr "Número de \"lags\" a criar:"
+msgstr "Número de desfasamentos a criar:"
 
 #: gui2/library.c:4160
 msgid "No discrete variables were selected"
@@ -11419,14 +11396,12 @@ msgid "Data transposed"
 msgstr "Dados transpostos"
 
 #: gui2/library.c:5561
-#, fuzzy
 msgid "Ascending"
-msgstr "Lendo"
+msgstr "Crescente"
 
 #: gui2/library.c:5562
-#, fuzzy
 msgid "Descending"
-msgstr "Decenal"
+msgstr "Decrescente"
 
 #: gui2/library.c:5599
 msgid "OK to overwrite?"
@@ -11528,7 +11503,7 @@ msgstr "/Modelo/Série temporal/Autoregressão _vectorial..."
 
 #: gui2/menustate.c:136
 msgid "/Model/Time series/VAR _lag selection..."
-msgstr "/Modelo/Série temporal/Selecção de \"_lags\" VAR..."
+msgstr "/Modelo/Série temporal/Selecção de desfasamentos VAR..."
 
 #: gui2/menustate.c:137
 msgid "/Model/Time series/V_ECM..."
@@ -11682,8 +11657,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Desculpe, os modelos TSLS não podem ser colocados na tabela de modelos"
 
 #: gui2/model_table.c:183
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Não se pode acrescentar modelo à tabela -- este modelo tem uma variável "
 "dependente diferente"
@@ -11790,8 +11764,7 @@ msgstr "Para logit e probit, o $R^2$ é o pseudo-$R^2$ de McFadden"
 
 #: gui2/model_table.c:1030
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
-"Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
+msgstr "Para logit e probit, o R{\\super 2} é o pseudo-R{\\super 2} de McFadden"
 
 #: gui2/model_table.c:1058
 msgid "No model is available"
@@ -11841,7 +11814,7 @@ msgstr "Tem que seleccionar uma variável peso"
 
 #: gui2/selector.c:1649
 msgid "You must specify a list of lags"
-msgstr "Tem que especificar uma lista de \"lags\""
+msgstr "Tem que especificar uma lista de desfasamentos"
 
 #: gui2/selector.c:1652
 msgid "You must specify a selection variable"
@@ -11905,7 +11878,7 @@ msgstr "Modelo autoregressivo"
 
 #: gui2/selector.c:1989
 msgid "VAR lag selection"
-msgstr "Selecção de \"lags\" VAR"
+msgstr "Selecção de desfasamentos VAR"
 
 #: gui2/selector.c:1996
 msgid "Cointegration"
@@ -11929,7 +11902,7 @@ msgstr "Variável de selecção"
 
 #: gui2/selector.c:2016
 msgid "List of AR lags"
-msgstr "Lista de \"lags\" AR"
+msgstr "Lista de desfasamentos AR"
 
 #: gui2/selector.c:2019 gui2/selector.c:2048
 msgid "Y-axis variable"
@@ -11961,11 +11934,11 @@ msgstr "Interface público"
 
 #: gui2/selector.c:2232
 msgid "cointegration rank:"
-msgstr "ordem de cointegração:"
+msgstr "posto de cointegração:"
 
 #: gui2/selector.c:2257
 msgid "maximum lag:"
-msgstr "\"lag\" máximo:"
+msgstr "desfasamento máximo:"
 
 #: gui2/selector.c:2290
 msgid "ARCH order:"
@@ -12001,7 +11974,7 @@ msgstr "<- Remover"
 
 #: gui2/selector.c:2376 gui2/selector.c:3327 gui2/selector.c:3492
 msgid "lags..."
-msgstr "\"lags\"..."
+msgstr "desfasamentos..."
 
 #: gui2/selector.c:2651
 msgid "ARCH p:"
@@ -12028,9 +12001,8 @@ msgid "MA order:"
 msgstr "ordem MA:"
 
 #: gui2/selector.c:2739 gui2/selector.c:2758
-#, fuzzy
 msgid "or specific lags"
-msgstr "\"lags\" específicos"
+msgstr "ou desfasamentos específicos"
 
 #: gui2/selector.c:2910
 msgid "configure"
@@ -12062,7 +12034,7 @@ msgstr "Afinar usando Cochrane-Orcutt"
 
 #: gui2/selector.c:2967
 msgid "Test down from maximum lag order"
-msgstr "Testar para baixo a partir do \"lag\" de maior ordem"
+msgstr "Testar para baixo a partir do desfasamento de maior ordem"
 
 #: gui2/selector.c:2969
 msgid "Skip initial DF tests"
@@ -12086,7 +12058,7 @@ msgstr "Usar X-12-ARIMA"
 
 #: gui2/selector.c:3014
 msgid "Show lagged variables"
-msgstr "Mostrar as variáveis com \"lags\""
+msgstr "Mostrar as variáveis com desfasamentos"
 
 #: gui2/selector.c:3059
 msgid "Spearman's rho"
@@ -12102,7 +12074,7 @@ msgstr "Apresentar declives na média"
 
 #: gui2/selector.c:3079
 msgid "Show p-values"
-msgstr "Apresentar p-values"
+msgstr "Apresentar valores p"
 
 #: gui2/selector.c:3091
 msgid "Use points"
@@ -12222,7 +12194,7 @@ msgstr "Seleccionar variáveis para registos"
 
 #: gui2/selector.c:3677
 msgid "Select variables for lagging"
-msgstr "Seleccionar variáveis para criar \"lags\""
+msgstr "Seleccionar variáveis para criar desfasamentos"
 
 #: gui2/selector.c:3679
 msgid "Select variables to square"
@@ -12328,11 +12300,11 @@ msgstr "Copiar dados"
 
 #: gui2/selector.c:4513
 msgid "lag order"
-msgstr "ordem de \"lag\""
+msgstr "ordem de desfasamento"
 
 #: gui2/selector.c:4534
 msgid "lags"
-msgstr "\"lags\""
+msgstr "desfasamentos"
 
 #: gui2/selector.c:4538
 msgid "or"
@@ -12340,11 +12312,11 @@ msgstr "ou"
 
 #: gui2/selector.c:4540
 msgid "specific lags"
-msgstr "\"lags\" específicos"
+msgstr "desfasamentos específicos"
 
 #: gui2/selector.c:4551
 msgid "Lags of dependent variable"
-msgstr "\"lags\" da variável dependente"
+msgstr "desfasamentos da variável dependente"
 
 #: gui2/selector.c:4577
 msgid "to"
@@ -12950,9 +12922,9 @@ msgid "No series to edit"
 msgstr "Não há série para editar"
 
 #: gui2/ssheet.c:2032
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: series %s is empty"
-msgstr "Atenção: a série tem observações omissas"
+msgstr "Atenção: a série %s está vazia"
 
 #: gui2/ssheet.c:2190
 msgid "gretl: edit matrix"
@@ -13135,8 +13107,7 @@ msgstr ""
 #: gui2/update.c:148
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
-"Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
+msgstr "Este ficheiro faz parte do sistema de notificação de actualizações do gretl\n"
 
 #: gui2/update.c:210
 msgid "No new files"
@@ -13421,12 +13392,15 @@ msgstr "P(Qui-quadrado(%d) > %g) = %g\n"
 #: plugin/jrestrict.c:1242
 #, c-format
 msgid "Switching algorithm: %d iterations"
-msgstr ""
+msgstr "Algoritmo de trocas: %d iterações"
 
+#<<<<<<< pt.po
+##: plugin/jrestrict.c:1209
+#=======
 #: plugin/jrestrict.c:1244
-#, fuzzy
+#>>>>>>> 1.29
 msgid "user-supplied initial values"
-msgstr "Valores críticos"
+msgstr "valores iniciais fornecidos pelo utilizador"
 
 #: plugin/jrestrict.c:1817
 #, c-format
@@ -13446,10 +13420,13 @@ msgstr "O modelo está completamente identificado\n"
 msgid "Based on Jacobian, df = %d\n"
 msgstr "Baseado na Jacobiana, gl = %d\n"
 
+#<<<<<<< pt.po
+##: plugin/jrestrict.c:2695
+#=======
 #: plugin/jrestrict.c:2750
-#, fuzzy
+#>>>>>>> 1.29
 msgid "loglikelihood"
-msgstr "Verosimilhança-Logarítmica "
+msgstr "logaritmo da verosimilhança"
 
 #: plugin/kernel.c:132
 #, c-format
@@ -13646,7 +13623,7 @@ msgstr "declive da amplitude versus média = %g\n"
 #: plugin/range-mean.c:201
 #, c-format
 msgid "p-value for H0: slope = 0 is %g\n"
-msgstr "p-value para H0: declive = 0 é %g\n"
+msgstr "valor p para H0: declive = 0 é %g\n"
 
 #: plugin/stata_import.c:257
 msgid "unknown data type"
@@ -13899,39 +13876,9 @@ msgstr ""
 
 #: plugin/workbook.c:635
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr ""
-"Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
+msgstr "Este não é um ficheiro OLE -- talvez seja demasiado antigo para o gretl ler\n"
 
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
 msgstr "Erro inesperado durante a leitura do ficheiro\n"
 
-#~ msgid "P-values based on MacKinnon (JAE, 1996)\n"
-#~ msgstr "P-values baseados em MacKinnon (JAE, 1996)\n"
-
-#~ msgid "Dropping %s: sample range has only one obs, namely %g\n"
-#~ msgstr ""
-#~ "Descartando %s: o intervalo da amostra tem apenas uma observação, "
-#~ "nomeadamente %g\n"
-
-#~ msgid "The dependent variable '%s' is not a 0/1 variable.\n"
-#~ msgstr "A variável dependente variable '%s' não é uma variável 0/1 .\n"
-
-#~ msgid "Invalid probability"
-#~ msgstr "Probabilidade inválida"
-
-#~ msgid "Failed to add case markers"
-#~ msgstr "Falha ao acrescentar marcadores de casos"
-
-#~ msgid ""
-#~ "No user-defined functions are currently loaded.\n"
-#~ "Please load or define some functions first."
-#~ msgstr ""
-#~ "Não estão carregadas nenhumas funções definidas pelo utilizador.\n"
-#~ "Por favor, primeiro carregar ou definir algumas funções."
-
-#~ msgid "P(Chi-Square(%d) > %g = %g"
-#~ msgstr "P(Qui-quadrado(%d) > %g) = %g"
-
-#~ msgid "P(Chi-Square(%d) > %g = %g\n"
-#~ msgstr "P(Qui-quadrado(%d) > %g) = %g\n"
