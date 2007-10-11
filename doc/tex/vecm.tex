@@ -449,7 +449,7 @@ can be shown that the minimum number of restrictions that is necessary
 to guarantee identification is $r^2$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
-normalization'', or ``triangular representation''\footnote{For
+normalization'', or ``triangular representation''.\footnote{For
   comparison with other studies, you may wish to normalize $\beta$
   differently.  Using the \texttt{set} command you can do 
   \verb|set vecm_norm diag| to select a normalization that simply scales the
@@ -458,7 +458,7 @@ normalization'', or ``triangular representation''\footnote{For
   Doornik (2004).  Another alternative is \verb+set vecm_norm first+,
   which scales $\beta$ such that the elements on the first row equal
   1.  (To return to the default: \texttt{set vecm\_norm phillips}.)
-}. The starting point is writing $\beta$ in partitioned form as in
+} The starting point is writing $\beta$ in partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
@@ -488,7 +488,7 @@ normalization expresses the system of $r$ equilibrium relations as
     y_{r,t} & = & \beta_{r,r+1} y_{r+1,t} + \ldots + \beta_{r,n} y_{r,t} 
   \end{eqnarray}
 
-wher the first $r$ variables are expressed as functions of the
+where the first $r$ variables are expressed as functions of the
 remaining $n-r$.
 
 Although the triangular representation ensures that the statistical problem of
@@ -554,13 +554,13 @@ This renormalization can be accomplished by means of the
 \texttt{restrict} command, to be given after the \texttt{vecm} command
 or, in the graphical interface, by selecting the ``Test, Linear
 Restrictions'' menu entry. The syntax for entering the restrictions
-should be fairly obvious\footnote{Note that in this context we are
+should be fairly obvious:\footnote{Note that in this context we are
   bending the usual matrix indexation convention, using the leading
   index to refer to the \textit{column} of $\beta$ (the particular
   cointegrating vector).  This is standard practice in the literature,
   and defensible insofar as it is the columns of $\beta$ (the
   cointegrating relations or equilibrium errors) that are of primary
-  interest.}:
+  interest.}
 \begin{code}
 restrict
   b[1,1] = -1
@@ -737,10 +737,10 @@ area, in which they find three long-run equilibrium relationships:
 \end{tabular}
 
 where $m$ is real money demand, $l$ and $r$ are long- and short-term
-interest rates, $y$ is output and $\pi$ is inflation\footnote{Note
+interest rates, $y$ is output and $\pi$ is inflation.\footnote{Note
   that a traditional formulation of the Fisher equation should reverse
   the roles of the variables; clearly this detail is immaterial in the
-  prresent context}. Since the contegration rank is 3 and the number
+  present context} Since the cointegration rank is 3 and the number
 of variables is 5, 9 restrictions are required for identification and
 a just-identified system should have 6 unrestricted parameters ($6 =
 6 \times 3 - 3 \times 3$).
@@ -784,7 +784,7 @@ genr ll1 = $rlnl
 In this case, the long-run relationships feature only 3 unrestricted
 parameters, so the over-identification rank is 3. Example
 \ref{brand-cassola-script} replicates Table 4 on page
-824\footnote{There appear to be a few typos in the article.}. Nothe
+824.\footnote{There appear to be a few typos in the article.} Note
 that we use the \verb|$lnl| accessor after the \texttt{vecm} command
 to store the unrestricted log-likelihood and the \verb|$rlnl| accessor
 after \texttt{restrict} for its restricted counterpart. Part of the
@@ -855,13 +855,13 @@ Homogeneity in the Fisher hypothesis:
 \subsection{Numerical methods}
 \label{sec:vecm-opt}
 
-Apart from a few special cases\footnote{Let us define a ``simple''
+Apart from a few special cases,\footnote{Let us define a ``simple''
   restriction as one that (a) is homogeneous, (b) is common to all
   $\beta$ or all $\alpha$ (in case $r>1$) and (c) involves either
   $\beta$ only or $\alpha$ only.  Simple restrictions are handled via
   the modified eigenvalues method set out by Johansen (1995).  We
   solve directly for the ML estimator, without any need for iterative
-  methods.}, the resulting estimator has no closed form solution;
+  methods.} the resulting estimator has no closed form solution;
 hence, the maximum must be found via numerical methods.
 
 Two such methods are available in \app{gretl}. The default is the
