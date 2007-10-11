@@ -775,7 +775,8 @@ unrestricted parameters, so the over-identification rank is 3.
 \begin{script}[htbp]
   \caption{Estimation of a money demand system with constraints on $\beta$}
   \label{brand-cassola-script}
-\begin{scode}
+Input:
+\begin{scodebit}
 open brand_cassola.gdt
 
 # perform a few transformations
@@ -804,17 +805,9 @@ restrict --full
   b[3,5] = 0
 end restrict
 genr ll1 = $rlnl
-\end{scode}
-%$
-\end{script}
-
-Example \ref{brand-cassola-script} replicates Table 4 on page 824 of
-the Brand and Cassola article.\footnote{Modulo what appear to be a few
-  typos in the article.} Note that we use the \verb|$lnl| accessor
-after the \texttt{vecm} command to store the unrestricted
-log-likelihood and the \verb|$rlnl| accessor after \texttt{restrict}
-for its restricted counterpart. Part of the output is
-\begin{code}
+\end{scodebit}
+Partial output:
+\begin{scodebit}
 Unrestricted loglikelihood (lu) = 116.60268
 Restricted loglikelihood (lr) = 115.86451
 2 * (lu - lr) = 1.47635
@@ -832,18 +825,33 @@ rs         0.0000       0.0000      -1.0000
           (0.0000)     (0.0000)     (0.0000) 
 y         -1.3304       0.0000       0.0000 
         (0.030533)     (0.0000)     (0.0000) 
-\end{code}
+\end{scodebit}
+%$
+\end{script}
 
-Further testing is then performed to check whether (a) the income
-elasticity in the money demand equation is 1 ($\beta_y = 1$) and (b)
-the Fisher relation is homogeneous ($\phi = 1$). Since the
-\verb|--full| switch was given to the \texttt{restrict} command,
-additional restrictions can be applied without having to repeat the
-previous ones. To perform these two tests, one may append the
-following (which contains a few \texttt{printf} commands, which are
-not strictly necessary, to format the output nicely) to the script
-\ref{brand-cassola-script}:
-\begin{code}
+Example \ref{brand-cassola-script} replicates Table 4 on page 824 of
+the Brand and Cassola article.\footnote{Modulo what appear to be a few
+  typos in the article.} Note that we use the \verb|$lnl| accessor
+after the \texttt{vecm} command to store the unrestricted
+log-likelihood and the \verb|$rlnl| accessor after \texttt{restrict}
+for its restricted counterpart. 
+
+The example continues in script~\ref{brand-cassola-tab5}, where we
+perform further testing to check whether (a) the income elasticity in
+the money demand equation is 1 ($\beta_y = 1$) and (b) the Fisher
+relation is homogeneous ($\phi = 1$). Since the \verb|--full| switch
+was given to the initial \texttt{restrict} command, additional
+restrictions can be applied without having to repeat the previous
+ones.  (The second script contains a few \texttt{printf} commands,
+which are not strictly necessary, to format the output nicely.)  It
+turns out that both of the additional hypotheses are rejected by the
+data, with p-values of $0.002$ and $0.004$.
+
+\begin{script}[htbp]
+  \caption{Further testing of money demand system}
+  \label{brand-cassola-tab5}
+Input:
+\begin{scodebit}
 restrict
   b[1,5] = -1
 end restrict
@@ -866,35 +874,34 @@ printf "  chi^2(4) = %g [%6.4f]\n", 2*(ll0-ll_uie), \
 printf "Homogeneity in the Fisher hypothesis:\n"
 printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
-\end{code}
-which produces
-\begin{code}
+\end{scodebit}
+Output:
+\begin{scodebit}
 Testing zero restrictions in cointegration space:
   LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
 Unit income elasticity: LR-test, rank = 3:
   chi^2(4) = 17.2071 [0.0018]
 Homogeneity in the Fisher hypothesis:
   LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
-\end{code}
-Both of the additional hypotheses are therefore rejected by the data.
+\end{scodebit}
+\end{script}
 
 Another type of test that is commonly performed is the ``weak
 exogeneity'' test. In this context, a variable is said to be weakly
 exogenous if all coefficients on the corresponding row in the $\alpha$
-matrix are 0. If this is the case, that variable does not adjust to
+matrix are zero. If this is the case, that variable does not adjust to
 deviations from any of the long-run equilibria and can be considered
 an autonomous driving force of the whole system.
 
-The code in Example~\ref{brand-cassola-exog} performs this type of
-test for each variable in turn, thus replicating the first column of
-Table 6 on page 825 of Brand and Cassola (2004).  The results show
-that weak exogeneity might perhaps be accepted for the long-term
-interest rate and real GDP (p-values $0.07$ and $0.08$ respectively).
+The code in Example~\ref{brand-cassola-exog} performs this test for
+each variable in turn, thus replicating the first column of Table 6 on
+page 825 of Brand and Cassola (2004).  The results show that weak
+exogeneity might perhaps be accepted for the long-term interest rate
+and real GDP (p-values $0.07$ and $0.08$ respectively).
 
 \begin{script}[htbp]
   \caption{Testing for weak exogeneity}
   \label{brand-cassola-exog}
-\vspace{6pt}
 Input:
 \begin{scodebit}
 restrict
@@ -926,7 +933,6 @@ loop foreach i m p l s y --quiet
   printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 end loop
 \end{scodebit}
-\vspace{4pt}
 Output (variable, LR test, p-value):
 \begin{scodebit}
 \Delta m	18.111 [0.0060]
