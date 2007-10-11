@@ -3696,9 +3696,6 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     PRN *prn = s->prn;
     int err = 0;
 
-    fprintf(stderr, "do_end_restrict: cmd->savename='%s'\n", cmd->savename);
-    fprintf(stderr, "do_end_restrict: cmd_savename='%s'\n", cmd_savename);
-
     if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
 	/* FIXME non-vecm case */
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 

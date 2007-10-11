@@ -1270,6 +1270,7 @@ static void set_lcnumeric (void)
     if (lcnumeric) {
 	struct langname names[] = {
 	    { "es", "Spanish" },
+	    { "eu", "Basque" },
 	    { "fr", "French" },
 	    { "it", "Italian" },
 	    { "pl", "Polish" },
