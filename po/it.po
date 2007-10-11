@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-09-18 11:34+0200\n"
+"PO-Revision-Date: 2007-10-11 12:44+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -305,9 +305,8 @@ msgid "add"
 msgstr "add"
 
 #: lib/src/compare.c:337
-#, fuzzy
 msgid "F-form"
-msgstr "Norma 1"
+msgstr "Forma F"
 
 #: lib/src/compare.c:339 lib/src/compare.c:347 lib/src/gretl_restrict.c:1756
 #: lib/src/gretl_restrict.c:2138 lib/src/gretl_restrict.c:2148
@@ -5035,9 +5034,8 @@ msgid "the two medians are equal"
 msgstr "le due mediane sono uguali"
 
 #: lib/src/nonparam.c:1020
-#, fuzzy
 msgid "sum of ranks, sample 1"
-msgstr "Media del campione 1"
+msgstr "somma dei ranghi, campione 1"
 
 #: lib/src/nonparam.c:1070
 msgid "Sign Test"
@@ -7057,6 +7055,8 @@ msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
 msgstr ""
+"Inserire la formula per la nuova variabile\n"
+"(o solo il nome, per aggiungere i valori manualmente)"
 
 #: gui2/callbacks.c:420 gui2/callbacks.c:425
 msgid "gretl: missing code"
@@ -9370,9 +9370,8 @@ msgid "/Data/_Transpose data..."
 msgstr "/Dati/_Trasponi dati..."
 
 #: gui2/gretl.c:335
-#, fuzzy
 msgid "/Data/_Sort data..."
-msgstr "/Dati/_Compatta dati..."
+msgstr "/Dati/_Ordina dati..."
 
 #: gui2/gretl.c:337
 msgid "/Data/_Refresh window"
@@ -10869,11 +10868,9 @@ msgstr " Trova:"
 msgid "Failed to download file"
 msgstr "Impossibile scaricare il file"
 
-#  Queste sono le info nel campo <description> del file .gdt
 #: gui2/library.c:129
-#, fuzzy
 msgid "gretl: iteration info"
-msgstr "gretl: modifica descrizione dei dati"
+msgstr "gretl: informazioni sulle iterazioni"
 
 #: gui2/library.c:166 gui2/library.c:4595 gui2/library.c:5090
 msgid "No data were available to graph"
@@ -11436,14 +11433,12 @@ msgid "Data transposed"
 msgstr "I dati sono stati trasposti"
 
 #: gui2/library.c:5561
-#, fuzzy
 msgid "Ascending"
-msgstr "Lettura"
+msgstr "Crescente"
 
 #: gui2/library.c:5562
-#, fuzzy
 msgid "Descending"
-msgstr "Decennale"
+msgstr "Decrescente"
 
 #: gui2/library.c:5599
 msgid "OK to overwrite?"
@@ -12045,9 +12040,8 @@ msgid "MA order:"
 msgstr "Ordine MA:"
 
 #: gui2/selector.c:2739 gui2/selector.c:2758
-#, fuzzy
 msgid "or specific lags"
-msgstr "ritardi specifici"
+msgstr "o ritardi specifici"
 
 #: gui2/selector.c:2910
 msgid "configure"
@@ -12968,9 +12962,9 @@ msgid "No series to edit"
 msgstr "Nessuna serie da modificare"
 
 #: gui2/ssheet.c:2032
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: series %s is empty"
-msgstr "Attenzione: la serie ha osservazioni mancanti"
+msgstr "Attenzione: la serie %s è vuota"
 
 #: gui2/ssheet.c:2190
 msgid "gretl: edit matrix"
