@@ -89,7 +89,7 @@
     <usage>
       <arguments>
         <argument>ordine</argument>
-        <argument>nome-variabile</argument>
+        <argument>lista-variabili</argument>
       </arguments>
       <options>
 	<option>
@@ -141,16 +141,22 @@
 
     <description>
       <para context="gui">Questo comando richiede un ordine di ritardo intero;
-       se si indica un ordine zero, viene eseguito un test Dickey&ndash;Fuller
-       standard (non aumentato).</para>
+       se si indica un ordine pari a zero, viene eseguito un test
+       Dickey&ndash;Fuller standard (non aumentato). Il comando calcola una
+       serie di test Dickey&ndash;Fuller sulla variabile selezionata, assumendo
+       come ipotesi nulla che la variabile abbia una radice unitaria. Se si usa
+       l'opzione di differenziazione, i test vengono condotti sulla differenza
+       prima della variabile e la discussione che segue va riferita a questa
+       trasformazione della variabile.
+       </para>
        
-      <para>
-	Calcola le statistiche per un gruppo di test Dickey&ndash;Fuller sulla
-        variabile specificata, assumendo come ipotesi nulla che la variabile
-        abbia una radice unitaria. Se si usa l'opzione di differenziazione, i
-        test vengono condotti sulla differenza prima della variabile e la
-        discussione che segue va riferita a questa trasformazione della
-        variabile.
+      <para context="cli">
+	Calcola una serie di test Dickey&ndash;Fuller sulle variabili
+        specificate, assumendo come ipotesi nulla che le variabili
+        abbiano una radice unitaria. Se si usa l'opzione <lit>--difference</lit>,
+        i test vengono condotti sulla differenza prima delle variabili e la
+        discussione che segue va riferita a questa trasformazione delle
+        variabili.
       </para>
 
       <para>Per impostazione predefinita, vengono mostrate tre varianti del
@@ -3998,7 +4004,7 @@
     <usage>
       <arguments>
         <argument>ordine</argument>
-        <argument>nome-variabile</argument>
+        <argument>lista-variabili</argument>
       </arguments>
       <options>
 	<option>
@@ -4035,8 +4041,8 @@
       </para>
       <para context="cli">
 	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
-	Shin, 1992) per la stazionarietà di una variabile (o della sua
-        differenza prima, se si usa l'opzione <lit>--difference</lit>. L'ipotesi
+	Shin, 1992) per la stazionarietà di ognuna delle variabili specificate
+        (o della loro differenza prima, se si usa l'opzione <lit>--difference</lit>. L'ipotesi
         nulla è che la variabile in questione sia stazionaria, attorno
         a un valore fisso o, se è stata usata l'opzione <lit>--trend</lit>,
         attorno a un trend deterministico lineare.
