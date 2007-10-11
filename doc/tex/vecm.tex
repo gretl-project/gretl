@@ -381,14 +381,21 @@ options, for augmenting $\mu_t$ with centered seasonal dummies.  In
 each case, p-values are computed via the approximations by Doornik
 (1998).
 
-\section{The Johansen cointegration test}
+\section{The Johansen cointegration tests}
 \label{sec:johansen-test}
 
-The two Johansen tests for cointegration are used to establish the rank of
-$\beta$; in other words, how many cointegration vectors the system
-has.  These are the ``$\lambda$-max'' test, for hypotheses
-on individual eigenvalues, and the ``trace'' test, for joint
-hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
+The two Johansen tests for cointegration are used to establish the
+rank of $\beta$; in other words, how many cointegration vectors the
+system has.  These are the ``$\lambda$-max'' test, for hypotheses on
+individual eigenvalues, and the ``trace'' test, for joint hypotheses.
+Suppose that the eigenvalues $\lambda_i$ are sorted from larger to
+smaller. The null hypothesis for the ``$\lambda$-max'' test on the
+$i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
+test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
+i$.
+
+
+The \app{gretl} command \cmd{coint2} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
@@ -472,22 +479,20 @@ post-multiplied by $\beta_1^{-1}$, giving
     \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
     \right] =
     \left[
-    \begin{array}{c} I \\ \hat{\beta_2} \end{array}
+    \begin{array}{c} I \\ -B \end{array}
   \right]  ,
 \]
 
 The coefficients that \app{gretl} produces are $\hat{\beta}$, with
-$\hat{\beta_2}$ known as the matrix of unrestricted coefficients. In
+$B$ known as the matrix of unrestricted coefficients. In
 terms of the underlying equilibrium relationship, the Phillips
 normalization expresses the system of $r$ equilibrium relations as
-
   \begin{eqnarray}
-    y_{1,t} & = & \beta_{1,r+1} y_{r+1,t} + \ldots + \beta_{1,n} y_{n,t} \\
-    y_{2,t} & = & \beta_{2,r+1} y_{r+1,t} + \ldots + \beta_{2,n} y_{n,t} \\
+    y_{1,t} & = & b_{1,r+1} y_{r+1,t} + \ldots + b_{1,n} y_{n,t} \\
+    y_{2,t} & = & b_{2,r+1} y_{r+1,t} + \ldots + b_{2,n} y_{n,t} \\
     & \vdots & \\
-    y_{r,t} & = & \beta_{r,r+1} y_{r+1,t} + \ldots + \beta_{r,n} y_{r,t} 
+    y_{r,t} & = & b_{r,r+1} y_{r+1,t} + \ldots + b_{r,n} y_{r,t} 
   \end{eqnarray}
-
 where the first $r$ variables are expressed as functions of the
 remaining $n-r$.
 
@@ -591,8 +596,6 @@ const       3.3625      0.68744
 \section{Over-identifying restrictions}
 \label{sec:johansen-overid}
 
-\textbf{FIXME: INCOMPLETE}
-
 Although $r^2$ restrictions need to be imposed on a VECM system to
 ensure identification of $\beta$, extra restrictions can be specified
 in order to check via a likelihood-ratio statistic whether they hold
@@ -659,8 +662,8 @@ are of the form
   \texttt{\emph{parameter linear combination}} = \emph{\texttt{scalar}}
 \end{center}
 where a parameter linear combination involves a weighted sum of
-individual elements of $\beta$ and $\alpha$ (but not both in the same
-combination);, the scalar on the right-hand side must be 0 for
+individual elements of $\beta$ or $\alpha$ (but not both in the same
+combination); the scalar on the right-hand side must be 0 for
 combinations involving $\alpha$, but can be any real number for
 combinations involving $\beta$. Below, we give a few examples of valid
 restrictions:
@@ -693,7 +696,7 @@ corresponds to
 \]
 A similar convention is used for $\alpha$: when only one index is given for
 each \texttt{a} term, the restriction is presumed to apply to all $r$
-columns of $\alpha$, or in other words the given variables are weakly
+rows of $\alpha$, or in other words the given variables are weakly
 exogenous. For instance, the formulation
 %
 \begin{code}
@@ -813,11 +816,11 @@ Further testing is then performed to check whether (a) the income
 elasticity in the money demand equation is 1 ($\beta_y = 1$) and (b)
 the Fisher relation is homogeneous ($\phi = 1$). Since the
 \verb|--full| switch was given to the \texttt{restrict} command,
-further restrictions can be applied without having to repeat the
+additional restrictions can be applied without having to repeat the
 previous ones. To perform these two tests, one may append the
 following (which contains a few \texttt{printf} commands, which are
 not strictly necessary, to format the output nicely) to the script
-\ref{brand-cassola-script}
+\ref{brand-cassola-script}:
 \begin{code}
 restrict
   b[1,5] = -1
@@ -851,6 +854,56 @@ Unit income elasticity: LR-test, rank = 3:
 Homogeneity in the Fisher hypothesis:
   LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
 \end{code}
+which shows that both extra hypotheses are rejected.
+
+Another type of test that is commonly performed is the ``weak
+exogeneity'' test. In this context, a variable is said to be weakly
+exogenous if all coefficients on the corresponding row in the $\alpha$
+matrix are 0. If this is the case, that variable does not adjust to
+deviations from any of the long-run equilibria and can be considered
+an autonomous driving force of the whole system.
+
+The code fragment below performs this type of test for each variable
+in turn, thus replicating the first column of Table 6 on page 825.
+\begin{code}
+restrict
+  a1 = 0
+end restrict
+ts_m = 2*(ll0 - $rlnl)
+
+restrict
+  a2 = 0
+end restrict
+ts_p = 2*(ll0 - $rlnl)
+
+restrict
+  a3 = 0
+end restrict
+ts_l = 2*(ll0 - $rlnl)
+
+restrict
+  a4 = 0
+end restrict
+ts_s = 2*(ll0 - $rlnl)
+
+restrict
+  a5 = 0
+end restrict
+ts_y = 2*(ll0 - $rlnl)
+
+loop foreach i m p l s y --quiet
+  printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
+end loop
+\end{code}
+
+The corresponding output is
+\begin{code}
+\Delta m	18.111 [0.0060]
+\Delta p	21.067 [0.0018]
+\Delta l	11.819 [0.0661]
+\Delta s	16.000 [0.0138]
+\Delta y	11.335 [0.0786]
+\end{code}
 
 \subsection{Numerical methods}
 \label{sec:vecm-opt}
@@ -861,11 +914,13 @@ Apart from a few special cases,\footnote{Let us define a ``simple''
   $\beta$ only or $\alpha$ only.  Simple restrictions are handled via
   the modified eigenvalues method set out by Johansen (1995).  We
   solve directly for the ML estimator, without any need for iterative
-  methods.} the resulting estimator has no closed form solution;
-hence, the maximum must be found via numerical methods.
+  methods.} the ML estimator has no closed form solution;
+hence, the maximum must be found via numerical methods. In some cases,
+convergence may be difficult, so \app{gretl} provides several choices
+to solve the problem.
 
-Two such methods are available in \app{gretl}. The default is the
-switching algorithm set out in Boswijk and Doornik (2004).  The
+Two maximization methods are available in \app{gretl}. The default is
+the switching algorithm set out in Boswijk and Doornik (2004).  The
 alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
 using analytical derivatives.  This is invoked using the
 \verb+--lbfgs+ flag with the \texttt{restrict} command.
@@ -881,21 +936,131 @@ LBFGS, on the other hand, requires that the model be fully identified.
 When using LBFGS, therefore, you may have to supplement the
 restrictions of interest with normalizations that serve to identify
 the parameters.  For example, one might use all or part of the
-Phillips normalization, $\beta' = [I_r : -B]$: the upper part of
-$\beta$ is an identity matrix of order $r$, while $B$ is an $r \times
-(p_1 - r)$ matrix representing the long-run effect of the last $(p_1 -
-r)$ elements of $X^*_t$ on the first $r$ elements.
+Phillips normalization (see section \ref{sec:johansen-ident}).
 
 Neither the switching algorithm nor LBFGS is guaranteed to find the
-global ML solution.  The optimizer may end up at a local maximum (or,
-in the case of the switching algorithm, at a saddle point).  The
-solution may therefore be sensitive to the initial value selected for
-$\theta$.  By default, gretl selects a starting point using a
-deterministic method based on Boswijk (1995).  There are two further
-options: the initialization may be adjusted using simulated annealing
-(with the \verb+--jitter+ flag), or the user may supply an explicit
-initial value for $\theta$.  We expand on these options in the
-following section.
+global ML solution.\footnote{In developing \app{gretl}'s VECM-testing
+  facilities we have considered a fair number of ``tricky cases'' from
+  various sources. We'd like to thank Luca Fanelli of the University
+  of Bologna for his help in devising torture-tests for \app{gretl}'s VECM
+  code.} The optimizer may end up at a local maximum (or, in the case
+of the switching algorithm, at a saddle point).  
+
+The solution (or lack thereof) may be sensitive to the initial value
+selected for $\theta$.  By default, \app{gretl} selects a starting
+point using a deterministic method based on Boswijk (1995), but two
+further options are available: the initialization may be adjusted
+using simulated annealing (with the \verb+--jitter+ flag), or the user
+may supply an explicit initial value for $\theta$.
+
+The default initialization method is:
+%
+\begin{enumerate}
+\item Calculate the unrestricted ML $\hat{\beta}$ using the
+  Johansen procedure.
+\item If the restriction on $\beta$ is non-homogeneous, use the
+  method proposed by Boswijk (1995):
+\begin{equation}
+\phi_0 = -[(I_r \otimes \hat{\beta}_{\perp})'H]^+ 
+  (I_r \otimes \hat{\beta}_{\perp})' h_0
+\end{equation}
+where $\hat{\beta}'_{\perp} \hat{\beta} = 0$ and $A^+$ denotes
+the Moore--Penrose inverse of $A$.  Otherwise
+\begin{equation}
+\phi_0 = (H'H)^{-1} H' \vec{\hat{\beta}}
+\end{equation}
+\item $\vec{\beta_0} = H\phi_0 + h_0$.
+\item Calculate the unrestricted ML $\hat{\alpha}$ conditional on
+  $\beta_0$, as per Johansen:
+\begin{equation}
+\label{eq:Jalpha}
+\hat{\alpha} = S_{01} \beta_0 (\beta'_0S_{11}\beta_0)^{-1}
+\end{equation}
+\item If $\alpha$ is restricted, $\psi_0 = (G'G)^{-1}G'\,{\rm
+    vec}(\hat{\alpha}')$ and $\vec{\alpha'_0} = G\psi_0$.
+\end{enumerate}
+
+However, as mentioned above, \app{gretl} offers the option of adjusting the
+initialization using simulated annealing.  
+
+The basic idea is this: we start at a certain point in the parameter
+space, and for each of $n$ iterations (currently $n=4096$) we randomly
+select a new point within a certain radius of the
+previous one, and determine the likelihood at the new point.  If the
+likelihood is higher, we jump to the new point; otherwise, we jump
+with probability $P$ (and remain at the previous point with
+probability $1-P$).  As the iterations proceed, the system gradually
+``cools''---that is, the radius of the random perturbation is
+reduced, as is the probability of making a jump when the likelihood
+fails to increase.
+
+In the course of this procedure many points in the parameter space are
+evaluated, starting with the point arrived at by the deterministic
+method, which we'll call $\theta_0$.  One of these points will be
+``best'' in the sense of yielding the highest likelihood: call it
+$\theta^*$.  This point may or may not have a greater likelihood than
+$\theta_0$.  And the procedure has an end point, $\theta_n$, which may
+or may not be ``best''.
+
+The rule followed by \app{gretl} in selecting an initial value for $\theta$
+based on simulated annealing is this: use $\theta^*$ if $\theta^* >
+\theta_0$, otherwise use $\theta_n$.  That is, if we get an
+improvement in the likelihood via annealing, we make full use of this;
+on the other hand, if we fail to get an improvement we nonetheless
+allow the annealing to randomize the starting point.  Experiments
+indicated that the latter effect can be helpful.
+
+If the default initialization fails, the alternative to relying on
+randomization is for the user to specify initial values.  This is done
+by passing a predefined vector to the \texttt{set} command with
+parameter \texttt{initvals}, as in
+%
+\begin{verbatim}
+set initvals myvec
+\end{verbatim}
+
+The details of this depend on whether the switching algorithm or LBFGS
+is used.  There are two options for specifying the initial values.
+The more user-friendly one (for most people, we suppose) is to specify
+a matrix that contains $\vec{\beta}$ followed by $\vec{\alpha}$. For
+example:
+\begin{code}
+open denmark.gdt
+vecm 2 1 LRM LRY IBO IDE --rc --seasonals
+
+matrix BA = {1, -1, 6, -6, -6, -0.2, 0.1, 0.02, 0.03}
+set initvals BA
+restrict
+  b[1] = 1
+  b[1] + b[2] = 0
+  b[3] + b[4] = 0
+end restrict
+\end{code}
+
+The other option, which is compulsory when using LBFGS, is to specify
+the initial values in terms of the unrestricted parameters, $\phi$ and
+$\psi$.  Getting this right is somewhat less obvious.  As mentioned
+above, the implicit-form restriction $R\vec{\beta} = q$ has explicit
+form $\vec{\beta} = H\phi + h_0$, where $H = G_{\perp}$, the right
+nullspace of $G$.  The vector $\phi$ is shorter, by the number of
+restrictions, than $\vec{\beta}$.  The savvy user will then see what
+needs to be done.  The other point to take into account is that if
+$\alpha$ is unrestricted, the \textit{effective} length of $\psi$ is
+0, since it is then optimal to compute $\alpha$ using Johansen's
+formula, conditional on $\beta$ (equation \ref{eq:Jalpha} above). An
+example follows:
+\begin{code}
+open denmark.gdt
+vecm 2 1 LRM LRY IBO IDE --rc --seasonals
+
+matrix phi = {-8, -6}
+set initvals phi
+restrict --lbfgs
+  b[1] = 1
+  b[1] + b[2] = 0
+  b[3] + b[4] = 0
+end restrict
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
