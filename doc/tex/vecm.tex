@@ -161,7 +161,7 @@ where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
 
 The syntax for \texttt{vecm} is 
 \begin{code}
-  vecm p r ylist [ ; xlist [ ; zlist] ]
+  vecm p r ylist [ ; xlist [ ; zlist ] ]
 \end{code}
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
 \texttt{r} is the cointegration rank, \texttt{ylist} is a list
@@ -402,7 +402,7 @@ Series, Cointegration Test, Johansen''.
 As in the ADF test, the asymptotic distribution of the tests varies
 with the deterministic kernel $\mu_t$ one includes in the VAR (see
 section \ref{sec:coint-5cases} above). The following code uses the
-\cmd{denmark} database, supplied with \app{gretl}, to replicate
+\cmd{denmark} data file, supplied with \app{gretl}, to replicate
 Johansen's example found in his 1995 book.
 %
 \begin{code}
@@ -431,12 +431,13 @@ Rank Eigenvalue Trace test p-value   Lmax test  p-value
 \end{code}
 \end{center}
 
-Since both the trace and $\lambda$-max accept the null hypothesis that
-the smallest eigenvalue is 0, we may conclude that the series are in
-fact non-stationary. However, some linear combination may be $I(0)$,
-as indicated by the rejection of the $\lambda$-max of the hypothesis
-that the rank of $\Pi$ is 0 (the trace test gives less clear-cut
-evidence for this).
+Both the trace and $\lambda$-max tests accept the null hypothesis that
+the smallest eigenvalue is 0 (see the last row of the table), so we
+may conclude that the series are in fact non-stationary.  However,
+some linear combination may be I(0), since the $\lambda$-max test
+rejects the hypothesis that the rank of $\Pi$ is 0 (though the trace
+test gives less clear-cut evidence for this, with a p-value of
+$0.1284$).
 
 \section{Identification of the cointegration vectors}
 \label{sec:johansen-ident}
@@ -444,16 +445,21 @@ evidence for this).
 The core problem in the estimation of equation (\ref{eq:VECM}) is to
 find an estimate of $\Pi$ that has by construction rank $r$, so it can
 be written as $\Pi = \alpha \beta'$, where $\beta$ is the matrix
-containing the cointegration vectors.
+containing the cointegration vectors and $\alpha$ contains the
+``adjustment'' or ``loading'' coefficients whereby the endogenous
+variables respond to deviation from equilibrium in the previous period.
 
-Without further indications, the problem has multiple solutions (in
+Without further specification, the problem has multiple solutions (in
 fact, infinitely many). The parameters $\alpha$ and $\beta$ are
 under-identified: if all columns of $\beta$ are cointegration vectors,
 then any arbitrary linear combinations of those columns is a
-cointegration vector too. In order to find a unique solution, it is
-necessary to impose some restrictions on $\alpha$ and/or $\beta$. It
-can be shown that the minimum number of restrictions that is necessary
-to guarantee identification is $r^2$.
+cointegration vector too.  To put it differently, if $\Pi = \alpha_0
+\beta_0'$ for specific matrices $\alpha_0$ and $\beta_0$, then $\Pi$
+also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any conformable
+non-singular matrix $\Sigma$.  In order to find a unique solution, it
+is therefore necessary to impose some restrictions on $\alpha$ and/or
+$\beta$. It can be shown that the minimum number of restrictions that
+is necessary to guarantee identification is $r^2$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
@@ -496,16 +502,22 @@ normalization expresses the system of $r$ equilibrium relations as
 where the first $r$ variables are expressed as functions of the
 remaining $n-r$.
 
-Although the triangular representation ensures that the statistical problem of
-estimating $\beta$ is solved, the resulting equilibrium relationships
-may be difficult to interpret. In this case, the user may want to
-achieve identification by specifying manually the system of $r^2$
-constraints that \app{gretl} will use to produce an estimate of
-$\beta$.
+Although the triangular representation ensures that the statistical
+problem of estimating $\beta$ is solved, the resulting equilibrium
+relationships may be difficult to interpret. In this case, the user
+may want to achieve identification by specifying manually the system
+of $r^2$ constraints that \app{gretl} will use to produce an estimate
+of $\beta$.
 
 As an example, consider the money demand system presented in section
-9.6 of Verbeek (2004). The estimation of the matrix $\beta$ can be performed via
-the commands
+9.6 of Verbeek (2004).  The variables used are \texttt{m} (the log of
+real money stock M1), \texttt{infl} (inflation), \texttt{cpr} (the
+commercial paper rate), \texttt{y} (log of real GDP) and \texttt{tbr}
+(the Treasury bill rate).\footnote{This data set is available in the
+  \texttt{verbeek} data package; see
+  \url{http://gretl.sourceforge.net/gretl_data.html}.}
+
+Estimation of $\beta$ can be performed via the commands
 \begin{code}
   open money.gdt 
   smpl 1954:1 1994:4 
@@ -538,12 +550,14 @@ columns. This is possible by hypothesizing the existence of two
 long-run relationships: a money demand equation
 \begin{equation}
   \label{eq:verbeek-mondem}
-  m = c_1 + \beta_1 \pi + \beta_2 y + \beta_3 tbr
+  \mbox{\tt m} = c_1 + \beta_1 \mbox{\tt infl} + \beta_2 \mbox{\tt
+    y} + \beta_3 \mbox{\tt tbr}
 \end{equation}
 and a risk premium equation
 \begin{equation}
   \label{eq:verbeek-premium}
-  cpr = c_2 + \beta_4 \pi + \beta_5 y + \beta_6 tbr ,
+ \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
+   \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
 \end{equation}
 which imply that the cointegration matrix can be normalized as
 \[
@@ -596,7 +610,7 @@ const       3.3625      0.68744
 \section{Over-identifying restrictions}
 \label{sec:johansen-overid}
 
-Although $r^2$ restrictions need to be imposed on a VECM system to
+Although $r^2$ restrictions must be imposed on a VECM system to
 ensure identification of $\beta$, extra restrictions can be specified
 in order to check via a likelihood-ratio statistic whether they hold
 in the data. These extra restrictions are usually imposed to test
@@ -675,7 +689,7 @@ restrictions:
 \end{code}
 
 A special syntax is reserved for the case when a certain constraint
-must be applied to all columns of $\beta$: in this case, one index is
+should be applied to all columns of $\beta$: in this case, one index is
 given for each \texttt{b} term, and the square brackets are dropped.
 Hence, the following syntax
 \begin{code}
@@ -694,7 +708,7 @@ corresponds to
 \end{array}
 \right]
 \]
-A similar convention is used for $\alpha$: when only one index is given for
+The same convention is used for $\alpha$: when only one index is given for
 each \texttt{a} term, the restriction is presumed to apply to all $r$
 rows of $\alpha$, or in other words the given variables are weakly
 exogenous. For instance, the formulation
@@ -710,8 +724,8 @@ specifies that variables 3 and 4 do not respond to the deviation from
 equilibrium in the previous period.  
 
 Finally, a short-cut is available for setting up complex restrictions (but
-currently only in relation to $\beta$): you can specify $R$ and $q$,
-as in $R \vec{\beta} = q$, by giving the names of previously
+currently only in relation to $\beta$): you can specify $R_b$ and $q$,
+as in $R_b \vec{\beta} = q$, by giving the names of previously
 defined matrices.  For example,
 %
 \begin{code}
@@ -724,29 +738,39 @@ restrict
 end restrict
 \end{code}
 %
-which imposes Phillips normalization on the $\beta$ estimates for
-a system with cointegrating rank 4.
+which manually imposes Phillips normalization on the $\beta$ estimates
+for a system with cointegrating rank 4.
  
 \subsection{An example}
 \label{sec:vecm-overid-ex}
 
 Brand and Cassola (2004) propose a money demand system for the Euro
-area, in which they find three long-run equilibrium relationships:
-
-\begin{tabular}{rl}
+area, in which they postulate three long-run equilibrium
+relationships:
+%
+\begin{center}
+\begin{tabular}{ll}
   money demand & $m = \beta_l l + \beta_y y$ \\
   Fisher equation & $\pi = \phi l$ \\
-  Expectation theory of interest rates & $l = s$
+  Expectation theory of & $l = s$ \\ [-4pt]
+  interest rates
 \end{tabular}
+\end{center}
+%
+where $m$ is real money demand, $l$ and $s$ are long- and short-term
+interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
+  traditional formulation of the Fisher equation would reverse the
+  roles of the variables in the second equation, but this detail is
+  immaterial in the present context.}  (The names for these variables
+in the \app{gretl} data file are \verb|m_p|, \texttt{rl}, \texttt{rs},
+\texttt{y} and \texttt{infl}, respectively.)  
 
-where $m$ is real money demand, $l$ and $r$ are long- and short-term
-interest rates, $y$ is output and $\pi$ is inflation.\footnote{Note
-  that a traditional formulation of the Fisher equation should reverse
-  the roles of the variables; clearly this detail is immaterial in the
-  present context} Since the cointegration rank is 3 and the number
-of variables is 5, 9 restrictions are required for identification and
-a just-identified system should have 6 unrestricted parameters ($6 =
-6 \times 3 - 3 \times 3$).
+The cointegration rank assumed by the authors is 3 and there are 5
+variables, giving 15 elements in the $\beta$ matrix.  $3 \times 3 = 9$
+restrictions are required for identification, and a just-identified
+system would have $15 - 9 = 6$ unrestricted parameters.  However, the
+three postulated long-run relationships feature only three
+unrestricted parameters, so the over-identification rank is 3.
 
 \begin{script}[htbp]
   \caption{Estimation of a money demand system with constraints on $\beta$}
@@ -784,14 +808,12 @@ genr ll1 = $rlnl
 %$
 \end{script}
 
-In this case, the long-run relationships feature only 3 unrestricted
-parameters, so the over-identification rank is 3. Example
-\ref{brand-cassola-script} replicates Table 4 on page
-824.\footnote{There appear to be a few typos in the article.} Note
-that we use the \verb|$lnl| accessor after the \texttt{vecm} command
-to store the unrestricted log-likelihood and the \verb|$rlnl| accessor
-after \texttt{restrict} for its restricted counterpart. Part of the
-output is
+Example \ref{brand-cassola-script} replicates Table 4 on page 824 of
+the Brand and Cassola article.\footnote{Modulo what appear to be a few
+  typos in the article.} Note that we use the \verb|$lnl| accessor
+after the \texttt{vecm} command to store the unrestricted
+log-likelihood and the \verb|$rlnl| accessor after \texttt{restrict}
+for its restricted counterpart. Part of the output is
 \begin{code}
 Unrestricted loglikelihood (lu) = 116.60268
 Restricted loglikelihood (lr) = 115.86451
@@ -854,7 +876,7 @@ Unit income elasticity: LR-test, rank = 3:
 Homogeneity in the Fisher hypothesis:
   LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
 \end{code}
-which shows that both extra hypotheses are rejected.
+Both of the additional hypotheses are therefore rejected by the data.
 
 Another type of test that is commonly performed is the ``weak
 exogeneity'' test. In this context, a variable is said to be weakly
@@ -863,9 +885,18 @@ matrix are 0. If this is the case, that variable does not adjust to
 deviations from any of the long-run equilibria and can be considered
 an autonomous driving force of the whole system.
 
-The code fragment below performs this type of test for each variable
-in turn, thus replicating the first column of Table 6 on page 825.
-\begin{code}
+The code in Example~\ref{brand-cassola-exog} performs this type of
+test for each variable in turn, thus replicating the first column of
+Table 6 on page 825 of Brand and Cassola (2004).  The results show
+that weak exogeneity might perhaps be accepted for the long-term
+interest rate and real GDP (p-values $0.07$ and $0.08$ respectively).
+
+\begin{script}[htbp]
+  \caption{Testing for weak exogeneity}
+  \label{brand-cassola-exog}
+\vspace{6pt}
+Input:
+\begin{scodebit}
 restrict
   a1 = 0
 end restrict
@@ -894,30 +925,31 @@ ts_y = 2*(ll0 - $rlnl)
 loop foreach i m p l s y --quiet
   printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 end loop
-\end{code}
-
-The corresponding output is
-\begin{code}
+\end{scodebit}
+\vspace{4pt}
+Output (variable, LR test, p-value):
+\begin{scodebit}
 \Delta m	18.111 [0.0060]
 \Delta p	21.067 [0.0018]
 \Delta l	11.819 [0.0661]
 \Delta s	16.000 [0.0138]
 \Delta y	11.335 [0.0786]
-\end{code}
+\end{scodebit}
+%$
+\end{script}
 
-\subsection{Numerical methods}
+\subsection{Numerical solution methods}
 \label{sec:vecm-opt}
 
-Apart from a few special cases,\footnote{Let us define a ``simple''
-  restriction as one that (a) is homogeneous, (b) is common to all
-  $\beta$ or all $\alpha$ (in case $r>1$) and (c) involves either
-  $\beta$ only or $\alpha$ only.  Simple restrictions are handled via
-  the modified eigenvalues method set out by Johansen (1995).  We
+In general, the ML estimator for the restricted VECM problem has no
+closed form solution, hence the maximum must be found via numerical
+methods.\footnote{The exception is restrictions that are homogeneous,
+  common to all $\beta$ or all $\alpha$ (in case $r>1$), and involve
+  either $\beta$ only or $\alpha$ only.  Such restrictions are handled
+  via the modified eigenvalues method set out by Johansen (1995).  We
   solve directly for the ML estimator, without any need for iterative
-  methods.} the ML estimator has no closed form solution;
-hence, the maximum must be found via numerical methods. In some cases,
-convergence may be difficult, so \app{gretl} provides several choices
-to solve the problem.
+  methods.}  In some cases convergence may be difficult, and
+\app{gretl} provides several choices to solve the problem.
 
 Two maximization methods are available in \app{gretl}. The default is
 the switching algorithm set out in Boswijk and Doornik (2004).  The
@@ -942,9 +974,10 @@ Neither the switching algorithm nor LBFGS is guaranteed to find the
 global ML solution.\footnote{In developing \app{gretl}'s VECM-testing
   facilities we have considered a fair number of ``tricky cases'' from
   various sources. We'd like to thank Luca Fanelli of the University
-  of Bologna for his help in devising torture-tests for \app{gretl}'s VECM
+  of Bologna and Sven Schreiber of Johann Wolfgang Goethe-Universit\"at,
+  for their help in devising torture-tests for \app{gretl}'s VECM
   code.} The optimizer may end up at a local maximum (or, in the case
-of the switching algorithm, at a saddle point).  
+of the switching algorithm, at a saddle point).
 
 The solution (or lack thereof) may be sensitive to the initial value
 selected for $\theta$.  By default, \app{gretl} selects a starting
@@ -976,8 +1009,9 @@ the Moore--Penrose inverse of $A$.  Otherwise
 \label{eq:Jalpha}
 \hat{\alpha} = S_{01} \beta_0 (\beta'_0S_{11}\beta_0)^{-1}
 \end{equation}
-\item If $\alpha$ is restricted, $\psi_0 = (G'G)^{-1}G'\,{\rm
-    vec}(\hat{\alpha}')$ and $\vec{\alpha'_0} = G\psi_0$.
+\item If $\alpha$ is restricted by $\vec{\alpha'} = G\psi$, then
+  $\psi_0 = (G'G)^{-1}G'\,{\rm vec}(\hat{\alpha}')$ and
+  $\vec{\alpha'_0} = G\psi_0$.
 \end{enumerate}
 
 However, as mentioned above, \app{gretl} offers the option of adjusting the
@@ -1010,20 +1044,20 @@ on the other hand, if we fail to get an improvement we nonetheless
 allow the annealing to randomize the starting point.  Experiments
 indicated that the latter effect can be helpful.
 
-If the default initialization fails, the alternative to relying on
-randomization is for the user to specify initial values.  This is done
-by passing a predefined vector to the \texttt{set} command with
-parameter \texttt{initvals}, as in
+If the default deterministic initialization fails, the alternative to
+relying on randomization is for the user to specify initial values.
+This is done by passing a predefined vector to the \texttt{set}
+command with parameter \texttt{initvals}, as in
 %
 \begin{verbatim}
 set initvals myvec
 \end{verbatim}
 
-The details of this depend on whether the switching algorithm or LBFGS
-is used.  There are two options for specifying the initial values.
-The more user-friendly one (for most people, we suppose) is to specify
-a matrix that contains $\vec{\beta}$ followed by $\vec{\alpha}$. For
-example:
+The details depend on whether the switching algorithm or LBFGS is
+used.  For the switching algorithm, there are two options for
+specifying the initial values.  The more user-friendly one (for most
+people, we suppose) is to specify a matrix that contains $\vec{\beta}$
+followed by $\vec{\alpha}$. For example:
 \begin{code}
 open denmark.gdt
 vecm 2 1 LRM LRY IBO IDE --rc --seasonals
@@ -1041,8 +1075,8 @@ The other option, which is compulsory when using LBFGS, is to specify
 the initial values in terms of the unrestricted parameters, $\phi$ and
 $\psi$.  Getting this right is somewhat less obvious.  As mentioned
 above, the implicit-form restriction $R\vec{\beta} = q$ has explicit
-form $\vec{\beta} = H\phi + h_0$, where $H = G_{\perp}$, the right
-nullspace of $G$.  The vector $\phi$ is shorter, by the number of
+form $\vec{\beta} = H\phi + h_0$, where $H = R_{\perp}$, the right
+nullspace of $R$.  The vector $\phi$ is shorter, by the number of
 restrictions, than $\vec{\beta}$.  The savvy user will then see what
 needs to be done.  The other point to take into account is that if
 $\alpha$ is unrestricted, the \textit{effective} length of $\psi$ is
