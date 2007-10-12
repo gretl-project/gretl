@@ -69,14 +69,14 @@ void free_command_stack (void)
 int add_command_to_stack (const char *str)
 {
     int n = strlen(str);
-    char **cmds;
+    char **tmp;
 
-    cmds = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmds);
-    if (cmds == NULL) {
+    tmp = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *tmp);
+    if (tmp == NULL) {
 	return 1;
     }
 
-    cmd_stack = cmds;
+    cmd_stack = tmp;
 
     if (n > 0 && str[n-1] == '\n') {
 	cmd_stack[n_cmds] = gretl_strdup(str);
@@ -118,9 +118,14 @@ void delete_last_command (void)
 static model_stack *add_model_stack (int model_id)
 {
     model_stack *tmp;
-    int nm = n_mstacks;
+    int n = n_mstacks;
 
-    tmp = myrealloc(mstacks, (nm + 1) * sizeof *tmp);
+#if CMD_DEBUG
+    fprintf(stderr, "add_model_stack: n = %d, ID=%d\n",
+	    n, model_id);
+#endif
+
+    tmp = myrealloc(mstacks, (n + 1) * sizeof *tmp);
     if (tmp == NULL) {
 	return NULL;
     }
@@ -128,60 +133,70 @@ static model_stack *add_model_stack (int model_id)
     mstacks = tmp;
     n_mstacks++;
 
-    mstacks[nm].ID = model_id;    
-    mstacks[nm].n = 0;
-    mstacks[nm].cmds = NULL;
+    mstacks[n].ID = model_id;    
+    mstacks[n].n = 0;
+    mstacks[n].cmds = NULL;
 
 #if CMD_DEBUG
-    fprintf(stderr, "add_model_stack:\n"
-	    " mstacks[%d]: ID=%d\n", nm, model_id);
+    fprintf(stderr, "mstacks[%d]: ID=%d\n", n, model_id);
 #endif
 
-    return &mstacks[nm];
+    return &mstacks[n];
 }
 
 static int mstack_delete_last_command (model_stack *mstack)
 {
-    int nc = mstack->n;
+    int n = mstack->n;
     char **tmp;
 
-    free(mstack->cmds[nc-1]);
-    mstack->n -= 1;
-
-    tmp = realloc(mstack->cmds, (nc - 1) * sizeof *tmp);
-    if (tmp == NULL) {
+    if (n <= 0) {
+	fprintf(stderr, "mstack_delete_last_command: WRONG\n");
 	return 1;
     }
 
-    mstack->cmds = tmp;
+    free(mstack->cmds[n-1]);
+    mstack->n -= 1;
+
+    if (mstack->n == 0) {
+	free(mstack->cmds);
+	mstack->cmds = NULL;
+    } else {
+	tmp = realloc(mstack->cmds, mstack->n * sizeof *tmp);
+	if (tmp == NULL) {
+	    return 1;
+	}
+	mstack->cmds = tmp;
+    }
 
     return 0;
 }
 
 static int add_command_to_mstack (model_stack *mstack, const char *str)
 {
-    int nc = mstack->n;
+    int n = mstack->n;
     char **tmp;
 
-    tmp = realloc(mstack->cmds, (nc + 1) * sizeof *tmp);
+#if CMD_DEBUG
+    fprintf(stderr, "add_command_to_mstack, ID=%d:\n"
+	    " '%s'\n", mstack->ID, str);
+#endif
+
+    tmp = realloc(mstack->cmds, (n + 1) * sizeof *tmp);
     if (tmp == NULL) {
 	return 1;
     }
 
     mstack->cmds = tmp;
 
-    mstack->cmds[nc] = gretl_strdup(str);
-    if (mstack->cmds[nc] == NULL) {
+    mstack->cmds[n] = gretl_strdup(str);
+    if (mstack->cmds[n] == NULL) {
 	return 1;
     }
 
     mstack->n += 1;
 
-
-
 #if CMD_DEBUG
-    fprintf(stderr, "add_command_to_mstack, with ID=%d:\n"
-	    " %s\n", mstack->ID, str);
+    fprintf(stderr, "mstack->n: now = %d\n", mstack->n);
 #endif
 
     return 0;

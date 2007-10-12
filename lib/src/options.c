@@ -666,7 +666,8 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    if (ci != SETINFO && ci != TABPRINT && ci != EQNPRINT) {
+    if (ci != SETINFO && ci != TABPRINT && 
+	ci != EQNPRINT && ci != SMPL) {
 	/* try for short-form options (e.g. "-o") */
 	opt = get_short_opts(line, ci, &myerr);
 	if (!myerr && opt) {
