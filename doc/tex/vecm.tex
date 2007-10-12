@@ -18,8 +18,8 @@ interpret in economic terms.
 The basic idea of cointegration relates closely to the concept of unit
 roots (see section~\ref{sec:uroot}).  Suppose we have a set of
 macroeconomic variables of interest, and we find we cannot reject the
-hypothesis that these variables, considered individually, are
-non-stationary.  Specifically, suppose we judge that the
+hypothesis that some of these variables, considered individually, are
+non-stationary.  Specifically, suppose we judge that a subset of the
 variables are individually integrated of order 1, or I(1).  That is,
 while they are non-stationary in their levels, their first differences
 are stationary.  Given the statistical problems associated with the
@@ -54,8 +54,8 @@ Realistically, we should not expect this condition to be satisfied
 each period.  We need to allow for the possibility of short-run
 disequilibrium.  But if the system moves back towards equilibrium
 following a disturbance, it follows that the vector $x = (m, p, y,
-r)'$ is bound by a cointegrating vector $\beta = (\beta_1, \beta_2,
-\beta_3, \beta_4)$, such that $\beta x$ is stationary (with a mean of
+r)'$ is bound by a cointegrating vector $\beta' = (\beta_1, \beta_2,
+\beta_3, \beta_4)$, such that $\beta'x$ is stationary (with a mean of
 $\gamma_0$).  Furthermore, if equilibrium is correctly characterized
 by the simple model above, we have $\beta_2 = -\beta_1$, $\beta_3 < 0$
 and $\beta_4 > 0$.  These things are testable within the context of
@@ -112,14 +112,14 @@ the matrix $\Pi$.
   -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$, which is
   equivalent to saying that
   \[
-    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} + z_t
+    y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} - z_t
   \]
   is a long-run equilibrium relationship: the deviations $z_t$
   may not be 0 but they are stationary. In this case, (\ref{eq:VECM})
   can be written as 
   \begin{equation}
     \label{eq:VECMab}
-    \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^p \Gamma_i 
+    \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
     \Delta y_{t-i} + \epsilon_t ,
   \end{equation}
   and estimation is carried out on all parameters
@@ -410,10 +410,11 @@ open denmark
 coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
 %
-In this case, the vector $y_t$ in equation (\ref{eq:VECM})
-comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
-\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:VECM}) plus
-one. Part of the output is reported below:
+In this case, the vector $y_t$ in equation (\ref{eq:VECM}) comprises
+the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. The
+number of lags equals $p$ in (\ref{eq:VECM}) (that is, the number of
+lags of the model written in VAR form). Part of the output is reported
+below:
 
 \begin{center}
 \begin{code}
@@ -459,7 +460,11 @@ also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any conformable
 non-singular matrix $\Sigma$.  In order to find a unique solution, it
 is therefore necessary to impose some restrictions on $\alpha$ and/or
 $\beta$. It can be shown that the minimum number of restrictions that
-is necessary to guarantee identification is $r^2$.
+is necessary to guarantee identification is $r^2$. Normalizing one
+coefficient per column to 1 (or -1, according to taste) is a trivial first
+step, which also helps in that the remaining coefficients can be
+interpreted as the parameters in the equilibrium relations, but this
+only suffices when $r=1$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
@@ -761,9 +766,14 @@ where $m$ is real money demand, $l$ and $s$ are long- and short-term
 interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
   traditional formulation of the Fisher equation would reverse the
   roles of the variables in the second equation, but this detail is
-  immaterial in the present context.}  (The names for these variables
-in the \app{gretl} data file are \verb|m_p|, \texttt{rl}, \texttt{rs},
-\texttt{y} and \texttt{infl}, respectively.)  
+  immaterial in the present context; moreover, the expectation theory
+  of interest rates implies that the third equilibrium relationship
+  should include a constant for the liquidity premium. However, since
+  in this example the system is estimated with the constant term
+  unrestricted, the liquidity premium gets merged in the system
+  intercept and disappears from $z_t$.}  (The names for these
+variables in the \app{gretl} data file are \verb|m_p|, \texttt{rl},
+\texttt{rs}, \texttt{y} and \texttt{infl}, respectively.)
 
 The cointegration rank assumed by the authors is 3 and there are 5
 variables, giving 15 elements in the $\beta$ matrix.  $3 \times 3 = 9$
