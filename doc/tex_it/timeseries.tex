@@ -1,6 +1,14 @@
 \chapter{Modelli per serie storiche}
 \label{chap:timeser}
 
+\section{Introduzione}
+\label{sec:tsintro}
+
+Questo capitolo e il successivo discutono i modelli per serie storiche.
+Questo capitolo si concentra sui modelli ARIMA, i test per radici unitarie
+e i modelli GARCH, mentre il successivo tratta la cointegrazione e i modelli
+a correzione d'errore.
+
 \section{Modelli ARIMA}
 \label{arma-estimation}
 
@@ -167,6 +175,36 @@ y_t - \mu = \phi (y_{t-1} - \mu) + \Phi (y_{t-4} - \mu) - (\phi
   \epsilon_{t-4} + (\theta \cdot \Theta) \epsilon_{t-5}
 \]
 Un tale modello è noto come ``modello ARMA stagionale moltiplicativo''.
+
+\subsection{Buchi nella struttura dei ritardi}
+
+Il modo standard di specificare un modello ARMA in \app{gretl} è usando
+gli ordini AR e MA, ossia rispettivamente $p$ e $q$. In questo caso vengono
+inclusi tutti i ritardi a partire dall'ordine 1 fino all'ordine specificato.
+In alcuni casi, occorre includere solo alcuni specifici ritardi AR e/o MA; questo
+risultato può essere ottenuto in due modi.
+%
+\begin{itemize}
+\item È possibile costruire una matrice che contiene i ritardi desiderati
+  (numeri interi positivi) e fornire il nome della matrice al posto di
+  $p$ o $q$.
+\item È possibile fornire una lista di ritardi separati da spazi e racchiusi
+  tra parentesi graffe, al posto di $p$ o $q$.
+\end{itemize}
+%
+Gli esempi seguenti illustrano le due possibilità:
+%
+\begin{code}
+matrix pvec = {1, 4}
+arma pvec 1 ; y
+arma {1 4} 1 ; y
+\end{code}
+%
+Entrambi i comandi specificano un modello ARMA in cui vengono usati i ritardi AR
+1 e 4, ma non i 2 e 3.
+
+Questo meccanismo è disponibile solo per la componente non stagionale della
+specificazione ARMA.
 
 \subsection{Differenziazione e ARIMA}
 
@@ -415,34 +453,13 @@ Il risultato dell'ultimo comando è:
 \end{script}
 
 
-\subsection{Limitazioni}
-
-La struttura del comando \cmd{arma} di \app{gretl} non permette di specificare
-modelli che contengono buchi nella struttura dei ritardi, se non usando la
-specificazione stagionale discussa sopra. Ad esempio, se si ha una serie
-mensile, non è possibile stimare un modello ARMA con termini AR (o MA) per i
-soli ritardi di ordine 1, 3 e 5.
-
-Un modo per aggirare questa limitazione con riguardo alla parte AR della
-specificazione consiste nell'includere ritardi della variabile dipendente nella
-lista delle variabili ``esogene''. Ad esempio, il comando
-\begin{code}
-arma 0 0 ; 0 1 ; y const y(-2)
-\end{code}
-su una serie trimestrale, stimerebbe i parametri del modello
-\[
-  y_t - \mu = \phi \left(y_{t-2} - \mu\right) + \epsilon_t + \Theta \epsilon_{t-4}
-\]
-Tuttavia, questa scorciatoia non è raccomandabile: produce stime corrette, ma
-rende inutilizzabile il meccanismo usato per le previsioni.
-
 \section{Test per radici unitarie}
 \label{sec:uroot}
 
 \subsection{Il test ADF}
 \label{sec:ADFtest}
 
-Il test ADF (Augmented Dickey-Fuller) è implementato in \app{gretl} sotto forma
+Il test ADF (Augmented Dickey--Fuller) è implementato in \app{gretl} sotto forma
 della statistica $t$ su $\varphi$ nella regressione seguente:
 \begin{equation}
   \label{eq:ADFtest}
@@ -563,13 +580,11 @@ kpss n y --trend
 Si noti che in questo caso la distribuzione asintotica del test è diversa, e i
 valori critici riportati da \app{gretl} sono corretti di conseguenza.
 
-\subsection{I test di Johansen}
-\label{sec:Joh-test}
+\subsection{I test di cointegrazione}
+\label{sec:coint-test}
 
-In senso stretto, questi sono test per la cointegrazione, ma possono essere
-usati anche come test multivariati per radici unitarie, visto che sono la
-generalizzazione multivariata del test ADF. Si veda la sezione
-\ref{sec:VECM-rep} per ulteriori dettagli.
+FIXME discuss Engle---Granger here, and refer forward to
+the next chapter for the Johansen tests.
 
 \section{ARCH e GARCH}
 \label{sec:arch-garch}
@@ -767,297 +782,6 @@ necessario tener conto di questi fatti per formulare un modello appropriato. Ad
 esempio, può essere necessario dover prendere la differenza prima della
 variabile in questione e/o aggiungere opportuni regressori $X_t$ al modello,
 come mostrato nella (\ref{eq:garch-meaneq}).
-
-\section{Cointegrazione e modelli vettoriali a correzione di errore}
-\label{vecm-explanation}
- 
-\subsection{Modelli vettoriali a correzione di errore come rappresentazione di
-un sistema cointegrato}
-\label{sec:VECM-rep}
-
-Si consideri un VAR di ordine $p$ con una parte deterministica data da $\mu_t$
-(tipicamente un polinomio nel tempo). È possibile scrivere il processo
-$n$-variato $y_t$ come
-\[
-  y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
-  \epsilon_t ;
-\]
-ma questo modello può essere riscritto in una forma più adatta per analizzare il
-fenomeno della cointegrazione. Poiché $y_t = y_{t-1} - \Delta y_t$ e
-$y_{t-i} = y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots +
-\Delta y_{t-i+1}$, la forma \emph{vettoriale a correzione d'errore} del modello
-precedente è data da
-\begin{equation}
-  \label{eq:Joh-tests}
-  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
-  y_{t-i} + \epsilon_t ,
-\end{equation}
-dove $\Pi = \sum_{i=1}^p A_i$ e $\Gamma_k = -\sum_{i=k}^p A_i$.
-
-Se il rango di $\Pi$ è 0, i processi sono tutti I(1); se il rango di
-$\Pi$ è pieno, i processi sono tutti I(0); nei casi intermedi, $\Pi$ può essere
-scritto come $\alpha \beta'$ e si ha cointegrazione.
-
-Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
-essa strettamente legata (chiamata $M$) che ha rango pari a quello di $\Pi$:
-per costruzione, $M$ è simmetrica e semidefinita positiva, quindi tutti i suoi
-autovalori sono reali e non negativi e i test sul rango di $\Pi$ possono quindi
-essere condotti verificando quanti autovalori di $M$ sono pari a 0.
-
-Se tutti gli autovalori sono significativamente diversi da 0, tutti i processi
-sono stazionari. Se, al contrario, c'è almeno un autovalore pari a 0, allora
-il processo $y_t$ è integrato, anche se qualche combinazione lineare $\beta'y_t$
-potrebbe essere stazionaria. All'estremo opposto, se non ci sono autovalori
-significativamente diversi da 0, non solo il processo $y_t$ è non-stazionario,
-ma vale lo stesso per qualsiasi combinazione lineare $\beta'y_t$; in altre
-parole non c'è alcuna cointegrazione.
-
-I due test di Johansen sono i test ``$\lambda$-max'', per le ipotesi sui singoli
-autovalori, e il test ``trace'', per le ipotesi congiunte.  Il comando
-\cmd{coint2} di \app{gretl} esegue questi due test. 
- 
-Come nel test ADF, la distribuzione asintotica dei test varia a seconda
-dell'elemento deterministico $\mu_t$ incluso nel VAR. \app{gretl} fornisce le
-opzioni seguenti (per una breve discussione del significato delle cinque
-opzioni, si veda la sezione \ref{sec:johansen-test}):
-\begin{center}
-  \begin{tabular}{cc}
-    \hline
-    $\mu_t$ & Opzione del comando \\
-    \hline
-    0 & \verb|--nc| \\
-    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
-    $\mu_0$ &  predefinito \\
-    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    \hline
-  \end{tabular}
-\end{center}
-Si noti che per questo comando le opzioni presentate sopra sono mutualmente
-esclusive. Inoltre, si può usare l'opzione \verb|--seasonal| per aggiungere a
-$\mu_t$ delle variabili dummy stagionali centrate. In ognuno dei casi, i p-value
-sono calcolati con le approssimazioni di Doornik (1998).
- 
-Il codice seguente usa il database \cmd{denmark}, fornito con \app{gretl}, per
-replicare l'esempio di Johansen contenuto nel suo libro del 1995.
-%
-\begin{code}
-open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonal
-\end{code}
-%
-In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:Joh-tests}) comprende
-le quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei ritardi
-è pari a $p$ nella (\ref{eq:Joh-tests}) più uno. Di seguito è riportata parte
-dell'output:
-\begin{center}
-\begin{code}
-Test di Johansen:
-Numero di equazioni = 4
-Ordine dei ritardi = 2
-Periodo di stima: 1974:3 - 1987:3 (T = 53)
-
-Caso 2: costante vincolata
-Rango Autovalore Test traccia p-value   Test Lmax  p-value
-   0    0,43317     49,144 [0,1284]     30,087 [0,0286]
-   1    0,17758     19,057 [0,7833]     10,362 [0,8017]
-   2    0,11279     8,6950 [0,7645]     6,3427 [0,7483]
-   3   0,043411     2,3522 [0,7088]     2,3522 [0,7076]
-\end{code}
-\end{center}
-Visto che sia la traccia, sia $\lambda$-max portano ad accettare l'ipotesi nulla
-che il più piccolo autovalore vale 0, possiamo concludere che le serie non sono
-stazionarie. Tuttavia, qualche loro combinazione lineare potrebbe essere $I(0)$,
-come indicato dal rifiuto del $\lambda$-max dell'ipotesi che il rango di
-$\Pi$ sia 0 (il test traccia dà un'indicazione meno netta in questo senso).
-
-\subsection{Il test di cointegrazione di Johansen}
-\label{sec:johansen-test}
-
-Il test di Johansen per la cointegrazione viene usato per stabilire il rango di
-$\beta$, o, in altre parole, per capire quanti vettori di cointegrazione ha il
-sistema.  Questo test deve tenere conto di quali ipotesi vengono fatte a
-proposito dei termini deterministici, per cui si possono individuare i ben noti
-``cinque casi''. Una presentazione approfondita dei cinque casi richiede una
-certa quantità di algebra matriciale, ma è possibile dare un'intuizione del
-problema per mezzo di un semplice esempio.
-    
-Si consideri una serie $x_t$ che si comporta nel modo seguente
-%      
-\[ x_t = m + x_{t-1} + \varepsilon_t \]
-%
-dove $m$ è un numero reale e $\varepsilon_t$ è un processo ``white
-noise''.  Come si può facilmente mostrare, $x_t$ è un ``random walk''
-che fluttua intorno a un trend deterministico con pendenza $m$. Nel
-caso particolare in cui $m$ = 0, il trend deterministico scompare e
-$x_t$ è un puro random walk.
-    
-Si consideri ora un altro processo $y_t$, definito da
-%      
-\[ y_t = k + x_t + u_t \]
-%
-dove, ancora, $k$ è un numero reale e $u_t$ è un processo white noise.
-Poiché $u_t$ è stazionario per definizione, $x_t$ e $y_t$ sono
-cointegrate, ossia la loro differenza
-%      
-\[ z_t = y_t - x_t = k + u_t \]
-%	
-è un processo stazionario. Per $k$ = 0, $z_t$ è un semplice white
-noise a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ è white
-noise con media diversa da zero.
-  
-Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
-essere rappresentate congiuntamente come un sistema VAR(1)
-%      
-\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
-  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
-  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
-  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
-  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
-\right] \]
-%	
-o in forma VECM
-%      
-\begin{eqnarray*}
-  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
-  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
-  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
-  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
-  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
-  & = & 
-  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
-  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
-  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
-  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
-  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
-  & = &
-  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
-  \mu_0 + \alpha z_{t-1} + \eta_t ,
-\end{eqnarray*}
-%	
-dove $\beta$ è il vettore di cointegrazione e $\alpha$ è il vettore
-dei ``loading'' o ``aggiustamenti''.
-     
-Possiamo ora considerare tre casi possibili:
-    
-\begin{enumerate}
-\item $m \ne 0$: in questo caso $x_t$ ha un trend, come abbiamo appena
-  visto; ne consegue che anche $y_t$ segue un trend lineare perché in
-  media si mantiene a una distanza di $k$ da $x_t$.  Il vettore
-  $\mu_0$ non ha restrizioni. Questo è il caso predefinito per il
-  comando \cmd{vecm} di gretl.
-	
-\item $m = 0$ e $k \ne 0$: in questo caso, $x_t$ non ha un trend, e di
-  conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
-  $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
-%	  
-  \[
-  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
-  \]
-%	    
-  che è non nullo, quindi il VECM mostrato sopra ha un termine
-  costante.  La costante, tuttavia è soggetta alla restrizione che il
-  suo secondo elemento deve essere pari a 0. Più in generale,
-  $\mu$\ensuremath{_{0}} è un multiplo del vettore $\alpha$. Si noti
-  che il VECM potrebbe essere scritto anche come
-%	  
-  \[
-  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
-  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
-    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
-    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
-  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
-    \end{array} \right]
-  \]
-%	   
-  che incorpora l'intercetta nel vettore di cointegrazione. Questo è
-  il caso di ``costante vincolata''; può essere specificato nel
-  comando \cmd{vecm} di gretl usando l'opzione \verb+--rc+.
-	
-\item $m = 0$ e $k = 0$: questo caso è il più vincolante: chiaramente,
-  né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
-  Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
-  chiamato ``senza costante''.  Questo caso è specificato usando
-  l'opzione \verb+--nc+ con \cmd{vecm}.
-	
-\end{enumerate}
-
-
-Nella maggior parte dei casi, la scelta tra le tre possibilità si basa
-su un misto di osservazione empirica e di ragionamento economico. Se
-le variabili in esame sembrano seguire un trend lineare, è opportuno
-non imporre alcun vincolo all'intercetta. Altrimenti occorre chiedersi
-se ha senso specificare una relazione di cointegrazione che includa
-un'intercetta diversa da zero. Un esempio appropriato potrebbe essere
-la relazione tra due tassi di interesse: in generale questi non hanno
-un trend, ma il VAR potrebbe comunque avere un'intercetta perché la
-differenza tra i due (lo ``spread'' sui tassi d'interesse) potrebbe
-essere stazionaria attorno a una media diversa da zero (ad esempio per
-un premio di liquidità o di rischio).
-    
-L'esempio precedente può essere generalizzato in tre direzioni:
-    
-\begin{enumerate}
-\item Se si considera un VAR di ordine maggiore di 1, l'algebra si
-  complica, ma le conclusioni sono identiche.
-\item Se il VAR include più di due variabili endogene, il rango di
-  cointegrazione $r$ può essere maggiore di 1. In questo caso $\alpha$
-  è una matrice con $r$ colonne e il caso con la costante vincolata
-  comporta che $\mu_0$ sia una combinazione lineare delle colonne di
-  $\alpha$.
-\item Se si include un trend lineare nel modello, la parte
-  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento è
-  praticamente quello visto sopra, tranne per il fatto che
-  l'attenzione è ora posta su $\mu_1$ invece che su $\mu_0$. La
-  controparte del caso con ``costante vincolata'' discusso sopra è un
-  caso con ``trend vincolato'', così che le relazioni di
-  cointegrazione includono un trend, ma la differenza prima delle
-  variabili in questione no. Nel caso di un trend non vincolato, il
-  trend appare sia nelle relazioni di cointegrazione sia nelle
-  differenze prime, il che corrisponde alla presenza di un trend
-  quadratico nelle variabili (espresse in livelli). Questi due casi
-  sono specificati rispettivamente con le opzioni \verb+--crt+ e
-  \verb+--ct+ del comando \cmd{vecm}.
-\end{enumerate}
-
-\subsection{Identificazione dei vettori di cointegrazione}
-\label{sec:johansen-ident}
-
-Si può dimostrare che la stima di massima verosimiglianza di $\beta$ equivale a
-risolvere un problema di autovettori. In pratica, se il rango di cointegrazione
-è noto e pari a $r$, la matrice $n \times r$ $\beta$ viene stimata come
-soluzione della seguente equazione matriciale:
-\[
-  M \beta = \beta \langle \lambda \rangle
-\]
-dove $\langle \lambda \rangle$ è una matrice diagonale che contiene gli
-autovalori. Si noti comunque che se tutte le colonne di $\beta$ sono vettori di
-cointegrazione, anche qualsiasi loro combinazione lineare è un vettore di
-cointegrazione. Questo significa che la matrice matrice $\beta$ è
-sotto-identificata, quindi i suoi elementi non possiedono una matrice di
-covarianza; tuttavia questa difficoltà può essere aggirata imponendo un numero
-appropriato di vincoli. Il metodo usato da \app{gretl} è chiamato
-``Normalizzazione di Phillips''. Il punto di partenza consiste nello scrivere
-$\beta$ in forma partizionata, come in
-\[
-  \beta = \left[
-    \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
-    \right] ,
-\]
-dove $\beta_1$ è una matrice $r \times r$ e  $\beta_2$ è $(n-r)
-\times r$. Assumendo che $\beta_1$ abbia rango pieno, $\beta$ può essere
-post-moltiplicata da $\beta_1^{-1}$, ottenendo
-\[
-  \hat{\beta} = \left[
-    \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
-    \right] =
-    \left[
-    \begin{array}{c} I \\ \hat{\beta_2} \end{array}
-  \right]  ,
-\]
-
-I coefficienti prodotti da \app{gretl} sono $\hat{\beta}$, mentre
-$\hat{\beta_2}$ è nota come matrice dei coefficienti non vincolati.
 
 %%% Local Variables: 
 %%% mode: latex
