@@ -663,6 +663,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     int *cslice = NULL;
     int r, c;
 
+    if (gretl_is_null_matrix(M)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (spec->type[0] == SEL_DIAG) {
 	return gretl_matrix_get_diagonal(M, err);
     }
@@ -991,8 +996,7 @@ double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
 }
 
 static gretl_matrix *
-real_user_matrix_get_inverse (const gretl_matrix *m,
-			      int moore)
+real_user_matrix_get_inverse (const gretl_matrix *m, int moore)
 {
     gretl_matrix *R = NULL;
     int err = 0;

@@ -1199,34 +1199,20 @@ static void select_first_editable_cell (Spreadsheet *sheet)
     gtk_tree_path_free(path);
 }
 
-static void set_allowable_transforms (Spreadsheet *sheet)
+static void set_valid_transforms (Spreadsheet *sheet)
 {
     int z = gretl_is_zero_matrix(sheet->matrix);
     int s = gretl_matrix_get_structure(sheet->matrix);
-    GtkWidget *w;
 
-    w = gtk_item_factory_get_item(sheet->ifac, 
-				  "/Transform/Multiply by scalar");
-    gtk_widget_set_sensitive(w, z == 0);
-
-    w = gtk_item_factory_get_item(sheet->ifac, 
-				  "/Transform/Divide by scalar");
-    gtk_widget_set_sensitive(w, z == 0);
-
-    w = gtk_item_factory_get_item(sheet->ifac, 
-				  "/Transform/X'X");
-    gtk_widget_set_sensitive(w, !(s > 0 && z));
-
-    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Cholesky");
-    gtk_widget_set_sensitive(w, s == GRETL_MATRIX_SYMMETRIC && z == 0);
-
-    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Invert");
-    gtk_widget_set_sensitive(w, s != 0 && z == 0);
-
-    w = gtk_item_factory_get_item(sheet->ifac, "/Transform/Transpose");
-    gtk_widget_set_sensitive(w, s != GRETL_MATRIX_SYMMETRIC &&
-			     s != GRETL_MATRIX_DIAGONAL &&
-			     s != GRETL_MATRIX_SCALAR);
+    flip(sheet->ifac, "/Transform/Multiply by scalar", !z);
+    flip(sheet->ifac, "/Transform/Divide by scalar", !z);
+    flip(sheet->ifac, "/Transform/X'X", !(s > 0 && z));
+    flip(sheet->ifac, "/Transform/Cholesky", 
+	 s == GRETL_MATRIX_SYMMETRIC && !z);
+    flip(sheet->ifac, "/Transform/Invert", s > 0 && !z &&
+	 s != GRETL_MATRIX_IDENTITY);
+    flip(sheet->ifac, "/Transform/Transpose", 
+	 s < GRETL_MATRIX_SYMMETRIC);
 }
 
 static int rejig_sheet_cols (Spreadsheet *sheet)
@@ -1320,7 +1306,7 @@ static int update_sheet_from_matrix (Spreadsheet *sheet)
     } 
 
     sheet_set_modified(sheet, TRUE);
-    set_allowable_transforms(sheet);
+    set_valid_transforms(sheet);
 
     if (resize) {
 	size_matrix_window(sheet);
@@ -1360,7 +1346,7 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
 
-    set_allowable_transforms(sheet);
+    set_valid_transforms(sheet);
 
     return 0;
 }
@@ -2421,6 +2407,7 @@ static void spin_call (GtkWidget *s, int *n)
 
 static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 {
+    gretl_matrix *m = NULL;
     const char *etxt;
     int err = 0;
 
@@ -2431,7 +2418,9 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	return;
     }
 
-    if (get_matrix_by_name(etxt) != NULL &&
+    m = get_matrix_by_name(etxt);
+
+    if (!gretl_is_null_matrix(m) &&  
 	matrix_overwrite_check(etxt) == GRETL_NO) {
 	return;
     }
@@ -2517,7 +2506,6 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     GtkWidget *tab;
     GtkWidget *rb;
     GtkWidget *w;
-
     int maxdim = 1000;
     int canceled = 0;
 
@@ -2542,7 +2530,12 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     w = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN+3);
-    gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+    if (*spec->name != '\0') {
+	gtk_entry_set_text(GTK_ENTRY(w), spec->name);
+	gtk_widget_set_sensitive(w, FALSE);
+    } else {
+	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
+    }
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     mdlg.nentry = w;
@@ -2719,24 +2712,75 @@ matrix_from_spec (struct gui_matrix_spec *s)
     return err;
 }
 
-static void gui_matrix_spec_init (struct gui_matrix_spec *s)
+static void gui_matrix_spec_init (struct gui_matrix_spec *s,
+				  gretl_matrix *m,
+				  const char *name)
 {
-    s->name[0] = '\0';
+    *s->name = '\0';
     s->rows = 2;
     s->cols = 2;
     s->fill = 0;
     s->formula = NULL;
     s->uselist = 1;
-    s->m = NULL;
+    s->m = m;
+
+    if (name != NULL) {
+	strncat(s->name, name, VNAMELEN - 1);
+    }
 }
 
-void gui_new_matrix (void)
+static void edit_matrix (gretl_matrix *m, const char *name)
 {
     Spreadsheet *sheet = NULL;
+    gretl_matrix *oldmat = m;
+    int err = 0;
+
+    if (m == NULL || name == NULL) {
+	return;
+    }
+
+    sheet = spreadsheet_new(SHEET_EDIT_MATRIX);
+    if (sheet == NULL) {
+	return;
+    }
+
+    strcpy(sheet->mname, name);
+    sheet->oldmat = oldmat;
+    sheet->matrix = gretl_matrix_copy(oldmat);
+    if (sheet->matrix == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (err) {
+	nomem();
+	free(sheet);
+	sheet = NULL;
+    } else {
+	sheet->datarows = gretl_matrix_rows(sheet->matrix);
+	sheet->datacols = gretl_matrix_cols(sheet->matrix);
+	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 0);
+    }
+
+    if (sheet != NULL) {
+	/* protect matrix from deletion while editing */
+	user_matrix *u = get_user_matrix_by_name(name);
+
+	if (u != NULL) {
+	    g_object_set_data(G_OBJECT(sheet->win), "object", u);
+	    g_signal_connect(G_OBJECT(sheet->win), "destroy", 
+			     G_CALLBACK(winstack_remove), sheet->win);
+	    winstack_add(sheet->win);
+	}
+    }
+}
+
+static void real_gui_new_matrix (gretl_matrix *m, const char *name)
+{
     struct gui_matrix_spec spec;
     int err = 0;
 
-    gui_matrix_spec_init(&spec);
+    gui_matrix_spec_init(&spec, m, name);
+
     err = new_matrix_dialog(&spec);
     if (err) {
 	return;
@@ -2760,53 +2804,12 @@ void gui_new_matrix (void)
 	}
     }
 
-    sheet = spreadsheet_new(SHEET_EDIT_MATRIX);
-    if (sheet == NULL) {
-	return;
-    }
-
-    strcpy(sheet->mname, spec.name);
-    sheet->matrix = spec.m;
-    sheet->datarows = gretl_matrix_rows(sheet->matrix);
-    sheet->datacols = gretl_matrix_cols(sheet->matrix);
-    real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 1);
+    edit_matrix(spec.m, spec.name);
 }
 
-/* returns pointer to matrix-editing window */
-
-static GtkWidget *edit_matrix (gretl_matrix *m, const char *name)
+void gui_new_matrix (void)
 {
-    Spreadsheet *sheet = NULL;
-    gretl_matrix *oldmat = m;
-    int err = 0;
-
-    if (m == NULL || name == NULL) {
-	return NULL;
-    }
-
-    sheet = spreadsheet_new(SHEET_EDIT_MATRIX);
-    if (sheet == NULL) {
-	return NULL;
-    }
-
-    strcpy(sheet->mname, name);
-    sheet->oldmat = oldmat;
-    sheet->matrix = gretl_matrix_copy(oldmat);
-    if (sheet->matrix == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (err) {
-	nomem();
-	free(sheet);
-	sheet = NULL;
-    } else {
-	sheet->datarows = gretl_matrix_rows(sheet->matrix);
-	sheet->datacols = gretl_matrix_cols(sheet->matrix);
-	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 0);
-    }
-
-    return (sheet != NULL)? sheet->win : NULL;
+    real_gui_new_matrix(NULL, NULL);
 }
 
 void edit_user_matrix_by_name (const char *name)
@@ -2825,15 +2828,10 @@ void edit_user_matrix_by_name (const char *name)
 
     if (m == NULL) {
 	errbox(_("Couldn't open '%s'"), name);
+    } else if (gretl_is_null_matrix(m)) {
+	real_gui_new_matrix(m, name);
     } else {
-	w = edit_matrix(m, name);
-	if (w != NULL) {
-	    /* protect matrix from deletion while editing */
-	    g_object_set_data(G_OBJECT(w), "object", u);
-	    g_signal_connect(G_OBJECT(w), "destroy", 
-			     G_CALLBACK(winstack_remove), w);
-	    winstack_add(w);
-	}
+	edit_matrix(m, name);
     }
 }
 

@@ -41,7 +41,8 @@ typedef enum {
     GRETL_MATRIX_UPPER_TRIANGULAR,
     GRETL_MATRIX_SYMMETRIC,
     GRETL_MATRIX_DIAGONAL,
-    GRETL_MATRIX_SCALAR
+    GRETL_MATRIX_IDENTITY,
+    GRETL_MATRIX_SCALAR,
 } GretlMatrixStructure;
 
 typedef struct _gretl_matrix gretl_matrix;
@@ -165,6 +166,8 @@ struct _gretl_matrix {
 #define gretl_matrix_is_scalar(m) ((m) != NULL && \
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
+
+#define gretl_is_null_matrix(m) (m == NULL || m->rows == 0 || m->cols == 0)
 
 int get_gretl_matrix_err (void);
 

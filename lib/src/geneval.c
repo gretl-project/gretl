@@ -822,6 +822,14 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     int rb, cb;
     int r, c;
 
+    if (gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B)) {
+	if (op != MCCAT && op != MRCAT) {
+	    *err = E_NONCONF;
+	    return NULL;
+	}
+    }
+
     switch (op) {
     case B_ADD:
     case B_SUB:
@@ -1034,11 +1042,13 @@ matrix_pow_check (int t, double x, const gretl_matrix *m, parser *p)
 {
     if (t != MAT) {
 	p->err = E_TYPES;
+    } else if (gretl_is_null_matrix(m)) {
+	p->err = E_DATA;
     } else if (m->rows != m->cols) {
 	p->err = E_NONCONF;
     } else if (x < 0 || x > (double) INT_MAX || floor(x) != x) {
 	p->err = E_DATA;
-    }
+    } 
 
     return p->err;
 }
@@ -1063,6 +1073,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
 	x = (l->t == NUM)? l->v.xval : r->v.xval;
 	m = (l->t == MAT)? l->v.m : r->v.m;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_DATA;
+	    return NULL;
+	}
+
 	n = m->rows * m->cols;
 
 	/* special: raising a matrix to an integer power */
@@ -1143,14 +1159,20 @@ static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
+	gretl_matrix *m = l->v.m;
 	const char *s = r->v.str;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_DATA;
+	    return NULL;
+	}
 
 	ret = aux_scalar_node(p);
 	if (ret == NULL) { 
 	    return NULL;
 	}
 
-	ret->v.xval = user_BFGS(l->v.m, s, p->Z, p->dinfo, 
+	ret->v.xval = user_BFGS(m, s, p->Z, p->dinfo, 
 				p->prn, &p->err);
     } else {
 	ret = aux_scalar_node(p);
@@ -1164,14 +1186,20 @@ static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
+	gretl_matrix *m = l->v.m;
 	int k = r->v.xval;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_DATA;
+	    return NULL;
+	}	
 
 	ret = aux_matrix_node(p);
 	if (ret == NULL) { 
 	    return NULL;
 	}
 
-	ret->v.m = gretl_matrix_lag(l->v.m, k, 0.0);
+	ret->v.m = gretl_matrix_lag(m, k, 0.0);
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -1219,7 +1247,9 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
 	const gretl_matrix *b = r->v.m;
 	int i, n = a->rows * a->cols;
 
-	if (a->rows != b->rows || a->cols != b->cols) {
+	if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+	    ret->v.xval = NADBL;
+	} else if (a->rows != b->rows || a->cols != b->cols) {
 	    ret->v.xval = NADBL;
 	} else {
 	    ret->v.xval = 1;
@@ -1271,6 +1301,11 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 
+	if (gretl_is_null_matrix(m) && f != ROWS && f != COLS) {
+	    ret->v.xval = NADBL;
+	    goto finalize;
+	}
+
 	gretl_error_clear();
 
 	switch (f) {
@@ -1305,7 +1340,8 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    p->err = 1;
 	    break;
 	}
-    
+
+    finalize:
 	if (xna(ret->v.xval)) {
 	    matrix_error(p);
 	}    
@@ -1342,6 +1378,11 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int a, b, c;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_DATA;
+	    goto finalize;
+	}
 
 	gretl_error_clear();
 
@@ -1426,6 +1467,8 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    break;
 	}
 
+    finalize:
+
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
 	}
@@ -1442,6 +1485,11 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const char *rname;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_DATA;
+	    goto finalize;
+	}
 
 	gretl_error_clear();
 
@@ -1470,6 +1518,8 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
 	    break;
 	}
+
+    finalize:
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
@@ -2062,7 +2112,9 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
 {
     gretl_matrix *m = n->v.m;
 
-    if (gretl_vector_get_length(m) != p->dinfo->n) {
+    if (gretl_is_null_matrix(m)) {
+	p->err = E_DATA;
+    } else if (gretl_vector_get_length(m) != p->dinfo->n) {
 	if (series_cast_optional(f)) {
 	    p->err = 1;
 	} else {
@@ -2288,6 +2340,8 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC) {
 	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
+	} else if (gretl_is_null_matrix(l->v.m)) {
+	    p->err = E_DATA;
 	} else {
 	    int n = gretl_vector_get_length(l->v.m);
 
@@ -2321,12 +2375,12 @@ static NODE *vector_values (NODE *l, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const double *x;
-	int n;
+	int n = 0;
 
 	if (l->t == VEC) {
 	    n = p->dinfo->t2 - p->dinfo->t1 + 1;
 	    x = l->v.xvec + p->dinfo->t1;
-	} else {
+	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
 	}
@@ -3142,6 +3196,9 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 		pprintf(p->prn, "Wrong sort of dummy var\n");
 		p->err = E_TYPES;
 	    }
+	} else {
+	    /* empty matrix def */
+	    M = gretl_null_matrix_new();
 	}
     }
 
@@ -5160,11 +5217,15 @@ static void matrix_edit (parser *p)
 
 static int matrix_missvals (const gretl_matrix *m)
 {
-    int i, n = m->rows * m->cols;
+    if (m == NULL) {
+	return 1;
+    } else {
+	int i, n = m->rows * m->cols;
 
-    for (i=0; i<n; i++) {
-	if (na(m->val[i])) {
-	    return 1;
+	for (i=0; i<n; i++) {
+	    if (na(m->val[i])) {
+		return 1;
+	    }
 	}
     }
 
