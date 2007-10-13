@@ -193,7 +193,7 @@ matrix_insert_diagonal (gretl_matrix *M, const gretl_matrix *S,
     return 0;
 }
 
-/* If slevel is LEVEL_AUTO search at the current function execution
+/* If slevel is LEVEL_AUTO, search at the current function execution
    depth, otherwise search at the function execution depth given by
    slevel.
 */
@@ -1266,7 +1266,7 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     gretl_matrix *R = NULL;
     int wantR = 0;
 
-    if (m == NULL) {
+    if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1302,7 +1302,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     int wantU = 0;
     int wantV = 0;
 
-    if (m == NULL) {
+    if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1350,7 +1350,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     gretl_matrix *U = NULL;
     int newU = 0;
 
-    if (X == NULL || Y == NULL) {
+    if (gretl_is_null_matrix(X) || gretl_is_null_matrix(X)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -1408,7 +1408,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     gretl_matrix *E = NULL;
     int vecs = 0;
 
-    if (m == NULL) {
+    if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }

@@ -385,13 +385,6 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 
 gretl_matrix *gretl_null_matrix_new (void)
 {
-#if 0
-    gretl_matrix *m = gretl_matrix_alloc(1, 1);
-
-    if (m != NULL) {
-	m->val[0] = 0.0;
-    }
-#else
     gretl_matrix *m = malloc(sizeof *m);
 
     if (m == NULL) {
@@ -402,7 +395,6 @@ gretl_matrix *gretl_null_matrix_new (void)
     m->val = NULL;
     m->rows = m->cols = 0;
     m->t1 = m->t2 = 0;
-#endif
 
     return m;
 }
@@ -626,7 +618,7 @@ double gretl_matrix_trace (const gretl_matrix *m, int *err)
 
     *err = 0;
     
-    if (m == NULL) {
+    if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NADBL;
     }
@@ -795,7 +787,7 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
 {
     int i, j;
 
-    if (m == NULL || m->val == NULL) 
+    if (gretl_is_null_matrix(m)) 
 	return 1;
 
     if (m->rows != m->cols) {
@@ -893,7 +885,7 @@ int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 
 void gretl_matrix_switch_sign (gretl_matrix *m)
 {
-    if (m != NULL) {
+    if (!gretl_is_null_matrix(m)) {
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
@@ -912,7 +904,7 @@ void gretl_matrix_switch_sign (gretl_matrix *m)
 
 void gretl_matrix_raise (gretl_matrix *m, double x)
 {
-    if (m != NULL) {
+    if (!gretl_is_null_matrix(m)) {
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
@@ -2012,6 +2004,10 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 {
     double x, y;
     int i, j;
+
+    if (gretl_is_null_matrix(m)) {
+	return 0;
+    }
 
     for (i=1; i<m->rows; i++) {
 	for (j=0; j<i; j++) {
@@ -4268,7 +4264,6 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     int i, k, rank = 0;
 
     if (gretl_is_null_matrix(a)) {
-	*err = E_DATA;
 	return 0;
     }
 
@@ -7317,11 +7312,19 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
 				     const gretl_matrix *B,
 				     gretl_matrix *C)
 {
-    int k = A->cols;
-    int n = B->cols;
-    int T = A->rows;
+    int k, n, T;
     double x, y;
     int i, j, t, p;
+
+    if (gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
+	gretl_is_null_matrix(C)) {
+	return E_DATA;
+    }
+
+    k = A->cols;
+    n = B->cols;
+    T = A->rows;
 
     if (B->rows != T || C->rows != T) {
 	return E_NONCONF;
@@ -7465,7 +7468,14 @@ double gretl_scalar_qform (const gretl_vector *b,
 {
     gretl_matrix *tmp = NULL;
     double ret = NADBL;
-    int mod, k = gretl_vector_get_length(b);
+    int mod, k;
+
+    if (gretl_is_null_matrix(b) || gretl_is_null_matrix(X)) {
+	*errp = E_DATA;
+	return NADBL;
+    } 
+
+    k = gretl_vector_get_length(b);
 
     if (k == 0 || X->rows != k || X->cols != k) {
 	*errp = E_NONCONF;
@@ -7593,6 +7603,11 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 {
     double ax, bx;
     int i, j;
+
+    if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
+	*err = E_DATA;
+	return -1;
+    }
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	*err = E_NONCONF;
