@@ -778,9 +778,9 @@ variables in the \app{gretl} data file are \verb|m_p|, \texttt{rl},
 The cointegration rank assumed by the authors is 3 and there are 5
 variables, giving 15 elements in the $\beta$ matrix.  $3 \times 3 = 9$
 restrictions are required for identification, and a just-identified
-system would have $15 - 9 = 6$ unrestricted parameters.  However, the
-three postulated long-run relationships feature only three
-unrestricted parameters, so the over-identification rank is 3.
+system would have $15 - 9 = 6$ free parameters.  However, the
+postulated long-run relationships feature only three free parameters,
+so the over-identification rank is 3.
 
 \begin{script}[htbp]
   \caption{Estimation of a money demand system with constraints on $\beta$}
@@ -1040,7 +1040,7 @@ previous one, and determine the likelihood at the new point.  If the
 likelihood is higher, we jump to the new point; otherwise, we jump
 with probability $P$ (and remain at the previous point with
 probability $1-P$).  As the iterations proceed, the system gradually
-``cools''---that is, the radius of the random perturbation is
+``cools'' --- that is, the radius of the random perturbation is
 reduced, as is the probability of making a jump when the likelihood
 fails to increase.
 
@@ -1087,18 +1087,28 @@ restrict
 end restrict
 \end{code}
 
+In this example --- from Johansen (1995) --- the cointegration rank is
+1 and there are 4 variables.  However, the model includes a restricted
+constant (the \verb|--rc| flag) so that $\beta$ has 5 elements.  The
+$\alpha$ matrix has 4 elements, one per equation.  So the matrix
+\texttt{BA} may be read as
+\[
+\left(\beta_1, \beta_2, \beta_3, \beta_4, \beta_5,
+ \alpha_1, \alpha_2, \alpha_3, \alpha_4 \right)
+\]
+
 The other option, which is compulsory when using LBFGS, is to specify
-the initial values in terms of the unrestricted parameters, $\phi$ and
-$\psi$.  Getting this right is somewhat less obvious.  As mentioned
-above, the implicit-form restriction $R\vec{\beta} = q$ has explicit
-form $\vec{\beta} = H\phi + h_0$, where $H = R_{\perp}$, the right
+the initial values in terms of the free parameters, $\phi$ and $\psi$.
+Getting this right is somewhat less obvious.  As mentioned above, the
+implicit-form restriction $R\vec{\beta} = q$ has explicit form
+$\vec{\beta} = H\phi + h_0$, where $H = R_{\perp}$, the right
 nullspace of $R$.  The vector $\phi$ is shorter, by the number of
 restrictions, than $\vec{\beta}$.  The savvy user will then see what
 needs to be done.  The other point to take into account is that if
 $\alpha$ is unrestricted, the \textit{effective} length of $\psi$ is
 0, since it is then optimal to compute $\alpha$ using Johansen's
-formula, conditional on $\beta$ (equation \ref{eq:Jalpha} above). An
-example follows:
+formula, conditional on $\beta$ (equation \ref{eq:Jalpha} above).  The
+example above could be rewritten as:
 \begin{code}
 open denmark.gdt
 vecm 2 1 LRM LRY IBO IDE --rc --seasonals
@@ -1111,6 +1121,11 @@ restrict --lbfgs
   b[3] + b[4] = 0
 end restrict
 \end{code}
+
+In this more economical formulation the initializer specifies only the
+two free parameters in $\phi$ (5 elements in $\beta$ minus 3
+restrictions).  There is no call to give values for $\psi$ since
+$\alpha$ is unrestricted.
 
 %%% Local Variables: 
 %%% mode: latex
