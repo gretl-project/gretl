@@ -1826,9 +1826,12 @@ int session_matrix_destroy_by_name (const char *name, PRN *prn)
 
     if (u == NULL) {
 	err = E_UNKVAR;
+    } else if (winstack_match_data(u)) {
+	errbox(_("Please close this object's window first"));
+	return 0;
     } else {
 	gui_obj *obj = get_gui_obj_by_data(u);
-    
+
 	if (obj != NULL) {
 	    session_delete_icon(obj);
 	}
