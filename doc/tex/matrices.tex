@@ -103,6 +103,16 @@ You can create new matrices, or replace existing matrices, by means of
 various transformations just as with scalars and data series.  The
 relevant mechanisms are discussed in the next several sections.
 
+The syntax 
+%
+\begin{code}
+matrix A = {}
+\end{code}
+%
+creates an empty matrix, namely a matrix with zero rows and zero
+columns. See section \ref{sec:emptymatrix} for a brief discussion on
+this object.
+
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
   characters, must start with a letter, and must be composed of
@@ -964,6 +974,62 @@ This function returns the OLS statistic obtained by regressing the $T
 \times n$ matrix on the $T \times k$ matrix, that is, a $k \times n$
 matrix holding $(X'X)^{-1} X'Y$. The Cholesky decomposition is
 used. The matrix u, if not null, is used to store the residuals.
+
+\section{Empty matrices}
+\label{sec:emptymatrix}
+
+The main purpose of the concept of an empty matrix is to enable the
+user to define a starting point for subsequent concatenation
+operations, so for instance, if \texttt{X} is an already defined
+matrix of any size, the syntax
+%
+\begin{code}
+  matrix A = {}
+  matrix B = A ~ X
+\end{code}
+%
+results in a matrix \texttt{B} identical to \texttt{X}.
+
+From an algebraic point of view, a way to think of an empty matrix so
+that the concept makes sense is in terms of vector spaces: if a matrix
+is an ordered set of vectors, then \verb|a={}| is the empty set. As a
+consequence, operations involving addition and multiplications don't
+have an obvious meaning (arguably, none at all), but operations
+involving the cardinality of this set (ie, the dimension of the space
+spanned by a) do.
+
+Legal operations on empty matrices are listed in table
+\ref{tab:empty-matrix-funcs}. Accordingly with the above
+interpretation, some matrix functions return an empty matrix in some
+cases: the functions \texttt{diag, vec, vech, unvech} when the
+arguments is an empty matrix, the functions \texttt{I, ones, zeros,
+  mnormal, muniform} when one of the arguments is 0 and the function
+\texttt{nullspace} when its argument has full column rank.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{rl}
+\textbf{Function} & \textbf{Return} \\
+\hline
+  \texttt{A', tranpose(A)} & \texttt{A} \\
+  \texttt{rows(A)} & 0 \\
+  \texttt{cols(A)} & 0 \\
+  \texttt{rank(A)} & 0 \\
+  \texttt{det(A)} & \texttt{NA} \\
+  \texttt{ldet(A)} & \texttt{NA} \\
+  \texttt{tr(A)} & \texttt{NA} \\
+  \texttt{onenorm(A)} & \texttt{NA} \\
+  \texttt{infnorm(A)} & \texttt{NA} \\
+  \texttt{rcond(A)} & \texttt{NA} \\
+\hline
+\end{tabular}
+
+where \texttt{A} is assumed to be an empty matrix.
+
+\caption{Valid functions on empty matrices}
+\label{tab:empty-matrix-funcs}
+\end{table}
+
 
 \section{Matrix accessors}
 \label{matrix-accessors}
