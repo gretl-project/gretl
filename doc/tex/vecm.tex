@@ -37,11 +37,12 @@ together'' in certain ways.  And it may be possible to interpret these
 ties, or \emph{cointegrating vectors}, as representing equilibrium
 conditions.
 
-For example, suppose we find that money stock, $M$, the price level,
-$P$, the nominal interest rate, $R$, and output, $Y$, are all I(1).
-According to standard theories of the demand for money, we would
-nonetheless expect there to be an equilibrium relationship between
-real balances, interest rate and output; for example
+For example, suppose we find some or all of the following variables
+are I(1): money stock, $M$, the price level, $P$, the nominal interest
+rate, $R$, and output, $Y$.  According to standard theories of the
+demand for money, we would nonetheless expect there to be an
+equilibrium relationship between real balances, interest rate and
+output; for example
 \[
 m - p = \gamma_0 + \gamma_1 y + \gamma_2 r \qquad \gamma_1 > 0,
 \gamma_2 < 0
@@ -456,15 +457,15 @@ under-identified: if all columns of $\beta$ are cointegration vectors,
 then any arbitrary linear combinations of those columns is a
 cointegration vector too.  To put it differently, if $\Pi = \alpha_0
 \beta_0'$ for specific matrices $\alpha_0$ and $\beta_0$, then $\Pi$
-also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any conformable
-non-singular matrix $\Sigma$.  In order to find a unique solution, it
-is therefore necessary to impose some restrictions on $\alpha$ and/or
-$\beta$. It can be shown that the minimum number of restrictions that
-is necessary to guarantee identification is $r^2$. Normalizing one
-coefficient per column to 1 (or -1, according to taste) is a trivial first
-step, which also helps in that the remaining coefficients can be
-interpreted as the parameters in the equilibrium relations, but this
-only suffices when $r=1$.
+also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any
+conformable non-singular matrix $\Sigma$.  In order to find a unique
+solution, it is therefore necessary to impose some restrictions on
+$\alpha$ and/or $\beta$. It can be shown that the minimum number of
+restrictions that is necessary to guarantee identification is $r^2$.
+Normalizing one coefficient per column to 1 (or -1, according to
+taste) is a trivial first step, which also helps in that the remaining
+coefficients can be interpreted as the parameters in the equilibrium
+relations, but this only suffices when $r=1$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
@@ -615,12 +616,14 @@ const       3.3625      0.68744
 \section{Over-identifying restrictions}
 \label{sec:johansen-overid}
 
-Although $r^2$ restrictions must be imposed on a VECM system to
-ensure identification of $\beta$, extra restrictions can be specified
-in order to check via a likelihood-ratio statistic whether they hold
-in the data. These extra restrictions are usually imposed to test
-constraints stemming from the economic theory underlying the
-equilibrium relationships.
+One purpose of imposing restrictions on a VECM system is simply to
+achieve identification.  If these restrictions are simply
+normalizations, they are not testable and should have no effect on the
+maximized likelihood.  In addition, however, one may wish to formulate
+constraints on $\beta$ and/or $\alpha$ that derive from the economic
+theory underlying the equilibrium relationships; substantive
+restrictions of this sort are then testable via a likelihood-ratio
+statistic.
 
 \app{Gretl} is capable of testing general linear restrictions of the
 form 
@@ -954,6 +957,47 @@ Output (variable, LR test, p-value):
 %$
 \end{script}
 
+\subsection{Identification and testability}
+\label{sec:ident-test}
+
+One point regarding VECM restrictions that can be confusing at first
+is that identification (does the restriction identify the system?) and
+testability (is the restriction testable?) are quite separate matters.
+Restrictions can be identifying but not testable --- and they can be
+testable but not identifying.
+
+This can be seen quite easily in relation to a rank-1 system.  The
+restriction $\beta_1 = 1$ is identifying --- it pins down the scale of
+$\beta$ --- but, being a pure scaling, it is not testable.  On the
+other hand, the restriction $\beta_1 + \beta_2 = 0$ is testable ---
+the system with this requirement imposed will almost certainly have a
+lower maximized likelihood --- but it is not identifying; it still
+leaves open the scale of $\beta$.  
+
+We said above that the number of restrictions must equal at least
+$r^2$, where $r$ is the cointegrating rank, for identification.  This
+is a necessary and not a sufficient condition.  In fact, when $r>1$ it
+can be quite tricky to assess whether a given set of restrictions is
+identifying.  \app{Gretl} uses the method suggested by Doornik (1995).
+That is, we construct the Jacobian matrix, which for restrictions of
+the sort (\ref{eq:vecbeta}) and (\ref{eq:vecalpha}) has the form
+%
+\[
+{\cal J}(\theta) = \left[ (I_p \otimes \beta) G : 
+                   (\alpha \otimes I_{p_1}) H \right]
+\]
+
+A sufficient condition for identification is that the rank of ${\cal
+  J}(\theta)$ equals the number of free parameters.  The rank of this
+matrix is evaluated by examination of its singular values at a
+randomly selected point in the parameter space.  For practical
+purposes we treat this condition as if it were both necessary and
+sufficient; that is, we disregard the special cases where
+identification could be achieved without this condition being
+met.\footnote{see Boswijk and Doornik (2004, pp.\ 447--8) for
+  discussion of this point.}
+
+
 \section{Numerical solution methods}
 \label{sec:vecm-opt}
 
@@ -1136,7 +1180,8 @@ $\alpha$ is unrestricted.
 \subsection{Scale removal}
 \label{sec:vecm-scale-removal}
 
-Consider the restriction discussed in the previous section, namely,
+Consider a simpler version of the restriction discussed in the
+previous section, namely,
 %
 \begin{code}
 restrict
@@ -1168,10 +1213,16 @@ unless you
 
 Scale removal is deemed infeasible if there are any cross-column
 restrictions on $\beta$, or any non-homogeneous restrictions involving
-more than one element of $\beta$.  In addition, experimentation has
-suggested to us that scale removal is inadvisable if the system is
-just identified with the normalization(s) included, so we do not do it
-in that case.
+more than one element of $\beta$.  
+
+In addition, experimentation has suggested to us that scale removal is
+inadvisable if the system is just identified with the normalization(s)
+included, so we do not do it in that case.  By ``just identified'' we
+mean that the system would not be identified if any of the
+restrictions were removed.  On that criterion the above example is not
+just identified, since the removal of the second restriction would not
+affect identification; and \app{gretl} would in fact perform scale
+removal in this case unless the user specified otherwise.
 
 %%% Local Variables: 
 %%% mode: latex
