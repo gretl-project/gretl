@@ -299,8 +299,10 @@ gretl_matrix *gretl_identity_matrix_new (int n)
     gretl_matrix *m;
     int i, k;
 
-    if (n <= 0) {
+    if (n < 0) {
 	return NULL;
+    } else if (n == 0) {
+	return gretl_null_matrix_new();
     }
 
     m = gretl_matrix_alloc(n, n);
@@ -331,8 +333,10 @@ gretl_matrix *gretl_zero_matrix_new (int r, int c)
     gretl_matrix *m;
     int i, n = r * c;
 
-    if (r <= 0 || c <= 0) {
+    if (r < 0 || c < 0) {
 	return NULL;
+    } else if (r == 0 || c == 0) {
+	return gretl_null_matrix_new();
     }
 
     m = gretl_matrix_alloc(r, c);
@@ -360,9 +364,11 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
     gretl_matrix *m;
     int i, n = r * c;
 
-    if (r <= 0 || c <= 0) {
+    if (r < 0 || c < 0) {
 	return NULL;
-    }    
+    } else if (r == 0 || c == 0) {
+	return gretl_null_matrix_new();
+    }
 
     m = gretl_matrix_alloc(r, c);
 
@@ -578,18 +584,16 @@ void gretl_matrix_zero (gretl_matrix *m)
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 {
     gretl_matrix *d = NULL;
-    int i, n;
+    int i, n = 0;
 
     *err = 0;
-    
+
     if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-	return NULL;
+	d = gretl_null_matrix_new();
+    } else {
+	n = (m->rows < m->cols)? m->rows : m->cols;
+	d = gretl_column_vector_alloc(n);
     }
-
-    n = (m->rows < m->cols)? m->rows : m->cols;
-
-    d = gretl_column_vector_alloc(n);
 
     if (d == NULL) {
 	*err = E_ALLOC;
@@ -619,7 +623,6 @@ double gretl_matrix_trace (const gretl_matrix *m, int *err)
     *err = 0;
     
     if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
 	return NADBL;
     }
     
@@ -688,6 +691,10 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
 
     if (dist != D_UNIFORM && dist != D_NORMAL) {
 	return NULL;
+    }
+
+    if (r == 0 || c == 0) {
+	return gretl_null_matrix_new();
     }
 
     m = gretl_matrix_alloc(r, c);
@@ -788,7 +795,7 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
     int i, j;
 
     if (gretl_is_null_matrix(m)) 
-	return 1;
+	return E_DATA;
 
     if (m->rows != m->cols) {
 	return E_NONCONF;
@@ -3468,7 +3475,8 @@ static double col_sum (const gretl_matrix *m, int j)
 /* return col vector containing row sums, or row vector containing
    column sums */
 
-static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol)
+static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
+				       int *err)
 {
 
     gretl_matrix *s = NULL;
@@ -3476,6 +3484,7 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol)
     double x;
 
     if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -3486,8 +3495,10 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol)
 	dim = m->rows;
 	s = gretl_matrix_alloc(dim, 1);
     }
-
-    if (s != NULL) {
+    
+    if (s == NULL) {
+	*err = E_ALLOC;
+    } else {
 	for (i=0; i<dim; i++) {
 	    x = (bycol)? col_sum(m, i) : row_sum(m, i);
 	    gretl_vector_set(s, i, x);
@@ -3505,9 +3516,9 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol)
  * the rows of @m, or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err)
 {
-    return gretl_matrix_sum(m, 0);
+    return gretl_matrix_sum(m, 0, err);
 }
 
 /**
@@ -3518,22 +3529,23 @@ gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m)
  * the columns of @m, or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err)
 {
-    return gretl_matrix_sum(m, 1);
+    return gretl_matrix_sum(m, 1, err);
 }
 
 /**
  * gretl_matrix_row_mean:
  * @m: source matrix.
+ * @err: location to receive error code.
  *
  * Returns: a column vector containing the means of
  * the rows of @m, or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m, int *err)
 {
-    gretl_matrix *s = gretl_matrix_sum(m, 0);
+    gretl_matrix *s = gretl_matrix_sum(m, 0, err);
 
     if (s != NULL) {
 	int i;
@@ -3549,14 +3561,15 @@ gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m)
 /**
  * gretl_matrix_column_mean:
  * @m: source matrix.
+ * @err: location to receive error code.
  *
  * Returns: a row vector containing the means of
  * the columns of @m, or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err)
 {
-    gretl_matrix *s = gretl_matrix_sum(m, 1);
+    gretl_matrix *s = gretl_matrix_sum(m, 1, err);
 
     if (s != NULL) {
 	int j;
@@ -3572,23 +3585,27 @@ gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m)
 /**
  * gretl_matrix_column_sd:
  * @m: source matrix.
+ * @err: location to receive error code.
  *
  * Returns: a row vector containing the standard deviations of
  * the columns of @m (without a degrees of freedom correction), 
  * or %NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
 {
     gretl_matrix *s;
     int i, j;
 
     if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
 	return NULL;
     }
 
     s = gretl_matrix_alloc(1, m->cols);
+
     if (s == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -3856,12 +3873,11 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
     double *work = NULL;
     double anorm, rcond = NADBL;
 
+    *err = 0;
+
     if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
 	return NADBL;
     }
-
-    *err = 0;
 
     n = m->rows;
     lda = m->rows;
@@ -5801,6 +5817,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     int i, j, k;
 
     if (gretl_is_null_matrix(M)) {
+	
 	*err = E_DATA;
 	return NULL;
     }
@@ -5821,24 +5838,21 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	}
 
 	if (k == 0) {
-#if 0
-	    strcpy(gretl_errmsg, _("Nullspace calculation failed"));
-#endif
-	    gretl_matrix_print(M, "Input to gretl_matrix_right_nullspace");
-	    *err = E_DATA;
+	    R = gretl_null_matrix_new();
 	} else {
 	    R = gretl_matrix_alloc(n, k);
-	    if (R == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		for (i=0; i<n; i++) {
-		    for (j=0; j<k; j++) {
-			x = gretl_matrix_get(V, j + n - k, i);
-			gretl_matrix_set(R, i, j, x);
-		    }
+	}
+
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else if (k > 0) {
+	    for (i=0; i<n; i++) {
+		for (j=0; j<k; j++) {
+		    x = gretl_matrix_get(V, j + n - k, i);
+		    gretl_matrix_set(R, i, j, x);
 		}
-		normalize_nullspace(R);
 	    }
+	    normalize_nullspace(R);
 	}
     }
 

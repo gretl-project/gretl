@@ -338,15 +338,15 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 				 int *errp);
 
-gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err);
 
 double gretl_matrix_row_i_mean (const gretl_matrix *m, int row);
 

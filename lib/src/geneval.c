@@ -36,6 +36,10 @@
 #define is_aux_node(t) (t != NULL && (t->flags & AUX_NODE))
 #define is_tmp_node(t) (t != NULL && (t->flags & TMP_NODE))
 
+#define nullmat_ok(f) (f == ROWS || f == COLS || f == DET || \
+		       f == LDET || f == DIAG || f == TRANSP || \
+		       f == TVEC || f == VECH || f == UNVECH)
+
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
@@ -1301,13 +1305,6 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 
-	if (gretl_is_null_matrix(m) && f != ROWS && f != COLS) {
-	    ret->v.xval = NADBL;
-	    goto finalize;
-	}
-
-	gretl_error_clear();
-
 	switch (f) {
 	case ROWS:
 	    ret->v.xval = m->rows;
@@ -1341,8 +1338,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	}
 
-    finalize:
-	if (xna(ret->v.xval)) {
+	if (p->err) {
 	    matrix_error(p);
 	}    
     }
@@ -1379,7 +1375,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	int a, b, c;
 
-	if (gretl_is_null_matrix(m)) {
+	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
 	    p->err = E_DATA;
 	    goto finalize;
 	}
@@ -1388,19 +1384,19 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case SUMC:
-	    ret->v.m = gretl_matrix_column_sum(m);
+	    ret->v.m = gretl_matrix_column_sum(m, &p->err);
 	    break;
 	case SUMR:
-	    ret->v.m = gretl_matrix_row_sum(m);
+	    ret->v.m = gretl_matrix_row_sum(m, &p->err);
 	    break;
 	case MEANC:
-	    ret->v.m = gretl_matrix_column_mean(m);
+	    ret->v.m = gretl_matrix_column_mean(m, &p->err);
 	    break;
 	case MEANR:
-	    ret->v.m = gretl_matrix_row_mean(m);
+	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
 	    break;
 	case SD:
-	    ret->v.m = gretl_matrix_column_sd(m);
+	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    break;
 	case MCOV:
 	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
@@ -1409,16 +1405,16 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
 	    break;
 	case CDEMEAN:
-	    ret->v.m = user_matrix_column_demean(m);
+	    ret->v.m = user_matrix_column_demean(m, &p->err);
 	    break;
 	case CHOL:
-	    ret->v.m = user_matrix_cholesky_decomp(m);
+	    ret->v.m = user_matrix_cholesky_decomp(m, &p->err);
 	    break;
 	case INV:
-	    ret->v.m = user_matrix_get_inverse(m);
+	    ret->v.m = user_matrix_get_inverse(m, &p->err);
 	    break;
 	case GINV:
-	    ret->v.m = user_matrix_moore_penrose(m);
+	    ret->v.m = user_matrix_moore_penrose(m, &p->err);
 	    break;
 	case DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
@@ -1427,7 +1423,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	    ret->v.m = gretl_matrix_copy_transpose(m);
 	    break;
 	case TVEC:
-	    ret->v.m = user_matrix_vec(m);
+	    ret->v.m = user_matrix_vec(m, &p->err);
 	    break;
 	case VECH:
 	    ret->v.m = user_matrix_vech(m, &p->err);
@@ -1463,6 +1459,7 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	case IMAXR:  
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
+	    break;
 	default:
 	    break;
 	}
@@ -1542,9 +1539,19 @@ static int ok_matrix_dim (double xr, double xc, int f)
 
     xm = xr * xc;
 
-    return (xr > 0 && xr <= imax && 
-	    xc > 0 && xc <= imax &&
-	    xm > 0 && xm <= imax);
+    if (f == IMAT || f == ZEROS || f == ONES || f == MUNIF || \
+	f == MNORM) {
+	/* zero is OK for matrix creation functions, which then 
+	   return an empty matrix 
+	*/
+	return (xr >= 0 && xr <= imax && 
+		xc >= 0 && xc <= imax &&
+		xm >= 0 && xm <= imax);
+    } else {
+	return (xr > 0 && xr <= imax && 
+		xc > 0 && xc <= imax &&
+		xm > 0 && xm <= imax);
+    }
 }
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)

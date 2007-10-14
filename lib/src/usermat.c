@@ -969,7 +969,7 @@ real_user_matrix_get_determinant (const gretl_matrix *m, int log, int *err)
 {
     double d = NADBL;
 
-    if (m != NULL) {
+    if (!gretl_is_null_matrix(m)) {
 	gretl_matrix *tmp = gretl_matrix_copy(m);
 
 	if (tmp != NULL) {
@@ -996,41 +996,40 @@ double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
 }
 
 static gretl_matrix *
-real_user_matrix_get_inverse (const gretl_matrix *m, int moore)
+real_user_matrix_get_inverse (const gretl_matrix *m, int moore, int *err)
 {
     gretl_matrix *R = NULL;
-    int err = 0;
 
-    if (m != NULL) {
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+    } else {
 	R = gretl_matrix_copy(m);
-	if (R != NULL) {
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else {
 	    if (moore) {
-		err = gretl_matrix_moore_penrose(R);
+		*err = gretl_matrix_moore_penrose(R);
 	    } else {
-		err = gretl_invert_matrix(R);
+		*err = gretl_invert_matrix(R);
 	    } 
-	    if (err) {
+	    if (*err) {
 		gretl_matrix_free(R);
 		R = NULL;
 	    }
 	} 
-    }
-
-    if (R == NULL) {
-   	strcpy(gretl_errmsg, _("Matrix inversion failed"));
-    }
+    } 
    
     return R;
 }
 
-gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
+gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_inverse(m, 0);
+    return real_user_matrix_get_inverse(m, 0, err);
 }
 
-gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m)
+gretl_matrix *user_matrix_moore_penrose (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_inverse(m, 1);
+    return real_user_matrix_get_inverse(m, 1, err);
 }
 
 static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
@@ -1122,34 +1121,40 @@ int matrix_XTX_in_place (gretl_matrix *m)
     return err;
 }
 
-gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m)
+gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m,
+					   int *err)
 {
     gretl_matrix *R = NULL;
 
-    if (m != NULL) {
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+    } else {
 	R = gretl_matrix_copy(m);
-	if (R != NULL) {
-	    if (gretl_matrix_cholesky_decomp(R)) {
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_matrix_cholesky_decomp(R);
+	    if (*err) {
 		gretl_matrix_free(R);
 		R = NULL;
 	    }
 	} 
     }
 
-    if (R == NULL) {
-	strcpy(gretl_errmsg, _("Matrix decomposition failed"));
-    }
-
     return R;
 }
 
-gretl_matrix *user_matrix_column_demean (const gretl_matrix *m)
+gretl_matrix *user_matrix_column_demean (const gretl_matrix *m, int *err)
 {
     gretl_matrix *R = NULL;
 
-    if (m != NULL) {
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+    } else {
 	R = gretl_matrix_copy(m);
-	if (R != NULL) {
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else {
 	    gretl_matrix_demean_by_column(R);
 	} 
     }
@@ -1157,15 +1162,21 @@ gretl_matrix *user_matrix_column_demean (const gretl_matrix *m)
     return R;
 }
 
-gretl_matrix *user_matrix_vec (const gretl_matrix *m)
+gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err)
 {
     gretl_matrix *R = NULL;
 
-    if (m != NULL) {
+    if (gretl_is_null_matrix(m)) {
+	R = gretl_null_matrix_new();
+    } else {
 	R = gretl_matrix_alloc(m->rows * m->cols, 1);
 	if (R != NULL) {
 	    gretl_matrix_vectorize(R, m);
 	} 
+    }
+
+    if (R == NULL) {
+	*err = E_ALLOC;
     }
 
     return R;
@@ -1175,18 +1186,22 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
 {
     gretl_matrix *R = NULL;
 
-    if (m != NULL) {
-	if (m->rows != m->cols) {
-	    *err = E_NONCONF;
-	} else {
-	    int n = m->rows;
-	    int k = n * (n + 1) / 2;
+    if (gretl_is_null_matrix(m)) {
+	R = gretl_null_matrix_new();
+    } else if (m->rows != m->cols) {
+	*err = E_NONCONF;
+    } else {
+	int n = m->rows;
+	int k = n * (n + 1) / 2;
 
-	    R = gretl_matrix_alloc(k, 1);
-	    if (R != NULL) {
-		*err = gretl_matrix_vectorize_h(R, m);
-	    }
-	} 
+	R = gretl_matrix_alloc(k, 1);
+	if (R != NULL) {
+	    *err = gretl_matrix_vectorize_h(R, m);
+	}
+    } 
+
+    if (R == NULL && !*err) {
+	*err = E_ALLOC;
     }
 
     return R;
@@ -1195,14 +1210,22 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
 {
     gretl_matrix *R = NULL;
-    int n;
 
-    if (m != NULL && m->cols == 1) {
-	n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+    if (gretl_is_null_matrix(m)) {
+	R = gretl_null_matrix_new();
+    } else if (m->cols != 1) {
+	*err = E_NONCONF;
+    } else {
+	int n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+
 	R = gretl_matrix_alloc(n, n);
 	if (R != NULL) {
 	    *err = gretl_matrix_unvectorize_h(R, m);
 	} 
+    }
+
+    if (R == NULL && !*err) {
+	*err = E_ALLOC;
     }
 
     return R;
