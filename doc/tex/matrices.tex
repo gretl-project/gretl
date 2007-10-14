@@ -1,13 +1,6 @@
 \chapter{Matrix manipulation}
 \label{chap:matrices}
 
-\section{Introduction}
-\label{matrix-intro}
-
-Since version 1.5.1, gretl has offered the facility of creating and
-manipulating user-defined matrices.  There are a few changes in this
-respect in version 1.6.1.
-
 \section{Creating matrices}
 \label{matrix-create}
 
@@ -109,9 +102,9 @@ The syntax
 matrix A = {}
 \end{code}
 %
-creates an empty matrix, namely a matrix with zero rows and zero
-columns. See section \ref{sec:emptymatrix} for a brief discussion on
-this object.
+creates an empty matrix --- a matrix with zero rows and zero columns.
+See section \ref{sec:emptymatrix} for a discussion of this
+object.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
@@ -980,37 +973,38 @@ used. The matrix u, if not null, is used to store the residuals.
 
 The main purpose of the concept of an empty matrix is to enable the
 user to define a starting point for subsequent concatenation
-operations, so for instance, if \texttt{X} is an already defined
-matrix of any size, the syntax
+operations.  For instance, if \texttt{X} is an already defined
+matrix of any size, the commands
 %
 \begin{code}
   matrix A = {}
   matrix B = A ~ X
 \end{code}
 %
-results in a matrix \texttt{B} identical to \texttt{X}.
+result in a matrix \texttt{B} identical to \texttt{X}.
 
-From an algebraic point of view, a way to think of an empty matrix so
-that the concept makes sense is in terms of vector spaces: if a matrix
-is an ordered set of vectors, then \verb|a={}| is the empty set. As a
-consequence, operations involving addition and multiplications don't
-have an obvious meaning (arguably, none at all), but operations
-involving the cardinality of this set (ie, the dimension of the space
-spanned by a) do.
+From an algebraic point of view, one can make sense of the idea of an
+empty matrix in terms of vector spaces: if a matrix is an ordered set
+of vectors, then \verb|A={}| is the empty set.  As a consequence,
+operations involving addition and multiplications don't have any clear
+meaning (arguably, they have none at all), but operations involving
+the cardinality of this set (that is, the dimension of the space
+spanned by \texttt{A}) are meaningful.
 
-Legal operations on empty matrices are listed in table
-\ref{tab:empty-matrix-funcs}. Accordingly with the above
-interpretation, some matrix functions return an empty matrix in some
-cases: the functions \texttt{diag, vec, vech, unvech} when the
-arguments is an empty matrix, the functions \texttt{I, ones, zeros,
-  mnormal, muniform} when one of the arguments is 0 and the function
-\texttt{nullspace} when its argument has full column rank.
+Legal operations on empty matrices are listed in Table
+\ref{tab:empty-matrix-funcs}.  (All other matrix operations generate
+an error when an empty matrix is given as an argument.)  In line with
+the above interpretation, some matrix functions return an empty matrix
+under certain conditions: the functions \texttt{diag, vec, vech,
+  unvech} when the arguments is an empty matrix; the functions
+\texttt{I, ones, zeros, mnormal, muniform} when one or more of the
+arguments is 0; and the function \texttt{nullspace} when its argument
+has full column rank.
 
 \begin{table}[htbp]
 \centering
-\begin{tabular}{rl}
-\textbf{Function} & \textbf{Return} \\
-\hline
+\begin{tabular}{lc}
+\textit{Function} & \textit{Return value} \\ [4pt]
   \texttt{A', tranpose(A)} & \texttt{A} \\
   \texttt{rows(A)} & 0 \\
   \texttt{cols(A)} & 0 \\
@@ -1021,12 +1015,8 @@ arguments is an empty matrix, the functions \texttt{I, ones, zeros,
   \texttt{onenorm(A)} & \texttt{NA} \\
   \texttt{infnorm(A)} & \texttt{NA} \\
   \texttt{rcond(A)} & \texttt{NA} \\
-\hline
 \end{tabular}
-
-where \texttt{A} is assumed to be an empty matrix.
-
-\caption{Valid functions on empty matrices}
+\caption{Valid functions on an empty matrix, \texttt{A}}
 \label{tab:empty-matrix-funcs}
 \end{table}
 
@@ -1036,15 +1026,17 @@ where \texttt{A} is assumed to be an empty matrix.
 
 In addition to the matrix functions discussed above,
 various ``accessor'' strings allow you to create copies of internal
-matrices associated with models previously estimated:
+matrices associated with models previously estimated.
+These are set out in Table~\ref{tab:matrix-accessors}.
 
-\begin{center}
+\begin{table}[htbp]
+\centering
 \begin{tabular}{ll}
 \texttt{\$coeff}  & vector of estimated coefficients \\
 \texttt{\$stderr} & vector of estimated standard errors \\
 \texttt{\$uhat}   & vector of residuals \\
 \texttt{\$yhat}   & vector of fitted values \\
-\texttt{\$vcv}    & covariance matrix (see below) \\
+\texttt{\$vcv}    & covariance matrix (see text) \\
 \texttt{\$rho}    & autoregressive coefficients for error process \\
 \texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
 \texttt{\$jbeta}  & matrix $\beta$ (cointegration vectors) from
@@ -1052,7 +1044,9 @@ Johansen's procedure \\
 \texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
 $\beta$ from Johansen's procedure
 \end{tabular}
-\end{center}
+\caption{Matrix accessors for model data}
+\label{tab:matrix-accessors}
+\end{table}
 
 If these accessors are given without any prefix, they retrieve results
 from the last model estimated, if any.  Alternatively, they may be

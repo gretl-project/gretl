@@ -2381,7 +2381,7 @@ static NODE *vector_values (NODE *l, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	const double *x;
+	const double *x = NULL;
 	int n = 0;
 
 	if (l->t == VEC) {

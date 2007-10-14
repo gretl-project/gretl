@@ -954,7 +954,7 @@ Output (variable, LR test, p-value):
 %$
 \end{script}
 
-\subsection{Numerical solution methods}
+\section{Numerical solution methods}
 \label{sec:vecm-opt}
 
 In general, the ML estimator for the restricted VECM problem has no
@@ -966,6 +966,9 @@ methods.\footnote{The exception is restrictions that are homogeneous,
   solve directly for the ML estimator, without any need for iterative
   methods.}  In some cases convergence may be difficult, and
 \app{gretl} provides several choices to solve the problem.
+
+\subsection{Switching and LBFGS}
+\label{sec:vecm-algorithms}
 
 Two maximization methods are available in \app{gretl}. The default is
 the switching algorithm set out in Boswijk and Doornik (2004).  The
@@ -999,8 +1002,8 @@ The solution (or lack thereof) may be sensitive to the initial value
 selected for $\theta$.  By default, \app{gretl} selects a starting
 point using a deterministic method based on Boswijk (1995), but two
 further options are available: the initialization may be adjusted
-using simulated annealing (with the \verb+--jitter+ flag), or the user
-may supply an explicit initial value for $\theta$.
+using simulated annealing, or the user may supply an explicit initial
+value for $\theta$.
 
 The default initialization method is:
 %
@@ -1030,8 +1033,12 @@ the Moore--Penrose inverse of $A$.  Otherwise
   $\vec{\alpha'_0} = G\psi_0$.
 \end{enumerate}
 
-However, as mentioned above, \app{gretl} offers the option of adjusting the
-initialization using simulated annealing.  
+\subsection{Alternative initialization methods}
+\label{sec:vecm-alt-init}
+
+As mentioned above, \app{gretl} offers the option of adjusting the
+initialization using \textbf{simulated annealing}.  This is invoked by
+adding the \verb|--jitter| option to the \texttt{restrict} command.
 
 The basic idea is this: we start at a certain point in the parameter
 space, and for each of $n$ iterations (currently $n=4096$) we randomly
@@ -1060,10 +1067,9 @@ on the other hand, if we fail to get an improvement we nonetheless
 allow the annealing to randomize the starting point.  Experiments
 indicated that the latter effect can be helpful.
 
-If the default deterministic initialization fails, the alternative to
-relying on randomization is for the user to specify initial values.
-This is done by passing a predefined vector to the \texttt{set}
-command with parameter \texttt{initvals}, as in
+Besides annealing, a further alternative is \textbf{manual
+  initialization}.  This is done by passing a predefined vector to the
+\texttt{set} command with parameter \texttt{initvals}, as in
 %
 \begin{verbatim}
 set initvals myvec
@@ -1126,6 +1132,46 @@ In this more economical formulation the initializer specifies only the
 two free parameters in $\phi$ (5 elements in $\beta$ minus 3
 restrictions).  There is no call to give values for $\psi$ since
 $\alpha$ is unrestricted.
+
+\subsection{Scale removal}
+\label{sec:vecm-scale-removal}
+
+Consider the restriction discussed in the previous section, namely,
+%
+\begin{code}
+restrict
+  b[1] = 1
+  b[1] + b[2] = 0
+end restrict
+\end{code}
+
+This restriction comprises a substantive, testable requirement ---
+that $\beta_1$ and $\beta_2$ sum to zero --- and a normalization or
+scaling, $\beta_1 = 1$.  The question arises, might it be easier and
+more reliable to maximize the likelihood without imposing $\beta_1 =
+1$?\footnote{As a numerical matter, that is.  In principle this should
+  make no difference.}  If so, we could record this normalization,
+remove it for the purpose of maximizing the likelihood, then reimpose
+it by scaling the result.
+
+Unfortunately it is not possible to say in advance whether ``scale
+removal'' of this sort will give better results, for any particular
+estimation problem.  However, this does seem to be the case more often
+than not.  Gretl therefore performs scale removal where feasible,
+unless you
+\begin{itemize}
+\item explicitly forbid this, by giving the \verb|--no-scaling| option
+  flag to the restrict command; or
+\item provide a specific vector of initial values; or
+\item select the LBFGS algorithm for maximization.
+\end{itemize}
+
+Scale removal is deemed infeasible if there are any cross-column
+restrictions on $\beta$, or any non-homogeneous restrictions involving
+more than one element of $\beta$.  In addition, experimentation has
+suggested to us that scale removal is inadvisable if the system is
+just identified with the normalization(s) included, so we do not do it
+in that case.
 
 %%% Local Variables: 
 %%% mode: latex
