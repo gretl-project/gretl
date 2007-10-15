@@ -120,6 +120,10 @@
   <xsl:if test="(@optional)"><literal>] </literal></xsl:if>
 </xsl:template>
 
+<xsl:template match="argpunct">
+  <literal><xsl:apply-templates/></literal>
+</xsl:template>
+
 <xsl:template match="altform">
   <row>
     <xsl:choose>

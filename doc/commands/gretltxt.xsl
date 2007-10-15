@@ -141,6 +141,10 @@
   <xsl:if test="(@optional)">] </xsl:if> 
 </xsl:template>
 
+<xsl:template match="argpunct">
+   <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="options">
   <xsl:call-template name="nl"/>
   <xsl:choose>
@@ -153,6 +157,9 @@
       <xsl:call-template name="gettext">
         <xsl:with-param name="key" select="'opt'"/>
       </xsl:call-template>
+      <xsl:if test="$hlp='gui'">
+       <xsl:text> </xsl:text>
+      </xsl:if>
     </xsl:otherwise> 
   </xsl:choose>
   <xsl:apply-templates/>

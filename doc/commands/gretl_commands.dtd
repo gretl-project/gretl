@@ -42,7 +42,7 @@
 <!ELEMENT usage (altforms?, arguments?, options?, examples?)>
 
 <!ELEMENT arguments    (argument | argblock)+>
-<!ELEMENT argblock     (argument)+>
+<!ELEMENT argblock     (argument | argpunct)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example*, demos?)>
 <!ELEMENT demos        (demo)+>
@@ -50,6 +50,7 @@
 <!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
+<!ELEMENT argpunct (#PCDATA)>
 <!ELEMENT argument (#PCDATA)>
 <!ATTLIST argument 
     separated (true | false) "false"

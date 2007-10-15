@@ -70,8 +70,6 @@ static GtkWidget *find_entry;
 static char *needle;
 
 GtkItemFactoryEntry help_menu_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Close"), NULL, close_help, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
     { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },

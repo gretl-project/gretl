@@ -6210,6 +6210,7 @@
     <usage>
       <arguments>
         <argument>format</argument>
+	<argpunct>, </argpunct>
         <argument>args</argument>
       </arguments>
     </usage>
@@ -7683,6 +7684,7 @@
       <arguments>
 	<argument>stringvar</argument>
         <argument>format</argument>
+	<argpunct>, </argpunct>
         <argument>args</argument>
       </arguments>
     </usage>
@@ -7693,6 +7695,17 @@
 	command, printing the given arguments under the control of the
 	format string, except that the result is written into the named
 	string, <repl>stringvar</repl>.
+      </para>
+      <para>
+	To print the string variable, give its name preceded by
+	<lit>@</lit>, as in
+      </para>
+      <code>
+	sprintf myvar "%g", x
+	print "myvar has value @myvar"
+      </code>
+      <para>
+	See also <cmdref targ="string"/>.
       </para>
     </description>
 
@@ -7835,6 +7848,43 @@
     <gui-access>
       <menu-path>/File/Save data; /File/Export data</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="string" section="Utilities" context="cli">
+    
+    <usage>
+      <arguments>
+        <argument>stringvar</argument>
+	<argpunct>= </argpunct>
+	<argument>expression</argument>
+      </arguments>
+      <examples>
+	<example>string mystr = "P-value: "</example>
+	<example>string homedir = getenv("HOME")</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Saves a string named <repl>stringvar</repl>.  The
+	<repl>expression</repl> can take the following forms: a literal
+	string, enclosed in double quotes; a series of such strings,
+	separated by spaces (these strings will be concatenated); or
+	a call to the <lit>getenv</lit> function to retrieve a string
+	from the program's environment.
+      </para>
+      <para>
+	After defining a string variable in this way, the variable can be
+	printed using its name preceded by <lit>@</lit>, as in
+      </para>
+      <code>
+	print "mystr = @mystr"
+      </code>
+      <para>
+	See also <cmdref targ="printf"/>,  <cmdref targ="sprintf"/>.
+      </para>
+    </description>
 
   </command>
 

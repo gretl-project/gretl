@@ -165,6 +165,12 @@
   <xsl:if test="(@optional)">] </xsl:if> 
 </xsl:template>
 
+<xsl:template match="argpunct">
+  <xsl:text>&lt;@lit="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="options">
   <xsl:call-template name="nl"/>
   <xsl:choose>
