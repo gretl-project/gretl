@@ -457,15 +457,15 @@ under-identified: if all columns of $\beta$ are cointegration vectors,
 then any arbitrary linear combinations of those columns is a
 cointegration vector too.  To put it differently, if $\Pi = \alpha_0
 \beta_0'$ for specific matrices $\alpha_0$ and $\beta_0$, then $\Pi$
-also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any
-conformable non-singular matrix $\Sigma$.  In order to find a unique
-solution, it is therefore necessary to impose some restrictions on
-$\alpha$ and/or $\beta$. It can be shown that the minimum number of
-restrictions that is necessary to guarantee identification is $r^2$.
-Normalizing one coefficient per column to 1 (or -1, according to
-taste) is a trivial first step, which also helps in that the remaining
-coefficients can be interpreted as the parameters in the equilibrium
-relations, but this only suffices when $r=1$.
+also equals $(\alpha_0 Q)(Q^{-1} \beta_0')$ for any conformable
+non-singular matrix $Q$.  In order to find a unique solution, it
+is therefore necessary to impose some restrictions on $\alpha$ and/or
+$\beta$. It can be shown that the minimum number of restrictions that
+is necessary to guarantee identification is $r^2$.  Normalizing one
+coefficient per column to 1 (or -1, according to taste) is a trivial
+first step, which also helps in that the remaining coefficients can be
+interpreted as the parameters in the equilibrium relations, but this
+only suffices when $r=1$.
 
 The method that \app{gretl} uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
@@ -978,9 +978,12 @@ We said above that the number of restrictions must equal at least
 $r^2$, where $r$ is the cointegrating rank, for identification.  This
 is a necessary and not a sufficient condition.  In fact, when $r>1$ it
 can be quite tricky to assess whether a given set of restrictions is
-identifying.  \app{Gretl} uses the method suggested by Doornik (1995).
-That is, we construct the Jacobian matrix, which for restrictions of
-the sort (\ref{eq:vecbeta}) and (\ref{eq:vecalpha}) has the form
+identifying.  \app{Gretl} uses the method suggested by Doornik (1995),
+where identification is assessed via the rank of the information matrix.
+
+It can be shown that for restrictions of the sort (\ref{eq:vecbeta})
+and (\ref{eq:vecalpha}) the information matrix has the same rank as the
+Jacobian matrix
 %
 \[
 {\cal J}(\theta) = \left[ (I_p \otimes \beta) G : 
@@ -994,7 +997,7 @@ randomly selected point in the parameter space.  For practical
 purposes we treat this condition as if it were both necessary and
 sufficient; that is, we disregard the special cases where
 identification could be achieved without this condition being
-met.\footnote{see Boswijk and Doornik (2004, pp.\ 447--8) for
+met.\footnote{See Boswijk and Doornik (2004, pp.\ 447--8) for
   discussion of this point.}
 
 
