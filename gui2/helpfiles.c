@@ -58,7 +58,6 @@ static help_head **en_cli_heads, **en_gui_heads;
 static windata_t *helpwin (int cli, int en);
 static void real_do_help (int hcode, int pos, int cli, int en);
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
-static void close_help (gpointer p, guint u, GtkWidget *w);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -140,13 +139,6 @@ const char *intl_topics[] = {
     N_("Transformations"),
     N_("Utilities")
 };
-
-static void close_help (gpointer p, guint u, GtkWidget *w)
-{
-    windata_t *vwin = p;
-
-    gtk_widget_destroy(vwin->dialog);
-}
 
 static int extra_command_number (const char *s)
 {

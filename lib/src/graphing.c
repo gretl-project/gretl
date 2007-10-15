@@ -1663,12 +1663,13 @@ static void graph_list_adjust_sample (int *list,
     int t1min = ginfo->t1;
     int t2max = ginfo->t2;
     int t_ok;
-    int i, t;
+    int i, t, vi;
 
     for (t=t1min; t<=t2max; t++) {
 	t_ok = 0;
 	for (i=1; i<=list[0]; i++) {
-	    if (!na(Z[list[i]][t])) {
+	    vi = list[i];
+	    if (vi > 0 && !na(Z[vi][t])) {
 		t_ok = 1;
 		break;
 	    }
@@ -1682,7 +1683,8 @@ static void graph_list_adjust_sample (int *list,
     for (t=t2max; t>t1min; t--) {
 	t_ok = 0;
 	for (i=1; i<=list[0]; i++) {
-	    if (!na(Z[list[i]][t])) {
+	    vi = list[i];
+	    if (vi > 0 && !na(Z[vi][t])) {
 		t_ok = 1;
 		break;
 	    }
@@ -1697,8 +1699,9 @@ static void graph_list_adjust_sample (int *list,
 	for (i=1; i<=list[0]; i++) {
 	    int all_missing = 1;
 
+	    vi = list[i];
 	    for (t=t1min; t<=t2max; t++) {
-		if (!na(Z[list[i]][t])) {
+		if (!na(Z[vi][t])) {
 		    all_missing = 0;
 		    break;
 		}
