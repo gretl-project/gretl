@@ -1,13 +1,6 @@
 \chapter{Operazioni con le matrici}
 \label{chap:matrices}
 
-\section{Introduzione}
-\label{matrix-intro}
-
-A partire dalla versione 1.5.1, gretl offre la possibilità di creare e
-manipolare matrici definite dall'utente. La versione 1.6.1 contiene alcune
-modifiche a questa funzionalità.
-
 \section{Creazione di matrici}
 \label{matrix-create}
 
@@ -104,6 +97,15 @@ matrix A = {const}~{dataset}
 È possibile creare nuove matrici, o sostituire matrici esistenti, usando varie
 trasformazioni, come per gli scalari e le serie di dati. I prossimi paragrafi
 spiegano nel dettaglio questi meccanismi.
+
+La sintassi
+%
+\begin{code}
+matrix A = {}
+\end{code}
+%
+crea una matrice vuota, ossia una matrice con zero righe e zero colonne.
+Si veda la sezione \ref{sec:emptymatrix} per una discussione di questo oggetto.
 
 \tip{I nomi delle matrici devono soddisfare gli stessi requisiti dei nomi delle
 variabili in gretl: il nome non può essere più lungo di 15 caratteri, deve
@@ -946,27 +948,82 @@ La funzione produce la statistica OLS ottenuta regredendo la matrice $T
 che contiene $(X'X)^{-1} X'Y$. Viene usata la decomposizione di Cholesky.
 La matrice u, se non nulla, è usata per salvare i residui.
 
+\section{Matrici vuote}
+\label{sec:emptymatrix}
+
+Lo scopo principale del concetto di matrice vuota è quello di permettere
+all'utente di definire un punto di partenza per successive operazioni di
+concatenazione. Ad esempio, se \texttt{X} è una matrice già definita di
+dimensione qualsiasi, i comandi
+%
+\begin{code}
+  matrix A = {}
+  matrix B = A ~ X
+\end{code}
+%
+producono una matrice \texttt{B} identica a \texttt{X}.
+
+Da un punto di vista algebrico, l'idea di una matrice vuota può essere
+giustificata facendo riferimento agli spazi vettoriali: se una matrice è un
+insieme ordinato di vettori, \verb|A={}| rappresenta l'insieme vuoto. Di
+conseguenza, le operazioni come l'addizione e la moltiplicazione non hanno un
+senso chiaro (si potrebbe sostenere che non ne hanno affatto), ma le operazioni
+che riguardano la cardinalità di questo insieme (ossia la dimensione dello
+spazio generato da \texttt{A}) hanno senso.
+
+La Tabella \ref{tab:empty-matrix-funcs} mostra le operazioni consentite con le
+matrici vuote; tutte le altre operazioni matriciali generano un errore se viene
+fornita una matrice vuota tra gli argomenti. In linea con l'interpretazione
+vista sopra, alcune funzioni matriciali producono una matrice vuota sotto certe
+condizioni: le funzioni \texttt{diag, vec, vech, unvech} quando l'argomento
+è una matrice vuota; le funzioni \texttt{I, ones, zeros, mnormal, muniform}
+quando uno o più argomenti sono pari a 0; la funzione \texttt{nullspace}
+quando il suo argomento ha rango pieno (per colonne).
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lc}
+\textit{Funzione} & \textit{Valore prodotto} \\ [4pt]
+  \texttt{A', transp(A)} & \texttt{A} \\
+  \texttt{rows(A)} & 0 \\
+  \texttt{cols(A)} & 0 \\
+  \texttt{rank(A)} & 0 \\
+  \texttt{det(A)} & \texttt{NA} \\
+  \texttt{ldet(A)} & \texttt{NA} \\
+  \texttt{tr(A)} & \texttt{NA} \\
+  \texttt{onenorm(A)} & \texttt{NA} \\
+  \texttt{infnorm(A)} & \texttt{NA} \\
+  \texttt{rcond(A)} & \texttt{NA} \\
+\end{tabular}
+\caption{Funzioni consentite su una matrice vuota \texttt{A}}
+\label{tab:empty-matrix-funcs}
+\end{table}
+
 \section{Matrici accessorie}
 \label{matrix-accessors}
 
 Oltre alle funzioni matriciali viste sopra, esistono vari ``accessori'' che
 permettono di salvare una copia di alcune matrici che vengono generate
-automaticamente dal programma quando viene stimato un modello:
+automaticamente dal programma quando viene stimato un modello.
+Sono presentati nella Tabella~\ref{tab:matrix-accessors}.
 
-\begin{center}
+\begin{table}[htbp]
+\centering
 \begin{tabular}{ll}
 \texttt{\$coeff}  & vettore dei coefficienti stimati \\
 \texttt{\$stderr} & vettore degli errori standard stimati \\
 \texttt{\$uhat}   & vettore dei residui \\
 \texttt{\$yhat}   & vettore dei valori stimati \\
-\texttt{\$vcv}    & matrice di covarianza (si veda oltre) \\
+\texttt{\$vcv}    & matrice di covarianza (si veda il testo) \\
 \texttt{\$rho}    & coefficienti di autoregressione per il processo di errore \\
 \texttt{\$jalpha} & matrice $\alpha$ (loading) della procedura di Johansen \\
 \texttt{\$jbeta}  & matrice $\beta$ (vettori di cointegrazione) della procedura di Johansen \\
 \texttt{\$jvbeta} & matrice di covarianza per gli elementi non vincolati di $\beta$ della procedura di Johansen
 
 \end{tabular}
-\end{center}
+\caption{Matrici accessorie per i dati provenienti da modelli}
+\label{tab:matrix-accessors}
+\end{table}
 
 Quando questi accessori sono utilizzati senza farli precedere da alcun prefisso,
 producono i risultati dell'ultimo modello stimato, se esiste. Altrimenti,
