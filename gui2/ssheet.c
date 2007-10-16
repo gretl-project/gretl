@@ -1609,19 +1609,38 @@ static void manufacture_keystroke (GtkWidget *widget, guint uval)
     }
 }
 
+static int numeric_key (guint *kval, Spreadsheet *sheet)
+{
+    if (*kval >= GDK_KP_0 && *kval <= GDK_KP_9) {
+	*kval = GDK_0 + (*kval - GDK_KP_0);
+    }
+
+    if (*kval >= GDK_0 && *kval <= GDK_9) {
+	return 1;
+    } else if (*kval == GDK_minus || *kval == GDK_period) {
+	return 1;
+    } else if ((sheet->flags & SHEET_USE_COMMA) && *kval == GDK_comma) {
+	return 1;
+    } 
+
+    return 0;
+}
+
 static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
 				   Spreadsheet *sheet)
 {
+    guint kval = key->keyval;
+
 #if CELLDEBUG
-    fprintf(stderr, "catch_spreadsheet_key: %d\n", key->keyval);
+    fprintf(stderr, "catch_spreadsheet_key: %d\n", kval);
 #endif
 
-    if (key->keyval == GDK_Tab) {
+    if (kval == GDK_Tab) {
 	/* FIXME */
 	;
     }
 
-    if (key->keyval == GDK_Left) {
+    if (kval == GDK_Left) {
 	GtkTreeViewColumn *col = NULL;
 	gpointer p;
 
@@ -1632,7 +1651,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 		return TRUE;
 	    } 
 	}
-    } else if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+    } else if (kval == GDK_Up || kval == GDK_Down) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *col = NULL;
 	int i;
@@ -1640,23 +1659,21 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
 	i = (gtk_tree_path_get_indices(path))[0];
 
-	if (key->keyval == GDK_Down && i < sheet->datarows - 1) {
+	if (kval == GDK_Down && i < sheet->datarows - 1) {
 	    gtk_tree_path_next(path);
-	} else if (key->keyval == GDK_Up && i > 0) {
+	} else if (kval == GDK_Up && i > 0) {
 	    gtk_tree_path_prev(path);
 	}
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 				 FALSE);
 	gtk_tree_path_free(path);
 	return TRUE;
-    } else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||
-	       key->keyval == GDK_minus || key->keyval == GDK_period ||
-	       ((sheet->flags & SHEET_USE_COMMA) && key->keyval == GDK_comma)) {
+    } else if (numeric_key(&kval, sheet)) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *col = NULL;
 
 #if CELLDEBUG
-	fprintf(stderr, "numeric key: start editing, k = %d\n", key->keyval);
+	fprintf(stderr, "numeric key: start editing, k = %d\n", kval);
 #endif
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
@@ -1664,7 +1681,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col, 
 				     TRUE);
 	    gtk_tree_path_free(path);
-	    manufacture_keystroke(view, key->keyval);
+	    manufacture_keystroke(view, kval);
 	}
     }
 
