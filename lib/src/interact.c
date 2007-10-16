@@ -2514,6 +2514,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    cmd_set_nolist(cmd);
 	}
     } else if (cmd->ci != SETMISS && 
+	       cmd->ci != PRINT &&
 	       cmd->ci != DELEET &&
 	       cmd->ci != REMEMBER) {
 	/* the command needs a list but doesn't have one */
