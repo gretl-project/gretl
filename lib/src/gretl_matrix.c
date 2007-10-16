@@ -3334,26 +3334,10 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
-/**
- * gretl_matrix_complex_multiply:
- * @a: m x (1 or 2) matrix.
- * @b: m x (1 or 2) matrix.
- * @err: location to receive error code.
- *
- * Computes the complex product of @a and @b.  The first
- * column in these matrices is assumed to contain real
- * values, and the second column (if present) imaginary 
- * coefficients.
- * 
- * Returns: an m x 2 matrix with the result of the multiplication 
- * of the two vectors of complex numbers. If both @a and @b have no 
- * imaginary part, the return value will be m x 1.  Or %NULL on 
- * failure.
- */
-
-gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
-					     const gretl_matrix *b,
-					     int *err)
+static gretl_matrix *
+gretl_matrix_complex_multdiv (const gretl_matrix *a, 
+			      const gretl_matrix *b,
+			      int multiply, int *err)
 {
     gretl_matrix *c = NULL;
     double *ar, *ai;
@@ -3361,6 +3345,7 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
     double *cr, *ci;
     int m, n, p, q;
     int i, izero = 1;
+    double r2;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	*err = E_DATA;
@@ -3403,6 +3388,7 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 
     for (i=0; i<m; i++) {
 	cr[i] = ar[i] * br[i];
+	if (multiply) {
 	if (ai != NULL && bi != NULL) {
 	    cr[i] -= ai[i] * bi[i];
 	}
@@ -3414,6 +3400,24 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 	}
 	if (ai != NULL) {
 	    ci[i] += br[i] * ai[i];
+	}
+	} else {
+	    r2 = br[i]*br[i] + bi[i]*bi[i];
+
+	    if (ai != NULL && bi != NULL) {
+		cr[i] += ai[i] * bi[i];
+	    }
+	    if (ci != NULL) {
+		ci[i] = 0.0;
+	    }
+	    if (bi != NULL) {
+		ci[i] -= ar[i] * bi[i];
+	    }
+	    if (ai != NULL) {
+		ci[i] += br[i] * ai[i];
+	    }
+	    cr[i] /= r2;
+	    ci[i] /= r2;
 	}
 	if (ci != NULL && ci[i] != 0.0) {
 	    izero = 0;
@@ -3434,6 +3438,54 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
     }
 
     return c;
+}
+
+/**
+ * gretl_matrix_complex_multiply:
+ * @a: m x (1 or 2) matrix.
+ * @b: m x (1 or 2) matrix.
+ * @err: location to receive error code.
+ *
+ * Computes the complex product of @a and @b.  The first
+ * column in these matrices is assumed to contain real
+ * values, and the second column (if present) imaginary 
+ * coefficients.
+ * 
+ * Returns: an m x 2 matrix with the result of the multiplication 
+ * of the two vectors of complex numbers. If both @a and @b have no 
+ * imaginary part, the return value will be m x 1.  Or %NULL on 
+ * failure.
+ */
+
+gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
+					     const gretl_matrix *b,
+					     int *err)
+{
+    return gretl_matrix_complex_multdiv(a, b, 1, err);
+}
+
+/**
+ * gretl_matrix_complex_divide:
+ * @a: m x (1 or 2) matrix.
+ * @b: m x (1 or 2) matrix.
+ * @err: location to receive error code.
+ *
+ * Computes the complex division of @a over @b.  The first
+ * column in these matrices is assumed to contain real
+ * values, and the second column (if present) imaginary 
+ * coefficients.
+ * 
+ * Returns: an m x 2 matrix with the result of the division 
+ * of the two vectors of complex numbers. If both @a and @b have no 
+ * imaginary part, the return value will be m x 1.  Or %NULL on 
+ * failure.
+ */
+
+gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
+					   const gretl_matrix *b,
+					   int *err)
+{
+    return gretl_matrix_complex_multdiv(a, b, 0, err);
 }
 
 /* return sum of elements in row i */

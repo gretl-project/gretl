@@ -187,6 +187,7 @@ struct str_table funcs[] = {
     { FFT,      "fft" },
     { FFTI,     "ffti" },
     { CMULT,    "cmult" },
+    { CDIV,     "cdiv" },
     { MCOV,     "mcov" },
     { MCORR,    "mcorr" },
     { MXTAB,    "mxtab" },
