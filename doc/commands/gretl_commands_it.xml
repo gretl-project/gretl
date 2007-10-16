@@ -6114,6 +6114,7 @@
     <usage>
       <arguments>
         <argument>formato</argument>
+	<argpunct>, </argpunct>
         <argument>argomenti</argument>
       </arguments>
     </usage>
@@ -7579,6 +7580,40 @@
 
   </command>
 
+  <command name="sprintf" section="Printing" 
+    label="Stampa su una stringa" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>var-stringa</argument>
+        <argument>formato</argument>
+	<argpunct>, </argpunct>
+        <argument>argomenti</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Questo comando funziona esattamente come il comando <cmdref targ="printf"/>,
+        stampando gli argomenti nel modo controllato dalla stringa di formato,
+        tranne per il fatto che il risultato è scritto nella stringa
+        specificata, <repl>var-stringa</repl>.
+      </para>
+      <para>
+	Per stampare la variabile stringa, basta usare il suo nome preceduto da
+	<lit>@</lit>, come in questo esempio:
+      </para>
+      <code>
+	sprintf variabile "%g", x
+	print "variabile ha il valore @variabile"
+      </code>
+      <para>
+	Si veda anche <cmdref targ="string"/>.
+      </para>
+    </description>
+
+  </command>
+
   <command name="square" section="Transformations" label="Crea quadrati delle
     variabili" context="cli">
 
@@ -7719,6 +7754,43 @@
     <gui-access>
       <menu-path>/File/Salva dati; /File/Esporta dati</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="string" section="Utilities" context="cli">
+    
+    <usage>
+      <arguments>
+        <argument>var-stringa</argument>
+	<argpunct>= </argpunct>
+	<argument>espressione</argument>
+      </arguments>
+      <examples>
+	<example>string pvalue = "P-value: "</example>
+	<example>string homedir = getenv("HOME")</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Salva una stringa chiamata <repl>var-stringa</repl>.
+	L'<repl>espressione</repl> può avere le forme seguenti: una stringa
+        letterale, racchiusa tra virgolette doppie; una serie di stringhe di
+        questo tipo, separate da spazi (le stringhe verranno concatenate);
+        oppure una chiamata alla funzione <lit>getenv</lit> per recuperare
+        una stringa dall'ambiente del programma.
+      </para>
+      <para>
+	Dopo aver definito una variabile stringa in questo modo, è possibile
+        stamparla usando il suo nome preceduto da <lit>@</lit>, come in
+      </para>
+      <code>
+	print "stringa = @stringa"
+      </code>
+      <para>
+	Si veda anche <cmdref targ="printf"/> e <cmdref targ="sprintf"/>.
+      </para>
+    </description>
 
   </command>
 
