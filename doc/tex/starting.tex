@@ -212,15 +212,26 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
   \item \textsf{Statistical tables}: Look up critical values for
     commonly used distributions (normal or Gaussian, \emph{t},
     chi-square, \emph{F} and Durbin--Watson).
-  \item \textsf{P-value finder}: Open a window which enables you to
-    look up p-values from the Gaussian, \emph{t}, chi-square,
-    \emph{F}, gamma or binomial distributions. See also the
-    \cmd{pvalue} command in the \emph{Gretl Command Reference}.
+  \item \textsf{P-value finder}: Look up p-values from the Gaussian,
+    \emph{t}, chi-square, \emph{F}, gamma, binomial or Poisson
+    distributions. See also the \cmd{pvalue} command in the
+    \emph{Gretl Command Reference}.
+  \item \textsf{Distribution graphs}: Produce graphs of various
+    probability distributions.  In the resulting graph window,
+    the pop-up menu includes an item ``Add another curve'', which
+    enables you to superimpose a further plot (for example, you
+    can draw the \emph{t} distrbution wth various different degrees
+    of freedom).
   \item \textsf{Test statistic calculator}: Calculate test statistics
     and p-values for a range of common hypothesis tests (population
     mean, variance and proportion; difference of means, variances and
-    proportions).  See also the item ``Bivariate tests'' under the
-    Model menu.
+    proportions).  
+  \item \textsf{Nonparametric tests}: Calculate test statistics
+    for various nonparametric tests (Sign test, Wilcoxon rank sum
+    test, Wilcoxon signed rank test, Runs test).
+  \item \textsf{Seed for random numbers}: Set the seed for the random
+    number generator (by default this is set based on the system time
+    when the program is started).
   \item \textsf{Command log}: Open a window containing a record
     of the commands executed so far.
   \item \textsf{Gretl console}: Open a ``console'' window into which
@@ -309,15 +320,19 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
   \item \textsf{Summary statistics}: Shows a full set of
     descriptive statistics for the variables selected in the main
     window.
-  \item \textsf{Correlation matrix}: Active only if two or more
-    variables are selected; shows the pairwise correlation
+  \item \textsf{Correlation matrix}: Shows the pairwise correlation
     coefficients for the selected variables.
-  \item \textsf{Principal components}: Active only if two or more
-    variables are selected; produces a Principal Components Analysis
-    of the selected variables.
-  \item \textsf{Mahalonobis distances}: Active only if two or more
-    variables are selected; computes the Mahalonobis distance of each
-    observation from the centroid of the selected set of variables.
+  \item \textsf{Cross Tabulation}: Shows a cross-tabulation of the
+    selected variables.  This works only if at least two variables
+    in the data set have been marked as discrete (see
+    Chapter~\ref{chap:discrete}).  
+  \item \textsf{Principal components}: Produces a Principal Components
+    Analysis for the selected variables.
+  \item \textsf{Mahalonobis distances}: Computes the Mahalonobis
+    distance of each observation from the centroid of the selected set
+    of variables.
+  \item \textsf{Cross-correlogram}: Computes and graphs the
+    cross-correlogram for two selected variables.
   \end{itemize}
 
 \item \textsf{Add menu} Offers various standard transformations
