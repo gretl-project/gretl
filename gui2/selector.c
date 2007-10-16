@@ -4096,10 +4096,10 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 
     if (nleft == 0) {
 	gtk_widget_destroy(sr->dlg);
-	errbox(_("No variables are available"));
+	warnbox(_("No suitable data are available"));
     } else if ((ci == COEFFSUM || ci == ELLIPSE) && nleft < 2) {
 	gtk_widget_destroy(sr->dlg);
-	errbox(_("No variables are available"));
+	warnbox(_("No suitable data are available"));
     } else {
 	gtk_widget_show(sr->dlg);
     }
