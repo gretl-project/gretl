@@ -3389,18 +3389,18 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     for (i=0; i<m; i++) {
 	cr[i] = ar[i] * br[i];
 	if (multiply) {
-	if (ai != NULL && bi != NULL) {
-	    cr[i] -= ai[i] * bi[i];
-	}
-	if (ci != NULL) {
-	    ci[i] = 0.0;
-	}
-	if (bi != NULL) {
-	    ci[i] += ar[i] * bi[i];
-	}
-	if (ai != NULL) {
-	    ci[i] += br[i] * ai[i];
-	}
+	    if (ai != NULL && bi != NULL) {
+		cr[i] -= ai[i] * bi[i];
+	    }
+	    if (ci != NULL) {
+		ci[i] = 0.0;
+	    }
+	    if (bi != NULL) {
+		ci[i] += ar[i] * bi[i];
+	    }
+	    if (ai != NULL) {
+		ci[i] += br[i] * ai[i];
+	    }
 	} else {
 	    r2 = br[i]*br[i] + bi[i]*bi[i];
 
