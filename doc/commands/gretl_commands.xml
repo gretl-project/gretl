@@ -1566,17 +1566,32 @@
       <arguments>
         <argument optional="true">varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--db</flag>
+	  <effect>delete from opened database</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
-      <para>Removes the listed variables (given by name or number)
-	from the dataset. <emphasis>Use with caution</emphasis>: no
-	confirmation is asked, and any variables with higher ID
-	numbers will be re-numbered.</para>
-
+      <para>
+	By default, removes the listed variables (given by name or
+	number) from the current dataset. <emphasis>Use with
+	caution</emphasis>: no confirmation is asked, and any variables
+	with higher ID numbers will be re-numbered.
+      </para>
       <para>If no <repl>varlist</repl> is given with this command, it
 	deletes the last (highest numbered) variable from the
-	dataset.</para>
+	dataset.
+      </para>
+      <para>
+	If the <lit>--db</lit> option is given, this command deletes the
+	listed variables not from the current dataset but from a gretl
+	database, assuming that a database has been opened, and the user
+	has write permission for file in question.  See also the
+	<cmdref targ="open"/> command.
+      </para>
     </description>
 
     <gui-access>
@@ -5695,8 +5710,8 @@
       </para>
 
       <para>
-	This command can also be used to open a database (gretl or RATS
-	4.0) for reading.  In that case it should be followed by the
+	This command can also be used to open a database (gretl, RATS 4.0
+	or PcGive) for reading.  In that case it should be followed by the
 	<cmdref targ="data"/> command to extract particular series from
 	the database.  If the <lit>www</lit> option is given, the program
 	will try to access a database of the given name on the gretl
