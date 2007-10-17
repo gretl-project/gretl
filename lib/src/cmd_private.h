@@ -47,6 +47,7 @@ struct ExecState_ {
     DATAINFO *subinfo; /* record of incoming sub-sample for functions */
     int alt_model;
     int in_comment;
+    int funcerr;
     EXEC_CALLBACK callback;
 };
 
@@ -59,7 +60,6 @@ void gretl_exec_state_init (ExecState *s,
 
 void gretl_exec_state_clear (ExecState *s);
 
-int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
-		     int *funcerr);
+int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
 
 #endif /* CMD_PRIVATE_H */

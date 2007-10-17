@@ -362,6 +362,7 @@ int ok_in_loop (int c)
 	c == ELSE ||
 	c == ENDIF ||
 	c == BREAK ||
+	c == FUNCERR ||
 	c == ENDLOOP) { 
 	return 1;
     }
@@ -2885,8 +2886,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     } /* end iterations of loop */
 
     if (err) {
-	errmsg(err, prn);
-	if (!loop_is_quiet(loop)) {
+	if (!s->funcerr) {
+	    errmsg(err, prn);
 	    pprintf(prn, ">> %s\n", errline);
 	}
     } else if (loop->err) {

@@ -3648,7 +3648,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
 	err = get_line_continuation(s->line, fp, prn);
 	if (!err) {
-	    err = maybe_exec_line(s, pZ, ppdinfo, NULL);
+	    err = maybe_exec_line(s, pZ, ppdinfo);
 	}
     }
 
@@ -4506,6 +4506,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = run_script(runfile, s, pZ, ppdinfo, prn);
 	break;
 
+    case FUNCERR:
+	err = s->funcerr = 1;
+	break;
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);
@@ -4523,7 +4527,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
-	errmsg(err, prn);
+	if (!s->funcerr) {
+	    errmsg(err, prn);
+	}
     }
 
     return err;
@@ -4532,8 +4538,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 /* called by functions, and by scripts executed from within
    functions */
 
-int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
-		     int *funcerr)
+int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     DATAINFO *pdinfo = *ppdinfo;
     int err = 0;
@@ -4574,10 +4579,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo,
     } 
 
     if (s->cmd->ci == FUNCERR) {
-	if (funcerr != NULL) {
-	    *funcerr = 1;
-	}
-	err = 1;
+	s->funcerr = err = 1;
     } else {
 	err = gretl_cmd_exec(s, pZ, ppdinfo);
 	pdinfo = *ppdinfo;
@@ -4895,6 +4897,7 @@ void gretl_exec_state_init (ExecState *s,
     s->var = NULL;
     s->alt_model = 0;
     s->in_comment = 0;
+    s->funcerr = 0;
 
     s->subinfo = NULL;
     s->callback = NULL;
@@ -4904,4 +4907,5 @@ void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
+    s->funcerr = 0;
 }

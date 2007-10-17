@@ -3322,7 +3322,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     CMD cmd;
     fn_param *fp;
     int started = 0;
-    int funcerr = 0;
     int argc, i, j;
     int err = 0;
 
@@ -3426,20 +3425,23 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     for (i=0; i<u->n_lines && !err; i++) {
 	strcpy(line, u->lines[i]);
-	err = maybe_exec_line(&state, pZ, &pdinfo, &funcerr);
-	if (funcerr) {
+	err = maybe_exec_line(&state, pZ, &pdinfo);
+	if (state.funcerr) {
 #if UDEBUG
 	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", i, line);
 #endif
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
 	}
-	/* FIXME: error condition inside loop */
 	if (gretl_execute_loop()) { 
 #if UDEBUG
 	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
 #endif
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);
+	    if (state.funcerr) {
+		pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
+		set_funcerr_message(u, state.cmd->param);
+	    }
 	    if (err) {
 		fprintf(stderr, "function_exec: breaking on error in loop\n");
 		break;
