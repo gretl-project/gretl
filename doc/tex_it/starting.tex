@@ -221,14 +221,23 @@ Campione, Variabile, Modello e Aiuto.
   \item \textsf{Tavole statistiche}: cerca i valori critici per alcune
     distribuzioni di uso comune (normale o Gaussiana, \emph{t},
     chi-quadro, \emph{F} e Durbin--Watson).
-  \item \textsf{Calcola p-value}: apre una finestra che mostra i
-    p-value per le distribuzioni Gaussiana, \emph{t}, chi-quadro,
-    \emph{F}, gamma o binomiale. Si veda anche il comando \cmd{pvalue} nella \GCR.
+  \item \textsf{Calcola p-value}: calcola i p-value per le distribuzioni
+    Gaussiana, \emph{t}, chi-quadro, \emph{F}, gamma, binomiale o Poisson. Si
+    veda anche il comando \cmd{pvalue} nella \GCR.
+  \item \textsf{Grafici distribuzione}: produce grafici di varie distribuzioni
+    di probabilità. Il menù pop-up della finestra grafica che viene creata contiene
+    il comando ``Aggiungi un'altra curva'', che permette di mostrare più curve
+    sullo stesso grafico (ad esempio è possibile disegnare la distribuzione
+    \emph{t} con vari gradi di libertà).
   \item \textsf{Calcola test}: calcola le statistiche test e i p-value
     per una serie di test di ipotesi di uso comune (media della
     popolazione, varianza e proporzione, differenza delle medie o
-    delle varianze e proporzioni). Si veda anche la voce ``Test bivariati'' nel
-    menù ``Modello''.
+    delle varianze e proporzioni).
+  \item \textsf{Test non parametrici}: calcola statistiche per vari test non parametrici
+    (test dei segni, test di Wilcoxon, test delle successioni).
+  \item \textsf{Seme per numeri casuali}: imposta il seme per il generatore di
+    numeri casuali (l'impostazione predefinita si basa sull'ora di sistema in
+    cui il programma è stato avviato).
   \item \textsf{Visualizza log comandi}: apre una finestra che contiene il
     registro dei comandi eseguiti fino a questo momento.
   \item \textsf{Terminale di Gretl}: apre una finestra di
@@ -320,15 +329,17 @@ Campione, Variabile, Modello e Aiuto.
     ricco di statistiche descrittive per tutte le variabili del
     dataset, o per le variabili selezionate.
   \item \textsf{Matrice di correlazione}: mostra i coefficienti di
-    correlazione fra tutte le variabili nel dataset, o fra
-    quelle selezionate.
-  \item \textsf{Componenti principali}: attivo solo se si selezionano
-    due o più variabili; produce un'analisi delle componenti
+    correlazione fra le variabili selezionate.
+  \item \textsf{Tabulazione incrociata}: mostra una tabulazione incrociata
+    fra le variabili selezionate. Occorre che almeno due variabili del dataset
+    siano state marcate come discrete (si veda il Capitolo~\ref{chap:discrete}).
+  \item \textsf{Componenti principali}: produce un'analisi delle componenti
     principali delle variabili selezionate.
-  \item \textsf{Distanze di Mahalonobis}: attivo solo se si
-    selezionano due o più variabili; calcola la distanza di
+  \item \textsf{Distanze di Mahalonobis}: calcola la distanza di
     Mahalonobis per ogni osservazione dal centroide dell'insieme di
     variabili selezionate.
+  \item \textsf{Correlogramma incrociato}: calcola e mostra il correlogramma incrociato
+    per due variabili selezionate.
   \end{itemize}
 
 \item \textsf{Menù aggiungi}: offre alcune trasformazioni
