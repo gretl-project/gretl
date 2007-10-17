@@ -2886,7 +2886,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     if (err) {
 	errmsg(err, prn);
-	pprintf(prn, ">> %s\n", errline);
+	if (!loop_is_quiet(loop)) {
+	    pprintf(prn, ">> %s\n", errline);
+	}
     } else if (loop->err) {
 	errmsg(loop->err, prn);
 	err = loop->err;
