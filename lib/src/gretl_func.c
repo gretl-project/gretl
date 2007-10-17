@@ -25,6 +25,7 @@
 #include "usermat.h"
 #include "gretl_xml.h"
 #include "cmd_private.h"
+#include "gretl_string_table.h"
 
 #define FN_DEBUG 0
 #define PKG_DEBUG 0
@@ -3229,6 +3230,14 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	err = anyerr;
 #if FN_DEBUG
 	fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", d, err);
+#endif
+    }  
+
+    anyerr = destroy_saved_strings_at_level(d);
+    if (anyerr && !err) {
+	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_saved_strings_at_level(%d): err = %d\n", d, err);
 #endif
     }  
 

@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 #include "gretl_string_table.h"
 
 typedef struct _col_table col_table;
@@ -277,6 +278,7 @@ typedef struct saved_string_ saved_string;
 
 struct saved_string_ {
     char name[VNAMELEN];
+    int level;
     char *s;
 };
 
@@ -284,20 +286,20 @@ static int n_saved_strings;
 static saved_string *saved_strings;
 
 static saved_string built_ins[] = {
-    { "gretldir", NULL },
-    { "userdir",  NULL },
-    { "gnuplot",  NULL },
-    { "x12a",     NULL },
-    { "x12adir",  NULL },
-    { "tramo",    NULL },
-    { "tramodir", NULL },
-    { "seats",    NULL }
+    { "gretldir", 0, NULL },
+    { "userdir",  0, NULL },
+    { "gnuplot",  0, NULL },
+    { "x12a",     0, NULL },
+    { "x12adir",  0, NULL },
+    { "tramo",    0, NULL },
+    { "tramodir", 0, NULL },
+    { "seats",    0, NULL }
 };
 
 #ifdef WIN32
-static saved_string dsep = { "dirsep",  "\\" };
+static saved_string dsep = { "dirsep", 0, "\\" };
 #else
-static saved_string dsep = { "dirsep",  "/" };
+static saved_string dsep = { "dirsep", 0, "/" };
 #endif
 
 void gretl_insert_builtin_string (const char *name, const char *s)
@@ -332,7 +334,7 @@ static void gretl_free_builtin_strings (void)
 static saved_string *get_saved_string_by_name (const char *name,
 					       int *builtin)
 {
-    int i;
+    int i, d;
 
     if (builtin != NULL && !strcmp(name, "dirsep")) {
 	*builtin = 1;
@@ -348,10 +350,13 @@ static saved_string *get_saved_string_by_name (const char *name,
 		return &built_ins[i];
 	    }
 	}
-    }	
+    }
+
+    d = gretl_function_depth();
 
     for (i=0; i<n_saved_strings; i++) {
-	if (!strcmp(name, saved_strings[i].name)) {
+	if (saved_strings[i].level == d &&
+	    !strcmp(name, saved_strings[i].name)) {
 	    return &saved_strings[i];
 	}
     }
@@ -364,7 +369,7 @@ static saved_string *get_saved_string_by_name (const char *name,
 
 char *get_named_string (const char *name)
 {
-    int i, n;
+    int i, n, d;
 
     if (!strcmp(name, "dirsep")) {
 	return dsep.s;
@@ -378,8 +383,11 @@ char *get_named_string (const char *name)
 	}
     }
 
+    d = gretl_function_depth();
+
     for (i=0; i<n_saved_strings; i++) {
-	if (!strcmp(name, saved_strings[i].name)) {
+	if (saved_strings[i].level == d &&
+	    !strcmp(name, saved_strings[i].name)) {
 	    return saved_strings[i].s;
 	}
     }
@@ -436,6 +444,7 @@ static saved_string *add_named_string (const char *name)
     }
 
     strcpy(S[n].name, name);
+    S[n].level = gretl_function_depth();
     S[n].s = NULL;
     saved_strings = S;
     n_saved_strings += 1;
@@ -456,6 +465,57 @@ void saved_strings_cleanup (void)
     n_saved_strings = 0;
 
     gretl_free_builtin_strings();
+}
+
+/* called on exiting a user-defined function to clean
+   up any strings defined therein */
+
+int destroy_saved_strings_at_level (int d)
+{
+    int i, ndel = 0;
+    int err = 0;
+
+    for (i=0; i<n_saved_strings; i++) {
+	if (saved_strings[i].level == d) {
+	    ndel++;
+	}
+    }
+
+    if (ndel > 0) {
+	int nnew = n_saved_strings - ndel;
+
+	if (nnew == 0) {
+	    for (i=0; i<n_saved_strings; i++) {
+		free(saved_strings[i].s);
+	    }
+	    free(saved_strings);
+	    saved_strings = NULL;
+	    n_saved_strings = 0;
+	} else {	    
+	    saved_string *S = malloc(nnew * sizeof *S);
+	    int j = 0;
+
+	    if (S == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (i=0; i<n_saved_strings; i++) {
+		    if (saved_strings[i].level == d) {
+			free(saved_strings[i].s);
+		    } else {
+			strcpy(S[j].name, saved_strings[i].name);
+			S[j].level = saved_strings[i].level;
+			S[j].s = saved_strings[i].s;
+			j++;
+		    }
+		}
+		free(saved_strings);
+		saved_strings = S;
+		n_saved_strings = nnew;
+	    }
+	}
+    }
+
+    return err;
 }
 
 static void copy_unescape (char *targ, const char *src, int n)
