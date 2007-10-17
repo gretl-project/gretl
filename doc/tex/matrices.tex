@@ -419,7 +419,8 @@ context it is reserved for the Kronecker product.)
 \texttt{rcond}     &
 \texttt{svd}       \\
 \texttt{tr}        &
-\texttt{cmult}      
+\texttt{cmult}     &
+\texttt{cdiv}      
 \end{tabular}      
 
 \textbf{Statistical}
@@ -787,12 +788,13 @@ calculates $B = A X A^{\prime}$.  This is computed more efficiently than
 the alternative command \texttt{B = A*X*A'}.  In addition, the result
 is symmetric by construction.
 
-The function \texttt{cmult} computes the complex product of two input
+The functions \texttt{cmult} and \texttt{cdiv} compute the complex
+product and division, respectively, of two input
 matrices, $A$ and $B$, representing complex numbers.  These matrices
 must have the same number of rows, $n$, and either one or two columns.
 The first column contains the real part and the second (if present)
 the imaginary part.  The return value is an $n \times 2$ matrix, or,
-if the product has no imaginary part, an $n$-vector.
+if the result has no imaginary part, an $n$-vector.
 
 
 \subsection{Multiple-return matrix functions}
@@ -1274,71 +1276,72 @@ ols price const sqft --vcv
 \texttt{abs}       &
 \texttt{atan}      &
 \texttt{cdemean}   &
+\texttt{cdiv}      &
 \texttt{cholesky}  &
-\texttt{cmult}     &
-\texttt{cnorm}     \\
-\texttt{cols}      &
-\texttt{cos}       &
-\texttt{det}       &
-\texttt{diag}      &
-\texttt{dnorm}     &
-\texttt{dsort}     \\
-\texttt{eigengen}  &
-\texttt{eigensym}  &
-\texttt{exp}       &
-\texttt{fft}       &
-\texttt{ffti}      &
-\texttt{gamma}     \\
-\texttt{ginv}      &
-\texttt{I}         &
-\texttt{imaxc}     &
-\texttt{imaxr}     &
-\texttt{iminc}     &
-\texttt{iminr}     \\
-\texttt{infnorm}   &
-\texttt{int}       &
-\texttt{inv}       &
-\texttt{ldet}      &
-\texttt{lngamma}   &
-\texttt{log}       \\
-\texttt{mcorr}     &
-\texttt{mcov}      &
+\texttt{cmult}     \\
+\texttt{cnorm}     & 
+\texttt{cols}      & 
+\texttt{cos}       & 
+\texttt{det}       & 
+\texttt{diag}      & 
+\texttt{dnorm}     \\
+\texttt{dsort}     & 
+\texttt{eigengen}  & 
+\texttt{eigensym}  & 
+\texttt{exp}       & 
+\texttt{fft}       & 
+\texttt{ffti}      \\
+\texttt{gamma}     & 
+\texttt{ginv}      & 
+\texttt{I}         & 
+\texttt{imaxc}     & 
+\texttt{imaxr}     & 
+\texttt{iminc}     \\
+\texttt{iminr}     & 
+\texttt{infnorm}   & 
+\texttt{int}       & 
+\texttt{inv}       & 
+\texttt{ldet}      & 
+\texttt{lngamma}   \\
+\texttt{log}       & 
+\texttt{mcorr}     & 
+\texttt{mcov}      & 
 \texttt{maxc}      &   
-\texttt{maxr}      &
-\texttt{meanc}     &
-\texttt{meanr}     \\
-\texttt{mexp}      &
+\texttt{maxr}      & 
+\texttt{meanc}     \\
+\texttt{meanr}     & 
+\texttt{mexp}      & 
 \texttt{minc}      &  
-\texttt{minr}      &
-\texttt{mlag}      &
-\texttt{mnormal}   &
-\texttt{mols}      \\
-\texttt{mshape}    &
-\texttt{muniform}  &
-\texttt{mxtab}     &
-\texttt{nullspace} &
-\texttt{onenorm}   &
-\texttt{ones}      \\
-\texttt{princomp}  &
-\texttt{qform}     &
-\texttt{qnorm}     &
-\texttt{qrdecomp}  &
-\texttt{rank}      &
-\texttt{rcond}     \\
-\texttt{rows}      &
-\texttt{seq}       &
-\texttt{sin}       &
-\texttt{sort}      &
-\texttt{sqrt}      &
-\texttt{sumc}      \\
-\texttt{sumr}      &
-\texttt{svd}       &
-\texttt{tan}       &
-\texttt{tr}        &
-\texttt{transp}    &
-\texttt{unvech}    \\
-\texttt{values}    &
-\texttt{vec}       &
+\texttt{minr}      & 
+\texttt{mlag}      & 
+\texttt{mnormal}   \\
+\texttt{mols}      & 
+\texttt{mshape}    & 
+\texttt{muniform}  & 
+\texttt{mxtab}     & 
+\texttt{nullspace} & 
+\texttt{onenorm}   \\
+\texttt{ones}      & 
+\texttt{princomp}  & 
+\texttt{qform}     & 
+\texttt{qnorm}     & 
+\texttt{qrdecomp}  & 
+\texttt{rank}      \\
+\texttt{rcond}     & 
+\texttt{rows}      & 
+\texttt{seq}       & 
+\texttt{sin}       & 
+\texttt{sort}      & 
+\texttt{sqrt}      \\
+\texttt{sumc}      & 
+\texttt{sumr}      & 
+\texttt{svd}       & 
+\texttt{tan}       & 
+\texttt{tr}        & 
+\texttt{transp}    \\
+\texttt{unvech}    & 
+\texttt{values}    & 
+\texttt{vec}       & 
 \texttt{vech}      &
 \texttt{zeros}    
 \end{tabular}      
