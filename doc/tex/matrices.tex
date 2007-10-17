@@ -526,7 +526,7 @@ The single matrix argument to these functions may be given as the name
 of an existing matrix or as an expression that evaluates to a single
 matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
 \texttt{tr} require a square matrix as input.  The \texttt{rank}
-function is computed via the QR decomposition.
+function is computed via the Singular Value Decomposition.
 
 The functions \texttt{onenorm} and \texttt{infnorm} return,
 respectively, the 1-norm and the infinity-norm of a matrix.  The
@@ -962,13 +962,14 @@ actually $V'$ that is provided.
 Finally, the syntax for \texttt{mols} is
 %
 \begin{code}
-matrix b = func(y, X, &u)
+matrix B = mols(Y, X, &U)
 \end{code}
 %
-This function returns the OLS statistic obtained by regressing the $T
-\times n$ matrix on the $T \times k$ matrix, that is, a $k \times n$
-matrix holding $(X'X)^{-1} X'Y$. The Cholesky decomposition is
-used. The matrix u, if not null, is used to store the residuals.
+This function returns the OLS estimates obtained by regressing the $T
+\times n$ matrix $Y$ on the $T \times k$ matrix $X$, that is, a $k
+\times n$ matrix holding $(X'X)^{-1} X'Y$. The Cholesky decomposition
+is used. The matrix $U$, if not \texttt{null}, is used to store the
+residuals.
 
 \section{Empty matrices}
 \label{sec:emptymatrix}
