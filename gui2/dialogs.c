@@ -157,6 +157,36 @@ gboolean exit_check (void)
     return FALSE;
 }
 
+double gui_double_from_string (const char *str, int *err)
+{
+    double x = 0;
+    char s[32];
+    int sub = 0;
+
+    *s = '\0';
+    strncat(s, str, 31);
+
+    if (get_local_decpoint() != '.') {
+	gretl_push_c_numeric_locale();
+	charsub(s, ',', '.');
+	sub = 1;
+    }
+
+    *err = check_atof(s);
+
+    if (*err) {
+	gui_errmsg(*err);
+    } else {
+	x = atof(s);
+    }
+
+    if (sub) {
+	gretl_pop_c_numeric_locale();
+    }
+
+    return x;
+}
+
 /* CSV files: setting the delimiter */
 
 typedef struct {
@@ -1080,17 +1110,15 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 
     if (vset->value_entry != NULL) {
 	double val;
+	int err = 0;
 
 	edttext = gtk_entry_get_text(GTK_ENTRY(vset->value_entry));
-	if (check_atof(edttext)) {
-	    errbox(gretl_errmsg_get());
+	val = gui_double_from_string(edttext, &err);
+	if (err) {
 	    return;
-	} else {
-	    val = atof(edttext);
-	    if (val != Z[v][0]) {
-		Z[v][0] = val;
-		changed = 1;
-	    }
+	} else if (val != Z[v][0]) {
+	    Z[v][0] = val;
+	    changed = 1;
 	}
     }
 
@@ -1167,7 +1195,8 @@ static const char *comp_int_to_string (int i)
 
 static int formula_ok (int v)
 {
-    if (var_is_generated(datainfo, v)) {
+    if (!var_is_scalar(datainfo, v) &&
+	var_is_generated(datainfo, v)) {
 	const char *s = VARLABEL(datainfo, v);
 	int n = strlen(s);
 

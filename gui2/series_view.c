@@ -89,36 +89,43 @@ void free_multi_series_view (gpointer p)
 
 static int series_view_allocate (series_view *sview)
 {
+    int err = 0;
+
     if (sview->npoints != 0) {
 	/* already allocated */
 	return 0;
     } else if (var_is_scalar(datainfo, sview->varnum)) {
-	sview->npoints = 1;
-	return 0;
+	sview->points = malloc(sizeof *sview->points);
+	if (sview->points == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    sview->points[0].val = Z[sview->varnum][0];
+	    sview->points[0].label[0] = '\0';
+	    sview->npoints = 1;
+	}
     } else {
 	int t, tp, T = datainfo->t2 - datainfo->t1 + 1;
 	int v = sview->varnum;
 
 	sview->points = malloc(T * sizeof *sview->points);
 	if (sview->points == NULL) {
-	    return 1;
-	} 
-
-	sview->npoints = T;
-
-	/* populate from data set */
-	for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	    tp = t - datainfo->t1; 
-	    sview->points[tp].val = Z[v][t];
-	    if (datainfo->markers) {
-		strcpy(sview->points[tp].label, datainfo->S[t]);
-	    } else {
-		ntodate(sview->points[tp].label, t, datainfo);
+	    err = E_ALLOC;
+	} else {
+	    sview->npoints = T;
+	    /* populate from data set */
+	    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+		tp = t - datainfo->t1; 
+		sview->points[tp].val = Z[v][t];
+		if (datainfo->markers) {
+		    strcpy(sview->points[tp].label, datainfo->S[t]);
+		} else {
+		    ntodate(sview->points[tp].label, t, datainfo);
+		}
 	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int multi_series_view_allocate (multi_series_view *mview)

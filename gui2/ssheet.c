@@ -319,36 +319,6 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
     sheet->next = NEXT_DOWN;
 }
 
-static double sheet_double_from_string (const char *str, int *err)
-{
-    double x = 0;
-    char s[32];
-    int sub = 0;
-
-    *s = '\0';
-    strncat(s, str, 31);
-
-    if (get_local_decpoint() != '.') {
-	gretl_push_c_numeric_locale();
-	charsub(s, ',', '.');
-	sub = 1;
-    }
-
-    *err = check_atof(s);
-
-    if (*err) {
-	gui_errmsg(*err);
-    } else {
-	x = atof(s);
-    }
-
-    if (sub) {
-	gretl_pop_c_numeric_locale();
-    }
-
-    return x;
-}
-
 static void update_sheet_matrix (Spreadsheet *sheet)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
@@ -818,7 +788,7 @@ static void sheet_get_scalar (GtkWidget *w, dialog_t *dlg)
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    x = sheet_double_from_string(buf, &err);
+    x = gui_double_from_string(buf, &err);
     if (!err) {
 	*px = x;
 	close_dialog(dlg);
@@ -2486,7 +2456,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	double x;
 
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->ventry));
-	x = sheet_double_from_string(etxt, &err);
+	x = gui_double_from_string(etxt, &err);
 	if (err) {
 	    return;
 	}
