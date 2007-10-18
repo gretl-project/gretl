@@ -576,6 +576,9 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, int *err);
 gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x, 
 				 const double *y, int *err);
 
+gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
+				  const gretl_matrix *y,
+				  int *err);
 
 void lapack_mem_free (void);
 

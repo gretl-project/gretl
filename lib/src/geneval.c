@@ -2011,23 +2011,23 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* functions taking two series as arguments and returning a matrix
-   result */
+/* takes two series or two matrices as arguments */
 
-static NODE *series_2_mat_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
-    const double *x = l->v.xvec;
-    const double *y = r->v.xvec;
 
     if (ret != NULL && starting(p)) {
-	switch (f) {
-	case MXTAB:
+	if (l->t == MAT && r->t == MAT) {
+	    ret->v.m = matrix_matrix_xtab(l->v.m, r->v.m, &p->err);
+	} else if (l->t == VEC && r->t == VEC) {
+	    const double *x = l->v.xvec;
+	    const double *y = r->v.xvec;
+	    
 	    ret->v.m = gretl_matrix_xtab(p->dinfo->t1, p->dinfo->t2, 
 					 x, y, &p->err);
-	    break;
-	default:
-	    break;
+	} else {
+	    p->err = E_TYPES;
 	}
     }
 
@@ -4024,9 +4024,10 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case MXTAB:
-	/* functions taking two series as args and returning a matrix */
-	if (l->t == VEC && r->t == VEC) {
-	    ret = series_2_mat_func(l, r, t->t, p);
+	/* functions taking two series or matrices as args and returning 
+	   a matrix */
+	if ((l->t == VEC && r->t == VEC) || (l->t == MAT && r->t == MAT)) {
+	    ret = mxtab_func(l, r, p);
 	} else {
 	    node_type_error(t->t, VEC, (l->t == VEC)? r : l, p);
 	} 

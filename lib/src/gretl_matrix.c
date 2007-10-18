@@ -8195,6 +8195,112 @@ static int ok_xy_count (int t1, int t2, const double *x, const double *y)
     return n;
 }
 
+static void make_matrix_xtab (double **X, int n, 
+			      const gretl_matrix *vx,
+			      const gretl_matrix *vy,
+			      gretl_matrix *tab)
+{
+    int xr, xc, rndx, cndx;
+    int counter, i;
+
+    qsort(X, n, sizeof *X, compare_xtab_rows);
+
+    /* compute frequencies by going through sorted X */
+
+    counter = rndx = cndx = 0;
+    xr = (int) gretl_vector_get(vx, 0);
+    xc = (int) gretl_vector_get(vy, 0);
+
+    for (i=0; i<n; i++) {
+	while (X[i][0] > xr) { 
+	    /* skip row */
+	    gretl_matrix_set(tab, rndx, cndx, counter);
+	    counter = 0;
+	    xr = gretl_vector_get(vx, ++rndx);
+	    cndx = 0;
+	    xc = gretl_vector_get(vy, 0);
+	}
+	while (X[i][1] > xc) { 
+	    /* skip column */
+	    gretl_matrix_set(tab, rndx, cndx, counter);
+	    counter = 0;
+	    xc = gretl_vector_get(vy, ++cndx);
+	}
+	counter++;
+    }
+    gretl_matrix_set(tab, rndx, cndx, counter);
+}
+
+/**
+ * matrix_matrix_xtab:
+ * @x: data vector
+ * @y: data vector
+ * @err: error code
+ *
+ * Computes the cross tabulation of the values contained in the
+ * vectors x (by row) and y (by column). These must be integer values.
+ *
+ * Returns: the generated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
+				  const gretl_matrix *y,
+				  int *err)
+{
+    gretl_matrix *tab = NULL;
+    gretl_matrix *vx = NULL;
+    gretl_matrix *vy = NULL;
+    double **X = NULL;
+    int i, nx, ny;
+
+    *err = 0;
+
+    nx = gretl_vector_get_length(x);
+    ny = gretl_vector_get_length(y);
+
+    if (nx < 2 || ny != nx) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    vx = gretl_matrix_values(x->val, nx, err);
+    if (*err) {
+	return NULL;
+    }
+
+    vy = gretl_matrix_values(y->val, ny, err);
+    if (*err) {
+	goto bailout;
+    }
+
+    tab = gretl_zero_matrix_new(vx->rows, vy->rows);
+    if (tab == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    X = doubles_array_new(nx, 2);
+    if (X == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<nx; i++) {
+	X[i][0] = (int) x->val[i];
+	X[i][1] = (int) y->val[i];
+    }
+
+    make_matrix_xtab(X, nx, vx, vy, tab);
+
+ bailout:
+
+    gretl_matrix_free(vx);
+    gretl_matrix_free(vy);
+    doubles_array_free(X, nx);
+
+    return tab;
+}
+
 /**
  * gretl_matrix_xtab:
  * @x: data vector
@@ -8218,8 +8324,6 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
     double *tmp = NULL;
     double **X = NULL;
     int i, t, nmax = t2 - t1 + 1;
-    int counter;
-    int xr, xc, rndx, cndx;
 
     *err = 0;
 
@@ -8282,40 +8386,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 	}
     }
 
-    qsort(X, nmax, sizeof *X, compare_xtab_rows);
-
-#if 0
-    for (i = 0; i < nmax; i++) {
-	fprintf(stderr, "X[%d] = [%g, %g]\n", i, X[i][0], X[i][1]);
-    }
-#endif
-
-    /* compute frequencies by going through sorted X */
-
-    rndx = 0;
-    cndx = 0;
-    xr = (int) gretl_vector_get(vx, 0);
-    xc = (int) gretl_vector_get(vy, 0);
-
-    counter = 0;
-    for (i=0; i<nmax && !*err; i++) {
-	while (X[i][0] > xr) { 
-	    /* skip row */
-	    gretl_matrix_set(tab, rndx, cndx, counter);
-	    counter = 0;
-	    xr = gretl_vector_get(vx, ++rndx);
-	    cndx = 0;
-	    xc = gretl_vector_get(vy, 0);
-	}
-	while (X[i][1] > xc) { 
-	    /* skip column */
-	    gretl_matrix_set(tab, rndx, cndx, counter);
-	    counter = 0;
-	    xc = gretl_vector_get(vy, ++cndx);
-	}
-	counter++;
-    }
-    gretl_matrix_set(tab, rndx, cndx, counter);
+    make_matrix_xtab(X, nmax, vx, vy, tab);
 
  bailout:
 
@@ -8326,5 +8397,4 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
     return tab;
 }
-
 

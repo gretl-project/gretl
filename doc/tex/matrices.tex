@@ -487,7 +487,7 @@ magnitude.  For \texttt{values} the return is a vector containing the
 distinct values in the input vector, sorted in ascending order.
 
 Several matrix-specific functions are available.  These functions fall
-into five categories:
+into the following categories:
 %
 \begin{enumerate}
 \item Those taking a single matrix as argument and returning a scalar.
@@ -795,6 +795,13 @@ must have the same number of rows, $n$, and either one or two columns.
 The first column contains the real part and the second (if present)
 the imaginary part.  The return value is an $n \times 2$ matrix, or,
 if the result has no imaginary part, an $n$-vector.
+
+The function \texttt{mxtab} basically does the same work as the
+\texttt{xtab} command, except that you get the result as a matrix.  It
+takes two $T\times 1$ matrices, $x$ and $y$, as arguments, and returns
+a matrix holding the cross tabulation of the values contained in $x$
+(by row) and $y$ (by column). These should be integer values.  You can
+also give two series as arguments to this function.
 
 
 \subsection{Multiple-return matrix functions}
