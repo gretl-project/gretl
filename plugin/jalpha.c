@@ -222,7 +222,7 @@ alpha_calc_full (GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *B = NULL;
-    int vnorm = get_vecm_norm();
+    int vnorm = libset_get_int(VECM_NORM);
 
     if (jv->Beta == NULL) {
 	jv->Beta = gretl_matrix_copy(M);

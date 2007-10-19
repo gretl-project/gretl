@@ -462,7 +462,7 @@ int VAR_wald_omit_tests (GRETL_VAR *var, int ifc)
     gretl_matrix *V = NULL;
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
-    int hcv = get_hc_version();
+    int hcv = libset_get_int(HC_VERSION);
     int p = var->order;
     int n = var->neqns;
     int g = var->ncoeff;

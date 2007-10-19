@@ -2053,7 +2053,7 @@ static int mle_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	BFGS_GRAD_FUNC gradfun = (s->mode == ANALYTIC_DERIVS)?
 	    get_mle_gradient : NULL;
-	int maxit = get_bfgs_maxiter();
+	int maxit = libset_get_int(BFGS_MAXITER);
 
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
@@ -2696,9 +2696,9 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     /* get tolerance from user setting or default */
     if (USES_BFGS(spec->ci)) {
-	spec->tol = libset_get_double("bfgs_toler");
+	spec->tol = libset_get_double(BFGS_TOLER);
     } else {
-	spec->tol = libset_get_double("nls_toler");
+	spec->tol = libset_get_double(NLS_TOLER);
     }
 
     pputs(prn, (spec->mode == NUMERIC_DERIVS)?
@@ -3210,12 +3210,12 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 	}
     }
 
-    umaxit = get_bfgs_maxiter();
+    umaxit = libset_get_int(BFGS_MAXITER);
     if (umaxit > 0) {
 	*maxit = umaxit;
     }
     
-    utol = libset_get_double("bfgs_toler");
+    utol = libset_get_double(BFGS_TOLER);
     if (utol != get_default_nls_toler()) {
 	/* it has actually been set */
 	*reltol = utol;
@@ -3654,7 +3654,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
-    if (libset_get_bool("use_lbfgs")) {
+    if (libset_get_bool(USE_LBFGS)) {
 	return LBFGS_max(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 
 			 crittype, gradfunc, data, 
@@ -3790,10 +3790,10 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
 	return NADBL;
     }
 
-    maxit = get_bfgs_maxiter();
-    tol = libset_get_double("bfgs_toler");
+    maxit = libset_get_int(BFGS_MAXITER);
+    tol = libset_get_double(BFGS_TOLER);
 
-    if (get_max_verbose()) {
+    if (libset_get_int(MAX_VERBOSE)) {
 	opt = OPT_V;
 	u.prn = prn;
     }

@@ -1426,9 +1426,9 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     show_or_hide_toolbar(want_toolbar);
 
     /* register these for session using libset apparatus */
-    libset_set_bool("use_qr", useqr);
-    libset_set_bool("use_cwd", usecwd);
-    libset_set_bool("shell_ok", shellok);
+    libset_set_bool(USE_QR, useqr);
+    libset_set_bool(USE_CWD, usecwd);
+    libset_set_bool(SHELL_OK, shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
@@ -1502,9 +1502,9 @@ static int common_read_rc_setup (void)
 {
     int err = 0;
 
-    libset_set_bool("use_qr", useqr);
-    libset_set_bool("use_cwd", usecwd);
-    libset_set_bool("shell_ok", shellok);
+    libset_set_bool(USE_QR, useqr);
+    libset_set_bool(USE_CWD, usecwd);
+    libset_set_bool(SHELL_OK, shellok);
     set_gp_colors();
     
     set_xsect_hccme(hc_xsect);

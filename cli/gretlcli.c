@@ -321,7 +321,7 @@ static void set_errfatal (int code)
     static int hoe = -1;
 
     if (hoe < 0) {
-	hoe = libset_get_bool("halt_on_err");
+	hoe = libset_get_bool(HALT_ON_ERR);
     }
 
     if (code == ERRFATAL_FORCE) {

@@ -469,7 +469,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 {
     gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
     gretl_matrix *X;
-    int prewhiten = libset_get_bool("prewhiten");
+    int prewhiten = libset_get_bool(PREWHITEN);
     int kern = get_hac_kernel();
     int T = pmod->nobs;
     int k = pmod->ncoeff;
@@ -519,7 +519,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	    goto bailout;
 	}
     } else if (kern == KERNEL_QS) {
-	bt = libset_get_double("qs_bandwidth");
+	bt = libset_get_double(QS_BANDWIDTH);
 	p = pmod->nobs - 1;
     } else {
 	p = get_hac_lag(T);
@@ -643,7 +643,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 	goto bailout;
     }  
 
-    hc_version = get_hc_version();
+    hc_version = libset_get_int(HC_VERSION);
     gretl_model_set_int(pmod, "hc", 1);
     if (hc_version > 0) {
 	gretl_model_set_int(pmod, "hc_version", hc_version);
@@ -960,7 +960,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     /* VCV and standard errors */
     if (opt & OPT_R) { 
 	gretl_model_set_int(pmod, "robust", 1);
-	if ((opt & OPT_T) && !libset_get_bool("force_hc")) {
+	if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
 	    qr_make_hac(pmod, Z, V);
 	} else {
 	    qr_make_hccme(pmod, Z, Q, V);
@@ -1026,7 +1026,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		err = panel_tsls_robust_vcv(pmod, Z, pdinfo);
 	    }
 	} else if (dataset_is_time_series(pdinfo) && 
-		   !libset_get_bool("force_hc")) {
+		   !libset_get_bool(FORCE_HC)) {
 	    gretl_model_set_int(pmod, "robust", 1);
 	    err = qr_make_hac(pmod, Z, V);
 	} else {

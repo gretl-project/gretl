@@ -186,7 +186,7 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *c = (job == V_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
-    int vnorm = get_vecm_norm();
+    int vnorm = libset_get_int(VECM_NORM);
     char xstr[32];
     int i, j, row;
     double x, y;
@@ -1079,7 +1079,7 @@ static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *H,
 			   int *do_stderrs)
 {
     if (H == NULL) {
-	int vnorm = get_vecm_norm();
+	int vnorm = libset_get_int(VECM_NORM);
 
 	if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
 	    if (do_stderrs != NULL) {

@@ -2846,11 +2846,11 @@ static void call_iters_dialog (GtkWidget *w, selector *sr)
     */
 
     if (1) {
-	iinfo.maxiters = get_bhhh_maxiter();
-	iinfo.tol = libset_get_double("bhhh_toler");
+	iinfo.maxiters = libset_get_int(BHHH_MAXITER);
+	iinfo.tol = libset_get_double(BHHH_TOLER);
     } else if (sr->code == NLS || sr->code == MLE || sr->code == GMM) {
 	iinfo.maxiters = 400; /* FIXME: 100*(n+1) or 200*(n+1) */
-	iinfo.tol = libset_get_double("nls_toler");
+	iinfo.tol = libset_get_double(NLS_TOLER);
     } 
     
     edit_dialog("Iterative estimation",

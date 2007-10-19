@@ -204,9 +204,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     valstr[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "shellok", valstr);
     if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
-	libset_set_bool("shell_ok", 1);
+	libset_set_bool(SHELL_OK, 1);
     } else {
-	libset_set_bool("shell_ok", 0);
+	libset_set_bool(SHELL_OK, 0);
     }
 
     gretl_www_init(ppaths->dbhost, dbproxy, use_proxy);
@@ -359,7 +359,7 @@ int gretl_shell (const char *arg)
     int async = 0;
     int err = 0;
 
-    if (!libset_get_bool("shell_ok")) {
+    if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
 	return 1;
     }

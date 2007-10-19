@@ -575,7 +575,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     var->ci = ci;
     var->order = order;
 
-    var->qr = libset_get_bool("use_qr");
+    var->qr = libset_get_bool(USE_QR);
     if (ci == VAR && (opt & OPT_R)) {
 	var->robust = 1;
     }
@@ -1255,7 +1255,7 @@ static int periods_from_pd (int pd)
 
 int default_VAR_horizon (const DATAINFO *pdinfo)
 {
-    int h = get_VAR_horizon();
+    int h = libset_get_int(HORIZON);
 
     if (h <= 0) {
 	h = periods_from_pd(pdinfo->pd);

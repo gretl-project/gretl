@@ -1070,7 +1070,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     double xx;
 
     if (opt & OPT_L) {
-	dig = get_long_digits();
+	dig = libset_get_int(LONGDIGITS);
 	opt = OPT_T;
     }
 
@@ -1536,7 +1536,7 @@ static void print_scalar (double x, const char *vname,
 	    pputc(prn, ' ');
 	}
 	if (opt & OPT_L) {
-	    pprintf(prn, "%#.*E", get_long_digits(), x);
+	    pprintf(prn, "%#.*E", libset_get_int(LONGDIGITS), x);
 	} else if (opt & OPT_T) {
 	    pprintf(prn, "%#.10E", x);
 	} else {

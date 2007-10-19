@@ -535,7 +535,7 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 	}
     }
 
-    if (libset_get_bool("use_cwd") || gretl_path_is_absolute(fname)) {
+    if (libset_get_bool(USE_CWD) || gretl_path_is_absolute(fname)) {
 	cmd->param = fname;
     } else {
 	cmd->param = gretl_strdup_printf("%s%s", gretl_user_dir(), fname);
@@ -2822,7 +2822,7 @@ int gretl_shell (const char *arg)
     void (*old2) (int);
     int pid, async = 0;
 
-    if (!libset_get_bool("shell_ok")) {
+    if (!libset_get_bool(SHELL_OK)) {
 	strcpy(gretl_errmsg, _("The shell command is not activated."));
 	return 1;
     }
@@ -3375,7 +3375,7 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 
     if (p != NULL && *p != '\0') {
 	free(cmd->param);
-	if (libset_get_bool("use_cwd") || gretl_path_is_absolute(p)) {
+	if (libset_get_bool(USE_CWD) || gretl_path_is_absolute(p)) {
 	    cmd->param = p;
 	} else {
 	    cmd->param = gretl_strdup_printf("%s%s", gretl_user_dir(), p);

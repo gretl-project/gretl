@@ -111,7 +111,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     } else if (ftype == FILTER_EMA) {
 	finfo->lambda = 0.1;
     } else if (ftype == FILTER_HP) {
-	finfo->lambda = libset_get_double("hp_lambda");
+	finfo->lambda = libset_get_double(HP_LAMBDA);
 	if (na(finfo->lambda)) {
 	    finfo->lambda = 100 * datainfo->pd * datainfo->pd;
 	}
@@ -825,11 +825,11 @@ static int calculate_filter (filter_info *finfo)
 	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
 	}
     } else if (finfo->ftype == FILTER_HP) {
-	double l0 = libset_get_double("hp_lambda");
+	double l0 = libset_get_double(HP_LAMBDA);
 
-	libset_set_double("hp_lambda", finfo->lambda);
+	libset_set_double(HP_LAMBDA, finfo->lambda);
 	err = hp_filter(x, fx, datainfo, OPT_T);
-	libset_set_double("hp_lambda", l0);
+	libset_set_double(HP_LAMBDA, l0);
     } else if (finfo->ftype == FILTER_BK) {
 	set_bkbp_k(finfo->k);
 	set_bkbp_periods(finfo->bkl, finfo->bku);

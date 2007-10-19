@@ -1165,7 +1165,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
 
     /* compute standard errors */
-    if ((opt & OPT_R) || libset_get_bool("use_qr")) {
+    if ((opt & OPT_R) || libset_get_bool(USE_QR)) {
 	/* QR decomp in force, or robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, pdinfo, opt);
 	if (tsls.errcode) {

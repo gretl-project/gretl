@@ -26,24 +26,52 @@ typedef enum {
     VCV_IM,
     VCV_OP,
     VCV_QML,
-    VCV_BW
+    VCV_BW,
+    VCV_MAX
 } VcvType;
 
 typedef enum {
     KERNEL_BARTLETT = 1,
     KERNEL_PARZEN,
-    KERNEL_QS
+    KERNEL_QS,
+    KERNEL_MAX
 } HACKernel;
 
 typedef enum {
     NORM_PHILLIPS,
     NORM_DIAG,
-    NORM_FIRST
+    NORM_FIRST,
+    NORM_MAX
 } VECMnorm;
+
+/* guard against consequences of typos */
+
+#define BFGS_MAXITER "bfgs_maxiter"
+#define BFGS_TOLER   "bfgs_toler"
+#define BHHH_MAXITER "bhhh_maxiter"
+#define BHHH_TOLER   "bhhh_toler"
+#define BOOTREP      "bootrep"
+#define FORCE_DECP   "force_decpoint"
+#define FORCE_HC     "force_hc"
+#define HALT_ON_ERR  "halt_on_err"
+#define HC_VERSION   "hc_version"
+#define HORIZON      "horizon"
+#define HP_LAMBDA    "hp_lambda"
+#define USE_LBFGS    "lbfgs"
+#define LONGDIGITS   "longdigits"
+#define MAX_VERBOSE  "max_verbose"
+#define NLS_TOLER    "nls_toler"
+#define PCSE         "pcse"
+#define PREWHITEN    "hac_prewhiten"
+#define QS_BANDWIDTH "qs_bandwidth"
+#define SHELL_OK     "shell_ok"
+#define USE_CWD      "use_cwd"
+#define USE_QR       "qr"
+#define VECM_NORM    "vecm_norm"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 
-#define set_nls_toler(x) (libset_set_double("nls_toler", x))
+#define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 
 int libset_init (void);
 void libset_cleanup (void);
@@ -58,6 +86,9 @@ void libset_set_bool (const char *s, int set);
 double libset_get_double (const char *s);
 int libset_set_double (const char *s, double x);
 
+int libset_get_int (const char *s);
+int libset_set_int (const char *s, int k);
+
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 void set_panel_hccme (const char *s);
@@ -66,7 +97,6 @@ void set_garch_robust_vcv (const char *s);
 int get_garch_vcv_version (void);
 int get_garch_robust_vcv_version (void);
 
-int get_hc_version (void);
 int get_hac_lag (int T);
 int get_hac_kernel (void);
 void set_hac_kernel (int k);
@@ -82,19 +112,9 @@ void unset_bkbp_periods (void);
 
 int gretl_get_text_pause (void);
 
-int get_bhhh_maxiter (void);
-int set_bhhh_maxiter (int n);
-
-int get_bfgs_maxiter (void);
-int set_bfgs_maxiter (int n);
-
 const gretl_matrix *get_init_vals (void);
 int n_init_vals (void);
 void free_init_vals (void);
-
-int get_VAR_horizon (void);
-
-int get_bootstrap_replications (void);
 
 void set_loop_on (void);
 void set_loop_off (void);
@@ -111,14 +131,6 @@ int gretl_echo_on (void);
 
 void set_gretl_messages (int e);
 int gretl_messages_on (void);
-
-int set_long_digits (int n);
-int get_long_digits (void);
-
-int set_max_verbose (int n);
-int get_max_verbose (void);
-
-int get_vecm_norm (void);
 
 void shelldir_init (void);
 char *get_shelldir (void);

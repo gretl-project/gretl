@@ -616,7 +616,7 @@ static int read_nist_nls_data (const char *fname)
 static void set_tolerance (void)
 {
     if (toler != 0.0) {
-	libset_set_double("nls_toler", toler); /* libset.c */
+	libset_set_double(NLS_TOLER, toler); /* libset.c */
     }
 }
 

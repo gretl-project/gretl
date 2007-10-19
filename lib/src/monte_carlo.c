@@ -2872,7 +2872,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	} /* end execution of commands within loop */
 
-	if (err && !libset_get_bool("halt_on_err")) {
+	if (err && !libset_get_bool(HALT_ON_ERR)) {
 	    errmsg(err, prn);
 	    err = 0;
 	}
@@ -2927,7 +2927,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	currloop = NULL;
     }
 
-    if (libset_get_bool("halt_on_err")) {
+    if (libset_get_bool(HALT_ON_ERR)) {
 	return err;
     } else {
 	return 0;

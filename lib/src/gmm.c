@@ -1444,7 +1444,7 @@ int gmm_calculate (nlspec *s, double *fvec, double *jac, PRN *prn)
     int full_grcount = 0;
     double itol = 1.0e-12, icrit = 1;
     double *oldcoeff = NULL;
-    int maxit = get_bfgs_maxiter();
+    int maxit = libset_get_int(BFGS_MAXITER);
     gretlopt iopt = s->opt;
     int outer_iters = 0;
     int outer_max = 1;
@@ -1590,11 +1590,11 @@ static void gmm_set_HAC_info (nlspec *s)
     hac_info *hinfo = &s->oc->hinfo;
 
     if (dataset_is_time_series(s->dinfo) && 
-	!libset_get_bool("force_hc")) {
-	hinfo->whiten = libset_get_bool("prewhiten");
+	!libset_get_bool(FORCE_HC)) {
+	hinfo->whiten = libset_get_bool(PREWHITEN);
 	hinfo->kern = get_hac_kernel();
 	if (hinfo->kern == KERNEL_QS) {
-	    hinfo->bt = libset_get_double("qs_bandwidth");
+	    hinfo->bt = libset_get_double(QS_BANDWIDTH);
 	    hinfo->h = s->nobs - 1;
 	} else {
 	    hinfo->h = get_hac_lag(s->nobs);

@@ -1214,7 +1214,7 @@ int gretl_set_paths (PATHS *ppaths, gretlopt opt)
 void gretl_maybe_switch_dir (const char *fname)
 {
     if (!g_path_is_absolute(fname)) {
-	if (dotpath(fname) || libset_get_bool("use_cwd")) {
+	if (dotpath(fname) || libset_get_bool(USE_CWD)) {
 	    char *sdir = get_shelldir();
 
 	    if (sdir != NULL) {

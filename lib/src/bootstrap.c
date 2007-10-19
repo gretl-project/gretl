@@ -194,7 +194,7 @@ static int make_bs_flags (gretlopt opt)
 int maybe_adjust_B (int B, double a, int flags)
 {
     if (B <= 0) {
-	B = get_bootstrap_replications();
+	B = libset_get_int(BOOTREP);
     }
 
     if (flags & BOOT_CI) {
