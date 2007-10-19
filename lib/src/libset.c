@@ -97,6 +97,25 @@ struct set_vars_ {
     char shelldir[MAXLEN];      /* working dir for shell commands */
 };
 
+#define libset_boolvar(s) (!strcmp(s, "echo") || \
+                           !strcmp(s, "force_decpoint") || \
+			   !strcmp(s, "force_hc") || \
+			   !strcmp(s, "halt_on_error") || \
+			   !strcmp(s, "lbfgs") || \
+			   !strcmp(s, "messages") || \
+			   !strcmp(s, "pcse") || \
+			   !strcmp(s, "hac_prewhiten") || \
+			   !strcmp(s, "qr") || \
+			   !strcmp(s, "shell_ok") || \
+			   !strcmp(s, "use_cwd"))
+
+#define libset_double(s) (!strcmp(s, "bfgs_toler") || \
+			  !strcmp(s, "bhhh_toler") || \
+			  !strcmp(s, "hp_lambda") || \
+			  !strcmp(s, "nls_toler") || \
+			  !strcmp(s, "qs_bandwidth"))
+
+
 /* global state */
 set_vars *state;
 
@@ -406,35 +425,6 @@ enum {
     BFGS
 };
 
-static int real_set_toler (double tol, int c)
-{
-    int err = 0;
-
-    if (check_for_state()) {
-	return E_ALLOC;
-    }
-
-    if (tol <= 0.0) {
-	err = 1;
-    } else if (c == BFGS) {
-	state->bfgs_opts.toler = tol;
-    } else {
-	state->bhhh_opts.toler = tol;
-    }
-
-    return err;
-}
-
-int set_bhhh_toler (double tol)
-{
-    return real_set_toler(tol, BHHH);
-}
-
-int set_bfgs_toler (double tol)
-{
-    return real_set_toler(tol, BFGS);
-}
-
 static int real_set_maxiter (int n, int c)
 {
     int err = 0;
@@ -508,23 +498,6 @@ int get_bootstrap_replications (void)
     } else {
 	return state->bootrep;
     }
-}
-
-int set_nls_toler (double tol)
-{
-    int err = 0;
-
-    if (check_for_state()) {
-	return E_ALLOC;
-    }
-
-    if (tol <= 0.0) {
-	err = 1;
-    } else {
-	state->nls_toler = tol;
-    }
-
-    return err;
 }
 
 static int get_or_set_garch_vcv (int v)
@@ -750,14 +723,6 @@ void set_hac_kernel (int k)
 
     if (k >= KERNEL_BARTLETT && k <= KERNEL_QS) {
 	state->ropts.hkern = k;
-    }
-}
-
-void set_qs_bandwidth (double w)
-{
-    check_for_state();
-    if (w >= 0.0) {
-	state->ropts.qsband = w;
     }
 }
 
@@ -1272,6 +1237,12 @@ static int display_settings (PRN *prn)
     return 0;
 }
 
+#define default_ok(s) (!strcmp(s, "bfgs_toler") || \
+                       !strcmp(s, "bhhh_toler") || \
+                       !strcmp(s, "hp_lambda"))
+
+#define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
+
 #define boolean_on(s) (!strcmp(s, "on") || !strcmp(s, "1") || \
                        !strcmp(s, "true"))
 
@@ -1317,22 +1288,26 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
     } else if (nw == 2) {
 	lower(setarg);
 
-	/* set command echo on/off */
-	if (!strcmp(setobj, "echo")) {
-	    if (boolean_off(setarg)) {
-		state->flags &= ~STATE_ECHO_ON;
-		err = 0;
+	if (libset_boolvar(setobj)) {
+	    if (!strcmp(setobj, "shell_ok")) {
+		pprintf(prn, "You can only set this variable "
+			"via the gretl GUI\n");
 	    } else if (boolean_on(setarg)) {
-		state->flags |= STATE_ECHO_ON;
+		libset_set_bool(setobj, 1);
+		err = 0;
+	    } else if (boolean_off(setarg)) {
+		libset_set_bool(setobj, 0);
 		err = 0;
 	    }
-	} else if (!strcmp(setobj, "messages")) {
-	    if (boolean_off(setarg)) {
-		state->flags &= ~STATE_MSGS_ON;
+	} else if (libset_double(setobj)) {
+	    if (default_ok(setobj) && default_str(setarg)) {
+		libset_set_double(setobj, NADBL);
 		err = 0;
-	    } else if (boolean_on(setarg)) {
-		state->flags |= STATE_MSGS_ON;
-		err = 0;
+	    } else {
+		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
+		if (!err) {
+		    err = libset_set_double(setobj, x);
+		}
 	    }
 	} else if (!strcmp(setobj, "csv_delim")) {
 	    char c = delim_from_arg(setarg);
@@ -1363,15 +1338,6 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	} else if (!strcmp(setobj, "hc_version")) {
 	    /* set HCCM variant */
 	    err = parse_hc_variant(setarg);
-	} else if (!strcmp(setobj, "force_hc")) {
-	    /* use HCCM, not HAC, even for time series */
-	    if (boolean_on(setarg)) { 
-		libset_set_bool("force_hc", 1);
-		err = 0;
-	    } else if (boolean_off(setarg)) { 
-		libset_set_bool("force_hc", 0);
-		err = 0;
-	    }
 	} else if (!strcmp(setobj, "hac_kernel")) {
 	    if (!strcmp(setarg, "bartlett")) {
 		state->ropts.hkern = KERNEL_BARTLETT;
@@ -1381,14 +1347,6 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		err = 0;
 	    } else if (!strcmp(setarg, "qs")) {
 		state->ropts.hkern = KERNEL_QS;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "hac_prewhiten")) {
-	    if (boolean_on(setarg)) { 
-		libset_set_bool("prewhiten", 1);
-		err = 0;
-	    } else if (boolean_off(setarg)) { 
-		libset_set_bool("prewhiten", 0);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "vecm_norm")) {
@@ -1402,66 +1360,9 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		state->vecm_norm = NORM_FIRST;
 		err = 0;
 	    }
-	} else if (!strcmp(setobj, "pcse")) {
-	    if (boolean_on(setarg)) { 
-		libset_set_bool("pcse", 1);
-		err = 0;
-	    } else if (boolean_off(setarg)) { 
-		libset_set_bool("pcse", 0);
-		err = 0;
-	    }	    
-	} else if (!strcmp(setobj, "qs_bandwidth")) {
-	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
-	    if (!err) {
-		state->ropts.qsband = x;
-	    }	    
 	} else if (!strcmp(setobj, "garch_vcv")) {
 	    /* set GARCH VCV variant */
 	    err = set_garch_vcv_variant(setarg);
-	} else if (!strcmp(setobj, "qr")) {
-	    /* switch QR vs Cholesky decomposition */
-	    if (boolean_on(setarg)) {
-		state->use_qr = 1;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->use_qr = 0;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "lbfgs")) {
-	    /* switch LBFGS vs plain BFGS */
-	    if (boolean_on(setarg)) {
-		state->use_lbfgs = 1;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->use_lbfgs = 0;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "use_cwd")) {
-	    if (boolean_on(setarg)) {
-		state->flags |= STATE_USE_CWD;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->flags &= ~STATE_USE_CWD;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "force_decpoint")) {
-	    if (boolean_on(setarg)) {
-		state->flags |= STATE_FORCE_DECPOINT;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->flags &= ~STATE_FORCE_DECPOINT;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "halt_on_error")) {
-	    if (boolean_on(setarg)) {
-		state->halt_on_err = 1;
-		err = 0;
-	    } else if (boolean_off(setarg)) {
-		state->halt_on_err = 0;
-		err = 0;
-	    }
-	} else if (!strcmp(setobj, "shell_ok")) {
-	    pprintf(prn, "You can only set this variable via the gretl GUI\n");
 	} else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
 	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
@@ -1470,17 +1371,6 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 		pprintf(prn, 
 			_("Pseudo-random number generator seeded with %d\n"), k);
 		state->seed = k;
-	    }
-	} else if (!strcmp(setobj, "hp_lambda")) {
-	    /* Hodrick-Prescott filter parameter */
-	    if (!strcmp(setarg, "auto")) {
-		state->hp_lambda = NADBL;
-		err = 0;
-	    } else {
-		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
-		if (!err) {
-		    state->hp_lambda = x;
-		}
 	    }
 	} else if (!strcmp(setobj, "bkbp_k")) {
 	    /* Baxter-King approximation order */
@@ -1511,36 +1401,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    if (!err) {
 		state->bootrep = k;
 	    } 
-	} else if (!strcmp(setobj, "nls_toler")) {
-	    err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
-	    if (!err) {
-		err = set_nls_toler(x);
-	    }
-	} else if (!strcmp(setobj, "bhhh_toler")) {
-	    /* Tolerance for BHHH (ARMA, Tobit) */
-	    if (!strcmp(setarg, "default")) {
-		set_bhhh_toler(NADBL);
-		err = 0;
-	    } else {
-		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
-		if (!err) {
-		    err = set_bhhh_toler(x);
-		}
-	    }
 	} else if (!strcmp(setobj, "bhhh_maxiter")) {
 	    /* Maximum iterations for BHHH (ARMA, Tobit) */
 	    if (isdigit(*setarg)) {
 		err = set_bhhh_maxiter(atoi(setarg));
-	    }
-	} else if (!strcmp(setobj, "bfgs_toler")) {
-	    if (!strcmp(setarg, "default")) {
-		set_bfgs_toler(NADBL);
-		err = 0;
-	    } else {
-		err = libset_get_scalar(setarg, Z, pdinfo, NULL, &x);
-		if (!err) {
-		    err = set_bfgs_toler(x);
-		}
 	    }
 	} else if (!strcmp(setobj, "bfgs_maxiter")) {
 	    err = libset_get_scalar(setarg, Z, pdinfo, &k, NULL);
@@ -1603,6 +1467,38 @@ double libset_get_double (const char *s)
     }
 }
 
+int libset_set_double (const char *s, double x)
+{
+    int err = 0;
+
+    if (check_for_state()) {
+	return 1;
+    }
+
+    /* all the libset double vals must be positive */
+    if (x <= 0.0) {
+	return E_DATA;
+    }
+
+    if (!strcmp(s, "qs_bandwidth")) {
+	state->ropts.qsband = x;
+    } else if (!strcmp(s, "nls_toler")) {
+	state->nls_toler = x;
+    } else if (!strcmp(s, "bhhh_toler")) {
+	state->bhhh_opts.toler = x;
+    } else if (!strcmp(s, "bfgs_toler")) {
+	state->bfgs_opts.toler = x;
+    } else if (!strcmp(s, "hp_lambda")) {
+	state->hp_lambda = x;
+    } else {
+	fprintf(stderr, "libset_set_double: unrecognized "
+		"variable '%s'\n", s);	
+	err = E_UNKVAR;
+    }
+
+    return err;
+}
+
 #ifndef WIN32
 static int read_cli_shell_status (void)
 {
@@ -1634,16 +1530,22 @@ int libset_get_bool (const char *s)
 	return 0;
     }
 
-    if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
+    if (!strcmp(s, "echo")) {
+	return flag_to_bool(state, STATE_ECHO_ON);
+    } else if (!strcmp(s, "messages")) {
+	return flag_to_bool(state, STATE_MSGS_ON);
+    } else if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
 	if (is_unset(state->use_qr)) {
 	    state->use_qr = bool_from_env("GRETL_USE_QR");
 	} 
 	return state->use_qr;
-    } else if (!strcmp(s, "use_lbfgs")) {
+    } else if (!strcmp(s, "use_lbfgs") || !strcmp(s, "lbfgs")) {
 	if (is_unset(state->use_lbfgs)) {
 	    state->use_lbfgs = bool_from_env("GRETL_USE_LBFGS");
 	}
 	return state->use_lbfgs;
+    } else if (!strcmp(s, "force_decpoint")) {
+	return flag_to_bool(state, STATE_FORCE_DECPOINT);
     } else if (!strcmp(s, "use_cwd")) {
 	return flag_to_bool(state, STATE_USE_CWD);
     } else if (!strcmp(s, "halt_on_err") ||
@@ -1677,7 +1579,19 @@ void libset_set_bool (const char *s, int set)
 {
     check_for_state();
 
-    if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
+    if (!strcmp(s, "echo")) {
+	if (set) {
+	    state->flags |= STATE_ECHO_ON;
+	} else {
+	    state->flags &= ~STATE_ECHO_ON;
+	}
+    } else if (!strcmp(s, "messages")) {
+	if (set) {
+	    state->flags |= STATE_MSGS_ON;
+	} else {
+	    state->flags &= ~STATE_MSGS_ON;
+	}	
+    } else if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
 	/* use Cholesky or QR for regression? */
 	state->use_qr = set;
     } else if (!strcmp(s, "use_lbfgs")) {
@@ -1689,6 +1603,12 @@ void libset_set_bool (const char *s, int set)
 	} else {
 	    state->flags &= ~STATE_USE_CWD;
 	}
+    } else if (!strcmp(s, "force_decpoint")) {
+	if (set) {
+	    state->flags |= STATE_FORCE_DECPOINT;
+	} else {
+	    state->flags &= ~STATE_FORCE_DECPOINT;
+	}	
     } else if (!strcmp(s, "shell_ok")) {
 	state->shell_ok = set;
     } else if (!strcmp(s, "force_hc")) {

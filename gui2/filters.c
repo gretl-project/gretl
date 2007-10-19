@@ -825,11 +825,11 @@ static int calculate_filter (filter_info *finfo)
 	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
 	}
     } else if (finfo->ftype == FILTER_HP) {
-	double l = libset_get_double("hp_lambda");
+	double l0 = libset_get_double("hp_lambda");
 
-	set_hp_lambda(finfo->lambda);
+	libset_set_double("hp_lambda", finfo->lambda);
 	err = hp_filter(x, fx, datainfo, OPT_T);
-	set_hp_lambda(l);
+	libset_set_double("hp_lambda", l0);
     } else if (finfo->ftype == FILTER_BK) {
 	set_bkbp_k(finfo->k);
 	set_bkbp_periods(finfo->bkl, finfo->bku);

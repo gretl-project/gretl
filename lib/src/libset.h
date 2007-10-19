@@ -43,6 +43,8 @@ typedef enum {
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 
+#define set_nls_toler(x) (libset_set_double("nls_toler", x))
+
 int libset_init (void);
 void libset_cleanup (void);
 int libset_restore_state_zero (DATAINFO *pdinfo);
@@ -54,6 +56,7 @@ int libset_get_bool (const char *s);
 void libset_set_bool (const char *s, int set);
 
 double libset_get_double (const char *s);
+int libset_set_double (const char *s, double x);
 
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
@@ -68,10 +71,7 @@ int get_hac_lag (int T);
 int get_hac_kernel (void);
 void set_hac_kernel (int k);
 
-void set_qs_bandwidth (double w);
 int data_based_hac_bandwidth (void);
-
-int set_hp_lambda (double d);
 
 int get_bkbp_k (const DATAINFO *pdinfo);
 void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u);
@@ -83,11 +83,9 @@ void unset_bkbp_periods (void);
 int gretl_get_text_pause (void);
 
 int get_bhhh_maxiter (void);
-int set_bhhh_toler (double tol);
 int set_bhhh_maxiter (int n);
 
 int get_bfgs_maxiter (void);
-int set_bfgs_toler (double tol);
 int set_bfgs_maxiter (int n);
 
 const gretl_matrix *get_init_vals (void);
@@ -97,8 +95,6 @@ void free_init_vals (void);
 int get_VAR_horizon (void);
 
 int get_bootstrap_replications (void);
-
-int set_nls_toler (double tol);
 
 void set_loop_on (void);
 void set_loop_off (void);
