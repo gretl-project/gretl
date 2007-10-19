@@ -1080,6 +1080,7 @@ static int display_settings (PRN *prn)
 
     pprintf(prn, " longdigits = %d\n", state->longdigits);
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
+    libset_get_bool(SHELL_OK); /* checks files */
     pprintf(prn, " shell_ok = %d\n", flag_to_bool(state, STATE_SHELL_OK));
 
     if (*state->shelldir) {
