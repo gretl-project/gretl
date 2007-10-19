@@ -50,17 +50,10 @@ int libset_restore_state_zero (DATAINFO *pdinfo);
 int push_program_state (void);
 int pop_program_state (void);
 
-void set_use_qr (int set);
-int get_use_qr (void);
+int libset_get_bool (const char *s);
+void libset_set_bool (const char *s, int set);
 
-void set_use_lbfgs (int set);
-int get_use_lbfgs (void);
-
-void set_use_cwd (int set);
-int get_use_cwd (void);
-
-void set_shell_ok (int set);
-int get_shell_ok (void);
+double libset_get_double (const char *s);
 
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
@@ -70,26 +63,14 @@ void set_garch_robust_vcv (const char *s);
 int get_garch_vcv_version (void);
 int get_garch_robust_vcv_version (void);
 
-int get_force_hc (void);
 int get_hc_version (void);
 int get_hac_lag (int T);
 int get_hac_kernel (void);
 void set_hac_kernel (int k);
 
-int get_hac_prewhiten (void);
-void set_hac_prewhiten (int w);
-
-int get_panel_beck_katz (void);
-void set_panel_beck_katz (int b);
-
-double get_qs_bandwidth (void);
 void set_qs_bandwidth (double w);
-
 int data_based_hac_bandwidth (void);
 
-int get_halt_on_error (void);
-
-double get_hp_lambda (void);
 int set_hp_lambda (double d);
 
 int get_bkbp_k (const DATAINFO *pdinfo);
@@ -101,12 +82,10 @@ void unset_bkbp_periods (void);
 
 int gretl_get_text_pause (void);
 
-double get_bhhh_toler (void);
 int get_bhhh_maxiter (void);
 int set_bhhh_toler (double tol);
 int set_bhhh_maxiter (int n);
 
-double get_bfgs_toler (void);
 int get_bfgs_maxiter (void);
 int set_bfgs_toler (double tol);
 int set_bfgs_maxiter (int n);
@@ -119,7 +98,6 @@ int get_VAR_horizon (void);
 
 int get_bootstrap_replications (void);
 
-double get_nls_toler (void);
 int set_nls_toler (double tol);
 
 void set_loop_on (void);

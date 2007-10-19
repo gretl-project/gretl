@@ -2696,9 +2696,9 @@ static MODEL real_nls (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 
     /* get tolerance from user setting or default */
     if (USES_BFGS(spec->ci)) {
-	spec->tol = get_bfgs_toler();
+	spec->tol = libset_get_double("bfgs_toler");
     } else {
-	spec->tol = get_nls_toler();
+	spec->tol = libset_get_double("nls_toler");
     }
 
     pputs(prn, (spec->mode == NUMERIC_DERIVS)?
@@ -3215,7 +3215,7 @@ static void BFGS_get_user_values (double *b, int n, int *maxit,
 	*maxit = umaxit;
     }
     
-    utol = get_bfgs_toler();
+    utol = libset_get_double("bfgs_toler");
     if (utol != get_default_nls_toler()) {
 	/* it has actually been set */
 	*reltol = utol;
@@ -3654,7 +3654,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn)
 {
-    if (get_use_lbfgs()) {
+    if (libset_get_bool("use_lbfgs")) {
 	return LBFGS_max(b, n, maxit, reltol,
 			 fncount, grcount, cfunc, 
 			 crittype, gradfunc, data, 
@@ -3791,7 +3791,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     }
 
     maxit = get_bfgs_maxiter();
-    tol = get_bfgs_toler();
+    tol = libset_get_double("bfgs_toler");
 
     if (get_max_verbose()) {
 	opt = OPT_V;

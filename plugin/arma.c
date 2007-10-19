@@ -2447,7 +2447,7 @@ static int user_arma_init (double *coeff, struct arma_info *ainfo,
 static model_info *
 set_up_arma_model_info (struct arma_info *ainfo)
 {
-    double tol = get_bhhh_toler();
+    double tol = libset_get_double("bhhh_toler");
     model_info *arma;
 
     if (na(tol)) {

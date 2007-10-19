@@ -1589,11 +1589,12 @@ static void gmm_set_HAC_info (nlspec *s)
 {
     hac_info *hinfo = &s->oc->hinfo;
 
-    if (dataset_is_time_series(s->dinfo) && !get_force_hc()) {
-	hinfo->whiten = get_hac_prewhiten();
+    if (dataset_is_time_series(s->dinfo) && 
+	!libset_get_bool("force_hc")) {
+	hinfo->whiten = libset_get_bool("prewhiten");
 	hinfo->kern = get_hac_kernel();
 	if (hinfo->kern == KERNEL_QS) {
-	    hinfo->bt = get_qs_bandwidth();
+	    hinfo->bt = libset_get_double("qs_bandwidth");
 	    hinfo->h = s->nobs - 1;
 	} else {
 	    hinfo->h = get_hac_lag(s->nobs);

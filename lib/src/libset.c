@@ -279,15 +279,6 @@ int get_hc_version (void)
     }
 }
 
-double get_hp_lambda (void)
-{
-    if (check_for_state()) {
-	return 0.0;
-    } else {
-	return state->hp_lambda;
-    }
-}
-
 int set_hp_lambda (double d)
 {
     if (check_for_state()) {
@@ -392,15 +383,6 @@ void unset_bkbp_periods (void)
     state->bkopts.periods[1] = UNSET_INT;
 }
 
-double get_bhhh_toler (void)
-{
-    if (check_for_state()) {
-	return 1.0;
-    }
-
-    return state->bhhh_opts.toler;
-}
-
 int get_bhhh_maxiter (void)
 {
     if (check_for_state()) {
@@ -408,19 +390,6 @@ int get_bhhh_maxiter (void)
     }
 
     return state->bhhh_opts.maxiter;
-}
-
-double get_bfgs_toler (void)
-{
-    if (check_for_state()) {
-	return 1.0;
-    }
-
-    if (na(state->bfgs_opts.toler)) {
-	state->bfgs_opts.toler = get_default_nls_toler();
-    }
-
-    return state->bfgs_opts.toler;
 }
 
 int get_bfgs_maxiter (void)
@@ -541,19 +510,6 @@ int get_bootstrap_replications (void)
     }
 }
 
-double get_nls_toler (void)
-{
-    if (check_for_state()) {
-	return 1.0;
-    }
-
-    if (na(state->nls_toler)) {
-	state->nls_toler = get_default_nls_toler();
-    }
-
-    return state->nls_toler;
-}
-
 int set_nls_toler (double tol)
 {
     int err = 0;
@@ -569,19 +525,6 @@ int set_nls_toler (double tol)
     }
 
     return err;
-}
-
-static int get_or_set_force_hc (int f)
-{
-    if (check_for_state()) {
-	return 0;
-    }
-
-    if (f >= 0) {
-	state->ropts.force_hc = f;
-    }
-
-    return state->ropts.force_hc;
 }
 
 static int get_or_set_garch_vcv (int v)
@@ -664,16 +607,6 @@ int get_garch_vcv_version (void)
 int get_garch_robust_vcv_version (void)
 {
     return get_or_set_garch_robust_vcv(-1);
-}
-
-static void set_force_hc (int f)
-{
-    get_or_set_force_hc(f);
-}
-
-int get_force_hc (void)
-{
-    return get_or_set_force_hc(-1);
 }
 
 void set_gretl_echo (int e)
@@ -817,44 +750,6 @@ void set_hac_kernel (int k)
 
     if (k >= KERNEL_BARTLETT && k <= KERNEL_QS) {
 	state->ropts.hkern = k;
-    }
-}
-
-int get_hac_prewhiten (void)
-{
-    check_for_state();
-
-    return state->ropts.prewhite;
-}
-
-void set_hac_prewhiten (int w)
-{
-    check_for_state();
-    state->ropts.prewhite = (w != 0);
-}
-
-int get_panel_beck_katz (void)
-{
-    check_for_state();
-
-    return state->ropts.pcse;
-}
-
-void set_panel_beck_katz (int b)
-{
-    check_for_state();
-    state->ropts.pcse = (b != 0);
-}
-
-double get_qs_bandwidth (void)
-{
-    check_for_state();
-
-    if (!na(state->ropts.qsband) && state->ropts.qsband > 0) {
-	return state->ropts.qsband;
-    } else {
-	/* what's a sensible default here? */
-	return 2.0;
     }
 }
 
@@ -1022,9 +917,9 @@ void set_tseries_hccme (const char *s)
 
     lower(scpy);
     if (parse_hc_variant(scpy) == 0) {
-	set_force_hc(1);
+	libset_set_bool("force_hc", 1);
     } else {
-	set_force_hc(0);
+	libset_set_bool("force_hc", 0);
     }
     free(scpy);
 }
@@ -1255,7 +1150,6 @@ static int display_settings (PRN *prn)
 {
     double dval;
     unsigned int uval;
-    int ival;
 
     pputs(prn, _("Variables that can be set using \"set\""));
     pputs(prn, " (");
@@ -1269,7 +1163,7 @@ static int display_settings (PRN *prn)
 
     libset_header(_("Numerical methods"), prn);
 
-    dval = get_bfgs_toler();
+    dval = libset_get_double("bfgs_toler");
     if (na(dval)) {
 	pputs(prn, " bfgs_toler = default\n");
     } else {
@@ -1277,7 +1171,7 @@ static int display_settings (PRN *prn)
     }
     pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
 
-    dval = get_bhhh_toler();
+    dval = libset_get_double("bhhh_toler");
     if (na(dval)) {
 	pputs(prn, " bhhh_toler = default\n");
     } else {
@@ -1285,14 +1179,14 @@ static int display_settings (PRN *prn)
     }
     pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
 
-    ival = get_use_lbfgs(); /* checks env */
+    libset_get_bool("use_lbfgs"); /* checks env */
     pprintf(prn, " lbfgs = %d\n", state->use_lbfgs);
 
     print_initvals(state->initvals, prn);
 
-    pprintf(prn, " nls_toler = %g\n", get_nls_toler());
+    pprintf(prn, " nls_toler = %g\n", libset_get_double("nls_toler"));
 
-    ival = get_use_qr(); /* checks env */
+    libset_get_bool("use_qr"); /* checks env */
     pprintf(prn, " qr = %d\n", state->use_qr);
 
     libset_header(_("Random number generation"), prn);
@@ -1360,12 +1254,12 @@ static int display_settings (PRN *prn)
     pprintf(prn, " force_decpoint = %d\n", 
 	    flag_to_bool(state, STATE_FORCE_DECPOINT));
 
-    ival = get_halt_on_error(); /* checks env */
+    libset_get_bool("halt_on_err"); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_err);
 
     pprintf(prn, " longdigits = %d\n", state->longdigits);
     pprintf(prn, " max_verbose = %d\n", state->max_verbose);
-    pprintf(prn, " shell_ok = %d\n", get_shell_ok());
+    pprintf(prn, " shell_ok = %d\n", libset_get_bool("shell_ok"));
 
     if (*state->shelldir) {
 	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
@@ -1472,10 +1366,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	} else if (!strcmp(setobj, "force_hc")) {
 	    /* use HCCM, not HAC, even for time series */
 	    if (boolean_on(setarg)) { 
-		set_force_hc(1);
+		libset_set_bool("force_hc", 1);
 		err = 0;
 	    } else if (boolean_off(setarg)) { 
-		set_force_hc(0);
+		libset_set_bool("force_hc", 0);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hac_kernel")) {
@@ -1491,10 +1385,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    }
 	} else if (!strcmp(setobj, "hac_prewhiten")) {
 	    if (boolean_on(setarg)) { 
-		set_hac_prewhiten(1);
+		libset_set_bool("prewhiten", 1);
 		err = 0;
 	    } else if (boolean_off(setarg)) { 
-		set_hac_prewhiten(0);
+		libset_set_bool("prewhiten", 0);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "vecm_norm")) {
@@ -1510,10 +1404,10 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    }
 	} else if (!strcmp(setobj, "pcse")) {
 	    if (boolean_on(setarg)) { 
-		set_panel_beck_katz(1);
+		libset_set_bool("pcse", 1);
 		err = 0;
 	    } else if (boolean_off(setarg)) { 
-		set_panel_beck_katz(0);
+		libset_set_bool("pcse", 0);
 		err = 0;
 	    }	    
 	} else if (!strcmp(setobj, "qs_bandwidth")) {
@@ -1675,114 +1569,38 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
     return err;
 }
 
-/* use Cholesky or QR for regression? */
-
-void set_use_qr (int set)
-{
-    check_for_state();
-
-    if (state != NULL) {
-	state->use_qr = set;
-    }
-}
-
-int get_use_qr (void)
-{
-    if (check_for_state()) {
-	return 0;
-    }
-
-#if PDEBUG
-    fprintf(stderr, "get_use_qr: state = %p\n", (void *) state);
-#endif
-
-    if (is_unset(state->use_qr)) {
-	char *s = getenv("GRETL_USE_QR");
-
-	if (s != NULL && *s != '\0' && *s != '0') {
-	    state->use_qr = 1;
-	} else {
-	    state->use_qr = 0;
-	}
-    } 
-
-    return state->use_qr;
-}
-
-/* use limited-memory or plain BFGS? */
-
-void set_use_lbfgs (int set)
-{
-    check_for_state();
-
-    if (state != NULL) {
-	state->use_lbfgs = set;
-    }
-}
-
-int get_use_lbfgs (void)
-{
-    if (check_for_state()) {
-	return 0;
-    }
-
-    if (is_unset(state->use_lbfgs)) {
-	char *s = getenv("GRETL_USE_LBFGS");
-
-	if (s != NULL && *s != '\0' && *s != '0') {
-	    state->use_lbfgs = 1;
-	} else {
-	    state->use_lbfgs = 0;
-	}
-    } 
-
-    return state->use_lbfgs;
-}
-
-void set_use_cwd (int set)
-{
-    check_for_state();
-
-    if (state != NULL) {
-	if (set) {
-	    state->flags |= STATE_USE_CWD;
-	} else {
-	    state->flags &= ~STATE_USE_CWD;
-	}
-    }
-}
-
-int get_use_cwd (void)
-{
-    if (check_for_state()) {
-	return 0;
-    }
-
-    return flag_to_bool(state, STATE_USE_CWD);
-}
-
-int get_halt_on_error (void)
+double libset_get_double (const char *s)
 {
     if (check_for_state()) {
 	return 1;
     }
 
-#if PDEBUG
-    fprintf(stderr, "get_halt_on_error: state = %p, halt_on_err = %d\n",
-	    (void *) state, state->halt_on_err);
-#endif
-
-    if (is_unset(state->halt_on_err)) {
-	char *s = getenv("GRETL_KEEP_GOING");
-
-	if (s != NULL && *s != '\0' && *s != '0') {
-	    state->halt_on_err = 0;
+    if (!strcmp(s, "qs_bandwidth")) {
+	if (!na(state->ropts.qsband) && state->ropts.qsband > 0) {
+	    return state->ropts.qsband;
 	} else {
-	    state->halt_on_err = 1;
+	    /* what's a sensible default here? */
+	    return 2.0;
 	}
-    } 
-
-    return state->halt_on_err;
+    } else if (!strcmp(s, "nls_toler")) {
+	if (na(state->nls_toler)) {
+	    state->nls_toler = get_default_nls_toler();
+	}
+	return state->nls_toler;
+    } else if (!strcmp(s, "bhhh_toler")) {
+	return state->bhhh_opts.toler;
+    } else if (!strcmp(s, "bfgs_toler")) {
+	if (na(state->bfgs_opts.toler)) {
+	    state->bfgs_opts.toler = get_default_nls_toler();
+	}
+	return state->bfgs_opts.toler;
+    } else if (!strcmp(s, "hp_lambda")) {
+	return state->hp_lambda;
+    } else {
+	fprintf(stderr, "libset_get_double: unrecognized "
+		"variable '%s'\n", s);	
+	return 1;
+    }
 }
 
 #ifndef WIN32
@@ -1803,23 +1621,87 @@ static int read_cli_shell_status (void)
 }
 #endif
 
-void set_shell_ok (int set)
+static int bool_from_env (const char *s)
 {
-    check_for_state();
-    state->shell_ok = set;
+    char *e = getenv(s);
+
+    return (e != NULL && *e != '\0' && *e != '0');
 }
 
-int get_shell_ok (void)
+int libset_get_bool (const char *s)
+{
+    if (check_for_state()) {
+	return 0;
+    }
+
+    if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
+	if (is_unset(state->use_qr)) {
+	    state->use_qr = bool_from_env("GRETL_USE_QR");
+	} 
+	return state->use_qr;
+    } else if (!strcmp(s, "use_lbfgs")) {
+	if (is_unset(state->use_lbfgs)) {
+	    state->use_lbfgs = bool_from_env("GRETL_USE_LBFGS");
+	}
+	return state->use_lbfgs;
+    } else if (!strcmp(s, "use_cwd")) {
+	return flag_to_bool(state, STATE_USE_CWD);
+    } else if (!strcmp(s, "halt_on_err") ||
+	       !strcmp(s, "halt_on_error")) {
+	if (is_unset(state->halt_on_err)) {
+	    state->halt_on_err = !bool_from_env("GRETL_KEEP_GOING");
+	} 
+	return state->halt_on_err;
+    } else if (!strcmp(s, "shell_ok")) {
+#ifndef WIN32
+	if (!gretl_in_gui_mode()) {
+	    state->shell_ok = read_cli_shell_status();
+	}
+#endif
+	return state->shell_ok;
+    } else if (!strcmp(s, "force_hc")) {
+	return state->ropts.force_hc;
+    } else if (!strcmp(s, "prewhiten") ||
+	       !strcmp(s, "hac_prewhiten")) {
+	return state->ropts.prewhite;
+    } else if (!strcmp(s, "pcse")) {
+	return state->ropts.pcse;
+    } else {
+	fprintf(stderr, "libset_get_bool: unrecognized "
+		"variable '%s'\n", s);	
+	return 0;
+    }
+}
+
+void libset_set_bool (const char *s, int set)
 {
     check_for_state();
 
-#ifndef WIN32
-    if (!gretl_in_gui_mode()) {
-	state->shell_ok = read_cli_shell_status();
+    if (!strcmp(s, "use_qr") || !strcmp(s, "qr")) {
+	/* use Cholesky or QR for regression? */
+	state->use_qr = set;
+    } else if (!strcmp(s, "use_lbfgs")) {
+	/* use limited-memory or plain BFGS? */
+	state->use_lbfgs = set;
+    } else if (!strcmp(s, "use_cwd")) {
+	if (set) {
+	    state->flags |= STATE_USE_CWD;
+	} else {
+	    state->flags &= ~STATE_USE_CWD;
+	}
+    } else if (!strcmp(s, "shell_ok")) {
+	state->shell_ok = set;
+    } else if (!strcmp(s, "force_hc")) {
+	state->ropts.force_hc = set;
+    } else if (!strcmp(s, "prewhiten") ||
+	       !strcmp(s, "hac_prewhiten")) {
+	state->ropts.prewhite = set;
+    } else if (!strcmp(s, "pcse")) {
+	state->ropts.pcse = set;
+    } else {
+	fprintf(stderr, "libset_set_bool: unrecognized "
+		"variable '%s'\n", s);
     }
-#endif
-
-    return state->shell_ok;
 }
 
 /* Mechanism for pushing and popping program state for user-defined

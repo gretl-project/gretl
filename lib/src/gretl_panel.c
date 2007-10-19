@@ -503,7 +503,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
     }
 
     /* call the appropriate function */
-    if (get_panel_beck_katz()) {
+    if (libset_get_bool("pcse")) {
 	err = beck_katz_vcv(pmod, pan, Z, XX, W, V);
     } else {
 	err = arellano_vcv(pmod, pan, Z, XX, W, V);

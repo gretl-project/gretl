@@ -583,7 +583,7 @@ int maybe_pick_up_sorted_markers (parser *p)
 
 static double hp_lambda (const DATAINFO *pdinfo)
 {
-    double la = get_hp_lambda();
+    double la = libset_get_double("hp_lambda");
 
     if (na(la)) {
 	la = 100 * pdinfo->pd * pdinfo->pd;

@@ -575,7 +575,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     var->ci = ci;
     var->order = order;
 
-    var->qr = get_use_qr();
+    var->qr = libset_get_bool("use_qr");
     if (ci == VAR && (opt & OPT_R)) {
 	var->robust = 1;
     }

@@ -678,12 +678,12 @@ int bhhh_max (LL_FUNC loglik,
 	    gretl_matrix_free(G);
 	}
 	if (minfo->opts & PRESERVE_OPG_MODEL) {
-	    int qr_bak = get_use_qr();
+	    int qr_bak = libset_get_bool("use_qr");
 
 	    /* run OPG once more using QR, to get packed VCV */
-	    set_use_qr(1);
+	    libset_set_bool("use_qr", 1);
 	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A);
-	    set_use_qr(qr_bak);
+	    libset_set_bool("use_qr", qr_bak);
 	    minfo->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
 	    if (minfo->bign > minfo->t2) {

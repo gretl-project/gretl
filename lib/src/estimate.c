@@ -498,7 +498,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 
     /* can't do HAC VCV with missing obs in middle */
     if ((opts & OPT_R) && dataset_is_time_series(pdinfo) &&
-	!get_force_hc()) {
+	!libset_get_bool("force_hc")) {
 	reject_missing = 1;
     } 
 
@@ -695,7 +695,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int jackknife = 0;
-    int use_qr = get_use_qr();
+    int use_qr = libset_get_bool("use_qr");
     int pwe = (ci == PWE || (opt & OPT_P));
     int yno, i;
 
