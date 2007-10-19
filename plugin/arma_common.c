@@ -1,6 +1,6 @@
 #include "usermat.h"
 
-#define MAX_ARMA_ORDER 13
+#define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
 
 struct arma_info {

@@ -1468,48 +1468,61 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
     return X;
 }
 
+static int add_to_spec (char *targ, const char *src)
+{
+    if (strlen(src) + strlen(targ) > MAXLINE - 1) {
+	return 1;
+    } else {
+	strcat(targ, src);
+	return 0;
+    }
+}
+
 /* for ARMAX: write the component of the NLS specification
    that takes the form (y_{t-i} - X_{t-i} \beta)
 */
 
-static void y_Xb_at_lag (char *spec, struct arma_info *ainfo, 
-			 int narmax, int lag)
+static int y_Xb_at_lag (char *spec, struct arma_info *ainfo, 
+			int narmax, int lag)
 {
-    char term[32];
+    char chunk[32];
     int i, nt;
+    int err = 0;
 
     if (narmax == 0) {
-	sprintf(term, "y_%d", lag);
-	strcat(spec, term);
-	return;
+	sprintf(chunk, "y_%d", lag);
+	return add_to_spec(spec, chunk);
     }
 
     nt = ainfo->ifc + narmax;
 
-    sprintf(term, "(y_%d-", lag);
-    strcat(spec, term);
+    sprintf(chunk, "(y_%d-", lag);
 
     if (nt > 1) {
-	strcat(spec, "(");
+	strcat(chunk, "(");
     }
 
     if (ainfo->ifc) {
-	strcat(spec, "b0");
+	strcat(chunk, "b0");
     }
 
-    for (i=0; i<narmax; i++) {
+    err = add_to_spec(spec, chunk);
+
+    for (i=0; i<narmax && !err; i++) {
 	if (ainfo->ifc || i > 0) {
-	    strcat(spec, "+");
+	    err += add_to_spec(spec, "+");
 	} 
-	sprintf(term, "b%d*x%d_%d", i+1, i+1, lag);
-	strcat(spec, term);
+	sprintf(chunk, "b%d*x%d_%d", i+1, i+1, lag);
+	err += add_to_spec(spec, chunk); 
     }
 
     if (nt > 1) {
-	strcat(spec, "))");
+	err += add_to_spec(spec, "))");
     } else {
-	strcat(spec, ")");
+	err += add_to_spec(spec, ")");
     }
+
+    return err;
 }
 
 static void nls_kickstart (int b0, int by1, 
@@ -1630,16 +1643,18 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	strcat(fnstr, "0");
     } 
 
-    for (i=0; i<ainfo->p; i++) {
+    for (i=0; i<ainfo->p && !err; i++) {
 	if (AR_included(ainfo, i)) {
 	    lag = i + 1;
 	    sprintf(term, "+phi%d*", lag);
-	    strcat(fnstr, term);
-	    y_Xb_at_lag(fnstr, ainfo, narmax, lag);
+	    err = add_to_spec(fnstr, term);
+	    if (!err) {
+		err = y_Xb_at_lag(fnstr, ainfo, narmax, lag);
+	    }
 	}
     }
 
-    for (j=0; j<ainfo->P; j++) {
+    for (j=0; j<ainfo->P && !err; j++) {
 	sprintf(term, "+Phi%d*", j+1);
 	strcat(fnstr, term);
 	lag = (j + 1) * ainfo->pd;
@@ -1647,31 +1662,34 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	for (i=0; i<ainfo->p; i++) {
 	    if (AR_included(ainfo, i)) {
 		sprintf(term, "-phi%d*Phi%d*", i+1, j+1);
-		strcat(fnstr, term);
-		lag = (j+1) * ainfo->pd + (i+1);
-		y_Xb_at_lag(fnstr, ainfo, narmax, lag);
+		err = add_to_spec(fnstr, term);
+		if (!err) {
+		    lag = (j+1) * ainfo->pd + (i+1);
+		    y_Xb_at_lag(fnstr, ainfo, narmax, lag);
+		}
 	    }
 	}
     }
 
-    for (i=0; i<ainfo->nexo; i++) {
+    for (i=0; i<ainfo->nexo && !err; i++) {
 	sprintf(term, "+b%d*x%d", i+1, i+1);
-	strcat(fnstr, term);
+	err = add_to_spec(fnstr, term);
     }
 
-    nls_kickstart(b0, by1, amod, pZ, pdinfo);
+    if (!err) {
+	nls_kickstart(b0, by1, amod, pZ, pdinfo);
 
 #if AINIT_DEBUG
-    fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
-    for (i=0; i<plist[0]; i++) {
-	fprintf(stderr, "initial NLS b[%d] = %g\n",
-		i, (*pZ)[oldv+i][0]);
-    }
-    printlist(plist, "NLS param list");
+	fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
+	for (i=0; i<plist[0]; i++) {
+	    fprintf(stderr, "initial NLS b[%d] = %g\n",
+		    i, (*pZ)[oldv+i][0]);
+	}
+	printlist(plist, "NLS param list");
 #endif
 
-    err = nlspec_set_regression_function(spec, fnstr, pdinfo);
-    
+	err = nlspec_set_regression_function(spec, fnstr, pdinfo);
+    }
 
     if (!err) {
 	err = nlspec_add_param_list(spec, plist, (const double **) *pZ,

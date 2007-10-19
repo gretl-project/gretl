@@ -95,14 +95,7 @@ static int series_view_allocate (series_view *sview)
 	/* already allocated */
 	return 0;
     } else if (var_is_scalar(datainfo, sview->varnum)) {
-	sview->points = malloc(sizeof *sview->points);
-	if (sview->points == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    sview->points[0].val = Z[sview->varnum][0];
-	    sview->points[0].label[0] = '\0';
-	    sview->npoints = 1;
-	}
+	return 0;
     } else {
 	int t, tp, T = datainfo->t2 - datainfo->t1 + 1;
 	int v = sview->varnum;
@@ -202,6 +195,7 @@ static void series_view_print (windata_t *vwin)
     }
 	
     /* print formatted data to buffer */
+
     if (var_is_series(datainfo, sview->varnum)) {
 	pprintf(prn, "\n%*s ", obslen, _("Obs"));
 	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);

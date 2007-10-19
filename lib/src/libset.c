@@ -1244,49 +1244,79 @@ static const char *arg_from_delim (char c)
     return ret;
 }
 
+static void libset_header (char *s, PRN *prn) 
+{
+    pputs(prn, "\n --- ");
+    pputs(prn, s);
+    pputs(prn, " ---\n");
+}
+
 static int display_settings (PRN *prn)
 {
     double dval;
     unsigned int uval;
     int ival;
 
-    pputs(prn, "Variables that can be set using \"set\" (do \"help set\""
-	  " for details):\n");
+    pputs(prn, _("Variables that can be set using \"set\""));
+    pputs(prn, " (");
+    pputs(prn, _("\"help set\" for details"));
+    pputs(prn, "):\n");
+
+    libset_header(_("Program interaction"), prn);
 
     pprintf(prn, " echo = %d\n", flag_to_bool(state, STATE_ECHO_ON));
     pprintf(prn, " messages = %d\n", flag_to_bool(state, STATE_MSGS_ON));
 
-    ival = get_use_qr(); /* checks env */
-    pprintf(prn, " qr = %d\n", state->use_qr);
+    libset_header(_("Numerical methods"), prn);
+
+    dval = get_bfgs_toler();
+    if (na(dval)) {
+	pputs(prn, " bfgs_toler = default\n");
+    } else {
+	pprintf(prn, " bfgs_toler = %g\n", dval);
+    }
+    pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
+
+    dval = get_bhhh_toler();
+    if (na(dval)) {
+	pputs(prn, " bhhh_toler = default\n");
+    } else {
+	pprintf(prn, " bhhh_toler = %g\n", dval);
+    }
+    pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
 
     ival = get_use_lbfgs(); /* checks env */
     pprintf(prn, " lbfgs = %d\n", state->use_lbfgs);
 
-    pprintf(prn, " use_cwd = %d\n", flag_to_bool(state, STATE_USE_CWD));
-    pprintf(prn, " force_decpoint = %d\n", flag_to_bool(state, STATE_FORCE_DECPOINT));
+    print_initvals(state->initvals, prn);
+
+    pprintf(prn, " nls_toler = %g\n", get_nls_toler());
+
+    ival = get_use_qr(); /* checks env */
+    pprintf(prn, " qr = %d\n", state->use_qr);
+
+    libset_header(_("Random number generation"), prn);
 
     uval = gretl_rand_get_seed();
     pprintf(prn, " seed = %u\n", uval);
 
-    pprintf(prn, " hac_lag = %s\n", get_hac_lag_string());
-    pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
+    libset_header(_("Robust estimation"), prn);
+
+    pprintf(prn, " bootrep = %d\n", state->bootrep);
+    pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
     pprintf(prn, " force_hc = %d\n", state->ropts.force_hc);
+    pprintf(prn, " hac_lag = %s\n", get_hac_lag_string());
     pprintf(prn, " hac_kernel = %s\n", hac_kernel_string());
     pprintf(prn, " hac_prewhiten = %d\n", state->ropts.prewhite);
+    pprintf(prn, " hc_version = %d\n", state->ropts.hc_version);
+    pprintf(prn, " pcse = %d\n", state->ropts.pcse);
     if (na(state->ropts.qsband)) {
 	pputs(prn, " qs_bandwidth: auto\n");
     } else {
 	pprintf(prn, " qs_bandwidth = %g\n", state->ropts.qsband);
     }
-    pprintf(prn, " pcse = %d\n", state->ropts.pcse);
 
-    pprintf(prn, " garch_vcv = %s\n", garch_vcv_string());
-
-    if (na(state->hp_lambda)) {
-	pputs(prn, " hp_lambda: auto\n");
-    } else {
-	pprintf(prn, " hp_lambda = %g\n", state->hp_lambda);
-    }
+    libset_header(_("Filtering"), prn);
 
     if (is_unset(state->bkopts.periods[0]) ||
 	is_unset(state->bkopts.periods[1])) {
@@ -1302,39 +1332,19 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " bkbp_k = %d\n", state->bkopts.k);
     }
 
+    if (na(state->hp_lambda)) {
+	pputs(prn, " hp_lambda: auto\n");
+    } else {
+	pprintf(prn, " hp_lambda = %g\n", state->hp_lambda);
+    }
+
+    libset_header(_("Time series"), prn);
+
     if (is_unset(state->horizon)) {
 	pputs(prn, " horizon: auto\n");
     } else {
 	pprintf(prn, " horizon = %d\n", state->horizon);
     }
-
-    pprintf(prn, " bootrep = %d\n", state->bootrep);
-
-    pprintf(prn, " nls_toler = %g\n", get_nls_toler());
-
-    dval = get_bhhh_toler();
-    if (na(dval)) {
-	pputs(prn, " bhhh_toler = default\n");
-    } else {
-	pprintf(prn, " bhhh_toler = %g\n", dval);
-    }
-    pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
-
-    dval = get_bfgs_toler();
-    if (na(dval)) {
-	pputs(prn, " bfgs_toler = default\n");
-    } else {
-	pprintf(prn, " bfgs_toler = %g\n", dval);
-    }
-    pprintf(prn, " bfgs_maxiter = %d\n", get_bfgs_maxiter());
-
-    ival = get_halt_on_error(); /* checks env */
-    pprintf(prn, " halt_on_error = %d\n", state->halt_on_err);
-
-    pprintf(prn, " shell_ok = %d\n", get_shell_ok());
-    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
-    pprintf(prn, " longdigits = %d\n", state->longdigits);
-    pprintf(prn, " max_verbose = %d\n", state->max_verbose);
 
     if (state->vecm_norm == NORM_DIAG) {
 	pputs(prn, " vecm_norm = diag\n");
@@ -1344,13 +1354,26 @@ static int display_settings (PRN *prn)
 	pputs(prn, " vecm_norm = phillips\n");
     }
     
-    print_initvals(state->initvals, prn);
+    libset_header(_("Program behavior"), prn);
+
+    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
+    pprintf(prn, " force_decpoint = %d\n", 
+	    flag_to_bool(state, STATE_FORCE_DECPOINT));
+
+    ival = get_halt_on_error(); /* checks env */
+    pprintf(prn, " halt_on_error = %d\n", state->halt_on_err);
+
+    pprintf(prn, " longdigits = %d\n", state->longdigits);
+    pprintf(prn, " max_verbose = %d\n", state->max_verbose);
+    pprintf(prn, " shell_ok = %d\n", get_shell_ok());
 
     if (*state->shelldir) {
 	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
     } else {
 	pputs(prn, " shelldir = unset\n");
     }
+
+    pprintf(prn, " use_cwd = %d\n", flag_to_bool(state, STATE_USE_CWD));
 
     return 0;
 }
