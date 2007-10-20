@@ -143,6 +143,14 @@ static void robust_opts_copy (struct robust_opts *r)
     r->qsband = state->ropts.qsband;
 }
 
+static const char *csv_delim_args[] = {
+    "comma",
+    "space",
+    "tab",
+    "semicolon",
+    NULL
+};
+
 static const char *garch_vcv_strs[] = {
     "unset",
     "hessian",
@@ -181,6 +189,8 @@ static const char **libset_option_strings (const char *s)
 	return hc_version_strs;
     } else if (!strcmp(s, VECM_NORM)) {
 	return vecm_norm_strs;
+    } else if (!strcmp(s, "csv_delim")) {
+	return csv_delim_args;
     } else {
 	return NULL;
     }
@@ -814,7 +824,7 @@ static int set_bkbp_limits (const char *s0, const char *s1,
     }
 
     if (p1 < p0) {
-	/* 2nd entry should be bigger than 1st one */
+	/* 2nd entry should be bigger than 1st */
 	int tmp = p1;
 
 	p1 = p0;
@@ -920,38 +930,32 @@ static int parse_set_plotfile (const char *s)
     return err;
 }
 
+const char *csv_delims = ", \t;";
+
 static char delim_from_arg (const char *s)
 {
-    char ret = 0;
+    int i;
 
-    if (!strcmp(s, "comma")) {
-	ret = ',';
-    } else if (!strcmp(s, "space")) {
-	ret = ' ';
-    } else if (!strcmp(s, "tab")) {
-	ret = '\t';
-    } else if (!strcmp(s, "semicolon")) {
-	ret = ';';
+    for (i=0; csv_delim_args[i] != NULL; i++) {
+	if (!strcmp(s, csv_delim_args[i])) {
+	    return csv_delims[i];
+	}
     }
 
-    return ret;
+    return 0;
 }
 
 static const char *arg_from_delim (char c)
 {
-    const char *ret = "unset";
+    int i;
 
-    if (c == ',') {
-	ret = "comma";
-    } else if (c == ' ') {
-	ret = "space";
-    } else if (c == '\t') {
-	ret = "tab";
-    } else if (c == ';') {
-	ret = "semicolon";
+    for (i=0; csv_delims[i] != '\0'; i++) {
+	if (c == csv_delims[i]) {
+	    return csv_delim_args[i];
+	}
     }
 
-    return ret;
+    return "unset";
 }
 
 static void libset_print_bool (const char *s, PRN *prn)
@@ -1128,6 +1132,7 @@ libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "csv_delim")) {
 	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
 		arg_from_delim(state->delim));
+	coded_var_show_opts(s, prn);
     } else if (!strcmp(s, "shelldir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		state->shelldir);
