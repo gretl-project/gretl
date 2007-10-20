@@ -31,7 +31,7 @@ typedef enum {
 } VcvType;
 
 typedef enum {
-    KERNEL_BARTLETT = 1,
+    KERNEL_BARTLETT,
     KERNEL_PARZEN,
     KERNEL_QS,
     KERNEL_MAX
@@ -50,10 +50,15 @@ typedef enum {
 #define BFGS_TOLER   "bfgs_toler"
 #define BHHH_MAXITER "bhhh_maxiter"
 #define BHHH_TOLER   "bhhh_toler"
+#define BKBP_K       "bkbp_k"
 #define BOOTREP      "bootrep"
 #define FORCE_DECP   "force_decpoint"
 #define FORCE_HC     "force_hc"
-#define HALT_ON_ERR  "halt_on_err"
+#define GARCH_VCV    "garch_vcv"
+#define GARCH_ROBUST_VCV "garch_robust_vcv"
+#define HAC_KERNEL   "hac_kernel"
+#define HAC_LAG      "hac_lag"
+#define HALT_ON_ERR  "halt_on_error"
 #define HC_VERSION   "hc_version"
 #define HORIZON      "horizon"
 #define HP_LAMBDA    "hp_lambda"
@@ -94,13 +99,8 @@ void set_tseries_hccme (const char *s);
 void set_panel_hccme (const char *s);
 
 void set_garch_robust_vcv (const char *s);
-int get_garch_vcv_version (void);
-int get_garch_robust_vcv_version (void);
 
 int get_hac_lag (int T);
-int get_hac_kernel (void);
-void set_hac_kernel (int k);
-
 int data_based_hac_bandwidth (void);
 
 int get_bkbp_k (const DATAINFO *pdinfo);

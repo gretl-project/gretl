@@ -1592,7 +1592,7 @@ static void gmm_set_HAC_info (nlspec *s)
     if (dataset_is_time_series(s->dinfo) && 
 	!libset_get_bool(FORCE_HC)) {
 	hinfo->whiten = libset_get_bool(PREWHITEN);
-	hinfo->kern = get_hac_kernel();
+	hinfo->kern = libset_get_int(HAC_KERNEL);
 	if (hinfo->kern == KERNEL_QS) {
 	    hinfo->bt = libset_get_double(QS_BANDWIDTH);
 	    hinfo->h = s->nobs - 1;

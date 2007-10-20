@@ -3793,7 +3793,7 @@ double user_BFGS (gretl_matrix *b, const char *fncall,
     maxit = libset_get_int(BFGS_MAXITER);
     tol = libset_get_double(BFGS_TOLER);
 
-    if (libset_get_int(MAX_VERBOSE)) {
+    if (libset_get_bool(MAX_VERBOSE)) {
 	opt = OPT_V;
 	u.prn = prn;
     }

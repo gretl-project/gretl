@@ -470,7 +470,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
     gretl_matrix *X;
     int prewhiten = libset_get_bool(PREWHITEN);
-    int kern = get_hac_kernel();
+    int kern = libset_get_int(HAC_KERNEL);
     int T = pmod->nobs;
     int k = pmod->ncoeff;
     int free_uhat = 0;
