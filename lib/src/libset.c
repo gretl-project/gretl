@@ -703,33 +703,41 @@ static int parse_libset_int_code (const char *s,
 
 void set_xsect_hccme (const char *s)
 {
-    char *scpy = gretl_strdup(s);
+    char *scpy;
 
-    if (scpy == NULL) return;
+    if (check_for_state()) return;
 
-    lower(scpy);
-    parse_hc_variant(scpy);
-    free(scpy);
+    scpy = gretl_strdup(s);
+
+    if (scpy != NULL) {
+	lower(scpy);
+	parse_hc_variant(scpy);
+	free(scpy);
+    }
 }
 
 void set_tseries_hccme (const char *s)
 {
-    char *scpy = gretl_strdup(s);
+    char *scpy;
 
-    if (scpy == NULL) return;
+    if (check_for_state()) return;
 
-    lower(scpy);
-    if (parse_hc_variant(scpy) == 0) {
-	libset_set_bool(FORCE_HC, 1);
-    } else {
-	libset_set_bool(FORCE_HC, 0);
+    scpy = gretl_strdup(s);
+
+    if (scpy != NULL) {
+	lower(scpy);
+	if (parse_hc_variant(scpy) == 0) {
+	    libset_set_bool(FORCE_HC, 1);
+	} else {
+	    libset_set_bool(FORCE_HC, 0);
+	}
+	free(scpy);
     }
-    free(scpy);
 }
 
 void set_panel_hccme (const char *s)
 {
-    check_for_state();
+    if (check_for_state()) return;
 
     if (!strcmp(s, "Arellano")) {
 	state->flags &= ~STATE_USE_PCSE;
@@ -742,9 +750,7 @@ void set_garch_robust_vcv (const char *s)
 {
     char *scpy;
 
-    if (check_for_state()) {
-	return;
-    }
+    if (check_for_state()) return;
 
     scpy = gretl_strdup(s);
 

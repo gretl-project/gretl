@@ -94,10 +94,10 @@ int libset_set_double (const char *s, double x);
 int libset_get_int (const char *s);
 int libset_set_int (const char *s, int k);
 
+/* GUI setter functions */
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 void set_panel_hccme (const char *s);
-
 void set_garch_robust_vcv (const char *s);
 
 int get_hac_lag (int T);
