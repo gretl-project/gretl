@@ -165,13 +165,7 @@ static void gui_graph_handler (int err)
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err) {
-	const char *msg = gretl_errmsg_get();
-
-	if (*msg) {
-	    errbox(msg);
-	} else {
-	    errbox(_("gnuplot command failed"));
-	}
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -736,7 +730,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
 	}
 	obj = get_mahal_distances(libcmd.list, &Z, datainfo, opt, prn);
 	if (obj == NULL) {
-	    errbox(_("Command failed"));
+	    gui_errmsg(1);
 	    gretl_print_destroy(prn);
 	    return;
 	}
@@ -745,7 +739,7 @@ static void real_do_menu_op (guint action, const char *liststr, gretlopt opt)
     case SUMMARY:
 	obj = summary(libcmd.list, (const double **) Z, datainfo, prn);
 	if (obj == NULL) {
-	    errbox(_("Failed to generate summary statistics"));
+	    gui_errmsg(1);
 	    gretl_print_destroy(prn);
 	    return;
 	}	    
@@ -1393,7 +1387,7 @@ void do_forecast (gpointer p, guint u, GtkWidget *w)
     }
 
     if (fr == NULL) {
-	errbox(_("Failed to generate fitted values"));
+	gui_errmsg(1);
 	gretl_print_destroy(prn);
     } else if (fr->err) {
 	gui_errmsg(fr->err);
@@ -1783,14 +1777,15 @@ static int get_model_id_from_window (GtkWidget *w)
 
 static int make_and_display_graph (void)
 {
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-	return 1;
-    } 
+    int err = gnuplot_make_graph();
 
-    register_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }
 
-    return 0;
+    return err;
 }
 
 void add_leverage_data (windata_t *vwin)
@@ -1888,7 +1883,9 @@ void do_vif (gpointer p, guint u, GtkWidget *w)
     err = (*print_vifs)(pmod, &Z, datainfo, prn);
     close_plugin(handle);
 
-    if (!err) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	windata_t *vifwin;
 
 	vifwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
@@ -1896,9 +1893,7 @@ void do_vif (gpointer p, guint u, GtkWidget *w)
 
 	gretl_command_strcpy("vif");
 	model_command_init(pmod->ID);
-    } else {
-	errbox(_("Command failed"));
-    }
+    } 
 }
 
 static int reject_scalar (int vnum)
@@ -3378,11 +3373,11 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
 
 int do_rename_variable (int v, const char *newname, int full)
 {
-    int err = 0;
+    int err = check_varname(newname);
 
-    if (check_varname(newname)) {
-	errbox(gretl_errmsg_get());
-	return 1;
+    if (err) {
+	gui_errmsg(err);
+	return err;
     }
 
     gretl_command_sprintf("rename %d %s", v, newname);
@@ -3566,13 +3561,9 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
 	errbox(_("Data contain negative values: gamma distribution not "
 		 "appropriate"));
     } else {
-	if (plot_freq(freq, dist)) {
-	    const char *msg = gretl_errmsg_get();
-
-	    if (*msg == '\0') {
-		msg = _("gnuplot command failed");
-	    } 
-	    errbox(msg);
+	err = plot_freq(freq, dist);
+	if (err) {
+	    gui_errmsg(err);
 	} else {
 	    register_graph();
 	}
@@ -3644,19 +3635,16 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 	if (*errtext != 0) {
 	    errbox(errtext);
 	} else {
-	    errbox((opt == TRAMO)? _("TRAMO command failed") : 
-		   _("X-12-ARIMA command failed"));
+	    gui_errmsg(err);
 	}
 	return;
     } else if (*fname == '\0') {
 	return;
     }
 
-
     g_file_get_contents(fname, &databuf, NULL, NULL);
     if (databuf == NULL) {
-	errbox((opt == TRAMO)? _("TRAMO command failed") : 
-	       _("X-12-ARIMA command failed"));
+	gui_errmsg(E_EXTERNAL);
 	return;
     }
 
@@ -3675,7 +3663,6 @@ void do_tramo_x12a (gpointer p, guint opt, GtkWidget *w)
 	populate_varlist();
 	mark_dataset_as_modified();
     }
-
 }
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
@@ -3883,8 +3870,7 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
     }
 
     if (err) {
-	gretl_errmsg_set(_("Periodogram command failed"));
-	gui_errmsg(1);
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -4222,7 +4208,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
     if (err) {
 	gui_errmsg(err);
-	return 1;
+	return err;
     }
 
     if (!undo) {
@@ -4277,7 +4263,7 @@ int add_system_resid (gpointer p, int eqnum, int ci)
 
     if (err) {
 	gui_errmsg(err);
-	return 1;
+	return err;
     }
 
     v = datainfo->v - 1;
@@ -4413,7 +4399,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
     if (pmod->ci == GARCH && xvar == 0) {
 	err = garch_resid_plot(pmod, datainfo);
 	if (err) {
-	    errbox(_("gnuplot command failed"));
+	    gui_errmsg(err);
 	} else {
 	    register_graph();
 	}
@@ -4476,7 +4462,7 @@ void resid_plot (gpointer p, guint xvar, GtkWidget *w)
 		  ginfo, opt);
 
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -4517,7 +4503,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 	err = gnuplot(plotlist, formula, (const double **) *gZ, 
 		      ginfo, opt);
 	if (err) {
-	    errbox(_("gnuplot command failed"));
+	    gui_errmsg(err);
 	} else {
 	    register_graph();
 	}
@@ -4556,7 +4542,7 @@ void fit_actual_plot (gpointer p, guint xvar, GtkWidget *w)
 		  ginfo, opt);
 
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -4594,7 +4580,7 @@ void fit_actual_splot (gpointer p, guint u, GtkWidget *w)
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	launch_gnuplot_interactive();
     }
@@ -4666,7 +4652,7 @@ void display_fit_resid (gpointer p, guint code, GtkWidget *w)
     fr = get_fit_resid(pmod, (const double **) Z, datainfo);
 
     if (fr == NULL) {
-	errbox(_("Failed to generate fitted values"));
+	gui_errmsg(1);
 	gretl_print_destroy(prn);
     } else {
 	text_print_fit_resid(fr, datainfo, prn);
@@ -4862,6 +4848,8 @@ void ts_plot_var (gpointer p, guint opt, GtkWidget *w)
 
 void do_boxplot_var (int varnum)
 {
+    int err = 0;
+
     if (varnum < 0) return;
 
     gretl_command_sprintf("boxplot %s", datainfo->varname[varnum]);
@@ -4869,9 +4857,10 @@ void do_boxplot_var (int varnum)
     if (check_and_record_command()) {
 	return;
     }
-
-    if (boxplots(libcmd.list, NULL, &Z, datainfo, OPT_NONE)) {
-	errbox (_("boxplot command failed"));
+    
+    err = boxplots(libcmd.list, NULL, &Z, datainfo, OPT_NONE);
+    if (err) {
+	gui_errmsg(err);
     }
 }
 
@@ -4896,8 +4885,8 @@ int do_scatters (selector *sr)
     err = multi_scatters(libcmd.list, (const double **) Z, datainfo, 
 			 opt);
 
-    if (err < 0) {
-	errbox(_("gnuplot command failed"));
+    if (err) {
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -4929,7 +4918,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
     }
 
     if (err) {
-	errbox(_("boxplot command failed"));
+	gui_errmsg(err);
     } else {
 	close_dialog(dlg);
     }
@@ -4961,7 +4950,7 @@ int do_dummy_graph (selector *sr)
 		  datainfo, OPT_G | OPT_Z);
 
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }
@@ -5089,7 +5078,7 @@ int do_splot_from_selector (selector *sr)
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     } else {
 	launch_gnuplot_interactive();
     }
@@ -5815,8 +5804,7 @@ int do_store (char *savename, gretlopt opt)
 		goto store_get_out;
 	    }
 	} else {
-	    errbox(_("Write of data file failed\n%s"), gretl_errmsg_get());
-	    err = 1;
+	    gui_errmsg(err);
 	    goto store_get_out;
 	} 
     }   
@@ -6358,7 +6346,7 @@ gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		  OPT_T | OPT_O); 
 
     if (err) {
-	pputs(prn, _("gnuplot command failed\n"));
+	gui_errmsg(err);
     } else {
 	register_graph();
     }

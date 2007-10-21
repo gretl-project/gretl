@@ -98,6 +98,8 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
     }
 #endif
 
+    gretl_error_clear();
+
     signal(SIGCHLD, SIG_DFL);
 
     ok = g_spawn_sync (workdir,
@@ -112,14 +114,22 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 		       &error);
 
     if (!ok) {
+	gretl_errmsg_set(error->message);
 	fprintf(stderr, "spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
     } else if (serr && *serr) {
+	gretl_errmsg_set(serr);
 	fprintf(stderr, "stderr: '%s'\n", serr);
 	ret = 1;
     } else if (status != 0) {
-	fprintf(stderr, "status=%d: stdout: '%s'\n", status, sout);
+	if (sout && *sout) {
+	    gretl_errmsg_set(sout);
+	    fprintf(stderr, "spawn: status = %d: '%s'\n", status, sout);
+	} else {
+	    strcpy(gretl_errmsg, _("Command failed"));
+	    fprintf(stderr, "spawn: status = %d\n", status);
+	}
 	ret = 1;
     }
 

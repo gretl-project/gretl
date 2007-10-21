@@ -1389,22 +1389,20 @@ int gretl_spawn (char *cmdline)
 				    &error);
 
     if (!ok) {
-	strcpy(gretl_errmsg, error->message);
+	gretl_errmsg_set(error->message);
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
     } else if (errout && *errout) {
 	fprintf(stderr, "stderr: '%s'\n", errout);
 	if (!font_not_found(errout)) {
-	    strcpy(gretl_errmsg, errout);
+	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gretl_errmsg: '%s'\n", gretl_errmsg);
 	    ret = 1;
 	}
     } else if (status != 0) {
-	if (sout != NULL) {
-	    sprintf(gretl_errmsg, "%s\n%s", 
-		    _("Command failed"),
-		    sout);
+	if (sout != NULL && *sout) {
+	    gretl_errmsg_set(sout);
 	    fprintf(stderr, "gretl_spawn: status = %d: '%s'\n", status, sout);
 	} else {
 	    strcpy(gretl_errmsg, _("Command failed"));

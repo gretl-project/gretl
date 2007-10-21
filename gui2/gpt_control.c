@@ -131,7 +131,7 @@ struct png_plot_t {
     unsigned char format;
 };
 
-static void render_pngfile (png_plot *plot, int view);
+static int render_pngfile (png_plot *plot, int view);
 static int zoom_unzoom_png (png_plot *plot, int view);
 static void create_selection_gc (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
@@ -2507,9 +2507,7 @@ int redisplay_edited_plot (png_plot *plot)
     get_plot_ranges(plot);
 
     /* put the newly created PNG onto the plot canvas */
-    render_pngfile(plot, PNG_REDISPLAY);
-
-    return 0;
+    return render_pngfile(plot, PNG_REDISPLAY);
 }
 
 static int zoom_unzoom_png (png_plot *plot, int view)
@@ -2572,9 +2570,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	return 1;
     }
 
-    render_pngfile(plot, view);
-
-    return 0;
+    return render_pngfile(plot, view);
 }
 
 static gint plot_button_release (GtkWidget *widget, GdkEventButton *event, 
@@ -2704,7 +2700,7 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 			 event->area.width, event->area.height);
 }
 
-static void render_pngfile (png_plot *plot, int view)
+static int render_pngfile (png_plot *plot, int view)
 {
     gint width;
     gint height;
@@ -2719,7 +2715,7 @@ static void render_pngfile (png_plot *plot, int view)
         errbox(error->message);
         g_error_free(error);
 	remove(pngname);
-	return;
+	return 1;
     }
 
     width = gdk_pixbuf_get_width(pbuf);
@@ -2729,7 +2725,7 @@ static void render_pngfile (png_plot *plot, int view)
 	errbox(_("Malformed PNG file for graph"));
 	g_object_unref(pbuf);
 	remove(pngname);
-	return;
+	return 1;
     }
 
     /* scrap any old record of which points are labeled */
@@ -2761,6 +2757,8 @@ static void render_pngfile (png_plot *plot, int view)
 	    plot->status ^= PLOT_ZOOMED;
 	}
     }
+
+    return 0;
 }
 
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
@@ -3330,7 +3328,11 @@ gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     g_signal_connect(G_OBJECT(plot->canvas), "expose_event",
 		     G_CALLBACK(plot_expose), plot->pixmap);
 
-    render_pngfile(plot, PNG_START);
+    err = render_pngfile(plot, PNG_START);
+    if (err) {
+	gtk_widget_destroy(plot->shell);
+	plot = NULL;
+    }
 
     return plot;
 }
