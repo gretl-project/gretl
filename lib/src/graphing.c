@@ -1893,10 +1893,20 @@ int gnuplot (const int *plotlist, const char *literal,
 	if (pdinfo->pd == 4 && (gi.t2 - gi.t1) / 4 < 8) {
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 4\n");
-	}
-	if (pdinfo->pd == 12 && (gi.t2 - gi.t1) / 12 < 8) {
+	} else if (pdinfo->pd == 12 && (gi.t2 - gi.t1) / 12 < 8) {
 	    pputs(prn, "set xtics nomirror 0,1\n"); 
 	    pputs(prn, "set mxtics 12\n");
+	} else if (dated_daily_data(pdinfo)) {
+	    double yrs = (gi.t2 - gi.t1 + 1.0) / (pdinfo->pd * 52.0);
+
+	    if (yrs < 6) {
+		pputs(prn, "set xtics 1\n");
+		if (yrs < 3) {
+		    pputs(prn, "set mxtics 12\n");
+		} else if (yrs < 5) {
+		    pputs(prn, "set mxtics 4\n");
+		}
+	    }
 	}
     } 
 
