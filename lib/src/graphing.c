@@ -1900,10 +1900,13 @@ int gnuplot (const int *plotlist, const char *literal,
 	    double yrs = (gi.t2 - gi.t1 + 1.0) / (pdinfo->pd * 52.0);
 
 	    if (yrs < 6) {
+		/* don't show ugly "fractions of years" */
 		pputs(prn, "set xtics 1\n");
 		if (yrs < 3) {
+		    /* put monthly minor tics */
 		    pputs(prn, "set mxtics 12\n");
 		} else if (yrs < 5) {
+		    /* quarterly minor tics */
 		    pputs(prn, "set mxtics 4\n");
 		}
 	    }
