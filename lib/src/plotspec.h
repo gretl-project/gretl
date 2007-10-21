@@ -54,6 +54,7 @@ typedef struct {
     FitType fit;               /* type of fitted line shown */
     int nobs;                  /* number of observations */
     int okobs;                 /* number of fully valid observations */
+    int pd;                    /* frequency (time series data) */
     char xvarname[MAXDISP];    /* name of x variable */
     char yvarname[MAXDISP];    /* name of y variable */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */

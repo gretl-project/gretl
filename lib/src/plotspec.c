@@ -88,6 +88,7 @@ GPT_SPEC *plotspec_new (void)
     spec->n_lines = 0;
     spec->nobs = 0;
     spec->okobs = 0;
+    spec->pd = 0;
     spec->boxwidth = 0;
     spec->samples = 0;
 
@@ -387,6 +388,15 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPT_FIT_HIDDEN) {
 	n_lines--;
+    }
+
+    if (spec->pd > 0) {
+	fprintf(fp, "# timeseries %d", spec->pd);
+	if (spec->flags & GPT_LETTERBOX) {
+	    fputs(" (letterbox)\n", fp);
+	} else {
+	    fputc('\n', fp);
+	}
     }
 
     if (!string_is_blank(spec->titles[0])) {

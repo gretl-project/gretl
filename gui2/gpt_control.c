@@ -279,6 +279,7 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     char temp[MAXLEN], fline[MAXLEN];
     char restore_line[MAXLEN] = {0};
     int png_line_saved = 0;
+    GptFlags flags = 0;
 #ifdef ENABLE_NLS
     int lv = iso_latin_version();
 #else
@@ -302,6 +303,9 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (commented_term_line(fline)) {
 		strcat(restore_line, fline + 2);
+	    } else if (strstr(fline, "letterbox")) {
+		flags = GPT_LETTERBOX;
+	    } else if (strncmp(fline, "plot", 4)) {
 		break;
 	    }
 	}
@@ -322,9 +326,12 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	}
 	if (need_term_line) {
 	    int ptype = (spec != NULL)? spec->code : PLOT_REGULAR;
-	    int flags = (spec != NULL)? spec->flags : 0;
-	    const char *pline = get_gretl_png_term_line(ptype, flags);
+	    const char *pline;
 
+	    if (spec != NULL) {
+		flags = spec->flags;
+	    }
+	    pline = get_gretl_png_term_line(ptype, flags);
 	    fprintf(ftmp, "%s\n", pline);
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
@@ -449,7 +456,7 @@ static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, "latex");
     } else if (!strcmp(spec->termtype, "png")) { 
 	const char *png_str = 
-	    get_gretl_png_term_line(spec->code, 0);
+	    get_gretl_png_term_line(spec->code, spec->flags);
 
 	strcpy(termstr, png_str + 9);
     } else if (!strcmp(spec->termtype, "emf color")) {
@@ -1542,10 +1549,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	int v;
 
 	if (!strncmp(gpline, "# timeseries", 12)) {
-	    int pd;
-
-	    if (sscanf(gpline, "# timeseries %d", &pd)) {
-		*plot_pd = pd;
+	    if (sscanf(gpline, "# timeseries %d", &spec->pd)) {
+		*plot_pd = spec->pd;
 	    }
 	    spec->flags |= GPT_TS;
 	    if (strstr(gpline, "letterbox")) {
@@ -1553,10 +1558,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    }
 	    continue;
 	} else if (!strncmp(gpline, "# multiple timeseries", 21)) {
-	    int pd;
-
-	    if (sscanf(gpline, "# multiple timeseries %d", &pd)) {
-		*plot_pd = pd;
+	    if (sscanf(gpline, "# multiple timeseries %d", &spec->pd)) {
+		*plot_pd = spec->pd;
 	    }
 	    spec->flags |= GPT_TS;
 	    continue;
