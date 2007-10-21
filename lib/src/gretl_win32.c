@@ -233,6 +233,27 @@ void win_show_last_error (void)
     LocalFree(buf);
 }
 
+void win_copy_last_error (void)
+{
+    DWORD dw = GetLastError();
+    LPVOID buf;
+
+    FormatMessage( 
+		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		  FORMAT_MESSAGE_FROM_SYSTEM | 
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  dw,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &buf,
+		  0,
+		  NULL 
+		  );
+
+    gretl_errmsg_set((const char *) buf);
+    LocalFree(buf);
+}
+
 int winfork (char *cmdline, const char *dir, 
 	     int wshow, DWORD flags)
 {
@@ -240,6 +261,7 @@ int winfork (char *cmdline, const char *dir,
     PROCESS_INFORMATION pi; 
     DWORD exitcode;
     int child;
+    int err = 0;
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);  
@@ -256,17 +278,26 @@ int winfork (char *cmdline, const char *dir,
 			  &si, &pi);
 
     if (!child) {
-	win_show_last_error();
-	return 1;
+	win_copy_last_error();
+	err = 1;
+    } else {
+	WaitForSingleObject(pi.hProcess, INFINITE); 
+	if (GetExitCodeProcess(pi.hProcess, &exitcode)) {
+	    if (exitcode != 0) {
+		sprintf(gretl_errmsg, "%s: exit code %d\n",
+			cmdline, exitcode);
+		err = 1;
+	    }
+	} else {
+	    win_copy_last_error();
+	    err = 1;
+	}
     }
-
-    WaitForSingleObject(pi.hProcess, INFINITE); 
-    GetExitCodeProcess(pi.hProcess, &exitcode);
    
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
-    return 0;
+    return err;
 }
 
 int gretl_spawn (char *cmdline)

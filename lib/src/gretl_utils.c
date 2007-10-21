@@ -1374,7 +1374,8 @@ static int font_not_found (const char *s)
 int gretl_spawn (char *cmdline)
 {
     GError *error = NULL;
-    gchar *errout = NULL, *sout = NULL;
+    gchar *errout = NULL;
+    gchar *sout = NULL;
     int ok, status;
     int ret = 0;
 
