@@ -3127,16 +3127,22 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     }
 
     if (err) {
-	errbox(_("gnuplot command failed"));
+	gui_errmsg(err);
     }
 }
 
 #else /* !G_OS_WIN32 */
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
+    GError *error = NULL;
     gchar *argv[4];
+    GPid pid = 0;
+    gint fd = -1;
     gboolean run;
 
     auto_save_gp(vwin);
@@ -3145,13 +3151,46 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     argv[1] = g_strdup("-persist");
     argv[2] = g_strdup(vwin->fname);
     argv[3] = NULL;
-    
-    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
-			NULL, NULL, NULL, NULL);
 
-    if (!run) {
+    run = g_spawn_async_with_pipes(NULL, argv, NULL, 
+				   G_SPAWN_SEARCH_PATH | 
+				   G_SPAWN_DO_NOT_REAP_CHILD |
+				   G_SPAWN_FILE_AND_ARGV_ZERO, 
+				   NULL, NULL, &pid, NULL, NULL,
+				   &fd, &error);
+
+    if (error != NULL) {
+	errbox(error->message);
+	g_error_free(error);
+    } else if (!run) {
 	errbox(_("gnuplot command failed"));
+    } else if (pid > 0) {
+	int status = 0, err = 0;
+
+	/* bodge below: try to give gnuplot time to bomb
+	   out, if it's going to -- but we don't want to
+	   hold things up if we're doing OK */
+	
+	sleep(1);
+	waitpid(pid, &status, WNOHANG);
+	if (WIFEXITED(status)) {
+	    err = WEXITSTATUS(status);
+	} 
+
+	if (err && fd > 0) {
+	    char buf[128] = {0};
+
+	    if (read(fd, buf, 127) > 0) {
+		errbox(buf);
+	    }
+	}
     }
+
+    if (fd > 0) {
+	close(fd);
+    }
+
+    g_spawn_close_pid(pid);
 
     g_free(argv[0]);
     g_free(argv[1]);

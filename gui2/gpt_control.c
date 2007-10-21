@@ -683,7 +683,7 @@ static int filter_plot_file (const char *inname,
     g_free(plotcmd);
 
     if (err) {
-	errbox(_("Gnuplot error creating graph"));
+	gui_errmsg(err);
     } 
 
     return err;
@@ -2496,8 +2496,8 @@ int redisplay_edited_plot (png_plot *plot)
     g_free(plotcmd);
 
     if (err) {
-	errbox(_("Failed to generate PNG file"));
-	return 1;
+	gui_errmsg(err);
+	return err;
     }
 
     /* reset format flags */
@@ -2566,8 +2566,8 @@ static int zoom_unzoom_png (png_plot *plot, int view)
     }
 
     if (err) {
-	errbox(_("Failed to generate PNG file"));
-	return 1;
+	gui_errmsg(err);
+	return err;
     }
 
     return render_pngfile(plot, view);
@@ -3363,7 +3363,7 @@ void display_session_graph_png (const char *fname)
     g_free(plotcmd);
 
     if (err) {
-	errbox(_("Gnuplot error creating graph"));
+	gui_errmsg(err);
     } else {
 	gnuplot_show_png(fullname, NULL, 1);
     }
