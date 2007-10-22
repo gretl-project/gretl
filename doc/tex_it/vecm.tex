@@ -1,178 +1,167 @@
-\chapter{Cointegration and Vector Error Correction Models}
+\chapter{Cointegrazione e modelli vettoriali a correzione d'errore}
 \label{chap:vecm}
 
-\section{Introduction}
+\section{Introduzione}
 \label{sec:VECM-intro}
 
-The twin concepts of cointegration and error correction have drawn a
-good deal of attention in macroeconometrics over recent years.  The
-attraction of the Vector Error Correction Model (VECM) is that it
-allows the researcher to embed a representation of economic
-equilibrium relationships within a relatively rich time-series
-specification.  This approach overcomes the old dichotomy between (a)
-structural models that faithfully represented macroeconomic theory but
-failed to fit the data, and (b) time-series models that were
-accurately tailored to the data but difficult if not impossible to
-interpret in economic terms.
+I concetti correlati di cointegrazione e correzione d'errore sono stati al
+centro della ricerca in macroeconometria negli ultimi anni. L'aspetto
+interessante del Modello Vettoriale a Correzione di Errore (VECM) consiste nel
+fatto che permette al ricercatore di inserire una rappresentazione di relazioni
+di equilibrio economico in una specificazione abbastanza ricca basata sulle
+serie storiche. Questo approccio supera l'antica dicotomia tra i modelli
+strutturali, che rappresentavano fedelmente la teoria macroeconomica ma non si
+adattavano ai dati, e l'analisi delle serie storiche, che era più precisa nel
+riprodurre l'andamento dei dati, ma di difficile, se non impossibile,
+interpretazione in termini di teoria economica.
 
-The basic idea of cointegration relates closely to the concept of unit
-roots (see section~\ref{sec:uroot}).  Suppose we have a set of
-macroeconomic variables of interest, and we find we cannot reject the
-hypothesis that some of these variables, considered individually, are
-non-stationary.  Specifically, suppose we judge that a subset of the
-variables are individually integrated of order 1, or I(1).  That is,
-while they are non-stationary in their levels, their first differences
-are stationary.  Given the statistical problems associated with the
-analysis of non-stationary data (for example, the threat of spurious
-regression), the traditional approach in this case was to take first
-differences of all the variables before proceeding with the analysis.
+L'idea basilare della cointegrazione è strettamente collegata al concetto di
+radici unitarie (si veda la sezione~\ref{sec:uroot}).  Si supponga di avere un
+insieme di variabili macroeconomiche di interesse, e di non poter rifiutare
+l'ipotesi che alcune di queste variabili, considerate individualmente, siano
+non-stazionarie. In particolare, si supponga che un sottoinsieme di queste
+variabili siano individualmente integrate di ordine 1, o I(1), ossia che non
+siano stazionarie, ma che la loro differenza prima sia stazionaria. Dati i
+problemi di tipo statistico che sono associati all'analisi dei dati non
+stazionari (ad esempio il problema della regressione spuria), l'approccio
+tradizionale in questo caso consiste nel prendere la differenza prima delle
+variabili prima di procedere con l'analisi statistica.
 
-But this can result in the loss of important information.  It may be
-that while the variables in question are I(1) when taken individually,
-there exists a linear combination of the variables that is stationary
-without differencing, or I(0).  (There could be more than one such
-linear combination.)  That is, while the ensemble of variables may be
-``free to wander'' over time, nonetheless the variables are ``tied
-together'' in certain ways.  And it may be possible to interpret these
-ties, or \emph{cointegrating vectors}, as representing equilibrium
-conditions.
+In questo modo però, si perde informazione importante. Può darsi che mentre le
+variabili sono I(1) prese singolarmente, esista una loro combinazione lineare
+che sia invece stazionaria, ossia I(0) (potrebbe esserci anche più di una
+combinazione lineare). In altri termini, mentre l'insieme delle variabili è
+libero di muoversi nel tempo, esistono comunque delle relazioni che legano fra
+di loro le variabili; è possibile interpretare queste relazioni, o
+\emph{vettori di cointegrazione} come condizioni di equilibrio.
 
-For example, suppose we find that money stock, $M$, the price level,
-$P$, the nominal interest rate, $R$, and output, $Y$, are all I(1).
-According to standard theories of the demand for money, we would
-nonetheless expect there to be an equilibrium relationship between
-real balances, interest rate and output; for example
+Ad esempio, ipotizziamo di scoprire che la quantità di moneta, $M$, il livello
+dei prezzi, $P$, il tasso di interesse nominale, $R$, e l'output, $Y$, siano
+tutti I(1). Secondo la teoria standard della domanda di moneta, dovremmo
+comunque aspettarci una relazione di equilibrio tra la quantità di moneta reale,
+il tasso d'interesse e l'output; ad esempio
 \[
 m - p = \gamma_0 + \gamma_1 y + \gamma_2 r \qquad \gamma_1 > 0,
 \gamma_2 < 0
 \]
-where lower-case variable names denote logs.  In equilibrium, then,
+dove le variabili in minuscolo indicano i logaritmi. In equilibrio si ha quindi
 \[
 m - p - \gamma_1 y - \gamma_2 r = \gamma_0
 \]
-Realistically, we should not expect this condition to be satisfied
-each period.  We need to allow for the possibility of short-run
-disequilibrium.  But if the system moves back towards equilibrium
-following a disturbance, it follows that the vector $x = (m, p, y,
-r)'$ is bound by a cointegrating vector $\beta' = (\beta_1, \beta_2,
-\beta_3, \beta_4)$, such that $\beta'x$ is stationary (with a mean of
-$\gamma_0$).  Furthermore, if equilibrium is correctly characterized
-by the simple model above, we have $\beta_2 = -\beta_1$, $\beta_3 < 0$
-and $\beta_4 > 0$.  These things are testable within the context of
-cointegration analysis.
+Nella realtà non ci si aspetta che questa condizione sia soddisfatta in ogni
+periodo, ma occorre ammettere la possibilità di disequilibri di breve periodo.
+Ma se il sistema ritorna all'equilibrio dopo un disturbo, ne consegue che
+il vettore $x = (m, p, y, r)'$ è limitato da un vettore di cointegrazione
+$\beta' = (\beta_1, \beta_2, \beta_3, \beta_4)$, tale che $\beta'x$ è
+stazionario (con una media pari a $\gamma_0$). Inoltre, se l'equilibrio è
+caratterizzato correttamente dal semplice modello visto sopra, si ha $\beta_2 =
+-\beta_1$, $\beta_3 < 0$ e $\beta_4 > 0$. Queste proprietà sono testabili
+attraverso l'analisi di cointegrazione.
 
-There are typically three steps in this sort of analysis:
+Questa analisi consiste tipicamente in tre passi:
 \begin{enumerate}
-\item Test to determine the number of cointegrating vectors, the 
-  \emph{cointegrating rank} of the system.
-\item Estimate a VECM with the appropriate rank, but subject to no
-  further restrictions.
-\item Probe the interpretation of the cointegrating vectors as
-  equilibrium conditions by means of restrictions on the elements
-  of these vectors.
+\item Test per verificare il numero di vettori di cointegrazione, ossia il 
+  \emph{rango di cointegrazione} del sistema.
+\item Stima di un VECM di rango appropriato, non soggetto ad altre restrizioni.
+\item Test dell'interpretazione dei vettori di cointegrazione come condizioni di
+  equilibrio, usando le restrizioni sugli elementi di questi vettori.
 \end{enumerate}
 
-The following sections expand on each of these points, giving further
-econometric details and explaining how to implement the analysis using
+Le sezioni seguenti approfondiscono ognuno dei passi, aggiungendo altre
+considerazioni econometriche e spiegando come implementare l'analisi usando
 \app{gretl}.
 
-
-\section{Vector Error Correction Models as representation of a
-  cointegrated system}
+\section{Modelli vettoriali a correzione di errore (VECM) come rappresentazione di
+un sistema cointegrato}
 \label{sec:VECM-rep}
 
-Consider a VAR of order $p$ with a deterministic part given by $\mu_t$
-(typically, a polynomial in time). One can write the $n$-variate
-process $y_t$ as
+Si consideri un VAR di ordine $p$ con una parte deterministica data da $\mu_t$
+(tipicamente un polinomio nel tempo). È possibile scrivere il processo
+$n$-variato $y_t$ come
 \begin{equation}
   \label{eq:VECM-VAR}
   y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
   \epsilon_t 
 \end{equation}
-But since $y_t \equiv y_{t-1} - \Delta y_t$ and $y_{t-i} \equiv
+Ma poiché $y_t \equiv y_{t-1} - \Delta y_t$ e $y_{t-i} \equiv
 y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
-y_{t-i+1})$, we can re-write the above as
+y_{t-i+1})$, è possibile riscrivere l'equazione nel modo seguente:
 \begin{equation}
   \label{eq:VECM}
   \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta
   y_{t-i} + \epsilon_t ,
 \end{equation}
-where $\Pi = \sum_{i=1}^p A_i$ and $\Gamma_k = -\sum_{i=k}^p A_i$.
-This is the VECM representation of (\ref{eq:VECM-VAR}).
+dove $\Pi = \sum_{i=1}^p A_i$ e $\Gamma_k = -\sum_{i=k}^p A_i$.
+Questa è la rappresentazione VECM della (\ref{eq:VECM-VAR}).
 
-The interpretation of (\ref{eq:VECM}) depends crucially on $r$, the rank of
-the matrix $\Pi$.
+L'interpretazione della (\ref{eq:VECM}) dipende in modo cruciale da $r$, il
+rango della matrice $\Pi$.
 \begin{itemize}
-\item If $r = 0$, the processes are all I(1).
-\item If $r = n$, then $\Pi$ is invertible and the processes are all I(0).
-\item Cointegration occurs in between, when $0 < r < n$ and $\Pi$ can
-  be written as $\alpha \beta'$. In this case, $y_t$ is I(1), but the
-  combination $z_t = \beta'y_t$ is I(0). If, for example, $r=1$ and
-  the first element of $\beta$ was $-1$, then one could write $z_t =
-  -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$, which is
-  equivalent to saying that
+\item Se $r = 0$, i processi sono tutti I(1).
+\item Se $r = n$, $\Pi$ è invertibile e i processi sono tutti I(0).
+\item La cointegrazione accade in tutti i casi intermedi, quando
+  $0 < r < n$ e $\Pi$ può essere scritta come $\alpha \beta'$. In 
+  questo caso, $y_t$ è I(1), ma la combinazione $z_t = \beta'y_t$ è I(0).
+  Se, ad esempio, $r=1$ e il primo elemento di $\beta$ fosse $-1$, si
+  potrebbe scrivere $z_t = -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$,
+  che è equivalente a dire che
   \[
     y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} - z_t
   \]
-  is a long-run equilibrium relationship: the deviations $z_t$
-  may not be 0 but they are stationary. In this case, (\ref{eq:VECM})
-  can be written as 
+  è una relazione di equilibrio di lungo periodo: le deviazioni
+  $z_t$ possono non essere pari a zero, ma sono stazionarie. In questo caso,
+  la (\ref{eq:VECM}) può essere scritta come
   \begin{equation}
     \label{eq:VECMab}
     \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
     \Delta y_{t-i} + \epsilon_t ,
   \end{equation}
-  and estimation is carried out on all parameters
-  simultaneously. However, it is worth noting that if $\beta$ were
-  known $z_t$ would be observable and all the remaining parameters
-  could be estimated via OLS. In practice, the procedure estimates
-  $\beta$ first and then the rest.
+  e la stima viene effettuata simultaneamente su tutti i parametri.
+  D'altra parte è utile notare che se $\beta$ fosse noto, $z_t$ sarebbe
+  osservabile e tutti i restanti parametri potrebbero essere stimati con OLS. In
+  pratica, la procedura stima per prima cosa $\beta$ e tutto il resto poi.
 \end{itemize}
 
-The rank of $\Pi$ is investigated by computing the eigenvalues of a
-closely related matrix whose rank is the same as $\Pi$: however, this
-matrix is by construction symmetric and positive semidefinite.  As a
-consequence, all its eigenvalues are real and non-negative, and tests
-on the rank of $\Pi$ can therefore be carried out by testing how many
-eigenvalues are 0.
+Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
+essa strettamente legata che ha rango pari a quello di $\Pi$, ma che per
+costruzione è simmetrica e semidefinita positiva. Di conseguenza, tutti i suoi
+autovalori sono reali e non negativi e i test sul rango di $\Pi$ possono quindi
+essere condotti verificando quanti autovalori sono pari a 0.
 
-If all the eigenvalues are significantly different from 0, then all
-the processes are stationary. If, on the contrary, there is at least
-one zero eigenvalue, then the $y_t$ process is integrated, although
-some linear combination $\beta'y_t$ might be stationary. On the other
-extreme, if no eigenvalues are significantly different from 0, then
-not only the process $y_t$ is non-stationary, but the same holds for
-any linear combination $\beta'y_t$; in other words, no cointegration
-occurs.
+Se tutti gli autovalori sono significativamente diversi da 0, tutti i processi
+sono stazionari. Se, al contrario, c'è almeno un autovalore pari a 0, allora
+il processo $y_t$ è integrato, anche se qualche combinazione lineare $\beta'y_t$
+potrebbe essere stazionaria. All'estremo opposto, se non ci sono autovalori
+significativamente diversi da 0, non solo il processo $y_t$ è non-stazionario,
+ma vale lo stesso per qualsiasi combinazione lineare $\beta'y_t$; in altre
+parole non c'è alcuna cointegrazione.
 
-Estimation typically proceeds in two stages: first, a sequence of
-tests is run to determine $r$, the cointegration rank. Then, for a
-given rank the parameters in equation (\ref{eq:VECMab}) are estimated.
-The two commands that \app{gretl} offers for estimating these systems
-are \texttt{coint2} and \texttt{vecm}, respectively. 
+La stima procede tipicamente in due passi: per prima cosa si esegue una serie di
+test per determinare $r$, il rango di cointegrazione. Quindi, per un certo rango
+vengono stimati i parametri dell'equazione (\ref{eq:VECMab}). I due comandi
+offerti da \app{gretl} per compiere queste operazioni sono rispettivamente
+\texttt{coint2} e \texttt{vecm}.
 
-The syntax for \texttt{coint2} is 
+La sintassi di \texttt{coint2} è
 \begin{code}
   coint2 p ylist [ ; xlist ]
 \end{code}
-where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
-\texttt{ylist} is a list containing the $y_t$ variables and
-\texttt{xlist} is an optional list of exogenous variables.
+dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{ylist} è una lista che contiene le variabili $y_t$, e
+\texttt{xlist} è una lista opzionale di variabili esogene.
 
-The syntax for \texttt{vecm} is 
+La sintassi di \texttt{vecm} è
 \begin{code}
   vecm p r ylist [ ; xlist [ ; zlist ] ]
 \end{code}
-where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
-\texttt{r} is the cointegration rank, \texttt{ylist} is a list
-containing the $y_t$ variables, \texttt{xlist} is an optional list of
-exogenous variables and \texttt{zlist} is another optional list of
-exogenous variables which are assumed to enter the cointegration
-relationships.
+dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{r} è il rango di cointegrazione, \texttt{ylist} è una lista
+che contiene le variabili $y_t$, \texttt{xlist} è una lista opzionale di
+variabili esogene, e \texttt{zlist} è un'altra lista opzionale di variabili
+esogene che si ipotizza facciano parte delle relazioni di cointegrazione.
 
-Both commands can be given specific options to handle the treatment of
-the deterministic kernel $\mu_t$. These are illustrated in the
-following section.
+Entrambi i comandi supportano opzioni specifiche per trattare il kernel
+deterministico $\mu_t$; queste sono illustrate nella sezione seguente.
 
 \section{Interpretation of the deterministic kernel}
 \label{sec:coint-5cases}
@@ -280,7 +269,7 @@ or in VECM form
   \mu_0 + \alpha z_{t-1} + \eta_t ,
 \end{eqnarray*}
 %	
-where $\beta$ is the cointegration vector and $\alpha$ is the
+where $\beta$ is the cointegrazione vector and $\alpha$ is the
 ``loadings'' or ``adjustments'' vector.
      
 We are now ready to consider three possible cases:
@@ -315,7 +304,7 @@ We are now ready to consider three possible cases:
     \end{array} \right]
   \]
 %	   
-  which incorporates the intercept into the cointegration vector. This
+  which incorporates the intercept into the cointegrazione vector. This
   is known as the ``restricted constant'' case.
 	
 \item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
@@ -329,7 +318,7 @@ In most cases, the choice between the three possibilities is based on
 a mix of empirical observation and economic reasoning. If the
 variables under consideration seem to follow a linear trend then we
 should not place any restriction on the intercept. Otherwise, the
-question arises of whether it makes sense to specify a cointegration
+question arises of whether it makes sense to specify a cointegrazione
 relationship which includes a non-zero intercept. One example where
 this is appropriate is the relationship between two interest rates:
 generally these are not trended, but the VAR might still have an
@@ -343,7 +332,7 @@ The previous example can be generalized in three directions:
 \item If a VAR of order greater than 1 is considered, the algebra gets
   more convoluted but the conclusions are identical.
 \item If the VAR includes more than two endogenous variables the
-  cointegration rank $r$ can be greater than 1. In this case, $\alpha$
+  rango di cointegrazione $r$ can be greater than 1. In this case, $\alpha$
   is a matrix with $r$ columns, and the case with restricted constant
   entails the restriction that $\mu_0$ should be some linear
   combination of the columns of $\alpha$.
@@ -352,9 +341,9 @@ The previous example can be generalized in three directions:
   practically the same as above except that the focus now centers on
   $\mu_1$ rather than $\mu_0$.  The counterpart to the ``restricted
   constant'' case discussed above is a ``restricted trend'' case, such
-  that the cointegration relationships include a trend but the first
+  that the cointegrazione relationships include a trend but the first
   differences of the variables in question do not.  In the case of an
-  unrestricted trend, the trend appears in both the cointegration
+  unrestricted trend, the trend appears in both the cointegrazione
   relationships and the first differences, which corresponds to the
   presence of a quadratic trend in the variables themselves (in
   levels).
@@ -381,80 +370,78 @@ options, for augmenting $\mu_t$ with centered seasonal dummies.  In
 each case, p-values are computed via the approximations by Doornik
 (1998).
 
-\section{The Johansen cointegration tests}
+\section{I test di cointegrazione di Johansen}
 \label{sec:johansen-test}
 
-The two Johansen tests for cointegration are used to establish the
-rank of $\beta$; in other words, how many cointegration vectors the
-system has.  These are the ``$\lambda$-max'' test, for hypotheses on
-individual eigenvalues, and the ``trace'' test, for joint hypotheses.
-Suppose that the eigenvalues $\lambda_i$ are sorted from larger to
-smaller. The null hypothesis for the ``$\lambda$-max'' test on the
-$i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
-test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
-i$.
+I due test di cointegrazione di Johansen vengono usati per stabilire il
+rango di $\beta$, in altre parole il numero di vettori di cointegrazione
+del sistema. Essi sono il test ``$\lambda$-max'', per le ipotesi sui singoli
+autovalori, e il test ``traccia'', per le ipotesi congiunte.
+Si supponga che gli autovalori $\lambda_i$ siano ordinati dal maggiore al
+minore. L'ipotesi nulla per il test  ``$\lambda$-max'' sul
+$i$-esimo autovalore è che sia $\lambda_i = 0$. Invece, il test traccia
+corrispondente considera l'ipotesi che sia $\lambda_j = 0$ per ogni
+$j \ge i$.
 
+Il comando \cmd{coint2} di \app{gretl} esegue questi due test; la voce
+corrispondente nel menù dell'interfaccia grafica è ``Modello, Serie Storiche,
+COINT - Test di cointegrazione, Johansen''.
 
-The \app{gretl} command \cmd{coint2} performs these two
-tests. The corresponding menu entry in the GUI is ``Model, Time
-Series, Cointegration Test, Johansen''.
-
-As in the ADF test, the asymptotic distribution of the tests varies
-with the deterministic kernel $\mu_t$ one includes in the VAR (see
-section \ref{sec:coint-5cases} above). The following code uses the
-\cmd{denmark} data file, supplied with \app{gretl}, to replicate
-Johansen's example found in his 1995 book.
+Come nel test ADF, la distribuzione asintotica dei test varia a seconda
+del kernel deterministico $\mu_t$ incluso nel VAR (si veda la sezione
+\ref{sec:coint-5cases}). Il codice seguente usa il file di dati
+\cmd{denmark}, fornito insieme a \app{gretl}, per replicare l'esempio proposto
+da Johansen nel suo libro del 1995.
 %
 \begin{code}
 open denmark
 coint2 2 LRM LRY IBO IDE --rc --seasonal
 \end{code}
 %
-In this case, the vector $y_t$ in equation (\ref{eq:VECM}) comprises
-the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. The
-number of lags equals $p$ in (\ref{eq:VECM}) (that is, the number of
-lags of the model written in VAR form). Part of the output is reported
-below:
+In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:VECM}) comprende le
+quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei
+ritardi equivale a $p$ nella (\ref{eq:VECM}) (ossia, il numero dei ritardi del
+modello scritto in forma VAR). Di seguito è riportata parte
+dell'output:
 
 \begin{center}
 \begin{code}
-Johansen test:
-Number of equations = 4
-Lag order = 2
-Estimation period: 1974:3 - 1987:3 (T = 53)
+Test di Johansen:
+Numero di equazioni = 4
+Ordine dei ritardi = 2
+Periodo di stima: 1974:3 - 1987:3 (T = 53)
 
-Case 2: Restricted constant
-Rank Eigenvalue Trace test p-value   Lmax test  p-value
-   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
-   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
-   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
-   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+Caso 2: costante vincolata
+Rango Autovalore Test traccia p-value   Test Lmax  p-value
+   0    0,43317     49,144 [0,1284]     30,087 [0,0286]
+   1    0,17758     19,057 [0,7833]     10,362 [0,8017]
+   2    0,11279     8,6950 [0,7645]     6,3427 [0,7483]
+   3   0,043411     2,3522 [0,7088]     2,3522 [0,7076]
 \end{code}
 \end{center}
 
-Both the trace and $\lambda$-max tests accept the null hypothesis that
-the smallest eigenvalue is 0 (see the last row of the table), so we
-may conclude that the series are in fact non-stationary.  However,
-some linear combination may be I(0), since the $\lambda$-max test
-rejects the hypothesis that the rank of $\Pi$ is 0 (though the trace
-test gives less clear-cut evidence for this, with a p-value of
-$0.1284$).
+Sia il test traccia, sia quello $\lambda$-max portano ad accettare l'ipotesi nulla
+che il più piccolo autovalore valga 0 (ultima riga della tabella), quindi possiamo
+concludere che le serie non sono stazionarie. Tuttavia, qualche loro combinazione
+lineare potrebbe essere I(0), visto che il test $\lambda$-max rifiuta l'ipotesi che
+il rango di $\Pi$ sia 0 (anche se il test traccia dà un'indicazione meno netta
+in questo senso, con un p-value pari a $0.1284$).
 
-\section{Identification of the cointegration vectors}
+\section{Identification of the cointegrazione vectors}
 \label{sec:johansen-ident}
 
 The core problem in the estimation of equation (\ref{eq:VECM}) is to
 find an estimate of $\Pi$ that has by construction rank $r$, so it can
 be written as $\Pi = \alpha \beta'$, where $\beta$ is the matrix
-containing the cointegration vectors and $\alpha$ contains the
+containing the cointegrazione vectors and $\alpha$ contains the
 ``adjustment'' or ``loading'' coefficients whereby the endogenous
 variables respond to deviation from equilibrium in the previous period.
 
 Without further specification, the problem has multiple solutions (in
 fact, infinitely many). The parameters $\alpha$ and $\beta$ are
-under-identified: if all columns of $\beta$ are cointegration vectors,
+under-identified: if all columns of $\beta$ are cointegrazione vectors,
 then any arbitrary linear combinations of those columns is a
-cointegration vector too.  To put it differently, if $\Pi = \alpha_0
+cointegrazione vector too.  To put it differently, if $\Pi = \alpha_0
 \beta_0'$ for specific matrices $\alpha_0$ and $\beta_0$, then $\Pi$
 also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any conformable
 non-singular matrix $\Sigma$.  In order to find a unique solution, it
@@ -534,7 +521,7 @@ Maximum likelihood estimates, observations 1954:1-1994:4 (T = 164)
 Cointegration rank = 2
 Case 2: Restricted constant
 
-beta (cointegrating vectors, standard errors in parentheses)
+beta (vettori di cointegrazione, standard errors in parentheses)
 
 m           1.0000       0.0000 
            (0.0000)     (0.0000) 
@@ -549,7 +536,7 @@ tbr       -0.54293       24.786
 const      -3.7483       16.751 
           (0.78082)     (30.909) 
 \end{code}
-Interpretation of the coefficients of the cointegration matrix $\beta$
+Interpretation of the coefficients of the cointegrazione matrix $\beta$
 would be easier if a meaning could be attached to each of its
 columns. This is possible by hypothesizing the existence of two
 long-run relationships: a money demand equation
@@ -564,7 +551,7 @@ and a risk premium equation
  \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
    \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
 \end{equation}
-which imply that the cointegration matrix can be normalized as
+which imply that the cointegrazione matrix can be normalized as
 \[
   \beta = \left[
     \begin{array}{rr}
@@ -581,7 +568,7 @@ Restrictions'' menu entry. The syntax for entering the restrictions
 should be fairly obvious:\footnote{Note that in this context we are
   bending the usual matrix indexation convention, using the leading
   index to refer to the \textit{column} of $\beta$ (the particular
-  cointegrating vector).  This is standard practice in the literature,
+  vettore di cointegrazione).  This is standard practice in the literature,
   and defensible insofar as it is the columns of $\beta$ (the
   cointegrating relations or equilibrium errors) that are of primary
   interest.}
@@ -744,7 +731,7 @@ end restrict
 \end{code}
 %
 which manually imposes Phillips normalization on the $\beta$ estimates
-for a system with cointegrating rank 4.
+for a system with rango di cointegrazione 4.
  
 \subsection{An example}
 \label{sec:vecm-overid-ex}
@@ -775,7 +762,7 @@ interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
 variables in the \app{gretl} data file are \verb|m_p|, \texttt{rl},
 \texttt{rs}, \texttt{y} and \texttt{infl}, respectively.)
 
-The cointegration rank assumed by the authors is 3 and there are 5
+The rango di cointegrazione assumed by the authors is 3 and there are 5
 variables, giving 15 elements in the $\beta$ matrix.  $3 \times 3 = 9$
 restrictions are required for identification, and a just-identified
 system would have $15 - 9 = 6$ unrestricted parameters.  However, the
@@ -823,7 +810,7 @@ Restricted loglikelihood (lr) = 115.86451
 2 * (lu - lr) = 1.47635
 P(Chi-Square(3) > 1.47635) = 0.68774
 
-beta (cointegrating vectors, standard errors in parentheses)
+beta (vettori di cointegrazione, standard errors in parentheses)
 
 m_p        1.0000       0.0000       0.0000 
           (0.0000)     (0.0000)     (0.0000) 
@@ -873,7 +860,7 @@ end restrict
 genr ll_hfh = $rlnl
 
 # replicate table 5, page 824
-printf "Testing zero restrictions in cointegration space:\n"
+printf "Testing zero restrictions in cointegrazione space:\n"
 printf "  LR-test, rank = 3: chi^2(3) = %6.4f [%6.4f]\n", 2*(ll0-ll1), \
 	pvalue(X, 3, 2*(ll0-ll1))
 
@@ -887,7 +874,7 @@ printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 \end{scodebit}
 Output:
 \begin{scodebit}
-Testing zero restrictions in cointegration space:
+Testing zero restrictions in cointegrazione space:
   LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
 Unit income elasticity: LR-test, rank = 3:
   chi^2(4) = 17.2071 [0.0018]
