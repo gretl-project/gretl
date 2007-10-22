@@ -163,85 +163,84 @@ esogene che si ipotizza facciano parte delle relazioni di cointegrazione.
 Entrambi i comandi supportano opzioni specifiche per trattare il kernel
 deterministico $\mu_t$; queste sono illustrate nella sezione seguente.
 
-\section{Interpretation of the deterministic kernel}
+\section{Interpretazione del kernel deterministico}
 \label{sec:coint-5cases}
 
-Several important inferential aspect of cointegrated systems depend on
-what hypotheses one is willing to make on the deterministic terms,
-which leads to the famous ``five cases.''
+Alcuni importanti aspetti di tipo inferenziale dei sistemi cointegrati dipendono
+dalle ipotesi fatte a proposito dei termini deterministici, per cui si possono
+individuare i ben noti ``cinque casi''.
 
-In equation (\ref{eq:VECM}), the term $\mu_t$ is usually understood to
-take the form
+Nell'equazione (\ref{eq:VECM}), il termine $\mu_t$ di solito assume la forma
+seguente:
 \[
   \mu_t = \mu_0 + \mu_1 \cdot t .
 \]
-In order to have the model mimic as closely as possible the features
-of the observed data, there is one preliminary question to settle. Do
-the data appear to follow a deterministic trend? And if so, is it
-linear or quadratic?
+Affinché il modello si adatti nel modo migliore alle caratteristiche dei dati,
+occorre risolvere una questione preliminare. I dati sembrano seguire un trend
+deterministico? In caso positivo, si tratta di un trend lineare o quadratico?
 
-Once this is established, one should impose restrictions on $\mu_0$
-and $\mu_1$ that are consistent with this choice. For example, suppose
-that the data do not exhibit a discernible trend. This means
-that $\Delta y_t$ is on average zero, so it is reasonable to assume
-that its expected value is also zero. Write equation (\ref{eq:VECM})
-as
+Una volta stabilito questo, bisogna imporre restrizioni coerenti su $\mu_0$
+e $\mu_1$. Ad esempio, se i dati non esibiscono un trend evidente, ciò
+significa che $\Delta y_t$ vale zero in media, quindi è ragionevole assumere
+che anche il suo valore atteso sia zero. Scriviamo l'equazione
+(\ref{eq:VECM}) come
 \begin{equation}
   \label{eq:VECM-poly}
   \Gamma(L) \Delta y_t = \mu_0 + \mu_1 \cdot t + \alpha z_{t-1} +
   \epsilon_t ,
 \end{equation}
-where $z_{t} = \beta' y_{t}$ is assumed to be stationary and therefore
-to possess finite moments. Taking unconditional expectations, we get
+dove si ipotizza che $z_{t} = \beta' y_{t}$ sia stazionario e quindi possieda
+momenti finiti. Prendendo i valori attesi non condizionati, otteniamo
 \[ 
   0 = \mu_0 + \mu_1 \cdot t + \alpha m_z .
 \]
-Since the left-hand side does not depend on $t$, the restriction
-$\mu_1 = 0$ is a safe bet. As for $\mu_0$, there are just two ways to
-make the above expression true: either $\mu_0 = 0$ or, less
-restrictively, $\mu_0$ happens to be exactly equal to $-\alpha m_z$.
-This possibility is less restrictive in that the vector $\mu_0$ may be
-non-zero, but it is constrained to be a linear combination of the
-columns of $\alpha$. But if this is the case, $\mu_0$ can be written
-as $\alpha \cdot c$, and one may write (\ref{eq:VECM-poly}) as
+Visto che il termine al primo membro non dipende da $t$, il vincolo
+$\mu_1 = 0$ pare appropriato. Per quanto riguarda $\mu_0$, ci sono solo due
+modi per rendere vera l'espressione vista sopra: $\mu_0 = 0$ oppure, in modo
+meno restrittivo, $\mu_0$ esattamente uguale a $-\alpha m_z$. Questa possibilità
+è meno restrittiva nel senso che il vettore $\mu_0$ può non essere pari a zero,
+ma è vincolato ad essere una combinazione lineare delle colonne di
+$\alpha$. Ma in questo caso $\mu_0$ può essere scritto come
+$\alpha \cdot c$, si può scrivere la (\ref{eq:VECM-poly}) come
 \[
   \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
   \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
   + \epsilon_t ,
 \]
-and the long-run relationship contains an intercept. This type of
-restriction is usually written
+e la relazione di lungo periodo contiene un'intercetta. Questo tipo
+di restrizione è scritta di solito nel modo seguente:
 \[
   \alpha'_{\perp} \mu_0 = 0 ,
 \]
-where $\alpha_{\perp}$ is the left null space of the matrix $\alpha$.
+dove $\alpha_{\perp}$ è lo spazio nullo sinistro della matrice $\alpha$.
 
-An intuitive understanding of the issue can be gained by means of a
-simple example. Consider a series $x_t$ which behaves as follows
+È possibile dare un'intuizione del problema per mezzo di un semplice esempio.
+Si consideri una serie $x_t$ che si comporta nel modo seguente:
 %      
 \[ x_t = m + x_{t-1} + \varepsilon_t \] 
 %
-where $m$ is a real number and $\varepsilon_t$ is a white noise
-process. As is easy to show, $x_t$ is a random walk which fluctuates
-around a deterministic trend with slope $m$. In the special case $m$ =
-0, the deterministic trend disappears and $x_t$ is a pure random walk.
+dove $m$ è un numero reale e $\varepsilon_t$ è un processo ``rumore bianco''
+(``white noise''). Come si può facilmente mostrare, $x_t$ è una ``passeggiata aleatoria''
+(``random walk'') che fluttua intorno a un trend deterministico con pendenza $m$. Nel
+caso particolare in cui $m$ = 0, il trend deterministico scompare e
+$x_t$ è una passeggiata aleatoria pura.
     
-Consider now another process $y_t$, defined by
+Si consideri ora un altro processo $y_t$, definito da
 %      
 \[ y_t = k + x_t + u_t \] 
 %
-where, again, $k$ is a real number and $u_t$ is a white noise process.
-Since $u_t$ is stationary by definition, $x_t$ and $y_t$ cointegrate:
-that is, their difference
+dove, ancora, $k$ è un numero reale e $u_t$ è un processo a rumore bianco.
+Poiché $u_t$ è stazionario per definizione, $x_t$ e $y_t$ sono
+cointegrate, ossia la loro differenza
 %      
 \[ z_t = y_t - x_t = k + u_t \]
 %	
-is a stationary process. For $k$ = 0, $z_t$ is simple zero-mean white
-noise, whereas for $k$ $\ne$ 0 the process $z_t$ is white noise with a
-non-zero mean.
+è un processo stazionario. Per $k$ = 0, $z_t$ è un semplice rumore bianco
+a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ è un rumore bianco
+con media diversa da zero.
   
-After some simple substitutions, the two equations above can be
-represented jointly as a VAR(1) system
+Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
+essere rappresentate congiuntamente come un sistema VAR(1)
 %      
 \[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
   \begin{array}{c} k + m \\ m \end{array} \right] + \left[
@@ -250,7 +249,7 @@ represented jointly as a VAR(1) system
   \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
 \right] \]
 %	
-or in VECM form
+o in forma VECM
 %      
 \begin{eqnarray*}
   \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
@@ -269,31 +268,30 @@ or in VECM form
   \mu_0 + \alpha z_{t-1} + \eta_t ,
 \end{eqnarray*}
 %	
-where $\beta$ is the cointegrazione vector and $\alpha$ is the
-``loadings'' or ``adjustments'' vector.
+dove $\beta$ è il vettore di cointegrazione e $\alpha$ è il vettore
+dei ``loading'' o ``aggiustamenti''.
      
-We are now ready to consider three possible cases:
+Possiamo ora considerare tre casi possibili:
     
 \begin{enumerate}
-\item $m$ $\ne$ 0: In this case $x_t$ is trended, as we just saw; it
-  follows that $y_t$ also follows a linear trend because on average it
-  keeps at a fixed distance $k$ from $x_t$. The vector $\mu_0$ is
-  unrestricted.
+\item $m$ $\ne$ 0: in questo caso $x_t$ ha un trend, come abbiamo appena
+  visto; ne consegue che anche $y_t$ segue un trend lineare perché in
+  media si mantiene a una distanza fissa da $x_t$ pari a $k$.  Il vettore
+  $\mu_0$ non ha restrizioni.
 	
-\item $m$ = 0 and $k$ $\ne$ 0: In this case, $x_t$ is not trended and
-  as a consequence neither is $y_t$. However, the mean distance
-  between $y_t$ and $x_t$ is non-zero. The vector
-  $\mu_0$ is given by
+\item $m$ = 0 e $k$ $\ne$ 0: in questo caso, $x_t$ non ha un trend, e di
+  conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
+  $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
 %	  
   \[
   \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
   \]
 %	    
-  which is not null and therefore the VECM shown above does have a
-  constant term. The constant, however, is subject to the restriction
-  that its second element must be 0. More generally,
-  $\mu_0$ is a multiple of the vector $\alpha$. Note
-  that the VECM could also be written as
+  che è non nullo, quindi il VECM mostrato sopra ha un termine
+  costante.  La costante, tuttavia è soggetta alla restrizione che il
+  suo secondo elemento deve essere pari a 0. Più in generale,
+  $\mu_0$ è un multiplo del vettore $\alpha$. Si noti
+  che il VECM potrebbe essere scritto anche come
 %	  
   \[
   \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
@@ -304,49 +302,49 @@ We are now ready to consider three possible cases:
     \end{array} \right]
   \]
 %	   
-  which incorporates the intercept into the cointegrazione vector. This
-  is known as the ``restricted constant'' case.
+  che incorpora l'intercetta nel vettore di cointegrazione. Questo è
+  il caso chiamato ``costante vincolata''.
 	
-\item $m$ = 0 and $k$ = 0: This case is the most restrictive: clearly,
-  neither $x_t$ nor $y_t$ are trended, and the mean distance between
-  them is zero. The vector $\mu_0$ is also 0, which explains why this
-  case is referred to as ``no constant.''
-	
+\item $m$ = 0 and $k$ = 0: questo caso è il più vincolante: chiaramente,
+  né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
+  Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
+  chiamato ``senza costante''.
+
 \end{enumerate}
 
-In most cases, the choice between the three possibilities is based on
-a mix of empirical observation and economic reasoning. If the
-variables under consideration seem to follow a linear trend then we
-should not place any restriction on the intercept. Otherwise, the
-question arises of whether it makes sense to specify a cointegrazione
-relationship which includes a non-zero intercept. One example where
-this is appropriate is the relationship between two interest rates:
-generally these are not trended, but the VAR might still have an
-intercept because the difference between the two (the ``interest rate
-spread'') might be stationary around a non-zero mean (for example,
-because of a risk or liquidity premium).
+Nella maggior parte dei casi, la scelta tra le tre possibilità si basa
+su un misto di osservazione empirica e di ragionamento economico. Se
+le variabili in esame sembrano seguire un trend lineare, è opportuno
+non imporre alcun vincolo all'intercetta. Altrimenti occorre chiedersi
+se ha senso specificare una relazione di cointegrazione che includa
+un'intercetta diversa da zero. Un esempio appropriato potrebbe essere
+la relazione tra due tassi di interesse: in generale questi non hanno
+un trend, ma il VAR potrebbe comunque avere un'intercetta perché la
+differenza tra i due (lo ``spread'' sui tassi d'interesse) potrebbe
+essere stazionaria attorno a una media diversa da zero (ad esempio per
+un premio di liquidità o di rischio).
     
-The previous example can be generalized in three directions:
+L'esempio precedente può essere generalizzato in tre direzioni:
     
 \begin{enumerate}
-\item If a VAR of order greater than 1 is considered, the algebra gets
-  more convoluted but the conclusions are identical.
-\item If the VAR includes more than two endogenous variables the
-  rango di cointegrazione $r$ can be greater than 1. In this case, $\alpha$
-  is a matrix with $r$ columns, and the case with restricted constant
-  entails the restriction that $\mu_0$ should be some linear
-  combination of the columns of $\alpha$.
-\item If a linear trend is included in the model, the deterministic
-  part of the VAR becomes $\mu_0 + \mu_1 t$. The reasoning is
-  practically the same as above except that the focus now centers on
-  $\mu_1$ rather than $\mu_0$.  The counterpart to the ``restricted
-  constant'' case discussed above is a ``restricted trend'' case, such
-  that the cointegrazione relationships include a trend but the first
-  differences of the variables in question do not.  In the case of an
-  unrestricted trend, the trend appears in both the cointegrazione
-  relationships and the first differences, which corresponds to the
-  presence of a quadratic trend in the variables themselves (in
-  levels).
+\item Se si considera un VAR di ordine maggiore di 1, l'algebra si
+  complica, ma le conclusioni sono identiche.
+\item Se il VAR include più di due variabili endogene, il rango di
+  cointegrazione $r$ può essere maggiore di 1. In questo caso $\alpha$
+  è una matrice con $r$ colonne e il caso con la costante vincolata
+  comporta che $\mu_0$ sia una combinazione lineare delle colonne di
+  $\alpha$.
+\item Se si include un trend lineare nel modello, la parte
+  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento è
+  praticamente quello visto sopra, tranne per il fatto che
+  l'attenzione è ora posta su $\mu_1$ invece che su $\mu_0$. La
+  controparte del caso con ``costante vincolata'' discusso sopra è un
+  caso con ``trend vincolato'', così che le relazioni di
+  cointegrazione includono un trend, ma la differenza prima delle
+  variabili in questione no. Nel caso di un trend non vincolato, il
+  trend appare sia nelle relazioni di cointegrazione sia nelle
+  differenze prime, il che corrisponde alla presenza di un trend
+  quadratico nelle variabili (espresse in livelli).
 \end{enumerate}
 
 In order to accommodate the five cases, \app{gretl} provides the
@@ -453,25 +451,25 @@ step, which also helps in that the remaining coefficients can be
 interpreted as the parameters in the equilibrium relations, but this
 only suffices when $r=1$.
 
-The method that \app{gretl} uses by default is known as the ``Phillips
-normalization'', or ``triangular representation''.\footnote{For
-  comparison with other studies, you may wish to normalize $\beta$
-  differently.  Using the \texttt{set} command you can do 
-  \verb|set vecm_norm diag| to select a normalization that simply scales the
-  columns of the original $\beta$ such that $\beta_{ij} = 1$ for $i=j$
-  and $i \leq r$, as used in the empirical section of Boswijk and
-  Doornik (2004).  Another alternative is \verb+set vecm_norm first+,
-  which scales $\beta$ such that the elements on the first row equal
-  1.  (To return to the default: \texttt{set vecm\_norm phillips}.)
-} The starting point is writing $\beta$ in partitioned form as in
+Il metodo usato da \app{gretl} in modo predefinito è chiamato ``normalizzazione
+di Phillips'', o ``rappresentazione triangolare''\footnote{Per fare confronti
+  con altri studi, potrebbe essere necessario normalizzare $\beta$ in modo
+  diverso. Usando il comando \texttt{set} è possibile scrivere
+  \verb|set vecm_norm diag| per scegliere la normalizzazione che scala
+  le colonne della $\beta$ originaria in modo che valga $\beta_{ij} = 1$ per $i=j$
+  e $i \leq r$, come è mostrato nella sezione empirica di Boswijk e
+  Doornik (2004).  Una soluzione alternativa è \verb+set vecm_norm first+,
+  che scala $\beta$ in modo che gli elementi della prima riga siano pari a 1.
+  Per tornare all'impostazione predefinita: \texttt{set vecm\_norm phillips}.
+}. Il punto di partenza consiste nello scrivere $\beta$ in forma partizionata, come in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
     \right] ,
 \]
-where $\beta_1$ is an $r \times r$ matrix and  $\beta_2$ is $(n-r)
-\times r$. Assuming that $\beta_1$ has full rank, $\beta$ can be
-post-multiplied by $\beta_1^{-1}$, giving
+dove $\beta_1$ è una matrice $r \times r$ e  $\beta_2$ è $(n-r)
+\times r$. Assumendo che $\beta_1$ abbia rango pieno, $\beta$ può essere
+post-moltiplicata da $\beta_1^{-1}$, ottenendo
 \[
   \hat{\beta} = \left[
     \begin{array}{c} I \\ \beta_2 \beta_1^{-1}  \end{array}
@@ -481,18 +479,18 @@ post-multiplied by $\beta_1^{-1}$, giving
   \right]  ,
 \]
 
-The coefficients that \app{gretl} produces are $\hat{\beta}$, with
-$B$ known as the matrix of unrestricted coefficients. In
-terms of the underlying equilibrium relationship, the Phillips
-normalization expresses the system of $r$ equilibrium relations as
+I coefficienti prodotti da \app{gretl} sono i $\hat{\beta}$, mentre
+$B$ è nota come matrice dei coefficienti non vincolati. Nei termini della
+relazione di equilibrio sottostante, la normalizzazione di Phillips
+esprime il sistema di $r$ relazioni di equilibrio come
   \begin{eqnarray}
     y_{1,t} & = & b_{1,r+1} y_{r+1,t} + \ldots + b_{1,n} y_{n,t} \\
     y_{2,t} & = & b_{2,r+1} y_{r+1,t} + \ldots + b_{2,n} y_{n,t} \\
     & \vdots & \\
     y_{r,t} & = & b_{r,r+1} y_{r+1,t} + \ldots + b_{r,n} y_{r,t} 
   \end{eqnarray}
-where the first $r$ variables are expressed as functions of the
-remaining $n-r$.
+dove le prime $r$ variabili sono espresse come funzione delle restanti
+$n-r$.
 
 Although the triangular representation ensures that the statistical
 problem of estimating $\beta$ is solved, the resulting equilibrium
