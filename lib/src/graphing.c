@@ -1809,6 +1809,8 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
     pputs(prn, "set xtics ("); 
     x = t0;
 
+    gretl_push_c_numeric_locale();
+
     for (i=0; i<n; i++) {
 	if (m == 1) {
 	    if (notfirst) {
@@ -1828,6 +1830,8 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
 	x += tw;
 	if (m > 12) m -= 12;
     }
+
+    gretl_pop_c_numeric_locale();
 
     pputs(prn, ")\n");
 }
@@ -1914,8 +1918,6 @@ int gnuplot (const int *plotlist, const char *literal,
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    gretl_push_c_numeric_locale();
 
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gi, Z);
@@ -2040,6 +2042,8 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     fputs(keystr, fp);
+
+    gretl_push_c_numeric_locale();
 
     if (gi.x != NULL) {
 	print_x_range(&gi, gi.x);
