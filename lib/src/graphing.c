@@ -1781,22 +1781,22 @@ static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
     for (x=t0; x<t1; x+=tw) n++;
 
     x = (t0 - floor(t0)) * 12;
-    m = (x - floor(x) > .8)? ceil(x) : floor(x);
-    m = (m + 1) % 12;
+    m = 1 + ((x - floor(x) > .8)? ceil(x) : floor(x));
+    if (m > 12) m -= 12;
 
     pputs(prn, "# literal lines = 1\n"); 
     pputs(prn, "set xtics ("); 
     x = t0;
 
     for (i=0; i<n; i++) {
-	get_month_name(mname, m);
+	get_month_name(mname, m++);
 	mname[4] = '\0';
 	pprintf(prn, "\"%s\" %.8g", mname, x);
 	if (i < n - 1) {
 	    pputs(prn, ", ");
 	} 
 	x += tw;
-	m = (m + 1) % 12;
+	if (m == 13) m = 1;
     }
 
     pputs(prn, ")\n");
