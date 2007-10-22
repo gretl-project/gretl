@@ -1769,13 +1769,15 @@ void gnuplot_missval_string (FILE *fp)
 /* for short daily time-series plots: write month names
    into the xtics */
 
-static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
+static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
 {
     double t0 = gi->x[gi->t1];
     double t1 = gi->x[gi->t2];
     double x, tw = 1.0/12;
     int i, m, n = 0;
     char mname[8];
+    int scale = (int) (yrs*1.5);
+    int notfirst = 0;
 
     t0 += (1.0 - (t0 - floor(t0)) * 12.0) / 12.0;
     for (x=t0; x<t1; x+=tw) n++;
@@ -1789,14 +1791,24 @@ static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
     x = t0;
 
     for (i=0; i<n; i++) {
-	get_month_name(mname, m++);
-	mname[4] = '\0';
-	pprintf(prn, "\"%s\" %.8g", mname, x);
-	if (i < n - 1) {
-	    pputs(prn, ", ");
-	} 
+	if(m == 1) {
+	    if (notfirst) {
+		pputs(prn, ", ");
+	    }
+	    pprintf(prn, "\"%4.0f\" %.8g", x, x);
+	    notfirst = 1;
+	} else if ( (scale==1) || (m%scale == 1) ) {
+	    get_month_name(mname, m);
+	    mname[4] = '\0';
+	    if (notfirst) {
+		pputs(prn, ", ");
+	    }
+	    pprintf(prn, "\"%s\" %.8g", mname, x);
+	    notfirst = 1;
+	}
+	m++;
 	x += tw;
-	if (m == 13) m = 1;
+	if (m > 12) m -= 12;
     }
 
     pputs(prn, ")\n");
@@ -1935,8 +1947,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	} else if (dated_daily_data(pdinfo)) {
 	    double yrs = (gi.t2 - gi.t1 + 1.0) / (pdinfo->pd * 52.0);
 
-	    if (yrs < 1.1) {
-		make_named_month_tics(&gi, prn);
+	    if (yrs <= 3) {
+		make_named_month_tics(&gi, yrs, prn);
 	    } else if (yrs < 6) {
 		/* don't show ugly "fractions of years" */
 		pputs(prn, "set xtics 1\n");
