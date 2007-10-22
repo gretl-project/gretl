@@ -483,7 +483,7 @@ grandezza crescente (\texttt{sort}) o decrescente (\texttt{dsort}). Per
 vettore originale, riordinati in ordine crescente.
 
 Infine, ci sono funzioni dedicate in modo specifico alle matrici, che è
-possibile suddividere in cinque categorie:
+possibile suddividere nelle categorie seguenti:
 %
 \begin{enumerate}
 \item Quelle che richiedono come argomento una sola matrice e producono uno scalare.
@@ -518,7 +518,8 @@ scalare sono:
 L'argomento di queste funzioni può essere il nome di una matrice esistente o
 un'espressione che si risolve in una matrice. Si noti che le funzioni
 \texttt{det}, \texttt{ldet} e \texttt{tr} richiedono una matrice quadrata.
-La funzione \texttt{rank} è calcolata usando la decomposizione QR.
+La funzione \texttt{rank} è calcolata usando la decomposizione in valori
+singolari (SVD).
 
 Le funzioni \texttt{onenorm} e \texttt{infnorm} restituiscono rispettivamente la
 norma-1 e la norma infinita di una matrice. La prima è il massimo, tra le
@@ -781,6 +782,13 @@ due colonne. La prima colonna contiene la parte reale, mentre la seconda (se
 presente) la parte immaginaria. Il valore prodotto è una matrice $n \times 2$, o
 se il risultato non ha parte immaginaria, un vettore di dimensione $n$.
 
+La funzione \texttt{mxtab} ha essenzialmente lo stesso ruolo del comando
+\texttt{xtab}, tranne per il fatto che produce una  matrice come risultato. La
+funzione accetta come argomenti due matrici $T\times 1$, $x$ e $y$, e produce
+una matrice che contiene la tabulazione incrociata dei valori contenuti in
+$x$ (per riga) e $y$ (per colonna), che devono essere valori interi. È anche
+possibile usare due serie come argomenti.
+
 \subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
 
@@ -941,13 +949,13 @@ prodotto $V'$.
 Infine, la sintassi per \texttt{mols} è
 %
 \begin{code}
-matrix b = func(y, X, &u)
+matrix B = mols(Y, X, &U)
 \end{code}
 %
-La funzione produce la statistica OLS ottenuta regredendo la matrice $T
-\times n$ sulla matrice $T \times k$, ossia una matrice $k \times n$
+La funzione produce le stime OLS ottenuta regredendo la matrice $Y$ $T
+\times n$ sulla matrice $X$ $T \times k$, ossia una matrice $k \times n$
 che contiene $(X'X)^{-1} X'Y$. Viene usata la decomposizione di Cholesky.
-La matrice u, se non nulla, è usata per salvare i residui.
+La matrice $U$, se non è \texttt{nulla}, è usata per salvare i residui.
 
 \section{Matrici vuote}
 \label{sec:emptymatrix}
