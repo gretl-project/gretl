@@ -1915,6 +1915,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
+    gretl_push_c_numeric_locale();
+
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gi, Z);
     if (gi.t1 == gi.t2 || list[0] < 2) {
@@ -2038,8 +2040,6 @@ int gnuplot (const int *plotlist, const char *literal,
     }
 
     fputs(keystr, fp);
-
-    gretl_push_c_numeric_locale();
 
     if (gi.x != NULL) {
 	print_x_range(&gi, gi.x);
