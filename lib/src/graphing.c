@@ -1766,13 +1766,16 @@ void gnuplot_missval_string (FILE *fp)
     }
 }
 
+/* for short daily time-series plots: write month names
+   into the xtics */
+
 static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
 {
     double t0 = gi->x[gi->t1];
     double t1 = gi->x[gi->t2];
-    double tw = 1.0/12;
-    double x;
+    double x, tw = 1.0/12;
     int i, m, n = 0;
+    char mname[8];
 
     t0 += (1.0 - (t0 - floor(t0)) * 12.0) / 12.0;
     for (x=t0; x<t1; x+=tw) n++;
@@ -1784,9 +1787,8 @@ static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
     pputs(prn, "# literal lines = 1\n"); 
     pputs(prn, "set xtics ("); 
     x = t0;
-    for (i=0; i<n; i++) {
-	char mname[8];
 
+    for (i=0; i<n; i++) {
 	get_month_name(mname, m);
 	mname[4] = '\0';
 	pprintf(prn, "\"%s\" %.8g", mname, x);
@@ -1796,6 +1798,7 @@ static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
 	x += tw;
 	m = (m + 1) % 12;
     }
+
     pputs(prn, ")\n");
 }
 
