@@ -1336,8 +1336,7 @@ int plotvar_code (const DATAINFO *pdinfo)
 	return PLOTVAR_MONTHS;
     } else if (pdinfo->pd == 24) {
 	return PLOTVAR_HOURLY;
-    } else if ((dated_daily_data(pdinfo) && pdinfo->n > 365) ||
-	    (dated_weekly_data(pdinfo) && pdinfo->n > 52)) {
+    } else if (calendar_data(pdinfo)) {
 	return PLOTVAR_CALENDAR;
     } else if (dataset_is_decennial(pdinfo)) {
 	return PLOTVAR_DECADES;

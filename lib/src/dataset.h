@@ -160,7 +160,6 @@ typedef enum {
                           (p->pd == 5 || p->pd == 6 || p->pd == 7 \
                            || p->pd == 52) && p->sd0 > 10000.0) 
 
-
 /**
  * quarterly_or_monthly:
  * @p: pointer to data information struct.
