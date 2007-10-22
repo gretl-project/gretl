@@ -1766,6 +1766,21 @@ void gnuplot_missval_string (FILE *fp)
     }
 }
 
+static void graph_month_name (char *mname, int m)
+{
+    struct tm mt;
+
+    mt.tm_sec = 0;
+    mt.tm_min = 0;
+    mt.tm_hour = 0;
+    mt.tm_mday = 1;
+    mt.tm_mon = m - 1;
+    mt.tm_year = 100;
+
+    strftime(mname, 7, "%b", &mt);
+    mname[4] = '\0';
+}
+
 /* for short daily time-series plots: write month names
    into the xtics */
 
@@ -1777,7 +1792,8 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
     int i, m, n = 0;
     char mname[8];
     int notfirst = 0;
-    int scale = (int) (yrs*1.5);
+    int scale = (int) (yrs * 1.5);
+
     if (scale == 0) {
 	scale = 1;
     }
@@ -1794,15 +1810,14 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
     x = t0;
 
     for (i=0; i<n; i++) {
-	if(m == 1) {
+	if (m == 1) {
 	    if (notfirst) {
 		pputs(prn, ", ");
 	    }
 	    pprintf(prn, "\"%4.0f\" %.8g", x, x);
 	    notfirst = 1;
-	} else if ( (scale==1) || (m%scale == 1) ) {
-	    get_month_name(mname, m);
-	    mname[4] = '\0';
+	} else if ((scale == 1) || (m % scale == 1)) {
+	    graph_month_name(mname, m);
 	    if (notfirst) {
 		pputs(prn, ", ");
 	    }
