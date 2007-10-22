@@ -347,26 +347,25 @@ L'esempio precedente può essere generalizzato in tre direzioni:
   quadratico nelle variabili (espresse in livelli).
 \end{enumerate}
 
-In order to accommodate the five cases, \app{gretl} provides the
-following options to the \texttt{coint2} and \texttt{vecm} commands:
+Per gestire i cinque casi, \app{gretl} fornisce le seguenti opzioni per i
+comandi \texttt{coint2} e \texttt{vecm}:
 \begin{center}
   \begin{tabular}{cc}
     \hline
-    $\mu_t$ & command option \\
+    $\mu_t$ & Opzione per il comando \\
     \hline
     0 & \verb|--nc| \\
     $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
-    $\mu_0$ &  default \\
+    $\mu_0$ &  predefinito \\
     $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
     $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
     \hline
   \end{tabular}
 \end{center}
-Note that for this command the above options are mutually exclusive.
-In addition, you have the option of using the \verb|--seasonal|
-options, for augmenting $\mu_t$ with centered seasonal dummies.  In
-each case, p-values are computed via the approximations by Doornik
-(1998).
+Si noti che le opzioni viste sopra sono mutualmente esclusive. Inoltre, è
+possibile usare l'opzione \verb|--seasonal| per aggiungere a $\mu_t$ delle
+dummy stagionali centrate. In ogni caso, i p-value sono calcolati con le
+approssimazioni indicate in Doornik (1998).
 
 \section{I test di cointegrazione di Johansen}
 \label{sec:johansen-test}
@@ -425,31 +424,30 @@ lineare potrebbe essere I(0), visto che il test $\lambda$-max rifiuta l'ipotesi 
 il rango di $\Pi$ sia 0 (anche se il test traccia dà un'indicazione meno netta
 in questo senso, con un p-value pari a $0.1284$).
 
-\section{Identification of the cointegrazione vectors}
+\section{Identificazione dei vettori di cointegrazione}
 \label{sec:johansen-ident}
 
-The core problem in the estimation of equation (\ref{eq:VECM}) is to
-find an estimate of $\Pi$ that has by construction rank $r$, so it can
-be written as $\Pi = \alpha \beta'$, where $\beta$ is the matrix
-containing the cointegrazione vectors and $\alpha$ contains the
-``adjustment'' or ``loading'' coefficients whereby the endogenous
-variables respond to deviation from equilibrium in the previous period.
+Il problema centrale nella stima dell'equazione (\ref{eq:VECM}) consiste nel
+trocare una stima di $\Pi$ che abbia rango $r$ per costruzione, così che possa
+essere scritta come $\Pi = \alpha \beta'$, dove $\beta$ è la matrice che
+contiene i vettori di cointegrazione e $\alpha$ contiene i coefficienti di
+``aggiustamento'' o ``loading'', per cui le variabili endogene rispondono
+a una deviazione dall'equilibrio nel periodo precedente.
 
-Without further specification, the problem has multiple solutions (in
-fact, infinitely many). The parameters $\alpha$ and $\beta$ are
-under-identified: if all columns of $\beta$ are cointegrazione vectors,
-then any arbitrary linear combinations of those columns is a
-cointegrazione vector too.  To put it differently, if $\Pi = \alpha_0
-\beta_0'$ for specific matrices $\alpha_0$ and $\beta_0$, then $\Pi$
-also equals $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ for any conformable
-non-singular matrix $\Sigma$.  In order to find a unique solution, it
-is therefore necessary to impose some restrictions on $\alpha$ and/or
-$\beta$. It can be shown that the minimum number of restrictions that
-is necessary to guarantee identification is $r^2$. Normalizing one
-coefficient per column to 1 (or -1, according to taste) is a trivial first
-step, which also helps in that the remaining coefficients can be
-interpreted as the parameters in the equilibrium relations, but this
-only suffices when $r=1$.
+Senza ulteriore specificazione, il problema ha molte soluzioni (in effetti
+ne ha infinite). I parametri $\alpha$ e $\beta$ sono sotto-identificati: se
+tutte le colonne di $\beta$ sono vettori di cointegrazione, anche qualsiasi loro
+combinazione lineare arbitraria è un vettore di cointegrazione. In altre parole,
+se $\Pi = \alpha_0 \beta_0'$ per specifiche matrici $\alpha_0$ e $\beta_0$, allora
+$\Pi$ è anche uguale a $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ per qualsiasi
+matrice conformabile e non singolare $\Sigma$. Per trovare una soluzione unica,
+è quindi necessario imporre alcune restrizioni su $\alpha$ e/o
+$\beta$. Si può dimostrare che il numero minimo di restrizioni necessarie per
+garantire l'identificazione è pari a $r^2$. Un primo passo banale consiste nel
+normalizzare un coefficiente per ogni colonna rendendolo pari a 1 (o a -1, a
+seconda dei gusti), il che aiuta anche a interpretare i restanti coefficienti
+come parametri delle relazioni di equilibrio; tuttavia, questo basta solo nel
+caso in cui $r=1$.
 
 Il metodo usato da \app{gretl} in modo predefinito è chiamato ``normalizzazione
 di Phillips'', o ``rappresentazione triangolare''\footnote{Per fare confronti
@@ -492,34 +490,34 @@ esprime il sistema di $r$ relazioni di equilibrio come
 dove le prime $r$ variabili sono espresse come funzione delle restanti
 $n-r$.
 
-Although the triangular representation ensures that the statistical
-problem of estimating $\beta$ is solved, the resulting equilibrium
-relationships may be difficult to interpret. In this case, the user
-may want to achieve identification by specifying manually the system
-of $r^2$ constraints that \app{gretl} will use to produce an estimate
-of $\beta$.
+Anche se la rappresentazione triangolare assicura la soluzione del problema
+statistico della stima di $\beta$, le relazioni di equilibrio che risultano
+possono essere difficili da interpretare. In questo caso, l'utente potrebbe
+voler cercare l'identificazione specificando manualmente il sistema di
+$r^2$ vincoli che \app{gretl} userà per produrre una stima di
+$\beta$.
 
-As an example, consider the money demand system presented in section
-9.6 of Verbeek (2004).  The variables used are \texttt{m} (the log of
-real money stock M1), \texttt{infl} (inflation), \texttt{cpr} (the
-commercial paper rate), \texttt{y} (log of real GDP) and \texttt{tbr}
-(the Treasury bill rate).\footnote{This data set is available in the
-  \texttt{verbeek} data package; see
-  \url{http://gretl.sourceforge.net/gretl_data.html}.}
+Come esempio, si consideri il sistema di domanda di moneta presentato nella
+sezione 9.6 di Verbeek (2004). Le variabili usate sono \texttt{m} (il logaritmo
+della quantità di moneta reale M1), \texttt{infl} (l'inflazione), \texttt{cpr}
+(i tassi di interesse sui ``commercial paper''), \texttt{y} (il logaritmo del
+PIL reale) e \texttt{tbr} (i tassi di interesse sui ``Treasury bill'')\footnote{Questo
+dataset è disponibile nel pacchetto \texttt{verbeek}; si veda la pagina
+  \url{http://gretl.sourceforge.net/gretl_data_it.html}.}.
 
-Estimation of $\beta$ can be performed via the commands
+La stima di $\beta$ si può ottenere con questi comandi:
 \begin{code}
   open money.gdt 
   smpl 1954:1 1994:4 
   vecm 6 2 m infl cpr y tbr --rc
 \end{code}
-and the relevant portion of the output reads
+e la parte rilevante dei risultati è questa:
 \begin{code}
-Maximum likelihood estimates, observations 1954:1-1994:4 (T = 164)
-Cointegration rank = 2
-Case 2: Restricted constant
+Stime Massima verosimiglianza usando le osservazioni 1954:1-1994:4 (T = 164)
+Rango di cointegrazione = 2
+Caso 2: costante vincolata
 
-beta (vettori di cointegrazione, standard errors in parentheses)
+Vettori di cointegrazione (errori standard tra parentesi)
 
 m           1.0000       0.0000 
            (0.0000)     (0.0000) 
@@ -534,22 +532,22 @@ tbr       -0.54293       24.786
 const      -3.7483       16.751 
           (0.78082)     (30.909) 
 \end{code}
-Interpretation of the coefficients of the cointegrazione matrix $\beta$
-would be easier if a meaning could be attached to each of its
-columns. This is possible by hypothesizing the existence of two
-long-run relationships: a money demand equation
+L'interpretazione dei coefficienti della matrice di cointegrazione $\beta$
+sarebbe più semplice se si potesse associare un significato ad ognuna delle sue
+colonne. Questo è possibile ipotizzando l'esistenza di due relazioni di lungo
+periodo: una equazione di domanda di moneta
 \begin{equation}
   \label{eq:verbeek-mondem}
   \mbox{\tt m} = c_1 + \beta_1 \mbox{\tt infl} + \beta_2 \mbox{\tt
     y} + \beta_3 \mbox{\tt tbr}
 \end{equation}
-and a risk premium equation
+e una equazione per premio sul rischio
 \begin{equation}
   \label{eq:verbeek-premium}
  \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
    \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
 \end{equation}
-which imply that the cointegrazione matrix can be normalized as
+che implica che la matrice di cointegrazione può essere normalizzata come
 \[
   \beta = \left[
     \begin{array}{rr}
@@ -559,17 +557,16 @@ which imply that the cointegrazione matrix can be normalized as
     \right]
 \]
 
-This renormalization can be accomplished by means of the
-\texttt{restrict} command, to be given after the \texttt{vecm} command
-or, in the graphical interface, by selecting the ``Test, Linear
-Restrictions'' menu entry. The syntax for entering the restrictions
-should be fairly obvious:\footnote{Note that in this context we are
-  bending the usual matrix indexation convention, using the leading
-  index to refer to the \textit{column} of $\beta$ (the particular
-  vettore di cointegrazione).  This is standard practice in the literature,
-  and defensible insofar as it is the columns of $\beta$ (the
-  cointegrating relations or equilibrium errors) that are of primary
-  interest.}
+Questa rinormalizzazione può essere compiuta per mezzo del comando
+\texttt{restrict}, da eseguire dopo il comando \texttt{vecm}, oppure, se si usa
+l'interfaccia grafica, scegliendo la voce dal menù ``Test, Vincoli lineari''.
+La sintassi per specificare i vincoli è abbastanza intuitiva\footnote{Si noti che
+  in questo contesto, stiamo trasgredendo la convenzione usata di solito per gli
+  indici delle matrici, visto che usiamo il primo indice per riferirci alla
+  \textit{colonna} di $\beta$ (il particolare vettore di cointegrazione).
+  Questa è la pratica usata di solito nella letteratura sulla cointegrazione,
+  visto che sono le colonne di $\beta$ (le relazioni di cointegrazione o gli
+  errori di equilibrio) che interessano in modo particolare.}:
 \begin{code}
 restrict
   b[1,1] = -1
@@ -578,10 +575,10 @@ restrict
   b[2,3] = -1
 end restrict
 \end{code}
-which produces
+che produce
 
 \begin{code}
-Cointegrating vectors (standard errors in parentheses)
+Vettori di cointegrazione (errori standard tra parentesi)
 
 m          -1.0000       0.0000 
            (0.0000)     (0.0000) 
