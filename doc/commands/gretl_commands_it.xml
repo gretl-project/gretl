@@ -1560,17 +1560,33 @@
       <arguments>
         <argument optional="true">lista-variabili</argument>
       </arguments>
+      <options>
+       <option>
+         <flag>--db</flag>
+         <effect>rimuove dal database aperto</effect>
+       </option>
+      </options>
     </usage>
 
     <description>
-      <para>Rimuove dal dataset le variabili elencate (specificate tramite il
-      nome o il numero). <emphasis>Usare con cautela</emphasis>: non viene
-      chiesta conferma dell'operazione e le variabili con numeri identificativi
-      più alti vengono ri-numerate.</para>
-
-      <para>Se non viene specificata alcuna <repl>lista-variabili</repl>
+      <para>
+        Per impostazione predefiinita, rimuove dal dataset le variabili
+        elencate (specificate tramite il nome o il numero). <emphasis>Usare con
+        cautela</emphasis>: non viene chiesta conferma dell'operazione e le
+        variabili con numeri identificativi più alti vengono ri-numerate.
+      </para>
+      <para>
+        Se non viene specificata alcuna <repl>lista-variabili</repl>
         viene eliminata dal dataset l'ultima variabile (quella col numero
-        identificativo più alto).</para>
+        identificativo più alto).
+      </para>
+      <para>
+       Se si usa l'opzione <lit>--db</lit>, il comando rimuove le variabili
+       elencate non dal dataset attuale ma da un database gretl, assumendo che
+       questo sia stato aperto in precedenza e che l'utente abbia il permesso
+       di scrittura sul file che contiene il database. Si veda anche il comando
+       <cmdref targ="open"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -5618,8 +5634,8 @@
       </para>
 
       <para>
-	Questo comando può essere usato anche per aprire un database (gretl o
-	RATS 4.0) per la lettura. In questo caso, dev'essere seguito dal comando
+	Questo comando può essere usato anche per aprire un database (gretl,
+	RATS 4.0 o PcGive) per la lettura. In questo caso, dev'essere seguito dal comando
         <cmdref targ="data"/> per estrarre una particolare serie dal database.
         Se si usa l'opzione <lit>www</lit>, il programma cercherà di accedere al
         database specificato sul server di gretl &mdash; ad esempio il database
