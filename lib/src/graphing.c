@@ -1766,6 +1766,39 @@ void gnuplot_missval_string (FILE *fp)
     }
 }
 
+static void make_named_month_tics (gnuplot_info *gi, PRN *prn)
+{
+    double t0 = gi->x[gi->t1];
+    double t1 = gi->x[gi->t2];
+    double tw = 1.0/12;
+    double x;
+    int i, m, n = 0;
+
+    t0 += (1.0 - (t0 - floor(t0)) * 12.0) / 12.0;
+    for (x=t0; x<t1; x+=tw) n++;
+
+    x = (t0 - floor(t0)) * 12;
+    m = (x - floor(x) > .8)? ceil(x) : floor(x);
+    m = (m + 1) % 12;
+
+    pputs(prn, "# literal lines = 1\n"); 
+    pputs(prn, "set xtics ("); 
+    x = t0;
+    for (i=0; i<n; i++) {
+	char mname[8];
+
+	get_month_name(mname, m);
+	mname[4] = '\0';
+	pprintf(prn, "\"%s\" %.8g", mname, x);
+	if (i < n - 1) {
+	    pputs(prn, ", ");
+	} 
+	x += tw;
+	m = (m + 1) % 12;
+    }
+    pputs(prn, ")\n");
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -1899,7 +1932,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	} else if (dated_daily_data(pdinfo)) {
 	    double yrs = (gi.t2 - gi.t1 + 1.0) / (pdinfo->pd * 52.0);
 
-	    if (yrs < 6) {
+	    if (yrs < 1.1) {
+		make_named_month_tics(&gi, prn);
+	    } else if (yrs < 6) {
 		/* don't show ugly "fractions of years" */
 		pputs(prn, "set xtics 1\n");
 		if (yrs < 3) {
