@@ -1776,8 +1776,11 @@ static void make_named_month_tics (gnuplot_info *gi, double yrs, PRN *prn)
     double x, tw = 1.0/12;
     int i, m, n = 0;
     char mname[8];
-    int scale = (int) (yrs*1.5);
     int notfirst = 0;
+    int scale = (int) (yrs*1.5);
+    if (scale == 0) {
+	scale = 1;
+    }
 
     t0 += (1.0 - (t0 - floor(t0)) * 12.0) / 12.0;
     for (x=t0; x<t1; x+=tw) n++;
