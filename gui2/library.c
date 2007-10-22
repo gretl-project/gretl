@@ -5566,7 +5566,7 @@ void gui_sort_data (gpointer p, guint u, GtkWidget *w)
 
 	v = select_var_from_list_with_opt(list, "Select sort key",
 					  opts, DATASORT);
-	if (v > 1) {
+	if (v > 0) {
 	    err = dataset_sort_by(v, Z, datainfo, opt);
 	    if (err) {
 		gui_errmsg(err);
