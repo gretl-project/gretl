@@ -227,11 +227,11 @@ It uses Tor Lillqvist's port of GTK 2.0 to win32.  The (free,
 open-source) Windows installer program is courtesy of Jordan Russell
 (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
 
-\section{Build instructions: a step-by-step example}
+\section{Build instructions: a step-by-step guide}
 \label{sec:build-inst}
 
 In this section we give instructions detailed enough to allow a user
-with only a basic knowledge of a Unix system to build \app{gretl}.
+with only a basic knowledge of a Unix-type system to build \app{gretl}.
 These steps were tested on a fresh installation of Debian Etch. For
 other Linux distributions (especially Debian-based ones, like Ubuntu
 and its derivatives) little should change. Other Unix-like operating
@@ -242,6 +242,8 @@ In this guided example, we will build \app{gretl} complete with
 documentation.  This introduces a few more requirements, but gives you
 the ability to modify the documentation files as well, like the help
 files or the manuals.
+
+\subsection{Installing the prerequisites}
 
 We assume that the basic GNU utilities are already installed on the
 system, together with these other programs:
@@ -292,23 +294,66 @@ also need the plain, non-\texttt{dev} library packages to \emph{run}
 installation.  In order to enable other optional features, like audio
 support, you may need to install more libraries.
 
-At this point, it is possible to build from the source.
+\subsection{Getting the source: release or CVS}
+
+At this point, it is possible to build from the source.  You have two
+options here: obtain the latest released source package, or retrieve
+the current CVS version of \app{gretl} (CVS = Concurrent Versions
+System).  The usual caveat applies to the CVS version, namely, that it
+may not build correctly and may contain ``experimental'' code; on the
+other hand, CVS often contains bug-fixes relative to the released
+version.  If you want to help with testing and to contribute bug
+reports, we recommend using CVS \app{gretl}.
+
+To work with the released source:
 \begin{enumerate}
-\item Download the latest \app{gretl} source package from
+\item Download the \app{gretl} source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-  The released versions are guaranteed to build correctly. However, if
-  you like to live dangerously, you may download the CVS version,
-  which contains the work in progress towards the next release. For
-  instructions on how to download the CVS version, please refer to the
-  appropriate
-  \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{SourceForge page}.
 \item Unzip and untar the package.  On a system with the GNU utilities
   available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
-  (e.g.\ \verb+gretl-1.6.2+).
+  (e.g.\ \verb+gretl-1.6.6+).
+\item Proceed to the next section, ``Configure and make''.
 \end{enumerate}
+
+To work with CVS you'll first need to install the \app{cvs} client
+program if it's not already on your system.  Relevant resources
+you may wish to consult include the CVS website at
+\href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs},
+general information on sourceforge CVS on the 
+  \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{SourceForge
+    CVS page}, and instructions specific to \app{gretl} at the
+\href{http://sourceforge.net/cvs/?group_id=36234}{SF gretl CVS page}.
+
+When grabbing the CVS sources \textit{for the first time}, you should
+first decide where you want to store the code.  For example, you might
+create a directory called \texttt{cvs} under your home directory.
+Open a terminal window, \texttt{cd} into this directory, and type
+the following commands:
+%
+\begin{code}
+cvs -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl login
+cvs -z3 -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl co -P gretl
+\end{code}
+%
+After the first command you will be prompted for a password: just hit
+the Enter key.  After the second command, \app{cvs} should create a
+subdirectory named \texttt{gretl} and fill it with the current
+sources.
+
+When you want to \textit{update the source}, this is very simple: just move into
+the \texttt{gretl} directory and type
+\begin{code}
+cvs update -d -P
+\end{code}
+
+Assuming you're now in the CVS \texttt{gretl} directory, you can
+proceed in the same manner as with the released source package.
+
+
+\subsection{Configure the source}
           
 The next command you need is \texttt{./configure}; this is a complex
 script that detects which tools you have on your system and sets
@@ -367,6 +412,15 @@ Configuration:
 Now type 'make' to build gretl.
 \end{scode}
 \end{script}
+
+\tip{If you're using CVS, it's a good idea to re-run the
+  \texttt{configure} script after doing an update.  This is not always
+  necessary, but sometimes it is, and it never does any harm.  For
+  this purpose, you may want to write a little shell script that calls
+  \texttt{configure} with any options you want to use.}
+
+
+\subsection{Build and install}
 
 We are now ready to undertake the compilation proper: this is done by
 running the \texttt{make} command, which takes care of compiling all
