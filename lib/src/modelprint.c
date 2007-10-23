@@ -188,21 +188,25 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
 
 static int GMM_crit_line (const MODEL *pmod, PRN *prn)
 {
-    if (plain_format(prn)) {    
-	pprintf(prn, "  %s = %.*g\n", _("GMM criterion"), 
-		XDIGITS(pmod), pmod->ess);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("GMM criterion"), 
-		pmod->ess);
-    } else if (tex_format(prn)) {
-	char xstr[32];
+    double Q = pmod->ess;
+    double TQ = pmod->ess * pmod->nobs;
 
-	tex_dcolumn_double(pmod->ess, xstr);
-	pprintf(prn, "%s & %s \\\\\n",
-		I_("GMM criterion"), xstr);
+    if (plain_format(prn)) {    
+	pprintf(prn, "  %s: Q = %.*g (TQ = %.*g)\n", _("GMM criterion"), 
+		XDIGITS(pmod), Q, XDIGITS(pmod), TQ);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s: Q = %g (TQ = %g)\n", I_("GMM criterion"), 
+		Q, TQ);
+    } else if (tex_format(prn)) {
+	char x1[32], x2[32];
+
+	tex_dcolumn_double(Q, x1);
+	tex_dcolumn_double(TQ, x2);
+	pprintf(prn, "%s, $Q$ & %s ($TQ$ = %s)\\\\\n",
+		I_("GMM criterion"), x1, x2);
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", I_("GMM criterion"), 
-		prn_delim(prn), pmod->ess);
+		prn_delim(prn), Q);
     }	
 
     return 0;
@@ -1147,12 +1151,12 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 	N_("Parzen kernel"),
 	N_("QS kernel")
     };
-    int kern = gretl_model_get_int(pmod, "hac_kernel");
+    int k = gretl_model_get_int(pmod, "hac_kernel");
     int h = gretl_model_get_int(pmod, "hac_lag");
     int white = gretl_model_get_int(pmod, "hac_prewhiten");
     double bt;
 
-    if (kern == KERNEL_QS) {
+    if (k == KERNEL_QS) {
 	bt = gretl_model_get_double(pmod, "qs_bandwidth");
 	if (plain_format(prn)) {
 	    pprintf(prn, _("HAC standard errors, "
@@ -1173,9 +1177,9 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 
     pputc(prn, ' ');
     if (plain_format(prn)) {
-	pprintf(prn, "(%s", _(kstrs[kern - 1]));
+	pprintf(prn, "(%s", _(kstrs[k]));
     } else {
-	pprintf(prn, "(%s", I_(kstrs[kern - 1]));
+	pprintf(prn, "(%s", I_(kstrs[k]));
 		    
     }
     if (white) {
@@ -1286,7 +1290,7 @@ static void tex_arbond_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
-    if (gretl_model_get_int(pmod, "hac_kernel")) {
+    if (gretl_model_get_int(pmod, "using_hac")) {
 	hac_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "hc")) {
 	hc_vcv_line(pmod, prn);

@@ -56,6 +56,8 @@ struct ocset_ {
     hac_info hinfo;      /* HAC characteristics */
 };
 
+#define using_HAC(s) (s->oc->hinfo.kern >= KERNEL_BARTLETT)
+
 /* destructor for set of O.C. info */
 
 void oc_set_destroy (ocset *oc)
@@ -1235,7 +1237,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 	goto bailout;
     }
 
-    if (s->oc->hinfo.kern != 0) {
+    if (using_HAC(s)) {
 	err = gmm_HAC(s->oc->tmp, S, &s->oc->hinfo);
 	gmm_HAC_cleanup();
     } else {
@@ -1302,7 +1304,8 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 		} 
 	    }
 	}
-	if (s->oc->hinfo.kern) {
+	if (using_HAC(s)) {
+	    gretl_model_set_int(pmod, "using_hac", 1);
 	    gretl_model_set_int(pmod, "hac_kernel", s->oc->hinfo.kern);
 	    if (s->oc->hinfo.kern == KERNEL_QS) {
 		gretl_model_set_double(pmod, "qs_bandwidth", s->oc->hinfo.bt);
@@ -1317,13 +1320,14 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
 
     if (!err) {
 	/* set additional GMM info */
+	double TGcrit = - s->crit / s->nobs;
 	int l = s->oc->noc;
 	
-	pmod->ess = - s->crit; /* note the borrowing! */
+	pmod->ess = TGcrit / s->nobs; /* note the borrowing! */
 
 	if (l > k && ((s->opt & OPT_V) || s->oc->step > 1)) {
 	    gretl_model_set_int(pmod, "J_df", l - k);
-	    gretl_model_set_double(pmod, "J_test", pmod->ess / s->nobs);
+	    gretl_model_set_double(pmod, "J_test", TGcrit);
 	}
 
 	if (s->oc->step > 1) {
@@ -1377,7 +1381,7 @@ static int gmm_recompute_weights (nlspec *s)
     gretl_matrix *W = s->oc->W;
     int err = 0;
 
-    if (s->oc->hinfo.kern) {
+    if (using_HAC(s)) {
 	err = gmm_HAC(s->oc->tmp, W, &s->oc->hinfo);
     } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
@@ -1406,7 +1410,7 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
 	return;
     }
 
-    if (s->oc->hinfo.kern) {
+    if (using_HAC(s)) {
 	err = gmm_HAC(s->oc->tmp, V, &s->oc->hinfo);
     } else {
 	err = gretl_matrix_multiply_mod(s->oc->tmp, GRETL_MOD_TRANSPOSE,
@@ -1589,8 +1593,7 @@ static void gmm_set_HAC_info (nlspec *s)
 {
     hac_info *hinfo = &s->oc->hinfo;
 
-    if (dataset_is_time_series(s->dinfo) && 
-	!libset_get_bool(FORCE_HC)) {
+    if (dataset_is_time_series(s->dinfo) && !libset_get_bool(FORCE_HC)) {
 	hinfo->whiten = libset_get_bool(PREWHITEN);
 	hinfo->kern = libset_get_int(HAC_KERNEL);
 	if (hinfo->kern == KERNEL_QS) {
@@ -1601,7 +1604,7 @@ static void gmm_set_HAC_info (nlspec *s)
 	    hinfo->bt = 0.0;
 	}
     } else {
-	hinfo->kern = 0;
+	hinfo->kern = -1;
 	hinfo->h = 0;
 	hinfo->bt = 0.0;
 	hinfo->whiten = 0;

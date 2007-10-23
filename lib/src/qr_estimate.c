@@ -405,20 +405,22 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
     
     for (j=1; j<=n; j++) {
 	if (kern == KERNEL_BARTLETT) {
-	    sv += 2 * j * s[j];
+	    sv += 2.0 * j * s[j];
 	} else {
-	    sv += 2 * j * j * s[j];
+	    sv += 2.0 * j * j * s[j];
 	}
 	s0 += 2 * s[j];
     }
 
-    i = kern - 1;
-
-    p = 1.0 / (2 * v[i] + 1);
-    g = cg[i] * pow((sv / s0) * (sv / s0), p);
+    p = 1.0 / (2.0 * v[kern] + 1);
+    g = cg[kern] * pow((sv / s0) * (sv / s0), p);
 
     *bt = g * pow((double) T, p);
     *h = (int) floor(*bt);
+
+#if 0
+    fprintf(stderr, "bt = %g, h = %d\n", *bt, *h);
+#endif
     
  bailout:
 

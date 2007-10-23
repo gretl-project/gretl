@@ -490,19 +490,23 @@ char *get_shelldir (void)
 
 int get_hac_lag (int T)
 {
+    int h = 0;
+
     check_for_state();
 
     /* Variants of Newey-West */
 
     if (state->ropts.user_lag >= 0 && state->ropts.user_lag < T - 2) {
 	/* FIXME upper limit? */
-	return state->ropts.user_lag;
+	h = state->ropts.user_lag;
     } else if (state->ropts.auto_lag == AUTO_LAG_WOOLDRIDGE) {
-	return 4.0 * pow(T / 100.0, 2.0 / 9.0);
+	h = 4.0 * pow(T / 100.0, 2.0 / 9.0);
     } else {
 	/* Stock-Watson default */
-	return 0.75 * pow(T, 1.0 / 3.0);
+	h = 0.75 * pow(T, 1.0 / 3.0);
     }
+
+    return h;
 }
 
 /* prewhitening implies nw3, but not vice versa */
