@@ -99,7 +99,7 @@ int gretl_minmax (int t1, int t2, const double *x,
 	t1++;
     }
 
-    if (t1 >= t2) {
+    if (t1 > t2) {
         *min = *max = NADBL;
         return 1;
     }
@@ -108,8 +108,8 @@ int gretl_minmax (int t1, int t2, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) {
-	    *max = (x[t] > *max)? x[t] : *max;
-	    *min = (x[t] < *min)? x[t] : *min;
+	    if (x[t] > *max) *max = x[t];
+	    if (x[t] < *min) *min = x[t];
 	}
     }
 

@@ -453,62 +453,49 @@ sudo make install
 the multiple-precision plugin invoked by the menu item ``Model, Other
 linear models, High precision OLS'' which represents floating-point
 values using a number of bits given by the environment variable
-\verb+GRETL_MP_BITS+ (default value 256).  The normal equations of
-Least Squares are by default solved via Cholesky decomposition, which
-is accurate enough for most purposes (with the option of using QR
-decomposition instead).  The program has been tested rather thoroughly
-on the statistical reference datasets provided by NIST (the U.S.
-National Institute of Standards and Technology) and a full account of
-the results may be found on the gretl website (follow the link
-``Numerical accuracy'').
+\verb+GRETL_MP_BITS+ (default value 256).  
 
-Giovanni Baiocchi and Walter Distaso published a review of \app{gretl}
-in the \emph{Journal of Applied Econometrics} (2003).  We are grateful
-to Baiocchi and Distaso for their careful examination of the program,
-which prompted the following modifications.
+The normal equations of Least Squares are by default solved via
+Cholesky decomposition, which is accurate enough for most purposes.
+In case the independent variables are found to be very highly
+collinear, \app{gretl} automatically switches to use QR decomposition;
+in addition the user has the option of making QR decomposition the
+default.  
 
-\begin{enumerate}
-\item The reviewers pointed out that there was a bug in \app{gretl}'s
-  ``p-value finder'', whereby the program printed the complement of
-  the correct probability for negative values of \emph{z}.  This was
-  fixed in version 0.998 of the program (released July 9, 2002).
-\item They also noted that the p-value finder produced inaccurate
-  results for extreme values of \emph{x} (e.g.\ values of around 8 to
-  10 in the \emph{t} distribution with 100 degrees of freedom).  This
-  too was fixed in \app{gretl} version 0.998, with a switch to more
-  accurate probability distribution code.
-\item The reviewers noted a flaw in the presentation of regression
-  coefficients in \app{gretl}, whereby some coefficients could be
-  printed to an unacceptably small number of significant figures.
-  This was fixed in version 0.999 (released August 25, 2002): now all
-  the statistics associated with a regression are printed to 6
-  significant figures.
-\item It transpired from the reviewer's tests that the numerical
-  accuracy of \app{gretl} on MS Windows was less than on Linux.  For
-  example, on the Longley data --- a well-known ``ill-conditioned''
-  dataset often used for testing econometrics programs --- the Windows
-  version of gretl was getting some coefficients wrong at the 7th
-  digit while the same coefficients were correct on Linux.  This
-  anomaly was fixed in \app{gretl} version 1.0pre3 (released October
-  10, 2002).
-\end{enumerate}
+The program has been tested rather thoroughly on the statistical
+reference datasets provided by NIST (the U.S.  National Institute of
+Standards and Technology) and a full account of the results may be
+found on the gretl website (follow the link ``Numerical accuracy'').
 
-The current version of \app{gretl} includes a ``plugin'' that runs the
-NIST linear regression test suite.  You can find this under the
-``Tools'' menu in the main window.  When you run this test, the
-introductory text explains the expected result.  If you run this test
-and see anything other than the expected result, please send a bug
-report to \verb+cottrell@wfu.edu+.  
+To date, two published reviews have discussed \app{gretl}'s accuracy:
+Giovanni Baiocchi and Walter Distaso (2003), and Talha Yalta and
+Yasemin Yalta (2007).  We are grateful to these authors for their
+careful examination of the program.  Their comments have prompted
+several modifications including the use of Stephen Moshier's
+\app{cephes} code for computing p-values and other quantities relating
+to probability distributions (see
+\href{http://www.netlib.org/cephes/}{netlib.org}), changes to the
+formatting of regression output to ensure that the program displays a
+consistent number of significant digits, and attention to compiler
+issues in producing the MS Windows version of \app{gretl} (which at
+one time was slighly less accurate than the Linux version).
 
-As mentioned above, all regression statistics are printed to 6
-significant figures in the current version of \app{gretl} (except when
-the multiple-precision plugin is used, then results are given to 12
-figures).  If you want to examine a particular value more closely,
-first save it (for example, using the \cmd{genr} command) then print
-it using \cmd{print --long} (see the \emph{Gretl Command Reference}).
-This will show the value to 10 digits (or more, if you set the
-internal variable \texttt{longdigits} to a higher value via the
-\cmd{set} command).
+\app{Gretl} now includes a ``plugin'' that runs the NIST linear
+regression test suite.  You can find this under the ``Tools'' menu in
+the main window.  When you run this test, the introductory text
+explains the expected result.  If you run this test and see anything
+other than the expected result, please send a bug report to
+\verb+cottrell@wfu.edu+.
+
+All regression statistics are printed to 6 significant figures in the
+current version of \app{gretl} (except when the multiple-precision
+plugin is used, in which case results are given to 12 figures).  If
+you want to examine a particular value more closely, first save it
+(for example, using the \cmd{genr} command) then print it using
+\cmd{print --long} (see the \emph{Gretl Command Reference}).  This
+will show the value to 10 digits (or more, if you set the internal
+variable \texttt{longdigits} to a higher value via the \cmd{set}
+command).
 
 \chapter{Related free software}
 \label{app-advanced}
