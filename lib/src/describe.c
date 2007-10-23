@@ -349,6 +349,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
     }
 
     if (n == 0) {
+	free(sx);
 	return NADBL;
     }
 
