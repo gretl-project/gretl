@@ -11,11 +11,11 @@ fatto che permette al ricercatore di inserire una rappresentazione di relazioni
 di equilibrio economico in una specificazione abbastanza ricca basata sulle
 serie storiche. Questo approccio supera l'antica dicotomia tra i modelli
 strutturali, che rappresentavano fedelmente la teoria macroeconomica ma non si
-adattavano ai dati, e l'analisi delle serie storiche, che era pi√π precisa nel
+adattavano ai dati, e l'analisi delle serie storiche, che era pi˘ precisa nel
 riprodurre l'andamento dei dati, ma di difficile, se non impossibile,
 interpretazione in termini di teoria economica.
 
-L'idea basilare della cointegrazione √® strettamente collegata al concetto di
+L'idea basilare della cointegrazione Ë strettamente collegata al concetto di
 radici unitarie (si veda la sezione~\ref{sec:uroot}).  Si supponga di avere un
 insieme di variabili macroeconomiche di interesse, e di non poter rifiutare
 l'ipotesi che alcune di queste variabili, considerate individualmente, siano
@@ -27,18 +27,18 @@ stazionari (ad esempio il problema della regressione spuria), l'approccio
 tradizionale in questo caso consiste nel prendere la differenza prima delle
 variabili prima di procedere con l'analisi statistica.
 
-In questo modo per√≤, si perde informazione importante. Pu√≤ darsi che mentre le
+In questo modo perÚ, si perde informazione importante. PuÚ darsi che mentre le
 variabili sono I(1) prese singolarmente, esista una loro combinazione lineare
-che sia invece stazionaria, ossia I(0) (potrebbe esserci anche pi√π di una
-combinazione lineare). In altri termini, mentre l'insieme delle variabili √®
+che sia invece stazionaria, ossia I(0) (potrebbe esserci anche pi˘ di una
+combinazione lineare). In altri termini, mentre l'insieme delle variabili Ë
 libero di muoversi nel tempo, esistono comunque delle relazioni che legano fra
-di loro le variabili; √® possibile interpretare queste relazioni, o
+di loro le variabili; Ë possibile interpretare queste relazioni, o
 \emph{vettori di cointegrazione} come condizioni di equilibrio.
 
-Ad esempio, ipotizziamo di scoprire che la quantit√† di moneta, $M$, il livello
+Ad esempio, ipotizziamo di scoprire che la quantit‡ di moneta, $M$, il livello
 dei prezzi, $P$, il tasso di interesse nominale, $R$, e l'output, $Y$, siano
 tutti I(1). Secondo la teoria standard della domanda di moneta, dovremmo
-comunque aspettarci una relazione di equilibrio tra la quantit√† di moneta reale,
+comunque aspettarci una relazione di equilibrio tra la quantit‡ di moneta reale,
 il tasso d'interesse e l'output; ad esempio
 \[
 m - p = \gamma_0 + \gamma_1 y + \gamma_2 r \qquad \gamma_1 > 0,
@@ -48,14 +48,14 @@ dove le variabili in minuscolo indicano i logaritmi. In equilibrio si ha quindi
 \[
 m - p - \gamma_1 y - \gamma_2 r = \gamma_0
 \]
-Nella realt√† non ci si aspetta che questa condizione sia soddisfatta in ogni
-periodo, ma occorre ammettere la possibilit√† di disequilibri di breve periodo.
+Nella realt‡ non ci si aspetta che questa condizione sia soddisfatta in ogni
+periodo, ma occorre ammettere la possibilit‡ di disequilibri di breve periodo.
 Ma se il sistema ritorna all'equilibrio dopo un disturbo, ne consegue che
-il vettore $x = (m, p, y, r)'$ √® limitato da un vettore di cointegrazione
-$\beta' = (\beta_1, \beta_2, \beta_3, \beta_4)$, tale che $\beta'x$ √®
-stazionario (con una media pari a $\gamma_0$). Inoltre, se l'equilibrio √®
+il vettore $x = (m, p, y, r)'$ Ë limitato da un vettore di cointegrazione
+$\beta' = (\beta_1, \beta_2, \beta_3, \beta_4)$, tale che $\beta'x$ Ë
+stazionario (con una media pari a $\gamma_0$). Inoltre, se l'equilibrio Ë
 caratterizzato correttamente dal semplice modello visto sopra, si ha $\beta_2 =
--\beta_1$, $\beta_3 < 0$ e $\beta_4 > 0$. Queste propriet√† sono testabili
+-\beta_1$, $\beta_3 < 0$ e $\beta_4 > 0$. Queste propriet‡ sono testabili
 attraverso l'analisi di cointegrazione.
 
 Questa analisi consiste tipicamente in tre passi:
@@ -76,65 +76,65 @@ un sistema cointegrato}
 \label{sec:VECM-rep}
 
 Si consideri un VAR di ordine $p$ con una parte deterministica data da $\mu_t$
-(tipicamente un polinomio nel tempo). √à possibile scrivere il processo
+(tipicamente un polinomio nel tempo). » possibile scrivere il processo
 $n$-variato $y_t$ come
 \begin{equation}
   \label{eq:VECM-VAR}
   y_t = \mu_t + A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
   \epsilon_t 
 \end{equation}
-Ma poich√© $y_t \equiv y_{t-1} - \Delta y_t$ e $y_{t-i} \equiv
+Ma poichÈ $y_t \equiv y_{t-1} - \Delta y_t$ e $y_{t-i} \equiv
 y_{t-1} - (\Delta y_{t-1} + \Delta y_{t-2} + \cdots + \Delta
-y_{t-i+1})$, √® possibile riscrivere l'equazione nel modo seguente:
+y_{t-i+1})$, Ë possibile riscrivere l'equazione nel modo seguente:
 \begin{equation}
   \label{eq:VECM}
   \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i \Delta
   y_{t-i} + \epsilon_t ,
 \end{equation}
 dove $\Pi = \sum_{i=1}^p A_i$ e $\Gamma_k = -\sum_{i=k}^p A_i$.
-Questa √® la rappresentazione VECM della (\ref{eq:VECM-VAR}).
+Questa Ë la rappresentazione VECM della (\ref{eq:VECM-VAR}).
 
 L'interpretazione della (\ref{eq:VECM}) dipende in modo cruciale da $r$, il
 rango della matrice $\Pi$.
 \begin{itemize}
 \item Se $r = 0$, i processi sono tutti I(1).
-\item Se $r = n$, $\Pi$ √® invertibile e i processi sono tutti I(0).
+\item Se $r = n$, $\Pi$ Ë invertibile e i processi sono tutti I(0).
 \item La cointegrazione accade in tutti i casi intermedi, quando
-  $0 < r < n$ e $\Pi$ pu√≤ essere scritta come $\alpha \beta'$. In 
-  questo caso, $y_t$ √® I(1), ma la combinazione $z_t = \beta'y_t$ √® I(0).
+  $0 < r < n$ e $\Pi$ puÚ essere scritta come $\alpha \beta'$. In 
+  questo caso, $y_t$ Ë I(1), ma la combinazione $z_t = \beta'y_t$ Ë I(0).
   Se, ad esempio, $r=1$ e il primo elemento di $\beta$ fosse $-1$, si
   potrebbe scrivere $z_t = -y_{1,t} + \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t}$,
-  che √® equivalente a dire che
+  che Ë equivalente a dire che
   \[
     y_{1_t} = \beta_2 y_{2,t} + \cdots + \beta_n y_{n,t} - z_t
   \]
-  √® una relazione di equilibrio di lungo periodo: le deviazioni
+  Ë una relazione di equilibrio di lungo periodo: le deviazioni
   $z_t$ possono non essere pari a zero, ma sono stazionarie. In questo caso,
-  la (\ref{eq:VECM}) pu√≤ essere scritta come
+  la (\ref{eq:VECM}) puÚ essere scritta come
   \begin{equation}
     \label{eq:VECMab}
     \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
     \Delta y_{t-i} + \epsilon_t ,
   \end{equation}
   e la stima viene effettuata simultaneamente su tutti i parametri.
-  D'altra parte √® utile notare che se $\beta$ fosse noto, $z_t$ sarebbe
+  D'altra parte Ë utile notare che se $\beta$ fosse noto, $z_t$ sarebbe
   osservabile e tutti i restanti parametri potrebbero essere stimati con OLS. In
   pratica, la procedura stima per prima cosa $\beta$ e tutto il resto poi.
 \end{itemize}
 
 Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
 essa strettamente legata che ha rango pari a quello di $\Pi$, ma che per
-costruzione √® simmetrica e semidefinita positiva. Di conseguenza, tutti i suoi
+costruzione Ë simmetrica e semidefinita positiva. Di conseguenza, tutti i suoi
 autovalori sono reali e non negativi e i test sul rango di $\Pi$ possono quindi
 essere condotti verificando quanti autovalori sono pari a 0.
 
 Se tutti gli autovalori sono significativamente diversi da 0, tutti i processi
-sono stazionari. Se, al contrario, c'√® almeno un autovalore pari a 0, allora
-il processo $y_t$ √® integrato, anche se qualche combinazione lineare $\beta'y_t$
+sono stazionari. Se, al contrario, c'Ë almeno un autovalore pari a 0, allora
+il processo $y_t$ Ë integrato, anche se qualche combinazione lineare $\beta'y_t$
 potrebbe essere stazionaria. All'estremo opposto, se non ci sono autovalori
-significativamente diversi da 0, non solo il processo $y_t$ √® non-stazionario,
+significativamente diversi da 0, non solo il processo $y_t$ Ë non-stazionario,
 ma vale lo stesso per qualsiasi combinazione lineare $\beta'y_t$; in altre
-parole non c'√® alcuna cointegrazione.
+parole non c'Ë alcuna cointegrazione.
 
 La stima procede tipicamente in due passi: per prima cosa si esegue una serie di
 test per determinare $r$, il rango di cointegrazione. Quindi, per un certo rango
@@ -142,22 +142,22 @@ vengono stimati i parametri dell'equazione (\ref{eq:VECMab}). I due comandi
 offerti da \app{gretl} per compiere queste operazioni sono rispettivamente
 \texttt{coint2} e \texttt{vecm}.
 
-La sintassi di \texttt{coint2} √®
+La sintassi di \texttt{coint2} Ë
 \begin{code}
   coint2 p ylist [ ; xlist ]
 \end{code}
-dove \texttt{p} √® il numero di ritardi nella (\ref{eq:VECM-VAR}),
-\texttt{ylist} √® una lista che contiene le variabili $y_t$, e
-\texttt{xlist} √® una lista opzionale di variabili esogene.
+dove \texttt{p} Ë il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{ylist} Ë una lista che contiene le variabili $y_t$, e
+\texttt{xlist} Ë una lista opzionale di variabili esogene.
 
-La sintassi di \texttt{vecm} √®
+La sintassi di \texttt{vecm} Ë
 \begin{code}
   vecm p r ylist [ ; xlist [ ; zlist ] ]
 \end{code}
-dove \texttt{p} √® il numero di ritardi nella (\ref{eq:VECM-VAR}),
-\texttt{r} √® il rango di cointegrazione, \texttt{ylist} √® una lista
-che contiene le variabili $y_t$, \texttt{xlist} √® una lista opzionale di
-variabili esogene, e \texttt{zlist} √® un'altra lista opzionale di variabili
+dove \texttt{p} Ë il numero di ritardi nella (\ref{eq:VECM-VAR}),
+\texttt{r} Ë il rango di cointegrazione, \texttt{ylist} Ë una lista
+che contiene le variabili $y_t$, \texttt{xlist} Ë una lista opzionale di
+variabili esogene, e \texttt{zlist} Ë un'altra lista opzionale di variabili
 esogene che si ipotizza facciano parte delle relazioni di cointegrazione.
 
 Entrambi i comandi supportano opzioni specifiche per trattare il kernel
@@ -175,13 +175,13 @@ seguente:
 \[
   \mu_t = \mu_0 + \mu_1 \cdot t .
 \]
-Affinch√© il modello si adatti nel modo migliore alle caratteristiche dei dati,
+AffinchÈ il modello si adatti nel modo migliore alle caratteristiche dei dati,
 occorre risolvere una questione preliminare. I dati sembrano seguire un trend
 deterministico? In caso positivo, si tratta di un trend lineare o quadratico?
 
 Una volta stabilito questo, bisogna imporre restrizioni coerenti su $\mu_0$
-e $\mu_1$. Ad esempio, se i dati non esibiscono un trend evidente, ci√≤
-significa che $\Delta y_t$ vale zero in media, quindi √® ragionevole assumere
+e $\mu_1$. Ad esempio, se i dati non esibiscono un trend evidente, ciÚ
+significa che $\Delta y_t$ vale zero in media, quindi Ë ragionevole assumere
 che anche il suo valore atteso sia zero. Scriviamo l'equazione
 (\ref{eq:VECM}) come
 \begin{equation}
@@ -197,46 +197,46 @@ momenti finiti. Prendendo i valori attesi non condizionati, otteniamo
 Visto che il termine al primo membro non dipende da $t$, il vincolo
 $\mu_1 = 0$ pare appropriato. Per quanto riguarda $\mu_0$, ci sono solo due
 modi per rendere vera l'espressione vista sopra: $\mu_0 = 0$ oppure, in modo
-meno restrittivo, $\mu_0$ esattamente uguale a $-\alpha m_z$. Questa possibilit√†
-√® meno restrittiva nel senso che il vettore $\mu_0$ pu√≤ non essere pari a zero,
-ma √® vincolato ad essere una combinazione lineare delle colonne di
-$\alpha$. Ma in questo caso $\mu_0$ pu√≤ essere scritto come
-$\alpha \cdot c$, si pu√≤ scrivere la (\ref{eq:VECM-poly}) come
+meno restrittivo, $\mu_0$ esattamente uguale a $-\alpha m_z$. Questa possibilit‡
+Ë meno restrittiva nel senso che il vettore $\mu_0$ puÚ non essere pari a zero,
+ma Ë vincolato ad essere una combinazione lineare delle colonne di
+$\alpha$. Ma in questo caso $\mu_0$ puÚ essere scritto come
+$\alpha \cdot c$, si puÚ scrivere la (\ref{eq:VECM-poly}) come
 \[
   \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
   \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
   + \epsilon_t ,
 \]
 e la relazione di lungo periodo contiene un'intercetta. Questo tipo
-di restrizione √® scritta di solito nel modo seguente:
+di restrizione Ë scritta di solito nel modo seguente:
 \[
   \alpha'_{\perp} \mu_0 = 0 ,
 \]
-dove $\alpha_{\perp}$ √® lo spazio nullo sinistro della matrice $\alpha$.
+dove $\alpha_{\perp}$ Ë lo spazio nullo sinistro della matrice $\alpha$.
 
-√à possibile dare un'intuizione del problema per mezzo di un semplice esempio.
+» possibile dare un'intuizione del problema per mezzo di un semplice esempio.
 Si consideri una serie $x_t$ che si comporta nel modo seguente:
 %      
 \[ x_t = m + x_{t-1} + \varepsilon_t \] 
 %
-dove $m$ √® un numero reale e $\varepsilon_t$ √® un processo ``rumore bianco''
-(``white noise''). Come si pu√≤ facilmente mostrare, $x_t$ √® una ``passeggiata aleatoria''
+dove $m$ Ë un numero reale e $\varepsilon_t$ Ë un processo ``rumore bianco''
+(``white noise''). Come si puÚ facilmente mostrare, $x_t$ Ë una ``passeggiata aleatoria''
 (``random walk'') che fluttua intorno a un trend deterministico con pendenza $m$. Nel
 caso particolare in cui $m$ = 0, il trend deterministico scompare e
-$x_t$ √® una passeggiata aleatoria pura.
+$x_t$ Ë una passeggiata aleatoria pura.
     
 Si consideri ora un altro processo $y_t$, definito da
 %      
 \[ y_t = k + x_t + u_t \] 
 %
-dove, ancora, $k$ √® un numero reale e $u_t$ √® un processo a rumore bianco.
-Poich√© $u_t$ √® stazionario per definizione, $x_t$ e $y_t$ sono
+dove, ancora, $k$ Ë un numero reale e $u_t$ Ë un processo a rumore bianco.
+PoichÈ $u_t$ Ë stazionario per definizione, $x_t$ e $y_t$ sono
 cointegrate, ossia la loro differenza
 %      
 \[ z_t = y_t - x_t = k + u_t \]
 %	
-√® un processo stazionario. Per $k$ = 0, $z_t$ √® un semplice rumore bianco
-a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ √® un rumore bianco
+Ë un processo stazionario. Per $k$ = 0, $z_t$ Ë un semplice rumore bianco
+a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ Ë un rumore bianco
 con media diversa da zero.
   
 Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
@@ -268,29 +268,29 @@ o in forma VECM
   \mu_0 + \alpha z_{t-1} + \eta_t ,
 \end{eqnarray*}
 %	
-dove $\beta$ √® il vettore di cointegrazione e $\alpha$ √® il vettore
+dove $\beta$ Ë il vettore di cointegrazione e $\alpha$ Ë il vettore
 dei ``loading'' o ``aggiustamenti''.
      
 Possiamo ora considerare tre casi possibili:
     
 \begin{enumerate}
 \item $m$ $\ne$ 0: in questo caso $x_t$ ha un trend, come abbiamo appena
-  visto; ne consegue che anche $y_t$ segue un trend lineare perch√© in
+  visto; ne consegue che anche $y_t$ segue un trend lineare perchÈ in
   media si mantiene a una distanza fissa da $x_t$ pari a $k$.  Il vettore
   $\mu_0$ non ha restrizioni.
 	
 \item $m$ = 0 e $k$ $\ne$ 0: in questo caso, $x_t$ non ha un trend, e di
   conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
-  $x_t$ √® diversa da zero. Il vettore $\mu_0$ √® dato da
+  $x_t$ Ë diversa da zero. Il vettore $\mu_0$ Ë dato da
 %	  
   \[
   \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
   \]
 %	    
-  che √® non nullo, quindi il VECM mostrato sopra ha un termine
-  costante.  La costante, tuttavia √® soggetta alla restrizione che il
-  suo secondo elemento deve essere pari a 0. Pi√π in generale,
-  $\mu_0$ √® un multiplo del vettore $\alpha$. Si noti
+  che Ë non nullo, quindi il VECM mostrato sopra ha un termine
+  costante.  La costante, tuttavia Ë soggetta alla restrizione che il
+  suo secondo elemento deve essere pari a 0. Pi˘ in generale,
+  $\mu_0$ Ë un multiplo del vettore $\alpha$. Si noti
   che il VECM potrebbe essere scritto anche come
 %	  
   \[
@@ -302,44 +302,44 @@ Possiamo ora considerare tre casi possibili:
     \end{array} \right]
   \]
 %	   
-  che incorpora l'intercetta nel vettore di cointegrazione. Questo √®
+  che incorpora l'intercetta nel vettore di cointegrazione. Questo Ë
   il caso chiamato ``costante vincolata''.
 	
-\item $m$ = 0 and $k$ = 0: questo caso √® il pi√π vincolante: chiaramente,
-  n√© $x_t$ n√© $y_t$ hanno un trend, e la loro distanza media √® zero.
-  Anche il vettore $\mu_0$ vale 0, quindi questo caso pu√≤ essere
+\item $m$ = 0 and $k$ = 0: questo caso Ë il pi˘ vincolante: chiaramente,
+  nÈ $x_t$ nÈ $y_t$ hanno un trend, e la loro distanza media Ë zero.
+  Anche il vettore $\mu_0$ vale 0, quindi questo caso puÚ essere
   chiamato ``senza costante''.
 
 \end{enumerate}
 
-Nella maggior parte dei casi, la scelta tra le tre possibilit√† si basa
+Nella maggior parte dei casi, la scelta tra le tre possibilit‡ si basa
 su un misto di osservazione empirica e di ragionamento economico. Se
-le variabili in esame sembrano seguire un trend lineare, √® opportuno
+le variabili in esame sembrano seguire un trend lineare, Ë opportuno
 non imporre alcun vincolo all'intercetta. Altrimenti occorre chiedersi
 se ha senso specificare una relazione di cointegrazione che includa
 un'intercetta diversa da zero. Un esempio appropriato potrebbe essere
 la relazione tra due tassi di interesse: in generale questi non hanno
-un trend, ma il VAR potrebbe comunque avere un'intercetta perch√© la
+un trend, ma il VAR potrebbe comunque avere un'intercetta perchÈ la
 differenza tra i due (lo ``spread'' sui tassi d'interesse) potrebbe
 essere stazionaria attorno a una media diversa da zero (ad esempio per
-un premio di liquidit√† o di rischio).
+un premio di liquidit‡ o di rischio).
     
-L'esempio precedente pu√≤ essere generalizzato in tre direzioni:
+L'esempio precedente puÚ essere generalizzato in tre direzioni:
     
 \begin{enumerate}
 \item Se si considera un VAR di ordine maggiore di 1, l'algebra si
   complica, ma le conclusioni sono identiche.
-\item Se il VAR include pi√π di due variabili endogene, il rango di
-  cointegrazione $r$ pu√≤ essere maggiore di 1. In questo caso $\alpha$
-  √® una matrice con $r$ colonne e il caso con la costante vincolata
+\item Se il VAR include pi˘ di due variabili endogene, il rango di
+  cointegrazione $r$ puÚ essere maggiore di 1. In questo caso $\alpha$
+  Ë una matrice con $r$ colonne e il caso con la costante vincolata
   comporta che $\mu_0$ sia una combinazione lineare delle colonne di
   $\alpha$.
 \item Se si include un trend lineare nel modello, la parte
-  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento √®
+  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento Ë
   praticamente quello visto sopra, tranne per il fatto che
-  l'attenzione √® ora posta su $\mu_1$ invece che su $\mu_0$. La
-  controparte del caso con ``costante vincolata'' discusso sopra √® un
-  caso con ``trend vincolato'', cos√¨ che le relazioni di
+  l'attenzione Ë ora posta su $\mu_1$ invece che su $\mu_0$. La
+  controparte del caso con ``costante vincolata'' discusso sopra Ë un
+  caso con ``trend vincolato'', cosÏ che le relazioni di
   cointegrazione includono un trend, ma la differenza prima delle
   variabili in questione no. Nel caso di un trend non vincolato, il
   trend appare sia nelle relazioni di cointegrazione sia nelle
@@ -362,7 +362,7 @@ comandi \texttt{coint2} e \texttt{vecm}:
     \hline
   \end{tabular}
 \end{center}
-Si noti che le opzioni viste sopra sono mutualmente esclusive. Inoltre, √®
+Si noti che le opzioni viste sopra sono mutualmente esclusive. Inoltre, Ë
 possibile usare l'opzione \verb|--seasonal| per aggiungere a $\mu_t$ delle
 dummy stagionali centrate. In ogni caso, i p-value sono calcolati con le
 approssimazioni indicate in Doornik (1998).
@@ -376,12 +376,12 @@ del sistema. Essi sono il test ``$\lambda$-max'', per le ipotesi sui singoli
 autovalori, e il test ``traccia'', per le ipotesi congiunte.
 Si supponga che gli autovalori $\lambda_i$ siano ordinati dal maggiore al
 minore. L'ipotesi nulla per il test  ``$\lambda$-max'' sul
-$i$-esimo autovalore √® che sia $\lambda_i = 0$. Invece, il test traccia
+$i$-esimo autovalore Ë che sia $\lambda_i = 0$. Invece, il test traccia
 corrispondente considera l'ipotesi che sia $\lambda_j = 0$ per ogni
 $j \ge i$.
 
 Il comando \cmd{coint2} di \app{gretl} esegue questi due test; la voce
-corrispondente nel men√π dell'interfaccia grafica √® ``Modello, Serie Storiche,
+corrispondente nel men˘ dell'interfaccia grafica Ë ``Modello, Serie Storiche,
 COINT - Test di cointegrazione, Johansen''.
 
 Come nel test ADF, la distribuzione asintotica dei test varia a seconda
@@ -398,7 +398,7 @@ coint2 2 LRM LRY IBO IDE --rc --seasonal
 In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:VECM}) comprende le
 quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei
 ritardi equivale a $p$ nella (\ref{eq:VECM}) (ossia, il numero dei ritardi del
-modello scritto in forma VAR). Di seguito √® riportata parte
+modello scritto in forma VAR). Di seguito Ë riportata parte
 dell'output:
 
 \begin{center}
@@ -418,18 +418,18 @@ Rango Autovalore Test traccia p-value   Test Lmax  p-value
 \end{center}
 
 Sia il test traccia, sia quello $\lambda$-max portano ad accettare l'ipotesi nulla
-che il pi√π piccolo autovalore valga 0 (ultima riga della tabella), quindi possiamo
+che il pi˘ piccolo autovalore valga 0 (ultima riga della tabella), quindi possiamo
 concludere che le serie non sono stazionarie. Tuttavia, qualche loro combinazione
 lineare potrebbe essere I(0), visto che il test $\lambda$-max rifiuta l'ipotesi che
-il rango di $\Pi$ sia 0 (anche se il test traccia d√† un'indicazione meno netta
+il rango di $\Pi$ sia 0 (anche se il test traccia d‡ un'indicazione meno netta
 in questo senso, con un p-value pari a $0.1284$).
 
 \section{Identificazione dei vettori di cointegrazione}
 \label{sec:johansen-ident}
 
 Il problema centrale nella stima dell'equazione (\ref{eq:VECM}) consiste nel
-trocare una stima di $\Pi$ che abbia rango $r$ per costruzione, cos√¨ che possa
-essere scritta come $\Pi = \alpha \beta'$, dove $\beta$ √® la matrice che
+trocare una stima di $\Pi$ che abbia rango $r$ per costruzione, cosÏ che possa
+essere scritta come $\Pi = \alpha \beta'$, dove $\beta$ Ë la matrice che
 contiene i vettori di cointegrazione e $\alpha$ contiene i coefficienti di
 ``aggiustamento'' o ``loading'', per cui le variabili endogene rispondono
 a una deviazione dall'equilibrio nel periodo precedente.
@@ -437,26 +437,26 @@ a una deviazione dall'equilibrio nel periodo precedente.
 Senza ulteriore specificazione, il problema ha molte soluzioni (in effetti
 ne ha infinite). I parametri $\alpha$ e $\beta$ sono sotto-identificati: se
 tutte le colonne di $\beta$ sono vettori di cointegrazione, anche qualsiasi loro
-combinazione lineare arbitraria √® un vettore di cointegrazione. In altre parole,
+combinazione lineare arbitraria Ë un vettore di cointegrazione. In altre parole,
 se $\Pi = \alpha_0 \beta_0'$ per specifiche matrici $\alpha_0$ e $\beta_0$, allora
-$\Pi$ √® anche uguale a $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ per qualsiasi
+$\Pi$ Ë anche uguale a $(\alpha_0 \Sigma)(\Sigma^{-1} \beta_0')$ per qualsiasi
 matrice conformabile e non singolare $\Sigma$. Per trovare una soluzione unica,
-√® quindi necessario imporre alcune restrizioni su $\alpha$ e/o
-$\beta$. Si pu√≤ dimostrare che il numero minimo di restrizioni necessarie per
-garantire l'identificazione √® pari a $r^2$. Un primo passo banale consiste nel
+Ë quindi necessario imporre alcune restrizioni su $\alpha$ e/o
+$\beta$. Si puÚ dimostrare che il numero minimo di restrizioni necessarie per
+garantire l'identificazione Ë pari a $r^2$. Un primo passo banale consiste nel
 normalizzare un coefficiente per ogni colonna rendendolo pari a 1 (o a -1, a
 seconda dei gusti), il che aiuta anche a interpretare i restanti coefficienti
 come parametri delle relazioni di equilibrio; tuttavia, questo basta solo nel
 caso in cui $r=1$.
 
-Il metodo usato da \app{gretl} in modo predefinito √® chiamato ``normalizzazione
+Il metodo usato da \app{gretl} in modo predefinito Ë chiamato ``normalizzazione
 di Phillips'', o ``rappresentazione triangolare''\footnote{Per fare confronti
   con altri studi, potrebbe essere necessario normalizzare $\beta$ in modo
-  diverso. Usando il comando \texttt{set} √® possibile scrivere
+  diverso. Usando il comando \texttt{set} Ë possibile scrivere
   \verb|set vecm_norm diag| per scegliere la normalizzazione che scala
   le colonne della $\beta$ originaria in modo che valga $\beta_{ij} = 1$ per $i=j$
-  e $i \leq r$, come √® mostrato nella sezione empirica di Boswijk e
-  Doornik (2004).  Una soluzione alternativa √® \verb+set vecm_norm first+,
+  e $i \leq r$, come Ë mostrato nella sezione empirica di Boswijk e
+  Doornik (2004).  Una soluzione alternativa Ë \verb+set vecm_norm first+,
   che scala $\beta$ in modo che gli elementi della prima riga siano pari a 1.
   Per tornare all'impostazione predefinita: \texttt{set vecm\_norm phillips}.
 }. Il punto di partenza consiste nello scrivere $\beta$ in forma partizionata, come in
@@ -465,8 +465,8 @@ di Phillips'', o ``rappresentazione triangolare''\footnote{Per fare confronti
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
     \right] ,
 \]
-dove $\beta_1$ √® una matrice $r \times r$ e  $\beta_2$ √® $(n-r)
-\times r$. Assumendo che $\beta_1$ abbia rango pieno, $\beta$ pu√≤ essere
+dove $\beta_1$ Ë una matrice $r \times r$ e  $\beta_2$ Ë $(n-r)
+\times r$. Assumendo che $\beta_1$ abbia rango pieno, $\beta$ puÚ essere
 post-moltiplicata da $\beta_1^{-1}$, ottenendo
 \[
   \hat{\beta} = \left[
@@ -478,7 +478,7 @@ post-moltiplicata da $\beta_1^{-1}$, ottenendo
 \]
 
 I coefficienti prodotti da \app{gretl} sono i $\hat{\beta}$, mentre
-$B$ √® nota come matrice dei coefficienti non vincolati. Nei termini della
+$B$ Ë nota come matrice dei coefficienti non vincolati. Nei termini della
 relazione di equilibrio sottostante, la normalizzazione di Phillips
 esprime il sistema di $r$ relazioni di equilibrio come
   \begin{eqnarray}
@@ -494,24 +494,24 @@ Anche se la rappresentazione triangolare assicura la soluzione del problema
 statistico della stima di $\beta$, le relazioni di equilibrio che risultano
 possono essere difficili da interpretare. In questo caso, l'utente potrebbe
 voler cercare l'identificazione specificando manualmente il sistema di
-$r^2$ vincoli che \app{gretl} user√† per produrre una stima di
+$r^2$ vincoli che \app{gretl} user‡ per produrre una stima di
 $\beta$.
 
 Come esempio, si consideri il sistema di domanda di moneta presentato nella
 sezione 9.6 di Verbeek (2004). Le variabili usate sono \texttt{m} (il logaritmo
-della quantit√† di moneta reale M1), \texttt{infl} (l'inflazione), \texttt{cpr}
+della quantit‡ di moneta reale M1), \texttt{infl} (l'inflazione), \texttt{cpr}
 (i tassi di interesse sui ``commercial paper''), \texttt{y} (il logaritmo del
 PIL reale) e \texttt{tbr} (i tassi di interesse sui ``Treasury bill'')\footnote{Questo
-dataset √® disponibile nel pacchetto \texttt{verbeek}; si veda la pagina
+dataset Ë disponibile nel pacchetto \texttt{verbeek}; si veda la pagina
   \url{http://gretl.sourceforge.net/gretl_data_it.html}.}.
 
-La stima di $\beta$ si pu√≤ ottenere con questi comandi:
+La stima di $\beta$ si puÚ ottenere con questi comandi:
 \begin{code}
   open money.gdt 
   smpl 1954:1 1994:4 
   vecm 6 2 m infl cpr y tbr --rc
 \end{code}
-e la parte rilevante dei risultati √® questa:
+e la parte rilevante dei risultati Ë questa:
 \begin{code}
 Stime Massima verosimiglianza usando le osservazioni 1954:1-1994:4 (T = 164)
 Rango di cointegrazione = 2
@@ -533,8 +533,8 @@ const      -3.7483       16.751
           (0.78082)     (30.909) 
 \end{code}
 L'interpretazione dei coefficienti della matrice di cointegrazione $\beta$
-sarebbe pi√π semplice se si potesse associare un significato ad ognuna delle sue
-colonne. Questo √® possibile ipotizzando l'esistenza di due relazioni di lungo
+sarebbe pi˘ semplice se si potesse associare un significato ad ognuna delle sue
+colonne. Questo Ë possibile ipotizzando l'esistenza di due relazioni di lungo
 periodo: una equazione di domanda di moneta
 \begin{equation}
   \label{eq:verbeek-mondem}
@@ -547,7 +547,7 @@ e una equazione per premio sul rischio
  \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
    \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
 \end{equation}
-che implica che la matrice di cointegrazione pu√≤ essere normalizzata come
+che implica che la matrice di cointegrazione puÚ essere normalizzata come
 \[
   \beta = \left[
     \begin{array}{rr}
@@ -557,14 +557,14 @@ che implica che la matrice di cointegrazione pu√≤ essere normalizzata come
     \right]
 \]
 
-Questa rinormalizzazione pu√≤ essere compiuta per mezzo del comando
+Questa rinormalizzazione puÚ essere compiuta per mezzo del comando
 \texttt{restrict}, da eseguire dopo il comando \texttt{vecm}, oppure, se si usa
-l'interfaccia grafica, scegliendo la voce dal men√π ``Test, Vincoli lineari''.
-La sintassi per specificare i vincoli √® abbastanza intuitiva\footnote{Si noti che
+l'interfaccia grafica, scegliendo la voce dal men˘ ``Test, Vincoli lineari''.
+La sintassi per specificare i vincoli Ë abbastanza intuitiva\footnote{Si noti che
   in questo contesto, stiamo trasgredendo la convenzione usata di solito per gli
   indici delle matrici, visto che usiamo il primo indice per riferirci alla
   \textit{colonna} di $\beta$ (il particolare vettore di cointegrazione).
-  Questa √® la pratica usata di solito nella letteratura sulla cointegrazione,
+  Questa Ë la pratica usata di solito nella letteratura sulla cointegrazione,
   visto che sono le colonne di $\beta$ (le relazioni di cointegrazione o gli
   errori di equilibrio) che interessano in modo particolare.}:
 \begin{code}
