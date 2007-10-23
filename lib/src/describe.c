@@ -356,7 +356,7 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 
     ret = sx[cpi];
     if (cpd > 0) {
-	ret += (1.0 - cpd) * (sx[cpi+1] - sx[cpi]);
+	ret += cpd * (sx[cpi+1] - sx[cpi]);
 	/* 
 	   The above formula makes sense, but so does
 	   ret += 0.5 * (sx[cpi+1] - sx[cpi]);
