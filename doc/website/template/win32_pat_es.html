@@ -1,80 +1,164 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
-     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html><head><title>gretl para Windows</title> 
 
-<html>
-<head><title>gretl para win32</title>
-<LINK REL=STYLESHEET TYPE="text/css"
-HREF="../css-gretl.html">
-</head>
-<body>
-[<a href="../gretl_espanol.html">página principal de gretl</a>]
+
+
+<link rel="STYLESHEET" type="text/css" href="gretl%20for%20Windows_files/css-gretl.html"></head><body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">Página principal de gretl</a>]</p>
 
 <center>
-<h1>Gnu Regression, Econometrics and Time-series Library</h1>
-<h2>versión para win32</h2>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>Versión para MS Windows</h2>
 </center>
 
 <h2>Descarga</h2>
 
-<p>gretl para win32 viene en un fichero ejecutable auto-extraíble, <a
-href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
-(SHORTDATE, aproximadamente 9MB). Vd. sólo tiene que descargarlo y
-ejecutarlo. Durante el proceso de instalación se le preguntará por el
-directorio donde desea instalar el programa (por defecto es
-<kbd>c:\userdata\gretl</kbd>). Es posible que desee también instalar
-los programas de corrección estacional X-12-ARIMA o TRAMO/SEATS
-en una forma adecuada
-para usarlo junto con gretl: para esto descargue los programas
-de instalación <a
-href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a> o
-<a href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a>.
+<p>Gretl para Windows viene en la forma de un fichero ejecutable auto-instalable,
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+(SHORTDATE, aproximadamente 9MB). Vd. sólo tiene que descargarlo y ejecutarlo. Durante 
+el proceso de instalación se le preguntará por el directorio donde desea instalar el programa
+(por defecto es <kbd>c:\Archivos de programa\gretl</kbd>).  El programa ha sido cheqeuado sobre 
+Windows 98 y Windows XP; y debería funcionar bien sobre cualquier versión de Windows posterior
+a Windows 95.</p>
+
+<p>El enlace de arriba señala a la última versión oficial del programa. Otra posibilidad es 
+descargar la versión "instantánea" de gretl desde el servidor de la Wake Forest University:
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl_install.exe">gretl_install.exe</a>.
+Ésta estará normalmente más actualizada: incorporará nuevas características a prueba, 
+a veces incorporará correcciones de errores, y otras veces ¡puede incorporar nuevos errores que antes no existían!  
+Además es probable que las traducciones a idiomas diferentes del Inglés estén incompletas en esta versión.
 </p>
 
-<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando
-<a href="http://www.mingw.org/">mingw32</a> y el <a
-href="http://www.gimp.org/~tml/gimp/win32/downloads.html">gtk para
-win32</a> de Tor Lillqvist. El programa de instalación, también gratuíto, es
-cortesía de <a
-href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+<p>Opciones extra que es posible que Vd. desee instalar:</p>
 
-<h2>Actualizando gretl</h2>
+<center>
+<table cellpadding="4">
 
-<p>Cuando se actualiza gretl, teniendo instalada una versión previa,
-probablemente no sea mala idea ejecutar primero el programa desinstalador
-<kbd>unins000.exe</kbd>, que debería estar en el directorio principal de gretl.
-Esto evitará que gretl funcione mal debido al uso de DLLs antiguos o
-inscripciones anteriores en el registro de Windows. Nótese que al ejecutar el 
-desinstalador no se tocará ningún fichero de usuario que Vd. haya creado en el 
-directorio <kbd>gretl/user</kbd>, pero se borrará la configuración personal que 
-haya determinado utilizando el menú 'preferencias', así que tendrá Vd. que
-restablecerla cuando ejecute la nueva versión del programa.</p>
+<tbody><tr>
+<td><p>X-12-ARIMA (corrección de estacionalidad, modelos ARIMA)</p></td>
+<td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a></p></td>
+</tr>
 
-<h2>Construyendo gretl para win32</h2>
+<tr>
+<td><p>TRAMO/SEATS (corrección de estacionalidad, detección de outliers, interpolación de valores ausentes, 
+modelos ARIMA)</p></td>
+<td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a></p></td>
+</tr>
 
-<p>Si Vd. desea construir gretl para Windows Vd. mismo, descargue el paquete de
-fuentes de gretl (vaya <a
-href="http://sourceforge.net/projects/gretl/">aquí</a> para encontrar el más 
-reciente) y eche un vistazo al subdirectorio <kbd>win32</kbd>.
-Aquí encontrará el archivo 'Makefile' para la versión Windows:
-actualmente está diseñado para cross-compilar gretl en Linux pero no debería ser 
-muy difícil modificarlo para compilar en Windows, especialmente
-si Vd. utiliza el compilador mingw32.</p>
+<tr>
+ <td><p>Conjuntos de datos del libro de Wooldridge, 
+ <a href="http://www.swlearning.com/economics/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+  Econometrics</i></a></p>
+ </td>
+ <td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a></p>
+ </td>
+</tr>
 
-<h2>gnuplot</h2>
+<tr>
+ <td><p>Conjuntos de datos del libro de Gujarati,
+  <a href="http://www.mhhe.com/economics/gujarati4/"><i>Basic Econometrics</i></a></p>
+ </td>
+ <td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/gujarati_data.exe">gujarati_data.exe</a></p>
+ </td>
+</tr>
 
-<p><b>gretl</b> llama a <a href="http://www.gnuplot.org">gnuplot</a> para
-generar los gráficos. Hay una copia de gnuplot en el propio fichero
-de instalación de gretl.</p>
+<tr>
+ <td><p>Conjuntos de datos + guiones del libro de Stock and Watson,
+  <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction to Econometrics</i></a></p>
+ </td>
+ <td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a></p>
+ </td>
+</tr>
 
-<hr>
+<tr>
+ <td><p>Conjuntos de datos del libro de Davidson y MacKinnon, 
+  <a href="http://www.econ.queensu.ca/ETM/"><i>Econometric Theory and Methods</i></a></p> 
+ </td>
+ <td><p><a href="http://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a></p>
+ </td>
+</tr>
+</tbody></table>
+</center>
 
-<p>
-Allin Cottrell (<a href="mailto:cottrell@wfu.edu">cottrell@wfu.edu</a>)<br>
-SHORTDATE</p>
+<p>Todos los de arriba son ficheros auto-instalables.  Vd. debe instalar Gretl antes de instalar 
+las opciones extra.</p>
 
-</body>
-</html>
+<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando <a href="http://www.mingw.org/">mingw32</a> y el <a href="http://www.gimp.org/%7Etml/gimp/win32/downloads.html">gtk para
+win32</a> de Tor Lillqvist. El programa de instalación, también software libre, es cortesía de <a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2>Soporte para varios idiomas</h2>
+
+<p>Ademas del Inglés, Gretl soporta el Francés, Italiano, Castellano, Alemán, Polaco, 
+Portugués y Vasco. Normalmente no debería ser necesario hacer nada especial
+para conseguir que Gretl aparezca en el idioma local: el programa queda instalado 
+con todas las traducciones y automáticamente debería aparecer en el idioma en que Vd 
+tenga configurado Windows. Sin embargo, en algunas circunstancias puede ser necesario ajustar 
+su configuración de idioma para obtener el efecto esperado. La configuración de idioma de Windows 
+puede ajustarse desde el panel de control. Si no le es posible hacer que esto funcione, aquí 
+hay un procedimiento de chequeo que puede utilizar:</p>
+
+<ul>
+
+<li>
+<p>Abra una consola de Windows (a veces llamada inexactamente "DOS
+box").</p>
+</li>
+
+<li><p>Cambie (<kbd>cd</kbd>) al directorio donde Gretl esté instalado. Por ejemplo, teclee</p>
+
+<pre>cd c:\Archivos de programa\gretl
+</pre>
+
+<p>y presione la tecla Enter.</p><p>
 
 
+</p></li><li>
+<p>Teclee "<kbd>set LANG=</kbd>" seguido por el código de dos letras de su idioma.  
+Por ejemplo, si su idioma es el castellano, teclee</p>
+
+<pre>set LANG=es
+</pre>
+
+<p>y presione Enter.  (Francés es <kbd>fr</kbd>, Castellano es
+<kbd>es</kbd>, Italiano es <kbd>it</kbd>, Polaco es <kbd>pl</kbd>, Portugués es <kbd>pt</kbd>, Alemán es <kbd>de</kbd> y Vasco es <kbd>eu</kbd>.)
+</p>
+</li>  
+
+<li><p>Entonces ejecute Gretl desde la consola: tecleando</p>
+
+<pre>gretlw32.exe
+</pre>
+<p>y presione Enter.</p>
+</li>
+
+</ul>
+
+<p>Gretl debería aparecer en el idioma seleccionado, si está soportado en Windows.
+Si Vd. consigue que Gretl funcione de esta manera con el idioma correcto,
+debería ser posible conseguir el mismo efecto por medio de la correcta configuración 
+de idioma mediante el panel de control de Windows.</p>
 
 
+<h2>Actualizaciones de Gretl</h2>
+
+<p>Cuendo se actualiza una versión existente de Gretl, es buena idea ejecutar 
+antes el programa desinstalador <kbd>unins000.exe</kbd>, que debería Vd. encontrar en el 
+directorio principal de Gretl. Esto evitará que gretl funcione mal debido al uso de DLLs antiguos o inscripciones anteriores en el registro de Windows. Nótese que al ejecutar el desinstalador no se tocará ningún fichero de usuario que Vd. haya creado en el directorio gretl de usuario, pero se borrará la configuración personal que haya determinado utilizando el menú 'preferencias', así que tendrá Vd. que restablecerla cuando ejecute la nueva versión del programa.
+</p>
+
+<h2>Ejecutando Gretl en red</h2>
+
+<p>Hay una página de consejos <a href="http://gretl.sourceforge.net/win32/gretl_network.html">aquí</a> 
+para quien desee configurar Gretl para Windows para ejecutarlo sobre una red, como por ejemplo en un laboratorio de ordenadores.</p>
+
+<h2>Construyendo Gretl para Windows</h2>
+
+<p>Si desea construir Gretl para Windows Vd. mismo, descargue el paquete de fuentes de Gretl  
+(vaya <a href="http://sourceforge.net/projects/gretl/">aquí</a> para encontrar el más reciente)
+y eche un vistazo en el subdirectorio <kbd>win32</kbd>.
+Aquí encontrará el archivo 'Makefile' para la versión Windows: actualmente está diseñado para 
+cross-compilar gretl en Linux pero no debería ser muy difícil modificarlo para compilar en Windows, 
+especialmente si Vd. utiliza el compilador mingw32.</p>
+
+</body></html>
