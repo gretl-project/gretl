@@ -450,7 +450,8 @@ static void transcribe_alpha (GRETL_VAR *v)
     MODEL *pmod;
     double aij, sij = NADBL;
     int r = jrank(v);
-    int i, j, k = v->B->rows;
+    int k = (v->B != NULL)? v->B->rows : 0;
+    int i, j;
 
     for (i=0; i<v->neqns; i++) {
 	pmod = v->models[i];
@@ -470,7 +471,7 @@ static void transcribe_alpha (GRETL_VAR *v)
 
 static int vecm_check_size (GRETL_VAR *v, int flags)
 {
-    int xc = gretl_matrix_cols(v->X);
+    int xc = (v->X != NULL)? v->X->cols : 0;
     int err = 0;
 
     if (flags & BOOTSTRAPPING) {
@@ -701,8 +702,8 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
     gretl_matrix_print(R, "Ra, in correct_variance()");
 #endif
 
-    nse = v->X->cols;
-    xc1 = v->X->cols + jrank(v);
+    nse = (v->X != NULL)? v->X->cols : 0;
+    xc1 = nse + jrank(v);
 
     X = gretl_zero_matrix_new(v->T, xc1);
     XTX = gretl_matrix_alloc(xc1, xc1);
@@ -713,7 +714,9 @@ correct_variance (GRETL_VAR *v, const gretl_restriction *rset,
 
     if (!err) {
 	/* copy original X cols and append ECs */
-	gretl_matrix_inscribe_matrix(X, v->X, 0, 0, GRETL_MOD_NONE);
+	if (v->X != NULL) {
+	    gretl_matrix_inscribe_matrix(X, v->X, 0, 0, GRETL_MOD_NONE);
+	}
 	err = add_EC_terms_to_X(v, X, Z);
     }
 
@@ -844,7 +847,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	return err;
     }
 
-    xc = v->X->cols;
+    xc = (v->X != NULL)? v->X->cols : 0;
 
     Pi = gretl_matrix_alloc(n, beta->rows);
     Ai = gretl_matrix_alloc(n, n);

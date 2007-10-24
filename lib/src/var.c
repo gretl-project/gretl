@@ -1770,13 +1770,17 @@ int transcribe_VAR_models (GRETL_VAR *var,
     int ecm = (var->ci == VECM);
     const double *y;
     double x;
-    int i, j, jmax = var->B->rows;
+    int i, j, jmax;
     int err = 0;
+
+    jmax = (var->B != NULL)? var->B->rows : 0;
 
     params = strings_array_new_with_length(var->ncoeff, VNAMELEN);
     if (params == NULL) {
 	return E_ALLOC;
     }
+
+    jmax = (var->B != NULL)? var->B->rows : 0;
 
     gretl_VAR_param_names(var, params, pdinfo);
 
