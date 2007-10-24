@@ -332,10 +332,6 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
     /* sanity check */
     q = (p > 1)? 1 : (p < 0)? 0 : p;
 
-    cpd = q * (m - 1);
-    cpi = (int) floor(cpd);
-    cpd -= cpi;
-
     sx = malloc(m * sizeof *sx);
     if (sx == NULL) {
 	return NADBL;
@@ -351,6 +347,10 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
     if (n == 0) {
 	free(sx);
 	return NADBL;
+    } else {
+	cpd = q * (n - 1);
+	cpi = (int) floor(cpd);
+	cpd -= cpi;
     }
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
