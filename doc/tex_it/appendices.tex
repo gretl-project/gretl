@@ -252,11 +252,11 @@ completa, ma è possibile trovare alcuni dettagli seguendo il link
 allo sviluppo di \app{gretl} è invitato a iscriversi alla mailing list
 \href{http://gretl.sourceforge.net/lists.html}{gretl-devel}.
 
-\section{Istruzioni per la compilazione: un esempio}
+\section{Istruzioni per la compilazione}
 \label{sec:build-inst}
 
 Questa sezione contiene istruzioni che permettono di compilare \app{gretl}
-a un utente con una conoscenza di base di un sistema Unix.
+a un utente con una conoscenza di base di un sistema di tipo Unix.
 La procedura è stata testata su una nuova installazione della distribuzione
 Debian Etch e dovrebbe funzionare anche su altre distribuzioni Linux
 (specialmente quelle derivate da Debian, come Ubuntu e simili). Su altri sistemi
@@ -267,6 +267,8 @@ In questo esempio guidato, compileremo \app{gretl} insieme alla sua
 documentazione completa. Questa scelta implica alcuni requisiti in più, ma in
 cambio permette di modificare anche i file della documentazione, come l'aiuto in
 linea o i manuali.
+
+\subsection{Installare i programmi di base}
 
 Assumiamo che le utilità GNU di base siano già installate sul sistema, insieme
 a questi altri programmi:
@@ -315,25 +317,64 @@ la maggior parte di questi pacchetti fa già parte delle installazioni standard.
 Per abilitare funzionalità aggiuntive, come il supporto audio, occorre
 installare altre librerie.
 
-A questo punto è possibile iniziare a compilare.
+\subsection{Procurarsi il sorgente: pacchetto o CVS}
+
+A questo punto è possibile iniziare a compilare il sorgente. È possibile
+procurarselo in due modi: scaricando l'ultimo pacchetto sorgente rilasciato, o
+scaricando la versione di \app{gretl} contenuta attualmente nell'archivio CVS
+(Concurrent Versions System). La versione CVS è di solito più recente, può
+contenere correzioni di bug presenti nell'ultimo pacchetto rilasciato, ma può
+anche contenere nuovi bug (o addirittura non essere compilabile) e codice
+``sperimentale''. Se si vuole partecipare allo sviluppo e al test del programma,
+è raccomandabile usare la versione CVS di \app{gretl}.
+
+Per lavorare col pacchetto sorgente:
 
 \begin{enumerate}
-  \item Scaricare il più recente pacchetto dei sorgenti di \app{Gretl}
+  \item Scaricare il pacchetto dei sorgenti di \app{Gretl}
     da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-    Le versioni rilasciate sotto forma di pacchetto sono testate e possono
-    essere compilate senza problemi, ma se si vuole correre qualche rischio,
-    è possibile compilare la versione CVS, che contiene modifiche più recenti,
-    che saranno incluse nella successiva versione. Le istruzioni per scaricare
-    la versione CVS si trovano sull'apposita
-    \href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{pagina
-    di SourceForge}.
   \item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
     usare il comando \cmd{tar xvfz gretl-N.tar.gz} (sostituire \cmd{N}
     con il numero di versione specifico del file scaricato).
   \item Spostarsi nella directory del codice sorgente di gretl appena
-    creata (ad es. \verb+gretl-1.6.2+).
+    creata (ad es. \verb+gretl-1.6.6+).
+  \item Procedere alla sezione seguente ``Configurare il sorgente''.
 \end{enumerate}
           
+Per lavorare con CVS occorre per prima cosa installare il programma client \app{cvs},
+se non si trova già sul proprio sistema. Può essere utile consultare il sito web
+di CVS \href{http://www.nongnu.org/cvs/}{www.nongnu.org/cvs}, le istruzioni per
+l'uso di CVS su SourceForge contenute nella
+\href{http://sourceforge.net/docman/display_doc.php?docid=14035&group_id=1}{pagina
+CVS di SourceForge}, e le istruzioni specifiche su \app{gretl} nella
+\href{http://sourceforge.net/cvs/?group_id=36234}{pagina CVS di Gretl}.
+
+Quando si scarica il codice da CVS \textit{per la prima volta}, occorre decidere
+dove salvarlo. Ad esempio si può creare una directory chiamata \texttt{cvs}
+nella propria home directory, aprire un terminale, fare \texttt{cd} in questa
+directory ed eseguire i comandi seguenti:
+%
+\begin{code}
+cvs -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl login
+cvs -z3 -d:pserver:anonymous@gretl.cvs.sourceforge.net:/cvsroot/gretl co -P gretl
+\end{code}
+%
+Dopo il primo comando verrà richiesta una password: basta premere invio. Dopo il
+secondo comando, \app{cvs} creerà una sotto-directory chiamatat \texttt{gretl}
+che conterrà il codice sorgente.
+
+Ogni volta che si vuole \textit{aggiornare la propria copia del sorgente}, basta
+andare nella directory \texttt{gretl} ed eseguire
+\begin{code}
+cvs update -d -P
+\end{code}
+
+Da questo punto in poi, assumendo di essere nella directory \texttt{gretl}, è
+possibile seguire le istruzioni valide anche per il sorgente contenuto nel
+pacchetto.
+
+\subsection{Configurare il sorgente}
+
 Il successivo comando da eseguire è \texttt{./configure}; si tratta di uno
 script sofisticato che cerca gli strumenti disponibili sul sistema e prepara
 la compilazione. Il comando \texttt{configure} accetta molte opzioni: eseguendo
@@ -391,6 +432,14 @@ Now type 'make' to build gretl.
 \end{scode}
 \end{script}
 
+\tip{Se si usa CVS, è una buona idea ri-eseguire lo script
+  \texttt{configure} dopo ogni operazione di aggiornamento del sorgente.
+  Non è sempre necessario, ma alcune volte lo è; in ogni caso non è dannoso.
+  A questo proposito, può essere comodo creare un piccolo script di shell che
+  esegue \texttt{configure} con le opzioni che si è soliti utilizzare.}
+
+\subsection{Compilare e installare}
+
 Siamo quindi pronti per iniziare la vera e propria compilazione: questa si
 ottiene col comando \texttt{make}, che compila tutti i file sorgenti nell'ordine
 corretto. Basta semplicemente eseguire
@@ -421,46 +470,30 @@ plugin per precisione multipla invocabile con il comando del menù
 ``Modello, Altri modelli lineari, Minimi quadrati in alta precisione'' che rappresenta i
 valori in virgola mobile usando un numero di bit indicato dalla
 variabile di ambiente \verb+GRETL_MP_BITS+ (valore predefinito: 256).
+
 Le equazioni normali dei minimi quadrati sono risolte in modo
 predefinito usando la decomposizione di Cholesky, che è abbastanza
-accurata per la maggior parte delle applicazioni (c'è anche l'opzione
-di usare la decomposizione QR). Il programma è stato testato
-abbastanza approfonditamente con i dataset di riferimento forniti dal
-NIST (il National Institute of Standards and Technology statunitense)
-e un rapporto completo dei risultati si trova sul sito web di Gretl
-(seguendo il link ``Accuratezza numerica'').
+accurata per la maggior parte delle applicazioni. Nel caso le variabili
+indipendenti esibiscano un'alto grado di collinearità, \app{gretl} adotta
+automaticamente la decomposizione QR; inoltre l'utente può scegliere di usare
+sempre la decomposizione QR.
 
-Giovanni Baiocchi e Walter Distaso hanno pubblicato una recensione di
-\app{Gretl} per il \emph{Journal of Applied Econometrics} (2003).  Siamo grati a
-Baiocchi e Distaso per il loro accurato esame del programma, che ha suggerito le
-seguenti modifiche.
+Il programma è stato testato abbastanza approfonditamente con i dataset di
+riferimento forniti dal NIST (il National Institute of Standards and Technology
+statunitense) e un rapporto completo dei risultati si trova sul sito web di
+Gretl (seguendo il link ``Accuratezza numerica'').
 
-\begin{enumerate}
-\item I recensori hanno trovato un bug nel ``calcolatore di p-value''
-  di \app{Gretl}, perché il programma mostrava il complemento della
-  probabilità corretta per i valori negativi di \emph{z}. Il bug è
-  stato corretto nella versione 0.998 del programma (pubblicata il 9
-  Luglio 2002).
-\item È stato anche notato che il calcolatore di p-value produceva
-  risultati non accurati per valori estremi di \emph{x} (ad es. valori
-  da 8 a 10 nella distribuzione \emph{t} con 100 gradi di libertà).
-  Anche questo problema è stato risolto nella versione 0.998 di
-  \app{Gretl}, inserendo codice più accurato per la distribuzione di
-  probabilità.
-\item I recensori hanno notato un difetto nella presentazione dei
-  coefficienti di regressione in \app{Gretl}, perché alcuni
-  coefficienti venivano mostrati con un numero troppo basso di cifre
-  significative. Il difetto è stato corretto nella versione 0.999
-  (pubblicata il 25 Agosto 2002): ora tutte le statistiche associate
-  con la regressione sono mostrate con 6 cifre significative.
-\item I test eseguiti dai recensori indicavano che l'accuratezza
-  numerica di \app{Gretl} su MS Windows era minore che su Linux.
-  Ad esempio, sui dati Longley (un dataset notoriamente ``mal-condizionato'' usato
-  spesso per testare i programmi econometrici) la versione Windows di Gretl
-  produceva alcuni coefficienti con la settima cifra errata, mentre gli stessi
-  coefficienti risultavano corretti su Linux. Questa anomalia è stata corretta
-  nella versione 1.0pre3 di \app{Gretl} (pubblicata il 10 Ottobre 2002).
-\end{enumerate}
+Ad oggi, sono state pubblicate due recensioni che hanno preso in esame
+l'accuratezza di \app{gretl}: Giovanni Baiocchi e Walter Distaso (2003), e Talha
+Yalta e Yasemin Yalta (2007). Siamo grati a questi autori per il loro accurato
+esame del programma. I loro commenti hanno suggerito vari miglioramenti, come
+l'uso del codice \app{cephes} di Stephen Moshier per calcolare i p-value e altre
+quantità relative alle distribuzioni di probabilità (si veda
+\href{http://www.netlib.org/cephes/}{netlib.org}), modifiche alla formattazione
+dei risultati delle regressioni per assicurare che il programma mostri un numero
+coerente di cifre significative, soluzione di alcuni problemi di compilazione
+della versione MS Windows di \app{gretl} (che in passato era leggermente meno
+accurata della versione Linux).
 
 La versione attuale di \app{Gretl} comprende un ``plugin'' che esegue
 la suite NIST di test della regressione lineare. È possibile trovarlo
@@ -469,7 +502,7 @@ questo test, un'introduzione spiega qual è il risultato atteso: se si
 esegue il test e si ottengono risultati diversi da quelli attesi, si
 prega di inviare un bug report a \verb+cottrell@wfu.edu+.  
 
-Come detto sopra, tutte le statistiche di regressione sono mostrate
+Tutte le statistiche di regressione sono mostrate
 con 6 cifre significative nella versione attuale di \app{Gretl}
 (tranne quando viene usato il plugin per precisione multipla, e allora
 i risultati sono mostrati con 12 cifre). Se occorre esaminare un
