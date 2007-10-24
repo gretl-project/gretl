@@ -804,6 +804,20 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 #endif
 }
 
+static void fill_residuals_matrix (GRETL_VAR *v)
+{
+    double x;
+    int T = v->Y->rows;
+    int i, t;
+
+    for (i=0; i<v->neqns; i++) {
+	for (t=0; t<T; t++) {
+	    x = gretl_matrix_get(v->Y, t, i);
+	    gretl_matrix_set(v->E, t, i, x);
+	}
+    }
+}
+
 /* The following is designed to accommodate the case where alpha is
    restricted, so we can't just run OLS conditional on beta.
 
@@ -880,7 +894,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    }
 	} else {
 	    /* nothing to estimate, with alpha in hand */
-	    gretl_matrix_copy_values(v->E, v->Y);
+	    fill_residuals_matrix(v);
 	}
     }
 
