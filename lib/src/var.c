@@ -2045,8 +2045,9 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 	vi = v->ylist[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(R0, s++, i, Z[vi][t] - Z[vi][t-1]);
-	    gretl_matrix_set(R1, s++, i, Z[vi][t-1]);
+	    gretl_matrix_set(R0, s, i, Z[vi][t] - Z[vi][t-1]);
+	    gretl_matrix_set(R1, s, i, Z[vi][t-1]);
+	    s++;
 	}
     }
 

@@ -325,9 +325,9 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 double gretl_quantile (int t1, int t2, const double *x, double p)
 {
     int m = t2 - t1 + 1;
-    double *sx, ret, cpd;
+    double *sx, cpd, q;
     int t, n, cpi;
-    double q;
+    double ret = NADBL;
     
     /* sanity check */
     q = (p > 1)? 1 : (p < 0)? 0 : p;
@@ -344,25 +344,22 @@ double gretl_quantile (int t1, int t2, const double *x, double p)
 	}
     }
 
-    if (n == 0) {
-	free(sx);
-	return NADBL;
-    } else {
+    if (n > 0) {
 	cpd = q * (n - 1);
 	cpi = (int) floor(cpd);
 	cpd -= cpi;
-    }
 
-    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
+	qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
-    ret = sx[cpi];
-    if (cpd > 0) {
-	ret += cpd * (sx[cpi+1] - sx[cpi]);
-	/* 
-	   The above formula makes sense, but so does
-	   ret += 0.5 * (sx[cpi+1] - sx[cpi]);
-	   which one is best?
-	*/
+	ret = sx[cpi];
+	if (cpd > 0) {
+	    ret += cpd * (sx[cpi+1] - sx[cpi]);
+	    /* 
+	       The above formula makes sense, but so does
+	       ret += 0.5 * (sx[cpi+1] - sx[cpi]);
+	       which one is best?
+	    */
+	}
     }
 
     free(sx);
