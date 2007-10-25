@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-10-14 22:00+0100\n"
+"PO-Revision-Date: 2007-10-23 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4563,7 +4563,7 @@ msgstr "Empiryczne"
 
 #: lib/src/modelprint.c:3198
 msgid "Predicted"
-msgstr "Prognoza"
+msgstr "Przewidywane"
 
 #: lib/src/modelprint.c:3229 lib/src/modelprint.c:3263
 #: lib/src/modelprint.c:3297
@@ -8663,7 +8663,7 @@ msgstr "pierwiastki równania charakterystycznego VAR"
 
 #: gui2/gpt_control.c:2243 gui2/gpt_control.c:2335
 msgid "Add another curve..."
-msgstr "Dodaj inne rozk³±dy..."
+msgstr "Dodaj inne krzywe rozk³adów..."
 
 #: gui2/gpt_control.c:2245 gui2/gpt_control.c:2339
 msgid "Save as PNG..."
