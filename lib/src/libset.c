@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "usermat.h"
+#include "gretl_string_table.h"
 
 #include <unistd.h>
 #include <errno.h>
@@ -1184,7 +1185,9 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 	    return set_initvals(line, pdinfo, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
-	} 
+	} else if (!strcmp(setobj, "codevars")) {
+	    return set_codevars(line);
+	}
     }
 
     if (nw == 1) {

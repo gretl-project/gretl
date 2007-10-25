@@ -3024,7 +3024,8 @@ static int blank_so_far (double *x, int obs)
 }
 
 static int process_csv_obs (const char *str, int i, int t, 
-			    double **Z, gretl_string_table **pst,
+			    double **Z, DATAINFO *pdinfo,
+			    gretl_string_table **pst,
 			    PRN *prn)
 {
     int err = 0;
@@ -3032,24 +3033,22 @@ static int process_csv_obs (const char *str, int i, int t,
     if (csv_missval(str, i, t+1, prn)) {
 	Z[i][t] = NADBL;
     } else {
-	if (check_atof(str)) {
-	    int ix = 0;
-	    int addcol = 0;
+	if (check_atof(str) || is_codevar(pdinfo->varname[i])) {
+	    int addcol, ix = -1;
 
-	    if (t == 0 && *pst == NULL) {
+	    if ((t == 0 || is_codevar(pdinfo->varname[i])) && *pst == NULL) {
 		*pst = gretl_string_table_new();
 	    }
-	    if (blank_so_far(Z[i], t)) {
-		addcol = 1;
-	    }
 	    if (*pst != NULL) {
+		addcol = blank_so_far(Z[i], t);
 		ix = gretl_string_table_index(*pst, str, i, addcol, prn);
 	    }
 	    if (ix >= 0) {
 		Z[i][t] = (double) ix;
 	    } else {
 		err = 1;
-		pprintf(prn, M_("At variable %d, observation %d:\n"), i, t+1);
+		pprintf(prn, M_("Variable %d (%s), observation %d, '%s':\n"), 
+			i, pdinfo->varname[i], t+1, str);
 		errmsg(err, prn);
 	    }
 	} else {
@@ -3463,7 +3462,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		iso_to_ascii(csvinfo->S[t]);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
-		if (process_csv_obs(csvstr, nv, t, csvZ, &st, prn)) {
+		if (process_csv_obs(csvstr, nv, t, csvZ, csvinfo, &st, prn)) {
 		    goto csv_bailout;
 		}
 	    }

@@ -50,4 +50,8 @@ void saved_strings_cleanup (void);
 
 int destroy_saved_strings_at_level (int d);
 
+int is_codevar (const char *s);
+
+int set_codevars (const char *s);
+
 #endif /* GRETL_STRING_TABLE_H */
