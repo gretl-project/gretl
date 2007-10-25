@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-10-23 20:00+0100\n"
+"PO-Revision-Date: 2007-10-25 23:30+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -9694,7 +9694,7 @@ msgstr "/Pomoc/_Przewodnik u¿ytkownika"
 
 #: gui2/gretl.c:516
 msgid "/Help/Check for _updates"
-msgstr "/Pomoc/_Uzupe³nienie danych w bazach"
+msgstr "/Pomoc/_Sprawdz aktualizacjê oprogramowania"
 
 #: gui2/gretl.c:520 gui2/gretl.c:522
 msgid "/Help/_About gretl"
@@ -10971,7 +10971,7 @@ msgstr "gretl: obserwacje d¼wigniowe (leverage) i wp³ywowe (influence)"
 
 #: gui2/library.c:1894
 msgid "gretl: collinearity"
-msgstr "gretl: ocena wspó³liniowo¶ci VIF"
+msgstr "gretl: ocena wspó³liniowo¶ci VIF (Variance Inflation Factor)"
 
 #: gui2/library.c:1935 gui2/menustate.c:328
 msgid "Gini coefficient"
@@ -12496,7 +12496,7 @@ msgstr "Tryb ekspercki (bez ostrze¿eñ)"
 
 #: gui2/settings.c:175
 msgid "Tell me about gretl updates"
-msgstr "Powiadamiaj o aktualizacjach baz danych"
+msgstr "Powiadom o aktualizacji oprogramowania"
 
 #: gui2/settings.c:177
 msgid "Show gretl toolbar"
@@ -13764,7 +13764,7 @@ msgstr "W³asno¶ci macierzy X'X"
 
 #: plugin/vif.c:127
 msgid "Reciprocal condition number"
-msgstr "Reciprocal condition number"
+msgstr "Wska¿nik uwarunkowania macierzy CN"
 
 #: plugin/vif.c:189
 msgid "The statistic you requested is not meaningful for this model"
