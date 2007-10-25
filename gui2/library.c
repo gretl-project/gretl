@@ -5425,7 +5425,7 @@ void do_open_csv_box (char *fname, int code, int append)
 	err = import_octave(&Z, &datainfo, fname, prn);
 	strcpy(dtype, "Octave");
     } else {
-	err = import_csv(&Z, &datainfo, fname, prn); 
+	err = import_csv(&Z, &datainfo, fname, OPT_NONE, prn); 
 	strcpy(dtype, "CSV");
     }
 
@@ -6420,7 +6420,7 @@ static int open_append (ExecState *s, double ***pZ,
     }
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, datfile, prn);
+	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, datfile, prn);
     } else if (k == GRETL_BOX_DATA) {

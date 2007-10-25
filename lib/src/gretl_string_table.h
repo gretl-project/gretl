@@ -22,7 +22,7 @@
 
 typedef struct _gretl_string_table gretl_string_table;
 
-gretl_string_table *gretl_string_table_new (void);
+gretl_string_table *gretl_string_table_new (int *err);
 
 gretl_string_table *string_table_new_from_cols_list (int *list);
 

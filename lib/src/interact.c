@@ -3672,7 +3672,7 @@ static int append_data (const char *line, double ***pZ,
     k = detect_filetype(fname, NULL, prn);
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, fname, prn);
+	err = import_csv(pZ, ppdinfo, fname, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, fname, prn);
     } else if (k == GRETL_BOX_DATA) {

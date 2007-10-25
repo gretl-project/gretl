@@ -192,6 +192,7 @@ struct gretl_option gretl_opts[] = {
     { OMITFROM, OPT_Q, "quiet" },
     { OMITFROM, OPT_T, "inst" },
     { OMITFROM, OPT_W, "wald" },
+    { OPEN,     OPT_C, "coded" },
     { OPEN,     OPT_B, "box1" },
     { OPEN,     OPT_O, "octave" },
     { OPEN,     OPT_W, "www" },

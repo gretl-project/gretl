@@ -1871,7 +1871,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(pZ, ppdinfo, datfile, prn);
+	return import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 
@@ -3026,7 +3026,7 @@ static int blank_so_far (double *x, int obs)
 static int process_csv_obs (const char *str, int i, int t, 
 			    double **Z, DATAINFO *pdinfo,
 			    gretl_string_table **pst,
-			    PRN *prn)
+			    gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -3036,8 +3036,13 @@ static int process_csv_obs (const char *str, int i, int t,
 	if (check_atof(str) || is_codevar(pdinfo->varname[i])) {
 	    int addcol, ix = -1;
 
-	    if ((t == 0 || is_codevar(pdinfo->varname[i])) && *pst == NULL) {
-		*pst = gretl_string_table_new();
+	    if (t == 0 || is_codevar(pdinfo->varname[i])) {
+		if (*pst == NULL) {
+		    *pst = gretl_string_table_new(&err);
+		}
+	    } else if (0 && (opt & OPT_C)) {
+		/* not ready yet */
+		return E_OK;
 	    }
 	    if (*pst != NULL) {
 		addcol = blank_so_far(Z[i], t);
@@ -3149,6 +3154,7 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
  * @pZ: pointer to data set.
  * @ppdinfo: pointer to data information struct.
  * @fname: name of CSV file.
+ * @opt: not yet documented.
  * @prn: gretl printing struct (can be NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -3159,16 +3165,18 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
  */
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, PRN *prn)
+		const char *fname, gretlopt opt, PRN *prn)
 {
     int ncols, chkcols, nrows;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
     int blank_1 = 0, obs_1 = 0;
+    int popit = 0;
     int i, k, t, trail, maxlen;
     char csvstr[CSVSTRLEN];
     FILE *fp = NULL;
     DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
+    int *codelist = NULL;
     PRN *mprn = NULL;
     char *line = NULL, *p = NULL, *descrip = NULL;
 
@@ -3184,6 +3192,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     char delim = '\t';
     int numcount, auto_name_vars = 0;
     gretl_string_table *st = NULL;
+    int err = 0;
 
     if (*ppdinfo != NULL) {
 	delim = (*ppdinfo)->delim;
@@ -3202,13 +3211,13 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	err = E_FOPEN;
 	goto csv_bailout;
     }
 
     csvinfo = datainfo_new();
     if (csvinfo == NULL) {
-	fclose(fp);
-	pputs(prn, M_("Out of memory\n"));
+	err = E_ALLOC;
 	goto csv_bailout;
     }
 
@@ -3227,6 +3236,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, 
 				 prn);    
     if (maxlen <= 0) {
+	err = E_DATA;
 	goto csv_bailout;
     } 
 
@@ -3248,7 +3258,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     line = malloc(maxlen);
     if (line == NULL) {
-	pputs(prn, M_("Out of memory\n"));
+	err = E_ALLOC;
 	goto csv_bailout;
     }  
     
@@ -3295,6 +3305,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
 			nrows, chkcols);
 		pputs(prn, msg);
+		err = E_DATA;
 		goto csv_bailout;
 	    }
 	}
@@ -3307,25 +3318,36 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     pprintf(mprn, M_("   number of variables: %d\n"), csvinfo->v - 1);
     pprintf(mprn, M_("   number of non-blank lines: %d\n"), nrows);
 
-    /* end initial checking */
-
     if (csvinfo->n == 0) {
 	pputs(prn, M_("Invalid data file\n"));
+	err = E_DATA;
 	goto csv_bailout;
     }
 
+    /* end initial checking */
+
     /* initialize datainfo and Z */
     if (start_new_Z(&csvZ, csvinfo, 0)) {
-	pputs(prn, M_("Out of memory\n"));
+	err = E_ALLOC;
 	goto csv_bailout;
     }
 
     if (blank_1 || obs_1) {
 	if (dataset_allocate_obs_markers(csvinfo)) {
-	    pputs(prn, M_("Out of memory\n"));
+	    err = E_ALLOC;
 	    goto csv_bailout;
 	}
     }
+
+#if 0 /* not ready */
+    if (opt & OPT_C) {
+	codelist = gretl_list_new(csvinfo->v - 1);
+	if (codelist == NULL) {
+	    err = E_ALLOC;
+	    goto csv_bailout;
+	}
+    }
+#endif
 
     /* second pass */
 
@@ -3372,6 +3394,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    if (*csvstr == '\0') {
 		pprintf(prn, M_("   variable name %d is missing: aborting\n"), nv);
 		pputs(prn, msg);
+		err = E_DATA;
 		goto csv_bailout;
 	    } else {
 		csvinfo->varname[nv][0] = 0;
@@ -3382,6 +3405,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		    iso_to_ascii(csvinfo->varname[nv]);
 		    if (check_varname(csvinfo->varname[nv])) {
 			errmsg(1, prn);
+			err = E_DATA;
 			goto csv_bailout;
 		    }
 		}
@@ -3395,14 +3419,14 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	pputs(prn, M_("it seems there are no variable names\n"));
 	/* then we undercounted the observations by one */
 	if (add_single_obs(&csvZ, csvinfo)) {
-	    pputs(prn, _("Out of memory\n"));
+	    err = E_ALLOC;
 	    goto csv_bailout;
 	}
 	auto_name_vars = 1;
 	rewind(fp);
 	if (obs_labels_no_varnames(obs_1, csvinfo, numcount)) {
 	    if (csv_reconfigure_for_markers(&csvZ, csvinfo)) {
-		pputs(prn, _("Out of memory\n"));
+		err = E_ALLOC;
 		goto csv_bailout;
 	    } else {
 		obs_1 = 1;
@@ -3414,12 +3438,14 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		errmsg(1, prn);
 		break;
 	    }
-	}	    
+	}
+	err = E_DATA;
 	goto csv_bailout;
     }
     
     if (*ppdinfo != NULL && (*ppdinfo)->decpoint != ',') {
 	gretl_push_c_numeric_locale();
+	popit = 1;
     }
 
     pputs(mprn, M_("scanning for row labels and data...\n"));
@@ -3462,19 +3488,27 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		iso_to_ascii(csvinfo->S[t]);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
-		if (process_csv_obs(csvstr, nv, t, csvZ, csvinfo, &st, prn)) {
-		    goto csv_bailout;
+		err = process_csv_obs(csvstr, nv, t, csvZ, csvinfo, &st, opt, prn);
+		if (err) {
+		    break;
 		}
 	    }
 	}
-	if (++t == csvinfo->n) {
+	if (err || ++t == csvinfo->n) {
 	    break;
 	}
     }
 
-    gretl_pop_c_numeric_locale();
+    if (popit) {
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (err) {
+	goto csv_bailout;
+    }
 
     if (st != NULL) {
+	/* this also frees the table */
 	gretl_string_table_print(st, csvinfo, fname, prn);
     }
 
@@ -3530,18 +3564,13 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    descrip = NULL;
 	}
 	*ppdinfo = csvinfo;
-    } else if (merge_data(pZ, *ppdinfo, csvZ, csvinfo, prn)) {
-	goto csv_bailout;
+    } else {
+	err = merge_data(pZ, *ppdinfo, csvZ, csvinfo, prn);
+	if (err) {
+	    /* failure here also frees the dataset */
+	    goto csv_bailout;
+	}
     }
-
-    fclose(fp); 
-    free(line);
-
-#ifdef ENABLE_NLS
-    console_off();
-#endif
-
-    return 0;
 
  csv_bailout:
 
@@ -3554,18 +3583,27 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (descrip != NULL) {
 	free(descrip);
     }
-    if (csvinfo != NULL) {
-	clear_datainfo(csvinfo, CLEAR_FULL);
+    if (codelist != NULL) {
+	free(codelist);
     }
-    if (st != NULL) {
-	gretl_string_table_destroy(st);
+
+    if (err) {
+	if (csvinfo != NULL) {
+	    clear_datainfo(csvinfo, CLEAR_FULL);
+	}
+	if (st != NULL) {
+	    gretl_string_table_destroy(st);
+	}
+	if (err == E_ALLOC) {
+	    pputs(prn, M_("Out of memory\n"));
+	}
     }
 
 #ifdef ENABLE_NLS
     console_off();
 #endif
 
-    return 1;
+    return err;
 }
 
 static int check_marker (char *src, int i)

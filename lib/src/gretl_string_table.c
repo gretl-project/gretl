@@ -50,11 +50,13 @@ static col_table *col_table_new (int colnum)
     return ct;
 }
 
-gretl_string_table *gretl_string_table_new (void)
+gretl_string_table *gretl_string_table_new (int *err)
 {
     gretl_string_table *st = malloc(sizeof *st);
 
-    if (st != NULL) {
+    if (st == NULL) {
+	*err = E_ALLOC;
+    } else {
 	st->cols = NULL;
 	st->n_cols = 0;
     }

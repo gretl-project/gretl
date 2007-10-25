@@ -479,7 +479,7 @@ int main (int argc, char *argv[])
 				 DATA_NONE, prn, 0);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
+	    err = import_csv(&Z, &datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
 	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
@@ -724,7 +724,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } 
 
     if (k == GRETL_CSV_DATA) {
-	err = import_csv(pZ, ppdinfo, datfile, prn);
+	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, datfile, prn);
     } else if (k == GRETL_BOX_DATA) {
