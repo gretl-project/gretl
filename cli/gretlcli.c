@@ -268,7 +268,7 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #else
 	printf("%s", (coding)? "> " : "? ");
 	fflush(stdout);
-	file_get_line(); /* note: "file" = stdin here */
+	file_get_line(s->line, s->cmd); /* note: "file" = stdin here */
 #endif
     }
 
