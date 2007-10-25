@@ -3134,6 +3134,75 @@ static char *get_csv_descrip (char *line, int n, FILE *fp)
     return desc;
 }
 
+static const char *
+csv_msg = N_("\nPlease note:\n"
+	     "- The first row of the CSV file should contain the "
+	     "names of the variables.\n"
+	     "- The first column may optionally contain date "
+	     "strings or other 'markers':\n  in that case its row 1 entry "
+	     "should be blank, or should say 'obs' or 'date'.\n"
+	     "- The remainder of the file must be a rectangular "
+	     "array of data.\n");
+
+static int cvs_fields_check (char *line, int maxlen, FILE *fp,
+			     char delim, int trail, char **pdescrip,
+			     int *pncols, int *pnrows, 
+			     int *blank_1, int *obs_1,
+			     double **Z, PRN *prn)
+{
+    int ncols = 0, nrows = 0;
+    int gotdata = 0;
+    int chkcols = 0;
+    int err = 0;
+
+    *pncols = *pnrows = 0;
+
+    while (csv_fgets(line, maxlen, fp) && !err) {
+
+	/* skip comment lines */
+	if (*line == '#') {
+	    continue;
+	}
+
+	/* skip blank lines -- but finish if the blank comes after data */
+	if (string_is_blank(line)) {
+	    if (gotdata) {
+		if (Z == NULL) {
+		    *pdescrip = get_csv_descrip(line, maxlen, fp);
+		}
+		break;
+	    } else {
+		continue;
+	    }
+	}
+
+	nrows++;
+	compress_csv_line(line, delim, trail);
+
+	if (!gotdata) {
+	    /* scrutinize first "real" line */
+	    check_first_field(line, delim, blank_1, obs_1, prn);
+	    gotdata = 1;
+	} 
+
+	chkcols = count_csv_fields(line, delim);
+	if (ncols == 0) {
+	    ncols = chkcols;
+	    pprintf(prn, M_("   number of columns = %d\n"), ncols);	    
+	} else if (chkcols != ncols) {
+	    pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
+		    nrows, chkcols);
+	    pputs(prn, M_(csv_msg));
+	    err = E_DATA;
+	}
+    }
+
+    *pnrows = nrows;
+    *pncols = ncols;
+
+    return err;
+}
+
 static int 
 csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 {
@@ -3167,8 +3236,8 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, gretlopt opt, PRN *prn)
 {
-    int ncols, chkcols, nrows;
-    int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
+    int ncols, nrows;
+    int gotdelim = 0, gottab = 0, markertest = -1;
     int blank_1 = 0, obs_1 = 0;
     int popit = 0;
     int i, k, t, trail, maxlen;
@@ -3179,16 +3248,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     int *codelist = NULL;
     PRN *mprn = NULL;
     char *line = NULL, *p = NULL, *descrip = NULL;
-
-    const char *msg = M_("\nPlease note:\n"
-	"- The first row of the CSV file should contain the "
-	"names of the variables.\n"
-	"- The first column may optionally contain date "
-	"strings or other 'markers':\n  in that case its row 1 entry "
-	"should be blank, or should say 'obs' or 'date'.\n"
-	"- The remainder of the file must be a rectangular "
-	"array of data.\n");
-
     char delim = '\t';
     int numcount, auto_name_vars = 0;
     gretl_string_table *st = NULL;
@@ -3263,58 +3322,19 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }  
     
     rewind(fp);
-    
+
     /* read lines, check for consistency in number of fields */
 
-    chkcols = ncols = nrows = gotdata = 0;
-
-    while (csv_fgets(line, maxlen, fp)) {
-
-	/* skip comment lines */
-	if (*line == '#') {
-	    continue;
-	}
-
-	/* skip blank lines -- but finish if the blank comes after data */
-	if (string_is_blank(line)) {
-	    if (gotdata) {
-		if (*pZ == NULL) {
-		    descrip = get_csv_descrip(line, maxlen, fp);
-		}
-		break;
-	    } else {
-		continue;
-	    }
-	}
-
-	nrows++;
-	compress_csv_line(line, delim, trail);
-
-	if (!gotdata) {
-	    /* scrutinize first "real" line */
-	    check_first_field(line, delim, &blank_1, &obs_1, mprn);
-	    gotdata = 1;
-	} 
-
-	chkcols = count_csv_fields(line, delim);
-	if (ncols == 0) {
-	    ncols = chkcols;
-	    pprintf(mprn, M_("   number of columns = %d\n"), ncols);	    
-	} else {
-	    if (chkcols != ncols) {
-		pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
-			nrows, chkcols);
-		pputs(prn, msg);
-		err = E_DATA;
-		goto csv_bailout;
-	    }
-	}
+    err = cvs_fields_check(line, maxlen, fp, delim, trail, &descrip,
+			   &ncols, &nrows, &blank_1, &obs_1,
+			   *pZ, prn);
+    if (err) {
+	goto csv_bailout;
     }
 
-    /* allow for var headings */
-    csvinfo->n = nrows - 1;
-
+    csvinfo->n = nrows - 1; /* allow for var headings */
     csvinfo->v = (blank_1 || obs_1)? ncols : ncols + 1;
+
     pprintf(mprn, M_("   number of variables: %d\n"), csvinfo->v - 1);
     pprintf(mprn, M_("   number of non-blank lines: %d\n"), nrows);
 
@@ -3393,7 +3413,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 	    if (*csvstr == '\0') {
 		pprintf(prn, M_("   variable name %d is missing: aborting\n"), nv);
-		pputs(prn, msg);
+		pputs(prn, M_(csv_msg));
 		err = E_DATA;
 		goto csv_bailout;
 	    } else {
