@@ -2381,17 +2381,15 @@ static void make_endobs_string (char *endobs, const char *s)
     strncat(endobs, s + 5, 2);
 }
 
-static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
+static int pd_from_date_label (const char *lbl, char *year, char *subp,
+			       PRN *prn)
 {
     const char *subchars = ".:QqMmPp";
-    char year[5];
-    char *lbl1 = pdinfo->S[0];
-    char *lbl2 = pdinfo->S[pdinfo->n - 1];
-    int len = strlen(lbl1);
+    int len = strlen(lbl);
     int try, pd = -1;
 
     *year = '\0';
-    strncat(year, lbl1, 4);
+    strncat(year, lbl, 4);
     try = atoi(year);
 
     if (try > 0 && try < 3000) {
@@ -2404,33 +2402,74 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
 	pputs(prn, M_("   but I can't make sense of the extra bit\n"));
     } else if (len == 4) {
 	pputs(prn, M_("and just a year\n"));
+	pd = 1;
+    } else {
+	char sep = lbl[4];
+	char sub[3], *s = NULL;
+	int p;
+
+	if (strchr(subchars, sep)) {
+	    *sub = '\0';
+	    strncat(sub, lbl + 5, 2);
+	    s = sub;
+	    if (len == 6 || (len == 7 && (sep == 'q' || sep == 'Q'))) {
+		if (len == 7) s++;
+		p = atoi(s);
+		if (p > 0 && p < 5) {
+		    pprintf(prn, M_("quarter %s?\n"), s);
+		    pd = 4;
+		} else {
+		    pprintf(prn, "quarter %d: not possible\n", p);
+		}
+	    } else if (len == 7) {
+		p = atoi(s);
+		if (p > 0 && p < 13) {
+		    pprintf(prn, M_("month %s?\n"), s);
+		    pd = 12;
+		} else {
+		    pprintf(prn, "month %d: not possible\n", p);
+		}
+	    }
+	    strcpy(subp, s);
+	}
+    }
+
+    return pd;
+}
+
+static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
+{
+    char year1[5], year2[5];
+    char sub1[3], sub2[3];
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
+    int pd = -1, pd2 = -1;
+
+    pd = pd_from_date_label(lbl1, year1, sub1, prn);
+
+    if (pd == 1 || pd == 4 || pd == 12) {
+	pd2 = pd_from_date_label(lbl2, year2, sub2, prn);
+    }
+
+    if (pd != pd2) {
+	pd = -1;
+    }
+
+    if (pd == 1) {
 	if (complete_year_labels(pdinfo)) {
-	    strcpy(pdinfo->stobs, year);
+	    pdinfo->pd = pd;
+	    strcpy(pdinfo->stobs, year1);
 	    pdinfo->sd0 = atof(pdinfo->stobs);
 	    strcpy(pdinfo->endobs, lbl2);
-	    pd = pdinfo->pd = 1;
 	} else {
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
-	    return pd;
+	    pd = -1;
 	}
-    } else if (strchr(subchars, lbl1[4])) {
-	char subper[3];
-
-	*subper = '\0';
-	strncat(subper, lbl1 + 5, 2);
-	if (len == 6) {
-	    pprintf(prn, M_("quarter %s?\n"), subper);
-	    sprintf(pdinfo->stobs, "%s:%s", year, subper);
-	    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
-	    make_endobs_string(pdinfo->endobs, lbl2);
-	    pd = pdinfo->pd = 4;
-	} else if (len == 7) {
-	    pprintf(prn, M_("month %s?\n"), subper);
-	    sprintf(pdinfo->stobs, "%s:%s", year, subper);
-	    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
-	    make_endobs_string(pdinfo->endobs, lbl2);
-	    pd = pdinfo->pd = 12;
-	}
+    } else if (pd == 4 || pd == 12) {
+	pdinfo->pd = pd;
+	sprintf(pdinfo->stobs, "%s:%s", year1, sub1);
+	pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
+	make_endobs_string(pdinfo->endobs, lbl2);
     }
 
     return pd;
