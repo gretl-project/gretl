@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-10-25 23:30+0100\n"
+"PO-Revision-Date: 2007-10-26 12:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1556,7 +1556,7 @@ msgstr "(obserwacje z brakuj±cymi danymi bêd± pominiête)"
 
 #: lib/src/describe.c:3281 gui2/guiprint.c:1065 gui2/guiprint.c:1158
 msgid "Mean"
-msgstr "¶rednia"
+msgstr "¦rednia"
 
 #: lib/src/describe.c:3282 gui2/guiprint.c:1065 gui2/guiprint.c:1158
 msgid "Median"
@@ -1615,7 +1615,7 @@ msgid ""
 "      MEAN           MEDIAN           MIN             MAX\n"
 "\n"
 msgstr ""
-"      SREDNIA        MEDIANA          MINIMALNA       MAKSYMALNA\n"
+"      ¦REDNIA        MEDIANA          MINIMALNA       MAKSYMALNA\n"
 "\n"
 
 #: lib/src/describe.c:3412
@@ -3712,7 +3712,7 @@ msgstr "Mediana zmiennej zale¿nej"
 #: lib/src/modelprint.c:106 lib/src/modelprint.c:116 lib/src/modelprint.c:119
 #: lib/src/modelprint.c:124
 msgid "Mean of dependent variable"
-msgstr "Srednia  arytmetyczna  zmiennej zale¿nej"
+msgstr "¦rednia  arytmetyczna  zmiennej zale¿nej"
 
 #: lib/src/modelprint.c:108 lib/src/modelprint.c:121 lib/src/modelprint.c:126
 msgid "Standard deviation of dep. var."
@@ -4385,7 +4385,7 @@ msgstr "WSPÓ£CZYNNIK"
 #: lib/src/modelprint.c:1855 lib/src/modelprint.c:1858
 #: lib/src/modelprint.c:1862 lib/src/modelprint.c:1866
 msgid "STDERROR"
-msgstr "B£±D STAND."
+msgstr "B£¡D STAND."
 
 #: lib/src/modelprint.c:1859 lib/src/modelprint.c:1863
 #: lib/src/modelprint.c:1867
@@ -4394,7 +4394,7 @@ msgstr "STAT. T"
 
 #: lib/src/modelprint.c:1859
 msgid "SLOPE at mean"
-msgstr "EFEKT KRANCOWY dla ¶rednich"
+msgstr "EFEKT KRAÑCOWY dla ¶rednich"
 
 #: lib/src/modelprint.c:1862
 msgid "PARAMETER"
@@ -4406,7 +4406,7 @@ msgstr "ESTYMATOR"
 
 #: lib/src/modelprint.c:1863 lib/src/modelprint.c:1867
 msgid "P-VALUE"
-msgstr "WARTO¶Æ P"
+msgstr "WARTO¦Æ P"
 
 #: lib/src/modelprint.c:1873
 msgid "Parameter"
@@ -4550,7 +4550,7 @@ msgstr "rho"
 #: lib/src/modelprint.c:3162 lib/src/modelprint.c:3167
 #: lib/src/modelprint.c:3173
 msgid "Mean of innovations"
-msgstr "¶rednia  z  zaburzeñ losowych"
+msgstr "¦rednia  z  zaburzeñ losowych"
 
 #: lib/src/modelprint.c:3164 lib/src/modelprint.c:3168
 #: lib/src/modelprint.c:3175
@@ -4568,7 +4568,7 @@ msgstr "Przewidywane"
 #: lib/src/modelprint.c:3229 lib/src/modelprint.c:3263
 #: lib/src/modelprint.c:3297
 msgid "Mean of"
-msgstr "Srednia dla zmiennej"
+msgstr "¦rednia dla zmiennej"
 
 #: lib/src/modelprint.c:3233 lib/src/modelprint.c:3267
 msgid "Number of cases 'correctly predicted'"
@@ -4608,7 +4608,7 @@ msgstr "df"
 
 #: lib/src/modelprint.c:3340
 msgid "Mean square"
-msgstr "¶rednia kwadratów"
+msgstr "¦rednia kwadratów"
 
 #: lib/src/modelprint.c:3343
 msgid "Regression"
@@ -6406,7 +6406,7 @@ msgstr "Liczeno¶æ próby: n = %d\n"
 #: gui2/calculator.c:1431
 #, c-format
 msgid "Sample mean = %g, std. deviation = %g\n"
-msgstr "¶rednia z próby = %g, odchylenie std. = %g\n"
+msgstr "¦rednia z próby = %g, odchylenie std. = %g\n"
 
 #: gui2/calculator.c:1435 gui2/calculator.c:1483 gui2/calculator.c:1563
 #, c-format
