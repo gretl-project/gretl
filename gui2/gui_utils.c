@@ -328,6 +328,7 @@ static GtkItemFactoryEntry VAR_items[] = {
 #ifdef NATIVE_PRINTING
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
+    { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
@@ -342,6 +343,7 @@ static GtkItemFactoryEntry SYS_items[] = {
 #ifdef NATIVE_PRINTING
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
+    { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    

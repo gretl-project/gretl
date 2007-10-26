@@ -39,7 +39,7 @@ enum {
 static JohansenInfo *
 johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt);
 
-static int VAR_add_models (GRETL_VAR *var)
+static int VAR_add_models (GRETL_VAR *var, const DATAINFO *pdinfo)
 {
     int n = var->neqns;
     int i, err = 0;
@@ -52,8 +52,14 @@ static int VAR_add_models (GRETL_VAR *var)
 	var->models = gretl_model_array_new(n);
 	if (var->models == NULL) {
 	    err = E_ALLOC;
-	}
+	} 
     }
+
+    if (var->models != NULL) {
+	for (i=0; i<n; i++) {
+	    gretl_model_smpl_init(var->models[i], pdinfo);
+	}
+    }	
 
     return err;
 }
@@ -622,7 +628,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     }
 
     if (!err && code != VAR_LAGSEL) {
-	err = VAR_add_models(var);
+	err = VAR_add_models(var, pdinfo);
     }
 
     if (!err && code == VAR_ESTIMATE) {
@@ -2273,9 +2279,9 @@ static void coint_test_header (const GRETL_VAR *v,
 
 }
 
-static int jvar_check_allocation (GRETL_VAR *v)
+static int jvar_check_allocation (GRETL_VAR *v, const DATAINFO *pdinfo)
 {
-    int err = VAR_add_models(v);
+    int err = VAR_add_models(v, pdinfo);
 
     if (!err) {
 	err = VAR_add_companion_matrix(v);
@@ -2318,7 +2324,7 @@ johansen_driver (GRETL_VAR *jvar,
 
     if (r > 0) {
 	/* estimating VECM, not just doing cointegration test */
-	jvar->err = jvar_check_allocation(jvar);
+	jvar->err = jvar_check_allocation(jvar, pdinfo);
     }
 
     /* Now get the johansen plugin to finish the job */
