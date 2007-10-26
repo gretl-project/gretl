@@ -132,6 +132,7 @@ LIBSRC = adf_kpss.c \
 	calendar.c \
 	compare.c \
 	compat.c \
+	csvdata.c \
 	dataio.c \
 	dataset.c \
 	dbread.c \

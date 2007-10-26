@@ -72,6 +72,7 @@ PUBLIC_HDRS = \
 	calendar.h \
 	compare.h \
 	compat.h \
+	csvdata.h \
 	dataio.h \
 	dataset.h \
 	dbread.h \
@@ -136,6 +137,7 @@ SRCS = adf_kpss.c \
 	calendar.c \
 	compare.c \
 	compat.c \
+	csvdata.c \
 	dataio.c \
 	dataset.c \
 	dbread.c \
