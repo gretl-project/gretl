@@ -5613,9 +5613,13 @@ static int set_auto_overwrite (const char *fname, gretlopt opt,
     } else if (WRITING_DB(opt)) {
 	/* allow for appending to databases */
 	ret = 1;
-    } else if (!strcmp(fname, paths.datfile)) {
+    } else {
+	int samename = (strcmp(fname, paths.datfile) == 0);
+
 	if (storelist == NULL) {
-	    ret = 1;
+	    if (samename) {
+		ret = 1;
+	    }
 	} else {
 	    int *test = gretl_list_from_string(storelist);
 
@@ -5629,15 +5633,15 @@ static int set_auto_overwrite (const char *fname, gretlopt opt,
 		    }
 		}
 		if (test[0] == nv) {
-		    /* saving full dataset under same name */
-		    ret = 1;
+		    /* saving full dataset */
+		    ret = samename;
 		} else {
 		    *sublist = 1;
 		}
 		free(test);
 	    }
 	}
-    }
+    } 
 
     return ret;
 }
@@ -5725,12 +5729,12 @@ int do_store (char *savename, gretlopt opt)
 {
     gchar *tmp = NULL;
     FILE *fp;
-    int overwrite;
+    int overwrite_ok;
     int showlist = 1;
     int sublist = 0;
     int err = 0;
 
-    overwrite = set_auto_overwrite(savename, opt, &sublist);
+    overwrite_ok = set_auto_overwrite(savename, opt, &sublist);
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
@@ -5760,7 +5764,7 @@ int do_store (char *savename, gretlopt opt)
 			      (showlist)? storelist : ""); 
     }
 
-    if (!overwrite) {
+    if (!overwrite_ok) {
 	fp = gretl_fopen(savename, "rb");
 	if (fp != NULL) {
 	    fclose(fp);
