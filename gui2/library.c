@@ -4704,11 +4704,13 @@ static void real_delete_vars (int id, int *dlist)
 	return;
     }
 
+#if 0
     if (complex_subsampled()) {
 	errbox(_("Can't delete a variable when in sub-sample"
 		 " mode\n"));
 	return;
     }
+#endif
 
     if (id > 0) {
 	/* delete single specified var */
@@ -6623,11 +6625,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    break;
 	}
 	if (dataset_locked()) {
-	    break;
-	}
-	if (complex_subsampled()) {
-	    pputs(prn, _("Can't delete a variable when in sub-sample"
-		    " mode\n"));
 	    break;
 	}
 	maybe_prune_delete_list(cmd->list);

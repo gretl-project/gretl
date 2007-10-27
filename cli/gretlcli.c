@@ -900,11 +900,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    } 
 	    break;
 	}	    
-	if (complex_subsampled()) {
-	    pputs(prn, _("Can't delete a variable when in sub-sample"
-			 " mode\n"));
-	    break;
-	}	
 	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
