@@ -1720,6 +1720,10 @@ static int j_general_restrict (GRETL_VAR *jvar,
     }
 
     if (!err) {
+	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+    }
+
+    if (!err) {
 	/* FIXME 'k' for AIC etc. */
 	err = vecm_ll_stats(jvar);
     }
