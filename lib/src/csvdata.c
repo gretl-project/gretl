@@ -1039,7 +1039,7 @@ static int process_csv_obs (csvdata *c, int i, int t,
     if (c->st != NULL) {
 	if (in_gretl_list(c->codelist, i) && !na(c->Z[i][t])) {
 	    ix = gretl_string_table_index(c->st, c->str, i, 0, prn);
-	    if (ix >= 0) {
+	    if (ix > 0) {
 		c->Z[i][t] = (double) ix;
 	    } else {
 		err = E_DATA;

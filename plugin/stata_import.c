@@ -541,7 +541,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 #endif
 		if (*strbuf != '\0' && strcmp(strbuf, ".") && *pst != NULL) {
 		    ix = gretl_string_table_index(*pst, strbuf, v, 0, prn);
-		    if (ix >= 0) {
+		    if (ix > 0) {
 			Z[v][t] = ix;
 		    }	
 		}

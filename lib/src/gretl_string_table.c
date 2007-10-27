@@ -22,12 +22,15 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 
+#include <glib.h>
+
 typedef struct _col_table col_table;
 
 struct _col_table {
     int idx;
     int n_strs;
     char **strs;
+    GHashTable *hash;
 };
 
 struct _gretl_string_table {
@@ -45,6 +48,7 @@ static col_table *col_table_new (int colnum)
 	ct->strs = NULL;
 	ct->n_strs = 0;
 	ct->idx = colnum;
+	ct->hash = g_hash_table_new(g_str_hash, g_str_equal);
     }
 
     return ct;
@@ -97,14 +101,11 @@ gretl_string_table *string_table_new_from_cols_list (int *list)
 
 static int col_table_get_index (const col_table *ct, const char *s)
 {
-    int ret = -1;
-    int i;
+    gpointer p = g_hash_table_lookup(ct->hash, s);
+    int ret = 0;
 
-    for (i=0; i<ct->n_strs; i++) {
-	if (!strcmp(s, ct->strs[i])) {
-	    ret = i + 1;
-	    break;
-	}
+    if (p != NULL) {
+	ret = GPOINTER_TO_INT(p);
     }
 
     return ret;
@@ -128,6 +129,8 @@ col_table_add_string (col_table *ct, const char *s)
 	    ret = -1;
 	} else {
 	    ct->n_strs += 1;
+	    g_hash_table_insert(ct->hash, (gpointer) strs[n-1], 
+				GINT_TO_POINTER(n));
 	}
     }
 
@@ -157,7 +160,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 			  int addcol, PRN *prn)
 {
     col_table *ct = NULL;
-    int i, idx = -1;
+    int i, idx = 0;
 
     if (st == NULL) return idx;
 
@@ -180,7 +183,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 	}
     }
 
-    if (idx < 0 && ct != NULL) {
+    if (idx == 0 && ct != NULL) {
 	idx = col_table_add_string(ct, s);
     }
 
@@ -197,6 +200,11 @@ static void col_table_destroy (col_table *ct)
 	free(ct->strs[i]);
     }
     free(ct->strs);
+
+    if (ct->hash != NULL) {
+	g_hash_table_destroy(ct->hash);
+    }
+
     free(ct);
 }
 
@@ -210,6 +218,7 @@ void gretl_string_table_destroy (gretl_string_table *st)
 	col_table_destroy(st->cols[i]);
     }
     free(st->cols);
+
     free(st);
 }
 
