@@ -223,15 +223,14 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     FILE *fp;
     int err = 0;
 
-    if (st == NULL) return 1;
+    if (st == NULL) return E_DATA;
 
     strcpy(stname, "string_table.txt");
     gretl_path_prepend(stname, gretl_user_dir());
 
     fp = gretl_fopen(stname, "w");
     if (fp == NULL) {
-	err = E_FOPEN;
-	goto bailout;
+	return E_FOPEN;
     }
 
     fshort = strrchr(fname, SLASH);
@@ -268,10 +267,6 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
 	fclose(fp);
 	set_string_table_written();
     }
-
- bailout:
-
-    gretl_string_table_destroy(st);
 
     return err;
 }

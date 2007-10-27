@@ -711,6 +711,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	if (st != NULL) {
 	    gretl_string_table_print(st, newinfo, fname, prn);
+	    gretl_string_table_destroy(st);
 	}
 
 	if (*pZ == NULL) {

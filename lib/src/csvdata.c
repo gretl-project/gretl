@@ -25,8 +25,8 @@
 #include <ctype.h>
 #include <glib.h>
 
-#define QUOTE                  '\''
-#define CSVSTRLEN               72
+#define QUOTE      '\''
+#define CSVSTRLEN  72
 
 enum {
     CSV_HAVEDATA = 1 << 0,
@@ -240,8 +240,8 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
     if (misscount > 0) {
 	double missfrac = (double) misscount / pdinfo->n;
 
-	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", pdinfo->n, misscount,
-		100.0 * missfrac);
+	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", 
+		pdinfo->n, misscount, 100.0 * missfrac);
 	if (missfrac > 0.05) {
 	    ret = 0;
 	} else {
@@ -361,7 +361,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 	}
     }
 
-#if 1
+#if DAY_DEBUG
     fprintf(stderr, "check_daily_dates: pd = %d, err = %d\n", 
 	    pdinfo->pd, err);
 #endif
@@ -383,7 +383,7 @@ static int complete_year_labels (DATAINFO *pdinfo)
 	yrbak = yr;
     }
 
-    return  ret;
+    return ret;
 }
 
 static int compress_daily (DATAINFO *pdinfo, int pd)
@@ -431,11 +431,14 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 
     for (t=0; t<pdinfo->n && !err; t++) {
 	if (dorder == YYYYMMDD) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &yr, sep1, &mon, sep2, &day);
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+			  &yr, sep1, &mon, sep2, &day);
 	} else if (dorder == DDMMYYYY) {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &day, sep1, &mon, sep2, &yr);
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+			  &day, sep1, &mon, sep2, &yr);
 	} else {
-	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &mon, sep1, &day, sep2, &yr);
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", 
+			  &mon, sep1, &day, sep2, &yr);
 	}
 	if (sret == 5) {
 	    sprintf(pdinfo->S[t], "%02d/%02d/%02d", yr, mon, day);
@@ -679,7 +682,7 @@ test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, PRN *prn)
    character is present in the file, on a non-comment line (where
    a comment line is one that starts with '#').  
 
-   Optionally, we check whether the file has a trailing comma on every
+   In addition, we check whether the file has a trailing comma on every
    line.
 */
 
@@ -688,9 +691,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
 
-    if (cdata != NULL) {
-	csv_set_trailing_comma(cdata);
-    }
+    csv_set_trailing_comma(cdata);
 
     while ((c = fgetc(fp)) != EOF) {
 	if (c == 0x0d) {
@@ -712,7 +713,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 		maxlen = cc;
 	    }
 	    cc = 0;
-	    if (cdata != NULL && cbak != 0 && cbak != ',') {
+	    if (cbak != 0 && cbak != ',') {
 		csv_unset_trailing_comma(cdata);
 	    }
 	    continue;
@@ -728,10 +729,10 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    comment = (c == '#');
 	}
 	if (!comment) {
-	    if (cdata != NULL && c == '\t') {
+	    if (c == '\t') {
 		csv_set_got_tab(cdata);
 	    }
-	    if (cdata != NULL && c == cdata->delim) {
+	    if (c == cdata->delim) {
 		csv_set_got_delim(cdata);
 	    }
 	}
@@ -740,7 +741,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 
     if (maxlen == 0) {
 	pprintf(prn, M_("Data file is empty\n"));
-    } else if (cdata != NULL && csv_has_trailing_comma(cdata)) {
+    } else if (csv_has_trailing_comma(cdata)) {
 	pprintf(prn, M_("Data file has trailing commas\n"));
     }
 
@@ -1403,9 +1404,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (c->st != NULL) {
-	/* this also frees the table */
 	gretl_string_table_print(c->st, c->dinfo, fname, prn);
-	c->st = NULL;
     }
 
     c->dinfo->t1 = 0;
