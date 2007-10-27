@@ -4710,7 +4710,8 @@ static int extract_LHS_string (const char *s, char *lhs, parser *p)
 static void pre_process (parser *p, int flags)
 {
     const char *s = p->input;
-    char test[GENSTRLEN], opstr[3] = {0};
+    char test[GENSTRLEN];
+    char opstr[3] = {0};
     int newvar = 1;
 
     while (isspace(*s)) s++;
@@ -4782,6 +4783,11 @@ static void pre_process (parser *p, int flags)
 	fputc('\n', stderr);
     }
 #endif
+
+    if (strlen(test) > VNAMELEN - 1) {
+	pprintf(p->prn, "'%s': name is too long and will be truncated\n", test);
+	test[VNAMELEN - 1] = '\0';
+    }
 
     /* find out if the LHS var already exists, and if
        so, what type it is */

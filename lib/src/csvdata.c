@@ -27,6 +27,7 @@
 
 #define QUOTE      '\''
 #define CSVSTRLEN  72
+#define NON_NUMERIC 1.0e99
 
 enum {
     CSV_HAVEDATA = 1 << 0,
@@ -35,7 +36,8 @@ enum {
     CSV_BLANK1   = 1 << 3,
     CSV_OBS1     = 1 << 4,
     CSV_TRAIL    = 1 << 5,
-    CSV_AUTONAME = 1 << 6
+    CSV_AUTONAME = 1 << 6,
+    CSV_NONNUM   = 1 << 7
 };
 
 typedef struct csvdata_ csvdata;
@@ -43,10 +45,13 @@ typedef struct csvdata_ csvdata;
 struct csvdata_ {
     int flags;
     char delim;
+    int markerpd;
+    int real_n;
     double **Z;
     DATAINFO *dinfo;
     int ncols, nrows;
     char str[CSVSTRLEN];
+    char skipstr[8];
     int *codelist;
     char *descrip;
     gretl_string_table *st;
@@ -60,6 +65,7 @@ struct csvdata_ {
 #define csv_autoname(c)           (c->flags & CSV_AUTONAME)
 #define csv_skip_column(c)        (c->flags & (CSV_OBS1 | CSV_BLANK1))
 #define csv_have_data(c)          (c->flags & CSV_HAVEDATA)
+#define csv_force_nonnum(c)       (c->flags & CSV_NONNUM)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -68,8 +74,12 @@ struct csvdata_ {
 #define csv_set_got_tab(c)          (c->flags |= CSV_GOTTAB)
 #define csv_set_got_delim(c)        (c->flags |= CSV_GOTDELIM)
 #define csv_set_autoname(c)         (c->flags |= CSV_AUTONAME)
+#define csv_set_force_nonnum(c)     (c->flags |= CSV_NONNUM)
 
-static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
+#define csv_skipping(c)        (*c->skipstr != '\0')
+#define csv_has_non_numeric(c) (c->st != NULL)
+
+static int csv_time_series_check (csvdata *c, PRN *prn);
 
 static void csvdata_free (csvdata *c)
 {
@@ -77,37 +87,34 @@ static void csvdata_free (csvdata *c)
 	free(c->descrip);
     }
 
-    if (c->dinfo != NULL) {
-	clear_datainfo(c->dinfo, CLEAR_FULL);
-    }
-
-    if (c->Z != NULL) {
-	/* FIXME */
-	;
-    }
-    
     if (c->st != NULL) {
 	gretl_string_table_destroy(c->st);
     }
 
+    destroy_dataset(c->Z, c->dinfo);
+
     free(c);
 }
 
-static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo)
+static csvdata *csvdata_new (double **Z, const DATAINFO *pdinfo,
+			     gretlopt opt)
 {
     csvdata *c = malloc(sizeof *c);
 
     if (c == NULL) {
 	return NULL;
     }
-    
-    c->flags = 0;
+
+    c->flags = (opt & OPT_C)? CSV_NONNUM : 0;
     c->delim = '\t';
+    c->markerpd = -1;
+    c->real_n = 0;
     c->Z = NULL;
     c->dinfo = NULL;
     c->ncols = 0;
     c->nrows = 0;
     *c->str = '\0';
+    *c->skipstr = '\0';
     c->codelist = NULL;
     c->descrip = NULL;
     c->st = NULL;
@@ -183,34 +190,33 @@ static int add_single_obs (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-static int 
-pad_weekly_data (double ***pZ, DATAINFO *pdinfo, int add)
+static int pad_weekly_data (csvdata *c, int add)
 {
-    int oldn = pdinfo->n;
+    int oldn = c->dinfo->n;
     int ttarg, offset = 0, skip = 0;
     int i, s, t, tc, err;
 
-    err = dataset_add_observations(add, pZ, pdinfo, OPT_A); 
+    err = dataset_add_observations(add, &c->Z, c->dinfo, OPT_A); 
 
     if (!err) {
 	for (t=0; t<oldn; t++) {
-	    tc = calendar_obs_number(pdinfo->S[t], pdinfo) - offset;
+	    tc = calendar_obs_number(c->dinfo->S[t], c->dinfo) - offset;
 	    if (tc != t) {
 		skip = tc - t;
 		fprintf(stderr, "Gap of size %d at original t = %d\n", skip, t);
 		offset += skip;
 		ttarg = oldn - 1 + offset;
 		for (s=0; s<oldn-t+skip; s++) {
-		    for (i=1; i<pdinfo->v; i++) {
+		    for (i=1; i<c->dinfo->v; i++) {
 			if (s < oldn - t) {
 			    if (s == 0 || s == oldn-t-1) {
 				fprintf(stderr, "shifting obs %d to obs %d\n",
 					ttarg-skip, ttarg);
 			    }
-			    (*pZ)[i][ttarg] = (*pZ)[i][ttarg - skip];
+			    c->Z[i][ttarg] = c->Z[i][ttarg - skip];
 			} else {
 			    fprintf(stderr, "inserting NA at obs %d\n", ttarg);
-			    (*pZ)[i][ttarg] = NADBL;
+			    c->Z[i][ttarg] = NADBL;
 			}
 		    }
 		    ttarg--;
@@ -224,29 +230,30 @@ pad_weekly_data (double ***pZ, DATAINFO *pdinfo, int add)
 
 /* FIXME the following needs to be made more flexible */
 
-static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
+static int csv_weekly_data (csvdata *c)
 {
+    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
     int ret = 1;
     int misscount = 0;
     int t, tc;
 
-    for (t=0; t<pdinfo->n; t++) {
-	tc = calendar_obs_number(pdinfo->S[t], pdinfo) - misscount;
+    for (t=0; t<c->dinfo->n; t++) {
+	tc = calendar_obs_number(c->dinfo->S[t], c->dinfo) - misscount;
 	if (tc != t) {
 	    misscount += tc - t;
 	}
     }
 
     if (misscount > 0) {
-	double missfrac = (double) misscount / pdinfo->n;
+	double missfrac = (double) misscount / c->dinfo->n;
 
 	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", 
-		pdinfo->n, misscount, 100.0 * missfrac);
+		c->dinfo->n, misscount, 100.0 * missfrac);
 	if (missfrac > 0.05) {
 	    ret = 0;
 	} else {
-	    int Tc = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo) + 1;
-	    int altmiss = Tc - pdinfo->n;
+	    int Tc = calendar_obs_number(lbl2, c->dinfo) + 1;
+	    int altmiss = Tc - c->dinfo->n;
 
 	    fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
 	    if (altmiss != misscount) {
@@ -255,7 +262,7 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 		int err;
 
 		fprintf(stderr, "OK, consistent\n");
-		err = pad_weekly_data(pZ, pdinfo, misscount);
+		err = pad_weekly_data(c, misscount);
 		if (err) ret = 0;
 	    } 
 	} 
@@ -268,6 +275,9 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 
 static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 {
+    int T = pdinfo->n;
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[T - 1];
     int fulln = 0, n, t, nbak;
     int oldpd = pdinfo->pd;
     double oldsd0 = pdinfo->sd0;
@@ -276,13 +286,13 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 
     *pd = 0;
     
-    ed1 = get_epoch_day(pdinfo->S[0]);
+    ed1 = get_epoch_day(lbl1);
     if (ed1 < 0) {
 	err = 1;
     }
 
 #if DAY_DEBUG    
-    fprintf(stderr, "S[0] = '%s', ed1 = %ld\n", pdinfo->S[0], ed1);
+    fprintf(stderr, "S[0] = '%s', ed1 = %ld\n", lbl1, ed1);
 #endif
 
     pdinfo->pd = guess_daily_pd(pdinfo);
@@ -293,7 +303,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 #endif
 
     if (!err) {
-	ed2 = get_epoch_day(pdinfo->S[pdinfo->n - 1]);
+	ed2 = get_epoch_day(lbl2);
 	if (ed2 <= ed1) {
 	    err = 1;
 	} else {
@@ -302,26 +312,26 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
     }
 
     if (!err) {
-	int n1 = calendar_obs_number(pdinfo->S[0], pdinfo);
-	int n2 = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+	int n1 = calendar_obs_number(lbl1, pdinfo);
+	int n2 = calendar_obs_number(lbl2, pdinfo);
 
 	fulln = n2 - n1 + 1;
-	if (pdinfo->n > fulln) {
+	if (T > fulln) {
 	    err = 1;
 	} else {
-	    nmiss = fulln - pdinfo->n;
+	    nmiss = fulln - T;
 	    pprintf(prn, "Observations: %d; days in sample: %d\n", 
-		    pdinfo->n, fulln);
-	    if (nmiss > 300 * pdinfo->n) {
+		    T, fulln);
+	    if (nmiss > 300 * T) {
 		pprintf(prn, "Probably annual data\n");
 		*pd = 1;
-	    } else if (nmiss > 50 * pdinfo->n) {
+	    } else if (nmiss > 50 * T) {
 		pprintf(prn, "Probably quarterly data\n");
 		*pd = 4;
-	    } else if (nmiss > 20 * pdinfo->n) {
+	    } else if (nmiss > 20 * T) {
 		pprintf(prn, "Probably monthly data\n");
 		*pd = 12;
-	    } else if (nmiss > 5 * pdinfo->n) {
+	    } else if (nmiss > 5 * T) {
 		pprintf(prn, "Probably weekly data\n");
 		*pd = pdinfo->pd = 52;
 	    } else {
@@ -353,8 +363,8 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 	pdinfo->sd0 = oldsd0;
 	pdinfo->structure = CROSS_SECTION;
     } else {
-	strcpy(pdinfo->stobs, pdinfo->S[0]);
-	strcpy(pdinfo->endobs, pdinfo->S[pdinfo->n - 1]);
+	strcpy(pdinfo->stobs, lbl1);
+	strcpy(pdinfo->endobs, lbl2);
 	pdinfo->t2 = pdinfo->n - 1;
 	if (nmiss > 0 && *pd == 0) {
 	    pdinfo->markers = DAILY_DATE_STRINGS;
@@ -369,7 +379,52 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
     return (err)? -1 : pdinfo->pd;
 }
 
-static int complete_year_labels (DATAINFO *pdinfo)
+static int complete_qm_labels (csvdata *c, int pd,
+			       const char *fmt,
+			       PRN *prn)
+{
+    char bad[16], skip[8];
+    int t, y, p, Ey, Ep;
+    int pd0 = pd;
+    int ret = 1;
+
+ restart:
+
+    if (sscanf(c->dinfo->S[0], fmt, &y, &p) != 2) {
+	return 0;
+    }
+
+    for (t=1; t<c->dinfo->n; t++) {
+	Ey = (p == pd)? y + 1 : y;
+	Ep = (p == pd)? 1 : p + 1;
+	if (sscanf(c->dinfo->S[t], fmt, &y, &p) != 2) {
+	    ret = 0;
+	} else if (Ep == 1 && pd == pd0 && p == pd + 1) {
+	    *skip = *bad = '\0';
+	    strncat(skip, c->dinfo->S[t] + 4, 7); 
+	    strncat(bad, c->dinfo->S[t], 15); 
+	    pd = pd0 + 1;
+	    goto restart;
+	} else if (y != Ey || p != Ep) {
+	    ret = 0;
+	}
+	if (!ret) {
+	    pprintf(prn, "   %s: not a consistent date\n", 
+		    c->dinfo->S[t]);
+	    break;
+	}
+    }
+
+    if (ret && pd == pd0 + 1) {
+	pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n", 
+		bad);
+	strcpy(c->skipstr, skip);
+    }
+
+    return ret;
+}
+
+static int complete_year_labels (const DATAINFO *pdinfo)
 {
     int t, yr, yrbak = atoi(pdinfo->S[0]);
     int ret = 1;
@@ -451,12 +506,12 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 }
 
 static int 
-csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+csv_daily_date_check (csvdata *c, PRN *prn)
 {
     int d1[3], d2[3];
     char sep1[2], sep2[2];
-    char *lbl1 = pdinfo->S[0];
-    char *lbl2 = pdinfo->S[pdinfo->n - 1];
+    char *lbl1 = c->dinfo->S[0];
+    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
 
     if (sscanf(lbl1, "%d%1[/-]%d%1[/-]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
 	sscanf(lbl2, "%d%1[/-]%d%1[/-]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
@@ -498,22 +553,22 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    day2 > 0 && day2 < 32) {
 	    /* looks promising for calendar dates */
 	    if (dorder != YYYYMMDD || *sep1 != '/' || *sep2 != '/') {
-		if (transform_daily_dates(pdinfo, dorder)) {
+		if (transform_daily_dates(c->dinfo, dorder)) {
 		    return -1;
 		}
 	    }
 	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
-	    ret = check_daily_dates(pdinfo, &pd, prn);
+	    ret = check_daily_dates(c->dinfo, &pd, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
-		    if (csv_weekly_data(pZ, pdinfo)) {
+		    if (csv_weekly_data(c)) {
 			ret = 52;
 		    } else {
 			ret = -1;
 		    }
 		} else {
-		    compress_daily(pdinfo, pd);
-		    ret = csv_time_series_check(pdinfo, prn);
+		    compress_daily(c->dinfo, pd);
+		    ret = csv_time_series_check(c, prn);
 		}
 	    } 
 	    return ret;
@@ -532,7 +587,7 @@ static void make_endobs_string (char *endobs, const char *s)
 }
 
 static int pd_from_date_label (const char *lbl, char *year, char *subp,
-			       PRN *prn)
+			       char *format, PRN *prn)
 {
     const char *subchars = ".:QqMmPp";
     int len = strlen(lbl);
@@ -568,8 +623,6 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 		if (p > 0 && p < 5) {
 		    pprintf(prn, M_("quarter %s?\n"), s);
 		    pd = 4;
-		} else if (p == 5) {
-		    pputs(prn, "\"quarter 5\": maybe an annual average?\n");
 		} else {
 		    pprintf(prn, "quarter %d: not possible\n", p);
 		}
@@ -578,52 +631,50 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
 		if (p > 0 && p < 13) {
 		    pprintf(prn, M_("month %s?\n"), s);
 		    pd = 12;
-		} else if (p == 13) {
-		    pputs(prn, "\"month 13\": maybe an annual average?\n");
 		} else {
 		    pprintf(prn, "month %d: not possible\n", p);
 		}
 	    }
 	    strcpy(subp, s);
+	    if (format != NULL && (pd == 4 || pd == 12)) {
+		sprintf(format, "%%d%c%%d", sep);
+	    }
 	}
     }
 
     return pd;
 }
 
-static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
+static int csv_time_series_check (csvdata *c, PRN *prn)
 {
-    char year1[5], year2[5];
-    char sub1[3], sub2[3];
-    char *lbl1 = pdinfo->S[0];
-    char *lbl2 = pdinfo->S[pdinfo->n - 1];
-    int pd = -1, pd2 = -1;
+    char year[5], sub[3];
+    char format[8] = {0};
+    char *lbl1 = c->dinfo->S[0];
+    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
+    int pd = -1;
 
-    pd = pd_from_date_label(lbl1, year1, sub1, prn);
-
-    if (pd == 1 || pd == 4 || pd == 12) {
-	pd2 = pd_from_date_label(lbl2, year2, sub2, prn);
-    }
-
-    if (pd != pd2) {
-	pd = -1;
-    }
+    pd = pd_from_date_label(lbl1, year, sub, format, prn);
 
     if (pd == 1) {
-	if (complete_year_labels(pdinfo)) {
-	    pdinfo->pd = pd;
-	    strcpy(pdinfo->stobs, year1);
-	    pdinfo->sd0 = atof(pdinfo->stobs);
-	    strcpy(pdinfo->endobs, lbl2);
+	if (complete_year_labels(c->dinfo)) {
+	    c->dinfo->pd = pd;
+	    strcpy(c->dinfo->stobs, year);
+	    c->dinfo->sd0 = atof(c->dinfo->stobs);
+	    strcpy(c->dinfo->endobs, lbl2);
 	} else {
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
 	}
     } else if (pd == 4 || pd == 12) {
-	pdinfo->pd = pd;
-	sprintf(pdinfo->stobs, "%s:%s", year1, sub1);
-	pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
-	make_endobs_string(pdinfo->endobs, lbl2);
+	if (complete_qm_labels(c, pd, format, prn)) {
+	    c->dinfo->pd = pd;
+	    sprintf(c->dinfo->stobs, "%s:%s", year, sub);
+	    c->dinfo->sd0 = obs_str_to_double(c->dinfo->stobs);
+	    make_endobs_string(c->dinfo->endobs, lbl2);
+	} else {
+	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
+	    pd = -1;
+	}
     }
 
     return pd;
@@ -635,39 +686,45 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
 */
 
 static int 
-test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+test_markers_for_dates (csvdata *c, PRN *prn)
 {
     char endobs[OBSLEN];
-    char *lbl1 = pdinfo->S[0];
-    int n1 = strlen(lbl1);
+    int n = c->dinfo->n;
+    char *lbl1 = c->dinfo->S[0];
+    char *lbl2 = c->dinfo->S[n - 1];
+    int len1 = strlen(lbl1);
+
+    if (csv_skipping(c)) {
+	return csv_time_series_check(c, prn);
+    }
 
     pprintf(prn, M_("   first row label \"%s\", last label \"%s\"\n"), 
-	    lbl1, pdinfo->S[pdinfo->n - 1]);
+	    lbl1, lbl2);
 
     /* are the labels (probably) just 1, 2, 3 etc.? */
-    sprintf(endobs, "%d", pdinfo->n);
-    if (!strcmp(pdinfo->S[0], "1") && !strcmp(pdinfo->S[pdinfo->n - 1], endobs)) {
+    sprintf(endobs, "%d", n);
+    if (!strcmp(lbl1, "1") && !strcmp(lbl2, endobs)) {
 	return 0;
     }
 
     /* labels are of different lengths? */
-    if (n1 != strlen(pdinfo->S[pdinfo->n - 1])) {
+    if (len1 != strlen(lbl2)) {
 	pputs(prn, M_("   label strings can't be consistent dates\n"));
 	return -1;
     }
 
     pputs(prn, M_("trying to parse row labels as dates...\n"));
 
-    if (n1 == 8 || n1 == 10) {
+    if (len1 == 8 || len1 == 10) {
 	/* daily data? */
-	return csv_daily_date_check(pZ, pdinfo, prn);
-    } else if (n1 >= 4) {
+	return csv_daily_date_check(c, prn);
+    } else if (len1 >= 4) {
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
-	    return csv_time_series_check(pdinfo, prn);
+	    return csv_time_series_check(c, prn);
 	} else {
 	    pputs(prn, M_("   definitely not a four-digit year\n"));
 	}
@@ -882,51 +939,118 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
     return miss;
 }
 
-static int blank_so_far (double *x, int obs)
+static int non_numeric_check (csvdata *c, PRN *prn)
 {
-    int t;
+    int *list = NULL;
+    int i, j, t, nn = 0;
+    int err = 0;
 
-    for (t=0; t<obs; t++) {
-	if (!na(x[t])) return 0;
+    for (i=1; i<c->dinfo->v; i++) {
+	if (is_codevar(c->dinfo->varname[i])) {
+	    nn++;
+	} else {
+	    for (t=0; t<c->dinfo->n; t++) {
+		if (c->Z[i][t] == NON_NUMERIC) {
+		    nn++;
+		    break;
+		}
+	    }
+	}
     }
 
-    return 1;
+    if (nn > 0) {
+	list = gretl_list_new(nn);
+	if (list == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (list != NULL) {
+	j = 1;
+	for (i=1; i<c->dinfo->v; i++) {
+	    if (is_codevar(c->dinfo->varname[i])) {
+		list[j++] = i;
+	    } else {
+		for (t=0; t<c->dinfo->n; t++) {
+		    if (c->Z[i][t] == NON_NUMERIC) {
+			list[j++] = i;
+			break;
+		    }
+		}
+	    }
+	}
+
+	printlist(list, "non-numeric vars list");
+
+	for (i=1; i<=list[0]; i++) {
+	    int v = list[i];
+	    int cv = is_codevar(c->dinfo->varname[v]);
+
+	    set_var_discrete(c->dinfo, v, 1);
+
+	    if (!cv) {
+		double nnfrac;
+		int nnon = 0;
+		int nok = 0;
+		int tn = 0;
+
+		for (t=0; t<c->dinfo->n; t++) {
+		    if (c->Z[v][t] == NON_NUMERIC) {
+			if (!tn) tn = t + 1;
+			nnon++;
+		    } else if (!na(c->Z[v][t])) {
+			nok++;
+		    }
+		}
+
+		nnfrac = (nok == 0)? 1.0 : (double) nnon / nok;
+		pprintf(prn, "variable %d (%s): non-numeric values = %d "
+			"(%.2f percent)\n", v, c->dinfo->varname[v], 
+			nnon, 100 * nnfrac);
+		if (!csv_force_nonnum(c) && (nnon < 2 || nnfrac < 0.01)) {
+		    pprintf(prn, M_("ERROR: variable %d (%s), observation %d, "
+				    "non-numeric value\n"), 
+			    v, c->dinfo->varname[v], tn);
+		    err = E_DATA;
+		}
+	    }
+	}
+
+	if (!err) {
+	    pputs(prn, "allocating string table\n");
+	    c->st = string_table_new_from_cols_list(list);
+	    if (c->st == NULL) {
+		err = E_ALLOC;
+		free(list);
+	    } else {
+		c->codelist = list;
+	    }
+	}
+    }
+
+    return err;
 }
 
 static int process_csv_obs (csvdata *c, int i, int t, 
 			    gretlopt opt, PRN *prn)
 {
-    int err = 0;
+    int ix, err = 0;
 
-    if (csv_missval(c->str, i, t+1, prn)) {
-	c->Z[i][t] = NADBL;
-    } else {
-	if (check_atof(c->str) || is_codevar(c->dinfo->varname[i])) {
-	    int addcol, ix = -1;
-
-	    if (t == 0 || is_codevar(c->dinfo->varname[i])) {
-		if (c->st == NULL) {
-		    c->st = gretl_string_table_new(&err);
-		}
-	    } else if (0 && (opt & OPT_C)) {
-		/* not ready yet */
-		return E_OK;
-	    }
-	    if (c->st != NULL) {
-		addcol = blank_so_far(c->Z[i], t);
-		ix = gretl_string_table_index(c->st, c->str, i, addcol, prn);
-	    }
+    if (c->st != NULL) {
+	if (in_gretl_list(c->codelist, i) && !na(c->Z[i][t])) {
+	    ix = gretl_string_table_index(c->st, c->str, i, 0, prn);
 	    if (ix >= 0) {
 		c->Z[i][t] = (double) ix;
 	    } else {
-		err = 1;
-		pprintf(prn, M_("Variable %d (%s), observation %d, '%s':\n"), 
-			i, c->dinfo->varname[i], t+1, c->str);
-		errmsg(err, prn);
+		err = E_DATA;
 	    }
-	} else {
-	    c->Z[i][t] = atof(c->str);
 	}
+    } else if (csv_missval(c->str, i, t+1, prn)) {
+	c->Z[i][t] = NADBL;
+    } else if (check_atof(c->str)) {
+	c->Z[i][t] = NON_NUMERIC;
+    } else {
+	c->Z[i][t] = atof(c->str);
     }
 
     return err;
@@ -1181,16 +1305,23 @@ static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
 }
 
 static int 
-csv_read_labels_and_data (csvdata *c, char *line, int maxlen, FILE *fp,
-			  gretlopt opt, PRN *prn)
+real_read_labels_and_data (csvdata *c, char *line, int maxlen, 
+			   FILE *fp, gretlopt opt, PRN *prn)
 {
     char *p;
     int i, k, nv, t = 0;
     int err = 0;
 
+    c->real_n = c->dinfo->n;
+
     while (csv_fgets(line, maxlen, fp) && !err) {
 
 	if (*line == '#' || string_is_blank(line)) {
+	    continue;
+	}
+
+	if (csv_skipping(c) && strstr(line, c->skipstr)) {
+	    c->real_n -= 1;
 	    continue;
 	}
 
@@ -1212,7 +1343,7 @@ csv_read_labels_and_data (csvdata *c, char *line, int maxlen, FILE *fp,
 	    if (*p == c->delim) {
 		p++;
 	    }
-	    c->str[i] = 0;
+	    c->str[i] = '\0';
 	    if (k == 0 && csv_skip_column(c) && c->dinfo->S != NULL) {
 		char *S = c->str;
 
@@ -1234,6 +1365,28 @@ csv_read_labels_and_data (csvdata *c, char *line, int maxlen, FILE *fp,
 	if (++t == c->dinfo->n) {
 	    break;
 	}
+    }
+
+    if (!err && c->real_n < c->dinfo->n) {
+	int drop = c->dinfo->n - c->real_n;
+
+	err = dataset_drop_observations(drop, &c->Z, c->dinfo);
+    }
+
+    return err;
+}
+
+static int csv_read_data (csvdata *c, char *line, int maxlen,
+			  FILE *fp, gretlopt opt, PRN *prn,
+			  PRN *mprn)
+{
+    int err;
+
+    pputs(mprn, M_("scanning for row labels and data...\n"));
+    err = real_read_labels_and_data(c, line, maxlen, fp, opt, prn);
+
+    if (!err && csv_skip_column(c)) {
+	c->markerpd = test_markers_for_dates(c, prn);
     }
 
     return err;
@@ -1275,7 +1428,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     char *line = NULL;
-    int markerpd = -1;
+    long datapos;
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -1295,7 +1448,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	goto csv_bailout;
     }
 
-    c = csvdata_new(*pZ, *ppdinfo);
+    c = csvdata_new(*pZ, *ppdinfo, opt);
     if (c == NULL) {
 	err = E_ALLOC;
 	goto csv_bailout;
@@ -1368,16 +1521,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	}
     }
 
-#if 0 /* not ready */
-    if (opt & OPT_C) {
-	codelist = gretl_list_new(c->dinfo->v - 1);
-	if (codelist == NULL) {
-	    err = E_ALLOC;
-	    goto csv_bailout;
-	}
-    }
-#endif
-
     /* second pass */
 
     rewind(fp);
@@ -1386,14 +1529,30 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (err) {
 	goto csv_bailout;
     }
-    
+
     if (*ppdinfo != NULL && (*ppdinfo)->decpoint != ',') {
 	gretl_push_c_numeric_locale();
 	popit = 1;
     }
 
-    pputs(mprn, M_("scanning for row labels and data...\n"));
-    err = csv_read_labels_and_data(c, line, maxlen, fp, opt, prn);
+    datapos = ftell(fp);
+
+    err = csv_read_data(c, line, maxlen, fp, opt, prn, mprn);
+
+    if (!err && csv_skipping(c)) {
+	/* try again */
+	fseek(fp, datapos, SEEK_SET);
+	err = csv_read_data(c, line, maxlen, fp, opt, prn, NULL);
+    }
+
+    if (!err) {
+	err = non_numeric_check(c, prn);
+	if (!err && csv_has_non_numeric(c)) {
+	    /* try once more */
+	    fseek(fp, datapos, SEEK_SET);
+	    err = csv_read_data(c, line, maxlen, fp, opt, prn, NULL);
+	}
+    }	
 
     if (popit) {
 	gretl_pop_c_numeric_locale();
@@ -1403,19 +1562,17 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	goto csv_bailout;
     }
 
-    if (c->st != NULL) {
-	gretl_string_table_print(c->st, c->dinfo, fname, prn);
-    }
-
     c->dinfo->t1 = 0;
     c->dinfo->t2 = c->dinfo->n - 1;
 
-    if (csv_skip_column(c)) {
-	markerpd = test_markers_for_dates(&c->Z, c->dinfo, prn);
-    }
-
-    if (markerpd > 0) {
+    if (c->markerpd > 0) {
 	pputs(mprn, M_("taking date information from row labels\n\n"));
+	if (csv_skipping(c)) {
+	    pprintf(prn, "WARNING: Check your data! gretl has stripped out "
+		    "what appear to be\nextraneous lines in a %s dataset: " 
+		    "this may not be right.\n\n",
+		    (c->dinfo->pd == 4)? "quarterly" : "monthly");
+	}
     } else {
 	pputs(mprn, M_("treating these as undated data\n\n"));
 	dataset_obs_info_default(c->dinfo);
@@ -1425,11 +1582,15 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
         c->dinfo->structure = TIME_SERIES;
     }
 
+    if (c->st != NULL) {
+	gretl_string_table_print(c->st, c->dinfo, fname, prn);
+    }
+
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they 
        should probably be preserved; otherwise discard them. 
     */
-    if (c->dinfo->S != NULL && markerpd >= 0 && 
+    if (c->dinfo->S != NULL && c->markerpd >= 0 && 
 	c->dinfo->markers != DAILY_DATE_STRINGS) {
 	dataset_destroy_obs_markers(c->dinfo);
     }
@@ -1459,7 +1620,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     } else {
 	err = merge_data(pZ, *ppdinfo, c->Z, c->dinfo, prn);
 	if (err) {
-	    /* failure here also frees the dataset */
+	    /* merge_data() frees the dataset */
 	    c->Z = NULL;
 	    c->dinfo = NULL;
 	    goto csv_bailout;
