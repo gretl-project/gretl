@@ -3320,6 +3320,18 @@ static void set_funcerr_message (ufunc *u, const char *s)
     strncat(funcerr_msg, s, 255 - n);
 }
 
+static void func_exec_callback (ExecState *s, double ***pZ,
+				DATAINFO *pdinfo)
+{
+    int ci = s->cmd->ci;
+
+    if (ci == VAR || ci == VECM) {
+	maybe_stack_var(s->var, s->cmd);
+    } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
+	maybe_stack_var(s->var, s->cmd);
+    }
+}
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, char **descrip, 
@@ -3423,6 +3435,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (pdinfo->submode) {
 	    state.subinfo = pdinfo;
 	}
+	state.callback = func_exec_callback;
     }
 
     if (!err) {

@@ -877,6 +877,12 @@ static void compress_csv_line (char *line, csvdata *c)
 	}
     }
 }
+
+#define OBS_LABEL(s) (!strcmp(s, "obs") || \
+                      !strcmp(s, "date") || \
+                      !strcmp(s, "year") || \
+                      !strcmp(s, "period"))
+
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
 {
     if (c->delim != ' ' && *line == c->delim) {
@@ -897,8 +903,7 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 	pprintf(prn, M_("   first field: '%s'\n"), field1);
 	lower(field1);
 
-	if (!strcmp(field1, "obs") || !strcmp(field1, "date") ||
-	    !strcmp(field1, "year")) {
+	if (OBS_LABEL(field1)) {
 	    pputs(prn, M_("   seems to be observation label\n"));
 	    csv_set_obs_column(c);
 	}
