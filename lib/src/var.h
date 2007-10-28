@@ -124,6 +124,8 @@ int beta_restricted_VECM (const GRETL_VAR *vecm);
 
 int alpha_restricted_VECM (const GRETL_VAR *vecm);
 
+int restricted_VECM (const GRETL_VAR *vecm);
+
 const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm);
 
 const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm);

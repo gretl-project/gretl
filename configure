@@ -26787,6 +26787,7 @@ if test ${pixbuf_failed} = "yes" ; then
 fi
 
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
+   if test "${have_gtkprint}" = "no" ; then
 
 pkg_failed=no
 { echo "$as_me:$LINENO: checking for GNOME" >&5
@@ -26846,10 +26847,12 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GNOME_PKG_ERRORS" >&5
 
-	have_gnome="no"
+	echo "no"
+       have_gnome="no"
 
 elif test $pkg_failed = untried; then
-	have_gnome="no"
+	echo "no"
+       have_gnome="no"
 
 else
 	GNOME_CFLAGS=$pkg_cv_GNOME_CFLAGS
@@ -26860,11 +26863,93 @@ echo "${ECHO_T}yes" >&6; }
 #define USE_GNOME 1
 _ACEOF
 
-     have_gnome="2.0"
-     if test "${gnome_prefix}" = "NA" ; then
-         gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
-     fi
+       have_gnome="2.0"
+       if test "${gnome_prefix}" = "NA" ; then
+           gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
+       fi
 fi
+   else
+
+pkg_failed=no
+{ echo "$as_me:$LINENO: checking for GNOME" >&5
+echo $ECHO_N "checking for GNOME... $ECHO_C" >&6; }
+
+if test -n "$PKG_CONFIG"; then
+    if test -n "$GNOME_CFLAGS"; then
+        pkg_cv_GNOME_CFLAGS="$GNOME_CFLAGS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnomeui-2.0 gconf-2.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "libgnomeui-2.0 gconf-2.0") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_GNOME_CFLAGS=`$PKG_CONFIG --cflags "libgnomeui-2.0 gconf-2.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+    if test -n "$GNOME_LIBS"; then
+        pkg_cv_GNOME_LIBS="$GNOME_LIBS"
+    else
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"libgnomeui-2.0 gconf-2.0\"") >&5
+  ($PKG_CONFIG --exists --print-errors "libgnomeui-2.0 gconf-2.0") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_GNOME_LIBS=`$PKG_CONFIG --libs "libgnomeui-2.0 gconf-2.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+    fi
+else
+	pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "libgnomeui-2.0 gconf-2.0"`
+        else
+	        GNOME_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libgnomeui-2.0 gconf-2.0"`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GNOME_PKG_ERRORS" >&5
+
+	echo "no"
+       have_gnome="no"
+
+elif test $pkg_failed = untried; then
+	echo "no"
+       have_gnome="no"
+
+else
+	GNOME_CFLAGS=$pkg_cv_GNOME_CFLAGS
+	GNOME_LIBS=$pkg_cv_GNOME_LIBS
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+	cat >>confdefs.h <<\_ACEOF
+#define USE_GNOME 1
+_ACEOF
+
+       have_gnome="2.0"
+       if test "${gnome_prefix}" = "NA" ; then
+           gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
+       fi
+fi
+   fi
    if test "$have_gnome" = "2.0" ; then
 
 pkg_failed=no

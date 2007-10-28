@@ -4062,6 +4062,9 @@
 	and 0.975 quantiles for the responses are found and plotted along with
 	the point estimates.
       </para>
+      <para>
+	The bootstrap option is not currently available for restricted VECMs.
+      </para>
 
     </description>
 

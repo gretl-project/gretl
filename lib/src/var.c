@@ -2797,6 +2797,16 @@ int alpha_restricted_VECM (const GRETL_VAR *vecm)
     return 0;
 }
 
+int restricted_VECM (const GRETL_VAR *vecm)
+{
+    if (vecm->jinfo != NULL && 
+	(vecm->jinfo->R != NULL || vecm->jinfo->Ra != NULL)) {
+	return 1;
+    }
+
+    return 0;
+}
+
 const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm)
 {
     if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {

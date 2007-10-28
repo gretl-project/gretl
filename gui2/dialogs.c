@@ -3207,15 +3207,17 @@ int checks_dialog (const char *title, const char *blurb,
 	button = gtk_check_button_new_with_label(_(opts[i]));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   button, TRUE, TRUE, 0);
-	if (active[i] > 0) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-	} else if (active[i] < 0) {
+	if (active[i] < 0) {
 	    gtk_widget_set_sensitive(button, FALSE);
+	} else {
+	    if (active[i] > 0) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    }
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(set_checks_opt), active);
+	    g_object_set_data(G_OBJECT(button), "optnum", 
+			      GINT_TO_POINTER(i));
 	}
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_checks_opt), active);
-	g_object_set_data(G_OBJECT(button), "optnum", 
-			  GINT_TO_POINTER(i));
 	gtk_widget_show(button);
     }
 

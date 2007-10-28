@@ -3139,7 +3139,8 @@ static void add_x12_output_menu_item (windata_t *vwin)
     g_free(item.path);
 }
 
-static int impulse_response_setup (int *horizon, int *bootstrap)
+static int 
+impulse_response_setup (GRETL_VAR *var, int *horizon, int *bootstrap)
 {
     gchar *title;
     int h = default_VAR_horizon(datainfo);
@@ -3148,6 +3149,10 @@ static int impulse_response_setup (int *horizon, int *bootstrap)
     };
     static int active[] = { 0 };
     int err;
+
+    if (restricted_VECM(var)) {
+	active[0] = -1;
+    }
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
@@ -3165,7 +3170,7 @@ static int impulse_response_setup (int *horizon, int *bootstrap)
 	*horizon = 0;
     } else {
 	*horizon = h;
-	*bootstrap = active[0];
+	*bootstrap = (active[0] > 0);
     }
 
     return err;
@@ -3182,7 +3187,7 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
 
     targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
 
-    if (impulse_response_setup(&horizon, &bootstrap) < 0) {
+    if (impulse_response_setup(var, &horizon, &bootstrap) < 0) {
 	return;
     }
 
@@ -3208,7 +3213,7 @@ static void multiple_irf_plot_call (gpointer p, guint vecm, GtkWidget *w)
     const double **vZ = NULL;
     int err;
 
-    if (impulse_response_setup(&horizon, &bootstrap) < 0) {
+    if (impulse_response_setup(var, &horizon, &bootstrap) < 0) {
 	return;
     }
 

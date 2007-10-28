@@ -831,8 +831,10 @@ void winprint (char *fullbuf, char *selbuf)
     }
 
     free(pinfo.hdr);
-    g_object_unref(pinfo.layout);
-    g_object_unref(op);
+    if (pinfo.layout != NULL) {
+	g_object_unref(G_OBJECT(pinfo.layout));
+    }
+    g_object_unref(G_OBJECT(op));
 }
 
 /* 
