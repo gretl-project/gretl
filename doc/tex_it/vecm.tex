@@ -144,20 +144,20 @@ offerti da \app{gretl} per compiere queste operazioni sono rispettivamente
 
 La sintassi di \texttt{coint2} è
 \begin{code}
-  coint2 p ylist [ ; xlist ]
+  coint2 p listay [ ; listax ]
 \end{code}
 dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
-\texttt{ylist} è una lista che contiene le variabili $y_t$, e
-\texttt{xlist} è una lista opzionale di variabili esogene.
+\texttt{listay} è una lista che contiene le variabili $y_t$, e
+\texttt{listax} è una lista opzionale di variabili esogene.
 
 La sintassi di \texttt{vecm} è
 \begin{code}
-  vecm p r ylist [ ; xlist [ ; zlist ] ]
+  vecm p r listay [ ; listax [ ; listaz ] ]
 \end{code}
 dove \texttt{p} è il numero di ritardi nella (\ref{eq:VECM-VAR}),
-\texttt{r} è il rango di cointegrazione, \texttt{ylist} è una lista
-che contiene le variabili $y_t$, \texttt{xlist} è una lista opzionale di
-variabili esogene, e \texttt{zlist} è un'altra lista opzionale di variabili
+\texttt{r} è il rango di cointegrazione, \texttt{listay} è una lista
+che contiene le variabili $y_t$, \texttt{listax} è una lista opzionale di
+variabili esogene, e \texttt{listaz} è un'altra lista opzionale di variabili
 esogene che si ipotizza facciano parte delle relazioni di cointegrazione.
 
 Entrambi i comandi supportano opzioni specifiche per trattare il kernel
@@ -305,7 +305,7 @@ Possiamo ora considerare tre casi possibili:
   che incorpora l'intercetta nel vettore di cointegrazione. Questo è
   il caso chiamato ``costante vincolata''.
 	
-\item $m$ = 0 and $k$ = 0: questo caso è il più vincolante: chiaramente,
+\item $m$ = 0 e $k$ = 0: questo caso è il più vincolante: chiaramente,
   né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
   Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
   chiamato ``senza costante''.
@@ -428,7 +428,7 @@ in questo senso, con un p-value pari a $0.1284$).
 \label{sec:johansen-ident}
 
 Il problema centrale nella stima dell'equazione (\ref{eq:VECM}) consiste nel
-trocare una stima di $\Pi$ che abbia rango $r$ per costruzione, così che possa
+trovare una stima di $\Pi$ che abbia rango $r$ per costruzione, così che possa
 essere scritta come $\Pi = \alpha \beta'$, dove $\beta$ è la matrice che
 contiene i vettori di cointegrazione e $\alpha$ contiene i coefficienti di
 ``aggiustamento'' o ``loading'', per cui le variabili endogene rispondono
@@ -594,80 +594,77 @@ const       3.3625      0.68744
           (0.25318)     (1.2870) 
 \end{code}
 
-\section{Over-identifying restrictions}
+\section{Restrizioni sovra-identificanti}
 \label{sec:johansen-overid}
 
-Although $r^2$ restrictions must be imposed on a VECM system to
-ensure identification of $\beta$, extra restrictions can be specified
-in order to check via a likelihood-ratio statistic whether they hold
-in the data. These extra restrictions are usually imposed to test
-constraints stemming from the economic theory underlying the
-equilibrium relationships.
+Sebbene bastino $r^2$ restrizioni per assicurare l'identificazione di 
+$\beta$ in un sistema VECM, è possibile specificare ulteriori restrizioni e
+controllare con un test del rapporto di verosimiglianza se queste sono
+supportate dai dati. Queste restrizioni aggiuntive sono imposte di solito per
+testare vincoli sui parametri che derivano dalla teoria economica su cui si
+basano le relazioni di equilibrio.
 
-\app{Gretl} is capable of testing general linear restrictions of the
-form 
+\app{Gretl} può testare restrizioni lineari generali nella forma
 \begin{equation}
 \label{eq:Rb}
 R_b \vec{\beta} = q
 \end{equation}
-and/or
+e/o
 \begin{equation}
 \label{eq:Ra}
 R_a \vec{\alpha} = 0
 \end{equation}
 %
-Note that the $\beta$ restriction may be non-homogeneous ($q \neq 0$)
-but the $\alpha$ restriction must be homogeneous.  Nonlinear
-restrictions are not supported, and neither are restrictions that
-cross between $\beta$ and $\alpha$.  In the case where $r > 1$ such
-restrictions may be in common across all the columns of $\beta$ (or
-$\alpha$) or may be specific to certain columns of these matrices.
-This is the case discussed in Boswijk (1995) and Boswijk and Doornik
-(2004, section 4.4).
+Si noti che la restrizione su $\beta$ può essere non-omogenea ($q \neq 0$)
+ma la restrizione su $\alpha$ deve essere omogenea. Non sono supportate le
+restrizioni non-lineari, né quelle incrociate tra $\beta$ e $\alpha$.
+Nel caso in cui $r > 1$ queste restrizioni possono essere in comune tra tutte le
+colonne di $\beta$ (o $\alpha$) o possono essere specifiche a certe colonne
+di queste matrici. Questo è il caso discusso in Boswijk (1995) e in Boswijk e Doornik
+(2004, capitolo 4.4).
 
-The restrictions (\ref{eq:Rb}) and (\ref{eq:Ra}) may be written in
-explicit form as
+Le restrizioni (\ref{eq:Rb}) e (\ref{eq:Ra}) possono essere scritte in forma
+esplicita come
 \begin{equation}
 \label{eq:vecbeta}
 \vec{\beta} = H\phi + h_0
 \end{equation}
-and
+e
 \begin{equation}
 \label{eq:vecalpha}
 \vec{\alpha'} = G\psi
 \end{equation}
-respectively, where $\phi$ and $\psi$ are the free parameter vectors
-associated with $\beta$ and $\alpha$ respectively.  We may refer
-to the free parameters collectively as $\theta$ (the column vector
-formed by concatenating $\phi$ and $\psi$).  \app{Gretl} uses this
-representation internally when testing the restrictions.
+rispettivamente, dove $\phi$ e $\psi$ sono i vettori parametrici liberi
+associati con $\beta$ e $\alpha$ rispettivamente. Possiamo riferirci
+collettivamente a tutti i parametri liberi come $\theta$ (il vettore colonna
+formato dalla concatenazione di $\phi$ e $\psi$).  \app{Gretl} usa internamente
+questa rappresentazione per testare le restrizioni.
 
-If the list of restrictions that is passed to the \texttt{restrict}
-command contains more constraints than necessary to achieve
-identification, then an LR test is performed; moreover, the
-\texttt{restrict} command can be given the \verb|--full| switch, in
-which case full estimates for the restricted system are printed
-(including the $\Gamma_i$ terms), and the system thus restricted
-becomes the ``current model'' for the purposes of further tests.  Thus
-you are able to carry out cumulative tests, as in Chapter 7 of
+Se la lista delle restrizioni passata al comando \texttt{restrict} contiene più
+restrizioni di quelle necessarie a garantire l'identificazione, viene eseguito
+un test LR; inoltre è possibile usare l'opzione \verb|--full| con il comando
+\texttt{restrict}, in modo che vengano mostrate le stime complete per il sistema
+vincolato (inclusi i termini $\Gamma_i$), e che il sistema vincolato diventi
+così il ``modello attuale'' ai fini di ulteriori test. In questo modo è
+possibile eseguire test cumulativi, come descritto nel capitolo 7 di
 Johansen (1995).
 
-\subsection{Syntax}
+\subsection{Sintassi}
 \label{sec:vecm-restr-syntax}
 
-The full syntax for specifying the restriction is an extension of the
-one exemplified in the previous section. Inside a
-\texttt{restrict}\ldots\texttt{end restrict} block, valid statements
-are of the form
+La sintassi completa per specificare le restrizioni è un'estensione di quella
+mostrata nella sezione precedente. All'interno di un blocco
+\texttt{restrict}\ldots\texttt{end restrict} è possibile usare dichiarazione
+della forma
 \begin{center}
-  \texttt{\emph{parameter linear combination}} = \emph{\texttt{scalar}}
+  \texttt{\emph{combinazione lineare di parametri}} = \emph{\texttt{scalare}}
 \end{center}
-where a parameter linear combination involves a weighted sum of
-individual elements of $\beta$ or $\alpha$ (but not both in the same
-combination); the scalar on the right-hand side must be 0 for
-combinations involving $\alpha$, but can be any real number for
-combinations involving $\beta$. Below, we give a few examples of valid
-restrictions:
+dove la combinazione lineare di parametri comprende la somma ponderata di
+elementi individuali di $\beta$ o $\alpha$ (ma non di entrambi nella stessa
+combinazione); lo scalare al secondo membro deve essere pari a 0 per
+combinazioni che riguardano $\alpha$, ma può essere qualsiasi numero reale per
+combinazioni che riguardano $\beta$. Di seguito vengono mostrati alcuni esempi
+di restrizioni valide:
 \begin{code}
   b[1,1] = 1.618
   b[1,4] + 2*b[2,5] = 0
@@ -675,16 +672,16 @@ restrictions:
   a[1,1] - a[1,2] = 0
 \end{code}
 
-A special syntax is reserved for the case when a certain constraint
-should be applied to all columns of $\beta$: in this case, one index is
-given for each \texttt{b} term, and the square brackets are dropped.
-Hence, the following syntax
+Una sintassi speciale è riservata al caso in cui una certa restrizione deve essere
+applicata a tutte le colonne di $\beta$: in questo caso, viene usato un indice
+per ogni termine \texttt{b} e non si usano le parentesi quadre. Quindi la
+sintassi seguente
 \begin{code}
 restrict
   b1 + b2 = 0
 end restrict
 \end{code}
-corresponds to
+corresponde a
 \[
 \beta = \left[
 \begin{array}{rr}
@@ -695,10 +692,10 @@ corresponds to
 \end{array}
 \right]
 \]
-The same convention is used for $\alpha$: when only one index is given for
-each \texttt{a} term, the restriction is presumed to apply to all $r$
-rows of $\alpha$, or in other words the given variables are weakly
-exogenous. For instance, the formulation
+La stessa convenzione viene usata per $\alpha$: quando si usa solo un indice per
+ogni termine \texttt{a}, la restrizione viene applicata a tutte le $r$ righe di
+$\alpha$, o in altre parole le variabili indicate sono debolmente esogene. Ad
+esempio la formulazione
 %
 \begin{code}
 restrict
@@ -707,13 +704,13 @@ restrict
 end restrict
 \end{code}
 %
-specifies that variables 3 and 4 do not respond to the deviation from
-equilibrium in the previous period.  
+specifica che le variabili 3 e 4 non rispondono alla deviazione dall'equilibrio
+nel periodo precedente.
 
-Finally, a short-cut is available for setting up complex restrictions (but
-currently only in relation to $\beta$): you can specify $R_b$ and $q$,
-as in $R_b \vec{\beta} = q$, by giving the names of previously
-defined matrices.  For example,
+Infine, è disponibile una scorciatoia per definire restrizioni complesse (al
+momento solo in relazione a $\beta$): è possibile specificare $R_b$ e $q$,
+come in $R_b \vec{\beta} = q$, dando i nomi di matrici definite in precedenza.
+Ad esempio,
 %
 \begin{code}
 matrix I4 = I(4)
@@ -725,60 +722,58 @@ restrict
 end restrict
 \end{code}
 %
-which manually imposes Phillips normalization on the $\beta$ estimates
-for a system with rango di cointegrazione 4.
+impone manualmente la normalizzazione di Phillips sulle stime di $\beta$ per un sistema con
+rango di cointegrazione 4.
  
-\subsection{An example}
+\subsection{Un esempio}
 \label{sec:vecm-overid-ex}
 
-Brand and Cassola (2004) propose a money demand system for the Euro
-area, in which they postulate three long-run equilibrium
-relationships:
+Brand e Cassola (2004) propongono un sistema di domanda di moneta per l'area
+Euro, in cui postulano tre relazioni di equilibrio di lungo periodo:
 %
 \begin{center}
 \begin{tabular}{ll}
-  money demand & $m = \beta_l l + \beta_y y$ \\
-  Fisher equation & $\pi = \phi l$ \\
-  Expectation theory of & $l = s$ \\ [-4pt]
-  interest rates
+  Domanda di moneta & $m = \beta_l l + \beta_y y$ \\
+  Equazione di Fisher & $\pi = \phi l$ \\
+  Teoria delle aspettative sui & $l = s$ \\ [-4pt]
+  tassi di interesse
 \end{tabular}
 \end{center}
 %
-where $m$ is real money demand, $l$ and $s$ are long- and short-term
-interest rates, $y$ is output and $\pi$ is inflation.\footnote{A
-  traditional formulation of the Fisher equation would reverse the
-  roles of the variables in the second equation, but this detail is
-  immaterial in the present context; moreover, the expectation theory
-  of interest rates implies that the third equilibrium relationship
-  should include a constant for the liquidity premium. However, since
-  in this example the system is estimated with the constant term
-  unrestricted, the liquidity premium gets merged in the system
-  intercept and disappears from $z_t$.}  (The names for these
-variables in the \app{gretl} data file are \verb|m_p|, \texttt{rl},
-\texttt{rs}, \texttt{y} and \texttt{infl}, respectively.)
+dove $m$ è la domanda di moneta reale, $l$ e $s$ sono i tassi di interesse a
+lungo e a breve termine, $y$ è l'output e $\pi$ è l'inflazione\footnote{Una
+  formulazione tradizionale dell'equazione di Fisher invertirebbe i ruoli delle
+  variabili nella seconda equazione, ma questo dettaglio non è rilevante in
+  questo contesto; inoltre, la teoria delle aspettative sui tassi implica che la
+  terza relazione di equilibrio dovrebbe includere una costante per il premio di
+  liquidità. In ogni caso, visto che in questo esempio il sistema è stimato con
+  il termine costante non vincolato, il premio per la liquidità viene assorbito
+  nell'intercetta del sistema e scompare da $z_t$.}. I nomi di queste variabili
+nel file di dati di \app{gretl} sono rispettivamente \verb|m_p|, \texttt{rl},
+\texttt{rs}, \texttt{y} e \texttt{infl}.
 
-The rango di cointegrazione assumed by the authors is 3 and there are 5
-variables, giving 15 elements in the $\beta$ matrix.  $3 \times 3 = 9$
-restrictions are required for identification, and a just-identified
-system would have $15 - 9 = 6$ unrestricted parameters.  However, the
-three postulated long-run relationships feature only three
-unrestricted parameters, so the over-identification rank is 3.
+Il rango di cointegrazione ipotizzato dagli autori è pari a 3, e ci sono 5
+variabili, per un totale di 15 elementi nella  matrice $\beta$. Per
+l'identificazione sono richieste $3 \times 3 = 9$ restrizioni, e un sistema
+esattamente identificato avrebbe $15 - 9 = 6$ parametri liberi. Tuttavia, le
+tre relazioni di lungo periodo ipotizzate contengono solo 3 parametri liberi,
+quindi il rango di sovraidentificazione è 3.
 
 \begin{script}[htbp]
-  \caption{Estimation of a money demand system with constraints on $\beta$}
+  \caption{Stima di un sistema di domanda di moneta con vincoli su $\beta$}
   \label{brand-cassola-script}
 Input:
 \begin{scodebit}
 open brand_cassola.gdt
 
-# perform a few transformations
+# Alcune trasformazioni
 m_p = m_p*100
 y = y*100
 infl = infl/4
 rs = rs/4
 rl = rl/4
 
-# replicate table 4, page 824
+# Replica della tabella 4 a pagina 824
 vecm 2 3 m_p infl rl rs y -q
 genr ll0 = $lnl
 
@@ -798,14 +793,14 @@ restrict --full
 end restrict
 genr ll1 = $rlnl
 \end{scodebit}
-Partial output:
+Output parziale:
 \begin{scodebit}
-Unrestricted loglikelihood (lu) = 116.60268
-Restricted loglikelihood (lr) = 115.86451
+Log-verosimiglianza non vincolata (lu) = 116.60268
+Log-verosimiglianza vincolata (lr) = 115.86451
 2 * (lu - lr) = 1.47635
-P(Chi-Square(3) > 1.47635) = 0.68774
+P(Chi-quadro(3) > 1.47635) = 0.68774
 
-beta (vettori di cointegrazione, standard errors in parentheses)
+Beta (vettori di cointegrazione, errori standard tra parentesi)
 
 m_p        1.0000       0.0000       0.0000 
           (0.0000)     (0.0000)     (0.0000) 
@@ -821,26 +816,25 @@ y         -1.3304       0.0000       0.0000
 %$
 \end{script}
 
-Example \ref{brand-cassola-script} replicates Table 4 on page 824 of
-the Brand and Cassola article.\footnote{Modulo what appear to be a few
-  typos in the article.} Note that we use the \verb|$lnl| accessor
-after the \texttt{vecm} command to store the unrestricted
-log-likelihood and the \verb|$rlnl| accessor after \texttt{restrict}
-for its restricted counterpart. 
+L'esempio \ref{brand-cassola-script} replica la tabella 4 a pagina 824
+dell'articolo di Brand e Cassola\footnote{Fatta eccezione per quelli che
+  sembrano alcuni errori di stampa nell'articolo.}. Si noti che viene usato
+l'accessorio \verb|$lnl| dopo il comando \texttt{vecm} per salvare la
+log-verosimiglianza non vincolata e l'accessorio \verb|$rlnl| dopo il comando
+\texttt{restrict} per la sua controparte vincolata.
 
-The example continues in script~\ref{brand-cassola-tab5}, where we
-perform further testing to check whether (a) the income elasticity in
-the money demand equation is 1 ($\beta_y = 1$) and (b) the Fisher
-relation is homogeneous ($\phi = 1$). Since the \verb|--full| switch
-was given to the initial \texttt{restrict} command, additional
-restrictions can be applied without having to repeat the previous
-ones.  (The second script contains a few \texttt{printf} commands,
-which are not strictly necessary, to format the output nicely.)  It
-turns out that both of the additional hypotheses are rejected by the
-data, with p-values of $0.002$ and $0.004$.
+L'esempio continua nello script~\ref{brand-cassola-tab5}, dove vengono eseguiti
+ulteriori test per controllare (a) se l'elasticità al reddito nell'equazione di
+domanda di moneta è pari a 1 ($\beta_y = 1$) e (b) se la relazione di Fisher è
+omogenea ($\phi = 1$). Visto che è stata usata l'opzione \verb|--full| con il
+comando \texttt{restrict} iniziale, è possibile applicare le restrizioni
+aggiuntive senza dover ripetere quelle precedenti. Il secondo script contiene
+alcuni comandi \texttt{printf} che non sono strettamente necessari, servono solo
+a formattare meglio i risultati. I dati portano a rifiutare entrambe le ipotesi
+aggiuntive, con p-value di $0.002$ e $0.004$.
 
 \begin{script}[htbp]
-  \caption{Further testing of money demand system}
+  \caption{Test ulteriori sul sistema di domanda di moneta}
   \label{brand-cassola-tab5}
 Input:
 \begin{scodebit}
@@ -854,45 +848,45 @@ restrict
 end restrict
 genr ll_hfh = $rlnl
 
-# replicate table 5, page 824
-printf "Testing zero restrictions in cointegrazione space:\n"
-printf "  LR-test, rank = 3: chi^2(3) = %6.4f [%6.4f]\n", 2*(ll0-ll1), \
+# Replica della tabella 5 a pagina 824
+printf "Test su zero restrizioni nello spazio di cointegrazione:\n"
+printf "  test LR, rango = 3: chi^2(3) = %6.4f [%6.4f]\n", 2*(ll0-ll1), \
 	pvalue(X, 3, 2*(ll0-ll1))
 
-printf "Unit income elasticity: LR-test, rank = 3:\n"
+printf "Elasticità al reddito unitaria: test LR, rango = 3:\n"
 printf "  chi^2(4) = %g [%6.4f]\n", 2*(ll0-ll_uie), \
 	pvalue(X, 4, 2*(ll0-ll_uie))
 
-printf "Homogeneity in the Fisher hypothesis:\n"
-printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
+printf "Omogeneità nell'ipotesi di Fisher:\n"
+printf "  test LR, rango = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
 \end{scodebit}
 Output:
 \begin{scodebit}
-Testing zero restrictions in cointegrazione space:
-  LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
-Unit income elasticity: LR-test, rank = 3:
+Test su zero restrizioni nello spazio di cointegrazione:
+  test LR, rango = 3: chi^2(3) = 1.4763 [0.6877]
+Elasticità al reddito unitaria: test LR, rango = 3:
   chi^2(4) = 17.2071 [0.0018]
-Homogeneity in the Fisher hypothesis:
-  LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
+Omogeneità nell'ipotesi di Fisher:
+  test LR, rango = 3: chi^2(4) = 15.547 [0.0037]  
 \end{scodebit}
 \end{script}
 
-Another type of test that is commonly performed is the ``weak
-exogeneity'' test. In this context, a variable is said to be weakly
-exogenous if all coefficients on the corresponding row in the $\alpha$
-matrix are zero. If this is the case, that variable does not adjust to
-deviations from any of the long-run equilibria and can be considered
-an autonomous driving force of the whole system.
+Un altro tipo di test eseguito spesso è quello dell'``esogeneità debole''.
+In questo contesto, si dice che una variabile è debolmente esogena se tutti i
+coefficienti nella riga corrispondente della matrice $\alpha$ sono pari a zero.
+In questo caso, la variabile non reagisce alle deviazioni da alcuno degli
+equilibri di lungo periodo e può essere considerata una forza autonoma dal resto
+del sistema.
 
-The code in Example~\ref{brand-cassola-exog} performs this test for
-each variable in turn, thus replicating the first column of Table 6 on
-page 825 of Brand and Cassola (2004).  The results show that weak
-exogeneity might perhaps be accepted for the long-term interest rate
-and real GDP (p-values $0.07$ and $0.08$ respectively).
+Il codice nell'Esempio~\ref{brand-cassola-exog} esegue questo test per ognuna
+delle variabili, replicando la prima colonna della Tabella 6 a pagina 825
+di Brand e Cassola (2004). I risultati mostrano che l'ipotesi di esogeneità
+debole può essere accettata per i tassi di interesse a lungo termine e il PIL
+reale (rispettivamente con p-value $0.07$ e $0.08$).
 
 \begin{script}[htbp]
-  \caption{Testing for weak exogeneity}
+  \caption{Test per l'esogeneità debole}
   \label{brand-cassola-exog}
 Input:
 \begin{scodebit}
@@ -925,7 +919,7 @@ loop foreach i m p l s y --quiet
   printf "\Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 end loop
 \end{scodebit}
-Output (variable, LR test, p-value):
+Output (variabile, test LR, p-value):
 \begin{scodebit}
 \Delta m	18.111 [0.0060]
 \Delta p	21.067 [0.0018]
@@ -936,126 +930,122 @@ Output (variable, LR test, p-value):
 %$
 \end{script}
 
-\subsection{Numerical solution methods}
+\subsection{Metodi di soluzione numerica}
 \label{sec:vecm-opt}
 
-In general, the ML estimator for the restricted VECM problem has no
-closed form solution, hence the maximum must be found via numerical
-methods.\footnote{The exception is restrictions that are homogeneous,
-  common to all $\beta$ or all $\alpha$ (in case $r>1$), and involve
-  either $\beta$ only or $\alpha$ only.  Such restrictions are handled
-  via the modified eigenvalues method set out by Johansen (1995).  We
-  solve directly for the ML estimator, without any need for iterative
-  methods.}  In some cases convergence may be difficult, and
-\app{gretl} provides several choices to solve the problem.
+In generale, il problema della stima ML per il VECM vincolato non ha una
+soluzione in forma chiusa, quindi il massimo deve essere cercato con metodi
+numerici\footnote{L'eccezione è costituita dal caso in cui le restrizioni
+  sono omogenee, sono comuni a tutti i $\beta$ o a tutti gli $\alpha$ (nel caso
+  $r>1$), e includono solo $\beta$ o solo $\alpha$. Queste restrizioni sono
+  gestite con il metodo degli autovalori modificati proposto da Johansen (1995):
+  risolviamo direttamente lo stimatore ML, senza aver bisogno di metodi
+  iterativi.}. In alcuni casi, la convergenza può risultare difficile da
+raggiungere, e \app{gretl} fornisce vari modi di risolvere il problema.
 
-Two maximization methods are available in \app{gretl}. The default is
-the switching algorithm set out in Boswijk and Doornik (2004).  The
-alternative is a limited-memory variant of the BFGS algorithm (LBFGS),
-using analytical derivatives.  This is invoked using the
-\verb+--lbfgs+ flag with the \texttt{restrict} command.
+Sono disponibili due metodi di massimizzazione in \app{gretl}: quello
+predefinito è l'algoritmo di switching proposto in Boswijk e Doornik (2004);
+l'alternativa è una variante a memoria limitata dell'algoritmo BFGS, che usa
+derivate analitiche: LBFGS. Per usare questo metodo occorre aggiungere l'opzione
+\verb+--lbfgs+ al comando \texttt{restrict}.
 
-The switching algorithm works by explicitly maximizing the likelihood
-at each iteration, with respect to $\hat{\phi}$, $\hat{\psi}$ and
-$\hat{\Omega}$ (the covariance matrix of the residuals) in turn.  This
-method shares a feature with the basic Johansen eigenvalues procedure,
-namely, it can handle a set of restrictions that does not fully
-identify the parameters.
+L'algoritmo di switching funziona massimizzando esplicitamente la
+verosimiglianza ad ogni iterazione rispetto a $\hat{\phi}$, $\hat{\psi}$ e 
+$\hat{\Omega}$ (la matrice di covarianza dei residui). Questo metodo condivide
+una caratteristica con la classica procedura degli autovalori di Johansen,
+ossia: può gestire un insieme di restrizioni che non identificano completamente
+i parametri.
 
-LBFGS, on the other hand, requires that the model be fully identified.
-When using LBFGS, therefore, you may have to supplement the
-restrictions of interest with normalizations that serve to identify
-the parameters.  For example, one might use all or part of the
-Phillips normalization (see section \ref{sec:johansen-ident}).
+D'altra parte, LBFGS richiede che il modello sia completamente identificato,
+quindi in alcuni casi occorrerà aggiungere alle restrizioni che interessano
+alcune normalizzazioni con lo scopo di identificare i parametri.
+Ad esempio, si può usare in tutto o in parte la normalizzazione di Phillips
+(si veda la sezione \ref{sec:johansen-ident}).
 
-Neither the switching algorithm nor LBFGS is guaranteed to find the
-global ML solution.\footnote{In developing \app{gretl}'s VECM-testing
-  facilities we have considered a fair number of ``tricky cases'' from
-  various sources. We'd like to thank Luca Fanelli of the University
-  of Bologna and Sven Schreiber of Johann Wolfgang Goethe-Universit\"at,
-  for their help in devising torture-tests for \app{gretl}'s VECM
-  code.} The optimizer may end up at a local maximum (or, in the case
-of the switching algorithm, at a saddle point).
+Né l'algoritmo di switching né quello LBFGS garantiscono di raggiungere la soluzione ML
+globale\footnote{Nello sviluppo del codice per il test dei VECM in \app{gretl}
+  sono stati considerati un certo numero di ``casi difficili'' individuati da
+  varie fonti. Vogliamo ringraziare Luca Fanelli dell'Università di Bologna e 
+  Sven Schreiber della Johann Wolfgang Goethe-Universit\"at, per aver suggerito
+  vari test per il codice VECM di \app{gretl}}: l'ottimizzatore potrebbe fermarsi
+su un massimo locale (o, nel caso dell'algoritmo di switching, su un punto di
+sella).
 
-The solution (or lack thereof) may be sensitive to the initial value
-selected for $\theta$.  By default, \app{gretl} selects a starting
-point using a deterministic method based on Boswijk (1995), but two
-further options are available: the initialization may be adjusted
-using simulated annealing (with the \verb+--jitter+ flag), or the user
-may supply an explicit initial value for $\theta$.
+La soluzione (o la sua mancanza) può essere sensibile al valore iniziale scelto
+per $\theta$. Per impostazione predefinita, \app{gretl} sceglie un valore
+iniziale usando un metodo deterministico basato su Boswijk (1995), ma sono
+disponibili due altre opzioni: è possibile aggiustare l'inizializzazione usando
+il metodo della ricottura simulata (con l'opzione \verb+--jitter+), oppure è
+possibile fornire esplicitamente un valore iniziale per $\theta$.
 
-The default initialization method is:
+Il metodo di inizializzazione predefinito è il seguente:
 %
 \begin{enumerate}
-\item Calculate the unrestricted ML $\hat{\beta}$ using the
-  Johansen procedure.
-\item If the restriction on $\beta$ is non-homogeneous, use the
-  method proposed by Boswijk (1995):
+\item Calcolare la ML non vincolata $\hat{\beta}$ usando la procedura di Johansen.
+\item Se la restrizione su $\beta$ è non-omogenea, usare il metodo proposto da
+  Boswijk (1995):
 \begin{equation}
 \phi_0 = -[(I_r \otimes \hat{\beta}_{\perp})'H]^+ 
   (I_r \otimes \hat{\beta}_{\perp})' h_0
 \end{equation}
-where $\hat{\beta}'_{\perp} \hat{\beta} = 0$ and $A^+$ denotes
-the Moore--Penrose inverse of $A$.  Otherwise
+dove $\hat{\beta}'_{\perp} \hat{\beta} = 0$ e $A^+$ denota l'inversa di Moore--Penrose di $A$.  Altrimenti
 \begin{equation}
 \phi_0 = (H'H)^{-1} H' \vec{\hat{\beta}}
 \end{equation}
 \item $\vec{\beta_0} = H\phi_0 + h_0$.
-\item Calculate the unrestricted ML $\hat{\alpha}$ conditional on
-  $\beta_0$, as per Johansen:
+\item Calcolare la ML non vincolata $\hat{\alpha}$ condizionale su
+  $\beta_0$, come da Johansen:
 \begin{equation}
 \label{eq:Jalpha}
 \hat{\alpha} = S_{01} \beta_0 (\beta'_0S_{11}\beta_0)^{-1}
 \end{equation}
-\item If $\alpha$ is restricted by $\vec{\alpha'} = G\psi$, then
-  $\psi_0 = (G'G)^{-1}G'\,{\rm vec}(\hat{\alpha}')$ and
+\item Se $\alpha$ è vincolata da $\vec{\alpha'} = G\psi$, allora
+  $\psi_0 = (G'G)^{-1}G'\,{\rm vec}(\hat{\alpha}')$ e
   $\vec{\alpha'_0} = G\psi_0$.
 \end{enumerate}
 
-However, as mentioned above, \app{gretl} offers the option of adjusting the
-initialization using simulated annealing.  
+Tuttavia, come detto in precedenza, \app{gretl} offre la possibilità di
+impostare l'inizializzazione usando la ricottura simulata.
 
-The basic idea is this: we start at a certain point in the parameter
-space, and for each of $n$ iterations (currently $n=4096$) we randomly
-select a new point within a certain radius of the
-previous one, and determine the likelihood at the new point.  If the
-likelihood is higher, we jump to the new point; otherwise, we jump
-with probability $P$ (and remain at the previous point with
-probability $1-P$).  As the iterations proceed, the system gradually
-``cools''---that is, the radius of the random perturbation is
-reduced, as is the probability of making a jump when the likelihood
-fails to increase.
+L'idea di base è questa: si inizia in un certo punto dello spazio parametrico,
+e per ognuna di $n$ iterazioni (al momento $n=4096$) si sceglie a caso un
+punto all'interno di un certo raggio di distanza dal precedente e si determina la
+verosimiglianza nel nuovo punto. Se la verosimiglianza è maggiore, si salta
+nel nuovo punto, altrimenti si salta con probabilità $P$ (e si rimane nel
+punto precedente con probabilità $1-P$). Man mano che le iterazioni procedono,
+il sistema ``si raffredda'' gradualmente, ossia il raggio delle perturbazioni
+casuali si riduce, così come la probabilità di fare un salto quando la
+verosimiglianza non aumenta.
 
-In the course of this procedure many points in the parameter space are
-evaluated, starting with the point arrived at by the deterministic
-method, which we'll call $\theta_0$.  One of these points will be
-``best'' in the sense of yielding the highest likelihood: call it
-$\theta^*$.  This point may or may not have a greater likelihood than
-$\theta_0$.  And the procedure has an end point, $\theta_n$, which may
-or may not be ``best''.
+Nel corso di questa procedura vengono valutati molti punti dello spazio dei
+parametri, cominciando dal punto scelto dalla procedura deterministica, che
+chiameremo $\theta_0$. Uno di questi punti sarà il ``migliore'' nel senso che
+produce la più alta verosimiglianza: lo si chiami $\theta^*$. Questo punto può
+avere o non avere una verosimiglianza maggiore di quella di $\theta_0$. La
+procedura ha inoltre un punto finale, $\theta_n$, che può essere o non essere il
+``migliore''.
 
-The rule followed by \app{gretl} in selecting an initial value for $\theta$
-based on simulated annealing is this: use $\theta^*$ if $\theta^* >
-\theta_0$, otherwise use $\theta_n$.  That is, if we get an
-improvement in the likelihood via annealing, we make full use of this;
-on the other hand, if we fail to get an improvement we nonetheless
-allow the annealing to randomize the starting point.  Experiments
-indicated that the latter effect can be helpful.
+La regola seguita da \app{gretl} per scegliere un valore iniziale per $\theta$
+basandosi sulla ricottura simulata è questa: usare $\theta^*$ se $\theta^* >
+\theta_0$, altrimenti usare $\theta_n$.  Ossia: se otteniamo un miglioramento
+nella verosimiglianza tramite la ricottura simulata, ne approfittiamo; d'altra
+parte, se non otteniamo un miglioramento usiamo comunque la ricottura per
+la randomizzazione del punto iniziale. La sperimentazione ha indicato che
+quest'ultimo metodo può aiutare.
 
-If the default deterministic initialization fails, the alternative to
-relying on randomization is for the user to specify initial values.
-This is done by passing a predefined vector to the \texttt{set}
-command with parameter \texttt{initvals}, as in
+Se l'inizializzazione deterministica fallisce, l'alternativa alla
+randomizzazione consiste nello scegliere esplicitamente dei valori iniziali.
+L'utente può farlo passando un vettore predefinito al comando \texttt{set} con
+il parametro \texttt{initvals}, come nell'esempio
 %
 \begin{verbatim}
 set initvals myvec
 \end{verbatim}
 
-The details depend on whether the switching algorithm or LBFGS is
-used.  For the switching algorithm, there are two options for
-specifying the initial values.  The more user-friendly one (for most
-people, we suppose) is to specify a matrix that contains $\vec{\beta}$
-followed by $\vec{\alpha}$. For example:
+I dettagli dipendono dall'algoritmo scelto. Nel caso dell'algoritmo di
+switching ci sono due opzioni per sceglire i valori iniziali. Quella più comoda
+(per la maggior parte delle persone supponiamo) consiste nello specificare una
+matrice che contiene $\vec{\beta}$ seguito da $\vec{\alpha}$. Ad esempio:
 \begin{code}
 open denmark.gdt
 vecm 2 1 LRM LRY IBO IDE --rc --seasonals
@@ -1069,18 +1059,16 @@ restrict
 end restrict
 \end{code}
 
-The other option, which is compulsory when using LBFGS, is to specify
-the initial values in terms of the unrestricted parameters, $\phi$ and
-$\psi$.  Getting this right is somewhat less obvious.  As mentioned
-above, the implicit-form restriction $R\vec{\beta} = q$ has explicit
-form $\vec{\beta} = H\phi + h_0$, where $H = R_{\perp}$, the right
-nullspace of $R$.  The vector $\phi$ is shorter, by the number of
-restrictions, than $\vec{\beta}$.  The savvy user will then see what
-needs to be done.  The other point to take into account is that if
-$\alpha$ is unrestricted, the \textit{effective} length of $\psi$ is
-0, since it is then optimal to compute $\alpha$ using Johansen's
-formula, conditional on $\beta$ (equation \ref{eq:Jalpha} above). An
-example follows:
+L'altra opzione, obbligatoria quando si usa LBFGS, consiste nello specificare i
+valori iniziali in termini dei parametri non vincolati, $\phi$ e $\psi$. Questo
+metodo è meno ovvio da comprendere: come ricordato sopra, la restrizione in
+forma implicita $R\vec{\beta} = q$ ha la forma esplicita $\vec{\beta} = H\phi +
+h_0$, dove $H = R_{\perp}$, lo spazio nullo destro di $R$. Il vettore $\phi$ è
+più corto, per il numero di restrizioni, di $\vec{\beta}$. L'utente attento
+capirà cosa occorre fare. L'altro punto di cui tenere conto è che se $\alpha$
+non è vincolato, la lunghezza \textit{effettiva} di $\psi$ è 0, visto che è
+ottimale calcolare $\alpha$ con la formula di Johansen, condizionale su $\beta$
+(equazione \ref{eq:Jalpha} sopra). Segue un esempio:
 \begin{code}
 open denmark.gdt
 vecm 2 1 LRM LRY IBO IDE --rc --seasonals
