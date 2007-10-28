@@ -1,4 +1,4 @@
-<equation-set latexopt="12pt" density="96x96" usepackage="mathtime">
+<equation-set latexopt="12pt" density="96x96" usepackage="mathptmx">
 <texequation fileref="adf1">
 \[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]
 </texequation>

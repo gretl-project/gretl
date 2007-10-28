@@ -14,7 +14,7 @@
 </xsl:template>
 
 <xsl:template match="commandlist">
-  <xsl:text>&lt;equation-set latexopt="12pt" density="96x96" usepackage="mathtime"&gt;&#10;</xsl:text>
+  <xsl:text>&lt;equation-set latexopt="12pt" density="96x96" usepackage="mathptmx"&gt;&#10;</xsl:text>
   <xsl:apply-templates select=".//equation"/>
   <xsl:text>&lt;/equation-set&gt;&#10;</xsl:text>
 </xsl:template>
