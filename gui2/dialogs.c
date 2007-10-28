@@ -1389,10 +1389,11 @@ void varinfo_dialog (int varnum, int full)
     }    
 
     /* mark variable as discrete or not? */
-    if (full && series && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
+    if (full && series && (var_is_discrete(datainfo, varnum) ||
+			   gretl_isdiscrete(0, datainfo->n - 1, Z[varnum]))) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	vset->check = gtk_check_button_new_with_label(_("Treat this variable "
-						      "as discrete"));
+							"as discrete"));
 	if (var_is_discrete(datainfo, varnum)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), TRUE);
 	}

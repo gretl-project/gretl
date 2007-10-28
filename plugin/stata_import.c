@@ -265,7 +265,8 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
 
 /* mechanism for handling (coding) non-numeric variables */
 
-static gretl_string_table *dta_make_string_table (int *types, int nvar, int ncols)
+static gretl_string_table *
+dta_make_string_table (int *types, int nvar, int ncols)
 {
     gretl_string_table *st;
     int *list;
@@ -543,6 +544,9 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		    ix = gretl_string_table_index(*pst, strbuf, v, 0, prn);
 		    if (ix > 0) {
 			Z[v][t] = ix;
+			if (t == 0) {
+			    set_var_discrete(dinfo, v, 1);
+			}
 		    }	
 		}
 	    }
