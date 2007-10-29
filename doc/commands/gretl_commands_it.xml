@@ -4009,7 +4009,9 @@
       procedura viene ripetuta 999 volte e vengono mostrati i quantili 0.025 e
       0.975 per le risposte, insieme alle stime puntuali.
       </para>
-
+      <para>
+       L'opzione bootstrap al momento non è disponibile per il VECM vincolati.
+      </para>
     </description>
 
   </command>
