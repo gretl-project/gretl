@@ -1798,6 +1798,8 @@ static double real_apply_func (double x, int f, parser *p)
 	return (double) (int) x;
     case CEIL:
 	return ceil(x);
+    case FLOOR:
+	return floor(x);
     case SIN:
 	return sin(x);
     case COS:
@@ -3849,6 +3851,7 @@ static NODE *eval (NODE *t, parser *p)
     case ABS:
     case TOINT:
     case CEIL:
+    case FLOOR:
     case SIN:
     case COS:
     case TAN:

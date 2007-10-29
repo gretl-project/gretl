@@ -127,6 +127,7 @@ struct str_table funcs[] = {
     { SDIF,     "sdiff" },
     { TOINT,    "int" },
     { CEIL,     "ceil" },
+    { FLOOR,    "floor" },
     { SORT,     "sort" }, 
     { DSORT,    "dsort" }, 
     { SORTBY,   "sortby" }, 
