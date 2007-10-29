@@ -354,7 +354,6 @@ void print_freq (const FreqDist *freq, PRN *prn)
 
 	if (xlen > 10 && digits == 5) {
 	    digits--;
-	    xlen = mxlen = 0;
 	    goto tryagain;
 	}
 
