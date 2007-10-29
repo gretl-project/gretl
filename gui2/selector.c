@@ -174,6 +174,8 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 				   gpointer data);
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr);
+static gint listvar_flag_callback (GtkWidget *widget, GdkEventButton *event, 
+				   gpointer data);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static int list_show_var (int v, int code, int show_lags);
 static int selector_get_depvar_number(selector *sr);
@@ -325,12 +327,19 @@ static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event,
 				selector *sr); 
 
 static void 
-real_varlist_set_var (int v, int lag, GtkListStore *store, GtkTreeIter *iter)
+real_varlist_set_var (int v, int lag, selector *sr, int locus,
+		      GtkListStore *store, GtkTreeIter *iter)
 {
     if (lag == 0) {
-	gtk_list_store_set(store, iter, 0, v, 1, 0, 
-			   2, datainfo->varname[v], 
-			   -1);
+	if (sr->code == VECM && locus == SR_RVARS2) {
+	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
+			       2, datainfo->varname[v], 
+			       3, "U", -1);
+	} else {
+	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
+			       2, datainfo->varname[v], 
+			       -1);
+	}
     } else {
 	char vstr[VNAMELEN + 8];
 
@@ -426,7 +435,8 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
 #if VLDEBUG
 		fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
 #endif
-		real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), iter);
+		real_varlist_set_var(v, laglist[i], sr, locus,
+				     GTK_LIST_STORE(mod), iter);
 	    }
 	    free(laglist);
 	} else {
@@ -436,7 +446,8 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
 
     if (lcontext == 0) {
 	gtk_list_store_append(GTK_LIST_STORE(mod), iter);
-	real_varlist_set_var(v, 0, GTK_LIST_STORE(mod), iter);
+	real_varlist_set_var(v, 0, sr, locus, GTK_LIST_STORE(mod), 
+			     iter);
     }
 }
 
@@ -489,7 +500,7 @@ static void list_append_var (GtkListStore *store, GtkTreeIter *iter,
 	if (laglist != NULL) {
 	    for (i=1; i<=laglist[0]; i++) {
 		gtk_list_store_append(store, iter);
-		real_varlist_set_var(v, laglist[i], store, iter);
+		real_varlist_set_var(v, laglist[i], sr, locus, store, iter);
 	    }
 	    free(laglist);
 	} else {
@@ -499,7 +510,7 @@ static void list_append_var (GtkListStore *store, GtkTreeIter *iter,
 
     if (lcontext == 0) {
 	gtk_list_store_append(store, iter);
-	real_varlist_set_var(v, 0, store, iter);
+	real_varlist_set_var(v, 0, sr, locus, store, iter);
     }
 }
 
@@ -513,10 +524,18 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     GtkCellRenderer *renderer; 
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
+    int flagcol = 0;
     int width = 120;
     int height = -1;
-
-    store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
+    
+    if (0 && sr->code == VECM && locus == SR_RVARS2) {
+	/* not ready yet */
+	store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_INT, 
+				   G_TYPE_STRING, G_TYPE_STRING);
+	flagcol = 1;
+    } else {
+	store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
+    }
 
     view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     g_object_unref(G_OBJECT(store));
@@ -531,6 +550,15 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 						      "text", 2,
 						      NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
+
+    if (flagcol) {
+	column = gtk_tree_view_column_new_with_attributes(NULL,
+							  renderer,
+							  "text", 3,
+							  NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+    }	
+
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
     gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
 
@@ -556,9 +584,15 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 	g_signal_connect(G_OBJECT(view), "button_press_event",
 			 G_CALLBACK(set_active_var),
 			 NULL);
-	g_signal_connect(G_OBJECT(view), "button_press_event",
-			 G_CALLBACK(listvar_special_click),
-			 view);
+	if (flagcol) {
+	    g_signal_connect(G_OBJECT(view), "button_press_event",
+			     G_CALLBACK(listvar_flag_callback),
+			     view);
+	} else {
+	    g_signal_connect(G_OBJECT(view), "button_press_event",
+			     G_CALLBACK(listvar_special_click),
+			     view);
+	}
     } 
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
@@ -663,7 +697,7 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
     GtkWidget *w;
     GtkTreeModel *mod;
     GtkTreeIter iter;
-    int append = 1;
+    int locus, append = 1;
     int modv, row = 0;
     int jmin = 0, jmax = 1;
     int i, j;
@@ -683,6 +717,8 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 	if (w == NULL) {
 	    return;
 	}
+
+	locus = (j > 0)? SR_RVARS2: SR_RVARS1;
 	
 	mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
 
@@ -720,7 +756,8 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 #if VLDEBUG
 	    fprintf(stderr, "depvar_lags: adding var %d, lag %d\n", v, laglist[i]);
 #endif
-	    real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), &iter);
+	    real_varlist_set_var(v, laglist[i], sr, locus, 
+				 GTK_LIST_STORE(mod), &iter);
 	}    
 
 	free(laglist);
@@ -844,7 +881,8 @@ static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
     }
 
     gtk_list_store_append(GTK_LIST_STORE(rmod), &r_iter);
-    real_varlist_set_var(v, 0, GTK_LIST_STORE(rmod), &r_iter);   
+    real_varlist_set_var(v, 0, sr, SR_RVARS1, GTK_LIST_STORE(rmod), 
+			 &r_iter);   
 
     g_free(vnum);
 }
@@ -942,8 +980,13 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     if (!already_there && !at_max) {
 	if (vname != NULL) {
 	    gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			       0, v, 1, 0, 2, vname, -1);
+	    if (sr->code == VECM && locus == SR_RVARS2) {
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+				   0, v, 1, 0, 2, vname, 3, "U", -1);
+	    } else {
+		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+				   0, v, 1, 0, 2, vname, -1);
+	    }
 	    g_free(vname);
 	} else {
 #if VLDEBUG
@@ -1065,6 +1108,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 	    gtk_tree_selection_iter_is_selected(selection, &last)) {
 	    if (context) {
 		gint v, lag;
+
 		gtk_tree_model_get(model, &last, 0, &v, 1, &lag, -1);
 		remove_specific_lag(v, lag, context);
 	    }
@@ -1108,6 +1152,24 @@ dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr)
 	    }
 	}
     }
+
+    return FALSE;
+}
+
+static gint listvar_flag_callback (GtkWidget *widget, GdkEventButton *event, 
+				   gpointer data)
+{
+    GdkWindow *topwin;
+    GdkModifierType mods;
+
+    topwin = gtk_widget_get_parent_window(GTK_WIDGET(data));
+    gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+
+    if (mods & GDK_BUTTON3_MASK) {
+	fprintf(stderr, "flagcol callback\n");
+	/* remove_from_right_callback(NULL, data); */
+	return TRUE;
+    } 
 
     return FALSE;
 }
