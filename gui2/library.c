@@ -3445,7 +3445,7 @@ void do_resid_freq (gpointer p, guint action, GtkWidget *w)
     }
 
     freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
-		    NADBL, NADBL, 0, pmod->ncoeff, OPT_NONE, &err);
+		    NADBL, NADBL, 0, pmod->ncoeff, OPT_Z, &err);
 
     dataset_drop_last_variables(1, rZ, rinfo);
 
@@ -3543,7 +3543,9 @@ void do_freqplot (gpointer p, guint dist, GtkWidget *w)
     }
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
-			  (dist == D_GAMMA)? " --gamma" : "");
+			  (dist == D_NORMAL)? " --normal" :
+			  (dist == D_GAMMA)? " --gamma" : 
+			  "");
 
     if (check_and_record_command()) {
 	return;

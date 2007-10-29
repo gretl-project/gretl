@@ -1342,6 +1342,9 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 {
     double skew, kurt;
 
+    freq->test = NADBL;
+    freq->dist = 0;
+
     gretl_moments(freq->t1, freq->t2, x, 
 		  &freq->xbar, &freq->sdx, 
 		  &skew, &kurt, k);
@@ -1350,14 +1353,11 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 	if (opt & OPT_O) {
 	    freq->test = lockes_test(x, freq->t1, freq->t2);
 	    freq->dist = D_GAMMA;
-	} else {
+	} else if (opt & OPT_Z) {
 	    freq->test = doornik_chisq(skew, kurt, freq->n); 
 	    freq->dist = D_NORMAL;
 	}
-    } else {
-	freq->test = NADBL;
-	freq->dist = 0;
-    }
+    } 
 }
 
 static FreqDist *
@@ -1479,7 +1479,7 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  * with the residual from a regression).
  * @opt: if includes %OPT_Z, set up for comparison with normal dist; 
  * if includes %OPT_O, compare with gamma distribution;
- * if includes %OPT_Q, do not show a histogram; if includes %OPT_D,
+ * if includes %OPT_Q, do not show a graph; if includes %OPT_D,
  * treat the variable as discrete; %OPT_X indicates that this function
  * is called as part of a cross-tabulation.
  * @err: location to receive error code.
@@ -1534,11 +1534,13 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     x = Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
+#if 0
     /* if the histogram is not wanted, we're done */
     if (opt & OPT_Q) {
 	freq->numbins = 0;
 	return freq;
     }
+#endif
 
     if (freq_add_arrays(freq, nbins)) {
 	*err = E_ALLOC;
@@ -1609,9 +1611,12 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     FreqDist *freq;
     int realgraph = graph && !(opt & OPT_Q);
     int err = 0;
+    DistCode dist = D_NONE;
 
-    if (realgraph && !(opt & OPT_O)) {
-	opt |= OPT_Z;
+    if (opt & OPT_O) {
+	dist = D_GAMMA; 
+    } else if (opt & OPT_Z) {
+	dist = D_NORMAL;
     }
 
     freq = get_freq(varno, Z, pdinfo, NADBL, NADBL, 0, 1, opt, &err); 
@@ -1622,7 +1627,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     print_freq(freq, prn); 
 
-    if (realgraph && plot_freq(freq, (opt & OPT_O)? D_GAMMA : D_NORMAL)) {
+    if (realgraph && plot_freq(freq, dist)) {
 	pputs(prn, _("gnuplot command failed\n"));
     }
 
@@ -2032,6 +2037,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn)
 {
     FreqDist *freq = NULL;
+    gretlopt opt = OPT_Z; /* show normal test */
     int err = 0;
 
     if (pmod == NULL || pmod->uhat == NULL) {
@@ -2044,7 +2050,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
     if (!err) {
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			NADBL, NADBL, 0, pmod->ncoeff, OPT_NONE, &err);
+			NADBL, NADBL, 0, pmod->ncoeff, opt, &err);
     }
 
     if (!err) {

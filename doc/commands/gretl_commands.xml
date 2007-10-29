@@ -2298,7 +2298,11 @@
       <options>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of histogram</effect>
+	  <effect>suppress printing of graph</effect>
+        </option>
+        <option>
+	  <flag>--normal</flag>
+	  <effect>test for the normal distribution</effect>
         </option>
         <option>
 	  <flag>--gamma</flag>
@@ -2310,19 +2314,19 @@
     <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
-	<repl>var</repl> (given by name or number) and shows the
-	results of the Doornik&ndash;Hansen chi-square test for
-	normality.
+	<repl>var</repl> (given by name or number).
       </para>
       <para>
-	If the <lit>--quiet</lit> option is given, the histogram is
-	not shown.  If the <lit>--gamma</lit> option is given, the
-	test for normality is replaced by Locke's nonparametric test
-	for the null hypothesis that the variable follows the gamma
-	distribution; see Locke (1976), Shapiro and Chen (2001).
+	If the <lit>--normal</lit> option is given, the results of the
+	Doornik&ndash;Hansen chi-square test for normality is computed. If
+	the <lit>--gamma</lit> option is given, the test for normality is
+	replaced by Locke's nonparametric test for the null hypothesis
+	that the variable follows the gamma distribution; see Locke
+	(1976), Shapiro and Chen (2001).
       </para>
       <para>
-	In interactive mode a graph of the distribution is displayed.
+	In interactive mode a graph of the distribution is displayed by
+	default.  The <lit>--quiet</lit> can be used to suppress this.
       </para>
     </description>
 

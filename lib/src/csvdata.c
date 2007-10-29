@@ -91,6 +91,10 @@ static void csvdata_free (csvdata *c)
 	gretl_string_table_destroy(c->st);
     }
 
+    if (c->codelist != NULL) {
+	free(c->codelist);
+    }
+
     destroy_dataset(c->Z, c->dinfo);
 
     free(c);
@@ -578,14 +582,6 @@ csv_daily_date_check (csvdata *c, PRN *prn)
     return -1;
 }
 
-static void make_endobs_string (char *endobs, const char *s)
-{
-    *endobs = 0;
-    strncat(endobs, s, 4);
-    strcat(endobs, ":");
-    strncat(endobs, s + 5, 2);
-}
-
 static int pd_from_date_label (const char *lbl, char *year, char *subp,
 			       char *format, PRN *prn)
 {
@@ -670,7 +666,7 @@ static int csv_time_series_check (csvdata *c, PRN *prn)
 	    c->dinfo->pd = pd;
 	    sprintf(c->dinfo->stobs, "%s:%s", year, sub);
 	    c->dinfo->sd0 = obs_str_to_double(c->dinfo->stobs);
-	    make_endobs_string(c->dinfo->endobs, lbl2);
+	    ntodate(c->dinfo->endobs, c->dinfo->n - 1, c->dinfo);
 	} else {
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
 	    pd = -1;

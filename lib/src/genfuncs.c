@@ -226,6 +226,7 @@ int rank_series (const double *x, double *y, int f,
 
     sx = malloc(m * sizeof *sx);
     rx = malloc(m * sizeof *rx);
+
     if (sx == NULL || rx == NULL) {
 	free(sx);
 	free(rx);

@@ -3853,7 +3853,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = freqdist(cmd->list[1], (const double **) *pZ, 
 		       pdinfo, (s->flags == CONSOLE_EXEC),
 		       cmd->opt, prn);
-	if (!err && s->callback != NULL) {
+	if (!err && !(cmd->opt & OPT_Q) && s->callback != NULL) {
 	    s->callback(s, pZ, pdinfo);
 	}
 	break;

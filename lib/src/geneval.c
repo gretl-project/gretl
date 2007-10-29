@@ -2437,34 +2437,37 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case HPFILT:
-	   p->err = hp_filter(l->v.xvec, ret->v.xvec, p->dinfo, OPT_NONE);
-	   break;
+	    p->err = hp_filter(l->v.xvec, ret->v.xvec, p->dinfo, OPT_NONE);
+	    break;
 	case BKFILT:
-	   p->err = bkbp_filter(l->v.xvec, ret->v.xvec, p->dinfo);
-	   break;
+	    p->err = bkbp_filter(l->v.xvec, ret->v.xvec, p->dinfo);
+	    break;
 	case FRACDIF:
-	   p->err = fracdiff_series(l->v.xvec, ret->v.xvec, r->v.xval, p->dinfo);
-	   break;
+	    p->err = fracdiff_series(l->v.xvec, ret->v.xvec, r->v.xval, p->dinfo);
+	    break;
 	case DIF:
 	case LDIF:
 	case SDIF:
-	   p->err = diff_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
-	   break;
+	    p->err = diff_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
+	    break;
 	case ODEV:
-	   p->err = orthdev_series(l->v.xvec, ret->v.xvec, p->dinfo); 
-	   break;
+	    p->err = orthdev_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	    break;
 	case CUM:
-	   p->err = cum_series(l->v.xvec, ret->v.xvec, p->dinfo); 
-	   break;
+	    p->err = cum_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	    break;
 	case RESAMPLE:
-	   p->err = resample_series(l->v.xvec, ret->v.xvec, p->dinfo); 
-	   break;
+	    p->err = resample_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	    break;
 	case PMEAN:
-	   p->err = panel_mean_series(l->v.xvec, ret->v.xvec, p->dinfo); 
-	   break;
+	    p->err = panel_mean_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	    break;
 	case PSD:
-	   p->err = panel_sd_series(l->v.xvec, ret->v.xvec, p->dinfo); 
-	   break;
+	    p->err = panel_sd_series(l->v.xvec, ret->v.xvec, p->dinfo); 
+	    break;
+	case RANKING:
+	    p->err = rank_series(l->v.xvec, ret->v.xvec, SORT, p->dinfo); 
+	    break;
 	default:
 	    break;
 	}
@@ -3945,6 +3948,7 @@ static NODE *eval (NODE *t, parser *p)
     case RESAMPLE:
     case PMEAN:
     case PSD:
+    case RANKING:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_series_func(l, r, t->t, p);
