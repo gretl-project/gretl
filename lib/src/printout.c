@@ -272,6 +272,7 @@ void print_freq (const FreqDist *freq, PRN *prn)
     int i, k, nlw, K;
     int total, valid, missing;
     char word[64];
+    int xlen = 0;
     double f, cumf = 0;
 
     if (freq == NULL) {
@@ -306,11 +307,26 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
     }
 
+    if (!freq->discrete) {
+	int len;
+
+	for (k=0; k<=K; k++) {
+	    sprintf(word, "%#.5g", freq->endpt[k]);
+	    len = strlen(word);
+	    if (len > xlen) {
+		xlen = len;
+		break;
+	    }
+	}
+    }
+
     for (k=0; k<=K; k++) {
 	*word = '\0';
 	if (freq->discrete) {
 	    sprintf(word, "%4g", freq->midpt[k]);
 	} else {
+	    double x;
+
 	    if (k == 0) {
 		pputs(prn, "          <  ");
 	    } else if (k == K) {
@@ -318,11 +334,13 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	    } else {
 		pprintf(prn, "%#10.5g - ", freq->endpt[k]);
 	    }
-	    if (k == K) {
-		sprintf(word, "%#.5g", freq->endpt[k]);
+
+	    x = (k == K)? freq->endpt[k] : freq->endpt[k+1];
+	    if (xlen > 0) {
+		sprintf(word, "%#*.5g", xlen, x);
 	    } else {
-		sprintf(word, "%#.5g", freq->endpt[k+1]);
-	    }
+		sprintf(word, "%#.5g", x);
+	    } 
 
 	    pprintf(prn, "%s", word);
 	    nlw = 10 - strlen(word);
@@ -354,6 +372,8 @@ void print_freq (const FreqDist *freq, PRN *prn)
 
     if (!na(freq->test)) {
 	print_freq_test(freq, prn);
+    } else {
+	pputc(prn, '\n');
     }
 }
 

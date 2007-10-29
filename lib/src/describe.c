@@ -1534,14 +1534,6 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     x = Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
-#if 0
-    /* if the histogram is not wanted, we're done */
-    if (opt & OPT_Q) {
-	freq->numbins = 0;
-	return freq;
-    }
-#endif
-
     if (freq_add_arrays(freq, nbins)) {
 	*err = E_ALLOC;
 	goto bailout;
