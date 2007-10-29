@@ -272,7 +272,6 @@ void print_freq (const FreqDist *freq, PRN *prn)
     int i, k, nlw, K;
     int total, valid, missing;
     char word[64];
-    int xlen = 0;
     double f, cumf = 0;
 
     if (freq == NULL) {
@@ -298,69 +297,112 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	return;
     }
 
-    if (!freq->discrete) {
+    if (freq->discrete) {
+	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
+
+	for (k=0; k<=K; k++) {
+	    sprintf(word, "%4g", freq->midpt[k]);
+	    pputs(prn, word);
+	    nlw = 10 - strlen(word);
+	    bufspace(nlw, prn);
+
+	    pprintf(prn, "%6d  ", freq->f[k]);
+	    f = 100.0 * freq->f[k] / valid;
+	    cumf += f;
+	    pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
+	    i = 0.36 * f;
+	    while (i--) {
+		pputc(prn, '*');
+	    }
+	    pputc(prn, '\n');
+	}
+    } else {
+	int digits = 5;
+	int someneg = 0, somemneg = 0;
+	int len, xlen, mxlen;
+	double x;
+
 	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
 		freq->numbins, freq->xbar, freq->sdx);
 	pputs(prn, 
 	      _("\n       interval          midpt   frequency    rel.     cum.\n\n"));
-    } else {
-	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
-    }
 
-    if (!freq->discrete) {
-	int len;
+    tryagain:
+
+	xlen = mxlen = 0;
 
 	for (k=0; k<=K; k++) {
-	    sprintf(word, "%#.5g", freq->endpt[k]);
+	    x = freq->endpt[k];
+	    if (x < 0) {
+		someneg = 1;
+	    }
+	    sprintf(word, "%#.*g", digits, x);
 	    len = strlen(word);
 	    if (len > xlen) {
 		xlen = len;
-		break;
+	    }
+	    x = freq->midpt[k];
+	    if (x < 0) {
+		somemneg = 1;
+	    }
+	    sprintf(word, "%#.*g", digits, x);
+	    len = strlen(word);
+	    if (len > mxlen) {
+		mxlen = len;
 	    }
 	}
-    }
 
-    for (k=0; k<=K; k++) {
-	*word = '\0';
-	if (freq->discrete) {
-	    sprintf(word, "%4g", freq->midpt[k]);
-	} else {
-	    double x;
+	if (xlen > 10 && digits == 5) {
+	    digits--;
+	    xlen = mxlen = 0;
+	    goto tryagain;
+	}
 
+	xlen++;
+	xlen = (xlen > 10)? xlen : 10;
+
+	mxlen++;
+	mxlen = (mxlen > 10)? mxlen : 10;
+	
+	for (k=0; k<=K; k++) {
+	    *word = '\0';
 	    if (k == 0) {
-		pputs(prn, "          <  ");
+		pprintf(prn, "%*s", xlen + 3, " < ");
 	    } else if (k == K) {
-		pputs(prn, "          >= ");
+		pprintf(prn, "%*s", xlen + 3, ">= ");
 	    } else {
-		pprintf(prn, "%#10.5g - ", freq->endpt[k]);
+		sprintf(word, "%#.*g", digits, freq->endpt[k]);
+		pprintf(prn, "%*s", xlen, word);
+		pputs(prn, " - ");
 	    }
 
 	    x = (k == K)? freq->endpt[k] : freq->endpt[k+1];
-	    if (xlen > 0) {
-		sprintf(word, "%#*.5g", xlen, x);
+	    if (x > 0 && someneg) {
+		sprintf(word, " %#.*g", digits, x);
 	    } else {
-		sprintf(word, "%#.5g", x);
-	    } 
+		sprintf(word, "%#.*g", digits, x);
+	    }
+	    pprintf(prn, "%-*s", xlen, word);
 
-	    pprintf(prn, "%s", word);
-	    nlw = 10 - strlen(word);
-	    bufspace(nlw, prn);
-	    sprintf(word, " %#.5g", freq->midpt[k]);
+	    x = freq->midpt[k];
+	    if (x > 0 && somemneg) {
+		sprintf(word, " %#.*g", digits, x);
+	    } else {
+		sprintf(word, "%#.*g", digits, x);
+	    }
+	    pprintf(prn, "%-*s", mxlen, word);
+
+	    pprintf(prn, "%6d  ", freq->f[k]);
+
+	    f = 100.0 * freq->f[k] / valid;
+	    cumf += f;
+	    pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
+	    i = 0.36 * f;
+	    while (i--) {
+		pputc(prn, '*');
+	    }
+	    pputc(prn, '\n');
 	}
-
-	pputs(prn, word);
-	nlw = 10 - strlen(word);
-	bufspace(nlw, prn);
-
-	pprintf(prn, "%6d  ", freq->f[k]);
-	f = 100.0 * freq->f[k] / valid;
-	cumf += f;
-	pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
-	i = 0.36 * f;
-	while (i--) {
-	    pputc(prn, '*');
-	}
-	pputc(prn, '\n');
     }
 
     missing = total - valid;
