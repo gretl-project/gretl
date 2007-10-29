@@ -2385,11 +2385,7 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
     nf = 0;
 
     for (t=fr->t0, s=0; t<=fr->t2; t++, s++) {
-	if (var->ci == VECM) {
-	    fr->actual[t] = Z[yno][t] - Z[yno][t-1];
-	} else {
-	    fr->actual[t] = Z[yno][t];
-	}
+	fr->actual[t] = Z[yno][t];
 	fr->fitted[t] = gretl_matrix_get(F, s, i);
 	if (!na(fr->fitted[t])) {
 	    nf++;
@@ -2403,8 +2399,8 @@ FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
 	fr->err = E_MISSDATA;
     } else {
 	if (var->ci == VECM) {
-	    fr->df = var->T;
 	    /* asymptotic normal */
+	    fr->df = var->T;
 	    fr->tval = 1.96;
 	} else {
 	    fr->df = pmod->dfd;
