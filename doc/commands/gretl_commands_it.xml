@@ -2283,7 +2283,11 @@
       <options>
         <option>
          <flag>--quiet</flag>
-         <effect>non mostra l'istogramma</effect>
+         <effect>non mostra il grafico</effect>
+        </option>
+        <option>
+         <flag>--normal</flag>
+         <effect>test per la distribuzione normale</effect>
         </option>
         <option>
          <flag>--gamma</flag>
@@ -2295,18 +2299,19 @@
     <description context="cli">
       <para>
         Se non vengono indicate opzioni, mostra la distribuzione di frequenza
-        per la <repl>variabile</repl> (indicata con il nome o il numero) e i
-        risultati del test chi-quadro di Doornik&ndash;Hansen per la normalità.
+        per la <repl>variabile</repl> (indicata con il nome o il numero).
       </para>
       <para>
-       Se si usa l'opzione <lit>--quiet</lit>, l'istogramma non viene mostrato.
+       Usando l'opzione <lit>--normal</lit>, vengono mostrati i risultati del
+       test chi-quadro di Doornik&ndash;Hansen per la normalità.
        Usando l'opzione <lit>--gamma</lit>, al posto del test di normalità
        viene eseguito il test non parametrico di Locke per l'ipotesi nulla che la
        variabile segua la distribuzione gamma; si veda Locke (1976), Shapiro e
        Chen (2001).
       </para>
       <para>
-        In modalità interattiva viene mostrato anche un grafico della distribuzione.
+        In modalità interattiva viene mostrato anche un grafico della distribuzione,
+        a meno che non si usi l'opzione <lit>--quiet</lit>.
       </para>
     </description>
  
