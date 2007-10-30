@@ -838,13 +838,18 @@ static NODE *factor (parser *p)
     } else {
 	t = powterm(p);
 	if (t != NULL) {
-	    while (!p->err && (p->sym == B_POW || 
-			       p->sym == DOTPOW ||
-			       p->sym == B_TRMUL)) {
-		t = newb2(p->sym, t, NULL);
-		if (t != NULL) {
-		    lex(p);
-		    t->v.b2.r = powterm(p);
+	    if (p->sym == B_TRMUL && p->ch == 0) {
+		/* can't really be TRMUL at end of input */
+		set_transpose(t);
+	    } else {
+		while (!p->err && (p->sym == B_POW || 
+				   p->sym == DOTPOW ||
+				   p->sym == B_TRMUL)) {
+		    t = newb2(p->sym, t, NULL);
+		    if (t != NULL) {
+			lex(p);
+			t->v.b2.r = powterm(p);
+		    }
 		}
 	    }
 	}
