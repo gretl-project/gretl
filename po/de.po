@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-09-17 13:04+0200\n"
+"PO-Revision-Date: 2007-10-30 14:09+0100\n"
 "Last-Translator: Sven Schreiber\n"
 "Language-Team:  <de@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -304,9 +304,8 @@ msgid "add"
 msgstr "hinzufügen"
 
 #: lib/src/compare.c:337
-#, fuzzy
 msgid "F-form"
-msgstr "1-Norm"
+msgstr "F-Form"
 
 #: lib/src/compare.c:339 lib/src/compare.c:347 lib/src/gretl_restrict.c:1756
 #: lib/src/gretl_restrict.c:2138 lib/src/gretl_restrict.c:2148
@@ -960,10 +959,8 @@ msgstr "   scheint Beobachtungsbezeichner zu sein\n"
 
 #: lib/src/dataio.c:2943
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
-"   leere Zelle bei Variable %d, Beobachtung %d: behandle als Fehlwert\n"
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   leere Zelle bei Variable %d, Beobachtung %d: behandle als Fehlwert\n"
 
 #: lib/src/dataio.c:2952
 #, c-format
@@ -2201,8 +2198,7 @@ msgstr "eine Funktion"
 #: lib/src/genmain.c:239
 #, c-format
 msgid "'%s' refers to %s and may not be used as a variable name"
-msgstr ""
-"'%s' bezieht sich auf %s und darf nicht als Variablenname verwendet werden"
+msgstr "'%s' bezieht sich auf %s und darf nicht als Variablenname verwendet werden"
 
 #: lib/src/genmain.c:336
 msgid "Periodic dummy variables generated.\n"
@@ -2477,8 +2473,7 @@ msgstr "Syntax-Fehler in Befehlszeile"
 
 #: lib/src/gretl_errors.c:45
 msgid "No independent variables left after omissions"
-msgstr ""
-"Keine unabhängigen Variablen sind nach den Auslassungen übrig geblieben"
+msgstr "Keine unabhängigen Variablen sind nach den Auslassungen übrig geblieben"
 
 #: lib/src/gretl_errors.c:46
 msgid "No independent variables were omitted"
@@ -2962,8 +2957,7 @@ msgstr "Konnte Verzeichnis '%s' nicht erstellen"
 #: lib/src/gretl_paths.c:890
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr ""
-"Kein Schreibzugriff auf '%s': gretl wird nur eingeschränkt funktionieren!"
+msgstr "Kein Schreibzugriff auf '%s': gretl wird nur eingeschränkt funktionieren!"
 
 #: lib/src/gretl_paths.c:1000
 #, c-format
@@ -3636,8 +3630,7 @@ msgstr "Daten geschrieben OK.\n"
 
 #: lib/src/interact.c:4157
 msgid "Warning: case markers not saved in binary datafile\n"
-msgstr ""
-"Warnung: Beobachtungsbezeichner nicht in binärer Datendatei gespeichert\n"
+msgstr "Warnung: Beobachtungsbezeichner nicht in binärer Datendatei gespeichert\n"
 
 #: lib/src/interact.c:4221
 msgid "This estimator requires panel data"
@@ -4393,10 +4386,8 @@ msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
 msgstr "       VARIABLE          KOEFFIZIENT                   STD.FEHLER\n"
 
 #: lib/src/modelprint.c:1842
-msgid ""
-"      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
-msgstr ""
-"      VARIABLE       KOEFFIZIENT        STDFEHLER       T-STAT       STEIG\n"
+msgid "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
+msgstr "      VARIABLE       KOEFFIZIENT        STDFEHLER       T-STAT       STEIG\n"
 
 #: lib/src/modelprint.c:1845
 msgid "(at mean)"
@@ -4927,8 +4918,7 @@ msgid "not significant at the 10% level\n"
 msgstr "nicht signifikant zum 10% Niveau\n"
 
 #: lib/src/nonparam.c:289
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "Stichprobe zu klein zum Berechnen eines p-Werts auf Basis der "
 "Normalverteilung\n"
@@ -5008,9 +4998,8 @@ msgid "the two medians are equal"
 msgstr "Beide Mediane sind gleich"
 
 #: lib/src/nonparam.c:1020
-#, fuzzy
 msgid "sum of ranks, sample 1"
-msgstr "Mittel von Stichprobe 1"
+msgstr "Rangsumme, Stichprobe 1"
 
 #: lib/src/nonparam.c:1070
 msgid "Sign Test"
@@ -5086,10 +5075,8 @@ msgid "gretl version %s\n"
 msgstr "gretl-Version %s\n"
 
 #: lib/src/printout.c:97
-msgid ""
-"Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
-msgstr ""
-"Copyright Ramu Ramanathan, Allin Cottrell und Riccardo \"Jack\" Lucchetti"
+msgid "Copyright Ramu Ramanathan, Allin Cottrell and Riccardo \"Jack\" Lucchetti"
+msgstr "Copyright Ramu Ramanathan, Allin Cottrell und Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:98
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -5529,8 +5516,7 @@ msgstr ""
 
 #: lib/src/subsample.c:1507
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr "Gesamtzahl von Fehlwerten = %d (%.2f%% aller Werte)\n"
 
 #: lib/src/system.c:67
@@ -6104,8 +6090,7 @@ msgstr "Geben Sie \"open dateiname\" ein um einen Datensatz zu öffnen\n"
 #: cli/gretlcli.c:706
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
-msgstr ""
-"Öffnen einer neuen Datendatei schließt die momentane. Fortfahren? (y/n)"
+msgstr "Öffnen einer neuen Datendatei schließt die momentane. Fortfahren? (y/n)"
 
 #: cli/gretlcli.c:710
 msgid "OK, staying with current data set\n"
@@ -6119,13 +6104,11 @@ msgstr "Sie müssen zuerst eine Datendatei öffnen\n"
 #: cli/gretlcli.c:840 gui2/library.c:6549
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr ""
-"Befehl '%s' ignoriert; nicht zulässig innerhalb von Gleichungssystemen\n"
+msgstr "Befehl '%s' ignoriert; nicht zulässig innerhalb von Gleichungssystemen\n"
 
 #: cli/gretlcli.c:848 gui2/library.c:6557
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr ""
-"Geben Sie Befehle für die Schleife ein. Zum Verlassen 'endloop' eingeben\n"
+msgstr "Geben Sie Befehle für die Schleife ein. Zum Verlassen 'endloop' eingeben\n"
 
 #: cli/gretlcli.c:855
 #, c-format
@@ -6210,8 +6193,7 @@ msgstr ""
 
 #: gui2/about.c:103
 #, c-format
-msgid ""
-"Cannot find the license agreement file COPYING. Please make sure it's in %s"
+msgid "Cannot find the license agreement file COPYING. Please make sure it's in %s"
 msgstr ""
 "Kann die Lizenzvereinbarungsdatei COPYING nicht finden. Bitte in %s "
 "bereitstellen"
@@ -6282,8 +6264,7 @@ msgstr "Median"
 
 #: gui2/boxplots.c:927
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr ""
-"Numerische Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
+msgstr "Numerische Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
 
 #: gui2/boxplots.c:933
 #, no-c-format
@@ -7021,6 +7002,8 @@ msgid ""
 "Enter formula for new variable\n"
 "(or just a name, to enter data manually)"
 msgstr ""
+"Formel für neue Variable eingeben\n"
+"(oder nur Name für manuelle Dateneingabe)"
 
 #: gui2/callbacks.c:420 gui2/callbacks.c:425
 msgid "gretl: missing code"
@@ -9332,9 +9315,8 @@ msgid "/Data/_Transpose data..."
 msgstr "Daten _transponieren..."
 
 #: gui2/gretl.c:335
-#, fuzzy
 msgid "/Data/_Sort data..."
-msgstr "_Verringere Datenfrequenz..."
+msgstr "Daten _sortieren..."
 
 #: gui2/gretl.c:337
 msgid "/Data/_Refresh window"
@@ -10827,9 +10809,8 @@ msgid "Failed to download file"
 msgstr "Laden der Datei fehlgeschlagen"
 
 #: gui2/library.c:129
-#, fuzzy
 msgid "gretl: iteration info"
-msgstr "gretl: Bearbeite Dateninfo"
+msgstr "gretl: Iterations-Info"
 
 #: gui2/library.c:166 gui2/library.c:4595 gui2/library.c:5090
 msgid "No data were available to graph"
@@ -11388,14 +11369,12 @@ msgid "Data transposed"
 msgstr "Daten transponiert"
 
 #: gui2/library.c:5561
-#, fuzzy
 msgid "Ascending"
-msgstr "Lesen"
+msgstr "Aufsteigend"
 
 #: gui2/library.c:5562
-#, fuzzy
 msgid "Descending"
-msgstr "Dekadisch"
+msgstr "Absteigend"
 
 #: gui2/library.c:5599
 msgid "OK to overwrite?"
@@ -11640,8 +11619,7 @@ msgstr "Modelltabelle geleert"
 
 #: gui2/model_table.c:159
 msgid "Sorry, this model can't be put in the model table"
-msgstr ""
-"Leider kann dieses Modell nicht in die Modelltabelle aufgenommen werden "
+msgstr "Leider kann dieses Modell nicht in die Modelltabelle aufgenommen werden "
 
 #: gui2/model_table.c:166
 msgid "Sorry, ARMA models can't be put in the model table"
@@ -11652,8 +11630,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr "Sorry, 2S-KQ-Modelle nicht möglich in Modelltabelle "
 
 #: gui2/model_table.c:183
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 "Kann Modell nicht zu Tabelle hinzufügen -- dieses hat andere abhängige "
 "Variable"
@@ -11997,9 +11974,8 @@ msgid "MA order:"
 msgstr "MA-Ordnung:"
 
 #: gui2/selector.c:2739 gui2/selector.c:2758
-#, fuzzy
 msgid "or specific lags"
-msgstr "bestimmte Lags"
+msgstr "oder bestimmte Lags"
 
 #: gui2/selector.c:2910
 msgid "configure"
@@ -12919,9 +12895,9 @@ msgid "No series to edit"
 msgstr "Keine Reihe zum Bearbeiten"
 
 #: gui2/ssheet.c:2032
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: series %s is empty"
-msgstr "Warnung: Reihe hat fehlende Beobachtungen"
+msgstr "Warnung: Reihe %s ist leer"
 
 #: gui2/ssheet.c:2190
 msgid "gretl: edit matrix"
@@ -13389,12 +13365,11 @@ msgstr "P(Chi-quadrat(%d) > %g) = %g\n"
 #: plugin/jrestrict.c:1242
 #, c-format
 msgid "Switching algorithm: %d iterations"
-msgstr ""
+msgstr "Wechsel-Algorithmus: %d Iterationen"
 
 #: plugin/jrestrict.c:1244
-#, fuzzy
 msgid "user-supplied initial values"
-msgstr "Kritische Werte"
+msgstr "benutzerdefinierte Startwerte"
 
 #: plugin/jrestrict.c:1817
 #, c-format
@@ -13415,7 +13390,6 @@ msgid "Based on Jacobian, df = %d\n"
 msgstr "Gemäß Jacobi-Matrix, FG = %d\n"
 
 #: plugin/jrestrict.c:2750
-#, fuzzy
 msgid "loglikelihood"
 msgstr "Log-Likelihood"
 
@@ -13871,31 +13845,3 @@ msgstr "Dies ist keine 'OLE'-Datei -- evtl. zu alt zum Einlesen durch gretl\n"
 msgid "Unexpected error reading the file\n"
 msgstr "Unerwarteter Fehler beim Lesen der Datei\n"
 
-#~ msgid "P-values based on MacKinnon (JAE, 1996)\n"
-#~ msgstr "p-Werte basieren auf MacKinnon (JAE, 1996)\n"
-
-#~ msgid "Dropping %s: sample range has only one obs, namely %g\n"
-#~ msgstr ""
-#~ "%s entfernt: Stichprobenbereich enthält nur die eine Beobachtung %g\n"
-
-#~ msgid "The dependent variable '%s' is not a 0/1 variable.\n"
-#~ msgstr "Die abhängige Variable '%s' ist keine 0/1 Variable. \n"
-
-#~ msgid "Invalid probability"
-#~ msgstr "Ungültige Wahrscheinlichkeit"
-
-#~ msgid "Failed to add case markers"
-#~ msgstr "Beobachtungsbezeichner hinzufügen fehlgeschlagen"
-
-#~ msgid ""
-#~ "No user-defined functions are currently loaded.\n"
-#~ "Please load or define some functions first."
-#~ msgstr ""
-#~ "Keine benutzerdefinierten Funktionen im Moment geladen.\n"
-#~ "Bitte laden oder definieren Sie zuerst Funktionen."
-
-#~ msgid "P(Chi-Square(%d) > %g = %g"
-#~ msgstr "P(Chi-quadrat(%d) > %g) = %g"
-
-#~ msgid "P(Chi-Square(%d) > %g = %g\n"
-#~ msgstr "P(Chi-quadrat(%d) > %g) = %g\n"
