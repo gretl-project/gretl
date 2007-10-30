@@ -150,12 +150,19 @@ char *tex_escape (char *targ, const char *src)
 {
     char *p = targ;
 
+    if (src == NULL) {
+	fprintf(stderr, "tex_escape: src is NULL\n");
+	*p = '\0';
+	return p;
+    }
+
     while (*src) {
 	if (*src == '$' || *src == '&' || *src == '_' || 
 	    *src == '%' || *src == '#')
 	    *targ++ = '\\';
 	*targ++ = *src++;
     }
+
     *targ = '\0';
 
     return p;
@@ -369,29 +376,22 @@ static void tex_arma_coeff_name (char *targ, const char *src,
     }
 }
 
-static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
+static void tex_VAR_varname (char *s, const MODEL *pmod,
+			     const DATAINFO *pdinfo, int v)
 {
-    const char *lbl = VARLABEL(pdinfo, v);
-    int gotit = 0;
+    char tmp[32], base[12];
+    int lag;
 
-    if (strlen(lbl) > 2) {
-	char myvar[32], tmp[VNAMELEN];
-	int lag;
+    gretl_model_get_param_name(pmod, pdinfo, v, tmp);
 
-	lbl += 2;
-	if (sscanf(lbl, "%15[^(](t - %d)", tmp, &lag) == 2) {
-	    tex_escape(myvar, tmp);
-	    sprintf(s, "%s$_{t-%d}$", myvar, lag);
-	    gotit = 1;
-	}
-    }
-	
-    if (!gotit) {
-	tex_escape(s, pdinfo->varname[v]); 
+    if (sscanf(tmp, "%11[^_]_%d", base, &lag) == 2) {
+	sprintf(s, "%s$_{t-%d}$", base, lag);
+    } else {
+	tex_escape(s, tmp);
     }
 }
 
-static void tex_vecm_varname (char *s, const MODEL *pmod,
+static void tex_VECM_varname (char *s, const MODEL *pmod,
 			      const DATAINFO *pdinfo, int v)
 {
     char tmp[32], base[12];
@@ -490,9 +490,9 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     } else if (pmod->ci == GARCH) {
 	tex_garch_coeff_name(name, pmod->params[i], 0);
     } else if (pmod->ci == VAR) {
-	tex_lagname(name, pdinfo, pmod->list[j]);
+	tex_VAR_varname(name, pmod, pdinfo, i);
     } else if (pmod->aux == AUX_VECM) {
-	tex_vecm_varname(name, pmod, pdinfo, i);
+	tex_VECM_varname(name, pmod, pdinfo, i);
     } else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	tex_mp_coeff_name(name, pmod->params[i], 0);
     } else if ((pmod->ci == PROBIT || pmod->ci == LOGIT || pmod->ci == HECKIT) &&
