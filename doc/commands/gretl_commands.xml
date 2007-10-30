@@ -1025,7 +1025,7 @@
 	<quote>case 3</quote>.  The first four options given above, which
 	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
 	The meaning of these cases and the criteria for selecting a case
-	are explained in <guideref targ="vecm-explanation"/>.
+	are explained in <guideref targ="chap:vecm"/>.
       </para>
 
       <para context="gui">
@@ -1038,7 +1038,7 @@
 	1995 book) this is often referred to as <quote>case 3</quote>. The
 	other four options produce cases 1, 2, 4 and 5 respectively. The
 	meaning of these cases and the criteria for selecting a case are
-	explained in <guideref targ="vecm-explanation"/>.
+	explained in <guideref targ="chap:vecm"/>.
       </para>
 
       <para context="cli">
@@ -2374,7 +2374,7 @@
       <para>
 	Opens a block of statements in which a function is defined.  This
 	block must be closed with <lit>end function</lit>.  Please see
-	<guideref targ="functions"/> for details.
+	<guideref targ="chap:functions"/> for details.
       </para>
     </description>
 
@@ -4709,7 +4709,7 @@
 	point the stacked commands are executed.
       </para>
 
-      <para>See <guideref targ="looping"/> for further details and
+      <para>See <guideref targ="chap:looping"/> for further details and
 	examples.  The effect of the <lit>--progressive</lit> option
 	(which is designed for use in Monte Carlo simulations) is
 	explained there. Not all gretl commands may be used within
@@ -6709,30 +6709,40 @@
     <description>
 
       <para>
-	Use this command to place homogeneous linear restrictions on the
-	cointegrating relations in a vector error-correction model (VECM).
+	Use this command to place linear restrictions on the cointegrating
+	relations (beta) and/or adjustment coefficients (alpha) in a
+	vector error-correction model (VECM).
       </para>
 
-      <para>Each restriction should be expressed as an equation, with a linear
-	combination of parameters on the left, and zero to the right of the
-	equals sign (at present gretl handles only homogeneous restrictions in
-	the context of VECMs).
+      <para>
+	Each restriction should be expressed as an equation, with a linear
+	combination of parameters to the left of the equals sign and a
+	numerical value on the right.  Restrictions on beta may be
+	non-homogeneous (non-zero on the right), but alpha restrictions
+	must be homogeneous (zero on the right).  
       </para>
 
-      <para>If the VECM is of rank 1, parameters are referenced in the
-	form <lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
-	represents position in the error-correction vector, starting at 1.
-	For example, <lit>b[2]</lit> denotes the second error-correction
-	parameter.  
+      <para>
+	If the VECM is of rank 1, the elements of beta are referenced in
+	the form <lit>b[</lit><repl>i</repl><lit>]</lit>, where
+	<repl>i</repl> represents position in the cointegrating vector,
+	starting at 1. For example, <lit>b[2]</lit> denotes the second
+	element in beta. If the rank is greater than 1, use <lit>b</lit>
+	plus two numbers in square brackets.  For example,
+	<lit>b[2,1]</lit> denotes the first element in the second
+	cointegrating vector.
       </para>
 
-      <para>If the rank is greater than 1, parameters are referenced using
-	<lit>b</lit> plus two numbers in square brackets.  FIXME explanation.
+      <para>
+	To reference elements of alpha, use <lit>a</lit> instead of
+	<lit>b</lit>.
       </para>
 
-      <para>The <lit>b</lit> terms in the equation representing a restriction
-	may be prefixed with a numeric multiplier, using <lit>*</lit>
-	to represent multiplication, for example <lit>3.5*b[4]</lit>.
+      <para>
+	The parameter identifiers in the equation representing a
+	restriction may be prefixed with a numeric multiplier, using
+	<lit>*</lit> to represent multiplication, for example
+	<lit>3.5*b[4]</lit>.
       </para>
 
       <para>Here is an example of a set of restrictions on a VECM of rank 1.
@@ -6740,6 +6750,10 @@
       <code>
 	b[1] + b[2] = 0
 	b[1] + b[3] = 0</code>
+
+      <para>
+	See also <guideref targ="chap:vecm"/>.
+      </para>
 
     </description>
 
@@ -8600,7 +8614,7 @@
 	is often referred to as <quote>case 3</quote>.  The first four options
 	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
 	respectively.  The meaning of these cases and the criteria for selecting
-	a case are explained in <guideref targ="vecm-explanation"/>.
+	a case are explained in <guideref targ="chap:vecm"/>.
       </para>
 
       <para context="cli">
@@ -8613,17 +8627,28 @@
       </para>
 
       <para context="gui">
-	In the <quote>Endogenous variables</quote> box you select the vector of
-	endogenous variables, in levels. The inclusion of deterministic terms in
-	the model is controlled by the option buttons.  The default is to
-	include an <quote>unrestricted constant</quote>, which allows for the
-	presence of a non-zero intercept in the cointegrating relations as well
-	as a trend in the levels of the endogenous variables.  In the literature
-	stemming from the work of Johensen (see for example his 1995 book) this
-	is often referred to as <quote>case 3</quote>.  The other four
-	<quote>radio</quote> buttons produce cases 1, 2, 4 and 5 respectively.
-	The meaning of these cases and the criteria for selecting a case are
-	explained in <guideref targ="vecm-explanation"/>.
+	In the <quote>Endogenous variables</quote> box you select the
+	vector of endogenous variables, in levels. The inclusion of
+	deterministic terms in the model is controlled by the option
+	buttons.  The default is to include an <quote>unrestricted
+	constant</quote>, which allows for the presence of a non-zero
+	intercept in the cointegrating relations as well as a trend in the
+	levels of the endogenous variables.  In the literature stemming
+	from the work of Johensen (see for example his 1995 book) this is
+	often referred to as <quote>case 3</quote>.  The other four
+	options produce cases 1, 2, 4 and 5 respectively.  The meaning of
+	these cases and the criteria for selecting a case are explained in
+	<guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	In the <quote>Exogenous variables</quote> box you may add specific
+	exogenous variables.  By default these enter the model in
+	unrestricted form (indicated by a <lit>U</lit> next to the name of
+	the variable).  If you want a certain exogenous variable to be
+	restricted to the cointegrating space, right-click on it and
+	select <quote>Restricted</quote> from the pop-up menu.  The symbol
+	next to the variable will change to R.
       </para>
 
       <para context="cli">
@@ -8640,6 +8665,7 @@
 	for the printing of the auxiliary regressions that form the starting
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
+
       <para context="cli">
 	The first example above specifies a VECM with lag order 4 and a single
 	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
