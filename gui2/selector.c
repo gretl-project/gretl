@@ -166,6 +166,7 @@ static int garch_q = 1;
 static int arma_const = 1;
 static int arma_x12 = 0;
 static int selvar;
+static int jcase = 2;
 
 static int *xlist;
 static int *instlist;
@@ -295,6 +296,8 @@ void clear_selector (void)
     garch_p = 1;
     garch_q = 1;
 
+    jcase = 2;
+
     free(xlist);
     xlist = NULL;
     free(instlist);
@@ -306,6 +309,14 @@ void clear_selector (void)
     vecxlist = NULL;
 
     destroy_lag_preferences();
+}
+
+static char varflag[8] = "U";
+
+static void set_varflag (const char *s)
+{
+    *varflag = '\0';
+    strncat(varflag, s, 7);
 }
 
 static int selector_get_depvar_number (selector *sr)
@@ -343,7 +354,7 @@ real_varlist_set_var (int v, int lag, GtkTreeModel *mod, GtkTreeIter *iter)
 	if (ncols == 4) {
 	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
 			       2, datainfo->varname[v], 
-			       3, "U", -1);
+			       3, varflag, -1);
 	} else {
 	    gtk_list_store_set(store, iter, 0, v, 1, 0, 
 			       2, datainfo->varname[v], 
@@ -1028,7 +1039,7 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 			       0, v, 1, 0, 2, vname, -1);
 	    if (ncols == 4) {
 		gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-				   3, "U", -1);
+				   3, varflag, -1);
 	    } 
 	    g_free(vname);
 	} else {
@@ -1785,9 +1796,7 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	gtk_tree_model_iter_next(mod, &iter);
     }
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
+    if (!err) {
 	if (xlist != NULL) {
 	    tmp = gretl_list_to_string(xlist);
 	    add_to_cmdlist(sr, tmp);
@@ -1798,16 +1807,28 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	    free(xlist);
 	} 
 	if (zlist != NULL) {
-	    add_to_cmdlist(sr, " ;");
-	    tmp = gretl_list_to_string(zlist);
-	    add_to_cmdlist(sr, tmp);
-	    g_free(tmp);
-	    for (i=1; i<=zlist[0]; i++) {
-		vecxlist[j++] = zlist[i];
+	    int n = vecxlist[0];
+
+	    gretl_list_resize(&vecxlist, n + 1);
+	    if (vecxlist == NULL) {
+		err = E_ALLOC;
+	    } else {
+		add_to_cmdlist(sr, " ;");
+		vecxlist[j++] = LISTSEP;
+		tmp = gretl_list_to_string(zlist);
+		add_to_cmdlist(sr, tmp);
+		g_free(tmp);
+		for (i=1; i<=zlist[0]; i++) {
+		    vecxlist[j++] = zlist[i];
+		}
 	    }
 	    free(zlist);	    
 	}
     }
+
+    if (err) {
+	gui_errmsg(err);
+    }    
 
     return err;
 }
@@ -2638,14 +2659,18 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	    list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
 	}
     } else if (USE_VECXLIST(sr->code) && vecxlist != NULL) {
+	set_varflag("U");
 	for (i=1; i<=vecxlist[0]; i++) {
-	    if (vecxlist[i] > 0) {
+	    if (vecxlist[i] == LISTSEP) {
+		set_varflag("R");
+	    } else if (vecxlist[i] > 0) {
 		list_append_var(mod, &iter, vecxlist[i], sr, SR_RVARS2);
 		if (sr->lags_button != NULL) {
 		    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 		}
 	    }
 	}
+	set_varflag("U");
     } else if (!VEC_CODE(sr->code)) {
 	list_append_var(mod, &iter, 0, sr, SR_RVARS2);
     }
@@ -3513,13 +3538,12 @@ static void build_vecm_combo (selector *sr)
 	OPT_T
     };    
     static combo_opts vecm_opts;
-    int deflt = 2;
 
     vecm_opts.strs = opt_strs;
     vecm_opts.vals = opts;
     vecm_opts.optp = &sr->opts;
 
-    combo = gretl_opts_combo(&vecm_opts, deflt);
+    combo = gretl_opts_combo(&vecm_opts, jcase);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
@@ -4503,11 +4527,35 @@ gpointer selector_get_data (const selector *sr)
 
 gretlopt selector_get_opts (const selector *sr)
 {
+    gretlopt ret;
+
     if (sr->code == PANEL_B) {
-	return sr->opts | OPT_B;
+	ret = sr->opts | OPT_B;
     } else {
-	return sr->opts;
+	ret = sr->opts;
     }
+
+    if (sr->code == VECM || sr->code == COINT2) {
+	/* record Johansen case */
+	if (ret & OPT_A) {
+	    /* --crt */
+	    jcase = 3;
+	} else if (ret & OPT_N) {
+	    /* --nc */
+	    jcase = 0;
+	} else if (ret & OPT_R) {
+	    /* --rc */
+	    jcase = 1;
+	} else if (ret & OPT_T) {
+	    /* --ct */
+	    jcase = 4;
+	} else {
+	    /* unrestricted constant */
+	    jcase = 2;
+	}
+    }
+
+    return ret;
 }
 
 const char *selector_entry_text (const selector *sr)
