@@ -687,6 +687,11 @@ static void set_factor_callback (GtkWidget *w, selector *sr)
 					sr);
 }
 
+/* when adding a variable to the Endogenous or Exogenous listing
+   for VAR, VECM, etc., check that the variable in question is not
+   present in the other listing: if it is, then remove it.
+*/
+
 static void vecx_cleanup (selector *sr, int new_locus)
 {
     GtkTreeModel *targ, *src;
@@ -1214,6 +1219,11 @@ dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr)
     return FALSE;
 }
 
+/* flip the flag that designates an exogenous veriable in a VECM
+   as either Unrestricted or Restricted (to the cointegrating
+   space) 
+*/
+
 static void maybe_flip_vecm_flag (GtkTreeModel *model, GtkTreePath *path,
 				  GtkTreeIter *iter, GtkWidget *w)
 {
@@ -1301,6 +1311,9 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 
     topwin = gtk_widget_get_parent_window(GTK_WIDGET(data));
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+
+    /* FIXME below: does this do anything useful?  I think
+       it's dead code (AC, 2007-10-31). */
 
     if (mods & GDK_BUTTON2_MASK) {
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(data), TRUE);
@@ -1757,6 +1770,11 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     }
 }
 
+/* VECM: parse out the exogenous vars as either restricted
+   or unrestricted.  Right now we don't attempt to combine
+   this with auto lag selection ("Lags" button), but maybe
+   we should */
+
 static int get_vecm_exog_list (selector *sr, int rows, 
 			       GtkTreeModel *mod)
 {
@@ -1775,12 +1793,12 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	gtk_tree_model_get(mod, &iter, 0, &v, 3, &flag, -1);
 
 	if (flag != NULL) {
-	    if (!strcmp(flag, "U")) {
+	    if (*flag == 'U') {
 		gretl_list_append_term(&xlist, v);
 		if (xlist == NULL) {
 		    err = E_ALLOC;
 		}
-	    } else if (!strcmp(flag, "R")) {
+	    } else if (*flag == 'R') {
 		gretl_list_append_term(&zlist, v);
 		if (zlist == NULL) {
 		    err = E_ALLOC;
@@ -1832,6 +1850,9 @@ static int get_vecm_exog_list (selector *sr, int rows,
 
     return err;
 }
+
+/* get the component of the model specification from the secondary
+   list box on the right, if applicable */
 
 static int get_rvars2_data (selector *sr, int rows, int context)
 {
@@ -2770,7 +2791,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     } else if (VEC_CODE(code)) {
 	dlgy = 450;
 	if (code == VAR || code == VECM) {
-	    dlgy += 90;
+	    dlgy += 50;
 	} else if (code == VLAGSEL) {
 	    dlgy += 40;
 	}

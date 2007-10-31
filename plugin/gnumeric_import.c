@@ -132,11 +132,11 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 	    cols, rows);
 #endif
 
-    sheet->Z = malloc(cols * sizeof *(sheet->Z));
+    sheet->Z = malloc(cols * sizeof *sheet->Z);
     if (sheet->Z == NULL) return 1;
 
     for (i=0; i<cols; i++) {
-	sheet->Z[i] = malloc(rows * sizeof **(sheet->Z));
+	sheet->Z[i] = malloc(rows * sizeof **sheet->Z);
 	if (sheet->Z[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free(sheet->Z[j]);
@@ -153,7 +153,7 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
     if (sheet->varname == NULL) return 1;
 
     for (i=0; i<cols; i++) {
-	sheet->varname[i] = malloc(VNAMELEN * sizeof **(sheet->varname));
+	sheet->varname[i] = malloc(VNAMELEN * sizeof **sheet->varname);
 	if (sheet->varname[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free(sheet->varname[j]);
@@ -362,6 +362,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		sheet->text_cols += 1;
 	    }
 	}
+
 	for (t=0; t<rows; t++) {
 	    if (toprows[t]) {
 		sheet->text_rows += 1;
@@ -373,6 +374,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    pputc(prn, '\n');
 	    err = 1;
 	}
+
 	if (sheet->text_cols > 1) {
 	    pputs(prn, _("Found an extraneous column of text"));
 	    pputc(prn, '\n');
