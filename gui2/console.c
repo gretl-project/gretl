@@ -28,8 +28,6 @@
 #include "gretl_func.h"
 #include "cmd_private.h"
 
-#define TRY_READLINE 0
-
 static GtkWidget *console_view;
 static PRN *console_prn;
 static gchar *cbuf;
@@ -40,71 +38,11 @@ static ExecState cstate;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
-#if TRY_READLINE
-
-/* experimental */
-# include <readline/readline.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-
-const char *fifopath = "/tmp/gretl_console";
-FILE *rlin;
-FILE *rlsock;
-
-static void console_rl_handler (char *s)
-{
-    fprintf(stderr, "rl_handler: line is '%s'\n", s);
-}
-
-static int console_readline_setup (void)
-{
-    int err = mkfifo(fifopath, 0600);
-    int fd;
-
-    if (!err) {
-	fd = open(fifopath, O_RDWR);
-	if (fd > 0) {
-	    rlin = fdopen(fd, "r");
-	    rlsock = fdopen(fd, "w");
-	    rl_instream = rlin;
-	    /* rl_outstream = fopen("rlout", "w"); */
-	    rl_callback_handler_install("? ", console_rl_handler);
-	} else {
-	    err = 1;
-	}
-    }
-
-    return err;
-}
-
-static void console_readline_cleanup (void)
-{
-    rl_callback_handler_remove();
-    rl_instream = stdin;
-    fclose(rlin);
-    fclose(rlsock);
-    remove(fifopath);
-}
-
-static void console_readline_doit (int keyval)
-{
-    fputc(keyval, rlsock);
-    fflush(rlsock);
-    rl_callback_read_char();
-    /* now read / display the rl-modified line */
-}
-
-#endif
 
 static int gretl_console_init (void)
 {
     char *hstr;
     int i;
-
-#if TRY_READLINE
-    console_readline_setup();
-#endif
 
     hlines = 0;
 
@@ -142,10 +80,6 @@ static int gretl_console_init (void)
 static void gretl_console_free (GtkWidget *w, gpointer p)
 {
     int i;
-
-#if TRY_READLINE
-    console_readline_cleanup();
-#endif
 
     if (cmd_history != NULL) {
 	for (i=0; i<hlines; i++) {
@@ -535,10 +469,6 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(console_view), TRUE);	
 	goto start_again;
     }
-
-#if TRY_READLINE
-    console_readline_doit(key->keyval);
-#endif
 
     /* make return key execute the command, unless backslash-
        continuation is happening */
