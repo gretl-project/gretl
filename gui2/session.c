@@ -993,6 +993,8 @@ void do_open_session (void)
 	/* FIXME more explicit error message */
 	errbox(_("Couldn't open %s"), sinfo.datafile);
 	return;
+    } else {
+	fprintf(stderr, "Opened session datafile '%s'\n", paths.datfile);
     }
 
     session_file_make_path(fname, "matrices.xml");
@@ -1375,6 +1377,9 @@ static int save_session_dataset (const char *dname)
 
     session_file_make_path(tmpname, dname);
     err = gretl_write_gdt(tmpname, NULL, dZ, dinfo, 0, NULL);
+
+    fprintf(stderr, "Save session datafile as '%s', err = %d\n",
+	    tmpname, err);
 
     dinfo->t1 = t1;
     dinfo->t2 = t2;
