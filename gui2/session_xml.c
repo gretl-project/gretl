@@ -290,6 +290,14 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	return 1;
     }
 
+    /* read datafile attribute, if present */
+    tmp = xmlGetProp(cur, (XUC) "datafile");
+    if (tmp != NULL) {
+	strcpy(sinfo->datafile, (char *) tmp);
+	my_filename_from_utf8(sinfo->datafile);
+	free(tmp);
+    }
+
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
@@ -476,7 +484,7 @@ static int maybe_write_lists_file (void)
     return gretl_serialize_lists(fullname);
 }
 
-static int write_session_xml (void)
+static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
     char fname[MAXLEN];
@@ -497,7 +505,13 @@ static int write_session_xml (void)
     }
 
     gretl_xml_header(fp);
-    fputs("<gretl-session>\n", fp);
+
+    if (*datname != '\0') {
+	fprintf(fp, "<gretl-session datafile=\"%s\">\n", datname);
+    } else {
+	fputs("<gretl-session>\n", fp);
+    }
+
     fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", datainfo->t1, datainfo->t2);
     write_datainfo_submask(datainfo, fp);
 

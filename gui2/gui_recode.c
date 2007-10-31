@@ -110,11 +110,17 @@ int maybe_recode_file (const char *fname)
 
 gchar *my_filename_from_utf8 (char *fname)
 {
+    const gchar *cset;
     gchar *trfname = NULL;
     GError *err = NULL;
     gsize bytes;
 
     if (seven_bit_string((unsigned char *) fname)) {
+	return fname;
+    }
+
+    if (g_get_charset(&cset)) {
+	/* is this right? */
 	return fname;
     }
 

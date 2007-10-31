@@ -127,6 +127,7 @@ struct gui_obj_ {
 };
 
 struct sample_info {
+    char datafile[MAXLEN];
     int t1;
     int t2;
     char *mask;
@@ -891,6 +892,7 @@ static int unzip_session_file (const char *fname)
 
 static void sinfo_init (struct sample_info *sinfo)
 {
+    strcpy(sinfo->datafile, "data.gdt");
     sinfo->t1 = 0;
     sinfo->t2 = 0;
     sinfo->mask = NULL;
@@ -984,12 +986,12 @@ void do_open_session (void)
 	return;
     }
 
-    session_file_make_path(paths.datfile, "data.gdt");
+    session_file_make_path(paths.datfile, sinfo.datafile);
     err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, DATA_NONE, 
 			 NULL, 1);
     if (err) {
 	/* FIXME more explicit error message */
-	errbox(_("Couldn't open %s"), "data.gdt");
+	errbox(_("Couldn't open %s"), sinfo.datafile);
 	return;
     }
 
@@ -1345,7 +1347,7 @@ static void relpath_from_fname (char *path, const char *fname)
     }
 }
 
-static int save_session_dataset (void)
+static int save_session_dataset (const char *dname)
 {
     char tmpname[MAXLEN];
     const double **dZ = NULL;
@@ -1354,6 +1356,7 @@ static int save_session_dataset (void)
     int err = 0;
 
     /* dump current dataset into session dir */
+
     if (complex_subsampled()) {
 	/* save full version of dataset */
 	double ***fullZ = fetch_full_Z();
@@ -1369,16 +1372,51 @@ static int save_session_dataset (void)
     t2 = dinfo->t2;
     dinfo->t1 = 0;
     dinfo->t2 = dinfo->n - 1;
-    session_file_make_path(tmpname, "data.gdt");
+
+    session_file_make_path(tmpname, dname);
     err = gretl_write_gdt(tmpname, NULL, dZ, dinfo, 0, NULL);
+
     dinfo->t1 = t1;
     dinfo->t2 = t2;
     
     return err;
 }
 
+static const char *unpath (const char *fname)
+{
+    int i, n = strlen(fname);
+
+    for (i=n-1; i>=0; i--) {
+	if (fname[i] == '/') {
+	    return fname + i + 1;
+	}
+#ifdef G_OS_WIN32
+	if (fname[i] == '\\') {
+	    return fname + i + 1;
+	}
+#endif
+    }
+
+    return fname;
+}
+
+static void make_session_dataname (char *datname)
+{
+    if (*paths.datfile != '\0') {
+	const char *dname = unpath(paths.datfile);
+
+	strcpy(datname, dname);
+#ifdef ENABLE_NLS
+	my_filename_to_utf8(datname);
+#endif
+    } else {
+	strcpy(datname, "data.gdt");
+    }
+}
+
 int save_session (char *fname) 
 {
+    char datname[MAXLEN];
     char dirname[MAXLEN];
     void *handle;
     int (*gretl_make_zipfile) (const char *, const char *, GError **);
@@ -1412,8 +1450,9 @@ int save_session (char *fname)
 	strcpy(session.dirname, dirname);
     }
 
-    write_session_xml();
-    err = save_session_dataset();
+    make_session_dataname(datname);
+    write_session_xml(datname);
+    err = save_session_dataset(datname);
     
     if (!err) {
 	gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 
