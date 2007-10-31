@@ -124,6 +124,8 @@ struct _selector {
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM || \
                          c == COINT2)
 
+#define USE_RXLIST(c) (c == VECM || c == COINT2)
+
 #define AUX_LAST(c) (c == TSLS || \
                      c == HECKIT || \
                      c == VAR || \
@@ -143,8 +145,9 @@ struct _selector {
 
 /* Should we have a lags button associated with auxiliary
    variable selector?  VECM was on this list, but it's too
-   error-prone (for now) to combine this with an 
+   complicated (for now) to combine this with an 
    Unrestricted/Restricted option flag */
+
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || \
                             c == TSLS || c == HECKIT)
 
@@ -546,7 +549,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     int width = 120;
     int height = -1;
     
-    if (sr->code == VECM && locus == SR_RVARS2) {
+    if (USE_RXLIST(sr->code) && locus == SR_RVARS2) {
 	store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_INT, 
 				   G_TYPE_STRING, G_TYPE_STRING);
 	flagcol = 1;
@@ -1867,7 +1870,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rvars2));
     ncols = gtk_tree_model_get_n_columns(model);
 
-    if (sr->code == VECM && ncols == 4) {
+    if (USE_RXLIST(sr->code) && ncols == 4) {
 	return get_vecm_exog_list(sr, rows, model);
     }
 

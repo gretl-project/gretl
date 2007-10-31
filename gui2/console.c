@@ -28,6 +28,8 @@
 #include "gretl_func.h"
 #include "cmd_private.h"
 
+#define TRY_READLINE 0
+
 static GtkWidget *console_view;
 static PRN *console_prn;
 static gchar *cbuf;
@@ -38,10 +40,71 @@ static ExecState cstate;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
+#if TRY_READLINE
+
+/* experimental */
+# include <readline/readline.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+
+const char *fifopath = "/tmp/gretl_console";
+FILE *rlin;
+FILE *rlsock;
+
+static void console_rl_handler (char *s)
+{
+    fprintf(stderr, "rl_handler: line is '%s'\n", s);
+}
+
+static int console_readline_setup (void)
+{
+    int err = mkfifo(fifopath, 0600);
+    int fd;
+
+    if (!err) {
+	fd = open(fifopath, O_RDWR);
+	if (fd > 0) {
+	    rlin = fdopen(fd, "r");
+	    rlsock = fdopen(fd, "w");
+	    rl_instream = rlin;
+	    /* rl_outstream = fopen("rlout", "w"); */
+	    rl_callback_handler_install("? ", console_rl_handler);
+	} else {
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+static void console_readline_cleanup (void)
+{
+    rl_callback_handler_remove();
+    rl_instream = stdin;
+    fclose(rlin);
+    fclose(rlsock);
+    remove(fifopath);
+}
+
+static void console_readline_doit (int keyval)
+{
+    fputc(keyval, rlsock);
+    fflush(rlsock);
+    rl_callback_read_char();
+    /* now read / display the rl-modified line */
+}
+
+#endif
+
 static int gretl_console_init (void)
 {
     char *hstr;
     int i;
+
+#if TRY_READLINE
+    console_readline_setup();
+#endif
 
     hlines = 0;
 
@@ -79,6 +142,10 @@ static int gretl_console_init (void)
 static void gretl_console_free (GtkWidget *w, gpointer p)
 {
     int i;
+
+#if TRY_READLINE
+    console_readline_cleanup();
+#endif
 
     if (cmd_history != NULL) {
 	for (i=0; i<hlines; i++) {
@@ -424,6 +491,20 @@ static int bslash_cont (const gchar *line)
     return bslash;
 }
 
+const char *console_varname_complete (const char *s)
+{
+    size_t n = strlen(s);
+    int i;
+
+    for (i=0; i<datainfo->v; i++) {
+	if (!strncmp(s, datainfo->varname[i], n)) {
+	    return datainfo->varname[i];
+	}
+    }
+
+    return NULL;
+}  
+
 gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 {
     gint last_line, curr_line, line_pos;
@@ -454,6 +535,10 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(console_view), TRUE);	
 	goto start_again;
     }
+
+#if TRY_READLINE
+    console_readline_doit(key->keyval);
+#endif
 
     /* make return key execute the command, unless backslash-
        continuation is happening */
@@ -517,28 +602,32 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	return TRUE;
     }
 
-    /* tab completion for gretl commands */
+    /* tab completion for gretl commands, variable names */
     if (key->keyval == GDK_Tab) {
+	const char *complete = NULL;
 	GtkTextIter start, end;	
-	gchar *bit;
+	gchar *bit = NULL;
+	int offset;
 
 	start = end = iter;
-	gtk_text_iter_set_line_index(&start, 2);
-	gtk_text_iter_forward_to_line_end(&end);
+	gtk_text_iter_backward_word_start(&start);
+	offset = gtk_text_iter_get_line_offset(&start);
+	gtk_text_iter_forward_word_end(&end);
 	bit = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
-	if (bit != NULL) {
-	    if (*bit != 0) {
-		const char *complete = gretl_command_complete(bit);
-
-		if (complete != NULL) {
-		    gtk_text_buffer_delete(buf, &start, &end);
-		    gtk_text_buffer_insert(buf, &start, complete, 
-				       strlen(complete));
-		}
+	if (bit != NULL && *bit != '\0') {
+	    if (offset == 2) {
+		complete = gretl_command_complete(bit);
+	    } else {
+		complete = console_varname_complete(bit);
 	    }
-	    g_free(bit);
+	    if (complete != NULL) {
+		gtk_text_buffer_delete(buf, &start, &end);
+		gtk_text_buffer_insert(buf, &start, complete, 
+				       strlen(complete));
+	    }
 	}
+	g_free(bit);
 	return TRUE;
     }
 

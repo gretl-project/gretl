@@ -41,6 +41,7 @@ typedef enum {
     NORM_PHILLIPS,
     NORM_DIAG,
     NORM_FIRST,
+    NORM_NONE,
     NORM_MAX
 } VECMnorm;
 

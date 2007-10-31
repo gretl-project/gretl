@@ -191,6 +191,10 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     int i, j, row;
     double x, y;
 
+    if (vnorm == NORM_NONE && rescale) {
+	return;
+    }
+
     if (rescale) {
 	pprintf(prn, "\n%s\n", (job == V_BETA)? 
 		_("renormalized beta") :
@@ -1095,17 +1099,24 @@ col_normalize_beta (GRETL_VAR *vecm, int vnorm)
 static int normalize_beta (GRETL_VAR *vecm, const gretl_matrix *H,
 			   int *do_stderrs)
 {
-    if (H == NULL) {
-	int vnorm = libset_get_int(VECM_NORM);
+    int vnorm = libset_get_int(VECM_NORM);
 
-	if (vnorm == NORM_DIAG || vnorm == NORM_FIRST) {
+    if (vnorm == NORM_NONE) {
+	if (do_stderrs != NULL) {
+	    *do_stderrs = 0;
+	}
+	return 0;
+    }
+
+    if (H == NULL) {
+	if (vnorm == NORM_PHILLIPS) {
+	    return phillips_normalize_beta(vecm);
+	} else {
 	    if (do_stderrs != NULL) {
 		*do_stderrs = 0;
-	    }
+	    }	    
 	    return col_normalize_beta(vecm, vnorm);
-	} else {
-	    return phillips_normalize_beta(vecm);
-	}
+	} 
     } else {
 	gretl_matrix *B = vecm->jinfo->Beta;
 

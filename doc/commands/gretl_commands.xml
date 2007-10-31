@@ -959,6 +959,9 @@
 	<argblock optional="true" separated="true">
 	  <argument>xlist</argument>
 	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>rxlist</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -1042,13 +1045,22 @@
       </para>
 
       <para context="cli">
-	The optional <repl>xlist</repl> allows you to control for
-	specified exogenous variables.
+	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
+	allow you to control for specified exogenous variables: these
+	enter the system either unrestrictedly (<repl>xlist</repl>) or
+	restricted to the cointegration space (<repl>rxlist</repl>). These
+	lists are separated from <repl>ylist</repl> and from each other by
+	semicolons.
       </para>
 
       <para context="gui">
 	You may control for exogenous variables by adding them to the
-	lower list box.
+	lower list box.  By default these enter the model in unrestricted
+	form (indicated by a <lit>U</lit> next to the name of the
+	variable).  If you want a certain exogenous variable to be
+	restricted to the cointegrating space, right-click on it and
+	select <quote>Restricted</quote> from the pop-up menu.  The symbol
+	next to the variable will change to R.
       </para>
 
       <para context="cli">

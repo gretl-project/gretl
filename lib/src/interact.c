@@ -336,6 +336,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 
 #define DOUBLE_SEP_OK(c) (c == ARBOND || \
                           c == ARMA || \
+                          c == COINT2 || \
 			  c == VECM) 
 
 #define NEEDS_LISTSEP(c) (c == AR || \

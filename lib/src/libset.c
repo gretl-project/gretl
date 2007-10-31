@@ -177,6 +177,7 @@ static const char *vecm_norm_strs[] = {
     "phillips",
     "diag",
     "first",
+    "none",
     NULL
 };
 
