@@ -1287,6 +1287,9 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	hwin->active_var = 0;
 	return;
     }
+
+    maybe_connect_help_signals(hwin, en);
+    maybe_set_help_tabs(hwin);
     
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
 

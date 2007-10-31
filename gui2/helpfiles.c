@@ -307,7 +307,7 @@ static int get_byte_positions (help_head **heads, int nh, int gui, FILE *fp)
     char word[16];
     int m = 0, n = 0;
     int c, cbak = 0;
-    int i, j, b = 0;
+    int i, j = 0, b = 0;
     int err = 0;
 
     rewind(fp);
@@ -1114,6 +1114,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    if (!gtk_text_iter_starts_word(&iter)) {
 		gtk_text_iter_backward_word_start(&w_start);
 	    }
+
 	    if (!gtk_text_iter_ends_word(&iter)) {
 		gtk_text_iter_forward_word_end(&w_end);
 	    }

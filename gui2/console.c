@@ -540,9 +540,13 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	int offset;
 
 	start = end = iter;
-	gtk_text_iter_backward_word_start(&start);
+	if (!gtk_text_iter_starts_word(&start)) {
+	    gtk_text_iter_backward_word_start(&start);
+	}
 	offset = gtk_text_iter_get_line_offset(&start);
-	gtk_text_iter_forward_word_end(&end);
+	if (!gtk_text_iter_ends_word(&end)) {
+	    gtk_text_iter_forward_word_end(&end);
+	}
 	bit = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
 	if (bit != NULL && *bit != '\0') {
