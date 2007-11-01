@@ -960,6 +960,9 @@
 	<argblock optional="true" separated="true">
 	  <argument>lista-x</argument>
 	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>lista-rx</argument>
+	</argblock>
       </arguments>
       <options>
         <option>
@@ -1024,7 +1027,7 @@
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
         casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="vecm-explanation"/>.
+	<guideref targ="chap:vecm"/>.
       </para>
       <para context="gui">
 	L'inclusione di termini deterministici nel modello è controllata dai
@@ -1037,15 +1040,24 @@
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
         casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="vecm-explanation"/>.
+	<guideref targ="chap:vecm"/>.
       </para>
       <para context="cli">
-	La <repl>lista-x</repl> opzionale permette di indicare le variabili
-        esogene per cui si intende controllare.
+	Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl> permettono
+        di controllare per specifiche variabili esogene che entrano nel sistema
+        in modo non vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
+        cointegrazione (<repl>lista-rx</repl>). Queste liste vanno separate tra
+        di loro e dalla <repl>lista-y</repl> usando il carattere punto e
+        virgola.
       </para>
       <para context="gui">
 	È possibile controllare per le variabili esogene aggiungendole nel campo
-        inferiore.
+        inferiore. Per impostazione predefinita, le variabili vengono aggiunte al
+        modello in forma non vincolata (indicata da una lettera <lit>U</lit> vicino
+        al nome della variabile). Se si vuole che una certa variabile esogena
+        sia vincolata allo spazio di cointegrazione, basta fare clic col tasto
+        destro e selezionare <quote>Vincolata</quote> dal menu pop-up. Il simbolo
+        vicino alla variabile diventerà una R.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
@@ -2358,7 +2370,7 @@
       <para>
 	Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
         chiuso con <lit>end function</lit>. Per i dettagli, si veda
-        la <guideref targ="functions"/>.
+        la <guideref targ="chap:functions"/>.
       </para>
     </description>
 
@@ -4652,7 +4664,7 @@
 
       <para>Non tutti i comandi di gretl possono essere usati all'interno di un
         loop: i comandi disponibili in questo contesto sono elencati nella
-        <guideref targ="looping"/>, che contiene anche altri dettagli, esempi e
+        <guideref targ="chap:looping"/>, che contiene anche altri dettagli, esempi e
         la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
       ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
@@ -6606,28 +6618,34 @@
     <description>
 
       <para>
-	Questo comando impone restrizioni lineari omogenee sulle relazioni
-        di cointegrazione in un modello vettoriale a correzione d'errore (VECM).
+	Questo comando impone restrizioni lineari sulle relazioni
+        di cointegrazione (beta) e/o sui coefficienti di aggiustamento (alfa)
+        in un modello vettoriale a correzione d'errore (VECM).
       </para>
 
       <para>Ognuno dei vincoli deve essere espresso sotto forma di equazione,
-        con una combinazione lineare dei parametri al primo membro e il valore
-        zero al secondo membro (al momento gretl supporta solo vincoli omogenei
-        in un contesto VECM).
+        con una combinazione lineare dei parametri al primo membro e un valore
+        numerico al secondo membro. Le restrizioni su beta possono essere non
+        omogenee (valore diverso da zero al secondo membro), ma quelle su alfa
+        devono essere omogenee (valore zero al secondo membro).
       </para>
 
-      <para>Se il VECM è di rango 1, è possibile esprimere i parametri nella
+      <para>Se il VECM è di rango 1, è possibile esprimere gli elementi di beta nella
         forma <lit>b[</lit><repl>i</repl><lit>]</lit>,  dove <repl>i</repl>
-        rappresenta la posizione nel
-        vettore di correzione dell'errore, a partire da uno. Ad esempio,
-        <lit>b[2]</lit> indica il secondo parametro di correzione dell'errore.
+        rappresenta la posizione nel vettore di correzione dell'errore, a
+        partire da uno. Ad esempio, <lit>b[2]</lit> indica il secondo elemento
+        di beta. Se il rango è maggiore di 1, è possibile esprimere i parametri
+        usando <lit>b</lit> seguito da due numeri tra parentesi quadre. Ad
+        esempio <lit>b[2,1]</lit> rappresenta il primo elemento nel secondo
+        vettore di cointegrazione.
       </para>
 
-      <para>Se il rango è maggiore di 1, è possibile esprimere i parametri
-        usando <lit>b</lit> seguito da due numeri tra parentesi quadre.
+      <para>
+	Per riferirisi agli elementi di alfa, basta usare <lit>a</lit> al posto di
+	<lit>b</lit>.
       </para>
 
-      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+      <para>Gli identificatori dei parametri nell'equazione che rappresenta un vincolo
         possono essere prefissati con un moltiplicatore numerico usando il
         carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
         <lit>3.5*b[4]</lit>.
@@ -6639,6 +6657,10 @@
       <code>
 	b[1] + b[2] = 0
 	b[1] + b[3] = 0</code>
+
+      <para>
+	Si veda anche la <guideref targ="chap:vecm"/>.
+      </para>
 
     </description>
 
@@ -6706,7 +6728,8 @@
         media del sotto-campione; se i punti si dispongono su una linea
         crescente, la varianza della serie cresce al crescere della
         media, viceversa se i punti si dispongono su una linea
-        decrescente.</para>
+        decrescente.
+      </para>
 
       <para>Oltre al grafico, gretl mostra anche le medie e i campi di
       variazione per ogni sotto-campione, insieme al coefficiente di
@@ -8493,7 +8516,7 @@
         3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
         mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
         significato di questi casi e i criteri per scegliere tra di essi sono
-        spiegati nella <guideref targ="vecm-explanation"/>.
+        spiegati nella <guideref targ="chap:vecm"/>.
       </para>
       <para context="gui">
         Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
@@ -8504,10 +8527,19 @@
         zero nelle relazioni di cointegrazione e di un trend nei livelli delle
         variabili endogene. Nella letteratura originata dal lavoro di Johansen
         (si veda ad esempio il suo libro del 1995), si fa riferimento a questo
-        come al <quote>caso 3</quote>.  Le prime quattro opzioni mostrate sopra,
-        che sono mutualmente esclusive, producono rispettivamente i casi 1, 2, 4
-        e 5. Il significato di questi casi e i criteri per scegliere tra di essi
-        sono spiegati nella <guideref targ="vecm-explanation"/>.
+        come al <quote>caso 3</quote>.  Le altre quattro opzioni producono
+        rispettivamente i casi 1, 2, 4 e 5. Il significato di questi casi e i
+        criteri per scegliere tra di essi sono spiegati nella <guideref
+        targ="chap:vecm"/>.
+      </para>
+      <para context="gui">
+        Nel riquadro <quote>Variabili esogene</quote> è possibile aggiungere
+        specifiche variabili esogene. Per impostazione predefinita, le variabili
+        vengono aggiunte al modello in forma non vincolata (indicata da una
+        lettera <lit>U</lit> vicino al nome della variabile). Se si vuole che
+        una certa variabile esogena sia vincolata allo spazio di cointegrazione,
+        basta fare clic col tasto destro e selezionare <quote>Vincolata</quote>
+        dal menu pop-up. Il simbolo vicino alla variabile diventerà una R.
       </para>
       <para context="cli">
 	Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl>
