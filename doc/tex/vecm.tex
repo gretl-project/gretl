@@ -121,13 +121,11 @@ the matrix $\Pi$.
   \begin{equation}
     \label{eq:VECMab}
     \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
-    \Delta y_{t-i} + \epsilon_t ,
+    \Delta y_{t-i} + \epsilon_t .
   \end{equation}
-  and estimation is carried out on all parameters
-  simultaneously. However, it is worth noting that if $\beta$ were
-  known $z_t$ would be observable and all the remaining parameters
-  could be estimated via OLS. In practice, the procedure estimates
-  $\beta$ first and then the rest.
+  If $\beta$ were known, then $z_t$ would be observable and all the
+  remaining parameters could be estimated via OLS.  In practice, the
+  procedure estimates $\beta$ first and then the rest.
 \end{itemize}
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
@@ -140,9 +138,9 @@ eigenvalues are 0.
 If all the eigenvalues are significantly different from 0, then all
 the processes are stationary. If, on the contrary, there is at least
 one zero eigenvalue, then the $y_t$ process is integrated, although
-some linear combination $\beta'y_t$ might be stationary. On the other
+some linear combination $\beta'y_t$ might be stationary. At the other
 extreme, if no eigenvalues are significantly different from 0, then
-not only the process $y_t$ is non-stationary, but the same holds for
+not only is the process $y_t$ non-stationary, but the same holds for
 any linear combination $\beta'y_t$; in other words, no cointegration
 occurs.
 
@@ -154,32 +152,32 @@ are \texttt{coint2} and \texttt{vecm}, respectively.
 
 The syntax for \texttt{coint2} is 
 \begin{code}
-  coint2 p ylist [ ; xlist ]
+  coint2 p ylist [ ; xlist [ ; zlist ] ]
 \end{code}
-where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
-\texttt{ylist} is a list containing the $y_t$ variables and
-\texttt{xlist} is an optional list of exogenous variables.
+where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
+\texttt{ylist} is a list containing the $y_t$ variables;
+\texttt{xlist} is an optional list of exogenous variables; and
+\texttt{zlist} is another optional list of exogenous variables whose
+effects are assumed to be confined to the cointegrating relationships.
 
 The syntax for \texttt{vecm} is 
 \begin{code}
   vecm p r ylist [ ; xlist [ ; zlist ] ]
 \end{code}
-where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
-\texttt{r} is the cointegration rank, \texttt{ylist} is a list
-containing the $y_t$ variables, \texttt{xlist} is an optional list of
-exogenous variables and \texttt{zlist} is another optional list of
-exogenous variables which are assumed to only enter the cointegration
-relationships.
+where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
+\texttt{r} is the cointegration rank; and the lists
+\texttt{ylist}, \texttt{xlist} and \texttt{zlist} have the
+same interpretation as in \texttt{coint2}.
 
 Both commands can be given specific options to handle the treatment of
-the deterministic component $\mu_t$. These are illustrated in the
+the deterministic component $\mu_t$. These are discussed in the
 following section.
 
 \section{Interpretation of the deterministic components}
 \label{sec:coint-5cases}
 
-Several important inferential aspect of cointegrated systems depend on
-what hypotheses one is willing to make on the deterministic terms,
+Statistical inference in the context of a cointegrated system depends
+on the hypotheses one is willing to make on the deterministic terms,
 which leads to the famous ``five cases.''
 
 In equation (\ref{eq:VECM}), the term $\mu_t$ is usually understood to
@@ -188,13 +186,13 @@ take the form
   \mu_t = \mu_0 + \mu_1 \cdot t .
 \]
 In order to have the model mimic as closely as possible the features
-of the observed data, there is one preliminary question to settle. Do
-the data appear to follow a deterministic trend? And if so, is it
+of the observed data, there is a preliminary question to settle. Do
+the data appear to follow a deterministic trend?  If so, is it
 linear or quadratic?
 
 Once this is established, one should impose restrictions on $\mu_0$
-and $\mu_1$ that are consistent with this choice. For example, suppose
-that the data do not exhibit a discernible trend. This means
+and $\mu_1$ that are consistent with this judgement. For example,
+suppose that the data do not exhibit a discernible trend. This means
 that $\Delta y_t$ is on average zero, so it is reasonable to assume
 that its expected value is also zero. Write equation (\ref{eq:VECM})
 as
@@ -209,19 +207,19 @@ to possess finite moments. Taking unconditional expectations, we get
   0 = \mu_0 + \mu_1 \cdot t + \alpha m_z .
 \]
 Since the left-hand side does not depend on $t$, the restriction
-$\mu_1 = 0$ is a safe bet. As for $\mu_0$, there are just two ways to
-make the above expression true: either $\mu_0 = 0$ with $m_z = 0$ or, less
-restrictively, $\mu_0$ happens to be exactly equal to $-\alpha m_z$.
-This possibility is less restrictive in that the vector $\mu_0$ may be
-non-zero, but it is constrained to be a linear combination of the
-columns of $\alpha$. But if this is the case, $\mu_0$ can be written
-as $\alpha \cdot c$, and one may write (\ref{eq:VECM-poly}) as
+$\mu_1 = 0$ is a safe bet.  As for $\mu_0$, there are just two ways to
+make the above expression true: either $\mu_0 = 0$ with $m_z = 0$, or
+$\mu_0$ equals $-\alpha m_z$.  The latter possibility is less
+restrictive in that the vector $\mu_0$ may be non-zero, but is
+constrained to be a linear combination of the columns of $\alpha$.  In
+that case, $\mu_0$ can be written as $\alpha \cdot c$, and one may
+write (\ref{eq:VECM-poly}) as
 \[
   \Gamma(L) \Delta y_t = \alpha \left[ \beta' \quad c \right] 
   \left[ \begin{array}{c} y_{t-1} \\ 1 \end{array} \right]  
-  + \epsilon_t ,
+  + \epsilon_t .
 \]
-and the long-run relationship contains an intercept. This type of
+The long-run relationship therefore contains an intercept. This type of
 restriction is usually written
 \[
   \alpha'_{\perp} \mu_0 = 0 ,
@@ -234,9 +232,8 @@ simple example. Consider a series $x_t$ which behaves as follows
 \[ x_t = m + x_{t-1} + \varepsilon_t \] 
 %
 where $m$ is a real number and $\varepsilon_t$ is a white noise
-process. As is easy to show, $x_t$ is a random walk which fluctuates
-around a deterministic trend with slope $m$. In the special case $m$ =
-0, the deterministic trend disappears and $x_t$ is a pure random walk.
+process: $x_t$ is then a random walk with drift $m$.  In the special
+case $m$ = 0, the drift disappears and $x_t$ is a pure random walk.
     
 Consider now another process $y_t$, defined by
 %      
@@ -326,8 +323,8 @@ We are now ready to consider three possible cases:
 	
 \end{enumerate}
 
-In most cases, the choice between the three possibilities is based on
-a mix of empirical observation and economic reasoning. If the
+In most cases, the choice between these three possibilities is based
+on a mix of empirical observation and economic reasoning. If the
 variables under consideration seem to follow a linear trend then we
 should not place any restriction on the intercept. Otherwise, the
 question arises of whether it makes sense to specify a cointegration
@@ -364,16 +361,16 @@ The previous example can be generalized in three directions:
 In order to accommodate the five cases, \app{gretl} provides the
 following options to the \texttt{coint2} and \texttt{vecm} commands:
 \begin{center}
-  \begin{tabular}{cc}
-    \hline
-    $\mu_t$ & command option \\
-    \hline
-    0 & \verb|--nc| \\
-    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
-    $\mu_0$ &  default \\
-    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
-    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
-    \hline
+  \begin{tabular}{ccl}
+    $\mu_t$ & \textit{option flag} & \textit{description} \\ [4pt]
+    0 & \verb|--nc| & no constant \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| & restricted
+       constant \\
+    $\mu_0$ &  default & unrestricted constant \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| &
+     constant + restricted trend \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| & 
+    constant + unrestricted trend 
   \end{tabular}
 \end{center}
 Note that for this command the above options are mutually exclusive.
@@ -394,7 +391,6 @@ smallest. The null hypothesis for the ``$\lambda$-max'' test on the
 $i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
 test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
 i$.
-
 
 The \app{gretl} command \cmd{coint2} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
@@ -462,7 +458,7 @@ non-singular matrix $Q$.  In order to find a unique solution, it
 is therefore necessary to impose some restrictions on $\alpha$ and/or
 $\beta$. It can be shown that the minimum number of restrictions that
 is necessary to guarantee identification is $r^2$.  Normalizing one
-coefficient per column to 1 (or -1, according to taste) is a trivial
+coefficient per column to 1 (or $-1$, according to taste) is a trivial
 first step, which also helps in that the remaining coefficients can be
 interpreted as the parameters in the equilibrium relations, but this
 only suffices when $r=1$.
@@ -470,14 +466,16 @@ only suffices when $r=1$.
 The method that \app{gretl} uses by default is known as the ``Phillips
 normalization'', or ``triangular representation''.\footnote{For
   comparison with other studies, you may wish to normalize $\beta$
-  differently.  Using the \texttt{set} command you can do 
-  \verb|set vecm_norm diag| to select a normalization that simply scales the
-  columns of the original $\beta$ such that $\beta_{ij} = 1$ for $i=j$
-  and $i \leq r$, as used in the empirical section of Boswijk and
-  Doornik (2004).  Another alternative is \verb+set vecm_norm first+,
-  which scales $\beta$ such that the elements on the first row equal
-  1.  (To return to the default: \texttt{set vecm\_norm phillips}.)
-} The starting point is writing $\beta$ in partitioned form as in
+  differently.  Using the \texttt{set} command you can do
+  \verb|set vecm_norm diag| to select a normalization that simply
+  scales the columns of the original $\beta$ such that $\beta_{ij} =
+  1$ for $i=j$ and $i \leq r$, as used in the empirical section of
+  Boswijk and Doornik (2004).  Another alternative is
+  \verb+set vecm_norm first+, which scales $\beta$ such that the
+  elements on the first row equal 1.  To suppress normalization
+  altogether, use \verb+set vecm_norm none+.  (To return to the
+  default: \texttt{set vecm\_norm phillips}.)} The starting point is
+writing $\beta$ in partitioned form as in
 \[
   \beta = \left[
     \begin{array}{c} \beta_1 \\ \beta_2  \end{array}
@@ -499,12 +497,12 @@ The coefficients that \app{gretl} produces are $\hat{\beta}$, with
 $B$ known as the matrix of unrestricted coefficients. In
 terms of the underlying equilibrium relationship, the Phillips
 normalization expresses the system of $r$ equilibrium relations as
-  \begin{eqnarray}
+  \begin{eqnarray*}
     y_{1,t} & = & b_{1,r+1} y_{r+1,t} + \ldots + b_{1,n} y_{n,t} \\
     y_{2,t} & = & b_{2,r+1} y_{r+1,t} + \ldots + b_{2,n} y_{n,t} \\
     & \vdots & \\
     y_{r,t} & = & b_{r,r+1} y_{r+1,t} + \ldots + b_{r,n} y_{r,t} 
-  \end{eqnarray}
+  \end{eqnarray*}
 where the first $r$ variables are expressed as functions of the
 remaining $n-r$.
 
@@ -525,9 +523,9 @@ commercial paper rate), \texttt{y} (log of real GDP) and \texttt{tbr}
 
 Estimation of $\beta$ can be performed via the commands
 \begin{code}
-  open money.gdt 
-  smpl 1954:1 1994:4 
-  vecm 6 2 m infl cpr y tbr --rc
+open money.gdt 
+smpl 1954:1 1994:4 
+vecm 6 2 m infl cpr y tbr --rc
 \end{code}
 and the relevant portion of the output reads
 \begin{code}
@@ -554,17 +552,15 @@ Interpretation of the coefficients of the cointegration matrix $\beta$
 would be easier if a meaning could be attached to each of its
 columns. This is possible by hypothesizing the existence of two
 long-run relationships: a money demand equation
-\begin{equation}
-  \label{eq:verbeek-mondem}
+\[
   \mbox{\tt m} = c_1 + \beta_1 \mbox{\tt infl} + \beta_2 \mbox{\tt
     y} + \beta_3 \mbox{\tt tbr}
-\end{equation}
+\]
 and a risk premium equation
-\begin{equation}
-  \label{eq:verbeek-premium}
+\[
  \mbox{\tt cpr} = c_2 + \beta_4 \mbox{\tt infl} +
    \beta_5 \mbox{\tt y} + \beta_6 \mbox{\tt tbr}
-\end{equation}
+\]
 which imply that the cointegration matrix can be normalized as
 \[
   \beta = \left[
@@ -963,12 +959,12 @@ Output (variable, LR test, p-value):
 One point regarding VECM restrictions that can be confusing at first
 is that identification (does the restriction identify the system?) and
 testability (is the restriction testable?) are quite separate matters.
-Restrictions can be identifying but not testable --- and they can be
-testable but not identifying.
+Restrictions can be identifying but not testable; less obviously, they
+can be testable but not identifying.
 
 This can be seen quite easily in relation to a rank-1 system.  The
-restriction $\beta_1 = 1$ is identifying --- it pins down the scale of
-$\beta$ --- but, being a pure scaling, it is not testable.  On the
+restriction $\beta_1 = 1$ is identifying (it pins down the scale of
+$\beta$) but, being a pure scaling, it is not testable.  On the
 other hand, the restriction $\beta_1 + \beta_2 = 0$ is testable ---
 the system with this requirement imposed will almost certainly have a
 lower maximized likelihood --- but it is not identifying; it still
