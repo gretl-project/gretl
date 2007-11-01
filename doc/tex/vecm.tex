@@ -104,7 +104,7 @@ This is the VECM representation of (\ref{eq:VECM-VAR}).
 The interpretation of (\ref{eq:VECM}) depends crucially on $r$, the rank of
 the matrix $\Pi$.
 \begin{itemize}
-\item If $r = 0$, the processes are all I(1).
+\item If $r = 0$, the processes are all I(1) and not cointegrated.
 \item If $r = n$, then $\Pi$ is invertible and the processes are all I(0).
 \item Cointegration occurs in between, when $0 < r < n$ and $\Pi$ can
   be written as $\alpha \beta'$. In this case, $y_t$ is I(1), but the
@@ -168,14 +168,14 @@ where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR}),
 \texttt{r} is the cointegration rank, \texttt{ylist} is a list
 containing the $y_t$ variables, \texttt{xlist} is an optional list of
 exogenous variables and \texttt{zlist} is another optional list of
-exogenous variables which are assumed to enter the cointegration
+exogenous variables which are assumed to only enter the cointegration
 relationships.
 
 Both commands can be given specific options to handle the treatment of
-the deterministic kernel $\mu_t$. These are illustrated in the
+the deterministic component $\mu_t$. These are illustrated in the
 following section.
 
-\section{Interpretation of the deterministic kernel}
+\section{Interpretation of the deterministic components}
 \label{sec:coint-5cases}
 
 Several important inferential aspect of cointegrated systems depend on
@@ -401,7 +401,7 @@ tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
 As in the ADF test, the asymptotic distribution of the tests varies
-with the deterministic kernel $\mu_t$ one includes in the VAR (see
+with the deterministic component $\mu_t$ one includes in the VAR (see
 section \ref{sec:coint-5cases} above). The following code uses the
 \cmd{denmark} data file, supplied with \app{gretl}, to replicate
 Johansen's example found in his 1995 book.
@@ -1040,7 +1040,7 @@ Neither the switching algorithm nor LBFGS is guaranteed to find the
 global ML solution.\footnote{In developing \app{gretl}'s VECM-testing
   facilities we have considered a fair number of ``tricky cases'' from
   various sources. We'd like to thank Luca Fanelli of the University
-  of Bologna and Sven Schreiber of Johann Wolfgang Goethe-Universit\"at,
+  of Bologna and Sven Schreiber of Goethe University Frankfurt
   for their help in devising torture-tests for \app{gretl}'s VECM
   code.} The optimizer may end up at a local maximum (or, in the case
 of the switching algorithm, at a saddle point).
