@@ -55,8 +55,7 @@ enum loop_types {
     INDEX_LOOP,
     DATED_LOOP,
     FOR_LOOP,
-    EACH_LOOP,
-    LIST_LOOP
+    EACH_LOOP
 };
 
 enum loop_val_codes {
@@ -68,8 +67,7 @@ enum loop_val_codes {
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
                          l->type == DATED_LOOP || \
-			 l->type == EACH_LOOP || \
-                         l->type == LIST_LOOP)
+			 l->type == EACH_LOOP)
 
 typedef struct {
     int *list;
@@ -162,6 +160,8 @@ struct LOOPSET_ {
 #define loop_set_verbose(l) (l->flags |= LOOP_VERBOSE)
 #define loop_is_quiet(l) (l->flags & LOOP_QUIET)
 #define loop_set_quiet(l) (l->flags |= LOOP_QUIET)
+
+#define is_list_loop(l) (l->listname[0] != '\0')
 
 static void gretl_loop_init (LOOPSET *loop);
 static int gretl_loop_prepare (LOOPSET *loop);
@@ -914,23 +914,30 @@ static int allocate_each_strings (LOOPSET *loop, int n)
 static int list_vars_to_strings (LOOPSET *loop, const int *list,
 				 const DATAINFO *pdinfo)
 {
-    int i, li;
-    int err = 0;
+    int i, vi, n = list[0];
+    int err;
 
-    for (i=0; i<list[0] && !err; i++) {
-	li = list[i+1];
-	if (li < 0 || li >= pdinfo->v) {
-	    err = 1;
+    err = allocate_each_strings(loop, n);
+
+    for (i=0; i<n && !err; i++) {
+	vi = list[i+1];
+	if (vi < 0 || vi >= pdinfo->v) {
+	    err = E_DATA;
 	} else {
-	    loop->eachstrs[i] = gretl_strdup(pdinfo->varname[li]);
-	}
-	if (!err && loop->eachstrs[i] == NULL) {
-	    err = E_ALLOC;
+	    loop->eachstrs[i] = gretl_strdup(pdinfo->varname[vi]);
+	    if (loop->eachstrs[i] == NULL) {
+		err = E_ALLOC;
+	    }
 	}
     }
 
     return err;
 }
+
+/* At loop runtime, check the named list and insert the names
+   of the variables as "eachstrs"; flag an error if the list
+   has disappeared.
+*/
 
 static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
 {
@@ -942,63 +949,42 @@ static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
 	loop->eachstrs = NULL;
     }
 
+    loop->itermax = loop->final.val = 0;
+
     if (list == NULL) {
 	err = E_UNKVAR;
-    } else if (list[0] == 0) {
-	/* empty list */
-	loop->final.val = 0;
-	return 0;
-    } else {
-	err = allocate_each_strings(loop, list[0]);
-    }    
-
-    if (!err) {
-	loop->final.val = list[0];
+    } else if (list[0] > 0) {
 	err = list_vars_to_strings(loop, list, pdinfo);
+	if (!err) {
+	    loop->final.val = list[0];
+	}
     }
 
     return err;
 }
 
-static int 
-each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
-			      char *s, int *nf)
+/* Identify the named list, if any, but do not yet fill out the
+   variable-name strings: these will be set when the loop is
+   actually run, since the list may hae changed in the meantime.
+*/
+
+static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 {
     int *list;
     int err = 0;
 
     while (isspace(*s)) s++;
-
     tailstrip(s);
-    list = get_list_by_name(s);
 
-    *loop->listname = '\0';
-    strncat(loop->listname, s, VNAMELEN - 1);
+    list = get_list_by_name(s);
 
     if (list == NULL) {
 	err = E_UNKVAR;
-    } else if (list[0] == 0) {
-	/* empty list */
-	*nf = 0;
-	return 0;
     } else {
-	err = allocate_each_strings(loop, list[0]);
-    }
-
-    /* when cashing out list-members, use varnames rather than numbers */
-
-    if (!err) {
-	err = list_vars_to_strings(loop, list, pdinfo);
-    }
-
-    if (err && loop->eachstrs != NULL) {
-	free_strings_array(loop->eachstrs, list[0]);
-	loop->eachstrs = NULL;
-    }
-
-    if (!err) {
+	*loop->listname = '\0';
+	strncat(loop->listname, s, VNAMELEN - 1);
 	*nf = list[0];
-    }
+    } 
 
     return err;
 }
@@ -1054,9 +1040,9 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 static int
 parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 {
-    int ltype = EACH_LOOP;
     char ivar[8] = {0};
     char ichar = 0;
+    int done = 0;
     int i, nf, err = 0;
 
     if (*s == '\0') {
@@ -1097,13 +1083,16 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     if (nf <= 3 && strstr(s, "..") != NULL) {
 	/* range of values, foo..quux */
 	err = each_strings_from_list_of_vars(loop, pdinfo, s, &nf);
-    } else if (nf == 1) {
-	/* named list? */
-	err = each_strings_from_named_list(loop, pdinfo, s, &nf);
-	if (!err) {
-	    ltype = LIST_LOOP;
-	}
-    } else {
+	done = 1;
+    }
+
+    if (!done && nf == 1) {
+	/* try for a named list? */
+	err = list_loop_setup(loop, s, &nf);
+	done = (err == 0);
+    }
+
+    if (!done) {
 	/* simple list of values */
 	err = allocate_each_strings(loop, nf);
 
@@ -1125,7 +1114,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     }
 
     if (!err) {
-	loop->type = ltype;
+	loop->type = EACH_LOOP;
 	loop->init.val = 1;
 	loop->final.val = nf;
     }   
@@ -1223,9 +1212,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     if (!err && !na(loop->init.val) && !na(loop->final.val)) {
 	int nt = loop->final.val - loop->init.val + 1;
 
-	if (loop->type != FOR_LOOP && 
-	    loop->type != EACH_LOOP && 
-	    loop->type != LIST_LOOP && nt <= 0) {
+	if (loop->type != FOR_LOOP && loop->type != EACH_LOOP && nt <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count missing or invalid"));
 	    err = 1;
 	}
@@ -2420,9 +2407,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	    ntodate(ins, idx, pdinfo);
 	} else if (loop->type == EACH_LOOP) {
 	    pins = loop->eachstrs[idx - 1];
-	} else if (loop->type == LIST_LOOP) {
-	    pins = loop->eachstrs[idx - 1];
-	}
+	} 
 
 	strcpy(p, pins);
 	strcpy(p + strlen(pins), q);
@@ -2527,7 +2512,7 @@ connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
 	err = clr_attach_var(&loop->final, pdinfo);
     }
 
-    if (!err && loop->type == LIST_LOOP) {
+    if (!err && is_list_loop(loop)) {
 	loop_list_refresh(loop, pdinfo);
     }
 
