@@ -1084,6 +1084,11 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
 {
     int n;
 
+    if (src == NULL) {
+	fprintf(stderr, "gretl_matrix_copy_values: src is NULL\n");
+	return E_DATA;
+    }
+
     if (targ->rows != src->rows || targ->cols != src->cols) {
 	fprintf(stderr, "gretl_matrix_copy_values: targ is %d x %d but src is %d x %d\n",
 		targ->rows, targ->cols, src->rows, src->cols);

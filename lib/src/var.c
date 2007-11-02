@@ -66,7 +66,8 @@ static int VAR_add_models (GRETL_VAR *var, const DATAINFO *pdinfo)
 
 static int VAR_add_companion_matrix (GRETL_VAR *var)
 {
-    int n = var->neqns * effective_order(var);
+    int g = var->neqns;
+    int n = g * effective_order(var);
     int i, j, err = 0;
 
     if (var->A != NULL) {
@@ -78,9 +79,12 @@ static int VAR_add_companion_matrix (GRETL_VAR *var)
     if (var->A == NULL) {
 	err = E_ALLOC;
     } else {
-	for (i=var->neqns; i<n; i++) {
+	double x;
+
+	for (i=g; i<n; i++) {
 	    for (j=0; j<n; j++) {
-		gretl_matrix_set(var->A, i, j, (j == i - var->neqns)? 1 : 0);
+		x = (j == i - g)? 1 : 0;
+		gretl_matrix_set(var->A, i, j, x);
 	    }
 	}
     }
@@ -3071,6 +3075,7 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     xmlNodePtr cur = node->xmlChildrenNode;
     JohansenInfo *jinfo;
     int ID, code, rank;
+    char *mname;
     int seas;
     int got = 0;
     int err = 0;
@@ -3097,32 +3102,40 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "u")) {
-	    jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "v")) {
-	    jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Suu")) {
-	    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Svv")) {
-	    jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Suv")) {
-	    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Beta")) {
-	    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Alpha")) {
-	    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Bvar")) {
-	    jinfo->Bvar = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Bse")) {
-	    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
-	    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
-	    jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "Ra")) {
-	    jinfo->Ra = gretl_xml_get_matrix(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "qa")) {
-	    jinfo->qa = gretl_xml_get_matrix(cur, doc, &err);
+	if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+	    gretl_xml_get_prop_as_string(cur, "name", &mname);
+	    if (mname == NULL) {
+		err = E_DATA;
+	    } else {
+		if (!strcmp(mname, "u")) {
+		    jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "v")) {
+		    jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Suu")) {
+		    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Svv")) {
+		    jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Suv")) {
+		    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Beta")) {
+		    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Alpha")) {
+		    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Bvar")) {
+		    jinfo->Bvar = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Bse")) {
+		    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "R")) {
+		    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "q")) {
+		    jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "Ra")) {
+		    jinfo->Ra = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "qa")) {
+		    jinfo->qa = gretl_xml_get_matrix(cur, doc, &err);
+		}
+		free(mname);
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
 	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
 	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
@@ -3218,14 +3231,60 @@ static int make_VAR_global_lists (GRETL_VAR *var)
     return 0;    
 }
 
+static int rebuild_VAR_matrices (GRETL_VAR *var)
+{
+    MODEL *pmod;
+    double x;
+    int gotA = (var->A != NULL);
+    int j, i;
+    int err = 0;
+
+    if (var->E == NULL) {
+	err = VAR_add_residuals_matrix(var);
+    }
+
+    if (!err && var->A == NULL) {
+	err = VAR_add_companion_matrix(var);
+    }
+
+    if (!err && var->C == NULL) {
+	err = VAR_add_cholesky_matrix(var);
+    } 
+
+    if (!err && var->B == NULL) {
+	var->B = gretl_matrix_alloc(var->models[0]->ncoeff, 
+				    var->neqns);
+	if (var->B == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    for (j=0; j<var->neqns && !err; j++) {
+	pmod = var->models[j];
+	for (i=0; i<pmod->ncoeff; i++) {
+	    x = pmod->coeff[i];
+	    gretl_matrix_set(var->B, i, j, x);
+	}
+	for (i=0; i<var->T; i++) {
+	    x = pmod->uhat[pmod->t1 + i];
+	    gretl_matrix_set(var->E, i, j, x);
+	}
+    }
+
+    if (!err && !gotA) {
+	/* FIXME this is wrong for VECMs */
+	VAR_write_A_matrix(var);
+    }
+
+    return err;
+}
+
 GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     GRETL_VAR *var;
     MODEL *pmod;
     xmlNodePtr cur;
-    int start = 0, rowmax = 0;
-    int i, j, k;
-    int n, got = 0;
+    int i, n, got = 0;
 
     var = gretl_VAR_rebuilder_new();
     if (var == NULL) {
@@ -3278,6 +3337,18 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	    *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns);
 	} else if (!xmlStrcmp(cur->name, (XUC) "gretl-johansen")) {
 	    *err = VAR_retrieve_jinfo(cur, doc, var);
+	} else if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+	    char *mname;
+
+	    gretl_xml_get_prop_as_string(cur, "name", &mname);
+	    if (mname == NULL) {
+		*err = E_DATA;
+	    } else {
+		if (!strcmp(mname, "A")) {
+		    var->A = gretl_xml_get_matrix(cur, doc, err);
+		}
+		free(mname);
+	    }
 	}
 	cur = cur->next;
     } 
@@ -3303,44 +3374,16 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     }
 
     if (!*err) {
-	start = pmod->ifc;
-	rowmax = var->neqns * var->order + start;
-
-	/* set up storage for residuals */
-	*err = VAR_add_residuals_matrix(var);
-    }
-
-    /* set up storage for coefficients */
-    if (!*err) {
-	*err = VAR_add_companion_matrix(var);
-    }    
-
-    for (k=0; k<var->neqns && !*err; k++) {
-	int v = 0, lag = 0;
-
-	pmod = var->models[k];
-
-	/* store residuals in var->E */
-	for (i=0; i<var->T; i++) {
-	    gretl_matrix_set(var->E, i, k, pmod->uhat[pmod->t1 + i]);
-	}
-
-	/* store coefficients in var->A */
-	for (i=start; i<rowmax; i++) {
-	    if ((i - start) % var->order == 0) {
-		v++;
-		lag = 1;
-	    } else {
-		lag++;
-	    }
-	    j = (lag - 1) * var->neqns + v - 1;
-	    gretl_matrix_set(var->A, k, j, pmod->coeff[i]);
-	}
+	*err = rebuild_VAR_matrices(var);
     }
 
     if (!*err) {
 	/* covariance matrix and related things */
 	*err = VAR_add_stats(var);
+    }
+
+    if (!*err) {
+	*err = gretl_VAR_do_error_decomp(var->S, var->C);
     }
 
  bailout:
@@ -3421,6 +3464,11 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 
     if (var->Ivals != NULL) {
 	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, fp);
+    }
+
+    if (var->ci == VECM) {
+	/* hard to reconstruct in VECM case */
+	gretl_xml_put_matrix(var->A, "A", fp);
     }
 
     gretl_pop_c_numeric_locale();
