@@ -38,7 +38,6 @@ static ExecState cstate;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
-
 static int gretl_console_init (void)
 {
     char *hstr;

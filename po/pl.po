@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-10-26 12:00+0100\n"
+"PO-Revision-Date: 2007-11-02 12:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2282,12 +2282,12 @@ msgstr "Reszty regresji = (obserwacje - wyrównane %s)"
 #: lib/src/graphing.c:1061 lib/src/graphing.c:1065
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Empiryczne i wyrównane wartosci zmiennej: %s"
+msgstr "Empiryczne i wyrównane warto¶ci zmiennej: %s"
 
 #: lib/src/graphing.c:1067
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Empiryczne i wyrownane wartosci %s wzgledem %s"
+msgstr "Empiryczne i wyrównane warto¶ci %s wzglêdem %s"
 
 #: lib/src/graphing.c:1213 gui2/gpt_dialog.c:220
 #, c-format
@@ -2314,7 +2314,7 @@ msgstr "empiryczne"
 #: lib/src/graphing.c:2014 lib/src/graphing.c:2017 lib/src/printout.c:939
 #: gui2/guiprint.c:1528 gui2/guiprint.c:1584
 msgid "fitted"
-msgstr "wyrownane"
+msgstr "wyrównane"
 
 #: lib/src/graphing.c:2539
 msgid "Test statistic for normality"
@@ -6161,7 +6161,7 @@ msgstr ""
 #: gui2/about.c:103
 #, c-format
 msgid "Cannot find the license agreement file COPYING. Please make sure it's in %s"
-msgstr "Nie znaleziono pliku licencji COPYING. Sprawdz czy znajduje siê w %s"
+msgstr "Nie znaleziono pliku licencji COPYING. Sprawd¼ czy znajduje siê w %s"
 
 #: gui2/about.c:154
 msgid "About gretl"
@@ -9690,11 +9690,11 @@ msgstr "/Pomoc/_Opis poleceñ gretla/plik PDF"
 
 #: gui2/gretl.c:513
 msgid "/Help/_User's guide"
-msgstr "/Pomoc/_Przewodnik u¿ytkownika"
+msgstr "/Pomoc/_Przewodnik u¿ytkownika - manual"
 
 #: gui2/gretl.c:516
 msgid "/Help/Check for _updates"
-msgstr "/Pomoc/_Sprawdz aktualizacjê oprogramowania"
+msgstr "/Pomoc/_Sprawd¼ uaktualnienia oprogramowania"
 
 #: gui2/gretl.c:520 gui2/gretl.c:522
 msgid "/Help/_About gretl"

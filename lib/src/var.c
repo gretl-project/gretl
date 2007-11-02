@@ -3075,7 +3075,6 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     xmlNodePtr cur = node->xmlChildrenNode;
     JohansenInfo *jinfo;
     int ID, code, rank;
-    char *mname;
     int seas;
     int got = 0;
     int err = 0;
@@ -3103,6 +3102,8 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+	    char *mname; 
+
 	    gretl_xml_get_prop_as_string(cur, "name", &mname);
 	    if (mname == NULL) {
 		err = E_DATA;
@@ -3272,7 +3273,9 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     }
 
     if (!err && !gotA) {
-	/* FIXME this is wrong for VECMs */
+	/* note: for VECMs, A should be retrieved from the session
+	   file, and gotA should be non-zero 
+	*/
 	VAR_write_A_matrix(var);
     }
 
@@ -3467,7 +3470,7 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     }
 
     if (var->ci == VECM) {
-	/* hard to reconstruct in VECM case */
+	/* this is hard to reconstruct for VECMs */
 	gretl_xml_put_matrix(var->A, "A", fp);
     }
 
