@@ -3923,8 +3923,8 @@
 
       <para>The weight series is formed as
 	<equation status="inline"
-	  tex="$1/\sqrt{e^{y^*}}$"
-	  ascii="1/sqrt(exp(y*))"
+	  tex="$1/e^{y^*}$"
+	  ascii="1/exp(y*)"
 	  graphic="hsk"/>, where <mathvar>y</mathvar><super>*</super>
 	denotes the fitted values from the auxiliary
 	regression.</para>

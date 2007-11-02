@@ -2131,9 +2131,8 @@ int *augment_regression_list (const int *orig, int aux,
 /* get_hsk_weights: take the residuals from the model pmod, square them
    and take logs; find the fitted values for this series using an
    auxiliary regression including the original independent variables
-   and their squares; transform the fitted values by exponentiating
-   and taking the square root; and add the resulting series to the
-   data set
+   and their squares; exponentiate the fitted values; and add the
+   resulting series to the data set.
 */
 
 static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
@@ -2152,10 +2151,10 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 
     /* add transformed pmod residuals to data set */
     for (t=0; t<pdinfo->n; t++) {
-	if (na(pmod->uhat[t])) {
+	xx = pmod->uhat[t];
+	if (na(xx)) {
 	    (*pZ)[oldv][t] = NADBL;
 	} else {
-	    xx = pmod->uhat[t];
 	    (*pZ)[oldv][t] = log(xx * xx);
 	}
     }
@@ -2179,10 +2178,10 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     } else {
 	/* write into the data set the required weights */
 	for (t=aux.t1; t<=aux.t2; t++) {
-	    if (na(aux.yhat[t])) {
+	    xx = aux.yhat[t];
+	    if (na(xx)) {
 		(*pZ)[oldv][t] = NADBL;
 	    } else {
-		xx = aux.yhat[t];
 		(*pZ)[oldv][t] = 1.0 / exp(xx);
 	    }
 	}
