@@ -89,6 +89,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	if (xmlStrcmp(node->name, (XUC) rootname)) {
 	    sprintf(gretl_errmsg, _("File of the wrong type, root node not %s"),
 		    rootname);
+	    fprintf(stderr, "Unexpected root node '%s'\n", (char *) node->name);
 	    xmlFreeDoc(doc);
 	    err = 1;
 	}
