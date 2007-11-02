@@ -383,14 +383,31 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
     return (err)? -1 : pdinfo->pd;
 }
 
-static int complete_qm_labels (csvdata *c, int pd,
+/* There's a special case (ugh!) where observation strings are
+   given as in monthly data, but the frequency is in fact
+   quarterly, as in:
+
+   1947.06
+   1947.09
+   1947.12
+   1948.03 
+
+   we'll make a brave attempt to handle this.
+*/ 
+
+#define fakequarter(m) (m==3 || m==6 || m==9 || m==12) 
+
+static int complete_qm_labels (csvdata *c, int *ppd,
 			       const char *fmt,
 			       PRN *prn)
 {
     char bad[16], skip[8];
     int t, y, p, Ey, Ep;
-    int pd0 = pd;
+    int pmin = 1;
+    int pd, pd0;
     int ret = 1;
+
+    pd = pd0 = *ppd;
 
  restart:
 
@@ -400,7 +417,7 @@ static int complete_qm_labels (csvdata *c, int pd,
 
     for (t=1; t<c->dinfo->n; t++) {
 	Ey = (p == pd)? y + 1 : y;
-	Ep = (p == pd)? 1 : p + 1;
+	Ep = (p == pd)? pmin : p + pmin;
 	if (sscanf(c->dinfo->S[t], fmt, &y, &p) != 2) {
 	    ret = 0;
 	} else if (Ep == 1 && pd == pd0 && p == pd + 1) {
@@ -408,6 +425,11 @@ static int complete_qm_labels (csvdata *c, int pd,
 	    strncat(skip, c->dinfo->S[t] + 4, 7); 
 	    strncat(bad, c->dinfo->S[t], 15); 
 	    pd = pd0 + 1;
+	    goto restart;
+	} else if (p == Ep + 2 && pmin == 1 && fakequarter(p)) {
+	    *bad = '\0';
+	    strncat(bad, c->dinfo->S[t], 15); 
+	    pmin = 3;
 	    goto restart;
 	} else if (y != Ey || p != Ep) {
 	    ret = 0;
@@ -419,10 +441,16 @@ static int complete_qm_labels (csvdata *c, int pd,
 	}
     }
 
-    if (ret && pd == pd0 + 1) {
-	pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n", 
-		bad);
-	strcpy(c->skipstr, skip);
+    if (ret) {
+	if (pmin == 3) {
+	    pprintf(prn, "   \"%s\": quarterly data pretending to be monthly?\n", 
+		    bad);
+	    *ppd = 4;
+	} else if (pd == pd0 + 1) {
+	    pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n", 
+		    bad);
+	    strcpy(c->skipstr, skip);
+	}
     }
 
     return ret;
@@ -662,9 +690,17 @@ static int csv_time_series_check (csvdata *c, PRN *prn)
 	    pd = -1;
 	}
     } else if (pd == 4 || pd == 12) {
-	if (complete_qm_labels(c, pd, format, prn)) {
+	int savepd = pd;
+
+	if (complete_qm_labels(c, &pd, format, prn)) {
 	    c->dinfo->pd = pd;
-	    sprintf(c->dinfo->stobs, "%s:%s", year, sub);
+	    if (savepd == 12 && pd == 4) {
+		int s = atoi(sub) / 3;
+
+		sprintf(c->dinfo->stobs, "%s:%d", year, s);
+	    } else {
+		sprintf(c->dinfo->stobs, "%s:%s", year, sub);
+	    }
 	    c->dinfo->sd0 = obs_str_to_double(c->dinfo->stobs);
 	    ntodate(c->dinfo->endobs, c->dinfo->n - 1, c->dinfo);
 	} else {
