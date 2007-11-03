@@ -146,6 +146,62 @@ int gretl_mkdir (const char *path)
     return err;
 }
 
+static const char *gretl_readd (DIR *d)
+{
+    struct dirent *e = readdir(d);
+
+    return (e == NULL)? NULL : e->d_name;
+}
+
+static int gretl_isdir (const char *path)
+{
+    struct stat buf;
+
+    return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
+}
+
+/* recursive deletion of directory tree: must be located
+   in the directory above the one to be deleted at the
+   outset */
+
+int gretl_deltree (const char *path)
+{
+    const char *fname;
+    DIR *dir;
+    int err = 0;
+
+    errno = 0;
+
+    dir = opendir(path);
+
+    if (dir == NULL) {
+	err = 1;
+    } else {
+	err = chdir(path);
+	while ((fname = gretl_readd(dir)) != NULL && !err) {
+	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
+		if (gretl_isdir(fname)) {
+		    err = gretl_deltree(fname);
+		} else {
+		    err = remove(fname);
+		}
+	    }
+	}
+	if (!err) {
+	    closedir(dir);
+	    chdir("..");
+	    err = remove(path);
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set_from_errno();
+	err = E_FOPEN;
+    }
+    
+    return err;
+}
+
 #endif
 
 /* like access(), returns 0 on success */

@@ -588,7 +588,7 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 	if (*test != '\0') {
 	    ret = 0;
 	} else if (errno == ERANGE) {
-	    gretl_errmsg_set(strerror(errno));
+	    gretl_errmsg_set_from_errno();
 	    *err = 1;
 	}
     } else {
@@ -597,7 +597,7 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 	if (*test != '\0') {
 	    ret = 0;
 	} else if (errno == ERANGE) {
-	    gretl_errmsg_set(strerror(errno));
+	    gretl_errmsg_set_from_errno();
 	    *err = 1;
 	} else {
 	    *pi = (int) li;
@@ -1164,7 +1164,7 @@ libset_query_settings (const char *s, PRN *prn)
 int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo, 
 		      PRN *prn)
 {
-    char setobj[32], setarg[16], setarg2[16];
+    char setobj[32], setarg[32], setarg2[32];
     int k, nw, err = E_PARSE;
     double x;
 
@@ -1172,7 +1172,7 @@ int execute_set_line (const char *line, double **Z, DATAINFO *pdinfo,
 
     *setobj = *setarg = *setarg2 = '\0';
 
-    nw = sscanf(line, "%*s %15s %15s %15s", setobj, setarg, setarg2);
+    nw = sscanf(line, "%*s %31s %31s %31s", setobj, setarg, setarg2);
 
     if (nw <= 0) {
 	return display_settings(prn);

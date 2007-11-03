@@ -32,6 +32,8 @@ gzFile gretl_gzopen (const char *filename, const char *mode);
 
 int gretl_mkdir (const char *path);
 
+int gretl_deltree (const char *path);
+
 int gretl_write_access (char *fname);
 
 int gretl_is_xml_file (const char *fname);

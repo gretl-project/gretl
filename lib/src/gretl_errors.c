@@ -19,6 +19,8 @@
 
 #include "libgretl.h"
 
+#include <errno.h>
+
 char gretl_errmsg[ERRLEN];
 
 static const char *gretl_error_messages[] = {
@@ -166,6 +168,28 @@ void gretl_errmsg_set (const char *str)
 	    strcat(gretl_errmsg, "\n");
 	    strcat(gretl_errmsg, str);
 	}
+    }
+}
+
+/**
+ * gretl_errmsg_set_from_errno:
+ *
+ * If %gretl_errmsg is currently blank, copy the string 
+ * returned by %strerror into the message space; or if the 
+ * error message is not blank but sufficient space remains, 
+ * append the new error info to the message.
+ */
+
+void gretl_errmsg_set_from_errno (void)
+{
+    char *msg = NULL;
+
+    if (errno) {
+	msg = strerror(errno);
+    }
+
+    if (msg != NULL) {
+	gretl_errmsg_set(msg);
     }
 }
 

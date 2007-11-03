@@ -1945,7 +1945,7 @@ static int db_delete_series (const char *line, const int *list,
 	    err = rename(tmp2, src2);
 	}
 	if (err) {
-	    strcpy(gretl_errmsg, strerror(errno));
+	    gretl_errmsg_set_from_errno();
 	}
 #endif
     } else {
