@@ -1093,23 +1093,8 @@ static void remove_session_dir (void)
     win32_delete_dir(fullpath);
     g_free(fullpath);
 #else
-    const char *fname;
-    DIR *dir;
-
     chdir(paths.userdir);
-    dir = opendir(session.dirname);
-
-    if (dir != NULL) {
-	chdir(session.dirname);
-	while ((fname = readd(dir)) != NULL) {
-	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
-		remove(fname);
-	    }
-	}
-	closedir(dir);
-	chdir(paths.userdir);
-	remove(session.dirname);
-    }
+    gretl_deltree(session.dirname);
 #endif
 }
 
