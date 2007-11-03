@@ -3878,8 +3878,8 @@
 
       <para>La serie dei pesi è composta da
 	<equation status="inline"
-	  tex="$1/\sqrt{e^{y^*}}$"
-	  ascii="1/sqrt(exp(y*))"
+          tex="$1/e^{y^*}$"
+          ascii="1/exp(y*)"
 	  graphic="hsk"/>, dove <mathvar>y</mathvar><super>*</super>
 	denota i valori stimati dalla regressione ausiliaria.</para>
     </description>
