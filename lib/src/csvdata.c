@@ -79,7 +79,8 @@ struct csvdata_ {
 #define csv_skipping(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
 
-static int csv_time_series_check (csvdata *c, PRN *prn);
+static int 
+time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn);
 
 static void csvdata_free (csvdata *c)
 {
@@ -194,33 +195,33 @@ static int add_single_obs (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-static int pad_weekly_data (csvdata *c, int add)
+static int pad_weekly_data (double ***pZ, DATAINFO *pdinfo, int add)
 {
-    int oldn = c->dinfo->n;
+    int oldn = pdinfo->n;
     int ttarg, offset = 0, skip = 0;
     int i, s, t, tc, err;
 
-    err = dataset_add_observations(add, &c->Z, c->dinfo, OPT_A); 
+    err = dataset_add_observations(add, pZ, pdinfo, OPT_A); 
 
     if (!err) {
 	for (t=0; t<oldn; t++) {
-	    tc = calendar_obs_number(c->dinfo->S[t], c->dinfo) - offset;
+	    tc = calendar_obs_number(pdinfo->S[t], pdinfo) - offset;
 	    if (tc != t) {
 		skip = tc - t;
 		fprintf(stderr, "Gap of size %d at original t = %d\n", skip, t);
 		offset += skip;
 		ttarg = oldn - 1 + offset;
 		for (s=0; s<oldn-t+skip; s++) {
-		    for (i=1; i<c->dinfo->v; i++) {
+		    for (i=1; i<pdinfo->v; i++) {
 			if (s < oldn - t) {
 			    if (s == 0 || s == oldn-t-1) {
 				fprintf(stderr, "shifting obs %d to obs %d\n",
 					ttarg-skip, ttarg);
 			    }
-			    c->Z[i][ttarg] = c->Z[i][ttarg - skip];
+			    (*pZ)[i][ttarg] = (*pZ)[i][ttarg - skip];
 			} else {
 			    fprintf(stderr, "inserting NA at obs %d\n", ttarg);
-			    c->Z[i][ttarg] = NADBL;
+			    (*pZ)[i][ttarg] = NADBL;
 			}
 		    }
 		    ttarg--;
@@ -234,30 +235,30 @@ static int pad_weekly_data (csvdata *c, int add)
 
 /* FIXME the following needs to be made more flexible */
 
-static int csv_weekly_data (csvdata *c)
+static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
 {
-    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
     int ret = 1;
     int misscount = 0;
     int t, tc;
 
-    for (t=0; t<c->dinfo->n; t++) {
-	tc = calendar_obs_number(c->dinfo->S[t], c->dinfo) - misscount;
+    for (t=0; t<pdinfo->n; t++) {
+	tc = calendar_obs_number(pdinfo->S[t], pdinfo) - misscount;
 	if (tc != t) {
 	    misscount += tc - t;
 	}
     }
 
     if (misscount > 0) {
-	double missfrac = (double) misscount / c->dinfo->n;
+	double missfrac = (double) misscount / pdinfo->n;
 
 	fprintf(stderr, "nobs = %d, misscount = %d (%.2f%%)\n", 
-		c->dinfo->n, misscount, 100.0 * missfrac);
+		pdinfo->n, misscount, 100.0 * missfrac);
 	if (missfrac > 0.05) {
 	    ret = 0;
 	} else {
-	    int Tc = calendar_obs_number(lbl2, c->dinfo) + 1;
-	    int altmiss = Tc - c->dinfo->n;
+	    int Tc = calendar_obs_number(lbl2, pdinfo) + 1;
+	    int altmiss = Tc - pdinfo->n;
 
 	    fprintf(stderr, "check: Tc = %d, missing = %d\n", Tc, altmiss);
 	    if (altmiss != misscount) {
@@ -266,7 +267,7 @@ static int csv_weekly_data (csvdata *c)
 		int err;
 
 		fprintf(stderr, "OK, consistent\n");
-		err = pad_weekly_data(c, misscount);
+		err = pad_weekly_data(pZ, pdinfo, misscount);
 		if (err) ret = 0;
 	    } 
 	} 
@@ -397,8 +398,8 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 
 #define fakequarter(m) (m==3 || m==6 || m==9 || m==12) 
 
-static int complete_qm_labels (csvdata *c, int *ppd,
-			       const char *fmt,
+static int complete_qm_labels (DATAINFO *pdinfo, char *skipstr,
+			       int *ppd, const char *fmt,
 			       PRN *prn)
 {
     char bad[16], skip[8];
@@ -411,24 +412,25 @@ static int complete_qm_labels (csvdata *c, int *ppd,
 
  restart:
 
-    if (sscanf(c->dinfo->S[0], fmt, &y, &p) != 2) {
+    if (sscanf(pdinfo->S[0], fmt, &y, &p) != 2) {
 	return 0;
     }
 
-    for (t=1; t<c->dinfo->n; t++) {
+    for (t=1; t<pdinfo->n; t++) {
 	Ey = (p == pd)? y + 1 : y;
 	Ep = (p == pd)? pmin : p + pmin;
-	if (sscanf(c->dinfo->S[t], fmt, &y, &p) != 2) {
+	if (sscanf(pdinfo->S[t], fmt, &y, &p) != 2) {
 	    ret = 0;
-	} else if (Ep == 1 && pd == pd0 && p == pd + 1) {
+	} else if (Ep == 1 && pd == pd0 && p == pd + 1 
+		   && skipstr != NULL) {
 	    *skip = *bad = '\0';
-	    strncat(skip, c->dinfo->S[t] + 4, 7); 
-	    strncat(bad, c->dinfo->S[t], 15); 
+	    strncat(skip, pdinfo->S[t] + 4, 7); 
+	    strncat(bad, pdinfo->S[t], 15); 
 	    pd = pd0 + 1;
 	    goto restart;
 	} else if (p == Ep + 2 && pmin == 1 && fakequarter(p)) {
 	    *bad = '\0';
-	    strncat(bad, c->dinfo->S[t], 15); 
+	    strncat(bad, pdinfo->S[t], 15); 
 	    pmin = 3;
 	    goto restart;
 	} else if (y != Ey || p != Ep) {
@@ -436,7 +438,7 @@ static int complete_qm_labels (csvdata *c, int *ppd,
 	}
 	if (!ret) {
 	    pprintf(prn, "   %s: not a consistent date\n", 
-		    c->dinfo->S[t]);
+		    pdinfo->S[t]);
 	    break;
 	}
     }
@@ -449,7 +451,7 @@ static int complete_qm_labels (csvdata *c, int *ppd,
 	} else if (pd == pd0 + 1) {
 	    pprintf(prn, "   \"%s\": BLS-type nonsense? Trying again\n", 
 		    bad);
-	    strcpy(c->skipstr, skip);
+	    strcpy(skipstr, skip);
 	}
     }
 
@@ -538,12 +540,17 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 }
 
 static int 
-csv_daily_date_check (csvdata *c, PRN *prn)
+csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, char *skipstr, 
+		      PRN *prn)
 {
     int d1[3], d2[3];
     char sep1[2], sep2[2];
-    char *lbl1 = c->dinfo->S[0];
-    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
+
+    if (pZ == NULL) {
+	return E_DATA;
+    }
 
     if (sscanf(lbl1, "%d%1[/-]%d%1[/-]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
 	sscanf(lbl2, "%d%1[/-]%d%1[/-]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
@@ -585,22 +592,24 @@ csv_daily_date_check (csvdata *c, PRN *prn)
 	    day2 > 0 && day2 < 32) {
 	    /* looks promising for calendar dates */
 	    if (dorder != YYYYMMDD || *sep1 != '/' || *sep2 != '/') {
-		if (transform_daily_dates(c->dinfo, dorder)) {
+		if (transform_daily_dates(pdinfo, dorder)) {
 		    return -1;
 		}
 	    }
 	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
-	    ret = check_daily_dates(c->dinfo, &pd, prn);
+	    ret = check_daily_dates(pdinfo, &pd, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
-		    if (csv_weekly_data(c)) {
+		    if (csv_weekly_data(pZ, pdinfo)) {
 			ret = 52;
 		    } else {
 			ret = -1;
 		    }
 		} else {
-		    compress_daily(c->dinfo, pd);
-		    ret = csv_time_series_check(c, prn);
+		    compress_daily(pdinfo, pd);
+		    ret = time_series_label_check(pdinfo, 
+						  skipstr, 
+						  prn);
 		}
 	    } 
 	    return ret;
@@ -669,22 +678,23 @@ static int pd_from_date_label (const char *lbl, char *year, char *subp,
     return pd;
 }
 
-static int csv_time_series_check (csvdata *c, PRN *prn)
+static int 
+time_series_label_check (DATAINFO *pdinfo, char *skipstr, PRN *prn)
 {
     char year[5], sub[3];
     char format[8] = {0};
-    char *lbl1 = c->dinfo->S[0];
-    char *lbl2 = c->dinfo->S[c->dinfo->n - 1];
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
     int pd = -1;
 
     pd = pd_from_date_label(lbl1, year, sub, format, prn);
 
     if (pd == 1) {
-	if (complete_year_labels(c->dinfo)) {
-	    c->dinfo->pd = pd;
-	    strcpy(c->dinfo->stobs, year);
-	    c->dinfo->sd0 = atof(c->dinfo->stobs);
-	    strcpy(c->dinfo->endobs, lbl2);
+	if (complete_year_labels(pdinfo)) {
+	    pdinfo->pd = pd;
+	    strcpy(pdinfo->stobs, year);
+	    pdinfo->sd0 = atof(pdinfo->stobs);
+	    strcpy(pdinfo->endobs, lbl2);
 	} else {
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
@@ -692,17 +702,17 @@ static int csv_time_series_check (csvdata *c, PRN *prn)
     } else if (pd == 4 || pd == 12) {
 	int savepd = pd;
 
-	if (complete_qm_labels(c, &pd, format, prn)) {
-	    c->dinfo->pd = pd;
+	if (complete_qm_labels(pdinfo, skipstr, &pd, format, prn)) {
+	    pdinfo->pd = pd;
 	    if (savepd == 12 && pd == 4) {
 		int s = atoi(sub) / 3;
 
-		sprintf(c->dinfo->stobs, "%s:%d", year, s);
+		sprintf(pdinfo->stobs, "%s:%d", year, s);
 	    } else {
-		sprintf(c->dinfo->stobs, "%s:%s", year, sub);
+		sprintf(pdinfo->stobs, "%s:%s", year, sub);
 	    }
-	    c->dinfo->sd0 = obs_str_to_double(c->dinfo->stobs);
-	    ntodate(c->dinfo->endobs, c->dinfo->n - 1, c->dinfo);
+	    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
+	    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 	} else {
 	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
@@ -717,17 +727,17 @@ static int csv_time_series_check (csvdata *c, PRN *prn)
    observation numbers, else return the inferred data frequency 
 */
 
-static int 
-test_markers_for_dates (csvdata *c, PRN *prn)
+int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo, 
+			    char *skipstr, PRN *prn)
 {
     char endobs[OBSLEN];
-    int n = c->dinfo->n;
-    char *lbl1 = c->dinfo->S[0];
-    char *lbl2 = c->dinfo->S[n - 1];
+    int n = pdinfo->n;
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[n - 1];
     int len1 = strlen(lbl1);
 
-    if (csv_skipping(c)) {
-	return csv_time_series_check(c, prn);
+    if (skipstr != NULL && *skipstr != '\0') {
+	return time_series_label_check(pdinfo, skipstr, prn);
     }
 
     pprintf(prn, M_("   first row label \"%s\", last label \"%s\"\n"), 
@@ -749,14 +759,14 @@ test_markers_for_dates (csvdata *c, PRN *prn)
 
     if (len1 == 8 || len1 == 10) {
 	/* daily data? */
-	return csv_daily_date_check(c, prn);
+	return csv_daily_date_check(pZ, pdinfo, skipstr, prn);
     } else if (len1 >= 4) {
 	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
-	    return csv_time_series_check(c, prn);
+	    return time_series_label_check(pdinfo, skipstr, prn);
 	} else {
 	    pputs(prn, M_("   definitely not a four-digit year\n"));
 	}
@@ -1421,7 +1431,8 @@ static int csv_read_data (csvdata *c, char *line, int maxlen,
     err = real_read_labels_and_data(c, line, maxlen, fp, opt, prn);
 
     if (!err && csv_skip_column(c)) {
-	c->markerpd = test_markers_for_dates(c, prn);
+	c->markerpd = test_markers_for_dates(&c->Z, c->dinfo, c->skipstr, 
+					     prn);
     }
 
     return err;
