@@ -910,10 +910,19 @@ static void compress_csv_line (char *line, csvdata *c)
     }
 }
 
-#define OBS_LABEL(s) (!strcmp(s, "obs") || \
-                      !strcmp(s, "date") || \
-                      !strcmp(s, "year") || \
-                      !strcmp(s, "period"))
+int import_obs_label (const char *s)
+{
+    char tmp[32];
+
+    *tmp = '\0';
+    strncat(tmp, s, 31);
+    lower(tmp);
+
+    return (!strcmp(s, "obs") ||
+	    !strcmp(s, "date") || 
+	    !strcmp(s, "year") || 
+	    !strcmp(s, "period"));    
+}
 
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
 {
@@ -933,24 +942,13 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 	iso_to_ascii(field1);
 
 	pprintf(prn, M_("   first field: '%s'\n"), field1);
-	lower(field1);
 
-	if (OBS_LABEL(field1)) {
+	if (import_obs_label(field1)) {
 	    pputs(prn, M_("   seems to be observation label\n"));
 	    csv_set_obs_column(c);
 	}
     }
 }
-
-#define ISNA(s) (!strcmp(s, "NA") || \
-                 !strcmp(s, "N.A.") || \
-                 !strcmp(s, "n.a.") || \
-                 !strcmp(s, "na") || \
-                 !strcmp(s, "N/A") || \
-                 !strcmp(s, "NaN") || \
-                 !strcmp(s, ".") || \
-                 !strcmp(s, "..") || \
-                 !strncmp(s, "-999", 4))
 
 static int csv_missval (const char *str, int i, int t, PRN *prn)
 {
@@ -965,7 +963,7 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
 	miss = 1;
     }
 
-    if (ISNA(str)) {
+    if (import_na_string(str)) {
 	if (t < 100) {
 	    pprintf(prn, M_("   warning: missing value for variable "
 			    "%d, obs %d\n"), i, t);

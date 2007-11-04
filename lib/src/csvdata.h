@@ -20,6 +20,19 @@
 #ifndef CSVDATA_H
 #define CSVDATA_H
 
+#define import_na_string(s) (!strcmp(s, "NA") || \
+                             !strcmp(s, "N.A.") || \
+                             !strcmp(s, "n.a.") || \
+                             !strcmp(s, "na") || \
+                             !strcmp(s, "N/A") || \
+                             !strcmp(s, "NaN") || \
+                             !strcmp(s, ".") || \
+                             !strcmp(s, "..") || \
+                             !strncmp(s, "-999", 4))
+
+int import_obs_label (const char *s);
+
+
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, gretlopt opt, 
 		PRN *prn);
