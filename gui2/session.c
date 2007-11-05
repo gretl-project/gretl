@@ -637,7 +637,7 @@ int add_graph_to_session (char *fname, char *fullname)
     if (Z == NULL) {
 	/* we may be called via the "stats calculator" when
 	   there's no dataset yet */
-	err = open_nulldata(&Z, datainfo, DATA_NONE, 10, NULL);
+	err = open_nulldata(&Z, datainfo, 0, 10, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	    return 1;
@@ -987,8 +987,8 @@ void do_open_session (void)
     }
 
     session_file_make_path(paths.datfile, sinfo.datafile);
-    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, DATA_NONE, 
-			 NULL, 1);
+    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, OPT_P, 
+			 NULL);
     if (err) {
 	/* FIXME more explicit error message */
 	errbox(_("Couldn't open %s"), sinfo.datafile);

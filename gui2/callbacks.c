@@ -170,9 +170,6 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_OCTAVE:
 	file_selector(_("Open Octave file"), code, FSEL_DATA_NONE, NULL);
 	break;
-    case OPEN_BOX:
-	file_selector(_("Open BOX file"), code, FSEL_DATA_NONE, NULL);
-	break;
     case OPEN_GNUMERIC:
     case APPEND_GNUMERIC:
 	file_selector(_("Open Gnumeric file"), code, FSEL_DATA_NONE, NULL);
@@ -192,6 +189,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case OPEN_JMULTI:
     case APPEND_JMULTI:
 	file_selector(_("Open JMulTi file"), code, FSEL_DATA_NONE, NULL);
+	break;
+    case OPEN_ODS:
+    case APPEND_ODS:
+	file_selector(_("Open ODS file"), code, FSEL_DATA_NONE, NULL);
 	break;
     case OPEN_MARKERS:
 	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);

@@ -41,10 +41,10 @@ typedef enum {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
     GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
-    GRETL_BOX_DATA,       /* BOX1 format data file */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
     GRETL_EXCEL,          /* MS Excel spreadsheet data */
+    GRETL_ODS,            /* Open Document Spreadsheet data */
     GRETL_WF1,            /* Eviews workfile data */
     GRETL_DTA,            /* Stata .dta data */
     GRETL_SCRIPT,         /* file containing gretl commands */
@@ -63,19 +63,16 @@ typedef enum {
 } DataClearCode;
 
 typedef enum {
-    DATA_NONE,    /* no dataset is currently open */
-    DATA_CLEAR,   /* dataset is open: dataset info should be cleared */
-    DATA_APPEND   /* dataset is open: attempt to append new data */
-} DataOpenCode;
-
-typedef enum {
     VARNAME_RESERVED = 1, /* vername is a gretl reserved name */
     VARNAME_FIRSTCHAR,    /* first character is not alphabetical */
     VARNAME_BADCHAR       /* illegal character in second or subsequent place */
 } GretlVarnameError;
 
-#define WORKSHEET_IMPORT(f) (f == GRETL_GNUMERIC || f == GRETL_EXCEL || \
-                             f == GRETL_WF1 || f == GRETL_DTA)
+#define WORKSHEET_IMPORT(f) (f == GRETL_EXCEL || \
+			     f == GRETL_GNUMERIC || \
+			     f == GRETL_ODS || \
+			     f == GRETL_DTA || \
+			     f == GRETL_WF1)
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);
@@ -112,13 +109,13 @@ int gretl_is_pkzip_file (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);
 
-int merge_data (double ***pZ, DATAINFO *pdinfo,
-		double **addZ, DATAINFO *addinfo,
-		PRN *prn);
+int merge_or_replace_data (double ***pZ0, DATAINFO **ppdinfo0,
+			   double ***pZ1, DATAINFO **ppdinfo1,
+			   PRN *prn);
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
 		    char *datfile, PATHS *ppaths, 
-		    DataOpenCode ocode, PRN *prn);
+		    PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,
@@ -129,9 +126,6 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 int import_octave (double ***pZ, DATAINFO **ppdinfo, 
 		   const char *fname, PRN *prn);
-
-int import_box (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, PRN *prn);
 
 int import_other (double ***pZ, DATAINFO **ppdinfo, 
 		  int ftype, const char *fname, PRN *prn);

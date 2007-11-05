@@ -38,6 +38,8 @@ static void invalid_varname (PRN *prn)
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
+#ifndef ODS_IMPORTER
+
 static int label_is_date (char *str, int *submax)
 {
     int len = strlen(str);
@@ -376,6 +378,8 @@ static void wbook_free (wbook *book)
     free(book->missmask);
 }
 
+#endif /* !ODS_IMPORTER */
+
 static void wbook_init (wbook *book)
 {
     book->version = 0;
@@ -388,6 +392,8 @@ static void wbook_init (wbook *book)
     book->xf_list = NULL;
     book->totmiss = 0;
     book->missmask = NULL;
+    book->get_min_offset = NULL;
+    book->data = NULL;
 }
 
 static const char *column_label (int col)
@@ -472,6 +478,15 @@ void debug_callback (GtkWidget *w, wbook *book)
 
 #endif /* EXCEL_IMPORTER */
 
+static int book_get_min_offset (wbook *book, int k)
+{
+    if (book->get_min_offset != NULL) {
+	return book->get_min_offset(book, k);
+    } else {
+	return 1;
+    }
+}
+
 static
 void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
 {
@@ -480,10 +495,30 @@ void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
     GtkTreePath *path;
     gint *idx;
 
-    gtk_tree_selection_get_selected (selection, &model, &iter);
-    path = gtk_tree_model_get_path (model, &iter);
+    gtk_tree_selection_get_selected(selection, &model, &iter);
+    path = gtk_tree_model_get_path(model, &iter);
     idx = gtk_tree_path_get_indices(path);
-    book->selected = idx[0];
+
+    if (book->selected != idx[0]) {
+	int offmin, offcurr;
+
+	book->selected = idx[0];
+	offmin = book_get_min_offset(book, COL_OFFSET);
+	offcurr = gtk_spin_button_get_value_as_int
+	    (GTK_SPIN_BUTTON(book->colspin));
+	if (offcurr < offmin) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->colspin),
+				      offmin);
+	}
+
+	offmin = book_get_min_offset(book, ROW_OFFSET);
+	offcurr = gtk_spin_button_get_value_as_int
+	    (GTK_SPIN_BUTTON(book->rowspin));
+	if (offcurr < offmin) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->rowspin),
+				      offmin);
+	}	
+    }
 }
 
 static 
@@ -502,9 +537,9 @@ void wsheet_menu_make_list (GtkTreeView *view, wbook *book)
 			   0, book->sheetnames[i], -1);
     }
 
-    gtk_tree_model_get_iter_first (model, &iter);
-    gtk_tree_selection_select_iter (gtk_tree_view_get_selection (view), 
-				    &iter);
+    gtk_tree_model_get_iter_first(model, &iter);
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(view), 
+				   &iter);
 }
 
 static 
@@ -514,14 +549,14 @@ void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 }
 
 static 
-void wbook_get_col_offset (GtkWidget *w, wbook *book)
+void wbook_set_col_offset (GtkWidget *w, wbook *book)
 {
     book->col_offset = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->colspin)) - 1;
 }
 
 static 
-void wbook_get_row_offset (GtkWidget *w, wbook *book)
+void wbook_set_row_offset (GtkWidget *w, wbook *book)
 {
     book->row_offset = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->rowspin)) - 1;
@@ -551,9 +586,9 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode (select, GTK_SELECTION_SINGLE);
-    g_signal_connect (G_OBJECT(select), "changed",
-		      G_CALLBACK(wsheet_menu_select_row),
-		      book);
+    g_signal_connect(G_OBJECT(select), "changed",
+		     G_CALLBACK(wsheet_menu_select_row),
+		     book);
 
     wsheet_menu_make_list(GTK_TREE_VIEW(view), book);
 
@@ -581,6 +616,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     GtkWidget *w, *tmp, *label;
     GtkWidget *vbox, *hbox;
     GtkObject *c_adj, *r_adj;
+    int offmin;
 
     w = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: spreadsheet import"));
@@ -602,10 +638,11 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     /* starting column spinner */
     tmp = gtk_label_new(_("column:"));
-    c_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
+    offmin = book->col_offset + 1;
+    c_adj = gtk_adjustment_new(offmin, offmin, 256, 1, 1, 1);
     book->colspin = gtk_spin_button_new(GTK_ADJUSTMENT(c_adj), 1, 0);
     g_signal_connect(c_adj, "value_changed",
-		     G_CALLBACK(wbook_get_col_offset), book);
+		     G_CALLBACK(wbook_set_col_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->colspin),
 				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -613,10 +650,11 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     /* starting row spinner */
     tmp = gtk_label_new(_("row:"));
-    r_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
-    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
+    offmin = book->row_offset + 1;
+    r_adj = gtk_adjustment_new(offmin, offmin, 256, 1, 1, 1);
+    book->rowspin = gtk_spin_button_new(GTK_ADJUSTMENT(r_adj), 1, 0);
     g_signal_connect(r_adj, "value_changed",
-		     G_CALLBACK(wbook_get_row_offset), book);
+		     G_CALLBACK(wbook_set_row_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->rowspin),
 				      GTK_UPDATE_IF_VALID);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -627,8 +665,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
     label = gtk_label_new("(A)");
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 5);
-    g_signal_connect (GTK_EDITABLE(book->colspin), "changed",
-		      G_CALLBACK (colspin_changed), label);
+    g_signal_connect(GTK_EDITABLE(book->colspin), "changed",
+		     G_CALLBACK(colspin_changed), label);
 
     /* choose the worksheet (if applicable) */
     if (multisheet) {

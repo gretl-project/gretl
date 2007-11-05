@@ -107,7 +107,6 @@ enum file_ops {
     APPEND_CSV,
     OPEN_ASCII,
     APPEND_ASCII,
-    OPEN_BOX,
     OPEN_OCTAVE,
     APPEND_OCTAVE,
     OPEN_GNUMERIC,
@@ -120,6 +119,8 @@ enum file_ops {
     APPEND_DTA,
     OPEN_JMULTI,
     APPEND_JMULTI,
+    OPEN_ODS,
+    APPEND_ODS,
     OPEN_SESSION,
     OPEN_MARKERS,
     END_OPEN,      /* marker for end of file open section */

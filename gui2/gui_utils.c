@@ -1028,6 +1028,7 @@ void register_data (char *fname, const char *user_fname,
                            action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
                            action == APPEND_EXCEL || \
+                           action == APPEND_ODS || \
                            action == APPEND_ASCII || \
                            action == APPEND_WF1 || \
                            action == APPEND_DTA || \
@@ -1039,7 +1040,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
     PRN *errprn;
     const char *errbuf;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO **, PRN *);
     int err = 0;
     
     fp = gretl_fopen(fname, "r");
@@ -1055,6 +1056,9 @@ int get_worksheet_data (char *fname, int datatype, int append)
 						 &handle);
     } else if (datatype == GRETL_EXCEL) {
 	sheet_get_data = gui_get_plugin_function("excel_get_data",
+						 &handle);
+    } else if (datatype == GRETL_ODS) {
+	sheet_get_data = gui_get_plugin_function("ods_get_data",
 						 &handle);
     } else if (datatype == GRETL_WF1) {
 	sheet_get_data = gui_get_plugin_function("wf1_get_data",
@@ -1079,7 +1083,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
 	return 1;
     }
 
-    err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
+    err = (*sheet_get_data)(fname, &Z, &datainfo, errprn);
     close_plugin(handle);
 
     if (err == -1) {
@@ -1174,6 +1178,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	datatype = GRETL_CSV_DATA;
     } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	datatype = GRETL_GNUMERIC;
+    } else if (code == OPEN_ODS || code == APPEND_ODS) {
+	datatype = GRETL_ODS;
     } else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
 	datatype = GRETL_EXCEL;
     } else if (code == OPEN_OCTAVE || code == APPEND_OCTAVE) {
@@ -1184,8 +1190,6 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	datatype = GRETL_DTA;
     } else if (code == OPEN_JMULTI || code == APPEND_JMULTI) {
 	datatype = GRETL_JMULTI;
-    } else if (code == OPEN_BOX) {
-	datatype = GRETL_BOX_DATA;
     } else {
 	/* no filetype specified: have to guess */
 	PRN *prn;	
@@ -1202,37 +1206,25 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
 	datatype == GRETL_WF1 || datatype == GRETL_DTA ||
-	datatype == GRETL_JMULTI) {
+	datatype == GRETL_JMULTI || datatype == GRETL_ODS) {
 	get_worksheet_data(tryfile, datatype, append);
 	return;
     } else if (datatype == GRETL_CSV_DATA) {
-	do_open_csv_box(tryfile, OPEN_CSV, append);
+	do_open_csv_octave(tryfile, OPEN_CSV, append);
 	return;
     } else if (datatype == GRETL_OCTAVE) {
-	do_open_csv_box(tryfile, OPEN_OCTAVE, append);
-	return;
-    } else if (datatype == GRETL_BOX_DATA) {
-	do_open_csv_box(tryfile, OPEN_BOX, 0);
+	do_open_csv_octave(tryfile, OPEN_OCTAVE, append);
 	return;
     } else { 
 	/* native data */
-	DataOpenCode ocode = DATA_NONE;
-	PRN *errprn;
-
-	errprn = gretl_print_new(GRETL_PRINT_STDERR);
-
-	if (append) {
-	    ocode = DATA_APPEND;
-	} else if (data_status) {
-	    ocode = DATA_CLEAR;
-	}
+	PRN *errprn = gretl_print_new(GRETL_PRINT_STDERR);
 
 	if (datatype == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, tryfile, &paths, 
-				 ocode, errprn, 1);
+				 OPT_P, errprn);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, tryfile, &paths, 
-				 ocode, errprn);
+				 errprn);
 	}
 
 	gretl_print_destroy(errprn);

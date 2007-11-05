@@ -63,6 +63,7 @@ SRCS = excel_import.c \
 	eviews_import.c \
 	stata_import.c \
 	jmulti_import.c \
+	ods_import.c \
 	import_common.c \
 	johansen.c \
 	jrestrict.c \
@@ -123,6 +124,7 @@ PLUGINS = arbond.la \
 
 GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
+	ods_import.la \
 	progress_bar.la \
 	leverage.la \
 	tramo-x12a.la \
@@ -214,6 +216,9 @@ progress_bar.la: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
 
 gnumeric_import.la: gnumeric_import.lo
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
+
+ods_import.la: ods_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
 excel_import.la: excel_import.lo workbook.lo ms-ole.lo

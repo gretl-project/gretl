@@ -472,20 +472,17 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_NATIVE_DATA:
 	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
-				 DATA_NONE, prn);
+				 prn);
 	    break;
 	case GRETL_XML_DATA:
 	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, 
-				 DATA_NONE, prn, 0);
+				 OPT_NONE, prn);
 	    break;
 	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, &datainfo, paths.datfile, OPT_NONE, prn);
 	    break;
 	case GRETL_OCTAVE:
 	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
-	    break;
-	case GRETL_BOX_DATA:
-	    err = import_box(&Z, &datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_GNUMERIC:
 	case GRETL_EXCEL:
@@ -676,7 +673,6 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO **ppdinfo, MODEL **models,
 			    PRN *prn)
 {
-    DataOpenCode ocode = DATA_NONE;
     DATAINFO *pdinfo = *ppdinfo;
     char datfile[MAXLEN] = {0};
     char response[3];
@@ -692,9 +688,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     if (cmd->opt & OPT_W) {
 	k = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->opt & OPT_B) {
-	k = GRETL_BOX_DATA;
-    } else if (cmd->opt & OPT_O) {
+     } else if (cmd->opt & OPT_O) {
 	k = GRETL_CSV_DATA;
     } else {
 	k = detect_filetype(datfile, &paths, prn);
@@ -715,9 +709,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     }
 
     if (data_status) {
-	if (dbdata || cmd->ci == APPEND) {
-	    ocode = DATA_APPEND;
-	} else {
+	if (!dbdata && cmd->ci != APPEND) {
 	    clear_data(cmd, pZ, ppdinfo, models);
 	    pdinfo = *ppdinfo;
 	}
@@ -727,18 +719,16 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, datfile, prn);
-    } else if (k == GRETL_BOX_DATA) {
-	err = import_box(pZ, ppdinfo, datfile, prn);
     } else if (WORKSHEET_IMPORT(k)) {
 	err = import_other(pZ, ppdinfo, k, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-			     ocode, prn, 0);
+			     OPT_NONE, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-			     ocode, prn);
+			     prn);
     }
 
     pdinfo = *ppdinfo;

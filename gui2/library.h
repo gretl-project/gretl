@@ -267,7 +267,7 @@ void open_info (gpointer p, guint edit, GtkWidget *w);
 
 void do_new_script (gpointer p, guint action, GtkWidget *w);
 
-void do_open_csv_box (char *fname, int code, int append);
+void do_open_csv_octave (char *fname, int code, int append);
 
 int do_store (char *mydatfile, gretlopt oflag);
 

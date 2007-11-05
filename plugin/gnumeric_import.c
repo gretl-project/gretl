@@ -20,14 +20,10 @@
 #include <gtk/gtk.h>
 
 #include "libgretl.h"
-
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
+#include "gretl_xml.h"
 #include "importer.h"
 
 #undef IDEBUG
-
-#define UTF const xmlChar *
 
 /* from gnumeric's value.h */
 typedef enum {
@@ -193,10 +189,10 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
     sheet->maxcol = 0;
 
     while (p) {
-	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
+	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
 	    int i, j;
 
-	    tmp = (char *) xmlGetProp(p, (UTF) "Row");
+	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
 	    if (tmp) {
 		i = atoi(tmp);
 		free(tmp);
@@ -204,7 +200,7 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
 		    sheet->maxrow = i;
 		}
 	    }
-	    tmp = (char *) xmlGetProp(p, (UTF) "Col");
+	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
 	    if (tmp) {
 		j = atoi(tmp);
 		free(tmp);
@@ -278,26 +274,26 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     sheet->colheads = 0;
 
     while (p && !err) {
-	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
+	if (!xmlStrcmp(p->name, (XUC) "Cell")) {
 	    int i_real = 0, t_real = 0;
 
 	    x = NADBL;
 	    i = 0; t = 0;
 
-	    tmp = (char *) xmlGetProp(p, (UTF) "Col");
+	    tmp = (char *) xmlGetProp(p, (XUC) "Col");
 	    if (tmp) {
 		i = atoi(tmp);
 		i_real = i - colmin;
 		free(tmp);
 	    }
-	    tmp = (char *) xmlGetProp(p, (UTF) "Row");
+	    tmp = (char *) xmlGetProp(p, (XUC) "Row");
 	    if (tmp) {
 		t = atoi(tmp);
 		t_real = t - rowmin;
 		free(tmp);
 	    }
 	    if (i_real >= 0 && t_real >= 0) {
-		tmp = (char *) xmlGetProp(p, (UTF) "ValueType");
+		tmp = (char *) xmlGetProp(p, (XUC) "ValueType");
 
 		if (tmp) {
 		    vtype = atoi(tmp);
@@ -318,7 +314,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    }
 
 		    if (i_real == 0 && t_real == 1 && VTYPE_IS_NUMERIC(vtype)) {
-			char *fmt = (char *) xmlGetProp(p, (UTF) "ValueFormat");
+			char *fmt = (char *) xmlGetProp(p, (XUC) "ValueFormat");
 
 			if (fmt) {
 			    check_for_date_format(sheet, fmt);
@@ -413,7 +409,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 	return 1;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
+    if (xmlStrcmp(cur->name, (XUC) "Workbook")) {
         pputs(prn, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
@@ -422,17 +418,17 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (!err && cur != NULL && !got_sheet) {
-	if (!xmlStrcmp(cur->name, (UTF) "Sheets")) {
+	if (!xmlStrcmp(cur->name, (XUC) "Sheets")) {
 	    int sheetcount = 0;
 
 	    sub = cur->xmlChildrenNode;
 
 	    while (sub != NULL && !got_sheet && !err) {
-		if (!xmlStrcmp(sub->name, (UTF) "Sheet")) {
+		if (!xmlStrcmp(sub->name, (XUC) "Sheet")) {
 		    xmlNodePtr snode = sub->xmlChildrenNode;
 
 		    while (snode != NULL && !err) {
-			if (!xmlStrcmp(snode->name, (UTF) "Name")) {
+			if (!xmlStrcmp(snode->name, (XUC) "Name")) {
 			    sheetcount++;
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
@@ -442,19 +438,19 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 				}
 				free(tmp);
 			    }
-			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "MaxCol")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "MaxCol")) {
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxcol = atoi(tmp);
 				free(tmp);
 			    }
-			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "MaxRow")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "MaxRow")) {
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxrow = atoi(tmp);
 				free(tmp);
 			    }
-			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "Cells")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (XUC) "Cells")) {
 			    wsheet_get_real_size(snode, sheet);
 			    err = wsheet_parse_cells(snode, sheet, prn);
 			}
@@ -519,7 +515,7 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
 	return 1;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
+    if (xmlStrcmp(cur->name, (XUC) "Workbook")) {
         pputs(prn, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
@@ -528,11 +524,11 @@ static int wbook_get_info (const char *fname, wbook *book, PRN *prn)
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !got_index && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "SheetNameIndex")) {
+        if (!xmlStrcmp(cur->name, (XUC) "SheetNameIndex")) {
 	    got_index = 1;
 	    sub = cur->xmlChildrenNode;
 	    while (sub != NULL && !err) {
-		if (!xmlStrcmp(sub->name, (UTF) "SheetName")) {
+		if (!xmlStrcmp(sub->name, (XUC) "SheetName")) {
 		    tmp = (char *) xmlNodeGetContent(sub);
 		    if (tmp != NULL) {
 			if (wbook_record_name(tmp, book)) {
@@ -644,7 +640,7 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
 }
 
 static int 
-real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+real_wbook_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		     int gui, PRN *prn)
 {
     wbook gbook;
@@ -816,13 +812,7 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	if (*pZ == NULL) {
-	    *pZ = newZ;
-	    *pdinfo = *newinfo;
-	    free(newinfo);
-	} else {
-	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
-	}
+	err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
     } 
 
  getout:
@@ -832,22 +822,22 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     gretl_pop_c_numeric_locale();
 
-    if (err) {
-	free(newinfo);
+    if (err && newinfo != NULL) {
+	destroy_dataset(newZ, newinfo);
     }
 
     return err;
 }
 
-int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int wbook_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *prn)
 {
-    return real_wbook_get_data(fname, pZ, pdinfo, 1, prn);
+    return real_wbook_get_data(fname, pZ, ppdinfo, 1, prn);
 }
 
-int cli_get_gnumeric (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int cli_get_gnumeric (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		      PRN *prn)
 {
-    return real_wbook_get_data(fname, pZ, pdinfo, 0, prn);
+    return real_wbook_get_data(fname, pZ, ppdinfo, 0, prn);
 }
 

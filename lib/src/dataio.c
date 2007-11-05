@@ -1793,13 +1793,14 @@ static void try_gdt (char *fname)
  */
 
 int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
-		    DataOpenCode ocode, PRN *prn) 
+		    PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
     double **tmpZ = NULL;
     FILE *dat = NULL;
     gzFile fz = NULL;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
+    int newdata = (*pZ == NULL);
     int gdtsuff, gzsuff = 0;
     int binary = 0, old_byvar = 0;
     int err = 0;
@@ -1848,7 +1849,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(datfile)) {
 	return gretl_read_gdt(pZ, ppdinfo, datfile, ppaths, 
-			      ocode, prn, 0);
+			      OPT_NONE, prn);
     }
 
     tmpdinfo = datainfo_new();
@@ -1948,27 +1949,16 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     err = readlbl(lblfile, tmpdinfo);
     if (err) goto bailout;
 
-    if (ocode == DATA_APPEND) {
-	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
-    } else {
-	if (ppaths != NULL && datfile != ppaths->datfile) {
-	    strcpy(ppaths->datfile, datfile);
-	}
-	free_Z(*pZ, *ppdinfo);
-	if (ocode == DATA_CLEAR) {
-	    clear_datainfo(*ppdinfo, CLEAR_FULL);
-	}
-	free(*ppdinfo);
-	*ppdinfo = tmpdinfo;
-	*pZ = tmpZ;
+    err = merge_or_replace_data(pZ, ppdinfo, &tmpZ, &tmpdinfo, prn);
+
+    if (!err && newdata && ppaths != NULL && datfile != ppaths->datfile) {
+	strcpy(ppaths->datfile, datfile);
     }
 
  bailout:
 
-    if (err) {
-	free_Z(tmpZ, tmpdinfo);
-	clear_datainfo(tmpdinfo, CLEAR_FULL);
-	free(tmpdinfo);
+    if (err && tmpdinfo != NULL) {
+	destroy_dataset(tmpZ, tmpdinfo);
     }
 
     return err;
@@ -2158,14 +2148,14 @@ static void merge_error (char *msg, PRN *prn)
  * @prn: print struct to accept messages.
  * 
  * Attempt to merge the content of a newly opened data file into
- * gretl's current working data set.
+ * gretl's current working data set.  
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int merge_data (double ***pZ, DATAINFO *pdinfo,
-		double **addZ, DATAINFO *addinfo,
-		PRN *prn)
+static int merge_data (double ***pZ, DATAINFO *pdinfo,
+		       double **addZ, DATAINFO *addinfo,
+		       PRN *prn)
 {
     int addsimple = 0;
     int addvars = 0;
@@ -2289,6 +2279,44 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
     free_Z(addZ, addinfo);
     clear_datainfo(addinfo, CLEAR_FULL);
+
+    return err;
+}
+
+/**
+ * merge_or_replace_data:
+ * @pZ0: pointer to original data set.
+ * @ppdinfo0: pointer to original data information struct.
+ * @pZ1: new data set.
+ * @ppdinfo1: pointer data information associated with @pZ1.
+ * @prn: print struct to accept messages.
+ *
+ * Given a newly-created dataset, pointed to by @pZ1 and
+ * @ppdinfo1, either attempt to merge it with @pZ0, if the
+ * original dataset is non-NULL, or replace the content of
+ * the original pointers with the new dataset.
+ * In case merging is not successful, the new dataset is
+ * destroyed.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int merge_or_replace_data (double ***pZ0, DATAINFO **ppdinfo0,
+			   double ***pZ1, DATAINFO **ppdinfo1,
+			   PRN *prn)
+{
+    int err = 0;
+
+    if (*pZ0 != NULL) {
+	err = merge_data(pZ0, *ppdinfo0, *pZ1, *ppdinfo1, prn);
+	destroy_dataset(*pZ1, *ppdinfo1);
+    } else {
+	*pZ0 = *pZ1;
+	*ppdinfo0 = *ppdinfo1;
+    }
+
+    *pZ1 = NULL;
+    *ppdinfo1 = NULL;
 
     return err;
 }
@@ -2682,260 +2710,6 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
     return 1;
 }
 
-static char *unspace (char *s)
-{
-    int i;
-    size_t n = strlen(s);
-
-    for (i=n-1; i>=0; i--) { 
-	if (s[i] == ' ') s[i] = '\0';
-	else break;
-    }
-    return s;
-}
-
-/* #define BOX_DEBUG 1 */
-
-/**
- * import_box:
- * @pZ: pointer to data set.
- * @ppdinfo: pointer to data information struct.
- * @fname: name of BOX1 file.
- * @prn: gretl printing struct.
- * 
- * Open a BOX1 data file (as produced by the US Census Bureau's
- * Data Extraction Service) and read the data into
- * the current work space.
- * 
- * Returns: 0 on successful completion, non-zero otherwise.
- */
-
-int import_box (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, PRN *prn)
-{
-    int c, cc, i, t, v, realv, gotdata;
-    int maxline, dumpvars;
-    char tmp[48];
-    unsigned *varsize = NULL, *varstart = NULL;
-    char *line = NULL;
-    double x;
-    FILE *fp;
-    DATAINFO *boxinfo;
-    double **boxZ = NULL;
-    int err = 0;
-
-#ifdef ENABLE_NLS
-    check_for_console(prn);
-#endif
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	pprintf(prn, M_("Couldn't open %s\n"), fname);
-	err = E_FOPEN;
-	goto box_bailout;
-    }
-
-    boxinfo = datainfo_new();
-    if (boxinfo == NULL) {
-	pputs(prn, M_("Out of memory\n"));
-	err = E_ALLOC;
-	goto box_bailout;
-    }
-
-    pprintf(prn, "%s %s...\n", M_("parsing"), fname);
-
-    /* first pass: find max line length, number of vars and number
-       of observations, plus basic sanity check */
-    cc = maxline = 0;
-    boxinfo->v = 1;
-    while ((c = getc(fp)) != EOF) {
-	if (c != 10 && !isprint((unsigned char) c)) {
-	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
-		   "BOX1 file\n"), c);
-	    fclose(fp);
-	    err = 1;
-	    goto box_bailout;
-	}
-	if (c == '\n') {
-	    if (cc > maxline) {
-		maxline = cc;
-	    }
-	    cc = 0;
-	    if ((c = getc(fp)) != EOF) {
-		tmp[0] = c; cc++;
-	    } else {
-		break;
-	    }
-	    if ((c = getc(fp)) != EOF) {
-		tmp[1] = c; cc++;
-	    } else {
-		break;
-	    }
-	    tmp[2] = '\0';
-	    if (!strcmp(tmp, "03")) {
-		boxinfo->v += 1;
-	    } else if (!strcmp(tmp, "99")) {
-		boxinfo->n += 1;
-	    }
-	} else {
-	    cc++;
-	}
-    } 
-
-    fclose(fp);
-
-    pprintf(prn, M_("   found %d variables\n"), boxinfo->v - 1);
-    pprintf(prn, M_("   found %d observations\n"), boxinfo->n);
-    pprintf(prn, M_("   longest line = %d characters\n"), maxline); 
-    maxline += 2;
-
-    /* allocate space for data etc */
-    pputs(prn, M_("allocating memory for data... "));
-
-    if (start_new_Z(&boxZ, boxinfo, 0)) {
-	err = E_ALLOC;
-	goto box_bailout;
-    }
-
-    varstart = malloc((boxinfo->v - 1) * sizeof *varstart);
-    varsize = malloc((boxinfo->v - 1) * sizeof *varsize);
-    line = malloc(maxline);
-
-    if (varstart == NULL || varsize == NULL || line == NULL) {
-	free(varstart);
-	free(varsize);
-	free(line);
-	err = E_ALLOC;
-	goto box_bailout;
-    }
-
-    pputs(prn, M_("done\n"));
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	err = E_FOPEN;
-	goto box_bailout;
-    }
-    pputs(prn, M_("reading variable information...\n"));
-
-    gretl_push_c_numeric_locale();
-
-    /* second pass: get detailed info on variables */
-    v = 0; realv = 1; t = 0;
-    dumpvars = 0; gotdata = 0;
-    while (fgets(line, maxline, fp)) {
-	strncpy(tmp, line, 2);
-	tmp[2] = '\0';
-	switch (atoi(tmp)) {
-	case 0: /* comment */
-	    break;
-	case 1: /* BOX info (ignored for now) */
-	    break;
-	case 2: /* raw data records types (ignored for now) */
-	    break;
-	case 3: /* variable info */
-	    boxinfo->varname[realv][0] = '\0';
-	    strncat(boxinfo->varname[realv], line+11, VNAMELEN - 1);
-	    unspace(boxinfo->varname[realv]);
-	    lower(boxinfo->varname[realv]);
-	    pprintf(prn, M_(" variable %d: '%s'\n"), v+1, boxinfo->varname[realv]);
-	    strncpy(tmp, line+52, 6);
-	    tmp[6] = '\0';
-	    varstart[v] = atoi(tmp) - 1;
-	    pprintf(prn, M_("   starting col. %d, "), varstart[v]);
-	    strncpy(tmp, line+58, 4);
-	    tmp[4] = '\0';
-	    varsize[v] = atoi(tmp);
-	    pprintf(prn, M_("field width %d, "), varsize[v]);
-	    strncpy(tmp, line+62, 2);
-	    tmp[2] = '\0';
-	    pprintf(prn, M_("decimal places %d\n"), atoi(tmp));
-	    tmp[0] = '\0';
-	    strncpy(tmp, line+64, 20);
-	    tmp[20] = '\0';
-	    unspace(tmp);
-	    if (strlen(tmp)) {
-		pprintf(prn, M_("   Warning: coded variable (format '%s' "
-			"in BOX file)\n"), tmp);
-	    }
-	    *VARLABEL(boxinfo, realv) = 0;
-	    strncat(VARLABEL(boxinfo, realv), line + 87, 99);
-	    unspace(VARLABEL(boxinfo, realv));
-	    pprintf(prn, M_("   definition: '%s'\n"), VARLABEL(boxinfo, realv));
-	    realv++;
-	    v++;
-	    break;
-	case 4: /* category info (ignored for now) */
-	    break;
-	case 99: /* data line */
-	    realv = 1;
- 	    for (i=0; i<v; i++) {
-		if (varstart[i] == 0 && varsize[i] == 0) {
-		    if (!gotdata) dumpvars++;
-		    continue;
-		}
-		strncpy(tmp, line + varstart[i], varsize[i]);
-		tmp[varsize[i]] = '\0';
-		top_n_tail(tmp);
-
-		if (check_atof(tmp)) {
-		    pprintf(prn, "%s\n", gretl_errmsg);
-		    x = NADBL;
-		} else {
-		    x = atof(tmp);
-		}
-#ifdef BOX_DEBUG
-		fprintf(stderr, "read %d chars from pos %d: '%s' -> %g\n",
-			varsize[i], varstart[i], tmp, x); 
-#endif
-		boxZ[realv][t] = x;
-#ifdef BOX_DEBUG
-		fprintf(stderr, "setting Z[%d][%d] = %g\n", realv, t, x);
-#endif
-		realv++;
-	    }
-	    t++;
-	    gotdata = 1;
-	    break;
-	default:
-	    break;
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    pputs(prn, M_("done reading data\n"));
-    fclose(fp);
-
-    free(varstart);
-    free(varsize);
-    free(line);
-
-    dataset_obs_info_default(boxinfo);
-
-    if (dumpvars) {
-	dataset_drop_last_variables(dumpvars, &boxZ, boxinfo);
-	pprintf(prn, M_("Warning: discarded %d non-numeric variable(s)\n"), 
-		dumpvars);
-    }
-
-    if (*pZ == NULL) {
-	*pZ = boxZ;
-	if (*ppdinfo != NULL) {
-	    free(*ppdinfo);
-	}
-	*ppdinfo = boxinfo;
-    }
-
- box_bailout:
-
-#ifdef ENABLE_NLS
-    console_off();
-#endif
-
-    return err;
-}
-
 /**
  * import_other:
  * @pZ: pointer to data set.
@@ -2944,7 +2718,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
  * @fname: name of file.
  * @prn: gretl printing struct.
  * 
- * Open a ...
+ * Open a data file of a type that requires a special plugin.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -2954,7 +2728,7 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
 {
     void *handle;
     FILE *fp;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO **, PRN *);
     int err = 0;
 
 #ifdef ENABLE_NLS
@@ -2974,6 +2748,8 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
 	sheet_get_data = get_plugin_function("cli_get_gnumeric", &handle);
     } else if (ftype == GRETL_EXCEL) {
 	sheet_get_data = get_plugin_function("cli_get_xls", &handle);
+    } else if (ftype == GRETL_ODS) {
+	sheet_get_data = get_plugin_function("cli_get_ods", &handle);
     } else if (ftype == GRETL_WF1) {
 	sheet_get_data = get_plugin_function("wf1_get_data", &handle);
     } else if (ftype == GRETL_DTA) {
@@ -2989,7 +2765,7 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     if (sheet_get_data == NULL) {
         err = 1;
     } else {
-	err = (*sheet_get_data)(fname, pZ, *ppdinfo, prn);
+	err = (*sheet_get_data)(fname, pZ, ppdinfo, prn);
 	close_plugin(handle);
     }
 
@@ -3092,6 +2868,8 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_GNUMERIC;
     if (has_suffix(fname, ".xls"))
 	return GRETL_EXCEL;
+    if (has_suffix(fname, ".ods"))
+	return GRETL_ODS;
     if (has_suffix(fname, ".wf1"))
 	return GRETL_WF1;
     if (has_suffix(fname, ".dta"))
@@ -3129,11 +2907,6 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_NATIVE_DATA; 
     }
 
-    /* look at extension */
-    if (has_suffix(fname, ".box")) {
-	ftype = GRETL_BOX_DATA;
-    }
-
     /* take a peek at content */
     for (i=0; i<80; i++) {
 	c = getc(fp);
@@ -3151,13 +2924,6 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
     fclose(fp);
     teststr[4] = 0;
-
-    if (ftype == GRETL_BOX_DATA) {
-	if (strcmp(teststr, "00**")) {
-	    pputs(prn, M_("box file seems to be malformed\n"));
-	    ftype = GRETL_UNRECOGNIZED;
-	}
-    }
 
     return ftype;
 }

@@ -26,8 +26,14 @@ typedef enum {
     BOOK_AUTO_VARNAMES   = 1 << 2,
     BOOK_TIME_SERIES     = 1 << 3,
     BOOK_OBS_LABELS      = 1 << 4,
-    BOOK_DEBUG           = 1 << 5
+    BOOK_OBS_BLANK       = 1 << 5,
+    BOOK_DEBUG           = 1 << 6
 } BookFlag;
+
+enum {
+    COL_OFFSET,
+    ROW_OFFSET
+};
 
 #define book_numeric_dates(b) ((b)->flags & BOOK_NUMERIC_DATES)
 #define book_base_1904(b)     ((b)->flags & BOOK_DATE_BASE_1904)
@@ -57,6 +63,8 @@ struct wbook_ {
     BookFlag flags;
     int totmiss;
     char *missmask;
+    int (*get_min_offset)();
+    void *data;
 };
 
 struct wsheet_ {

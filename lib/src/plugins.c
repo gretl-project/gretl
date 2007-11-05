@@ -30,6 +30,7 @@
 enum {
     P_EXCEL_IMPORT = 1,
     P_GNUMERIC_IMPORT,
+    P_ODS_IMPORT,
     P_JOHANSEN,
     P_LAD,
     P_VIF,
@@ -75,6 +76,7 @@ struct plugin_info plugins[] = {
     { 0,                 NULL },
     { P_EXCEL_IMPORT,    "excel_import" },
     { P_GNUMERIC_IMPORT, "gnumeric_import" },
+    { P_ODS_IMPORT,      "ods_import" },
     { P_JOHANSEN,        "johansen" },
     { P_LAD,             "lad" },
     { P_VIF,             "vif" },
@@ -112,6 +114,9 @@ struct plugin_function plugin_functions[] = {
     { "cli_get_xls",      P_EXCEL_IMPORT },
     { "wbook_get_data",   P_GNUMERIC_IMPORT },
     { "cli_get_gnumeric", P_GNUMERIC_IMPORT },
+    { "ods_get_data",     P_ODS_IMPORT },
+    { "cli_get_ods",      P_ODS_IMPORT },
+
     { "wf1_get_data",     P_EVIEWS_IMPORT },
     { "dta_get_data",     P_STATA_IMPORT },
     { "jmulti_get_data",  P_JMULTI_IMPORT },

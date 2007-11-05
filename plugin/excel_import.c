@@ -1340,7 +1340,7 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
 }
 
 static int 
-real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+real_excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		     int gui, PRN *prn)
 {
     wbook xbook;
@@ -1519,13 +1519,7 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (*pZ == NULL) {
-	*pZ = newZ;
-	*pdinfo = *newinfo;
-	free(newinfo);
-    } else {
-	err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
-    }
+    err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
 
  getout:
     
@@ -1541,19 +1535,23 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 #endif
 
+    if (newinfo != NULL) {
+	destroy_dataset(newZ, newinfo);
+    }
+
     return err;
 }  
 
-int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		    PRN *prn)
 {
-    return real_excel_get_data(fname, pZ, pdinfo, 1, prn);
+    return real_excel_get_data(fname, pZ, ppdinfo, 1, prn);
 }
 
-int cli_get_xls (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int cli_get_xls (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		 PRN *prn)
 {
-    return real_excel_get_data(fname, pZ, pdinfo, 0, prn);
+    return real_excel_get_data(fname, pZ, ppdinfo, 0, prn);
 }
 
 

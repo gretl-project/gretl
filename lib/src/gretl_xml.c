@@ -2051,24 +2051,24 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * @ppdinfo: pointer to data information struct.
  * @fname: name of file to try.
  * @ppaths: path information struct.
- * @ocode: %DATA_NONE: no datafile currently open; %DATA_CLEAR: datafile
- * is open, should be cleared; %DATA_APPEND: add to current dataset.
+ * @opt: use %OPT_P to display gui progress bar.
  * @prn: where messages should be written.
- * @gui: should = 1 if the function is launched from the GUI, else 0.
  * 
  * Read data from file into gretl's work space, allocating space as
- * required.
+ * required.  If the array to which @pZ points is not %NULL, attempt
+ * to merge the new data with the original data.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
 int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
-		    PATHS *ppaths, DataOpenCode ocode, PRN *prn, int gui) 
+		    PATHS *ppaths, gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo;
     double **tmpZ = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
+    int newdata = (*pZ == NULL);
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0;
     long fsz, progress = 0L;
@@ -2094,7 +2094,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	fprintf(stderr, "%s %ld bytes %s...\n", 
 		(is_gzipped(fname))? I_("Uncompressing") : I_("Reading"),
 		fsz, I_("of data"));
-	if (gui) progress = fsz;
+	if (opt & OPT_P) progress = fsz;
     }
 
     doc = gretl_xmlParseFile(fname);
@@ -2195,24 +2195,10 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     data_read_message(fname, tmpdinfo, prn);
 
-    if (ocode == DATA_APPEND) {
-	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
-	if (err) {
-	    tmpZ = NULL;
-	    free(tmpdinfo);
-	    tmpdinfo = NULL;
-	}
-    } else {
-	if (ppaths != NULL && fname != ppaths->datfile) {
-	    strcpy(ppaths->datfile, fname);
-	}
-	free_Z(*pZ, *ppdinfo);
-	if (ocode == DATA_CLEAR) {
-	    clear_datainfo(*ppdinfo, CLEAR_FULL);
-	}
-	free(*ppdinfo);
-	*ppdinfo = tmpdinfo;
-	*pZ = tmpZ;
+    err = merge_or_replace_data(pZ, ppdinfo, &tmpZ, &tmpdinfo, prn);
+
+    if (!err && newdata && ppaths != NULL && fname != ppaths->datfile) {
+	strcpy(ppaths->datfile, fname);
     }
 
  bailout:
@@ -2225,22 +2211,20 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
     */
-    if (!err && tmpdinfo->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(tmpZ, tmpdinfo);
+    if (!err && (*ppdinfo)->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(*pZ, *ppdinfo);
     }
 
-    if (!err && tmpdinfo->structure == STACKED_TIME_SERIES) {
-	if (tmpdinfo->paninfo == NULL) {
-	    err = dataset_add_default_panel_indices(tmpdinfo);
+    if (!err && (*ppdinfo)->structure == STACKED_TIME_SERIES) {
+	if ((*ppdinfo)->paninfo == NULL) {
+	    err = dataset_add_default_panel_indices(*ppdinfo);
 	} else {
-	    err = dataset_finalize_panel_indices(tmpdinfo);
+	    err = dataset_finalize_panel_indices(*ppdinfo);
 	}
     }
 
-    if (err) {
-	free_Z(tmpZ, tmpdinfo);
-	clear_datainfo(tmpdinfo, CLEAR_FULL);
-	free(tmpdinfo);
+    if (err && tmpdinfo != NULL) {
+	destroy_dataset(tmpZ, tmpdinfo);
     }
 
 #ifdef ENABLE_NLS

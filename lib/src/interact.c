@@ -3676,16 +3676,13 @@ static int append_data (const char *line, double ***pZ,
 	err = import_csv(pZ, ppdinfo, fname, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, fname, prn);
-    } else if (k == GRETL_BOX_DATA) {
-	err = import_box(pZ, ppdinfo, fname, prn);
     } else if (WORKSHEET_IMPORT(k)) {
 	err = import_other(pZ, ppdinfo, k, fname, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, ppdinfo, fname, NULL, 
-			     DATA_APPEND, prn, 0);
+			     OPT_NONE, prn);
     } else {
-	err = gretl_get_data(pZ, ppdinfo, fname, NULL, 
-			     DATA_APPEND, prn);
+	err = gretl_get_data(pZ, ppdinfo, fname, NULL, prn);
     }
 
     return err;

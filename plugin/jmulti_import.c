@@ -297,7 +297,7 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
     return err;
 }
 
-int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+int jmulti_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 		     PRN *prn)
 {
     int maxlen = 0;
@@ -383,12 +383,7 @@ int jmulti_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	newinfo->descrip = descrip;
 	descrip = NULL;
 
-	if (*pZ == NULL) {
-	    *pZ = newZ;
-	    *pdinfo = *newinfo;
-	} else {
-	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
-	}
+	err = merge_or_replace_data(pZ, ppdinfo, &newZ, &newinfo, prn);
     }
 
  bailout:

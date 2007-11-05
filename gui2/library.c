@@ -5413,7 +5413,7 @@ void maybe_display_string_table (void)
     }
 }
 
-void do_open_csv_box (char *fname, int code, int append)
+void do_open_csv_octave (char *fname, int code, int append)
 {
     int err;
     PRN *prn;
@@ -5422,10 +5422,7 @@ void do_open_csv_box (char *fname, int code, int append)
 
     if (bufopen(&prn)) return;
 
-    if (code == OPEN_BOX) {
-	err = import_box(&Z, &datainfo, fname, prn);
-	strcpy(dtype, "BOX");
-    } else if (code == OPEN_OCTAVE) {
+    if (code == OPEN_OCTAVE) {
 	err = import_octave(&Z, &datainfo, fname, prn);
 	strcpy(dtype, "Octave");
     } else {
@@ -6386,7 +6383,6 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 static int open_append (ExecState *s, double ***pZ,
 			DATAINFO **ppdinfo, PRN *prn)
 {
-    DataOpenCode ocode = DATA_NONE;
     DATAINFO *pdinfo = *ppdinfo;
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -6407,8 +6403,6 @@ static int open_append (ExecState *s, double ***pZ,
 
     if (cmd->opt & OPT_W) {
 	k = GRETL_NATIVE_DB_WWW;
-    } else if (cmd->opt & OPT_B) {
-	k = GRETL_BOX_DATA;
     } else if (cmd->opt & OPT_O) {
 	k = GRETL_CSV_DATA;
     } else {
@@ -6419,9 +6413,7 @@ static int open_append (ExecState *s, double ***pZ,
 	      k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
 
     if (data_status & HAVE_DATA) {
-	if (dbdata || cmd->ci == APPEND) {
-	    ocode = DATA_APPEND;
-	} else {
+	if (!dbdata && cmd->ci != APPEND) {
 	    close_session(s, pZ, ppdinfo);
 	    pdinfo = *ppdinfo;
 	}
@@ -6431,18 +6423,16 @@ static int open_append (ExecState *s, double ***pZ,
 	err = import_csv(pZ, ppdinfo, datfile, OPT_NONE, prn);
     } else if (k == GRETL_OCTAVE) {
 	err = import_octave(pZ, ppdinfo, datfile, prn);
-    } else if (k == GRETL_BOX_DATA) {
-	err = import_box(pZ, ppdinfo, datfile, prn);
     } else if (k == GRETL_XML_DATA) {
 	err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
-			     ocode, prn, 1);
+			     OPT_P, prn);
     } else if (WORKSHEET_IMPORT(k)) {
 	err = import_other(pZ, ppdinfo, k, datfile, prn);
     } else if (dbdata) {
 	err = set_db_name(datfile, k, &paths, prn);
     } else {
 	err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
-			     ocode, prn);
+			     prn);
     }
 
     pdinfo = *ppdinfo;
@@ -6456,8 +6446,8 @@ static int open_append (ExecState *s, double ***pZ,
 	strncpy(paths.datfile, datfile, MAXLEN - 1);
     }
 
-    if (k == GRETL_CSV_DATA || k == GRETL_BOX_DATA || 
-	k == GRETL_OCTAVE || WORKSHEET_IMPORT(k) || dbdata) {
+    if (k == GRETL_CSV_DATA || k == GRETL_OCTAVE || 
+	WORKSHEET_IMPORT(k) || dbdata) {
 	data_status |= IMPORT_DATA;
 	if (!dbdata) {
 	    maybe_display_string_table();

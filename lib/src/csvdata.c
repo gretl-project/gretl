@@ -276,7 +276,7 @@ static int csv_weekly_data (double ***pZ, DATAINFO *pdinfo)
     return ret;
 }
 
-#define DAY_DEBUG 0
+#define DAY_DEBUG 1
 
 static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 {
@@ -928,10 +928,10 @@ int import_obs_label (const char *s)
     strncat(tmp, s, 31);
     lower(tmp);
 
-    return (!strcmp(s, "obs") ||
-	    !strcmp(s, "date") || 
-	    !strcmp(s, "year") || 
-	    !strcmp(s, "period"));    
+    return (!strcmp(tmp, "obs") ||
+	    !strcmp(tmp, "date") || 
+	    !strcmp(tmp, "year") || 
+	    !strcmp(tmp, "period"));    
 }
 
 static void check_first_field (const char *line, csvdata *c, PRN *prn)
@@ -1076,8 +1076,7 @@ static int non_numeric_check (csvdata *c, PRN *prn)
     return err;
 }
 
-static int process_csv_obs (csvdata *c, int i, int t, 
-			    gretlopt opt, PRN *prn)
+static int process_csv_obs (csvdata *c, int i, int t, PRN *prn)
 {
     int ix, err = 0;
 
@@ -1351,7 +1350,7 @@ static int csv_varname_scan (csvdata *c, char *line, int maxlen, FILE *fp,
 
 static int 
 real_read_labels_and_data (csvdata *c, char *line, int maxlen, 
-			   FILE *fp, gretlopt opt, PRN *prn)
+			   FILE *fp, PRN *prn)
 {
     char *p;
     int i, k, nv, t = 0;
@@ -1400,7 +1399,7 @@ real_read_labels_and_data (csvdata *c, char *line, int maxlen,
 		iso_to_ascii(c->dinfo->S[t]);
 	    } else {
 		nv = (csv_skip_column(c))? k : k + 1;
-		err = process_csv_obs(c, nv, t, opt, prn);
+		err = process_csv_obs(c, nv, t, prn);
 		if (err) {
 		    break;
 		}
@@ -1422,13 +1421,12 @@ real_read_labels_and_data (csvdata *c, char *line, int maxlen,
 }
 
 static int csv_read_data (csvdata *c, char *line, int maxlen,
-			  FILE *fp, gretlopt opt, PRN *prn,
-			  PRN *mprn)
+			  FILE *fp, PRN *prn, PRN *mprn)
 {
     int err;
 
     pputs(mprn, M_("scanning for row labels and data...\n"));
-    err = real_read_labels_and_data(c, line, maxlen, fp, opt, prn);
+    err = real_read_labels_and_data(c, line, maxlen, fp, prn);
 
     if (!err && csv_skip_column(c)) {
 	c->markerpd = test_markers_for_dates(&c->Z, c->dinfo, c->skipstr, 
@@ -1455,14 +1453,14 @@ static void csv_parsing_header (const char *fname, PRN *prn)
  * @pZ: pointer to data set.
  * @ppdinfo: pointer to data information struct.
  * @fname: name of CSV file.
- * @opt: not yet documented.
+ * @opt: use %OPT_C to force interpretation of data colums containing
+ * strings as coded values and not errors.
  * @prn: gretl printing struct (can be NULL).
  * 
  * Open a Comma-Separated Values data file and read the data into
  * the current work space.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
@@ -1474,6 +1472,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     FILE *fp = NULL;
     PRN *mprn = NULL;
     char *line = NULL;
+    int newdata = (*pZ == NULL);
     long datapos;
     int err = 0;
 
@@ -1583,12 +1582,12 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     datapos = ftell(fp);
 
-    err = csv_read_data(c, line, maxlen, fp, opt, prn, mprn);
+    err = csv_read_data(c, line, maxlen, fp, prn, mprn);
 
     if (!err && csv_skipping(c)) {
 	/* try again */
 	fseek(fp, datapos, SEEK_SET);
-	err = csv_read_data(c, line, maxlen, fp, opt, prn, NULL);
+	err = csv_read_data(c, line, maxlen, fp, prn, NULL);
     }
 
     if (!err) {
@@ -1596,7 +1595,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (!err && csv_has_non_numeric(c)) {
 	    /* try once more */
 	    fseek(fp, datapos, SEEK_SET);
-	    err = csv_read_data(c, line, maxlen, fp, opt, prn, NULL);
+	    err = csv_read_data(c, line, maxlen, fp, prn, NULL);
 	}
     }	
 
@@ -1650,27 +1649,11 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	pputs(prn, M_("warning: some variable names were duplicated\n"));
     }
 
-    if (*pZ == NULL) {
-	/* no dataset currently in place */
-	*pZ = c->Z;
-	c->Z = NULL;
-	if (*ppdinfo != NULL) {
-	    free(*ppdinfo);
-	}
-	if (c->descrip != NULL) {
-	    c->dinfo->descrip = c->descrip;
-	    c->descrip = NULL;
-	}
-	*ppdinfo = c->dinfo;
-	c->dinfo = NULL;
-    } else {
-	err = merge_data(pZ, *ppdinfo, c->Z, c->dinfo, prn);
-	if (err) {
-	    /* merge_data() frees the dataset */
-	    c->Z = NULL;
-	    c->dinfo = NULL;
-	    goto csv_bailout;
-	}
+    err = merge_or_replace_data(pZ, ppdinfo, &c->Z, &c->dinfo, prn);
+
+    if (!err && newdata && c->descrip != NULL) {
+	(*ppdinfo)->descrip = c->descrip;
+	c->descrip = NULL;
     }
 
  csv_bailout:

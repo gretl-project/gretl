@@ -40,12 +40,12 @@
                               i == OPEN_CSV || \
                               i == OPEN_ASCII || \
                               i == OPEN_OCTAVE || \
-	                      i == OPEN_BOX || \
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL || \
                               i == OPEN_WF1 || \
                               i == OPEN_DTA || \
-                              i == OPEN_JMULTI)
+                              i == OPEN_JMULTI || \
+                              i == OPEN_ODS)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
                                i == APPEND_CSV || \
@@ -55,7 +55,8 @@
                                i == APPEND_ASCII || \
                                i == APPEND_WF1 || \
                                i == APPEND_DTA || \
-                               i == APPEND_JMULTI)
+                               i == APPEND_JMULTI || \
+                               i == APPEND_ODS)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_BOXPLOT_EPS || \
@@ -104,7 +105,6 @@ static struct extmap action_map[] = {
     { APPEND_CSV,        ".csv" },
     { OPEN_ASCII,        ".txt" },
     { APPEND_ASCII,      ".txt" },
-    { OPEN_BOX,          ".box" },
     { OPEN_GNUMERIC,     ".gnumeric" },
     { APPEND_GNUMERIC,   ".gnumeric" },
     { OPEN_EXCEL,        ".xls" },
@@ -115,6 +115,8 @@ static struct extmap action_map[] = {
     { APPEND_DTA,        ".dta" },
     { OPEN_JMULTI,       ".dat" },
     { APPEND_JMULTI,     ".dat" },
+    { OPEN_ODS,          ".ods" },
+    { APPEND_ODS,        ".ods" },
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
     { FILE_OP_MAX,       NULL }
@@ -608,7 +610,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
 	{ OPEN_ASCII,   { N_("ASCII files (*.txt)"), "*.txt" }},
 	{ APPEND_ASCII, { N_("ASCII files (*.txt)"), "*.txt" }},
-	{ OPEN_BOX,     { N_("BOX data files (*.box)"), "*.box" }},
 	{ OPEN_GNUMERIC,   { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{ APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{ OPEN_EXCEL,   { N_("Excel files (*.xls)"), "*.xls" }},
@@ -619,6 +620,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_DTA,   { N_("Stata files (*.dta)"), "*.dta" }},
 	{ OPEN_JMULTI,  { N_("JMulTi files (*.dat)"), "*.dat" }},
 	{ APPEND_JMULTI,{ N_("JMulTi files (*.dat)"), "*.dat" }},
+	{ OPEN_ODS,     { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
+	{ APPEND_ODS,   { N_("Open Document Spreadsheet (*.ods)"), "*.ods" }},
 	{ OPEN_RATS_DB, { N_("RATS databases (*.rat)"), "*.rat" }},
 	{ OPEN_PCGIVE_DB, { N_("PcGive data files (*.bn7)"), "*.bn7" }},
 	{ SET_PROG,     { N_("program files (*.exe)"), "*.exe" }}
