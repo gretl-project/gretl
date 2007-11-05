@@ -47,11 +47,13 @@ static void wsheet_init (wsheet *sheet)
 {
     sheet->maxcol = sheet->maxrow = 0;
     sheet->text_cols = sheet->text_rows = 0;
+    sheet->colheads = 0;
+    sheet->ID = 0;
+    sheet->flags = 0;
+    sheet->name = NULL;
     sheet->Z = NULL;
     sheet->varname = NULL;
     sheet->label = NULL;
-    sheet->name = NULL;
-    sheet->flags = 0;
 }
 
 static void wsheet_free (wsheet *sheet)
@@ -727,7 +729,7 @@ real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	if (book_numeric_dates(book)) {
+	if (book != NULL && book_numeric_dates(book)) {
 	    pd = pd_from_numeric_dates(nrows, r0, 0, sheet->label, book);
 	} else if (sheet->colheads > 0) {
 	    if (obs_column_heading(sheet->label[0])) {
