@@ -70,7 +70,6 @@ struct office_table_ {
     int xoffset;     /* offset to first non-blank column */
     int yoffset;     /* offset to first non-blank row */
     int empty;       /* has any content (0) or not (1) */
-    int strrow0;     /* first row containing strings */
 };
 
 struct office_sheet_ {
@@ -105,7 +104,6 @@ static office_table *office_table_new (xmlNodePtr node, int *err)
 	tab->xoffset = XOFF_UNDEF;
 	tab->yoffset = 0;
 	tab->empty = 1;
-	tab->strrow0 = -1;
     } else {
 	*err = E_ALLOC;
 	free(name);
@@ -192,12 +190,6 @@ static void office_table_print (office_table *tab)
 	fprintf(stderr, "%d x %d, xoff = %d, yoff = %d, data area %d x %d\n",
 		tab->rows, tab->cols, tab->xoffset, tab->yoffset,
 		tab->rows - tab->yoffset, tab->cols - tab->xoffset);
-	if (tab->strrow0 < 0) {
-	    fprintf(stderr, " Found no strings rows\n");
-	} else {
-	    fprintf(stderr, " Found (first) string(s) on row %d\n", 
-		    tab->strrow0);
-	}
     }
 }
 
@@ -302,68 +294,15 @@ static int cell_width (xmlNodePtr p)
     return w;
 }
 
-static int test_read_cell (xmlNodePtr cur, office_sheet *sheet, 
-			   office_table *tab, int *totcols,
-			   int *realcols)
-{
-    int nr, gottype = 0, gotval = 0;
-    xmlChar *tmp;
-    int totadd = 1;
-    int realadd = 0;
-
-    if (get_ods_value_type(cur) != ODS_NONE) {
-	realadd = gottype = 1;
-    }
-
-    tmp = xmlGetProp(cur, (XUC) "value");
-    if (tmp != NULL) {
-	gotval = 1;
-	free(tmp);
-    }  
-
-    nr = cell_width(cur);
-    if (nr > 1) {
-	if (gottype) {
-	    realadd = nr;
-	}
-	totadd = nr;
-    }
-
-    if (gottype && !gotval) {
-	/* string? */
-	char *sval;
-
-	sval = get_ods_string_value(cur, sheet);
-	if (sval != NULL) {
-	    gotval = 1;
-	    free(sval);
-	    if (tab->strrow0 < 0) {
-		tab->strrow0 = tab->rows;
-	    }
-	}
-    }
-
-    if (gottype && gotval) {
-	if (*totcols < tab->xoffset) {
-	    tab->xoffset = *totcols;
-	}
-	tab->empty = 0;
-    }
-
-    *totcols += totadd;
-    *realcols += realadd;
-
-    return 0;
-}
-
 static int real_read_cell (xmlNodePtr cur, 
 			   office_sheet *sheet, 
-			   int readrow, int readcol,
+			   int readrow, int *preadcol,
 			   PRN *prn)
 {
-    int obscol, blank0, vnames;
     char *val = NULL;
-    int nr, j, v, t, vtype;
+    int readcol = *preadcol;
+    int obscol, blank0, vnames;
+    int nr, j, v, vj, t, vtype;
     int err = 0;
 
     obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
@@ -379,6 +318,8 @@ static int real_read_cell (xmlNodePtr cur,
 
     vtype = get_ods_value_type(cur);
     nr = cell_width(cur);
+
+    *preadcol += nr;
 
 #if ODEBUG
     fprintf(stderr, "reading: i=%d, j=%d, v=%d, t=%d\n",
@@ -448,8 +389,6 @@ static int real_read_cell (xmlNodePtr cur,
 	return err;
     }	    
 
-    gretl_push_c_numeric_locale();
-
     if (vtype == ODS_NUMERIC) {
 	val = (char *) xmlGetProp(cur, (XUC) "value");
 	if (val != NULL) {
@@ -457,39 +396,23 @@ static int real_read_cell (xmlNodePtr cur,
 	    double x = atof(val);
 
 	    fprintf(stderr, " float: '%s'\n", val); 
-	    for (j=0; j<nr && (v+j)<sheet->dinfo->v; j++) {
-		sheet->Z[v+j][t] = x;
-	    }
+	    for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
+		sheet->Z[vj][t] = x;
+	    }	    
 	    free(val);
-	}
-    } else if (vtype == ODS_DATE) {
-	val = (char *) xmlGetProp(cur, (XUC) "date-value");
-	if (val != NULL) {
-	    /* yyyy-mm-dd, or yyyy-mm-ddThh:mm:ss */
-	    fprintf(stderr, " date: '%s'\n", val); 
-	    free(val);
-	}	    
-    } else if (vtype == ODS_TIME) {
-	val = (char *) xmlGetProp(cur, (XUC) "time-value");
-	if (val != NULL) {
-	    /* PThhHmmMss,ffffS (ffff = fractional part of sec) */
-	    fprintf(stderr, " time: '%s'\n", val); 
-	    free(val);
-	}
-    } else if (vtype == ODS_STRING) {
-	val = get_ods_string_value(cur, sheet);
-	if (val != NULL) {
-	    fprintf(stderr, " string: '%s'\n", val);
-	    free(val);
+	} else {
+	    err = E_DATA;
 	}
     } else if (vtype == ODS_NONE) {
 	fprintf(stderr, " blank: NA?\n");
-	for (j=0; j<nr && (v+j)<sheet->dinfo->v; j++) {
-	    sheet->Z[v+j][t] = NADBL;
+	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
+	    sheet->Z[vj][t] = NADBL;
 	}
+    } else {
+	fprintf(stderr, "Expected numeric value or blank, but "
+		"got value-type %d\n", vtype);
+	err = E_DATA;
     }
-
-    gretl_pop_c_numeric_locale();
 
     return err;
 }
@@ -508,17 +431,21 @@ static int read_data_row (xmlNodePtr cur,
     cur = cur->xmlChildrenNode;
     tabcol = readcol = 0;
 
+    gretl_push_c_numeric_locale();
+
     while (cur != NULL && !err && readcol < tab->cols) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
 	    if (tabcol >= sheet->xoffset) {
 		err = real_read_cell(cur, sheet, 
-				     readrow, readcol++, 
+				     readrow, &readcol, 
 				     prn);
 	    }
 	    tabcol += cell_width(cur);
 	}
 	cur = cur->next;
     }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
@@ -710,11 +637,14 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
     return err;
 }
 
-static int read_table (xmlNodePtr cur, office_sheet *sheet)
+static int 
+get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 {
     office_table *tab = NULL;
     xmlNodePtr rowp;
-    int totcols, realcols;
+    int vtype, nc, row_empty;
+    int cols, xoffset;
+    int rows, rbak;
     int err = 0;
 
     tab = office_table_new(cur, &err);
@@ -729,46 +659,54 @@ static int read_table (xmlNodePtr cur, office_sheet *sheet)
 
     cur = cur->xmlChildrenNode;
 
-    /* below: totcols and realcols represent the number of columns
-       falling under a given "table-cell", which may have a
-       "columns-repeated" value: totcols includes empty columns while
-       realcols does not.
-
-       The following is not really right yet: FIXME 
-    */
+    rows = rbak = 0;
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
-	    totcols = realcols = 0;
+	    cols = xoffset = 0;
+	    row_empty = 1;
 	    rowp = cur->xmlChildrenNode;
 	    while (rowp != NULL && !err) {
-		int prevtot = totcols;
-		int prevreal = realcols;
-
 		if (!xmlStrcmp(rowp->name, (XUC) "table-cell")) {
-		    err = test_read_cell(rowp, sheet, tab, &totcols,
-					 &realcols);
-		    if (rowp->next == NULL && realcols == prevreal) {
-			/* last cell in row may contain lots o' nothin' */
-			totcols = prevtot;
+		    vtype = get_ods_value_type(rowp);
+		    nc = cell_width(rowp);
+		    if (vtype == ODS_NONE) {
+			if (row_empty) {
+			    xoffset += nc;
+			}
+		    } else {
+			row_empty = 0;
+			tab->empty = 0;
+		    }
+		    if (rowp->next == NULL) {
+			/* last cell in row */
+			cols += (vtype == ODS_NONE)? 0 : nc;
+		    } else {
+			cols += nc;
 		    }
 		}
 		rowp = rowp->next;
 	    }
 	    if (!err) {
-		if (realcols > 0 || (tab->empty && totcols > 0)) {
-		    tab->rows += 1;
+		rows++;
+		if (!row_empty) {
+		    rbak = rows;
 		}
-		if (totcols > tab->cols) {
-		    tab->cols = totcols;
+		if (cols > tab->cols) {
+		    tab->cols = cols;
 		}
 		if (tab->empty) {
 		    tab->yoffset += 1;
+		}
+		if (!row_empty && xoffset < tab->xoffset) {
+		    tab->xoffset = xoffset;
 		}
 	    }
 	}
 	cur = cur->next;
     }
+
+    tab->rows = rbak;
 
     return err;
 }
@@ -809,7 +747,7 @@ static office_sheet *read_content (PRN *prn, int *err)
 		    c2 = c1->xmlChildrenNode;
 		    while (c2 != NULL && !*err) {
 			if (!xmlStrcmp(c2->name, (XUC) "table")) {
-			    *err = read_table(c2, sheet);
+			    *err = get_table_dimensions(c2, sheet);
 			}
 			c2 = c2->next;
 		    }
