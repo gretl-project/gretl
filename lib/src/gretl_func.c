@@ -537,6 +537,7 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
+    case GRETL_TYPE_STRING:     return "string";	
     }
 
     return "unknown";
@@ -573,6 +574,8 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
     if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
     if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
+
+    if (!strcmp(s, "string")) return GRETL_TYPE_STRING;
 
     return 0;
 }
@@ -2898,13 +2901,15 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
     return dataset_add_scalar_as(x, param->name, pZ, pdinfo);
 }
 
+/* FIXME */
+
 static int allocate_function_args (ufunc *fun,
 				   int argc, fnargs *args, 
 				   double ***pZ,
 				   DATAINFO *pdinfo)
 {
     fn_param *fp;
-    int xi = 0, Xi = 0, Mi = 0, li = 0;
+    int xi = 0, Xi = 0, Mi = 0, li = 0, si = 0;
     int i, err = 0;
 
     /* regular arguments, passed by value */
@@ -2929,7 +2934,9 @@ static int allocate_function_args (ufunc *fun,
 	    } else {
 		err = localize_list(args->lists[li++], fp, pdinfo);
 	    } 
-	} 
+	} else if (fp->type == GRETL_TYPE_STRING) {
+	    err = add_string_as(args->s[si++], fp->name);
+	}
     }
 
     xi = Mi = 0;
@@ -3370,7 +3377,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     state.models = NULL;
 
     argc = args->nx + args->nX + args->nM + args->nl +
-	args->nrefv + args->nrefm + args->nnull;
+	args->nrefv + args->nrefm + args->ns + 
+	args->nnull;
 
 #if FN_DEBUG
     fprintf(stderr, "gretl_function_exec: argc = %d\n", argc);

@@ -42,16 +42,17 @@ typedef struct fnargs_ fnargs;
 
 struct fnargs_ {
     char *types;
-    int nx, nX, nM, nl;
+    int nx, nX, nM, nl, ns;
     int nrefv, nrefm;
     int nnull;
     int nnames;
-    double *x;
-    double **X;
-    gretl_matrix **M;
-    char **lists;
-    int *refv;
-    user_matrix **refm;
+    double *x;          /* double args */
+    double **X;         /* double * args */
+    gretl_matrix **M;   /* matrix args */
+    char **lists;       /* list args */
+    int *refv;          /* series ref (pointer) args */
+    user_matrix **refm; /* matrix ref (pointer) args */
+    char **s;           /* string args */
     char **upnames;
 };
 

@@ -2311,6 +2311,7 @@ int merge_or_replace_data (double ***pZ0, DATAINFO **ppdinfo0,
 	err = merge_data(pZ0, *ppdinfo0, *pZ1, *ppdinfo1, prn);
 	destroy_dataset(*pZ1, *ppdinfo1);
     } else {
+	free(*ppdinfo0);
 	*pZ0 = *pZ1;
 	*ppdinfo0 = *ppdinfo1;
     }

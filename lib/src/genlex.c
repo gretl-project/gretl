@@ -23,6 +23,7 @@
 #include "usermat.h"
 #include "loop_private.h"
 #include "gretl_func.h"
+#include "gretl_string_table.h"
 
 #define NUMLEN 32
 #define MAXQUOTE 64
@@ -634,6 +635,9 @@ static void look_up_word (const char *s, parser *p)
 		} else if (gretl_is_user_function(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
+		} else if (string_is_defined(s)) {
+		    p->sym = STR;
+		    p->idstr = gretl_strdup(get_named_string(s));
 		} else {
 		    err = 1;
 		}

@@ -460,6 +460,35 @@ static saved_string *add_named_string (const char *name)
     return &S[n];
 }
 
+int add_string_as (const char *s, const char *name)
+{
+    int n = n_saved_strings;
+    saved_string *S;
+    int err = 0;
+
+    if (name == NULL || s == NULL) {
+	return E_DATA;
+    }
+
+    S = realloc(saved_strings, (n + 1) * sizeof *S);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    saved_strings = S;
+
+    S[n].s = gretl_strdup(s);
+    if (S[n].s == NULL) {
+	err = E_ALLOC;
+    } else {  
+	strcpy(S[n].name, name);
+	S[n].level = gretl_function_depth() + 1;
+	n_saved_strings += 1;
+    }
+
+    return err;
+}
+
 void saved_strings_cleanup (void)
 {
     int i;

@@ -1692,6 +1692,7 @@ void fn_args_init (fnargs *args)
     args->nl = 0;
     args->nrefv = 0;
     args->nrefm = 0;
+    args->ns = 0;
     args->nnull = 0;
     args->nnames = 0;
     args->x = NULL;
@@ -1700,6 +1701,7 @@ void fn_args_init (fnargs *args)
     args->lists = NULL;
     args->refv = NULL;
     args->refm = NULL;
+    args->s = NULL;
     args->upnames = NULL;
 }
 
@@ -1715,6 +1717,7 @@ void fn_args_free (fnargs *args)
     free(args->lists);
     free(args->refv);
     free(args->refm);
+    free(args->s);
     free_strings_array(args->upnames, args->nnames);
 }
 
@@ -1728,7 +1731,8 @@ int push_fn_arg (fnargs *args, int type, void *p)
 #endif
 
     n = args->nx + args->nX + args->nM + args->nl + 
-	args->nrefv + args->nrefm + args->nnull + 1;
+	args->nrefv + args->nrefm + args->ns +
+	args->nnull + 1;
 
     types = realloc(args->types, n * sizeof *types);
     if (types == NULL) {
@@ -1813,6 +1817,18 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->refm = M;
 	    args->nrefm = n;
 	}
+    } else if (type == GRETL_TYPE_STRING) {
+	char **s;
+
+	n = args->ns + 1;
+	s = realloc(args->s, n * sizeof *s);
+	if (s == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    s[n-1] = (char *) p;
+	    args->s = s;
+	    args->ns = n;
+	}	
     } else {
 	err = E_TYPES;
     }

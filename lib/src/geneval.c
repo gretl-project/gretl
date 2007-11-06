@@ -2682,7 +2682,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
-                         s == EMPTY)
+                         s == STR || s == EMPTY)
 
 /* evaluate a user-defined function */
 
@@ -2780,6 +2780,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = push_fn_arg(&args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
 	    p->err = push_fn_arg(&args, GRETL_TYPE_LIST, n->v.str);
+	} else if (n->t == STR) {
+	    p->err = push_fn_arg(&args, GRETL_TYPE_STRING, n->v.str);
 	}
 
 	if (p->err) {
@@ -2788,8 +2790,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     }
 
 #if EDEBUG
-    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
-	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
+    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, "
+	    "nstr=%d, total=%d\n", args.nx, args.nX, args.nM, args.nl, 
+	    args.nrefv, args.ns, m);
     fprintf(stderr, "(p->err = %d)\n", p->err);
 #endif
 
