@@ -670,8 +670,8 @@ zlib is available via http://www.info-zip.org/pub/infozip/zlib/
 
 elif test x"${XML_LIBS}" = x ; then
 echo "
-Please install libxml and then reconfigure gretl.
-libxml is available from http://xmlsoft.org/
+Please install libxml2 and then reconfigure gretl.
+libxml2 is available from http://xmlsoft.org/
 "
 
 elif test "${have_lapack}" = "no" ; then
