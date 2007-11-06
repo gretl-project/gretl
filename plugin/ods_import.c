@@ -644,7 +644,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
     xmlNodePtr rowp;
     int vtype, nc, row_empty;
     int cols, xoffset;
-    int rows, rbak;
+    int rows, rchk;
     int err = 0;
 
     tab = office_table_new(cur, &err);
@@ -659,7 +659,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 
     cur = cur->xmlChildrenNode;
 
-    rows = rbak = 0;
+    rows = rchk = 0;
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
@@ -690,7 +690,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 	    if (!err) {
 		rows++;
 		if (!row_empty) {
-		    rbak = rows;
+		    rchk = rows;
 		}
 		if (cols > tab->cols) {
 		    tab->cols = cols;
@@ -706,7 +706,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 	cur = cur->next;
     }
 
-    tab->rows = rbak;
+    tab->rows = rchk;
 
     return err;
 }
