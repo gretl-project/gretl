@@ -263,7 +263,33 @@ int gretl_isunits (int t1, int t2, const double *x)
     return ret;
 }
 
-#define FEWVALS 8
+/**
+ * gretl_isint:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * 
+ * Check whether variable @x contains only integer values over the
+ * given sample range (aside from any missing values).
+ *
+ * Returns: 1 if so, otherwise 0.
+ */
+
+int gretl_isint (int t1, int t2, const double *x)
+{
+    int t, ret = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && x[t] != floor(x[t])) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+#define FEWVALS 32
 
 static int few_vals (int t1, int t2, const double *x)
 {
@@ -306,7 +332,7 @@ static int few_vals (int t1, int t2, const double *x)
  * values.
  * 
  * Returns: 0 if test (a) is not passed or the number of distinct values
- * is > 8; else 1 if the number of distinct values is <= 8; else 2 if 
+ * is > 32; else 1 if the number of distinct values is <= 32; else 2 if 
  * the number of distinct values is <= 4.  A return of 1 is supposed
  * to indicate that it's "reasonable" to treat @x as discrete, while
  * a return of 2 indicates that it's probably ureasonable _not_ to
