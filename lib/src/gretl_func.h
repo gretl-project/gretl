@@ -40,22 +40,6 @@ typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;
 
-struct fnargs_ {
-    char *types;
-    int nx, nX, nM, nl, ns;
-    int nrefv, nrefm;
-    int nnull;
-    int nnames;
-    double *x;          /* double args */
-    double **X;         /* double * args */
-    gretl_matrix **M;   /* matrix args */
-    char **lists;       /* list args */
-    int *refv;          /* series ref (pointer) args */
-    user_matrix **refm; /* matrix ref (pointer) args */
-    char **s;           /* string args */
-    char **upnames;
-};
-
 int n_free_functions (void);
 
 ufunc *get_user_function_by_name (const char *name);
@@ -166,5 +150,11 @@ int update_function_from_script (const char *fname, int idx);
 int user_function_help (const char *fnname, PRN *prn);
 
 void gretl_functions_cleanup (void);
+
+fnargs *fn_args_new (void);
+
+void fn_args_free (fnargs *args);
+
+int push_fn_arg (fnargs *args, int type, void *p);
 
 #endif /* GRETL_FUNC_H */

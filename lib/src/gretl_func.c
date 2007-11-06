@@ -73,6 +73,22 @@ struct fnpkg_ {
     int n_priv;
 };
 
+struct fnargs_ {
+    char *types;
+    int nx, nX, nM, nl, ns;
+    int nrefv, nrefm;
+    int nnull;
+    int nnames;
+    double *x;          /* double args */
+    double **X;         /* double * args */
+    gretl_matrix **M;   /* matrix args */
+    char **lists;       /* list args */
+    int *refv;          /* series ref (pointer) args */
+    user_matrix **refm; /* matrix ref (pointer) args */
+    char **s;           /* string args */
+    char **upnames;
+};
+
 enum {
     ARG_OPTIONAL = 1 << 0,
     ARG_CONST    = 1 << 1
@@ -118,6 +134,175 @@ static void set_compiling_off (void)
 int gretl_function_depth (void)
 {
     return fn_executing;
+}
+
+/* handling of function arguments */
+
+fnargs *fn_args_new (void)
+{
+    fnargs *args = malloc(sizeof *args);
+
+    if (args == NULL) {
+	return NULL;
+    }
+
+    args->types = NULL;
+    args->nx = 0;
+    args->nX = 0;
+    args->nM = 0;
+    args->nl = 0;
+    args->nrefv = 0;
+    args->nrefm = 0;
+    args->ns = 0;
+    args->nnull = 0;
+    args->nnames = 0;
+    args->x = NULL;
+    args->X = NULL;
+    args->M = NULL;
+    args->lists = NULL;
+    args->refv = NULL;
+    args->refm = NULL;
+    args->s = NULL;
+    args->upnames = NULL;
+
+    return args;
+}
+
+/* note: this is not supposed to be a "deep free"; that is
+   handled in geneval.c */
+
+void fn_args_free (fnargs *args)
+{
+    free(args->types);
+    free(args->x);
+    free(args->X);
+    free(args->M);
+    free(args->lists);
+    free(args->refv);
+    free(args->refm);
+    free(args->s);
+    free_strings_array(args->upnames, args->nnames);
+
+    free(args);
+}
+
+int push_fn_arg (fnargs *args, int type, void *p)
+{
+    char *types;
+    int n, err = 0;
+
+#if 0
+    fprintf(stderr, "push_fn_arg: starting on type %d\n", type);
+#endif
+
+    n = args->nx + args->nX + args->nM + args->nl + 
+	args->nrefv + args->nrefm + args->ns +
+	args->nnull + 1;
+
+    types = realloc(args->types, n * sizeof *types);
+    if (types == NULL) {
+	return E_ALLOC;
+    }
+
+    types[n-1] = type;
+    args->types = types;
+
+    if (type == GRETL_TYPE_NONE) {
+	args->nnull += 1;
+    } else if (type == GRETL_TYPE_DOUBLE) {
+	double *x;
+
+	n = args->nx + 1;
+	x = realloc(args->x, n * sizeof *x);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    x[n-1] = *(double *) p;
+	    args->x = x;
+	    args->nx = n;
+	}
+    } else if (type == GRETL_TYPE_SERIES) {
+	double **X;
+
+	n = args->nX + 1;
+	X = realloc(args->X, n * sizeof *X);
+	if (X == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    X[n-1] = (double *) p;
+	    args->X = X;
+	    args->nX = n;
+	}
+    } else if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix **M;
+
+	n = args->nM + 1;
+	M = realloc(args->M, n * sizeof *M);
+	if (M == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    M[n-1] = (gretl_matrix *) p;
+	    args->M = M;
+	    args->nM = n;
+	}
+    } else if (type == GRETL_TYPE_LIST) {
+	char **lists;
+
+	n = args->nl + 1;
+	lists = realloc(args->lists, n * sizeof *lists);
+	if (lists == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    lists[n-1] = (char *) p;
+	    args->lists = lists;
+	    args->nl = n;
+	}
+    } else if (type == GRETL_TYPE_SCALAR_REF ||
+	       type == GRETL_TYPE_SERIES_REF) {
+	int *refv;
+
+	n = args->nrefv + 1;
+	refv = realloc(args->refv, n * sizeof *refv);
+	if (refv == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    refv[n-1] = * (int *) p;
+	    args->refv = refv;
+	    args->nrefv = n;
+	}
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
+	user_matrix **M;
+
+	n = args->nrefm + 1;
+	M = realloc(args->refm, n * sizeof *M);
+	if (M == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    M[n-1] = (user_matrix *) p;
+	    args->refm = M;
+	    args->nrefm = n;
+	}
+    } else if (type == GRETL_TYPE_STRING) {
+	char **s;
+
+	n = args->ns + 1;
+	s = realloc(args->s, n * sizeof *s);
+	if (s == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    s[n-1] = (char *) p;
+	    args->s = s;
+	    args->ns = n;
+	}	
+    } else {
+	err = E_TYPES;
+    }
+
+    if (err) {
+	fprintf(stderr, "push_fn_arg: type = %d, err = %d\n", type, err);
+    }
+
+    return err;
 }
 
 /* Switch to delete, or not, all the "private" variables internal to a
@@ -947,27 +1132,36 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     return err;
 }
 
+static int wordmatch (const char *line, const char *s)
+{
+    int n = strlen(s);
+    
+    return (strncmp(line, s, n) == 0 && 
+	    (line[n] == '\0' || isspace(line[n])));
+}
+
 static void adjust_indent (const char *line, int *this_indent,
 			   int *next_indent)
 {
     int ti = *next_indent;
     int ni = *next_indent;
 
-    if (!strncmp(line, "loop", 4)) {
+    if (wordmatch(line, "loop")) {
 	ni++;
-    } else if (!strncmp(line, "if", 2)) {
+    } else if (wordmatch(line, "if")) {
 	ni++;
-    } else if (!strncmp(line, "nls", 3)) {
+    } else if (wordmatch(line, "nls")) {
 	ni++;
-    } else if (!strncmp(line, "mle", 3)) {
+    } else if (wordmatch(line, "mle")) {
 	ni++;
-    } else if (!strncmp(line, "gmm", 3)) {
+    } else if (wordmatch(line, "gmm")) {
 	ni++;
-    } else if (!strncmp(line, "end", 3)) {
+    } else if (wordmatch(line, "end") ||
+	       wordmatch(line, "endloop")) {
 	ti--;
 	ni--;
-    } else if (!strncmp(line, "else", 4) ||
-	       !strncmp(line, "elif", 4)) {
+    } else if (wordmatch(line, "else") ||
+	       wordmatch(line, "elif")) {
 	ni = ti;
 	ti--;
     } 

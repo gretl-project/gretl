@@ -25,6 +25,7 @@
 #include "usermat.h"
 #include "cmd_private.h"
 #include "gretl_www.h"
+#include "gretl_string_table.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -35,8 +36,9 @@ typedef struct call_info_ call_info;
 
 struct call_info_ {
     GtkWidget *dlg;
-    GList *lsels;
-    GList *msels;
+    GList *lsels; /* list arg selectors */
+    GList *msels; /* matrix arg selectors */
+    GList *ssels; /* string arg selectors */
     int iface;
     int extracol;
     const ufunc *func;
@@ -109,6 +111,7 @@ static void cinfo_free (call_info *cinfo)
     if (cinfo->msels != NULL) {
 	g_list_free(cinfo->msels);
     }
+
     free(cinfo);
 }
 
@@ -125,6 +128,8 @@ static const char *arg_type_string (int t)
     if (t == GRETL_TYPE_SCALAR_REF) return "scalar *";
     if (t == GRETL_TYPE_SERIES_REF) return "series *";
     if (t == GRETL_TYPE_MATRIX_REF) return "matrix *";
+
+    if (t == GRETL_TYPE_STRING) return "string";
 
     return "";
 }
@@ -283,7 +288,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 	    name = get_matrix_name_by_index(i);
 	    list = g_list_append(list, (gpointer) name);
 	}	
-    }
+    } 
 
     if (optional && type != GRETL_TYPE_LIST) {
 	list = g_list_append(list, "null");
@@ -631,7 +636,7 @@ static void function_call_dialog (call_info *cinfo)
 				 G_CALLBACK(launch_matrix_maker), 
 				 cinfo);
 		gtk_widget_show(button);
-	    }		
+	    } 
 	}
 
 	gtk_widget_show(tbl);
@@ -776,13 +781,13 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
     return err;
 }
 
-/* handle the case where we need a "pointer" variable but
+/* detect the case where we need a "pointer" variable but
    have been given a scalar or matrix constant 
 */
 
-static int addressify_var (call_info *cinfo, int i)
+static int should_addressify_var (call_info *cinfo, int i)
 {
-    char *numchars = "0123456789+-.";
+    char *numchars = "0123456789+-.,";
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
 
@@ -790,7 +795,7 @@ static int addressify_var (call_info *cinfo, int i)
 	(t == GRETL_TYPE_MATRIX_REF && *s == '{');
 }
 
-static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
+static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 {
     int t = fn_param_type(cinfo->func, i);
     char *s = cinfo->args[i];
@@ -829,14 +834,24 @@ static int add_amp (call_info *cinfo, int i, PRN *prn, int *add)
     return err;
 }
 
+static int needs_quoting (call_info *cinfo, int i)
+{
+    int t = fn_param_type(cinfo->func, i);
+    char *s = cinfo->args[i];
+
+    return (t == GRETL_TYPE_STRING && 
+	    get_named_string(s) == NULL &&
+	    *s != '"');
+}
+
 static int pre_process_args (call_info *cinfo, PRN *prn)
 {
     char auxline[MAXLINE];
-    char auxname[VNAMELEN+1];
+    char auxname[VNAMELEN+2];
     int i, add = 0, err = 0;
 
     for (i=0; i<cinfo->n_params && !err; i++) {
-	if (addressify_var(cinfo, i)) {
+	if (should_addressify_var(cinfo, i)) {
 	    sprintf(auxname, "FNARG%d", i + 1);
 	    sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
 	    err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
@@ -846,13 +861,17 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 		pprintf(prn, "? %s\n", auxline);
 	    } 
 	} 
-	err = add_amp(cinfo, i, prn, &add);
+	err = maybe_add_amp(cinfo, i, prn, &add);
 	if (add) {
 	    strcpy(auxname, "&");
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
 	    free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
-	}
+	} else if (needs_quoting(cinfo, i)) {
+	    sprintf(auxname, "\"%s\"", cinfo->args[i]);
+	    free(cinfo->args[i]);
+	    cinfo->args[i] = g_strdup(auxname);
+	}	
     }
 
     return err;

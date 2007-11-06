@@ -436,11 +436,6 @@ const char *dvarname (int t);
 const char *mvarname (int t);
 const char *dumname (int t);
 
-/* for handling user-functions */
-void fn_args_init (fnargs *args);
-void fn_args_free (fnargs *args);
-int push_fn_arg (fnargs *args, int type, void *p);
-
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);
 

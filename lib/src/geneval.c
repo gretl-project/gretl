@@ -2688,17 +2688,14 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 
 static NODE *eval_ufunc (NODE *t, parser *p)
 {
-    fnargs args;
+    fnargs *args = NULL;
     ufunc *uf = NULL;
     int argc = 0;
-
     NODE *l = t->v.b2.l;
     NODE *r = t->v.b2.r;
-    NODE *n, *ret = NULL;
     int i, m = r->v.bn.n_nodes;
     int rtype = GRETL_TYPE_NONE;
-
-    fn_args_init(&args);
+    NODE *n, *ret = NULL;
 
     /* find the function */
     uf = get_user_function_by_name(l->v.str);
@@ -2728,6 +2725,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
+    /* make an arguments array */
+    args = fn_args_new();
+    if (args == NULL) {
+	p->err = E_ALLOC;
+	return NULL;
+    }
+
     /* evaluate the function arguments */
 
     for (i=0; i<m && !p->err; i++) {
@@ -2752,49 +2756,42 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	    if (u->t == UVAR) {
 		if (var_is_scalar(p->dinfo, u->v.idnum)) {
-		    p->err = push_fn_arg(&args, GRETL_TYPE_SCALAR_REF, &u->v.idnum);
+		    p->err = push_fn_arg(args, GRETL_TYPE_SCALAR_REF, &u->v.idnum);
 		} else {
-		    p->err = push_fn_arg(&args, GRETL_TYPE_SERIES_REF, &u->v.idnum);
+		    p->err = push_fn_arg(args, GRETL_TYPE_SERIES_REF, &u->v.idnum);
 		}
 	    } else if (u->t == UMAT) {
 		user_matrix *m = get_user_matrix_by_name(u->v.str);
 
-		p->err = push_fn_arg(&args, GRETL_TYPE_MATRIX_REF, m);
+		p->err = push_fn_arg(args, GRETL_TYPE_MATRIX_REF, m);
 	    } else {
 		pputs(p->prn, "Wrong type of operand for unary '&'\n");
 		p->err = 1;
 	    }
 	} else if (n->t == DUM) {
 	    if (n->v.idnum == DUM_NULL) {
-		p->err = push_fn_arg(&args, GRETL_TYPE_NONE, NULL);
+		p->err = push_fn_arg(args, GRETL_TYPE_NONE, NULL);
 	    } else {
 		p->err = E_TYPES;
 	    }
 	} else if (n->t == EMPTY) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_NONE, NULL);
+	    p->err = push_fn_arg(args, GRETL_TYPE_NONE, NULL);
 	} else if (n->t == NUM) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_DOUBLE, &n->v.xval);
+	    p->err = push_fn_arg(args, GRETL_TYPE_DOUBLE, &n->v.xval);
 	} else if (n->t == VEC) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_SERIES, n->v.xvec);
+	    p->err = push_fn_arg(args, GRETL_TYPE_SERIES, n->v.xvec);
 	} else if (n->t == MAT) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_MATRIX, n->v.m);
+	    p->err = push_fn_arg(args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_LIST, n->v.str);
+	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
 	} else if (n->t == STR) {
-	    p->err = push_fn_arg(&args, GRETL_TYPE_STRING, n->v.str);
+	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
 	}
 
 	if (p->err) {
 	    fprintf(stderr, "eval_ufunc: error evaluating arg %d\n", i);
 	}
     }
-
-#if EDEBUG
-    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, "
-	    "nstr=%d, total=%d\n", args.nx, args.nX, args.nM, args.nl, 
-	    args.nrefv, args.ns, m);
-    fprintf(stderr, "(p->err = %d)\n", p->err);
-#endif
 
     /* try sending args to function */
 
@@ -2823,7 +2820,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    pdescrip = &descrip;
 	}
 
-	p->err = gretl_function_exec(uf, &args, rtype, p->Z, p->dinfo, 
+	p->err = gretl_function_exec(uf, args, rtype, p->Z, p->dinfo, 
 				     retp, pdescrip, p->prn);
 
 	if (!p->err) {
@@ -2865,7 +2862,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
-    fn_args_free(&args);
+    fn_args_free(args);
 
     return ret;
 }
