@@ -516,3 +516,32 @@ int win32_rename (const char *oldpath, const char *newpath)
 
     return err;
 }
+
+int win32_delete_dir (const char *path)
+{
+    SHFILEOPSTRUCT op;
+    char *from;
+    int err = 0;
+
+    from = calloc(strlen(path) + 2, 1);
+    if (from == NULL) {
+	return E_ALLOC;
+    }
+
+    strcpy(from, path);
+
+    op.hwnd = NULL;
+    op.wFunc = FO_DELETE;
+    op.pFrom = from;
+    op.pTo = NULL;
+    op.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+    op.fAnyOperationsAborted = FALSE;
+    op.hNameMappings = NULL;
+    op.lpszProgressTitle = NULL;
+
+    err = SHFileOperation(&op);
+
+    free(from);
+
+    return err;
+}

@@ -60,6 +60,7 @@ PLUGINSRC = \
 	eviews_import.c \
 	stata_import.c \
 	jmulti_import.c \
+	ods_import.c \
 	johansen.c \
 	jrestrict.c \
 	jalpha.c \
@@ -102,6 +103,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/excel_import.dll \
 	plugins/stata_import.dll \
 	plugins/jmulti_import.dll \
+	plugins/ods_import.dll \
 	plugins/mp_ols.dll \
 	plugins/sysest.dll \
 	plugins/johansen.dll \
@@ -340,6 +342,11 @@ plugins/progress_bar.dll: progress_bar.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl
 
 plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
+	$(GRETLLIB) $(GTKLIBS)
+
+plugins/ods_import.dll: ods_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
 	$(GRETLLIB) $(GTKLIBS)

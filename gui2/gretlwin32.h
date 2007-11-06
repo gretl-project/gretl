@@ -69,6 +69,4 @@ int browser_open (const char *url);
 
 int win32_open_file (const char *fname);
 
-int win32_delete_dir (const char *path);
-
 #endif /* GRETLWIN32_H */

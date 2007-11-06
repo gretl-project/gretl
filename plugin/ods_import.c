@@ -50,8 +50,8 @@ static void remove_temp_dir (char *dname)
 }
 
 enum {
-    ODS_NONE,
-    ODS_NUMERIC,
+    ODS_NONE,     
+    ODS_NUMERIC, 
     ODS_DATE,
     ODS_TIME,
     ODS_STRING
@@ -294,23 +294,62 @@ static int cell_width (xmlNodePtr p)
     return w;
 }
 
+static const char *ods_name (int t)
+{
+    if (t == ODS_NONE) 
+	return "blank";
+    if (t == ODS_NUMERIC) 
+	return "numerical value";
+    if (t == ODS_DATE) 
+	return "date string";
+    if (t == ODS_TIME) 
+	return "time string";
+    if (t == ODS_STRING) 
+	return "string";
+
+    return "blank";
+}
+
+static int ods_error (office_sheet *sheet,
+		      int i, int j, int etype, int vtype,
+		      PRN *prn)
+{
+    int si = i + sheet->xoffset + 1;
+    int sj = j + sheet->yoffset + 1;
+
+    pprintf(prn, _("Sheet row %d, column %d"), si, sj);
+
+    if ((sheet->flags & BOOK_AUTO_VARNAMES) || i == 0) {
+	pputs(prn, ":\n");
+    } else {
+	int v = j + 1;
+
+	if (sheet->flags & BOOK_OBS_LABELS) v--;
+	pprintf(prn, " (\"%s\"):\n", sheet->dinfo->varname[v]);
+    } 
+
+    pprintf(prn, _("expected %s but found %s"),
+	    ods_name(etype), ods_name(vtype));
+    
+    return E_DATA; 
+}
+
 static int real_read_cell (xmlNodePtr cur, 
 			   office_sheet *sheet, 
-			   int readrow, int *preadcol,
+			   int iread, int *preadcol,
 			   PRN *prn)
 {
     char *val = NULL;
-    int readcol = *preadcol;
-    int obscol, blank0, vnames;
+    int jread = *preadcol;
+    int obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
+    int blank0 = (sheet->flags & BOOK_OBS_BLANK)? 1 : 0;
+    int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
     int nr, j, v, vj, t, vtype;
+    double x;
     int err = 0;
 
-    obscol = (sheet->flags & BOOK_OBS_LABELS)? 1 : 0;
-    blank0 = (sheet->flags & BOOK_OBS_BLANK)? 1 : 0;
-    vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
-
-    v = readcol + 1 - obscol;
-    t = readrow - vnames;
+    v = jread + 1 - obscol;
+    t = iread - vnames;
 
     if (v >= sheet->dinfo->v || t >= sheet->dinfo->n) {
 	return E_DATA;
@@ -323,68 +362,62 @@ static int real_read_cell (xmlNodePtr cur,
 
 #if ODEBUG
     fprintf(stderr, "reading: i=%d, j=%d, v=%d, t=%d\n",
-	    readrow, readcol, v, t);
+	    iread, jread, v, t);
 #endif
 
-    if (readrow == 0 && vnames) {
-	readcol += blank0;
+    if (iread == 0 && vnames) {
+	jread += blank0;
 	v += blank0;
-	if (readcol == 0 && obscol) {
+	if (jread == 0 && obscol) {
 	    return 0;
 	}
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur, sheet);
 	    if (val != NULL) {
+		*sheet->dinfo->varname[v] = '\0';
 		strncat(sheet->dinfo->varname[v],
 			val, VNAMELEN - 1);
 		fprintf(stderr, " varname: '%s'\n", val);
 		if (check_varname(sheet->dinfo->varname[v])) {
-		   invalid_varname(prn);
-		   err = 1;
+		    invalid_varname(prn);
+		    err = 1;
 		}
 		free(val);
 	    } else {
-		fprintf(stderr, "varname is missing?\n");
-		err = 1;
+		err = ods_error(sheet, iread, jread, ODS_STRING, 
+				ODS_NONE, prn);
 	    }
-	} else {
-	    fprintf(stderr, "expected varname, found value-type %d\n",
-		    vtype);
-	    if (vtype == ODS_NONE) {
-		sprintf(sheet->dinfo->varname[v], "v%d", v+1);
-	    } else {
-		err = 1;
-	    }
+	} else if (vtype != ODS_NONE) {
+	    err = ods_error(sheet, iread, jread, ODS_STRING, 
+			    vtype, prn);
 	}
 	return err;
     }
 
-    if (readcol == 0 && obscol) {
+    if (jread == 0 && obscol) {
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur, sheet);
 	    if (val != NULL) {
-		strncat(sheet->dinfo->S[t],
-			val, OBSLEN - 1);
+		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " obs string: '%s'\n", val);
 		free(val);
 	    } else {
-		fprintf(stderr, "obs string is missing (1)\n");
-		err = 1;
+		err = ods_error(sheet, iread, jread, ODS_STRING,
+				ODS_NONE, prn);
 	    }
 	} else if (vtype == ODS_DATE) {
 	    val = (char *) xmlGetProp(cur, (XUC) "date-value");
 	    if (val != NULL) {
-		strncat(sheet->dinfo->S[t],
-			val, OBSLEN - 1);
+		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " date: '%s'\n", val); 
 		free(val);
 	    } else {
-		fprintf(stderr, "date-value is missing\n");
-		err = 1;
+		err = ods_error(sheet, iread, jread, ODS_DATE,
+				ODS_NONE, prn);
 	    }
 	} else {
-	    fprintf(stderr, "obs string is missing (2)\n");
-	    err = 1;
+	    err = ods_error(sheet, iread, jread, ODS_DATE,
+			    vtype, prn);
 	}
 	return err;
     }	    
@@ -393,15 +426,15 @@ static int real_read_cell (xmlNodePtr cur,
 	val = (char *) xmlGetProp(cur, (XUC) "value");
 	if (val != NULL) {
 	    /* uses '.' as decimal separator */
-	    double x = atof(val);
-
+	    x = atof(val);
 	    fprintf(stderr, " float: '%s'\n", val); 
 	    for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
 		sheet->Z[vj][t] = x;
 	    }	    
 	    free(val);
 	} else {
-	    err = E_DATA;
+	    err = ods_error(sheet, iread, jread, ODS_NUMERIC,
+			    ODS_NONE, prn);
 	}
     } else if (vtype == ODS_NONE) {
 	fprintf(stderr, " blank: NA?\n");
@@ -409,9 +442,8 @@ static int real_read_cell (xmlNodePtr cur,
 	    sheet->Z[vj][t] = NADBL;
 	}
     } else {
-	fprintf(stderr, "Expected numeric value or blank, but "
-		"got value-type %d\n", vtype);
-	err = E_DATA;
+	err = ods_error(sheet, iread, jread, ODS_NUMERIC,
+			vtype, prn);
     }
 
     return err;
@@ -426,12 +458,8 @@ static int read_data_row (xmlNodePtr cur,
     int tabcol, readcol;
     int err = 0;
 
-    fprintf(stderr, "readrow = %d\n", readrow);
-
     cur = cur->xmlChildrenNode;
     tabcol = readcol = 0;
-
-    gretl_push_c_numeric_locale();
 
     while (cur != NULL && !err && readcol < tab->cols) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
@@ -445,24 +473,15 @@ static int read_data_row (xmlNodePtr cur,
 	cur = cur->next;
     }
 
-    gretl_pop_c_numeric_locale();
-
     return err;
 }
-
-/* We initially allocate on the assumption that the entire
-   read area is composed of data.  If it then turns out
-   that the first row contains varnames, we'll drop one
-   observation; and if it turns out that the first column
-   contains observation labels we'll drop one variable.
-*/
 
 static int sheet_allocate_data (office_sheet *sheet,
 				office_table *tab)
 {
     int n = tab->rows - sheet->yoffset - 1;
     int v = tab->cols - sheet->xoffset + 1;
-    int labels = 0;
+    int i, labels = 0;
 
     if (sheet->flags & BOOK_AUTO_VARNAMES) {
 	n++;
@@ -485,10 +504,15 @@ static int sheet_allocate_data (office_sheet *sheet,
 	return E_ALLOC;
     }
 
+    /* write fallback variable names */
+    for (i=1; i<v; i++) {
+	sprintf(sheet->dinfo->varname[i], "v%d", i);
+    }
+
     return 0;
 }
 
-/* Look at the cells in the top left-hand corner of the table; try to
+/* Look at the cells in the top left-hand corner of the table: try to
    determine (a) if we have an observations column and (b) if we have
    a varnames row.
 */
@@ -621,6 +645,8 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
     cur = tab->node->xmlChildrenNode;
     tabrow = readrow = 0;
 
+    gretl_push_c_numeric_locale();
+
     while (cur != NULL && !err && readrow < tab->rows) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
 	    if (tabrow++ >= sheet->yoffset) {
@@ -629,6 +655,8 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
 	}
 	cur = cur->next;
     } 
+
+    gretl_pop_c_numeric_locale();
 
 #if ODEBUG
     fprintf(stderr, "read_table_content, returning %d\n", err);
@@ -726,7 +754,7 @@ static office_sheet *read_content (PRN *prn, int *err)
 
     if (*err) {
 	pprintf(prn, "didn't get office:document-content\n");
-	pprintf(prn, "%s\n", gretl_errmsg);
+	pprintf(prn, "%s", gretl_errmsg_get());
 	return NULL;
     }
 
@@ -799,6 +827,7 @@ static int gretl_make_tempdir (char *dname)
 	return gretl_mkdir(dname);
     }
 }
+
 #else
 
 static int gretl_make_tempdir (char *dname)
@@ -813,8 +842,6 @@ static int gretl_make_tempdir (char *dname)
 	gretl_errmsg_set_from_errno();
 	err = E_FOPEN;
     } 
-
-    fprintf(stderr, "dname: '%s'\n", dname);
 
     return err;
 }
@@ -836,7 +863,9 @@ static int ts_check (office_sheet *sheet, PRN *prn)
 	dataset_destroy_obs_markers(sheet->dinfo);
     } 
 
+#if ODEBUG
     fprintf(stderr, "sheet->dinfo->pd = %d\n", sheet->dinfo->pd);
+#endif
 
     if (sheet->dinfo->pd != 1 || strcmp(sheet->dinfo->stobs, "1")) { 
         sheet->dinfo->structure = TIME_SERIES;
@@ -856,9 +885,6 @@ static int ods_min_offset (wbook *book, int k)
 	if (i >= 0 && i < sheet->n_tables) {
 	    office_table *tab = sheet->tables[i];
 
-	    fprintf(stderr, "table %d: offsets %d, %d\n", i, 
-		    tab->xoffset, tab->yoffset);
-
 	    if (k == COL_OFFSET) {
 		ret = tab->xoffset + 1;
 	    } else {
@@ -866,8 +892,6 @@ static int ods_min_offset (wbook *book, int k)
 	    }
 	}
     }
-
-    fprintf(stderr, "ods_min_offset: i=%d, k=%d, ret = %d\n", i, k, ret);
 
     return ret;
 }
@@ -921,12 +945,39 @@ static int gui_get_response (office_sheet *sheet, int *err)
     sheet->xoffset = book.col_offset;
     sheet->yoffset = book.row_offset;
 
+#if ODEBUG
     fprintf(stderr, "sheet->xoffset = %d, sheet->yoffset = %d\n",
 	    sheet->xoffset, sheet->yoffset);
+#endif
 
     free(book.sheetnames);
 
     return book.selected;
+}
+
+static int finalize_import (double ***pZ, DATAINFO **ppdinfo,
+			    office_sheet *sheet, PRN *prn)
+{
+    PRN *tprn = gretl_print_new(GRETL_PRINT_STDERR);
+
+    ts_check(sheet, tprn);
+    gretl_print_destroy(tprn);
+
+    return merge_or_replace_data(pZ, ppdinfo, &sheet->Z, 
+				 &sheet->dinfo, prn);   
+}
+
+static char *get_absolute_path (const char *fname)
+{
+    char buf[FILENAME_MAX];
+    char *s, *ret = NULL;
+
+    s = getcwd(buf, sizeof buf - strlen(fname) - 2);
+    if (s != NULL) {
+	ret = g_strdup_printf("%s/%s", s, fname);
+    }
+
+    return ret;
 }
 
 static int read_ods_file (const char *fname, 
@@ -936,6 +987,7 @@ static int read_ods_file (const char *fname,
     office_sheet *sheet = NULL;
     int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_user_dir();
+    char *abspath = NULL;
     void *handle;
     char dname[32];
     FILE *fp;
@@ -950,6 +1002,12 @@ static int read_ods_file (const char *fname,
 	return E_FOPEN;
     }
     fclose(fp);
+
+    /* by doing chdir, we may lose track of the ods file if 
+       its path is relative */
+    if (!g_path_is_absolute(fname)) {
+	abspath = get_absolute_path(fname);
+    }
 
     /* cd to user dir */
     if (chdir(udir)) {
@@ -976,7 +1034,13 @@ static int read_ods_file (const char *fname,
         return E_FOPEN;
     }
 
-    err = (*gretl_unzip_file)(fname, &gerr);
+    if (abspath == NULL) {
+	err = (*gretl_unzip_file)(fname, &gerr);
+    } else {
+	err = (*gretl_unzip_file)(abspath, &gerr);
+	free(abspath);
+    }
+
     if (gerr != NULL) {
 	pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
 	g_error_free(gerr);
@@ -1020,14 +1084,11 @@ static int read_ods_file (const char *fname,
 
     if (!err) {
 	err = read_table_content(sheet, prn);
-	if (!err) {
-	    ts_check(sheet, prn);
-	    fprintf(stderr, "done ts_check\n");
-	    err = merge_or_replace_data(pZ, ppdinfo, &sheet->Z, &sheet->dinfo, 
-					prn);
-	    fprintf(stderr, "merge_or_replace_data: err = %d\n", err);
-	}
-    } 
+    }
+
+    if (!err) {
+	err = finalize_import(pZ, ppdinfo, sheet, prn); 
+    }
 
     office_sheet_free(sheet);
 

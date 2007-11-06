@@ -197,9 +197,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/Import/_Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
     { N_("/File/Open data/Import/_Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
 #endif
-#if 1
     { N_("/File/Open data/Import/_Open Document..."), NULL, open_data, OPEN_ODS, NULL, GNULL },
-#endif    
     { N_("/File/Open data/Import/_Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
     { N_("/File/Open data/Import/_Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
     { N_("/File/Open data/Import/_JMulTi..."), NULL, open_data, OPEN_JMULTI, NULL, GNULL },
@@ -898,6 +896,7 @@ int main (int argc, char *argv[])
 	case GRETL_WF1:
 	case GRETL_DTA:
 	case GRETL_JMULTI:
+	case GRETL_ODS:
 	    err = get_worksheet_data(paths.datfile, ftype, 0);
 	    break;
 	case GRETL_SCRIPT:

@@ -503,10 +503,11 @@ void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
 	int offmin, offcurr;
 
 	book->selected = idx[0];
+
 	offmin = book_get_min_offset(book, COL_OFFSET);
 	offcurr = gtk_spin_button_get_value_as_int
 	    (GTK_SPIN_BUTTON(book->colspin));
-	if (offcurr < offmin) {
+	if (offcurr != offmin) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->colspin),
 				      offmin);
 	}
@@ -514,7 +515,7 @@ void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
 	offmin = book_get_min_offset(book, ROW_OFFSET);
 	offcurr = gtk_spin_button_get_value_as_int
 	    (GTK_SPIN_BUTTON(book->rowspin));
-	if (offcurr < offmin) {
+	if (offcurr != offmin) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->rowspin),
 				      offmin);
 	}	

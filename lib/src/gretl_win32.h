@@ -59,6 +59,8 @@ int win32_write_access (char *path);
 
 int win32_rename (const char *oldpath, const char *newpath);
 
+int win32_delete_dir (const char *path);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */
