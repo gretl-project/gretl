@@ -54,6 +54,7 @@ enum {
     ODS_NUMERIC, 
     ODS_DATE,
     ODS_TIME,
+    ODS_BOOL,
     ODS_STRING
 };
 
@@ -253,6 +254,8 @@ static int get_ods_value_type (xmlNodePtr node)
 	ret = ODS_DATE;
     } else if (!strcmp(s, "time")) {
 	ret = ODS_TIME;
+    } else if (!strcmp(s, "boolean")) {
+	ret = ODS_BOOL;
     } else if (!strcmp(s, "string")) {
 	ret = ODS_STRING;
     }
@@ -265,7 +268,12 @@ static int get_ods_value_type (xmlNodePtr node)
 static char *
 get_ods_string_value (xmlNodePtr cur, office_sheet *sheet)
 {
-    char *sval = NULL;
+    char *sval;
+
+    sval = (char *) xmlGetProp(cur, (XUC) "string-value");
+    if (sval != NULL) {
+	return sval;
+    }
 
     cur = cur->xmlChildrenNode;
 
@@ -278,6 +286,34 @@ get_ods_string_value (xmlNodePtr cur, office_sheet *sheet)
     }
 
     return sval;
+}
+
+static int get_ods_bool_value (xmlNodePtr cur)
+{
+    char *tmp;
+    int ret = 0;
+
+    tmp = (char *) xmlGetProp(cur, (XUC) "boolean-value");
+    if (tmp != NULL) {
+	ret = (strcmp(tmp, "true") == 0);
+	free(tmp);
+    }
+
+    return ret;
+}
+
+static double get_ods_numeric_value (xmlNodePtr cur)
+{
+    char *tmp;
+    double ret = NADBL;
+
+    tmp = (char *) xmlGetProp(cur, (XUC) "value");
+    if (tmp != NULL) {
+	ret = atof(tmp);
+	free(tmp);
+    }
+
+    return ret;
 }
 
 static int cell_width (xmlNodePtr p)
@@ -304,6 +340,8 @@ static const char *ods_name (int t)
 	return "date string";
     if (t == ODS_TIME) 
 	return "time string";
+    if (t == ODS_BOOL) 
+	return "boolean";
     if (t == ODS_STRING) 
 	return "string";
 
@@ -423,18 +461,16 @@ static int real_read_cell (xmlNodePtr cur,
     }	    
 
     if (vtype == ODS_NUMERIC) {
-	val = (char *) xmlGetProp(cur, (XUC) "value");
-	if (val != NULL) {
-	    /* uses '.' as decimal separator */
-	    x = atof(val);
-	    fprintf(stderr, " float: '%s'\n", val); 
-	    for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
-		sheet->Z[vj][t] = x;
-	    }	    
-	    free(val);
-	} else {
-	    err = ods_error(sheet, iread, jread, ODS_NUMERIC,
-			    ODS_NONE, prn);
+	x = get_ods_numeric_value(cur);
+	fprintf(stderr, " float: %.15g\n", x); 
+	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
+	    sheet->Z[vj][t] = x;
+	}	    
+    } else if (vtype == ODS_BOOL) {
+	x = get_ods_bool_value(cur);
+	fprintf(stderr, " boolean: %g\n", x); 
+	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
+	    sheet->Z[vj][t] = x;
 	}
     } else if (vtype == ODS_NONE) {
 	fprintf(stderr, " blank: NA?\n");
