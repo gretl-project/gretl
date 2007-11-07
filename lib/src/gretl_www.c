@@ -248,7 +248,7 @@ struct urlinfo_ {
     char *getbuf;            /* buffer to which to write result or NULL */
     const char *upload;      /* content of file to upload */
     int upsize;              /* size of the above */
-    char agent[16];          /* to communicate gretl version */
+    char agent[32];          /* to communicate gretl version */
     char host[32];           /* host, in IP form */
     char errbuf[80];
     FILE *fp;                /* for saving content locally */
@@ -1836,8 +1836,3 @@ int retrieve_manfile (const char *fname, const char *localname)
 }
 
 #endif /* !STANDALONE */
-
-
-
-
-
