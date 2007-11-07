@@ -2694,12 +2694,14 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     NODE *l = t->v.b2.l;
     NODE *r = t->v.b2.r;
     int i, m = r->v.bn.n_nodes;
+    const char *funname = l->v.str;
     int rtype = GRETL_TYPE_NONE;
     NODE *n, *ret = NULL;
 
     /* find the function */
-    uf = get_user_function_by_name(l->v.str);
+    uf = get_user_function_by_name(funname);
     if (uf == NULL) {
+	fprintf(stderr, "%s: couldn't find a function of this name\n", funname);
 	p->err = 1;
 	return NULL;
     }
@@ -2709,6 +2711,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	rtype = user_func_get_return_type(uf);
 	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
 	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST) {
+	    fprintf(stderr, "%s: invalid return type %d\n", funname, rtype);
 	    p->err = E_TYPES;
 	    return NULL;
 	}
@@ -2720,7 +2723,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	pprintf(p->prn, _("Number of arguments (%d) does not "
 			  "match the number of\nparameters for "
 			  "function %s (%d)"),
-		m, l->v.str, argc);
+		m, funname, argc);
 	p->err = 1;
 	return NULL;
     }
@@ -2728,6 +2731,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* make an arguments array */
     args = fn_args_new();
     if (args == NULL) {
+	fprintf(stderr, "%s: invalid return type %d\n", funname, rtype);
 	p->err = E_ALLOC;
 	return NULL;
     }
@@ -2737,9 +2741,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     for (i=0; i<m && !p->err; i++) {
 	n = eval(r->v.bn.n[i], p);
 	if (n == NULL) {
-	    fprintf(stderr, "eval_ufunc: failed to evaluate arg\n"); 
+	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
 	} else if (!ok_ufunc_sym(n->t)) {
-	    fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
+	    fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
 	    p->err = E_TYPES;
 	}
 
@@ -2748,7 +2752,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
 
 #if EDEBUG
-	fprintf(stderr, "eval_ufunc: arg[%d] is of type %d\n", i, n->t);
+	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, n->t);
 #endif
 
 	if (n->t == U_ADDR) {

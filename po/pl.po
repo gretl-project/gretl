@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.6.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-09 12:13-0400\n"
-"PO-Revision-Date: 2007-11-02 12:00+0100\n"
+"PO-Revision-Date: 2007-11-07 12:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1623,7 +1623,7 @@ msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
 msgstr ""
-"      ODCH.STAND.     WSP.ZMIEN.      SKOSNOSC       KURTOZA\n"
+"      ODCH.STAND.     WSP.ZMIEN.      SKO¦NO¦Æ       KURTOZA\n"
 "\n"
 
 #: lib/src/describe.c:3540
@@ -2862,7 +2862,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Srednie reszt dla jednostek przekroju w estymacji panelu MNK:\n"
+"¦rednie reszt dla jednostek przekroju w estymacji panelu MNK:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2117
@@ -9506,7 +9506,7 @@ msgstr "/Zmienna/Wspó³czynnik _Giniego"
 
 #: gui2/gretl.c:440
 msgid "/Variable/_Range-mean graph"
-msgstr "/Zmienna/Sre_dnie przedzia³owe"
+msgstr "/Zmienna/¦re_dnie przedzia³owe"
 
 #: gui2/gretl.c:442
 msgid "/Variable/_Time series plot"
@@ -9690,7 +9690,7 @@ msgstr "/Pomoc/_Opis poleceñ gretla/plik PDF"
 
 #: gui2/gretl.c:513
 msgid "/Help/_User's guide"
-msgstr "/Pomoc/_Przewodnik u¿ytkownika - manual"
+msgstr "/Pomoc/_Przewodnik u¿ytkownika - Manual PDF"
 
 #: gui2/gretl.c:516
 msgid "/Help/Check for _updates"
@@ -10116,7 +10116,7 @@ msgstr "/Testy/test stabilno¶ci CUSUMSQ"
 
 #: gui2/gui_utils.c:265
 msgid "/Tests/_Panel diagnostics"
-msgstr "/Testy/test diagnostyczny panelu"
+msgstr "/Testy/testy diagnostyczne panelu"
 
 #: gui2/gui_utils.c:266 gui2/gui_utils.c:3716
 msgid "/_Save"
@@ -13509,11 +13509,11 @@ msgstr "Skanowanie %ld czcionek"
 
 #: plugin/range-mean.c:65
 msgid "range-mean plot for"
-msgstr "Wykres srednich-przedzialowych dla"
+msgstr "Wykres ¶rednich-przedzia³owych dla"
 
 #: plugin/range-mean.c:68 plugin/range-mean.c:157
 msgid "range"
-msgstr "przedzialy"
+msgstr "przedzia³y"
 
 #: plugin/range-mean.c:133
 msgid "Sample is too small for range-mean graph\n"
