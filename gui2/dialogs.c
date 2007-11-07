@@ -4498,7 +4498,7 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, DATAINFO *dwinfo)
     if (active || (missfrac > 0 && missfrac < 0.12)) {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 	GtkWidget *chk = gtk_check_button_new_with_label
-	    N_("purge missing observations");
+	    (N_("purge missing observations"));
 
 	gtk_box_pack_start(GTK_BOX(hbox), chk, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
