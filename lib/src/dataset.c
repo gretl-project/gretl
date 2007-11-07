@@ -2762,4 +2762,116 @@ int modify_dataset (int op, const int *list, const char *s,
     return err;
 }
 
+/**
+ * dataset_purge_missing_rows:
+ * @Z: data array.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Removes empty rows from the dataset -- that is, observations
+ * at which there are no non-missing values.  This is intended
+ * for daily data only.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
 
+int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
+{
+    int new_n, missrow, totmiss = 0;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    char **S = NULL;
+    double *Zi = NULL;
+    size_t sz;
+    int i, t, s;
+    int err = 0;
+
+    for (t=0; t<pdinfo->n; t++) {
+	missrow = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+		missrow = 0;
+		break;
+	    }
+	}
+	if (missrow) {
+	    totmiss++;
+	    if (t < pdinfo->t1) {
+		t1--;
+	    }
+	    if (t < pdinfo->t2) {
+		t2--;
+	    }
+	}
+    }
+
+    if (totmiss == 0) {
+	/* no-op */
+	return 0;
+    }
+
+    if (dated_daily_data(pdinfo) && pdinfo->S == NULL) {
+	err = dataset_allocate_obs_markers(pdinfo);
+	if (!err) {
+	    for (t=0; t<pdinfo->n; t++) {
+		calendar_date_string(pdinfo->S[t], t, pdinfo);
+	    }
+	}
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	missrow = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+		missrow = 0;
+		break;
+	    }
+	}
+	if (missrow) {
+	    sz = (pdinfo->n - t) * sizeof **Z;
+	    for (i=1; i<pdinfo->v; i++) {
+		if (!var_is_scalar(pdinfo, i)) {
+		    memmove(Z[i] + t, Z[i] + t + 1, sz);
+		}
+	    }
+	    if (pdinfo->S != NULL) {
+		free(pdinfo->S[t]);
+		for (s=t; s<pdinfo->n - 1; s++) {
+		    pdinfo->S[s] = pdinfo->S[s+1];
+		}
+	    }
+	}
+    } 
+
+    new_n = pdinfo->n - totmiss;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!var_is_scalar(pdinfo, i)) {
+	    Zi = realloc(Z[i], new_n * sizeof *Zi);
+	    if (Zi == NULL) {
+		err = E_ALLOC;
+	    } else {
+		Z[i] = Zi;
+	    }
+	}
+    }
+
+    if (!err && pdinfo->S != NULL) {
+	S = realloc(pdinfo->S, new_n * sizeof *S);
+	if (S == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    pdinfo->S = S;
+	    if (dated_daily_data(pdinfo)) {
+		strcpy(pdinfo->stobs, pdinfo->S[0]);
+		strcpy(pdinfo->endobs, pdinfo->S[new_n-1]);
+		pdinfo->sd0 = get_epoch_day(pdinfo->stobs);
+	    }
+	}
+    }
+
+    pdinfo->n = new_n;
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
+
+    return err;
+}

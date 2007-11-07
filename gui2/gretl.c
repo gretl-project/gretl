@@ -190,13 +190,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/Import/_CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
     { N_("/File/Open data/Import/_ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
     { N_("/File/Open data/Import/_Octave..."), NULL, open_data, OPEN_OCTAVE, NULL, GNULL },
-#ifdef G_OS_WIN32
-    { N_("/File/Open data/Import/_Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
-    { N_("/File/Open data/Import/_Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
-#else
     { N_("/File/Open data/Import/_Gnumeric..."), NULL, open_data, OPEN_GNUMERIC, NULL, GNULL },
     { N_("/File/Open data/Import/_Excel..."), NULL, open_data, OPEN_EXCEL, NULL, GNULL },
-#endif
     { N_("/File/Open data/Import/_Open Document..."), NULL, open_data, OPEN_ODS, NULL, GNULL },
     { N_("/File/Open data/Import/_Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
     { N_("/File/Open data/Import/_Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
@@ -210,6 +205,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/_Octave..."), NULL, open_data, APPEND_OCTAVE, NULL, GNULL },
     { N_("/File/Append data/_Gnumeric..."), NULL, open_data, APPEND_GNUMERIC, NULL, GNULL },
     { N_("/File/Append data/_Excel..."), NULL, open_data, APPEND_EXCEL, NULL, GNULL },
+    { N_("/File/Append data/_Open Document..."), NULL, open_data, OPEN_ODS, NULL, GNULL },
     { N_("/File/Append data/_Eviews..."), NULL, open_data, APPEND_WF1, NULL, GNULL },
     { N_("/File/Append data/_Stata..."), NULL, open_data, APPEND_DTA, NULL, GNULL },
     { N_("/File/Append data/_JMulTi..."), NULL, open_data, APPEND_JMULTI, NULL, GNULL },

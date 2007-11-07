@@ -878,8 +878,19 @@ int top_n_tail (char *str)
     }
 
     if (*str != 0) {
-	/* drop any leading spaces, also possible questionmark */
+	/* drop any leading spaces, also possible questionmark
+	   2007-11-07: try to catch non-breaking spaces too */
+#if 1
+	i = 0;
+	while (isspace((unsigned char) str[i]) || 
+	       str[i] == '?' ||
+	       str[i] == (char) 0xC2 ||
+	       str[i] == (char) 0xA0) {
+	    i++;
+	}
+#else
 	i = strspn(str, " \t?");
+#endif
 	if (i > 0) {
 	    shift_string_left(str, i);
 	}

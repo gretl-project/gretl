@@ -837,3 +837,35 @@ int set_miss (const int *list, const char *param, double **Z,
 
     return ret;
 }
+
+/**
+ * missing_obs_fraction:
+ * @Z: data array.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Returns: the fraction of the observations in @Z for which
+ * all variables have missing values (empty rows).
+ */
+
+double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
+{
+    int missrow, totmiss = 0;
+    int i, t;
+
+    if (pdinfo->n == 0) {
+	return 0.0;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	missrow = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!var_is_scalar(pdinfo, i) && !na(Z[i][t])) {
+		missrow = 0;
+		break;
+	    }
+	}
+	totmiss += missrow;
+    }
+
+    return (double) totmiss / pdinfo->n;
+}

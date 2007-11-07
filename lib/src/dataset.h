@@ -368,4 +368,6 @@ int modify_dataset (int op, const int *list, const char *s,
 		    double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn);
 
+int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo);
+
 #endif /* DATASET_H */

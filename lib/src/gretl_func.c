@@ -2822,6 +2822,12 @@ static int add_function_return (ufunc *fun, const char *line)
     }
 
     type = field_to_type(s1);
+
+#if FN_DEBUG
+    fprintf(stderr, "add_function_return: s1='%s', s2='%s'\n", s1, s2);
+    fprintf(stderr, "field_to_type on '%s' gives %d\n", s1, type);
+#endif
+
     if (type == 0) {
 	return E_PARSE;
     } 

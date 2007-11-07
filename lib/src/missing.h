@@ -56,4 +56,6 @@ int check_for_missing_obs (const int *list, int *t1, int *t2,
 int set_miss (const int *list, const char *param, double **Z,
 	      DATAINFO *pdinfo, PRN *prn);
 
+double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo);
+
 #endif /* MISSING_H */

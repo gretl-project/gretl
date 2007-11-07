@@ -3719,11 +3719,14 @@ static void maybe_unrestrict_dataset (void)
     }
 }
 
+#define DROP_MISSROWS 999
+
 static int
 datawiz_make_changes (DATAINFO *dwinfo, int create)
 {
     char setline[32];
     gretlopt opt = OPT_NONE;
+    int delmiss = 0;
     int delete_markers = 0;
     int err = 0;
 
@@ -3749,11 +3752,15 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
 	goto finalize;
     }
 
+    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
+	delmiss = 1;
+    }
+
     /* check for nothing to be done */
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
-	if (create) {
+	if (create || delmiss) {
 	    goto finalize;
 	} else {
 	    infobox(_("No changes were made"));
@@ -3763,7 +3770,8 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
 
     /* if converting to time series, we probably don't want to
        retain any original observation-marker strings */
-    if (dwinfo->structure == TIME_SERIES && datainfo->markers) {
+    if (dwinfo->structure == TIME_SERIES && 
+	datainfo->markers && !delmiss) {
 	delete_markers = 1;
     }
 
@@ -3804,6 +3812,10 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     err = set_obs(setline, Z, datainfo, opt);
 
  finalize:
+
+    if (!err && delmiss) {
+	err = dataset_purge_missing_rows(Z, datainfo);
+    }
 
     if (err) {
 	errbox(gretl_errmsg_get());
@@ -4035,6 +4047,11 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 		_("stacked time series") : _("stacked cross sections"),
 		nunits, nperiods);
     } 
+
+    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
+	strcat(ctxt, "\n");
+	strcat(ctxt, _("(dropping missing observations)"));
+    }
 }
 
 static void make_weekly_stobs (DATAINFO *dwinfo)
@@ -4457,6 +4474,43 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
     return dwspin;
 }
 
+static void set_purge_missobs (GtkWidget *w, DATAINFO *dwinfo)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	dwinfo->data = GINT_TO_POINTER(DROP_MISSROWS);
+    } else {
+	dwinfo->data = NULL;
+    }    
+}
+
+static void maybe_add_missobs_purger (GtkWidget *vbox, DATAINFO *dwinfo)
+{
+    double missfrac = 0.0;
+    int active = 0;
+
+    if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
+	active = 1;
+    } else {
+	missfrac = missing_obs_fraction((const double **) Z, 
+					datainfo);
+    }
+
+    if (active || (missfrac > 0 && missfrac < 0.12)) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *chk = gtk_check_button_new_with_label
+	    N_("purge missing observations");
+
+	gtk_box_pack_start(GTK_BOX(hbox), chk, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	if (active) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), TRUE);
+	}
+	g_signal_connect(G_OBJECT(chk), "toggled", 
+			 G_CALLBACK(set_purge_missobs), dwinfo);
+	gtk_widget_show_all(hbox);
+    }
+}
+
 static void reactivate_main_menus (GtkWidget *w, gpointer p)
 {
     main_menus_enable(TRUE);
@@ -4599,10 +4653,15 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	gtk_widget_show(hbox);
     }
 
-    /* FIXME: at "starting obs" stage, if daily data with
-       missing values, offer option to remove the missing
-       vals and treat the data as effectively continuous 
+    /* At "starting obs" stage, if we have daily data with
+       missing values, offer the option to remove the missing
+       rows (and treat the data as effectively continuous)
     */
+    if (step == DW_STARTING_OBS && Z != NULL &&
+	dwinfo->structure == TIME_SERIES &&
+	(dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7)) {
+	maybe_add_missobs_purger(GTK_DIALOG(dialog)->vbox, dwinfo);
+    }
 
     /* panel: selectors for unit and time index variables? */
     if (step == DW_PANEL_VARS) {
@@ -4618,7 +4677,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     /* confirming? */
     if (step == DW_CONFIRM) {
-	char ctxt[256];
+	char ctxt[512];
 
 	make_confirmation_text(ctxt, dwinfo);
 	tempwid = gtk_label_new(ctxt);
