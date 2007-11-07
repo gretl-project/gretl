@@ -316,6 +316,49 @@ static double get_ods_numeric_value (xmlNodePtr cur)
     return ret;
 }
 
+static int ods_cell_has_content (xmlNodePtr node, office_sheet *sheet)
+{
+    int vtype, ret = 0;
+    char *s = NULL;
+
+    vtype = get_ods_value_type(node);
+
+    if (vtype == ODS_NONE) {
+	return 0;
+    } else if (vtype == ODS_NUMERIC) {
+	s = (char *) xmlGetProp(node, (XUC) "value");
+    } else if (vtype == ODS_DATE) {
+	s = (char *) xmlGetProp(node, (XUC) "date-value");
+    } else if (vtype == ODS_TIME) {
+	s = (char *) xmlGetProp(node, (XUC) "time-value");
+    } else if (vtype == ODS_BOOL) {
+	s = (char *) xmlGetProp(node, (XUC) "boolean-value");
+    } else if (vtype == ODS_STRING) {
+	s = get_ods_string_value(node, sheet);
+    } 
+
+    if (s != NULL) {
+	ret = (*s != '\0');
+	free(s);
+    }
+
+    return ret;
+}
+
+static int row_height (xmlNodePtr p)
+{
+    char *s;
+    int h = 1;
+
+    s = (char *) xmlGetProp(p, (XUC) "number-rows-repeated");
+    if (s != NULL && *s != '\0') {
+	h = atoi(s);
+	free(s);
+    }
+
+    return h;
+}
+
 static int cell_width (xmlNodePtr p)
 {
     char *s;
@@ -360,7 +403,7 @@ static int ods_error (office_sheet *sheet,
     if ((sheet->flags & BOOK_AUTO_VARNAMES) || i == 0) {
 	pputs(prn, ":\n");
     } else {
-	int v = j + 1;
+	int v = i + 1;
 
 	if (sheet->flags & BOOK_OBS_LABELS) v--;
 	pprintf(prn, " (\"%s\"):\n", sheet->dinfo->varname[v]);
@@ -452,6 +495,16 @@ static int real_read_cell (xmlNodePtr cur,
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_DATE,
 				ODS_NONE, prn);
+	    }
+	} else if (vtype == ODS_NUMERIC) {
+	    val = (char *) xmlGetProp(cur, (XUC) "value");
+	    if (val != NULL) {
+		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
+		fprintf(stderr, " numeric obs: '%s'\n", val); 
+		free(val);		
+	    } else {
+		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
+				ODS_NONE, prn);		
 	    }
 	} else {
 	    err = ods_error(sheet, iread, jread, ODS_DATE,
@@ -559,7 +612,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
     xmlNodePtr colp, rowp = tab->node->xmlChildrenNode;
     xmlNodePtr p00 = NULL, p01 = NULL, p10 = NULL;
     int readcols = tab->cols - sheet->xoffset;
-    int tabcol, tabrow = 0;
+    int nr, tabcol, tabrow = 0;
     int done = 0;
     int err = 0;
 
@@ -568,6 +621,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 
     while (!err && rowp != NULL && !done) {
 	if (!xmlStrcmp(rowp->name, (XUC) "table-row")) {
+	    nr = row_height(rowp);
 	    if (tabrow == sheet->yoffset) {
 		colp = rowp->xmlChildrenNode;
 		tabcol = 0;
@@ -595,7 +649,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 		    colp = colp->next;
 		}
 	    }
-	    tabrow++;
+	    tabrow += nr;
 	}
 	if (readcols > 1) {
 	    done = (p01 != NULL && p10 != NULL);
@@ -613,14 +667,14 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 
 	if (p00 != NULL) {
 	    vt00 = get_ods_value_type(p00);
-	    fprintf(stderr, "cell(0,0): type = %d\n", vt00);
+	    fprintf(stderr, "cell(0,0): type = %s\n", ods_name(vt00));
 	} else {
 	    fprintf(stderr, "cell(0,0): blank\n");
 	    sheet->flags |= BOOK_OBS_BLANK;
 	}
 
 	vt10 = get_ods_value_type(p10);
-	fprintf(stderr, "cell(1,0): type = %d\n", vt10);
+	fprintf(stderr, "cell(1,0): type = %s\n", ods_name(vt10));
 
 	if (p01 == NULL) {
 	    /* single column */
@@ -629,7 +683,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 	    }
 	} else {
 	    vt01 = get_ods_value_type(p01);
-	    fprintf(stderr, "cell(0,1): type = %d\n", vt01);
+	    fprintf(stderr, "cell(0,1): type = %s\n", ods_name(vt01));
 	    if (vt01 != ODS_STRING) {
 		sheet->flags |= BOOK_AUTO_VARNAMES;
 	    }
@@ -685,9 +739,10 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
 
     while (cur != NULL && !err && readrow < tab->rows) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
-	    if (tabrow++ >= sheet->yoffset) {
+	    if (tabrow >= sheet->yoffset) {
 		err = read_data_row(cur, tab, sheet, readrow++, prn);
 	    }
+	    tabrow += row_height(cur);
 	}
 	cur = cur->next;
     } 
@@ -706,7 +761,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 {
     office_table *tab = NULL;
     xmlNodePtr rowp;
-    int vtype, nc, row_empty;
+    int hascont, nr, nc, row_empty;
     int cols, xoffset;
     int rows, rchk;
     int err = 0;
@@ -727,24 +782,23 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
+	    nr = row_height(cur);
 	    cols = xoffset = 0;
 	    row_empty = 1;
 	    rowp = cur->xmlChildrenNode;
 	    while (rowp != NULL && !err) {
 		if (!xmlStrcmp(rowp->name, (XUC) "table-cell")) {
-		    vtype = get_ods_value_type(rowp);
+		    hascont = ods_cell_has_content(rowp, sheet);
 		    nc = cell_width(rowp);
-		    if (vtype == ODS_NONE) {
-			if (row_empty) {
-			    xoffset += nc;
-			}
-		    } else {
+		    if (hascont) {
 			row_empty = 0;
 			tab->empty = 0;
-		    }
+		    } else if (row_empty) {
+			xoffset += nc;
+		    } 
 		    if (rowp->next == NULL) {
 			/* last cell in row */
-			cols += (vtype == ODS_NONE)? 0 : nc;
+			cols += (hascont)? nc : 0;
 		    } else {
 			cols += nc;
 		    }
@@ -752,7 +806,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 		rowp = rowp->next;
 	    }
 	    if (!err) {
-		rows++;
+		rows += nr;
 		if (!row_empty) {
 		    rchk = rows;
 		}
@@ -760,7 +814,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 		    tab->cols = cols;
 		}
 		if (tab->empty) {
-		    tab->yoffset += 1;
+		    tab->yoffset += nr;
 		}
 		if (!row_empty && xoffset < tab->xoffset) {
 		    tab->xoffset = xoffset;
