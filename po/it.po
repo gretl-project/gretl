@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.6.5\n"
+"Project-Id-Version: gretl 1.6.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-07 14:27-0500\n"
-"PO-Revision-Date: 2007-10-11 12:44+0200\n"
+"PO-Revision-Date: 2007-11-08 14:59+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2337,9 +2337,8 @@ msgid "The restrictions do not identify the parameters"
 msgstr "I vincoli non identificano i parametri"
 
 #: lib/src/gretl_errors.c:69
-#, fuzzy
 msgid "External command failed"
-msgstr "comando scatters fallito\n"
+msgstr "Comando esterno fallito"
 
 #: lib/src/gretl_func.c:2332
 msgid "No description available"
@@ -2987,9 +2986,9 @@ msgid "p-value for %s test"
 msgstr "p-value per il test %s"
 
 #: lib/src/gretl_utils.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "log-likelihood for %s test"
-msgstr "Log-verosimiglianza per %s"
+msgstr "Log-verosimiglianza per test %s"
 
 #: lib/src/gretl_win32.c:49
 #, c-format
@@ -3479,37 +3478,31 @@ msgstr "%s: matrice inesistente\n"
 
 #: lib/src/libset.c:1022
 msgid "Variables that can be set using \"set\""
-msgstr ""
+msgstr "Variabili impostabili usando \"set\""
 
 #: lib/src/libset.c:1024
-#, fuzzy
 msgid "\"help set\" for details"
-msgstr "Testo di aiuto per %s:"
+msgstr "\"help set\" per i dettagli"
 
 #: lib/src/libset.c:1027
-#, fuzzy
 msgid "Program interaction"
-msgstr "Cointegrazione"
+msgstr "Interazione col programma"
 
 #: lib/src/libset.c:1032
-#, fuzzy
 msgid "Numerical methods"
-msgstr "Valori numerici"
+msgstr "Metodi numerici"
 
 #: lib/src/libset.c:1043
-#, fuzzy
 msgid "Random number generation"
-msgstr "Numero di osservazioni non valido"
+msgstr "Generazione di numeri casuali"
 
 #: lib/src/libset.c:1047
-#, fuzzy
 msgid "Robust estimation"
-msgstr "/Modello/Stima _robusta"
+msgstr "Stima robusta"
 
 #: lib/src/libset.c:1059
-#, fuzzy
 msgid "Filtering"
-msgstr "Filtro"
+msgstr "Filtraggio"
 
 #: lib/src/libset.c:1073 gui2/dialogs.c:3926 gui2/menustate.c:491
 msgid "Time series"
@@ -3517,7 +3510,7 @@ msgstr "Serie storiche"
 
 #: lib/src/libset.c:1078
 msgid "Program behavior"
-msgstr ""
+msgstr "Comportamento del programma"
 
 #: lib/src/libset.c:1240
 #, c-format
@@ -6728,9 +6721,8 @@ msgid "Open JMulTi file"
 msgstr "Apri file JMulTi"
 
 #: gui2/callbacks.c:195
-#, fuzzy
 msgid "Open ODS file"
-msgstr "Apri file BOX"
+msgstr "Apri file ODS"
 
 #: gui2/callbacks.c:198
 msgid "gretl: add markers"
@@ -7802,15 +7794,15 @@ msgstr "Non sono state eseguite modifiche"
 
 #: gui2/dialogs.c:3851
 msgid "Daily (5 days)"
-msgstr ""
+msgstr "Giornaliero (5 giorni)"
 
 #: gui2/dialogs.c:3852
 msgid "Daily (6 days)"
-msgstr ""
+msgstr "Giornaliero (6 giorni)"
 
 #: gui2/dialogs.c:3853
 msgid "Daily (7 days)"
-msgstr ""
+msgstr "Giornaliero (7 giorni)"
 
 #: gui2/dialogs.c:3854 gui2/dialogs.c:4004 gui2/menustate.c:501
 msgid "Hourly"
@@ -7889,9 +7881,8 @@ msgid "stacked cross sections"
 msgstr "pila di dati cross section"
 
 #: gui2/dialogs.c:4053
-#, fuzzy
 msgid "(dropping missing observations)"
-msgstr "Osservazioni mancanti"
+msgstr "(scartate osservazioni mancanti)"
 
 #: gui2/dialogs.c:4240
 msgid "The unit and time index variables must be distinct"
@@ -7910,9 +7901,8 @@ msgid "Time index variable:"
 msgstr "Variabile indice temporale"
 
 #: gui2/dialogs.c:4501
-#, fuzzy
 msgid "purge missing observations"
-msgstr "Osservazioni mancanti"
+msgstr "elimina osservazioni mancanti"
 
 #: gui2/dialogs.c:4546
 msgid "The data set contains no suitable index variables"
@@ -8179,7 +8169,7 @@ msgstr "file JMulTi (*.dat)"
 
 #: gui2/fileselect.c:623 gui2/fileselect.c:624
 msgid "Open Document Spreadsheet (*.ods)"
-msgstr ""
+msgstr "Open Document Spreadsheet (*.ods)"
 
 #: gui2/fileselect.c:625
 msgid "RATS databases (*.rat)"
@@ -8818,7 +8808,7 @@ msgstr "/File/Apri dati/Importa/_ASCII..."
 
 #: gui2/gretl.c:192
 msgid "/File/Open data/Import/_Octave..."
-msgstr "/File/Apri dati/Importa/_Octave..."
+msgstr "/File/Apri dati/Importa/Oc_tave..."
 
 #: gui2/gretl.c:193
 msgid "/File/Open data/Import/_Gnumeric..."
@@ -8829,9 +8819,8 @@ msgid "/File/Open data/Import/_Excel..."
 msgstr "/File/Apri dati/Importa/_Excel..."
 
 #: gui2/gretl.c:195
-#, fuzzy
 msgid "/File/Open data/Import/_Open Document..."
-msgstr "/File/Apri dati/Importa/_Gnumeric..."
+msgstr "/File/Apri dati/Importa/_Open Document..."
 
 #: gui2/gretl.c:196
 msgid "/File/Open data/Import/_Eviews..."
@@ -8874,9 +8863,8 @@ msgid "/File/Append data/_Excel..."
 msgstr "/File/Aggiungi dati/_Excel..."
 
 #: gui2/gretl.c:208
-#, fuzzy
 msgid "/File/Append data/_Open Document..."
-msgstr "/File/Apri dati/Importa/_Gnumeric..."
+msgstr "/File/Aggiungi dati/_Open Document..."
 
 #: gui2/gretl.c:209
 msgid "/File/Append data/_Eviews..."
@@ -11601,14 +11589,12 @@ msgid "The variable '%s' is not a 0/1 variable."
 msgstr "La variabile '%s' non è una variabile 0/1."
 
 #: gui2/selector.c:1268
-#, fuzzy
 msgid "Unrestricted"
-msgstr "Trend non vincolato"
+msgstr "Non vincolato"
 
 #: gui2/selector.c:1269
-#, fuzzy
 msgid "Restricted"
-msgstr "Trend vincolato"
+msgstr "Vincolato"
 
 #: gui2/selector.c:1456
 msgid "You must select an X-axis variable"
