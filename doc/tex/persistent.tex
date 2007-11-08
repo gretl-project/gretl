@@ -53,13 +53,27 @@ After the second assignment, \texttt{xlist} contains just variables 4,
 5 and 6.
 
 To \textit{append} or \textit{prepend} variables to an existing list,
-we simply make use of the fact that a named list can stand in for a
+we can make use of the fact that a named list stands in for a
 ``longhand'' list.  For example, we can do
 %
 \begin{code}
 list xlist = xlist 5 6 7
 list xlist = 9 10 xlist 11 12
 \end{code}
+%
+Another option for appending a term to a list is to use \texttt{+=},
+as in
+%
+\begin{code}
+list xlist += cpi
+\end{code}
+%
+To drop a variable from a list, use \texttt{-=}:
+%
+\begin{code}
+list xlist -= cpi
+\end{code}
+%
 
 \subsection{Querying a list}
 

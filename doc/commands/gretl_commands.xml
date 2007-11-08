@@ -2594,8 +2594,12 @@
 	    synonym), <func>log10</func> (log to the base 10),
 	    <func>log2</func> (log to the base 2), <func>sqrt</func>
 	    (square root), <func>ceil</func> (ceiling: round up to nearest
+	    integer), <func>floor</func> (round down to the nearest
 	    integer).  All of these take a single argument, which may be
-	    either a series or a scalar.
+	    either a series or a scalar.  Note: <func>int</func> and
+	    <func>floor</func> differ in their effect for negative
+	    arguments: <lit>int(-3.5)</lit> gives &minus;3, while
+	    <lit>floor(-3.5)</lit> gives &minus;4.  
 	  </para>
 	</li>
 

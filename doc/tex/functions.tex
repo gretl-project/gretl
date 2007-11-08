@@ -39,7 +39,8 @@ below.
 \texttt{scalar} & scalar variable \\
 \texttt{series} & data series \\
 \texttt{list}   & named list of series \\
-\texttt{matrix} & named matrix or vector 
+\texttt{matrix} & named matrix or vector \\
+\texttt{string} & named string or string literal 
 \end{tabular}
 \end{center}
 
@@ -51,9 +52,9 @@ within the function.  An example follows:
 function myfunc(series y, list xvars, bool verbose)
 \end{code}
 
-Each of the type-specifiers, with the exception of \texttt{list}, may
-be modified by prepending an asterisk to the associated parameter
-name, as in
+Each of the type-specifiers, with the exception of \texttt{list} and
+\texttt{string}, may be modified by prepending an asterisk to the
+associated parameter name, as in
 %    
 \begin{code}
 function myfunc(series *y, scalar *b)
@@ -305,13 +306,39 @@ which returns 0 for an empty list.  (This mechanism can also be used
 to check whether a named, but empty, list was supplied as an
 argument.)
 
+\subsection{String arguments}
+
+String arguments can be used, for example, to provide flexibility in
+the naming of variables created within a function.  In the following
+example the function \texttt{movavg} returns a list containing two
+moving averages constructed from an input series, with the names of
+the newly created variables governed by the string argument.
+%
+\begin{code}
+function movavg (series y, string vname)
+   series @vname_2 = (y+y(-1)) / 2
+   series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
+   list retlist = @vname_2 @vname_4
+   return list retlist
+end function
+
+open data9-9
+list malist = movavg(nocars, "nocars")
+print malist --byobs
+\end{code}
+%
+The last line of the script will print two variables named
+\verb|nocars_2| and \verb|nocars_4|.  For details on the handling of
+named strings, see chapter~\ref{chap-persist}.
+
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
 they can return a single variable --- a scalar, series, list or
-matrix.  The return value, if any, is specified via a statement within
-the function body beginning with the keyword \verb+return+, followed
-by a type specifier and the name of a variable (as in the listing of
+matrix.  (At this point functions cannot return strings.)
+The return value, if any, is specified via a statement within the
+function body beginning with the keyword \verb+return+, followed by a
+type specifier and the name of a variable (as in the listing of
 parameters).  There can be only one such statement.  An example of a
 valid return statement is shown below:
 %    
