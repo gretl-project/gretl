@@ -37,7 +37,8 @@ separata da virgole. I parametri possono essere di uno dei seguenti tipi:
 \texttt{scalar} & variabile scalare \\
 \texttt{series} & serie di dati \\
 \texttt{list}   & lista di serie \\
-\texttt{matrix} & matrice o vettore
+\texttt{matrix} & matrice o vettore \\
+\texttt{string} & variabile stringa o stringa letterale
 \end{tabular}
 \end{center}
 
@@ -49,7 +50,7 @@ riconosciuto all'interno della funzione. Ecco un esempio:
 function funzione(series y, list xvars, bool verboso)
 \end{code}
 
-Ognuno di questi indicatori di tipo, con l'eccezione di \texttt{list},
+Ognuno di questi indicatori di tipo, con l'eccezione di \texttt{list} e \texttt{string},
 può essere modificato facendo precedere da un asterisco il parametro ad esso
 associato, come in questo esempio
 %    
@@ -301,11 +302,37 @@ essere riconosciuta usando la funzione \texttt{nelem()}, che restituisce il
 valore 0 se una lista è vuota (questo meccanismo può essere usato anche per
 controllare se è stata fornita una lista vuota come argomento).
 
+\subsection{Argomenti stringa}
+
+È possibile usare stringhe come argomenti, ad esempio per gestire in
+modo flessibile i nomi di variabili create all'interno di una funzione.
+Nell'esempio che segue, la funzione \texttt{movavg} produce una lista
+che contiene due medie mobili costruite a partire da una serie iniziale,
+con i nomi delle nuove variabili formati usando l'argomento stringa.
+%
+\begin{code}
+function movavg (series y, string vname)
+   series @vname_2 = (y+y(-1)) / 2
+   series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
+   list retlist = @vname_2 @vname_4
+   return list retlist
+end function
+
+open data9-9
+list malist = movavg(nocars, "nocars")
+print malist --byobs
+\end{code}
+%
+L'ultima riga dello script stamperà due variabili chiamate
+\verb|nocars_2| e \verb|nocars_4|.  Per i dettagli sulla gestione delle
+stringhe, si veda il capitolo~\ref{chap-persist}.
+
 \subsection{Valori di uscita}
 
 Le funzioni possono non produrre alcun valore (limitandosi ad esempio
 a stampare un risultato), oppure possono produrre una singola variabile:
-una scalare, una serie, una lista o una matrice. Il valore di uscita è specificato
+una scalare, una serie, una lista o una matrice (al momento le funzioni non
+possono produrre stringhe).  Il valore di uscita è specificato
 con una dichiarazione all'interno del corpo della funzione
 che comincia con la parola chiave \verb+return+, seguita dall'indicatore del
 tipo e dal nome della variabile (in modo analogo a quanto avviene per la lista
