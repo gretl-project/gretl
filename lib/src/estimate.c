@@ -1847,6 +1847,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int missv = 0, misst = 0;
     gretlopt lsqopt = OPT_A;
+    int quiet = (opt & OPT_Q);
     int ascii = !(opt & OPT_P);
     MODEL corc_model;
 
@@ -1879,7 +1880,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		goto bailout;
 	    }
 	    ess = corc_model.ess;
-	    if (ascii) {
+	    if (ascii && !quiet) {
 		char num[16];
 		int chk;
 		
@@ -1900,7 +1901,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 			bufspace(3, prn);
 		    }
 		} 
-	    } else {
+	    } else if (!quiet) {
 		ssr[nn] = ess;
 		rh[nn++] = rho;
 	    }
@@ -1945,12 +1946,14 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	rho0 = rho = finalrho;
-	pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
-	if (ascii) {
-	    graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
-	    pputs(prn, "\n");
-	} else {
-	    hilu_plot(ssr, rh, nn);
+	if (!quiet) {
+	    pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
+	    if (ascii) {
+		graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
+		pputs(prn, "\n");
+	    } else {
+		hilu_plot(ssr, rh, nn);
+	    }
 	}
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
@@ -1973,20 +1976,24 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (ci != HILU || !(opt & OPT_B)) {
 
-	if (ci == HILU) {
-	    pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
-	} else {
-	    pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
-	}
+	if (!quiet) {
+	    if (ci == HILU) {
+		pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n"));
+	    } else {
+		pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
+	    }
 
-	pputs(prn, _("                 ITER       RHO        ESS"));
-	pputc(prn, '\n');
+	    pputs(prn, _("                 ITER       RHO        ESS"));
+	    pputc(prn, '\n');
+	}
 
 	iter = 0;
 	diff = 1.0;
 
 	while (diff > 0.001) {
-	    pprintf(prn, "          %10d %12.5f", ++iter, rho);
+	    if (!quiet) {
+		pprintf(prn, "          %10d %12.5f", ++iter, rho);
+	    }
 	    clear_model(&corc_model);
 	    corc_model = ar1_lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
 #if AR_DEBUG
@@ -1999,7 +2006,9 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&corc_model);
 		goto bailout;
 	    }
-	    pprintf(prn, "   %g\n", corc_model.ess);
+	    if (!quiet) {
+		pprintf(prn, "   %g\n", corc_model.ess);
+	    }
 
 	    rho = autores(&corc_model, (const double **) *pZ, ci);
 
@@ -2020,7 +2029,9 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    if (iter == 30) break;
 	}
 
-	pprintf(prn, _("                final %11.5f\n\n"), rho);
+	if (!quiet) {
+	    pprintf(prn, _("                final %11.5f\n\n"), rho);
+	}
     }
 
     clear_model(&corc_model);

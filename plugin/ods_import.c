@@ -405,7 +405,7 @@ static int real_read_cell (xmlNodePtr cur,
     int blank0 = (sheet->flags & BOOK_OBS_BLANK)? 1 : 0;
     int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
     int nr, j, v, vj, t, vtype;
-    double x;
+    double x = NADBL;
     int err = 0;
 
     v = jread + 1 - obscol;
@@ -495,24 +495,30 @@ static int real_read_cell (xmlNodePtr cur,
     if (vtype == ODS_NUMERIC) {
 	x = get_ods_numeric_value(cur);
 	fprintf(stderr, " float: %.15g\n", x); 
-	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
-	    sheet->Z[vj][t] = x;
-	}	    
     } else if (vtype == ODS_BOOL) {
 	x = get_ods_bool_value(cur);
 	fprintf(stderr, " boolean: %g\n", x); 
+    } else if (vtype == ODS_NONE) {
+	fprintf(stderr, " blank: NA?\n");
+    } else if (vtype == ODS_STRING) {
+	val = get_ods_string_value(cur);
+	if (val != NULL && import_na_string(val)) {
+	    fprintf(stderr, " string: NA?\n");
+	} else {
+	    err = E_DATA;
+	}
+	free(val);
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, prn);
+    } else {
 	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
 	    sheet->Z[vj][t] = x;
 	}
-    } else if (vtype == ODS_NONE) {
-	fprintf(stderr, " blank: NA?\n");
-	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
-	    sheet->Z[vj][t] = NADBL;
-	}
-    } else {
-	err = ods_error(sheet, iread, jread, ODS_NUMERIC,
-			vtype, prn);
-    }
+    }	    
 
     return err;
 }
