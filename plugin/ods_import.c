@@ -454,6 +454,8 @@ static int real_read_cell (xmlNodePtr cur,
 	    iread, jread, v, t);
 #endif
 
+    /* reading a variable name? */
+
     if (iread == 0 && vnames) {
 	jread += blank0;
 	v += blank0;
@@ -483,13 +485,13 @@ static int real_read_cell (xmlNodePtr cur,
 	return err;
     }
 
+    /* reading an observation label? */
+
     if (jread == 0 && obscol) {
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
-		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " obs string: '%s'\n", val);
-		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_STRING,
 				ODS_NONE, prn);
@@ -497,9 +499,7 @@ static int real_read_cell (xmlNodePtr cur,
 	} else if (vtype == ODS_DATE) {
 	    val = (char *) xmlGetProp(cur, (XUC) "date-value");
 	    if (val != NULL) {
-		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " date: '%s'\n", val); 
-		free(val);
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_DATE,
 				ODS_NONE, prn);
@@ -507,9 +507,7 @@ static int real_read_cell (xmlNodePtr cur,
 	} else if (vtype == ODS_NUMERIC) {
 	    val = (char *) xmlGetProp(cur, (XUC) "value");
 	    if (val != NULL) {
-		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " numeric obs: '%s'\n", val); 
-		free(val);		
 	    } else {
 		err = ods_error(sheet, iread, jread, ODS_NUMERIC,
 				ODS_NONE, prn);		
@@ -518,8 +516,17 @@ static int real_read_cell (xmlNodePtr cur,
 	    err = ods_error(sheet, iread, jread, ODS_DATE,
 			    vtype, prn);
 	}
+
+	if (!err) {
+	    strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
+	}
+
+	free(val);
+
 	return err;
-    }	    
+    }
+
+    /* reading actual data */
 
     if (vtype == ODS_NUMERIC) {
 	x = get_ods_numeric_value(cur);
