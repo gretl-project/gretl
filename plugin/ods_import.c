@@ -265,6 +265,31 @@ static int get_ods_value_type (xmlNodePtr node)
     return ret;
 }
 
+static int p_content_NA (xmlNodePtr cur)
+{
+    char *s = NULL;
+    int ret = 0;
+
+    cur = cur->xmlChildrenNode;
+
+    while (cur != NULL) {
+	if (!xmlStrcmp(cur->name, (XUC) "p")) {
+	    s = (char *) xmlNodeGetContent(cur);
+	    break;
+	}
+	cur = cur->next;
+    }
+
+    if (s != NULL) {
+	if (!strcmp(s, "#N/A")) {
+	    ret = 1;
+	}
+	free(s);
+    }
+
+    return ret;
+}
+
 static char *get_ods_string_value (xmlNodePtr cur)
 {
     char *sval;
@@ -308,7 +333,11 @@ static double get_ods_numeric_value (xmlNodePtr cur)
 
     tmp = (char *) xmlGetProp(cur, (XUC) "value");
     if (tmp != NULL) {
-	ret = atof(tmp);
+	if (!strcmp(tmp, "0") && p_content_NA(cur)) {
+	    ret = NADBL;
+	} else {
+	    ret = atof(tmp);
+	}
 	free(tmp);
     }
 
