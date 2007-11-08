@@ -2440,6 +2440,37 @@ static void print_whites_test (double TR2, int df, double pval, PRN *prn)
 	    df, TR2, chisq_cdf_comp(TR2, df)); 
 }
 
+/* For White's test, see if we have enough degrees of freedom
+   to add squares -- and if so, if we have enough df to add
+   cross-products also.
+*/
+
+static int get_whites_aux (const MODEL *pmod, const double **Z) 
+{
+    int aux = AUX_WHITE;
+    int rem = pmod->ncoeff - pmod->ifc - 1;
+    int nsq = 0, nxpx = 0;
+    int i, v;
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	v = pmod->list[i];
+	if (v > 0) {
+	    if (!gretl_isdummy(pmod->t1, pmod->t2, Z[v])) {
+		nsq++;
+	    }
+	    nxpx += rem--;
+	}
+    }
+
+    if (pmod->dfd - nsq < 1) {
+	aux = AUX_NONE;
+    } else if (pmod->dfd - nsq - nxpx < 1) {
+	aux = AUX_SQ;
+    }
+
+    return aux;
+}
+
 /**
  * whites_test:
  * @pmod: pointer to model.
@@ -2457,14 +2488,16 @@ static void print_whites_test (double TR2, int df, double pval, PRN *prn)
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    int lo, ncoeff, yno, t;
+    int aux, lo, ncoeff, yno, t;
     int v = pdinfo->v;
     int *list = NULL;
     double zz;
     MODEL white;
     int err = 0;
 
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) { 
+    if (pmod->ci == NLS || pmod->ci == MLE ||
+	pmod->ci == GMM || pmod->ci == ARMA || 
+	pmod->ci == LOGISTIC) { 
 	return E_NOTIMP;
     }
 
@@ -2472,11 +2505,17 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
+    /* what can we do, with the degrees of freedom available? */
+    aux = get_whites_aux(pmod, (const double **) *pZ);
+    if (aux == AUX_NONE) {
+	return E_DF;
+    } 
+
     gretl_model_init(&white);
 
     lo = pmod->list[0];
     yno = pmod->list[1];
-    ncoeff = pmod->list[0] - 1;
+    ncoeff = pmod->ncoeff;    
 
     /* make space in data set */
     if (dataset_add_series(1, pZ, pdinfo)) {
@@ -2498,8 +2537,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	/* build aux regression list, adding squares and
-	   cross-products of the original independent vars */
-	list = augment_regression_list(pmod->list, AUX_WHITE, pZ, pdinfo);
+	   (possibly) cross-products of the original 
+	   independent vars */
+	list = augment_regression_list(pmod->list, aux, pZ, pdinfo);
 	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
