@@ -953,7 +953,9 @@ static int ts_check (office_sheet *sheet, PRN *prn)
 
     if (mpd > 0) {
 	pputs(prn, _("taking date information from row labels\n\n"));
-	dataset_destroy_obs_markers(sheet->dinfo);
+	if (sheet->dinfo->markers != DAILY_DATE_STRINGS) {
+	    dataset_destroy_obs_markers(sheet->dinfo);
+	}
     } 
 
 #if ODEBUG

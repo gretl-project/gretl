@@ -579,8 +579,14 @@ int guess_daily_pd (const DATAINFO *pdinfo)
 {
     int t, wd, pd = 5;
     int wdbak = -1;
+    int havesat = 0;
     int gotsat = 0, gotsun = 0;
     int contig = 0;
+
+    wd = get_day_of_week(pdinfo->S[0]);
+    if (6 - wd < pdinfo->n) {
+	havesat = 1;
+    }
 
     for (t=0; t<pdinfo->n && t<28; t++) {
 	wd = get_day_of_week(pdinfo->S[t]);
@@ -598,6 +604,14 @@ int guess_daily_pd (const DATAINFO *pdinfo)
     if (contig > 10) {
 	if (gotsun) pd = 7;
 	else if (gotsat) pd = 6;
+    } else if (pdinfo->n > 7) {
+	if (!gotsun && !gotsat) {
+	    pd = 5;
+	} else if (!gotsun) {
+	    pd = 6;
+	}
+    } else if (havesat && !gotsat) {
+	pd = 5;
     } else {
 	pd = 7;
     }

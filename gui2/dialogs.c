@@ -3754,6 +3754,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
 
     if (GPOINTER_TO_INT(dwinfo->data) == DROP_MISSROWS) {
 	delmiss = 1;
+	dwinfo->data = NULL;
     }
 
     /* check for nothing to be done */
