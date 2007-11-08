@@ -120,7 +120,6 @@ static void wsheet_print_info (wsheet *sheet)
                              (v) == VALUE_INTEGER || \
                              (v) == VALUE_FLOAT)
 
-
 static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 {
     int i, j, t;

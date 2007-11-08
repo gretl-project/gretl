@@ -265,8 +265,7 @@ static int get_ods_value_type (xmlNodePtr node)
     return ret;
 }
 
-static char *
-get_ods_string_value (xmlNodePtr cur, office_sheet *sheet)
+static char *get_ods_string_value (xmlNodePtr cur)
 {
     char *sval;
 
@@ -279,7 +278,7 @@ get_ods_string_value (xmlNodePtr cur, office_sheet *sheet)
 
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "p")) {
-	    gretl_xml_node_get_string(cur, sheet->doc, &sval);
+	    sval = (char *) xmlNodeGetContent(cur);
 	    break;
 	}
 	cur = cur->next;
@@ -316,33 +315,9 @@ static double get_ods_numeric_value (xmlNodePtr cur)
     return ret;
 }
 
-static int ods_cell_has_content (xmlNodePtr node, office_sheet *sheet)
+static int ods_cell_has_content (xmlNodePtr node)
 {
-    int vtype, ret = 0;
-    char *s = NULL;
-
-    vtype = get_ods_value_type(node);
-
-    if (vtype == ODS_NONE) {
-	return 0;
-    } else if (vtype == ODS_NUMERIC) {
-	s = (char *) xmlGetProp(node, (XUC) "value");
-    } else if (vtype == ODS_DATE) {
-	s = (char *) xmlGetProp(node, (XUC) "date-value");
-    } else if (vtype == ODS_TIME) {
-	s = (char *) xmlGetProp(node, (XUC) "time-value");
-    } else if (vtype == ODS_BOOL) {
-	s = (char *) xmlGetProp(node, (XUC) "boolean-value");
-    } else if (vtype == ODS_STRING) {
-	s = get_ods_string_value(node, sheet);
-    } 
-
-    if (s != NULL) {
-	ret = (*s != '\0');
-	free(s);
-    }
-
-    return ret;
+    return (get_ods_value_type(node) != ODS_NONE);
 }
 
 static int row_height (xmlNodePtr p)
@@ -351,8 +326,10 @@ static int row_height (xmlNodePtr p)
     int h = 1;
 
     s = (char *) xmlGetProp(p, (XUC) "number-rows-repeated");
-    if (s != NULL && *s != '\0') {
-	h = atoi(s);
+    if (s != NULL) {
+	if (*s != '\0') {
+	    h = atoi(s);
+	}
 	free(s);
     }
 
@@ -365,8 +342,10 @@ static int cell_width (xmlNodePtr p)
     int w = 1;
 
     s = (char *) xmlGetProp(p, (XUC) "number-columns-repeated");
-    if (s != NULL && *s != '\0') {
-	w = atoi(s);
+    if (s != NULL) {
+	if (*s != '\0') {
+	    w = atoi(s);
+	}
 	free(s);
     }
 
@@ -453,7 +432,7 @@ static int real_read_cell (xmlNodePtr cur,
 	    return 0;
 	}
 	if (vtype == ODS_STRING) {
-	    val = get_ods_string_value(cur, sheet);
+	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
 		*sheet->dinfo->varname[v] = '\0';
 		strncat(sheet->dinfo->varname[v],
@@ -477,7 +456,7 @@ static int real_read_cell (xmlNodePtr cur,
 
     if (jread == 0 && obscol) {
 	if (vtype == ODS_STRING) {
-	    val = get_ods_string_value(cur, sheet);
+	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
 		strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
 		fprintf(stderr, " obs string: '%s'\n", val);
@@ -544,11 +523,10 @@ static int read_data_row (xmlNodePtr cur,
 			  int readrow,
 			  PRN *prn)
 {
-    int tabcol, readcol;
+    int tabcol = 0, readcol = 0;
     int err = 0;
 
     cur = cur->xmlChildrenNode;
-    tabcol = readcol = 0;
 
     while (cur != NULL && !err && readcol < tab->cols) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-cell")) {
@@ -601,9 +579,9 @@ static int sheet_allocate_data (office_sheet *sheet,
     return 0;
 }
 
-/* Look at the cells in the top left-hand corner of the table: try to
-   determine (a) if we have an observations column and (b) if we have
-   a varnames row.
+/* Look at the cells in the top left-hand corner of the reading area
+   of the table: try to determine (a) if we have an observations
+   column and (b) if we have a varnames row.
 */
 
 static int 
@@ -690,7 +668,7 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
 	    if (vt00 == ODS_NONE) {
 		sheet->flags |= BOOK_OBS_LABELS;
 	    } else if (vt00 == ODS_STRING) {
-		char *val = get_ods_string_value(p00, sheet);
+		char *val = get_ods_string_value(p00);
 
 		fprintf(stderr, "cell(0,0): val = '%s'\n", val);
 		if (import_obs_label(val)) {
@@ -709,11 +687,33 @@ analyse_top_left (office_sheet *sheet, office_table *tab)
     return err;
 }
 
+static int repeat_data_row (office_sheet *sheet, int iread,
+			    PRN *prn)
+{
+    int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
+    int i, t = iread - vnames;
+
+    if (t < 1 || t >= sheet->dinfo->n) {
+	pprintf(prn, "Found a repeated row in the wrong place");
+	return E_DATA;
+    }
+
+    for (i=1; i<sheet->dinfo->v; i++) {
+	sheet->Z[i][t] = sheet->Z[i][t-1];
+    }
+
+    if (sheet->dinfo->S != NULL) {
+	strcpy(sheet->dinfo->S[t], sheet->dinfo->S[t-1]);
+    }
+
+    return 0;
+}
+
 static int read_table_content (office_sheet *sheet, PRN *prn)
 {
     office_table *tab;
     xmlNodePtr cur;
-    int tabrow, readrow;
+    int i, nr, tabrow = 0, readrow = 0;
     int err = 0;
     
     if (sheet->seltab < 0 || sheet->seltab >= sheet->n_tables) {
@@ -733,16 +733,19 @@ static int read_table_content (office_sheet *sheet, PRN *prn)
     }
     
     cur = tab->node->xmlChildrenNode;
-    tabrow = readrow = 0;
 
     gretl_push_c_numeric_locale();
 
     while (cur != NULL && !err && readrow < tab->rows) {
 	if (!xmlStrcmp(cur->name, (XUC) "table-row")) {
+	    nr = row_height(cur);
 	    if (tabrow >= sheet->yoffset) {
 		err = read_data_row(cur, tab, sheet, readrow++, prn);
+		for (i=1; i<nr && !err; i++) {
+		    err = repeat_data_row(sheet, readrow++, prn);
+		}
 	    }
-	    tabrow += row_height(cur);
+	    tabrow += nr;
 	}
 	cur = cur->next;
     } 
@@ -788,7 +791,7 @@ get_table_dimensions (xmlNodePtr cur, office_sheet *sheet)
 	    rowp = cur->xmlChildrenNode;
 	    while (rowp != NULL && !err) {
 		if (!xmlStrcmp(rowp->name, (XUC) "table-cell")) {
-		    hascont = ods_cell_has_content(rowp, sheet);
+		    hascont = ods_cell_has_content(rowp);
 		    nc = cell_width(rowp);
 		    if (hascont) {
 			row_empty = 0;

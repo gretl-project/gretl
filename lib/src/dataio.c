@@ -2277,9 +2277,6 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("Data appended OK\n"));
     }
 
-    free_Z(addZ, addinfo);
-    clear_datainfo(addinfo, CLEAR_FULL);
-
     return err;
 }
 
