@@ -2576,8 +2576,12 @@
             sinonimo), <func>log10</func> (logaritmo in base 10),
             <func>log2</func> (logaritmo in base 2), <func>sqrt</func>
             (radice quadrata), <func>ceil</func> (ceiling: arrotonda per
-            eccesso all'intero superiore).  Tutte queste funzioni accettano un
-            singolo argomento, che può essere una serie o uno scalare.
+            eccesso all'intero superiore), <func>floor</func> (arrotonda per
+            difetto all'intero inferiore).  Tutte queste funzioni accettano un
+            singolo argomento, che può essere una serie o uno scalare. Nota:
+            <func>int</func> e <func>floor</func> si comportano in modo diverso
+            con argomenti negativi: <lit>int(-3.5)</lit> produce &minus;3,
+            mentre <lit>floor(-3.5)</lit> produce &minus;4.
 	  </para>
 	</li>
 	<li>
