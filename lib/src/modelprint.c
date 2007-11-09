@@ -775,7 +775,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int least_signif_coeff (const MODEL *pmod)
+static int least_significant_coeff (const MODEL *pmod)
 {
     double tstat, tmin = 4.0;
     int i, k = 0;
@@ -802,7 +802,7 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (k < 3) return;
 
-    if ((k = least_signif_coeff(pmod))) {
+    if ((k = least_significant_coeff(pmod))) {
 	char tmp[128];
 
 	if (pmod->ifc) {

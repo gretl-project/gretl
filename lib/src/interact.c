@@ -4294,6 +4294,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	if (!(cmd->opt & OPT_W)) {
 	    clear_model(models[1]);
 	}
+	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
+	    /* auto-omit was a no-op */
+	    err = 0;
+	}
 	break;	
 
     case ADDTO:

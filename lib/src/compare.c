@@ -867,6 +867,9 @@ static void remove_special_flags (gretlopt *popt)
     if (opt & OPT_P) {
 	opt &= ~OPT_P;
     }
+    if (opt & OPT_A) {
+	opt &= ~OPT_A;
+    }    
 
     *popt = opt;
 }
@@ -1015,6 +1018,130 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     return err;
 }
 
+static int auto_drop_var (const MODEL *pmod, int *list,
+			  DATAINFO *pdinfo,
+			  int d0, PRN *prn)
+{
+    double alpha_max = .10;
+    double pv, tstat, tmin = 4.0;
+    int i, k = 0;
+    int ret = 0;
+
+    if (pmod->ncoeff == 1) {
+	return 0;
+    }
+    
+    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+	tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
+	if (tstat < tmin) {
+	    tmin = tstat;
+	    k = i;
+	}
+    }
+
+    pv = coeff_pval(pmod->ci, tmin, pmod->dfd);
+
+    if (pv > alpha_max) {
+	if (d0) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Sequential elimination using two-sided alpha = %.2f"),
+		    alpha_max);
+	    pputs(prn, "\n\n");
+	}
+	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), 
+		pdinfo->varname[list[k+2]], pv);
+	gretl_list_delete_at_pos(list, k+2);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static void list_copy_values (int *targ, const int *src)
+{
+    int i;
+
+    for (i=0; i<=src[0]; i++) {
+	targ[i] = src[i];
+    }
+}
+
+static int auto_omit (MODEL *orig, MODEL *new, 
+		      double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt est_opt, gretlopt opt,
+		      PRN *prn)
+{
+    int *tmplist = NULL;
+    int err = 0;
+
+    tmplist = gretl_list_copy(orig->list);
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
+
+    if (!auto_drop_var(orig, tmplist, pdinfo, 1, prn)) {
+	free(tmplist);
+	return E_NOOMIT; /* FIXME */
+    }    
+
+    while (!err) {
+	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+				   est_opt, prn);
+	if (new->errcode) {
+	    err = new->errcode;
+	} else {
+	    list_copy_values(tmplist, new->list);
+	    if (auto_drop_var(new, tmplist, pdinfo, 0, prn)) {
+		model_count_minus();
+		clear_model(new);
+	    } else {
+		break;
+	    }
+	}
+    }
+
+    free(tmplist);
+
+    return err;
+}
+
+/* create reduced list for "omit" test on model */
+
+static int make_short_list (MODEL *orig, const int *omitvars,
+			    gretlopt opt, int *omitlast,
+			    int **plist)
+{
+    int *list = NULL;
+    int err = 0;
+
+    if (omitvars == NULL || omitvars[0] == 0) {
+	if (orig->ci == TSLS) {
+	    return E_PARSE;
+	} else {
+	    *omitlast = 1;
+	}
+    }
+
+    if (orig->ci == TSLS) {
+	list = tsls_list_omit(orig->list, omitvars, opt, &err);
+    } else if (orig->ci == PANEL || orig->ci == ARBOND) {
+	list = panel_list_omit(orig, omitvars, &err);
+    } else if (*omitlast) {
+	/* special: just drop the last variable */
+	list = gretl_list_omit_last(orig->list, &err);
+    } else {
+	list = gretl_list_omit(orig->list, omitvars, 2, &err);
+    }
+
+    if (list != NULL && list[0] == 1) {
+	err = E_NOVARS;
+    }
+
+    *plist = list;
+
+    return err;
+}
+
 static int omit_options_inconsistent (gretlopt opt)
 {
     if ((opt & OPT_T) || (opt & OPT_B)) {
@@ -1037,16 +1164,20 @@ static int omit_options_inconsistent (gretlopt opt)
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
  * of the new model, %OPT_O to print covariance matrix,
- * %OPT_I for silent operation.  Additional options that
- * are applicable only for 2SLS models: %OPT_B (omit from
- * both list of regressors and list of instruments), %OPT_T
- * (omit from list of instruments only).
+ * %OPT_I for silent operation; for %OPT_A, see below.
+ * Additional options that are applicable only for 2SLS models: 
+ * %OPT_B (omit from both list of regressors and list of 
+ * instruments), %OPT_T (omit from list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
- * specified in @omitvars, or if @omitvars is %NULL and
+ * specified in @omitvars.  Or if @omitvars is %NULL and
  * @orig was not estimated using two-stage least squares, after
- * removing the last independent variable in @orig.
+ * removing the last independent variable in @orig.  Or
+ * if %OPT_A is given, proceed sequentially, at each step
+ * dropping the least significant variable provided its
+ * p-value is above a certain threshold (currently 0.10,
+ * two-sided).
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -1083,32 +1214,11 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
-    if (omitvars == NULL || omitvars[0] == 0) {
-	if (orig->ci == TSLS) {
-	    return E_PARSE;
-	} else {
-	    omitlast = 1;
+    if (!(opt & OPT_A)) {
+	err = make_short_list(orig, omitvars, opt, &omitlast, &tmplist);
+	if (err) {
+	    return err;
 	}
-    }
-
-    /* create list for test model */
-    if (orig->ci == TSLS) {
-	tmplist = tsls_list_omit(orig->list, omitvars, opt, &err);
-    } else if (orig->ci == PANEL || orig->ci == ARBOND) {
-	tmplist = panel_list_omit(orig, omitvars, &err);
-    } else if (omitlast) {
-	/* special: just drop the last variable */
-	tmplist = gretl_list_omit_last(orig->list, &err);
-    } else {
-	tmplist = gretl_list_omit(orig->list, omitvars, 2, &err);
-    }
-
-    if (tmplist == NULL) {
-	return err;
-    }
-
-    if (tmplist[0] == 1) {
-	return E_NOVARS;
     }
 
     /* impose the sample range used for the original model */ 
@@ -1122,14 +1232,16 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
        functions */
     remove_special_flags(&est_opt);
 
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
-
-    if (new->errcode) {
+    if (opt & OPT_A) {
+	err = auto_omit(orig, new, pZ, pdinfo, est_opt, opt, prn);
+    } else {
+	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
 	err = new->errcode;
-	errmsg(err, prn);
     }
 
-    if (!err) {
+    if (err) {
+	errmsg(err, prn);
+    } else {
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_OMIT;
 	}

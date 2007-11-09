@@ -5293,9 +5293,7 @@ static int gen_check_return_type (parser *p)
 	}
     } else if (p->targ == MAT) {
 	/* error if result contains NAs */
-	if (r->t == LIST) {
-	    p->err = E_TYPES;
-	} else if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
+	if (r->t == VEC && has_missvals(r->v.xvec, p->dinfo)) {
 	    p->err = E_MISSDATA;
 	} else if (r->t == NUM && xna(r->v.xval)) {
 	    p->err = E_MISSDATA;
