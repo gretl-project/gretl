@@ -17,21 +17,6 @@
  * 
  */
 
-#ifdef EXCEL_IMPORTER
-
-static void set_all_missing (double **Z, DATAINFO *pdinfo)
-{
-    int i, t;
-
-    for (i=1; i<pdinfo->v; i++) {
-	for (t=0; t<pdinfo->n; t++) {
-	    Z[i][t] = NADBL;
-	}
-    }
-}
-
-#endif /* EXCEL_IMPORTER */
-
 static void invalid_varname (PRN *prn)
 {
     pputs(prn, gretl_errmsg_get());

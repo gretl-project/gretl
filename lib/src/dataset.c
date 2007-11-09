@@ -632,6 +632,7 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 
     pdinfo->v = nvar;
     pdinfo->n = nobs;
+
     *pZ = NULL;
 
     if (start_new_Z(pZ, pdinfo, 0)) {
@@ -639,8 +640,7 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 	return NULL;
     }
 
-    pdinfo->markers = (unsigned char) markers;
-    if (pdinfo->markers) {
+    if (markers) {
 	if (dataset_allocate_obs_markers(pdinfo)) {
 	    free_datainfo(pdinfo);
 	    return NULL;

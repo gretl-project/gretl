@@ -1488,16 +1488,10 @@ real_excel_get_data (const char *fname, double ***pZ, DATAINFO **ppdinfo,
 	goto getout;
     }
 
-    set_all_missing(newZ, newinfo);
-
     if (book_time_series(book)) {
 	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
     } else {
-	strcpy(newinfo->stobs, "1");
-	sprintf(newinfo->endobs, "%d", newinfo->n);
-	newinfo->sd0 = 1.0;
-	newinfo->pd = 1;
-	newinfo->structure = CROSS_SECTION;
+	dataset_obs_info_default(newinfo);
     } 
 
     /* OK: actually populate the dataset */

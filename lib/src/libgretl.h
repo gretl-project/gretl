@@ -284,8 +284,7 @@ struct DATAINFO_ {
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
     PANINFO *paninfo;   /* additional info for panel data */
-    char markers;       /* whether (1) or not (0) the data file has
-			   observation markers */
+    char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
     char delim;         /* default delimiter for "CSV" files */
     char decpoint;      /* character used to represent decimal point */
     char submode;       /* mode of sub-sampling in force, if any */
