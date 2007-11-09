@@ -1024,8 +1024,8 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 */
 
 static int auto_drop_var (const MODEL *pmod, int *list,
-			  DATAINFO *pdinfo,
-			  int d0, PRN *prn)
+			  DATAINFO *pdinfo, int d0, 
+			  PRN *prn, int *err)
 {
     double alpha_max = .10; /* FIXME make this configurable? */
     double tstat, pv = 0.0, tmin = 4.0;
@@ -1049,16 +1049,18 @@ static int auto_drop_var (const MODEL *pmod, int *list,
     }
 
     if (pv > alpha_max) {
+	char pname[VNAMELEN];
+
 	if (d0) {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Sequential elimination using two-sided alpha = %.2f"),
 		    alpha_max);
 	    pputs(prn, "\n\n");
 	}
-	k = k + 2;
-	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), 
-		pdinfo->varname[list[k]], pv);
-	gretl_list_delete_at_pos(list, k);
+
+	gretl_model_get_param_name(pmod, pdinfo, k, pname);
+	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), pname, pv);
+	*err = gretl_list_delete_at_pos(list, k + 2);
 	ret = 1;
     }
 
@@ -1076,7 +1078,8 @@ static void list_copy_values (int *targ, const int *src)
 
 /* run a loop in which the least significant variable is dropped
    from the regression list, provided its p-value exceeds some
-   specified cutoff.
+   specified cutoff.  FIXME this probably still needs work for 
+   estimators other than OLS.
 */
 
 static int auto_omit (MODEL *orig, MODEL *new, 
@@ -1092,9 +1095,9 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	return E_ALLOC;
     }
 
-    if (!auto_drop_var(orig, tmplist, pdinfo, 1, prn)) {
+    if (!auto_drop_var(orig, tmplist, pdinfo, 1, prn, &err)) {
 	free(tmplist);
-	return E_NOOMIT;
+	return (err)? err : E_NOOMIT;
     }    
 
     while (!err) {
@@ -1104,7 +1107,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
 	    err = new->errcode;
 	} else {
 	    list_copy_values(tmplist, new->list);
-	    if (auto_drop_var(new, tmplist, pdinfo, 0, prn)) {
+	    if (auto_drop_var(new, tmplist, pdinfo, 0, prn, &err)) {
 		model_count_minus();
 		clear_model(new);
 	    } else {
