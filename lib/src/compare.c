@@ -1018,13 +1018,18 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     return err;
 }
 
+/* determine if a model contains a variable with p-value
+   greater than some cutoff alpha_max; and if so, remove
+   this variable from the regression list 
+*/
+
 static int auto_drop_var (const MODEL *pmod, int *list,
 			  DATAINFO *pdinfo,
 			  int d0, PRN *prn)
 {
-    double alpha_max = .10;
-    double pv, tstat, tmin = 4.0;
-    int i, k = 0;
+    double alpha_max = .10; /* FIXME make this configurable? */
+    double tstat, pv = 0.0, tmin = 4.0;
+    int i, k = -1;
     int ret = 0;
 
     if (pmod->ncoeff == 1) {
@@ -1039,7 +1044,9 @@ static int auto_drop_var (const MODEL *pmod, int *list,
 	}
     }
 
-    pv = coeff_pval(pmod->ci, tmin, pmod->dfd);
+    if (k >= 0) {
+	pv = coeff_pval(pmod->ci, tmin, pmod->dfd);
+    }
 
     if (pv > alpha_max) {
 	if (d0) {
@@ -1048,9 +1055,10 @@ static int auto_drop_var (const MODEL *pmod, int *list,
 		    alpha_max);
 	    pputs(prn, "\n\n");
 	}
+	k = k + 2;
 	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), 
-		pdinfo->varname[list[k+2]], pv);
-	gretl_list_delete_at_pos(list, k+2);
+		pdinfo->varname[list[k]], pv);
+	gretl_list_delete_at_pos(list, k);
 	ret = 1;
     }
 
@@ -1065,6 +1073,11 @@ static void list_copy_values (int *targ, const int *src)
 	targ[i] = src[i];
     }
 }
+
+/* run a loop in which the least significant variable is dropped
+   from the regression list, provided its p-value exceeds some
+   specified cutoff.
+*/
 
 static int auto_omit (MODEL *orig, MODEL *new, 
 		      double ***pZ, DATAINFO *pdinfo, 
@@ -1081,7 +1094,7 @@ static int auto_omit (MODEL *orig, MODEL *new,
 
     if (!auto_drop_var(orig, tmplist, pdinfo, 1, prn)) {
 	free(tmplist);
-	return E_NOOMIT; /* FIXME */
+	return E_NOOMIT;
     }    
 
     while (!err) {
@@ -1105,7 +1118,9 @@ static int auto_omit (MODEL *orig, MODEL *new,
     return err;
 }
 
-/* create reduced list for "omit" test on model */
+/* create reduced list for "omit" test on model, based on
+   the list of variables to be dropped, omitvars
+*/
 
 static int make_short_list (MODEL *orig, const int *omitvars,
 			    gretlopt opt, int *omitlast,
@@ -1171,13 +1186,12 @@ static int omit_options_inconsistent (gretlopt opt)
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
- * specified in @omitvars.  Or if @omitvars is %NULL and
- * @orig was not estimated using two-stage least squares, after
- * removing the last independent variable in @orig.  Or
- * if %OPT_A is given, proceed sequentially, at each step
- * dropping the least significant variable provided its
- * p-value is above a certain threshold (currently 0.10,
- * two-sided).
+ * specified in @omitvars.  Or if %OPT_A is given, proceed 
+ * sequentially, at each step dropping the least significant 
+ * variable provided its p-value is above a certain threshold 
+ * (currently 0.10, two-sided).  Or if @omitvars is %NULL 
+ * and @orig was not estimated using two-stage least squares,
+ * drop the last independent variable in @orig.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
