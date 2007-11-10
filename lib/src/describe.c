@@ -1043,6 +1043,14 @@ double doornik_chisq (double skew, double xkurt, int n)
 	z2 = z1*z1 + z2*z2;
     }
 
+#if 0
+    double S2, JB;
+
+    S2 = b1;
+    JB = ((double) n / 6) * (S2 + xkurt * xkurt/ 4.0);
+    fprintf(stderr, "JB = %g\n", JB);
+#endif
+
     return z2;
 }
 

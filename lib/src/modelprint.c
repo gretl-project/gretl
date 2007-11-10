@@ -2438,8 +2438,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	pmod->errcode = E_NAN;
     }
 
-    printlist(pmod->list, "pmod->list, after printmodel");
-
     return gotnan;
 }
 
