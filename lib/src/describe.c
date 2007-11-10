@@ -1345,7 +1345,7 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
 /* calculate test stat for distribution, if the sample 
    is big enough */
 
-static void 
+static void
 freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 {
     double skew, kurt;
@@ -1542,6 +1542,11 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     x = Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
+    if (opt & OPT_S) {
+	/* silent operation */
+	return freq;
+    }
+
     if (freq_add_arrays(freq, nbins)) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -1602,14 +1607,33 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     return freq;
 }
 
+static void record_freq_test (const FreqDist *freq)
+{
+    double pval = NADBL;
+
+    if (freq->dist == D_NORMAL) {
+	pval = chisq_cdf_comp(freq->test, 2);
+    } else if (freq->dist == D_GAMMA) {
+	pval = normal_pvalue_2(freq->test);
+    }	
+
+    if (!na(pval)) {
+	record_test_result(freq->test, pval, 
+			   (freq->dist == D_NORMAL)? 
+			   "normality" : "gamma");
+    }
+}
+
 /* wrapper function: get the distribution, print it, graph it
-   if wanted, then free stuff */
+   if wanted, then free stuff.  OPT_Q = quiet; OPT_S =
+   silent.
+*/
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq;
-    int realgraph = graph && !(opt & OPT_Q);
+    int realgraph = graph && !(opt & (OPT_Q|OPT_S));
     int err = 0;
     DistCode dist = D_NONE;
 
@@ -1625,7 +1649,11 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	return err;
     }
 
-    print_freq(freq, prn); 
+    if (!(opt & OPT_S)) {
+	print_freq(freq, prn);
+    } else if (dist) {
+	record_freq_test(freq);
+    }
 
     if (realgraph && plot_freq(freq, dist)) {
 	pputs(prn, _("gnuplot command failed\n"));

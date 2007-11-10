@@ -2320,6 +2320,10 @@
 	  <flag>--gamma</flag>
 	  <effect>test for gamma distribution</effect>
         </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
       </options>
     </usage>
 
@@ -2338,7 +2342,15 @@
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed by
-	default.  The <lit>--quiet</lit> can be used to suppress this.
+	default.  The <lit>--quiet</lit> flag can be used to suppress
+	this.
+      </para>
+      <para>
+	The <lit>--silent</lit> flag suppresses the usual output entirely.
+	This makes sense only in conjunction with one or other of the
+	distribution test options: the test statistic and its p-value are
+	recorded, and can be retrieved using the accessors
+	<lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
     </description>
 

@@ -126,6 +126,7 @@ struct gretl_option gretl_opts[] = {
     { FCASTERR, OPT_S, "static" },
     { FREQ,     OPT_O, "gamma" },
     { FREQ,     OPT_Q, "quiet" },
+    { FREQ,     OPT_S, "silent" },
     { FREQ,     OPT_Z, "normal" },
     { GARCH,    OPT_A, "arma-init" },    
     { GARCH,    OPT_R, "robust" },
