@@ -8164,7 +8164,7 @@
 	Must follow a model estimation command.  Gives the frequency
 	distribution for the residual from the model along with a
 	chi-square test for normality, based on the procedure
-	suggested by Doornik and Hansen (1984).
+	suggested by Doornik and Hansen (1994).
       </para>
     </description>
 
