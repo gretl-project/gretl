@@ -2333,7 +2333,7 @@
 	<repl>var</repl> (given by name or number).
       </para>
       <para>
-	If the <lit>--normal</lit> option is given, the results of the
+	If the <lit>--normal</lit> option is given, the
 	Doornik&ndash;Hansen chi-square test for normality is computed. If
 	the <lit>--gamma</lit> option is given, the test for normality is
 	replaced by Locke's nonparametric test for the null hypothesis
