@@ -2389,7 +2389,9 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *m;
     int err = 0;
 
-    if (pmod->ci != OLS) return E_OLSONLY;
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
 
     model_leverage = get_plugin_function("model_leverage", &handle);
     if (model_leverage == NULL) {
