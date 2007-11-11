@@ -25,6 +25,36 @@ setobs 20 9:1 --special
 difference) or estimation methods like seasonal ARIMA will work as
 expected.
 
+\subsection{Help, my data are backwards!}
+
+\emph{Problem:} Gretl expects time series data to be in chronological
+order (most recent observation last), but you have imported
+third-party data that are in reverse order (most recent first).
+
+\emph{Solution:}
+\begin{code}
+setobs 1 1 --cross-section
+genr sortkey = -obs
+dataset sortby sortkey
+setobs 1 1950 --time-series
+\end{code}
+
+\emph{Comment:} The first line is required only if the data currently
+have a time series interpretation: it removes that interpretation,
+because (for fairly obvious reasons) the \texttt{dataset sortby}
+operation is not allowed for time series data.  The following two
+lines reverse the data, using the negative of the built-in index
+variable \texttt{obs}.  The last line is just illustrative: it
+establishes the data as annual time series, starting in 1950.
+
+If you have a dataset that is mostly the right way round, but a
+particular variable is wrong, you can reverse that variable as
+follows:
+\begin{code}
+genr x = sortby(-obs, x)
+\end{code}
+
+
 \subsection{Dropping missing observations selectively}
 
 \emph{Problem:} You have a dataset with many variables and want to
@@ -32,12 +62,14 @@ restrict the sample to those observations for which there are no
 missing observations for the variables \texttt{x1}, \texttt{x2} and
 \texttt{x3}.
 
+\begin{samepage}
 \emph{Solution:}
 \begin{code}
 list X = x1 x2 x3
 genr sel = ok(X)
 smpl sel --restrict
 \end{code}
+\end{samepage}
 
 \emph{Comment:} You can now save the file via a \texttt{store} command
 to preserve a subsampled version of the dataset.

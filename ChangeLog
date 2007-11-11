@@ -6,7 +6,9 @@ version 1.6.6, in progress
 - Fix for saved sessions after using Forecast menu items
 - Fix for long variable names in Model Graph menus
 - Improve formatting for nonparametric difference test
-- Add "ceil" function in genr
+- Improve formatting for "freq" command; also add --silent
+  option for this command
+- Add ceil() and floor() functions in genr
 - Add "--p-values" option to show p-values instead of slopes
   for logit, probit models
 - Add options to GUI for xtab command (cross-tabulation);
@@ -59,6 +61,8 @@ version 1.6.6, in progress
 - Small improvements to built-in data editor
 - ARMA: allow specification of particular AR and/or MA
   lags (int the non-seasonal component only)
+- Add importer for Open Document Spreadsheet files
+- MS Windows: update to version 2.12 of GTK runtime
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
