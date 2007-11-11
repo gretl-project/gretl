@@ -1,0 +1,43 @@
+# Makefile for cross-compiling DLL stubs for win32 on Linux,
+# using mingw compiler
+
+include config.mk
+
+# directories
+topsrc = ..
+imports = ./import-libs
+
+# tools
+CC = $(MGW_PREFIX)gcc -Wall -O2 -mms-bitfields -DWIN32
+AS = $(MGW_PREFIX)as
+DLLWRAP = $(MGW_PREFIX)dllwrap
+DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
+
+# source paths
+vpath %.c $(topsrc)/win32
+
+#### End of system configuration section. ####
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) -MM $(CFLAGS) $< > $*.d 
+
+# targets begin
+
+all: dlls/jpeg62.dll dlls/libtiff3.dll
+
+dlls/jpeg62.dll: dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) \
+	--output-def jpeg62.def --implib $(imports)/jpeg62.a \
+	-o $@ $^
+
+dlls/libtiff3.dll: dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) \
+	--output-def libtiff3.def --implib $(imports)/libtiff3.a \
+	-o $@ $^ 
+
+clean:
+	rm -f jpegstub.o tiffstub.o dlls/jpeg62.dll dlls/libtiff3.dll
+
+
+
