@@ -2305,6 +2305,10 @@
          <flag>--gamma</flag>
          <effect>test per la distribuzione gamma</effect>
         </option>
+        <option>
+         <flag>--silent</flag>
+         <effect>non mostra nulla</effect>
+        </option>
       </options>
     </usage>
 
@@ -2324,6 +2328,13 @@
       <para>
         In modalità interattiva viene mostrato anche un grafico della distribuzione,
         a meno che non si usi l'opzione <lit>--quiet</lit>.
+      </para>
+      <para>
+       L'opzione <lit>--silent</lit> sopprime interamente l'output mostrato
+       di solito. Ha senso usarla insieme a una delle opzioni riguardanti la
+       distribuzione: in questo modo la statistica test e il suo p-value
+       verranno salvati nelle variabili accessorie
+       <lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
     </description>
  
@@ -8063,7 +8074,7 @@
 	Deve seguire un comando di stima. Mostra la distribuzione di
         frequenza dei residui del modello, insieme a un test chi-quadro
         per la normalità, basato sulla procedura suggerita da Doornik
-        e Hansen (1984).
+        e Hansen (1994).
       </para>
     </description>
 
