@@ -428,23 +428,23 @@ void menu_font_option_off (void)
     }
 }
 
-static int using_XP_theme (void)
-
-{
-    char tmp[4] = {0};
-    int err;
-
-    err = read_reg_val(HKEY_CURRENT_USER, 
-		       "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
-		       "ThemeActive", tmp);
-
-    return (strcmp(tmp, "1") == 0);
-}
-
 void set_up_windows_look (void)
 {
-    if (wimp && using_XP_theme()) { 
-	/* "Windows Impersonator" wanted */
+    char tmp[4] = {0};
+
+    /* Note: use of WIMP was conditional on the "wimp" (int)
+       user-setting, but I've now made it conditional on using
+       Windows' XP theme instead.  This is because (a) I think WIMP
+       looks like crap on Windows classic, while (b) standard GTK does
+       not look very good under the XP theme.  AC, 2007-11-12.
+    */
+
+    read_reg_val(HKEY_CURRENT_USER, 
+		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
+		 "ThemeActive", tmp);
+
+    if (!strcmp(tmp, "1")) { 
+	/* using XP theme, not "classic" */
 	size_t n = strlen(paths.gretldir);
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
