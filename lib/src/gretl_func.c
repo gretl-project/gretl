@@ -2964,7 +2964,7 @@ int update_function_from_script (const char *fname, int idx)
 	return E_DATA;
     }
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }

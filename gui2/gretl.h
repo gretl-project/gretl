@@ -43,8 +43,10 @@
 # define NATIVE_PRINTING
 #endif
 
-#if GTK_MINOR_VERSION >= 10
-# define GTK_PRINTING
+#ifndef G_OS_WIN32
+# if GTK_MINOR_VERSION >= 10
+#  define GTK_PRINTING
+# endif
 #endif
 
 #define GNULL (gconstpointer) NULL

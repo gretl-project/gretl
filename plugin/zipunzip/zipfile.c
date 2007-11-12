@@ -495,7 +495,7 @@ int read_zipfile (zfile *zf, int task)
 	return 0;
     }
 
-    zf->fp = gretl_fopen(zf->fname, "rb");
+    zf->fp = fopen(zf->fname, "rb");
     if (zf->fp == NULL) {
 	if (task == ZIP_DO_ZIP) {
 	    return 0;

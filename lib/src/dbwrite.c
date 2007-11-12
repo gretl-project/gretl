@@ -324,27 +324,27 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
 
 	    fp = fq = NULL;
 	    
-	    fp = fopen(idxcpy, "r");
+	    fp = gretl_fopen(idxcpy, "r");
 	    if (fp == NULL) {
 		err = E_FOPEN;
 	    }
 
 	    if (!err) {
-		fidx = fopen(idxname, "w");
+		fidx = gretl_fopen(idxname, "w");
 		if (fidx == NULL) {
 		    err = E_FOPEN;
 		}
 	    }
 
 	    if (!err) {
-		fq = fopen(bincpy, "rb");
+		fq = gretl_fopen(bincpy, "rb");
 		if (fq == NULL) {
 		    err = E_FOPEN;
 		}
 	    }
 
 	    if (!err) {
-		fbin = fopen(binname, "wb");
+		fbin = gretl_fopen(binname, "wb");
 		if (fbin == NULL) {
 		    err = E_FOPEN;
 		}
@@ -397,12 +397,12 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
 	remove(bincpy);
     } else {
 	/* no replacements */
-	fidx = fopen(idxname, "w");
+	fidx = gretl_fopen(idxname, "w");
 	if (fidx == NULL) {
 	    err = E_FOPEN;
 	}
 	if (!err) {
-	    fbin = fopen(binname, "wb");
+	    fbin = gretl_fopen(binname, "wb");
 	    if (fbin == NULL) {
 		err = E_FOPEN;
 	    }
@@ -448,13 +448,13 @@ open_db_files (const char *fname, char *idxname, char *binname,
     strcpy(idxname, base);
     strcat(idxname, ".idx");
 
-    fp = fopen(idxname, "r");
+    fp = gretl_fopen(idxname, "r");
     if (fp != NULL) {
 	*append = 1;
 	fclose(fp);
     }
 
-    *fidx = fopen(idxname, (*append)? "a" : "w");
+    *fidx = gretl_fopen(idxname, (*append)? "a" : "w");
     if (*fidx == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), idxname);
 	return 1;
@@ -463,7 +463,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
     strcpy(binname, base);
     strcat(binname, ".bin");
     
-    *fbin = fopen(binname, (*append)? "ab" : "wb");
+    *fbin = gretl_fopen(binname, (*append)? "ab" : "wb");
     if (*fbin == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
 	fclose(*fidx);

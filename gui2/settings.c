@@ -105,7 +105,7 @@ static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
 #ifdef G_OS_WIN32
-int wimp;
+int wimp = 1;
 #endif
 
 #ifdef ENABLE_NLS
@@ -184,9 +184,11 @@ RCVAR rc_vars[] = {
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET, 0, TAB_MAIN, NULL },
 #endif
-#ifdef G_OS_WIN32
+#if 0
+# ifdef G_OS_WIN32
     { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
       BOOLSET, 0, TAB_MAIN, NULL },
+# endif
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 

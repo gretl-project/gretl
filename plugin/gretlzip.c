@@ -17,48 +17,109 @@
  * 
  */
 
-#ifdef USE_LIBGSF
-
-/* not ready yet */
-
-#else
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib.h>
 
 #include "zipunzip.h"
 
+/* We'll try to take charge at this level of ensuring that filenames
+   are in the right encoding for the OS, so we can use the
+   regular stdio functions in the rest of the zipunzip apparatus.
+*/
+
+static char *get_sys_fname (const char *fname, GError **gerr)
+{
+    const gchar *cset;
+    gchar *sfname = NULL;
+    gsize bytes;
+
+    if (g_get_charset(&cset)) {
+	sfname = g_strdup(fname);
+    } else {
+#if defined(G_OS_WIN32) && GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 10
+	sfname = g_locale_from_utf8(fname, -1, NULL, &bytes, gerr);
+#else
+	sfname = g_filename_from_utf8(fname, -1, NULL, &bytes, gerr);
+#endif
+    }
+
+    return sfname;
+}
+
 int gretl_unzip_file (const char *fname, GError **gerr)
 {
-    return zipfile_extract_files(fname, NULL, 0, gerr);
+    char *sysfname;
+    int err = 0;
+
+    sysfname = get_sys_fname(fname, gerr);
+
+    if (sysfname == NULL) {
+	err = 1;
+    } else {
+	err = zipfile_extract_files(sysfname, NULL, 0, gerr);
+	g_free(sysfname);
+    }
+    
+    return err;
 }
+
+/*
+ * @fname: full path to zipfile to be created.
+ * @path: path relative to userdir for files to be picked up
+ * and zipped.
+ */
 
 int gretl_make_zipfile (const char *fname, const char *path,
 			GError **gerr)
 {
+    char *sysfname = NULL;
+    char *sysdname = NULL;
     const char *array[2];
+    int err = 0;
 
-    array[0] = path;
-    array[1] = NULL;
+    sysfname = get_sys_fname(fname, gerr);
+    if (sysfname == NULL) {
+        err = 1;
+    } else {
+        sysdname = get_sys_fname(path, gerr);
+        if (sysdname == NULL) {
+            err = 1;
+        }
+    }
 
-    return zipfile_archive_files(fname, array, 9, 
-				 ZIP_RECURSE_DIRS,
-				 gerr);
+    if (!err) {
+	array[0] = sysdname;
+	array[1] = NULL;
+
+	err = zipfile_archive_files(sysfname, array, 9, 
+				    ZIP_RECURSE_DIRS,
+				    gerr);
+    }
+
+    g_free(sysfname);
+    g_free(sysdname);
+
+    return err;
 }
 
 int gretl_is_zipfile (const char *fname)
 {
+    char *sysfname;
     zipinfo *zinfo;
     int ret = 0;
 
-    zinfo = zipfile_get_info(fname, 0, NULL);
-    if (zinfo != NULL) {
-	zipinfo_destroy(zinfo);
-	ret = 1;
+    sysfname = get_sys_fname(fname, NULL);
+    
+    if (sysfname != NULL) {
+	zinfo = zipfile_get_info(sysfname, 0, NULL);
+	if (zinfo != NULL) {
+	    zipinfo_destroy(zinfo);
+	    ret = 1;
+	}
+	g_free(sysfname);
     }
 
     return ret;
 }
 
-#endif

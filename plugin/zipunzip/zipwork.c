@@ -337,7 +337,7 @@ int zipup (zfile *zf, zlist *z)
 	fsize = 0;
     } else {
 	trace(2, "'%s': is regular file, trying DEFLATE\n", z->name);
-	fin = gretl_fopen(z->name, "rb");
+	fin = fopen(z->name, "rb");
 	if (fin == NULL) {
 	    return ZE_OPEN;
 	}
@@ -735,7 +735,7 @@ int decompress_to_file (zfile *zf, zlist *z, long offset)
     /* overwriting existing file(s)? */
 
     if (!islink) {
-	fout = gretl_fopen(z->name, "wb");
+	fout = fopen(z->name, "wb");
 	if (fout == NULL) {
 	    err = ZE_CREAT;
 	}

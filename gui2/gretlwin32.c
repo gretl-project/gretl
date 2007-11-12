@@ -428,21 +428,29 @@ void menu_font_option_off (void)
     }
 }
 
+static int using_XP_theme (void)
+
+{
+    char tmp[4] = {0};
+    int err;
+
+    err = read_reg_val(HKEY_CURRENT_USER, 
+		       "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
+		       "ThemeActive", tmp);
+
+    return (strcmp(tmp, "1") == 0);
+}
+
 void set_up_windows_look (void)
 {
-    if (wimp) { 
+    if (wimp && using_XP_theme()) { 
 	/* "Windows Impersonator" wanted */
 	size_t n = strlen(paths.gretldir);
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
-#ifdef NEW_GTK
 	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
 				 paths.gretldir, (needslash)? "\\" : "");
-#else
-	wimprc = g_strdup_printf("%s%setc\\gtk-2.0\\gtkrc.wimp", 
-				 paths.gretldir, (needslash)? "\\" : "");
-#endif
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
     } else {

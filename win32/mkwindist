@@ -117,10 +117,10 @@ do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
 
-# extra DLLs (FIXME: remove these!)
+# extra DLLs (FIXME: remove these as soon as possible!)
 for f in jpeg62.dll libtiff3.dll
 do
-    add_file /home/cottrell/tor/dlltmp/bin/$f gretl/$f
+    add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
 
 # gretl lang files for gtksourceview

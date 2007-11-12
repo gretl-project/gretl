@@ -186,10 +186,20 @@ gchar *my_filename_to_utf8 (char *fname)
 	return fname;
     }
 
+    /* On Windows, with GTK >= 2.6, the GTK filename
+       encoding is UTF-8; however, filenames coming from
+       a native Windows file dialog will be in the
+       locale charset 
+    */
+
+#if defined(G_OS_WIN32) && GTK_MINOR_VERSION >= 6
+    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
+#else
     trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
+#endif
 
     if (err != NULL) {
-	errbox("g_filename_to_utf8 failed");
+	errbox(err->message);
 	g_error_free(err);
     } else {
 	strcpy(fname, trfname);

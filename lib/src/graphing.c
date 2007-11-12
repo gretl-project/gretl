@@ -940,7 +940,7 @@ static int html_recode_gnuplot_file (const char *fname)
     char rname[FILENAME_MAX];
     int ttf = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return 1;
     }
@@ -948,7 +948,7 @@ static int html_recode_gnuplot_file (const char *fname)
     strcpy(rname, fname);
     strcat(rname, "l2");
 
-    fq = fopen(rname, "w");
+    fq = gretl_fopen(rname, "w");
     if (fq == NULL) {
 	fclose(fp);
 	return 1;
