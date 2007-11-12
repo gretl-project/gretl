@@ -23,18 +23,49 @@ setobs 20 9:1 --special
 \emph{Commento:} ora le funzioni come \texttt{sdiff()} (differenza ``stagionale'')
 o i metodi di stima come l'ARIMA stagionale funzioneranno come ci si aspetta.
 
+\subsection{Aiuto, i miei dati sono all'incontrario!}
+
+\emph{Problema:} Gretl si aspetta che le serie storiche siano in ordine
+cronologico (l'osservazione più recente per ultima), ma sono stati importati
+da una fonte esterna dei dati ordinati in modo inverso (l'osservazione più
+recente per prima).
+
+\emph{Soluzione:}
+\begin{code}
+setobs 1 1 --cross-section
+genr ordinamento = -obs
+dataset sortby ordinamento
+setobs 1 1950 --time-series
+\end{code}
+
+\emph{Commento:} la prima riga è richiesta solo se il dataset in uso è
+interpretato come serie storiche: occorre rimuovere questo tipo di
+interpretazione che (ovviamente) non permette di usare il comando
+\texttt{dataset sortby}. Le due righe successive invertono l'ordine dei dati,
+usando come variabile di ordinamento il negativo della variabile indice interna
+\texttt{obs}. L'ultima riga è solo un esempio: imposta l'interpretazione del
+dataset come serie storiche annuali che iniziano dall'anno 1950.
+
+Se si ha un dataset ordinato correttamente per tutte le variabili tranne una, è
+possibile correggere l'ordinamento di una sola variabile nel modo seguente:
+\begin{code}
+genr x = sortby(-obs, x)
+\end{code}
+
 \subsection{Eliminare osservazioni mancanti in modo selettivo}
 
 \emph{Problema:} si ha un dataset con molte variabili e si vuole restringere il
 campione a quelle osservazioni per cui non ci sono osservazioni mancanti per
 nessuna delle variabili \texttt{x1}, \texttt{x2} e \texttt{x3}.
 
+\begin{samepage}
 \emph{Soluzione:}
 \begin{code}
 list X = x1 x2 x3
 genr sel = ok(X)
 smpl sel --restrict
 \end{code}
+\end{samepage}
 
 \emph{Commento:} ora è possibile salvare il file con il comando \texttt{store} per
 preservare una versione ristretta del dataset.
