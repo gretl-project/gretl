@@ -319,7 +319,7 @@ real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
     if (fname != NULL) {
 	fp = gretl_fopen(fname, "rb");
 	if (fp == NULL) {
-	    errbox(_("Couldn't open %s"), fname);
+	    file_read_errbox(fname);
 	    return;
 	}
     }

@@ -1224,7 +1224,7 @@ int plot_to_xpm (const char *fname, gpointer data)
     
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
-	errbox (_("Couldn't open XPM file for writing"));
+	file_write_errbox(fname);
 	return 1;
     }
 
@@ -1364,12 +1364,7 @@ static int dump_boxplot (PLOTGROUP *grp)
 
     fp = gretl_fopen(boxplottmp, "w");
     if (fp == NULL) {
-	gchar *msg;
-
-	msg = g_strdup_printf(_("Couldn't open %s for writing"), 
-			      boxplottmp);
-	errbox(msg);
-	g_free(msg);
+	file_write_errbox(boxplottmp);
 	return 1;
     }
 
@@ -1509,15 +1504,11 @@ int retrieve_boxplot (const char *fname)
     PLOTGROUP *grp = NULL;
     BOXPLOT *plt = NULL;
     char line[80], numstr[24];
-    gchar *msg;
     int err = 0;
 
     fp = gretl_fopen(fname, "r");
-
     if (fp == NULL) {
-	msg = g_strdup_printf(_("Couldn't open %s"), fname);
-	errbox(msg);
-	g_free(msg);
+	file_read_errbox(fname);
 	return 1;
     }
 
@@ -1615,7 +1606,7 @@ int retrieve_boxplot (const char *fname)
 
     grp->popup = NULL;
     grp->pixmap = NULL;
-    place_plots (grp);
+    place_plots(grp);
 
     if (make_area(grp) == NULL) {
 	free(grp->plots);

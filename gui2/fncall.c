@@ -771,7 +771,7 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
     err = load_user_function_file(target);
     if (err) {
 	fprintf(stderr, "load_user_function_file: failed on %s\n", target);
-	errbox(_("Couldn't open %s"), target);
+	file_read_errbox(target);
     }
 
     if (err) {
@@ -900,7 +900,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	if (!function_package_is_loaded(fname)) {
 	    err = load_user_function_file(fname);
 	    if (err) {
-		errbox(_("Couldn't open %s"), fname);
+		file_read_errbox(fname);
 		*loaderr = 1;
 	    }
 	}

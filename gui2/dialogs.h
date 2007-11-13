@@ -41,6 +41,10 @@ void infobox (const char *template, ...);
 
 void warnbox (const char *template, ...);
 
+void file_read_errbox (const char *fname);
+
+void file_write_errbox (const char *fname);
+
 gint yes_no_dialog (const char *title, const char *msg, int cancel);
 
 int make_default_storelist (void);

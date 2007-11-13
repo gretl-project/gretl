@@ -277,7 +277,8 @@ static void clear_files_list (int filetype, char **filep)
 {
     GtkWidget *w;
     char tmpname[MAXSTR];
-    gchar itempath[80];
+    gchar itempath[128];
+    gchar *fname;
     const gchar *fpath[] = {
 	N_("/File/Open data"), 
 	N_("/File/Session files"),
@@ -286,12 +287,14 @@ static void clear_files_list (int filetype, char **filep)
     int i;
 
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(itempath, "%s/%d. %s", fpath[filetype],
-		i+1, endbit(tmpname, filep[i], 0)); 
+	endbit(tmpname, filep[i], 0);
+	fname = my_filename_to_utf8(tmpname);
+	sprintf(itempath, "%s/%d. %s", fpath[filetype], i+1, fname);
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);
 	}
+	g_free(fname);
     }
 }
 
@@ -323,21 +326,13 @@ static void add_files_to_menu (int ftype)
     real_add_files_to_menus(ftype);
 }
 
-void mkfilelist (int filetype, char *fname_in)
+void mkfilelist (int filetype, char *fname)
 {
     char *tmp[MAXRECENT-1];
     char **filep;
-    char *fname;
     int i, match = -1;
-    char trfname[MAXLEN];
 
-    cut_multiple_slashes(fname_in);
-
-    strcpy(trfname, fname_in);
-#ifdef ENABLE_NLS
-    my_filename_to_utf8(trfname);
-#endif
-    fname = trfname;
+    cut_multiple_slashes(fname);
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
@@ -458,19 +453,10 @@ void delete_from_filelist (int filetype, const char *fname)
     /* need to save to file at this point? */
 }
 
-static void copy_sys_filename (char *targ, const char *src)
-{
-    strcpy(targ, src);
-    /* check this: very confusing! */
-#if !defined(G_OS_WIN32) && defined(ENABLE_NLS)
-    my_filename_from_utf8(targ);
-#endif
-}    
-
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
 {
-    copy_sys_filename(tryfile, datap[i]);
+    strcpy(tryfile, datap[i]);
     if (strstr(tryfile, ".csv")) {
 	delimiter_dialog(NULL);
     }
@@ -480,14 +466,14 @@ static void set_data_from_filelist (gpointer data, guint i,
 static void set_session_from_filelist (gpointer data, guint i, 
 				       GtkWidget *widget)
 {
-    copy_sys_filename(tryfile, sessionp[i]);
+    strcpy(tryfile, sessionp[i]);
     verify_open_session();
 }
 
 static void set_script_from_filelist (gpointer data, guint i, 
 				      GtkWidget *widget)
 {
-    copy_sys_filename(tryfile, scriptp[i]);
+    strcpy(tryfile, scriptp[i]);
     do_open_script();
 }
 
@@ -515,7 +501,6 @@ static void real_add_files_to_menus (int ftype)
     }
 
     for (j=jmin; j<jmax; j++) {
-	gchar *itemtype = "<Separator>";
 	GtkWidget *w;
 
 	filep = NULL;
@@ -532,39 +517,48 @@ static void real_add_files_to_menus (int ftype)
 	} 
 
 	/* See if there are any files to add */
+
 	if (filep == NULL || *filep[0] == '\0') {
 	    continue;
 	}
 
 	/* is a separator already in place? */
+
 	w = gtk_item_factory_get_widget(mdata->ifac, msep[j]);
 	if (w == NULL) {
 	    fileitem.path = g_strdup(msep[j]);
 	    fileitem.accelerator = NULL;
 	    fileitem.callback = NULL;
 	    fileitem.callback_action = 0;
-	    fileitem.item_type = itemtype;
+	    fileitem.item_type = "<Separator>";
 	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
 	    g_free(fileitem.path);
 	}
 
-	/* put the files under the menu separator */
-	for (i=0; i<MAXRECENT; i++) {
-	    if (filep[i][0]) {
+	/* put the files under the menu separator: ensure valid UTF-8
+	   for display */
+
+	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
+	    gchar *fname;
+
+	    fname = my_filename_to_utf8(filep[i]);
+
+	    if (fname == NULL) {
+		break;
+	    } else {
 		fileitem.accelerator = NULL;
 		fileitem.callback_action = i; 
 		fileitem.item_type = NULL;
 		fileitem.path = g_strdup_printf("%s/%d. %s", mpath[j],
-						i+1, endbit(tmp, filep[i], 1));
+						i+1, endbit(tmp, fname, 1));
 		fileitem.callback = callfunc; 
 		gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
 		g_free(fileitem.path);
 		w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
 		if (w != NULL) {
-		    gretl_tooltips_add(w, filep[i]);
+		    gretl_tooltips_add(w, fname);
 		} 
-	    } else {
-		break;
+		g_free(fname);
 	    }
 	}
     }

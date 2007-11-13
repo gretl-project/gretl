@@ -778,6 +778,7 @@ int process_string_command (const char *line, PRN *prn)
 {
     saved_string *str;
     char *s1 = NULL;
+    char argvar[VNAMELEN];
     char targ[VNAMELEN];
     int builtin = 0;
     int n, add = 0;
@@ -839,6 +840,18 @@ int process_string_command (const char *line, PRN *prn)
     } else if (!add) {
 	free(str->s);
 	str->s = NULL;
+    }
+
+    line += strspn(line, " \t");
+
+    /* special: argname function */
+    if (sscanf(line, " argname(%15[^)])", argvar) == 1) {
+	if (gretl_function_depth()) {
+	    s1 = gretl_func_get_arg_name(argvar);
+	} else {
+	    pprintf(prn, "argvar: can only be used inside a function\n");
+	    err = E_DATA;
+	}
     }
 
     /* add strings(s) to target */

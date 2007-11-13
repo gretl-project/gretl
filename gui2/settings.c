@@ -1795,7 +1795,7 @@ void write_rc (void)
 
     rc = fopen(rcfile, "w");
     if (rc == NULL) {
-	errbox(_("Couldn't open config file for writing"));
+	file_write_errbox(rcfile);
 	return;
     }
 
@@ -2296,7 +2296,7 @@ void dump_rc (void)
 
     fp = gretl_fopen(dumper, "w");
     if (fp == NULL) {
-	errbox(_("Couldn't open config file for writing"));
+	file_write_errbox(dumper);
 	return;
     }
 

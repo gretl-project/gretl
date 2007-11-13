@@ -270,9 +270,6 @@ static void real_finfo_save (function_info *finfo)
     } else {
 	maybe_revise_package_name(finfo);
 	err = save_user_functions(finfo->fname, finfo);
-	if (!err) {
-	    infobox(_("Saved package as %s"), finfo->fname);
-	}
     }
 }
 
@@ -1089,7 +1086,7 @@ void edit_function_package (const char *fname, int *loaderr)
 	err = load_user_function_file(fname);
 	if (err) {
 	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
-	    errbox(_("Couldn't open %s"), fname);
+	    file_read_errbox(fname);
 	    *loaderr = 1;
 	    return;
 	}

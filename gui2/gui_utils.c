@@ -372,12 +372,12 @@ int copyfile (const char *src, const char *dest)
     if (!strcmp(src, dest)) return 1;
    
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
-	errbox(_("Couldn't open %s"), src);
+	file_read_errbox(src);
 	return 1; 
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
-	errbox(_("Couldn't write to %s"), dest);
+	file_write_errbox(dest);
 	fclose(srcfd);
 	return 1;
     }
@@ -413,7 +413,7 @@ FILE *gretl_tempfile_open (char *fname)
     if (fd != -1) {
 	fp = fdopen(fd, "w+");
 	if (fp == NULL) {
-	    errbox(_("Couldn't open %s"), fname);
+	    file_write_errbox(fname);
 	    close(fd);
 	    remove(fname);
 	}
@@ -433,7 +433,7 @@ int gretl_tempname (char *fname)
     fd = mkstemp(fname);
 #endif
     if (fd == -1) {
-	errbox(_("Couldn't open %s"), fname);
+	file_write_errbox(fname);
 	err = 1;
     } else {
 	close(fd);
@@ -1045,7 +1045,7 @@ int get_worksheet_data (char *fname, int datatype, int append)
     
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open %s"), fname);
+	file_read_errbox(fname);
 	return 1;
     } else {
 	fclose(fp);
@@ -1139,14 +1139,6 @@ int get_worksheet_data (char *fname, int datatype, int append)
     }
 
     return err;
-}
-
-static void copy_utf8_filename (char *targ, const char *src)
-{
-    strcpy(targ, src);
-#ifdef ENABLE_NLS
-    my_filename_to_utf8(targ);
-#endif
 }
 
 /* cases for do_open_data: 
@@ -1244,7 +1236,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (append) {
 	register_data(NULL, NULL, 0);
     } else {
-	copy_utf8_filename(paths.datfile, tryfile);
+	strcpy(paths.datfile, tryfile);
 	register_data(paths.datfile, NULL, 1);
     } 
 }
@@ -2001,6 +1993,24 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
     }
 }
 
+static gchar *title_from_filename (const char *fname)
+{
+    const char *p = strrchr(fname, SLASH);
+    gchar *trfname, *title = NULL;
+
+    if (p != NULL) {
+	trfname = my_filename_to_utf8(p + 1);
+    } else {
+	trfname = my_filename_to_utf8(fname);
+    }
+
+    title = g_strdup_printf("gretl: %s", trfname);
+
+    g_free(trfname);
+
+    return title;
+}
+
 static gchar *make_viewer_title (int role, const char *fname)
 {
     gchar *title = NULL;
@@ -2024,13 +2034,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
 	    title = g_strdup(_("gretl: command script"));
 	} else {
-	    const char *p = strrchr(fname, SLASH);
-
-	    title = g_strdup_printf("gretl: %s", 
-				    (p != NULL)? p + 1 : fname);
-#ifdef ENABLE_NLS
-	    my_filename_to_utf8(title);
-#endif	    
+	    title = title_from_filename(fname);
 	} 
 	break;
     case EDIT_NOTES:
@@ -2544,7 +2548,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 static void auto_save_script (windata_t *vwin)
 {
     FILE *fp;
-    char msg[MAXLEN];
     gchar *savestuff;
     int unsaved = 0;
 
@@ -2555,8 +2558,7 @@ static void auto_save_script (windata_t *vwin)
     }
 
     if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
-	errbox(msg); 
+	file_write_errbox(vwin->fname);
 	return;
     }
 
@@ -3936,7 +3938,7 @@ void startR (const char *Rcommand)
     build_path(Rprofile, paths.userdir, "gretl.Rprofile", NULL);
     fp = fopen(Rprofile, "w");
     if (fp == NULL) {
-	errbox(_("Couldn't write R startup file"));
+	file_write_errbox(Rprofile);
 	return;
     }
 

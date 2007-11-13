@@ -705,7 +705,7 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
 
     err = remove(fname);
     if (err) {
-	errbox("Couldn't delete %s", fname);
+	file_write_errbox(fname);
     } else {
 	GtkTreeModel *mod;
 	GtkTreeIter iter;

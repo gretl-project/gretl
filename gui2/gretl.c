@@ -535,7 +535,7 @@ static void gui_usage (void)
 	      " -h or --help      Print this info and exit.\n"
 	      " -v or --version   Print version info and exit.\n"));
 
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 static void noalloc (const char *str)
@@ -549,11 +549,13 @@ static void get_runfile (char *fname)
     int i;
 
     *tryfile = '\0';
+
 #ifdef G_OS_WIN32
     if (unmangle(fname, tryfile)) return;
 #else
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
+
     if (addpath(tryfile, &paths, 1) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
@@ -652,7 +654,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-# endif
+# endif /* NLS init variants */
 
 void nls_init (void)
 {
@@ -865,7 +867,6 @@ int main (int argc, char *argv[])
 	if (unmangle(filearg, paths.datfile)) {
 	    exit(EXIT_FAILURE);
 	}
-	my_filename_to_utf8(paths.datfile);
 #else
 	record_filearg(paths.datfile, filearg);
 #endif
@@ -917,12 +918,6 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	    break;
 	}
-
-#if 0
-	if (paths.datfile[0] != 0) {
-	    my_filename_to_utf8(paths.datfile);
-	}
-#endif
 
 	if (err == E_CANCEL) {
 	    err = 0;
@@ -1706,8 +1701,6 @@ mdata_handle_drag  (GtkWidget *widget,
 
 #ifdef G_OS_WIN32
     slash_convert(tmp, TO_BACKSLASH);
-    /* also convert to UTF-8 here? */
-    my_filename_to_utf8(tmp);
 #endif
 
     strcpy(tryfile, tmp);

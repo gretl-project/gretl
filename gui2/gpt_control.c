@@ -253,9 +253,9 @@ static FILE *open_gp_file (const char *fname, const char *mode)
 
     if (fp == NULL) {
 	if (*mode == 'w') {
-	    errbox(_("Couldn't write to %s"), fname);
+	    file_write_errbox(fname);
 	} else {
-	    errbox(_("Couldn't open %s"), fname);
+	    file_read_errbox(fname);
 	}
     }
 
@@ -405,7 +405,7 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     *fpp = gretl_fopen(spec->fname, "w");
 
     if (*fpp == NULL) {
-	errbox(_("Couldn't write to %s"), spec->fname);
+	file_write_errbox(spec->fname);
 	return 1;
     }
 
@@ -606,7 +606,7 @@ static int filter_plot_file (const char *inname,
 
     fp = gretl_fopen(inname, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't access graph info"));
+	file_read_errbox(inname);
 	gretl_print_destroy(prn);
 	return 1;
     }
@@ -1512,7 +1512,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     /* open the plot file */
     fp = gretl_fopen(spec->fname, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open graph file"));
+	file_read_errbox(spec->fname);
 	return 1;
     }
 

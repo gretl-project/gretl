@@ -258,7 +258,7 @@ int user_fopen (const char *fname, char *fullname, PRN **pprn)
     *pprn = gretl_print_new_with_filename(fullname);
 
     if (*pprn == NULL) {
-	errbox(_("Couldn't open file for writing"));
+	file_write_errbox(fname);
 	err = 1;
     }
 
@@ -5360,7 +5360,7 @@ void do_open_script (void)
 
     fp = fopen(tryfile, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open %s"), tryfile);
+	file_read_errbox(tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	return;
@@ -6024,7 +6024,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 
     fprn = gretl_print_new_with_filename(texfile);
     if (fprn == NULL) {
-	errbox(_("Couldn't write to %s"), texfile);
+	file_write_errbox(texfile);
 	return;
     }
 
@@ -6076,7 +6076,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    sprintf(tmp, "%s.dvi", texbase);
 	}
 	if (osx_open_file(tmp)) {
-	    errbox(_("Couldn't open %s"), tmp);
+	    file_read_errbox(tmp);
 	}
 #else
 	if (!strncmp(latex, "pdf", 3)) {
@@ -6151,7 +6151,7 @@ static int ok_script_file (const char *runfile)
 
     fp = gretl_fopen(runfile, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open script"));
+	file_read_errbox(runfile);
 	return 0;
     }
 

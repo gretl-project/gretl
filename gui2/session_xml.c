@@ -14,7 +14,7 @@ static int check_graph_file (const char *fname)
     session_file_make_path(fullname, fname);
     fp = gretl_fopen(fullname, "r");
     if (fp == NULL) {
-	errbox(_("Warning: couldn't open graph file %s"), fname);
+	file_read_errbox(fname);
 	err = 1;
     } else {
 	fclose(fp);
@@ -500,14 +500,18 @@ static int write_session_xml (const char *datname)
     fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
-	errbox("Couldn't write session file");
+	file_write_errbox(fname);
 	return E_FOPEN;
     }
 
     gretl_xml_header(fp);
 
     if (*datname != '\0') {
-	fprintf(fp, "<gretl-session datafile=\"%s\">\n", datname);
+	/* ensure UTF-8 inside XML file */
+	gchar *trname = my_filename_to_utf8(datname);
+
+	fprintf(fp, "<gretl-session datafile=\"%s\">\n", trname);
+	g_free(trname);
     } else {
 	fputs("<gretl-session>\n", fp);
     }
@@ -536,7 +540,7 @@ static int write_session_xml (const char *datname)
 	fq = fopen(tmpname, "w");
 
 	if (fq == NULL) {
-	    errbox("Couldn't write session model file");
+	    file_write_errbox(tmpname);
 	    err = E_FOPEN;
 	} else {
 	    sprintf(tmpname, "model.%d", i + 1);
@@ -561,7 +565,7 @@ static int write_session_xml (const char *datname)
 	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
 	    fq = fopen(tmpname, "w");
 	    if (fq == NULL) {
-		errbox("Couldn't write session model file");
+		file_write_errbox(tmpname);
 		err = E_FOPEN;
 	    } else {
 		sprintf(tmpname, "model.%d", i+1);

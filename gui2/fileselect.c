@@ -242,14 +242,24 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
 
 static void script_window_update (windata_t *vwin, const char *fname)
 {
-    gchar *title;
+    gchar *trfname, *title;
     const char *p = strrchr(fname, SLASH);
 
+    /* ensure UTF-8 filename for display */
+    if (p != NULL) {
+	trfname = my_filename_to_utf8(p + 1);
+    } else {
+	trfname = my_filename_to_utf8(fname);
+    }
+
     /* update the window title */
-    title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
+    title = g_strdup_printf("gretl: %s", trfname);
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
-    strcpy(vwin->fname, fname);
+    g_free(trfname);
     g_free(title);
+
+    /* and update internal filename record */
+    strcpy(vwin->fname, fname);
 
     if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT ||
 	vwin->role == VIEW_FUNC_CODE) {
@@ -282,7 +292,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
-	errbox(_("Couldn't open file for writing"));
+	file_write_errbox(fname);
 	g_free(buf);
 	return;
     }
@@ -323,7 +333,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
     FILE *fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
-	errbox(_("Couldn't write to %s"), fname);
+	file_write_errbox(fname);
     } else {
 	const char *buf = gretl_print_get_buffer(prn);
 
@@ -436,9 +446,7 @@ static void bootstrap_save_callback (const char *fname)
 
     if (err) {
 	gui_errmsg(err);
-    } else {
-	infobox(_("Saved data as %s"), fname);
-    }
+    } 
 }
 
 static void
@@ -454,7 +462,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {
-	    errbox(_("Couldn't open %s"), fname);
+	    file_read_errbox(fname);
 	    return;
 	} else {
 	    fclose(fp);
@@ -798,8 +806,6 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	}
 	return;
     }
-
-    my_filename_to_utf8(fname);
 
     file_selector_process_result(fname, action, src, data);
 }

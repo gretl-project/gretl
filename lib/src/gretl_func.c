@@ -3101,8 +3101,6 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
     return dataset_add_scalar_as(x, param->name, pZ, pdinfo);
 }
 
-/* FIXME */
-
 static int allocate_function_args (ufunc *fun,
 				   int argc, fnargs *args, 
 				   double ***pZ,
@@ -3715,6 +3713,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 #endif
 
     return err;    
+}
+
+/* look up name of supplied argument based on name of variable
+   inside function */
+
+char *gretl_func_get_arg_name (const char *argvar)
+{
+    return gretl_strdup("notyet");
 }
 
 void gretl_functions_cleanup (void)

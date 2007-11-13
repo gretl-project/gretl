@@ -165,53 +165,35 @@ gchar *my_locale_from_utf8 (const gchar *src)
     return trstr;
 }
 
-#define FNAME_DEBUG 0
+/* returns new copy of fname, converted if need be */
 
-gchar *my_filename_to_utf8 (char *fname)
+gchar *my_filename_to_utf8 (const char *fname)
 {
     gchar *trfname = NULL;
     GError *err = NULL;
     gsize bytes;
 
-#if FNAME_DEBUG
-    fprintf(stderr, "my_filename_to_utf8: fname='%s'\n", fname);
-    fflush(stderr);
-#endif
-
     if (g_utf8_validate(fname, -1, NULL)) {
-#if FNAME_DEBUG
-	fprintf(stderr, " validates as utf8, returning fname\n");
-	fflush(stderr);
-#endif
-	return fname;
-    }
-
-    /* On Windows, with GTK >= 2.6, the GTK filename
-       encoding is UTF-8; however, filenames coming from
-       a native Windows file dialog will be in the
-       locale charset 
-    */
-
+	trfname = g_strdup(fname);
+    } else {
+	/* On Windows, with GTK >= 2.6, the GLib filename
+	   encoding is UTF-8; however, filenames coming from
+	   a native Windows file dialog will be in the
+	   locale charset 
+	*/
 #if defined(G_OS_WIN32) && GTK_MINOR_VERSION >= 6
-    trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
+	trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
 #else
-    trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
+	trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
 #endif
+    }
 
     if (err != NULL) {
 	errbox(err->message);
 	g_error_free(err);
-    } else {
-	strcpy(fname, trfname);
-#if FNAME_DEBUG
-	fprintf(stderr, " converted fname='%s'\n", fname);
-	fflush(stderr);
-#endif
-    }
+    } 
 
-    g_free(trfname);
-
-    return fname;
+    return trfname;
 }
 
 static gchar *real_my_locale_to_utf8 (const gchar *src,

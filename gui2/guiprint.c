@@ -253,7 +253,7 @@ int winprint_graph (char *emfname)
 
     hemf = GetEnhMetaFile(emfname);
     if (hemf == NULL) {
-	errbox(_("Couldn't open %s"), emfname);
+	file_read_errbox(emfname);
 	return 1;
     }
 

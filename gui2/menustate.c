@@ -548,11 +548,17 @@ void set_sample_label (DATAINFO *pdinfo)
 
     if (strlen(paths.datfile) > 2) {
 	/* data file open already */
-	if (strrchr(paths.datfile, SLASH) == NULL) {
-	    sprintf(labeltxt, " %s ", paths.datfile);
+	const char *p = strrchr(paths.datfile, SLASH);
+	gchar *trfname;
+
+	if (p != NULL) {
+	    trfname = my_filename_to_utf8(p + 1);
 	} else {
-	    sprintf(labeltxt, " %s ", strrchr(paths.datfile, SLASH) + 1);
+	    trfname = my_filename_to_utf8(paths.datfile);
 	}
+
+	sprintf(labeltxt, " %s ", trfname);
+	g_free(trfname);
 	if (data_status & MODIFIED_DATA) { 
 	    strcat(labeltxt, "* ");
 	} 

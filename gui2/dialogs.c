@@ -3545,6 +3545,22 @@ void warnbox (const char *template, ...)
     msgbox(msg, GTK_MESSAGE_WARNING);
 }
 
+void file_read_errbox (const char *fname)
+{
+    gchar *uname = my_filename_to_utf8(fname);
+
+    errbox(_("Couldn't open %s"), uname);
+    g_free(uname);
+}
+
+void file_write_errbox (const char *fname)
+{
+    gchar *uname = my_filename_to_utf8(fname);
+
+    errbox(_("Couldn't write to %s"), uname);
+    g_free(uname);
+}
+
 /* --------------  Dataset structure "wizard" ---------------- */
 
 #define DWDEBUG 0

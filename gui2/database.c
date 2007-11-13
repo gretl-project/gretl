@@ -1062,8 +1062,7 @@ static int add_local_db_series_list (windata_t *vwin)
     fp = gretl_fopen(dbidx, "r");
 
     if (fp == NULL) {
-	errbox(_("Couldn't open database index file"));
-	fprintf(stderr, "Couldn't open '%s'\n", dbidx);
+	file_read_errbox(dbidx);
 	return 1;
     }
 
@@ -1273,9 +1272,8 @@ static int add_rats_db_series_list (windata_t *vwin)
     dbwrapper *dw;
 
     fp = gretl_fopen(vwin->fname, "rb");
-
     if (fp == NULL) {
-	errbox(_("Couldn't open RATS data file"));
+	file_read_errbox(vwin->fname);
 	return 1;
     }
 
@@ -1307,7 +1305,7 @@ static int add_pcgive_db_series_list (windata_t *vwin)
 
     fp = gretl_fopen(in7name, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open PcGive data file"));
+	file_read_errbox(in7name);
 	return 1;
     }
 
@@ -1539,7 +1537,7 @@ void open_named_db_index (char *dbname)
     }
 
     if (fp == NULL) {
-	errbox(_("Couldn't open database"));
+	file_read_errbox(dbname);
     } else {
 	fclose(fp);
 	make_db_series_window(action, dbname, NULL);
@@ -1673,7 +1671,7 @@ static int parse_db_header (const char *buf, size_t *idxlen,
     return err;
 }
 
-static int ggz_extract (char *errbuf, char *ggzname)
+static int ggz_extract (char *ggzname)
 {
     gzFile fgz = NULL;
     FILE *fidx = NULL, *fbin = NULL, *fcbk = NULL;
@@ -1693,28 +1691,28 @@ static int ggz_extract (char *errbuf, char *ggzname)
 
     fgz = gzopen(ggzname, "rb");
     if (fgz == NULL) {
-        sprintf(errbuf, _("Couldn't gzopen %s for reading\n"), ggzname);
-        return 1;
+	file_read_errbox(ggzname);
+        return E_FOPEN;
     }
 
     fidx = gretl_fopen(idxname, "wb");
     if (fidx == NULL) {
-        sprintf(errbuf, _("Couldn't open %s for writing\n"), idxname);
-	err = 1;
+	file_write_errbox(idxname);
+	err = E_FOPEN;
 	goto bailout;
     }
 
     fbin = gretl_fopen(binname, "wb");
     if (fbin == NULL) {
-        sprintf(errbuf, _("Couldn't open %s for writing\n"), binname);
-	err = 1;
+	file_write_errbox(binname);
+	err = E_FOPEN;
 	goto bailout;
     }
 
     fcbk = gretl_fopen(cbname, "wb");
     if (fcbk == NULL) {
-	sprintf(errbuf, _("Couldn't open %s for writing\n"), cbname);
-	err = 1;
+	file_write_errbox(cbname);
+	err = E_FOPEN;
 	goto bailout;
     } 
 
@@ -1868,7 +1866,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    /* write to user dir instead? */
 	    build_path(target, paths.userdir, objname, ".ggz");
 	} else {
-	    errbox(_("Couldn't open %s for writing"), target);
+	    file_write_errbox(target);
 	    free(target);
 	    return 1;
 	}
@@ -1901,14 +1899,11 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	    gui_show_function_info(target, VIEW_FUNC_INFO);
 	}
     } else {
-	char errbuf[80];
-
-	err = ggz_extract(errbuf, target);
+	err = ggz_extract(target);
 	if (err) {
-	    if (*errbuf == '\0') {
-		strcpy(errbuf, _("Error unzipping compressed data"));
+	    if (err != E_FOPEN) {
+		errbox(_("Error unzipping compressed data"));
 	    }
-	    errbox(errbuf);
 	} else {
 	    int resp = yes_no_dialog ("gretl",                      
 				      _("Database installed.\n"

@@ -34,11 +34,6 @@
 #endif
 
 #include <glib.h>
-#if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
-# ifdef WIN32
-#  define USE_G_FOPEN
-# endif
-#endif
 
 enum {
     CURRENT_DIR,
@@ -60,51 +55,105 @@ static int add_suffix (char *fname, const char *sfx)
     return 0;
 }
 
-FILE *gretl_fopen (const char *filename, const char *mode)
+/* Heuristic: filename contains non-ascii characters, and
+   validates as UTF-8 */
+
+static int fname_is_utf8 (const unsigned char *s)
 {
+    const unsigned char *p = s;
+    int sevenbit = 1;
+    int ret = 0;
+
+    while (*p) {
+	if (*p > 127) {
+	    sevenbit = 0;
+	    break;
+	}
+	p++;
+    }
+
+    if (!sevenbit && g_utf8_validate((gchar *) s, -1, NULL)) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/* Below: try to guard against a situation where a filename
+   is UTF-8 encoded, but we should be using locale encoding
+   with the stdio functions.
+*/
+
+FILE *gretl_fopen (const char *fname, const char *mode)
+{
+    const char *cset = NULL;
+    gchar *fconv;
+    gsize wrote;
     FILE *fp = NULL;
 
-#if defined(USE_G_FOPEN)
-    fp = g_fopen((const gchar *) filename, (const gchar *) mode);
-#elif defined(WIN32)
-    fp = fopen(filename, mode);
-    if (fp == NULL) {
-	int save_errno = errno;
-	gchar *fconv;
-	gsize wrote;
+    if (mode != NULL && *mode == 'r') {
+	/* opening for reading */
+	fp = fopen(fname, mode);
+	if (fp == NULL && !g_get_charset(&cset) && 
+	    fname_is_utf8((unsigned char *) fname)) {
+	    int save_errno = errno;
 
-	fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
-	if (fconv != NULL) {
-	    fp = fopen(fconv, mode);
-	    g_free(fconv);
+	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+	    if (fconv != NULL) {
+		fp = fopen(fconv, mode);
+		g_free(fconv);
+	    }
+	    errno = save_errno;
 	}
-	errno = save_errno;
+    } else {
+	/* opening for writing */
+	if (!g_get_charset(&cset) && fname_is_utf8((unsigned char *) fname)) {
+	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+	    if (fconv != NULL) {
+		fp = fopen(fconv, mode);
+		g_free(fconv);
+	    }
+	} else {
+	    fp = fopen(fname, mode);
+	}
     }
-#else    
-    fp = fopen(filename, mode);
-#endif
 
     return fp;
 }
 
-gzFile gretl_gzopen (const char *filename, const char *mode)
+gzFile gretl_gzopen (const char *fname, const char *mode)
 {
-    gzFile fz = NULL;
-
-#if defined(USE_G_FOPEN) || defined(WIN32)
-    int save_errno = errno;
+    const char *cset = NULL;
     gchar *fconv;
     gsize wrote;
+    gzFile fz = NULL;
 
-    fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
-    if (fconv != NULL) {
-	fz = gzopen(fconv, mode);
-	g_free(fconv);
-    }    
-    errno = save_errno;
-#else
-    fz = gzopen(filename, mode);
-#endif
+    if (mode != NULL && *mode == 'r') {
+	/* opening for reading */
+	fz = gzopen(fname, mode);
+	if (fz == NULL && !g_get_charset(&cset) && 
+	    fname_is_utf8((unsigned char *) fname)) {
+	    int save_errno = errno;
+
+	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+	    if (fconv != NULL) {
+		fz = gzopen(fconv, mode);
+		g_free(fconv);
+	    }
+	    errno = save_errno;
+	}
+    } else {
+	/* opening for writing */
+	if (!g_get_charset(&cset) && fname_is_utf8((unsigned char *) fname)) {
+	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+	    if (fconv != NULL) {
+		fz = gzopen(fconv, mode);
+		g_free(fconv);
+	    }
+	} else {
+	    fz = gzopen(fname, mode);
+	}
+    }
 
     return fz;
 }

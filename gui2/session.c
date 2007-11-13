@@ -940,7 +940,7 @@ void do_open_session (void)
     if (fp != NULL) {
 	fclose(fp);
     } else {
-	errbox(_("Couldn't open %s\n"), tryfile);
+	file_read_errbox(tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	return;
@@ -957,7 +957,7 @@ void do_open_session (void)
 
     if (status == SAVEFILE_ERROR) {
 	/* FIXME more explicit error message */
-	errbox(_("Couldn't open %s"), sessionfile);
+	file_read_errbox(sessionfile);
 	return;
     } else if (status == SAVEFILE_SCRIPT) {
 	strcpy(scriptfile, sessionfile);
@@ -972,7 +972,7 @@ void do_open_session (void)
     err = set_session_dirname(sname);
     if (err) {
 	fprintf(stderr, "Failed on set_session_dirname\n");
-	errbox(_("Couldn't open %s"), "session.xml");
+	file_read_errbox("session.xml");
 	return;
     }
 
@@ -982,7 +982,7 @@ void do_open_session (void)
     if (err) {
 	/* FIXME more explicit error message */
 	fprintf(stderr, "Failed on read_session_xml\n");
-	errbox(_("Couldn't open %s"), "session.xml");
+	file_read_errbox("session.xml");
 	return;
     }
 
@@ -991,7 +991,7 @@ void do_open_session (void)
 			 NULL);
     if (err) {
 	/* FIXME more explicit error message */
-	errbox(_("Couldn't open %s"), sinfo.datafile);
+	file_read_errbox(sinfo.datafile);
 	return;
     } else {
 	fprintf(stderr, "Opened session datafile '%s'\n", paths.datfile);
@@ -1382,12 +1382,7 @@ static const char *unpath (const char *fname)
 static void make_session_dataname (char *datname)
 {
     if (*paths.datfile != '\0') {
-	const char *dname = unpath(paths.datfile);
-
-	strcpy(datname, dname);
-#ifdef ENABLE_NLS
-	my_filename_to_utf8(datname);
-#endif
+	strcpy(datname, unpath(paths.datfile));
     } else {
 	strcpy(datname, "data.gdt");
     }
@@ -3063,9 +3058,7 @@ static void auto_save_gp (windata_t *vwin)
 
     if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
 	g_free(buf);
-	buf = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
-	errbox(buf); 
-	g_free(buf);
+	file_write_errbox(vwin->fname);
 	return;
     }
 
