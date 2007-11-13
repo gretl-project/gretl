@@ -36,8 +36,6 @@
 
 #define MAX_CONSOLE_LINES 500
 
-extern int wimp; /* settings.c */
-
 void redirect_io_to_console (void)
 {
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
@@ -421,22 +419,15 @@ static void try_to_get_windows_font (void)
     }
 }
 
-void menu_font_option_off (void)
-{
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/File/Preferences/Menu font...", FALSE);
-    }
-}
-
 void set_up_windows_look (void)
 {
     char tmp[4] = {0};
 
-    /* Note: use of WIMP was conditional on the "wimp" (int)
-       user-setting, but I've now made it conditional on using
-       Windows' XP theme instead.  This is because (a) I think WIMP
-       looks like crap on Windows classic, while (b) standard GTK does
-       not look very good under the XP theme.  AC, 2007-11-12.
+    /* Note: use of WIMP was conditional on the "wimp" user-setting,
+       but I've now made it conditional on using Windows' XP theme
+       instead.  This is because (a) WIMP looks totally crap on
+       Windows classic, while (b) standard GTK does not look good
+       under the XP theme.  AC, 2007-11-12.
     */
 
     read_reg_val(HKEY_CURRENT_USER, 

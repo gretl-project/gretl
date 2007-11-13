@@ -303,7 +303,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_PREFERENCES },
     { N_("/Tools/Preferences/_Fixed font..."), NULL, font_selector, 
       FIXED_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
-#ifndef USE_GNOME
+#if !defined(USE_GNOME) && !defined(G_OS_WIN32)
     { N_("/Tools/Preferences/_Menu font..."), NULL, font_selector, 
       APP_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
 #endif
@@ -1560,12 +1560,6 @@ static GtkWidget *make_main_window (void)
 	gtk_window_move(GTK_WINDOW(mdata->w), main_x, main_y);
     }
 
-#ifdef G_OS_WIN32
-    if (wimp) {
-	menu_font_option_off();
-    }
-#endif
-
     return main_vbox;
 }
 
@@ -1577,12 +1571,16 @@ static void set_up_main_menu (void)
     accel_group = gtk_accel_group_new();
     mdata->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
 				       accel_group);
+
     gtk_window_add_accel_group(GTK_WINDOW(mdata->w), accel_group);
     g_object_unref(accel_group);
+
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(mdata->ifac, menu_translate, NULL, NULL);
 #endif    
+
     gtk_item_factory_create_items(mdata->ifac, n_items, data_items, NULL);
+
     mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
 }
 

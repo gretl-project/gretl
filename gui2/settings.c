@@ -104,10 +104,6 @@ static char hc_tseri[5] = "HAC";
 static char hc_panel[9] = "Arellano";
 static char hc_garch[5] = "QML";
 
-#ifdef G_OS_WIN32
-int wimp = 1;
-#endif
-
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
 #endif
@@ -183,12 +179,6 @@ RCVAR rc_vars[] = {
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET, 0, TAB_MAIN, NULL },
-#endif
-#if 0
-# ifdef G_OS_WIN32
-    { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
-      BOOLSET, 0, TAB_MAIN, NULL },
-# endif
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
@@ -1060,7 +1050,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 
 	    /* special case: warning */
-	    if (!strcmp(rc->key, "wimp") || !strcmp(rc->key, "lcnumeric")) {
+	    if (!strcmp(rc->key, "lcnumeric")) {
 		g_signal_connect(G_OBJECT(rc->widget), "toggled",
 				 G_CALLBACK(takes_effect_on_restart), 
 				 NULL);

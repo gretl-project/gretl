@@ -97,14 +97,10 @@ extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
 
-#if defined(G_OS_WIN32)
-extern int wimp;
-#else
-# ifndef OSX_BUILD
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];
 extern char Browser[MAXSTR];
-# endif
 #endif
 
 extern char calculator[MAXSTR];
