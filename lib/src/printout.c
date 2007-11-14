@@ -2323,7 +2323,7 @@ static char *printf_get_string (const char *s, const double **Z,
 				int t, int *err)
 {
     char *ret = NULL;
-    char tstr[OBSLEN], darg[16];
+    char tmpstr[16], strarg[16];
     const char *p = NULL, *q = NULL;
     int v, offset = 0;
     int len = 0;
@@ -2361,20 +2361,31 @@ static char *printf_get_string (const char *s, const double **Z,
 	    len = strlen(p);
 	    q = strchr(s, ')') + 1;
 	}
-    } else if (sscanf(s, "date(%15[^)])", darg)) {
+    } else if (sscanf(s, "argname(%15[^)])", strarg)) {
+	/* name of function argument */
+	char *aname = gretl_func_get_arg_name(strarg);
+
+	if (aname != NULL) {
+	    strcpy(tmpstr, aname);
+	    p = tmpstr;
+	    len = strlen(p);
+	    q = strchr(s, ')') + 1;
+	    free(aname);
+	}
+    } else if (sscanf(s, "date(%15[^)])", strarg)) {
 	/* date string */
 	t = -1;
-	if (isdigit(*darg)) {
-	    t = atoi(darg);
+	if (isdigit(*strarg)) {
+	    t = atoi(strarg);
 	} else {
-	    v = varindex(pdinfo, darg);
+	    v = varindex(pdinfo, strarg);
 	    if (v < pdinfo->v) {
 		t = Z[v][0];
 	    }
 	}
 	if (t > 0 && t <= pdinfo->n) {
-	    ntodate(tstr, t - 1, pdinfo);
-	    p = tstr;
+	    ntodate(tmpstr, t - 1, pdinfo);
+	    p = tmpstr;
 	    len = strlen(p);
 	    q = strchr(s, ')') + 1;
 	}

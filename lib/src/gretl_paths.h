@@ -26,6 +26,8 @@ int gretl_string_table_written (void);
 
 int gretl_path_prepend (char *file, const char *path);
 
+void set_fopen_use_utf8 (void);
+
 FILE *gretl_fopen (const char *filename, const char *mode);
 
 gzFile gretl_gzopen (const char *filename, const char *mode);

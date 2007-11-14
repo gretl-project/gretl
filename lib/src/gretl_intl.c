@@ -183,8 +183,10 @@ void set_gretl_charset (const char *s)
     int using_utf8 = 0;
 
     using_utf8 = g_get_charset(&charset);
+
     if (using_utf8) {
 	set_tex_use_utf(1);
+	set_fopen_use_utf8();
     }
 
     *gretl_charset = '\0';

@@ -653,8 +653,6 @@ static char *retrieve_arg_name (const char **pline, int *err)
     char argvar[VNAMELEN];
     char *ret = NULL;
 
-    fprintf(stderr, "retrieve_arg_name: line = '%s'\n", *pline);
-
     if (sscanf(*pline, "argname(%15[^)])", argvar) == 1) {
 	*pline = strchr(*pline, ')') + 1;
 	ret = gretl_func_get_arg_name(argvar);

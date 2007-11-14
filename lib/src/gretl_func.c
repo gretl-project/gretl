@@ -73,20 +73,22 @@ struct fnpkg_ {
     int n_priv;
 };
 
+struct fnarg {
+    int type;
+    char *upname;  /* name of arg at caller level */
+    union {
+	int idnum;
+	double x;
+	double *px;
+	gretl_matrix *m;
+	user_matrix *um;
+	char *str;
+    } val;
+};
+
 struct fnargs_ {
-    char *types;
-    int nx, nX, nM, nl, ns;
-    int nrefv, nrefm;
-    int nnull;
-    int nnames;
-    double *x;          /* double args */
-    double **X;         /* double * args */
-    gretl_matrix **M;   /* matrix args */
-    char **lists;       /* list args */
-    int *refv;          /* series ref (pointer) args */
-    user_matrix **refm; /* matrix ref (pointer) args */
-    char **s;           /* string args */
-    char **upnames;
+    int argc;
+    struct fnarg **arg;
 };
 
 enum {
@@ -138,6 +140,45 @@ int gretl_function_depth (void)
 
 /* handling of function arguments */
 
+struct fnarg *fn_arg_new (int type, void *p, int *err)
+{
+    struct fnarg *arg;
+
+    arg = malloc(sizeof *arg);
+    if (arg == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    arg->type = type;
+    arg->upname = NULL;
+    
+    if (type == GRETL_TYPE_NONE) {
+	arg->val.x = 0;
+    } else if (type == GRETL_TYPE_DOUBLE) {
+	arg->val.x = *(double *) p;
+    } else if (type == GRETL_TYPE_SERIES) {
+	arg->val.px = (double *) p;
+    } else if (type == GRETL_TYPE_MATRIX) {
+	arg->val.m = (gretl_matrix *) p;
+    } else if (type == GRETL_TYPE_LIST ||
+	       type == GRETL_TYPE_STRING) {
+	arg->val.str = (char *) p;
+    } else if (type == GRETL_TYPE_SCALAR_REF ||
+	       type == GRETL_TYPE_SERIES_REF ||
+	       type == GRETL_TYPE_UVAR) {
+	arg->val.idnum = * (int *) p;
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
+	arg->val.um = (user_matrix *) p;
+    } else {
+	*err = E_TYPES;
+	free(arg);
+	arg = NULL;
+    }
+
+    return arg;
+}
+
 fnargs *fn_args_new (void)
 {
     fnargs *args = malloc(sizeof *args);
@@ -146,160 +187,59 @@ fnargs *fn_args_new (void)
 	return NULL;
     }
 
-    args->types = NULL;
-    args->nx = 0;
-    args->nX = 0;
-    args->nM = 0;
-    args->nl = 0;
-    args->nrefv = 0;
-    args->nrefm = 0;
-    args->ns = 0;
-    args->nnull = 0;
-    args->nnames = 0;
-    args->x = NULL;
-    args->X = NULL;
-    args->M = NULL;
-    args->lists = NULL;
-    args->refv = NULL;
-    args->refm = NULL;
-    args->s = NULL;
-    args->upnames = NULL;
+    args->argc = 0;
+    args->arg = NULL;
 
     return args;
 }
 
-/* note: this is not supposed to be a "deep free"; that is
-   handled in geneval.c */
+/* note: this is not supposed to be a "deep free" (in case the arg
+   carries a pointer member); that is handled in geneval.c 
+*/
+
+static void free_fn_arg (struct fnarg *arg)
+{
+    free(arg->upname);
+    free(arg);
+}
 
 void fn_args_free (fnargs *args)
 {
-    free(args->types);
-    free(args->x);
-    free(args->X);
-    free(args->M);
-    free(args->lists);
-    free(args->refv);
-    free(args->refm);
-    free(args->s);
-    free_strings_array(args->upnames, args->nnames);
+    int i;
 
+    for (i=0; i<args->argc; i++) {
+	free_fn_arg(args->arg[i]);
+    }
+    
+    free(args->arg);
     free(args);
 }
 
 int push_fn_arg (fnargs *args, int type, void *p)
 {
-    char *types;
-    int n, err = 0;
+    int err = 0;
 
 #if 0
     fprintf(stderr, "push_fn_arg: starting on type %d\n", type);
 #endif
 
-    n = args->nx + args->nX + args->nM + args->nl + 
-	args->nrefv + args->nrefm + args->ns +
-	args->nnull + 1;
-
-    types = realloc(args->types, n * sizeof *types);
-    if (types == NULL) {
-	return E_ALLOC;
-    }
-
-    types[n-1] = type;
-    args->types = types;
-
-    if (type == GRETL_TYPE_NONE) {
-	args->nnull += 1;
-    } else if (type == GRETL_TYPE_DOUBLE) {
-	double *x;
-
-	n = args->nx + 1;
-	x = realloc(args->x, n * sizeof *x);
-	if (x == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    x[n-1] = *(double *) p;
-	    args->x = x;
-	    args->nx = n;
-	}
-    } else if (type == GRETL_TYPE_SERIES) {
-	double **X;
-
-	n = args->nX + 1;
-	X = realloc(args->X, n * sizeof *X);
-	if (X == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    X[n-1] = (double *) p;
-	    args->X = X;
-	    args->nX = n;
-	}
-    } else if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix **M;
-
-	n = args->nM + 1;
-	M = realloc(args->M, n * sizeof *M);
-	if (M == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    M[n-1] = (gretl_matrix *) p;
-	    args->M = M;
-	    args->nM = n;
-	}
-    } else if (type == GRETL_TYPE_LIST) {
-	char **lists;
-
-	n = args->nl + 1;
-	lists = realloc(args->lists, n * sizeof *lists);
-	if (lists == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    lists[n-1] = (char *) p;
-	    args->lists = lists;
-	    args->nl = n;
-	}
-    } else if (type == GRETL_TYPE_SCALAR_REF ||
-	       type == GRETL_TYPE_SERIES_REF) {
-	int *refv;
-
-	n = args->nrefv + 1;
-	refv = realloc(args->refv, n * sizeof *refv);
-	if (refv == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    refv[n-1] = * (int *) p;
-	    args->refv = refv;
-	    args->nrefv = n;
-	}
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	user_matrix **M;
-
-	n = args->nrefm + 1;
-	M = realloc(args->refm, n * sizeof *M);
-	if (M == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    M[n-1] = (user_matrix *) p;
-	    args->refm = M;
-	    args->nrefm = n;
-	}
-    } else if (type == GRETL_TYPE_STRING) {
-	char **s;
-
-	n = args->ns + 1;
-	s = realloc(args->s, n * sizeof *s);
-	if (s == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    s[n-1] = (char *) p;
-	    args->s = s;
-	    args->ns = n;
-	}	
+    if (args == NULL) {
+	err = E_DATA;
     } else {
-	err = E_TYPES;
-    }
+	struct fnarg **arg;
+	int n = args->argc + 1;
 
-    if (err) {
-	fprintf(stderr, "push_fn_arg: type = %d, err = %d\n", type, err);
+	arg = realloc(args->arg, n * sizeof *arg);
+	if (arg == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    args->arg = arg;
+	    args->arg[n-1] = fn_arg_new(type, p, &err);
+	}
+
+	if (!err) {
+	    args->argc = n;
+	}
     }
 
     return err;
@@ -3122,71 +3062,85 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
 }
 
 static int allocate_function_args (ufunc *fun,
-				   int argc, fnargs *args, 
+				   fnargs *args, 
 				   double ***pZ,
 				   DATAINFO *pdinfo)
 {
+    struct fnarg *arg;
     fn_param *fp;
-    int xi = 0, Xi = 0, Mi = 0, li = 0, si = 0;
     int i, err = 0;
 
-    /* regular arguments, passed by value */
-    
-    for (i=0; i<fun->n_params && !err; i++) {
+    for (i=0; i<args->argc && !err; i++) {
+	arg = args->arg[i];
 	fp = &fun->params[i];
+
 	if (gretl_scalar_type(fp->type)) {
-	    if (i >= argc || args->types[i] == GRETL_TYPE_NONE) {
+	    if (arg->type == GRETL_TYPE_UVAR) {
+		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
+					       pZ, pdinfo);
+	    } else if (arg->type == GRETL_TYPE_NONE) {
 		err = add_scalar_arg_default(fp, pZ, pdinfo);
 	    } else {
-		err = dataset_add_scalar_as(args->x[xi++], fp->name, 
+		err = dataset_add_scalar_as(arg->val.x, fp->name, 
 					    pZ, pdinfo);
-	    } 
+	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    err = dataset_add_series_as(args->X[Xi++], fp->name, 
-					pZ, pdinfo);
+	    if (arg->type == GRETL_TYPE_UVAR) {
+		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
+					       pZ, pdinfo);
+	    } else {
+		err = dataset_add_series_as(arg->val.px, fp->name, 
+					    pZ, pdinfo);
+	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
-	    err = copy_matrix_as(args->M[Mi++], fp->name);
+	    err = copy_matrix_as(arg->val.m, fp->name);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    if (i >= argc || args->types[i] == GRETL_TYPE_NONE) {
+	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
 	    } else {
-		err = localize_list(args->lists[li++], fp, pdinfo);
-	    } 
+		err = localize_list(arg->val.str, fp, pdinfo);
+	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
-	    err = add_string_as(args->s[si++], fp->name);
+	    err = add_string_as(arg->val.str, fp->name);
+	} else if (fp->type == GRETL_TYPE_SCALAR_REF ||
+		   fp->type == GRETL_TYPE_SERIES_REF) {
+	    int v = arg->val.idnum;
+
+	    arg->upname = gretl_strdup(pdinfo->varname[v]);
+	    if (arg->upname == NULL) {
+		err = E_ALLOC;
+	    } else {
+		STACK_LEVEL(pdinfo, v) += 1;
+		strcpy(pdinfo->varname[v], fp->name);
+	    }
+	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
+	    user_matrix *u = arg->val.um;
+
+	    arg->upname = gretl_strdup(user_matrix_get_name(u));
+	    if (arg->upname == NULL) {
+		err = E_ALLOC;
+	    } else {	    
+		user_matrix_adjust_level(u, 1);
+		user_matrix_set_name(u, fp->name);
+	    }
+	}
+
+	if (arg->type == GRETL_TYPE_UVAR && !err) {
+	    arg->upname = gretl_strdup(pdinfo->varname[arg->val.idnum]);
 	}
     }
 
-    xi = Mi = 0;
+    /* now for any parameters withut matching arguments */
 
-    /* "pointer" parameters, passed by reference: make these vars
-       visible at function level, under their parameter names
-    */
-
-    for (i=0; i<argc && !err; i++) {
+    for (i=args->argc; i<fun->n_params && !err; i++) {
 	fp = &fun->params[i];
-	if (gretl_ref_type(fp->type)) {
-	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
-		args->types[i] == GRETL_TYPE_SERIES_REF) {
-		err = strings_array_add(&args->upnames, &args->nnames, 
-					pdinfo->varname[args->refv[xi]]);
-		if (!err) {
-		    STACK_LEVEL(pdinfo, args->refv[xi]) += 1;
-		    strcpy(pdinfo->varname[args->refv[xi]], fp->name);
-		    xi++;
-		}
-	    } else if (args->types[i] == GRETL_TYPE_MATRIX_REF) {
-		err = strings_array_add(&args->upnames, &args->nnames, 
-					user_matrix_get_name(args->refm[Mi]));
-		if (!err) {
-		    user_matrix_adjust_level(args->refm[Mi], 1);
-		    user_matrix_set_name(args->refm[Mi], fp->name);
-		    Mi++;
-		}
-	    } 
-	} 
+	if (gretl_scalar_type(fp->type)) {
+	    err = add_scalar_arg_default(fp, pZ, pdinfo);
+	} else if (fp->type == GRETL_TYPE_LIST) {
+	    err = create_named_null_list(fp->name);
+	}
     }
-
+    
     return err;
 }
 
@@ -3371,14 +3325,14 @@ maybe_set_return_description (ufunc *u, int rtype, DATAINFO *pdinfo,
 }
 
 static int 
-function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype, 
+function_assign_returns (ufunc *u, fnargs *args, int rtype, 
 			 double **Z, DATAINFO *pdinfo, 
 			 void *ret, char **descrip, PRN *prn, 
 			 int *perr)
 {
+    struct fnarg *arg;
     fn_param *fp;
-    int vi = 0, mi = 0;
-    int i, j, err = 0;
+    int i, err = 0;
 
     if (*perr == 0) {
 	/* direct return value */
@@ -3408,19 +3362,21 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
        function bombed
     */
 
-    j = 0;
-    for (i=0; i<argc; i++) {
+    for (i=0; i<args->argc; i++) {
+	arg = args->arg[i];
 	fp = &u->params[i];
 	if (gretl_ref_type(fp->type)) {
-	    if (args->types[i] == GRETL_TYPE_SCALAR_REF ||
-		args->types[i] == GRETL_TYPE_SERIES_REF) {
-		STACK_LEVEL(pdinfo, args->refv[vi]) -= 1;
-		strcpy(pdinfo->varname[args->refv[vi]], args->upnames[j++]);
-		vi++;
-	    } else if (args->types[i] == GRETL_TYPE_MATRIX_REF) {
-		user_matrix_adjust_level(args->refm[mi], -1);
-		user_matrix_set_name(args->refm[mi], args->upnames[j++]);
-		mi++;
+	    if (arg->type == GRETL_TYPE_SCALAR_REF ||
+		arg->type == GRETL_TYPE_SERIES_REF) {
+		int v = arg->val.idnum;
+
+		STACK_LEVEL(pdinfo, v) -= 1;
+		strcpy(pdinfo->varname[v], arg->upname);
+	    } else if (arg->type == GRETL_TYPE_MATRIX_REF) {
+		user_matrix *u = arg->val.um;
+
+		user_matrix_adjust_level(u, -1);
+		user_matrix_set_name(u, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, pdinfo);
@@ -3560,6 +3516,105 @@ static void func_exec_callback (ExecState *s, double ***pZ,
     }
 }
 
+static int uvar_scalar (struct fnarg *arg, const DATAINFO *pdinfo)
+{
+    if (arg->type == GRETL_TYPE_UVAR) {
+	int v = arg->val.idnum;
+
+	if (v >= 0 && v < pdinfo->v) {
+	    return var_is_scalar(pdinfo, v);
+	}
+    }
+
+    return 0;
+}
+
+static int uvar_series (struct fnarg *arg, const DATAINFO *pdinfo)
+{
+    if (arg->type == GRETL_TYPE_UVAR) {
+	int v = arg->val.idnum;
+
+	if (v >= 0 && v < pdinfo->v) {
+	    return var_is_series(pdinfo, v);
+	}
+    }
+
+    return 0;
+}
+
+static double arg_get_double_val (struct fnarg *arg,
+				  const double **Z)
+{
+    if (gretl_scalar_type(arg->type)) {
+	return arg->val.x;
+    } else if (arg->type == GRETL_TYPE_UVAR) {
+	return Z[arg->val.idnum][0];
+    } else {
+	return NADBL;
+    }
+}
+
+static int check_function_args (ufunc *u, fnargs *args, 
+				const double **Z,
+				const DATAINFO *pdinfo,
+				PRN *prn)
+{
+    struct fnarg *arg;
+    fn_param *fp;
+    double x;
+    int i, err = 0;
+
+    for (i=0; i<args->argc && !err; i++) {
+	arg = args->arg[i];
+	fp = &u->params[i];
+
+	if ((fp->flags & ARG_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
+	    ; /* this is OK */
+	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
+	    ; /* OK */
+	} else if (gretl_scalar_type(fp->type) && uvar_scalar(arg, pdinfo)) {
+	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_SERIES && uvar_series(arg, pdinfo)) {
+	    ; /* OK */
+	} else if (fp->type != arg->type) {
+	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
+		    i, arg_type_string(arg->type), arg_type_string(fp->type));
+	    err = E_TYPES;
+	}
+
+	if (!err && fp->type == GRETL_TYPE_DOUBLE) {
+	    x = arg_get_double_val(arg, Z);
+	    if ((!na(fp->min) && x < fp->min) ||
+		(!na(fp->max) && x > fp->max)) {
+		pprintf(prn, "argv[%d]: scalar value %g out of bounds\n", i, x);
+		err = E_INVARG;
+	    }
+	}
+    }
+
+    for (i=args->argc; i<u->n_params && !err; i++) {
+	/* do we have defaults for any empty args? */
+	fp = &u->params[i];
+	if (!(fp->flags & ARG_OPTIONAL) && na(fp->deflt)) {
+	    pprintf(prn, "%s: not enough arguments\n", u->name);
+	    err = E_ARGS;
+	}
+    }
+
+    return err;
+}
+
+static void fn_state_init (CMD *cmd, ExecState *state)
+{
+    cmd->list = NULL;
+    cmd->param = NULL;
+    cmd->extra = NULL;
+    cmd->linfo = NULL;
+
+    state->cmd = NULL;
+    state->models = NULL;
+}
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, char **descrip, 
@@ -3569,15 +3624,12 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     MODEL **models = NULL;
     char line[MAXLINE];
     CMD cmd;
-    fn_param *fp;
-    int started = 0;
-    int argc, i, j;
-    int err = 0;
-
     int orig_v = pdinfo->v;
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;
-
+    int started = 0;
+    int i, err = 0;
+ 
     *funcerr_msg = '\0';
 
 #if FN_DEBUG
@@ -3589,58 +3641,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	return err;
     }
 
-    /* precautions */
-    cmd.list = NULL;
-    cmd.param = NULL;
-    cmd.extra = NULL;
-    cmd.linfo = NULL;
-    state.cmd = NULL;
-    state.models = NULL;
-
-    argc = args->nx + args->nX + args->nM + args->nl +
-	args->nrefv + args->nrefm + args->ns + 
-	args->nnull;
+    /* precaution */
+    fn_state_init(&cmd, &state);
 
 #if FN_DEBUG
-    fprintf(stderr, "gretl_function_exec: argc = %d\n", argc);
+    fprintf(stderr, "gretl_function_exec: argc = %d\n", args->argc);
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
 
-    j = 0;
-    for (i=0; i<argc && !err; i++) {
-	fp = &u->params[i];
-	if ((fp->flags & ARG_OPTIONAL) && args->types[i] == GRETL_TYPE_NONE) {
-	    ; /* this is OK */
-	} else if (gretl_scalar_type(fp->type) && 
-		   args->types[i] == GRETL_TYPE_DOUBLE) {
-	    ; /* this is OK too */
-	} else if (fp->type != args->types[i]) {
-	    pprintf(prn, "argv[%d] is of wrong type (got %s, should be %s)\n", 
-		    i, arg_type_string(args->types[i]), 
-		    arg_type_string(fp->type));
-	    err = E_TYPES;
-	} else if (fp->type == GRETL_TYPE_DOUBLE) {
-	    if ((!na(fp->min) && args->x[j] < fp->min) ||
-		(!na(fp->max) && args->x[j] > fp->max)) {
-		pprintf(prn, "argv[%d]: scalar value %g out of bounds\n", 
-			i, args->x[j]);
-		err = E_INVARG;
-	    }
-	    j++;
-	}
-    }
-
-    for (i=argc; i<u->n_params && !err; i++) {
-	/* do we have defaults for any empty args? */
-	fp = &u->params[i];
-	if (!(fp->flags & ARG_OPTIONAL) && na(fp->deflt)) {
-	    pprintf(prn, "%s: not enough arguments\n", u->name);
-	    err = E_ARGS;
-	}
-    }
+    err = check_function_args(u, args, (const double **) *pZ, pdinfo, prn);
 
     if (!err) {
-	err = allocate_function_args(u, argc, args, pZ, pdinfo);
+	err = allocate_function_args(u, args, pZ, pdinfo);
     }
 
     if (err) {
@@ -3719,7 +3731,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
-    function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
+    function_assign_returns(u, args, rtype, *pZ, pdinfo,
 			    ret, descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
@@ -3748,22 +3760,20 @@ char *gretl_func_get_arg_name (const char *argvar)
     char *ret = NULL;
 
     if (u != NULL && u->args != NULL) {
-	int i, n = u->args->nnames;
-
-	fprintf(stderr, "u->args->nnames = %d\n", n);
+	int i, n = u->args->argc;
 
 	for (i=0; i<n; i++) {
-	    if (!strcmp(argvar, u->args->upnames[i])) {
-		fprintf(stderr, "found '%s' at position %d in upnames\n",
-			argvar, i);
-		ret = gretl_strdup(argvar); /* FIXME */
+	    if (!strcmp(argvar, u->params[i].name)) {
+		if (u->args->arg[i]->upname != NULL) {
+		    ret = gretl_strdup(u->args->arg[i]->upname); 
+		}
 		break;
 	    }
 	}
     }
 
     if (ret == NULL) {
-	ret = gretl_strdup("NA");
+	ret = gretl_strdup("");
     }
 
     return ret;

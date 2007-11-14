@@ -455,10 +455,10 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
    inside a quoted string.
 */
 
-static int maybe_opt_start (char *line, char *s)
+static int maybe_opt_start (char *line, int n)
 {
-    int i, n = s - line;
-    int quoted = 0;
+    char *s = line + n;
+    int i, quoted = 0;
 
     if (n > 0 && !isspace(*(s-1))) {
 	return 0;
@@ -482,7 +482,7 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
 	char *p = s + 1;
 	int i, n = 0;
 
-	if (maybe_opt_start(line, s)) {
+	if (maybe_opt_start(line, s - line)) {
 	    n = strspn(p, ok_flags);
 	    if (n > 0) {
 		if (isspace(p[n]) || p[n] == '\0') {
@@ -570,7 +570,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
     while ((s = strstr(s, "--")) != NULL) {
 	match = 0;
 	*longopt = '\0';
-	if (maybe_opt_start(line, s)) {
+	if (maybe_opt_start(line, s - line)) {
 	    sscanf(s + 2, "%31s", longopt);
 	    match = valid_long_opt(ci, longopt);
 	    if (match > 0) {

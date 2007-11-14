@@ -79,6 +79,13 @@ static int fname_is_utf8 (const unsigned char *s)
     return ret;
 }
 
+static int fopen_use_utf8;
+
+void set_fopen_use_utf8 (void)
+{
+    fopen_use_utf8 = 1;
+}
+
 /* Below: try to guard against a situation where a filename
    is UTF-8 encoded, but we should be using locale encoding
    with the stdio functions.
@@ -86,7 +93,6 @@ static int fname_is_utf8 (const unsigned char *s)
 
 FILE *gretl_fopen (const char *fname, const char *mode)
 {
-    const char *cset = NULL;
     gchar *fconv;
     gsize wrote;
     FILE *fp = NULL;
@@ -94,7 +100,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
     if (mode != NULL && *mode == 'r') {
 	/* opening for reading */
 	fp = fopen(fname, mode);
-	if (fp == NULL && !g_get_charset(&cset) && 
+	if (fp == NULL && !fopen_use_utf8 && 
 	    fname_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
@@ -107,7 +113,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for writing */
-	if (!g_get_charset(&cset) && fname_is_utf8((unsigned char *) fname)) {
+	if (!fopen_use_utf8 && fname_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fp = fopen(fconv, mode);
@@ -123,7 +129,6 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 gzFile gretl_gzopen (const char *fname, const char *mode)
 {
-    const char *cset = NULL;
     gchar *fconv;
     gsize wrote;
     gzFile fz = NULL;
@@ -131,7 +136,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
     if (mode != NULL && *mode == 'r') {
 	/* opening for reading */
 	fz = gzopen(fname, mode);
-	if (fz == NULL && !g_get_charset(&cset) && 
+	if (fz == NULL && !fopen_use_utf8 && 
 	    fname_is_utf8((unsigned char *) fname)) {
 	    int save_errno = errno;
 
@@ -144,7 +149,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 	}
     } else {
 	/* opening for writing */
-	if (!g_get_charset(&cset) && fname_is_utf8((unsigned char *) fname)) {
+	if (!fopen_use_utf8 && fname_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
 		fz = gzopen(fconv, mode);

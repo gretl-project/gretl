@@ -2739,12 +2739,17 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* evaluate the function arguments */
 
     for (i=0; i<m && !p->err; i++) {
-	n = eval(r->v.bn.n[i], p);
-	if (n == NULL) {
-	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
-	} else if (!ok_ufunc_sym(n->t)) {
-	    fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
-	    p->err = E_TYPES;
+	if (r->v.bn.n[i]->t == UVAR) {
+	    /* let dataset variables through "as is" */
+	    n = r->v.bn.n[i];
+	} else {
+	    n = eval(r->v.bn.n[i], p);
+	    if (n == NULL) {
+		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
+	    } else if (!ok_ufunc_sym(n->t)) {
+		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
+		p->err = E_TYPES;
+	    }
 	}
 
 	if (p->err) {
@@ -2790,6 +2795,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
+	} else if (n->t == UVAR) {
+	    p->err = push_fn_arg(args, GRETL_TYPE_UVAR, &n->v.idnum);
 	}
 
 	if (p->err) {
