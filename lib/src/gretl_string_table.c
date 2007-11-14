@@ -178,7 +178,8 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 	/* no table for this column yet: start one now */
 	ct = gretl_string_table_add_column(st, col);
 	if (ct != NULL) {
-	    pprintf(prn, M_("variable %d: translating from strings to code numbers\n"), 
+	    pprintf(prn, M_("variable %d: translating from strings to "
+			    "code numbers\n"), 
 		    col);
 	}
     }
@@ -647,6 +648,23 @@ static char *gretl_getenv (const char **pline, int *err)
     return val;
 }
 
+static char *retrieve_arg_name (const char **pline, int *err)
+{
+    char argvar[VNAMELEN];
+    char *ret = NULL;
+
+    fprintf(stderr, "retrieve_arg_name: line = '%s'\n", *pline);
+
+    if (sscanf(*pline, "argname(%15[^)])", argvar) == 1) {
+	*pline = strchr(*pline, ')') + 1;
+	ret = gretl_func_get_arg_name(argvar);
+    } else {
+	*err = E_PARSE;
+    }
+
+    return ret;
+}
+
 static char *get_string_element (const char **pline, int *err)
 {
     const char *line = *pline;
@@ -657,6 +675,7 @@ static char *get_string_element (const char **pline, int *err)
     int n = 0;
 
     line += strspn(line, " \t");
+    *pline = line;
 
     if (*line == '@') {
 	/* should be saved string variable */
@@ -665,6 +684,10 @@ static char *get_string_element (const char **pline, int *err)
 
     if (!strncmp(line, "getenv(\"", 8)) {
 	return gretl_getenv(pline, err);
+    }
+
+    if (!strncmp(line, "argname(", 8)) {
+	return retrieve_arg_name(pline, err);
     }
 
     if (*line != '"') {
@@ -778,7 +801,6 @@ int process_string_command (const char *line, PRN *prn)
 {
     saved_string *str;
     char *s1 = NULL;
-    char argvar[VNAMELEN];
     char targ[VNAMELEN];
     int builtin = 0;
     int n, add = 0;
@@ -840,18 +862,6 @@ int process_string_command (const char *line, PRN *prn)
     } else if (!add) {
 	free(str->s);
 	str->s = NULL;
-    }
-
-    line += strspn(line, " \t");
-
-    /* special: argname function */
-    if (sscanf(line, " argname(%15[^)])", argvar) == 1) {
-	if (gretl_function_depth()) {
-	    s1 = gretl_func_get_arg_name(argvar);
-	} else {
-	    pprintf(prn, "argvar: can only be used inside a function\n");
-	    err = E_DATA;
-	}
     }
 
     /* add strings(s) to target */

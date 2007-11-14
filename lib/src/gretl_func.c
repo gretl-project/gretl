@@ -33,7 +33,6 @@
 #define UDEBUG 0
 
 typedef struct fn_param_ fn_param;
-typedef struct fncall_ fncall;
 
 struct fn_param_ {
     char *name;
@@ -56,6 +55,7 @@ struct ufunc_ {
     int rettype;
     char *retname;
     int *in_use;
+    fnargs *args;
 };
 
 struct fnpkg_ {
@@ -514,6 +514,24 @@ int current_func_pkgID (void)
     return 0;
 }
 
+static ufunc *currently_called_function (void)
+{
+    ufunc *fun;
+    int i, f0;
+
+    for (i=0; i<n_ufuns; i++) {
+	fun = ufuns[i];
+	if (fun->in_use != NULL) {
+	    f0 = fun->in_use[0];
+	    if (fun->in_use[f0] == fn_executing) {
+		return fun;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
 ufunc *get_user_function_by_name (const char *name)
 {
     int i, ID = current_func_pkgID();
@@ -605,6 +623,7 @@ static ufunc *ufunc_new (void)
     fun->retname = NULL;
 
     fun->in_use = NULL;
+    fun->args = NULL;
 
     return fun;
 }
@@ -639,6 +658,7 @@ static void clear_ufunc_data (ufunc *fun)
     fun->retname = NULL;
     
     fun->in_use = NULL;
+    fun->args = NULL;
 }
 
 static void free_ufunc (ufunc *fun)
@@ -3422,6 +3442,8 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
 	    "function '%s' at depth %d\n", u->name, d);
 #endif
 
+    u->args = NULL;
+
     anyerr = destroy_saved_lists_at_level(d);
     if (anyerr && !err) {
 	err = anyerr;
@@ -3501,9 +3523,10 @@ static int stop_fncall (ufunc *u, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void start_fncall (ufunc *u)
+static void start_fncall (ufunc *u, fnargs *args)
 {
     set_executing_on(u);
+    u->args = args;
     push_program_state();
     set_gretl_echo(0);
     set_gretl_messages(0);
@@ -3645,7 +3668,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (!err) {
-	start_fncall(u);
+	start_fncall(u, args);
 	started = 1;
     }
 
@@ -3656,7 +3679,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = maybe_exec_line(&state, pZ, &pdinfo);
 	if (state.funcerr) {
 #if UDEBUG
-	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", i, line);
+	    fprintf(stderr, "funcerr: gretl_function_exec: i=%d, line: '%s'\n", 
+		    i, line);
 #endif
 	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
 	    set_funcerr_message(u, state.cmd->param);
@@ -3720,7 +3744,29 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 char *gretl_func_get_arg_name (const char *argvar)
 {
-    return gretl_strdup("notyet");
+    ufunc *u = currently_called_function();
+    char *ret = NULL;
+
+    if (u != NULL && u->args != NULL) {
+	int i, n = u->args->nnames;
+
+	fprintf(stderr, "u->args->nnames = %d\n", n);
+
+	for (i=0; i<n; i++) {
+	    if (!strcmp(argvar, u->args->upnames[i])) {
+		fprintf(stderr, "found '%s' at position %d in upnames\n",
+			argvar, i);
+		ret = gretl_strdup(argvar); /* FIXME */
+		break;
+	    }
+	}
+    }
+
+    if (ret == NULL) {
+	ret = gretl_strdup("NA");
+    }
+
+    return ret;
 }
 
 void gretl_functions_cleanup (void)
