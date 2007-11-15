@@ -741,8 +741,22 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 }
 
+/* PNG anti-aliasing */
+
+static void set_aa_status (GtkWidget *w, int *ok)
+{
+    *ok = GTK_TOGGLE_BUTTON(w)->active;
+
+    if (*ok) {
+	putenv("GNUPLOT_PNG_ANTIALIAS=1");
+    } else {
+	putenv("GNUPLOT_PNG_ANTIALIAS=0");
+    }
+}
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
+    static int aa_ok = 1;
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
     GList *keypos_list = NULL;
@@ -891,6 +905,22 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     } else {
 	markers_check = NULL;
     }
+
+    /* give option of suppressing anti-aliasing for PNGs */
+    if (1) {
+	GtkWidget *aa_check;
+
+	table_add_row(tbl, &rows, TAB_MAIN_COLS);
+	aa_check = gtk_check_button_new_with_label(_("Allow anti-aliasing of lines"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  aa_check, 0, TAB_MAIN_COLS, 
+				  rows-1, rows);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(aa_check),
+				     aa_ok);
+	g_signal_connect(G_OBJECT(aa_check), "clicked", 
+			 G_CALLBACK(set_aa_status), &aa_ok);
+	gtk_widget_show(aa_check);
+    }	
 
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf(0)) {

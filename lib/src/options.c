@@ -450,9 +450,9 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     return 0;
 }
 
-/* See if at point "s" in "line" we might be at the start of an option
-   flag: the previous character must be a space, and we must not be
-   inside a quoted string.
+/* See if at point "p" (at which we've found '-') in string "s" we
+   might be at the start of an option flag: the previous character
+   must be a space, and we must not be inside a quoted string.
 */
 
 static int maybe_opt_start (char *s, char *p)
