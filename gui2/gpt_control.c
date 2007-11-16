@@ -622,7 +622,10 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PDF;
     }
 
-    if (strstr(term, " mono ")) mono = 1;
+    if (strstr(term, " mono ") || 
+	(strstr(term, "postscr") && !strstr(term, "color"))) {
+	mono = 1;
+    }
 
 #ifdef ENABLE_NLS
     pprint_gnuplot_encoding(term, prn);
