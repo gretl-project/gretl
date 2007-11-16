@@ -871,8 +871,10 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
     }
 
     if (*bnum < 1) {
-	sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		*bnum);
+	if (*gretl_errmsg == '\0') {
+	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		    *bnum);
+	}
 	err = 1;
     } else {
 	*bnum -= 1; /* convert to zero base */
@@ -1309,8 +1311,10 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		    i + 1);
 	} else if (j >= pmod->ncoeff || j < 0) {
-	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    j + 1);
+	    if (*gretl_errmsg == '\0') {
+		sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+			j + 1);
+	    }
 	} else {
 	    ret = 0;
 	}
@@ -1377,6 +1381,8 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     rrow *r;
     int sgn = 1;
     int i, nt, err = 0;
+
+    gretl_error_clear();
 
 #if RDEBUG
     fprintf(stderr, "parse restriction line: got '%s'\n", line);

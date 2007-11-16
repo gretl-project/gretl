@@ -43,17 +43,18 @@ static char pd_char (const DATAINFO *pdinfo)
     }
 }
 
-static char **get_db_series_names (const char *idxname)
+static int get_db_series_names (const char *idxname, char ***pnames,
+				int *pnv)
 {
-    char line[256], varname[VNAMELEN];
-    char **varlist = NULL;
+    char line[256];
+    char **vnames = NULL;
     FILE *fp;
     int i, j, nv;
+    int err = 0;
 
     fp = gretl_fopen(idxname, "r");
-
     if (fp == NULL) {
-	return NULL;
+	return E_FOPEN;
     }
 
 #if DB_DEBUG
@@ -73,35 +74,36 @@ static char **get_db_series_names (const char *idxname)
 	}
     }
 
-    /* allocate space for list of varnames, plus sentinel */
-    varlist = malloc((nv + 1) * sizeof *varlist);
-    if (varlist == NULL) {
-	fclose(fp);
-	return NULL;
-    }
-
-    for (i=0; i<=nv; i++) {
-	varlist[i] = NULL;
-    }
-
 #if DB_DEBUG
     fprintf(stderr, " found %d varnames\n", nv);
 #endif
+
+    if (nv == 0) {
+	err = E_DATA;
+    } else {
+	vnames = strings_array_new_with_length(nv, VNAMELEN);
+	if (vnames == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	fclose(fp);
+	return err;
+    }
 
     rewind(fp);
 
     /* second pass: grab all the varnames */
     i = j = 0;
-    while (fgets(line, sizeof line, fp)) {
+    while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	}
 	i++;
 	if (i % 2) {
-	    sscanf(line, "%15s", varname);
-	    varlist[j] = gretl_strdup(varname);
-	    if (varlist[j] == NULL) {
-		break;
+	    if (sscanf(line, "%15s", vnames[j]) != 1) {
+		err = E_DATA;
 	    }
 	    j++;
 	}
@@ -109,18 +111,14 @@ static char **get_db_series_names (const char *idxname)
 
     fclose(fp);
 
-    return varlist;
-}
-
-static void free_snames (char **s)
-{
-    int j;
-
-    for (j=0; s[j] != NULL; j++) {
-	free(s[j]);
+    if (err) {
+	free_strings_array(vnames, nv);
+    } else {
+	*pnames = vnames;
+	*pnv = nv;
     }
 
-    free(s);
+    return err;
 }
 
 /* Given a list of variables to be appended to a gretl database,
@@ -132,22 +130,24 @@ static void free_snames (char **s)
 
 static int 
 check_for_db_duplicates (const int *list, const DATAINFO *pdinfo,
-			 const char *idxname)
+			 const char *idxname, int *err)
 {
-    char **snames = get_db_series_names(idxname);
-    int i, j, v, ret = 0;
-
-    if (snames == NULL) {
-	return -1;
-    }
+    char **snames = NULL;
+    int i, j, v, oldv = 0;
+    int ret = 0;
 
 #if DB_DEBUG   
     printlist(list, "check_for_db_duplicates: input save list");
 #endif
 
+    *err = get_db_series_names(idxname, &snames, &oldv);
+    if (*err) {
+	return -1;
+    }
+
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	for (j=0; snames[j] != NULL; j++) {
+	for (j=0; j < oldv; j++) {
 	    if (!strcmp(pdinfo->varname[v], snames[j])) {
 		ret++;
 		break;
@@ -155,7 +155,7 @@ check_for_db_duplicates (const int *list, const DATAINFO *pdinfo,
 	}
     }
 
-    free_snames(snames);
+    free_strings_array(snames, oldv);
 
     return ret;
 }
@@ -241,29 +241,29 @@ static void list_delete_element (int *list, int m)
     }
 }
 
+/* writing to a previously existing database, replacing any existing
+   variables with the same name as "new" ones, but otherwise
+   preserving the existing content 
+*/
+
 static int 
-write_db_data_with_replacement (const char *idxname, const char *binname,
-				int *list, const double **Z, 
-				const DATAINFO *pdinfo) 
+append_db_data_with_replacement (const char *idxname, const char *binname,
+				 int *list, const double **Z, 
+				 const DATAINFO *pdinfo) 
 {
     FILE *fidx = NULL, *fbin = NULL;
-    char **db_vnames = NULL;
+    char **oldnames = NULL;
     char *mask = NULL;
     int *newlist = NULL;
-    int i, j, v, nv;
+    int i, j, v, oldv;
     int nrep, err = 0;
 
-    db_vnames = get_db_series_names(idxname);
-    if (db_vnames == NULL) {
-	return E_ALLOC;
+    err = get_db_series_names(idxname, &oldnames, &oldv);
+    if (err) {
+	return err;
     }
 
-    nv = 0;
-    for (j=0; db_vnames[j] != NULL; j++) {
-	nv++;
-    }
-
-    mask = calloc(nv, 1);
+    mask = calloc(oldv, 1);
     if (mask == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -278,8 +278,8 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
     nrep = 0;
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	for (j=0; db_vnames[j] != NULL; j++) {
-	    if (!strcmp(db_vnames[j], pdinfo->varname[v])) {
+	for (j=0; j<oldv; j++) {
+	    if (!strcmp(oldnames[j], pdinfo->varname[v])) {
 		/* match: remove var v from "newlist" and flag that it
 		   is a replacement in "mask" */
 		list_delete_element(newlist, v);
@@ -294,7 +294,8 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db write with replacements, nrep = %d\n", nrep);
+    fprintf(stderr, "write_db_data_with_replacement: replicated vars = %d\n", 
+	    nrep);
     printlist(list, "full var list");
     printlist(newlist, "new var list");
 #endif    
@@ -372,7 +373,7 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
 		fprintf(stderr, "old db, var %d, nobs = %d\n", i, nobs);
 #endif
 		if (mask[i]) {
-		    v = varindex(pdinfo, db_vnames[i]);
+		    v = varindex(pdinfo, oldnames[i]);
 #if DB_DEBUG
 		    fprintf(stderr, "replacing this with var %d\n", v);
 #endif
@@ -396,13 +397,13 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
 	remove(idxcpy);
 	remove(bincpy);
     } else {
-	/* no replacements */
-	fidx = gretl_fopen(idxname, "w");
+	/* no variables to be replaced */
+	fidx = gretl_fopen(idxname, "a");
 	if (fidx == NULL) {
 	    err = E_FOPEN;
 	}
 	if (!err) {
-	    fbin = gretl_fopen(binname, "wb");
+	    fbin = gretl_fopen(binname, "ab");
 	    if (fbin == NULL) {
 		err = E_FOPEN;
 	    }
@@ -424,7 +425,7 @@ write_db_data_with_replacement (const char *idxname, const char *binname,
     if (fidx != NULL) fclose(fidx);
     if (fbin != NULL) fclose(fbin);
 
-    free_snames(db_vnames);
+    free_strings_array(oldnames, oldv);
     free(mask);
     free(newlist);
 
@@ -437,6 +438,8 @@ open_db_files (const char *fname, char *idxname, char *binname,
 {
     FILE *fp;
     char base[FILENAME_MAX];
+    char imode[3] = "w";
+    char bmode[3] = "wb";
     char *p;
 
     strcpy(base, fname);
@@ -448,13 +451,17 @@ open_db_files (const char *fname, char *idxname, char *binname,
     strcpy(idxname, base);
     strcat(idxname, ".idx");
 
+    fprintf(stderr, "open_db_files: doing test open on '%s'\n", idxname);
+
     fp = gretl_fopen(idxname, "r");
     if (fp != NULL) {
 	*append = 1;
+	strcpy(imode, "a");
+	strcpy(bmode, "ab");
 	fclose(fp);
     }
 
-    *fidx = gretl_fopen(idxname, (*append)? "a" : "w");
+    *fidx = gretl_fopen(idxname, imode);
     if (*fidx == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), idxname);
 	return 1;
@@ -463,7 +470,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
     strcpy(binname, base);
     strcat(binname, ".bin");
     
-    *fbin = gretl_fopen(binname, (*append)? "ab" : "wb");
+    *fbin = gretl_fopen(binname, bmode);
     if (*fbin == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), binname);
 	fclose(*fidx);
@@ -473,8 +480,10 @@ open_db_files (const char *fname, char *idxname, char *binname,
 	return 1;
     }
 
-    fprintf(stderr, "Writing gretl database index file '%s'\n", idxname);
-    fprintf(stderr, "Writing gretl database binary file '%s'\n", binname);
+    fprintf(stderr, "Opened database index '%s' in mode '%s'\n", 
+	    idxname, imode);
+    fprintf(stderr, "Opened database binary '%s' in mode '%s'\n", 
+	    binname, bmode);
 
     return 0;
 }
@@ -569,17 +578,16 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 #endif
 	    fclose(fidx);
 	    fclose(fbin);
-	    return write_db_data_with_replacement(idxname, binname, dlist,
-						  Z, pdinfo);
+	    return append_db_data_with_replacement(idxname, binname, dlist,
+						   Z, pdinfo);
 	} else {
-	    int dups = check_for_db_duplicates(dlist, pdinfo, idxname);
+	    int dups = check_for_db_duplicates(dlist, pdinfo, idxname, &err);
 
 #if DB_DEBUG
 	    fprintf(stderr, "No force flag, checking for dups\n");
 #endif
-	    if (dups < 0) {
+	    if (err) {
 		fputs("check_for_db_duplicates failed\n", stderr);
-		err = 1;
 	    } else if (dups > 0) {
 		sprintf(gretl_errmsg, 
 			_("Of the variables to be saved, %d were already "

@@ -112,7 +112,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 	    errno = save_errno;
 	}
     } else {
-	/* opening for writing */
+	/* opening for appending/writing */
 	if (!fopen_use_utf8 && fname_is_utf8((unsigned char *) fname)) {
 	    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	    if (fconv != NULL) {
