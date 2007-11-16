@@ -181,8 +181,9 @@ series resid = get_uhat(price, xlist)
 \subsection{Variables versus pointers}
 \label{funscope}
 
-Arguments to functions can be passed in two ways: ``as they are'', or
-as pointers. For example, consider, the following two functions:
+Series, scalar, and matrix arguments to functions can be passed in two
+ways: ``as they are'', or as pointers. For example, consider the
+following:
 \begin{code}
 function triple1(series x)
   series ret = 3*x
@@ -195,40 +196,36 @@ function triple2(series *x)
 end function
 \end{code}
 
-These two functions are nearly identical; the only difference is that
-you need to feed a series into \texttt{triple1}, as in
-\texttt{triple1(myseries)}, while \texttt{triple2} must be supplied a
-\emph{pointer} to a series, as in
-\texttt{triple2(\&myseries)}. However, the result they yield will be
-exactly the same.
+These two functions are nearly identical (and yield the same result);
+the only difference is that you need to feed a series into
+\texttt{triple1}, as in \texttt{triple1(myseries)}, while
+\texttt{triple2} must be supplied a \emph{pointer} to a series, as in
+\texttt{triple2(\&myseries)}. 
 
-Why make the distinction, then? There are mainly two reasons for
-doing so. The most important one is modularity; the other is performance.
+Why make the distinction, then? There are two main reasons for doing
+so. The most important one is modularity; the other is performance.
 
 The idea of modularity comes from the fact that insulating functions
-from the rest of a script is generally a good idea, for a number of
-reasons. One of the many benefits you get from this approach is to
-make your functions easily reusable in other contexts.  For this
-reason, variables created within a function are local to that
-function, and are destroyed when the function exits, unless they are
-made available as return values and these values are ``picked up'' or
-assigned by the caller.
+from the rest of a script is generally a good idea.  One of the many
+benefits of this approach is that your functions are easily reusable
+in other contexts.  To achieve modularity, \emph{variables created
+  within a function are local to that function, and are destroyed when
+  the function exits}, unless they are made available as return values
+and these values are ``picked up'' or assigned by the caller.
     
-Functions do not have access to variables in ``outer scope'' (that is,
-variables that exist in the script from which the function is called)
-except insofar as these are explicitly passed to the function as
-arguments.  
+In addition, functions do not have access to variables in ``outer
+scope'' (that is, variables that exist in the script from which the
+function is called) except insofar as these are explicitly passed to
+the function as arguments.
 
 By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
-modified by whatever goes on inside the function.  There is, however,
-a mechanism for allowing a function and its caller to ``cooperate''
-such that an outer variable can be modified by the function.  In
-effect, this allows a function to ``return'' more than one value
-(although only one variable can be returned directly --- see below).
-The method is (at least superficially) similar to the passing of the
-address of a variable in the C programming language.  The parameter in
+modified by whatever goes on inside the function.  But the use of
+pointers allows a function and its caller to ``cooperate'' such that
+an outer variable can be modified by the function.  In effect, this
+allows a function to ``return'' more than one value (although only one
+variable can be returned directly --- see below).  The parameter in
 question is marked with a prefix of \texttt{*} in the function
 definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
@@ -291,16 +288,16 @@ time \app{gretl} spends transcribing the value of the variable to the
 local copy may be non-negligible, compared to the time the function
 spends doing the job it was written for.
 
-Example \ref{ex:perf-pointers} takes this to the extreme. In this
-case, we define two functions which return the number of rows of a
-matrix (a pretty fast operation). One gets a matrix as argument, the
-other one a pointer to a matrix. Then, the two functions are evaluated
-on a matrix with 2000 rows and 2000 columns; on a typical system,
+Example \ref{ex:perf-pointers} takes this to the extreme.  We define
+two functions which return the number of rows of a matrix (a pretty
+fast operation).  One function gets a matrix as argument, the other
+one a pointer to a matrix.  The two functions are evaluated on a
+matrix with 2000 rows and 2000 columns; on a typical system,
 floating-point numbers take 8 bytes of memory, so the space occupied
-by the matrix is roughly 32 megbytes.
+by the matrix is roughly 32 megabytes.
 
 Running the code in example \ref{ex:perf-pointers} will produce output
-similar to the following (clearly, the actual numbers depend on the
+similar to the following (the actual numbers depend on the
 machine you're running the example on):
 \begin{code}
 Elapsed time: 
