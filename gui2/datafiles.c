@@ -1545,6 +1545,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int code)
     build_file_collections(); /* FIXME check for errors */
 
     notebook = gtk_notebook_new();
+    gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 
     j = 0;
 

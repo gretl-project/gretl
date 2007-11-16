@@ -741,7 +741,9 @@ static void add_color_selector (int i, GtkWidget *tbl, int *rows,
     }
 }
 
-/* PNG anti-aliasing */
+#ifdef G_OS_WIN32
+
+/* PNG anti-aliasing switch */
 
 static void set_aa_status (GtkWidget *w, int *ok)
 {
@@ -754,9 +756,13 @@ static void set_aa_status (GtkWidget *w, int *ok)
     }
 }
 
+#endif
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
+#ifdef G_OS_WIN32
     static int aa_ok = 1;
+#endif
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
     GList *keypos_list = NULL;
@@ -906,6 +912,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	markers_check = NULL;
     }
 
+#ifdef G_OS_WIN32
     /* give option of suppressing anti-aliasing for PNGs */
     if (1) {
 	GtkWidget *aa_check;
@@ -921,6 +928,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			 G_CALLBACK(set_aa_status), &aa_ok);
 	gtk_widget_show(aa_check);
     }	
+#endif
 
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf(0)) {

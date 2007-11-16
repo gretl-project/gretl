@@ -63,6 +63,16 @@ version 1.6.6, in progress
   lags (int the non-seasonal component only)
 - Add importer for Open Document Spreadsheet files
 - MS Windows: update to version 2.12 of GTK runtime
+- MS Windows: update to gnuplot 4.2.2, and add switch
+  in graph editing dialog to prevent anti-aliasing of
+  lines
+- GUI linear restrictions dialog: fix bug whereby
+  parameter names were not accepted
+- Saving databases: fix effect of --overwrite flag to
+  do what the manual says
+- Databases on Windows: look in the gretl user directory
+  as well as the system db directory
+- add argname() function for use in user functions
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

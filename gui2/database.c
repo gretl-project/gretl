@@ -2469,16 +2469,18 @@ gint populate_dbfilelist (windata_t *vwin)
 
     closedir(dir);
 
-#ifndef G_OS_WIN32
     /* pick up any databases in the user's personal dir */
     dbdir = paths.userdir;
+#ifdef G_OS_WIN32 
+    dir = win32_opendir(dbdir);
+#else
     dir = opendir(dbdir);
+#endif
 
     if (dir != NULL) {
 	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
 	closedir(dir);
     }
-#endif
 
     if (ndb == 0) {
 	errbox(_("No database files found"));

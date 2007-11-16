@@ -461,7 +461,7 @@ int gnuplot_has_pdf (void)
     if (err == -1) {
 	err = gnuplot_test_command("set term pdf");
 	if (err) {
-	    err = gnuplot_test_command("set term cairopdf");
+	    err = gnuplot_test_command("set term pdfcairo");
 	}
     }
 
@@ -473,7 +473,18 @@ int gnuplot_has_cairo (void)
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set term cairopdf");
+	err = gnuplot_test_command("set term pdfcairo");
+    }
+
+    return !err;
+}
+
+int gnuplot_has_pngcairo (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term pngcairo");
     }
 
     return !err;
@@ -625,23 +636,41 @@ void graph_palette_reset (int i)
 }
 
 static void 
-write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
+write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
+			   int cairo)
 {
-    int shrink = 0;
+    if (cairo) {
+	char fname[128];
+	int fsize, nf;
 
-    if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
-	&& gp_small_font_size > 0) {
-	char fname[64];
-	int fsize;
-
-	if (sscanf(grfont, "%s %d", fname, &fsize) == 2) {
-	    sprintf(fstr, " font %s %d", fname, gp_small_font_size);
-	    shrink = 1;
+	nf = sscanf(grfont, "%s %d", fname, &fsize);
+	if (nf == 2) {
+	    if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
+		&& gp_small_font_size > 0) {
+		sprintf(fstr, " font \"%s,%d\"", fname, gp_small_font_size);
+	    } else {
+		sprintf(fstr, " font \"%s,%d\"", fname, fsize);
+	    }
+	} else if (nf == 1) {
+	    sprintf(fstr, " font \"%s\"", fname);
 	}
-    }
+    } else {
+	int shrink = 0;
 
-    if (!shrink) {
-	sprintf(fstr, " font %s", grfont);
+	if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
+	    && gp_small_font_size > 0) {
+	    char fname[64];
+	    int fsize;
+
+	    if (sscanf(grfont, "%s %d", fname, &fsize) == 2) {
+		sprintf(fstr, " font %s %d", fname, gp_small_font_size);
+		shrink = 1;
+	    }
+	}
+
+	if (!shrink) {
+	    sprintf(fstr, " font %s", grfont);
+	}
     }
 }
 
@@ -682,11 +711,16 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char size_string[16];
     char color_string[64];
     int gpcolors = 1, gpttf = 1, gpsize = 1;
+    int pngcairo = 0;
     const char *grfont = NULL;
 
     *font_string = 0;
     *size_string = 0;
     *color_string = 0;
+
+#if 0
+    pngcairo = gnuplot_has_pngcairo(); /* not ready yet */
+#endif
 
 #ifndef WIN32
     gpcolors = gnuplot_has_specified_colors();
@@ -701,7 +735,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	}
 	if (grfont != NULL && *grfont != 0) {
-	    write_gnuplot_font_string(font_string, grfont, ptype);
+	    write_gnuplot_font_string(font_string, grfont, ptype, pngcairo);
 	}
     } 
 
@@ -711,8 +745,8 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
 #endif
 
-    /* plot color setup */
-    if (gpcolors) {
+    /* plot color setup (FIXME cairo) */
+    if (gpcolors && !pngcairo) {
 	int i;
 
 	/* background etc. */
@@ -740,8 +774,13 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	}
     }
 
-    sprintf(png_term_line, "set term png%s%s%s",
-	    font_string, size_string, color_string);
+    if (pngcairo) {
+	sprintf(png_term_line, "set term pngcairo%s%s",
+		font_string, size_string);
+    } else {
+	sprintf(png_term_line, "set term png%s%s%s",
+		font_string, size_string, color_string);
+    }
 
 #if GP_DEBUG
     fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
