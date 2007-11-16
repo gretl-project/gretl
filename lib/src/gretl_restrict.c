@@ -315,7 +315,14 @@ restriction_set_form_full_matrices (gretl_restriction *rset)
 	gretl_vector_set(q, i, r->rhs);
     }
 
+    if (rset->R != NULL) {
+	gretl_matrix_free(rset->R);
+    }
     rset->R = R;
+
+    if (rset->q != NULL) {
+	gretl_matrix_free(rset->q);
+    }
     rset->q = q;
 
     return 0;
@@ -461,6 +468,11 @@ static int rset_alloc_matrices (gretl_restriction *rset, int nc)
 {
     rset->R = gretl_zero_matrix_new(rset->k, nc);
     rset->q = gretl_zero_matrix_new(rset->k, 1);
+
+#if RDEBUG
+    fprintf(stderr, "rset_alloc_matrices: on output R=%p, q=%p\n",
+	    (void *) rset->R, (void *) rset->q);
+#endif
 
     if (rset->R == NULL || rset->q == NULL) {
 	gretl_matrix_free(rset->R);
@@ -737,35 +749,39 @@ static int count_ops (const char *p)
     return n;
 }
 
-/* Given the dataset position of a variable as the identifier for a
-   parameter, try to retrieve the corresponding 0-based coefficient
-   number in the model to be restricted.  We don't yet attempt this
-   for anything other than single-equation models.
+/* Try to retrieve the coefficient number in a model to be restricted,
+   based on the parameter name.  We don't yet attempt this for
+   anything other than single-equation models.
 */
 
 static int 
-bnum_from_vnum (gretl_restriction *r, int v, const DATAINFO *pdinfo)
+bnum_from_name (gretl_restriction *r, const DATAINFO *pdinfo,
+		const char *s)
 {
-    const MODEL *pmod;
-    int k;
+    int k = -1;
 
-    if (r->type != GRETL_OBJ_EQN || r->obj == NULL) {
-	return -1;
+    if (pdinfo == NULL || r->type != GRETL_OBJ_EQN || r->obj == NULL) {
+	strcpy(gretl_errmsg, _("Please give a coefficient number"));
+    } else {
+	const MODEL *pmod = r->obj;
+
+	k = gretl_model_get_param_number(pmod, pdinfo, s);
+
+	if (k < 0) {
+	    sprintf(gretl_errmsg, _("%s: not a valid parameter name"), s);
+	} else {
+	    /* convert to 1-based for compatibility with numbers read
+	       directly: the index will be converted to 0-base below
+	    */
+	    k++;
+	}
     }
 
-    pmod = r->obj;
-
-    k = gretl_model_get_param_number(pmod, pdinfo, pdinfo->varname[v]);
-
 #if RDEBUG
-    fprintf(stderr, "bnum_from_vnum: vnum = %d (%s) -> bnum = %d (coeff = %g)\n", 
-	    v, pdinfo->varname[v], k, pmod->coeff[k]);
+    fprintf(stderr, "bnum_from_name: %s -> bnum = %d\n", s, k);
 #endif
 
-    /* convert to 1-based for compatibility with numbers read directly:
-       the index will be converted to 0-base below */
-
-    return k + 1; 
+    return k; 
 }
 
 /* Pick apart strings of the form "b[X]" or "b[X,Y]".  If the ",Y" is
@@ -785,7 +801,6 @@ static int pick_apart (gretl_restriction *r, const char *s,
     char s2[16] = {0};
     char *targ = s1;
     int i, j, k;
-    int vnum = -1;
 
 #if RDEBUG
     fprintf(stderr, "pick_apart: looking at '%s'\n", s);
@@ -823,21 +838,17 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	}
 	if (isdigit(*s2)) {
 	    *bnum = positive_int_from_string(s2);
-	} else if (pdinfo != NULL) {
-	    vnum = varindex(pdinfo, s2);
+	} else {
+	    *bnum = bnum_from_name(r, pdinfo, s2);
 	}
     } else {
 	/* only one field: [bnum] */
 	*eq = EQN_UNSPEC;
 	if (isdigit(*s1)) {
 	    *bnum = positive_int_from_string(s1);
-	} else if (pdinfo != NULL) {
-	    vnum = varindex(pdinfo, s1);
+	} else {
+	    *bnum = bnum_from_name(r, pdinfo, s1);
 	}	    
-    }
-
-    if (pdinfo != NULL && vnum >= 0 && vnum < pdinfo->v) {
-	*bnum = bnum_from_vnum(r, vnum, pdinfo);
     }
 
     return 0;
@@ -948,6 +959,11 @@ void destroy_restriction_set (gretl_restriction *rset)
 
     free(rset->rows);
     free(rset->mask);
+
+#if RDEBUG
+    fprintf(stderr, "destroy_restriction_set: R at %p, q at %p\n",
+	    (void *) rset->R, (void *) rset->q);
+#endif
     
     gretl_matrix_free(rset->R);
     gretl_matrix_free(rset->q);
@@ -1522,7 +1538,9 @@ cross_restriction_set_start (const char *line, equation_system *sys)
 /* set-up for a set of restrictions on a single equation */
 
 gretl_restriction *
-eqn_restriction_set_start (const char *line, MODEL *pmod, gretlopt opt)
+eqn_restriction_set_start (const char *line, MODEL *pmod, 
+			   const DATAINFO *pdinfo,
+			   gretlopt opt)
 {
     gretl_restriction *rset;
 
@@ -1532,7 +1550,7 @@ eqn_restriction_set_start (const char *line, MODEL *pmod, gretlopt opt)
 	return NULL;
     }
 
-    if (real_restriction_set_parse_line(rset, line, NULL, 1)) {
+    if (real_restriction_set_parse_line(rset, line, pdinfo, 1)) {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	return NULL;
     }

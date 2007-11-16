@@ -692,8 +692,8 @@ int
 gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
 			      const char *s)
 {
-    char pname[16];
-    int idx = -1;
+    char pname[16], tmp[16];
+    int i, idx = -1;
 
     if (pmod == NULL) {
 	return -1;
@@ -705,25 +705,11 @@ gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
 	strcpy(pname, s);
     }
 
-    if (pmod->params != NULL) {
-	int i;
-
-	for (i=0; i<pmod->nparams; i++) {
-	    if (!strcmp(pname, pmod->params[i])) {
-		idx = i;
-		break;
-	    }
-	}
-    } else if (pmod->list != NULL) {
-	int v = varindex(pdinfo, pname);
-
-	if (v < pdinfo->v) {
-	    idx = gretl_list_position(v, pmod->list);
-	    if (idx > 1) {
-		idx -= 2;
-	    } else {
-		idx = -1;
-	    }
+    for (i=0; i<pmod->ncoeff; i++) {
+	gretl_model_get_param_name(pmod, pdinfo, i, tmp);
+	if (!strcmp(pname, tmp)) {
+	    idx = i;
+	    break;
 	}
     }
 

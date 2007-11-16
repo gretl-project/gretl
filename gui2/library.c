@@ -2275,7 +2275,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
-		my_rset = eqn_restriction_set_start(bufline, pmod, opt);
+		my_rset = eqn_restriction_set_start(bufline, pmod, 
+						    datainfo, opt);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
 	    } else {
