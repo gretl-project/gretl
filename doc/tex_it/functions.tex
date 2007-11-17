@@ -175,16 +175,41 @@ series resids = get_uhat(price, xlist)
 \section{Programmazione delle funzioni}
 \label{func-details}
  
-\subsection{Ambito delle variabili}
+\subsection{Variabili o puntatori}
 \label{funscope}
 
-Tutte le variabili create in una funzione sono locali a quella
-funzione, e vengono distrutte quando la funzione termina la sua
-esecuzione, a meno che esse siano rese disponibili come valori di
-ritorno, e che questi siano ``raccolti'' o assegnati nella chiamata
-della funzione.
+Le serie, gli scalari, e le matrici che sono argomenti di una funzione possono
+essere passati alla funzione in due modi: ``così come sono'', oppure come puntatori.
+Si consideri l'esempio seguente:
+\begin{code}
+function triplo1(series x)
+  series ret = 3*x
+  return series ret
+end function
+  
+function triplo2(series *x)
+  series ret = 3*x
+  return series ret
+end function
+\end{code}
 
-Le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
+Queste due funzioni sono quasi identiche (e producono lo stesso risultato):
+l'unica differenza sta nel fatto che \texttt{triplo1} richiede una serie come
+argomento, come in \texttt{triplo1(serie)}, mentre \texttt{triplo2} richiede un
+\emph{puntatore} a una serie, come in \texttt{triplo2(\&serie)}. 
+
+Perché questa distinzione? Ci sono due motivi principali: il più importante è
+la modularità, il secondo le prestazioni.
+
+L'idea di modularità nasce dal fatto che isolare le funzioni dal resto di uno
+script è di solito una buona idea. Uno dei tanti benefici di questo approccio
+consiste nel fatto che le funzioni sono facilmente riutilizzabili in altri
+contesti. Per ottenere la modularità, \emph{le variabili create in una funzione
+sono locali a quella funzione, e vengono distrutte quando la funzione termina la
+sua esecuzione}, a meno che esse siano rese disponibili come valori di ritorno,
+e che questi siano ``raccolti'' o assegnati nella chiamata della funzione.
+
+Inoltre, le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
 (ossia le variabili che esistono nello script da cui la funzione è
 chiamata), a meno che queste siano passate esplicitamente alla
 funzione come argomenti.
@@ -192,16 +217,15 @@ funzione come argomenti.
 Nel caso predefinito, quando una variabile viene passata a una funzione come
 argomento, la funzione ottiene una \emph{copia} della variabile esterna, quindi il
 valore della variabile nell'ambiente esterno non viene modificato dalle
-operazioni che avvengono all'interno della funzione. Esiste tuttavia un
-meccanismo per consentire a una funzione e all'ambiente di ``cooperare'' in modo
+operazioni che avvengono all'interno della funzione. Invece, l'uso dei puntatori
+consente a una funzione e all'ambiente di ``cooperare'' in modo
 che una variabile esterna possa essere modificata dalla funzione. Questo
 meccanismo consente a una funzione di restituire più di un valore (anche se una
 funzione può restituire direttamente al massimo una variabile, come spiegato in
-seguito). Questo metodo assomiglia (almeno superficialmente) al passaggio
-dell'indirizzo di una variabile in linguaggio C. Il parametro in questione viene
-contrassegnato col prefisso \texttt{*} nella definizione della funzione, mentre
-l'argomento corrispondente viene contrassegnato col prefisso complementare
-\verb+&+ nella chiamata. Ad esempio:
+seguito).  Il parametro in questione viene contrassegnato col prefisso
+\texttt{*} nella definizione della funzione, mentre l'argomento corrispondente
+viene contrassegnato col prefisso complementare \verb+&+ nella chiamata. Ad
+esempio:
 %
 \begin{code}
 function get_uhat_and_ess(series y, list xvars, scalar *ess)
@@ -253,6 +277,68 @@ Se alla chiamata non si ha interesse per il valore di \texttt{ess}, occorre usar
 series resid = get_uhat_and_ess(price, xlist, null)
 \end{code}
 
+Usare i puntatori può essere utile anche per ottimizzare le prestazioni:
+anche se una variabile non viene modificata all'interno della funzione, può
+essere una buona idea passarla come puntatore se occupa molta memoria.
+Altrimenti, il tempo impiegato da \app{gretl} per trascrivere il valore della
+variabile nella copia locale potrebbe influire sostanzialmente sul tempo di
+esecuzione dell'intera funzione.
+
+L'esempio \ref{ex:perf-pointers} mostra un caso estremo. Definiamo due funzioni
+che producono il numero di righe di una matrice (un'operazione abbastanza
+veloce). La prima funzione accetta la matrice come argomento, la seconda come
+puntatore alla matrice. Valutiamo le due funzioni usando una matrice con 2000
+righe e 2000 colonne; su un sistema tipico, i valori a virgola mobile occupano 8
+byte di memoria, quindi lo spazio occupato dalla matrice è di circa 32 megabyte.
+
+Eseguendo il codice dell'esempio \ref{ex:perf-pointers} verrà prodotto un
+risultato simile al seguente (i numeri esatti dipenderano dalla macchina su cui
+si esegue il codice):
+\begin{code}
+Tempo impiegato:
+	senza puntatori (copia) = 3.66 secondi,
+	con puntatori (non copia) = 0.01 secondi.
+\end{code}
+
+\begin{script}[htbp]
+  \caption{Confronto di prestazioni: valori contro puntatori}
+  \label{ex:perf-pointers}
+  \begin{scode}
+function a(matrix X)
+  r = rows(X)
+  return scalar r
+end function
+
+function b(matrix *X)
+  r = rows(X)
+  return scalar r
+end function
+
+nulldata 10
+set echo off
+set messages off
+X = zeros(2000,2000)
+r = 0
+
+set stopwatch
+loop 100
+  r = a(X)
+end loop
+fa = $stopwatch
+
+set stopwatch
+loop 100
+  r = b(&X)
+end loop
+fb = $stopwatch
+
+printf "Tempo impiegato:\n\
+\tsenza puntatori (copia) = %g secondi,\n\
+\tcon puntatori (non copia) = %g secondi.\n", fa, fb 
+\end{scode}
+%$
+\end{script}
+
 \subsection{Argomenti lista}
 
 L'uso di una lista come argomento di una funzione dà modo di fornire a una
@@ -285,7 +371,7 @@ esempio:
 function funzione (scalar y, const list X)
 \end{code}
 %
-Quando una lista è marcata come \texttt{const}, ogni tentativo di rinomiare,
+Quando una lista è marcata come \texttt{const}, ogni tentativo di rinominare,
 cancellare o sovrascrivere i valori originali delle variabili nella lista
 produrrà un errore.
  
@@ -399,7 +485,7 @@ all'interno di una funzione (si veda la sezione~\ref{func-define}). Se
 il corpo della funzione contiene comandi non validi, verrà segnalato
 solo quando la funzione viene chiamata.
 
-\subsection{Printing of output}
+\subsection{Stampa dei risultati}
 
 Durante l'esecuzione di una funzione, il meccanismo con cui \app{gretl} mostra i
 comandi e i risultati delle operazioni di creazione di nuove variabili, viene
