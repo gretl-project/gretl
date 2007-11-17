@@ -29,7 +29,7 @@
 #include "guiprint.h"
 
 #define GPDEBUG 0
-#define POINTS_DEBUG 0
+#define POINTS_DEBUG 1
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -3392,6 +3392,18 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 	ret = GRETL_PNG_NO_COORDS;
     } 
 
+    if (bounds->xright > 1024) {
+	bounds->xleft /= 20;
+	bounds->xright /= 20;
+	bounds->ybot /= 20;
+	bounds->ytop /= 20;
+    }
+
+#if POINTS_DEBUG
+    fprintf(stderr, "Got: xleft=%d, xright=%d, ybot=%d, ytop=%d\n",
+	    bounds->xleft, bounds->xright, bounds->ybot, bounds->ytop);
+#endif
+
     return ret;
 }
 
@@ -3416,7 +3428,61 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 	ret = GRETL_PNG_NO_COORDS;
     } 
 
+#if POINTS_DEBUG
+    fprintf(stderr, "Got: xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
+	    bounds->xmin, bounds->xmax, bounds->ymin, bounds->ymax);
+#endif
+
     gretl_pop_c_numeric_locale();
+
+    return ret;
+}
+
+static int new_get_png_bounds_info (png_bounds *bounds)
+{
+    char fname[MAXLEN];
+    FILE *fp;
+    char line[128];
+    int plot_ret = -1, data_ret = -1;
+    int ret = GRETL_PNG_OK;
+
+    build_path(fname, paths.userdir, "gretltmp.png", ".dims"); 
+    fp = gretl_fopen(fname, "r");
+
+    fprintf(stderr, "fname='%s', fp=%p\n", fname, (void *) fp);
+
+    if (fp != NULL) {
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    plot_ret = GRETL_PNG_NO_COMMENTS;
+	} else {
+	    fprintf(stderr, "line1: '%s'\n", line);
+	    plot_ret = get_png_plot_bounds(line, bounds);
+	}
+
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    data_ret = GRETL_PNG_NO_COMMENTS;
+	} else {
+	    fprintf(stderr, "line2: '%s'\n", line);
+	    data_ret = get_png_data_bounds(line, bounds);
+	}
+
+	fclose(fp);
+	remove(fname);
+    }
+
+    fprintf(stderr, "plot_ret=%d, data_ret=%d\n", plot_ret, data_ret);
+
+    if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
+	/* comments were present and correct, but all zero */
+	ret = GRETL_PNG_NO_COORDS;
+    } else if (plot_ret != GRETL_PNG_OK || data_ret != GRETL_PNG_OK) {
+	/* one or both set of coordinates bad or missing */
+	if (plot_ret >= 0 || data_ret >= 0) {
+	    ret = GRETL_PNG_BAD_COMMENTS;
+	} else {
+	    ret = GRETL_PNG_NO_COMMENTS;
+	}
+    }
 
     return ret;
 }
@@ -3433,6 +3499,15 @@ static int get_png_bounds_info (png_bounds *bounds)
     png_text *text_ptr = NULL;
     int i, num_text;
     volatile int ret = GRETL_PNG_OK;
+
+#if 1
+    build_path(pngname, paths.userdir, "gretltmp.png", ".dims"); 
+    fp = fopen(pngname, "r");
+    if (fp != NULL) {
+	fclose(fp);
+	return new_get_png_bounds_info(bounds);
+    }
+#endif
 
     build_path(pngname, paths.userdir, "gretltmp.png", NULL); 
 
