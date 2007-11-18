@@ -29,7 +29,7 @@
 #include "guiprint.h"
 
 #define GPDEBUG 0
-#define POINTS_DEBUG 1
+#define POINTS_DEBUG 0
 
 #ifdef G_OS_WIN32
 # include <io.h>

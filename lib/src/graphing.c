@@ -547,6 +547,17 @@ int gnuplot_has_rgb (void)
     return !err;
 }
 
+int gnuplot_has_png_truecolor (void)
+{
+    static int err = -1; 
+
+    if (err == -1) {
+	err = gnuplot_test_command("set term png truecolor");
+    }
+
+    return !err;
+}
+
 const char *gnuplot_label_front_string (void)
 {
     static int err = -1; 
@@ -562,7 +573,14 @@ const char *gnuplot_label_front_string (void)
     }
 }
 
-#endif /* WIN32 */
+static int gnuplot_linux_use_aa = 1;
+
+void gnuplot_linux_set_use_aa (int s)
+{
+    gnuplot_linux_use_aa = s;
+}
+
+#endif /* !WIN32 */
 
 /* apparatus for handling plot colors */
 
@@ -707,6 +725,7 @@ write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 {
     static char png_term_line[256];
+    char truecolor_string[12] = {0};
     char font_string[128];
     char size_string[16];
     char color_string[64];
@@ -726,6 +745,10 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     gpcolors = gnuplot_has_specified_colors();
     gpttf = gnuplot_has_ttf(0);
     gpsize = gnuplot_has_size();
+    if (!pngcairo && gnuplot_linux_use_aa &&
+	gnuplot_has_png_truecolor()) {
+	strcpy(truecolor_string, " truecolor");
+    }
 #endif
 
     /* plot font setup */
@@ -778,8 +801,9 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	sprintf(png_term_line, "set term pngcairo%s%s",
 		font_string, size_string);
     } else {
-	sprintf(png_term_line, "set term png%s%s%s",
-		font_string, size_string, color_string);
+	sprintf(png_term_line, "set term png%s%s%s%s",
+		truecolor_string, font_string, size_string, 
+		color_string);
     }
 
 #if GP_DEBUG

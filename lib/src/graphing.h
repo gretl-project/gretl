@@ -208,5 +208,10 @@ const char *graph_color_string (int i);
 
 int gnuplot_test_command (const char *cmd);
 
+#ifndef WIN32
+int gnuplot_has_png_truecolor (void);
+void gnuplot_linux_set_use_aa (int s);
+#endif
+
 #endif /* GRAPHING_H */
 
