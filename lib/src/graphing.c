@@ -460,16 +460,21 @@ int gnuplot_has_pdf (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set term pdf");
+#if 0 /* not yet */
 	if (err) {
 	    err = gnuplot_test_command("set term pdfcairo");
 	}
+#endif
     }
 
     return !err;
 }
 
-int gnuplot_has_cairo (void)
+int gnuplot_has_pdfcairo (void)
 {
+#if 1
+    return 0;  /* cairo terminals are not really ready */
+#else    
     static int err = -1; 
 
     if (err == -1) {
@@ -477,17 +482,22 @@ int gnuplot_has_cairo (void)
     }
 
     return !err;
+#endif
 }
 
 int gnuplot_has_pngcairo (void)
 {
+#if 1
+    return 0;  /* cairo terminals are not really ready */
+#else
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set term pngcairo");
+	err = gnuplot_test_command("set term pngcairo xffffff");
     }
 
     return !err;
+#endif
 }
 
 int gnuplot_has_specified_colors (void)
@@ -738,7 +748,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     *color_string = 0;
 
 #if 0
-    pngcairo = gnuplot_has_pngcairo(); /* not ready yet */
+    pngcairo = gnuplot_has_pngcairo(); /* experimental */
 #endif
 
 #ifndef WIN32
@@ -769,7 +779,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 #endif
 
     /* plot color setup (FIXME cairo) */
-    if (gpcolors && !pngcairo) {
+    if (gpcolors) {
 	int i;
 
 	/* background etc. */
@@ -798,8 +808,8 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
 
     if (pngcairo) {
-	sprintf(png_term_line, "set term pngcairo%s%s",
-		font_string, size_string);
+	sprintf(png_term_line, "set term pngcairo%s%s%s",
+		font_string, size_string, color_string);
     } else {
 	sprintf(png_term_line, "set term png%s%s%s%s",
 		truecolor_string, font_string, size_string, 

@@ -454,7 +454,7 @@ static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	strcpy(termstr, "fig");
     } else if (!strcmp(spec->termtype, "latex")) {
 	strcpy(termstr, "latex");
-    } else if (!strcmp(spec->termtype, "png")) { 
+    } else if (!strncmp(spec->termtype, "png", 3)) { 
 	const char *png_str = 
 	    get_gretl_png_term_line(spec->code, spec->flags);
 
@@ -617,8 +617,7 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PNG;
     } else if (!strncmp(term, "post", 4)) {
 	ttype = GP_TERM_EPS;
-    } else if (!strncmp(term, "pdf", 3) ||
-	       !strncmp(term, "cairopdf", 8)) {
+    } else if (!strncmp(term, "pdf", 3)) {
 	ttype = GP_TERM_PDF;
     }
 
@@ -720,10 +719,10 @@ static void graph_display_pdf (GPT_SPEC *spec)
     build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
 
     if (use_cairo < 0) {
-	use_cairo = gnuplot_has_cairo();
+	use_cairo = gnuplot_has_pdfcairo();
     }
 
-    term = (use_cairo)? "cairopdf" : "pdf";
+    term = (use_cairo)? "pdfcairo" : "pdf";
 
     if (filter_plot_file(spec->fname, term, pdfname)) {
 	errbox("Error creating graph file");
@@ -3438,39 +3437,23 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
     return ret;
 }
 
-static int new_get_png_bounds_info (png_bounds *bounds)
+static int new_get_png_bounds_info (png_bounds *bounds, FILE *fp)
 {
-    char fname[MAXLEN];
-    FILE *fp;
     char line[128];
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
 
-    build_path(fname, paths.userdir, "gretltmp.png", ".dims"); 
-    fp = gretl_fopen(fname, "r");
-
-    fprintf(stderr, "fname='%s', fp=%p\n", fname, (void *) fp);
-
-    if (fp != NULL) {
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    plot_ret = GRETL_PNG_NO_COMMENTS;
-	} else {
-	    fprintf(stderr, "line1: '%s'\n", line);
-	    plot_ret = get_png_plot_bounds(line, bounds);
-	}
-
-	if (fgets(line, sizeof line, fp) == NULL) {
-	    data_ret = GRETL_PNG_NO_COMMENTS;
-	} else {
-	    fprintf(stderr, "line2: '%s'\n", line);
-	    data_ret = get_png_data_bounds(line, bounds);
-	}
-
-	fclose(fp);
-	remove(fname);
+    if (fgets(line, sizeof line, fp) == NULL) {
+	plot_ret = GRETL_PNG_NO_COMMENTS;
+    } else {
+	plot_ret = get_png_plot_bounds(line, bounds);
     }
 
-    fprintf(stderr, "plot_ret=%d, data_ret=%d\n", plot_ret, data_ret);
+    if (fgets(line, sizeof line, fp) == NULL) {
+	data_ret = GRETL_PNG_NO_COMMENTS;
+    } else {
+	data_ret = get_png_data_bounds(line, bounds);
+    }
 
     if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
 	/* comments were present and correct, but all zero */
@@ -3504,8 +3487,10 @@ static int get_png_bounds_info (png_bounds *bounds)
     build_path(pngname, paths.userdir, "gretltmp.png", ".dims"); 
     fp = fopen(pngname, "r");
     if (fp != NULL) {
+	ret = new_get_png_bounds_info(bounds, fp);
 	fclose(fp);
-	return new_get_png_bounds_info(bounds);
+	remove(pngname);
+	return ret;
     }
 #endif
 

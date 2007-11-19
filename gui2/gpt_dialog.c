@@ -565,10 +565,20 @@ static const char *get_font_filename (const char *showname)
 
 static int font_is_ok (const char *fname)
 {
+    static int use_cairo = -1;
     char cmd[64];
     int err;
 
-    sprintf(cmd, "set term png font %s 10", fname);
+    if (use_cairo < 0) {
+	use_cairo = gnuplot_has_pngcairo();
+    }
+
+    if (use_cairo) {
+	sprintf(cmd, "set term pngcairo font \"%s,10\"", fname);
+    } else {
+	sprintf(cmd, "set term png font %s 10", fname);
+    }
+
     err = gnuplot_test_command(cmd);
 
     return err == 0;
@@ -761,7 +771,7 @@ static void set_aa_status (GtkWidget *w, int *ok)
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
-    int show_aa_check = 0;
+    static int show_aa_check = -1;
     GtkWidget *label, *vbox, *tbl;
     int i, rows = 1;
     GList *keypos_list = NULL;
@@ -911,11 +921,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	markers_check = NULL;
     }
 
+    if (show_aa_check < 0) {
 #ifdef G_OS_WIN32
-    show_aa_check = 1;
+	show_aa_check = 1;
 #else
-    show_aa_check = gnuplot_has_png_truecolor();
+	show_aa_check = !gnuplot_has_pngcairo() && gnuplot_has_png_truecolor();
 #endif
+    }
 
     /* give option of suppressing anti-aliasing for PNGs */
     if (show_aa_check) {

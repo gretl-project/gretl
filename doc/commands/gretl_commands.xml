@@ -8070,9 +8070,44 @@
       </ilist>
 	
       <para context="cli">
-	In the optional <cmd>save=</cmd> field of the command you can
-	specify whether to save the residuals (<cmd>resids</cmd>)
-	and/or the fitted values (<cmd>fitted</cmd>).
+	After estimation using the <cmd>system</cmd> or
+	<cmd>estimate</cmd> commands the following accessors can be used to
+	retrieve additional information:
+      </para>
+
+      <ilist context="cli">
+	<li><para><lit>$uhat</lit>: the matrix of residuals, one column
+	    per equation.
+	  </para>
+	</li>
+	<li><para><lit>$uhat</lit>: matrix of fitted values, one column
+	    per equation.
+	  </para>
+	</li>
+	<li><para><lit>$coeff</lit>: column vector of coefficients (all
+	    the coefficients from the first equation, followed by those
+	    from the second equation, and so on).
+	  </para>
+	</li>
+	<li><para><lit>$vcv</lit>: covariance matrix of the coefficients.
+	    If there are <mathvar>k</mathvar> elements in the
+	    <lit>$coeff</lit> vector, this matrix is <mathvar>k</mathvar>
+	    by <mathvar>k</mathvar>.
+	  </para>
+	</li>
+	<li><para><lit>$sigma</lit>: cross-equation residual covariance
+	    matrix.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	Besides the accessors above, you can arrange to save the residuals
+	and/or fitted values as separate series using the optional
+	<cmd>save=</cmd> field of the <cmd>system</cmd> command, as
+	shown in the examples.  These series are given names on the
+	pattern <lit>uhat_s01</lit> (indicating residuals from equation
+	1 of the system).
       </para>
 
       <para>

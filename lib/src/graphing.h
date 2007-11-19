@@ -188,7 +188,9 @@ int gnuplot_has_ttf (int reset);
 
 int gnuplot_has_pdf (void);
 
-int gnuplot_has_cairo (void);
+int gnuplot_has_pdfcairo (void);
+
+int gnuplot_has_pngcairo (void);
 
 int gnuplot_has_specified_colors (void);
 
