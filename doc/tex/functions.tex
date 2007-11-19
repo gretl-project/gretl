@@ -419,6 +419,47 @@ The last line of the script will print two variables named
 \verb|nocars_2| and \verb|nocars_4|.  For details on the handling of
 named strings, see chapter~\ref{chap-persist}.
 
+
+\subsection{Retrieving the names of arguments}
+
+The variables given as arguments to a function are known inside the
+function by the names of the corresponding parameters.  For example,
+within the function whose signature is
+%
+\begin{code}
+function somefun (series y)
+\end{code}
+%
+we have the series known as \texttt{y}.  In may be useful, however, to
+be able to determine the names of the variables provided as arguments.
+This can be done using the function \texttt{argname}, which takes the
+name of a function parameter as its single argument and returns a
+string.  Here is a simple illustration:
+%
+\begin{code}
+function namefun (series y)
+  printf "the series given as 'y' was named %s\n", argname(y)
+end function
+
+open data9-7
+namefun(QNC)
+\end{code}
+%
+This produces the output
+%
+\begin{code}
+the series given as 'y' was named QNC
+\end{code}
+
+It should be noted that this will not always work: the arguments given
+to functions may be anonymous variables, created on the fly, as in
+\texttt{somefun(log(QNC))} or \texttt{somefun(CPI/100)}.  In that case
+the \textsf{argname} function returns an empty string.  Function
+writers who wish to make use of this facility should check the return
+from \texttt{argname} using the \texttt{isstring()} function, which
+returns 1 for a non-empty string, 0 otherwise.
+
+
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
