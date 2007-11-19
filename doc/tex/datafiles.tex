@@ -22,14 +22,14 @@ file formats are given in Appendix~\ref{app-datafile}.
 \item Comma-Separated Values (CSV) files.  These can be imported using
   \app{gretl}'s ``File, Open Data, Import CSV\dots{}'' menu item, or
   the \cmd{import} script command. See also Section~\ref{scratch}.
-\item Worksheets in the format of either MS \app{Excel} or
-  \app{Gnumeric}.  These are also brought in using \app{gretl}'s
-  ``File, Open Data, Import'' menu.  The requirements for such files
-  are given in Section~\ref{scratch}.
+\item Spreadsheets: MS \app{Excel}, \app{Gnumeric} and Open Document
+  (ODS).  These are also brought in using \app{gretl}'s ``File, Open
+  Data, Import'' menu.  The requirements for such files are given in
+  Section~\ref{scratch}.
 \item \app{Stata} data files (\texttt{.dta}).
-\item \app{Eviews} workfiles (\texttt{.wf1}).\footnote{This is
-    somewhat experimental.  See
+\item \app{Eviews} workfiles (\texttt{.wf1}).\footnote{See
     \url{http://www.ecn.wfu.edu/eviews_format/}.}
+\item \app{JMulTi} data files.
 \end{itemize}
 
 When you import data from the ASCII or CSV formats, \app{gretl}
@@ -40,10 +40,12 @@ problem.
 
 For the convenience of anyone wanting to carry out more complex data
 analysis, \app{gretl} has a facility for writing out data in the
-native formats of GNU R and GNU Octave (see
-Appendix~\ref{app-advanced}).  In the GUI client this option is found
-under the ``File, Export data'' menu; in the command-line client use the
-\cmd{store} command with the flag \cmd{-r} (R) or \cmd{-m} (Octave).
+native formats of GNU \app{R}, \app{Octave}, \app{JMulTi} and
+\app{PcGive} (see Appendix~\ref{app-advanced}).  In the GUI client
+this option is found under the ``File, Export data'' menu; in the
+command-line client use the \cmd{store} command with the appropriate
+option flag.
+
 
 \section{Binary databases}
 \label{dbase}
@@ -69,20 +71,24 @@ University.  Your computer must be connected to the internet for this
 option to work.  Please see the description of the ``data'' command under
 \app{gretl}'s Help menu.
 
-\subsection{RATS 4 databases}
+\tip{Visit the \app{gretl}
+  \href{http://gretl.sourceforge.net/gretl_data.html}{data page} for
+  details and updates on available data.}
+
+
+\subsection{Foreign database formats}
 \label{RATS}
 
 Thanks to Thomas Doan of \emph{Estima}, who made available the
 specification of the database format used by RATS 4 (Regression
-Analysis of Time Series), \app{gretl} can also handle such databases.
-Well, actually, a subset of same: I have only worked on time-series
-databases containing monthly and quarterly series.  My university has
-the RATS G7 database containing data for the seven largest OECD
-economies and \app{gretl} will read that OK.
+Analysis of Time Series), \app{gretl} can handle such databases
+--- or at least, a subset of same, namely time-series databases
+containing monthly and quarterly series.  
 
-\tip{Visit the \app{gretl}
-  \href{http://gretl.sourceforge.net/gretl_data.html}{data page} for
-  details and updates on available data.}
+\app{Gretl} can also import data from \app{PcGive} databases.  These
+take the form of a pair of files, one containing the actual data (with
+suffix \texttt{.bn7}) and one containing supplementary information
+(\texttt{.in7}).  
 
 \section{Creating a data file from scratch}
 \label{scratch}
@@ -94,9 +100,8 @@ There are several ways of doing this:
   open it with \app{gretl}'s ``Import ASCII'' option.
 \item Use your favorite spreadsheet to establish the data file, save
   it in Comma Separated Values format if necessary (this should not be
-  necessary if the spreadsheet program is MS Excel or Gnumeric), then
-  use one of \app{gretl}'s ``Import'' options (CSV, Excel or Gnumeric,
-  as the case may be).
+  necessary if the spreadsheet format is MS Excel, Gnumeric or Open
+  Document), then use one of \app{gretl}'s ``Import'' options.
 \item Use \app{gretl}'s built-in spreadsheet.
 \item Select data series from a suitable database.
 \item Use your favorite text editor or other software tools to a
@@ -208,12 +213,10 @@ the ``Add'' or ``Variable'' menus in the main \app{gretl} window.
 \subsection{Selecting from a database}
 
 Another alternative is to establish your dataset by selecting
-variables from a database.  \app{Gretl} comes with a database of US
-macroeconomic time series and, as mentioned above, the program will
-reads RATS 4 databases.
+variables from a database.  
 
-Begin with \app{gretl}'s ``File, Databases'' menu item. This
-has three forks: ``Gretl native'', ``RATS 4'' and ``On database
+Begin with \app{gretl}'s ``File, Databases'' menu item. This has four
+forks: ``Gretl native'', ``RATS 4'', ``PcGive'' and ``On database
 server''.  You should be able to find the file \verb+fedstl.bin+ in
 the file selector that opens if you choose the ``Gretl native'' option
 --- this file, which contains a large collection of US macroeconomic
@@ -223,7 +226,7 @@ You won't find anything under ``RATS 4'' unless you have purchased
 RATS data.\footnote{See \href{http://www.estima.com/}{www.estima.com}}
 If you do possess RATS data you should go into \app{gretl}'s ``Tools,
 Preferences, General'' dialog, select the Databases tab, and fill in
-the correct path to your RATS files.
+the correct path to your RATS files.  
 
 If your computer is connected to the internet you should find several
 databases (at Wake Forest University) under ``On database server''.

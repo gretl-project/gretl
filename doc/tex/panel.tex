@@ -291,20 +291,20 @@ When you estimate using \textsl{random effects}, the Breusch--Pagan
 and Hausman tests are presented automatically.  
 
 The Breusch--Pagan test is the counterpart to the $F$-test mentioned
-above.  The null hypothesis is that the variance of $v_i$ equals zero;
-if this hypothesis is not rejected, then again we conclude that the
-simple pooled model is adequate.
+above.  The null hypothesis is that the variance of $v_i$ in
+equation (\ref{eq:RE}) equals zero; if this hypothesis is not rejected,
+then again we conclude that the simple pooled model is adequate.
 
 The Hausman test probes the consistency of the GLS estimates.  The
-null hypothesis is that these estimates are consistent, that is, that
-the requirement of orthogonality of the $v_i$ and the $X_i$ is
+null hypothesis is that these estimates are consistent --- that is,
+that the requirement of orthogonality of the $v_i$ and the $X_i$ is
 satisfied.  The test is based on a measure, $H$, of the ``distance''
 between the fixed-effects and random-effects estimates, constructed
 such that under the null it follows the $\chi^2$ distribution with
 degrees of freedom equal to the number of time-varying regressors in
-the matrix $X$.  If the value of $H$ is ``large'' this suggests
-that the random effects estimator is not consistent and the
-fixed-effects model is preferable.
+the matrix $X$.  If the value of $H$ is ``large'' this suggests that
+the random effects estimator is not consistent and the fixed-effects
+model is preferable.
 
 There are two ways of calculating $H$, the matrix-difference method
 and the regression method.  The procedure for the matrix-difference
