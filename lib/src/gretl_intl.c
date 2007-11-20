@@ -261,12 +261,12 @@ static const char *gnuplot_encoding_string (void)
 	sprintf(gp_enc, "iso_8859_%d", gretl_cset_min);
 	return gp_enc;
     } else if (gretl_cset_min == 9) {
-	static int l9 = -1;
+	static int l5 = -1;
 
-	if (l9 < 0) {
-	    l9 = gnuplot_has_latin9();
+	if (l5 < 0) {
+	    l5 = gnuplot_has_latin5();
 	}
-	if (l9) {
+	if (l5) {
 	    strcpy(gp_enc, "iso_8859_9");
 	    return gp_enc;
 	}

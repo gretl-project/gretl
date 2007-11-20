@@ -1342,7 +1342,7 @@ static void set_gp_colors (void)
 		cstr[0], cstr[1], cstr[2], cstr[3]);
 
     for (i=0; i<nc; i++) {
-	set_graph_palette(i, cstr[i]);
+	set_graph_palette_from_string(i, cstr[i]);
     }
 }
 
@@ -2089,12 +2089,17 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
 #define scale_round(v) ((v) * 255.0 / 65535.0)
 
-static GtkWidget *get_image_for_color (const char *colstr)
+static GtkWidget *get_image_for_color (const RGBColor *color)
 {
+    static char **xpm = NULL;
     GdkPixbuf *icon;
     GtkWidget *image;
-    static char **xpm = NULL;
+    char colstr[8] = {0};
     int i;
+
+    if (color == NULL) {
+	return NULL;
+    }
 
     if (xpm == NULL) {
 	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
@@ -2119,8 +2124,10 @@ static GtkWidget *get_image_for_color (const char *colstr)
 	return NULL;
     }
 
+    print_rgb_hash(colstr, color);
+
     for (i=0; i<6; i++) {
-	xpm[1][10+i] = colstr[1+i];
+	xpm[1][10+i] = colstr[i+1];
     }    
 
     icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
@@ -2133,28 +2140,28 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
     GtkWidget *color_button, *image;
-    GdkColor color;
-    char color_string[12];
+    GdkColor gcolor;
+    RGBColor rgb;
     gint i;
 
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
     csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
 
-    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
-    sprintf(color_string, "x%02x%02x%02x",
-	    (guint) (scale_round(color.red)),
-	    (guint) (scale_round(color.green)),
-	    (guint) (scale_round(color.blue)));
+    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
+
+    rgb.r = (unsigned char) (scale_round(gcolor.red));
+    rgb.g = (unsigned char) (scale_round(gcolor.red));
+    rgb.b = (unsigned char) (scale_round(gcolor.red));
 
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
 
-    set_graph_palette(i, color_string);
+    set_graph_palette(i, rgb);
     print_palette_string(gpcolors);
 
     /* update the "image" widget */
     image = g_object_get_data(G_OBJECT(color_button), "image");
     gtk_widget_destroy(image);
-    image = get_image_for_color(color_string);
+    image = get_image_for_color(&rgb);
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(color_button), image);
     g_object_set_data(G_OBJECT(color_button), "image", image);
@@ -2171,7 +2178,7 @@ GtkWidget *color_patch_button (int cnum)
 {
     GtkWidget *image, *button;
 
-    image = get_image_for_color(graph_color_string(cnum));
+    image = get_image_for_color(get_graph_color(cnum));
 
     if (image == NULL) {
 	button = gtk_button_new_with_label(_("Select color"));
@@ -2193,7 +2200,7 @@ void color_patch_button_reset (GtkWidget *button, int cnum)
 
     image = g_object_get_data(G_OBJECT(button), "image");
     gtk_widget_destroy(image);
-    image = get_image_for_color(graph_color_string(cnum));
+    image = get_image_for_color(get_graph_color(cnum));
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(button), image);
     g_object_set_data(G_OBJECT(button), "image", image);
@@ -2209,11 +2216,17 @@ void graph_color_selector (GtkWidget *w, gpointer p)
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
     char colstr[8];
-    GdkColor color;
+    const RGBColor *rgb;
+    GdkColor gcolor;
 
-    strcpy(colstr, graph_color_string(i));
-    *colstr = '#';
-    gdk_color_parse(colstr, &color);
+    rgb = get_graph_color(i);
+    if (rgb == NULL) {
+	fprintf(stderr, "graph_get_color(%d) gave NULL\n", i);
+	return;
+    }
+
+    print_rgb_hash(colstr, rgb);
+    gdk_color_parse(colstr, &gcolor);
 
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
 
@@ -2222,7 +2235,7 @@ void graph_color_selector (GtkWidget *w, gpointer p)
 
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
 					  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
-					  &color);					  
+					  &gcolor);					  
 
     button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
     g_signal_connect(G_OBJECT(button), "clicked", 

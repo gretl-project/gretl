@@ -485,19 +485,6 @@ static int html_encoded (const char *s)
 }
 #endif
 
-static void set_gp_color_styles (PRN *prn)
-{
-    const char *cstr;
-    int i;
-
-    for (i=0; i<3; i++) {
-	cstr = graph_color_string(i);
-	if (cstr != NULL) {
-	    pprintf(prn, "set style line %d lt rgb \"#%s\"\n", i + 1, cstr + 1);
-	}
-    }
-}
-
 static char *get_insert_point (char *s)
 {
     char *p = strstr(s, ", \\");
@@ -513,49 +500,41 @@ static char *get_insert_point (char *s)
     return p;
 }
 
+/* old gnuplot: can't do "rgb" line spec; we'll do what we can,
+   namely switch line type 2 for 3
+*/
+
 static void 
-print_line_with_color (PRN *prn, char *s, int lnum, int rgb,
-		       int *contd)
+print_line_with_color (PRN *prn, char *s, int lnum, int *contd)
 {
-    const char *cstr = graph_color_string(lnum - 1);
+    const RGBColor *color = get_graph_color(lnum - 1);
+    char cstr[8];
     char *p;
 
     if (strstr(s, ", \\") == NULL) {
 	*contd = 0;
     }
 
+    if (color == NULL) {
+	pputs(prn, s);
+	return;
+    }
+
+    print_rgb_hash(cstr, color);
+
 #if GPDEBUG
     fprintf(stderr, "lnum=%d, cstr='%s', rgb=%d\n", lnum, cstr, rgb);
     fprintf(stderr, "s='%s'\n", s);
 #endif
     
-    if (cstr == NULL) {
+    if (lnum == 2 && strcmp(cstr, "#00ff00") &&
+	strstr(s, " lt ") == NULL) {
+	p = get_insert_point(s);
+	*p = '\0';
+	strcpy(p, " lt 3");
+    } else {
 	pputs(prn, s);
 	return;
-    }
-
-    if (!rgb) {
-	/* old gnuplot: can't do "rgb" line spec */
-	if (lnum == 2 && strcmp(cstr, "x00ff00") &&
-	    strstr(s, " lt ") == NULL) {
-	    p = get_insert_point(s);
-	    *p = '\0';
-	    strcpy(p, " lt 3");
-	} else {
-	    pputs(prn, s);
-	    return;
-	}
-    } else {
-	if ((p = strstr(s, " lt "))) {
-	    /* convert 'type' to 'style' */
-	    *(p + 2) = 's';
-	    pputs(prn, s);
-	    return;
-	} else {
-	    p = get_insert_point(s);
-	    *p = '\0';
-	    sprintf(p, " lt rgb \"#%s\"", cstr + 1);
-	}
     }
 
     if (*contd) {
@@ -565,27 +544,7 @@ print_line_with_color (PRN *prn, char *s, int lnum, int rgb,
     }
 }
 
-static int plot_specifies_linetypes (char *s, int len, FILE *fp)
-{
-    int inplot = 0, ret = 0;
-
-    while (fgets(s, len, fp)) {
-	if (!strncmp(s, "plot ", 5)) {
-	    inplot = 1;
-	} else if (inplot) {
-	    if (strstr(s, " lt ")) {
-		ret = 1;
-		break;
-	    } else if (isdigit(*s)) {
-		break;
-	    }
-	}
-    }
-
-    rewind(fp);
-
-    return ret;
-}
+#define is_color_line(s) (strstr(s, "set style line") && strstr(s, "rgb"))
 
 static int filter_plot_file (const char *inname, 
 			     const char *term,
@@ -596,8 +555,8 @@ static int filter_plot_file (const char *inname,
     gchar *plotcmd = NULL;
     FILE *fp = NULL;
     PRN *prn = NULL;
-    int rgb = 0, ttype = 0, mono = 0;
-    int lnum = -1, colorize = 0;
+    int ttype = 0, mono = 0;
+    int lnum = -1, recolor = 0;
     int contd = 1, err = 0;
 
     if (user_fopen("gptout.tmp", plottmp, &prn)) {
@@ -621,23 +580,20 @@ static int filter_plot_file (const char *inname,
 	ttype = GP_TERM_PDF;
     }
 
-    if (strstr(term, " mono ") || 
-	(strstr(term, "postscr") && !strstr(term, "color"))) {
-	mono = 1;
-    }
-
 #ifdef ENABLE_NLS
     pprint_gnuplot_encoding(term, prn);
 #endif
     pprintf(prn, "set term %s\n", term);
     pprintf(prn, "set output '%s'\n", fname);
 
-    if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)) {
-	rgb = gnuplot_has_rgb();
-	if (plot_specifies_linetypes(pline, sizeof pline, fp) && rgb) {
-	    set_gp_color_styles(prn);
-	} 
-	colorize = 1;
+    if (strstr(term, " mono") || 
+	(strstr(term, "postscr") && !strstr(term, "color"))) {
+	mono = 1;
+    }    
+
+    if (!mono && (ttype == GP_TERM_EPS || ttype == GP_TERM_PDF)
+	&& !gnuplot_has_rgb()) {
+	recolor = 1;
     }
 
     while (fgets(pline, sizeof pline, fp)) {
@@ -654,10 +610,12 @@ static int filter_plot_file (const char *inname,
 
 	if (mono && strstr(pline, "set style fill solid")) {
 	    pputs(prn, "set style fill solid 0.3\n");
+	} else if (mono && is_color_line(pline)) {
+	    ; /* skip */
 	} else if (ttype != GP_TERM_PNG && html_encoded(pline)) {
 	    pprint_as_latin(prn, pline, ttype == GP_TERM_EMF);
-	} else if (colorize && lnum > 0 && contd) {
-	    print_line_with_color(prn, pline, lnum, rgb, &contd);
+	} else if (recolor && lnum > 0 && contd) {
+	    print_line_with_color(prn, pline, lnum, &contd);
 	} else {
 	    pputs(prn, pline);
 	}

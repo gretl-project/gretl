@@ -371,6 +371,18 @@ void print_plot_ranges_etc (const GPT_SPEC *spec, FILE *fp)
     gretl_pop_c_numeric_locale();
 }
 
+static int get_mono_output (const GPT_SPEC *spec)
+{
+    if (strstr(spec->termtype, " mono")) {
+	return 1;
+    } else if (strstr(spec->termtype, "postscr") && 
+	       !strstr(spec->termtype, "color")) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #define show_fit(s) (s->fit == PLOT_FIT_OLS || \
                      s->fit == PLOT_FIT_QUADRATIC || \
                      s->fit == PLOT_FIT_INVERSE || \
@@ -380,6 +392,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t;
     int png = get_png_output(spec);
+    int mono = get_mono_output(spec);
     int started_data_lines = 0;
     int n_lines = spec->n_lines;
     double *x[4];
@@ -397,6 +410,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputc('\n', fp);
 	}
+    }
+
+    if (!mono && gnuplot_has_rgb()) {
+	write_plot_line_styles(spec->code, fp);
     }
 
     if (!string_is_blank(spec->titles[0])) {
@@ -492,7 +509,7 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
     if ((spec->code == PLOT_FREQ_SIMPLE ||
 	 spec->code == PLOT_FREQ_NORMAL ||
 	 spec->code == PLOT_FREQ_GAMMA) && gnuplot_has_style_fill()) {
-	if (strstr(spec->termtype, " mono")) {
+	if (mono) {
 	    fputs("set style fill solid 0.3\n", fp);
 	} else {
 	    fputs("set style fill solid 0.6\n", fp);

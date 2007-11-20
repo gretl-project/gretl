@@ -52,6 +52,14 @@ typedef enum {
     GPT_YZEROAXIS      = 1 << 22  /* show y = 0 line */
 } GptFlags; 
 
+typedef struct RGBColor_ RGBColor;
+
+struct RGBColor_ {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
 #define N_GP_COLORS 4
@@ -127,6 +135,8 @@ int gnuplot_init (PlotType ptype, FILE **fpp);
 
 int write_plot_type_string (PlotType ptype, FILE *fp);
 
+void write_plot_line_styles (int ptype, FILE *fp);
+
 PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
@@ -198,15 +208,19 @@ int gnuplot_has_rgb (void);
 
 int gnuplot_has_style_fill (void);
 
-int gnuplot_has_latin9 (void);
+int gnuplot_has_latin5 (void);
 
-void set_graph_palette (int i, const char *colstr);
+void set_graph_palette (int i, RGBColor color);
+
+void set_graph_palette_from_string (int i, const char *cstr);
 
 void graph_palette_reset (int i);
 
-void print_palette_string (char *targ);
+void print_rgb_hash (char *s, const RGBColor *color);
 
-const char *graph_color_string (int i);
+void print_palette_string (char *s);
+
+const RGBColor *get_graph_color (int i);
 
 int gnuplot_test_command (const char *cmd);
 

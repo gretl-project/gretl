@@ -398,7 +398,7 @@ const char *gnuplot_label_front_string (void)
     return " front";
 }
 
-int gnuplot_has_latin9 (void)
+int gnuplot_has_latin5 (void)
 {
     /* ... and that it supports ISO8859-9 */
     return 1;
@@ -443,7 +443,7 @@ static int gnuplot_has_size (void)
     return !err;
 }
 
-int gnuplot_has_latin9 (void)
+int gnuplot_has_latin5 (void)
 {
     static int err = -1; 
 
@@ -506,7 +506,7 @@ int gnuplot_has_specified_colors (void)
 
     if (err == -1) {
 	/* try the old-style command: 
-	   if it fails, we have the new driver, we hope */
+	   if it fails, we have the new driver, we hope! */
 	err = gnuplot_test_command("set term png color");
     }
 
@@ -551,7 +551,7 @@ int gnuplot_has_rgb (void)
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set style line 2 lt rgb \"#0000ff\"");
+	err = gnuplot_test_command("set style line 2 lc rgb \"#0000ff\"");
     }
 
     return !err;
@@ -594,71 +594,90 @@ void gnuplot_linux_set_use_aa (int s)
 
 /* apparatus for handling plot colors */
 
-static const char default_palette[N_GP_COLORS][8] = {
-    "xff0000", 
-    "x0000ff", 
-    "x00cc00",
-    "x9ba6bb"
+enum {
+    OLD_PNG_COLOR,  /* plain old "color" option */
+    GD_PNG_COLOR,   /* pre-4.2.0 libgd-based PNG color spec */
+    RGB_LINE_COLOR  /* per-line rgb settings */
 };
 
-static char graph_palette[N_GP_COLORS][8] = {
-    "xff0000", 
-    "x0000ff", 
-    "x00cc00",  /* full-intensity green is not very legible */
-    "x9ba6bb"   /* color for box fill */
+static const RGBColor default_color[N_GP_COLORS] = {
+    { 0xff, 0x00, 0x00 },
+    { 0x00, 0x00, 0xff },
+    { 0x00, 0xcc, 0x00 }, /* full-intensity green is not very legible */
+    { 0x9b, 0xa6, 0xbb }  /* color for box fill */
 };
 
-void print_palette_string (char *targ)
+static RGBColor user_color[N_GP_COLORS] = {
+    { 0xff, 0x00, 0x00 },
+    { 0x00, 0x00, 0xff },
+    { 0x00, 0xcc, 0x00 },
+    { 0x9b, 0xa6, 0xbb }
+};
+
+static void print_rgb_x (char *s, RGBColor color)
 {
-    sprintf(targ, "%s %s %s %s", graph_palette[0],
-	    graph_palette[1], graph_palette[2],
-	    graph_palette[3]);
+    sprintf(s, "x%02x%02x%02x", color.r, color.g, color.b);
 }
 
-const char *graph_color_string (int i)
+void print_rgb_hash (char *s, const RGBColor *color)
 {
-#if GP_DEBUG
-    fprintf(stderr, "get_graph_palette: i=%d\n", i);
-#endif
-
-    return (i >= 0 && i < N_GP_COLORS)? graph_palette[i] : "";
+    sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
 }
 
-static int colstr_is_valid (const char *colstr)
+void print_palette_string (char *s)
 {
-    char *test = NULL;
-    int cnum;
-
-    if (*colstr != 'x' || strlen(colstr) != 7) {
-	return 0;
-    }
-
-    cnum = strtol(colstr + 1, &test, 16);
-
-    if (*test != '\0' || cnum < 0 || cnum > 0xffffff) {
-	return 0;
-    }
-
-    return 1;
+    sprintf(s, "x%02x%02x%02x x%02x%02x%02x x%02x%02x%02x x%02x%02x%02x",
+	    user_color[0].r, user_color[0].g, user_color[0].b,
+	    user_color[1].r, user_color[1].g, user_color[1].b,
+	    user_color[2].r, user_color[2].g, user_color[2].b,
+	    user_color[3].r, user_color[3].g, user_color[3].b);
 }
 
-void set_graph_palette (int i, const char *colstr)
+const RGBColor *get_graph_color (int i)
 {
-    if (i >= 0 && i < N_GP_COLORS && colstr_is_valid(colstr)) {
-	*graph_palette[i] = '\0';
-	strncat(graph_palette[i], colstr, 7);
+    return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
+}
+
+void set_graph_palette (int i, RGBColor color)
+{
+    if (i >= 0 && i < N_GP_COLORS) {
+	user_color[i] = color;
     } else {
-	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
+	fprintf(stderr, "Out of bounds color index %d\n", i);
+    }
+}
+
+void set_graph_palette_from_string (int i, const char *s)
+{
+    int err = 0;
+
+    if (i >= 0 && i < N_GP_COLORS) {
+	unsigned int x[3];
+
+	if (sscanf(s + 1, "%02x%02x%02x", &x[0], &x[1], &x[2]) == 3) {
+	    user_color[i].r = x[0];
+	    user_color[i].g = x[1];
+	    user_color[i].b = x[2];
+	} else {
+	    err = 1;
+	}
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	fprintf(stderr, "Error in set_graph_palette_from_string(%d, '%s')\n", 
+		i, s);
     }
 }
 
 void graph_palette_reset (int i)
 {
     if (i == BOXCOLOR) {
-	strcpy(graph_palette[BOXCOLOR], default_palette[BOXCOLOR]);
+	user_color[BOXCOLOR] = default_color[BOXCOLOR];
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
-	    strcpy(graph_palette[i], default_palette[i]);
+	    user_color[i] = default_color[i];
 	}
     }
 }
@@ -716,6 +735,53 @@ write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 
 #endif
 
+/* we need this only if we don't have per-line rgb
+   settings, as in gnuplot 4.2 and higher */
+
+static char *make_png_colorspec (char *targ, int ptype)
+{
+    char cstr[8];
+    int i;
+
+    /* background etc. */
+    strcpy(targ, " xffffff x000000 x202020");
+
+    if (frequency_plot_code(ptype)) {
+	strcat(targ, " ");
+	print_rgb_x(cstr, user_color[BOXCOLOR]);
+	strcat(targ, cstr);
+	strcat(targ, " x000000");
+    } else {
+	for (i=0; i<BOXCOLOR; i++) {
+	    strcat(targ, " ");
+	    print_rgb_x(cstr, user_color[i]);
+	    strcat(targ, cstr);
+	}
+    }
+
+    return targ;
+}
+
+/* we use this mechanism with gnuplot 4.2 and higher */
+
+void write_plot_line_styles (int ptype, FILE *fp)
+{
+    char cstr[8];
+    int i;
+    
+    if (frequency_plot_code(ptype)) {
+	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
+	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
+    } else {
+	for (i=0; i<BOXCOLOR; i++) {
+	    print_rgb_hash(cstr, &user_color[i]);
+	    fprintf(fp, "set style line %d lc rgb \"%s\"\n", i+1, cstr);
+	}
+    }
+
+    fputs("set style increment user\n", fp);
+}
+
 /* end colors apparatus */
 
 /**
@@ -739,7 +805,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char font_string[128];
     char size_string[16];
     char color_string[64];
-    int gpcolors = 1, gpttf = 1, gpsize = 1;
+    int gpcolors, gpttf = 1, gpsize = 1;
     int pngcairo = 0;
     const char *grfont = NULL;
 
@@ -748,11 +814,19 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     *color_string = 0;
 
 #if 0
-    pngcairo = gnuplot_has_pngcairo(); /* experimental */
+    pngcairo = gnuplot_has_pngcairo(); /* not yet */
 #endif
 
-#ifndef WIN32
-    gpcolors = gnuplot_has_specified_colors();
+#ifdef WIN32
+    gpcolors = RGB_LINE_COLOR;
+#else
+    if (gnuplot_has_rgb()) {
+	gpcolors = RGB_LINE_COLOR;
+    } else if (gnuplot_has_specified_colors()) {
+	gpcolors = GD_PNG_COLOR;
+    } else {
+	gpcolors = OLD_PNG_COLOR;
+    }
     gpttf = gnuplot_has_ttf(0);
     gpsize = gnuplot_has_size();
     if (!pngcairo && gnuplot_linux_use_aa &&
@@ -778,25 +852,14 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
 #endif
 
-    /* plot color setup (FIXME cairo) */
-    if (gpcolors) {
-	int i;
-
-	/* background etc. */
-	strcpy(color_string, " xffffff x000000 x202020");
-
-	if (frequency_plot_code(ptype)) {
-	    strcat(color_string, " ");
-	    strcat(color_string, graph_palette[BOXCOLOR]);
-	    strcat(color_string, " x000000");
-	} else {
-	    for (i=0; i<BOXCOLOR; i++) {
-		strcat(color_string, " ");
-		strcat(color_string, graph_palette[i]);
-	    }
-	}
+    /* plot color setup */
+    if (gpcolors == GD_PNG_COLOR) {
+	make_png_colorspec(color_string, ptype);
+    } else if (gpcolors == OLD_PNG_COLOR) {
+	strcpy(color_string, " color");
     } else {
-	strcpy(color_string, " color"); /* old PNG driver */
+	/* handled via styles */
+	*color_string = '\0';
     }
 
     if (gpsize) {
@@ -860,6 +923,7 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 {
     static char emf_term_line[256];
     const char *grfont = NULL;
+    char cstr[8];
     
     strcpy(emf_term_line, "set term emf ");
 
@@ -875,15 +939,18 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 	png_font_to_emf(grfont, emf_term_line);
     }
 
-    if (color && gnuplot_has_specified_emf_colors()) {
+    if (color && !gnuplot_has_rgb() && 
+	gnuplot_has_specified_emf_colors()) {
 	if (frequency_plot_code(ptype)) {
-	    strcat(emf_term_line, graph_palette[BOXCOLOR]);
+	    print_rgb_x(cstr, user_color[BOXCOLOR]);
+	    strcat(emf_term_line, cstr);
 	    strcat(emf_term_line, " x000000");
 	} else {
 	    int i;
 
 	    for (i=0; i<BOXCOLOR; i++) {
-		strcat(emf_term_line, graph_palette[i]);
+		print_rgb_x(cstr, user_color[i]);
+		strcat(emf_term_line, cstr);
 		strcat(emf_term_line, " ");
 	    }
 	}
@@ -968,6 +1035,12 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
     }
 
     write_plot_type_string(ptype, *fpp);
+
+#if 1
+    if (gnuplot_has_rgb()) {
+	write_plot_line_styles(ptype, *fpp);
+    }
+#endif
 
 #if GP_DEBUG
     fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", 

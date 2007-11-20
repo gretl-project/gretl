@@ -421,6 +421,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->u = gretl_matrix_alloc(HC->nunc, 1);
 	HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
 	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
+
 	if (HC->fitted == NULL || HC->u == NULL || 
 	    HC->ndx == NULL || HC->VProbit == NULL) {
 	    err = E_ALLOC;
