@@ -145,8 +145,9 @@ static h_container *h_container_new (void)
    Zlist.
 */
 
-static int make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
-				const double **Z, const DATAINFO *pdinfo)
+static int 
+make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
+		     const double **Z, const DATAINFO *pdinfo)
 {
     int sel = Zlist[1];
     int T = pdinfo->t2 - pdinfo->t1 + 1;
@@ -310,51 +311,66 @@ static int h_container_fill (h_container *HC, const int *Xl,
     err = make_uncens_mask(HC, Xl, Zl, Z, pdinfo);
 
 #if HDEBUG
-    double x;
-    int t;
+    if (!err) {
+	double x;
+	int t;
 
-    if (HC->fullmask != NULL) {
-	for (t=t1; t<=t2; t++) {
-	    if (HC->fullmask[t] == '1') {
-		fputc('F', stderr);
-	    }
-	    if (HC->uncmask[t] == '1') {
-		fputc('U', stderr);
-	    }
-	    fputc('\t', stderr);
-	    x = Z[selvar][t];
-	    fprintf(stderr, "%12.4f", x);
-	    for (i=1; i<=Xl[0]; i++) {
-		x = Z[Xl[i]][t];
-		if (na(x)) {
-		    fprintf(stderr, "          NA");
-		} else {
-		    fprintf(stderr, "%12.4f", x);
+	if (HC->fullmask != NULL) {
+	    for (t=t1; t<=t2; t++) {
+		if (HC->fullmask[t] == '1') {
+		    fputc('F', stderr);
 		}
+		if (HC->uncmask[t] == '1') {
+		    fputc('U', stderr);
+		}
+		fputc('\t', stderr);
+		x = Z[selvar][t];
+		fprintf(stderr, "%12.4f", x);
+		for (i=1; i<=Xl[0]; i++) {
+		    x = Z[Xl[i]][t];
+		    if (na(x)) {
+			fprintf(stderr, "          NA");
+		    } else {
+			fprintf(stderr, "%12.4f", x);
+		    }
+		}
+		fputc('\n', stderr);
 	    }
-	    fputc('\n', stderr);
 	}
     }
 #endif
 
     tmplist[0] = 1;
 
-    tmplist[1] = depvar;
-    HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
-    HC->nunc = gretl_matrix_rows(HC->y);
+    if (!err) {
+	tmplist[1] = depvar;
+	HC->y = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
+					 HC->uncmask, &err);
+    }
 
-    tmplist[1] = selvar;
-    HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->fullmask);
-    HC->ntot = gretl_matrix_rows(HC->d);
+    if (!err) {
+	HC->nunc = gretl_matrix_rows(HC->y);
+	tmplist[1] = selvar;
+	HC->d = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
+					 HC->fullmask, &err);
+    }
 
-    tmplist[1] = v;
-    HC->mills = gretl_matrix_data_subset(tmplist, Z, t1, t2, HC->uncmask);
+    if (!err) {
+	HC->ntot = gretl_matrix_rows(HC->d);
+	tmplist[1] = v;
+	HC->mills = gretl_matrix_data_subset(tmplist, Z, t1, t2, 
+					     HC->uncmask, &err);
+    }
 
-    HC->Xlist = gretl_list_new(HC->kmain);
-    HC->Zlist = gretl_list_new(HC->ksel);
+    if (!err) {
+	HC->Xlist = gretl_list_new(HC->kmain);
+	HC->Zlist = gretl_list_new(HC->ksel);
+	if (HC->Xlist == NULL || HC->Zlist == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
-    if (HC->Xlist == NULL || HC->Zlist == NULL) {
-	err = E_ALLOC;
+    if (err) {
 	goto bailout;
     }
 
@@ -366,40 +382,54 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->Zlist[i] = Zl[i+1];
     }
 
-    HC->reg = gretl_matrix_data_subset(HC->Xlist, Z, t1, t2, HC->uncmask);
-    HC->selreg = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, HC->fullmask);
-    HC->selreg_u = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, HC->uncmask);
+    HC->reg = gretl_matrix_data_subset(HC->Xlist, Z, t1, t2, 
+				       HC->uncmask, &err);
 
-    if (HC->reg == NULL || HC->selreg == NULL || HC->selreg_u == NULL) {
-	err = E_ALLOC;
+    if (!err) {
+	HC->selreg = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, 
+					      HC->fullmask, &err);
+    }
+
+    if (!err) {
+	HC->selreg_u = gretl_matrix_data_subset(HC->Zlist, Z, t1, t2, 
+						HC->uncmask, &err);
+    }
+
+    if (err) {
 	goto bailout;
     }    
 
     tmp = gretl_matrix_multiply_new(HC->selreg_u, HC->gama, &err);
-    gretl_matrix_add_to(tmp, HC->mills);
-    HC->delta = gretl_matrix_dot_op(tmp, HC->mills, '*', &err);
-    gretl_matrix_free(tmp);
 
-    bmills = olsmod->coeff[olsmod->ncoeff-1];
-    mdelta  = gretl_vector_mean(HC->delta);
-    s2 = olsmod->ess / olsmod->nobs + mdelta * bmills * bmills;
-    HC->sigma = sqrt(s2);
-    HC->rho = bmills / HC->sigma;
+    if (!err) {
+	gretl_matrix_add_to(tmp, HC->mills);
+	HC->delta = gretl_matrix_dot_op(tmp, HC->mills, '*', &err);
+	gretl_matrix_free(tmp);
+    }
 
-    if (fabs(HC->rho) > 1.0) {
+    if (!err) {
+	bmills = olsmod->coeff[olsmod->ncoeff-1];
+	mdelta  = gretl_vector_mean(HC->delta);
+	s2 = olsmod->ess / olsmod->nobs + mdelta * bmills * bmills;
+	HC->sigma = sqrt(s2);
+	HC->rho = bmills / HC->sigma;
+    }
+
+    if (!err && fabs(HC->rho) > 1.0) {
 	HC->rho = (HC->rho < 0)? -1 : 1;
 	/* ensure consistency */
 	HC->sigma = HC->lambda / HC->rho;
     }
 
-    HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
-    HC->u = gretl_matrix_alloc(HC->nunc, 1);
-    HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
-    HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
-
-    if (HC->fitted == NULL || HC->u == NULL || 
-	HC->ndx == NULL || HC->VProbit) {
-	err = E_ALLOC;
+    if (!err) {
+	HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
+	HC->u = gretl_matrix_alloc(HC->nunc, 1);
+	HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
+	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
+	if (HC->fitted == NULL || HC->u == NULL || 
+	    HC->ndx == NULL || HC->VProbit) {
+	    err = E_ALLOC;
+	}
     }
 
  bailout:
@@ -935,14 +965,12 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     err = gretl_list_split_on_separator(list, &Xlist, &Zlist);
     if (err) {
-	hm.errcode = err;
 	goto bailout;
     } 
 
     err = make_heckit_NA_mask(HC, Xlist, Zlist, (const double **) *pZ, 
 			      pdinfo);
     if (err) {
-	hm.errcode = err;
 	goto bailout;
     }
 
@@ -961,7 +989,6 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
-	hm.errcode = err;
 	goto bailout;
     } 
 
@@ -979,25 +1006,31 @@ static MODEL heckit_init (int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* run OLS */
     hm = lsq(Xlist, pZ, pdinfo, OLS, OPT_A);
-    hm.ci = HECKIT;
-
-    /* FIXME: this definitely doesn't belong here */
-    gretl_model_set_int(&hm, "totobs", probmod.nobs);
+    if (!hm.errcode) {
+	hm.ci = HECKIT;
+	gretl_model_set_int(&hm, "totobs", probmod.nobs);
+    }
 
 #if HDEBUG
     printmodel(&hm, pdinfo, OPT_NONE, prn);
     gretl_print_destroy(prn);
 #endif
 
-    /* fill the container with all the relevant data */
-    err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
-			   pdinfo, &probmod, &hm);
+    if (!hm.errcode) {
+	/* fill the container with all the relevant data */
+	err = h_container_fill(HC, Xlist, Zlist, (const double **) *pZ, 
+			       pdinfo, &probmod, &hm);
+    }
 
  bailout:
 
     clear_model(&probmod);
     free(Xlist);
     free(Zlist);
+
+    if (err && !hm.errcode) {
+	hm.errcode = err;
+    }
 
     return hm;
 }

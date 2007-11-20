@@ -47,7 +47,8 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, const char *mask);
+					int t1, int t2, const char *mask,
+					int *err);
 
 gretl_matrix *
 gretl_matrix_data_subset_no_missing (const int *list, const double **Z,

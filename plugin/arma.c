@@ -1188,6 +1188,7 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     gretl_matrix *x;
     int i, xstart;
     int *xlist;
+    int err = 0;
 
     xlist = gretl_list_new(ainfo->nexo);
     if (xlist == NULL) {
@@ -1204,8 +1205,9 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     printlist(xlist, "xlist (exog vars)");
 #endif
 
-    x = gretl_matrix_data_subset(xlist, Z, ainfo->t1, ainfo->t2, NULL);
-    if (x == NULL) {
+    x = gretl_matrix_data_subset(xlist, Z, ainfo->t1, ainfo->t2, 
+				 NULL, &err);
+    if (err) {
 	free(xlist);
 	return NULL;
     }

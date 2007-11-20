@@ -478,6 +478,17 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	}
     }
 
+    if (!*err) {
+	for (j=0; j<k && !*err; j++) {
+	    for (t=0; t<T && !*err; t++) {
+		x = gretl_matrix_get(M, t, j);
+		if (na(x)) {
+		    *err = E_MISSDATA;
+		}
+	    }
+	}
+    }	
+
     if (*err) {
 	gretl_matrix_free(M);
 	M = NULL;
@@ -493,6 +504,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  * @t1: starting observation.
  * @t2: ending observation.
  * @mask: missing observations mask, or %NULL.
+ * @err: location to recieve error code.
  *
  * Creates a gretl matrix holding the subset of variables from
  * @Z specified by @list, over the sample range @t1 to @t2,
@@ -506,12 +518,11 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  */
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, const char *mask)
+					int t1, int t2, const char *mask,
+					int *err)
 {
-    int err = 0;
-
     return real_gretl_matrix_data_subset(list, Z, t1, t2, mask, 
-					 OBS_MISS_MASK, &err);
+					 OBS_MISS_MASK, err);
 }
 
 /**
