@@ -189,21 +189,17 @@ make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
 	}
 	memset(HC->probmask, '0', pdinfo->n);
 	HC->probmask[pdinfo->n] = 0;
-    }
 
-    if (s > 0) {
 	HC->fullmask = calloc(T, 1);
 	if (HC->fullmask == NULL) {
 	    return E_ALLOC;
 	}
-    }
 
-    if (m > 0 || s > 0) {
 	s = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    int miss = 0;
 
-	    if (HC->fullmask != NULL && Z[sel][t] == 1.0) {
+	    if (Z[sel][t] == 1.0) {
 		for (i=1; i<=Xlist[0] && !miss; i++) {
 		    if (na(Z[Xlist[i]][t])) {
 			miss = 1;
@@ -214,14 +210,15 @@ make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
 		    }
 		}
 	    }
-	    if (HC->probmask != NULL) {
-		for (i=1; i<=Zlist[0] && !miss; i++) {
-		    if (na(Z[Zlist[i]][t])) {
-			miss = 1;
-			HC->probmask[t] = '1';
-		    }
+
+	    for (i=1; i<=Zlist[0] && !miss; i++) {
+		if (na(Z[Zlist[i]][t])) {
+		    miss = 1;
+		    HC->fullmask[s] = 1;
+		    HC->probmask[t] = '1';
 		}
-	    }		
+	    }
+
 	    s++;
 	}
     }
@@ -317,15 +314,19 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
 	if (HC->fullmask != NULL) {
 	    for (t=t1; t<=t2; t++) {
-		if (HC->fullmask[t] == '1') {
+		if (HC->fullmask[t] == 1) {
 		    fputc('F', stderr);
 		}
-		if (HC->uncmask[t] == '1') {
+		if (HC->uncmask[t] == 1) {
 		    fputc('U', stderr);
 		}
 		fputc('\t', stderr);
 		x = Z[selvar][t];
-		fprintf(stderr, "%12.4f", x);
+		if (na(x)) {
+		    fprintf(stderr, "          NA");
+		} else {
+		    fprintf(stderr, "%12.4f", x);
+		}
 		for (i=1; i<=Xl[0]; i++) {
 		    x = Z[Xl[i]][t];
 		    if (na(x)) {
@@ -427,7 +428,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->ndx = gretl_matrix_alloc(HC->ntot, 1);
 	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL);
 	if (HC->fitted == NULL || HC->u == NULL || 
-	    HC->ndx == NULL || HC->VProbit) {
+	    HC->ndx == NULL || HC->VProbit == NULL) {
 	    err = E_ALLOC;
 	}
     }
