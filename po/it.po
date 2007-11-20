@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-19 10:38-0500\n"
-"PO-Revision-Date: 2007-11-08 14:59+0100\n"
+"PO-Revision-Date: 2007-11-20 12:28+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -360,12 +360,12 @@ msgstr "non linearità"
 #: lib/src/compare.c:1056
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr ""
+msgstr "Eliminazione sequenziale usando alfa (a due code) = %.2f"
 
 #: lib/src/compare.c:1062
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr ""
+msgstr " Scartata %-16s (p-value %.3f)\n"
 
 #: lib/src/compare.c:1392 lib/src/compare.c:1544 lib/src/compare.c:1548
 #: lib/src/compare.c:1552 lib/src/describe.c:2760 lib/src/describe.c:2987
@@ -2793,14 +2793,13 @@ msgstr ""
 "o ridondanti"
 
 #: lib/src/gretl_restrict.c:764
-#, fuzzy
 msgid "Please give a coefficient number"
-msgstr "Si prega di dare un nome al dataset attuale"
+msgstr "Specificare il numero di un coefficiente"
 
 #: lib/src/gretl_restrict.c:771
-#, fuzzy, c-format
+#, c-format
 msgid "%s: not a valid parameter name"
-msgstr "%d non è un valido numero di variabile"
+msgstr "%s: non è un valido nome di parametro"
 
 #: lib/src/gretl_restrict.c:875 lib/src/gretl_restrict.c:1289
 #: lib/src/gretl_restrict.c:1315
@@ -8630,7 +8629,7 @@ msgstr "Mostra tutte le etichette dei dati"
 
 #: gui2/gpt_dialog.c:925
 msgid "Allow anti-aliasing of lines"
-msgstr ""
+msgstr "Abilita anti-aliasing delle linee"
 
 #: gui2/gpt_dialog.c:953 gui2/gpt_dialog.c:955
 msgid "None"
