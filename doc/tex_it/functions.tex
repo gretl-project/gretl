@@ -413,6 +413,45 @@ L'ultima riga dello script stamperà due variabili chiamate
 \verb|nocars_2| e \verb|nocars_4|.  Per i dettagli sulla gestione delle
 stringhe, si veda il capitolo~\ref{chap-persist}.
 
+\subsection{Recuperare il nome degli argomenti}
+
+Le variabili passate come argomenti a una funzione vengono chiamate all'interno
+della funzione col nome dei parametri corrispondenti. Ad esempio, all'interno di
+questa funzione:
+%
+\begin{code}
+function somefun (series y)
+\end{code}
+%
+abbiamo la serie chiamata \texttt{y}. In alcuni casi può però essere utile
+disporre del nome delle variabili che sono state passate come argomenti.
+Questo risultato si ottiene usando la funzione \texttt{argname}, che accetta
+come unico argomento il nome di un parametro della funzione e restituisce una
+stringa. Ecco un esempio:
+%
+\begin{code}
+function namefun (series y)
+  printf "La serie passata come 'y' si chiamava %s\n", argname(y)
+end function
+
+open data9-7
+namefun(QNC)
+\end{code}
+%
+L'output è il seguente:
+%
+\begin{code}
+La serie passata come 'y' si chiamava QNC
+\end{code}
+
+Occorre notare che questo meccanismo non funziona sempre: gli argomenti di una
+funzione possono essere variabili senza nome, create al volo, come in
+\texttt{somefun(log(QNC))} o \texttt{somefun(CPI/100)}.  In questo caso, la
+funzione \textsf{argname} produce una stringa vuota. Quando si usa questo
+meccanismo all'interno di una funzione occorre quindi controllare il valore
+prodotto da \texttt{argname} usando la funzione \texttt{isstring()}, che produce
+1 per una stringa non vuota, o 0 altrimenti.
+
 \subsection{Valori di uscita}
 
 Le funzioni possono non produrre alcun valore (limitandosi ad esempio

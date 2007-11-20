@@ -25,13 +25,14 @@ farlo: per ulteriori dettagli si veda l'appendice~\ref{app-datafile}.
   Importa CSV\dots{}'' dell'interfaccia grafica o il comando
   \cmd{import} dell'interfaccia a riga di comando.  Si veda anche
   la sezione~\ref{scratch}.
-\item Cartelle di lavoro in formato \app{MS Excel} o \app{Gnumeric}.
-  Possono essere importate in \app{gretl} con il comando ``File, Apri
+\item Fogli di calcolo: MS \app{Excel}, \app{Gnumeric} e Open Document
+  (ODS).  Possono essere importati in \app{gretl} con il comando ``File, Apri
   dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
   questo tipo di file.
 \item File di dati di \app{Stata} (\texttt{.dta}).
-\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Il supporto per
-  questo tipo di file è sperimentale. Si veda \url{http://www.ecn.wfu.edu/eviews_format/}.}
+\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Si veda
+  \url{http://www.ecn.wfu.edu/eviews_format/}.}
+\item File di dati di \app{JMulTi}.
 \end{itemize}
 
 Quando vengono importati file in formato ASCII o CSV, \app{gretl}
@@ -42,11 +43,10 @@ risolverli.
 
 Per venire incontro a chi vuole eseguire analisi più sofisticate,
 \app{gretl} offre la possibilità di salvare i dati nei formati usati
-dai programmi GNU R e GNU Octave (si veda
-l'appendice~\ref{app-advanced}).  Nell'interfaccia grafica, questa
+dai programmi GNU \app{R}, \app{Octave}, \app{JMulTi} e \app{PcGive} 
+(si veda l'appendice~\ref{app-advanced}).  Nell'interfaccia grafica, questa
 opzione si trova nel menù ``File, Esporta dati'', mentre nel client a riga di
-comando occorre usare il comando \cmd{store} con l'opzione \cmd{-r}
-(per R) o \cmd{-m} (per Octave).
+comando occorre usare il comando \cmd{store} con l'opzione appropriata.
 
 \section{Database binari}
 \label{dbase}
@@ -72,21 +72,23 @@ database, a cui è possibile accedere se il proprio computer è connesso
 a internet. Si veda la descrizione del comando ``data'' nel menù
 ``Aiuto'' di \app{gretl}.
 
-\subsection{Database RATS 4}
+\tip{Per dettagli e aggiornamenti sui dati disponibili, basta visitare la
+\href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei dati} di
+\app{gretl}.}
+
+\subsection{Formati di database esterni}
 \label{RATS}
 
 Grazie a Thomas Doan di \emph{Estima}, che ha reso disponibili le specifiche
 del formato di database usato da RATS 4 (Regression Analysis of Time
 Series), \app{gretl} è in grado di gestire anche alcuni tipi di
 database RATS 4: per la precisione quelli che contengono dati mensili
-o trimestrali.  La mia università possiede il database RATS G7, che
-contiene dati per i sette maggiori paesi dell'OECD, e \app{gretl} lo
-legge correttamente.
+o trimestrali.
 
-\tip{Per dettagli e aggiornamenti sui dati disponibili, è possibile
-  visitare la
-  \href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei
-    dati} di \app{gretl}.}
+\app{Gretl} può anche importare dati dai database \app{PcGive}. Questi sono
+costituiti da coppie di file, uno dei quali (con l'estensione \texttt{.bn7})
+contiene i dati veri e propri, mentre quello con estensione (\texttt{.in7})
+contiene informazioni supplementari.
 
 \section{Creazione di un file di dati}
 \label{scratch}
@@ -99,8 +101,8 @@ Ci sono vari modi per compiere questa operazione.
 \item Usare il proprio foglio di lavoro per inserire i dati, salvarlo
   in formato con valori separati da virgole (Comma Separated Values)
   se necessario (non dovrebbe essere necessario se il programma di
-  foglio elettronico è MS Excel o Gnumeric) e infine usare uno dei
-  comandi ``Importa'' di \app{gretl} (CSV, Excel o Gnumeric).
+  foglio elettronico è MS Excel, Gnumeric o OpenOffice) e infine usare uno dei
+  comandi ``Importa'' di \app{gretl}.
 \item Usare il foglio elettronico contenuto in \app{gretl}.
 \item Selezionare le serie di dati da un database.
 \item Usare un editor di testo o altri programmi per creare un file di
@@ -218,12 +220,10 @@ possibile usare i comandi disponibili nei menù ``Aggiungi'' o
 \subsection{Estrarre dati da un database}
 
 Un modo alternativo di creare un dataset consiste nel selezionare le
-variabili da un database.  \app{gretl} include un database di serie
-storiche macroeconomiche relative agli USA e, come visto sopra,
-consente di leggere i database RATS 4.
+variabili da un database.
 
-Selezionando il comando ``File, Database'', vengono presentate tre alternative:
-``Gretl'', ``RATS 4'' e ``Sul server di gretl''. Selezionando ``Gretl'', si
+Selezionando il comando ``File, Database'', vengono presentate quattro alternative:
+``Gretl'', ``RATS 4'', ``PcGive'' e ``Sul server di gretl''. Selezionando ``Gretl'', si
 troverà il file \verb+fedstl.bin+, che contiene un'ampia raccolta di serie
 macroeconomiche USA ed è distribuito insieme al programma.
 
