@@ -8080,7 +8080,7 @@
 	    per equation.
 	  </para>
 	</li>
-	<li><para><lit>$uhat</lit>: matrix of fitted values, one column
+	<li><para><lit>$yhat</lit>: matrix of fitted values, one column
 	    per equation.
 	  </para>
 	</li>
