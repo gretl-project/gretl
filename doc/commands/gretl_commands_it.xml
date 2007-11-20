@@ -7969,10 +7969,48 @@
       </ilist>
         
       <para context="cli">
-        Nel campo opzionale <cmd>save=</cmd> del comando è possibile
-        specificare se salvare i residui (<cmd>resids</cmd>) e/o
-	i valori stimati (<cmd>fitted</cmd>).
+	Dopo la stima eseguita con i comandi <cmd>system</cmd> o
+	<cmd>estimate</cmd> è possibile recuperare informazioni aggiuntive dalle
+        seguenti variabili accessorie:
       </para>
+
+      <ilist context="cli">
+	<li>
+          <para><lit>$uhat</lit>: la matrice dei residui, una colonna per
+            equazione.
+	  </para>
+	</li>
+	<li>
+          <para><lit>$yhat</lit>: la matrice dei valori stimati, una colonna
+            per equazione.
+	  </para>
+	</li>
+	<li>
+          <para><lit>$coeff</lit>: il vettore colonna dei coefficienti (tutti
+            i coefficienti della prima equazione, seguiti da quelli della seconda
+            equazione, e così via).
+	  </para>
+	</li>
+	<li>
+          <para><lit>$vcv</lit>: la matrice di covarianza dei coefficienti.
+            Se il vettore <lit>$coeff</lit> ha <mathvar>k</mathvar> elementi,
+            questa matrice ha dimensione <mathvar>k</mathvar> per <mathvar>k</mathvar>.
+	  </para>
+	</li>
+	<li>
+          <para><lit>$sigma</lit>: la matrice di covarianza dei residui
+          incrociata tra equazioni.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	Oltre a questi accessori, è possibile salvare i residui e/o i valori
+        stimati usando il campo opzionale <cmd>save=</cmd> del comando
+        <cmd>system</cmd>, come mostrato negli esempi. Queste serie vengono
+        create con nomi del tipo <lit>uhat_s01</lit> (che indica i residui della
+        prima equazione del sistema).
+       </para>
       
       <para>Per esempi completi di specificazione e stima di un
 	sistema di equazioni, si vedano gli script
