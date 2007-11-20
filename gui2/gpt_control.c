@@ -272,13 +272,17 @@ static int set_output_line (const char *s)
     return !strncmp(s, "set output", 10);
 }
 
+enum {
+    REMOVE_PNG,
+    ADD_PNG
+};
+
 static int 
-add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
+add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
     char restore_line[MAXLEN] = {0};
-    int png_line_saved = 0;
     GptFlags flags = 0;
 #ifdef ENABLE_NLS
     int lv = iso_latin_version();
@@ -298,33 +302,28 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	return 1;
     }
 
-    if (add && spec == NULL) {
-	/* see if there's a commented out term setting to restore */
+    if (action == ADD_PNG) {
+	/* see if there's already a png term setting, possibly commented
+	   out, that can be reused */
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (commented_term_line(fline)) {
+	    if (!strncmp(fline, "set term png", 12)) {
+		strcat(restore_line, fline);
+		break;
+	    } else if (commented_term_line(fline) && *restore_line == '\0') {
 		strcat(restore_line, fline + 2);
+		break;
 	    } else if (strstr(fline, "letterbox")) {
 		flags = GPT_LETTERBOX;
-	    } else if (strncmp(fline, "plot", 4)) {
+	    } else if (!strncmp(fline, "plot", 4)) {
 		break;
 	    }
 	}
+
 	rewind(fsrc);
-    }
 
-    if (add) {
-	int need_term_line = 1;
-
-	if (spec == NULL) {
-	    /* we're reconstituting a session graph from a 
-	       saved gnuplot command file */
-	    if (*restore_line) {
-		/* found a saved png term specification */
-		fputs(restore_line, ftmp);
-		need_term_line = 0;
-	    }
-	}
-	if (need_term_line) {
+	if (*restore_line) {
+	    fputs(restore_line, ftmp);
+	} else {
 	    int ptype = (spec != NULL)? spec->code : PLOT_REGULAR;
 	    const char *pline;
 
@@ -339,15 +338,19 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     }
 
     /* now for the body of the plot file */
-    while (fgets(fline, sizeof fline, fsrc)) {
-	if (add) {
+
+    if (action == ADD_PNG) {
+	while (fgets(fline, sizeof fline, fsrc)) {
 	    if (!commented_term_line(fline) && !set_output_line(fline)) {
 		line_to_file(fline, ftmp, -lv);
 	    }
-	} else {
-	    /* we're removing the png term line */
-	    int printit = 1;
-
+	}
+    } else {
+	/* we're removing the png term line */
+	int printit, png_line_saved = 0;
+	
+	while (fgets(fline, sizeof fline, fsrc)) {
+	    printit = 1;
 	    if (!strncmp(fline, "set term png", 12)) {
 		if (!png_line_saved) {
 		    /* comment it out, for future reference */
@@ -356,7 +359,9 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		} 
 		printit = 0;
 	    } else if (commented_term_line(fline)) {
-		printit = 0;
+		if (png_line_saved) {
+		    printit = 0;
+		}
 	    } else if (set_output_line(fline)) {
 		printit = 0;
 	    } else if (spec != NULL && (spec->flags & GPT_FIT_HIDDEN)
@@ -378,19 +383,19 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 
 static int add_png_term_to_plotfile (const char *fname)
 {
-    return add_or_remove_png_term(fname, 1, NULL);
+    return add_or_remove_png_term(fname, ADD_PNG, NULL);
 }
 
 static int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
 {
-    return add_or_remove_png_term(fname, 0, spec);
+    return add_or_remove_png_term(fname, REMOVE_PNG, spec);
 }
 
-/* public because called from session.c when saving a graph file */
+/* public because called from session.c when editing plot commands */
 
 int remove_png_term_from_plotfile_by_name (const char *fname)
 {
-    return add_or_remove_png_term(fname, 0, NULL);
+    return add_or_remove_png_term(fname, REMOVE_PNG, NULL);
 }
 
 static void mark_plot_as_saved (GPT_SPEC *spec)

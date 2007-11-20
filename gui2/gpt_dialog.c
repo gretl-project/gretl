@@ -763,9 +763,8 @@ static void set_aa_status (GtkWidget *w, int *ok)
     } else {
 	putenv("GNUPLOT_PNG_ANTIALIAS=0");
     }
-#else
-    gnuplot_linux_set_use_aa(*ok);
 #endif
+    gnuplot_png_set_use_aa(*ok);
 }
 
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
@@ -922,11 +921,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     if (show_aa_check < 0) {
-#ifdef G_OS_WIN32
-	show_aa_check = 1;
-#else
 	show_aa_check = !gnuplot_has_pngcairo() && gnuplot_has_png_truecolor();
-#endif
     }
 
     /* give option of suppressing anti-aliasing for PNGs */

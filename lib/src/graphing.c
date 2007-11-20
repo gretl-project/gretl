@@ -368,9 +368,27 @@ int gnuplot_has_cairo (void)
     return 0;
 }
 
+int gnuplot_has_pngcairo (void)
+{
+    /* ... and no pngcairo */
+    return 0;
+}
+   
+int gnuplot_has_pdfcairo (void)
+{
+    /* ... and no pdfcairo */
+    return 0;
+}    
+
 int gnuplot_has_specified_colors (void)
 {
     /* ... and we know it does specified colors */
+    return 1;
+}
+
+int gnuplot_has_png_truecolor (void)
+{
+    /* yup */
     return 1;
 }
 
@@ -583,14 +601,14 @@ const char *gnuplot_label_front_string (void)
     }
 }
 
-static int gnuplot_linux_use_aa = 1;
-
-void gnuplot_linux_set_use_aa (int s)
-{
-    gnuplot_linux_use_aa = s;
-}
-
 #endif /* !WIN32 */
+
+static int gnuplot_png_use_aa = 1;
+
+void gnuplot_png_set_use_aa (int s)
+{
+    gnuplot_png_use_aa = s;
+}
 
 /* apparatus for handling plot colors */
 
@@ -829,11 +847,12 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     }
     gpttf = gnuplot_has_ttf(0);
     gpsize = gnuplot_has_size();
-    if (!pngcairo && gnuplot_linux_use_aa &&
+#endif
+
+    if (!pngcairo && gnuplot_png_use_aa &&
 	gnuplot_has_png_truecolor()) {
 	strcpy(truecolor_string, " truecolor");
-    }
-#endif
+    }    
 
     /* plot font setup */
     if (gpttf) {
@@ -1036,11 +1055,9 @@ static int real_gnuplot_init (PlotType ptype, int flags, FILE **fpp)
 
     write_plot_type_string(ptype, *fpp);
 
-#if 1
     if (gnuplot_has_rgb()) {
 	write_plot_line_styles(ptype, *fpp);
     }
-#endif
 
 #if GP_DEBUG
     fprintf(stderr, "gnuplot_init: set plotfile = '%s'\n", 
