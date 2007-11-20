@@ -5949,7 +5949,7 @@ int osx_open_file (const char *path)
     FSRef r;
     int err;
     
-    err = FSPathMakeRef(path, &r, NULL);
+    err = FSPathMakeRef((const UInt8 *) path, &r, NULL);
     if (!err) {
 	err = LSOpenFSRef(&r, NULL);
     }
@@ -5963,7 +5963,7 @@ int osx_open_url (const char *url)
     CFURLRef u;
     int err;
     
-    s = CFStringCreateWithBytes(NULL, url, strlen(url), 
+    s = CFStringCreateWithBytes(NULL, (const UInt8 *) url, strlen(url), 
                                 kCFStringEncodingASCII, 
 				0);
     if (s == NULL) {

@@ -512,7 +512,7 @@ static char *get_insert_point (char *s)
 static void 
 print_line_with_color (PRN *prn, char *s, int lnum, int *contd)
 {
-    const RGBColor *color = get_graph_color(lnum - 1);
+    const gretlRGB *color = get_graph_color(lnum - 1);
     char cstr[8];
     char *p;
 

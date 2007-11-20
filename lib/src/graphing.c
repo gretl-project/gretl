@@ -618,26 +618,26 @@ enum {
     RGB_LINE_COLOR  /* per-line rgb settings */
 };
 
-static const RGBColor default_color[N_GP_COLORS] = {
+static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
     { 0x00, 0x00, 0xff },
     { 0x00, 0xcc, 0x00 }, /* full-intensity green is not very legible */
     { 0x9b, 0xa6, 0xbb }  /* color for box fill */
 };
 
-static RGBColor user_color[N_GP_COLORS] = {
+static gretlRGB user_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
     { 0x00, 0x00, 0xff },
     { 0x00, 0xcc, 0x00 },
     { 0x9b, 0xa6, 0xbb }
 };
 
-static void print_rgb_x (char *s, RGBColor color)
+static void print_rgb_x (char *s, gretlRGB color)
 {
     sprintf(s, "x%02x%02x%02x", color.r, color.g, color.b);
 }
 
-void print_rgb_hash (char *s, const RGBColor *color)
+void print_rgb_hash (char *s, const gretlRGB *color)
 {
     sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
 }
@@ -651,12 +651,12 @@ void print_palette_string (char *s)
 	    user_color[3].r, user_color[3].g, user_color[3].b);
 }
 
-const RGBColor *get_graph_color (int i)
+const gretlRGB *get_graph_color (int i)
 {
     return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
 }
 
-void set_graph_palette (int i, RGBColor color)
+void set_graph_palette (int i, gretlRGB color)
 {
     if (i >= 0 && i < N_GP_COLORS) {
 	user_color[i] = color;

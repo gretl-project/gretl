@@ -2089,7 +2089,7 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
 #define scale_round(v) ((v) * 255.0 / 65535.0)
 
-static GtkWidget *get_image_for_color (const RGBColor *color)
+static GtkWidget *get_image_for_color (const gretlRGB *color)
 {
     static char **xpm = NULL;
     GdkPixbuf *icon;
@@ -2141,7 +2141,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     GtkWidget *csel;
     GtkWidget *color_button, *image;
     GdkColor gcolor;
-    RGBColor rgb;
+    gretlRGB rgb;
     gint i;
 
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
@@ -2216,7 +2216,7 @@ void graph_color_selector (GtkWidget *w, gpointer p)
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
     char colstr[8];
-    const RGBColor *rgb;
+    const gretlRGB *rgb;
     GdkColor gcolor;
 
     rgb = get_graph_color(i);

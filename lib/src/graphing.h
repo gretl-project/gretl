@@ -52,9 +52,9 @@ typedef enum {
     GPT_YZEROAXIS      = 1 << 22  /* show y = 0 line */
 } GptFlags; 
 
-typedef struct RGBColor_ RGBColor;
+typedef struct gretlRGB_ gretlRGB;
 
-struct RGBColor_ {
+struct gretlRGB_ {
     unsigned char r;
     unsigned char g;
     unsigned char b;
@@ -210,17 +210,17 @@ int gnuplot_has_style_fill (void);
 
 int gnuplot_has_latin5 (void);
 
-void set_graph_palette (int i, RGBColor color);
+void set_graph_palette (int i, gretlRGB color);
 
 void set_graph_palette_from_string (int i, const char *cstr);
 
 void graph_palette_reset (int i);
 
-void print_rgb_hash (char *s, const RGBColor *color);
+void print_rgb_hash (char *s, const gretlRGB *color);
 
 void print_palette_string (char *s);
 
-const RGBColor *get_graph_color (int i);
+const gretlRGB *get_graph_color (int i);
 
 int gnuplot_test_command (const char *cmd);
 
