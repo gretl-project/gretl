@@ -184,42 +184,36 @@ make_heckit_NA_mask (h_container *HC, const int *Xlist, const int *Zlist,
 
     if (m > 0) {
 	HC->probmask = malloc(pdinfo->n + 1);
-	if (HC->probmask == NULL) {
+	HC->fullmask = calloc(T, 1);
+
+	if (HC->probmask == NULL ||
+	    HC->fullmask == NULL) {
 	    return E_ALLOC;
 	}
+
 	memset(HC->probmask, '0', pdinfo->n);
 	HC->probmask[pdinfo->n] = 0;
 
-	HC->fullmask = calloc(T, 1);
-	if (HC->fullmask == NULL) {
-	    return E_ALLOC;
-	}
-
-	s = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (s=0, t=pdinfo->t1; t<=pdinfo->t2; t++, s++) {
 	    int miss = 0;
 
 	    if (Z[sel][t] == 1.0) {
 		for (i=1; i<=Xlist[0] && !miss; i++) {
 		    if (na(Z[Xlist[i]][t])) {
-			miss = 1;
 			HC->fullmask[s] = 1;
-			if (HC->probmask != NULL) {
-			    HC->probmask[t] = '1';
-			}
+			HC->probmask[t] = '1';
+			miss = 1;
 		    }
 		}
 	    }
 
 	    for (i=1; i<=Zlist[0] && !miss; i++) {
 		if (na(Z[Zlist[i]][t])) {
-		    miss = 1;
 		    HC->fullmask[s] = 1;
 		    HC->probmask[t] = '1';
+		    miss = 1;
 		}
 	    }
-
-	    s++;
 	}
     }
 
