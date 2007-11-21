@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-11-19 10:38-0500\n"
-"PO-Revision-Date: 2007-11-20 12:28+0100\n"
+"PO-Revision-Date: 2007-11-21 12:27+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -11559,13 +11559,17 @@ msgstr "Legge il valore attuale, o imposta un nuovo valore"
 msgid "The variable '%s' is not a 0/1 variable."
 msgstr "La variabile '%s' non è una variabile 0/1."
 
+# Si riferisce alla variabile nei vecm vincolata o no allo spazio di
+# cointegrazione
 #: gui2/selector.c:1268
 msgid "Unrestricted"
-msgstr "Non vincolato"
+msgstr "Non vincolata"
 
+# Si riferisce alla variabile nei vecm vincolata o no allo spazio di
+# cointegrazione
 #: gui2/selector.c:1269
 msgid "Restricted"
-msgstr "Vincolato"
+msgstr "Vincolata"
 
 #: gui2/selector.c:1456
 msgid "You must select an X-axis variable"
