@@ -168,6 +168,8 @@ static int gretl_cset_min;
 # ifdef WIN32
 static int gretl_cpage;
 # endif
+static int using_utf8;
+
 
 /* Use g_get_charset() to determine the current local character set,
    and record this information.  If we get an "ISO-XXXX-Y" locale,
@@ -180,7 +182,6 @@ void set_gretl_charset (const char *s)
 {
     const char *charset = NULL;
     char gretl_charset[32];
-    int using_utf8 = 0;
 
     using_utf8 = g_get_charset(&charset);
 
@@ -330,8 +331,6 @@ int iso_latin_version (void)
     return 1;
 }
 
-/* we'll need to fix this for Turkish eventually */
-
 static const char *get_gp_charset (void)
 {
     if (iso_latin_version() == 2) {
@@ -340,6 +339,8 @@ static const char *get_gp_charset (void)
 #else
 	return "ISO-8859-2";
 #endif
+    } else if (iso_latin_version() == 9) {
+	return "ISO-8859-9";
     } else {
 	return "ISO-8859-1";
     }
@@ -349,6 +350,10 @@ char *gp_gettext (const char *msgid)
 {
     static const char *cset;
     char *ret;
+
+    if (using_utf8 && gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	return gettext(msgid);
+    }
 
     if (cset == NULL) {
 	cset = get_gp_charset();

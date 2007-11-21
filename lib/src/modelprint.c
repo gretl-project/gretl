@@ -896,17 +896,17 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("ARMA");
 	}
-    } else if (pmod->ci == WLS) {
-	if (gretl_model_get_int(pmod, "iters")) {
-	    return N_("Maximum Likelihood");
-	} else {
-	    return N_("WLS");
-	}
     } else if (pmod->ci == PANEL) {
 	if (gretl_model_get_int(pmod, "fixed-effects")) {
 	    return N_("Fixed-effects");
 	} else if (gretl_model_get_int(pmod, "random-effects")) {
 	    return N_("Random-effects (GLS)");
+	} else if (gretl_model_get_int(pmod, "unit-weights")) {
+	    if (gretl_model_get_int(pmod, "iters")) {
+		return N_("Maximum Likelihood");
+	    } else {
+		return N_("WLS");
+	    }
 	} else {
 	    return N_("Between-groups");
 	}
@@ -1704,7 +1704,7 @@ static void print_model_heading (const MODEL *pmod,
     print_model_vcv_info(pmod, prn);
 
     /* WLS on panel data */
-    if (gretl_model_get_int(pmod, "unit_weights") && !pmod->aux) {
+    if (gretl_model_get_int(pmod, "unit-weights") && !pmod->aux) {
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}

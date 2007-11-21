@@ -3091,11 +3091,12 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!mdl.errcode) {
+	mdl.ci = PANEL;
 	if (!(opt & OPT_A)) {
 	    set_model_id(&mdl);
 	}
 	gretl_model_set_int(&mdl, "n_included_units", pan.effn);
-	gretl_model_set_int(&mdl, "unit_weights", 1);
+	gretl_model_set_int(&mdl, "unit-weights", 1);
 	mdl.nwt = 0;
 
 	if (opt & OPT_T) {

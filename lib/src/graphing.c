@@ -349,6 +349,8 @@ static int factorized_vars (gnuplot_info *gi, const double **Z)
 
 #ifdef WIN32
 
+#define WIN32_USE_CAIRO 0 /* close, but not just yet */
+
 int gnuplot_has_ttf (int reset)
 {
     /* we know the gnuplot supplied with gretl for win32
@@ -356,42 +358,24 @@ int gnuplot_has_ttf (int reset)
     return 1;
 }
 
-int gnuplot_has_pdf (void)
+int gnuplot_pdf_terminal (void)
 {
-    /* ... and we know it does PDF output */
-    return 1;
+#if WIN32_USE_CAIRO
+    return GP_PDF_CAIRO;
+#else
+    return GP_PDF_PDFLIB;
+#endif
 }
 
-int gnuplot_has_cairo (void)
+int gnuplot_png_terminal (void)
 {
-    /* ... but does not support cairo */
-    return 0;
-}
-
-int gnuplot_has_pngcairo (void)
-{
-    /* ... and no pngcairo */
-    return 0;
+#if WIN32_USE_CAIRO
+    return GP_PNG_CAIRO;
+#else
+    return GP_PNG_GD2;
+#endif
 }
    
-int gnuplot_has_pdfcairo (void)
-{
-    /* ... and no pdfcairo */
-    return 0;
-}    
-
-int gnuplot_has_specified_colors (void)
-{
-    /* ... and we know it does specified colors */
-    return 1;
-}
-
-int gnuplot_has_png_truecolor (void)
-{
-    /* yup */
-    return 1;
-}
-
 int gnuplot_has_style_fill (void)
 {
     /* ... and that it does style fill */
@@ -401,12 +385,6 @@ int gnuplot_has_style_fill (void)
 static int gnuplot_uses_datafile_missing (void)
 {
     /* yup */
-    return 1;
-}
-
-static int gnuplot_has_specified_emf_colors (void)
-{
-    /* ... and we know it does specified emf colors */
     return 1;
 }
 
@@ -472,63 +450,57 @@ int gnuplot_has_latin5 (void)
     return !err;
 }
 
-int gnuplot_has_pdf (void)
+int gnuplot_pdf_terminal (void)
 {
-    static int err = -1; 
+    static int ret = -1;
 
-    if (err == -1) {
-	err = gnuplot_test_command("set term pdf");
-#if 0 /* not yet */
-	if (err) {
-	    err = gnuplot_test_command("set term pdfcairo");
+    if (ret == -1) {
+	int err = gnuplot_test_command("set term pdfcairo");
+
+	if (!err) {
+	    ret = GP_PDF_CAIRO;
+	} else {
+	    err = gnuplot_test_command("set term pdf");
+	    if (!err) {
+		ret = GP_PDF_PDFLIB;
+	    } else {
+		ret = GP_PDF_NONE;
+	    }
 	}
-#endif
     }
 
-    return !err;
+    return ret;
 }
 
-int gnuplot_has_pdfcairo (void)
-{
-#if 1
-    return 0;  /* cairo terminals are not really ready */
-#else    
-    static int err = -1; 
+/* We should enable pngcairo as the default as soon as possible -- but
+   for the present this poses a problem with regard to guessing the
+   pixel bounds in the PNG file.  So we'll accept pngcairo only if
+   we find a (hacked) version that supports the "boundsfile" option.
+*/
 
-    if (err == -1) {
-	err = gnuplot_test_command("set term pdfcairo");
+int gnuplot_png_terminal (void)
+{
+    static int ret = -1;
+
+    if (ret == -1) {
+	int err = gnuplot_test_command("set term pngcairo bounds");
+
+	if (!err) {
+	    ret = GP_PNG_CAIRO;
+	} else {
+	    /* try the old-style command: if it fails, we have 
+	       the libgd driver, we hope! */
+	    err = gnuplot_test_command("set term png color");
+	    if (!err) {
+		ret = GP_PNG_OLD;
+	    } else {
+		err = gnuplot_test_command("set term png truecolor");
+		ret = (err)? GP_PNG_GD1 : GP_PNG_GD2;
+	    }
+	}
     }
 
-    return !err;
-#endif
-}
-
-int gnuplot_has_pngcairo (void)
-{
-#if 1
-    return 0;  /* cairo terminals are not really ready */
-#else
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term pngcairo xffffff");
-    }
-
-    return !err;
-#endif
-}
-
-int gnuplot_has_specified_colors (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	/* try the old-style command: 
-	   if it fails, we have the new driver, we hope! */
-	err = gnuplot_test_command("set term png color");
-    }
-
-    return err;
+    return ret;
 }
 
 int gnuplot_has_style_fill (void)
@@ -553,34 +525,12 @@ static int gnuplot_uses_datafile_missing (void)
     return !err;
 }
 
-static int gnuplot_has_specified_emf_colors (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term emf color xff0000");
-    }
-
-    return !err;
-}
-
 int gnuplot_has_rgb (void)
 {
     static int err = -1; 
 
     if (err == -1) {
 	err = gnuplot_test_command("set style line 2 lc rgb \"#0000ff\"");
-    }
-
-    return !err;
-}
-
-int gnuplot_has_png_truecolor (void)
-{
-    static int err = -1; 
-
-    if (err == -1) {
-	err = gnuplot_test_command("set term png truecolor");
     }
 
     return !err;
@@ -702,9 +652,9 @@ void graph_palette_reset (int i)
 
 static void 
 write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype,
-			   int cairo)
+			   int pngterm)
 {
-    if (cairo) {
+    if (pngterm == GP_PNG_CAIRO) {
 	char fname[128];
 	int fsize, nf;
 
@@ -824,33 +774,31 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     char size_string[16];
     char color_string[64];
     int gpcolors, gpttf = 1, gpsize = 1;
-    int pngcairo = 0;
+    int pngterm = 0;
     const char *grfont = NULL;
 
     *font_string = 0;
     *size_string = 0;
     *color_string = 0;
 
-#if 0
-    pngcairo = gnuplot_has_pngcairo(); /* not yet */
-#endif
+    pngterm = gnuplot_png_terminal();
 
 #ifdef WIN32
     gpcolors = RGB_LINE_COLOR;
 #else
     if (gnuplot_has_rgb()) {
 	gpcolors = RGB_LINE_COLOR;
-    } else if (gnuplot_has_specified_colors()) {
-	gpcolors = GD_PNG_COLOR;
-    } else {
+    } else if (pngterm == GP_PNG_OLD) {
 	gpcolors = OLD_PNG_COLOR;
+    } else {
+	gpcolors = GD_PNG_COLOR;
     }
+
     gpttf = gnuplot_has_ttf(0);
     gpsize = gnuplot_has_size();
 #endif
 
-    if (!pngcairo && gnuplot_png_use_aa &&
-	gnuplot_has_png_truecolor()) {
+    if (pngterm == GP_PNG_GD2 && gnuplot_png_use_aa) {
 	strcpy(truecolor_string, " truecolor");
     }    
 
@@ -861,7 +809,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	}
 	if (grfont != NULL && *grfont != 0) {
-	    write_gnuplot_font_string(font_string, grfont, ptype, pngcairo);
+	    write_gnuplot_font_string(font_string, grfont, ptype, pngterm);
 	}
     } 
 
@@ -889,9 +837,10 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 	}
     }
 
-    if (pngcairo) {
-	sprintf(png_term_line, "set term pngcairo%s%s%s",
-		font_string, size_string, color_string);
+    if (pngterm == GP_PNG_CAIRO) {
+	sprintf(png_term_line, "set term pngcairo bounds %s%s",
+		font_string, size_string);
+	strcat(png_term_line, "\nset encoding utf8");
     } else {
 	sprintf(png_term_line, "set term png%s%s%s%s",
 		truecolor_string, font_string, size_string, 
@@ -942,7 +891,6 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
 {
     static char emf_term_line[256];
     const char *grfont = NULL;
-    char cstr[8];
     
     strcpy(emf_term_line, "set term emf ");
 
@@ -957,23 +905,6 @@ const char *get_gretl_emf_term_line (PlotType ptype, int color)
     if (grfont != NULL && *grfont != 0) {
 	png_font_to_emf(grfont, emf_term_line);
     }
-
-    if (color && !gnuplot_has_rgb() && 
-	gnuplot_has_specified_emf_colors()) {
-	if (frequency_plot_code(ptype)) {
-	    print_rgb_x(cstr, user_color[BOXCOLOR]);
-	    strcat(emf_term_line, cstr);
-	    strcat(emf_term_line, " x000000");
-	} else {
-	    int i;
-
-	    for (i=0; i<BOXCOLOR; i++) {
-		print_rgb_x(cstr, user_color[i]);
-		strcat(emf_term_line, cstr);
-		strcat(emf_term_line, " ");
-	    }
-	}
-    } 
 
     return emf_term_line;
 }
@@ -1163,7 +1094,8 @@ int gnuplot_make_graph (void)
     int err = 0;
 
 #ifdef ENABLE_NLS  
-    if (iso_latin_version() == 2 && gnuplot_has_ttf(0)) {
+    if (iso_latin_version() == 2 && gnuplot_png_terminal() != GP_PNG_CAIRO && 
+	gnuplot_has_ttf(0)) {
 # if GP_DEBUG
 	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
 # endif

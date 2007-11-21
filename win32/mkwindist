@@ -108,11 +108,11 @@ done
 # GTK directories and runtime files
 process_gtk
 
-# auxiliary dlls
+# auxiliary dlls (if using cairo, can drop libpdf.dll)
 for f in \
     libgmp-3.dll libxml2.dll readline5.dll history5.dll zlib1.dll \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll libpdf.dll libfftw3-3.dll
+    iconv.dll intl.dll libfftw3-3.dll libpdf.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done

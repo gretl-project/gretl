@@ -285,6 +285,7 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
 #ifdef ENABLE_NLS
     int lv = iso_latin_version();
+    int pngterm = gnuplot_png_terminal();
 #endif
     gchar *trstr = NULL;
 
@@ -295,7 +296,7 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 
 
 #ifdef ENABLE_NLS
-    if (lv == 2) {
+    if (lv == 2 && pngterm < GP_PNG_CAIRO) {
 	char lstr[MAXTITLE];
 	
 	sprint_html_to_l2(lstr, str);
@@ -565,15 +566,15 @@ static const char *get_font_filename (const char *showname)
 
 static int font_is_ok (const char *fname)
 {
-    static int use_cairo = -1;
+    static int pngterm;
     char cmd[64];
     int err;
 
-    if (use_cairo < 0) {
-	use_cairo = gnuplot_has_pngcairo();
+    if (pngterm == 0) {
+	pngterm = gnuplot_png_terminal();
     }
 
-    if (use_cairo) {
+    if (pngterm == GP_PNG_CAIRO) {
 	sprintf(cmd, "set term pngcairo font \"%s,10\"", fname);
     } else {
 	sprintf(cmd, "set term png font %s 10", fname);
@@ -757,13 +758,6 @@ static void set_aa_status (GtkWidget *w, int *ok)
 {
     *ok = GTK_TOGGLE_BUTTON(w)->active;
 
-#ifdef G_OS_WIN32
-    if (*ok) {
-	putenv("GNUPLOT_PNG_ANTIALIAS=1");
-    } else {
-	putenv("GNUPLOT_PNG_ANTIALIAS=0");
-    }
-#endif
     gnuplot_png_set_use_aa(*ok);
 }
 
@@ -921,7 +915,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     }
 
     if (show_aa_check < 0) {
-	show_aa_check = !gnuplot_has_pngcairo() && gnuplot_has_png_truecolor();
+	show_aa_check = (gnuplot_png_terminal() == GP_PNG_GD2);
     }
 
     /* give option of suppressing anti-aliasing for PNGs */
@@ -1004,7 +998,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	ttfspin = NULL;
     }
 
-    if (gnuplot_has_specified_colors()) { 
+    if (gnuplot_png_terminal() != GP_PNG_OLD) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
@@ -1037,7 +1031,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
 	"plot commands",
 	NULL
     }; 
-    int pdf_ok = gnuplot_has_pdf();
+    int pdf_ok = gnuplot_pdf_terminal();
 
     for (i=0; termtypes[i] != NULL; i++) {
 	if (!pdf_ok && !strcmp(termtypes[i], "PDF")) {

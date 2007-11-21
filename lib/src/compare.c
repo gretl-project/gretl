@@ -570,9 +570,6 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	}
 	rho = estimate_rho(list, pZ, pdinfo, orig->ci, 
 			   &rep.errcode, hlopt, prn);
-    } else if (gretl_model_get_int(orig, "unit_weights")) {
-	/* panel model with per-unit weights */
-	myopt |= OPT_W;
     } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list);
@@ -599,6 +596,11 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     } else if (orig->ci == PANEL) {
 	if (gretl_model_get_int(orig, "random-effects")) {
 	    myopt |= OPT_U;
+	} else if (gretl_model_get_int(orig, "unit-weights")) {
+	    myopt |= OPT_W;
+	    if (gretl_model_get_int(orig, "iters")) {
+		myopt |= OPT_T;
+	    }
 	}
     }
 
@@ -650,7 +652,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	}
 	break;
     case PANEL:
-	rep = real_panel_model(list, pZ, pdinfo, myopt, prn);
+	rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	break;
     default:
 	/* handles OLS, WLS, HSK, HCCM, etc. */
@@ -663,7 +665,6 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
 	} else {
-	    /* FIXME panel WLS by unit? */
 	    rep = lsq(list, pZ, pdinfo, repci, myopt);
 	}
 	break;

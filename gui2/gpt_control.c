@@ -232,19 +232,30 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
 
 static void line_to_file (const char *s, FILE *fp, int lv)
 {
+    int done = 0;
+
 #ifdef ENABLE_NLS
-    if (lv == -2) {
-	fprintf(stderr, "line_to_file: lv=-2, doing print_as_html\n");
-	print_as_html(s, fp);
-    } else if (lv == 2) {
-	fprintf(stderr, "line_to_file: lv=2, doing print_as_locale\n");
-	print_as_locale(s, fp);
-    } else {
+    static int pngterm = -1;
+
+    if (lv == -2 || lv == 2) {
+	if (pngterm < 0) {
+	    pngterm = gnuplot_png_terminal();
+	}
+	if (pngterm != GP_PNG_CAIRO) {
+	    if (lv == -2) {
+		print_as_html(s, fp);
+		done = 1;
+	    } else if (lv == 2) {
+		print_as_locale(s, fp);
+		done = 1;
+	    }
+	}
+    } 
+#endif
+
+    if (!done) {
 	fputs(s, fp);
     }
-#else
-    fputs(s, fp);
-#endif
 }
 
 static FILE *open_gp_file (const char *fname, const char *mode)
@@ -454,7 +465,11 @@ static int get_full_term_string (const GPT_SPEC *spec, char *termstr)
     } else if (!strcmp(spec->termtype, "postscript")) {
 	strcpy(termstr, "postscript eps"); 
     } else if (!strcmp(spec->termtype, "PDF")) {
-	strcpy(termstr, "pdf");
+	if (gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	    strcpy(termstr, "pdfcairo");
+	} else {
+	    strcpy(termstr, "pdf");
+	}
     } else if (!strcmp(spec->termtype, "fig")) {
 	strcpy(termstr, "fig");
     } else if (!strcmp(spec->termtype, "latex")) {
@@ -676,16 +691,17 @@ void save_graph_to_file (gpointer data, const char *fname)
 static void graph_display_pdf (GPT_SPEC *spec)
 {
     char pdfname[FILENAME_MAX];
-    const char *term;
-    static int use_cairo = -1;
+    static char term[9];
 
     build_path(pdfname, paths.userdir, GRETL_PDF_TMP, NULL);
 
-    if (use_cairo < 0) {
-	use_cairo = gnuplot_has_pdfcairo();
+    if (*term == '\0') {
+	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	    strcpy(term, "pdfcairo");
+	} else {
+	    strcpy(term, "pdf");
+	}
     }
-
-    term = (use_cairo)? "pdfcairo" : "pdf";
 
     if (filter_plot_file(spec->fname, term, pdfname)) {
 	errbox("Error creating graph file");
@@ -2211,11 +2227,19 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, _("Add another curve..."))) {
 	stats_calculator(plot, CALC_GRAPH_ADD, NULL);
     } else if (!strcmp(item, _("Save as PNG..."))) {
-	strcpy(plot->spec->termtype, "png");
+	if (gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	    strcpy(plot->spec->termtype, "pngcairo");
+	} else {
+	    strcpy(plot->spec->termtype, "png");
+	}
         file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save as PDF..."))) {
-	strcpy(plot->spec->termtype, "PDF");
+	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
+	    strcpy(plot->spec->termtype, "pdfcairo");
+	} else {
+	    strcpy(plot->spec->termtype, "pdf");
+	}
         file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
@@ -2341,7 +2365,7 @@ static void build_plot_menu (png_plot *plot)
     int i;
 
     if (pdf_ok == -1) {
-	pdf_ok = gnuplot_has_pdf();
+	pdf_ok = gnuplot_pdf_terminal();
     }
 
     plot->popup = gtk_menu_new();
@@ -2797,6 +2821,14 @@ static void set_approx_pixel_bounds (png_plot *plot,
 #endif
 }
 
+int ok_dumb_line (const char *s)
+{
+    if (strstr(s, "x2tics")) return 0;
+    if (strstr(s, "set style line")) return 0;
+    if (strstr(s, "set style inc")) return 0;
+    return 1;
+}
+
 /* Attempt to read y-range info from the ascii representation
    of a gnuplot graph (the "dumb" terminal): return 0 on
    success, non-zero on failure.
@@ -2830,7 +2862,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	    fputs("set term dumb\n", fpout);
 	} else if (strstr(line, "set output")) { 
 	    fprintf(fpout, "set output '%s'\n", dumbtxt);
-	} else if (strstr(line, "x2tics") == NULL) {
+	} else if (ok_dumb_line(line)) {
 	    fputs(line, fpout);
 	}
 	if (strstr(line, "x2range")) {
@@ -2996,7 +3028,9 @@ static int get_plot_ranges (png_plot *plot)
     fclose(fp);
 
 #ifdef PNG_COMMENTS
-    /* now try getting accurate coordinate info from PNG file */
+    /* now try getting accurate coordinate info from PNG file
+       or auxiliary file
+    */
     if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
 	plot->status |= PLOT_PNG_COORDS;
 	got_x = got_y = 1;
@@ -3016,6 +3050,7 @@ static int get_plot_ranges (png_plot *plot)
 	fprintf(stderr, "using px_height %d, px_width %d\n",
 		plot->pixel_height, plot->pixel_width);
 # endif
+	fprintf(stderr, "get_png_bounds_info(): OK\n");
     } else {
 	fprintf(stderr, "get_png_bounds_info(): failed\n");
     }
@@ -3447,7 +3482,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     volatile int ret = GRETL_PNG_OK;
 
 #if 1
-    build_path(pngname, paths.userdir, "gretltmp.png", ".dims"); 
+    build_path(pngname, paths.userdir, "gretltmp.png", ".bounds"); 
     fp = fopen(pngname, "r");
     if (fp != NULL) {
 	ret = new_get_png_bounds_info(bounds, fp);

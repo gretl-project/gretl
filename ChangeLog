@@ -73,6 +73,7 @@ version 1.6.6, in progress
 - Databases on Windows: look in the gretl user directory
   as well as the system db directory
 - add argname() function for use in user functions
+- Panel, unit-weights: fix omit command
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory

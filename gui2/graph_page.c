@@ -607,7 +607,7 @@ int display_graph_page (void)
     gpage_filenames_init(NULL);
 
     if (!strncmp(latex, "pdf", 3)) {
-	if (gnuplot_has_pdf()) {
+	if (gnuplot_pdf_terminal()) {
 	    gpage.output = PDF_OUTPUT;
 	} else {
 	    latex_orig = g_strdup(latex);
@@ -678,7 +678,7 @@ int save_graph_page (const char *fname)
     gpage_filenames_init(fname);
 
     if (!strncmp(latex, "pdf", 3)) {
-	if (gnuplot_has_pdf()) {
+	if (gnuplot_pdf_terminal()) {
 	    gpage.output = PDF_OUTPUT;
 	} else {
 	    latex_orig = g_strdup(latex);

@@ -114,6 +114,20 @@ typedef enum {
     GP_TERM_PLT
 } TermType;
 
+typedef enum {
+    GP_PNG_NONE,  /* no PNG terminal available */
+    GP_PNG_OLD,   /* old driver from gnuplot 3.N */
+    GP_PNG_GD1,   /* libgd driver, no truecolor option */
+    GP_PNG_GD2,   /* libgd with truecolor option */
+    GP_PNG_CAIRO  /* newer cairo-based driver */
+} PNGTerm;
+
+typedef enum {
+    GP_PDF_NONE,
+    GP_PDF_PDFLIB,
+    GP_PDF_CAIRO
+} PDFTerm;
+
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA)
@@ -196,13 +210,9 @@ int is_auto_fit_string (const char *s);
 
 int gnuplot_has_ttf (int reset);
 
-int gnuplot_has_pdf (void);
+int gnuplot_pdf_terminal (void);
 
-int gnuplot_has_pdfcairo (void);
-
-int gnuplot_has_pngcairo (void);
-
-int gnuplot_has_specified_colors (void);
+int gnuplot_png_terminal (void);
 
 int gnuplot_has_rgb (void);
 
@@ -223,8 +233,6 @@ void print_palette_string (char *s);
 const gretlRGB *get_graph_color (int i);
 
 int gnuplot_test_command (const char *cmd);
-
-int gnuplot_has_png_truecolor (void);
 
 void gnuplot_png_set_use_aa (int s);
 

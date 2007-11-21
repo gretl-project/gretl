@@ -198,18 +198,27 @@ static char *escape_quotes (const char *s)
 static void 
 gp_string (FILE *fp, const char *fmt, const char *s, int png)
 {
-#ifdef ENABLE_NLS  
-    if (png && iso_latin_version() == 2) {
-	char htmlstr[128];
+    int done = 0;
 
-	sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
-	fprintf(fp, fmt, htmlstr);
-    } else {
-	fprintf(fp, fmt, s); 
-    }
-#else
-    fprintf(fp, fmt, s);
+#ifdef ENABLE_NLS  
+    static int pngterm = -1;
+
+    if (png && iso_latin_version() == 2) {
+	if (pngterm < 0) {
+	    pngterm = gnuplot_png_terminal();
+	}
+	if (pngterm != GP_PNG_CAIRO) {
+	    char htmlstr[128];
+
+	    sprint_l2_to_html(htmlstr, s, sizeof htmlstr);
+	    fprintf(fp, fmt, htmlstr);
+	}
+    } 
 #endif
+
+    if (!done) {
+	fprintf(fp, fmt, s);
+    }
 }
 
 const char *gp_justification_string (int j)

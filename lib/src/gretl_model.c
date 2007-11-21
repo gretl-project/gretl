@@ -649,6 +649,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[j]], targ);
+	} else if (gretl_model_get_int(pmod, "unit-weights")) {
+	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	} else if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
 		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == GARCH) {
