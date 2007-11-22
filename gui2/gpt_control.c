@@ -3380,14 +3380,24 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 {
     int ret = GRETL_PNG_OK;
 
-    if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
+    bounds->xleft = bounds->xright = 0;
+    bounds->ybot = bounds->ytop = 0;
+
+    if (sscanf(str, "pixel_bounds: %d %d %d %d",
+	       &bounds->xleft, &bounds->xright,
+	       &bounds->ybot, &bounds->ytop) == 4) {
+	ret = GRETL_PNG_OK;
+    } else if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
 	       &bounds->xleft, &bounds->xright,
 	       &bounds->ybot, &bounds->ytop) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
-    } else if (bounds->xleft == 0 && bounds->xright == 0 &&
-	       bounds->ybot == 0 && bounds->ytop == 0) {
-	ret = GRETL_PNG_NO_COORDS;
     } 
+
+    if (ret == GRETL_PNG_OK && bounds->xleft == 0 && 
+	bounds->xright == 0 && bounds->ybot == 0 && 
+	bounds->ytop == 0) {
+	ret = GRETL_PNG_NO_COORDS;
+    }
 
     if (bounds->xright > 1024) {
 	bounds->xleft /= 20;
@@ -3414,14 +3424,24 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
 	p++;
     }
 
+    bounds->xmin = bounds->xmax = 0.0;
+    bounds->ymin = bounds->ymax = 0.0;
+
     gretl_push_c_numeric_locale();
 
-    if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
+    if (sscanf(str, "data_bounds: %lf %lf %lf %lf",
+	       &bounds->xmin, &bounds->xmax,
+	       &bounds->ymin, &bounds->ymax) == 4) {
+	ret = GRETL_PNG_OK;
+    } else if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
 	       &bounds->xmin, &bounds->xmax,
 	       &bounds->ymin, &bounds->ymax) != 4) {
 	ret = GRETL_PNG_BAD_COMMENTS;
-    } else if (bounds->xmin == 0.0 && bounds->xmax == 0.0 &&
-	       bounds->ymin == 0.0 && bounds->ymax == 0.0) {
+    } 
+
+    if (ret == GRETL_PNG_OK && bounds->xmin == 0.0 && 
+	bounds->xmax == 0.0 && bounds->ymin == 0.0 && 
+	bounds->ymax == 0.0) {
 	ret = GRETL_PNG_NO_COORDS;
     } 
 

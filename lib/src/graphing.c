@@ -752,6 +752,22 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 /* end colors apparatus */
 
+static void print_plot_bounding_box (void)
+{
+    FILE *fp;
+
+    fp = fopen(gretl_plotfile(), "a");
+    
+    if (fp != NULL) {
+	fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_user_dir());
+	fputs("print \"pixel_bounds: \", GPVAL_GRAPH_XMIN, GPVAL_GRAPH_XMAX, "
+	      "GPVAL_GRAPH_YMIN, GPVAL_GRAPH_YMAX\n", fp);
+	fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
+	      "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
+	fclose(fp);
+    }
+}
+
 /**
  * get_gretl_png_term_line:
  * @ptype: indication of the sort of plot to be made, which
@@ -1102,6 +1118,11 @@ int gnuplot_make_graph (void)
 	html_recode_gnuplot_file(gretl_plotfile());
     } 
 #endif
+
+    if (gretl_in_gui_mode() && gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	/* FIXME */
+	print_plot_bounding_box();
+    }
 
 #ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
