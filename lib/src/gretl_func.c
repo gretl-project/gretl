@@ -474,8 +474,14 @@ static ufunc *currently_called_function (void)
 
 ufunc *get_user_function_by_name (const char *name)
 {
-    int i, ID = current_func_pkgID();
     ufunc *fun = NULL;
+    int i, ID;
+
+    if (n_ufuns == 0) {
+	return NULL;
+    }
+
+    ID = current_func_pkgID();
 
     /* if we're currently exec'ing a function from a package,
        look first for functions from the same package */
@@ -2300,53 +2306,6 @@ char *get_function_file_header (const char *fname, char **pver,
     }
 
     return descrip;
-}
-
-static char *function_name_from_line (const char *line, char *name)
-{
-    if (*line == '#' || !strncmp(line, "(*", 2)) {
-	*name = '\0';
-    } else {
-	const char *p = strchr(line, '=');
-	char *q;
-
-	if (p == NULL) {
-	    p = line;
-	} else {
-	    p++;
-	}
-
-	sscanf(p, "%31s", name);
-	q = strchr(name, '(');
-	if (q != NULL) {
-	    *q = 0;
-	}
-#if FN_DEBUG
-	fprintf(stderr, "function_name_from_line: line='%s', got '%s'\n", 
-		line, name);
-#endif
-    }
-
-    return name;
-}
-
-int gretl_is_user_function (const char *line)
-{
-    int ret = 0;
-
-    if (n_ufuns > 0 && !string_is_blank(line)) {
-	char name[FN_NAMELEN];
-
-#if FN_DEBUG > 1
-	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
-#endif
-	function_name_from_line(line, name);
-	if (get_user_function_by_name(name) != NULL) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
 }
 
 int gretl_is_public_user_function (const char *name)

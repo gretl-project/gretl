@@ -153,7 +153,7 @@ static void gen_write_label (parser *p, int oldv)
 
 int function_from_string (const char *s)
 {
-    char word[VNAMELEN];
+    char word[9];
     const char *p;
 
     *word = 0;
@@ -170,7 +170,7 @@ int function_from_string (const char *s)
     }
 
     /* user-defined functions */
-    if (gretl_is_user_function(s)) {
+    if (get_user_function_by_name(s)) {
 	return 1;
     }
 

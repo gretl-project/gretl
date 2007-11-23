@@ -166,17 +166,29 @@ static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
     return ret;
 }
 
+/* check for a command that generates a list via a user-defined
+   function: this must be handled as GENR
+*/
+
 static int list_genr_command (char *line)
 {
     char *s = strchr(line, '=');
+    int ret = 0;
 
     if (s != NULL) {
+	char name[FN_NAMELEN] = {0};
+	int n;
+
 	s++;
 	s += strspn(s, " ");
-	return gretl_is_user_function(s);
+	n = gretl_varchar_spn(s);
+	if (n > 0) {
+	    strncat(name, s, (n > FN_NAMELEN - 1)? FN_NAMELEN - 1 : n);
+	    ret = (get_user_function_by_name(name) != NULL);
+	}	
     }
 
-    return 0;
+    return ret;
 }
 
 static void cmd_set_param_direct (CMD *cmd, const char *s)
@@ -1591,7 +1603,7 @@ static int plausible_genr_start (const char *s, CMD *cmd,
 		ret = 1;
 	    }
 	}
-    } else if (varindex(pdinfo, s) < pdinfo->v) {
+    } else if (pdinfo != NULL && varindex(pdinfo, s) < pdinfo->v) {
 	ret = 1;
     } else if (get_matrix_by_name(s)) {
 	ret = 1;
@@ -2095,17 +2107,21 @@ static int sepcount_error (int ci, int nsep)
 static int get_command_word (const char *line, CMD *cmd)
 {
     int n = gretl_varchar_spn(line);
+    int ret = 0;
 
-    if (n == 0) {
-	return 0;
-    } else {
+    if (*line == '!') {
+	strcpy(cmd->word, "!");
+	ret = 1;
+    } else if (n > 0) {
 	if (n > FN_NAMELEN - 1) {
 	    n = FN_NAMELEN - 1;
 	}
 	*cmd->word = '\0';
 	strncat(cmd->word, line, n);
-	return 1;
+	ret = 1;
     }
+
+    return ret;
 }
 
 /**
@@ -2200,7 +2216,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->ci = GENR;
-	    } else if (gretl_is_user_function(line)) {
+	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
 	    } else if (ifstate(IS_FALSE)) {
@@ -3653,6 +3669,7 @@ static int run_script (const char *fname, ExecState *s,
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
 	return E_FOPEN;
     }
 
@@ -4620,22 +4637,6 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     return err;
 }
 
-static int could_be_varname (const char *s)
-{
-    int n = gretl_varchar_spn(s);
-    char word[VNAMELEN];
-
-    if (n > 0 && n < VNAMELEN) {
-	*word = '\0';
-	strncat(word, s, n);
-	if (check_varname(word) == 0) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 /**
  * get_command_index:
  * @line: command line.
@@ -4656,14 +4657,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     static int context;
     int done = 0;
 
-#if 0
-    if (gretl_cmd_clear(cmd)) {
-	return cmd->err;
-    }
-#else
     cmd->ci = 0;
     cmd->opt = OPT_NONE;
-#endif
 
     while (isspace(*line)) {
 	line++;
@@ -4677,7 +4672,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	return 0;
     }
 
-    if (sscanf(line, "%8s", cmd->word) != 1) {
+    if (!get_command_word(line, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return 0;
@@ -4714,9 +4709,9 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
 	if (cmd->ci == 0) {
-	    if (could_be_varname(line)) {
+	    if (plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->ci = GENR;
-	    } else if (gretl_is_user_function(line)) {
+	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
 	    } else {

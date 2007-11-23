@@ -632,7 +632,7 @@ static void look_up_word (const char *s, parser *p)
 		} else if (get_list_by_name(s)) {
 		    p->sym = LIST;
 		    p->idstr = gretl_strdup(s);
-		} else if (gretl_is_user_function(s)) {
+		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
 		} else if (string_is_defined(s)) {

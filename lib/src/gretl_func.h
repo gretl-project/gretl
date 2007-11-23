@@ -80,8 +80,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn);
 
 int gretl_function_append_line (const char *line);
 
-int gretl_is_user_function (const char *line);
-
 int gretl_is_public_user_function (const char *name);
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
