@@ -4657,9 +4657,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
-    if (*line == '#' || (*line == '(' && *(line+1) == '*')) {
-	cmd_set_nolist(cmd);
-	cmd->ci = CMD_COMMENT;
+    if (filter_comments(line, cmd)) {
 	return 0;
     }
 
