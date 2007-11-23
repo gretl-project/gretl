@@ -23,7 +23,6 @@
 #include "monte_carlo.h"
 #include "var.h"
 #include "gretl_func.h"
-#include "loop_private.h"
 #include "compat.h"
 #include "system.h"
 #include "forecast.h"
@@ -66,6 +65,9 @@ typedef struct {
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
 
 static void get_optional_filename_etc (const char *line, CMD *cmd);
+static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err);
+static int set_if_state (int code);
+static int get_if_state (int code);
 
 static int strip_inline_comments (char *s)
 {
@@ -383,6 +385,86 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == LOGS || \
                          c == SQUARE)
 
+enum {
+    SET_FALSE,
+    SET_TRUE,
+    SET_ELSE,
+    SET_ELIF,
+    SET_ENDIF,
+    IS_FALSE,
+    IS_TRUE,
+    DOINDENT,
+    UNINDENT,
+    GETINDENT,
+    RELAX
+};
+
+#define IFDEBUG 0
+
+#if 1
+
+static int flow_control (const char *line, double ***pZ, 
+			 DATAINFO *pdinfo, CMD *cmd)
+{
+    int ci = cmd->ci;
+    int ok, err = 0;
+
+    if (get_if_state(IS_FALSE)) {
+	if (ci == IF) {
+	    err = set_if_state(SET_FALSE);
+	} else if (ci == ENDIF) {
+	    err = set_if_state(SET_ENDIF);
+	} else if (ci == ELSE && (cmd->opt & OPT_I)) {
+	    err = set_if_state(SET_ELIF);
+	    if (!err && get_if_state(IS_TRUE)) {
+		set_if_state(UNINDENT);
+		ok = if_eval(line, pZ, pdinfo, &err);
+		if (!err) {
+		    err = set_if_state(ok? SET_TRUE : SET_FALSE);
+		}
+	    } 
+	} else if (ci == ELSE) {
+	    err = set_if_state(SET_ELSE);
+	}
+	goto blocked;
+    }
+
+    if (ci != IF && ci != ELSE && ci != ENDIF) {
+	return 0;
+    }
+
+    if (ci == IF) {
+	ok = if_eval(line, pZ, pdinfo, &err);
+	if (!err) {
+	    err = set_if_state(ok? SET_TRUE : SET_FALSE);
+	}
+    } else if (ci == ENDIF) {
+	err = set_if_state(SET_ENDIF);
+    } else if (ci == ELSE && (cmd->opt & OPT_I)) {
+	err = set_if_state(SET_ELIF);
+	if (!err && get_if_state(IS_TRUE)) {
+	    set_if_state(UNINDENT);
+	    ok = if_eval(line, pZ, pdinfo, &err);
+	    if (!err) {
+		err = set_if_state(ok? SET_TRUE : SET_FALSE);
+	    }
+	} 
+    } else if (ci == ELSE) {
+	err = set_if_state(SET_ELSE);
+    }
+
+ blocked:
+
+    if (err) {
+	set_if_state(RELAX);
+	cmd->err = err;
+    } 
+
+    return 1;
+}
+
+#else
+
 /* Below: 'skip' gets set whenever an "if" or "elif" condition is
    satisfied: in that case we don't need to bother with any trailing
    "else" or "elif" clauses.  We do need to be sure to switch off
@@ -403,13 +485,13 @@ static int flow_control (const char *line, double ***pZ,
     int ci = cmd->ci;
     int ok, err = 0;
 
-#if 0
+#if 1
     fprintf(stderr, "flow_control: line='%s', skiplev=%d, skip=%d\n",
 	    line, skiplev, skip);
 #endif
 
     if (skip == SKIP_ALLOW && ci == ELSE && 
-	skiplev == ifstate(GETINDENT)) {
+	skiplev == get_if_state(GETINDENT)) {
 	/* reached the end of an accepted block */
 	skip = SKIP_DENY;
 	return 1;
@@ -419,65 +501,76 @@ static int flow_control (const char *line, double ***pZ,
 	/* keep going to the end of the relevant conditional, keeping
 	   track of depth */
 	if (ci == IF) {
-	    ifstate(DOINDENT);
+	    err = set_if_state(DOINDENT);
 	} else if (ci == ENDIF) {
-	    if (skiplev < ifstate(GETINDENT)) {
-		ifstate(UNINDENT);
+	    int indent = get_if_state(GETINDENT);
+
+	    if (skiplev < indent) {
+		set_if_state(UNINDENT);
+		if (indent == 1) {
+		    skip = SKIP_NONE;
+		    return 1;
+		}
 	    } else {
+		fprintf(stderr, " got here 2\n");
 		skip = SKIP_NONE;
 	    }
-	}
+	} 
 	if (skip == SKIP_DENY) {
 	    return 1;
 	}
     }
 
     /* otherwise, clear to proceed? */
-    if (!ifstate(IS_FALSE) && ci != IF && ci != ELSE && ci != ENDIF) {
+    if (!get_if_state(IS_FALSE) && ci != IF && ci != ELSE && ci != ENDIF) {
 	return 0;
     }
 
     if (ci == ELSE && (cmd->opt & OPT_I)) {
 	/* "elif" */
-	err = ifstate(SET_ELIF);
-	if (!ifstate(IS_FALSE)) {
-	    ifstate(UNINDENT);
-	    ok = if_eval(line, pZ, pdinfo);
-	    if (ok == -1) {
-		err = 1;
-	    } else if (ok) {
-		err = ifstate(SET_TRUE);
-		skip = SKIP_ALLOW;
-		skiplev = ifstate(GETINDENT);
-	    } else {
-		err = ifstate(SET_FALSE);
+	err = set_if_state(SET_ELIF);
+	if (!get_if_state(IS_FALSE)) {
+	    set_if_state(UNINDENT);
+	    ok = if_eval(line, pZ, pdinfo, &err);
+	    if (!err) {
+		if (ok) {
+		    err = set_if_state(SET_TRUE);
+		    skip = SKIP_ALLOW;
+		    skiplev = get_if_state(GETINDENT);
+		} else {
+		    err = set_if_state(SET_FALSE);
+		    skip = SKIP_DENY;
+		}
 	    }
 	} 	
     } else if (ci == IF) {
-	ok = if_eval(line, pZ, pdinfo);
-	if (ok == -1) {
-	    err = 1;
-	} else if (ok) {
-	    err = ifstate(SET_TRUE);
-	    skip = SKIP_ALLOW;
-	    skiplev = ifstate(GETINDENT);
-	} else {
-	    err = ifstate(SET_FALSE);
+	ok = if_eval(line, pZ, pdinfo, &err);
+	if (!err) {
+	    if (ok) {
+		err = set_if_state(SET_TRUE);
+		skip = SKIP_ALLOW;
+		skiplev = get_if_state(GETINDENT);
+	    } else {
+		err = set_if_state(SET_FALSE);
+		skip = SKIP_DENY;
+	    }
 	}
     } else if (ci == ELSE) {
-	err = ifstate(SET_ELSE);
+	err = set_if_state(SET_ELSE);
     } else if (ci == ENDIF) {
-	err = ifstate(SET_ENDIF);
+	err = set_if_state(SET_ENDIF);
 	skip = SKIP_NONE;
     }
 
     if (err) {
-	ifstate(RELAX);
-	cmd->err = E_SYNTAX;
-    }    
+	set_if_state(RELAX);
+	cmd->err = err;
+    } 
 
     return 1;
 }
+
+#endif
 
 static char cmd_savename[MAXSAVENAME];
 
@@ -2219,7 +2312,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
-	    } else if (ifstate(IS_FALSE)) {
+	    } else if (get_if_state(IS_FALSE)) {
 		cmd_set_nolist(cmd);
 		cmd->ci = CMD_NULL;
 		return 0;
@@ -4570,6 +4663,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     return err;
 }
 
+
 /* called by functions, and by scripts executed from within
    functions */
 
@@ -4635,6 +4729,22 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     return err;
+}
+
+static int could_be_varname (const char *s)
+{
+    int n = gretl_varchar_spn(s);
+    char word[VNAMELEN];
+
+    if (n > 0 && n < VNAMELEN) {
+	*word = '\0';
+	strncat(word, s, n);
+	if (check_varname(word) == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -4709,7 +4819,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
 	if (cmd->ci == 0) {
-	    if (plausible_genr_start(line, cmd, pdinfo)) {
+	    if (could_be_varname(line)) {
 		cmd->ci = GENR;
 	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
@@ -4919,4 +5029,164 @@ void gretl_exec_state_clear (ExecState *s)
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
     s->funcerr = 0;
+}
+
+/* if-then stuff - conditional execution */
+
+static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
+{
+    double val = NADBL;
+    int ret = -1;
+
+#if IFDEBUG
+    fprintf(stderr, "if_eval: line = '%s'\n", s);
+#endif
+
+    if (!strncmp(s, "if", 2)) {
+	s += 2;
+    } else if (!strncmp(s, "elif", 4)) {
+	s += 4;
+    }
+
+    while (*s == ' ') s++;
+
+    val = generate_scalar(s, pZ, pdinfo, err);
+
+#if IFDEBUG
+    if (err) {
+	fprintf(stderr, "if_eval: generate returned %d\n", *err);
+    }
+#endif
+
+    if (*err) {
+	gretl_errmsg_set(_("error evaluating 'if'"));
+    } else if (na(val)) {
+	strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
+    } else {
+	ret = (int) val;
+    }
+
+#if IFDEBUG
+    fprintf(stderr, "if_eval: returning %d\n", ret);
+#endif
+
+    return ret;
+}
+
+#if IFDEBUG
+static const char *ifstr (int c)
+{
+    if (c == SET_FALSE) return "SET_FALSE";
+    if (c == SET_TRUE)  return "SET_TRUE";
+    if (c == SET_ELSE)  return "SET_ELSE";
+    if (c == SET_ELIF)  return "SET_ELIF";
+    if (c == SET_ENDIF) return "SET_ENDIF";
+    if (c == IS_FALSE)  return "IS_FALSE";
+    if (c == IS_TRUE)   return "IS_TRUE";
+    if (c == DOINDENT)  return "DOINDENT";
+    if (c == UNINDENT)  return "UNINDENT";
+    if (c == GETINDENT) return "GETINDENT";
+    if (c == RELAX)     return "RELAX";
+    return "UNKNOWN";
+}
+#endif
+
+#define IF_DEPTH 32
+
+static int ifstate (int code, int *err)
+{
+    static unsigned char T[IF_DEPTH];
+    static unsigned char got_if[IF_DEPTH];
+    static unsigned char got_else[IF_DEPTH];
+    static unsigned char indent;
+    int i, ret = 0;
+
+#if IFDEBUG
+    fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
+#endif
+
+    if (code == RELAX) {
+	indent = 0;
+    } else if (code == DOINDENT) {
+	ret = ++indent;
+	if (indent >= IF_DEPTH) {
+	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
+	    *err = E_DATA;
+	}
+    } else if (code == UNINDENT) {
+	ret = --indent;
+    } else if (code == GETINDENT) {
+	ret = indent;
+    } else if (code == SET_FALSE || code == SET_TRUE) {
+	indent++;
+	if (indent >= IF_DEPTH) {
+	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
+	    *err = E_DATA;
+	} else {
+	    T[indent] = (code == SET_TRUE);
+	    got_if[indent] = 1;
+	    got_else[indent] = 0;
+	}
+    } else if (code == SET_ELSE) {
+	if (got_else[indent] || !got_if[indent]) {
+	    strcpy(gretl_errmsg, "Unmatched \"else\"");
+	    *err = E_PARSE;
+	} else {
+	    T[indent] = !T[indent];
+	    got_else[indent] = 1;
+	}
+    } else if (code == SET_ELIF) {
+	if (got_else[indent] || !got_if[indent]) {
+	    strcpy(gretl_errmsg, "Unmatched \"elif\"");
+	    *err = E_PARSE;
+	} else {
+	    T[indent] = !T[indent];
+	}
+    } else if (code == SET_ENDIF) {
+	if (!got_if[indent] || indent == 0) {
+	    strcpy(gretl_errmsg, "Unmatched \"endif\"");
+	    *err = E_PARSE;
+	} else {
+	    got_if[indent] = 0;
+	    got_else[indent] = 0;
+	    indent--;
+	}
+    } else if (code == IS_FALSE) {
+	for (i=1; i<=indent; i++) {
+	    if (T[i] == 0) {
+		ret = 1;
+		break;
+	    }
+	}
+    } else if (code == IS_TRUE) {
+	ret = 1;
+	for (i=1; i<=indent; i++) {
+	    if (T[i] == 0) {
+		ret = 0;
+		break;
+	    }
+	}
+    }
+
+#if IFDEBUG
+    fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 
+	    ret, indent, *err);
+#endif
+
+    return ret;
+}
+
+static int set_if_state (int code)
+{
+    int err = 0;
+
+    ifstate(code, &err);
+    return err;
+}
+
+static int get_if_state (int code)
+{
+    int err = 0;
+
+    return ifstate(code, &err);
 }

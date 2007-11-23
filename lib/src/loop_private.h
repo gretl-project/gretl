@@ -24,23 +24,6 @@
 #ifndef LOOP_PRIVATE_H
 #define LOOP_PRIVATE_H
 
-enum {
-    SET_FALSE,
-    SET_TRUE,
-    SET_ELSE,
-    SET_ELIF,
-    SET_ENDIF,
-    IS_FALSE,
-    DOINDENT,
-    UNINDENT,
-    GETINDENT,
-    RELAX
-};
-
 int is_active_index_loop_char (int c);
-
-int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
-
-int ifstate (int code);
 
 #endif /* LOOP_PRIVATE_H */
