@@ -41,6 +41,7 @@ typedef enum {
     MAIL_NO_SERVER,
     MAIL_NO_SENDER,
     MAIL_NO_PASS,
+    MAIL_NO_MEM,
     MAIL_CANCEL
 } MailError;
 
@@ -74,6 +75,7 @@ struct msg_info {
 };  
 
 struct mail_info {
+    int err;
     char *sender;
     char *sig;
     int want_sig;
@@ -98,7 +100,6 @@ struct mail_dialog {
     GtkWidget *cancel;
     struct mail_info *minfo;
     struct msg_info *msg;
-    int *errp;
 };
 
 struct pop_dialog {
@@ -109,7 +110,6 @@ struct pop_dialog {
     GtkWidget *ok;
     GtkWidget *cancel;
     struct mail_info *minfo;
-    int *errp;
 };
 
 static void msg_init (struct msg_info *msg)
@@ -130,6 +130,7 @@ static void free_msg (struct msg_info *msg)
 
 static void mail_info_init (struct mail_info *minfo)
 {
+    minfo->err = 0;
     minfo->sender = NULL;
     minfo->sig = NULL;
     minfo->want_sig = 1;
@@ -250,7 +251,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     int save = 0;
 
     if (w == md->cancel) {
-	*md->errp = MAIL_CANCEL;
+	md->minfo->err = MAIL_CANCEL;
 	gtk_widget_destroy(md->dlg);
 	return;
     }
@@ -347,7 +348,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	}	    
     }
 
-    *md->errp = err;
+    md->minfo->err = err;
 
     if (save) {
 	save_email_info(minfo);
@@ -363,7 +364,7 @@ static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
     int err = MAIL_OK;
 
     if (w == pd->cancel) {
-	*pd->errp = MAIL_CANCEL;
+	pd->minfo->err = MAIL_CANCEL;
 	gtk_widget_destroy(pd->dlg);
 	return;
     }
@@ -405,7 +406,7 @@ static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
 	save_email_info(minfo);
     }
 
-    *pd->errp = err;
+    pd->minfo->err = err;
 
     gtk_widget_destroy(pd->dlg);
 }
@@ -465,13 +466,13 @@ static void get_email_info (struct mail_info *minfo)
 static void cancel_mail (struct mail_dialog *md)
 {
     fprintf(stderr, "delete-event: canceling\n");
-    *md->errp = MAIL_CANCEL;
+    md->minfo->err = MAIL_CANCEL;
 }
 
 static void cancel_pop (struct pop_dialog *pd)
 {
     fprintf(stderr, "delete-event: canceling\n");
-    *pd->errp = MAIL_CANCEL;
+    pd->minfo->err = MAIL_CANCEL;
 }
 
 static int is_data_file (const char *fname)
@@ -506,7 +507,7 @@ static void mail_to_dialog_quit (GtkWidget *w, struct mail_dialog *md)
     gtk_main_quit();
 }
 
-static int 
+static void 
 mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg)
 {
     const gchar *lbls[] = {
@@ -520,18 +521,17 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gchar *port_str;
     const char *short_fname, *p;
     struct mail_dialog *md;
-    int datafile, nrows;
-    int i, err = 0;
+    int i, datafile, nrows;
 
     md = malloc(sizeof *md);
     if (md == NULL) {
-	return E_ALLOC;
+	minfo->err = MAIL_NO_MEM;
+	return;
     }
 
     md->dlg = gtk_dialog_new();
     md->minfo = minfo;
     md->msg = msg;
-    md->errp = &err;
 
     get_email_info(md->minfo);
     md->minfo->sig = get_signature();
@@ -682,14 +682,14 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     GTK_WIDGET_SET_FLAGS(md->cancel, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), md->cancel);
     g_signal_connect(G_OBJECT(md->cancel), "clicked", 
-		     G_CALLBACK(finalize_mail_settings), &md);
+		     G_CALLBACK(finalize_mail_settings), md);
 
     /* Create the "OK" button */
     md->ok = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(md->ok, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), md->ok);
     g_signal_connect(G_OBJECT(md->ok), "clicked", 
-		     G_CALLBACK(finalize_mail_settings), &md);
+		     G_CALLBACK(finalize_mail_settings), md);
     gtk_widget_grab_default(md->ok);
 
     gtk_widget_set_size_request(md->dlg, 420, -1);
@@ -701,8 +701,6 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 
     gtk_window_set_modal(GTK_WINDOW(md->dlg), TRUE);
     gtk_main();
-
-    return err;
 }
 
 static void pop_info_dialog_quit (GtkWidget *w, struct pop_dialog *pd)
@@ -711,7 +709,7 @@ static void pop_info_dialog_quit (GtkWidget *w, struct pop_dialog *pd)
     gtk_main_quit();
 }
 
-static int pop_info_dialog (struct mail_info *minfo)
+static void pop_info_dialog (struct mail_info *minfo)
 {
     const gchar *lbls[] = {
 	N_("POP server:"),
@@ -721,16 +719,16 @@ static int pop_info_dialog (struct mail_info *minfo)
     GtkWidget *tbl, *lbl;
     GtkWidget *hbox, *vbox;
     struct pop_dialog *pd;
-    int i, err = 0;
+    int i;
 
     pd = malloc(sizeof *pd);
     if (pd == NULL) {
-	return E_ALLOC;
+	minfo->err = MAIL_NO_MEM;
+	return;
     }
 
     pd->dlg = gtk_dialog_new();
     pd->minfo = minfo;
-    pd->errp = &err;
 
     g_signal_connect(G_OBJECT(pd->dlg), "delete-event", 
 		     G_CALLBACK(cancel_pop), pd);
@@ -792,14 +790,14 @@ static int pop_info_dialog (struct mail_info *minfo)
     GTK_WIDGET_SET_FLAGS(pd->cancel, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), pd->cancel);
     g_signal_connect(G_OBJECT(pd->cancel), "clicked", 
-		     G_CALLBACK(finalize_pop_settings), &pd);
+		     G_CALLBACK(finalize_pop_settings), pd);
 
     /* "OK" button */
     pd->ok = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(pd->ok, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), pd->ok);
     g_signal_connect(G_OBJECT(pd->ok), "clicked", 
-		     G_CALLBACK(finalize_pop_settings), &pd);
+		     G_CALLBACK(finalize_pop_settings), pd);
     gtk_widget_grab_default(pd->ok);
 
     gtk_widget_set_size_request(pd->dlg, 360, -1);
@@ -807,8 +805,6 @@ static int pop_info_dialog (struct mail_info *minfo)
 
     gtk_window_set_modal(GTK_WINDOW(pd->dlg), TRUE);
     gtk_main();
-
-    return err;
 }
 
 static void mail_infobox (const char *msg, int err)
@@ -970,9 +966,10 @@ static int pop_login (struct mail_info *minfo)
     int unit, err;
 
     set_pop_defaults(minfo);
-    err = pop_info_dialog(minfo);
-    if (err) {
-	return err;
+    pop_info_dialog(minfo);
+
+    if (minfo->err) {
+	return 1;
     }
 
     fprintf(stderr, "trying POP before SMTP, with %s\n", minfo->pop_server);
@@ -1195,7 +1192,7 @@ int email_file (const char *fname, const char *userdir)
     struct msg_info msg;
     char temp[FILENAME_MAX];
     gchar *errmsg = NULL;
-    int mval, err = 0;
+    int err = 0;
 
     mail_info_init(&minfo);
     msg_init(&msg);
@@ -1206,14 +1203,16 @@ int email_file (const char *fname, const char *userdir)
     }
 
     if (!err) {
-	mval = mail_to_dialog(fname, &minfo, &msg);
-	if (mval == MAIL_NO_RECIPIENT) {
+	mail_to_dialog(fname, &minfo, &msg);
+	if (minfo.err == MAIL_NO_RECIPIENT) {
 	    errmsg = g_strdup("No address was given");
-	} else if (mval == MAIL_NO_SERVER) {
+	} else if (minfo.err == MAIL_NO_SERVER) {
 	    errmsg = g_strdup("No SMTP was given");
-	} else if (mval == MAIL_NO_SENDER) {
+	} else if (minfo.err == MAIL_NO_SENDER) {
 	    errmsg = g_strdup("No sender address was given");
-	} else if (mval == MAIL_OK) {
+	} else if (minfo.err == MAIL_NO_MEM) {
+	    errmsg = g_strdup("Out of memory");
+	} else if (minfo.err == MAIL_OK) {
 	    err = pack_and_mail(fname, &msg, &minfo, temp);
 	}
     }
