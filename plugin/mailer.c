@@ -500,6 +500,12 @@ static void sig_callback (GtkWidget *w, struct mail_info *minfo)
     minfo->want_sig = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
+static void mail_to_dialog_quit (GtkWidget *w, struct mail_dialog *md)
+{
+    free(md);
+    gtk_main_quit();
+}
+
 static int 
 mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg)
 {
@@ -513,32 +519,37 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     GtkWidget *nb, *hbox;
     gchar *port_str;
     const char *short_fname, *p;
-    struct mail_dialog md;
+    struct mail_dialog *md;
     int datafile, nrows;
     int i, err = 0;
 
-    md.dlg = gtk_dialog_new();
-    md.minfo = minfo;
-    md.msg = msg;
-    md.errp = &err;
+    md = malloc(sizeof *md);
+    if (md == NULL) {
+	return E_ALLOC;
+    }
 
-    get_email_info(md.minfo);
-    md.minfo->sig = get_signature();
-    md.minfo->want_sig = minfo->sig != NULL;
+    md->dlg = gtk_dialog_new();
+    md->minfo = minfo;
+    md->msg = msg;
+    md->errp = &err;
 
-    g_signal_connect(G_OBJECT(md.dlg), "delete-event", 
-		     G_CALLBACK(cancel_mail), &md);
+    get_email_info(md->minfo);
+    md->minfo->sig = get_signature();
+    md->minfo->want_sig = minfo->sig != NULL;
 
-    g_signal_connect(G_OBJECT(md.dlg), "destroy", 
-		     G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(md->dlg), "delete-event", 
+		     G_CALLBACK(cancel_mail), md);
 
-    gtk_window_set_title(GTK_WINDOW(md.dlg), _("gretl: send mail"));
-    set_dialog_border_widths(md.dlg);
-    gtk_dialog_set_has_separator(GTK_DIALOG(md.dlg), FALSE);
-    gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
+    g_signal_connect(G_OBJECT(md->dlg), "destroy", 
+		     G_CALLBACK(mail_to_dialog_quit), md);
+
+    gtk_window_set_title(GTK_WINDOW(md->dlg), _("gretl: send mail"));
+    set_dialog_border_widths(md->dlg);
+    gtk_dialog_set_has_separator(GTK_DIALOG(md->dlg), FALSE);
+    gtk_window_set_position(GTK_WINDOW(md->dlg), GTK_WIN_POS_MOUSE);
 
     nb = gtk_notebook_new();
-    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(md.dlg)->vbox), nb);
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(md->dlg)->vbox), nb);
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -547,7 +558,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     lbl = gtk_label_new(_("Message"));
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);    
 
-    nrows = (md.minfo->sig == NULL)? 4 : 5;
+    nrows = (md->minfo->sig == NULL)? 4 : 5;
 
     tbl = gtk_table_new(nrows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -570,16 +581,16 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 
 	if (i == 0) {
 	    w = gtk_combo_new();
-	    if (md.minfo->addrs != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(w), md.minfo->addrs);
+	    if (md->minfo->addrs != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(w), md->minfo->addrs);
 	    } 
 	} else {
 	    w = gtk_entry_new();
 	}
 
 	if (i == 1) {
-	    if (md.minfo->sender != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), md.minfo->sender);
+	    if (md->minfo->sender != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), md->minfo->sender);
 	    }
 	} else if (i == 2) {
 	    gtk_entry_set_text(GTK_ENTRY(w), (datafile)? "dataset" : "script");
@@ -606,17 +617,17 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
 
 	if (i == 0) {
-	    md.recip_combo = w;
+	    md->recip_combo = w;
 	} else if (i == 1) {
-	    md.reply_entry = w;
+	    md->reply_entry = w;
 	} else if (i == 2) {
-	    md.subj_entry = w;
+	    md->subj_entry = w;
 	} else {
-	    md.note_entry = w;
+	    md->note_entry = w;
 	}
     }
 
-    if (md.minfo->sig != NULL) {
+    if (md->minfo->sig != NULL) {
 	GtkWidget *w;
 
 	w = gtk_check_button_new_with_label(_("Append signature"));
@@ -643,55 +654,61 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
 
-    md.server_entry = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), md.server_entry, 1, 3, 0, 1);
-    if (md.minfo->server != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(md.server_entry), md.minfo->server);
+    md->server_entry = gtk_entry_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), md->server_entry, 1, 3, 0, 1);
+    if (md->minfo->server != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(md->server_entry), md->minfo->server);
     }    
 
     lbl = gtk_label_new(_("port:"));
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 
-    md.port_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(md.port_entry), 5);
-    gtk_entry_set_width_chars(GTK_ENTRY(md.port_entry), 8);
+    md->port_entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(md->port_entry), 5);
+    gtk_entry_set_width_chars(GTK_ENTRY(md->port_entry), 8);
 
-    gtk_table_attach_defaults(GTK_TABLE(tbl), md.port_entry, 1, 2, 1, 2);
-    port_str = g_strdup_printf("%d", md.minfo->port);
-    gtk_entry_set_text(GTK_ENTRY(md.port_entry), port_str);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), md->port_entry, 1, 2, 1, 2);
+    port_str = g_strdup_printf("%d", md->minfo->port);
+    gtk_entry_set_text(GTK_ENTRY(md->port_entry), port_str);
     g_free(port_str);
     lbl = gtk_label_new("                     ");
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
 
-    hbox = GTK_DIALOG(md.dlg)->action_area;
+    hbox = GTK_DIALOG(md->dlg)->action_area;
 
     /* Cancel button */
-    md.cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(md.cancel, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(hbox), md.cancel);
-    g_signal_connect(G_OBJECT(md.cancel), "clicked", 
+    md->cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(md->cancel, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), md->cancel);
+    g_signal_connect(G_OBJECT(md->cancel), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &md);
 
     /* Create the "OK" button */
-    md.ok = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(md.ok, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(hbox), md.ok);
-    g_signal_connect(G_OBJECT(md.ok), "clicked", 
+    md->ok = gtk_button_new_from_stock(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(md->ok, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), md->ok);
+    g_signal_connect(G_OBJECT(md->ok), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &md);
-    gtk_widget_grab_default(md.ok);
+    gtk_widget_grab_default(md->ok);
 
-    gtk_widget_set_size_request(md.dlg, 420, -1);
-    gtk_widget_show_all(md.dlg);
+    gtk_widget_set_size_request(md->dlg, 420, -1);
+    gtk_widget_show_all(md->dlg);
 
-    if (md.minfo->server == NULL) {
+    if (md->minfo->server == NULL) {
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), 1);
     }
 
-    gtk_window_set_modal(GTK_WINDOW(md.dlg), TRUE);
+    gtk_window_set_modal(GTK_WINDOW(md->dlg), TRUE);
     gtk_main();
 
     return err;
+}
+
+static void pop_info_dialog_quit (GtkWidget *w, struct pop_dialog *pd)
+{
+    free(pd);
+    gtk_main_quit();
 }
 
 static int pop_info_dialog (struct mail_info *minfo)
@@ -703,24 +720,29 @@ static int pop_info_dialog (struct mail_info *minfo)
     };
     GtkWidget *tbl, *lbl;
     GtkWidget *hbox, *vbox;
-    struct pop_dialog pd;
+    struct pop_dialog *pd;
     int i, err = 0;
 
-    pd.dlg = gtk_dialog_new();
-    pd.minfo = minfo;
-    pd.errp = &err;
+    pd = malloc(sizeof *pd);
+    if (pd == NULL) {
+	return E_ALLOC;
+    }
 
-    g_signal_connect(G_OBJECT(pd.dlg), "delete-event", 
-		     G_CALLBACK(cancel_pop), &pd);
+    pd->dlg = gtk_dialog_new();
+    pd->minfo = minfo;
+    pd->errp = &err;
 
-    g_signal_connect(G_OBJECT(pd.dlg), "destroy", 
-		     G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(pd->dlg), "delete-event", 
+		     G_CALLBACK(cancel_pop), pd);
 
-    gtk_window_set_title(GTK_WINDOW(pd.dlg), _("gretl: POP info"));
-    set_dialog_border_widths(pd.dlg);
-    gtk_window_set_position(GTK_WINDOW(pd.dlg), GTK_WIN_POS_MOUSE);
+    g_signal_connect(G_OBJECT(pd->dlg), "destroy", 
+		     G_CALLBACK(pop_info_dialog_quit), pd);
 
-    vbox = GTK_DIALOG(pd.dlg)->vbox;
+    gtk_window_set_title(GTK_WINDOW(pd->dlg), _("gretl: POP info"));
+    set_dialog_border_widths(pd->dlg);
+    gtk_window_set_position(GTK_WINDOW(pd->dlg), GTK_WIN_POS_MOUSE);
+
+    vbox = GTK_DIALOG(pd->dlg)->vbox;
 
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -737,16 +759,16 @@ static int pop_info_dialog (struct mail_info *minfo)
 	w = gtk_entry_new();
 
 	if (i == 0) {
-	    if (pd.minfo->pop_server != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_server);
+	    if (pd->minfo->pop_server != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd->minfo->pop_server);
 	    }
 	} else if (i == 1) {
-	    if (pd.minfo->pop_user != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_user);
+	    if (pd->minfo->pop_user != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd->minfo->pop_user);
 	    }
 	} else if (i == 2) {
-	    if (pd.minfo->pop_pass != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), pd.minfo->pop_pass);
+	    if (pd->minfo->pop_pass != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(w), pd->minfo->pop_pass);
 	    }
 	    gtk_entry_set_visibility(GTK_ENTRY(w), FALSE);
 	}
@@ -755,35 +777,35 @@ static int pop_info_dialog (struct mail_info *minfo)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
 
 	if (i == 0) {
-	    pd.server_entry = w;
+	    pd->server_entry = w;
 	} else if (i == 1) {
-	    pd.user_entry = w;
+	    pd->user_entry = w;
 	} else if (i == 2) {
-	    pd.pass_entry = w;
+	    pd->pass_entry = w;
 	} 
     }
 
-    hbox = GTK_DIALOG(pd.dlg)->action_area;
+    hbox = GTK_DIALOG(pd->dlg)->action_area;
 
     /* Cancel button */
-    pd.cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(pd.cancel, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(hbox), pd.cancel);
-    g_signal_connect(G_OBJECT(pd.cancel), "clicked", 
+    pd->cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(pd->cancel, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), pd->cancel);
+    g_signal_connect(G_OBJECT(pd->cancel), "clicked", 
 		     G_CALLBACK(finalize_pop_settings), &pd);
 
     /* "OK" button */
-    pd.ok = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(pd.ok, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(hbox), pd.ok);
-    g_signal_connect(G_OBJECT(pd.ok), "clicked", 
+    pd->ok = gtk_button_new_from_stock(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(pd->ok, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), pd->ok);
+    g_signal_connect(G_OBJECT(pd->ok), "clicked", 
 		     G_CALLBACK(finalize_pop_settings), &pd);
-    gtk_widget_grab_default(pd.ok);
+    gtk_widget_grab_default(pd->ok);
 
-    gtk_widget_set_size_request(pd.dlg, 360, -1);
-    gtk_widget_show_all(pd.dlg);
+    gtk_widget_set_size_request(pd->dlg, 360, -1);
+    gtk_widget_show_all(pd->dlg);
 
-    gtk_window_set_modal(GTK_WINDOW(pd.dlg), TRUE);
+    gtk_window_set_modal(GTK_WINDOW(pd->dlg), TRUE);
     gtk_main();
 
     return err;
