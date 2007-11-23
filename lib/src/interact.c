@@ -401,42 +401,26 @@ enum {
 
 #define IFDEBUG 0
 
-#if 1
-
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {
     int ci = cmd->ci;
-    int ok, err = 0;
+    int blocked, ok, err = 0;
 
-    if (get_if_state(IS_FALSE)) {
-	if (ci == IF) {
-	    err = set_if_state(SET_FALSE);
-	} else if (ci == ENDIF) {
-	    err = set_if_state(SET_ENDIF);
-	} else if (ci == ELSE && (cmd->opt & OPT_I)) {
-	    err = set_if_state(SET_ELIF);
-	    if (!err && get_if_state(IS_TRUE)) {
-		set_if_state(UNINDENT);
-		ok = if_eval(line, pZ, pdinfo, &err);
-		if (!err) {
-		    err = set_if_state(ok? SET_TRUE : SET_FALSE);
-		}
-	    } 
-	} else if (ci == ELSE) {
-	    err = set_if_state(SET_ELSE);
-	}
-	goto blocked;
-    }
+    blocked = get_if_state(IS_FALSE);
 
     if (ci != IF && ci != ELSE && ci != ENDIF) {
-	return 0;
+	return blocked;
     }
 
     if (ci == IF) {
-	ok = if_eval(line, pZ, pdinfo, &err);
-	if (!err) {
-	    err = set_if_state(ok? SET_TRUE : SET_FALSE);
+	if (blocked) {
+	    err = set_if_state(SET_FALSE);
+	} else {
+	    ok = if_eval(line, pZ, pdinfo, &err);
+	    if (!err) {
+		err = set_if_state(ok? SET_TRUE : SET_FALSE);
+	    }
 	}
     } else if (ci == ENDIF) {
 	err = set_if_state(SET_ENDIF);
@@ -448,118 +432,9 @@ static int flow_control (const char *line, double ***pZ,
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
-	} 
-    } else if (ci == ELSE) {
-	err = set_if_state(SET_ELSE);
-    }
-
- blocked:
-
-    if (err) {
-	set_if_state(RELAX);
-	cmd->err = err;
-    } 
-
-    return 1;
-}
-
-#else
-
-/* Below: 'skip' gets set whenever an "if" or "elif" condition is
-   satisfied: in that case we don't need to bother with any trailing
-   "else" or "elif" clauses.  We do need to be sure to switch off
-   'skip' when we meet a matching "endif".
-*/
-
-enum {
-    SKIP_NONE = 0,
-    SKIP_ALLOW,
-    SKIP_DENY
-};
-
-static int flow_control (const char *line, double ***pZ, 
-			 DATAINFO *pdinfo, CMD *cmd)
-{
-    static int skip;
-    static int skiplev;
-    int ci = cmd->ci;
-    int ok, err = 0;
-
-#if 1
-    fprintf(stderr, "flow_control: line='%s', skiplev=%d, skip=%d\n",
-	    line, skiplev, skip);
-#endif
-
-    if (skip == SKIP_ALLOW && ci == ELSE && 
-	skiplev == get_if_state(GETINDENT)) {
-	/* reached the end of an accepted block */
-	skip = SKIP_DENY;
-	return 1;
-    }
-
-    if (skip == SKIP_DENY) {
-	/* keep going to the end of the relevant conditional, keeping
-	   track of depth */
-	if (ci == IF) {
-	    err = set_if_state(DOINDENT);
-	} else if (ci == ENDIF) {
-	    int indent = get_if_state(GETINDENT);
-
-	    if (skiplev < indent) {
-		set_if_state(UNINDENT);
-		if (indent == 1) {
-		    skip = SKIP_NONE;
-		    return 1;
-		}
-	    } else {
-		fprintf(stderr, " got here 2\n");
-		skip = SKIP_NONE;
-	    }
-	} 
-	if (skip == SKIP_DENY) {
-	    return 1;
-	}
-    }
-
-    /* otherwise, clear to proceed? */
-    if (!get_if_state(IS_FALSE) && ci != IF && ci != ELSE && ci != ENDIF) {
-	return 0;
-    }
-
-    if (ci == ELSE && (cmd->opt & OPT_I)) {
-	/* "elif" */
-	err = set_if_state(SET_ELIF);
-	if (!get_if_state(IS_FALSE)) {
-	    set_if_state(UNINDENT);
-	    ok = if_eval(line, pZ, pdinfo, &err);
-	    if (!err) {
-		if (ok) {
-		    err = set_if_state(SET_TRUE);
-		    skip = SKIP_ALLOW;
-		    skiplev = get_if_state(GETINDENT);
-		} else {
-		    err = set_if_state(SET_FALSE);
-		    skip = SKIP_DENY;
-		}
-	    }
-	} 	
-    } else if (ci == IF) {
-	ok = if_eval(line, pZ, pdinfo, &err);
-	if (!err) {
-	    if (ok) {
-		err = set_if_state(SET_TRUE);
-		skip = SKIP_ALLOW;
-		skiplev = get_if_state(GETINDENT);
-	    } else {
-		err = set_if_state(SET_FALSE);
-		skip = SKIP_DENY;
-	    }
 	}
     } else if (ci == ELSE) {
 	err = set_if_state(SET_ELSE);
-    } else if (ci == ENDIF) {
-	err = set_if_state(SET_ENDIF);
-	skip = SKIP_NONE;
     }
 
     if (err) {
@@ -569,8 +444,6 @@ static int flow_control (const char *line, double ***pZ,
 
     return 1;
 }
-
-#endif
 
 static char cmd_savename[MAXSAVENAME];
 
