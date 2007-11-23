@@ -2075,7 +2075,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
     return ok;
 }
 
-int sepcount_error (int ci, int nsep)
+static int sepcount_error (int ci, int nsep)
 {
     int err = 0;
 
@@ -2090,6 +2090,22 @@ int sepcount_error (int ci, int nsep)
     }
 
     return err;
+}
+
+static int get_command_word (const char *line, CMD *cmd)
+{
+    int n = gretl_varchar_spn(line);
+
+    if (n == 0) {
+	return 0;
+    } else {
+	if (n > FN_NAMELEN - 1) {
+	    n = FN_NAMELEN - 1;
+	}
+	*cmd->word = '\0';
+	strncat(cmd->word, line, n);
+	return 1;
+    }
 }
 
 /**
@@ -2145,7 +2161,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     maybe_extract_savename(line, cmd);
 
     /* no command here? */
-    if (sscanf(line, "%8s", cmd->word) != 1) {
+    if (!get_command_word(line, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->err;
@@ -2184,7 +2200,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->ci = GENR;
-	    } else if (gretl_get_user_function(line)) {
+	    } else if (gretl_is_user_function(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
 	    } else if (ifstate(IS_FALSE)) {

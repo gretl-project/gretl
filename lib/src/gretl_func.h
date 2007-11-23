@@ -84,8 +84,6 @@ int gretl_is_user_function (const char *line);
 
 int gretl_is_public_user_function (const char *name);
 
-int gretl_get_user_function (const char *line);
-
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, char **descrip,

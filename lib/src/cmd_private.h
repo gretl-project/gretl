@@ -4,6 +4,7 @@
 #define CMD_PRIVATE_H
 
 #include "gretl_restrict.h"
+#include "gretl_func.h"
 
 typedef struct Laginfo_ Laginfo;
 
@@ -16,7 +17,7 @@ enum {
 #define cmd_ignore(c) (c->flags & CMD_IGNORE)
 
 struct CMD_ {
-    char word[9];               /* command word */
+    char word[FN_NAMELEN];      /* command word */
     int ci;                     /* command index number */
     int context;                /* context for subsetted commands */
     int order;                  /* lag order, for various commands */

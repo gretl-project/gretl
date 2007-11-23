@@ -169,11 +169,6 @@ int function_from_string (const char *s)
 	return 1;
     }
 
-    /* aliases */
-    if (!strcmp(word, "ln")) {
-	return 1;
-    }
-
     /* user-defined functions */
     if (gretl_is_user_function(s)) {
 	return 1;
