@@ -2099,6 +2099,17 @@ static char active_decpoint (void)
 #define between_model(m) (m->ci == PANEL && \
                           gretl_model_get_int(m, "between"))
 
+#define weighted_model(m) (m->ci == HSK || m->ci == ARCH || \
+			   (m->ci == WLS && !gretl_model_get_int(m, "wt_dummy")) || \
+                           (m->ci == PANEL && gretl_model_get_int(m, "unit-weights")))
+
+#define panel_ML_model(m) (m->ci == PANEL && \
+                           gretl_model_get_int(m, "unit-weights") && \
+			   gretl_model_get_int(m, "iters"))
+
+#define non_weighted_panel(m) (m->ci == PANEL && \
+			       !gretl_model_get_int(m, "unit-weights"))
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -2295,7 +2306,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == NLS || pmod->ci == MPOLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
-	|| pmod->ci == PANEL 
+	|| non_weighted_panel(pmod)
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
@@ -2347,8 +2358,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    else if (pmod->ci == WLS && gretl_model_get_int(pmod, "iters")) {
-	/* panel ML estimation */
+    else if (panel_ML_model(pmod)) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_ll(pmod, prn);
@@ -2363,8 +2373,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
     }	
 
-    else if (pmod->ci == HSK || pmod->ci == ARCH ||
-	     (pmod->ci == WLS && !gretl_model_get_int(pmod, "wt_dummy"))) {
+    else if (weighted_model(pmod)) {
 
 	weighted_stats_message(prn);
 	print_middle_table_start(prn);

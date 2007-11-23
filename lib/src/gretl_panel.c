@@ -2880,8 +2880,8 @@ static double pooled_ll (const MODEL *pmod)
    heteroskedasticity
 */
 
-static double panel_ML_ll (const MODEL *pmod, const double *uvar, 
-			   int nunits, const int *unit_obs)
+static void panel_ML_ll (MODEL *pmod, const double *uvar, 
+			 int nunits, const int *unit_obs)
 {
     double ll = -(pmod->nobs / 2.0) * LN_2_PI;
     int i, Ti;
@@ -2893,7 +2893,8 @@ static double panel_ML_ll (const MODEL *pmod, const double *uvar,
 	}
     }
 
-    return ll;
+    pmod->lnL = ll;
+    mle_criteria(pmod, 0);
 }
 
 /* we can't estimate a group-specific variance based on just one
@@ -3103,7 +3104,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
 	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
-	    mdl.lnL = panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
+	    panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
 	    }
