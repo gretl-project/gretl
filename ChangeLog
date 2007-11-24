@@ -74,6 +74,8 @@ version 1.6.6, in progress
   as well as the system db directory
 - add argname() function for use in user functions
 - Panel, unit-weights: fix omit command
+- Fix bug in mailer dialog (crash when closed via
+  window manager)
 
 5/17/2007 version 1.6.5
 - Fix new breakage in configuration of user directory
