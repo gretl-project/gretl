@@ -283,6 +283,13 @@ static int set_output_line (const char *s)
     return !strncmp(s, "set output", 10);
 }
 
+static int set_print_line (const char *s)
+{
+    return (!strncmp(s, "set print ", 10) ||
+	    !strncmp(s, "print \"pixe", 11) ||
+	    !strncmp(s, "print \"data", 11));
+}
+
 enum {
     REMOVE_PNG,
     ADD_PNG
@@ -351,10 +358,18 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     /* now for the body of the plot file */
 
     if (action == ADD_PNG) {
+	int got_set_print = 0;
+
 	while (fgets(fline, sizeof fline, fsrc)) {
-	    if (!commented_term_line(fline) && !set_output_line(fline)) {
+	    if (set_print_line(fline)) {
+		got_set_print = 1;
+		fputs(fline, ftmp);
+	    } else if (!commented_term_line(fline) && !set_output_line(fline)) {
 		line_to_file(fline, ftmp, -lv);
 	    }
+	}
+	if (gnuplot_png_terminal() == GP_PNG_CAIRO && !got_set_print) {
+	    print_plot_bounding_box_request(ftmp);
 	}
     } else {
 	/* we're removing the png term line */
@@ -377,6 +392,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		printit = 0;
 	    } else if (spec != NULL && (spec->flags & GPT_FIT_HIDDEN)
 		       && is_auto_fit_string(fline)) {
+		printit = 0;
+	    } else if (set_print_line(fline)) {
 		printit = 0;
 	    }
 	    if (printit) {

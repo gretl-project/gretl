@@ -151,6 +151,8 @@ int write_plot_type_string (PlotType ptype, FILE *fp);
 
 void write_plot_line_styles (int ptype, FILE *fp);
 
+void print_plot_bounding_box_request (FILE *fp);
+
 PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);

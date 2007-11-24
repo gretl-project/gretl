@@ -710,7 +710,7 @@ write_old_gnuplot_font_string (char *fstr, PlotType ptype)
 #endif
 
 /* we need this only if we don't have per-line rgb
-   settings, as in gnuplot 4.2 and higher */
+   settings, which are in gnuplot 4.2 and higher */
 
 static char *make_png_colorspec (char *targ, int ptype)
 {
@@ -746,6 +746,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
     if (frequency_plot_code(ptype)) {
 	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
 	fprintf(fp, "set style line 1 lc rgb \"%s\"\n", cstr);
+	fputs("set style line 2 lc rgb \"#000000\"\n", fp);
     } else {
 	for (i=0; i<BOXCOLOR; i++) {
 	    print_rgb_hash(cstr, &user_color[i]);
@@ -758,18 +759,25 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 /* end colors apparatus */
 
-static void print_plot_bounding_box (void)
-{
-    FILE *fp;
+/* Get gnuplot to print the dimensions of a PNG plot, in terms
+   of both pixels and data bounds, if gnuplot supports this.
+*/
 
-    fp = fopen(gretl_plotfile(), "a");
-    
+void print_plot_bounding_box_request (FILE *fp)
+{
+    fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_user_dir());
+    fputs("print \"pixel_bounds: \", TERM_XMIN, TERM_XMAX, "
+	  "TERM_YMIN, TERM_YMAX\n", fp);
+    fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
+	  "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
+}
+
+static void do_plot_bounding_box (void)
+{
+    FILE *fp = fopen(gretl_plotfile(), "a");
+
     if (fp != NULL) {
-	fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_user_dir());
-	fputs("print \"pixel_bounds: \", TERM_XMIN, TERM_XMAX, "
-	      "TERM_YMIN, TERM_YMAX\n", fp);
-	fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
-	      "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
+	print_plot_bounding_box_request(fp);
 	fclose(fp);
     }
 }
@@ -862,7 +870,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
     if (pngterm == GP_PNG_CAIRO) {
 	sprintf(png_term_line, "set term pngcairo%s%s",
 		font_string, size_string);
-	strcat(png_term_line, "\nset encoding utf8");
+	strcat(png_term_line, "\nset encoding utf8"); /* FIXME? */
     } else {
 	sprintf(png_term_line, "set term png%s%s%s%s",
 		truecolor_string, font_string, size_string, 
@@ -1126,8 +1134,8 @@ int gnuplot_make_graph (void)
 #endif
 
     if (gretl_in_gui_mode() && gnuplot_png_terminal() == GP_PNG_CAIRO) {
-	/* FIXME */
-	print_plot_bounding_box();
+	/* FIXME? */
+	do_plot_bounding_box();
     }
 
 #ifdef WIN32

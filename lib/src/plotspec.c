@@ -640,6 +640,10 @@ int plotspec_print (const GPT_SPEC *spec, FILE *fp)
 
     gretl_pop_c_numeric_locale();
 
+    if (png && gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	print_plot_bounding_box_request(fp);
+    }
+
     return miss;
 }
 
