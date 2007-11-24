@@ -393,7 +393,6 @@ enum {
     SET_ENDIF,
     IS_FALSE,
     IS_TRUE,
-    DOINDENT,
     UNINDENT,
     GETINDENT,
     RELAX
@@ -4744,7 +4743,6 @@ int ready_for_command (const char *line)
 	"eval",
 	"!",
 	"launch",
-	"/*", 
 	"man ", 
 	"help", 
 	"set", 
@@ -4956,13 +4954,19 @@ static const char *ifstr (int c)
     if (c == SET_ENDIF) return "SET_ENDIF";
     if (c == IS_FALSE)  return "IS_FALSE";
     if (c == IS_TRUE)   return "IS_TRUE";
-    if (c == DOINDENT)  return "DOINDENT";
     if (c == UNINDENT)  return "UNINDENT";
     if (c == GETINDENT) return "GETINDENT";
     if (c == RELAX)     return "RELAX";
     return "UNKNOWN";
 }
 #endif
+
+static void unmatched_message (int code)
+{
+    sprintf(gretl_errmsg, "Unmatched \"%s\"",
+	    (code == SET_ELSE)? "else" : 
+	    (code == SET_ELIF)? "elif": "endif");
+}
 
 #define IF_DEPTH 32
 
@@ -4971,6 +4975,7 @@ static int ifstate (int code, int *err)
     static unsigned char T[IF_DEPTH];
     static unsigned char got_if[IF_DEPTH];
     static unsigned char got_else[IF_DEPTH];
+    static unsigned char got_T[IF_DEPTH];
     static unsigned char indent;
     int i, ret = 0;
 
@@ -4980,66 +4985,53 @@ static int ifstate (int code, int *err)
 
     if (code == RELAX) {
 	indent = 0;
-    } else if (code == DOINDENT) {
-	ret = ++indent;
-	if (indent >= IF_DEPTH) {
-	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
-	    *err = E_DATA;
-	}
-    } else if (code == UNINDENT) {
-	ret = --indent;
     } else if (code == GETINDENT) {
 	ret = indent;
+    } else if (code == UNINDENT) {
+	ret = --indent;
     } else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
 	if (indent >= IF_DEPTH) {
 	    sprintf(gretl_errmsg, "IF depth (%d) exceeded\n", IF_DEPTH);
 	    *err = E_DATA;
 	} else {
-	    T[indent] = (code == SET_TRUE);
+	    T[indent] = got_T[indent] = (code == SET_TRUE);
 	    got_if[indent] = 1;
 	    got_else[indent] = 0;
 	}
-    } else if (code == SET_ELSE) {
+    } else if (code == SET_ELSE || code == SET_ELIF) {
 	if (got_else[indent] || !got_if[indent]) {
-	    strcpy(gretl_errmsg, "Unmatched \"else\"");
+	    unmatched_message(code);
 	    *err = E_PARSE;
 	} else {
-	    T[indent] = !T[indent];
-	    got_else[indent] = 1;
-	}
-    } else if (code == SET_ELIF) {
-	if (got_else[indent] || !got_if[indent]) {
-	    strcpy(gretl_errmsg, "Unmatched \"elif\"");
-	    *err = E_PARSE;
-	} else {
-	    T[indent] = !T[indent];
+	    got_else[indent] = (code == SET_ELSE);
+	    if (T[indent]) {
+		T[indent] = 0;
+	    } else if (!got_T[indent]) {
+		T[indent] = 1;
+	    }
 	}
     } else if (code == SET_ENDIF) {
 	if (!got_if[indent] || indent == 0) {
-	    strcpy(gretl_errmsg, "Unmatched \"endif\"");
+	    unmatched_message(code);
 	    *err = E_PARSE;
 	} else {
 	    got_if[indent] = 0;
 	    got_else[indent] = 0;
+	    got_T[indent] = 0;
 	    indent--;
 	}
-    } else if (code == IS_FALSE) {
+    } else if (code == IS_FALSE || code == IS_TRUE) {
 	for (i=1; i<=indent; i++) {
 	    if (T[i] == 0) {
 		ret = 1;
 		break;
 	    }
 	}
-    } else if (code == IS_TRUE) {
-	ret = 1;
-	for (i=1; i<=indent; i++) {
-	    if (T[i] == 0) {
-		ret = 0;
-		break;
-	    }
+	if (code == IS_TRUE) {
+	    ret = !ret;
 	}
-    }
+    } 
 
 #if IFDEBUG
     fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 

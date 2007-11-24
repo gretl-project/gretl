@@ -760,8 +760,8 @@ static void print_plot_bounding_box (void)
     
     if (fp != NULL) {
 	fprintf(fp, "set print '%sgretltmp.png.bounds'\n", gretl_user_dir());
-	fputs("print \"pixel_bounds: \", GPVAL_GRAPH_XMIN, GPVAL_GRAPH_XMAX, "
-	      "GPVAL_GRAPH_YMIN, GPVAL_GRAPH_YMAX\n", fp);
+	fputs("print \"pixel_bounds: \", TERM_XMIN, TERM_XMAX, "
+	      "TERM_YMIN, TERM_YMAX\n", fp);
 	fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
 	      "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
 	fclose(fp);
