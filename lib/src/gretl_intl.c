@@ -351,7 +351,8 @@ char *gp_gettext (const char *msgid)
     static const char *cset;
     char *ret;
 
-    if (using_utf8 && gnuplot_png_terminal() == GP_PNG_CAIRO) {
+    if (gnuplot_png_terminal() == GP_PNG_CAIRO) {
+	/* UTF-8 wanted */
 	return gettext(msgid);
     }
 
