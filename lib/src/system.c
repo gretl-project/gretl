@@ -735,7 +735,7 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
     int i, j;
 
     if (sys->vcv->rows == nc) {
-	/* no-op */
+	/* no-op (shouldn't happen) */
 	return 0;
     }
 
@@ -802,10 +802,8 @@ static int estimate_with_test (equation_system *sys,
 	    system_print_LR_test(sys, llu, prn);
 	} else if (stest == SYS_TEST_F) {
 	    system_print_F_test(sys, b, vcv, prn);
+	    err = shrink_b_and_vcv(b, sys);
 	}
-
-        /* trim the (augmented) coeff and vcv matrices */
-	err = shrink_b_and_vcv(b, sys);
     }
 
  bailout:
