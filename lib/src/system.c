@@ -727,10 +727,16 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
     double x;
     int i, j;
 
+    if (V->rows == nc) {
+	/* no-op */
+	return 0;
+    }
+
     V = gretl_matrix_alloc(nc, nc);
     if (V == NULL) {
 	return E_ALLOC;
     }
+
     gretl_matrix_reuse(sys->b, nc, 1);
 
     for (i=0; i<nc; i++) {
@@ -791,7 +797,7 @@ static int estimate_with_test (equation_system *sys,
 	    system_print_F_test(sys, b, vcv, prn);
 	}
 
-        /* trim the augmented coeff and vcv matrices */
+        /* trim the (augmented) coeff and vcv matrices */
 	err = shrink_b_and_vcv(b, sys);
     }
 
