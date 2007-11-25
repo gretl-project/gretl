@@ -719,6 +719,33 @@ static int sys_test_type (equation_system *sys)
     return ret;
 }
 
+static int shrink_b_and_vcv (const gretl_matrix *b,
+			     equation_system *sys)
+{
+    int nc = gretl_vector_get_length(b);
+    gretl_matrix *V;
+    double x;
+    int i, j;
+
+    V = gretl_matrix_alloc(nc, nc);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+    gretl_matrix_reuse(sys->b, nc, 1);
+
+    for (i=0; i<nc; i++) {
+	for (j=0; j<nc; j++) {
+	    x = gretl_matrix_get(sys->vcv, i, j);
+	    gretl_matrix_set(V, i, j, x);
+	}
+    }
+
+    gretl_matrix_free(sys->vcv);
+    sys->vcv = V;
+
+    return 0;
+}
+
 static int estimate_with_test (equation_system *sys, 
 			       double ***pZ, DATAINFO *pdinfo, 
 			       gretlopt opt, int stest, 
@@ -758,8 +785,6 @@ static int estimate_with_test (equation_system *sys,
     err = (* system_est) (sys, pZ, pdinfo, opt, prn);
 
     if (!err) {
-	int nc;
-
 	if (stest == SYS_TEST_LR) {
 	    system_print_LR_test(sys, llu, prn);
 	} else if (stest == SYS_TEST_F) {
@@ -767,9 +792,7 @@ static int estimate_with_test (equation_system *sys,
 	}
 
         /* trim the augmented coeff and vcv matrices */
-	nc = gretl_vector_get_length(b);
-	gretl_matrix_reuse(sys->b, nc, 1);
-	gretl_matrix_reuse(sys->vcv, nc, nc);
+	err = shrink_b_and_vcv(b, sys);
     }
 
  bailout:
