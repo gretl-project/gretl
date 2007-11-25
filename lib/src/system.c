@@ -719,6 +719,13 @@ static int sys_test_type (equation_system *sys)
     return ret;
 }
 
+/* Handle the case where sys->b and sys->vcv have been augmented in
+   order to test some restrictions: we now have to trim these matrices
+   down to their final size. The vector 'b' contains unrestricted
+   coefficient estimates, so its length can be used to gauge the
+   true number of coeffs.
+*/
+
 static int shrink_b_and_vcv (const gretl_matrix *b,
 			     equation_system *sys)
 {
