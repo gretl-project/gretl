@@ -758,11 +758,18 @@ static int estimate_with_test (equation_system *sys,
     err = (* system_est) (sys, pZ, pdinfo, opt, prn);
 
     if (!err) {
+	int nc;
+
 	if (stest == SYS_TEST_LR) {
 	    system_print_LR_test(sys, llu, prn);
 	} else if (stest == SYS_TEST_F) {
 	    system_print_F_test(sys, b, vcv, prn);
 	}
+
+        /* trim the augmented coeff and vcv matrices */
+	nc = gretl_vector_get_length(b);
+	gretl_matrix_reuse(sys->b, nc, 1);
+	gretl_matrix_reuse(sys->vcv, nc, nc);
     }
 
  bailout:

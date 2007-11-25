@@ -2069,12 +2069,22 @@ static int sepcount_error (int ci, int nsep)
     return err;
 }
 
+/* Get the first word out of line.  In general this should be a
+   command word (starting with a alphabetical character), but there
+   are a couple of special case: shell commands, starting with
+   the "!" escape; and restriction specifications, which may
+   start with "-" as in "-b1 + b2 = 0".
+*/
+
 static int get_command_word (const char *line, CMD *cmd)
 {
     int n = gretl_varchar_spn(line);
     int ret = 0;
 
-    if (*line == '!') {
+    if (cmd->context == RESTRICT && *line == '-') {
+	strcpy(cmd->word, "-");
+	ret = 1;
+    } else if (*line == '!') {
 	strcpy(cmd->word, "!");
 	ret = 1;
     } else if (n > 0) {
@@ -2084,6 +2094,8 @@ static int get_command_word (const char *line, CMD *cmd)
 	*cmd->word = '\0';
 	strncat(cmd->word, line, n);
 	ret = 1;
+    } else if (!string_is_blank(line)) {
+	cmd->err = E_PARSE;
     }
 
     return ret;

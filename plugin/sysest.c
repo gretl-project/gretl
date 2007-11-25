@@ -24,7 +24,7 @@
 
 #define SDEBUG 0
 #define SYS_USE_SVD 0
-#define USE_SYS_SIGMA 0
+#define USE_SYS_SIGMA 0 /* ?? */
 
 /* insert the elements of sub-matrix M, multuplied by scale, in the
    appropriate position within the big matrix X */
