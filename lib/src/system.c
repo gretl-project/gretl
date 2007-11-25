@@ -610,7 +610,8 @@ static int system_get_dfu (const equation_system *sys)
 
 static void 
 system_print_F_test (const equation_system *sys,
-		     const gretl_matrix *b, const gretl_matrix *vcv,
+		     const gretl_matrix *b, 
+		     const gretl_matrix *vcv,
 		     PRN *prn)
 {
     const gretl_matrix *R = sys->R;
@@ -618,10 +619,8 @@ system_print_F_test (const equation_system *sys,
     int Rrows = gretl_matrix_rows(R);
     int dfu = system_get_dfu(sys);
     int dfn = gretl_matrix_rows(R);
-
     gretl_matrix *Rbq = NULL;
     gretl_matrix *RvR = NULL;
-
     double F = NADBL;
     int err = 0;
 

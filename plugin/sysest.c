@@ -826,11 +826,11 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	print_equation_system_info(sys, pdinfo, OPT_H, prn);
     }
 
-    /* First estimate the equations separately, and put the
-       single-equation residuals into the uhat matrix.  Note that at
-       this stage we are not in a position to impose any
-       cross-equation restrictions, since we're doing straight
-       equation-by-equation estimation.
+    /* First estimate the equations separately (either by OLS or
+       TSLS), and put the single-equation residuals into the uhat
+       matrix.  Note that at this stage we are not in a position to
+       impose any cross-equation restrictions, since we're doing
+       straight equation-by-equation estimation.
     */
 
     for (i=0; i<m; i++) {
@@ -843,9 +843,6 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    err = 1;
 	    break;
 	}
-
-	/* FIXME: should we try to handle the case of redundant instruments
-	   in this context? */
 
 	if (method == SYS_METHOD_SUR || 
 	    method == SYS_METHOD_OLS || 
@@ -891,7 +888,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (err) {
-	fprintf(stderr, "system_estimate: after initial tsls, err = %d", err);
+	fprintf(stderr, "system_estimate: after single-equation "
+		"estimation, err = %d", err);
 	goto cleanup;
     }
 
@@ -929,8 +927,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (err) goto cleanup;
 
-    /* the tests against NULL here allow for the possibility that
-       we're iterating */
+    /* the initial tests against NULL here allow for the possibility
+       that we're iterating */
 
     if (Xi == NULL) {
 	Xi = gretl_matrix_alloc(T, k);
@@ -941,6 +939,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (M == NULL) {
 	M = gretl_matrix_alloc(k, k);
     }
+
     if (Xi == NULL || Xj == NULL || M == NULL) {
 	err = E_ALLOC;
 	goto cleanup;
@@ -1021,8 +1020,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	make_sys_X_block(Xi, models[i], *pZ, sys->t1, method);
 
-	for (j=0; j<models[i]->ncoeff; j++) { /* loop over the rows within each of 
-						 the m blocks */
+	for (j=0; j<models[i]->ncoeff; j++) { 
+	    /* loop over the rows within each of the m blocks */
 	    double yv = 0.0;
 	    int lmin = 0, lmax = m;
 
@@ -1032,8 +1031,9 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		lmax = i + 1;
 	    }
 
-	    for (l=lmin; l<lmax; l++) { /* loop over the components that
-					   must be added to form each element */
+	    for (l=lmin; l<lmax; l++) { 
+		/* loop over the components that must be
+		   added to form each element */
 		const double *yl = NULL;
 		double sil, xx = 0.0;
 
@@ -1072,7 +1072,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* The estimates calculated below will be SUR, 3SLS or LIML,
        depending on how the data matrices above were constructed --
-       unless we're just doing restricted OLS, WLS or TSLS estimates
+       unless, that is, we're just doing restricted OLS, WLS or TSLS
+       estimates.
     */
     calculate_sys_coeffs(sys, (const double **) *pZ, X, 
 			 y, mk, nr, do_iteration);
