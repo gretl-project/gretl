@@ -24,7 +24,6 @@
 
 #define SDEBUG 0
 #define SYS_USE_SVD 0
-#define USE_SYS_SIGMA 0 /* ?? */
 
 /* insert the elements of sub-matrix M, multuplied by scale, in the
    appropriate position within the big matrix X */
@@ -206,13 +205,11 @@ liml_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     }		
 }
 
-#if USE_SYS_SIGMA
-
 /* calculate the standard error of the residuals for the system as a
    whole and use this for scaling the covariance matrix */
 
 static void 
-single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
+single_eq_common_sigma_scale_vcv (equation_system *sys, gretl_matrix *vcv)
 {
     double s, ess = 0.0;
     int nr = 0, dfc = 0;
@@ -241,8 +238,6 @@ single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     gretl_matrix_multiply_by_scalar(vcv, s * s);
 }
 
-#else
-
 /* use the per-equation residual standard deviations for scaling
    the covariance matrix, block by diagonal block
 */
@@ -270,8 +265,6 @@ single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     }    
 }
 
-#endif /* USE_SYS_SIGMA, or not */
-
 /* compute SUR, 3SLS or LIML parameter estimates (or restricted OLS,
    TSLS, WLS) */
 
@@ -279,7 +272,7 @@ static int
 calculate_sys_coeffs (equation_system *sys,
 		      const double **Z,
 		      gretl_matrix *X, gretl_matrix *y, 
-		      int mk, int do_iteration)
+		      int mk, int nr, int do_iteration)
 {
     int do_bdiff = ((sys->method == SYS_METHOD_3SLS) && do_iteration);
     double bij, oldb, bnum = 0.0, bden = 0.0;
@@ -348,7 +341,11 @@ calculate_sys_coeffs (equation_system *sys,
 
     if (sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_TSLS) {
-	single_eq_scale_vcv(sys, vcv);
+	if (nr > 0) {
+	    single_eq_common_sigma_scale_vcv(sys, vcv);
+	} else {
+	    single_eq_scale_vcv(sys, vcv);
+	}
     } else if (sys->method == SYS_METHOD_LIML) {
 	liml_scale_vcv(sys, vcv);
     }
@@ -1078,7 +1075,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        unless we're just doing restricted OLS, WLS or TSLS estimates
     */
     calculate_sys_coeffs(sys, (const double **) *pZ, X, 
-			 y, mk, do_iteration);
+			 y, mk, nr, do_iteration);
 
     if (rtsls) {
 	rtsls = 0;

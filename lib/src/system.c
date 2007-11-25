@@ -727,7 +727,7 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
     double x;
     int i, j;
 
-    if (V->rows == nc) {
+    if (sys->vcv->rows == nc) {
 	/* no-op */
 	return 0;
     }
