@@ -115,7 +115,6 @@ static int function_package_remove_by_ID (int ID);
 
 static int compiling;
 static int fn_executing;
-static int fn_comment;
 
 int gretl_compiling_function (void)
 {
@@ -124,7 +123,6 @@ int gretl_compiling_function (void)
 
 static void set_compiling_on (void)
 {
-    fn_comment = 0;
     compiling = 1;
 }
 
@@ -2782,16 +2780,6 @@ static int real_function_append_line (const char *line, ufunc *fun)
 
     if (string_is_blank(line)) {
 	return 0;
-    }
-
-    if (!strncmp(line, "/*", 2)) {
-	fn_comment = 1;
-    } else if (!strncmp(line, "*/", 2)) {
-	fn_comment = 0;
-    }
-
-    if (fn_comment) {
-	return strings_array_add(&fun->lines, &fun->n_lines, line);
     }
 
     if (end_of_function(line)) {
