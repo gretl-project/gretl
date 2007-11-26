@@ -141,7 +141,11 @@ static int nls_genr_setup (nlspec *s)
 	genrs[i] = NULL;
     }
 
+#if 0 
+    /* namespace problems when two or more non-nested functions
+       are called in an NLS/MLE/GMM block! */
     set_drop_function_vars(0);
+#endif
 
     j = 0;
 
