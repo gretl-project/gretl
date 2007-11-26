@@ -1,4 +1,4 @@
-version 1.6.6, in progress
+11/26/2007 version 1.6.6
 - Add heckit estimator
 - Fix for loop on empty list
 - Fix for remaining issues with apostrophes in graph titles
