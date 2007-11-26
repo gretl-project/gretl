@@ -16,7 +16,7 @@ HREF="./css-gretl.html">
 
 <h2>Pre-built disk image</h2>
 
-<p>The simple way of installing gretl for OS X, if it works for you, is to
+<p>The simple way of installing gretl for OS X on Intel, if it works for you, is to
 grab a disk image, <a
 href="http://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.dmg">gretl-VERSION.dmg</a>
 (about 12MB).  Download the image to your desktop, double-click on it to
@@ -24,7 +24,7 @@ open it, then drag the Gretl folder (actually its full name is Gretl.app),
 which you'll find inside, to somewhere suitable for installation
 (e.g. your Applications folder).</p>
 
-<p>I have tested this on OS X v10.4.  
+<p>This has been tested on OS X v10.4.  
 The disk image is briefly documented in 
 <a href="./README.pdf">README.pdf</a>, which contains a suggestion for what to do
 if fonts do not appear properly.  If you want to debug a non-functioning
@@ -41,6 +41,10 @@ change directory to <kbd>Contents/Resources/bin</kbd> and run the command</p>
 <p><i>Please note</i>: this package depends upon Apple's X11 (their port
 to the Mac of the X Window system).  This is available on the OS X
 installation DVDs.</p>
+
+<p><i>Also note</i>: As mentioned above, the current disk image is for
+<b>Intel</b> Macs.  We need a volunteer to make a current build of
+gretl for the PPC architecture.</p>
 
 <h2>Alternative method: build using Fink</h2>
 
@@ -76,14 +80,6 @@ the Mac Terminal app) to do the job:</p>
     <td><kbd>fink install libxml2</kbd></td>
     </tr>
   <tr>
-    <td><p class="in-cell">dlcompat</p></td><td>
-    <kbd>fink install dlcompat</kbd></td>
-    </tr>
-  <tr>
-    <td><p class="in-cell">dlcompat-dev</p></td>
-    <td><kbd>fink install dlcompat-dev</kbd></td>
-    </tr>
-  <tr>
     <td><p class="in-cell">gnuplot</p></td>
     <td><kbd>fink install gnuplot</kbd></td>
     </tr>
@@ -91,10 +87,29 @@ the Mac Terminal app) to do the job:</p>
     <td><p class="in-cell">recode</p></td>
     <td><kbd>fink install recode</kbd></td>
     </tr>
+  <tr>
+    <td><p class="in-cell">fftw3</p></td>
+    <td><kbd>fink install fftw3</kbd></td>
+    </tr>
 </table>
 
 <p>In particular, you should ensure that gnuplot is up to date (the
-package number must be at least 3.8i.0-2 to work with gretl).</p>
+package number should be at least 4.0 to work with gretl).</p>
+
+<p>At one time you also needed the following, but this may now
+be redudant:</p>
+
+<table cellspacing=8>
+  <tr>
+    <td><p class="in-cell">dlcompat</p></td><td>
+    <kbd>fink install dlcompat</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">dlcompat-dev</p></td>
+    <td><kbd>fink install dlcompat-dev</kbd></td>
+    </tr>
+</table>
+
 
 <h2>Environment variables</h2>
 
