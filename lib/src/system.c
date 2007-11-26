@@ -902,11 +902,11 @@ equation_system_estimate (equation_system *sys,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn)
 {
-    int err = 0;
     void *handle = NULL;
     int (*system_est) (equation_system *, 
 		       double ***, DATAINFO *, gretlopt, PRN *);
     int stest = 0;
+    int err = 0;
 
     gretl_error_clear();
 
@@ -926,8 +926,10 @@ equation_system_estimate (equation_system *sys,
     system_clear_results(sys);
 
     err = make_instrument_list(sys);
-    if (err) goto system_bailout;
-    
+    if (err) {
+	goto system_bailout;
+    }
+
     if (sys->method == SYS_METHOD_SUR) {
 	sur_rearrange_lists(sys, (const double **) *pZ, pdinfo);
     }
@@ -1728,22 +1730,23 @@ static int sys_in_list (const int *list, int k)
     return 0;
 }
 
+#define system_needs_endog_list(s) (s->method != SYS_METHOD_SUR && \
+				    s->method != SYS_METHOD_OLS && \
+				    s->method != SYS_METHOD_WLS)
+
 static int make_instrument_list (equation_system *sys)
 {
     int *ilist, *elist = sys->endog_vars;
     int i, j, k, nexo, maxnexo = 0;
 
+    if (system_needs_endog_list(sys) && elist == NULL) {
+	gretl_errmsg_set(_("No list of endogenous variables was given"));
+	return E_DATA;
+    }
+
     if (sys->instr_vars != NULL) {
 	/* job is already done */
 	return 0;
-    }
-
-    if (sys->method != SYS_METHOD_SUR && 
-	sys->method != SYS_METHOD_OLS && 
-	sys->method != SYS_METHOD_WLS &&
-	elist == NULL) {
-	/* no list of endog vars: can't proceed */
-	return 1;
     }
 
     /* First pass: get a count of the max possible number of

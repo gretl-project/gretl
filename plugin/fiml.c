@@ -79,11 +79,20 @@ static void fiml_system_destroy (fiml_system *fsys)
     free(fsys);
 }
 
-static fiml_system *fiml_system_new (equation_system *sys)
+static fiml_system *fiml_system_new (equation_system *sys, int *err)
 {
     fiml_system *fsys;
     int *endog_vars;
     int *exog_vars;
+
+    endog_vars = system_get_endog_vars(sys);
+    exog_vars = system_get_instr_vars(sys);
+
+    if (endog_vars == NULL || exog_vars == NULL) {
+	gretl_errmsg_set(_("No list of endogenous variables was given"));
+	*err = E_DATA;
+	return NULL;
+    }
 
     fsys = malloc(sizeof *fsys);
     if (fsys == NULL) return NULL;
@@ -94,9 +103,6 @@ static fiml_system *fiml_system_new (equation_system *sys)
     fsys->n = sys->n_obs;
     fsys->gn = fsys->g * fsys->n;
     fsys->totk = system_n_indep_vars(sys);
-
-    endog_vars = system_get_endog_vars(sys);
-    exog_vars = system_get_instr_vars(sys);
 
     fsys->nendo = endog_vars[0];
     fsys->nexo = exog_vars[0];
@@ -914,9 +920,9 @@ int fiml_driver (equation_system *sys, double ***pZ,
     int iters = 0;
     int err = 0;
 
-    fsys = fiml_system_new(sys);
-    if (fsys == NULL) {
-	return E_ALLOC;
+    fsys = fiml_system_new(sys, &err);
+    if (err) {
+	return err;
     }
 
 #if FDEBUG
