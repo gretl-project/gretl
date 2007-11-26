@@ -653,7 +653,7 @@ static int filter_plot_file (const char *inname,
 	    pprint_as_latin(prn, pline, ttype == GP_TERM_EMF);
 	} else if (recolor && lnum > 0 && contd) {
 	    print_line_with_color(prn, pline, lnum, &contd);
-	} else {
+	} else if (!set_print_line(pline)) {
 	    pputs(prn, pline);
 	}
 
