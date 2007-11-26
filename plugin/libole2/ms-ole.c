@@ -947,9 +947,8 @@ ms_ole_open_vfs (MsOle **fs, const char *name,
     }
 
     if (try_mmap && f->syswrap->mmap) {
-	f->mem = f->syswrap->mmap (
-				   0, f->length, prot, MAP_SHARED, file, 0);
-	if (!f->mem || (caddr_t)f->mem == (caddr_t)MAP_FAILED) {
+	f->mem = f->syswrap->mmap(0, f->length, prot, MAP_SHARED, file, 0);
+	if (!f->mem || (caddr_t) f->mem == (caddr_t) MAP_FAILED) {
 	    g_warning ("I can't mmap that file, falling back to slower method");
 	    f->mem = NULL;
 	} else

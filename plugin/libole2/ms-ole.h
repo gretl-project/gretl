@@ -13,16 +13,18 @@
 
 /* This should be done in glib */
 /* Allin Cottrell modifications here */
+
 #ifndef _WIN32
-#	include <fcntl.h>	/* for mode_t */
+# include <fcntl.h>	/* for mode_t */
+# include <sys/types.h>
 #else
 # include <sys/types.h>
-# ifdef notdef
-	typedef unsigned long mode_t;
-	typedef /* signed */ long off_t;
-	typedef size_t ssize_t;
+# if 0
+ typedef unsigned long mode_t;
+ typedef /* signed */ long off_t;
+ typedef size_t ssize_t;
 # endif
-	typedef /* unsigned */ long caddr_t;
+typedef /* unsigned */ long caddr_t;
 #endif
 
 #include <glib.h>
@@ -53,6 +55,7 @@ typedef enum  {
 
 typedef guint32 MsOlePos;
 typedef gint32  MsOleSPos;
+
 /*
 #ifdef G_HAVE_GINT64
 	typedef guint64 MsOlePos;
