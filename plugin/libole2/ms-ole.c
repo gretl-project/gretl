@@ -28,11 +28,11 @@
 #include <glib.h>
 #include <string.h>
 
-#include "ms-ole.h"
-
 #ifdef HAVE_MMAP
 # include <sys/mman.h>
 #endif
+
+#include "ms-ole.h"
 
 #ifndef HAVE_UNISTD_H
 # define S_IRUSR 0000400
