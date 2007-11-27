@@ -3798,7 +3798,15 @@
       </para>
 
       <para>
-      FIXME this entry needs to be completed.
+	Si noti che nella stima di massima verosimiglianza viene
+	impiegata una matrice hessiana calcolata numericamente; ciò
+	può condurre a una stima inaccurata della matrice di
+	covarianze se l'ordine di grandezza delle variabili
+	esplicative è tale per cui alcuni dei coefficienti stimati
+	risultano molto piccoli in valore assoluto. Il problema verrà
+	affrontato nelle versioni future; nel frattempo, si può
+	aggirare il problema riscalando opportunamente i regressori
+	problematici.
       </para>
     </description>
 

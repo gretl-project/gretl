@@ -3842,7 +3842,13 @@
       </para>
 
       <para>
-      FIXME this entry needs to be completed.
+	Please note that in ML estimation a numerical approximation of
+	the Hessian is used; this may lead to inaccuracies in the
+	estimated covariance matrix if the scale of the explanatory
+	variables is such that some of the estimated coefficients are
+	very small in absolute value. This problem will be addressed
+	in future versions; in the meantime, rescaling the offending
+	explanatory variable(s) can be used as a workaround.
       </para>
     </description>
 
