@@ -7106,6 +7106,15 @@
 	is given to an estimation command. 
       </para>
       <para>
+	A special usage of the command is <cmd>set
+	stopwatch</cmd>. This activates the measurement of CPU time,
+	which stops the first time the accessor <lit>$stopwatch</lit>
+	is used, either in assigning it to a variable or simply by
+	printing it. The accessor <lit>$stopwatch</lit> will yield the
+	seconds of CPU time that have elapsed between the <lit>set
+	stopwatch</lit> statement and its invocation.
+      </para>
+      <para>
 	If the <cmd>set</cmd> command is given without any parameters, the
 	current settings for all the relevant variables are printed.
       </para>
