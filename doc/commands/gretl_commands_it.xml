@@ -6998,10 +6998,18 @@
         <lit>--robust</lit> a un comando di stima.
       </para>
       <para>
+        Un uso speciale di questo comando è <cmd>set stopwatch</cmd>. In questo
+        modo viene avviata la misurazione del tempo della CPU, che viene fermata
+        la prima volta che viene usata la variabile accessoria
+        <lit>$stopwatch</lit>, ad esempio assegnandola a un'altra variabile,
+        oppure stampandola. <lit>$stopwatch</lit> conterrà il numero di secondi
+        usati dalla CPU, dal momento in cui è stato dato il comando
+        <lit>set stopwatch</lit>.
+      </para>
+      <para>
         Se il comando <cmd>set</cmd> è usato senza parametri, vengono
         mostrate le impostazioni attuali per tutti i parametri rilevanti.
       </para>
-
       <ilist>
 	<li>
 	  <para><lit>echo</lit>:
