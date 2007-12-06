@@ -4473,10 +4473,10 @@
     <description context="cli">
       <para>
 	Must immediately follow an <cmd>ols</cmd> command. Depending on
-	the options given, this command carries out some combination of
-	the following: Lagrange Multiplier tests for nonlinearity (logs
-	and squares); White's test for heteroskedasticity; the LMF test
-	for serial correlation (see Kiviet, 1986); and a test for ARCH
+	the option given, this command carries one of the following:
+	Lagrange Multiplier test for nonlinearity (logs or squares);
+	White's test for heteroskedasticity; the LMF test for serial
+	correlation (see Kiviet, 1986); and a test for ARCH
 	(Autoregressive Conditional Heteroskedasticity, see also the
 	<cmd>arch</cmd> command).
       </para>
@@ -4496,7 +4496,9 @@
       <para>
 	By default, the program prints the auxiliary regression on which
 	the test statistic is based.  This may be suppressed by using the
-	<lit>--quiet</lit> flag.
+	<lit>--quiet</lit> flag.  The test statistic and its p-value may
+	be retrieved using the accessors <lit>$test</lit> and
+	<lit>$pvalue</lit> respectively.
       </para>
     </description>
 

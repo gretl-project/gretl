@@ -2506,6 +2506,10 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL white;
     int err = 0;
 
+    if (pmod->list == NULL || gretl_list_has_separator(pmod->list)) {
+	return E_NOTIMP;
+    }
+
     if (pmod->ci == NLS || pmod->ci == MLE ||
 	pmod->ci == GMM || pmod->ci == ARMA || 
 	pmod->ci == LOGISTIC) { 

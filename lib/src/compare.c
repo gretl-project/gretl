@@ -2479,6 +2479,12 @@ int lmtest_driver (const char *param,
 	return 0;
     }
 
+    err = incompatible_options(opt, OPT_A | OPT_H | OPT_L | OPT_S |
+			       OPT_P | OPT_W);
+    if (err) {
+	return err;
+    }
+
     ptr = get_last_model(&type);  
     if (ptr == NULL) {
 	return E_DATA;
