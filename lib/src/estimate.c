@@ -3003,6 +3003,16 @@ lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo)
     return ret;
 }
 
+static void arch_test_print_simple (int order, double LM,
+				    double pval, PRN *prn)
+{
+    pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), order);
+    pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
+    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
+	    _("with p-value"), _("Chi-square"), 
+	    order, LM, pval); 
+}
+
 static void 
 arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 			 int T, int order, double rsq, MODEL *pmod, 
@@ -3032,7 +3042,9 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 	model_test_set_value(test, LM);
 	model_test_set_pvalue(test, pv);
 
-	if (!(opt & OPT_Q)) {
+	if (opt & OPT_Q) {
+	    arch_test_print_simple(order, LM, pv, prn);
+	} else {
 	    int heading = (V == NULL);
 
 	    gretl_model_test_print_direct(test, heading, prn);
