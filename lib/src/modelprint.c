@@ -1290,7 +1290,9 @@ static void tex_arbond_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
-    if (gretl_model_get_int(pmod, "using_hac")) {
+    if (gretl_model_get_int(pmod, "using_hac") ||
+	gretl_model_get_int(pmod, "hac_kernel") ||
+	gretl_model_get_int(pmod, "hac_lag")) {
 	hac_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "hc")) {
 	hc_vcv_line(pmod, prn);
