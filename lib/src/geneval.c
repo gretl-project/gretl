@@ -2285,6 +2285,63 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *series_movavg (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret;
+    const double *x = l->v.xvec;
+    int k = (int) r->v.xval;
+    int t, t1, t2;
+
+    ret = aux_vec_node(p, p->dinfo->n);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
+    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+
+    for (t=t1; t<=t2; t++) {
+	double xs, msum = 0.0;
+	int i, s;
+
+	for (i=0; i<k; i++) {
+	    s = t - i; /* FIXME */
+	    if (dated_daily_data(p->dinfo)) {
+		if (s >= 0 && s < p->dinfo->n) {
+		    while (s >= 0 && xna(x[s])) {
+			s--;
+		    }
+		}
+	    } else if (p->dinfo->structure == STACKED_TIME_SERIES) {
+		if (s >= 0 && s < p->dinfo->n && 
+		    p->dinfo->paninfo->unit[s] != 
+		    p->dinfo->paninfo->unit[t]) {
+		    s = -1;
+		}
+	    }
+
+	    if (s >= 0 && s < p->dinfo->n) {
+		xs = x[s];
+	    } else {
+		xs = NADBL;
+	    }
+
+	    if (na(xs)) {
+		msum = NADBL;
+		break;
+	    } else {
+		msum += x[s];
+	    }
+	}
+
+	if (!na(msum)) {
+	    ret->v.xvec[t] = msum / k;
+	} 
+    }
+
+    return ret;
+}
+
 static NODE *series_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret;
@@ -3925,6 +3982,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case LAG:
     case OBS:
+    case MOVAVG:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, VEC, l, p);
@@ -3934,6 +3992,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = series_lag(l, r, p); 
 	} else if (t->t == OBS) {
 	    ret = series_obs(l, r, p); 
+	} else if (t->t == MOVAVG) {
+	    ret = series_movavg(l, r, p); 
 	}
 	break;
     case MSL:

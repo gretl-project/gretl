@@ -169,6 +169,7 @@ struct str_table funcs[] = {
     { FRACDIF,  "fracdiff" },  /* fractional difference */
     { COV,      "cov" },
     { COR,      "corr" },
+    { MOVAVG,   "movavg" },
     { IMAT,     "I" },
     { ZEROS,    "zeros" },
     { ONES,     "ones" },
