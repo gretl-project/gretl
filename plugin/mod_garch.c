@@ -366,12 +366,12 @@ static int garch_etht (const double *par, void *ptr)
     for (t=t1; t<=t2; t++) {
 	ht = par[ncm+1];
 
-	for (i=1; i<=p; i++) {
+	for (i=1; i<=q; i++) {
 	    ht += DH->e2[t-i] * par[ncm+i+1];
 	}
 
-	for (i=1; i<=q; i++) {
-	    ht += DH->h[t-i] * par[ncm+i+p+1];
+	for (i=1; i<=p; i++) {
+	    ht += DH->h[t-i] * par[ncm+i+q+1];
 	}
 	
 	DH->h[t] = ht;
@@ -382,8 +382,8 @@ static int garch_etht (const double *par, void *ptr)
 	    dedq[0][t] = -1.0;
 	    k = ncm+1;
 	    dhdq[0][t] = 0.0;
-	    for (i=1; i<=p; i++) {
-		if (t - p < t1 && DH->init == INIT_VAR_RESID) {
+	    for (i=1; i<=q; i++) {
+		if (t - q < t1 && DH->init == INIT_VAR_RESID) {
 		    dhdq[0][t] += par[k+i] * dhdq[0][t1-1];
 		} else {	
 		    dhdq[0][t] += 2.0 * par[k+i] * DH->e[t-i] * dedq[0][t-i];
@@ -395,8 +395,8 @@ static int garch_etht (const double *par, void *ptr)
 		dedq[i][t] = -(DH->X[i][t]);
 		k = ncm+1;
 		dhdq[i][t] = 0.0;
-		for (j=1; j<=p; j++) {
-		    if (t - p < t1 && DH->init == INIT_VAR_RESID) { 
+		for (j=1; j<=q; j++) {
+		    if (t - q < t1 && DH->init == INIT_VAR_RESID) { 
 			// add INIT_THEO here
 			dhdq[i][t] += par[k+j] * dhdq[i][t1-1];
 		    } else {	
@@ -416,7 +416,7 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	    /* garch params: alphas */
 	    k = ncm + 2;
-	    for (i=1; i<=p; i++) {
+	    for (i=1; i<=q; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->e2[t-i];
 		if (t - p < t1 && DH->init == INIT_VAR_THEO) {
@@ -429,7 +429,7 @@ static int garch_etht (const double *par, void *ptr)
 	    
 	    /* garch params: betas */
 	    k = ncm + p + 2;
-	    for (i=1; i<=q; i++) {
+	    for (i=1; i<=p; i++) {
 		dedq[k][t] = 0.0;
 		dhdq[k][t] = DH->h[t-i];
 		if (t - p < t1 && DH->init == INIT_VAR_THEO) {
@@ -443,7 +443,7 @@ static int garch_etht (const double *par, void *ptr)
 	    /* "real" recursive part */
 	    for (i=0; i<DH->k; i++) {
 		k = ncm + p + 2;
-		for (j=1; j<=q; j++) {
+		for (j=1; j<=p; j++) {
 		    dhdq[i][t] += par[k++] * dhdq[i][t-j];
 		}
 	    }
