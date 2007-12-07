@@ -2006,6 +2006,13 @@ static int cusum_do_graph (double a, double b, const double *W,
     double x0 = 0.0;
     int j, t;
     int err = 0;
+    double frac = 1;
+    double slope = b;
+
+    if( pdinfo->pd==4 || pdinfo->pd==12 ) {
+	slope *= pdinfo->pd;
+	frac = 1.0/pdinfo->pd;
+    }
 
     err = gnuplot_init(PLOT_CUSUM, &fq);
     if (err) {
@@ -2028,16 +2035,16 @@ static int cusum_do_graph (double a, double b, const double *W,
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		G_("CUSUMSQ plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", b, x0 - 1);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0 - 1);
-	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0 - 1);
+	fprintf(fq, "plot \\\n%g*(x-%g) title '' w dots lt 2, \\\n", slope, x0 - frac);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", -a, slope, x0 - frac);
+	fprintf(fq, "%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, slope, x0 - frac);
     } else {
 	fputs("set xzeroaxis\n", fq);
 	fprintf(fq, "set title '%s'\n",
 		/* xgettext:no-c-format */
 		G_("CUSUM plot with 95% confidence band"));
-	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
-	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
+	fprintf(fq, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, slope, x0);
+	fprintf(fq, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, slope, x0);
     }	
 
     fputs("'-' using 1:2 w linespoints lt 1\n", fq);
