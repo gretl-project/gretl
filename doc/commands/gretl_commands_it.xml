@@ -4415,9 +4415,9 @@
 
     <description context="cli">
       <para>
-	Deve seguire immediatamente un comando <cmd>ols</cmd>. A seconda delle
-        opzioni usate, il comando esegue una combinazione dei test seguenti:
-        test dei moltiplicatori di Lagrange per la non-linearità (logaritmi e
+	Deve seguire immediatamente un comando <cmd>ols</cmd>. A seconda
+        dell'opzione usata, il comando esegue uno dei test seguenti:
+        test dei moltiplicatori di Lagrange per la non-linearità (logaritmi o
         quadrati), test di White per l'eteroschedasticità, test LMF per la
         correlazione seriale (si veda Kiviet, 1986) e test per il modello ARCH
         (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
@@ -4439,7 +4439,9 @@
       <para>
 	Per impostazione predefinita, il programma mostra la regressione
         ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
-        usando l'opzione <lit>--quiet</lit>.
+        usando l'opzione <lit>--quiet</lit>. La statistica test e il suo p-value
+        possono essere recuperati usando le variabili accessorie <lit>$test</lit>
+        e <lit>$pvalue</lit>.
       </para>
     </description>
 
