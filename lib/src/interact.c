@@ -1552,8 +1552,7 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
 /* look for a line with an "implicit genr", such as
    y = 3*x, x += 10, etc. */
 
-static int plausible_genr_start (const char *s, CMD *cmd, 
-				 const DATAINFO *pdinfo)
+int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 {
     int ret = 0;
 
@@ -2191,7 +2190,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == 0) {
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
-	    if (plausible_genr_start(line, cmd, pdinfo)) {
+	    if (plausible_genr_start(line, pdinfo)) {
 		cmd->ci = GENR;
 	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;

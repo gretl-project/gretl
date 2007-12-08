@@ -63,4 +63,6 @@ void gretl_exec_state_clear (ExecState *s);
 
 int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo);
 
+int plausible_genr_start (const char *s, const DATAINFO *pdinfo);
+
 #endif /* CMD_PRIVATE_H */

@@ -27,6 +27,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "nlspec.h"
+#include "cmd_private.h"
 
 #include "../../minpack/minpack.h"  
 
@@ -2338,11 +2339,48 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
     return err;
 }
 
+static void get_aux_command_word (char *word, const char *line)
+{
+    int n = gretl_varchar_spn(line);
+
+    *word = '\0';
+
+    if (n > 0) {
+	if (n > FN_NAMELEN - 1) {
+	    n = FN_NAMELEN - 1;
+	}
+	strncat(word, line, n);
+    } 
+}
+
+static int screen_bad_aux (const char *line, const DATAINFO *pdinfo)
+{
+    char word[FN_NAMELEN];
+    int ci, err = E_DATA;
+
+    get_aux_command_word(word, line);
+    ci = gretl_command_number(word);
+
+    if (ci == GENR) {
+	err = 0;
+    } else if (plausible_genr_start(line, pdinfo)) {
+	err = 0;
+    } else if (get_user_function_by_name(word)) {
+	err = 0;
+    } else {
+	sprintf(gretl_errmsg, _("command '%s' not valid in this context"), 
+		word);
+    }
+
+    return err;
+}
+
 /**
  * nlspec_add_aux:
  * @spec: pointer to nls specification.
  * @s: string specifying an auxiliary command (primarily
  * for use in calculating function or derivatives).
+ * @pdinfo: pointer to dataset information.
  *
  * Adds the specification of an auxiliary command to @spec, 
  * which pointer must have previously been obtained by a call 
@@ -2351,7 +2389,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int nlspec_add_aux (nlspec *spec, const char *s)
+int nlspec_add_aux (nlspec *spec, const char *s, const DATAINFO *pdinfo)
 {
     char **aux;
     char *this;
@@ -2361,6 +2399,11 @@ int nlspec_add_aux (nlspec *spec, const char *s)
 #if NLS_DEBUG
     fprintf(stderr, "nlspec_add_aux: s = '%s'\n", s);
 #endif
+
+    err = screen_bad_aux(s, pdinfo);
+    if (err) {
+	return err;
+    }
 
     this = gretl_strdup(s);
     if (this == NULL) {
@@ -2569,7 +2612,7 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    }
 	}
     } else {
-	err = nlspec_add_aux(s, line);
+	err = nlspec_add_aux(s, line, pdinfo);
     }
 
     if (err) {
