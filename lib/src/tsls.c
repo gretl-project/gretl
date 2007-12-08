@@ -407,7 +407,7 @@ tsls_make_hatlist (const int *reglist, int *instlist, int *hatlist)
 	instlist[1] = 0;
     }
 
-    return 0;
+    return addconst;
 }
 
 /* perform the Sargan overidentification test for a model
@@ -1078,7 +1078,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* determine the list of variables (hatlist) for which we need to
        obtain fitted values in the first stage 
     */
-    tsls_make_hatlist(reglist, instlist, hatlist);
+    int addconst = tsls_make_hatlist(reglist, instlist, hatlist);
 
     Q = tsls_Q(instlist, reglist, &droplist,
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
@@ -1197,6 +1197,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	gretl_model_set_list_as_data(&tsls, "inst_droplist", droplist); 
     }
 
+    gretl_model_set_int(&tsls, "addconst", addconst);
  bailout:
 
     gretl_matrix_free(Q);

@@ -1969,6 +1969,17 @@ static void print_middle_table_end (PRN *prn)
     }
 }
 
+static void addconst_message (const MODEL *pmod, PRN *prn)
+{
+    if(gretl_model_get_int(pmod, "addconst")) {
+	pprintf(prn, "\n\n%s\n", 
+		_("WARNING: The constant was present among the regressors but not among the\n"
+		  "instruments, so it has been automatically added to the instrument list.\n"
+		  "This behavior may change in future versions, so you may want to adjust your\n"
+		  "scripts accordingly.\n"));
+    }
+}
+
 static void r_squared_message (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->rsq)) {
@@ -2351,6 +2362,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		print_ll(pmod, prn);
 	    }
 	    info_stats_lines(pmod, prn);
+	}
+
+	if (pmod->ci == TSLS && plain_format(prn)) {
+	    addconst_message(pmod, prn);
 	}
 
 	print_middle_table_end(prn);
