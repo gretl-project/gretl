@@ -424,7 +424,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.chisq = 2.0 * (umod->lnL - rmod->lnL);
     } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
-    } else if (cmp.dfn > 1) {
+    } else if (cmp.dfn >= 1) {
 	cmp.err = wald_test(testvars, umod, &cmp.chisq, NULL);
     }
 

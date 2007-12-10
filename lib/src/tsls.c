@@ -500,7 +500,12 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     HT_list = gretl_list_add(reglist, hatlist, &err);
     if (err) {
-	fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
+	if (err == E_NOADD) {
+	    /* more of a no-op than an error */
+	    err = 0;
+	} else {
+	    fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
+	}
 	goto bailout;
     } 
 
