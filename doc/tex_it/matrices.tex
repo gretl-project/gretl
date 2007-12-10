@@ -343,14 +343,16 @@ di Kronecker.
 
 \begin{table}[htbp]
 \centering
-\textbf{Creazione}
+\textbf{Creazione e I/O}
 \hrulefill
 
 \begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{I}         &
 \texttt{mnormal}   &
+\texttt{mread}     &
+\texttt{mwrite}    &
 \texttt{muniform}  &
-\texttt{ones}      &
+\texttt{ones}      \\
 \texttt{seq}       &
 \texttt{zeros}     
 \end{tabular}      
@@ -443,7 +445,8 @@ di Kronecker.
 \texttt{sumr}      \\
 \texttt{sd}        &
 \texttt{values}
-\end{tabular}      
+\end{tabular}
+
 \caption{Funzioni matriciali suddivise per categoria}
 \label{tab:matrix_funcs_cat}
 \end{table}
@@ -956,6 +959,80 @@ La funzione produce le stime OLS ottenuta regredendo la matrice $Y$ $T
 \times n$ sulla matrice $X$ $T \times k$, ossia una matrice $k \times n$
 che contiene $(X'X)^{-1} X'Y$. Viene usata la decomposizione di Cholesky.
 La matrice $U$, se non è \texttt{nulla}, è usata per salvare i residui.
+ 
+\subsection{Lettura e scrittura di matrici con file testuali}
+\label{matrix-csv}
+
+Le due funzioni \texttt{mread} e \texttt{mwrite} possono essere usate per
+semplici operazioni di input/output matriciale, ad esempio permettendo a
+\app{gretl} di scambiare dati con altri programmi.
+
+La funzione \texttt{mread} accetta un parametro stringa: il nome del file
+(testuale) da cui leggere la matrice. Il file in questione deve sottostare alle
+regole seguenti:
+%
+\begin{enumerate}
+\item Le colonne devono essere separate da spazi o caratteri tab.
+\item Il separatore decimale deve essere il carattere punto \texttt{``.''}.
+\item La prima riga del file deve contenere due interi, separati da spazio o
+  tab, che indicano rispettivamente il numero di righe e di colonne.
+\end{enumerate}
+
+In caso di errore (ad esempio se il file è mal formattato o non accessibile),
+viene prodotta una matrice vuota (si veda la sezione~\ref{sec:emptymatrix}).
+
+La funzione complementare \texttt{mwrite} produce file di testo formattati nel
+modo descritto sopra. Il separatore di colonna è il carattere tab, in modo da
+facilitare l'importazione in fogli elettronici. L'uso è descritto nell'esempio
+\ref{matrix-rw}.  Le matrici esportate con il comando \texttt{mwrite} possono
+essere facilmente lette con altri programmi: la tabella seguente riassume i
+comandi necessari per leggere una matrice \texttt{A} da un file chiamato
+\texttt{a.mat} in alcuni programmi di uso comune.
+
+\begin{center}
+  \begin{tabular}{rl}
+    \textbf{Programma} & \textbf{Codice di esempio} \\
+    \hline
+    GAUSS & \verb|tmp[] = load a.mat;| \\
+    & \verb|A = reshape(tmp[3:rows(tmp)],tmp[1],tmp[2]);| \\
+    Ox    & \verb|decl A = loadmat("a.mat");| \\
+    R     & \verb|A = as.matrix(read.table("a.mat", skip=1))| \\
+  \hline
+\end{tabular}
+\end{center}
+
+
+\begin{script}[htbp]
+  \caption{Input/output di matrici con file testuali}
+  \label{matrix-rw}
+  \begin{code}
+nulldata 64
+scalar n = 3
+string f1 = "a.csv"
+string f2 = "b.csv"
+
+matrix a = mnormal(n,n)
+matrix b = inv(a)
+
+err = mwrite(a, f1)
+
+if err != 0
+  fprintf "Errore nella scrittura di %s\n", f1
+else
+  err = mwrite(b, f2)
+endif 
+
+if err != 0
+  fprintf "Errore nella scrittura di %s\n", f2
+else
+  c = mread(f1)
+  d = mread(f2)
+  a = c*d
+  printf "La matrice seguente dovrebbe essere una matrice identità\n"
+  print a
+endif
+  \end{code}
+\end{script}
 
 \section{Matrici vuote}
 \label{sec:emptymatrix}
@@ -1294,36 +1371,38 @@ ols price const sqft --vcv
 \texttt{mexp}      & 
 \texttt{minc}      &  
 \texttt{minr}      & 
-\texttt{mlag}      & 
+\texttt{mlag}      &
 \texttt{mnormal}   \\
 \texttt{mols}      & 
+\texttt{mread}     & 
 \texttt{mshape}    & 
-\texttt{muniform}  & 
-\texttt{mxtab}     & 
+\texttt{muniform}  &
+\texttt{mwrite}    & 
+\texttt{mxtab}     \\
 \texttt{nullspace} & 
-\texttt{onenorm}   \\
+\texttt{onenorm}   &
 \texttt{ones}      & 
 \texttt{princomp}  & 
 \texttt{qform}     & 
-\texttt{qnorm}     & 
+\texttt{qnorm}     \\ 
 \texttt{qrdecomp}  & 
-\texttt{rank}      \\
+\texttt{rank}      &
 \texttt{rcond}     & 
 \texttt{rows}      & 
 \texttt{seq}       & 
-\texttt{sin}       & 
+\texttt{sin}       \\ 
 \texttt{sort}      & 
-\texttt{sqrt}      \\
+\texttt{sqrt}      &
 \texttt{sumc}      & 
 \texttt{sumr}      & 
 \texttt{svd}       & 
-\texttt{tan}       & 
+\texttt{tan}       \\ 
 \texttt{tr}        & 
-\texttt{transp}    \\
+\texttt{transp}    &
 \texttt{unvech}    & 
 \texttt{values}    & 
 \texttt{vec}       & 
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}    
 \end{tabular}      
 \caption{Elenco alfabetico delle funzioni matriciali}
