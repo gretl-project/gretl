@@ -1053,11 +1053,11 @@
       <para context="gui">
 	È possibile controllare per le variabili esogene aggiungendole nel campo
         inferiore. Per impostazione predefinita, le variabili vengono aggiunte al
-        modello in forma non vincolata (indicata da una lettera <lit>U</lit> vicino
+        modello in forma non vincolata (indicata da una lettera <lit>N</lit> vicino
         al nome della variabile). Se si vuole che una certa variabile esogena
         sia vincolata allo spazio di cointegrazione, basta fare clic col tasto
         destro e selezionare <quote>Vincolata</quote> dal menu pop-up. Il simbolo
-        vicino alla variabile diventerà una R.
+        vicino alla variabile diventerà una V.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
@@ -8607,10 +8607,10 @@
         Nel riquadro <quote>Variabili esogene</quote> è possibile aggiungere
         specifiche variabili esogene. Per impostazione predefinita, le variabili
         vengono aggiunte al modello in forma non vincolata (indicata da una
-        lettera <lit>U</lit> vicino al nome della variabile). Se si vuole che
+        lettera <lit>N</lit> vicino al nome della variabile). Se si vuole che
         una certa variabile esogena sia vincolata allo spazio di cointegrazione,
         basta fare clic col tasto destro e selezionare <quote>Vincolata</quote>
-        dal menu pop-up. Il simbolo vicino alla variabile diventerà una R.
+        dal menu pop-up. Il simbolo vicino alla variabile diventerà una V.
       </para>
       <para context="cli">
 	Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl>
