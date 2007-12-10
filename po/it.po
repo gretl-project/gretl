@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-09 19:06+0000\n"
-"PO-Revision-Date: 2007-11-21 12:27+0100\n"
+"PO-Revision-Date: 2007-12-10 21:51+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -415,9 +415,8 @@ msgid "autocorrelation"
 msgstr "Autocorrelazione"
 
 #: lib/src/compare.c:1866
-#, fuzzy
 msgid "Pesaran-Taylor test for heteroskedasticity"
-msgstr "Test di White per l'eteroschedasticità"
+msgstr "Test di Pesaran-Taylor per l'eteroschedasticità"
 
 #: lib/src/compare.c:1915
 msgid "dummy variable for Chow test"
@@ -4677,9 +4676,9 @@ msgid "Analytical derivatives cannot be used with GMM"
 msgstr "Non è possibile usare derivate analitiche con GMM"
 
 #: lib/src/nls.c:2371
-#, fuzzy, c-format
+#, c-format
 msgid "command '%s' not valid in this context"
-msgstr "Il simbolo '%s' non è valido in questo contesto\n"
+msgstr "Il comando '%s' non è valido in questo contesto"
 
 #: lib/src/nls.c:2589
 msgid "No regression function has been specified"
@@ -5490,9 +5489,8 @@ msgid "Undefined variable '%s'."
 msgstr "Variabile non definita '%s'."
 
 #: lib/src/system.c:1743 plugin/fiml.c:92
-#, fuzzy
 msgid "No list of endogenous variables was given"
-msgstr "Aggiungi lista delle variabili endogene"
+msgstr "Non è stata indicata la lista delle variabili endogene"
 
 #: lib/src/system.c:2236
 msgid ""
@@ -11572,14 +11570,19 @@ msgstr "Valore"
 msgid "Reads the current value, or sets a new value"
 msgstr "Legge il valore attuale, o imposta un nuovo valore"
 
+# Si riferisce alla variabile nei vecm vincolata o no allo spazio di
+# cointegrazione.
+# "U" di "Unrestricted"
 #: gui2/selector.c:317
 msgid "U"
-msgstr ""
+msgstr "N"
 
+# Si riferisce alla variabile nei vecm vincolata o no allo spazio di
+# cointegrazione.
+# "R" di "Restricted"
 #: gui2/selector.c:318
-#, fuzzy
 msgid "R"
-msgstr "AR"
+msgstr "V"
 
 #: gui2/selector.c:650
 #, c-format
