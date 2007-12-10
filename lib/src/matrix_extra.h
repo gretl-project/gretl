@@ -64,4 +64,8 @@ int gretl_plotfit_matrices (int yno, int xno, FitType fit,
 
 int gretl_matrix_delete_columns (gretl_matrix *X, int *list);
 
+gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err);
+
+int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname);
+
 #endif /* MATRIX_EXTRA_H */

@@ -1188,6 +1188,26 @@ static NODE *BFGS_maximize (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *matrix_csv_write (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	const char *s = r->v.str;
+
+	ret = aux_scalar_node(p);
+	if (ret == NULL) { 
+	    return NULL;
+	}
+
+	ret->v.xval = gretl_matrix_write_as_text(l->v.m, s);
+    } else {
+	ret = aux_scalar_node(p);
+    }
+
+    return ret;
+}
+
 static NODE *matrix_lag (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -1468,6 +1488,30 @@ static NODE *matrix_to_matrix_func (NODE *n, int f, parser *p)
 	}
 
     finalize:
+
+	if (ret->v.m == NULL) {
+	    matrix_error(p);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *string_to_matrix_func (NODE *n, int f, parser *p)
+{
+    const char *s = n->v.str;
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_error_clear();
+
+	switch (f) {
+	case MREAD:
+	    ret->v.m = gretl_matrix_read_from_text(s, &p->err);
+	    break;
+	default:
+	    break;
+	}
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
@@ -2305,14 +2349,8 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 	int i, s;
 
 	for (i=0; i<k; i++) {
-	    s = t - i; /* FIXME */
-	    if (dated_daily_data(p->dinfo)) {
-		if (s >= 0 && s < p->dinfo->n) {
-		    while (s >= 0 && xna(x[s])) {
-			s--;
-		    }
-		}
-	    } else if (p->dinfo->structure == STACKED_TIME_SERIES) {
+	    s = t - i;
+	    if (p->dinfo->structure == STACKED_TIME_SERIES) {
 		if (s >= 0 && s < p->dinfo->n && 
 		    p->dinfo->paninfo->unit[s] != 
 		    p->dinfo->paninfo->unit[t]) {
@@ -2320,7 +2358,7 @@ static NODE *series_movavg (NODE *l, NODE *r, parser *p)
 		}
 	    }
 
-	    if (s >= 0 && s < p->dinfo->n) {
+	    if (s >= 0) {
 		xs = x[s];
 	    } else {
 		xs = NADBL;
@@ -4183,6 +4221,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, MAT, l, p);
 	}
 	break;
+    case MREAD:
+	/* string -> matrix functions */
+	if (l->t == STR) {
+	    ret = string_to_matrix_func(l, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case QR:
     case EIGSYM:
     case EIGGEN:
@@ -4197,12 +4243,15 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case BFGSMAX:
     case FDJAC:
+    case MWRITE:
 	/* matrix, with string as second arg */
 	if (l->t == MAT && r->t == STR) {
 	    if (t->t == BFGSMAX) {
 		ret = BFGS_maximize(l, r, p);
-	    } else {
+	    } else if (t->t == FDJAC) {
 		ret = numeric_jacobian(l, r, p);
+	    } else {
+		ret = matrix_csv_write(l, r, p);
 	    }
 	} else {
 	    p->err = E_TYPES;

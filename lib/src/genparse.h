@@ -169,6 +169,7 @@ enum {
 	      FFTI,
 	      UPPER,
   /* 140 */   LOWER,
+	      MREAD,
 	      FUNC_MAX,	  /* separator: end of single-arg functions */
 	      COR,
 	      COV,
@@ -177,8 +178,8 @@ enum {
 	      RNORMAL,
 	      FRACDIF,
 	      ZEROS,
-	      ONES,
-  /* 150 */   SEQ,
+  /* 150 */   ONES,
+	      SEQ,
 	      MUNIF,
 	      MNORM,
 	      QFORM,
@@ -187,18 +188,19 @@ enum {
 	      EIGSYM,	 
 	      EIGGEN,
 	      FDJAC,
-	      BFGSMAX,
-  /* 160 */   LRVAR,
+  /* 160 */   BFGSMAX,
+	      LRVAR,
 	      PRINCOMP,
 	      QUANTILE,
 	      CMULT,	  /* complex multiplication */
 	      CDIV,	  /* complex division */
 	      MXTAB,
+	      MWRITE,
 	      MOVAVG,
 	      F2_MAX,	  /* separator: end of two-arg functions */
-	      MSHAPE,
+  /* 170 */   MSHAPE,
 	      SVD,
-  /* 170 */   MOLS,
+	      MOLS,
               FN_MAX,	  /* separator: end of n-arg functions */
 	      COM,	  /* comma */
 	      DOT,	  /* period */
@@ -206,9 +208,9 @@ enum {
 	      COL,	  /* colon */
 	      CON,	  /* named constant */
 	      DUM,	  /* dummy variable */
-	      UVAR,	  /* user variable (scalar or series) */
+  /* 180 */   UVAR,	  /* user variable (scalar or series) */
               UMAT,	  /* user-defined matrix */
-  /* 180 */   UOBJ,	  /* user-defined object (e.g. model) */
+	      UOBJ,	  /* user-defined object (e.g. model) */
               NUM,	  /* scalar, evaluated */
 	      VEC,	  /* series, evaluated */
 	      IVEC,	  /* vector of integers, evaluated */
@@ -216,9 +218,9 @@ enum {
 	      OBS,	  /* observation from a series */
 	      MSL,	  /* matrix plus subspec */
 	      DMSL,	  /* "dollar" matrix plus subspec */
-	      DMSTR,	  /* "dollar" matrix plus old-style string subspec */
+  /* 190 */   DMSTR,	  /* "dollar" matrix plus old-style string subspec */
 	      MSL2,	  /* unevaluated matrix subspec */
-  /* 190 */   MSPEC,	  /* evaluated matrix subspec */
+	      MSPEC,	  /* evaluated matrix subspec */
               SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,	  
@@ -226,9 +228,9 @@ enum {
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      OVAR,	  /* object variable: variable "under" an object */
 	      LOOPIDX,	  /* loop index variable */
-	      LIST,	  /* reference to named list */
+  /* 200 */   LIST,	  /* reference to named list */
 	      STR,	  /* string */
-  /* 200 */   EROOT,	  /* dummy root for (...) expression */
+	      EROOT,	  /* dummy root for (...) expression */
 	      UFUN,	  /* user-defined function */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,
@@ -236,7 +238,7 @@ enum {
 	      INC,   
 	      DEC,
 	      QUERY,
-	      UNK 
+  /* 210 */   UNK 
 };
 
 enum {

@@ -242,6 +242,8 @@ struct str_table funcs[] = {
     { MSHAPE,   "mshape" },
     { SVD,      "svd" },
     { MOLS,     "mols" },
+    { MREAD,    "mread" },
+    { MWRITE,   "mwrite" },
     { 0,        NULL }
 };
 

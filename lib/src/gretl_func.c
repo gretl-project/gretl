@@ -2935,6 +2935,7 @@ static int localize_list (const char *oldname, fn_param *fp,
 			  DATAINFO *pdinfo)
 {
     const int *list;
+    int level = fn_executing + 1;
     int i, err;
 
     list = get_list_by_name(oldname);
@@ -2953,7 +2954,7 @@ static int localize_list (const char *oldname, fn_param *fp,
     if (!err) {
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] != 0) {
-		STACK_LEVEL(pdinfo, list[i]) += 1;
+		STACK_LEVEL(pdinfo, list[i]) = level;
 		if (fp->flags & ARG_CONST) {
 		    set_var_const(pdinfo, list[i]);
 		}

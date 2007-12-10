@@ -3835,7 +3835,11 @@ int command_ok_for_model (int test_ci, gretlopt opt, int model_ci)
 	if (opt & OPT_H) {
 	    ok = (model_ci != ARCH);
 	} else if (model_ci != OLS) {
-	    ok = 0; /* FIXME */
+	    if ((model_ci == TSLS) && (opt & (OPT_A | OPT_W))) {
+		ok = 1; 
+	    } else {
+		ok = 0; /* FIXME */
+	    }
 	}
 	break;
 

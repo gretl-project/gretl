@@ -1971,7 +1971,7 @@ static void print_middle_table_end (PRN *prn)
 
 static void addconst_message (const MODEL *pmod, PRN *prn)
 {
-    if(gretl_model_get_int(pmod, "addconst")) {
+    if (gretl_model_get_int(pmod, "addconst")) {
 	pprintf(prn, "\n\n%s\n", 
 		_("WARNING: The constant was present among the regressors but not among the\n"
 		  "instruments, so it has been automatically added to the instrument list.\n"
@@ -2452,7 +2452,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	outcovmx(pmod, pdinfo, prn);
     }
 
-    if (any_tests(pmod)) {
+    if (any_tests(pmod) && !(opt & OPT_S)) {
 	print_model_tests(pmod, prn);
     }
 

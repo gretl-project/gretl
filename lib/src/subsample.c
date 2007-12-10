@@ -715,6 +715,8 @@ count_panel_units (const char *mask, const DATAINFO *pdinfo)
     return n;
 }
 
+/* construct mask for takig random sub-sample from dataset */
+
 static int make_random_mask (const char *oldmask, const char *line, 
 			     const double **Z, const DATAINFO *pdinfo,
 			     char *mask)

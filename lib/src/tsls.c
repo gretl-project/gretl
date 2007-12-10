@@ -387,8 +387,7 @@ tsls_make_hatlist (const int *reglist, int *instlist, int *hatlist)
 	}
 	if (endog) {
 	    if (reglist[i] == 0) {
-		/* found const in reglist but not instlist: needs fixing
-		   FIXME non-official const? */
+		/* found const in reglist but not instlist: needs fixing */
 		addconst = 1;
 	    } else {
 		hatlist[++k] = reglist[i];
@@ -990,6 +989,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int *hatlist = NULL, *s2list = NULL;
     int *exolist = NULL;
     int *droplist = NULL;
+    int addconst = 0;
     int pos, orig_nvar = pdinfo->v;
     int rlen, ninst, ev = 0;
     int OverIdRank = 0;
@@ -1078,7 +1078,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* determine the list of variables (hatlist) for which we need to
        obtain fitted values in the first stage 
     */
-    int addconst = tsls_make_hatlist(reglist, instlist, hatlist);
+    addconst = tsls_make_hatlist(reglist, instlist, hatlist);
 
     Q = tsls_Q(instlist, reglist, &droplist,
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
@@ -1197,7 +1197,12 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	gretl_model_set_list_as_data(&tsls, "inst_droplist", droplist); 
     }
 
-    gretl_model_set_int(&tsls, "addconst", addconst);
+#if 0
+    if (addconst) {
+	gretl_model_set_int(&tsls, "addconst", addconst);
+    }
+#endif
+
  bailout:
 
     gretl_matrix_free(Q);

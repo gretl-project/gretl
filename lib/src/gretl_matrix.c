@@ -8408,4 +8408,3 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 
     return tab;
 }
-

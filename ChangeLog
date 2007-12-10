@@ -1,5 +1,11 @@
 version 1.7.1, in progress
 - Add documentation for "set stopwatch"
+- Add movavg function to genr
+- Add autocorrelation and heteroskedasticity tests for models
+  estimated via TSLS
+- Add "dataset resample n" command to resample observations
+  with replacement
+- Fix bugs: [ add SF bug ID numbers]
 
 11/27/2007 version 1.7.0
 - Add heckit estimator

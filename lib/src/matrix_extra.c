@@ -712,3 +712,114 @@ int gretl_matrix_delete_columns (gretl_matrix *X, int *list)
 
     return 0;
 }
+
+/**
+ * gretl_matrix_read_from_text:
+ * @fname: name of text file.
+ * @err: location to receive error code.
+ *
+ * Reads a matrix from a text file by the name @fname; the column
+ * separator must be space or tab. It is assumed that the dimensions of
+ * the matrix (number of rows and columns) are found on the first line
+ * of the csv file, so no heuristics are necessary. In case of error,
+ * an empty matrix is returned and @err is filled appropriately.
+ *
+ * Returns: The matrix read from file, or %NULL.
+ */
+
+gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
+{
+    int r, c, i, j;
+    int ret;
+    double x;
+    gretl_matrix *A = NULL;
+    FILE *f;
+
+    f = fopen(fname, "r");
+
+    if (f == NULL) {
+	*err = E_FOPEN;
+	return gretl_null_matrix_new();
+    }
+
+    ret = fscanf(f, "%d %d\n", &r, &c);
+
+    if (ret < 2 || r <= 0 || c <= 0) {
+	*err = E_DATA;
+	A = gretl_null_matrix_new();
+    } else {
+	A = gretl_matrix_alloc(r, c);
+    }
+
+    if (A == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (*err) {
+	fclose(f);
+	return A;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<r && !*err; i++) {
+	for (j=0; j<c && !*err; j++) {
+	    if (fscanf(f, "%lf", &x) != 1) {
+		*err = E_DATA;
+		fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
+	    } else {
+		gretl_matrix_set(A, i, j, x);
+	    }
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+    
+    fclose(f);
+
+    return A;
+}
+
+/**
+ * gretl_matrix_write_as text:
+ * @A: matrix.
+ * @fname: name of file to write.
+ *
+ * Writes the matrix @A to a plain text file by the name @fname; the 
+ * column separator is the tab. The number of rows and columns are 
+ * written on the first line of the file (which comes in handy for 
+ * reading the matrix).
+ *
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
+{
+    int r = A->rows;
+    int c = A->cols;
+    int i, j, err = 0;
+    FILE *f;
+
+    f = fopen(fname, "w");
+
+    if (f == NULL) {
+	return E_FOPEN;
+    }
+
+    fprintf(f, "%d\t%d\n", r, c);
+    
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<r; i++) {
+	for (j=0; j<c; j++) {
+	    fprintf(f, "%26.18E\t", gretl_matrix_get(A, i, j));
+	}
+	fputc('\n', f);
+    }
+
+    gretl_pop_c_numeric_locale();
+    
+    fclose(f);
+
+    return err;
+}

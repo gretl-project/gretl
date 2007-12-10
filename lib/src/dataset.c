@@ -2642,19 +2642,21 @@ int dataset_op_from_string (const char *s)
 	op = DS_SORTBY;
     } else if (!strcmp(s, "dsortby")) {
 	op = DS_DSORTBY;
+    } else if (!strcmp(s, "resample")) {
+	op = DS_RESAMPLE;
     }
 
     return op;
 }
 
-static int dataset_int_param (const char *s, int code, 
+static int dataset_int_param (const char *s, int op, 
 			      double **Z, DATAINFO *pdinfo, 
 			      int *err)
 {
     char test[32];
     int k = 0;
 
-    if ((code == DS_COMPACT || code == DS_EXPAND) &&
+    if ((op == DS_COMPACT || op == DS_EXPAND) &&
 	!dataset_is_time_series(pdinfo)) {
 	*err = E_PDWRONG;
 	return 0;
@@ -2668,9 +2670,9 @@ static int dataset_int_param (const char *s, int code,
 	return 0;
     }
 
-    if (k <= 0) {
+    if (k <= 0 || (op == DS_RESAMPLE && k < 1)) {
 	*err = E_DATA;
-    } else if (code == DS_COMPACT) {
+    } else if (op == DS_COMPACT) {
 	int ok = 0;
 
 	if (pdinfo->pd == 12 && (k == 4 || k == 1)) {
@@ -2687,7 +2689,7 @@ static int dataset_int_param (const char *s, int code,
 	    *err = E_PDWRONG;
 	    strcpy(gretl_errmsg, "This conversion is not supported");
 	}
-    } else if (code == DS_EXPAND) {
+    } else if (op == DS_EXPAND) {
 	int ok = 0;
 
 	if (pdinfo->pd == 1 && (k == 4 || k == 12)) {
@@ -2721,6 +2723,97 @@ static int compact_data_set_wrapper (const char *s, double ***pZ,
     return compact_data_set(pZ, pdinfo, k, method, 0, 0);
 }
 
+/* resample the dataset by observation, with replacement */
+
+static int dataset_resample (int n, double ***pZ, DATAINFO *pdinfo)
+{
+    double **RZ = NULL;
+    char **S = NULL;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int v = pdinfo->v;
+    int i, j, s, t;
+    int err = 0;
+
+    if (v < 2) {
+	return E_DATA;
+    }
+
+    RZ = malloc(v * sizeof *RZ);
+    if (RZ == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<v; i++) {
+	RZ[i] = NULL;
+    }
+
+    j = 0;
+    for (i=0; i<pdinfo->v && !err; i++) {
+	if (i > 0 && var_is_scalar(pdinfo, i)) {
+	    RZ[j] = malloc(sizeof **RZ);
+	    if (RZ[j] != NULL) {
+		RZ[j][0] = (*pZ)[i][0];
+	    }
+	} else {
+	    RZ[j] = malloc(n * sizeof **RZ);
+	    if (RZ[j] != NULL && i == 0) {
+		for (t=0; t<n; t++) {
+		    RZ[j][t] = 1.0;
+		}
+	    }
+	}
+	if (RZ[j] == NULL) {
+	    err = E_ALLOC;
+	}
+	j++;
+    }
+
+    if (err) {
+	for (i=0; i<v; i++) {
+	    free(RZ[i]);
+	}
+	free(RZ);
+	return E_ALLOC;
+    }
+
+    if (pdinfo->markers == REGULAR_MARKERS) {
+	S = strings_array_new_with_length(n, OBSLEN);
+    }
+
+    for (t=0; t<n; t++) {
+	s = gretl_rand_int_max(T) + pdinfo->t1;
+	j = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (var_is_series(pdinfo, i)) {
+		RZ[j][t] = (*pZ)[i][s];
+	    } 
+	    j++;
+	}
+	if (S != NULL) {
+	    strcpy(S[t], pdinfo->S[s]);
+	}
+    }
+
+    free_Z(*pZ, pdinfo);
+    *pZ = RZ;
+
+    if (S != NULL) {
+	dataset_destroy_obs_markers(pdinfo);
+	pdinfo->S = S;
+	pdinfo->markers = REGULAR_MARKERS;
+    } else if (pdinfo->S != NULL) {
+	dataset_destroy_obs_markers(pdinfo);
+    }
+
+    pdinfo->v = v;
+    pdinfo->n = n;
+    pdinfo->t1 = 0;
+    pdinfo->t2 = n - 1;
+    dataset_obs_info_default(pdinfo);
+
+    return err;
+}
+
 int modify_dataset (int op, const int *list, const char *s, 
 		    double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn)
@@ -2732,7 +2825,8 @@ int modify_dataset (int op, const int *list, const char *s,
 	return 1;
     }
 
-    if (op == DS_ADDOBS || op == DS_COMPACT || op == DS_EXPAND) {
+    if (op == DS_ADDOBS || op == DS_COMPACT || 
+	op == DS_EXPAND || op == DS_RESAMPLE) {
 	k = dataset_int_param(s, op, *pZ, pdinfo, &err);
 	if (err) {
 	    return err;
@@ -2751,6 +2845,8 @@ int modify_dataset (int op, const int *list, const char *s,
 	err = dataset_sort(s, *pZ, pdinfo, OPT_NONE);
     } else if (op == DS_DSORTBY) {
 	err = dataset_sort(s, *pZ, pdinfo, OPT_D);
+    } else if (op == DS_RESAMPLE) {
+	err = dataset_resample(k, pZ, pdinfo);
     } else if (op == DS_DELETE) {
 	pprintf(prn, "dataset delete: not ready yet\n");
     } else if (op == DS_KEEP) {

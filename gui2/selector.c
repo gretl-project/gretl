@@ -314,7 +314,10 @@ void clear_selector (void)
     destroy_lag_preferences();
 }
 
-static char varflag[8] = "U";
+#define UNRESTRICTED N_("U")
+#define RESTRICTED   N_("R")
+
+static char varflag[8];
 
 static void set_varflag (const char *s)
 {
@@ -2683,10 +2686,10 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	    list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
 	}
     } else if (USE_VECXLIST(sr->code) && vecxlist != NULL) {
-	set_varflag("U");
+	set_varflag(UNRESTRICTED);
 	for (i=1; i<=vecxlist[0]; i++) {
 	    if (vecxlist[i] == LISTSEP) {
-		set_varflag("R");
+		set_varflag(RESTRICTED);
 	    } else if (vecxlist[i] > 0) {
 		list_append_var(mod, &iter, vecxlist[i], sr, SR_RVARS2);
 		if (sr->lags_button != NULL) {
@@ -2694,7 +2697,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 		}
 	    }
 	}
-	set_varflag("U");
+	set_varflag(UNRESTRICTED);
     } else if (!VEC_CODE(sr->code)) {
 	list_append_var(mod, &iter, 0, sr, SR_RVARS2);
     }

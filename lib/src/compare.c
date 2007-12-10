@@ -1583,6 +1583,301 @@ int autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
+/**
+ * tsls_autocorr_test:
+ * @pmod: pointer to model to be tested.
+ * @order: lag order for test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_Q, be less verbose.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given two-stage model for autocorrelation of order equal
+ * to the specified value, or equal to the frequency of the data if
+ * the supplied @order is zero, as per Godfrey (1999), "Testing for
+ * Serial Correlation by Variable Addition in Dynamic Models Estimated
+ * by Instrumental Variables", RES. Note that none of the
+ * asymptotically equivalent tests given on page 553 is used
+ * here. Instead, we estimate the model augmented with lags and then
+ * perform a Wald-type test. The resulting chi-square statistic is
+ * divided by its degrees of freedom as a finite-sample adjustment and
+ * compared to an F distribution.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+static int tsls_autocorr_test (MODEL *pmod, int order, 
+			       double ***pZ, DATAINFO *pdinfo, 
+			       gretlopt opt, PRN *prn)
+{
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
+    int *addlist = NULL;
+    int *testlist = NULL;
+    MODEL aux;
+    int i, j, t, n = pdinfo->n, v = pdinfo->v;
+    double x, pval = 1.0;
+    int err = 0;
+
+    if (pmod->ci != TSLS) { 
+	return E_NOTIMP;
+    }
+
+    if (pmod->missmask != NULL) {
+	return E_DATA;
+    }
+
+    /* impose original sample range */
+    impose_model_smpl(pmod, pdinfo);
+
+    gretl_model_init(&aux);
+
+    if (order <= 0) {
+	order = pdinfo->pd;
+    }
+
+    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
+	return E_DF;
+    }
+
+    addlist = gretl_list_new(order);
+
+    if (addlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = dataset_add_series(1, pZ, pdinfo);
+    }
+
+    if (!err) {
+	/* add uhat to data set */
+	for (t=0; t<n; t++) {
+	    (*pZ)[v][t] = pmod->uhat[t];
+	}
+	strcpy(pdinfo->varname[v], "uhat");
+	strcpy(VARLABEL(pdinfo, v), _("residual"));
+	/* then lags of same */
+	for (i=1; i<=order; i++) {
+	    int lnum;
+
+	    lnum = laggenr(v, i, pZ, pdinfo);
+	    /* 
+	       set the first entries to 0 for compatibility with Godfrey (1994)
+	       and PcGive (not perfect)
+	    */
+	    for (t=smpl_t1; t<smpl_t1+i; t++) {
+		(*pZ)[lnum][t] = 0;
+	    }
+
+	    if (lnum < 0) {
+		sprintf(gretl_errmsg, _("lagging uhat failed"));
+		err = E_LAGS;
+	    } else {
+		addlist[i] = lnum;
+	    }
+	}
+    }
+
+    if (!err) {
+	testlist = tsls_list_add(pmod->list, addlist, OPT_B, &err);
+	aux = tsls_func(testlist, TSLS, pZ, pdinfo, OPT_NONE);
+	err = aux.errcode;
+	if (err) {
+	    errmsg(aux.errcode, prn);
+	}
+    } 
+
+    if (!err) {
+	gretl_matrix *V0;
+	gretl_vector *b = gretl_vector_alloc(order);
+	gretl_matrix *V1 = gretl_matrix_alloc(order, order);
+	gretl_vector *WT = gretl_matrix_alloc(1, 1);
+	int ki, kj;
+
+	V0 = gretl_model_get_matrix(&aux, M_VCV, &err);
+	ki = aux.ncoeff - order;
+
+	for (i=0; i<order; i++) {
+	    x = aux.coeff[ki];
+	    gretl_vector_set(b, i, x);
+	    kj = ki;
+	    for (j=i; j<order; j++) {
+		x = gretl_matrix_get(V0, ki, kj); 
+		gretl_matrix_set(V1, i, j, x);
+		gretl_matrix_set(V1, j, i, x);
+		kj++;
+	    }
+	    ki++;
+	}
+
+	err = gretl_invert_symmetric_matrix(V1);
+	gretl_matrix_qform(b, GRETL_MOD_NONE, V1, WT, GRETL_MOD_NONE);
+	x = gretl_vector_get(WT,0) / order;
+	
+	gretl_vector_free(WT);
+	gretl_vector_free(b);
+	gretl_matrix_free(V1);
+	gretl_matrix_free(V0);
+
+	aux.aux = AUX_AR;
+	gretl_model_set_int(&aux, "BG_order", order);
+	pval = snedecor_cdf_comp(x, order, aux.nobs - pmod->ncoeff - order);
+
+	if (opt & OPT_Q) {
+	    bg_test_header(order, prn);
+	} else {
+	    printmodel(&aux, pdinfo, OPT_S, prn);
+	} 
+
+	pprintf(prn, "%s: Pseudo-LMF = %f,\n", _("Test statistic"), x);
+	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		order, aux.nobs - pmod->ncoeff, x, pval);
+	pputc(prn, '\n');
+	record_test_result(x/order, pval, _("autocorrelation"));
+
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
+	    
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_LMF);
+		model_test_set_dfn(test, order);
+		model_test_set_dfd(test, aux.nobs - pmod->ncoeff);
+		model_test_set_order(test, order);
+		model_test_set_value(test, x);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }	    
+	}
+    }
+
+    free(addlist);
+    free(testlist);
+
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
+    clear_model(&aux); 
+
+    /* reset sample as it was */
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
+
+    return err;
+}
+
+/**
+ * pt_tsls_het_test:
+ * @pmod: pointer to model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save results to model; %OPT_Q
+ * means don't print the auxiliary regression.
+ * @prn: gretl printing struct.
+ *
+ * Runs Pesaran and Taylor's (1999) HET_1 test for heteroskedasticity
+ * on the given tsls model. The statistic is just a t-statistic, so
+ * under the null it is distributed as a standard normal.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+#define PT_DEBUG 0
+
+static int tsls_hetero_test (MODEL *pmod, double ***pZ, 
+			     DATAINFO *pdinfo, gretlopt opt, 
+			     PRN *prn)
+{
+    int ret = 0;
+    int pos, v = pmod->list[1], newv = pdinfo->v;
+    int *auxlist = NULL, *testlist = NULL;
+    int i, h, t, t1a, t2a, t1b, t2b;
+    MODEL aux;
+    double x, pval;
+
+    pos = gretl_list_separator_position(pmod->list);
+    h = pmod->list[0] - pos;
+
+#if PT_DEBUG
+    pprintf(prn, "v = %d, h = %d\n", v, h);
+#endif
+
+    auxlist = gretl_list_new(h + 1);
+    testlist = gretl_list_new(3);
+
+    if (auxlist == NULL || testlist == NULL) {
+	free(auxlist);
+	free(testlist);
+	return E_ALLOC;
+    }
+
+    auxlist[1] = v;
+    for (i=2; i<=auxlist[0]; i++) {
+	auxlist[i] = pmod->list[i + pos - 1];
+    }	
+
+    testlist[1] = newv;
+    testlist[2] = 0;
+    testlist[3] = newv+1;
+
+#if PT_DEBUG
+    printlist(auxlist, "auxlist");
+    printlist(testlist, "testlist");
+#endif
+
+    aux = lsq(auxlist, pZ, pdinfo, OLS, OPT_A);
+#if PT_DEBUG
+    printmodel(&aux, pdinfo, OPT_S, prn);
+#endif
+
+    t1a = pmod->t1;
+    t2a = pmod->t2;
+    t1b = pdinfo->t1;
+    t2b = pdinfo->t2;
+
+    if (dataset_add_series(2, pZ, pdinfo)) {
+	free(auxlist);
+	free(testlist);
+	return E_ALLOC;
+    } 
+
+    for (t=t1a; t<=t2a; t++) {
+	x = pmod->uhat[t];
+	(*pZ)[newv][t] = x*x;
+	x = aux.yhat[t];
+	(*pZ)[newv+1][t] = x*x;
+    }
+
+    clear_model(&aux);
+
+    pdinfo->t1 = t1a;
+    pdinfo->t2 = t2a;
+
+    aux = lsq(testlist, pZ, pdinfo, OLS, OPT_A);
+#if PT_DEBUG
+    printmodel(&aux, pdinfo, OPT_S, prn);
+#endif
+
+    x = fabs(aux.coeff[1]) / aux.sderr[1];
+    pval = 2.0 * (1 - normal_cdf(x));
+
+    clear_model(&aux);
+
+    pdinfo->t1 = t1b;
+    pdinfo->t2 = t2b;
+
+    pprintf(prn, "\n%s\n", _("Pesaran-Taylor test for heteroskedasticity"));
+    pputc(prn, '\n');
+
+    pprintf(prn, "%s: HET_1 = %f", _("Test statistic"), x);
+    pprintf(prn, ", %s = %.3g\n", _("with p-value"), pval);
+    pputc(prn, '\n');
+
+    free(auxlist);
+    free(testlist);
+
+    dataset_drop_last_variables(2, pZ, pdinfo); 
+
+    return ret;
+}
+
 /* compose list of variables to be added for Chow test and add
    them to the data set */
 
@@ -2523,10 +2818,14 @@ int lmtest_driver (const char *param,
 	}
     }
 
-    /* heteroskedasticity, White */
+    /* heteroskedasticity (White) */
     if (!err && (opt & OPT_W)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
+	    if (((MODEL *) ptr)->ci == TSLS) {
+		err = tsls_hetero_test(ptr, pZ, pdinfo, testopt, prn);
+	    } else {
+		err = whites_test(ptr, pZ, pdinfo, testopt, prn);
+	    }
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2535,8 +2834,13 @@ int lmtest_driver (const char *param,
     /* autocorrelation */
     if (!err && (opt & OPT_A)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = autocorr_test(ptr, k, pZ, pdinfo, 
-				testopt, prn);
+	    if (((MODEL *) ptr)->ci == TSLS) {
+		err = tsls_autocorr_test(ptr, k, pZ, pdinfo, 
+					 testopt, prn);
+	    } else {
+		err = autocorr_test(ptr, k, pZ, pdinfo, 
+				    testopt, prn);
+	    }
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
 	} else {

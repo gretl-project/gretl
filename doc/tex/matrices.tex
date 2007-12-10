@@ -347,14 +347,16 @@ context it is reserved for the Kronecker product.)
 
 \begin{table}[htbp]
 \centering
-\textbf{Creation}
+\textbf{Creation and I/O}
 \hrulefill
 
 \begin{tabular}{p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}p{\cwid}}
 \texttt{I}         &
 \texttt{mnormal}   &
+\texttt{mread}     &
+\texttt{mwrite}    &
 \texttt{muniform}  &
-\texttt{ones}      &
+\texttt{ones}      \\
 \texttt{seq}       &
 \texttt{zeros}     
 \end{tabular}      
@@ -448,6 +450,7 @@ context it is reserved for the Kronecker product.)
 \texttt{sd}        &
 \texttt{values}  
 \end{tabular}      
+
 \caption{Table of matrix functions by category}
 \label{tab:matrix_funcs_cat}
 \end{table}
@@ -978,6 +981,83 @@ This function returns the OLS estimates obtained by regressing the $T
 is used. The matrix $U$, if not \texttt{null}, is used to store the
 residuals.
 
+\subsection{Reading and writing matrices from/to text files}
+\label{matrix-csv}
+
+The two functions \texttt{mread} and \texttt{mwrite} can be used for
+basic matrix input/output. This can be useful to enable \app{gretl} to
+exchange data with other programs.
+
+The \texttt{mread} function accepts one string parameter: the name of
+the (plain text) file from which the matrix is to be read.  The file
+in question must conform to the following rules:
+%
+\begin{enumerate}
+\item The columns must be separated by spaces or tab characters.
+\item The decimal separator must be the dot \texttt{``.''} character.
+\item The first line in the file must contain two integers, separated
+  by a space or a tab, indicating the number of rows and columns,
+  respectively.
+\end{enumerate}
+
+Should an error occur (such as the file being badly formatted or
+inaccessible), an empty matrix (see section~\ref{sec:emptymatrix}) is
+returned.
+
+The complementary function \texttt{mwrite} produces text files
+formatted as described above.  The column separator is the tab
+character, so import into spreadsheets should be straightforward.
+Usage is illustrated in example \ref{matrix-rw}.  Matrices stored via
+the \texttt{mwrite} command can be easily read by other programs; the
+following table summarizes the appropriate commands for reading a
+matrix \texttt{A} from a file called \texttt{a.mat} in some
+widely-used programs.
+
+\begin{center}
+  \begin{tabular}{rl}
+    \textbf{Program} & \textbf{Sample code} \\
+    \hline
+    GAUSS & \verb|tmp[] = load a.mat;| \\
+    & \verb|A = reshape(tmp[3:rows(tmp)],tmp[1],tmp[2]);| \\
+    Ox    & \verb|decl A = loadmat("a.mat");| \\
+    R     & \verb|A = as.matrix(read.table("a.mat", skip=1))| \\
+  \hline
+\end{tabular}
+\end{center}
+
+
+\begin{script}[htbp]
+  \caption{Matrix input/output via text files}
+  \label{matrix-rw}
+  \begin{code}
+nulldata 64
+scalar n = 3
+string f1 = "a.csv"
+string f2 = "b.csv"
+
+matrix a = mnormal(n,n)
+matrix b = inv(a)
+
+err = mwrite(a, f1)
+
+if err != 0
+  fprintf "Failed to write %s\n", f1
+else
+  err = mwrite(b, f2)
+endif 
+
+if err != 0
+  fprintf "Failed to write %s\n", f2
+else
+  c = mread(f1)
+  d = mread(f2)
+  a = c*d
+  printf "The following matrix should be an identity matrix\n"
+  print a
+endif
+  \end{code}
+\end{script}
+
 \section{Empty matrices}
 \label{sec:emptymatrix}
 
@@ -1324,33 +1404,35 @@ ols price const sqft --vcv
 \texttt{mlag}      & 
 \texttt{mnormal}   \\
 \texttt{mols}      & 
+\texttt{mread}     & 
 \texttt{mshape}    & 
 \texttt{muniform}  & 
-\texttt{mxtab}     & 
+\texttt{mwrite}    & 
+\texttt{mxtab}     \\
 \texttt{nullspace} & 
-\texttt{onenorm}   \\
+\texttt{onenorm}   & 
 \texttt{ones}      & 
 \texttt{princomp}  & 
 \texttt{qform}     & 
-\texttt{qnorm}     & 
+\texttt{qnorm}     \\
 \texttt{qrdecomp}  & 
-\texttt{rank}      \\
+\texttt{rank}      & 
 \texttt{rcond}     & 
 \texttt{rows}      & 
 \texttt{seq}       & 
-\texttt{sin}       & 
+\texttt{sin}       \\
 \texttt{sort}      & 
-\texttt{sqrt}      \\
+\texttt{sqrt}      & 
 \texttt{sumc}      & 
 \texttt{sumr}      & 
 \texttt{svd}       & 
-\texttt{tan}       & 
+\texttt{tan}       \\
 \texttt{tr}        & 
-\texttt{transp}    \\
+\texttt{transp}    & 
 \texttt{unvech}    & 
 \texttt{values}    & 
 \texttt{vec}       & 
-\texttt{vech}      &
+\texttt{vech}      \\
 \texttt{zeros}    
 \end{tabular}      
 \caption{Alphabetical listing of matrix functions}
