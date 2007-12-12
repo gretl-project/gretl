@@ -4500,6 +4500,17 @@
 	be retrieved using the accessors <lit>$test</lit> and
 	<lit>$pvalue</lit> respectively.
       </para>
+
+      <para>
+	When a model has been estimated by two-stage least squares
+	(see <cmdref targ="tsls"/>), the LM principle breaks down and
+	gretl offers some equivalents: in these cases, the
+	<flag>--autocorr</flag> option computes Godfrey's (Review of
+	Economics and Statistics, 1994) test for autocorrelation,
+	while the <flag>--white</flag> option yields Pesaran and
+	Taylor's (Oxford Bulletin of Economics and Statistics, 1999)
+	HET1 heteroskedasticity test.
+      </para>
     </description>
 
     <gui-access>
