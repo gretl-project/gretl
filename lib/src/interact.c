@@ -75,7 +75,7 @@ static int strip_inline_comments (char *s)
 
     if (*s == '#' || (*s == '/' && *(s+1) == '/')) {
 	ret = 1;
-    } else if (strstr(s, " #") || strstr(s, "//")) {
+    } else if (strstr(s, "#") || strstr(s, "//")) {
 	int quoted = 0;
 	int braced = 0;
 
@@ -90,8 +90,7 @@ static int strip_inline_comments (char *s)
 		}
 	    }
 	    if (!quoted && !braced) {
-		if ((*s == ' ' && *(s+1) == '#') ||
-		    (*s == '/' && *(s+1) == '/')) {
+		if ((*s == '#') || (*s == '/' && *(s+1) == '/')) {
 		    *s = '\0';
 		    break;
 		}
