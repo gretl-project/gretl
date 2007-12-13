@@ -419,23 +419,26 @@ static void try_to_get_windows_font (void)
     }
 }
 
-void set_up_windows_look (void)
+int use_wimp;
+
+static int wimp_init (void)
 {
     char tmp[4] = {0};
 
-    /* Note: use of WIMP was conditional on the "wimp" user-setting,
-       but I've now made it conditional on using Windows' XP theme
-       instead.  This is because (a) WIMP looks totally crap on
-       Windows classic, while (b) standard GTK does not look good
-       under the XP theme.  AC, 2007-11-12.
-    */
+    /* Are we using the XP theme (as opposed to "classic")? */
 
     read_reg_val(HKEY_CURRENT_USER, 
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
 		 "ThemeActive", tmp);
 
-    if (!strcmp(tmp, "1")) { 
-	/* using XP theme, not "classic" */
+    if (!strcmp(tmp, "1")) {
+	use_wimp = 1;
+    }
+}
+
+void set_up_windows_look (void)
+{
+    if (use_wimp) { 
 	size_t n = strlen(paths.gretldir);
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
@@ -507,6 +510,7 @@ void gretl_win32_init (const char *progname)
 {
     set_network_cfg_filename(progname);
 
+    wimp_init();
     read_rc(); /* get config info from registry */
     set_gd_fontpath();
     hush_warnings();

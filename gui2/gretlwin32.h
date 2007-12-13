@@ -35,6 +35,8 @@ enum {
     WIN32_TO_PRINTER
 };
 
+extern int use_wimp;
+
 int create_child_process (char *prog);
 
 void startR (char *Rcommand);

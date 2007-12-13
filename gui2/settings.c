@@ -108,6 +108,10 @@ static char hc_garch[5] = "QML";
 static int lcnumeric = 1;
 #endif
 
+#ifdef G_OS_WIN32
+extern int use_wimp;
+#endif
+
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
 char midiplayer[MAXSTR];
 #endif
@@ -179,6 +183,10 @@ RCVAR rc_vars[] = {
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
       BOOLSET, 0, TAB_MAIN, NULL },
+#endif
+#ifdef G_OS_WIN32 	 
+    { "wimp", N_("Emulate Windows look"), NULL, &use_wimp, 	 
+      BOOLSET, 0, TAB_MAIN, NULL }, 	 
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
@@ -1050,7 +1058,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 
 	    /* special case: warning */
-	    if (!strcmp(rc->key, "lcnumeric")) {
+	    if (!strcmp(rc->key, "lcnumeric") || !strcmp(rc->key, "wimp")) {
 		g_signal_connect(G_OBJECT(rc->widget), "toggled",
 				 G_CALLBACK(takes_effect_on_restart), 
 				 NULL);

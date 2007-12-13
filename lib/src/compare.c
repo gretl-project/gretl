@@ -1416,171 +1416,22 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void bg_test_header (int order, PRN *prn)
+static void bg_test_header (int order, PRN *prn, int tsls)
 {
-    pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
+    if (tsls) {
+	pprintf(prn, "\n%s ", _("Godfrey (1994) test for"));
+    } else {
+	pprintf(prn, "\n%s ", _("Breusch-Godfrey test for")); 
+    }
+
     if (order > 1) {
 	pprintf(prn, "%s %d\n", _("autocorrelation up to order"),
 		order);
     } else {
 	pprintf(prn, "%s\n", _("first-order autocorrelation"));
     }
+
     pputc(prn, '\n');
-}
-
-/**
- * autocorr_test:
- * @pmod: pointer to model to be tested.
- * @order: lag order for test.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_Q, be less verbose.
- * @prn: gretl printing struct.
- *
- * Tests the given model for autocorrelation of order equal to
- * the specified value, or equal to the frequency of the data if
- * the supplied @order is zero. Gives TR^2 and LMF test statistics.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-int autocorr_test (MODEL *pmod, int order, 
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn)
-{
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
-    int *newlist = NULL;
-    MODEL aux;
-    int i, t, n = pdinfo->n, v = pdinfo->v; 
-    double trsq, LMF, lb, pval = 1.0;
-    int err = 0;
-
-    if (pmod->ci != OLS && pmod->ci != VAR) { 
-	return E_NOTIMP;
-    }
-
-    if (pmod->missmask != NULL) {
-	return E_DATA;
-    }
-
-    if (dataset_is_panel(pdinfo)) {
-	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
-    }
-
-    /* impose original sample range */
-    impose_model_smpl(pmod, pdinfo);
-
-    gretl_model_init(&aux);
-
-    if (order <= 0) {
-	order = pdinfo->pd;
-    }
-
-    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
-	return E_DF;
-    }
-
-    newlist = malloc((pmod->list[0] + order + 1) * sizeof *newlist);
-
-    if (newlist == NULL) {
-	err = E_ALLOC;
-    } else {
-	newlist[0] = pmod->list[0] + order;
-	for (i=2; i<=pmod->list[0]; i++) {
-	    newlist[i] = pmod->list[i];
-	}
-	if (dataset_add_series(1, pZ, pdinfo)) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	/* add uhat to data set */
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = pmod->uhat[t];
-	}
-	strcpy(pdinfo->varname[v], "uhat");
-	strcpy(VARLABEL(pdinfo, v), _("residual"));
-	/* then lags of same */
-	for (i=1; i<=order; i++) {
-	    int lnum;
-
-	    lnum = laggenr(v, i, pZ, pdinfo);
-	    if (lnum < 0) {
-		sprintf(gretl_errmsg, _("lagging uhat failed"));
-		err = E_LAGS;
-	    } else {
-		newlist[pmod->list[0] + i] = lnum;
-	    }
-	}
-    }
-
-    if (!err) {
-	newlist[1] = v;
-	/* printlist(newlist); */
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
-	err = aux.errcode;
-	if (err) {
-	    errmsg(aux.errcode, prn);
-	}
-    } 
-
-    if (!err) {
-	aux.aux = AUX_AR;
-	gretl_model_set_int(&aux, "BG_order", order);
-	trsq = aux.rsq * aux.nobs;
-	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
-	    (aux.nobs - pmod->ncoeff - order)/order; 
-	pval = snedecor_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
-
-	if (pmod->aux != AUX_VAR) {
-	    if (opt & OPT_Q) {
-		bg_test_header(order, prn);
-	    } else {
-		printmodel(&aux, pdinfo, OPT_NONE, prn);
-	    } 
-	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
-	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
-	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
-		    _("Alternative statistic"), trsq);
-	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
-		    _("Chi-square"), order, trsq, chisq_cdf_comp(trsq, order));
-	    if (ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lb) == 0) {
-		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-			lb, _("with p-value"), _("Chi-square"), order,
-			lb, chisq_cdf_comp(lb, order));
-	    }
-	    pputc(prn, '\n');
-	    record_test_result(LMF, pval, _("autocorrelation"));
-	}
-
-	if (opt & OPT_S) {
-	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
-
-	    if (test != NULL) {
-		model_test_set_teststat(test, GRETL_STAT_LMF);
-		model_test_set_dfn(test, order);
-		model_test_set_dfd(test, aux.nobs - pmod->ncoeff - order);
-		model_test_set_order(test, order);
-		model_test_set_value(test, LMF);
-		model_test_set_pvalue(test, pval);
-		maybe_add_test_to_model(pmod, test);
-	    }	    
-	}
-    }
-
-    free(newlist);
-    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
-    clear_model(&aux); 
-
-    /* reset sample as it was */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
-
-    return err;
 }
 
 /**
@@ -1620,7 +1471,7 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
     double x, pval = 1.0;
     int err = 0;
 
-    if (pmod->ci != TSLS) { 
+    if (dataset_is_panel(pdinfo)) { 
 	return E_NOTIMP;
     }
 
@@ -1724,7 +1575,7 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
 	pval = snedecor_cdf_comp(x, order, aux.nobs - pmod->ncoeff - order);
 
 	if (opt & OPT_Q) {
-	    bg_test_header(order, prn);
+	    bg_test_header(order, prn, 1);
 	} else {
 	    printmodel(&aux, pdinfo, OPT_S, prn);
 	} 
@@ -1753,6 +1604,165 @@ static int tsls_autocorr_test (MODEL *pmod, int order,
     free(addlist);
     free(testlist);
 
+    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
+    clear_model(&aux); 
+
+    /* reset sample as it was */
+    pdinfo->t1 = smpl_t1;
+    pdinfo->t2 = smpl_t2;
+
+    return err;
+}
+
+/**
+ * autocorr_test:
+ * @pmod: pointer to model to be tested.
+ * @order: lag order for test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if flags include %OPT_S, save test results to model;
+ * if %OPT_Q, be less verbose.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given model for autocorrelation of order equal to
+ * the specified value, or equal to the frequency of the data if
+ * the supplied @order is zero. Gives TR^2 and LMF test statistics.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int autocorr_test (MODEL *pmod, int order, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
+{
+    int smpl_t1 = pdinfo->t1;
+    int smpl_t2 = pdinfo->t2;
+    int *newlist = NULL;
+    MODEL aux;
+    int i, t, n = pdinfo->n, v = pdinfo->v; 
+    double trsq, LMF, lb, pval = 1.0;
+    int err = 0;
+
+    if (pmod->ci == TSLS) {
+	return tsls_autocorr_test(pmod, order, pZ, pdinfo, opt, prn);
+    }
+
+    if (pmod->ci != OLS && pmod->ci != VAR) { 
+	return E_NOTIMP;
+    }
+
+    if (pmod->missmask != NULL) {
+	return E_DATA;
+    }
+
+    if (dataset_is_panel(pdinfo)) {
+	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
+    }
+
+    /* impose original sample range */
+    impose_model_smpl(pmod, pdinfo);
+
+    gretl_model_init(&aux);
+
+    if (order <= 0) {
+	order = pdinfo->pd;
+    }
+
+    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
+	return E_DF;
+    }
+
+    newlist = malloc((pmod->list[0] + order + 1) * sizeof *newlist);
+
+    if (newlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	newlist[0] = pmod->list[0] + order;
+	for (i=2; i<=pmod->list[0]; i++) {
+	    newlist[i] = pmod->list[i];
+	}
+	if (dataset_add_series(1, pZ, pdinfo)) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* add uhat to data set */
+	for (t=0; t<n; t++) {
+	    (*pZ)[v][t] = pmod->uhat[t];
+	}
+	strcpy(pdinfo->varname[v], "uhat");
+	strcpy(VARLABEL(pdinfo, v), _("residual"));
+	/* then lags of same */
+	for (i=1; i<=order; i++) {
+	    int lnum;
+
+	    lnum = laggenr(v, i, pZ, pdinfo);
+	    if (lnum < 0) {
+		sprintf(gretl_errmsg, _("lagging uhat failed"));
+		err = E_LAGS;
+	    } else {
+		newlist[pmod->list[0] + i] = lnum;
+	    }
+	}
+    }
+
+    if (!err) {
+	newlist[1] = v;
+	/* printlist(newlist); */
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+	err = aux.errcode;
+	if (err) {
+	    errmsg(aux.errcode, prn);
+	}
+    } 
+
+    if (!err) {
+	aux.aux = AUX_AR;
+	gretl_model_set_int(&aux, "BG_order", order);
+	trsq = aux.rsq * aux.nobs;
+	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
+	    (aux.nobs - pmod->ncoeff - order)/order; 
+	pval = snedecor_cdf_comp(LMF, order, aux.nobs - pmod->ncoeff - order);
+
+	if (pmod->aux != AUX_VAR) {
+	    if (opt & OPT_Q) {
+		bg_test_header(order, prn, 0);
+	    } else {
+		printmodel(&aux, pdinfo, OPT_NONE, prn);
+	    } 
+	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
+	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
+	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
+		    _("Alternative statistic"), trsq);
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
+		    _("Chi-square"), order, trsq, chisq_cdf_comp(trsq, order));
+	    if (ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lb) == 0) {
+		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+			lb, _("with p-value"), _("Chi-square"), order,
+			lb, chisq_cdf_comp(lb, order));
+	    }
+	    pputc(prn, '\n');
+	    record_test_result(LMF, pval, _("autocorrelation"));
+	}
+
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
+
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_LMF);
+		model_test_set_dfn(test, order);
+		model_test_set_dfd(test, aux.nobs - pmod->ncoeff - order);
+		model_test_set_order(test, order);
+		model_test_set_value(test, LMF);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }	    
+	}
+    }
+
+    free(newlist);
     dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
     clear_model(&aux); 
 
@@ -2834,13 +2844,7 @@ int lmtest_driver (const char *param,
     /* autocorrelation */
     if (!err && (opt & OPT_A)) {
 	if (type == GRETL_OBJ_EQN) {
-	    if (((MODEL *) ptr)->ci == TSLS) {
-		err = tsls_autocorr_test(ptr, k, pZ, pdinfo, 
-					 testopt, prn);
-	    } else {
-		err = autocorr_test(ptr, k, pZ, pdinfo, 
-				    testopt, prn);
-	    }
+	    err = autocorr_test(ptr, k, pZ, pdinfo, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
 	} else {

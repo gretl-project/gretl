@@ -1498,11 +1498,19 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_AR:
 	order = gretl_model_get_int(pmod, "BG_order");
-	if (utf) { 	
-	    pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
+	if (pmod->ci == TSLS) {
+	    if (utf) { 	
+		pprintf(prn, "\n%s ", _("Godfrey (1994) test for"));
+	    } else {
+		pprintf(prn, "\n%s ", I_("Godfrey (1994) test for"));
+	    } 
 	} else {
-	    pprintf(prn, "\n%s ", I_("Breusch-Godfrey test for"));
-	} 
+	    if (utf) { 	
+		pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
+	    } else {
+		pprintf(prn, "\n%s ", I_("Breusch-Godfrey test for"));
+	    } 
+	}
 	if (order > 1) {
 	    pprintf(prn, "%s %d\n", (utf)? _("autocorrelation up to order") :
 		    I_("autocorrelation up to order"), 
