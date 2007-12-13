@@ -4616,19 +4616,26 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--p-values</flag>
+	  <effect>show p-values instead of slopes</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are
-	0 or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the <quote>binary
-	  response model regression</quote> (BRMR) method outlined by
-	Davidson and MacKinnon (2004). As the model is nonlinear the
-	slopes depend on the values of the independent variables: the
-	reported slopes are evaluated at the means of those variables.
-	The chi-square statistic tests the null hypothesis that all
+	If the dependent variable is a binary variable (all values are 0
+	or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the <quote>binary response
+	  model regression</quote> (BRMR) method outlined by Davidson and
+	MacKinnon (2004). As the model is nonlinear the slopes depend on
+	the values of the independent variables.  By default the slopes
+	with respect to each of the independent variables are calculated
+	(at the means of those variables) and these slopes replace the
+	usual p-values in the regression output.  This behavior can be
+	suppressed my giving the <lit>--p-values</lit> option. The
+	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
       <para context="cli">
@@ -6359,14 +6366,17 @@
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are
-	0 or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the <quote>binary
-	  response model regression</quote> (BRMR) method outlined by
-	Davidson and MacKinnon (2004). As the model is nonlinear the
-	slopes depend on the values of the independent variables: the
-	reported slopes are evaluated at the means of those variables.
-	The chi-square statistic tests the null hypothesis that all
+	If the dependent variable is a binary variable (all values are 0
+	or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the <quote>binary response
+	  model regression</quote> (BRMR) method outlined by Davidson and
+	MacKinnon (2004). As the model is nonlinear the slopes depend on
+	the values of the independent variables.  By default the slopes
+	with respect to each of the independent variables are calculated
+	(at the means of those variables) and these slopes replace the
+	usual p-values in the regression output.  This behavior can be
+	suppressed my giving the <lit>--p-values</lit> option. The
+	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
       <para context="cli">
