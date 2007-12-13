@@ -6,6 +6,10 @@ version 1.7.1, in progress
 - Add "dataset resample n" command to resample observations
   with replacement
 - Fix bugs: [ add SF bug ID numbers]
+- Fix bugs in saving/re-opening restricted VECM models as part
+  of a gretl session
+- Fix bug in CUSUM/CUSUMSQ plots for time series data frequency
+  greater than 1
 
 11/27/2007 version 1.7.0
 - Add heckit estimator

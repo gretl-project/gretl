@@ -737,7 +737,9 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     pputs(prn, _("Cointegrating vectors"));
     if (jv->Bse != NULL) {
 	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
-    } 
+    } else {
+	pputc(prn, '\n');
+    }
 
     pputs(prn, "\n\\vspace{1em}\n");
 
@@ -783,6 +785,64 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     }
 
     pputs(prn, "\\end{tabular}\n\n\\vspace{1em}\n");
+    pputc(prn, '\n');
+
+    rows = gretl_matrix_rows(jv->Alpha);
+
+    pputs(prn, "\\noindent\n");
+    pprintf(prn, _("Adjustment vectors"));
+    if (jv->Ase != NULL) {
+	pprintf(prn, " (%s)\n", _("standard errors in parentheses"));
+    } else {
+	pputc(prn, '\n');
+    }
+
+    pputs(prn, "\n\\vspace{1em}\n");
+
+    pputs(prn, "\\begin{tabular}{");
+    pputs(prn, "l");
+    for (i=0; i<jv->rank; i++) {
+	pputs(prn, "r");
+    }
+    pputs(prn, "}\n");
+
+    for (i=0; i<rows; i++) {
+	tex_beta_vname(s, vecm, pdinfo, i, prn);
+
+	/* coefficients */
+	for (j=0; j<jv->rank; j++) {
+	    x = gretl_matrix_get(jv->Alpha, i, j);
+	    if (jv->Ase == NULL) {
+		x /= gretl_matrix_get(jv->Alpha, j, j);
+	    }
+	    tex_print_signed_float(x, prn);
+	    if (j == jv->rank - 1) {
+		pputs(prn, "\\\\\n");
+	    } else {
+		pputs(prn, "& ");
+	    }	    
+	}
+
+	if (jv->Ase != NULL) {
+	    /* standard errors */
+	    pputs(prn, " & ");
+	    for (j=0; j<jv->rank; j++) {
+		x = gretl_matrix_get(jv->Ase, i, j);
+		pputc(prn, '(');
+		tex_print_float(x, prn);
+		pputc(prn, ')');
+		if (j == jv->rank - 1) {
+		    pputs(prn, "\\\\\n");
+		} else {
+		    pputs(prn, "& ");
+		}
+	    }
+	}
+    }
+
+    pputs(prn, "\\end{tabular}\n\n\\vspace{1em}\n");
+    pputc(prn, '\n');
+
 }
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)

@@ -160,7 +160,7 @@ static GtkItemFactoryEntry panel_model_items[] = {
 
 #define extended_ts(d) ((d)->structure == TIME_SERIES || \
 			(d)->structure == SPECIAL_TIME_SERIES || \
-                        (d)->structure == STACKED_TIME_SERIES)
+			(d)->structure == STACKED_TIME_SERIES)
 
 #define tramo_ts(d) ((d)->structure == TIME_SERIES && \
                      (d->pd == 1 || d->pd == 4 || d->pd == 12))

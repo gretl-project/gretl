@@ -3098,6 +3098,11 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
     jinfo->rank = rank;
     jinfo->seasonals = seas;
 
+    gretl_xml_get_prop_as_double(node, "ll0", &jinfo->ll0);
+    gretl_xml_get_prop_as_int(node, "bdf", &jinfo->lrdf);
+    gretl_xml_get_prop_as_double(node, "oldll", &jinfo->prior_ll);
+    gretl_xml_get_prop_as_int(node, "olddf", &jinfo->prior_df);
+
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
@@ -3137,15 +3142,7 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 		}
 		free(mname);
 	    }
-	} else if (!xmlStrcmp(cur->name, (XUC) "ll0")) {
-	    gretl_xml_node_get_double(cur, doc, &jinfo->ll0);
-	} else if (!xmlStrcmp(cur->name, (XUC) "bdf")) {
-	    gretl_xml_node_get_int(cur, doc, &jinfo->lrdf);
-	} else if (!xmlStrcmp(cur->name, (XUC) "oldll")) {
-	    gretl_xml_node_get_double(cur, doc, &jinfo->prior_ll);
-	} else if (!xmlStrcmp(cur->name, (XUC) "olddf")) {
-	    gretl_xml_node_get_int(cur, doc, &jinfo->prior_df);
-	}
+	} 
 	cur = cur->next;
     }
 
@@ -3389,6 +3386,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 	*err = gretl_VAR_do_error_decomp(var->S, var->C);
     }
 
+    /* FIXME vecm tests on beta/alpha */
+
  bailout:
 
     if (*err) {
@@ -3428,8 +3427,8 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_matrix(j->Bse, "Bse", fp);
     gretl_xml_put_matrix(j->R, "R", fp);
     gretl_xml_put_matrix(j->q, "q", fp);
-    gretl_xml_put_matrix(j->R, "Ra", fp);
-    gretl_xml_put_matrix(j->q, "qa", fp);
+    gretl_xml_put_matrix(j->Ra, "Ra", fp);
+    gretl_xml_put_matrix(j->qa, "qa", fp);
 
     fputs("</gretl-johansen>\n", fp);
 }

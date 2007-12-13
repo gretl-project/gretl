@@ -638,8 +638,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	if (zkeypos == 'L') {
 	    fputs("set key top left\n", fp);
 	}
-	sprintf(xtitle, I_("%s (original data)"), datainfo->varname[v]);
-	sprintf(ztitle, I_("%s (smoothed)"), datainfo->varname[v]);
+	sprintf(xtitle, G_("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, G_("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, Z[v], fp);
@@ -650,7 +650,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("set size 1.0,0.38\n", fp);
 	fputs("set origin 0.0,0.0\n", fp);
 	fputs("set xzeroaxis\n", fp);
-	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
+	sprintf(title, G_("Cyclical component of %s"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
 	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
@@ -659,8 +659,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	if (zkeypos == 'L') {
 	    fputs("set key top left\n", fp);
 	}
-	sprintf(xtitle, I_("%s (original data)"), datainfo->varname[v]);
-	sprintf(ztitle, I_("%s (smoothed)"), datainfo->varname[v]);
+	sprintf(xtitle, G_("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, G_("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
 	print_gp_data(finfo, obs, Z[v], fp);
@@ -669,10 +669,10 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
 	if (finfo->ftype == FILTER_BK) {
-	    sprintf(title, I_("Baxter-King component of %s at frequency %d to %d"), 
+	    sprintf(title, G_("Baxter-King component of %s at frequency %d to %d"), 
 		    datainfo->varname[v], finfo->bkl, finfo->bku);
 	} else {
-	    sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
+	    sprintf(title, G_("Cyclical component of %s"), datainfo->varname[v]);
 	}
 	fprintf(fp, "set title '%s'\n", title); 
 	fputs("set xzeroaxis\n", fp);
@@ -758,6 +758,7 @@ static int sma_special (const filter_info *finfo, double *fx,
 	k = t - t1;
 	fx[t] = (tmp[k] + tmp[k+1]) / 2.0;
     }
+
     fx[t2] = NADBL;
 
     free(tmp);
