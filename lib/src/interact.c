@@ -4753,7 +4753,7 @@ int ready_for_command (const char *line)
 	"eval",
 	"!",
 	"launch",
-	"man ", 
+	"man", 
 	"help", 
 	"set", 
 	"critical", 
