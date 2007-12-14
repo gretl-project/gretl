@@ -5,7 +5,10 @@ version 1.7.1, in progress
   estimated via TSLS
 - Add "dataset resample n" command to resample observations
   with replacement
-- Fix bugs: [ add SF bug ID numbers]
+- Add functions for matrix I/O from/to test files	
+- Fix garch bug when p!=q
+- Fix bugs: [ 1848487, 1847908, 1850842, 1848039, 1840179, 
+	1842439, 1841098, 1843664, 1835707, 1841107, 1841774 ]
 - Fix bugs in saving/re-opening restricted VECM models as part
   of a gretl session
 - Fix bug in CUSUM/CUSUMSQ plots for time series data frequency
@@ -13,6 +16,7 @@ version 1.7.1, in progress
 
 11/27/2007 version 1.7.0
 - Add heckit estimator
+- Add estimation/testing for restricted VECM models
 - Fix for loop on empty list
 - Fix for remaining issues with apostrophes in graph titles
 - Fix for lists as arguments for user-defined functions
