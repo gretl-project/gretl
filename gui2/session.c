@@ -3165,8 +3165,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 
     run = g_spawn_async_with_pipes(NULL, argv, NULL, 
 				   G_SPAWN_SEARCH_PATH | 
-				   G_SPAWN_DO_NOT_REAP_CHILD |
-				   G_SPAWN_FILE_AND_ARGV_ZERO, 
+				   G_SPAWN_DO_NOT_REAP_CHILD,
 				   NULL, NULL, &pid, NULL, NULL,
 				   &fd, &error);
 
