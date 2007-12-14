@@ -4973,7 +4973,7 @@ static const char *ifstr (int c)
 
 static void unmatched_message (int code)
 {
-    sprintf(gretl_errmsg, "Unmatched \"%s\"",
+    sprintf(gretl_errmsg, _("Unmatched \"%s\""),
 	    (code == SET_ELSE)? "else" : 
 	    (code == SET_ELIF)? "elif": "endif");
 }
@@ -5064,4 +5064,18 @@ static int get_if_state (int code)
     int err = 0;
 
     return ifstate(code, &err);
+}
+
+int gretl_exec_state_finalize (void)
+{
+    int ret, err = 0;
+
+    ret = ifstate(IS_TRUE, &err);
+
+    if (!ret) {
+	ifstate(RELAX, &err);
+	err = E_PARSE;
+    }
+
+    return err;
 }

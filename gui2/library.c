@@ -6218,6 +6218,7 @@ static int execute_script (const char *runfile, const char *buf,
     int including = (exec_code & INCLUDE_EXEC);
     int bufread = 0;
     int exec_err = 0;
+    int if_err = 0;
 
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
@@ -6333,6 +6334,14 @@ static int execute_script (const char *runfile, const char *buf,
 
     refresh_data();
     set_iter_print_func(gui_iter_print);
+
+    if_err = gretl_exec_state_finalize();
+    if (if_err && !exec_err) {
+	exec_err = if_err;
+	pputc(prn, '\n');
+	pprintf(prn, _("Unmatched \"%s\""), "if");
+	pputc(prn, '\n');
+    }
 
     return exec_err;
 }
