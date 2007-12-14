@@ -993,10 +993,14 @@ comandi necessari per leggere una matrice \texttt{A} da un file chiamato
   \begin{tabular}{rl}
     \textbf{Programma} & \textbf{Codice di esempio} \\
     \hline
-    GAUSS & \verb|tmp[] = load a.mat;| \\
+    GAUSS  & \verb|tmp[] = load a.mat;| \\
     & \verb|A = reshape(tmp[3:rows(tmp)],tmp[1],tmp[2]);| \\
-    Ox    & \verb|decl A = loadmat("a.mat");| \\
-    R     & \verb|A = as.matrix(read.table("a.mat", skip=1))| \\
+    Octave & \verb|fd = fopen("a.mat");| \\
+    & \verb|[r,c] = fscanf(fd, "%d %d", "C");| \\
+    & \verb|A = reshape(fscanf(fd, "%g", r*c),c,r)';| \\
+    & \verb|fclose(fd);| \\
+    Ox     & \verb|decl A = loadmat("a.mat");| \\
+    R      & \verb|A = as.matrix(read.table("a.mat", skip=1))| \\
   \hline
 \end{tabular}
 \end{center}
