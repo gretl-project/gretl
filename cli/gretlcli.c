@@ -1013,6 +1013,8 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    err = load_user_XML_file(runfile);
 	    if (err) {
 		pprintf(prn, _("Error reading %s\n"), runfile);
+	    } else {
+		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
 	    break;
 	}

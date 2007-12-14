@@ -3640,8 +3640,9 @@ static int run_script (const char *fname, ExecState *s,
 		       PRN *prn)
 {
     FILE *fp;
+    int indent = get_if_state(GETINDENT);
     int err = 0;
-
+    
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
@@ -3662,6 +3663,16 @@ static int run_script (const char *fname, ExecState *s,
     }
 
     fclose(fp);
+
+    if (get_if_state(GETINDENT) != indent) {
+	set_if_state(RELAX);
+	pputc(prn, '\n');
+	pprintf(prn, _("Unmatched \"%s\""), "if");
+	pputc(prn, '\n');
+	if (!err) {
+	    err = E_PARSE;
+	}
+    }
 
     return err;
 }
