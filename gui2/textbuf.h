@@ -68,6 +68,10 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
 			     gpointer p);
 
+gboolean 
+script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
+
+
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable);
 

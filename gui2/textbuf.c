@@ -1070,6 +1070,206 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
+/* Determine whether or not a chunk of text is commented,
+   in the form of each line beginning with '#' (with possible
+   leading white space).  If some lines are commented and
+   others are not, return -1.
+*/
+
+static int text_is_commented (const gchar *s)
+{
+    int gotc = 0, comm = 0;
+    int lines = 1;
+
+    if (s == NULL) {
+	return -1;
+    }
+
+    while (*s) {
+	if (!gotc) {
+	    if (*s == '#') {
+		comm++;
+		gotc = 1;
+	    } else if (!isspace(*s)) {
+		gotc = 1;
+	    }
+	} else if (*s == '\n') {
+	    gotc = 0;
+	    if (*(s+1)) {
+		lines++;
+	    }
+	}
+	s++;
+    }
+
+    if (comm > 0 && comm < lines) {
+	/* mixed */
+	comm = -1;
+    }
+
+    return comm;
+}
+
+struct textcomm {
+    windata_t *vwin;
+    GtkTextBuffer *buf;
+    GtkTextIter start;
+    GtkTextIter end;
+    gchar *chunk;
+    int commented;
+    int selected;
+};
+
+/* either insert or remove '#' comment markers at the
+   start of the line(s) of a chunk of text 
+*/
+
+static void comment_or_uncomment_text (GtkWidget *w, gpointer p)
+{
+    struct textcomm *tc = (struct textcomm *) p;
+    gchar *s;
+
+    gtk_text_buffer_delete(tc->buf, &tc->start, &tc->end);
+
+    if (tc->selected) {
+	char line[1024];
+
+	bufgets_init(tc->chunk);
+	while (bufgets(line, sizeof line, tc->chunk)) {
+	    if (tc->commented) {
+		s = strchr(line, '#');
+		if (s != NULL) {
+		    s++;
+		    if (*s == ' ') s++;
+		    gtk_text_buffer_insert(tc->buf, &tc->start, s, -1);
+		    gtk_text_buffer_insert(tc->buf, &tc->start, "\n", -1);
+		}
+	    } else {
+		gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
+		gtk_text_buffer_insert(tc->buf, &tc->start, line, -1);
+		gtk_text_buffer_insert(tc->buf, &tc->start, "\n", -1);
+	    }
+	}
+	bufgets_finalize(tc->chunk);
+    } else {
+	if (tc->commented) {
+	    s = strchr(tc->chunk, '#');
+	    if (s != NULL) {
+		s++;
+		if (*s == ' ') s++;
+		gtk_text_buffer_insert(tc->buf, &tc->start, s, -1);
+	    }
+	} else {
+	    gtk_text_buffer_insert(tc->buf, &tc->start, "# ", -1);
+	    gtk_text_buffer_insert(tc->buf, &tc->start, tc->chunk, -1);
+	}
+    }
+}
+
+GtkWidget *build_script_popup (windata_t *vwin, struct textcomm **ptc)
+{
+    const char *items[] = {
+	N_("Comment line"),
+	N_("Uncomment line"),
+	N_("Comment region"),
+	N_("Uncomment region"),
+    };
+    GtkWidget *pmenu = gtk_menu_new();
+    GtkWidget *item;
+    struct textcomm *tc;
+    int i;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(vwin->w), NULL);
+
+    tc = malloc(sizeof *tc);
+    if (tc == NULL) {
+	return NULL;
+    }
+
+    tc->vwin = vwin;
+    tc->buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    if (gtk_text_buffer_get_selection_bounds(tc->buf, &tc->start, &tc->end)) {
+	tc->selected = 1;
+	gtk_text_iter_set_line_offset(&tc->start, 0);
+	gtk_text_iter_forward_to_line_end(&tc->end);
+	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
+    } else {
+	tc->selected = 0;
+	gtk_text_buffer_get_iter_at_mark(tc->buf, &tc->start, 
+					 gtk_text_buffer_get_insert(tc->buf));
+	gtk_text_iter_set_line_offset(&tc->start, 0);
+	gtk_text_buffer_get_iter_at_mark(tc->buf, &tc->end, 
+					 gtk_text_buffer_get_insert(tc->buf));
+	gtk_text_iter_forward_to_line_end(&tc->end);
+	tc->chunk = gtk_text_buffer_get_text(tc->buf, &tc->start, &tc->end, FALSE);
+    }
+
+    tc->commented = text_is_commented(tc->chunk);
+
+    if (tc->commented < 0) {
+	/* mixed, commented and uncommented */
+	g_free(tc->chunk);
+	free(tc);
+	return NULL;
+    }
+
+    *ptc = tc;
+
+    i = (tc->selected && !tc->commented)? 2 : 
+	(tc->selected && tc->commented)? 3 :
+	(!tc->selected && !tc->commented)? 0 : 1;
+
+    item = gtk_menu_item_new_with_label(_(items[i]));
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(comment_or_uncomment_text),
+		     *ptc);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+
+    return pmenu;
+}
+
+static gboolean destroy_textcomm (GtkWidget **pw, struct textcomm *tc)
+{
+    tc->vwin->popup = NULL;
+    g_free(tc->chunk);
+    free(tc);
+    return FALSE;
+}
+
+gboolean 
+script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
+    if (mods & GDK_BUTTON3_MASK) {
+	windata_t *vwin = (windata_t *) p;
+	struct textcomm *tc = NULL;
+
+	if (vwin->popup) {
+	    gtk_widget_destroy(vwin->popup);
+	    vwin->popup = NULL;
+	}
+
+	vwin->popup = build_script_popup(vwin, &tc);
+
+	if (vwin->popup != NULL) {
+	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
+			     G_CALLBACK(destroy_textcomm), 
+			     tc);
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 enum {
     INSERT_NONE,
     INSERT_REF,
