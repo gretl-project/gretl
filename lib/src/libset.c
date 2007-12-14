@@ -879,6 +879,8 @@ void shelldir_init (void)
 
     if (test == NULL) {
 	*state->shelldir = '\0';
+    } else {
+	gretl_insert_builtin_string("shelldir", state->shelldir);
     }
 }
 
@@ -904,6 +906,10 @@ static int set_shelldir (const char *s)
     } else {
 	*state->shelldir = '\0';
 	strncat(state->shelldir, s, MAXLEN - 1);
+    }
+
+    if (!err) {
+	gretl_insert_builtin_string("shelldir", state->shelldir);
     }
 
     return err;

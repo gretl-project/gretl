@@ -572,6 +572,31 @@ static void make_path_absolute (char *fname, const char *orig)
     }
 }
 
+/* When given a filename such as "./foo", see if shelldir is
+   set -- if so, try opening the file as if shelldir was
+   the CWD.
+*/
+
+static int shelldir_open_dotfile (char *fname, char *orig)
+{
+    char *sdir = get_shelldir();
+    FILE *test;
+    int ret = 0;
+
+    if (sdir != NULL && *sdir != '\0') {
+	sprintf(fname, "%s%c%s", sdir, SLASH, orig);
+	test = gretl_fopen(fname, "r");
+	if (test != NULL) {
+	    fclose(test);
+	    ret = 1;
+	} else {
+	    strcpy(fname, orig);
+	}
+    }
+
+    return ret;
+}
+
 /**
  * addpath:
  * @fname: initially given file name.
@@ -592,6 +617,10 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     FILE *test;
 
     strcpy(orig, fname);
+
+    if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
+	return fname;
+    }
 
     /* try opening filename as given */
     test = gretl_fopen(fname, "r");
