@@ -303,7 +303,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_PREFERENCES },
     { N_("/Tools/Preferences/_Fixed font..."), NULL, font_selector, 
       FIXED_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
-#if !defined(USE_GNOME) && !defined(G_OS_WIN32)
+#if !defined(USE_GNOME)
     { N_("/Tools/Preferences/_Menu font..."), NULL, font_selector, 
       APP_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
 #endif
