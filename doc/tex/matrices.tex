@@ -1011,7 +1011,9 @@ Usage is illustrated in example \ref{matrix-rw}.  Matrices stored via
 the \texttt{mwrite} command can be easily read by other programs; the
 following table summarizes the appropriate commands for reading a
 matrix \texttt{A} from a file called \texttt{a.mat} in some
-widely-used programs.
+widely-used programs\footnote{Matlab users may find the Octave
+  example helpful, since the two programs are mostly compatible with one
+  another.}.
 
 \begin{center}
   \begin{tabular}{rl}
@@ -1033,7 +1035,7 @@ widely-used programs.
 \begin{script}[htbp]
   \caption{Matrix input/output via text files}
   \label{matrix-rw}
-  \begin{code}
+  \begin{scode}
 nulldata 64
 scalar n = 3
 string f1 = "a.csv"
@@ -1059,7 +1061,7 @@ else
   printf "The following matrix should be an identity matrix\n"
   print a
 endif
-  \end{code}
+  \end{scode}
 \end{script}
 
 \section{Empty matrices}
