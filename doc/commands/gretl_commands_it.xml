@@ -4443,6 +4443,16 @@
         possono essere recuperati usando le variabili accessorie <lit>$test</lit>
         e <lit>$pvalue</lit>.
       </para>
+      <para>
+        Nel caso di modelli stimati col metodo dei minimi quadrati a due stadi
+        (si veda <cmdref targ="tsls"/>), non è possibile usare il test LM, quindi
+        gretl offre alcuni test equivalenti; in questo caso, l'opzione
+        <flag>--autocorr</flag> calcola il test di Godfrey per
+        l'autocorrelazione (si veda: Review of Economics and Statistics, 1994),
+        mentre l'opzione <flag>--white</flag> produce il test HET1 di Pesaran e
+        Taylor per l'eteroschedasticità (si veda: Oxford Bulletin of Economics
+        and Statistics, 1999).
+      </para>
     </description>
 
     <gui-access>
@@ -4558,10 +4568,13 @@
         per le <repl>variabili-indipendenti</repl> con il
         metodo BRMR (<quote>binary response model regression</quote>) descritto
         in Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le pendenze
-        dipendono dai valori delle variabili indipendenti: le pendenze
-        riportate sono valutate nelle medie di queste variabili. La
-        statistica chi-quadro testa l'ipotesi nulla che tutti i
-        coefficienti tranne la costante siano pari a zero.
+        dipendono dai valori delle variabili indipendenti: per impostazione
+        predefinita, al posto dei p-value vengono mostrate le pendenze rispetto ad
+        ognuna delle variabili indipendenti, calcolate in corrispondenza della
+        media della variabile. Questo comportamento può essere soppresso usando
+        l'opzione <lit>--p-values</lit>.  La statistica chi-quadro testa
+        l'ipotesi nulla che tutti i coefficienti tranne la costante siano pari a
+        zero.
       </para>
       <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati con
@@ -6258,10 +6271,13 @@
         <repl>variabili-indipendenti</repl> con il metodo
         <quote>binary response model regression</quote> (BRMR) descritto in
         Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le
-        pendenze dipendono dai valori delle variabili indipendenti: le pendenze
-        riportate sono valutate nelle medie di queste variabili. La
-        statistica chi-quadro testa l'ipotesi nulla che tutti i
-        coefficienti tranne la costante siano pari a zero.
+        pendenze dipendono dai valori delle variabili indipendenti: per
+        impostazione predefinita, al posto dei p-value vengono mostrate le
+        pendenze rispetto ad ognuna delle variabili indipendenti, calcolate in
+        corrispondenza della media della variabile. Questo comportamento può
+        essere soppresso usando l'opzione <lit>--p-values</lit>.  La statistica
+        chi-quadro testa l'ipotesi nulla che tutti i coefficienti tranne la
+        costante siano pari a zero.
       </para>
       <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati con
