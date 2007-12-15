@@ -120,21 +120,13 @@ static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
     GtkWidget *image = gtk_image_new_from_pixbuf(pix);
     GtkWidget *button = gtk_button_new();
 
-    gtk_widget_set_size_request(button, 26, 24); /* 26, 24 */
+    gtk_widget_set_size_request(button, 26, 24);
 
-    gtk_container_add (GTK_CONTAINER(button), image);
-    g_signal_connect (G_OBJECT(button), "clicked",
-                      G_CALLBACK(toolfunc), NULL);
+    gtk_container_add(GTK_CONTAINER(button), image);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(toolfunc), NULL);
 
     return button;
-}
-
-static void gretl_toolbar_append_tool (GtkWidget *tbar,
-				       GtkWidget *w,
-				       const char *toolstr)
-{
-    gtk_box_pack_start(GTK_BOX(tbar), w, FALSE, FALSE, 0);
-    gretl_tooltips_add(w, toolstr);
 }
 
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
@@ -219,7 +211,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	toolstr = _(toolstrings[i]);
 	icon = gdk_pixbuf_new_from_xpm_data((const char **) toolxpm);
 	button = image_button_new(icon, toolfunc);
-	gretl_toolbar_append_tool(toolbar, button, toolstr);
+	gtk_box_pack_start(GTK_BOX(toolbar), button, FALSE, FALSE, 0);
+	gretl_tooltips_add(button, toolstr);
 	gdk_pixbuf_unref(icon);
     }
 
