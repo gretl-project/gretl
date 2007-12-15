@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-09 19:06+0000\n"
+"POT-Creation-Date: 2007-12-15 08:57-0500\n"
 "PO-Revision-Date: 2007-01-05 11:09-0500\n"
 "Last-Translator: Özgür İşgören <yol_gezer18@yahoo.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -41,8 +41,8 @@ msgstr ""
 #: lib/src/adf_kpss.c:136 lib/src/adf_kpss.c:139 lib/src/bootstrap.c:420
 #: lib/src/modelprint.c:424 lib/src/modelprint.c:473 lib/src/modelprint.c:483
 #: lib/src/modelprint.c:573 lib/src/modelprint.c:576 lib/src/modelprint.c:588
-#: lib/src/modelprint.c:1912 lib/src/modelprint.c:3259
-#: lib/src/modelprint.c:3293 lib/src/modelprint.c:3328 lib/src/texprint.c:611
+#: lib/src/modelprint.c:1920 lib/src/modelprint.c:3282
+#: lib/src/modelprint.c:3316 lib/src/modelprint.c:3351 lib/src/texprint.c:611
 #: lib/src/texprint.c:646 lib/src/varprint.c:954 lib/src/varprint.c:958
 #: lib/src/varprint.c:962 lib/src/varprint.c:1135 lib/src/varprint.c:1140
 #: lib/src/varprint.c:1147 lib/src/varprint.c:1158 lib/src/varprint.c:1163
@@ -52,8 +52,8 @@ msgstr ""
 msgid "p-value"
 msgstr "p-değeri"
 
-#: lib/src/adf_kpss.c:136 lib/src/dataio.c:1568 lib/src/modelprint.c:2639
-#: lib/src/modelprint.c:2698
+#: lib/src/adf_kpss.c:136 lib/src/dataio.c:1568 lib/src/modelprint.c:2662
+#: lib/src/modelprint.c:2721
 msgid "unknown"
 msgstr "bilinmeyen"
 
@@ -170,13 +170,13 @@ msgid "Lag truncation parameter = %d\n"
 msgstr ""
 
 #: lib/src/adf_kpss.c:670 lib/src/compare.c:317 lib/src/compare.c:344
-#: lib/src/compare.c:753 lib/src/compare.c:1392 lib/src/compare.c:1544
-#: lib/src/compare.c:1732 lib/src/compare.c:1869 lib/src/describe.c:4162
+#: lib/src/compare.c:753 lib/src/compare.c:1392 lib/src/compare.c:1583
+#: lib/src/compare.c:1734 lib/src/compare.c:1879 lib/src/describe.c:4162
 #: lib/src/estimate.c:2448 lib/src/estimate.c:3010 lib/src/gretl_intl.c:104
 #: lib/src/gretl_model.c:2830 lib/src/gretl_panel.c:3294
 #: lib/src/gretl_restrict.c:1770 lib/src/gretl_restrict.c:1777
-#: lib/src/modelprint.c:2025 lib/src/modelprint.c:2032
-#: lib/src/modelprint.c:2039 lib/src/vartest.c:636
+#: lib/src/modelprint.c:2044 lib/src/modelprint.c:2051
+#: lib/src/modelprint.c:2058 lib/src/vartest.c:636
 #, fuzzy
 msgid "Test statistic"
 msgstr "Test istatistiği "
@@ -289,13 +289,13 @@ msgstr ""
 msgid "Asymptotic test statistic"
 msgstr "test istatistiği "
 
-#: lib/src/compare.c:320 lib/src/compare.c:1550 lib/src/compare.c:1553
+#: lib/src/compare.c:320 lib/src/compare.c:1740 lib/src/compare.c:1743
 #: lib/src/estimate.c:2450 lib/src/estimate.c:3012 lib/src/gretl_model.c:2748
 #: lib/src/gretl_model.c:2756 lib/src/gretl_panel.c:2781
 #: lib/src/gretl_panel.c:3301 lib/src/modelprint.c:397
-#: lib/src/modelprint.c:472 lib/src/modelprint.c:482 lib/src/modelprint.c:2028
-#: lib/src/modelprint.c:2035 lib/src/modelprint.c:3258
-#: lib/src/modelprint.c:3292 lib/src/printout.c:245 lib/src/pvalues.c:1231
+#: lib/src/modelprint.c:472 lib/src/modelprint.c:482 lib/src/modelprint.c:2047
+#: lib/src/modelprint.c:2054 lib/src/modelprint.c:3281
+#: lib/src/modelprint.c:3315 lib/src/printout.c:245 lib/src/pvalues.c:1231
 #: lib/src/system.c:689 lib/src/system.c:2230 lib/src/system.c:2243
 #: lib/src/system.c:2265 lib/src/system.c:2274 lib/src/varprint.c:1215
 #: lib/src/varprint.c:1224 lib/src/vartest.c:637
@@ -392,37 +392,42 @@ msgstr ""
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr ""
 
-#: lib/src/compare.c:1393 lib/src/compare.c:1545 lib/src/compare.c:1549
-#: lib/src/compare.c:1553 lib/src/compare.c:1733 lib/src/compare.c:1870
+#: lib/src/compare.c:1393 lib/src/compare.c:1584 lib/src/compare.c:1735
+#: lib/src/compare.c:1739 lib/src/compare.c:1743 lib/src/compare.c:1880
 #: lib/src/describe.c:2760 lib/src/describe.c:2987 lib/src/estimate.c:2450
 #: lib/src/estimate.c:3012 lib/src/gretl_model.c:2846
 #: lib/src/gretl_model.c:2848 lib/src/gretl_model.c:2850
 #: lib/src/gretl_panel.c:1240 lib/src/gretl_panel.c:3295
 #: lib/src/gretl_panel.c:3300 lib/src/modelprint.c:398
-#: lib/src/modelprint.c:2028 lib/src/modelprint.c:2035
-#: lib/src/modelprint.c:2042 lib/src/printout.c:246 lib/src/printout.c:252
+#: lib/src/modelprint.c:2047 lib/src/modelprint.c:2054
+#: lib/src/modelprint.c:2061 lib/src/printout.c:246 lib/src/printout.c:252
 #: lib/src/system.c:662 lib/src/system.c:690 lib/src/system.c:2231
 #: lib/src/system.c:2244 lib/src/system.c:2266 lib/src/system.c:2275
 #, fuzzy
 msgid "with p-value"
 msgstr "p-değeriyle"
 
-#: lib/src/compare.c:1421 lib/src/modelprint.c:1502 lib/src/modelprint.c:1504
+#: lib/src/compare.c:1422 lib/src/modelprint.c:1503 lib/src/modelprint.c:1505
+#, fuzzy
+msgid "Godfrey (1994) test for"
+msgstr "için Breusch-Godfrey"
+
+#: lib/src/compare.c:1424 lib/src/modelprint.c:1509 lib/src/modelprint.c:1511
 #, fuzzy
 msgid "Breusch-Godfrey test for"
 msgstr "için Breusch-Godfrey"
 
-#: lib/src/compare.c:1423 lib/src/modelprint.c:1507 lib/src/modelprint.c:1508
+#: lib/src/compare.c:1428 lib/src/modelprint.c:1515 lib/src/modelprint.c:1516
 #, fuzzy
 msgid "autocorrelation up to order"
 msgstr "özilinti sıralandı"
 
-#: lib/src/compare.c:1426 lib/src/modelprint.c:1511 lib/src/modelprint.c:1512
+#: lib/src/compare.c:1431 lib/src/modelprint.c:1519 lib/src/modelprint.c:1520
 #, fuzzy
 msgid "first-order autocorrelation"
 msgstr "ilk sıra özilinti"
 
-#: lib/src/compare.c:1505 lib/src/compare.c:1658 lib/src/graphing.c:2149
+#: lib/src/compare.c:1509 lib/src/compare.c:1695 lib/src/graphing.c:2149
 #: lib/src/graphing.c:2158 lib/src/graphing.c:2225 lib/src/graphing.c:3005
 #: lib/src/gretl_panel.c:3149 lib/src/printout.c:1001 gui2/guiprint.c:1530
 #: gui2/guiprint.c:1586 gui2/library.c:4440 plugin/leverage.c:462
@@ -430,84 +435,84 @@ msgstr "ilk sıra özilinti"
 msgid "residual"
 msgstr "kalıntı"
 
-#: lib/src/compare.c:1512 lib/src/compare.c:1673
+#: lib/src/compare.c:1524 lib/src/compare.c:1702
 #, fuzzy, c-format
 msgid "lagging uhat failed"
 msgstr "geciken uhat başarısız "
 
-#: lib/src/compare.c:1548 lib/src/gretl_panel.c:3299
-#, fuzzy
-msgid "Alternative statistic"
-msgstr "Alternatif istatistik "
-
-#: lib/src/compare.c:1557 lib/src/compare.c:1736
+#: lib/src/compare.c:1587 lib/src/compare.c:1747
 #, fuzzy
 msgid "autocorrelation"
 msgstr "özilinti yok "
 
-#: lib/src/compare.c:1866
+#: lib/src/compare.c:1738 lib/src/gretl_panel.c:3299
+#, fuzzy
+msgid "Alternative statistic"
+msgstr "Alternatif istatistik "
+
+#: lib/src/compare.c:1876
 #, fuzzy
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "White'ın heteroskedastisite için testi "
 
-#: lib/src/compare.c:1915
+#: lib/src/compare.c:1925
 #, fuzzy
 msgid "dummy variable for Chow test"
 msgstr "Chow testi için takma değişken "
 
-#: lib/src/compare.c:1958
+#: lib/src/compare.c:1968
 #, fuzzy
 msgid "Chow F-test for break"
 msgstr "yapısal kesme yok "
 
-#: lib/src/compare.c:2000
+#: lib/src/compare.c:2010
 msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
 
-#: lib/src/compare.c:2003
+#: lib/src/compare.c:2013
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
 msgstr ""
 
-#: lib/src/compare.c:2027
+#: lib/src/compare.c:2037
 #, fuzzy, c-format
 msgid "Significant at the %d percent level "
 msgstr "anlam yüzde 5 düzeyinde"
 
-#: lib/src/compare.c:2028
+#: lib/src/compare.c:2038
 #, fuzzy, c-format
 msgid "(%d%% critical value %s %.2f)"
 msgstr "Aykırı değerler için kritik değer:"
 
-#: lib/src/compare.c:2032
+#: lib/src/compare.c:2042
 #, fuzzy, c-format
 msgid "10%% critical value for q = 20 is %.2f"
 msgstr "Aykırı değerler için kritik değer:"
 
-#: lib/src/compare.c:2035
+#: lib/src/compare.c:2045
 #, fuzzy
 msgid "Not significant at the 10 percent level "
 msgstr "anlam yüzde 10 düzeyinde"
 
-#: lib/src/compare.c:2036
+#: lib/src/compare.c:2046
 #, fuzzy, c-format
 msgid "(10%% value = %.2f)"
 msgstr "Ki-kareli(2) = %.3f, pdeğeri %.5f "
 
-#: lib/src/compare.c:2042
+#: lib/src/compare.c:2052
 msgid ""
 "This statistic does not follow the standard F distribution;\n"
 "critical values are from Stock and Watson (2003)."
 msgstr ""
 
-#: lib/src/compare.c:2117
+#: lib/src/compare.c:2127
 #, fuzzy
 msgid "Invalid sample split for Chow test"
 msgstr "Chow testi için bölünmüş geçersiz örnek "
 
-#: lib/src/compare.c:2196
+#: lib/src/compare.c:2206
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -520,22 +525,22 @@ msgstr ""
 "  F(%d, %d) = %f p-değeriyle %f\n"
 "\n"
 
-#: lib/src/compare.c:2326
+#: lib/src/compare.c:2336
 #, fuzzy
 msgid "Observation"
 msgstr "gözlem "
 
-#: lib/src/compare.c:2332
+#: lib/src/compare.c:2342
 #, fuzzy, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
 msgstr "95% güvenlik bandıyla CUSUM çizimi "
 
-#: lib/src/compare.c:2340
+#: lib/src/compare.c:2350
 #, fuzzy, no-c-format
 msgid "CUSUM plot with 95% confidence band"
 msgstr "95% güvenlik bandıyla CUSUM çizimi "
 
-#: lib/src/compare.c:2373
+#: lib/src/compare.c:2383
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -546,27 +551,27 @@ msgstr ""
 "Harvey-Collier t(%d) = %g p-değeriyle %.4g\n"
 "\n"
 
-#: lib/src/compare.c:2455
+#: lib/src/compare.c:2465
 #, fuzzy
 msgid "CUSUMSQ test for stability of parameters"
 msgstr "Parametrelerin kararlılığı için CUSUM testi "
 
-#: lib/src/compare.c:2472
+#: lib/src/compare.c:2482
 #, fuzzy
 msgid "Cumulated sum of squared residuals"
 msgstr "Kareli kalıntıların toplamı"
 
-#: lib/src/compare.c:2475
+#: lib/src/compare.c:2485
 #, fuzzy
 msgid "CUSUM test for stability of parameters"
 msgstr "Parametrelerin kararlılığı için CUSUM testi "
 
-#: lib/src/compare.c:2476
+#: lib/src/compare.c:2486
 #, fuzzy, c-format
 msgid "mean of scaled residuals = %g\n"
 msgstr "ölçekli kalıntıların ortalaması = %g\n"
 
-#: lib/src/compare.c:2483
+#: lib/src/compare.c:2493
 #, fuzzy, c-format
 msgid ""
 "sigmahat                 = %g\n"
@@ -575,12 +580,12 @@ msgstr ""
 "sigmahat                 = %g\n"
 "\n"
 
-#: lib/src/compare.c:2490
+#: lib/src/compare.c:2500
 #, fuzzy
 msgid "Cumulated sum of scaled residuals"
 msgstr "Kareli kalıntıların toplamı"
 
-#: lib/src/compare.c:2495
+#: lib/src/compare.c:2505
 #, fuzzy, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr ""
@@ -588,17 +593,17 @@ msgstr ""
 "('*'%%95 güvenlik bandının dışındaki bir değeri gösterir):\n"
 "\n"
 
-#: lib/src/compare.c:2553
+#: lib/src/compare.c:2563
 #, fuzzy
 msgid "This test is only relevant for pooled models\n"
 msgstr "Bu test sadece toplu modellere uygundur\n"
 
-#: lib/src/compare.c:2558
+#: lib/src/compare.c:2568
 #, fuzzy
 msgid "This test requires that the model contains a constant\n"
 msgstr "Bu testi modelin bir değişmeze sahip olmasını gerektirir\n"
 
-#: lib/src/compare.c:2563
+#: lib/src/compare.c:2573
 #, fuzzy
 msgid ""
 "Sorry, can't do this test on an unbalanced panel.\n"
@@ -656,6 +661,231 @@ msgstr ""
 #, fuzzy, c-format
 msgid "= rho-differenced %s"
 msgstr "%s = rho-farklı %s "
+
+#: lib/src/csvdata.c:634
+#, fuzzy, c-format
+msgid "   %s: probably a year... "
+msgstr "   %s: muhtemelen bir yıl... "
+
+#: lib/src/csvdata.c:636
+#, fuzzy, c-format
+msgid "   %s: probably not a year\n"
+msgstr "   %s: muhtemelen bir yıl... "
+
+#: lib/src/csvdata.c:640
+#, fuzzy
+msgid "   but I can't make sense of the extra bit\n"
+msgstr "   ancak ilave bit anlaşılamıyor\n"
+
+#: lib/src/csvdata.c:642
+#, fuzzy
+msgid "and just a year\n"
+msgstr "ve yalnızca bir yıl\n"
+
+#: lib/src/csvdata.c:657
+#, fuzzy, c-format
+msgid "quarter %s?\n"
+msgstr "üç ayda bir %s?\n"
+
+#: lib/src/csvdata.c:665
+#, fuzzy, c-format
+msgid "month %s?\n"
+msgstr "ay %s?\n"
+
+#: lib/src/csvdata.c:699 lib/src/csvdata.c:717
+#, fuzzy
+msgid "   but the dates are not complete and consistent\n"
+msgstr "   ancak tarihler bütün ve tutarlı değil\n"
+
+#: lib/src/csvdata.c:743
+#, fuzzy, c-format
+msgid "   first row label \"%s\", last label \"%s\"\n"
+msgstr "   ilk sıra etiketi \"%s\", son etiket \"%s\"\n"
+
+#: lib/src/csvdata.c:754
+#, fuzzy
+msgid "   label strings can't be consistent dates\n"
+msgstr "   etiket dizgileri tutarlı tarihler olamaz\n"
+
+#: lib/src/csvdata.c:758
+#, fuzzy
+msgid "trying to parse row labels as dates...\n"
+msgstr "sıra etiketleri tarih olarak çözümlenmeye çalışılıyor...\n"
+
+#: lib/src/csvdata.c:771
+#, fuzzy
+msgid "   definitely not a four-digit year\n"
+msgstr "   kesinlikle dört rakamlı bir yıl değil\n"
+
+#: lib/src/csvdata.c:823 lib/src/dataio.c:2456
+#, fuzzy, c-format
+msgid "Binary data (%d) encountered: this is not a valid text file\n"
+msgstr "İkili veriyle (%d) karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+
+#: lib/src/csvdata.c:842 lib/src/dataio.c:2467
+#, fuzzy
+msgid "Data file is empty\n"
+msgstr "Veri dosyası boş\n"
+
+#: lib/src/csvdata.c:844
+#, fuzzy
+msgid "Data file has trailing commas\n"
+msgstr "Veri dosyası izleyen virgüllere sahip\n"
+
+#: lib/src/csvdata.c:954
+#, fuzzy, c-format
+msgid "   first field: '%s'\n"
+msgstr "   ilk alan: '%s'\n"
+
+#: lib/src/csvdata.c:957
+#, fuzzy
+msgid "   seems to be observation label\n"
+msgstr "   gözlem etiketi gibi görünüyor\n"
+
+#: lib/src/csvdata.c:969
+#, fuzzy, c-format
+msgid ""
+"   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   değişken için hücre %d, obs %d boş: eksik değer olarak görülüyor\n"
+
+#: lib/src/csvdata.c:978
+#, fuzzy, c-format
+msgid "   warning: missing value for variable %d, obs %d\n"
+msgstr "   uyarı: değişken için eksik değer %d, obs %d\n"
+
+#: lib/src/csvdata.c:1056
+#, fuzzy, c-format
+msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
+msgstr "Değişkende %d, gözlem %d:\n"
+
+#: lib/src/csvdata.c:1174
+#, fuzzy
+msgid ""
+"\n"
+"Please note:\n"
+"- The first row of the CSV file should contain the names of the variables.\n"
+"- The first column may optionally contain date strings or other 'markers':\n"
+"  in that case its row 1 entry should be blank, or should say 'obs' or "
+"'date'.\n"
+"- The remainder of the file must be a rectangular array of data.\n"
+msgstr ""
+"\n"
+"Lütfen not edin:\n"
+"-CSV dosyasının ilk sırası değişkenlerin adlarını içermeli.\n"
+"-İlk sütun isteğe bağlı olarak tarih dizgilerini ya da diğer "
+"'işaretleyicileri' içerebilir:\n"
+" bu durumda sıra 1'deki girdi boş olmalı, veya 'obs' ya da 'tarih' demeli.\n"
+"-Dosyanın geri kalanı dikdörtgen biçimli bir veri dizilimi olmalı.\n"
+
+#: lib/src/csvdata.c:1223
+#, fuzzy, c-format
+msgid "   number of columns = %d\n"
+msgstr "   sütun sayısı = %d\n"
+
+#: lib/src/csvdata.c:1225
+#, fuzzy, c-format
+msgid "   ...but row %d has %d fields: aborting\n"
+msgstr "   ...ancak sıra %d %d alanlarına sahip: durduruluyor\n"
+
+#: lib/src/csvdata.c:1258
+#, fuzzy
+msgid "scanning for variable names...\n"
+msgstr "değişken adları taranıyor...\n"
+
+#: lib/src/csvdata.c:1273
+#, fuzzy, c-format
+msgid "   line: %s\n"
+msgstr "   satır: %s\n"
+
+#: lib/src/csvdata.c:1297
+#, fuzzy, c-format
+msgid "   variable name %d is missing: aborting\n"
+msgstr "   değişken adı %d eksik: durduruluyor\n"
+
+#: lib/src/csvdata.c:1323 plugin/excel_import.c:1439
+#, fuzzy
+msgid "it seems there are no variable names\n"
+msgstr "hiç değişken adı yok görünüyor\n"
+
+#: lib/src/csvdata.c:1382
+#, fuzzy, c-format
+msgid "warning: truncating data at row %d, column %d\n"
+msgstr "uyarı: %d sütununda , %d sırasındaki veri kırpılıyor\n"
+
+#: lib/src/csvdata.c:1428
+#, fuzzy
+msgid "scanning for row labels and data...\n"
+msgstr "satır etiketleri ve veri taranıyor...\n"
+
+#: lib/src/csvdata.c:1444 lib/src/csvdata.c:1447 lib/src/dataio.c:2520
+#, fuzzy
+msgid "parsing"
+msgstr "öğelerine ayrılıyor"
+
+#: lib/src/csvdata.c:1491 lib/src/dataio.c:969 lib/src/dataio.c:981
+#: lib/src/dataio.c:2738 lib/src/dbread.c:1499
+#, fuzzy, c-format
+msgid "Couldn't open %s\n"
+msgstr "Açılamadı %s\n"
+
+#: lib/src/csvdata.c:1522
+#, fuzzy, c-format
+msgid "using delimiter '%c'\n"
+msgstr "sınırlayıcıyı kullanılıyor '%c'\n"
+
+#: lib/src/csvdata.c:1523 lib/src/dataio.c:2532
+#, fuzzy, c-format
+msgid "   longest line: %d characters\n"
+msgstr "   en uzun satır: %d karakterleri\n"
+
+#: lib/src/csvdata.c:1547 lib/src/dataio.c:2613
+#, fuzzy, c-format
+msgid "   number of variables: %d\n"
+msgstr "   değişken sayısı: %d\n"
+
+#: lib/src/csvdata.c:1548
+#, fuzzy, c-format
+msgid "   number of non-blank lines: %d\n"
+msgstr "   boş olmayan satır sayısı: %d\n"
+
+#: lib/src/csvdata.c:1551 lib/src/dataio.c:2590 lib/src/dataio.c:2666
+#, fuzzy
+msgid "Invalid data file\n"
+msgstr "Geçersiz veri dosyası\n"
+
+#: lib/src/csvdata.c:1614 plugin/ods_import.c:997
+#, fuzzy
+msgid ""
+"taking date information from row labels\n"
+"\n"
+msgstr ""
+"satır etiketlerinden tarih bilgisi alınıyor\n"
+"\n"
+
+#: lib/src/csvdata.c:1622
+#, fuzzy
+msgid ""
+"treating these as undated data\n"
+"\n"
+msgstr ""
+"bunlar tarihsiz veri olarak görülüyor\n"
+"\n"
+
+#: lib/src/csvdata.c:1649 plugin/eviews_import.c:333
+#: plugin/excel_import.c:1501 plugin/gnumeric_import.c:790
+#: plugin/jmulti_import.c:380 plugin/stata_import.c:713
+#, fuzzy
+msgid "warning: some variable names were duplicated\n"
+msgstr "Bir ya da daha fazla değişken adı eksik.\n"
+
+#: lib/src/csvdata.c:1669 lib/src/dataio.c:2599 lib/src/dataio.c:2607
+#: plugin/eviews_import.c:300 plugin/eviews_import.c:315
+#: plugin/excel_import.c:1358 plugin/gnumeric_import.c:656
+#: plugin/jmulti_import.c:353 plugin/jmulti_import.c:370
+#: plugin/stata_import.c:681 plugin/stata_import.c:692
+#, fuzzy
+msgid "Out of memory\n"
+msgstr "Yetersiz bellek\n"
 
 #: lib/src/dataio.c:153 lib/src/dataio.c:172 lib/src/dataio.c:260
 #: lib/src/dataio.c:272
@@ -757,12 +987,6 @@ msgstr "Sınırın dışında gözlem sayısı "
 #, fuzzy
 msgid "space for comments"
 msgstr "yorumlar için alan "
-
-#: lib/src/dataio.c:969 lib/src/dataio.c:981 lib/src/dataio.c:2738
-#: lib/src/dbread.c:1499
-#, fuzzy, c-format
-msgid "Couldn't open %s\n"
-msgstr "Açılamadı %s\n"
 
 #: lib/src/dataio.c:975
 #, fuzzy, c-format
@@ -881,7 +1105,7 @@ msgstr "Tanım "
 msgid "Type of data"
 msgstr "Veri türü "
 
-#: lib/src/dataio.c:1610 lib/src/modelprint.c:2995 lib/src/modelprint.c:3003
+#: lib/src/dataio.c:1610 lib/src/modelprint.c:3018 lib/src/modelprint.c:3026
 #, fuzzy
 msgid "Frequency"
 msgstr "Sıklık "
@@ -978,49 +1202,10 @@ msgstr "Veri eklerken yetersiz bellek oluştu\n"
 msgid "Data appended OK\n"
 msgstr "Veri sona eklendi Tamam\n"
 
-#: lib/src/dataio.c:2456
-#, fuzzy, c-format
-msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr "İkili veriyle (%d) karşılaşıldı: bu geçerli bir metin dosyası değil\n"
-
-#: lib/src/dataio.c:2467
-#, fuzzy
-msgid "Data file is empty\n"
-msgstr "Veri dosyası boş\n"
-
-#: lib/src/dataio.c:2520
-#, fuzzy
-msgid "parsing"
-msgstr "öğelerine ayrılıyor"
-
-#: lib/src/dataio.c:2532
-#, fuzzy, c-format
-msgid "   longest line: %d characters\n"
-msgstr "   en uzun satır: %d karakterleri\n"
-
 #: lib/src/dataio.c:2573
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr ""
-
-#: lib/src/dataio.c:2590 lib/src/dataio.c:2666
-#, fuzzy
-msgid "Invalid data file\n"
-msgstr "Geçersiz veri dosyası\n"
-
-#: lib/src/dataio.c:2599 lib/src/dataio.c:2607 plugin/eviews_import.c:300
-#: plugin/eviews_import.c:315 plugin/excel_import.c:1358
-#: plugin/gnumeric_import.c:656 plugin/jmulti_import.c:353
-#: plugin/jmulti_import.c:370 plugin/stata_import.c:681
-#: plugin/stata_import.c:692
-#, fuzzy
-msgid "Out of memory\n"
-msgstr "Yetersiz bellek\n"
-
-#: lib/src/dataio.c:2613
-#, fuzzy, c-format
-msgid "   number of variables: %d\n"
-msgstr "   değişken sayısı: %d\n"
 
 #: lib/src/dataio.c:2614
 #, fuzzy, c-format
@@ -1067,7 +1252,7 @@ msgid "auto-generated constant"
 msgstr "kendi kendine oluşmuş değişmez "
 
 #: lib/src/dataset.c:1416 lib/src/dataset.c:1453 gui2/fncall.c:730
-#: gui2/fncall.c:740 gui2/gretlwin32.c:153 gui2/gui_utils.c:3934
+#: gui2/fncall.c:740 gui2/gretlwin32.c:153 gui2/gui_utils.c:3939
 #: gui2/toolbar.c:89 gui2/toolbar.c:98 gui2/toolbar.c:107
 #, fuzzy
 msgid "Please open a data file first"
@@ -1174,7 +1359,7 @@ msgid "Series imported OK"
 msgstr "Seriler alındı Tamam "
 
 #: lib/src/dbread.c:1778 lib/src/gretl_func.c:1416 lib/src/gretl_utils.c:1466
-#: lib/src/interact.c:2841 lib/src/interact.c:3648 gui2/dialogs.c:3552
+#: lib/src/interact.c:2840 lib/src/interact.c:3648 gui2/dialogs.c:3552
 #: plugin/tramo-x12a.c:413
 #, fuzzy, c-format
 msgid "Couldn't open %s"
@@ -1237,7 +1422,7 @@ msgid "%s is a constant"
 msgstr "%s bir değişmezdir "
 
 #: lib/src/describe.c:1659 cli/gretlcli.c:654 cli/gretlcli.c:924
-#: gui2/library.c:6648
+#: gui2/library.c:6657
 #, fuzzy
 msgid "gnuplot command failed\n"
 msgstr "gnuplot komutu başarısız\n"
@@ -1519,7 +1704,7 @@ msgstr "Özet İstatistikleri "
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "değişken '%s' için (%d geçerli gözlemler) "
 
-#: lib/src/describe.c:3418 lib/src/describe.c:3443 lib/src/modelprint.c:1882
+#: lib/src/describe.c:3418 lib/src/describe.c:3443 lib/src/modelprint.c:1890
 #: gui2/calculator.c:2210 gui2/guiprint.c:1058 gui2/guiprint.c:1081
 #: gui2/guiprint.c:1153 gui2/guiprint.c:1180 gui2/guiprint.c:1899
 #: gui2/guiprint.c:1948 gui2/selector.c:4850 plugin/pca.c:193
@@ -1552,14 +1737,14 @@ msgstr "Bırakılıyor %s: örnek aralık geçerli bir gözlem içermiyor\n"
 
 #: lib/src/describe.c:3907 lib/src/estimate.c:2788 lib/src/estimate.c:2789
 #: lib/src/modelprint.c:658 lib/src/modelprint.c:666 lib/src/modelprint.c:679
-#: lib/src/modelprint.c:688 lib/src/modelprint.c:2565
-#: lib/src/modelprint.c:2572 lib/src/modelprint.c:2588
-#: lib/src/modelprint.c:2614 lib/src/modelprint.c:2620
-#: lib/src/modelprint.c:2621 lib/src/modelprint.c:2622
-#: lib/src/modelprint.c:2631 lib/src/modelprint.c:2641
-#: lib/src/modelprint.c:2673 lib/src/modelprint.c:2680
-#: lib/src/modelprint.c:2689 lib/src/modelprint.c:2700
-#: lib/src/modelprint.c:3370 lib/src/printout.c:161 lib/src/printout.c:169
+#: lib/src/modelprint.c:688 lib/src/modelprint.c:2588
+#: lib/src/modelprint.c:2595 lib/src/modelprint.c:2611
+#: lib/src/modelprint.c:2637 lib/src/modelprint.c:2643
+#: lib/src/modelprint.c:2644 lib/src/modelprint.c:2645
+#: lib/src/modelprint.c:2654 lib/src/modelprint.c:2664
+#: lib/src/modelprint.c:2696 lib/src/modelprint.c:2703
+#: lib/src/modelprint.c:2712 lib/src/modelprint.c:2723
+#: lib/src/modelprint.c:3393 lib/src/printout.c:161 lib/src/printout.c:169
 #: lib/src/texprint.c:418 lib/src/texprint.c:436 lib/src/texprint.c:453
 #: lib/src/texprint.c:466 lib/src/texprint.c:520 lib/src/texprint.c:526
 #: lib/src/texprint.c:532 gui2/guiprint.c:1012 gui2/guiprint.c:1014
@@ -1880,8 +2065,8 @@ msgstr "Genelleştirilmiş Cochrane-Orcutt kestirimi"
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER              ESS           % CHANGE "
 
-#: lib/src/estimate.c:3009 lib/src/modelprint.c:1518 lib/src/modelprint.c:1519
-#: lib/src/modelprint.c:2741
+#: lib/src/estimate.c:3009 lib/src/modelprint.c:1526 lib/src/modelprint.c:1527
+#: lib/src/modelprint.c:2764
 #, fuzzy
 msgid "Test for ARCH of order"
 msgstr "ARCH sırası için test"
@@ -2081,7 +2266,7 @@ msgstr "son gözlem"
 msgid "Empty observation []\n"
 msgstr "son gözlem"
 
-#: lib/src/genlex.c:1111
+#: lib/src/genlex.c:1116
 #, fuzzy, c-format
 msgid "Invalid character '%c'\n"
 msgstr "geçersiz sapma adı'%s'"
@@ -2193,7 +2378,7 @@ msgid "String is too long (%d versus %d max)\n"
 msgstr ""
 
 #: lib/src/gmm.c:103 lib/src/gretl_panel.c:3800 lib/src/gretl_panel.c:3812
-#: lib/src/interact.c:3438 lib/src/nls.c:491 lib/src/nls.c:2482
+#: lib/src/interact.c:3437 lib/src/nls.c:491 lib/src/nls.c:2482
 #, fuzzy, c-format
 msgid "Unknown variable '%s'"
 msgstr "Bilinmeyen değişken '%s' "
@@ -2727,7 +2912,7 @@ msgstr "Çizgisel olmayan uygulama (loglar) "
 msgid "relationship is linear"
 msgstr "ilişki doğrusal "
 
-#: lib/src/gretl_model.c:2558 gui2/gui_utils.c:3355 gui2/gui_utils.c:3675
+#: lib/src/gretl_model.c:2558 gui2/gui_utils.c:3360 gui2/gui_utils.c:3680
 #, fuzzy
 msgid "Test for normality of residual"
 msgstr "Kalıntı normalliği için test"
@@ -3026,52 +3211,52 @@ msgstr ""
 msgid "iteration"
 msgstr "Ortak tümleştirme "
 
-#: lib/src/gretl_paths.c:982
+#: lib/src/gretl_paths.c:1011
 #, fuzzy
 msgid "User directory is not set"
 msgstr "Gretl kullanıcı dizinini varsayılan olarak kullan "
 
-#: lib/src/gretl_paths.c:988
+#: lib/src/gretl_paths.c:1017
 #, fuzzy, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "'%s' dizini oluşturulamadı"
 
-#: lib/src/gretl_paths.c:1000
+#: lib/src/gretl_paths.c:1029
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
 msgstr ""
 
-#: lib/src/gretl_paths.c:1110
+#: lib/src/gretl_paths.c:1139
 #, fuzzy, c-format
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: bu temel arama yolları kullanılıyor:\n"
 
-#: lib/src/gretl_paths.c:1175
+#: lib/src/gretl_paths.c:1204
 #, fuzzy
 msgid "gretlgui_hlp.txt"
 msgstr "gretl_hlp.txt "
 
-#: lib/src/gretl_paths.c:1176
+#: lib/src/gretl_paths.c:1205
 #, fuzzy
 msgid "gretlcmd_hlp.txt"
 msgstr "gretl_hlp.txt "
 
-#: lib/src/gretl_paths.c:1177 lib/src/gretl_paths.c:1180
+#: lib/src/gretl_paths.c:1206 lib/src/gretl_paths.c:1209
 #, fuzzy
 msgid "gretlcli_hlp.txt"
 msgstr "gretlcli_hlp.txt "
 
-#: lib/src/gretl_paths.c:1286
+#: lib/src/gretl_paths.c:1315
 #, fuzzy
 msgid "gretlgui.hlp"
 msgstr "gretl.hlp "
 
-#: lib/src/gretl_paths.c:1287 lib/src/gretl_paths.c:1291
+#: lib/src/gretl_paths.c:1316 lib/src/gretl_paths.c:1320
 #, fuzzy
 msgid "gretlcli.hlp"
 msgstr "gretl.hlp "
 
-#: lib/src/gretl_paths.c:1288
+#: lib/src/gretl_paths.c:1317
 #, fuzzy
 msgid "gretlcmd.hlp"
 msgstr "gretl.hlp "
@@ -3222,8 +3407,8 @@ msgstr ""
 "Yazılan dizgi kodu tablosu\n"
 "%s\n"
 
-#: lib/src/gretl_string_table.c:956 lib/src/interact.c:3625 cli/gretlcli.c:305
-#: gui2/library.c:6290
+#: lib/src/gretl_string_table.c:957 lib/src/interact.c:3624 cli/gretlcli.c:305
+#: gui2/library.c:6291
 #, fuzzy, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Komut satırının( %d bit) maximum uzunluğu aşıldı.\n"
@@ -3316,7 +3501,7 @@ msgstr "Günlük- olabilirlik"
 msgid "Couldn't open registry\n"
 msgstr "Kaydı açamadı\n"
 
-#: lib/src/gretl_win32.c:394 lib/src/interact.c:2835
+#: lib/src/gretl_win32.c:394 lib/src/interact.c:2834
 #, fuzzy
 msgid "The shell command is not activated."
 msgstr "Bu komut bir değişken gerektiriyor.\n"
@@ -3514,79 +3699,79 @@ msgstr "Değişken bilgisi eksik "
 msgid "No observations were found"
 msgstr "Gözlem bulunmadı "
 
-#: lib/src/interact.c:992 lib/src/interact.c:1780
+#: lib/src/interact.c:991 lib/src/interact.c:1779
 #, fuzzy
 msgid "Memory allocation failed for command list"
 msgstr "Komut listesi için bellek ayırma başarısız"
 
-#: lib/src/interact.c:1134
+#: lib/src/interact.c:1133
 #, fuzzy, c-format
 msgid "generation of lag variable failed"
 msgstr "gecikme değişkeni oluşturma başarısız"
 
-#: lib/src/interact.c:1392
+#: lib/src/interact.c:1391
 #, fuzzy
 msgid "requires a variable number and a new name"
 msgstr "bir değişken ismi ve yeni bir isim gerekiyor"
 
-#: lib/src/interact.c:1400
+#: lib/src/interact.c:1399
 #, fuzzy, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "%d değişken sayısı girişi yasaktır"
 
-#: lib/src/interact.c:1414
+#: lib/src/interact.c:1413
 #, fuzzy, c-format
 msgid "'%s': there is already a variable of this name"
 msgstr "'%s': bu isimde bir değişken zaten var"
 
-#: lib/src/interact.c:1648
+#: lib/src/interact.c:1647
 #, fuzzy, c-format
 msgid "command 'end %s' not recognized"
 msgstr "Komut '%s' tanımlanamadı"
 
-#: lib/src/interact.c:1653
+#: lib/src/interact.c:1652
 msgid "end: nothing to end"
 msgstr ""
 
-#: lib/src/interact.c:1710
+#: lib/src/interact.c:1709
 #, c-format
 msgid "%s: required parameter is missing"
 msgstr ""
 
-#: lib/src/interact.c:1951
+#: lib/src/interact.c:1950
 #, fuzzy, c-format
 msgid "%d is not a valid variable number"
 msgstr "%d geçerli değişken numarası değil"
 
-#: lib/src/interact.c:2047
+#: lib/src/interact.c:2046
 #, fuzzy, c-format
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' bir değişken ismi değil"
 
-#: lib/src/interact.c:2204 lib/src/interact.c:4712 cli/cli_object.c:59
+#: lib/src/interact.c:2203 lib/src/interact.c:4722 cli/cli_object.c:59
 #: gui2/objectsave.c:68
 #, fuzzy, c-format
 msgid "command '%s' not recognized"
 msgstr "Komut '%s' tanımlanamadı"
 
-#: lib/src/interact.c:2488
+#: lib/src/interact.c:2487
 #, fuzzy, c-format
 msgid "field '%s' in command is invalid"
 msgstr " komuttaki alan '%s'  geçersiz"
 
-#: lib/src/interact.c:2498 gui2/library.c:1902
+#: lib/src/interact.c:2497 gui2/library.c:1902
 #, fuzzy, c-format
 msgid "variable %s is a scalar"
 msgstr "değişken %s bir skalardır. "
 
-#: lib/src/interact.c:2551
+#: lib/src/interact.c:2550
 #, fuzzy, c-format
 msgid "var number %d duplicated in the command list."
 msgstr ""
 "\n"
 " var numarası %d komut listesine kopyalandı.\n"
 
-#: lib/src/interact.c:2635
+#: lib/src/interact.c:2634
 #, fuzzy
 msgid ""
 "\n"
@@ -3595,7 +3780,7 @@ msgstr ""
 "\n"
 " Geçerli gretl komutları:\n"
 
-#: lib/src/interact.c:2650
+#: lib/src/interact.c:2649
 #, fuzzy
 msgid ""
 "\n"
@@ -3606,132 +3791,137 @@ msgstr ""
 "\n"
 " Belli komutlarla ilgili yardım için help cmdname yazın  "
 
-#: lib/src/interact.c:2651
+#: lib/src/interact.c:2650
 #, fuzzy
 msgid " (e.g. help smpl)\n"
 msgstr "( ör.: yardım smpl)\n"
 
-#: lib/src/interact.c:2662
+#: lib/src/interact.c:2661
 #, fuzzy, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" gretl komutu değil.\n"
 
-#: lib/src/interact.c:2668
+#: lib/src/interact.c:2667
 #, fuzzy, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "%s dosyasına ulaşamıyor.\n"
 
-#: lib/src/interact.c:2700
+#: lib/src/interact.c:2699
 #, fuzzy, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: üzgünüm, yardım edemiyorum.\n"
 
-#: lib/src/interact.c:2729
+#: lib/src/interact.c:2728
 #, fuzzy
 msgid "ess: negative value is out of bounds.\n"
 msgstr "ess:olumsuz değer girişi yasaktır.\n"
 
-#: lib/src/interact.c:2743
+#: lib/src/interact.c:2742
 #, fuzzy
 msgid "T: negative value is out of bounds.\n"
 msgstr "T: olumsuz değer girişi yasaktır. \n"
 
-#: lib/src/interact.c:2757
+#: lib/src/interact.c:2756
 #, fuzzy
 msgid "k: negative value is out of bounds.\n"
 msgstr "k: olumsuz değer girişi yasaktır. \n"
 
-#: lib/src/interact.c:2903
+#: lib/src/interact.c:2902
 #, fuzzy
 msgid "Try again later"
 msgstr "Tekrar deneyin"
 
-#: lib/src/interact.c:3471
+#: lib/src/interact.c:3470
 #, fuzzy
 msgid "Listing labels for variables:\n"
 msgstr "Değişkenler için etiketleri listeleme:\n"
 
-#: lib/src/interact.c:3516
+#: lib/src/interact.c:3515
 #, fuzzy
 msgid "Output is not currently diverted to file\n"
 msgstr "Çıktı dosyaya yönlendirilmedi.\n"
 
-#: lib/src/interact.c:3521
+#: lib/src/interact.c:3520
 #, fuzzy, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Çift yönlendirilmiş çıktı dosyası kapatılıyor."
 
-#: lib/src/interact.c:3529
+#: lib/src/interact.c:3528
 #, fuzzy, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Çıktı '%s'e yönlendirildi\n"
 
-#: lib/src/interact.c:3546
+#: lib/src/interact.c:3545
 #, fuzzy, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "Yazma için %s i açamadı\n"
 
-#: lib/src/interact.c:3552
+#: lib/src/interact.c:3551
 #, fuzzy, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Çıktı '%s' e yazılıyor\n"
 
-#: lib/src/interact.c:3554
+#: lib/src/interact.c:3553
 #, fuzzy, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Çıktıyı '%s' e ekliyor\n"
 
-#: lib/src/interact.c:3592
+#: lib/src/interact.c:3591
 #, fuzzy
 msgid "No data information is available.\n"
 msgstr "Hiçbir veri bilgisi uygun değil.\n"
 
-#: lib/src/interact.c:3812 lib/src/interact.c:3821
+#: lib/src/interact.c:3670 lib/src/interact.c:4987 gui2/library.c:6342
+#, c-format
+msgid "Unmatched \"%s\""
+msgstr ""
+
+#: lib/src/interact.c:3822 lib/src/interact.c:3831
 #, fuzzy
 msgid "Failed to generate correlogram\n"
 msgstr "Correlogram oluşturma başarısız\n"
 
-#: lib/src/interact.c:3830
+#: lib/src/interact.c:3840
 #, fuzzy
 msgid "Failed to generate periodogram\n"
 msgstr "Periodogram oluşturmada başarısız\n"
 
-#: lib/src/interact.c:3836
+#: lib/src/interact.c:3846
 #, fuzzy
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Bir döngüye burada sonlandıramazsınız, yenisine başlamadınız\n"
 
-#: lib/src/interact.c:3850
+#: lib/src/interact.c:3860
 #, fuzzy
 msgid "Retrieved fitted values as \"autofit\"\n"
 msgstr "\"autofit\" olarak alınan uygun değerler\n"
 
-#: lib/src/interact.c:3899
+#: lib/src/interact.c:3909
 #, fuzzy
 msgid "Error in computing model selection criteria.\n"
 msgstr "Model seçme ölçütünü hesaplamada hata.\n"
 
-#: lib/src/interact.c:3924
+#: lib/src/interact.c:3934
 #, fuzzy
 msgid "Error adding log differences of variables.\n"
 msgstr "Değişkenlerin günlük farklılıklarını eklemede hata.\n"
 
-#: lib/src/interact.c:3926
+#: lib/src/interact.c:3936
 #, fuzzy
 msgid "Error adding first differences of variables.\n"
 msgstr "Değişkenlerin ilk farklılıklarını eklemede hata.\n"
 
-#: lib/src/interact.c:3944
+#: lib/src/interact.c:3954
 #, fuzzy
 msgid "Error adding lags of variables.\n"
 msgstr "Değişkenlerin gecikmelerini eklemede hata.\n"
 
-#: lib/src/interact.c:3953
+#: lib/src/interact.c:3963
 #, fuzzy
 msgid "Error adding logs of variables.\n"
 msgstr "değişkenlerin günlüklerini eklemede hata. \n"
 
-#: lib/src/interact.c:3962
+#: lib/src/interact.c:3972
 #, fuzzy
 msgid "Failed to generate squares\n"
 msgstr ""
@@ -3740,27 +3930,27 @@ msgstr ""
 "#-#-#-#-#  gretl4.po (tr 485)  #-#-#-#-#\n"
 "Kareler oluşturmada başarısız\n"
 
-#: lib/src/interact.c:3988
+#: lib/src/interact.c:3998
 #, fuzzy
 msgid "This command requires one variable.\n"
 msgstr "Bu komut bir değişken gerektiriyor.\n"
 
-#: lib/src/interact.c:4064
+#: lib/src/interact.c:4074
 #, fuzzy
 msgid "generation of summary stats failed\n"
 msgstr "Özet stats'ların üretimi başarısız.\n"
 
-#: lib/src/interact.c:4119
+#: lib/src/interact.c:4129
 #, fuzzy, c-format
 msgid "setting data frequency = %d\n"
 msgstr "veri sıklığı ayarlamak = %d\n"
 
-#: lib/src/interact.c:4144
+#: lib/src/interact.c:4154
 #, fuzzy, c-format
 msgid "store: using filename %s.gz\n"
 msgstr "depola: dosya adı %s.gz kullanılıyor\n"
 
-#: lib/src/interact.c:4146 lib/src/monte_carlo.c:2333
+#: lib/src/interact.c:4156 lib/src/monte_carlo.c:2333
 #, fuzzy, c-format
 msgid "store: using filename %s\n"
 msgstr ""
@@ -3769,7 +3959,7 @@ msgstr ""
 "#-#-#-#-#  gretl4.po (tr 485)  #-#-#-#-#\n"
 "sakla: %s dosya adı kullanarak\n"
 
-#: lib/src/interact.c:4150
+#: lib/src/interact.c:4160
 #, fuzzy
 msgid "store: no filename given\n"
 msgstr ""
@@ -3778,17 +3968,17 @@ msgstr ""
 "#-#-#-#-#  gretl4.po (tr 485)  #-#-#-#-#\n"
 "sakla: dosya adı verilmedi\n"
 
-#: lib/src/interact.c:4155 lib/src/monte_carlo.c:2341
+#: lib/src/interact.c:4165 lib/src/monte_carlo.c:2341
 #, fuzzy
 msgid "write of data file failed\n"
 msgstr "veri dosyası yazımı başarısız\n"
 
-#: lib/src/interact.c:4160 lib/src/monte_carlo.c:2339
+#: lib/src/interact.c:4170 lib/src/monte_carlo.c:2339
 #, fuzzy
 msgid "Data written OK.\n"
 msgstr "Veri yazımı tamam.\n"
 
-#: lib/src/interact.c:4163
+#: lib/src/interact.c:4173
 #, fuzzy
 msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
@@ -3797,61 +3987,61 @@ msgstr ""
 "#-#-#-#-#  gretl4.po (tr 485)  #-#-#-#-#\n"
 "Uyarı: harf belirteçleri ikili veri dosyasına kaydedilemediı\n"
 
-#: lib/src/interact.c:4227
+#: lib/src/interact.c:4237
 #, fuzzy
 msgid "This estimator requires panel data"
 msgstr "Bu komut kullanımdaki OLS modelleri için uygun sadece\n"
 
-#: lib/src/interact.c:4326
+#: lib/src/interact.c:4336
 #, fuzzy, c-format
 msgid "Failed to reconstruct model %d\n"
 msgstr "Model %d'yi tekraryapılandırmada başarısız\n"
 
-#: lib/src/interact.c:4393
+#: lib/src/interact.c:4403
 #, fuzzy
 msgid "Couldn't format model\n"
 msgstr "Modeli biçimlendiremedi\n"
 
-#: lib/src/interact.c:4402
+#: lib/src/interact.c:4412
 #, fuzzy
 msgid "Couldn't open tex file for writing\n"
 msgstr "Yazma için tex dosyası açamadı\n"
 
-#: lib/src/interact.c:4404
+#: lib/src/interact.c:4414
 #, fuzzy, c-format
 msgid "Model printed to %s\n"
 msgstr "Model %s'e yazıldı\n"
 
-#: lib/src/interact.c:4502 cli/gretlcli.c:1009
+#: lib/src/interact.c:4512 cli/gretlcli.c:1009
 #, fuzzy
 msgid "Command is malformed\n"
 msgstr "Komut kötü biçimlendirilmiş\n"
 
-#: lib/src/interact.c:4508 cli/gretlcli.c:1015 gui2/library.c:6720
+#: lib/src/interact.c:4518 cli/gretlcli.c:1015 gui2/library.c:6729
 #, fuzzy, c-format
 msgid "Error reading %s\n"
 msgstr "smpl satırını okurken hata oluştu "
 
-#: lib/src/interact.c:4513 cli/gretlcli.c:1020 gui2/library.c:6725
+#: lib/src/interact.c:4523 cli/gretlcli.c:1022 gui2/library.c:6734
 #, fuzzy
 msgid "Infinite loop detected in script\n"
 msgstr "Yazıda bitimsiz döngü tespit edildi\n"
 
-#: lib/src/interact.c:4525
+#: lib/src/interact.c:4535
 #, fuzzy, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Üzgünüm, %s komutu henüz libgretl'da gerçekleştirilmedi\n"
 
-#: lib/src/interact.c:4582 gui2/library.c:6554
+#: lib/src/interact.c:4592 gui2/library.c:6563
 #, fuzzy
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Üzgünüm, bu komut döngü modunda kullanılabilir değil\n"
 
-#: lib/src/interact.c:4944
+#: lib/src/interact.c:4954
 msgid "error evaluating 'if'"
 msgstr ""
 
-#: lib/src/interact.c:4946
+#: lib/src/interact.c:4956
 msgid "indeterminate condition for 'if'"
 msgstr ""
 
@@ -3870,49 +4060,45 @@ msgstr ""
 msgid "'%s': no such matrix\n"
 msgstr "%s: böyle bir nesne yok\n"
 
-#: lib/src/libset.c:1022
+#: lib/src/libset.c:1028
 msgid "Variables that can be set using \"set\""
 msgstr ""
 
-#: lib/src/libset.c:1024
+#: lib/src/libset.c:1030
 msgid "\"help set\" for details"
 msgstr ""
 
-#: lib/src/libset.c:1027
+#: lib/src/libset.c:1033
 #, fuzzy
-msgid "Program interaction"
+msgid "Program interaction and behavior"
 msgstr "Ortak tümleştirme "
 
-#: lib/src/libset.c:1032
+#: lib/src/libset.c:1054
 #, fuzzy
 msgid "Numerical methods"
 msgstr "Aykırı değerler için kritik değer:"
 
-#: lib/src/libset.c:1043
+#: lib/src/libset.c:1065
 #, fuzzy
 msgid "Random number generation"
 msgstr "Gözlem sayısını öğelerine ayırmada başarısız "
 
-#: lib/src/libset.c:1047
+#: lib/src/libset.c:1069
 #, fuzzy
 msgid "Robust estimation"
 msgstr "Model kestirim aralığı"
 
-#: lib/src/libset.c:1059
+#: lib/src/libset.c:1081
 #, fuzzy
 msgid "Filtering"
 msgstr "Filter"
 
-#: lib/src/libset.c:1073 gui2/dialogs.c:3943 gui2/menustate.c:491
+#: lib/src/libset.c:1095 gui2/dialogs.c:3943 gui2/menustate.c:491
 #, fuzzy
 msgid "Time series"
 msgstr "zaman serileri "
 
-#: lib/src/libset.c:1078
-msgid "Program behavior"
-msgstr ""
-
-#: lib/src/libset.c:1240
+#: lib/src/libset.c:1244
 #, fuzzy, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Sözde-rasgele sayı üreticisi %d ile başladı.\n"
@@ -4059,19 +4245,19 @@ msgstr "Değişken bilgisi eksik "
 msgid "Hannan--Quinn criterion"
 msgstr ""
 
-#: lib/src/modelprint.c:329 lib/src/texprint.c:798 lib/src/varprint.c:1065
+#: lib/src/modelprint.c:329 lib/src/texprint.c:858 lib/src/varprint.c:1065
 #: lib/src/varprint.c:1073
 #, fuzzy
 msgid "AIC"
 msgstr "AIC"
 
-#: lib/src/modelprint.c:330 lib/src/texprint.c:799 lib/src/varprint.c:1066
+#: lib/src/modelprint.c:330 lib/src/texprint.c:859 lib/src/varprint.c:1066
 #: lib/src/varprint.c:1074
 #, fuzzy
 msgid "BIC"
 msgstr "BIC"
 
-#: lib/src/modelprint.c:331 lib/src/texprint.c:800 lib/src/varprint.c:1067
+#: lib/src/modelprint.c:331 lib/src/texprint.c:860 lib/src/varprint.c:1067
 #: lib/src/varprint.c:1075
 msgid "HQC"
 msgstr ""
@@ -4282,7 +4468,7 @@ msgstr "TSLS"
 msgid "Heteroskedasticity-corrected"
 msgstr "Heteroskedasticity-düzeltildi"
 
-#: lib/src/modelprint.c:858 lib/src/modelprint.c:3008
+#: lib/src/modelprint.c:858 lib/src/modelprint.c:3031
 #, fuzzy
 msgid "AR"
 msgstr "AR"
@@ -4586,9 +4772,9 @@ msgstr ""
 msgid "Redundant instruments:"
 msgstr "Gereçler"
 
-#: lib/src/modelprint.c:1434 lib/src/modelprint.c:1638
-#: lib/src/modelprint.c:1642 lib/src/modelprint.c:1646
-#: lib/src/modelprint.c:1651 lib/src/modelprint.c:1683 gui2/model_table.c:868
+#: lib/src/modelprint.c:1434 lib/src/modelprint.c:1646
+#: lib/src/modelprint.c:1650 lib/src/modelprint.c:1654
+#: lib/src/modelprint.c:1659 lib/src/modelprint.c:1691 gui2/model_table.c:868
 #: gui2/model_table.c:982 gui2/selector.c:2438
 #, fuzzy
 msgid "Dependent variable"
@@ -4616,81 +4802,81 @@ msgstr ""
 msgid "Estimated using BHHH method"
 msgstr " X-12-ARIMA kullan"
 
-#: lib/src/modelprint.c:1524 lib/src/modelprint.c:1528
-#: lib/src/modelprint.c:1532 lib/src/vartest.c:46 lib/src/vartest.c:62
+#: lib/src/modelprint.c:1532 lib/src/modelprint.c:1536
+#: lib/src/modelprint.c:1540 lib/src/vartest.c:46 lib/src/vartest.c:62
 #, fuzzy
 msgid "Equation"
 msgstr "Denklem"
 
-#: lib/src/modelprint.c:1551 lib/src/modelprint.c:1553 lib/src/objstack.c:548
+#: lib/src/modelprint.c:1559 lib/src/modelprint.c:1561 lib/src/objstack.c:548
 #, fuzzy
 msgid "Model"
 msgstr "Model"
 
-#: lib/src/modelprint.c:1563 lib/src/modelprint.c:1564
-#: lib/src/modelprint.c:1590 lib/src/modelprint.c:1591
+#: lib/src/modelprint.c:1571 lib/src/modelprint.c:1572
+#: lib/src/modelprint.c:1598 lib/src/modelprint.c:1599
 #, fuzzy, c-format
 msgid "%s estimates using the %d observations %s%s%s"
 msgstr "%s %d gözlemlerini kullanarak hesaplar %s%s%s"
 
-#: lib/src/modelprint.c:1578 lib/src/modelprint.c:1579
+#: lib/src/modelprint.c:1586 lib/src/modelprint.c:1587
 #, fuzzy, c-format
 msgid "%s estimates using %d observations from %s%s%s"
 msgstr "%s %d gözlemlerini kullanarak hesaplar %s%s%s"
 
-#: lib/src/modelprint.c:1585 lib/src/modelprint.c:1586
+#: lib/src/modelprint.c:1593 lib/src/modelprint.c:1594
 #, fuzzy
 msgid "Missing or incomplete observations dropped"
 msgstr "Hiçbir gözlm bırakılmadı"
 
-#: lib/src/modelprint.c:1601 lib/src/modelprint.c:1602
+#: lib/src/modelprint.c:1609 lib/src/modelprint.c:1610
 #, fuzzy, c-format
 msgid "%s estimates using %d observations"
 msgstr "%s %d gözlemlerini kullanarak hesaplar"
 
-#: lib/src/modelprint.c:1607 lib/src/modelprint.c:1608
+#: lib/src/modelprint.c:1615 lib/src/modelprint.c:1616
 #, fuzzy, c-format
 msgid "Included %d cross-sectional units"
 msgstr "kesitsel "
 
-#: lib/src/modelprint.c:1613 lib/src/modelprint.c:1614
+#: lib/src/modelprint.c:1621 lib/src/modelprint.c:1622
 #, fuzzy, c-format
 msgid "Time-series length = %d"
 msgstr "Zaman serileri çizimi"
 
-#: lib/src/modelprint.c:1616 lib/src/modelprint.c:1617
+#: lib/src/modelprint.c:1624 lib/src/modelprint.c:1625
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
 msgstr ""
 
-#: lib/src/modelprint.c:1714 lib/src/modelprint.c:1715
+#: lib/src/modelprint.c:1722 lib/src/modelprint.c:1723
 #, fuzzy
 msgid "Allowing for groupwise heteroskedasticity"
 msgstr "White'ın heteroskedastisite için testi "
 
-#: lib/src/modelprint.c:1717 lib/src/modelprint.c:1718
+#: lib/src/modelprint.c:1725 lib/src/modelprint.c:1726
 #, fuzzy
 msgid "Weights based on per-unit error variances"
 msgstr "Hata değişintisi alınamıyor "
 
-#: lib/src/modelprint.c:1730 lib/src/modelprint.c:1740
+#: lib/src/modelprint.c:1738 lib/src/modelprint.c:1748
 #, fuzzy
 msgid "Variable used as weight"
 msgstr "Değişken ağırlık olarak kullanıldı"
 
-#: lib/src/modelprint.c:1784 lib/src/modelprint.c:1785
+#: lib/src/modelprint.c:1792 lib/src/modelprint.c:1793
 #, fuzzy
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr "Ağırlık değişkeni takma bir değişken, etkili gözlem="
 
-#: lib/src/modelprint.c:1829
+#: lib/src/modelprint.c:1837
 #, fuzzy
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr "DEĞİŞKEN KATSAYI STHATASI SLOPE\n"
 
-#: lib/src/modelprint.c:1832 lib/src/modelprint.c:2743
+#: lib/src/modelprint.c:1840 lib/src/modelprint.c:2766
 #, fuzzy
 msgid ""
 "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
@@ -4699,97 +4885,105 @@ msgstr ""
 " PARAMETRE  STDHATASI       T STAT   2Prob(t > |T|) belirledi\n"
 "\n"
 
-#: lib/src/modelprint.c:1844
+#: lib/src/modelprint.c:1852
 #, fuzzy
 msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
 msgstr "DEĞİŞKEN KATSAYISI STANDART HATA\n"
 
-#: lib/src/modelprint.c:1848
+#: lib/src/modelprint.c:1856
 #, fuzzy
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
 msgstr "DEĞİŞKEN KATSAYI STHATASI SLOPE\n"
 
-#: lib/src/modelprint.c:1851
+#: lib/src/modelprint.c:1859
 #, fuzzy
 msgid "(at mean)"
 msgstr "(ortalamada)"
 
-#: lib/src/modelprint.c:1861 lib/src/modelprint.c:1864
-#: lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1869 lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1880
 #, fuzzy
 msgid "VARIABLE"
 msgstr "ARIMA"
 
-#: lib/src/modelprint.c:1861 lib/src/modelprint.c:1864
-#: lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1869 lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1880
 msgid "COEFFICIENT"
 msgstr ""
 
-#: lib/src/modelprint.c:1861 lib/src/modelprint.c:1864
-#: lib/src/modelprint.c:1868 lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1869 lib/src/modelprint.c:1872
+#: lib/src/modelprint.c:1876 lib/src/modelprint.c:1880
 msgid "STDERROR"
 msgstr ""
 
-#: lib/src/modelprint.c:1865 lib/src/modelprint.c:1869
-#: lib/src/modelprint.c:1873
+#: lib/src/modelprint.c:1873 lib/src/modelprint.c:1877
+#: lib/src/modelprint.c:1881
 msgid "T STAT"
 msgstr ""
 
-#: lib/src/modelprint.c:1865
+#: lib/src/modelprint.c:1873
 #, fuzzy
 msgid "SLOPE at mean"
 msgstr "(ortalamada)"
 
-#: lib/src/modelprint.c:1868
+#: lib/src/modelprint.c:1876
 msgid "PARAMETER"
 msgstr ""
 
-#: lib/src/modelprint.c:1868
+#: lib/src/modelprint.c:1876
 msgid "ESTIMATE"
 msgstr ""
 
-#: lib/src/modelprint.c:1869 lib/src/modelprint.c:1873
+#: lib/src/modelprint.c:1877 lib/src/modelprint.c:1881
 msgid "P-VALUE"
 msgstr ""
 
-#: lib/src/modelprint.c:1879
+#: lib/src/modelprint.c:1887
 #, fuzzy
 msgid "Parameter"
 msgstr "Parametre"
 
-#: lib/src/modelprint.c:1880
+#: lib/src/modelprint.c:1888
 #, fuzzy
 msgid "Estimate"
 msgstr "Hesapla"
 
-#: lib/src/modelprint.c:1883 gui2/dialogs.c:802 gui2/dialogs.c:5052
+#: lib/src/modelprint.c:1891 gui2/dialogs.c:802 gui2/dialogs.c:5052
 #: gui2/guiprint.c:1899 gui2/guiprint.c:1948
 #, fuzzy
 msgid "Coefficient"
 msgstr "Katsayı"
 
-#: lib/src/modelprint.c:1900 lib/src/modelprint.c:1911
+#: lib/src/modelprint.c:1908 lib/src/modelprint.c:1919
 #, fuzzy
 msgid "Std. Error"
 msgstr "Standart hata"
 
-#: lib/src/modelprint.c:1901 lib/src/modelprint.c:1912
+#: lib/src/modelprint.c:1909 lib/src/modelprint.c:1920
 #, fuzzy
 msgid "t-statistic"
 msgstr "t-istatistiği"
 
-#: lib/src/modelprint.c:1901 lib/src/texprint.c:646
+#: lib/src/modelprint.c:1909 lib/src/texprint.c:646
 #, fuzzy
 msgid "Slope"
 msgstr "Eğim"
 
-#: lib/src/modelprint.c:1930
+#: lib/src/modelprint.c:1938
 #, fuzzy
 msgid "Warning: data matrix close to singularity!"
 msgstr "Uyarı: veri matrisi tekilliğe yakın! "
 
-#: lib/src/modelprint.c:1979
+#: lib/src/modelprint.c:1984
+msgid ""
+"WARNING: The constant was present among the regressors but not among the\n"
+"instruments, so it has been automatically added to the instrument list.\n"
+"This behavior may change in future versions, so you may want to adjust your\n"
+"scripts accordingly.\n"
+msgstr ""
+
+#: lib/src/modelprint.c:1998
 #, fuzzy
 msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
@@ -4798,211 +4992,211 @@ msgstr ""
 "R-kareli bağımlı değşkenin gözlenen ve\n"
 " uyan değerleri arasındaki ilintinin karesi olarak hesaplanıyor"
 
-#: lib/src/modelprint.c:1985
+#: lib/src/modelprint.c:2004
 #, fuzzy
 msgid "Statistics based on the weighted data"
 msgstr "Ağırlaştırılmış veri temelli istatistik"
 
-#: lib/src/modelprint.c:1998
+#: lib/src/modelprint.c:2017
 #, fuzzy
 msgid "Statistics based on the original data"
 msgstr "Orjinal veri temelli istatistikler"
 
-#: lib/src/modelprint.c:2011
+#: lib/src/modelprint.c:2030
 #, fuzzy
 msgid "Statistics based on the rho-differenced data"
 msgstr "rho-farkı  veri temelli istatistik "
 
-#: lib/src/modelprint.c:2065 lib/src/modelprint.c:2075
-#: lib/src/modelprint.c:2081 lib/src/modelprint.c:3254
-#: lib/src/modelprint.c:3288 lib/src/modelprint.c:3323 lib/src/printout.c:2240
-#: lib/src/system.c:2323 lib/src/texprint.c:790 lib/src/varprint.c:1061
+#: lib/src/modelprint.c:2084 lib/src/modelprint.c:2094
+#: lib/src/modelprint.c:2100 lib/src/modelprint.c:3277
+#: lib/src/modelprint.c:3311 lib/src/modelprint.c:3346 lib/src/printout.c:2240
+#: lib/src/system.c:2323 lib/src/texprint.c:850 lib/src/varprint.c:1061
 #: lib/src/varprint.c:1070
 #, fuzzy
 msgid "Log-likelihood"
 msgstr "Günlük- olabilirlik"
 
-#: lib/src/modelprint.c:2070
+#: lib/src/modelprint.c:2089
 #, fuzzy, c-format
 msgid "Log-likelihood for %s"
 msgstr "Günlük- olabilirlik"
 
-#: lib/src/modelprint.c:2153 lib/src/nls.c:2126 lib/src/nls.c:2223
+#: lib/src/modelprint.c:2172 lib/src/nls.c:2126 lib/src/nls.c:2223
 #: lib/src/system.c:2320
 #, fuzzy, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr "Yakınsama %d yinelemelerinden sonra tamamlandı.\n"
 
-#: lib/src/modelprint.c:2159 lib/src/nls.c:3852
+#: lib/src/modelprint.c:2178 lib/src/nls.c:3852
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr ""
 
-#: lib/src/modelprint.c:2160 lib/src/nls.c:3853
+#: lib/src/modelprint.c:2179 lib/src/nls.c:3853
 #, fuzzy, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "genr ifadesi değerlendirimi başarısız "
 
-#: lib/src/modelprint.c:2905
+#: lib/src/modelprint.c:2928
 #, fuzzy
 msgid "Estimates of the AR coefficients"
 msgstr "AR katsayılarının hesapları "
 
-#: lib/src/modelprint.c:2920
+#: lib/src/modelprint.c:2943
 #, fuzzy
 msgid "Sum of AR coefficients"
 msgstr "AR katsayılarının toplamı"
 
-#: lib/src/modelprint.c:2934
+#: lib/src/modelprint.c:2957
 #, fuzzy
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr "Gerçek  Sanal Büyüklük Sıklığı"
 
-#: lib/src/modelprint.c:2944 lib/src/modelprint.c:2947
-#: lib/src/modelprint.c:2960
+#: lib/src/modelprint.c:2967 lib/src/modelprint.c:2970
+#: lib/src/modelprint.c:2983
 #, fuzzy
 msgid "Root"
 msgstr "Kök"
 
-#: lib/src/modelprint.c:2995 lib/src/modelprint.c:3003
+#: lib/src/modelprint.c:3018 lib/src/modelprint.c:3026
 #, fuzzy
 msgid "Real"
 msgstr "Gerçek"
 
-#: lib/src/modelprint.c:2995 lib/src/modelprint.c:3003
+#: lib/src/modelprint.c:3018 lib/src/modelprint.c:3026
 #, fuzzy
 msgid "Imaginary"
 msgstr "Sanal"
 
-#: lib/src/modelprint.c:2995 lib/src/modelprint.c:3003
+#: lib/src/modelprint.c:3018 lib/src/modelprint.c:3026
 #, fuzzy
 msgid "Modulus"
 msgstr "Büyüklük"
 
-#: lib/src/modelprint.c:3028
+#: lib/src/modelprint.c:3051
 msgid "AR (seasonal)"
 msgstr ""
 
-#: lib/src/modelprint.c:3048
+#: lib/src/modelprint.c:3071
 #, fuzzy
 msgid "MA"
 msgstr "MA"
 
-#: lib/src/modelprint.c:3068
+#: lib/src/modelprint.c:3091
 msgid "MA (seasonal)"
 msgstr ""
 
-#: lib/src/modelprint.c:3102 lib/src/modelprint.c:3105
-#: lib/src/modelprint.c:3111 lib/src/modelprint.c:3125
-#: lib/src/modelprint.c:3130 lib/src/modelprint.c:3139
+#: lib/src/modelprint.c:3125 lib/src/modelprint.c:3128
+#: lib/src/modelprint.c:3134 lib/src/modelprint.c:3148
+#: lib/src/modelprint.c:3153 lib/src/modelprint.c:3162
 #, fuzzy
 msgid "Censored observations"
 msgstr "Sansürlü gözlemler"
 
-#: lib/src/modelprint.c:3103 lib/src/modelprint.c:3106
-#: lib/src/modelprint.c:3126 lib/src/modelprint.c:3131
+#: lib/src/modelprint.c:3126 lib/src/modelprint.c:3129
+#: lib/src/modelprint.c:3149 lib/src/modelprint.c:3154
 #, fuzzy
 msgid "sigma"
 msgstr "sigma"
 
-#: lib/src/modelprint.c:3124 lib/src/modelprint.c:3129
-#: lib/src/modelprint.c:3137
+#: lib/src/modelprint.c:3147 lib/src/modelprint.c:3152
+#: lib/src/modelprint.c:3160
 #, fuzzy
 msgid "Total observations"
 msgstr "Gözlem alınmadı\n"
 
-#: lib/src/modelprint.c:3127 lib/src/modelprint.c:3132
+#: lib/src/modelprint.c:3150 lib/src/modelprint.c:3155
 msgid "rho"
 msgstr ""
 
-#: lib/src/modelprint.c:3177 lib/src/modelprint.c:3182
-#: lib/src/modelprint.c:3188
+#: lib/src/modelprint.c:3200 lib/src/modelprint.c:3205
+#: lib/src/modelprint.c:3211
 #, fuzzy
 msgid "Mean of innovations"
 msgstr "gözlemlerin ortalaması"
 
-#: lib/src/modelprint.c:3179 lib/src/modelprint.c:3183
-#: lib/src/modelprint.c:3190
+#: lib/src/modelprint.c:3202 lib/src/modelprint.c:3206
+#: lib/src/modelprint.c:3213
 #, fuzzy
 msgid "Variance of innovations"
 msgstr "gözlemlerin ortalaması"
 
-#: lib/src/modelprint.c:3210 lib/src/modelprint.c:3218
+#: lib/src/modelprint.c:3233 lib/src/modelprint.c:3241
 #, fuzzy
 msgid "Actual"
 msgstr "gerçek "
 
-#: lib/src/modelprint.c:3213
+#: lib/src/modelprint.c:3236
 #, fuzzy
 msgid "Predicted"
 msgstr "Öngörü"
 
-#: lib/src/modelprint.c:3244 lib/src/modelprint.c:3278
-#: lib/src/modelprint.c:3312
+#: lib/src/modelprint.c:3267 lib/src/modelprint.c:3301
+#: lib/src/modelprint.c:3335
 #, fuzzy
 msgid "Mean of"
 msgstr "ortalama"
 
-#: lib/src/modelprint.c:3248 lib/src/modelprint.c:3282
+#: lib/src/modelprint.c:3271 lib/src/modelprint.c:3305
 #, fuzzy
 msgid "Number of cases 'correctly predicted'"
 msgstr "'doğru öngörülen' durumların sayısı"
 
-#: lib/src/modelprint.c:3251 lib/src/modelprint.c:3285
-#: lib/src/modelprint.c:3320
+#: lib/src/modelprint.c:3274 lib/src/modelprint.c:3308
+#: lib/src/modelprint.c:3343
 #, fuzzy
 msgid "at mean of independent vars"
 msgstr "bağımsız değişkenlerin ortalaması"
 
-#: lib/src/modelprint.c:3258 lib/src/modelprint.c:3292
-#: lib/src/modelprint.c:3327 lib/src/varprint.c:1208 lib/src/varprint.c:1215
+#: lib/src/modelprint.c:3281 lib/src/modelprint.c:3315
+#: lib/src/modelprint.c:3350 lib/src/varprint.c:1208 lib/src/varprint.c:1215
 #: lib/src/varprint.c:1224
 #, fuzzy
 msgid "Likelihood ratio test"
 msgstr "Olabilirlik oranı testi"
 
-#: lib/src/modelprint.c:3276 lib/src/modelprint.c:3308
+#: lib/src/modelprint.c:3299 lib/src/modelprint.c:3331
 #, fuzzy
 msgid "Evaluated at the mean"
 msgstr "Ortalamada değerlendirilmiş"
 
-#: lib/src/modelprint.c:3316
+#: lib/src/modelprint.c:3339
 #, fuzzy
 msgid "Number of cases `correctly predicted'"
 msgstr "'doğru öngörülen' durumların sayısı"
 
-#: lib/src/modelprint.c:3351
+#: lib/src/modelprint.c:3374
 #, fuzzy
 msgid "Analysis of Variance"
 msgstr "Katsayısal ortak değişinti matrisi"
 
-#: lib/src/modelprint.c:3355
+#: lib/src/modelprint.c:3378
 #, fuzzy
 msgid "Sum of squares"
 msgstr "Karelerin toplamında hata"
 
-#: lib/src/modelprint.c:3355 lib/src/varprint.c:954 lib/src/varprint.c:958
+#: lib/src/modelprint.c:3378 lib/src/varprint.c:954 lib/src/varprint.c:958
 #: lib/src/varprint.c:962 gui2/calculator.c:1864 gui2/calculator.c:1867
 #, fuzzy
 msgid "df"
 msgstr "df"
 
-#: lib/src/modelprint.c:3355
+#: lib/src/modelprint.c:3378
 #, fuzzy
 msgid "Mean square"
 msgstr "Standart hata "
 
-#: lib/src/modelprint.c:3358
+#: lib/src/modelprint.c:3381
 #, fuzzy
 msgid "Regression"
 msgstr "Oturum"
 
-#: lib/src/modelprint.c:3361
+#: lib/src/modelprint.c:3384
 #, fuzzy
 msgid "Residual"
 msgstr "kalıntı"
 
-#: lib/src/modelprint.c:3364
+#: lib/src/modelprint.c:3387
 #, fuzzy
 msgid "Total"
 msgstr "Tobit"
@@ -6126,7 +6320,7 @@ msgstr "Std.\\hata"
 msgid "$t$-statistic"
 msgstr "$t$-istatistik"
 
-#: lib/src/texprint.c:666 lib/src/varprint.c:757 gui2/gui_utils.c:3511
+#: lib/src/texprint.c:666 lib/src/varprint.c:757 gui2/gui_utils.c:3516
 #, fuzzy
 msgid "Cross-equation covariance matrix"
 msgstr "Ortak değişinti matrisi oluştururken hata oluştu"
@@ -6140,19 +6334,23 @@ msgstr ""
 msgid "Cointegrating vectors"
 msgstr "vektörü bütünleştiriyor"
 
-#: lib/src/texprint.c:739 lib/src/texprint.c:1214 lib/src/varprint.c:631
-#: lib/src/varprint.c:687 gui2/model_table.c:1120 plugin/jrestrict.c:2775
-#: plugin/jrestrict.c:2808
+#: lib/src/texprint.c:739 lib/src/texprint.c:795 lib/src/texprint.c:1274
+#: lib/src/varprint.c:631 lib/src/varprint.c:687 gui2/model_table.c:1120
+#: plugin/jrestrict.c:2775 plugin/jrestrict.c:2808
 #, fuzzy
 msgid "standard errors in parentheses"
 msgstr "Parantezlerdeki standart hatalar "
 
-#: lib/src/texprint.c:794 lib/src/varprint.c:1063 lib/src/varprint.c:1072
+#: lib/src/texprint.c:793
+msgid "Adjustment vectors"
+msgstr ""
+
+#: lib/src/texprint.c:854 lib/src/varprint.c:1063 lib/src/varprint.c:1072
 #, fuzzy
 msgid "Determinant of covariance matrix"
 msgstr "Katsayısal ortak değişinti matrisi"
 
-#: lib/src/texprint.c:1213 gui2/model_table.c:920
+#: lib/src/texprint.c:1273 gui2/model_table.c:920
 #, fuzzy
 msgid "$t$-statistics in parentheses"
 msgstr "parantez içinde $t$-istatistiği"
@@ -6206,7 +6404,7 @@ msgstr ""
 msgid "squared time trend variable"
 msgstr "zaman eğilim değişkeni "
 
-#: lib/src/tsls.c:1094
+#: lib/src/tsls.c:1099
 #, fuzzy, c-format
 msgid ""
 "The order condition for identification is not satisfied.\n"
@@ -6593,17 +6791,17 @@ msgstr "Yeni veri dosyası açmak kullanımdakini kapatır. ilerle?(y/n)"
 msgid "OK, staying with current data set\n"
 msgstr "Tamam, geçerli veri kümesinde kal\n"
 
-#: cli/gretlcli.c:797 gui2/library.c:6509
+#: cli/gretlcli.c:797 gui2/library.c:6518
 #, fuzzy, c-format
 msgid "You must open a data file first\n"
 msgstr "Önce veri dosyası açmalısınız\n"
 
-#: cli/gretlcli.c:832 gui2/library.c:6539
+#: cli/gretlcli.c:832 gui2/library.c:6548
 #, fuzzy, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "Komut '%s' yoksayıldı; denklem sisteminde geçersiz\n"
 
-#: cli/gretlcli.c:840 gui2/library.c:6547
+#: cli/gretlcli.c:840 gui2/library.c:6556
 #, fuzzy
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr "Döngü için komutu girin.  Çıkmak için 'döngüyübitir' yazın\n"
@@ -6613,12 +6811,12 @@ msgstr "Döngü için komutu girin.  Çıkmak için 'döngüyübitir' yazın\n"
 msgid "Command '%s' ignored; not available in loop mode\n"
 msgstr "Komut '%s' yoksayıldı; döngü modunda uygun değil\n"
 
-#: cli/gretlcli.c:895 gui2/library.c:6626
+#: cli/gretlcli.c:895 gui2/library.c:6635
 #, fuzzy
 msgid "Failed to shrink the data set"
 msgstr "Veri kümesini küçültme başarısız"
 
-#: cli/gretlcli.c:898 gui2/library.c:4785 gui2/library.c:6630
+#: cli/gretlcli.c:898 gui2/library.c:4785 gui2/library.c:6639
 #, fuzzy
 msgid "Take note: variables have been renumbered"
 msgstr "Not alın:  Değişkenler tekrar numaralandırıdı"
@@ -6632,17 +6830,17 @@ msgstr ""
 "Sonuncusu takma değişken olan üç değişken sağlamalısınız\n"
 " (1 veya 0 değeriyle9\n"
 
-#: cli/gretlcli.c:926 gui2/library.c:6653
+#: cli/gretlcli.c:926 gui2/library.c:6662
 #, fuzzy, c-format
 msgid "wrote %s\n"
 msgstr "%s yazdı\n"
 
-#: cli/gretlcli.c:947 gui2/library.c:6687
+#: cli/gretlcli.c:947 gui2/library.c:6696
 #, fuzzy
 msgid "Data series length count missing or invalid\n"
 msgstr "Veri serileri uzunluğu sayısı eksik veya geçersiz\n"
 
-#: cli/gretlcli.c:956 gui2/library.c:6696
+#: cli/gretlcli.c:956 gui2/library.c:6705
 #, fuzzy
 msgid "Failed to create empty data set\n"
 msgstr "Boş veri kümesi oluşturmada başarısız\n"
@@ -6667,12 +6865,12 @@ msgstr "Çıktıyı saklamak için dosya adı yazın (çıkmak için enter):"
 msgid "writing session output to %s%s\n"
 msgstr "%s%s için oturum çıktısı yazma \n"
 
-#: cli/gretlcli.c:1028
+#: cli/gretlcli.c:1030
 #, fuzzy, c-format
 msgid "Couldn't open script \"%s\"\n"
 msgstr "Betik\"%s\" açamadı\n"
 
-#: cli/gretlcli.c:1032 gui2/library.c:6735
+#: cli/gretlcli.c:1034 gui2/library.c:6744
 #, fuzzy, c-format
 msgid "%s opened OK\n"
 msgstr "%s açıldı tamam\n"
@@ -6916,8 +7114,8 @@ msgid "Standard errors"
 msgstr "Standart hatalar"
 
 #: gui2/calculator.c:569 gui2/calculator.c:663 gui2/database.c:210
-#: gui2/filters.c:689 gui2/gui_utils.c:3378 gui2/gui_utils.c:3393
-#: gui2/gui_utils.c:3408 gui2/session.c:3177
+#: gui2/filters.c:689 gui2/gui_utils.c:3383 gui2/gui_utils.c:3398
+#: gui2/gui_utils.c:3413 gui2/session.c:3176
 #, fuzzy
 msgid "gnuplot command failed"
 msgstr "gnuplot komutu başarısız"
@@ -9432,7 +9630,7 @@ msgstr "düzensiz %s bileşeni"
 msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr ""
 
-#: gui2/filters.c:885 gui2/library.c:3353 gui2/library.c:3507
+#: gui2/filters.c:886 gui2/library.c:3353 gui2/library.c:3507
 #, fuzzy
 msgid "This variable is a scalar"
 msgstr "Bu değişken bir skalar"
@@ -9635,7 +9833,7 @@ msgstr "gnuplot dosyasını öğelere ayırma başarısız"
 msgid "Plot file is corrupted"
 msgstr "Bozok Plot dosyası"
 
-#: gui2/gpt_control.c:2093 gui2/gretlwin32.c:817
+#: gui2/gpt_control.c:2093 gui2/gretlwin32.c:821
 #, fuzzy
 msgid "Couldn't access graph info"
 msgstr "Grafik bilgisine ulaşılamadı"
@@ -11073,12 +11271,12 @@ msgstr "Kullanılabilir yuva sürücü bulunamadı\n"
 msgid "Couldn't write R startup file"
 msgstr "R başlangıç dosyası yazılamadı"
 
-#: gui2/gretlwin32.c:166 gui2/gui_utils.c:3947
+#: gui2/gretlwin32.c:166 gui2/gui_utils.c:3952
 #, fuzzy
 msgid "Couldn't set R_PROFILE environment variable"
 msgstr "R_PROFIL çevre değişkeni kurulamdı"
 
-#: gui2/gretlwin32.c:179 gui2/gui_utils.c:3960
+#: gui2/gretlwin32.c:179 gui2/gui_utils.c:3965
 #, fuzzy
 msgid "Write of R data file failed"
 msgstr "R veri dosyası yazımı başarısız"
@@ -11093,32 +11291,32 @@ msgstr "gretl:chm"
 msgid "Couldn't access help file"
 msgstr "Yardım dosyasına ulaşılamadı"
 
-#: gui2/gretlwin32.c:531
+#: gui2/gretlwin32.c:535
 #, fuzzy
 msgid "Copy buffer was empty"
 msgstr "Kopya arabellek boşaldı"
 
-#: gui2/gretlwin32.c:536 gui2/gretlwin32.c:605 gui2/gretlwin32.c:769
+#: gui2/gretlwin32.c:540 gui2/gretlwin32.c:609 gui2/gretlwin32.c:773
 #, fuzzy
 msgid "Cannot open the clipboard"
 msgstr "Pano açılamadı!"
 
-#: gui2/gretlwin32.c:712 plugin/mailer.c:613
+#: gui2/gretlwin32.c:716 plugin/mailer.c:613
 #, fuzzy, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "Lütfen varsayılan veri kümesine bir ad verin"
 
-#: gui2/gretlwin32.c:716 plugin/mailer.c:616
+#: gui2/gretlwin32.c:720 plugin/mailer.c:616
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr ""
 
-#: gui2/gretlwin32.c:852
+#: gui2/gretlwin32.c:856
 #, fuzzy
 msgid "Gnuplot error creating graph"
 msgstr "Grafik oluştururken gnuplot hatası olştu "
 
-#: gui2/gretlwin32.c:856
+#: gui2/gretlwin32.c:860
 #, fuzzy
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
 msgstr ""
@@ -11376,7 +11574,7 @@ msgstr "/_Düzenle"
 msgid "/Edit/_Copy"
 msgstr "/Düzenle/_Kopya"
 
-#: gui2/gui_utils.c:243 gui2/gui_utils.c:349 gui2/gui_utils.c:3437
+#: gui2/gui_utils.c:243 gui2/gui_utils.c:349 gui2/gui_utils.c:3442
 #, fuzzy
 msgid "/_Tests"
 msgstr "/_Testler"
@@ -11471,12 +11669,12 @@ msgstr "/Testler/CUSUM testi"
 msgid "/Tests/_Panel diagnostics"
 msgstr "/Testler/pano tanılayıcılar"
 
-#: gui2/gui_utils.c:266 gui2/gui_utils.c:3717
+#: gui2/gui_utils.c:266 gui2/gui_utils.c:3722
 #, fuzzy
 msgid "/_Save"
 msgstr "Kaydet"
 
-#: gui2/gui_utils.c:267 gui2/gui_utils.c:3445
+#: gui2/gui_utils.c:267 gui2/gui_utils.c:3450
 #, fuzzy
 msgid "/_Graphs"
 msgstr "/_Grafikler"
@@ -11491,7 +11689,7 @@ msgstr "/Grafikler/ kalıntı çizimi"
 msgid "/Graphs/_Fitted, actual plot"
 msgstr "/Grafikler/ uygun,  gerçek çizim"
 
-#: gui2/gui_utils.c:270 gui2/gui_utils.c:3441 gui2/gui_utils.c:3711
+#: gui2/gui_utils.c:270 gui2/gui_utils.c:3446 gui2/gui_utils.c:3716
 msgid "/_Analysis"
 msgstr ""
 
@@ -11808,315 +12006,315 @@ msgstr "gretl: veriyi görüntüle"
 msgid "Can't open %s for reading"
 msgstr "Okumak için %s açılamadı"
 
-#: gui2/gui_utils.c:2397 gui2/ssheet.c:2045 gui2/ssheet.c:2070
+#: gui2/gui_utils.c:2402 gui2/ssheet.c:2045 gui2/ssheet.c:2070
 #, fuzzy
 msgid "Save changes?"
 msgstr "Değişiklikleri kaydet?"
 
-#: gui2/gui_utils.c:2720
+#: gui2/gui_utils.c:2725
 #, fuzzy
 msgid "/Save/_Fitted values"
 msgstr "tahmini değerler"
 
-#: gui2/gui_utils.c:2722
+#: gui2/gui_utils.c:2727
 #, fuzzy
 msgid "/Save/_Residuals"
 msgstr "kalıntılar"
 
-#: gui2/gui_utils.c:2724
+#: gui2/gui_utils.c:2729
 #, fuzzy
 msgid "/Save/_Squared residuals"
 msgstr "Kareli kalıntıların toplamı"
 
-#: gui2/gui_utils.c:2729
+#: gui2/gui_utils.c:2734
 #, fuzzy
 msgid "/Save/_Error sum of squares"
 msgstr "Karelerin toplamında hata"
 
-#: gui2/gui_utils.c:2731
+#: gui2/gui_utils.c:2736
 #, fuzzy
 msgid "/Save/_Standard error of residuals"
 msgstr "kalıntılar için standart hata"
 
-#: gui2/gui_utils.c:2736
+#: gui2/gui_utils.c:2741
 #, fuzzy
 msgid "/Save/_R-squared"
 msgstr "R kare"
 
-#: gui2/gui_utils.c:2738
+#: gui2/gui_utils.c:2743
 #, fuzzy
 msgid "/Save/_T*R-squared"
 msgstr "R kare"
 
-#: gui2/gui_utils.c:2743
+#: gui2/gui_utils.c:2748
 #, fuzzy
 msgid "/Save/_Log likelihood"
 msgstr "Günlük- olabilirlik"
 
-#: gui2/gui_utils.c:2748
+#: gui2/gui_utils.c:2753
 #, fuzzy
 msgid "/Save/_Akaike Information Criterion"
 msgstr "Değişken bilgisi eksik "
 
-#: gui2/gui_utils.c:2750
+#: gui2/gui_utils.c:2755
 #, fuzzy
 msgid "/Save/_Bayesian Information Criterion"
 msgstr "/Model veri/Veri kümesine ekle/serbestlik dereceleri"
 
-#: gui2/gui_utils.c:2752
+#: gui2/gui_utils.c:2757
 #, fuzzy
 msgid "/Save/_Hannan-Quinn Information Criterion"
 msgstr "Hiçbir $aic (Akaike Bilgi Kriteri) değeri kullanılabilir değil "
 
-#: gui2/gui_utils.c:2757
+#: gui2/gui_utils.c:2762
 #, fuzzy
 msgid "/Save/_Predicted error variance"
 msgstr "/Model veri/Veri kümesine ekle/öngörülmüş hata değişintisi"
 
-#: gui2/gui_utils.c:2762
+#: gui2/gui_utils.c:2767
 #, fuzzy
 msgid "/Save/Per-unit _constants"
 msgstr "%s bir değişmezdir "
 
-#: gui2/gui_utils.c:2768
+#: gui2/gui_utils.c:2773
 #, fuzzy
 msgid "/Save/Define _new variable..."
 msgstr "Yeni değişken tanımla..."
 
-#: gui2/gui_utils.c:2864
+#: gui2/gui_utils.c:2869
 #, fuzzy
 msgid "/Graphs/Residual plot"
 msgstr "/Grafikler/ kalıntı çizimi"
 
-#: gui2/gui_utils.c:2865
+#: gui2/gui_utils.c:2870
 #, fuzzy
 msgid "/Graphs/Fitted, actual plot"
 msgstr "/Grafikler/ uygun,  gerçek çizim"
 
-#: gui2/gui_utils.c:2877
+#: gui2/gui_utils.c:2882
 #, fuzzy, c-format
 msgid "%s/_Correlogram"
 msgstr "correlogram"
 
-#: gui2/gui_utils.c:2881
+#: gui2/gui_utils.c:2886
 #, fuzzy, c-format
 msgid "%s/_Spectrum"
 msgstr "Spektrum"
 
-#: gui2/gui_utils.c:2889
+#: gui2/gui_utils.c:2894
 #, fuzzy, c-format
 msgid "%s/_Against time"
 msgstr "%s/zamana karşı"
 
-#: gui2/gui_utils.c:2891
+#: gui2/gui_utils.c:2896
 #, fuzzy, c-format
 msgid "%s/By _observation number"
 msgstr "%s/gözlem numarasına göre"
 
-#: gui2/gui_utils.c:2915
+#: gui2/gui_utils.c:2920
 #, fuzzy, c-format
 msgid "%s/_Against %s"
 msgstr "%s/%s'e karşı"
 
-#: gui2/gui_utils.c:2931
+#: gui2/gui_utils.c:2936
 #, fuzzy, c-format
 msgid "%s/_Against %s and %s"
 msgstr "%s/%s ve %s karşı"
 
-#: gui2/gui_utils.c:2954
+#: gui2/gui_utils.c:2959
 #, fuzzy
 msgid "/Graphs/Separation"
 msgstr "/Grafikler/Ayrım"
 
-#: gui2/gui_utils.c:2980 gui2/gui_utils.c:2986
+#: gui2/gui_utils.c:2985 gui2/gui_utils.c:2991
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: gui2/gui_utils.c:2993
+#: gui2/gui_utils.c:2998
 #, fuzzy, c-format
 msgid "%s/none"
 msgstr "%s/hiçbiri"
 
-#: gui2/gui_utils.c:3005
+#: gui2/gui_utils.c:3010
 #, fuzzy, c-format
 msgid "%s/By %s"
 msgstr "%s/tarafından %s"
 
-#: gui2/gui_utils.c:3051 gui2/gui_utils.c:3151
+#: gui2/gui_utils.c:3056 gui2/gui_utils.c:3156
 #, fuzzy
 msgid "impulse responses"
 msgstr "Bağlanım detaylarını göster"
 
-#: gui2/gui_utils.c:3052
+#: gui2/gui_utils.c:3057
 #, fuzzy
 msgid "variance decompositions"
 msgstr "QR ayrışımını kullanın"
 
-#: gui2/gui_utils.c:3054 gui2/gui_utils.c:3158
+#: gui2/gui_utils.c:3059 gui2/gui_utils.c:3163
 #, fuzzy
 msgid "forecast horizon (periods):"
 msgstr "gretl: periodogram"
 
-#: gui2/gui_utils.c:3064
+#: gui2/gui_utils.c:3069
 #, fuzzy
 msgid "gretl: VAR covariance matrix"
 msgstr "Katsayısal ortak değişinti matrisi"
 
-#: gui2/gui_utils.c:3067
+#: gui2/gui_utils.c:3072
 #, fuzzy
 msgid "gretl: VAR impulse responses"
 msgstr "Bağlanım detaylarını göster"
 
-#: gui2/gui_utils.c:3070
+#: gui2/gui_utils.c:3075
 #, fuzzy
 msgid "gretl: VAR variance decompositions"
 msgstr "gretl: değişinti testi"
 
-#: gui2/gui_utils.c:3102
+#: gui2/gui_utils.c:3107
 #, fuzzy
 msgid "Heteroskedasticity (_White's test)"
 msgstr "/Tests/heteroskedasticity"
 
-#: gui2/gui_utils.c:3124
+#: gui2/gui_utils.c:3129
 #, fuzzy
 msgid "x12sep"
 msgstr "x12sep"
 
-#: gui2/gui_utils.c:3131
+#: gui2/gui_utils.c:3136
 #, fuzzy
 msgid "View X-12-ARIMA output"
 msgstr "X-12-ARIMA çıktısını görüntüle"
 
-#: gui2/gui_utils.c:3142
+#: gui2/gui_utils.c:3147
 #, fuzzy
 msgid "include bootstrap confidence interval"
 msgstr "Güvenlik aralığı bulunamadı"
 
-#: gui2/gui_utils.c:3307 gui2/library.c:1410
+#: gui2/gui_utils.c:3312 gui2/library.c:1410
 #, fuzzy
 msgid "gretl: forecasts"
 msgstr "gretl: öngörüler"
 
-#: gui2/gui_utils.c:3335 gui2/library.c:2086
+#: gui2/gui_utils.c:3340 gui2/library.c:2086
 #, fuzzy
 msgid "gretl: autocorrelation"
 msgstr "gretl: özilinti"
 
-#: gui2/gui_utils.c:3336 gui2/gui_utils.c:3352 gui2/library.c:2129
+#: gui2/gui_utils.c:3341 gui2/gui_utils.c:3357 gui2/library.c:2129
 #: gui2/library.c:2151
 #, fuzzy
 msgid "gretl: ARCH test"
 msgstr "gretl: ARCH testi"
 
-#: gui2/gui_utils.c:3337 gui2/library.c:2087
+#: gui2/gui_utils.c:3342 gui2/library.c:2087
 #, fuzzy
 msgid "Lag order for test:"
 msgstr "Test için gecikme sırası"
 
-#: gui2/gui_utils.c:3347 gui2/library.c:2099
+#: gui2/gui_utils.c:3352 gui2/library.c:2099
 #, fuzzy
 msgid "gretl: LM test (autocorrelation)"
 msgstr "gretl: LM testi (özilinti)"
 
-#: gui2/gui_utils.c:3418 gui2/gui_utils.c:3692
+#: gui2/gui_utils.c:3423 gui2/gui_utils.c:3697
 #, fuzzy
 msgid "/Tests"
 msgstr "/_Testler"
 
-#: gui2/gui_utils.c:3419
+#: gui2/gui_utils.c:3424
 #, fuzzy
 msgid "/Graphs"
 msgstr "/Grafikler"
 
-#: gui2/gui_utils.c:3420
+#: gui2/gui_utils.c:3425
 msgid "/Analysis"
 msgstr ""
 
-#: gui2/gui_utils.c:3421
+#: gui2/gui_utils.c:3426
 #, fuzzy
 msgid "/Analysis/Forecasts"
 msgstr "/Model veri/sep1"
 
-#: gui2/gui_utils.c:3422 gui2/gui_utils.c:3693
+#: gui2/gui_utils.c:3427 gui2/gui_utils.c:3698
 #, fuzzy
 msgid "/Save"
 msgstr "Kaydet"
 
-#: gui2/gui_utils.c:3459
+#: gui2/gui_utils.c:3464
 #, fuzzy
 msgid "Autocorrelation"
 msgstr "özilinti yok "
 
-#: gui2/gui_utils.c:3468 gui2/model_table.c:364 gui2/selector.c:2273
+#: gui2/gui_utils.c:3473 gui2/model_table.c:364 gui2/selector.c:2273
 #, fuzzy
 msgid "ARCH"
 msgstr "ARCH"
 
-#: gui2/gui_utils.c:3477 gui2/gui_utils.c:3723
+#: gui2/gui_utils.c:3482 gui2/gui_utils.c:3728
 #, fuzzy
 msgid "Normality of residuals"
 msgstr "/Testler/kalılntının gaussluğu"
 
-#: gui2/gui_utils.c:3487
+#: gui2/gui_utils.c:3492
 #, fuzzy
 msgid "Linear restrictions"
 msgstr "sıfır kısıtlamaları için F-testi"
 
-#: gui2/gui_utils.c:3500
+#: gui2/gui_utils.c:3505
 #, fuzzy
 msgid "Omit exogenous variables..."
 msgstr "Değişken alınmadı "
 
-#: gui2/gui_utils.c:3519
+#: gui2/gui_utils.c:3524
 #, fuzzy
 msgid "Impulse responses"
 msgstr "Bağlanım detaylarını göster"
 
-#: gui2/gui_utils.c:3528
+#: gui2/gui_utils.c:3533
 #, fuzzy
 msgid "Forecast variance decomposition"
 msgstr "QR ayrışımını kullanın"
 
-#: gui2/gui_utils.c:3537
+#: gui2/gui_utils.c:3542
 #, fuzzy
 msgid "Residual plots"
 msgstr "/Grafikler/ kalıntı çizimi"
 
-#: gui2/gui_utils.c:3546
+#: gui2/gui_utils.c:3551
 #, fuzzy
 msgid "Combined residual plot"
 msgstr "/Grafikler/ kalıntı çizimi"
 
-#: gui2/gui_utils.c:3554
+#: gui2/gui_utils.c:3559
 msgid "VAR inverse roots"
 msgstr ""
 
-#: gui2/gui_utils.c:3563
+#: gui2/gui_utils.c:3568
 #, fuzzy
 msgid "Impulse responses (combined)"
 msgstr "Bağlanım detaylarını göster"
 
-#: gui2/gui_utils.c:3587 gui2/gui_utils.c:3733
+#: gui2/gui_utils.c:3592 gui2/gui_utils.c:3738
 #, fuzzy
 msgid "Residuals from equation"
 msgstr "denklemden kalıntılar"
 
-#: gui2/gui_utils.c:3597
+#: gui2/gui_utils.c:3602
 #, fuzzy, c-format
 msgid "Response of %s"
 msgstr "%s'in yanıtı"
 
-#: gui2/gui_utils.c:3615
+#: gui2/gui_utils.c:3620
 #, fuzzy, c-format
 msgid "to %s"
 msgstr "%s'e"
 
-#: gui2/gui_utils.c:3632
+#: gui2/gui_utils.c:3637
 msgid "EC term"
 msgstr ""
 
-#: gui2/gui_utils.c:3813
+#: gui2/gui_utils.c:3818
 #, fuzzy, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -12125,7 +12323,7 @@ msgstr ""
 "Değişken adı %s...çok uzun\n"
 "(maks. 8 karakter olmalı)"
 
-#: gui2/gui_utils.c:3818
+#: gui2/gui_utils.c:3823
 #, fuzzy, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -12134,7 +12332,7 @@ msgstr ""
 "Adın ilk kar.  ('%c') kötü\n"
 "(ilki alfabetik olmalı)"
 
-#: gui2/gui_utils.c:3826
+#: gui2/gui_utils.c:3831
 #, fuzzy, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -12143,12 +12341,12 @@ msgstr ""
 "Ad geçersiz bir kar. içeriyor (yerine %d)\n"
 "Sadece vurgusuz harfler, rakamlar ve altçizgi kullanın"
 
-#: gui2/gui_utils.c:4000
+#: gui2/gui_utils.c:4005
 #, fuzzy
 msgid "No command was supplied to start R"
 msgstr "R'yi başlatacak komut sağlanmadı"
 
-#: gui2/gui_utils.c:4009
+#: gui2/gui_utils.c:4014
 #, fuzzy
 msgid "Couldn't fork"
 msgstr "Çatallaştırılamadı"
@@ -12906,12 +13104,12 @@ msgstr ""
 "Bu isimde bir veri dosyası  zaten var.\n"
 "Üzerine yazılsın mı?"
 
-#: gui2/library.c:6176 gui2/library.c:6235
+#: gui2/library.c:6176 gui2/library.c:6236
 #, fuzzy
 msgid "No commands to execute"
 msgstr "Yürütülecek komut yok"
 
-#: gui2/library.c:6317
+#: gui2/library.c:6318
 #, fuzzy
 msgid ""
 "\n"
@@ -12920,17 +13118,17 @@ msgstr ""
 "\n"
 "Yazıyı yürütürken hata oluştu: durduruluyor\n"
 
-#: gui2/library.c:6704
+#: gui2/library.c:6713
 #, fuzzy
 msgid "Please use the Close button to exit\n"
 msgstr "Çıkmak için lütfen Kapat tuşunu kullanın\n"
 
-#: gui2/library.c:6706
+#: gui2/library.c:6715
 #, fuzzy
 msgid "Script done\n"
 msgstr "Yazı bitti\n"
 
-#: gui2/library.c:6714
+#: gui2/library.c:6723
 #, fuzzy
 msgid "Run command failed\n"
 msgstr "Çalıştır komutu başarısız\n"
@@ -14152,142 +14350,147 @@ msgstr "Grafik sayfa"
 msgid "current session"
 msgstr "varsayılan oturum"
 
-#: gui2/session.c:3266
+#: gui2/session.c:3265
 #, fuzzy, c-format
 msgid "Properties of matrix %s"
 msgstr "Seçilmiş değişkenler"
 
-#: gui2/session.c:3270
+#: gui2/session.c:3269
 #, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr ""
 
-#: gui2/session.c:3273
+#: gui2/session.c:3272
 #, c-format
 msgid "Identity matrix, order %d\n"
 msgstr ""
 
-#: gui2/session.c:3276
+#: gui2/session.c:3275
 #, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr ""
 
-#: gui2/session.c:3280
+#: gui2/session.c:3279
 msgid "Rows"
 msgstr ""
 
-#: gui2/session.c:3281
+#: gui2/session.c:3280
 #, fuzzy
 msgid "Columns"
 msgstr "sütun"
 
-#: gui2/session.c:3282 plugin/johansen.c:1439
+#: gui2/session.c:3281 plugin/johansen.c:1439
 #, fuzzy
 msgid "Rank"
 msgstr "Derece"
 
-#: gui2/session.c:3287
+#: gui2/session.c:3286
 #, fuzzy
 msgid "Square"
 msgstr "üç ay "
 
-#: gui2/session.c:3291
+#: gui2/session.c:3290
 #, fuzzy
 msgid "Diagonal"
 msgstr "Oturum"
 
-#: gui2/session.c:3293
+#: gui2/session.c:3292
 msgid "Lower triangular"
 msgstr ""
 
-#: gui2/session.c:3295
+#: gui2/session.c:3294
 msgid "Upper triangular"
 msgstr ""
 
-#: gui2/session.c:3297
+#: gui2/session.c:3296
 msgid "Symmetric"
 msgstr ""
 
-#: gui2/session.c:3302
+#: gui2/session.c:3301
 msgid "Positive definite"
 msgstr ""
 
-#: gui2/session.c:3304
+#: gui2/session.c:3303
 msgid "Not positive definite"
 msgstr ""
 
-#: gui2/session.c:3320
+#: gui2/session.c:3319
 #, fuzzy
 msgid "Idempotent"
 msgstr "Getir"
 
-#: gui2/session.c:3322
+#: gui2/session.c:3321
 msgid "Not idempotent"
 msgstr ""
 
-#: gui2/session.c:3328 plugin/vif.c:125
+#: gui2/session.c:3327 plugin/vif.c:125
 #, fuzzy
 msgid "1-norm"
 msgstr "normal"
 
-#: gui2/session.c:3329
+#: gui2/session.c:3328
 msgid "Infinity-norm"
 msgstr ""
 
-#: gui2/session.c:3334
+#: gui2/session.c:3333
 #, fuzzy
 msgid "Trace"
 msgstr "İz testi"
 
-#: gui2/session.c:3343 plugin/vif.c:126
+#: gui2/session.c:3342 plugin/vif.c:126
 msgid "Determinant"
 msgstr ""
 
-#: gui2/session.c:3351
+#: gui2/session.c:3350
 #, fuzzy
 msgid "Eigenvalues"
 msgstr "özdeğer"
 
-#: gui2/settings.c:165
+#: gui2/settings.c:169
 #, fuzzy
 msgid "Main gretl directory"
 msgstr "Ana gretl dizini"
 
-#: gui2/settings.c:167
+#: gui2/settings.c:171
 #, fuzzy
 msgid "User's gretl directory"
 msgstr "Kullancı gretl dizini"
 
-#: gui2/settings.c:169
+#: gui2/settings.c:173
 #, fuzzy
 msgid "Expert mode (no warnings)"
 msgstr "Uzman modu (uyarı yok)"
 
-#: gui2/settings.c:171
+#: gui2/settings.c:175
 #, fuzzy
 msgid "Tell me about gretl updates"
 msgstr "Bana gretl güncelleştirmelerini anlat"
 
-#: gui2/settings.c:173
+#: gui2/settings.c:177
 #, fuzzy
 msgid "Show gretl toolbar"
 msgstr "Gretl araç çubuğunu göster"
 
-#: gui2/settings.c:176
+#: gui2/settings.c:180
 #, fuzzy
 msgid "Remember main window size"
 msgstr "ana pencere"
 
-#: gui2/settings.c:180
+#: gui2/settings.c:184
 #, fuzzy
 msgid "Use locale setting for decimal point"
 msgstr "Ondalık noktası için bölge ayarını kullan"
 
-#: gui2/settings.c:184
+#: gui2/settings.c:188
+#, fuzzy
+msgid "Emulate Windows look"
+msgstr "Windows'un görünüşüne öykün"
+
+#: gui2/settings.c:192
 msgid "Web browser"
 msgstr ""
 
-#: gui2/settings.c:187
+#: gui2/settings.c:195
 #, fuzzy
 msgid "Allow shell commands"
 msgstr ""
@@ -14296,240 +14499,240 @@ msgstr ""
 "#-#-#-#-#  gretl4.po (tr 485)  #-#-#-#-#\n"
 "model komutu "
 
-#: gui2/settings.c:189
+#: gui2/settings.c:197
 #, fuzzy
 msgid "Command to launch gnuplot"
 msgstr "Gnuplot'u başlatma komutu"
 
-#: gui2/settings.c:191
+#: gui2/settings.c:199
 #, fuzzy
 msgid "Command to launch GNU R"
 msgstr "GNU R'yi başlatma komutu"
 
-#: gui2/settings.c:193
+#: gui2/settings.c:201
 #, fuzzy
 msgid "Command to compile TeX files"
 msgstr "DVI dosyalarını görüntüleme komutu"
 
-#: gui2/settings.c:195
+#: gui2/settings.c:203
 #, fuzzy
 msgid "Command to view DVI files"
 msgstr "DVI dosyalarını görüntüleme komutu"
 
-#: gui2/settings.c:198
+#: gui2/settings.c:206
 #, fuzzy
 msgid "Command to view postscript files"
 msgstr "Postscript dosyaları görüntüleme komutu"
 
-#: gui2/settings.c:200
+#: gui2/settings.c:208
 #, fuzzy
 msgid "Command to view PDF files"
 msgstr "DVI dosyalarını görüntüleme komutu"
 
-#: gui2/settings.c:204
+#: gui2/settings.c:212
 msgid "Program to play MIDI files"
 msgstr ""
 
-#: gui2/settings.c:207
+#: gui2/settings.c:215
 #, fuzzy
 msgid "Calculator"
 msgstr "Hesaplayıcı"
 
-#: gui2/settings.c:210
+#: gui2/settings.c:218
 #, fuzzy
 msgid "path to x12arima"
 msgstr "z12arima'ya gidiş"
 
-#: gui2/settings.c:214
+#: gui2/settings.c:222
 #, fuzzy
 msgid "path to tramo"
 msgstr "tramo'ya gidiş"
 
-#: gui2/settings.c:217
+#: gui2/settings.c:225
 #, fuzzy
 msgid "gretl database directory"
 msgstr "gretl veritabanı dizini"
 
-#: gui2/settings.c:219
+#: gui2/settings.c:227
 #, fuzzy
 msgid "RATS data directory"
 msgstr "RATS veri dizini"
 
-#: gui2/settings.c:221
+#: gui2/settings.c:229
 #, fuzzy
 msgid "Database server name"
 msgstr "Veritabanı sunucu IP"
 
-#: gui2/settings.c:223
+#: gui2/settings.c:231
 #, fuzzy
 msgid "HTTP proxy (ipnumber:port)"
 msgstr "HTTP proxy (ip numarası:bağlantı noktası)"
 
-#: gui2/settings.c:225
+#: gui2/settings.c:233
 #, fuzzy
 msgid "Use HTTP proxy"
 msgstr "HTTP proxy kullan"
 
-#: gui2/settings.c:227
+#: gui2/settings.c:235
 #, fuzzy
 msgid "Use current working directory as default"
 msgstr "Geçerli yürürlükteki dizini varsayılan olarak kullan"
 
-#: gui2/settings.c:228
+#: gui2/settings.c:236
 #, fuzzy
 msgid "Use gretl user directory as default"
 msgstr "Gretl kullanıcı dizinini varsayılan olarak kullan "
 
-#: gui2/settings.c:230
+#: gui2/settings.c:238
 #, fuzzy
 msgid "Use QR decomposition"
 msgstr "QR ayrışımını kullanın"
 
-#: gui2/settings.c:230
+#: gui2/settings.c:238
 #, fuzzy
 msgid "Use Cholesky decomposition"
 msgstr "Cholesky ayrışımını kullanın"
 
-#: gui2/settings.c:232
+#: gui2/settings.c:240
 #, fuzzy
 msgid "Fixed font"
 msgstr "Değişmez yazıtipi"
 
-#: gui2/settings.c:235
+#: gui2/settings.c:243
 #, fuzzy
 msgid "Menu font"
 msgstr "Menü yazıtipi"
 
-#: gui2/settings.c:242
+#: gui2/settings.c:250
 #, fuzzy
 msgid "PNG graph font"
 msgstr "PNG grafik yazıtipi"
 
-#: gui2/settings.c:244
+#: gui2/settings.c:252
 #, fuzzy
 msgid "Gnuplot colors"
 msgstr "Gnu çizim renkleri"
 
-#: gui2/settings.c:254
+#: gui2/settings.c:262
 msgid "Use robust covariance matrix by default"
 msgstr ""
 
-#: gui2/settings.c:256
+#: gui2/settings.c:264
 #, fuzzy
 msgid "For cross-sectional data"
 msgstr "kesitsel "
 
-#: gui2/settings.c:258
+#: gui2/settings.c:266
 #, fuzzy
 msgid "For time-series data"
 msgstr "gretl: zaman serileri verisi"
 
-#: gui2/settings.c:260
+#: gui2/settings.c:268
 #, fuzzy
 msgid "For panel data"
 msgstr "yıllık veri"
 
-#: gui2/settings.c:262
+#: gui2/settings.c:270
 #, fuzzy
 msgid "For GARCH estimation"
 msgstr "Kestirim"
 
-#: gui2/settings.c:264
+#: gui2/settings.c:272
 #, fuzzy
 msgid "PDF manual preference"
 msgstr "komut satırı"
 
-#: gui2/settings.c:734
+#: gui2/settings.c:742
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
 msgstr ""
 
-#: gui2/settings.c:778
+#: gui2/settings.c:786
 #, fuzzy
 msgid "gretl: options"
 msgstr "gretl: seçenekler"
 
-#: gui2/settings.c:877
+#: gui2/settings.c:885
 #, fuzzy
 msgid "Browse..."
 msgstr "Göz at..."
 
-#: gui2/settings.c:886
+#: gui2/settings.c:894
 #, fuzzy
 msgid "This change will take effect when you restart gretl"
 msgstr "Gretl'ı yeniden başlattığınızda bu değişiklik etkisini gösterecek"
 
-#: gui2/settings.c:904
+#: gui2/settings.c:912
 msgid "English (US letter paper)"
 msgstr ""
 
-#: gui2/settings.c:905
+#: gui2/settings.c:913
 msgid "English (A4 paper)"
 msgstr ""
 
-#: gui2/settings.c:906
+#: gui2/settings.c:914
 msgid "Italian"
 msgstr ""
 
-#: gui2/settings.c:907
+#: gui2/settings.c:915
 msgid "Spanish"
 msgstr ""
 
-#: gui2/settings.c:994 plugin/tramo_options.c:341
+#: gui2/settings.c:1002 plugin/tramo_options.c:341
 #, fuzzy
 msgid "General"
 msgstr "Genel"
 
-#: gui2/settings.c:996
+#: gui2/settings.c:1004
 #, fuzzy
 msgid "Databases"
 msgstr "Veritabanları"
 
-#: gui2/settings.c:998
+#: gui2/settings.c:1006
 #, fuzzy
 msgid "Programs"
 msgstr "Programlar"
 
-#: gui2/settings.c:1000
+#: gui2/settings.c:1008
 #, fuzzy
 msgid "File Open/Save"
 msgstr "Aç/Kaydet yolu"
 
-#: gui2/settings.c:1002
+#: gui2/settings.c:1010
 #, fuzzy
 msgid "HCCME"
 msgstr "HCCM"
 
-#: gui2/settings.c:1004
+#: gui2/settings.c:1012
 #, fuzzy
 msgid "Manuals"
 msgstr "yıllık "
 
-#: gui2/settings.c:1940
+#: gui2/settings.c:1948
 #, fuzzy
 msgid "Font for gretl output windows"
 msgstr "Gretl çıktı pencereleri için yazıtipi"
 
-#: gui2/settings.c:1946
+#: gui2/settings.c:1954
 #, fuzzy
 msgid "Font for menus and labels"
 msgstr "Menüler ve etiketler için yazıtipi "
 
-#: gui2/settings.c:2184
+#: gui2/settings.c:2192
 #, fuzzy
 msgid "Select color"
 msgstr "Renk seçin"
 
-#: gui2/settings.c:2231
+#: gui2/settings.c:2239
 #, fuzzy
 msgid "gretl: graph color selection"
 msgstr "gretl: sıra ilintisi"
 
-#: gui2/settings.c:2289
+#: gui2/settings.c:2297
 #, fuzzy
 msgid "gretl: working directory"
 msgstr "gretl: yürürlükteki dizin"
 
-#: gui2/settings.c:2290
+#: gui2/settings.c:2298
 #, fuzzy
 msgid ""
 "You seem to be using gretl for the first time.\n"
@@ -14783,6 +14986,26 @@ msgstr "gretl komut dosyaları (*.inp)"
 msgid "Back"
 msgstr ""
 
+#: gui2/textbuf.c:1172
+#, fuzzy
+msgid "Comment line"
+msgstr "komut satırı"
+
+#: gui2/textbuf.c:1173
+#, fuzzy
+msgid "Uncomment line"
+msgstr "komut satırı"
+
+#: gui2/textbuf.c:1174
+#, fuzzy
+msgid "Comment region"
+msgstr "Ortak tümleştirme "
+
+#: gui2/textbuf.c:1175
+#, fuzzy
+msgid "Uncomment region"
+msgstr "Sıkıştırılmıyor "
+
 #: gui2/textutil.c:64
 #, fuzzy
 msgid "gretl: replace"
@@ -14927,13 +15150,6 @@ msgstr "Hiçbir bağımsız değişken atlanmadı "
 msgid "Error reading workfile header\n"
 msgstr "Uygun değerleri almada hata\n"
 
-#: plugin/eviews_import.c:333 plugin/excel_import.c:1501
-#: plugin/gnumeric_import.c:790 plugin/jmulti_import.c:380
-#: plugin/stata_import.c:713
-#, fuzzy
-msgid "warning: some variable names were duplicated\n"
-msgstr "Bir ya da daha fazla değişken adı eksik.\n"
-
 #: plugin/excel_import.c:78
 #, fuzzy
 msgid "Perhaps you need to adjust the starting column or row?"
@@ -14983,11 +15199,6 @@ msgstr "T: olumsuz değer girişi yasaktır. \n"
 #, fuzzy
 msgid "One or more variable names are missing.\n"
 msgstr "Bir ya da daha fazla değişken adı eksik.\n"
-
-#: plugin/excel_import.c:1439
-#, fuzzy
-msgid "it seems there are no variable names\n"
-msgstr "hiç değişken adı yok görünüyor\n"
 
 #: plugin/excel_import.c:1451
 #, fuzzy, c-format
@@ -15399,6 +15610,16 @@ msgstr "Değişken '%s'in bütünü sıfır"
 #, fuzzy, c-format
 msgid "Error sum of squares is not >= 0"
 msgstr "Kareler hata toplamı >=O değil"
+
+#: plugin/ods_import.c:409
+#, c-format
+msgid "Sheet row %d, column %d"
+msgstr ""
+
+#: plugin/ods_import.c:420
+#, fuzzy, c-format
+msgid "expected %s but found %s"
+msgstr "Seriler bulunmadı, '%s' "
 
 #: plugin/pca.c:103
 #, fuzzy
@@ -15856,155 +16077,8 @@ msgstr "Dosyayı okurken beklenmeyen hata oluştu\n"
 #~ msgstr "Uyarı: grafik dosya açılamadı %s"
 
 #, fuzzy
-#~ msgid "Emulate Windows look"
-#~ msgstr "Windows'un görünüşüne öykün"
-
-#, fuzzy
 #~ msgid "Couldn't open config file for writing"
 #~ msgstr "Config dosyası yazm için açılamadı"
-
-#, fuzzy
-#~ msgid "   %s: probably a year... "
-#~ msgstr "   %s: muhtemelen bir yıl... "
-
-#, fuzzy
-#~ msgid "   %s: probably not a year\n"
-#~ msgstr "   %s: muhtemelen bir yıl... "
-
-#, fuzzy
-#~ msgid "   but I can't make sense of the extra bit\n"
-#~ msgstr "   ancak ilave bit anlaşılamıyor\n"
-
-#, fuzzy
-#~ msgid "and just a year\n"
-#~ msgstr "ve yalnızca bir yıl\n"
-
-#, fuzzy
-#~ msgid "   but the dates are not complete and consistent\n"
-#~ msgstr "   ancak tarihler bütün ve tutarlı değil\n"
-
-#, fuzzy
-#~ msgid "quarter %s?\n"
-#~ msgstr "üç ayda bir %s?\n"
-
-#, fuzzy
-#~ msgid "month %s?\n"
-#~ msgstr "ay %s?\n"
-
-#, fuzzy
-#~ msgid "   first row label \"%s\", last label \"%s\"\n"
-#~ msgstr "   ilk sıra etiketi \"%s\", son etiket \"%s\"\n"
-
-#, fuzzy
-#~ msgid "   label strings can't be consistent dates\n"
-#~ msgstr "   etiket dizgileri tutarlı tarihler olamaz\n"
-
-#, fuzzy
-#~ msgid "trying to parse row labels as dates...\n"
-#~ msgstr "sıra etiketleri tarih olarak çözümlenmeye çalışılıyor...\n"
-
-#, fuzzy
-#~ msgid "   definitely not a four-digit year\n"
-#~ msgstr "   kesinlikle dört rakamlı bir yıl değil\n"
-
-#, fuzzy
-#~ msgid "Data file has trailing commas\n"
-#~ msgstr "Veri dosyası izleyen virgüllere sahip\n"
-
-#, fuzzy
-#~ msgid "   first field: '%s'\n"
-#~ msgstr "   ilk alan: '%s'\n"
-
-#, fuzzy
-#~ msgid "   seems to be observation label\n"
-#~ msgstr "   gözlem etiketi gibi görünüyor\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "   the cell for variable %d, obs %d is empty: treating as missing value\n"
-#~ msgstr ""
-#~ "   değişken için hücre %d, obs %d boş: eksik değer olarak görülüyor\n"
-
-#, fuzzy
-#~ msgid "   warning: missing value for variable %d, obs %d\n"
-#~ msgstr "   uyarı: değişken için eksik değer %d, obs %d\n"
-
-#, fuzzy
-#~ msgid "At variable %d, observation %d:\n"
-#~ msgstr "Değişkende %d, gözlem %d:\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "Please note:\n"
-#~ "- The first row of the CSV file should contain the names of the "
-#~ "variables.\n"
-#~ "- The first column may optionally contain date strings or other "
-#~ "'markers':\n"
-#~ "  in that case its row 1 entry should be blank, or should say 'obs' or "
-#~ "'date'.\n"
-#~ "- The remainder of the file must be a rectangular array of data.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Lütfen not edin:\n"
-#~ "-CSV dosyasının ilk sırası değişkenlerin adlarını içermeli.\n"
-#~ "-İlk sütun isteğe bağlı olarak tarih dizgilerini ya da diğer "
-#~ "'işaretleyicileri' içerebilir:\n"
-#~ " bu durumda sıra 1'deki girdi boş olmalı, veya 'obs' ya da 'tarih' "
-#~ "demeli.\n"
-#~ "-Dosyanın geri kalanı dikdörtgen biçimli bir veri dizilimi olmalı.\n"
-
-#, fuzzy
-#~ msgid "using delimiter '%c'\n"
-#~ msgstr "sınırlayıcıyı kullanılıyor '%c'\n"
-
-#, fuzzy
-#~ msgid "   number of columns = %d\n"
-#~ msgstr "   sütun sayısı = %d\n"
-
-#, fuzzy
-#~ msgid "   ...but row %d has %d fields: aborting\n"
-#~ msgstr "   ...ancak sıra %d %d alanlarına sahip: durduruluyor\n"
-
-#, fuzzy
-#~ msgid "   number of non-blank lines: %d\n"
-#~ msgstr "   boş olmayan satır sayısı: %d\n"
-
-#, fuzzy
-#~ msgid "scanning for variable names...\n"
-#~ msgstr "değişken adları taranıyor...\n"
-
-#, fuzzy
-#~ msgid "   line: %s\n"
-#~ msgstr "   satır: %s\n"
-
-#, fuzzy
-#~ msgid "   variable name %d is missing: aborting\n"
-#~ msgstr "   değişken adı %d eksik: durduruluyor\n"
-
-#, fuzzy
-#~ msgid "scanning for row labels and data...\n"
-#~ msgstr "satır etiketleri ve veri taranıyor...\n"
-
-#, fuzzy
-#~ msgid "warning: truncating data at row %d, column %d\n"
-#~ msgstr "uyarı: %d sütununda , %d sırasındaki veri kırpılıyor\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "taking date information from row labels\n"
-#~ "\n"
-#~ msgstr ""
-#~ "satır etiketlerinden tarih bilgisi alınıyor\n"
-#~ "\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "treating these as undated data\n"
-#~ "\n"
-#~ msgstr ""
-#~ "bunlar tarihsiz veri olarak görülüyor\n"
-#~ "\n"
 
 #, fuzzy
 #~ msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"

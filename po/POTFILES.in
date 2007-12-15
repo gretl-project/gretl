@@ -4,6 +4,7 @@ lib/src/bootstrap.c
 lib/src/calendar.c
 lib/src/compare.c
 lib/src/compat.c
+lib/src/csvdata.c
 lib/src/dataio.c
 lib/src/dataset.c
 lib/src/dbread.c
@@ -130,7 +131,6 @@ plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
-plugin/infomat.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
@@ -143,6 +143,7 @@ plugin/mailer.c
 plugin/midi_utils.c
 plugin/mod_garch.c
 plugin/mp_ols.c
+plugin/ods_import.c
 plugin/oprobit.c
 plugin/pca.c
 plugin/poisson.c
