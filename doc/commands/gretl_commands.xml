@@ -7141,12 +7141,56 @@
 	If the <cmd>set</cmd> command is given without any parameters, the
 	current settings for all the relevant variables are printed.
       </para>
+      <para>
+	The possible settings can be grouped under six categories:
+	program interaction and behavior, numerical methods, random
+	number generation, robust estimation, filtering and time series
+	models estimation.
+      </para>
 
+      <para>
+	<emphasis>Program interaction and behavior</emphasis>
+      </para>
+      <para>
+	These settings are used for controlling various aspects of the way
+	gretl interacts with the user.
+      </para>
       <ilist>
 	<li>
+	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the
+	  default), <lit>space</lit> or <lit>tab</lit>.  Sets the column
+	  delimiter used when saving data to file in CSV format.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
-	    default). Suppress or resume the echoing of commands in gretl's
+	  default). Suppress or resume the echoing of commands in gretl's
 	    output.</para>
+	</li>
+	<li>
+	  <para><lit>force_decpoint</lit>: unused
+	  </para>
+	</li>
+	<li>
+	  <para><lit>halt_on_error</lit>: <lit>off</lit> or
+	  <lit>on</lit> (the default). When active, if an error occurs
+	  within a command loop, the loop will break. This also forces
+	  the command-line client to exit.
+	  </para>
+	</li>
+	<li>	  
+	  <para><lit>longdigits</lit>: one positive integer value, less
+	    than or equal to 20.  Determines the number of digits of
+	    precision used when printing the values of variables using the
+	    <lit>--long</lit> option (see <cmdref targ="print"/>).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>max_verbose</lit>: <lit>on</lit> or
+	  <lit>off</lit> (the default). Toggles verbose output for the
+	  <lit>BFGSmax</lit> function (see the User's Guide for
+	  details).
+	</para>
 	</li>
 	<li>
 	  <para><lit>messages</lit>: <lit>off</lit> or <lit>on</lit> (the
@@ -7156,149 +7200,41 @@
          </para>
 	</li>
 	<li>
+	  <para><lit>shell_ok</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). Enable launching external programs from
+	  gretl via the system shell. This is disabled by default for
+	  security reasons, and can only be enabled via the graphical
+	  user interface (Tools/Preferences/General). However, once
+	  set to on, this setting will remain active for future
+	  sessions until explicitly disabled.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>shelldir</lit>: <repl>path</repl>.  Sets the current
-	    working directory for shell commands.
-         </para>
-	</li>
-	<li>
-	<para>
-	  <lit>nls_toler</lit>: a floating-point value (the default is the
-	  machine precision to the power 3/4).  Sets the tolerance used in
-	  judging whether or not convergence has occurred in nonlinear least
-	  squares estimation using the <cmdref targ="nls"/> command.
-	</para>
-	</li>
-	<li>
-	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
-	    default). Use QR rather than Cholesky decomposition in calculating
-	    OLS estimates.</para>
-	</li>
-	<li>
-	  <para><lit>seed</lit>: an unsigned integer.  Sets the seed for
-	    the pseudo-random number generator.  By default this is set from the
-	    system time; if you want to generate repeatable sequences of random
-	    numbers you must set the seed manually.
+	  working directory for shell commands.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default),
-	    <lit>nw2</lit>, <lit>nw3</lit> or an integer.  Sets the
-	    maximum lag value or bandwidth, <mathvar>p</mathvar>, used
-	    when calculating HAC (Heteroskedasticity and Autocorrelation
-	    Consistent) standard errors using the Newey-West approach, for
-	    time series data.  <lit>nw1</lit> and <lit>nw2</lit> represent
-	    two variant automatic calculations based on the sample size,
-	    <mathvar>T</mathvar>: for nw1, 
-	    <equation status="inline"
-	      tex="$p = 0.75 \times T^{1/3}$" 
-	      ascii="p = 0.75 * T^(1/3)"
-	      graphic="nw1"/>, and for nw2, 
-	    <equation status="inline"
-	      tex="$p = 4 \times (T/100)^{2/9}$" 
-	      ascii="p = 4 * (T/100)^(2/9)" 
-	      graphic="nw2"/>. <lit>nw3</lit> calls for data-based
-	    bandwidth selection.  See also <lit>qs_bandwidth</lit> and
-	    <lit>hac_prewhiten</lit> below.
+	  <para><lit>use_cwd</lit>: <lit>on</lit> or <lit>off</lit>
+	  (the default). This setting affects the behavior of the
+	  <cmdref targ="outfile"/> and <cmdref targ="store"/>
+	  commands, which write external files. Normally, the file
+	  will be written in the user's default data directory; if
+	  <lit>use_cwd</lit> is <lit>on</lit>, on the contrary, the
+	  file will be created in the working directory when gretl was
+	  started.
 	  </para>
 	</li>
-	<li>
-	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (the default),
-	    <lit>parzen</lit>, or <lit>qs</lit> (Quadratic Spectral).
-	    Sets the kernel, or pattern of weights, used when calculating
-	    HAC standard errors.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> or <lit>off</lit>
-	    (the default). Use Andrews-Monahan prewhitening and
-	    re-coloring when computing HAC standard errors.  This also
-	    implies use of data-based bandwidth selection.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>qs_bandwidth</lit>: Bandwidth for HAC estimation in
-	    the case where the Quadratic Spectral kernel is selected.
-	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth need
-	    not be an integer.)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>hc_version</lit>: 0 (the default), 1, 2 or 3. Sets the
-	    variant used when calculating Heteroskedasticity Consistent standard
-	    errors with cross-sectional data.  The options correspond to the
-	    HC0, HC1, HC2 and HC3 discussed by Davidson and MacKinnon in
-	    <book>Econometric Theory and Methods</book>, chapter 5.  HC0
-	    produces what are usually called <quote>White's standard
-	      errors</quote>.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
-	    <lit>on</lit>.  By default, with time-series data and when the
-	    <lit>--robust</lit> option is given with <lit>ols</lit>, the HAC
-	    estimator is used.  If you set <lit>force_hc</lit> to
-	    <quote>on</quote>, this forces calculation of the regular
-	    Heteroskedasticity Consistent Covariance Matrix (which does not take
-	    autocorrelation into account).
-	  </para>
-	</li>
-	<li>
-	  <para><lit>pcse</lit>: <lit>off</lit> (the default) or
-	    <lit>on</lit>.  By default, when estimating a model using
-	    pooled OLS on panel data with the <lit>--robust</lit> option,
-	    the Arellano estimator is used for the covariance matrix.  If
-	    you set <lit>pcse</lit> to <quote>on</quote>, this forces use
-	    of the Beck and Katz Panel Corrected Standard Errors (which do
-	    not take autocorrelation into account).
-	  </para>
-	</li>
-	<li>
-	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,
-	    <lit>hessian</lit>, <lit>im</lit> (information matrix) ,
-	    <lit>op</lit> (outer product matrix), <lit>qml</lit> (QML
-	    estimator), <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies
-	    the variant that will be used for estimating the coefficient
-	    covariance matrix, for GARCH models.  If <lit>unset</lit> is given
-	    (the default) then the Hessian is used unless the
-	    <quote>robust</quote> option is given for the garch command, in
-	    which case QML is used.</para>
-	</li>
-	<li>
-	  <para><lit>hp_lambda</lit>: <lit>auto</lit> (the default), or a
-	    numerical value.  Sets the smoothing parameter for the
-	    Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit> function
-	    under the <lit>genr</lit> command).  The default is to use 100 times
-	    the square of the periodicity, which gives 100 for annual data, 1600
-	    for quarterly data, and so on.</para>
-	</li>
-	<li>
-	  <para><lit>bkbp_limits</lit>: two integers, the second greater
-	    than the first (the defaults are 8 and 32).  Sets the
-	    frequency bounds for the Baxter&ndash;King bandpass filter
-	    (see the <lit>bkfilt</lit> function under the <lit>genr</lit>
-	    command).
-	  </para>
-	</li>
-	<li>
-	  <para><lit>bkbp_k</lit>: one integer (the default is 8).  Sets
-	    the approximation order for the Baxter&ndash;King bandpass
-	    filter.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>horizon</lit>: one integer (the default is based on
-	    the frequency of the data).  Sets the horizon for impulse
-	    responses and forecast variance decompositions in the context
-	    of vector autoregressions.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the
-	    default), <lit>space</lit> or <lit>tab</lit>.  Sets the column
-	    delimiter used when saving data to file in CSV format.
-	  </para>
-	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Numerical methods</emphasis>
+      </para>
+      <para>
+	These settings are used for controlling
+	the numerical algorithms that gretl uses for estimation.
+      </para>
+      <ilist>
 	<li>	
 	  <para><lit>bhhh_maxiter</lit>: one integer, maximum number of
 	    iterations for gretl's internal BHHH routine, which is used in
@@ -7339,17 +7275,189 @@
 	  </para>
 	</li>
 	<li>	  
-	  <para><lit>longdigits</lit>: one positive integer value, less
-	    than or equal to 20.  Determines the number of digits of
-	    precision used when printing the values of variables using the
-	    <lit>--long</lit> option (see <cmdref targ="print"/>).
-	  </para>
-	</li>
-	<li>	  
 	  <para><lit>initvals</lit>: a pre-specified matrix. Allows manual
 	    setting of the initial parameter estimates for ARMA
 	    estimation. For details see <guideref
 	      targ="arma-estimation"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>lbfgs</lit>: <lit>on</lit> or <lit>off</lit> (the
+	  default). Use the limited-memory version of BFGS instead of
+	  the ordinary algorithm. This may be advantageous when the
+	  function to maximize is not globally concave.
+	  </para>
+	</li>
+	<li>
+	<para>
+	  <lit>nls_toler</lit>: a floating-point value (the default is the
+	  machine precision to the power 3/4).  Sets the tolerance used in
+	  judging whether or not convergence has occurred in nonlinear least
+	  squares estimation using the <cmdref targ="nls"/> command.
+	</para>
+	</li>
+	<li>
+	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
+	    default). Use QR rather than Cholesky decomposition in calculating
+	    OLS estimates.</para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Random number generation</emphasis>
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>seed</lit>: an unsigned integer.  Sets the seed for
+	    the pseudo-random number generator.  By default this is set from the
+	    system time; if you want to generate repeatable sequences of random
+	    numbers you must set the seed manually.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Robust estimation</emphasis>. 
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>bootrep</lit>: an integer. Sets the number of
+	  replications for the <cmdref targ="restrict"/> command with
+	  the <lit>--bootstrap</lit> option.</para>
+	</li>
+	<li>
+	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,
+	    <lit>hessian</lit>, <lit>im</lit> (information matrix) ,
+	    <lit>op</lit> (outer product matrix), <lit>qml</lit> (QML
+	    estimator), <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies
+	    the variant that will be used for estimating the coefficient
+	    covariance matrix, for GARCH models.  If <lit>unset</lit> is given
+	    (the default) then the Hessian is used unless the
+	    <quote>robust</quote> option is given for the garch command, in
+	    which case QML is used.</para>
+	</li>
+	<li>
+	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>.  By default, with time-series data and when the
+	    <lit>--robust</lit> option is given with <lit>ols</lit>, the HAC
+	    estimator is used.  If you set <lit>force_hc</lit> to
+	    <quote>on</quote>, this forces calculation of the regular
+	    Heteroskedasticity Consistent Covariance Matrix (which does not take
+	    autocorrelation into account).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default),
+	    <lit>nw2</lit>, <lit>nw3</lit> or an integer.  Sets the
+	    maximum lag value or bandwidth, <mathvar>p</mathvar>, used
+	    when calculating HAC (Heteroskedasticity and Autocorrelation
+	    Consistent) standard errors using the Newey-West approach, for
+	    time series data.  <lit>nw1</lit> and <lit>nw2</lit> represent
+	    two variant automatic calculations based on the sample size,
+	    <mathvar>T</mathvar>: for nw1, 
+	    <equation status="inline"
+	      tex="$p = 0.75 \times T^{1/3}$" 
+	      ascii="p = 0.75 * T^(1/3)"
+	      graphic="nw1"/>, and for nw2, 
+	    <equation status="inline"
+	      tex="$p = 4 \times (T/100)^{2/9}$" 
+	      ascii="p = 4 * (T/100)^(2/9)" 
+	      graphic="nw2"/>. <lit>nw3</lit> calls for data-based
+	    bandwidth selection.  See also <lit>qs_bandwidth</lit> and
+	    <lit>hac_prewhiten</lit> below.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_kernel</lit>: <lit>bartlett</lit> (the default),
+	    <lit>parzen</lit>, or <lit>qs</lit> (Quadratic Spectral).
+	    Sets the kernel, or pattern of weights, used when calculating
+	    HAC standard errors.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> or <lit>off</lit>
+	    (the default). Use Andrews-Monahan prewhitening and
+	    re-coloring when computing HAC standard errors.  This also
+	    implies use of data-based bandwidth selection.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>hc_version</lit>: 0 (the default), 1, 2 or 3. Sets the
+	    variant used when calculating Heteroskedasticity Consistent standard
+	    errors with cross-sectional data.  The options correspond to the
+	    HC0, HC1, HC2 and HC3 discussed by Davidson and MacKinnon in
+	    <book>Econometric Theory and Methods</book>, chapter 5.  HC0
+	    produces what are usually called <quote>White's standard
+	      errors</quote>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>pcse</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>.  By default, when estimating a model using
+	    pooled OLS on panel data with the <lit>--robust</lit> option,
+	    the Arellano estimator is used for the covariance matrix.  If
+	    you set <lit>pcse</lit> to <quote>on</quote>, this forces use
+	    of the Beck and Katz Panel Corrected Standard Errors (which do
+	    not take autocorrelation into account).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>qs_bandwidth</lit>: Bandwidth for HAC estimation in
+	    the case where the Quadratic Spectral kernel is selected.
+	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth need
+	    not be an integer.)
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Filtering</emphasis>. 
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>hp_lambda</lit>: <lit>auto</lit> (the default), or a
+	    numerical value.  Sets the smoothing parameter for the
+	    Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit> function
+	    under the <lit>genr</lit> command).  The default is to use 100 times
+	    the square of the periodicity, which gives 100 for annual data, 1600
+	    for quarterly data, and so on.</para>
+	</li>
+	<li>
+	  <para><lit>bkbp_limits</lit>: two integers, the second greater
+	    than the first (the defaults are 8 and 32).  Sets the
+	    frequency bounds for the Baxter&ndash;King bandpass filter
+	    (see the <lit>bkfilt</lit> function under the <lit>genr</lit>
+	    command).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bkbp_k</lit>: one integer (the default is 8).  Sets
+	    the approximation order for the Baxter&ndash;King bandpass
+	    filter.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Time series</emphasis>. 
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>horizon</lit>: one integer (the default is based on
+	    the frequency of the data).  Sets the horizon for impulse
+	    responses and forecast variance decompositions in the context
+	    of vector autoregressions.
+	  </para>
+	  <para><lit>vecm_norm</lit>: <lit>phillips</lit> (the
+	  default), <lit>diag</lit>, <lit>first</lit> or
+	  <lit>none</lit>. Used in the context of VECM estimation via
+	  the <cmdref targ="vecm"/> command for identifying the
+	  cointegration vectors. See the User's Guide for details.
 	  </para>
 	</li>
       </ilist>

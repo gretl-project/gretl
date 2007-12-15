@@ -1030,17 +1030,33 @@ static int display_settings (PRN *prn)
     pputs(prn, _("\"help set\" for details"));
     pputs(prn, "):\n");
 
-    libset_header(_("Program interaction"), prn);
+    libset_header(_("Program interaction and behavior"), prn);
+
+    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
 
     libset_print_bool(ECHO, prn);
+    libset_print_bool(FORCE_DECP, prn);
+    libset_print_bool(HALT_ON_ERR, prn);
+    libset_print_int(LONGDIGITS, prn);
+    libset_print_bool(MAX_VERBOSE, prn);
     libset_print_bool(MESSAGES, prn);
+    libset_print_bool(SHELL_OK, prn);
+
+    if (*state->shelldir) {
+	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
+    } else {
+	pputs(prn, " shelldir = unset\n");
+    }
+
+    libset_print_bool(USE_CWD, prn);
+
 
     libset_header(_("Numerical methods"), prn);
 
-    libset_print_double(BFGS_TOLER, prn);
     libset_print_int(BFGS_MAXITER, prn);
-    libset_print_double(BHHH_TOLER, prn);
+    libset_print_double(BFGS_TOLER, prn);
     libset_print_int(BHHH_MAXITER, prn);
+    libset_print_double(BHHH_TOLER, prn);
     print_initvals(state->initvals, prn);
     libset_print_bool(USE_LBFGS, prn);
     libset_print_double(NLS_TOLER, prn);
@@ -1081,24 +1097,6 @@ static int display_settings (PRN *prn)
     libset_print_int(HORIZON, prn);
     libset_print_int(VECM_NORM, prn);
     
-    libset_header(_("Program behavior"), prn);
-
-    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
-
-    libset_print_bool(FORCE_DECP, prn);
-    libset_print_bool(HALT_ON_ERR, prn);
-    libset_print_int(LONGDIGITS, prn);
-    libset_print_bool(MAX_VERBOSE, prn);
-    libset_print_bool(SHELL_OK, prn);
-
-    if (*state->shelldir) {
-	pprintf(prn, " shelldir = '%s'\n", state->shelldir);
-    } else {
-	pputs(prn, " shelldir = unset\n");
-    }
-
-    libset_print_bool(USE_CWD, prn);
-
     return 0;
 }
 
