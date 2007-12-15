@@ -7134,15 +7134,15 @@
 	which stops the first time the accessor <lit>$stopwatch</lit>
 	is used, either in assigning it to a variable or simply by
 	printing it. The accessor <lit>$stopwatch</lit> will yield the
-	seconds of CPU time that have elapsed between the <lit>set
-	stopwatch</lit> statement and its invocation.
+	seconds of CPU time that have elapsed since the last <lit>set
+	stopwatch</lit> statement.
       </para>
       <para>
 	If the <cmd>set</cmd> command is given without any parameters, the
 	current settings for all the relevant variables are printed.
       </para>
       <para>
-	The possible settings can be grouped under six categories:
+	The available settings are grouped under six categories:
 	program interaction and behavior, numerical methods, random
 	number generation, robust estimation, filtering and time series
 	models estimation.
@@ -7168,7 +7168,10 @@
 	    output.</para>
 	</li>
 	<li>
-	  <para><lit>force_decpoint</lit>: unused
+	  <para><lit>force_decpoint</lit>: <lit>on</lit> or <lit>off</lit>
+	    (the default).  Force gretl to use the decimal point
+	    character, in a locale where another character (most likely
+	    the comma) is the standard decimal separator.
 	  </para>
 	</li>
 	<li>
@@ -7236,7 +7239,7 @@
       </para>
       <ilist>
 	<li>	
-	  <para><lit>bhhh_maxiter</lit>: one integer, maximum number of
+	  <para><lit>bhhh_maxiter</lit>: one integer, the maximum number of
 	    iterations for gretl's internal BHHH routine, which is used in
 	    the <cmd>arma</cmd> command for conditional ML estimation. If
 	    convergence is not achieved after <lit>bhhh_maxiter</lit>, the
@@ -7255,7 +7258,7 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>bfgs_maxiter</lit>: one integer, maximum number of
+	  <para><lit>bfgs_maxiter</lit>: one integer, the maximum number of
 	    iterations for gretl's BFGS routine, which is used for
 	    <cmd>mle</cmd>, <cmd>gmm</cmd> and several specific
 	    estimators. If convergence is not achieved in the specified
@@ -7318,7 +7321,7 @@
       </ilist>
 
       <para>
-	<emphasis>Robust estimation</emphasis>. 
+	<emphasis>Robust estimation</emphasis>
       </para>
 
       <ilist>
@@ -7414,7 +7417,7 @@
       </ilist>
 
       <para>
-	<emphasis>Filtering</emphasis>. 
+	<emphasis>Filtering</emphasis>
       </para>
 
       <ilist>
@@ -7443,7 +7446,7 @@
       </ilist>
 
       <para>
-	<emphasis>Time series</emphasis>. 
+	<emphasis>Time series</emphasis>
       </para>
 
       <ilist>

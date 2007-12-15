@@ -1557,6 +1557,23 @@ int libset_get_bool (const char *s)
     return ret;
 }
 
+static void libset_set_decpoint (int on)
+{
+    static char num_locale[16];
+
+    if (on) {
+	char *orig = setlocale(LC_NUMERIC, "");
+
+	*num_locale = '\0';
+	strncat(num_locale, orig, 15);
+	setlocale(LC_NUMERIC, "C");
+    } else {
+	setlocale(LC_NUMERIC, num_locale);
+    }
+
+    reset_local_decpoint();
+}
+
 void libset_set_bool (const char *s, int set)
 {
     int flag;
@@ -1566,6 +1583,7 @@ void libset_set_bool (const char *s, int set)
     }
 
     flag = boolvar_get_flag(s);
+
     if (flag == 0) {
 	fprintf(stderr, "libset_set_bool: unrecognized "
 		"variable '%s'\n", s);
@@ -1573,6 +1591,10 @@ void libset_set_bool (const char *s, int set)
 	state->flags |= flag;
     } else {
 	state->flags &= ~flag;
+    }
+
+    if (flag == STATE_FORCE_DECPOINT) {
+	libset_set_decpoint(set);
     }
 }
 

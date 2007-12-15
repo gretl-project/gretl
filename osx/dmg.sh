@@ -9,7 +9,7 @@ sudo newfs_hfs -v gretl $MYDEV
 hdiutil eject $MYDEV
 hdid tmp.dmg
 cd ~/dist && \
-cp -a Gretl_Folder /Volumes/gretl && \
+cp -a Gretl.app /Volumes/gretl && \
 cp -a README.pdf /Volumes/gretl
 cd $HERE
 hdiutil eject $MYDEV
