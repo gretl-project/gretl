@@ -238,7 +238,8 @@ enum {
 	      INC,   
 	      DEC,
 	      QUERY,
-  /* 210 */   UNK 
+  /* 210 */   EOT,        /* end of transmission */
+              UNK 
 };
 
 enum {

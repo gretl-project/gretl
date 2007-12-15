@@ -897,6 +897,11 @@ void lex (parser *p)
     else fprintf(stderr, "lex: p->ch = NUL\n");
 #endif
 
+    if (p->ch == 0) {
+	p->sym = EOT;
+	return;
+    }
+
     while (p->ch != 0) {
 	switch (p->ch) {
 	case ' ':
@@ -1122,6 +1127,10 @@ const char *getsymb (int t, const parser *p)
 	(t > FUNC_MAX && t < F2_MAX) ||
 	(t > F2_MAX && t < FN_MAX)) {
 	return funname(t);
+    }
+
+    if (t == EOT) {
+	return "";
     }
 
     /* yes, well */
