@@ -739,7 +739,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     double LMF = NADBL;
     double pvF = NADBL;
     double scale = 1.0;
-    int t, err, init_err, yno = 0;
+    int i, t, err, init_err, yno = 0;
 
     gretl_model_init(&model);
 
@@ -789,9 +789,16 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 #endif 
 
     /* default variance parameter initialization */
-    vparm_init[1] = 0.2;
-    vparm_init[list[2]+1] = 0.7;
+    int q = list[1], p = list[2];
+
     vparm_init[0] = model.sigma * model.sigma * 0.1;
+    if (q>0) {
+	vparm_init[p+1] = 0.7;
+    }
+    vparm_init[1] = (q==0 ? 0.9 : 0.2) / p;
+    for (i=2; i<=p; i++) {
+	vparm_init[i] = vparm_init[1];
+    }
 
     if (opt & OPT_A) {
 	/* "--arma-init": try initializing params via ARMA */
