@@ -25,9 +25,9 @@ export "XDG_DATA_DIRS=$TOP/share"
 export "XDG_DATA_HOME=$TOP/share"
 
 # location of gnuplot help file
-export "GNUHELP=$TOP/share/gnuplot/4.0/gnuplot.gih"
+export "GNUHELP=$TOP/share/gnuplot/4.2/gnuplot.gih"
 # location of gnuplot X11 driver
-export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.0"
+export "GNUPLOT_DRIVER_DIR=$TOP/libexec/gnuplot/4.2"
 # path for fonts for GD fonts (check this)
 export "GDFONTPATH=$TOP/fonts:/usr/X11R6/lib/X11/fonts/TTF"
 # default font for gnuplot PNG

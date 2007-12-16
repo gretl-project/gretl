@@ -50,24 +50,16 @@
 # include "gretlwin32.h"
 #endif
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-# define NO_INFO_ICON 
-#endif
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-# define NO_EDIT_ICON
-#endif
-
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#ifdef N0_INFO_ICON
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 # include "../pixmaps/info_24.xpm"
 #endif
-#ifdef N0_EDIT_ICON
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
 # include "../pixmaps/edit_24.xpm"
 # include "../pixmaps/mini.edit.xpm"
 #endif
@@ -1550,10 +1542,10 @@ void free_windata (GtkWidget *w, gpointer data)
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
-#ifdef NO_INFO_ICON
+#if NO_INFO_ICON
 	info_24_xpm,
 #endif
-#ifdef NO_EDIT_ICON
+#if NO_EDIT_ICON
 	edit_24_xpm,
 	mini_edit_xpm,
 #endif
@@ -1571,10 +1563,10 @@ void gretl_stock_icons_init (void)
 	mini_model_xpm
     };
     const char *stocks[] = {
-#ifdef NO_INFO_ICON
+#if NO_INFO_ICON
 	GRETL_STOCK_INFO,
 #endif
-#ifdef NO_EDIT_ICON
+#if NO_EDIT_ICON
 	GRETL_STOCK_EDIT,
 	GRETL_STOCK_SCRIPT,
 #endif
