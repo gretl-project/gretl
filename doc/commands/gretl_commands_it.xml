@@ -4558,6 +4558,10 @@
           <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+	<option>
+	  <flag>--p-values</flag>
+	  <effect>mostra i p-value invece delle pendenze</effect>
+	</option>
       </options>
     </usage>
 
@@ -6261,6 +6265,10 @@
           <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+	<option>
+	  <flag>--p-values</flag>
+	  <effect>mostra i p-value invece delle pendenze</effect>
+	</option>
       </options>
     </usage>
 
@@ -7028,12 +7036,59 @@
         Se il comando <cmd>set</cmd> è usato senza parametri, vengono
         mostrate le impostazioni attuali per tutti i parametri rilevanti.
       </para>
+      <para>
+	Le impostazioni disponibili sono raggruppate in sei categorie:
+        interazione col programma, metodi numerici, generazione di numeri
+        casuali, stima robusta, filtri e stima di modelli per serie storiche.
+      </para>
+
+      <para>
+	<emphasis>Interazione con il programma</emphasis>
+      </para>
+      <para>
+	Queste impostazioni servono per controllare vari aspetti del modo in cui
+        gretl interagisce con l'utente.
+      </para>
       <ilist>
+	<li>
+	  <para><lit>csv_delim</lit>:
+	  <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
+            (spazio), o <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
+            salvataggio di dati su file in formato CSV.
+	  </para>
+	</li>
 	<li>
 	  <para><lit>echo</lit>:
 	  <lit>off</lit> o <lit>on</lit> (valore predefinito).
 	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
             dei risultati.</para>
+	</li>
+	<li>
+	  <para><lit>force_decpoint</lit>: <lit>on</lit> o <lit>off</lit>
+	    (valore predefinito).  Forza gretl a usare il carattere punto come
+            separatore decimale, in un ambiente in cui il separatore standard è
+            un'altro carattere (tipicamente la virgola).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>halt_on_error</lit>: <lit>off</lit> o
+	  <lit>on</lit> (valore predefinito). Quando è attivo, se si verifica un
+          errore all'interno di un loop, questo si interromperà. Se si usa il
+          client a riga di comando, il programma terminerà.
+	  </para>
+	</li>
+	<li>	  
+	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
+            uguale a 20. Determina il numero di cifre usate per mostrare i
+            valori delle variabili quando viene usata l'opzione
+	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>max_verbose</lit>: <lit>on</lit> o
+	  <lit>off</lit> (valore predefinito). Attiva l'output aggiuntivo per la
+          funzione <lit>BFGSmax</lit> (si veda la Guida all'uso per i dettagli).
+	  </para>
 	</li>
  	<li>
 	  <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
@@ -7044,9 +7099,91 @@
          </para>
 	</li>
 	<li>
+	  <para><lit>shell_ok</lit>: <lit>on</lit> o <lit>off</lit>
+	  (valore predefinito). Abilita l'esecuzione di programmi esterni da
+          gretl attraverso la shell di sistema. Per motivi di sicurezza, la
+          funzione è disabilitata per impostazione predefinita; inoltre è
+          possibile abilitarla solo tramite l'interfaccia grafica
+          (Strumenti/Preferenze/Generali). Una volta abilitata, l'impostazione
+          rimarrà attiva per le successive sessioni, fino a che non sarà
+          disabilitata esplicitamente.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>shelldir</lit>: <repl>percorso</repl>. Imposta la directory
            di lavoro corrente per i comandi shell.
          </para>
+	</li>
+	<li>
+	  <para><lit>use_cwd</lit>: <lit>on</lit> o <lit>off</lit>
+	  (valore predefinito). Questa impostazione modifica il comportamento
+          dei comandi <cmdref targ="outfile"/> e <cmdref targ="store"/>, che
+          scrivono su file esterni. Normalmente, il file verrà scritto nella
+          directory dati predefinita dell'utente: se si imposta
+	  <lit>use_cwd</lit> a <lit>on</lit>, al contrario, il file verrà creato
+          nella directory di lavoro da cui gretl è stato eseguito.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Metodi numerici</emphasis>
+      </para>
+      <para>
+	Queste impostazioni vengono usate per controllare gli algoritmi numerici
+        usati da gretl per la stima.
+      </para>
+      <ilist>
+	<li>	
+	<para><lit>bhhh_maxiter</lit>: un intero. Imposta il massimo numero di
+          iterazioni per la routine BHHH, che è usata dal comando
+          <cmd>arma</cmd>. Se non viene raggiunta la convergenza dopo
+          <lit>bhhh_maxiter</lit>, il programma segnala un errore. Il valore
+          predefinito è 500.
+	  </para>
+	</li>	  
+	<li>	  
+	  <para><lit>bhhh_toler</lit>: un valore a virgola mobile, oppure la
+            stringa <lit>default</lit>. Viene usato dalla routine BHHH di gretl
+            per controllare se viene raggiunta la convergenza. L'algoritmo di
+            calcolo ferma le iterazioni non appena l'incremento nella
+            log-verosimiglianza tra le iterazioni è minore di <lit>bhhh_toler</lit>.
+            Il valore predefinito è 1.0E&minus;06; questo valore può essere reimpostato
+            usando la stringa <lit>default</lit> invece di un valore numerico.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bfgs_maxiter</lit>: un valore intero. Rappresenta il
+            massimo numero di iterazioni per la routine BFGS di gretl,
+            usata da <cmd>mle</cmd>, <cmd>gmm</cmd> e altri stimatori.
+            Se non si raggiunge la convergenza nel numero specificato di
+            iterazioni, il programma produce un messaggio di errore. Il valore
+            predefinito è 500.
+	  </para>
+	</li>	  
+	<li>	  
+	  <para><lit>bfgs_toler</lit>: un valore in virgola mobile, o la stringa
+	    <lit>default</lit>. Viene usato nella routine BFGS di gretl per
+            controllare se si è raggiunta la convergenza. L'algoritmo si ferma
+            appena l'incremento relativo nella funzione obiettivo tra
+            un'iterazione e l'altra è minore di
+	    <lit>bfgs_toler</lit>.  Il valore predefinito è pari alla precisione
+            della macchina elevata alla potenza 3/4; questo valore può essere
+            re-impostato usando la stringa <lit>default</lit> invece di un valore numerico.
+ 	  </para>
+	</li>	  
+	<li>	  
+          <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
+            impostare manualmente le stime dei parametri ARMA. Per i dettagli,
+            si veda la <guideref targ="arma-estimation"/>.
+	  </para>
+	</li>
+	<li>
+          <para><lit>lbfgs</lit>: <lit>on</lit> o <lit>off</lit> (valore
+          predefinito). Usa la versione a memoria limitata di BFGS, al posto
+          dell'algoritmo standard. Può essere vantaggioso quando la funzione da
+          massimizzare non è globalmente concava.
+	  </para>
 	</li>
         <li>
 	<para>
@@ -7063,6 +7200,19 @@
 	    Usa la decomposizione QR invece di quella di Cholesky nel
             calcolo delle stime OLS.</para>
 	</li>
+	<li>
+          <para><lit>fcp</lit>: <lit>on</lit> o <lit>off</lit> (valore
+          predefinito). Usa l'algoritmo di Fiorentini, Calzolari e Panattoni
+          al posto del codice interno di gretl per  calcolare le stime GARCH.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Generazione di numeri casuali</emphasis>
+      </para>
+
+      <ilist>
         <li>
           <para><lit>seed</lit>: un intero senza segno. Imposta il seme per il
             generatore di numeri pseudo-casuali. Di solito il seme viene
@@ -7071,6 +7221,39 @@
             il seme manualmente.
           </para>
         </li>
+      </ilist>
+
+      <para>
+	<emphasis>Stima robusta</emphasis>
+      </para>
+
+      <ilist>
+	<li>
+	  <para><lit>bootrep</lit>: un intero. Imposta il numero di replicazioni
+          per il comando <cmdref targ="restrict"/> con l'opzione <lit>--bootstrap</lit>.
+          </para>
+	</li>
+	<li>
+	  <para><lit>garch_vcv</lit>:
+	  <lit>unset</lit>, <lit>hessian</lit>,
+	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
+            (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
+	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
+            variante da usare per stimare la matrice di covarianza dei
+            coefficienti nei modelli GARCH.  Se si usa <lit>unset</lit>
+	    (valore predefinito), viene usata l'Hessiana, a meno di
+            usare l'opzione <quote>robust</quote> col comando garch, nel
+            qual caso viene usato QML.</para>
+	</li>
+	<li>
+	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito)
+	    o <lit>on</lit>. Lo stimatore HAC viene usato in modo predefinito con dati
+            serie storiche e quando si usa l'opzione <lit>--robust</lit> di
+            <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
+            <quote>on</quote>, si forza l'uso della matrice di covarianza
+	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
+	  </para>
+	</li>
 	<li>
 	  <para><lit>hac_lag</lit>:
 	  <lit>nw1</lit> (valore predefinito), <lit>nw2</lit>,
@@ -7111,13 +7294,6 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>qs_bandwidth</lit>: larghezza di banda per la stima HAC
-            nel caso in cui si scelga il kernel "Quadratic Spectral" (a differenza
-            dei kernel Bartlett e Parzen, la larghezza di banda QS non deve essere
-            necessariamente un intero).
-	  </para>
-	</li>
-	<li>
 	  <para><lit>hc_version</lit>:
 	  0 (valore predefinito), 1, 2 o 3. Imposta la
           variante da usare nel calcolo degli errori standard HAC
@@ -7126,16 +7302,8 @@
           HC2 e HC3 discusse da Davidson e MacKinnon nel capitolo 5 di
           <book>Econometric Theory and Methods</book>.  HC0 produce
           quelli che di solito vengono chiamati <quote>errori standard di
-          White</quote>.</para> </li>
-	<li>
-	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito)
-	    o <lit>on</lit>. Lo stimatore HAC viene usato in modo predefinito con dati
-            serie storiche e quando si usa l'opzione <lit>--robust</lit> di
-            <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
-            <quote>on</quote>, si forza l'uso della matrice di covarianza
-	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
-	  </para>
-	</li>
+          White</quote>.</para>
+        </li>
 	<li>
 	  <para><lit>pcse</lit>: <lit>off</lit> (impostazione predefinita) o
 	    <lit>on</lit>.  Di solito, quando si stima un modello con pooled OLS
@@ -7147,17 +7315,19 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>garch_vcv</lit>:
-	  <lit>unset</lit>, <lit>hessian</lit>,
-	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
-            (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
-	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
-            variante da usare per stimare la matrice di covarianza dei
-            coefficienti nei modelli GARCH.  Se si usa <lit>unset</lit>
-	    (valore predefinito), viene usata l'Hessiana, a meno di
-            usare l'opzione <quote>robust</quote> col comando garch, nel
-            qual caso viene usato QML.</para>
+	  <para><lit>qs_bandwidth</lit>: larghezza di banda per la stima HAC
+            nel caso in cui si scelga il kernel "Quadratic Spectral" (a differenza
+            dei kernel Bartlett e Parzen, la larghezza di banda QS non deve essere
+            necessariamente un intero).
+	  </para>
 	</li>
+      </ilist>
+
+      <para>
+	<emphasis>Filtri</emphasis>
+      </para>
+
+      <ilist>
 	<li>
 	  <para><lit>hp_lambda</lit>:
 	  <lit>auto</lit> (valore predefinito), o un
@@ -7183,6 +7353,13 @@
             Baxter&ndash;King.
           </para>
         </li>
+      </ilist>
+
+      <para>
+	<emphasis>Serie storiche</emphasis>
+      </para>
+      
+      <ilist>
 	<li>
 	  <para><lit>horizon</lit>:
 	  un intero (il valore predefinito dipende dalla
@@ -7192,61 +7369,11 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>csv_delim</lit>:
-	  <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
-            (spazio), o <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
-            salvataggio di dati su file in formato CSV.
-	  </para>
-	</li>
-	<li>	
-	<para><lit>bhhh_maxiter</lit>: un intero. Imposta il massimo numero di
-          iterazioni per la routine BHHH, che è usata dal comando
-          <cmd>arma</cmd>. Se non viene raggiunta la convergenza dopo
-          <lit>bhhh_maxiter</lit>, il programma segnala un errore. Il valore
-          predefinito è 500.
-	  </para>
-	</li>	  
-	<li>	  
-	  <para><lit>bhhh_toler</lit>: un valore a virgola mobile, oppure la
-            stringa <lit>default</lit>. Viene usato dalla routine BHHH di gretl
-            per controllare se viene raggiunta la convergenza. L'algoritmo di
-            calcolo ferma le iterazioni non appena l'incremento nella
-            log-verosimiglianza tra le iterazioni è minore di <lit>bhhh_toler</lit>.
-            Il valore predefinito è 1.0E&minus;06; questo valore può essere reimpostato
-            usando la stringa <lit>default</lit> invece di un valore numerico.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>bfgs_maxiter</lit>: un valore intero. Rappresenta il
-            massimo numero di iterazioni per la routine BFGS di gretl,
-            usata da <cmd>mle</cmd>, <cmd>gmm</cmd> e altri stimatori.
-            Se non si raggiunge la convergenza nel numero specificato di
-            iterazioni, il programma produce un messaggio di errore. Il valore
-            predefinito è 500.
-	  </para>
-	</li>	  
-	<li>	  
-	  <para><lit>bfgs_toler</lit>: un valore in virgola mobile, o la stringa
-	    <lit>default</lit>. Viene usato nella routine BFGS di gretl per
-            controllare se si è raggiunta la convergenza. L'algoritmo si ferma
-            appena l'incremento relativo nella funzione obiettivo tra
-            un'iterazione e l'altra è minore di
-	    <lit>bfgs_toler</lit>.  Il valore predefinito è pari alla precisione
-            della macchina elevata alla potenza 3/4; questo valore può essere
-            re-impostato usando la stringa <lit>default</lit> invece di un valore numerico.
- 	  </para>
-	</li>	  
-	<li>	  
-	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
-            uguale a 20. Determina il numero di cifre usate per mostrare i
-            valori delle variabili quando viene usata l'opzione
-	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
-	  </para>
-	</li>
-	<li>	  
-          <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
-            impostare manualmente le stime dei parametri ARMA. Per i dettagli,
-            si veda la <guideref targ="arma-estimation"/>.
+	  <para><lit>vecm_norm</lit>: <lit>phillips</lit> (valore predefinito),
+          <lit>diag</lit>, <lit>first</lit> o <lit>none</lit>. Usato nel
+          contesto della stima VECM, attraverso il comando <cmdref targ="vecm"/>
+          per identificare i vettori di cointegrazione. Si veda la Guida all'uso
+          per i dettagli.
 	  </para>
 	</li>
       </ilist>
