@@ -1,0 +1,145 @@
+\documentclass{article}
+\usepackage{smallhds,lucidabr}
+\usepackage{url}
+
+\begin{document}
+
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0pt}
+
+\begin{center}
+  {\large \textbf{Building a gretl disk image for OS X}}\\
+Allin Cottrell, December 2007
+\end{center}
+
+\section{Objective}
+
+To build a stand-alone disk image (dmg) of gretl for Mac OS X.  The
+final user should be able to download the dmg file, double-click to
+mount it, and drag the Gretl.app folder (found ``inside'' the image)
+to an Applications folder.  You'll use Fink in the build process but
+the final dmg should not be dependent on Fink in any way; it will,
+however, be dependent on Apple's X11.
+
+\section{Overview}
+
+First, here are the prerequisites:
+
+\begin{itemize}
+\item A fully functional installation of OS X.
+\item Apple's X11 and the Xcode development package.  If these are
+  not already installed, they should be found on the OS X installation
+  DVDs.
+\item A basic installation of Fink.
+\item Source code for gretl and gnuplot.
+\item A skeleton for Gretl.app plus some auxiliary scripts.
+\end{itemize}
+
+The method is as follows:
+
+\begin{itemize}
+\item Install the Gretl.app skeleton.  This provides the ``space''
+  into which you'll install gretl and gnuplot.
+\item Under Fink, install the various required third-party packages
+  (including the ``dev'' or developer components).  This includes
+  GTK+ and friends (glib, atk, gdk, pango).
+\item Configure and build gretl; install gretl into the right place
+  inside the Gretl.app folder; delete some extraneous files.
+\item Patch, configure and build gnuplot; install gnuplot into
+  Gretl.app; delete extraneous files.
+\item Tar up various run-time files from your Fink installation
+  and dump them into the appropriate place in Gretl.app (hence
+  removing the dependency on Fink at run time).
+\item Grab the latest gretl documentation and dump it into Gretl.app.
+\item Create a compressed disk image containing Gretl.app.
+\end{itemize}
+
+The following sections expand on each of the steps.
+
+\section{The Gretl.app skeleton}
+
+I'll make a gzipped tar file available.  This will contain a mostly
+empty directory tree, but I'll include some ``generic'' files that
+shouldn't depend on the particular OS X build platform.  This should
+be unzipped in some suitable location; on the OS X system to which I
+have access I've put it under \texttt{/Users/allin/dist}.
+
+\section{Required Fink packages}
+
+The exact line-up of these packages depends somewhat on the specific
+OS X variant.  If a given package is available via OS X itself, then
+you don't need to, and probably don't want to, install the
+corresponding Fink package.  A case in point is libxml2, which is
+supplied on recent OS X (but was not supplied in earlier variants).
+
+The required packages will presumably include gtk+2, gtk+2-dev and
+fftw3;  recode may also be required; gnuplot is not required since
+we'll be building that ourselves.  Libxml2 will hopefully be supplied
+by OS X, and dlcompat doesn't seem to be needed any longer.
+
+\section{Configuring and building gretl}
+
+Needed: sample configure params; postinst shell script.
+
+
+\section{Patching and building gnuplot}
+
+Needed: patch plus instructions, sample configure params;
+post-installation script.
+
+\section{Copying Fink run-time files}
+
+Explanation; sample script.
+
+\section{Documentation files}
+
+The canonical PDF documentation for gretl is available from
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/manual/en/}.  You should do
+
+\begin{verbatim}
+wget http://ricardo.ecn.wfu.edu/pub/gretl/manual/en/gretl-guide.pdf
+wget http://ricardo.ecn.wfu.edu/pub/gretl/manual/en/gretl-ref.pdf
+cp gretl-guide.pdf XXX
+cp gretl-ref.pdf XXX
+
+\end{verbatim}
+
+
+\section{Creation of dmg}
+
+Below is a shell script to create the final .dmg file.  There's a copy
+of this in the gretl source package, in the osx subdirectory (called
+dmg.sh).  Obviously, you'll need to edit the line that defines TOPDIR;
+hopefully the rest should be portable.  Note that you need the
+top-level README.pdf for users of gretl on OS X.  That's also
+available in the osx subdirectory of the gretl source.
+
+\begin{verbatim}
+#!/bin/bash
+
+# the directory above Gretl.app
+TOPDIR=/Users/allin/dist
+
+HERE=`pwd`
+KB=`du -ks ~/dist | awk '{ print $1 }'`
+KB=$((KB+640))
+hdiutil create -size ${KB}k tmp.dmg -layout NONE
+MYDEV=`hdid -nomount tmp.dmg`
+sudo newfs_hfs -v gretl $MYDEV
+hdiutil eject $MYDEV
+hdid tmp.dmg
+cd $TOPDIR && \
+cp -a Gretl.app /Volumes/gretl && \
+cp -a README.pdf /Volumes/gretl
+cd $HERE
+hdiutil eject $MYDEV
+hdiutil convert -format UDZO tmp.dmg -o gretl.dmg && rm tmp.dmg
+
+\end{verbatim}
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
