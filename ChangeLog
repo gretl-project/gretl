@@ -21,6 +21,7 @@ version 1.7.1, in progress
 - genr: fix for case where closing parenthesis is missing at 
   the end of a formula
 - OS X: replace fftw library with an i386 build
+- Toolbar: use GTK stock icons where possible
 
 11/27/2007 version 1.7.0
 - Add heckit estimator
