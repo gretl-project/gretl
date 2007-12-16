@@ -987,7 +987,9 @@ facilitare l'importazione in fogli elettronici. L'uso è descritto nell'esempio
 \ref{matrix-rw}.  Le matrici esportate con il comando \texttt{mwrite} possono
 essere facilmente lette con altri programmi: la tabella seguente riassume i
 comandi necessari per leggere una matrice \texttt{A} da un file chiamato
-\texttt{a.mat} in alcuni programmi di uso comune.
+\texttt{a.mat} in alcuni programmi di uso comune\footnote{Gli utenti di Matlab
+  possono trovare utile l'esempio in Octave, visto che i due programmi sono per
+  lo più compatibili fra loro.}.
 
 \begin{center}
   \begin{tabular}{rl}
@@ -1009,7 +1011,7 @@ comandi necessari per leggere una matrice \texttt{A} da un file chiamato
 \begin{script}[htbp]
   \caption{Input/output di matrici con file testuali}
   \label{matrix-rw}
-  \begin{code}
+  \begin{scode}
 nulldata 64
 scalar n = 3
 string f1 = "a.csv"
@@ -1035,7 +1037,7 @@ else
   printf "La matrice seguente dovrebbe essere una matrice identità\n"
   print a
 endif
-  \end{code}
+  \end{scode}
 \end{script}
 
 \section{Matrici vuote}
