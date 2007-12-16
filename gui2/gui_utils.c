@@ -50,10 +50,6 @@
 # include "gretlwin32.h"
 #endif
 
-#include <gtksourceview/gtksourceview.h>
-
-char *storelist = NULL;
-
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
@@ -75,6 +71,8 @@ char *storelist = NULL;
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.browser.xpm"
+
+char *storelist = NULL;
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
