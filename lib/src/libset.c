@@ -47,7 +47,8 @@ enum {
     STATE_HALT_ON_ERR    = 1 << 8,  /* errors fatal in batch mode */
     STATE_USE_LBFGS      = 1 << 9,  /* prefer LBFGS to BFGS? */
     STATE_SHELL_OK       = 1 << 10, /* "shell" facility is approved? */
-    STATE_MAX_VERBOSE    = 1 << 11  /* verbose output from maximizer? */
+    STATE_MAX_VERBOSE    = 1 << 11, /* verbose output from maximizer? */
+    STATE_USE_FCP        = 1 << 12  /* use FCP garch code */
 };    
 
 /* for values that really want a non-negative integer */
@@ -102,7 +103,8 @@ struct set_vars_ {
 			   !strcmp(s, PREWHITEN) || \
 			   !strcmp(s, USE_QR) || \
 			   !strcmp(s, SHELL_OK) || \
-			   !strcmp(s, USE_CWD))
+			   !strcmp(s, USE_CWD) || \
+			   !strcmp(s, USE_FCP))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BHHH_TOLER) || \
@@ -1050,7 +1052,6 @@ static int display_settings (PRN *prn)
 
     libset_print_bool(USE_CWD, prn);
 
-
     libset_header(_("Numerical methods"), prn);
 
     libset_print_int(BFGS_MAXITER, prn);
@@ -1061,6 +1062,7 @@ static int display_settings (PRN *prn)
     libset_print_bool(USE_LBFGS, prn);
     libset_print_double(NLS_TOLER, prn);
     libset_print_bool(USE_QR, prn);
+    libset_print_bool(USE_FCP, prn);
 
     libset_header(_("Random number generation"), prn);
 
@@ -1476,6 +1478,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_FORCE_DECPOINT;
     } else if (!strcmp(s, USE_CWD)) {
 	return STATE_USE_CWD;
+    } else if (!strcmp(s, USE_FCP)) {
+	return STATE_USE_FCP;
     } else if (!strcmp(s, HALT_ON_ERR)) {
 	return STATE_HALT_ON_ERR;
     } else if (!strcmp(s, MAX_VERBOSE)) {

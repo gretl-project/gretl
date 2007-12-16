@@ -6361,6 +6361,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
+	<option>
+	  <flag>--p-values</flag>
+	  <effect>show p-values instead of slopes</effect>
+	</option>
       </options>
     </usage>
 
@@ -7303,6 +7307,12 @@
 	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
 	    default). Use QR rather than Cholesky decomposition in calculating
 	    OLS estimates.</para>
+	</li>
+	<li>
+	  <para><lit>fcp</lit>: <lit>on</lit> or <lit>off</lit> (the
+	    default). Use the algorithm of Fiorentini, Calzolari and
+	    Panattoni rather than native gretl code when computing
+	    GARCH estimates.</para>
 	</li>
       </ilist>
 

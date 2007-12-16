@@ -27,8 +27,7 @@
 
 #include "garch.h"
 
-#define USE_FCP 0
-#undef VPARM_DEBUG
+#define VPARM_DEBUG 0
 
 #define VPARM_MAX 6            /* max number of variance parameters */
 #define GARCH_PARAM_MAX 0.999
@@ -316,10 +315,6 @@ static int garch_manual_init (double *theta, int k, int p, int q,
 {
     int mlen = n_init_vals();
     int n = k + p + q + 1;
-#if USE_FCP
-    const gretl_matrix *m;
-    int i;
-#endif
 
     if (mlen != n) {
 	if (mlen > 0) {
@@ -332,19 +327,20 @@ static int garch_manual_init (double *theta, int k, int p, int q,
     /* if we're not using FCP, the following is handled 
        within the BFGS routine */
 
-#if USE_FCP
-    m = get_init_vals();
+    if (libset_get_bool("fcp")) {
+	const gretl_matrix *m = get_init_vals();
+	int i;
+	
+	/* order: coeffs on regressors; variance params */
 
-    /* order: coeffs on regressors; variance params */
+	for (i=0; i<n; i++) {
+	    theta[i] = m->val[i];
+	}
 
-    for (i=0; i<n; i++) {
-	theta[i] = m->val[i];
+	garch_print_init(theta, k, p, q, 1, prn);
+
+	free_init_vals();
     }
-
-    garch_print_init(theta, k, p, q, 1, prn);
-
-    free_init_vals();
-#endif
 
     return 1;
 }
@@ -432,16 +428,10 @@ garch_driver (const int *list, double **Z, double scale,
 	}
     }
 
-#if USE_FCP
-    err = garch_estimate(y, (const double **) X,
-			 t1 + pad, t2 + pad, bign, nc, 
-			 p, q, theta, V, e, e2, h,
-			 scale, &ll, &iters, vopt, prn);
-#else
-    if (getenv("FCP_GARCH") != NULL) {
+    if (libset_get_bool("fcp")) {
 	err = garch_estimate(y, (const double **) X,
-			     t1 + pad, t2 + pad, bign, nc,
-			     p, q, theta, V, e, e2, h,  
+			     t1 + pad, t2 + pad, bign, nc, 
+			     p, q, theta, V, e, e2, h,
 			     scale, &ll, &iters, vopt, prn);
     } else {
 	err = garch_estimate_mod(y, (const double **) X,
@@ -449,7 +439,6 @@ garch_driver (const int *list, double **Z, double scale,
 				 p, q, theta, V, e, e2, h, 
 				 scale, &ll, &fnc, &grc, vopt, prn);
     }
-#endif
 
     if (err != 0) {
 	pmod->errcode = err;
@@ -531,7 +520,7 @@ garchpar_from_armapar (const double *armapar, int q, int p)
     int mo = q;
     int i;
 
-#ifdef VPARM_DEBUG
+#if VPARM_DEBUG
     for (i=0; i<1+ao+mo; i++) {
 	fprintf(stderr, "armapar[%d] = %#12.6g\n", i, armapar[i]);
     }
@@ -555,7 +544,7 @@ garchpar_from_armapar (const double *armapar, int q, int p)
 	sum_ab += vparm_init[p+i];
     }
 
-#ifdef VPARM_DEBUG
+#if VPARM_DEBUG
     fprintf(stderr, "sum_ab = %#12.6g\n", sum_ab);
 #endif
 

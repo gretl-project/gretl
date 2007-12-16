@@ -73,6 +73,7 @@ typedef enum {
 #define SHELL_OK     "shell_ok"
 #define USE_CWD      "use_cwd"
 #define USE_QR       "qr"
+#define USE_FCP      "fcp"
 #define VECM_NORM    "vecm_norm"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
