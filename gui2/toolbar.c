@@ -28,6 +28,9 @@
 # include "gretlwin32.h"
 #endif
 
+#define NEWSTYLE 1
+
+#if (NEWSTYLE == 0)
 /* pixmaps for gretl toolbar */
 #include "../pixmaps/mini.calc.xpm"
 #include "../pixmaps/mini.edit.xpm"
@@ -39,6 +42,7 @@
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
 #include "../pixmaps/mini.browser.xpm"
+#endif
 
 static GtkWidget *toolbar_box;
 
@@ -115,6 +119,63 @@ static void new_script_callback (void)
 
 /* end toolbar icon callbacks */
 
+#if NEWSTYLE
+
+struct toolbar_item {
+    const char *str;
+    const gchar *icon;
+    void (*toolfunc)();
+};
+
+static struct toolbar_item toolbar_items[] = {
+    { N_("launch calculator"), GRETL_STOCK_CALC, show_calc },
+#if NO_EDIT_ICON
+    { N_("new script"), GRETL_STOCK_SCRIPT, new_script_callback },
+#else
+    { N_("new script"), GTK_STOCK_EDIT, new_script_callback },
+#endif
+    { N_("open gretl console"), GRETL_STOCK_CONSOLE, show_gretl_console },
+    { N_("session icon view"), GRETL_STOCK_ICONS, go_session },
+    { N_("gretl website"), GRETL_STOCK_WWW, gretl_website },
+    { N_("user's guide"), GRETL_STOCK_PDF, toolbar_users_guide },
+    { N_("command reference"), GTK_STOCK_HELP, toolbar_command_reference },
+    { N_("X-Y graph"), GRETL_STOCK_SCATTER, xy_graph },
+    { N_("OLS model"), GRETL_STOCK_MODEL, ols_model },
+    { N_("open dataset"), GTK_STOCK_OPEN, open_textbook_data },
+    { NULL, NULL, NULL }
+};
+
+static void make_toolbar (GtkWidget *vbox)
+{
+    GtkWidget *w, *hbox;
+    GtkWidget *toolbar, *image;
+    int i;
+
+    gretl_stock_icons_init();
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    toolbar_box = gtk_handle_box_new();
+    gtk_box_pack_start(GTK_BOX(hbox), toolbar_box, FALSE, FALSE, 0);
+
+    toolbar = gtk_toolbar_new();
+    gtk_container_add(GTK_CONTAINER(toolbar_box), toolbar);
+
+    for (i=0; toolbar_items[i].str != NULL; i++) {
+	image = gtk_image_new();
+	gtk_image_set_from_stock(GTK_IMAGE(image), toolbar_items[i].icon, 
+				 GTK_ICON_SIZE_MENU);
+        w = gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
+				    NULL, _(toolbar_items[i].str), NULL,
+				    image, toolbar_items[i].toolfunc, mdata);
+    }
+
+    gtk_widget_show_all(hbox);
+}
+
+#else
+
 static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
 {
     GtkWidget *image = gtk_image_new_from_pixbuf(pix);
@@ -129,7 +190,7 @@ static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
     return button;
 }
 
-static void make_toolbar (GtkWidget *w, GtkWidget *box)
+static void make_toolbar (GtkWidget *vbox)
 {
     GtkWidget *button;
     GtkWidget *toolbar;
@@ -154,7 +215,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     const char *toolstr;
 
     hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     toolbar_box = gtk_handle_box_new();
     gtk_box_pack_start(GTK_BOX(hbox), toolbar_box, FALSE, FALSE, 0);
@@ -219,6 +280,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     gtk_widget_show_all(hbox);
 }
 
+#endif
+
 /* public interface */
 
 void show_or_hide_toolbar (int want_toolbar)
@@ -226,7 +289,7 @@ void show_or_hide_toolbar (int want_toolbar)
     if (want_toolbar && toolbar_box == NULL) {
 	GtkWidget *vbox = g_object_get_data(G_OBJECT(mdata->w), "vbox");
 
-	make_toolbar(mdata->w, vbox);
+	make_toolbar(vbox);
     } else if (!want_toolbar && toolbar_box != NULL) {
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;

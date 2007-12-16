@@ -2203,6 +2203,14 @@ static void construct_cmdlist (selector *sr)
 		arma_x12 = 0;
 	    }
 	}
+	if (sr->code == GARCH) {
+	    if (sr->opts & OPT_F) {
+		sr->opts &= ~OPT_F;
+		libset_set_bool("fcp", 1);
+	    } else {
+		libset_set_bool("fcp", 0);
+	    }
+	}	
     }
 }
 
@@ -2820,6 +2828,11 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgy += 60;
     }
 
+    if (code == GARCH) {
+	/* extra check box */
+	dlgy += 20;
+    }
+
     if (dataset_lags_ok(datainfo)) {
 	if (MODEL_CODE(code) && code != ARMA) {
 	    /* lag selector button at foot */
@@ -3278,6 +3291,11 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, arma_x12, FALSE, OPT_X, 0);
     }	
 #endif
+
+    if (sr->code == GARCH) {
+	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
+	pack_switch(tmp, sr, libset_get_bool("fcp"), FALSE, OPT_F, 0);
+    }
 } 
 
 static void unhide_lags_callback (GtkWidget *w, selector *sr)

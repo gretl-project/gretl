@@ -983,13 +983,6 @@ struct files_item {
     const gchar *icon;
 };
 
-#ifndef GTK_STOCK_INFO
-# define GTK_STOCK_INFO GRETL_STOCK_INFO
-#endif
-#ifndef GTK_STOCK_EDIT
-# define GTK_STOCK_EDIT GRETL_STOCK_EDIT
-#endif
-
 static struct files_item files_items[] = {
     { N_("Open"),      BTN_OPEN,  GTK_STOCK_OK },
     { N_("Edit"),      BTN_EDIT,  GTK_STOCK_EDIT },

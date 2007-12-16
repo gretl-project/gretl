@@ -22,14 +22,31 @@
 
 #include <gtksourceview/gtksourceview.h>
 
-#define GRETL_STOCK_TEX    "gretl-tex"
-#define GRETL_STOCK_MAIL   "gretl-mail"
-#define GRETL_STOCK_TS     "gretl-tsplot"
-#define GRETL_STOCK_BOX    "gretl-boxplot"
-#define GRETL_STOCK_PDF    "gretl-pdf"
-#define GRETL_STOCK_BOOK   "gretl-book"
-#define GRETL_STOCK_INFO   "gretl-info"
-#define GRETL_STOCK_EDIT   "gretl-edit"
+#define GRETL_STOCK_TEX     "gretl-tex"
+#define GRETL_STOCK_MAIL    "gretl-mail"
+#define GRETL_STOCK_TS      "gretl-tsplot"
+#define GRETL_STOCK_BOX     "gretl-boxplot"
+#define GRETL_STOCK_PDF     "gretl-pdf"
+#define GRETL_STOCK_BOOK    "gretl-book"
+#define GRETL_STOCK_CALC    "gretl-calc"
+#define GRETL_STOCK_WWW     "gretl-www"
+#define GRETL_STOCK_ICONS   "gretl-icons"
+#define GRETL_STOCK_MODEL   "gretl-model"
+#define GRETL_STOCK_CONSOLE "gretl-console"
+#define GRETL_STOCK_SCATTER "gretl-scatter"
+
+#define NO_INFO_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
+#define NO_EDIT_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+
+#if NO_INFO_ICON
+# define GRETL_STOCK_INFO "gretl-info"
+# define GTK_STOCK_INFO GRETL_STOCK_INFO
+#endif
+#if NO_EDIT_ICON
+# define GRETL_STOCK_EDIT "gretl-edit"
+# define GTK_STOCK_EDIT GRETL_STOCK_EDIT
+# define GRETL_STOCK_SCRIPT "gretl-script"
+#endif
 
 enum windata_flags {
     VWIN_HELP_ACTIVE  = 1 << 0,

@@ -52,9 +52,6 @@
 
 #include <gtksourceview/gtksourceview.h>
 
-#define NEED_INFO_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-#define NEED_EDIT_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-
 char *storelist = NULL;
 
 #include "../pixmaps/mini.tex.xpm"
@@ -63,12 +60,21 @@ char *storelist = NULL;
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#if NEED_INFO_ICON
+#if N0_INFO_ICON
 # include "../pixmaps/info_24.xpm"
 #endif
-#if NEED_EDIT_ICON
+#if N0_EDIT_ICON
 # include "../pixmaps/edit_24.xpm"
+# include "../pixmaps/mini.edit.xpm"
 #endif
+
+/* for gretl toolbar */
+#include "../pixmaps/mini.calc.xpm"
+#include "../pixmaps/mini.sh.xpm"
+#include "../pixmaps/mini.session.xpm"
+#include "../pixmaps/mini.plot.xpm"
+#include "../pixmaps/mini.model.xpm"
+#include "../pixmaps/mini.browser.xpm"
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1538,32 +1544,46 @@ void free_windata (GtkWidget *w, gpointer data)
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
-#if NEED_INFO_ICON
+#if NO_INFO_ICON
 	info_24_xpm,
 #endif
-#if NEED_EDIT_ICON
+#if NO_EDIT_ICON
 	edit_24_xpm,
+	mini_edit_xpm,
 #endif
 	mini_tex_xpm,
 	mail_16_xpm,
 	mini_tsplot_xpm,
 	mini_boxplot_xpm,
 	mini_pdf_xpm,
-	mini_manual_xpm
+	mini_manual_xpm,
+	mini_calc_xpm,
+	mini_sh_xpm,
+	mini_session_xpm,
+	mini_browser_xpm,
+	mini_plot_xpm,
+	mini_model_xpm
     };
     const char *stocks[] = {
-#if NEED_INFO_ICON
+#if NO_INFO_ICON
 	GRETL_STOCK_INFO,
 #endif
-#if NEED_EDIT_ICON
+#if NO_EDIT_ICON
 	GRETL_STOCK_EDIT,
+	GRETL_STOCK_SCRIPT,
 #endif
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
 	GRETL_STOCK_TS,
 	GRETL_STOCK_BOX,
 	GRETL_STOCK_PDF,
-	GRETL_STOCK_BOOK
+	GRETL_STOCK_BOOK,
+	GRETL_STOCK_CALC,
+	GRETL_STOCK_CONSOLE,
+	GRETL_STOCK_ICONS,
+	GRETL_STOCK_WWW,
+	GRETL_STOCK_SCATTER,
+	GRETL_STOCK_MODEL
     };
     int n = sizeof stocks / sizeof stocks[0];
 
