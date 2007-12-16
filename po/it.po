@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-15 08:57-0500\n"
-"PO-Revision-Date: 2007-12-10 21:51+0100\n"
+"PO-Revision-Date: 2007-12-16 21:16+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -383,9 +383,8 @@ msgid "with p-value"
 msgstr "con p-value"
 
 #: lib/src/compare.c:1422 lib/src/modelprint.c:1503 lib/src/modelprint.c:1505
-#, fuzzy
 msgid "Godfrey (1994) test for"
-msgstr "Test Breusch-Godfrey per"
+msgstr "Test di Godfrey (1994) per"
 
 #: lib/src/compare.c:1424 lib/src/modelprint.c:1509 lib/src/modelprint.c:1511
 msgid "Breusch-Godfrey test for"
@@ -705,9 +704,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   attenzione: valore mancante per la variabile %d, osservazione %d\n"
 
 #: lib/src/csvdata.c:1056
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
-msgstr "Alla variabile %d, osservazione %d:\n"
+msgstr "ERRORE: variabile %d (%s), osservazione %d, valore non numerico\n"
 
 #: lib/src/csvdata.c:1174
 msgid ""
@@ -3533,9 +3532,9 @@ msgid "No data information is available.\n"
 msgstr "Non sono disponibili informazioni sui dati.\n"
 
 #: lib/src/interact.c:3670 lib/src/interact.c:4987 gui2/library.c:6342
-#, fuzzy, c-format
+#, c-format
 msgid "Unmatched \"%s\""
-msgstr "Numero errato di \"%c\"\n"
+msgstr "Numero errato di \"%s\""
 
 #: lib/src/interact.c:3822 lib/src/interact.c:3831
 msgid "Failed to generate correlogram\n"
@@ -3692,7 +3691,6 @@ msgid "\"help set\" for details"
 msgstr "\"help set\" per i dettagli"
 
 #: lib/src/libset.c:1033
-#, fuzzy
 msgid "Program interaction and behavior"
 msgstr "Interazione col programma"
 
@@ -4484,6 +4482,10 @@ msgid ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 msgstr ""
+"ATTENZIONE: la costante era presente tra i regressori ma non tra gli\n"
+"strumenti, quindi è stata aggiunta automaticamente all'elenco degli strumenti.\n"
+"Questo comportamento potrebbe cambiare nelle future versioni, quindi occorre\n"
+"tenerne conto nei propri script.\n"
 
 #: lib/src/modelprint.c:1998
 msgid ""
@@ -5732,9 +5734,8 @@ msgid "standard errors in parentheses"
 msgstr "errori standard tra parentesi"
 
 #: lib/src/texprint.c:793
-#, fuzzy
 msgid "Adjustment vectors"
-msgstr "vettori di aggiustamento"
+msgstr "Vettori di aggiustamento"
 
 #: lib/src/texprint.c:854 lib/src/varprint.c:1063 lib/src/varprint.c:1072
 msgid "Determinant of covariance matrix"
@@ -12992,24 +12993,20 @@ msgid "Back"
 msgstr "Indietro"
 
 #: gui2/textbuf.c:1172
-#, fuzzy
 msgid "Comment line"
-msgstr "Riga di comando"
+msgstr "Commenta riga"
 
 #: gui2/textbuf.c:1173
-#, fuzzy
 msgid "Uncomment line"
-msgstr "Riga di comando"
+msgstr "Rimuovi commento da riga"
 
 #: gui2/textbuf.c:1174
-#, fuzzy
 msgid "Comment region"
-msgstr "Cointegrazione"
+msgstr "Commenta regione"
 
 #: gui2/textbuf.c:1175
-#, fuzzy
 msgid "Uncomment region"
-msgstr "Decompressione"
+msgstr "Rimuovi commento da regione"
 
 #: gui2/textutil.c:64
 msgid "gretl: replace"
@@ -13532,12 +13529,12 @@ msgstr "La somma dei quadrati degli errori non è >= 0"
 #: plugin/ods_import.c:409
 #, c-format
 msgid "Sheet row %d, column %d"
-msgstr ""
+msgstr "Riga %d, colonna %d del foglio"
 
 #: plugin/ods_import.c:420
-#, fuzzy, c-format
+#, c-format
 msgid "expected %s but found %s"
-msgstr "Al posto di \"%c\" è stato trovato \"%s\"\n"
+msgstr "Al posto di %s è stato trovato %s"
 
 #: plugin/pca.c:103
 msgid "Components with eigenvalues > 1.0"
