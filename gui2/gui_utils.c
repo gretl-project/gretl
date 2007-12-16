@@ -1542,10 +1542,10 @@ void free_windata (GtkWidget *w, gpointer data)
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
-#if NO_INFO_ICON
+#ifdef NO_INFO_ICON
 	info_24_xpm,
 #endif
-#if NO_EDIT_ICON
+#ifdef NO_EDIT_ICON
 	edit_24_xpm,
 	mini_edit_xpm,
 #endif
@@ -1563,10 +1563,10 @@ void gretl_stock_icons_init (void)
 	mini_model_xpm
     };
     const char *stocks[] = {
-#if NO_INFO_ICON
+#ifdef NO_INFO_ICON
 	GRETL_STOCK_INFO,
 #endif
-#if NO_EDIT_ICON
+#ifdef NO_EDIT_ICON
 	GRETL_STOCK_EDIT,
 	GRETL_STOCK_SCRIPT,
 #endif

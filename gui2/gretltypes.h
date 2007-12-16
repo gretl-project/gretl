@@ -35,14 +35,14 @@
 #define GRETL_STOCK_CONSOLE "gretl-console"
 #define GRETL_STOCK_SCATTER "gretl-scatter"
 
-#define NO_INFO_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-#define NO_EDIT_ICON (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-
-#if NO_INFO_ICON
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
+# define NO_INFO_ICON
 # define GRETL_STOCK_INFO "gretl-info"
 # define GTK_STOCK_INFO GRETL_STOCK_INFO
 #endif
-#if NO_EDIT_ICON
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+# define NO_EDIT_ICON
 # define GRETL_STOCK_EDIT "gretl-edit"
 # define GTK_STOCK_EDIT GRETL_STOCK_EDIT
 # define GRETL_STOCK_SCRIPT "gretl-script"
