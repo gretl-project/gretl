@@ -50,16 +50,24 @@
 # include "gretlwin32.h"
 #endif
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
+# define NO_INFO_ICON 
+#endif
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+# define NO_EDIT_ICON
+#endif
+
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#if N0_INFO_ICON
+#ifdef N0_INFO_ICON
 # include "../pixmaps/info_24.xpm"
 #endif
-#if N0_EDIT_ICON
+#ifdef N0_EDIT_ICON
 # include "../pixmaps/edit_24.xpm"
 # include "../pixmaps/mini.edit.xpm"
 #endif

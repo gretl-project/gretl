@@ -20,8 +20,6 @@
 #ifndef GRETLTYPES_H
 #define GRETLTYPES_H
 
-#include <gtksourceview/gtksourceview.h>
-
 #define GRETL_STOCK_TEX     "gretl-tex"
 #define GRETL_STOCK_MAIL    "gretl-mail"
 #define GRETL_STOCK_TS      "gretl-tsplot"
@@ -36,13 +34,13 @@
 #define GRETL_STOCK_SCATTER "gretl-scatter"
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-# define NO_INFO_ICON
+# define NO_INFO_ICON 1
 # define GRETL_STOCK_INFO "gretl-info"
 # define GTK_STOCK_INFO GRETL_STOCK_INFO
 #endif
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-# define NO_EDIT_ICON
+# define NO_EDIT_ICON 1
 # define GRETL_STOCK_EDIT "gretl-edit"
 # define GTK_STOCK_EDIT GRETL_STOCK_EDIT
 # define GRETL_STOCK_SCRIPT "gretl-script"
@@ -55,6 +53,8 @@ enum windata_flags {
 };
 
 typedef struct _windata_t windata_t;
+
+#include <gtksourceview/gtksourceview.h>
 
 struct _windata_t {
     GtkWidget *dialog;
