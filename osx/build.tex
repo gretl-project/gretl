@@ -2,7 +2,13 @@
 \usepackage[T1]{fontenc}
 \usepackage[body={6.5in,9in},top=1in,left=1in,nohead]{geometry}
 \usepackage{smallhds,lucidabr}
+\usepackage{verbatim,fancyvrb}
 \usepackage{url}
+
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
+
 
 \begin{document}
 
@@ -16,17 +22,17 @@ Allin Cottrell, December 2007
 
 \section{Objective}
 
-To build a stand-alone disk image (dmg) of gretl, including a suitable
+To build a stand-alone disk image (dmg) of gretl, including a suitably
 configured version of gnuplot, for Mac OS X.  The final user should be
 able to download the dmg file, double-click to mount it, and drag the
-Gretl.app folder (found ``inside'' the image) to an Applications
-folder.  You'll use Fink in the build process but the final dmg should
-not be dependent on Fink in any way; it will, however, be dependent on
-Apple's X11.
+\texttt{Gretl.app} folder (found ``inside'' the image) to an
+Applications folder.  You'll use Fink in the build process but the
+final dmg should not be dependent on Fink in any way; it will,
+however, be dependent on Apple's X11.
 
 \section{Overview}
 
-First, here are the prerequisites:
+Here are the basic prerequisites:
 
 \begin{itemize}
 \item A fully functional installation of OS X.
@@ -35,39 +41,43 @@ First, here are the prerequisites:
   DVDs.
 \item A basic installation of Fink.
 \item Source code for gretl and gnuplot.
-\item A skeleton for Gretl.app plus some auxiliary scripts.
+\item A skeleton for \texttt{Gretl.app} plus some auxiliary scripts.
 \end{itemize}
 
 The method is as follows:
 
 \begin{enumerate}
-\item Install the Gretl.app skeleton.  This provides the ``space''
-  into which you'll install gretl and gnuplot.
-\item Under Fink, install the various required third-party packages
+\item Install the \texttt{Gretl.app} skeleton.  This provides the
+  ``space'' into which you'll install gretl and gnuplot.
+\item Under Fink, install various required third-party packages
   (including the ``dev'' or developer components).  This includes
   GTK+ and friends (glib, atk, gdk, pango).
-\item Configure and build gnuplot; install gnuplot into Gretl.app.
+\item Configure and build gnuplot; install gnuplot into
+  the \texttt{Gretl.app} folder.
 \item Configure and build gretl; install gretl into the right place
-  inside the Gretl.app folder; delete some extraneous files.
+  inside \texttt{Gretl.app}; delete some extraneous files and add some
+  extras.
 \item Tar up various run-time files from your Fink installation and
-  dump them into the appropriate place in Gretl.app (hence removing
-  the dependency on Fink at run time).  This is the trickiest part.
-\item Grab the latest gretl documentation and dump it into Gretl.app.
-\item Create a compressed disk image containing Gretl.app.
+  dump them into the appropriate place in \texttt{Gretl.app} (hence
+  removing the dependency on Fink at run time).  This is the trickiest
+  part.
+\item Grab the latest gretl documentation and dump it into place.
+\item Create a compressed disk image containing \texttt{Gretl.app}.
 \end{enumerate}
 
 Steps 1, 2, 3 and 5 only need to be done once; thereafter you can
-update Gretl.app with just steps 4, 6 and 7.
+update the disk image with just steps 4, 6 and 7.
 
 The following sections expand on each of the steps.
 
 \section{The Gretl.app skeleton}
 
-I'll make a gzipped tar file available.  This will contain a mostly
-empty directory tree, but I'll include some ``generic'' files that
-shouldn't depend on the particular OS X build platform.  This should
-be unzipped in some suitable location; on the OS X system to which I
-have access I've put it under \texttt{/Users/allin/dist}.
+I'm making a gzipped tar file available.  This is mostly an empty
+directory tree, but it includes some ``generic'' files that shouldn't
+depend on the particular OS X build platform (though see the final
+section below).  This should be unzipped in some suitable location; on
+the OS X system to which I have access I've put it under
+\texttt{/Users/allin/dist}.
 
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/Gretl.app.tar.gz}
 
@@ -85,11 +95,14 @@ we'll be building that ourselves.  Libxml2 will hopefully be supplied
 by OS X, and dlcompat doesn't seem to be needed any longer. It may be
 helpful to install wget via Fink for build purposes.
 
+Since we're building gnuplot, the libraries to be installed via Fink
+also include those needed by gnuplot (more on this below).
+
 \section{Building gnuplot}
 
 Grab the patched source for gnuplot 4.2.2,
 \url{http://ricardo.ecn.wfu.edu/~cottrell/gretl-osx/gnuplot-4.2.2-ac.tar.gz}.
-Untar and configure.  FIXME need configure params, etc.
+Untar and configure.  FIXME: complete this section.
 
 
 \section{Configuring and building gretl}
@@ -98,7 +111,7 @@ There's a file \texttt{myconf} in the osx subdirectory of the gretl
 source.  You should use this, or a variant of it, to configure gretl.
 Here's what it looks like:
 
-\begin{verbatim}
+\begin{code}
 export CFLAGS="-O2 -I/sw/include"
 export LDFLAGS=-L/sw/lib
 export CPPFLAGS=$CFLAGS
@@ -106,15 +119,20 @@ export PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/X11R6/lib/pkgconfig:/sw/lib/pkgc
 export PATH=/Users/allin/dist/Gretl.app/Contents/Resources/bin:$PATH
 ./configure --prefix=/Users/allin/dist/Gretl.app/Contents/Resources \
   --disable-rpath --enable-build-doc
-\end{verbatim}
+\end{code}
+
+The ``\texttt{export PATH}'' line is designed to ensure that the
+version of gnuplot installed at the previous step is found during the
+gretl configuration process.  This may not be necessary if a version
+of gnuplot that supports PNG output is already in your path.
 
 After doing \texttt{make} and \texttt{make install} we run a script
-named postinst to clear out unnecessary files and add a few extras.
-This is also in the \texttt{osx} subdir of the source.
+named postinst to clear out unnecessary files and add a few extra
+things needed for OS X.  This is also in the \texttt{osx} subdir of
+the source.
 
-\begin{verbatim}
+\begin{code}
 #!/bin/sh
-
 # postinst: run this in the gretl build directory
 
 # The directory above Gretl.app
@@ -132,28 +150,57 @@ rm -rf $PREFIX/share/emacs
 
 install -m 644 osx/README.pdf $TOPDIR
 install -m 755 osx/gretl.sh $PREFIX/bin/gretl
-\end{verbatim}
+\end{code}
 
 \section{Copying Fink run-time files}
 
-Needed: Explanation; sample script.
+As mentioned above, this is a bit tricky.  The general idea is that we
+want to identify all the files provided by Fink that are necessary to
+support gretl and/or gnuplot, and copy these into the right places
+under \texttt{Gretl.app}.  To keep the disk image as compact as
+possible, we want to try to ensure that we copy \textit{only} those
+files that are really necessary.  This includes all shared libraries
+that are not provided by OS X itself; it also includes some additional
+run-time files required by GTK+.
+
+FIXME: complete this section.
+
+\textit{Testing}: To check that the \texttt{Gretl.app} is
+self-contained, you need to run gretl with Fink disabled.  To help
+with this I have two little scripts, as follows:
+
+\begin{code}
+# disable Fink
+sudo mv /sw /hidden.sw
+hash -r
+
+# enable Fink
+sudo mv /hidden.sw /sw
+hash -r
+
+\end{code}
+
+The \texttt{hash -r} command is required to ensure that common
+utilities such as \texttt{cp}, which are present in both \texttt{/bin}
+and \texttt{/sw/bin}, are found after the switch.
 
 \section{Documentation files}
 
 The canonical PDF documentation for gretl is available from
 \url{ricardo.ecn.wfu.edu}.  You should do something like the following
-(wget may be installed via Fink):
+(wget can be installed via Fink; you could use curl instead if you
+prefer):
 
-\begin{verbatim}
+\begin{code}
 TOPDIR=/Users/allin/dist
-TARG=$TOPDIR/Gretl.app/Contents/Resources/share/gretl/doc
+DOCDIR=$TOPDIR/Gretl.app/Contents/Resources/share/gretl/doc
 rm -f gretl-guide.pdf
 wget http://ricardo.ecn.wfu.edu/pub/gretl/manual/PDF/gretl-guide.pdf
-cp gretl-guide.pdf $TARG
+cp gretl-guide.pdf $DOCDIR
 rm -f gretl-ref.pdf
 wget http://ricardo.ecn.wfu.edu/pub/gretl/manual/PDF/gretl-ref.pdf
-cp gretl-ref.pdf $TARG
-\end{verbatim}
+cp gretl-ref.pdf $DOCDIR
+\end{code}
 
 \section{Creation of dmg}
 
@@ -167,7 +214,7 @@ the distribution tree; you don't want to get a recursive thing going,
 whereby the dmg is included within itself.  I run \texttt{dmg.sh} from
 \verb+~/bin+.
 
-\begin{verbatim}
+\begin{code}
 #!/bin/bash
 
 # the directory above Gretl.app
@@ -175,7 +222,7 @@ TOPDIR=/Users/allin/dist
 
 HERE=`pwd`
 KB=`du -ks $TOPDIR | awk '{ print $1 }'`
-KB=$((KB+640))
+KB=$((KB+1024))
 hdiutil create -size ${KB}k tmp.dmg -layout NONE
 MYDEV=`hdid -nomount tmp.dmg`
 sudo newfs_hfs -v gretl $MYDEV
@@ -187,8 +234,33 @@ cp -a README.pdf /Volumes/gretl
 cd $HERE
 hdiutil eject $MYDEV
 hdiutil convert -format UDZO tmp.dmg -o gretl.dmg && rm tmp.dmg
+\end{code}
 
-\end{verbatim}
+%$
+This script uses the \texttt{-a} flag to the \texttt{cp} command: that
+is not supported by \texttt{/bin/cp} under OS X, but it is supported by 
+Fink's \texttt{/sw/bin/cp}.
+
+\section{Extra: ScriptExec stuff}
+
+Something else should be mentioned.  To make Gretl.app into a proper
+OS X Application ``bundle'' we use the ScriptExec apparatus from
+gimp.app, at \url{http://gimp-app.sourceforge.net/}.  This apparatus
+allows for launching gretl from an icon, and automatic startup of X11.
+
+The \texttt{Gretl.app} skeleton mentioned above contains all the files
+generated in association with ScriptExec as built on OS X 10.4.11.
+So with any luck you should not have to mess with this.  On the other
+hand it's possible that the files generated on Tiger don't work
+properly with Leopard (or higher), so it may be worth regenerating
+them.
+
+An account of how to do this (for gimp, but \textit{mutatis mutandis}
+for gretl) is given at the gimp.app URL above.  I can't add much to
+what's said there as I have no expertise in Xcode and I worked by trial
+and error.  The basic idea is that you have to build ScriptExec as an
+Xcode project, then copy the generated bits and pieces into place
+under \texttt{Gretl.app}.
 
 \end{document}
 
